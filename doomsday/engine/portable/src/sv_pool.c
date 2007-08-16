@@ -446,7 +446,7 @@ void Sv_RegisterPlayer(dt_player_t *reg, uint number)
     reg->turnDelta = p->mo ? p->mo->angle - p->lastangle : 0;
     reg->friction = p->mo &&
         gx.MobjFriction ? gx.MobjFriction(p->mo) : DEFAULT_FRICTION;
-    reg->extraLight = p->extralight;
+    reg->extraLight = p->extraLight;
     reg->fixedColorMap = p->fixedcolormap;
     reg->filter = p->filter;
     reg->clYaw = p->mo ? p->mo->angle : 0;

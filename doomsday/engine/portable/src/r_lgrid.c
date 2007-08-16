@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -926,8 +926,8 @@ void LG_Debug(void)
         return;
 
     blink++;
-    vx = ((viewplayer->mo->pos[VX] - lgOrigin[VX]) / lgBlockSize) >> FRACBITS;
-    vy = ((viewplayer->mo->pos[VY] - lgOrigin[VY]) / lgBlockSize) >> FRACBITS;
+    vx = ((viewPlayer->mo->pos[VX] - lgOrigin[VX]) / lgBlockSize) >> FRACBITS;
+    vy = ((viewPlayer->mo->pos[VY] - lgOrigin[VY]) / lgBlockSize) >> FRACBITS;
     vx = MINMAX_OF(1, vx, lgBlockWidth - 2);
     vy = MINMAX_OF(1, vy, lgBlockHeight - 2);
 

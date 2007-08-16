@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,10 +68,6 @@ int     bwidth;
 // The view border graphics.
 char    borderGfx[9][9];
 
-boolean BorderNeedRefresh;
-boolean BorderTopRefresh;
-
-byte   *dc_translation;
 byte   *translationtables;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -158,43 +154,4 @@ void R_DrawViewBorder(void)
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
-}
-
-/**
- * Draws the top border around the view for different size windows.
- */
-void R_DrawTopBorder(void)
-{
-    if(viewwidth == 320 && viewheight == 200)
-        return;
-
-    GL_SetColorAndAlpha(1, 1, 1, 1);
-    GL_SetFlat(R_FlatNumForName(borderGfx[BG_BACKGROUND]));
-
-    GL_DrawRectTiled(0, 0, 320, 64, 64, 64);
-    if(viewwindowy < 65)
-    {
-        texinfo_t      *texinfo;
-
-        gl.Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_TOP]), &texinfo));
-        GL_DrawRectTiled(viewwindowx, viewwindowy - bwidth, viewwidth,
-                         texinfo->height, 16,
-                         texinfo->height);
-
-        GL_UsePatchOffset(false);
-        GL_DrawPatch(viewwindowx - bwidth, viewwindowy,
-                     W_GetNumForName(borderGfx[BG_LEFT]));
-        GL_DrawPatch(viewwindowx + viewwidth, viewwindowy,
-                     W_GetNumForName(borderGfx[BG_RIGHT]));
-        GL_DrawPatch(viewwindowx - bwidth, viewwindowy + 16,
-                     W_GetNumForName(borderGfx[BG_LEFT]));
-        GL_DrawPatch(viewwindowx + viewwidth, viewwindowy + 16,
-                     W_GetNumForName(borderGfx[BG_RIGHT]));
-
-        GL_DrawPatch(viewwindowx - bwidth, viewwindowy - bwidth,
-                     W_GetNumForName(borderGfx[BG_TOPLEFT]));
-        GL_DrawPatch(viewwindowx + viewwidth, viewwindowy - bwidth,
-                     W_GetNumForName(borderGfx[BG_TOPRIGHT]));
-        GL_UsePatchOffset(true);
-    }
 }

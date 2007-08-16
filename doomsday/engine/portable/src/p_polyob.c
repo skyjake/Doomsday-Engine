@@ -210,16 +210,16 @@ boolean PO_MovePolyobj(uint num, float fx, float fy)
     prevPts = po->prevPts;
     blocked = false;
 
-    validcount++;
+    validCount++;
     for(count = 0; count < po->numsegs; ++count, segList++, prevPts++)
     {
-        if((*segList)->linedef->validcount != validcount)
+        if((*segList)->linedef->validCount != validCount)
         {
             (*segList)->linedef->bbox[BOXTOP]    += y;
             (*segList)->linedef->bbox[BOXBOTTOM] += y;
             (*segList)->linedef->bbox[BOXLEFT]   += x;
             (*segList)->linedef->bbox[BOXRIGHT]  += x;
-            (*segList)->linedef->validcount = validcount;
+            (*segList)->linedef->validCount = validCount;
         }
         for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
         {
@@ -249,16 +249,16 @@ boolean PO_MovePolyobj(uint num, float fx, float fy)
         count = 0;
         segList = po->segs;
         prevPts = po->prevPts;
-        validcount++;
+        validCount++;
         while(count++ < po->numsegs)
         {
-            if((*segList)->linedef->validcount != validcount)
+            if((*segList)->linedef->validCount != validCount)
             {
                 (*segList)->linedef->bbox[BOXTOP]    -= y;
                 (*segList)->linedef->bbox[BOXBOTTOM] -= y;
                 (*segList)->linedef->bbox[BOXLEFT]   -= x;
                 (*segList)->linedef->bbox[BOXRIGHT]  -= x;
-                (*segList)->linedef->validcount = validcount;
+                (*segList)->linedef->validCount = validCount;
             }
             for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
             {
@@ -299,12 +299,12 @@ static void RotatePt(int an, float *x, float *y, float startSpotX, float startSp
     trx = *x;
     try = *y;
 
-    gxt = trx * FIX2FLT(finecosine[an]);
+    gxt = trx * FIX2FLT(fineCosine[an]);
     gyt = try * FIX2FLT(finesine[an]);
     *x = gxt - gyt + startSpotX;
 
     gxt = trx * FIX2FLT(finesine[an]);
-    gyt = try * FIX2FLT(finecosine[an]);
+    gyt = try * FIX2FLT(fineCosine[an]);
     *y = gyt + gxt + startSpotY;
 }
 
@@ -350,17 +350,17 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
     }
     segList = po->segs;
     blocked = false;
-    validcount++;
+    validCount++;
     for(count = 0; count < po->numsegs; ++count, segList++)
     {
         if(CheckMobjBlocking(*segList, po))
         {
             blocked = true;
         }
-        if((*segList)->linedef->validcount != validcount)
+        if((*segList)->linedef->validCount != validCount)
         {
             UpdateSegBBox(*segList);
-            (*segList)->linedef->validcount = validcount;
+            (*segList)->linedef->validCount = validCount;
         }
         (*segList)->angle += angle;
     }
@@ -376,13 +376,13 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
             vtx->V_pos[VY] = prevPts->pos[VY];
         }
         segList = po->segs;
-        validcount++;
+        validCount++;
         for(count = 0; count < po->numsegs; ++count, segList++, prevPts++)
         {
-            if((*segList)->linedef->validcount != validcount)
+            if((*segList)->linedef->validCount != validCount)
             {
                 UpdateSegBBox(*segList);
-                (*segList)->linedef->validcount = validcount;
+                (*segList)->linedef->validCount = validCount;
             }
             (*segList)->angle -= angle;
         }

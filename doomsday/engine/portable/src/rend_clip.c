@@ -607,7 +607,7 @@ static int C_TryMergeOccludes(occnode_t *orange, occnode_t *other)
     // Now we must determine which plane occludes which.
     // Pick a point in the middle of the range.
     crossAngle = (orange->start + orange->end) >> (1 + BAMS_BITS - 13);
-    cross[VX] = 100 * FIX2FLT(finecosine[crossAngle]);
+    cross[VX] = 100 * FIX2FLT(fineCosine[crossAngle]);
     cross[VY] = 100 * FIX2FLT(finesine[crossAngle]);
     // z = -(A*x+B*y)/C
     cross[VZ] =

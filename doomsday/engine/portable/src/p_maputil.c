@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -539,7 +539,7 @@ void P_LinkToLines(mobj_t *thing)
     yl = (data.box[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
     yh = (data.box[BOXTOP]    - bmaporgy) >> MAPBLOCKSHIFT;
 
-    validcount++;
+    validCount++;
     for(bx = xl; bx <= xh; ++bx)
         for(by = yl; by <= yh; ++by)
             P_BlockLinesIterator(bx, by, PIT_LinkToLines, &data);
@@ -654,7 +654,7 @@ boolean P_ThingLinesIterator(mobj_t *thing, boolean (*func) (line_t *, void *),
 }
 
 /*
- * Increment validcount before calling this routine. The callback function
+ * Increment validCount before calling this routine. The callback function
  * will be called once for each sector the thing is touching
  * (totally or partly inside). This is not a 3D check; the thing may
  * actually reside above or under the sector.
@@ -671,7 +671,7 @@ boolean P_ThingSectorsIterator(mobj_t *thing,
 
     // Always process the thing's own sector first.
     *end++ = sec = thing->subsector->sector;
-    sec->validcount = validcount;
+    sec->validCount = validCount;
 
     // Any good lines around here?
     if(thing->lineroot)
@@ -682,19 +682,19 @@ boolean P_ThingSectorsIterator(mobj_t *thing,
             ld = (line_t *) tn[nix].ptr;
             // All these lines are two-sided. Try front side.
             sec = ld->L_frontsector;
-            if(sec->validcount != validcount)
+            if(sec->validCount != validCount)
             {
                 *end++ = sec;
-                sec->validcount = validcount;
+                sec->validCount = validCount;
             }
             // And then the back side.
             if(ld->L_backside)
             {
                 sec = ld->L_backsector;
-                if(sec->validcount != validcount)
+                if(sec->validCount != validCount)
                 {
                     *end++ = sec;
-                    sec->validcount = validcount;
+                    sec->validCount = validCount;
                 }
             }
         }
@@ -717,7 +717,7 @@ boolean P_LineThingsIterator(line_t *line, boolean (*func) (mobj_t *, void *),
 }
 
 /**
- * Increment validcount before using this. 'func' is called for each mobj
+ * Increment validCount before using this. 'func' is called for each mobj
  * that is (even partly) inside the sector. This is not a 3D test, the
  * mobjs may actually be above or under the sector.
  *
@@ -738,9 +738,9 @@ boolean P_SectorTouchingThingsIterator(sector_t *sector,
     // First process the things that obviously are in the sector.
     for(mo = sector->thinglist; mo; mo = mo->snext)
     {
-        if(mo->validcount == validcount)
+        if(mo->validCount == validCount)
             continue;
-        mo->validcount = validcount;
+        mo->validCount = validCount;
         *end++ = mo;
     }
     // Then check the sector's lines.
@@ -752,9 +752,9 @@ boolean P_SectorTouchingThingsIterator(sector_t *sector,
         for(nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
             mo = (mobj_t *) ln[nix].ptr;
-            if(mo->validcount == validcount)
+            if(mo->validCount == validCount)
                 continue;
-            mo->validcount = validcount;
+            mo->validCount = validCount;
             *end++ = mo;
         }
     }
@@ -874,7 +874,7 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
 
     earlyout = flags & PT_EARLYOUT;
 
-    validcount++;
+    validCount++;
     //intercept_p = intercepts;
     P_ClearIntercepts();
 

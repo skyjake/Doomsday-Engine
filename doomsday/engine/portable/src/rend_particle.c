@@ -101,16 +101,16 @@ void Rend_ParticleRegister(void)
 
 static fixed_t PG_PointDist(fixed_t c[3])
 {
-    fixed_t dist = FixedMul(FLT2FIX(viewy) - c[VY], -viewsin)
-        - FixedMul(FLT2FIX(viewx) - c[VX], viewcos);
+    fixed_t dist = FixedMul(FLT2FIX(viewY) - c[VY], -viewSin)
+        - FixedMul(FLT2FIX(viewX) - c[VX], viewCos);
 
     if(dist < 0)
         return -dist;           // Always return positive.
     return dist;
 
     // Approximate the 3D distance to the point.
-    /*return M_AproxDistance(M_AproxDistance(c[VX] - viewx, c[VY] - viewy),
-       c[VZ] - viewz); */
+    /*return M_AproxDistance(M_AproxDistance(c[VX] - viewX, c[VY] - viewY),
+       c[VZ] - viewZ); */
 }
 
 /**
@@ -416,11 +416,11 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
     blendmode_t mode = BM_NORMAL, newMode;
     boolean flatOnPlane, flatOnWall, nearPlane, nearWall;
 
-    // viewsidevec points to the left.
+    // viewSideVec points to the left.
     for(c = 0; c < 3; ++c)
     {
-        leftoff[c]  = viewupvec[c] + viewsidevec[c];
-        rightoff[c] = viewupvec[c] - viewsidevec[c];
+        leftoff[c]  = viewUpVec[c] + viewSideVec[c];
+        rightoff[c] = viewUpVec[c] - viewSideVec[c];
     }
 
     // Should we use a texture?

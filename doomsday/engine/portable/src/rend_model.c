@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -192,13 +192,17 @@ float __inline Mod_Lerp(float start, float end, float pos)
 boolean Mod_LightIterator(lumobj_t *lum, fixed_t xyDist, void *data)
 {
     modellightitervars_t *vars = (modellightitervars_t*) data;
-    fixed_t     zDist =
-        (FLT2FIX(vars->z + vars->gzt) >> 1) -
-        FLT2FIX(lum->pos[VZ] + lum->zOff);
-    fixed_t dist = P_ApproxDistance(xyDist, zDist);
+    fixed_t     dist, zDist;
     int         i, maxIndex = 0;
     fixed_t     maxDist = -1;
     mlight_t   *light;
+
+    if(lum->type != LT_OMNI)
+        return true; // Only interested in omni lights.
+
+    zDist = (FLT2FIX(vars->z + vars->gzt) >> 1) -
+             FLT2FIX(lum->pos[VZ] + LUM_OMNI(lum)->zOff);
+    dist = P_ApproxDistance(xyDist, zDist);
 
     // If the light is too far away, skip it.
     if(dist > (dlMaxRad << FRACBITS))
@@ -768,26 +772,27 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 
             if(light->lum)
             {
+                lumobj_t       *l = light->lum;
+
                 dist = FIX2FLT(light->dist);
 
                 // The intensity of the light.
-                intensity = (1 - dist / (light->lum->radius * 2)) * 2;
+                intensity = (1 - dist / (LUM_OMNI(l)->radius * 2)) * 2;
                 if(intensity < 0)
                     intensity = 0;
                 if(intensity > 1)
                     intensity = 1;
 
                 if(intensity == 0)
-                {
-                    // No point in lighting with this!
+                {   // No point in lighting with this!
                     light->used = false;
                     continue;
                 }
 
                 // The center of the light source.
-                lightCenter[VX] = light->lum->pos[VX];
-                lightCenter[VY] = light->lum->pos[VY];
-                lightCenter[VZ] = light->lum->pos[VZ] + light->lum->zOff;
+                lightCenter[VX] = l->pos[VX];
+                lightCenter[VY] = l->pos[VY];
+                lightCenter[VZ] = l->pos[VZ] + LUM_OMNI(l)->zOff;
 
                 intensity *= reciprocal255;
 
@@ -798,7 +803,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
                     light->vector[c] =
                         (lightCenter[c] - modelCenter[c]) / dist;
                     // ...and the color of the light.
-                    light->color[c] = light->lum->rgb[c] * intensity;
+                    light->color[c] = l->color[c] * intensity;
                 }
             }
             else
@@ -1136,7 +1141,7 @@ void Rend_RenderModel(const modelparams_t *params)
         for(i = numLights; i < MAX_MODEL_LIGHTS; ++i)
             lights[i].dist = DDMAXINT;
 
-        DL_RadiusIterator(params->subsector, FLT2FIX(params->center[VX]),
+        DL_LumRadiusIterator(params->subsector, FLT2FIX(params->center[VX]),
                           FLT2FIX(params->center[VY]), dlMaxRad << FRACBITS,
                           &vars, Mod_LightIterator);
     }

@@ -197,8 +197,8 @@ void P_InitPolyBlockMap(void)
 }
 
 /**
- * The validcount flags are used to avoid checking lines that are marked
- * in multiple mapblocks, so increment validcount before the first call
+ * The validCount flags are used to avoid checking lines that are marked
+ * in multiple mapblocks, so increment validCount before the first call
  * to P_BlockLinesIterator, then make one or more calls to it.
  */
 boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
@@ -222,17 +222,17 @@ boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
         polyNext = polyLink->next;
         if(polyLink->polyobj)
         {
-            if(polyLink->polyobj->validcount != validcount)
+            if(polyLink->polyobj->validCount != validCount)
             {
-                polyLink->polyobj->validcount = validcount;
+                polyLink->polyobj->validCount = validCount;
                 tempSeg = polyLink->polyobj->segs;
                 for(i = 0; i < polyLink->polyobj->numsegs; ++i, tempSeg++)
                 {
                     ld = (*tempSeg)->linedef;
-                    if(ld->validcount == validcount)
+                    if(ld->validCount == validCount)
                         continue;
 
-                    ld->validcount = validcount;
+                    ld->validCount = validCount;
 
                     if(!func(ld, data))
                         return false;
@@ -255,10 +255,10 @@ boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
         if(ld->flags & LINEF_BENIGN)
             continue;
 
-        if(ld->validcount == validcount)
+        if(ld->validCount == validCount)
             continue;           // line has already been checked
 
-        ld->validcount = validcount;
+        ld->validCount = validCount;
 
         if(!func(ld, data))
             return false;
@@ -268,8 +268,8 @@ boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
 }
 
 /**
- * The validcount flags are used to avoid checking polys
- * that are marked in multiple mapblocks, so increment validcount
+ * The validCount flags are used to avoid checking polys
+ * that are marked in multiple mapblocks, so increment validCount
  * before the first call, then make one or more calls to it.
  */
 boolean P_BlockPolyobjsIterator(int x, int y,
@@ -287,9 +287,9 @@ boolean P_BlockPolyobjsIterator(int x, int y,
         polyNext = polyLink->next;
         if(polyLink->polyobj)
         {
-            if(polyLink->polyobj->validcount != validcount)
+            if(polyLink->polyobj->validCount != validCount)
             {
-                polyLink->polyobj->validcount = validcount;
+                polyLink->polyobj->validCount = validCount;
                 if(!func(polyLink->polyobj, data))
                     return false;
             }
@@ -334,9 +334,9 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
             {
                 sub = *iter;
 
-                if(sub->validcount != localValidCount)
+                if(sub->validCount != localValidCount)
                 {
-                    sub->validcount = localValidCount;
+                    sub->validCount = localValidCount;
 
                     // Check the sector restriction.
                     if(sector && sub->sector != sector)

@@ -300,7 +300,7 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     data.floorz = data.dropoffz = newsubsec->sector->SP_floorheight;
     data.ceilingz = newsubsec->sector->SP_ceilheight;
 
-    validcount++;
+    validCount++;
 
     // Check things first, possibly picking things up.
     // The bounding box is extended by MAXRADIUS
@@ -598,9 +598,9 @@ static void P_WallMomSlide(line_t *ld)
     deltaangle >>= ANGLETOFINESHIFT;
 
     movelen = P_ApproxDistance(tmpMove[MX], tmpMove[MY]);
-    newlen = FixedMul(movelen, finecosine[deltaangle]);
+    newlen = FixedMul(movelen, fineCosine[deltaangle]);
 
-    tmpMove[VX] = FixedMul(newlen, finecosine[lineangle]);
+    tmpMove[VX] = FixedMul(newlen, fineCosine[lineangle]);
     tmpMove[VY] = FixedMul(newlen, finesine[lineangle]);
 }
 
@@ -774,8 +774,8 @@ boolean P_SectorPlanesChanged(sector_t *sector)
 {
     noFit = false;
 
-    // We'll use validcount to make sure things are only checked once.
-    validcount++;
+    // We'll use validCount to make sure things are only checked once.
+    validCount++;
     P_SectorTouchingThingsIterator(sector, PIT_SectorPlanesChanged, 0);
 
     return noFit;

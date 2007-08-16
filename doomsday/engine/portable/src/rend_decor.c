@@ -115,23 +115,23 @@ static void Rend_ClearDecorations(void)
     sourceCursor = sourceFirst;
 }
 
-static void R_ProjectDecoration(decorsource_t *source)
+static void R_ProjectDecoration(lumobj_t *lum, float x, float y, float z)
 {
     float   v1[2];
     vissprite_t *vis;
 
     // Calculate edges of the shape.
-    v1[VX] = source->pos[VX];
-    v1[VY] = source->pos[VY];
+    v1[VX] = x;
+    v1[VY] = y;
 
     vis = R_NewVisSprite();
     memset(vis, 0, sizeof(*vis));
     vis->type = VSPR_DECORATION;
     vis->distance = Rend_PointDist2D(v1);
-    vis->light = DL_GetLuminous(source->light);
-    vis->center[VX] = source->pos[VX];
-    vis->center[VY] = source->pos[VY];
-    vis->center[VZ] = source->pos[VZ];
+    vis->light = lum;
+    vis->center[VX] = x;
+    vis->center[VY] = y;
+    vis->center[VZ] = z;
 }
 
 /**
@@ -148,13 +148,17 @@ void Rend_ProjectDecorations(void)
 
     for(src = sourceFirst; src != sourceCursor; src = src->next)
     {
-        lumobj_t *lum = DL_GetLuminous(src->light);
+        lumobj_t *l = DL_GetLuminous(src->light);
 
-        // Clipped sources don't get halos.
-        if(lum->flags & LUMF_CLIPPED || lum->flareSize <= 0)
+        // Only omni lights get halos.
+        if(l->type != LT_OMNI)
             continue;
 
-        R_ProjectDecoration(src);
+        // Clipped sources don't get halos.
+        if((l->flags & LUMF_CLIPPED) || LUM_OMNI(l)->flareSize <= 0)
+            continue;
+
+        R_ProjectDecoration(l, src->pos[VX], src->pos[VY], src->pos[VZ]);
     }
 }
 
@@ -204,7 +208,7 @@ static void Rend_AddLightDecoration(float pos[3], ded_decorlight_t *def,
                                     DGLuint decorMap)
 {
     decorsource_t *source;
-    lumobj_t   *lum;
+    lumobj_t   *l;
     float       distance = Rend_PointDist3D(pos);
     float       fadeMul = 1, flareMul = 1;
     float       maxDist = (isWall ? decorWallMaxDist : decorPlaneMaxDist);
@@ -253,62 +257,64 @@ static void Rend_AddLightDecoration(float pos[3], ded_decorlight_t *def,
         return;                 // Out of sources!
 
     // Fill in the data for a new luminous object.
-    source->light = DL_NewLuminous();
+    source->light = DL_NewLuminous(LT_OMNI);
     source->pos[VX] = pos[VX];
     source->pos[VY] = pos[VY];
     source->pos[VZ] = pos[VZ];
-    lum = DL_GetLuminous(source->light);
-    lum->pos[VX] = source->pos[VX];
-    lum->pos[VY] = source->pos[VY];
-    lum->pos[VZ] = source->pos[VZ];
-    lum->subsector = R_PointInSubsector(FLT2FIX(lum->pos[VX]), FLT2FIX(lum->pos[VY]));
-    lum->halofactor = 0xff; // Assumed visible.
-    lum->zOff = 0;
-    lum->flags = LUMF_CLIPPED;
-    lum->tex = def->sides.tex;
-    lum->ceilTex = def->up.tex;
-    lum->floorTex = def->down.tex;
+    l = DL_GetLuminous(source->light);
+    l->pos[VX] = source->pos[VX];
+    l->pos[VY] = source->pos[VY];
+    l->pos[VZ] = source->pos[VZ];
+    l->subsector =
+        R_PointInSubsector(FLT2FIX(l->pos[VX]),
+                           FLT2FIX(l->pos[VY]));
+    LUM_OMNI(l)->halofactor = 0xff; // Assumed visible.
+    LUM_OMNI(l)->zOff = 0;
+    l->flags = LUMF_CLIPPED;
+    LUM_OMNI(l)->tex = def->sides.tex;
+    LUM_OMNI(l)->ceilTex = def->up.tex;
+    LUM_OMNI(l)->floorTex = def->down.tex;
 
     // These are the same rules as in DL_ThingRadius().
-    lum->radius = def->radius * 40 * dlRadFactor;
+    LUM_OMNI(l)->radius = def->radius * 40 * dlRadFactor;
 
     // Don't make a too small or too large light.
-    if(lum->radius > dlMaxRad)
-        lum->radius = dlMaxRad;
+    if(LUM_OMNI(l)->radius > dlMaxRad)
+        LUM_OMNI(l)->radius = dlMaxRad;
 
     if(def->halo_radius > 0)
     {
-        lum->flareSize = def->halo_radius * 60 * (50 + haloSize) / 100.0f;
-        if(lum->flareSize < 1)
-            lum->flareSize = 1;
+        LUM_OMNI(l)->flareSize = def->halo_radius * 60 * (50 + haloSize) / 100.0f;
+        if(LUM_OMNI(l)->flareSize < 1)
+            LUM_OMNI(l)->flareSize = 1;
     }
     else
     {
-        lum->flareSize = 0;
+        LUM_OMNI(l)->flareSize = 0;
     }
 
     if(def->flare.disabled)
-        lum->flags |= LUMF_NOHALO;
+        l->flags |= LUMF_NOHALO;
     else
     {
-        lum->flareCustom = def->flare.custom;
-        lum->flareTex = def->flare.tex;
+        LUM_OMNI(l)->flareCustom = def->flare.custom;
+        LUM_OMNI(l)->flareTex = def->flare.tex;
     }
 
-    lum->flareMul = flareMul;
+    LUM_OMNI(l)->flareMul = flareMul;
 
     // This light source is associated with a decoration map, if one is
     // available.
-    lum->decorMap = decorMap;
+    LUM_OMNI(l)->decorMap = decorMap;
 
     for(i = 0; i < 3; ++i)
-        lum->rgb[i] = def->color[i] * fadeMul;
+        l->color[i] = def->color[i] * fadeMul;
 
     // Approximate the distance.
-    lum->distance =
-        P_ApproxDistance3(FLT2FIX(lum->pos[VX] - viewx),
-                          FLT2FIX(lum->pos[VY] - viewy),
-                          FLT2FIX(lum->pos[VZ] - viewz));
+    l->distance =
+        P_ApproxDistance3(FLT2FIX(l->pos[VX] - viewX),
+                          FLT2FIX(l->pos[VY] - viewY),
+                          FLT2FIX(l->pos[VZ] - viewZ));
 }
 
 /**
@@ -317,9 +323,9 @@ static void Rend_AddLightDecoration(float pos[3], ded_decorlight_t *def,
  */
 static boolean Rend_CheckDecorationBounds(fixed_t bounds[6], float fMaxDist)
 {
-    fixed_t vX = FLT2FIX(viewx);
-    fixed_t vY = FLT2FIX(viewy);
-    fixed_t vZ = FLT2FIX(viewz);
+    fixed_t vX = FLT2FIX(viewX);
+    fixed_t vY = FLT2FIX(viewY);
+    fixed_t vZ = FLT2FIX(viewZ);
     fixed_t maxDist = FRACUNIT * fMaxDist;
 
     return vX > bounds[BLEFT] - maxDist   && vX < bounds[BRIGHT] + maxDist
@@ -793,7 +799,7 @@ void Rend_InitDecorationsForFrame(void)
         return;
 
     // Process all lines. This could also be done during sectors,
-    // but validcount would need to be used to prevent duplicate
+    // but validCount would need to be used to prevent duplicate
     // processing.
     for(i = 0; i < numlines; ++i)
         Rend_DecorateLine(i);

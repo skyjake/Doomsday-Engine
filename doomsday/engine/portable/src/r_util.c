@@ -212,12 +212,12 @@ int R_SlopeDiv(unsigned num, unsigned den)
  * @param   x           X coordinate to test.
  * @param   y           Y coordinate to test.
  *
- * @return  angle_t     Angle between the test point and viewx,y.
+ * @return  angle_t     Angle between the test point and viewX,y.
  */
 angle_t R_PointToAngle(fixed_t x, fixed_t y)
 {
-    x -= FLT2FIX(viewx);
-    y -= FLT2FIX(viewy);
+    x -= FLT2FIX(viewX);
+    y -= FLT2FIX(viewY);
     if((!x) && (!y))
         return 0;
 
@@ -262,8 +262,8 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
 
 angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 {
-    viewx = FIX2FLT(x1);
-    viewy = FIX2FLT(y1);
+    viewX = FIX2FLT(x1);
+    viewY = FIX2FLT(y1);
     return R_PointToAngle(x2, y2);
 }
 
@@ -273,8 +273,8 @@ fixed_t R_PointToDist(fixed_t x, fixed_t y)
     fixed_t     dx, dy, temp;
     fixed_t     dist;
 
-    dx = abs(x - FLT2FIX(viewx));
-    dy = abs(y - FLT2FIX(viewy));
+    dx = abs(x - FLT2FIX(viewX));
+    dy = abs(y - FLT2FIX(viewY));
 
     if(dy > dx)
     {

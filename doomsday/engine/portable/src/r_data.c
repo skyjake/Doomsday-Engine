@@ -247,9 +247,11 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->texoffx = 0;
     poly->texoffy = 0;
     poly->interpos = 0;
-    poly->lights = 0;
+    poly->lightListIdx = 0;
     poly->decorlightmap = 0;
     poly->blendmode = BM_NORMAL;
+    poly->normal[0] = poly->normal[1] = poly->normal[2] = 0;
+
     poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN, &texinfo);
 
     poly->tex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
@@ -257,8 +259,7 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->tex.width = texinfo->width;
     poly->tex.masked = texinfo->masked;
 
-    poly->intertex.id = 0;
-    poly->intertex.detail = NULL;
+    memset(&poly->intertex, 0, sizeof(poly->intertex));
 
     return poly;
 }
@@ -280,6 +281,7 @@ void R_FreeRendPoly(rendpoly_t *poly)
     {
         if(&rendPolys[i]->poly == poly)
         {
+            // \todo: release any light list created for this rendpoly.
             rendPolys[i]->inUse = false;
             return;
         }
@@ -289,7 +291,7 @@ void R_FreeRendPoly(rendpoly_t *poly)
 #endif
 }
 
-void R_MemcpyRendPoly(rendpoly_t *dest, rendpoly_t *src)
+void R_MemcpyRendPoly(rendpoly_t *dest, const rendpoly_t *src)
 {
     unsigned int i;
 
@@ -305,9 +307,10 @@ void R_MemcpyRendPoly(rendpoly_t *dest, rendpoly_t *src)
     dest->flags = src->flags;
     dest->interpos = src->interpos;
     dest->blendmode = src->interpos;
-    dest->lights = src->lights;
+    dest->lightListIdx = src->lightListIdx;
     dest->decorlightmap = src->decorlightmap;
     dest->type = src->type;
+    memcpy(&dest->normal, &src->normal, sizeof(dest->normal));
     for(i = 0; i < dest->numvertices; ++i)
         memcpy(&dest->vertices[i], &src->vertices[i], sizeof(rendpoly_vertex_t));
 }

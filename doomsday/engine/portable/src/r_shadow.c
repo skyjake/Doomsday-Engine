@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -602,9 +602,9 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
         sector = SECTOR_PTR(i);
         sectorFirst = allocator;
 
-        // Use validcount to make sure we only allocate one shadowpoly
+        // Use validCount to make sure we only allocate one shadowpoly
         // per line, side.
-        ++validcount;
+        ++validCount;
 
         // Iterate all the subsectors of the sector.
         for(j = 0; j < sector->subscount; ++j)
@@ -617,12 +617,12 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
                 uint    fidx, bidx;
 
                 seg = *ptr;
-                fidx = GET_SECTOR_IDX(seg->sec[FRONT]);
-                bidx = GET_SECTOR_IDX(seg->sec[BACK]);
+                fidx = GET_SECTOR_IDX(seg->SG_frontsector);
+                bidx = GET_SECTOR_IDX(seg->SG_backsector);
 
                 // Minisegs and benign linedefs don't get shadows, even then, only one.
                 if(seg->linedef &&
-                   !((seg->linedef->validcount == validcount) ||
+                   !((seg->linedef->validCount == validCount) ||
                      (seg->linedef->flags & LINEF_BENIGN) ||
                      (seg->linedef->flags & LINEF_SELFREF)))
                 {
@@ -637,7 +637,7 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
                         // This side will get a shadow.  Increment counter (we'll
                         // return this count).
                         counter++;
-                        line->validcount = validcount;
+                        line->validCount = validCount;
 
                         if(allocator)
                         {
@@ -647,7 +647,7 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
                             poly->seg = seg;
                             poly->ssec = ssec;
                             poly->flags = (frontside ? SHPF_FRONTSIDE : 0);
-                            poly->visframe = framecount - 1;
+                            poly->visframe = frameCount - 1;
 
                             // The outer vertices are just the beginning and end of
                             // the line.

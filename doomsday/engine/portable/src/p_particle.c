@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -302,8 +302,8 @@ static void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high)
             acos(2 * (M_Random() * reciprocal255) -
                  1) / PI * (ANGLE_180 >> ANGLETOFINESHIFT);
 
-        vec[VZ] = FixedMul(finecosine[phi], FRACUNIT * 0.8333);
-        vec[VX] = FixedMul(finecosine[theta], finesine[phi]);
+        vec[VZ] = FixedMul(fineCosine[phi], FRACUNIT * 0.8333);
+        vec[VX] = FixedMul(fineCosine[theta], finesine[phi]);
         vec[VY] = FixedMul(finesine[theta], finesine[phi]);
 
         for(i = 0; i < 3; ++i)
@@ -443,7 +443,7 @@ static void P_NewParticle(ptcgen_t *gen)
              angle) + FIX2FLT(gen->center[VY]) / 180.0f * ANG180;
         ang2 = (ang + ANG90) >> ANGLETOFINESHIFT;
         ang >>= ANGLETOFINESHIFT;
-        pt->pos[VX] += FixedMul(finecosine[ang], gen->center[VX]);
+        pt->pos[VX] += FixedMul(fineCosine[ang], gen->center[VX]);
         pt->pos[VY] += FixedMul(finesine[ang], gen->center[VX]);
 
         // There might be an offset from the model of the mobj.
@@ -469,8 +469,8 @@ static void P_NewParticle(ptcgen_t *gen)
                 }
 
             // Apply it to the particle coords.
-            pt->pos[VX] += FixedMul(finecosine[ang], FRACUNIT * off[VX]);
-            pt->pos[VX] += FixedMul(finecosine[ang2], FRACUNIT * off[VZ]);
+            pt->pos[VX] += FixedMul(fineCosine[ang], FRACUNIT * off[VX]);
+            pt->pos[VX] += FixedMul(fineCosine[ang2], FRACUNIT * off[VZ]);
             pt->pos[VY] += FixedMul(finesine[ang], FRACUNIT * off[VX]);
             pt->pos[VY] += FixedMul(finesine[ang2], FRACUNIT * off[VZ]);
             pt->pos[VZ] += FRACUNIT * off[VY];
@@ -1011,7 +1011,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     yl = (mbox[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
     yh = (mbox[BOXTOP]    - bmaporgy) >> MAPBLOCKSHIFT;
 
-    validcount++;
+    validCount++;
     for(bx = xl; bx <= xh; ++bx)
         for(by = yl; by <= yh; ++by)
             if(!P_BlockLinesIterator(bx, by, PIT_CheckLinePtc, 0))

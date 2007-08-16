@@ -51,55 +51,47 @@ END_PROF_TIMERS()
 #define X_TO_DLBX(cx)           ( ((cx) - dlBlockOrig[VX]) >> (FRACBITS+7) )
 #define Y_TO_DLBY(cy)           ( ((cy) - dlBlockOrig[VY]) >> (FRACBITS+7) )
 #define DLB_ROOT_DLBXY(bx, by)  (dlBlockLinks + bx + by*dlBlockWidth)
-#define LUM_FACTOR(dist)        (1.5f - 1.5f*(dist)/lum->radius)
+#define LUM_FACTOR(dist, radius)        (1.5f - 1.5f*(dist)/(radius))
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    boolean isLit;
-    float   height;
-    DGLuint decorMap;
-} planeitervars_t;
-
-typedef struct {
-    float   color[3];
-    float   size;
-    float   flareSize;
-    float   xOffset, yOffset;
+    float           color[3];
+    float           size;
+    float           flareSize;
+    float           xOffset, yOffset;
 } lightconfig_t;
-
-typedef struct seglight_s {
-    dynnode_t *wallSection[3];
-} seglight_t;
-
-typedef struct subseclight_s {
-    uint planeCount;
-    dynnode_t **planes;
-} subseclight_t;
 
 typedef struct lumcontact_s {
     struct lumcontact_s *next;  // Next in the subsector.
     struct lumcontact_s *nextUsed;  // Next used contact.
-    lumobj_t *lum;
+    lumobj_t       *lum;
 } lumcontact_t;
 
 typedef struct lumnode_s {
     struct lumnode_s *next;         // Next in the same DL block, or NULL.
     struct lumnode_s *ssNext;       // Next in the same subsector, or NULL.
 
-    lumobj_t  lum;
+    lumobj_t        lum;
 } lumnode_t;
 
+typedef struct dynnode_s {
+	struct dynnode_s *next, *nextUsed;
+    dynlight_t      dyn;
+} dynnode_t;
+
 typedef struct contactfinder_data_s {
-    fixed_t box[4];
-    boolean didSpread;
-    lumobj_t *lum;
-    int     firstValid;
+    fixed_t         box[4];
+    boolean         didSpread;
+    lumobj_t       *lum;
+    int             firstValid;
 } contactfinder_data_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+boolean DLIT_LinkLumToSubSector(subsector_t *subsector, void *data);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -140,11 +132,9 @@ static int dlBlockWidth, dlBlockHeight;    // In 128 blocks.
 
 static lumnode_t **dlSubLinks = 0;
 
-// A list of dynlight nodes for each surface (seg, subsector-planes[]).
-// The segs are indexed by seg index, subSecs are indexed by
-// subsector index.
-static seglight_t *segLightLinks;
-static subseclight_t *subSecLightLinks;
+// Surface light link lists.
+static uint numLightLinkLists = 0, lightLinkListCursor = 0;
+static dynnode_t **lightLinkLists;
 
 // List of unused and used lumobj-subsector contacts.
 static lumcontact_t *contFirst, *contCursor;
@@ -152,13 +142,9 @@ static lumcontact_t *contFirst, *contCursor;
 // List of lumobj contacts for each subsector.
 static lumcontact_t **subContacts;
 
-// A framecount for each block. Used to prevent multiple processing of
+// A frameCount for each block. Used to prevent multiple processing of
 // a block during one frame.
 static int *spreadBlocks;
-
-// Used when iterating planes.
-static uint maxPlanes = 0;
-static planeitervars_t *planeVars;
 
 // CODE --------------------------------------------------------------------
 
@@ -191,28 +177,22 @@ void DL_Register(void)
  * Moves all used dynlight nodes to the list of unused nodes, so they
  * can be reused.
  */
-static void DL_DeleteUsed(void)
+static void deleteUsed(void)
 {
-    uint        i;
-
     // Start reusing nodes from the first one in the list.
     dynCursor = dynFirst;
     contCursor = contFirst;
 
-    // Clear the surface light links.
-    memset(segLightLinks, 0, numsegs * sizeof(seglight_t));
-    for(i = 0; i < numsubsectors; ++i)
-    {
-        if(subSecLightLinks[i].planeCount)
-            memset(subSecLightLinks[i].planes, 0,
-                   subSecLightLinks[i].planeCount * sizeof(dynnode_t*));
-    }
+    // Clear the surface light link lists.
+    lightLinkListCursor = 0;
+    if(numLightLinkLists)
+        memset(lightLinkLists, 0, numLightLinkLists * sizeof(dynnode_t*));
 
     // Clear lumobj contacts.
     memset(subContacts, 0, numsubsectors * sizeof(lumcontact_t *));
 }
 
-static dynnode_t *DL_NewDynnode(void)
+static dynnode_t *newDynNode(void)
 {
 	dynnode_t	*node;
 
@@ -239,10 +219,10 @@ static dynnode_t *DL_NewDynnode(void)
  * Returns a new dynlight node. If the list of unused nodes is empty,
  * a new node is created.
  */
-static dynnode_t *DL_New(float *s, float *t)
+static dynnode_t *newDynLight(float *s, float *t)
 {
-	dynnode_t	*node = DL_NewDynnode();
-    dynlight_t	*dyn = &node->light;
+	dynnode_t	*node = newDynNode();
+    dynlight_t	*dyn = &node->dyn;
 
     if(s)
     {
@@ -269,52 +249,29 @@ uint DL_GetNumLuminous(void)
 /**
  * Link the given dynlight node to list.
  */
-static void __inline DL_Link(dynnode_t *node, dynnode_t **list, uint index)
+static void __inline linkDynNode(dynnode_t *node, dynnode_t **list, uint index)
 {
     node->next = list[index];
     list[index] = node;
 }
 
-static void DL_LinkToSubSecPlane(dynnode_t *node, uint index, uint plane)
+static void linkToSurfaceLightList(dynnode_t *node, uint index)
 {
-    DL_Link(node, &subSecLightLinks[index].planes[plane], 0);
+    linkDynNode(node, &lightLinkLists[index], 0);
 }
 
 /**
- * @return          Ptr to the list of dynlights for the subsector plane.
+ * Link the given lumcontact node to list.
  */
-dynnode_t *DL_GetSubSecPlaneLightLinks(uint ssec, uint plane)
+static void __inline linkContact(lumcontact_t *con, lumcontact_t **list, uint index)
 {
-    if(useDynLights)
-    {
-        subseclight_t *ssll;
-
-        assert(ssec < numsubsectors);
-        ssll = &subSecLightLinks[ssec];
-        assert(ssll->planeCount || plane < ssll->planeCount);
-
-        return ssll->planes[plane];
-    }
-
-    return NULL;
+    con->next = list[index];
+    list[index] = con;
 }
 
-static void DL_LinkToSegSection(dynnode_t *node, uint index, segsection_t segPart)
+static void linkLumToSubSector(lumcontact_t *node, uint index)
 {
-    DL_Link(node, &segLightLinks[index].wallSection[segPart], 0);
-}
-
-/**
- * @return          Ptr to the list of dynlights for the wall seg section.
- */
-dynnode_t *DL_GetSegSectionLightLinks(uint seg, segsection_t section)
-{
-    if(useDynLights)
-    {
-        return segLightLinks[seg].wallSection[section];
-    }
-
-    return NULL;
+    linkContact(node, &subContacts[index], 0);
 }
 
 /**
@@ -325,7 +282,7 @@ dynnode_t *DL_GetSegSectionLightLinks(uint seg, segsection_t section)
  *
  * @return          Ptr to the new lumcontact.
  */
-static lumcontact_t *DL_NewContact(lumobj_t *lum)
+static lumcontact_t *newLumContact(lumobj_t *lum)
 {
     lumcontact_t *con;
 
@@ -348,46 +305,6 @@ static lumcontact_t *DL_NewContact(lumobj_t *lum)
 }
 
 /**
- * Link the contact to the subsector's list of contacts. The lumobj is
- * contacting the subsector.
- *
- * NOTE: This called iff a lumobj passes the sector spread test.
- *
- * @param subsector Ptr to the subsector to link to.
- * @param lum       Ptr to the lumobj being linked.
- *
- * @return          <code>true</code> because this function is also used as
- *                  an iterator.
- */
-static boolean DL_AddContact(subsector_t *subsector, void *lum)
-{
-    lumcontact_t *con = DL_NewContact(lum);
-    lumcontact_t **list = subContacts + GET_SUBSECTOR_IDX(subsector);
-
-    con->next = *list;
-    *list = con;
-    return true;
-}
-
-#if 0 // Unused atm
-void DL_ThingRadius(lumobj_t *lum, lightconfig_t *cf)
-{
-    lum->radius = cf->size * 40 * dlRadFactor;
-
-    // Don't make a too small or too large light.
-    if(lum->radius < 32)
-        lum->radius = 32;
-    if(lum->radius > dlMaxRad)
-        lum->radius = dlMaxRad;
-
-    lum->flareSize = cf->flareSize * 60 * (50 + haloSize) / 100.0f;
-
-    if(lum->flareSize < 8)
-        lum->flareSize = 8;
-}
-#endif
-
-/**
  * Blend the given light value with the lumobj's color, apply any global
  * modifiers and output the result.
  *
@@ -395,7 +312,7 @@ void DL_ThingRadius(lumobj_t *lum, lightconfig_t *cf)
  * @param lum       Ptr to the lumobj from which the color will be used.
  * @param light     The light value to be used in the calculation.
  */
-static void DL_ComputeLightColor(float *outRGB, lumobj_t *lum, float light)
+static void calcDynLightColor(float *outRGB, lumobj_t *lum, float light)
 {
     uint        i;
 
@@ -411,7 +328,7 @@ static void DL_ComputeLightColor(float *outRGB, lumobj_t *lum, float light)
         light *= .5f;           // Would be too much.
 
     // Multiply with the light color.
-    if(lum->decorMap)
+    if(lum->type == LT_OMNI && LUM_OMNI(lum)->decorMap)
     {   // Decoration maps are pre-colored.
        for(i = 0; i < 3; ++i)
            outRGB[i] = light;
@@ -420,7 +337,7 @@ static void DL_ComputeLightColor(float *outRGB, lumobj_t *lum, float light)
     {
         for(i = 0; i < 3; ++i)
         {
-            outRGB[i] = light * lum->rgb[i];
+            outRGB[i] = light * lum->color[i];
         }
     }
 }
@@ -452,214 +369,88 @@ void DL_InitForMap(void)
         M_Realloc(dlBlockLinks,
                 sizeof(lumnode_t*) * dlBlockWidth * dlBlockHeight);
 
-    // Initialize the dynlight -> surface link list head ptrs.
-    segLightLinks =
-        Z_Calloc(numsegs * sizeof(seglight_t), PU_LEVELSTATIC, 0);
-    subSecLightLinks =
-        Z_Calloc(numsubsectors * sizeof(subseclight_t), PU_LEVELSTATIC, 0);
-
     // Initialize lumobj -> subsector contacts.
     subContacts =
         Z_Calloc(numsubsectors * sizeof(lumcontact_t*), PU_LEVELSTATIC, 0);
 
-    // A framecount was each block.
+    // A frameCount was each block.
     spreadBlocks =
         Z_Malloc(sizeof(int) * dlBlockWidth * dlBlockHeight,
                  PU_LEVELSTATIC, 0);
 }
 
 /**
- * Calculate planar texture coordinates for the given lumobj.
- *
- * @param t         Destination to write result to.
- * @param top       Top of the plane.
- * @param bottom    Bottom of the plane.
- * @param lum       Ptr to the lumobj.
- *
- * @return          <code>true</code> if the coords are in range.
- */
-static boolean DL_SegTexCoords(float *t, float top, float bottom,
-                               lumobj_t *lum)
-{
-    float       lightZ = lum->pos[VZ] + lum->zOff;
-    float       radius = lum->radius / DYN_ASPECT;
-    float       radiusX2 = 2 * radius;
-
-    if(radiusX2 == 0)
-    {
-        t[0] = t[1] = 0;
-        return false;
-    }
-
-    t[0] = (lightZ + radius - top) / radiusX2;
-    t[1] = t[0] + (top - bottom) / radiusX2;
-
-    return (t[0] < 1 && t[1] > 0);
-}
-
-/**
- * Process the given seg to see if it is lit by the lumobject. If so, new
- * dynlight nodes will be created for each lit section and linked to the
- * appropriate list.
+ * Project the given planelight onto the specified seg. If it would be lit,
+ * a new dynlight node will be created and returned.
  *
  * @param lum       Ptr to the lumobj lighting the seg.
- * @param seg       Ptr to the seg being lit.
- * @param ssec      Subsector this seg is part of (must be given because of
- *                  polyobjs).
+ * @param bottom    Z height (bottom) of the section being lit.
+ * @param top       Z height (top) of the section being lit.
+ *
+ * @return          Ptr to the projected light, ELSE @c NULL.
  */
-static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
+static dynnode_t *projectPlaneGlowOnSegSection(lumobj_t *lum, float bottom,
+                                               float top)
 {
-#define SMIDDLE 0x1
-#define STOP    0x2
-#define SBOTTOM 0x4
-
-    int         present = 0;
-    sector_t   *backsec = seg->SG_backsector;
-    side_t     *sdef = seg->sidedef;
-    float       s[2], t[2];
-    float       dist, pntLight[2];
-    float       fceil, ffloor, bceil, bfloor;
-    float       top[2], bottom[2];
+    uint        i;
+    float       glowHeight;
     dynlight_t *dyn;
     dynnode_t  *node;
-    uint        segindex = GET_SEG_IDX(seg);
-    float       lumRGB[3];
-    sector_t   *linkSec;
+    float       s[2], t[2];
 
-    // We will only calculate light placement for segs that are facing
-    // the viewpoint.
-    if(!(seg->frameflags & SEGINF_FACINGFRONT))
-        return;
+    if(bottom >= top)
+        return NULL; // No height.
 
-    // Let's begin with an analysis of the visible surfaces.
-    // Is there a mid wall segment?
-    if(seg->sidedef->sections[SEG_MIDDLE].frameflags & SUFINF_PVIS)
-        present |= SMIDDLE;
+    if(!LUM_PLANE(lum)->tex)
+        return NULL;
 
-    // Is there a top wall segment?
-    if(seg->sidedef->sections[SEG_TOP].frameflags & SUFINF_PVIS)
-        present |= STOP;
+    glowHeight =
+        (MAX_GLOWHEIGHT * LUM_PLANE(lum)->intensity) * glowHeightFactor;
 
-    // Is there a lower wall segment?
-    if(seg->sidedef->sections[SEG_BOTTOM].frameflags & SUFINF_PVIS)
-        present |= SBOTTOM;
+    // Don't make too small or too large glows.
+    if(glowHeight <= 2)
+        return NULL;
 
-    // There are no surfaces to light!
-    if(!present)
-        return;
+    if(glowHeight > glowHeightMax)
+        glowHeight = glowHeightMax;
 
-    linkSec = R_GetLinkedSector(ssec, PLN_CEILING);
-    fceil  = linkSec->SP_ceilvisheight;
-    linkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
-    ffloor = linkSec->SP_floorvisheight;
+    // Calculate texture coords for the light.
+    if(LUM_PLANE(lum)->castDown)
+    {   // Light is cast downwards.
+        t[1] = t[0] = (lum->pos[VZ] - top) / glowHeight;
+        t[1]+= (top - bottom) / glowHeight;
 
-    // A zero-volume sector?
-    if(fceil <= ffloor)
-        return;
-
-    if(backsec)
-    {
-        bceil  = backsec->SP_ceilvisheight;
-        bfloor = backsec->SP_floorvisheight;
+        if(t[0] > 1 || t[1] < 0)
+            return NULL;
     }
     else
-    {
-        bceil = bfloor = 0;
+    {   // Light is cast upwards.
+        t[0] = t[1] = (bottom - lum->pos[VZ]) / glowHeight;
+        t[0]+= (top - bottom) / glowHeight;
+
+        if(t[1] > 1 || t[0] < 0)
+            return NULL;
     }
 
-    pntLight[VX] = lum->pos[VX];
-    pntLight[VY] = lum->pos[VY];
+    // The horizontal direction is easy.
+    s[0] = 0;
+    s[1] = 1;
 
-    // Calculate distance between seg and light source.
-    dist = ((seg->SG_v1pos[VY] - pntLight[VY]) * (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]) -
-            (seg->SG_v1pos[VX] - pntLight[VX]) * (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]))
-            / seg->length;
+    node = newDynLight(s, t);
+    dyn = &node->dyn;
+    dyn->texture = LUM_PLANE(lum)->tex;
 
-    // Is it close enough and on the right side?
-    if(dist < 0 || dist > lum->radius)
-        return; // Nope.
-
-    // Do a scalar projection for the offset.
-    s[0] = (-((seg->SG_v1pos[VY] - pntLight[VY]) * (seg->SG_v1pos[VY] - seg->SG_v2pos[VY]) -
-              (seg->SG_v1pos[VX] - pntLight[VX]) * (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]))
-              / seg->length +
-               lum->radius) / (2 * lum->radius);
-
-    s[1] = s[0] + seg->length / (2 * lum->radius);
-
-    // Would the light be visible?
-    if(s[0] >= 1 || s[1] <= 0)
-        return;  // Outside the seg.
-
-    DL_ComputeLightColor(lumRGB, lum, LUM_FACTOR(dist));
-
-    // Process the visible parts of the segment.
-    if(present & SMIDDLE)
+    for(i = 0; i < 3; ++i)
     {
-        if(backsec)
-        {
-            texinfo_t      *texinfo;
+        dyn->color[i] = lum->color[i] * dlFactor;
 
-            top[0]    = top[1]    = (fceil < bceil ? fceil : bceil);
-            bottom[0] = bottom[1] = (ffloor > bfloor ? ffloor : bfloor);
-
-            // We need the properties of the real flat/texture.
-            if(sdef->SW_middleisflat)
-                GL_GetFlatInfo(sdef->SW_middletexture, &texinfo);
-            else
-                GL_GetTextureInfo(sdef->SW_middletexture, &texinfo);
-
-            Rend_MidTexturePos(&bottom[0], &bottom[1], &top[0], &top[1],
-                               NULL, sdef->SW_middleoffy, texinfo->height,
-                               seg->linedef ? (seg->linedef->
-                                               mapflags & ML_DONTPEGBOTTOM) !=
-                               0 : false);
-        }
-        else
-        {
-            top[0]    = top[1]    = fceil;
-            bottom[0] = bottom[1] = ffloor;
-        }
-
-        if(DL_SegTexCoords(t, top[0], bottom[0], lum) &&
-           DL_SegTexCoords(t, top[1], bottom[1], lum))
-        {
-            node = DL_New(s, t);
-            dyn = &node->light;
-            memcpy(dyn->color, lumRGB, sizeof(float) * 3);
-            dyn->texture = lum->tex;
-
-            DL_LinkToSegSection(node, segindex, SEG_MIDDLE);
-        }
-    }
-    if(present & STOP)
-    {
-        if(DL_SegTexCoords(t, fceil, MAX_OF(ffloor, bceil), lum))
-        {
-            node = DL_New(s, t);
-            dyn = &node->light;
-            memcpy(dyn->color, lumRGB, sizeof(float) * 3);
-            dyn->texture = lum->tex;
-
-            DL_LinkToSegSection(node, segindex, SEG_TOP);
-        }
-    }
-    if(present & SBOTTOM)
-    {
-        if(DL_SegTexCoords(t, MIN_OF(bfloor, fceil), ffloor, lum))
-        {
-            node = DL_New(s, t);
-            dyn = &node->light;
-            memcpy(dyn->color, lumRGB, sizeof(float) * 3);
-            dyn->texture = lum->tex;
-
-            DL_LinkToSegSection(node, segindex, SEG_BOTTOM);
-        }
+        // In fog, additive blending is used. The normal fog color
+        // is way too bright.
+        if(usingFog)
+            dyn->color[i] *= glowFogBright;
     }
 
-#undef SMIDDLE
-#undef STOP
-#undef SBOTTOM
+    return node;
 }
 
 /**
@@ -669,184 +460,50 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
  * @param ssec          Ptr to the subsector which seg is part of.
  * @param seg           Ptr to the seg to be lit.
  * @param part          Wall seg section id.
- * @param segtop        Z coordinate of the top of the seg section.
- * @param segbottom     Z coordinate of the bottom of the seg section.
- * @param glow_floor    Process floor glow.
- * @param glow_ceil     Process ceiling glow.
+ * @param top           Z coordinate of the top of the seg section.
+ * @param bottom        Z coordinate of the bottom of the seg section.
  */
-static void DL_CreateGlowLightPerPlaneForSegSection(subsector_t *ssec, seg_t *seg,
-                                                    segsection_t part,
-                                                    float segtop, float segbottom,
-                                                    boolean glow_floor,
-                                                    boolean glow_ceil)
+static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
 {
-    uint        i, g, segindex;
-    float       ceil, floor, top, bottom, s[2], t[2];
-    float       glowHeight;
-    dynlight_t *dyn;
-    dynnode_t  *node;
+    uint        g;
     plane_t    *glowPlanes[2], *pln;
-
-    // Check the heights.
-    if(segtop <= segbottom)
-        return;                 // No height.
 
     glowPlanes[PLN_FLOOR] = R_GetLinkedSector(ssec, PLN_FLOOR)->planes[PLN_FLOOR];
     glowPlanes[PLN_CEILING] = R_GetLinkedSector(ssec, PLN_CEILING)->planes[PLN_CEILING];
 
-    floor = glowPlanes[PLN_FLOOR]->visheight;
-    ceil  = glowPlanes[PLN_CEILING]->visheight;
-
-    if(segtop > ceil)
-        segtop = ceil;
-    if(segbottom < floor)
-        segbottom = floor;
-
-    segindex = GET_SEG_IDX(seg);
     // \fixme $nplanes
     for(g = 0; g < 2; ++g)
     {
+        uint        light;
+        lumobj_t   *l;
+
         pln = glowPlanes[g];
 
-        // Only do what's told.
-        if((g == PLN_CEILING && !glow_ceil) || (g == PLN_FLOOR && !glow_floor))
+        if(pln->glow <= 0)
             continue;
 
-        glowHeight = (MAX_GLOWHEIGHT * pln->glow) * glowHeightFactor;
+        light = DL_NewLuminous(LT_PLANE);
 
-        // Don't make too small or too large glows.
-        if(glowHeight <= 2)
-            continue;
+        l = DL_GetLuminous(light);
+        l->flags = LUMF_NOHALO | LUMF_CLIPPED;
+        l->pos[VX] = ssec->midpoint.pos[VX];
+        l->pos[VY] = ssec->midpoint.pos[VY];
+        l->pos[VZ] = pln->visheight;
+        // Approximate the distance in 3D.
+        l->distance =
+            P_ApproxDistance3(FLT2FIX(l->pos[VX] - viewX),
+                              FLT2FIX(l->pos[VY] - viewY),
+                              FLT2FIX(l->pos[VZ] - viewZ));
 
-        if(glowHeight > glowHeightMax)
-            glowHeight = glowHeightMax;
-
-        // Calculate texture coords for the light.
+        l->subsector = ssec;
+        memcpy(l->color, pln->glowrgb, sizeof(l->color));
         if(g == PLN_CEILING)
-        {   // Ceiling glow.
-            top = ceil;
-            bottom = ceil - glowHeight;
+            LUM_PLANE(l)->castDown = true;
+        LUM_PLANE(l)->intensity = pln->glow;
+        LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT, NULL);
 
-            t[1] = t[0] = (top - segtop) / glowHeight;
-            t[1]+= (segtop - segbottom) / glowHeight;
-
-            if(t[0] > 1 || t[1] < 0)
-                continue;
-        }
-        else
-        {   // Floor glow.
-            bottom = floor;
-            top = floor + glowHeight;
-
-            t[0] = t[1] = (segbottom - bottom) / glowHeight;
-            t[0]+= (segtop - segbottom) / glowHeight;
-
-            if(t[1] > 1 || t[0] < 0)
-                continue;
-        }
-
-        // The horizontal direction is easy.
-        s[0] = 0;
-        s[1] = 1;
-
-        node = DL_New(s, t);
-        dyn = &node->light;
-        dyn->texture = GL_PrepareLSTexture(LST_GRADIENT, NULL);
-
-        for(i = 0; i < 3; ++i)
-        {
-            dyn->color[i] = pln->glowrgb[i] * dlFactor;
-
-            // In fog, additive blending is used. The normal fog color
-            // is way too bright.
-            if(usingFog)
-                dyn->color[i] *= glowFogBright;
-        }
-        DL_LinkToSegSection(node, segindex, part);
-    }
-}
-
-/**
- * If necessary, generate dynamic lights for plane glow.
- *
- * @param seg           Ptr to the seg to be lit.
- * @param ssec          Ptr to the subsector which seg is a part of.
- */
-static void DL_ProcessSegForGlow(seg_t *seg, subsector_t *ssec)
-{
-    sector_t   *back = seg->SG_backsector;
-    sector_t   *sec = ssec->sector;
-    boolean     do_floor = (sec->SP_floorglow > 0)? true : false;
-    boolean     do_ceil = (sec->SP_ceilglow > 0)? true : false;
-    side_t     *sdef = seg->sidedef;
-    float       fceil, ffloor;
-
-    // Check if this segment is actually facing our way.
-    if(!(seg->frameflags & SEGINF_FACINGFRONT))
-        return;                 // Nope...
-
-    // Visible plane heights.
-    fceil  = sec->SP_ceilvisheight;
-    ffloor = sec->SP_floorvisheight;
-
-    // Determine which portions of the segment get lit.
-    if(!back)
-    {
-        // One sided.
-        DL_CreateGlowLightPerPlaneForSegSection(ssec, seg, SEG_MIDDLE, fceil, ffloor,
-                                                do_floor, do_ceil);
-    }
-    else
-    {
-        float       bceil, bfloor;
-        float       opentop[2], openbottom[2];    // top, bottom, [left, right];
-
-        // Two-sided.
-        bceil  = back->SP_ceilvisheight;
-        bfloor = back->SP_floorvisheight;
-        opentop[0] = opentop[1] = MIN_OF(fceil, bceil);
-        openbottom[0] = opentop[1] = MAX_OF(ffloor, bfloor);
-
-        // The glow can only be visible in the front sector's height range.
-
-        // Is there a middle?
-        if(seg->sidedef->sections[SEG_MIDDLE].frameflags & SUFINF_PVIS)
-        {
-            texinfo_t      *texinfo = NULL;
-
-            if(sdef->SW_middletexture > 0)
-            {
-                if(sdef->SW_middleisflat)
-                    GL_GetFlatInfo(sdef->SW_middletexture, &texinfo);
-                else
-                    GL_GetTextureInfo(sdef->SW_middletexture, &texinfo);
-            }
-
-            if(!texinfo->masked)
-            {
-                float texOffY = 0;
-                Rend_MidTexturePos
-               (&openbottom[0], &openbottom[1], &opentop[0], &opentop[1],
-                &texOffY, sdef->SW_middleoffy, texinfo->height,
-                0 != (seg->linedef->mapflags & ML_DONTPEGBOTTOM));
-                DL_CreateGlowLightPerPlaneForSegSection(ssec, seg, SEG_MIDDLE, opentop[0],
-                                                        openbottom[0], do_floor, do_ceil);
-            }
-        }
-
-        // Top?
-        if(seg->sidedef->sections[SEG_TOP].frameflags & SUFINF_PVIS)
-        {
-            DL_CreateGlowLightPerPlaneForSegSection(ssec, seg, SEG_TOP, fceil, bceil,
-                                                    do_floor, do_ceil);
-        }
-
-        // Bottom?
-        if(seg->sidedef->sections[SEG_BOTTOM].frameflags & SUFINF_PVIS)
-        {
-            DL_CreateGlowLightPerPlaneForSegSection(ssec, seg, SEG_BOTTOM, bfloor, ffloor,
-                                                    do_floor, do_ceil);
-        }
+        // Plane lights don't spread, so just link the lum to its own ssec.
+        DLIT_LinkLumToSubSector(l->subsector, l);
     }
 }
 
@@ -865,10 +522,6 @@ void DL_Clear(void)
     dlBlockLinks = 0;
     dlBlockOrig[VX] = dlBlockOrig[VY] = 0;
     dlBlockWidth = dlBlockHeight = 0;
-
-    if(planeVars)
-        M_Free(planeVars);
-    maxPlanes = 0;
 }
 
 /**
@@ -901,9 +554,9 @@ void DL_ClearForFrame(void)
  *
  * @return          Index (name) by which the lumobj should be referred.
  */
-uint DL_NewLuminous(void)
+uint DL_NewLuminous(lumtype_t type)
 {
-    lumnode_t   *newList;
+    lumnode_t  *node, *newList;
 
     numLuminous++;
 
@@ -930,7 +583,10 @@ uint DL_NewLuminous(void)
     }
 
     // Clear the new lumobj.
-    memset(luminousList + numLuminous - 1, 0, sizeof(lumnode_t));
+    node = (luminousList + numLuminous - 1);
+    memset(node, 0, sizeof(lumnode_t));
+
+    node->lum.type = type;
 
     return numLuminous; // == index + 1
 }
@@ -941,21 +597,21 @@ uint DL_NewLuminous(void)
  *
  * @return          Ptr to the lumnode at the given index.
  */
-static lumnode_t __inline *DL_GetLum(uint idx)
+static lumnode_t __inline *getLumNode(uint idx)
 {
     return &luminousList[idx];
 }
 
 /**
  * Retrieve a ptr to the lumobj with the given index. A public interface to
- * lumobj list.
+ * the lumobj list.
  *
  * @return          Ptr to the lumobj with the given 1-based index.
  */
 lumobj_t *DL_GetLuminous(uint idx)
 {
     if(!(idx == 0 || idx > numLuminous))
-        return &DL_GetLum(idx - 1)->lum;
+        return &getLumNode(idx - 1)->lum;
 
     return NULL;
 }
@@ -965,10 +621,10 @@ lumobj_t *DL_GetLuminous(uint idx)
  *
  * @param def       Ptr to the ded_light to examine.
  *
- * @return          <code>true</code> if we HAVE to use a dynamic light for
- *                  this light defintion (as opposed to a bias light source).
+ * @return          @c true, if we HAVE to use a dynamic light for this
+ *                  light defintion (as opposed to a bias light source).
  */
-static boolean DL_MustUseDynamic(ded_light_t *def)
+static boolean mustUseDynamic(ded_light_t *def)
 {
     // Are any of the light directions disabled or use a custom lightmap?
     if(def && (def->sides.tex != 0 || def->up.tex != 0 || def->down.tex != 0))
@@ -993,7 +649,7 @@ void DL_AddLuminous(mobj_t *mo)
     int         flags = 0;
     int         radius, flareSize;
     float       rgb[3];
-    lumobj_t   *lum;
+    lumobj_t   *l;
     lightconfig_t cf;
     ded_light_t *def = 0;
     modeldef_t *mf, *nextmf;
@@ -1126,7 +782,7 @@ void DL_AddLuminous(mobj_t *mo)
 
         if(useBias && mo->usingBias)
         {   // We have previously acquired a BIAS source for this mobj.
-            if(radius < dlMinRadForBias || DL_MustUseDynamic(def))
+            if(radius < dlMinRadForBias || mustUseDynamic(def))
             {   // We can nolonger use a BIAS source for this light.
                 // Delete the bias source (it will be replaced with a
                 // dynlight shortly).
@@ -1148,7 +804,7 @@ void DL_AddLuminous(mobj_t *mo)
 
         // Should we attempt to acquire a BIAS light source for this?
         if(useBias && radius >= dlMinRadForBias &&
-           !DL_MustUseDynamic(def))
+           !mustUseDynamic(def))
         {
             if((mo->light =
                     SB_NewSourceAt(FIX2FLT(mo->pos[VX]),
@@ -1165,64 +821,65 @@ void DL_AddLuminous(mobj_t *mo)
         {
             // This'll allow a halo to be rendered. If the light is hidden from
             // view by world geometry, the light pointer will be set to NULL.
-            mo->light = DL_NewLuminous();
+            mo->light = DL_NewLuminous(LT_OMNI);
 
-            lum = DL_GetLuminous(mo->light);
-            lum->pos[VX] = FIX2FLT(mo->pos[VX]);
-            lum->pos[VY] = FIX2FLT(mo->pos[VY]);
-            lum->pos[VZ] = FIX2FLT(mo->pos[VZ]);
-            lum->subsector = mo->subsector;
-            lum->halofactor = mo->halofactor;
-            lum->patch = lump;
-            lum->zOff = center;
-            lum->xOff = xOff;
-            lum->flags = flags;
-            lum->flags |= LUMF_CLIPPED;
+            l = DL_GetLuminous(mo->light);
+            l->flags = flags;
+            l->flags |= LUMF_CLIPPED;
+            l->pos[VX] = FIX2FLT(mo->pos[VX]);
+            l->pos[VY] = FIX2FLT(mo->pos[VY]);
+            l->pos[VZ] = FIX2FLT(mo->pos[VZ]);
+            // Approximate the distance in 3D.
+            l->distance =
+                P_ApproxDistance3(mo->pos[VX] - FLT2FIX(viewX),
+                                  mo->pos[VY] - FLT2FIX(viewY),
+                                  mo->pos[VZ] - FLT2FIX(viewZ));
+
+            l->subsector = mo->subsector;
+            LUM_OMNI(l)->halofactor = mo->halofactor;
+            LUM_OMNI(l)->patch = lump;
+            LUM_OMNI(l)->zOff = center;
+            LUM_OMNI(l)->xOff = xOff;
 
             // Don't make too large a light.
             if(radius > dlMaxRad)
                 radius = dlMaxRad;
 
-            lum->radius = radius;
-            lum->flareMul = 1;
-            lum->flareSize = flareSize;
+            LUM_OMNI(l)->radius = radius;
+            LUM_OMNI(l)->flareMul = 1;
+            LUM_OMNI(l)->flareSize = flareSize;
             for(i = 0; i < 3; ++i)
-                lum->rgb[i] = rgb[i];
-
-            // Approximate the distance in 3D.
-            lum->distance =
-                P_ApproxDistance3(mo->pos[VX] - FLT2FIX(viewx),
-                                  mo->pos[VY] - FLT2FIX(viewy),
-                                  mo->pos[VZ] - FLT2FIX(viewz));
+                l->color[i] = rgb[i];
 
             // Is there a model definition?
             R_CheckModelFor(mo, &mf, &nextmf);
             if(mf && useModels)
-                lum->xyScale = MAX_OF(mf->scale[VX], mf->scale[VZ]);
+                LUM_OMNI(l)->xyScale = MAX_OF(mf->scale[VX], mf->scale[VZ]);
             else
-                lum->xyScale = 1;
+                LUM_OMNI(l)->xyScale = 1;
 
             // This light source is not associated with a decormap.
-            lum->decorMap = 0;
+            LUM_OMNI(l)->decorMap = 0;
 
             if(def)
             {
-                lum->tex = def->sides.tex;
-                lum->ceilTex = def->up.tex;
-                lum->floorTex = def->down.tex;
+                LUM_OMNI(l)->tex = def->sides.tex;
+                LUM_OMNI(l)->ceilTex = def->up.tex;
+                LUM_OMNI(l)->floorTex = def->down.tex;
 
                 if(def->flare.disabled)
-                    lum->flags |= LUMF_NOHALO;
+                    l->flags |= LUMF_NOHALO;
                 else
                 {
-                    lum->flareCustom = def->flare.custom;
-                    lum->flareTex = def->flare.tex;
+                    LUM_OMNI(l)->flareCustom = def->flare.custom;
+                    LUM_OMNI(l)->flareTex = def->flare.tex;
                 }
             }
             else
             {
                 // Use the same default light texture for all directions.
-                lum->tex = lum->ceilTex = lum->floorTex =
+                LUM_OMNI(l)->tex = LUM_OMNI(l)->ceilTex =
+                    LUM_OMNI(l)->floorTex =
                     GL_PrepareLSTexture(LST_DYNAMIC, NULL);
             }
         }
@@ -1237,6 +894,17 @@ void DL_AddLuminous(mobj_t *mo)
     }
 }
 
+boolean DLIT_LinkLumToSubSector(subsector_t *subsector, void *data)
+{
+    lumobj_t   *lum = (lumobj_t*) data;
+    lumcontact_t *con = newLumContact(lum);
+
+    // Link it to the contact list for this subsector.
+    linkLumToSubSector(con, GET_SUBSECTOR_IDX(subsector));   
+
+    return true; // Continue iteration.
+}
+
 /**
  * Iterate subsectors of sector, within or intersecting the specified
  * bounding box, looking for those which are close enough to be lit by the
@@ -1246,9 +914,9 @@ void DL_AddLuminous(mobj_t *mo)
  * @param box       Subsectors within this bounding box will be processed.
  * @param sector    Ptr to the sector to check for contacts.
  */
-static void DL_ContactSector(lumobj_t *lum, fixed_t *box, sector_t *sector)
+static void contactSector(lumobj_t *lum, fixed_t *box, sector_t *sector)
 {
-    P_SubsectorBoxIterator(box, sector, DL_AddContact, lum);
+    P_SubsectorBoxIterator(box, sector, DLIT_LinkLumToSubSector, lum);
 }
 
 /**
@@ -1258,15 +926,20 @@ static void DL_ContactSector(lumobj_t *lum, fixed_t *box, sector_t *sector)
  * @param line      Ptr to linedef to attempt to spread over.
  * @param data      Ptr to contactfinder_data structure.
  *
- * @return          <code>true</code> because this function is also used as
- *                  an iterator.
+ * @return          @c true, because this function is also used as an
+ *                  iterator.
  */
-static boolean DLIT_ContactFinder(line_t *line, void *data)
+boolean DLIT_ContactFinder(line_t *line, void *data)
 {
     contactfinder_data_t *light = data;
     sector_t   *source, *dest;
     float       distance;
     vertex_t   *vtx;
+    lumobj_t   *l;
+
+    if(light->lum->type != LT_OMNI)
+        return true; // Only interested in omni lights.
+    l = light->lum;
 
     if(!line->L_backside || !line->L_frontside ||
        line->L_frontsector == line->L_backsector)
@@ -1282,12 +955,12 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     }
 
     // Which way does the spread go?
-    if(line->L_frontsector->validcount == validcount)
+    if(line->L_frontsector->validCount == validCount)
     {
         source = line->L_frontsector;
         dest = line->L_backsector;
     }
-    else if(line->L_backsector->validcount == validcount)
+    else if(line->L_backsector->validCount == validCount)
     {
         source = line->L_backsector;
         dest = line->L_frontsector;
@@ -1298,8 +971,8 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
         return true;
     }
 
-    if(dest->validcount >= light->firstValid &&
-       dest->validcount <= validcount + 1)
+    if(dest->validCount >= light->firstValid &&
+       dest->validCount <= validCount + 1)
     {
         // This was already spreaded to.
         return true;
@@ -1327,8 +1000,8 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     // Calculate distance to line.
     vtx = line->L_v1;
     distance =
-        ((vtx->V_pos[VY] - light->lum->pos[VY]) * line->dx -
-         (vtx->V_pos[VX] - light->lum->pos[VX]) * line->dy)
+        ((vtx->V_pos[VY] - l->pos[VY]) * line->dx -
+         (vtx->V_pos[VX] - l->pos[VX]) * line->dy)
          / line->length;
 
     if((source == line->L_frontsector && distance < 0) ||
@@ -1341,9 +1014,8 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     // Check distance against the light radius.
     if(distance < 0)
         distance = -distance;
-    if(distance >= light->lum->radius)
-    {
-        // The light doesn't reach that far.
+    if(distance >= LUM_OMNI(l)->radius)
+    {   // The light doesn't reach that far.
         return true;
     }
 
@@ -1351,10 +1023,10 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     light->didSpread = true;
 
     // During next step, light will continue spreading from there.
-    dest->validcount = validcount + 1;
+    dest->validCount = validCount + 1;
 
     // Add this lumobj to the destination's subsectors.
-    DL_ContactSector(light->lum, light->box, dest);
+    contactSector(l, light->box, dest);
 
     return true;
 }
@@ -1366,18 +1038,22 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
  *
  * @param lum       Ptr to lumobj to find subsector contacts for.
  */
-static void DL_FindContacts(lumobj_t *lum)
+static void findContacts(lumobj_t *lum)
 {
-    int         firstValid = ++validcount;
+    int         firstValid = ++validCount;
     int         xl, yl, xh, yh, bx, by;
     contactfinder_data_t light;
 
     // Use a slightly smaller radius than what the light really is.
-    fixed_t radius = lum->radius * FRACUNIT - 2 * FRACUNIT;
+    fixed_t radius;
     static uint numSpreads = 0, numFinds = 0;
 
+    if(lum->type != LT_OMNI)
+        return; // Only omni lights spread.
+
+    radius = LUM_OMNI(lum)->radius * FRACUNIT - 2 * FRACUNIT;
     // Do the sector spread. Begin from the light's own sector.
-    lum->subsector->sector->validcount = validcount;
+    lum->subsector->sector->validCount = validCount;
 
     light.lum = lum;
     light.firstValid = firstValid;
@@ -1386,7 +1062,7 @@ static void DL_FindContacts(lumobj_t *lum)
     light.box[BOXRIGHT]  = FLT2FIX(lum->pos[VX]) + radius;
     light.box[BOXLEFT]   = FLT2FIX(lum->pos[VX]) - radius;
 
-    DL_ContactSector(lum, light.box, lum->subsector->sector);
+    contactSector(lum, light.box, lum->subsector->sector);
 
     xl = (light.box[BOXLEFT]   - bmaporgx) >> MAPBLOCKSHIFT;
     xh = (light.box[BOXRIGHT]  - bmaporgx) >> MAPBLOCKSHIFT;
@@ -1407,8 +1083,8 @@ static void DL_FindContacts(lumobj_t *lum)
             for(by = yl; by <= yh; ++by)
                 P_BlockLinesIterator(bx, by, DLIT_ContactFinder, &light);
 
-        // Increment validcount for the next round of spreading.
-        validcount++;
+        // Increment validCount for the next round of spreading.
+        validCount++;
     }
     while(light.didSpread);
 
@@ -1429,7 +1105,7 @@ if(!((numFinds + 1) % 1000))
  *
  * @param subsector Ptr to the subsector to spread the lumobj contacts of.
  */
-static void DL_SpreadBlocks(subsector_t *subsector)
+static void spreadLumobjsInSubSector(subsector_t *subsector)
 {
     int         xl, xh, yl, yh, x, y;
     int        *count;
@@ -1458,13 +1134,13 @@ static void DL_SpreadBlocks(subsector_t *subsector)
         for(y = yl; y <= yh; ++y)
         {
             count = &spreadBlocks[x + y * dlBlockWidth];
-            if(*count != framecount)
+            if(*count != frameCount)
             {
-                *count = framecount;
+                *count = frameCount;
 
                 // Spread the lumobjs in this block.
                 for(iter = *DLB_ROOT_DLBXY(x, y); iter; iter = iter->next)
-                    DL_FindContacts(&iter->lum);
+                    findContacts(&iter->lum);
             }
         }
 }
@@ -1474,8 +1150,8 @@ static void DL_SpreadBlocks(subsector_t *subsector)
  */
 static int C_DECL lumobjSorter(const void *e1, const void *e2)
 {
-    lumobj_t *lum1 = &DL_GetLum(*(const ushort *) e1)->lum;
-    lumobj_t *lum2 = &DL_GetLum(*(const ushort *) e2)->lum;
+    lumobj_t *lum1 = &getLumNode(*(const ushort *) e1)->lum;
+    lumobj_t *lum2 = &getLumNode(*(const ushort *) e2)->lum;
 
     if(lum1->distance > lum2->distance)
         return 1;
@@ -1490,7 +1166,7 @@ static int C_DECL lumobjSorter(const void *e1, const void *e2)
  * Called by DL_InitForNewFrame() at the beginning of each frame (iff the
  * render lists are not frozen).
  */
-static void DL_LinkLuminous(void)
+static void linkDynNodeLuminous(void)
 {
 #define MAX_LUMS 8192           // Normally 100-200, heavy: 1000
 
@@ -1514,7 +1190,7 @@ static void DL_LinkLuminous(void)
 
     for(i = 0; i < num; ++i)
     {
-        node = DL_GetLum((maxDynLights ? order[i] : i));
+        node = getLumNode((maxDynLights ? order[i] : i));
 
         // Link this lumnode to the dlBlockLinks, if it can be linked.
         node->next = NULL;
@@ -1538,11 +1214,11 @@ static void DL_LinkLuminous(void)
 }
 
 /**
- * @return          <code>true</code> if the texture is already used in the
- *                  list of dynlights.
+ * @return          @ true, if the texture is already used in the list of
+ *                  dynlights.
  */
-#if 0 // currently unused
-static boolean DL_IsTexUsed(dynlight_t *node, DGLuint texture)
+#if 0 // Currently unused
+static boolean isTexUsed(dynlight_t *node, DGLuint texture)
 {
     boolean     found;
 
@@ -1560,133 +1236,10 @@ static boolean DL_IsTexUsed(dynlight_t *node, DGLuint texture)
 #endif
 
 /**
- * Process the given lumobj to maybe add a dynamic light for the plane.
- *
- * @param lum       Ptr to the lumobj on which the dynlight will be based.
- * @param subsector Ptr to the subsector to process.
- * @param planeID   Index of the plane to process.
- * @param planeVars Ptr to planeitervars structure holding values passed
- *                  along during iteration.
- */
-static void DL_ProcessPlane(lumobj_t *lum, subsector_t *subsector,
-                            uint planeID, planeitervars_t *planeVars)
-{
-    DGLuint     lightTex;
-    float       diff, lightStrength, srcRadius;
-    float       s[2], t[2];
-    float       pos[3];
-
-    pos[VX] = lum->pos[VX];
-    pos[VY] = lum->pos[VY];
-    pos[VZ] = lum->pos[VZ];
-
-    // Center the Z.
-    pos[VZ] += lum->zOff;
-    srcRadius = lum->radius / 4;
-    if(srcRadius == 0)
-        srcRadius = 1;
-
-    // Determine on which side the light is for all planes.
-    lightTex = 0;
-    lightStrength = 0;
-
-    if(subsector->planes[planeID]->type == PLN_FLOOR)
-    {
-        if((lightTex = lum->floorTex) != 0)
-        {
-            if(pos[VZ] > planeVars->height)
-                lightStrength = 1;
-            else if(pos[VZ] > planeVars->height - srcRadius)
-                lightStrength = 1 - (planeVars->height - pos[VZ]) / srcRadius;
-        }
-    }
-    else
-    {
-        if((lightTex = lum->ceilTex) != 0)
-        {
-            if(pos[VZ] < planeVars->height)
-                lightStrength = 1;
-            else if(pos[VZ] < planeVars->height + srcRadius)
-                lightStrength = 1 - (pos[VZ] - planeVars->height) / srcRadius;
-        }
-    }
-
-    // Is there light in this direction? Is it strong enough?
-    if(!lightTex || !lightStrength)
-        return;
-
-    // Check that the height difference is tolerable.
-    if(subsector->planes[planeID]->type == PLN_CEILING)
-        diff = planeVars->height - pos[VZ];
-    else
-        diff = pos[VZ] - planeVars->height;
-
-    // Clamp it.
-    if(diff < 0)
-        diff = 0;
-
-    if(diff < lum->radius)
-    {
-        dynlight_t *dyn;
-        dynnode_t  *node;
-        // Calculate dynlight position. It may still be outside
-        // the bounding box the subsector.
-        s[0] = -pos[VX] + lum->radius;
-        t[0] = pos[VY] + lum->radius;
-        s[1] = t[1] = 1.0f / (2 * lum->radius);
-
-        // A dynamic light will be generated.
-        node = DL_New(s, t);
-        dyn = &node->light;
-        dyn->texture = lightTex;
-
-        DL_ComputeLightColor(dyn->color,
-                             lum, LUM_FACTOR(diff) * lightStrength);
-
-        // Link to this plane's list.
-        DL_LinkToSubSecPlane(node, GET_SUBSECTOR_IDX(subsector),
-                             planeID);
-    }
-}
-
-/**
- * Iterate the segs of the given subsector, which are to be lit by the lumobj.
- *
- * @param lum       Ptr to the lumobj casting the light.
- * @param ssec      Ptr to the subsector to process.
- */
-static void DL_LightSegIteratorFunc(lumobj_t *lum, subsector_t *ssec)
-{
-    uint        j;
-    seg_t      *seg, **ptr;
-
-    // The wall segments.
-    ptr = ssec->segs;
-    while(*ptr)
-    {
-        seg = *ptr;
-
-        if(seg->linedef && // "minisegs" have no linedefs.
-           !(seg->flags & SEGF_POLYOBJ))
-        {
-            DL_ProcessWallSeg(lum, seg, ssec);
-        }
-
-        *ptr++;
-    }
-
-    // Is there a polyobj on board? Light it, too.
-    if(ssec->poly)
-        for(j = 0; j < ssec->poly->numsegs; ++j)
-        {
-            DL_ProcessWallSeg(lum, ssec->poly->segs[j], ssec);
-        }
-}
-
-/**
  * @param surface   Surface to retreive the current texture name from.
+ *
  * @return          The texture name of the decoration light map for the
- *                  flat, else <code>0</code> if no such texture exists.
+ *                  flat, else @c 0 = no such texture exists.
  */
 #if 0 // Unused
 DGLuint DL_GetFlatDecorLightMap(surface_t *surface)
@@ -1702,125 +1255,335 @@ DGLuint DL_GetFlatDecorLightMap(surface_t *surface)
 #endif
 
 /**
- * Process dynamic lights for the specified subsector.
+ * Project the given omnilight onto the specified seg. If it would be lit, a new
+ * dynlight node will be created and returned.
  *
- * @param ssec      Ptr to the subsector to process.
+ * @param lum       Ptr to the lumobj lighting the seg.
+ * @param seg       Ptr to the seg being lit.
+ * @param bottom    Z height (bottom) of the section being lit.
+ * @param top       Z height (top) of the section being lit.
+ *
+ * @return          Ptr to the projected light, ELSE @c NULL.
  */
-void DL_ProcessSubsector(subsector_t *ssec)
+static dynnode_t *projectOmniLightOnSegSection(lumobj_t *lum, seg_t *seg,
+                                               float bottom, float top)
 {
-    uint        pln, j;
-    uint        num, ssecidx = GET_SUBSECTOR_IDX(ssec);
-    seg_t      *seg, **ptr;
+    float       s[2], t[2];
+    float       dist, pntLight[2];
+    dynlight_t *dyn;
+    dynnode_t  *node;
+    float       lumRGB[3];
+    float       radius, radiusX2;
+
+    if(!LUM_OMNI(lum)->tex)
+        return NULL;
+
+    radius = LUM_OMNI(lum)->radius / DYN_ASPECT;
+    radiusX2 = 2 * radius;
+
+    if(bottom >= top || radiusX2 == 0)
+        return NULL;
+
+    // Clip to the z section height first.
+    t[0] = (lum->pos[VZ] + LUM_OMNI(lum)->zOff + radius - top) / radiusX2;
+    t[1] = t[0] + (top - bottom) / radiusX2;
+
+    if(!(t[0] < 1 && t[1] > 0))
+        return NULL;
+
+    pntLight[VX] = lum->pos[VX];
+    pntLight[VY] = lum->pos[VY];
+
+    // Calculate 2D distance between seg and light source.
+    dist = ((seg->SG_v1pos[VY] - pntLight[VY]) * (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]) -
+            (seg->SG_v1pos[VX] - pntLight[VX]) * (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]))
+            / seg->length;
+
+    // Is it close enough and on the right side?
+    if(dist < 0 || dist > LUM_OMNI(lum)->radius)
+        return NULL; // Nope.
+
+    // Do a scalar projection for the offset.
+    s[0] = (-((seg->SG_v1pos[VY] - pntLight[VY]) * (seg->SG_v1pos[VY] - seg->SG_v2pos[VY]) -
+              (seg->SG_v1pos[VX] - pntLight[VX]) * (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]))
+              / seg->length +
+               LUM_OMNI(lum)->radius) / (2 * LUM_OMNI(lum)->radius);
+
+    s[1] = s[0] + seg->length / (2 * LUM_OMNI(lum)->radius);
+
+    // Would the light be visible?
+    if(s[0] >= 1 || s[1] <= 0)
+        return NULL;  // Is left/right of the seg on the X/Y plane.
+
+    calcDynLightColor(lumRGB, lum, LUM_FACTOR(dist, LUM_OMNI(lum)->radius));
+
+    node = newDynLight(s, t);
+    dyn = &node->dyn;
+    memcpy(dyn->color, lumRGB, sizeof(float) * 3);
+    dyn->texture = LUM_OMNI(lum)->tex;
+
+    return node;
+}
+
+/**
+ * Process the given lumobj to maybe add a dynamic light for the plane.
+ *
+ * @param lum       Ptr to the lumobj on which the dynlight will be based.
+ */
+static dynnode_t *projectOmniLightOnSubSectorPlane(lumobj_t *lum,
+                    uint planeType, float height)
+{
+    DGLuint     lightTex;
+    float       diff, lightStrength, srcRadius;
+    float       s[2], t[2];
+    float       pos[3];
+
+    pos[VX] = lum->pos[VX];
+    pos[VY] = lum->pos[VY];
+    pos[VZ] = lum->pos[VZ];
+
+    // Center the Z.
+    pos[VZ] += LUM_OMNI(lum)->zOff;
+    srcRadius = LUM_OMNI(lum)->radius / 4;
+    if(srcRadius == 0)
+        srcRadius = 1;
+
+    // Determine on which side the light is for all planes.
+    lightTex = 0;
+    lightStrength = 0;
+
+    if(planeType == PLN_FLOOR)
+    {
+        if((lightTex = LUM_OMNI(lum)->floorTex) != 0)
+        {
+            if(pos[VZ] > height)
+                lightStrength = 1;
+            else if(pos[VZ] > height - srcRadius)
+                lightStrength = 1 - (height - pos[VZ]) / srcRadius;
+        }
+    }
+    else
+    {
+        if((lightTex = LUM_OMNI(lum)->ceilTex) != 0)
+        {
+            if(pos[VZ] < height)
+                lightStrength = 1;
+            else if(pos[VZ] < height + srcRadius)
+                lightStrength = 1 - (pos[VZ] - height) / srcRadius;
+        }
+    }
+
+    // Is there light in this direction? Is it strong enough?
+    if(!lightTex || !lightStrength)
+        return NULL;
+
+    // Check that the height difference is tolerable.
+    if(planeType == PLN_CEILING)
+        diff = height - pos[VZ];
+    else
+        diff = pos[VZ] - height;
+
+    // Clamp it.
+    if(diff < 0)
+        diff = 0;
+
+    if(diff < LUM_OMNI(lum)->radius)
+    {
+        dynlight_t *dyn;
+        dynnode_t  *node;
+
+        // Calculate dynlight position. It may still be outside
+        // the bounding box the subsector.
+        s[0] = -pos[VX] + LUM_OMNI(lum)->radius;
+        t[0] = pos[VY] + LUM_OMNI(lum)->radius;
+        s[1] = t[1] = 1.0f / (2 * LUM_OMNI(lum)->radius);
+
+        // A dynamic light will be generated.
+        node = newDynLight(s, t);
+        dyn = &node->dyn;
+        dyn->texture = lightTex;
+
+        calcDynLightColor(dyn->color, lum,
+                          LUM_FACTOR(diff, LUM_OMNI(lum)->radius) * lightStrength);
+        return node;
+    }
+
+    return NULL;
+}
+
+static uint newLightListForSurface(void)
+{
+    // Ran out of light link lists?
+    if(++lightLinkListCursor >= numLightLinkLists)
+    {
+        uint        i;
+        uint        newNum = numLightLinkLists * 2;
+        dynnode_t **newList;
+
+        if(!newNum)
+            newNum = 2;
+
+        newList = Z_Calloc(newNum * sizeof(dynnode_t*), PU_LEVEL, 0);
+
+        // Copy existing links.
+        for(i = 0; i < lightLinkListCursor - 1; ++i)
+        {
+            newList[i] = lightLinkLists[i];
+        }
+
+        if(lightLinkLists)
+            Z_Free(lightLinkLists);
+        lightLinkLists = newList;
+        numLightLinkLists = newNum;
+    }
+
+    return lightLinkListCursor - 1;
+}
+
+/**
+ * Process dynamic lights for the specified seg.
+ */
+uint DL_ProcessSegSection(seg_t *seg, float bottom, float top)
+{
+    uint        listIdx = 0;
     lumcontact_t *con;
-    sector_t   *sect = ssec->sector, *linkSec;
-    planeitervars_t *pVars;
+    boolean     haveList = false;
 
-    // Do we need to enlarge the planeVars buffer?
-    if(sect->planecount > maxPlanes)
+    if(!useDynLights)
+        return 0; // Disabled.
+
+    if(!seg || !seg->subsector)
+        return 0;
+
+    for(con = subContacts[GET_SUBSECTOR_IDX(seg->subsector)]; con; con = con->next)
     {
-        maxPlanes *= 2;
+        dynnode_t *node;
+        
+        switch(con->lum->type)
+        {
+        case LT_OMNI:
+            node = projectOmniLightOnSegSection(con->lum, seg, bottom, top);
+            break;
 
-        if(!maxPlanes)
-            maxPlanes = 2;
+        case LT_PLANE:
+            node = projectPlaneGlowOnSegSection(con->lum, bottom, top);
+            break;
+        }
 
-        planeVars =
-            M_Realloc(planeVars, maxPlanes * sizeof(planeitervars_t));
+        if(node)
+        {
+            // Got a list for this surface yet?
+            if(!haveList)
+            {
+                listIdx = newLightListForSurface();
+                haveList = true;
+            }
+
+            linkToSurfaceLightList(node, listIdx);
+        }
     }
 
-    // Has the number of planes changed for this subsector?
-    if(sect->planecount != subSecLightLinks[ssecidx].planeCount)
+    // Did we generate a light list?
+    if(haveList)
+        return listIdx + 1;
+
+    return 0; // Nope.
+}
+
+uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
+{
+    lumcontact_t *con;
+    uint        listIdx = 0;
+    boolean     haveList = false;
+
+    if(!useDynLights)
+        return 0; // Disabled.
+
+    if(!ssec)
+        return 0;
+
+    // Sanity check.
+    assert(plane >= 0 && plane < ssec->sector->planecount);
+
+    // Process each lumobj contacting the subsector.
+    for(con = subContacts[GET_SUBSECTOR_IDX(ssec)]; con; con = con->next)
     {
-        subseclight_t *sseclight = &subSecLightLinks[ssecidx];
-
-        sseclight->planeCount = sect->planecount;
-        sseclight->planes =
-                Z_Realloc(sseclight->planes,
-                          sseclight->planeCount * sizeof(dynlight_t*),
-                          PU_LEVEL);
-
-        memset(sseclight->planes, 0,
-               sseclight->planeCount * sizeof(dynlight_t*));
-    }
-
-    // First make sure we know which lumobjs are contacting us.
-    DL_SpreadBlocks(ssec);
-
-    // Check if lighting can be skipped for each plane.
-    num = sect->planecount;
-    for(pln = 0, pVars = planeVars; pln < num; pVars++, ++pln)
-    {
-        linkSec = R_GetLinkedSector(ssec, pln);
-        pVars->height = linkSec->SP_planevisheight(pln);
-        pVars->isLit = (!R_IsSkySurface(&sect->SP_planesurface(pln)));
-        pVars->decorMap = 0;
+        lumobj_t *lum = con->lum;
+        sector_t *linkSec = R_GetLinkedSector(ssec, plane);
+        float     height = linkSec->SP_planevisheight(plane);
+        boolean   isLit = (!R_IsSkySurface(&linkSec->SP_planesurface(plane)));
+        uint      planeType = ssec->SP_plane(plane)->type;
 
         // View height might prevent us from seeing the light.
-        if(ssec->SP_plane(pln)->type == PLN_FLOOR)
+        if(planeType == PLN_FLOOR)
         {
-            if(vy < pVars->height)
-                pVars->isLit = false;
+            if(vy < height)
+                isLit = false;
         }
         else
         {
-            if(vy > pVars->height)
-                pVars->isLit = false;
+            if(vy > height)
+                isLit = false;
+        }
+
+        if(isLit)
+        {
+            dynnode_t *node;
+
+            switch(lum->type)
+            {
+            case LT_OMNI:
+                node = projectOmniLightOnSubSectorPlane(lum, plane, height);
+                break;
+
+            case LT_PLANE: // Planar lights don't affect planes.
+                node = NULL;
+                break;
+            }
+
+            if(node)
+            {
+                // Got a list for this surface yet?
+                if(!haveList)
+                {
+                    listIdx = newLightListForSurface();
+                    haveList = true;
+                }
+
+                // Link to this plane's list.
+                linkToSurfaceLightList(node, listIdx);
+            }
         }
     }
 
-    // Process each lumobj contacting the subsector.
-    for(con = subContacts[ssecidx]; con; con = con->next)
-    {
-        lumobj_t *lum = con->lum;
+    // Did we generate a light list?
+    if(haveList)
+        return listIdx + 1;
 
-        if(haloMode)
-        {
-            if(lum->subsector == ssec)
-                lum->flags |= LUMF_RENDERED;
-        }
+    return 0; // Nope.
+}
 
-        // Process the planes
-        for(pln = 0, pVars = planeVars; pln < num; pVars++, ++pln)
-        {
-            if(pVars->isLit)
-                DL_ProcessPlane(lum, ssec, pln, pVars);
-        }
+/**
+ * Perform any processing needed before we can draw surfaces within the
+ * specified subsector with dynamic lights.
+ *
+ * @param ssec      Ptr to the subsector to process.
+ */
+void DL_InitForSubsector(subsector_t *ssec)
+{
+    sector_t   *sect = ssec->sector;
 
-        // If the light has no texture for the 'sides', there's no point in
-        // going through the wall segments.
-        if(lum->tex)
-            DL_LightSegIteratorFunc(con->lum, ssec);
-    }
+    if(!useDynLights)
+        return; // Disabled.
+
+    // First make sure we know which lumobjs are contacting us.
+    spreadLumobjsInSubSector(ssec);
 
     // If the segs of this subsector are affected by glowing planes we need
     // to create dynlights and link them.
-    if(useWallGlow &&
-       (sect->SP_floorglow || sect->SP_ceilglow))
+    if(useWallGlow)
     {
-        // The wall segments.
-        ptr = ssec->segs;
-        while(*ptr)
-        {
-            seg = *ptr;
-
-            if(seg->linedef && // "minisegs" have no linedefs.
-               !(seg->flags & SEGF_POLYOBJ))
-            {
-                DL_ProcessSegForGlow(seg, ssec);
-            }
-
-            *ptr++;
-        }
-
-        // Is there a polyobj on board? Light it, too.
-        if(ssec->poly)
-        {
-            num = ssec->poly->numsegs;
-            for(j = 0; j < num; ++j)
-            {
-                seg = ssec->poly->segs[j];
-                DL_ProcessSegForGlow(seg, ssec);
-            }
-        }
+        createGlowLightPerPlaneForSubSector(ssec);
     }
 }
 
@@ -1839,7 +1602,7 @@ BEGIN_PROF( PROF_DYN_INIT_DEL );
 
     // Clear the dynlight lists, which are used to track the lights on
     // each surface of the map.
-    DL_DeleteUsed();
+    deleteUsed();
 
 END_PROF( PROF_DYN_INIT_DEL );
 
@@ -1861,9 +1624,45 @@ END_PROF( PROF_DYN_INIT_ADD );
 BEGIN_PROF( PROF_DYN_INIT_LINK );
 
     // Link the luminous objects into the blockmap.
-    DL_LinkLuminous();
+    linkDynNodeLuminous();
 
 END_PROF( PROF_DYN_INIT_LINK );
+}
+
+/**
+ * Calls func for all projected dynlights in the given list.
+ * 
+ * @param listIdx   Identifier of the list to process.
+ * @param data      Ptr to pass to the callback.
+ * @param func      Callback to make for each object.
+ *
+ * @return          @c true, iff every callback returns @c true, else @c false.
+ */
+boolean DL_DynLightIterator(uint listIdx, void *data,
+                            boolean (*func) (const dynlight_t *, void *data))
+{
+    dynnode_t  *node;
+    boolean     retVal, isDone;
+
+    if(listIdx == 0 || listIdx > numLightLinkLists)
+        return true;
+    listIdx--;
+
+    node = lightLinkLists[listIdx];
+    retVal = true;
+    isDone = false;
+    while(node && !isDone)
+    {
+        if(!func(&node->dyn, data))
+        {
+            retVal = false;
+            isDone = true;
+        }
+        else
+            node = node->next;
+    }
+
+    return retVal;
 }
 
 /**
@@ -1876,12 +1675,11 @@ END_PROF( PROF_DYN_INIT_LINK );
  * @param data      Ptr to pass to the callback.
  * @param func      Callback to make for each object.
  *
- * @return          <code>true</code> iff every callback returns
- *                  <code>true</code>, else <code>false</code>
+ * @return          @c true, iff every callback returns @c true, else @c false.
  */
-boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
-                          fixed_t radius, void *data,
-                          boolean (*func) (lumobj_t *, fixed_t, void *data))
+boolean DL_LumRadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
+                             fixed_t radius, void *data,
+                             boolean (*func) (lumobj_t *, fixed_t, void *data))
 {
     fixed_t     dist;
     lumcontact_t *con;
@@ -1924,12 +1722,15 @@ void DL_ClipInSubsector(uint ssecidx)
     {
         lumobj_t *lobj = &lumi->lum;
 
+        if(lobj->type != LT_OMNI)
+            continue; // Only interested in omnilights.
+
         lobj->flags &= ~LUMF_CLIPPED;
 
         // \fixme Determine the exact centerpoint of the light in
         // DL_AddLuminous!
         if(!C_IsPointVisible(lobj->pos[VX], lobj->pos[VY],
-                             lobj->pos[VZ] + lobj->zOff))
+                             lobj->pos[VZ] + LUM_OMNI(lobj)->zOff))
             lobj->flags |= LUMF_CLIPPED;    // Won't have a halo.
     }
 }

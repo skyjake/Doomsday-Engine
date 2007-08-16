@@ -74,27 +74,27 @@ extern byte rendInfoRPolys;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     viewangleoffset = 0;
-int     validcount = 1;         // increment every time a check is made
-int     framecount;             // just for profiling purposes
+int     viewAngleOffset = 0;
+int     validCount = 1;         // increment every time a check is made
+int     frameCount;             // just for profiling purposes
 int     rendInfoTris = 0;
 int     useVSync = 0;
-float   viewx, viewy, viewz;
-float   viewfrontvec[3], viewupvec[3], viewsidevec[3];
-float   viewxOffset = 0, viewyOffset = 0, viewzOffset = 0;
-angle_t viewangle;
-float   viewpitch;              // player->lookdir, global version
-fixed_t viewcos, viewsin;
-ddplayer_t *viewplayer;
-boolean setsizeneeded;
+float   viewX, viewY, viewZ;
+float   viewFrontVec[3], viewUpVec[3], viewSideVec[3];
+float   viewXOffset = 0, viewYOffset = 0, viewZOffset = 0;
+angle_t viewAngle;
+float   viewPitch;              // player->lookdir, global version
+fixed_t viewCos, viewSin;
+ddplayer_t *viewPlayer;
+boolean setSizeNeeded;
 
 // Precalculated math tables.
-fixed_t *finecosine = &finesine[FINEANGLES / 4];
+fixed_t *fineCosine = &finesine[FINEANGLES / 4];
 
-int     extralight;             // bumped light from gun blasts
+int     extraLight;             // bumped light from gun blasts
 
-int     skyflatnum;
-char    skyflatname[9] = "F_SKY";
+int     skyFlatNum;
+char    skyFlatName[9] = "F_SKY";
 
 float   frameTimePos;           // 0...1: fractional part for sharp game tics
 
@@ -102,7 +102,7 @@ int     loadInStartupMode = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int rend_camera_smooth = true;   // smoothed by default
+static int rendCameraSmooth = true;   // smoothed by default
 
 // These are used when camera smoothing is disabled.
 static angle_t frozenAngle = 0;
@@ -124,7 +124,7 @@ void R_Register(void)
 {
     C_VAR_INT("con-show-during-setup", &loadInStartupMode, 0, 0, 1);
 
-    C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, CVF_HIDE, 0, 1);
+    C_VAR_INT("rend-camera-smooth", &rendCameraSmooth, CVF_HIDE, 0, 1);
 
     C_VAR_BYTE("rend-info-deltas-angles", &showViewAngleDeltas, 0, 0, 1);
     C_VAR_BYTE("rend-info-deltas-pos", &showViewPosDeltas, 0, 0, 1);
@@ -141,7 +141,7 @@ void R_Register(void)
  */
 void R_InitSkyMap(void)
 {
-    skyflatnum = R_FlatNumForName(skyflatname);
+    skyFlatNum = R_FlatNumForName(skyFlatName);
 }
 
 /**
@@ -152,7 +152,7 @@ void R_InitSkyMap(void)
  */
 boolean R_IsSkySurface(surface_t* surface)
 {
-    return surface->SM_isflat && surface->SM_texture == skyflatnum;
+    return surface->SM_isflat && surface->SM_texture == skyFlatNum;
 }
 
 /**
@@ -184,7 +184,7 @@ void R_Init(void)
     if(gx.R_Init)
         gx.R_Init();
     Rend_Init();
-    framecount = 0;
+    frameCount = 0;
     R_InitViewBorder();
     Def_PostInit();
 }
@@ -271,11 +271,11 @@ void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos,
 
 void R_SetViewPos(viewer_t *v)
 {
-    viewx = FIX2FLT(v->pos[VX]);
-    viewy = FIX2FLT(v->pos[VY]);
-    viewz = FIX2FLT(v->pos[VZ]);
-    viewangle = v->angle;
-    viewpitch = v->pitch;
+    viewX = FIX2FLT(v->pos[VX]);
+    viewY = FIX2FLT(v->pos[VY]);
+    viewZ = FIX2FLT(v->pos[VZ]);
+    viewAngle = v->angle;
+    viewPitch = v->pitch;
 }
 
 /**
@@ -305,11 +305,11 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
         return;
 
     /* $unifiedangles */
-    view->angle = player->mo->angle + viewangleoffset;
+    view->angle = player->mo->angle + viewAngleOffset;
     view->pitch = player->lookdir;
-    view->pos[VX] = player->mo->pos[VX] + FLT2FIX(viewxOffset);
-    view->pos[VY] = player->mo->pos[VY] + FLT2FIX(viewyOffset);
-    view->pos[VZ] = FLT2FIX(player->viewz + viewzOffset);
+    view->pos[VX] = player->mo->pos[VX] + FLT2FIX(viewXOffset);
+    view->pos[VY] = player->mo->pos[VY] + FLT2FIX(viewYOffset);
+    view->pos[VZ] = FLT2FIX(player->viewZ + viewZOffset);
     if((player->flags & DDPF_CHASECAM) && !(player->flags & DDPF_CAMERA))
     {
         /* STUB
@@ -324,12 +324,12 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
         angle = view->angle >> ANGLETOFINESHIFT;
         pitch >>= ANGLETOFINESHIFT;
 
-        view->pos[VX] -= distance * finecosine[angle];
+        view->pos[VX] -= distance * fineCosine[angle];
         view->pos[VY] -= distance * finesine[angle];
         view->pos[VZ] -= distance * finesine[pitch];
     }
 
-    // Check that the viewz doesn't go too high or low.
+    // Check that the viewZ doesn't go too high or low.
     // Cameras are not restricted.
     if(!(player->flags & DDPF_CAMERA))
     {
@@ -355,13 +355,13 @@ void R_NewSharpWorld(void)
     plane_t    *plane;
     viewer_t    sharpView;
 
-    if(!viewplayer)
+    if(!viewPlayer)
         return;
 
     if(resetNextViewer)
         resetNextViewer = 2;
 
-    R_GetSharpView(&sharpView, viewplayer);
+    R_GetSharpView(&sharpView, viewPlayer);
 
     // Update the camera angles that will be used when the camera is
     // not smoothed.
@@ -472,8 +472,8 @@ void R_SetupFrame(ddplayer_t *player)
     // Reset the DGL triangle counter.
     gl.GetInteger(DGL_POLY_COUNT);
 
-    viewplayer = player;
-    R_GetSharpView(&sharpView, viewplayer);
+    viewPlayer = player;
+    R_GetSharpView(&sharpView, viewPlayer);
 
     if(resetNextViewer)
     {
@@ -554,33 +554,33 @@ void R_SetupFrame(ddplayer_t *player)
         Con_Printf("frametime = %f\n", frameTimePos);
     }
 
-    extralight = player->extralight;
-    tableAngle = viewangle >> ANGLETOFINESHIFT;
-    viewsin = finesine[tableAngle];
-    viewcos = finecosine[tableAngle];
-    validcount++;
+    extraLight = player->extraLight;
+    tableAngle = viewAngle >> ANGLETOFINESHIFT;
+    viewSin = finesine[tableAngle];
+    viewCos = fineCosine[tableAngle];
+    validCount++;
 
     // Calculate the front, up and side unit vectors.
     // The vectors are in the DGL coordinate system, which is a left-handed
     // one (same as in the game, but Y and Z have been swapped). Anyone
     // who uses these must note that it might be necessary to fix the aspect
     // ratio of the Y axis by dividing the Y coordinate by 1.2.
-    yawRad = ((viewangle / (float) ANGLE_MAX) *2) * PI;
+    yawRad = ((viewAngle / (float) ANGLE_MAX) *2) * PI;
 
-    pitchRad = viewpitch * 85 / 110.f / 180 * PI;
+    pitchRad = viewPitch * 85 / 110.f / 180 * PI;
 
     // The front vector.
-    viewfrontvec[VX] = cos(yawRad) * cos(pitchRad);
-    viewfrontvec[VZ] = sin(yawRad) * cos(pitchRad);
-    viewfrontvec[VY] = sin(pitchRad);
+    viewFrontVec[VX] = cos(yawRad) * cos(pitchRad);
+    viewFrontVec[VZ] = sin(yawRad) * cos(pitchRad);
+    viewFrontVec[VY] = sin(pitchRad);
 
     // The up vector.
-    viewupvec[VX] = -cos(yawRad) * sin(pitchRad);
-    viewupvec[VZ] = -sin(yawRad) * sin(pitchRad);
-    viewupvec[VY] = cos(pitchRad);
+    viewUpVec[VX] = -cos(yawRad) * sin(pitchRad);
+    viewUpVec[VZ] = -sin(yawRad) * sin(pitchRad);
+    viewUpVec[VY] = cos(pitchRad);
 
     // The side vector is the cross product of the front and up vectors.
-    M_CrossProduct(viewfrontvec, viewupvec, viewsidevec);
+    M_CrossProduct(viewFrontVec, viewUpVec, viewSideVec);
 }
 
 /**
@@ -588,22 +588,7 @@ void R_SetupFrame(ddplayer_t *player)
  */
 void R_RenderPlayerViewBorder(void)
 {
-    // View border?
-    if(BorderNeedRefresh)
-    {
-        R_DrawViewBorder();
-        BorderNeedRefresh = false;
-        BorderTopRefresh = false;
-        UpdateState |= I_FULLSCRN;
-    }
-    else if(BorderTopRefresh)
-    {
-        if(viewwindowx > 0)
-            R_DrawTopBorder();
-
-        BorderTopRefresh = false;
-        UpdateState |= I_MESSAGES;
-    }
+    R_DrawViewBorder();
 }
 
 /**
@@ -633,7 +618,7 @@ void R_RenderPlayerView(ddplayer_t *player)
     R_ProjectPlayerSprites();   // Only if 3D models exists for them.
     PG_InitForNewFrame();
 
-    // Hide the viewplayer's mobj?
+    // Hide the viewPlayer's mobj?
     if(!(player->flags & DDPF_CHASECAM))
     {
         oldFlags = player->mo->ddflags;
@@ -672,7 +657,7 @@ void R_RenderPlayerView(ddplayer_t *player)
     if(renderWireframe)
         gl.Disable(DGL_WIREFRAME_MODE);
 
-    // Now we can show the viewplayer's mobj again.
+    // Now we can show the viewPlayer's mobj again.
     if(!(player->flags & DDPF_CHASECAM))
         player->mo->ddflags = oldFlags;
 

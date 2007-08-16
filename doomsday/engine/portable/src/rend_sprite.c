@@ -133,8 +133,8 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
     data.rgb1 = quad->vertices[0].color.rgba;
     data.rgb2 = quad->vertices[1].color.rgba;
 
-    data.viewvec.pos[VX] = spr->center[VX] - viewx;
-    data.viewvec.pos[VY] = spr->center[VY] - viewy;
+    data.viewvec.pos[VX] = spr->center[VX] - viewX;
+    data.viewvec.pos[VY] = spr->center[VY] - viewY;
 
     len = sqrt(data.viewvec.pos[VX] * data.viewvec.pos[VX] +
                data.viewvec.pos[VY] * data.viewvec.pos[VY]);
@@ -142,7 +142,7 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
     {
         data.viewvec.pos[VX] /= len;
         data.viewvec.pos[VY] /= len;
-        DL_RadiusIterator(spr->data.mo.subsector, FLT2FIX(spr->center[VX]),
+        DL_LumRadiusIterator(spr->data.mo.subsector, FLT2FIX(spr->center[VX]),
                           FLT2FIX(spr->center[VY]), dlMaxRad << FRACBITS,
                           &data, Rend_SpriteLighter);
     }
@@ -274,7 +274,7 @@ void Rend_DrawPlayerSprites(void)
     spriteinfo_t info[DDMAXPSPRITES];
     ddpsprite_t *psp;
     int     i, c;
-    sector_t *sec = viewplayer->mo->subsector->sector;
+    sector_t *sec = viewPlayer->mo->subsector->sector;
     float   offx = pspOffX / 16.0f;
     float   offy = pspOffY / 16.0f;
     float   offScaleY = weaponOffsetScaleY / 1000.0f;
@@ -283,14 +283,14 @@ void Rend_DrawPlayerSprites(void)
     rendpoly_t *tempquad = NULL;
 
     // Cameramen have no psprites.
-    if((viewplayer->flags & DDPF_CAMERA) || (viewplayer->flags & DDPF_CHASECAM))
+    if((viewPlayer->flags & DDPF_CAMERA) || (viewPlayer->flags & DDPF_CHASECAM))
         return;
 
     // Clear sprite info.
     memset(info, 0, sizeof(info));
 
     // Check for fullbright.
-    for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; ++i, psp++)
+    for(i = 0, psp = viewPlayer->psprites; i < DDMAXPSPRITES; ++i, psp++)
     {
         // Should this psprite be drawn?
         if((psp->flags & DDPSPF_RENDERED) || !psp->stateptr)
@@ -314,7 +314,7 @@ void Rend_DrawPlayerSprites(void)
         return;
     }
 
-    psp = viewplayer->psprites;
+    psp = viewPlayer->psprites;
 
     // If both psprites have identical attributes, they can be combined
     // into one sprite (cvar allowing).
@@ -345,10 +345,10 @@ void Rend_DrawPlayerSprites(void)
 	    */
             float point[3];
             
-            point[VX] = FIX2FLT(viewplayer->mo->pos[VX]);
-            point[VY] = FIX2FLT(viewplayer->mo->pos[VY]);
-            point[VZ] = FIX2FLT(viewplayer->mo->pos[VZ]) +
-                            viewplayer->mo->height / 2;
+            point[VX] = FIX2FLT(viewPlayer->mo->pos[VX]);
+            point[VY] = FIX2FLT(viewPlayer->mo->pos[VY]);
+            point[VZ] = FIX2FLT(viewPlayer->mo->pos[VZ]) +
+                            viewPlayer->mo->height / 2;
             LG_Evaluate(point, secbRGB);
         }
 
@@ -422,7 +422,7 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.
-    if(vis->data.wall.light)
+    if(vis->data.wall.modTex)
     {
         if(IS_MUL)
         {
@@ -439,8 +439,8 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
         gl.SetInteger(DGL_MODULATE_TEXTURE, IS_MUL ? 4 : 5);
 
         // The dynamic light.
-        RL_BindTo(IS_MUL ? 0 : 1, vis->data.wall.light->texture);
-        gl.SetFloatv(DGL_ENV_COLOR, vis->data.wall.light->color);
+        RL_BindTo(IS_MUL ? 0 : 1, vis->data.wall.modTex);
+        gl.SetFloatv(DGL_ENV_COLOR, vis->data.wall.modColor);
 
         // The actual texture.
         RL_BindTo(IS_MUL ? 1 : 0, vis->data.wall.texture);
@@ -492,11 +492,11 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
         gl.Begin(DGL_QUADS);
 
         gl.Color4ubv(vis->data.wall.vertices[0].color);
-        gl.MultiTexCoord2f(normal, vis->data.wall.texc[0][VX],
-                           vis->data.wall.texc[1][VY]);
+        gl.MultiTexCoord2f(normal, vis->data.wall.texc[0][0],
+                           vis->data.wall.texc[1][1]);
 
-        gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[0],
-                           vis->data.wall.light->t[1]);
+        gl.MultiTexCoord2f(dyn, vis->data.wall.modTexC[0][0],
+                           vis->data.wall.modTexC[1][1]);
 
         gl.Vertex3f(vis->data.wall.vertices[0].pos[VX],
                     vis->data.wall.vertices[0].pos[VZ],
@@ -504,19 +504,19 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 
         gl.MultiTexCoord2fv(normal, vis->data.wall.texc[0]);
 
-        gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[0],
-                           vis->data.wall.light->t[0]);
+        gl.MultiTexCoord2f(dyn, vis->data.wall.modTexC[0][0],
+                           vis->data.wall.modTexC[1][0]);
 
         gl.Vertex3f(vis->data.wall.vertices[1].pos[VX],
                     vis->data.wall.vertices[1].pos[VZ],
                     vis->data.wall.vertices[1].pos[VY]);
 
         gl.Color4ubv(vis->data.wall.vertices[1].color);
-        gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][VX],
-                           vis->data.wall.texc[0][VY]);
+        gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][0],
+                           vis->data.wall.texc[0][1]);
 
-        gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[1],
-                           vis->data.wall.light->t[0]);
+        gl.MultiTexCoord2f(dyn, vis->data.wall.modTexC[0][1],
+                           vis->data.wall.modTexC[1][0]);
 
         gl.Vertex3f(vis->data.wall.vertices[3].pos[VX],
                     vis->data.wall.vertices[3].pos[VZ],
@@ -524,8 +524,8 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 
         gl.MultiTexCoord2fv(normal, vis->data.wall.texc[1]);
 
-        gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[1],
-                           vis->data.wall.light->t[1]);
+        gl.MultiTexCoord2f(dyn, vis->data.wall.modTexC[0][1],
+                           vis->data.wall.modTexC[1][1]);
 
         gl.Vertex3f(vis->data.wall.vertices[2].pos[VX],
                     vis->data.wall.vertices[2].pos[VZ],
@@ -543,8 +543,8 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
         gl.Begin(DGL_QUADS);
 
         gl.Color4ubv(vis->data.wall.vertices[0].color);
-        gl.MultiTexCoord2f(normal, vis->data.wall.texc[0][VX],
-                           vis->data.wall.texc[1][VY]);
+        gl.MultiTexCoord2f(normal, vis->data.wall.texc[0][0],
+                           vis->data.wall.texc[1][1]);
 
         gl.Vertex3f(vis->data.wall.vertices[0].pos[VX],
                     vis->data.wall.vertices[0].pos[VZ],
@@ -557,8 +557,8 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
                     vis->data.wall.vertices[1].pos[VY]);
 
         gl.Color4ubv(vis->data.wall.vertices[1].color);
-        gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][VX],
-                           vis->data.wall.texc[0][VY]);
+        gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][0],
+                           vis->data.wall.texc[0][1]);
 
         gl.Vertex3f(vis->data.wall.vertices[3].pos[VX],
                     vis->data.wall.vertices[3].pos[VZ],
@@ -765,15 +765,19 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data)
     fvertex_t   lightVec;
     float       directness, side, inleft, inright, zfactor;
 
+    if(lum->type != LT_OMNI)
+        return true; // Only interested in omni lights.
+
     if(!fdist)
         return true;
+
     if(slData->rgb1[0] == 0xff && slData->rgb1[1] == 0xff && slData->rgb1[2] == 0xff &&
        slData->rgb2[0] == 0xff && slData->rgb2[1] == 0xff && slData->rgb2[2] == 0xff)
         return false;           // No point in continuing, light is already white.
 
     zfactor =
         (slData->spr->center[VZ] + slData->spr->data.mo.gzt / 2 -
-         (lum->pos[VZ] + lum->zOff)) / dlMaxRad;
+         (lum->pos[VZ] + LUM_OMNI(lum)->zOff)) / dlMaxRad;
 
     // Round out the "shape" of light to be more spherical.
     zfactor *= 8;
@@ -795,7 +799,7 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data)
     lightVec.pos[VY] /= fdist;
 
     // Also include the effect of the distance to zfactor.
-    fdist /= (lum->radius * 2) /*dlMaxRad */ ;
+    fdist /= (LUM_OMNI(lum)->radius * 2) /*dlMaxRad */ ;
     fdist = 1 - fdist;
     //fdist *= 4;
     if(fdist > 1)
@@ -842,7 +846,8 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data)
     {
         for(i = 0; i < 3; ++i)
         {
-            temp = slData->rgb1[i] + inleft * (lum->rgb[i] * 255.f);
+            temp = slData->rgb1[i] +
+                inleft * (lum->color[i] * 255.f);
             if(temp > 0xff)
                 temp = 0xff;
             slData->rgb1[i] = temp;
@@ -852,7 +857,8 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data)
     {
         for(i = 0; i < 3; ++i)
         {
-            temp = slData->rgb2[i] + inright * (lum->rgb[i] * 255.f);
+            temp = slData->rgb2[i] +
+                inright * (lum->color[i] * 255.f);
             if(temp > 0xff)
                 temp = 0xff;
             slData->rgb2[i] = temp;

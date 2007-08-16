@@ -161,15 +161,18 @@ void H_SetupState(boolean dosetup)
  */
 boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
 {
-    float   viewpos[3];
-    float   viewtocenter[3], mirror[3], normalviewtocenter[3];
-    float   leftoff[3], rightoff[3], center[3], radius;
-    float   halopos[3], occlusionfactor;
+    float   viewPos[3];
+    float   viewToCenter[3], mirror[3], normalViewToCenter[3];
+    float   leftOff[3], rightOff[3], center[3], radius;
+    float   haloPos[3], occlusionFactor;
     int     i, k, tex;
-    float   color[4], radx, rady, scale, turnangle = 0;
-    float   fadefactor = 1, secbold, secdimfactor;
-    float   coloraverage, f, distancedim, lum_distance;
+    float   color[4], radX, radY, scale, turnAngle = 0;
+    float   fadeFactor = 1, secBold, secDimFactor;
+    float   colorAverage, f, distanceDim, lumDistance;
     flare_t *fl;
+
+    if(lum->type != LT_OMNI)
+        return false; // Only omni lights support halos.
 
     if(!primary && haloRealistic)
     {
@@ -177,7 +180,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
         return false;
     }
 
-    if(devNoCulling || P_IsInVoid(viewplayer))
+    if(devNoCulling || P_IsInVoid(viewPlayer))
     {
         // Normal visible surface culling has been disabled meaning that this
         // halo should, more than likely, be occluded (at least partially) by
@@ -187,31 +190,31 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
             return false;
     }
 
-    lum_distance = FIX2FLT(lum->distance);
+    lumDistance = FIX2FLT(lum->distance);
 
-    if(lum->flags & LUMF_NOHALO || lum_distance == 0 ||
-       (haloFadeMax && lum_distance > haloFadeMax))
+    if((lum->flags & LUMF_NOHALO) || lumDistance == 0 ||
+       (haloFadeMax && lumDistance > haloFadeMax))
         return false;
 
-    if(haloFadeMax && haloFadeMax != haloFadeMin && lum_distance < haloFadeMax
-       && lum_distance >= haloFadeMin)
+    if(haloFadeMax && haloFadeMax != haloFadeMin && lumDistance < haloFadeMax
+       && lumDistance >= haloFadeMin)
     {
-        fadefactor =
-            (lum_distance - haloFadeMin) / (haloFadeMax - haloFadeMin);
+        fadeFactor =
+            (lumDistance - haloFadeMin) / (haloFadeMax - haloFadeMin);
     }
 
-    occlusionfactor = (lum->halofactor & 0x7f) / 127.0f;
-    if(occlusionfactor == 0)
+    occlusionFactor = (LUM_OMNI(lum)->halofactor & 0x7f) / 127.0f;
+    if(occlusionFactor == 0)
         return false;
-    occlusionfactor = (1 + occlusionfactor) / 2;
+    occlusionFactor = (1 + occlusionFactor) / 2;
 
-    // viewsidevec is to the left.
+    // viewSideVec is to the left.
     for(i = 0; i < 3; ++i)
     {
-        leftoff[i] = viewupvec[i] + viewsidevec[i];
-        rightoff[i] = viewupvec[i] - viewsidevec[i];
+        leftOff[i] = viewUpVec[i] + viewSideVec[i];
+        rightOff[i] = viewUpVec[i] - viewSideVec[i];
         // Convert the color to floating point.
-        color[i] = lum->rgb[i];
+        color[i] = lum->color[i];
     }
 
     // Setup the proper DGL state.
@@ -220,52 +223,58 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
 
     center[VX] = x;
     center[VZ] = y;
-    center[VY] = z + lum->zOff;
+    center[VY] = z + LUM_OMNI(lum)->zOff;
 
     // Apply the flare's X offset. (Positive is to the right.)
     for(i = 0; i < 3; i++)
-        center[i] -= lum->xOff * viewsidevec[i];
+        center[i] -= LUM_OMNI(lum)->xOff * viewSideVec[i];
 
     // Calculate the mirrored position.
-    // Project viewtocenter vector onto viewsidevec.
-    viewpos[0] = vx;
-    viewpos[1] = vy;
-    viewpos[2] = vz;
+    // Project viewtocenter vector onto viewSideVec.
+    viewPos[VX] = vx;
+    viewPos[VY] = vy;
+    viewPos[VZ] = vz;
     for(i = 0; i < 3; i++)
-        normalviewtocenter[i] = viewtocenter[i] = center[i] - viewpos[i];
+        normalViewToCenter[i] = viewToCenter[i] = center[i] - viewPos[i];
 
     // Calculate the dimming factor for secondary flares.
-    M_Normalize(normalviewtocenter);
-    secdimfactor = M_DotProduct(normalviewtocenter, viewfrontvec);
+    M_Normalize(normalViewToCenter);
+    secDimFactor = M_DotProduct(normalViewToCenter, viewFrontVec);
 
-    scale =
-        M_DotProduct(viewtocenter, viewfrontvec) / M_DotProduct(viewfrontvec,
-                                                                viewfrontvec);
+    scale = M_DotProduct(viewToCenter, viewFrontVec) /
+                M_DotProduct(viewFrontVec, viewFrontVec);
+
     for(i = 0; i < 3; i++)
-        halopos[i] = mirror[i] =
-            (viewfrontvec[i] * scale - viewtocenter[i]) * 2;
+        haloPos[i] = mirror[i] =
+            (viewFrontVec[i] * scale - viewToCenter[i]) * 2;
     // Now adding 'mirror' to a position will mirror it.
 
     // Calculate texture turn angle.
-    if(M_Normalize(halopos))
+    if(M_Normalize(haloPos))
     {
         // Now halopos is a normalized version of the mirror vector.
         // Both vectors are on the view plane.
         if(!(lum->flags & LUMF_DONTTURNHALO))
         {
-            turnangle = M_DotProduct(halopos, viewupvec);
-            if(turnangle > 1)
-                turnangle = 1;
-            if(turnangle < -1)
-                turnangle = -1;
-            turnangle =
-                turnangle >= 1 ? 0 : turnangle <= -1 ? PI : acos(turnangle);
+            turnAngle = M_DotProduct(haloPos, viewUpVec);
+            if(turnAngle > 1)
+                turnAngle = 1;
+            else if(turnAngle < -1)
+                turnAngle = -1;
+
+            if(turnAngle >= 1)
+                turnAngle = 0;
+            else if(turnAngle <= -1)
+                turnAngle = (float) PI;
+            else
+                turnAngle = acos(turnAngle);
+
             // On which side of the up vector (left or right)?
-            if(M_DotProduct(halopos, viewsidevec) < 0)
-                turnangle = -turnangle;
+            if(M_DotProduct(haloPos, viewSideVec) < 0)
+                turnAngle = -turnAngle;
         }
         else
-            turnangle = 0;
+            turnAngle = 0;
     }
 
     // Radius is affected by the precalculated 'flaresize' and the
@@ -277,19 +286,18 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
     gl.LoadIdentity();
     // Rotate around the center of the texture.
     gl.Translatef(0.5f, 0.5f, 0);
-    gl.Rotatef(turnangle / PI * 180, 0, 0, 1);
+    gl.Rotatef(turnAngle / PI * 180, 0, 0, 1);
     gl.Translatef(-0.5f, -0.5f, 0);
 
     // The overall brightness of the flare.
-    coloraverage = (color[CR] + color[CG] + color[CB] + 1) / 4;
-    //overallbrightness = lum->flareSize/25 * coloraverage;
+    colorAverage = (color[CR] + color[CG] + color[CB] + 1) / 4;
 
     // Small flares have stronger dimming.
-    f = lum_distance / lum->flareSize;
+    f = lumDistance / LUM_OMNI(lum)->flareSize;
     if(haloDimStart && haloDimStart < haloDimEnd && f > haloDimStart)
-        distancedim = 1 - (f - haloDimStart) / (haloDimEnd - haloDimStart);
+        distanceDim = 1 - (f - haloDimStart) / (haloDimEnd - haloDimStart);
     else
-        distancedim = 1;
+        distanceDim = 1;
 
     for(i = 0, fl = flares; i < haloMode && i < NUM_FLARES; i++, fl++)
     {
@@ -302,30 +310,28 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
         if(i)
         {
             // Secondary flare dimming?
-            f = minHaloSize * lum->flareSize / lum_distance;
+            f = minHaloSize * LUM_OMNI(lum)->flareSize / lumDistance;
             if(f > 1)
                 f = 1;
         }
-        f *= distancedim * lum->flareMul;
+        f *= distanceDim * LUM_OMNI(lum)->flareMul;
 
         // The color & alpha of the flare.
-        color[CA] =
-            f * (fl->alpha * occlusionfactor * fadefactor +
-                 coloraverage * coloraverage / 5);
+        color[CA] = f * (fl->alpha * occlusionFactor * fadeFactor +
+                 colorAverage * colorAverage / 5);
 
-        radius =
-            lum->flareSize * (1 - coloraverage / 3) +
-            lum_distance / haloZMagDiv;
+        radius = LUM_OMNI(lum)->flareSize * (1 - colorAverage / 3) +
+            lumDistance / haloZMagDiv;
         if(radius < haloMinRadius)
             radius = haloMinRadius;
-        radius *= occlusionfactor;
+        radius *= occlusionFactor;
 
-        secbold = coloraverage - 8 * (1 - secdimfactor);
+        secBold = colorAverage - 8 * (1 - secDimFactor);
 
         color[CA] *= .8f * haloBright / 100.0f;
         if(i)
         {
-            color[CA] *= secbold;   // Secondary flare boldness.
+            color[CA] *= secBold;   // Secondary flare boldness.
         }
         if(color[CA] <= 0)
         {
@@ -344,19 +350,20 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
         {
             // The 'realistic' halos just use the blurry round
             // texture unless custom.
-            if(lum->flareCustom)
-                tex = lum->flareTex;
+            if(LUM_OMNI(lum)->flareCustom)
+                tex = LUM_OMNI(lum)->flareTex;
             else
                 tex = GL_PrepareLSTexture(LST_DYNAMIC, NULL);
         }
         else
         {
-            if(primary && (lum->flareCustom || lum->flareTex))
+            if(primary &&
+               (LUM_OMNI(lum)->flareCustom || LUM_OMNI(lum)->flareTex))
             {
-                tex = lum->flareTex;
+                tex = LUM_OMNI(lum)->flareTex;
             }
-            else if(lum->flareSize > 45 ||
-                    (coloraverage > .90 && lum->flareSize > 20))
+            else if(LUM_OMNI(lum)->flareSize > 45 ||
+                    (colorAverage > .90 && LUM_OMNI(lum)->flareSize > 20))
             {
                 // The "Very Bright" condition.
                 radius *= .65f;
@@ -392,37 +399,37 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
         }
 
         // The final radius.
-        radx = radius * fl->size;
-        rady = radx / 1.2f;
+        radX = radius * fl->size;
+        radY = radX / 1.2f;
 
         // Determine the final position of the halo.
-        halopos[VX] = center[VX];
-        halopos[VY] = center[VY];
-        halopos[VZ] = center[VZ];
+        haloPos[VX] = center[VX];
+        haloPos[VY] = center[VY];
+        haloPos[VZ] = center[VZ];
         if(i)                   // Secondary halos.
         {
             // Mirror it according to the flare table.
             for(k = 0; k < 3; k++)
-                halopos[k] += mirror[k] * fl->offset;
+                haloPos[k] += mirror[k] * fl->offset;
         }
 
         gl.Begin(DGL_QUADS);
         gl.TexCoord2f(0, 0);
-        gl.Vertex3f(halopos[VX] + radx * leftoff[VX],
-                    halopos[VY] + rady * leftoff[VY],
-                    halopos[VZ] + radx * leftoff[VZ]);
+        gl.Vertex3f(haloPos[VX] + radX * leftOff[VX],
+                    haloPos[VY] + radY * leftOff[VY],
+                    haloPos[VZ] + radX * leftOff[VZ]);
         gl.TexCoord2f(1, 0);
-        gl.Vertex3f(halopos[VX] + radx * rightoff[VX],
-                    halopos[VY] + rady * rightoff[VY],
-                    halopos[VZ] + radx * rightoff[VZ]);
+        gl.Vertex3f(haloPos[VX] + radX * rightOff[VX],
+                    haloPos[VY] + radY * rightOff[VY],
+                    haloPos[VZ] + radX * rightOff[VZ]);
         gl.TexCoord2f(1, 1);
-        gl.Vertex3f(halopos[VX] - radx * leftoff[VX],
-                    halopos[VY] - rady * leftoff[VY],
-                    halopos[VZ] - radx * leftoff[VZ]);
+        gl.Vertex3f(haloPos[VX] - radX * leftOff[VX],
+                    haloPos[VY] - radY * leftOff[VY],
+                    haloPos[VZ] - radX * leftOff[VZ]);
         gl.TexCoord2f(0, 1);
-        gl.Vertex3f(halopos[VX] - radx * rightoff[VX],
-                    halopos[VY] - rady * rightoff[VY],
-                    halopos[VZ] - radx * rightoff[VZ]);
+        gl.Vertex3f(haloPos[VX] - radX * rightOff[VX],
+                    haloPos[VY] - radY * rightOff[VY],
+                    haloPos[VZ] - radX * rightOff[VZ]);
         gl.End();
     }
 

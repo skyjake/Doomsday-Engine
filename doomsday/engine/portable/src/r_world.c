@@ -1608,9 +1608,9 @@ void R_RationalizeSectors(void)
             // Mark this sector as a self-referencing hack.
             sec->selfRefHack = true;
 
-            // We'll use validcount to ensure we only attempt to find
+            // We'll use validCount to ensure we only attempt to find
             // each hack group once.
-            ++validcount;
+            ++validCount;
 
             // Now look for lines connected to this root line (and any
             // subsequent lines that connect to those) that match the
@@ -1625,7 +1625,7 @@ void R_RationalizeSectors(void)
                 if(!(lin->flags & LINEF_SELFREFHACKROOT))
                     continue;
 
-                if(lin->validcount == validcount)
+                if(lin->validCount == validCount)
                     continue; // We've already found this hack group.
 
                 for(l = 0; l < 2; ++l)
@@ -1745,8 +1745,8 @@ void R_RationalizeSectors(void)
                                                                      (long) GET_LINE_IDX(collectedLines[o]),
                                                                      (long) GET_SECTOR_IDX(sec)));
 
-                                                // Use validcount to mark them as done.
-                                                collectedLines[o]->validcount = validcount;
+                                                // Use validCount to mark them as done.
+                                                collectedLines[o]->validCount = validCount;
                                             }
 
                                             // We are done with this group, don't collect.

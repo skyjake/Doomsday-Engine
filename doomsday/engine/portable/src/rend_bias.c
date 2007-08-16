@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2005-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -755,7 +755,7 @@ void SB_BeginFrame(void)
             sources[l].lastUpdateTime = currentTimeSB;
 
             // Recalculate which sources affect which surfaces.
-            lastChangeOnFrame = framecount;
+            lastChangeOnFrame = frameCount;
         }
     }
 
@@ -872,10 +872,9 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  * tracker          Tracker of all the changed lights for this polygon.
  * mapElementIndex  Index of the seg or subsector in the global arrays.
  */
-void SB_RendPoly(struct rendpoly_s *poly, struct surface_s *surface,
-                 struct sector_s *sector, vertexillum_t *illumination,
-                 biastracker_t *tracker, biasaffection_t *affected,
-                 uint mapElementIndex)
+void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
+                 vertexillum_t *illumination, biastracker_t *tracker,
+                 biasaffection_t *affected, uint mapElementIndex)
 {
     uint        i;
     boolean     forced;
@@ -883,29 +882,19 @@ void SB_RendPoly(struct rendpoly_s *poly, struct surface_s *surface,
     if(!useBias)
         return;
 
-#if 1
     // Apply sectorlight bias.  Note: Distance darkening is not used
     // with bias lights.
-    if(sector->lightlevel > biasMin && biasMax > biasMin)
+    if(sectorLightLevel > biasMin && biasMax > biasMin)
     {
-        biasAmount = (sector->lightlevel - biasMin) / (biasMax - biasMin);
+        biasAmount = (sectorLightLevel - biasMin) / (biasMax - biasMin);
 
         if(biasAmount > 1)
             biasAmount = 1;
-
-//        memcpy(biasColor, R_GetSectorLightColor(sector), sizeof(float) * 3);
-
-/*            // Planes and the top edge of walls.
-            SB_AddLight(&poly->vertices[i].color,
-                        colorOverride ? NULL : sectorColor, applied);
-            }*/
     }
     else
     {
         biasAmount = 0;
     }
-#endif
-
 
     memcpy(&trackChanged, tracker, sizeof(trackChanged));
     memset(&trackApplied, 0, sizeof(trackApplied));
@@ -922,7 +911,7 @@ void SB_RendPoly(struct rendpoly_s *poly, struct surface_s *surface,
     {
         SB_EvalPoint(&poly->vertices[i].color,
                      &illumination[i], affected,
-                     poly->vertices[i].pos, surface->normal);
+                     poly->vertices[i].pos, poly->normal);
     }
 
 //    colorOverride = SB_CheckColorOverride(affected);

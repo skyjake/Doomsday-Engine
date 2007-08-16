@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -125,16 +125,16 @@ boolean P_SightBlockLinesIterator(int x, int y)
     {
         if(polyLink->polyobj)
         {                       // only check non-empty links
-            if(polyLink->polyobj->validcount != validcount)
+            if(polyLink->polyobj->validCount != validCount)
             {
                 segList = polyLink->polyobj->segs;
                 for(i = 0; i < polyLink->polyobj->numsegs; ++i, segList++)
                 {
                     ld = (*segList)->linedef;
-                    if(ld->validcount == validcount)
+                    if(ld->validCount == validCount)
                         continue;
 
-                    ld->validcount = validcount;
+                    ld->validCount = validCount;
 
                     s[0] = P_PointOnDivlineSide(FLT2FIX(ld->L_v1pos[VX]),
                                                 FLT2FIX(ld->L_v1pos[VY]), &strace);
@@ -159,7 +159,7 @@ boolean P_SightBlockLinesIterator(int x, int y)
                        intercept_p++; */
                     P_AddIntercept(0, true, ld);
                 }
-                polyLink->polyobj->validcount = validcount;
+                polyLink->polyobj->validCount = validCount;
             }
         }
         polyLink = polyLink->next;
@@ -173,10 +173,10 @@ boolean P_SightBlockLinesIterator(int x, int y)
         if(ld->flags & LINEF_BENIGN)
             continue;
 
-        if(ld->validcount == validcount)
+        if(ld->validCount == validCount)
             continue;           // line has already been checked
 
-        ld->validcount = validcount;
+        ld->validCount = validCount;
 
         s[0] = P_PointOnDivlineSide(FLT2FIX(ld->L_v1pos[VX]),
                                     FLT2FIX(ld->L_v1pos[VY]), &strace);
@@ -218,7 +218,7 @@ boolean P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
     int     mapx, mapy, mapxstep, mapystep;
     int     count;
 
-    validcount++;
+    validCount++;
     //intercept_p = intercepts;
     P_ClearIntercepts();
 
@@ -335,7 +335,7 @@ boolean P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
     int     mapx, mapy, mapxstep, mapystep;
     int     count;
 
-    validcount++;
+    validCount++;
     intercept_p = intercepts;
 
     if(((x1 - bmaporgx) & (MAPBLOCKSIZE - 1)) == 0)

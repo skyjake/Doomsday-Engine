@@ -491,33 +491,33 @@ void R_ProjectPlayerSprites(void)
     psp3d = false;
 
     // Cameramen have no psprites.
-    if((viewplayer->flags & DDPF_CAMERA) || (viewplayer->flags & DDPF_CHASECAM))
+    if((viewPlayer->flags & DDPF_CAMERA) || (viewPlayer->flags & DDPF_CHASECAM))
         return;
 
-    for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; ++i, psp++)
+    for(i = 0, psp = viewPlayer->psprites; i < DDMAXPSPRITES; ++i, psp++)
     {
         vis = vispsprites + i;
         psp->flags &= ~DDPSPF_RENDERED;
         vis->type = false;
 
         vis->distance = 4;
-        vis->data.mo.subsector = viewplayer->mo->subsector;
+        vis->data.mo.subsector = viewPlayer->mo->subsector;
         vis->data.mo.flags = 0;
         // Adjust the vector slightly so an angle can be calculated.
-        ang = viewangle >>ANGLETOFINESHIFT;
-        vis->center[VX] = viewx + FIX2FLT(2 * finecosine[ang]);
-        vis->center[VY] = viewy + FIX2FLT(2 * finesine[ang]);
+        ang = viewAngle >>ANGLETOFINESHIFT;
+        vis->center[VX] = viewX + FIX2FLT(2 * fineCosine[ang]);
+        vis->center[VY] = viewY + FIX2FLT(2 * finesine[ang]);
         vis->data.mo.v1[VX] = vis->center[VX];
         vis->data.mo.v1[VY] = vis->center[VY];
         // 32 is the raised weapon height.
-        vis->data.mo.gzt = vis->center[VZ] = viewz;
-        vis->data.mo.secfloor = viewplayer->mo->subsector->sector->SP_floorvisheight;
-        vis->data.mo.secceil = viewplayer->mo->subsector->sector->SP_ceilvisheight;
+        vis->data.mo.gzt = vis->center[VZ] = viewZ;
+        vis->data.mo.secfloor = viewPlayer->mo->subsector->sector->SP_floorvisheight;
+        vis->data.mo.secceil = viewPlayer->mo->subsector->sector->SP_ceilvisheight;
         vis->data.mo.pclass = 0;
         vis->data.mo.floorclip = 0;
 
         // Glowing floor and ceiling.
-        R_ApplyPlaneGlowsToVisSprite(vis, viewplayer->mo->subsector->sector);
+        R_ApplyPlaneGlowsToVisSprite(vis, viewPlayer->mo->subsector->sector);
 
         if(!useModels || !psp->stateptr)
             continue;
@@ -539,8 +539,8 @@ void R_ProjectPlayerSprites(void)
         vis->data.mo.nextmf = nextmf;
         vis->data.mo.viewaligned = true;
         // Use the exact center with HUD models.
-        vis->center[VX] = viewx;
-        vis->center[VY] = viewy;
+        vis->center[VX] = viewX;
+        vis->center[VY] = viewY;
         vis->data.mo.v1[VX] = vis->center[VX];
         vis->data.mo.v1[VY] = vis->center[VY];
 
@@ -559,8 +559,8 @@ void R_ProjectPlayerSprites(void)
             vis->data.mo.v2[VY] -= weaponFOVShift * (fieldOfView - 90) / 90;
         // Real rotation angles.
         vis->data.mo.yaw =
-            viewangle / (float) ANGLE_MAX *-360 + vis->data.mo.v2[VX] + 90;
-        vis->data.mo.pitch = viewpitch * 85 / 110 + vis->data.mo.v2[VY];
+            viewAngle / (float) ANGLE_MAX *-360 + vis->data.mo.v2[VX] + 90;
+        vis->data.mo.pitch = viewPitch * 85 / 110 + vis->data.mo.v2[VY];
         vis->data.mo.flip = false;
 
         vis->data.mo.alpha = psp->alpha;
@@ -572,10 +572,10 @@ void R_ProjectPlayerSprites(void)
 	    */
             float       point[3];
 
-            point[0] = FIX2FLT(viewplayer->mo->pos[VX]);
-            point[1] = FIX2FLT(viewplayer->mo->pos[VY]);
-            point[2] = FIX2FLT(viewplayer->mo->pos[VZ]) +
-                            viewplayer->mo->height / 2;
+            point[0] = FIX2FLT(viewPlayer->mo->pos[VX]);
+            point[1] = FIX2FLT(viewPlayer->mo->pos[VY]);
+            point[2] = FIX2FLT(viewPlayer->mo->pos[VZ]) +
+                            viewPlayer->mo->height / 2;
             LG_Evaluate(point, vis->data.mo.rgb);
 
             vis->data.mo.lightlevel = 1;
@@ -583,7 +583,7 @@ void R_ProjectPlayerSprites(void)
         else
         {
             memcpy(vis->data.mo.rgb,
-                   R_GetSectorLightColor(viewplayer->mo->subsector->sector),
+                   R_GetSectorLightColor(viewPlayer->mo->subsector->sector),
                    sizeof(float) * 3);
 
             if(psp->light < 1)
@@ -670,8 +670,8 @@ void R_ProjectSprite(mobj_t *thing)
     }
 
     // Transform the origin point.
-    trx = thing->pos[VX] - FLT2FIX(viewx);
-    try = thing->pos[VY] - FLT2FIX(viewy);
+    trx = thing->pos[VX] - FLT2FIX(viewX);
+    try = thing->pos[VY] - FLT2FIX(viewY);
 
     // Decide which patch to use for sprite relative to player.
 
@@ -737,8 +737,8 @@ void R_ProjectSprite(mobj_t *thing)
         if(align || alwaysAlign == 3)
         {
             // The sprite should be fully aligned to view plane.
-            sinrv = -FIX2FLT(viewcos);
-            cosrv = FIX2FLT(viewsin);
+            sinrv = -FIX2FLT(viewCos);
+            cosrv = FIX2FLT(viewSin);
         }
         else
         {
@@ -782,7 +782,7 @@ void R_ProjectSprite(mobj_t *thing)
             // to disappear too early.
             if(P_ApproxDistance
                (distance * FRACUNIT,
-                thing->pos[VZ] + FLT2FIX((thing->height / 2) - viewz)) >
+                thing->pos[VZ] + FLT2FIX((thing->height / 2) - viewZ)) >
                MAX_OBJECT_RADIUS * FRACUNIT)
             {
                 return;         // Can't be visible.
@@ -819,7 +819,7 @@ void R_ProjectSprite(mobj_t *thing)
     // The thing's Z coordinate must match the actual visible
     // floor/ceiling height.  When using smoothing, this requires
     // iterating through the sectors (planes) in the vicinity.
-    validcount++;
+    validCount++;
     projectedThing = thing;
     P_ThingSectorsIterator(thing, RIT_VisMobjZ, vis);
 
@@ -900,7 +900,7 @@ void R_ProjectSprite(mobj_t *thing)
             vis->data.mo.pitch =
                 -BANG2DEG(bamsAtan2
                           (((vis->center[VZ] + vis->data.mo.gzt) / 2 -
-                            viewz) * 10, distance * 10));
+                            viewZ) * 10, distance * 10));
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)
         {
@@ -984,12 +984,12 @@ void R_AddSprites(sector_t *sec)
     spriteinfo_t spriteInfo;
     boolean     raised = false;
 
-    // Don't use validcount, because other parts of the renderer may
+    // Don't use validCount, because other parts of the renderer may
     // change it.
-    if(sec->addspritecount == framecount)
+    if(sec->addspritecount == frameCount)
         return;                 // already added
 
-    sec->addspritecount = framecount;
+    sec->addspritecount = frameCount;
 
     for(thing = sec->thinglist; thing; thing = thing->snext)
     {

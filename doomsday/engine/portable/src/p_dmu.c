@@ -1193,7 +1193,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_LINE_SIDES, &p->L_backside, args, 0);
             break;
         case DMU_VALID_COUNT:
-            SetValue(DMT_LINE_VALIDCOUNT, &p->validcount, args, 0);
+            SetValue(DMT_LINE_VALIDCOUNT, &p->validCount, args, 0);
             break;
         case DMU_FLAGS:
             SetValue(DMT_LINE_MAPFLAGS, &p->mapflags, args, 0);
@@ -1357,7 +1357,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SECTOR_LIGHTLEVEL, &p->lightlevel, args, 0);
             break;
         case DMU_VALID_COUNT:
-            SetValue(DMT_SECTOR_VALIDCOUNT, &p->validcount, args, 0);
+            SetValue(DMT_SECTOR_VALIDCOUNT, &p->validCount, args, 0);
             break;
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_SECTOR.\n",
@@ -1846,7 +1846,7 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SECTOR_THINGLIST, &p->thinglist, args, 0);
             break;
         case DMU_VALID_COUNT:
-            GetValue(DMT_SECTOR_VALIDCOUNT, &p->validcount, args, 0);
+            GetValue(DMT_SECTOR_VALIDCOUNT, &p->validCount, args, 0);
             break;
         default:
             Con_Error("GetProperty: DMU_SECTOR has no property %s.\n",
@@ -2192,7 +2192,7 @@ static int GetProperty(void* ptr, void* context)
             }
             break;
         case DMU_VALID_COUNT:
-            GetValue(DMT_LINE_VALIDCOUNT, &p->validcount, args, 0);
+            GetValue(DMT_LINE_VALIDCOUNT, &p->validCount, args, 0);
             break;
         default:
             Con_Error("GetProperty: DMU_LINE has no property %s.\n", DMU_Str(args->prop));
