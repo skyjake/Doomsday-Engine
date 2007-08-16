@@ -107,7 +107,7 @@ extern int ratioLimit;
 extern boolean palettedTextureExtAvailable;
 extern boolean s3tcAvailable;
 
-extern int skyflatnum;
+extern int skyFlatNum;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

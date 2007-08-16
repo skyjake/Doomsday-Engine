@@ -32,55 +32,68 @@
 #include "p_object.h"
 #include "rend_list.h"
 
-#define DYN_ASPECT      1.1f       // 1.2f is just too round for Doom.
+#define DYN_ASPECT          1.1f    // 1.2f is just too round for Doom.
 
-#define MAX_GLOWHEIGHT  1024.0f    // Absolute max glow height
+#define MAX_GLOWHEIGHT      1024.0f // Absolute max glow height
 
 // Lumobj Flags.
-#define LUMF_USED       0x1
-#define LUMF_RENDERED   0x2
-#define LUMF_CLIPPED    0x4        // Hidden by world geometry.
-#define LUMF_NOHALO     0x100
-#define LUMF_DONTTURNHALO 0x200
+#define LUMF_USED           0x1
+#define LUMF_RENDERED       0x2
+#define LUMF_CLIPPED        0x4     // Hidden by world geometry.
+#define LUMF_NOHALO         0x100
+#define LUMF_DONTTURNHALO   0x200
 
-typedef struct lumobj_s            // For dynamic lighting.
-{
+// Lumobject types.
+typedef enum {
+    LT_OMNI,                        // Omni (spherical) light.
+    LT_PLANE                        // Planar light.
+} lumtype_t;
+
+// Helper macros for accessing lum data.
+#define LUM_OMNI(x)         (&((x)->data.omni))
+#define LUM_PLANE(x)        (&((x)->data.plane))
+
+typedef struct lumobj_s {          // For dynamic lighting.
+    lumtype_t       type;
     int             flags;
     float           pos[3];
+    float           color[3];
+    int             distance;
     subsector_t    *subsector;
-    int             radius, patch, distance;    // Radius: lights are spheres.
-    int             flareSize;     // Radius for this light source.
-    byte            halofactor;
-    float           rgb[3];        // The color.
-    float           xOff;
-    float           zOff;          // Offset to center from pos[VZ].
-    float           xyScale;       // 1.0 if there's no modeldef.
-    DGLuint         tex;           // Lightmap texture.
-    DGLuint         floorTex, ceilTex;  // Lightmaps for floor/ceil.
-    DGLuint         decorMap;      // Decoration lightmap.
-    DGLuint         flareTex;      // Flaremap if flareCustom ELSE (flaretexName id.
-                                   // Zero = automatical)
-    boolean         flareCustom;   // True id flareTex is a custom flare graphic
-    float           flareMul;      // Flare brightness factor.
+
+    union lumobj_data_u {
+        struct lumobj_omni_s {
+            int             radius, patch;
+            int             flareSize;     // Radius for this omnilight source.
+            byte            halofactor;
+            float           xOff;
+            float           zOff;          // Offset to center from pos[VZ].
+            float           xyScale;       // 1.0 if there's no modeldef.
+            DGLuint         tex;           // Lightmap texture.
+            DGLuint         floorTex, ceilTex;  // Lightmaps for floor/ceil.
+            DGLuint         decorMap;      // Decoration lightmap.
+            DGLuint         flareTex;      // Flaremap if flareCustom ELSE (flaretexName id.
+                                           // Zero = automatical)
+            boolean         flareCustom;   // True id flareTex is a custom flare graphic
+            float           flareMul;      // Flare brightness factor.
+        } omni;
+        struct lumobj_plane_s {
+            float           intensity;
+            DGLuint         tex;
+            boolean         castDown;
+        } plane;
+    } data;
 } lumobj_t;
 
 /*
  * The data of a projected dynamic light is stored in this structure.
- * A list of these is associated with all the lit segs/planes in a frame.
+ * A list of these is associated with all the lit surfaces in a frame.
  */
 typedef struct dynlight_s {
     float           s[2], t[2];
     float           color[3];
     DGLuint         texture;
 } dynlight_t;
-
-typedef struct dynnode_s {
-	struct dynnode_s *next, *nextUsed;
-    dynlight_t		light;
-} dynnode_t;
-
-// Flags for projected dynamic lights.
-#define DYNF_PREGEN_DECOR   0x1    // Pregen RGB lightmap for a light decoration.
 
 extern boolean  dlInited;
 extern int      useDynLights;
@@ -102,15 +115,17 @@ void            DL_Clear(void);        // 'Physically' destroy the tables.
 // Action.
 void            DL_ClearForFrame(void);
 void            DL_InitForNewFrame(void);
-uint            DL_NewLuminous(void);
+uint            DL_NewLuminous(lumtype_t type);
 lumobj_t*       DL_GetLuminous(uint idx);
 uint            DL_GetNumLuminous(void);
-void            DL_ProcessSubsector(subsector_t *ssec);
-dynnode_t*      DL_GetSegSectionLightLinks(uint segidx, segsection_t section);
-dynnode_t*      DL_GetSubSecPlaneLightLinks(uint ssecidx, uint plane);
+void            DL_InitForSubsector(subsector_t *ssec);
+uint            DL_ProcessSegSection(seg_t *seg, float bottom, float top);
+uint            DL_ProcessSubSectorPlane(subsector_t *subsector, uint plane);
 
 // Helpers.
-boolean         DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
+boolean         DL_DynLightIterator(uint listIdx, void *data,
+                                boolean (*func) (const dynlight_t *, void *data));
+boolean         DL_LumRadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
                                   fixed_t radius, void *data,
                                   boolean (*func) (lumobj_t *, fixed_t, void *data));
 

@@ -71,13 +71,6 @@
 // Node flags.
 #define NF_SUBSECTOR    0x80000000
 
-// Sidedef flags
-#define SDF_BLENDTOPTOMID       0x01
-#define SDF_BLENDMIDTOTOP       0x02
-#define SDF_BLENDMIDTOBOTTOM    0x04
-#define SDF_BLENDBOTTOMTOMID    0x08
-//#define SDF_MIDTEXUPPER         0x10
-
 // Runtime map data objects, such as vertices, sectors, and subsectors all
 // have this header as their first member. This makes it possible to treat
 // an unknown map data pointer as a runtime_mapdata_header_t* and determine
@@ -89,6 +82,18 @@ typedef struct runtime_mapdata_header_s {
 typedef struct fvertex_s {
     float           pos[2];
 } fvertex_t;
+
+typedef struct shadowcorner_s {
+    float   corner;
+    struct sector_s *proximity;
+    float   pOffset;
+    float   pHeight;
+} shadowcorner_t;
+
+typedef struct edgespan_s {
+    float   length;
+    float   shift;
+} edgespan_t;
 
 #include "p_maptypes.h"
 

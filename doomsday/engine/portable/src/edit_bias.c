@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2006-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -145,9 +145,9 @@ void SBE_Register(void)
 
 static void SBE_GetHand(float pos[3])
 {
-    pos[0] = vx + viewfrontvec[VX] * editDistance;
-    pos[1] = vz + viewfrontvec[VZ] * editDistance;
-    pos[2] = vy + viewfrontvec[VY] * editDistance;
+    pos[0] = vx + viewFrontVec[VX] * editDistance;
+    pos[1] = vz + viewFrontVec[VZ] * editDistance;
+    pos[2] = vy + viewFrontVec[VY] * editDistance;
 }
 
 static source_t *SBE_GrabSource(int index)
@@ -205,7 +205,7 @@ static void SBE_GetHueColor(float *color, float *angle, float *sat)
     float minAngle = 0.1f, range = 0.19f;
     vec3_t h, proj;
 
-    dot = M_DotProduct(viewfrontvec, hueOrigin);
+    dot = M_DotProduct(viewFrontVec, hueOrigin);
     saturation = (acos(dot) - minAngle) / range;
 
     if(saturation < 0)
@@ -228,12 +228,12 @@ static void SBE_GetHueColor(float *color, float *angle, float *sat)
 
     // Calculate hue angle by projecting the current viewfront to the
     // hue circle plane.  Project onto the normal and subtract.
-    scale = M_DotProduct(viewfrontvec, hueOrigin) /
+    scale = M_DotProduct(viewFrontVec, hueOrigin) /
         M_DotProduct(hueOrigin, hueOrigin);
     M_Scale(h, hueOrigin, scale);
 
     for(i = 0; i < 3; ++i)
-        proj[i] = viewfrontvec[i] - h[i];
+        proj[i] = viewFrontVec[i] - h[i];
 
     // Now we have the projected view vector on the circle's plane.
     // Normalize the projected vector.
@@ -454,9 +454,9 @@ void SBE_SetHueCircle(boolean activate)
         // Determine the orientation of the hue circle.
         for(i = 0; i < 3; ++i)
         {
-            hueOrigin[i] = viewfrontvec[i];
-            hueSide[i] = viewsidevec[i];
-            hueUp[i] = viewupvec[i];
+            hueOrigin[i] = viewFrontVec[i];
+            hueSide[i] = viewSideVec[i];
+            hueUp[i] = viewUpVec[i];
         }
     }
 }

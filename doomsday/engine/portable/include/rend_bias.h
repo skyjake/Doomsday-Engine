@@ -85,7 +85,7 @@ void            SB_SegHasMoved(struct seg_s *seg);
 void            SB_PlaneHasMoved(struct subsector_s *subsector, uint plane);
 void            SB_BeginFrame(void);
 void            SB_RendPoly(struct rendpoly_s *poly,
-                            struct surface_s *surface, struct sector_s *sector,
+                            float sectorLightLevel,
                             vertexillum_t *illumination,
                             biastracker_t *tracker,
                             biasaffection_t *affected,

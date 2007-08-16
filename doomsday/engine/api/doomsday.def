@@ -8,7 +8,9 @@ NAME			"DOOMSDAY"
 ; 45 formerly B_BindingsForCommand
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
+; 107 formerly GL_DoUpdate
 ; 108 formerly GL_ChangeResolution
+; 206 formerly GL_Update
 ; 232 formerly R_SetAnimGroup
 ; 332 formerly P_ControlReset
 
@@ -281,8 +283,6 @@ EXPORTS
 	Rend_SkyParams				@105 NONAME
 
 ; Graphics.
-	GL_Update					@206 NONAME
-	GL_DoUpdate					@107 NONAME
 	GL_UseFog					@104 NONAME
 	GL_GrabScreen				@109 NONAME
 	GL_TextureFilterMode		@112 NONAME

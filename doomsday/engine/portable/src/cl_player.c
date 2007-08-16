@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -207,7 +207,7 @@ Con_Message("Cl_RPlD: pl=%i => moid=%i\n",
     {
         i = Msg_ReadByte();
         pl->fixedcolormap = i & 7;
-        pl->extralight = i & 0xf8;
+        pl->extraLight = i & 0xf8;
     }
     if(df & PDF_FILTER)
         pl->filter = Msg_ReadLong();
@@ -266,7 +266,7 @@ void Cl_ThrustMul(mobj_t *mo, angle_t angle, fixed_t move, fixed_t thmul)
     // Make a fine angle.
     angle >>= ANGLETOFINESHIFT;
     move = FixedMul(move, thmul);
-    mo->mom[MX] += FixedMul(move, finecosine[angle]);
+    mo->mom[MX] += FixedMul(move, fineCosine[angle]);
     mo->mom[MY] += FixedMul(move, finesine[angle]);
 }
 
@@ -718,7 +718,7 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
     {
         i = Msg_ReadByte();
         pl->fixedcolormap = i & 7;
-        pl->extralight = i & 0xf8;
+        pl->extraLight = i & 0xf8;
     }
     if(df & PDF_FILTER)
         pl->filter = Msg_ReadLong();

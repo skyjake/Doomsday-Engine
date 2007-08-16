@@ -29,25 +29,25 @@
 #ifndef __DOOMSDAY_REFRESH_MAIN_H__
 #define __DOOMSDAY_REFRESH_MAIN_H__
 
-extern float    viewx, viewy, viewz;
-extern float    viewfrontvec[3], viewupvec[3], viewsidevec[3];
-extern float    viewxOffset, viewyOffset, viewzOffset;
-extern angle_t  viewangle;
-extern float    viewpitch;
-extern ddplayer_t *viewplayer;
-extern angle_t  clipangle;
-extern fixed_t  finetangent[FINEANGLES / 2];
+extern float    viewX, viewY, viewZ;
+extern float    viewFrontVec[3], viewUpVec[3], viewSideVec[3];
+extern float    viewXOffset, viewYOffset, viewZOffset;
+extern angle_t  viewAngle;
+extern float    viewPitch;
+extern ddplayer_t *viewPlayer;
+extern angle_t  clipAngle;
+extern fixed_t  fineTangent[FINEANGLES / 2];
 
 extern float    frameTimePos;      // 0...1: fractional part for sharp game tics
 extern boolean  resyncFrameTimePos;
 extern int      loadInStartupMode;
-extern int      validcount;
+extern int      validCount;
 extern int      viewwidth, viewheight, viewwindowx, viewwindowy;
-extern boolean  setsizeneeded;
-extern int      framecount;
-extern int      viewangleoffset;
-extern int      extralight;
-extern fixed_t  viewcos, viewsin;
+extern boolean  setSizeNeeded;
+extern int      frameCount;
+extern int      viewAngleOffset;
+extern int      extraLight;
+extern fixed_t  viewCos, viewSin;
 extern int      rendInfoTris;
 
 void            R_Register(void);

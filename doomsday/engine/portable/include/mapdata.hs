@@ -52,6 +52,7 @@ struct seg
     PTR     side_s*     sidedef
     PTR     line_s*     linedef
     PTR     sector_s*[2] sec
+	PTR		subsector_s* subsector
     PTR		seg_s*		backseg
     ANGLE   angle_t     angle
     BYTE    byte		side		// 0=front, 1=back
@@ -74,14 +75,12 @@ struct subsector
     PTR		seg_s**		segs		// [segcount] size.
     PTR     polyobj_s*  poly		// NULL, if there is no polyobj.
     -		int         flags
-#    -       ushort      numverts
-#    -       fvertex_t*  verts		// A sorted list of edge vertices.
     -       fvertex_t   bbox[2]		// Min and max points.
     -       fvertex_t   midpoint	// Center of vertices.
     -       subplaneinfo_s** planes
     -       ushort      numvertices
     -       fvertex_s** vertices	// [numvertices] size
-    -       int         validcount
+    -       int         validCount
     -       shadowlink_s* shadows
     -       uint        group
     -       uint[NUM_REVERB_DATA] reverb
@@ -245,7 +244,7 @@ struct sector
     -       float       oldlightlevel
     FLOAT   float[3]    rgb
     -       float[3]    oldrgb
-    INT     int         validcount  // if == validcount, already checked.
+    INT     int         validCount  // if == validCount, already checked.
     PTR     mobj_s*     thinglist   // List of mobjs in the sector.
     UINT    uint        linecount   
     PTR     line_s**    Lines       // [linecount] size.
@@ -330,12 +329,27 @@ typedef enum segsection_e {
 #define SW_bottomtexlat         SW_surfacetexlat(SEG_BOTTOM)
 end
 
+internal
+// Sidedef flags
+#define SDF_BLENDTOPTOMID       0x01
+#define SDF_BLENDMIDTOTOP       0x02
+#define SDF_BLENDMIDTOBOTTOM    0x04
+#define SDF_BLENDBOTTOMTOMID    0x08
+end
+
 struct side
     -       surface_t[3] sections
     UINT	uint		segcount
     PTR		seg_s**		segs		// [segcount] size, segs arranged left>right
     PTR     sector_s*   sector
     SHORT   short       flags
+
+# The following is used with FakeRadio.
+    -		int			fakeRadioUpdateCount // frame number of last update
+	-		shadowcorner_t[2] topCorners
+    -		shadowcorner_t[2] bottomCorners
+    -		shadowcorner_t[2] sideCorners
+    -		edgespan_t[2] spans // [left, right]
 end
 
 public
@@ -380,7 +394,7 @@ struct line
     FLOAT   float       dx
     FLOAT   float       dy
     INT     slopetype_t slopetype
-    INT     int         validcount
+    INT     int         validCount
     PTR     side_s*[2]  sides
     FIXED   fixed_t[4]  bbox
     -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
@@ -392,7 +406,7 @@ end
 struct polyobj
     UINT    uint        numsegs
     PTR     seg_s**     segs
-    INT     int         validcount
+    INT     int         validCount
     PTR     degenmobj_t startSpot
     ANGLE   angle_t     angle
     INT     int         tag         // reference tag assigned in HereticEd

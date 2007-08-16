@@ -52,7 +52,7 @@ typedef struct game_import_s {
     ddtext_t      **text;
 
     // General information.
-    int            *validcount;
+    int            *validCount;
     fixed_t        *topslope;
     fixed_t        *bottomslope;
 

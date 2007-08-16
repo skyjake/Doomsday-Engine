@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -238,7 +238,6 @@ void DD_DrawAndBlit(void)
     {
         // Draw user interface.
         UI_Drawer();
-        UpdateState = I_FULLSCRN;
     }
 
     // Draw console.
@@ -271,15 +270,15 @@ void DD_EndFrame(void)
     static uint lastFpsTime = 0;
 
     // Increment the frame counter.
-    framecount++;
+    frameCount++;
 
     // Count the frames every other second.
     if(nowTime - 2000 >= lastFpsTime)
     {
-        fps = (framecount - lastFrameCount) /
+        fps = (frameCount - lastFrameCount) /
             ((nowTime - lastFpsTime)/1000.0f);
         lastFpsTime = nowTime;
-        lastFrameCount = framecount;
+        lastFrameCount = frameCount;
     }
 
     if(gx.EndFrame)

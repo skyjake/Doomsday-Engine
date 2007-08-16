@@ -160,11 +160,12 @@ typedef struct rendpoly_s {
     gltexture_t     tex;
     gltexture_t     intertex;
     float           interpos;      // Blending strength (0..1).
-    struct dynnode_s *lights;      // List of lights that affect this poly.
+    uint            lightListIdx;  // List of lights that affect this poly.
     DGLuint         decorlightmap; // Pregen RGB lightmap for decor lights.
     blendmode_t     blendmode;     // Primitive-specific blending mode.
 
     // The geometry:
+    float           normal[3];
     byte            numvertices;   // Number of vertices for the poly.
     rendpoly_vertex_t *vertices;
 
@@ -372,7 +373,7 @@ void            R_InitRendPolyPool(void);
 rendpoly_t     *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
                                 unsigned int numverts);
 void            R_FreeRendPoly(rendpoly_t *poly);
-void            R_MemcpyRendPoly(rendpoly_t *dest, rendpoly_t *src);
+void            R_MemcpyRendPoly(rendpoly_t *dest, const rendpoly_t *src);
 void            R_InfoRendPolys(void);
 
 void            R_InitData(void);

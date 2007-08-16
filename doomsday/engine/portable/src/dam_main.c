@@ -2565,6 +2565,7 @@ static void finalizeMapData(gamemap_t *map)
                 found = true;
             }
 
+            seg->subsector = ss;
             ss->segs[n] = seg;
         }
         ss->segs[n] = NULL; // terminate.

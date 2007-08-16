@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -449,7 +449,7 @@ void Demo_WriteLocalCamera(int plnum)
     Msg_WriteShort(mo->pos[VY] >> 16);
     Msg_WriteByte(mo->pos[VY] >> 8);
     //z = mo->pos[VZ] + players[plnum].viewheight;
-    z = FLT2FIX(players[plnum].viewz);
+    z = FLT2FIX(players[plnum].viewZ);
     Msg_WriteShort(z >> 16);
     Msg_WriteByte(z >> 8);
     Msg_WriteShort(mo->angle /*players[plnum].clAngle*/ >> 16); /* $unifiedangles */
@@ -550,7 +550,7 @@ void Demo_ReadLocalCamera(void)
         R_ResetViewer();
         Cl_MoveLocalPlayer(pos_delta[VX], pos_delta[VY], demo_framez =
                            z, demo_onground);
-        pl->viewz = FIX2FLT(z); // Might get an unsynced frame is not set right now.
+        pl->viewZ = FIX2FLT(z); // Might get an unsynced frame is not set right now.
         pos_delta[VX] = pos_delta[VY] = pos_delta[VZ] = 0;
     }
 }

@@ -97,8 +97,6 @@ extern boolean filloutlines;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     UpdateState;
-
 // The default resolution (config file).
 int     defResX = 640, defResY = 480, defBPP = 32;
 int     defFullscreen = true;
@@ -129,7 +127,7 @@ void GL_Register(void)
 {
     // Cvars
     C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 1);
-    C_VAR_INT("rend-dev-framecount", &framecount,
+    C_VAR_INT("rend-dev-frameCount", &frameCount,
               CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
     C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2);
     // * Render-HUD
@@ -165,28 +163,6 @@ boolean GL_IsInited(void)
 }
 
 /**
- * This update stuff is really old-fashioned...
- */
-void GL_Update(int flags)
-{
-    if(flags & DDUF_BORDER)
-        BorderNeedRefresh = true;
-    if(flags & DDUF_TOP)
-        BorderTopRefresh = true;
-    if(flags & DDUF_FULLVIEW)
-        UpdateState |= I_FULLVIEW;
-    if(flags & DDUF_STATBAR)
-        UpdateState |= I_STATBAR;
-    if(flags & DDUF_MESSAGES)
-        UpdateState |= I_MESSAGES;
-    if(flags & DDUF_FULLSCREEN)
-        UpdateState |= I_FULLSCRN;
-
-    if(flags & DDUF_UPDATE)
-        GL_DoUpdate();
-}
-
-/**
  * Swaps buffers / blits the back buffer to the front.
  */
 void GL_DoUpdate(void)
@@ -196,16 +172,12 @@ void GL_DoUpdate(void)
        oldbright != vid_bright)
         GL_SetGamma();
 
-    if(UpdateState == I_NOUPDATE)
-        return;
-
     // Blit screen to video.
     if(renderWireframe)
         gl.Enable(DGL_WIREFRAME_MODE);
     gl.Show();
     if(renderWireframe)
         gl.Disable(DGL_WIREFRAME_MODE);
-    UpdateState = I_NOUPDATE; // Clear out all draw types.
 
     // Increment frame counter.
     r_framecounter++;

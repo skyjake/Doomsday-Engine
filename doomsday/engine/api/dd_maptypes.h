@@ -12,6 +12,7 @@
 #define DMT_SEG_SIDEDEF DDVT_PTR
 #define DMT_SEG_LINEDEF DDVT_PTR
 #define DMT_SEG_SEC DDVT_PTR
+#define DMT_SEG_SUBSECTOR DDVT_PTR
 #define DMT_SEG_BACKSEG DDVT_PTR
 #define DMT_SEG_ANGLE DDVT_ANGLE
 #define DMT_SEG_SIDE DDVT_BYTE         // 0=front, 1=back
@@ -41,7 +42,7 @@
 
 #define DMT_SECTOR_LIGHTLEVEL DDVT_FLOAT
 #define DMT_SECTOR_RGB DDVT_FLOAT
-#define DMT_SECTOR_VALIDCOUNT DDVT_INT // if == validcount, already checked.
+#define DMT_SECTOR_VALIDCOUNT DDVT_INT // if == validCount, already checked.
 #define DMT_SECTOR_THINGLIST DDVT_PTR  // List of mobjs in the sector.
 #define DMT_SECTOR_LINECOUNT DDVT_UINT
 #define DMT_SECTOR_LINES DDVT_PTR      // [linecount] size.

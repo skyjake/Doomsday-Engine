@@ -376,8 +376,6 @@ extern          "C" {
     void            Rend_SkyParams(int layer, int parm, float value);
 
     // Graphics.
-    void            GL_Update(int flags);
-    void            GL_DoUpdate(void);
     void            GL_UseFog(int yes);
     byte           *GL_GrabScreen(void);
     unsigned int    GL_NewTextureWithParams2(int format, int width, int height, void* pixels, 

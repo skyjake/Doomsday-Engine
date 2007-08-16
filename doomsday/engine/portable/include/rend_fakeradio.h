@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,8 +31,10 @@
 
 void            Rend_RadioRegister(void);
 void            Rend_RadioInitForFrame(void);
+void            Rend_RadioUpdateLinedef(line_t *line, boolean backSide);
 void            Rend_RadioInitForSubsector(subsector_t *sector);
-void            Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad);
+void            Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line,
+                                     byte side, float xOffset, float segLength);
 void            Rend_RadioSubsectorEdges(subsector_t *subsector);
 
 #endif

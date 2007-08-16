@@ -104,8 +104,8 @@ extern HINSTANCE hInstDGL;
 #endif
 
 extern int renderTextures;
-extern int skyflatnum;
-extern char skyflatname[9];
+extern int skyFlatNum;
+extern char skyFlatName[9];
 extern fixed_t mapgravity;
 extern int gotframe;
 extern int monochrome;
@@ -844,7 +844,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&isServer, 0},                         // An *open* server?
     {&isClient, 0},
     {&allowFrames, &allowFrames},
-    {&skyflatnum, 0},
+    {&skyFlatNum, 0},
     {0, 0},
     {&viewwindowx, &viewwindowx},
     {&viewwindowy, &viewwindowy},
@@ -1009,8 +1009,8 @@ void DD_SetInteger(int ddvalue, int parm)
         {
             // Dude!  This is not 64-bit safe.
             ASSERT_NOT_64BIT();
-            memset(skyflatname, 0, 9);
-            strncpy(skyflatname, (char *) parm, 9);
+            memset(skyFlatName, 0, 9);
+            strncpy(skyFlatName, (char *) parm, 9);
         }
         return;
     }
@@ -1030,28 +1030,28 @@ void* DD_GetVariable(int ddvalue)
         switch (ddvalue)
         {
         case DD_VIEWX:
-            return &viewx;
+            return &viewX;
 
         case DD_VIEWY:
-            return &viewy;
+            return &viewY;
 
         case DD_VIEWZ:
-            return &viewz;
+            return &viewZ;
 
         case DD_VIEWX_OFFSET:
-            return &viewxOffset;
+            return &viewXOffset;
 
         case DD_VIEWY_OFFSET:
-            return &viewyOffset;
+            return &viewYOffset;
 
         case DD_VIEWZ_OFFSET:
-            return &viewzOffset;
+            return &viewZOffset;
 
         case DD_VIEWANGLE:
-            return &viewangle;
+            return &viewAngle;
 
         case DD_VIEWANGLE_OFFSET:
-            return &viewangleoffset;
+            return &viewAngleOffset;
 
         case DD_SHARED_FIXED_TRIGGER:
             return &sharedFixedTrigger;
@@ -1139,40 +1139,40 @@ void DD_SetVariable(int ddvalue, void *parm)
         switch(ddvalue)
         {
         case DD_VIEWX:
-            viewx = *(float*) parm;
+            viewX = *(float*) parm;
             return;
 
         case DD_VIEWY:
-            viewy = *(float*) parm;
+            viewY = *(float*) parm;
             return;
 
         case DD_VIEWZ:
-            viewz = *(float*) parm;
+            viewZ = *(float*) parm;
             return;
 
         case DD_VIEWX_OFFSET:
-            viewxOffset = *(float*) parm;
+            viewXOffset = *(float*) parm;
             return;
 
         case DD_VIEWY_OFFSET:
-            viewyOffset = *(float*) parm;
+            viewYOffset = *(float*) parm;
             return;
 
         case DD_VIEWZ_OFFSET:
-            viewzOffset = *(float*) parm;
+            viewZOffset = *(float*) parm;
             return;
 
         case DD_VIEWANGLE:
-            viewangle = *(angle_t*) parm;
+            viewAngle = *(angle_t*) parm;
             return;
 
         case DD_VIEWANGLE_OFFSET:
-            viewangleoffset = *(int*) parm;
+            viewAngleOffset = *(int*) parm;
             return;
 
         case DD_SKYFLAT_NAME:
-            memset(skyflatname, 0, 9);
-            strncpy(skyflatname, parm, 9);
+            memset(skyFlatName, 0, 9);
+            strncpy(skyFlatName, parm, 9);
             return;
 
         default:

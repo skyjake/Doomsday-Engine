@@ -100,6 +100,6 @@ extern float    texGamma;
 
 // tab_tables.c
 extern fixed_t  finesine[5 * FINEANGLES / 4];
-extern fixed_t *finecosine;
+extern fixed_t *fineCosine;
 
 #endif

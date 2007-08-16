@@ -50,6 +50,7 @@ typedef struct seg_s {
     struct side_s*      sidedef;
     struct line_s*      linedef;
     struct sector_s*    sec[2];
+    struct subsector_s* subsector;
     struct seg_s*       backseg;
     angle_t             angle;
     byte                side;          // 0=front, 1=back
@@ -76,7 +77,7 @@ typedef struct subsector_s {
     struct subplaneinfo_s** planes;
     unsigned short      numvertices;
     struct fvertex_s**  vertices;      // [numvertices] size
-    int                 validcount;
+    int                 validCount;
     struct shadowlink_s* shadows;
     unsigned int        group;
     unsigned int        reverb[NUM_REVERB_DATA];
@@ -229,7 +230,7 @@ typedef struct sector_s {
     float               oldlightlevel;
     float               rgb[3];
     float               oldrgb[3];
-    int                 validcount;    // if == validcount, already checked.
+    int                 validCount;    // if == validCount, already checked.
     struct mobj_s*      thinglist;     // List of mobjs in the sector.
     unsigned int        linecount;
     struct line_s**     Lines;         // [linecount] size.
@@ -312,6 +313,12 @@ typedef enum segsection_e {
 #define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
 #define SW_bottomtexlat         SW_surfacetexlat(SEG_BOTTOM)
 
+// Sidedef flags
+#define SDF_BLENDTOPTOMID       0x01
+#define SDF_BLENDMIDTOTOP       0x02
+#define SDF_BLENDMIDTOBOTTOM    0x04
+#define SDF_BLENDBOTTOMTOMID    0x08
+
 typedef struct side_s {
     runtime_mapdata_header_t header;
     surface_t           sections[3];
@@ -319,6 +326,11 @@ typedef struct side_s {
     struct seg_s**      segs;          // [segcount] size, segs arranged left>right
     struct sector_s*    sector;
     short               flags;
+    int                 fakeRadioUpdateCount; // frame number of last update
+    shadowcorner_t      topCorners[2];
+    shadowcorner_t      bottomCorners[2];
+    shadowcorner_t      sideCorners[2];
+    edgespan_t          spans[2];      // [left, right]
 } side_t;
 
 // Helper macros for accessing linedef data elements.
@@ -358,7 +370,7 @@ typedef struct line_s {
     float               dx;
     float               dy;
     slopetype_t         slopetype;
-    int                 validcount;
+    int                 validCount;
     struct side_s*      sides[2];
     fixed_t             bbox[4];
     struct lineowner_s* vo[2];         // Links to vertex line owner nodes [left, right]
@@ -371,7 +383,7 @@ typedef struct polyobj_s {
     runtime_mapdata_header_t header;
     unsigned int        numsegs;
     struct seg_s**      segs;
-    int                 validcount;
+    int                 validCount;
     degenmobj_t         startSpot;
     angle_t             angle;
     int                 tag;           // reference tag assigned in HereticEd

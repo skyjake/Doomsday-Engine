@@ -49,7 +49,7 @@ typedef struct vissprite_s {
     byte            type;          // True if this is a sprite (otherwise a wall segment).
     float           distance;      // Vissprites are sorted by distance.
     float           center[3];
-    struct lumobj_s *light; // For the halo (NULL if no halo).
+    struct lumobj_s *light;        // For the halo (NULL if no halo).
 
     // An anonymous union for the data.
     union vissprite_data_u {
@@ -90,7 +90,10 @@ typedef struct vissprite_s {
                 unsigned char   color[4];
             } vertices[4];
             float           texc[2][2]; // u and v coordinates.
-            struct dynlight_s *light;
+            
+            DGLuint         modTex; // Texture to modulate with.
+            float           modTexC[2][2]; // u and v coordinates.
+            float           modColor[3];
         } wall;
     } data;
 } vissprite_t;

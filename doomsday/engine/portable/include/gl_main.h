@@ -52,7 +52,6 @@ void            GL_SwitchTo3DState(boolean push_state);
 void            GL_Restore2DState(int step);
 void            GL_ProjectionMatrix(void);
 void            GL_RuntimeMode(void);
-void            GL_Update(int flags);
 void            GL_DoUpdate(void);
 void            GL_BlendMode(blendmode_t mode);
 

@@ -913,7 +913,7 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     short           srvo[3];            /* short-range visual offset (xyz) */ \
     short           visangle;           /* visual angle ("angle-servo") */ \
     int             selector;           /* multipurpose info */ \
-    int             validcount;         /* used in iterating */ \
+    int             validCount;         /* used in iterating */ \
     unsigned int    light;              /* index+1 of the lumobj/bias source, or 0 */ \
     boolean         usingBias;          /* if true, "light" is the bias source index+1 */ \
     byte            halofactor;         /* strength of halo */ \
@@ -921,7 +921,6 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     short           vistarget;          /* -1 = mobj is becoming less visible, */ \
                                         /* 0 = no change, 2= mobj is becoming more visible */ \
     int             reactiontime;       /* if not zero, freeze controls */ 
-    //struct ddplayer_s *netexplayer;     /* player who should not detect the object in netgames */
 
     typedef struct ddmobj_base_s {
     DD_BASE_MOBJ_ELEMENTS()} ddmobj_base_t;
@@ -938,21 +937,6 @@ enum { MX, MY, MZ };               // Momentum axis indices.
 #define SCREENWIDTH     320
 #define SCREENHEIGHT    200
 
-#define I_NOUPDATE  0
-#define I_FULLVIEW  1
-#define I_STATBAR   2
-#define I_MESSAGES  4
-#define I_FULLSCRN  8
-
-    // Update flags.
-#define DDUF_BORDER     0x1        // BorderNeedRefresh = true
-#define DDUF_TOP        0x2        // BorderTopRefresh = true
-#define DDUF_FULLVIEW   0x10       // Request update for the view.
-#define DDUF_STATBAR    0x20       // Request update for the status bar.
-#define DDUF_MESSAGES   0x40       // Request update for the messages.
-#define DDUF_FULLSCREEN 0x80       // Request update for the whole screen.
-#define DDUF_UPDATE     0x10000    // Really calls I_Update.
-
     //------------------------------------------------------------------------
     //
     // Sound
@@ -963,46 +947,12 @@ enum { MX, MY, MZ };               // Momentum axis indices.
 #define DDSF_NO_ATTENUATION     0x80000000
 #define DDSF_REPEAT             0x40000000
 
-    // Which fields are valid?
-#define DDSOUNDF_VOLUME         0x1
-#define DDSOUNDF_PITCH          0x2
-#define DDSOUNDF_POS            0x4
-#define DDSOUNDF_MOV            0x8
-
-#define DDSOUNDF_LOCAL          0x10000 // The sound is inside the listener's head.
-#define DDSOUNDF_VERY_LOUD      0x20000 // The sound has virtually no rolloff.
-
-    typedef struct {
-        int             flags;
-        int             volume;    // 0..1000
-        int             pitch;     // 1000 is normal.
-        fixed_t         pos[3];
-        fixed_t         mov[3];
-    } sound3d_t;
-
     typedef struct {
         float           volume;    // 0..1
         float           decay;     // Decay factor: 0 (acoustically dead) ... 1 (live)
         float           damping;   // High frequency damping factor: 0..1
         float           space;     // 0 (small space) ... 1 (large space)
     } reverb_t;
-
-    // Which fields are valid?
-#define DDLISTENERF_POS             0x1
-#define DDLISTENERF_MOV             0x2
-#define DDLISTENERF_YAW             0x4
-#define DDLISTENERF_PITCH           0x8
-    // Reverb control:
-#define DDLISTENERF_SET_REVERB      0x10
-#define DDLISTENERF_DISABLE_REVERB  0x20
-
-    typedef struct {
-        int             flags;
-        fixed_t         pos[3];
-        fixed_t         mov[3];
-        float           yaw, pitch; // In degrees: (0,0) is to the east.
-        reverb_t        reverb;
-    } listener3d_t;
 
     // Use with PlaySong().
 #define DDMUSICF_EXTERNAL   0x80000000
@@ -1396,12 +1346,12 @@ typedef struct ticcmd_s {
     typedef struct ddplayer_s {
         ticcmd_t        cmd;
         struct mobj_s  *mo;         // pointer to a (game specific) mobj
-        float           viewz;      // focal origin above r.z
-        float           viewheight; // base height above floor for viewz
+        float           viewZ;      // focal origin above r.z
+        float           viewheight; // base height above floor for viewZ
         float           deltaviewheight;
         float           lookdir;    // It's now a float, for mlook.
         int             fixedcolormap;  // can be set to REDCOLORMAP, etc
-        int             extralight; // so gun flashes light up areas
+        int             extraLight; // so gun flashes light up areas
         int             ingame;     // is this player in game?
         int             invoid;     // True if player is in the void
                                     // (not entirely accurate so it shouldn't
