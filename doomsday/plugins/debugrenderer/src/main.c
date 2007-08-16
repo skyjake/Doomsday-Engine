@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -321,7 +321,7 @@ int DG_SetInteger(int name, int value)
 	return result;
 }
 
-char   *DG_GetString(int name)
+char *DG_GetString(int name)
 {
 	char   *result;
 
@@ -331,7 +331,7 @@ char   *DG_GetString(int name)
 	return result;
 }
 
-int DG_SetFloatv(int name, float *values)
+int DG_SetFloatv(int name, const float *values)
 {
 	int     result;
 
@@ -438,15 +438,15 @@ void DG_Fog(int pname, float param)
 	out(2, "Fog");
 }
 
-void DG_Fogv(int pname, void *data)
+void DG_Fogv(int pname, const void *data)
 {
 	in(2, "Fogv (0x%x, %p)", pname, data);
 	gl.Fogv(pname, data);
 	out(2, "Fogv");
 }
 
-int DG_Project(int num, gl_fc3vertex_t * inVertices,
-			   gl_fc3vertex_t * outVertices)
+int DG_Project(int num, gl_fc3vertex_t *inVertices,
+			   gl_fc3vertex_t *outVertices)
 {
 	return gl.Project(num, inVertices, outVertices);
 }
@@ -465,7 +465,7 @@ void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 	out(3, "Color3ub");
 }
 
-void DG_Color3ubv(DGLubyte * data)
+void DG_Color3ubv(const DGLubyte *data)
 {
 	in(3, "Color3ubv (0x%p)", data);
 	gl.Color3ubv(data);
@@ -479,7 +479,7 @@ void DG_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 	out(3, "Color4ub");
 }
 
-void DG_Color4ubv(DGLubyte * data)
+void DG_Color4ubv(const DGLubyte *data)
 {
 	in(3, "Color4ubv (0x%p)", data);
 	gl.Color4ubv(data);
@@ -493,7 +493,7 @@ void DG_Color3f(float r, float g, float b)
 	out(3, "Color3f");
 }
 
-void DG_Color3fv(float *data)
+void DG_Color3fv(const float *data)
 {
 	in(3, "Color3fv (0x%p)", data);
 	gl.Color3fv(data);
@@ -507,7 +507,7 @@ void DG_Color4f(float r, float g, float b, float a)
 	out(3, "Color4f");
 }
 
-void DG_Color4fv(float *data)
+void DG_Color4fv(const float *data)
 {
 	in(3, "Color4fv (0x%p)", data);
 	gl.Color4fv(data);
@@ -521,7 +521,7 @@ void DG_TexCoord2f(float s, float t)
 	out(3, "TexCoord2f");
 }
 
-void DG_TexCoord2fv(float *data)
+void DG_TexCoord2fv(const float *data)
 {
 	in(3, "TexCoord2fv (0x%p)", data);
 	gl.TexCoord2fv(data);
@@ -535,7 +535,7 @@ void DG_MultiTexCoord2f(int target, float s, float t)
 	out(3, "MultiTexCoord2f");
 }
 
-void DG_MultiTexCoord2fv(int target, float *data)
+void DG_MultiTexCoord2fv(int target, const float *data)
 {
 	in(3, "MultiTexCoord2fv (0x%x, 0x%p)", target, data);
 	gl.MultiTexCoord2fv(target, data);
@@ -549,7 +549,7 @@ void DG_Vertex2f(float x, float y)
 	out(3, "Vertex2f");
 }
 
-void DG_Vertex2fv(float *data)
+void DG_Vertex2fv(const float *data)
 {
 	in(3, "Vertex2fv (0x%p)", data);
 	gl.Vertex2fv(data);
@@ -563,24 +563,24 @@ void DG_Vertex3f(float x, float y, float z)
 	out(3, "Vertex3f");
 }
 
-void DG_Vertex3fv(float *data)
+void DG_Vertex3fv(const float *data)
 {
 	in(3, "Vertex3fv (0x%p)", data);
 	gl.Vertex3fv(data);
 	out(3, "Vertex3fv");
 }
 
-void DG_Vertices2ftv(int num, gl_ft2vertex_t * data)
+void DG_Vertices2ftv(int num, const gl_ft2vertex_t *data)
 {
 	gl.Vertices2ftv(num, data);
 }
 
-void DG_Vertices3ftv(int num, gl_ft3vertex_t * data)
+void DG_Vertices3ftv(int num, const gl_ft3vertex_t *data)
 {
 	gl.Vertices3ftv(num, data);
 }
 
-void DG_Vertices3fctv(int num, gl_fct3vertex_t * data)
+void DG_Vertices3fctv(int num, const gl_fct3vertex_t *data)
 {
 	gl.Vertices3fctv(num, data);
 }
@@ -628,7 +628,7 @@ void DG_ArrayElement(int index)
 	INT1_VOID(ArrayElement, index);
 }
 
-void DG_DrawElements(int type, int count, unsigned int *indices)
+void DG_DrawElements(int type, int count, const unsigned int *indices)
 {
 	in(1, "DrawElements (%i, %i, 0x%p)", type, count, indices);
 	gl.DrawElements(type, count, indices);
@@ -656,7 +656,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 	return result;
 }
 
-void DG_DeleteTextures(int num, DGLuint * names)
+void DG_DeleteTextures(int num, const DGLuint *names)
 {
 	in(1, "DeleteTextures (%i, 0x%p)", num, names);
 	gl.DeleteTextures(num, names);
