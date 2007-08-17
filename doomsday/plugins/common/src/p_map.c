@@ -2,10 +2,10 @@
  *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © Raven Software, Corp.
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© Raven Software, Corp.
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  */
 
 /* $Id: p_start.c 3509 2006-08-09 15:06:59Z danij $
