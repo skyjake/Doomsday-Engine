@@ -804,7 +804,7 @@ void DG_PushMatrix(void)
 
     if(glGetError() == GL_STACK_OVERFLOW)
     {
-        Con_Error("DG_PushMatrix: Stack overflow.\n");
+        Con_Error("DG_PushMatrix: Stack overflow.\nEnsure you have current OpenGL Drivers installed on you system.\n");
     }
 }
 
@@ -814,7 +814,7 @@ void DG_PopMatrix(void)
 
     if(glGetError() == GL_STACK_UNDERFLOW)
     {
-        Con_Error("DG_PopMatrix: Stack underflow.\n");
+        Con_Error("DG_PopMatrix: Stack underflow.\nEnsure you have current OpenGL Drivers installed on you system.\n");
     }
 }
 
