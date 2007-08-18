@@ -935,32 +935,8 @@ int DD_GetInteger(int ddvalue)
         case DD_BLOCKMAP_HEIGHT:
             return bmapheight;
 
-        case DD_GAME_EXPORTS:
-            ASSERT_NOT_64BIT();
-            return (int) &gx;
-
         case DD_DYNLIGHT_TEXTURE:
             return (int) GL_PrepareLSTexture(LST_DYNAMIC, NULL);
-
-        case DD_TRACE_ADDRESS:
-            ASSERT_NOT_64BIT();
-            return (int) &trace;
-
-        case DD_TRANSLATIONTABLES_ADDRESS:
-            ASSERT_NOT_64BIT();
-            return (int) translationtables;
-
-        case DD_MAP_NAME:
-            ASSERT_NOT_64BIT();
-            if(mapinfo && mapinfo->name[0])
-                return (int) mapinfo->name;
-            break;
-
-        case DD_MAP_AUTHOR:
-            ASSERT_NOT_64BIT();
-            if(mapinfo && mapinfo->author[0])
-                return (int) mapinfo->author;
-            break;
 
         case DD_MAP_MUSIC:
             if(mapinfo)
@@ -972,12 +948,6 @@ int DD_GetInteger(int ddvalue)
 
         case DD_WINDOW_HEIGHT:
             return theWindow->height;
-
-#ifdef WIN32
-        case DD_WINDOW_HANDLE:
-            ASSERT_NOT_64BIT();
-            return (int) Sys_GetWindowHandle(windowIDX);
-#endif
         }
         return 0;
     }

@@ -1,10 +1,10 @@
-/**\file
+ï»¿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1457,7 +1457,7 @@ uint DL_ProcessSegSection(seg_t *seg, float bottom, float top)
 
     for(con = subContacts[GET_SUBSECTOR_IDX(seg->subsector)]; con; con = con->next)
     {
-        dynnode_t *node;
+        dynnode_t *node = NULL;
         
         switch(con->lum->type)
         {
@@ -1528,7 +1528,7 @@ uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
 
         if(isLit)
         {
-            dynnode_t *node;
+            dynnode_t *node = NULL;
 
             switch(lum->type)
             {
@@ -1571,8 +1571,6 @@ uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
  */
 void DL_InitForSubsector(subsector_t *ssec)
 {
-    sector_t   *sect = ssec->sector;
-
     if(!useDynLights)
         return; // Disabled.
 

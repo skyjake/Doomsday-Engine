@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -2323,7 +2323,6 @@ DGLuint GL_GetRawOtherPart(int idx, texinfo_t **info)
  */
 DGLuint GL_BindTexRaw(rawtex_t *raw)
 {
-    DGLuint texId = 0;
     image_t image;
     int     lump = raw->lump;
 
@@ -2534,6 +2533,7 @@ static void BlackOutlines(byte* pixels, int width, int height)
     }
 }
 
+#if 0 // Currently unused.
 static void EnhanceContrast(byte *pixels, int width, int height)
 {
     int     i, c;
@@ -2553,6 +2553,7 @@ static void EnhanceContrast(byte *pixels, int width, int height)
         }
     }
 }
+#endif
 
 static void SharpenPixels(byte* pixels, int width, int height)
 {

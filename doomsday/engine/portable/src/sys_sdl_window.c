@@ -1,10 +1,10 @@
-/**\file
+ï»¿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -231,11 +231,6 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
         return 1; // Success.
 
     return 0;
-}
-
-static void destroyDDWindow(ddwindow_t *window)
-{
-    
 }
 
 /**

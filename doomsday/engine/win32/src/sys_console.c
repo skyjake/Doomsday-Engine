@@ -191,10 +191,12 @@ static void setAttrib(int flags)
  */
 static void writeText(CHAR_INFO *line, int len)
 {
-    COORD       linesize = {len, 1};
+    COORD       linesize;
     COORD       from = {0, 0};
     SMALL_RECT  rect;
 
+    linesize.X = len;
+    linesize.Y = 1;
     rect.Left = cx;
     rect.Right = cx + len;
     rect.Top = cy;

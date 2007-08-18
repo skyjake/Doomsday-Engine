@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,7 +69,7 @@ static thread_t busyThread;
 static timespan_t busyTime;
 static volatile boolean busyDone;
 static volatile const char* busyError = NULL;
-static float    busyProgress = 0;
+//static float    busyProgress = 0;
 static int      busyFont = 0;
 static int      busyFontHgt;        // Height of the font.
 
@@ -518,7 +519,8 @@ void Con_BusyDrawConsoleOutput(void)
     
     // The text lines.
     topY = y = theWindow->height - busyFontHgt * (2 * LINE_COUNT + .5f);
-    if(newCount > 0 || nowTime >= scrollStartTime && nowTime < scrollEndTime && scrollEndTime > scrollStartTime)
+    if(newCount > 0 ||
+       (nowTime >= scrollStartTime && nowTime < scrollEndTime && scrollEndTime > scrollStartTime))
     {
         if(scrollEndTime - scrollStartTime > 0)
             y += scroll * (scrollEndTime - nowTime) / (scrollEndTime - scrollStartTime) *
@@ -557,7 +559,7 @@ void Con_BusyDrawConsoleOutput(void)
  */
 static void Con_BusyDrawer(void)
 {
-    float       pos;
+    float       pos = 0;
 
     Con_DrawScreenshotBackground(0, 0, theWindow->width, theWindow->height);
 

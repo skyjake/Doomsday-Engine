@@ -1,11 +1,11 @@
-/**\file
+ï»¿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -812,8 +812,8 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
     // End kludge.
 
     // Only segs at sidedef ends can/should be split.
-    if(!(seg == seg->sidedef->segs[0] && !doRight ||
-         seg == seg->sidedef->segs[seg->sidedef->segcount -1] && doRight))
+    if(!((seg == seg->sidedef->segs[0] && !doRight) ||
+         (seg == seg->sidedef->segs[seg->sidedef->segcount -1] && doRight)))
         return;
 
     doCalcSegDivisions(seg->linedef, seg->side, frontSec, div, bottomZ, topZ, doRight);
@@ -826,7 +826,7 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
 static void doApplyWallHeightDivision(rendpoly_t *quad, const seg_t *seg,
                                     sector_t *frontsec, float hi, float low)
 {
-    uint        i, k;
+    uint        i;
     walldiv_t  *div;
 
     for(i = 0; i < 2; ++i)
@@ -847,6 +847,8 @@ static void doApplyWallHeightDivision(rendpoly_t *quad, const seg_t *seg,
         }
 
 #ifdef RANGECHECK
+{
+uint        k;
 for(k = 0; k < div->num; ++k)
     if(div->pos[k] > hi || div->pos[k] < low)
     {
@@ -854,6 +856,7 @@ for(k = 0; k < div->num; ++k)
                   i, div->pos[k], hi, low, div->num);
     }
 #endif
+}
     }
 }
 
@@ -1975,7 +1978,6 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     int         surfaceFlags;
     float       height;
     surface_t  *surface;
-    int         flags = 0;
     sector_t   *polySector;
     float       vec[3];
 

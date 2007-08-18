@@ -1,10 +1,10 @@
-/**\file
+ï»¿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -168,7 +168,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
 
     if(id >= sec->planecount)
         Con_Error("P_DestroyPlaneOfSector: Plane id #%i is not valid for "
-                  "sector #%i", id, GET_SECTOR_IDX(sec));
+                  "sector #%u", id, (uint) GET_SECTOR_IDX(sec));
 
     plane = sec->planes[id];
 
@@ -761,7 +761,6 @@ static void R_PolygonizeWithoutCarving(void)
     for(i = 0; i < numsubsectors; ++i)
     {
         uint        j;
-        fvertex_t  *baseVtx = NULL;
         seg_t     **ptr;
         subsector_t *sub;
         ownerlist_t subSecOwnerList;

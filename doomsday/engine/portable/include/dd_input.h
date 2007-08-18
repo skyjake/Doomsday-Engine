@@ -40,7 +40,7 @@ enum
     IDEV_JOY3,
     IDEV_JOY4,
     NUM_INPUT_DEVICES       // Theoretical maximum.
-};	
+};
 
 typedef enum ddeventtype_e {
     E_TOGGLE,               // two-state device
@@ -60,7 +60,7 @@ typedef enum ddevent_axistype_e {
 } ddevent_axistype_t;
 
 // These are used internally, a cutdown version containing
-// only need-to-know stuff is sent down the games' responder chain. 
+// only need-to-know stuff is sent down the games' responder chain.
 typedef struct ddevent_s {
     uint            device; // e.g. IDEV_KEYBOARD
     ddeventtype_t   type;   // E_TOGGLE, E_AXIS, or E_ANGLE
@@ -84,7 +84,7 @@ typedef struct ddevent_s {
             boolean         isAxis;     // <code>true</code> = controlID is an axis id.
             uint            useclass;   // use a specific bindclass command
             boolean         noclass;
-            
+
             int             data1;      // control is key; state (e.g. EVS_DOWN)
                                         // control is axis; position delta.
         } obsolete;
@@ -98,8 +98,8 @@ typedef struct ddevent_s {
 #define IS_TOGGLE_UP(evp)              (evp->type == E_TOGGLE && evp->toggle.state == ETOG_UP)
 #define IS_TOGGLE_REPEAT(evp)          (evp->type == E_TOGGLE && evp->toggle.state == ETOG_REPEAT)
 #define IS_KEY_TOGGLE(evp)             (evp->device == IDEV_KEYBOARD && evp->type == E_TOGGLE)
-#define IS_KEY_DOWN(evp)               (evp->device == IDEV_KEYBOARD && evp->type == E_TOGGLE && evp->toggle.state == ETOG_DOWN) 
-#define IS_KEY_PRESS(evp)              (evp->device == IDEV_KEYBOARD && evp->type == E_TOGGLE && evp->toggle.state != ETOG_UP) 
+#define IS_KEY_DOWN(evp)               (evp->device == IDEV_KEYBOARD && evp->type == E_TOGGLE && evp->toggle.state == ETOG_DOWN)
+#define IS_KEY_PRESS(evp)              (evp->device == IDEV_KEYBOARD && evp->type == E_TOGGLE && evp->toggle.state != ETOG_UP)
 #define IS_MOUSE_DOWN(evp)             (evp->device == IDEV_MOUSE && IS_TOGGLE_DOWN(evp))
 #define IS_MOUSE_UP(evp)               (evp->device == IDEV_MOUSE && IS_TOGGLE_UP(evp))
 #define IS_MOUSE_MOTION(evp)           (evp->device == IDEV_MOUSE && evp->type == E_AXIS)
@@ -153,7 +153,7 @@ typedef struct inputdev_s {
     uint    numKeys;        // Number of keys for this input device.
     inputdevkey_t *keys;
     uint    numHats;        // NUmber of hats.
-    inputdevhat_t *hats;    
+    inputdevhat_t *hats;
 } inputdev_t;
 
 extern boolean  ignoreInput;

@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -797,7 +797,7 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
              UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (sel ? -1 : 1),
                   false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
-    if(name = B_ShortNameForKey((int) key))
+    if((name = B_ShortNameForKey((int) key)) != NULL)
         sprintf(buf, "%s", name);
     else if(key > 32 && key < 128)
         sprintf(buf, "%c", (char) key);

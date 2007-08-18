@@ -1,10 +1,10 @@
-/**\file
+ï»¿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,8 +66,8 @@
 
 static void destroyDDWindow(ddwindow_t *win);
 static boolean setDDWindow(ddwindow_t *win, int newX, int newY, int newWidth,
-                           int newHeight, int newBPP, uint wFlags,
-                           uint uFlags);
+                           int newHeight, int newBPP, int wFlags,
+                           int uFlags);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -167,7 +167,7 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
 
 static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
                                   int x, int y, int w, int h, int bpp,
-                                  int flags, const char *title, int nCmdShow)
+                                  int flags, const char *title)
 {
     ddwindow_t *win, *pWin = NULL;
     HWND        phWnd = NULL;
@@ -207,8 +207,8 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
     else // Initialize.
     {
         PIXELFORMATDESCRIPTOR pfd;
-        int         pixForm;
-        HDC         hDC;
+        int         pixForm = 0;
+        HDC         hDC = NULL;
 
         // Setup the pixel format descriptor.
         ZeroMemory(&pfd, sizeof(pfd));
@@ -326,13 +326,12 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
                       const char *title, void *data)
 {
     ddwindow_t *win;
-    int         nCmdShow = (data? *((int*) data) : 0); // Currently ignored.
+    //int         nCmdShow = (data? *((int*) data) : 0); // Currently ignored.
 
     if(!winManagerInited)
         return 0; // Window manager not initialized yet.
 
-    win = createDDWindow(app, parentIDX, x, y, w, h, bpp, flags, title,
-                         nCmdShow);
+    win = createDDWindow(app, parentIDX, x, y, w, h, bpp, flags, title);
 
     if(win)
     {   // Success, link it in.
@@ -428,7 +427,7 @@ boolean Sys_SetActiveWindow(uint idx)
 
 static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
                            int newWidth, int newHeight, int newBPP,
-                           uint wFlags, uint uFlags)
+                           int wFlags, int uFlags)
 {
     int             x, y, width, height, bpp, flags;
     HWND            hWnd;

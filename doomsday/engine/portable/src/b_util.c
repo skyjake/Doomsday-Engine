@@ -1,9 +1,10 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -379,28 +380,28 @@ boolean B_CheckAxisPos(ebstate_t test, float testPos, float pos)
 {
     switch(test)
     {
-        case EBAXIS_WITHIN:
-            if(pos > 0 && pos > testPos || pos < 0 && pos < -testPos)
-                return false;
-            break;
-            
-        case EBAXIS_BEYOND:
-            if(!(pos > 0 && pos >= testPos || pos < 0 && pos <= -testPos))
-                return false;
-            break;
-            
-        case EBAXIS_BEYOND_POSITIVE:
-            if(pos < testPos)
-                return false;
-            break;
-            
-        case EBAXIS_BEYOND_NEGATIVE:
-            if(pos > -testPos)
-                return false;
-            break;
-            
-        default:
+    case EBAXIS_WITHIN:
+        if((pos > 0 && pos > testPos) || (pos < 0 && pos < -testPos))
             return false;
+        break;
+        
+    case EBAXIS_BEYOND:
+        if(!((pos > 0 && pos >= testPos) || (pos < 0 && pos <= -testPos)))
+            return false;
+        break;
+        
+    case EBAXIS_BEYOND_POSITIVE:
+        if(pos < testPos)
+            return false;
+        break;
+        
+    case EBAXIS_BEYOND_NEGATIVE:
+        if(pos > -testPos)
+            return false;
+        break;
+        
+    default:
+        return false;
     }
     return true;
 }
@@ -413,8 +414,8 @@ boolean B_CheckCondition(statecondition_t* cond)
     if(cond->type == SCT_TOGGLE_STATE)
     {
         int isDown = (dev->keys[cond->id].isDown != 0);
-        if(isDown && cond->state == EBTOG_DOWN ||
-           !isDown && cond->state == EBTOG_UP)
+        if((isDown && cond->state == EBTOG_DOWN) ||
+           (!isDown && cond->state == EBTOG_UP))
             return fulfilled;
     }
     if(cond->type == SCT_AXIS_BEYOND)

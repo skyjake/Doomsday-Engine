@@ -1,10 +1,10 @@
-/**\file
+ï»¿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -167,9 +167,9 @@ boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
     if(!neighbor)
     {
         // Should never happen...
-        Con_Message("R_ShadowCornerDeltas: No %s neighbor for line %i!\n",
+        Con_Message("R_ShadowCornerDeltas: No %s neighbor for line %u!\n",
                     leftCorner? "left":"right",
-                    GET_LINE_IDX(poly->seg->linedef));
+                    (uint) GET_LINE_IDX(poly->seg->linedef));
         return false;
     }
 
@@ -328,10 +328,12 @@ void R_ShadowEdges(shadowpoly_t *poly)
 
                 // Update orientSec ready for the next iteration?
                 if(i < count - 1)
+                {
                     if(neighbor->L_frontsector == orientSec)
                         orientSec = (neighbor->L_backside? neighbor->L_backsector : NULL);
                     else
                         orientSec = (neighbor->L_frontside? neighbor->L_frontsector : NULL);
+                }
             }
         }
     }

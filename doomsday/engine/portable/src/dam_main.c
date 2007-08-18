@@ -1,10 +1,10 @@
-/**\file
+ï»¿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2699,8 +2699,8 @@ static void finalizeMapData(gamemap_t *map)
                 if(ssegCount == 0) // No segs??
                 {   // Not much more we can do short of rebuilding the map...
                     // Give up. The linedef will become benign soon.
-                    Con_Message(" Warning: Missing %s seg(s) for linedef #%i\n",
-                                (backside? "back" : "front"), li - map->lines);
+                    Con_Message(" Warning: Missing %s seg(s) for linedef #%u\n",
+                                (backside? "back" : "front"), (uint) (li - map->lines));
                 }
                 else
                 {
@@ -2911,7 +2911,8 @@ static void finalizeMapData(gamemap_t *map)
         else
         {
             if(!seg->backseg) // Sanity check.
-                Con_Error("Missing partner for miniseg #%i!", seg - map->segs);
+                Con_Error("Missing partner for miniseg #%i!",
+                          (uint) (seg - map->segs));
         }
     }
     for(i = 0; i < map->numsegs; ++i)
@@ -3146,7 +3147,7 @@ static void createBlockMap(gamemap_t* map)
         horiz = !dy;
         slopePos = (dx ^ dy) > 0;
         slopeNeg = (dx ^ dy) < 0;
-        bx, by;
+
         // extremal lines[i] coords
         minx = (v1[VX] > v2[VX]? v2[VX] : v1[VX]);
         maxx = (v1[VX] > v2[VX]? v1[VX] : v2[VX]);

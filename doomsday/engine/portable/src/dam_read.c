@@ -422,8 +422,8 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
         case 4:
             break;
         default:
-            Con_Error("ReadValue: DDVT_BYTE no conversion from %i bytes.",
-                      size);
+            Con_Error("ReadValue: DDVT_BYTE no conversion from %lu bytes.",
+                      (unsigned long) size);
         }
         args->byteValues[index] = *src;
     }
@@ -467,8 +467,8 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_FLOAT no conversion from %i bytes.",
-                      size);
+            Con_Error("ReadValue: DDVT_FLOAT no conversion from %lu bytes.",
+                      (unsigned long) size);
         }
         args->floatValues[index] = d;
     }
@@ -509,8 +509,8 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             break;
             }
          default:
-            Con_Error("ReadValue: DDVT_SHORT no conversion from %i bytes.",
-                      size);
+            Con_Error("ReadValue: DDVT_SHORT no conversion from %lu bytes.",
+                      (unsigned long) size);
          }
         args->shortValues[index] = d;
     }
@@ -544,8 +544,8 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_FIXED no conversion from %i bytes.",
-                      size);
+            Con_Error("ReadValue: DDVT_FIXED no conversion from %lu bytes.",
+                      (unsigned long) size);
         }
         args->fixedValues[index] = d;
     }
@@ -580,8 +580,8 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_ULONG no conversion from %i bytes.",
-                      size);
+            Con_Error("ReadValue: DDVT_ULONG no conversion from %lu bytes.",
+                      (unsigned long) size);
         }
         args->ulongValues[index] = d;
     }
@@ -633,8 +633,8 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_INT no conversion from %i bytes.",
-                      size);
+            Con_Error("ReadValue: DDVT_INT no conversion from %lu bytes.",
+                      (unsigned long) size);
         }
         args->uintValues[index] = d;
     }
@@ -675,8 +675,8 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             break;
 
         default:
-            Con_Error("ReadValue: %s no conversion from %i bytes.\n",
-                      value_Str(valueType), size);
+            Con_Error("ReadValue: %s no conversion from %lu bytes.\n",
+                      value_Str(valueType), (unsigned long) size);
         }
         args->longValues[index] = d;
     }
@@ -727,8 +727,8 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_INT no conversion from %i bytes.",
-                      size);
+            Con_Error("ReadValue: DDVT_INT no conversion from %lu bytes.",
+                      (unsigned long) size);
         }
         args->intValues[index] = d;
     }
@@ -745,8 +745,8 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_ANGLE no conversion from %i bytes.",
-                      size);
+            Con_Error("ReadValue: DDVT_ANGLE no conversion from %lu bytes.",
+                      (unsigned long) size);
         }
         args->angleValues[index] = d;
     }

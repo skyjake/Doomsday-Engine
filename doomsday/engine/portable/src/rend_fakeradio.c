@@ -1,10 +1,10 @@
-/**\file
+ï»¿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2004-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -338,6 +338,7 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
 
             closed = false;
             if(side == 0 && iter->L_backside != NULL)
+            {
                 if(scanTop)
                 {
                     if(iBFloor >= fCeil)
@@ -348,6 +349,7 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
                     if(iBCeil <= fFloor)
                         closed = true;  // compared to "this" sector anyway
                 }
+            }
 
             // Does this line's length contribute to the alignment of the
             // texture on the seg shadow edge being rendered?
@@ -1167,6 +1169,7 @@ static uint radioEdgeHackType(line_t *line, sector_t *front, sector_t *back,
 
     // Is the back sector closed?
     if(front->SP_floorvisheight >= back->SP_ceilvisheight)
+    {
         if(R_IsSkySurface(&front->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface))
         {
             if(R_IsSkySurface(&back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface))
@@ -1174,6 +1177,7 @@ static uint radioEdgeHackType(line_t *line, sector_t *front, sector_t *back,
         }
         else
             return 1; // Consider it fully closed.
+    }
 
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
