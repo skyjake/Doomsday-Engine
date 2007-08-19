@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
 /*
  * con_busy.c: Console Busy Mode
  *
- * Draws the screen while the main engine thread is working a long 
- * operation. The busy mode can be configured to be displaying a progress 
+ * Draws the screen while the main engine thread is working a long
+ * operation. The busy mode can be configured to be displaying a progress
  * bar, the console output, or a more generic "please wait" message.
  */
 
@@ -90,7 +90,7 @@ static DGLuint  texScreenshot;      // Captured screenshot of the latest frame.
 int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
 {
     int result = 0;
-    
+
     if(busyInited)
     {
         Con_Error("Con_Busy: Already busy.\n");
@@ -104,10 +104,10 @@ int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
 
     busyInited = true;
 
-    // Start the busy worker thread, which will proces things in the 
+    // Start the busy worker thread, which will proces things in the
     // background while we keep the user occupied with nice animations.
     busyThread = Sys_StartThread(worker, workerData);
-    
+
     // Wait for the busy thread to stop.
     Con_BusyLoop();
 
@@ -118,24 +118,24 @@ int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
     {
         Con_AbnormalShutdown((const char*) busyError);
     }
-    
+
     // Make sure the worker finishes before we continue.
-    result = Sys_WaitThread(busyThread);   
+    result = Sys_WaitThread(busyThread);
     busyThread = NULL;
     busyInited = false;
-    
+
     // Make sure that any remaining deferred content gets uploaded.
     if(!(isDedicated || (busyMode & BUSYF_NO_UPLOADS)))
     {
         GL_UploadDeferredContent(0);
     }
-    
+
     return result;
 }
 
 /**
  * Called by the busy worker to shutdown the engine immediately.
- * 
+ *
  * @param message  Message, expected to exist until the engine closes.
  */
 void Con_BusyWorkerError(const char* message)
@@ -145,14 +145,14 @@ void Con_BusyWorkerError(const char* message)
 }
 
 /**
- * Called by the busy worker thread when it has finished processing, 
+ * Called by the busy worker thread when it has finished processing,
  * to end busy mode.
  */
 void Con_BusyWorkerEnd(void)
 {
     if(!busyInited)
         return;
-    
+
     busyDone = true;
 }
 
@@ -173,7 +173,7 @@ static void Con_BusyLoadTextures(void)
         // Not in startup, so take a copy of the current frame contents.
         Con_AcquireScreenshotTexture();
     }
-    
+
     // Need to load the progress indicator?
     if(busyMode & (BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR))
     {
@@ -181,19 +181,19 @@ static void Con_BusyLoadTextures(void)
         // been loaded yet when engine startup is done.
         if(GL_LoadImage(&image, "}data/graphics/loading1.png", false))
         {
-            texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height, 
+            texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height,
                                                     image.pixels, TXCF_NEVER_DEFER);
             GL_DestroyImage(&image);
         }
 
         if(GL_LoadImage(&image, "}data/graphics/loading2.png", false))
         {
-            texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height, 
+            texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height,
                                                     image.pixels, TXCF_NEVER_DEFER);
             GL_DestroyImage(&image);
-        }        
-    }    
-    
+        }
+    }
+
     if(busyMode & BUSYF_CONSOLE_OUTPUT)
     {
         const char* fontName;
@@ -221,12 +221,12 @@ static void Con_BusyDeleteTextures(void)
     {
         FR_DestroyFont(busyFont);
     }
-    
+
     gl.DeleteTextures(2, texLoading);
     texLoading[0] = texLoading[1] = 0;
-    
+
     busyFont = 0;
-    
+
     // Don't release this yet if doing a wipe.
     Con_ReleaseScreenshotTexture();
 }
@@ -241,12 +241,12 @@ void Con_AcquireScreenshotTexture(void)
 #ifdef _DEBUG
     timespan_t startTime;
 #endif
-    
+
     if(texScreenshot)
     {
         Con_ReleaseScreenshotTexture();
     }
-    
+
 #ifdef _DEBUG
     startTime = Sys_GetRealSeconds();
 #endif
@@ -261,9 +261,9 @@ void Con_AcquireScreenshotTexture(void)
                                      TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION);
     glMaxTexSize = oldMaxTexSize;
     M_Free(frame);
-    
+
 #ifdef _DEBUG
-    printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n", 
+    printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n",
            Sys_GetRealSeconds() - startTime);
 #endif
 }
@@ -295,20 +295,20 @@ static void Con_BusyLoop(void)
         gl.LoadIdentity();
         gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
     }
-    
+
     while(!busyDone || (canUpload && GL_GetDeferredCount() > 0))
     {
         Sys_Sleep(20);
-        
+
         // Make sure that any deferred content gets uploaded.
         if(canUpload)
         {
             GL_UploadDeferredContent(15);
         }
-        
+
         // Update the time.
         busyTime = Sys_GetRealSeconds() - startTime;
-        
+
         // Time for an update?
         if(canDraw)
             Con_BusyDrawer();
@@ -319,7 +319,7 @@ static void Con_BusyLoop(void)
         gl.MatrixMode(DGL_PROJECTION);
         gl.PopMatrix();
     }
-    
+
     if(verbose)
     {
         Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
@@ -368,10 +368,10 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     int         backW, backH;
 
     backW = backH = (radius * 2);
-    
+
     pos = MINMAX_OF(0, pos, 1);
     edgeCount = MAX_OF(1, pos * 30);
-    
+
     // Draw a background.
     gl.Disable(DGL_TEXTURING);
     gl.Enable(DGL_BLENDING);
@@ -391,13 +391,13 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     gl.Vertex2f(x - backW*.8f, y - backH*.8f);
     gl.Vertex2f(x, y - backH);
     gl.End();
-    
+
     // Draw the frame.
     gl.Enable(DGL_TEXTURING);
 
     gl.Bind(texLoading[0]);
     GL_DrawRect(x - radius, y - radius, radius*2, radius*2, col[0], col[1], col[2], col[3]);
-    
+
     // Rotate around center.
     gl.MatrixMode(DGL_TEXTURE);
     gl.PushMatrix();
@@ -421,7 +421,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
         gl.Vertex2f(x + cos(angle)*radius, y + sin(angle)*radius);
     }
     gl.End();
-    
+
     gl.MatrixMode(DGL_TEXTURE);
     gl.PopMatrix();
 }
@@ -437,7 +437,7 @@ static int GetBufLines(cbuffer_t* buffer, const cbline_t** oldLines)
     int count;
     int newCount = 0;
     int i, k;
-    
+
     count = Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT, (const cbline_t**)&bufLines);
     for(i = 0; i < count; ++i)
     {
@@ -460,13 +460,13 @@ lineIsNotNew:;
 
 /**
  * Draws a number of console output to the bottom of the screen.
- * FIXME: Wow. I had some weird time hacking the smooth scrolling. Cleanup would be 
+ * FIXME: Wow. I had some weird time hacking the smooth scrolling. Cleanup would be
  *        good some day. -jk
  */
 void Con_BusyDrawConsoleOutput(void)
 {
     cbuffer_t  *buffer;
-    static const cbline_t *visibleBusyLines[2 * LINE_COUNT];   
+    static const cbline_t *visibleBusyLines[2 * LINE_COUNT];
     static float scroll = 0;
     static float scrollStartTime = 0;
     static float scrollEndTime = 0;
@@ -514,9 +514,9 @@ void Con_BusyDrawConsoleOutput(void)
     gl.Vertex2f(theWindow->width, theWindow->height);
     gl.Vertex2f(0, theWindow->height);
     gl.End();
-    
+
     gl.Enable(DGL_TEXTURING);
-    
+
     // The text lines.
     topY = y = theWindow->height - busyFontHgt * (2 * LINE_COUNT + .5f);
     if(newCount > 0 ||
@@ -526,7 +526,7 @@ void Con_BusyDrawConsoleOutput(void)
             y += scroll * (scrollEndTime - nowTime) / (scrollEndTime - scrollStartTime) *
                 busyFontHgt;
     }
-    
+
     for(i = 0; i < 2 * LINE_COUNT; ++i, y += busyFontHgt)
     {
         float color = 1;//lineAlpha[i];
@@ -540,7 +540,7 @@ void Con_BusyDrawConsoleOutput(void)
             color = MINMAX_OF(0, color/2, 1);
         else
             color = 1 - (color - LINE_COUNT);
-        
+
         if(!(line->flags & CBLF_RULER)) // ignore rulers.
         {
             if(!line->text)
@@ -550,7 +550,7 @@ void Con_BusyDrawConsoleOutput(void)
             FR_TextOut(line->text, (theWindow->width - FR_TextWidth(line->text))/2, y);
         }
     }
-    
+
 #undef LINE_COUNT
 }
 
@@ -574,13 +574,13 @@ static void Con_BusyDrawer(void)
         pos = Con_GetProgress();
     }
     Con_BusyDrawIndicator(theWindow->width/2, theWindow->height/2, theWindow->height/12, pos);
-    
+
     // Output from the console?
     if(busyMode & BUSYF_CONSOLE_OUTPUT)
     {
         Con_BusyDrawConsoleOutput();
     }
-    
+
     // Swap buffers.
     gl.Show();
 }
