@@ -806,7 +806,7 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
     if(!seg->linedef || !seg->sidedef)
         return; // Mini-segs arn't drawn.
 
-    // \kludge: Apparently, finalizeMapData() is not fool-proof yet...  
+    // \kludge: Apparently, finalizeMapData() is not fool-proof yet...
     if(!(seg->sidedef->segcount > 0))
         return;
     // End kludge.
@@ -855,8 +855,8 @@ for(k = 0; k < div->num; ++k)
         Con_Error("DivQuad: i=%i, pos (%f), hi (%f), low (%f), num=%i\n",
                   i, div->pos[k], hi, low, div->num);
     }
-#endif
 }
+#endif
     }
 }
 
@@ -1257,7 +1257,7 @@ static void renderSegSection(seg_t *seg, segsection_t section, surface_t *surfac
             quad->flags = 0;
             quad->texoffx = surface->offx + seg->offset;
             quad->texoffy = surface->offy + extraTexYOffset;
-     
+
             surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
 
             if(offsetTexYByTexHeight)
@@ -1318,55 +1318,9 @@ static void renderSegSection(seg_t *seg, segsection_t section, surface_t *surfac
     }
 }
 
-/**
- * Renders the given single-sided seg into the world.
- */
-static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
-{
-    side_t     *side;
-    line_t     *ldef;
-    float       ffloor, fceil;
-    boolean     backSide;
-    sector_t   *frontsec, *fflinkSec, *fclinkSec;
-    int         pid = viewPlayer - players;
-
-    frontsec = seg->sidedef->sector;
-    side = seg->sidedef;
-    backSide = seg->side;
-    ldef = seg->linedef;
-
-    if(!ldef->mapped[pid])
-    {
-        ldef->mapped[pid] = true; // This line is now seen in the map.
-
-        // Send a status report.
-        if(gx.HandleMapObjectStatusReport)
-            gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
-                                           GET_LINE_IDX(ldef),
-                                           DMU_LINE, &pid);
-    }
-
-    fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
-    ffloor = fflinkSec->SP_floorvisheight;
-    fclinkSec = R_GetLinkedSector(ssec, PLN_CEILING);
-    fceil = fclinkSec->SP_ceilvisheight;
-
-    setSurfaceColorsForSide(side);
-    renderSegSection(seg, SEG_MIDDLE, &side->SW_middlesurface, ffloor, fceil,
-                     (ldef->mapflags & ML_DONTPEGBOTTOM)? -(fceil - ffloor) : 0,
-                     /*temp >*/ frontsec, /*< temp*/
-                     /*Peg top?*/ (ldef->mapflags & ML_DONTPEGBOTTOM),
-                     true, side->flags);
-
-    // We KNOW we can make it solid.
-    if(!P_IsInVoid(viewPlayer))
-        C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
-                        seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
-}
-
 static boolean renderSegMiddle(seg_t *seg, segsection_t section, surface_t *surface,
                                float bottom, float top,
-                               sector_t *frontsec, boolean pegBottom,
+                               sector_t *frontsec, boolean pegTop,
                                boolean softSurface,
                                short sideFlags)
 {
@@ -1408,7 +1362,7 @@ static boolean renderSegMiddle(seg_t *seg, segsection_t section, surface_t *surf
 
         if(Rend_MidTexturePos
            (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
-            &texOffY, surface->offy, texinfo->height, !pegBottom))
+            &texOffY, surface->offy, texinfo->height, pegTop))
         {
             const float *topColor = NULL;
             const float *bottomColor = NULL;
@@ -1534,16 +1488,69 @@ static boolean renderSegMiddle(seg_t *seg, segsection_t section, surface_t *surf
 }
 
 /**
+ * Renders the given single-sided seg into the world.
+ */
+static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
+{
+    boolean     solidSeg = false;
+    side_t     *side;
+    line_t     *ldef;
+    float       ffloor, fceil;
+    boolean     backSide;
+    sector_t   *frontsec, *fflinkSec, *fclinkSec;
+    int         pid = viewPlayer - players;
+
+    frontsec = seg->sidedef->sector;
+    side = seg->sidedef;
+    backSide = seg->side;
+    ldef = seg->linedef;
+
+    if(!ldef->mapped[pid])
+    {
+        ldef->mapped[pid] = true; // This line is now seen in the map.
+
+        // Send a status report.
+        if(gx.HandleMapObjectStatusReport)
+            gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
+                                           GET_LINE_IDX(ldef),
+                                           DMU_LINE, &pid);
+    }
+
+    fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
+    ffloor = fflinkSec->SP_floorvisheight;
+    fclinkSec = R_GetLinkedSector(ssec, PLN_CEILING);
+    fceil = fclinkSec->SP_ceilvisheight;
+
+    setSurfaceColorsForSide(side);
+
+    // Create the wall sections.
+
+    // Middle section.
+    if(side->sections[SEG_MIDDLE].frameflags & SUFINF_PVIS)
+    {
+        renderSegSection(seg, SEG_MIDDLE, &side->SW_middlesurface, ffloor, fceil,
+                         (ldef->mapflags & ML_DONTPEGBOTTOM)? -(fceil - ffloor) : 0,
+                         /*temp >*/ frontsec, /*< temp*/
+                         /*Peg top?*/ (ldef->mapflags & ML_DONTPEGBOTTOM),
+                         true, side->flags);
+    }
+
+    if(!P_IsInVoid(viewPlayer))
+        solidSeg = true;
+
+    return solidSeg;
+}
+
+/**
  * Renders wall sections for given two-sided seg.
  */
-static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
+static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 {
     int         solidSeg = false;
     sector_t   *backsec;
     side_t     *backsid, *side;
     line_t     *ldef;
-    float       ffloor, fceil, bfloor, bceil, fsh, bsh;
-    float      *vL_XY, *vR_XY;
+    float       ffloor, fceil, bfloor, bceil, bsh;
     boolean     backSide;
     sector_t   *frontsec, *fflinkSec, *fclinkSec;
     int         pid = viewPlayer - players;
@@ -1569,21 +1576,16 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     if(backsec == frontsec &&
        side->SW_toptexture == 0 && side->SW_bottomtexture == 0 &&
        side->SW_middletexture == 0)
-       return; // Ugh... an obvious wall seg hack. Best take no chances...
+       return false; // Ugh... an obvious wall seg hack. Best take no chances...
 
     fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
     ffloor = fflinkSec->SP_floorvisheight;
     fclinkSec = R_GetLinkedSector(ssec, PLN_CEILING);
     fceil = fclinkSec->SP_ceilvisheight;
-    fsh = fceil - ffloor;
 
     bceil = backsec->SP_ceilvisheight;
     bfloor = backsec->SP_floorvisheight;
     bsh = bceil - bfloor;
-
-    // Get the start and end vertices, left then right.
-    vL_XY = seg->SG_v1pos;
-    vR_XY = seg->SG_v2pos;
 
     setSurfaceColorsForSide(side);
 
@@ -1600,8 +1602,8 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 
         solidSeg = renderSegMiddle(seg, SEG_MIDDLE, &side->SW_middlesurface,
                                    MAX_OF(bfloor, ffloor), MIN_OF(bceil, fceil),
-                                   frontsec,
-                                   !(ldef->mapflags & ML_DONTPEGBOTTOM),
+                                   /*temp >*/ frontsec, /*< temp*/
+                                   /*Peg top?*/ (ldef->mapflags & ML_DONTPEGBOTTOM),
                                    softSurface, side->flags);
     }
 
@@ -1648,7 +1650,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 
     // Can we make this a solid segment in the clipper?
     if(solidSeg == -1)
-        return; // NEVER (we have a hole we couldn't fix).
+        return false; // NEVER (we have a hole we couldn't fix).
 
     if(!solidSeg) // We'll have to determine whether we can...
     {
@@ -1676,14 +1678,16 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     }
 
     if(solidSeg && !P_IsInVoid(viewPlayer))
-        C_AddViewRelSeg(vL_XY[VX], vL_XY[VY], vR_XY[VX], vR_XY[VY]);
+        return true;
+
+    return false;
 }
 
 float Rend_SectorLight(sector_t *sec)
 {
     if(levelFullBright)
         return 1.0f;
-    
+
     // Apply light adaptation
     return sec->lightlevel + Rend_GetLightAdaptVal(sec->lightlevel);
 }
@@ -2117,10 +2121,18 @@ static void Rend_RenderSubsector(uint ssecidx)
            !(seg->linedef->flags & LINEF_BENIGN) && // Benign linedefs are not rendered.
            (seg->frameflags & SEGINF_FACINGFRONT))
         {
+            boolean     solid;
+
             if(!seg->SG_backsector || !seg->SG_frontsector)
-                Rend_RenderSSWallSeg(seg, ssec);
+                solid = Rend_RenderSSWallSeg(seg, ssec);
             else
-                Rend_RenderWallSeg(seg, ssec);
+                solid = Rend_RenderWallSeg(seg, ssec);
+
+            if(solid)
+            {
+                C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
+                                seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
+            }
         }
 
         *ptr++;
@@ -2135,7 +2147,15 @@ static void Rend_RenderSubsector(uint ssecidx)
 
             // Let's first check which way this seg is facing.
             if(seg->frameflags & SEGINF_FACINGFRONT)
-                Rend_RenderSSWallSeg(seg, ssec);
+            {
+                boolean     solid = Rend_RenderSSWallSeg(seg, ssec);
+
+                if(solid)
+                {
+                    C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
+                                    seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
+                }
+            }
         }
     }
 
