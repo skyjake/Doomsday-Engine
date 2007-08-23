@@ -464,8 +464,7 @@ static listnode_t *splitList(listnode_t *list)
     return listb;
 }
 
-static listnode_t *doMergeSort(listnode_t *list,
-                                   comparefunc funcCompare)
+static listnode_t *doMergeSort(listnode_t *list, comparefunc funcCompare)
 {
     listnode_t *p;
 
@@ -673,6 +672,7 @@ void *List_ExtractBack(linklist_t *llist)
 
 /**
  * Extract an element from the list at the given position.
+ * \note An O(n) opperation.
  *
  * @param llist     Ptr to the list to extract an element from.
  * @param position  Position of the element to be extracted.
@@ -726,6 +726,7 @@ void *List_GetBack(const linklist_t *llist)
 
 /**
  * Retrieve a ptr to an element at the given position in a linked list.
+ * \note An O(n) opperation.
  *
  * @param llist     Ptr to the list to retrieve the element from.
  * @param position  Position of the element to be retrieved.
@@ -744,6 +745,7 @@ void *List_GetAt(const linklist_t *llist, listindex_t position)
 
 /**
  * Exchange two elements in the linked list.
+ * \note An O(n+n) opperation!
  *
  * @param llist     Ptr to the list to exchange the elements of.
  * @param positionA Position of the first element being exchanged.
@@ -764,6 +766,7 @@ int List_Exchange(linklist_t *llist, listindex_t positionA,
 
 /**
  * Search the link list for a specific element.
+ * \note An O(n) opperation.
  *
  * @param llist     Ptr to the list to be searched.
  * @return          Index of the element in the list if found, else @c <0.
