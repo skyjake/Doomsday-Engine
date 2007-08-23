@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -39,5 +39,6 @@
 #include "m_vector.h"
 #include "m_profiler.h"
 #include "m_md5.h"
+#include "m_linkedlist.h"
 
 #endif
