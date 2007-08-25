@@ -76,19 +76,88 @@ int     DM_Mus_Play(int looped);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+boolean sdl_sound_init = false;
+Sound_Version compiled;
+Sound_Version linked;
+Sound_DecoderInfo **decoder_info;
+static int verbose;
 
 // CODE --------------------------------------------------------------------
 
+static void message(const char *message)
+{
+    Con_Message("SDL_Sound: %s\n", message);
+}
+
 void DS_Error(void)
 {
+    char        buf[500];
+
+    sprintf(buf, "ERROR: %s", Sound_GetError());
+    message(buf);
 }
 
 int DS_Init(void)
 {
+    if(sdl_sound_init)
+        return true;
+    Con_Message("Initialising SDL_sound\n");
+    if(!Sound_Init())
+    {
+        message(Sound_GetError());
+        return false;
+    }
+    SOUND_VERSION(&compiled);
+    Sound_GetLinkedVersion(&linked);
+    Con_Message("SDL_Sound: Compiled with SDL_sound version %d.%d.%d\n",compiled.major, compiled.minor, compiled.patch);
+    Con_Message("SDL_Sound: Linked with SDL_sound version %d.%d.%d\n", linked.major, linked.minor, linked.patch);
+    if ((compiled.major < linked.major) || \
+       ((compiled.minor < linked.minor) && (compiled.major == linked.major)) || \
+       ((compiled.patch < linked.patch) && (compiled.minor == linked.minor) && (compiled.major == linked.major)))
+    {
+       Con_Message("ERROR: SDL_Sound: Linked SDL_sound library out of date\n");
+        return false;
+    }
+
+/* === */
+
+    const Sound_DecoderInfo **decoder_info = Sound_AvailableDecoders();
+    const Sound_DecoderInfo **i;
+    const char **ext;
+
+    Con_Message("SDL_Sound: Supported sound decoders:\n");
+    if (decoder_info == NULL)
+    {
+        Con_Message("ERROR: SDL_Sound: No supported sound decoders\n");
+        return false;
+    }
+    else
+    {
+        for (i = decoder_info; *i != NULL; i++)
+        {
+            Con_Message("SDL_Sound: %s decoder\n", (*i)->description);
+            if((verbose = ArgExists("-verbose")))
+               {
+               Con_Message("           supports: ");
+                   for (ext = (*i)->extensions; *ext != NULL; ext++)
+                   Con_Message("%s, ", *ext);
+                   Con_Message("\n");
+               }
+        } /* for */
+    } /* else */
+
+
+/* === */
+    sdl_sound_init = true;
+    return true;
 }
 
 void DS_Shutdown(void)
 {
+    if(!sdl_sound_init)
+        return;
+    Sound_Quit();
+    sdl_sound_init = false;
 }
 
 sfxbuffer_t *DS_CreateBuffer(int flags, int bits, int rate)
