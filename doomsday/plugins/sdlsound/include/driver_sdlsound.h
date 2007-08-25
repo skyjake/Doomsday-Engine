@@ -24,6 +24,7 @@
 #ifndef __DOOMSDAY_SDLSOUND_AUDIO_H__
 #define __DOOMSDAY_SDLSOUND_AUDIO_H__
 
+#include "doomsday.h"
 #include "sys_sfxd.h"
 #include "sys_musd.h"
 #include "mus2midi.h"
