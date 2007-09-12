@@ -21,6 +21,15 @@
  * Boston, MA  02110-1301  USA
  */
 
+/**
+* Desgin and Implmentation notes, for other hackers.
+* MIDI, and External Audio is handled by SDL_sound. CD Audio is to be handled
+* by native SDL, and ideally directed into SDL_sound for further processing.
+*
+* SDL_sound has no concept of channels
+*/
+
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "driver_sdlsound.h"
@@ -102,6 +111,12 @@ int DS_Init(void)
     if(sdl_sound_init)
         return true;
     Con_Message("Initialising SDL_sound\n");
+    if(SDL_InitSubSystem(SDL_INIT_AUDIO))
+    {
+        message(SDL_GetError());
+        return false;
+    }
+
     if(!Sound_Init())
     {
         message(Sound_GetError());
@@ -156,6 +171,7 @@ void DS_Shutdown(void)
 {
     if(!sdl_sound_init)
         return;
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
     Sound_Quit();
     sdl_sound_init = false;
 }
