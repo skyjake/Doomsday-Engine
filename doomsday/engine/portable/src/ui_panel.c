@@ -126,7 +126,6 @@ cvarbutton_t cvarbuttons[] = {
     {0, "rend-sprite-precache"},
     {0, "rend-sprite-noz"},
     {0, "rend-sprite-blend"},
-    {0, "rend-sprite-lit"},
     {0, "rend-model"},
     {0, "rend-model-inter"},
     {0, "rend-model-precache"},
@@ -322,6 +321,7 @@ uidata_slider_t sld_halo_zmagdiv =
     { 1, 200, 0, .01f, true, "rend-halo-zmag-div" };
 uidata_slider_t sld_halo_radmin =
     { 1, 80, 0, .01f, true, "rend-halo-radius-min" };
+uidata_slider_t sld_sprite_lights = { 0, 10, 0, 1, false, "rend-sprite-lights" };
 
 uidata_edit_t ed_server_password =
     { panel_sv_password, 100, "server-password" };
@@ -563,8 +563,8 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              680, 490, 70, 55,   "rend-sprite-noz", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Additive blending for sprites", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 550, 70, 55,   "rend-sprite-blend", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Sprites lit by dynamic lights", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 610, 70, 55,   "rend-sprite-lit", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Max dynamic lights on sprites", UIText_Drawer },
+    { UI_SLIDER,    0,  0,              680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_sprite_lights },
     { UI_TEXT,      0,  0,              300, 670, 0, 55,    "Align sprites to...", UIText_Drawer },
     { UI_LIST,      0,  0,              680, 670, 300, 115, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_sprite_align },
     { UI_TEXT,      0,  0,              300, 790, 0, 55,    "Smooth actor rotation", UIText_Drawer },

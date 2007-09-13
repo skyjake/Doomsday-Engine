@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -101,13 +101,13 @@ plane_t *R_NewPlaneForSector(sector_t *sec, planetype_t type)
 
     if(!sec)
         return NULL; // Do wha?
-    
+
     if(sec->planecount >= 2)
         Con_Error("P_NewPlaneForSector: Cannot create plane for sector, "
                   "limit is %i per sector.\n", 2);
 
     // Allocate the new plane.
-    plane = Z_Malloc(sizeof(plane_t), PU_LEVEL, 0);
+    plane = Z_Calloc(sizeof(plane_t), PU_LEVEL, 0);
     suf = &plane->surface;
 
     // Allocate a new plane list for this sector.
@@ -124,14 +124,12 @@ plane_t *R_NewPlaneForSector(sector_t *sec, planetype_t type)
         Z_Free(sec->planes); // Free the old list.
     sec->planes = newList;
 
-    // Setup header for DMU. 
+    // Setup header for DMU.
     plane->header.type = DMU_PLANE;
 
     // Initalize the plane.
     for(i = 0; i < 3; ++i)
         plane->glowrgb[i] = 1;
-    plane->glow = 0;
-    plane->height = 0;
 
     // The back pointer (temporary)
     plane->sector = sec;
@@ -1091,8 +1089,8 @@ static lineowner_t *sortLineOwners(lineowner_t *list,
     return list;
 }
 
-static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr,
-                                 lineowner_t **storage)
+static void setVertexLineOwner(vertex_t *vtx, line_t *lineptr,
+                               lineowner_t **storage)
 {
     lineowner_t *p, *newOwner;
 
@@ -1139,11 +1137,8 @@ static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr,
 }
 
 /**
- * Generates an array of sector references for each vertex. The list
- * includes all the sectors the vertex belongs to.
- *
- * Generates an array of line references for each vertex. The list includes
- * all the lines the vertex belongs to sorted by angle, (the list is
+ * Generates the line owner rings for each vertex. Each ring includes all
+ * the lines which the vertex belongs to sorted by angle, (the rings is
  * arranged in clockwise order, east = 0).
  */
 static void R_BuildVertexOwners(void)
@@ -1170,7 +1165,7 @@ static void R_BuildVertexOwners(void)
             for(p = 0; p < 2; ++p)
             {
                 vertex_t    *vtx = line->L_v(p);
-                R_SetVertexLineOwner(vtx, line, &allocator);
+                setVertexLineOwner(vtx, line, &allocator);
             }
         }
     }
@@ -1442,8 +1437,6 @@ static void R_BuildSectorLinks(void)
         }
     }
 }
-
-
 
 /**
  * Determines if the given sector is made up of any self-referencing
@@ -1780,7 +1773,7 @@ void R_RationalizeSectors(void)
                                 if(scanOwners)
                                 {
                                     vertex_t    *vtx2[2];
-                                    
+
                                     vtx2[0] = line->L_v1;
                                     vtx2[1] = line->L_v2;
 
@@ -1818,14 +1811,14 @@ void R_RationalizeSectors(void)
 void R_SetupFog(void)
 {
     int flags = 0;
-    
+
     if(!mapinfo)
     {
         // Go with the defaults.
         Con_Execute(CMDS_DDAY,"fog off", true, false);
         return;
     }
-    
+
     // Check the flags.
     flags = mapinfo->flags;
     if(flags & MIF_FOG)

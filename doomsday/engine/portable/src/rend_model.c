@@ -1,10 +1,10 @@
-/**\file
+ï»¿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,6 @@
 // MACROS ------------------------------------------------------------------
 
 #define MAX_VERTS           4096    // Maximum number of vertices per model.
-#define MAX_MODEL_LIGHTS    10
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)         qatan2(y,x)
 #define QASIN(x)            asin(x) // \fixme Precalculate arcsin.
@@ -63,22 +62,6 @@ typedef enum rendcmd_e {
     RC_OTHER_COORDS,
     RC_BOTH_COORDS
 } rendcmd_t;
-
-typedef struct {
-    boolean used;
-    fixed_t dist;               // Only an approximation.
-    lumobj_t *lum;
-    float   worldVector[3];     // Light direction vector (world space).
-    float   vector[3];          // Light direction vector (model space).
-    float   color[3];           // How intense the light is (0..1, RGB).
-    float   offset;
-    float   lightSide, darkSide;    // Factors for world light.
-} mlight_t;
-
-typedef struct {
-    float       z;
-    float       gzt;
-} modellightitervars_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -100,17 +83,6 @@ float   rend_model_lod = 256;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-//static float worldLight[3] = { .267261f, .534522f, .801783f };
-static float worldLight[3] = { .200445f, .400891f, .601336f };
-static float ceilingLight[3] = { 0, 0, 1 };
-static float floorLight[3] = { 0, 0, -1 };
-
-static mlight_t lights[MAX_MODEL_LIGHTS] = {
-    // The first light is the world light.
-    {false, 0, NULL}
-};
-static int numLights;
-
 // Fixed-size vertex arrays for the model.
 static gl_vertex_t modelVertices[MAX_VERTS];
 static gl_vertex_t modelNormals[MAX_VERTS];
@@ -119,7 +91,6 @@ static gl_texcoord_t modelTexCoords[MAX_VERTS];
 
 // Global variables for ease of use. (Egads!)
 static float modelCenter[3];
-static float ambientColor[3];
 static int activeLod;
 static char *vertexUsage;
 
@@ -154,81 +125,12 @@ static __inline float qatan2(float y, float x)
     //return atan2(y, x);
 }
 
-static void scaleAmbientRgb(float *out, const float *in, float mul)
-{
-    int         i;
-    float       val;
-
-    if(mul < 0)
-        mul = 0;
-    if(mul > 1)
-        mul = 1;
-    for(i = 0; i < 3; ++i)
-    {
-        val = in[i] * mul;
-
-        if(out[i] < val)
-            out[i] = val;
-    }
-}
-
-static void scaleFloatRgb(float *out, const float *in, float mul)
-{
-    memset(out, 0, sizeof(float) * 3);
-    scaleAmbientRgb(out, in, mul);
-}
-
 /**
  * Linear interpolation between two values.
  */
 float __inline Mod_Lerp(float start, float end, float pos)
 {
     return end * pos + start * (1 - pos);
-}
-
-/**
- * Iterator for processing light sources around a model.
- */
-boolean Mod_LightIterator(lumobj_t *lum, fixed_t xyDist, void *data)
-{
-    modellightitervars_t *vars = (modellightitervars_t*) data;
-    fixed_t     dist, zDist;
-    int         i, maxIndex = 0;
-    fixed_t     maxDist = -1;
-    mlight_t   *light;
-
-    if(lum->type != LT_OMNI)
-        return true; // Only interested in omni lights.
-
-    zDist = (FLT2FIX(vars->z + vars->gzt) >> 1) -
-             FLT2FIX(lum->pos[VZ] + LUM_OMNI(lum)->zOff);
-    dist = P_ApproxDistance(xyDist, zDist);
-
-    // If the light is too far away, skip it.
-    if(dist > (dlMaxRad << FRACBITS))
-        return true;
-
-    // See if this lumobj is close enough to make it to the list.
-    // (In most cases it should be the case.)
-    for(i = 1, light = lights + 1; i < modelLight; ++i, light++)
-    {
-        if(light->dist > maxDist)
-        {
-            maxDist = light->dist;
-            maxIndex = i;
-        }
-    }
-    // Now we know the farthest light on the current list (at maxIndex).
-    if(dist < maxDist)
-    {
-        // The new light is closer. Replace the old max.
-        lights[maxIndex].lum = lum;
-        lights[maxIndex].dist = dist;
-        lights[maxIndex].used = true;
-        if(numLights < maxIndex + 1)
-            numLights = maxIndex + 1;
-    }
-    return true;
 }
 
 /**
@@ -372,11 +274,11 @@ void Mod_MirrorVertices(int count, gl_vertex_t *v, int axis)
  * Calculate vertex lighting.
  */
 void Mod_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
-                      byte alpha, float ambient[3])
+                      int numLights, vlight_t *lights, float ambient[4])
 {
     int         i, k;
     float       color[3], extra[3], *dest, dot;
-    mlight_t   *light;
+    vlight_t   *light;
 
     for(i = 0; i < count; ++i, out++, normal++)
     {
@@ -444,19 +346,19 @@ void Mod_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
             // This is the final color.
             out->rgba[k] = (byte) (255 * color[k]);
         }
-        out->rgba[3] = alpha;
+        out->rgba[CA] = (byte) (255 * ambient[CA]);
     }
 }
 
 /**
  * Set all the colors in the array to bright white.
  */
-void Mod_FullBrightVertexColors(int count, gl_color_t *colors, byte alpha)
+void Mod_FullBrightVertexColors(int count, gl_color_t *colors, float alpha)
 {
     for(; count-- > 0; colors++)
     {
         memset(colors->rgba, 255, 3);
-        colors->rgba[3] = alpha;
+        colors->rgba[3] = (byte) (255 * alpha);
     }
 }
 
@@ -527,13 +429,11 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     int         i, c;
     float       endPos, offset;
     float       alpha, customAlpha;
-    float       dist, intensity, lightCenter[3], delta[3], color[4];
-    float       ambient[3];
+    float       delta[3], color[4];
+    float       ambient[4];
     float       shininess, *shinyColor;
     float       normYaw, normPitch, shinyAng, shinyPnt;
     float       inter = params->inter;
-    mlight_t   *light;
-    byte        byteAlpha;
     blendmode_t blending = mf->def->sub[number].blendmode;
     DGLuint     skinTexture = 0, shinyTexture = 0;
     int         zSign = (params->mirror? -1 : 1);
@@ -577,7 +477,6 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
         return;                 // Fully transparent.
     if(alpha > 1)
         alpha = 1;
-    byteAlpha = alpha * 255;
 
     // Extra blending modes.
     if(subFlags & MFF_SUBTRACT)
@@ -666,7 +565,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     gl.PushMatrix();
 
     // Model space => World space
-    gl.Translatef(params->center[VX] + params->srvo[VX] + 
+    gl.Translatef(params->center[VX] + params->srvo[VX] +
                     Mod_Lerp(mf->offset[VX], mfNext->offset[VX], inter),
                   params->center[VZ] + params->srvo[VZ] +
                     Mod_Lerp(mf->offset[VY], mfNext->offset[VY], inter),
@@ -744,73 +643,34 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 
     // Calculate lighting.
     if(params->uniformColor)
-    {
-        // Specified uniform color.
+    {   // Specified uniform color.
         color[0] = params->rgb[0];
         color[1] = params->rgb[1];
         color[2] = params->rgb[2];
-        color[3] = byteAlpha / 255.0f;
+        color[3] = alpha;
         Mod_FixedVertexColors(numVerts, modelColors, color);
     }
     else if((params->lightLevel < 0 || (subFlags & MFF_FULLBRIGHT)) &&
             !(subFlags & MFF_DIM))
-    {
-        // Fullbright white.
-        ambient[0] = ambient[1] = ambient[2] = 1;
-        Mod_FullBrightVertexColors(numVerts, modelColors, byteAlpha);
+    {   // Fullbright white.
+        ambient[CR] = ambient[CG] = ambient[CB] = ambient[CA] = 1;
+        Mod_FullBrightVertexColors(numVerts, modelColors, alpha);
     }
     else
-    {
+    {   // Lit normally.
+        extern float ambientColor[3];
+
+        uint        i;
+        vlight_t   *light;
+
         memcpy(ambient, ambientColor, sizeof(float) * 3);
+        ambient[CA] = alpha;
 
-        // Calculate color for light sources nearby.
-        // Rotate light vectors to model's space.
-        for(i = 0, light = lights; i < numLights; ++i, light++)
+        // We need to make some adjustments to the light vectors.
+        for(i = 0; i < params->numLights; ++i)
         {
-            if(!light->used)
-                continue;
+            light = &params->lights[i];
 
-            if(light->lum)
-            {
-                lumobj_t       *l = light->lum;
-
-                dist = FIX2FLT(light->dist);
-
-                // The intensity of the light.
-                intensity = (1 - dist / (LUM_OMNI(l)->radius * 2)) * 2;
-                if(intensity < 0)
-                    intensity = 0;
-                if(intensity > 1)
-                    intensity = 1;
-
-                if(intensity == 0)
-                {   // No point in lighting with this!
-                    light->used = false;
-                    continue;
-                }
-
-                // The center of the light source.
-                lightCenter[VX] = l->pos[VX];
-                lightCenter[VY] = l->pos[VY];
-                lightCenter[VZ] = l->pos[VZ] + LUM_OMNI(l)->zOff;
-
-                intensity *= reciprocal255;
-
-                // Calculate the normalized direction vector,
-                // pointing out of the model.
-                for(c = 0; c < 3; ++c)
-                {
-                    light->vector[c] =
-                        (lightCenter[c] - modelCenter[c]) / dist;
-                    // ...and the color of the light.
-                    light->color[c] = l->color[c] * intensity;
-                }
-            }
-            else
-            {
-                memcpy(lights[i].vector, lights[i].worldVector,
-                       sizeof(lights[i].vector));
-            }
             // We must transform the light vector to model space.
             M_RotateVector(light->vector, -params->yaw, -params->pitch);
             // Quick hack: Flip light normal if model inverted.
@@ -820,8 +680,9 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
                 light->vector[VY] = -light->vector[VY];
             }
         }
-        Mod_VertexColors(numVerts, modelColors, modelNormals, byteAlpha,
-                         ambient);
+
+        Mod_VertexColors(numVerts, modelColors, modelNormals,
+                         params->numLights, params->lights, ambient);
     }
 
     // Calculate shiny coordinates.
@@ -912,7 +773,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
         gl.Disable(DGL_CULL_FACE);
 
     // Render using multiple passes?
-    if(!modelShinyMultitex || shininess <= 0 || byteAlpha < 255 ||
+    if(!modelShinyMultitex || shininess <= 0 || alpha < 1 ||
        blending != BM_NORMAL || !(subFlags & MFF_SHINY_SPECULAR) ||
        numTexUnits < 2 || !envModAdd)
     {
@@ -1008,150 +869,18 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 }
 
 /**
- * Setup the light/dark factors and dot product offset for glow lights.
- */
-void Mod_GlowLightSetup(mlight_t *light)
-{
-    light->lightSide = 1;
-    light->darkSide = 0;
-    light->offset = .3f;
-}
-
-/**
  * Render all the submodels of a model.
  */
 void Rend_RenderModel(const modelparams_t *params)
 {
-    rendpoly_t *quad;
     int         i;
-    float       dist;
-    mlight_t   *light;
 
     if(!params || !params->mf)
         return;
 
-    numLights = 0;
-
-    // This way the distance darkening has an effect.
-    quad = R_AllocRendPoly(RP_NONE, false, 1);
-
-    // Note: Light adaptation has already been applied
-    RL_VertexColors(quad, params->lightLevel, params->distance, params->rgb, 1);
-
-    // Determine the ambient light affecting the model.
-    for(i = 0; i < 3; ++i)
-        ambientColor[i] = quad->vertices[0].color.rgba[i] * reciprocal255;
-
-    R_FreeRendPoly(quad);
-
-    if(modelLight)
-    {
-        memset(lights, 0, sizeof(lights));
-
-        // The model should always be lit with world light.
-        numLights++;
-        lights[0].used = true;
-
-        // Set the correct intensity.
-        for(i = 0; i < 3; ++i)
-        {
-            lights->worldVector[i] = worldLight[i];
-            lights->color[i] = ambientColor[i];
-        }
-
-        if(params->starkLight)
-        {
-            lights->lightSide = .35f;
-            lights->darkSide = .5f;
-            lights->offset = 0;
-        }
-        else
-        {
-            // World light can both light and shade. Normal objects
-            // get more shade than light (to prevent them from
-            // becoming too bright when compared to ambient light).
-            lights->lightSide = .2f;
-            lights->darkSide = .8f;
-            lights->offset = .3f;
-        }
-
-        // Plane glow?
-        if(params->hasGlow)
-        {
-            float glowHeight;
-
-            // Ceiling glow
-            glowHeight =
-                (MAX_GLOWHEIGHT * params->ceilGlowAmount) * glowHeightFactor;
-            // Don't make too small or too large glows.
-            if(glowHeight > 2)
-            {
-                if(glowHeight > glowHeightMax)
-                    glowHeight = glowHeightMax;
-
-                if(params->ceilGlowRGB[0] > 0 || params->ceilGlowRGB[1] > 0 ||
-                   params->ceilGlowRGB[2] > 0)
-                {
-                    light = lights + numLights++;
-                    light->used = true;
-                    Mod_GlowLightSetup(light);
-                    memcpy(light->worldVector, &ceilingLight,
-                           sizeof(ceilingLight));
-                    dist = 1 - (params->ceilHeight - params->gzt) / glowHeight;
-                    scaleFloatRgb(light->color, params->ceilGlowRGB, dist);
-                    scaleAmbientRgb(ambientColor, params->ceilGlowRGB, dist / 3);
-                }
-            }
-
-            // Floor glow
-            glowHeight =
-                (MAX_GLOWHEIGHT * params->floorGlowAmount) * glowHeightFactor;
-            // Don't make too small or too large glows.
-            if(glowHeight > 2)
-            {
-                if(glowHeight > glowHeightMax)
-                    glowHeight = glowHeightMax;
-
-                if(params->floorGlowRGB[0] > 0 || params->floorGlowRGB[1] > 0||
-                   params->floorGlowRGB[2] > 0)
-                {
-                    light = lights + numLights++;
-                    light->used = true;
-                    Mod_GlowLightSetup(light);
-                    memcpy(light->worldVector, &floorLight, sizeof(floorLight));
-                    dist = 1 - (params->center[VZ] - params->floorHeight) /
-                                   glowHeight;
-                    scaleFloatRgb(light->color, params->floorGlowRGB, dist);
-                    scaleAmbientRgb(ambientColor, params->floorGlowRGB, dist / 3);
-                }
-            }
-        }
-    }
-
-    // Add extra light using dynamic lights.
-    if(modelLight > numLights && dlInited && params->subsector)
-    {
-        modellightitervars_t vars;
-
-        vars.z = params->center[VZ];
-        vars.gzt = params->gzt;
-
-        // Find the nearest sources of light. They will be used to
-        // light the vertices. First initialize the array.
-        for(i = numLights; i < MAX_MODEL_LIGHTS; ++i)
-            lights[i].dist = DDMAXINT;
-
-        DL_LumRadiusIterator(params->subsector, FLT2FIX(params->center[VX]),
-                          FLT2FIX(params->center[VY]), dlMaxRad << FRACBITS,
-                          &vars, Mod_LightIterator);
-    }
-
-    // Don't use too many lights.
-    if(numLights > modelLight)
-        numLights = modelLight;
-
-    // Render all the models associated with the vissprite.
+    // Render all the submodels of this model.
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
+    {
         if(params->mf->sub[i].model)
         {
             boolean disableZ = (params->mf->flags & MFF_DISABLE_Z_WRITE ||
@@ -1166,4 +895,5 @@ void Rend_RenderModel(const modelparams_t *params)
             if(disableZ)
                 gl.Enable(DGL_DEPTH_WRITE);
         }
+    }
 }

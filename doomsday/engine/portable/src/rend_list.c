@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -202,6 +202,7 @@ typedef struct {
 } brightdynlightparams_t;
 
 typedef struct {
+    uint        lastIdx;
     rendpoly_t *poly;
     primhdr_t  *hdr;
     DGLuint     lastDynTexture;
@@ -384,7 +385,7 @@ static void addMaskedPoly(rendpoly_t *poly)
  * @param distanceOverride If positive, this distance will be used for ALL
  *                      of the rendpoly's vertices. Else, the dist will be
  *                      calculated if needed, depending on the properties of
- *                      the rendpoly to be lit, for each vertex seperately.                     
+ *                      the rendpoly to be lit, for each vertex seperately.
  */
 void RL_VertexColors(rendpoly_t *poly, float lightlevel,
                      float distanceOverride, const float *rgb, float alpha)
@@ -414,7 +415,11 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel,
             lightlevel = 1;
     }
 
-    light = lightlevel;
+    if(lightlevel < 0)
+        light = 1; // Full bright.
+    else
+        light = lightlevel;
+
     num = poly->numvertices;
     for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
     {
@@ -946,7 +951,7 @@ static void allocateIndices(rendlist_t *list, int numIndices)
     void   *indices;
 
     list->last->numIndices = numIndices;
-    indices = allocateData(list, sizeof(*list->last->indices) * numIndices);
+    indices = allocateData(list, sizeof(uint) * numIndices);
 
     // list->last may change during allocateData.
     list->last->indices = indices;
@@ -1322,7 +1327,7 @@ static void writeDivQuad(rendlist_t *list, rendpoly_t *poly)
     base = allocateVertices(list->last->primSize);
 
     // Allocate the indices.
-    allocateIndices(list, 3 + poly->wall->divs[1].num + 
+    allocateIndices(list, 3 + poly->wall->divs[1].num +
                              3 + poly->wall->divs[0].num);
 
     hdr = list->last;
@@ -1481,6 +1486,7 @@ static void writeFlat(rendlist_t *list, rendpoly_t *poly)
     gl_texcoord_t *tc;
     gl_vertex_t *v;
     uint    base;
+    primhdr_t *hdr = NULL;
     unsigned int i, num;
 
     list->last->type = PT_FAN;
@@ -1493,14 +1499,15 @@ static void writeFlat(rendlist_t *list, rendpoly_t *poly)
     allocateIndices(list, poly->numvertices);
 
     // Setup indices in a triangle fan.
+    hdr = list->last;
     num = poly->numvertices;
     for(i = 0; i < num; ++i)
     {
-        list->last->indices[i] = base + i;
+        hdr->indices[i] = base + i;
     }
 
     // Primitive-specific blending mode.
-    list->last->blendMode = poly->blendmode;
+    hdr->blendMode = poly->blendmode;
 
     for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
     {
@@ -1600,18 +1607,16 @@ static void writeDynLight(rendlist_t *list, const dynlight_t *dyn,
     uint        i, c, num, base;
     gl_texcoord_t *tc;
     gl_color_t *col;
-    void       *ptr;
+    primhdr_t  *hdr;
 
-    ptr = allocateData(list, sizeof(primhdr_t));
-    list->last = ptr;
+    list->last = hdr = allocateData(list, sizeof(primhdr_t));
 
     list->last->size = 0;
     list->last->type = prim->type;
     list->last->flags = 0;
     list->last->numLights = 0;
-    list->last->numIndices = prim->numIndices;
-    ptr = allocateData(list, sizeof(*list->last->indices) * prim->numIndices);
-    list->last->indices = ptr;
+
+    allocateIndices(list, prim->numIndices);
     list->last->beginOther = prim->beginOther;
 
     // Make copies of the original vertices.
@@ -1718,7 +1723,7 @@ boolean RLIT_DynLightWrite(const dynlight_t *dyn, void *data)
     dynlightiterparams_t *params = data;
 
     // If multitexturing is in use, we skip the first light.
-    if(!(IS_MTEX_LIGHTS && params->hdr->numLights <= 1))
+    if(!(IS_MTEX_LIGHTS && params->lastIdx == 0))
     {
         rendlist_t *dynList;
 
@@ -1734,9 +1739,9 @@ boolean RLIT_DynLightWrite(const dynlight_t *dyn, void *data)
         }
 
         writeDynLight(dynList, dyn, params->hdr, params->poly);
+        params->hdr->numLights++;
     }
-
-    params->hdr->numLights++;
+    params->lastIdx++;
 
     return true; // Continue iteration.
 }
@@ -1858,6 +1863,7 @@ END_PROF( PROF_RL_GET_LIST );
         params.lastDynList = NULL;
         params.poly = poly;
         params.hdr = hdr;
+        params.lastIdx = 0;
 
         DL_DynLightIterator(poly->lightListIdx, &params, RLIT_DynLightWrite);
     }

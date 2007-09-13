@@ -332,7 +332,7 @@ void B_DestroyControlBinding(controlbinding_t* conBin)
     {
         B_DestroyDeviceBindingList(&conBin->deviceBinds[i]);
     }
-    free(conBin);
+    M_Free(conBin);
 }
 
 void B_InitControlBindingList(controlbinding_t* listRoot)

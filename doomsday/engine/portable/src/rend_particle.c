@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -570,7 +570,9 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         {
             int         frame;
             const float *slc;
+            sector_t   *sec;
             modelparams_t params;
+            visspritelightparams_t lparams;
 
             memset(&params, 0, sizeof(params));
 
@@ -578,6 +580,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             params.distance = dist;
             params.subsector =
                 R_PointInSubsector(pt->pos[VX], pt->pos[VY]);
+            sec = params.subsector->sector;
             params.center[VX] = center[VX];
             params.center[VY] = center[VZ];
             params.center[VZ] = params.gzt = center[VY];
@@ -628,33 +631,19 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             params.rgb[2] = slc[2];
             params.alpha = color[3];
 
-            if(useWallGlow)
+            lparams.starkLight = false;
+            lparams.subsector = params.subsector;
+            memcpy(lparams.center, params.center, sizeof(lparams.center));
+            lparams.maxLights = modelLight;
+
             {
-                uint        c;
-                sector_t   *sec = params.subsector->sector;
-
-                // Do ceiling.
-                if(sec && sec->planes[PLN_CEILING]->glow)
-                {
-                    for(c = 0; c < 3; ++c)
-                        params.ceilGlowRGB[c] =
-                            sec->planes[PLN_CEILING]->glowrgb[c] * dlFactor;
-
-                    params.hasGlow = true;
-                    params.ceilGlowAmount = sec->planes[PLN_CEILING]->glow;
-                }
-
-                // Do floor.
-                if(sec && sec->planes[PLN_FLOOR]->glow)
-                {
-                    for(c = 0; c < 3; ++c)
-                        params.floorGlowRGB[c] =
-                            sec->planes[PLN_FLOOR]->glowrgb[c] * dlFactor;
-
-                    params.hasGlow = true;
-                    params.floorGlowAmount = sec->planes[PLN_FLOOR]->glow;
-                }
+            float       rgba[4];
+            memcpy(rgba, params.rgb, sizeof(float) * 3);
+            rgba[CA] = params.alpha;
+            R_SetAmbientColor(rgba, params.lightLevel, params.distance);
             }
+            R_DetermineLightsAffectingVisSprite(&lparams, &params.lights, &params.numLights);
+
             Rend_RenderModel(&params);
             continue;
         }

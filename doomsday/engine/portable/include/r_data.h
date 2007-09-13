@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -343,6 +343,17 @@ typedef struct animgroup_s {
     int             count;
     animframe_t    *frames;
 } animgroup_t;
+
+typedef struct {
+    boolean         used;
+    float           approxDist;         // Only an approximation.
+    struct lumobj_s *lum;
+    float           worldVector[3];     // Light direction vector (world space).
+    float           vector[3];          // Light direction vector (object space).
+    float           color[3];           // How intense the light is (0..1, RGB).
+    float           offset;
+    float           lightSide, darkSide;    // Factors for world light.
+} vlight_t;
 
 extern nodeindex_t *linelinks;
 extern long    *blockmaplump;      // offsets in blockmap are from here

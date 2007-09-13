@@ -803,8 +803,8 @@ desc = 1=Enable variable translucency on sprites.
 [rend-sprite-blend]
 desc = 1=Use additive blending for explosions.
 
-[rend-sprite-lit]
-desc = 1=Sprites lit using dynamic lights.
+[rend-sprite-lights]
+desc = Maximum number of light sources on sprites.
 
 [rend-sprite-mode]
 desc = 1=Draw sprites and masked walls with hard edges.

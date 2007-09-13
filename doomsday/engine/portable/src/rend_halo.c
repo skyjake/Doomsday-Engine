@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -168,7 +168,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
     int     i, k, tex;
     float   color[4], radX, radY, scale, turnAngle = 0;
     float   fadeFactor = 1, secBold, secDimFactor;
-    float   colorAverage, f, distanceDim, lumDistance;
+    float   colorAverage, f, distanceDim;
     flare_t *fl;
 
     if(lum->type != LT_OMNI)
@@ -190,17 +190,15 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
             return false;
     }
 
-    lumDistance = FIX2FLT(lum->distance);
-
-    if((lum->flags & LUMF_NOHALO) || lumDistance == 0 ||
-       (haloFadeMax && lumDistance > haloFadeMax))
+    if((lum->flags & LUMF_NOHALO) || lum->distanceToViewer <= 0 ||
+       (haloFadeMax && lum->distanceToViewer > haloFadeMax))
         return false;
 
-    if(haloFadeMax && haloFadeMax != haloFadeMin && lumDistance < haloFadeMax
-       && lumDistance >= haloFadeMin)
+    if(haloFadeMax && haloFadeMax != haloFadeMin &&
+       lum->distanceToViewer < haloFadeMax && lum->distanceToViewer >= haloFadeMin)
     {
-        fadeFactor =
-            (lumDistance - haloFadeMin) / (haloFadeMax - haloFadeMin);
+        fadeFactor = (lum->distanceToViewer - haloFadeMin) /
+            (haloFadeMax - haloFadeMin);
     }
 
     occlusionFactor = (LUM_OMNI(lum)->halofactor & 0x7f) / 127.0f;
@@ -293,7 +291,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
     colorAverage = (color[CR] + color[CG] + color[CB] + 1) / 4;
 
     // Small flares have stronger dimming.
-    f = lumDistance / LUM_OMNI(lum)->flareSize;
+    f = lum->distanceToViewer / LUM_OMNI(lum)->flareSize;
     if(haloDimStart && haloDimStart < haloDimEnd && f > haloDimStart)
         distanceDim = 1 - (f - haloDimStart) / (haloDimEnd - haloDimStart);
     else
@@ -310,7 +308,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
         if(i)
         {
             // Secondary flare dimming?
-            f = minHaloSize * LUM_OMNI(lum)->flareSize / lumDistance;
+            f = minHaloSize * LUM_OMNI(lum)->flareSize / lum->distanceToViewer;
             if(f > 1)
                 f = 1;
         }
@@ -321,7 +319,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
                  colorAverage * colorAverage / 5);
 
         radius = LUM_OMNI(lum)->flareSize * (1 - colorAverage / 3) +
-            lumDistance / haloZMagDiv;
+            lum->distanceToViewer / haloZMagDiv;
         if(radius < haloMinRadius)
             radius = haloMinRadius;
         radius *= occlusionFactor;

@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -377,6 +377,9 @@ void DL_InitForMap(void)
     spreadBlocks =
         Z_Malloc(sizeof(int) * dlBlockWidth * dlBlockHeight,
                  PU_LEVELSTATIC, 0);
+
+    lightLinkLists = NULL;
+    numLightLinkLists = 0, lightLinkListCursor = 0;
 }
 
 /**
@@ -415,7 +418,7 @@ static dynnode_t *projectPlaneGlowOnSegSection(lumobj_t *lum, float bottom,
         glowHeight = glowHeightMax;
 
     // Calculate texture coords for the light.
-    if(LUM_PLANE(lum)->castDown)
+    if(LUM_PLANE(lum)->normal[VZ] < 0)
     {   // Light is cast downwards.
         t[1] = t[0] = (lum->pos[VZ] - top) / glowHeight;
         t[1]+= (top - bottom) / glowHeight;
@@ -454,14 +457,10 @@ static dynnode_t *projectPlaneGlowOnSegSection(lumobj_t *lum, float bottom,
 }
 
 /**
- * Generate one dynlight node per seg section for each plane glow.
+ * Generate one dynlight node for each plane glow.
  * The light is attached to the appropriate dynlight node list.
  *
- * @param ssec          Ptr to the subsector which seg is part of.
- * @param seg           Ptr to the seg to be lit.
- * @param part          Wall seg section id.
- * @param top           Z coordinate of the top of the seg section.
- * @param bottom        Z coordinate of the bottom of the seg section.
+ * @param ssec          Ptr to the subsector to process.
  */
 static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
 {
@@ -489,16 +488,19 @@ static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
         l->pos[VX] = ssec->midpoint.pos[VX];
         l->pos[VY] = ssec->midpoint.pos[VY];
         l->pos[VZ] = pln->visheight;
+
+        LUM_PLANE(l)->normal[VX] = pln->PS_normal[VX];
+        LUM_PLANE(l)->normal[VY] = pln->PS_normal[VY];
+        LUM_PLANE(l)->normal[VZ] = pln->PS_normal[VZ];
+
         // Approximate the distance in 3D.
-        l->distance =
-            P_ApproxDistance3(FLT2FIX(l->pos[VX] - viewX),
-                              FLT2FIX(l->pos[VY] - viewY),
-                              FLT2FIX(l->pos[VZ] - viewZ));
+        l->distanceToViewer =
+            FIX2FLT(P_ApproxDistance3(FLT2FIX(l->pos[VX] - viewX),
+                                      FLT2FIX(l->pos[VY] - viewY),
+                                      FLT2FIX(l->pos[VZ] - viewZ)));
 
         l->subsector = ssec;
         memcpy(l->color, pln->glowrgb, sizeof(l->color));
-        if(g == PLN_CEILING)
-            LUM_PLANE(l)->castDown = true;
         LUM_PLANE(l)->intensity = pln->glow;
         LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT, NULL);
 
@@ -652,7 +654,6 @@ void DL_AddLuminous(mobj_t *mo)
     lumobj_t   *l;
     lightconfig_t cf;
     ded_light_t *def = 0;
-    modeldef_t *mf, *nextmf;
     spritedef_t *sprdef;
     spriteframe_t *sprframe;
 
@@ -706,7 +707,7 @@ void DL_AddLuminous(mobj_t *mo)
         cf.yOffset = spritelumps[lump]->flarey;
 
         // X offset to the flare position.
-        xOff = cf.xOffset - spritelumps[lump]->width / 2.0f;
+        xOff = cf.xOffset - (float) spritelumps[lump]->width / 2.0f;
 
         // Does the mobj have an active light definition?
         if(mo->state && mo->state->light)
@@ -734,7 +735,7 @@ void DL_AddLuminous(mobj_t *mo)
         // Will the sprite be allowed to go inside the floor?
         mul =
             FIX2FLT(mo->pos[VZ]) + spritelumps[lump]->topoffset -
-            spritelumps[lump]->height - mo->subsector->sector->SP_floorheight;
+            (float) spritelumps[lump]->height - mo->subsector->sector->SP_floorheight;
         if(!(mo->ddflags & DDMF_NOFITBOTTOM) && mul < 0)
         {
             // Must adjust.
@@ -830,14 +831,13 @@ void DL_AddLuminous(mobj_t *mo)
             l->pos[VY] = FIX2FLT(mo->pos[VY]);
             l->pos[VZ] = FIX2FLT(mo->pos[VZ]);
             // Approximate the distance in 3D.
-            l->distance =
-                P_ApproxDistance3(mo->pos[VX] - FLT2FIX(viewX),
-                                  mo->pos[VY] - FLT2FIX(viewY),
-                                  mo->pos[VZ] - FLT2FIX(viewZ));
+            l->distanceToViewer =
+                FIX2FLT(P_ApproxDistance3(mo->pos[VX] - FLT2FIX(viewX),
+                                          mo->pos[VY] - FLT2FIX(viewY),
+                                          mo->pos[VZ] - FLT2FIX(viewZ)));
 
             l->subsector = mo->subsector;
             LUM_OMNI(l)->halofactor = mo->halofactor;
-            LUM_OMNI(l)->patch = lump;
             LUM_OMNI(l)->zOff = center;
             LUM_OMNI(l)->xOff = xOff;
 
@@ -850,13 +850,6 @@ void DL_AddLuminous(mobj_t *mo)
             LUM_OMNI(l)->flareSize = flareSize;
             for(i = 0; i < 3; ++i)
                 l->color[i] = rgb[i];
-
-            // Is there a model definition?
-            R_CheckModelFor(mo, &mf, &nextmf);
-            if(mf && useModels)
-                LUM_OMNI(l)->xyScale = MAX_OF(mf->scale[VX], mf->scale[VZ]);
-            else
-                LUM_OMNI(l)->xyScale = 1;
 
             // This light source is not associated with a decormap.
             LUM_OMNI(l)->decorMap = 0;
@@ -900,7 +893,7 @@ boolean DLIT_LinkLumToSubSector(subsector_t *subsector, void *data)
     lumcontact_t *con = newLumContact(lum);
 
     // Link it to the contact list for this subsector.
-    linkLumToSubSector(con, GET_SUBSECTOR_IDX(subsector));   
+    linkLumToSubSector(con, GET_SUBSECTOR_IDX(subsector));
 
     return true; // Continue iteration.
 }
@@ -1153,9 +1146,9 @@ static int C_DECL lumobjSorter(const void *e1, const void *e2)
     lumobj_t *lum1 = &getLumNode(*(const ushort *) e1)->lum;
     lumobj_t *lum2 = &getLumNode(*(const ushort *) e2)->lum;
 
-    if(lum1->distance > lum2->distance)
+    if(lum1->distanceToViewer > lum2->distanceToViewer)
         return 1;
-    else if(lum1->distance < lum2->distance)
+    else if(lum1->distanceToViewer < lum2->distanceToViewer)
         return -1;
     else
         return 0;
@@ -1458,7 +1451,7 @@ uint DL_ProcessSegSection(seg_t *seg, float bottom, float top)
     for(con = subContacts[GET_SUBSECTOR_IDX(seg->subsector)]; con; con = con->next)
     {
         dynnode_t *node = NULL;
-        
+
         switch(con->lum->type)
         {
         case LT_OMNI:
@@ -1576,13 +1569,6 @@ void DL_InitForSubsector(subsector_t *ssec)
 
     // First make sure we know which lumobjs are contacting us.
     spreadLumobjsInSubSector(ssec);
-
-    // If the segs of this subsector are affected by glowing planes we need
-    // to create dynlights and link them.
-    if(useWallGlow)
-    {
-        createGlowLightPerPlaneForSubSector(ssec);
-    }
 }
 
 /**
@@ -1616,6 +1602,18 @@ BEGIN_PROF( PROF_DYN_INIT_ADD );
         {
             DL_AddLuminous(iter);
         }
+
+        // If the segs of this subsector are affected by glowing planes we need
+        // to create dynlights and link them.
+        if(useWallGlow)
+        {
+            subsector_t **ssec = seciter->subsectors;
+            while(*ssec)
+            {
+                createGlowLightPerPlaneForSubSector(*ssec);
+                *ssec++;
+            }
+        }
     }
 
 END_PROF( PROF_DYN_INIT_ADD );
@@ -1629,7 +1627,7 @@ END_PROF( PROF_DYN_INIT_LINK );
 
 /**
  * Calls func for all projected dynlights in the given list.
- * 
+ *
  * @param listIdx   Identifier of the list to process.
  * @param data      Ptr to pass to the callback.
  * @param func      Callback to make for each object.
@@ -1665,7 +1663,7 @@ boolean DL_DynLightIterator(uint listIdx, void *data,
 
 /**
  * Calls func for all luminous objects within the specified origin range.
- * 
+ *
  * @param subsector The subsector in which the origin resides.
  * @param x         X coordinate of the origin (must be within subsector).
  * @param y         Y coordinate of the origin (must be within subsector).

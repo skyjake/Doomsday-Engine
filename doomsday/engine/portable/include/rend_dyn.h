@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -53,41 +53,43 @@ typedef enum {
 #define LUM_OMNI(x)         (&((x)->data.omni))
 #define LUM_PLANE(x)        (&((x)->data.plane))
 
-typedef struct lumobj_s {          // For dynamic lighting.
+typedef struct lumobj_s {           // For dynamic lighting.
     lumtype_t       type;
-    int             flags;
-    float           pos[3];
+    int             flags;          // LUMF_* flags.
+    float           pos[3];         // Center of the light. 
     float           color[3];
-    int             distance;
+    float           distanceToViewer;
     subsector_t    *subsector;
 
     union lumobj_data_u {
         struct lumobj_omni_s {
-            int             radius, patch;
-            int             flareSize;     // Radius for this omnilight source.
+            int             radius;         // Radius for this omnilight source.
+            float           zOff;           // Offset to center from pos[VZ].
+            DGLuint         tex;            // Lightmap texture.
+            DGLuint         floorTex, ceilTex;  // Lightmaps for floor/ceil.
+            DGLuint         decorMap;       // Decoration lightmap.
+
+        // For flares (halos).
+            int             flareSize;    
             byte            halofactor;
             float           xOff;
-            float           zOff;          // Offset to center from pos[VZ].
-            float           xyScale;       // 1.0 if there's no modeldef.
-            DGLuint         tex;           // Lightmap texture.
-            DGLuint         floorTex, ceilTex;  // Lightmaps for floor/ceil.
-            DGLuint         decorMap;      // Decoration lightmap.
-            DGLuint         flareTex;      // Flaremap if flareCustom ELSE (flaretexName id.
-                                           // Zero = automatical)
-            boolean         flareCustom;   // True id flareTex is a custom flare graphic
-            float           flareMul;      // Flare brightness factor.
+            DGLuint         flareTex;       // Flaremap if flareCustom ELSE (flaretexName id.
+                                            // Zero = automatical)
+            boolean         flareCustom;    // True id flareTex is a custom flare graphic
+            float           flareMul;       // Flare brightness factor.
         } omni;
         struct lumobj_plane_s {
             float           intensity;
             DGLuint         tex;
-            boolean         castDown;
+            float           normal[3];
         } plane;
     } data;
 } lumobj_t;
 
 /*
  * The data of a projected dynamic light is stored in this structure.
- * A list of these is associated with all the lit surfaces in a frame.
+ * A list of these is associated with each surface lit by texture mapped lights
+ * in a frame.
  */
 typedef struct dynlight_s {
     float           s[2], t[2];

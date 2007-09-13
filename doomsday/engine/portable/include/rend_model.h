@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -62,17 +62,12 @@ typedef struct modelparams_s {
 
     // Lighting/color:
     float       lightLevel; // Light level of the sector the model is in. All modifiers applied (i.e. light adaptation).
-    boolean     starkLight;
     float       rgb[3];
     boolean     uniformColor;
     float       alpha;
 
-    // Glowing planes affecting this model:
-    boolean     hasGlow;
-    float       ceilGlowAmount, ceilHeight;
-    float       ceilGlowRGB[3];
-    float       floorGlowAmount, floorHeight;
-    float       floorGlowRGB[3];
+    uint        numLights;
+    vlight_t   *lights;
 
     // Shinemaping:
     float       shineYawOffset;

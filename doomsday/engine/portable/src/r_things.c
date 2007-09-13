@@ -1,12 +1,12 @@
-/**\file
+ï»¿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,15 @@
 #define MAX_FRAMES 128
 #define MAX_OBJECT_RADIUS 128
 
+#define MAX_VISSPRITE_LIGHTS 10
+
 // TYPES -------------------------------------------------------------------
+
+typedef struct {
+    float           pos[3];
+    uint           *numLights;
+    uint            maxLights;
+} vlightitervars_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -76,12 +84,11 @@ float   modelSpinSpeed = 1;
 int     alwaysAlign = 0;
 int     noSpriteZWrite = false;
 int     pspOffX = 0, pspOffY = 0;
-// srvo1 = models only, srvo2 = sprites + models
+// useSRVO: 1 = models only, 2 = sprites + models
 int     useSRVO = 2, useSRVOAngle = true;
-
 int     psp3d;
 
-// variables used to look up and range check thing_t sprites patches
+// Variables used to look up and range check thing_t sprites patches
 spritedef_t *sprites = 0;
 int     numSprites;
 
@@ -92,17 +99,27 @@ vissprite_t vissprites[MAXVISSPRITES], *vissprite_p;
 vissprite_t vispsprites[DDMAXPSPRITES];
 
 int     maxModelDistance = 1500;
-
 int     levelFullBright = false;
+
+vissprite_t vsprsortedhead;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static spriteframe_t sprtemp[MAX_FRAMES];
-static int     maxFrame;
-static char   *spriteName;
+static int maxFrame;
+static char *spriteName;
 
 static vissprite_t overflowSprite;
 static mobj_t *projectedThing;  // Used during RIT_VisMobjZ
+
+static const float worldLight[3] = {-.400891f, -.200445f, .601336f};
+
+static vlight_t lights[MAX_VISSPRITE_LIGHTS] = {
+    // The first light is the world light.
+    {false, 0, NULL}
+};
+
+float ambientColor[3];
 
 // CODE --------------------------------------------------------------------
 
@@ -132,8 +149,8 @@ void R_InitSpriteLumps(void)
     }
 }
 
-/*
- * Returns the new sprite lump number.
+/**
+ * @return              The new sprite lump number.
  */
 int R_NewSpriteLump(int lump)
 {
@@ -159,18 +176,20 @@ int R_NewSpriteLump(int lump)
     return numSpriteLumps - 1;
 }
 
-/*
+/**
  * Local function for R_InitSprites.
  */
-void R_InstallSpriteLump(int lump, unsigned frame, unsigned rotation,
-                         boolean flipped)
+static void installSpriteLump(int lump, unsigned frame, unsigned rotation,
+                              boolean flipped)
 {
     int     splump = R_NewSpriteLump(lump);
     int     r;
 
     if(frame >= 30 || rotation > 8)
-        //Con_Error ("R_InstallSpriteLump: Bad frame characters in lump %i", lump);
+    {
+        //Con_Error("installSpriteLump: Bad frame characters in lump %i", lump);
         return;
+    }
 
     if((int) frame > maxFrame)
         maxFrame = frame;
@@ -186,11 +205,12 @@ void R_InstallSpriteLump(int lump, unsigned frame, unsigned rotation,
            , spriteName, 'A'+frame); */
 
         sprtemp[frame].rotate = false;
-        for(r = 0; r < 8; r++)
+        for(r = 0; r < 8; ++r)
         {
             sprtemp[frame].lump[r] = splump;    //lump - firstspritelump;
             sprtemp[frame].flip[r] = (byte) flipped;
         }
+
         return;
     }
 
@@ -210,7 +230,7 @@ void R_InstallSpriteLump(int lump, unsigned frame, unsigned rotation,
     sprtemp[frame].flip[rotation] = (byte) flipped;
 }
 
-/*
+/**
  * Pass a null terminated list of sprite names (4 chars exactly) to be used
  * Builds the sprite rotation matrixes to account for horizontally flipped
  * sprites.  Will report an error if the lumps are inconsistant.
@@ -236,7 +256,7 @@ void R_InitSpriteDefs(void)
 
     // Scan all the lump names for each of the names, noting the highest
     // frame letter. Just compare 4 characters as ints.
-    for(i = 0; i < numSprites; i++)
+    for(i = 0; i < numSprites; ++i)
     {
         spriteName = sprnames[i].name;
         memset(sprtemp, -1, sizeof(sprtemp));
@@ -264,27 +284,32 @@ void R_InitSpriteDefs(void)
                 in_sprite_block = false;
                 continue;
             }
+
             if(!in_sprite_block)
                 continue;
+
             // Check that the first four letters match the sprite name.
             if(*(int *) name == intname)
             {
                 // Check that the name is valid.
                 if(!name[4] || !name[5] || (name[6] && !name[7]))
                     continue;   // This is not a sprite frame.
+
                 // Indices 5 and 7 must be numbers (0-8).
                 if(name[5] < '0' || name[5] > '8')
                     continue;
+
                 if(name[7] && (name[7] < '0' || name[7] > '8'))
                     continue;
+
                 frame = name[4] - 'A';
                 rotation = name[5] - '0';
-                R_InstallSpriteLump(l, frame, rotation, false);
+                installSpriteLump(l, frame, rotation, false);
                 if(name[6])
                 {
                     frame = name[6] - 'A';
                     rotation = name[7] - '0';
-                    R_InstallSpriteLump(l, frame, rotation, true);
+                    installSpriteLump(l, frame, rotation, true);
                 }
             }
         }
@@ -303,7 +328,7 @@ void R_InitSpriteDefs(void)
         {
             switch ((int) sprtemp[frame].rotate)
             {
-            case -1:            // no rotations were found for that frame at all
+            case -1:        // no rotations were found for that frame at all
                 Con_Error("R_InitSprites: No patches found for %s frame %c",
                           spriteName, frame + 'A');
             case 0:         // only the first rotation is needed
@@ -386,8 +411,8 @@ void R_GetPatchInfo(int lump, spriteinfo_t *info)
     info->offset = SHORT(patch->leftoffset);
 }
 
-/*
- * Returns the radius of the mobj as it would visually appear to be.
+/**
+ * @return              Radius of the mobj as it would visually appear to be.
  */
 int R_VisualRadius(mobj_t *mo)
 {
@@ -418,7 +443,7 @@ void R_InitSprites(void)
     R_InitSpriteLumps();
 }
 
-/*
+/**
  * Called at frame start.
  */
 void R_ClearSprites(void)
@@ -430,63 +455,25 @@ vissprite_t *R_NewVisSprite(void)
 {
     if(vissprite_p == &vissprites[MAXVISSPRITES])
         return &overflowSprite;
+
     vissprite_p++;
     return vissprite_p - 1;
 }
 
-static void R_ApplyPlaneGlowsToVisSprite(vissprite_t *vis, sector_t *sect)
-{
-    int     c;
-
-    vis->data.mo.hasglow = false;
-    if(!useWallGlow)
-        return;
-
-    // Do ceiling.
-    if(sect->planes[PLN_CEILING]->glow)
-    {
-        for(c = 0; c < 3; ++c)
-            vis->data.mo.ceilglow[c] =
-                sect->planes[PLN_CEILING]->glowrgb[c] * dlFactor;
-
-        vis->data.mo.hasglow = true;
-        vis->data.mo.ceilglowamount = sect->planes[PLN_CEILING]->glow;
-    }
-    else
-    {
-        for(c = 0; c < 3; ++c)
-            vis->data.mo.ceilglow[c] = 0;
-    }
-
-    // Do floor.
-    if(sect->planes[PLN_FLOOR]->glow)
-    {
-        for(c = 0; c < 3; ++c)
-            vis->data.mo.floorglow[c] =
-                sect->planes[PLN_FLOOR]->glowrgb[c] * dlFactor;
-
-        vis->data.mo.hasglow = true;
-        vis->data.mo.floorglowamount = sect->planes[PLN_FLOOR]->glow;
-    }
-    else
-    {
-        for(c = 0; c < 3; ++c)
-            vis->data.mo.floorglow[c] = 0;
-    }
-}
-
-/*
+/**
  * If 3D models are found for psprites, here we will create vissprites
  * for them.
  */
 void R_ProjectPlayerSprites(void)
 {
     int         i;
-    angle_t     ang;
+    float       inter;
+    float       lightLevel, alpha, rgb[3];
     modeldef_t *mf, *nextmf;
     ddpsprite_t *psp;
     vissprite_t *vis;
-    mobj_t      dummy;
+    boolean     isFullBright = (levelFullBright != 0);
+    boolean     isModel;
 
     psp3d = false;
 
@@ -494,108 +481,144 @@ void R_ProjectPlayerSprites(void)
     if((viewPlayer->flags & DDPF_CAMERA) || (viewPlayer->flags & DDPF_CHASECAM))
         return;
 
+    // Determine if we should be drawing all the psprites full bright?
+    if(!isFullBright)
+    {
+        for(i = 0, psp = viewPlayer->psprites; i < DDMAXPSPRITES; ++i, psp++)
+        {
+            if(!psp->stateptr)
+                continue;
+
+            // If one of the psprites is fullbright, both are.
+            if(psp->stateptr->flags & STF_FULLBRIGHT)
+                isFullBright = true;
+        }
+    }
+
     for(i = 0, psp = viewPlayer->psprites; i < DDMAXPSPRITES; ++i, psp++)
     {
         vis = vispsprites + i;
-        psp->flags &= ~DDPSPF_RENDERED;
+
         vis->type = false;
-
-        vis->distance = 4;
-        vis->data.mo.subsector = viewPlayer->mo->subsector;
-        vis->data.mo.flags = 0;
-        // Adjust the vector slightly so an angle can be calculated.
-        ang = viewAngle >>ANGLETOFINESHIFT;
-        vis->center[VX] = viewX + FIX2FLT(2 * fineCosine[ang]);
-        vis->center[VY] = viewY + FIX2FLT(2 * finesine[ang]);
-        vis->data.mo.v1[VX] = vis->center[VX];
-        vis->data.mo.v1[VY] = vis->center[VY];
-        // 32 is the raised weapon height.
-        vis->data.mo.gzt = vis->center[VZ] = viewZ;
-        vis->data.mo.secfloor = viewPlayer->mo->subsector->sector->SP_floorvisheight;
-        vis->data.mo.secceil = viewPlayer->mo->subsector->sector->SP_ceilvisheight;
-        vis->data.mo.pclass = 0;
-        vis->data.mo.floorclip = 0;
-
-        // Glowing floor and ceiling.
-        R_ApplyPlaneGlowsToVisSprite(vis, viewPlayer->mo->subsector->sector);
-
-        if(!useModels || !psp->stateptr)
+        if(!psp->stateptr)
             continue;
 
-        // Is there a model for this frame?
-        // Setup a dummy for the call to R_CheckModelFor.
-        dummy.state = psp->stateptr;
-        dummy.tics = psp->tics;
+        // First, determine whether this is a model or a sprite.
+        isModel = false;
+        if(useModels)
+        {   // Is there a model for this frame?
+            mobj_t      dummy;
 
-        vis->data.mo.inter = R_CheckModelFor(&dummy, &mf, &nextmf);
-        if(!mf)
-        {
-            // No, draw a 2D sprite instead (in Rend_DrawPlayerSprites).
-            continue;
+            // Setup a dummy for the call to R_CheckModelFor.
+            dummy.state = psp->stateptr;
+            dummy.tics = psp->tics;
+
+            inter = R_CheckModelFor(&dummy, &mf, &nextmf);
+            if(mf)
+                isModel = true;
         }
-        vis->type = VSPR_HUD_MODEL; // it's a psprite
-        vis->light = NULL;
-        vis->data.mo.mf = mf;
-        vis->data.mo.nextmf = nextmf;
-        vis->data.mo.viewaligned = true;
-        // Use the exact center with HUD models.
-        vis->center[VX] = viewX;
-        vis->center[VY] = viewY;
-        vis->data.mo.v1[VX] = vis->center[VX];
-        vis->data.mo.v1[VY] = vis->center[VY];
 
-        // Mark this sprite rendered.
-        psp->flags |= DDPSPF_RENDERED;
-
-        // There are 3D psprites.
-        psp3d = true;
-
-        // Offsets to rotation angles.
-        vis->data.mo.v2[VX] = psp->x * weaponOffsetScale - 90;
-        vis->data.mo.v2[VY] =
-            (32 - psp->y) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
-        // Is the FOV shift in effect?
-        if(weaponFOVShift > 0 && fieldOfView > 90)
-            vis->data.mo.v2[VY] -= weaponFOVShift * (fieldOfView - 90) / 90;
-        // Real rotation angles.
-        vis->data.mo.yaw =
-            viewAngle / (float) ANGLE_MAX *-360 + vis->data.mo.v2[VX] + 90;
-        vis->data.mo.pitch = viewPitch * 85 / 110 + vis->data.mo.v2[VY];
-        vis->data.mo.flip = false;
-
-        vis->data.mo.alpha = psp->alpha;
-
-        if(useBias)
+        if(isFullBright)
         {
-            /** Evaluate the position of this player in the light grid.
-            * \todo Should be affected by BIAS sources.
-	    */
-            float       point[3];
-
-            point[0] = FIX2FLT(viewPlayer->mo->pos[VX]);
-            point[1] = FIX2FLT(viewPlayer->mo->pos[VY]);
-            point[2] = FIX2FLT(viewPlayer->mo->pos[VZ]) +
-                            viewPlayer->mo->height / 2;
-            LG_Evaluate(point, vis->data.mo.rgb);
-
-            vis->data.mo.lightlevel = 1;
+            rgb[CR] = rgb[CG] = rgb[CB] = 1;
+            lightLevel = -1;
         }
         else
         {
-            memcpy(vis->data.mo.rgb,
-                   R_GetSectorLightColor(viewPlayer->mo->subsector->sector),
-                   sizeof(float) * 3);
-
-            if(psp->light < 1)
+            if(useBias)
             {
-                vis->data.mo.lightlevel = (psp->light - .1f);
-                Rend_ApplyLightAdaptation(&vis->data.mo.lightlevel);
+                /** Evaluate the position of this player in the light grid.
+                 * \todo Should be affected by BIAS sources.
+                 */
+                float       point[3];
+
+                point[0] = FIX2FLT(viewPlayer->mo->pos[VX]);
+                point[1] = FIX2FLT(viewPlayer->mo->pos[VY]);
+                point[2] = FIX2FLT(viewPlayer->mo->pos[VZ]) +
+                            viewPlayer->viewheight / 2;
+                LG_Evaluate(point, rgb);
+                lightLevel = 1;
             }
             else
-                vis->data.mo.lightlevel = 1;
-        }
+            {
+                memcpy(rgb,
+                       R_GetSectorLightColor(viewPlayer->mo->subsector->sector),
+                       sizeof(rgb));
 
-        memset(vis->data.mo.visoff, 0, sizeof(vis->data.mo.visoff));
+                if(psp->light < 1)
+                {
+                    lightLevel = (psp->light - .1f);
+                    Rend_ApplyLightAdaptation(&lightLevel);
+                }
+                else
+                    lightLevel = 1;
+            }
+        }
+        alpha = psp->alpha;
+
+        if(isModel)
+        {   // Yes, draw a 3D model (in Rend_Draw3DPlayerSprites).
+
+            // There are 3D psprites.
+            psp3d = true;
+
+            vis->type = VSPR_HUD_MODEL;
+            vis->light = NULL;
+
+            vis->distance = -10;//4;
+            vis->data.mo.subsector = viewPlayer->mo->subsector;
+            vis->data.mo.flags = 0;
+            // 32 is the raised weapon height.
+            vis->data.mo.gzt = viewZ;
+            vis->data.mo.secfloor = viewPlayer->mo->subsector->sector->SP_floorvisheight;
+            vis->data.mo.secceil = viewPlayer->mo->subsector->sector->SP_ceilvisheight;
+            vis->data.mo.pclass = 0;
+            vis->data.mo.floorclip = 0;
+
+            vis->data.mo.mf = mf;
+            vis->data.mo.nextmf = nextmf;
+            vis->data.mo.inter = inter;
+            vis->data.mo.viewaligned = true;
+            vis->center[VX] = viewX;
+            vis->center[VY] = viewY;
+            vis->center[VZ] = viewZ;
+
+            // Offsets to rotation angles.
+            vis->data.mo.yawAngleOffset = psp->x * weaponOffsetScale - 90;
+            vis->data.mo.pitchAngleOffset =
+                (32 - psp->y) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
+            // Is the FOV shift in effect?
+            if(weaponFOVShift > 0 && fieldOfView > 90)
+                vis->data.mo.yawAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
+            // Real rotation angles.
+            vis->data.mo.yaw =
+                viewAngle / (float) ANGLE_MAX *-360 + vis->data.mo.yawAngleOffset + 90;
+            vis->data.mo.pitch = viewPitch * 85 / 110 + vis->data.mo.yawAngleOffset;
+            vis->data.mo.texFlip[0] = vis->data.mo.texFlip[1] = false;
+            memset(vis->data.mo.visoff, 0, sizeof(vis->data.mo.visoff));
+
+            memcpy(vis->data.mo.rgb, rgb, sizeof(float) * 3);
+            vis->data.mo.alpha = alpha;
+            vis->data.mo.lightlevel = lightLevel;
+        }
+        else
+        {   // No, draw a 2D sprite (in Rend_DrawPlayerSprites).
+            vis->type = VSPR_HUD_SPRITE;
+            vis->light = NULL;
+
+            // Adjust the center slightly so an angle can be calculated.
+            vis->distance = 4;
+            vis->center[VX] = viewX;
+            vis->center[VY] = viewY;
+            vis->center[VZ] = viewZ;
+
+            vis->data.psprite.subsector = viewPlayer->mo->subsector;
+            vis->data.psprite.psp = psp;
+
+            memcpy(vis->data.psprite.rgb, rgb, sizeof(float) * 3);
+            vis->data.psprite.alpha = alpha;
+            vis->data.psprite.lightlevel = lightLevel;
+        }
     }
 }
 
@@ -612,10 +635,10 @@ float R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz)
                  (100 * FIX2FLT(momz), 100 * P_AccurateDistance(momx, momy)));
 }
 
-/*
- * Determine the correct Z coordinate for the mobj.  The visible Z
- * coordinate may be slightly different than the actual Z coordinate
- * due to smoothed plane movement.
+/**
+ * Determine the correct Z coordinate for the mobj. The visible Z coordinate
+ * may be slightly different than the actual Z coordinate due to smoothed plane
+ * movement.
  */
 boolean RIT_VisMobjZ(sector_t *sector, void *data)
 {
@@ -644,6 +667,7 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
 void R_ProjectSprite(mobj_t *thing)
 {
     sector_t   *sect = thing->subsector->sector;
+    float       thangle = 0;
     fixed_t     trx, try;
     spritedef_t *sprdef;
     spriteframe_t *sprframe = NULL;
@@ -652,13 +676,9 @@ void R_ProjectSprite(mobj_t *thing)
     boolean     flip;
     vissprite_t *vis;
     angle_t     ang;
-    float       v1[2], v2[2];
-    float       sinrv, cosrv, thangle = 0;  // rv = real value
     boolean     align;
     modeldef_t *mf = NULL, *nextmf = NULL;
     float       interp = 0, distance;
-
-    v2[VX] = v2[VY] = 0; // initialize
 
     if(thing->ddflags & DDMF_DONTDRAW || thing->translucency == 0xff ||
        thing->state == NULL || thing->state == states)
@@ -690,11 +710,13 @@ void R_ProjectSprite(mobj_t *thing)
     }
     sprframe = &sprdef->spriteframes[thing->frame];
 
-    // Calculate edges of the shape.
-    v1[VX] = FIX2FLT(thing->pos[VX]);
-    v1[VY] = FIX2FLT(thing->pos[VY]);
-
-    distance = Rend_PointDist2D(v1);
+    // Determine distance to object.
+    {
+    float v[2];
+    v[VX] = FIX2FLT(thing->pos[VX]);
+    v[VY] = FIX2FLT(thing->pos[VY]);
+    distance = Rend_PointDist2D(v);
+    }
 
     // Check for a 3D model.
     if(useModels)
@@ -732,39 +754,34 @@ void R_ProjectSprite(mobj_t *thing)
     if(alwaysAlign == 1)
         align = true;
 
+    // Perform visibility checking.
     if(!mf)
-    {
-        if(align || alwaysAlign == 3)
-        {
-            // The sprite should be fully aligned to view plane.
-            sinrv = -FIX2FLT(viewCos);
-            cosrv = FIX2FLT(viewSin);
-        }
-        else
-        {
-            thangle =
-                BANG2RAD(bamsAtan2(FIX2FLT(try) * 10, FIX2FLT(trx) * 10)) -
-                PI / 2;
-            sinrv = sin(thangle);
-            cosrv = cos(thangle);
-        }
-
-        //if(alwaysAlign == 2) align = true;
-
-        v1[VX] -= cosrv * spritelumps[lump]->offset;
-        v1[VY] -= sinrv * spritelumps[lump]->offset;
-        v2[VX] = v1[VX] + cosrv * spritelumps[lump]->width;
-        v2[VY] = v1[VY] + sinrv * spritelumps[lump]->width;
-
+    {   // Its a sprite.
         if(!align && alwaysAlign != 2 && alwaysAlign != 3)
+        {
+            float center[2], v1[2], v2[2];
+            float width = (float) spritelumps[lump]->width;
+            float offset = (float) spritelumps[lump]->offset - (width / 2);
+
+            // Project a line segment relative to the view in 2D, then check
+            // if not entirely clipped away in the 360 degree angle clipper.
+            center[VX] = FIX2FLT(thing->pos[VX]);
+            center[VY] = FIX2FLT(thing->pos[VY]);
+            M_ProjectViewRelativeLine2D(center, (align || alwaysAlign == 3),
+                                        width, offset, v1, v2);
+
             // Check for visibility.
             if(!C_CheckViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]))
                 return;         // Isn't visible.
+        }
     }
     else
-    {
-        // Models need to be visibility-checked, too.
-        float   off[2];
+    {   // Its a model.
+        float   v[2], off[2];
+        float   sinrv, cosrv;
+
+        v[VX] = FIX2FLT(thing->pos[VX]);
+        v[VY] = FIX2FLT(thing->pos[VY]);
 
         thangle =
             BANG2RAD(bamsAtan2(FIX2FLT(try) * 10, FIX2FLT(trx) * 10)) - PI / 2;
@@ -773,8 +790,8 @@ void R_ProjectSprite(mobj_t *thing)
         off[VX] = cosrv * (thing->radius >> FRACBITS);
         off[VY] = sinrv * (thing->radius >> FRACBITS);
         if(!C_CheckViewRelSeg
-           (v1[VX] - off[VX], v1[VY] - off[VY], v1[VX] + off[VX],
-            v1[VY] + off[VY]))
+           (v[VX] - off[VX], v[VY] - off[VY], v[VX] + off[VX],
+            v[VY] + off[VY]))
         {
             // The visibility check indicates that the model's origin is
             // not visible. However, if the model is close to the viewpoint
@@ -791,6 +808,7 @@ void R_ProjectSprite(mobj_t *thing)
         // Viewaligning means scaling down Z with models.
         align = false;
     }
+
     //
     // Store information in a vissprite.
     //
@@ -858,15 +876,7 @@ void R_ProjectSprite(mobj_t *thing)
         vis->data.mo.floorclip += R_GetBobOffset(thing);
     }
 
-    // The start and end vertices.
-    vis->data.mo.v1[VX] = v1[VX];
-    vis->data.mo.v1[VY] = v1[VY];
-    if(!mf)
-    {
-        vis->data.mo.v2[VX] = v2[VX];
-        vis->data.mo.v2[VY] = v2[VY];
-    }
-    else
+    if(mf)
     {
         // Determine the rotation angles (in degrees).
         if(mf->sub[0].flags & MFF_ALIGN_YAW)
@@ -910,7 +920,8 @@ void R_ProjectSprite(mobj_t *thing)
         else
             vis->data.mo.pitch = 0;
     }
-    vis->data.mo.flip = flip;
+    vis->data.mo.texFlip[0] = flip;
+    vis->data.mo.texFlip[1] = false;
     vis->data.mo.patch = lump;
 
     // Set light level.
@@ -960,9 +971,11 @@ void R_ProjectSprite(mobj_t *thing)
         {
             float   mul =
                 (thing->tics - frameTimePos) / (float) thing->state->tics;
+
             for(i = 0; i < 3; i++)
                 vis->data.mo.visoff[i] = FIX2FLT(thing->srvo[i] << 8) * mul;
         }
+
         if(thing->mom[MX] || thing->mom[MY] || thing->mom[MZ])
         {
             // Use the object's speed to calculate a short-range
@@ -972,9 +985,6 @@ void R_ProjectSprite(mobj_t *thing)
             vis->data.mo.visoff[VZ] += FIX2FLT(thing->mom[MZ]) * frameTimePos;
         }
     }
-
-    // Glowing floor and ceiling.
-    R_ApplyPlaneGlowsToVisSprite(vis, sect);
 }
 
 void R_AddSprites(sector_t *sec)
@@ -1002,7 +1012,7 @@ void R_AddSprites(sector_t *sec)
         if(R_IsSkySurface(&sec->SP_ceilsurface))
         {
             if(!(thing->dplayer && thing->dplayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
-               thing->pos[VZ] <= sec->SP_ceilheight && 
+               thing->pos[VZ] <= sec->SP_ceilheight &&
                thing->pos[VZ] >= sec->SP_floorheight && !sec->selfRefHack)
             {
                 R_GetSpriteInfo(thing->sprite, thing->frame, &spriteInfo);
@@ -1025,8 +1035,6 @@ void R_AddSprites(sector_t *sec)
     if(raised)
         R_SkyFix(false, true);
 }
-
-vissprite_t vsprsortedhead;
 
 void R_SortVisSprites(void)
 {
@@ -1055,7 +1063,7 @@ void R_SortVisSprites(void)
     // Pull the vissprites out by distance.
     //
     vsprsortedhead.next = vsprsortedhead.prev = &vsprsortedhead;
-    for(i = 0; i < count; i++)
+    for(i = 0; i < count; ++i)
     {
         bestdist = 0;
         for(ds = unsorted.next; ds != &unsorted; ds = ds->next)
@@ -1066,6 +1074,7 @@ void R_SortVisSprites(void)
                 best = ds;
             }
         }
+
         best->next->prev = best->prev;
         best->prev->next = best->next;
         best->next = &vsprsortedhead;
@@ -1075,9 +1084,269 @@ void R_SortVisSprites(void)
     }
 }
 
-/*
- * Returns the current floatbob offset for the mobj, if the mobj is flagged
- * for bobbing.
+void R_SetAmbientColor(float *rgba, float lightLevel, float distance)
+{
+    uint        i;
+    rendpoly_t *poly;
+
+    // This way the distance darkening has an effect.
+    poly = R_AllocRendPoly(RP_NONE, false, 1);
+
+    // Note: Light adaptation has already been applied.
+    RL_VertexColors(poly, lightLevel, distance, rgba, rgba[CA]);
+
+    // Determine the ambient light affecting the vissprite.
+    for(i = 0; i < 3; ++i)
+        ambientColor[i] = poly->vertices[0].color.rgba[i] * reciprocal255;
+
+    R_FreeRendPoly(poly);
+}
+
+
+static void scaleFloatRGB(float *out, const float *in, float mul)
+{
+    memset(out, 0, sizeof(float) * 3);
+    R_ScaleAmbientRGB(out, in, mul);
+}
+
+/**
+ * Setup the light/dark factors and dot product offset for glow lights.
+ */
+static void glowLightSetup(vlight_t *light)
+{
+    light->lightSide = 1;
+    light->darkSide = 0;
+    light->offset = .3f;
+}
+
+/**
+ * Iterator for processing light sources around a vissprite.
+ */
+boolean visSpriteLightIterator(lumobj_t *lum, fixed_t xyDist, void *data)
+{
+    vlightitervars_t *vars = (vlightitervars_t*) data;
+    float       dist;
+    float       glowHeight;
+    boolean     addLight = false;
+
+    // Is the light close enough to make the list?
+    switch(lum->type)
+    {
+    case LT_OMNI:
+        {
+        fixed_t     zDist;
+
+        zDist = FLT2FIX(vars->pos[VZ] - lum->pos[VZ] + LUM_OMNI(lum)->zOff);
+        dist = FIX2FLT(P_ApproxDistance(xyDist, zDist));
+
+        if(dist < (float) dlMaxRad)
+            addLight = true;
+        }
+        break;
+
+    case LT_PLANE:
+        if(LUM_PLANE(lum)->intensity &&
+           (lum->color[0] > 0 || lum->color[1] > 0|| lum->color[2] > 0))
+        {
+            // Floor glow
+            glowHeight =
+                (MAX_GLOWHEIGHT * LUM_PLANE(lum)->intensity) * glowHeightFactor;
+
+            // Don't make too small or too large glows.
+            if(glowHeight > 2)
+            {
+                float       delta[3];
+
+                if(glowHeight > glowHeightMax)
+                    glowHeight = glowHeightMax;
+
+                delta[VX] = vars->pos[VX] - lum->pos[VX];
+                delta[VY] = vars->pos[VY] - lum->pos[VY];
+                delta[VZ] = vars->pos[VZ] - lum->pos[VZ];
+
+                if(!((dist = M_DotProduct(delta, LUM_PLANE(lum)->normal)) < 0))
+                    // Is on the front of the glow plane.
+                    addLight = true;
+            }
+        }
+        break;
+    }
+
+    // If the light is not close enough, skip it.
+    if(addLight)
+    {
+        vlight_t   *light;
+        uint        i, maxIndex = 0;
+        float       maxDist = -1;
+
+        // See if this light can be inserted into the list.
+        // (In most cases it should be.)
+        for(i = 1, light = lights + 1; i < vars->maxLights; ++i, light++)
+        {
+            if(light->approxDist > maxDist)
+            {
+                maxDist = light->approxDist;
+                maxIndex = i;
+            }
+        }
+
+        // Now we know the farthest light on the current list (at maxIndex).
+        if(dist < maxDist)
+        {
+            // The new light is closer. Replace the old max.
+            light = &lights[maxIndex];
+
+            light->used = true;
+            switch(lum->type)
+            {
+            case LT_OMNI:
+                light->lum = lum;
+                light->approxDist = dist;
+                break;
+
+            case LT_PLANE:
+                light->lum = NULL;
+                light->approxDist = dist;
+                glowLightSetup(light);
+
+                memcpy(light->worldVector, &LUM_PLANE(lum)->normal,
+                       sizeof(light->worldVector));
+                dist = 1 - dist / glowHeight;
+                scaleFloatRGB(light->color, lum->color, dist);
+                R_ScaleAmbientRGB(ambientColor, lum->color, dist / 3);
+                break;
+            }
+
+            if(*vars->numLights < maxIndex + 1)
+                *vars->numLights = maxIndex + 1;
+        }
+    }
+
+    return true;
+}
+
+void R_DetermineLightsAffectingVisSprite(const visspritelightparams_t *params,
+                                         vlight_t **ptr, uint *num)
+{
+    uint        i, numLights;
+    vlight_t   *light;
+
+    if(!params || !ptr || !num)
+        return;
+
+    // Determine the lighting properties that affect this vissprite and find
+    // any lights close enough to contribute additional light.
+    numLights = 0;
+    if(params->maxLights)
+    {
+        memset(lights, 0, sizeof(lights));
+
+        // The model should always be lit with world light.
+        numLights++;
+        lights[0].used = true;
+
+        // Set the correct intensity.
+        for(i = 0; i < 3; ++i)
+        {
+            lights->worldVector[i] = worldLight[i];
+            lights->color[i] = ambientColor[i];
+        }
+
+        if(params->starkLight)
+        {
+            lights->lightSide = .35f;
+            lights->darkSide = .5f;
+            lights->offset = 0;
+        }
+        else
+        {
+            // World light can both light and shade. Normal objects
+            // get more shade than light (to prevent them from
+            // becoming too bright when compared to ambient light).
+            lights->lightSide = .2f;
+            lights->darkSide = .8f;
+            lights->offset = .3f;
+        }
+    }
+
+    // Add extra light using dynamic lights.
+    if(params->maxLights > numLights && dlInited && params->subsector)
+    {
+        vlightitervars_t vars;
+
+        memcpy(vars.pos, params->center, sizeof(vars.pos));
+        vars.numLights = &numLights;
+        vars.maxLights = params->maxLights;
+
+        // Find the nearest sources of light. They will be used to
+        // light the vertices. First initialize the array.
+        for(i = numLights; i < MAX_VISSPRITE_LIGHTS; ++i)
+            lights[i].approxDist = (float) DDMAXINT;
+
+        DL_LumRadiusIterator(params->subsector, FLT2FIX(params->center[VX]),
+                             FLT2FIX(params->center[VY]), dlMaxRad << FRACBITS,
+                             &vars, visSpriteLightIterator);
+    }
+
+    // Don't use too many lights.
+    if(numLights > params->maxLights)
+        numLights = params->maxLights;
+
+    // Calculate color for light sources nearby.
+    for(i = 0, light = lights; i < numLights; ++i, light++)
+    {
+        if(!light->used)
+            continue;
+
+        if(light->lum)
+        {
+            int             c;
+            float           intensity, lightCenter[3];
+            lumobj_t       *l = light->lum;
+
+            // The intensity of the light.
+            intensity = (1 - light->approxDist /
+                            (LUM_OMNI(l)->radius * 2)) * 2;
+            if(intensity < 0)
+                intensity = 0;
+            if(intensity > 1)
+                intensity = 1;
+
+            if(intensity == 0)
+            {   // No point in lighting with this!
+                light->used = false;
+                continue;
+            }
+
+            // The center of the light source.
+            lightCenter[VX] = l->pos[VX];
+            lightCenter[VY] = l->pos[VY];
+            lightCenter[VZ] = l->pos[VZ] + LUM_OMNI(l)->zOff;
+
+            // Calculate the normalized direction vector,
+            // pointing out of the vissprite.
+            for(c = 0; c < 3; ++c)
+            {
+                light->vector[c] = (params->center[c] - lightCenter[c]) /
+                                        light->approxDist;
+                // ...and the color of the light.
+                light->color[c] = l->color[c] * intensity;
+            }
+        }
+        else
+        {
+            memcpy(light->vector, light->worldVector,
+                   sizeof(light->vector));
+        }
+    }
+
+    *ptr = lights;
+    *num = numLights;
+}
+
+/**
+ * @return              The current floatbob offset for the mobj, if the mobj
+ *                      is flagged for bobbing, else @c 0.
  */
 float R_GetBobOffset(mobj_t *mo)
 {

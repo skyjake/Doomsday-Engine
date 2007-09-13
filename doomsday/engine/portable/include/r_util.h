@@ -1,10 +1,10 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ line_t         *R_GetLineForSide(uint sideIDX);
 subsector_t    *R_PointInSubsector(fixed_t x, fixed_t y);
 boolean         R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector);
 boolean         R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector);
+void            R_ScaleAmbientRGB(float *out, const float *in, float mul);
 sector_t*       R_GetSectorForDegen(void *degenmobj);
 
 #endif

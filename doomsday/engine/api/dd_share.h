@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -1308,9 +1308,6 @@ typedef struct ticcmd_s {
 
     // Normally one for the weapon and one for the muzzle flash.
 #define DDMAXPSPRITES 2
-
-    // Player sprite flags.
-#define DDPSPF_RENDERED     0x1    // Was rendered.
 
     enum                           // Psprite states.
     {

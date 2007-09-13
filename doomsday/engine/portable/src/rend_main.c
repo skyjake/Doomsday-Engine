@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -63,6 +63,12 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+void Rend_DrawBBox(float pos3f[3], float w, float l, float h,
+                   float color3f[3], float alpha, float br,
+                   boolean alignToBase);
+void Rend_DrawArrow(float pos3f[3], angle_t a, float s, float color3f[3],
+                    float alpha);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void Rend_RenderBoundingBoxes(void);
@@ -90,7 +96,6 @@ boolean willRenderSprites = true;
 boolean freezeRLs = false;
 
 int     missileBlend = 1;
-int     litSprites = 1;
 // Ambient lighting, r_ambient is used within the renderer, ambientLight is
 // used to store the value of the ambient light cvar. ambientLight is used
 // The value chosen for r_ambient occurs in Rend_CalcLightRangeModMatrix
@@ -2223,7 +2228,7 @@ void Rend_RenderMap(void)
         Rend_InitDecorationsForFrame();
 
         // Maintain luminous objects.
-        if(useDynLights || haloMode || litSprites || useDecorations)
+        if(useDynLights || haloMode || spriteLight || useDecorations)
         {
             DL_InitForNewFrame();
         }

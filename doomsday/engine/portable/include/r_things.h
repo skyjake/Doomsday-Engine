@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -39,14 +39,31 @@ enum {
     VSPR_MASKED_WALL,
     VSPR_MAP_OBJECT,
     VSPR_HUD_MODEL,
+    VSPR_HUD_SPRITE,
     VSPR_DECORATION
 };
+
+typedef struct rendmaskedwallparams_s {
+    int             texture;
+    boolean         masked;
+    blendmode_t     blendmode; // Blendmode to be used when drawing
+                               // (two sided mid textures only)
+    struct wall_vertex_s {
+        float           pos[3]; // x y and z coordinates.
+        unsigned char   color[4];
+    } vertices[4];
+    float           texc[2][2]; // u and v coordinates.
+    
+    DGLuint         modTex; // Texture to modulate with.
+    float           modTexC[2][2]; // u and v coordinates.
+    float           modColor[3];
+} rendmaskedwallparams_t;
 
 // A vissprite_t is a thing or masked wall that will be drawn during
 // a refresh.
 typedef struct vissprite_s {
     struct vissprite_s *prev, *next;
-    byte            type;          // True if this is a sprite (otherwise a wall segment).
+    byte            type;          // VSPR_* type of vissprite.
     float           distance;      // Vissprites are sorted by distance.
     float           center[3];
     struct lumobj_s *light;        // For the halo (NULL if no halo).
@@ -57,8 +74,7 @@ typedef struct vissprite_s {
             int             patch;
             subsector_t    *subsector;
             float           gzt;    // global top for silhouette clipping
-            boolean         flip;  // Flip texture?
-            float           v1[2], v2[2];   // The vertices (v1 is the left one).
+            boolean         texFlip[2]; // {X, Y} Flip texture?
             int             flags; // for color translation and shadow draw
             uint            id;
             int             selector;
@@ -66,37 +82,37 @@ typedef struct vissprite_s {
             float           floorclip;
             boolean         viewaligned;    // Align to view plane.
             float           secfloor, secceil;
-            boolean         hasglow;
-            float           floorglow[3];   // Floor glow color.
-            float           ceilglow[3];    // Ceiling glow color.
-            float           floorglowamount;
-            float           ceilglowamount;
             float           rgb[3]; // Sector light color.
             float           lightlevel;
             float           alpha;
             float           visoff[3];  // Last-minute offset to coords.
-            struct modeldef_s *mf, *nextmf;
-            float           yaw, pitch; // For models.
-            float           inter; // Frame interpolation, 0..1
             boolean         flooradjust; // Allow moving sprite to match visible floor.
+
+            // For models:
+            struct modeldef_s *mf, *nextmf;
+            float           yaw, pitch;
+            float           pitchAngleOffset;
+            float           yawAngleOffset;
+            float           inter; // Frame interpolation, 0..1
         } mo;
-        struct vissprite_wall_s {
-            int             texture;
-            boolean         masked;
-            blendmode_t     blendmode; // Blendmode to be used when drawing
-                                       // (two sided mid textures only)
-            struct vissprite_wall_vertex_s {
-                float           pos[3]; // x y and z coordinates.
-                unsigned char   color[4];
-            } vertices[4];
-            float           texc[2][2]; // u and v coordinates.
-            
-            DGLuint         modTex; // Texture to modulate with.
-            float           modTexC[2][2]; // u and v coordinates.
-            float           modColor[3];
-        } wall;
+        rendmaskedwallparams_t wall;
+        struct vissprite_hudsprite_s {
+            subsector_t    *subsector;
+            float           lightlevel;
+            float           alpha;
+            float           rgb[3];
+            ddpsprite_t    *psp;
+        } psprite;
     } data;
 } vissprite_t;
+
+typedef struct visspritelightparams_s {
+    float       center[3];
+    subsector_t *subsector;
+
+    uint        maxLights;
+    boolean     starkLight; // World light has a more pronounced effect.
+} visspritelightparams_t;
 
 // Sprites are patches with a special naming convention so they can be
 // recognized by R_InitSprites.  The sprite and frame specified by a
@@ -165,5 +181,9 @@ void            R_InitSprites(void);
 void            R_ClearSprites(void);
 
 void            R_ClipVisSprite(vissprite_t * vis, int xl, int xh);
+
+void            R_SetAmbientColor(float *rgba, float lightLevel, float distance);
+void            R_DetermineLightsAffectingVisSprite(const visspritelightparams_t *params,
+                                                 vlight_t **ptr, uint *num);
 
 #endif
