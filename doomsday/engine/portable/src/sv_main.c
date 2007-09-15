@@ -342,9 +342,10 @@ void Sv_HandlePacket(void)
     char       *msg;
     char        buf[17];
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
-#endif
+Con_Message("Sv_HandlePacket: length=%i\n", netBuffer.length);
+//#endif
 
     switch(netBuffer.msg.type)
     {
@@ -447,6 +448,13 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
         // Is the message for us?
         mask = Msg_ReadShort();
         // Copy the message into a buffer.
+
+        // integer overflow in PKT_CHAT attacks us with an incomplete PKT_CHAT packet
+        // with a size less then 3. As we will replace the entire netcode, lets bandaid this
+        // by breaking out. Yagisan
+        if (netBuffer.length <=3)
+           {break; }
+        // end of bandaid
         msg = M_Malloc(netBuffer.length - 3);
         strcpy(msg, (char *) netBuffer.cursor);
         // Message for us? Show it locally.
