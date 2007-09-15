@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -92,7 +92,7 @@ float V2_Distance(const pvec2_t a, const pvec2_t b)
  *
  * @return          The length of the vector.
  */
-float V2_Normalize(float *vec)
+float V2_Normalize(pvec2_t vec)
 {
     float   len = V2_Length(vec);
 
@@ -128,7 +128,7 @@ void V2_Scale(pvec2_t vec, float scalar)
 void V2_Rotate(pvec2_t vec, float radians)
 {
     const float c = cos(radians);
-    const float s = sin(radians); 
+    const float s = sin(radians);
     float x = c * vec[VX] - s * vec[VY];
     float y = s * vec[VX] + c * vec[VY];
     vec[VX] = x;
@@ -336,4 +336,162 @@ void V2_AddToBox(arvec2_t box, const pvec2_t point)
         box[0][VY] = point[VY];
     if(point[VY] > box[1][VY])
         box[1][VY] = point[VY];
+}
+
+/**
+ * Set the vector's x, y and z components.
+ */
+void V3_Set(pvec3_t vec, vectorcomp_t x, vectorcomp_t y, vectorcomp_t z)
+{
+    vec[VX] = x;
+    vec[VY] = y;
+    vec[VZ] = z;
+}
+
+void V3_SetFixed(pvec3_t vec, fixed_t x, fixed_t y, fixed_t z)
+{
+    vec[VX] = FIX2FLT(x);
+    vec[VY] = FIX2FLT(y);
+    vec[VZ] = FIX2FLT(z);
+}
+
+/**
+ * 3-dimensional vector length.
+ */
+float V3_Length(const pvec3_t vec)
+{
+    if(vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0)
+        return 0;
+
+    return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY] + vec[VZ] * vec[VZ]);
+}
+
+/**
+ * The distance between two points.
+ */
+float V3_Distance(const pvec3_t a, const pvec3_t b)
+{
+    vec3_t  vec;
+
+    V3_Subtract(vec, b, a);
+    return V3_Length(vec);
+}
+
+/**
+ * Normalize a 3-dimensional vector.
+ *
+ * @return          The length of the vector.
+ */
+float V3_Normalize(pvec3_t vec)
+{
+    float   len = V3_Length(vec);
+
+    if(len != 0)
+    {
+        vec[VX] /= len;
+        vec[VY] /= len;
+        vec[VZ] /= len;
+    }
+    return len;
+}
+
+/**
+ * Make a copy of the source vector.
+ */
+void V3_Copy(pvec3_t dest, const pvec3_t src)
+{
+    dest[VX] = src[VX];
+    dest[VY] = src[VY];
+    dest[VZ] = src[VZ];
+}
+
+/**
+ * Multiply the vector by the scalar.
+ */
+void V3_Scale(pvec3_t vec, float scalar)
+{
+    vec[VX] *= scalar;
+    vec[VY] *= scalar;
+    vec[VZ] *= scalar;
+}
+
+/**
+ * Calculate the sum of two 3-dimensional vectors.
+ */
+void V3_Sum(pvec3_t dest, const pvec3_t src1, const pvec3_t src2)
+{
+    dest[VX] = src1[VX] + src2[VX];
+    dest[VY] = src1[VY] + src2[VY];
+    dest[VZ] = src1[VZ] + src2[VZ];
+}
+
+/**
+ * Subtract src1 from src2, return result in 'dest'.
+ */
+void V3_Subtract(pvec3_t dest, const pvec3_t src1, const pvec3_t src2)
+{
+    dest[VX] = src1[VX] - src2[VX];
+    dest[VY] = src1[VY] - src2[VY];
+    dest[VZ] = src1[VZ] - src2[VZ];
+}
+
+/**
+ * Calculate the dot product of the two vectors.
+ */
+float V3_DotProduct(const pvec3_t a, const pvec3_t b)
+{
+    return a[VX] * b[VX] + a[VY] * b[VY] + a[VZ] * b[VZ];
+}
+
+/**
+ * Calculate the cross product of two vectors.
+ *
+ * @param dest      Result will be written back here.
+ * @param src1      First vector.
+ * @param src2      Second vector.
+ */
+void V3_CrossProduct(pvec3_t dest, const pvec3_t src1, const pvec3_t src2)
+{
+    dest[VX] = src1[VY] * src2[VZ] - src1[VZ] * src2[VY];
+    dest[VY] = src1[VZ] * src2[VX] - src1[VX] * src2[VZ];
+    dest[VZ] = src1[VX] * src2[VY] - src1[VY] * src2[VX];
+}
+
+/**
+ * Cross product of two vectors composed of three points.
+ *
+ * @param dest      Result will be written back here.
+ * @param v1        First vector.
+ * @param v2        Second vector.
+ * @param v3        Third vector.
+ */
+void V3_PointCrossProduct(pvec3_t dest, const pvec3_t v1, const pvec3_t v2,
+                          const pvec3_t v3)
+{
+    vec3_t      a, b;
+
+    V3_Subtract(a, v2, v1);
+    V3_Subtract(b, v3, v1);
+    V3_CrossProduct(dest, a, b);
+}
+
+/**
+ * @return          @c true, if the vector is a zero vector.
+ */
+boolean V3_IsZero(const pvec3_t vec)
+{
+    return vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0;
+}
+
+/**
+ * Linear interpolation between a and b, by c.
+ */
+void V3_Lerp(pvec3_t dest, const pvec3_t a, const pvec3_t b, float c)
+{
+    uint    i;
+
+    for(i = 0; i < 3; ++i)
+    {
+        dest[i] = a[i] + c * (b[i] - a[i]);
+    }
 }
