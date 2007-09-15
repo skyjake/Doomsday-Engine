@@ -476,6 +476,35 @@ void V3_PointCrossProduct(pvec3_t dest, const pvec3_t v1, const pvec3_t v2,
 }
 
 /**
+ * Find the closest point in the plane, to an arbitary point.
+ *
+ * @param dest          Result will be written back here.
+ * @param planeNormal   The normalized plane normal.
+ * @param planePoint    A point already on the plane.
+ * @param arbPoint      The arbitrary point to find the closest point too.
+ *
+ * @return              Distance from the closest point on the plane to the
+ *                      specified arbitary point.
+ */
+float V3_ClosestPointOnPlane(pvec3_t dest,
+                             const pvec3_t planeNormal,
+                             const pvec3_t planePoint,
+                             const pvec3_t arbPoint)
+{
+    vec3_t      pvec;
+    float       distance;
+
+    V3_Subtract(pvec, arbPoint, planePoint);
+    distance = V3_DotProduct(planeNormal, pvec);
+
+    V3_Copy(dest, planeNormal);
+    V3_Scale(dest, distance);
+    V3_Subtract(dest, arbPoint, dest);
+
+    return distance;
+}
+
+/**
  * @return          @c true, if the vector is a zero vector.
  */
 boolean V3_IsZero(const pvec3_t vec)

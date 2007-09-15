@@ -84,6 +84,10 @@ void            V3_CrossProduct(pvec3_t dest, const pvec3_t src1,
                                 const pvec3_t src2);
 void            V3_PointCrossProduct(pvec3_t dest, const pvec3_t v1,
                                      const pvec3_t v2, const pvec3_t v3);
+float           V3_ClosestPointOnPlane(pvec3_t dest,
+                                       const pvec3_t planeNormal,
+                                       const pvec3_t planePoint,
+                                       const pvec3_t arbPoint);
 boolean         V3_IsZero(const pvec3_t vec);
 void            V3_Lerp(pvec3_t dest, const pvec3_t a, const pvec3_t b,
                         float c);
