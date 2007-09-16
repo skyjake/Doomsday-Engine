@@ -278,7 +278,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         if(showmsg)
         {
             // Print a notification.
-            sprintf(msgBuff, "%s joined the game",
+            snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s joined the game",
                     Net_GetPlayerName(plrNumber));
             D_NetMessage(msgBuff);
         }
@@ -290,7 +290,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         players[plrNumber].playerstate = PST_GONE;
 
         // Print a notification.
-        sprintf(msgBuff, "%s left the game", Net_GetPlayerName(plrNumber));
+        snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s left the game", Net_GetPlayerName(plrNumber));
         D_NetMessage(msgBuff);
 
         if(IS_SERVER)
