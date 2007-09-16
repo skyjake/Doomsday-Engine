@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,7 +79,7 @@ extern int netSvAllowSendMsg;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char    msgBuff[256];
+char    msgBuff[NETBUFFER_MAXMESSAGE];
 float   netJumpPower = 9;
 
 // Net code related console commands
@@ -305,13 +306,8 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         for(i = num = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->ingame)
                 num++;
-        // If there are more than two players, include the name of
-        // the player who sent this.
-        if(num > 2)
-            sprintf(msgBuff, "%s: %s", Net_GetPlayerName(plrNumber),
+            snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber),
                     (const char *) data);
-        else
-            strcpy(msgBuff, data);
 
         // The chat message is already echoed by the console.
         cfg.echoMsg = false;
