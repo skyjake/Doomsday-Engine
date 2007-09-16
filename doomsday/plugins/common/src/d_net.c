@@ -79,7 +79,7 @@ extern int netSvAllowSendMsg;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char    msgBuff[NETBUFFER_MAXMESSAGE];
+char    msgBuff[NETBUFFER_MAXMESSAGE + 1];
 float   netJumpPower = 9;
 
 // Net code related console commands
@@ -464,7 +464,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
         break;
 
     case GPT_MESSAGE:
-        strcpy(msgBuff, data);
+        snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", data);
         P_SetMessage(&players[consoleplayer], msgBuff, false);
 
         break;
@@ -472,7 +472,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 #ifndef __JDOOM__
 #ifndef __JHERETIC__
     case GPT_YELLOW_MESSAGE:
-        strcpy(msgBuff, data);
+        snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", data);
         P_SetYellowMessage(&players[consoleplayer], msgBuff, false);
         break;
 #endif
@@ -566,7 +566,7 @@ void D_ChatSound(void)
  */
 static void D_NetMessageEx(char *msg, boolean playSound)
 {
-    strcpy(msgBuff, msg);
+    snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", msg);
     // This is intended to be a local message.
     // Let's make sure P_SetMessage doesn't forward it anywhere.
     netSvAllowSendMsg = false;
