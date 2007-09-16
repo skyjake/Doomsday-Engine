@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -186,25 +187,29 @@ void *NetSv_ReadCommands(byte *msg, uint size)
         // One more command.
         *count += 1;
 
-        // First the flags.
-        flags = *msg++;
+        // only act on up to MAX_COMMANDS, and discard the rest to prevent buffer overflows
+        // its a fugly hack - we really need to replace the netcode - Yagisan
+        if (*msg <= MAX_COMMANDS)
+           {
+           // First the flags.
+           flags = *msg++;
 
-        if(flags & CMDF_FORWARDMOVE)
-            cmd->forwardMove = *msg++;
-        if(flags & CMDF_SIDEMOVE)
-            cmd->sideMove = *msg++;
-        if(flags & CMDF_ANGLE)
-        {
-            cmd->angle = SHORT( *(short *) msg );
-            msg += 2;
-        }
-        if(flags & CMDF_LOOKDIR)
-        {
-            cmd->pitch = SHORT( *(short *) msg );
-            msg += 2;
-        }
-        if(flags & CMDF_BUTTONS)
-            cmd->actions = *msg++;
+           if(flags & CMDF_FORWARDMOVE)
+               cmd->forwardMove = *msg++;
+           if(flags & CMDF_SIDEMOVE)
+               cmd->sideMove = *msg++;
+           if(flags & CMDF_ANGLE)
+           {
+               cmd->angle = SHORT( *(short *) msg );
+               msg += 2;
+           }
+           if(flags & CMDF_LOOKDIR)
+           {
+               cmd->pitch = SHORT( *(short *) msg );
+               msg += 2;
+           }
+           if(flags & CMDF_BUTTONS)
+               cmd->actions = *msg++;
 /*
         if(flags & CMDF_BUTTONS)
         {
@@ -229,10 +234,17 @@ void *NetSv_ReadCommands(byte *msg, uint size)
         }
 */
         // Copy to next command (only differences have been written).
-        memcpy(cmd + 1, cmd, sizeof(ticcmd_t));
-
-        // Move to next command.
-        cmd++;
+           memcpy(cmd + 1, cmd, sizeof(ticcmd_t));
+           }
+           // 
+           // we reached MAX_COMMANDS, start discarding now to prevent buffer overflows
+           // its a fugly hack - we really need to replace the netcode - Yagisan
+           else
+           {
+           msg++;
+           }
+           // Move to next command.
+           cmd++;
     }
 
     return data;
