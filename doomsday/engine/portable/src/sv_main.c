@@ -342,10 +342,10 @@ void Sv_HandlePacket(void)
     char       *msg;
     char        buf[17];
 
-//#ifdef _DEBUG
+#ifdef _DEBUG
 Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
 Con_Message("Sv_HandlePacket: length=%i\n", netBuffer.length);
-//#endif
+#endif
 
     switch(netBuffer.msg.type)
     {
