@@ -178,52 +178,65 @@ void DS_Shutdown(void)
 
 sfxbuffer_t *DS_CreateBuffer(int flags, int bits, int rate)
 {
+    Con_Message("Stub: SDL_Sound: DS_CreateBuffer\n");
 }
 
 void DS_DestroyBuffer(sfxbuffer_t *buf)
 {
+    Con_Message("Stub: SDL_Sound: DS_DestroyBuffer\n");
 }
 
 void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
 {
+    Con_Message("Stub: SDL_Sound: DS_Load\n");
 }
 
 void DS_Reset(sfxbuffer_t *buf)
 {
+    Con_Message("Stub: SDL_Sound: DS_Reset\n");
 }
 
 void DS_Play(sfxbuffer_t *buf)
 {
+    Con_Message("Stub: SDL_Sound: DS_Play\n");
 }
 
 void DS_Stop(sfxbuffer_t *buf)
 {
+    Con_Message("Stub: SDL_Sound: DS_Stop\n");
 }
 
 void DS_Refresh(sfxbuffer_t *buf)
 {
+    Con_Message("Stub: SDL_Sound: DS_Refresh\n");
 }
 
 void DS_Event(int type)
 {
+    Con_Message("Stub: SDL_Sound: DS_Event\n");
 }
 
 void DS_Set(sfxbuffer_t *buf, int property, float value)
 {
+    Con_Message("Stub: SDL_Sound: DS_Set\n");
 }
 
 void DS_Setv(sfxbuffer_t * buf, int property, float *values)
 {
+    Con_Message("Stub: SDL_Sound: DS_Setv\n");
 }
 
 void DS_Listener(int property, float value)
 {
+    Con_Message("Stub: SDL_Sound: DS_Listener\n");
 }
 
 void SetEnvironment(float *rev)
 {
+    Con_Message("Stub: SDL_Sound: SetEnvironment\n");
 }
 
 void DS_Listenerv(int property, float *values)
 {
+    Con_Message("Stub: SDL_Sound: DS_Listenerv\n");
 }
