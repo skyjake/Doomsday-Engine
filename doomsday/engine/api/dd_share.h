@@ -67,9 +67,10 @@ extern          "C" {
     char           *strlwr(char *string);
 #endif
 
-    // We need to use _vsnprintf in Windows
+    // We need to use _vsnprintf, _snprintf in Windows
 #ifdef WIN32
 #   define vsnprintf(buf, size, fmt, list) _vsnprintf(buf, size, fmt, list)
+#   define snprintf(buf, size, fmt, list) _snprintf(buf, size, fmt, list)
 #endif
 
     // Format checking for printf-like functions in GCC2
@@ -109,8 +110,10 @@ extern          "C" {
 #define MIN_OF(x, y)            ((x) < (y)? (x) : (y))
 #define MINMAX_OF(a, x, b)      ((x) < (a)? (a) : (x) > (b)? (b) : (x))
 #define SIGN_OF(x)              ((x) > 0? +1 : (x) < 0? -1 : 0)
+#define ROUND(x)                ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
+#define ABS(x)                  ((x) >= 0 ? (x) : -(x))
 
-// Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
+    // Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
 // Note that this should err on the side of being < 1/255 to prevent result
 // exceeding 255 (e.g. 255 * reciprocal255).
 #define reciprocal255   0.003921568627f
@@ -920,7 +923,7 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     byte            translucency;       /* default = 0 = opaque */ \
     short           vistarget;          /* -1 = mobj is becoming less visible, */ \
                                         /* 0 = no change, 2= mobj is becoming more visible */ \
-    int             reactiontime;       /* if not zero, freeze controls */ 
+    int             reactiontime;       /* if not zero, freeze controls */
 
     typedef struct ddmobj_base_s {
     DD_BASE_MOBJ_ELEMENTS()} ddmobj_base_t;
@@ -1152,8 +1155,8 @@ typedef enum blendmode_e {
     //
     //------------------------------------------------------------------------
 
-/* 
- * Tick Commands. Usually only a part of this data is transferred over 
+/*
+ * Tick Commands. Usually only a part of this data is transferred over
  * the network. In addition to tick commands, clients will sent 'impulses'
  * to the server when they want to change a weapon, use an artifact, or
  * maybe commit suicide.
