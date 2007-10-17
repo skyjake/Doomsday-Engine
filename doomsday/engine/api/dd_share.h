@@ -69,8 +69,8 @@ extern          "C" {
 
     // We need to use _vsnprintf, _snprintf in Windows
 #ifdef WIN32
-#   define vsnprintf(buf, size, fmt, list) _vsnprintf(buf, size, fmt, list)
-#   define snprintf(buf, size, fmt, list) _snprintf(buf, size, fmt, list)
+#   define vsnprintf    _vsnprintf
+#   define snprintf     _snprintf
 #endif
 
     // Format checking for printf-like functions in GCC2
