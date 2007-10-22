@@ -3,30 +3,68 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Doomsday", "Doomsday.vcproj", "{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JDoom", "JDoom.vcproj", "{A36C0FB9-8186-4747-A5D9-D7B659B9F39F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JHeretic", "JHeretic.vcproj", "{7D03FB13-8674-4473-BD32-83C43188B2D2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JHexen", "JHexen.vcproj", "{060CA7D4-CEF4-4F36-8950-55A3E5C46C4C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpDehRead", "dpDehRead.vcproj", "{EF5A1023-13BF-475D-B978-7ED12CD9553A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "drOpenGL", "drOpenGL.vcproj", "{4D082B36-9D60-4308-90D2-BF11C9C05ED7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsCompat", "dsCompat.vcproj", "{1D7A3D67-B874-4844-BA4E-8DA934AF993C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsOpenAL", "dsOpenAL.vcproj", "{0324DC98-86C1-40F5-B3B0-35A057F6173C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpMapLoad", "dpMapLoad.vcproj", "{DA1B6F57-7827-462C-A2BA-44E2F515D413}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsSDLMixer", "dssdlmixer.vcproj", "{C9C45D56-D51C-45C7-8509-020DE447638B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Doom64TC", "doom64tc.vcproj", "{CA7A0565-5F80-4E69-A3C2-12B81FC35768}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WolfTC", "WolfTC.vcproj", "{D1EE2873-F1C3-48D3-B61F-5EDBCDF1691A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsA3D", "dsA3D.vcproj", "{872D3583-05F8-407F-BFAC-111C839845C7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "drDebug", "drdebug.vcproj", "{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpExample", "dpexample.vcproj", "{DC664B00-A393-4B3C-A847-C192E29D053E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -84,11 +122,8 @@ Global
 		{0324DC98-86C1-40F5-B3B0-35A057F6173C}.Release|Win32.ActiveCfg = Release|Win32
 		{0324DC98-86C1-40F5-B3B0-35A057F6173C}.Release|Win32.Build.0 = Release|Win32
 		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Debug|Win32.ActiveCfg = Debug|Win32
-		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Debug|Win32.Build.0 = Debug|Win32
 		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Mesa Release|Win32.ActiveCfg = Release|Win32
-		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Mesa Release|Win32.Build.0 = Release|Win32
 		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Release|Win32.ActiveCfg = Release|Win32
-		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Release|Win32.Build.0 = Release|Win32
 		{C9C45D56-D51C-45C7-8509-020DE447638B}.Debug|Win32.ActiveCfg = Debug|Win32
 		{C9C45D56-D51C-45C7-8509-020DE447638B}.Debug|Win32.Build.0 = Debug|Win32
 		{C9C45D56-D51C-45C7-8509-020DE447638B}.Mesa Release|Win32.ActiveCfg = Release|Win32
@@ -119,6 +154,11 @@ Global
 		{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}.Mesa Release|Win32.Build.0 = Mesa Release|Win32
 		{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}.Release|Win32.ActiveCfg = Release|Win32
 		{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}.Release|Win32.Build.0 = Release|Win32
+		{DC664B00-A393-4B3C-A847-C192E29D053E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DC664B00-A393-4B3C-A847-C192E29D053E}.Mesa Release|Win32.ActiveCfg = Release|Win32
+		{DC664B00-A393-4B3C-A847-C192E29D053E}.Mesa Release|Win32.Build.0 = Release|Win32
+		{DC664B00-A393-4B3C-A847-C192E29D053E}.Release|Win32.ActiveCfg = Release|Win32
+		{DC664B00-A393-4B3C-A847-C192E29D053E}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
