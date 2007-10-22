@@ -6,7 +6,7 @@ GOTO SetPaths
 cls
 ECHO $Id$
 ECHO.
-ECHO This build script compiles the Doomsday Engine and the associated 
+ECHO This build script compiles the Doomsday Engine and the associated
 ECHO libraries.
 ECHO.
 ECHO Microsoft Visual C++ Toolkit is the minimum requirement.  If you
@@ -14,9 +14,9 @@ ECHO want to compile the engine itself, you will also need the Platform
 ECHO SDK, which can be downloaded from Microsoft's website.  The DirectX
 ECHO SDK is also required for compiling the engine.  This means you can
 ECHO compile everything using tools that can be downloaded for free, but
-ECHO all the SDKs will add up to several hundred megabytes. 
+ECHO all the SDKs will add up to several hundred megabytes.
 ECHO.
-ECHO On the bright side, you only need the Visual C++ Toolkit in order to 
+ECHO On the bright side, you only need the Visual C++ Toolkit in order to
 ECHO compile a game DLL.  The game DLLs' only dependency is Doomsday.lib,
 ECHO which is included in the Doomsday source code package.
 ECHO.
@@ -74,7 +74,7 @@ SET INCS_LIBCURL=/I "./../../external/libcurl/portable/include"
 SET INCS_PLUGIN_COMMON=/I "./../../plugins/common/include"
 SET LIBS=/LIBPATH:"./Lib" /LIBPATH:"%DX_LIB%" /LIBPATH:"%EAX_LIB%" /LIBPATH:"%SDL_LIB%" /LIBPATH:"%SDLNET_LIB%" /LIBPATH:"%PLATFORM_LIB%" /LIBPATH:"./%BIN_DIR%"
 SET FLAGS=/Ob1 /Oi /Ot /Oy /GF /FD /EHsc /MT /GS /Gy /Fo"./Obj/Release/" /Fd"./Obj/Release/" /W3 /Gd /Gs
-SET LFLAGS=/INCREMENTAL:NO /SUBSYSTEM:WINDOWS /MACHINE:I386 
+SET LFLAGS=/INCREMENTAL:NO /SUBSYSTEM:WINDOWS /MACHINE:I386
 SET EXTERNAL=./../../external
 
 
@@ -186,7 +186,7 @@ GOTO Failure
 :dpMapLoad
 ECHO Compiling dpMapLoad.dll ((gl)BSP Node Builder Plugin)...
 md %OBJ_DIR%\dpMapLoad
-cl /O2 /Ob1 %INCS_ZLIB% %INCS% /I "./../../external/glbsp/include" %DLLDEFINES% /D "GLBSP_PLUGIN" /D "DPMAPLOAD_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dpMapLoad/" /Fd"./%OBJ_DIR%/dpMapLoad/" /W3 /Gd  @dpmapload_cl.rsp  /link /OUT:"./%BIN_DIR%/dpMapLoad.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dpMapLoad.lib" %LIBS% ./%BIN_DIR%/Doomsday.lib 
+cl /O2 /Ob1 %INCS_ZLIB% %INCS% /I "./../../external/glbsp/include" %DLLDEFINES% /D "GLBSP_PLUGIN" /D "DPMAPLOAD_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dpMapLoad/" /Fd"./%OBJ_DIR%/dpMapLoad/" /W3 /Gd  @dpmapload_cl.rsp  /link /OUT:"./%BIN_DIR%/dpMapLoad.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dpMapLoad.lib" %LIBS% ./%BIN_DIR%/Doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -204,7 +204,7 @@ GOTO Failure
 :dsA3D
 ECHO Compiling dsA3D.dll (A3D SoundFX driver) -- SKIPPING!
 REM md %OBJ_DIR%\dsA3D
-REM cl /O2 /Ob1 %INCS% /I "%A3D_INC%" %DLLDEFINES% /D "DSA3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsA3D" /Fd"./%OBJ_DIR%/dsA3D" /W3 /Gd  @dsa3d_cl.rsp  /link /OUT:"./%BIN_DIR%/dsA3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/a3d/api/dsA3D.def" /IMPLIB:"./%BIN_DIR%/dsA3D.lib" %LIBS% /LIBPATH:"%A3D_LIB%" ./%BIN_DIR%/doomsday.lib ia3dutil.lib ole32.lib 
+REM cl /O2 /Ob1 %INCS% /I "%A3D_INC%" %DLLDEFINES% /D "DSA3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsA3D" /Fd"./%OBJ_DIR%/dsA3D" /W3 /Gd  @dsa3d_cl.rsp  /link /OUT:"./%BIN_DIR%/dsA3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/a3d/api/dsA3D.def" /IMPLIB:"./%BIN_DIR%/dsA3D.lib" %LIBS% /LIBPATH:"%A3D_LIB%" ./%BIN_DIR%/doomsday.lib ia3dutil.lib ole32.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -222,7 +222,7 @@ GOTO Failure
 :dsCompat
 ECHO Compiling dsCompat.dll (DirectSound(3D) SoundFX driver)...
 md %OBJ_DIR%\dsCompat
-cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DSCOMPAT_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsCompat" /Fd"./%OBJ_DIR%/dsCompat" /W3 /Gd  @dscompat_cl.rsp  /link /OUT:"./%BIN_DIR%/dsCompat.dll" %LFLAGS% /DLL /DEF:"./../../plugins/ds6/api/dsCompat.def" /IMPLIB:"./%BIN_DIR%/dsCompat.lib" %LIBS% eax.lib eaxguid.lib dsound.lib dxguid.lib ./%BIN_DIR%/doomsday.lib 
+cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DSCOMPAT_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsCompat" /Fd"./%OBJ_DIR%/dsCompat" /W3 /Gd  @dscompat_cl.rsp  /link /OUT:"./%BIN_DIR%/dsCompat.dll" %LFLAGS% /DLL /DEF:"./../../plugins/ds6/api/dsCompat.def" /IMPLIB:"./%BIN_DIR%/dsCompat.lib" %LIBS% eax.lib eaxguid.lib dsound.lib dxguid.lib ./%BIN_DIR%/doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -249,7 +249,7 @@ GOTO Failure
 :jHeretic
 ECHO Compiling jHeretic.dll (jHeretic Game Library)...
 md %OBJ_DIR%\jHeretic
-cl /O2 /Ob1 %INCS_PLUGIN_COMMON% %INCS_ENGINE_API% %INCS_LZSS_PORTABLE% /I "./../../plugins/jheretic/include" /D "__JHERETIC__" %DLLDEFINES% /D "JHERETIC_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/jHeretic/" /Fd"./%OBJ_DIR%/jHeretic/" /W3 /Gd  @jheretic_cl.rsp  /link /OUT:"./%BIN_DIR%/jHeretic.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:"./../../plugins/jheretic/api/jheretic.def" /IMPLIB:"./%BIN_DIR%/jHeretic.lib" ./%BIN_DIR%/doomsday.lib %EXTERNAL%/lzss/win32/lzss.lib 
+cl /O2 /Ob1 %INCS_PLUGIN_COMMON% %INCS_ENGINE_API% %INCS_LZSS_PORTABLE% /I "./../../plugins/jheretic/include" /D "__JHERETIC__" %DLLDEFINES% /D "JHERETIC_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/jHeretic/" /Fd"./%OBJ_DIR%/jHeretic/" /W3 /Gd  @jheretic_cl.rsp  /link /OUT:"./%BIN_DIR%/jHeretic.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:"./../../plugins/jheretic/api/jheretic.def" /IMPLIB:"./%BIN_DIR%/jHeretic.lib" ./%BIN_DIR%/doomsday.lib %EXTERNAL%/lzss/win32/lzss.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -277,6 +277,15 @@ GOTO Failure
 ECHO Compiling Doom64TC.dll (Doom64TC Game Library)...
 md %OBJ_DIR%\Doom64TC
 cl /O2 /Ob1 %INCS_PLUGIN_COMMON% %INCS_ENGINE_API% %INCS_LZSS_PORTABLE% /I "./../../plugins/doom64tc/include" /D "__DOOM64TC__" /D "__JDOOM__" %DLLDEFINES% /D "DOOM64TC_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/Doom64TC/" /Fd"./%OBJ_DIR%/Doom64TC/" /W3 /Gd  @doom64tc_cl.rsp  /link  /OUT:"./%BIN_DIR%/Doom64TC.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:"./../../plugins/doom64tc/api/doom64tc.def" /IMPLIB:"./%BIN_DIR%/Doom64TC.lib" ./%BIN_DIR%/doomsday.lib %EXTERNAL%/lzss/win32/lzss.lib
+IF %ERRORLEVEL% == 0 GOTO Done
+GOTO Failure
+
+
+:: *** dpExample.dll
+:dpExample
+ECHO Compiling dpExample.dll (Doomsday Example Plugin)...
+md %OBJ_DIR%\dpExample
+cl /O2 /Ob1 %DLLDEFINES% /D "EXAMPLE_PLUGIN" /D "DPEXAMPLE_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dpExample/" /Fd"./%OBJ_DIR%/dpExample/" /W3 /Gd  @dpexample_cl.rsp  /link /OUT:"./%BIN_DIR%/dpExample.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dpExample.lib" %LIBS% ./%BIN_DIR%/Doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
