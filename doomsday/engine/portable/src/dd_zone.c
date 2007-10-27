@@ -180,7 +180,7 @@ memvolume_t *Z_Create(size_t volumeSize)
     block->seq_first = block->seq_last = NULL;
     block->size = vol->zone->size - sizeof(memzone_t);
 
-    printf("Z_Create: New %.1f MB memory volume.\n",
+    Con_Message("Z_Create: New %.1f MB memory volume.\n",
            vol->size / 1024.0 / 1024.0);
 
     return vol;
@@ -222,7 +222,7 @@ void Z_Shutdown(void)
         M_Free(vol);
     }
 
-    printf("Z_Shutdown: Used %i volumes, total %lu bytes.\n",
+    Con_Message("Z_Shutdown: Used %i volumes, total %lu bytes.\n",
            numVolumes, (long unsigned int) totalMemory);
 }
 
@@ -590,7 +590,7 @@ void Z_CheckHeap(void)
     boolean     isDone;
 
 #ifdef _DEBUG
-    VERBOSE2( printf("Z_CheckHeap\n") );
+    VERBOSE2( Con_Message("Z_CheckHeap\n") );
 #endif
 
     for(volume = volumeRoot; volume; volume = volume->next)
