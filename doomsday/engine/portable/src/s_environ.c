@@ -156,85 +156,91 @@ static void setSubSecSectorOwner(ownerlist_t *ownerList, subsector_t *ssec)
     ownerList->head = node;
 }
 
-/**
- * Called during level init to determine which subsectors affect the reverb
- * properties of all sectors. Given that subsectors do not change shape (in
- * two dimensions at least), they do not move and are not created/destroyed
- * once the map has been loaded; this step can be pre-processed.
- */
-void S_DetermineSubSecsAffectingSectorReverb(void)
+static void findSSecsAffectingSector(gamemap_t *map, uint secIDX)
 {
-    uint        startTime = Sys_GetRealTime();
-
-    uint        i, k;
+    uint        i;
     subsector_t *sub;
-    sector_t   *sec;
     ownernode_t *node, *p;
+    float       bbox[4];
+    ownerlist_t subSecOwnerList;
+    sector_t   *sec = &map->sectors[secIDX];
 
-    for(i = 0; i < numsectors; ++i)
-    {
-        float       bbox[4];
-        ownerlist_t subSecOwnerList;
+    memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
 
-        sec = SECTOR_PTR(i);
-        memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
-
-        memcpy(bbox, sec->bounds, sizeof(bbox));
-        bbox[BLEFT]   -= 128;
-        bbox[BRIGHT]  += 128;
-        bbox[BTOP]    -= 128;
-        bbox[BBOTTOM] += 128;
+    memcpy(bbox, sec->bounds, sizeof(bbox));
+    bbox[BLEFT]   -= 128;
+    bbox[BRIGHT]  += 128;
+    bbox[BTOP]    -= 128;
+    bbox[BBOTTOM] += 128;
 /*
 #if _DEBUG
 Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
             bbox[BLEFT], bbox[BTOP], bbox[BRIGHT], bbox[BBOTTOM]);
 #endif
 */
-        for(k = 0; k < numsubsectors; ++k)
+    for(i = 0; i < map->numsubsectors; ++i)
+    {
+        sub = &map->subsectors[i];
+
+        // Is this subsector close enough?
+        if(sub->sector == sec || // subsector is IN this sector
+           (sub->midpoint.pos[VX] > bbox[BLEFT] &&
+            sub->midpoint.pos[VX] < bbox[BRIGHT] &&
+            sub->midpoint.pos[VY] > bbox[BTOP] &&
+            sub->midpoint.pos[VY] < bbox[BBOTTOM]))
         {
-            sub = SUBSECTOR_PTR(k);
-
-            // Is this subsector close enough?
-            if(sub->sector == sec || // subsector is IN this sector
-               (sub->midpoint.pos[VX] > bbox[BLEFT] &&
-                sub->midpoint.pos[VX] < bbox[BRIGHT] &&
-                sub->midpoint.pos[VY] > bbox[BTOP] &&
-                sub->midpoint.pos[VY] < bbox[BBOTTOM]))
-            {
-                // It will contribute to the reverb settings of this sector.
-                setSubSecSectorOwner(&subSecOwnerList, sub);
-            }
+            // It will contribute to the reverb settings of this sector.
+            setSubSecSectorOwner(&subSecOwnerList, sub);
         }
+    }
 
-        // Now harden the list.
-        sec->numReverbSSecAttributors = subSecOwnerList.count;
-        if(sec->numReverbSSecAttributors)
+    // Now harden the list.
+    sec->numReverbSSecAttributors = subSecOwnerList.count;
+    if(sec->numReverbSSecAttributors)
+    {
+        subsector_t **ptr;
+
+        sec->reverbSSecs =
+            Z_Malloc((sec->numReverbSSecAttributors + 1) * sizeof(subsector_t*),
+                     PU_LEVELSTATIC, 0);
+
+        for(i = 0, ptr = sec->reverbSSecs, node = subSecOwnerList.head;
+            i < sec->numReverbSSecAttributors; ++i, ptr++)
         {
-            subsector_t **ptr;
+            p = node->next;
+            *ptr = (subsector_t*) node->data;
 
-            sec->reverbSSecs =
-                Z_Malloc((sec->numReverbSSecAttributors + 1) * sizeof(subsector_t*),
-                         PU_LEVELSTATIC, 0);
-
-            for(k = 0, ptr = sec->reverbSSecs, node = subSecOwnerList.head;
-                k < sec->numReverbSSecAttributors; ++k, ptr++)
-            {
-                p = node->next;
-                *ptr = (subsector_t*) node->data;
-
-                if(i < numsectors - 1)
-                {   // Move this node to the unused list for re-use.
-                    node->next = unusedNodeList;
-                    unusedNodeList = node;
-                }
-                else
-                {   // No further use for the nodes.
-                    M_Free(node);
-                }
-                node = p;
+            if(i < numsectors - 1)
+            {   // Move this node to the unused list for re-use.
+                node->next = unusedNodeList;
+                unusedNodeList = node;
             }
-            *ptr = NULL; // terminate.
+            else
+            {   // No further use for the nodes.
+                M_Free(node);
+            }
+            node = p;
         }
+        *ptr = NULL; // terminate.
+    }
+}
+
+/**
+ * Called during level init to determine which subsectors affect the reverb
+ * properties of all sectors. Given that subsectors do not change shape (in
+ * two dimensions at least), they do not move and are not created/destroyed
+ * once the map has been loaded; this step can be pre-processed.
+ */
+void S_DetermineSubSecsAffectingSectorReverb(gamemap_t *map)
+{
+    uint        startTime = Sys_GetRealTime();
+
+    uint        i;
+    ownernode_t *node, *p;
+
+    for(i = 0; i < map->numsectors; ++i)
+    {
+        findSSecsAffectingSector(map, i);
     }
 
     // Free any nodes left in the unused list.
@@ -370,7 +376,7 @@ void S_CalcSectorReverb(sector_t *sec)
 
     sectorSpace = (int) (sec->SP_ceilheight - sec->SP_floorheight) *
         (sec->bounds[BRIGHT] - sec->bounds[BLEFT]) *
-        (sec->bounds[BBOTTOM] - sec->bounds[BTOP]);    
+        (sec->bounds[BBOTTOM] - sec->bounds[BTOP]);
 /*
 #if _DEBUG
 Con_Message("sector %i: secsp:%i\n", c, sectorSpace);

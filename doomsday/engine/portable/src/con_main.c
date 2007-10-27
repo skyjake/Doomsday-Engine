@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,6 +54,7 @@
 #include "de_audio.h"
 #include "de_ui.h"
 #include "de_misc.h"
+#include "de_bsp.h"
 
 #ifdef TextOut
 // Windows has its own TextOut.
@@ -394,6 +395,7 @@ boolean Con_Init(void)
     I_Register();
     H_Register();
     DAM_Register();
+    BSP_Register();
     UI_Register();
     Demo_Register();
     P_ControlRegister();
@@ -1242,7 +1244,7 @@ void Con_Open(int yes)
     {
         ConsoleActive = true;
         ConsoleTime = 0;
-        
+
         B_ActivateClass(B_ClassByName(CONSOLE_BINDING_CLASS_NAME), true);
     }
     else
@@ -1396,17 +1398,17 @@ boolean Con_Responder(ddevent_t *event)
 
     case DDKEY_HOME:
         if(conInputLock)
-            break;        
+            break;
         bLineOff = MAX_OF(0, Con_BufferNumLines(histBuf) - 1);
         return true;
-        
+
     case DDKEY_ENTER:
         if(conInputLock)
             break;
 
         // Return to the bottom.
         bLineOff = 0;
-        
+
         // Print the command line with yellow text.
         Con_FPrintf(CBLF_YELLOW, ">%s\n", cmdLine);
         // Process the command line.
@@ -1817,7 +1819,7 @@ void Con_Error(const char *error, ...)
         Con_BusyWorkerError(buff);
         for(;;)
         {
-            // We'll stop here. 
+            // We'll stop here.
             // \todo Kill this thread?
             Sys_Sleep(10000);
         }

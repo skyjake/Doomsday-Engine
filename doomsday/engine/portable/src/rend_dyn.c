@@ -348,6 +348,7 @@ static void calcDynLightColor(float *outRGB, lumobj_t *lum, float light)
  */
 void DL_InitForMap(void)
 {
+    gamemap_t  *map = P_GetCurrentMap();
     fixed_t     min[3], max[3];
 
     // First initialize the subsector links (root pointers).
@@ -355,7 +356,7 @@ void DL_InitForMap(void)
         Z_Calloc(sizeof(lumnode_t*) * numsubsectors, PU_LEVELSTATIC, 0);
 
     // Then the blocklinks.
-    R_GetMapSize(&min[0], &max[0]);
+    P_GetMapBounds(map, &min[0], &max[0]);
 
     // Origin has fixed-point coordinates.
     memcpy(&dlBlockOrig, &min, sizeof(min));

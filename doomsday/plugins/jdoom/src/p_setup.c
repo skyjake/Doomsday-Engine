@@ -4,8 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2002-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Handle jDoom specific map data properties.
+/**
+ * p_setup.c: Handle jDoom specific map data properties.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -213,11 +212,12 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
         case DAM_TOP_TEXTURE:
         case DAM_MIDDLE_TEXTURE:
         case DAM_BOTTOM_TEXTURE:
-            /** It could be a BOOM overloaded texture name?
-            * In this context Doomsday expects either -1 (a bad texture name)
-            * Or the id of a wall texture it should set to this section.
-            * \todo Add code to determine what to do.
-	    */
+            /**
+             * It could be a BOOM overloaded texture name?
+             * In this context Doomsday expects either -1 (a bad texture name)
+             * Or the id of a wall texture it should set to this section.
+             * \todo Add code to determine what to do.
+	         */
             break;
 
         default:
@@ -254,16 +254,20 @@ int P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data)
     switch(code)
     {
     case DMUSC_SECTOR_ISBENIGN:
-        // A benign sector is one which has zero lines.
-        // Zero it's tag to prevent it from being selected while searching for
-        // sectors to act on (eg XG and the "built-in" line specials).
+        /**
+         * A benign sector is one which has zero lines.
+         * Zero it's tag to prevent it from being selected while searching for
+         * sectors to act on (eg XG and the "built-in" line specials).
+         */
         xsectors[id].tag = 0;
         break;
 
     case DMUSC_LINE_FIRSTRENDERED:
-        // Called the first time the given line is rendered.
-        // *data is a pointer to int, giving the player id which has seen it.
-        // We'll utilize this to mark it as being visible in the automap.
+        /**
+         * Called the first time the given line is rendered.
+         * *data is a pointer to int, giving the player id which has seen it.
+         * We'll utilize this to mark it as being visible in the automap.
+         */
         xlines[id].mapped[*(int *) data] = true;
         break;
 

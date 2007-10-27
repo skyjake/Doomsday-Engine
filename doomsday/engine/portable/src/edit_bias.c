@@ -382,15 +382,16 @@ static void SBE_Dupe(int which)
 
 static boolean SBE_Save(const char *name)
 {
-    filename_t fileName;
-    FILE *file;
-    int i;
-    source_t *s;
-    const char *uid = R_GetUniqueLevelID();
+    int         i;
+    source_t   *s;
+    FILE       *file;
+    filename_t  fileName;
+    gamemap_t  *map = P_GetCurrentMap();
+    const char *uid = P_GetUniqueMapID(map);
 
     if(!name)
     {
-        sprintf(fileName, "%s.ded", R_GetCurrentLevelID());
+        sprintf(fileName, "%s.ded", P_GetMapID(map));
     }
     else
     {
@@ -796,6 +797,7 @@ void SBE_DrawHUD(void)
     int         w, h, y;
     char        buf[80];
     float       alpha = .8f;
+    gamemap_t  *map = P_GetCurrentMap();
     source_t   *s;
 
     if(!editActive || editHidden)
@@ -818,7 +820,7 @@ void SBE_DrawHUD(void)
                  UI_Color(UIC_TITLE), alpha);
 
     // The map ID.
-    UI_TextOutEx((char*)R_GetUniqueLevelID(), 18, y - h/2, false, true,
+    UI_TextOutEx(P_GetUniqueMapID(map), 18, y - h/2, false, true,
                  UI_Color(UIC_TITLE), alpha);
 
     // Stats for nearest & grabbed:
@@ -877,7 +879,7 @@ static void SBE_DrawIndex(source_t *src)
 {
     char        buf[80];
     float       eye[3], scale;
-   
+
     if(!editShowIndices)
         return;
 

@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,8 +72,6 @@ typedef struct {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern fixed_t mapgravity;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -911,7 +909,7 @@ void P_ThingZMovement(mobj_t *mo)
     {
         if(mo->mom[MZ] < 0)
         {
-            if(mo->dplayer && mo->mom[MZ] < -mapgravity * 8)
+            if(mo->dplayer && mo->mom[MZ] < -mapGravity * 8)
             {
                 // Squat down.
                 // Decrease viewheight for a moment
@@ -931,7 +929,7 @@ void P_ThingZMovement(mobj_t *mo)
         // Hit the floor.
         if(mo->mom[MZ] < 0)
         {
-            if(mo->dplayer && mo->mom[MZ] < -mapgravity * 8)
+            if(mo->dplayer && mo->mom[MZ] < -mapGravity * 8)
             {
                 // Squat down.
                 // Decrease viewheight for a moment
@@ -946,16 +944,16 @@ void P_ThingZMovement(mobj_t *mo)
     else if(mo->ddflags & DDMF_LOWGRAVITY)
     {
         if(mo->mom[MZ] == 0)
-            mo->mom[MZ] = -(mapgravity >> 3) * 2;
+            mo->mom[MZ] = -(mapGravity >> 3) * 2;
         else
-            mo->mom[MZ] -= mapgravity >> 3;
+            mo->mom[MZ] -= mapGravity >> 3;
     }
     else if(!(mo->ddflags & DDMF_NOGRAVITY))
     {
         if(mo->mom[MZ] == 0)
-            mo->mom[MZ] = -mapgravity * 2;
+            mo->mom[MZ] = -mapGravity * 2;
         else
-            mo->mom[MZ] -= mapgravity;
+            mo->mom[MZ] -= mapGravity;
     }
     if(FIX2FLT(mo->pos[VZ]) + mo->height > mo->ceilingz)
     {

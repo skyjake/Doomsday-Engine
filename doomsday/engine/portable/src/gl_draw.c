@@ -36,6 +36,7 @@
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_render.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -170,7 +171,7 @@ void GL_DrawPatch_CS(int posX, int posY, int lumpnum)
     }
     if(texinfo->offsetX)
     {
-        // This offset is used only for the extra borders in the 
+        // This offset is used only for the extra borders in the
         // "upscaled and sharpened" patches, so we can tweak the values
         // to our liking a bit more.
         x += texinfo->offsetX * .75f;
@@ -441,8 +442,8 @@ void GL_DrawPSprite(float x, float y, float scale, int flip, int lump)
     GL_SetSprite(lump, pSprMode);
     w = slump->width;
     h = slump->height;
-    w2 = CeilPow2(w);
-    h2 = CeilPow2(h);
+    w2 = M_CeilPow2(w);
+    h2 = M_CeilPow2(h);
 
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.

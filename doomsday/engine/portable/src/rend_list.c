@@ -951,7 +951,7 @@ static void allocateIndices(rendlist_t *list, int numIndices)
     void   *indices;
 
     list->last->numIndices = numIndices;
-    indices = allocateData(list, sizeof(uint) * numIndices);
+    indices = allocateData(list, sizeof(*list->last->indices) * numIndices);
 
     // list->last may change during allocateData.
     list->last->indices = indices;
@@ -1721,6 +1721,13 @@ boolean RLIT_DynGetFirst(const dynlight_t *dyn, void *data)
 boolean RLIT_DynLightWrite(const dynlight_t *dyn, void *data)
 {
     dynlightiterparams_t *params = data;
+
+    /**
+     * \fixme This test should not be here. It is here to prevent a crash caused
+     * by a bug elsewhere which I've not been able to track down.
+     */
+    if(!params->hdr->indices)
+        return false;
 
     // If multitexturing is in use, we skip the first light.
     if(!(IS_MTEX_LIGHTS && params->lastIdx == 0))

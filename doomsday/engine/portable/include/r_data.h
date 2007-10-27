@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -216,21 +216,6 @@ typedef struct subplaneinfo_s {
     biasaffection_t affected[MAX_BIAS_AFFECTED];
 } subplaneinfo_t;
 
-#define LO_prev     link[0]
-#define LO_next     link[1]
-
-typedef struct lineowner_s {
-    struct line_s *line;
-    struct lineowner_s *link[2];    // {prev, next} (i.e. {anticlk, clk}).
-    binangle_t      angle;          // between this and next clockwise.
-} lineowner_t;
-
-typedef struct polyblock_s {
-    struct polyobj_s *polyobj;
-    struct polyblock_s *prev;
-    struct polyblock_s *next;
-} polyblock_t;
-
 typedef struct {
     float           rgb[3];
 } rgbcol_t;
@@ -363,7 +348,7 @@ extern fixed_t  bmaporgx, bmaporgy; // origin of block map
 extern linkmobj_t *blockrings;
 extern polyblock_t **polyblockmap;
 extern byte    *rejectmatrix;      // for fast sight rejection
-extern nodepile_t thingnodes, linenodes;
+extern nodepile_t *thingnodes, *linenodes;
 
 extern int      viewwidth, viewheight;
 extern int      numtextures;

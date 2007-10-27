@@ -559,10 +559,6 @@ static void Rend_DecorateLine(int index)
     sector_t   *highSector, *lowSector;
     float       frontCeil, frontFloor, backCeil, backFloor;
 
-    // Ignore benign linedefs.
-    if(line->flags & LINEF_BENIGN)
-        return;
-
     // Only the lines within the decoration visibility bounding box
     // are processed.
     if(!Rend_LineDecorationBounds(line))

@@ -6,13 +6,22 @@ public
 end
 
 internal
+#define LO_prev     link[0]
+#define LO_next     link[1]
+
+typedef struct lineowner_s {
+    struct line_s *line;
+    struct lineowner_s *link[2];    // {prev, next} (i.e. {anticlk, clk}).
+    binangle_t      angle;          // between this and next clockwise.
+} lineowner_t;
+
 #define V_pos					v.pos
 end
 
 struct vertex
     -       fvertex_t	v
     -       uint        numlineowners // Number of line owners.
-    -       lineowner_s* lineowners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
+    -       lineowner_t* lineowners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     -       boolean     anchored	// One or more of our line owners are one-sided.
 end
 
@@ -36,9 +45,6 @@ internal
 
 // Seg flags
 #define SEGF_POLYOBJ			0x1 // Seg is part of a poly object.
-#define SEGF_MIGRANT			0x2 // Seg's sectors are NOT the same as the subsector they are in.
-									// Apparently, glBSP combines segs from unclosed sectors into
-									// subsectors to guarantee they are convex.
 
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
@@ -70,7 +76,6 @@ end
 
 struct subsector
     PTR     sector_s*   sector
-    -		uint		firstWADSeg // First seg index, as specified in SSECTORS lump.
     UINT    uint        segcount
     PTR		seg_s**		segs		// [segcount] size.
     PTR     polyobj_s*  poly		// NULL, if there is no polyobj.
@@ -234,7 +239,7 @@ internal
 #define SECF_INVIS_CEILING  0x2
 
 typedef struct ssecgroup_s {
-	struct sector_s**   linked;     // [sector->planecount] size.
+	struct sector_s**   linked;     // [sector->planecount+1] size.
 	                                // Plane attached to another sector.
 } ssecgroup_t;
 end
@@ -247,19 +252,18 @@ struct sector
     INT     int         validCount  // if == validCount, already checked.
     PTR     mobj_s*     thinglist   // List of mobjs in the sector.
     UINT    uint        linecount   
-    PTR     line_s**    Lines       // [linecount] size.
-    UINT    uint        subscount
-    PTR     subsector_s** subsectors // [subscount] size.
+    PTR     line_s**    Lines       // [linecount+1] size.
+    PTR     subsector_s** subsectors // [subscount+1] size.
     -		uint		numReverbSSecAttributors
     -		subsector_s** reverbSSecs // [numReverbSSecAttributors] size.
     -       uint        subsgroupcount
-    -       ssecgroup_t* subsgroups // [subsgroupcount] size.
+    -       ssecgroup_t* subsgroups // [subsgroupcount+1] size.
     -       skyfix_t[2] skyfix      // floor, ceiling.
     PTR     degenmobj_t soundorg
     FLOAT   float[NUM_REVERB_DATA] reverb
     -       int[4]      blockbox    // Mapblock bounding box.
     UINT    uint        planecount
-    -       plane_s**   planes      // [planecount] size.
+    -       plane_s**   planes      // [planecount+1] size.
     -       sector_s*   containsector // Sector that contains this (if any).
     -       boolean     permanentlink
     -       boolean     unclosed    // An unclosed sector (some sort of fancy hack).
@@ -381,10 +385,6 @@ internal
 // Line flags 
 #define LINEF_SELFREF           0x1 // Front and back sectors of this line are the same.
 #define LINEF_SELFREFHACKROOT	0x2	// This line is the root of a self-referencing hack sector
-#define LINEF_BENIGN			0x4 // Benign lines are those which have no front or back segs
-									// (though they may have sides). These are induced in GL
-									// node generation process. They are inoperable and will
-									// NOT be added to a sector's line table.
 end
 
 struct line

@@ -276,7 +276,7 @@ extern          "C" {
 #define NUM_SKY_LAYERS      2
 #define NUM_SKY_MODELS      32
 
-    typedef struct {
+    typedef struct ded_mapinfo_s {
         ded_stringid_t  id;        // ID of the map (e.g. E2M3 or MAP21).
         char            name[64];  // Name of the map.
         ded_string_t    author;    // Author of the map.

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -579,6 +579,7 @@ void Cl_MoveThing(clmobj_t *cmo)
 {
     mobj_t     *mo = &cmo->mo;
     boolean     collided = false;
+    gamemap_t  *map = P_GetCurrentMap();
 
     // First do XY movement.
     if(mo->mom[MX] || mo->mom[MY])
@@ -623,21 +624,21 @@ void Cl_MoveThing(clmobj_t *cmo)
     }
 
     if(mo->pos[VZ] > FLT2FIX(mo->floorz))
-    {
-        // Gravity will affect the prediction.
+    {   // Gravity will affect the prediction.
+        //// \fixme What about sector-specific gravity?
         if(mo->ddflags & DDMF_LOWGRAVITY)
         {
             if(mo->mom[MZ] == 0)
-                mo->mom[MZ] = -(mapgravity >> 3) * 2;
+                mo->mom[MZ] = -(mapGravity >> 3) * 2;
             else
-                mo->mom[MZ] -= mapgravity >> 3;
+                mo->mom[MZ] -= mapGravity >> 3;
         }
         else if(!(mo->ddflags & DDMF_NOGRAVITY))
         {
             if(mo->mom[MZ] == 0)
-                mo->mom[MZ] = -mapgravity * 2;
+                mo->mom[MZ] = -mapGravity * 2;
             else
-                mo->mom[MZ] -= mapgravity;
+                mo->mom[MZ] -= mapGravity;
         }
     }
 

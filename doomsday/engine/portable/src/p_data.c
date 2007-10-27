@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_network.h"
 #include "de_play.h"
+#include "de_render.h"
 #include "de_refresh.h"
 #include "de_system.h"
 #include "de_misc.h"
@@ -46,23 +48,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-// Lump order in a map WAD: each map needs a couple of lumps
-// to provide a complete scene geometry description.
-enum {
-    ML_LABEL,                      // A separator, name, ExMx or MAPxx
-    ML_THINGS,                     // Monsters, items..
-    ML_LINEDEFS,                   // LineDefs, from editing
-    ML_SIDEDEFS,                   // SideDefs, from editing
-    ML_VERTEXES,                   // Vertices, edited and BSP splits generated
-    ML_SEGS,                       // LineSegs, from LineDefs split by BSP
-    ML_SSECTORS,                   // SubSectors, list of LineSegs
-    ML_NODES,                      // BSP nodes
-    ML_SECTORS,                    // Sectors, from editing
-    ML_REJECT,                     // LUT, sector-sector visibility
-    ML_BLOCKMAP,                   // LUT, motion clipping, walls/grid element
-    ML_BEHAVIOR                    // ACS Scripts (not supported currently)
-};
-
 // Bad texture record
 typedef struct {
     char *name;
@@ -75,8 +60,6 @@ typedef struct {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void P_FreeBadTexList(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -123,20 +106,15 @@ byte       *rejectmatrix;           // for fast sight rejection
 
 polyblock_t **polyblockmap;         // polyobj blockmap
 
-nodepile_t  thingnodes, linenodes;  // all kinds of wacky links
+nodepile_t *thingnodes, *linenodes;  // all kinds of wacky links
 
-ded_mapinfo_t *mapinfo = 0;         // Current mapinfo.
-fixed_t     mapgravity;             // Gravity for the current map.
-int         mapambient;             // Ambient lightlevel for the current map.
+fixed_t     mapGravity;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// The following is used in error fixing/detection/reporting:
-// missing sidedefs
-uint numMissingFronts;
-uint *missingFronts;
+static gamemap_t *currentMap = NULL;
 
-// bad texture list
+// Bad texture list
 static uint numBadTexNames = 0;
 static uint maxBadTexNames = 0;
 static badtex_t *badTexNames = NULL;
@@ -154,8 +132,7 @@ void P_InitData(void)
 void P_PlaneChanged(sector_t *sector, uint plane)
 {
     uint        i;
-    subsector_t *sub;
-    seg_t      **ptr;
+    subsector_t **ssecp;
     side_t     *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
@@ -174,9 +151,9 @@ void P_PlaneChanged(sector_t *sector, uint plane)
             continue;
 
         /** Do as in the original Doom if the texture has not been defined -
-        * extend the floor/ceiling to fill the space (unless its the skyflat),
-        * or if there is a midtexture use that instead.
-	*/
+         * extend the floor/ceiling to fill the space (unless its the skyflat),
+         * or if there is a midtexture use that instead.
+         */
         if(plane == PLN_FLOOR)
         {
             // Check for missing lowers.
@@ -287,20 +264,22 @@ void P_PlaneChanged(sector_t *sector, uint plane)
         }
     }
 
-    for(i = 0; i < sector->subscount; ++i)
+    // Inform the shadow bias of changed geometry.
+    ssecp = sector->subsectors;
+    while(*ssecp)
     {
-        sub = sector->subsectors[i];
+        subsector_t *ssec = *ssecp;
+        seg_t     **segp = ssec->segs;
 
-        ptr = sub->segs;
-        while(*ptr)
+        while(*segp)
         {
-            // Inform the shadow bias of changed geometry.
-            SB_SegHasMoved(*ptr);
-            *ptr++;
+            seg_t      *seg = *segp;
+            SB_SegHasMoved(seg);
+            *segp++;
         }
 
-        // Inform the shadow bias of changed geometry.
-        SB_PlaneHasMoved(sub, plane);
+        SB_PlaneHasMoved(ssec, plane);
+        *ssecp++;
     }
 }
 
@@ -331,17 +310,159 @@ void P_PolyobjChanged(polyobj_t *po)
 }
 
 /**
+ * Generate a 'unique' identifier for the map.  This identifier
+ * contains information about the map tag (E3M3), the WAD that
+ * contains the map (DOOM.IWAD), and the game mode (doom-ultimate).
+ *
+ * The entire ID string will be in lowercase letters.
+ */
+const char *P_GenerateUniqueMapID(const char *mapID)
+{
+    static char uid[256];
+    filename_t  base;
+    int         lump = W_GetNumForName(mapID);
+
+    M_ExtractFileBase(W_LumpSourceFile(lump), base);
+
+    sprintf(uid, "%s|%s|%s|%s", mapID,
+            base, (W_IsFromIWAD(lump) ? "iwad" : "pwad"),
+            (char *) gx.GetVariable(DD_GAME_MODE));
+
+    strlwr(uid);
+    return uid;
+}
+
+/**
+ * @return          Ptr to the current map.
+ */
+gamemap_t *P_GetCurrentMap(void)
+{
+    return currentMap;
+}
+
+void P_SetCurrentMap(gamemap_t *map)
+{
+    strncpy(levelid, map->levelid, sizeof(levelid));
+
+    numthings = map->numthings;
+
+    numvertexes = map->numvertexes;
+    vertexes = map->vertexes;
+
+    numsegs = map->numsegs;
+    segs = map->segs;
+
+    numsectors = map->numsectors;
+    sectors = map->sectors;
+
+    numsubsectors = map->numsubsectors;
+    subsectors = map->subsectors;
+
+    numnodes = map->numnodes;
+    nodes = map->nodes;
+
+    numlines = map->numlines;
+    lines = map->lines;
+
+    numsides = map->numsides;
+    sides = map->sides;
+
+    po_NumPolyobjs = map->po_NumPolyobjs;
+    polyobjs = map->polyobjs;
+
+    polyblockmap = map->polyBlockMap;
+    rejectmatrix = map->rejectmatrix;
+    thingnodes = &map->thingnodes;
+    linenodes = &map->linenodes;
+    linelinks = map->linelinks;
+
+    blockmaplump = map->blockmaplump;
+    blockmap = map->blockmap;
+    bmapwidth = map->bmapwidth;
+    bmapheight = map->bmapheight;
+    bmaporgx = map->bmaporgx;
+    bmaporgy = map->bmaporgy;
+    blockrings = map->blockrings;
+
+    mapGravity = map->globalGravity;
+
+    currentMap = map;
+}
+
+/**
+ * This ID is the name of the lump tag that marks the beginning of map
+ * data, e.g. "MAP03" or "E2M8".
+ */
+const char *P_GetMapID(gamemap_t *map)
+{
+    if(!map)
+        return NULL;
+
+    return map->levelid;
+}
+
+/**
+ * Return the 'unique' identifier of the map.
+ */
+const char *P_GetUniqueMapID(gamemap_t *map)
+{
+    if(!map)
+        return NULL;
+
+    return map->uniqueID;
+}
+
+void P_GetMapBounds(gamemap_t *map, fixed_t *min, fixed_t *max)
+{
+    min[VX] = FRACUNIT * map->bounds[BLEFT];
+    min[VY] = FRACUNIT * map->bounds[BTOP];
+
+    max[VX] = FRACUNIT * map->bounds[BRIGHT];
+    max[VY] = FRACUNIT * map->bounds[BBOTTOM];
+}
+
+/**
+ * Get the ambient light level of the specified map.
+ */
+int P_GetMapAmbientLightLevel(gamemap_t *map)
+{
+    if(!map)
+        return 0;
+
+    return map->ambientLightLevel;
+}
+
+static void spawnParticleGeneratorsForMap(const char *mapID)
+{
+    uint        startTime = Sys_GetRealTime();
+
+    // Spawn all type-triggered particle generators.
+    // Let's hope there aren't too many...
+    P_SpawnTypeParticleGens();
+    P_SpawnMapParticleGens(mapID);
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("spawnParticleGeneratorsForMap: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
+}
+
+/**
  * Begin the process of loading a new map.
  * Can be accessed by the games via the public API.
  *
  * @param levelId   Identifier of the map to be loaded (eg "E1M1").
  *
- * @return boolean  (True) If we loaded the map successfully.
+ * @return          @c true, if the map was loaded successfully.
  */
-boolean P_LoadMap(char *levelId)
+boolean P_LoadMap(const char *mapID)
 {
-    if(!levelId)
+    uint        i;
+
+    if(!mapID || !mapID[0])
         return false; // Yeah, ok... :P
+
+    Con_Message("P_LoadMap: \"%s\"\n", mapID);
 
     // It would be very cool if map loading happened in another
     // thread. That way we could be keeping ourselves busy while
@@ -353,68 +474,119 @@ boolean P_LoadMap(char *levelId)
     // enough free memory of course) so that transitions are
     // (potentially) seamless :-)
 
-    if(P_AttemptMapLoad(levelId))
+    if(isServer)
     {
-        // ALL the map data was loaded/generated successfully.
-        P_CheckLevel(levelId, false);
+        // Whenever the map changes, remote players must tell us when
+        // they're ready to begin receiving frames.
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            if(!(players[i].flags & DDPF_LOCAL) && clients[i].connected)
+            {
+#ifdef _DEBUG
+                Con_Printf("Cl%i NOT READY ANY MORE!\n", i);
+#endif
+                clients[i].ready = false;
+            }
+        }
+    }
 
-        // Inform the game of our success.
+    if(DAM_AttemptMapLoad(mapID))
+    {
+        uint        i;
+        gamemap_t  *map = P_GetCurrentMap();
+
+        Cl_Reset();
+        RL_DeleteLists();
+        Rend_CalcLightRangeModMatrix(NULL);
+
+        // Invalidate old cmds and init player values.
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            players[i].invoid = false;
+            if(isServer && players[i].ingame)
+                clients[i].runTime = SECONDS_TO_TICKS(gameTime);
+        }
+
+        // Make sure that the next frame doesn't use a filtered viewer.
+        R_ResetViewer();
+
+        // Texture animations should begin from their first step.
+        R_ResetAnimGroups();
+
+        // Init Particle Generator links.
+        PG_InitForLevel();
+
+        DL_InitForMap();
+
+        spawnParticleGeneratorsForMap(P_GetMapID(map));
+
+        // Tell shadow bias to initialize the bias light sources.
+        SB_InitForMap(P_GetUniqueMapID(map));
+
+        // Initialize the lighting grid.
+        LG_Init();
+
+        if(!isDedicated)
+            R_InitRendPolyPool();
         return true;
     }
-    else
+
+    return false;
+}
+
+void P_RegisterUnknownTexture(const char *name, boolean planeTex)
+{
+    uint        i;
+    char        namet[9];
+    boolean     known = false;
+
+    namet[8] = 0;
+    memcpy(namet, name, 8);
+
+    // Do we already know about it?
+    if(numBadTexNames > 0)
     {
-        // Unsuccessful... inform the game.
-        return false;
+        for(i = 0; i < numBadTexNames && !known; ++i)
+        {
+            if(!strcmp(badTexNames[i].name, namet) &&
+                badTexNames[i].planeTex == planeTex)
+            {
+                // Yep we already know about it.
+                known = true;
+                badTexNames[i].count++;
+            }
+        }
+    }
+
+    if(!known)
+    {   // A new unknown texture. Add it to the list
+        if(++numBadTexNames > maxBadTexNames)
+        {
+            // Allocate more memory
+            maxBadTexNames *= 2;
+            if(maxBadTexNames < numBadTexNames)
+                maxBadTexNames = numBadTexNames;
+
+            badTexNames = M_Realloc(badTexNames, sizeof(badtex_t)
+                                                * maxBadTexNames);
+        }
+
+        badTexNames[numBadTexNames -1].name = M_Malloc(strlen(namet) +1);
+        strcpy(badTexNames[numBadTexNames -1].name, namet);
+
+        badTexNames[numBadTexNames -1].planeTex = planeTex;
+        badTexNames[numBadTexNames -1].count = 1;
     }
 }
 
-/**
- * If we encountered any problems during setup - announce them
- * to the user. If the errors couldn't be repaired or we cant
- * continue safely - an error dialog is presented.
- *
- * \todo latter on this will be expanded to check for various
- * doom.exe renderer hacks and other stuff.
- *
- * @param silent        @c true = don't announce non-critical errors.
- *
- * @return              @c true = we can continue setting up the level.
- */
-boolean P_CheckLevel(char *levelID, boolean silent)
+void P_PrintMissingTextureList(void)
 {
-    uint        i, printCount;
-    boolean     canContinue = !numMissingFronts;
-
-    Con_Message("P_CheckLevel: Checking %s for errors...\n", levelID);
-
-    // If we are missing any front sidedefs announce them to the user.
-    // Critical
-    if(numMissingFronts)
-    {
-        Con_Message(" ![100] Error: Found %u linedef(s) missing front sidedefs:\n",
-                    numMissingFronts);
-
-        printCount = 0;
-        for(i = 0; i < numlines; ++i)
-        {
-            if(missingFronts[i])
-            {
-                Con_Printf("%s%u,", printCount? " ": "   ", i);
-
-                if((++printCount) > 9)
-                {   // print 10 per line then wrap.
-                    printCount = 0;
-                    Con_Printf("\n ");
-                }
-            }
-        }
-        Con_Printf("\n");
-    }
-
     // Announce any bad texture names we came across when loading the map.
     // Non-critical as a "MISSING" texture will be drawn in place of them.
-    if(numBadTexNames && !silent)
+    if(numBadTexNames)
     {
+        uint        i;
+
         Con_Message("  [110] Warning: Found %u bad texture name(s):\n",
                     numBadTexNames);
 
@@ -422,22 +594,28 @@ boolean P_CheckLevel(char *levelID, boolean silent)
             Con_Message(" %4u x \"%s\"\n", badTexNames[i].count,
                         badTexNames[i].name);
     }
+}
 
-    // Dont need this stuff anymore
-    if(missingFronts != NULL)
-        M_Free(missingFronts);
+/**
+ * Frees memory we allocated for bad texture name collection.
+ */
+void P_FreeBadTexList(void)
+{
+    uint        i;
 
-    P_FreeBadTexList();
-
-    if(!canContinue)
+    if(badTexNames != NULL)
     {
-        Con_Message("\nP_CheckLevel: Critical errors encountered "
-                    "(marked with '!').\n  You will need to fix these errors in "
-                    "order to play this map.\n");
-        return false;
-    }
+        for(i = 0; i < numBadTexNames; ++i)
+        {
+            M_Free(badTexNames[i].name);
+            badTexNames[i].name = NULL;
+        }
 
-    return true;
+        M_Free(badTexNames);
+        badTexNames = NULL;
+
+        numBadTexNames = maxBadTexNames = 0;
+    }
 }
 
 /**
@@ -456,9 +634,6 @@ int P_CheckTexture(char *name, boolean planeTex, int dataType,
                    unsigned int element, int property)
 {
     int         id;
-    uint        i;
-    char        namet[9];
-    boolean     known = false;
 
     if(planeTex)
         id = R_FlatNumForName(name);
@@ -476,66 +651,8 @@ int P_CheckTexture(char *name, boolean planeTex, int dataType,
     // present it to the user latter on.
     if(levelSetup && id == -1)
     {
-        namet[8] = 0;
-        memcpy(namet, name, 8);
-
-        // Do we already know about it?
-        if(numBadTexNames > 0)
-        {
-            for(i = 0; i < numBadTexNames && !known; ++i)
-            {
-                if(!strcmp(badTexNames[i].name, namet) &&
-                    badTexNames[i].planeTex == planeTex)
-                {
-                    // Yep we already know about it.
-                    known = true;
-                    badTexNames[i].count++;
-                }
-            }
-        }
-
-        if(!known)
-        {   // A new unknown texture. Add it to the list
-            if(++numBadTexNames > maxBadTexNames)
-            {
-                // Allocate more memory
-                maxBadTexNames *= 2;
-                if(maxBadTexNames < numBadTexNames)
-                    maxBadTexNames = numBadTexNames;
-
-                badTexNames = M_Realloc(badTexNames, sizeof(badtex_t)
-                                                    * maxBadTexNames);
-            }
-
-            badTexNames[numBadTexNames -1].name = M_Malloc(strlen(namet) +1);
-            strcpy(badTexNames[numBadTexNames -1].name, namet);
-
-            badTexNames[numBadTexNames -1].planeTex = planeTex;
-            badTexNames[numBadTexNames -1].count = 1;
-        }
+        P_RegisterUnknownTexture(name, planeTex);
     }
 
     return id;
-}
-
-/**
- * Frees memory we allocated for bad texture name collection.
- */
-static void P_FreeBadTexList(void)
-{
-    uint        i;
-
-    if(badTexNames != NULL)
-    {
-        for(i = 0; i < numBadTexNames; ++i)
-        {
-            M_Free(badTexNames[i].name);
-            badTexNames[i].name = NULL;
-        }
-
-        M_Free(badTexNames);
-        badTexNames = NULL;
-
-        numBadTexNames = maxBadTexNames = 0;
-    }
 }

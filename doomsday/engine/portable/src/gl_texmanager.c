@@ -228,13 +228,13 @@ void GL_TexRegister(void)
 void GL_EarlyInitTextureManager(void)
 {
     int     i;
-    
+
     // Initialize the smart texture filtering routines.
     GL_InitSmartFilter();
-    
+
     // The palette lump, for color information (really??!!?!?!).
     pallump = W_GetNumForName(PALLUMPNAME);
-    
+
     // Load the pal18to8 table from the lump PAL18TO8. We need it
     // when resizing textures.
     if((i = W_CheckNumForName("PAL18TO8")) == -1)
@@ -289,7 +289,7 @@ void GL_InitTextureManager(void)
     // DGL needs the palette information regardless of whether the
     // paletted textures are enabled or not.
     LoadPalette();
-        
+
     // Detail textures.
     dtinstances = NULL;
 
@@ -1177,8 +1177,8 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
         //inst->tex = GL_LoadGraphics2(RC_TEXTURE, external, LGM_NORMAL,
         //    DGL_GRAY_MIPMAP, true, (content.grayMipmap << TXCF_GRAY_MIPMAP_LEVEL_SHIFT));
         inst->tex = GL_LoadGraphics4(RC_TEXTURE, external, LGM_NORMAL,
-                                     DGL_GRAY_MIPMAP, DGL_LINEAR_MIPMAP_LINEAR, 
-                                     DGL_LINEAR, -1, DGL_REPEAT, DGL_REPEAT, 
+                                     DGL_GRAY_MIPMAP, DGL_LINEAR_MIPMAP_LINEAR,
+                                     DGL_LINEAR, -1, DGL_REPEAT, DGL_REPEAT,
                                      (content.grayMipmap << TXCF_GRAY_MIPMAP_LEVEL_SHIFT));
 
         if(inst->tex == 0)
@@ -1659,7 +1659,7 @@ DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
 }
 
 DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
-                         gfxmode_t mode, int useMipmap, boolean clamped, 
+                         gfxmode_t mode, int useMipmap, boolean clamped,
                          int otherFlags)
 {
     return GL_LoadGraphics4(resClass, name, mode, useMipmap,
@@ -2501,7 +2501,7 @@ static void BlackOutlines(byte* pixels, int width, int height)
     int     x, y;
     int     a, b;
     byte*   pix;
-    
+
     for(y = 1; y < height - 1; ++y)
     {
         for(x = 1; x < width - 1; ++x)
@@ -2524,7 +2524,7 @@ static void BlackOutlines(byte* pixels, int width, int height)
             }
         }
     }
-            
+
     // Apply the darkness.
     for(a = 0, pix = pixels; a < width * height; ++a, pix += 4)
     {
@@ -2538,7 +2538,7 @@ static void EnhanceContrast(byte *pixels, int width, int height)
 {
     int     i, c;
     byte*   pix;
-    
+
     for(i = 0, pix = pixels; i < width * height; ++i, pix += 4)
     {
         for(c = 0; c < 3; ++c)
@@ -2548,7 +2548,7 @@ static void EnhanceContrast(byte *pixels, int width, int height)
                 f = (f - 90) * 3 + 90;
             else if(f > 200) // Lighten light parts.
                 f = (f - 200) * 2 + 200;
-                
+
             pix[c] = MINMAX_OF(0, f, 255);
         }
     }
@@ -2561,11 +2561,11 @@ static void SharpenPixels(byte* pixels, int width, int height)
     byte*   result = M_Calloc(4 * width * height);
     const float strength = .05f;
     float   A, B, C;
-    
+
     A = strength;
     B = .70710678 * strength; // 1/sqrt(2)
     C = 1 + 4*A + 4*B;
-    
+
     for(y = 1; y < height - 1; ++y)
     {
         for(x = 1; x < width -1; ++x)
@@ -2574,8 +2574,8 @@ static void SharpenPixels(byte* pixels, int width, int height)
             byte* out = result + (x + y*width) * 4;
             for(c = 0; c < 3; ++c)
             {
-                int r = (C*pix[c] - A*pix[c - width] - A*pix[c + 4] - A*pix[c - 4] - 
-                         A*pix[c + width] - B*pix[c + 4 - width] - B*pix[c + 4 + width] - 
+                int r = (C*pix[c] - A*pix[c - width] - A*pix[c + 4] - A*pix[c - 4] -
+                         A*pix[c + width] - B*pix[c + 4 - width] - B*pix[c + 4 + width] -
                          B*pix[c - 4 - width] - B*pix[c - 4 + width]);
                 out[c] = MINMAX_OF(0, r, 255);
             }
@@ -2634,10 +2634,10 @@ DGLuint GL_BindTexPatch(patch_t *p)
         int     patchHeight = SHORT(patch->height) + addBorder*2;
         int     numpels = patchWidth * patchHeight, alphaChannel;
         byte   *buffer;
-        
+
         if(!numpels)
             return 0; // This won't do!
-        
+
         // Allocate memory for the patch.
         buffer = M_Calloc(2 * numpels);
 
@@ -2647,7 +2647,7 @@ DGLuint GL_BindTexPatch(patch_t *p)
 
         if(filloutlines && !scaleSharp)
             ColorOutlines(buffer, patchWidth, patchHeight);
-        
+
         if(monochrome || (p->info.modFlags & TXIF_MONOCHROME))
         {
             DeSaturate(buffer, GL_GetPalette(), patchWidth, patchHeight);
@@ -2658,10 +2658,10 @@ DGLuint GL_BindTexPatch(patch_t *p)
         {
             byte* rgbaPixels = M_Malloc(numpels * 4 * 2); // also for the final output
             byte* upscaledPixels = M_Malloc(numpels * 4 * 4);
-                        
-            GL_ConvertBuffer(patchWidth, patchHeight, 2, 4, buffer, rgbaPixels, 
+
+            GL_ConvertBuffer(patchWidth, patchHeight, 2, 4, buffer, rgbaPixels,
                              GL_GetPalette(), false);
-            
+
             GL_SmartFilter2x(rgbaPixels, upscaledPixels, patchWidth, patchHeight,
                              patchWidth * 8);
             patchWidth *= 2;
@@ -2677,29 +2677,29 @@ DGLuint GL_BindTexPatch(patch_t *p)
                 fwrite(upscaledPixels, 4 * 4 * numpels, 1, f);
                 fclose(f);
             }
-            */            
+            */
             /*
             Con_Message("upscale and sharpen on %s (lump %i) monochrome:%i\n", W_LumpName(p->lump),
                         p->lump, p->info.modFlags & TXIF_MONOCHROME);
              */
-            
+
             //EnhanceContrast(upscaledPixels, patchWidth, patchHeight);
             SharpenPixels(upscaledPixels, patchWidth, patchHeight);
             BlackOutlines(upscaledPixels, patchWidth, patchHeight);
-            
+
             // Back to indexed+alpha.
-            GL_ConvertBuffer(patchWidth, patchHeight, 4, 2, upscaledPixels, rgbaPixels, 
+            GL_ConvertBuffer(patchWidth, patchHeight, 4, 2, upscaledPixels, rgbaPixels,
                              GL_GetPalette(), false);
-            
+
             // Replace the old buffer.
             M_Free(upscaledPixels);
             M_Free(buffer);
             buffer = rgbaPixels;
-            
+
             // We'll sharpen it in the future as well.
             p->info.modFlags |= TXIF_UPSCALE_AND_SHARPEN;
         }
-        
+
         // See if we have to split the patch into two parts.
         // This is done to conserve the quality of wide textures
         // (like the status bar) on video cards that have a pitifully
@@ -3385,7 +3385,7 @@ void GL_SetTexture(int idx)
  */
 static void GL_SetTexCoords(float *tc, int wid, int hgt)
 {
-    int     pw = CeilPow2(wid), ph = CeilPow2(hgt);
+    int     pw = M_CeilPow2(wid), ph = M_CeilPow2(hgt);
 
     if(pw > glMaxTexSize || ph > glMaxTexSize)
         tc[VX] = tc[VY] = 1;

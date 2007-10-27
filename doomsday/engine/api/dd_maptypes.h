@@ -45,9 +45,8 @@
 #define DMT_SECTOR_VALIDCOUNT DDVT_INT // if == validCount, already checked.
 #define DMT_SECTOR_THINGLIST DDVT_PTR  // List of mobjs in the sector.
 #define DMT_SECTOR_LINECOUNT DDVT_UINT
-#define DMT_SECTOR_LINES DDVT_PTR      // [linecount] size.
-#define DMT_SECTOR_SUBSCOUNT DDVT_UINT
-#define DMT_SECTOR_SUBSECTORS DDVT_PTR // [subscount] size.
+#define DMT_SECTOR_LINES DDVT_PTR      // [linecount+1] size.
+#define DMT_SECTOR_SUBSECTORS DDVT_PTR // [subscount+1] size.
 #define DMT_SECTOR_SOUNDORG DDVT_PTR
 #define DMT_SECTOR_REVERB DDVT_FLOAT
 #define DMT_SECTOR_PLANECOUNT DDVT_UINT

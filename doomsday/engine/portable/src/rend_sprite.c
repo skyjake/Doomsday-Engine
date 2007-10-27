@@ -263,9 +263,9 @@ static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
     params->texOffset[0] =
-        slump->tc[1][VX] - 0.4f / CeilPow2(params->width);
+        slump->tc[1][VX] - 0.4f / M_CeilPow2(params->width);
     params->texOffset[1] =
-        slump->tc[1][VY] - 0.4f / CeilPow2(params->height);
+        slump->tc[1][VY] - 0.4f / M_CeilPow2(params->height);
 
     params->texFlip[0] = (boolean) info.flip;
     params->texFlip[1] = false;

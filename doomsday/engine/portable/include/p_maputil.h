@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -47,7 +47,6 @@ fixed_t         P_ApproxDistance3(fixed_t dx, fixed_t dy, fixed_t dz);
 void            P_LineUnitVector(line_t *line, float *unitvec);
 float           P_MobjPointDistancef(mobj_t *start, mobj_t *end,
                                      float *fixpoint);
-void            P_SectorBoundingBox(sector_t *sec, float *bbox);
 int             P_PointOnLineSide(fixed_t x, fixed_t y, line_t *line);
 int             P_BoxOnLineSide(fixed_t *tmbox, line_t *ld);
 void            P_MakeDivline(line_t *li, divline_t *dl);

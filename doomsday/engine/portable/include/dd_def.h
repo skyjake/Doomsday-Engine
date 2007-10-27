@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -74,8 +74,8 @@
 
 #define MAXEVENTS       256
 #define SBARHEIGHT      39         // status bar height at bottom of screen
-//#define PI            3.141592657     // Why the small inaccuracy?
 #define PI              3.14159265359
+#define PI_D            3.14159265358979323846
 
 #define SECONDS_TO_TICKS(sec) ((int)(sec*35))
 

@@ -48,8 +48,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define ROUND(x) ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
@@ -212,7 +210,6 @@ void Rend_Init(void)
     C_Init();                   // Clipper.
     RL_Init();                  // Rendering lists.
     Rend_InitSky();             // The sky.
-    Rend_CalcLightRangeModMatrix(NULL);
 }
 
 /**
@@ -828,7 +825,7 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
  * Division will only happen if it must be done.
  * Converts quads to divquads.
  */
-static void doApplyWallHeightDivision(rendpoly_t *quad, const seg_t *seg,
+static void applyWallHeightDivision(rendpoly_t *quad, const seg_t *seg,
                                     sector_t *frontsec, float hi, float low)
 {
     uint        i;
@@ -863,39 +860,6 @@ for(k = 0; k < div->num; ++k)
 }
 #endif
     }
-}
-
-static void applyWallHeightDivision(rendpoly_t *quad, const seg_t *seg,
-                                    sector_t *frontsec, segsection_t mode)
-{
-    float       hi, low;
-
-    switch(mode)
-    {
-    case SEG_MIDDLE:
-        hi = frontsec->SP_ceilvisheight;
-        low = frontsec->SP_floorvisheight;
-        break;
-
-    case SEG_TOP:
-        hi = frontsec->SP_ceilvisheight;
-        low = seg->SG_backsector->SP_ceilvisheight;
-        if(frontsec->SP_floorvisheight > low)
-            low = frontsec->SP_floorvisheight;
-        break;
-
-    case SEG_BOTTOM:
-        hi = seg->SG_backsector->SP_floorvisheight;
-        low = frontsec->SP_floorvisheight;
-        if(frontsec->SP_ceilvisheight < hi)
-            hi = frontsec->SP_ceilvisheight;
-        break;
-
-    default:
-        return;
-    }
-
-    doApplyWallHeightDivision(quad, seg, frontsec, hi, low);
 }
 
 /**
@@ -1309,7 +1273,7 @@ static void renderSegSection(seg_t *seg, segsection_t section, surface_t *surfac
             uint            lightListIdx;
 
             // Check for neighborhood division?
-            applyWallHeightDivision(quad, seg, frontsec, section);
+            applyWallHeightDivision(quad, seg, frontsec, top, bottom);
 
             getColorsForSegSection(sideFlags, section, &bottomColor, &topColor);
 
@@ -1477,7 +1441,7 @@ static boolean renderSegMiddle(seg_t *seg, segsection_t section, surface_t *surf
 
             // Check for neighborhood division?
             if(solidSeg && !(quad->flags & RPF_MASKED))
-                applyWallHeightDivision(quad, seg, frontsec, section);
+                applyWallHeightDivision(quad, seg, frontsec, top, bottom);
 
             getColorsForSegSection(sideFlags, section, &bottomColor, &topColor);
 
@@ -2059,7 +2023,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     float       sceil = sect->SP_ceilvisheight;
     float       sfloor = sect->SP_floorvisheight;
 
-    if(sceil - sfloor <= 0 || ssec->numvertices < 3)
+    if(sceil - sfloor <= 0 || ssec->segcount < 3)
     {
         // Skip this, it has no volume.
         // Neighbors handle adding the solid clipper segments.
@@ -2123,7 +2087,6 @@ static void Rend_RenderSubsector(uint ssecidx)
 
         if(!(seg->flags & SEGF_POLYOBJ)  &&// Not handled here.
            seg->linedef && // "minisegs" have no linedefs.
-           !(seg->linedef->flags & LINEF_BENIGN) && // Benign linedefs are not rendered.
            (seg->frameflags & SEGINF_FACINGFRONT))
         {
             boolean     solid;
@@ -2289,13 +2252,16 @@ void Rend_RenderMap(void)
 void Rend_CalcLightRangeModMatrix(cvar_t *unused)
 {
     int         j, n;
+    int         mapAmbient;
     float       f;
     double      ramp = 0, rm = 0;
+    gamemap_t  *map = P_GetCurrentMap();
 
     memset(lightRangeModMatrix, 0, (sizeof(float) * 255) * MOD_RANGE);
 
-    if(mapambient > ambientLight)
-        r_ambient = mapambient;
+    mapAmbient = P_GetMapAmbientLightLevel(map);
+    if(mapAmbient > ambientLight)
+        r_ambient = mapAmbient;
     else
         r_ambient = ambientLight;
 
@@ -2535,7 +2501,7 @@ void Rend_ApplyLightAdaptation(float *lightvar)
 {
     // The default range.
     uint        range = (MOD_RANGE/2) - 1;
-    float       lightval;
+    int         lightval;
 
     if(lightvar == NULL)
         return; // Can't apply adaptation to a NULL val ptr...
@@ -2550,7 +2516,7 @@ void Rend_ApplyLightAdaptation(float *lightvar)
     else if(lightval < 0)
         lightval = 0;
 
-    *lightvar += lightRangeModMatrix[range][(int) lightval];
+    *lightvar += lightRangeModMatrix[range][lightval];
 }
 
 /**
@@ -2563,7 +2529,7 @@ void Rend_ApplyLightAdaptation(float *lightvar)
 float Rend_GetLightAdaptVal(float lightvalue)
 {
     uint        range = (MOD_RANGE/2) - 1;
-    float       lightval;
+    int         lightval;
 
     // Apply light adaptation?
     if(r_lightAdapt)
@@ -2575,7 +2541,7 @@ float Rend_GetLightAdaptVal(float lightvalue)
     else if(lightval < 0)
         lightval = 0;
 
-    return lightRangeModMatrix[range][(int) lightval];
+    return lightRangeModMatrix[range][lightval];
 }
 
 static void DrawRangeBox(int x, int y, int w, int h, ui_color_t *c)

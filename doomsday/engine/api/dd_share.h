@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -734,7 +734,6 @@ extern          "C" {
     enum /* do not change the numerical values of the constants */
     {
         DMUSC_SECTOR_ISBENIGN,
-        DMUSC_LINE_ISBENIGN,
         DMUSC_LINE_FIRSTRENDERED
     };
 

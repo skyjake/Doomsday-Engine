@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2072,18 +2072,12 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SEG_SIDEDEF, &p->sidedef, args, 0);
             break;
         case DMU_LINE:
-        {
-            line_t  *line = NULL;
-            if(p->linedef && !(p->linedef->flags & LINEF_BENIGN))
-                line = p->linedef;
-            GetValue(DMT_SEG_LINEDEF, &line, args, 0);
+            GetValue(DMT_SEG_LINEDEF, &p->linedef, args, 0);
             break;
-        }
         case DMU_FRONT_SECTOR:
         {
             sector_t *sec = NULL;
-            if(p->SG_frontsector &&
-               p->linedef && !(p->linedef->flags & LINEF_BENIGN))
+            if(p->SG_frontsector && p->linedef)
                 sec = p->SG_frontsector;
             GetValue(DMT_SEG_SEC, &sec, args, 0);
             break;
@@ -2091,8 +2085,7 @@ static int GetProperty(void* ptr, void* context)
         case DMU_BACK_SECTOR:
         {
             sector_t *sec = NULL;
-            if(p->SG_backsector &&
-               p->linedef && !(p->linedef->flags & LINEF_BENIGN))
+            if(p->SG_backsector && p->linedef)
                 sec = p->SG_backsector;
             GetValue(DMT_SEG_SEC, &p->SG_backsector, args, 0);
             break;

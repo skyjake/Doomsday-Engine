@@ -1,10 +1,10 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,8 @@
 
 #include "de_play.h"
 
+#include "dam_main.h"
+
 // Data type flags
 #define DT_UNSIGNED   0x01
 #define DT_FRACBITS   0x02
@@ -51,9 +53,27 @@ typedef struct {
     int         offset;
 } readprop_t;
 
-boolean DAM_ReadMapDataFromLump(gamemap_t *map, mapdatalumpinfo_t *mapLump,
-                                uint startIndex, readprop_t *props,
-                                uint numProps,
-                                int (*callback)(int type, uint index, void* ctx));
-int DAM_SetProperty(int type, uint index, void *context);
+typedef struct selectprop_s {
+    uint        id;
+    int         valueType;
+} selectprop_t;
+
+void        DAM_InitReader(void);
+
+void        DAM_LockCustomPropertys(void);
+uint        DAM_RegisterCustomMapProperty(int type, valuetype_t dataType,
+                                          char *name);
+boolean     DAM_TypeSupportsCustomProperty(int type);
+uint        DAM_IDForProperty(int type, char *name);
+selectprop_t* DAM_CollectProps(int type, boolean builtIn,
+                               boolean custom, uint *count);
+selectprop_t* DAM_MergePropLists(selectprop_t *listA, uint numA,
+                                    selectprop_t *listB, uint numB,
+                                    uint *count);
+
+boolean     DAM_ReadMapDataFromLump(gamemap_t *map, maplumpinfo_t *mapLump,
+                                    uint startIndex, readprop_t *props,
+                                    uint numProps,
+                                    int (*callback)(int type, uint index, void* ctx));
+int         DAM_SetProperty(int type, uint index, void *context);
 #endif

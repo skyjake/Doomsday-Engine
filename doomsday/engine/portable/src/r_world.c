@@ -53,8 +53,6 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-static void    R_PrepareSubsector(subsector_t *sub);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -63,8 +61,6 @@ static void    R_PrepareSubsector(subsector_t *sub);
 
 int     rendSkyLight = 1;       // cvar
 
-char    currentLevelId[64];
-
 boolean firstFrameAfterLoad;
 boolean levelSetup;
 
@@ -72,12 +68,9 @@ nodeindex_t     *linelinks;         // indices to roots
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static vertex_t *rootVtx; // used when sorting vertex line owners.
-
 static boolean noSkyColorGiven;
 static float skyColorRGB[4], balancedRGB[4];
 static float skyColorBalance;
-static float mapBounds[4];
 
 // CODE --------------------------------------------------------------------
 
@@ -204,24 +197,20 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
 /**
  * Called whenever the sector changes.
  *
- * This routine handles plane hacks where all of the sector's
- * lines are twosided and missing upper or lower textures.
+ * This routine handles plane hacks where all of the sector's lines are
+ * twosided and missing upper or lower textures.
  *
- * NOTE: This does not support sectors with disjoint groups of
- *       lines (eg a sector with a "control" sector such as the
- *       forcefields in ETERNAL.WAD MAP01).
+ * \note This does not support sectors with disjoint groups of lines
+ *       (e.g. a sector with a "control" sector such as the forcefields in
+ *       ETERNAL.WAD MAP01).
+ *
+ * \todo Needs updating for $nplanes.
  */
 static void R_SetSectorLinks(sector_t *sec)
 {
-    uint        i, k;
-    sector_t   *back;
-    line_t     *lin;
+    uint        i;
     boolean     hackfloor, hackceil;
-    side_t     *sid, *frontsid, *backsid;
-    sector_t   *floorlink_candidate = 0, *ceillink_candidate = 0;
-    seg_t      *seg, **ptr;
-    subsector_t *sub;
-    ssecgroup_t *ssgrp;
+    sector_t   *floorLinkCandidate = 0, *ceilLinkCandidate = 0;
 
     // Must have a valid sector!
     if(!sec || !sec->linecount || sec->permanentlink)
@@ -229,117 +218,130 @@ static void R_SetSectorLinks(sector_t *sec)
 
     hackfloor = (!R_IsSkySurface(&sec->SP_floorsurface));
     hackceil = (!R_IsSkySurface(&sec->SP_ceilsurface));
-    if(hackfloor || hackceil)
+    if(!(hackfloor || hackceil))
+        return;
+
     for(i = 0; i < sec->subsgroupcount; ++i)
     {
+        subsector_t   **ssecp;
+        ssecgroup_t    *ssgrp;
+
         if(!hackfloor && !hackceil)
             break;
 
         ssgrp = &sec->subsgroups[i];
-        for(k = 0; k < sec->subscount; ++k)
+
+        ssecp = sec->subsectors;
+        while(*ssecp)
         {
+            subsector_t    *ssec = *ssecp;
+
             if(!hackfloor && !hackceil)
                 break;
 
-            sub = sec->subsectors[k];
             // Must be in the same group.
-            if(sub->group != i)
-                continue;
-
-            ptr = sub->segs;
-            while(*ptr)
+            if(ssec->group == i)
             {
-                if(!hackfloor && !hackceil)
-                    break;
+                seg_t         **segp = ssec->segs;
 
-                seg = *ptr;
-                lin = seg->linedef;
-
-                if(lin && // minisegs don't count.
-                   lin->L_frontside && lin->L_backside) // Must be twosided.
+                while(*segp)
                 {
-                    // Check the vertex line owners for both verts.
-                    // We are only interested in lines that do NOT share either vertex
-                    // with a one-sided line (ie, its not "anchored").
-                    if(lin->L_v1->anchored || lin->L_v2->anchored)
-                        return;
+                    seg_t          *seg = *segp;
+                    line_t         *lin;
 
-                    // Check which way the line is facing.
-                    sid = lin->L_frontside;
-                    if(sid->sector == sec)
-                    {
-                        frontsid = sid;
-                        backsid = lin->L_backside;
-                    }
-                    else
-                    {
-                        frontsid = lin->L_backside;
-                        backsid = sid;
-                    }
-                    back = backsid->sector;
-                    if(back == sec)
-                        return;
+                    if(!hackfloor && !hackceil)
+                        break;
 
-                    // Check that there is something on the other side.
-                    if(back->SP_ceilheight == back->SP_floorheight)
-                        return;
+                    lin = seg->linedef;
 
-                    // Check the conditions that prevent the invis plane.
-                    if(back->SP_floorheight == sec->SP_floorheight)
+                    if(lin && // minisegs don't count.
+                       lin->L_frontside && lin->L_backside) // Must be twosided.
                     {
-                        hackfloor = false;
-                    }
-                    else
-                    {
-                        if(back->SP_floorheight > sec->SP_floorheight)
-                            sid = frontsid;
+                        sector_t       *back;
+                        side_t         *sid, *frontsid, *backsid;
+
+                        // Check the vertex line owners for both verts.
+                        // We are only interested in lines that do NOT share either vertex
+                        // with a one-sided line (ie, its not "anchored").
+                        if(lin->L_v1->anchored || lin->L_v2->anchored)
+                            return;
+
+                        // Check which way the line is facing.
+                        sid = lin->L_frontside;
+                        if(sid->sector == sec)
+                        {
+                            frontsid = sid;
+                            backsid = lin->L_backside;
+                        }
                         else
-                            sid = backsid;
+                        {
+                            frontsid = lin->L_backside;
+                            backsid = sid;
+                        }
 
-                        if((sid->SW_bottomtexture && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
-                           (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
+                        back = backsid->sector;
+                        if(back == sec)
+                            return;
+
+                        // Check that there is something on the other side.
+                        if(back->SP_ceilheight == back->SP_floorheight)
+                            return;
+
+                        // Check the conditions that prevent the invis plane.
+                        if(back->SP_floorheight == sec->SP_floorheight)
+                        {
                             hackfloor = false;
+                        }
                         else
-                            floorlink_candidate = back;
-                    }
+                        {
+                            if(back->SP_floorheight > sec->SP_floorheight)
+                                sid = frontsid;
+                            else
+                                sid = backsid;
 
-                    if(back->SP_ceilheight == sec->SP_ceilheight)
-                        hackceil = false;
-                    else
-                    {
-                        if(back->SP_ceilheight < sec->SP_ceilheight)
-                            sid = frontsid;
-                        else
-                            sid = backsid;
+                            if((sid->SW_bottomtexture && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
+                               (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
+                                hackfloor = false;
+                            else
+                                floorLinkCandidate = back;
+                        }
 
-                        if((sid->SW_toptexture && !(sid->SW_topflags & SUF_TEXFIX)) ||
-                           (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
+                        if(back->SP_ceilheight == sec->SP_ceilheight)
+                        {
                             hackceil = false;
+                        }
                         else
-                            ceillink_candidate = back;
-                    }
-                }
+                        {
+                            if(back->SP_ceilheight < sec->SP_ceilheight)
+                                sid = frontsid;
+                            else
+                                sid = backsid;
 
-                *ptr++;
+                            if((sid->SW_toptexture && !(sid->SW_topflags & SUF_TEXFIX)) ||
+                               (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
+                                hackceil = false;
+                            else
+                                ceilLinkCandidate = back;
+                        }
+                    }
+
+                    segp++;
+                }
             }
+
+            ssecp++;
         }
+
         if(hackfloor)
         {
-            if(floorlink_candidate == sec->containsector)
-                ssgrp->linked[PLN_FLOOR] = floorlink_candidate;
-
-            /*      if(floorlink_candidate)
-               Con_Printf("LF:%i->%i\n",
-               i, GET_SECTOR_IDX(floorlink_candidate)); */
+            if(floorLinkCandidate == sec->containsector)
+                ssgrp->linked[PLN_FLOOR] = floorLinkCandidate;
         }
+
         if(hackceil)
         {
-            if(ceillink_candidate == sec->containsector)
-                ssgrp->linked[PLN_CEILING] = ceillink_candidate;
-
-            /*      if(ceillink_candidate)
-               Con_Printf("LC:%i->%i\n",
-               i, GET_SECTOR_IDX(ceillink_candidate)); */
+            if(ceilLinkCandidate == sec->containsector)
+                ssgrp->linked[PLN_CEILING] = ceilLinkCandidate;
         }
     }
 }
@@ -638,615 +640,9 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
     while(adjusted[PLN_FLOOR] || adjusted[PLN_CEILING]);
 }
 
-static void R_PrepareSubsector(subsector_t *sub)
-{
-    seg_t     **ptr;
-    fvertex_t  *vtx;
-
-    // Find the center point. First calculate the bounding box.
-    ptr = sub->segs;
-    vtx = &((*ptr)->SG_v1->v);
-    sub->bbox[0].pos[VX] = sub->bbox[1].pos[VX] = sub->midpoint.pos[VX] = vtx->pos[VX];
-    sub->bbox[0].pos[VY] = sub->bbox[1].pos[VY] = sub->midpoint.pos[VY] = vtx->pos[VY];
-
-    *ptr++;
-    while(*ptr)
-    {
-        vtx = &((*ptr)->SG_v1->v);
-        if(vtx->pos[VX] < sub->bbox[0].pos[VX])
-            sub->bbox[0].pos[VX] = vtx->pos[VX];
-        if(vtx->pos[VY] < sub->bbox[0].pos[VY])
-            sub->bbox[0].pos[VY] = vtx->pos[VY];
-        if(vtx->pos[VX] > sub->bbox[1].pos[VX])
-            sub->bbox[1].pos[VX] = vtx->pos[VX];
-        if(vtx->pos[VY] > sub->bbox[1].pos[VY])
-            sub->bbox[1].pos[VY] = vtx->pos[VY];
-
-        sub->midpoint.pos[VX] += vtx->pos[VX];
-        sub->midpoint.pos[VY] += vtx->pos[VY];
-        *ptr++;
-    }
-
-    sub->midpoint.pos[VX] /= sub->segcount; // num vertices.
-    sub->midpoint.pos[VY] /= sub->segcount;
-}
-
-
-static float triangleArea(fvertex_t *o, fvertex_t *s, fvertex_t *t)
-{
-    fvertex_t a, b;
-    float   area;
-
-    a.pos[VX] = s->pos[VX] - o->pos[VX];
-    a.pos[VY] = s->pos[VY] - o->pos[VY];
-
-    b.pos[VX] = t->pos[VX] - o->pos[VX];
-    b.pos[VY] = t->pos[VY] - o->pos[VY];
-
-    area = (a.pos[VX] * b.pos[VY] - b.pos[VX] * a.pos[VY]) / 2;
-
-    if(area < 0)
-        return -area;
-    else
-        return area;
-}
-
-static void R_InitPlaneIllumination(subsector_t *sub, uint planeid)
-{
-    uint        i, j, num;
-    subplaneinfo_t *plane = sub->planes[planeid];
-
-    num = sub->numvertices;
-
-    plane->illumination =
-        Z_Calloc(num * sizeof(vertexillum_t), PU_LEVELSTATIC, NULL);
-
-    for(i = 0; i < num; ++i)
-    {
-        plane->illumination[i].flags |= VIF_STILL_UNSEEN;
-
-        for(j = 0; j < MAX_BIAS_AFFECTED; ++j)
-            plane->illumination[i].casted[j].source = -1;
-    }
-}
-
-static ownernode_t *unusedNodeList = NULL;
-
-static ownernode_t *newOwnerNode(void)
-{
-    ownernode_t *node;
-
-    if(unusedNodeList)
-    {   // An existing node is available for re-use.
-        node = unusedNodeList;
-        unusedNodeList = unusedNodeList->next;
-
-        node->next = NULL;
-        node->data = NULL;
-    }
-    else
-    {   // Need to allocate another.
-        node = M_Malloc(sizeof(ownernode_t));
-    }
-
-    return node;
-}
-
-static void addVertexToSSecOwnerList(ownerlist_t *ownerList, fvertex_t *v)
-{
-    ownernode_t *node;
-
-    if(!v)
-        return; // Wha?
-
-    // Add a new owner.
-    // NOTE: No need to check for duplicates.
-    ownerList->count++;
-
-    node = newOwnerNode();
-    node->data = v;
-    node->next = ownerList->head;
-    ownerList->head = node;
-}
-
-static void R_PolygonizeWithoutCarving(void)
-{
-    uint        startTime = Sys_GetRealTime();
-
-    uint        i;
-    ownernode_t *node, *p;
-
-    for(i = 0; i < numsubsectors; ++i)
-    {
-        uint        j;
-        seg_t     **ptr;
-        subsector_t *sub;
-        ownerlist_t subSecOwnerList;
-        boolean     found = false;
-
-        memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
-
-        sub = SUBSECTOR_PTR(i);
-        R_PrepareSubsector(sub);
-
-        // Create one node for each vertex of the subsector.
-        ptr = sub->segs;
-        while(*ptr)
-        {
-            fvertex_t *other = &((*ptr)->SG_v1->v);
-            addVertexToSSecOwnerList(&subSecOwnerList, other);
-            *ptr++;
-        }
-
-        // We need to find a good tri-fan base vertex, (one that doesn't
-        // generate zero-area triangles).
-        if(subSecOwnerList.count <= 3)
-        {   // Always valid.
-            found = true;
-        }
-        else
-        {   // Higher vertex counts need checking, we'll test each one
-            // and pick the first good one.
-            ownernode_t *base = subSecOwnerList.head;
-
-            while(base && !found)
-            {
-                ownernode_t *current;
-                boolean     ok;
-
-                current = base;
-                ok = true;
-                j = 0;
-                while(j < subSecOwnerList.count - 2 && ok)
-                {
-#define TRIFAN_LIMIT    0.1
-
-                    ownernode_t *a, *b;
-
-                    if(current->next)
-                        a = current->next;
-                    else
-                        a = subSecOwnerList.head;
-                    if(a->next)
-                        b = a->next;
-                    else
-                        b = subSecOwnerList.head;
-
-                    if(triangleArea((fvertex_t*) base->data,
-                                    (fvertex_t*) a->data,
-                                    (fvertex_t*) b->data) <= TRIFAN_LIMIT)
-                    {
-                        ok = false;
-                    }
-                    else
-                    {   // Keep checking...
-                        if(current->next)
-                            current = current->next;
-                        else
-                            current = subSecOwnerList.head;
-
-                        j++;
-                    }
-
-#undef TRIFAN_LIMIT
-                }
-
-                if(ok)
-                {   // This will do nicely.
-                    // Must ensure that the vertices are ordered such that
-                    // base comes last (this is because when adding vertices
-                    // to the ownerlist; it is done backwards).
-                    ownernode_t *last;
-
-                    // Find the last.
-                    last = base;
-                    while(last->next) last = last->next;
-
-                    if(base != last)
-                    {   // Need to change the order.
-                        last->next = subSecOwnerList.head;
-                        subSecOwnerList.head = base->next;
-                        base->next = NULL;
-                    }
-
-                    found = true;
-                }
-                else
-                {
-                    base = base->next;
-                }
-            }
-        }
-
-        if(!found)
-        {   // No suitable triangle fan base vertex found.
-            ownernode_t *newNode, *last;
-
-            // Use the subsector midpoint as the base since it will always
-            // be valid.
-            sub->flags |= SUBF_MIDPOINT;
-
-            // This entails adding the midpoint as a vertex at the start
-            // and duplicating the first vertex at the end (so the fan
-            // wraps around).
-
-            // We'll have to add the end vertex manually...
-            // Find the end.
-            last = subSecOwnerList.head;
-            while(last->next) last = last->next;
-
-            newNode = newOwnerNode();
-            newNode->data = &sub->midpoint;
-            newNode->next = NULL;
-
-            last->next = newNode;
-            subSecOwnerList.count++;
-
-            addVertexToSSecOwnerList(&subSecOwnerList, last->data);
-        }
-
-        // We can now create the subsector vertex array by hardening the list.
-        // NOTE: The same polygon is used for all planes of this subsector.
-        sub->numvertices = subSecOwnerList.count;
-        sub->vertices =
-            Z_Malloc(sizeof(fvertex_t*) * (sub->numvertices + 1),
-                     PU_LEVELSTATIC, 0);
-
-        node = subSecOwnerList.head;
-        j = sub->numvertices - 1;
-        while(node)
-        {
-            p = node->next;
-            sub->vertices[j--] = (fvertex_t*) node->data;
-
-            if(i < numsubsectors - 1)
-            {   // Move this node to the unused list for re-use.
-                node->next = unusedNodeList;
-                unusedNodeList = node;
-            }
-            else
-            {   // No further use for the nodes.
-                M_Free(node);
-            }
-            node = p;
-        }
-        sub->vertices[sub->numvertices] = NULL; // terminate.
-    }
-
-    // Free any nodes left in the unused list.
-    node = unusedNodeList;
-    while(node)
-    {
-        p = node->next;
-        M_Free(node);
-        node = p;
-    }
-    unusedNodeList = NULL;
-
-#ifdef _DEBUG
-    Z_CheckHeap();
-#endif
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("R_PolygonizeWithoutCarving: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
-}
-
-static void createSSecPlanes(void)
-{
-    uint        i, j;
-    subsector_t *sub;
-
-    for(i = 0; i < numsubsectors; ++i)
-    {
-        sub = SUBSECTOR_PTR(i);
-
-        // Allocate the subsector plane info array.
-        sub->planes =
-            Z_Malloc(sub->sector->planecount * sizeof(subplaneinfo_t*),
-                     PU_LEVEL, NULL);
-        for(j = 0; j < sub->sector->planecount; ++j)
-        {
-            sub->planes[j] =
-                Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
-
-            // Initialize the illumination for the subsector.
-            R_InitPlaneIllumination(sub, j);
-        }
-
-        // \fixme $nplanes
-        // Initialize the plane types.
-        sub->planes[PLN_FLOOR]->type = PLN_FLOOR;
-        sub->planes[PLN_CEILING]->type = PLN_CEILING;
-    }
-}
-
-/**
- * Compares the angles of two lines that share a common vertex.
- *
- * pre: rootVtx must point to the vertex common between a and b
- *      which are (lineowner_t*) ptrs.
- */
-static int C_DECL lineAngleSorter(const void *a, const void *b)
-{
-    uint        i;
-    fixed_t     dx, dy;
-    binangle_t  angles[2];
-    lineowner_t *own[2];
-    line_t     *line;
-
-    own[0] = (lineowner_t *)a;
-    own[1] = (lineowner_t *)b;
-    for(i = 0; i < 2; ++i)
-    {
-        if(own[i]->LO_prev) // We have a cached result.
-        {
-            angles[i] = own[i]->angle;
-        }
-        else
-        {
-            vertex_t    *otherVtx;
-
-            line = own[i]->line;
-            otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
-
-            dx = otherVtx->V_pos[VX] - rootVtx->V_pos[VX];
-            dy = otherVtx->V_pos[VY] - rootVtx->V_pos[VY];
-
-            own[i]->angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
-
-            // Mark as having a cached angle.
-            own[i]->LO_prev = (lineowner_t*) 1;
-        }
-    }
-
-    return (angles[1] - angles[0]);
-}
-
-/**
- * Merge left and right line owner lists into a new list.
- *
- * @return          Ptr to the newly merged list.
- */
-static lineowner_t *mergeLineOwners(lineowner_t *left, lineowner_t *right,
-                                    int (C_DECL *compare) (const void *a,
-                                                           const void *b))
-{
-    lineowner_t tmp, *np;
-
-    np = &tmp;
-    tmp.LO_next = np;
-    while(left != NULL && right != NULL)
-    {
-        if(compare(left, right) <= 0)
-        {
-            np->LO_next = left;
-            np = left;
-
-            left = left->LO_next;
-        }
-        else
-        {
-            np->LO_next = right;
-            np = right;
-
-            right = right->LO_next;
-        }
-    }
-
-    // At least one of these lists is now empty.
-    if(left)
-        np->LO_next = left;
-    if(right)
-        np->LO_next = right;
-
-    // Is the list empty?
-    if(tmp.LO_next == &tmp)
-        return NULL;
-
-    return tmp.LO_next;
-}
-
-static lineowner_t *splitLineOwners(lineowner_t *list)
-{
-    lineowner_t *lista, *listb, *listc;
-
-    if(!list)
-        return NULL;
-
-    lista = listb = listc = list;
-    do
-    {
-        listc = listb;
-        listb = listb->LO_next;
-        lista = lista->LO_next;
-        if(lista != NULL)
-            lista = lista->LO_next;
-    } while(lista);
-
-    listc->LO_next = NULL;
-    return listb;
-}
-
-/**
- * This routine uses a recursive mergesort algorithm; O(NlogN)
- */
-static lineowner_t *sortLineOwners(lineowner_t *list,
-                                   int (C_DECL *compare) (const void *a,
-                                                          const void *b))
-{
-    lineowner_t *p;
-
-    if(list && list->LO_next)
-    {
-        p = splitLineOwners(list);
-
-        // Sort both halves and merge them back.
-        list = mergeLineOwners(sortLineOwners(list, compare),
-                               sortLineOwners(p, compare), compare);
-    }
-    return list;
-}
-
-static void setVertexLineOwner(vertex_t *vtx, line_t *lineptr,
-                               lineowner_t **storage)
-{
-    lineowner_t *p, *newOwner;
-
-    if(!lineptr)
-        return;
-
-    // If this is a one-sided line then this is an "anchored" vertex.
-    if(!(lineptr->L_frontside && lineptr->L_backside))
-        vtx->anchored = true;
-
-    // Has this line already been registered with this vertex?
-    if(vtx->numlineowners != 0)
-    {
-        p = vtx->lineowners;
-        while(p)
-        {
-            if(p->line == lineptr)
-                return;             // Yes, we can exit.
-
-            p = p->LO_next;
-        }
-    }
-
-    //Add a new owner.
-    vtx->numlineowners++;
-
-    newOwner = (*storage)++;
-    newOwner->line = lineptr;
-    newOwner->LO_prev = NULL;
-
-    // Link it in.
-    // NOTE: We don't bother linking everything at this stage since we'll
-    // be sorting the lists anyway. After which we'll finish the job by
-    // setting the prev and circular links.
-    // So, for now this is only linked singlely, forward.
-    newOwner->LO_next = vtx->lineowners;
-    vtx->lineowners = newOwner;
-
-    // Link the line to its respective owner node.
-    if(vtx == lineptr->L_v1)
-        lineptr->L_vo1 = newOwner;
-    else
-        lineptr->L_vo2 = newOwner;
-}
-
-/**
- * Generates the line owner rings for each vertex. Each ring includes all
- * the lines which the vertex belongs to sorted by angle, (the rings is
- * arranged in clockwise order, east = 0).
- */
-static void R_BuildVertexOwners(void)
-{
-    uint            startTime = Sys_GetRealTime();
-
-    uint            i, k, p;
-    sector_t       *sec;
-    line_t         *line;
-    lineowner_t    *lineOwners, *allocator;
-
-    // We know how many vertex line owners we need (numlines * 2).
-    lineOwners =
-        Z_Malloc(sizeof(lineowner_t) * numlines * 2, PU_LEVELSTATIC, 0);
-    allocator = lineOwners;
-
-    for(i = 0, sec = sectors; i < numsectors; ++i, sec++)
-    {
-        // Traversing the line list will do fine.
-        for(k = 0; k < sec->linecount; ++k)
-        {
-            line = sec->Lines[k];
-
-            for(p = 0; p < 2; ++p)
-            {
-                vertex_t    *vtx = line->L_v(p);
-                setVertexLineOwner(vtx, line, &allocator);
-            }
-        }
-    }
-
-    // Sort line owners and then finish the rings.
-    for(i = 0; i < numvertexes; ++i)
-    {
-        vertex_t   *v = VERTEX_PTR(i);
-
-        // Line owners:
-        if(v->numlineowners != 0)
-        {
-            lineowner_t *p, *last;
-            binangle_t  lastAngle = 0;
-
-            // Sort them so that they are ordered clockwise based on angle.
-            rootVtx = v;
-            v->lineowners =
-                sortLineOwners(v->lineowners, lineAngleSorter);
-
-            // Finish the linking job and convert to relative angles.
-            // They are only singly linked atm, we need them to be doubly
-            // and circularly linked.
-            last = v->lineowners;
-            p = last->LO_next;
-            while(p)
-            {
-                p->LO_prev = last;
-
-                // Convert to a relative angle between last and this.
-                last->angle = last->angle - p->angle;
-                lastAngle += last->angle;
-
-                last = p;
-                p = p->LO_next;
-            }
-            last->LO_next = v->lineowners;
-            v->lineowners->LO_prev = last;
-
-            // Set the angle of the last owner.
-            last->angle = BANG_360 - lastAngle;
-
-#if _DEBUG
-{
-// For checking the line owner link rings are formed correctly.
-lineowner_t *base;
-uint        idx;
-
-if(verbose >= 2)
-    Con_Message("Vertex #%i: line owners #%i\n", i, v->numlineowners);
-
-p = base = v->lineowners;
-idx = 0;
-do
-{
-    if(verbose >= 2)
-        Con_Message("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f\n", idx,
-                    GET_LINE_IDX(p->LO_prev->line),
-                    GET_LINE_IDX(p->line),
-                    GET_LINE_IDX(p->LO_next->line), BANG2DEG(p->angle));
-
-    if(p->LO_prev->LO_next != p || p->LO_next->LO_prev != p)
-       Con_Error("Invalid line owner link ring!");
-
-    p = p->LO_next;
-    idx++;
-} while(p != base);
-}
-#endif
-        }
-    }
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("R_BuildVertexOwners: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
-}
-
 /**
  * @return          Ptr to the lineowner for this line for this vertex else
- *                  <code>NULL</code>.
+ *                  @c NULL.
  */
 lineowner_t* R_GetVtxLineOwner(vertex_t *v, line_t *line)
 {
@@ -1342,36 +738,7 @@ static void R_BuildSectorLinks(void)
     uint        i, k;
     sector_t   *sec, *other;
     line_t     *lin;
-    boolean     dohack, unclosed;
-
-    // Calculate bounding boxes for all sectors.
-    // Check for unclosed sectors.
-    for(i = 0, sec = sectors; i < numsectors; ++i, sec++)
-    {
-        if(i == 0)
-        {
-            // The first sector is used as is.
-            memcpy(mapBounds, sec->bounds, sizeof(mapBounds));
-        }
-        else
-        {
-            // Expand the bounding box.
-            M_JoinBoxes(mapBounds, sec->bounds);
-        }
-
-        // Detect unclosed sectors.
-        unclosed = false;
-        if(sec->linecount < 3)
-            unclosed = true;
-        else
-        {
-            // \todo Add algorithm to check for unclosed sectors here.
-            // Perhaps have a look at glBSP.
-        }
-
-        if(unclosed)
-            sec->unclosed = true;
-    }
+    boolean     dohack;
 
     for(i = 0, sec = sectors; i < numsectors; sec++, ++i)
     {
@@ -1805,50 +1172,29 @@ void R_RationalizeSectors(void)
              (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
-/**
- * Mapinfo must be available.
- */
-void R_SetupFog(void)
+void R_SetupFog(float start, float end, float density, float *rgb)
 {
-    int flags = 0;
-
-    if(!mapinfo)
-    {
-        // Go with the defaults.
-        Con_Execute(CMDS_DDAY,"fog off", true, false);
-        return;
-    }
-
-    // Check the flags.
-    flags = mapinfo->flags;
-    if(flags & MIF_FOG)
-    {
-        // Setup fog.
-        Con_Execute(CMDS_DDAY, "fog on", true, false);
-        Con_Executef(CMDS_DDAY, true, "fog start %f", mapinfo->fog_start);
-        Con_Executef(CMDS_DDAY, true, "fog end %f", mapinfo->fog_end);
-        Con_Executef(CMDS_DDAY, true, "fog density %f", mapinfo->fog_density);
-        Con_Executef(CMDS_DDAY, true, "fog color %.0f %.0f %.0f",
-                     mapinfo->fog_color[0] * 255, mapinfo->fog_color[1] * 255,
-                     mapinfo->fog_color[2] * 255);
-    }
-    else
-    {
-        Con_Execute(CMDS_DDAY, "fog off", true, false);
-    }
+    Con_Execute(CMDS_DDAY, "fog on", true, false);
+    Con_Executef(CMDS_DDAY, true, "fog start %f", start);
+    Con_Executef(CMDS_DDAY, true, "fog end %f", end);
+    Con_Executef(CMDS_DDAY, true, "fog density %f", density);
+    Con_Executef(CMDS_DDAY, true, "fog color %.0f %.0f %.0f",
+                 rgb[0] * 255, rgb[1] * 255, rgb[2] * 255);
 }
 
-/**
- * Mapinfo must be set.
- */
-void R_SetupSky(void)
+void R_SetupFogDefaults(void)
 {
-    int     i, k;
-    int     skyTex;
+    // Go with the defaults.
+    Con_Execute(CMDS_DDAY,"fog off", true, false);
+}
+
+void R_SetupSky(ded_mapinfo_t *mapinfo)
+{
+    int         i, k;
+    int         skyTex;
 
     if(!mapinfo)
-    {
-        // Use the defaults.
+    {   // Go with the defaults.
         Rend_SkyParams(DD_SKY, DD_HEIGHT, .666667f);
         Rend_SkyParams(DD_SKY, DD_HORIZON, 0);
         Rend_SkyParams(0, DD_ENABLE, 0);
@@ -2094,28 +1440,26 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
 #undef SEP
 }
 
-void R_InitLinks(void)
+void R_InitLinks(gamemap_t *map)
 {
     uint        i;
     uint        starttime;
 
     Con_Message("R_InitLinks: Initializing\n");
 
-    // Init polyobj blockmap.
-    P_InitPolyBlockMap();
-
     // Initialize node piles and line rings.
-    NP_Init(&thingnodes, 256);  // Allocate a small pile.
-    NP_Init(&linenodes, numlines + 1000);
+    NP_Init(&map->thingnodes, 256);  // Allocate a small pile.
+    NP_Init(&map->linenodes, map->numlines + 1000);
 
     // Allocate the rings.
     starttime = Sys_GetRealTime();
-    linelinks = Z_Malloc(sizeof(*linelinks) * numlines, PU_LEVELSTATIC, 0);
-    for(i = 0; i < numlines; ++i)
-        linelinks[i] = NP_New(&linenodes, NP_ROOT_NODE);
+    map->linelinks =
+        Z_Malloc(sizeof(*map->linelinks) * map->numlines, PU_LEVELSTATIC, 0);
+    for(i = 0; i < map->numlines; ++i)
+        map->linelinks[i] = NP_New(&map->linenodes, NP_ROOT_NODE);
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("R_InitLinks: Allocating line link rings Done in %.2f seconds.\n",
+            ("R_InitLinks: Allocating line link rings. Done in %.2f seconds.\n",
              (Sys_GetRealTime() - starttime) / 1000.0f));
 }
 
@@ -2124,59 +1468,17 @@ void R_InitLinks(void)
  * level. Creates floors and ceilings and fixes the adjacent sky sector
  * heights.  Creates a big enough dlBlockLinks.
  */
-void R_InitLevel(char *level_id)
+void R_InitMap(gamemap_t *map)
 {
     uint        startTime;
-    uint        i;
 
-    // Must be called before any mobjs are spawned.
-    R_InitLinks();
-
-    if(isServer)
-    {
-        // Whenever the map changes, remote players must tell us when
-        // they're ready to begin receiving frames.
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(!(players[i].flags & DDPF_LOCAL) && clients[i].connected)
-            {
-#ifdef _DEBUG
-                Con_Printf("Cl%i NOT READY ANY MORE!\n", i);
-#endif
-                clients[i].ready = false;
-            }
-        }
-    }
-
-    //Con_InitProgress("Setting up level...", 100);
-    strcpy(currentLevelId, level_id);
-
-    //Con_Progress(10, 0);
-
-    // Polygonize.
-    R_PolygonizeWithoutCarving();
-
-    createSSecPlanes();
-    //Con_Progress(10, 0);
-
-    // Init Particle Generator links.
-    PG_InitForLevel();
-
-    // The map bounding box will be updated during sector info
-    // initialization.
-    memset(mapBounds, 0, sizeof(mapBounds));
     R_BuildSectorLinks();
-
-    // Compose the vertex owner arrays.
-    R_BuildVertexOwners();
 
     // Init blockmap for searching subsectors.
     P_InitSubsectorBlockMap();
 
     R_RationalizeSectors();
     R_InitSectorShadows();
-
-    //Con_Progress(10, 0);
 
     startTime = Sys_GetRealTime();
     R_InitSkyFix();
@@ -2185,68 +1487,6 @@ void R_InitLevel(char *level_id)
     VERBOSE(Con_Message
             ("R_InitLevel: Initial SkyFix Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
-
-    S_DetermineSubSecsAffectingSectorReverb();
-
-    DL_InitForMap();
-
-    Cl_Reset();
-    RL_DeleteLists();
-
-    // See what mapinfo says about this level.
-    mapinfo = Def_GetMapInfo(level_id);
-    if(!mapinfo)
-        mapinfo = Def_GetMapInfo("*");
-
-    // Setup accordingly.
-    R_SetupSky();
-
-    if(mapinfo)
-    {
-        mapgravity = mapinfo->gravity * FRACUNIT;
-        mapambient = mapinfo->ambient * 255;
-    }
-    else
-    {
-        // No map info found, so set some basic stuff.
-        mapgravity = FRACUNIT;
-        mapambient = 0;
-    }
-
-    // Invalidate old cmds and init player values.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        players[i].invoid = false;
-        if(isServer && players[i].ingame)
-            clients[i].runTime = SECONDS_TO_TICKS(gameTime);
-    }
-
-    // Spawn all type-triggered particle generators.
-    // Let's hope there aren't too many...
-    startTime = Sys_GetRealTime();
-    P_SpawnTypeParticleGens();
-    P_SpawnMapParticleGens(level_id);
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("R_InitLevel: Spawn Generators Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
-
-    // Make sure that the next frame doesn't use a filtered viewer.
-    R_ResetViewer();
-
-    // Texture animations should begin from their first step.
-    R_ResetAnimGroups();
-
-    // Tell shadow bias to initialize the bias light sources.
-    SB_InitForLevel(R_GetUniqueLevelID());
-
-    // Initialize the lighting grid.
-    LG_Init();
-
-    if(!isDedicated)
-        R_InitRendPolyPool();
-
-    //Con_Progress(10, 0);        // 50%.
 }
 
 /**
@@ -2355,8 +1595,13 @@ void R_SetupLevel(int mode, int flags)
         PO_SetupPolyobjs();
 
         // Run any commands specified in Map Info.
-        if(mapinfo && mapinfo->execute)
-            Con_Execute(CMDS_DED, mapinfo->execute, true, false);
+        {
+        gamemap_t  *map = P_GetCurrentMap();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
+
+        if(mapInfo && mapInfo->execute)
+            Con_Execute(CMDS_DED, mapInfo->execute, true, false);
+        }
 
         // The level setup has been completed.  Run the special level
         // setup command, which the user may alias to do something
@@ -2401,9 +1646,18 @@ void R_SetupLevel(int mode, int flags)
         return;
     }
     case DDSLM_AFTER_BUSY:
+    {
+        gamemap_t  *map = P_GetCurrentMap();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
+
         // Shouldn't do anything time-consuming, as we are no longer in busy mode.
-        R_SetupFog();
+        if(!mapInfo || !(mapInfo->flags & MIF_FOG))
+            R_SetupFogDefaults();
+        else
+            R_SetupFog(mapInfo->fog_start, mapInfo->fog_end,
+                       mapInfo->fog_density, mapInfo->fog_color);
         break;
+    }
     default:
         Con_Error("R_SetupLevel: Unknown setup mode %i", mode);
     }
@@ -2689,39 +1943,6 @@ void R_UpdatePlanes(void)
 }
 
 /**
- * This ID is the name of the lump tag that marks the beginning of map
- * data, e.g. "MAP03" or "E2M8".
- */
-const char *R_GetCurrentLevelID(void)
-{
-    return currentLevelId;
-}
-
-/**
- * Return the 'unique' identifier of the map.  This identifier
- * contains information about the map tag (E3M3), the WAD that
- * contains the map (DOOM.IWAD), and the game mode (doom-ultimate).
- *
- * The entire ID string will be in lowercase letters.
- */
-const char *R_GetUniqueLevelID(void)
-{
-    static char uid[256];
-    filename_t  base;
-    int         lump = W_GetNumForName((char*)R_GetCurrentLevelID());
-
-    M_ExtractFileBase(W_LumpSourceFile(lump), base);
-
-    sprintf(uid, "%s|%s|%s|%s",
-            R_GetCurrentLevelID(),
-            base, (W_IsFromIWAD(lump) ? "iwad" : "pwad"),
-            (char *) gx.GetVariable(DD_GAME_MODE));
-
-    strlwr(uid);
-    return uid;
-}
-
-/**
  * Sector light color may be affected by the sky light color.
  */
 const float *R_GetSectorLightColor(sector_t *sector)
@@ -2757,16 +1978,4 @@ const float *R_GetSectorLightColor(sector_t *sector)
     }
     // Return the sky color.
     return skyColorRGB;
-}
-
-/**
- * Calculate the size of the entire map.
- */
-void R_GetMapSize(fixed_t *min, fixed_t *max)
-{
-    min[VX] = FRACUNIT * mapBounds[BLEFT];
-    min[VY] = FRACUNIT * mapBounds[BTOP];
-
-    max[VX] = FRACUNIT * mapBounds[BRIGHT];
-    max[VY] = FRACUNIT * mapBounds[BBOTTOM];
 }

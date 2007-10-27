@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -90,57 +90,6 @@ static byte *GetScratchBuffer(size_t size)
     }
 
     return scratchBuffer;
-}
-
-/**
- * Finds the power of 2 that is equal to or greater than the specified
- * number.
- */
-int CeilPow2(int num)
-{
-    int         cumul;
-
-    for(cumul = 1; num > cumul; cumul <<= 1);
-
-    return cumul;
-}
-
-/**
- * Finds the power of 2 that is less than or equal to the specified number.
- */
-int FloorPow2(int num)
-{
-    int         fl = CeilPow2(num);
-
-    if(fl > num)
-        fl >>= 1;
-    return fl;
-}
-
-/**
- * Finds the power of 2 that is nearest the specified number. In ambiguous
- * cases, the smaller number is returned.
- */
-int RoundPow2(int num)
-{
-    int         cp2 = CeilPow2(num), fp2 = FloorPow2(num);
-
-    return ((cp2 - num >= num - fp2) ? fp2 : cp2);
-}
-
-/**
- * Weighted rounding. Weight determines the point where the number is still
- * rounded down (0..1).
- */
-int WeightPow2(int num, float weight)
-{
-    int         fp2 = FloorPow2(num);
-    float       frac = (num - fp2) / (float) fp2;
-
-    if(frac <= weight)
-        return fp2;
-    else
-        return (fp2 << 1);
 }
 
 /**
@@ -469,8 +418,8 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
 {
     if(noStretch)
     {
-        *optWidth = CeilPow2(width);
-        *optHeight = CeilPow2(height);
+        *optWidth = M_CeilPow2(width);
+        *optHeight = M_CeilPow2(height);
 
         // MaxTexSize may prevent using noStretch.
         if(*optWidth > glMaxTexSize)
@@ -492,23 +441,23 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
             // At the best texture quality *opt, all textures are
             // sized *upwards*, so no details are lost. This takes
             // more memory, but naturally looks better.
-            *optWidth = CeilPow2(width);
-            *optHeight = CeilPow2(height);
+            *optWidth = M_CeilPow2(width);
+            *optHeight = M_CeilPow2(height);
         }
         else if(texQuality == 0)
         {
             // At the lowest quality, all textures are sized down
             // to the nearest power of 2.
-            *optWidth = FloorPow2(width);
-            *optHeight = FloorPow2(height);
+            *optWidth = M_FloorPow2(width);
+            *optHeight = M_FloorPow2(height);
         }
         else
         {
             // At the other quality *opts, a weighted rounding
             // is used.
-            *optWidth = WeightPow2(width, 1 - texQuality / (float) TEXQ_BEST);
+            *optWidth = M_WeightPow2(width, 1 - texQuality / (float) TEXQ_BEST);
             *optHeight =
-                WeightPow2(height, 1 - texQuality / (float) TEXQ_BEST);
+               M_WeightPow2(height, 1 - texQuality / (float) TEXQ_BEST);
         }
     }
 

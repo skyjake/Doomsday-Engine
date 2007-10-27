@@ -80,7 +80,7 @@ extern int      useBias; // Bias lighting enabled.
 extern unsigned int currentTimeSB;
 
 void            SB_Register(void);
-void            SB_InitForLevel(const char *uniqueId);
+void            SB_InitForMap(const char *uniqueId);
 void            SB_SegHasMoved(struct seg_s *seg);
 void            SB_PlaneHasMoved(struct subsector_s *subsector, uint plane);
 void            SB_BeginFrame(void);

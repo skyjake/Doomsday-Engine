@@ -99,7 +99,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread dpmapload dropengl dssdlmixer dscompat jdoom jheretic jhexen wolftc doom64tc
+CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread dropengl dssdlmixer dscompat jdoom jheretic jhexen wolftc doom64tc
 GOTO Done
 
 
@@ -178,15 +178,6 @@ GOTO Failure
 ECHO Compiling dpDehRead.dll (Dehacked Reader Plugin)...
 md %OBJ_DIR%\dpDehRead
 cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DPDEHREAD_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dpDehRead/" /Fd"./%OBJ_DIR%/dpDehRead/" /W3 /Gd   @dpdehread_cl.rsp   /link /OUT:"./%BIN_DIR%/dpDehRead.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dpDehRead.lib" %LIBS% ./%BIN_DIR%/Doomsday.lib
-IF %ERRORLEVEL% == 0 GOTO Done
-GOTO Failure
-
-
-:: *** dpMapLoad.dll
-:dpMapLoad
-ECHO Compiling dpMapLoad.dll ((gl)BSP Node Builder Plugin)...
-md %OBJ_DIR%\dpMapLoad
-cl /O2 /Ob1 %INCS_ZLIB% %INCS% /I "./../../external/glbsp/include" %DLLDEFINES% /D "GLBSP_PLUGIN" /D "DPMAPLOAD_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dpMapLoad/" /Fd"./%OBJ_DIR%/dpMapLoad/" /W3 /Gd  @dpmapload_cl.rsp  /link /OUT:"./%BIN_DIR%/dpMapLoad.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dpMapLoad.lib" %LIBS% ./%BIN_DIR%/Doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 

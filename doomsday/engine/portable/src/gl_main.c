@@ -43,6 +43,7 @@
 #include "de_render.h"
 #include "de_misc.h"
 #include "de_ui.h"
+#include "de_defs.h"
 
 #include "r_draw.h"
 
@@ -207,7 +208,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
     {
         HWND    hWnd = Sys_GetWindowHandle(windowIDX);
         HDC     hDC;
-        
+
         if(!hWnd)
         {
             suspendMsgPump = true;
@@ -217,7 +218,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
             suspendMsgPump = false;
         }
         else
-        {      
+        {
             hDC = GetDC(hWnd);
 
             if(!hDC)
@@ -585,7 +586,7 @@ boolean GL_EarlyInit(void)
         winFlags &= ~DDWF_CENTER;
 
     if(ArgExists("-nofullscreen") || ArgExists("-window"))
-        winFlags &= ~DDWF_FULLSCREEN; 
+        winFlags &= ~DDWF_FULLSCREEN;
 
     if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP,
                      winFlags, 0))
@@ -608,7 +609,7 @@ boolean GL_EarlyInit(void)
     // Set a custom maximum size?
     if(ArgCheckWith("-maxtex", 1))
     {
-        int     customSize = CeilPow2(strtol(ArgNext(), 0, 0));
+        int     customSize = M_CeilPow2(strtol(ArgNext(), 0, 0));
 
         if(glMaxTexSize < customSize)
             customSize = glMaxTexSize;
@@ -641,7 +642,7 @@ boolean GL_EarlyInit(void)
 
     // Allow font rendering.
     FR_Init();
-    
+
     initGLOk = true;
     return true;
 }
@@ -879,6 +880,9 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
     }
     else
     {
+        gamemap_t  *map = P_GetCurrentMap();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
+
         // Getting back up and running.
         GL_InitFont();
         GL_InitVarFont();
@@ -890,7 +894,11 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
         GL_InitRefresh(loadLightMaps, loadFlares);
 
         // Restore map's fog settings.
-        R_SetupFog();
+        if(!mapInfo || !(mapInfo->flags & MIF_FOG))
+            R_SetupFogDefaults();
+        else
+            R_SetupFog(mapInfo->fog_start, mapInfo->fog_end,
+                       mapInfo->fog_density, mapInfo->fog_color);
 
         // Make sure the fog is enabled, if necessary.
         if(hadFog)
@@ -906,7 +914,7 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
 unsigned char *GL_GrabScreen(void)
 {
     unsigned char *buffer = 0;
-    
+
     buffer = malloc(theWindow->width * theWindow->height * 3);
     gl.Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
     return buffer;
@@ -977,7 +985,7 @@ D_CMD(SetRes)
 }
 
 D_CMD(ToggleFullscreen)
-{ 
+{
     boolean         fullscreen;
 
     if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))

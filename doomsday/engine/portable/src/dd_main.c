@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,6 +63,7 @@
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"
+#include "de_dam.h"
 
 #include "dd_pinit.h"
 
@@ -106,7 +107,6 @@ extern HINSTANCE hInstDGL;
 extern int renderTextures;
 extern int skyFlatNum;
 extern char skyFlatName[9];
-extern fixed_t mapgravity;
 extern int gotframe;
 extern int monochrome;
 extern int gamedataformat;
@@ -426,7 +426,7 @@ int DD_Main(void)
         else
             Con_Executef(CMDS_CMDLINE, false, "net server start");
     }
-    
+
     // Final preparations for using the console UI.
     Con_InitUI();
 
@@ -434,7 +434,7 @@ int DD_Main(void)
     exitCode = DD_GameLoop();
 
     // Time to shutdown.
-    
+
     if(netgame)
     {   // Quit netgame if one is in progress.
         Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
@@ -619,7 +619,7 @@ static int DD_StartupWorker(void *parm)
             strncpy(buff, lumpinfo[p].name, 8);
             buff[8] = 0;
             printf("%04i - %-8s (hndl: %p, pos: %i, size: %lu)\n", p, buff,
-                   lumpinfo[p].handle, lumpinfo[p].position, 
+                   lumpinfo[p].handle, lumpinfo[p].position,
                    (unsigned long) lumpinfo[p].size);
         }
         Con_Error("---End of lumps---\n");
@@ -629,11 +629,11 @@ static int DD_StartupWorker(void *parm)
 
     Con_Message("Sys_Init: Setting up machine state.\n");
     Sys_Init();
-    
+
     Con_Message("B_Init: Init bindings.\n");
     B_Init();
     Con_ParseCommands(bindingsConfigFileName, false);
-    
+
     Con_SetProgress(125);
 
     Con_Message("R_Init: Init the refresh daemon.\n");
@@ -872,7 +872,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&isDedicated, 0},
     {&novideo, 0},
     {&defs.count.mobjs.num, 0},
-    {&mapgravity, &mapgravity},
+    {&mapGravity, &mapGravity},
     {&gotframe, 0},
     {&playback, 0},
     {&defs.count.sounds.num, 0},
@@ -939,10 +939,14 @@ int DD_GetInteger(int ddvalue)
             return (int) GL_PrepareLSTexture(LST_DYNAMIC, NULL);
 
         case DD_MAP_MUSIC:
-            if(mapinfo)
-                return Def_GetMusicNum(mapinfo->music);
-            return -1;
+        {
+            gamemap_t *map = P_GetCurrentMap();
+            ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
 
+            if(mapInfo)
+                return Def_GetMusicNum(mapInfo->music);
+            return -1;
+        }
         case DD_WINDOW_WIDTH:
             return theWindow->width;
 
@@ -1025,59 +1029,67 @@ void* DD_GetVariable(int ddvalue)
 
         case DD_SHARED_FIXED_TRIGGER:
             return &sharedFixedTrigger;
-            
+
         case DD_SECTOR_COUNT:
             return &numsectors;
-            
+
         case DD_LINE_COUNT:
             return &numlines;
-            
+
         case DD_SIDE_COUNT:
             return &numsides;
-            
+
         case DD_VERTEX_COUNT:
             return &numvertexes;
-            
+
         case DD_POLYOBJ_COUNT:
             return &po_NumPolyobjs;
-            
+
         case DD_SEG_COUNT:
             return &numsegs;
-            
+
         case DD_SUBSECTOR_COUNT:
             return &numsubsectors;
-            
+
         case DD_NODE_COUNT:
             return &numnodes;
-            
+
         case DD_THING_COUNT:
             return &numthings;
-            
+
         case DD_GAME_EXPORTS:
             return &gx;
-            
+
         case DD_TRACE_ADDRESS:
             return &trace;
-            
+
         case DD_TRANSLATIONTABLES_ADDRESS:
             return translationtables;
-            
+
         case DD_MAP_NAME:
-            if(mapinfo && mapinfo->name[0])
-                return mapinfo->name;
+        {
+            gamemap_t *map = P_GetCurrentMap();
+            ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
+
+            if(mapInfo && mapInfo->name[0])
+                return mapInfo->name;
             break;
-            
+        }
         case DD_MAP_AUTHOR:
-            if(mapinfo && mapinfo->author[0])
-                return mapinfo->author;
+        {
+            gamemap_t *map = P_GetCurrentMap();
+            ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
+
+            if(mapInfo && mapInfo->author[0])
+                return mapInfo->author;
             break;
-            
+        }
         case DD_BLOCKMAP_ORIGIN_X:
             return &bmaporgx;
-            
+
         case DD_BLOCKMAP_ORIGIN_Y:
             return &bmaporgy;
-                
+
 #ifdef WIN32
         case DD_WINDOW_HANDLE:
             return Sys_GetWindowHandle(windowIDX);

@@ -1,9 +1,10 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,9 +66,6 @@ extern mobjinfo_t **stateowners;
 extern ded_count_t count_sprnames;
 extern ded_count_t count_states;
 
-// From DD_Setup.c.
-extern ded_mapinfo_t *mapinfo;     // Current mapinfo, can be NULL.
-
 void            Def_Init(void);
 void            Def_PostInit(void);
 
@@ -90,16 +88,16 @@ int             Def_GetModelNum(const char *id);
 int             Def_GetMusicNum(char *id);
 int             Def_GetSoundNum(char *id);
 int             Def_EvalFlags(char *ptr);
-ded_mapinfo_t  *Def_GetMapInfo(char *map_id);
+ded_mapinfo_t  *Def_GetMapInfo(const char *mapID);
 ded_light_t    *Def_GetLightDef(int spr, int frame);
-ded_decor_t    *Def_GetDecoration(int number, boolean is_texture,
+ded_decor_t    *Def_GetDecoration(int number, boolean isTexture,
                                   boolean has_ext);
-ded_reflection_t *Def_GetReflection(int number, boolean is_texture);
-ded_lumpformat_t *Def_GetMapLumpFormat(char *name);
+ded_reflection_t *Def_GetReflection(int number, boolean isTexture);
+ded_lumpformat_t *Def_GetMapLumpFormat(const char *name);
 int             Def_Get(int type, char *id, void *out);
-boolean         Def_SameStateSequence(state_t * snew, state_t * sold);
-void            Def_LightMapLoaded(const char *id, unsigned int texture);
-void            Def_FlareMapLoaded(const char *id, unsigned int texture,
+boolean         Def_SameStateSequence(state_t *snew, state_t *sold);
+void            Def_LightMapLoaded(const char *id, uint texture);
+void            Def_FlareMapLoaded(const char *id, uint texture,
                                    boolean disabled, boolean custom);
 D_CMD(ListMobjs);
 #endif

@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -39,6 +39,7 @@
 #include "dd_share.h"
 #include "dam_main.h"
 #include "rend_bias.h"
+#include "m_nodepile.h"
 
 #define GET_VERTEX_IDX(vtx)     ((vtx) - vertexes)
 #define GET_LINE_IDX(li)        ((li) - lines)
@@ -95,6 +96,12 @@ typedef struct edgespan_s {
     float   shift;
 } edgespan_t;
 
+typedef struct polyblock_s {
+    struct polyobj_s *polyobj;
+    struct polyblock_s *prev;
+    struct polyblock_s *next;
+} polyblock_t;
+
 #include "p_maptypes.h"
 
 /*
@@ -124,14 +131,17 @@ extern side_t  *sides;
 
 extern int      numthings;
 
-extern fixed_t  mapgravity;        // Gravity for the current map.
-extern int      mapambient;        // Ambient light level for the current map.
-
 extern uint    *missingFronts;
 extern uint     numMissingFronts;
 
+extern fixed_t  mapGravity;
+
 typedef struct gamemap_s {
     char        levelid[9];
+    char        uniqueID[256];
+
+    float       bounds[4];
+
     uint        numvertexes;
     vertex_t   *vertexes;
 
@@ -155,26 +165,44 @@ typedef struct gamemap_s {
 
     uint        po_NumPolyobjs;
     polyobj_t  *polyobjs;
+    polyblock_t **polyBlockMap;
 
     int         numthings;
 
     long       *blockmaplump;           // offsets in blockmap are from here
     long       *blockmap;
-
     uint        bmapwidth, bmapheight;  // in mapblocks
     fixed_t     bmaporgx, bmaporgy;     // origin of block map
-    struct linkmobj_s *blockrings;             // for thing rings
+
+    struct linkmobj_s *blockrings;      // for thing rings
+    nodepile_t  thingnodes, linenodes;  // all kinds of wacky links.
+    nodeindex_t *linelinks;             // indices to roots.
 
     byte       *rejectmatrix;
+
+    fixed_t     globalGravity;          // Gravity for the current map.
+    int         ambientLightLevel;      // Ambient lightlevel for the current map.
 } gamemap_t;
 
-void            P_PolyobjChanged(polyobj_t *po);
-void            P_FloorChanged(sector_t *sector);
-void            P_CeilingChanged(sector_t *sector);
-void            P_PlaneChanged(sector_t *sector, uint plane);
-void            P_InitData(void);
-int             P_CheckTexture(char *name, boolean planeTex, int dataType,
-                               unsigned int element, int property);
+void        P_InitData(void);
 
-boolean         P_CheckLevel(char *levelID, boolean silent);
+gamemap_t  *P_GetCurrentMap(void);
+void        P_SetCurrentMap(gamemap_t *map);
+
+const char *P_GetMapID(gamemap_t *map);
+const char *P_GetUniqueMapID(gamemap_t *map);
+void        P_GetMapBounds(gamemap_t *map, fixed_t *min, fixed_t *max);
+int         P_GetMapAmbientLightLevel(gamemap_t *map);
+
+const char *P_GenerateUniqueMapID(const char *mapID);
+
+void        P_PolyobjChanged(polyobj_t *po);
+void        P_FloorChanged(sector_t *sector);
+void        P_CeilingChanged(sector_t *sector);
+void        P_PlaneChanged(sector_t *sector, uint plane);
+int         P_CheckTexture(char *name, boolean planeTex, int dataType,
+                           unsigned int element, int property);
+void        P_RegisterUnknownTexture(const char *name, boolean planeTex);
+void        P_PrintMissingTextureList(void);
+void        P_FreeBadTexList(void);
 #endif

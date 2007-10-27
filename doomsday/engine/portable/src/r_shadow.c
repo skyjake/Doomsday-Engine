@@ -228,7 +228,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
         }
         else
         {   // An error in the map. Set the inside corner to the extoffset.
-            V2_Copy(poly->inoffset[edge], poly->extoffset[edge]);  
+            V2_Copy(poly->inoffset[edge], poly->extoffset[edge]);
         }
 
         // The back extended offset(s):
@@ -588,12 +588,7 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
  */
 uint R_MakeShadowEdges(shadowpoly_t *storage)
 {
-    uint        i, j, counter;
-    sector_t   *sector;
-    line_t     *line;
-    subsector_t *ssec;
-    seg_t      *seg, **ptr;
-    boolean     frontside;
+    uint        i, counter;
     shadowpoly_t *poly, *sectorFirst, *allocator = storage;
 
     if(allocator)
@@ -601,7 +596,9 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
 
     for(i = 0, counter = 0; i < numsectors; ++i)
     {
-        sector = SECTOR_PTR(i);
+        sector_t   *sec = SECTOR_PTR(i);
+        subsector_t **ssecp;
+
         sectorFirst = allocator;
 
         // Use validCount to make sure we only allocate one shadowpoly
@@ -609,27 +606,27 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
         ++validCount;
 
         // Iterate all the subsectors of the sector.
-        for(j = 0; j < sector->subscount; ++j)
+        ssecp = sec->subsectors;
+        while(*ssecp)
         {
-            ssec = sector->subsectors[j];
-            // Iterate all the segs of the subsector.
-            ptr = ssec->segs;
-            while(*ptr)
-            {
-                uint    fidx, bidx;
+            subsector_t *ssec = *ssecp;
+            seg_t     **segp;
 
-                seg = *ptr;
-                fidx = GET_SECTOR_IDX(seg->SG_frontsector);
-                bidx = GET_SECTOR_IDX(seg->SG_backsector);
+            // Iterate all the segs of the subsector.
+            segp = ssec->segs;
+            while(*segp)
+            {
+                seg_t      *seg = *segp;
+                uint        fidx = GET_SECTOR_IDX(seg->SG_frontsector);
+                uint        bidx = GET_SECTOR_IDX(seg->SG_backsector);
 
                 // Minisegs and benign linedefs don't get shadows, even then, only one.
                 if(seg->linedef &&
                    !((seg->linedef->validCount == validCount) ||
-                     (seg->linedef->flags & LINEF_BENIGN) ||
                      (seg->linedef->flags & LINEF_SELFREF)))
                 {
-                    line = seg->linedef;
-                    frontside = (line->L_frontsector == sector);
+                    line_t     *line = seg->linedef;
+                    boolean     frontside = (line->L_frontsector == sec);
 
                     // If the line hasn't got two neighbors, it won't get a
                     // shadow.
@@ -648,27 +645,28 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
 
                             poly->seg = seg;
                             poly->ssec = ssec;
-                            poly->flags = (frontside ? SHPF_FRONTSIDE : 0);
+                            poly->flags = (frontside? SHPF_FRONTSIDE : 0);
                             poly->visframe = frameCount - 1;
 
                             // The outer vertices are just the beginning and end of
                             // the line.
-                            R_OrderVertices(line, sector, poly->outer);
-
+                            R_OrderVertices(line, sec, poly->outer);
                             R_ShadowEdges(poly);
                         }
                     }
                 }
 
-                *ptr++;
+                *segp++;
             }
+
+            *ssecp++;
         }
 
         if(allocator)
         {
             // If shadows were created, make sure they don't overlap
             // each other.
-            R_ResolveOverlaps(sectorFirst, allocator - sectorFirst, sector);
+            R_ResolveOverlaps(sectorFirst, allocator - sectorFirst, sec);
         }
     }
 

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -183,17 +183,15 @@ void P_InitSubsectorBlockMap(void)
  * Allocates and clears the polyobj blockmap.
  * Normal blockmap must already be initialized when this is called.
  */
-void P_InitPolyBlockMap(void)
+void P_InitPolyBlockMap(gamemap_t *map)
 {
-    if(verbose)
-    {
-        Con_Message("P_InitPolyBlockMap: w=%i h=%i\n", bmapwidth, bmapheight);
-    }
+    size_t         pBMapSize =
+        map->bmapwidth * map->bmapheight * sizeof(polyblock_t *);
 
-    polyblockmap =
-        Z_Malloc(bmapwidth * bmapheight * sizeof(polyblock_t *),
-                 PU_LEVELSTATIC, 0);
-    memset(polyblockmap, 0, bmapwidth * bmapheight * sizeof(polyblock_t *));
+    VERBOSE(Con_Message("P_InitPolyBlockMap: w=%i h=%i\n",
+                        map->bmapwidth, map->bmapheight));
+
+    map->polyBlockMap = Z_Calloc(pBMapSize, PU_LEVELSTATIC, 0);
 }
 
 /**
@@ -250,10 +248,6 @@ boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
             continue; // very odd...
 
         ld = LINE_PTR(*list);
-
-        // Ignore benign linedefs.
-        if(ld->flags & LINEF_BENIGN)
-            continue;
 
         if(ld->validCount == validCount)
             continue;           // line has already been checked

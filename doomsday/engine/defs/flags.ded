@@ -206,9 +206,6 @@ Flag { ID = "damlmpc_vertex"; Value = 2; }
 Flag { ID = "damlmpc_linedef"; Value = 3; }
 Flag { ID = "damlmpc_sidedef"; Value = 4; }
 Flag { ID = "damlmpc_sector"; Value = 5; }
-Flag { ID = "damlmpc_seg"; Value = 6; }
-Flag { ID = "damlmpc_subsector"; Value = 7; }
-Flag { ID = "damlmpc_node"; Value = 8; }
 
 # DAM - Property Flags:
 Flag { ID = "dampf_unsigned"; Value = 0x1; }

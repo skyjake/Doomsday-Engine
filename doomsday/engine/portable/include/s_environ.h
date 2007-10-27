@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -29,6 +29,8 @@
 #ifndef __DOOMSDAY_SOUND_ENVIRON_H__
 #define __DOOMSDAY_SOUND_ENVIRON_H__
 
+#include "p_mapdata.h"
+
 typedef enum {
     MATTYPE_UNKNOWN = -1,
     MATTYPE_METAL = 0,
@@ -38,8 +40,8 @@ typedef enum {
     NUM_MATERIAL_TYPES
 } materialtype_t;
 
-void            S_CalcSectorReverb(struct sector_s *sec);
-void            S_DetermineSubSecsAffectingSectorReverb(void);
+void            S_CalcSectorReverb(sector_t *sec);
+void            S_DetermineSubSecsAffectingSectorReverb(gamemap_t *map);
 materialtype_t  S_MaterialTypeForName(const char *name, boolean isFlat);
 
 #endif

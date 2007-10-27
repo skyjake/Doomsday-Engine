@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -230,7 +230,7 @@ extern          "C" {
     int             P_GetImpulseControlState(int playerNum, int control);
 
     // Play: Setup.
-    boolean         P_LoadMap(char *levelID);
+    boolean         P_LoadMap(const char *mapID);
     
     // Play: Map Data Updates and Information Access.
     unsigned int    P_ToIndex(const void* ptr);

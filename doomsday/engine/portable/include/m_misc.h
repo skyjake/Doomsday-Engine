@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -102,6 +102,7 @@ float           M_DotProduct(float *a, float *b);
 void            M_CrossProduct(float *a, float *b, float *out);
 void            M_PointCrossProduct(float *v1, float *v2, float *v3,
                                     float *out);
+float           M_TriangleArea(float *v1, float *v2, float *v3);
 void            M_RotateVector(float vec[3], float degYaw, float degPitch);
 void            M_ProjectPointOnLine(float *point, float *linepoint,
                                       float *delta, float gap,
@@ -110,7 +111,13 @@ void            M_ProjectViewRelativeLine2D(float center[2],
                                             boolean alignToViewPlane,
                                             float width, float offset,
                                             float start[2], float end[2]);
+int             M_CeilPow2(int num);
+int             M_FloorPow2(int num);
+int             M_RoundPow2(int num);
+int             M_WeightPow2(int num, float weight);
 float           M_CycleIntoRange(float value, float length);
+double          M_SlopeToAngle(double dx, double dy);
+double          M_Length(double x, double y);
 uint            M_CRC32(byte *data, uint length);
 
 // Time utilities.

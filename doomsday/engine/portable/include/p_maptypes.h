@@ -5,13 +5,22 @@
 
 #include "p_mapdata.h"
 
+#define LO_prev     link[0]
+#define LO_next     link[1]
+
+typedef struct lineowner_s {
+    struct line_s *line;
+    struct lineowner_s *link[2];    // {prev, next} (i.e. {anticlk, clk}).
+    binangle_t      angle;          // between this and next clockwise.
+} lineowner_t;
+
 #define V_pos					v.pos
 
 typedef struct vertex_s {
     runtime_mapdata_header_t header;
     fvertex_t           v;
     unsigned int        numlineowners; // Number of line owners.
-    struct lineowner_s* lineowners;    // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
+    lineowner_t*        lineowners;    // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     boolean             anchored;      // One or more of our line owners are one-sided.
 } vertex_t;
 
@@ -34,9 +43,6 @@ typedef struct vertex_s {
 
 // Seg flags
 #define SEGF_POLYOBJ			0x1 // Seg is part of a poly object.
-#define SEGF_MIGRANT			0x2 // Seg's sectors are NOT the same as the subsector they are in.
-									// Apparently, glBSP combines segs from unclosed sectors into
-									// subsectors to guarantee they are convex.
 
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
@@ -67,7 +73,6 @@ typedef struct seg_s {
 typedef struct subsector_s {
     runtime_mapdata_header_t header;
     struct sector_s*    sector;
-    unsigned int        firstWADSeg;   // First seg index, as specified in SSECTORS lump.
     unsigned int        segcount;
     struct seg_s**      segs;          // [segcount] size.
     struct polyobj_s*   poly;          // NULL, if there is no polyobj.
@@ -220,7 +225,7 @@ typedef struct plane_s {
 #define SECF_INVIS_CEILING  0x2
 
 typedef struct ssecgroup_s {
-	struct sector_s**   linked;     // [sector->planecount] size.
+	struct sector_s**   linked;     // [sector->planecount+1] size.
 	                                // Plane attached to another sector.
 } ssecgroup_t;
 
@@ -233,19 +238,18 @@ typedef struct sector_s {
     int                 validCount;    // if == validCount, already checked.
     struct mobj_s*      thinglist;     // List of mobjs in the sector.
     unsigned int        linecount;
-    struct line_s**     Lines;         // [linecount] size.
-    unsigned int        subscount;
-    struct subsector_s** subsectors;   // [subscount] size.
+    struct line_s**     Lines;         // [linecount+1] size.
+    struct subsector_s** subsectors;   // [subscount+1] size.
     unsigned int        numReverbSSecAttributors;
     struct subsector_s** reverbSSecs;  // [numReverbSSecAttributors] size.
     unsigned int        subsgroupcount;
-    ssecgroup_t*        subsgroups;    // [subsgroupcount] size.
+    ssecgroup_t*        subsgroups;    // [subsgroupcount+1] size.
     skyfix_t            skyfix[2];     // floor, ceiling.
     degenmobj_t         soundorg;
     float               reverb[NUM_REVERB_DATA];
     int                 blockbox[4];   // Mapblock bounding box.
     unsigned int        planecount;
-    struct plane_s**    planes;        // [planecount] size.
+    struct plane_s**    planes;        // [planecount+1] size.
     struct sector_s*    containsector; // Sector that contains this (if any).
     boolean             permanentlink;
     boolean             unclosed;      // An unclosed sector (some sort of fancy hack).
@@ -357,10 +361,6 @@ typedef struct side_s {
 // Line flags
 #define LINEF_SELFREF           0x1 // Front and back sectors of this line are the same.
 #define LINEF_SELFREFHACKROOT	0x2	// This line is the root of a self-referencing hack sector
-#define LINEF_BENIGN			0x4 // Benign lines are those which have no front or back segs
-									// (though they may have sides). These are induced in GL
-									// node generation process. They are inoperable and will
-									// NOT be added to a sector's line table.
 
 typedef struct line_s {
     runtime_mapdata_header_t header;

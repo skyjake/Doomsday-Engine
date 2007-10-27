@@ -411,6 +411,58 @@ float M_FRandom(void)
     return (M_Random() | (M_Random() << 8)) / 65535.0f;
 }
 
+
+/**
+ * Finds the power of 2 that is equal to or greater than the specified
+ * number.
+ */
+int M_CeilPow2(int num)
+{
+    int         cumul;
+
+    for(cumul = 1; num > cumul; cumul <<= 1);
+
+    return cumul;
+}
+
+/**
+ * Finds the power of 2 that is less than or equal to the specified number.
+ */
+int M_FloorPow2(int num)
+{
+    int         fl = M_CeilPow2(num);
+
+    if(fl > num)
+        fl >>= 1;
+    return fl;
+}
+
+/**
+ * Finds the power of 2 that is nearest the specified number. In ambiguous
+ * cases, the smaller number is returned.
+ */
+int M_RoundPow2(int num)
+{
+    int         cp2 = M_CeilPow2(num), fp2 = M_FloorPow2(num);
+
+    return ((cp2 - num >= num - fp2) ? fp2 : cp2);
+}
+
+/**
+ * Weighted rounding. Weight determines the point where the number is still
+ * rounded down (0..1).
+ */
+int M_WeightPow2(int num, float weight)
+{
+    int         fp2 = M_FloorPow2(num);
+    float       frac = (num - fp2) / (float) fp2;
+
+    if(frac <= weight)
+        return fp2;
+    else
+        return (fp2 << 1);
+}
+
 /**
  * @return          value mod length (length > 0).
  */
@@ -425,6 +477,29 @@ float M_CycleIntoRange(float value, float length)
         return value - ((int) (value / length)) * length;
     }
     return value;
+}
+
+/**
+ * Translate (dx, dy) into an angle value (degrees).
+ */
+double M_SlopeToAngle(double dx, double dy)
+{
+    double      angle;
+
+    if(dx == 0)
+        return (dy > 0? 90.0 : 270.0);
+
+    angle = atan2((double) dy, (double) dx) * 180.0 / PI_D;
+
+    if(angle < 0)
+        angle += 360.0;
+
+    return angle;
+}
+
+double M_Length(double x, double y)
+{
+    return sqrt(x * x + y * y);
 }
 
 /**
@@ -495,6 +570,28 @@ void M_PointCrossProduct(float *v1, float *v2, float *v3, float *out)
         b[i] = v3[i] - v1[i];
     }
     M_CrossProduct(a, b, out);
+}
+
+/**
+ * Area of a triangle.
+ */
+float M_TriangleArea(float *v1, float *v2, float *v3)
+{
+    float   a[2], b[2];
+    float   area;
+
+    a[VX] = v2[VX] - v1[VX];
+    a[VY] = v2[VY] - v1[VY];
+
+    b[VX] = v3[VX] - v1[VX];
+    b[VY] = v3[VY] - v1[VY];
+
+    area = (a[VX] * b[VY] - b[VX] * a[VY]) / 2;
+
+    if(area < 0)
+        return -area;
+    else
+        return area;
 }
 
 /**
@@ -784,7 +881,7 @@ static size_t FileReader(char const *name, byte **buffer, int mallocType)
     return length;
 }
 
-/*
+/**
  * Change string to uppercase.
  */
 void M_ForceUppercase(char *text)
@@ -1096,7 +1193,7 @@ boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.
     timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
-    
+
     trigger->accum += advanceTime;
 
     if(trigger->accum >= duration)

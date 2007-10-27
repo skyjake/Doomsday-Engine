@@ -1,10 +1,9 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,136 +21,66 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dam_main.h: Doomsday Archived Map (DAM) reader
- *
- * Engine-internal header for DAM.
  */
 
-#ifndef __DOOMSDAY_ARCHIVED_MAP_H__
-#define __DOOMSDAY_ARCHIVED_MAP_H__
+#ifndef __DOOMSDAY_ARCHIVED_MAP_MAIN_H__
+#define __DOOMSDAY_ARCHIVED_MAP_MAIN_H__
 
-// number of map data lumps for a level
-#define NUM_MAPLUMPS 12
-
-// well, there is GL_PVIS too but we arn't interested in that
-#define NUM_GLLUMPS 5
-
-// Common map format properties.
 enum {
-    DAM_UNKNOWN = -2,
-
-    DAM_ALL = -1,
-    DAM_NONE,
-
-    // Object/Data types
-    DAM_THING,
-    DAM_VERTEX,
-    DAM_LINE,
-    DAM_SIDE,
-    DAM_SECTOR,
-    DAM_SEG,
-    DAM_SUBSECTOR,
-    DAM_NODE,
-    DAM_MAPBLOCK,
-    DAM_SECREJECT,
-    DAM_ACSSCRIPT,
-
-    // Object properties
-    DAM_X,
-    DAM_Y,
-    DAM_DX,
-    DAM_DY,
-
-    DAM_VERTEX1,
-    DAM_VERTEX2,
-    DAM_FLAGS,
-    DAM_SIDE0,
-    DAM_SIDE1,
-
-    DAM_TOP_TEXTURE_OFFSET_X,
-    DAM_TOP_TEXTURE_OFFSET_Y,
-    DAM_MIDDLE_TEXTURE_OFFSET_X,
-    DAM_MIDDLE_TEXTURE_OFFSET_Y,
-    DAM_BOTTOM_TEXTURE_OFFSET_X,
-    DAM_BOTTOM_TEXTURE_OFFSET_Y,
-    DAM_TOP_TEXTURE,
-    DAM_MIDDLE_TEXTURE,
-    DAM_BOTTOM_TEXTURE,
-    DAM_FRONT_SECTOR,
-
-    DAM_FLOOR_HEIGHT,
-    DAM_FLOOR_TEXTURE,
-    DAM_CEILING_HEIGHT,
-    DAM_CEILING_TEXTURE,
-    DAM_LIGHT_LEVEL,
-
-    DAM_ANGLE,
-    DAM_OFFSET,
-    DAM_BACK_SEG,
-
-    DAM_SEG_COUNT,
-    DAM_SEG_FIRST,
-
-    DAM_BBOX_RIGHT_TOP_Y,
-    DAM_BBOX_RIGHT_LOW_Y,
-    DAM_BBOX_RIGHT_LOW_X,
-    DAM_BBOX_RIGHT_TOP_X,
-    DAM_BBOX_LEFT_TOP_Y,
-    DAM_BBOX_LEFT_LOW_Y,
-    DAM_BBOX_LEFT_LOW_X,
-    DAM_BBOX_LEFT_TOP_X,
-    DAM_CHILD_RIGHT,
-    DAM_CHILD_LEFT,
-    NUM_DAM_PROPERTIES
+    ML_INVALID = -1,
+    ML_LABEL,                   // A separator, name, ExMx or MAPxx
+    ML_THINGS,                  // Monsters, items..
+    ML_LINEDEFS,                // LineDefs, from editing
+    ML_SIDEDEFS,                // SideDefs, from editing
+    ML_VERTEXES,                // Vertices, edited and BSP splits generated
+    ML_SEGS,                    // LineSegs, from LineDefs split by BSP
+    ML_SSECTORS,                // SubSectors, list of LineSegs
+    ML_NODES,                   // BSP nodes
+    ML_SECTORS,                 // Sectors, from editing
+    ML_REJECT,                  // LUT, sector-sector visibility
+    ML_BLOCKMAP,                // LUT, motion clipping, walls/grid element
+    ML_BEHAVIOR,                // ACS Scripts (compiled).
+    ML_SCRIPTS,                 // ACS Scripts (source).
+    NUM_MAPLUMPS
 };
 
-typedef struct mapdatalumpformat_s {
+typedef struct maplumpformat_s {
     int         hversion;
-    char       *magicid;
     char       *formatName;
-    boolean     isText;     // True if the lump is a plain text lump.
-} mapdatalumpformat_t;
+    int         lumpClass;
+} maplumpformat_t;
 
-typedef struct mapdatalumpinfo_s {
+typedef struct maplumpinfo_s {
     int         lumpNum;
-    byte       *lumpp;      // ptr to the lump data
-    mapdatalumpformat_t *format;
+    maplumpformat_t *format;
     int         lumpClass;
     int         startOffset;
     uint        elements;
     size_t      length;
-} mapdatalumpinfo_t;
-
-typedef struct {
-    char       *lumpname;
-    int         mdLump;
-    int         glLump;
-    int         dataType;
-    int         lumpclass;
-    int         required;
-    boolean precache;
 } maplumpinfo_t;
 
-typedef struct {
-    uint        id;
-    int         valueType;
-} selectprop_t;
+typedef struct listnode_s {
+    void       *data;
+    struct listnode_s *next;
+} listnode_t;
 
-extern int      createBMap;
-extern int      createReject;
+typedef struct archivedmap_s {
+    char       *identifier;
+    listnode_t *lumpNodes;
+    boolean     lastLoadAttemptFailed;
+} archivedmap_t;
+
+extern byte     mapCache;      
+extern byte     createBMap;
+extern byte     createReject;
 
 void        DAM_Register(void);
 
 void        DAM_Init(void);
-void        DAM_LockCustomPropertys(void);
+void        DAM_Shutdown(void);
 
-const char* DAM_Str(int prop);
-maplumpinfo_t* DAM_MapLumpInfoForLumpClass(int lumpClass);
-long        DAM_VertexIdx(long idx);
+boolean     DAM_AttemptMapLoad(const char *mapID);
 
-uint        P_RegisterCustomMapProperty(int type, valuetype_t dataType,
-                                        char *name);
-
-boolean     P_AttemptMapLoad(char *levelId);
 #endif

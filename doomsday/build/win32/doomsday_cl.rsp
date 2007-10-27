@@ -74,6 +74,16 @@
  ./../../engine/portable/src/p_dmu.c
  ./../../engine/portable/src/dam_main.c
  ./../../engine/portable/src/dam_read.c
+ ./../../engine/portable/src/dam_loader.c
+ ./../../engine/portable/src/dam_reject.c
+ ./../../engine/portable/src/dam_blockmap.c
+ ./../../engine/portable/src/bsp_analyze.c
+ ./../../engine/portable/src/bsp_edge.c
+ ./../../engine/portable/src/bsp_intersection.c
+ ./../../engine/portable/src/bsp_level.c
+ ./../../engine/portable/src/bsp_main.c
+ ./../../engine/portable/src/bsp_node.c
+ ./../../engine/portable/src/bsp_superblock.c
  ./../../engine/portable/src/p_bmap.c
  ./../../engine/portable/src/sv_sound.c
  ./../../engine/portable/src/sv_pool.c

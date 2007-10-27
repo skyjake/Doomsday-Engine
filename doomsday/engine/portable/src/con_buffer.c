@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -127,7 +127,7 @@ static void insertNodeAtEnd(cbuffer_t *buf, cbnode_t *newnode)
 
 static void moveNodeForReuse(cbuffer_t *buf, cbnode_t *node)
 {
-    cbline_t *line;
+    cbline_t   *line;
 
     if(buf->unused != NULL)
         node->next = buf->unused;
@@ -138,7 +138,14 @@ static void moveNodeForReuse(cbuffer_t *buf, cbnode_t *node)
 
     line = node->data;
     line->flags = 0;
-    memset(line->text, 0, line->len);
+
+    if(line->text)
+    {
+        size_t      len = strlen(line->text);
+
+        if(len > 0)
+            memset(line->text, 0, len);
+    }
 }
 
 static void removeNode(cbuffer_t *buf, cbnode_t *node)

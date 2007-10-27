@@ -205,9 +205,6 @@ void Def_Destroy(void)
     DED_DelArray((void **) &stateowners, &count_stateowners);
 
     defsInited = false;
-
-    // Clear global variables pointing to definitions.
-    mapinfo = NULL;
 }
 
 /**
@@ -377,15 +374,15 @@ acfnptr_t Def_GetActionPtr(char *name)
     return 0;
 }
 
-ded_mapinfo_t *Def_GetMapInfo(char *map_id)
+ded_mapinfo_t *Def_GetMapInfo(const char *mapID)
 {
     int     i;
 
-    if(!map_id || !map_id[0])
+    if(!mapID || !mapID[0])
         return 0;
 
     for(i = defs.count.mapinfo.num - 1; i >= 0; i--)
-        if(!stricmp(defs.mapinfo[i].id, map_id))
+        if(!stricmp(defs.mapinfo[i].id, mapID))
             return defs.mapinfo + i;
     return 0;
 }
@@ -450,7 +447,7 @@ ded_xgclass_t *Def_GetXGClass(char *name)
     return 0;
 }
 
-ded_lumpformat_t *Def_GetMapLumpFormat(char *name)
+ded_lumpformat_t *Def_GetMapLumpFormat(const char *name)
 {
     ded_lumpformat_t *def;
     int         i;

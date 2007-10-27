@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 1999-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -788,8 +788,7 @@ static void Z_AddBlockToSet(zblockset_t* set)
     block->max = set->elementsPerBlock;
     block->elementSize = set->elementSize;
     block->elements = Z_Malloc(block->elementSize * block->max, set->tag, NULL);
-
-    assert(block->count == 0);
+    block->count = 0;
 }
 
 /**

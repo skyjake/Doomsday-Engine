@@ -1,9 +1,10 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +29,7 @@
 #ifndef __DOOMSDAY_NODEPILE_H__
 #define __DOOMSDAY_NODEPILE_H__
 
-#define NP_ROOT_NODE ((void*) -1 )
+#define NP_ROOT_NODE ((void*) -1)
 
 struct linknode_s;				   // Defined in dd_share.h.
 
@@ -38,11 +39,11 @@ typedef struct nodepile_s {
 	struct linknode_s *nodes;
 } nodepile_t;
 
-void            NP_Init(nodepile_t * pile, int initial);
-nodeindex_t     NP_New(nodepile_t * pile, void *ptr);
-void            NP_Link(nodepile_t * pile, nodeindex_t node, nodeindex_t root);
-void            NP_Unlink(nodepile_t * pile, nodeindex_t node);
+void            NP_Init(nodepile_t *pile, int initial);
+nodeindex_t     NP_New(nodepile_t *pile, void *ptr);
+void            NP_Link(nodepile_t *pile, nodeindex_t node, nodeindex_t root);
+void            NP_Unlink(nodepile_t *pile, nodeindex_t node);
 
-#define NP_Dismiss(pile, node) (pile.nodes[node].ptr = 0)
+#define NP_Dismiss(pile, node) (pile->nodes[node].ptr = 0)
 
 #endif

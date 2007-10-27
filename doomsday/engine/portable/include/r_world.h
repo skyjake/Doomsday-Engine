@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -48,23 +48,20 @@ extern int      rendSkyLight;      // cvar
 #define MIF_FOG             0x1    // Fog is used in the level.
 #define MIF_DRAW_SPHERE     0x2    // Always draw the sky sphere.
 
-const char     *R_GetCurrentLevelID(void);
-const char     *R_GetUniqueLevelID(void);
 const float    *R_GetSectorLightColor(sector_t *sector);
 boolean         R_IsSkySurface(surface_t *surface);
-void            R_InitLevel(char *level_id);
-void            R_SetupLevel(int mode, int flags);
-void            R_InitLinks(void);
-void            R_SetupFog(void);
-void            R_SetupSky(void);
+void            R_InitMap(gamemap_t *map);
+void            R_SetupMap(int mode, int flags);
+void            R_InitLinks(gamemap_t *map);
+void            R_SetupFog(float start, float end, float density, float *rgb);
+void            R_SetupFogDefaults(void);
+void            R_SetupSky(ded_mapinfo_t *mapInfo);
 sector_t       *R_GetLinkedSector(subsector_t *startssec, uint plane);
 void            R_UpdatePlanes(void);
 void            R_ClearSectorFlags(void);
 void            R_SkyFix(boolean fixFloors, boolean fixCeilings);
 void            R_OrderVertices(line_t *line, const sector_t *sector,
                                 vertex_t *verts[2]);
-void            R_GetMapSize(fixed_t *min, fixed_t *max);
-
 plane_t        *R_NewPlaneForSector(sector_t *sec, planetype_t type);
 void            R_DestroyPlaneOfSector(uint id, sector_t *sec);
 

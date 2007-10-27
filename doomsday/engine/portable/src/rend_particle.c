@@ -169,7 +169,7 @@ void PG_InitTextures(void)
 
         // Create a new texture and upload the image.
         ptctexname[i + 1] = GL_NewTextureWithParams(image.pixelSize == 4 ? DGL_RGBA : image.pixelSize ==
-                                                    2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB, 
+                                                    2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
                                                     image.width, image.height, image.pixels,
                                                     TXCF_NO_COMPRESSION);
 

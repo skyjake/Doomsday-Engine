@@ -245,6 +245,34 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\bsp_analyze.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\bsp_edge.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\bsp_intersection.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\bsp_level.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\bsp_main.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\bsp_node.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\bsp_superblock.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\cl_frame.c"
 				>
 			</File>
@@ -301,11 +329,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\dam_blockmap.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\dam_loader.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\dam_main.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\dam_read.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\dam_reject.c"
 				>
 			</File>
 			<File
@@ -1116,7 +1156,31 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\b_util.h"
+				RelativePath="..\..\..\engine\portable\include\bsp_analyze.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\bsp_edge.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\bsp_intersection.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\bsp_level.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\bsp_main.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\bsp_node.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\bsp_superblock.h"
 				>
 			</File>
 			<File
@@ -1172,11 +1236,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\dam_blockmap.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\dam_loader.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\dam_main.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\dam_read.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\dam_reject.h"
 				>
 			</File>
 			<File
@@ -1249,6 +1325,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\de_base.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\de_bsp.h"
 				>
 			</File>
 			<File

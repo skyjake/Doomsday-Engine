@@ -31,8 +31,6 @@
 
 #include "gl_texmanager.h"
 
-int             CeilPow2(int num);
-
 boolean         GL_OptimalSize(int width, int height, int *optWidth,
                                int *optHeight, boolean noStretch);
 void            GL_ConvertBuffer(int width, int height, int informat,
