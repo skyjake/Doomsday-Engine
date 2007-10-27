@@ -204,7 +204,7 @@ static void N_UDPSend(sqpack_t *pack)
         char    buf[80];
 
         N_IPToString(buf, &pack->packet->address);
-        printf("Send: len=%i to %s\n", pack->packet->len, buf);
+        Con_Message("Send: len=%i to %s\n", pack->packet->len, buf);
     }
 #endif
 
@@ -368,7 +368,7 @@ static int C_DECL N_UDPReceiver(void *parm)
                     char    buf[80];
 
                     N_IPToString(buf, &packet->address);
-                    printf("Recv: ch=%i len=%i %s\n", packet->channel,
+                    Con_Message("Recv: ch=%i len=%i %s\n", packet->channel,
                            packet->len, buf);
                 }
 #endif
@@ -1299,7 +1299,7 @@ boolean N_LookForHosts(const char *address, int port)
         Str_Delete(response);
 
         // Show the information in the console.
-        Con_Printf("%i server%s been found.\n", N_GetHostCount(),
+        Con_Message("%i server%s been found.\n", N_GetHostCount(),
                    N_GetHostCount() != 1 ? "s have" : " has");
         Net_PrintServerInfo(0, NULL);
         Net_PrintServerInfo(0, &located.info);
@@ -1351,7 +1351,7 @@ boolean N_Connect(int index)
     sprintf(buf, "JOIN %04x %s\n", recvUDPPort, pName);
     SDLNet_TCP_Send(svNode->sock, buf, strlen(buf));
 
-    VERBOSE(Con_Printf("N_Connect: %s", buf));
+    VERBOSE(Con_Message("N_Connect: %s", buf));
 
     // What is the reply?
     memset(buf, 0, sizeof(buf));
@@ -1685,7 +1685,7 @@ void N_PrintInfo(void)
     // \todo Print information about send queues, ports, etc.
 
 #ifdef TRANSMIT_RANDOMIZER
-    Con_Printf("Randomizer enabled: max delay = %i ms, dropping %i%%.\n",
+    Con_Message("Randomizer enabled: max delay = %i ms, dropping %i%%.\n",
                RANDOMIZER_MAX_DELAY, RANDOMIZER_DROP_PERCENT);
 #endif
 
