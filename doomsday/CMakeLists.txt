@@ -737,9 +737,6 @@ IF (BUILDOPENGL)
 	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/opengl )
 ENDIF (BUILDOPENGL)
 ################################################################################
-######################## Maploader Plugin  #####################################
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/mapload )
-################################################################################
 ######################## Dehacked Reader Plugin  ###############################
 ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/dehread )
 ################################################################################
