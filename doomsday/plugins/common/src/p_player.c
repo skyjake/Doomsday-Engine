@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -53,6 +53,9 @@
 // MACROS ------------------------------------------------------------------
 
 #define MESSAGETICS (4*35)
+#define CAMERA_FRICTION_THRESHOLD   .4f
+
+#define INRANGEOF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
 
 // TYPES -------------------------------------------------------------------
 
@@ -524,8 +527,9 @@ int P_CameraXYMovement(mobj_t *mo)
 #endif
 
     // Friction.
-    if(mo->player->plr->cmd.forwardMove || mo->player->plr->cmd.sideMove ||
-        mo->player->plr->cmd.upMove)
+    if(!INRANGEOF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
+       !INRANGEOF(mo->player->brain.sideMove, 0, CAMERA_FRICTION_THRESHOLD) ||
+       !INRANGEOF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
     {   // While moving; normal friction applies.
         mo->mom[MX] = FixedMul(mo->mom[MX], 0xe800);
         mo->mom[MY] = FixedMul(mo->mom[MY], 0xe800);
@@ -546,8 +550,9 @@ int P_CameraZMovement(mobj_t *mo)
     mo->pos[VZ] += mo->mom[MZ];
 
     // Friction.
-    if(mo->player->plr->cmd.forwardMove || mo->player->plr->cmd.sideMove ||
-        mo->player->plr->cmd.upMove)
+    if(!INRANGEOF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
+       !INRANGEOF(mo->player->brain.sideMove, 0, CAMERA_FRICTION_THRESHOLD) ||
+       !INRANGEOF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
     {   // While moving; normal friction applies.
         mo->mom[MZ] = FixedMul(mo->mom[MZ], 0xe800);
     }
