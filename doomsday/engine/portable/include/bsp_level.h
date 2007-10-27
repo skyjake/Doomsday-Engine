@@ -35,6 +35,8 @@
 #ifndef __BSP_LEVEL_H__
 #define __BSP_LEVEL_H__
 
+#include "p_mapdata.h"
+
 struct node_s;
 struct sector_s;
 struct superblock_s;
@@ -144,8 +146,8 @@ msector_t  *LookupSector(int index);
 msubsec_t  *LookupSubsec(int index);
 
 // Load all level data for the current level.
-void        LoadMap(struct gamemap_s *map);
-void        CleanMap(struct gamemap_s *map);
+void        LoadMap(gamemap_t *map);
+void        CleanMap(gamemap_t *map);
 
 // Free all level data.
 void        FreeMap(void);

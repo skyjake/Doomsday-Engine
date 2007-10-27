@@ -34,6 +34,8 @@
 #ifndef __BSP_NODE_H__
 #define __BSP_NODE_H__
 
+#include "p_mapdata.h"
+
 typedef struct child_s {
     // Child node or subsector (one must be NULL).
     struct mnode_s *node;
@@ -65,9 +67,6 @@ extern int numNodes;
 mnode_t    *NewNode(void);
 mnode_t    *LookupNode(int index);
 
-// Save the newly computed NODE info etc..
-void        SaveMap(struct gamemap_s *map, mnode_t *rootNode);
-
 int         BoxOnLineSide(struct superblock_s *box, struct hedge_s *part);
 
 boolean     BuildNodes(struct superblock_s *hEdgeList, mnode_t **n, msubsec_t **s,
@@ -76,4 +75,6 @@ void        BSP_AddHEdgeToSuperBlock(struct superblock_s *block, struct hedge_s 
 
 int         ComputeBspHeight(mnode_t *node);
 void        ClockwiseBspTree(mnode_t *root);
+
+void        SaveMap(gamemap_t *map, mnode_t *rootNode);
 #endif
