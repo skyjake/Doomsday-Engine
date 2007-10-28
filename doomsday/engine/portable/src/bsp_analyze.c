@@ -1,4 +1,4 @@
-﻿/**\file
+/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -244,7 +244,7 @@ static __inline boolean hasIndexBit(uint index, uint *bitfield)
  * Sets the index in the bitfield.
  * Count is incremented when a zero bit is changed to one.
  */
-static _inline void addIndexBit(uint index, uint *bitfield)
+static void addIndexBit(uint index, uint *bitfield)
 {
     // Assume 32-bit uint.
     bitfield[index >> 5] |= (1 << (index & 0x1f));
