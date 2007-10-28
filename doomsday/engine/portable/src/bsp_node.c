@@ -558,7 +558,7 @@ int ComputeBspHeight(mnode_t *node)
  * @return              @c true, if successfull.
  */
 boolean BuildNodes(superblock_t *hEdgeList, mnode_t **n, msubsec_t **s,
-                   int depth)
+                   int depth, cutlist_t *cutList)
 {
     mnode_t    *node;
     child_t    *child;
@@ -606,8 +606,6 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
     lefts->y2 = rights->y2 = hEdgeList->y2;
 
     // Divide the half-edges into two lists: left & right.
-    {
-    cutlist_t  *cutList = BSP_CutListCreate();
     BSP_SeparateHEdges(hEdgeList, best, lefts, rights, cutList);
 
     // Sanity checks...
@@ -618,8 +616,7 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
         Con_Error("BuildNodes: Separated halfedge-list has no left side.");
 
     BSP_AddMiniHEdges(best, lefts, rights, cutList);
-    BSP_CutListDestroy(cutList);
-    }
+    BSP_CutListEmpty(cutList);
 
     *n = node = NewNode();
 
@@ -663,7 +660,8 @@ Con_Message("BuildNodes: Going left.\n");
 #endif
 */
     child = &node->children[LEFT];
-    builtOK = BuildNodes(lefts, &child->node, &child->subSec, depth + 1);
+    builtOK = BuildNodes(lefts, &child->node, &child->subSec, depth + 1,
+                         cutList);
     BSP_SuperBlockDestroy(lefts);
 
     if(builtOK)
@@ -674,7 +672,8 @@ Con_Message("BuildNodes: Going right.\n");
 #endif
 */
         child = &node->children[RIGHT];
-        builtOK = BuildNodes(rights, &child->node, &child->subSec, depth + 1);
+        builtOK = BuildNodes(rights, &child->node, &child->subSec, depth + 1,
+                             cutList);
     }
 
     BSP_SuperBlockDestroy(rights);

@@ -166,7 +166,7 @@ static superblock_t *createInitialHEdges(void)
                 if(line->windowEffect)
                 {
                     hedge_t    *other;
-                    
+
                     other = BSP_CreateHEdge(front->linedef, line,
                                             line->v[1], line->v[0],
                                             line->windowEffect, true);
@@ -251,7 +251,11 @@ boolean BSP_Build(gamemap_t *map)
     hEdgeList = createInitialHEdges();
 
     // Recursively create nodes.
-    builtOK = BuildNodes(hEdgeList, &rootNode, &rootSub, 0);
+    {
+    cutlist_t  *cutList = BSP_CutListCreate();
+    builtOK = BuildNodes(hEdgeList, &rootNode, &rootSub, 0, cutList);
+    BSP_CutListDestroy(cutList);
+    }
 
     // The superblock data is no longer needed.
     BSP_SuperBlockDestroy(hEdgeList);
