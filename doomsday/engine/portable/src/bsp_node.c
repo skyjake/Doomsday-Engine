@@ -417,15 +417,17 @@ static void sanityCheckSameSector(msubsec_t *sub)
         compare->sector->warnedFacing = cur->sector->index;
 
         if(verbose >= 1)
-        if(cur->linedef)
-            Con_Message("Sector #%d has sidedef facing #%d (line #%d) "
-                        "near (%1.0f,%1.0f).\n", compare->sector->index,
-                        cur->sector->index, cur->linedef->index,
-                        sub->midPoint[VX], sub->midPoint[VY]);
-        else
-            Con_Message("Sector #%d has sidedef facing #%d "
-                        "near (%1.0f,%1.0f).\n", compare->sector->index,
-                        cur->sector->index, sub->midPoint[VX], sub->midPoint[VY]);
+        {
+            if(cur->linedef)
+                Con_Message("Sector #%d has sidedef facing #%d (line #%d) "
+                            "near (%1.0f,%1.0f).\n", compare->sector->index,
+                            cur->sector->index, cur->linedef->index,
+                            sub->midPoint[VX], sub->midPoint[VY]);
+            else
+                Con_Message("Sector #%d has sidedef facing #%d "
+                            "near (%1.0f,%1.0f).\n", compare->sector->index,
+                            cur->sector->index, sub->midPoint[VX], sub->midPoint[VY]);
+        }
     }
 }
 

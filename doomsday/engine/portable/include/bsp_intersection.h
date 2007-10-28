@@ -62,7 +62,7 @@ typedef struct intersection_s {
 void        BSP_InitIntersectionAllocator(void);
 void        BSP_ShutdownIntersectionAllocator(void);
 
-intersection_t *BSP_IntersectionCreate(mvertex_t *vert, hedge_t *part,
+intersection_t *BSP_IntersectionCreate(mvertex_t *vert, struct hedge_s *part,
                                        boolean selfRef);
 void        BSP_IntersectionDestroy(intersection_t *cut);
 #if _DEBUG

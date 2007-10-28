@@ -34,6 +34,7 @@
 #ifndef __BSP_NODE_H__
 #define __BSP_NODE_H__
 
+#include "bsp_intersection.h"
 #include "p_mapdata.h"
 
 typedef struct child_s {
@@ -70,7 +71,7 @@ mnode_t    *LookupNode(int index);
 int         BoxOnLineSide(struct superblock_s *box, struct hedge_s *part);
 
 boolean     BuildNodes(struct superblock_s *hEdgeList, mnode_t **n, msubsec_t **s,
-                       int depth, void *cutList);
+                       int depth, cutlist_t *cutList);
 void        BSP_AddHEdgeToSuperBlock(struct superblock_s *block, struct hedge_s *hEdge);
 
 int         ComputeBspHeight(mnode_t *node);
