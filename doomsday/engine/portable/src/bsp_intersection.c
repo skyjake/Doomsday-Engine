@@ -64,6 +64,8 @@ typedef struct clist_s {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static clist_t* UnusedIntersectionList;
+static cnode_t* unusedCNodes;
+
 static boolean initedOK = false;
 
 // CODE --------------------------------------------------------------------
@@ -76,6 +78,23 @@ static cnode_t *allocCNode(void)
 static void freeCNode(cnode_t *node)
 {
     M_Free(node);
+}
+
+static cnode_t *quickAllocCNode(void)
+{
+    cnode_t    *node;
+
+    if(initedOK && unusedCNodes)
+    {
+        node = unusedCNodes;
+        unusedCNodes = unusedCNodes->next;
+    }
+    else
+    {   // Need to allocate another.
+        node = allocCNode();
+    }
+
+    return node;
 }
 
 static clist_t *allocCList(void)
@@ -112,8 +131,9 @@ static intersection_t *quickAllocIntersection(void)
         // Grab the intersection.
         cut = node->data;
 
-        // Release the list node.
-        freeCNode(node);
+        // Move the list node to the unused node list.
+        node->next = unusedCNodes;
+        unusedCNodes = node;
     }
     else
     {
@@ -133,7 +153,10 @@ static void emptyCList(clist_t *list)
         cnode_t    *p = node->next;
 
         BSP_IntersectionDestroy(node->data);
-        freeCNode(node);
+
+        // Move the list node to the unused node list.
+        node->next = unusedCNodes;
+        unusedCNodes = node;
 
         node = p;
     }
@@ -146,6 +169,7 @@ void BSP_InitIntersectionAllocator(void)
     if(!initedOK)
     {
         UnusedIntersectionList = M_Calloc(sizeof(clist_t));
+        unusedCNodes = NULL;
         initedOK = true;
     }
 }
@@ -168,8 +192,23 @@ void BSP_ShutdownIntersectionAllocator(void)
         }
 
         M_Free(UnusedIntersectionList);
+        UnusedIntersectionList = NULL;
     }
-    UnusedIntersectionList = NULL;
+
+    if(unusedCNodes)
+    {
+        cnode_t    *node;
+
+        node = unusedCNodes;
+        while(node)
+        {
+            cnode_t    *np = node->next;
+            freeCNode(node);
+            node = np;
+        }
+
+        unusedCNodes = NULL;
+    }
 
     initedOK = false;
 }
@@ -202,7 +241,7 @@ void BSP_IntersectionDestroy(intersection_t *cut)
     if(initedOK)
     {   // If the allocator is initialized, move the intersection to the
         // unused list for reuse.
-        cnode_t    *node = allocCNode();
+        cnode_t    *node = quickAllocCNode();
 
         node->data = cut;
         node->next = UnusedIntersectionList->headPtr;
@@ -302,7 +341,7 @@ boolean BSP_CutListInsertIntersection(cutlist_t *cutList, intersection_t *cut)
     if(cutList && cut)
     {
         clist_t    *list = (clist_t*) cutList;
-        cnode_t    *newNode = allocCNode();
+        cnode_t    *newNode = quickAllocCNode();
         cnode_t    *after;
 
         /**
