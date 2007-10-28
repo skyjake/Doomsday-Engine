@@ -244,7 +244,7 @@ static __inline boolean hasIndexBit(uint index, uint *bitfield)
  * Sets the index in the bitfield.
  * Count is incremented when a zero bit is changed to one.
  */
-static void addIndexBit(uint index, uint *bitfield)
+static __inline void addIndexBit(uint index, uint *bitfield)
 {
     // Assume 32-bit uint.
     bitfield[index >> 5] |= (1 << (index & 0x1f));
