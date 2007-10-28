@@ -401,7 +401,7 @@ int             R_SetTextureTranslation(int tex, int translateTo);
 boolean         R_IsCustomTexture(int texture);
 boolean         R_IsAllowedDecoration(ded_decor_t *def, int index,
                                       boolean hasExternal);
-boolean         R_IsValidLightDecoration(ded_decorlight_t *lightDef);
+boolean         R_IsValidLightDecoration(const ded_decorlight_t *lightDef);
 void            R_GenerateDecorMap(ded_decor_t *def);
 
 #endif

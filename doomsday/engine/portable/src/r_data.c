@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -394,10 +394,10 @@ rawtex_t *R_GetRawTex(uint lumpnum)
 
     if(lumpnum >= (unsigned) numlumps)
     {
-        Con_Error("R_GetPatch: lumpnum = %i out of bounds (%i).\n", 
+        Con_Error("R_GetPatch: lumpnum = %i out of bounds (%i).\n",
                   lumpnum, numlumps);
     }
-    
+
     r = R_FindRawTex(lumpnum);
     // Check if this lump has already been loaded as a rawtex.
     if(r)
@@ -406,7 +406,7 @@ rawtex_t *R_GetRawTex(uint lumpnum)
     // Hmm, this is an entirely new rawtex.
     rawtextures = M_Realloc(rawtextures, sizeof(rawtex_t) * ++numrawtextures);
     r = &rawtextures[numrawtextures - 1];
-    
+
     r->lump = lumpnum;
     r->tex = r->tex2 = 0;
     r->info.width = r->info2.width = 0;
@@ -427,12 +427,12 @@ patch_t *R_GetPatch(int lumpnum)
 
     if(lumpnum >= numlumps)
     {
-        Con_Error("R_GetPatch: lumpnum = %i out of bounds (%i).\n", 
+        Con_Error("R_GetPatch: lumpnum = %i out of bounds (%i).\n",
                   lumpnum, numlumps);
     }
-    
+
     p = R_FindPatch(lumpnum);
-    
+
     if(!lumpnum)
         return NULL;
 
@@ -928,14 +928,14 @@ int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
 {
     if(picid < 0)
         return 0;
-  
+
     switch(rclass)
     {
     case RC_TEXTURE:  // picid is a texture id
         if(picid >= numtextures)
         {
             Con_Error("R_GraphicResourceFlags: RC_TEXTURE, picid %i out of bounds.\n",
-                      picid);                      
+                      picid);
         }
         picid = texturetranslation[picid].current;
         if(picid < 0)
@@ -947,7 +947,7 @@ int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
         if(picid >= numflats)
         {
             Con_Error("R_GraphicResourceFlags: RC_FLAT, picid %i out of bounds.\n",
-                      picid);                      
+                      picid);
         }
         picid = flattranslation[picid].current;
         if(picid < 0)
@@ -1114,10 +1114,10 @@ boolean R_IsCustomTexture(int texture)
 /**
  * Returns true if the given light decoration definition is valid.
  */
-boolean R_IsValidLightDecoration(ded_decorlight_t *lightDef)
+boolean R_IsValidLightDecoration(const ded_decorlight_t *lightDef)
 {
     return (lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
-        lightDef->color[2] != 0);
+            lightDef->color[2] != 0);
 }
 
 /**
@@ -1286,7 +1286,7 @@ void R_PrecacheLevel(void)
             }
         }
     }
-    
+
     // Update progress.
 
     // \fixme Precache sky textures!
@@ -1301,7 +1301,7 @@ void R_PrecacheLevel(void)
         {
             R_PrecacheFlat(k);
         }
-            
+
     // Update progress.
 
     // Precache sprites.
@@ -1341,7 +1341,7 @@ void R_PrecacheLevel(void)
     }
 
     // Update progress.
-            
+
     // Sky models usually have big skins.
     R_PrecacheSky();
 

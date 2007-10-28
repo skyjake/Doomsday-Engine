@@ -381,18 +381,18 @@ Con_Message("PARTITION: (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
         double      len = next->alongDist - cur->alongDist;
 
         if(len < -0.1)
+        {
             Con_Error("BSP_AddMiniHEdges: Bad order in intersect list - "
                       "%1.3f > %1.3f\n",
                       cur->alongDist, next->alongDist);
-
-        if(len > 0.2)
+        }
+        else if(len > 0.2)
         {
             node = np;
             np = node->next;
             continue;
         }
-
-        if(len > DIST_EPSILON)
+        else if(len > DIST_EPSILON)
         {
 /*
 #if _DEBUG

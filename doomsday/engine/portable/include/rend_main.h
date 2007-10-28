@@ -56,8 +56,8 @@ void            Rend_ModelViewMatrix(boolean use_angles);
 
 #define Rend_PointDist2D(c) (fabs((vz-c[VY])*viewsidex - (vx-c[VX])*viewsidey))
 
-float           Rend_PointDist3D(float c[3]);
-//float           Rend_SignedPointDist2D(float c[2]);
+float           Rend_PointDist3D(const float c[3]);
+//float           Rend_SignedPointDist2D(const float c[2]);
 float           Rend_SectorLight(sector_t *sec);
 int             Rend_MidTexturePos(float *bottomleft, float *bottomright,
                                    float *topleft, float *topright,

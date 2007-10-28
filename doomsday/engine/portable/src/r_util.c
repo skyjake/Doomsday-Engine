@@ -64,7 +64,7 @@ extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
  * @param y         Y coordinate to test.
  * @return int      <code>0</code> = front, else <code>1</code> = back.
  */
-int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
+int R_PointOnSide(const fixed_t x, const fixed_t y, const node_t *node)
 {
     float       fx = FIX2FLT(x), fy = FIX2FLT(y);
     float       dx, dy;
@@ -218,6 +218,7 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
 {
     x -= FLT2FIX(viewX);
     y -= FLT2FIX(viewY);
+
     if((!x) && (!y))
         return 0;
 
@@ -260,14 +261,15 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
     }
 }
 
-angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
+angle_t R_PointToAngle2(const fixed_t x1, const fixed_t y1,
+                        const fixed_t x2, const fixed_t y2)
 {
     viewX = FIX2FLT(x1);
     viewY = FIX2FLT(y1);
     return R_PointToAngle(x2, y2);
 }
 
-fixed_t R_PointToDist(fixed_t x, fixed_t y)
+fixed_t R_PointToDist(const fixed_t x, const fixed_t y)
 {
     int         angle;
     fixed_t     dx, dy, temp;
@@ -291,7 +293,7 @@ fixed_t R_PointToDist(fixed_t x, fixed_t y)
     return dist;
 }
 
-subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
+subsector_t *R_PointInSubsector(const fixed_t x, const fixed_t y)
 {
     node_t     *node = 0;
     uint        nodenum = 0;
@@ -310,7 +312,7 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
     return SUBSECTOR_PTR(nodenum & ~NF_SUBSECTOR);
 }
 
-line_t *R_GetLineForSide(uint sideNumber)
+line_t *R_GetLineForSide(const uint sideNumber)
 {
     uint        i;
     side_t     *side = SIDE_PTR(sideNumber);
@@ -335,13 +337,14 @@ line_t *R_GetLineForSide(uint sideNumber)
  * subsector. Uses the well-known algorithm described here:
  * http://www.alienryderflex.com/polygon/
  *
- * @param   x           X coordinate to test.
- * @param   y           Y coordinate to test.
- * @param   sector      Sector to test.
+ * @param               X coordinate to test.
+ * @param               Y coordinate to test.
+ * @param               Sector to test.
  *
- * @return  boolean     (TRUE) If the point is inside the sector.
+ * @return              @c true, if the point is inside the sector.
  */
-boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
+boolean R_IsPointInSector(const fixed_t x, const fixed_t y,
+                          const sector_t *sector)
 {
     uint        i;
     boolean     isOdd = false;
@@ -385,13 +388,14 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
  *
  * More accurate than R_IsPointInSector.
  *
- * @param   x           X coordinate to test.
- * @param   y           Y coordinate to test.
- * @param   sector      Sector to test.
+ * @param               X coordinate to test.
+ * @param               Y coordinate to test.
+ * @param               Sector to test.
  *
- * @return  boolean     (TRUE) If the point is inside the sector.
+ * @return              @c true, if the point is inside the sector.
  */
-boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
+boolean R_IsPointInSector2(const fixed_t x, const fixed_t y,
+                           const sector_t *sector)
 {
     uint        i;
     subsector_t *subsector;
@@ -462,9 +466,9 @@ void R_ScaleAmbientRGB(float *out, const float *in, float mul)
  * @param degenmobj     degenmobj to search for.
  *
  * @return              Ptr to the Sector where the degenmobj resides,
- *                      else <code>NULL</code>.
+ *                      else @c NULL.
  */
-sector_t *R_GetSectorForDegen(void *degenmobj)
+sector_t *R_GetSectorForDegen(const void *degenmobj)
 {
     uint        i, k;
     sector_t   *sec;

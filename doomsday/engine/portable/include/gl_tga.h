@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -81,26 +82,26 @@ extern          "C" {
 #pragma pack()					   // Back to the default value.
 
 	// Save the rgb565 buffer as Targa 16.
-	int             TGA_Save24_rgb565(char *filename, int w, int h,
-									  uShort * buffer);
+	int             TGA_Save24_rgb565(const char *filename, int w, int h,
+									  uShort *buffer);
 
 	// Save the rgb888 buffer as Targa 24.
-	int             TGA_Save24_rgb888(char *filename, int w, int h,
-									  uChar * buffer);
+	int             TGA_Save24_rgb888(const char *filename, int w, int h,
+									  uChar *buffer);
 
-	int             TGA_Save24_rgba8888(char *filename, int w, int h,
-										uChar * buffer);
+	int             TGA_Save24_rgba8888(const char *filename, int w, int h,
+										uChar *buffer);
 
 	// Save the rgb888 buffer as Targa 16.
-	int             TGA_Save16_rgb888(char *filename, int w, int h,
-									  uChar * buffer);
+	int             TGA_Save16_rgb888(const char *filename, int w, int h,
+									  uChar *buffer);
 
 	// Load an rgba8888 image (32 bits per pixel).
 	int             TGA_Load32_rgba8888(DFILE * file, int w, int h,
-										uChar * buffer);
+										uChar *buffer);
 
 	// Get the dimensions of a Targa image.
-	int             TGA_GetSize(char *filename, int *w, int *h);
+	int             TGA_GetSize(const char *filename, int *w, int *h);
 
 #ifdef __cplusplus
 }

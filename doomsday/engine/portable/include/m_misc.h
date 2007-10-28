@@ -66,7 +66,7 @@ void            M_ReadLine(char *buffer, int len, DFILE * file);
 // Bounding boxes.
 void            M_ClearBox(fixed_t *box);
 void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
-float           M_BoundingBoxDiff(float in[4], float out[4]);
+float           M_BoundingBoxDiff(const float in[4], const float out[4]);
 void            M_JoinBoxes(float box[4], const float other[4]);
 
 // Text utilities.
@@ -91,23 +91,24 @@ void            M_ClearRandom(void);
 
 // Math routines.
 float           M_ApproxDistancef(float dx, float dy);
-float           M_ApproxDistance3(float delta[3]);
+float           M_ApproxDistance3(const float delta[3]);
 float           M_ApproxDistance3f(float dx, float dy, float dz);
-float           M_PointLineDistance(float *a, float *b, float *c);
-float           M_PointUnitLineDistance(float *a, float *b, float *c);
+float           M_PointLineDistance(const float *a, const float *b, const float *c);
+float           M_PointUnitLineDistance(const float *a, const float *b, const float *c);
 float           M_Normalize(float *a);
-float           M_Distance(float *a, float *b);
+float           M_Distance(const float *a, const float *b);
 void            M_Scale(float *dest, const float *a, float scale);
-float           M_DotProduct(float *a, float *b);
-void            M_CrossProduct(float *a, float *b, float *out);
-void            M_PointCrossProduct(float *v1, float *v2, float *v3,
-                                    float *out);
-float           M_TriangleArea(float *v1, float *v2, float *v3);
+float           M_DotProduct(const float *a, const float *b);
+void            M_CrossProduct(const float *a, const float *b, float *out);
+void            M_PointCrossProduct(const float *v1, const float *v2,
+                                    const float *v3, float *out);
+float           M_TriangleArea(const float *v1, const float *v2,
+                               const float *v3);
 void            M_RotateVector(float vec[3], float degYaw, float degPitch);
-void            M_ProjectPointOnLine(float *point, float *linepoint,
-                                      float *delta, float gap,
-                                      float *result);
-void            M_ProjectViewRelativeLine2D(float center[2],
+void            M_ProjectPointOnLine(const float *point, const float *linepoint,
+                                     const float *delta, float gap,
+                                     float *result);
+void            M_ProjectViewRelativeLine2D(const float center[2],
                                             boolean alignToViewPlane,
                                             float width, float offset,
                                             float start[2], float end[2]);
@@ -125,6 +126,6 @@ boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
 boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 
 // Other utilities.
-int             M_ScreenShot(char *filename, int bits);
+int             M_ScreenShot(const char *filename, int bits);
 
 #endif

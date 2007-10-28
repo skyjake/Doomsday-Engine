@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,7 +116,7 @@ static float GetConsoleTitleBarHeight(void)
     int oldFont = FR_GetCurrent();
     int border = theWindow->width / 120;
     int height;
-    
+
     FR_SetFont(glFontVariable[GLFS_BOLD]);
     height = FR_TextHeight("W") + border;
     FR_SetFont(oldFont);
@@ -374,10 +374,10 @@ static void DrawConsoleTitleBar(float closeFade)
     int height;
     int oldFont = FR_GetCurrent();
     int border = theWindow->width / 120;
-    
+
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
-    
+
     //FR_SetFont(glFontVariable[GLFS_BOLD]);
     height = GetConsoleTitleBarHeight(); //FR_TextHeight("W") + border;
     FR_SetFont(glFontVariable[GLFS_BOLD]);
@@ -401,10 +401,10 @@ static void DrawConsoleTitleBar(float closeFade)
         UI_TextOutEx(statusText, theWindow->width - UI_BORDER - width, height / 2,
                      false, true, UI_Color(UIC_TEXT), .75f * closeFade);
     }
-    
+
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
-    
+
     FR_SetFont(oldFont);
 }
 
@@ -425,7 +425,7 @@ void Rend_Console(void)
     int         textOffsetY = 0;
     uint        cmdCursor;
     cbuffer_t  *buffer;
-    static const cbline_t **lines = NULL;
+    static cbline_t **lines = NULL;
     static int bufferSize = 0;
     int         reqLines;
     uint        count;

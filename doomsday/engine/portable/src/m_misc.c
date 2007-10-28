@@ -523,10 +523,10 @@ float M_Normalize(float *a)
 /**
  * For convenience.
  */
-float M_Distance(float *a, float *b)
+float M_Distance(const float *a, const float *b)
 {
-    float delta[3];
-    int i;
+    float       delta[3];
+    int         i;
 
     for(i = 0; i < 3; ++i)
         delta[i] = b[i] - a[i];
@@ -534,7 +534,7 @@ float M_Distance(float *a, float *b)
     return M_Normalize(delta);
 }
 
-float M_DotProduct(float *a, float *b)
+float M_DotProduct(const float *a, const float *b)
 {
     return a[VX] * b[VX] + a[VY] * b[VY] + a[VZ] * b[VZ];
 }
@@ -549,7 +549,7 @@ void M_Scale(float *dest, const float *a, float scale)
 /**
  * Cross product of two vectors.
  */
-void M_CrossProduct(float *a, float *b, float *out)
+void M_CrossProduct(const float *a, const float *b, float *out)
 {
     out[VX] = a[VY] * b[VZ] - a[VZ] * b[VY];
     out[VY] = a[VZ] * b[VX] - a[VX] * b[VZ];
@@ -559,7 +559,8 @@ void M_CrossProduct(float *a, float *b, float *out)
 /**
  * Cross product of two vectors composed of three points.
  */
-void M_PointCrossProduct(float *v1, float *v2, float *v3, float *out)
+void M_PointCrossProduct(const float *v1, const float *v2, const float *v3,
+                         float *out)
 {
     float   a[3], b[3];
     int     i;
@@ -575,7 +576,7 @@ void M_PointCrossProduct(float *v1, float *v2, float *v3, float *out)
 /**
  * Area of a triangle.
  */
-float M_TriangleArea(float *v1, float *v2, float *v3)
+float M_TriangleArea(const float *v1, const float *v2, const float *v3)
 {
     float   a[2], b[2];
     float   area;
@@ -628,7 +629,7 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
 /**
  * Line a -> b, point c. The line must be exactly one unit long!
  */
-float M_PointUnitLineDistance(float *a, float *b, float *c)
+float M_PointUnitLineDistance(const float *a, const float *b, const float *c)
 {
     return
         fabs(((a[VY] - c[VY]) * (b[VX] - a[VX]) -
@@ -638,7 +639,7 @@ float M_PointUnitLineDistance(float *a, float *b, float *c)
 /**
  * Line a -> b, point c.
  */
-float M_PointLineDistance(float *a, float *b, float *c)
+float M_PointLineDistance(const float *a, const float *b, const float *c)
 {
     float   d[2], len;
 
@@ -647,6 +648,7 @@ float M_PointLineDistance(float *a, float *b, float *c)
     len = sqrt(d[VX] * d[VX] + d[VY] * d[VY]);  // Accurate.
     if(!len)
         return 0;
+
     return
         fabs(((a[VY] - c[VY]) * (b[VX] - a[VX]) -
               (a[VX] - c[VX]) * (b[VY] - a[VY])) / len);
@@ -655,7 +657,8 @@ float M_PointLineDistance(float *a, float *b, float *c)
 /**
  * Gap is the distance left between the line and the projected point.
  */
-void M_ProjectPointOnLine(float *point, float *linepoint, float *delta,
+void M_ProjectPointOnLine(const float *point, const float *linepoint,
+                          const float *delta,
                           float gap, float *result)
 {
 #define DOTPROD(a,b)    (a[VX]*b[VX] + a[VY]*b[VY])
@@ -688,7 +691,8 @@ void M_ProjectPointOnLine(float *point, float *linepoint, float *delta,
     }
 }
 
-void M_ProjectViewRelativeLine2D(float center[2], boolean alignToViewPlane,
+void M_ProjectViewRelativeLine2D(const float center[2],
+                                 boolean alignToViewPlane,
                                  float width, float offset,
                                  float start[2], float end[2])
 {
@@ -721,7 +725,7 @@ void M_ProjectViewRelativeLine2D(float center[2], boolean alignToViewPlane,
     end[VY] = start[VY] + sinrv * width;
 }
 
-float M_BoundingBoxDiff(float in[4], float out[4])
+float M_BoundingBoxDiff(const float in[4], const float out[4])
 {
     return in[BLEFT] - out[BLEFT] + in[BTOP] - out[BTOP] + out[BRIGHT] -
         in[BRIGHT] + out[BBOTTOM] - in[BBOTTOM];
@@ -765,7 +769,7 @@ void M_JoinBoxes(float bbox[4], const float other[4])
 #  define O_BINARY 0
 #endif
 
-boolean M_WriteFile(char const *name, void *source, size_t length)
+boolean M_WriteFile(const char *name, void *source, size_t length)
 {
     int     handle;
     size_t  count;
@@ -785,7 +789,7 @@ boolean M_WriteFile(char const *name, void *source, size_t length)
 /**
  * Read a file into a buffer allocated using Z_Malloc().
  */
-size_t M_ReadFile(char const *name, byte **buffer)
+size_t M_ReadFile(const char *name, byte **buffer)
 {
     return FileReader(name, buffer, MALLOC_ZONE);
 }
@@ -793,12 +797,12 @@ size_t M_ReadFile(char const *name, byte **buffer)
 /**
  * Read a file into a buffer allocated using malloc().
  */
-size_t M_ReadFileCLib(char const *name, byte **buffer)
+size_t M_ReadFileCLib(const char *name, byte **buffer)
 {
     return FileReader(name, buffer, MALLOC_CLIB);
 }
 
-static size_t FileReader(char const *name, byte **buffer, int mallocType)
+static size_t FileReader(const char *name, byte **buffer, int mallocType)
 {
     int         handle;
     size_t      count, length;
@@ -953,7 +957,7 @@ float M_ApproxDistancef(float dx, float dy)
     return dx + dy - dy / 2;
 }
 
-float M_ApproxDistance3(float delta[3])
+float M_ApproxDistance3(const float delta[3])
 {
     return M_ApproxDistancef(
         M_ApproxDistancef(delta[0], delta[1]), delta[2]);
@@ -967,7 +971,7 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
 /**
  * Writes a Targa file of the specified depth.
  */
-int M_ScreenShot(char *filename, int bits)
+int M_ScreenShot(const char *filename, int bits)
 {
     byte   *screen = 0;
 

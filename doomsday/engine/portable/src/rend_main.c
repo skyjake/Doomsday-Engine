@@ -200,7 +200,7 @@ float Rend_SignedPointDist2D(float c[2])
 /**
  * Approximated! The Z axis aspect ratio is corrected.
  */
-float Rend_PointDist3D(float c[3])
+float Rend_PointDist3D(const float c[3])
 {
     return M_ApproxDistance3f(vx - c[VX], vz - c[VY], 1.2f * (vy - c[VZ]));
 }

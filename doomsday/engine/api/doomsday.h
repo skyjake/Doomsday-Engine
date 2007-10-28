@@ -26,7 +26,7 @@
  * doomsday.h: Doomsday Engine API
  *
  * Doomsday Engine API. Routines exported from Doomsday.exe.
- * Games and plugins need to include this to gain access to the 
+ * Games and plugins need to include this to gain access to the
  * engine's features.
  */
 
@@ -231,7 +231,7 @@ extern          "C" {
 
     // Play: Setup.
     boolean         P_LoadMap(const char *mapID);
-    
+
     // Play: Map Data Updates and Information Access.
     unsigned int    P_ToIndex(const void* ptr);
     void*           P_ToPtr(int type, uint index);
@@ -378,8 +378,8 @@ extern          "C" {
     // Graphics.
     void            GL_UseFog(int yes);
     byte           *GL_GrabScreen(void);
-    unsigned int    GL_NewTextureWithParams2(int format, int width, int height, void* pixels, 
-                                             int flags, int minFilter, int magFilter, int anisoFilter, 
+    unsigned int    GL_NewTextureWithParams2(int format, int width, int height, void* pixels,
+                                             int flags, int minFilter, int magFilter, int anisoFilter,
                                              int wrapS, int wrapT);
     void            GL_TextureFilterMode(int target, int parm);
     void            GL_SetColor(int palidx);
@@ -431,15 +431,15 @@ extern          "C" {
                              int *pixelSize);
 
     // Graphics: TGA.
-    int             TGA_Save24_rgb565(char *filename, int w, int h,
+    int             TGA_Save24_rgb565(const char *filename, int w, int h,
                                       unsigned short *buffer);
-    int             TGA_Save24_rgb888(char *filename, int w, int h,
+    int             TGA_Save24_rgb888(const char *filename, int w, int h,
                                       byte *buffer);
-    int             TGA_Save24_rgba8888(char *filename, int w, int h,
+    int             TGA_Save24_rgba8888(const char *filename, int w, int h,
                                         byte *buffer);
-    int             TGA_Save16_rgb888(char *filename, int w, int h,
+    int             TGA_Save16_rgb888(const char *filename, int w, int h,
                                       byte *buffer);
-    int             TGA_GetSize(char *filename, int *w, int *h);
+    int             TGA_GetSize(const char *filename, int *w, int *h);
 
     // Audio.
     void            S_LevelChange(void);
@@ -463,12 +463,12 @@ extern          "C" {
     void            S_StopMusic(void);
 
     // Miscellaneous.
-    size_t          M_ReadFile(char const *name, byte **buffer);
-    size_t          M_ReadFileCLib(char const *name, byte **buffer);
-    boolean         M_WriteFile(char const *name, void *source, size_t length);
+    size_t          M_ReadFile(const char *name, byte **buffer);
+    size_t          M_ReadFileCLib(const char *name, byte **buffer);
+    boolean         M_WriteFile(const char *name, void *source, size_t length);
     void            M_ExtractFileBase(const char *path, char *dest);
     void            M_GetFileExt(const char *path, char *ext);
-    boolean         M_CheckPath(char *path);
+    boolean         M_CheckPath(const char *path);
     int             M_FileExists(const char *file);
     void            M_TranslatePath(const char *path, char *translated);
     char           *M_SkipWhite(char *str);
@@ -478,12 +478,12 @@ extern          "C" {
     float           M_FRandom(void);
     void            M_ClearBox(fixed_t *box);
     void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
-    int             M_ScreenShot(char *filename, int bits);
+    int             M_ScreenShot(const char *filename, int bits);
 
     // MiscellaneousL: Time utilities.
     boolean         M_RunTrigger(trigger_t *trigger, timespan_t advanceTime);
     boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
-    
+
     // Miscellaneous: Math.
     void            V2_Rotate(float vec[2], float radians);
     binangle_t      bamsAtan2(int y, int x);

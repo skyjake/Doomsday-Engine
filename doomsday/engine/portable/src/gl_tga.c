@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -53,10 +53,10 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Saves the buffer (which is formatted rgb565) to a Targa 24 image file.
  */
-int TGA_Save24_rgb565(char *filename, int w, int h, uShort * buffer)
+int TGA_Save24_rgb565(const char *filename, int w, int h, uShort *buffer)
 {
     FILE   *file;
     TARGA_HEADER header;
@@ -126,10 +126,10 @@ int TGA_Save24_rgb565(char *filename, int w, int h, uShort * buffer)
     return 1;
 }
 
-/*
+/**
  * Save the rgb888 buffer as Targa 24.
  */
-int TGA_Save24_rgb888(char *filename, int w, int h, uChar * buffer)
+int TGA_Save24_rgb888(const char *filename, int w, int h, uChar *buffer)
 {
     FILE   *file;
     TARGA_HEADER header;
@@ -176,7 +176,10 @@ int TGA_Save24_rgb888(char *filename, int w, int h, uChar * buffer)
     return 1;
 }
 
-int TGA_Save24_rgba8888(char *filename, int w, int h, uChar * buffer)
+/**
+ * Save the rgb8888 buffer as Targa 24.
+ */
+int TGA_Save24_rgba8888(const char *filename, int w, int h, uChar *buffer)
 {
     FILE   *file;
     TARGA_HEADER header;
@@ -223,10 +226,10 @@ int TGA_Save24_rgba8888(char *filename, int w, int h, uChar * buffer)
     return 1;
 }
 
-/*
+/**
  * Save the rgb888 buffer as Targa 16.
  */
-int TGA_Save16_rgb888(char *filename, int w, int h, uChar * buffer)
+int TGA_Save16_rgb888(const char *filename, int w, int h, uChar *buffer)
 {
     FILE   *file;
     TARGA_HEADER header;
@@ -273,7 +276,7 @@ int TGA_Save16_rgb888(char *filename, int w, int h, uChar * buffer)
     return 1;
 }
 
-/*
+/**
  * Loads a 24-bit or a 32-bit TGA image (24-bit color + 8-bit alpha).
  * Caller must allocate enough memory for 'buffer' (at least 4*w*h).
  * Returns non-zero iff the image is loaded successfully.
@@ -344,10 +347,10 @@ int TGA_Load32_rgba8888(DFILE *file, int w, int h, uChar *buffer)
     return format;
 }
 
-/*
+/**
  * Returns true if the file was found and successfully read.
  */
-int TGA_GetSize(char *filename, int *w, int *h)
+int TGA_GetSize(const char *filename, int *w, int *h)
 {
     TARGA_HEADER header;
     DFILE  *file = F_Open(filename, "rb");
