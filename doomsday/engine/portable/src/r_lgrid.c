@@ -395,14 +395,15 @@ void LG_Init(void)
         {
             off[VX] = x * (lgBlockSize << FRACBITS);
 
-            /** Pick the sector at each of the sample points.
-            * \todo We don't actually need the blkSampleSectors array
-            * anymore. Now that ssamples stores the results consecutively
-            * a simple index into ssamples would suffice.
-            * However if the optimization to save memory is implemented as
-            * described in the comments above we WOULD still require it.
-            * Therefore, for now I'm making use of it to clarify the code.
-	    */
+            /**
+             * Pick the sector at each of the sample points.
+             * \todo We don't actually need the blkSampleSectors array
+             * anymore. Now that ssamples stores the results consecutively
+             * a simple index into ssamples would suffice.
+             * However if the optimization to save memory is implemented as
+             * described in the comments above we WOULD still require it.
+             * Therefore, for now I'm making use of it to clarify the code.
+	         */
             n = (x + y * lgBlockWidth) * numSamples;
             for(i = 0; i < numSamples; ++i)
                 blkSampleSectors[i] = ssamples[i + n];
@@ -511,7 +512,7 @@ void LG_Init(void)
             }
         }
 
-        VERBOSE2(Con_Message("  Sector %i: %i / %i\n", i, changedCount, count));
+        VERBOSE2(Con_Message("  Sector %i: %i / %i\n", s, changedCount, count));
 
         sector->changedblockcount = changedCount;
         sector->blockcount = changedCount + count;
