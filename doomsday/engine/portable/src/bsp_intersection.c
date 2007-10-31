@@ -94,6 +94,9 @@ static cnode_t *quickAllocCNode(void)
         node = allocCNode();
     }
 
+    node->data = NULL;
+    node->next = node->prev = NULL;
+
     return node;
 }
 
@@ -139,6 +142,8 @@ static intersection_t *quickAllocIntersection(void)
     {
         cut = allocIntersection();
     }
+
+    memset(cut, 0, sizeof(*cut));
 
     return cut;
 }
