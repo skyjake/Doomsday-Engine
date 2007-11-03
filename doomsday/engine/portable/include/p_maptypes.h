@@ -360,7 +360,6 @@ typedef struct side_s {
 
 // Line flags
 #define LINEF_SELFREF           0x1 // Front and back sectors of this line are the same.
-#define LINEF_SELFREFHACKROOT	0x2	// This line is the root of a self-referencing hack sector
 
 typedef struct line_s {
     runtime_mapdata_header_t header;

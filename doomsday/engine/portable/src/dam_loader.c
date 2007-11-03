@@ -2108,6 +2108,176 @@ static void markUnclosedSectors(gamemap_t *map)
     }
 }
 
+/*boolean DD_SubContainTest(sector_t *innersec, sector_t *outersec)
+   {
+   uint i, k;
+   boolean contained;
+   float in[4], out[4];
+   subsector_t *isub, *osub;
+
+   // Test each subsector of innersec against all subsectors of outersec.
+   for(i=0; i<numsubsectors; i++)
+   {
+   isub = SUBSECTOR_PTR(i);
+   contained = false;
+   // Only accept innersec's subsectors.
+   if(isub->sector != innersec) continue;
+   for(k=0; k<numsubsectors && !contained; k++)
+   {
+   osub = SUBSECTOR_PTR(i);
+   // Only accept outersec's subsectors.
+   if(osub->sector != outersec) continue;
+   // Test if isub is inside osub.
+   if(isub->bbox[BLEFT] >= osub->bbox[BLEFT]
+   && isub->bbox[BRIGHT] <= osub->bbox[BRIGHT]
+   && isub->bbox[BTOP] >= osub->bbox[BTOP]
+   && isub->bbox[BBOTTOM] <= osub->bbox[BBOTTOM])
+   {
+   // This is contained.
+   contained = true;
+   }
+   }
+   if(!contained) return false;
+   }
+   // All tested subsectors were contained!
+   return true;
+   } */
+
+/**
+ * The test is done on subsectors.
+ */
+static sector_t *getContainingSectorOf(sector_t *sec)
+{
+    uint        i;
+    float       cdiff = -1, diff;
+    float       inner[4], outer[4];
+    sector_t   *other, *closest = NULL;
+
+    memcpy(inner, sec->bounds, sizeof(inner));
+
+    // Try all sectors that fit in the bounding box.
+    for(i = 0, other = sectors; i < numsectors; other++, ++i)
+    {
+        if(!other->linecount || other->unclosed)
+            continue;
+        if(other == sec)
+            continue;           // Don't try on self!
+
+        memcpy(outer, other->bounds, sizeof(outer));
+        if(inner[BLEFT]  >= outer[BLEFT] &&
+           inner[BRIGHT] <= outer[BRIGHT] &&
+           inner[BTOP]   >= outer[BTOP] &&
+           inner[BBOTTOM]<= outer[BBOTTOM])
+        {
+            // Inside! Now we must test each of the subsectors. Otherwise
+            // we can't be sure...
+            /*if(DD_SubContainTest(sec, other))
+               { */
+            // Sec is totally and completely inside other!
+            diff = M_BoundingBoxDiff(inner, outer);
+            if(cdiff < 0 || diff <= cdiff)
+            {
+                closest = other;
+                cdiff = diff;
+            }
+            //}
+        }
+    }
+    return closest;
+}
+
+static void buildSectorLinks(gamemap_t *map)
+{
+#define DOMINANT_SIZE 1000
+
+    uint        i;
+
+    for(i = 0; i < map->numsectors; ++i)
+    {
+        uint        k;
+        sector_t   *other;
+        line_t     *lin;
+        sector_t   *sec = &map->sectors[i];
+        boolean     dohack;
+
+        if(!sec->linecount)
+            continue;
+
+        // Is this sector completely contained by another?
+        sec->containsector = getContainingSectorOf(sec);
+
+        dohack = true;
+        for(k = 0; k < sec->linecount; ++k)
+        {
+            lin = sec->Lines[k];
+            if(!lin->L_frontside || !lin->L_backside ||
+                lin->L_frontsector != lin->L_backsector)
+            {
+                dohack = false;
+                break;
+            }
+        }
+
+        if(dohack)
+        {   // Link all planes permanently.
+            sec->permanentlink = true;
+            // Only floor and ceiling can be linked, not all planes inbetween.
+            for(k = 0; k < sec->subsgroupcount; ++k)
+            {
+                ssecgroup_t *ssgrp = &sec->subsgroups[k];
+                uint        p;
+
+                for(p = 0; p < sec->planecount; ++p)
+                    ssgrp->linked[p] = sec->containsector;
+            }
+
+            Con_Printf("Linking S%i planes permanently to S%li\n", i,
+                       (long) (sec->containsector - map->sectors));
+        }
+
+        // Is this sector large enough to be a dominant light source?
+        if(sec->lightsource == NULL &&
+           (R_IsSkySurface(&sec->SP_ceilsurface) ||
+            R_IsSkySurface(&sec->SP_floorsurface)) &&
+           sec->bounds[BRIGHT] - sec->bounds[BLEFT] > DOMINANT_SIZE &&
+           sec->bounds[BBOTTOM] - sec->bounds[BTOP] > DOMINANT_SIZE)
+        {
+            // All sectors touching this one will be affected.
+            for(k = 0; k < sec->linecount; ++k)
+            {
+                lin = sec->Lines[k];
+                other = lin->L_frontsector;
+                if(!other || other == sec)
+                {
+                    if(lin->L_backside)
+                    {
+                        other = lin->L_backsector;
+                        if(!other || other == sec)
+                            continue;
+                    }
+                }
+
+                other->lightsource = sec;
+            }
+        }
+    }
+
+#undef DOMINANT_SIZE
+}
+
+static void doInitialSkyFix(void)
+{
+    uint        startTime = Sys_GetRealTime();
+
+    R_InitSkyFix();
+    R_SkyFix(true, true); // fix floors and ceilings.
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("doInitialSkyFix: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
+}
+
 static boolean loadMap(archivedmap_t *dam, gamemap_t *map)
 {
     mustCreateBlockMap = false;
@@ -2151,6 +2321,11 @@ static boolean loadMap(archivedmap_t *dam, gamemap_t *map)
 
     // Must be called before any mobjs are spawned.
     R_InitLinks(map);
+
+    buildSectorLinks(map);
+
+    // Init blockmap for searching subsectors.
+    P_BuildSubsectorBlockMap(map);
 
     return true;
 }
@@ -2209,10 +2384,9 @@ boolean DAM_LoadMap(archivedmap_t *dam)
     // currentMap to be set first.
     P_SetCurrentMap(newmap);
 
-    // It's imperative that this is called!
-    // - sky fix
-    // - map info setup
-    R_InitMap(newmap);
+    R_InitSectorShadows();
+
+    doInitialSkyFix();
 
     // Announce any issues detected with the map.
     DAM_PrintMapErrors(dam, false);

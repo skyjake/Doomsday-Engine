@@ -39,20 +39,28 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define X_TO_BLOCK(x) ( ((x)-subMapOrigin[VX]) / blockSize[VX] )
-#define Y_TO_BLOCK(y) ( ((y)-subMapOrigin[VY]) / blockSize[VY] )
-
 // TYPES -------------------------------------------------------------------
 
-typedef struct subsecnode_s {
-    struct subsecnode_s *next;
-    subsector_t *subsector;
-} subsecnode_t;
+typedef struct ssecnode_s {
+    void       *data;
+    struct ssecnode_s *next;
+} ssecnode_t;
 
 typedef struct subsecmap_s {
-    subsecnode_t *nodes;
-    uint    count;
-} subsecmap_t;
+    uint        count;
+    ssecnode_t *nodes;
+} ssecmap_t;
+
+typedef struct ssecmapblock_s {
+    subsector_t **ssecs;
+} ssecmapblock_t;
+
+typedef struct ssecblockmap_s {
+    vec2_t      origin;
+    vec2_t      blockSize;
+    int         width, height; // In blocks.
+    gridmap_t  *gridmap;
+} ssecblockmap_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -66,29 +74,81 @@ typedef struct subsecmap_s {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static subsector_t ***subMap;   // array of subsector_t* arrays
-static int subMapWidth, subMapHeight;   // in blocks
-static vec2_t subMapOrigin;
-static vec2_t blockSize;
+static ssecblockmap_t *SSecBlockMap;
 
 // CODE --------------------------------------------------------------------
 
-void P_InitSubsectorBlockMap(void)
+static __inline int xToSSecBlockX(ssecblockmap_t *bmap, float x)
 {
+    if(x >= bmap->origin[VX] && x < bmap->width * bmap->blockSize[VX])
+        return (x - bmap->origin[VX]) / bmap->blockSize[VX];
+
+    return -1;
+}
+
+static __inline int yToSSecBlockY(ssecblockmap_t *bmap, float y)
+{
+    if(y >= bmap->origin[VY] && y < bmap->height * bmap->blockSize[VY])
+        return (y - bmap->origin[VY]) / bmap->blockSize[VY];
+
+    return -1;
+}
+
+static ssecblockmap_t *allocSSecBlockMap(void)
+{
+    return Z_Malloc(sizeof(ssecblockmap_t), PU_LEVELSTATIC, 0);
+}
+
+int setSSecMapBlock(void* p, void* ctx)
+{
+    ssecmapblock_t *block = (ssecmapblock_t*) p;
+
+    block->ssecs = ctx;
+    return true;
+}
+
+ssecblockmap_t *P_CreateSSecBlockMap(float originX, float originY,
+                                     float blockWidth, float blockHeight,
+                                     int width, int height)
+{
+    ssecblockmap_t *bmap = allocSSecBlockMap();
+
+    V2_Set(bmap->origin, originX, originY);
+    V2_Set(bmap->blockSize, blockWidth, blockHeight);
+    bmap->width = width;
+    bmap->height = height;
+
+    bmap->gridmap =
+        M_GridmapCreate(width, height,
+                        sizeof(ssecmapblock_t), PU_LEVELSTATIC,
+                        setSSecMapBlock);
+
+    VERBOSE(Con_Message
+            ("P_CreateSSecBlockMap: bs=%.0f/%.0f w=%i h=%i\n", blockWidth,
+             blockHeight, width, height));
+
+    return bmap;
+}
+
+void P_BuildSubsectorBlockMap(gamemap_t *map)
+{
+#define BLOCK_WIDTH         128
+#define BLOCK_HEIGHT        128
+
     uint        startTime = Sys_GetRealTime();
 
-    int         j, xl, xh, yl, yh, x, y;
+    int         xl, xh, yl, yh, x, y;
+    int         subMapWidth, subMapHeight;
     uint        i;
-    subsector_t *sub, **ptr;
-    subsecnode_t *iter, *next;
-    subsecmap_t *map, *block;
+    ssecnode_t *iter, *next;
+    ssecmap_t  *bmap, *block;
     vec2_t      bounds[2], point, dims;
-    vertex_t   *vtx;
 
     // Figure out the dimensions of the blockmap.
-    for(i = 0; i < numvertexes; ++i)
+    for(i = 0; i < map->numvertexes; ++i)
     {
-        vtx = VERTEX_PTR(i);
+        vertex_t   *vtx = &map->vertexes[i];
+
         V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
         if(!i)
             V2_InitBox(bounds, point);
@@ -97,32 +157,32 @@ void P_InitSubsectorBlockMap(void)
     }
 
     // Select a good size for the blocks.
-    V2_Set(blockSize, 128, 128);
-    V2_Copy(subMapOrigin, bounds[0]);   // min point
     V2_Subtract(dims, bounds[1], bounds[0]);
 
-    subMapWidth  = ceil(dims[VX] / blockSize[VX]) + 1;
-    subMapHeight = ceil(dims[VY] / blockSize[VY]) + 1;
+    subMapWidth  = ceil(dims[VX] / BLOCK_WIDTH) + 1;
+    subMapHeight = ceil(dims[VY] / BLOCK_HEIGHT) + 1;
 
-    // The subsector blockmap is tagged as PU_LEVEL.
-    subMap =
-        Z_Calloc(subMapWidth * subMapHeight * sizeof(subsector_t **),
-                 PU_LEVELSTATIC, 0);
+    SSecBlockMap =
+        P_CreateSSecBlockMap(bounds[0][VX], bounds[0][VY],
+                             BLOCK_WIDTH, BLOCK_HEIGHT,
+                             subMapWidth, subMapHeight);
 
     // We'll construct the links using nodes.
-    map = M_Calloc(sizeof(subsecmap_t) * subMapWidth * subMapHeight);
+    bmap = M_Calloc(sizeof(ssecmap_t) * subMapWidth * subMapHeight);
 
     // Process all the subsectors in the map.
-    for(i = 0, sub = subsectors; i < numsubsectors; sub++, ++i)
+    for(i = 0; i < map->numsubsectors; ++i)
     {
-        if(!sub->sector)
+        subsector_t    *ssec = &map->subsectors[i];
+
+        if(!ssec->sector)
             continue;
 
         // Blockcoords to link to.
-        xl = X_TO_BLOCK(sub->bbox[0].pos[VX]);
-        xh = X_TO_BLOCK(sub->bbox[1].pos[VX]);
-        yl = Y_TO_BLOCK(sub->bbox[0].pos[VY]);
-        yh = Y_TO_BLOCK(sub->bbox[1].pos[VY]);
+        xl = xToSSecBlockX(SSecBlockMap, ssec->bbox[0].pos[VX]);
+        xh = xToSSecBlockX(SSecBlockMap, ssec->bbox[1].pos[VX]);
+        yl = yToSSecBlockY(SSecBlockMap, ssec->bbox[0].pos[VY]);
+        yh = yToSSecBlockY(SSecBlockMap, ssec->bbox[1].pos[VY]);
 
         for(x = xl; x <= xh; ++x)
             for(y = yl; y <= yh; ++y)
@@ -134,11 +194,11 @@ void P_InitSubsectorBlockMap(void)
                 }
 
                 // Create a new node.
-                iter = M_Malloc(sizeof(subsecnode_t));
-                iter->subsector = sub;
+                iter = M_Malloc(sizeof(ssecnode_t));
+                iter->data = ssec;
 
                 // Link to the temporary map.
-                block = &map[x + y * subMapWidth];
+                block = &bmap[x + y * subMapWidth];
                 iter->next = block->nodes;
                 block->nodes = iter;
                 block->count++;
@@ -146,37 +206,46 @@ void P_InitSubsectorBlockMap(void)
     }
 
     // Create the actual links by 'hardening' the lists into arrays.
-    for(j = 0, block = map; j < subMapWidth * subMapHeight; ++j, block++)
-        if(block->count > 0)
+    for(y = 0; y < subMapHeight; ++y)
+        for(x = 0; x < subMapWidth; ++x)
         {
-            // An NULL-terminated array of pointers to subsectors.
-            ptr = subMap[j] =
-                Z_Malloc((block->count + 1) * sizeof(subsector_t *),
-                         PU_LEVELSTATIC, NULL);
+            block = &bmap[y * subMapWidth + x];
 
-            // Copy pointers to the array, delete the nodes.
-            for(iter = block->nodes; iter; iter = next)
+            if(block->count > 0)
             {
-                *ptr++ = iter->subsector;
-                // Kill the node.
-                next = iter->next;
-                M_Free(iter);
-            }
+                subsector_t **ssecs, **ptr;
 
-            // Terminate.
-            *ptr = NULL;
+                // A NULL-terminated array of pointers to subsectors.
+                ssecs = Z_Malloc((block->count + 1) * sizeof(subsector_t *),
+                                PU_LEVELSTATIC, NULL);
+
+                // Copy pointers to the array, delete the nodes.
+                ptr = ssecs;
+                for(iter = block->nodes; iter; iter = next)
+                {
+                    *ptr++ = (subsector_t *) iter->data;
+                    // Kill the node.
+                    next = iter->next;
+                    M_Free(iter);
+                }
+                // Terminate.
+                *ptr = NULL;
+
+                // Link it into the blockmap.
+                M_GridmapSetBlock(SSecBlockMap->gridmap, x, y, ssecs);
+            }
         }
 
     // Free the temporary link map.
-    M_Free(map);
+    M_Free(bmap);
 
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("P_InitSubsectorBlockMap: Done in %.2f seconds.\n",
+            ("P_BuildSubsectorBlockMap: Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
-    VERBOSE(Con_Message
-            ("  (bs=%.0f/%.0f w=%i h=%i)\n", blockSize[VX], blockSize[VY],
-             subMapWidth, subMapHeight));
+
+#undef BLOCK_WIDTH
+#undef BLOCK_HEIGHT
 }
 
 /**
@@ -293,68 +362,80 @@ boolean P_BlockPolyobjsIterator(int x, int y,
     return true;
 }
 
+typedef struct iterparams_s {
+    arvec2_t    box;
+    sector_t   *sector;
+    int         localValidCount;
+    boolean   (*func) (subsector_t *, void *);
+    void       *param;
+} iterparams_t;
+
+boolean ssecBoxIterator(ssecmapblock_t *block, void *context)
+{
+    subsector_t **iter;
+    iterparams_t *args = (iterparams_t*) context;
+
+    iter = block->ssecs;
+    while(*iter)
+    {
+        subsector_t *ssec = *iter;
+
+        if(ssec->validCount != args->localValidCount)
+        {
+            ssec->validCount = args->localValidCount;
+
+            // Check the sector restriction.
+            if(!(args->sector && ssec->sector != args->sector) &&
+                // Check the bounds.
+               !(ssec->bbox[1].pos[VX] < args->box[0][VX] ||
+                 ssec->bbox[0].pos[VX] > args->box[1][VX] ||
+                 ssec->bbox[1].pos[VY] < args->box[0][VY] ||
+                 ssec->bbox[0].pos[VY] > args->box[1][VY]))
+            {
+                if(!args->func(ssec, args->param))
+                    return false;
+            }
+        }
+
+        *iter++;
+    }
+
+    return true;
+}
+
 /**
  * Same as the fixed-point version of this routine, but the bounding box
  * is specified using an vec2_t array (see m_vector.c).
  */
 boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
                                 boolean (*func) (subsector_t *, void *),
-                                void *parm)
+                                void *param)
 {
     static int  localValidCount = 0;
-    int         xl, xh, yl, yh, x, y;
-    subsector_t *sub, **iter;
+    iterparams_t    args;
+    int         xl, xh, yl, yh;
 
     // This is only used here.
     localValidCount++;
 
     // Blockcoords to check.
-    xl = X_TO_BLOCK(box[0][VX]);
-    xh = X_TO_BLOCK(box[1][VX]);
-    yl = Y_TO_BLOCK(box[0][VY]);
-    yh = Y_TO_BLOCK(box[1][VY]);
+    xl = xToSSecBlockX(SSecBlockMap, box[0][VX]);
+    xh = xToSSecBlockX(SSecBlockMap, box[1][VX]);
+    yl = yToSSecBlockY(SSecBlockMap, box[0][VY]);
+    yh = yToSSecBlockY(SSecBlockMap, box[1][VY]);
 
-    for(x = xl; x <= xh; ++x)
-    {
-        for(y = yl; y <= yh; ++y)
-        {
-            if(x < 0 || y < 0 || x >= subMapWidth || y >= subMapHeight)
-                continue;
+    args.box = box;
+    args.localValidCount = localValidCount;
+    args.sector = sector;
+    args.func = func;
+    args.param = param;
 
-            if((iter = subMap[x + y * subMapWidth]) == NULL)
-                continue;
-
-            for(; *iter; iter++)
-            {
-                sub = *iter;
-
-                if(sub->validCount != localValidCount)
-                {
-                    sub->validCount = localValidCount;
-
-                    // Check the sector restriction.
-                    if(sector && sub->sector != sector)
-                        continue;
-
-                    // Check the bounds.
-                    if(sub->bbox[1].pos[VX] < box[0][VX] ||
-                       sub->bbox[0].pos[VX] > box[1][VX] ||
-                       sub->bbox[1].pos[VY] < box[0][VY] ||
-                       sub->bbox[0].pos[VY] > box[1][VY])
-                        continue;
-
-                    if(!func(sub, parm))
-                        return false;
-                }
-            }
-        }
-    }
-    return true;
+    return M_GridmapBoxIterator(SSecBlockMap->gridmap, xl, xh, yl, yh,
+                                ssecBoxIterator, &args);
 }
 
 /**
- * @return          <code>false</code>i f the iterator func returns
- *                  <code>false</code>.
+ * @return          @c false, if the iterator func returns @c false.
  */
 boolean P_SubsectorBoxIterator(fixed_t *box, sector_t *sector,
                                boolean (*func) (subsector_t *, void *),

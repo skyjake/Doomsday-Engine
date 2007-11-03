@@ -384,7 +384,6 @@ internal
 
 // Line flags 
 #define LINEF_SELFREF           0x1 // Front and back sectors of this line are the same.
-#define LINEF_SELFREFHACKROOT	0x2	// This line is the root of a self-referencing hack sector
 end
 
 struct line

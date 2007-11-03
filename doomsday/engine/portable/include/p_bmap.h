@@ -29,7 +29,7 @@
 #ifndef __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
 #define __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
 
-void            P_InitSubsectorBlockMap(void);
+void            P_BuildSubsectorBlockMap(gamemap_t *map);
 
 void            P_InitPolyBlockMap(gamemap_t *map);
 

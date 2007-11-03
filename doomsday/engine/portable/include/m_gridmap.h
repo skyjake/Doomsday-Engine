@@ -22,25 +22,29 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * de_misc.h: Miscellaneous Services
+/**
+ * m_gridmap.h: Generalized blockmap
  */
 
-#ifndef __DOOMSDAY_MISC__
-#define __DOOMSDAY_MISC__
+#ifndef __DOOMSDAY_MISC_GRIDMAP_H__
+#define __DOOMSDAY_MISC_GRIDMAP_H__
 
-#include "m_misc.h"
-#include "m_args.h"
-#include "m_bams.h"
-#include "m_vector.h"
-#include "m_string.h"
-#include "m_nodepile.h"
-#include "m_filehash.h"
-#include "m_huffman.h"
-#include "m_vector.h"
-#include "m_profiler.h"
-#include "m_md5.h"
-#include "m_linkedlist.h"
-#include "m_gridmap.h"
+typedef void* gridmap_t;
+
+gridmap_t  *M_GridmapCreate(int width, int height, size_t sizeOfBlock,
+                            int memzoneTag,
+                            int (*setBlock)(void *p, void *ctx));
+void        M_GridmapDestroy(gridmap_t *gridmap);
+
+boolean     M_GridmapSetBlock(gridmap_t *gridmap, int x, int y, void *ctx);
+
+// Iteration
+boolean     M_GridmapIterator(gridmap_t *gridmap,
+                              boolean (*func) (void *p, void *ctx),
+                              void *param);
+boolean     M_GridmapBoxIterator(gridmap_t *gridmap,
+                                 int xl, int xh, int yl, int yh,
+                                 boolean (*func) (void *p, void *ctx),
+                                 void *param);
 
 #endif

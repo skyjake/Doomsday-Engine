@@ -473,6 +473,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\m_gridmap.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\m_huffman.c"
 				>
 			</File>
@@ -1461,6 +1465,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\m_filehash.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\m_gridmap.h"
 				>
 			</File>
 			<File

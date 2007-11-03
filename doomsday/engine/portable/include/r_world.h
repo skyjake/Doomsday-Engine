@@ -50,7 +50,6 @@ extern int      rendSkyLight;      // cvar
 
 const float    *R_GetSectorLightColor(sector_t *sector);
 boolean         R_IsSkySurface(surface_t *surface);
-void            R_InitMap(gamemap_t *map);
 void            R_SetupMap(int mode, int flags);
 void            R_InitLinks(gamemap_t *map);
 void            R_SetupFog(float start, float end, float density, float *rgb);
@@ -59,6 +58,7 @@ void            R_SetupSky(ded_mapinfo_t *mapInfo);
 sector_t       *R_GetLinkedSector(subsector_t *startssec, uint plane);
 void            R_UpdatePlanes(void);
 void            R_ClearSectorFlags(void);
+void            R_InitSkyFix(void);
 void            R_SkyFix(boolean fixFloors, boolean fixCeilings);
 void            R_OrderVertices(line_t *line, const sector_t *sector,
                                 vertex_t *verts[2]);

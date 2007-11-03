@@ -534,7 +534,7 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
                 if(polys[i].seg->linedef == line)
                     continue;
 
-                if(line->flags & LINEF_SELFREFHACKROOT)
+                if(line->flags & LINEF_SELFREF)
                     continue;
 
                 if((overlaps[i] & OVERLAP_ALL) == OVERLAP_ALL)
