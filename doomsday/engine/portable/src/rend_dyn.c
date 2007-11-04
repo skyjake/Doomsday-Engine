@@ -1037,6 +1037,8 @@ static void findContacts(lumobj_t *lum)
     int         firstValid = ++validCount;
     int         xl, yl, xh, yh, bx, by;
     contactfinder_data_t light;
+    gamemap_t  *map;
+    fixed_t     bmapOrg[2];
 
     // Use a slightly smaller radius than what the light really is.
     fixed_t radius;
@@ -1058,10 +1060,13 @@ static void findContacts(lumobj_t *lum)
 
     contactSector(lum, light.box, lum->subsector->sector);
 
-    xl = (light.box[BOXLEFT]   - bmaporgx) >> MAPBLOCKSHIFT;
-    xh = (light.box[BOXRIGHT]  - bmaporgx) >> MAPBLOCKSHIFT;
-    yl = (light.box[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
-    yh = (light.box[BOXTOP]    - bmaporgy) >> MAPBLOCKSHIFT;
+    map = P_GetCurrentMap();
+    P_GetBlockmapOrigin(map->blockmap, bmapOrg);
+
+    xl = (light.box[BOXLEFT]   - bmapOrg[VX]) >> MAPBLOCKSHIFT;
+    xh = (light.box[BOXRIGHT]  - bmapOrg[VX]) >> MAPBLOCKSHIFT;
+    yl = (light.box[BOXBOTTOM] - bmapOrg[VY]) >> MAPBLOCKSHIFT;
+    yh = (light.box[BOXTOP]    - bmapOrg[VY]) >> MAPBLOCKSHIFT;
 
     numFinds++;
 

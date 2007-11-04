@@ -102,6 +102,8 @@ typedef struct polyblock_s {
     struct polyblock_s *next;
 } polyblock_t;
 
+typedef void* blockmap_t;
+
 #include "p_maptypes.h"
 
 /*
@@ -169,10 +171,7 @@ typedef struct gamemap_s {
 
     int         numthings;
 
-    long       *blockmaplump;           // offsets in blockmap are from here
-    long       *blockmap;
-    uint        bmapwidth, bmapheight;  // in mapblocks
-    fixed_t     bmaporgx, bmaporgy;     // origin of block map
+    blockmap_t *blockmap;
 
     struct linkmobj_s *blockrings;      // for thing rings
     nodepile_t  thingnodes, linenodes;  // all kinds of wacky links.

@@ -341,10 +341,7 @@ typedef struct {
 } vlight_t;
 
 extern nodeindex_t *linelinks;
-extern long    *blockmaplump;      // offsets in blockmap are from here
-extern long    *blockmap;
-extern int      bmapwidth, bmapheight;  // in mapblocks
-extern fixed_t  bmaporgx, bmaporgy; // origin of block map
+extern blockmap_t *BlockMap;
 extern linkmobj_t *blockrings;
 extern polyblock_t **polyblockmap;
 extern byte    *rejectmatrix;      // for fast sight rejection

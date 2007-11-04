@@ -62,6 +62,16 @@ typedef struct ssecblockmap_s {
     gridmap_t  *gridmap;
 } ssecblockmap_t;
 
+typedef struct bmapblock_s {
+    line_t    **lines;
+} bmapblock_t;
+
+typedef struct bmap_s {
+    fixed_t     origin[2];              // origin of block map
+    uint        width, height;          // in mapblocks
+    gridmap_t  *gridmap;
+} bmap_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -231,7 +241,7 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
                 // Terminate.
                 *ptr = NULL;
 
-                // Link it into the blockmap.
+                // Link it into the ssecblockmap.
                 M_GridmapSetBlock(SSecBlockMap->gridmap, x, y, ssecs);
             }
         }
@@ -248,132 +258,18 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
 #undef BLOCK_HEIGHT
 }
 
-/**
- * Allocates and clears the polyobj blockmap.
- * Normal blockmap must already be initialized when this is called.
- */
-void P_InitPolyBlockMap(gamemap_t *map)
-{
-    size_t         pBMapSize =
-        map->bmapwidth * map->bmapheight * sizeof(polyblock_t *);
-
-    VERBOSE(Con_Message("P_InitPolyBlockMap: w=%i h=%i\n",
-                        map->bmapwidth, map->bmapheight));
-
-    map->polyBlockMap = Z_Calloc(pBMapSize, PU_LEVELSTATIC, 0);
-}
-
-/**
- * The validCount flags are used to avoid checking lines that are marked
- * in multiple mapblocks, so increment validCount before the first call
- * to P_BlockLinesIterator, then make one or more calls to it.
- */
-boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
-                             void *data)
-{
-    uint        i;
-    int         offset;
-    long       *list;
-    line_t     *ld;
-    polyblock_t *polyLink, *polyNext;
-    seg_t     **tempSeg;
-
-    if(x < 0 || y < 0 || x >= bmapwidth || y >= bmapheight)
-        return true;
-
-    offset = y * bmapwidth + x;
-
-    polyLink = polyblockmap[offset];
-    while(polyLink)
-    {
-        polyNext = polyLink->next;
-        if(polyLink->polyobj)
-        {
-            if(polyLink->polyobj->validCount != validCount)
-            {
-                polyLink->polyobj->validCount = validCount;
-                tempSeg = polyLink->polyobj->segs;
-                for(i = 0; i < polyLink->polyobj->numsegs; ++i, tempSeg++)
-                {
-                    ld = (*tempSeg)->linedef;
-                    if(ld->validCount == validCount)
-                        continue;
-
-                    ld->validCount = validCount;
-
-                    if(!func(ld, data))
-                        return false;
-                }
-            }
-        }
-        polyLink = polyNext;
-    }
-
-    offset = *(blockmap + offset);
-
-    for(list = blockmaplump + offset; *list != -1; list++)
-    {
-        if((uint) *list >= numlines)
-            continue; // very odd...
-
-        ld = LINE_PTR(*list);
-
-        if(ld->validCount == validCount)
-            continue;           // line has already been checked
-
-        ld->validCount = validCount;
-
-        if(!func(ld, data))
-            return false;
-    }
-
-    return true;                // everything was checked
-}
-
-/**
- * The validCount flags are used to avoid checking polys
- * that are marked in multiple mapblocks, so increment validCount
- * before the first call, then make one or more calls to it.
- */
-boolean P_BlockPolyobjsIterator(int x, int y,
-                                boolean (*func) (polyobj_t *, void *),
-                                void *data)
-{
-    polyblock_t *polyLink, *polyNext;
-
-    if(x < 0 || y < 0 || x >= bmapwidth || y >= bmapheight)
-        return true;
-
-    polyLink = polyblockmap[y * bmapwidth + x];
-    while(polyLink)
-    {
-        polyNext = polyLink->next;
-        if(polyLink->polyobj)
-        {
-            if(polyLink->polyobj->validCount != validCount)
-            {
-                polyLink->polyobj->validCount = validCount;
-                if(!func(polyLink->polyobj, data))
-                    return false;
-            }
-        }
-        polyLink = polyNext;
-    }
-    return true;
-}
-
-typedef struct iterparams_s {
+typedef struct sseciterparams_s {
     arvec2_t    box;
     sector_t   *sector;
     int         localValidCount;
     boolean   (*func) (subsector_t *, void *);
     void       *param;
-} iterparams_t;
+} sseciterparams_t;
 
 boolean ssecBoxIterator(ssecmapblock_t *block, void *context)
 {
     subsector_t **iter;
-    iterparams_t *args = (iterparams_t*) context;
+    sseciterparams_t *args = (sseciterparams_t*) context;
 
     iter = block->ssecs;
     while(*iter)
@@ -412,7 +308,7 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
                                 void *param)
 {
     static int  localValidCount = 0;
-    iterparams_t    args;
+    sseciterparams_t args;
     int         xl, xh, yl, yh;
 
     // This is only used here.
@@ -449,4 +345,236 @@ boolean P_SubsectorBoxIterator(fixed_t *box, sector_t *sector,
     bounds[1][VY] = FIX2FLT(box[BOXTOP]);
 
     return P_SubsectorBoxIteratorv(bounds, sector, func, parm);
+}
+
+static bmap_t *allocBmap(void)
+{
+    return Z_Calloc(sizeof(bmap_t), PU_LEVELSTATIC, 0);
+}
+
+int setBlockmapBlock(void* p, void* ctx)
+{
+    bmapblock_t *block = (bmapblock_t*) p;
+
+    block->lines = ctx;
+    return true;
+}
+
+blockmap_t *P_BlockmapCreate(fixed_t originX, fixed_t originY, uint width,
+                             uint height)
+{
+    bmap_t     *bmap = allocBmap();
+
+    bmap->origin[VX] = originX;
+    bmap->origin[VY] = originY;
+    bmap->width = width;
+    bmap->height = height;
+
+    bmap->gridmap =
+        M_GridmapCreate(width, height,
+                        sizeof(bmapblock_t), PU_LEVELSTATIC,
+                        setBlockmapBlock);
+
+    VERBOSE(Con_Message
+            ("P_BlockMapCreate: w=%i h=%i\n", width, height));
+
+    return (blockmap_t *) bmap;
+}
+
+void P_BlockmapSetBlock(blockmap_t *blockmap, uint x, uint y, line_t **lines)
+{
+    if(blockmap)
+    {
+        bmap_t     *bmap = (bmap_t*) blockmap;
+        M_GridmapSetBlock(bmap->gridmap, x, y, lines);
+    }
+}
+
+void P_GetBlockmapOrigin(blockmap_t *blockmap, fixed_t *v)
+{
+    if(blockmap)
+    {
+        bmap_t     *bmap = (bmap_t*) blockmap;
+
+        v[VX] = bmap->origin[VX];
+        v[VY] = bmap->origin[VY];
+    }
+}
+
+void P_GetBlockmapSize(blockmap_t *blockmap, uint *v)
+{
+    if(blockmap)
+    {
+        bmap_t     *bmap = (bmap_t*) blockmap;
+
+        v[VX] = bmap->width;
+        v[VY] = bmap->height;
+    }
+}
+
+typedef struct bmapiterparams_s {
+    int         localValidCount;
+    boolean   (*func) (line_t *, void *);
+    void       *param;
+} bmapiterparams_t;
+
+boolean bmapBlockLinesIterator(bmapblock_t *block, void *context)
+{
+    line_t    **iter;
+    bmapiterparams_t *args = (bmapiterparams_t*) context;
+
+    iter = block->lines;
+    while(*iter)
+    {
+        line_t     *line = *iter;
+
+        if(line->validCount != args->localValidCount)
+        {
+            line->validCount = args->localValidCount;
+
+            if(!args->func(line, args->param))
+                return false;
+        }
+
+        *iter++;
+    }
+
+    return true;
+}
+
+boolean P_BlockmapLinesIterator(blockmap_t *blockmap, int x, int y,
+                                boolean (*func) (line_t *, void *),
+                                void *param)
+{
+    bmap_t     *bmap = (bmap_t*) blockmap;
+    int         xl, xh, yl, yh;
+    bmapiterparams_t args;
+
+    // Blocks to check.
+    xl = xh = x;
+    yl = yh = y;
+
+    args.localValidCount = validCount;
+    args.func = func;
+    args.param = param;
+
+    return M_GridmapBoxIterator(bmap->gridmap, xl, xh, yl, yh,
+                                bmapBlockLinesIterator, &args);
+}
+
+/**
+ * The validCount flags are used to avoid checking lines that are marked
+ * in multiple mapblocks, so increment validCount before the first call
+ * to P_BlockLinesIterator, then make one or more calls to it.
+ */
+boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
+                             void *data)
+{
+    if(!P_PolyBlockLinesIterator(x, y, func, data))
+        return false;
+
+    return P_BlockmapLinesIterator(BlockMap, x, y, func, data);
+}
+
+/**
+ * Allocates and clears the polyobj blockmap.
+ * Normal blockmap must already be initialized when this is called.
+ */
+void P_InitPolyBlockMap(gamemap_t *map)
+{
+    size_t      pBMapSize;
+    uint        bmapSize[2];
+
+    P_GetBlockmapSize(map->blockmap, bmapSize);
+
+    pBMapSize = bmapSize[VX] * bmapSize[VY] * sizeof(polyblock_t *);
+
+    VERBOSE(Con_Message("P_InitPolyBlockMap: w=%i h=%i\n",
+                        bmapSize[VX], bmapSize[VY]));
+
+    map->polyBlockMap = Z_Calloc(pBMapSize, PU_LEVELSTATIC, 0);
+}
+
+
+/**
+ * The validCount flags are used to avoid checking polys
+ * that are marked in multiple mapblocks, so increment validCount
+ * before the first call, then make one or more calls to it.
+ */
+boolean P_BlockPolyobjsIterator(int x, int y,
+                                boolean (*func) (polyobj_t *, void *),
+                                void *data)
+{
+    polyblock_t *polyLink, *polyNext;
+    gamemap_t  *map = P_GetCurrentMap();
+    uint        bmapSize[2];
+
+    P_GetBlockmapSize(map->blockmap, bmapSize);
+
+    if(x < 0 || y < 0 || x >= bmapSize[VX] || y >= bmapSize[VY])
+        return true;
+
+    polyLink = polyblockmap[y * bmapSize[VX] + x];
+    while(polyLink)
+    {
+        polyNext = polyLink->next;
+        if(polyLink->polyobj)
+        {
+            if(polyLink->polyobj->validCount != validCount)
+            {
+                polyLink->polyobj->validCount = validCount;
+                if(!func(polyLink->polyobj, data))
+                    return false;
+            }
+        }
+        polyLink = polyNext;
+    }
+    return true;
+}
+
+boolean P_PolyBlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
+                                 void *data)
+{
+    uint        i;
+    int         offset;
+    line_t     *ld;
+    polyblock_t *polyLink, *polyNext;
+    seg_t     **tempSeg;
+    gamemap_t  *map = P_GetCurrentMap();
+    uint        bmapSize[2];
+
+    P_GetBlockmapSize(map->blockmap, bmapSize);
+
+    if(x < 0 || y < 0 || x >= bmapSize[VX] || y >= bmapSize[VY])
+        return true;
+
+    offset = y * bmapSize[VX] + x;
+
+    polyLink = polyblockmap[offset];
+    while(polyLink)
+    {
+        polyNext = polyLink->next;
+        if(polyLink->polyobj)
+        {
+            if(polyLink->polyobj->validCount != validCount)
+            {
+                polyLink->polyobj->validCount = validCount;
+                tempSeg = polyLink->polyobj->segs;
+                for(i = 0; i < polyLink->polyobj->numsegs; ++i, tempSeg++)
+                {
+                    ld = (*tempSeg)->linedef;
+                    if(ld->validCount == validCount)
+                        continue;
+
+                    ld->validCount = validCount;
+
+                    if(!func(ld, data))
+                        return false;
+                }
+            }
+        }
+        polyLink = polyNext;
+    }
+
+    return true;
 }

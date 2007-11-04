@@ -29,18 +29,8 @@
 #ifndef __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
 #define __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
 
+// Subsector blockmap:
 void            P_BuildSubsectorBlockMap(gamemap_t *map);
-
-void            P_InitPolyBlockMap(gamemap_t *map);
-
-boolean         P_BlockLinesIterator(int x, int y,
-                                     boolean (*func) (line_t *, void *),
-                                     void *data);
-
-boolean         P_BlockPolyobjsIterator(int x, int y,
-                                        boolean (*func) (polyobj_t *, void *),
-                                        void *data);
-
 boolean         P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
                                         boolean (*func) (subsector_t *,
                                                          void *), void *parm);
@@ -49,4 +39,28 @@ boolean         P_SubsectorBoxIterator(fixed_t *box, sector_t *sector,
                                        boolean (*func) (subsector_t *, void *),
                                        void *parm);
 
+// Linedefs blockmap:
+blockmap_t     *P_BlockmapCreate(fixed_t originX, fixed_t originY,
+                                 uint width, uint height);
+void            P_BlockmapSetBlock(blockmap_t *bmap, uint x, uint y,
+                                   line_t **lines);
+
+void            P_GetBlockmapOrigin(blockmap_t *bmap, fixed_t *v);
+void            P_GetBlockmapSize(blockmap_t *bmap, uint *v);
+boolean         P_BlockmapLinesIterator(blockmap_t *bmap, int x, int y,
+                                        boolean (*func) (line_t *, void *),
+                                        void *data);
+
+// Polyobject blockmap:
+void            P_InitPolyBlockMap(gamemap_t *map);
+boolean         P_BlockPolyobjsIterator(int x, int y,
+                                        boolean (*func) (polyobj_t *, void *),
+                                        void *data);
+boolean         P_PolyBlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
+                                         void *data);
+
+// Iterate the polyobj blockmap, then the regular blockmap.
+boolean         P_BlockLinesIterator(int x, int y,
+                                     boolean (*func) (line_t *, void *),
+                                     void *data);
 #endif

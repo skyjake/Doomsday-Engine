@@ -1105,9 +1105,10 @@ void P_GetSectorBounds(sector_t *sec, float *min, float *max)
 /**
  * \pre Sector bounds must be setup before this is called!
  */
-static void updateSectorBlockBox(sector_t *sec)
+static void updateSectorBlockBox(sector_t *sec, fixed_t bmapOrg[2],
+                                 uint bmapSize[2])
 {
-    int         block;
+    uint        block;
     fixed_t     bbox[4];
 
     if(!sec)
@@ -1119,19 +1120,19 @@ static void updateSectorBlockBox(sector_t *sec)
     bbox[BOXRIGHT] = FLT2FIX(sec->bounds[BOXRIGHT]);
 
     // Determine sector blockmap blocks from the bounding box.
-    block = (bbox[BOXTOP] - bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
-    block = (block >= bmapheight? bmapheight - 1 : block);
+    block = (bbox[BOXTOP] - bmapOrg[VY] + MAXRADIUS) >> MAPBLOCKSHIFT;
+    block = (block >= bmapSize[VY]? bmapSize[VY] - 1 : block);
     sec->blockbox[BOXTOP] = block;
 
-    block = (bbox[BOXBOTTOM] - bmaporgy - MAXRADIUS) >> MAPBLOCKSHIFT;
+    block = (bbox[BOXBOTTOM] - bmapOrg[VY] - MAXRADIUS) >> MAPBLOCKSHIFT;
     block = (block < 0? 0 : block);
     sec->blockbox[BOXBOTTOM] = block;
 
-    block = (bbox[BOXRIGHT] - bmaporgx + MAXRADIUS) >> MAPBLOCKSHIFT;
-    block = (block >= bmapwidth? bmapwidth - 1 : block);
+    block = (bbox[BOXRIGHT] - bmapOrg[VX] + MAXRADIUS) >> MAPBLOCKSHIFT;
+    block = (block >= bmapSize[VX]? bmapSize[VX] - 1 : block);
     sec->blockbox[BOXRIGHT] = block;
 
-    block = (bbox[BOXLEFT] - bmaporgx - MAXRADIUS) >> MAPBLOCKSHIFT;
+    block = (bbox[BOXLEFT] - bmapOrg[VX] - MAXRADIUS) >> MAPBLOCKSHIFT;
     block = (block < 0? 0 : block);
     sec->blockbox[BOXLEFT] = block;
 }
@@ -1162,12 +1163,15 @@ static void initMapBlockRings(gamemap_t *map)
 {
     uint        i;
     size_t      size;
+    uint        bmapSize[2];
+
+    P_GetBlockmapSize(map->blockmap, bmapSize);
 
     // Clear out mobj rings.
-    size = sizeof(*map->blockrings) * map->bmapwidth * map->bmapheight;
+    size = sizeof(*map->blockrings) * bmapSize[VX] * bmapSize[VY];
     map->blockrings = Z_Calloc(size, PU_LEVEL, 0);
 
-    for(i = 0; i < map->bmapwidth * map->bmapheight; ++i)
+    for(i = 0; i < bmapSize[VX] * bmapSize[VY]; ++i)
         map->blockrings[i].next =
             map->blockrings[i].prev = (mobj_t *) &map->blockrings[i];
 }
@@ -1367,6 +1371,11 @@ static void buildSectorLineLists(gamemap_t *map)
 static void finishSectors(gamemap_t *map)
 {
     uint        i;
+    fixed_t     bmapOrg[2];
+    uint        bmapSize[2];
+
+    P_GetBlockmapOrigin(map->blockmap, bmapOrg);
+    P_GetBlockmapSize(map->blockmap, bmapSize);
 
     for(i = 0; i < map->numsectors; ++i)
     {
@@ -1386,7 +1395,7 @@ static void finishSectors(gamemap_t *map)
         }
 
         updateSectorBounds(sec);
-        updateSectorBlockBox(sec);
+        updateSectorBlockBox(sec, bmapOrg, bmapSize);
 
         P_GetSectorBounds(sec, min, max);
 
@@ -1439,12 +1448,14 @@ static void finalizeMapData(gamemap_t *map)
     buildSectorLineLists(map);
 
     finishLineDefs(map);
-    finishSectors(map);
     finishSides(map);
 
     if(mustCreateBlockMap)
+    {
         DAM_BuildBlockMap(map);
+    }
 
+    finishSectors(map);
     initMapBlockRings(map);
 
     // How much time did we spend?
@@ -2469,12 +2480,11 @@ boolean DAM_PrintMapErrors(archivedmap_t *map, boolean silent)
  */
 static boolean loadBlockMap(gamemap_t* map, maplumpinfo_t* maplump)
 {
-    long        i;
     long        count = (maplump->length / 2);
     boolean     generateBMap = (createBMap == 2)? true : false;
 
     // \kludge: We should be able to patch up an older blockmap but for now
-    // force a completely blockmap build.
+    // force a complete blockmap build.
     generateBMap = true;
 
     // Do we have a lump to process?
@@ -2497,39 +2507,84 @@ static boolean loadBlockMap(gamemap_t* map, maplumpinfo_t* maplump)
          * No, the existing data is valid - so load it in.
          * Data in PWAD is little endian.
 	     */
-        short      *wadBlockMapLump;
+        blockmap_t *blockmap;
+        uint        x, y, width, height;
+        fixed_t     originX, originY;
+        long       *blockmapExpanded;
 
-        wadBlockMapLump =
+        {
+        uint        n;
+        long        i;
+        short      *blockmapLump;
+
+        blockmapLump =
             (short *) W_CacheLumpNum(maplump->lumpNum, PU_STATIC);
 
-        map->blockmaplump =
-            Z_Malloc(sizeof(*map->blockmaplump) * count, PU_LEVELSTATIC, 0);
+        originX = ((fixed_t) SHORT(blockmapLump[0])) << FRACBITS;
+        originY = ((fixed_t) SHORT(blockmapLump[1])) << FRACBITS;
+        width  = ((SHORT(blockmapLump[2])) & 0xffff);
+        height = ((SHORT(blockmapLump[3])) & 0xffff);
 
         /**
-         * Expand WAD blockmap into larger internal one, by treating all
-         * offsets except -1 as unsigned and zero-extending them. This
-         * potentially doubles the size of blockmaps allowed because DOOM
-         * originally considered the offsets as always signed.
+         * Expand WAD blockmap into a larger one, by treating all offsets
+         * except -1 as unsigned and zero-extending them. This potentially
+         * doubles the size of blockmaps allowed because DOOM originally
+         * considered the offsets as always signed.
 	     */
-        map->blockmaplump[0] = SHORT(wadBlockMapLump[0]);
-        map->blockmaplump[1] = SHORT(wadBlockMapLump[1]);
-        map->blockmaplump[2] = (long)(SHORT(wadBlockMapLump[2])) & 0xffff;
-        map->blockmaplump[3] = (long)(SHORT(wadBlockMapLump[3])) & 0xffff;
+        blockmapExpanded = M_Malloc(sizeof(long) * (count - 4));
 
-        for(i = 4; i < count; ++i)
+        n = 4;
+        for(i = 0; i < count - 4; ++i)
         {
-            short t = SHORT(wadBlockMapLump[i]);
-            map->blockmaplump[i] = t == -1? -1 : (long) t & 0xffff;
+            short t = SHORT(blockmapLump[n]);
+            blockmapExpanded[i] = (t == -1? -1 : (long) t & 0xffff);
+        }
         }
 
-        map->bmaporgx = map->blockmaplump[0] << FRACBITS;
-        map->bmaporgy = map->blockmaplump[1] << FRACBITS;
-        map->bmapwidth = map->blockmaplump[2];
-        map->bmapheight = map->blockmaplump[3];
+        /**
+         * Finally, convert the blockmap into our internal representation.
+         */
+        blockmap = P_BlockmapCreate(originX, originY, width, height);
 
-        map->blockmap = map->blockmaplump + 4;
+        for(y = 0; y < height; ++y)
+            for(x = 0; x < width; ++x)
+            {
+                int         offset = *(blockmapExpanded + (y * width + x));
+                long       *list;
+                uint        count;
 
-        Z_Free(wadBlockMapLump);
+                // Count the number of lines in this block.
+                count = 0;
+                for(list = blockmapExpanded + offset; *list != -1; list++)
+                    count++;
+
+                if(count > 0)
+                {
+                    line_t    **lines, **ptr;
+
+                    // A NULL-terminated array of pointers to lines.
+                    lines = Z_Malloc((count + 1) * sizeof(line_t *),
+                                    PU_LEVELSTATIC, NULL);
+
+                    // Copy pointers to the array, delete the nodes.
+                    ptr = lines;
+                    for(list = blockmapExpanded + offset;
+                        *list != -1; list++)
+                    {
+                        *ptr++ = &map->lines[*list];
+                    }
+                    // Terminate.
+                    *ptr = NULL;
+
+                    // Link it into the BlockMap.
+                    P_BlockmapSetBlock(blockmap, x, y, lines);
+                }
+            }
+
+        // Don't need this anymore.
+        M_Free(blockmapExpanded);
+
+        map->blockmap = blockmap;
     }
 
     return true;

@@ -304,8 +304,6 @@ enum {
 #define PO_LINE_START 1            // polyobj line start special
 #define PO_LINE_EXPLICIT 5
 
-#define PolyBlockMap    ((polyblock_t**) *gi.polyblockmap)
-
 extern polyobj_t *polyobjs;        // list of all poly-objects on the level
 extern int      po_NumPolyobjs;
 

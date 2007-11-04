@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -97,28 +97,31 @@ boolean PTR_SightTraverse(intercept_t *in)
     return true;                // keep going
 }
 
-boolean P_SightBlockLinesIterator(int x, int y)
+boolean P_SightPolyBlockLinesIterator(int x, int y)
 {
     int         offset;
-    long       *list;
     line_t     *ld;
     int         s[2];
     divline_t   dl;
     polyblock_t *polyLink;
     seg_t     **segList;
     uint        i;
+    gamemap_t  *map = P_GetCurrentMap();
+    uint        bmapSize[2];
 
-    if(x < 0 || y < 0 || x >= bmapwidth || y >= bmapheight)
+    P_GetBlockmapSize(map->blockmap, bmapSize);
+
+    if(x >= bmapSize[VX] || y >= bmapSize[VY])
     {
 #if _DEBUG
         Con_Message
-            ("P_SightBlockLinesIterator: x=%i, y=%i outside blockmap.\n", x,
+            ("P_SightPolyBlockLinesIterator: x=%i, y=%i outside blockmap.\n", x,
              y);
 #endif
         return false;
     }
 
-    offset = y * bmapwidth + x;
+    offset = y * bmapSize[VX] + x;
 
     polyLink = polyblockmap[offset];
     while(polyLink)
@@ -165,42 +168,49 @@ boolean P_SightBlockLinesIterator(int x, int y)
         polyLink = polyLink->next;
     }
 
-    offset = *(blockmap + offset);
+    return true;
+}
 
-    for(list = blockmaplump + offset; *list != -1; list++)
-    {
-        ld = LINE_PTR(*list);
+boolean PIT_CheckSightLine(line_t *line, void *data)
+{
+    int         s[2];
+    divline_t   dl;
 
-        if(ld->validCount == validCount)
-            continue;           // line has already been checked
+    s[0] = P_PointOnDivlineSide(FLT2FIX(line->L_v1pos[VX]),
+                                FLT2FIX(line->L_v1pos[VY]), &strace);
+    s[1] = P_PointOnDivlineSide(FLT2FIX(line->L_v2pos[VX]),
+                                FLT2FIX(line->L_v2pos[VY]), &strace);
+    if(s[0] == s[1])
+        return true; // Line isn't crossed, continue iteration.
 
-        ld->validCount = validCount;
+    P_MakeDivline(line, &dl);
+    s[0] = P_PointOnDivlineSide(strace.pos[VX], strace.pos[VY], &dl);
+    s[1] = P_PointOnDivlineSide(strace.pos[VX] + strace.dx, strace.pos[VY] + strace.dy,
+                                &dl);
+    if(s[0] == s[1])
+        return true; // Line isn't crossed, continue iteration.
 
-        s[0] = P_PointOnDivlineSide(FLT2FIX(ld->L_v1pos[VX]),
-                                    FLT2FIX(ld->L_v1pos[VY]), &strace);
-        s[1] = P_PointOnDivlineSide(FLT2FIX(ld->L_v2pos[VX]),
-                                    FLT2FIX(ld->L_v2pos[VY]), &strace);
-        if(s[0] == s[1])
-            continue;           // line isn't crossed
+    // Try to early out the check.
+    if(!line->L_backside)
+        return false; // Stop iteration.
 
-        P_MakeDivline(ld, &dl);
-        s[0] = P_PointOnDivlineSide(strace.pos[VX], strace.pos[VY], &dl);
-        s[1] = P_PointOnDivlineSide(strace.pos[VX] + strace.dx, strace.pos[VY] + strace.dy,
-                                  &dl);
-        if(s[0] == s[1])
-            continue;           // line isn't crossed
+    // Store the line for later intersection testing.
+    P_AddIntercept(0, true, line);
 
-        // try to early out the check
-        if(!ld->L_backside)
-            return false;       // stop checking
+    return true; // Continue iteration.
+}
 
-        // store the line for later intersection testing
-        /*intercept_p->d.line = ld;
-           intercept_p++; */
-        P_AddIntercept(0, true, ld);
-    }
+boolean P_SightBlockmapLinesIterator(int x, int y)
+{
+    return P_BlockmapLinesIterator(BlockMap, x, y, PIT_CheckSightLine, NULL);
+}
 
-    return true;                // everything was checked
+boolean P_SightBlockLinesIterator(int x, int y)
+{
+    if(!P_SightPolyBlockLinesIterator(x, y))
+        return false;
+
+    return P_SightBlockmapLinesIterator(x, y);
 }
 
 /*
@@ -215,35 +225,41 @@ boolean P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
     fixed_t xintercept, yintercept;
     int     mapx, mapy, mapxstep, mapystep;
     int     count;
+    gamemap_t *map = P_GetCurrentMap();
+    fixed_t bmapOrigin[2];
+    uint    bmapSize[2];
+
+    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
+    P_GetBlockmapSize(map->blockmap, bmapSize);
 
     validCount++;
     //intercept_p = intercepts;
     P_ClearIntercepts();
 
-    if(((x1 - bmaporgx) & (MAPBLOCKSIZE - 1)) == 0)
-        x1 += FRACUNIT;         // don't side exactly on a line
-    if(((y1 - bmaporgy) & (MAPBLOCKSIZE - 1)) == 0)
-        y1 += FRACUNIT;         // don't side exactly on a line
+    if(((x1 - bmapOrigin[VX]) & (MAPBLOCKSIZE - 1)) == 0)
+        x1 += FRACUNIT;         // Don't side exactly on a line.
+    if(((y1 - bmapOrigin[VY]) & (MAPBLOCKSIZE - 1)) == 0)
+        y1 += FRACUNIT;         // Don't side exactly on a line.
 
     strace.pos[VX] = x1;
     strace.pos[VY] = y1;
     strace.dx = x2 - x1;
     strace.dy = y2 - y1;
 
-    x1 -= bmaporgx;
-    y1 -= bmaporgy;
+    x1 -= bmapOrigin[VX];
+    y1 -= bmapOrigin[VY];
     xt1 = x1 >> MAPBLOCKSHIFT;
     yt1 = y1 >> MAPBLOCKSHIFT;
 
-    x2 -= bmaporgx;
-    y2 -= bmaporgy;
+    x2 -= bmapOrigin[VX];
+    y2 -= bmapOrigin[VY];
     xt2 = x2 >> MAPBLOCKSHIFT;
     yt2 = y2 >> MAPBLOCKSHIFT;
 
     // points should never be out of bounds, but check once instead of
     // each block
-    if(xt1 < 0 || yt1 < 0 || xt1 >= bmapwidth || yt1 >= bmapheight || xt2 < 0
-       || yt2 < 0 || xt2 >= bmapwidth || yt2 >= bmapheight)
+    if(xt1 < 0 || yt1 < 0 || xt1 >= bmapSize[VX] || yt1 >= bmapSize[VY] ||
+       xt2 < 0 || yt2 < 0 || xt2 >= bmapSize[VX] || yt2 >= bmapSize[VY])
         return false;
 
     if(xt2 > xt1)

@@ -272,6 +272,10 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     subsector_t *newsubsec;
     checkpos_data_t data;
     boolean result = true;
+    gamemap_t  *map = P_GetCurrentMap();
+    fixed_t     bmapOrigin[2];
+
+    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
 
     blockingMobj = NULL;
     thing->onmobj = NULL;
@@ -305,10 +309,10 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     // because mobj_ts are grouped into mapblocks
     // based on their origin point, and can overlap
     // into adjacent blocks by up to MAXRADIUS units.
-    xl = (data.box[BOXLEFT]   - bmaporgx - MAXRADIUS) >> MAPBLOCKSHIFT;
-    xh = (data.box[BOXRIGHT]  - bmaporgx + MAXRADIUS) >> MAPBLOCKSHIFT;
-    yl = (data.box[BOXBOTTOM] - bmaporgy - MAXRADIUS) >> MAPBLOCKSHIFT;
-    yh = (data.box[BOXTOP]    - bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
+    xl = (data.box[BOXLEFT]   - bmapOrigin[VX] - MAXRADIUS) >> MAPBLOCKSHIFT;
+    xh = (data.box[BOXRIGHT]  - bmapOrigin[VX] + MAXRADIUS) >> MAPBLOCKSHIFT;
+    yl = (data.box[BOXBOTTOM] - bmapOrigin[VY] - MAXRADIUS) >> MAPBLOCKSHIFT;
+    yh = (data.box[BOXTOP]    - bmapOrigin[VY] + MAXRADIUS) >> MAPBLOCKSHIFT;
 
     if(!dontHitMobjs)
     {
@@ -322,10 +326,10 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     }
 
     // check lines
-    xl = (data.box[BOXLEFT]   - bmaporgx) >> MAPBLOCKSHIFT;
-    xh = (data.box[BOXRIGHT]  - bmaporgx) >> MAPBLOCKSHIFT;
-    yl = (data.box[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
-    yh = (data.box[BOXTOP]    - bmaporgy) >> MAPBLOCKSHIFT;
+    xl = (data.box[BOXLEFT]   - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
+    xh = (data.box[BOXRIGHT]  - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
+    yl = (data.box[BOXBOTTOM] - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
+    yh = (data.box[BOXTOP]    - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
 
     for(bx = xl; bx <= xh; ++bx)
         for(by = yl; by <= yh; ++by)

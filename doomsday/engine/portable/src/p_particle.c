@@ -1004,10 +1004,17 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     mbox[BOXLEFT]   = MIN_OF(x, pt->pos[VX]) - st->radius;
 
     // Iterate the lines in the contacted blocks.
-    xl = (mbox[BOXLEFT]   - bmaporgx) >> MAPBLOCKSHIFT;
-    xh = (mbox[BOXRIGHT]  - bmaporgx) >> MAPBLOCKSHIFT;
-    yl = (mbox[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
-    yh = (mbox[BOXTOP]    - bmaporgy) >> MAPBLOCKSHIFT;
+    {
+    gamemap_t  *map = P_GetCurrentMap();
+    fixed_t     bmapOrigin[2];
+
+    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
+
+    xl = (mbox[BOXLEFT]   - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
+    xh = (mbox[BOXRIGHT]  - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
+    yl = (mbox[BOXBOTTOM] - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
+    yh = (mbox[BOXTOP]    - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
+    }
 
     validCount++;
     for(bx = xl; bx <= xh; ++bx)

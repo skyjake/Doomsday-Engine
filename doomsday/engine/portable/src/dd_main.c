@@ -930,11 +930,33 @@ int DD_GetInteger(int ddvalue)
             return numthings;
 
         case DD_BLOCKMAP_WIDTH:
-            return bmapwidth;
-
+        {
+            gamemap_t *map = P_GetCurrentMap();
+            if(map)
+            {
+                uint        bmapSize[2];
+                P_GetBlockmapSize(map->blockmap, bmapSize);
+                return bmapSize[VX];
+            }
+            else
+            {
+                return -1;
+            }
+        }
         case DD_BLOCKMAP_HEIGHT:
-            return bmapheight;
-
+        {
+            gamemap_t *map = P_GetCurrentMap();
+            if(map)
+            {
+                uint        bmapSize[2];
+                P_GetBlockmapSize(map->blockmap, bmapSize);
+                return bmapSize[VY];
+            }
+            else
+            {
+                return -1;
+            }
+        }
         case DD_DYNLIGHT_TEXTURE:
             return (int) GL_PrepareLSTexture(LST_DYNAMIC, NULL);
 
@@ -1085,10 +1107,29 @@ void* DD_GetVariable(int ddvalue)
             break;
         }
         case DD_BLOCKMAP_ORIGIN_X:
-            return &bmaporgx;
-
+        {
+            gamemap_t  *map = P_GetCurrentMap();
+            if(map)
+            {
+                fixed_t     bmapOrigin[2];
+                P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
+                return &bmapOrigin[VX];
+            }
+            else
+                return NULL;
+        }
         case DD_BLOCKMAP_ORIGIN_Y:
-            return &bmaporgy;
+        {
+            gamemap_t  *map = P_GetCurrentMap();
+            if(map)
+            {
+                fixed_t     bmapOrigin[2];
+                P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
+                return &bmapOrigin[VY];
+            }
+            else
+                return NULL;
+        }
 
 #ifdef WIN32
         case DD_WINDOW_HANDLE:

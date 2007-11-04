@@ -349,12 +349,17 @@ mobj_t *P_GetBlockRootIdx(int index)
  */
 mobj_t *P_GetBlockRoot(int blockx, int blocky)
 {
+    gamemap_t  *map = P_GetCurrentMap();
+    uint        bmapSize[2];
+
+    P_GetBlockmapSize(map->blockmap, bmapSize);
+
     // We must be in the block map range.
-    if(blockx < 0 || blocky < 0 || blockx >= bmapwidth || blocky >= bmapheight)
+    if(blockx < 0 || blocky < 0 || blockx >= bmapSize[VX] || blocky >= bmapSize[VY])
     {
         return NULL;
     }
-    return (mobj_t *) (blockrings + (blocky * bmapwidth + blockx));
+    return (mobj_t *) (blockrings + (blocky * bmapSize[VX] + blockx));
 }
 
 /**
@@ -362,8 +367,13 @@ mobj_t *P_GetBlockRoot(int blockx, int blocky)
  */
 mobj_t *P_GetBlockRootXY(int x, int y)
 {
-    return P_GetBlockRoot((x - bmaporgx) >> MAPBLOCKSHIFT,
-                          (y - bmaporgy) >> MAPBLOCKSHIFT);
+    gamemap_t  *map = P_GetCurrentMap();
+    fixed_t     bmapOrigin[2];
+
+    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
+
+    return P_GetBlockRoot((x - bmapOrigin[VX]) >> MAPBLOCKSHIFT,
+                          (y - bmapOrigin[VY]) >> MAPBLOCKSHIFT);
 }
 
 /**
@@ -493,6 +503,10 @@ void P_LinkToLines(mobj_t *thing)
 {
     int     xl, yl, xh, yh, bx, by;
     linelinker_data_t data;
+    gamemap_t  *map = P_GetCurrentMap();
+    fixed_t     bmapOrigin[2];
+
+    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
 
     // Get a new root node.
     thing->lineroot = NP_New(thingnodes, NP_ROOT_NODE);
@@ -504,10 +518,10 @@ void P_LinkToLines(mobj_t *thing)
     data.box[BOXRIGHT]  = thing->pos[VX] + thing->radius;
     data.box[BOXLEFT]   = thing->pos[VX] - thing->radius;
 
-    xl = (data.box[BOXLEFT]   - bmaporgx) >> MAPBLOCKSHIFT;
-    xh = (data.box[BOXRIGHT]  - bmaporgx) >> MAPBLOCKSHIFT;
-    yl = (data.box[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
-    yh = (data.box[BOXTOP]    - bmaporgy) >> MAPBLOCKSHIFT;
+    xl = (data.box[BOXLEFT]   - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
+    xh = (data.box[BOXRIGHT]  - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
+    yl = (data.box[BOXBOTTOM] - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
+    yh = (data.box[BOXTOP]    - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
 
     validCount++;
     for(bx = xl; bx <= xh; ++bx)
@@ -843,6 +857,10 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
     fixed_t     xintercept, yintercept;
     int         mapx, mapy, mapxstep, mapystep;
     uint        count;
+    gamemap_t  *map = P_GetCurrentMap();
+    fixed_t     bmapOrigin[2];
+
+    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
 
     earlyout = flags & PT_EARLYOUT;
 
@@ -850,22 +868,22 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
     //intercept_p = intercepts;
     P_ClearIntercepts();
 
-    if(((x1 - bmaporgx) & (MAPBLOCKSIZE - 1)) == 0)
+    if(((x1 - bmapOrigin[VX]) & (MAPBLOCKSIZE - 1)) == 0)
         x1 += FRACUNIT;         // don't side exactly on a line
-    if(((y1 - bmaporgy) & (MAPBLOCKSIZE - 1)) == 0)
+    if(((y1 - bmapOrigin[VY]) & (MAPBLOCKSIZE - 1)) == 0)
         y1 += FRACUNIT;         // don't side exactly on a line
     trace.pos[VX] = x1;
     trace.pos[VY] = y1;
     trace.dx = x2 - x1;
     trace.dy = y2 - y1;
 
-    x1 -= bmaporgx;
-    y1 -= bmaporgy;
+    x1 -= bmapOrigin[VX];
+    y1 -= bmapOrigin[VY];
     t1[VX] = x1 >> MAPBLOCKSHIFT;
     t1[VY] = y1 >> MAPBLOCKSHIFT;
 
-    x2 -= bmaporgx;
-    y2 -= bmaporgy;
+    x2 -= bmapOrigin[VX];
+    y2 -= bmapOrigin[VY];
     t2[VX] = x2 >> MAPBLOCKSHIFT;
     t2[VY] = y2 >> MAPBLOCKSHIFT;
 
@@ -952,6 +970,11 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
 
 void P_PointToBlock(fixed_t x, fixed_t y, int *bx, int *by)
 {
-    *bx = (x - bmaporgx) >> MAPBLOCKSHIFT;
-    *by = (y - bmaporgy) >> MAPBLOCKSHIFT;
+    gamemap_t  *map = P_GetCurrentMap();
+    fixed_t     bmapOrigin[2];
+
+    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
+
+    *bx = (x - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
+    *by = (y - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
 }

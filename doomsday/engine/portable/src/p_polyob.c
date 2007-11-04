@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_polyob.c: Polygon Objects
  *
  * Polyobj translation and rotation.
- * Based on Hexen by Raven Software.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -400,14 +399,18 @@ void PO_UnLinkPolyobj(polyobj_t * po)
     polyblock_t *link;
     int     i, j;
     int     index;
+    gamemap_t *map = P_GetCurrentMap();
+    uint    bmapSize[2];
+
+    P_GetBlockmapSize(map->blockmap, bmapSize);
 
     // remove the polyobj from each blockmap section
     for(j = po->bbox[BOXBOTTOM]; j <= po->bbox[BOXTOP]; ++j)
     {
-        index = j * bmapwidth;
+        index = j * bmapSize[VX];
         for(i = po->bbox[BOXLEFT]; i <= po->bbox[BOXRIGHT]; ++i)
         {
-            if(i >= 0 && i < bmapwidth && j >= 0 && j < bmapheight)
+            if(i >= 0 && i < bmapSize[VX] && j >= 0 && j < bmapSize[VY])
             {
                 link = polyblockmap[index + i];
                 while(link != NULL && link->polyobj != po)
@@ -434,6 +437,12 @@ void PO_LinkPolyobj(polyobj_t * po)
     uint        s;
     int         i, j;
     vertex_t   *vtx;
+    gamemap_t  *map = P_GetCurrentMap();
+    fixed_t     bmapOrigin[2];
+    uint        bmapSize[2];
+
+    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
+    P_GetBlockmapSize(map->blockmap, bmapSize);
 
     // calculate the polyobj bbox
     tempSeg = po->segs;
@@ -461,21 +470,23 @@ void PO_LinkPolyobj(polyobj_t * po)
             bottomY = FLT2FIX(vtx->V_pos[VY]);
         }
     }
-    po->bbox[BOXRIGHT]  = (rightX  - bmaporgx) >> MAPBLOCKSHIFT;
-    po->bbox[BOXLEFT]   = (leftX   - bmaporgx) >> MAPBLOCKSHIFT;
-    po->bbox[BOXTOP]    = (topY    - bmaporgy) >> MAPBLOCKSHIFT;
-    po->bbox[BOXBOTTOM] = (bottomY - bmaporgy) >> MAPBLOCKSHIFT;
-    // add the polyobj to each blockmap section
-    for(j = po->bbox[BOXBOTTOM] * bmapwidth; j <= po->bbox[BOXTOP] * bmapwidth;
-        j += bmapwidth)
+
+    po->bbox[BOXRIGHT]  = (rightX  - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
+    po->bbox[BOXLEFT]   = (leftX   - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
+    po->bbox[BOXTOP]    = (topY    - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
+    po->bbox[BOXBOTTOM] = (bottomY - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
+
+    // Add the polyobj to each blockmap section.
+    for(j = po->bbox[BOXBOTTOM] * bmapSize[VX]; j <= po->bbox[BOXTOP] * bmapSize[VX];
+        j += bmapSize[VX])
     {
         for(i = po->bbox[BOXLEFT]; i <= po->bbox[BOXRIGHT]; ++i)
         {
-            if(i >= 0 && i < bmapwidth && j >= 0 && j < bmapheight * bmapwidth)
+            if(i >= 0 && i < bmapSize[VX] && j >= 0 && j < bmapSize[VY] * bmapSize[VX])
             {
                 link = &polyblockmap[j + i];
                 if(!(*link))
-                {               // Create a new link at the current block cell
+                {   // Create a new link at the current block cell.
                     *link = Z_Malloc(sizeof(polyblock_t), PU_LEVEL, 0);
                     (*link)->next = NULL;
                     (*link)->prev = NULL;
@@ -490,6 +501,7 @@ void PO_LinkPolyobj(polyobj_t * po)
                         tempLink = tempLink->next;
                     }
                 }
+
                 if(tempLink->polyobj == NULL)
                 {
                     tempLink->polyobj = po;
@@ -504,7 +516,7 @@ void PO_LinkPolyobj(polyobj_t * po)
                     tempLink->next->polyobj = po;
                 }
             }
-            // else, don't link the polyobj, since it's off the map
+            // else Don't link the polyobj (since it's off the map).
         }
     }
 }
@@ -517,26 +529,32 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po)
     int         tmbbox[4];
     line_t     *ld;
     boolean     blocked;
+    gamemap_t  *map = P_GetCurrentMap();
+    fixed_t     bmapOrigin[2];
+    uint        bmapSize[2];
+
+    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
+    P_GetBlockmapSize(map->blockmap, bmapSize);
 
     ld = seg->linedef;
 
-    top    = (ld->bbox[BOXTOP]    - bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
-    bottom = (ld->bbox[BOXBOTTOM] - bmaporgy - MAXRADIUS) >> MAPBLOCKSHIFT;
-    left   = (ld->bbox[BOXLEFT]   - bmaporgx - MAXRADIUS) >> MAPBLOCKSHIFT;
-    right  = (ld->bbox[BOXRIGHT]  - bmaporgx + MAXRADIUS) >> MAPBLOCKSHIFT;
+    top    = (ld->bbox[BOXTOP]    - bmapOrigin[VY] + MAXRADIUS) >> MAPBLOCKSHIFT;
+    bottom = (ld->bbox[BOXBOTTOM] - bmapOrigin[VY] - MAXRADIUS) >> MAPBLOCKSHIFT;
+    left   = (ld->bbox[BOXLEFT]   - bmapOrigin[VX] - MAXRADIUS) >> MAPBLOCKSHIFT;
+    right  = (ld->bbox[BOXRIGHT]  - bmapOrigin[VX] + MAXRADIUS) >> MAPBLOCKSHIFT;
 
     blocked = false;
 
-    bottom = bottom < 0 ? 0 : bottom;
-    bottom = bottom >= bmapheight ? bmapheight - 1 : bottom;
-    top    = top    < 0 ? 0 : top;
-    top    = top    >= bmapheight ? bmapheight - 1 : top;
-    left   = left   < 0 ? 0 : left;
-    left   = left   >= bmapwidth ?  bmapwidth  - 1 : left;
-    right  = right  < 0 ? 0 : right;
-    right  = right  >= bmapwidth ?  bmapwidth  - 1 : right;
+    bottom = (bottom < 0? 0 : bottom);
+    bottom = (bottom >= bmapSize[VY]? bmapSize[VY] - 1 : bottom);
+    top    = (top    < 0? 0 : top);
+    top    = (top    >= bmapSize[VY]? bmapSize[VY] - 1 : top);
+    left   = (left   < 0? 0 : left);
+    left   = (left   >= bmapSize[VX]?  bmapSize[VX]  - 1 : left);
+    right  = (right  < 0? 0 : right);
+    right  = (right  >= bmapSize[VX]?  bmapSize[VX]  - 1 : right);
 
-    for(j = bottom * bmapwidth; j <= top * bmapwidth; j += bmapwidth)
+    for(j = bottom * bmapSize[VX]; j <= top * bmapSize[VX]; j += bmapSize[VX])
     {
         for(i = left; i <= right; ++i)
         {

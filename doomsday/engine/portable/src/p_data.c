@@ -95,11 +95,7 @@ side_t     *sides;
 // mapthings are actually stored & handled game-side
 int         numthings;
 
-long       *blockmaplump;           // offsets in blockmap are from here
-long       *blockmap;
-
-int         bmapwidth, bmapheight;  // in mapblocks
-fixed_t     bmaporgx, bmaporgy;     // origin of block map
+blockmap_t *BlockMap;
 linkmobj_t *blockrings;             // for thing rings
 
 byte       *rejectmatrix;           // for fast sight rejection
@@ -376,12 +372,7 @@ void P_SetCurrentMap(gamemap_t *map)
     linenodes = &map->linenodes;
     linelinks = map->linelinks;
 
-    blockmaplump = map->blockmaplump;
-    blockmap = map->blockmap;
-    bmapwidth = map->bmapwidth;
-    bmapheight = map->bmapheight;
-    bmaporgx = map->bmaporgx;
-    bmaporgy = map->bmaporgy;
+    BlockMap = map->blockmap;
     blockrings = map->blockrings;
 
     mapGravity = map->globalGravity;
