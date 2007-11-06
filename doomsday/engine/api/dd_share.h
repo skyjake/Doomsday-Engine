@@ -1161,9 +1161,9 @@ typedef enum blendmode_e {
  * maybe commit suicide.
  */
 typedef struct ticcmd_s {
-	char		forwardMove;		//*2048 for real move
-	char		sideMove;			//*2048 for real move
-	char		upMove;				//*2048 for real move
+	char		forwardMove;		// *2048 for real move
+	char		sideMove;			// *2048 for real move
+	char		upMove;				// *2048 for real move
 	ushort		angle;				// <<16 for angle (view angle)
 	short		pitch;				// View pitch
 	short		actions;			// On/off action flags
