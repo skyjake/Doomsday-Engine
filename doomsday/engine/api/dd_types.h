@@ -82,9 +82,9 @@ typedef unsigned long long   uintmax_t;
 
 // The C_DECL macro, used with functions.
 #ifndef C_DECL
-#  if defined(WIN32)
+#  ifdef WIN32
 #    define C_DECL __cdecl
-#  elif defined(UNIX)
+#  else ifdef UNIX
 #    define C_DECL
 #  endif
 #endif
