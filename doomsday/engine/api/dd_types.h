@@ -92,7 +92,13 @@ typedef unsigned long long   uintmax_t;
 #ifndef UNIX
 typedef unsigned int	uint;
 typedef unsigned short	ushort;
+
+/* 
+Splint 3.1.1 --- 03 Nov 2006
+../../api/dd_types.h:95:22: Datatype size_t declared with inconsistent type: unsigned int
 typedef unsigned int	size_t;
+*/
+
 #endif
 
 typedef int				fixed_t;
