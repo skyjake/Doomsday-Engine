@@ -27,13 +27,24 @@
  */
 
 
-/* give hints to gcc as to what the expeced outcome of a comparision is:
+/* give hints to gcc as to what the expected outcome of a comparison is:
  * eg if (likely(a > 1))
- * use sparinly in places where profiling indicates they are needed
- * ie a LOT of mispredictions - or you'll just slow it down.
+ * use sparingly in places where profiling indicates they are needed
+ * ie a LOT of mis-predictions - or you'll just slow it down.
  * use -freorder-blocks and/or -freorder-blocks-and-partition with
  * GCC to make best use of this.
  */
 
-#define unlikely(expr) __builtin_expect(!!(expr), 0)
-#define likely(expr) __builtin_expect(!!(expr), 1)
+#ifdef _GNUC_
+    #if __GNUC__ >= 3
+        #define unlikely(expr) __builtin_expect(!!(expr), 0)
+        #define likely(expr) __builtin_expect(!!(expr), 1)
+    #endif
+    #if __GNUC__ < 3
+        #error Sorry, your GCC is too old. Please use 3.x.x or newer.
+    #endif
+#else ifndef  _GNUC_
+        #define unlikely(expr) (expr)
+        #define likely(expr) (expr)
+#endif
+
