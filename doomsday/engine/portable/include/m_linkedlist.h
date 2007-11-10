@@ -51,7 +51,7 @@ typedef int (C_DECL *comparefunc) (const void *a, const void *b);
 // Premade compare functions:
 COMPAREFUNC( compareInt );
 COMPAREFUNC( compareUInt );
-COMAPREFUNC( compareFloat );
+COMPAREFUNC( compareFloat );
 COMPAREFUNC( compareDouble );
 COMPAREFUNC( compareString );
 COMPAREFUNC( compareAddress );
