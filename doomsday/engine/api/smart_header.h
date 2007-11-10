@@ -35,7 +35,7 @@
  * GCC to make best use of this.
  */
 
-#ifdef _GNUC_
+#ifdef __GNUC__
     #if __GNUC__ >= 3
         #define unlikely(expr) __builtin_expect(!!(expr), 0)
         #define likely(expr) __builtin_expect(!!(expr), 1)
@@ -44,7 +44,7 @@
         #error Sorry, your GCC is too old. Please use 3.x.x or newer.
     #endif
 #endif
-#ifndef  _GNUC_
+#ifndef  __GNUC__
         #define unlikely(expr) (expr)
         #define likely(expr) (expr)
 #endif
@@ -52,7 +52,7 @@
 /* leverage OpenMP if available for multi-threading goodness */
 #ifdef _OPENMP
 #include <omp.h>
-#ifndef  _GNUC_
+#ifndef  __GNUC__
 #warning OpenMP support requested - ensure you have omp.h and the link libraries. Standard with GCC 4.2 or later
 #endif
 #endif
