@@ -43,8 +43,13 @@
     #if __GNUC__ < 3
         #error Sorry, your GCC is too old. Please use 3.x.x or newer.
     #endif
-#else ifndef  _GNUC_
+#endif
+#ifndef  _GNUC_
         #define unlikely(expr) (expr)
         #define likely(expr) (expr)
 #endif
 
+/* leverage OpenMP if available for multi-threading goodness */
+#ifdef _OPENMP
+#include <omp.h>
+#endif
