@@ -51,5 +51,37 @@
 
 /* leverage OpenMP if available for multi-threading goodness */
 #ifdef _OPENMP
+#ifdef _GNUC_
 #include <omp.h>
+#endif
+#ifndef  _GNUC_
+extern void omp_set_num_threads (int);
+extern int omp_get_num_threads (void);
+extern int omp_get_max_threads (void);
+extern int omp_get_thread_num (void);
+extern int omp_get_num_procs (void);
+
+extern int omp_in_parallel (void);
+
+extern void omp_set_dynamic (int);
+extern int omp_get_dynamic (void);
+
+extern void omp_set_nested (int);
+extern int omp_get_nested (void);
+
+extern void omp_init_lock (omp_lock_t *);
+extern void omp_destroy_lock (omp_lock_t *);
+extern void omp_set_lock (omp_lock_t *);
+extern void omp_unset_lock (omp_lock_t *);
+extern int omp_test_lock (omp_lock_t *);
+
+extern void omp_init_nest_lock (omp_nest_lock_t *);
+extern void omp_destroy_nest_lock (omp_nest_lock_t *);
+extern void omp_set_nest_lock (omp_nest_lock_t *);
+extern void omp_unset_nest_lock (omp_nest_lock_t *);
+extern int omp_test_nest_lock (omp_nest_lock_t *);
+
+extern double omp_get_wtime (void);
+extern double omp_get_wtick (void);
+#endif
 #endif
