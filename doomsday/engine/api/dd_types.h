@@ -84,7 +84,8 @@ typedef unsigned long long   uintmax_t;
 #ifndef C_DECL
 #  ifdef WIN32
 #    define C_DECL __cdecl
-#  else ifdef UNIX
+#  endif
+#  ifdef UNIX
 #    define C_DECL
 #  endif
 #endif
