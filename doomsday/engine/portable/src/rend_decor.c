@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -824,11 +824,17 @@ void Rend_InitDecorationsForFrame(void)
         // but validCount would need to be used to prevent duplicate
         // processing.
         maxDist = FLT2FIX(decorWallMaxDist);
+	#ifdef _OPENMP
+	#pragma omp parallel for
+	#endif
         for(i = 0; i < numlines; ++i)
             Rend_DecorateLine(i, viewer, maxDist);
 
         // Process all planes.
         maxDist = FLT2FIX(decorPlaneMaxDist);
+	#ifdef _OPENMP
+	#pragma omp parallel for
+	#endif
         for(i = 0; i < numsectors; ++i)
             Rend_DecorateSector(i, viewer, maxDist);
     }
