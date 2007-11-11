@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2688,6 +2689,14 @@ void XL_Think(line_t *line)
     uint        i;
     line_t     *line;
 
+    /** Profiling via oprofile, of jDoom with dv.wad map 5, indicates 37.6092% of jDoom execution
+     * time is spent in this function. I'm going to throw more CPU at the problem to make it
+     * less of a bottle neck - but still, on single core systems it will need some work to speed up
+     * 2007-11-11 - Yagisan - times taken with svn5080 on a dual core 2.3GHz amd64 system - 64bit mode.
+     */
+    #ifdef _OPENMP
+    #pragma omp parallel for
+    #endif
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
