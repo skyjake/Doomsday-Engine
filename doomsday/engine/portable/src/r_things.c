@@ -1062,7 +1062,18 @@ void R_SortVisSprites(void)
     //
     // Pull the vissprites out by distance.
     //
+
     vsprsortedhead.next = vsprsortedhead.prev = &vsprsortedhead;
+
+/* \FIXME
+ * we need a better algorithm here. nuts.wad map01 is a perfect pathological test case
+ * Oprofile results from nuts.wad below. Over 25% of total execution time was spent sorting
+-------------------------------------------------------------------------------
+811299   26.0547  R_SortVisSprites
+  811299   100.000  R_SortVisSprites [self]
+-------------------------------------------------------------------------------
+ */
+
     for(i = 0; i < count; ++i)
     {
         bestdist = 0;
@@ -1082,6 +1093,7 @@ void R_SortVisSprites(void)
         vsprsortedhead.prev->next = best;
         vsprsortedhead.prev = best;
     }
+
 }
 
 void R_SetAmbientColor(float *rgba, float lightLevel, float distance)
