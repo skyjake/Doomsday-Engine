@@ -2690,13 +2690,10 @@ void XL_Think(line_t *line)
     line_t     *line;
 
     /** Profiling via oprofile, of jDoom with dv.wad map 5, indicates 37.6092% of jDoom execution
-     * time is spent in this function. I'm going to throw more CPU at the problem to make it
-     * less of a bottle neck - but still, on single core systems it will need some work to speed up
-     * 2007-11-11 - Yagisan - times taken with svn5080 on a dual core 2.3GHz amd64 system - 64bit mode.
+     * time is spent in this function.This will need some work to speed up. Multithreading was a bad idea
+     * apparently it modifies global data ...
+     * 2007-11-13 - Yagisan - times taken with svn5080 on a dual core 2.3GHz amd64 system - 64bit mode.
      */
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
