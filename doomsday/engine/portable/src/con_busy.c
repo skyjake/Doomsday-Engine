@@ -469,7 +469,7 @@ lineIsNotNew:;
 void Con_BusyDrawConsoleOutput(void)
 {
     cbuffer_t  *buffer;
-    static cbline_t *visibleBusyLines[2 * LINE_COUNT];
+    static cbline_t const *visibleBusyLines[2 * LINE_COUNT];
     static float scroll = 0;
     static float scrollStartTime = 0;
     static float scrollEndTime = 0;
