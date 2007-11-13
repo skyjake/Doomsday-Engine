@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * con_busy.c: Console Busy Mode
  *
  * Draws the screen while the main engine thread is working a long
@@ -431,14 +431,14 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 /**
  * @return  Number of new lines since the old ones.
  */
-static int GetBufLines(cbuffer_t* buffer, cbline_t **oldLines)
+static int GetBufLines(cbuffer_t* buffer, cbline_t const **oldLines)
 {
-    cbline_t* bufLines[LINE_COUNT + 1];
-    int count;
-    int newCount = 0;
-    int i, k;
+    cbline_t const * bufLines[LINE_COUNT + 1];
+    int         count;
+    int         newCount = 0;
+    int         i, k;
 
-    count = Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT, (const cbline_t**)&bufLines);
+    count = Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT, bufLines);
     for(i = 0; i < count; ++i)
     {
         for(k = 0; k < 2 * LINE_COUNT - newCount; ++k)
@@ -450,7 +450,10 @@ static int GetBufLines(cbuffer_t* buffer, cbline_t **oldLines)
         }
 
         newCount++;
-        memmove(oldLines, oldLines + 1, sizeof(cbline_t*) * (2 * LINE_COUNT - 1));
+        for(k = 0; k < (2 * LINE_COUNT - 1); ++k)
+            oldLines[k] = oldLines[k+1];
+
+        //memmove(oldLines, oldLines + 1, sizeof(cbline_t*) * (2 * LINE_COUNT - 1));
         oldLines[2 * LINE_COUNT - 1] = bufLines[i];
 
 lineIsNotNew:;

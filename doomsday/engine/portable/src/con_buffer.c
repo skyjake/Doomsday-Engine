@@ -322,7 +322,7 @@ uint Con_BufferNumLines(cbuffer_t *buf)
     return num;
 }
 
-static const cbline_t *bufferGetLine(cbuffer_t *buf, uint idx)
+static cbline_t const *bufferGetLine(cbuffer_t *buf, uint idx)
 {
     const cbline_t *ptr = NULL;
 
@@ -358,7 +358,7 @@ static const cbline_t *bufferGetLine(cbuffer_t *buf, uint idx)
 }
 
 static uint bufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
-                           const cbline_t **list)
+                           cbline_t const **list)
 {
     if(firstIdx <= (int) buf->numLines)
     {
@@ -414,7 +414,7 @@ static uint bufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
  * @return              The number of elements written back to the buffer.
  */
 uint Con_BufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
-                        const cbline_t **list)
+                        cbline_t const **list)
 {
     if(buf)
     {
@@ -440,7 +440,7 @@ uint Con_BufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
  * @param idx               Index of the line to retrieve.
  *
  * @return                  Ptr to the cbline_t with the requested index or
- *                          <code>NULL</code> if the index was invalid.
+ *                          @c NULL, if the index was invalid.
  */
 const cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx)
 {

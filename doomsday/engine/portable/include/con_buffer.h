@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * con_buffer.h: Console history buffer.
  */
 
@@ -70,6 +70,6 @@ void            Con_BufferSetMaxLineLength(cbuffer_t *buf, uint length);
 
 const cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx);
 uint            Con_BufferGetLines(cbuffer_t *buf, uint reqCount,
-                                   int firstIdx, const cbline_t **list);
+                                   int firstIdx, cbline_t const **list);
 uint            Con_BufferNumLines(cbuffer_t *buf);
 #endif

@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_console.c: Console rendering.
  */
 
@@ -425,7 +425,7 @@ void Rend_Console(void)
     int         textOffsetY = 0;
     uint        cmdCursor;
     cbuffer_t  *buffer;
-    static cbline_t **lines = NULL;
+    static const cbline_t **lines;
     static int bufferSize = 0;
     int         reqLines;
     uint        count;
@@ -520,7 +520,7 @@ void Rend_Console(void)
         // Need to enlarge the buffer?
         if(reqLines > bufferSize)
         {
-            lines = Z_Realloc(lines, sizeof(cbline_t *) * (reqLines + 1),
+            lines = Z_Realloc((void*) lines, sizeof(cbline_t *) * (reqLines + 1),
                               PU_STATIC);
             bufferSize = reqLines;
         }
