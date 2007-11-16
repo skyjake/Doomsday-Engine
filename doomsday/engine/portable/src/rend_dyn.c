@@ -1271,7 +1271,7 @@ static dynnode_t *projectOmniLightOnSegSection(lumobj_t *lum, seg_t *seg,
     float       dist, pntLight[2];
     dynlight_t *dyn;
     dynnode_t  *node;
-    float       lumRGB[3];
+    float       lumRGB[3], lightVal;
     float       radius, radiusX2;
 
     if(!LUM_OMNI(lum)->tex)
@@ -1302,6 +1302,11 @@ static dynnode_t *projectOmniLightOnSegSection(lumobj_t *lum, seg_t *seg,
     if(dist < 0 || dist > LUM_OMNI(lum)->radius)
         return NULL; // Nope.
 
+    lightVal = LUM_FACTOR(dist, LUM_OMNI(lum)->radius);
+
+    if(lightVal < .05f)
+        return NULL; // Nope.
+
     // Do a scalar projection for the offset.
     s[0] = (-((seg->SG_v1pos[VY] - pntLight[VY]) * (seg->SG_v1pos[VY] - seg->SG_v2pos[VY]) -
               (seg->SG_v1pos[VX] - pntLight[VX]) * (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]))
@@ -1314,7 +1319,7 @@ static dynnode_t *projectOmniLightOnSegSection(lumobj_t *lum, seg_t *seg,
     if(s[0] >= 1 || s[1] <= 0)
         return NULL;  // Is left/right of the seg on the X/Y plane.
 
-    calcDynLightColor(lumRGB, lum, LUM_FACTOR(dist, LUM_OMNI(lum)->radius));
+    calcDynLightColor(lumRGB, lum, lightVal);
 
     node = newDynLight(s, t);
     dyn = &node->dyn;
