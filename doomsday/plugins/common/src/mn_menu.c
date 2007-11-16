@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -24,7 +24,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * mn_menu.c: Common selection menu, options, episode etc.
  *            Sliders and icons. Kinda widget stuff.
  */
@@ -69,10 +69,10 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define OBSOLETE        CVF_HIDE|CVF_NO_ARCHIVE
+#define OBSOLETE            CVF_HIDE|CVF_NO_ARCHIVE
 
-#define SAVESTRINGSIZE     24
-#define CVAR(typ, x)    (*(typ*)Con_GetVariable(x)->ptr)
+#define SAVESTRINGSIZE      24
+#define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
 
 #define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
 #define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
@@ -197,7 +197,7 @@ extern int joyaxis[3];
 
 extern char *weaponNames[];
 
-extern int     typein_time;    // in heads-up code
+extern int typein_time;    // in heads-up code
 
 extern dpatch_t hu_font[HU_FONTSIZE];
 extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
@@ -309,7 +309,15 @@ short   whichSkull;    // which skull to draw
 
 // Sounds played in the menu
 int menusnds[] = {
-#if __JDOOM__
+#if __WOLFTC__
+    sfx_menubc,            // close menu
+    sfx_menubc,            // open menu
+    sfx_menubc,            // cancel
+    sfx_menumv,            // up/down
+    sfx_menumv,            // left/right
+    sfx_menusl,            // accept
+    sfx_menumv             // bad sound (eg can't autosave)
+#elif __JDOOM__
     sfx_dorcls,            // close menu
     sfx_swtchx,            // open menu
     sfx_swtchn,            // cancel
@@ -2333,7 +2341,7 @@ static void M_DrawBackground(menu_t *menu)
     gl.MatrixMode(DGL_TEXTURE);
     gl.PushMatrix();
 
-    for(i = 0; i < 3; ++i)
+    for(i = 0; i < 2; ++i)
     {
         if(i || cfg.menuFog == 1)
         {
@@ -2422,8 +2430,7 @@ static void M_DrawBackground(menu_t *menu)
             else
                 GL_DrawRectTiled(0, 0, 320, 200, 270, 225);
         }
-
-       }
+    }
 
     gl.MatrixMode(DGL_TEXTURE);
     gl.PopMatrix();
