@@ -165,11 +165,6 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     // Setup state.
     GL_InitVarFont();
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
-
     // Change font.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     uiFontHgt = FR_TextHeight("W");
@@ -615,10 +610,10 @@ void UI_Drawer(void)
         float           width, height, scale;
 
         if(theWindow->width >= theWindow->height)
-            scale = (theWindow->width / UI_WIDTH) * 
+            scale = (theWindow->width / UI_WIDTH) *
                 (theWindow->height / (float) theWindow->width);
         else
-            scale = (theWindow->height / UI_HEIGHT) * 
+            scale = (theWindow->height / UI_HEIGHT) *
                 (theWindow->width / (float) theWindow->height);
 
         width = UICURSORWIDTH * scale * uiCursorWidthMul;
@@ -1012,7 +1007,7 @@ int UIButton_Responder(ui_object_t *ob, ddevent_t *ev)
             return true;
         }
     }
-    else if(IS_TOGGLE_DOWN(ev) && 
+    else if(IS_TOGGLE_DOWN(ev) &&
             ((ev->device == IDEV_MOUSE && UI_MouseInside(ob)) ||
              (ev->device == IDEV_KEYBOARD && IS_ACTKEY(ev->toggle.id))))
     {
@@ -1161,9 +1156,9 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
         }
         return true;
     }
-    else if(IS_TOGGLE_DOWN(ev) && 
+    else if(IS_TOGGLE_DOWN(ev) &&
             ((ev->device == IDEV_MOUSE && UI_MouseInside(ob)) ||
-             (ev->device == IDEV_KEYBOARD && IS_ACTKEY(ev->toggle.id))))        
+             (ev->device == IDEV_KEYBOARD && IS_ACTKEY(ev->toggle.id))))
     {
         // Activate and capture.
         ob->flags |= UIF_ACTIVE;
