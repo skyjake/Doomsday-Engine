@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * con_data.c: Console Subsystem
  *
  * Console databases for knownwords, cvars, ccmds and aliases.
@@ -578,7 +578,7 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
             // Remember the first one with a matching name.
             if(!matchingNameCmd)
                 matchingNameCmd = ccmd;
-            
+
             // Are we validating the arguments?
             if(!(ccmd->minArgs == -1 && ccmd->maxArgs == -1))
             {
@@ -807,7 +807,7 @@ static int C_DECL knownWordListSorter(const void *e1, const void *e2)
 void Con_UpdateKnownWords(void)
 {
     uint        i, c, knownVars;
-    uint        len;
+    size_t      len;
 
     // Count the number of visible console variables.
     for(i = knownVars = 0; i < numCVars; ++i)
@@ -816,8 +816,8 @@ void Con_UpdateKnownWords(void)
 
     // Fill the known words table.
     numKnownWords = numCCmds + knownVars + numCAliases /*+ numBindClasses*/;
-    knownWords = M_Realloc(knownWords, len =
-                         sizeof(knownword_t) * numKnownWords);
+    len = sizeof(knownword_t) * numKnownWords;
+    knownWords = M_Realloc(knownWords, len);
     memset(knownWords, 0, len);
 
     // Commands, variables, aliases, and bind class names are known words.
@@ -826,11 +826,14 @@ void Con_UpdateKnownWords(void)
         strncpy(knownWords[c].word, ccmds[i].name, 63);
         knownWords[c].type = WT_CCMD;
     }
-    for(i = 0; i < numCVars; ++i)
+    for(i = 0; i < knownVars; ++i)
     {
         if(!(cvars[i].flags & CVF_HIDE))
-            strncpy(knownWords[c++].word, cvars[i].name, 63);
-        knownWords[c].type = WT_CVAR;
+        {
+            strncpy(knownWords[c].word, cvars[i].name, 63);
+            knownWords[c].type = WT_CVAR;
+            c++;
+        }
     }
     for(i = 0; i < numCAliases; ++i, ++c)
     {
@@ -858,7 +861,7 @@ void Con_UpdateKnownWords(void)
  *
  * @param word      The word to be matched.
  * @param count     The count of the number of matching words will be
- *                  written back to this location if NOT <code>NULL</code>.
+ *                  written back to this location if NOT @c NULL.
  *
  * @return          A NULL-terminated array of pointers to all the known
  *                  words which match (at least partially) @param word
