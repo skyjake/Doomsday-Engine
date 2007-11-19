@@ -178,7 +178,7 @@ menuitem_t GameSetupItems1[] =  // for Heretic
 
 #  elif __JDOOM__
 
-#    define NUM_GAMESETUP_ITEMS     18
+#    define NUM_GAMESETUP_ITEMS     19
 
 menuitem_t GameSetupItems1[] =  // for Doom 1
 {
@@ -193,6 +193,7 @@ menuitem_t GameSetupItems1[] =  // for Doom 1
     {ITT_EFUNC, 0, "NO COOP DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noCoopDamage },
     {ITT_EFUNC, 0, "NO COOP WEAPONS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopWeapons },
     {ITT_EFUNC, 0, "NO COOP OBJECTS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopAnything },
+    {ITT_EFUNC, 0, "COOP ITEMS RESPAWN :", SCGameSetupFunc, 0, NULL, &cfg.coopRespawnItems },
     {ITT_EFUNC, 0, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
     {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
@@ -214,6 +215,7 @@ menuitem_t GameSetupItems2[] =  // for Doom 2
     {ITT_EFUNC, 0, "NO COOP DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noCoopDamage },
     {ITT_EFUNC, 0, "NO COOP WEAPONS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopWeapons },
     {ITT_EFUNC, 0, "NO COOP OBJECTS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopAnything },
+    {ITT_EFUNC, 0, "COOP ITEMS RESPAWN :", SCGameSetupFunc, 0, NULL, &cfg.coopRespawnItems },
     {ITT_EFUNC, 0, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
     {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
@@ -371,6 +373,7 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopDamage]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopWeapons]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopAnything]);
+    M_WriteMenuText(menu, idx++, boolText[cfg.coopRespawnItems]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noNetBFG]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noTeamDamage]);
 # endif                        // __JDOOM__
