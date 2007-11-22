@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * net_event.c: Network Events
  *
  * Network events include clients joining and leaving.
@@ -64,9 +65,9 @@ static int neqHead, neqTail;
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Add a master action command to the queue. The master action stuff 
- * really doesn't belong in this file...
+/**
+ * Add a master action command to the queue. The master action stuff really
+ * doesn't belong in this file...
  */
 void N_MAPost(masteraction_t act)
 {
@@ -74,10 +75,10 @@ void N_MAPost(masteraction_t act)
 	mqHead %= MASTER_QUEUE_LEN;
 }
 
-/*
+/**
  * Get a master action command from the queue.
  */
-boolean N_MAGet(masteraction_t * act)
+boolean N_MAGet(masteraction_t *act)
 {
 	// Empty queue?
 	if(mqHead == mqTail)
@@ -86,7 +87,7 @@ boolean N_MAGet(masteraction_t * act)
 	return true;
 }
 
-/*
+/**
  * Remove a master action command from the queue.
  */
 void N_MARemove(void)
@@ -97,7 +98,7 @@ void N_MARemove(void)
 	}
 }
 
-/*
+/**
  * Clear the master action command queue.
  */
 void N_MAClear(void)
@@ -105,15 +106,15 @@ void N_MAClear(void)
 	mqHead = mqTail = 0;
 }
 
-/*
- * Returns true if the master action command queue is empty.
+/**
+ * @return              @c true, if the master action command queue is empty.
  */
 boolean N_MADone(void)
 {
 	return (mqHead == mqTail);
 }
 
-/*
+/**
  * Add a net event to the queue, to wait for processing.
  */
 void N_NEPost(netevent_t * nev)
@@ -122,21 +123,26 @@ void N_NEPost(netevent_t * nev)
 	neqHead = (neqHead + 1) % NETEVENT_QUEUE_LEN;
 }
 
-/*
- * Returns true if there are net events waiting to be processed.
- * N_GetPacket() will not return a packet until all net events have
+/**
+ * Are there any net events awaiting processing?
+ *
+ * \note N_GetPacket() will not return a packet until all net events have
  * processed.
+ *
+ * @return              @c true if there are net events waiting to be
+ *                      processed.
  */
 boolean N_NEPending(void)
 {
 	return neqHead != neqTail;
 }
 
-/*
- * Get a net event from the queue. Returns true if an event was 
- * returned.
+/**
+ * Get a net event from the queue.
+ *
+ * @return              @c true, if an event was returned.
  */
-boolean N_NEGet(netevent_t * nev)
+boolean N_NEGet(netevent_t *nev)
 {
 	// Empty queue?
 	if(!N_NEPending())
@@ -146,13 +152,13 @@ boolean N_NEGet(netevent_t * nev)
 	return true;
 }
 
-/*
+/**
  * Handles low-level net tick stuff: communication with the master server.
  */
 void N_NETicker(void)
 {
 	masteraction_t act;
-	int     i, num;
+	int         i, num;
 
 	if(netgame)
 	{
@@ -193,12 +199,12 @@ void N_NETicker(void)
 				serverinfo_t info;
 
 				N_MasterGet(i, &info);
-				/*Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n", 
+				/*Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n",
 				 * i, info.name,
 				 * info.players, info.maxPlayers,
 				 * info.canJoin? ' ':'*', info.version, info.game,
 				 * info.address, info.port);
-				 * Con_Printf("    %s (%x) %s\n", info.map, info.data[0], 
+				 * Con_Printf("    %s (%x) %s\n", info.map, info.data[0],
 				 * info.description); */
 				Net_PrintServerInfo(i, &info);
 			}
@@ -210,35 +216,35 @@ void N_NETicker(void)
 	}
 }
 
-/*
+/**
  * The event list is checked for arrivals and exits, and the 'clients'
  * and 'players' arrays are updated accordingly.
  */
 void N_Update(void)
 {
-	netevent_t event;
-	char    name[256];
+	netevent_t  nevent;
+	char        name[256];
 
 	// Are there any events to process?
-	while(N_NEGet(&event))
+	while(N_NEGet(&nevent))
 	{
-		switch (event.type)
+		switch(nevent.type)
 		{
 		case NE_CLIENT_ENTRY:
 			// Find out the name of the new player.
 			memset(name, 0, sizeof(name));
-			N_GetNodeName(event.id, name);
+			N_GetNodeName(nevent.id, name);
 
 			// Assign a console to the new player.
-			Sv_PlayerArrives(event.id, name);
+			Sv_PlayerArrives(nevent.id, name);
 			break;
 
 		case NE_CLIENT_EXIT:
-			Sv_PlayerLeaves(event.id);
+			Sv_PlayerLeaves(nevent.id);
 			break;
 
 		case NE_END_CONNECTION:
-			// A client receives this event when the connection is 
+			// A client receives this event when the connection is
 			// terminated.
 			if(netgame)
 			{
@@ -252,10 +258,9 @@ void N_Update(void)
 	}
 }
 
-/*
- * The client is removed from the game without delay. This is used
- * when the server needs to terminate a client's connection
- * abnormally.
+/**
+ * The client is removed from the game without delay. This is used when the
+ * server needs to terminate a client's connection abnormally.
  */
 void N_TerminateClient(int console)
 {

@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_file.h: File Stream Abstraction Layer
  *
  * Data can be read from memory, virtual files or actual files.
@@ -41,7 +41,7 @@ typedef struct {
 		unsigned char   file:1;
 		unsigned char   eof:1;
 	} flags;
-	int             size;
+	size_t          size;
 	void           *data;
 	char           *pos;
 	unsigned int    lastModified;
@@ -61,13 +61,13 @@ void            F_InitDirec(void);
 void            F_ShutdownDirec(void);
 int             F_Access(const char *path);
 DFILE          *F_Open(const char *path, const char *mode);
-void            F_Close(DFILE * file);
-int             F_Length(DFILE * file);
-int             F_Read(void *dest, int count, DFILE * file);
-int             F_GetC(DFILE * file);
-int             F_Tell(DFILE * file);
-int             F_Seek(DFILE * file, int offset, int whence);
-void            F_Rewind(DFILE * file);
+void            F_Close(DFILE *file);
+int             F_Length(DFILE *file);
+int             F_Read(void *dest, int count, DFILE *file);
+int             F_GetC(DFILE *file);
+int             F_Tell(DFILE *file);
+int             F_Seek(DFILE *file, int offset, int whence);
+void            F_Rewind(DFILE *file);
 int             F_ForAll(const char *filespec, void *parm,
 						 f_forall_func_t func);
 unsigned int    F_LastModified(const char *fileName);

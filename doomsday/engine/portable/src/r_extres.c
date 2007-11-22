@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,12 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * r_extres.c: External Resources
+/**
+ * r_extres.c: External Resources.
  *
  * Routines for locating external resource files.
  */
@@ -109,7 +109,7 @@ static resclass_t classInfo[NUM_RESOURCE_CLASSES];
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Set the initial path names.
  */
 void R_InitExternalResources(void)
@@ -117,15 +117,15 @@ void R_InitExternalResources(void)
     R_InitDataPaths("}Data\\", false);
 }
 
-/*
- * Returns a pointer to the general data path.
+/**
+ * @return              Ptr to a string containing the general data path.
  */
 const char *R_GetDataPath(void)
 {
     return dataPath;
 }
 
-/*
+/**
  * Set the data path. The game module is responsible for calling this.
  */
 void R_SetDataPath(const char *path)
@@ -133,19 +133,19 @@ void R_SetDataPath(const char *path)
     R_InitDataPaths(path, true);
 }
 
-/*
+/**
  * Set the data path. The game module is responsible for calling this.
  */
 void R_InitDataPaths(const char *path, boolean justGamePaths)
 {
-    int     i;
+    int         i;
 
     M_TranslatePath(path, dataPath);
     Dir_ValidDir(dataPath);
     VERBOSE(Con_Message("R_SetDataPath: %s\n", M_Pretty(dataPath)));
 
     // Update the paths of each class.
-    for(i = 0; i < NUM_RESOURCE_CLASSES; i++)
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
     {
         // The Graphics class resources are under Doomsday's control.
         if(justGamePaths && i == RC_GRAPHICS)
@@ -165,6 +165,7 @@ void R_InitDataPaths(const char *path, boolean justGamePaths)
             strcpy(classInfo[i].path, dataPath);
             strcat(classInfo[i].path, defaultResourcePath[i]);
         }
+
         Dir_ValidDir(classInfo[i].path);
 
         // The overriding path.
@@ -180,13 +181,13 @@ void R_InitDataPaths(const char *path, boolean justGamePaths)
     }
 }
 
-/*
- * If the origPath is a relative path, the data path is added in
- * front of it.
+/**
+ * @param origPath      If a relative path, the data path is added in
+ *                      front of it.
  */
 void R_PrependDataPath(const char *origPath, char *newPath)
 {
-    char    buf[300];
+    char        buf[300];
 
     if(Dir_IsAbsolute(origPath))
     {
@@ -200,7 +201,7 @@ void R_PrependDataPath(const char *origPath, char *newPath)
     }
 }
 
-/*
+/**
  * Callback function used in R_TryResourceFile.
  */
 int R_FileFinder(const char *fn, filetype_t type, void *buf)
@@ -217,28 +218,30 @@ int R_FileFinder(const char *fn, filetype_t type, void *buf)
     return false;
 }
 
-/*
+/**
  * Check all possible extensions to see if the resource exists.
- * 'path' is complete, sans extension. Returns true if it's found.
+ *
+ * @param path          Is an absolute path to the file, sans extension.
+ *
+ * @return              @c true, if it's found.
  */
 boolean R_TryResourceFile(resourceclass_t resClass, const char *path,
                           char *foundFileName)
 {
     const char **ext;
-    char    buf[256], *extPlace;
-    int     i;
+    char        buf[256], *extPlace;
+    int         i;
 
     strcpy(buf, path);
     extPlace = buf + strlen(buf);
 
     for(i = 0, ext = classExtension[resClass]; *ext; ext++)
     {
-        if(**ext == '*')        // Anything goes?
+        if(**ext == '*') // Anything goes?
         {
             strcpy(extPlace, ".*");
             if(!F_ForAll(buf, foundFileName, R_FileFinder))
-            {
-                // A match was found.
+            {   // A match was found.
                 return true;
             }
         }
@@ -246,8 +249,7 @@ boolean R_TryResourceFile(resourceclass_t resClass, const char *path,
         {
             strcpy(extPlace, *ext);
             if(F_Access(buf))
-            {
-                // Found it.
+            {   // Found it.
                 if(foundFileName)
                     strcpy(foundFileName, buf);
                 return true;
@@ -259,7 +261,7 @@ boolean R_TryResourceFile(resourceclass_t resClass, const char *path,
     return false;
 }
 
-/*
+/**
  * Attempt to locate an external file for the specified resource. Returns
  * true if successful. The file name is returned in the fileName parameter.
  * The fileName parm can be NULL, which makes the routine just check for

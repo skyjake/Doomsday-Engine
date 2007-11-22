@@ -93,10 +93,10 @@ extern          "C" {
         // classes by "name";
         int (C_DECL *doFunc)();
         void (*initFunc)(line_t *line);
-        int traverse;
-        int travref;
-        int travdata;
-        int evtypeflags;
+        int             traverse;
+        int             travref;
+        int             travdata;
+        int             evtypeflags;
     } ded_xgclass_t;
 
     typedef struct {

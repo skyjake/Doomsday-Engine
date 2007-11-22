@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_model.c: 3D Model Renderer v2.0
  *
  * Note: Light vectors and triangle normals are considered to be

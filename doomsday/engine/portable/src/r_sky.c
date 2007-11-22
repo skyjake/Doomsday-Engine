@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_sky.c: Sky Management
  */
 
@@ -60,7 +61,7 @@ boolean alwaysDrawSphere = false;
  */
 void R_SetupSkyModels(ded_mapinfo_t *info)
 {
-    int     i;
+    int         i;
     ded_skymodel_t *def;
     skymodel_t *sky;
 
@@ -95,7 +96,7 @@ void R_SetupSkyModels(ded_mapinfo_t *info)
  */
 void R_PrecacheSky(void)
 {
-    int     i;
+    int         i;
     skymodel_t *sky;
 
     if(!skyModelsInited)
@@ -114,7 +115,7 @@ void R_PrecacheSky(void)
  */
 void R_SkyTicker(void)
 {
-    int     i;
+    int         i;
     skymodel_t *sky;
 
     if(!skyModelsInited || clientPaused)

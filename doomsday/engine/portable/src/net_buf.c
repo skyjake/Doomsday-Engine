@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * net_buf.c: Network Message Handling and Buffering
  */
 
@@ -125,7 +125,7 @@ void N_Shutdown(void)
 /**
  * Acquire or release ownership of the message queue mutex.
  *
- * @return          <code>true</code> if successful.
+ * @return          @c true, if successful.
  */
 boolean N_LockQueue(boolean doAcquire)
 {
@@ -164,7 +164,7 @@ void N_PostMessage(netmessage_t *msg)
 
     // One new message available.
     msgCount++;
-    
+
     N_LockQueue(false);
 }
 
@@ -176,13 +176,13 @@ void N_PostMessage(netmessage_t *msg)
  * We use a mutex to synchronize access to the message queue. This is
  * called in the Doomsday thread.
  *
- * @return              <code>NULL</code> if no message is found;
+ * @return              @c NULL, if no message is found;
  */
 netmessage_t *N_GetMessage(void)
 {
     // This is the message we'll return.
     netmessage_t *msg = NULL;
-    
+
     N_LockQueue(true);
     if(msgHead != NULL)
     {
@@ -195,7 +195,7 @@ netmessage_t *N_GetMessage(void)
 
         // Advance the head pointer.
         msgHead = msgHead->next;
-        
+
         if(msg)
         {
             // One less message available.
@@ -319,7 +319,7 @@ void N_SendPacket(int flags)
 }
 
 /**
- * @return  The player number that corresponds the DPNID.
+ * @return          The player number that corresponds the DPNID.
  */
 uint N_IdentifyPlayer(nodeid_t id)
 {
@@ -351,7 +351,7 @@ uint N_IdentifyPlayer(nodeid_t id)
 /**
  * Confirmations are handled here.
  *
- * NOTE: Skips all messages from unknown nodeids!
+ * \note Skips all messages from unknown nodeids!
  *
  * @return          The next message waiting in the incoming message queue.
  */
@@ -385,7 +385,7 @@ netmessage_t *N_GetNextMessage(void)
 /**
  * An attempt is made to extract a message from the message queue.
  *
- * @return          <code>true</code> if a message successfull.
+ * @return          @c true, if a message successfull.
  */
 boolean N_GetPacket(void)
 {
@@ -399,7 +399,7 @@ boolean N_GetPacket(void)
 
     netBuffer.player = -1;
     netBuffer.length = 0;
-    
+
     /*{extern byte monitorMsgQueue;
     if(monitorMsgQueue)
         Con_Message("N_GetPacket: %i messages queued.\n", msgCount);
@@ -410,7 +410,7 @@ boolean N_GetPacket(void)
         // No messages at this time.
         return false;
     }
-    
+
     // There was a packet!
 /*
 #if _DEBUG

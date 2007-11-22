@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * m_vector.c: Vector Math
  */
 
@@ -284,7 +284,7 @@ float V2_Intercept(const pvec2_t a, const pvec2_t b, const pvec2_t c,
 }
 
 /**
- * @return          <code>true</code> if the two lines intercept.
+ * @return          @c true, if the two lines intercept.
  */
 boolean V2_Intercept2(const pvec2_t a, const pvec2_t b, const pvec2_t c,
                       const pvec2_t d, pvec2_t point, float *abFrac,

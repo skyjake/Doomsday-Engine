@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * s_main.c: Sound Subsystem
  *
  * Interface to the Sfx and Mus modules.
@@ -92,7 +92,7 @@ void S_Register(void)
 /**
  * Main sound system initialization. Inits both the Sfx and Mus modules.
  *
- * @return: boolean         (true) if there were no errors.
+ * @return                  @c true, if there were no errors.
  */
 boolean S_Init(void)
 {
@@ -173,7 +173,10 @@ mobj_t *S_GetListenerMobj(void)
 }
 
 /**
- * NOTE: freq and volume may be NULL (they will be modified by sound links).
+ * \note freq and volume may be NULL(they will be modified by sound links).
+ *
+ * @param freq              May be @c NULL.
+ * @param volume            May be @c NULL.
  */
 sfxinfo_t *S_GetSoundInfo(int sound_id, float *freq, float *volume)
 {
@@ -189,10 +192,12 @@ sfxinfo_t *S_GetSoundInfo(int sound_id, float *freq, float *volume)
     if(!volume)
         volume = &dummy;
 
-    // Traverse all links when getting the definition.
-    // (But only up to 10, which is certainly enough and prevents endless
-    // recursion.) Update the sound id at the same time.
-    // The links were checked in Def_Read() so there can't be any bogus ones.
+    /**
+     * Traverse all links when getting the definition.
+     * (But only up to 10, which is certainly enough and prevents endless
+     * recursion.) Update the sound id at the same time.
+     * The links were checked in Def_Read() so there can't be any bogus ones.
+     */
     for(info = sounds + sound_id, i = 0; info->link && i < 10;
         info = info->link, *freq =
         (info->link_pitch > 0 ? info->link_pitch / 128.0f : *freq), *volume +=
@@ -203,7 +208,7 @@ sfxinfo_t *S_GetSoundInfo(int sound_id, float *freq, float *volume)
 }
 
 /**
- * @return: boolean         (true) if the specified ID is a repeating sound.
+ * @return                  @c true, if the specified ID is a repeating sound.
  */
 boolean S_IsRepeating(int idFlags)
 {
@@ -220,15 +225,18 @@ boolean S_IsRepeating(int idFlags)
 
 /**
  * Play a sound on the local system. A public interface.
- * Origin and fixedpos can be both NULL, in which case the sound is
- * played in 2D and centered.
  *
- * NOTE: Flags can be included in the sound ID number (DDSF_*).
+ * \note: Flags can be included in the sound ID number (DDSF_*).
+ * Origin and fixedpos can be both NULL, in which case the sound is played
+ * in 2D and centered.
  *
- * @return: int             Nonzero if a sound was started.
+ * @param origin            May be @c NULL.
+ * @param fixedPos          May be @c NULL.
+ *
+ * @return                  Non-zero if a sound was started.
  */
-int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin, float *fixedPos,
-                             float volume)
+int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
+                             float *fixedPos, float volume)
 {
     int     soundId = soundIdAndFlags & ~DDSF_FLAG_MASK;
     sfxsample_t *sample;
@@ -244,7 +252,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin, float *fixedPo
 
     if(soundId <= 0 || soundId >= defs.count.sounds.num || sfx_volume <= 0 ||
        volume <= 0)
-        return false;           // This won't play...
+        return false; // This won't play...
 
 #if _DEBUG
     if(volume > 1)
@@ -257,7 +265,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin, float *fixedPo
     // This is the sound we're going to play.
     if((info = S_GetSoundInfo(soundId, &freq, &volume)) == NULL)
     {
-        return false;           // Hmm? This ID is not defined.
+        return false; // Hmm? This ID is not defined.
     }
 
     isRepeating = S_IsRepeating(soundIdAndFlags);
@@ -317,7 +325,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin, float *fixedPo
  * Plays a sound on the local system at the given volume.
  * This is a public sound interface.
  *
- * @return: int         Nonzero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 {
@@ -328,7 +336,7 @@ int S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume)
  * Plays a sound on the local system from the given origin.
  * This is a public sound interface.
  *
- * @return: int         Nonzero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_LocalSound(int sound_id, mobj_t *origin)
 {
@@ -340,7 +348,7 @@ int S_LocalSound(int sound_id, mobj_t *origin)
  * Plays a sound on the local system at a give distance from listener.
  * This is a public sound interface.
  *
- * @return: int         Nonzero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_LocalSoundFrom(int sound_id, float *fixedpos)
 {
@@ -350,7 +358,7 @@ int S_LocalSoundFrom(int sound_id, float *fixedpos)
 /**
  * Play a world sound. All players in the game will hear it.
  *
- * @return: int         Nonzero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_StartSound(int soundId, mobj_t *origin)
 {
@@ -366,10 +374,10 @@ int S_StartSound(int soundId, mobj_t *origin)
  * owns the origin mobj. The server assumes that the owner of the origin plays
  * the sound locally, which is done here, in the end of S_StartSoundEx().
  *
- * @param soundId  Id of the sound.
- * @param origin   Origin mobj for the sound.
+ * @param soundId           Id of the sound.
+ * @param origin            Origin mobj for the sound.
  *
- * @return  Nonzero if a sound was successfully started.
+ * @return                  Non-zero if a sound was successfully started.
  */
 int S_StartSoundEx(int soundId, mobj_t *origin)
 {
@@ -382,7 +390,7 @@ int S_StartSoundEx(int soundId, mobj_t *origin)
 /**
  * Play a world sound. All players in the game will hear it.
  *
- * @return: int         Nonzero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 {
@@ -396,7 +404,7 @@ int S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 /**
  * Play a player sound. Only the specified player will hear it.
  *
- * @return: int         Nonzero if a sound was started (always).
+ * @return                  Non-zero if a sound was started (always).
  */
 int S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
 {
@@ -411,9 +419,9 @@ int S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
 }
 
 /**
- * If sound_id == 0, then stops all sounds of the origin.
- * If origin == NULL, stops all sounds with the ID.
- * Otherwise both ID and origin must match.
+ * @param sound_id          @c 0 = stops all sounds of the origin.
+ * @param origin            @c NULL = stops all sounds with the ID.
+ *                          Otherwise both ID and origin must match.
  */
 void S_StopSound(int sound_id, mobj_t *emitter)
 {
@@ -435,7 +443,7 @@ void S_StopSound(int sound_id, mobj_t *emitter)
  * If sound_id is zero, returns true if the source is emitting any sounds.
  * An exported function.
  *
- * @return: int         Nonzero if a sound is playing.
+ * @return                  Non-zero if a sound is playing.
  */
 int S_IsPlaying(int sound_id, mobj_t *emitter)
 {
@@ -446,7 +454,7 @@ int S_IsPlaying(int sound_id, mobj_t *emitter)
 /**
  * Start a song based on its number.
  *
- * @return: int         (true) if the ID exists.
+ * @return                  @c NULL, if the ID exists.
  */
 int S_StartMusicNum(int id, boolean looped)
 {
@@ -463,7 +471,7 @@ int S_StartMusicNum(int id, boolean looped)
 }
 
 /**
- * @return: int         (true) if the song is found.
+ * @return                  @c NULL, if the song is found.
  */
 int S_StartMusic(char *musicid, boolean looped)
 {

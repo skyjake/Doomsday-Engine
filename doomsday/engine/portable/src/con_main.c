@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * con_main.c: Console Subsystem
  *
  * Should be completely redesigned.
@@ -1575,7 +1575,6 @@ boolean Con_Responder(ddevent_t *event)
                 Sys_ConUpdateCmdLine(cmdLine);
             return true;
         }
-
 
         // If not in insert mode, push the rest of the command-line forward.
         if(!cmdInsMode)

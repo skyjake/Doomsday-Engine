@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_halo.c: Halos and Flares
  */
 
@@ -41,15 +41,15 @@
 // MACROS ------------------------------------------------------------------
 
 //#define Z_TEST_BIAS       .00005
-#define NUM_FLARES      5
+#define NUM_FLARES          5
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct flare_s {
-    float   offset;
-    float   size;
-    float   alpha;
-    int     texture;            // -1=dlight, 0=flare, 1=brflare, 2=bigflare
+    float       offset;
+    float       size;
+    float       alpha;
+    int         texture;    // -1=dlight, 0=flare, 1=brflare, 2=bigflare
 } flare_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -150,16 +150,16 @@ void H_SetupState(boolean dosetup)
  * @param y             Y coordinate of the center of the halo.
  * @param z             Z coordinate of the center of the halo.
  * @param lumobj        The lumobj casting the halo.
- * @param primary       If <code>true</code>, we'll draw the primary halo,
- *                      otherwise the secondary ones (which won't be clipped
- *                      or occluded by anything; they're drawn after
- *                      everything else, during a separate pass).
- *                      If <code>false</code>, the caller must setup the
- *                      rendering state.
+ * @param primary       @c true = we'll draw the primary halo, otherwise the
+ *                      secondary ones (which won't be clipped or occluded
+ *                      by anything; they're drawn after everything else,
+ *                      during a separate pass).
+ *                      @c false = the caller must setup the rendering state.
  *
- * @return              <code>true</code> if a halo was rendered.
+ * @return              @c true, if a halo was rendered.
  */
-boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
+boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
+                     boolean primary)
 {
     float   viewPos[3];
     float   viewToCenter[3], mirror[3], normalViewToCenter[3];

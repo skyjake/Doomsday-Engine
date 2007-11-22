@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_world.h: World Setup and Refresh
  */
 
@@ -33,7 +33,7 @@
 
 // Used for vertex sector owners, side line owners and reverb subsectors.
 typedef struct ownernode_s {
-    void *data;
+    void       *data;
     struct ownernode_s* next;
 } ownernode_t;
 

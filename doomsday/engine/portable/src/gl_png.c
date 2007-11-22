@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_png.c: PNG Images
  *
  * Portable Network Graphics high-level handling.
@@ -85,12 +85,12 @@ void PNGAPI my_read_data(png_structp read_ptr, png_bytep data,
 unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                         int *pixelSize)
 {
-    DFILE  *file;
+    DFILE      *file;
     png_structp png_ptr = 0;
-    png_infop png_info = 0, end_info = 0;
-    png_bytep *rows, pixel;
+    png_infop   png_info = 0, end_info = 0;
+    png_bytep  *rows, pixel;
     unsigned char *retbuf = 0;  // The return buffer.
-    int     i, k, off;
+    int         i, k, off;
 
     if((file = F_Open(fileName, "rb")) == NULL)
         return NULL;
@@ -156,7 +156,7 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                                 memcpy(retbuf + i * (*pixelSize) * png_info->width,
                                        rows[i], (*pixelSize) * png_info->width);
                             }
-                            else                    // Paletted image.
+                            else // Paletted image.
                             {
                                 for(k = 0; k < *width; ++k)
                                 {

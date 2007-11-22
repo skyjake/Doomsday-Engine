@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * net_main.h: Network Subsystem
  */
 
@@ -61,7 +61,7 @@
 
 // The number of mobjs that can be stored in the input/visible buffer.
 // The server won't send more mobjs than this.
-#define MAX_CLMOBJS     80
+#define MAX_CLMOBJS         80
 
 // Packet types.
 // PKT = sent by anybody

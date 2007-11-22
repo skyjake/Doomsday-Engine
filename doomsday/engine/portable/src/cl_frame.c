@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * cl_frame.c: Frame Reception
  */
 
@@ -128,8 +128,8 @@ void Cl_HistoryAdd(byte set)
 }
 
 /**
- * @return              <code>true</code> if the set is found in the recent
- *                      set history.
+ * @return              @c true, if the set is found in the recent set
+ *                      history.
  */
 boolean Cl_HistoryCheck(byte set)
 {
@@ -155,8 +155,7 @@ void Cl_ResendHistoryAdd(byte id)
 }
 
 /**
- * @return              <code>true</code> if the resend ID is found in the
- *                      history.
+ * @return              @c true, if the resend ID is found in the history.
  */
 boolean Cl_ResendHistoryCheck(byte id)
 {

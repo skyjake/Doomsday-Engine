@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_loop.c: Main Loop
  */
 
@@ -43,18 +43,18 @@
 
 // MACROS ------------------------------------------------------------------
 
-/*
+/**
  * There needs to be at least this many tics per second. A smaller value
  * is likely to cause unpredictable changes in playsim.
  */
 #define MIN_TIC_RATE 35
 
-/*
+/**
  * The length of one tic can be at most this.
  */
 #define MAX_FRAME_TIME (1.0/MIN_TIC_RATE)
 
-/*
+/**
  * Maximum number of milliseconds spent uploading textures at the beginning
  * of a frame. Note that non-uploaded textures will appear as pure white
  * until their content gets uploaded (you should precache them).
@@ -105,7 +105,7 @@ static boolean firstTic = true;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Register console variables for main loop.
  */
 void DD_RegisterLoop(void)
@@ -132,9 +132,11 @@ int DD_GameLoop(void)
     while(!appShutdown)
     {
 #ifdef WIN32
-        // Start by checking Windows messages.
-        // NOTE: Must be in the same thread as that which registered the
-        //       window it is handling messages for - DJS.
+        /**
+         * Start by checking Windows messages.
+         * \note Must be in the same thread as that which registered the
+         *       window it is handling messages for - DJS.
+         */
         while(!suspendMsgPump &&
               PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
         {
@@ -180,7 +182,7 @@ int DD_GameLoop(void)
     return exitCode;
 }
 
-/*
+/**
  * Drawing anything outside this routine is frowned upon.
  * Seriously frowned!
  */
@@ -188,17 +190,16 @@ void DD_DrawAndBlit(void)
 {
     if(novideo)
         return;
-    
+
     if(Con_IsBusy())
     {
         Con_Error("DD_DrawAndBlit: Console is busy, can't draw!\n");
     }
-    
-    // This'll let DGL know that some serious rendering is about to begin.
-    // OpenGL doesn't need it, but Direct3D will do the BeginScene call.
-    // If rendering happens outside The Sequence, DGL is forced, in
-    // Direct3D's case, to call BeginScene/EndScene before and after the
-    // aforementioned operation.
+
+    /**
+     * This'll let DGL know that some serious rendering is about to begin.
+     * OpenGL doesn't need it, but Direct3D will do the BeginScene call.
+     */
     gl.Begin(DGL_SEQUENCE);
 
     if(drawGame)
@@ -212,7 +213,7 @@ void DD_DrawAndBlit(void)
         // Update the world ready for drawing view(s) of it.
         R_SetupWorldFrame();
 
-        // Draw in-window game graphics. 
+        // Draw in-window game graphics.
         gx.G_Drawer();
 
         // Draw the view border.
@@ -254,7 +255,7 @@ void DD_StartFrame(void)
 {
     if(!isDedicated)
         GL_UploadDeferredContent(FRAME_DEFERRED_UPLOAD_TIMEOUT);
-    
+
     frameStartTime = Sys_GetTimef();
 
     S_StartFrame();
@@ -292,7 +293,7 @@ float DD_GetFrameRate(void)
     return fps;
 }
 
-/*
+/**
  * This is the main ticker of the engine. We'll call all the other tickers
  * from here.
  */
@@ -306,25 +307,29 @@ void DD_Ticker(timespan_t time)
     P_Ticker(time);
 
     if(tickFrame || netgame)
-    {
-        // Advance frametime.  It will be reduced when new sharp world
-        // positions are calculated, so that frametime always stays within
-        // the range 0..1.
+    {   // Advance frametime
+        /**
+         * It will be reduced when new sharp world positions are calculated,
+         * so that frametime always stays within the range 0..1.
+         */
         realFrameTimePos += time * TICSPERSEC;
-        
+
         // Game logic.
-        gx.Ticker(time);    
+        gx.Ticker(time);
 
         if(M_RunTrigger(&sharedFixedTrigger, time))
-        {
-            // A new 35 Hz tick begins, clear the player fixangles flags which
-            // have been in effect for any fractional ticks since they were
-            // set.
+        {   // A new 35 Hz tick begins.
+            // Clear the player fixangles flags which have been in effect
+            // for any fractional ticks since they were set.
             //Sv_FixLocalAngles(true /* just clear flags; don't apply */);
 
-            // Server ticks.  These are placed here because
-            // they still rely on fixed ticks and thus it's best to
-            // keep them in sync with the fixed game ticks.
+            /**
+             * Server ticks.
+             *
+             * These are placed here because they still rely on fixed ticks
+             * and thus it's best to keep them in sync with the fixed game
+             * ticks.
+             */
             if(isClient)
                 Cl_Ticker( /* time */ );
             else
@@ -426,7 +431,7 @@ void DD_RunTics(void)
         {
             // Wait for a short while.
             Sys_Sleep(3);
-            
+
             N_Update();
             Net_Update();
         }

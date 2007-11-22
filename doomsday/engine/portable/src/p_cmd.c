@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_cmd.c: Tic Commands
  *
  * Tic commands are generated out of controller state. There is one command
@@ -79,8 +79,8 @@ void P_MergeCommand(ticcmd_t *dest, ticcmd_t *src)
 void P_BuildCommand(ticcmd_t *cmd, int playerNumber)
 {
     memset(cmd, 0, sizeof(*cmd));
-    
-#if 0    
+
+#if 0
 	ddplayer_t *player = &players[playerNumber];
 	//client_t *client = clients + playerNumber;
 
@@ -107,7 +107,7 @@ void P_BuildCommand(ticcmd_t *cmd, int playerNumber)
     cmd->actions = P_ControlGetToggles(playerNumber);
 
 //Con_Printf("%i: a=%04x p=%04x\n", playerNumber, cmd->angle, cmd->pitch);
-	
+
     if(isClient)
     {
         // Clients mirror their local commands.

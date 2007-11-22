@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -58,7 +58,7 @@ typedef struct modelparams_s {
     boolean     mirror; // If true the model will be mirrored about its Z axis (in model space).
 
 // Appearance
-    int         flags; // Thing flags.
+    int         flags; // Mobj flags.
 
     // Lighting/color:
     float       lightLevel; // Light level of the sector the model is in. All modifiers applied (i.e. light adaptation).

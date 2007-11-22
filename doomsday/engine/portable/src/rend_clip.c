@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_clip.c: Clipper
  *
  * Clipnodes and oranges.
@@ -149,7 +149,7 @@ void C_RoverRewind(rover_t *r)
     r->rover = r->first;
 }
 
-void   *C_RoverGet(rover_t *r)
+void *C_RoverGet(rover_t *r)
 {
     void       *node;
 
