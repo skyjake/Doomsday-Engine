@@ -1,4 +1,4 @@
-/**\file
+﻿/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_sprite.c: Rendering Map Objects as 2D Sprites
  */
 
@@ -239,8 +239,6 @@ void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
 static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
                                            vissprite_t *spr)
 {
-    float       offx = pspOffX / 16.0f;
-    float       offy = pspOffY / 16.0f;
     float       offScaleY = weaponOffsetScaleY / 1000.0f;
     spritelump_t *slump;
     spriteinfo_t info;
@@ -253,9 +251,9 @@ static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
                     &info);
     slump = spritelumps[info.lump];
 
-    params->pos[0] = psp->x - info.offset + offx;
-    params->pos[1] =
-        offScaleY * psp->y + (1 - offScaleY) * 32 - info.topOffset + offy;
+    params->pos[VX] = psp->pos[VX] - info.offset + pspOffset[VX];
+    params->pos[VY] =
+        offScaleY * psp->pos[VY] + (1 - offScaleY) * 32 - info.topOffset + pspOffset[VY];
     params->width = slump->width;
     params->height = slump->height;
     params->subsector = spr->data.psprite.subsector;
@@ -301,21 +299,21 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     else
         gl.Bind(0);
 
-    //  3---2
-    //  |   |  Vertex layout.
     //  0---1
+    //  |   |  Vertex layout.
+    //  3---2
 
-    v1[VX] = params->pos[0];
-    v1[VY] = params->pos[1];
+    v1[VX] = params->pos[VX];
+    v1[VY] = params->pos[VY];
 
-    v2[VX] = params->pos[0] + params->width;
-    v2[VY] = params->pos[1];
+    v2[VX] = params->pos[VX] + params->width;
+    v2[VY] = params->pos[VY];
 
-    v3[VX] = params->pos[0] + params->width;
-    v3[VY] = params->pos[1] + params->height;
+    v3[VX] = params->pos[VX] + params->width;
+    v3[VY] = params->pos[VY] + params->height;
 
-    v4[VX] = params->pos[0];
-    v4[VY] = params->pos[1] + params->height;
+    v4[VX] = params->pos[VX];
+    v4[VY] = params->pos[VY] + params->height;
 
     // All psprite vertices are co-plannar, so just copy the view front vector.
     // \fixme: Can we do something better here?
@@ -506,6 +504,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                     params->vertices[0].pos[VZ],
                     params->vertices[0].pos[VY]);
 
+        gl.Color4ubv(params->vertices[1].color);
         gl.MultiTexCoord2fv(normal, params->texc[0]);
 
         gl.MultiTexCoord2f(dyn, params->modTexC[0][0],
@@ -515,7 +514,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                     params->vertices[1].pos[VZ],
                     params->vertices[1].pos[VY]);
 
-        gl.Color4ubv(params->vertices[1].color);
+        gl.Color4ubv(params->vertices[3].color);
         gl.MultiTexCoord2f(normal, params->texc[1][0],
                            params->texc[0][1]);
 
@@ -526,6 +525,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                     params->vertices[3].pos[VZ],
                     params->vertices[3].pos[VY]);
 
+        gl.Color4ubv(params->vertices[2].color);
         gl.MultiTexCoord2fv(normal, params->texc[1]);
 
         gl.MultiTexCoord2f(dyn, params->modTexC[0][1],
@@ -552,13 +552,14 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                     params->vertices[0].pos[VZ],
                     params->vertices[0].pos[VY]);
 
+        gl.Color4ubv(params->vertices[1].color);
         gl.MultiTexCoord2fv(normal, params->texc[0]);
 
         gl.Vertex3f(params->vertices[1].pos[VX],
                     params->vertices[1].pos[VZ],
                     params->vertices[1].pos[VY]);
 
-        gl.Color4ubv(params->vertices[1].color);
+        gl.Color4ubv(params->vertices[3].color);
         gl.MultiTexCoord2f(normal, params->texc[1][0],
                            params->texc[0][1]);
 
@@ -566,6 +567,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                     params->vertices[3].pos[VZ],
                     params->vertices[3].pos[VY]);
 
+        gl.Color4ubv(params->vertices[2].color);
         gl.MultiTexCoord2fv(normal, params->texc[1]);
 
         gl.Vertex3f(params->vertices[2].pos[VX],
