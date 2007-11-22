@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -31,6 +31,10 @@
  * you modify this file, you may extend this exception to your
  * version of the file, but you are not obligated to do so. If you
  * do not wish to do so, delete this exception statement from your version.
+ */
+
+/**
+ * p_sound.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -57,14 +61,14 @@ extern int gsvMapMusic;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Start the song for the current map.
  */
 void S_LevelMusic(void)
 {
     ddmapinfo_t info;
-    char    id[10];
-    int    songid = 0;
+    char        id[10];
+    int         songid = 0;
 
     if(G_GetGameState() != GS_LEVEL)
         return;
@@ -81,11 +85,11 @@ void S_LevelMusic(void)
         S_StartMusicNum(songid, true);
     }
 
-    // set the map music game status cvar
+    // Set the map music game status cvar.
     gsvMapMusic = songid;
 }
 
-/*
+/**
  * Doom-like sector sounds: when a new sound starts, stop any old ones
  * from the same origin.
  *

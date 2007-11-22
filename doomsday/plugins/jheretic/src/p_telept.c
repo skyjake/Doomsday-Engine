@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -41,6 +41,10 @@
  * http://www.ravensoft.com/
  */
 
+/**
+ * p_telept.c:
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "jheretic.h"
@@ -68,45 +72,46 @@
 
 // CODE --------------------------------------------------------------------
 
-mobj_t *P_SpawnTeleFog(int x, int y)
+mobj_t *P_SpawnTeleFog(float x, float y)
 {
     subsector_t *ss = R_PointInSubsector(x, y);
 
-    return P_SpawnMobj(x, y, P_GetFixedp(ss, DMU_FLOOR_HEIGHT) +
-                             TELEFOGHEIGHT, MT_TFOG);
+    return P_SpawnMobj3f(MT_TFOG, x, y,
+                         P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT);
 }
 
-boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
+boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
 {
-    fixed_t oldpos[3];
-    fixed_t aboveFloor;
-    fixed_t fogDelta;
-    player_t *player;
-    unsigned an;
-    mobj_t *fog;
+    float       oldpos[3];
+    float       aboveFloor;
+    float       fogDelta;
+    player_t   *player;
+    uint        an;
+    mobj_t     *fog;
 
     memcpy(oldpos, thing->pos, sizeof(oldpos));
-    aboveFloor = thing->pos[VZ] - FLT2FIX(thing->floorz);
+    aboveFloor = thing->pos[VZ] - thing->floorz;
     if(!P_TeleportMove(thing, x, y, false))
     {
-        return (false);
+        return false;
     }
+
     if(thing->player)
     {
         player = thing->player;
         if(player->powers[PT_FLIGHT] && aboveFloor)
         {
-            thing->pos[VZ] = FLT2FIX(thing->floorz) + aboveFloor;
-            if(FIX2FLT(thing->pos[VZ]) + thing->height > thing->ceilingz)
+            thing->pos[VZ] = thing->floorz + aboveFloor;
+            if(thing->pos[VZ] + thing->height > thing->ceilingz)
             {
-                thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
+                thing->pos[VZ] = thing->ceilingz - thing->height;
             }
-            player->plr->viewZ = FIX2FLT(thing->pos[VZ]) + player->plr->viewheight;
+            player->plr->viewZ = thing->pos[VZ] + player->plr->viewheight;
         }
         else
         {
-            thing->pos[VZ] = FLT2FIX(thing->floorz);
-            player->plr->viewZ = FIX2FLT(thing->pos[VZ]) + player->plr->viewheight;
+            thing->pos[VZ] = thing->floorz;
+            player->plr->viewZ = thing->pos[VZ] + player->plr->viewheight;
             //player->plr->clLookDir = 0; /* $unifiedangles */
             player->plr->lookdir = 0;
         }
@@ -115,35 +120,39 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
     }
     else if(thing->flags & MF_MISSILE)
     {
-        thing->pos[VZ] = FLT2FIX(thing->floorz) + aboveFloor;
-        if(FIX2FLT(thing->pos[VZ]) + thing->height > thing->ceilingz)
+        thing->pos[VZ] = thing->floorz + aboveFloor;
+        if(thing->pos[VZ] + thing->height > thing->ceilingz)
         {
-            thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
+            thing->pos[VZ] = thing->ceilingz - thing->height;
         }
     }
     else
     {
-        thing->pos[VZ] = FLT2FIX(thing->floorz);
+        thing->pos[VZ] = thing->floorz;
     }
+
     // Spawn teleport fog at source and destination
-    fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-    fog = P_SpawnMobj(oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta, MT_TFOG);
+    fogDelta = thing->flags & MF_MISSILE? 0 : TELEFOGHEIGHT;
+    fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta);
     S_StartSound(sfx_telept, fog);
     an = angle >> ANGLETOFINESHIFT;
     fog =
-        P_SpawnMobj(x + 20 * finecosine[an], y + 20 * finesine[an],
-                    thing->pos[VZ] + fogDelta, MT_TFOG);
+        P_SpawnMobj3f(MT_TFOG,
+                      x + 20 * FIX2FLT(finecosine[an]),
+                      y + 20 * FIX2FLT(finesine[an]),
+                      thing->pos[VZ] + fogDelta);
     S_StartSound(sfx_telept, fog);
     if(thing->player && !thing->player->powers[PT_WEAPONLEVEL2])
-    {                           // Freeze player for about .5 sec
+    {   // Freeze player for about .5 sec.
         thing->reactiontime = 18;
     }
+
     thing->angle = angle;
     if(thing->flags2 & MF2_FLOORCLIP)
     {
-        if(thing->pos[VZ] == P_GetFixedp(thing->subsector,
+        if(thing->pos[VZ] == P_GetFloatp(thing->subsector,
                                    DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
-           P_GetThingFloorType(thing) >= FLOOR_LIQUID)
+           P_GetMobjFloorType(thing) >= FLOOR_LIQUID)
         {
             thing->floorclip = 10;
         }
@@ -155,16 +164,17 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
 
     if(thing->flags & MF_MISSILE)
     {
-        angle >>= ANGLETOFINESHIFT;
-        thing->mom[MX] = FixedMul(thing->info->speed, finecosine[angle]);
-        thing->mom[MY] = FixedMul(thing->info->speed, finesine[angle]);
+        an = angle >> ANGLETOFINESHIFT;
+        thing->mom[MX] = thing->info->speed * FIX2FLT(finecosine[angle]);
+        thing->mom[MY] = thing->info->speed * FIX2FLT(finesine[angle]);
     }
     else
     {
         thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;
     }
+
     P_ClearThingSRVO(thing);
-    return (true);
+    return true;
 }
 
 boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
@@ -177,12 +187,11 @@ boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
     if(thing->flags2 & MF2_NOTELEPORT)
         return false;
 
-    // Don't teleport if hit back of line,
-    //  so you can get out of teleporter.
+    // Don't teleport if hit back of line, so you can get out of teleporter.
     if(side == 1)
         return false;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return false;
 
@@ -193,15 +202,15 @@ boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
         for(th = thinkercap.next; th != &thinkercap; th = th->next)
         {
             if(th->function != P_MobjThinker)
-                continue; // Not a mobj
+                continue; // Not a mobj.
 
             m = (mobj_t *) th;
 
             if(m->type != MT_TELEPORTMAN)
-                continue; // Not a teleportman
+                continue; // Not a teleportman.
 
             if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
-                continue; // wrong sector
+                continue; // Wrong sector.
 
             return P_Teleport(thing, m->pos[VX], m->pos[VY], m->angle);
         }
@@ -213,26 +222,25 @@ boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
 #if __JHERETIC__ || __JHEXEN__
 void P_ArtiTele(player_t *player)
 {
-    int     i;
-    int     selections;
-    fixed_t destX;
-    fixed_t destY;
-    angle_t destAngle;
+    int         i;
+    int         selections;
+    float       destPos[2];
+    angle_t     destAngle;
 
+    //// \todo Spawn spot selection does not belong in this file.
     if(deathmatch)
     {
         selections = deathmatch_p - deathmatchstarts;
         i = P_Random() % selections;
-        destX = deathmatchstarts[i].x << FRACBITS;
-        destY = deathmatchstarts[i].y << FRACBITS;
-        destAngle = ANG45 * (deathmatchstarts[i].angle / 45);
+        destPos[VX] = deathmatchstarts[i].pos[VX];
+        destPos[VY] = deathmatchstarts[i].pos[VY];
+        destAngle = deathmatchstarts[i].angle;
     }
     else
     {
-        //// \fixme DJS - this doesn't seem right...
-        destX = playerstarts[0].x << FRACBITS;
-        destY = playerstarts[0].y << FRACBITS;
-        destAngle = ANG45 * (playerstarts[0].angle / 45);
+        destPos[VX] = playerstarts[0].pos[VX];
+        destPos[VY] = playerstarts[0].pos[VY];
+        destAngle = playerstarts[0].angle;
     }
 
 # if __JHEXEN__
@@ -243,7 +251,7 @@ void P_ArtiTele(player_t *player)
     }
     //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
 # else
-    P_Teleport(player->plr->mo, destX, destY, destAngle);
+    P_Teleport(player->plr->mo, destPos[VX], destPos[VY], destAngle);
     /*S_StartSound(sfx_wpnup, NULL); // Full volume laugh
        NetSv_Sound(NULL, sfx_wpnup, player-players); */
     S_StartSound(sfx_wpnup, NULL);

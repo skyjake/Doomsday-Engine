@@ -3,8 +3,8 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,15 +27,14 @@
  * versions of it that use the same license as the libjhexen or
  * libjheretic libraries), and distribute the linked executables.
  * You must obey the GNU General Public License in all respects for
- * all of the code used other than “libjhexen or libjheretic”. If
+ * all of the code used other than ?libjhexen or libjheretic?. If
  * you modify this file, you may extend this exception to your
  * version of the file, but you are not obligated to do so. If you
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * Status bar code.
- *  Does palette indicators as well
+/**
+ * st_stuff.c: Status bar code.
  */
 
  // HEADER FILES ------------------------------------------------------------
@@ -64,7 +63,7 @@
 //       or into the frame buffer?
 
 // current ammo icon(sbbar)
-#define ST_AMMOIMGWIDTH     24
+#define ST_AMMOIMGWIDTH         24
 #define ST_AMMOICONX            111
 #define ST_AMMOICONY            172
 
@@ -80,46 +79,46 @@
 #define ST_INVCOUNTOFFY         22
 
 // current artifact (sbbar)
-#define ST_ARTIFACTWIDTH    24
+#define ST_ARTIFACTWIDTH        24
 #define ST_ARTIFACTX            179
 #define ST_ARTIFACTY            160
 
 // current artifact count (sbar)
-#define ST_ARTIFACTCWIDTH   2
+#define ST_ARTIFACTCWIDTH       2
 #define ST_ARTIFACTCX           209
 #define ST_ARTIFACTCY           182
 
 // AMMO number pos.
-#define ST_AMMOWIDTH        3
-#define ST_AMMOX            135
-#define ST_AMMOY            162
+#define ST_AMMOWIDTH            3
+#define ST_AMMOX                135
+#define ST_AMMOY                162
 
 // ARMOR number pos.
-#define ST_ARMORWIDTH       3
-#define ST_ARMORX           254
-#define ST_ARMORY           170
+#define ST_ARMORWIDTH           3
+#define ST_ARMORX               254
+#define ST_ARMORY               170
 
 // HEALTH number pos.
-#define ST_HEALTHWIDTH      3
-#define ST_HEALTHX          85
-#define ST_HEALTHY          170
+#define ST_HEALTHWIDTH          3
+#define ST_HEALTHX              85
+#define ST_HEALTHY              170
 
 // Key icon positions.
-#define ST_KEY0WIDTH        10
-#define ST_KEY0HEIGHT       6
-#define ST_KEY0X            153
-#define ST_KEY0Y            164
-#define ST_KEY1WIDTH        ST_KEY0WIDTH
-#define ST_KEY1X            153
-#define ST_KEY1Y            172
-#define ST_KEY2WIDTH        ST_KEY0WIDTH
-#define ST_KEY2X            153
-#define ST_KEY2Y            180
+#define ST_KEY0WIDTH            10
+#define ST_KEY0HEIGHT           6
+#define ST_KEY0X                153
+#define ST_KEY0Y                164
+#define ST_KEY1WIDTH            ST_KEY0WIDTH
+#define ST_KEY1X                153
+#define ST_KEY1Y                172
+#define ST_KEY2WIDTH            ST_KEY0WIDTH
+#define ST_KEY2X                153
+#define ST_KEY2Y                180
 
 // Frags pos.
-#define ST_FRAGSX           85
-#define ST_FRAGSY           171
-#define ST_FRAGSWIDTH       2
+#define ST_FRAGSX               85
+#define ST_FRAGSY               171
+#define ST_FRAGSWIDTH           2
 
 // TYPES -------------------------------------------------------------------
 
@@ -129,7 +128,7 @@
 
 void ST_drawWidgets(boolean refresh);
 
-// Console commands for the HUD/Statusbar
+// Console commands for the HUD/Statusbar.
 DEFCC(CCmdHUDShow);
 DEFCC(CCmdStatusBarSize);
 
