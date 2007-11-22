@@ -397,6 +397,13 @@ int DD_Main(void)
         }
     }
 
+    /**
+     * \note This must be called from the main thread due to issues with
+     * the devices we use via the WINAPI, MCI (cdaudio, mixer etc).
+     */
+    Con_Message("Sys_Init: Setting up machine state.\n");
+    Sys_Init();
+
     // Enter busy mode until startup complete.
     Con_InitProgress(200);
     Con_Busy(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR
@@ -627,9 +634,6 @@ static int DD_StartupWorker(void *parm)
 
     Con_SetProgress(100);
 
-    Con_Message("Sys_Init: Setting up machine state.\n");
-    Sys_Init();
-
     Con_Message("B_Init: Init bindings.\n");
     B_Init();
     Con_ParseCommands(bindingsConfigFileName, false);
@@ -820,7 +824,7 @@ void DD_CheckQuery(int query, int parm)
     switch (query)
     {
     case DD_TEXTURE_HEIGHT_QUERY:
-        queryResult = textures[parm]->info.height << FRACBITS;
+        queryResult = textures[parm]->info.height;
         break;
 #if 0
     // Unused
@@ -872,17 +876,12 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&isDedicated, 0},
     {&novideo, 0},
     {&defs.count.mobjs.num, 0},
-    {&mapGravity, &mapGravity},
     {&gotframe, 0},
     {&playback, 0},
     {&defs.count.sounds.num, 0},
     {&defs.count.music.num, 0},
     {&numlumps, 0},
     {&send_all_players, &send_all_players},
-    {&pspOffX, &pspOffX},
-    {&pspOffY, &pspOffY},
-    {&psp_move_speed, &psp_move_speed},
-    {&cplr_thrust_mul, &cplr_thrust_mul},
     {&clientPaused, &clientPaused},
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
     {&monochrome, &monochrome},
@@ -929,34 +928,6 @@ int DD_GetInteger(int ddvalue)
         case DD_THING_COUNT:
             return numthings;
 
-        case DD_BLOCKMAP_WIDTH:
-        {
-            gamemap_t *map = P_GetCurrentMap();
-            if(map)
-            {
-                uint        bmapSize[2];
-                P_GetBlockmapSize(map->blockmap, bmapSize);
-                return bmapSize[VX];
-            }
-            else
-            {
-                return -1;
-            }
-        }
-        case DD_BLOCKMAP_HEIGHT:
-        {
-            gamemap_t *map = P_GetCurrentMap();
-            if(map)
-            {
-                uint        bmapSize[2];
-                P_GetBlockmapSize(map->blockmap, bmapSize);
-                return bmapSize[VY];
-            }
-            else
-            {
-                return -1;
-            }
-        }
         case DD_DYNLIGHT_TEXTURE:
             return (int) GL_PrepareLSTexture(LST_DYNAMIC, NULL);
 
@@ -1023,7 +994,7 @@ void* DD_GetVariable(int ddvalue)
     if(ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
     {
         // How about some specials?
-        switch (ddvalue)
+        switch(ddvalue)
         {
         case DD_VIEWX:
             return &viewX;
@@ -1048,9 +1019,6 @@ void* DD_GetVariable(int ddvalue)
 
         case DD_VIEWANGLE_OFFSET:
             return &viewAngleOffset;
-
-        case DD_SHARED_FIXED_TRIGGER:
-            return &sharedFixedTrigger;
 
         case DD_SECTOR_COUNT:
             return &numsectors;
@@ -1106,30 +1074,96 @@ void* DD_GetVariable(int ddvalue)
                 return mapInfo->author;
             break;
         }
-        case DD_BLOCKMAP_ORIGIN_X:
+        case DD_BLOCKMAP_MIN_X:
         {
             gamemap_t  *map = P_GetCurrentMap();
             if(map)
             {
-                fixed_t     bmapOrigin[2];
-                P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
-                return &bmapOrigin[VX];
+                vec2_t      bmapMin;
+                P_GetBlockmapBounds(map->blockMap, bmapMin, NULL);
+                return &bmapMin[VX];
             }
             else
                 return NULL;
         }
-        case DD_BLOCKMAP_ORIGIN_Y:
+        case DD_BLOCKMAP_MIN_Y:
         {
             gamemap_t  *map = P_GetCurrentMap();
             if(map)
             {
-                fixed_t     bmapOrigin[2];
-                P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
-                return &bmapOrigin[VY];
+                vec2_t     bmapMin;
+                P_GetBlockmapBounds(map->blockMap, bmapMin, NULL);
+                return &bmapMin[VY];
             }
             else
                 return NULL;
         }
+        case DD_BLOCKMAP_MAX_X:
+        {
+            gamemap_t  *map = P_GetCurrentMap();
+            if(map)
+            {
+                vec2_t      bmapMax;
+                P_GetBlockmapBounds(map->blockMap, NULL, bmapMax);
+                return &bmapMax[VX];
+            }
+            else
+                return NULL;
+        }
+        case DD_BLOCKMAP_MAX_Y:
+        {
+            gamemap_t  *map = P_GetCurrentMap();
+            if(map)
+            {
+                vec2_t     bmapMax;
+                P_GetBlockmapBounds(map->blockMap, NULL, bmapMax);
+                return &bmapMax[VY];
+            }
+            else
+                return NULL;
+        }
+        case DD_BLOCKMAP_WIDTH:
+        {
+            gamemap_t *map = P_GetCurrentMap();
+            if(map)
+            {
+                uint        bmapSize[2];
+                P_GetBlockmapDimensions(map->blockMap, bmapSize);
+                return &bmapSize[VX];
+            }
+            else
+            {
+                return NULL;
+            }
+        }
+        case DD_BLOCKMAP_HEIGHT:
+        {
+            gamemap_t *map = P_GetCurrentMap();
+            if(map)
+            {
+                uint        bmapSize[2];
+                P_GetBlockmapDimensions(map->blockMap, bmapSize);
+                return &bmapSize[VY];
+            }
+            else
+            {
+                return NULL;
+            }
+        }
+        case DD_PSPRITE_OFFSET_X:
+            return &pspOffset[VX];
+
+        case DD_PSPRITE_OFFSET_Y:
+            return &pspOffset[VY];
+
+        case DD_SHARED_FIXED_TRIGGER:
+            return &sharedFixedTrigger;
+
+        case DD_CPLAYER_THRUST_MUL:
+            return &cplr_thrust_mul;
+
+        case DD_GRAVITY:
+            return &mapGravity;
 
 #ifdef WIN32
         case DD_WINDOW_HANDLE:
@@ -1193,9 +1227,25 @@ void DD_SetVariable(int ddvalue, void *parm)
             viewAngleOffset = *(int*) parm;
             return;
 
+        case DD_CPLAYER_THRUST_MUL:
+            cplr_thrust_mul = *(float*) parm;
+            return;
+
+        case DD_GRAVITY:
+            mapGravity = *(float*) parm;
+            return;
+
         case DD_SKYFLAT_NAME:
             memset(skyFlatName, 0, 9);
             strncpy(skyFlatName, parm, 9);
+            return;
+
+        case DD_PSPRITE_OFFSET_X:
+            pspOffset[VX] = *(float*) parm;
+            return;
+
+        case DD_PSPRITE_OFFSET_Y:
+            pspOffset[VY] = *(float*) parm;
             return;
 
         default:

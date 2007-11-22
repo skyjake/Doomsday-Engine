@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +21,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * m_gridmap.c: Generalized blockmap
  */
 
@@ -44,12 +43,10 @@ typedef struct gridblock_s {
 } gridblock_t;
 
 typedef struct gmap_s {
-    int         width, height;
+    uint        width, height;
     size_t      sizeOfBlock;
     int         memzoneTag;
     gridblock_t *blocks;
-
-    int       (*setBlock)(void* p, void* ctx);
 } gmap_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -77,9 +74,9 @@ static void freeGridmap(gmap_t *gmap)
     Z_Free(gmap);
 }
 
-static gridblock_t *getBlock(gmap_t *gmap, int x, int y)
+static gridblock_t *getBlock(gmap_t *gmap, uint x, uint y)
 {
-    if(x >= 0 && y >= 0 && x < gmap->width && y < gmap->height)
+    if(x < gmap->width && y < gmap->height)
     {
         return &gmap->blocks[y * gmap->width + x];
     }
@@ -94,9 +91,8 @@ static gridblock_t *getBlock(gmap_t *gmap, int x, int y)
  * @param height        Y dimension of the grid.
  * @param sizeOfElement Amount of memory to be allocated for each element.
  */
-gridmap_t *M_GridmapCreate(int width, int height, size_t sizeOfElement,
-                           int memzoneTag,
-                           int (*setBlock)(void* p, void* ctx))
+gridmap_t *M_GridmapCreate(uint width, uint height, size_t sizeOfElement,
+                           int memzoneTag)
 {
     gmap_t     *gmap = allocGridmap(memzoneTag);
 
@@ -108,8 +104,6 @@ gridmap_t *M_GridmapCreate(int width, int height, size_t sizeOfElement,
     gmap->blocks =
         Z_Calloc(gmap->width * gmap->height * sizeof(gridblock_t),
                  gmap->memzoneTag, 0);
-
-    gmap->setBlock = setBlock;
 
     return (gridmap_t*) gmap;
 }
@@ -139,7 +133,7 @@ void M_GridmapDestroy(gridmap_t *gridmap)
     }
 }
 
-boolean M_GridmapSetBlock(gridmap_t *gridmap, int x, int y, void *context)
+void *M_GridmapGetBlock(gridmap_t *gridmap, uint x, uint y, boolean alloc)
 {
     if(gridmap)
     {
@@ -148,18 +142,28 @@ boolean M_GridmapSetBlock(gridmap_t *gridmap, int x, int y, void *context)
 
         if(block)
         {
-            // Have we allocated memory for this block yet?
-            if(!block->data)
-            {
-                block->data =
-                    Z_Calloc(gmap->sizeOfBlock, gmap->memzoneTag, 0);
-            }
+            if(alloc)
+            {   // Allocator mode.
+                // Have we allocated memory for this block yet?
+                if(!block->data)
+                {
+                    block->data =
+                        Z_Calloc(gmap->sizeOfBlock, gmap->memzoneTag, 0);
+                }
 
-            return gmap->setBlock(block->data, context);
+                return block->data;
+            }
+            else
+            {   // Look up mode.
+                if(block->data)
+                    return block->data;
+
+                return NULL;
+            }
         }
     }
 
-    return false;
+    return NULL;
 }
 
 /**
@@ -178,7 +182,7 @@ boolean M_GridmapIterator(gridmap_t *gridmap,
     if(gridmap)
     {
         gmap_t     *gmap = (gmap_t*) gridmap;
-        int         x, y;
+        uint        x, y;
 
         for(x = 0; x <= gmap->width; ++x)
         {
@@ -213,14 +217,20 @@ boolean M_GridmapIterator(gridmap_t *gridmap,
  * @return              @c true, iff all callbacks return @c true;
  */
 boolean M_GridmapBoxIterator(gridmap_t *gridmap,
-                             int xl, int xh, int yl, int yh,
+                             uint xl, uint xh, uint yl, uint yh,
                              boolean (*callback) (void* p, void* ctx),
                              void* param)
 {
     if(gridmap)
     {
         gmap_t     *gmap = (gmap_t*) gridmap;
-        int         x, y;
+        uint        x, y;
+
+        // Kludge: We shouldn't need clamping here!
+        if(xh >= gmap->width)
+            xh = gmap->width -1;
+        if(yh >= gmap->height)
+            yh = gmap->height - 1;
 
         for(x = xl; x <= xh; ++x)
         {
@@ -239,4 +249,13 @@ boolean M_GridmapBoxIterator(gridmap_t *gridmap,
     }
 
     return false;
+}
+
+boolean M_GridmapBoxIteratorv(gridmap_t *gridmap, const uint box[4],
+                              boolean (*callback) (void* p, void* ctx),
+                              void* param)
+{
+    return M_GridmapBoxIterator(gridmap, box[BOXLEFT], box[BOXRIGHT],
+                                box[BOXBOTTOM], box[BOXTOP], callback,
+                                param);
 }

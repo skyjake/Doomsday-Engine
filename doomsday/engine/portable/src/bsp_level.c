@@ -366,8 +366,8 @@ static void buildSegsFromHEdges(gamemap_t *map)
             }
 
             seg->sidedef = ldef->L_side(seg->side);
-            seg->offset = P_AccurateDistancef(seg->SG_v1pos[VX] - vtx->V_pos[VX],
-                                              seg->SG_v1pos[VY] - vtx->V_pos[VY]);
+            seg->offset = P_AccurateDistance(seg->SG_v1pos[VX] - vtx->V_pos[VX],
+                                             seg->SG_v1pos[VY] - vtx->V_pos[VY]);
         }
         else
         {
@@ -385,8 +385,8 @@ static void buildSegsFromHEdges(gamemap_t *map)
 
         // Calculate the length of the segment. We need this for
         // the texture coordinates. -jk
-        seg->length = P_AccurateDistancef(seg->SG_v2pos[VX] - seg->SG_v1pos[VX],
-                                          seg->SG_v2pos[VY] - seg->SG_v1pos[VY]);
+        seg->length = P_AccurateDistance(seg->SG_v2pos[VX] - seg->SG_v1pos[VX],
+                                         seg->SG_v2pos[VY] - seg->SG_v1pos[VY]);
 
         if(seg->length == 0)
             seg->length = 0.01f; // Hmm...
@@ -520,7 +520,7 @@ static void hardenNodes(gamemap_t *map, mnode_t *root)
 
 /**
  * Perform cleanup on the loaded map data, removing duplicate vertexes,
- * pruning unused sectors etc, etc... 
+ * pruning unused sectors etc, etc...
  */
 void CleanMap(gamemap_t *map)
 {

@@ -46,9 +46,10 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BLKSHIFT 7                // places to shift rel position for cell num
-#define BLKMASK ((1<<BLKSHIFT)-1) // mask for rel position within cell
-#define BLKMARGIN 0               // size guardband around map used
+#define BLKSHIFT                7 // places to shift rel position for cell num
+#define BLKMASK                 ((1<<BLKSHIFT)-1) // mask for rel position within cell
+#define BLKMARGIN               (8) // size guardband around map
+#define MAPBLOCKUNITS           128
 
 // TYPES -------------------------------------------------------------------
 
@@ -108,8 +109,7 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
     uint        i;
     int         j;
     uint        bMapWidth, bMapHeight;  // blockmap dimensions
-    static vec2_t bMapOrigin;           // blockmap origin (lower left)
-    static vec2_t blockSize;            // size of the blocks
+    vec2_t      blockSize;            // size of the blocks
     uint       *blockcount = NULL;      // array of counters of line lists
     uint       *blockdone = NULL;       // array keeping track of blocks/line
     uint        numBlocks;              // number of cells = nrows*ncols
@@ -130,40 +130,50 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
             V2_AddToBox(bounds, point);
     }
 
-    // Setup the blockmap area to enclose the whole map,
-    // plus a margin (margin is needed for a map that fits
-    // entirely inside one blockmap cell).
+    // Setup the blockmap area to enclose the whole map, plus a margin
+    // (margin is needed for a map that fits entirely inside one blockmap
+    // cell).
     V2_Set(bounds[0], bounds[0][VX] - BLKMARGIN, bounds[0][VY] - BLKMARGIN);
-    V2_Set(bounds[1], bounds[1][VX] + BLKMARGIN + 1, bounds[1][VY] + BLKMARGIN + 1);
+    V2_Set(bounds[1], bounds[1][VX] + BLKMARGIN, bounds[1][VY] + BLKMARGIN);
 
     // Select a good size for the blocks.
-    V2_Set(blockSize, 128, 128);
-    V2_Copy(bMapOrigin, bounds[0]);   // min point
+    V2_Set(blockSize, MAPBLOCKUNITS, MAPBLOCKUNITS);
     V2_Subtract(dims, bounds[1], bounds[0]);
 
     // Calculate the dimensions of the blockmap.
-    bMapWidth = ceil(dims[VX] / blockSize[VX]) + 1;
-    bMapHeight = ceil(dims[VY] / blockSize[VY]) + 1;
+    if(dims[VX] <= blockSize[VX])
+        bMapWidth = 1;
+    else
+        bMapWidth = ceil(dims[VX] / blockSize[VX]);
+
+    if(dims[VY] <= blockSize[VY])
+        bMapHeight = 1;
+    else
+        bMapHeight = ceil(dims[VY] / blockSize[VY]);
     numBlocks = bMapWidth * bMapHeight;
 
-    // Create the array of pointers on NBlocks to blocklists,
-    // create an array of linelist counts on NBlocks, then finally,
-    // make an array in which we can mark blocks done per line
+    // Adjust the max bound so we have whole blocks.
+    V2_Set(bounds[1], bounds[0][VX] + bMapWidth  * blockSize[VX],
+                      bounds[0][VY] + bMapHeight * blockSize[VY]);
+
+    // Create the array of pointers on NBlocks to blocklists, create an array
+    // of linelist counts on NBlocks, then finally, make an array in which we
+    // can mark blocks done per line.
     blocklists = M_Calloc(numBlocks * sizeof(linelist_t *));
     blockcount = M_Calloc(numBlocks * sizeof(uint));
-    blockdone = M_Malloc(numBlocks * sizeof(uint));
+    blockdone  = M_Malloc(numBlocks * sizeof(uint));
 
     // For each linedef in the wad, determine all blockmap blocks it touches
     // and add the linedef number to the blocklists for those blocks.
     {
-    int xorg = (int) bMapOrigin[VX];
-    int yorg = (int) bMapOrigin[VY];
-    int     v1[2], v2[2];
-    int     dx, dy;
-    int     vert, horiz;
-    boolean slopePos, slopeNeg;
-    int     bx, by;
-    int     minx, maxx, miny, maxy;
+    int         xorg = (int) bounds[0][VX];
+    int         yorg = (int) bounds[0][VY];
+    int         v1[2], v2[2];
+    int         dx, dy;
+    int         vert, horiz;
+    boolean     slopePos, slopeNeg;
+    int         bx, by;
+    int         minx, maxx, miny, maxy;
 
     for(i = 0; i < map->numlines; ++i)
     {
@@ -180,13 +190,13 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
         slopePos = (dx ^ dy) > 0;
         slopeNeg = (dx ^ dy) < 0;
 
-        // extremal lines[i] coords
+        // Extremal lines[i] coords.
         minx = (v1[VX] > v2[VX]? v2[VX] : v1[VX]);
         maxx = (v1[VX] > v2[VX]? v1[VX] : v2[VX]);
         miny = (v1[VY] > v2[VY]? v2[VY] : v1[VY]);
         maxy = (v1[VY] > v2[VY]? v1[VY] : v2[VY]);
 
-        // no blocks done for this linedef yet
+        // No blocks done for this linedef yet.
         memset(blockdone, 0, numBlocks * sizeof(uint));
 
         // The line always belongs to the blocks containing its endpoints
@@ -217,7 +227,7 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
                 int     yp = (y - yorg) & BLKMASK;        // y position within block
 
                 // Already outside the blockmap?
-                if(yb < 0 || yb > (signed) (bMapHeight - 1))
+                if(yb < 0 || yb > (signed) (bMapHeight) + 1)
                     continue;
 
                 // Does the line touch this column at all?
@@ -289,7 +299,7 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
                 int     xp = (x - xorg) & BLKMASK;        // x position within block
 
                 // Outside the blockmap?
-                if(xb < 0 || xb > (signed) (bMapWidth - 1))
+                if(xb < 0 || xb > (signed) (bMapWidth) + 1)
                     continue;
 
                 // Touches this row?
@@ -342,7 +352,7 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
     }
 
     // Create the blockmap.
-    blockmap = P_BlockmapCreate(FLT2FIX(bMapOrigin[VX]), FLT2FIX(bMapOrigin[VY]),
+    blockmap = P_BlockmapCreate(bounds[0], bounds[1],
                                 bMapWidth, bMapHeight);
 
     // Create the actual links by 'hardening' the lists into arrays.
@@ -377,7 +387,7 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
                 *ptr = NULL;
 
                 // Link it into the BlockMap.
-                P_BlockmapSetBlock(blockmap, x, y, lines);
+                P_BlockmapSetBlock(blockmap, x, y, lines, NULL);
             }
         }
     }
@@ -387,6 +397,6 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
     M_Free(blockcount);
     M_Free(blockdone);
 
-    map->blockmap = blockmap;
+    map->blockMap = blockmap;
     return true;
 }

@@ -44,10 +44,8 @@
 // Internal data types
 #define MAPDATA_FORMATS 2
 
-// MAXRADIUS is for precalculated sector block boxes
-// the spider demon is larger,
-// but we do not have any moving sectors nearby
-#define MAXRADIUS       32*FRACUNIT
+// MAXRADIUS is for precalculated sector block boxes.
+#define MAXRADIUS       32
 
 // TYPES -------------------------------------------------------------------
 
@@ -145,20 +143,20 @@ const char* DAM_Str(int prop)
         { DAM_FLAGS, "DAM_FLAGS" },
         { DAM_SIDE0, "DAM_SIDE0" },
         { DAM_SIDE1, "DAM_SIDE1" },
-        { DAM_TOP_TEXTURE_OFFSET_X, "DAM_TOP_TEXTURE_OFFSET_X" },
-        { DAM_TOP_TEXTURE_OFFSET_Y, "DAM_TOP_TEXTURE_OFFSET_Y" },
-        { DAM_MIDDLE_TEXTURE_OFFSET_X, "DAM_MIDDLE_TEXTURE_OFFSET_X" },
-        { DAM_MIDDLE_TEXTURE_OFFSET_Y, "DAM_MIDDLE_TEXTURE_OFFSET_Y" },
-        { DAM_BOTTOM_TEXTURE_OFFSET_X, "DAM_BOTTOM_TEXTURE_OFFSET_X" },
-        { DAM_BOTTOM_TEXTURE_OFFSET_Y, "DAM_BOTTOM_TEXTURE_OFFSET_Y" },
-        { DAM_TOP_TEXTURE, "DAM_TOP_TEXTURE" },
-        { DAM_MIDDLE_TEXTURE, "DAM_MIDDLE_TEXTURE" },
-        { DAM_BOTTOM_TEXTURE, "DAM_BOTTOM_TEXTURE" },
+        { DAM_TOP_MATERIAL_OFFSET_X, "DAM_TOP_MATERIAL_OFFSET_X" },
+        { DAM_TOP_MATERIAL_OFFSET_Y, "DAM_TOP_MATERIAL_OFFSET_Y" },
+        { DAM_MIDDLE_MATERIAL_OFFSET_X, "DAM_MIDDLE_MATERIAL_OFFSET_X" },
+        { DAM_MIDDLE_MATERIAL_OFFSET_Y, "DAM_MIDDLE_MATERIAL_OFFSET_Y" },
+        { DAM_BOTTOM_MATERIAL_OFFSET_X, "DAM_BOTTOM_MATERIAL_OFFSET_X" },
+        { DAM_BOTTOM_MATERIAL_OFFSET_Y, "DAM_BOTTOM_MATERIAL_OFFSET_Y" },
+        { DAM_TOP_MATERIAL, "DAM_TOP_MATERIAL" },
+        { DAM_MIDDLE_MATERIAL, "DAM_MIDDLE_MATERIAL" },
+        { DAM_BOTTOM_MATERIAL, "DAM_BOTTOM_MATERIAL" },
         { DAM_FRONT_SECTOR, "DAM_FRONT_SECTOR" },
         { DAM_FLOOR_HEIGHT, "DAM_FLOOR_HEIGHT" },
-        { DAM_FLOOR_TEXTURE, "DAM_FLOOR_TEXTURE" },
+        { DAM_FLOOR_MATERIAL, "DAM_FLOOR_MATERIAL" },
         { DAM_CEILING_HEIGHT, "DAM_CEILING_HEIGHT" },
-        { DAM_CEILING_TEXTURE, "DAM_CEILING_TEXTURE" },
+        { DAM_CEILING_MATERIAL, "DAM_CEILING_MATERIAL" },
         { DAM_LIGHT_LEVEL, "DAM_LIGHT_LEVEL" },
         { 0, NULL }
     };
@@ -541,7 +539,7 @@ static void allocateMapData(gamemap_t *map)
         sector_t   *sec = &map->sectors[k];
 
         sec->header.type = DMU_SECTOR;
-        sec->thinglist = NULL;
+        sec->mobjList = NULL;
         for(j = 0;  j < 3; ++j)
             sec->rgb[j] = 1;
 
@@ -799,12 +797,12 @@ static boolean loadMapData(gamemap_t *map, listnode_t *nodes)
         boolean     result, freeList = false;
         selectprop_t *list, *cprops;
         selectprop_t props[] = {
-            {DAM_TOP_TEXTURE_OFFSET_X, DMT_SURFACE_OFFX},
-            {DAM_TOP_TEXTURE_OFFSET_Y, DMT_SURFACE_OFFY},
-            {DAM_MIDDLE_TEXTURE_OFFSET_X, DMT_SURFACE_OFFX},
-            {DAM_MIDDLE_TEXTURE_OFFSET_Y, DMT_SURFACE_OFFY},
-            {DAM_BOTTOM_TEXTURE_OFFSET_X, DMT_SURFACE_OFFX},
-            {DAM_BOTTOM_TEXTURE_OFFSET_Y, DMT_SURFACE_OFFY},
+            {DAM_TOP_MATERIAL_OFFSET_X, DMT_SURFACE_OFFSET},
+            {DAM_TOP_MATERIAL_OFFSET_Y, DMT_SURFACE_OFFSET},
+            {DAM_MIDDLE_MATERIAL_OFFSET_X, DMT_SURFACE_OFFSET},
+            {DAM_MIDDLE_MATERIAL_OFFSET_Y, DMT_SURFACE_OFFSET},
+            {DAM_BOTTOM_MATERIAL_OFFSET_X, DMT_SURFACE_OFFSET},
+            {DAM_BOTTOM_MATERIAL_OFFSET_Y, DMT_SURFACE_OFFSET},
             // \todo should be DMT_SIDE_SECTOR but we require special case logic
             {DAM_FRONT_SECTOR, DDVT_SECT_IDX}
         };
@@ -840,9 +838,9 @@ static boolean loadMapData(gamemap_t *map, listnode_t *nodes)
          * then tell us what texture to use.
          */
         selectprop_t props[] = {
-            {DAM_TOP_TEXTURE, DMT_MATERIAL_TEXTURE},
-            {DAM_MIDDLE_TEXTURE, DMT_MATERIAL_TEXTURE},
-            {DAM_BOTTOM_TEXTURE, DMT_MATERIAL_TEXTURE}
+            {DAM_TOP_MATERIAL, DMT_MATERIAL_TEXTURE},
+            {DAM_MIDDLE_MATERIAL, DMT_MATERIAL_TEXTURE},
+            {DAM_BOTTOM_MATERIAL, DMT_MATERIAL_TEXTURE}
         };
 
         if(!P_ReadMapData(map, nodes, ML_SIDEDEFS, &(*props), 3,
@@ -993,7 +991,7 @@ static void finishLineDefs(gamemap_t* map)
         ld->dy = v[1]->V_pos[VY] - v[0]->V_pos[VY];
 
         // Calculate the accurate length of each line.
-        ld->length = P_AccurateDistancef(ld->dx, ld->dy);
+        ld->length = P_AccurateDistance(ld->dx, ld->dy);
         ld->angle = bamsAtan2((int) (ld->v[1]->V_pos[VY] - ld->v[0]->V_pos[VY]),
                       (int) (ld->v[1]->V_pos[VX] - ld->v[0]->V_pos[VX])) << FRACBITS;
 
@@ -1011,24 +1009,24 @@ static void finishLineDefs(gamemap_t* map)
 
         if(v[0]->V_pos[VX] < v[1]->V_pos[VX])
         {
-            ld->bbox[BOXLEFT]   = FLT2FIX(v[0]->V_pos[VX]);
-            ld->bbox[BOXRIGHT]  = FLT2FIX(v[1]->V_pos[VX]);
+            ld->bbox[BOXLEFT]   = v[0]->V_pos[VX];
+            ld->bbox[BOXRIGHT]  = v[1]->V_pos[VX];
         }
         else
         {
-            ld->bbox[BOXLEFT]   = FLT2FIX(v[1]->V_pos[VX]);
-            ld->bbox[BOXRIGHT]  = FLT2FIX(v[0]->V_pos[VX]);
+            ld->bbox[BOXLEFT]   = v[1]->V_pos[VX];
+            ld->bbox[BOXRIGHT]  = v[0]->V_pos[VX];
         }
 
         if(v[0]->V_pos[VY] < v[1]->V_pos[VY])
         {
-            ld->bbox[BOXBOTTOM] = FLT2FIX(v[0]->V_pos[VY]);
-            ld->bbox[BOXTOP]    = FLT2FIX(v[1]->V_pos[VY]);
+            ld->bbox[BOXBOTTOM] = v[0]->V_pos[VY];
+            ld->bbox[BOXTOP]    = v[1]->V_pos[VY];
         }
         else
         {
-            ld->bbox[BOXBOTTOM] = FLT2FIX(v[1]->V_pos[VY]);
-            ld->bbox[BOXTOP]    = FLT2FIX(v[0]->V_pos[VY]);
+            ld->bbox[BOXBOTTOM] = v[1]->V_pos[VY];
+            ld->bbox[BOXTOP]    = v[0]->V_pos[VY];
         }
     }
 }
@@ -1063,30 +1061,30 @@ static void updateSectorBounds(sector_t *sec)
     if(!sec)
         return;
 
-    bbox = sec->bounds;
+    bbox = sec->bbox;
 
     if(!(sec->linecount > 0))
     {
-        memset(sec->bounds, 0, sizeof(sec->bounds));
+        memset(sec->bbox, 0, sizeof(sec->bbox));
         return;
     }
 
     vtx = sec->Lines[0]->L_v1;
-    bbox[BLEFT] = bbox[BRIGHT]  = vtx->V_pos[VX];
-    bbox[BTOP]  = bbox[BBOTTOM] = vtx->V_pos[VY];
+    bbox[BOXLEFT] = bbox[BOXRIGHT]  = vtx->V_pos[VX];
+    bbox[BOXTOP]  = bbox[BOXBOTTOM] = vtx->V_pos[VY];
 
     for(i = 1; i < sec->linecount; ++i)
     {
         vtx = sec->Lines[i]->L_v1;
 
-        if(vtx->V_pos[VX] < bbox[BLEFT])
-            bbox[BLEFT]   = vtx->V_pos[VX];
-        if(vtx->V_pos[VX] > bbox[BRIGHT])
-            bbox[BRIGHT]  = vtx->V_pos[VX];
-        if(vtx->V_pos[VY] < bbox[BTOP])
-            bbox[BTOP]    = vtx->V_pos[VY];
-        if(vtx->V_pos[VY] > bbox[BBOTTOM])
-            bbox[BBOTTOM] = vtx->V_pos[VY];
+        if(vtx->V_pos[VX] < bbox[BOXLEFT])
+            bbox[BOXLEFT]   = vtx->V_pos[VX];
+        if(vtx->V_pos[VX] > bbox[BOXRIGHT])
+            bbox[BOXRIGHT]  = vtx->V_pos[VX];
+        if(vtx->V_pos[VY] < bbox[BOXBOTTOM])
+            bbox[BOXBOTTOM] = vtx->V_pos[VY];
+        if(vtx->V_pos[VY] > bbox[BOXTOP])
+            bbox[BOXTOP]   = vtx->V_pos[VY];
     }
 }
 
@@ -1095,46 +1093,27 @@ static void updateSectorBounds(sector_t *sec)
  */
 void P_GetSectorBounds(sector_t *sec, float *min, float *max)
 {
-    min[VX] = sec->bounds[BLEFT];
-    min[VY] = sec->bounds[BTOP];
+    min[VX] = sec->bbox[BOXLEFT];
+    min[VY] = sec->bbox[BOXBOTTOM];
 
-    max[VX] = sec->bounds[BRIGHT];
-    max[VY] = sec->bounds[BBOTTOM];
+    max[VX] = sec->bbox[BOXRIGHT];
+    max[VY] = sec->bbox[BOXTOP];
 }
 
 /**
  * \pre Sector bounds must be setup before this is called!
  */
-static void updateSectorBlockBox(sector_t *sec, fixed_t bmapOrg[2],
-                                 uint bmapSize[2])
+static void updateSectorBlockBox(sector_t *sec, const pvec2_t bmapOrigin,
+                                 const uint bmapSize[2])
 {
-    uint        block;
-    fixed_t     bbox[4];
+    vec2_t      box[2];
 
-    if(!sec)
-        return;
+    box[0][VX] = sec->bbox[BOXLEFT];
+    box[0][VY] = sec->bbox[BOXBOTTOM];
+    box[1][VX] = sec->bbox[BOXRIGHT];
+    box[1][VY] = sec->bbox[BOXTOP];
 
-    bbox[BOXTOP] = FLT2FIX(sec->bounds[BOXTOP]);
-    bbox[BOXBOTTOM] = FLT2FIX(sec->bounds[BOXBOTTOM]);
-    bbox[BOXLEFT] = FLT2FIX(sec->bounds[BOXLEFT]);
-    bbox[BOXRIGHT] = FLT2FIX(sec->bounds[BOXRIGHT]);
-
-    // Determine sector blockmap blocks from the bounding box.
-    block = (bbox[BOXTOP] - bmapOrg[VY] + MAXRADIUS) >> MAPBLOCKSHIFT;
-    block = (block >= bmapSize[VY]? bmapSize[VY] - 1 : block);
-    sec->blockbox[BOXTOP] = block;
-
-    block = (bbox[BOXBOTTOM] - bmapOrg[VY] - MAXRADIUS) >> MAPBLOCKSHIFT;
-    block = (block < 0? 0 : block);
-    sec->blockbox[BOXBOTTOM] = block;
-
-    block = (bbox[BOXRIGHT] - bmapOrg[VX] + MAXRADIUS) >> MAPBLOCKSHIFT;
-    block = (block >= bmapSize[VX]? bmapSize[VX] - 1 : block);
-    sec->blockbox[BOXRIGHT] = block;
-
-    block = (bbox[BOXLEFT] - bmapOrg[VX] - MAXRADIUS) >> MAPBLOCKSHIFT;
-    block = (block < 0? 0 : block);
-    sec->blockbox[BOXLEFT] = block;
+    P_BoxToBlockmapBlocks(BlockMap, sec->blockbox, box);
 }
 
 /**
@@ -1165,7 +1144,7 @@ static void initMapBlockRings(gamemap_t *map)
     size_t      size;
     uint        bmapSize[2];
 
-    P_GetBlockmapSize(map->blockmap, bmapSize);
+    P_GetBlockmapDimensions(map->blockMap, bmapSize);
 
     // Clear out mobj rings.
     size = sizeof(*map->blockrings) * bmapSize[VX] * bmapSize[VY];
@@ -1371,11 +1350,11 @@ static void buildSectorLineLists(gamemap_t *map)
 static void finishSectors(gamemap_t *map)
 {
     uint        i;
-    fixed_t     bmapOrg[2];
+    vec2_t      bmapOrigin;
     uint        bmapSize[2];
 
-    P_GetBlockmapOrigin(map->blockmap, bmapOrg);
-    P_GetBlockmapSize(map->blockmap, bmapSize);
+    P_GetBlockmapBounds(map->blockMap, bmapOrigin, NULL);
+    P_GetBlockmapDimensions(map->blockMap, bmapSize);
 
     for(i = 0; i < map->numsectors; ++i)
     {
@@ -1395,7 +1374,7 @@ static void finishSectors(gamemap_t *map)
         }
 
         updateSectorBounds(sec);
-        updateSectorBlockBox(sec, bmapOrg, bmapSize);
+        updateSectorBlockBox(sec, bmapOrigin, bmapSize);
 
         P_GetSectorBounds(sec, min, max);
 
@@ -1554,13 +1533,19 @@ static void prepareSubSectors(gamemap_t *map)
 static void prepareSubSectorsForBias(gamemap_t *map)
 {
     uint        i;
+    uint        starttime = Sys_GetRealTime();
 
+    Con_Message("prepareSubSectorsForBias: Processing...\n");
     for(i = 0; i < map->numsubsectors; ++i)
     {
         subsector_t *ssec = &map->subsectors[i];
 
         initSSecPlanes(ssec);
     }
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("prepareSubSectorsForBias: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - starttime) / 1000.0f));
 }
 
 static ownernode_t *unusedNodeList = NULL;
@@ -2077,20 +2062,20 @@ static void updateMapBounds(gamemap_t *map)
 {
     uint        i;
 
-    memset(map->bounds, 0, sizeof(map->bounds));
+    memset(map->bbox, 0, sizeof(map->bbox));
     for(i = 0; i < map->numsectors; ++i)
     {
-        sector_t *sec = &map->sectors[i];
+        sector_t   *sec = &map->sectors[i];
 
         if(i == 0)
         {
             // The first sector is used as is.
-            memcpy(map->bounds, sec->bounds, sizeof(map->bounds));
+            memcpy(map->bbox, sec->bbox, sizeof(map->bbox));
         }
         else
         {
             // Expand the bounding box.
-            M_JoinBoxes(map->bounds, sec->bounds);
+            M_JoinBoxes(map->bbox, sec->bbox);
         }
     }
 }
@@ -2164,7 +2149,7 @@ static sector_t *getContainingSectorOf(sector_t *sec)
     float       inner[4], outer[4];
     sector_t   *other, *closest = NULL;
 
-    memcpy(inner, sec->bounds, sizeof(inner));
+    memcpy(inner, sec->bbox, sizeof(inner));
 
     // Try all sectors that fit in the bounding box.
     for(i = 0, other = sectors; i < numsectors; other++, ++i)
@@ -2174,11 +2159,11 @@ static sector_t *getContainingSectorOf(sector_t *sec)
         if(other == sec)
             continue;           // Don't try on self!
 
-        memcpy(outer, other->bounds, sizeof(outer));
-        if(inner[BLEFT]  >= outer[BLEFT] &&
-           inner[BRIGHT] <= outer[BRIGHT] &&
-           inner[BTOP]   >= outer[BTOP] &&
-           inner[BBOTTOM]<= outer[BBOTTOM])
+        memcpy(outer, other->bbox, sizeof(outer));
+        if(inner[BOXLEFT]  >= outer[BOXLEFT] &&
+           inner[BOXRIGHT] <= outer[BOXRIGHT] &&
+           inner[BOXTOP]   <= outer[BOXTOP] &&
+           inner[BOXBOTTOM]>= outer[BOXBOTTOM])
         {
             // Inside! Now we must test each of the subsectors. Otherwise
             // we can't be sure...
@@ -2250,8 +2235,8 @@ static void buildSectorLinks(gamemap_t *map)
         if(sec->lightsource == NULL &&
            (R_IsSkySurface(&sec->SP_ceilsurface) ||
             R_IsSkySurface(&sec->SP_floorsurface)) &&
-           sec->bounds[BRIGHT] - sec->bounds[BLEFT] > DOMINANT_SIZE &&
-           sec->bounds[BBOTTOM] - sec->bounds[BTOP] > DOMINANT_SIZE)
+           sec->bbox[BOXRIGHT] - sec->bbox[BOXLEFT]   > DOMINANT_SIZE &&
+           sec->bbox[BOXTOP]   - sec->bbox[BOXBOTTOM] > DOMINANT_SIZE)
         {
             // All sectors touching this one will be affected.
             for(k = 0; k < sec->linecount; ++k)
@@ -2327,9 +2312,6 @@ static boolean loadMap(archivedmap_t *dam, gamemap_t *map)
     // Must follow polygonize!
     prepareSubSectorsForBias(map);
 
-    // Init polyobj blockmap.
-    P_InitPolyBlockMap(map);
-
     // Must be called before any mobjs are spawned.
     R_InitLinks(map);
 
@@ -2381,13 +2363,13 @@ boolean DAM_LoadMap(archivedmap_t *dam)
     // Setup accordingly.
     if(mapInfo)
     {
-        newmap->globalGravity = mapInfo->gravity * FRACUNIT;
+        newmap->globalGravity = mapInfo->gravity;
         newmap->ambientLightLevel = mapInfo->ambient * 255;
     }
     else
     {
         // No map info found, so set some basic stuff.
-        newmap->globalGravity = FRACUNIT;
+        newmap->globalGravity = 1.0f;
         newmap->ambientLightLevel = 0;
     }
 
@@ -2480,82 +2462,102 @@ boolean DAM_PrintMapErrors(archivedmap_t *map, boolean silent)
  */
 static boolean loadBlockMap(gamemap_t* map, maplumpinfo_t* maplump)
 {
-    long        count = (maplump->length / 2);
+#define MAPBLOCKUNITS       128
+
     boolean     generateBMap = (createBMap == 2)? true : false;
 
-    // \kludge: We should be able to patch up an older blockmap but for now
-    // force a complete blockmap build.
-    generateBMap = true;
-
     // Do we have a lump to process?
-    if(maplump->lumpNum == -1)
+    if(maplump->lumpNum == -1 || maplump->length == 0)
         generateBMap = true; // We'll HAVE to generate it.
 
     // Are we generating new blockmap data?
     if(generateBMap)
     {
-        // Only announce if the user has choosen to always generate new data.
-        // (As we will have already announced it if the lump was missing).
+        // Only announce if the user has choosen to always generate
+        // new data (we will have already announced it if the lump
+        // was missing).
         if(maplump->lumpNum != -1)
-            Con_Message("loadBlockMap: Generating NEW blockmap...\n");
+            VERBOSE(
+            Con_Message("loadBlockMap: Generating NEW blockmap...\n"));
 
         mustCreateBlockMap = true;
     }
     else
-    {
-        /**
-         * No, the existing data is valid - so load it in.
-         * Data in PWAD is little endian.
-	     */
+    {   // No, the existing data is valid - so load it in.
+        uint        startTime;
         blockmap_t *blockmap;
         uint        x, y, width, height;
-        fixed_t     originX, originY;
-        long       *blockmapExpanded;
-
-        {
-        uint        n;
-        long        i;
+        float       v[2];
+        vec2_t      bounds[2];
+        long       *lineListOffsets, i, n, numBlocks, blockIdx;
         short      *blockmapLump;
+
+        VERBOSE(
+        Con_Message("loadBlockMap: Converting existing blockmap...\n"));
+
+        startTime = Sys_GetRealTime();
 
         blockmapLump =
             (short *) W_CacheLumpNum(maplump->lumpNum, PU_STATIC);
 
-        originX = ((fixed_t) SHORT(blockmapLump[0])) << FRACBITS;
-        originY = ((fixed_t) SHORT(blockmapLump[1])) << FRACBITS;
+        v[VX] = (float) SHORT(blockmapLump[0]);
+        v[VY] = (float) SHORT(blockmapLump[1]);
         width  = ((SHORT(blockmapLump[2])) & 0xffff);
         height = ((SHORT(blockmapLump[3])) & 0xffff);
 
-        /**
-         * Expand WAD blockmap into a larger one, by treating all offsets
-         * except -1 as unsigned and zero-extending them. This potentially
-         * doubles the size of blockmaps allowed because DOOM originally
-         * considered the offsets as always signed.
-	     */
-        blockmapExpanded = M_Malloc(sizeof(long) * (count - 4));
+        numBlocks = (long) width * (long) height;
 
+        /**
+         * Expand WAD blockmap into a larger one, by treating all
+         * offsets except -1 as unsigned and zero-extending them.
+         * This potentially doubles the size of blockmaps allowed
+         * because DOOM originally considered the offsets as always
+         * signed.
+	     */
+
+        lineListOffsets = M_Malloc(sizeof(long) * numBlocks);
         n = 4;
-        for(i = 0; i < count - 4; ++i)
+        for(i = 0; i < numBlocks; ++i)
         {
-            short t = SHORT(blockmapLump[n]);
-            blockmapExpanded[i] = (t == -1? -1 : (long) t & 0xffff);
-        }
+            short t = SHORT(blockmapLump[n++]);
+            lineListOffsets[i] = (t == -1? -1 : (long) t & 0xffff);
         }
 
         /**
          * Finally, convert the blockmap into our internal representation.
+         * We'll ensure the blockmap is formed correctly as we go.
+         *
+         * \todo We could gracefully handle malformed blockmaps by
+         * by cleaning up and then generating our own.
          */
-        blockmap = P_BlockmapCreate(originX, originY, width, height);
 
+        V2_Set(bounds[0], v[VX], v[VY]);
+        v[VX] += (float) (width * MAPBLOCKUNITS);
+        v[VY] += (float) (height * MAPBLOCKUNITS);
+        V2_Set(bounds[1], v[VX], v[VY]);
+
+        blockmap = P_BlockmapCreate(bounds[0], bounds[1],
+                                    width, height);
+        blockIdx = 0;
         for(y = 0; y < height; ++y)
             for(x = 0; x < width; ++x)
             {
-                int         offset = *(blockmapExpanded + (y * width + x));
-                long       *list;
+                long        offset = lineListOffsets[blockIdx];
+                long        idx;
                 uint        count;
+
+#if _DEBUG
+if(SHORT(blockmapLump[offset]) != 0)
+{
+    Con_Error("loadBlockMap: Offset (%li) for block %u [%u, %u] "
+              "does not index the beginning of a line list!\n",
+              offset, blockIdx, x, y);
+}
+#endif
 
                 // Count the number of lines in this block.
                 count = 0;
-                for(list = blockmapExpanded + offset; *list != -1; list++)
+                while((idx = SHORT(blockmapLump[offset + 1 + count])) != -1)
                     count++;
 
                 if(count > 0)
@@ -2568,26 +2570,42 @@ static boolean loadBlockMap(gamemap_t* map, maplumpinfo_t* maplump)
 
                     // Copy pointers to the array, delete the nodes.
                     ptr = lines;
-                    for(list = blockmapExpanded + offset;
-                        *list != -1; list++)
+                    count = 0;
+                    while((idx = SHORT(blockmapLump[offset + 1 + count])) != -1)
                     {
-                        *ptr++ = &map->lines[*list];
+#if _DEBUG
+if(idx < 0 || idx >= (long) map->numlines)
+{
+    Con_Error("loadBlockMap: Invalid linedef id %li\n!", idx);
+}
+#endif
+                        *ptr++ = &map->lines[idx];
+                        count++;
                     }
                     // Terminate.
                     *ptr = NULL;
 
                     // Link it into the BlockMap.
-                    P_BlockmapSetBlock(blockmap, x, y, lines);
+                    P_BlockmapSetBlock(blockmap, x, y, lines, NULL);
                 }
+
+                blockIdx++;
             }
 
         // Don't need this anymore.
-        M_Free(blockmapExpanded);
+        M_Free(lineListOffsets);
 
-        map->blockmap = blockmap;
+        map->blockMap = blockmap;
+
+        // How much time did we spend?
+        VERBOSE(Con_Message
+                ("loadBlockMap: Done in %.2f seconds.\n",
+                 (Sys_GetRealTime() - startTime) / 1000.0f));
     }
 
     return true;
+
+#undef MAPBLOCKUNITS
 }
 
 /**

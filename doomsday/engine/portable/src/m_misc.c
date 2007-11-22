@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * m_misc.c: Miscellanous Routines
  */
 
@@ -119,14 +119,14 @@ void M_ResetFileIDs(void)
 /**
  * Maintains a list of identifiers already seen.
  *
- * @return          <code>true</code> if the given file can be read, or
- *                  false if it has already been read.
+ * @return          @c true, if the given file can be read, or
+ *                  @c false, if it has already been read.
  */
 boolean M_CheckFileID(const char *path)
 {
-    byte    id[16];
-    uint    i;
-    boolean alreadySeen;
+    byte        id[16];
+    uint        i;
+    boolean     alreadySeen;
 
     if(!F_Access(path))
     {
@@ -700,8 +700,8 @@ void M_ProjectViewRelativeLine2D(const float center[2],
 
     if(alignToViewPlane)
     {   // Should be fully aligned to view plane.
-        sinrv = -FIX2FLT(viewCos);
-        cosrv = FIX2FLT(viewSin);
+        sinrv = -viewCos;
+        cosrv = viewSin;
     }
     else
     {
@@ -727,8 +727,10 @@ void M_ProjectViewRelativeLine2D(const float center[2],
 
 float M_BoundingBoxDiff(const float in[4], const float out[4])
 {
-    return in[BLEFT] - out[BLEFT] + in[BTOP] - out[BTOP] + out[BRIGHT] -
-        in[BRIGHT] + out[BBOTTOM] - in[BBOTTOM];
+    return in[BOXLEFT]    - out[BOXLEFT] +
+           in[BOXBOTTOM]  - out[BOXBOTTOM] +
+           out[BOXRIGHT]  - in[BOXRIGHT] +
+           out[BOXTOP]    - in[BOXTOP];
 }
 
 void M_ClearBox(fixed_t *box)
@@ -751,18 +753,17 @@ void M_AddToBox(fixed_t *box, fixed_t x, fixed_t y)
 
 void M_JoinBoxes(float bbox[4], const float other[4])
 {
-    if(other[BLEFT] < bbox[BLEFT])
-        bbox[BLEFT] = other[BLEFT];
+    if(other[BOXLEFT] < bbox[BOXLEFT])
+        bbox[BOXLEFT] = other[BOXLEFT];
 
-    if(other[BRIGHT] > bbox[BRIGHT])
-        bbox[BRIGHT] = other[BRIGHT];
+    if(other[BOXRIGHT] > bbox[BOXRIGHT])
+        bbox[BOXRIGHT] = other[BOXRIGHT];
 
-    if(other[BTOP] < bbox[BTOP])
-        bbox[BTOP] = other[BTOP];
+    if(other[BOXTOP] > bbox[BOXTOP])
+        bbox[BOXTOP] = other[BOXTOP];
 
-    if(other[BBOTTOM] > bbox[BBOTTOM])
-        bbox[BBOTTOM] = other[BBOTTOM];
-
+    if(other[BOXBOTTOM] < bbox[BOXBOTTOM])
+        bbox[BOXBOTTOM] = other[BOXBOTTOM];
 }
 
 #ifndef O_BINARY
@@ -1062,7 +1063,7 @@ int M_FileExists(const char *file)
  * Check that the given directory exists. If it doesn't, create it.
  * The path must be relative!
  *
- * @return          <code>true</code> if the directory already exists.
+ * @return          @c true, if the directory already exists.
  */
 boolean M_CheckPath(char *path)
 {
@@ -1190,8 +1191,8 @@ char* M_StrCatQuoted(char *dest, char *src)
  * @param trigger      Time trigger.
  * @param advanceTime  Amount of time to advance the trigger.
  *
- * @return @c true, if the trigger has accumulated enough time to fill the trigger's
- *         time threshold.
+ * @return              @c true, if the trigger has accumulated enough time
+ *                      to fill the trigger's time threshold.
  */
 boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
 {
@@ -1216,8 +1217,8 @@ boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
  * @param trigger      Time trigger.
  * @param advanceTime  Amount of time to advance the trigger.
  *
- * @return @c true, if the trigger has accumulated enough time to fill the trigger's
- *         time threshold.
+ * @return              @c true, if the trigger has accumulated enough time
+ *                      to fill the trigger's time threshold.
  */
 boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
 {

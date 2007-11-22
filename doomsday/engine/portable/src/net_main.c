@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * net_main.c: Client/server networking.
  *
  * Player number zero is always the server.
@@ -49,7 +49,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define OBSOLETE        CVF_NO_ARCHIVE|CVF_HIDE // Old ccmds.
+#define OBSOLETE                CVF_NO_ARCHIVE|CVF_HIDE // Old ccmds.
 
 // The threshold is the average ack time * mul.
 #define ACK_THRESHOLD_MUL       1.5f
@@ -60,8 +60,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct connectparam_s {
-    char address[256];
-    int port;    
+    char        address[256];
+    int         port;
     serverinfo_t info;
 } connectparam_t;
 
@@ -199,7 +199,7 @@ void Net_Shutdown(void)
 /**
  * @return          The name of the specified player.
  */
-char   *Net_GetPlayerName(int player)
+char *Net_GetPlayerName(int player)
 {
     return clients[player].name;
 }
@@ -214,7 +214,7 @@ ident_t Net_GetPlayerID(int player)
 /**
  * Sends the contents of the netBuffer.
  */
-void Net_SendBuffer(int to_player, int sp_flags)
+void Net_SendBuffer(int toPlayer, int spFlags)
 {
     // Don't send anything during demo playback.
     if(playback)
@@ -222,32 +222,32 @@ void Net_SendBuffer(int to_player, int sp_flags)
 
     // Update the length of the message.
     netBuffer.length = netBuffer.cursor - netBuffer.msg.data;
-    netBuffer.player = to_player;
+    netBuffer.player = toPlayer;
 
     // A rebound packet?
-    if(sp_flags & SPF_REBOUND)
+    if(spFlags & SPF_REBOUND)
     {
         reboundstore = netBuffer;
         reboundpacket = true;
         return;
     }
 
-    Demo_WritePacket(to_player);
+    Demo_WritePacket(toPlayer);
 
     // Can we send the packet?
-    if(sp_flags & SPF_DONT_SEND)
+    if(spFlags & SPF_DONT_SEND)
         return;
 
     // Send the packet to the network.
-    N_SendPacket(sp_flags);
+    N_SendPacket(spFlags);
 }
 
 /**
- * @return         <code>false</code> if there are no packets waiting.
+ * @return         @C false, if there are no packets waiting.
  */
 boolean Net_GetPacket(void)
 {
-    if(reboundpacket)           // Local packets rebound.
+    if(reboundpacket) // Local packets rebound.
     {
         netBuffer = reboundstore;
         netBuffer.player = consoleplayer;
@@ -255,16 +255,17 @@ boolean Net_GetPacket(void)
         reboundpacket = false;
         return true;
     }
+
     if(playback)
-    {
-        // We're playing a demo. This overrides all other packets.
+    {   // We're playing a demo. This overrides all other packets.
         return Demo_ReadPacket();
     }
+
     if(!netgame)
-    {
-        // Packets cannot be received.
+    {   // Packets cannot be received.
         return false;
     }
+
     if(!N_GetPacket())
         return false;
 
@@ -283,7 +284,7 @@ boolean Net_GetPacket(void)
  */
 void Net_SendPacket(int to_player, int type, void *data, int length)
 {
-    int     flags = 0;
+    int         flags = 0;
 
     // What kind of delivery to use?
     if(to_player & DDSP_CONFIRM)
@@ -296,13 +297,11 @@ void Net_SendPacket(int to_player, int type, void *data, int length)
         Msg_Write(data, length);
 
     if(isClient)
-    {
-        // As a client we can only send messages to the server.
+    {   // As a client we can only send messages to the server.
         Net_SendBuffer(0, flags);
     }
     else
-    {
-        // The server can send packets to any player.
+    {   // The server can send packets to any player.
         // Only allow sending to the sixteen possible players.
         Net_SendBuffer(to_player & DDSP_ALL_PLAYERS ? NSP_BROADCAST
                        : (to_player & 0xf), flags);
@@ -314,15 +313,15 @@ void Net_SendPacket(int to_player, int type, void *data, int length)
  */
 void Net_ShowChatMessage(void)
 {
-    // The current packet in the netBuffer is a chat message,
-    // let's unwrap and show it.
+    // The current packet in the netBuffer is a chat message, let's unwrap
+    // and show it.
     Con_FPrintf(CBLF_GREEN, "%s: %s\n", clients[netBuffer.msg.data[0]].name,
                 netBuffer.msg.data + 3);
 }
 
 /**
- * After a long period with no updates (map setup), calling this will
- * reset the tictimer so that no time seems to have passed.
+ * After a long period with no updates (map setup), calling this will reset
+ * the tictimer so that no time seems to have passed.
  */
 void Net_ResetTimer(void)
 {
@@ -330,12 +329,11 @@ void Net_ResetTimer(void)
 }
 
 /**
- * @return      <code>true</code> if the specified player is a real,
- *              local player.
+ * @return      @c true, if the specified player is a real, local player.
  */
 boolean Net_IsLocalPlayer(int pNum)
 {
-	return players[pNum].ingame && players[pNum].flags & DDPF_LOCAL;
+	return players[pNum].ingame && (players[pNum].flags & DDPF_LOCAL);
 }
 
 /**
@@ -346,7 +344,7 @@ void Net_SendCommands(void)
     uint        i;
     byte       *msg;
     ticcmd_t   *cmd;
-    
+
     if(isDedicated)
         return;
 
@@ -356,41 +354,50 @@ void Net_SendCommands(void)
         if(!Net_IsLocalPlayer(i))
             continue;
 
-        // Clients send their ticcmds to the server at regular intervals,
-        // but significantly less often than new ticcmds are built.
-        // Therefore they need to send a combination of all the cmds built
-        // during the wait period.
+        /**
+         * Clients send their ticcmds to the server at regular intervals,
+         * but significantly less often than new ticcmds are built.
+         * Therefore they need to send a combination of all the cmds built
+         * during the wait period.
+         */
 
         cmd = clients[i].aggregateCmd;
 
-        // The game will pack the commands into a buffer. The returned
-        // pointer points to a buffer that contains its size and the
-        // packed commands.
+        /**
+         * The game will pack the commands into a buffer. The returned
+         * pointer points to a buffer that contains its size and the
+         * packed commands.
+         */
+
         msg = (byte *) gx.NetPlayerEvent(1, DDPE_WRITE_COMMANDS, cmd);
 
         Msg_Begin(PCL_COMMANDS);
         Msg_Write(msg + 2, *(ushort *) msg);
 
-        // Send the packet to the server, i.e. player zero.
-        // Player commands are sent over TCP so their integrity and order
-        // are guaranteed.
+        /**
+         * Send the packet to the server, i.e. player zero.
+         * Player commands are sent over TCP so their integrity and order
+         * are guaranteed.
+         */
+
         Net_SendBuffer(0, (isClient ? 0 : SPF_REBOUND) | SPF_ORDERED);
 
-        // Clients will begin composing a new aggregate now that this
-        // one has been sent.
+        // Clients will begin composing a new aggregate now that this one
+        // has been sent.
         memset(cmd, 0, TICCMD_SIZE);
     }
 }
 
 static void Net_DoUpdate(void)
 {
-    static int lastTime = 0;
+    static int  lastTime = 0;
 
-    int     nowTime;
-    int     newTics;
+    int         nowTime, newTics;
 
-    // This timing is only used by the client when it determines if it
-    // is time to send ticcmds or coordinates to the server.
+    /**
+     * This timing is only used by the client when it determines if it is
+     * time to send ticcmds or coordinates to the server.
+     */
 
     // Check time.
     nowTime = Sys_GetTime();
@@ -403,7 +410,7 @@ static void Net_DoUpdate(void)
     }
     newTics = nowTime - lastTime;
     if(newTics <= 0)
-        return;            // Nothing new to update.
+        return; // Nothing new to update.
 
     lastTime = nowTime;
 
@@ -430,8 +437,10 @@ static void Net_DoUpdate(void)
             if(cmd)
             {
                 gx.BuildTicCmd(cmd);
+
                 // Set the time stamp. Only the lowest byte is stored.
                 //cmd->time = gametic + availabletics;
+
                 // Availabletics counts the tics that have cmds.
                 availabletics++;
                 if(isClient)
@@ -449,9 +458,11 @@ static void Net_DoUpdate(void)
     if(isDedicated)
         return;
 
-    // Clients will periodically send their coordinates to the server so
-    // any prediction errors can be fixed. Client movement is almost
-    // entirely local.
+    /**
+     * Clients will periodically send their coordinates to the server so
+     * any prediction errors can be fixed. Client movement is almost
+     * entirely local.
+     */
     coordTimer -= newTics;
     if(isClient && allowFrames && coordTimer < 0 && players[consoleplayer].mo)
     {
@@ -459,17 +470,18 @@ static void Net_DoUpdate(void)
 
         coordTimer = net_coordtime; // 35/2
         Msg_Begin(PKT_COORDS);
-        Msg_WriteShort(mo->pos[VX] >> 16);
-        Msg_WriteShort(mo->pos[VY] >> 16);
-        if(mo->pos[VZ] == FLT2FIX(mo->floorz))
+        Msg_WriteShort((short) mo->pos[VX]);
+        Msg_WriteShort((short) mo->pos[VY]);
+        if(mo->pos[VZ] == mo->floorz)
         {
             // This'll keep us on the floor even in fast moving sectors.
             Msg_WriteShort(DDMININT >> 16);
         }
         else
         {
-            Msg_WriteShort(mo->pos[VZ] >> 16);
+            Msg_WriteShort((short) mo->pos[VZ]);
         }
+
         Net_SendBuffer(0, 0);
     }
 }
@@ -486,7 +498,7 @@ void Net_Update(void)
     N_Listen();
     if(isClient)
         Cl_GetPackets();
-    else                        // Single-player or server.
+    else // Single-player or server.
         Sv_GetPackets();
 }
 
@@ -501,7 +513,7 @@ void Net_BuildLocalCommands(timespan_t time)
     if(isDedicated)
         return;
 
-		// Generate ticcmds for local players.
+    // Generate ticcmds for local players.
 	for(i = 0; i < DDMAXPLAYERS; ++i)
     {
 		if(!Net_IsLocalPlayer(i))
@@ -572,8 +584,7 @@ void Net_DestroyArrays(void)
 }
 
 /**
- * This is the network one-time initialization.
- * (into single-player mode)
+ * This is the network one-time initialization (into single-player mode).
  */
 void Net_InitGame(void)
 {
@@ -606,15 +617,15 @@ void Net_StopGame(void)
     int     i;
 
     if(isServer)
-    {
-        // We are an open server. This means we should inform all the
-        // connected clients that the server is about to close.
+    {   // We are an open server.
+        // This means we should inform all the connected clients that the
+        // server is about to close.
         Msg_Begin(PSV_SERVER_CLOSE);
         Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
         N_FlushOutgoing();
     }
     else
-    {
+    {   // We are a connected client.
         // Must stop recording, we're disconnecting.
         Demo_StopRecording(consoleplayer);
         Cl_CleanUp();
@@ -660,21 +671,21 @@ void Net_StopGame(void)
  */
 int Net_TimeDelta(byte now, byte then)
 {
-    int     delta;
+    int         delta;
 
     if(now >= then)
-    {
-        // Simple case.
+    {   // Simple case.
         delta = now - then;
     }
     else
-    {
-        // There's a wraparound.
+    {   // There's a wraparound.
         delta = 256 - then + now;
     }
+
     // The time can be in the future. We'll allow one second.
     if(delta > 220)
         delta -= 256;
+
     return delta;
 }
 
@@ -823,7 +834,6 @@ void Net_Drawer(void)
 {
     char    buf[160], tmp[40];
     int     i, c;
-//    int     winWidth, winHeight;
     boolean show_blink_r = false;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -835,6 +845,11 @@ void Net_Drawer(void)
 
     // Draw lightgrid debug display.
     LG_Debug();
+
+    // Draw the blockmap debug display.
+    //P_BlockmapDebug(BlockMap);
+
+    P_BlockmapDebug(SSecBlockMap);
 
     // Draw the light range debug display.
     R_DrawLightRange();
@@ -858,6 +873,7 @@ void Net_Drawer(void)
                 // This is a "real" player (or camera).
                 if(c++)
                     strcat(buf, ",");
+
                 sprintf(tmp, "%i:%s", i, clients[i].recordPaused ? "-P-" : "REC");
                 strcat(buf, tmp);
             }
@@ -870,6 +886,7 @@ void Net_Drawer(void)
         gl.Color3f(1, 1, 1);
         FR_ShadowTextOut(buf, i - 10, 10);
     }
+
     if(net_dev)
     {
         /*      gl.Color3f(1, 1, 1);
@@ -909,14 +926,14 @@ void Net_SetAckTime(int clientNumber, uint period)
 }
 
 /**
- * Returns the average ack time of the client.
+ * @return              The average ack time of the client.
  */
 uint Net_GetAckTime(int clientNumber)
 {
-    client_t *client = &clients[clientNumber];
-    uint    average = 0;
-    int     i, count = 0;
-    uint    smallest = 0, largest = 0;
+    client_t   *client = &clients[clientNumber];
+    uint        average = 0;
+    int         i, count = 0;
+    uint        smallest = 0, largest = 0;
 
     // Find the smallest and largest so that they can be ignored.
     smallest = largest = client->ackTimes[0];
@@ -938,6 +955,7 @@ uint Net_GetAckTime(int clientNumber)
             count++;
         }
     }
+
     if(count > 0)
     {
         return average / count;
@@ -953,7 +971,7 @@ uint Net_GetAckTime(int clientNumber)
  */
 void Net_SetInitialAckTime(int clientNumber, uint period)
 {
-    int     i;
+    int         i;
 
     for(i = 0; i < NUM_ACK_TIMES; ++i)
     {
@@ -967,19 +985,21 @@ void Net_SetInitialAckTime(int clientNumber, uint period)
  */
 uint Net_GetAckThreshold(int clientNumber)
 {
-    uint    threshold = Net_GetAckTime(clientNumber) * ACK_THRESHOLD_MUL;
+    uint        threshold =
+        Net_GetAckTime(clientNumber) * ACK_THRESHOLD_MUL;
 
     if(threshold < ACK_MINIMUM_THRESHOLD)
     {
         threshold = ACK_MINIMUM_THRESHOLD;
     }
+
     return threshold;
 }
 
 void Net_Ticker(void /*timespan_t time*/)
 {
-    int     i;
-    client_t *cl;
+    int         i;
+    client_t   *cl;
 
     // Network event ticker.
     N_NETicker();
@@ -1172,22 +1192,26 @@ D_CMD(Kick)
         Con_Printf("This is not a netgame.\n");
         return false;
     }
+
     if(!isServer)
     {
         Con_Printf("This command is for the server only.\n");
         return false;
     }
+
     num = atoi(argv[1]);
     if(num < 1 || num >= MAXPLAYERS)
     {
         Con_Printf("Invalid client number.\n");
         return false;
     }
+
     if(net_remoteuser == num)
     {
         Con_Printf("Can't kick the client who's logged in.\n");
         return false;
     }
+
     Sv_Kick(num);
     return true;
 }
@@ -1248,16 +1272,18 @@ D_CMD(MakeCamera)
        displayplayer = cp; */
 
     // Create a new local player.
-    int     cp;
+    int         cp;
 
     cp = atoi(argv[1]);
     if(cp < 0 || cp >= MAXPLAYERS)
         return false;
+
     if(clients[cp].connected)
     {
         Con_Printf("Client %i already connected.\n", cp);
         return false;
     }
+
     clients[cp].connected = true;
     clients[cp].ready = true;
     clients[cp].updateCount = UPDATECOUNT;
@@ -1269,7 +1295,7 @@ D_CMD(MakeCamera)
 
 D_CMD(SetConsole)
 {
-    int     cp;
+    int         cp;
 
     cp = atoi(argv[1]);
     if(players[cp].ingame)
@@ -1283,39 +1309,37 @@ int Net_ConnectWorker(void *ptr)
     double      startTime = 0;
     boolean     isDone = false;
     int         returnValue = false;
-    
+
     // Make sure TCP/IP is active.
     if(N_InitService(false))
     {
         Con_Message("Connecting to %s...\n", param->address);
-        
+
         // Start searching at the specified location.
         N_LookForHosts(param->address, param->port);
-        
+
         startTime = Sys_GetSeconds();
         isDone = false;
         while(!isDone)
         {
             if(N_GetHostInfo(0, &param->info))
-            {
-                // Found something!
+            {   // Found something!
                 Net_PrintServerInfo(0, NULL);
                 Net_PrintServerInfo(0, &param->info);
                 Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
-                
+
                 returnValue = true;
                 isDone = true;
             }
             else
-            {
-                // Nothing yet, should we wait a while longer?
+            {   // Nothing yet, should we wait a while longer?
                 if(Sys_GetSeconds() - startTime >= net_connecttimeout)
                     isDone = true;
                 else
                     Sys_Sleep(250); // Wait a while.
             }
         }
-        
+
         if(!returnValue)
             Con_Printf("No response from %s.\n", param->address);
     }
@@ -1323,7 +1347,7 @@ int Net_ConnectWorker(void *ptr)
     {
         Con_Message("TCP/IP not available.\n");
     }
-        
+
     Con_BusyWorkerEnd();
     return returnValue;
 }
@@ -1335,7 +1359,7 @@ int Net_ConnectWorker(void *ptr)
 D_CMD(Connect)
 {
     connectparam_t param;
-    char    *ptr;
+    char       *ptr;
 
     if(argc < 2 || argc > 3)
     {
@@ -1352,7 +1376,7 @@ D_CMD(Connect)
     }
 
     strcpy(param.address, argv[1]);
-    
+
     // If there is a port specified in the address, use it.
     if((ptr = strrchr(param.address, ':')))
     {
@@ -1364,7 +1388,7 @@ D_CMD(Connect)
         param.port = strtol(argv[2], 0, 0);
     }
 
-    return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), 
+    return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                     Net_ConnectWorker, &param);
 }
 
@@ -1373,8 +1397,8 @@ D_CMD(Connect)
  */
 D_CMD(Net)
 {
-    int     i;
-    boolean success = true;
+    int         i;
+    boolean     success = true;
 
     if(argc == 1)               // No args?
     {
@@ -1411,6 +1435,7 @@ D_CMD(Net)
             return CmdReturnValue = success;
         }
     }
+
     if(argc == 2)               // One argument?
     {
         if(!stricmp(argv[1], "shutdown"))
@@ -1447,7 +1472,7 @@ D_CMD(Net)
                 for(i = 0; i < MAXPLAYERS; ++i)
                 {
                     if(clients[i].connected)
-                        Con_Printf("%2i: %10s node %2x, entered at %07i (ingame:%i, handshake:%i)\n", 
+                        Con_Printf("%2i: %10s node %2x, entered at %07i (ingame:%i, handshake:%i)\n",
                                    i, clients[i].name,
                                    clients[i].nodeID, clients[i].enterTime,
                                    players[i].ingame, clients[i].handshake);
@@ -1485,6 +1510,7 @@ D_CMD(Net)
             return false;       // Bad args.
         }
     }
+
     if(argc == 3)               // Two arguments?
     {
         if(!stricmp(argv[1], "server"))
@@ -1566,6 +1592,7 @@ D_CMD(Net)
             CmdReturnValue = true;
         }
     }
+
     if(argc == 4)
     {
         if(!stricmp(argv[1], "search"))
@@ -1573,5 +1600,6 @@ D_CMD(Net)
             success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0));
         }
     }
+
     return success;
 }

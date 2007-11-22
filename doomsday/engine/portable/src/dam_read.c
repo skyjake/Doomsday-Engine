@@ -122,22 +122,22 @@ static mapproperty_t properties[DAM_NUM_PROPERTIES] =
     // \todo should be DMT_LINE_SIDES but we require special case logic
     {DAM_SIDE1, DAM_LINE, DDVT_SIDE_IDX, "backside"},
 // Side
-    {DAM_TOP_TEXTURE_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFX, "toptextureoffsetx"},
-    {DAM_TOP_TEXTURE_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFY, "toptextureoffsety"},
-    {DAM_MIDDLE_TEXTURE_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFX, "middletextureoffsetx"},
-    {DAM_MIDDLE_TEXTURE_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFY, "middletextureoffsety"},
-    {DAM_BOTTOM_TEXTURE_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFX, "bottomtextureoffsetx"},
-    {DAM_BOTTOM_TEXTURE_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFY, "bottomtextureoffsety"},
-    {DAM_TOP_TEXTURE, DAM_SIDE, DMT_MATERIAL_TEXTURE, "toptexture"},
-    {DAM_MIDDLE_TEXTURE, DAM_SIDE, DMT_MATERIAL_TEXTURE, "middletexture"},
-    {DAM_BOTTOM_TEXTURE, DAM_SIDE, DMT_MATERIAL_TEXTURE, "bottomtexture"},
+    {DAM_TOP_MATERIAL_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFSET, "toptextureoffsetx"},
+    {DAM_TOP_MATERIAL_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFSET, "toptextureoffsety"},
+    {DAM_MIDDLE_MATERIAL_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFSET, "middletextureoffsetx"},
+    {DAM_MIDDLE_MATERIAL_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFSET, "middletextureoffsety"},
+    {DAM_BOTTOM_MATERIAL_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFSET, "bottomtextureoffsetx"},
+    {DAM_BOTTOM_MATERIAL_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFSET, "bottomtextureoffsety"},
+    {DAM_TOP_MATERIAL, DAM_SIDE, DMT_MATERIAL_TEXTURE, "toptexture"},
+    {DAM_MIDDLE_MATERIAL, DAM_SIDE, DMT_MATERIAL_TEXTURE, "middletexture"},
+    {DAM_BOTTOM_MATERIAL, DAM_SIDE, DMT_MATERIAL_TEXTURE, "bottomtexture"},
     // \todo should be DMT_SIDE_SECTOR but we require special case logic
     {DAM_FRONT_SECTOR, DAM_SIDE, DDVT_SECT_IDX, "frontsector"},
 // Sector
     {DAM_FLOOR_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "floorheight"},
     {DAM_CEILING_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "ceilingheight"},
-    {DAM_FLOOR_TEXTURE, DAM_SECTOR, DMT_MATERIAL_TEXTURE, "floortexture"},
-    {DAM_CEILING_TEXTURE, DAM_SECTOR, DMT_MATERIAL_TEXTURE, "ceilingtexture"},
+    {DAM_FLOOR_MATERIAL, DAM_SECTOR, DMT_MATERIAL_TEXTURE, "floortexture"},
+    {DAM_CEILING_MATERIAL, DAM_SECTOR, DMT_MATERIAL_TEXTURE, "ceilingtexture"},
     {DAM_LIGHT_LEVEL, DAM_SECTOR, DDVT_SHORT, "lightlevel"},
 };
 
@@ -1194,39 +1194,39 @@ static int SetProperty2(void *ptr, void *context)
 
         switch(args->prop)
         {
-        case DAM_TOP_TEXTURE_OFFSET_X:
-            SetValue(DMT_SURFACE_OFFX, &p->SW_topoffx, args, 0);
+        case DAM_TOP_MATERIAL_OFFSET_X:
+            SetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VX], args, 0);
             break;
 
-        case DAM_TOP_TEXTURE_OFFSET_Y:
-            SetValue(DMT_SURFACE_OFFY, &p->SW_topoffy, args, 0);
+        case DAM_TOP_MATERIAL_OFFSET_Y:
+            SetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VY], args, 0);
             break;
 
-        case DAM_MIDDLE_TEXTURE_OFFSET_X:
-            SetValue(DMT_SURFACE_OFFX, &p->SW_middleoffx, args, 0);
+        case DAM_MIDDLE_MATERIAL_OFFSET_X:
+            SetValue(DMT_SURFACE_OFFSET, &p->SW_middleoffset[VX], args, 0);
             break;
 
-        case DAM_MIDDLE_TEXTURE_OFFSET_Y:
-            SetValue(DMT_SURFACE_OFFY, &p->SW_middleoffy, args, 0);
+        case DAM_MIDDLE_MATERIAL_OFFSET_Y:
+            SetValue(DMT_SURFACE_OFFSET, &p->SW_middleoffset[VY], args, 0);
             break;
 
-        case DAM_BOTTOM_TEXTURE_OFFSET_X:
-            SetValue(DMT_SURFACE_OFFX, &p->SW_bottomoffx, args, 0);
+        case DAM_BOTTOM_MATERIAL_OFFSET_X:
+            SetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VX], args, 0);
             break;
 
-        case DAM_BOTTOM_TEXTURE_OFFSET_Y:
-            SetValue(DMT_SURFACE_OFFY, &p->SW_bottomoffy, args, 0);
+        case DAM_BOTTOM_MATERIAL_OFFSET_Y:
+            SetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VY], args, 0);
             break;
 
-        case DAM_TOP_TEXTURE:
+        case DAM_TOP_MATERIAL:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SW_toptexture, args, 0);
             break;
 
-        case DAM_MIDDLE_TEXTURE:
+        case DAM_MIDDLE_MATERIAL:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SW_middletexture, args, 0);
             break;
 
-        case DAM_BOTTOM_TEXTURE:
+        case DAM_BOTTOM_MATERIAL:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SW_bottomtexture, args, 0);
             break;
 
@@ -1254,11 +1254,11 @@ static int SetProperty2(void *ptr, void *context)
             SetValue(DMT_PLANE_HEIGHT, &p->SP_ceilheight, args, 0);
             break;
 
-        case DAM_FLOOR_TEXTURE:
+        case DAM_FLOOR_MATERIAL:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SP_floortexture, args, 0);
             break;
 
-        case DAM_CEILING_TEXTURE:
+        case DAM_CEILING_MATERIAL:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SP_ceiltexture, args, 0);
             break;
 

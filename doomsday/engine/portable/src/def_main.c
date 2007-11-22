@@ -49,7 +49,7 @@
 #define LOOPk(n)    for(k = 0; k < (n); ++k)
 
 // Legacy frame flags.
-#define FF_FULLBRIGHT       0x8000 // flag in thing->frame
+#define FF_FULLBRIGHT       0x8000 // flag in mobj->frame
 #define FF_FRAMEMASK        0x7fff
 
 // TYPES -------------------------------------------------------------------
@@ -806,9 +806,9 @@ void Def_Read(void)
         mo->painchance = dmo->painchance;
         mo->painsound = Def_GetSoundNum(dmo->painsound);
         mo->deathsound = Def_GetSoundNum(dmo->deathsound);
-        mo->speed = dmo->speed * FRACUNIT;
-        mo->radius = dmo->radius * FRACUNIT;
-        mo->height = dmo->height * FRACUNIT;
+        mo->speed = dmo->speed;
+        mo->radius = dmo->radius;
+        mo->height = dmo->height;
         mo->mass = dmo->mass;
         mo->damage = dmo->damage;
         mo->activesound = Def_GetSoundNum(dmo->activesound);
@@ -1241,8 +1241,7 @@ boolean Def_SameStateSequence(state_t * snew, state_t * sold)
 
 #if 0
 /**
- * @return          <code>true</code> if the mobj (in mobjinfo) has the
- *                  given state.
+ * @return          @c true, if the mobj (in mobjinfo) has the given state.
  */
 boolean DD_HasMobjState(int mobj_num, int state_num)
 {

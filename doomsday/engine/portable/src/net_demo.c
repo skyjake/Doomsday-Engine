@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,12 +65,12 @@ typedef struct {
 #pragma pack()
 
 typedef struct {
-    boolean first;
-    int     begintime;
-    boolean canwrite;           // False until Handshake packet.
-    int     cameratimer;
-    int     pausetime;
-    float   fov;
+    boolean         first;
+    int             begintime;
+    boolean         canwrite;           // False until Handshake packet.
+    int             cameratimer;
+    int             pausetime;
+    float           fov;
 } demotimer_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -83,7 +83,7 @@ D_CMD(PlayDemo);
 D_CMD(RecordDemo);
 D_CMD(StopDemo);
 
-void    Demo_WriteLocalCamera(int plnum);
+void Demo_WriteLocalCamera(int plnum);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -93,23 +93,23 @@ extern float net_connecttime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char    demoPath[128] = "demo\\";
+char demoPath[128] = "demo\\";
 
 //int demotic = 0;
 LZFILE *playdemo = 0;
-int     playback = false;
-int     viewangle_delta = 0;
-float   lookdir_delta = 0;
-int     pos_delta[3];
-int     demo_framez, demo_z;
-boolean demo_onground;
+int playback = false;
+int viewangleDelta = 0;
+float lookdirDelta = 0;
+float posDelta[3];
+float demoFrameZ, demoZ;
+boolean demoOnGround;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static demotimer_t writeInfo[MAXPLAYERS];
-static demotimer_t readinfo;
-static float start_fov;
-static int demostarttic;
+static demotimer_t readInfo;
+static float startFOV;
+static int demoStartTic;
 
 // CODE --------------------------------------------------------------------
 
@@ -324,14 +324,14 @@ boolean Demo_BeginPlayback(char *fileName)
     playback = true;
     isServer = false;
     isClient = true;
-    readinfo.first = true;
-    viewangle_delta = 0;
-    lookdir_delta = 0;
-    demo_framez = 1;
-    demo_z = 0;
-    start_fov = fieldOfView;
-    demostarttic = DEMOTIC;
-    memset(pos_delta, 0, sizeof(pos_delta));
+    readInfo.first = true;
+    viewangleDelta = 0;
+    lookdirDelta = 0;
+    demoFrameZ = 1;
+    demoZ = 0;
+    startFOV = fieldOfView;
+    demoStartTic = DEMOTIC;
+    memset(posDelta, 0, sizeof(posDelta));
     // Start counting frames from here.
     if(ArgCheck("-timedemo"))
         r_framecounter = 0;
@@ -346,13 +346,13 @@ void Demo_StopPlayback(void)
         return;
 
     Con_Message("Demo was %.2f seconds (%i tics) long.\n",
-                (DEMOTIC - demostarttic) / (float) TICSPERSEC,
-                DEMOTIC - demostarttic);
+                (DEMOTIC - demoStartTic) / (float) TICSPERSEC,
+                DEMOTIC - demoStartTic);
 
     playback = false;
     lzClose(playdemo);
     playdemo = 0;
-    fieldOfView = start_fov;
+    fieldOfView = startFOV;
     Net_StopGame();
 
     if(ArgCheck("-timedemo"))
@@ -389,15 +389,15 @@ boolean Demo_ReadPacket(void)
         return false;
     }
 
-    if(readinfo.first)
+    if(readInfo.first)
     {
-        readinfo.first = false;
-        readinfo.begintime = nowtime;
+        readInfo.first = false;
+        readInfo.begintime = nowtime;
         ptime = lzGetC(playdemo);
     }
 
     // Check if the packet can be read.
-    if(Net_TimeDelta(nowtime - readinfo.begintime, ptime) < 0)
+    if(Net_TimeDelta(nowtime - readInfo.begintime, ptime) < 0)
         return false;           // Can't read yet.
 
     // Read the packet.
@@ -427,6 +427,7 @@ void Demo_WriteLocalCamera(int plnum)
 {
     mobj_t *mo = players[plnum].mo;
     int     z;
+    fixed_t x, y;
     byte    flags;
     boolean incfov = (writeInfo[plnum].fov != fieldOfView);
 
@@ -435,7 +436,7 @@ void Demo_WriteLocalCamera(int plnum)
 
     Msg_Begin(clients[plnum].recordPaused ? PKT_DEMOCAM_RESUME : PKT_DEMOCAM);
     // Flags.
-    flags = (mo->pos[VZ] <= FLT2FIX(mo->floorz) ? LCAMF_ONGROUND : 0)  // On ground?
+    flags = (mo->pos[VZ] <= mo->floorz ? LCAMF_ONGROUND : 0)  // On ground?
         | (incfov ? LCAMF_FOV : 0);
     if(players[plnum].flags & DDPF_CAMERA)
     {
@@ -443,15 +444,20 @@ void Demo_WriteLocalCamera(int plnum)
         flags |= LCAMF_CAMERA;
     }
     Msg_WriteByte(flags);
+
     // Coordinates.
-    Msg_WriteShort(mo->pos[VX] >> 16);
-    Msg_WriteByte(mo->pos[VX] >> 8);
-    Msg_WriteShort(mo->pos[VY] >> 16);
-    Msg_WriteByte(mo->pos[VY] >> 8);
+    x = FLT2FIX(mo->pos[VX]);
+    y = FLT2FIX(mo->pos[VY]);
+    Msg_WriteShort(x >> 16);
+    Msg_WriteByte(x >> 8);
+    Msg_WriteShort(y >> 16);
+    Msg_WriteByte(y >> 8);
+
     //z = mo->pos[VZ] + players[plnum].viewheight;
     z = FLT2FIX(players[plnum].viewZ);
     Msg_WriteShort(z >> 16);
     Msg_WriteByte(z >> 8);
+
     Msg_WriteShort(mo->angle /*players[plnum].clAngle*/ >> 16); /* $unifiedangles */
     Msg_WriteShort(players[plnum].lookdir / 110 * DDMAXSHORT /* $unifiedangles */);
     // Field of view is optional.
@@ -470,12 +476,12 @@ void Demo_WriteLocalCamera(int plnum)
 void Demo_ReadLocalCamera(void)
 {
     ddplayer_t *pl = players + consoleplayer;
-    mobj_t *mo = players[consoleplayer].mo;
-    int     flags;
-    int     z;
-    int     intertics = LOCALCAM_WRITE_TICS;
-    int     dang;
-    float   dlook;
+    mobj_t     *mo = players[consoleplayer].mo;
+    int         flags;
+    float       z;
+    int         intertics = LOCALCAM_WRITE_TICS;
+    int         dang;
+    float       dlook;
 
     if(!mo)
         return;
@@ -486,25 +492,25 @@ void Demo_ReadLocalCamera(void)
     }
 
     // Framez keeps track of the current camera Z.
-    demo_framez += demo_z;
+    demoFrameZ += demoZ;
 
     flags = Msg_ReadByte();
-    demo_onground = (flags & LCAMF_ONGROUND) != 0;
+    demoOnGround = (flags & LCAMF_ONGROUND) != 0;
     if(flags & LCAMF_CAMERA)
         pl->flags |= DDPF_CAMERA;
     else
         pl->flags &= ~DDPF_CAMERA;
 
     // X and Y coordinates are easy. Calculate deltas to the new coords.
-    pos_delta[VX] =
-        ((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8) - mo->pos[VX]) / intertics;
-    pos_delta[VY] =
-        ((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8) - mo->pos[VY]) / intertics;
+    posDelta[VX] =
+        (FIX2FLT((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8)) - mo->pos[VX]) / intertics;
+    posDelta[VY] =
+        (FIX2FLT((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8)) - mo->pos[VY]) / intertics;
 
     // The Z coordinate is a bit trickier. We are tracking the *camera's*
     // Z coordinate (z+viewheight), not the player mobj's Z.
-    z = (Msg_ReadShort() << 16) + (Msg_ReadByte() << 8);
-    pos_delta[VZ] = (z - demo_framez) / LOCALCAM_WRITE_TICS;
+    z = FIX2FLT((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8));
+    posDelta[VZ] = (z - demoFrameZ) / LOCALCAM_WRITE_TICS;
 
     // View angles.
     dang = Msg_ReadShort() << 16;
@@ -514,7 +520,7 @@ void Demo_ReadLocalCamera(void)
     if(flags & LCAMF_FOV)
         fieldOfView = Msg_ReadShort() * 180.0f / DDMAXSHORT;
 
-    if(intertics == 1 || demo_framez == 1)
+    if(intertics == 1 || demoFrameZ == 1)
     {
         // Immediate change.
         /*pl->clAngle = dang;
@@ -522,36 +528,36 @@ void Demo_ReadLocalCamera(void)
         pl->mo->angle = dang;
         pl->lookdir = dlook;
         /* $unifiedangles */
-        viewangle_delta = 0;
-        lookdir_delta = 0;
+        viewangleDelta = 0;
+        lookdirDelta = 0;
     }
     else
     {
-        viewangle_delta = (dang - pl->mo->angle) / intertics;
-        lookdir_delta = (dlook - pl->lookdir) / intertics;
+        viewangleDelta = (dang - pl->mo->angle) / intertics;
+        lookdirDelta = (dlook - pl->lookdir) / intertics;
         /* $unifiedangles */
     }
 
     // The first one gets no delta.
-    if(demo_framez == 1)
+    if(demoFrameZ == 1)
     {
         // This must be the first democam packet.
         // Initialize framez to the height we just read.
-        demo_framez = z;
-        pos_delta[VZ] = 0;
+        demoFrameZ = z;
+        posDelta[VZ] = 0;
     }
     // demo_z is the offset to demo_framez for the current tic.
     // It is incremented by pos_delta[VZ] every tic.
-    demo_z = 0;
+    demoZ = 0;
 
     if(intertics == 1)
     {
         // Instantaneous move.
         R_ResetViewer();
-        Cl_MoveLocalPlayer(pos_delta[VX], pos_delta[VY], demo_framez =
-                           z, demo_onground);
-        pl->viewZ = FIX2FLT(z); // Might get an unsynced frame is not set right now.
-        pos_delta[VX] = pos_delta[VY] = pos_delta[VZ] = 0;
+        demoFrameZ = z;
+        Cl_MoveLocalPlayer(posDelta[VX], posDelta[VY], z, demoOnGround);
+        pl->viewZ = z; // Might get an unsynced frame is not set right now.
+        posDelta[VX] = posDelta[VY] = posDelta[VZ] = 0;
     }
 }
 
@@ -562,7 +568,7 @@ void Demo_Ticker(timespan_t time)
 {
     static trigger_t fixed = { 1 / 35.0 };
     ddplayer_t *pl = players + consoleplayer;
-    int     i;
+    int         i;
 
     if(!M_RunTrigger(&fixed, time))
         return;
@@ -570,18 +576,18 @@ void Demo_Ticker(timespan_t time)
     // Only playback is handled.
     if(playback)
     {
-        pl->mo->angle += viewangle_delta;
-        pl->lookdir += lookdir_delta;
+        pl->mo->angle += viewangleDelta;
+        pl->lookdir += lookdirDelta;
         /* $unifiedangles */
         // Move player (i.e. camera).
-        Cl_MoveLocalPlayer(pos_delta[VX], pos_delta[VY], demo_framez + demo_z,
-                           demo_onground);
+        Cl_MoveLocalPlayer(posDelta[VX], posDelta[VY], demoFrameZ + demoZ,
+                           demoOnGround);
         // Interpolate camera Z offset (to framez).
-        demo_z += pos_delta[VZ];
+        demoZ += posDelta[VZ];
     }
     else
     {
-        for(i = 0; i < MAXPLAYERS; i++)
+        for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].ingame && clients[i].recording &&
                !clients[i].recordPaused &&
                ++writeInfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
@@ -601,7 +607,7 @@ D_CMD(PlayDemo)
 
 D_CMD(RecordDemo)
 {
-    int     plnum = consoleplayer;
+    int         plnum = consoleplayer;
 
     if(argc == 3 && isClient)
     {
@@ -627,10 +633,11 @@ D_CMD(RecordDemo)
 
 D_CMD(PauseDemo)
 {
-    int     plnum = consoleplayer;
+    int         plnum = consoleplayer;
 
     if(argc >= 2)
         plnum = atoi(argv[1]);
+
     if(!clients[plnum].recording)
     {
         Con_Printf("Not recording for player %i.\n", plnum);
@@ -651,7 +658,7 @@ D_CMD(PauseDemo)
 
 D_CMD(StopDemo)
 {
-    int     plnum = consoleplayer;
+    int         plnum = consoleplayer;
 
     if(argc > 2)
     {
@@ -660,10 +667,13 @@ D_CMD(StopDemo)
     }
     if(argc == 2)
         plnum = atoi(argv[1]);
+
     if(!playback && !clients[plnum].recording)
         return true;
+
     Con_Printf("Demo %s of player %i stopped.\n",
                clients[plnum].recording ? "recording" : "playback", plnum);
+
     if(playback)
     {
         Demo_StopPlayback();
@@ -680,7 +690,7 @@ D_CMD(StopDemo)
  */
 D_CMD(DemoLump)
 {
-    char    buf[64];
+    char        buf[64];
 
     memset(buf, 0, sizeof(buf));
     strncpy(buf, argv[1], 64);

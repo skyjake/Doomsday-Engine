@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * cl_mobj.c: Client Map Objects
  */
 
@@ -172,9 +172,9 @@ clmobj_t *Cl_FindMobj(thid_t id)
 
 /**
  * Iterate the client mobj hash, exec the callback on each. Abort if callback
- * returns <code>false</code>.
+ * returns @c false.
  *
- * @return              If the callback returns <code>false</code>.
+ * @return              If the callback returns @c false.
  */
 boolean Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm)
 {
@@ -193,25 +193,25 @@ boolean Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm)
 }
 
 /**
- * Unlinks the thing from sectorlinks and if the object is solid,
+ * Unlinks the mobj from sectorlinks and if the object is solid,
  * the blockmap.
  */
-void Cl_UnsetThingPosition(clmobj_t *cmo)
+void Cl_UnsetMobjPosition(clmobj_t *cmo)
 {
-    P_UnlinkThing(&cmo->mo);
+    P_UnlinkMobj(&cmo->mo);
 }
 
 /**
- * Links the thing into sectorlinks and if the object is solid, the
- * blockmap. Linking to sectorlinks makes the thing visible and linking
+ * Links the mobj into sectorlinks and if the object is solid, the
+ * blockmap. Linking to sectorlinks makes the mobj visible and linking
  * to the blockmap makes it possible to interact with it (collide).
  * If the client mobj is Hidden, it will not be linked anywhere.
  */
-void Cl_SetThingPosition(clmobj_t *cmo)
+void Cl_SetMobjPosition(clmobj_t *cmo)
 {
-    mobj_t *thing = &cmo->mo;
+    mobj_t *mo = &cmo->mo;
 
-    if((cmo->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE)) || thing->dplayer)
+    if((cmo->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE)) || mo->dplayer)
     {
         // We do not yet have all the details about Hidden mobjs.
         // The server hasn't sent us a Create Mobj delta for them.
@@ -219,15 +219,15 @@ void Cl_SetThingPosition(clmobj_t *cmo)
         return;
     }
 
-    P_LinkThing(thing,
-                (thing->ddflags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
-                (thing->ddflags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
+    P_LinkMobj(mo,
+                (mo->ddflags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
+                (mo->ddflags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
 }
 
 /**
  * Change the state of a mobj.
  */
-void Cl_SetThingState(mobj_t *mo, int stnum)
+void Cl_SetMobjState(mobj_t *mo, int stnum)
 {
     if(stnum < 0)
         return;
@@ -261,8 +261,9 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 
         // Give it a real Z coordinate.
         onFloor = true;
-        mo->pos[VZ] = FLT2FIX(mo->floorz);
+        mo->pos[VZ] = mo->floorz;
     }
+
     if(mo->pos[VZ] == DDMAXINT)
     {
         // Make the mobj stick to the ceiling.
@@ -270,7 +271,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 
         // Give it a real Z coordinate.
         inCeiling = true;
-        mo->pos[VZ] = FLT2FIX(mo->ceilingz - mo->height);
+        mo->pos[VZ] = mo->ceilingz - mo->height;
     }
 
     // Find out floor and ceiling z.
@@ -280,11 +281,11 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 
     if(onFloor)
     {
-        mo->pos[VZ] = FLT2FIX(mo->floorz);
+        mo->pos[VZ] = mo->floorz;
     }
     if(inCeiling)
     {
-        mo->pos[VZ] = FLT2FIX(mo->ceilingz - mo->height);
+        mo->pos[VZ] = mo->ceilingz - mo->height;
     }
 
 #if 0
@@ -294,9 +295,9 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
        Con_Printf("Collision %i\n", mo->thinker.id); */
     if(justCreated && mo->ddflags & DDMF_MISSILE)
     {
-        Con_Printf("Misl creat %i, (%x %x %x) mom (%x %x %x)\n",
-                   mo->thinker.id, mo->pos[VX], mo->pos[VY], mo->pos[VZ], mo->momx, mo->momy,
-                   mo->momz);
+        Con_Printf("Misl creat %i, (%g %g %g) mom (%g %g %g)\n",
+                   mo->thinker.id, mo->pos[VX], mo->pos[VY], mo->pos[VZ],
+                   mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
     }
 #  endif
     if(justCreated && mo->ddflags & DDMF_MISSILE && blockingMobj != NULL)
@@ -331,10 +332,10 @@ if(!mo || !clmo)
     if(flags & (MDF_POS_X | MDF_POS_Y))
     {
         // We have to unlink the real mobj before we move it.
-        P_UnlinkThing(mo);
+        P_UnlinkMobj(mo);
         mo->pos[VX] = clmo->pos[VX];
         mo->pos[VY] = clmo->pos[VY];
-        P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        P_LinkMobj(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
     mo->pos[VZ] = clmo->pos[VZ];
     if(flags & MDF_MOM_X)
@@ -440,19 +441,19 @@ if(justCreated && (!(df & MDF_POS_X) || !(df & MDF_POS_Y)))
        !d->dplayer)
     {
         linked = false;
-        Cl_UnsetThingPosition(cmo);
+        Cl_UnsetMobjPosition(cmo);
     }
 
     // Coordinates with three bytes.
     if(df & MDF_POS_X)
-        d->pos[VX] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
+        d->pos[VX] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
     if(df & MDF_POS_Y)
-        d->pos[VY] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
+        d->pos[VY] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
     if(df & MDF_POS_Z)
-        d->pos[VZ] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
+        d->pos[VZ] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
 
 #ifdef _DEBUG
-if(!d->pos[VX] && !d->pos[VY])
+if(d->pos[VX] == 0 && d->pos[VY] == 0)
 {
     Con_Printf("CL_RMD: x,y zeroed t%i(%s)\n", d->type,
                defs.mobjs[d->type].id);
@@ -461,11 +462,11 @@ if(!d->pos[VX] && !d->pos[VY])
 
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
-        d->mom[MX] = (Msg_ReadShort() << 16) / 256;    //>> 8;
+        d->mom[MX] = FIX2FLT(Msg_ReadShort() << 16) / 256;    //>> 8;
     if(df & MDF_MOM_Y)
-        d->mom[MY] = (Msg_ReadShort() << 16) / 256;    //>> 8;
+        d->mom[MY] = FIX2FLT(Msg_ReadShort() << 16) / 256;    //>> 8;
     if(df & MDF_MOM_Z)
-        d->mom[MZ] = (Msg_ReadShort() << 16) / 256;    //>> 8;
+        d->mom[MZ] = FIX2FLT(Msg_ReadShort() << 16) / 256;    //>> 8;
 
     // Angles with 16-bit accuracy.
     if(df & MDF_ANGLE)
@@ -478,7 +479,7 @@ if(!d->pos[VX] && !d->pos[VY])
         d->selector |= Msg_ReadByte() << 24;
 
     if(df & MDF_STATE)
-        Cl_SetThingState(d, (unsigned short) Msg_ReadPackedShort());
+        Cl_SetMobjState(d, (unsigned short) Msg_ReadPackedShort());
 
     // Pack flags into a word (3 bytes?).
     // \fixme Do the packing!
@@ -491,7 +492,7 @@ if(!d->pos[VX] && !d->pos[VY])
 
     // Radius, height and floorclip are all bytes.
     if(df & MDF_RADIUS)
-        d->radius = Msg_ReadByte() << FRACBITS;
+        d->radius = (float) Msg_ReadByte();
     if(df & MDF_HEIGHT)
         d->height = (float) Msg_ReadByte();
     if(df & MDF_FLOORCLIP)
@@ -504,7 +505,7 @@ if(!d->pos[VX] && !d->pos[VY])
 
     // Link again.
     if(!linked && !d->dplayer)
-        Cl_SetThingPosition(cmo);
+        Cl_SetMobjPosition(cmo);
 
     if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z))
     {
@@ -551,7 +552,7 @@ void Cl_DestroyClientMobjs(void)
         {
             // Players' clmobjs are not linked anywhere.
             if(!cmo->mo.dplayer)
-                Cl_UnsetThingPosition(cmo);
+                Cl_UnsetMobjPosition(cmo);
         }
     }
 
@@ -575,14 +576,15 @@ void Cl_Reset(void)
 /**
  * The client mobj is moved linearly, with collision checking.
  */
-void Cl_MoveThing(clmobj_t *cmo)
+void Cl_MobjMove(clmobj_t *cmo)
 {
     mobj_t     *mo = &cmo->mo;
     boolean     collided = false;
     gamemap_t  *map = P_GetCurrentMap();
+    float       gravity = FIX2FLT(mapGravity);
 
     // First do XY movement.
-    if(mo->mom[MX] || mo->mom[MY])
+    if(mo->mom[MX] != 0 || mo->mom[MY] != 0)
     {
         // Missiles don't hit mobjs only after a short delay. This'll
         // allow the missile to move free of the shooter. (Quite a hack!)
@@ -605,40 +607,41 @@ void Cl_MoveThing(clmobj_t *cmo)
         dontHitMobjs = false;
     }
 
-    if(mo->mom[MZ])
+    if(mo->mom[MZ] != 0)
     {
         mo->pos[VZ] += mo->mom[MZ];
 
-        if(mo->pos[VZ] < FLT2FIX(mo->floorz))
+        if(mo->pos[VZ] < mo->floorz)
         {
-            mo->pos[VZ] = FLT2FIX(mo->floorz);
+            mo->pos[VZ] = mo->floorz;
             mo->mom[MZ] = 0;
             collided = true;
         }
-        if(FIX2FLT(mo->pos[VZ]) + mo->height > mo->ceilingz)
+
+        if(mo->pos[VZ] + mo->height > mo->ceilingz)
         {
-            mo->pos[VZ] = FLT2FIX(mo->ceilingz - mo->height);
+            mo->pos[VZ] = mo->ceilingz - mo->height;
             mo->mom[MZ] = 0;
             collided = true;
         }
     }
 
-    if(mo->pos[VZ] > FLT2FIX(mo->floorz))
+    if(mo->pos[VZ] > mo->floorz)
     {   // Gravity will affect the prediction.
         //// \fixme What about sector-specific gravity?
         if(mo->ddflags & DDMF_LOWGRAVITY)
         {
             if(mo->mom[MZ] == 0)
-                mo->mom[MZ] = -(mapGravity >> 3) * 2;
+                mo->mom[MZ] = -(gravity / 8) * 2;
             else
-                mo->mom[MZ] -= mapGravity >> 3;
+                mo->mom[MZ] -= gravity / 8;
         }
         else if(!(mo->ddflags & DDMF_NOGRAVITY))
         {
             if(mo->mom[MZ] == 0)
-                mo->mom[MZ] = -mapGravity * 2;
+                mo->mom[MZ] = -gravity * 2;
             else
-                mo->mom[MZ] -= mapGravity;
+                mo->mom[MZ] -= gravity;
         }
     }
 
@@ -652,7 +655,7 @@ void Cl_MoveThing(clmobj_t *cmo)
             // stopping the mobj is not enough. Let's hide it until
             // next delta arrives.
             cmo->flags |= CLMF_UNPREDICTABLE;
-            Cl_UnsetThingPosition(cmo);
+            Cl_UnsetMobjPosition(cmo);
         }
         // [Kaboom!]
     }
@@ -660,18 +663,18 @@ void Cl_MoveThing(clmobj_t *cmo)
     // Stick to a plane?
     if(cmo->flags & CLMF_STICK_FLOOR)
     {
-        mo->pos[VZ] = FLT2FIX(mo->floorz);
+        mo->pos[VZ] = mo->floorz;
     }
     if(cmo->flags & CLMF_STICK_CEILING)
     {
-        mo->pos[VZ] = FLT2FIX(mo->ceilingz - mo->height);
+        mo->pos[VZ] = mo->ceilingz - mo->height;
     }
 }
 
 /**
- * Decrement tics counter and changes the state of the thing if necessary.
+ * Decrement tics counter and changes the state of the mobj if necessary.
  */
-void Cl_AnimateThing(mobj_t *mo)
+void Cl_MobjAnimate(mobj_t *mo)
 {
     if(!mo->state || mo->tics < 0)
         return;                 // In stasis.
@@ -682,7 +685,7 @@ void Cl_AnimateThing(mobj_t *mo)
         // Go to next state, if possible.
         if(mo->state->nextstate >= 0)
         {
-            Cl_SetThingState(mo, mo->state->nextstate);
+            Cl_SetMobjState(mo, mo->state->nextstate);
 
             // Players have both client mobjs and regular mobjs. This
             // routine modifies the *client* mobj, so for players we need
@@ -730,7 +733,7 @@ void Cl_PredictMovement(void)
                     // and hidden mobjs are not visible or bl/seclinked.)
                     Cl_DestroyMobj(cmo);
                 }
-                // We can't predict what Hidden and Unpredictable things do.
+                // We can't predict what Hidden and Unpredictable mobjs do.
                 // Must wait for the next delta to arrive. This mobj won't be
                 // visible until then.
                 continue;
@@ -744,11 +747,11 @@ void Cl_PredictMovement(void)
             else
             {
                 // Linear movement prediction with collisions, then.
-                Cl_MoveThing(cmo);
+                Cl_MobjMove(cmo);
             }
 
             // Tic away.
-            Cl_AnimateThing(&cmo->mo);
+            Cl_MobjAnimate(&cmo->mo);
 
             // Remove mobjs who have reached the NULL state, from whose
             // bourn no traveller returns.
@@ -805,7 +808,7 @@ void Cl_DestroyMobj(clmobj_t *cmo)
 
     // The ID is free once again.
     P_SetMobjID(cmo->mo.thinker.id, false);
-    Cl_UnsetThingPosition(cmo);
+    Cl_UnsetMobjPosition(cmo);
     Cl_UnlinkMobj(cmo);
     Z_Free(cmo);
 }
@@ -922,7 +925,7 @@ void Cl_ReadMobjDelta2(boolean skip)
            !justCreated && !d->dplayer)
         {
             needsLinking = true;
-            Cl_UnsetThingPosition(cmo);
+            Cl_UnsetMobjPosition(cmo);
         }
     }
     else
@@ -934,17 +937,19 @@ void Cl_ReadMobjDelta2(boolean skip)
     // Coordinates with three bytes.
     if(df & MDF_POS_X)
     {
-        d->pos[VX] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
-        if(cmo) cmo->flags |= CLMF_KNOWN_X;
+        d->pos[VX] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
+        if(cmo)
+            cmo->flags |= CLMF_KNOWN_X;
     }
     if(df & MDF_POS_Y)
     {
-        d->pos[VY] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
-        if(cmo) cmo->flags |= CLMF_KNOWN_Y;
+        d->pos[VY] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
+        if(cmo)
+            cmo->flags |= CLMF_KNOWN_Y;
     }
     if(df & MDF_POS_Z)
     {
-        d->pos[VZ] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
+        d->pos[VZ] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
         if(cmo)
         {
             cmo->flags |= CLMF_KNOWN_Z;
@@ -958,29 +963,31 @@ void Cl_ReadMobjDelta2(boolean skip)
     if(moreFlags & MDFE_Z_FLOOR)
     {
         d->pos[VZ] = DDMININT;
-        if(cmo) cmo->flags |= CLMF_KNOWN_Z;
+        if(cmo)
+            cmo->flags |= CLMF_KNOWN_Z;
     }
     if(moreFlags & MDFE_Z_CEILING)
     {
         d->pos[VZ] = DDMAXINT;
-        if(cmo) cmo->flags |= CLMF_KNOWN_Z;
+        if(cmo)
+            cmo->flags |= CLMF_KNOWN_Z;
     }
 
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
         mom = Msg_ReadShort();
-        d->mom[MX] = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
+        d->mom[MX] = FIX2FLT(fastMom? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
     if(df & MDF_MOM_Y)
     {
         mom = Msg_ReadShort();
-        d->mom[MY] = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
+        d->mom[MY] = FIX2FLT(fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
     if(df & MDF_MOM_Z)
     {
         mom = Msg_ReadShort();
-        d->mom[MZ] = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
+        d->mom[MZ] = FIX2FLT(fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
 
     // Angles with 16-bit accuracy.
@@ -998,7 +1005,7 @@ void Cl_ReadMobjDelta2(boolean skip)
         ushort stateIdx = Msg_ReadPackedShort();
         if(!skip)
         {
-            Cl_SetThingState(d, stateIdx);
+            Cl_SetMobjState(d, stateIdx);
             cmo->flags |= CLMF_KNOWN_STATE;
         }
     }
@@ -1014,7 +1021,7 @@ void Cl_ReadMobjDelta2(boolean skip)
 
     // Radius, height and floorclip are all bytes.
     if(df & MDF_RADIUS)
-        d->radius = Msg_ReadByte() << FRACBITS;
+        d->radius = (float) Msg_ReadByte();
     if(df & MDF_HEIGHT)
         d->height = (float) Msg_ReadByte();
     if(df & MDF_FLOORCLIP)
@@ -1061,7 +1068,7 @@ void Cl_ReadMobjDelta2(boolean skip)
         // Link again.
         if(needsLinking && !d->dplayer)
         {
-            Cl_SetThingPosition(cmo);
+            Cl_SetMobjPosition(cmo);
         }
 
         // Update players.
@@ -1105,7 +1112,7 @@ Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
     // Get rid of this mobj.
     if(!cmo->mo.dplayer)
     {
-        Cl_UnsetThingPosition(cmo);
+        Cl_UnsetMobjPosition(cmo);
     }
     else
     {

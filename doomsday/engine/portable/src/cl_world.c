@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * cl_world.c: Clientside World Management
  */
 
@@ -79,7 +79,7 @@ typedef struct {
 
 static mover_t *activemovers[MAX_MOVERS];
 static polymover_t *activepolys[MAX_MOVERS];
-short  *xlat_lump;
+short *xlat_lump;
 
 // CODE --------------------------------------------------------------------
 
@@ -99,13 +99,13 @@ void Cl_InitTranslations(void)
     xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_REFRESHTEX, 0);
     memset(xlat_lump, 0, sizeof(short) * MAX_TRANSLATIONS);
     for(i = 0; i < numlumps; ++i)
-        xlat_lump[i] = i;       // Identity translation.
+        xlat_lump[i] = i; // Identity translation.
 }
 
 void Cl_SetLumpTranslation(short lumpnum, char *name)
 {
     if(lumpnum < 0 || lumpnum >= MAX_TRANSLATIONS)
-        return;                 // Can't do it, sir! We just don't the power!!
+        return; // Can't do it, sir! We just don't the power!!
 
     xlat_lump[lumpnum] = W_CheckNumForName(name);
     if(xlat_lump[lumpnum] < 0)
@@ -274,15 +274,15 @@ void Cl_PolyMoverThinker(polymover_t *mover)
 {
     polyobj_t  *poly = mover->poly;
     float       dx, dy;
-    int         dist;
+    float       dist;
 
     if(mover->move)
     {
         // How much to go?
         dx = poly->dest.pos[VX] - poly->startSpot.pos[VX];
         dy = poly->dest.pos[VY] - poly->startSpot.pos[VY];
-        dist = P_ApproxDistance(FLT2FIX(dx), FLT2FIX(dy));
-        if(dist <= poly->speed || !poly->speed)
+        dist = P_ApproxDistance(dx, dy);
+        if(dist <= poly->speed || poly->speed == 0)
         {
             // We'll arrive at the destination.
             mover->move = false;
@@ -290,9 +290,10 @@ void Cl_PolyMoverThinker(polymover_t *mover)
         else
         {
             // Adjust deltas to fit speed.
-            dx = FIX2FLT(poly->speed) * (dx / FIX2FLT(dist));
-            dy = FIX2FLT(poly->speed) * (dy / FIX2FLT(dist));
+            dx = poly->speed * (dx / dist);
+            dy = poly->speed * (dy / dist);
         }
+
         // Do the move.
         PO_MovePolyobj(mover->number | 0x80000000, dx, dy);
     }
@@ -300,8 +301,8 @@ void Cl_PolyMoverThinker(polymover_t *mover)
     if(mover->rotate)
     {
         // How much to go?
-        dist = poly->destAngle - poly->angle;
-        if((abs(dist >> 4) <= abs(((signed) poly->angleSpeed) >> 4) &&
+        dist = FIX2FLT(poly->destAngle - poly->angle);
+        if((abs(FLT2FIX(dist) >> 4) <= abs(((signed) poly->angleSpeed) >> 4) &&
             poly->destAngle != -1) || !poly->angleSpeed)
         {
             // We'll arrive at the destination.
@@ -310,9 +311,9 @@ void Cl_PolyMoverThinker(polymover_t *mover)
         else
         {
             // Adjust to speed.
-            dist = poly->angleSpeed;
+            dist = FIX2FLT(poly->angleSpeed);
         }
-        PO_RotatePolyobj(mover->number | 0x80000000, dist);
+        PO_RotatePolyobj(mover->number | 0x80000000, FLT2FIX(dist));
     }
 
     // Can we get rid of this mover?
@@ -520,14 +521,9 @@ if(num >= numsectors)
         }
     }
     if(df & SDF_FLOOR_TEXMOVE)
-    {
+    {   // Old clients might include these.
         fixed_t moveX = Msg_ReadShort() << 8;
         fixed_t moveY = Msg_ReadShort() << 8;
-        if(!skip)
-        {
-            sec->SP_floortexmove[0] = FIX2FLT(moveX);
-            sec->SP_floortexmove[1] = FIX2FLT(moveY);
-        }
     }
     if(df & SDF_CEILING_TARGET)
     {
@@ -553,14 +549,9 @@ if(num >= numsectors)
         }
     }
     if(df & SDF_CEILING_TEXMOVE)
-    {
+    {   // Old clients might include these.
         fixed_t moveX = Msg_ReadShort() << 8;
         fixed_t moveY = Msg_ReadShort() << 8;
-        if(!skip)
-        {
-            sec->SP_ceiltexmove[0] = FIX2FLT(moveX);
-            sec->SP_ceiltexmove[1] = FIX2FLT(moveY);
-        }
     }
     if(df & SDF_COLOR_RED)
         sec->rgb[0] = Msg_ReadByte() / 255.f;
@@ -779,7 +770,8 @@ void Cl_ReadPolyDelta2(boolean skip)
     unsigned short num;
     polyobj_t  *po;
     float       destX = 0, destY = 0;
-    int         speed = 0, destAngle = 0, angleSpeed = 0;
+    float       speed = 0;
+    int         destAngle = 0, angleSpeed = 0;
 
     num = Msg_ReadPackedShort();
 
@@ -791,7 +783,7 @@ void Cl_ReadPolyDelta2(boolean skip)
     if(df & PODF_DEST_Y)
         destY = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
     if(df & PODF_SPEED)
-        speed = Msg_ReadShort() << 8;
+        speed = FIX2FLT(Msg_ReadShort() << 8);
     if(df & PODF_DEST_ANGLE)
         destAngle = Msg_ReadShort() << 16;
     if(df & PODF_ANGSPEED)

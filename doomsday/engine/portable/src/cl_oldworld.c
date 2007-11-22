@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * cl_oldworld.c: Obsolete Clientside World Management
  *
  * This file contains obsolete delta routines. They are preserved so that
@@ -94,9 +94,9 @@ int Cl_ReadSectorDelta(void)
             FIX2FLT((fixed_t) (Msg_ReadByte() << (df & SDF_FLOOR_SPEED_44 ? 12 : 15)));
     }
     if(df & SDF_FLOOR_TEXMOVE)
-    {
-        sec->SP_floortexmove[0] = FIX2FLT(Msg_ReadShort() << 8);
-        sec->SP_floortexmove[1] = FIX2FLT(Msg_ReadShort() << 8);
+    {   // Old clients might include these.
+        fixed_t movex = Msg_ReadShort() << 8;
+        fixed_t movey = Msg_ReadShort() << 8;
     }
     if(df & SDF_CEILING_TARGET)
         sec->planes[PLN_CEILING]->target = FIX2FLT(Msg_ReadShort() << 16);
@@ -106,9 +106,9 @@ int Cl_ReadSectorDelta(void)
             FIX2FLT((fixed_t) (Msg_ReadByte() << (df & SDF_CEILING_SPEED_44 ? 12 : 15)));
     }
     if(df & SDF_CEILING_TEXMOVE)
-    {
-        sec->SP_ceiltexmove[0] = FIX2FLT(Msg_ReadShort() << 8);
-        sec->SP_ceiltexmove[1] = FIX2FLT(Msg_ReadShort() << 8);
+    {   // Old clients might include these.
+        fixed_t movex = Msg_ReadShort() << 8;
+        fixed_t movey = Msg_ReadShort() << 8;
     }
     if(df & SDF_COLOR_RED)
         sec->rgb[0] = Msg_ReadByte() / 255.f;
@@ -272,11 +272,11 @@ int Cl_ReadPolyDelta(void)
     df = Msg_ReadPackedShort();
 
     if(df & PODF_DEST_X)
-        po->dest.pos[VX] = (Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8);
+        po->dest.pos[VX] = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
     if(df & PODF_DEST_Y)
-        po->dest.pos[VY] = (Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8);
+        po->dest.pos[VY] = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
     if(df & PODF_SPEED)
-        po->speed = Msg_ReadShort() << 8;
+        po->speed = FIX2FLT(Msg_ReadShort() << 8);
     if(df & PODF_DEST_ANGLE)
         po->destAngle = Msg_ReadShort() << 16;
     if(df & PODF_ANGSPEED)

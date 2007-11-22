@@ -728,8 +728,7 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
     else
         src = SBE_GetNearest();
 
-    sector = R_PointInSubsector(FRACUNIT * src->pos[VX],
-                                FRACUNIT * src->pos[VY])->sector;
+    sector = R_PointInSubsector(src->pos[VX], src->pos[VY])->sector;
 
     if(lastSector != sector)
     {
