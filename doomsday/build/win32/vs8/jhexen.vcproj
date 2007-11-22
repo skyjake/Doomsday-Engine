@@ -568,11 +568,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_acs.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\p_local.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\include\p_mapinfo.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_mobj.h"
 				>
 			</File>
 			<File
@@ -588,7 +596,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\po_man.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\r_defs.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\r_local.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\s_sequence.h"
 				>
 			</File>
 			<File
@@ -620,11 +640,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\x_items.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\x_player.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\include\x_state.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\x_think.h"
 				>
 			</File>
 			<File
