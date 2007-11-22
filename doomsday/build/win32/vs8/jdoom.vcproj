@@ -636,6 +636,14 @@
 			<File
 				RelativePath="..\..\..\plugins\jdoom\include\oldinfo.h"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jdoom\include\p_inter.h"
@@ -666,15 +674,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jdoom\include\r_data.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jdoom\include\r_defs.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jdoom\include\r_local.h"
 				>
 			</File>
 			<File
