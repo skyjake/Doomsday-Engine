@@ -42,39 +42,43 @@
  */
 
 /**
- * p_mapinfo.h: MAPINFO definitions.
+ * r_defs.h:
  */
 
-#ifndef __P_MAPINFO_H__
-#define __P_MAPINFO_H__
+#ifndef __R_DEFS_H__
+#define __R_DEFS_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-void            P_InitMapInfo(void);
-void            P_InitMapMusicInfo(void);
+#include "p_mobj.h"
+#include "s_sequence.h"
 
-int             P_GetMapCluster(int map);
-int             P_TranslateMap(int map);
-int             P_GetMapCDTrack(int map);
-int             P_GetMapWarpTrans(int map);
-int             P_GetMapNextMap(int map);
-int             P_GetMapSky1Texture(int map);
-int             P_GetMapSky2Texture(int map);
-char           *P_GetMapName(int map);
-float           P_GetMapSky1ScrollDelta(int map);
-float           P_GetMapSky2ScrollDelta(int map);
-boolean         P_GetMapDoubleSky(int map);
-boolean         P_GetMapLightning(int map);
-int             P_GetMapFadeTable(int map);
-char           *P_GetMapSongLump(int map);
-void            P_PutMapSongLump(int map, char *lumpName);
-int             P_GetCDStartTrack(void);
-int             P_GetCDEnd1Track(void);
-int             P_GetCDEnd2Track(void);
-int             P_GetCDEnd3Track(void);
-int             P_GetCDIntermissionTrack(void);
-int             P_GetCDTitleTrack(void);
+typedef struct xsector_s {
+    short           special, tag;
+    int             soundtraversed; // 0 = untraversed, 1,2 = sndlines -1
+    mobj_t         *soundtarget;   // thing that made a sound (or null)
+    seqtype_t       seqType;       // stone, metal, heavy, etc...
+    void           *specialdata;   // thinker_t for reversable actions
+} xsector_t;
 
+typedef struct xline_s {
+    byte            special;
+    byte            arg1;
+    byte            arg2;
+    byte            arg3;
+    byte            arg4;
+    byte            arg5;
+    // Has been rendered at least once and needs to appear in the map,
+    // for each player.
+    boolean         mapped[MAXPLAYERS];
+    int             validcount;
+} xline_t;
+
+xline_t*    P_ToXLine(line_t* line);
+xline_t*    P_GetXLine(uint index);
+xsector_t*  P_ToXSector(sector_t* sector);
+xsector_t*  P_GetXSector(uint index);
+xsector_t*  P_ToXSectorOfSubsector(subsector_t* sub);
 #endif

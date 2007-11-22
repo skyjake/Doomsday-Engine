@@ -42,39 +42,78 @@
  */
 
 /**
- * p_mapinfo.h: MAPINFO definitions.
+ * p_acs.h: ACS scripting system.
  */
 
-#ifndef __P_MAPINFO_H__
-#define __P_MAPINFO_H__
+#ifndef __P_PSPR_H__
+#define __P_PSPR_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-void            P_InitMapInfo(void);
-void            P_InitMapMusicInfo(void);
+#define MAX_ACS_SCRIPT_VARS     10
+#define MAX_ACS_MAP_VARS        32
+#define MAX_ACS_WORLD_VARS      64
+#define ACS_STACK_DEPTH         32
+#define MAX_ACS_STORE           20
 
-int             P_GetMapCluster(int map);
-int             P_TranslateMap(int map);
-int             P_GetMapCDTrack(int map);
-int             P_GetMapWarpTrans(int map);
-int             P_GetMapNextMap(int map);
-int             P_GetMapSky1Texture(int map);
-int             P_GetMapSky2Texture(int map);
-char           *P_GetMapName(int map);
-float           P_GetMapSky1ScrollDelta(int map);
-float           P_GetMapSky2ScrollDelta(int map);
-boolean         P_GetMapDoubleSky(int map);
-boolean         P_GetMapLightning(int map);
-int             P_GetMapFadeTable(int map);
-char           *P_GetMapSongLump(int map);
-void            P_PutMapSongLump(int map, char *lumpName);
-int             P_GetCDStartTrack(void);
-int             P_GetCDEnd1Track(void);
-int             P_GetCDEnd2Track(void);
-int             P_GetCDEnd3Track(void);
-int             P_GetCDIntermissionTrack(void);
-int             P_GetCDTitleTrack(void);
+typedef enum aste_e {
+    ASTE_INACTIVE,
+    ASTE_RUNNING,
+    ASTE_SUSPENDED,
+    ASTE_WAITING_FOR_TAG,
+    ASTE_WAITING_FOR_POLY,
+    ASTE_WAITING_FOR_SCRIPT,
+    ASTE_TERMINATING
+} aste_t;
+
+typedef struct acsinfo_s {
+    int             number;
+    int            *address;
+    int             argCount;
+    aste_t          state;
+    int             waitValue;
+} acsinfo_t ;
+
+typedef struct acs_s {
+    thinker_t       thinker;
+    mobj_t         *activator;
+    line_t         *line;
+    int             side;
+    int             number;
+    int             infoIndex;
+    int             delayCount;
+    int             stack[ACS_STACK_DEPTH];
+    int             stackPtr;
+    int             vars[MAX_ACS_SCRIPT_VARS];
+    int            *ip;
+} acs_t;
+
+typedef struct acsstore_s {
+    int             map; // Target map.
+    int             script; // Script number on target map.
+    byte            args[4]; // Padded to 4 for alignment.
+} acsstore_t;
+
+extern int ACScriptCount;
+extern byte *ActionCodeBase;
+extern acsinfo_t *ACSInfo;
+extern int MapVars[MAX_ACS_MAP_VARS];
+extern int WorldVars[MAX_ACS_WORLD_VARS];
+extern acsstore_t ACSStore[MAX_ACS_STORE + 1]; // +1 for termination marker.
+
+void            P_LoadACScripts(int lump);
+boolean         P_StartACS(int number, int map, byte *args, mobj_t *activator,
+                           line_t *line, int side);
+boolean         P_StartLockedACS(line_t *line, byte *args, mobj_t *mo,
+                                 int side);
+boolean         P_TerminateACS(int number, int map);
+boolean         P_SuspendACS(int number, int map);
+void            T_InterpretACS(acs_t *script);
+void            P_TagFinished(int tag);
+void            P_PolyobjFinished(int po);
+void            P_ACSInitNewGame(void);
+void            P_CheckACSStore(void);
 
 #endif

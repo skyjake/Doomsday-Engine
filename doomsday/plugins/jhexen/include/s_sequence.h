@@ -39,42 +39,83 @@
  * You should have received a copy of the HERETIC / HEXEN source code
  * license along with this program (Ravenlic.txt); if not:
  * http://www.ravensoft.com/
+ *
  */
 
 /**
- * p_mapinfo.h: MAPINFO definitions.
+ * s_sequence.h: Sound sequences.
  */
 
-#ifndef __P_MAPINFO_H__
-#define __P_MAPINFO_H__
+#ifndef __S_SEQUENCE_H__
+#define __S_SEQUENCE_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-void            P_InitMapInfo(void);
-void            P_InitMapMusicInfo(void);
+enum {
+    SEQ_PLATFORM,
+    SEQ_PLATFORM_HEAVY, // same script as a normal platform.
+    SEQ_PLATFORM_METAL,
+    SEQ_PLATFORM_CREAK, // same script as a normal platform.
+    SEQ_PLATFORM_SILENCE,
+    SEQ_PLATFORM_LAVA,
+    SEQ_PLATFORM_WATER,
+    SEQ_PLATFORM_ICE,
+    SEQ_PLATFORM_EARTH,
+    SEQ_PLATFORM_METAL2,
+    SEQ_DOOR_STONE,
+    SEQ_DOOR_HEAVY,
+    SEQ_DOOR_METAL,
+    SEQ_DOOR_CREAK,
+    SEQ_DOOR_SILENCE,
+    SEQ_DOOR_LAVA,
+    SEQ_DOOR_WATER,
+    SEQ_DOOR_ICE,
+    SEQ_DOOR_EARTH,
+    SEQ_DOOR_METAL2,
+    SEQ_ESOUND_WIND,
+    SEQ_NUMSEQ
+};
 
-int             P_GetMapCluster(int map);
-int             P_TranslateMap(int map);
-int             P_GetMapCDTrack(int map);
-int             P_GetMapWarpTrans(int map);
-int             P_GetMapNextMap(int map);
-int             P_GetMapSky1Texture(int map);
-int             P_GetMapSky2Texture(int map);
-char           *P_GetMapName(int map);
-float           P_GetMapSky1ScrollDelta(int map);
-float           P_GetMapSky2ScrollDelta(int map);
-boolean         P_GetMapDoubleSky(int map);
-boolean         P_GetMapLightning(int map);
-int             P_GetMapFadeTable(int map);
-char           *P_GetMapSongLump(int map);
-void            P_PutMapSongLump(int map, char *lumpName);
-int             P_GetCDStartTrack(void);
-int             P_GetCDEnd1Track(void);
-int             P_GetCDEnd2Track(void);
-int             P_GetCDEnd3Track(void);
-int             P_GetCDIntermissionTrack(void);
-int             P_GetCDTitleTrack(void);
+typedef enum {
+    SEQTYPE_STONE,
+    SEQTYPE_HEAVY,
+    SEQTYPE_METAL,
+    SEQTYPE_CREAK,
+    SEQTYPE_SILENCE,
+    SEQTYPE_LAVA,
+    SEQTYPE_WATER,
+    SEQTYPE_ICE,
+    SEQTYPE_EARTH,
+    SEQTYPE_METAL2,
+    SEQTYPE_NUMSEQ
+} seqtype_t;
 
+typedef struct seqnode_s {
+    int            *sequencePtr;
+    int             sequence;
+    mobj_t         *mobj;
+    int             currentSoundID;
+    int             delayTics;
+    int             volume;
+    int             stopSound;
+    struct seqnode_s *prev;
+    struct seqnode_s *next;
+} seqnode_t;
+
+extern int ActiveSequences;
+extern seqnode_t *SequenceListHead;
+
+void            SN_InitSequenceScript(void);
+void            SN_StartSequence(mobj_t *mobj, int sequence);
+void            SN_StartSequenceInSec(sector_t *sector, int seqBase);
+void            SN_StartSequenceName(mobj_t *mobj, char *name);
+void            SN_StopSequence(mobj_t *mobj);
+void            SN_StopSequenceInSec(sector_t *sector);
+void            SN_UpdateActiveSequences(void);
+void            SN_StopAllSequences(void);
+int             SN_GetSequenceOffset(int sequence, int *sequencePtr);
+void            SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics,
+                                  int volume, int currentSoundID);
 #endif

@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -44,6 +44,10 @@
  * a base for replacement. - Yagisan
  */
 
+/**
+ * p_spec.h:
+ */
+
 #ifndef __P_SPEC_H__
 #define __P_SPEC_H__
 
@@ -51,53 +55,34 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-//#pragma pack(1)
+#define MO_TELEPORTMAN          14
 
-extern int     *TerrainTypes;
+extern int *TerrainTypes;
 
-//      Define values for map objects
-#define MO_TELEPORTMAN 14
+void        P_InitTerrainTypes(void);
+void        P_InitLava(void);
 
-// at game start
-void            P_InitTerrainTypes(void);
-void            P_InitLava(void);
+void        P_SpawnSpecials(void);
 
-// at map load
-void            P_SpawnSpecials(void);
+void        P_UpdateSpecials(void);
 
-// every tic
-void            P_UpdateSpecials(void);
+boolean     P_ExecuteLineSpecial(int special, byte *args, line_t *line,
+                                 int side, mobj_t *mo);
+boolean     P_ActivateLine(line_t *ld, mobj_t *mo, int side,
+                           int activationType);
 
-// when needed
-boolean         P_ExecuteLineSpecial(int special, byte *args, line_t *line,
-                                     int side, mobj_t *mo);
-boolean         P_ActivateLine(line_t *ld, mobj_t *mo, int side,
-                               int activationType);
+int         P_GetTerrainType(sector_t* sec, int plane);
+int         P_FlatToTerrainType(int flatlumpnum);
 
-int             P_GetTerrainType(sector_t* sec, int plane);
-int             P_FlatToTerrainType(int flatlumpnum);
+void        P_PlayerInSpecialSector(player_t *plr);
+void        P_PlayerOnSpecialFlat(player_t *plr, int floorType);
 
-void            P_PlayerInSpecialSector(player_t *player);
-void            P_PlayerOnSpecialFlat(player_t *player, int floorType);
+void        P_AnimateSurfaces(void);
+void        P_InitPicAnims(void);
+void        P_InitLightning(void);
+void        P_ForceLightning(void);
+void        R_HandleSectorSpecials(void);
 
-//
-//      SPECIAL
-//
-//int EV_DoDonut(line_t *line);
-
-//-------------------------------
-// P_anim.c
-//-------------------------------
-
-void            P_AnimateSurfaces(void);
-void            P_InitPicAnims(void);
-void            P_InitLightning(void);
-void            P_ForceLightning(void);
-void            R_HandleSectorSpecials(void);
-
-//
-// Light
-//
 typedef enum {
     LITE_RAISEBYVALUE,
     LITE_LOWERBYVALUE,
@@ -130,15 +115,12 @@ typedef struct {
 #define LIGHT_SEQUENCE          3
 #define LIGHT_SEQUENCE_ALT      4
 
-void            T_Phase(phase_t *phase);
-void            T_Light(light_t *light);
-void            P_SpawnPhasedLight(sector_t *sector, float base, int index);
-void            P_SpawnLightSequence(sector_t *sector, int indexStep);
-boolean         EV_SpawnLight(line_t *line, byte *arg, lighttype_t type);
+void        T_Phase(phase_t *phase);
+void        T_Light(light_t *light);
+void        P_SpawnPhasedLight(sector_t *sec, float base, int index);
+void        P_SpawnLightSequence(sector_t *sec, int indexStep);
+boolean     EV_SpawnLight(line_t *line, byte *arg, lighttype_t type);
 
-//
-// Switch
-//
 typedef struct {
     char            name1[9];
     char            name2[9];
@@ -161,21 +143,19 @@ typedef struct button_s {
     struct button_s *next;
 } button_t;
 
-#define BUTTONTIME 35              // 1 second
+#define BUTTONTIME              TICSPERSEC // 1 second
 
 extern button_t *buttonlist;
-void            P_FreeButtons(void);
 
-void            P_ChangeSwitchTexture(line_t *line, int useAgain);
-void            P_InitSwitchList(void);
+void        P_FreeButtons(void);
 
-//
-// Plats
-//
+void        P_ChangeSwitchTexture(line_t *line, int useAgain);
+void        P_InitSwitchList(void);
+
 typedef enum {
     up,
     down,
-    waiting,
+    waiting
     //  PLAT_IN_STASIS
 } plat_e;
 
@@ -201,29 +181,25 @@ typedef struct {
     int             tag;
     plattype_e      type;
 
-    struct platlist *list;   // killough
+    struct platlist_s *list;
 } plat_t;
 
-// New limit-free plat structure -- killough
-typedef struct platlist {
-  plat_t *plat;
-  struct platlist *next,**prev;
+typedef struct platlist_s {
+  plat_t           *plat;
+  struct platlist_s *next,**prev;
 } platlist_t;
 
-#define PLATWAIT 3
-#define PLATSPEED 1
+#define PLATWAIT                3
+#define PLATSPEED               1
 
-void            T_PlatRaise(plat_t *plat);
-int             EV_DoPlat(line_t *line, byte *args, plattype_e type,
-                          int amount);
-void            P_AddActivePlat(plat_t *plat);
-void            P_RemoveActivePlat(plat_t *plat);
-void            P_RemoveAllActivePlats(void);
-boolean         EV_StopPlat(line_t *line, byte *args);
+void        T_PlatRaise(plat_t *plat);
+int         EV_DoPlat(line_t *line, byte *args, plattype_e type,
+                      int amount);
+void        P_AddActivePlat(plat_t *plat);
+void        P_RemoveActivePlat(plat_t *plat);
+void        P_RemoveAllActivePlats(void);
+boolean     EV_StopPlat(line_t *line, byte *args);
 
-//
-// Doors
-//
 typedef enum {
     normal,
     close30ThenOpen,
@@ -238,24 +214,18 @@ typedef struct {
     vldoor_e        type;
     float           topheight;
     float           speed;
-    int             direction;     // 1 = up, 0 = waiting at top, -1 = down
-    int             topwait;       // tics to wait at the top (keep in case a door going down is reset)
-    int             topcountdown;  // when it reaches 0, start going down
+    int             direction; // 1 = up, 0 = waiting at top, -1 = down
+    int             topwait; // tics to wait at the top (keep in case a door going down is reset)
+    int             topcountdown; // when it reaches 0, start going down
 } vldoor_t;
 
-#define VDOORSPEED      1*2
-#define VDOORWAIT       150
+#define VDOORSPEED              1*2
+#define VDOORWAIT               150
 
-boolean         EV_VerticalDoor(line_t *line, mobj_t *thing);
-int             EV_DoDoor(line_t *line, byte *args, vldoor_e type);
-void            T_VerticalDoor(vldoor_t *door);
+boolean     EV_VerticalDoor(line_t *line, mobj_t *thing);
+int         EV_DoDoor(line_t *line, byte *args, vldoor_e type);
+void        T_VerticalDoor(vldoor_t *door);
 
-//void P_SpawnDoorCloseIn30(sector_t *sec);
-//void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum);
-
-//
-// Ceiling
-//
 typedef enum {
     lowerToFloor,
     raiseToHighest,
@@ -275,40 +245,37 @@ typedef struct {
     float           topheight;
     float           speed;
     int             crush;
-    int             direction;     // 1 = up, 0 = waiting, -1 = down
-    int             tag;           // ID
+    int             direction; // 1 = up, 0 = waiting, -1 = down
+    int             tag; // ID
     int             olddirection;
 
-    struct ceilinglist *list;   // jff 2/22/98 copied from killough's plats
+    struct ceilinglist_s *list;
 } ceiling_t;
 
-typedef struct ceilinglist {
-    ceiling_t *ceiling;
-    struct ceilinglist *next,**prev;
+typedef struct ceilinglist_s {
+    ceiling_t      *ceiling;
+    struct ceilinglist_s *next,**prev;
 } ceilinglist_t;
 
-#define CEILSPEED       1
-#define CEILWAIT        150
+#define CEILSPEED               1
+#define CEILWAIT                150
 
-int             EV_DoCeiling(line_t *line, byte *args, ceiling_e type);
-void            T_MoveCeiling(ceiling_t *ceiling);
-void            P_AddActiveCeiling(ceiling_t *c);
-void            P_RemoveActiveCeiling(ceiling_t *c);
-void            P_RemoveAllActiveCeilings(void);
-int             EV_CeilingCrushStop(line_t *line, byte *args);
+int         EV_DoCeiling(line_t *line, byte *args, ceiling_e type);
+void        T_MoveCeiling(ceiling_t *ceiling);
+void        P_AddActiveCeiling(ceiling_t *c);
+void        P_RemoveActiveCeiling(ceiling_t *c);
+void        P_RemoveAllActiveCeilings(void);
+int         EV_CeilingCrushStop(line_t *line, byte *args);
 
-//
-// Floor
-//
 typedef enum {
-    FLEV_LOWERFLOOR,               // lower floor to highest surrounding floor
-    FLEV_LOWERFLOORTOLOWEST,       // lower floor to lowest surrounding floor
+    FLEV_LOWERFLOOR, // lower floor to highest surrounding floor
+    FLEV_LOWERFLOORTOLOWEST, // lower floor to lowest surrounding floor
     FLEV_LOWERFLOORBYVALUE,
-    FLEV_RAISEFLOOR,               // raise floor to lowest surrounding CEILING
-    FLEV_RAISEFLOORTONEAREST,      // raise floor to next highest surrounding floor
+    FLEV_RAISEFLOOR, // raise floor to lowest surrounding CEILING
+    FLEV_RAISEFLOORTONEAREST, // raise floor to next highest surrounding floor
     FLEV_RAISEFLOORBYVALUE,
     FLEV_RAISEFLOORCRUSH,
-    FLEV_RAISEBUILDSTEP,           // One step of a staircase
+    FLEV_RAISEBUILDSTEP, // One step of a staircase
     FLEV_RAISEBYVALUETIMES8,
     FLEV_LOWERBYVALUETIMES8,
     FLEV_LOWERTIMES8INSTANT,
@@ -360,7 +327,7 @@ typedef struct {
     int             state;
 } floorWaggle_t;
 
-#define FLOORSPEED      1
+#define FLOORSPEED              1
 
 typedef enum {
     ok,
@@ -374,109 +341,37 @@ typedef enum {
     STAIRS_PHASED
 } stairs_e;
 
-result_e        T_MovePlane(sector_t *sector, float speed, float dest,
-                            int crush, int floorOrCeiling, int direction);
+result_e    T_MovePlane(sector_t *sector, float speed, float dest,
+                        int crush, int floorOrCeiling, int direction);
 
-int             EV_BuildStairs(line_t *line, byte *args, int direction,
-                               stairs_e type);
-int             EV_DoFloor(line_t *line, byte *args, floor_e floortype);
-void            T_MoveFloor(floormove_t *floor);
-void            T_BuildPillar(pillar_t *pillar);
-void            T_FloorWaggle(floorWaggle_t *waggle);
-int             EV_BuildPillar(line_t *line, byte *args, boolean crush);
-int             EV_OpenPillar(line_t *line, byte *args);
-int             EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise);
-int             EV_FloorCrushStop(line_t *line, byte *args);
-boolean         EV_StartFloorWaggle(int tag, int height, int speed,
-                                    int offset, int timer);
+int         EV_BuildStairs(line_t *line, byte *args, int direction,
+                           stairs_e type);
+int         EV_DoFloor(line_t *line, byte *args, floor_e floortype);
+void        T_MoveFloor(floormove_t *floor);
+void        T_BuildPillar(pillar_t *pillar);
+void        T_FloorWaggle(floorWaggle_t *waggle);
+int         EV_BuildPillar(line_t *line, byte *args, boolean crush);
+int         EV_OpenPillar(line_t *line, byte *args);
+int         EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise);
+int         EV_FloorCrushStop(line_t *line, byte *args);
+boolean     EV_StartFloorWaggle(int tag, int height, int speed, int offset,
+                                int timer);
 
-//
-// Teleport
-//
-#define         TELEFOGHEIGHT (32*FRACUNIT)
-boolean         P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
-                           boolean useFog);
-boolean         EV_Teleport(int tid, mobj_t *thing, boolean fog);
-void            P_ArtiTele(player_t *player);
+#define TELEFOGHEIGHTF          (32)
 
-//
-// ACS
-//
-#define MAX_ACS_SCRIPT_VARS     10
-#define MAX_ACS_MAP_VARS        32
-#define MAX_ACS_WORLD_VARS      64
-#define ACS_STACK_DEPTH         32
-#define MAX_ACS_STORE           20
+boolean     P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
+                       boolean useFog);
+boolean     EV_Teleport(int tid, mobj_t *thing, boolean fog);
+void        P_ArtiTele(player_t *player);
 
-typedef enum aste_e {
-    ASTE_INACTIVE,
-    ASTE_RUNNING,
-    ASTE_SUSPENDED,
-    ASTE_WAITING_FOR_TAG,
-    ASTE_WAITING_FOR_POLY,
-    ASTE_WAITING_FOR_SCRIPT,
-    ASTE_TERMINATING
-} aste_t;
-
-typedef struct acsinfo_s {
-    int             number;
-    int            *address;
-    int             argCount;
-    aste_t          state;
-    int             waitValue;
-} acsinfo_t ;
-
-typedef struct acs_s {
-    thinker_t       thinker;
-    mobj_t         *activator;
-    line_t         *line;
-    int             side;
-    int             number;
-    int             infoIndex;
-    int             delayCount;
-    int             stack[ACS_STACK_DEPTH];
-    int             stackPtr;
-    int             vars[MAX_ACS_SCRIPT_VARS];
-    int            *ip;
-} acs_t;
-
-typedef struct acsstore_s {
-    int             map;           // Target map
-    int             script;        // Script number on target map
-    byte            args[4];       // Padded to 4 for alignment
-} acsstore_t;
-
-void            P_LoadACScripts(int lump);
-boolean         P_StartACS(int number, int map, byte *args, mobj_t *activator,
-                           line_t *line, int side);
-boolean         P_StartLockedACS(line_t *line, byte *args, mobj_t *mo,
-                                 int side);
-boolean         P_TerminateACS(int number, int map);
-boolean         P_SuspendACS(int number, int map);
-void            T_InterpretACS(acs_t *script);
-void            P_TagFinished(int tag);
-void            P_PolyobjFinished(int po);
-void            P_ACSInitNewGame(void);
-void            P_CheckACSStore(void);
-
-extern int      ACScriptCount;
-extern byte    *ActionCodeBase;
-extern acsinfo_t *ACSInfo;
-extern int      MapVars[MAX_ACS_MAP_VARS];
-extern int      WorldVars[MAX_ACS_WORLD_VARS];
-extern acsstore_t ACSStore[MAX_ACS_STORE + 1];  // +1 for termination marker
-
-//
-// Things
-//
 extern mobjtype_t TranslateThingType[];
 
-boolean         EV_ThingProjectile(byte *args, boolean gravity);
-boolean         EV_ThingSpawn(byte *args, boolean fog);
-boolean         EV_ThingActivate(int tid);
-boolean         EV_ThingDeactivate(int tid);
-boolean         EV_ThingRemove(int tid);
-boolean         EV_ThingDestroy(int tid);
+boolean     EV_ThingProjectile(byte *args, boolean gravity);
+boolean     EV_ThingSpawn(byte *args, boolean fog);
+boolean     EV_ThingActivate(int tid);
+boolean     EV_ThingDeactivate(int tid);
+boolean     EV_ThingRemove(int tid);
+boolean     EV_ThingDestroy(int tid);
 
 //#pragma pack()
 
