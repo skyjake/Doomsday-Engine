@@ -66,7 +66,6 @@
 #include "de_dam.h"
 
 #include "dd_pinit.h"
-#include "smart_header.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -397,12 +396,6 @@ int DD_Main(void)
             return -1;
         }
     }
-
-    /* Display multi-theading information if we have it */
-    #ifdef _OPENMP
-    Con_Message("OpenMP enabled.\n");
-    Con_Message("OpenMP detects %d CPUs\n", omp_get_num_procs() );
-    #endif
 
     // Enter busy mode until startup complete.
     Con_InitProgress(200);
