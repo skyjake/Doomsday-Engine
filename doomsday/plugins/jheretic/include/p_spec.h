@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Implements special effects:
+/**
+ * p_spec.h: Implements special effects:
+ *
  * Texture animation, height or lighting changes according to adjacent
  * sectors, respective utility functions, etc.
  *
@@ -201,13 +202,12 @@ typedef struct {
     int             tag;
     plattype_e      type;
 
-    struct platlist *list;   // killough
+    struct platlist_s *list;
 } plat_t;
 
-// New limit-free plat structure -- killough
-typedef struct platlist {
-  plat_t *plat;
-  struct platlist *next,**prev;
+typedef struct platlist_s {
+  plat_t           *plat;
+  struct platlist_s *next,**prev;
 } platlist_t;
 
 #define PLATWAIT        3
@@ -220,7 +220,7 @@ boolean         EV_StopPlat(line_t *line);
 
 void            P_AddActivePlat(plat_t *plat);
 void            P_RemoveActivePlat(plat_t *plat);
-void            P_RemoveAllActivePlats(void);    // killough
+void            P_RemoveAllActivePlats(void);
 int             P_ActivateInStasisPlat(int tag);
 
 //
@@ -288,12 +288,12 @@ typedef struct {
     int             tag;
     int             olddirection;
 
-    struct ceilinglist *list;   // jff 2/22/98 copied from killough's plats
+    struct ceilinglist_s *list;
 } ceiling_t;
 
-typedef struct ceilinglist {
-  ceiling_t *ceiling;
-  struct ceilinglist *next,**prev;
+typedef struct ceilinglist_s {
+  ceiling_t        *ceiling;
+  struct ceilinglist_s *next,**prev;
 } ceilinglist_t;
 
 #define CEILSPEED       1
@@ -376,8 +376,8 @@ void            T_MoveFloor(floormove_t *floor);
 //
 // P_TELEPT
 //
-#define         TELEFOGHEIGHT (32*FRACUNIT)
-boolean         P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle);
+#define         TELEFOGHEIGHTF      (32)
+boolean         P_TeleportF(mobj_t *thing, float x, float y, angle_t angle);
 boolean         EV_Teleport(line_t *line, int side, mobj_t *thing);
 void            P_ArtiTele(player_t *player);
 

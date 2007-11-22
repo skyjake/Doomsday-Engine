@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,10 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
+/**
+ * st_stuff.h:
+ */
+
 #ifndef __ST_STUFF_H__
 #define __ST_STUFF_H__
 
@@ -42,11 +46,10 @@
 
 #include "h_player.h"
 
-// Size of statusbar.
-// Now sensitive for scaling.
-#define ST_HEIGHT   42*SCREEN_MUL
-#define ST_WIDTH    SCREENWIDTH
-#define ST_Y        (SCREENHEIGHT - ST_HEIGHT)
+// Size of statusbar, now sensitive for scaling.
+#define ST_HEIGHT           (42*SCREEN_MUL)
+#define ST_WIDTH            (SCREENWIDTH)
+#define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
 
 // Called by main loop.
 void    ST_Ticker(void);

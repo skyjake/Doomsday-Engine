@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,8 +33,8 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * shared data struct definitions.
+/**
+ * r_defs.h: shared data struct definitions.
  */
 
 #ifndef __R_DEFS__
@@ -107,7 +107,9 @@ typedef struct xline_s {
     xgline_t       *xg;
 } xline_t;
 
-xline_t*    P_XLine(line_t* line);
-xsector_t*  P_XSector(sector_t* sector);
-xsector_t*  P_XSectorOfSubsector(subsector_t* sub);
+xline_t*    P_ToXLine(line_t* line);
+xline_t*    P_GetXLine(uint index);
+xsector_t*  P_ToXSector(sector_t* sector);
+xsector_t*  P_GetXSector(uint index);
+xsector_t*  P_ToXSectorOfSubsector(subsector_t* sub);
 #endif
