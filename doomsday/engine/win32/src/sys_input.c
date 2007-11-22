@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_input.c: Game Controllers
  *
  * Keyboard, mouse and joystick input using DirectInput.
@@ -347,7 +347,7 @@ void I_KillDevice2(LPDIRECTINPUTDEVICE2 *dev)
 /**
  * Initialize input.
  *
- * @return          <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 int I_Init(void)
 {
