@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -44,6 +44,10 @@
  * \bug Not 64bit clean: In function 'P_v13_UnArchiveThinkers': cast from pointer to integer of different size
  */
 
+/**
+ * p_oldsvg.c:
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "jheretic.h"
@@ -53,14 +57,14 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define VERSIONSIZE 16
-#define SAVE_GAME_TERMINATOR 0x1d
+#define VERSIONSIZE             16
+#define SAVE_GAME_TERMINATOR    0x1d
 
-#define SAVESTRINGSIZE 24
+#define SAVESTRINGSIZE          24
 
-#define FF_FRAMEMASK        0x7fff
+#define FF_FRAMEMASK            0x7fff
 
-#define SIZEOF_V13_THINKER_T 12
+#define SIZEOF_V13_THINKER_T    12
 #define V13_THINKER_T_FUNC_OFFSET 8
 
 // TYPES -------------------------------------------------------------------
@@ -77,8 +81,8 @@ extern void SV_UpdateReadMobjFlags(mobj_t *mo, int ver);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte   *savebuffer;
-byte   *save_p;
+byte *savebuffer;
+byte *save_p;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -105,34 +109,51 @@ static void SV_v13_Read(void *data, int len)
 
 static void SV_v13_ReadPlayer(player_t *pl)
 {
-    byte    temp[12];
+    int         i;
+    byte        temp[12];
     ddplayer_t *ddpl = pl->plr;
 
-    SV_v13_ReadLong();          // mo
+    SV_v13_ReadLong(); // mo
     pl->playerstate = SV_v13_ReadLong();
-    SV_v13_Read(temp, 10);      // ticcmd_t
+    SV_v13_Read(temp, 10); // ticcmd_t
     ddpl->viewZ = FIX2FLT(SV_v13_ReadLong());
     ddpl->viewheight = FIX2FLT(SV_v13_ReadLong());
     ddpl->deltaviewheight = FIX2FLT(SV_v13_ReadLong());
-    pl->bob = SV_v13_ReadLong();
+    pl->bob = FIX2FLT(SV_v13_ReadLong());
     pl->flyheight = SV_v13_ReadLong();
     ddpl->lookdir = SV_v13_ReadLong();
     pl->centering = SV_v13_ReadLong();
     pl->health = SV_v13_ReadLong();
     pl->armorpoints = SV_v13_ReadLong();
     pl->armortype = SV_v13_ReadLong();
+
+    //// \fixme Assumes inventory size.
     SV_v13_Read(pl->inventory, 4 * 2 * 14);
+
     pl->readyArtifact = SV_v13_ReadLong();
     pl->artifactCount = SV_v13_ReadLong();
     pl->inventorySlotNum = SV_v13_ReadLong();
+
+    //// \fixme Assumes powers size.
     SV_v13_Read(pl->powers, 4 * 9);
+
+    //// \fixme Assumes keys size.
     SV_v13_Read(pl->keys, 4 * 3);
+
     pl->backpack = SV_v13_ReadLong();
+
+    //// \fixme Assumes frags size.
     SV_v13_Read(pl->frags, 4 * 4);
     pl->readyweapon = SV_v13_ReadLong();
     pl->pendingweapon = SV_v13_ReadLong();
+
+    //// \fixme Assumes owned weapon size.
     SV_v13_Read(pl->weaponowned, 4 * 9);
+
+    //// \fixme Assumes ammo size.
     SV_v13_Read(pl->ammo, 4 * 6);
+
+    //// \fixme Assumes maxammo size.
     SV_v13_Read(pl->maxammo, 4 * 6);
     pl->attackdown = SV_v13_ReadLong();
     pl->usedown = SV_v13_ReadLong();
@@ -141,20 +162,29 @@ static void SV_v13_ReadPlayer(player_t *pl)
     pl->killcount = SV_v13_ReadLong();
     pl->itemcount = SV_v13_ReadLong();
     pl->secretcount = SV_v13_ReadLong();
-    SV_v13_ReadLong();          // message, char*
+    SV_v13_ReadLong(); // message, char*
     pl->damagecount = SV_v13_ReadLong();
     pl->bonuscount = SV_v13_ReadLong();
     pl->flamecount = SV_v13_ReadLong();
-    SV_v13_ReadLong();          // attacker
+    SV_v13_ReadLong(); // attacker
     ddpl->extraLight = SV_v13_ReadLong();
     ddpl->fixedcolormap = SV_v13_ReadLong();
     pl->colormap = SV_v13_ReadLong();
-    SV_v13_Read(pl->psprites, 16 * 2);
+    for(i = 0; i < 2; ++i)
+    {
+        pspdef_t       *psp = &pl->psprites[i];
+
+        psp->state = (state_t*) SV_v13_ReadLong();
+        psp->pos[VX] = SV_v13_ReadLong();
+        psp->pos[VY] = SV_v13_ReadLong();
+        psp->tics = SV_v13_ReadLong();
+    }
+
     pl->didsecret = SV_v13_ReadLong();
     pl->morphTics = SV_v13_ReadLong();
     pl->chickenPeck = SV_v13_ReadLong();
-    SV_v13_ReadLong();          // rain1
-    SV_v13_ReadLong();          // rain2
+    SV_v13_ReadLong(); // rain1
+    SV_v13_ReadLong(); // rain2
 }
 
 static void SV_v13_ReadMobj(mobj_t *mo)
@@ -162,20 +192,20 @@ static void SV_v13_ReadMobj(mobj_t *mo)
     // Clear everything first.
     memset(mo, 0, sizeof(*mo));
 
-    // The thinker is 3 ints long.
+    // The thinker was 3 ints long.
     SV_v13_ReadLong();
     SV_v13_ReadLong();
     SV_v13_ReadLong();
 
-    mo->pos[VX] = SV_v13_ReadLong();
-    mo->pos[VY] = SV_v13_ReadLong();
-    mo->pos[VZ] = SV_v13_ReadLong();
+    mo->pos[VX] = FIX2FLT(SV_v13_ReadLong());
+    mo->pos[VY] = FIX2FLT(SV_v13_ReadLong());
+    mo->pos[VZ] = FIX2FLT(SV_v13_ReadLong());
 
     // Sector links.
     SV_v13_ReadLong();
     SV_v13_ReadLong();
 
-    mo->angle = SV_v13_ReadLong();
+    mo->angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
     mo->sprite = SV_v13_ReadLong();
     mo->frame = SV_v13_ReadLong();
     mo->frame &= ~FF_FRAMEMASK; // not used anymore.
@@ -189,11 +219,11 @@ static void SV_v13_ReadMobj(mobj_t *mo)
 
     mo->floorz = FIX2FLT(SV_v13_ReadLong());
     mo->ceilingz = FIX2FLT(SV_v13_ReadLong());
-    mo->radius = SV_v13_ReadLong();
+    mo->radius = FIX2FLT(SV_v13_ReadLong());
     mo->height = FIX2FLT(SV_v13_ReadLong());
-    mo->mom[MX] = SV_v13_ReadLong();
-    mo->mom[MY] = SV_v13_ReadLong();
-    mo->mom[MZ] = SV_v13_ReadLong();
+    mo->mom[MX] = FIX2FLT(SV_v13_ReadLong());
+    mo->mom[MY] = FIX2FLT(SV_v13_ReadLong());
+    mo->mom[MZ] = FIX2FLT(SV_v13_ReadLong());
 
     mo->valid = SV_v13_ReadLong();
 
@@ -215,12 +245,12 @@ static void SV_v13_ReadMobj(mobj_t *mo)
     mo->player = (player_t *) SV_v13_ReadLong();
     mo->lastlook = SV_v13_ReadLong();
 
-    mo->spawninfo.pos[VX] = (fixed_t) (SV_v13_ReadLong() << FRACBITS);
-    mo->spawninfo.pos[VY] = (fixed_t) (SV_v13_ReadLong() << FRACBITS);
-    mo->spawninfo.pos[VZ] = ONFLOORZ;
-    mo->spawninfo.angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
-    mo->spawninfo.type = (int) SV_v13_ReadLong();
-    mo->spawninfo.options = (int) SV_v13_ReadLong();
+    mo->spawnspot.pos[VX] = (float) SV_v13_ReadLong();
+    mo->spawnspot.pos[VY] = (float) SV_v13_ReadLong();
+    mo->spawnspot.pos[VZ] = ONFLOORZ;
+    mo->spawnspot.angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
+    mo->spawnspot.type = (int) SV_v13_ReadLong();
+    mo->spawnspot.flags = (int) SV_v13_ReadLong();
 
     SV_UpdateReadMobjFlags(mo, 0);
 }
@@ -235,12 +265,16 @@ void P_v13_UnArchivePlayers(void)
             continue;
 
         SV_v13_ReadPlayer(players + i);
-        players[i].plr->mo = NULL;  // Will be set when unarc thinker.
+        players[i].plr->mo = NULL; // Will be set when unarc thinker.
         players[i].attacker = NULL;
-        for(j = 0; j < NUMPSPRITES; j++)
+        for(j = 0; j < NUMPSPRITES; ++j)
+        {
             if(players[i].psprites[j].state)
+            {
                 players[i].psprites[j].state =
                     &states[(int) players[i].psprites[j].state];
+            }
+        }
     }
 }
 
@@ -261,12 +295,12 @@ void P_v13_UnArchiveWorld(void)
     for(i = 0; i < numsectors; ++i)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
 
         P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
         P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
-        P_SetIntp(sec, DMU_FLOOR_TEXTURE, *get++ + firstflat);
-        P_SetIntp(sec, DMU_CEILING_TEXTURE, *get++ + firstflat);
+        P_SetIntp(sec, DMU_FLOOR_MATERIAL, *get++ + firstflat);
+        P_SetIntp(sec, DMU_CEILING_MATERIAL, *get++ + firstflat);
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++;  // needed?
         /*xsec->tag =*/ *get++;      // needed?
@@ -278,7 +312,7 @@ void P_v13_UnArchiveWorld(void)
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
-        xline = P_XLine(line);
+        xline = P_ToXLine(line);
 
         P_SetIntp(line, DMU_FLAGS, *get++);
         xline->special = *get++;
@@ -298,15 +332,15 @@ void P_v13_UnArchiveWorld(void)
 
             offx = *get++ << FRACBITS;
             offy = *get++ << FRACBITS;
-            P_SetFixedp(sdef, DMU_TOP_TEXTURE_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_TOP_TEXTURE_OFFSET_Y, offy);
-            P_SetFixedp(sdef, DMU_MIDDLE_TEXTURE_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_MIDDLE_TEXTURE_OFFSET_Y, offy);
-            P_SetFixedp(sdef, DMU_BOTTOM_TEXTURE_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_BOTTOM_TEXTURE_OFFSET_Y, offy);
-            P_SetIntp(sdef, DMU_TOP_TEXTURE, *get++);
-            P_SetIntp(sdef, DMU_BOTTOM_TEXTURE, *get++);
-            P_SetIntp(sdef, DMU_MIDDLE_TEXTURE, *get++);
+            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_Y, offy);
+            P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
+            P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
+            P_SetIntp(sdef, DMU_TOP_MATERIAL, *get++);
+            P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, *get++);
+            P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, *get++);
         }
     }
     save_p = (byte *) get;
@@ -360,7 +394,7 @@ typedef enum
                 //mobj->player->plr->clAngle = mobj->angle; /* $unifiedangles */
                 //mobj->player->plr->clLookDir = mobj->player->plr->lookdir; /* $unifiedangles */
             }
-            P_SetThingPosition(mobj);
+            P_SetMobjPosition(mobj);
             mobj->info = &mobjinfo[mobj->type];
             mobj->floorz = P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT);
             mobj->ceilingz = P_GetFloatp(mobj->subsector, DMU_CEILING_HEIGHT);
@@ -413,7 +447,7 @@ typedef struct {
     if(temp + V13_THINKER_T_FUNC_OFFSET)
         ceiling->thinker.function = T_MoveCeiling;
 
-    P_XSector(ceiling->sector)->specialdata = T_MoveCeiling;
+    P_ToXSector(ceiling->sector)->specialdata = T_MoveCeiling;
     return true; // Add this thinker.
 }
 
@@ -451,7 +485,7 @@ typedef struct {
 
     door->thinker.function = T_VerticalDoor;
 
-    P_XSector(door->sector)->specialdata = T_VerticalDoor;
+    P_ToXSector(door->sector)->specialdata = T_VerticalDoor;
     return true; // Add this thinker.
 }
 
@@ -490,7 +524,7 @@ typedef struct {
 
     floor->thinker.function = T_MoveFloor;
 
-    P_XSector(floor->sector)->specialdata = T_MoveFloor;
+    P_ToXSector(floor->sector)->specialdata = T_MoveFloor;
     return true; // Add this thinker.
 }
 
@@ -536,7 +570,7 @@ typedef struct {
     if(temp + V13_THINKER_T_FUNC_OFFSET)
         plat->thinker.function = T_PlatRaise;
 
-    P_XSector(plat->sector)->specialdata = T_PlatRaise;
+    P_ToXSector(plat->sector)->specialdata = T_PlatRaise;
     return true; // Add this thinker.
 }
 
@@ -780,7 +814,7 @@ void SV_v13_LoadGame(char *savename)
     P_v13_UnArchiveThinkers();
     P_v13_UnArchiveSpecials();
 
-    if(*save_p != SAVE_GAME_TERMINATOR)                     
+    if(*save_p != SAVE_GAME_TERMINATOR)
         Con_Error("Bad savegame"); // Missing savegame termination marker
 
     Z_Free(savebuffer);

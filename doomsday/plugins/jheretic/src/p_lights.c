@@ -25,9 +25,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Handle Sector base lighting effects.
- * Muzzle flash?
+/**
+ * p_lights.c: Per-sector lighting effects - jHeretic specific.
+ *
  *  2006/01/17 DJS - Recreated using jDoom's p_lights.c as a base.
  */
 
@@ -88,8 +88,8 @@ void P_SpawnLightFlash(sector_t *sector)
     float       lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     lightflash_t *flash;
 
-    // nothing special about it during gameplay
-    P_XSector(sector)->special = 0;
+    // Nothing special about it during gameplay.
+    P_ToXSector(sector)->special = 0;
 
     flash = Z_Malloc(sizeof(*flash), PU_LEVSPEC, 0);
 
@@ -151,7 +151,7 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
         flash->minlight = 0;
 
     // nothing special about it during gameplay
-    P_XSector(sector)->special = 0;
+    P_ToXSector(sector)->special = 0;
 
     if(!inSync)
         flash->count = (P_Random() & 7) + 1;
@@ -159,22 +159,22 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
         flash->count = 1;
 }
 
-/*
- * Start strobing lights (usually from a trigger)
+/**
+ * Start strobing lights (usually from a trigger).
  */
 void EV_StartLightStrobing(line_t *line)
 {
     sector_t   *sec = NULL;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return;
 
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        if(P_XSector(sec)->specialdata)
+        if(P_ToXSector(sec)->specialdata)
             continue;
 
         P_SpawnStrobeFlash(sec, SLOWDARK, 0);
@@ -190,7 +190,7 @@ void EV_TurnTagLightsOff(line_t *line)
     line_t     *other;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return;
 
@@ -224,7 +224,7 @@ void EV_LightTurnOn(line_t *line, float max)
     line_t     *tline;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return;
 
@@ -236,7 +236,7 @@ void EV_LightTurnOn(line_t *line, float max)
         // surrounding sector
         if(!max)
         {
-            for(j = 0; j < P_GetIntp(sec, DMU_LINE_COUNT); j++)
+            for(j = 0; j < P_GetIntp(sec, DMU_LINE_COUNT); ++j)
             {
                 tline = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | j);
                 tsec = P_GetNextSector(tline, sec);
@@ -262,8 +262,7 @@ void T_Glow(glow_t * g)
 
     switch(g->direction)
     {
-    case -1:
-        // DOWN
+    case -1: // Down.
         lightlevel -= glowdelta;
         if(lightlevel <= g->minlight)
         {
@@ -272,8 +271,7 @@ void T_Glow(glow_t * g)
         }
         break;
 
-    case 1:
-        // UP
+    case 1: // Up.
         lightlevel += glowdelta;
         if(lightlevel >= g->maxlight)
         {
@@ -301,5 +299,5 @@ void P_SpawnGlowingLight(sector_t *sector)
     g->thinker.function = T_Glow;
     g->direction = -1;
 
-    P_XSector(sector)->special = 0;
+    P_ToXSector(sector)->special = 0;
 }

@@ -3,10 +3,11 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ *\author Copyright Â© 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +21,17 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Movement/collision utility functions, as used by function in p_map.c.
- * BLOCKMAP Iterator functions, and some PIT_* functions to use for iteration.
+/**
+ * p_maputil.c: Movement/collision utility functions.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
 #include <stdlib.h>
 
 #include "jheretic.h"
@@ -55,24 +56,23 @@ extern mobj_t *tmthing;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Unlinks a thing from block map and sectors.
- * On each position change, BLOCKMAP and other
- * lookups maintaining lists ot things inside
- * these structures need to be updated.
+ * On each position change, BLOCKMAP and other lookups maintaining lists to
+ * things inside these structures need to be updated.
  */
-void P_UnsetThingPosition(mobj_t *thing)
+void P_UnsetMobjPosition(mobj_t *thing)
 {
-    P_UnlinkThing(thing);
+    P_UnlinkMobj(thing);
 }
 
-/*
+/**
  * Links a thing into both a block and a subsector based on it's x,y.
  * Sets thing->subsector properly.
  */
-void P_SetThingPosition(mobj_t *thing)
+void P_SetMobjPosition(mobj_t *thing)
 {
-    int flags = 0;
+    int         flags = 0;
 
     if(!(thing->flags & MF_NOSECTOR))
         flags |= DDLINK_SECTOR;
@@ -80,92 +80,91 @@ void P_SetThingPosition(mobj_t *thing)
     if(!(thing->flags & MF_NOBLOCKMAP))
         flags |= DDLINK_BLOCKMAP;
 
-    P_LinkThing(thing, flags);
+    P_LinkMobj(thing, flags);
 }
 
-/*
- * Apply "torque" to objects hanging off of ledges, so that they
- * fall off. It's not really torque, since Doom has no concept of
- * rotation, but it's a convincing effect which avoids anomalies
- * such as lifeless objects hanging more than halfway off of ledges,
- * and allows objects to roll off of the edges of moving lifts, or
- * to slide up and then back down stairs, or to fall into a ditch.
- * If more than one linedef is contacted, the effects are cumulative,
- * so balancing is possible.
- * killough $dropoff_fix
+/**
+ * Apply "torque" to objects hanging off of ledges, so that they fall off.
+ * It's not really torque, since Doom has no concept of rotation, but it's
+ * a convincing effect which avoids anomalies such as lifeless objects
+ * hanging more than halfway off of ledges, and allows objects to roll off
+ * of the edges of moving lifts, or to slide up and then back down stairs,
+ * or to fall into a ditch.
+ *
+ * If more than one linedef is contacted, the effects are cumulative, so
+ * balancing is possible.
  */
 static boolean PIT_ApplyTorque(line_t *ld, void *data)
 {
-    mobj_t *mo = tmthing;
-    fixed_t dist;
-    sector_t *frontsec = P_GetPtrp(ld, DMU_FRONT_SECTOR);
-    sector_t *backsec = P_GetPtrp(ld, DMU_BACK_SECTOR);
-    fixed_t ffloor;
-    fixed_t bfloor;
-    fixed_t dx = P_GetFixedp(ld, DMU_DX);
-    fixed_t dy = P_GetFixedp(ld, DMU_DY);
-
-    ffloor = P_GetFixedp(frontsec, DMU_FLOOR_HEIGHT);
-    bfloor = P_GetFixedp(backsec, DMU_FLOOR_HEIGHT);
+    mobj_t     *mo = tmthing;
+    float       dist;
+    sector_t   *frontsec, *backsec;
+    float       ffloor;
+    float       bfloor;
+    float       dx, dy;
 
     if(tmthing->player)
-        return true;            // skip players!
+        return true; // skip players!
 
-    dist =                      // lever arm
-        +(dx >> FRACBITS) * (mo->pos[VY] >> FRACBITS) -
-        (dy >> FRACBITS) * (mo->pos[VX] >> FRACBITS) -
-        (dx >> FRACBITS) * (P_GetFixedp(P_GetPtrp(ld, DMU_VERTEX1),
-                                        DMU_Y) >> FRACBITS) +
-        (dy >> FRACBITS) * (P_GetFixedp(P_GetPtrp(ld, DMU_VERTEX1),
-                                        DMU_X) >> FRACBITS);
+    dx = P_GetFloatp(ld, DMU_DX);
+    dy = P_GetFloatp(ld, DMU_DY);
 
-    if((dist < 0 && ffloor < mo->pos[VZ] && bfloor >= mo->pos[VZ]) ||
+    frontsec = P_GetPtrp(ld, DMU_FRONT_SECTOR);
+    backsec = P_GetPtrp(ld, DMU_BACK_SECTOR);
+    ffloor = P_GetFloatp(frontsec, DMU_FLOOR_HEIGHT);
+    bfloor = P_GetFloatp(backsec, DMU_FLOOR_HEIGHT);
+
+    // Lever-arm:
+    dist =
+        +dx * mo->pos[VY] -
+        dy * mo->pos[VX] -
+        dx * (P_GetFloatp(P_GetPtrp(ld, DMU_VERTEX1), DMU_Y)) +
+        dy * (P_GetFloatp(P_GetPtrp(ld, DMU_VERTEX1), DMU_X));
+
+    if((dist < 0  && ffloor < mo->pos[VZ] && bfloor >= mo->pos[VZ]) ||
        (dist >= 0 && bfloor < mo->pos[VZ] && ffloor >= mo->pos[VZ]))
     {
         // At this point, we know that the object straddles a two-sided
         // linedef, and that the object's center of mass is above-ground.
-
-        fixed_t x = abs(dx), y = abs(dy);
+        float       x = fabs(dx), y = fabs(dy);
 
         if(y > x)
         {
-            fixed_t t = x;
-
+            float       tmp = x;
             x = y;
-            y = t;
+            y = tmp;
         }
 
-        y = finesine[(tantoangle[FixedDiv(y, x) >> DBITS] +
-                      ANG90) >> ANGLETOFINESHIFT];
+        y = FIX2FLT(finesine[(tantoangle[FLT2FIX(y / x) >> DBITS] +
+                             ANG90) >> ANGLETOFINESHIFT]);
 
-        // Momentum is proportional to distance between the
-        // object's center of mass and the pivot linedef.
-        //
-        // It is scaled by 2^(OVERDRIVE - gear). When gear is
-        // increased, the momentum gradually decreases to 0 for
-        // the same amount of pseudotorque, so that oscillations
-        // are prevented, yet it has a chance to reach equilibrium.
+        /**
+         * Momentum is proportional to distance between the object's center
+         * of mass and the pivot linedef.
+         *
+         * It is scaled by 2^(OVERDRIVE - gear). When gear is increased, the
+         * momentum gradually decreases to 0 for the same amount of
+         * pseudotorque, so that oscillations are prevented, yet it has a
+         * chance to reach equilibrium.
+         */
 
         if(mo->gear < OVERDRIVE)
-            dist = FixedDiv(FixedMul(dist, y << -(mo->gear - OVERDRIVE)), x);
+            dist = (dist * FIX2FLT(FLT2FIX(y) << -(mo->gear - OVERDRIVE))) / x;
         else
-            dist = FixedDiv(FixedMul(dist, y >> +(mo->gear - OVERDRIVE)), x);
+            dist = (dist * FIX2FLT(FLT2FIX(y) >> +(mo->gear - OVERDRIVE))) / x;
 
         // Apply momentum away from the pivot linedef.
+        x = dy * dist;
+        y = dx * dist;
 
-        x = FixedMul(dy, dist);
-        y = FixedMul(dx, dist);
-
-        // Avoid moving too fast all of a sudden (step into "overdrive")
-
-        dist = FixedMul(x, x) + FixedMul(y, y);
-
-        while(dist > FRACUNIT * 4 && mo->gear < MAXGEAR)
+        // Avoid moving too fast all of a sudden (step into "overdrive").
+        dist = (x * x) + (y * y);
+        while(dist > 4 && mo->gear < MAXGEAR)
         {
             ++mo->gear;
-            x >>= 1;
-            y >>= 1;
-            dist >>= 1;
+            x /= 2;
+            y /= 2;
+            dist /= 2;
         }
 
         mo->mom[MX] -= x;
@@ -175,44 +174,44 @@ static boolean PIT_ApplyTorque(line_t *ld, void *data)
     return true;
 }
 
-/*
+/**
  * Applies "torque" to objects, based on all contacted linedefs.
- * killough $dropoff_fix
+ * \note $dropoff_fix
  */
 void P_ApplyTorque(mobj_t *mo)
 {
-    // Remember the current state, for gear-change
+    // Remember the current state, for gear-change.
     int     flags = mo->intflags;
 
-    // 2003-4-16 (jk): corpse sliding anomalies, made configurable
+    // Corpse sliding anomalies, made configurable.
     if(!cfg.slidingCorpses)
         return;
 
     tmthing = mo;
 
-    // Use VALIDCOUNT to prevent checking the same line twice
+    // Use VALIDCOUNT to prevent checking the same line twice.
     VALIDCOUNT++;
 
-    P_ThingLinesIterator(mo, PIT_ApplyTorque, 0);
+    P_MobjLinesIterator(mo, PIT_ApplyTorque, 0);
 
     // If any momentum, mark object as 'falling' using engine-internal flags
-    if(mo->mom[MX] | mo->mom[MY])
+    if(mo->mom[MX] != 0 || mo->mom[MY] != 0)
         mo->intflags |= MIF_FALLING;
-    else
-        // Clear the engine-internal flag indicating falling object.
+    else // Clear the engine-internal flag indicating falling object.
         mo->intflags &= ~MIF_FALLING;
 
-    // If the object has been moving, step up the gear.
-    // This helps reach equilibrium and avoid oscillations.
-    //
-    // Doom has no concept of potential energy, much less
-    // of rotation, so we have to creatively simulate these
-    // systems somehow :)
+    /**
+     * If the object has been moving, step up the gear. This helps reach
+     * equilibrium and avoid oscillations.
+     *
+     * DOOM has no concept of potential energy, much less of rotation, so we
+     * have to creatively simulate these systems somehow :)
+     */
 
-    // If not falling for a while, reset it to full strength
+    // If not falling for a while, reset it to full strength.
     if(!((mo->intflags | flags) & MIF_FALLING))
         mo->gear = 0;
     else if(mo->gear < MAXGEAR)
-        // Else if not at max gear, move up a gear
+        // Else if not at max gear, move up a gear.
         mo->gear++;
 }

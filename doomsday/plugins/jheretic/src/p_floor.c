@@ -25,9 +25,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- *  Stairs and donuts.
- *  2006/01/17 DJS - Recreated using jDoom's p_floor.c as a base.
+/**
+ * p_floor.c: Stairs and donuts.
+ *
+ * 2006/01/17 DJS - Recreated using jDoom's p_floor.c as a base.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -68,19 +69,18 @@ int EV_BuildStairs(line_t *line, stair_e type)
     floormove_t *floor;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return rtn;
 
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        xsec = P_XSector(sec);
-        // ALREADY MOVING?  IF SO, KEEP GOING...
-        if(xsec->specialdata)
-            continue;
+        xsec = P_ToXSector(sec);
 
-        // new floor thinker
+        if(xsec->specialdata)
+            continue; // Already moving, so keep going.
+
         rtn = 1;
         floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
         P_AddThinker(&floor->thinker);
@@ -103,11 +103,11 @@ int EV_BuildStairs(line_t *line, stair_e type)
         height = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + stairsize;
         floor->floordestheight = height;
 
-        texture = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
+        texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
 
-        // Find next sector to raise
-        // 1.   Find 2-sided line with same sector side[0]
-        // 2.   Other side is the next sector to raise
+        // Find next sector to raise.
+        // 1. Find 2-sided line with same sector side[0].
+        // 2. Other side is the next sector to raise.
         do
         {
             ok = 0;
@@ -123,12 +123,12 @@ int EV_BuildStairs(line_t *line, stair_e type)
                     continue;
 
                 tsec = P_GetPtrp(ln, DMU_BACK_SECTOR);
-                if(P_GetIntp(tsec, DMU_FLOOR_TEXTURE) != texture)
+                if(P_GetIntp(tsec, DMU_FLOOR_MATERIAL) != texture)
                     continue;
 
                 height += stairsize;
 
-                if(P_XSector(tsec)->specialdata)
+                if(P_ToXSector(tsec)->specialdata)
                     continue;
 
                 sec = tsec;
@@ -136,7 +136,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
                 P_AddThinker(&floor->thinker);
 
-                P_XSector(tsec)->specialdata = floor;
+                P_ToXSector(tsec)->specialdata = floor;
                 floor->thinker.function = T_MoveFloor;
                 floor->type = raiseBuildStep;
                 floor->direction = 1;
@@ -162,16 +162,15 @@ int EV_DoDonut(line_t *line)
     floormove_t *floor;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return rtn;
 
     P_IterListResetIterator(list, true);
     while((s1 = P_IterListIterator(list)) != NULL)
     {
-        // ALREADY MOVING?  IF SO, KEEP GOING...
-        if(P_XSector(s1)->specialdata)
-            continue;
+        if(P_ToXSector(s1)->specialdata)
+            continue; // Already moving, so keep going.
 
         rtn = 1;
 
@@ -190,7 +189,7 @@ int EV_DoDonut(line_t *line)
             floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
             P_AddThinker(&floor->thinker);
 
-            P_XSector(s2)->specialdata = floor;
+            P_ToXSector(s2)->specialdata = floor;
 
             floor->thinker.function = T_MoveFloor;
             floor->type = donutRaise;
@@ -198,7 +197,7 @@ int EV_DoDonut(line_t *line)
             floor->direction = 1;
             floor->sector = s2;
             floor->speed = FLOORSPEED * .5;
-            floor->texture = P_GetIntp(s3, DMU_FLOOR_TEXTURE);
+            floor->texture = P_GetIntp(s3, DMU_FLOOR_MATERIAL);
             floor->newspecial = 0;
             floor->floordestheight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
 
@@ -206,7 +205,7 @@ int EV_DoDonut(line_t *line)
             floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
             P_AddThinker(&floor->thinker);
 
-            P_XSector(s1)->specialdata = floor;
+            P_ToXSector(s1)->specialdata = floor;
 
             floor->thinker.function = T_MoveFloor;
             floor->type = lowerFloor;
