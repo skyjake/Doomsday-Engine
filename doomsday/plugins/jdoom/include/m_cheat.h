@@ -19,12 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Cheat code checking.
+/**
+ * m_cheat.h: Cheat code checking.
  */
 
 #ifndef __M_CHEAT__
@@ -50,23 +50,23 @@ typedef struct {
 
 } cheatseq_t;
 
-void        cht_Init(void);
+void        Cht_Init(void);
 
-int         cht_CheckCheat(cheatseq_t * cht, char key);
+int         Cht_CheckCheat(cheatseq_t *cht, char key);
 
-void        cht_GetParam(cheatseq_t * cht, char *buffer);
+void        Cht_GetParam(cheatseq_t *cht, char *buffer);
 
-void        cht_GodFunc(player_t *plyr);
-void        cht_SuicideFunc(player_t *plyr);
-void        cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
-                         boolean armor, boolean cards, cheatseq_t *cheat);
-void        cht_MusicFunc(player_t *plyr, char *buf);
-void        cht_NoClipFunc(player_t *plyr);
-boolean     cht_WarpFunc(player_t *plyr, char *buf);
-boolean     cht_PowerUpFunc(player_t *plyr, int i);
-void        cht_ChoppersFunc(player_t *plyr);
-void        cht_PosFunc(player_t *plyr);
+void        Cht_GodFunc(player_t *plyr);
+void        Cht_SuicideFunc(player_t *plyr);
+void        Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
+                         boolean armor, boolean cards, cheatseq_t *cht);
+void        Cht_MusicFunc(player_t *plyr, char *buf);
+void        Cht_NoClipFunc(player_t *plyr);
+boolean     Cht_WarpFunc(player_t *plyr, char *buf);
+boolean     Cht_PowerUpFunc(player_t *plyr, int i);
+void        Cht_ChoppersFunc(player_t *plyr);
+void        Cht_MyPosFunc(player_t *plyr);
 
-boolean     cht_Responder(event_t *ev);
+boolean     Cht_Responder(event_t *ev);
 
 #endif

@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * jdoom.h: All jDoom Headers
  *
  * A convenience header for including all jDoom headers.

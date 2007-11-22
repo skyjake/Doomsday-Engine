@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Menu widget stuff, episode selection and such.
+/**
+ * m_menu.h: Menu widget stuff, episode selection and such.
  */
 
 #ifndef __M_MENU__

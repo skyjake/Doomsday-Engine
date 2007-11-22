@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,14 +19,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * MapObj data. Map Objects or mobjs are actors, entities,
- * thinker, take-your-pick... anything that moves, acts, or
- * suffers state changes of more or less violent nature.
+/**
+ * d_think.h: MapObj data.
+ *
+ * Map Objects or mobjs are actors, entities, thinker, take-your-pick...
+ * anything that moves, acts, or suffers state changes of more or less
+ * violent nature.
  */
 
 #ifndef __D_THINK__
@@ -36,12 +38,11 @@
 #pragma interface
 #endif
 
-//
-// Experimental stuff.
-// To compile this as "ANSI C with classes"
-//  we will need to handle the various
-//  action functions cleanly.
-//
+/**
+ * Experimental stuff.
+ * To compile this as "ANSI C with classes" we will need to handle the
+ * various action functions cleanly.
+ */
 typedef void    (*actionf_v) ();
 typedef void    (*actionf_p1) (void *);
 typedef void    (*actionf_p2) (void *, void *);
@@ -53,7 +54,6 @@ typedef union {
     actionf_p1      acp1;
     actionf_v       acv;
     actionf_p2      acp2;
-
 } actionf_t;
 
 #endif

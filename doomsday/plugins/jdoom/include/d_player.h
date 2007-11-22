@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * d_player.h: Player data structures.
  */
 
 #ifndef __D_PLAYER__
@@ -76,8 +80,8 @@ typedef struct player_s {
     playerclass_t   class;         // player class type
     playerbrain_t   brain;
 
-    // bounded/scaled total momentum.
-    fixed_t         bob;
+    // Bounded/scaled total momentum.
+    float           bob;
 
     // This is only used between levels,
     // mo->health is used during levels.

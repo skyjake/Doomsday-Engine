@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Menu defines and types.
+/**
+ * mn_def.h: Menu defines and types.
  */
 
 #ifndef __MENU_DEFS_H_
@@ -146,7 +146,7 @@ extern menu_t   GameSetupMenu;
 extern menu_t   PlayerSetupMenu;
 
 void    M_DrawTitle(char *text, int y);
-void    M_WriteMenuText(const menu_t * menu, int index, const char *text);
+void    M_WriteMenuText(const menu_t *menu, int index, const char *text);
 
 // Color widget.
 void    DrawColorWidget();
@@ -154,10 +154,10 @@ void    SCColorWidget(int index, void *data);
 void    M_WGCurrentColor(int option, void *data);
 
 void    M_DrawSaveLoadBorder(int x, int y);
-void    M_SetupNextMenu(menu_t * menudef);
+void    M_SetupNextMenu(menu_t *menu);
 void    M_DrawThermo(int x, int y, int thermWidth, int thermDot);
-void    MN_DrawSlider(const menu_t * menu, int item, int width, int slot);
-void    MN_DrawColorBox(const menu_t * menu, int index, float r, float g,
+void    MN_DrawSlider(const menu_t *menu, int item, int width, int slot);
+void    MN_DrawColorBox(const menu_t *menu, int index, float r, float g,
                         float b, float a);
 void    M_StartControlPanel(void);
 void    M_StartMessage(char *string, void *routine, boolean input);

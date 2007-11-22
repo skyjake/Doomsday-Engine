@@ -19,8 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * d_event.h: Game actions (instigate changes to game state).
  */
 
 #ifndef __D_EVENT__
@@ -63,7 +67,7 @@ typedef enum
 
 	// Center player look angle (pitch back to zero).
 	//BT_LOOKCENTER	= 64,
-    
+
     // Flag, weapon change pending.
     // If true, the next 3 bits hold weapon num.
     //BT_CHANGE		= 4,
@@ -80,14 +84,14 @@ typedef enum
     //BTS_SAVEGAME	= 2,
 
     // Savegame slot numbers
-    //  occupy the second byte of buttons.    
+    //  occupy the second byte of buttons.
     //BTS_SAVEMASK	= (4+8+16),
     //BTS_SAVESHIFT 	= 2,
 
 	// Special weapon change flags.
 	//BTS_NEXTWEAPON	= 4,
 	//BTS_PREVWEAPON	= 8,
-  
+
 } buttoncode_t;*/
 
 #endif
