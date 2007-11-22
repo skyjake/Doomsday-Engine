@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_api.h: Data Structures for the Engine/Game Interface
  */
 
@@ -31,7 +31,7 @@
 
 #include "dd_share.h"
 
-/*
+/**
  * The routines/data exported out of the Doomsday engine:
  *
  * This structure contains pointers to routines that can have alternative
@@ -53,14 +53,14 @@ typedef struct game_import_s {
 
     // General information.
     int            *validCount;
-    fixed_t        *topslope;
-    fixed_t        *bottomslope;
+    float          *topslope;
+    float          *bottomslope;
 
     // Thinker data (DO NOT CHANGE).
     thinker_t      *thinkercap;    // The head and tail of the thinker list
 } game_import_t;                   // game import == engine export
 
-/*
+/**
  * The routines/data exported from the game DLL.
  */
 typedef struct {
@@ -102,7 +102,7 @@ typedef struct {
 
     // Miscellaneous.
     void            (*MobjThinker) ();
-    fixed_t         (*MobjFriction) (void *mobj);   // Returns a friction factor.
+    float           (*MobjFriction) (void *mobj);   // Returns a friction factor.
 
     // Main structure sizes.
     int             ticcmd_size;   // sizeof(ticcmd_t)

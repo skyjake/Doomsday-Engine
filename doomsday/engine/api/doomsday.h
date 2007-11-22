@@ -22,12 +22,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * doomsday.h: Doomsday Engine API
+/**
+ * doomsday.h: Doomsday Engine API (Routines exported from Doomsday.exe).
  *
- * Doomsday Engine API. Routines exported from Doomsday.exe.
- * Games and plugins need to include this to gain access to the
- * engine's features.
+ * Games and plugins need to include this to gain access to the engine's
+ * features.
  */
 
 #ifndef __DOOMSDAY_EXPORTS_H__
@@ -44,7 +43,7 @@
 extern          "C" {
 #endif
 
-/*
+/**
  * Public definitions of the internal map data pointers.  These can be
  * accessed externally, but only as identifiers to data instances.
  * For example, a game could use sector_t to identify to sector to
@@ -61,7 +60,6 @@ extern          "C" {
     typedef struct seg_s { int type; } seg_t;
     typedef struct subsector_s { int type; } subsector_t;
     typedef struct sector_s { int type; } sector_t;
-    typedef struct polyblock_s { int type; } polyblock_t;
     typedef struct polyobj_s { int type; } polyobj_t;
     typedef struct plane_s { int type; } plane_t;
 #endif
@@ -171,58 +169,69 @@ extern          "C" {
     ident_t         Net_GetPlayerID(int player);
 
     // Play.
-    float           P_AccurateDistance(fixed_t dx, fixed_t dy);
-    fixed_t         P_ApproxDistance(fixed_t dx, fixed_t dy);
-    fixed_t         P_ApproxDistance3(fixed_t dx, fixed_t dy, fixed_t dz);
-    int             P_PointOnLineSide(fixed_t x, fixed_t y,
+    float           P_AccurateDistance(float dx, float dy);
+    float           P_ApproxDistance(float dx, float dy);
+    float           P_ApproxDistance3(float dx, float dy, float dz);
+    int             P_PointOnLineSide(float x, float y,
                                       struct line_s *line);
-    int             P_BoxOnLineSide(fixed_t *tmbox, struct line_s *ld);
-    void            P_MakeDivline(struct line_s *li, divline_t * dl);
-    int             P_PointOnDivlineSide(fixed_t x, fixed_t y,
-                                         divline_t * line);
-    fixed_t         P_InterceptVector(divline_t * v2, divline_t * v1);
+    int             P_BoxOnLineSide(float *tmbox, struct line_s *ld);
+    void            P_MakeDivline(struct line_s *li, divline_t *dl);
+    int             P_PointOnDivlineSide(float x, float y,
+                                         divline_t *line);
+    float           P_InterceptVector(divline_t *v2, divline_t *v1);
     void            P_LineOpening(struct line_s *linedef);
     struct mobj_s  *P_GetBlockRootIdx(int index);
-    void            P_LinkThing(struct mobj_s *thing, byte flags);
-    void            P_UnlinkThing(struct mobj_s *thing);
-    void            P_PointToBlock(fixed_t x, fixed_t y, int *bx, int *by);
+    void            P_LinkMobj(struct mobj_s *mo, byte flags);
+    void            P_UnlinkMobj(struct mobj_s *mo);
+    void            P_PointToBlock(float x, float y, uint *bx, uint *by);
 
-    // Object type in blockmap iterators.
-    boolean         P_BlockLinesIterator(int x, int y,
-                                         boolean (*func) (struct line_s *,
-                                                          void *), void *);
-    boolean         P_BlockThingsIterator(int x, int y,
-                                          boolean (*func)
-                                          (struct mobj_s*, void*), void*);
-    boolean         P_BlockPolyobjsIterator(int x, int y,
+    // Object in map block iterators.
+    boolean         P_BlockMobjsIterator(uint x, uint y,
+                                         boolean (*func)(struct mobj_s*, void*),
+                                         void *data);
+    boolean         P_BlockLinesIterator(uint x, uint y,
+                                         boolean (*func) (struct line_s*, void *),
+                                         void *data);
+    boolean         P_BlockPolyobjsIterator(uint x, uint y,
                                             boolean (*func) (void *, void *),
                                             void *);
-    boolean         P_SubsectorBoxIterator(fixed_t *box, sector_t *sector,
-                                           boolean (*func) (subsector_t *, void *),
-                                           void *parm);
 
-    // Thing linked object iterators.
-    boolean         P_ThingLinesIterator(struct mobj_s *thing,
-                                         boolean (*func) (struct line_s *,
-                                                          void *), void *);
-    boolean         P_ThingSectorsIterator(struct mobj_s *thing,
-                                           boolean (*func) (sector_t*, void*),
+    // Object in bounding box iterators.
+    boolean         P_MobjsBoxIterator(const float box[4],
+                                       boolean (*func) (struct mobj_s *, void *),
+                                       void *data);
+    boolean         P_LinesBoxIterator(const float box[4],
+                                       boolean (*func) (line_t *, void *),
+                                       void *data);
+    boolean         P_AllLinesBoxIterator(const float box[4],
+                                          boolean (*func) (struct line_s*, void *),
+                                          void *data);
+    boolean         P_SubsectorsBoxIterator(const float box[4], sector_t *sector,
+                                           boolean (*func) (subsector_t *, void *),
                                            void *data);
 
-    // Object type touching things iterators.
-    boolean         P_LineThingsIterator(struct line_s *line,
+    // Mobj linked object iterators.
+    boolean         P_MobjLinesIterator(struct mobj_s *mo,
+                                        boolean (*func) (struct line_s *,
+                                                          void *), void *);
+    boolean         P_MobjSectorsIterator(struct mobj_s *mo,
+                                          boolean (*func) (sector_t*, void*),
+                                          void *data);
+
+    // Object type touching mobjs iterators.
+    boolean         P_LineMobjsIterator(struct line_s *line,
                                          boolean (*func) (struct mobj_s *,
                                                           void *), void *data);
-    boolean         P_SectorTouchingThingsIterator
+    boolean         P_SectorTouchingMobjsIterator
                         (sector_t *sector, boolean (*func) (struct mobj_s*, void*),
                          void *data);
 
 
-    boolean         P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2,
-                                   fixed_t y2, int flags,
+    boolean         P_PathTraverse(float x1, float y1, float x2, float y2,
+                                   int flags,
                                    boolean (*trav) (intercept_t *));
     boolean         P_CheckSight(struct mobj_s *t1, struct mobj_s *t2);
-    void            P_SetState(struct mobj_s *mobj, int statenum);
+    void            P_SetState(struct mobj_s *mo, int statenum);
 
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
@@ -367,9 +376,9 @@ extern          "C" {
     int             R_CreateAnimGroup(int type, int flags);
     void            R_AddToAnimGroup(int groupNum, const char *name,
                                      int tics, int randomTics);
-    angle_t         R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2,
-                                    fixed_t y2);
-    struct subsector_s *R_PointInSubsector(fixed_t x, fixed_t y);
+    angle_t         R_PointToAngle2(float x1, float y1, float x2,
+                                    float y2);
+    struct subsector_s *R_PointInSubsector(float x, float y);
 
     // Renderer.
     void            Rend_Reset(void);
@@ -445,7 +454,7 @@ extern          "C" {
     void            S_LevelChange(void);
     int             S_LocalSoundAtVolumeFrom(int sound_id,
                                              struct mobj_s *origin,
-                                             float *fixedpos, float volume);
+                                             float *pos, float volume);
     int             S_LocalSoundAtVolume(int sound_id, struct mobj_s *origin,
                                          float volume);
     int             S_LocalSound(int sound_id, struct mobj_s *origin);

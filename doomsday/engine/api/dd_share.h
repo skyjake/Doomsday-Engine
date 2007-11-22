@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_share.h: Shared Macros and Constants
  *
  * Macros and constants used by the engine and games.
@@ -59,7 +59,7 @@ extern          "C" {
 #   define stricmp      strcasecmp
 #   define strnicmp     strncasecmp
 
-    /*
+    /**
      * There are manual implementations for these string handling
      * routines:
      */
@@ -113,7 +113,7 @@ extern          "C" {
 #define ROUND(x)                ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
 #define ABS(x)                  ((x) >= 0 ? (x) : -(x))
 
-    // Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
+// Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
 // Note that this should err on the side of being < 1/255 to prevent result
 // exceeding 255 (e.g. 255 * reciprocal255).
 #define reciprocal255   0.003921568627f
@@ -194,17 +194,12 @@ extern          "C" {
         DD_DEDICATED,
         DD_NOVIDEO,
         DD_NUMMOBJTYPES,
-        DD_GRAVITY,
         DD_GOTFRAME,
         DD_PLAYBACK,
         DD_NUMSOUNDS,
         DD_NUMMUSIC,
         DD_NUMLUMPS,
         DD_SEND_ALL_PLAYERS,
-        DD_PSPRITE_OFFSET_X,       // 10x
-        DD_PSPRITE_OFFSET_Y,       // 10x
-        DD_PSPRITE_SPEED,
-        DD_CPLAYER_THRUST_MUL,
         DD_CLIENT_PAUSED,
         DD_WEAPON_OFFSET_SCALE_Y,  // 1000x
         DD_MONOCHROME_PATCHES,      // DJS - convert patch image data to monochrome. 1= linear 2= weighted
@@ -306,8 +301,10 @@ extern          "C" {
         DD_POLYOBJ_COUNT,
         DD_BLOCKMAP_WIDTH,
         DD_BLOCKMAP_HEIGHT,
-        DD_BLOCKMAP_ORIGIN_X,
-        DD_BLOCKMAP_ORIGIN_Y,
+        DD_BLOCKMAP_MIN_X,
+        DD_BLOCKMAP_MIN_Y,
+        DD_BLOCKMAP_MAX_X,
+        DD_BLOCKMAP_MAX_Y,
         DD_XGFUNC_LINK,            // XG line classes
         DD_SHARED_FIXED_TRIGGER,
         DD_VIEWX,
@@ -317,15 +314,21 @@ extern          "C" {
         DD_VIEWY_OFFSET,
         DD_VIEWZ_OFFSET,
         DD_VIEWANGLE,
-        DD_VIEWANGLE_OFFSET
+        DD_VIEWANGLE_OFFSET,
+        DD_CPLAYER_THRUST_MUL,
+        DD_GRAVITY,
+        DD_PSPRITE_OFFSET_X,       // 10x
+        DD_PSPRITE_OFFSET_Y        // 10x
     };
 
     // Bounding box coordinates.
     enum {
-        BOXTOP = 0,
-        BOXBOTTOM = 1,
-        BOXLEFT = 2,
-        BOXRIGHT = 3
+        BOXTOP      = 0,
+        BOXBOTTOM   = 1,
+        BOXLEFT     = 2,
+        BOXRIGHT    = 3,
+        BOXFLOOR    = 4,
+        BOXCEILING  = 5
     };
 
     //------------------------------------------------------------------------
@@ -618,28 +621,28 @@ extern          "C" {
         DMU_SLOPE_TYPE,
         DMU_ANGLE,
         DMU_OFFSET,
-        DMU_TOP_TEXTURE,
-        DMU_TOP_TEXTURE_OFFSET_X,
-        DMU_TOP_TEXTURE_OFFSET_Y,
-        DMU_TOP_TEXTURE_OFFSET_XY,
+        DMU_TOP_MATERIAL,
+        DMU_TOP_MATERIAL_OFFSET_X,
+        DMU_TOP_MATERIAL_OFFSET_Y,
+        DMU_TOP_MATERIAL_OFFSET_XY,
         DMU_TOP_COLOR,
         DMU_TOP_COLOR_RED,
         DMU_TOP_COLOR_GREEN,
         DMU_TOP_COLOR_BLUE,
-        DMU_MIDDLE_TEXTURE,
-        DMU_MIDDLE_TEXTURE_OFFSET_X,
-        DMU_MIDDLE_TEXTURE_OFFSET_Y,
-        DMU_MIDDLE_TEXTURE_OFFSET_XY,
+        DMU_MIDDLE_MATERIAL,
+        DMU_MIDDLE_MATERIAL_OFFSET_X,
+        DMU_MIDDLE_MATERIAL_OFFSET_Y,
+        DMU_MIDDLE_MATERIAL_OFFSET_XY,
         DMU_MIDDLE_COLOR,
         DMU_MIDDLE_COLOR_RED,
         DMU_MIDDLE_COLOR_GREEN,
         DMU_MIDDLE_COLOR_BLUE,
         DMU_MIDDLE_COLOR_ALPHA,
         DMU_MIDDLE_BLENDMODE,
-        DMU_BOTTOM_TEXTURE,
-        DMU_BOTTOM_TEXTURE_OFFSET_X,
-        DMU_BOTTOM_TEXTURE_OFFSET_Y,
-        DMU_BOTTOM_TEXTURE_OFFSET_XY,
+        DMU_BOTTOM_MATERIAL,
+        DMU_BOTTOM_MATERIAL_OFFSET_X,
+        DMU_BOTTOM_MATERIAL_OFFSET_Y,
+        DMU_BOTTOM_MATERIAL_OFFSET_XY,
         DMU_BOTTOM_COLOR,
         DMU_BOTTOM_COLOR_RED,
         DMU_BOTTOM_COLOR_GREEN,
@@ -652,24 +655,21 @@ extern          "C" {
         DMU_COLOR_GREEN,            // green component
         DMU_COLOR_BLUE,             // blue component
         DMU_LIGHT_LEVEL,
-        DMU_THINGS,                 // pointer to start of sector thinglist
-        DMU_BOUNDING_BOX,           // fixed_t[4]
+        DMT_MOBJS,                 // pointer to start of sector mobjList
+        DMU_BOUNDING_BOX,           // float[4]
         DMU_SOUND_ORIGIN,
 
         DMU_PLANE_HEIGHT,
-        DMU_PLANE_TEXTURE,
-        DMU_PLANE_OFFSET_X,
-        DMU_PLANE_OFFSET_Y,
-        DMU_PLANE_OFFSET_XY,
-        DMU_PLANE_TARGET,
+        DMU_PLANE_TARGET_HEIGHT,
+        DMU_PLANE_MATERIAL,
+        DMU_PLANE_MATERIAL_OFFSET_X,
+        DMU_PLANE_MATERIAL_OFFSET_Y,
+        DMU_PLANE_MATERIAL_OFFSET_XY,
         DMU_PLANE_SPEED,
         DMU_PLANE_COLOR,
         DMU_PLANE_COLOR_RED,
         DMU_PLANE_COLOR_GREEN,
         DMU_PLANE_COLOR_BLUE,
-        DMU_PLANE_TEXTURE_MOVE_X,
-        DMU_PLANE_TEXTURE_MOVE_Y,
-        DMU_PLANE_TEXTURE_MOVE_XY,
         DMU_PLANE_SOUND_ORIGIN,
 
         // DMU_FLOOR_*/DMU_CEILING constants are aliases which can be
@@ -678,35 +678,29 @@ extern          "C" {
         // They MUST be in the same order as and match the DMU_PLANE_*
         // constants above.
         DMU_FLOOR_HEIGHT,
-        DMU_FLOOR_TEXTURE,
-        DMU_FLOOR_OFFSET_X,
-        DMU_FLOOR_OFFSET_Y,
-        DMU_FLOOR_OFFSET_XY,
-        DMU_FLOOR_TARGET,
+        DMU_FLOOR_TARGET_HEIGHT,
+        DMU_FLOOR_MATERIAL,
+        DMU_FLOOR_MATERIAL_OFFSET_X,
+        DMU_FLOOR_MATERIAL_OFFSET_Y,
+        DMU_FLOOR_MATERIAL_OFFSET_XY,
         DMU_FLOOR_SPEED,
         DMU_FLOOR_COLOR,
         DMU_FLOOR_COLOR_RED,
         DMU_FLOOR_COLOR_GREEN,
         DMU_FLOOR_COLOR_BLUE,
-        DMU_FLOOR_TEXTURE_MOVE_X,
-        DMU_FLOOR_TEXTURE_MOVE_Y,
-        DMU_FLOOR_TEXTURE_MOVE_XY,
         DMU_FLOOR_SOUND_ORIGIN,
 
         DMU_CEILING_HEIGHT,
-        DMU_CEILING_TEXTURE,
-        DMU_CEILING_OFFSET_X,
-        DMU_CEILING_OFFSET_Y,
-        DMU_CEILING_OFFSET_XY,
-        DMU_CEILING_TARGET,
+        DMU_CEILING_TARGET_HEIGHT,
+        DMU_CEILING_MATERIAL,
+        DMU_CEILING_MATERIAL_OFFSET_X,
+        DMU_CEILING_MATERIAL_OFFSET_Y,
+        DMU_CEILING_MATERIAL_OFFSET_XY,
         DMU_CEILING_SPEED,
         DMU_CEILING_COLOR,
         DMU_CEILING_COLOR_RED,
         DMU_CEILING_COLOR_GREEN,
         DMU_CEILING_COLOR_BLUE,
-        DMU_CEILING_TEXTURE_MOVE_X,
-        DMU_CEILING_TEXTURE_MOVE_Y,
-        DMU_CEILING_TEXTURE_MOVE_XY,
         DMU_CEILING_SOUND_ORIGIN,
 
         DMU_SEG_LIST,               // array of seg_t*'s
@@ -783,10 +777,10 @@ extern          "C" {
 
     // For PathTraverse.
 #define PT_ADDLINES     1
-#define PT_ADDTHINGS    2
+#define PT_ADDMOBJS     2
 #define PT_EARLYOUT     4
 
-    // Mapblocks are used to check movement against lines and things.
+//// \todo This stuff is obsolete and needs to be removed!
 #define MAPBLOCKUNITS   128
 #define MAPBLOCKSIZE    (MAPBLOCKUNITS*FRACUNIT)
 #define MAPBLOCKSHIFT   (FRACBITS+7)
@@ -803,10 +797,10 @@ extern          "C" {
 #define DDLINK_NOLINE       0x4
 
     typedef struct intercept_s {
-        fixed_t         frac;      // along trace line
+        float           frac;      // Along trace line.
         boolean         isaline;
         union {
-            struct mobj_s  *thing;
+            struct mobj_s  *mo;
             struct line_s  *line;
         } d;
     } intercept_t;
@@ -814,9 +808,9 @@ extern          "C" {
     typedef boolean (*traverser_t) (intercept_t * in);
 
     // Polyobjs.
-#define PO_MAXPOLYSEGS 64
+#define PO_MAXPOLYSEGS      64
 
-#define NO_INDEX 0xffffffff
+#define NO_INDEX            0xffffffff
 
     //------------------------------------------------------------------------
     //
@@ -824,7 +818,7 @@ extern          "C" {
     //
     //------------------------------------------------------------------------
 
-    /*
+    /**
      * Linknodes are used when linking mobjs to lines. Each mobj has a ring
      * of linknodes, each node pointing to a line the mobj has been linked to.
      * Correspondingly each line has a ring of nodes, with pointers to the
@@ -832,7 +826,7 @@ extern          "C" {
      * that a single mobj is linked simultaneously to multiple lines (which
      * is common).
      *
-     * All these rings are maintained by P_(Un)LinkThing().
+     * All these rings are maintained by P_(Un)LinkMobj().
      */
     typedef struct linknode_s {
         nodeindex_t     prev, next;
@@ -887,19 +881,19 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     // Base mobj_t elements. Games MUST use this as the basis for mobj_t.
 #define DD_BASE_MOBJ_ELEMENTS() \
     thinker_t       thinker;            /* thinker node */ \
-    fixed_t         pos[3];             /* position [x,y,z] */ \
+    float           pos[3];             /* position [x,y,z] */ \
 \
     struct mobj_s   *bnext, *bprev;     /* links in blocks (if needed) */ \
     nodeindex_t     lineroot;           /* lines to which this is linked */ \
     struct mobj_s   *snext, **sprev;    /* links in sector (if needed) */ \
 \
     struct subsector_s *subsector;      /* subsector in which this resides */ \
-    fixed_t         mom[3];   \
+    float           mom[3];   \
     angle_t         angle;              \
     spritenum_t     sprite;             /* used to find patch_t and \
                                          * flip value */ \
     int             frame;              /* might be ord with FF_FULLBRIGHT */ \
-    fixed_t         radius; \
+    float           radius; \
     float           height; \
     int             ddflags;            /* Doomsday mobj flags (DDMF_*) */ \
     float           floorclip;          /* value to use for floor clipping */ \
@@ -912,7 +906,7 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     struct mobj_s*  onmobj;             /* the mobj this one is on top of. */ \
     boolean         wallhit;            /* the mobj is hitting a wall. */ \
     struct ddplayer_s *dplayer;         /* NULL if not a player mobj. */ \
-    short           srvo[3];            /* short-range visual offset (xyz) */ \
+    float           srvo[3];            /* short-range visual offset (xyz) */ \
     short           visangle;           /* visual angle ("angle-servo") */ \
     int             selector;           /* multipurpose info */ \
     int             validCount;         /* used in iterating */ \
@@ -1324,10 +1318,10 @@ typedef struct ticcmd_s {
         state_t        *stateptr;
         int             tics;
         float           light, alpha;
-        float           x, y;
+        float           pos[2];
         int             flags;
         int             state;
-        int             offx, offy;
+        float           offset[2];
     } ddpsprite_t;
 
     // Lookdir conversions.

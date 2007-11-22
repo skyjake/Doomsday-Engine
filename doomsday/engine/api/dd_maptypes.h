@@ -27,9 +27,7 @@
 
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
 #define DMT_SURFACE_BLENDMODE DDVT_BLENDMODE
-#define DMT_SURFACE_TEXMOVE DDVT_FLOAT // Texture movement X and Y
-#define DMT_SURFACE_OFFX DDVT_FLOAT    // Texture x offset
-#define DMT_SURFACE_OFFY DDVT_FLOAT    // Texture y offset
+#define DMT_SURFACE_OFFSET DDVT_FLOAT  // [X, Y] Planar offset to surface material origin.
 #define DMT_SURFACE_RGBA DDVT_FLOAT    // Surface color tint
 
 #define DMT_PLANE_HEIGHT DDVT_FLOAT    // Current height
@@ -43,7 +41,7 @@
 #define DMT_SECTOR_LIGHTLEVEL DDVT_FLOAT
 #define DMT_SECTOR_RGB DDVT_FLOAT
 #define DMT_SECTOR_VALIDCOUNT DDVT_INT // if == validCount, already checked.
-#define DMT_SECTOR_THINGLIST DDVT_PTR  // List of mobjs in the sector.
+#define DMT_SECTOR_MOBJLIST DDVT_PTR   // List of mobjs in the sector.
 #define DMT_SECTOR_LINECOUNT DDVT_UINT
 #define DMT_SECTOR_LINES DDVT_PTR      // [linecount+1] size.
 #define DMT_SECTOR_SUBSECTORS DDVT_PTR // [subscount+1] size.
@@ -65,21 +63,20 @@
 #define DMT_LINE_SLOPETYPE DDVT_INT
 #define DMT_LINE_VALIDCOUNT DDVT_INT
 #define DMT_LINE_SIDES DDVT_PTR
-#define DMT_LINE_BBOX DDVT_FIXED
+#define DMT_LINE_BBOX DDVT_FLOAT
 
 #define DMT_POLYOBJ_NUMSEGS DDVT_UINT
 #define DMT_POLYOBJ_SEGS DDVT_PTR
 #define DMT_POLYOBJ_VALIDCOUNT DDVT_INT
 #define DMT_POLYOBJ_STARTSPOT DDVT_PTR
 #define DMT_POLYOBJ_ANGLE DDVT_ANGLE
-#define DMT_POLYOBJ_TAG DDVT_INT       // reference tag assigned in HereticEd
-#define DMT_POLYOBJ_BBOX DDVT_FIXED
-#define DMT_POLYOBJ_SPEED DDVT_INT     // Destination XY and speed.
+#define DMT_POLYOBJ_TAG DDVT_INT       // Reference tag assigned in HereticEd
+#define DMT_POLYOBJ_BOX DDVT_FLOAT
+#define DMT_POLYOBJ_SPEED DDVT_FLOAT   // Movement speed.
 #define DMT_POLYOBJ_DESTANGLE DDVT_ANGLE // Destination angle.
 #define DMT_POLYOBJ_ANGLESPEED DDVT_ANGLE // Rotation speed.
-#define DMT_POLYOBJ_CRUSH DDVT_BOOL    // should the polyobj attempt to crush mobjs?
+#define DMT_POLYOBJ_CRUSH DDVT_BOOL    // Should the polyobj attempt to crush mobjs?
 #define DMT_POLYOBJ_SEQTYPE DDVT_INT
-#define DMT_POLYOBJ_SIZE DDVT_FIXED    // polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
 #define DMT_POLYOBJ_SPECIALDATA DDVT_PTR // pointer a thinker, if the poly is moving
 
 #define DMT_NODE_X DDVT_FLOAT          // Partition line.
