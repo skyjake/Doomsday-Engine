@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Map Objects, MObj, definition and handling.
+/**
+ * p_mobj.h: Map Objects, MObj, definition and handling.
  */
 
 #ifndef __P_MOBJ__
@@ -267,10 +267,10 @@ typedef struct mobj_s {
 
     // For nightmare/multiplayer respawn.
     struct {
-        fixed_t pos[3];   // Note DOOM didn't include VZ
-        angle_t angle;
-        int     type;
-        int     options;
+        float           fpos[3];   // Note DOOM didn't include VZ
+        angle_t         angle;
+        int             type;
+        int             options;
     } spawninfo;
 
     // Thing being chased/attacked for tracers.
@@ -281,6 +281,6 @@ typedef struct mobj_s {
 
 } mobj_t;
 
-void        P_RespawnSpecials(void);
+void        P_CheckRespawnQueue(void);
 
 #endif

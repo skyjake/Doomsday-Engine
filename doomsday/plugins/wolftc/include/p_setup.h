@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Map setup routines
+/**
+ * p_setup.h: Map setup routines.
  */
 
 #ifndef __D_SETUP_H__
@@ -71,21 +72,21 @@ enum {
     DAM_SIDE0,
     DAM_SIDE1,
 
-    DAM_TOP_TEXTURE_OFFSET_X,
-    DAM_TOP_TEXTURE_OFFSET_Y,
-    DAM_MIDDLE_TEXTURE_OFFSET_X,
-    DAM_MIDDLE_TEXTURE_OFFSET_Y,
-    DAM_BOTTOM_TEXTURE_OFFSET_X,
-    DAM_BOTTOM_TEXTURE_OFFSET_Y,
-    DAM_TOP_TEXTURE,
-    DAM_MIDDLE_TEXTURE,
-    DAM_BOTTOM_TEXTURE,
+    DAM_TOP_MATERIAL_OFFSET_X,
+    DAM_TOP_MATERIAL_OFFSET_Y,
+    DAM_MIDDLE_MATERIAL_OFFSET_X,
+    DAM_MIDDLE_MATERIAL_OFFSET_Y,
+    DAM_BOTTOM_MATERIAL_OFFSET_X,
+    DAM_BOTTOM_MATERIAL_OFFSET_Y,
+    DAM_TOP_MATERIAL,
+    DAM_MIDDLE_MATERIAL,
+    DAM_BOTTOM_MATERIAL,
     DAM_FRONT_SECTOR,
 
     DAM_FLOOR_HEIGHT,
-    DAM_FLOOR_TEXTURE,
+    DAM_FLOOR_MATERIAL,
     DAM_CEILING_HEIGHT,
-    DAM_CEILING_TEXTURE,
+    DAM_CEILING_MATERIAL,
     DAM_LIGHT_LEVEL,
 
     DAM_ANGLE,

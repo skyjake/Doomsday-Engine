@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Play functions, animation, global header.
+/**
+ * p_local.h: Play functions, animation, global header.
  */
 
 #ifndef __P_LOCAL__
@@ -50,31 +50,28 @@
 #define NUMREDPALS          8
 #define NUMBONUSPALS        4
 
-#define FLOATSPEED      (FRACUNIT*4)
+#define FLOATSPEED      4
 
 #define DELTAMUL        6.324555320 // Used when calculating ticcmd_t.lookdirdelta
 
 
 #define MAXHEALTH       maxhealth  //100
-#define VIEWHEIGHT      (41*FRACUNIT)
+#define VIEWHEIGHT      41
 
 #define TOCENTER        -8
 
 // player radius for movement checking
-#define PLAYERRADIUS    16*FRACUNIT
+#define PLAYERRADIUS    16
 
 // MAXRADIUS is for precalculated sector block boxes
 // the spider demon is larger,
 // but we do not have any moving sectors nearby
-#define MAXRADIUS       32*FRACUNIT
+#define MAXRADIUS       32
+#define MAXMOVE         30
 
-#define GRAVITY     ((IS_NETGAME && cfg.netGravity != -1)? \
-                     (fixed_t) (((float) cfg.netGravity / 100) * FRACUNIT) : Get(DD_GRAVITY)) //FRACUNIT
-#define MAXMOVE     (30*FRACUNIT)
-
-#define USERANGE        (64*FRACUNIT)
-#define MELEERANGE      (64*FRACUNIT)
-#define MISSILERANGE    (32*64*FRACUNIT)
+#define USERANGE        64
+#define MELEERANGE      64
+#define MISSILERANGE    (32*64)
 
 // follow a player exlusively for 3 seconds
 #define BASETHRESHOLD       100
@@ -122,6 +119,9 @@ enum {
     NUM_TERRAINTYPES
 };
 
+#define FRICTION_NORMAL     (0.90625f)
+#define FRICTION_FLY        (0.91796875f)
+
 #define ONFLOORZ        DDMININT
 #define ONCEILINGZ      DDMAXINT
 #define FLOATRANDZ      (DDMAXINT-1)
@@ -129,28 +129,29 @@ enum {
 // Time interval for item respawning.
 #define ITEMQUESIZE     128
 
-extern int      iquehead;
-extern int      iquetail;
+extern int iquehead;
+extern int iquetail;
 
-void            P_SpawnMapThing(thing_t * th);
-mobj_t         *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
 
-void            P_RemoveMobj(mobj_t *th);
-boolean         P_SetMobjState(mobj_t *mobj, statenum_t state);
-void            P_MobjThinker(mobj_t *mobj);
-int             P_GetThingFloorType(mobj_t *thing);
-void            P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
-mobj_t         *P_SpawnCustomPuff(fixed_t x, fixed_t y, fixed_t z,
-                                  mobjtype_t type);
-void            P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
-void            P_RipperBlood(mobj_t *mo);
-mobj_t         *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
-void            P_SpawnPlayer(thing_t * mthing, int pnum);
-mobj_t         *P_SpawnTeleFog(int x, int y);
+mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z);
+mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3]);
 
-void            P_SetDoomsdayFlags(mobj_t *mo);
+void        P_SpawnPuff(float x, float y, float z);
+mobj_t     *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z);
+void        P_SpawnBlood(float x, float y, float z, int damage);
+mobj_t     *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
+mobj_t     *P_SpawnTeleFog(float x, float y);
 
-void            P_HitFloor(mobj_t *mo);
+void        P_RemoveMobj(mobj_t *th);
+boolean     P_SetMobjState(mobj_t *mobj, statenum_t state);
+void        P_MobjThinker(mobj_t *mobj);
+int         P_GetMobjFloorType(mobj_t *thing);
+void        P_RipperBlood(mobj_t *mo);
+void        P_SetDoomsdayFlags(mobj_t *mo);
+void        P_HitFloor(mobj_t *mo);
+
+void        P_SpawnMapThing(spawnspot_t *th);
+void        P_SpawnPlayer(spawnspot_t *mthing, int pnum);
 
 //
 // P_ENEMY
@@ -180,8 +181,8 @@ extern int      numbraintargets_alloc;
 #define openbottom          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define lowfloor            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-void            P_UnsetThingPosition(mobj_t *thing);
-void            P_SetThingPosition(mobj_t *thing);
+void            P_UnsetMobjPosition(mobj_t *thing);
+void            P_SetMobjPosition(mobj_t *thing);
 
 int             P_Massacre(void);
 
@@ -191,7 +192,7 @@ int             P_Massacre(void);
 extern int      maxammo[NUM_AMMO_TYPES];
 extern int      clipammo[NUM_AMMO_TYPES];
 
-void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
+void            P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
 
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                              int damage);
