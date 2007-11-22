@@ -3,10 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ *\author Copyright Â© 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
+ * p_maputl.c:
+ *
  * Movement/collision utility functions, as used by function in p_map.c.
  * BLOCKMAP Iterator functions, and some PIT_* functions to use for iteration.
  */
@@ -61,16 +63,16 @@ extern mobj_t *tmthing;
  * lookups maintaining lists ot things inside
  * these structures need to be updated.
  */
-void P_UnsetThingPosition(mobj_t *thing)
+void P_UnsetMobjPosition(mobj_t *thing)
 {
-    P_UnlinkThing(thing);
+    P_UnlinkMobj(thing);
 }
 
 /*
  * Links a thing into both a block and a subsector based on it's x,y.
  * Sets thing->subsector properly.
  */
-void P_SetThingPosition(mobj_t *thing)
+void P_SetMobjPosition(mobj_t *thing)
 {
     int flags = 0;
 
@@ -80,7 +82,7 @@ void P_SetThingPosition(mobj_t *thing)
     if(!(thing->flags & MF_NOBLOCKMAP))
         flags |= DDLINK_BLOCKMAP;
 
-    P_LinkThing(thing, flags);
+    P_LinkMobj(thing, flags);
 }
 
 /*
@@ -193,7 +195,7 @@ void P_ApplyTorque(mobj_t *mo)
     // Use VALIDCOUNT to prevent checking the same line twice
     VALIDCOUNT++;
 
-    P_ThingLinesIterator(mo, PIT_ApplyTorque, 0);
+    P_MobjLinesIterator(mo, PIT_ApplyTorque, 0);
 
     // If any momentum, mark object as 'falling' using engine-internal flags
     if(mo->mom[MX] | mo->mom[MY])

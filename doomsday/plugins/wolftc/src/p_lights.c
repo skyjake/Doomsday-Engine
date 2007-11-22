@@ -25,9 +25,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Handle Sector base lighting effects.
- * Muzzle flash?
+/**
+ * p_lights.c: Handle Sector base lighting effects.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -82,7 +81,7 @@ void P_SpawnFireFlicker(sector_t *sector)
 
     // Note that we are resetting sector attributes.
     // Nothing special about it during gameplay.
-    P_XSector(sector)->special = 0;
+    P_ToXSector(sector)->special = 0;
 
     flick = Z_Malloc(sizeof(*flick), PU_LEVSPEC, 0);
 
@@ -128,7 +127,7 @@ void P_SpawnLightFlash(sector_t *sector)
     lightflash_t *flash;
 
     // nothing special about it during gameplay
-    P_XSector(sector)->special = 0;
+    P_ToXSector(sector)->special = 0;
 
     flash = Z_Malloc(sizeof(*flash), PU_LEVSPEC, 0);
 
@@ -190,7 +189,7 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
         flash->minlight = 0;
 
     // nothing special about it during gameplay
-    P_XSector(sector)->special = 0;
+    P_ToXSector(sector)->special = 0;
 
     if(!inSync)
         flash->count = (P_Random() & 7) + 1;
@@ -206,14 +205,14 @@ void EV_StartLightStrobing(line_t *line)
     sector_t   *sec = NULL;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return;
 
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        if(P_XSector(sec)->specialdata)
+        if(P_ToXSector(sec)->specialdata)
             continue;
 
         P_SpawnStrobeFlash(sec, SLOWDARK, 0);
@@ -229,7 +228,7 @@ void EV_TurnTagLightsOff(line_t *line)
     line_t     *other;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return;
 
@@ -263,7 +262,7 @@ void EV_LightTurnOn(line_t *line, float max)
     line_t     *tline;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return;
 
@@ -339,5 +338,5 @@ void P_SpawnGlowingLight(sector_t *sector)
     g->thinker.function = T_Glow;
     g->direction = -1;
 
-    P_XSector(sector)->special = 0;
+    P_ToXSector(sector)->special = 0;
 }

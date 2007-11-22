@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2002-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Handle jDoom specific map data properties.
+/**
+ * p_setup.c: Custom map data properties - WolfTC specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -43,7 +43,7 @@ enum {
     CMP_THING_POS_Y,
     CMP_THING_ANGLE,
     CMP_THING_TYPE,
-    CMP_THING_OPTIONS,
+    CMP_THING_FLAGS,
     NUM_CUSTOM_MAP_PROPERTIES
 } mappropid_t;
 
@@ -103,7 +103,7 @@ void P_RegisterCustomMapProperties(void)
         {DAM_THING,     DDVT_SHORT,     "Y",            CMP_THING_POS_Y},
         {DAM_THING,     DDVT_SHORT,     "Angle",        CMP_THING_ANGLE},
         {DAM_THING,     DDVT_SHORT,     "Type",         CMP_THING_TYPE},
-        {DAM_THING,     DDVT_SHORT,     "Options",      CMP_THING_OPTIONS},
+        {DAM_THING,     DDVT_SHORT,     "Options",      CMP_THING_FLAGS},
         {0,             0,              NULL,           0} // Terminate.
     };
     uint        i, idx;
@@ -176,7 +176,7 @@ int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
     case CMP_THING_TYPE:
         things[id].type = *(short *)data;
         break;
-    case CMP_THING_OPTIONS:
+    case CMP_THING_FLAGS:
         things[id].options = *(short *)data;
         break;
 
@@ -209,9 +209,9 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
     case DAM_SIDE:
         switch(prop)
         {
-        case DAM_TOP_TEXTURE:
-        case DAM_MIDDLE_TEXTURE:
-        case DAM_BOTTOM_TEXTURE:
+        case DAM_TOP_MATERIAL:
+        case DAM_MIDDLE_MATERIAL:
+        case DAM_BOTTOM_MATERIAL:
             /** It could be a BOOM overloaded texture name?
             * In this context Doomsday expects either -1 (a bad texture name)
             * Or the id of a wall texture it should set to this section.
