@@ -19,12 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Intermission screens
+/**
+ * wi_stuff.h: Intermission screens
  */
 
 #ifndef __WI_STUFF__
@@ -44,17 +44,15 @@ typedef enum {
     ShowNextLoc
 } stateenum_t;
 
+// Setup for an intermission screen.
+void            WI_Start(wbstartstruct_t *wbstartstruct);
+void            WI_SetState(stateenum_t st);
+void            WI_End(void);
+
 // Called by main loop, animate the intermission.
 void            WI_Ticker(void);
 
-// Called by main loop,
-// draws the intermission directly into the screen buffer.
+// Draw the intermission screen.
 void            WI_Drawer(void);
-
-// Setup for an intermission screen.
-void            WI_Start(wbstartstruct_t * wbstartstruct);
-
-void            WI_SetState(stateenum_t st);
-void            WI_End(void);
 
 #endif

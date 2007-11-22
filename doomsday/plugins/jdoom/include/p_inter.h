@@ -19,8 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * p_inter.h:
  */
 
 #ifndef __P_INTER__
@@ -34,11 +38,11 @@
 #pragma interface
 #endif
 
-boolean         P_GivePower(player_t *, int);
-boolean         P_TakePower(player_t *player, int power);
-void            P_GiveKey(player_t *player, keytype_t card);
-boolean         P_GiveBody(player_t *player, int num);
-void            P_GiveBackpack(player_t *player);
-boolean         P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped);
+boolean         P_GivePower(player_t *plr, int);
+boolean         P_TakePower(player_t *plr, int power);
+void            P_GiveKey(player_t *plr, keytype_t keyType);
+boolean         P_GiveBody(player_t *plr, int num);
+void            P_GiveBackpack(player_t *plr);
+boolean         P_GiveWeapon(player_t *plr, weapontype_t weapon, boolean dropped);
 
 #endif

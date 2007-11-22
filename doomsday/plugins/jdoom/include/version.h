@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,8 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * version.h: Version numbering, naming etc.
  */
 
 #ifndef __JDOOM_VERSION_H__
@@ -39,14 +44,14 @@
 #  endif
 #endif
 
-#define GAMENAMETEXT "jdoom"
+#define GAMENAMETEXT        "jdoom"
 
 // My my, the names of these #defines are really well chosen...
-#define VERSION_TEXT "1.15."DOOMSDAY_RELEASE_NAME
-#define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("JDOOM_VER_ID")"
+#define VERSION_TEXT        "1.15."DOOMSDAY_RELEASE_NAME
+#define VERSIONTEXT         "Version "VERSION_TEXT" "__DATE__" ("JDOOM_VER_ID")"
 
-// All the versions of Doom have different savegame IDs, but
-// 500 will be the savegame base from now on.
+// All the versions of Doom have different savegame IDs, but 500 will be
+// the savegame base from now on.
 #define SAVE_VERSION_BASE   500
 #define SAVE_VERSION        (SAVE_VERSION_BASE + gamemode)
 

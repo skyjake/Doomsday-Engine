@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,8 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * p_oldsvg.h: DOOM ver 1.9 save game support.
  */
 
 #ifndef __P_V19_SAVEG__
@@ -31,8 +36,6 @@
 
 void            SV_v19_LoadGame(char *filename);
 
-// Persistent storage/archiving.
-// These are the load / save game routines.
 void            P_v19_UnArchivePlayers(void);
 void            P_v19_UnArchiveWorld(void);
 void            P_v19_UnArchiveThinkers(void);

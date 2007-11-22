@@ -21,8 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * shared data struct definitions.
+/**
+ * r_defs.h: Shared data struct definitions.
  */
 
 #ifndef __R_DEFS__
@@ -44,18 +44,10 @@
 #pragma interface
 #endif
 
-//
-// INTERNAL MAP TYPES
-//  used by play and refresh
-//
 
 #define SP_floororigheight      planes[PLN_FLOOR].origheight
 #define SP_ceilorigheight       planes[PLN_CEILING].origheight
 
-//
-// The SECTORS record, at runtime.
-// Stores things/mobjs.
-//
 typedef struct xsector_s {
     short           special;
     short           tag;
@@ -95,7 +87,9 @@ typedef struct xline_s {
     xgline_t       *xg;
 } xline_t;
 
-xline_t*    P_XLine(line_t* line);
-xsector_t*  P_XSector(sector_t* sector);
-xsector_t*  P_XSectorOfSubsector(subsector_t* sub);
+xline_t*        P_ToXLine(line_t* line);
+xsector_t*      P_ToXSector(sector_t* sector);
+xline_t*        P_GetXLine(uint idx);
+xsector_t*      P_GetXSector(uint idx);
+xsector_t*      P_GetXSectorOfSubsector(subsector_t* sub);
 #endif

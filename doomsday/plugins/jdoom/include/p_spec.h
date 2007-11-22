@@ -23,15 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Implements special effects:
- * Texture animation, height or lighting changes according to adjacent
- * sectors, respective utility functions, etc.
+/**
+ * p_spec.h: World texture animation, height or lighting changes
+ * according to adjacent sectors, respective utility functions, etc.
  *
  * Line Tag handling. Line and Sector triggers.
  *
- * Events are operations triggered by using, crossing,
- * or shooting special lines, or by timed thinkers.
+ * Events are operations triggered by using, crossing, or shooting special
+ * lines, or by timed thinkers.
  */
 
 #ifndef __P_SPEC__
@@ -42,15 +41,12 @@
 #endif
 
 #include "d_player.h"
-#include "r_data.h"
 
-//
 // End-level timer (-TIMER option)
-//
 extern boolean  levelTimer;
 extern int      levelTimeCount;
 
-//      Define values for map objects
+// Define values for map objects
 #define MO_TELEPORTMAN          14
 
 // at game start
@@ -71,14 +67,8 @@ boolean         P_ActivateLine(line_t *ld, mobj_t *mo, int side,
 
 void            P_PlayerInSpecialSector(player_t *player);
 
-//
-// SPECIAL
-//
 int             EV_DoDonut(line_t *line);
 
-//
-// P_LIGHTS
-//
 typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
@@ -115,10 +105,10 @@ typedef struct {
     int             direction;
 } glow_t;
 
-#define GLOWSPEED           8
-#define STROBEBRIGHT        5
-#define FASTDARK            15
-#define SLOWDARK            35
+#define GLOWSPEED               8
+#define STROBEBRIGHT            5
+#define FASTDARK                15
+#define SLOWDARK                35
 
 void T_FireFlicker(fireflicker_t *flick);
 void P_SpawnFireFlicker(sector_t *sector);
@@ -137,20 +127,20 @@ void EV_LightTurnOn(line_t *line, float bright);
 void T_Glow(glow_t *g);
 void P_SpawnGlowingLight(sector_t *sector);
 
-//
-// P_SWITCH
-//
-// This struct is used to provide byte offsets when reading a custom
-// SWITCHES lump thus it must be packed and cannot be altered.
-
+/**
+ * This struct is used to provide byte offsets when reading a custom
+ * SWITCHES lump thus it must be packed and cannot be altered.
+ */
 #pragma pack(1)
 typedef struct {
-    /* Do NOT change these members in any way */
+    /* Do NOT change these members in any way! */
     char            name1[9];
     char            name2[9];
     short           episode;
 } switchlist_t;
 #pragma pack()
+
+#define BUTTONTIME              (TICSPERSEC) // 1 second, in ticks.
 
 typedef enum {
     top,
@@ -168,19 +158,13 @@ typedef struct button_s{
     struct button_s *next;
 } button_t;
 
- // 1 second, in ticks.
-#define BUTTONTIME      35
-
 extern button_t *buttonlist;
-void            P_FreeButtons(void);
 
-void            P_ChangeSwitchTexture(line_t *line, int useAgain);
+void        P_InitSwitchList(void);
 
-void            P_InitSwitchList(void);
+void        P_FreeButtons(void);
+void        P_ChangeSwitchTexture(line_t *line, int useAgain);
 
-//
-// P_PLATS
-//
 typedef enum {
     up,
     down,
@@ -196,7 +180,7 @@ typedef enum {
     blazeDWUS
 } plattype_e;
 
-typedef struct {
+typedef struct plat_s {
     thinker_t       thinker;
     sector_t       *sector;
     float           speed;
@@ -210,31 +194,27 @@ typedef struct {
     int             tag;
     plattype_e      type;
 
-    struct platlist *list;   // killough
+    struct platlist_s *list;
 } plat_t;
 
-// New limit-free plat structure -- killough
-typedef struct platlist {
-  plat_t *plat;
-  struct platlist *next,**prev;
+typedef struct platlist_s {
+  plat_t           *plat;
+  struct platlist_s  *next,**prev;
 } platlist_t;
 
 #define PLATWAIT        3
 #define PLATSPEED       1
 
-void            T_PlatRaise(plat_t *plat);
+void        T_PlatRaise(plat_t *plat);
 
-int             EV_DoPlat(line_t *line, plattype_e type, int amount);
-boolean         EV_StopPlat(line_t *line);
+int         EV_DoPlat(line_t *line, plattype_e type, int amount);
+boolean     EV_StopPlat(line_t *line);
 
-void            P_AddActivePlat(plat_t *plat);
-void            P_RemoveActivePlat(plat_t *plat);
-void            P_RemoveAllActivePlats(void);    // killough
-int             P_ActivateInStasisPlat(int tag);
+void        P_AddActivePlat(plat_t *plat);
+void        P_RemoveActivePlat(plat_t *plat);
+void        P_RemoveAllActivePlats(void);
+int         P_ActivateInStasisPlat(int tag);
 
-//
-// P_DOORS
-//
 typedef enum {
     normal,
     close30ThenOpen,
@@ -263,20 +243,17 @@ typedef struct {
     int             topcountdown;
 } vldoor_t;
 
-#define VDOORSPEED      2
-#define VDOORWAIT       150
+#define VDOORSPEED          2
+#define VDOORWAIT           150
 
-boolean         EV_VerticalDoor(line_t *line, mobj_t *thing);
-int             EV_DoDoor(line_t *line, vldoor_e type);
-int             EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing);
+boolean     EV_VerticalDoor(line_t *line, mobj_t *thing);
+int         EV_DoDoor(line_t *line, vldoor_e type);
+int         EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing);
 
-void            T_VerticalDoor(vldoor_t *door);
-void            P_SpawnDoorCloseIn30(sector_t *sec);
-void            P_SpawnDoorRaiseIn5Mins(sector_t *sec);
+void        T_VerticalDoor(vldoor_t *door);
+void        P_SpawnDoorCloseIn30(sector_t *sec);
+void        P_SpawnDoorRaiseIn5Mins(sector_t *sec);
 
-//
-// P_CEILNG
-//
 typedef enum {
     lowerToFloor,
     raiseToHighest,
@@ -302,29 +279,26 @@ typedef struct {
     int             tag;
     int             olddirection;
 
-    struct ceilinglist *list;   // jff 2/22/98 copied from killough's plats
+    struct ceilinglist_s *list;
 } ceiling_t;
 
-typedef struct ceilinglist {
-    ceiling_t *ceiling;
-    struct ceilinglist *next,**prev;
+typedef struct ceilinglist_s {
+    ceiling_t      *ceiling;
+    struct ceilinglist_s *next,**prev;
 } ceilinglist_t;
 
-#define CEILSPEED       1
-#define CEILWAIT        150
+#define CEILSPEED           1
+#define CEILWAIT            150
 
-int             EV_DoCeiling(line_t *line, ceiling_e type);
+int         EV_DoCeiling(line_t *line, ceiling_e type);
 
-void            T_MoveCeiling(ceiling_t *ceiling);
-void            P_AddActiveCeiling(ceiling_t *c);
-void            P_RemoveActiveCeiling(ceiling_t *c);
-void            P_RemoveAllActiveCeilings(void);
-int             EV_CeilingCrushStop(line_t *line);
-int             P_ActivateInStasisCeiling(line_t *line);
+void        T_MoveCeiling(ceiling_t *ceiling);
+void        P_AddActiveCeiling(ceiling_t *c);
+void        P_RemoveActiveCeiling(ceiling_t *c);
+void        P_RemoveAllActiveCeilings(void);
+int         EV_CeilingCrushStop(line_t *line);
+int         P_ActivateInStasisCeiling(line_t *line);
 
-//
-// P_FLOOR
-//
 typedef enum {
     // lower floor to highest surrounding floor
     lowerFloor,
@@ -359,8 +333,8 @@ typedef enum {
 } floor_e;
 
 typedef enum {
-    build8,                        // slowly build by 8
-    turbo16                        // quickly build by 16
+    build8, // slowly build by 8
+    turbo16 // quickly build by 16
 } stair_e;
 
 typedef struct {
@@ -375,7 +349,7 @@ typedef struct {
     float           speed;
 } floormove_t;
 
-#define FLOORSPEED     1
+#define FLOORSPEED              1
 
 typedef enum {
     ok,
@@ -383,17 +357,15 @@ typedef enum {
     pastdest
 } result_e;
 
-result_e        T_MovePlane(sector_t *sector, float speed, float dest,
-                            int crush, int floorOrCeiling, int direction);
+result_e    T_MovePlane(sector_t *sector, float speed, float dest,
+                        int crush, int floorOrCeiling, int direction);
 
-int             EV_BuildStairs(line_t *line, stair_e type);
-int             EV_DoFloor(line_t *line, floor_e floortype);
-void            T_MoveFloor(floormove_t *floor);
+int         EV_BuildStairs(line_t *line, stair_e type);
+int         EV_DoFloor(line_t *line, floor_e floortype);
+void        T_MoveFloor(floormove_t *floor);
 
-//
-// P_TELEPT
-//
 #define         TELEFOGHEIGHT 0
-int             EV_Teleport(line_t *line, int side, mobj_t *thing);
+
+int         EV_Teleport(line_t *line, int side, mobj_t *thing);
 
 #endif

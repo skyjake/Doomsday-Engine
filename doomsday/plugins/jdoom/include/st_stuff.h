@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,12 +19,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Status bar code.
+/**
+ * st_stuff.h: Status bar code.
+ *
  * Does the face/direction indicator animatin.
  * Does palette indicators as well (red pain/berserk, bright pickup)
  */
@@ -38,33 +39,9 @@
 
 #include "d_config.h"
 
-// Size of statusbar.
-// Now sensitive for scaling.
-#define ST_HEIGHT   32*SCREEN_MUL
-#define ST_WIDTH    SCREENWIDTH
-#define ST_Y        (SCREENHEIGHT - ST_HEIGHT)
-
-//
-// STATUS BAR
-//
-
-// Called by main loop.
-void    ST_Ticker(void);
-
-// Called by main loop.
-void    ST_Drawer(int fullscreenmode, boolean refresh);
-
-// Called when the console player is spawned on each level.
-void    ST_Start(void);
-
-// Called by startup code.
-void    ST_Register(void);
-void    ST_Init(void);
-
-void    ST_updateGraphics(void);
-
-// Called when it might be neccessary for the hud to unhide.
-void    ST_HUDUnHide(hueevent_t event);
+#define ST_HEIGHT           (32 * SCREEN_MUL)
+#define ST_WIDTH            (SCREENWIDTH)
+#define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
 
 // States for status bar code.
 typedef enum {
@@ -79,6 +56,24 @@ typedef enum {
     GetChatState
 } st_chatstateenum_t;
 
-int             R_GetFilterColor(int filter);
+// Called by startup code.
+void        ST_Register(void);
+void        ST_Init(void);
+
+// Called by main loop.
+void        ST_Ticker(void);
+
+// Called by main loop.
+void        ST_Drawer(int mode, boolean refresh);
+
+// Called when the console player is spawned on each level.
+void        ST_Start(void);
+
+void        ST_updateGraphics(void);
+
+// Called when it might be neccessary for the hud to unhide.
+void        ST_HUDUnHide(hueevent_t event);
+
+int         R_GetFilterColor(int filter);
 
 #endif

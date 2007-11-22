@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Play functions, animation, global header.
+/**
+ * p_local.h: Play functions, animation, global header.
  */
 
 #ifndef __P_LOCAL__
@@ -34,10 +34,6 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#ifndef __R_LOCAL__
-#include "r_local.h"
-#endif
-
 #include "p_spec.h"
 #include "p_start.h"
 #include "p_actor.h"
@@ -45,43 +41,38 @@
 
 // Palette indices.
 // For damage/bonus red-/gold-shifts
-#define STARTREDPALS        1
-#define STARTBONUSPALS      9
-#define NUMREDPALS          8
-#define NUMBONUSPALS        4
+#define STARTREDPALS    1
+#define STARTBONUSPALS  9
+#define NUMREDPALS      8
+#define NUMBONUSPALS    4
 
-#define FLOATSPEED      (FRACUNIT*4)
+#define FLOATSPEED      4
 
 #define DELTAMUL        6.324555320 // Used when calculating ticcmd_t.lookdirdelta
 
 
 #define MAXHEALTH       maxhealth  //100
-#define VIEWHEIGHT      (41*FRACUNIT)
+#define VIEWHEIGHT      41
 
 #define TOCENTER        -8
 
 // player radius for movement checking
-#define PLAYERRADIUS    16*FRACUNIT
+#define PLAYERRADIUS    16
 
-// MAXRADIUS is for precalculated sector block boxes
-// the spider demon is larger,
-// but we do not have any moving sectors nearby
-#define MAXRADIUS       32*FRACUNIT
+// MAXRADIUS is for precalculated sector block boxes the spider demon is
+// larger, but we do not have any moving sectors nearby.
+#define MAXRADIUS       32
+#define MAXMOVE         30
 
-#define GRAVITY     ((IS_NETGAME && cfg.netGravity != -1)? \
-                     (fixed_t) (((float) cfg.netGravity / 100) * FRACUNIT) : Get(DD_GRAVITY)) //FRACUNIT
-#define MAXMOVE     (30*FRACUNIT)
-
-#define USERANGE        (64*FRACUNIT)
-#define MELEERANGE      (64*FRACUNIT)
-#define MISSILERANGE    (32*64*FRACUNIT)
+#define USERANGE        64
+#define MELEERANGE      64
+#define MISSILERANGE    (32*64)
 
 // follow a player exlusively for 3 seconds
-#define BASETHRESHOLD       100
-
+#define BASETHRESHOLD   100
 
 // GMJ 02/02/02
-#define sentient(mobj) ((mobj)->health > 0 && (mobj)->info->seestate)
+#define sentient(mobj)  ((mobj)->health > 0 && (mobj)->info->seestate)
 
 //
 // P_TICK
@@ -89,23 +80,23 @@
 
 #define thinkercap      (*gi.thinkercap)
 
-extern int      TimerGame;         // tic countdown for deathmatch
+extern int TimerGame;         // tic countdown for deathmatch
 
 //
 // P_PSPR
 //
-void            P_SetupPsprites(player_t *curplayer);
-void            P_MovePsprites(player_t *curplayer);
-void            P_DropWeapon(player_t *player);
-void            P_SetPsprite(player_t *player, int position, statenum_t stnum);
+void        P_SetupPsprites(player_t *plr);
+void        P_MovePsprites(player_t *plr);
+void        P_DropWeapon(player_t *plr);
+void        P_SetPsprite(player_t *plr, int position, statenum_t stnum);
 
 //
 // P_USER
 //
-extern int      maxhealth, healthlimit, godmodehealth;
-extern int      soulspherehealth, soulspherelimit, megaspherehealth;
-extern int      armorpoints[4];    // Green, blue, IDFA and IDKFA points.
-extern int      armorclass[4];     // Green and blue classes.
+extern int maxhealth, healthlimit, godmodehealth;
+extern int soulspherehealth, soulspherelimit, megaspherehealth;
+extern int armorpoints[4];    // Green, blue, IDFA and IDKFA points.
+extern int armorclass[4];     // Green and blue classes.
 
 //
 // P_MOBJ
@@ -122,53 +113,56 @@ enum {
     NUM_TERRAINTYPES
 };
 
-#define ONFLOORZ        DDMININT
-#define ONCEILINGZ      DDMAXINT
-#define FLOATRANDZ      (DDMAXINT-1)
+#define FRICTION_NORMAL     (0.90625f)
+#define FRICTION_FLY        (0.91796875f)
+#define FRICTION_HIGH       (0.5f)
+
+#define ONFLOORZ            DDMININT
+#define ONCEILINGZ          DDMAXINT
+#define FLOATRANDZ          (DDMAXINT-1)
 
 // Time interval for item respawning.
-#define ITEMQUESIZE     128
+#define ITEMQUESIZE         128
 
-extern int      iquehead;
-extern int      iquetail;
+extern int iquehead;
+extern int iquetail;
 
-mobj_t         *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
-void            P_SpawnMapThing(thing_t * th);
-void            P_RemoveMobj(mobj_t *th);
-boolean         P_SetMobjState(mobj_t *mobj, statenum_t state);
-void            P_MobjThinker(mobj_t *mobj);
-int             P_GetThingFloorType(mobj_t *thing);
-void            P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
-mobj_t         *P_SpawnCustomPuff(fixed_t x, fixed_t y, fixed_t z,
-                                  mobjtype_t type);
-void            P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
-void            P_RipperBlood(mobj_t *mo);
-mobj_t         *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
-void            P_SpawnPlayer(thing_t * mthing, int pnum);
-mobj_t         *P_SpawnTeleFog(int x, int y);
+mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z);
+mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3]);
 
-void            P_SetDoomsdayFlags(mobj_t *mo);
+mobj_t     *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z);
+mobj_t     *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
+void        P_SpawnPuff(float x, float y, float z);
+void        P_SpawnBlood(float x, float y, float z, int damage);
+mobj_t     *P_SpawnTeleFog(float x, float y);
 
-void            P_HitFloor(mobj_t *mo);
+void        P_RemoveMobj(mobj_t *mo);
+boolean     P_SetMobjState(mobj_t *mo, statenum_t state);
+void        P_MobjThinker(mobj_t *mo);
+int         P_GetMobjFloorType(mobj_t *mo);
+void        P_RipperBlood(mobj_t *mo);
+
+void        P_SetDoomsdayFlags(mobj_t *mo);
+void        P_HitFloor(mobj_t *mo);
+
+void        P_SpawnMapThing(spawnspot_t *th);
+void        P_SpawnPlayer(spawnspot_t *mthing, int pnum);
 
 //
 // P_ENEMY
 //
-void            P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
+void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
+void        P_SpawnBrainTargets(void);
 
-/* killough 3/26/98: spawn icon landings */
-void P_SpawnBrainTargets(void);
-
-/* killough 3/26/98: global state of boss brain */
+// Global state of boss brain.
 extern struct brain_s {
-    int easy;
-    int targeton;
+    int         easy;
+    int         targeton;
 } brain;
 
-/* Removed fixed limit on number of brain targets */
-extern mobj_t  **braintargets;
-extern int      numbraintargets;
-extern int      numbraintargets_alloc;
+extern mobj_t **braintargets;
+extern int numbraintargets;
+extern int numbraintargets_alloc;
 
 //
 // P_MAPUTL
@@ -179,24 +173,24 @@ extern int      numbraintargets_alloc;
 #define openbottom          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define lowfloor            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-void            P_UnsetThingPosition(mobj_t *thing);
-void            P_SetThingPosition(mobj_t *thing);
+void        P_UnsetMobjPosition(mobj_t *thing);
+void        P_SetMobjPosition(mobj_t *thing);
 
-int             P_Massacre(void);
+int         P_Massacre(void);
 
 //
 // P_INTER
 //
-extern int      maxammo[NUM_AMMO_TYPES];
-extern int      clipammo[NUM_AMMO_TYPES];
+extern int maxammo[NUM_AMMO_TYPES];
+extern int clipammo[NUM_AMMO_TYPES];
 
-void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
+void        P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
 
-void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                             int damage);
-void            P_DamageMobj2(mobj_t *target, mobj_t *inflictor,
-                              mobj_t *source, int damage, boolean stomping);
+void        P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+                         int damage);
+void        P_DamageMobj2(mobj_t *target, mobj_t *inflictor,
+                          mobj_t *source, int damage, boolean stomping);
 
-void            P_ExplodeMissile(mobj_t *mo);
+void        P_ExplodeMissile(mobj_t *mo);
 
 #endif
