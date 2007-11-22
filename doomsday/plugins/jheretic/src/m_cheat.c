@@ -3,8 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright � 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright � 1999 Activision
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -40,9 +41,8 @@
  * http://www.ravensoft.com/
  */
 
-/*
+/**
  * m_cheat.c: Cheat sequence checking.
- *
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -71,7 +71,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct Cheat_s {
-    void    (*func) (player_t *player, struct Cheat_s * cheat);
+    void    (*func) (player_t *player, struct Cheat_s *cheat);
     byte   *sequence;
     byte   *pos;
     int     args[2];
@@ -82,7 +82,7 @@ typedef struct Cheat_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-boolean cht_Responder(event_t *ev);
+boolean Cht_Responder(event_t *ev);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -314,7 +314,7 @@ static Cheat_t Cheats[] = {
 
 // CODE --------------------------------------------------------------------
 
-void cht_Init(void)
+void Cht_Init(void)
 {
     int     i;
 
@@ -330,7 +330,7 @@ void cht_Init(void)
  * @param       ev          ptr to the event to be checked
  * @returnval   boolean     (True) if the caller should eat the key.
  */
-boolean cht_Responder(event_t *ev)
+boolean Cht_Responder(event_t *ev)
 {
     int     i;
     byte key = ev->data1;
@@ -420,17 +420,17 @@ static boolean CheatAddKey(Cheat_t * cheat, byte key, boolean *eat)
     return (false);
 }
 
-void cht_GodFunc(player_t *player)
+void Cht_GodFunc(player_t *player)
 {
     CheatGodFunc(player, NULL);
 }
 
-void cht_NoClipFunc(player_t *player)
+void Cht_NoClipFunc(player_t *player)
 {
     CheatNoClipFunc(player, NULL);
 }
 
-void cht_SuicideFunc(player_t *plyr)
+void Cht_SuicideFunc(player_t *plyr)
 {
     P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000);
 }
@@ -441,7 +441,7 @@ boolean SuicideResponse(int option, void *data)
     {
         M_StopMessage();
         M_ClearMenus();
-        cht_SuicideFunc(&players[consoleplayer]);
+        Cht_SuicideFunc(&players[consoleplayer]);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
@@ -704,22 +704,24 @@ static void CheatDebugFunc(player_t *player, cheat_t * cheat)
         return;
 
     P_GetMapLumpName(gameepisode, gamemap, lumpName);
-    sprintf(textBuffer, "MAP [%s]  X:%5d  Y:%5d  Z:%5d",
+    sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             lumpName,
-            player->plr->mo->pos[VX] >> FRACBITS,
-            player->plr->mo->pos[VY] >> FRACBITS,
-            player->plr->mo->pos[VZ] >> FRACBITS);
+            player->plr->mo->pos[VX],
+            player->plr->mo->pos[VY],
+            player->plr->mo->pos[VZ]);
     P_SetMessage(player, textBuffer, false);
 
     // Also print some information to the console.
     Con_Message(textBuffer);
     sub = player->plr->mo->subsector;
     Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
-    Con_Message("  Floorz:%d pic:%d\n", P_GetIntp(sub, DMU_FLOOR_HEIGHT),
-                P_GetIntp(sub, DMU_FLOOR_TEXTURE));
-    Con_Message("  Ceilingz:%d pic:%d\n", P_GetIntp(sub, DMU_CEILING_HEIGHT),
-                P_GetIntp(sub, DMU_CEILING_TEXTURE));
-    Con_Message("Player height:%g   Player radius:%x\n",
+    Con_Message("  Floorz:%g material:%d\n",
+                P_GetFloatp(sub, DMU_FLOOR_HEIGHT),
+                P_GetIntp(sub, DMU_FLOOR_MATERIAL));
+    Con_Message("  Ceilingz:%g material:%d\n",
+                P_GetFloatp(sub, DMU_CEILING_HEIGHT),
+                P_GetIntp(sub, DMU_CEILING_MATERIAL));
+    Con_Message("Player height:%g   Player radius:%g\n",
                 player->plr->mo->height, player->plr->mo->radius);
 }
 
@@ -737,7 +739,7 @@ DEFCC(CCmdCheat)
         ev.state = EVS_DOWN;
         ev.data1 = argv[1][i];
         ev.data2 = ev.data3 = 0;
-        cht_Responder(&ev);
+        Cht_Responder(&ev);
     }
     return true;
 }
@@ -930,7 +932,7 @@ DEFCC(CCmdCheatReveal)
     AM_SetCheatLevel(consoleplayer, 0);
     players[consoleplayer].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
-    if(option < 0 || option > 4)
+    if(option < 0 || option > 3)
         return false;
 
     if(option == 1)

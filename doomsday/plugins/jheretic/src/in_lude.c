@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -41,7 +41,7 @@
  * http://www.ravensoft.com/
  */
 
-/*
+/**
  * in_lude.c: Intermission/stat screens
  */
 
@@ -54,7 +54,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define NUMTEAMS    4           // Four colors, four teams.
+#define NUMTEAMS            4 // Four colors, four teams.
 
 // TYPES -------------------------------------------------------------------
 

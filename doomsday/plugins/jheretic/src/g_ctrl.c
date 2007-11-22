@@ -33,8 +33,8 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * g_ctrl.c: Control bindings - Heretic specifc
+/**
+ * g_ctrl.c: Control bindings - jHeretic specifc
  */
 
 // HEADER FILES ------------------------------------------------------------

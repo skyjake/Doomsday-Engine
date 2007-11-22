@@ -3,10 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * H_Main.c: HERETIC specifc Initialization.
+/**
+ * h_main.c: Game initialization - jHeretic specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -46,12 +46,11 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXWADFILES 20
+#define MAXWADFILES         20
 
 // MAPDIR should be defined as the directory that holds development maps
 // for the -wart # # command
-
-#define MAPDIR "\\data\\"
+#define MAPDIR              "\\data\\"
 
 // TYPES -------------------------------------------------------------------
 
@@ -69,27 +68,28 @@ extern float lookOffset;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     verbose;
+int verbose;
 
-boolean devparm;                // checkparm of -devparm
-boolean nomonsters;             // checkparm of -nomonsters
-boolean respawnparm;            // checkparm of -respawn
-boolean turboparm;              // checkparm of -turbo
-float   turbomul;               // multiplier for turbo
+boolean devparm; // checkparm of -devparm
+boolean nomonsters; // checkparm of -nomonsters
+boolean respawnparm; // checkparm of -respawn
+boolean turboparm; // checkparm of -turbo
+float turbomul; // multiplier for turbo
 
-boolean cdrom;                  // true if cd-rom mode active
-boolean singletics;             // debug flag to cancel adaptiveness
-boolean artiskip;             // whether shift-enter skips an artifact
+boolean cdrom; // true if cd-rom mode active
+boolean singletics; // debug flag to cancel adaptiveness
+boolean artiskip; // whether shift-enter skips an artifact
 
 skillmode_t startskill;
-int     startepisode;
-int     startmap;
+int startepisode;
+int startmap;
 boolean autostart;
-FILE   *debugfile;
-boolean debugmode;              // checkparm of -debug
+
+FILE *debugfile;
+boolean debugmode; // checkparm of -debug
 
 gamemode_t gamemode;
-int     gamemodebits;
+int gamemodebits;
 
 // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
 char gameModeString[17];
@@ -100,29 +100,29 @@ boolean monsterinfight;
 const float deffontRGB[] = { .425f, 0.986f, 0.378f};
 const float deffontRGB2[] = { 1.0f, 1.0f, 1.0f};
 
-char   *borderLumps[] = {
-    "FLAT513",                  // background
-    "bordt",                    // top
-    "bordr",                    // right
-    "bordb",                    // bottom
-    "bordl",                    // left
-    "bordtl",                   // top left
-    "bordtr",                   // top right
-    "bordbr",                   // bottom right
-    "bordbl"                    // bottom left
+char *borderLumps[] = {
+    "FLAT513", // background
+    "bordt", // top
+    "bordr", // right
+    "bordb", // bottom
+    "bordl", // left
+    "bordtl", // top left
+    "bordtr", // top right
+    "bordbr", // bottom right
+    "bordbl" // bottom left
 };
 
-char   *wadfiles[MAXWADFILES] = {
+char *wadfiles[MAXWADFILES] = {
     "heretic.wad",
     "texture1.lmp",
     "texture2.lmp",
     "pnames.lmp"
 };
 
-char   *basedefault = "heretic.cfg";
+char *basedefault = "heretic.cfg";
 
-char    exrnwads[80];
-char    exrnwads2[80];
+char exrnwads[80];
+char exrnwads2[80];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -138,7 +138,8 @@ static boolean devMap;
  * global vars.
  *
  * @param mode          The game mode to change to.
- * @return boolean      (TRUE) if we changed game modes successfully.
+ *
+ * @return              @c true, if we changed game modes successfully.
  */
 boolean D_SetGameMode(gamemode_t mode)
 {
@@ -428,15 +429,15 @@ void H_PostInit(void)
     char        mapstr[6];
 
     if(W_CheckNumForName("E2M1") == -1)
-        // Can't find episode 2 maps, must be the shareware WAD
+        // Can't find episode 2 maps, must be the shareware WAD.
         D_SetGameMode(shareware);
     else if(W_CheckNumForName("EXTENDED") != -1)
-        // Found extended lump, must be the extended WAD
+        // Found extended lump, must be the extended WAD.
         D_SetGameMode(extended);
     else
         D_SetGameMode(registered);
 
-    // Common post init routine
+    // Common post init routine.
     G_PostInit();
 
     // Initialize weapon info using definitions.
@@ -450,17 +451,17 @@ void H_PostInit(void)
     // Game parameters.
     monsterinfight = GetDefInt("AI|Infight", 0);
 
-    // get skill / episode / map from parms
+    // get skill / episode / map from parms.
     startskill = SM_MEDIUM;
     startepisode = 1;
     startmap = 1;
     autostart = false;
     cdrom = false;
 
-    // Game mode specific settings
+    // Game mode specific settings.
     /* None */
 
-    // Command line options
+    // Command line options.
     nomonsters = ArgCheck("-nomonsters");
     respawnparm = ArgCheck("-respawn");
     devparm = ArgCheck("-devparm");
@@ -495,7 +496,7 @@ void H_PostInit(void)
         autostart = true;
     }
 
-    // turbo option
+    // turbo option.
     p = ArgCheck("-turbo");
     turbomul = 1.0f;
     if(p)
@@ -543,7 +544,7 @@ void H_PostInit(void)
     p = ArgCheck("-loadgame");
     if(p && p < myargc - 1)
     {
-        SV_SaveGameFile(Argv(p + 1)[0] - '0', file);
+        SV_GetSaveGameFileName(Argv(p + 1)[0] - '0', file);
         G_LoadGame(file);
     }
 
@@ -566,7 +567,7 @@ void H_PostInit(void)
         }
         else
         {
-            G_StartTitle();     // start up intro loop
+            G_StartTitle(); // Start up intro loop.
         }
     }
 }
@@ -591,7 +592,7 @@ void H_Shutdown(void)
 void H_Ticker(timespan_t ticLength)
 {
     static trigger_t fixed = { 1.0 / 35 };
-    
+
     if(M_RunTrigger(&fixed, ticLength))
     {
         MN_Ticker();

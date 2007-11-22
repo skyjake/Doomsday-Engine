@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,8 +33,8 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * Doomsday API setup and interaction - jHeretic specific
+/**
+ * h_api.c: Doomsday API setup and interaction - jHeretic specific
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -47,8 +47,8 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-/*
- *  jHeretic's entry points
+/**
+ * jHeretic's entry points
  */
 
 // Initialization
@@ -73,12 +73,12 @@ int     D_PrivilegedResponder(event_t *event);
 void    P_SetupForMapData(int type, uint num);
 
 // Map Objects
-fixed_t P_GetMobjFriction(struct mobj_s *mo);
+float   P_GetMobjFriction(struct mobj_s *mo);
 void    P_MobjThinker(mobj_t *mobj);
 void    P_BlasterMobjThinker(mobj_t *mobj);
 
 // Misc
-void H_ConsoleBg(int *width, int *height);
+void    H_ConsoleBg(int *width, int *height);
 
 // Game state changes
 void    G_UpdateState(int step);
@@ -122,23 +122,13 @@ game_export_t gx;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Get a 32-bit integer value.
  */
 int G_GetInteger(int id)
 {
-    switch (id)
+    switch(id)
     {
-    case DD_PSPRITE_BOB_X:
-        return (int) (FRACUNIT +
-            FixedMul(FixedMul(FRACUNIT * cfg.bobWeapon, players[consoleplayer].bob),
-                     finecosine[(128 * leveltime) & FINEMASK]));
-
-    case DD_PSPRITE_BOB_Y:
-        return (int) (32 * FRACUNIT +
-            FixedMul(FixedMul(FRACUNIT * cfg.bobWeapon, players[consoleplayer].bob),
-                     finesine[(128 * leveltime) & FINEMASK & (FINEANGLES / 2 - 1)]));
-
     case DD_GAME_DMUAPI_VER:
         return DMUAPI_VER;
 
@@ -149,12 +139,14 @@ int G_GetInteger(int id)
     return 0;
 }
 
-/*
+/**
  * Get a pointer to the value of a variable. Added for 64-bit support.
  */
 void *G_GetVariable(int id)
 {
-    switch (id)
+    static float bob[2];
+
+    switch(id)
     {
     case DD_GAME_NAME:
         return GAMENAMETEXT;
@@ -183,16 +175,32 @@ void *G_GetVariable(int id)
 
     case DD_XGFUNC_LINK:
         return xgClasses;
+
+    case DD_PSPRITE_BOB_X:
+        bob[VX] = 1 + (cfg.bobWeapon * players[consoleplayer].bob) *
+            FIX2FLT(finecosine[(128 * leveltime) & FINEMASK]);
+
+        return &bob[VX];
+
+    case DD_PSPRITE_BOB_Y:
+        bob[VY] = 32 + (cfg.bobWeapon * players[consoleplayer].bob) *
+            FIX2FLT(finesine[(128 * leveltime) & FINEMASK & (FINEANGLES / 2 - 1)]);
+
+        return &bob[VY];
+
+    default:
+        break;
     }
+
     // ID not recognized, return NULL.
     return 0;
 }
 
-/*
+/**
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-game_export_t *GetGameAPI(game_import_t * imports)
+game_export_t *GetGameAPI(game_import_t *imports)
 {
     // Take a copy of the imports, but only copy as much data as is
     // allowed and legal.
@@ -214,7 +222,7 @@ game_export_t *GetGameAPI(game_import_t * imports)
     gx.FallbackResponder = M_Responder;
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (fixed_t (*)(void *)) P_GetMobjFriction;
+    gx.MobjFriction = (float (*)(void *)) P_GetMobjFriction;
     gx.EndFrame = H_EndFrame;
     gx.ConsoleBackground = H_ConsoleBg;
     gx.UpdateState = G_UpdateState;

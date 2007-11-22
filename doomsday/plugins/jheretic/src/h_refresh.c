@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,17 +18,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * H_Refresh.c
+/**
+ * h_refresh.c: - jHeretic specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <ctype.h>  // has isspace
 #include <math.h>
 
 #include "jheretic.h"
@@ -46,9 +45,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define viewheight  Get(DD_VIEWWINDOW_HEIGHT)
-#define SIZEFACT 4
-#define SIZEFACT2 16
+#define viewheight          Get(DD_VIEWWINDOW_HEIGHT)
+#define SIZEFACT            4
+#define SIZEFACT2           16
 
 // TYPES -------------------------------------------------------------------
 
@@ -82,23 +81,24 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;
 /**
  * Creates the translation tables to map the green color ramp to gray,
  * brown, red.
- * NOTE: Assumes a given structure of the PLAYPAL.
- *       Could be read from a lump instead.
+ *
+ * \note Assumes a given structure of the PLAYPAL. Could be read from a
+ * lump instead.
  */
 void R_InitTranslationTables(void)
 {
+    int         i;
     byte       *translationtables = (byte *)
                     DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
-    int         i;
 
-    // Fill out the translation tables
+    // Fill out the translation tables.
     for(i = 0; i < 256; ++i)
     {
         if(i >= 225 && i <= 240)
         {
             translationtables[i] = 114 + (i - 225); // yellow
-            translationtables[i + 256] = 145 + (i - 225);   // red
-            translationtables[i + 512] = 190 + (i - 225);   // blue
+            translationtables[i + 256] = 145 + (i - 225); // red
+            translationtables[i + 512] = 190 + (i - 225); // blue
         }
         else
         {
@@ -109,7 +109,7 @@ void R_InitTranslationTables(void)
 }
 
 /**
- * Draws a special filter over the screen
+ * Draws a special filter over the screen.
  */
 void R_DrawSpecialFilter(void)
 {
@@ -142,53 +142,41 @@ void R_DrawSpecialFilter(void)
         gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_SRC_COLOR);
         GL_DrawRect(x, y, w, h, 0, 0, .6f, 1);
     }
+
     // Restore the normal rendering state.
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
     gl.Enable(DGL_TEXTURING);
 }
 
-/**
- * Show map name and author.
- */
-void R_DrawLevelTitle(void)
+void R_DrawLevelTitle(int x, int y, float alpha, dpatch_t *font,
+                      boolean center)
 {
-    float       alpha = 1;
-    int         y = 13;
-    char       *lname, *lauthor, *ptr;
+    int         strX;
+    char       *lname, *lauthor;
 
-    if(!cfg.levelTitle || actual_leveltime > 6 * 35)
-        return;
-
-    if(actual_leveltime < 35)
-        alpha = actual_leveltime / 35.0f;
-    if(actual_leveltime > 5 * 35)
-        alpha = 1 - (actual_leveltime - 5 * 35) / 35.0f;
-
-    lname = (char *) DD_GetVariable(DD_MAP_NAME);
-    lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
-    Draw_BeginZoom((1 + cfg.hudScale)/2, 160, y);
-
+    lname = P_GetMapNiceName();
     if(lname)
     {
-        // Skip the ExMx.
-        ptr = strchr(lname, ':');
-        if(ptr)
-        {
-            lname = ptr + 1;
-            while(*lname && isspace(*lname))
-                lname++;
-        }
-        M_WriteText3(160 - M_StringWidth(lname, hu_font_b) / 2, y, lname,
-                    hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], alpha, false, 0);
+        strX = x;
+        if(center)
+            strX -= M_StringWidth(lname, font) / 2;
+
+        M_WriteText3(strX, y, lname, font,
+                     deffontRGB[0], deffontRGB[1], deffontRGB[2], alpha,
+                     false, 0);
         y += 20;
     }
 
+    lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
     if(lauthor && stricmp(lauthor, "raven software"))
     {
-        M_WriteText3(160 - M_StringWidth(lauthor, hu_font_a) / 2, y, lauthor,
-                    hu_font_a, .5f, .5f, .5f, alpha, false, 0);
+        strX = x;
+        if(center)
+            strX -= M_StringWidth(lauthor, hu_font_a) / 2;
+
+        M_WriteText3(strX, y, lauthor, hu_font_a, .5f, .5f, .5f, alpha,
+                     false, 0);
     }
-    Draw_EndZoom();
 }
 
 /**
@@ -225,11 +213,11 @@ void D_Display(void)
     {
         int w = cfg.setblocks * 32;
         int h = cfg.setblocks * (200 - SBARHEIGHT * cfg.sbarscale / 20) / 10;
-        R_SetViewWindowTarget(160 - (w >> 1),
-                              (200 - SBARHEIGHT * cfg.sbarscale / 20 - h) >> 1,
+        R_SetViewWindowTarget(160 - (w / 2),
+                              (200 - SBARHEIGHT * cfg.sbarscale / 20 - h) / 2,
                               w, h);
     }
-      
+
     R_GetViewWindow(&x, &y, &w, &h);
     R_ViewWindow((int) x, (int) y, (int) w, (int) h);
 
@@ -238,6 +226,7 @@ void D_Display(void)
     case GS_LEVEL:
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
+
         if(!IS_CLIENT && leveltime < 2)
         {
             // Don't render too early; the first couple of frames
@@ -251,27 +240,31 @@ void D_Display(void)
 
         if(!(MN_CurrentMenuHasBackground() && MN_MenuAlpha() >= 1) &&
            !mapHidesView)
-        {
-            int viewAngleOffset = ANGLE_MAX * -G_GetLookOffset(displayplayer);
+        {   // Draw the player view.
+            int         viewAngleOffset =
+                ANGLE_MAX * -G_GetLookOffset(displayplayer);
+            boolean     isFullbright =
+                (vplayer->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
+                               (vplayer->powers[PT_INVULNERABILITY] & 8);
 
-            // Draw the player view.
             if(IS_CLIENT)
             {
                 // Server updates mobj flags in NetSv_Ticker.
                 R_SetAllDoomsdayFlags();
             }
+
             // The view angle offset.
             DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
             GL_SetFilter(vplayer->plr->filter);
 
             // How about fullbright?
-            Set(DD_FULLBRIGHT, (vplayer->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
-                               (vplayer->powers[PT_INVULNERABILITY] & 8));
+            Set(DD_FULLBRIGHT, isFullbright);
 
             // Render the view with possible custom filters.
             R_RenderPlayerView(vplayer->plr);
 
             R_DrawSpecialFilter();
+
             // Crosshair.
             if(!iscam)
                 X_Drawer();
@@ -295,7 +288,7 @@ void D_Display2(void)
     switch(G_GetGameState())
     {
     case GS_LEVEL:
-        // These various HUD's will be drawn unless Doomsday advises not to
+        // These various HUD's will be drawn unless Doomsday advises not to.
         if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
         {
             boolean     redrawsbar = false;
@@ -306,7 +299,22 @@ void D_Display2(void)
 
             // Level information is shown for a few seconds in the
             // beginning of a level.
-            R_DrawLevelTitle();
+            if(cfg.levelTitle || actual_leveltime <= 6 * TICSPERSEC)
+            {
+                int         x, y;
+                float       alpha = 1;
+
+                if(actual_leveltime < 35)
+                    alpha = actual_leveltime / 35.0f;
+                if(actual_leveltime > 5 * 35)
+                    alpha = 1 - (actual_leveltime - 5 * 35) / 35.0f;
+
+                x = SCREENWIDTH / 2;
+                y = 13;
+                Draw_BeginZoom((1 + cfg.hudScale)/2, x, y);
+                R_DrawLevelTitle(x, y, alpha, hu_font_b, true);
+                Draw_EndZoom();
+            }
 
             if((viewheight != 200))
                 redrawsbar = true;
@@ -314,22 +322,18 @@ void D_Display2(void)
             // Do we need to render a full status bar at this point?
             if(!(AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0))
             {
-                 player_t   *player = &players[displayplayer];
-                 boolean     iscam = (player->plr->flags & DDPF_CAMERA) != 0; // $democam
+                player_t   *player = &players[displayplayer];
+                boolean     iscam = (player->plr->flags & DDPF_CAMERA) != 0; // $democam
 
                 if(!iscam)
                 {
-                    if(true == (viewheight == 200))
-                    {
-                        // Fullscreen. Which mode?
-                        ST_Drawer(cfg.setblocks - 10, redrawsbar);    // $democam
-                    }
-                    else
-                    {
-                        ST_Drawer(0, redrawsbar);    // $democam
-                    }
+                    int         viewmode =
+                        ((viewheight == 200)? (cfg.setblocks - 10) : 0);
+
+                    ST_Drawer(viewmode, redrawsbar); // $democam
                 }
             }
+
             HU_Drawer();
         }
         break;
@@ -347,7 +351,7 @@ void D_Display2(void)
         break;
     }
 
-    // draw pause pic (but not if InFine active)
+    // Draw pause pic (but not if InFine active).
     if(paused && !fi_active)
     {
         GL_DrawPatch(160, 4, W_GetNumForName("PAUSED"));
@@ -383,29 +387,28 @@ void R_SetDoomsdayFlags(mobj_t *mo)
     if(mo->flags2 & MF2_FLOATBOB)
         mo->ddflags |= DDMF_NOGRAVITY | DDMF_BOB;
     if(mo->flags & MF_MISSILE)
-    {
-        // Mace death balls are controlled by the server.
+    {   // Mace death balls are controlled by the server.
         //if(mo->type != MT_MACEFX4)
         mo->ddflags |= DDMF_MISSILE;
     }
-    if(mo->info && mo->info->flags2 & MF2_ALWAYSLIT)
+    if(mo->info && (mo->info->flags2 & MF2_ALWAYSLIT))
         mo->ddflags |= DDMF_ALWAYSLIT;
 
     if(mo->flags2 & MF2_FLY)
         mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
 
-    // $democam: cameramen are invisible
+    // $democam: cameramen are invisible.
     if(P_IsCamera(mo))
         mo->ddflags |= DDMF_DONTDRAW;
 
-    if(mo->flags & MF_CORPSE && cfg.corpseTime && mo->corpsetics == -1)
+    if((mo->flags & MF_CORPSE) && cfg.corpseTime && mo->corpsetics == -1)
         mo->ddflags |= DDMF_DONTDRAW;
 
     // Choose which ddflags to set.
     if(mo->flags2 & MF2_DONTDRAW)
     {
         mo->ddflags |= DDMF_DONTDRAW;
-        return;                 // No point in checking the other flags.
+        return; // No point in checking the other flags.
     }
 
     if(mo->flags2 & MF2_LOGRAV)
@@ -416,12 +419,12 @@ void R_SetDoomsdayFlags(mobj_t *mo)
     else if(mo->flags & MF_SHADOW)
         mo->ddflags |= DDMF_ALTSHADOW;
 
-    if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE)) ||
-       mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE &&
-                                !(mo->flags & MF_VIEWALIGN)))
+    if(((mo->flags & MF_VIEWALIGN) && !(mo->flags & MF_MISSILE)) ||
+       (mo->flags & MF_FLOAT) ||
+       ((mo->flags & MF_MISSILE) && !(mo->flags & MF_VIEWALIGN)))
         mo->ddflags |= DDMF_VIEWALIGN;
 
-    mo->ddflags |= mo->flags & MF_TRANSLATION;
+    mo->ddflags |= (mo->flags & MF_TRANSLATION);
 }
 
 /**
@@ -435,7 +438,12 @@ void R_SetAllDoomsdayFlags(void)
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); iter; iter = iter->snext)
+        iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS);
+
+        while(iter)
+        {
             R_SetDoomsdayFlags(iter);
+            iter = iter->snext;
+        }
     }
 }

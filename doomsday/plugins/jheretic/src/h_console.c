@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,8 +33,8 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * H_Console.c: jHeretic specific console stuff
+/**
+ * H_Console.c: Console stuff - jHeretic specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -187,7 +187,7 @@ cvar_t  gameCVars[] = {
 };
 
 //  Console commands
-ccmd_t  gameCCmds[] = {
+ccmd_t gameCCmds[] = {
     {"spy",        "",      CCmdCycleSpy},
     {"screenshot", "",      CCmdScreenShot},
     {"viewsize",   "s",     CCmdViewSize},
