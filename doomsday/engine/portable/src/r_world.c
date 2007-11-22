@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_world.c: World Setup and Refresh
  */
 
@@ -131,7 +131,7 @@ plane_t *R_NewPlaneForSector(sector_t *sec, planetype_t type)
     for(i = 0; i < 4; ++i)
         suf->rgba[i] = 1;
     suf->flags = 0;
-    suf->offx = suf->offy = 0;
+    suf->offset[VX] = suf->offset[VY] = 0;
 
     // Set normal.
     suf->normal[VX] = 0;
@@ -349,7 +349,7 @@ static void R_SetSectorLinks(sector_t *sec)
 #endif
 
 /**
- * Initialize the skyfix. In practice all this does is to check for things
+ * Initialize the skyfix. In practice all this does is to check for mobjs
  * intersecting ceilings and if so: raises the sky fix for the sector a
  * bit to accommodate them.
  */
@@ -371,8 +371,8 @@ void R_InitSkyFix(void)
 
         fix = &sec->skyfix[PLN_CEILING].offset;
 
-        // Check that all the things in the sector fit in.
-        for(it = sec->thinglist; it; it = it->snext)
+        // Check that all the mobjs in the sector fit in.
+        for(it = sec->mobjList; it; it = it->snext)
         {
             b = it->height;
             f = sec->SP_ceilheight + *fix -
@@ -893,7 +893,7 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
 #define SEP 10
 
     lineowner_t *cown = own->link[!antiClockwise];
-    line_t *other = cown->line;
+    line_t     *other = cown->line;
     binangle_t diff;
 
     if(other == line)
@@ -929,7 +929,7 @@ void R_InitLinks(gamemap_t *map)
     Con_Message("R_InitLinks: Initializing\n");
 
     // Initialize node piles and line rings.
-    NP_Init(&map->thingnodes, 256);  // Allocate a small pile.
+    NP_Init(&map->mobjnodes, 256);  // Allocate a small pile.
     NP_Init(&map->linenodes, map->numlines + 1000);
 
     // Allocate the rings.
@@ -1257,23 +1257,15 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
     }
 
     if(forceUpdate ||
-       (suf->texmove[0] != suf->oldtexmove[0] ||
-        suf->texmove[1] != suf->oldtexmove[1]))
+       (suf->offset[VX] != suf->oldoffset[VX]))
     {
-        suf->oldtexmove[0] = suf->texmove[0];
-        suf->oldtexmove[1] = suf->texmove[1];
+        suf->oldoffset[VX] = suf->offset[VX];
     }
 
     if(forceUpdate ||
-       (suf->offx != suf->oldoffx))
+       (suf->offset[VY] != suf->oldoffset[VY]))
     {
-        suf->oldoffx = suf->offx;
-    }
-
-    if(forceUpdate ||
-       (suf->offy != suf->oldoffy))
-    {
-        suf->oldoffy = suf->offy;
+        suf->oldoffset[VY] = suf->offset[VY];
     }
 
     // Surface color change?
@@ -1357,8 +1349,8 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
                 if((player->flags & DDPF_CAMERA) &&
                    player->mo->subsector->sector == sec &&
-                   (FIX2FLT(player->mo->pos[VZ]) > sec->SP_ceilheight ||
-                    FIX2FLT(player->mo->pos[VZ]) < sec->SP_floorheight))
+                   (player->mo->pos[VZ] > sec->SP_ceilheight ||
+                    player->mo->pos[VZ] < sec->SP_floorheight))
                 {
                     player->invoid = true;
                 }

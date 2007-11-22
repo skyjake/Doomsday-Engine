@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_shadow.c: Map Object Shadows
  */
 
@@ -70,12 +70,12 @@ void Rend_ShadowRegister(void)
 /**
  * This is called for each sector a shadow-caster is touching.
  * The highest floor height will be searched and if larger than the
- * value of <code>data</code> it will be written back.
+ * value of 'data' it will be written back.
  *
  * @param sector    The sector to search the floor height of.
  * @param data      Ptr to a float containing the height to compare.
  *
- * @return          <code>true</code> if iteration should continue.
+ * @return          @c true, if iteration should continue.
  */
 static boolean Rend_ShadowIterator(sector_t *sector, void *data)
 {
@@ -87,19 +87,19 @@ static boolean Rend_ShadowIterator(sector_t *sector, void *data)
     return true;                // Continue iteration.
 }
 
-static void Rend_ProcessThingShadow(mobj_t *mo)
+static void Rend_ProcessMobjShadow(mobj_t *mo)
 {
-    fixed_t     moz;
+    float       moz;
     float       height, moh, halfmoh, color, pos[2], floor;
     sector_t   *sec = mo->subsector->sector;
-    int         radius;
+    float       radius;
     uint        i;
     rendpoly_t *poly;
     float       distance;
 
     // Is this too far?
-    pos[VX] = FIX2FLT(mo->pos[VX]);
-    pos[VY] = FIX2FLT(mo->pos[VY]);
+    pos[VX] = mo->pos[VX];
+    pos[VY] = mo->pos[VY];
     if((distance = Rend_PointDist2D(pos)) > shadowMaxDist)
         return;
 
@@ -108,22 +108,22 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
     {
         float   mul = mo->tics / (float) mo->state->tics;
 
-        pos[VX] += FIX2FLT(mo->srvo[VX] << 8) * mul;
-        pos[VY] += FIX2FLT(mo->srvo[VY] << 8) * mul;
+        pos[VX] += mo->srvo[VX] * mul;
+        pos[VY] += mo->srvo[VY] * mul;
     }
 
     // Check the height.
-    moz = mo->pos[VZ] - FLT2FIX(mo->floorclip);
+    moz = mo->pos[VZ] - mo->floorclip;
     if(mo->ddflags & DDMF_BOB)
-        moz -= FLT2FIX(R_GetBobOffset(mo));
+        moz -= R_GetBobOffset(mo);
 
-    height = FIX2FLT(moz) - mo->floorz;
+    height = moz - mo->floorz;
     moh = mo->height;
     if(!moh)
         moh = 1;
     if(height > moh)
         return;                 // Too far.
-    if(FIX2FLT(moz) + mo->height < mo->floorz)
+    if(moz + mo->height < mo->floorz)
         return;
 
     // Calculate the strength of the shadow.
@@ -151,14 +151,14 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
     radius = R_VisualRadius(mo);
     if(!radius)
         return;
-    if(radius > shadowMaxRad)
-        radius = shadowMaxRad;
+    if(radius > (float) shadowMaxRad)
+        radius = (float) shadowMaxRad;
 
     // Figure out the visible floor height.
     floor = mo->subsector->sector->SP_floorvisheight;
-    P_ThingSectorsIterator(mo, Rend_ShadowIterator, &floor);
+    P_MobjSectorsIterator(mo, Rend_ShadowIterator, &floor);
 
-    if(floor >= FIX2FLT(moz) + mo->height)
+    if(floor >= moz + mo->height)
         return; // Can't have a shadow above the object!
 
     // View height might prevent us from seeing the shadow.
@@ -170,8 +170,8 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
     poly->flags = RPF_SHADOW;
     poly->tex.id = GL_PrepareLSTexture(LST_DYNAMIC, NULL);
     poly->tex.width = poly->tex.height = radius * 2;
-    poly->texoffx = -pos[VX] + radius;
-    poly->texoffy = -pos[VY] - radius;
+    poly->texOffset[VX] = -pos[VX] + radius;
+    poly->texOffset[VY] = -pos[VY] - radius;
     floor += 0.2f;    // A bit above the floor.
 
     poly->vertices[0].pos[VX] = pos[VX] - radius;
@@ -221,7 +221,7 @@ void Rend_RenderShadows(void)
         if(R_IsSkySurface(&sec->SP_floorsurface))
             continue;
 
-        for(mo = sec->thinglist; mo; mo = mo->snext)
+        for(mo = sec->mobjList; mo; mo = mo->snext)
         {
             if(!mo->state)
                 continue;
@@ -231,7 +231,7 @@ void Rend_RenderShadows(void)
                (mo->ddflags & DDMF_ALWAYSLIT))
                 continue;
 
-            Rend_ProcessThingShadow(mo);
+            Rend_ProcessMobjShadow(mo);
         }
     }
 }

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sv_pool.c: Delta Pools
  *
  * Delta Pools use PU_LEVEL, which means all the memory allocated for them
@@ -53,7 +53,7 @@
 // Maximum difference in plane height where the absolute height doesn't
 // need to be sent.
 
-#define PLANE_SKIP_LIMIT    (40*FRACUNIT)
+#define PLANE_SKIP_LIMIT            (40)
 
 // TYPES -------------------------------------------------------------------
 
@@ -61,11 +61,8 @@ typedef struct reg_mobj_s {
     // Links to next and prev mobj in the register hash.
     struct reg_mobj_s *next, *prev;
 
-    // The tic when the mobj state was last sent.
-    int lastTimeStateSent;
-
-    // The state of the mobj.
-    dt_mobj_t mo;
+    int         lastTimeStateSent; // The tic when the mobj state was last sent.
+    dt_mobj_t   mo; // The state of the mobj.
 } reg_mobj_t;
 
 typedef struct mobjhash_s {
@@ -77,26 +74,26 @@ typedef struct mobjhash_s {
  */
 typedef struct cregister_s {
     // The time the register was last updated.
-    int     gametic;
+    int         gametic;
 
     // True if this register contains a read-only copy of the initial state
     // of the world.
-    boolean isInitial;
+    boolean     isInitial;
 
     // The mobjs are stored in a hash for efficiency (ID is the key).
-    mobjhash_t mobjs[REG_MOBJ_HASH_SIZE];
+    mobjhash_t  mobjs[REG_MOBJ_HASH_SIZE];
 
     dt_player_t players[MAXPLAYERS];
     dt_sector_t *sectors;
-    dt_side_t *sides;
-    dt_poly_t *polys;
+    dt_side_t  *sides;
+    dt_poly_t  *polys;
 } cregister_t;
 
 /*
  * Each entity (mobj, sector, side, etc.) has an origin the world.
  */
 typedef struct origin_s {
-    fixed_t pos[2];
+    float       pos[2];
 } origin_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -123,7 +120,7 @@ cregister_t worldRegister;
 cregister_t initialRegister;
 
 // Each client has its own pool for deltas.
-pool_t  pools[MAXPLAYERS];
+pool_t pools[MAXPLAYERS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -203,11 +200,9 @@ void Sv_InitPools(void)
         sec = SECTOR_PTR(i);
 
         sectorOrigins[i].pos[VX] =
-            FRACUNIT * (sec->bounds[BRIGHT] +
-                        sec->bounds[BLEFT]) / 2;
+            (sec->bbox[BOXRIGHT] + sec->bbox[BOXLEFT]) / 2;
         sectorOrigins[i].pos[VY] =
-            FRACUNIT * (sec->bounds[BBOTTOM] +
-                        sec->bounds[BTOP]) / 2;
+            (sec->bbox[BOXBOTTOM] + sec->bbox[BOXTOP]) / 2;
     }
 
     // Origins of sides.
@@ -221,9 +216,9 @@ void Sv_InitPools(void)
 
         vtx = sideOwners[i]->L_v1;
         sideOrigins[i].pos[VX] =
-            FLT2FIX(vtx->V_pos[VX] + sideOwners[i]->dx / 2);
+            vtx->V_pos[VX] + sideOwners[i]->dx / 2;
         sideOrigins[i].pos[VY] =
-            FLT2FIX(vtx->V_pos[VY] + sideOwners[i]->dy / 2);
+            vtx->V_pos[VY] + sideOwners[i]->dy / 2;
     }
 
     // Store the current state of the world into both the registers.
@@ -363,17 +358,17 @@ void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
 }
 
 /**
- * @return              If the mobj is on the floor; <code>MININT/code>.
- *                      If the mobj is touching the ceiling; <code>MAXINT</code>.
+ * @return              If the mobj is on the floor; @c MININT.
+ *                      If the mobj is touching the ceiling; @c MAXINT.
  *                      Otherwise returns the Z coordinate.
  */
-fixed_t Sv_GetMaxedMobjZ(const mobj_t *mo)
+float Sv_GetMaxedMobjZ(const mobj_t *mo)
 {
-    if(FIX2FLT(mo->pos[VZ]) == mo->floorz)
+    if(mo->pos[VZ] == mo->floorz)
     {
         return DDMININT;
     }
-    if(FIX2FLT(mo->pos[VZ]) + mo->height == mo->ceilingz)
+    if(mo->pos[VZ] + mo->height == mo->ceilingz)
     {
         return DDMAXINT;
     }
@@ -458,8 +453,8 @@ void Sv_RegisterPlayer(dt_player_t *reg, uint number)
  * Store the state of the sector into the register-sector.
  * Called at register init and after each delta generation.
  *
- * @param   reg     The sector register to be initialized.
- * @param   number  The world sector number to be registered.
+ * @param reg           The sector register to be initialized.
+ * @param number        The world sector number to be registered.
  */
 void Sv_RegisterSector(dt_sector_t *reg, uint number)
 {
@@ -484,8 +479,6 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
         reg->planes[i].surface.material.isflat = sec->planes[i]->PS_isflat;
         memcpy(reg->planes[i].surface.rgba, sec->planes[i]->surface.rgba,
                sizeof(reg->planes[i].surface.rgba));
-        reg->planes[i].surface.texmove[0] = sec->planes[i]->surface.texmove[0];
-        reg->planes[i].surface.texmove[1] = sec->planes[i]->surface.texmove[1];
     }
 }
 
@@ -526,7 +519,7 @@ void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 }
 
 /**
- * @return              <code>true</code> if the result is not void.
+ * @return              @c true, if the result is not void.
  */
 boolean Sv_RegisterCompareMobj(cregister_t *reg, const mobj_t *s,
                                mobjdelta_t *d)
@@ -751,7 +744,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     }
     else
     {
-        if(FLT2FIX(fabs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR]->height))
+        if(fabs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR]->height)
            > PLANE_SKIP_LIMIT)
             df |= SDF_FLOOR_HEIGHT;
     }
@@ -764,7 +757,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     }
     else
     {
-        if(FLT2FIX(fabs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING]->height))
+        if(fabs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING]->height)
            > PLANE_SKIP_LIMIT)
             df |= SDF_CEILING_HEIGHT;
     }
@@ -780,11 +773,6 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(r->planes[PLN_FLOOR].surface.texmove[0] != s->planes[PLN_FLOOR]->surface.texmove[0] ||
-       r->planes[PLN_FLOOR].surface.texmove[1] != s->planes[PLN_FLOOR]->surface.texmove[1])
-    {
-        df |= SDF_FLOOR_TEXMOVE;
-    }
     if(r->planes[PLN_CEILING].target != s->planes[PLN_CEILING]->target)
     {
         // Target and speed are always sent together.
@@ -794,12 +782,6 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
-    }
-    if(r->planes[PLN_CEILING].surface.texmove[0] != s->planes[PLN_CEILING]->surface.texmove[0]
-       || r->planes[PLN_CEILING].surface.texmove[1] !=
-       s->planes[PLN_CEILING]->surface.texmove[1])
-    {
-        df |= SDF_CEILING_TEXMOVE;
     }
 
     // Only do a delta when something changes.
@@ -1079,7 +1061,8 @@ void Sv_UpdateOwnerInfo(pool_t *pool)
         info->pos[VZ] = player->mo->pos[VZ];
         info->angle = player->mo->angle;
         info->speed =
-            P_ApproxDistance(player->mo->mom[MX], player->mo->mom[MY]);
+            P_ApproxDistance(player->mo->mom[MX],
+                             player->mo->mom[MY]);
     }
 
     // The acknowledgement threshold is a multiple of the average
@@ -1353,8 +1336,8 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
                     d->psp[i].state = s->psp[i].state;
                 if(sf & (PSDF_OFFSET << off))
                 {
-                    d->psp[i].offx = s->psp[i].offx;
-                    d->psp[i].offy = s->psp[i].offy;
+                    d->psp[i].offset[VX] = s->psp[i].offset[VX];
+                    d->psp[i].offset[VY] = s->psp[i].offset[VY];
                 }
             }
         }
@@ -1376,22 +1359,10 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
             d->planes[PLN_FLOOR].target = s->planes[PLN_FLOOR].target;
         if(sf & SDF_FLOOR_SPEED)
             d->planes[PLN_FLOOR].speed = s->planes[PLN_FLOOR].speed;
-        if(sf & SDF_FLOOR_TEXMOVE)
-        {
-            memcpy(d->planes[PLN_FLOOR].surface.texmove,
-                   s->planes[PLN_FLOOR].surface.texmove,
-                   sizeof(float) * 2);
-        }
         if(sf & SDF_CEILING_TARGET)
             d->planes[PLN_CEILING].target = s->planes[PLN_CEILING].target;
         if(sf & SDF_CEILING_SPEED)
             d->planes[PLN_CEILING].speed = s->planes[PLN_CEILING].speed;
-        if(sf & SDF_CEILING_TEXMOVE)
-        {
-            memcpy(d->planes[PLN_CEILING].surface.texmove,
-                   s->planes[PLN_CEILING].surface.texmove,
-                   sizeof(float) * 2);
-        }
         if(sf & SDF_FLOOR_HEIGHT)
             d->planes[PLN_FLOOR].height = s->planes[PLN_FLOOR].height;
         if(sf & SDF_CEILING_HEIGHT)
@@ -1603,18 +1574,18 @@ uint Sv_DeltaAge(const delta_t *delta)
  * Approximate the distance to the given sector. Set 'mayBeGone' to true
  * if the mobj may have been destroyed and should not be processed.
  */
-fixed_t Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
-                        boolean isReal)
+float Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
+                      boolean isReal)
 {
-    float z;
+    float       z;
 
     if(isReal && !P_IsUsedMobjID(mo->thinker.id))
     {
         // This mobj does not exist any more!
-        return DDMAXINT;
+        return FIX2FLT(DDMAXINT);
     }
 
-    z = FIX2FLT(mo->pos[VZ]);
+    z = mo->pos[VZ];
 
     // Registered mobjs may have a maxed out Z coordinate.
     if(!isReal)
@@ -1625,28 +1596,29 @@ fixed_t Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
             z = mo->ceilingz - mo->height;
     }
 
-    return P_ApproxDistance3(info->pos[VX] - mo->pos[VX], info->pos[VY] - mo->pos[VY],
-                             info->pos[VZ] - FLT2FIX(z + mo->height / 2));
+    return P_ApproxDistance3(info->pos[VX] - mo->pos[VX],
+                             info->pos[VY] - mo->pos[VY],
+                             info->pos[VZ] - z + mo->height / 2);
 }
 
 /**
  * Approximate the distance to the given sector.
  */
-fixed_t Sv_SectorDistance(int index, const ownerinfo_t *info)
+float Sv_SectorDistance(int index, const ownerinfo_t *info)
 {
     sector_t *sector = SECTOR_PTR(index);
 
     return P_ApproxDistance3(info->pos[VX] - sectorOrigins[index].pos[VX],
                              info->pos[VY] - sectorOrigins[index].pos[VY],
                              info->pos[VZ] -
-                             (FLT2FIX(sector->planes[PLN_CEILING]->height +
+                             ((sector->planes[PLN_CEILING]->height +
                                       sector->planes[PLN_FLOOR]->height) / 2));
 }
 
 /**
  * @return              The distance to the origin of the delta's entity.
  */
-fixed_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
+float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 {
     const delta_t *delta = deltaPtr;
 
@@ -1689,8 +1661,8 @@ fixed_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
     {
         polyobj_t *po = PO_PTR(delta->id);
 
-        return P_ApproxDistance(info->pos[VX] - FLT2FIX(po->startSpot.pos[VX]),
-                                info->pos[VY] - FLT2FIX(po->startSpot.pos[VY]));
+        return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
+                                info->pos[VY] - po->startSpot.pos[VY]);
     }
 
     if(delta->type == DT_MOBJ_SOUND)
@@ -1709,12 +1681,12 @@ fixed_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
     {
         polyobj_t *po = PO_PTR(delta->id);
 
-        return P_ApproxDistance(info->pos[VX] - FLT2FIX(po->startSpot.pos[VX]),
-                                info->pos[VY] - FLT2FIX(po->startSpot.pos[VY]));
+        return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
+                                info->pos[VY] - po->startSpot.pos[VY]);
     }
 
     // Unknown distance.
-    return FRACUNIT;
+    return 1;
 }
 
 /**
@@ -1807,7 +1779,7 @@ void Sv_DrainPool(int clientNumber)
  *                      is any farther, the delta will not be sent to the
  *                      client in question.
  */
-fixed_t Sv_GetMaxSoundDistance(const sounddelta_t *delta)
+float Sv_GetMaxSoundDistance(const sounddelta_t *delta)
 {
     float   volume = 1;
 
@@ -1820,9 +1792,9 @@ fixed_t Sv_GetMaxSoundDistance(const sounddelta_t *delta)
     if(volume <= 0)
     {
         // Silence is heard all over the world.
-        return DDMAXINT;
+        return FIX2FLT(DDMAXINT);
     }
-    return volume * sound_max_distance * FRACUNIT;
+    return volume * sound_max_distance;
 }
 
 /**
@@ -2750,7 +2722,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
 
     // Calculate the distance to the delta's origin.
     // If no distance can be determined, it's 1.0.
-    distance = FIX2FLT(Sv_DeltaDistance(delta, info));
+    distance = Sv_DeltaDistance(delta, info);
     if(distance < 1)
         distance = 1;
     distance = distance * distance; // power of two
@@ -2784,7 +2756,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
             score *= 1.2f;
 
         // Small objects are not that important.
-        size = MAX_OF(FIX2FLT(mo->radius), mo->height);
+        size = MAX_OF(mo->radius, mo->height);
         if(size < 16)
         {
             // Not too small, though.

@@ -24,11 +24,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_things.c: Object Management and Refresh
  */
 
-/*
+/**
  * Sprite rotation 0 is facing the viewer, rotation 1 is one angle
  * turn CLOCKWISE around the axis. This is not the same as the angle,
  * which increases counter clockwise (protractor).
@@ -54,10 +54,10 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_FRAMES 128
-#define MAX_OBJECT_RADIUS 128
+#define MAX_FRAMES              128
+#define MAX_OBJECT_RADIUS       128
 
-#define MAX_VISSPRITE_LIGHTS 10
+#define MAX_VISSPRITE_LIGHTS    10
 
 // TYPES -------------------------------------------------------------------
 
@@ -83,12 +83,12 @@ float   weaponFOVShift = 45;
 float   modelSpinSpeed = 1;
 int     alwaysAlign = 0;
 int     noSpriteZWrite = false;
-int     pspOffX = 0, pspOffY = 0;
+float   pspOffset[2] = {0, 0};
 // useSRVO: 1 = models only, 2 = sprites + models
 int     useSRVO = 2, useSRVOAngle = true;
 int     psp3d;
 
-// Variables used to look up and range check thing_t sprites patches
+// Variables used to look up and range check sprites patches.
 spritedef_t *sprites = 0;
 int     numSprites;
 
@@ -110,7 +110,7 @@ static int maxFrame;
 static char *spriteName;
 
 static vissprite_t overflowSprite;
-static mobj_t *projectedThing;  // Used during RIT_VisMobjZ
+static mobj_t *projectedMobj;  // Used during RIT_VisMobjZ
 
 static const float worldLight[3] = {-.400891f, -.200445f, .601336f};
 
@@ -127,8 +127,8 @@ void R_InitSpriteLumps(void)
 {
     lumppatch_t *patch;
     spritelump_t *sl;
-    int     i;
-    char    buf[64];
+    int         i;
+    char        buf[64];
 
     sprintf(buf, "R_Init: Initializing %i sprites...", numSpriteLumps);
     //Con_InitProgress(buf, numSpriteLumps);
@@ -155,7 +155,7 @@ void R_InitSpriteLumps(void)
 int R_NewSpriteLump(int lump)
 {
     spritelump_t **newlist, *ptr;
-    int     i;
+    int         i;
 
     // Is this lump already entered?
     for(i = 0; i < numSpriteLumps; i++)
@@ -182,8 +182,7 @@ int R_NewSpriteLump(int lump)
 static void installSpriteLump(int lump, unsigned frame, unsigned rotation,
                               boolean flipped)
 {
-    int     splump = R_NewSpriteLump(lump);
-    int     r;
+    int         r, splump = R_NewSpriteLump(lump);
 
     if(frame >= 30 || rotation > 8)
     {
@@ -242,8 +241,8 @@ static void installSpriteLump(int lump, unsigned frame, unsigned rotation,
  */
 void R_InitSpriteDefs(void)
 {
-    int     i, l, intname, frame, rotation;
-    boolean in_sprite_block;
+    int         i, l, intname, frame, rotation;
+    boolean     in_sprite_block;
 
     numSpriteLumps = 0;
     numSprites = count_sprnames.num;
@@ -414,7 +413,7 @@ void R_GetPatchInfo(int lump, spriteinfo_t *info)
 /**
  * @return              Radius of the mobj as it would visually appear to be.
  */
-int R_VisualRadius(mobj_t *mo)
+float R_VisualRadius(mobj_t *mo)
 {
     modeldef_t *mf, *nextmf;
     spriteinfo_t sprinfo;
@@ -527,14 +526,15 @@ void R_ProjectPlayerSprites(void)
         {
             if(useBias)
             {
-                /** Evaluate the position of this player in the light grid.
+                /**
+                 * Evaluate the position of this player in the light grid.
                  * \todo Should be affected by BIAS sources.
                  */
                 float       point[3];
 
-                point[0] = FIX2FLT(viewPlayer->mo->pos[VX]);
-                point[1] = FIX2FLT(viewPlayer->mo->pos[VY]);
-                point[2] = FIX2FLT(viewPlayer->mo->pos[VZ]) +
+                point[0] = viewPlayer->mo->pos[VX];
+                point[1] = viewPlayer->mo->pos[VY];
+                point[2] = viewPlayer->mo->pos[VZ] +
                             viewPlayer->viewheight / 2;
                 LG_Evaluate(point, rgb);
                 lightLevel = 1;
@@ -584,9 +584,9 @@ void R_ProjectPlayerSprites(void)
             vis->center[VZ] = viewZ;
 
             // Offsets to rotation angles.
-            vis->data.mo.yawAngleOffset = psp->x * weaponOffsetScale - 90;
+            vis->data.mo.yawAngleOffset = psp->pos[VX] * weaponOffsetScale - 90;
             vis->data.mo.pitchAngleOffset =
-                (32 - psp->y) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
+                (32 - psp->pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
             // Is the FOV shift in effect?
             if(weaponFOVShift > 0 && fieldOfView > 90)
                 vis->data.mo.yawAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
@@ -622,17 +622,17 @@ void R_ProjectPlayerSprites(void)
     }
 }
 
-float R_MovementYaw(fixed_t momx, fixed_t momy)
+float R_MovementYaw(float momx, float momy)
 {
     // Multiply by 100 to get some artificial accuracy in bamsAtan2.
-    return BANG2DEG(bamsAtan2(-100 * FIX2FLT(momy), 100 * FIX2FLT(momx)));
+    return BANG2DEG(bamsAtan2(-100 * momy, 100 * momx));
 }
 
-float R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz)
+float R_MovementPitch(float momx, float momy, float momz)
 {
     return
         BANG2DEG(bamsAtan2
-                 (100 * FIX2FLT(momz), 100 * P_AccurateDistance(momx, momy)));
+                 (100 * momz, 100 * P_AccurateDistance(momx, momy)));
 }
 
 /**
@@ -648,27 +648,27 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
     assert(data != NULL);
 
     if(vis->data.mo.flooradjust &&
-       FIX2FLT(projectedThing->pos[VZ]) == sector->SP_floorheight)
+       projectedMobj->pos[VZ] == sector->SP_floorheight)
     {
         vis->center[VZ] = sector->SP_floorvisheight;
     }
 
-    if(FIX2FLT(projectedThing->pos[VZ]) + projectedThing->height ==
+    if(projectedMobj->pos[VZ] + projectedMobj->height ==
        sector->SP_ceilheight)
     {
-        vis->center[VZ] = sector->SP_ceilvisheight - projectedThing->height;
+        vis->center[VZ] = sector->SP_ceilvisheight - projectedMobj->height;
     }
     return true;
 }
 
 /**
- * Generates a vissprite for a thing if it might be visible.
+ * Generates a vissprite for a mobj if it might be visible.
  */
-void R_ProjectSprite(mobj_t *thing)
+void R_ProjectSprite(mobj_t *mo)
 {
-    sector_t   *sect = thing->subsector->sector;
+    sector_t   *sect = mo->subsector->sector;
     float       thangle = 0;
-    fixed_t     trx, try;
+    float       pos[2];
     spritedef_t *sprdef;
     spriteframe_t *sprframe = NULL;
     int         i, lump;
@@ -680,48 +680,43 @@ void R_ProjectSprite(mobj_t *thing)
     modeldef_t *mf = NULL, *nextmf = NULL;
     float       interp = 0, distance;
 
-    if(thing->ddflags & DDMF_DONTDRAW || thing->translucency == 0xff ||
-       thing->state == NULL || thing->state == states)
+    if(mo->ddflags & DDMF_DONTDRAW || mo->translucency == 0xff ||
+       mo->state == NULL || mo->state == states)
     {
         // Never make a vissprite when DDMF_DONTDRAW is set or when
-        // the thing is fully transparent, or when the thing hasn't got
+        // the mo is fully transparent, or when the mo hasn't got
         // a valid state.
         return;
     }
 
     // Transform the origin point.
-    trx = thing->pos[VX] - FLT2FIX(viewX);
-    try = thing->pos[VY] - FLT2FIX(viewY);
+    pos[VX] = mo->pos[VX] - viewX;
+    pos[VY] = mo->pos[VY] - viewY;
 
     // Decide which patch to use for sprite relative to player.
 
 #ifdef RANGECHECK
-    if((unsigned) thing->sprite >= (unsigned) numSprites)
+    if((unsigned) mo->sprite >= (unsigned) numSprites)
     {
         Con_Error("R_ProjectSprite: invalid sprite number %i\n",
-                  thing->sprite);
+                  mo->sprite);
     }
 #endif
-    sprdef = &sprites[thing->sprite];
-    if(thing->frame >= sprdef->numframes)
+    sprdef = &sprites[mo->sprite];
+    if(mo->frame >= sprdef->numframes)
     {
         // The frame is not defined, we can't display this object.
         return;
     }
-    sprframe = &sprdef->spriteframes[thing->frame];
+    sprframe = &sprdef->spriteframes[mo->frame];
 
     // Determine distance to object.
-    {
-    float v[2];
-    v[VX] = FIX2FLT(thing->pos[VX]);
-    v[VY] = FIX2FLT(thing->pos[VY]);
-    distance = Rend_PointDist2D(v);
-    }
+    distance = Rend_PointDist2D(mo->pos);
 
     // Check for a 3D model.
     if(useModels)
     {
-        interp = R_CheckModelFor(thing, &mf, &nextmf);
+        interp = R_CheckModelFor(mo, &mf, &nextmf);
         if(mf && !(mf->flags & MFF_NO_DISTANCE_CHECK) && maxModelDistance &&
            distance > maxModelDistance)
         {
@@ -732,21 +727,20 @@ void R_ProjectSprite(mobj_t *thing)
     }
 
     if(sprframe->rotate && !mf)
-    {
-        // Choose a different rotation based on player view.
-        ang = R_PointToAngle(thing->pos[VX], thing->pos[VY]);
-        rot = (ang - thing->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
+    {   // Choose a different rotation based on player view.
+        ang = R_PointToAngle(mo->pos[VX], mo->pos[VY]);
+        rot = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
         lump = sprframe->lump[rot];
         flip = (boolean) sprframe->flip[rot];
     }
     else
-    {
-        // Use single rotation for all views.
+    {   // Use single rotation for all views.
         lump = sprframe->lump[0];
         flip = (boolean) sprframe->flip[0];
     }
+
     // Align to the view plane?
-    if(thing->ddflags & DDMF_VIEWALIGN)
+    if(mo->ddflags & DDMF_VIEWALIGN)
         align = true;
     else
         align = false;
@@ -759,20 +753,20 @@ void R_ProjectSprite(mobj_t *thing)
     {   // Its a sprite.
         if(!align && alwaysAlign != 2 && alwaysAlign != 3)
         {
-            float center[2], v1[2], v2[2];
-            float width = (float) spritelumps[lump]->width;
-            float offset = (float) spritelumps[lump]->offset - (width / 2);
+            float   center[2], v1[2], v2[2];
+            float   width = (float) spritelumps[lump]->width;
+            float   offset = (float) spritelumps[lump]->offset - (width / 2);
 
             // Project a line segment relative to the view in 2D, then check
             // if not entirely clipped away in the 360 degree angle clipper.
-            center[VX] = FIX2FLT(thing->pos[VX]);
-            center[VY] = FIX2FLT(thing->pos[VY]);
+            center[VX] = mo->pos[VX];
+            center[VY] = mo->pos[VY];
             M_ProjectViewRelativeLine2D(center, (align || alwaysAlign == 3),
                                         width, offset, v1, v2);
 
             // Check for visibility.
             if(!C_CheckViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]))
-                return;         // Isn't visible.
+                return; // Isn't visible.
         }
     }
     else
@@ -780,15 +774,15 @@ void R_ProjectSprite(mobj_t *thing)
         float   v[2], off[2];
         float   sinrv, cosrv;
 
-        v[VX] = FIX2FLT(thing->pos[VX]);
-        v[VY] = FIX2FLT(thing->pos[VY]);
+        v[VX] = mo->pos[VX];
+        v[VY] = mo->pos[VY];
 
         thangle =
-            BANG2RAD(bamsAtan2(FIX2FLT(try) * 10, FIX2FLT(trx) * 10)) - PI / 2;
+            BANG2RAD(bamsAtan2(pos[VY] * 10, pos[VX] * 10)) - PI / 2;
         sinrv = sin(thangle);
         cosrv = cos(thangle);
-        off[VX] = cosrv * (thing->radius >> FRACBITS);
-        off[VY] = sinrv * (thing->radius >> FRACBITS);
+        off[VX] = cosrv * mo->radius;
+        off[VY] = sinrv * mo->radius;
         if(!C_CheckViewRelSeg
            (v[VX] - off[VX], v[VY] - off[VY], v[VX] + off[VX],
             v[VY] + off[VY]))
@@ -798,9 +792,8 @@ void R_ProjectSprite(mobj_t *thing)
             // we will need to draw it. Otherwise large models are likely
             // to disappear too early.
             if(P_ApproxDistance
-               (distance * FRACUNIT,
-                thing->pos[VZ] + FLT2FIX((thing->height / 2) - viewZ)) >
-               MAX_OBJECT_RADIUS * FRACUNIT)
+               (distance, mo->pos[VZ] + (mo->height / 2) - viewZ) >
+               MAX_OBJECT_RADIUS)
             {
                 return;         // Can't be visible.
             }
@@ -815,31 +808,31 @@ void R_ProjectSprite(mobj_t *thing)
     vis = R_NewVisSprite();
     vis->type = VSPR_MAP_OBJECT;
     vis->distance = distance;
-    vis->data.mo.subsector = thing->subsector;
-    if(thing->usingBias && useBias)
+    vis->data.mo.subsector = mo->subsector;
+    if(mo->usingBias && useBias)
         vis->light = NULL;
     else
-        vis->light = DL_GetLuminous(thing->light);
+        vis->light = LO_GetLuminous(mo->light);
 
     vis->data.mo.mf = mf;
     vis->data.mo.nextmf = nextmf;
     vis->data.mo.inter = interp;
-    vis->data.mo.flags = thing->ddflags;
-    vis->data.mo.id = thing->thinker.id;
-    vis->data.mo.selector = thing->selector;
-    vis->center[VX] = FIX2FLT(thing->pos[VX]);
-    vis->center[VY] = FIX2FLT(thing->pos[VY]);
-    vis->center[VZ] = FIX2FLT(thing->pos[VZ]);
+    vis->data.mo.flags = mo->ddflags;
+    vis->data.mo.id = mo->thinker.id;
+    vis->data.mo.selector = mo->selector;
+    vis->center[VX] = mo->pos[VX];
+    vis->center[VY] = mo->pos[VY];
+    vis->center[VZ] = mo->pos[VZ];
 
     vis->data.mo.flooradjust =
         (fabs(sect->SP_floorvisheight - sect->SP_floorheight) < 8);
 
-    // The thing's Z coordinate must match the actual visible
+    // The mo's Z coordinate must match the actual visible
     // floor/ceiling height.  When using smoothing, this requires
     // iterating through the sectors (planes) in the vicinity.
     validCount++;
-    projectedThing = thing;
-    P_ThingSectorsIterator(thing, RIT_VisMobjZ, vis);
+    projectedMobj = mo;
+    P_MobjSectorsIterator(mo, RIT_VisMobjZ, vis);
 
     vis->data.mo.gzt =
         vis->center[VZ] + ((float) spritelumps[lump]->topoffset);
@@ -848,9 +841,9 @@ void R_ProjectSprite(mobj_t *thing)
     {
         float point[3];
 
-        point[0] = FIX2FLT(thing->pos[VX]);
-        point[1] = FIX2FLT(thing->pos[VY]);
-        point[2] = FIX2FLT(thing->pos[VZ]) + thing->height / 2;
+        point[0] = mo->pos[VX];
+        point[1] = mo->pos[VY];
+        point[2] = mo->pos[VZ] + mo->height / 2;
         LG_Evaluate(point, vis->data.mo.rgb);
     }
     else
@@ -860,20 +853,20 @@ void R_ProjectSprite(mobj_t *thing)
 
     vis->data.mo.viewaligned = align;
 
-    vis->data.mo.secfloor = thing->subsector->sector->SP_floorvisheight;
-    vis->data.mo.secceil  = thing->subsector->sector->SP_ceilvisheight;
+    vis->data.mo.secfloor = mo->subsector->sector->SP_floorvisheight;
+    vis->data.mo.secceil  = mo->subsector->sector->SP_ceilvisheight;
 
-    if(thing->ddflags & DDMF_TRANSLATION)
-        vis->data.mo.pclass = (thing->ddflags >> DDMF_CLASSTRSHIFT) & 0x3;
+    if(mo->ddflags & DDMF_TRANSLATION)
+        vis->data.mo.pclass = (mo->ddflags >> DDMF_CLASSTRSHIFT) & 0x3;
     else
         vis->data.mo.pclass = 0;
 
     // Foot clipping.
-    vis->data.mo.floorclip = thing->floorclip;
-    if(thing->ddflags & DDMF_BOB)
+    vis->data.mo.floorclip = mo->floorclip;
+    if(mo->ddflags & DDMF_BOB)
     {
         // Bobbing is applied to the floorclip.
-        vis->data.mo.floorclip += R_GetBobOffset(thing);
+        vis->data.mo.floorclip += R_GetBobOffset(mo);
     }
 
     if(mf)
@@ -885,16 +878,17 @@ void R_ProjectSprite(mobj_t *thing)
         }
         else if(mf->sub[0].flags & MFF_SPIN)
         {
-            vis->data.mo.yaw = modelSpinSpeed * 70 * levelTime + (long) thing % 360;
+            vis->data.mo.yaw =
+                modelSpinSpeed * 70 * levelTime + (long) mo % 360;
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
         {
-            vis->data.mo.yaw = R_MovementYaw(thing->mom[MX], thing->mom[MY]);
+            vis->data.mo.yaw = R_MovementYaw(mo->mom[MX], mo->mom[MY]);
         }
         else
         {
             vis->data.mo.yaw = (useSRVOAngle && !netgame &&
-                                !playback ? (thing->visangle << 16) : thing->
+                                !playback ? (mo->visangle << 16) : mo->
                                 angle) / (float) ANGLE_MAX *-360;
         }
 
@@ -902,7 +896,7 @@ void R_ProjectSprite(mobj_t *thing)
         if(mf->sub[0].flags & MFF_IDANGLE)
         {
             // Multiply with an arbitrary factor.
-            vis->data.mo.yaw += THING_TO_ID(thing) % 360;
+            vis->data.mo.yaw += MOBJ_TO_ID(mo) % 360;
         }
 
         if(mf->sub[0].flags & MFF_ALIGN_PITCH)
@@ -915,7 +909,7 @@ void R_ProjectSprite(mobj_t *thing)
         else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)
         {
             vis->data.mo.pitch =
-                R_MovementPitch(thing->mom[MX], thing->mom[MY], thing->mom[MZ]);
+                R_MovementPitch(mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
         }
         else
             vis->data.mo.pitch = 0;
@@ -925,7 +919,7 @@ void R_ProjectSprite(mobj_t *thing)
     vis->data.mo.patch = lump;
 
     // Set light level.
-    if((levelFullBright || thing->state->flags & STF_FULLBRIGHT) &&
+    if((levelFullBright || mo->state->flags & STF_FULLBRIGHT) &&
        (!mf || !(mf->sub[0].flags & MFF_DIM)))
     {
         vis->data.mo.lightlevel = -1; // fullbright
@@ -947,15 +941,15 @@ void R_ProjectSprite(mobj_t *thing)
     // 1 = 1/8 transparent
     // 4 = 1/2 transparent
     // 7 = 7/8 transparent
-    i = thing->selector >> DDMOBJ_SELECTOR_SHIFT;
+    i = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
     if(i & 0xe0)
     {
         vis->data.mo.alpha = 1 - ((i & 0xe0) >> 5) / 8.0f;
     }
     else
     {
-        if(thing->translucency)
-            vis->data.mo.alpha = 1 - thing->translucency * reciprocal255;
+        if(mo->translucency)
+            vis->data.mo.alpha = 1 - mo->translucency * reciprocal255;
         else
             vis->data.mo.alpha = -1;
     }
@@ -967,22 +961,22 @@ void R_ProjectSprite(mobj_t *thing)
     if((vis->data.mo.mf && useSRVO > 0) ||
        (!vis->data.mo.mf && useSRVO > 1))
     {
-        if(thing->state && thing->tics >= 0)
+        if(mo->state && mo->tics >= 0)
         {
             float   mul =
-                (thing->tics - frameTimePos) / (float) thing->state->tics;
+                (mo->tics - frameTimePos) / (float) mo->state->tics;
 
             for(i = 0; i < 3; i++)
-                vis->data.mo.visoff[i] = FIX2FLT(thing->srvo[i] << 8) * mul;
+                vis->data.mo.visoff[i] = mo->srvo[i] * mul;
         }
 
-        if(thing->mom[MX] || thing->mom[MY] || thing->mom[MZ])
+        if(mo->mom[MX] != 0 || mo->mom[MY] != 0 || mo->mom[MZ] != 0)
         {
             // Use the object's speed to calculate a short-range
             // offset.
-            vis->data.mo.visoff[VX] += FIX2FLT(thing->mom[MX]) * frameTimePos;
-            vis->data.mo.visoff[VY] += FIX2FLT(thing->mom[MY]) * frameTimePos;
-            vis->data.mo.visoff[VZ] += FIX2FLT(thing->mom[MZ]) * frameTimePos;
+            vis->data.mo.visoff[VX] += mo->mom[MX] * frameTimePos;
+            vis->data.mo.visoff[VY] += mo->mom[MY] * frameTimePos;
+            vis->data.mo.visoff[VZ] += mo->mom[MZ] * frameTimePos;
         }
     }
 }
@@ -990,7 +984,7 @@ void R_ProjectSprite(mobj_t *thing)
 void R_AddSprites(sector_t *sec)
 {
     float       visibleTop;
-    mobj_t      *thing;
+    mobj_t      *mo;
     spriteinfo_t spriteInfo;
     boolean     raised = false;
 
@@ -1001,9 +995,9 @@ void R_AddSprites(sector_t *sec)
 
     sec->addspritecount = frameCount;
 
-    for(thing = sec->thinglist; thing; thing = thing->snext)
+    for(mo = sec->mobjList; mo; mo = mo->snext)
     {
-        R_ProjectSprite(thing);
+        R_ProjectSprite(mo);
 
         // Hack: Sprites have a tendency to extend into the ceiling in
         // sky sectors. Here we will raise the skyfix dynamically, at
@@ -1011,13 +1005,12 @@ void R_AddSprites(sector_t *sec)
         // Only check
         if(R_IsSkySurface(&sec->SP_ceilsurface))
         {
-            if(!(thing->dplayer && thing->dplayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
-               thing->pos[VZ] <= sec->SP_ceilheight &&
-               thing->pos[VZ] >= sec->SP_floorheight && !sec->selfRefHack)
+            if(!(mo->dplayer && mo->dplayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
+               mo->pos[VZ] <= sec->SP_ceilheight &&
+               mo->pos[VZ] >= sec->SP_floorheight && !sec->selfRefHack)
             {
-                R_GetSpriteInfo(thing->sprite, thing->frame, &spriteInfo);
-                visibleTop =
-                    FIX2FLT(thing->pos[VZ] + (spriteInfo.height << FRACBITS));
+                R_GetSpriteInfo(mo->sprite, mo->frame, &spriteInfo);
+                visibleTop = mo->pos[VZ] + spriteInfo.height;
 
                 if(visibleTop >
                     sec->SP_ceilheight + sec->skyfix[PLN_CEILING].offset)
@@ -1038,10 +1031,10 @@ void R_AddSprites(sector_t *sec)
 
 void R_SortVisSprites(void)
 {
-    int     i, count;
+    int         i, count;
     vissprite_t *ds, *best = 0;
     vissprite_t unsorted;
-    float   bestdist;
+    float       bestdist;
 
     count = vissprite_p - vissprites;
 
@@ -1065,14 +1058,16 @@ void R_SortVisSprites(void)
 
     vsprsortedhead.next = vsprsortedhead.prev = &vsprsortedhead;
 
-/* \FIXME
- * we need a better algorithm here. nuts.wad map01 is a perfect pathological test case
- * Oprofile results from nuts.wad below. Over 25% of total execution time was spent sorting
--------------------------------------------------------------------------------
-811299   26.0547  R_SortVisSprites
-  811299   100.000  R_SortVisSprites [self]
--------------------------------------------------------------------------------
- */
+    /**
+     * \todo
+     * Oprofile results from nuts.wad show over 25% of total execution time
+     * was spent sorting vissprites (nuts.wad map01 is a perfect
+     * pathological test case).
+     *
+     * Rather than try to speed up the sort, it would make more sense to
+     * actually construct the vissprite in z order if it can be done in
+     * linear time.
+     */
 
     for(i = 0; i < count; ++i)
     {
@@ -1114,7 +1109,6 @@ void R_SetAmbientColor(float *rgba, float lightLevel, float distance)
     R_FreeRendPoly(poly);
 }
 
-
 static void scaleFloatRGB(float *out, const float *in, float mul)
 {
     memset(out, 0, sizeof(float) * 3);
@@ -1134,7 +1128,7 @@ static void glowLightSetup(vlight_t *light)
 /**
  * Iterator for processing light sources around a vissprite.
  */
-boolean visSpriteLightIterator(lumobj_t *lum, fixed_t xyDist, void *data)
+boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
 {
     vlightitervars_t *vars = (vlightitervars_t*) data;
     float       dist;
@@ -1146,12 +1140,12 @@ boolean visSpriteLightIterator(lumobj_t *lum, fixed_t xyDist, void *data)
     {
     case LT_OMNI:
         {
-        fixed_t     zDist;
+        float       zDist;
 
-        zDist = FLT2FIX(vars->pos[VZ] - lum->pos[VZ] + LUM_OMNI(lum)->zOff);
-        dist = FIX2FLT(P_ApproxDistance(xyDist, zDist));
+        zDist = vars->pos[VZ] - lum->pos[VZ] + LUM_OMNI(lum)->zOff;
+        dist = P_ApproxDistance(xyDist, zDist);
 
-        if(dist < (float) dlMaxRad)
+        if(dist < (float) loMaxRadius)
             addLight = true;
         }
         break;
@@ -1282,7 +1276,7 @@ void R_DetermineLightsAffectingVisSprite(const visspritelightparams_t *params,
     }
 
     // Add extra light using dynamic lights.
-    if(params->maxLights > numLights && dlInited && params->subsector)
+    if(params->maxLights > numLights && loInited && params->subsector)
     {
         vlightitervars_t vars;
 
@@ -1295,8 +1289,8 @@ void R_DetermineLightsAffectingVisSprite(const visspritelightparams_t *params,
         for(i = numLights; i < MAX_VISSPRITE_LIGHTS; ++i)
             lights[i].approxDist = (float) DDMAXINT;
 
-        DL_LumRadiusIterator(params->subsector, FLT2FIX(params->center[VX]),
-                             FLT2FIX(params->center[VY]), dlMaxRad << FRACBITS,
+        LO_LumobjsRadiusIterator(params->subsector, params->center[VX],
+                             params->center[VY], (float) loMaxRadius,
                              &vars, visSpriteLightIterator);
     }
 
@@ -1318,7 +1312,7 @@ void R_DetermineLightsAffectingVisSprite(const visspritelightparams_t *params,
 
             // The intensity of the light.
             intensity = (1 - light->approxDist /
-                            (LUM_OMNI(l)->radius * 2)) * 2;
+                            LUM_OMNI(l)->radius) * 2;
             if(intensity < 0)
                 intensity = 0;
             if(intensity > 1)
@@ -1364,7 +1358,7 @@ float R_GetBobOffset(mobj_t *mo)
 {
     if(mo->ddflags & DDMF_BOB)
     {
-        return (sin(THING_TO_ID(mo) + levelTime / 1.8286 * 2 * PI) * 8);
+        return (sin(MOBJ_TO_ID(mo) + levelTime / 1.8286 * 2 * PI) * 8);
     }
     return 0;
 }

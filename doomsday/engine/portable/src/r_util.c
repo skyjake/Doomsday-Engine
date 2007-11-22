@@ -22,11 +22,13 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_util.c: Refresh Utility Routines
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <math.h>
 
 #include "de_base.h"
 #include "de_refresh.h"
@@ -35,9 +37,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define SLOPERANGE  2048
-#define SLOPEBITS   11
-#define DBITS       (FRACBITS-SLOPEBITS)
+#define SLOPERANGE      2048
+#define SLOPEBITS       11
+#define DBITS           (FRACBITS-SLOPEBITS)
 
 // TYPES -------------------------------------------------------------------
 
@@ -62,31 +64,30 @@ extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
  *
  * @param x         X coordinate to test.
  * @param y         Y coordinate to test.
- * @return int      <code>0</code> = front, else <code>1</code> = back.
+ * @return int      @c 0 = front, else @c 1 = back.
  */
-int R_PointOnSide(const fixed_t x, const fixed_t y, const node_t *node)
+int R_PointOnSide(const float x, const float y, const node_t *node)
 {
-    float       fx = FIX2FLT(x), fy = FIX2FLT(y);
     float       dx, dy;
     float       left, right;
 
     if(!node->dx)
     {
-        if(fx <= node->x)
+        if(x <= node->x)
             return (node->dy > 0? 1:0);
         else
             return (node->dy < 0? 1:0);
     }
     if(!node->dy)
     {
-        if(fy <= node->y)
+        if(y <= node->y)
             return (node->dx < 0? 1:0);
         else
             return (node->dx > 0? 1:0);
     }
 
-    dx = (fx - node->x);
-    dy = (fy - node->y);
+    dx = (x - node->x);
+    dy = (y - node->y);
 
     // Try to quickly decide by looking at the signs.
     if(node->dx < 0)
@@ -145,53 +146,6 @@ int R_PointOnSide(const fixed_t x, const fixed_t y, const node_t *node)
         return 1;               // back side
 }
 
-/*
-   int  R_PointOnSegSide (fixed_t x, fixed_t y, seg_t *line)
-   {
-   fixed_t  lx, ly;
-   fixed_t  ldx, ldy;
-   fixed_t  dx,dy;
-   fixed_t  left, right;
-
-   lx = line->v1->x;
-   ly = line->v1->y;
-
-   ldx = line->v2->x - lx;
-   ldy = line->v2->y - ly;
-
-   if (!ldx)
-   {
-   if (x <= lx)
-   return ldy > 0;
-   return ldy < 0;
-   }
-   if (!ldy)
-   {
-   if (y <= ly)
-   return ldx < 0;
-   return ldx > 0;
-   }
-
-   dx = (x - lx);
-   dy = (y - ly);
-
-   // try to quickly decide by looking at sign bits
-   if ( (ldy ^ ldx ^ dx ^ dy)&0x80000000 )
-   {
-   if  ( (ldy ^ dx) & 0x80000000 )
-   return 1;    // (left is negative)
-   return 0;
-   }
-
-   left = FixedMul ( ldy>>FRACBITS , dx );
-   right = FixedMul ( dy , ldx>>FRACBITS );
-
-   if (right < left)
-   return 0;        // front side
-   return 1;            // back side
-   }
- */
-
 int R_SlopeDiv(unsigned num, unsigned den)
 {
     unsigned    ans;
@@ -214,69 +168,74 @@ int R_SlopeDiv(unsigned num, unsigned den)
  *
  * @return  angle_t     Angle between the test point and viewX,y.
  */
-angle_t R_PointToAngle(fixed_t x, fixed_t y)
+angle_t R_PointToAngle(float x, float y)
 {
-    x -= FLT2FIX(viewX);
-    y -= FLT2FIX(viewY);
+    fixed_t         pos[2];
 
-    if((!x) && (!y))
+    x -= viewX;
+    y -= viewY;
+
+    if(x == 0 && y == 0)
         return 0;
 
-    if(x >= 0)
+    pos[VX] = FLT2FIX(x);
+    pos[VY] = FLT2FIX(y);
+
+    if(pos[VX] >= 0)
     {                           // x >=0
-        if(y >= 0)
+        if(pos[VY] >= 0)
         {                       // y>= 0
-            if(x > y)
-                return tantoangle[R_SlopeDiv(y, x)];                // octant 0
+            if(pos[VX] > pos[VY])
+                return tantoangle[R_SlopeDiv(pos[VY], pos[VX])];                // octant 0
             else
-                return ANG90 - 1 - tantoangle[R_SlopeDiv(x, y)];    // octant 1
+                return ANG90 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])];    // octant 1
         }
         else
         {                       // y<0
-            y = -y;
-            if(x > y)
-                return -tantoangle[R_SlopeDiv(y, x)];               // octant 8
+            pos[VY] = -pos[VY];
+            if(pos[VX] > pos[VY])
+                return -tantoangle[R_SlopeDiv(pos[VY], pos[VX])];               // octant 8
             else
-                return ANG270 + tantoangle[R_SlopeDiv(x, y)];       // octant 7
+                return ANG270 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])];       // octant 7
         }
     }
     else
     {                           // x<0
-        x = -x;
-        if(y >= 0)
+        pos[VX] = -pos[VX];
+        if(pos[VY] >= 0)
         {                       // y>= 0
-            if(x > y)
-                return ANG180 - 1 - tantoangle[R_SlopeDiv(y, x)];   // octant 3
+            if(pos[VX] > pos[VY])
+                return ANG180 - 1 - tantoangle[R_SlopeDiv(pos[VY], pos[VX])];   // octant 3
             else
-                return ANG90 + tantoangle[R_SlopeDiv(x, y)];        // octant 2
+                return ANG90 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])];        // octant 2
         }
         else
         {                       // y<0
-            y = -y;
-            if(x > y)
-                return ANG180 + tantoangle[R_SlopeDiv(y, x)];       // octant 4
+            pos[VY] = -pos[VY];
+            if(pos[VX] > pos[VY])
+                return ANG180 + tantoangle[R_SlopeDiv(pos[VY], pos[VX])];       // octant 4
             else
-                return ANG270 - 1 - tantoangle[R_SlopeDiv(x, y)];   // octant 5
+                return ANG270 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])];   // octant 5
         }
     }
 }
 
-angle_t R_PointToAngle2(const fixed_t x1, const fixed_t y1,
-                        const fixed_t x2, const fixed_t y2)
+angle_t R_PointToAngle2(const float x1, const float y1,
+                        const float x2, const float y2)
 {
-    viewX = FIX2FLT(x1);
-    viewY = FIX2FLT(y1);
+    viewX = x1;
+    viewY = y1;
     return R_PointToAngle(x2, y2);
 }
 
-fixed_t R_PointToDist(const fixed_t x, const fixed_t y)
+float R_PointToDist(const float x, const float y)
 {
-    int         angle;
-    fixed_t     dx, dy, temp;
-    fixed_t     dist;
+    uint        angle;
+    float       dx, dy, temp;
+    float       dist;
 
-    dx = abs(x - FLT2FIX(viewX));
-    dy = abs(y - FLT2FIX(viewY));
+    dx = fabs(x - viewX);
+    dy = fabs(y - viewY);
 
     if(dy > dx)
     {
@@ -286,14 +245,14 @@ fixed_t R_PointToDist(const fixed_t x, const fixed_t y)
     }
 
     angle =
-        (tantoangle[FixedDiv(dy, dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT;
+        (tantoangle[FLT2FIX(dy / dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT;
 
-    dist = FixedDiv(dx, finesine[angle]);   // use as cosine
+    dist = dx / FIX2FLT(finesine[angle]); // Use as cosine
 
     return dist;
 }
 
-subsector_t *R_PointInSubsector(const fixed_t x, const fixed_t y)
+subsector_t *R_PointInSubsector(const float x, const float y)
 {
     node_t     *node = 0;
     uint        nodenum = 0;
@@ -307,8 +266,9 @@ subsector_t *R_PointInSubsector(const fixed_t x, const fixed_t y)
     {
         node = NODE_PTR(nodenum);
         ASSERT_DMU_TYPE(node, DMU_NODE);
-        nodenum = node->children[ R_PointOnSide(x, y, node) ];
+        nodenum = node->children[R_PointOnSide(x, y, node)];
     }
+
     return SUBSECTOR_PTR(nodenum & ~NF_SUBSECTOR);
 }
 
@@ -343,12 +303,11 @@ line_t *R_GetLineForSide(const uint sideNumber)
  *
  * @return              @c true, if the point is inside the sector.
  */
-boolean R_IsPointInSector(const fixed_t x, const fixed_t y,
+boolean R_IsPointInSector(const float x, const float y,
                           const sector_t *sector)
 {
     uint        i;
     boolean     isOdd = false;
-    float       fx = FIX2FLT(x), fy = FIX2FLT(y);
 
     for(i = 0; i < sector->linecount; ++i)
     {
@@ -364,12 +323,12 @@ boolean R_IsPointInSector(const fixed_t x, const fixed_t y,
         vtx[0] = line->L_v1;
         vtx[1] = line->L_v2;
         // It shouldn't matter whether the line faces inward or outward.
-        if((vtx[0]->V_pos[VY] < fy && vtx[1]->V_pos[VY] >= fy) ||
-           (vtx[1]->V_pos[VY] < fy && vtx[0]->V_pos[VY] >= fy))
+        if((vtx[0]->V_pos[VY] < y && vtx[1]->V_pos[VY] >= y) ||
+           (vtx[1]->V_pos[VY] < y && vtx[0]->V_pos[VY] >= y))
         {
             if(vtx[0]->V_pos[VX] +
-               (((fy - vtx[0]->V_pos[VY]) / (vtx[1]->V_pos[VY] - vtx[0]->V_pos[VY])) *
-                (vtx[1]->V_pos[VX] - vtx[0]->V_pos[VX])) < fx)
+               (((y - vtx[0]->V_pos[VY]) / (vtx[1]->V_pos[VY] - vtx[0]->V_pos[VY])) *
+                (vtx[1]->V_pos[VX] - vtx[0]->V_pos[VX])) < x)
             {
                 // Toggle oddness.
                 isOdd = !isOdd;
@@ -394,13 +353,12 @@ boolean R_IsPointInSector(const fixed_t x, const fixed_t y,
  *
  * @return              @c true, if the point is inside the sector.
  */
-boolean R_IsPointInSector2(const fixed_t x, const fixed_t y,
+boolean R_IsPointInSector2(const float x, const float y,
                            const sector_t *sector)
 {
     uint        i;
     subsector_t *subsector;
     fvertex_t  *vi, *vj;
-    float       fx, fy;
 
     subsector = R_PointInSubsector(x, y);
     if(subsector->sector != sector)
@@ -409,26 +367,23 @@ boolean R_IsPointInSector2(const fixed_t x, const fixed_t y,
         return false;
     }
 
-    fx = FIX2FLT(x);
-    fy = FIX2FLT(y);
-
     for(i = 0; i < subsector->segcount; ++i)
     {
         vi = &subsector->segs[i]->SG_v1->v;
         vj = &subsector->segs[(i + 1) % subsector->segcount]->SG_v1->v;
 
-        if(((vi->pos[VY] - fy) * (vj->pos[VX] - vi->pos[VX]) -
-            (vi->pos[VX] - fx) * (vj->pos[VY] - vi->pos[VY])) < 0)
+        if(((vi->pos[VY] - y) * (vj->pos[VX] - vi->pos[VX]) -
+            (vi->pos[VX] - x) * (vj->pos[VY] - vi->pos[VY])) < 0)
         {
             // Outside the subsector's edges.
             return false;
         }
 
-/*      if((vi->pos[VY] < fy && vj->pos[VY] >= fy) ||
-           (vj->pos[VY] < fy && vi->pos[VY] >= fy))
+/*      if((vi->pos[VY] < y && vj->pos[VY] >= y) ||
+           (vj->pos[VY] < y && vi->pos[VY] >= y))
         {
-            if(vi->pos[VX] + (((fy - vi->pos[VY])/(vj->pos[VY] - vi->pos[VY])) *
-                              (vj->pos[VX] - vi->pos[VX])) < fx)
+            if(vi->pos[VX] + (((y - vi->pos[VY])/(vj->pos[VY] - vi->pos[VY])) *
+                              (vj->pos[VX] - vi->pos[VX])) < x)
             {
                 // Toggle oddness.
                 isOdd = !isOdd;

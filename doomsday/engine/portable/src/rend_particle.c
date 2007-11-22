@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_particle.c: Particle Effects
  */
 
@@ -47,13 +47,13 @@
 
 typedef struct pglink_s {
     struct pglink_s *next;
-    ptcgen_t *gen;
+    ptcgen_t       *gen;
 } pglink_t;
 
 typedef struct {
-    unsigned char gen;          // Index of the generator (activePtcGens)
-    short   index;
-    fixed_t distance;
+    unsigned char   gen;            // Index of the generator (activePtcGens)
+    short           index;
+    float           distance;
 } porder_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -99,18 +99,15 @@ void Rend_ParticleRegister(void)
               CVF_NO_MAX, 0, 0);
 }
 
-static fixed_t PG_PointDist(fixed_t c[3])
+static float PG_PointDist(fixed_t c[3])
 {
-    fixed_t dist = FixedMul(FLT2FIX(viewY) - c[VY], -viewSin)
-        - FixedMul(FLT2FIX(viewX) - c[VX], viewCos);
+    float       dist =
+        ((viewY - FIX2FLT(c[VY])) * -viewSin) -
+                    ((viewX - FIX2FLT(c[VX])) * viewCos);
 
     if(dist < 0)
         return -dist;           // Always return positive.
     return dist;
-
-    // Approximate the 3D distance to the point.
-    /*return M_AproxDistance(M_AproxDistance(c[VX] - viewX, c[VY] - viewY),
-       c[VZ] - viewZ); */
 }
 
 /**
@@ -303,9 +300,8 @@ static void PG_CheckOrderBuffer(uint max)
 static int PG_ListVisibleParticles(void)
 {
     unsigned int i, m;
-    int     p, stagetype;
-    fixed_t maxdist, mindist = FRACUNIT * particleNearLimit;
-    ptcgen_t *gen;
+    int         p, stagetype;
+    ptcgen_t   *gen;
     ded_ptcgen_t *def;
     particle_t *pt;
 
@@ -338,7 +334,6 @@ static int PG_ListVisibleParticles(void)
             continue;
 
         def = gen->def;
-        maxdist = FRACUNIT * def->maxdist;
         for(p = 0, pt = gen->ptcs; p < gen->count; ++p, pt++)
         {
             if(pt->stage < 0)
@@ -351,11 +346,11 @@ static int PG_ListVisibleParticles(void)
             order[m].index = p;
             order[m].distance = PG_PointDist(pt->pos);
             // Don't allow zero distance.
-            if(!order[m].distance)
+            if(order[m].distance == 0)
                 order[m].distance = 1;
-            if(maxdist && order[m].distance > maxdist)
+            if(def->maxdist != 0 && order[m].distance > def->maxdist)
                 continue;       // Too far.
-            if(order[m].distance < mindist)
+            if(order[m].distance < (float) particleNearLimit)
                 continue;       // Too near.
 
             stagetype = gen->stages[pt->stage].type;
@@ -524,7 +519,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         }
 
         maxdist = gen->def->maxdist;
-        dist = FIX2FLT(order[i].distance);
+        dist = order[i].distance;
 
         // Far diffuse?
         if(maxdist)
@@ -555,7 +550,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
 
         center[VX] = FIX2FLT(pt->pos[VX]);
         center[VZ] = FIX2FLT(pt->pos[VY]);
-        center[VY] = FIX2FLT(P_GetParticleZ(pt));
+        center[VY] = P_GetParticleZ(pt);
 
         if(!flatOnPlane && !flatOnWall)
         {
@@ -579,7 +574,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             // Render the particle as a model.
             params.distance = dist;
             params.subsector =
-                R_PointInSubsector(pt->pos[VX], pt->pos[VY]);
+                R_PointInSubsector(FIX2FLT(pt->pos[VX]), FIX2FLT(pt->pos[VY]));
             sec = params.subsector->sector;
             params.center[VX] = center[VX];
             params.center[VY] = center[VZ];
@@ -603,7 +598,8 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             // Set the correct orientation for the particle.
             if(params.mf->sub[0].flags & MFF_MOVEMENT_YAW)
             {
-                params.yaw = R_MovementYaw(pt->mov[0], pt->mov[1]);
+                params.yaw =
+                    R_MovementYaw(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]));
             }
             else
             {

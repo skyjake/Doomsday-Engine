@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_sky.c: Sky Sphere and 3D Models
  *
  * This version supports only two sky layers.
@@ -48,7 +48,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct skyvertex_s {
-    float   x, y, z;
+    float           pos[3];
 } skyvertex_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -204,22 +204,19 @@ static void SkyVertex(int r, int c)
         else
             gl.Color3f(1, 1, 1);
     }
+
     // And finally the vertex itself.
-    //gl.Vertex3f(vx + svtx->x, vy + svtx->y*(yflip? -1 : 1), vz + svtx->z);
-    gl.Vertex3f(svtx->x, svtx->y * (yflip ? -1 : 1), svtx->z);
+    gl.Vertex3f(svtx->pos[VX], svtx->pos[VY] * (yflip ? -1 : 1), svtx->pos[VZ]);
 }
 
 static void CapSideVertex(int r, int c)
-{
-    // Look up the precalculated vertex.
+{   // Look up the precalculated vertex.
     skyvertex_t *svtx = skyVerts + SKYVTX_IDX(c, r);
 
-    /*gl.Vertex3f(vx + svtx->x, vy + svtx->y*(yflip? -1 : 1),
-       vz + svtx->z); */
-    gl.Vertex3f(svtx->x, svtx->y * (yflip ? -1 : 1), svtx->z);
+    gl.Vertex3f(svtx->pos[VX], svtx->pos[VY] * (yflip ? -1 : 1), svtx->pos[VZ]);
 }
 
-/*
+/**
  * Hemi is Upper or Lower. Zero is not acceptable.
  * The current texture is used. SKYHEMI_NO_TOPCAP can be used.
  */
@@ -418,7 +415,7 @@ void Rend_RenderSky(int hemis)
     }
 }
 
-/*
+/**
  * Calculate sky vertices.
  */
 void Rend_InitSky()
@@ -447,8 +444,8 @@ void Rend_ShutdownSky()
 
 void Rend_SkyDetail(int quarterDivs, int rows)
 {
-    float   topAngle, sideAngle, realRadius, scale = 1 /*32 */ ;
-    int     c, r;
+    float       topAngle, sideAngle, realRadius, scale = 1 /*32 */ ;
+    int         c, r;
     skyvertex_t *svtx;
 
     if(quarterDivs < 1)
@@ -475,15 +472,15 @@ void Rend_SkyDetail(int quarterDivs, int rows)
             sideAngle =
                 horizonOffset + maxSideAngle * (skyRows - r) / (float) skyRows;
             realRadius = scale * cos(sideAngle);
-            svtx->x = realRadius * cos(topAngle);
-            svtx->y = scale * sin(sideAngle);   // The height.
-            svtx->z = realRadius * sin(topAngle);
+            svtx->pos[VX] = realRadius * cos(topAngle);
+            svtx->pos[VY] = scale * sin(sideAngle);   // The height.
+            svtx->pos[VZ] = realRadius * sin(topAngle);
         }
 }
 
 static void updateLayerStats()
 {
-    int     i = 0;
+    int         i = 0;
 
     // -1 denotes 'no active layers'.
     firstLayer = -1;
@@ -499,9 +496,9 @@ static void updateLayerStats()
     }
 }
 
-static void internalSkyParams(skylayer_t * slayer, int parm, float value)
+static void internalSkyParams(skylayer_t *slayer, int parm, float value)
 {
-    switch (parm)
+    switch(parm)
     {
     case DD_ENABLE:
         slayer->flags |= SLF_ENABLED;
@@ -553,7 +550,7 @@ static void internalSkyParams(skylayer_t * slayer, int parm, float value)
 
 void Rend_SkyParams(int layer, int parm, float value)
 {
-    int     i;
+    int         i;
 
     if(isDedicated)
         return;

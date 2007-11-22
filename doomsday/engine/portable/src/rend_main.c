@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_main.c: Rendering Subsystem
  */
 
@@ -75,7 +75,7 @@ static void Rend_RenderBoundingBoxes(void);
 
 extern int useDynLights, translucentIceCorpse;
 extern int skyhemispheres, haloMode;
-extern int dlMaxRad;
+extern int loMaxRadius;
 extern int devNoCulling;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -164,13 +164,19 @@ void Rend_Register(void)
               0, 0, 200);
     C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255,
                Rend_CalcLightRangeModMatrix);
-    C_VAR_INT("rend-light-sky", &rendSkyLight, 0, 0, 1);
+    C_VAR_INT2("rend-light-sky", &rendSkyLight, 0, 0, 1,
+               LG_MarkAllForUpdate);
     C_VAR_FLOAT("rend-light-wall-angle", &rend_light_wall_angle, CVF_NO_MAX,
                 0, 0);
     C_VAR_INT("rend-dev-light-modmatrix", &debugLightModMatrix,
               CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, 0, 0, 1);
     C_VAR_BYTE("rend-dev-surface-linked", &devNoLinkedSurfaces, 0, 0, 1);
+
+    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, 0, 0, 1);
+    C_VAR_BYTE("rend-dev-blockmap-debug-lines", &bmapDebugLines, 0, 0, 1);
+    C_VAR_BYTE("rend-dev-blockmap-debug-polyobjs", &bmapDebugPolyobjs, 0, 0, 1);
+    C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, 0, .1f, 100);
 
     RL_Register();
     DL_Register();
@@ -219,7 +225,7 @@ void Rend_Reset(void)
 {
     // Textures are deleted (at least skies need this???).
     GL_ClearRuntimeTextures();
-    DL_Clear();
+    LO_Clear(); // Free lumobj stuff.
 }
 
 void Rend_ModelViewMatrix(boolean useAngles)
@@ -420,12 +426,12 @@ static ded_reflection_t *getReflectionDef(material_t *material, short *width,
 }
 
 /**
- * Pre: As we modify param poly quite a bit it is the responsibility of
+ * \pre As we modify param poly quite a bit it is the responsibility of
  *      the caller to ensure this is OK (ie if not it should pass us a
  *      copy instead (eg wall segs)).
  *
  * @param   texture     The texture/flat id of the texture on the poly.
- * @param   isFlat      (TRUE) = param texture is a flat.
+ * @param   isFlat      @c true = param texture is a flat.
  * @param   poly        The poly to add the shiny poly for.
  */
 static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
@@ -544,7 +550,7 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
                     // Possibly. Check the placement of the mid texture.
                     if(Rend_MidTexturePos
                        (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
-                        NULL, side->SW_middleoffy, texinfo->height,
+                        NULL, side->SW_middleoffset[VX], texinfo->height,
                         0 != (line->mapflags & ML_DONTPEGBOTTOM)))
                     {
                         if(openTop[0] >= gapTop[0] &&
@@ -826,7 +832,7 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
  * Converts quads to divquads.
  */
 static void applyWallHeightDivision(rendpoly_t *quad, const seg_t *seg,
-                                    sector_t *frontsec, float hi, float low)
+                                    sector_t *frontsec, float low, float hi)
 {
     uint        i;
     walldiv_t  *div;
@@ -920,95 +926,6 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
     return (visible[0] || visible[1]);
 }
 
-#define RPF2_SHADOW 0x0001
-#define RPF2_SHINY  0x0002
-#define RPF2_GLOW   0x0004
-#define RPF2_BLEND  0x0008
-
-#define RENDER_SEG_SECTION(poly, seg, material, section, alpha, lights, flags, bottomColor, topColor) \
-        (doRenderSegSection((poly), (seg), (material), (alpha), \
-                            (flags), Rend_SectorLight(frontsec), \
-                            lights, \
-                            (seg)->illum[(section)], &((seg)->tracker[(section)]), \
-                            (seg)->affected, (bottomColor), (topColor)))
-
-static void doRenderSegSection(rendpoly_t *quad, seg_t *seg, material_t *material,
-                               float alpha, short flags,
-                               float sectorLightLevel, uint lightListIdx,
-                               vertexillum_t *illumination,
-                               biastracker_t *tracker,
-                               biasaffection_t *affected,
-                               const float *bottomColor, const float *topColor)
-{
-    uint        i;
-    uint        segIndex = GET_SEG_IDX(seg);
-
-    if(alpha <= 0)
-        return; // no point rendering transparent polys...
-
-    // Make it fullbright?
-    if((flags & RPF2_GLOW) && glowingTextures)
-        quad->flags |= RPF_GLOW;
-
-    // Surface color/light.
-    RL_VertexColors(quad, sectorLightLevel, -1, topColor, alpha);
-
-    // Bottom color (if different from top)?
-    if(bottomColor != NULL)
-    {
-        for(i = 0; i < 4; i += 2)
-        {
-            quad->vertices[i].color.rgba[0] = (DGLubyte) (255 * bottomColor[0]);
-            quad->vertices[i].color.rgba[1] = (DGLubyte) (255 * bottomColor[1]);
-            quad->vertices[i].color.rgba[2] = (DGLubyte) (255 * bottomColor[2]);
-        }
-    }
-
-    // Dynamic lights.
-    quad->lightListIdx = lightListIdx;
-
-    // Do BIAS lighting for this poly.
-    SB_RendPoly(quad, sectorLightLevel, illumination, tracker, affected,
-                segIndex);
-
-    // Smooth Texture Animation?
-    if(flags & RPF2_BLEND)
-        polyTexBlend(quad, material);
-
-    // Add the poly to the appropriate list
-    RL_AddPoly(quad);
-
-    // Render Fakeradio polys for this seg?
-    if(flags & RPF2_SHADOW)
-    {
-        Rend_RadioUpdateLinedef(seg->linedef, seg->side);
-        Rend_RadioSegSection(quad, seg->linedef, seg->side, seg->offset,
-                             seg->length);
-    }
-
-    // Render Shiny polys for this seg?
-    if((flags & RPF2_SHINY) && useShinySurfaces)
-    {
-        ded_reflection_t *ref;
-        short width = 0;
-        short height = 0;
-
-        if((ref = getReflectionDef(material, &width, &height)) != NULL)
-        {
-            // Make sure the texture has been loaded.
-            if(GL_LoadReflectionMap(ref))
-            {
-                // We're going to modify the polygon quite a bit...
-                rendpoly_t *q = R_AllocRendPoly(RP_QUAD, true, 4);
-                R_MemcpyRendPoly(q, quad);
-                Rend_AddShinyPoly(q, ref, width, height);
-
-                R_FreeRendPoly(q);
-            }
-        }
-    }
-}
-
 static void getColorsForSegSection(short sideFlags, segsection_t section,
                                    const float **bottomColor, const float **topColor)
 {
@@ -1061,6 +978,11 @@ static void getColorsForSegSection(short sideFlags, segsection_t section,
         break;
     }
 }
+
+#define RPF2_SHADOW 0x0001
+#define RPF2_SHINY  0x0002
+#define RPF2_GLOW   0x0004
+#define RPF2_BLEND  0x0008
 
 /**
  * Same as above but for planes. Ultimately we should consider merging the
@@ -1163,15 +1085,34 @@ static void setSurfaceColorsForSide(side_t *side)
         bottomColorPtr = sLightColor;
 }
 
-static void renderSegSection(seg_t *seg, segsection_t section, surface_t *surface,
-                             float bottom, float top, float extraTexYOffset,
-                             sector_t *frontsec, boolean offsetTexYByTexHeight,
-                             boolean canMask, short sideFlags)
+static void lineDistanceAlpha(const float *point, float radius,
+                              const float *from, const float *to,
+                              sector_t *nearSec, float *alpha)
+{
+    // Calculate 2D distance to line.
+    float       distance =  M_PointLineDistance(from, to, point);
+
+    if(radius <= 0)
+        radius = 1;
+
+    if(distance < radius)
+    {
+        // Fade it out the closer the viewPlayer gets and clamp.
+        *alpha = (*alpha / radius) * distance;
+        *alpha = MINMAX_OF(0, *alpha, 1);
+    }
+}
+
+static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *surface,
+                                float bottom, float top, float extraTexYOffset,
+                                sector_t *frontsec, boolean softSurface,
+                                boolean canMask, short sideFlags)
 {
     boolean     visible = false, skyMask = false;
+    boolean     solidSeg = true;
 
     if(bottom >= top)
-        return;
+        return true;
 
     // Is there a visible surface?
     if(surface->SM_texture != 0)
@@ -1190,228 +1131,105 @@ static void renderSegSection(seg_t *seg, segsection_t section, surface_t *surfac
     // Is there a visible surface?
     if(visible)
     {
-        short       tempflags = 0;
-        rendpoly_t *quad;
         float       vL_ZTop, vL_ZBottom, vR_ZTop, vR_ZBottom, *vL_XY, *vR_XY;
-
-        // Init the quad.
-        quad = R_AllocRendPoly(RP_QUAD, true, 4);
-        quad->flags = 0;
-        quad->tex.detail = NULL;
-        quad->intertex.detail = NULL;
-        memcpy(&quad->normal, &surface->normal, sizeof(quad->normal));
+        short       tempflags = 0;
+        float       alpha = (section == SEG_MIDDLE? surface->rgba[3] : 1.0f);
+        float       texOffset[2] = {0, 0};
+        boolean     inView = true;
+        texinfo_t  *texinfo = NULL;
 
         // Get the start and end vertices, left then right.
         vL_XY = seg->SG_v1pos;
         vR_XY = seg->SG_v2pos;
 
+        // Calculate texture coordinates.
         vL_ZTop = vR_ZTop = top;
         vL_ZBottom = vR_ZBottom = bottom;
 
-        quad->wall->length = seg->length;
+        texOffset[VX] = surface->offset[VX] + seg->offset;
+        texOffset[VY] = surface->offset[VY] + extraTexYOffset;
 
-        // Fill in the remaining quad data.
-        if(skyMask)
-        {   // We'll mask this.
-            quad->flags = RPF_SKY_MASK;
-            quad->tex.id = 0;
-            quad->lightListIdx = 0;
-            quad->intertex.id = 0;
-        }
-        else
+        if(section == SEG_MIDDLE && softSurface)
         {
-            texinfo_t  *texinfo = NULL;
-            int         surfaceFlags;
+            mobj_t         *mo = viewPlayer->mo;
 
-            quad->flags = 0;
-            quad->texoffx = surface->offx + seg->offset;
-            quad->texoffy = surface->offy + extraTexYOffset;
+            /**
+             * Can the player walk through this surface?
+             * If the player is close enough we should NOT add a
+             * solid seg otherwise they'd get HOM when they are
+             * directly on top of the line (eg passing through an
+             * opaque waterfall).
+             */
 
-            surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
+            if(mo->subsector->sector == frontsec)
+            {
+                float       c[2];
+                c[VX] = mo->pos[VX];
+                c[VY] = mo->pos[VY];
 
-            if(offsetTexYByTexHeight)
-                quad->texoffy += texinfo->height;
-
-            if(!(surfaceFlags & SUF_NO_RADIO))
-                tempflags |= RPF2_SHADOW;
-            if(surface->SM_texture != -1)
-                tempflags |= RPF2_SHINY;
-            if(surfaceFlags & SUF_GLOW)
-                tempflags |= RPF2_GLOW;
-            if((surfaceFlags & SUF_BLEND) && !(surface->flags & SUF_TEXFIX))
-                tempflags |= RPF2_BLEND;
+                lineDistanceAlpha(c, mo->radius * .8f,
+                                  vL_XY, vR_XY, frontsec, &alpha);
+                if(alpha < 1)
+                    solidSeg = false;
+            }
         }
 
-        // Bottom Left.
-        quad->vertices[0].pos[0] = vL_XY[VX];
-        quad->vertices[0].pos[1] = vL_XY[VY];
-        quad->vertices[0].pos[2] = vL_ZBottom;
-
-        // Bottom Right.
-        quad->vertices[2].pos[0] = vR_XY[VX];
-        quad->vertices[2].pos[1] = vR_XY[VY];
-        quad->vertices[2].pos[2] = vR_ZBottom;
-
-        // Top Left.
-        quad->vertices[1].pos[0] = vL_XY[VX];
-        quad->vertices[1].pos[1] = vL_XY[VY];
-        quad->vertices[1].pos[2] = vL_ZTop;
-
-        // Top Right.
-        quad->vertices[3].pos[0] = vR_XY[VX];
-        quad->vertices[3].pos[1] = vR_XY[VY];
-        quad->vertices[3].pos[2] = vR_ZTop;
-
-        if(skyMask)
+        if(inView && alpha > 0)
         {
-            RL_AddPoly(quad);
-        }
-        else
-        {
-            const float    *topColor = NULL;
-            const float    *bottomColor = NULL;
-            uint            lightListIdx;
-
-            // Check for neighborhood division?
-            applyWallHeightDivision(quad, seg, frontsec, top, bottom);
-
-            getColorsForSegSection(sideFlags, section, &bottomColor, &topColor);
-
-            lightListIdx = DL_ProcessSegSection(seg, bottom, top);
-
-            RENDER_SEG_SECTION(quad, seg, &surface->material, section,
-                               1.0f, lightListIdx, tempflags, bottomColor, topColor);
-        }
-
-        R_FreeRendPoly(quad);
-    }
-}
-
-static boolean renderSegMiddle(seg_t *seg, segsection_t section, surface_t *surface,
-                               float bottom, float top,
-                               sector_t *frontsec, boolean pegTop,
-                               boolean softSurface,
-                               short sideFlags)
-{
-    float       vL_ZTop, vL_ZBottom, vR_ZTop, vR_ZBottom, *vL_XY, *vR_XY;
-    float       gaptop, gapbottom;
-    float       alpha = surface->rgba[3];
-    boolean     solidSeg = false, visible = false;
-
-    // Get the start and end vertices, left then right.
-    vL_XY = seg->SG_v1pos;
-    vR_XY = seg->SG_v2pos;
-
-    if(bottom >= top)
-        return true;
-
-    // Is there a visible surface?
-    if(surface->SM_texture != 0)
-    {
-        visible = true;
-    }
-
-    // Is there a visible surface?
-    if(visible)
-    {
-        float texOffY = 0;
-        texinfo_t *texinfo = NULL;
-
-        // Calculate texture coordinates.
-        vL_ZTop = vR_ZTop = gaptop = top;
-        vL_ZBottom = vR_ZBottom = gapbottom = bottom;
-
-        // We need the properties of the real flat/texture.
-        if(surface->SM_texture < 0)
-            GL_GetDDTextureInfo(DDT_UNKNOWN, &texinfo);
-        else if(surface->SM_isflat)
-            GL_GetFlatInfo(surface->SM_texture, &texinfo);
-        else
-            GL_GetTextureInfo(surface->SM_texture, &texinfo);
-
-        if(Rend_MidTexturePos
-           (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
-            &texOffY, surface->offy, texinfo->height, pegTop))
-        {
-            const float *topColor = NULL;
-            const float *bottomColor = NULL;
-            uint        lightListIdx;
-            short       tempflags = 0;
             rendpoly_t *quad;
             int         surfaceFlags;
 
-            // Should a solid segment be added here?
-            if(vL_ZTop >= gaptop && vL_ZBottom <= gapbottom &&
-               vR_ZTop >= gaptop && vR_ZBottom <= gapbottom)
-            {
-                if(!texinfo->masked && alpha >= 1 && surface->blendmode == 0)
-                    solidSeg = true; // We could add clipping seg.
-
-                // Can the player walk through this surface?
-                if(softSurface)
-                {
-                    mobj_t* mo = viewPlayer->mo;
-                    // If the player is close enough we should NOT add a solid seg
-                    // otherwise they'd get HOM when they are directly on top of the
-                    // line (eg passing through an opaque waterfall).
-                    if(mo->subsector->sector == frontsec)
-                    {
-                        // Calculate 2D distance to line.
-                        float c[2];
-                        float distance;
-
-                        c[VX] = FIX2FLT(mo->pos[VX]);
-                        c[VY] = FIX2FLT(mo->pos[VY]);
-                        distance =
-                            M_PointLineDistance(vL_XY, vR_XY, c);
-
-                        if(distance < (FIX2FLT(mo->radius)*.8f))
-                        {
-                            float temp = 0;
-
-                            // Fade it out the closer the viewPlayer gets.
-                            solidSeg = false;
-                            temp = (alpha / (FIX2FLT(mo->radius)*.8f));
-                            temp *= distance;
-
-                            // Clamp it.
-                            if(temp > 1)
-                                temp = 1;
-                            if(temp < 0)
-                                temp = 0;
-
-                            alpha = temp;
-                        }
-                    }
-                }
-            }
-
             // Init the quad.
             quad = R_AllocRendPoly(RP_QUAD, true, 4);
-            quad->flags = 0;
             quad->tex.detail = NULL;
             quad->intertex.detail = NULL;
             quad->wall->length = seg->length;
+            quad->flags = 0;
             memcpy(&quad->normal, &surface->normal, sizeof(quad->normal));
 
-            quad->texoffx = surface->offx + seg->offset;
-            quad->texoffy = texOffY;
+            quad->texOffset[VX] = texOffset[VX];
+            quad->texOffset[VY] = texOffset[VY];
 
-            // Blendmode
-            if(surface->blendmode == BM_NORMAL && noSpriteTrans)
-                quad->blendmode = BM_ZEROALPHA; // "no translucency" mode
+            // Fill in the remaining quad data.
+            if(skyMask)
+            {   // We'll mask this.
+                quad->flags = RPF_SKY_MASK;
+                quad->tex.id = 0;
+                quad->lightListIdx = 0;
+                quad->intertex.id = 0;
+            }
             else
-                quad->blendmode = surface->blendmode;
+            {
+                surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
+                if(section == SEG_MIDDLE && softSurface)
+                {
+                    // Blendmode.
+                    if(surface->blendmode == BM_NORMAL && noSpriteTrans)
+                        quad->blendmode = BM_ZEROALPHA; // "no translucency" mode
+                    else
+                        quad->blendmode = surface->blendmode;
 
-            surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
-            if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
-                tempflags |= RPF2_SHADOW;
-            if(solidSeg && surface->SM_texture != -1 && !texinfo->masked)
-                tempflags |= RPF2_SHINY;
-            if(surfaceFlags & SUF_GLOW)
-                tempflags |= RPF2_GLOW;
-            if((surfaceFlags & SUF_BLEND) && !(surface->flags & SUF_TEXFIX))
-                tempflags |= RPF2_BLEND;
+                    // If alpha, masked or blended we'll render as a vissprite.
+                    if(alpha < 1 || texinfo->masked || surface->blendmode > 0)
+                    {
+                        quad->flags = RPF_MASKED;
+                        solidSeg = false;
+                    }
+                }
+                else
+                {
+                    quad->blendmode = BM_NORMAL;
+                }
+
+                if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
+                    tempflags |= RPF2_SHADOW;
+                if(solidSeg && surface->SM_texture != -1 && !texinfo->masked)
+                    tempflags |= RPF2_SHINY;
+                if(surfaceFlags & SUF_GLOW)
+                    tempflags |= RPF2_GLOW;
+                if((surfaceFlags & SUF_BLEND) && !(surface->flags & SUF_TEXFIX))
+                    tempflags |= RPF2_BLEND;
+            }
 
             // Bottom Left.
             quad->vertices[0].pos[0] = vL_XY[VX];
@@ -1433,22 +1251,97 @@ static boolean renderSegMiddle(seg_t *seg, segsection_t section, surface_t *surf
             quad->vertices[3].pos[1] = vR_XY[VY];
             quad->vertices[3].pos[2] = vR_ZTop;
 
-            // If alpha, masked or blended we must render as a vissprite
-            if(alpha < 1 || texinfo->masked || surface->blendmode > 0)
-                quad->flags = RPF_MASKED;
+            if(skyMask)
+            {
+                /**
+                 * This poly is destined for the skymask, so we don't need
+                 * to do further processing.
+                 */
+                RL_AddPoly(quad);
+            }
             else
-                quad->flags = 0;
+            {
+                const float    *topColor = NULL;
+                const float    *bottomColor = NULL;
+                uint            lightListIdx;
+                float           sectorLightLevel = Rend_SectorLight(frontsec);
 
-            // Check for neighborhood division?
-            if(solidSeg && !(quad->flags & RPF_MASKED))
-                applyWallHeightDivision(quad, seg, frontsec, top, bottom);
+                // Check for neighborhood division?
+                if(solidSeg && !(quad->flags & RPF_MASKED))
+                    applyWallHeightDivision(quad, seg, frontsec, vL_ZBottom, vL_ZTop);
 
-            getColorsForSegSection(sideFlags, section, &bottomColor, &topColor);
+                getColorsForSegSection(sideFlags, section, &bottomColor, &topColor);
 
-            lightListIdx = DL_ProcessSegSection(seg, vL_ZBottom, vL_ZTop);
+                lightListIdx =
+                    DL_ProcessSegSection(seg, vL_ZBottom, vL_ZTop,
+                                         (quad->flags & RPF_MASKED)? true:false);
 
-            RENDER_SEG_SECTION(quad, seg, &surface->material, section,
-                               alpha, lightListIdx, tempflags, bottomColor, topColor);
+                // Make it fullbright?
+                if((tempflags & RPF2_GLOW) && glowingTextures)
+                    quad->flags |= RPF_GLOW;
+
+                // Surface color/light.
+                RL_VertexColors(quad, sectorLightLevel, -1, topColor, alpha);
+
+                // Bottom color (if different from top)?
+                if(bottomColor != NULL)
+                {
+                    uint        i;
+
+                    for(i = 0; i < 4; i += 2)
+                    {
+                        quad->vertices[i].color.rgba[0] = (DGLubyte) (255 * bottomColor[0]);
+                        quad->vertices[i].color.rgba[1] = (DGLubyte) (255 * bottomColor[1]);
+                        quad->vertices[i].color.rgba[2] = (DGLubyte) (255 * bottomColor[2]);
+                    }
+                }
+
+                // Dynamic lights.
+                quad->lightListIdx = lightListIdx;
+
+                // Do BIAS lighting for this poly.
+                SB_RendPoly(quad, sectorLightLevel, seg->illum[section],
+                            &seg->tracker[section], seg->affected,
+                            GET_SEG_IDX(seg));
+
+                // Smooth Texture Animation?
+                if(tempflags & RPF2_BLEND)
+                    polyTexBlend(quad, &surface->material);
+
+                // Add the poly to the appropriate list
+                RL_AddPoly(quad);
+
+                // Render Fakeradio polys for this seg?
+                if(tempflags & RPF2_SHADOW)
+                {
+                    Rend_RadioUpdateLinedef(seg->linedef, seg->side);
+                    Rend_RadioSegSection(quad, seg->linedef, seg->side, seg->offset,
+                                         seg->length);
+                }
+
+                // Render Shiny polys for this seg?
+                if((tempflags & RPF2_SHINY) && useShinySurfaces)
+                {
+                    ded_reflection_t *ref;
+                    short width = 0;
+                    short height = 0;
+
+                    if((ref = getReflectionDef(&surface->material, &width, &height)) != NULL)
+                    {
+                        // Make sure the texture has been loaded.
+                        if(GL_LoadReflectionMap(ref))
+                        {
+                            // We're going to modify the polygon quite a bit...
+                            rendpoly_t *q = R_AllocRendPoly(RP_QUAD, true, 4);
+                            R_MemcpyRendPoly(q, quad);
+                            Rend_AddShinyPoly(q, ref, width, height);
+
+                            R_FreeRendPoly(q);
+                        }
+                    }
+                }
+            }
+
             R_FreeRendPoly(quad);
         }
     }
@@ -1497,11 +1390,13 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     // Middle section.
     if(side->sections[SEG_MIDDLE].frameflags & SUFINF_PVIS)
     {
+        float       offsetY =
+            (ldef->mapflags & ML_DONTPEGBOTTOM)? -(fceil - ffloor) : 0;
+
         renderSegSection(seg, SEG_MIDDLE, &side->SW_middlesurface, ffloor, fceil,
-                         (ldef->mapflags & ML_DONTPEGBOTTOM)? -(fceil - ffloor) : 0,
+                         offsetY,
                          /*temp >*/ frontsec, /*< temp*/
-                         /*Peg top?*/ (ldef->mapflags & ML_DONTPEGBOTTOM),
-                         true, side->flags);
+                         false, true, side->flags);
     }
 
     if(!P_IsInVoid(viewPlayer))
@@ -1566,14 +1461,40 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     // Middle section.
     if(side->sections[SEG_MIDDLE].frameflags & SUFINF_PVIS)
     {
-        boolean softSurface =
+        surface_t  *surface = &side->SW_middlesurface;
+        texinfo_t  *texinfo = NULL;
+        float       texOffsetY = 0;
+        float       top, bottom, vL_ZBottom, vR_ZBottom, vL_ZTop, vR_ZTop;
+        boolean     softSurface =
             (!(ldef->mapflags & ML_BLOCKING) || !(viewPlayer->flags & DDPF_NOCLIP));
 
-        solidSeg = renderSegMiddle(seg, SEG_MIDDLE, &side->SW_middlesurface,
-                                   MAX_OF(bfloor, ffloor), MIN_OF(bceil, fceil),
-                                   /*temp >*/ frontsec, /*< temp*/
-                                   /*Peg top?*/ (ldef->mapflags & ML_DONTPEGBOTTOM),
-                                   softSurface, side->flags);
+        // We need the properties of the real flat/texture.
+        if(surface->SM_texture < 0)
+            GL_GetDDTextureInfo(DDT_UNKNOWN, &texinfo);
+        else if(surface->SM_isflat)
+            GL_GetFlatInfo(surface->SM_texture, &texinfo);
+        else
+            GL_GetTextureInfo(surface->SM_texture, &texinfo);
+
+        vL_ZBottom = vR_ZBottom = bottom = MAX_OF(bfloor, ffloor);
+        vL_ZTop    = vR_ZTop    = top    = MIN_OF(bceil, fceil);
+        if(Rend_MidTexturePos
+           (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
+            &texOffsetY, surface->offset[VY], texinfo->height,
+            (ldef->mapflags & ML_DONTPEGBOTTOM)? true : false))
+        {
+            // Can we make this a soft surface?
+            if(vL_ZTop >= top && vL_ZBottom <= bottom &&
+               vR_ZTop >= top && vR_ZBottom <= bottom)
+            {
+                softSurface = true;
+            }
+
+            solidSeg = renderSegSection(seg, SEG_MIDDLE, surface,
+                                        vL_ZBottom, vL_ZTop, texOffsetY,
+                                        /*temp >*/ frontsec, /*< temp*/
+                                        softSurface, false, side->flags);
+        }
     }
 
     // Upper section.
@@ -1591,8 +1512,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             texOffY += -(fceil - bceil);  // Align with normal middle texture.
 
         renderSegSection(seg, SEG_TOP, &side->SW_topsurface, bottom, fceil,
-                         texOffY, frontsec,
-                         !(ldef->mapflags & ML_DONTPEGTOP),
+                         texOffY, frontsec, false,
                          false, side->flags);
     }
 
@@ -1613,8 +1533,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 
         renderSegSection(seg, SEG_BOTTOM, &side->SW_bottomsurface, ffloor, top,
                          texOffY, frontsec,
-                         false,
-                         false, side->flags);
+                         false, false, side->flags);
     }
 
     // Can we make this a solid segment in the clipper?
@@ -1995,8 +1914,10 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
             }
             else
             {
-                poly->texoffx = sector->planes[plane->type]->surface.offx;
-                poly->texoffy = sector->planes[plane->type]->surface.offy;
+                poly->texOffset[VX] =
+                    sector->planes[plane->type]->surface.offset[VX];
+                poly->texOffset[VY] =
+                    sector->planes[plane->type]->surface.offset[VY];
             }
 
             if(surface->SM_texture != -1)
@@ -2049,20 +1970,20 @@ static void Rend_RenderSubsector(uint ssecidx)
     Rend_MarkSegsFacingFront(ssec);
 
     // Prepare for dynamic lighting.
-    DL_InitForSubsector(ssec);
+    LO_InitForSubsector(ssec);
 
     // Prepare for FakeRadio.
     Rend_RadioInitForSubsector(ssec);
     Rend_RadioSubsectorEdges(ssec);
 
     Rend_OccludeSubsector(ssec, false);
-    DL_ClipInSubsector(ssecidx);
+    LO_ClipInSubsector(ssecidx);
     Rend_OccludeSubsector(ssec, true);
 
     if(ssec->poly)
     {
         // Polyobjs don't obstruct, do clip lights with another algorithm.
-        DL_ClipBySight(ssecidx);
+        LO_ClipBySight(ssecidx);
     }
 
     // Mark the particle generators in the sector visible.
@@ -2154,7 +2075,7 @@ static void Rend_RenderNode(uint bspnum)
         bsp = NODE_PTR(bspnum);
 
         // Decide which side the view point is on.
-        side = R_PointOnSide(FLT2FIX(viewX), FLT2FIX(viewY), bsp);
+        side = R_PointOnSide(viewX, viewY, bsp);
 
         Rend_RenderNode(bsp->children[side]);   // Recursively divide front space.
         Rend_RenderNode(bsp->children[side ^ 1]);   // ...and back space.
@@ -2166,7 +2087,7 @@ void Rend_RenderMap(void)
     binangle_t viewside;
 
     // Set to true if dynlights are inited for this frame.
-    dlInited = false;
+    loInited = false;
 
     // This is all the clearing we'll do.
     if(P_IsInVoid(viewPlayer) || freezeRLs)
@@ -2182,7 +2103,7 @@ void Rend_RenderMap(void)
         // Prepare for rendering.
         RL_ClearLists();        // Clear the lists for new quads.
         C_ClearRanges();        // Clear the clipper.
-        DL_ClearForFrame();     // Zeroes the links.
+        LO_ClearForFrame();     // Zeroes the links.
         LG_Update();
         SB_BeginFrame();
         Rend_RadioInitForFrame();
@@ -2193,7 +2114,11 @@ void Rend_RenderMap(void)
         // Maintain luminous objects.
         if(useDynLights || haloMode || spriteLight || useDecorations)
         {
+            // Clear the projected dynlight lists.
             DL_InitForNewFrame();
+
+            // Clear the luminous objects.
+            LO_InitForNewFrame();
         }
 
         // Add the backside clipping range (if vpitch allows).
@@ -2210,8 +2135,8 @@ void Rend_RenderMap(void)
         }
 
         // The viewside line for the depth cue.
-        viewsidex = -FIX2FLT(viewSin);
-        viewsidey = FIX2FLT(viewCos);
+        viewsidex = -viewSin;
+        viewsidey = viewCos;
 
         // We don't want subsector clipchecking for the first subsector.
         firstsubsector = true;
@@ -2367,46 +2292,42 @@ void Rend_RetrieveLightSample(void)
             continue;
         }
 
-        /** Evaluate the light level at the point this player is at.
-        * Uses a very simply method which uses the sector in which the player
-        * is at currently and uses the light level of that sector.
-        * \todo Really this is junk. We should evaluate the lighting condition using
-        * a much better method (perhaps obtain an average color from all the
-        * vertexes (selected lists only) rendered in the previous frame?)
-	*/
-     /*   if(useBias)
-        {
+        /**
+         * Evaluate the light level at the point this player is at.
+         * Uses a very simply method which uses the sector in which the
+         * player is at currently and uses the light level of that sector.
+         *
+         * \todo Really this is junk. We should evaluate the lighting
+         * condition using a much better approach (perhaps obtain an average
+         * color from all the vertexes (selected lists only) rendered in the
+         * previous frame?)
+	     */
+        /*if(useBias)
+        {   // Use the bias lighting to evaluate the point.
             byte color[3];
 
-            // use the bias lighting to evaluate the point.
-            // todo this we'll create a vertex at the players position
-            // so that it can be evaluated with both ambient light (light grid)
-            // and with the bias light sources.
-
-            // Use the players postion.
-            pos[VX] = FIX2FLT(player->mo->[VX]);
-            pos[VY] = FIX2FLT(player->mo->[VY]);
-            pos[VZ] = FIX2FLT(player->mo->[VZ]);
-
             // \todo Should be affected by BIAS sources...
-            LG_Evaluate(pos, color);
+            LG_Evaluate(player->mo->pos, color);
             light = ((float)(color[0] + color[1] + color[2]) / 3) / 255.0f;
         }
-        else*/
+        else
+        */
         {
             // use the light level of the sector they are currently in.
             light = sub->sector->lightlevel;
         }
 
-        /** Pick the range based on the current lighting conditions compared
-        * to the previous lighting conditions.
-        * We adapt to predominantly bright lighting conditions (mere seconds)
-        * much quicker than very dark lighting conditions (upto 30mins).
-        * Obviously that would be much too slow for a fast paced action game.
-	*/
+        /**
+         * Pick the range based on the current lighting conditions compared
+         * to the previous lighting conditions.
+         *
+         * We adapt to predominantly bright lighting conditions (mere
+         * seconds) much quicker than very dark lighting conditions (upto
+         * 30 mins). Obviously, that would be much too slow for a fast paced
+         * action game.
+	     */
         if(light < playerLastLightSample[i].value)
-        {
-            // Going from a bright area to a darker one
+        {   // Going from a bright area to a darker one
             inter = (currentTime - playerLastLightSample[i].updateTime) /
                            (float) SECONDS_TO_TICKS(r_lightAdaptDarkTime);
 
@@ -2419,8 +2340,7 @@ void Rend_RetrieveLightSample(void)
             }
         }
         else if(light > playerLastLightSample[i].value)
-        {
-            // Going from a dark area to a bright one
+        {   // Going from a dark area to a bright one
             inter = (currentTime - playerLastLightSample[i].updateTime) /
                            (float) SECONDS_TO_TICKS(r_lightAdaptBrightTime);
 
@@ -2490,7 +2410,7 @@ void Rend_RetrieveLightSample(void)
  * applied to sector lightlevels, lightgrid point evaluations, vissprite
  * lightlevels, fakeradio shadows etc, etc...
  *
- * NOTE: There is no need to clamp the result. Since the offset values in
+ * \note There is no need to clamp the result. Since the offset values in
  *       the lightRangeModMatrix have already been clamped so that the resultant
  *       lightvalue is NEVER outside the range 0-254 when the original lightvalue
  *       is used as the index.
@@ -2734,7 +2654,7 @@ void Rend_DrawArrow(float pos3f[3], angle_t a, float s, float color3f[3],
 }
 
 /**
- * Renders bounding boxes for all mobj's (linked in sec->thinglist, except
+ * Renders bounding boxes for all mobj's (linked in sec->mobjList, except
  * the console player) in all sectors that are currently marked as vissible.
  *
  * Depth test is disabled to show all mobjs that are being rendered, regardless
@@ -2751,7 +2671,6 @@ static void Rend_RenderBoundingBoxes(void)
     static float yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
     float       alpha;
     float       eye[3];
-    float       pos[3];
 
     if(!devMobjBBox || netgame)
         return;
@@ -2779,28 +2698,25 @@ static void Rend_RenderBoundingBoxes(void)
         if(!(sec->frameflags & SIF_VISIBLE))
             continue;
 
-        // For every mobj in the sector's thinglist
-        for(mo = sec->thinglist; mo; mo = mo->snext)
+        // For every mobj in the sector's mobjList
+        for(mo = sec->mobjList; mo; mo = mo->snext)
         {
             if(mo == players[consoleplayer].mo)
                 continue; // We don't want the console player.
 
-            pos[VX] = FIX2FLT(mo->pos[VX]);
-            pos[VY] = FIX2FLT(mo->pos[VY]);
-            pos[VZ] = FIX2FLT(mo->pos[VZ]);
-            alpha = 1 - ((M_Distance(pos, eye)/(theWindow->width/2))/4);
+            alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->width/2))/4);
 
             if(alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.
 
             // Draw a bounding box in an appropriate color.
-            size = FIX2FLT(mo->radius);
-            Rend_DrawBBox(pos, size, size, mo->height/2,
+            size = mo->radius;
+            Rend_DrawBBox(mo->pos, size, size, mo->height/2,
                           (mo->ddflags & DDMF_MISSILE)? yellow :
                           (mo->ddflags & DDMF_SOLID)? green : red,
                           alpha, 0.08f, true);
 
-            Rend_DrawArrow(pos, mo->angle + ANG45 + ANG90 , size*1.25,
+            Rend_DrawArrow(mo->pos, mo->angle + ANG45 + ANG90 , size*1.25,
                            (mo->ddflags & DDMF_MISSILE)? yellow :
                            (mo->ddflags & DDMF_SOLID)? green : red, alpha);
         }

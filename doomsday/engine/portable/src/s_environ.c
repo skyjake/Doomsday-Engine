@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * s_environ.c: Environmental Sound Effects
  *
  * Calculation of the aural properties of sectors.
@@ -79,10 +79,10 @@ static ownernode_t *unusedNodeList = NULL;
  * Given a texture/flat name, look up the associated material type.
  *
  * @param name          Name of the texture/flat to look up.
- * @param isFlat        <code>true</code> = look for name among flats.
+ * @param isFlat        @c true, = look for name among flats.
  *
  * @return              If found; material type associated to the texture,
- *                      else <code>MATTYPE_UNKNOWN</code>.
+ *                      else @c MATTYPE_UNKNOWN.
  */
 materialtype_t S_MaterialTypeForName(const char *name, boolean isFlat)
 {
@@ -167,15 +167,15 @@ static void findSSecsAffectingSector(gamemap_t *map, uint secIDX)
 
     memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
 
-    memcpy(bbox, sec->bounds, sizeof(bbox));
-    bbox[BLEFT]   -= 128;
-    bbox[BRIGHT]  += 128;
-    bbox[BTOP]    -= 128;
-    bbox[BBOTTOM] += 128;
+    memcpy(bbox, sec->bbox, sizeof(bbox));
+    bbox[BOXLEFT]   -= 128;
+    bbox[BOXRIGHT]  += 128;
+    bbox[BOXTOP]    += 128;
+    bbox[BOXBOTTOM] -= 128;
 /*
 #if _DEBUG
 Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
-            bbox[BLEFT], bbox[BTOP], bbox[BRIGHT], bbox[BBOTTOM]);
+            bbox[BOXLEFT], bbox[BOXTOP], bbox[BOXRIGHT], bbox[BOXBOTTOM]);
 #endif
 */
     for(i = 0; i < map->numsubsectors; ++i)
@@ -184,10 +184,10 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
 
         // Is this subsector close enough?
         if(sub->sector == sec || // subsector is IN this sector
-           (sub->midpoint.pos[VX] > bbox[BLEFT] &&
-            sub->midpoint.pos[VX] < bbox[BRIGHT] &&
-            sub->midpoint.pos[VY] > bbox[BTOP] &&
-            sub->midpoint.pos[VY] < bbox[BBOTTOM]))
+           (sub->midpoint.pos[VX] > bbox[BOXLEFT] &&
+            sub->midpoint.pos[VX] < bbox[BOXRIGHT] &&
+            sub->midpoint.pos[VY] < bbox[BOXTOP] &&
+            sub->midpoint.pos[VY] > bbox[BOXBOTTOM]))
         {
             // It will contribute to the reverb settings of this sector.
             setSubSecSectorOwner(&subSecOwnerList, sub);
@@ -375,8 +375,8 @@ void S_CalcSectorReverb(sector_t *sec)
         return; // Wha?
 
     sectorSpace = (int) (sec->SP_ceilheight - sec->SP_floorheight) *
-        (sec->bounds[BRIGHT] - sec->bounds[BLEFT]) *
-        (sec->bounds[BBOTTOM] - sec->bounds[BTOP]);
+        (sec->bbox[BOXRIGHT] - sec->bbox[BOXLEFT]) *
+        (sec->bbox[BOXTOP] - sec->bbox[BOXBOTTOM]);
 /*
 #if _DEBUG
 Con_Message("sector %i: secsp:%i\n", c, sectorSpace);

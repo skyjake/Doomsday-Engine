@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_bias.c: Light/Shadow Bias
  *
  * Calculating macro-scale lighting on the fly.
@@ -95,7 +95,7 @@ static float biasAmount;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Register console variables for Shadow Bias.
  */
 void SB_Register(void)
@@ -116,7 +116,7 @@ void SB_Register(void)
 /*    C_VAR_INT("rend-dev-bias-solo", &editSelector, CVF_NO_ARCHIVE, -1, 255);*/
 }
 
-/*
+/**
  * Creates a new bias light source and sets the appropriate properties
  * to the values of the passed parameters. The id of the new light source
  * is returned unless there are no free sources available.
@@ -162,7 +162,7 @@ uint SB_NewSourceAt(float x, float y, float z, float size, float minLight,
     return numSources; // == index + 1;
 }
 
-/*
+/**
  * Same as above really but for updating an existing source.
  */
 void SB_UpdateSource(uint which, float x, float y, float z, float size,
@@ -188,7 +188,7 @@ void SB_UpdateSource(uint which, float x, float y, float z, float size,
     src->sectorLevel[1] = maxLight;
 }
 
-/*
+/**
  * Return a ptr to the bias light source by id.
  */
 source_t *SB_GetSource(int which)
@@ -196,7 +196,7 @@ source_t *SB_GetSource(int which)
     return &sources[which];
 }
 
-/*
+/**
  * Convert bias light source ptr to index.
  */
 uint SB_ToIndex(source_t* source)
@@ -207,7 +207,7 @@ uint SB_ToIndex(source_t* source)
         return (source - sources) + 1;
 }
 
-/*
+/**
  * Removes the specified bias light source from the level.
  *
  * @param which         The id of the bias light source to be deleted.
@@ -243,7 +243,7 @@ void SB_Delete(uint which)
         mobj_t *iter;
 
         seciter = SECTOR_PTR(j);
-        for(iter = seciter->thinglist; iter && !done; iter = iter->snext)
+        for(iter = seciter->mobjList; iter && !done; iter = iter->snext)
         {
             if(iter->usingBias && iter->light == which + 1)
             {
@@ -256,7 +256,7 @@ void SB_Delete(uint which)
     }
 }
 
-/*
+/**
  * Removes ALL bias light sources on the level.
  */
 void SB_Clear(void)
@@ -277,7 +277,7 @@ void SB_Clear(void)
         mobj_t *iter;
 
         seciter = SECTOR_PTR(i);
-        for(iter = seciter->thinglist; iter; iter = iter->snext)
+        for(iter = seciter->mobjList; iter; iter = iter->snext)
         {
             if(iter->usingBias)
             {
@@ -723,8 +723,8 @@ void SB_BeginFrame(void)
         {
             float   minLevel = s->sectorLevel[0];
             float   maxLevel = s->sectorLevel[1];
-            sector_t *sector = R_PointInSubsector
-                (FRACUNIT * s->pos[VX], FRACUNIT * s->pos[VY])->sector;
+            sector_t *sector =
+                R_PointInSubsector(s->pos[VX], s->pos[VY])->sector;
             float oldIntensity = s->intensity;
 
             // The lower intensities are useless for light emission.
@@ -930,7 +930,7 @@ void SB_LerpIllumination(vertexillum_t *illum, gl_rgba_t *result)
     {
         // We're done with the interpolation, just use the
         // destination color.
-        memcpy(result->rgba, illum->color.rgba, 4);
+        memcpy(result->rgba, illum->color.rgba, 3);
     }
     else
     {
@@ -939,8 +939,8 @@ void SB_LerpIllumination(vertexillum_t *illum, gl_rgba_t *result)
         if(inter > 1)
         {
             illum->flags &= ~VIF_LERP;
-            memcpy(illum->color.rgba, illum->dest.rgba, 4);
-            memcpy(result->rgba, illum->color.rgba, 4);
+            memcpy(illum->color.rgba, illum->dest.rgba, 3);
+            memcpy(result->rgba, illum->color.rgba, 3);
         }
         else
         {

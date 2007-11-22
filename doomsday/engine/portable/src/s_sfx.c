@@ -301,9 +301,7 @@ float Sfx_Priority(mobj_t *emitter, float *fixpos, float volume, int starttic)
     // The sound has an origin, base the points on distance.
     if(emitter)
     {
-        orig[VX] = FIX2FLT(emitter->pos[VX]);
-        orig[VY] = FIX2FLT(emitter->pos[VY]);
-        orig[VZ] = FIX2FLT(emitter->pos[VZ]);
+        memcpy(orig, emitter->pos, sizeof(orig));
     }
     else
     {
@@ -340,9 +338,9 @@ void Sfx_GetListenerXYZ(float *pos)
         return;
 
     // \fixme Make it exactly eye-level! (viewheight)
-    pos[VX] = FIX2FLT(listener->pos[VX]);
-    pos[VY] = FIX2FLT(listener->pos[VY]);
-    pos[VZ] = FIX2FLT(listener->pos[VZ] + FLT2FIX(listener->height) - (5 << FRACBITS));
+    pos[VX] = listener->pos[VX];
+    pos[VY] = listener->pos[VY];
+    pos[VZ] = listener->pos[VZ] + listener->height - 5;
 }
 
 /**
@@ -361,9 +359,10 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
     // Copy the emitter's position (if any), to the pos coord array.
     if(ch->emitter)
     {
-        ch->pos[VX] = FIX2FLT(ch->emitter->pos[VX]);
-        ch->pos[VY] = FIX2FLT(ch->emitter->pos[VY]);
-        ch->pos[VZ] = FIX2FLT(ch->emitter->pos[VZ]);
+        ch->pos[VX] = ch->emitter->pos[VX];
+        ch->pos[VY] = ch->emitter->pos[VY];
+        ch->pos[VZ] = ch->emitter->pos[VZ];
+
         // If this is a mobj, center the Z pos.
         if(P_IsMobjThinker(ch->emitter->thinker.function))
         {
@@ -397,9 +396,9 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
         if(ch->emitter && ch->emitter != listener &&
            P_IsMobjThinker(ch->emitter->thinker.function))
         {
-            vec[VX] = FIX2FLT(ch->emitter->mom[MX]) * TICSPERSEC;
-            vec[VY] = FIX2FLT(ch->emitter->mom[MY]) * TICSPERSEC;
-            vec[VZ] = FIX2FLT(ch->emitter->mom[MZ]) * TICSPERSEC;
+            vec[VX] = ch->emitter->mom[MX] * TICSPERSEC;
+            vec[VY] = ch->emitter->mom[MY] * TICSPERSEC;
+            vec[VZ] = ch->emitter->mom[MZ] * TICSPERSEC;
             driver->Setv(buf, SFXBP_VELOCITY, vec);
         }
         else
@@ -444,9 +443,10 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
             if(listener)
             {
                 angle =
-                    (R_PointToAngle2
-                     (listener->pos[VX], listener->pos[VY], ch->pos[VX] * FRACUNIT,
-                      ch->pos[VY] * FRACUNIT) -
+                    (R_PointToAngle2(listener->pos[VX],
+                                     listener->pos[VY],
+                                     ch->pos[VX],
+                                     ch->pos[VY]) -
                      listener->angle) / (float) ANGLE_MAX *360;
                 // We want a signed angle.
                 if(angle > 180)
@@ -500,9 +500,9 @@ void Sfx_ListenerUpdate(void)
         driver->Listenerv(SFXLP_ORIENTATION, vec);
 
         // Velocity. The unit is world distance units per second.
-        vec[VX] = FIX2FLT(listener->mom[MX]) * TICSPERSEC;
-        vec[VY] = FIX2FLT(listener->mom[MY]) * TICSPERSEC;
-        vec[VZ] = FIX2FLT(listener->mom[MZ]) * TICSPERSEC;
+        vec[VX] = listener->mom[MX] * TICSPERSEC;
+        vec[VY] = listener->mom[MY] * TICSPERSEC;
+        vec[VZ] = listener->mom[MZ] * TICSPERSEC;
         driver->Listenerv(SFXLP_VELOCITY, vec);
 
         // Reverb effects. Has the current sector changed?

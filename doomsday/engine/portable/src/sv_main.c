@@ -22,11 +22,13 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sv_main.c: Network Server
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <math.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -993,32 +995,28 @@ Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%f lookdir=%f\n",
     if(player->flags & DDPF_FIXPOS)
     {
         Msg_WriteLong(++player->fixcounter.pos);
-        Msg_WriteLong(player->mo->pos[VX]);
-        Msg_WriteLong(player->mo->pos[VY]);
-        Msg_WriteLong(player->mo->pos[VZ]);
+        Msg_WriteLong(FLT2FIX(player->mo->pos[VX]));
+        Msg_WriteLong(FLT2FIX(player->mo->pos[VY]));
+        Msg_WriteLong(FLT2FIX(player->mo->pos[VZ]));
 
 #ifdef _DEBUG
 Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
             player->fixcounter.pos,
-            FIX2FLT(player->mo->pos[VX]),
-            FIX2FLT(player->mo->pos[VY]),
-            FIX2FLT(player->mo->pos[VZ]));
+            player->mo->pos[VX], player->mo->pos[VY], player->mo->pos[VZ]);
 #endif
     }
 
     if(player->flags & DDPF_FIXMOM)
     {
         Msg_WriteLong(++player->fixcounter.mom);
-        Msg_WriteLong(player->mo->mom[MX]);
-        Msg_WriteLong(player->mo->mom[MY]);
-        Msg_WriteLong(player->mo->mom[MZ]);
+        Msg_WriteLong(FLT2FIX(player->mo->mom[MX]));
+        Msg_WriteLong(FLT2FIX(player->mo->mom[MY]));
+        Msg_WriteLong(FLT2FIX(player->mo->mom[MZ]));
 
 #ifdef _DEBUG
 Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
             player->fixcounter.mom,
-            FIX2FLT(player->mo->mom[MX]),
-            FIX2FLT(player->mo->mom[MY]),
-            FIX2FLT(player->mo->mom[MZ]));
+            player->mo->mom[MX], player->mo->mom[MY], player->mo->mom[MZ]);
 #endif
     }
 
@@ -1131,21 +1129,21 @@ boolean Sv_CheckBandwidth(int playerNumber)
     return qSize <= 10 * limit;
 }
 
-void Sv_PlaceThing(mobj_t* mo, fixed_t x, fixed_t y, fixed_t z, boolean onFloor)
+void Sv_PlaceMobj(mobj_t* mo, float x, float y, float z, boolean onFloor)
 {
     P_CheckPosXYZ(mo, x, y, z);
 
-    P_UnlinkThing(mo);
+    P_UnlinkMobj(mo);
     mo->pos[VX] = x;
     mo->pos[VY] = y;
     mo->pos[VZ] = z;
-    P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+    P_LinkMobj(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     mo->floorz = tmpFloorZ;
     mo->ceilingz = tmpCeilingZ;
 
     if(onFloor)
     {
-        mo->pos[VZ] = FLT2FIX(mo->floorz);
+        mo->pos[VZ] = mo->floorz;
     }
 }
 
@@ -1157,7 +1155,8 @@ void Sv_PlaceThing(mobj_t* mo, fixed_t x, fixed_t y, fixed_t z, boolean onFloor)
 void Sv_ClientCoords(int playerNum)
 {
     mobj_t     *mo = players[playerNum].mo;
-    int         clx, cly, clz;
+    int         clz;
+    float       clientPos[3];
     boolean     onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
@@ -1165,32 +1164,34 @@ void Sv_ClientCoords(int playerNum)
        players[playerNum].flags & DDPF_DEAD)
         return;
 
-    clx = Msg_ReadShort() << 16;
-    cly = Msg_ReadShort() << 16;
-    clz = Msg_ReadShort() << 16;
+    clientPos[VX] = (float) Msg_ReadShort();
+    clientPos[VY] = (float) Msg_ReadShort();
 
-    if((unsigned) clz == (DDMININT & 0xffff0000))
+    clz = Msg_ReadShort();
+    clientPos[VZ] = (float) clz;
+
+    if((unsigned) (clz << 16) == (DDMININT & 0xffff0000))
     {
-        clz = FLT2FIX(mo->floorz);
+        clientPos[VZ] = mo->floorz;
         onFloor = true;
     }
 
     // If we aren't about to forcibly change the client's position, update
-    // with new pos if it's valid.
+    // with new pos if it's valid. But it must be a valid pos.
     if(players[playerNum].fixcounter.pos == players[playerNum].fixacked.pos &&
-       P_CheckPosXYZ(mo, clx, cly, clz))   // But it must be a valid pos.
+       P_CheckPosXYZ(mo, clientPos[VX], clientPos[VY], clientPos[VZ]))
     {
         // Large differences in the coordinates suggest that player position
         // has been misestimated on serverside.
 
         // Prevent illegal stepups.
-        if(tmpFloorZ - FIX2FLT(mo->pos[VZ]) <= 24 ||
+        if(tmpFloorZ - mo->pos[VZ] <= 24 ||
            // But also allow warping the position.
-           (abs(clx - mo->pos[VX]) > WARP_LIMIT * FRACUNIT ||
-            abs(cly - mo->pos[VY]) > WARP_LIMIT * FRACUNIT ||
-            abs(clz - mo->pos[VZ]) > WARP_LIMIT * FRACUNIT))
+           (fabs(clientPos[VX] - mo->pos[VX]) > WARP_LIMIT ||
+            fabs(clientPos[VY] - mo->pos[VY]) > WARP_LIMIT ||
+            fabs(clientPos[VZ] - mo->pos[VZ]) > WARP_LIMIT))
         {
-            Sv_PlaceThing(mo, clx, cly, clz, onFloor);
+            Sv_PlaceMobj(mo, clientPos[VX], clientPos[VY], clientPos[VZ], onFloor);
         }
     }
 }

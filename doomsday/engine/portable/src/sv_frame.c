@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sv_frame.c: Frame Generation and Transmission
  */
 
@@ -56,7 +56,7 @@
 #define CLAMPED_CHAR(x)     ((x)>127? 127 : (x)<-128? -128 : (x))
 
 // If movement is faster than this, we'll adjust the place of the point.
-#define MOM_FAST_LIMIT      (127*FRACUNIT)
+#define MOM_FAST_LIMIT      (127)
 
 // TYPES -------------------------------------------------------------------
 
@@ -200,9 +200,9 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
     byte        moreFlags = 0;
 
     // Do we have fast momentum?
-    if(abs(d->mom[MX]) >= MOM_FAST_LIMIT ||
-       abs(d->mom[MY]) >= MOM_FAST_LIMIT ||
-       abs(d->mom[MZ]) >= MOM_FAST_LIMIT)
+    if(fabs(d->mom[MX]) >= MOM_FAST_LIMIT ||
+       fabs(d->mom[MY]) >= MOM_FAST_LIMIT ||
+       fabs(d->mom[MZ]) >= MOM_FAST_LIMIT)
     {
         df |= MDF_MORE_FLAGS;
         moreFlags |= MDFE_FAST_MOM;
@@ -233,11 +233,11 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
     // Floor/ceiling z?
     if(df & MDF_POS_Z)
     {
-        if(d->pos[VZ] == DDMININT || d->pos[VZ] == DDMAXINT)
+        if(FLT2FIX(d->pos[VZ]) == DDMININT || FLT2FIX(d->pos[VZ]) == DDMAXINT)
         {
             df &= ~MDF_POS_Z;
             df |= MDF_MORE_FLAGS;
-            moreFlags |= (d->pos[VZ] == DDMININT ? MDFE_Z_FLOOR : MDFE_Z_CEILING);
+            moreFlags |= (FLT2FIX(d->pos[VZ]) == DDMININT ? MDFE_Z_FLOOR : MDFE_Z_CEILING);
         }
     }
 
@@ -266,35 +266,41 @@ if((df & 0xffff) == 0)
     // Coordinates with three bytes.
     if(df & MDF_POS_X)
     {
-        Msg_WriteShort(d->pos[VX] >> FRACBITS);
-        Msg_WriteByte(d->pos[VX] >> 8);
+        fixed_t     vx = FLT2FIX(d->pos[VX]);
+        Msg_WriteShort(vx >> FRACBITS);
+        Msg_WriteByte(vx >> 8);
     }
     if(df & MDF_POS_Y)
     {
-        Msg_WriteShort(d->pos[VY] >> FRACBITS);
-        Msg_WriteByte(d->pos[VY] >> 8);
+        fixed_t     vy = FLT2FIX(d->pos[VY]);
+        Msg_WriteShort(vy >> FRACBITS);
+        Msg_WriteByte(vy >> 8);
     }
     if(df & MDF_POS_Z)
     {
-        Msg_WriteShort(d->pos[VZ] >> FRACBITS);
-        Msg_WriteByte(d->pos[VZ] >> 8);
+        fixed_t     vz = FLT2FIX(d->pos[VZ]);
+        Msg_WriteShort(vz >> FRACBITS);
+        Msg_WriteByte(vz >> 8);
     }
 
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(d->mom[MX]) :
-                       FIXED8_8(d->mom[MX]));
+        fixed_t     mx = FLT2FIX(d->mom[MX]);
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mx) :
+                       FIXED8_8(mx));
     }
     if(df & MDF_MOM_Y)
     {
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(d->mom[MY]) :
-                       FIXED8_8(d->mom[MY]));
+        fixed_t     my = FLT2FIX(d->mom[MY]);
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(my) :
+                       FIXED8_8(my));
     }
     if(df & MDF_MOM_Z)
     {
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(d->mom[MZ]) :
-                       FIXED8_8(d->mom[MZ]));
+        fixed_t     mz = FLT2FIX(d->mom[MZ]);
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mz) :
+                       FIXED8_8(mz));
     }
 
     // Angles with 16-bit accuracy.
@@ -316,7 +322,7 @@ if((df & 0xffff) == 0)
 
     // Radius, height and floorclip are all bytes.
     if(df & MDF_RADIUS)
-        Msg_WriteByte(d->radius >> FRACBITS);
+        Msg_WriteByte((byte) d->radius);
     if(df & MDF_HEIGHT)
         Msg_WriteByte((byte) d->height);
     if(df & MDF_FLOORCLIP)
@@ -362,7 +368,7 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
     if(df & PDF_TURNDELTA)
         Msg_WriteByte((d->turnDelta * 16) >> 24);
     if(df & PDF_FRICTION)
-        Msg_WriteByte(d->friction >> 8);
+        Msg_WriteByte(FLT2FIX(d->friction) >> 8);
     if(df & PDF_EXTRALIGHT)
     {
         // Three bits is enough for fixedcolormap.
@@ -419,8 +425,8 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
             }
             if(psdf & PSDF_OFFSET)
             {
-                Msg_WriteByte(CLAMPED_CHAR(psp->offx / 2));
-                Msg_WriteByte(CLAMPED_CHAR(psp->offy / 2));
+                Msg_WriteByte(CLAMPED_CHAR(psp->offset[VX] / 2));
+                Msg_WriteByte(CLAMPED_CHAR(psp->offset[VY] / 2));
             }
         }
     }
@@ -473,7 +479,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     {
         // Must fit into a byte.
         int     lightlevel = (int) (255.0f * d->lightlevel);
-            
+
         lightlevel = (lightlevel < 0 ? 0 : lightlevel >
                       255 ? 255 : lightlevel);
 
@@ -496,20 +502,10 @@ VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
         Msg_WriteShort(FLT2FIX(d->planes[PLN_FLOOR].target) >> 16);
     if(df & SDF_FLOOR_SPEED)    // 7.1/4.4 fixed-point
         Msg_WriteByte(floorspd);
-    if(df & SDF_FLOOR_TEXMOVE)
-    {
-        Msg_WriteShort(FLT2FIX(d->planes[PLN_FLOOR].surface.texmove[0]) >> 8);
-        Msg_WriteShort(FLT2FIX(d->planes[PLN_FLOOR].surface.texmove[1]) >> 8);
-    }
     if(df & SDF_CEILING_TARGET)
         Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].target) >> 16);
     if(df & SDF_CEILING_SPEED)  // 7.1/4.4 fixed-point
         Msg_WriteByte(ceilspd);
-    if(df & SDF_CEILING_TEXMOVE)
-    {
-        Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].surface.texmove[0]) >> 8);
-        Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].surface.texmove[1]) >> 8);
-    }
     if(df & SDF_COLOR_RED)
         Msg_WriteByte((byte) (255 * d->rgb[0]));
     if(df & SDF_COLOR_GREEN)
@@ -643,7 +639,7 @@ void Sv_WritePolyDelta(const void *deltaPtr)
         Msg_WriteByte(FLT2FIX(d->dest.pos[VY]) >> 8);
     }
     if(df & PODF_SPEED)
-        Msg_WriteShort(d->speed >> 8);
+        Msg_WriteShort(FLT2FIX(d->speed) >> 8);
     if(df & PODF_DEST_ANGLE)
         Msg_WriteShort(d->destAngle >> 16);
     if(df & PODF_ANGSPEED)

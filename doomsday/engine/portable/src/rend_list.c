@@ -197,11 +197,6 @@ typedef struct listhash_s {
 } listhash_t;
 
 typedef struct {
-    float       light;
-    const dynlight_t *dyn;
-} brightdynlightparams_t;
-
-typedef struct {
     uint        lastIdx;
     rendpoly_t *poly;
     primhdr_t  *hdr;
@@ -285,20 +280,11 @@ void RL_Register(void)
     C_VAR_BYTE("rend-dev-sky", &debugSky, 0, 0, 1);
 }
 
-boolean RLIT_BrightDynlightSelector(const dynlight_t *dyn, void *data)
+boolean RLIT_DynGetFirst(const dynlight_t *dyn, void *data)
 {
-    brightdynlightparams_t *params = data;
-    float           light;
-
-    // Is this dynlight brighter than the previously found brightest?
-    light = (dyn->color[0] + dyn->color[1] + dyn->color[2]) / 3;
-    if(light > params->light)
-    {
-        params->light = light;
-        params->dyn = dyn;
-    }
-
-    return true; // Continue iteration.
+    dynlight_t **ptr = data;
+    *ptr = (dynlight_t*) dyn;
+    return false; // Stop iteration.
 }
 
 /**
@@ -345,10 +331,10 @@ static void addMaskedPoly(rendpoly_t *poly)
             }
         }
     }
-    vis->data.wall.texc[0][VX] = poly->texoffx / (float) poly->tex.width;
+    vis->data.wall.texc[0][VX] = poly->texOffset[VX] / (float) poly->tex.width;
     vis->data.wall.texc[1][VX] =
         vis->data.wall.texc[0][VX] + poly->wall->length / poly->tex.width;
-    vis->data.wall.texc[0][VY] = poly->texoffy / (float) poly->tex.height;
+    vis->data.wall.texc[0][VY] = poly->texOffset[VY] / (float) poly->tex.height;
     vis->data.wall.texc[1][VY] =
         vis->data.wall.texc[0][VY] + (poly->vertices[3].pos[VZ] -
                                       poly->vertices[0].pos[VZ]) / poly->tex.height;
@@ -357,20 +343,22 @@ static void addMaskedPoly(rendpoly_t *poly)
     // \fixme Semitransparent masked polys arn't lit atm
     if(!(poly->flags & RPF_GLOW) && poly->lightListIdx && numTexUnits > 1 &&
        envModAdd && poly->vertices[0].color.rgba[3] == 255)
-    {   // Choose the brightest light to modulate the texture with.
-        brightdynlightparams_t data;
+    {
+        dynlight_t    *dyn = NULL;
 
-        memset(&data, 0, sizeof(&data));
-        DL_DynLightIterator(poly->lightListIdx, &data, RLIT_BrightDynlightSelector);
+        /**
+         * The dynlights will have already been sorted so that the brightest
+         * and largest of them is first in the list. So grab that one.
+         */
+        DL_ListIterator(poly->lightListIdx, &dyn, RLIT_DynGetFirst);
 
-        // Copy the properties of the dynlight.
-        vis->data.wall.modTex = data.dyn->texture;
-        vis->data.wall.modTexC[0][0] = data.dyn->s[0];
-        vis->data.wall.modTexC[0][1] = data.dyn->s[1];
-        vis->data.wall.modTexC[1][0] = data.dyn->t[0];
-        vis->data.wall.modTexC[1][1] = data.dyn->t[1];
+        vis->data.wall.modTex = dyn->texture;
+        vis->data.wall.modTexC[0][0] = dyn->s[0];
+        vis->data.wall.modTexC[0][1] = dyn->s[1];
+        vis->data.wall.modTexC[1][0] = dyn->t[0];
+        vis->data.wall.modTexC[1][1] = dyn->t[1];
         for(c = 0; c < 3; ++c)
-            vis->data.wall.modColor[c] = data.dyn->color[c];
+            vis->data.wall.modColor[c] = dyn->color[c];
     }
     else
     {
@@ -973,10 +961,10 @@ static void quadTexCoords(gl_texcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
         if(poly->flags & RPF_HORIZONTAL)
         {
             // Special horizontal coordinates for wall shadows.
-            tc[0].st[0] = poly->texoffy / height;
-            tc[2].st[0] = poly->texoffy / height;
-            tc[0].st[1] = poly->texoffx / width;
-            tc[1].st[1] = poly->texoffx / width;
+            tc[0].st[0] = poly->texOffset[VY] / height;
+            tc[2].st[0] = poly->texOffset[VY] / height;
+            tc[0].st[1] = poly->texOffset[VX] / width;
+            tc[1].st[1] = poly->texOffset[VX] / width;
             tc[1].st[0] = tc[0].st[0] + (poly->vertices[1].pos[VZ] - poly->vertices[0].pos[VZ]) / height;
             tc[3].st[0] = tc[0].st[0] + (poly->vertices[3].pos[VZ] - poly->vertices[2].pos[VZ]) / height;
             tc[3].st[1] = tc[0].st[1] + poly->wall->length / width;
@@ -992,8 +980,8 @@ static void quadTexCoords(gl_texcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
         height = tex->height;
     }
 
-    tc[0].st[0] = tc[1].st[0] = poly->texoffx / width;
-    tc[3].st[1] = tc[1].st[1] = poly->texoffy / height;
+    tc[0].st[0] = tc[1].st[0] = poly->texOffset[VX] / width;
+    tc[3].st[1] = tc[1].st[1] = poly->texOffset[VY] / height;
     tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + poly->wall->length / width;
     tc[2].st[1] = tc[3].st[1] + (poly->vertices[1].pos[VZ] - poly->vertices[0].pos[VZ]) / height;
     tc[0].st[1] = tc[3].st[1] + (poly->vertices[3].pos[VZ] - poly->vertices[2].pos[VZ]) / height;
@@ -1069,8 +1057,8 @@ static void quadDetailTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
 {
     float   mul = tex->detail->scale * detailScale;
 
-    tc[1].st[0] = tc[0].st[0] = poly->texoffx / tex->detail->width;
-    tc[1].st[1] = tc[3].st[1] = poly->texoffy / tex->detail->height;
+    tc[1].st[0] = tc[0].st[0] = poly->texOffset[VX] / tex->detail->width;
+    tc[1].st[1] = tc[3].st[1] = poly->texOffset[VY] / tex->detail->height;
     tc[3].st[0] = tc[2].st[0] =
         (tc[1].st[0] + poly->wall->length / tex->detail->width) * mul;
     tc[2].st[1] =
@@ -1173,13 +1161,11 @@ static void flatDetailTexCoords(gl_texcoord_t *tc, float xy[2], rendpoly_t *poly
                                 gltexture_t *tex)
 {
     tc->st[0] =
-        (xy[VX] +
-         poly->texoffx) / tex->detail->width * detailScale *
+        (xy[VX] + poly->texOffset[VX]) / tex->detail->width * detailScale *
         tex->detail->scale;
 
     tc->st[1] =
-        (-xy[VY] -
-         poly->texoffy) / tex->detail->height * detailScale *
+        (-xy[VY] - poly->texOffset[VY]) / tex->detail->height * detailScale *
         tex->detail->scale;
 }
 
@@ -1530,12 +1516,12 @@ static void writeFlat(rendlist_t *list, rendpoly_t *poly)
             {   // Normal texture coordinates.
                 tc->st[0] =
                     (vtx->pos[VX] +
-                     poly->texoffx) /
+                     poly->texOffset[VX]) /
                     (poly->flags & RPF_SHADOW ? poly->tex.width :
                      list->tex.width);
                 tc->st[1] =
                     (-vtx->pos[VY] -
-                     poly->texoffy) /
+                     poly->texOffset[VY]) /
                     (poly->flags & RPF_SHADOW ? poly->tex.height :
                      list->tex.height);
             }
@@ -1571,12 +1557,12 @@ static void writeFlat(rendlist_t *list, rendpoly_t *poly)
         if(list->intertex.id)
         {
             tc = &texCoords[TCA_BLEND][base + i];
-            tc->st[0] = (vtx->pos[VX] + poly->texoffx) /
-                (poly->flags & RPF_SHINY ? poly->tex.width :
+            tc->st[0] = (vtx->pos[VX] + poly->texOffset[VX]) /
+                ((poly->flags & RPF_SHINY) ? poly->tex.width :
                  list->intertex.width);
             tc->st[1] =
-                (-vtx->pos[VY] - poly->texoffy) /
-                (poly->flags & RPF_SHINY ? poly->tex.height :
+                (-vtx->pos[VY] - poly->texOffset[VY]) /
+                ((poly->flags & RPF_SHINY) ? poly->tex.height :
                  list->intertex.height);
         }
 
@@ -1703,21 +1689,6 @@ static void writeDynLight(rendlist_t *list, const dynlight_t *dyn,
     endWrite(list);
 }
 
-boolean RLIT_DynGetFirst(const dynlight_t *dyn, void *data)
-{
-    primhdr_t *hdr = data;
-
-    hdr->numLights = 1;
-    hdr->modTex = dyn->texture;
-    hdr->modTexTC[0][0] = dyn->s[0];
-    hdr->modTexTC[0][1] = dyn->s[1];
-    hdr->modTexTC[1][0] = dyn->t[0];
-    hdr->modTexTC[1][1] = dyn->t[1];
-    memcpy(hdr->modColor, dyn->color, sizeof(hdr->modColor));
-
-    return false; // Stop iteration.
-}
-
 boolean RLIT_DynLightWrite(const dynlight_t *dyn, void *data)
 {
     dynlightiterparams_t *params = data;
@@ -1786,7 +1757,7 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
         poly->tex.width = texinfo->width;
         poly->tex.height = texinfo->height;
         poly->tex.detail = 0;
-        poly->texoffy = poly->texoffx = 0;
+        poly->texOffset[VX] = poly->texOffset[VY] = 0;
         poly->lightListIdx = 0;
         poly->flags &= ~RPF_SKY_MASK;
         poly->flags |= RPF_GLOW;
@@ -1838,10 +1809,22 @@ END_PROF( PROF_RL_GET_LIST );
     hdr->flags = poly->flags;
     hdr->numLights = 0;
 
-    // If multitexturing is enabled, grab the first light and copy the params
-    // to the list.
+    // If multitexturing is enabled, grab the first light and copy the
+    // params to the list.
     if(useLights && IS_MTEX_LIGHTS)
-        DL_DynLightIterator(poly->lightListIdx, hdr, RLIT_DynGetFirst);
+    {
+        dynlight_t     *dyn = NULL;
+
+        DL_ListIterator(poly->lightListIdx, &dyn, RLIT_DynGetFirst);
+
+        hdr->numLights = 1;
+        hdr->modTex = dyn->texture;
+        hdr->modTexTC[0][0] = dyn->s[0];
+        hdr->modTexTC[0][1] = dyn->s[1];
+        hdr->modTexTC[1][0] = dyn->t[0];
+        hdr->modTexTC[1][1] = dyn->t[1];
+        memcpy(hdr->modColor, dyn->color, sizeof(hdr->modColor));
+    }
 
     switch(poly->type)
     {
@@ -1872,7 +1855,7 @@ END_PROF( PROF_RL_GET_LIST );
         params.hdr = hdr;
         params.lastIdx = 0;
 
-        DL_DynLightIterator(poly->lightListIdx, &params, RLIT_DynLightWrite);
+        DL_ListIterator(poly->lightListIdx, &params, RLIT_DynLightWrite);
     }
 
 END_PROF( PROF_RL_ADD_POLY );
