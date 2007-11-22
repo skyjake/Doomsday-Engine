@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_fakeradio.c: Faked Radiosity Lighting
  *
  * Perhaps the most distinctive characteristic of radiosity lighting
@@ -65,11 +65,11 @@ END_PROF_TIMERS()
 // TYPES -------------------------------------------------------------------
 
 typedef struct edge_s {
-    boolean done;
-    line_t *line;
-    sector_t *sector;
-    float   length;
-    binangle_t diff;
+    boolean     done;
+    line_t     *line;
+    sector_t   *sector;
+    float       length;
+    binangle_t  diff;
 } edge_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -198,8 +198,8 @@ void Rend_RadioInitForSubsector(subsector_t *ssec)
 }
 
 /**
- * @return      <code>true</code> if the specified flat is non-glowing, i.e.
- *              not glowing or a sky.
+ * @return      @c true, if the specified flat is non-glowing, i.e. not
+ *              glowing or a sky.
  */
 static __inline boolean Rend_RadioNonGlowingFlat(sector_t* sector, int plane)
 {
@@ -230,7 +230,7 @@ static void Rend_RadioSetColor(rendpoly_t *q, float darkness)
 }
 
 /**
- * @return          <code>true</code> if there is open space in the sector.
+ * @return          @c true, if there is open space in the sector.
  */
 static __inline boolean Rend_IsSectorOpen(sector_t *sector)
 {
@@ -244,14 +244,14 @@ static __inline boolean Rend_IsSectorOpen(sector_t *sector)
  * @param length    If negative; implies that the texture is flipped
  *                  horizontally.
  */
-static void Rend_RadioTexCoordX(rendpoly_t *q, float lineLength,
-                                float segOffset)
+static __inline void Rend_RadioTexCoordX(rendpoly_t *q, float lineLength,
+                                         float segOffset)
 {
     q->tex.width = lineLength;
     if(lineLength > 0)
-        q->texoffx = segOffset;
+        q->texOffset[VX] = segOffset;
     else
-        q->texoffx = lineLength + segOffset;
+        q->texOffset[VX] = lineLength + segOffset;
 }
 
 /**
@@ -260,12 +260,12 @@ static void Rend_RadioTexCoordX(rendpoly_t *q, float lineLength,
  * @param size      If negative; implies that the texture is flipped
  *                  vertically.
  */
-static void Rend_RadioTexCoordY(rendpoly_t *q, float size)
+static __inline void Rend_RadioTexCoordY(rendpoly_t *q, float size)
 {
     if((q->tex.height = size) > 0)
-        q->texoffy = fCeil - q->vertices[1].pos[VZ];
+        q->texOffset[VY] = fCeil - q->vertices[1].pos[VZ];
     else
-        q->texoffy = fFloor - q->vertices[1].pos[VZ];
+        q->texOffset[VY] = fFloor - q->vertices[1].pos[VZ];
 }
 
 static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
@@ -657,7 +657,7 @@ static float Rend_RadioLongWallBonus(float span)
 void Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line, byte side,
                           float xOffset, float segLength)
 {
-#define BOTTOM          0           
+#define BOTTOM          0
 #define TOP             1
 
     float       bFloor, bCeil, limit, size;
@@ -694,8 +694,8 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line, byte side,
 
     // Init the quad.
     quad->flags = RPF_SHADOW;
-    quad->texoffx = xOffset;
-    quad->texoffy = 0;
+    quad->texOffset[VX] = xOffset;
+    quad->texOffset[VY] = 0;
     quad->tex.id = GL_PrepareLSTexture(LST_RADIO_CC, NULL);
     quad->tex.detail = NULL;
     quad->tex.width = line->length;
@@ -986,7 +986,7 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line, byte side,
         float       shadowMul;
 
         quad->flags |= RPF_HORIZONTAL;
-        quad->texoffy = quad->vertices[0].pos[VZ] - fFloor;
+        quad->texOffset[VY] = quad->vertices[0].pos[VZ] - fFloor;
         quad->tex.height = fCeil - fFloor;
 
         // Left Shadow
@@ -994,7 +994,7 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line, byte side,
         {
             if(sideCn[0].corner > 0 && xOffset < size)
             {
-                quad->texoffx = xOffset;
+                quad->texOffset[VX] = xOffset;
                 // Make sure the shadow isn't too big
                 if(size > line->length)
                 {
@@ -1013,7 +1013,7 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line, byte side,
         {
             if(sideCn[1].corner > 0 && xOffset + segLength > line->length - size)
             {
-                quad->texoffx = -line->length + xOffset;
+                quad->texOffset[VX] = -line->length + xOffset;
                 // Make sure the shadow isn't too big
                 if(size > line->length)
                 {
@@ -1040,7 +1040,7 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line, byte side,
                 }
                 else if(!(Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR)))
                 {
-                    quad->texoffy = quad->vertices[0].pos[VZ] - fCeil;
+                    quad->texOffset[VY] = quad->vertices[0].pos[VZ] - fCeil;
                     quad->tex.height = -(fCeil - fFloor);
                     texture = LST_RADIO_CO;
                 }
@@ -1056,7 +1056,7 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line, byte side,
                 }
                 else if(!(Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR)))
                 {
-                    quad->texoffy = quad->vertices[0].pos[VZ] - fCeil;
+                    quad->texOffset[VY] = quad->vertices[0].pos[VZ] - fCeil;
                     quad->tex.height = -(fCeil - fFloor);
                     texture = LST_RADIO_CO;
                 }
@@ -1072,7 +1072,7 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line, byte side,
                 }
                 else if(!(Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR)))
                 {
-                    quad->texoffy = quad->vertices[0].pos[VZ] - fCeil;
+                    quad->texOffset[VY] = quad->vertices[0].pos[VZ] - fCeil;
                     quad->tex.height = -(fCeil - fFloor);
                     texture = LST_RADIO_CO;
                 }
@@ -1103,7 +1103,7 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line, byte side,
     }
     R_FreeRendPoly(quad);
 
-#undef BOTTOM   
+#undef BOTTOM
 #undef TOP
 }
 
@@ -1222,8 +1222,19 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
             V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->inoffset[i]);
         }
         else if(pos == 1)       // Same height on both sides.
-        {
-            // We need to use a back extended offset but which one?
+        {   // We need to use a back extended offset but which one?
+
+            /**
+             * \todo This determination logic is called for each shadow
+             * edge connected on the XY plane twice (once for each side).
+             * Instead, we should reuse the same offset by pre-determining
+             * before we get here. Due to the offsets being the same for
+             * each side of the edge (relative to the angle between the two)
+             * there is a memory saving to be made also by putting the
+             * midpoint in the vertex owner rings (which could be passed
+             * from our caller as it already has to do this).
+             */
+
             // Walk around the vertex and choose the bextoffset for the
             // back neighbor at which plane heights differ.
             lineowner_t *base, *p;
