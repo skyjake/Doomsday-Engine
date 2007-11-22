@@ -601,6 +601,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\r_lumobjs.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\r_main.c"
 				>
 			</File>
@@ -813,6 +817,10 @@
 				>
 				<File
 					RelativePath="..\..\..\engine\win32\src\dd_winit.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\src\sys_cdaudio.c"
 					>
 				</File>
 				<File
@@ -1604,6 +1612,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\r_lumobjs.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\r_main.h"
 				>
 			</File>
@@ -1713,6 +1725,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\s_wav.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\smart_header.h"
 				>
 			</File>
 			<File
@@ -1832,6 +1848,10 @@
 				</File>
 				<File
 					RelativePath="..\..\..\engine\win32\include\resource.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\include\sys_cdaudio.h"
 					>
 				</File>
 				<File

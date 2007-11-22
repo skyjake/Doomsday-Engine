@@ -60,6 +60,7 @@
  ./../../engine/portable/src/r_draw.c
  ./../../engine/portable/src/r_data.c
  ./../../engine/portable/src/r_lgrid.c
+ ./../../engine/portable/src/r_lumobjs.c
  ./../../engine/portable/src/p_ticker.c
  ./../../engine/portable/src/p_think.c
  ./../../engine/portable/src/p_sight.c
@@ -109,7 +110,8 @@
  ./../../engine/portable/src/sys_sfxd_dummy.c
  ./../../engine/win32/src/sys_sfxd_ds.c
  ./../../engine/win32/src/sys_musd_win.c
- ./../../engine/win32/src/sys_window.c
+ ./../../engine/win32/src/sys_musd_win.c
+ ./../../engine/win32/src/sys_cdaudio.c
  ./../../engine/portable/src/sys_timer.c
  ./../../engine/portable/src/sys_system.c
  ./../../engine/portable/src/sys_sock.c
