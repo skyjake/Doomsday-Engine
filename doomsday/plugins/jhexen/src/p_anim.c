@@ -41,6 +41,10 @@
  * http://www.ravensoft.com/
  */
 
+/**
+ * p_anim.c:
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "jhexen.h"
@@ -91,8 +95,6 @@ static void P_LightningFlash(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern fixed_t Sky1ColumnOffset;
-extern fixed_t Sky2ColumnOffset;
 extern int Sky1Texture;
 extern boolean DoubleSky;
 
@@ -100,10 +102,10 @@ extern boolean DoubleSky;
 
 int     Sky1Texture;
 int     Sky2Texture;
-fixed_t Sky1ColumnOffset;
-fixed_t Sky2ColumnOffset;
-fixed_t Sky1ScrollDelta;
-fixed_t Sky2ScrollDelta;
+float   Sky1ColumnOffset;
+float   Sky2ColumnOffset;
+float   Sky1ScrollDelta;
+float   Sky2ScrollDelta;
 boolean DoubleSky;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -134,30 +136,30 @@ void P_AnimateSurfaces(void)
             {
 
                 P_GetFixedpv(side,
-                             (i==0? DMU_TOP_TEXTURE_OFFSET_XY :
-                              i==1? DMU_MIDDLE_TEXTURE_OFFSET_XY :
-                              DMU_BOTTOM_TEXTURE_OFFSET_XY), texOff);
+                             (i==0? DMU_TOP_MATERIAL_OFFSET_XY :
+                              i==1? DMU_MIDDLE_MATERIAL_OFFSET_XY :
+                              DMU_BOTTOM_MATERIAL_OFFSET_XY), texOff);
 
-                switch (P_XLine(line)->special)
+                switch (P_ToXLine(line)->special)
                 {
                 case 100:               // Scroll_Texture_Left
-                    texOff[0] += P_XLine(line)->arg1 << 10;
+                    texOff[0] += P_ToXLine(line)->arg1 << 10;
                     break;
                 case 101:               // Scroll_Texture_Right
-                    texOff[0] -= P_XLine(line)->arg1 << 10;
+                    texOff[0] -= P_ToXLine(line)->arg1 << 10;
                     break;
                 case 102:               // Scroll_Texture_Up
-                    texOff[1] += P_XLine(line)->arg1 << 10;
+                    texOff[1] += P_ToXLine(line)->arg1 << 10;
                     break;
                 case 103:               // Scroll_Texture_Down
-                    texOff[1] -= P_XLine(line)->arg1 << 10;
+                    texOff[1] -= P_ToXLine(line)->arg1 << 10;
                     break;
                 }
 
                 P_SetFixedpv(side,
-                             (i==0? DMU_TOP_TEXTURE_OFFSET_XY :
-                              i==1? DMU_MIDDLE_TEXTURE_OFFSET_XY :
-                              DMU_BOTTOM_TEXTURE_OFFSET_XY), texOff);
+                             (i==0? DMU_TOP_MATERIAL_OFFSET_XY :
+                              i==1? DMU_MIDDLE_MATERIAL_OFFSET_XY :
+                              DMU_BOTTOM_MATERIAL_OFFSET_XY), texOff);
             }
         }
     }
@@ -165,8 +167,8 @@ void P_AnimateSurfaces(void)
     // Update sky column offsets
     Sky1ColumnOffset += Sky1ScrollDelta;
     Sky2ColumnOffset += Sky2ScrollDelta;
-    Rend_SkyParams(1, DD_OFFSET, FIX2FLT(Sky1ColumnOffset));
-    Rend_SkyParams(0, DD_OFFSET, FIX2FLT(Sky2ColumnOffset));
+    Rend_SkyParams(1, DD_OFFSET, Sky1ColumnOffset);
+    Rend_SkyParams(0, DD_OFFSET, Sky2ColumnOffset);
 
     if(LevelHasLightning)
     {
@@ -198,9 +200,9 @@ static void P_LightningFlash(void)
             for(i = 0; i < numsectors; ++i)
             {
                 tempSec = P_ToPtr(DMU_SECTOR, i);
-                if(P_GetIntp(tempSec, DMU_CEILING_TEXTURE) == skyflatnum ||
-                   P_XSector(tempSec)->special == LIGHTNING_SPECIAL ||
-                   P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
+                if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == skyflatnum ||
+                   P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL ||
+                   P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
                 {
                     if(*tempLight < P_GetFloatp(tempSec, DMU_LIGHT_LEVEL) - (4.0f/255.0f))
                     {
@@ -217,9 +219,9 @@ static void P_LightningFlash(void)
             for(i = 0; i < numsectors; ++i)
             {
                 tempSec = P_ToPtr(DMU_SECTOR, i);
-                if(P_GetIntp(tempSec, DMU_CEILING_TEXTURE) == skyflatnum ||
-                   P_XSector(tempSec)->special == LIGHTNING_SPECIAL ||
-                   P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
+                if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == skyflatnum ||
+                   P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL ||
+                   P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
                 {
                     P_SetFloatp(tempSec, DMU_LIGHT_LEVEL, *tempLight);
                     tempLight++;
@@ -239,13 +241,13 @@ static void P_LightningFlash(void)
     for(i = 0; i < numsectors; ++i)
     {
         tempSec = P_ToPtr(DMU_SECTOR, i);
-        if(P_GetIntp(tempSec, DMU_CEILING_TEXTURE) == skyflatnum ||
-           P_XSector(tempSec)->special == LIGHTNING_SPECIAL ||
-           P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
+        if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == skyflatnum ||
+           P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL ||
+           P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
         {
             float newLevel = *tempLight = P_GetFloatp(tempSec, DMU_LIGHT_LEVEL);
 
-            if(P_XSector(tempSec)->special == LIGHTNING_SPECIAL)
+            if(P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL)
             {
                 newLevel += .25f;
                 if(newLevel > flashLight)
@@ -253,7 +255,7 @@ static void P_LightningFlash(void)
                     newLevel = flashLight;
                 }
             }
-            else if(P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
+            else if(P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
             {
                 newLevel += .125f;
                 if(newLevel > flashLight)
@@ -293,7 +295,7 @@ static void P_LightningFlash(void)
             // random number generator gets out of sync.
             //P_SaveRandom();
             crashorigin =
-                P_SpawnMobj(plrmo->pos[VX] + (16 * (M_Random() - 127) << FRACBITS),
+                P_SpawnMobj3f(plrmo->pos[VX] + (16 * (M_Random() - 127) << FRACBITS),
                             plrmo->pos[VY] + (16 * (M_Random() - 127) << FRACBITS),
                             plrmo->pos[VZ] + (4000 << FRACBITS), MT_CAMERA);
             //P_RestoreRandom();
@@ -347,8 +349,8 @@ void P_InitLightning(void)
     for(i = 0; i < numsectors; ++i)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_XSector(sec);
-        if(P_GetIntp(sec, DMU_CEILING_TEXTURE) == skyflatnum ||
+        xsec = P_ToXSector(sec);
+        if(P_GetIntp(sec, DMU_CEILING_MATERIAL) == skyflatnum ||
            xsec->special == LIGHTNING_SPECIAL ||
            xsec->special == LIGHTNING_SPECIAL2)
         {

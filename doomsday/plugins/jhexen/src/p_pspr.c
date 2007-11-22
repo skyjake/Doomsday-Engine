@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -41,14 +41,16 @@
  * http://www.ravensoft.com/
  */
 
-/*
- * P_pspr.c: Weapon sprite animation.
+/**
+ * p_pspr.c: Weapon sprite animation.
  *
  * Weapon sprite animation, weapon objects.
  * Action functions for weapons.
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <math.h>
 
 #include "jhexen.h"
 
@@ -57,18 +59,17 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LOWERSPEED      (FRACUNIT*6)
-#define RAISESPEED      (FRACUNIT*6)
-#define WEAPONBOTTOM    (128*FRACUNIT)
-#define WEAPONTOP       (32*FRACUNIT)
+#define LOWERSPEED          (6)
+#define RAISESPEED          (6)
+#define WEAPONBOTTOM        (128)
+#define WEAPONTOP           (32)
 
-#define ZAGSPEED        (FRACUNIT)
-#define MAX_ANGLE_ADJUST (5*ANGLE_1)
-#define HAMMER_RANGE    (MELEERANGE+MELEERANGE/2)
-#define AXERANGE        (2.25*MELEERANGE)
-#define FLAMESPEED      (0.45*FRACUNIT)
-#define CFLAMERANGE     (12*64*FRACUNIT)
-#define FLAMEROTSPEED   (2*FRACUNIT)
+#define ZAGSPEED            (1)
+#define MAX_ANGLE_ADJUST    (5*ANGLE_1)
+#define HAMMER_RANGE        (MELEERANGE+MELEERANGE/2)
+#define AXERANGE            (2.25*MELEERANGE)
+#define FLAMESPEED          (0.45)
+#define FLAMEROTSPEED       (2)
 
 #define SHARDSPAWN_LEFT     1
 #define SHARDSPAWN_RIGHT    2
@@ -88,11 +89,9 @@ extern void C_DECL A_UnHideThing(mobj_t *actor);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern fixed_t FloatBobOffsets[64];
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-fixed_t bulletslope;
+float bulletslope;
 
 weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
     {                           // First Weapons
@@ -365,12 +364,12 @@ weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Offset in state->misc1/2.
  */
-void P_SetPSpriteOffset(pspdef_t * psp, player_t *player, state_t * state)
+void P_SetPSpriteOffset(pspdef_t *psp, player_t *plr, state_t *state)
 {
-    ddpsprite_t *ddpsp = player->plr->psprites;
+    ddpsprite_t *ddpsp = plr->plr->psprites;
 
     // Clear the Offset flag by default.
     //ddpsp->flags &= ~DDPSPF_OFFSET;
@@ -378,117 +377,121 @@ void P_SetPSpriteOffset(pspdef_t * psp, player_t *player, state_t * state)
     if(state->misc[0])
     {
         // Set coordinates.
-        psp->sx = state->misc[0] << FRACBITS;
+        psp->pos[VX] = (float) state->misc[0];
         //ddpsp->flags |= DDPSPF_OFFSET;
-        ddpsp->offx = state->misc[0];
+        ddpsp->offset[VX] = (float) state->misc[0];
     }
+
     if(state->misc[1])
     {
-        psp->sy = state->misc[1] << FRACBITS;
+        psp->pos[VY] = (float) state->misc[1];
         //ddpsp->flags |= DDPSPF_OFFSET;
-        ddpsp->offy = state->misc[1];
+        ddpsp->offset[VY] = (float) state->misc[1];
     }
 }
 
-void P_SetPsprite(player_t *player, int position, statenum_t stnum)
+void P_SetPsprite(player_t *plr, int position, statenum_t stnum)
 {
-    pspdef_t *psp;
-    state_t *state;
+    pspdef_t       *psp;
+    state_t        *state;
 
-    psp = &player->psprites[position];
+    psp = &plr->psprites[position];
     do
     {
         if(!stnum)
-        {                       // Object removed itself.
+        {   // Object removed itself.
             psp->state = NULL;
             break;
         }
+
         state = &states[stnum];
         psp->state = state;
-        psp->tics = state->tics;    // could be 0
+        psp->tics = state->tics; // could be 0
+        P_SetPSpriteOffset(psp, plr, state);
 
-        P_SetPSpriteOffset(psp, player, state);
         if(state->action)
-        {                       // Call action routine.
-            state->action(player, psp);
+        {   // Call action routine.
+            state->action(plr, psp);
             if(!psp->state)
             {
                 break;
             }
         }
+
         stnum = psp->state->nextstate;
-    } while(!psp->tics);        // An initial state of 0 could cycle through.
+    } while(!psp->tics); // An initial state of 0 could cycle through.
 }
 
-/*
- * Identical to P_SetPsprite, without calling the action function
+/**
+ * Identical to P_SetPsprite, without calling the action function.
  */
-void P_SetPspriteNF(player_t *player, int position, statenum_t stnum)
+void P_SetPspriteNF(player_t *plr, int position, statenum_t stnum)
 {
-    pspdef_t *psp;
-    state_t *state;
+    pspdef_t       *psp;
+    state_t        *state;
 
-    psp = &player->psprites[position];
+    psp = &plr->psprites[position];
     do
     {
         if(!stnum)
-        {                       // Object removed itself.
+        {   // Object removed itself.
             psp->state = NULL;
             break;
         }
+
         state = &states[stnum];
         psp->state = state;
-        psp->tics = state->tics;    // could be 0
+        psp->tics = state->tics; // could be 0
 
-        P_SetPSpriteOffset(psp, player, state);
+        P_SetPSpriteOffset(psp, plr, state);
         stnum = psp->state->nextstate;
-    } while(!psp->tics);        // An initial state of 0 could cycle through.
+    } while(!psp->tics); // An initial state of 0 could cycle through.
 }
 
-void P_ActivateMorphWeapon(player_t *player)
+void P_ActivateMorphWeapon(player_t *plr)
 {
-    player->pendingweapon = WT_NOCHANGE;
-    player->psprites[ps_weapon].sy = WEAPONTOP;
-    player->readyweapon = WT_FIRST; // Snout is the first weapon
-    player->update |= PSF_WEAPONS;
-    P_SetPsprite(player, ps_weapon, S_SNOUTREADY);
+    plr->pendingweapon = WT_NOCHANGE;
+    plr->psprites[ps_weapon].pos[VY] = WEAPONTOP;
+    plr->readyweapon = WT_FIRST; // Snout is the first weapon
+    plr->update |= PSF_WEAPONS;
+    P_SetPsprite(plr, ps_weapon, S_SNOUTREADY);
 }
 
-void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
+void P_PostMorphWeapon(player_t *plr, weapontype_t weapon)
 {
-    player->pendingweapon = WT_NOCHANGE;
-    player->readyweapon = weapon;
-    player->psprites[ps_weapon].sy = WEAPONBOTTOM;
-    player->update |= PSF_WEAPONS;
-    P_SetPsprite(player, ps_weapon, weaponinfo[weapon][player->class].mode[0].upstate);
+    plr->pendingweapon = WT_NOCHANGE;
+    plr->readyweapon = weapon;
+    plr->psprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
+    plr->update |= PSF_WEAPONS;
+    P_SetPsprite(plr, ps_weapon, weaponinfo[weapon][plr->class].mode[0].upstate);
 }
 
-/*
+/**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
-void P_BringUpWeapon(player_t *player)
+void P_BringUpWeapon(player_t *plr)
 {
     statenum_t newState;
     weaponmodeinfo_t *wminfo;
 
-    wminfo = WEAPON_INFO(player->pendingweapon, player->class, 0);
+    wminfo = WEAPON_INFO(plr->pendingweapon, plr->class, 0);
 
     newState = wminfo->upstate;
-    if(player->class == PCLASS_FIGHTER && player->pendingweapon == WT_SECOND &&
-       player->ammo[AT_BLUEMANA])
+    if(plr->class == PCLASS_FIGHTER && plr->pendingweapon == WT_SECOND &&
+       plr->ammo[AT_BLUEMANA])
     {
         newState = S_FAXEUP_G;
     }
 
-    if(player->pendingweapon == WT_NOCHANGE)
-        player->pendingweapon = player->readyweapon;
+    if(plr->pendingweapon == WT_NOCHANGE)
+        plr->pendingweapon = plr->readyweapon;
 
     if(wminfo->raisesound)
-        S_StartSound(wminfo->raisesound, player->plr->mo);
+        S_StartSound(wminfo->raisesound, plr->plr->mo);
 
-    player->pendingweapon = WT_NOCHANGE;
-    player->psprites[ps_weapon].sy = WEAPONBOTTOM;
-    P_SetPsprite(player, ps_weapon, newState);
+    plr->pendingweapon = WT_NOCHANGE;
+    plr->psprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
+    P_SetPsprite(plr, ps_weapon, newState);
 }
 
 /**
@@ -496,34 +499,34 @@ void P_BringUpWeapon(player_t *player)
  * a weapon change event is dispatched (which may or may not do anything
  * depending on the player's config).
  *
- * @returns             <code>true</code> if there is enough mana to shoot.
+ * @return              @c true, if there is enough mana to shoot.
  */
-boolean P_CheckAmmo(player_t *player)
+boolean P_CheckAmmo(player_t *plr)
 {
-    ammotype_t i;
-    int     count;
-    boolean good;
+    ammotype_t  i;
+    int         count;
+    boolean     good;
 
     //// \kludge Work around the multiple firing modes problems.
     //// We need to split the weapon firing routines and implement them as
     //// new fire modes.
-    if(player->class == PCLASS_FIGHTER && player->readyweapon != WT_FOURTH)
+    if(plr->class == PCLASS_FIGHTER && plr->readyweapon != WT_FOURTH)
         return true;
     // < KLUDGE
 
     // Check we have enough of ALL ammo types used by this weapon.
     good = true;
 
-    for(i=0; i < NUM_AMMO_TYPES && good; ++i)
+    for(i = 0; i < NUM_AMMO_TYPES && good; ++i)
     {
-        if(!weaponinfo[player->readyweapon][player->class].mode[0].ammotype[i])
+        if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[i])
             continue; // Weapon does not take this type of ammo.
 
         // Minimal amount for one shot varies.
-        count = weaponinfo[player->readyweapon][player->class].mode[0].pershot[i];
+        count = weaponinfo[plr->readyweapon][plr->class].mode[0].pershot[i];
 
         // Return if current ammunition sufficient.
-        if(player->ammo[i] < count)
+        if(plr->ammo[i] < count)
         {
             good = false;
         }
@@ -532,112 +535,113 @@ boolean P_CheckAmmo(player_t *player)
         return true;
 
     // Out of ammo, pick a weapon to change to.
-    P_MaybeChangeWeapon(player, WT_NOCHANGE, AT_NOAMMO, false);
+    P_MaybeChangeWeapon(plr, WT_NOCHANGE, AT_NOAMMO, false);
 
     // Now set appropriate weapon overlay.
-    P_SetPsprite(player, ps_weapon,
-                 weaponinfo[player->readyweapon][player->class].mode[0].downstate);
+    P_SetPsprite(plr, ps_weapon,
+                 weaponinfo[plr->readyweapon][plr->class].mode[0].downstate);
     return false;
 }
 
-void P_FireWeapon(player_t *player)
+void P_FireWeapon(player_t *plr)
 {
     statenum_t attackState;
 
-    if(!P_CheckAmmo(player))
+    if(!P_CheckAmmo(plr))
         return;
 
     // Psprite state.
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackstate);
-    if(player->class == PCLASS_FIGHTER && player->readyweapon == WT_SECOND &&
-       player->ammo[AT_BLUEMANA] > 0)
-    {                           // Glowing axe
+    P_SetMobjState(plr->plr->mo, PCLASS_INFO(plr->class)->attackstate);
+    if(plr->class == PCLASS_FIGHTER && plr->readyweapon == WT_SECOND &&
+       plr->ammo[AT_BLUEMANA] > 0)
+    {   // Glowing axe.
         attackState = S_FAXEATK_G1;
     }
     else
     {
-        if(player->refire)
+        if(plr->refire)
             attackState =
-                weaponinfo[player->readyweapon][player->class].mode[0].holdatkstate;
+                weaponinfo[plr->readyweapon][plr->class].mode[0].holdatkstate;
         else
             attackState =
-                weaponinfo[player->readyweapon][player->class].mode[0].atkstate;
+                weaponinfo[plr->readyweapon][plr->class].mode[0].atkstate;
     }
 
-    P_SetPsprite(player, ps_weapon, attackState);
-    P_NoiseAlert(player->plr->mo, player->plr->mo);
+    P_SetPsprite(plr, ps_weapon, attackState);
+    P_NoiseAlert(plr->plr->mo, plr->plr->mo);
 
-    player->update |= PSF_AMMO;
+    plr->update |= PSF_AMMO;
 
     // Psprite state.
-    player->plr->psprites[0].state = DDPSP_FIRE;
+    plr->plr->psprites[0].state = DDPSP_FIRE;
 }
 
-/*
+/**
  * The player died, so put the weapon away.
  */
-void P_DropWeapon(player_t *player)
+void P_DropWeapon(player_t *plr)
 {
-    P_SetPsprite(player, ps_weapon,
-                 weaponinfo[player->readyweapon][player->class].mode[0].downstate);
+    P_SetPsprite(plr, ps_weapon,
+                 weaponinfo[plr->readyweapon][plr->class].mode[0].downstate);
 }
 
-/*
+/**
  * The player can fire the weapon or change to another weapon at this time.
  */
-void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
+void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
 {
     weaponmodeinfo_t *wminfo;
     ddpsprite_t *ddpsp;
 
-    // Change player from attack state
-    if(player->plr->mo->state >= &states[PCLASS_INFO(player->class)->attackstate] &&
-       player->plr->mo->state <= &states[PCLASS_INFO(player->class)->attackendstate])
+    // Change plr from attack state
+    if(plr->plr->mo->state >= &states[PCLASS_INFO(plr->class)->attackstate] &&
+       plr->plr->mo->state <= &states[PCLASS_INFO(plr->class)->attackendstate])
     {
-        P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
+        P_SetMobjState(plr->plr->mo, PCLASS_INFO(plr->class)->normalstate);
     }
 
-    if(player->readyweapon != WT_NOCHANGE)
+    if(plr->readyweapon != WT_NOCHANGE)
     {
-        wminfo = WEAPON_INFO(player->readyweapon, player->class, 0);
+        wminfo = WEAPON_INFO(plr->readyweapon, plr->class, 0);
 
         // A weaponready sound?
         if(psp->state == &states[wminfo->readystate] && wminfo->readysound)
-            S_StartSound(wminfo->readysound, player->plr->mo);
+            S_StartSound(wminfo->readysound, plr->plr->mo);
 
-        // check for change
-        //  if player is dead, put the weapon away
-        if(player->pendingweapon != WT_NOCHANGE || !player->health)
+        // Check for change, if plr is dead, put the weapon away.
+        if(plr->pendingweapon != WT_NOCHANGE || !plr->health)
         {   //  (pending weapon should allready be validated)
-            P_SetPsprite(player, ps_weapon, wminfo->downstate);
+            P_SetPsprite(plr, ps_weapon, wminfo->downstate);
             return;
         }
     }
 
-    // check for autofire
-    if(player->brain.attack)
+    // Check for autofire.
+    if(plr->brain.attack)
     {
-        wminfo = WEAPON_INFO(player->readyweapon, player->class, 0);
+        wminfo = WEAPON_INFO(plr->readyweapon, plr->class, 0);
 
-        if(!player->attackdown || wminfo->autofire)
+        if(!plr->attackdown || wminfo->autofire)
         {
-            player->attackdown = true;
-            P_FireWeapon(player);
+            plr->attackdown = true;
+            P_FireWeapon(plr);
             return;
         }
     }
     else
-        player->attackdown = false;
+    {
+        plr->attackdown = false;
+    }
 
-    ddpsp = player->plr->psprites;
+    ddpsp = plr->plr->psprites;
 
-    if(!player->morphTics)
+    if(!plr->morphTics)
     {
         // Bob the weapon based on movement speed.
-        psp->sx = G_GetInteger(DD_PSPRITE_BOB_X);
-        psp->sy = G_GetInteger(DD_PSPRITE_BOB_Y);
+        psp->pos[VX] = *((float *)G_GetVariable(DD_PSPRITE_BOB_X));
+        psp->pos[VY] = *((float *)G_GetVariable(DD_PSPRITE_BOB_Y));
 
-        ddpsp->offx = ddpsp->offy = 0;
+        ddpsp->offset[VX] = ddpsp->offset[VY] = 0;
     }
 
     // Psprite state.
@@ -647,73 +651,78 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
 /**
  * The player can re fire the weapon without lowering it entirely.
  */
-void C_DECL A_ReFire(player_t *player, pspdef_t *psp)
+void C_DECL A_ReFire(player_t *plr, pspdef_t *psp)
 {
-    if((player->brain.attack) &&
-       player->pendingweapon == WT_NOCHANGE && player->health)
+    if((plr->brain.attack) &&
+       plr->pendingweapon == WT_NOCHANGE && plr->health)
     {
-        player->refire++;
-        P_FireWeapon(player);
+        plr->refire++;
+        P_FireWeapon(plr);
     }
     else
     {
-        player->refire = 0;
-        P_CheckAmmo(player);
+        plr->refire = 0;
+        P_CheckAmmo(plr);
     }
 }
 
-void C_DECL A_Lower(player_t *player, pspdef_t *psp)
+void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
 {
     // Psprite state.
-    player->plr->psprites[0].state = DDPSP_DOWN;
+    plr->plr->psprites[0].state = DDPSP_DOWN;
 
-    if(player->morphTics)
+    if(plr->morphTics)
     {
-        psp->sy = WEAPONBOTTOM;
+        psp->pos[VY] = WEAPONBOTTOM;
     }
     else
     {
-        psp->sy += LOWERSPEED;
+        psp->pos[VY] += LOWERSPEED;
     }
-    if(psp->sy < WEAPONBOTTOM)
-    {                           // Not lowered all the way yet
+
+    if(psp->pos[VY] < WEAPONBOTTOM)
+    {   // Not lowered all the way yet.
         return;
     }
-    if(player->playerstate == PST_DEAD)
-    {                           // Player is dead, so don't bring up a pending weapon
-        psp->sy = WEAPONBOTTOM;
+
+    if(plr->playerstate == PST_DEAD)
+    {   // Player is dead, so don't bring up a pending weapon.
+        psp->pos[VY] = WEAPONBOTTOM;
         return;
     }
-    if(!player->health)
-    {                           // Player is dead, so keep the weapon off screen
-        P_SetPsprite(player, ps_weapon, S_NULL);
+
+    if(!plr->health)
+    {   // Player is dead, so keep the weapon off screen.
+        P_SetPsprite(plr, ps_weapon, S_NULL);
         return;
     }
-    player->readyweapon = player->pendingweapon;
-    player->update |= PSF_WEAPONS;
-    P_BringUpWeapon(player);
+
+    plr->readyweapon = plr->pendingweapon;
+    plr->update |= PSF_WEAPONS;
+    P_BringUpWeapon(plr);
 }
 
-void C_DECL A_Raise(player_t *player, pspdef_t * psp)
+void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
 {
     // Psprite state.
-    player->plr->psprites[0].state = DDPSP_UP;
+    plr->plr->psprites[0].state = DDPSP_UP;
 
-    psp->sy -= RAISESPEED;
-    if(psp->sy > WEAPONTOP)
-    {                           // Not raised all the way yet
+    psp->pos[VY] -= RAISESPEED;
+    if(psp->pos[VY] > WEAPONTOP)
+    {   // Not raised all the way yet.
         return;
     }
-    psp->sy = WEAPONTOP;
-    if(player->class == PCLASS_FIGHTER && player->readyweapon == WT_SECOND &&
-       player->ammo[AT_BLUEMANA])
+
+    psp->pos[VY] = WEAPONTOP;
+    if(plr->class == PCLASS_FIGHTER && plr->readyweapon == WT_SECOND &&
+       plr->ammo[AT_BLUEMANA])
     {
-        P_SetPsprite(player, ps_weapon, S_FAXEREADY_G);
+        P_SetPsprite(plr, ps_weapon, S_FAXEREADY_G);
     }
     else
     {
-        P_SetPsprite(player, ps_weapon,
-                     weaponinfo[player->readyweapon][player->class].mode[0].
+        P_SetPsprite(plr, ps_weapon,
+                     weaponinfo[plr->readyweapon][plr->class].mode[0].
                      readystate);
     }
 }
@@ -737,388 +746,401 @@ void AdjustPlayerAngle(mobj_t *pmo)
     pmo->player->plr->flags |= DDPF_FIXANGLES;
 }
 
-void C_DECL A_SnoutAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_SnoutAttack(player_t *plr, pspdef_t *psp)
 {
-    angle_t angle;
-    int     damage;
-    int     slope;
+    angle_t     angle;
+    int         damage;
+    float       slope;
 
     damage = 3 + (P_Random() & 3);
-    angle = player->plr->mo->angle;
-    slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
+    angle = plr->plr->mo->angle;
+    slope = P_AimLineAttack(plr->plr->mo, angle, MELEERANGE);
+
     PuffType = MT_SNOUTPUFF;
     PuffSpawned = NULL;
-    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
-    S_StartSound(SFX_PIG_ACTIVE1 + (P_Random() & 1), player->plr->mo);
+
+    P_LineAttack(plr->plr->mo, angle, MELEERANGE, slope, damage);
+    S_StartSound(SFX_PIG_ACTIVE1 + (P_Random() & 1), plr->plr->mo);
+
     if(linetarget)
     {
-        AdjustPlayerAngle(player->plr->mo);
+        AdjustPlayerAngle(plr->plr->mo);
 
         if(PuffSpawned)
-        {                       // Bit something
-            S_StartSound(SFX_PIG_ATTACK, player->plr->mo);
+        {   // Bit something.
+            S_StartSound(SFX_PIG_ATTACK, plr->plr->mo);
         }
     }
 }
 
-void C_DECL A_FHammerAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
 {
-    angle_t angle;
-    mobj_t *pmo = player->plr->mo;
-    int     damage;
-    fixed_t power;
-    int     slope;
-    int     i;
+    int         i;
+    angle_t     angle;
+    mobj_t     *mo = plr->plr->mo;
+    int         damage;
+    float       power;
+    float       slope;
 
     damage = 60 + (P_Random() & 63);
-    power = 10 * FRACUNIT;
+    power = 10;
     PuffType = MT_HAMMERPUFF;
-    for(i = 0; i < 16; i++)
+    for(i = 0; i < 16; ++i)
     {
-        angle = pmo->angle + i * (ANG45 / 32);
-        slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE);
+        angle = mo->angle + i * (ANG45 / 32);
+        slope = P_AimLineAttack(mo, angle, HAMMER_RANGE);
         if(linetarget)
         {
-            P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage);
-            AdjustPlayerAngle(pmo);
-            if(linetarget->flags & MF_COUNTKILL || linetarget->player)
+            P_LineAttack(mo, angle, HAMMER_RANGE, slope, damage);
+            AdjustPlayerAngle(mo);
+            if((linetarget->flags & MF_COUNTKILL) || linetarget->player)
             {
                 P_ThrustMobj(linetarget, angle, power);
             }
-            pmo->special1 = false;  // Don't throw a hammer
+
+            mo->special1 = false; // Don't throw a hammer.
             goto hammerdone;
         }
-        angle = pmo->angle - i * (ANG45 / 32);
-        slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE);
+
+        angle = mo->angle - i * (ANG45 / 32);
+        slope = P_AimLineAttack(mo, angle, HAMMER_RANGE);
         if(linetarget)
         {
-            P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage);
-            AdjustPlayerAngle(pmo);
-            if(linetarget->flags & MF_COUNTKILL || linetarget->player)
+            P_LineAttack(mo, angle, HAMMER_RANGE, slope, damage);
+            AdjustPlayerAngle(mo);
+            if((linetarget->flags & MF_COUNTKILL) || linetarget->player)
             {
                 P_ThrustMobj(linetarget, angle, power);
             }
-            pmo->special1 = false;  // Don't throw a hammer
+
+            mo->special1 = false; // Don't throw a hammer.
             goto hammerdone;
         }
     }
-    // didn't find any targets in meleerange, so set to throw out a hammer
+
+    // Didn't find any targets in meleerange, so set to throw out a hammer.
     PuffSpawned = NULL;
-    angle = pmo->angle;
-    slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE);
-    P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage);
+
+    angle = mo->angle;
+    slope = P_AimLineAttack(mo, angle, HAMMER_RANGE);
+    P_LineAttack(mo, angle, HAMMER_RANGE, slope, damage);
     if(PuffSpawned)
     {
-        pmo->special1 = false;
+        mo->special1 = false;
     }
     else
     {
-        pmo->special1 = true;
+        mo->special1 = true;
     }
+
   hammerdone:
-    if(player->ammo[AT_GREENMANA] <
-       weaponinfo[player->readyweapon][player->class].mode[0].pershot[AT_GREENMANA])
-    {   // Don't spawn a hammer if the player doesn't have enough mana
-        pmo->special1 = false;
+    if(plr->ammo[AT_GREENMANA] <
+       weaponinfo[plr->readyweapon][plr->class].mode[0].pershot[AT_GREENMANA])
+    {   // Don't spawn a hammer if the plr doesn't have enough mana.
+        mo->special1 = false;
     }
-    return;
 }
 
-void C_DECL A_FHammerThrow(player_t *player, pspdef_t * psp)
+void C_DECL A_FHammerThrow(player_t *plr, pspdef_t *psp)
 {
-    mobj_t *mo;
+    mobj_t     *pmo;
 
-    if(!player->plr->mo->special1)
+    if(!plr->plr->mo->special1)
         return;
 
-    P_ShotAmmo(player);
+    P_ShotAmmo(plr);
 
-    mo = P_SpawnPlayerMissile(player->plr->mo, MT_HAMMER_MISSILE);
-    if(mo)
-        mo->special1 = 0;
+    pmo = P_SpawnPlayerMissile(MT_HAMMER_MISSILE, plr->plr->mo);
+    if(pmo)
+        pmo->special1 = 0;
 }
 
-void C_DECL A_FSwordAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_FSwordAttack(player_t *plr, pspdef_t *psp)
 {
-    mobj_t *pmo;
+    mobj_t         *mo;
 
-    P_ShotAmmo(player);
+    P_ShotAmmo(plr);
 
-    pmo = player->plr->mo;
-    P_SPMAngleXYZ(pmo, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ] - 10 * FRACUNIT,
-                  MT_FSWORD_MISSILE, pmo->angle + ANG45 / 4);
-    P_SPMAngleXYZ(pmo, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ] - 5 * FRACUNIT,
-                  MT_FSWORD_MISSILE, pmo->angle + ANG45 / 8);
-    P_SPMAngleXYZ(pmo, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ],
-                  MT_FSWORD_MISSILE, pmo->angle);
-    P_SPMAngleXYZ(pmo, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ] + 5 * FRACUNIT,
-                  MT_FSWORD_MISSILE, pmo->angle - ANG45 / 8);
-    P_SPMAngleXYZ(pmo, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ] + 10 * FRACUNIT,
-                  MT_FSWORD_MISSILE, pmo->angle - ANG45 / 4);
-    S_StartSound(SFX_FIGHTER_SWORD_FIRE, pmo);
+    mo = plr->plr->mo;
+    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->pos[VX], mo->pos[VY], mo->pos[VZ] - 10,
+                  mo, mo->angle + ANG45 / 4);
+    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->pos[VX], mo->pos[VY], mo->pos[VZ] - 5,
+                  mo, mo->angle + ANG45 / 8);
+    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->pos[VX], mo->pos[VY], mo->pos[VZ],
+                  mo, mo->angle);
+    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->pos[VX], mo->pos[VY], mo->pos[VZ] + 5,
+                  mo, mo->angle - ANG45 / 8);
+    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->pos[VX], mo->pos[VY], mo->pos[VZ] + 10,
+                  mo, mo->angle - ANG45 / 4);
+    S_StartSound(SFX_FIGHTER_SWORD_FIRE, mo);
 }
 
-void C_DECL A_FSwordAttack2(mobj_t *actor)
+void C_DECL A_FSwordAttack2(mobj_t *mo)
 {
-    angle_t angle = actor->angle;
+    angle_t         angle = mo->angle;
 
-    P_SpawnMissileAngle(actor, MT_FSWORD_MISSILE, angle + ANG45 / 4, 0);
-    P_SpawnMissileAngle(actor, MT_FSWORD_MISSILE, angle + ANG45 / 8, 0);
-    P_SpawnMissileAngle(actor, MT_FSWORD_MISSILE, angle, 0);
-    P_SpawnMissileAngle(actor, MT_FSWORD_MISSILE, angle - ANG45 / 8, 0);
-    P_SpawnMissileAngle(actor, MT_FSWORD_MISSILE, angle - ANG45 / 4, 0);
-    S_StartSound(SFX_FIGHTER_SWORD_FIRE, actor);
+    P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle + ANG45 / 4, 0);
+    P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle + ANG45 / 8, 0);
+    P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle, 0);
+    P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle - ANG45 / 8, 0);
+    P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle - ANG45 / 4, 0);
+    S_StartSound(SFX_FIGHTER_SWORD_FIRE, mo);
 }
 
-void C_DECL A_FSwordFlames(mobj_t *actor)
+void C_DECL A_FSwordFlames(mobj_t *mo)
 {
-    int     i;
+    int             i;
 
     for(i = 1 + (P_Random() & 3); i; i--)
     {
-        P_SpawnMobj(actor->pos[VX] + ((P_Random() - 128) << 12),
-                    actor->pos[VY] + ((P_Random() - 128) << 12),
-                    actor->pos[VZ] + ((P_Random() - 128) << 11), MT_FSWORD_FLAME);
+        P_SpawnMobj3f(MT_FSWORD_FLAME,
+                      mo->pos[VX] + FIX2FLT((P_Random() - 128) << 12),
+                      mo->pos[VY] + FIX2FLT((P_Random() - 128) << 12),
+                      mo->pos[VZ] + FIX2FLT((P_Random() - 128) << 11));
     }
 }
 
-void C_DECL A_MWandAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_MWandAttack(player_t *plr, pspdef_t *psp)
 {
-    mobj_t *mo;
+    mobj_t         *pmo;
 
-    mo = P_SpawnPlayerMissile(player->plr->mo, MT_MWAND_MISSILE);
-    if(mo)
+    pmo = P_SpawnPlayerMissile(MT_MWAND_MISSILE, plr->plr->mo);
+    if(pmo)
     {
-        mo->thinker.function = P_BlasterMobjThinker;
+        pmo->thinker.function = P_BlasterMobjThinker;
     }
-    S_StartSound(SFX_MAGE_WAND_FIRE, player->plr->mo);
+    S_StartSound(SFX_MAGE_WAND_FIRE, plr->plr->mo);
 }
 
-void C_DECL A_LightningReady(player_t *player, pspdef_t * psp)
+void C_DECL A_LightningReady(player_t *plr, pspdef_t *psp)
 {
-    A_WeaponReady(player, psp);
+    A_WeaponReady(plr, psp);
     if(P_Random() < 160)
     {
-        S_StartSound(SFX_MAGE_LIGHTNING_READY, player->plr->mo);
+        S_StartSound(SFX_MAGE_LIGHTNING_READY, plr->plr->mo);
     }
 }
 
-void C_DECL A_LightningClip(mobj_t *actor)
+void C_DECL A_LightningClip(mobj_t *mo)
 {
-    mobj_t *cMo;
-    mobj_t *target = 0;
-    int     zigZag;
+    mobj_t         *cMo, *target = 0;
+    int             zigZag;
 
-    if(actor->type == MT_LIGHTNING_FLOOR)
+    if(mo->type == MT_LIGHTNING_FLOOR)
     {
-        actor->pos[VZ] = FLT2FIX(actor->floorz);
-        target = actor->lastenemy->tracer;
+        mo->pos[VZ] = mo->floorz;
+        target = mo->lastenemy->tracer;
     }
-    else if(actor->type == MT_LIGHTNING_CEILING)
+    else if(mo->type == MT_LIGHTNING_CEILING)
     {
-        actor->pos[VZ] = FLT2FIX(actor->ceilingz - actor->height);
-        target = actor->tracer;
+        mo->pos[VZ] = mo->ceilingz - mo->height;
+        target = mo->tracer;
     }
-    if(actor->type == MT_LIGHTNING_FLOOR)
-    {   // floor lightning zig-zags, and forces the ceiling lightning to mimic
-        cMo = actor->lastenemy;
+
+    if(mo->type == MT_LIGHTNING_FLOOR)
+    {   // Floor lightning zig-zags, and forces the ceiling lightning to mimic.
+        cMo = mo->lastenemy;
         zigZag = P_Random();
-        if((zigZag > 128 && actor->special1 < 2) || actor->special1 < -2)
+        if((zigZag > 128 && mo->special1 < 2) || mo->special1 < -2)
         {
-            P_ThrustMobj(actor, actor->angle + ANG90, ZAGSPEED);
+            P_ThrustMobj(mo, mo->angle + ANG90, ZAGSPEED);
             if(cMo)
             {
-                P_ThrustMobj(cMo, actor->angle + ANG90, ZAGSPEED);
+                P_ThrustMobj(cMo, mo->angle + ANG90, ZAGSPEED);
             }
-            actor->special1++;
+            mo->special1++;
         }
         else
         {
-            P_ThrustMobj(actor, actor->angle - ANG90, ZAGSPEED);
+            P_ThrustMobj(mo, mo->angle - ANG90, ZAGSPEED);
             if(cMo)
             {
                 P_ThrustMobj(cMo, cMo->angle - ANG90, ZAGSPEED);
             }
-            actor->special1--;
+            mo->special1--;
         }
     }
+
     if(target)
     {
         if(target->health <= 0)
         {
-            P_ExplodeMissile(actor);
+            P_ExplodeMissile(mo);
         }
         else
         {
-            actor->angle = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
-                                           target->pos[VX], target->pos[VY]);
-            actor->mom[MX] = 0;
-            actor->mom[MY] = 0;
-            P_ThrustMobj(actor, actor->angle, actor->info->speed >> 1);
+            mo->angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
+                                        target->pos[VX], target->pos[VY]);
+            mo->mom[MX] = mo->mom[MY] = 0;
+            P_ThrustMobj(mo, mo->angle, mo->info->speed / 2);
         }
     }
 }
 
-void C_DECL A_LightningZap(mobj_t *actor)
+void C_DECL A_LightningZap(mobj_t *mo)
 {
-    mobj_t *mo;
-    fixed_t deltaZ;
+    mobj_t         *pmo;
+    float           deltaZ;
 
-    A_LightningClip(actor);
+    A_LightningClip(mo);
 
-    actor->health -= 8;
-    if(actor->health <= 0)
+    mo->health -= 8;
+    if(mo->health <= 0)
     {
-        P_SetMobjState(actor, actor->info->deathstate);
+        P_SetMobjState(mo, mo->info->deathstate);
         return;
     }
-    if(actor->type == MT_LIGHTNING_FLOOR)
+
+    if(mo->type == MT_LIGHTNING_FLOOR)
     {
-        deltaZ = 10 * FRACUNIT;
+        deltaZ = 10;
     }
     else
     {
-        deltaZ = -10 * FRACUNIT;
+        deltaZ = -10;
     }
-    mo = P_SpawnMobj(actor->pos[VX] + ((P_Random() - 128) * actor->radius / 256),
-                     actor->pos[VY] + ((P_Random() - 128) * actor->radius / 256),
-                     actor->pos[VZ] + deltaZ, MT_LIGHTNING_ZAP);
-    if(mo)
+
+    pmo = P_SpawnMobj3f(MT_LIGHTNING_ZAP,
+                        mo->pos[VX] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
+                        mo->pos[VY] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
+                        mo->pos[VZ] + deltaZ);
+    if(pmo)
     {
-        mo->lastenemy = actor;
-        mo->mom[MX] = actor->mom[MX];
-        mo->mom[MY] = actor->mom[MY];
-        mo->target = actor->target;
-        if(actor->type == MT_LIGHTNING_FLOOR)
+        pmo->lastenemy = mo;
+        pmo->mom[MX] = mo->mom[MX];
+        pmo->mom[MY] = mo->mom[MY];
+        pmo->target = mo->target;
+        if(mo->type == MT_LIGHTNING_FLOOR)
         {
-            mo->mom[MZ] = 20 * FRACUNIT;
+            pmo->mom[MZ] = 20;
         }
         else
         {
-            mo->mom[MZ] = -20 * FRACUNIT;
+            pmo->mom[MZ] = -20;
         }
     }
 
-    if(actor->type == MT_LIGHTNING_FLOOR && P_Random() < 160)
+    if(mo->type == MT_LIGHTNING_FLOOR && P_Random() < 160)
     {
-        S_StartSound(SFX_MAGE_LIGHTNING_CONTINUOUS, actor);
+        S_StartSound(SFX_MAGE_LIGHTNING_CONTINUOUS, mo);
     }
 }
 
-void C_DECL A_MLightningAttack2(mobj_t *actor)
+void C_DECL A_MLightningAttack2(mobj_t *mo)
 {
-    mobj_t *fmo, *cmo;
+    mobj_t         *fmo, *cmo;
 
-    fmo = P_SpawnPlayerMissile(actor, MT_LIGHTNING_FLOOR);
-    cmo = P_SpawnPlayerMissile(actor, MT_LIGHTNING_CEILING);
+    fmo = P_SpawnPlayerMissile(MT_LIGHTNING_FLOOR, mo);
+    cmo = P_SpawnPlayerMissile(MT_LIGHTNING_CEILING, mo);
     if(fmo)
     {
         fmo->special1 = 0;
         fmo->lastenemy = cmo;
         A_LightningZap(fmo);
     }
+
     if(cmo)
     {
-        cmo->tracer = NULL;      // mobj that it will track
+        cmo->tracer = NULL; // Mobj that it will track.
         cmo->lastenemy = fmo;
         A_LightningZap(cmo);
     }
-    S_StartSound(SFX_MAGE_LIGHTNING_FIRE, actor);
+    S_StartSound(SFX_MAGE_LIGHTNING_FIRE, mo);
 }
 
-void C_DECL A_MLightningAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_MLightningAttack(player_t *plr, pspdef_t *psp)
 {
-    A_MLightningAttack2(player->plr->mo);
-    P_ShotAmmo(player);
+    A_MLightningAttack2(plr->plr->mo);
+    P_ShotAmmo(plr);
 }
 
-void C_DECL A_ZapMimic(mobj_t *actor)
+void C_DECL A_ZapMimic(mobj_t *mo)
 {
-    mobj_t *mo;
+    mobj_t         *target;
 
-    mo = actor->lastenemy;
-    if(mo)
+    target = mo->lastenemy;
+    if(target)
     {
-        if(mo->state >= &states[mo->info->deathstate] ||
-           mo->state == &states[S_FREETARGMOBJ])
+        if(target->state >= &states[target->info->deathstate] ||
+           target->state == &states[S_FREETARGMOBJ])
         {
-            P_ExplodeMissile(actor);
+            P_ExplodeMissile(mo);
         }
         else
         {
-            actor->mom[MX] = mo->mom[MX];
-            actor->mom[MY] = mo->mom[MY];
+            mo->mom[MX] = target->mom[MX];
+            mo->mom[MY] = target->mom[MY];
         }
     }
 }
 
-void C_DECL A_LastZap(mobj_t *actor)
+void C_DECL A_LastZap(mobj_t *mo)
 {
-    mobj_t *mo;
+    mobj_t         *pmo;
 
-    mo = P_SpawnMobj(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_LIGHTNING_ZAP);
-    if(mo)
+    pmo = P_SpawnMobj3fv(MT_LIGHTNING_ZAP, mo->pos);
+    if(pmo)
     {
-        P_SetMobjState(mo, S_LIGHTNING_ZAP_X1);
-        mo->mom[MZ] = 40 * FRACUNIT;
+        P_SetMobjState(pmo, S_LIGHTNING_ZAP_X1);
+        pmo->mom[MZ] = 40;
     }
 }
 
-void C_DECL A_LightningRemove(mobj_t *actor)
+void C_DECL A_LightningRemove(mobj_t *mo)
 {
-    mobj_t *mo;
+    mobj_t         *target;
 
-    mo = actor->lastenemy;
-    if(mo)
+    target = mo->lastenemy;
+    if(target)
     {
-        mo->lastenemy = NULL;
-        P_ExplodeMissile(mo);
+        target->lastenemy = NULL;
+        P_ExplodeMissile(target);
     }
 }
 
-void MStaffSpawn(mobj_t *pmo, angle_t angle)
+void MStaffSpawn(mobj_t *mo, angle_t angle)
 {
-    mobj_t *mo;
+    mobj_t         *pmo;
 
-    mo = P_SPMAngle(pmo, MT_MSTAFF_FX2, angle);
-    if(mo)
+    pmo = P_SPMAngle(MT_MSTAFF_FX2, mo, angle);
+    if(pmo)
     {
-        mo->target = pmo;
-        mo->tracer = P_RoughMonsterSearch(mo, 10);
+        pmo->target = mo;
+        pmo->tracer = P_RoughMonsterSearch(pmo, 10);
     }
 }
 
-void C_DECL A_MStaffAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_MStaffAttack(player_t *plr, pspdef_t *psp)
 {
-    angle_t angle;
-    mobj_t *pmo;
+    angle_t         angle;
+    mobj_t         *mo;
 
-    P_ShotAmmo(player);
-    pmo = player->plr->mo;
-    angle = pmo->angle;
+    P_ShotAmmo(plr);
+    mo = plr->plr->mo;
+    angle = mo->angle;
 
-    MStaffSpawn(pmo, angle);
-    MStaffSpawn(pmo, angle - ANGLE_1 * 5);
-    MStaffSpawn(pmo, angle + ANGLE_1 * 5);
-    S_StartSound(SFX_MAGE_STAFF_FIRE, player->plr->mo);
-    if(player == &players[consoleplayer])
+    MStaffSpawn(mo, angle);
+    MStaffSpawn(mo, angle - ANGLE_1 * 5);
+    MStaffSpawn(mo, angle + ANGLE_1 * 5);
+    S_StartSound(SFX_MAGE_STAFF_FIRE, plr->plr->mo);
+    if(plr == &players[consoleplayer])
     {
-        player->damagecount = 0;
-        player->bonuscount = 0;
+        plr->damagecount = 0;
+        plr->bonuscount = 0;
 
         R_SetFilter(STARTSCOURGEPAL);
     }
 }
 
-void C_DECL A_MStaffPalette(player_t *player, pspdef_t * psp)
+void C_DECL A_MStaffPalette(player_t *plr, pspdef_t *psp)
 {
-    int     pal;
+    int             pal;
 
-    if(player == &players[consoleplayer])
+    if(plr == &players[consoleplayer])
     {
         pal = STARTSCOURGEPAL + psp->state - (&states[S_MSTAFFATK_2]);
         if(pal == STARTSCOURGEPAL + 3)
-        {                       // reset back to original playpal
+        {   // Reset back to original playpal.
             pal = 0;
         }
 
@@ -1126,156 +1148,167 @@ void C_DECL A_MStaffPalette(player_t *player, pspdef_t * psp)
     }
 }
 
-void C_DECL A_MStaffWeave(mobj_t *actor)
+void C_DECL A_MStaffWeave(mobj_t *mo)
 {
-    fixed_t newX, newY;
-    int     weaveXY, weaveZ;
-    int     angle;
+    float       pos[2];
+    uint        weaveXY, weaveZ;
+    uint        an;
 
-    weaveXY = actor->special2 >> 16;
-    weaveZ = actor->special2 & 0xFFFF;
-    angle = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
-    newX =
-        actor->pos[VX] - FixedMul(finecosine[angle], FloatBobOffsets[weaveXY] << 2);
-    newY = actor->pos[VY] - FixedMul(finesine[angle], FloatBobOffsets[weaveXY] << 2);
+    weaveXY = mo->special2 >> 16;
+    weaveZ = mo->special2 & 0xFFFF;
+    an = (mo->angle + ANG90) >> ANGLETOFINESHIFT;
+
+    pos[VX] = mo->pos[VX];
+    pos[VY] = mo->pos[VY];
+
+    pos[VX] -= FIX2FLT(finecosine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
+    pos[VY] -= FIX2FLT(finesine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
+
     weaveXY = (weaveXY + 6) & 63;
-    newX += FixedMul(finecosine[angle], FloatBobOffsets[weaveXY] << 2);
-    newY += FixedMul(finesine[angle], FloatBobOffsets[weaveXY] << 2);
-    P_TryMove(actor, newX, newY);
-    actor->pos[VZ] -= FloatBobOffsets[weaveZ] << 1;
+    pos[VX] += FIX2FLT(finecosine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
+    pos[VY] += FIX2FLT(finesine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
+
+    P_TryMove(mo, pos[VX], pos[VY]);
+    mo->pos[VZ] -= FLOATBOBOFFSET(weaveZ) * 2;
     weaveZ = (weaveZ + 3) & 63;
-    actor->pos[VZ] += FloatBobOffsets[weaveZ] << 1;
-    if(actor->pos[VZ] <= FLT2FIX(actor->floorz))
+    mo->pos[VZ] += FLOATBOBOFFSET(weaveZ) * 2;
+
+    if(mo->pos[VZ] <= mo->floorz)
     {
-        actor->pos[VZ] = FLT2FIX(actor->floorz) + FRACUNIT;
+        mo->pos[VZ] = mo->floorz + 1;
     }
-    actor->special2 = weaveZ + (weaveXY << 16);
+    mo->special2 = weaveZ + (weaveXY << 16);
 }
 
-void C_DECL A_MStaffTrack(mobj_t *actor)
+void C_DECL A_MStaffTrack(mobj_t *mo)
 {
-    if((actor->tracer == 0) && (P_Random() < 50))
+    if((mo->tracer == 0) && (P_Random() < 50))
     {
-        actor->tracer = P_RoughMonsterSearch(actor, 10);
-    }
-    P_SeekerMissile(actor, ANGLE_1 * 2, ANGLE_1 * 10);
-}
-
-/*
- * for use by mage class boss
- */
-void MStaffSpawn2(mobj_t *actor, angle_t angle)
-{
-    mobj_t *mo;
-
-    mo = P_SpawnMissileAngle(actor, MT_MSTAFF_FX2, angle, 0);
-    if(mo)
-    {
-        mo->target = actor;
         mo->tracer = P_RoughMonsterSearch(mo, 10);
     }
+    P_SeekerMissile(mo, ANGLE_1 * 2, ANGLE_1 * 10);
 }
 
-/*
- * for use by mage class boss
+/**
+ * For use by mage class boss.
  */
-void C_DECL A_MStaffAttack2(mobj_t *actor)
+void MStaffSpawn2(mobj_t *mo, angle_t angle)
 {
-    angle_t angle;
+    mobj_t         *pmo;
 
-    angle = actor->angle;
-    MStaffSpawn2(actor, angle);
-    MStaffSpawn2(actor, angle - ANGLE_1 * 5);
-    MStaffSpawn2(actor, angle + ANGLE_1 * 5);
-    S_StartSound(SFX_MAGE_STAFF_FIRE, actor);
+    pmo = P_SpawnMissileAngle(MT_MSTAFF_FX2, mo, angle, 0);
+    if(pmo)
+    {
+        pmo->target = mo;
+        pmo->tracer = P_RoughMonsterSearch(pmo, 10);
+    }
 }
 
-void C_DECL A_FPunchAttack(player_t *player, pspdef_t * psp)
+/**
+ * For use by mage class boss.
+ */
+void C_DECL A_MStaffAttack2(mobj_t *mo)
 {
-    angle_t angle;
-    int     damage;
-    int     slope;
-    mobj_t *pmo = player->plr->mo;
-    fixed_t power;
-    int     i;
+    angle_t         angle;
+
+    angle = mo->angle;
+    MStaffSpawn2(mo, angle);
+    MStaffSpawn2(mo, angle - ANGLE_1 * 5);
+    MStaffSpawn2(mo, angle + ANGLE_1 * 5);
+    S_StartSound(SFX_MAGE_STAFF_FIRE, mo);
+}
+
+void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
+{
+    int         i;
+    angle_t     angle;
+    int         damage;
+    float       slope;
+    mobj_t     *mo = plr->plr->mo;
+    float       power;
 
     damage = 40 + (P_Random() & 15);
-    power = 2 * FRACUNIT;
+    power = 2;
     PuffType = MT_PUNCHPUFF;
-    for(i = 0; i < 16; i++)
+
+    for(i = 0; i < 16; ++i)
     {
-        angle = pmo->angle + i * (ANG45 / 16);
-        slope = P_AimLineAttack(pmo, angle, 2 * MELEERANGE);
+        angle = mo->angle + i * (ANG45 / 16);
+        slope = P_AimLineAttack(mo, angle, 2 * MELEERANGE);
         if(linetarget)
         {
-            player->plr->mo->special1++;
-            if(pmo->special1 == 3)
+            plr->plr->mo->special1++;
+            if(mo->special1 == 3)
             {
-                damage <<= 1;
-                power = 6 * FRACUNIT;
+                damage /= 2;
+                power = 6;
                 PuffType = MT_HAMMERPUFF;
             }
-            P_LineAttack(pmo, angle, 2 * MELEERANGE, slope, damage);
-            if(linetarget->flags & MF_COUNTKILL || linetarget->player)
+
+            P_LineAttack(mo, angle, 2 * MELEERANGE, slope, damage);
+            if((linetarget->flags & MF_COUNTKILL) || linetarget->player)
             {
                 P_ThrustMobj(linetarget, angle, power);
             }
-            AdjustPlayerAngle(pmo);
+
+            AdjustPlayerAngle(mo);
             goto punchdone;
         }
-        angle = pmo->angle - i * (ANG45 / 16);
-        slope = P_AimLineAttack(pmo, angle, 2 * MELEERANGE);
+
+        angle = mo->angle - i * (ANG45 / 16);
+        slope = P_AimLineAttack(mo, angle, 2 * MELEERANGE);
         if(linetarget)
         {
-            pmo->special1++;
-            if(pmo->special1 == 3)
+            mo->special1++;
+            if(mo->special1 == 3)
             {
-                damage <<= 1;
-                power = 6 * FRACUNIT;
+                damage /= 2;
+                power = 6;
                 PuffType = MT_HAMMERPUFF;
             }
-            P_LineAttack(pmo, angle, 2 * MELEERANGE, slope, damage);
-            if(linetarget->flags & MF_COUNTKILL || linetarget->player)
+
+            P_LineAttack(mo, angle, 2 * MELEERANGE, slope, damage);
+            if((linetarget->flags & MF_COUNTKILL) || linetarget->player)
             {
                 P_ThrustMobj(linetarget, angle, power);
             }
-            AdjustPlayerAngle(pmo);
+
+            AdjustPlayerAngle(mo);
             goto punchdone;
         }
     }
-    // didn't find any creatures, so try to strike any walls
-    pmo->special1 = 0;
 
-    angle = pmo->angle;
-    slope = P_AimLineAttack(pmo, angle, MELEERANGE);
-    P_LineAttack(pmo, angle, MELEERANGE, slope, damage);
+    // Didn't find any creatures, so try to strike any walls.
+    mo->special1 = 0;
+
+    angle = mo->angle;
+    slope = P_AimLineAttack(mo, angle, MELEERANGE);
+    P_LineAttack(mo, angle, MELEERANGE, slope, damage);
 
   punchdone:
-    if(pmo->special1 == 3)
+    if(mo->special1 == 3)
     {
-        pmo->special1 = 0;
-        P_SetPsprite(player, ps_weapon, S_PUNCHATK2_1);
-        S_StartSound(SFX_FIGHTER_GRUNT, pmo);
+        mo->special1 = 0;
+        P_SetPsprite(plr, ps_weapon, S_PUNCHATK2_1);
+        S_StartSound(SFX_FIGHTER_GRUNT, mo);
     }
-    return;
 }
 
-void C_DECL A_FAxeAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
 {
-    angle_t angle;
-    mobj_t *pmo = player->plr->mo;
-    fixed_t power;
-    int     damage;
-    int     slope;
-    int     i;
-    int     useMana;
+    int         i;
+    angle_t     angle;
+    mobj_t     *pmo = plr->plr->mo;
+    float       power;
+    float       slope;
+    int         damage, useMana;
 
     damage = 40 + (P_Random() & 15) + (P_Random() & 7);
     power = 0;
-    if(player->ammo[AT_BLUEMANA] > 0)
+    if(plr->ammo[AT_BLUEMANA] > 0)
     {
-        damage <<= 1;
-        power = 6 * FRACUNIT;
+        damage /= 2;
+        power = 6;
         PuffType = MT_AXEPUFF_GLOW;
         useMana = 1;
     }
@@ -1284,21 +1317,24 @@ void C_DECL A_FAxeAttack(player_t *player, pspdef_t * psp)
         PuffType = MT_AXEPUFF;
         useMana = 0;
     }
-    for(i = 0; i < 16; i++)
+
+    for(i = 0; i < 16; ++i)
     {
         angle = pmo->angle + i * (ANG45 / 16);
         slope = P_AimLineAttack(pmo, angle, AXERANGE);
         if(linetarget)
         {
             P_LineAttack(pmo, angle, AXERANGE, slope, damage);
-            if(linetarget->flags & MF_COUNTKILL || linetarget->player)
+            if((linetarget->flags & MF_COUNTKILL) || linetarget->player)
             {
                 P_ThrustMobj(linetarget, angle, power);
             }
+
             AdjustPlayerAngle(pmo);
             useMana++;
             goto axedone;
         }
+
         angle = pmo->angle - i * (ANG45 / 16);
         slope = P_AimLineAttack(pmo, angle, AXERANGE);
         if(linetarget)
@@ -1308,12 +1344,14 @@ void C_DECL A_FAxeAttack(player_t *player, pspdef_t * psp)
             {
                 P_ThrustMobj(linetarget, angle, power);
             }
+
             AdjustPlayerAngle(pmo);
             useMana++;
             goto axedone;
         }
     }
-    // didn't find any creatures, so try to strike any walls
+
+    // Didn't find any creatures, so try to strike any walls.
     pmo->special1 = 0;
 
     angle = pmo->angle;
@@ -1323,326 +1361,356 @@ void C_DECL A_FAxeAttack(player_t *player, pspdef_t * psp)
   axedone:
     if(useMana == 2)
     {
-        P_ShotAmmo(player);
-        if(player->ammo[AT_BLUEMANA] <= 0)
-            P_SetPsprite(player, ps_weapon, S_FAXEATK_5);
+        P_ShotAmmo(plr);
+        if(plr->ammo[AT_BLUEMANA] <= 0)
+            P_SetPsprite(plr, ps_weapon, S_FAXEATK_5);
     }
-    return;
 }
 
-void C_DECL A_CMaceAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_CMaceAttack(player_t *plr, pspdef_t *psp)
 {
-    angle_t angle;
-    int     damage;
-    int     slope;
-    int     i;
+    int         i;
+    angle_t     angle;
+    int         damage;
+    float       slope;
 
     damage = 25 + (P_Random() & 15);
     PuffType = MT_HAMMERPUFF;
-    for(i = 0; i < 16; i++)
+    for(i = 0; i < 16; ++i)
     {
-        angle = player->plr->mo->angle + i * (ANG45 / 16);
-        slope = P_AimLineAttack(player->plr->mo, angle, 2 * MELEERANGE);
+        angle = plr->plr->mo->angle + i * (ANG45 / 16);
+        slope = P_AimLineAttack(plr->plr->mo, angle, 2 * MELEERANGE);
         if(linetarget)
         {
-            P_LineAttack(player->plr->mo, angle, 2 * MELEERANGE, slope,
+            P_LineAttack(plr->plr->mo, angle, 2 * MELEERANGE, slope,
                          damage);
-            AdjustPlayerAngle(player->plr->mo);
+            AdjustPlayerAngle(plr->plr->mo);
             goto macedone;
         }
-        angle = player->plr->mo->angle - i * (ANG45 / 16);
-        slope = P_AimLineAttack(player->plr->mo, angle, 2 * MELEERANGE);
+
+        angle = plr->plr->mo->angle - i * (ANG45 / 16);
+        slope = P_AimLineAttack(plr->plr->mo, angle, 2 * MELEERANGE);
         if(linetarget)
         {
-            P_LineAttack(player->plr->mo, angle, 2 * MELEERANGE, slope,
+            P_LineAttack(plr->plr->mo, angle, 2 * MELEERANGE, slope,
                          damage);
-            AdjustPlayerAngle(player->plr->mo);
+            AdjustPlayerAngle(plr->plr->mo);
             goto macedone;
         }
     }
-    // didn't find any creatures, so try to strike any walls
-    player->plr->mo->special1 = 0;
 
-    angle = player->plr->mo->angle;
-    slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
-    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
+    // Didn't find any creatures, so try to strike any walls.
+    plr->plr->mo->special1 = 0;
+
+    angle = plr->plr->mo->angle;
+    slope = P_AimLineAttack(plr->plr->mo, angle, MELEERANGE);
+    P_LineAttack(plr->plr->mo, angle, MELEERANGE, slope, damage);
   macedone:
     return;
 }
 
-void C_DECL A_CStaffCheck(player_t *player, pspdef_t * psp)
+void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
 {
-    mobj_t *pmo;
-    int     damage;
-    int     newLife;
-    angle_t angle;
-    int     slope;
-    int     i;
+    int         i;
+    mobj_t     *pmo;
+    int         damage, newLife;
+    angle_t     angle;
+    float       slope;
 
-    pmo = player->plr->mo;
+    pmo = plr->plr->mo;
     damage = 20 + (P_Random() & 15);
     PuffType = MT_CSTAFFPUFF;
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
     {
         angle = pmo->angle + i * (ANG45 / 16);
         slope = P_AimLineAttack(pmo, angle, 1.5 * MELEERANGE);
         if(linetarget)
         {
             P_LineAttack(pmo, angle, 1.5 * MELEERANGE, slope, damage);
-            pmo->angle = R_PointToAngle2(pmo->pos[VX], pmo->pos[VY],
-                                         linetarget->pos[VX], linetarget->pos[VY]);
-            if((linetarget->player || linetarget->flags & MF_COUNTKILL) &&
+
+            pmo->angle =
+                R_PointToAngle2(pmo->pos[VX], pmo->pos[VY],
+                                linetarget->pos[VX], linetarget->pos[VY]);
+
+            if((linetarget->player || (linetarget->flags & MF_COUNTKILL)) &&
                (!(linetarget->flags2 & (MF2_DORMANT + MF2_INVULNERABLE))))
             {
-                newLife = player->health + (damage >> 3);
-                newLife = newLife > 100 ? 100 : newLife;
-                pmo->health = player->health = newLife;
-                P_SetPsprite(player, ps_weapon, S_CSTAFFATK2_1);
+                newLife = plr->health + (damage / 8);
+                newLife = (newLife > 100 ? 100 : newLife);
+                pmo->health = plr->health = newLife;
+
+                P_SetPsprite(plr, ps_weapon, S_CSTAFFATK2_1);
             }
-            P_ShotAmmo(player);
+
+            P_ShotAmmo(plr);
             break;
         }
+
         angle = pmo->angle - i * (ANG45 / 16);
-        slope = P_AimLineAttack(player->plr->mo, angle, 1.5 * MELEERANGE);
+        slope = P_AimLineAttack(plr->plr->mo, angle, 1.5 * MELEERANGE);
         if(linetarget)
         {
             P_LineAttack(pmo, angle, 1.5 * MELEERANGE, slope, damage);
-            pmo->angle = R_PointToAngle2(pmo->pos[VX], pmo->pos[VY],
-                                         linetarget->pos[VX], linetarget->pos[VY]);
-            if(linetarget->player || linetarget->flags & MF_COUNTKILL)
+            pmo->angle =
+                R_PointToAngle2(pmo->pos[VX], pmo->pos[VY],
+                                linetarget->pos[VX], linetarget->pos[VY]);
+            if(linetarget->player || (linetarget->flags & MF_COUNTKILL))
             {
-                newLife = player->health + (damage >> 4);
-                newLife = newLife > 100 ? 100 : newLife;
-                pmo->health = player->health = newLife;
-                P_SetPsprite(player, ps_weapon, S_CSTAFFATK2_1);
+                newLife = plr->health + (damage >> 4);
+                newLife = (newLife > 100 ? 100 : newLife);
+                pmo->health = plr->health = newLife;
+
+                P_SetPsprite(plr, ps_weapon, S_CSTAFFATK2_1);
             }
-            P_ShotAmmo(player);
+
+            P_ShotAmmo(plr);
             break;
         }
     }
 }
 
-void C_DECL A_CStaffAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_CStaffAttack(player_t *plr, pspdef_t *psp)
 {
-    mobj_t *mo;
-    mobj_t *pmo;
+    mobj_t     *mo, *pmo;
 
-    P_ShotAmmo(player);
-    pmo = player->plr->mo;
-    mo = P_SPMAngle(pmo, MT_CSTAFF_MISSILE, pmo->angle - (ANG45 / 15));
+    P_ShotAmmo(plr);
+    pmo = plr->plr->mo;
+    mo = P_SPMAngle(MT_CSTAFF_MISSILE, pmo, pmo->angle - (ANG45 / 15));
     if(mo)
     {
         mo->special2 = 32;
     }
-    mo = P_SPMAngle(pmo, MT_CSTAFF_MISSILE, pmo->angle + (ANG45 / 15));
+
+    mo = P_SPMAngle(MT_CSTAFF_MISSILE, pmo, pmo->angle + (ANG45 / 15));
     if(mo)
     {
         mo->special2 = 0;
     }
-    S_StartSound(SFX_CLERIC_CSTAFF_FIRE, player->plr->mo);
+
+    S_StartSound(SFX_CLERIC_CSTAFF_FIRE, plr->plr->mo);
 }
 
 void C_DECL A_CStaffMissileSlither(mobj_t *actor)
 {
-    fixed_t newX, newY;
-    int     weaveXY;
-    int     angle;
+    float       pos[2];
+    uint        an, weaveXY;
 
     weaveXY = actor->special2;
-    angle = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
-    newX = actor->pos[VX] - FixedMul(finecosine[angle], FloatBobOffsets[weaveXY]);
-    newY = actor->pos[VY] - FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
+    an = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
+
+    pos[VX] = actor->pos[VX];
+    pos[VY] = actor->pos[VY];
+
+    pos[VX] -= FIX2FLT(finecosine[an]) * FLOATBOBOFFSET(weaveXY);
+    pos[VY] -= FIX2FLT(finesine[an]) * FLOATBOBOFFSET(weaveXY);
+
     weaveXY = (weaveXY + 3) & 63;
-    newX += FixedMul(finecosine[angle], FloatBobOffsets[weaveXY]);
-    newY += FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
-    P_TryMove(actor, newX, newY);
+    pos[VX] += FIX2FLT(finecosine[an]) * FLOATBOBOFFSET(weaveXY);
+    pos[VY] += FIX2FLT(finesine[an]) * FLOATBOBOFFSET(weaveXY);
+
+    P_TryMove(actor, pos[VX], pos[VY]);
     actor->special2 = weaveXY;
 }
 
-void C_DECL A_CStaffInitBlink(player_t *player, pspdef_t * psp)
+void C_DECL A_CStaffInitBlink(player_t *plr, pspdef_t *psp)
 {
-    player->plr->mo->special1 = (P_Random() >> 1) + 20;
+    plr->plr->mo->special1 = (P_Random() >> 1) + 20;
 }
 
-void C_DECL A_CStaffCheckBlink(player_t *player, pspdef_t * psp)
+void C_DECL A_CStaffCheckBlink(player_t *plr, pspdef_t *psp)
 {
-    if(!--player->plr->mo->special1)
+    if(!--plr->plr->mo->special1)
     {
-        P_SetPsprite(player, ps_weapon, S_CSTAFFBLINK1);
-        player->plr->mo->special1 = (P_Random() + 50) >> 2;
+        P_SetPsprite(plr, ps_weapon, S_CSTAFFBLINK1);
+        plr->plr->mo->special1 = (P_Random() + 50) >> 2;
     }
 }
 
-void C_DECL A_CFlameAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_CFlameAttack(player_t *plr, pspdef_t *psp)
 {
-    mobj_t *mo;
+    mobj_t         *pmo;
 
-    mo = P_SpawnPlayerMissile(player->plr->mo, MT_CFLAME_MISSILE);
-    if(mo)
+    pmo = P_SpawnPlayerMissile(MT_CFLAME_MISSILE, plr->plr->mo);
+    if(pmo)
     {
-        mo->thinker.function = P_BlasterMobjThinker;
-        mo->special1 = 2;
+        pmo->thinker.function = P_BlasterMobjThinker;
+        pmo->special1 = 2;
     }
 
-    P_ShotAmmo(player);
-    S_StartSound(SFX_CLERIC_FLAME_FIRE, player->plr->mo);
+    P_ShotAmmo(plr);
+    S_StartSound(SFX_CLERIC_FLAME_FIRE, plr->plr->mo);
 }
 
-void C_DECL A_CFlamePuff(mobj_t *actor)
+void C_DECL A_CFlamePuff(mobj_t *mo)
 {
-    A_UnHideThing(actor);
-    actor->mom[MX] = 0;
-    actor->mom[MY] = 0;
-    actor->mom[MZ] = 0;
-    S_StartSound(SFX_CLERIC_FLAME_EXPLODE, actor);
+    A_UnHideThing(mo);
+    mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
+    S_StartSound(SFX_CLERIC_FLAME_EXPLODE, mo);
 }
 
-void C_DECL A_CFlameMissile(mobj_t *actor)
+void C_DECL A_CFlameMissile(mobj_t *mo)
 {
-    int     i;
-    int     an, an90;
-    fixed_t dist;
-    mobj_t *mo;
+    int         i;
+    uint        an, an90;
+    float       dist;
+    mobj_t     *pmo;
 
-    A_UnHideThing(actor);
-    S_StartSound(SFX_CLERIC_FLAME_EXPLODE, actor);
-    if(BlockingMobj && BlockingMobj->flags & MF_SHOOTABLE)
-    {   // Hit something, so spawn the flame circle around the thing
-        dist = BlockingMobj->radius + 18 * FRACUNIT;
-        for(i = 0; i < 4; i++)
+    A_UnHideThing(mo);
+    S_StartSound(SFX_CLERIC_FLAME_EXPLODE, mo);
+
+    if(BlockingMobj && (BlockingMobj->flags & MF_SHOOTABLE))
+    {   // Hit something.
+        // Spawn the flame circle around the thing
+        dist = BlockingMobj->radius + 18;
+        for(i = 0; i < 4; ++i)
         {
             an = (i * ANG45) >> ANGLETOFINESHIFT;
             an90 = (i * ANG45 + ANG90) >> ANGLETOFINESHIFT;
-            mo = P_SpawnMobj(BlockingMobj->pos[VX] + FixedMul(dist, finecosine[an]),
-                             BlockingMobj->pos[VY] + FixedMul(dist, finesine[an]),
-                             BlockingMobj->pos[VZ] + 5 * FRACUNIT, MT_CIRCLEFLAME);
-            if(mo)
+            pmo = P_SpawnMobj3f(MT_CIRCLEFLAME,
+                                BlockingMobj->pos[VX] + dist * FIX2FLT(finecosine[an]),
+                                BlockingMobj->pos[VY] + dist * FIX2FLT(finesine[an]),
+                                BlockingMobj->pos[VZ] + 5);
+            if(pmo)
             {
-                mo->angle = an << ANGLETOFINESHIFT;
-                mo->target = actor->target;
-                mo->mom[MX] = mo->special1 = FixedMul(FLAMESPEED, finecosine[an]);
-                mo->mom[MY] = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
-                mo->tics -= P_Random() & 3;
+                pmo->angle = (angle_t) an << ANGLETOFINESHIFT;
+                pmo->target = mo->target;
+                pmo->mom[MX] = FLAMESPEED * FIX2FLT(finecosine[an]);
+                pmo->mom[MY] = FLAMESPEED * FIX2FLT(finesine[an]);
+
+                pmo->special1 = FLT2FIX(pmo->mom[MX]);
+                pmo->special2 = FLT2FIX(pmo->mom[MY]);
+                pmo->tics -= P_Random() & 3;
             }
-            mo = P_SpawnMobj(BlockingMobj->pos[VX] - FixedMul(dist, finecosine[an]),
-                             BlockingMobj->pos[VY] - FixedMul(dist, finesine[an]),
-                             BlockingMobj->pos[VZ] + 5 * FRACUNIT, MT_CIRCLEFLAME);
-            if(mo)
+
+            pmo = P_SpawnMobj3f(MT_CIRCLEFLAME,
+                                BlockingMobj->pos[VX] - dist * FIX2FLT(finecosine[an]),
+                                BlockingMobj->pos[VY] - dist * FIX2FLT(finesine[an]),
+                                BlockingMobj->pos[VZ] + 5);
+            if(pmo)
             {
-                mo->angle = ANG180 + (an << ANGLETOFINESHIFT);
-                mo->target = actor->target;
-                mo->mom[MX] = mo->special1 =
-                    FixedMul(-FLAMESPEED, finecosine[an]);
-                mo->mom[MY] = mo->special2 = FixedMul(-FLAMESPEED, finesine[an]);
-                mo->tics -= P_Random() & 3;
+                pmo->angle = (angle_t) (ANG180 + (an << ANGLETOFINESHIFT));
+                pmo->target = mo->target;
+                pmo->mom[MX] = -FLAMESPEED * FIX2FLT(finecosine[an]);
+                pmo->mom[MY] = -FLAMESPEED * FIX2FLT(finesine[an]);
+
+                pmo->special1 = FLT2FIX(pmo->mom[MX]);
+                pmo->special2 = FLT2FIX(pmo->mom[MY]);
+                pmo->tics -= P_Random() & 3;
             }
         }
-        P_SetMobjState(actor, S_FLAMEPUFF2_1);
+
+        P_SetMobjState(mo, S_FLAMEPUFF2_1);
     }
 }
 
-void C_DECL A_CFlameRotate(mobj_t *actor)
+void C_DECL A_CFlameRotate(mobj_t *mo)
 {
-    int     an;
+    uint        an;
 
-    an = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
-    actor->mom[MX] = actor->special1 + FixedMul(FLAMEROTSPEED, finecosine[an]);
-    actor->mom[MY] = actor->special2 + FixedMul(FLAMEROTSPEED, finesine[an]);
-    actor->angle += ANG90 / 15;
+    an = (mo->angle + ANG90) >> ANGLETOFINESHIFT;
+    mo->mom[MX] = FIX2FLT(mo->special1);
+    mo->mom[MY] = FIX2FLT(mo->special2);
+    mo->mom[MX] += FLAMEROTSPEED * FIX2FLT(finecosine[an]);
+    mo->mom[MY] += FLAMEROTSPEED * FIX2FLT(finesine[an]);
+    mo->angle += ANG90 / 15;
 }
 
-/*
+/**
  * Spawns the spirits
  */
-void C_DECL A_CHolyAttack3(mobj_t *actor)
+void C_DECL A_CHolyAttack3(mobj_t *mo)
 {
-    P_SpawnMissile(actor, actor->target, MT_HOLY_MISSILE);
-    S_StartSound(SFX_CHOLY_FIRE, actor);
+    P_SpawnMissile(MT_HOLY_MISSILE, mo, mo->target);
+    S_StartSound(SFX_CHOLY_FIRE, mo);
 }
 
-/*
+/**
  * Spawns the spirits
  */
-void C_DECL A_CHolyAttack2(mobj_t *actor)
+void C_DECL A_CHolyAttack2(mobj_t *mo)
 {
-    int     j;
-    int     i;
-    mobj_t *mo;
-    mobj_t *tail, *next;
+    int         i, j;
+    mobj_t     *pmo, *tail, *next;
 
-    for(j = 0; j < 4; j++)
+    for(i = 0; i < 4; ++i)
     {
-        mo = P_SpawnMobj(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_HOLY_FX);
-        if(!mo)
-        {
+        pmo = P_SpawnMobj3fv(MT_HOLY_FX, mo->pos);
+        if(!pmo)
             continue;
-        }
-        switch (j)
-        {                       // float bob index
+
+        switch(i) // float bob index
+        {
         case 0:
-            mo->special2 = P_Random() & 7;  // upper-left
+            pmo->special2 = P_Random() & 7; // Upper-left.
             break;
+
         case 1:
-            mo->special2 = 32 + (P_Random() & 7);   // upper-right
+            pmo->special2 = 32 + (P_Random() & 7); // Upper-right.
             break;
+
         case 2:
-            mo->special2 = (32 + (P_Random() & 7)) << 16;   // lower-left
+            pmo->special2 = (32 + (P_Random() & 7)) << 16; // Lower-left.
             break;
+
         case 3:
-            mo->special2 =
+            pmo->special2 =
                 ((32 + (P_Random() & 7)) << 16) + 32 + (P_Random() & 7);
             break;
         }
-        mo->pos[VZ] = actor->pos[VZ];
-        mo->angle = actor->angle + (ANGLE_45 + ANGLE_45 / 2) - ANGLE_45 * j;
-        P_ThrustMobj(mo, mo->angle, mo->info->speed);
-        mo->target = actor->target;
-        mo->args[0] = 10;       // initial turn value
-        mo->args[1] = 0;        // initial look angle
+
+        pmo->pos[VZ] = mo->pos[VZ];
+        pmo->angle = mo->angle + (ANGLE_45 + ANGLE_45 / 2) - ANGLE_45 * i;
+        P_ThrustMobj(pmo, pmo->angle, pmo->info->speed);
+        pmo->target = mo->target;
+        pmo->args[0] = 10; // Initial turn value.
+        pmo->args[1] = 0; // Initial look angle.
         if(deathmatch)
-        {                       // Ghosts last slightly less longer in DeathMatch
-            mo->health = 85;
+        {   // Ghosts last slightly less longer in DeathMatch.
+            pmo->health = 85;
         }
+
         if(linetarget)
         {
-            mo->tracer = linetarget;
-            mo->flags |= MF_NOCLIP | MF_SKULLFLY;
-            mo->flags &= ~MF_MISSILE;
+            pmo->tracer = linetarget;
+            pmo->flags |= MF_NOCLIP | MF_SKULLFLY;
+            pmo->flags &= ~MF_MISSILE;
         }
-        tail = P_SpawnMobj(mo->pos[VX], mo->pos[VY], mo->pos[VZ], MT_HOLY_TAIL);
-        tail->target = mo;  // parent
-        for(i = 1; i < 3; i++)
+
+        tail = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos);
+        tail->target = pmo; // Parent.
+        for(j = 1; j < 3; ++j)
         {
-            next = P_SpawnMobj(mo->pos[VX], mo->pos[VY], mo->pos[VZ], MT_HOLY_TAIL);
+            next = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos);
             P_SetMobjState(next, next->info->spawnstate + 1);
             tail->tracer = next;
             tail = next;
         }
+
         tail->tracer = NULL;     // last tail bit
     }
 }
 
-void C_DECL A_CHolyAttack(player_t *player, pspdef_t * psp)
+void C_DECL A_CHolyAttack(player_t *plr, pspdef_t *psp)
 {
-    mobj_t *mo;
+    mobj_t     *pmo;
 
-    P_ShotAmmo(player);
-    mo = P_SpawnPlayerMissile(player->plr->mo, MT_HOLY_MISSILE);
-    if(player == &players[consoleplayer])
+    P_ShotAmmo(plr);
+    pmo = P_SpawnPlayerMissile(MT_HOLY_MISSILE, plr->plr->mo);
+    if(plr == &players[consoleplayer])
     {
-        player->damagecount = 0;
-        player->bonuscount = 0;
+        plr->damagecount = 0;
+        plr->bonuscount = 0;
 
         R_SetFilter(STARTHOLYPAL);
     }
-    S_StartSound(SFX_CHOLY_FIRE, player->plr->mo);
+    S_StartSound(SFX_CHOLY_FIRE, plr->plr->mo);
 }
 
-void C_DECL A_CHolyPalette(player_t *player, pspdef_t * psp)
+void C_DECL A_CHolyPalette(player_t *plr, pspdef_t *psp)
 {
-    int     pal;
+    int         pal;
 
-    if(player == &players[consoleplayer])
+    if(plr == &players[consoleplayer])
     {
         pal = STARTHOLYPAL + psp->state - (&states[S_CHOLYATK_6]);
         if(pal == STARTHOLYPAL + 3)
@@ -1654,415 +1722,432 @@ void C_DECL A_CHolyPalette(player_t *player, pspdef_t * psp)
     }
 }
 
-static void CHolyFindTarget(mobj_t *actor)
+static void CHolyFindTarget(mobj_t *mo)
 {
-    mobj_t *target;
+    mobj_t     *target;
 
-    target = P_RoughMonsterSearch(actor, 6);
+    target = P_RoughMonsterSearch(mo, 6);
     if(target)
     {
         Con_Message("CHolyFindTarget: mobj_t* converted to int! Not 64-bit compatible.\n");
-        actor->tracer = target;
-        actor->flags |= MF_NOCLIP | MF_SKULLFLY;
-        actor->flags &= ~MF_MISSILE;
+        mo->tracer = target;
+        mo->flags |= MF_NOCLIP | MF_SKULLFLY;
+        mo->flags &= ~MF_MISSILE;
     }
 }
 
-/*
+/**
  * Similar to P_SeekerMissile, but seeks to a random Z on the target
  */
-static void CHolySeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
+static void CHolySeekerMissile(mobj_t *mo, angle_t thresh, angle_t turnMax)
 {
-    int     dir;
-    int     dist;
-    angle_t delta;
-    angle_t angle;
-    mobj_t *target;
-    fixed_t newZ;
-    fixed_t deltaZ;
+    int         dir;
+    uint        an;
+    angle_t     delta;
+    mobj_t     *target;
+    float       dist, newZ, deltaZ;
 
-    target = actor->tracer;
+    target = mo->tracer;
     if(target == NULL)
     {
         return;
     }
+
     if(!(target->flags & MF_SHOOTABLE) ||
        (!(target->flags & MF_COUNTKILL) && !target->player))
     {   // Target died/target isn't a player or creature
-        actor->tracer = NULL;
-        actor->flags &= ~(MF_NOCLIP | MF_SKULLFLY);
-        actor->flags |= MF_MISSILE;
-        CHolyFindTarget(actor);
+        mo->tracer = NULL;
+        mo->flags &= ~(MF_NOCLIP | MF_SKULLFLY);
+        mo->flags |= MF_MISSILE;
+        CHolyFindTarget(mo);
         return;
     }
-    dir = P_FaceMobj(actor, target, &delta);
+
+    dir = P_FaceMobj(mo, target, &delta);
     if(delta > thresh)
     {
-        delta >>= 1;
+        delta /= 2;
         if(delta > turnMax)
         {
             delta = turnMax;
         }
     }
+
     if(dir)
     {   // Turn clockwise
-        actor->angle += delta;
+        mo->angle += delta;
     }
     else
     {   // Turn counter clockwise
-        actor->angle -= delta;
+        mo->angle -= delta;
     }
-    angle = actor->angle >> ANGLETOFINESHIFT;
-    actor->mom[MX] = FixedMul(actor->info->speed, finecosine[angle]);
-    actor->mom[MY] = FixedMul(actor->info->speed, finesine[angle]);
-    if(!(leveltime & 15) || actor->pos[VZ] > target->pos[VZ] + FLT2FIX(target->height) ||
-       actor->pos[VZ] + FLT2FIX(actor->height) < target->pos[VZ])
+
+    an = mo->angle >> ANGLETOFINESHIFT;
+    mo->mom[MX] = mo->info->speed * FIX2FLT(finecosine[an]);
+    mo->mom[MY] = mo->info->speed * FIX2FLT(finesine[an]);
+
+    if(!(leveltime & 15) ||
+       mo->pos[VZ] > target->pos[VZ] + target->height ||
+       mo->pos[VZ] + mo->height < target->pos[VZ])
     {
-        newZ = target->pos[VZ] + ((P_Random() * FLT2FIX(target->height)) >> 8);
-        deltaZ = newZ - actor->pos[VZ];
-        if(abs(deltaZ) > 15 * FRACUNIT)
+        newZ = target->pos[VZ];
+        newZ += FIX2FLT((P_Random() * FLT2FIX(target->height)) >> 8);
+        deltaZ = newZ - mo->pos[VZ];
+
+        if(fabs(deltaZ) > 15)
         {
             if(deltaZ > 0)
             {
-                deltaZ = 15 * FRACUNIT;
+                deltaZ = 15;
             }
             else
             {
-                deltaZ = -15 * FRACUNIT;
+                deltaZ = -15;
             }
         }
-        dist = P_ApproxDistance(target->pos[VX] - actor->pos[VX],
-                                target->pos[VX] - actor->pos[VY]);
-        dist = dist / actor->info->speed;
+
+        dist = P_ApproxDistance(target->pos[VX] - mo->pos[VX],
+                                target->pos[VX] - mo->pos[VY]);
+        dist /= mo->info->speed;
         if(dist < 1)
         {
             dist = 1;
         }
-        actor->mom[MZ] = deltaZ / dist;
+        mo->mom[MZ] = deltaZ / dist;
     }
-    return;
 }
 
-static void CHolyWeave(mobj_t *actor)
+static void CHolyWeave(mobj_t *mo)
 {
-    fixed_t newX, newY;
-    int     weaveXY, weaveZ;
-    int     angle;
+    float       pos[2];
+    int         weaveXY, weaveZ;
+    int         angle;
 
-    weaveXY = actor->special2 >> 16;
-    weaveZ = actor->special2 & 0xFFFF;
-    angle = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
-    newX =
-        actor->pos[VX] - FixedMul(finecosine[angle], FloatBobOffsets[weaveXY] << 2);
-    newY = actor->pos[VY] - FixedMul(finesine[angle], FloatBobOffsets[weaveXY] << 2);
+    weaveXY = mo->special2 >> 16;
+    weaveZ = mo->special2 & 0xFFFF;
+    angle = (mo->angle + ANG90) >> ANGLETOFINESHIFT;
+
+    pos[VX] = mo->pos[VX] - (FIX2FLT(finecosine[angle]) * (FLOATBOBOFFSET(weaveXY) * 4));
+    pos[VY] = mo->pos[VY] - (FIX2FLT(finesine[angle]) * (FLOATBOBOFFSET(weaveXY) * 4));
+
     weaveXY = (weaveXY + (P_Random() % 5)) & 63;
-    newX += FixedMul(finecosine[angle], FloatBobOffsets[weaveXY] << 2);
-    newY += FixedMul(finesine[angle], FloatBobOffsets[weaveXY] << 2);
-    P_TryMove(actor, newX, newY);
-    actor->pos[VZ] -= FloatBobOffsets[weaveZ] << 1;
+    pos[VX] += FIX2FLT(finecosine[angle]) * (FLOATBOBOFFSET(weaveXY) * 4);
+    pos[VY] += FIX2FLT(finesine[angle]) * (FLOATBOBOFFSET(weaveXY) * 4);
+
+    P_TryMove(mo, pos[VX], pos[VY]);
+    mo->pos[VZ] -= FLOATBOBOFFSET(weaveZ) * 2;
     weaveZ = (weaveZ + (P_Random() % 5)) & 63;
-    actor->pos[VZ] += FloatBobOffsets[weaveZ] << 1;
-    actor->special2 = weaveZ + (weaveXY << 16);
+    mo->pos[VZ] += FLOATBOBOFFSET(weaveZ) * 2;
+
+    mo->special2 = weaveZ + (weaveXY << 16);
 }
 
-void C_DECL A_CHolySeek(mobj_t *actor)
+void C_DECL A_CHolySeek(mobj_t *mo)
 {
-    actor->health--;
-    if(actor->health <= 0)
+    mo->health--;
+    if(mo->health <= 0)
     {
-        actor->mom[MX] >>= 2;
-        actor->mom[MY] >>= 2;
-        actor->mom[MZ] = 0;
-        P_SetMobjState(actor, actor->info->deathstate);
-        actor->tics -= P_Random() & 3;
+        mo->mom[MX] /= 4;
+        mo->mom[MY] /= 4;
+        mo->mom[MZ] = 0;
+        P_SetMobjState(mo, mo->info->deathstate);
+        mo->tics -= P_Random() & 3;
         return;
     }
-    if(actor->tracer)
+
+    if(mo->tracer)
     {
-        CHolySeekerMissile(actor, actor->args[0] * ANGLE_1,
-                           actor->args[0] * ANGLE_1 * 2);
+        CHolySeekerMissile(mo, mo->args[0] * ANGLE_1,
+                           mo->args[0] * ANGLE_1 * 2);
         if(!((leveltime + 7) & 15))
         {
-            actor->args[0] = 5 + (P_Random() / 20);
+            mo->args[0] = 5 + (P_Random() / 20);
         }
     }
-    CHolyWeave(actor);
+    CHolyWeave(mo);
 }
 
-static void CHolyTailFollow(mobj_t *actor, fixed_t dist)
+static void CHolyTailFollow(mobj_t *mo, float dist)
 {
-    mobj_t *child;
-    int     an;
-    fixed_t oldDistance, newDistance;
+    uint        an;
+    angle_t     angle;
+    mobj_t     *child;
+    float       oldDistance, newDistance;
 
-    child = actor->tracer;
+    child = mo->tracer;
     if(child)
     {
-        an = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
-                             child->pos[VX], child->pos[VY]) >> ANGLETOFINESHIFT;
+        angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
+                                child->pos[VX], child->pos[VY]);
+        an = angle >> ANGLETOFINESHIFT;
         oldDistance =
-            P_ApproxDistance(child->pos[VX] - actor->pos[VX],
-                             child->pos[VY] - actor->pos[VY]);
-        if(P_TryMove
-           (child, actor->pos[VX] + FixedMul(dist, finecosine[an]),
-            actor->pos[VY] + FixedMul(dist, finesine[an])))
+            P_ApproxDistance(child->pos[VX] - mo->pos[VX],
+                             child->pos[VY] - mo->pos[VY]);
+        if(P_TryMove(child,
+                     mo->pos[VX] + dist * FIX2FLT(finecosine[an]),
+                     mo->pos[VY] + dist * FIX2FLT(finesine[an])))
         {
             newDistance =
-                P_ApproxDistance(child->pos[VX] - actor->pos[VX],
-                                 child->pos[VY] - actor->pos[VY]) - FRACUNIT;
-            if(oldDistance < FRACUNIT)
+                P_ApproxDistance(child->pos[VX] - mo->pos[VX],
+                                 child->pos[VY] - mo->pos[VY]) - 1;
+            if(oldDistance < 1)
             {
-                if(child->pos[VZ] < actor->pos[VZ])
+                if(child->pos[VZ] < mo->pos[VZ])
                 {
-                    child->pos[VZ] = actor->pos[VZ] - dist;
+                    child->pos[VZ] = mo->pos[VZ] - dist;
                 }
                 else
                 {
-                    child->pos[VZ] = actor->pos[VZ] + dist;
+                    child->pos[VZ] = mo->pos[VZ] + dist;
                 }
             }
             else
             {
-                child->pos[VZ] =
-                    actor->pos[VZ] + FixedMul(FixedDiv(newDistance, oldDistance),
-                                        child->pos[VZ] - actor->pos[VZ]);
+                child->pos[VZ] = mo->pos[VZ] +
+                    (newDistance / oldDistance) * (child->pos[VZ] - mo->pos[VZ]);
             }
         }
-        CHolyTailFollow(child, dist - FRACUNIT);
+        CHolyTailFollow(child, dist - 1);
     }
 }
 
-static void CHolyTailRemove(mobj_t *actor)
+static void CHolyTailRemove(mobj_t *mo)
 {
-    mobj_t *child;
+    mobj_t     *child;
 
-    child = actor->tracer;
+    child = mo->tracer;
     if(child)
     {
         CHolyTailRemove(child);
     }
-    P_RemoveMobj(actor);
+
+    P_RemoveMobj(mo);
 }
 
-void C_DECL A_CHolyTail(mobj_t *actor)
+void C_DECL A_CHolyTail(mobj_t *mo)
 {
-    mobj_t *parent;
+    mobj_t     *parent;
 
-    parent = actor->target;
-
+    parent = mo->target;
     if(parent)
     {
         if(parent->state >= &states[parent->info->deathstate])
-        {   // Ghost removed, so remove all tail parts
-            CHolyTailRemove(actor);
-            return;
+        {   // Ghost removed, so remove all tail parts.
+            CHolyTailRemove(mo);
         }
-        else if(P_TryMove
-                (actor,
-                 parent->pos[VX] - FixedMul(14 * FRACUNIT,
-                                      finecosine[parent->
-                                                 angle >> ANGLETOFINESHIFT]),
-                 parent->pos[VY] - FixedMul(14 * FRACUNIT,
-                                      finesine[parent->
-                                               angle >> ANGLETOFINESHIFT])))
+        else
         {
-            actor->pos[VZ] = parent->pos[VZ] - 5 * FRACUNIT;
+            uint        an = parent->angle >> ANGLETOFINESHIFT;
+
+            if(P_TryMove(mo,
+                         parent->pos[VX] - (14 * FIX2FLT(finecosine[an])),
+                         parent->pos[VY] - (14 * FIX2FLT(finesine[an]))))
+            {
+                mo->pos[VZ] = parent->pos[VZ] - 5;
+            }
+
+            CHolyTailFollow(mo, 10);
         }
-        CHolyTailFollow(actor, 10 * FRACUNIT);
     }
 }
 
-void C_DECL A_CHolyCheckScream(mobj_t *actor)
+void C_DECL A_CHolyCheckScream(mobj_t *mo)
 {
-    A_CHolySeek(actor);
+    A_CHolySeek(mo);
     if(P_Random() < 20)
     {
-        S_StartSound(SFX_SPIRIT_ACTIVE, actor);
+        S_StartSound(SFX_SPIRIT_ACTIVE, mo);
     }
-    if(!actor->tracer)
+
+    if(!mo->tracer)
     {
-        CHolyFindTarget(actor);
+        CHolyFindTarget(mo);
     }
 }
 
-void C_DECL A_CHolySpawnPuff(mobj_t *actor)
+void C_DECL A_CHolySpawnPuff(mobj_t *mo)
 {
-    P_SpawnMobj(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_HOLY_MISSILE_PUFF);
+    P_SpawnMobj3fv(MT_HOLY_MISSILE_PUFF, mo->pos);
 }
 
-void C_DECL A_FireConePL1(player_t *player, pspdef_t * psp)
+void C_DECL A_FireConePL1(player_t *plr, pspdef_t *psp)
 {
-    angle_t angle;
-    int     damage;
-    int     slope;
-    int     i;
-    mobj_t *pmo, *mo;
-    int     conedone = false;
+    int         i, damage;
+    angle_t     angle;
+    mobj_t     *pmo, *mo;
+    boolean     conedone = false;
 
-    pmo = player->plr->mo;
-    P_ShotAmmo(player);
-    S_StartSound(SFX_MAGE_SHARDS_FIRE, pmo);
+    mo = plr->plr->mo;
+    P_ShotAmmo(plr);
+    S_StartSound(SFX_MAGE_SHARDS_FIRE, mo);
 
     damage = 90 + (P_Random() & 15);
-    for(i = 0; i < 16; i++)
+    for(i = 0; i < 16; ++i)
     {
-        angle = pmo->angle + i * (ANG45 / 16);
-        slope = P_AimLineAttack(pmo, angle, MELEERANGE);
+        angle = mo->angle + i * (ANG45 / 16);
+
+        P_AimLineAttack(mo, angle, MELEERANGE);
         if(linetarget)
         {
-            pmo->flags2 |= MF2_ICEDAMAGE;
-            P_DamageMobj(linetarget, pmo, pmo, damage);
-            pmo->flags2 &= ~MF2_ICEDAMAGE;
+            mo->flags2 |= MF2_ICEDAMAGE;
+            P_DamageMobj(linetarget, mo, mo, damage);
+            mo->flags2 &= ~MF2_ICEDAMAGE;
             conedone = true;
             break;
         }
     }
 
-    // didn't find any creatures, so fire projectiles
+    // Didn't find any creatures, so fire projectiles.
     if(!conedone)
     {
-        mo = P_SpawnPlayerMissile(pmo, MT_SHARDFX1);
-        if(mo)
+        pmo = P_SpawnPlayerMissile(MT_SHARDFX1, mo);
+        if(pmo)
         {
-            mo->special1 =
+            pmo->special1 =
                 SHARDSPAWN_LEFT | SHARDSPAWN_DOWN | SHARDSPAWN_UP |
                 SHARDSPAWN_RIGHT;
-            mo->special2 = 3;   // Set sperm count (levels of reproductivity)
-            mo->target = pmo;
-            mo->args[0] = 3;    // Mark Initial shard as super damage
+            pmo->special2 = 3; // Set sperm count (levels of reproductivity)
+            pmo->target = mo;
+            pmo->args[0] = 3; // Mark Initial shard as super damage
         }
     }
 }
 
-void C_DECL A_ShedShard(mobj_t *actor)
+void C_DECL A_ShedShard(mobj_t *mo)
 {
-    mobj_t *mo;
-    int     spawndir = actor->special1;
-    int     spermcount = actor->special2;
+    mobj_t     *pmo;
+    int         spawndir = mo->special1;
+    int         spermcount = mo->special2;
 
     if(spermcount <= 0)
-        return;                 // No sperm left
-    actor->special2 = 0;
+        return; // No sperm left, can no longer reproduce.
+
+    mo->special2 = 0;
     spermcount--;
 
-    // every so many calls, spawn a new missile in it's set directions
+    // Every so many calls, spawn a new missile in it's set directions.
     if(spawndir & SHARDSPAWN_LEFT)
     {
-        mo = P_SpawnMissileAngleSpeed(actor, MT_SHARDFX1,
-                                      actor->angle + (ANG45 / 9), 0,
-                                      (20 + 2 * spermcount) << FRACBITS);
-        if(mo)
+        pmo = P_SpawnMissileAngleSpeed(MT_SHARDFX1, mo,
+                                       mo->angle + (ANG45 / 9), 0,
+                                       (20 + 2 * spermcount));
+        if(pmo)
         {
-            mo->special1 = SHARDSPAWN_LEFT;
-            mo->special2 = spermcount;
-            mo->mom[MZ] = actor->mom[MZ];
-            mo->target = actor->target;
-            mo->args[0] = (spermcount == 3) ? 2 : 0;
+            pmo->special1 = SHARDSPAWN_LEFT;
+            pmo->special2 = spermcount;
+            pmo->mom[MZ] = mo->mom[MZ];
+            pmo->target = mo->target;
+            pmo->args[0] = (spermcount == 3) ? 2 : 0;
         }
     }
+
     if(spawndir & SHARDSPAWN_RIGHT)
     {
-        mo = P_SpawnMissileAngleSpeed(actor, MT_SHARDFX1,
-                                      actor->angle - (ANG45 / 9), 0,
-                                      (20 + 2 * spermcount) << FRACBITS);
-        if(mo)
+        pmo = P_SpawnMissileAngleSpeed(MT_SHARDFX1, mo,
+                                       mo->angle - (ANG45 / 9), 0,
+                                       (20 + 2 * spermcount));
+        if(pmo)
         {
-            mo->special1 = SHARDSPAWN_RIGHT;
-            mo->special2 = spermcount;
-            mo->mom[MZ] = actor->mom[MZ];
-            mo->target = actor->target;
-            mo->args[0] = (spermcount == 3) ? 2 : 0;
+            pmo->special1 = SHARDSPAWN_RIGHT;
+            pmo->special2 = spermcount;
+            pmo->mom[MZ] = mo->mom[MZ];
+            pmo->target = mo->target;
+            pmo->args[0] = (spermcount == 3) ? 2 : 0;
         }
     }
+
     if(spawndir & SHARDSPAWN_UP)
     {
-        mo = P_SpawnMissileAngleSpeed(actor, MT_SHARDFX1, actor->angle, 0,
-                                      (15 + 2 * spermcount) << FRACBITS);
-        if(mo)
+        pmo = P_SpawnMissileAngleSpeed(MT_SHARDFX1, mo, mo->angle, 0,
+                                      (15 + 2 * spermcount));
+        if(pmo)
         {
-            mo->mom[MZ] = actor->mom[MZ];
-            mo->pos[VZ] += 8 * FRACUNIT;
-            if(spermcount & 1)  // Every other reproduction
-                mo->special1 =
+            pmo->mom[MZ] = mo->mom[MZ];
+            pmo->pos[VZ] += 8;
+            if(spermcount & 1) // Every other reproduction.
+                pmo->special1 =
                     SHARDSPAWN_UP | SHARDSPAWN_LEFT | SHARDSPAWN_RIGHT;
             else
-                mo->special1 = SHARDSPAWN_UP;
-            mo->special2 = spermcount;
-            mo->target = actor->target;
-            mo->args[0] = (spermcount == 3) ? 2 : 0;
+                pmo->special1 = SHARDSPAWN_UP;
+            pmo->special2 = spermcount;
+            pmo->target = mo->target;
+            pmo->args[0] = (spermcount == 3) ? 2 : 0;
         }
     }
+
     if(spawndir & SHARDSPAWN_DOWN)
     {
-        mo = P_SpawnMissileAngleSpeed(actor, MT_SHARDFX1, actor->angle, 0,
-                                      (15 + 2 * spermcount) << FRACBITS);
-        if(mo)
+        pmo = P_SpawnMissileAngleSpeed(MT_SHARDFX1, mo, mo->angle, 0,
+                                      (15 + 2 * spermcount));
+        if(pmo)
         {
-            mo->mom[MZ] = actor->mom[MZ];
-            mo->pos[VZ] -= 4 * FRACUNIT;
-            if(spermcount & 1)  // Every other reproduction
-                mo->special1 =
+            pmo->mom[MZ] = mo->mom[MZ];
+            pmo->pos[VZ] -= 4;
+            if(spermcount & 1) // Every other reproduction.
+                pmo->special1 =
                     SHARDSPAWN_DOWN | SHARDSPAWN_LEFT | SHARDSPAWN_RIGHT;
             else
-                mo->special1 = SHARDSPAWN_DOWN;
-            mo->special2 = spermcount;
-            mo->target = actor->target;
-            mo->args[0] = (spermcount == 3) ? 2 : 0;
+                pmo->special1 = SHARDSPAWN_DOWN;
+            pmo->special2 = spermcount;
+            pmo->target = mo->target;
+            pmo->args[0] = (spermcount == 3) ? 2 : 0;
         }
     }
 }
 
-void C_DECL A_Light0(player_t *player, pspdef_t * psp)
+void C_DECL A_Light0(player_t *plr, pspdef_t *psp)
 {
-    player->plr->extraLight = 0;
+    plr->plr->extraLight = 0;
 }
 
-/*
- * Called at start of level for each player
+/**
+ * Called at start of level for each player.
  */
-void P_SetupPsprites(player_t *player)
+void P_SetupPsprites(player_t *plr)
 {
-    int     i;
+    int         i;
 
-#ifdef _DEBUG
-    Con_Message("P_SetupPsprites: Player %i.\n", player - players);
+#if _DEBUG
+    Con_Message("P_SetupPsprites: Player %i.\n", plr - players);
 #endif
 
-    // Remove all psprites
-    for(i = 0; i < NUMPSPRITES; i++)
+    // Remove all psprites.
+    for(i = 0; i < NUMPSPRITES; ++i)
     {
-        player->psprites[i].state = NULL;
+        plr->psprites[i].state = NULL;
     }
+
     // Spawn the ready weapon
-    player->pendingweapon = player->readyweapon;
-    P_BringUpWeapon(player);
+    plr->pendingweapon = plr->readyweapon;
+    P_BringUpWeapon(plr);
 }
 
-/*
- * Called every tic by player thinking routine
+/**
+ * Called every tic by player thinking routine.
  */
-void P_MovePsprites(player_t *player)
+void P_MovePsprites(player_t *plr)
 {
-    int     i;
-    pspdef_t *psp;
-    state_t *state;
+    int         i;
+    pspdef_t   *psp;
+    state_t    *state;
 
-    psp = &player->psprites[0];
-    for(i = 0; i < NUMPSPRITES; i++, psp++)
+    psp = &plr->psprites[0];
+    for(i = 0; i < NUMPSPRITES; ++i, psp++)
     {
-        if((state = psp->state) != 0)   // a null state means not active
+        if((state = psp->state) != 0) // A null state means not active.
         {
-            // drop tic count and possibly change state
-            if(psp->tics != -1) // a -1 tic count never changes
+            // Drop tic count and possibly change state.
+            if(psp->tics != -1) // A -1 tic count never changes.
             {
                 psp->tics--;
                 if(!psp->tics)
                 {
-                    P_SetPsprite(player, i, psp->state->nextstate);
+                    P_SetPsprite(plr, i, psp->state->nextstate);
                 }
             }
         }
     }
-    player->psprites[ps_flash].sx = player->psprites[ps_weapon].sx;
-    player->psprites[ps_flash].sy = player->psprites[ps_weapon].sy;
+
+    plr->psprites[ps_flash].pos[VX] = plr->psprites[ps_weapon].pos[VX];
+    plr->psprites[ps_flash].pos[VY] = plr->psprites[ps_weapon].pos[VY];
 }

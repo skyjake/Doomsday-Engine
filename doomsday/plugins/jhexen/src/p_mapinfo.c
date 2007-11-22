@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -41,8 +41,8 @@
  * http://www.ravensoft.com/
  */
 
-/*
- * Mapinfo support.
+/**
+ * p_mapinfo.c: MAPINFO lump support.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -63,19 +63,19 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct mapinfo_s {
-    short   cluster;
-    short   warpTrans;
-    short   nextMap;
-    short   cdTrack;
-    char    name[32];
-    short   sky1Texture;
-    short   sky2Texture;
-    fixed_t sky1ScrollDelta;
-    fixed_t sky2ScrollDelta;
-    boolean doubleSky;
-    boolean lightning;
-    int     fadetable;
-    char    songLump[10];
+    short           cluster;
+    short           warpTrans;
+    short           nextMap;
+    short           cdTrack;
+    char            name[32];
+    short           sky1Texture;
+    short           sky2Texture;
+    float           sky1ScrollDelta;
+    float           sky2ScrollDelta;
+    boolean         doubleSky;
+    boolean         lightning;
+    int             fadetable;
+    char            songLump[10];
 } mapinfo_t;
 
 enum {
@@ -265,14 +265,14 @@ void P_InitMapInfo(void)
                 SC_MustGetString();
                 info->sky1Texture = R_TextureNumForName(sc_String);
                 SC_MustGetNumber();
-                info->sky1ScrollDelta = sc_Number << 8;
+                info->sky1ScrollDelta = (float) sc_Number / 256;
                 break;
 
             case MCMD_SKY2:
                 SC_MustGetString();
                 info->sky2Texture = R_TextureNumForName(sc_String);
                 SC_MustGetNumber();
-                info->sky2ScrollDelta = sc_Number << 8;
+                info->sky2ScrollDelta = (float) sc_Number / 256;
                 break;
 
             case MCMD_DOUBLESKY:
@@ -468,7 +468,7 @@ int P_GetMapSky2Texture(int map)
  *
  * @return              The sky1 scroll delta of the map.
  */
-fixed_t P_GetMapSky1ScrollDelta(int map)
+float P_GetMapSky1ScrollDelta(int map)
 {
     return MapInfo[qualifyMap(map)].sky1ScrollDelta;
 }
@@ -480,7 +480,7 @@ fixed_t P_GetMapSky1ScrollDelta(int map)
  *
  * @return              The sky2 scroll delta of the map.
  */
-fixed_t P_GetMapSky2ScrollDelta(int map)
+float P_GetMapSky2ScrollDelta(int map)
 {
     return MapInfo[qualifyMap(map)].sky2ScrollDelta;
 }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -39,6 +39,10 @@
  * You should have received a copy of the HERETIC / HEXEN source code
  * license along with this program (Ravenlic.txt); if not:
  * http://www.ravensoft.com/
+ */
+
+/**
+ * p_lights.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -113,14 +117,14 @@ void T_Light(light_t *light)
             {
                 P_SectorSetLight(light->sector, light->value1);
                 light->tics1 = -light->tics1;
-                light->tics2 = -1;  // reverse direction
+                light->tics2 = -1;  // Reverse direction.
             }
         }
         else if(P_SectorLight(light->sector) <= light->value2)
         {
             P_SectorSetLight(light->sector, light->value2);
             light->tics1 = -light->tics1;
-            light->tics2 = 1;   // reverse direction
+            light->tics2 = 1; // Reverse direction.
         }
         break;
 
@@ -184,7 +188,7 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
         light->sector = sec;
         light->count = 0;
 
-        switch (type)
+        switch(type)
         {
         case LITE_RAISEBYVALUE:
             P_SectorModifyLight(light->sector, (float) arg1 / 255.0f);
@@ -200,13 +204,13 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
 
         case LITE_FADE:
             think = true;
-            light->value1 = (float) arg1 / 255.0f;   // destination lightlevel
+            light->value1 = (float) arg1 / 255.0f; // Destination lightlevel.
             light->value2 =
                 FIX2FLT(FixedDiv((arg1 - (int) (255.0f * P_SectorLight(light->sector))) << FRACBITS,
-                         arg2 << FRACBITS)) / 255.0f;  // delta lightlevel
+                         arg2 << FRACBITS)) / 255.0f; // Delta lightlevel.
             if(P_SectorLight(light->sector) <= (float) arg1 / 255.0f)
             {
-                light->tics2 = 1;   // get brighter
+                light->tics2 = 1; // Get brighter.
             }
             else
             {
@@ -216,14 +220,14 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
 
         case LITE_GLOW:
             think = true;
-            light->value1 = (float) arg1 / 255.0f;   // upper lightlevel
-            light->value2 = (float) arg2 / 255.0f;   // lower lightlevel
+            light->value1 = (float) arg1 / 255.0f; // Upper lightlevel.
+            light->value2 = (float) arg2 / 255.0f; // Lower lightlevel.
             light->tics1 =
                 FixedDiv((arg1 - (int) (255.0f * P_SectorLight(light->sector))) << FRACBITS,
-                         arg3 << FRACBITS);   // lightlevel delta
+                         arg3 << FRACBITS); // Lightlevel delta.
             if(P_SectorLight(light->sector) <= (float) arg1 / 255.0f)
             {
-                light->tics2 = 1;   // get brighter
+                light->tics2 = 1; // Get brighter.
             }
             else
             {
@@ -233,18 +237,18 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
 
         case LITE_FLICKER:
             think = true;
-            light->value1 = (float) arg1 / 255.0f;   // upper lightlevel
-            light->value2 = (float) arg2 / 255.0f;   // lower lightlevel
+            light->value1 = (float) arg1 / 255.0f; // Upper lightlevel.
+            light->value2 = (float) arg2 / 255.0f; // Lower lightlevel.
             P_SectorSetLight(light->sector, light->value1);
             light->count = (P_Random() & 64) + 1;
             break;
 
         case LITE_STROBE:
             think = true;
-            light->value1 = (float) arg1 / 255.0f;   // upper lightlevel
-            light->value2 = (float) arg2 / 255.0f;   // lower lightlevel
-            light->tics1 = arg3;    // upper tics
-            light->tics2 = arg4;    // lower tics
+            light->value1 = (float) arg1 / 255.0f; // Upper lightlevel.
+            light->value2 = (float) arg2 / 255.0f; // Lower lightlevel.
+            light->tics1 = arg3; // Upper tics.
+            light->tics2 = arg4; // Lower tics.
             light->count = arg3;
             P_SectorSetLight(light->sector, light->value1);
             break;
@@ -264,6 +268,7 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
             Z_Free(light);
         }
     }
+
     return rtn;
 }
 
@@ -282,19 +287,20 @@ void P_SpawnPhasedLight(sector_t *sector, float base, int index)
     P_AddThinker(&phase->thinker);
     phase->sector = sector;
     if(index == -1)
-    {                           // sector->lightlevel as the index
+    {   // Sector->lightlevel as the index.
         phase->index = (int) (255.0f * P_SectorLight(sector)) & 63;
     }
     else
     {
         phase->index = index & 63;
     }
+
     phase->baseValue = base;
     P_SectorSetLight(phase->sector,
                      phase->baseValue + phaseTable[phase->index]);
     phase->thinker.function = T_Phase;
 
-    P_XSector(sector)->special = 0;
+    P_ToXSector(sector)->special = 0;
 }
 
 void P_SpawnLightSequence(sector_t *sector, int indexStep)
@@ -304,21 +310,21 @@ void P_SpawnLightSequence(sector_t *sector, int indexStep)
     fixed_t     index, indexDelta;
     sector_t   *sec, *nextSec, *tempSec;
 
-    seqSpecial = LIGHT_SEQUENCE;    // look for Light_Sequence, first
+    seqSpecial = LIGHT_SEQUENCE; // Look for Light_Sequence, first.
     sec = sector;
     count = 1;
     do
     {
         nextSec = NULL;
         // make sure that the search doesn't back up.
-        P_XSector(sec)->special = LIGHT_SEQUENCE_START;
+        P_ToXSector(sec)->special = LIGHT_SEQUENCE_START;
         for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
         {
             tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i), sec);
             if(!tempSec)
                 continue;
 
-            if(P_XSector(tempSec)->special == seqSpecial)
+            if(P_ToXSector(tempSec)->special == seqSpecial)
             {
                 if(seqSpecial == LIGHT_SEQUENCE)
                 {
@@ -356,7 +362,7 @@ void P_SpawnLightSequence(sector_t *sector, int indexStep)
             if(!tempSec)
                 continue;
 
-            if(P_XSector(tempSec)->special == LIGHT_SEQUENCE_START)
+            if(P_ToXSector(tempSec)->special == LIGHT_SEQUENCE_START)
             {
                 nextSec = tempSec;
             }

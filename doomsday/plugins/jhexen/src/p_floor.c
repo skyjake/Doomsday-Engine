@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ *\author Copyright Â© 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -41,8 +41,8 @@
  * http://www.ravensoft.com/
  */
 
-/*
- * Stairs, pillars and waggle floors.
+/**
+ * p_floor.c: Stairs, pillars and waggle floors.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -89,44 +89,43 @@ typedef struct stairdata_s {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern fixed_t FloatBobOffsets[64];
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 stairdata_t stairData;
-stairqueue_t StairQueue[STAIR_QUEUE_SIZE];
-static int QueueHead;
-static int QueueTail;
+stairqueue_t stairQueue[STAIR_QUEUE_SIZE];
+static int stairQueueHead;
+static int stairQueueTail;
 
 // CODE --------------------------------------------------------------------
 
-static void QueueStairSector(sector_t *sec, int type, float height)
+static void enqueueStairSector(sector_t *sec, int type, float height)
 {
-    if((QueueTail + 1) % STAIR_QUEUE_SIZE == QueueHead)
+    if((stairQueueTail + 1) % STAIR_QUEUE_SIZE == stairQueueHead)
     {
         Con_Error("BuildStairs:  Too many branches located.\n");
     }
-    StairQueue[QueueTail].sector = sec;
-    StairQueue[QueueTail].type = type;
-    StairQueue[QueueTail].height = height;
+    stairQueue[stairQueueTail].sector = sec;
+    stairQueue[stairQueueTail].type = type;
+    stairQueue[stairQueueTail].height = height;
 
-    QueueTail = (QueueTail + 1) % STAIR_QUEUE_SIZE;
+    stairQueueTail = (stairQueueTail + 1) % STAIR_QUEUE_SIZE;
 }
 
-static sector_t *DequeueStairSector(int *type, float *height)
+static sector_t *dequeueStairSector(int *type, float *height)
 {
     sector_t   *sec;
 
-    if(QueueHead == QueueTail)
-    {                           // queue is empty
+    if(stairQueueHead == stairQueueTail)
+    {   // Queue is empty.
         return NULL;
     }
-    *type = StairQueue[QueueHead].type;
-    *height = StairQueue[QueueHead].height;
-    sec = StairQueue[QueueHead].sector;
-    QueueHead = (QueueHead + 1) % STAIR_QUEUE_SIZE;
+
+    *type = stairQueue[stairQueueHead].type;
+    *height = stairQueue[stairQueueHead].height;
+    sec = stairQueue[stairQueueHead].sector;
+    stairQueueHead = (stairQueueHead + 1) % STAIR_QUEUE_SIZE;
 
     return sec;
 }
@@ -146,7 +145,7 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
     floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
     memset(floor, 0, sizeof(*floor));
     P_AddThinker(&floor->thinker);
-    P_XSector(sec)->specialdata = floor;
+    P_ToXSector(sec)->specialdata = floor;
     floor->thinker.function = T_MoveFloor;
     floor->type = FLEV_RAISEBUILDSTEP;
     floor->direction = stairData.direction;
@@ -166,6 +165,7 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
         floor->resetDelayCount = resetDelay;
         floor->resetHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         break;
+
     case STAIRS_SYNC:
         floor->speed =
             stairData.speed * ((height - stairData.startHeight) / stairData.stepDelta);
@@ -173,49 +173,43 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
         floor->resetDelayCount = delay;
         floor->resetHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         break;
-        /*
-           case STAIRS_PHASED:
-           floor->floordestheight =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + stairData.stepDelta;
-           floor->speed = stairData.speed;
-           floor->delayCount = stairData.startDelay;
-           StartDelay += stairData.startDelayDelta;
-           floor->textureChange = stairData.textureChange;
-           floor->resetDelayCount = stairData.startDelay;
-           break;
-         */
+
     default:
         break;
     }
+
     SN_StartSequence(P_GetPtrp(sec, DMU_SOUND_ORIGIN),
-                     SEQ_PLATFORM + P_XSector(sec)->seqType);
+                     SEQ_PLATFORM + P_ToXSector(sec)->seqType);
     //
     // Find next sector to raise
     // Find nearby sector with sector special equal to type
     //
     for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
     {
-        line_t *line = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        line_t         *line = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+
         if(!(P_GetIntp(line, DMU_FLAGS) & ML_TWOSIDED))
         {
             continue;
         }
+
         tsec = P_GetPtrp(line, DMU_FRONT_SECTOR);
-        xtsec = P_XSector(tsec);
+        xtsec = P_ToXSector(tsec);
         if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialdata &&
-           P_GetIntp(tsec, DMU_FLOOR_TEXTURE) == stairData.texture &&
+           P_GetIntp(tsec, DMU_FLOOR_MATERIAL) == stairData.texture &&
            P_GetIntp(tsec, DMU_VALID_COUNT) != VALIDCOUNT)
         {
-            QueueStairSector(tsec, type ^ 1, height);
+            enqueueStairSector(tsec, type ^ 1, height);
             P_SetIntp(tsec, DMU_VALID_COUNT, VALIDCOUNT);
         }
+
         tsec = P_GetPtrp(line, DMU_BACK_SECTOR);
-        xtsec = P_XSector(tsec);
+        xtsec = P_ToXSector(tsec);
         if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialdata &&
-           P_GetIntp(tsec, DMU_FLOOR_TEXTURE) == stairData.texture &&
+           P_GetIntp(tsec, DMU_FLOOR_MATERIAL) == stairData.texture &&
            P_GetIntp(tsec, DMU_VALID_COUNT) != VALIDCOUNT)
         {
-            QueueStairSector(tsec, type ^ 1, height);
+            enqueueStairSector(tsec, type ^ 1, height);
             P_SetIntp(tsec, DMU_VALID_COUNT, VALIDCOUNT);
         }
     }
@@ -259,21 +253,23 @@ int EV_BuildStairs(line_t *line, byte *args, int direction,
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        stairData.texture = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
+        stairData.texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
         stairData.startHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
 
         // ALREADY MOVING?  IF SO, KEEP GOING...
-        if(P_XSector(sec)->specialdata)
-            continue;
+        if(P_ToXSector(sec)->specialdata)
+            continue; // Already moving, so keep going...
 
-        QueueStairSector(sec, 0, P_GetFloatp(sec, DMU_FLOOR_HEIGHT));
-        P_XSector(sec)->special = 0;
+        enqueueStairSector(sec, 0, P_GetFloatp(sec, DMU_FLOOR_HEIGHT));
+        P_ToXSector(sec)->special = 0;
     }
-    while((qSec = DequeueStairSector(&type, &height)) != NULL)
+
+    while((qSec = dequeueStairSector(&type, &height)) != NULL)
     {
         ProcessStairSector(qSec, type, height, stairsType, delay, resetDelay);
     }
-    return (1);
+
+    return 1;
 }
 
 void T_BuildPillar(pillar_t *pillar)
@@ -289,9 +285,9 @@ void T_BuildPillar(pillar_t *pillar)
                     pillar->crush, 1, -pillar->direction);
     if(res1 == pastdest && res2 == pastdest)
     {
-        P_XSector(pillar->sector)->specialdata = NULL;
+        P_ToXSector(pillar->sector)->specialdata = NULL;
         SN_StopSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN));
-        P_TagFinished(P_XSector(pillar->sector)->tag);
+        P_TagFinished(P_ToXSector(pillar->sector)->tag);
         P_RemoveThinker(&pillar->thinker);
     }
 }
@@ -311,12 +307,12 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        if(P_XSector(sec)->specialdata)
-            continue; // already moving
+        if(P_ToXSector(sec)->specialdata)
+            continue; // Already moving, so keep going.
 
         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
            P_GetFloatp(sec, DMU_CEILING_HEIGHT))
-            continue; // pillar is already closed
+            continue; // Pillar is already closed.
 
         rtn = 1;
         if(!args[2])
@@ -324,7 +320,7 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
             newHeight =
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) +
                 ((P_GetFloatp(sec, DMU_CEILING_HEIGHT) -
-                  P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) * .5);
+                  P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) * .5f);
         }
         else
         {
@@ -333,37 +329,39 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
         }
 
         pillar = Z_Malloc(sizeof(*pillar), PU_LEVSPEC, 0);
-        P_XSector(sec)->specialdata = pillar;
+        P_ToXSector(sec)->specialdata = pillar;
         P_AddThinker(&pillar->thinker);
         pillar->thinker.function = T_BuildPillar;
         pillar->sector = sec;
+
         if(!args[2])
         {
             pillar->ceilingSpeed = pillar->floorSpeed =
-                (float) args[1] * (1.0 / 8);
+                (float) args[1] * (1.0f / 8);
         }
         else if(newHeight - P_GetFloatp(sec, DMU_FLOOR_HEIGHT) >
                 P_GetFloatp(sec, DMU_CEILING_HEIGHT) - newHeight)
         {
-            pillar->floorSpeed = (float) args[1] * (1.0 / 8);
+            pillar->floorSpeed = (float) args[1] * (1.0f / 8);
             pillar->ceilingSpeed =
                 (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - newHeight) *
                       (pillar->floorSpeed / (newHeight - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)));
         }
         else
         {
-            pillar->ceilingSpeed = (float) args[1] * (1.0 / 8);
+            pillar->ceilingSpeed = (float) args[1] * (1.0f / 8);
             pillar->floorSpeed =
                 (newHeight - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) *
-                    (pillar->ceilingSpeed / 
+                    (pillar->ceilingSpeed /
                                   (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - newHeight));
         }
+
         pillar->floordest = newHeight;
         pillar->ceilingdest = newHeight;
         pillar->direction = 1;
         pillar->crush = crush * (int) args[3];
         SN_StartSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN),
-                         SEQ_PLATFORM + P_XSector(pillar->sector)->seqType);
+                         SEQ_PLATFORM + P_ToXSector(pillar->sector)->seqType);
     }
     return rtn;
 }
@@ -382,16 +380,16 @@ int EV_OpenPillar(line_t *line, byte *args)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        if(P_XSector(sec)->specialdata)
-            continue; // already moving
+        if(P_ToXSector(sec)->specialdata)
+            continue; // Already moving, so keep going...
 
         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) !=
            P_GetFloatp(sec, DMU_CEILING_HEIGHT))
-            continue; // pillar isn't closed
+            continue; // Pillar isn't closed.
 
         rtn = 1;
         pillar = Z_Malloc(sizeof(*pillar), PU_LEVSPEC, 0);
-        P_XSector(sec)->specialdata = pillar;
+        P_ToXSector(sec)->specialdata = pillar;
         P_AddThinker(&pillar->thinker);
         pillar->thinker.function = T_BuildPillar;
         pillar->sector = sec;
@@ -404,6 +402,7 @@ int EV_OpenPillar(line_t *line, byte *args)
             pillar->floordest =
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - (float) args[2];
         }
+
         if(!args[3])
         {
             pillar->ceilingdest = P_FindHighestCeilingSurrounding(sec);
@@ -413,10 +412,11 @@ int EV_OpenPillar(line_t *line, byte *args)
             pillar->ceilingdest =
                 P_GetFloatp(sec, DMU_CEILING_HEIGHT) + (float) args[3];
         }
+
         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - pillar->floordest >=
            pillar->ceilingdest - P_GetFloatp(sec, DMU_CEILING_HEIGHT))
         {
-            pillar->floorSpeed = (float) args[1] * (1.0 / 8);
+            pillar->floorSpeed = (float) args[1] * (1.0f / 8);
             pillar->ceilingSpeed =
                 (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - pillar->ceilingdest) *
                     (pillar->floorSpeed /
@@ -424,16 +424,18 @@ int EV_OpenPillar(line_t *line, byte *args)
         }
         else
         {
-            pillar->ceilingSpeed = (float) args[1] * (1.0 / 8);
+            pillar->ceilingSpeed = (float) args[1] * (1.0f / 8);
             pillar->floorSpeed =
                 (pillar->floordest - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) *
                     (pillar->ceilingSpeed /
                         (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - pillar->ceilingdest));
         }
-        pillar->direction = -1; // open the pillar
+
+        pillar->direction = -1; // Open the pillar.
         SN_StartSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN),
-                         SEQ_PLATFORM + P_XSector(pillar->sector)->seqType);
+                         SEQ_PLATFORM + P_ToXSector(pillar->sector)->seqType);
     }
+
     return rtn;
 }
 
@@ -443,25 +445,7 @@ void T_FloorWaggle(floorWaggle_t *waggle)
 
     switch(waggle->state)
     {
-    case WGLSTATE_EXPAND:
-        if((waggle->scale += waggle->scaleDelta) >= waggle->targetScale)
-        {
-            waggle->scale = waggle->targetScale;
-            waggle->state = WGLSTATE_STABLE;
-        }
-        break;
-    case WGLSTATE_REDUCE:
-        if((waggle->scale -= waggle->scaleDelta) <= 0)
-        {                       // Remove
-            P_SetFloatp(waggle->sector, DMU_FLOOR_HEIGHT,
-                        waggle->originalHeight);
-            P_ChangeSector(waggle->sector, true);
-            P_XSector(waggle->sector)->specialdata = NULL;
-            P_TagFinished(P_XSector(waggle->sector)->tag);
-            P_RemoveThinker(&waggle->thinker);
-            return;
-        }
-        break;
+    default:
     case WGLSTATE_STABLE:
         if(waggle->ticker != -1)
         {
@@ -471,13 +455,34 @@ void T_FloorWaggle(floorWaggle_t *waggle)
             }
         }
         break;
+
+    case WGLSTATE_EXPAND:
+        if((waggle->scale += waggle->scaleDelta) >= waggle->targetScale)
+        {
+            waggle->scale = waggle->targetScale;
+            waggle->state = WGLSTATE_STABLE;
+        }
+        break;
+
+    case WGLSTATE_REDUCE:
+        if((waggle->scale -= waggle->scaleDelta) <= 0)
+        {   // Remove.
+            P_SetFloatp(waggle->sector, DMU_FLOOR_HEIGHT,
+                        waggle->originalHeight);
+            P_ChangeSector(waggle->sector, true);
+            P_ToXSector(waggle->sector)->specialdata = NULL;
+            P_TagFinished(P_ToXSector(waggle->sector)->tag);
+            P_RemoveThinker(&waggle->thinker);
+            return;
+        }
+        break;
     }
+
     waggle->accumulator += waggle->accDelta;
     fh = waggle->originalHeight +
-        FIX2FLT(FloatBobOffsets[((int) waggle->accumulator) & 63]) *
-                 waggle->scale;
+        FLOATBOBOFFSET(((int) waggle->accumulator) & 63) * waggle->scale;
     P_SetFloatp(waggle->sector, DMU_FLOOR_HEIGHT, fh);
-    P_SetFloatp(waggle->sector, DMU_FLOOR_TARGET, fh);
+    P_SetFloatp(waggle->sector, DMU_FLOOR_TARGET_HEIGHT, fh);
     P_SetFloatp(waggle->sector, DMU_FLOOR_SPEED, 0);
     P_ChangeSector(waggle->sector, true);
 }
@@ -485,10 +490,10 @@ void T_FloorWaggle(floorWaggle_t *waggle)
 boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
                             int timer)
 {
-    boolean     retCode = false;
-    sector_t   *sec = NULL;
-    floorWaggle_t *waggle;
-    iterlist_t *list;
+    boolean         retCode = false;
+    sector_t       *sec = NULL;
+    floorWaggle_t  *waggle;
+    iterlist_t     *list;
 
     list = P_GetSectorIterListForTag(tag, false);
     if(!list)
@@ -497,12 +502,12 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        if(P_XSector(sec)->specialdata)
-            continue; // already moving
+        if(P_ToXSector(sec)->specialdata)
+            continue; // Already moving, so keep going...
 
         retCode = true;
         waggle = Z_Malloc(sizeof(*waggle), PU_LEVSPEC, 0);
-        P_XSector(sec)->specialdata = waggle;
+        P_ToXSector(sec)->specialdata = waggle;
         waggle->thinker.function = T_FloorWaggle;
         waggle->sector = sec;
         waggle->originalHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
@@ -511,10 +516,11 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
         waggle->scale = 0;
         waggle->targetScale = FIX2FLT(height << 10);
         waggle->scaleDelta =
-            FIX2FLT(FLT2FIX(waggle->targetScale) / (35 + ((3 * 35) * height) / 255));
+            FIX2FLT(FLT2FIX(waggle->targetScale) / (TICSPERSEC + ((3 * TICSPERSEC) * height) / 255));
         waggle->ticker = timer ? timer * 35 : -1;
         waggle->state = WGLSTATE_EXPAND;
         P_AddThinker(&waggle->thinker);
     }
+
     return retCode;
 }
