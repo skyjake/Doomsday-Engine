@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * shared data struct definitions.
+/**
+ * r_defs.h: shared data struct definitions.
  */
 
 #ifndef __R_DEFS__
@@ -34,22 +34,10 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-// Screenwidth.
-#include "doomdef.h"
-
 #include "p_xg.h"
 
 // SECTORS do store MObjs anyway.
 #include "p_mobj.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
-
-//
-// INTERNAL MAP TYPES
-//  used by play and refresh
-//
 
 #define SP_floororigheight      planes[PLN_FLOOR].origheight
 #define SP_ceilorigheight       planes[PLN_CEILING].origheight
@@ -81,7 +69,6 @@ typedef struct xsector_s {
     float           origlight;
     float           origrgb[3];
     xgsector_t     *xg;
-
 } xsector_t;
 
 typedef struct xline_s {
@@ -99,7 +86,9 @@ typedef struct xline_s {
     short           useon;    // d64tc
 } xline_t;
 
-xline_t*    P_XLine(line_t* line);
-xsector_t*  P_XSector(sector_t* sector);
-xsector_t*  P_XSectorOfSubsector(subsector_t* sub);
+xline_t*    P_ToXLine(line_t* line);
+xline_t*    P_GetXLine(uint index);
+xsector_t*  P_ToXSector(sector_t* sector);
+xsector_t*  P_GetXSector(uint index);
+xsector_t*  P_ToXSectorOfSubsector(subsector_t* sub);
 #endif

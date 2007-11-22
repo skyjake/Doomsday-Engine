@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
+ * doomstat.h:
+ *
  * All the global variables that store the internal state.
  * Theoretically speaking, the internal state of the engine
  * should be found by looking at the variables collected
@@ -158,8 +161,8 @@ extern player_t players[MAXPLAYERS];
 
 // Player spawn spots for deathmatch.
 #define MAX_DM_STARTS   16
-extern thing_t deathmatchstarts[MAX_DM_STARTS];
-extern thing_t *deathmatch_p;
+extern spawnspot_t deathmatchstarts[MAX_DM_STARTS];
+extern spawnspot_t *deathmatch_p;
 
 // Intermission stats.
 // Parameters for world map / intermission.
