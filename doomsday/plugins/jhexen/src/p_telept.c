@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -41,6 +41,10 @@
  * http://www.ravensoft.com/
  */
 
+/**
+ * p_telept.c:
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "jhexen.h"
@@ -65,20 +69,21 @@
 
 // CODE --------------------------------------------------------------------
 
-void P_ArtiTeleportOther(player_t *player)
+void P_ArtiTeleportOther(player_t *plr)
 {
-    mobj_t     *mo = P_SpawnPlayerMissile(player->plr->mo, MT_TELOTHER_FX1);
+    mobj_t         *mo;
 
+    mo = P_SpawnPlayerMissile(MT_TELOTHER_FX1, plr->plr->mo);
     if(mo)
-        mo->target = player->plr->mo;
+        mo->target = plr->plr->mo;
 }
 
 void P_TeleportToPlayerStarts(mobj_t *victim)
 {
-    int         i, selections = 0;
-    fixed_t     destPos[3];
-    angle_t     destAngle;
-    thing_t    *start;
+    int             i, selections = 0;
+    float           destPos[3];
+    angle_t         destAngle;
+    spawnspot_t    *start;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -91,26 +96,26 @@ void P_TeleportToPlayerStarts(mobj_t *victim)
     i = P_Random() % selections;
     start = P_GetPlayerStart(0, i);
 
-    destPos[VX] = start->x << FRACBITS;
-    destPos[VY] = start->y << FRACBITS;
-    destAngle = ANG45 * (playerstarts[i].angle / 45);
+    destPos[VX] = start->pos[VX];
+    destPos[VY] = start->pos[VY];
+    destAngle = playerstarts[i].angle;
 
     P_Teleport(victim, destPos[VX], destPos[VY], destAngle, true);
 }
 
 void P_TeleportToDeathmatchStarts(mobj_t *victim)
 {
-    int         i, selections;
-    fixed_t     destPos[3];
-    angle_t     destAngle;
+    int             i, selections;
+    float           destPos[3];
+    angle_t         destAngle;
 
     selections = deathmatch_p - deathmatchstarts;
     if(selections)
     {
         i = P_Random() % selections;
-        destPos[VX] = deathmatchstarts[i].x << FRACBITS;
-        destPos[VY] = deathmatchstarts[i].y << FRACBITS;
-        destAngle = ANG45 * (deathmatchstarts[i].angle / 45);
+        destPos[VX] = deathmatchstarts[i].pos[VX];
+        destPos[VY] = deathmatchstarts[i].pos[VY];
+        destAngle = deathmatchstarts[i].angle;
 
         P_Teleport(victim, destPos[VX], destPos[VY], destAngle, true);
     }
@@ -131,7 +136,7 @@ void P_TeleportOther(mobj_t *victim)
     }
     else
     {
-        // If death action, run it upon teleport
+        // If death action, run it upon teleport.
         if(victim->flags & MF_COUNTKILL && victim->special)
         {
             P_RemoveMobjFromTIDList(victim);
@@ -140,125 +145,130 @@ void P_TeleportOther(mobj_t *victim)
             victim->special = 0;
         }
 
-        // Send all monsters to deathmatch spots
+        // Send all monsters to deathmatch spots.
         P_TeleportToDeathmatchStarts(victim);
     }
 }
 
-mobj_t *P_SpawnTeleFog(int x, int y)
+mobj_t *P_SpawnTeleFog(float x, float y)
 {
-    fixed_t     fheight;
+    float       fheight;
 
-    fheight = P_GetFixedp(R_PointInSubsector(x, y),
+    fheight = P_GetFloatp(R_PointInSubsector(x, y),
                           DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
 
-    return P_SpawnMobj(x, y, fheight + TELEFOGHEIGHT, MT_TFOG);
+    return P_SpawnMobj3f(MT_TFOG, x, y, fheight + TELEFOGHEIGHT);
 }
 
-boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
+boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
                    boolean useFog)
 {
-    fixed_t     oldpos[3], aboveFloor, fogDelta;
+    float       oldpos[3], aboveFloor, fogDelta;
     player_t   *player;
     unsigned    an;
     mobj_t     *fog;
 
-    memcpy(oldpos, thing->pos, sizeof(oldpos));
+    memcpy(oldpos, mo->pos, sizeof(oldpos));
 
-    aboveFloor = thing->pos[VZ] - FLT2FIX(thing->floorz);
-    if(!P_TeleportMove(thing, x, y, false))
+    aboveFloor = mo->pos[VZ] - mo->floorz;
+    if(!P_TeleportMove(mo, x, y, false))
         return false;
 
-    if(thing->player)
+    if(mo->player)
     {
-        player = thing->player;
+        player = mo->player;
         player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
         if(player->powers[PT_FLIGHT] && aboveFloor)
         {
-            thing->pos[VZ] = FLT2FIX(thing->floorz) + aboveFloor;
-            if(FIX2FLT(thing->pos[VZ]) + thing->height > thing->ceilingz)
+            mo->pos[VZ] = mo->floorz + aboveFloor;
+            if(mo->pos[VZ] + mo->height > mo->ceilingz)
             {
-                thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
+                mo->pos[VZ] = mo->ceilingz - mo->height;
             }
-            player->plr->viewZ = FIX2FLT(thing->pos[VZ]) + player->plr->viewheight;
+            player->plr->viewZ = mo->pos[VZ] + player->plr->viewheight;
         }
         else
         {
-            thing->pos[VZ] = FLT2FIX(thing->floorz);
-            player->plr->viewZ = FIX2FLT(thing->pos[VZ]) + player->plr->viewheight;
+            mo->pos[VZ] = mo->floorz;
+            player->plr->viewZ = mo->pos[VZ] + player->plr->viewheight;
             if(useFog)
             {
                 player->plr->lookdir = 0;
             }
         }
     }
-    else if(thing->flags & MF_MISSILE)
+    else if(mo->flags & MF_MISSILE)
     {
-        thing->pos[VZ] = FLT2FIX(thing->floorz) + aboveFloor;
-        if(FIX2FLT(thing->pos[VZ]) + thing->height > thing->ceilingz)
+        mo->pos[VZ] = mo->floorz + aboveFloor;
+        if(mo->pos[VZ] + mo->height > mo->ceilingz)
         {
-            thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
+            mo->pos[VZ] = mo->ceilingz - mo->height;
         }
     }
     else
     {
-        thing->pos[VZ] = FLT2FIX(thing->floorz);
+        mo->pos[VZ] = mo->floorz;
     }
 
     // Spawn teleport fog at source and destination
     if(useFog)
     {
-        fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-        fog = P_SpawnMobj(oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta, MT_TFOG);
-        S_StartSound(SFX_TELEPORT, fog);
-        an = angle >> ANGLETOFINESHIFT;
-        fog =
-            P_SpawnMobj(x + 20 * finecosine[an], y + 20 * finesine[an],
-                        thing->pos[VZ] + fogDelta, MT_TFOG);
+        fogDelta = FIX2FLT(mo->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT);
+        fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta);
+
         S_StartSound(SFX_TELEPORT, fog);
 
-        if(thing->player && !thing->player->powers[PT_SPEED])
+        an = angle >> ANGLETOFINESHIFT;
+        fog = P_SpawnMobj3f(MT_TFOG,
+                            x + 20 * FIX2FLT(finecosine[an]),
+                            y + 20 * FIX2FLT(finesine[an]),
+                            mo->pos[VZ] + fogDelta);
+        S_StartSound(SFX_TELEPORT, fog);
+
+        if(mo->player && !mo->player->powers[PT_SPEED])
         {   // Freeze player for about .5 sec
-            thing->reactiontime = 18;
+            mo->reactiontime = 18;
         }
-        thing->angle = angle;
+        mo->angle = angle;
     }
 
-    if(thing->flags2 & MF2_FLOORCLIP)
+    if(mo->flags2 & MF2_FLOORCLIP)
     {
-        if(thing->pos[VZ] == P_GetFixedp(thing->subsector,
-                                   DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
-           P_GetThingFloorType(thing) >= FLOOR_LIQUID)
+        if(mo->pos[VZ] ==
+           P_GetFloatp(mo->subsector,
+                       DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
+           P_GetMobjFloorType(mo) >= FLOOR_LIQUID)
         {
-            thing->floorclip = 10;
+            mo->floorclip = 10;
         }
         else
         {
-            thing->floorclip = 0;
+            mo->floorclip = 0;
         }
     }
 
-    if(thing->flags & MF_MISSILE)
+    if(mo->flags & MF_MISSILE)
     {
         angle >>= ANGLETOFINESHIFT;
-        thing->mom[MX] = FixedMul(thing->info->speed, finecosine[angle]);
-        thing->mom[MY] = FixedMul(thing->info->speed, finesine[angle]);
+        mo->mom[MX] = mo->info->speed * FIX2FLT(finecosine[angle]);
+        mo->mom[MY] = mo->info->speed * FIX2FLT(finesine[angle]);
     }
-    else if(useFog) // no fog doesn't alter the player's momentums
+    else if(useFog) // No fog doesn't alter the player's momentums.
     {
-        thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;
+        mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
     }
-    P_ClearThingSRVO(thing);
 
-    // Update the floor pic
-    thing->floorpic = tmfloorpic;
+    P_ClearThingSRVO(mo);
+
+    // Update the floor pic.
+    mo->floorpic = tmfloorpic;
     return true;
 }
 
 boolean EV_Teleport(int tid, mobj_t *thing, boolean fog)
 {
-    int         i, count, searcher;
-    mobj_t     *mo = 0;
+    int             i, count, searcher;
+    mobj_t         *mo = 0;
 
     if(!thing)
         return false;
@@ -290,23 +300,25 @@ boolean EV_Teleport(int tid, mobj_t *thing, boolean fog)
 #if __JHERETIC__ || __JHEXEN__
 void P_ArtiTele(player_t *player)
 {
-    int         i, selections;
-    fixed_t     destPos[3], destAngle;
+    int             i, selections;
+    float           destPos[3];
+    angle_t         destAngle;
 
     if(deathmatch)
     {
         selections = deathmatch_p - deathmatchstarts;
         i = P_Random() % selections;
-        destPos[VX] = deathmatchstarts[i].x << FRACBITS;
-        destPos[VY] = deathmatchstarts[i].y << FRACBITS;
-        destAngle = ANG45 * (deathmatchstarts[i].angle / 45);
+
+        destPos[VX] = deathmatchstarts[i].pos[VX];
+        destPos[VY] = deathmatchstarts[i].pos[VY];
+        destAngle = deathmatchstarts[i].angle;
     }
     else
     {
         //// \fixme DJS - this doesn't seem right... why always player 0?
-        destPos[VX] = playerstarts[0].x << FRACBITS;
-        destPos[VY] = playerstarts[0].y << FRACBITS;
-        destAngle = ANG45 * (playerstarts[0].angle / 45);
+        destPos[VX] = playerstarts[0].pos[VX];
+        destPos[VY] = playerstarts[0].pos[VY];
+        destAngle = playerstarts[0].angle;
     }
 
 # if __JHEXEN__

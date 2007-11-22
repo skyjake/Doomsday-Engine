@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -39,6 +39,10 @@
  * You should have received a copy of the HERETIC / HEXEN source code
  * license along with this program (Ravenlic.txt); if not:
  * http://www.ravensoft.com/
+ */
+
+/**
+ * p_spec.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -138,7 +142,7 @@ int P_FlatToTerrainType(int flatlumpnum)
  */
 int P_GetTerrainType(sector_t* sec, int plane)
 {
-    int flatnum = P_GetIntp(sec, (plane? DMU_CEILING_TEXTURE : DMU_FLOOR_TEXTURE));
+    int flatnum = P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
 
     if(flatnum != -1)
         return TerrainTypes[flatnum];
@@ -162,7 +166,7 @@ boolean EV_SectorSoundChange(byte *args)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        P_XSector(sec)->seqType = args[1];
+        P_ToXSector(sec)->seqType = args[1];
         rtn = true;
     }
 
@@ -200,7 +204,7 @@ boolean EV_LineSearchForPuzzleItem(line_t *line, byte *args, mobj_t *mo)
     if(!mo || !mo->player || !line)
         return false;
 
-    arti = arti_firstpuzzitem + P_XLine(line)->arg1;
+    arti = arti_firstpuzzitem + P_ToXLine(line)->arg1;
 
     if(arti < arti_firstpuzzitem)
         return false;
@@ -432,7 +436,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
     case 72: // Thrust Mobj
         if(!side) // Only thrust on side 0
         {
-            P_ThrustMobj(mo, args[0] * (ANGLE_90 / 64), args[1] << FRACBITS);
+            P_ThrustMobj(mo, args[0] * (ANGLE_90 / 64), (float) args[1]);
             buttonSuccess = 1;
         }
         break;
@@ -617,9 +621,10 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
 
 boolean P_ActivateLine(line_t *line, mobj_t *mo, int side, int activationType)
 {
-    int         lineActivation;
-    boolean     repeat;
-    boolean     buttonSuccess;
+    int             lineActivation;
+    boolean         repeat;
+    boolean         buttonSuccess;
+    xline_t        *xline;
 
     lineActivation = GET_SPAC(P_GetIntp(line, DMU_FLAGS));
     if(lineActivation != activationType)
@@ -636,16 +641,16 @@ boolean P_ActivateLine(line_t *line, mobj_t *mo, int side, int activationType)
             return false; // never open secret doors
     }
 
+    xline = P_ToXLine(line);
     repeat = P_GetIntp(line, DMU_FLAGS) & ML_REPEAT_SPECIAL;
     buttonSuccess = false;
 
     buttonSuccess =
-        P_ExecuteLineSpecial(P_XLine(line)->special, &P_XLine(line)->arg1,
-                             line, side, mo);
+        P_ExecuteLineSpecial(xline->special, &xline->arg1, line, side, mo);
     if(!repeat && buttonSuccess)
     {
         // clear the special on non-retriggerable lines
-        P_XLine(line)->special = 0;
+        xline->special = 0;
     }
 
     if((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) &&
@@ -664,16 +669,16 @@ void P_PlayerInSpecialSector(player_t *player)
 {
     sector_t   *sector;
     xsector_t  *xsector;
-    static int pushTab[3] = {
-        2048 * 5,
-        2048 * 10,
-        2048 * 25
+    static float pushTab[3] = {
+        (1.0f / 32) * 5,
+        (1.0f / 32) * 10,
+        (1.0f / 32) * 25
     };
 
     sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
-    xsector = P_XSector(sector);
+    xsector = P_ToXSector(sector);
 
-    if(player->plr->mo->pos[VZ] != P_GetFixedp(sector, DMU_FLOOR_HEIGHT))
+    if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
         return; // Player is not touching the floor
 
     switch(xsector->special)
@@ -769,7 +774,7 @@ void P_PlayerInSpecialSector(player_t *player)
 void P_PlayerOnSpecialFlat(player_t *player, int floorType)
 {
     if(player->plr->mo->pos[VZ]
-       > P_GetFixedp(player->plr->mo->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT))
+       > P_GetFloatp(player->plr->mo->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT))
     {
         return; // Player is not touching the floor
     }
@@ -807,15 +812,15 @@ void P_UpdateSpecials(void)
                 switch(button->where)
                 {
                 case top:
-                    P_SetIntp(sdef, DMU_TOP_TEXTURE, button->btexture);
+                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->btexture);
                     break;
 
                 case middle:
-                    P_SetIntp(sdef, DMU_MIDDLE_TEXTURE, button->btexture);
+                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->btexture);
                     break;
 
                 case bottom:
-                    P_SetIntp(sdef, DMU_BOTTOM_TEXTURE, button->btexture);
+                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->btexture);
                     break;
 
                 default:
@@ -863,7 +868,7 @@ void P_SpawnSpecials(void)
     for(i = 0; i < numsectors; ++i)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
 
         if(xsec->tag)
         {
@@ -898,7 +903,7 @@ void P_SpawnSpecials(void)
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
-        xline = P_XLine(line);
+        xline = P_ToXLine(line);
 
         switch(xline->special)
         {
@@ -934,77 +939,77 @@ void R_HandleSectorSpecials(void)
 
     for(i = 0; i < numsectors; ++i)
     {
-        xsector_t* sect = P_XSector(P_ToPtr(DMU_SECTOR, i));
+        xsector_t* sect = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
 
         switch(sect->special)
         {                       // Handle scrolling flats
         case 201:
         case 202:
         case 203:               // Scroll_North_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
                        (63 - scrollOffset) << (sect->special - 201));
             break;
 
         case 204:
         case 205:
         case 206:               // Scroll_East_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
                        (63 - scrollOffset) << (sect->special - 204));
             break;
 
         case 207:
         case 208:
         case 209:               // Scroll_South_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
                        scrollOffset << (sect->special - 207));
             break;
 
         case 210:
         case 211:
         case 212:               // Scroll_West_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
                        scrollOffset << (sect->special - 210));
             break;
 
         case 213:
         case 214:
         case 215:               // Scroll_NorthWest_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
                        scrollOffset << (sect->special - 213));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
                        (63 - scrollOffset) << (sect->special - 213));
             break;
 
         case 216:
         case 217:
         case 218:               // Scroll_NorthEast_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
                        (63 - scrollOffset) << (sect->special - 216));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
                        (63 - scrollOffset) << (sect->special - 216));
             break;
 
         case 219:
         case 220:
         case 221:               // Scroll_SouthEast_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
                        (63 - scrollOffset) << (sect->special - 219));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
                        scrollOffset << (sect->special - 219));
             break;
 
         case 222:
         case 223:
         case 224:               // Scroll_SouthWest_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
                        scrollOffset << (sect->special - 222));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
                        scrollOffset << (sect->special - 222));
             break;
 
         default:
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X, 0);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y, 0);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, 0);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, 0);
             break;
         }
     }

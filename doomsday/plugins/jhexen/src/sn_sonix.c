@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -41,10 +41,16 @@
  * http://www.ravensoft.com/
  */
 
+/**
+ * sn_sonix.c:
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
 #include "jhexen.h"
+
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -318,7 +324,7 @@ void SN_StartSequence(mobj_t *mobj, int sequence)
 void SN_StartSequenceInSec(sector_t *sector, int seqBase)
 {
     SN_StartSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN),
-                     seqBase + P_XSector(sector)->seqType);
+                     seqBase + P_ToXSector(sector)->seqType);
 }
 
 void SN_StopSequenceInSec(sector_t *sector)

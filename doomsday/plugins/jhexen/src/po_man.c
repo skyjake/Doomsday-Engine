@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ *\author Copyright Â© 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -41,11 +41,11 @@
  * http://www.ravensoft.com/
  *
  * \bug PO_TranslateToStartSpot:  Multiple polyobjs in a single subsector -> https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1530158&group_id=74815
- * 
+ *
  */
 
-/*
- * Po_man.c : Polyobject management.
+/**
+ * po_man.c: Polyobject management.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -54,6 +54,7 @@
 
 #include "p_mapsetup.h"
 #include "p_map.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -69,23 +70,21 @@
 
 static polyobj_t *GetPolyobj(uint polyNum);
 static int GetPolyobjMirror(uint polyNum);
-static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po);
-static void InitBlockMap(void);
+static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t *po);
 static void IterFindPolySegs(float x, float y, seg_t **segList);
 static void SpawnPolyobj(uint polyNum, int tag, boolean crush);
 static void TranslateToStartSpot(int tag, float originX, float originY);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern thing_t *things;
+extern spawnspot_t *things;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static uint PolySegCount;
-static float PolyStartX;
-static float PolyStartY;
+static float PolyStart[2];
 
 // CODE --------------------------------------------------------------------
 
@@ -100,18 +99,17 @@ void PO_StopSequence(polyobj_t *poly)
     SN_StopSequence(P_GetPtrp(poly, DMU_START_SPOT));
 }
 
-void PO_SetDestination(polyobj_t *poly, fixed_t dist, angle_t angle,
-                       fixed_t speed)
+void PO_SetDestination(polyobj_t *poly, float dist, uint an, float speed)
 {
     ddvertexf_t startSpot;
 
     P_GetFloatpv(poly, DMU_START_SPOT_XY, startSpot.pos);
 
     P_SetFloatp(poly, DMU_DESTINATION_X,
-                startSpot.pos[VX] + FIX2FLT(FixedMul(dist, finecosine[angle])));
+                startSpot.pos[VX] + dist * FIX2FLT(finecosine[an]));
     P_SetFloatp(poly, DMU_DESTINATION_Y,
-                startSpot.pos[VY] + FIX2FLT(FixedMul(dist, finesine[angle])));
-    P_SetFixedp(poly, DMU_SPEED, speed);
+                startSpot.pos[VY] + dist * FIX2FLT(finesine[an]));
+    P_SetFloatp(poly, DMU_SPEED, speed);
 }
 
 // ===== Polyobj Event Code =====
@@ -121,9 +119,9 @@ void T_RotatePoly(polyevent_t *pe)
     unsigned int absSpeed;
     polyobj_t  *poly;
 
-    if(PO_RotatePolyobj(pe->polyobj, pe->speed))
+    if(PO_RotatePolyobj(pe->polyobj, pe->intSpeed))
     {
-        absSpeed = abs(pe->speed);
+        absSpeed = abs(pe->intSpeed);
 
         if(pe->dist == -1)
         {                       // perpetual polyobj
@@ -146,7 +144,7 @@ void T_RotatePoly(polyevent_t *pe)
 
         if(pe->dist < absSpeed)
         {
-            pe->speed = pe->dist * (pe->speed < 0 ? -1 : 1);
+            pe->intSpeed = pe->dist * (pe->intSpeed < 0 ? -1 : 1);
         }
     }
 }
@@ -199,9 +197,10 @@ boolean EV_RotatePoly(line_t *line, byte *args, int direction,
         P_SetAnglep(poly, DMU_DESTINATION_ANGLE,
                         P_GetAnglep(poly, DMU_ANGLE) + pe->dist);
     }
-    pe->speed = (args[1] * direction * (ANGLE_90 / 64)) >> 3;
+
+    pe->intSpeed = (args[1] * direction * (ANGLE_90 / 64)) >> 3;
     P_SetPtrp(poly, DMU_SPECIAL_DATA, pe);
-    P_SetAnglep(poly, DMU_ANGLE_SPEED, pe->speed);
+    P_SetAnglep(poly, DMU_ANGLE_SPEED, pe->intSpeed);
     PO_StartSequence(poly, SEQ_DOOR_STONE);
 
     while((mirror = GetPolyobjMirror(polyNum)) != 0)
@@ -240,8 +239,8 @@ boolean EV_RotatePoly(line_t *line, byte *args, int direction,
                             pe->dist);
         }
         direction = -direction;
-        pe->speed = (args[1] * direction * (ANGLE_90 / 64)) >> 3;
-        P_SetAnglep(poly, DMU_ANGLE_SPEED, pe->speed);
+        pe->intSpeed = (args[1] * direction * (ANGLE_90 / 64)) >> 3;
+        P_SetAnglep(poly, DMU_ANGLE_SPEED, pe->intSpeed);
 
         poly = GetPolyobj(polyNum);
         if(poly)
@@ -264,9 +263,9 @@ void T_MovePoly(polyevent_t *pe)
     unsigned int absSpeed;
     polyobj_t  *poly;
 
-    if(PO_MovePolyobj(pe->polyobj, FIX2FLT(pe->xSpeed), FIX2FLT(pe->ySpeed)))
+    if(PO_MovePolyobj(pe->polyobj, pe->speed[MX], pe->speed[MY]))
     {
-        absSpeed = abs(pe->speed);
+        absSpeed = abs(pe->intSpeed);
         pe->dist -= absSpeed;
         if(pe->dist <= 0)
         {
@@ -278,13 +277,14 @@ void T_MovePoly(polyevent_t *pe)
             PO_StopSequence(poly);
             P_PolyobjFinished(PO_Tag(poly));
             P_RemoveThinker(&pe->thinker);
-            P_SetIntp(poly, DMU_SPEED, 0);
+            P_SetFloatp(poly, DMU_SPEED, 0);
         }
+
         if(pe->dist < absSpeed)
         {
-            pe->speed = pe->dist * (pe->speed < 0 ? -1 : 1);
-            pe->xSpeed = FixedMul(pe->speed, finecosine[pe->angle]);
-            pe->ySpeed = FixedMul(pe->speed, finesine[pe->angle]);
+            pe->intSpeed = pe->dist * (pe->intSpeed < 0 ? -1 : 1);
+            pe->speed[MX] = FIX2FLT(FixedMul(pe->intSpeed, finecosine[pe->fangle]));
+            pe->speed[MY] = FIX2FLT(FixedMul(pe->intSpeed, finesine[pe->fangle]));
         }
     }
 }
@@ -295,7 +295,7 @@ boolean EV_MovePoly(line_t *line, byte *args, boolean timesEight,
     int         mirror, polyNum;
     polyevent_t *pe;
     polyobj_t  *poly;
-    angle_t     an;
+    angle_t     angle;
 
     polyNum = args[0];
     poly = GetPolyobj(polyNum);
@@ -323,17 +323,17 @@ boolean EV_MovePoly(line_t *line, byte *args, boolean timesEight,
     {
         pe->dist = args[3] * FRACUNIT;  // Distance
     }
-    pe->speed = args[1] * (FRACUNIT / 8);
+    pe->intSpeed = args[1] * (FRACUNIT / 8);
     P_SetPtrp(poly, DMU_SPECIAL_DATA, pe);
 
-    an = args[2] * (ANGLE_90 / 64);
+    angle = args[2] * (ANGLE_90 / 64);
 
-    pe->angle = an >> ANGLETOFINESHIFT;
-    pe->xSpeed = FixedMul(pe->speed, finecosine[pe->angle]);
-    pe->ySpeed = FixedMul(pe->speed, finesine[pe->angle]);
+    pe->fangle = angle >> ANGLETOFINESHIFT;
+    pe->speed[MX] = FIX2FLT(FixedMul(pe->intSpeed, finecosine[pe->fangle]));
+    pe->speed[MY] = FIX2FLT(FixedMul(pe->intSpeed, finesine[pe->fangle]));
     PO_StartSequence(poly, SEQ_DOOR_STONE);
 
-    PO_SetDestination(poly, pe->dist, pe->angle, pe->speed);
+    PO_SetDestination(poly, FIX2FLT(pe->dist), pe->fangle, FIX2FLT(pe->intSpeed));
 
     while((mirror = GetPolyobjMirror(polyNum)) != 0)
     {
@@ -356,15 +356,15 @@ boolean EV_MovePoly(line_t *line, byte *args, boolean timesEight,
         {
             pe->dist = args[3] * FRACUNIT;  // Distance
         }
-        pe->speed = args[1] * (FRACUNIT / 8);
-        an = an + ANGLE_180;    // reverse the angle
-        pe->angle = an >> ANGLETOFINESHIFT;
-        pe->xSpeed = FixedMul(pe->speed, finecosine[pe->angle]);
-        pe->ySpeed = FixedMul(pe->speed, finesine[pe->angle]);
+        pe->intSpeed = args[1] * (FRACUNIT / 8);
+        angle = angle + ANGLE_180;    // reverse the angle
+        pe->fangle = angle >> ANGLETOFINESHIFT;
+        pe->speed[MX] = FIX2FLT(FixedMul(pe->intSpeed, finecosine[pe->fangle]));
+        pe->speed[MY] = FIX2FLT(FixedMul(pe->intSpeed, finesine[pe->fangle]));
         polyNum = mirror;
         PO_StartSequence(poly, SEQ_DOOR_STONE);
 
-        PO_SetDestination(poly, pe->dist, pe->angle, pe->speed);
+        PO_SetDestination(poly, FIX2FLT(pe->dist), pe->fangle, FIX2FLT(pe->intSpeed));
     }
     return true;
 }
@@ -382,8 +382,8 @@ void T_PolyDoor(polydoor_t *pd)
             PO_StartSequence(poly, SEQ_DOOR_STONE);
 
             // Movement is about to begin. Update the destination.
-            PO_SetDestination(GetPolyobj(pd->polyobj), pd->dist, pd->direction,
-                              pd->speed);
+            PO_SetDestination(GetPolyobj(pd->polyobj), FIX2FLT(pd->dist),
+                              pd->direction, FIX2FLT(pd->intSpeed));
         }
         return;
     }
@@ -391,9 +391,9 @@ void T_PolyDoor(polydoor_t *pd)
     switch(pd->type)
     {
     case PODOOR_SLIDE:
-        if(PO_MovePolyobj(pd->polyobj, FIX2FLT(pd->xSpeed), FIX2FLT(pd->ySpeed)))
+        if(PO_MovePolyobj(pd->polyobj, pd->speed[MX], pd->speed[MY]))
         {
-            absSpeed = abs(pd->speed);
+            absSpeed = abs(pd->intSpeed);
             pd->dist -= absSpeed;
             if(pd->dist <= 0)
             {
@@ -406,8 +406,8 @@ void T_PolyDoor(polydoor_t *pd)
                     pd->tics = pd->waitTics;
                     pd->direction =
                         (ANGLE_MAX >> ANGLETOFINESHIFT) - pd->direction;
-                    pd->xSpeed = -pd->xSpeed;
-                    pd->ySpeed = -pd->ySpeed;
+                    pd->speed[MX] = -pd->speed[MX];
+                    pd->speed[MY] = -pd->speed[MY];
                 }
                 else
                 {
@@ -432,11 +432,11 @@ void T_PolyDoor(polydoor_t *pd)
                 pd->dist = pd->totalDist - pd->dist;
                 pd->direction =
                     (ANGLE_MAX >> ANGLETOFINESHIFT) - pd->direction;
-                pd->xSpeed = -pd->xSpeed;
-                pd->ySpeed = -pd->ySpeed;
+                pd->speed[MX] = -pd->speed[MX];
+                pd->speed[MY] = -pd->speed[MY];
                 // Update destination.
-                PO_SetDestination(GetPolyobj(pd->polyobj), pd->dist,
-                                  pd->direction, pd->speed);
+                PO_SetDestination(GetPolyobj(pd->polyobj), FIX2FLT(pd->dist),
+                                  pd->direction, FIX2FLT(pd->intSpeed));
                 pd->close = false;
                 PO_StartSequence(poly, SEQ_DOOR_STONE);
             }
@@ -444,9 +444,9 @@ void T_PolyDoor(polydoor_t *pd)
         break;
 
     case PODOOR_SWING:
-        if(PO_RotatePolyobj(pd->polyobj, pd->speed))
+        if(PO_RotatePolyobj(pd->polyobj, pd->intSpeed))
         {
-            absSpeed = abs(pd->speed);
+            absSpeed = abs(pd->intSpeed);
             if(pd->dist == -1)
             {   // perpetual polyobj
                 return;
@@ -461,7 +461,7 @@ void T_PolyDoor(polydoor_t *pd)
                     pd->dist = pd->totalDist;
                     pd->close = true;
                     pd->tics = pd->waitTics;
-                    pd->speed = -pd->speed;
+                    pd->intSpeed = -pd->intSpeed;
                 }
                 else
                 {
@@ -484,7 +484,7 @@ void T_PolyDoor(polydoor_t *pd)
             else
             {   // open back up and rewait
                 pd->dist = pd->totalDist - pd->dist;
-                pd->speed = -pd->speed;
+                pd->intSpeed = -pd->intSpeed;
                 pd->close = false;
                 PO_StartSequence(poly, SEQ_DOOR_STONE);
             }
@@ -501,7 +501,7 @@ boolean EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type)
     int         mirror, polyNum;
     polydoor_t *pd;
     polyobj_t  *poly;
-    angle_t     an = 0;
+    angle_t     angle = 0;
 
     polyNum = args[0];
     poly = GetPolyobj(polyNum);
@@ -526,27 +526,27 @@ boolean EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type)
     if(type == PODOOR_SLIDE)
     {
         pd->waitTics = args[4];
-        pd->speed = args[1] * (FRACUNIT / 8);
+        pd->intSpeed = args[1] * (FRACUNIT / 8);
         pd->totalDist = args[3] * FRACUNIT; // Distance
         pd->dist = pd->totalDist;
-        an = args[2] * (ANGLE_90 / 64);
-        pd->direction = an >> ANGLETOFINESHIFT;
-        pd->xSpeed = FixedMul(pd->speed, finecosine[pd->direction]);
-        pd->ySpeed = FixedMul(pd->speed, finesine[pd->direction]);
+        angle = args[2] * (ANGLE_90 / 64);
+        pd->direction = angle >> ANGLETOFINESHIFT;
+        pd->speed[MX] = FIX2FLT(FixedMul(pd->intSpeed, finecosine[pd->direction]));
+        pd->speed[MY] = FIX2FLT(FixedMul(pd->intSpeed, finesine[pd->direction]));
         PO_StartSequence(poly, SEQ_DOOR_STONE);
     }
     else if(type == PODOOR_SWING)
     {
         pd->waitTics = args[3];
         pd->direction = 1;      // ADD:  PODOOR_SWINGL, PODOOR_SWINGR
-        pd->speed = (args[1] * pd->direction * (ANGLE_90 / 64)) >> 3;
+        pd->intSpeed = (args[1] * pd->direction * (ANGLE_90 / 64)) >> 3;
         pd->totalDist = args[2] * (ANGLE_90 / 64);
         pd->dist = pd->totalDist;
         PO_StartSequence(poly, SEQ_DOOR_STONE);
     }
 
     P_SetPtrp(poly, DMU_SPECIAL_DATA, pd);
-    PO_SetDestination(poly, pd->dist, pd->direction, pd->speed);
+    PO_SetDestination(poly, FIX2FLT(pd->dist), pd->direction, FIX2FLT(pd->intSpeed));
 
     while((mirror = GetPolyobjMirror(polyNum)) != 0)
     {
@@ -566,27 +566,28 @@ boolean EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type)
         if(type == PODOOR_SLIDE)
         {
             pd->waitTics = args[4];
-            pd->speed = args[1] * (FRACUNIT / 8);
+            pd->intSpeed = args[1] * (FRACUNIT / 8);
             pd->totalDist = args[3] * FRACUNIT; // Distance
             pd->dist = pd->totalDist;
-            an = an + ANGLE_180;    // reverse the angle
-            pd->direction = an >> ANGLETOFINESHIFT;
-            pd->xSpeed = FixedMul(pd->speed, finecosine[pd->direction]);
-            pd->ySpeed = FixedMul(pd->speed, finesine[pd->direction]);
+            angle = angle + ANGLE_180;    // reverse the angle
+            pd->direction = angle >> ANGLETOFINESHIFT;
+            pd->speed[MX] = FIX2FLT(FixedMul(pd->intSpeed, finecosine[pd->direction]));
+            pd->speed[MY] = FIX2FLT(FixedMul(pd->intSpeed, finesine[pd->direction]));
             PO_StartSequence(poly, SEQ_DOOR_STONE);
         }
         else if(type == PODOOR_SWING)
         {
             pd->waitTics = args[3];
             pd->direction = -1; // ADD:  same as above
-            pd->speed = (args[1] * pd->direction * (ANGLE_90 / 64)) >> 3;
+            pd->intSpeed = (args[1] * pd->direction * (ANGLE_90 / 64)) >> 3;
             pd->totalDist = args[2] * (ANGLE_90 / 64);
             pd->dist = pd->totalDist;
             PO_StartSequence(poly, SEQ_DOOR_STONE);
         }
         polyNum = mirror;
-        PO_SetDestination(poly, pd->dist, pd->direction, pd->speed);
+        PO_SetDestination(poly, FIX2FLT(pd->dist), pd->direction, FIX2FLT(pd->intSpeed));
     }
+
     return true;
 }
 
@@ -616,15 +617,17 @@ static int GetPolyobjMirror(uint poly)
         {
             seg_t* seg = P_GetPtrp(P_ToPtr(DMU_POLYOBJ, i), DMU_SEG_OF_POLYOBJ | 0);
             line_t* linedef = P_GetPtrp(seg, DMU_LINE);
-            return P_XLine(linedef)->arg2;
+            return P_ToXLine(linedef)->arg2;
         }
     }
+
     return 0;
 }
 
 static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
 {
-    int         thrustAngle, thrustX, thrustY, force;
+    uint        thrustAn;
+    float       thrustX, thrustY, force;
     polyevent_t *pe;
 
     // Clients do no polyobj <-> mobj interaction.
@@ -635,104 +638,62 @@ static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
         return;
 
     if(!(mobj->flags & MF_SHOOTABLE) && !mobj->player)
-    {
         return;
-    }
-    thrustAngle = (P_GetAnglep(seg, DMU_ANGLE) - ANGLE_90) >>
-                  ANGLETOFINESHIFT;
+
+    thrustAn =
+        (P_GetAnglep(seg, DMU_ANGLE) - ANGLE_90) >> ANGLETOFINESHIFT;
 
     pe = PO_SpecialData(po);
     if(pe)
     {
         if(pe->thinker.function == T_RotatePoly)
         {
-            force = pe->speed >> 8;
+            force = FIX2FLT(pe->intSpeed >> 8);
         }
         else
         {
-            force = pe->speed >> 3;
+            force = FIX2FLT(pe->intSpeed >> 3);
         }
-        if(force < FRACUNIT)
+
+        if(force < 1)
         {
-            force = FRACUNIT;
+            force = 1;
         }
-        else if(force > 4 * FRACUNIT)
+        else if(force > 4)
         {
-            force = 4 * FRACUNIT;
+            force = 4;
         }
     }
     else
     {
-        force = FRACUNIT;
+        force = 1;
     }
 
-    thrustX = FixedMul(force, finecosine[thrustAngle]);
-    thrustY = FixedMul(force, finesine[thrustAngle]);
+    thrustX = force * FIX2FLT(finecosine[thrustAn]);
+    thrustY = force * FIX2FLT(finesine[thrustAn]);
     mobj->mom[MX] += thrustX;
     mobj->mom[MY] += thrustY;
 
     if(P_GetBoolp(po, DMU_CRUSH))
     {
-        if(!P_CheckPosition(mobj, mobj->pos[VX] + thrustX,
-                            mobj->pos[VY] + thrustY))
+        if(!P_CheckPosition2f(mobj, mobj->pos[VX] + thrustX,
+                              mobj->pos[VY] + thrustY))
         {
             P_DamageMobj(mobj, NULL, NULL, 3);
         }
     }
 }
 
-static void InitBlockMap(void)
-{
-    int         area, leftX, rightX, topY, bottomY;
-    uint        i, j;
-    seg_t     **segList;
-
-    for(i = 0; i < numpolyobjs; ++i)
-    {
-        PO_LinkPolyobj(P_ToPtr(DMU_POLYOBJ, i));
-
-        // calculate a rough area
-        // right now, working like shit...gotta fix this...
-        segList = P_GetPtr(DMU_POLYOBJ, i, DMU_SEG_LIST);
-        leftX = rightX = P_GetFixedp(*segList, DMU_VERTEX1_X);
-        topY = bottomY = P_GetFixedp(*segList, DMU_VERTEX1_Y);
-        for(j = 0; j < (uint) P_GetInt(DMU_POLYOBJ, i, DMU_SEG_COUNT);
-            ++j, segList++)
-        {
-            ddvertex_t v1;
-            P_GetFixedpv(*segList, DMU_VERTEX1_XY, v1.pos);
-            if(v1.pos[VX] < leftX)
-            {
-                leftX = v1.pos[VX];
-            }
-            if(v1.pos[VX] > rightX)
-            {
-                rightX = v1.pos[VX];
-            }
-            if(v1.pos[VY] < bottomY)
-            {
-                bottomY = v1.pos[VY];
-            }
-            if(v1.pos[VY] > topY)
-            {
-                topY = v1.pos[VY];
-            }
-        }
-        area = ((rightX >> FRACBITS) -
-                (leftX >> FRACBITS)) * ((topY >> FRACBITS) -
-                                        (bottomY >> FRACBITS));
-    }
-}
-
 /**
- * @param segList       <code>NULL</code> will cause IterFindPolySegs to
- *                      count the number of segs in the polyobj.
+ * @param segList           @c NULL, will cause IterFindPolySegs to count
+ *                          the number of segs in the polyobj.
  */
 static void IterFindPolySegs(float x, float y, seg_t **segList)
 {
     uint        i;
+    float       v[2];
 
-    if(x == PolyStartX && y == PolyStartY)
+    if(x == PolyStart[VX] && y == PolyStart[VY])
     {
         return;
     }
@@ -742,8 +703,8 @@ static void IterFindPolySegs(float x, float y, seg_t **segList)
         if(!P_GetPtr(DMU_SEG, i, DMU_LINE))
             continue;
 
-        if(P_GetFloat(DMU_SEG, i, DMU_VERTEX1_X) == x &&
-           P_GetFloat(DMU_SEG, i, DMU_VERTEX1_Y) == y)
+        P_GetFloatv(DMU_SEG, i, DMU_VERTEX1_XY, v);
+        if(v[VX] == x && v[VY] == y)
         {
             if(!segList)
             {
@@ -753,11 +714,13 @@ static void IterFindPolySegs(float x, float y, seg_t **segList)
             {
                 *segList++ = P_ToPtr(DMU_SEG, i);
             }
-            IterFindPolySegs(P_GetFloat(DMU_SEG, i, DMU_VERTEX2_X),
-                             P_GetFloat(DMU_SEG, i, DMU_VERTEX2_Y), segList);
+
+            P_GetFloatv(DMU_SEG, i, DMU_VERTEX2_XY, v);
+            IterFindPolySegs(v[VX], v[VY], segList);
             return;
         }
     }
+
     Con_Error("IterFindPolySegs:  Non-closed Polyobj located.\n");
 }
 
@@ -766,18 +729,20 @@ static void IterFindPolySegs(float x, float y, seg_t **segList)
  */
 static void SpawnPolyobj(uint index, int tag, boolean crush)
 {
-    uint        i, j, psIndex, psIndexOld;
-    int         seqType;
-    seg_t      *polySegList[PO_MAXPOLYSEGS];
-    line_t     *ldef;
-    xline_t    *xline;
+    uint            i, j, psIndex, psIndexOld;
+    int             seqType;
+    float           v[2];
+    seg_t          *polySegList[PO_MAXPOLYSEGS];
+    line_t         *ldef;
+    xline_t        *xline;
 
     for(i = 0; i < numsegs; ++i)
     {
-        line_t *linedef = P_GetPtr(DMU_SEG, i, DMU_LINE);
+        line_t         *linedef = P_GetPtr(DMU_SEG, i, DMU_LINE);
         if(!linedef)
             continue;
-        xline = P_XLine(linedef);
+
+        xline = P_ToXLine(linedef);
 
         if(xline->special == PO_LINE_START &&
            xline->arg1 == tag)
@@ -790,19 +755,17 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
             xline->special = 0;
             xline->arg1 = 0;
             PolySegCount = 1;
-            PolyStartX = P_GetFloat(DMU_SEG, i, DMU_VERTEX1_X);
-            PolyStartY = P_GetFloat(DMU_SEG, i, DMU_VERTEX1_Y);
-            IterFindPolySegs(P_GetFloat(DMU_SEG, i, DMU_VERTEX2_X),
-                             P_GetFloat(DMU_SEG, i, DMU_VERTEX2_Y), NULL);
+
+            P_GetFloatv(DMU_SEG, i, DMU_VERTEX1_XY, PolyStart);
+            P_GetFloatv(DMU_SEG, i, DMU_VERTEX2_XY, v);
+            IterFindPolySegs(v[VX], v[VY], NULL);
             P_SetInt(DMU_POLYOBJ, index, DMU_SEG_COUNT, PolySegCount);
             P_SetPtr(DMU_POLYOBJ, index, DMU_SEG_LIST,
-                Z_Malloc(PolySegCount * sizeof(seg_t*), PU_LEVEL, 0));
+                     Z_Malloc(PolySegCount * sizeof(seg_t*), PU_LEVEL, 0));
             P_SetPtrp(P_ToPtr(DMU_POLYOBJ, index), DMU_SEG_OF_POLYOBJ | 0,
                       P_ToPtr(DMU_SEG, i)); // insert the first seg
-            IterFindPolySegs(P_GetFloat(DMU_SEG, i, DMU_VERTEX2_X),
-                             P_GetFloat(DMU_SEG, i, DMU_VERTEX2_Y),
-                             /*P_GetPtrp(P_ToPtr(DMU_POLYOBJ, index),
-                                       DMU_SEG_OF_POLYOBJ | 1)*/
+
+            IterFindPolySegs(v[VX], v[VY],
                              ((seg_t**)P_GetPtr(DMU_POLYOBJ, index, DMU_SEG_LIST)) + 1);
             P_SetBool(DMU_POLYOBJ, index, DMU_CRUSH, crush);
             P_SetInt(DMU_POLYOBJ, index, DMU_TAG, tag);
@@ -818,7 +781,7 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
     }
 
     if(!P_GetPtr(DMU_POLYOBJ, index, DMU_SEG_LIST))
-    {    // didn't find a polyobj through PO_LINE_START
+    {    // Didn't find a polyobj through PO_LINE_START
         psIndex = 0;
         P_SetInt(DMU_POLYOBJ, index, DMU_SEG_COUNT, 0);
         for(j = 1; j < PO_MAXPOLYSEGS; ++j)
@@ -826,20 +789,24 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
             psIndexOld = psIndex;
             for(i = 0; i < numsegs; ++i)
             {
-                line_t *linedef = P_GetPtr(DMU_SEG, i, DMU_LINE);
-                if(!linedef)
+                line_t         *line = P_GetPtr(DMU_SEG, i, DMU_LINE);
+
+                if(!line)
                     continue;
-                if(P_XLine(linedef)->special == PO_LINE_EXPLICIT &&
-                   P_XLine(linedef)->arg1 == tag)
+
+                xline = P_ToXLine(line);
+                if(xline->special == PO_LINE_EXPLICIT &&
+                   xline->arg1 == tag)
                 {
-                    if(!P_XLine(linedef)->arg2)
+                    if(!xline->arg2)
                     {
                         Con_Error
                             ("SpawnPolyobj:  Explicit line missing order number "
                              "(probably %d) in poly %d.\n",
                              j + 1, tag);
                     }
-                    if(P_XLine(linedef)->arg2 == j)
+
+                    if(xline->arg2 == j)
                     {
                         polySegList[psIndex] = P_ToPtr(DMU_SEG, i);
                         P_SetInt(DMU_POLYOBJ, index, DMU_SEG_COUNT,
@@ -859,11 +826,11 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
             //      linedef.
             for(i = 0; i < numsegs; ++i)
             {
-                line_t *linedef = P_GetPtr(DMU_SEG, i, DMU_LINE);
-                if(!linedef)
+                line_t         *line = P_GetPtr(DMU_SEG, i, DMU_LINE);
+                if(!line)
                     continue;
-                xline = P_XLine(linedef);
 
+                xline = P_ToXLine(line);
                 if(xline->special == PO_LINE_EXPLICIT && xline->arg1 == tag &&
                    xline->arg2 == j)
                 {
@@ -878,12 +845,13 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
                 // lines with the current tag value
                 for(i = 0; i < numsegs; ++i)
                 {
-                    line_t *linedef = P_GetPtr(DMU_SEG, i, DMU_LINE);
-                    if(!linedef)
+                    line_t         *line = P_GetPtr(DMU_SEG, i, DMU_LINE);
+                    if(!line)
                         continue;
 
-                    if(P_XLine(linedef)->special == PO_LINE_EXPLICIT &&
-                       P_XLine(linedef)->arg1 == tag)
+                    xline = P_ToXLine(line);
+                    if(xline->special == PO_LINE_EXPLICIT &&
+                       xline->arg1 == tag)
                     {
                         Con_Error
                             ("SpawnPolyobj:  Missing explicit line %d for poly %d\n",
@@ -908,7 +876,7 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
             }
 
             P_SetInt(DMU_POLYOBJ, index, DMU_SEQUENCE_TYPE,
-                P_XLine(P_GetPtrp(P_GetPtrp(po, DMU_SEG_OF_POLYOBJ | 0),
+                P_ToXLine(P_GetPtrp(P_GetPtrp(po, DMU_SEG_OF_POLYOBJ | 0),
                                   DMU_LINE))->arg4);
         }
 
@@ -917,7 +885,7 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
         ldef = P_GetPtrp( P_GetPtrp(P_ToPtr(DMU_POLYOBJ, index),
                                     DMU_SEG_OF_POLYOBJ | 0),
                          DMU_LINE );
-        P_XLine(ldef)->arg2 = P_XLine(ldef)->arg3;
+        P_ToXLine(ldef)->arg2 = P_ToXLine(ldef)->arg3;
         //(*polyobjs[index].Segs)->linedef->arg2 =
         //  (*polyobjs[index].Segs)->linedef->arg3;
     }
@@ -925,14 +893,14 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
 
 static void TranslateToStartSpot(int tag, float originX, float originY)
 {
-    uint        i;
-    fixed_t     deltaX, deltaY;
-    ddvertexf_t avg; // used to find a polyobj's center, and hence subsector
-    seg_t     **tempSeg, **veryTempSeg;
-    ddvertexf_t *tempPt;
-    subsector_t *sub;
-    polyobj_t  *po;
-    int         poNumSegs = 0;
+    uint            i;
+    float           delta[2];
+    ddvertexf_t     avg; // used to find a polyobj's center, and hence subsector
+    seg_t         **tempSeg, **veryTempSeg;
+    ddvertexf_t    *tempPt;
+    subsector_t    *sub;
+    polyobj_t      *po;
+    int             poNumSegs = 0;
 
     po = GetPolyobj(tag);
     if(!po)
@@ -940,6 +908,7 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
         Con_Error("TranslateToStartSpot:  Unable to match polyobj tag: %d\n",
                   tag);
     }
+
     if(P_GetPtrp(po, DMU_SEG_LIST) == NULL)
     {
         Con_Error
@@ -952,8 +921,8 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
               Z_Malloc(poNumSegs * sizeof(ddvertex_t), PU_LEVEL, 0));
     P_SetPtrp(po, DMU_PREVIOUS_POINTS,
               Z_Malloc(poNumSegs * sizeof(ddvertex_t), PU_LEVEL, 0));
-    deltaX = FLT2FIX(originX - P_GetFloatp(po, DMU_START_SPOT_X));
-    deltaY = FLT2FIX(originY - P_GetFloatp(po, DMU_START_SPOT_Y));
+    delta[VX] = originX - P_GetFloatp(po, DMU_START_SPOT_X);
+    delta[VY] = originY - P_GetFloatp(po, DMU_START_SPOT_Y);
 
     tempSeg = P_GetPtrp(po, DMU_SEG_LIST);
     tempPt = P_GetPtrp(po, DMU_ORIGINAL_POINTS);
@@ -966,11 +935,11 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
         line_t* linedef = P_GetPtrp(*tempSeg, DMU_LINE);
         if(P_GetIntp(linedef, DMU_VALID_COUNT) != VALIDCOUNT)
         {
-            fixed_t *bbox = P_GetPtrp(linedef, DMU_BOUNDING_BOX);
-            bbox[BOXTOP]    -= deltaY;
-            bbox[BOXBOTTOM] -= deltaY;
-            bbox[BOXLEFT]   -= deltaX;
-            bbox[BOXRIGHT]  -= deltaX;
+            float          *bbox = P_GetPtrp(linedef, DMU_BOUNDING_BOX);
+            bbox[BOXTOP]    -= delta[VY];
+            bbox[BOXBOTTOM] -= delta[VY];
+            bbox[BOXLEFT]   -= delta[VX];
+            bbox[BOXRIGHT]  -= delta[VX];
             P_SetIntp(linedef, DMU_VALID_COUNT, VALIDCOUNT);
         }
 
@@ -985,13 +954,15 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
         }
 
         if(veryTempSeg == tempSeg)
-        {                       // the point hasn't been translated, yet
-            float v1[2];
+        {   // the point hasn't been translated, yet
+            float           v1[2];
+
             P_GetFloatpv(*tempSeg, DMU_VERTEX1_XY, v1);
-            v1[0] -= FIX2FLT(deltaX);
-            v1[1] -= FIX2FLT(deltaY);
+            v1[0] -= delta[VX];
+            v1[1] -= delta[VY];
             P_SetFloatpv(*tempSeg, DMU_VERTEX1_XY, v1);
         }
+
         avg.pos[VX] += P_GetFloatp(*tempSeg, DMU_VERTEX1_X);
         avg.pos[VY] += P_GetFloatp(*tempSeg, DMU_VERTEX1_Y);
         // the original Pts are based off the startSpot Pt, and are
@@ -1004,7 +975,7 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
 
     avg.pos[VX] /= poNumSegs;
     avg.pos[VY] /= poNumSegs;
-    sub = R_PointInSubsector(FLT2FIX(avg.pos[VX]), FLT2FIX(avg.pos[VY]));
+    sub = R_PointInSubsector(avg.pos[VX], avg.pos[VY]);
     if(P_GetPtrp(sub, DMU_POLYOBJ) != NULL)
     {
         Con_Message("PO_TranslateToStartSpot: Warning: Multiple polyobjs in a single subsector\n"
@@ -1020,10 +991,8 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
 void PO_Init(int lump)
 {
     int         i;
-    thing_t    *mt;
+    spawnspot_t *mt;
     uint        polyIndex;
-    float       x, y;
-    short       angle, type;
 
     // ThrustMobj will handle polyobj <-> mobj interaction.
     PO_SetCallback(ThrustMobj);
@@ -1032,44 +1001,34 @@ void PO_Init(int lump)
     // actually is, so we let the engine allocate memory for them.
     PO_Allocate();
 
-    mt = things;
-    polyIndex = 0;              // index polyobj number
+    polyIndex = 0; // Index polyobj number.
 
     // Find the startSpot points, and spawn each polyobj
-    for(i = 0; i < numthings; ++i, mt++)
+    for(i = 0; i < numthings; ++i)
     {
-        x = (float) mt->x;
-        y = (float) mt->y;
-        angle = mt->angle;
-        type = mt->type;
+        mt = &things[i];
 
         // 3001 = no crush, 3002 = crushing
-        if(type == PO_SPAWN_TYPE ||
-           type == PO_SPAWNCRUSH_TYPE)
-        {                       // Polyobj StartSpot Pt.
-            P_SetFloat(DMU_POLYOBJ, polyIndex, DMU_START_SPOT_X, x);
-            P_SetFloat(DMU_POLYOBJ, polyIndex, DMU_START_SPOT_Y, y);
-            SpawnPolyobj(polyIndex, angle,
-                         (type == PO_SPAWNCRUSH_TYPE));
+        if(mt->type == PO_SPAWN_TYPE || mt->type == PO_SPAWNCRUSH_TYPE)
+        {   // Polyobj StartSpot Pt.
+            P_SetFloatv(DMU_POLYOBJ, polyIndex, DMU_START_SPOT_XY, mt->pos);
+            SpawnPolyobj(polyIndex, mt->angle,
+                         (mt->type == PO_SPAWNCRUSH_TYPE));
             polyIndex++;
         }
     }
 
-    mt = things;
     for(i = 0; i < numthings; ++i, mt++)
     {
-        x = (float) mt->x;
-        y = (float) mt->y;
-        angle = mt->angle;
-        type = mt->type;
+        mt = &things[i];
 
-        if(type == PO_ANCHOR_TYPE)
-        {                       // Polyobj Anchor Pt.
-            TranslateToStartSpot(angle, x, y);
+        if(mt->type == PO_ANCHOR_TYPE)
+        {   // Polyobj Anchor Pt.
+            TranslateToStartSpot(mt->angle, mt->pos[VX], mt->pos[VY]);
         }
     }
 
-    // check for a startspot without an anchor point
+    // Check for a startspot without an anchor point.
     for(i = 0; i < DD_GetInteger(DD_POLYOBJ_COUNT); ++i)
     {
         if(!P_GetPtr(DMU_POLYOBJ, i, DMU_ORIGINAL_POINTS))
@@ -1079,7 +1038,6 @@ void PO_Init(int lump)
                  P_GetInt(DMU_POLYOBJ, i, DMU_TAG));
         }
     }
-    InitBlockMap();
 }
 
 boolean PO_Busy(int polyobj)

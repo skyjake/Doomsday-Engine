@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -39,6 +39,10 @@
  * You should have received a copy of the HERETIC / HEXEN source code
  * license along with this program (Ravenlic.txt); if not:
  * http://www.ravensoft.com/
+ */
+
+/**
+ * p_things.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -182,12 +186,13 @@ mobjtype_t TranslateThingType[] = {
 
 boolean EV_ThingProjectile(byte *args, boolean gravity)
 {
-    int         tid, fineAngle, searcher;
-    angle_t     angle;
-    fixed_t     speed, vspeed;
-    mobjtype_t moType;
-    mobj_t     *mobj, *newMobj;
-    boolean     success;
+    uint            an;
+    int             tid, searcher;
+    angle_t         angle;
+    float           speed, vspeed;
+    mobjtype_t      moType;
+    mobj_t         *mobj, *newMobj;
+    boolean         success;
 
     success = false;
     searcher = -1;
@@ -199,21 +204,20 @@ boolean EV_ThingProjectile(byte *args, boolean gravity)
     }
 
     angle = (int) args[2] << 24;
-    fineAngle = angle >> ANGLETOFINESHIFT;
-    speed = (int) args[3] << 13;
-    vspeed = (int) args[4] << 13;
+    an = angle >> ANGLETOFINESHIFT;
+    speed = FIX2FLT((int) args[3] << 13);
+    vspeed = FIX2FLT((int) args[4] << 13);
     while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
     {
-        newMobj = P_SpawnMobj(mobj->pos[VX], mobj->pos[VY], mobj->pos[VZ],
-                              moType);
+        newMobj = P_SpawnMobj3fv(moType, mobj->pos);
 
         if(newMobj->info->seesound)
             S_StartSound(newMobj->info->seesound, newMobj);
 
         newMobj->target = mobj; // Originator
         newMobj->angle = angle;
-        newMobj->mom[MX] = FixedMul(speed, finecosine[fineAngle]);
-        newMobj->mom[MY] = FixedMul(speed, finesine[fineAngle]);
+        newMobj->mom[MX] = speed * FIX2FLT(finecosine[an]);
+        newMobj->mom[MY] = speed * FIX2FLT(finesine[an]);
         newMobj->mom[MZ] = vspeed;
         newMobj->flags2 |= MF2_DROPPED; // Don't respawn
         if(gravity == true)
@@ -237,7 +241,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
     mobj_t     *mobj, *newMobj, *fogMobj;
     mobjtype_t  moType;
     boolean     success;
-    fixed_t     z;
+    float       z;
 
     success = false;
     searcher = -1;
@@ -254,9 +258,9 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
         z = mobj->pos[VZ];
 
         if(mobjinfo[moType].flags2 & MF2_FLOATBOB)
-            z -= FLT2FIX(mobj->floorz);
+            z -= mobj->floorz;
 
-        newMobj = P_SpawnMobj(mobj->pos[VX], mobj->pos[VY], z, moType);
+        newMobj = P_SpawnMobj3f(moType, mobj->pos[VX], mobj->pos[VY], z);
         if(P_TestMobjLocation(newMobj) == false)
         {   // Didn't fit
             P_RemoveMobj(newMobj);
@@ -266,20 +270,23 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
             newMobj->angle = angle;
             if(fog == true)
             {
-                fogMobj =
-                    P_SpawnMobj(mobj->pos[VX], mobj->pos[VY],
-                                mobj->pos[VZ] + TELEFOGHEIGHT, MT_TFOG);
+                fogMobj = P_SpawnMobj3f(MT_TFOG,
+                                        mobj->pos[VX], mobj->pos[VY],
+                                        mobj->pos[VZ] + TELEFOGHEIGHT);
                 S_StartSound(SFX_TELEPORT, fogMobj);
             }
 
             newMobj->flags2 |= MF2_DROPPED; // Don't respawn
             if(newMobj->flags2 & MF2_FLOATBOB)
             {
-                newMobj->special1 = newMobj->pos[VZ] - FLT2FIX(newMobj->floorz);
+                newMobj->special1 =
+                    FLT2FIX(newMobj->pos[VZ] - newMobj->floorz);
             }
+
             success = true;
         }
     }
+
     return success;
 }
 

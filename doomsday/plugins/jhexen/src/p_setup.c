@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,8 +33,8 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * Handle jHexen specific map data properties.
+/**
+ * p_setup. Custom map data properties - jHexen specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -60,7 +60,7 @@ enum {
     CMP_THING_HEIGHT,
     CMP_THING_ANGLE,
     CMP_THING_TYPE,
-    CMP_THING_OPTIONS,
+    CMP_THING_FLAGS,
     CMP_THING_SPECIAL,
     CMP_THING_ARG1,
     CMP_THING_ARG2,
@@ -132,7 +132,7 @@ void P_RegisterCustomMapProperties(void)
         {DAM_THING,     DDVT_SHORT,     "Height",       CMP_THING_HEIGHT},
         {DAM_THING,     DDVT_SHORT,     "Angle",        CMP_THING_ANGLE},
         {DAM_THING,     DDVT_SHORT,     "Type",         CMP_THING_TYPE},
-        {DAM_THING,     DDVT_SHORT,     "Options",      CMP_THING_OPTIONS},
+        {DAM_THING,     DDVT_SHORT,     "Options",      CMP_THING_FLAGS},
         {DAM_THING,     DDVT_BYTE,      "Special",      CMP_THING_SPECIAL},
         {DAM_THING,     DDVT_BYTE,      "Arg1",         CMP_THING_ARG1},
         {DAM_THING,     DDVT_BYTE,      "Arg2",         CMP_THING_ARG2},
@@ -169,8 +169,8 @@ void P_RegisterCustomMapProperties(void)
  * @param *data     Ptr to the data value (has already been expanded, size
  *                  converted and endian converted where necessary).
  *
- * @return          <code>true</code> unless there is a critical problem with
- *                  the data supplied.
+ * @return          @c true unless there is a critical problem with the data
+ *                  supplied.
  */
 int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
 {
@@ -215,22 +215,27 @@ int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
         things[id].tid = *(short *)data;
         break;
     case CMP_THING_POS_X:
-        things[id].x = *(short *)data;
+        things[id].pos[VX] = (float) (*(short *)data);
         break;
     case CMP_THING_POS_Y:
-        things[id].y = *(short *)data;
+        things[id].pos[VY] = (float) (*(short *)data);
         break;
     case CMP_THING_HEIGHT:
         things[id].height = *(short *)data;
         break;
     case CMP_THING_ANGLE:
+        /**
+         * For some stupid reason, Hexen stores polyobject tags in the
+         * angle field in THINGS. Thus, we cannot translate the angle until
+         * we know whether it is a polyobject type or not.
+         */
         things[id].angle = *(short *)data;
         break;
     case CMP_THING_TYPE:
         things[id].type = *(short *)data;
         break;
-    case CMP_THING_OPTIONS:
-        things[id].options = *(short *)data;
+    case CMP_THING_FLAGS:
+        things[id].flags = (int) (*(short *)data);
         break;
     case CMP_THING_SPECIAL:
         things[id].special = *(byte *)data;
@@ -280,9 +285,9 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
     case DAM_SIDE:
         switch(prop)
         {
-        case DAM_TOP_TEXTURE:
-        case DAM_MIDDLE_TEXTURE:
-        case DAM_BOTTOM_TEXTURE:
+        case DAM_TOP_MATERIAL:
+        case DAM_MIDDLE_MATERIAL:
+        case DAM_BOTTOM_MATERIAL:
             // It could be a BOOM overloaded texture name?
             // In this context Doomsday expects either -1 (a bad texture name)
             // Or the id of a wall texture it should set to this section.

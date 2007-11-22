@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ *\author Copyright Â© 2005-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -41,6 +41,10 @@
  * http://www.ravensoft.com/
  */
 
+/**
+ * st_stuff.c:
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "jhexen.h"
@@ -49,6 +53,7 @@
 
 #include "p_tick.h" // for P_IsPaused
 #include "am_map.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -64,24 +69,24 @@
 #define ST_INVCOUNTOFFY         22
 
 // current artifact (sbbar)
-#define ST_ARTIFACTWIDTH    24
+#define ST_ARTIFACTWIDTH        24
 #define ST_ARTIFACTX            143
 #define ST_ARTIFACTY            163
 
 // current artifact count (sbar)
-#define ST_ARTIFACTCWIDTH   2
+#define ST_ARTIFACTCWIDTH       2
 #define ST_ARTIFACTCX           174
 #define ST_ARTIFACTCY           184
 
 // HEALTH number pos.
-#define ST_HEALTHWIDTH      3
-#define ST_HEALTHX          64
-#define ST_HEALTHY          176
+#define ST_HEALTHWIDTH          3
+#define ST_HEALTHX              64
+#define ST_HEALTHY              176
 
 // MANA A
-#define ST_MANAAWIDTH       3
-#define ST_MANAAX           91
-#define ST_MANAAY           181
+#define ST_MANAAWIDTH           3
+#define ST_MANAAX               91
+#define ST_MANAAY               181
 
 // MANA A ICON
 #define ST_MANAAICONX           77
@@ -92,9 +97,9 @@
 #define ST_MANAAVIALY           164
 
 // MANA B
-#define ST_MANABWIDTH       3
-#define ST_MANABX           123
-#define ST_MANABY           181
+#define ST_MANABWIDTH           3
+#define ST_MANABX               123
+#define ST_MANABY               181
 
 // MANA B ICON
 #define ST_MANABICONX           110
@@ -105,14 +110,14 @@
 #define ST_MANABVIALY           164
 
 // ARMOR number pos.
-#define ST_ARMORWIDTH       2
-#define ST_ARMORX           274
-#define ST_ARMORY           176
+#define ST_ARMORWIDTH           2
+#define ST_ARMORX               274
+#define ST_ARMORY               176
 
 // Frags pos.
-#define ST_FRAGSWIDTH       3
-#define ST_FRAGSX           64
-#define ST_FRAGSY           176
+#define ST_FRAGSWIDTH           3
+#define ST_FRAGSX               64
+#define ST_FRAGSY               176
 
 // TYPES -------------------------------------------------------------------
 
@@ -1557,6 +1562,7 @@ void ST_doPaletteStuff(boolean forceChange)
     {
         sb_palette = -1;
     }
+
     if(G_GetGameState() == GS_LEVEL)
     {
         plyr = &players[consoleplayer];
@@ -2095,18 +2101,15 @@ DEFCC(CCmdStatusBarSize)
     return true;
 }
 
-
-////////////////////////////////////////////////////////////////////////////
-
 /**
  * Changes the class of the given player. Will not work if the player
  * is currently morphed.
  */
 void SB_ChangePlayerClass(player_t *player, int newclass)
 {
-    int     i;
-    mobj_t *oldmobj;
-    thing_t dummy;
+    int         i;
+    mobj_t     *oldMobj;
+    spawnspot_t dummy;
 
     // Don't change if morphed.
     if(player->morphTics)
@@ -2125,15 +2128,14 @@ void SB_ChangePlayerClass(player_t *player, int newclass)
     player->update |= PSF_ARMOR_POINTS;
 
     // Respawn the player and destroy the old mobj.
-    oldmobj = player->plr->mo;
-    if(oldmobj)
-    {
-        // Use a dummy as the spawn point.
-        dummy.x = oldmobj->pos[VX] >> FRACBITS;
-        dummy.y = oldmobj->pos[VY] >> FRACBITS;
-        // The +27 (45/2) makes the approximation properly averaged.
-        dummy.angle = (short) ((float) oldmobj->angle / ANGLE_MAX * 360) + 27;
+    oldMobj = player->plr->mo;
+    if(oldMobj)
+    {   // Use a dummy as the spawn point.
+        dummy.pos[VX] = oldMobj->pos[VX];
+        dummy.pos[VY] = oldMobj->pos[VY];
+        dummy.angle = oldMobj->angle;
+
         P_SpawnPlayer(&dummy, player - players);
-        P_RemoveMobj(oldmobj);
+        P_RemoveMobj(oldMobj);
     }
 }
