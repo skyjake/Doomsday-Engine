@@ -97,6 +97,27 @@ Copy Decoration {
 # Wall textures:
 # (many obvious light sources not included, e.g. LITE*)
 #
+
+#
+# Glowing textures:
+#
+Decoration {
+  Texture = "FIREBLU1";
+  Glow {
+  };
+}
+
+* Decoration { Texture = "FIREBLU2"; }
+* Decoration { Texture = "FIRELAVA"; }
+* Decoration { Texture = "FIRELAV2"; }
+* Decoration { Texture = "FIRELAV3"; }
+* Decoration { Texture = "FIREMAG1"; }
+* Decoration { Texture = "FIREMAG2"; }
+* Decoration { Texture = "FIREMAG3"; }
+* Decoration { Texture = "FIREWALL"; }
+* Decoration { Texture = "FIREWALA"; }
+* Decoration { Texture = "FIREWALB"; }
+
 Decoration {
   Texture = "COMP2";
   Light {
