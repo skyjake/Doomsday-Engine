@@ -65,13 +65,11 @@
 #include "d_net.h"
 #include "p_player.h"
 #include "p_map.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define ANG5    (ANG90/18)
-
-// 16 pixels of bob
-#define MAXBOB  0x100000
+#define ANG5                (ANG90/18)
 
 // TYPES -------------------------------------------------------------------
 
@@ -87,9 +85,10 @@ boolean     P_TestMobjLocation(mobj_t *mobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern float   turbomul;               // multiplier for turbo
+extern float turbomul; // turbo multiplier (player speed).
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
 boolean onground;
 
 #if __JDOOM__
@@ -240,18 +239,18 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Moves the given origin along a given angle.
  */
-void P_Thrust(player_t *player, angle_t angle, fixed_t move)
+void P_Thrust(player_t *player, angle_t angle, float move)
 {
-    mobj_t *plrmo = player->plr->mo;
+    mobj_t     *plrmo = player->plr->mo;
+    uint        an = angle >> ANGLETOFINESHIFT;
 #if __JDOOM__ || __JHERETIC__
-    sector_t* sector = P_GetPtrp(plrmo->subsector, DMU_SECTOR);
+    sector_t   *sector = P_GetPtrp(plrmo->subsector, DMU_SECTOR);
 #endif
 
-    angle >>= ANGLETOFINESHIFT;
-    if(player->powers[PT_FLIGHT] && !(plrmo->pos[VZ] <= FLT2FIX(plrmo->floorz)))
+    if(player->powers[PT_FLIGHT] && !(plrmo->pos[VZ] <= plrmo->floorz))
     {
         /*float xmul=1, ymul=1;
 
@@ -263,56 +262,57 @@ void P_Thrust(player_t *player, angle_t angle, fixed_t move)
            mo->mom[MZ] += sin(ang) * move;
            } */
 
-        plrmo->mom[MX] += FixedMul(move, finecosine[angle]);
-        plrmo->mom[MY] += FixedMul(move, finesine[angle]);
+        plrmo->mom[MX] += move * FIX2FLT(finecosine[an]);
+        plrmo->mom[MY] += move * FIX2FLT(finesine[an]);
     }
 #if __JHERETIC__
-    else if(P_XSector(sector)->special == 15)    // Friction_Low
+    else if(P_ToXSector(sector)->special == 15)    // Friction_Low
     {
-        plrmo->mom[MX] += FixedMul(move >> 2, finecosine[angle]);
-        plrmo->mom[MY] += FixedMul(move >> 2, finesine[angle]);
+        plrmo->mom[MX] += (move / 4) * FIX2FLT(finecosine[an]);
+        plrmo->mom[MY] += (move / 4) * FIX2FLT(finesine[an]);
     }
 #elif __JHEXEN__
-    else if(P_GetThingFloorType(plrmo) == FLOOR_ICE)   // Friction_Low
+    else if(P_GetMobjFloorType(plrmo) == FLOOR_ICE)   // Friction_Low
     {
-        plrmo->mom[MX] += FixedMul(move >> 1, finecosine[angle]);
-        plrmo->mom[MY] += FixedMul(move >> 1, finesine[angle]);
+        plrmo->mom[MX] += (move / 2) * FIX2FLT(finecosine[an]);
+        plrmo->mom[MY] += (move / 2) * FIX2FLT(finesine[an]);
     }
 #endif
     else
     {
 #if __JDOOM__ || __JHERETIC__
-        int     mul = XS_ThrustMul(sector);
+        float       mul = XS_ThrustMul(sector);
 
-        if(mul != FRACUNIT)
-            move = FixedMul(move, mul);
+        if(mul != 1)
+            move *= mul;
 #endif
-        plrmo->mom[MX] += FixedMul(move, finecosine[angle]);
-        plrmo->mom[MY] += FixedMul(move, finesine[angle]);
+        plrmo->mom[MX] += move * FIX2FLT(finecosine[an]);
+        plrmo->mom[MY] += move * FIX2FLT(finesine[an]);
     }
 }
 
-/*
+/**
  * Returns true if the player is currently standing on ground
  * or on top of another mobj.
  */
 boolean P_IsPlayerOnGround(player_t *player)
 {
-    boolean onground = (player->plr->mo->pos[VZ] <= FLT2FIX(player->plr->mo->floorz));
+    boolean onground =
+        (player->plr->mo->pos[VZ] <= player->plr->mo->floorz);
 
 #if __JHEXEN__
     if((player->plr->mo->flags2 & MF2_ONMOBJ) && !onground)
     {
         //mobj_t *on = onmobj;
 
-        onground = true; //(player->plr->mo->pos[VZ] <= on->pos[VZ] + FLT2FIX(on->height));
+        onground = true; //(player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
     }
 #else
     if(player->plr->mo->onmobj && !onground && !(player->plr->mo->flags2 & MF2_FLY))
     {
         mobj_t *on = player->plr->mo->onmobj;
 
-        onground = (player->plr->mo->pos[VZ] <= on->pos[VZ] + FLT2FIX(on->height));
+        onground = (player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
     }
 #endif
     return onground;
@@ -336,10 +336,10 @@ void P_CheckPlayerJump(player_t *player)
         // Jump, then!
 #if __JHEXEN__
         if(player->morphTics) // Pigs don't jump that high.
-            player->plr->mo->mom[MZ] = FRACUNIT * (2 * power / 3);
+            player->plr->mo->mom[MZ] = (2 * power / 3);
         else
 #endif
-            player->plr->mo->mom[MZ] = FRACUNIT * power;
+            player->plr->mo->mom[MZ] = power;
 
         player->jumptics = PCLASS_INFO(player->class)->jumptics;
 
@@ -357,8 +357,7 @@ void P_MovePlayer(player_t *player)
     playerbrain_t *brain = &player->brain;
     classinfo_t *pClassInfo = PCLASS_INFO(player->class);
     int         speed;
-    fixed_t     forwardMove;
-    fixed_t     sideMove;
+    float       forwardMove, sideMove;
 
     // Change the angle if possible.
     /* $unifiedangles */
@@ -399,24 +398,26 @@ void P_MovePlayer(player_t *player)
         int movemul = (onground || plrmo->flags2 & MF2_FLY) ? pClassInfo->movemul :
                        (cfg.airborneMovement) ? cfg.airborneMovement * 64 : 0;
 
-        forwardMove = brain->forwardMove * pClassInfo->forwardmove[speed] * turbomul;
-        sideMove = brain->sideMove * pClassInfo->sidemove[speed] * turbomul;
+        forwardMove =
+            FIX2FLT(brain->forwardMove * pClassInfo->forwardmove[speed] * turbomul);
+        sideMove =
+            FIX2FLT(brain->sideMove * pClassInfo->sidemove[speed] * turbomul);
 
-        if(forwardMove > pClassInfo->maxmove)
-            forwardMove = pClassInfo->maxmove;
-        else if(forwardMove < -pClassInfo->maxmove)
-            forwardMove = -pClassInfo->maxmove;
-        if(sideMove > pClassInfo->maxmove)
-            sideMove = pClassInfo->maxmove;
-        else if(sideMove < -pClassInfo->maxmove)
-            sideMove = -pClassInfo->maxmove;
+        if(forwardMove > FIX2FLT(pClassInfo->maxmove))
+            forwardMove = FIX2FLT(pClassInfo->maxmove);
+        else if(forwardMove < -FIX2FLT(pClassInfo->maxmove))
+            forwardMove = -FIX2FLT(pClassInfo->maxmove);
+        if(sideMove > FIX2FLT(pClassInfo->maxmove))
+            sideMove = FIX2FLT(pClassInfo->maxmove);
+        else if(sideMove < -FIX2FLT(pClassInfo->maxmove))
+            sideMove = -FIX2FLT(pClassInfo->maxmove);
 
 #if __JHEXEN__
         if(player->powers[PT_SPEED] && !player->morphTics)
         {
             // Adjust for a player with a speed artifact
-            forwardMove = (3 * forwardMove) >> 1;
-            sideMove = (3 * sideMove) >> 1;
+            forwardMove = (3 * forwardMove) / 2;
+            sideMove = (3 * sideMove) / 2;
         }
 #endif
 
@@ -431,17 +432,17 @@ void P_MovePlayer(player_t *player)
             sideMove *= cfg.playerMoveSpeed;
         }
 
-        if(forwardMove && movemul)
+        if(forwardMove != 0 && movemul)
         {
             P_Thrust(player, plrmo->angle, forwardMove * movemul);
         }
 
-        if(sideMove && movemul)
+        if(sideMove != 0 && movemul)
         {
             P_Thrust(player, plrmo->angle - ANG90, sideMove * movemul);
         }
 
-        if((forwardMove || sideMove) &&
+        if((forwardMove != 0 || sideMove != 0) &&
            player->plr->mo->state == &states[pClassInfo->normalstate])
         {
             P_SetMobjState(player->plr->mo, pClassInfo->runstate);
@@ -467,9 +468,9 @@ void P_MovePlayer(player_t *player)
 #endif
 }
 
-/*
+/**
  * Fall on your ass when dying.
- * Decrease POV height to floor height.
+ * Decrease viewheight to floor height.
  */
 void P_DeathThink(player_t *player)
 {
@@ -481,7 +482,7 @@ void P_DeathThink(player_t *player)
 
     P_MovePsprites(player);
 
-    onground = (player->plr->mo->pos[VZ] <= FLT2FIX(player->plr->mo->floorz));
+    onground = (player->plr->mo->pos[VZ] <= player->plr->mo->floorz);
 #if __JDOOM__
     if(cfg.deathLookUp)
 #elif __JHERETIC__
@@ -554,7 +555,7 @@ void P_DeathThink(player_t *player)
 #if __JHEXEN__
         int dir = P_FaceMobj(player->plr->mo, player->attacker, &delta);
         if(delta < ANGLE_1 * 10)
-        {                       // Looking at killer, so fade damage and poison counters
+        {   // Looking at killer, so fade damage and poison counters
             if(player->damagecount)
             {
                 player->damagecount--;
@@ -582,8 +583,7 @@ void P_DeathThink(player_t *player)
 
         if(delta < ANG5 || delta > (unsigned) -ANG5)
         {
-            // Looking at killer,
-            //  so fade damage flash down.
+            // Looking at killer, so fade damage flash down.
             player->plr->mo->angle = angle;
             if(player->damagecount)
                 player->damagecount--;
@@ -661,7 +661,8 @@ void P_MorphThink(player_t *player)
         return;
 
     pmo = player->plr->mo;
-    if(!(pmo->mom[MX] + pmo->mom[MY]) && P_Random() < 64)
+    //// \fixme: Replace equality to zero checks with mom in-range.
+    if(pmo->mom[MX] == 0 && pmo->mom[MY] == 0 && P_Random() < 64)
     {   // Snout sniff
         P_SetPspriteNF(player, ps_weapon, S_SNOUTATK2);
         S_StartSound(SFX_PIG_ACTIVE1, pmo); // snort
@@ -683,18 +684,21 @@ void P_MorphThink(player_t *player)
         return;
 
     pmo = player->plr->mo;
-    if(!(pmo->mom[MX] + pmo->mom[MY]) && P_Random() < 160)
-    {                           // Twitch view angle
+    //// \fixme: Replace equality to zero checks with mom in-range.
+    if(pmo->mom[MX] == 0 && pmo->mom[MY] == 0 && P_Random() < 160)
+    {   // Twitch view angle
         pmo->angle += (P_Random() - P_Random()) << 19;
     }
-    if((pmo->pos[VZ] <= FLT2FIX(pmo->floorz)) && (P_Random() < 32))
-    {                           // Jump and noise
-        pmo->mom[MZ] += FRACUNIT;
+
+    if(pmo->pos[VZ] <= pmo->floorz && (P_Random() < 32))
+    {   // Jump and noise
+        pmo->mom[MZ] += 1;
         P_SetMobjState(pmo, S_CHICPLAY_PAIN);
         return;
     }
+
     if(P_Random() < 48)
-    {                           // Just noise
+    {   // Just noise.
         S_StartSound(sfx_chicact, pmo);
     }
 # endif
@@ -702,16 +706,12 @@ void P_MorphThink(player_t *player)
 
 boolean P_UndoPlayerMorph(player_t *player)
 {
-    mobj_t *fog = 0;
-    mobj_t *mo = 0;
-    mobj_t *pmo = 0;
-    fixed_t pos[3];
-    angle_t angle;
-    int     playerNum;
+    mobj_t     *fog = 0, *mo = 0, *pmo = 0;
+    float       pos[3];
+    angle_t     angle;
+    int         playerNum;
     weapontype_t weapon;
-    int     oldFlags;
-    int     oldFlags2;
-    int     oldBeast;
+    int         oldFlags, oldFlags2, oldBeast;
 
 # if __JHEXEN__
     player->update |= PSF_MORPH_TIME | PSF_POWERS | PSF_HEALTH;
@@ -733,16 +733,15 @@ boolean P_UndoPlayerMorph(player_t *player)
 
     playerNum = P_GetPlayerNum(player);
 # if __JHEXEN__
-    mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ],
-                     PCLASS_INFO(cfg.playerClass[playerNum])->mobjtype);
+    mo = P_SpawnMobj3fv(PCLASS_INFO(cfg.playerClass[playerNum])->mobjtype, pos);
 # else
-    mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_PLAYER);
+    mo = P_SpawnMobj3fv(MT_PLAYER, pos);
 # endif
 
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit
         P_RemoveMobj(mo);
-        mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], oldBeast);
+        mo = P_SpawnMobj3fv(oldBeast, pos);
 
         mo->angle = angle;
         mo->health = player->health;
@@ -753,7 +752,7 @@ boolean P_UndoPlayerMorph(player_t *player)
         mo->flags2 = oldFlags2;
         player->plr->mo = mo;
         player->morphTics = 2 * 35;
-        return (false);
+        return false;
     }
 
 # if __JHEXEN__
@@ -798,8 +797,10 @@ boolean P_UndoPlayerMorph(player_t *player)
     angle >>= ANGLETOFINESHIFT;
 
     fog =
-        P_SpawnMobj(pos[VX] + 20 * finecosine[angle], pos[VY] + 20 * finesine[angle],
-                    pos[VZ] + TELEFOGHEIGHT, MT_TFOG);
+        P_SpawnMobj3f(MT_TFOG,
+                      pos[VX] + 20 * FIX2FLT(finecosine[angle]),
+                      pos[VY] + 20 * FIX2FLT(finesine[angle]),
+                      pos[VZ] + TELEFOGHEIGHT);
 # if __JHERETIC__
     S_StartSound(sfx_telept, fog);
 # else
@@ -809,16 +810,17 @@ boolean P_UndoPlayerMorph(player_t *player)
 
     player->update |= PSF_MORPH_TIME | PSF_HEALTH;
     player->plr->flags |= DDPF_FIXPOS | DDPF_FIXMOM;
-    return (true);
+
+    return true;
 }
 #endif
 
-/*
+/**
  * Called once per tick by P_Ticker.
  * This routine does all the thinking for the console player during
  * netgames.
  *
- * FIXME: This should be removed in favor of the regular P_PlayerThink, which 
+ * FIXME: This should be removed in favor of the regular P_PlayerThink, which
  *        is supposed to handle all thinking regardless of whether it's a client
  *        or a server doing the thinking.
  */
@@ -926,13 +928,13 @@ void P_ClientSideThink(void)
         // Keep the fly flag in sync.
         mo->flags2 |= MF2_FLY;
 
-        mo->mom[MZ] = pl->flyheight * FRACUNIT;
+        mo->mom[MZ] = (float) pl->flyheight;
         if(pl->flyheight)
             pl->flyheight /= 2;
         // Do some fly-bobbing.
         if(mo->pos[VZ] > mo->floorz && (mo->flags2 & MF2_FLY) &&
            !mo->onmobj && (leveltime & 2))
-            mo->pos[VZ] += finesine[(FINEANGLES / 20 * leveltime >> 2) & FINEMASK];
+            mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * leveltime >> 2) & FINEMASK]);
     }
 #if __JHEXEN__
     else
@@ -944,26 +946,29 @@ void P_ClientSideThink(void)
 */
 
 #if __JHEXEN__
-/*    if(P_XSector(P_GetPtrp(mo->subsector, DMU_SECTOR))->special)
+/*    if(P_ToXSector(P_GetPtrp(mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(pl);
 */
     // Set consoleplayer thrust multiplier.
-    if(mo->pos[VZ] > FLT2FIX(mo->floorz))      // Airborne?
+    if(mo->pos[VZ] > mo->floorz)      // Airborne?
     {
-        Set(DD_CPLAYER_THRUST_MUL, (mo->ddflags & DDMF_FLY) ? FRACUNIT : 0);
+        float       mul = (mo->ddflags & DDMF_FLY) ? 1 : 0;
+        DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
     }
     else
-    {
-        Set(DD_CPLAYER_THRUST_MUL,
-            (P_GetThingFloorType(mo) == FLOOR_ICE) ? FRACUNIT >> 1 : FRACUNIT);
+    {   float       mul =
+            ((P_GetMobjFloorType(mo) == FLOOR_ICE) ? (1.0f / 2) : 1);
+        DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
     }
 #else
     // Set the proper thrust multiplier. XG gives this quite easily.
     // (The thrust multiplier is used by Cl_MovePlayer, the movement
     // "predictor"; almost all clientside movement is handled by that
     // routine, in fact.)
-    Set(DD_CPLAYER_THRUST_MUL,
-        XS_ThrustMul(P_GetPtrp(mo->subsector, DMU_SECTOR)));
+    {
+    float       mul = XS_ThrustMul(P_GetPtrp(mo->subsector, DMU_SECTOR));
+    DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
+    }
 #endif
 
     // Update view angles. The server fixes them if necessary.
@@ -974,7 +979,7 @@ void P_ClientSideThink(void)
 void P_PlayerThinkState(player_t *player)
 {
     mobj_t *plrmo = player->plr->mo;
-    
+
     // jDoom
     // Selector 0 = Generic (used by default)
     // Selector 1 = Fist
@@ -1041,8 +1046,8 @@ void P_PlayerThinkAttackLunge(player_t *player)
 }
 
 /**
- * @return  <code>true</code>, if thinking should be stopped. Otherwhise,
- * <code>false</code>.
+ * @return              @c true, if thinking should be stopped. Otherwise,
+ *                      @c false.
  */
 boolean P_PlayerThinkDeath(player_t *player)
 {
@@ -1061,7 +1066,7 @@ void P_PlayerThinkMorph(player_t *player)
     {
         P_MorphThink(player);
         if(!--player->morphTics)
-        {                       // Attempt to undo the pig/chicken
+        {   // Attempt to undo the pig/chicken.
             P_UndoPlayerMorph(player);
         }
     }
@@ -1070,11 +1075,10 @@ void P_PlayerThinkMorph(player_t *player)
 
 void P_PlayerThinkMove(player_t *player)
 {
-    mobj_t *plrmo = player->plr->mo;
+    mobj_t     *plrmo = player->plr->mo;
 
     // Move around.
-    // Reactiontime is used to prevent movement
-    //  for a bit after a teleport.
+    // Reactiontime is used to prevent movement for a bit after a teleport.
     if(!plrmo->reactiontime)
     {
         P_MovePlayer(player);
@@ -1082,21 +1086,21 @@ void P_PlayerThinkMove(player_t *player)
 #if __JHEXEN__
         plrmo = player->plr->mo;
         if(player->powers[PT_SPEED] && !(leveltime & 1) &&
-           P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) > 12 * FRACUNIT)
+           P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) > 12)
         {
-            mobj_t *speedMo;
-            int     playerNum;
+            mobj_t     *speedMo;
+            int         playerNum;
 
-            speedMo = P_SpawnMobj(plrmo->pos[VX], plrmo->pos[VY], plrmo->pos[VZ],
-                                  MT_PLAYER_SPEED);
+            speedMo = P_SpawnMobj3fv(MT_PLAYER_SPEED, plrmo->pos);
             if(speedMo)
             {
                 speedMo->angle = plrmo->angle;
                 playerNum = P_GetPlayerNum(player);
+
                 if(player->class == PCLASS_FIGHTER)
                 {
                     // The first type should be blue, and the
-                    // third should be the Fighter's original gold color
+                    // third should be the Fighter's original gold color.
                     if(playerNum == 0)
                     {
                         speedMo->flags |= 2 << MF_TRANSSHIFT;
@@ -1107,15 +1111,17 @@ void P_PlayerThinkMove(player_t *player)
                     }
                 }
                 else if(playerNum)
-                {               // Set color translation bits for player sprites
+                {   // Set color translation bits for player sprites.
                     speedMo->flags |= playerNum << MF_TRANSSHIFT;
                 }
+
                 speedMo->target = plrmo;
                 speedMo->special1 = player->class;
                 if(speedMo->special1 > 2)
                 {
                     speedMo->special1 = 0;
                 }
+
                 speedMo->sprite = plrmo->sprite;
                 speedMo->floorclip = plrmo->floorclip;
                 if(player == &players[consoleplayer])
@@ -1153,8 +1159,8 @@ void P_PlayerThinkFly(player_t *player)
             plrmo->flags2 |= MF2_FLY;
             plrmo->flags |= MF_NOGRAVITY;
 #if __JHEXEN__
-            if(plrmo->mom[MZ] <= -39 * FRACUNIT)
-            {           // stop falling scream
+            if(plrmo->mom[MZ] <= -39)
+            {   // Stop falling scream.
                 S_StopSound(0, plrmo);
             }
 #endif
@@ -1164,7 +1170,7 @@ void P_PlayerThinkFly(player_t *player)
     // Apply Z momentum based on flight speed.
     if(plrmo->flags2 & MF2_FLY)
     {
-        plrmo->mom[MZ] = player->flyheight * FRACUNIT;
+        plrmo->mom[MZ] = (float) player->flyheight;
         if(player->flyheight)
         {
             player->flyheight /= 2;
@@ -1195,11 +1201,11 @@ void P_PlayerThinkSpecial(player_t *player)
     int     floorType;
 #endif
 
-    if(P_XSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
+    if(P_ToXSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
 
 #if __JHEXEN__
-    if((floorType = P_GetThingFloorType(player->plr->mo)) != FLOOR_SOLID)
+    if((floorType = P_GetMobjFloorType(player->plr->mo)) != FLOOR_SOLID)
     {
         P_PlayerOnSpecialFlat(player, floorType);
     }
@@ -1214,29 +1220,32 @@ void P_PlayerThinkSounds(player_t *player)
     switch(player->class)
     {
         case PCLASS_FIGHTER:
-            if(plrmo->mom[MZ] <= -35 * FRACUNIT &&
-               plrmo->mom[MZ] >= -40 * FRACUNIT && !player->morphTics &&
+            if(plrmo->mom[MZ] <= -35 &&
+               plrmo->mom[MZ] >= -40 && !player->morphTics &&
                !S_IsPlaying(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo))
             {
                 S_StartSound(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo);
             }
             break;
+
         case PCLASS_CLERIC:
-            if(plrmo->mom[MZ] <= -35 * FRACUNIT &&
-               plrmo->mom[MZ] >= -40 * FRACUNIT && !player->morphTics &&
+            if(plrmo->mom[MZ] <= -35 &&
+               plrmo->mom[MZ] >= -40 && !player->morphTics &&
                !S_IsPlaying(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo))
             {
                 S_StartSound(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo);
             }
             break;
+
         case PCLASS_MAGE:
-            if(plrmo->mom[MZ] <= -35 * FRACUNIT &&
-               plrmo->mom[MZ] >= -40 * FRACUNIT && !player->morphTics &&
+            if(plrmo->mom[MZ] <= -35 &&
+               plrmo->mom[MZ] >= -40 && !player->morphTics &&
                !S_IsPlaying(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo))
             {
                 S_StartSound(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo);
             }
             break;
+
         default:
             break;
     }
@@ -1248,10 +1257,10 @@ void P_PlayerThinkItems(player_t *player)
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     int     arti = 0; // What to use?
     int     pnum = player - players;
-    
+
     // Moving in the inventory is handled by "invleft" and "invright" commands.
-    // FIXME: Switch to using impulses for consistency.
-    
+    // \fixme Switch to using impulses for consistency.
+
     // Check the "Use Artifact" impulse.
     if(P_GetImpulseControlState(pnum, CTL_USE_ARTIFACT))
     {
@@ -1268,22 +1277,21 @@ void P_PlayerThinkItems(player_t *player)
             if(ST_IsInventoryVisible())
             {
                 player->readyArtifact = player->inventory[player->inv_ptr].type;
-                
+
                 ST_Inventory(false); // close the inventory
-                
+
                 if(cfg.chooseAndUse)
                     arti = player->inventory[player->inv_ptr].type;
                 else
                     arti = 0;
             }
-            else //if(usearti)
+            else
             {
-                // Use the artifact.
                 arti = player->inventory[player->inv_ptr].type;
             }
         }
     }
-    
+
     // Artifact hot keys.
 #if __JHERETIC__
     // Check Tome of Power and other artifact hotkeys.
@@ -1294,7 +1302,7 @@ void P_PlayerThinkItems(player_t *player)
     }
 #endif
 #if __JHEXEN__
-    if(!arti && P_GetImpulseControlState(pnum, CTL_HEALTH) && 
+    if(!arti && P_GetImpulseControlState(pnum, CTL_HEALTH) &&
        (player->plr->mo->health < MAXHEALTH))
     {
         arti = arti_health;
@@ -1305,9 +1313,9 @@ void P_PlayerThinkItems(player_t *player)
         arti = arti_invulnerability;
     }
 #endif
-    
+
 #ifndef __JDOOM__
-    {   
+    {
         // Check for other artifact keys.
         struct {
             int control;
@@ -1351,17 +1359,17 @@ void P_PlayerThinkItems(player_t *player)
             }
         }
     }
-#endif    
+#endif
 
     if(arti)
-    {                           // Use an artifact
+    {   // Use an artifact
         if(arti == NUMARTIFACTS)
-        {                       // use one of each artifact (except puzzle artifacts)
+        {   // Use one of each artifact (except puzzle artifacts).
             int     i;
 # if __JHEXEN__ || __JSTRIFE__
-            for(i = arti_none + 1; i < arti_firstpuzzitem; i++)
+            for(i = arti_none + 1; i < arti_firstpuzzitem; ++i)
 # else
-            for(i = arti_none + 1; i < NUMARTIFACTS; i++)
+            for(i = arti_none + 1; i < NUMARTIFACTS; ++i)
 # endif
             {
                 P_InventoryUseArtifact(player, i);
@@ -1409,10 +1417,9 @@ void P_PlayerThinkWeapons(player_t *player)
 #  define HAS_WEAPON(x) (player->weaponowned[x])
 #  define CUR_WEAPON(x)  (palyer->readyweapon == x)
 #endif
-        
-        // The actual changing of the weapon is done
-        //  when the weapon psprite can do it
-        //  (read: not in the middle of an attack).
+
+        // The actual changing of the weapon is done when the weapon psprite
+        // can do it (read: not in the middle of an attack).
         newweapon = brain->changeWeapon;
 #if __JDOOM__
         if(newweapon == player->readyweapon)
@@ -1429,10 +1436,10 @@ void P_PlayerThinkWeapons(player_t *player)
                 if(newweapon == WT_THIRD)
                     newweapon = WT_NINETH;
                 else if(newweapon == WT_NINETH)
-                    newweapon = WT_THIRD;                    
+                    newweapon = WT_THIRD;
             }
         }
-        
+
 # if !__DOOM64TC__
         if(gamemode != commercial && newweapon == WT_NINETH)
         {
@@ -1441,7 +1448,7 @@ void P_PlayerThinkWeapons(player_t *player)
         }
 # endif
 #endif // __JDOOM__
-        
+
 #if __JHERETIC__
         // Swapping between staff and gauntlets.
         if(newweapon == player->readyweapon)
@@ -1452,7 +1459,7 @@ void P_PlayerThinkWeapons(player_t *player)
                 newweapon = WT_FIRST;
         }
 #endif // __JHERETIC__
-        
+
         if(player->weaponowned[newweapon] && newweapon != player->readyweapon)
         {
             if(weaponinfo[newweapon][player->class].mode[0].gamemodebits
@@ -1544,10 +1551,11 @@ void P_PlayerThinkPowers(player_t *player)
     {
         if(!--player->powers[PT_FLIGHT])
         {
-            if(player->plr->mo->pos[VZ] != FLT2FIX(player->plr->mo->floorz))
+            if(player->plr->mo->pos[VZ] != player->plr->mo->floorz && cfg.lookSpring)
             {
                 player->centering = true;
             }
+
             player->plr->mo->flags2 &= ~MF2_FLY;
             player->plr->mo->flags &= ~MF_NOGRAVITY;
         }
@@ -1632,7 +1640,7 @@ void P_PlayerThinkPowers(player_t *player)
     {
         if(player->class == PCLASS_CLERIC)
         {
-            if(!(leveltime & 7) && player->plr->mo->flags & MF_SHADOW &&
+            if(!(leveltime & 7) && (player->plr->mo->flags & MF_SHADOW) &&
                !(player->plr->mo->flags2 & MF2_DONTDRAW))
             {
                 player->plr->mo->flags &= ~MF_SHADOW;
@@ -1784,16 +1792,16 @@ void P_PlayerThinkPowers(player_t *player)
                 states[i].tics += 12;
 
             // projectiles
-            mobjinfo[MT_TROOPSHOT].speed -= 7 * FRACUNIT;
-            mobjinfo[MT_HEADSHOT].speed -= 7 * FRACUNIT;
-            mobjinfo[MT_ARACHPLAZ].speed -= 7 * FRACUNIT;
-            mobjinfo[MT_BRUISERSHOTRED].speed -= 7 * FRACUNIT;
-            mobjinfo[MT_NTROSHOT].speed -= 13 * FRACUNIT;
-            mobjinfo[MT_BRUISERSHOT].speed -= 7 * FRACUNIT;
-            mobjinfo[MT_TRACER].speed -= 7 * FRACUNIT;
-            mobjinfo[MT_BITCHBALL].speed -= 7 * FRACUNIT;
-            mobjinfo[MT_ACIDMISSILE].speed -= 7 * FRACUNIT;
-            mobjinfo[MT_CYBERROCKET].speed -= 15 * FRACUNIT;
+            mobjinfo[MT_TROOPSHOT].speed -= 7;
+            mobjinfo[MT_HEADSHOT].speed -= 7;
+            mobjinfo[MT_ARACHPLAZ].speed -= 7;
+            mobjinfo[MT_BRUISERSHOTRED].speed -= 7;
+            mobjinfo[MT_NTROSHOT].speed -= 13;
+            mobjinfo[MT_BRUISERSHOT].speed -= 7;
+            mobjinfo[MT_TRACER].speed -= 7;
+            mobjinfo[MT_BITCHBALL].speed -= 7;
+            mobjinfo[MT_ACIDMISSILE].speed -= 7;
+            mobjinfo[MT_CYBERROCKET].speed -= 15;
         }
         else if(player->helltime == 1)
         {
@@ -1871,16 +1879,16 @@ void P_PlayerThinkPowers(player_t *player)
                 states[i].tics -= 12;
 
             // projectiles
-            mobjinfo[MT_TROOPSHOT].speed += 7 * FRACUNIT;
-            mobjinfo[MT_HEADSHOT].speed += 7 * FRACUNIT;
-            mobjinfo[MT_ARACHPLAZ].speed += 7 * FRACUNIT;
-            mobjinfo[MT_BRUISERSHOTRED].speed += 7 * FRACUNIT;
-            mobjinfo[MT_NTROSHOT].speed += 13 * FRACUNIT;
-            mobjinfo[MT_BRUISERSHOT].speed += 7 * FRACUNIT;
-            mobjinfo[MT_TRACER].speed += 7 * FRACUNIT;
-            mobjinfo[MT_BITCHBALL].speed += 7 * FRACUNIT;
-            mobjinfo[MT_ACIDMISSILE].speed += 7 * FRACUNIT;
-            mobjinfo[MT_CYBERROCKET].speed += 15 * FRACUNIT;
+            mobjinfo[MT_TROOPSHOT].speed += 7;
+            mobjinfo[MT_HEADSHOT].speed += 7;
+            mobjinfo[MT_ARACHPLAZ].speed += 7;
+            mobjinfo[MT_BRUISERSHOTRED].speed += 7;
+            mobjinfo[MT_NTROSHOT].speed += 13;
+            mobjinfo[MT_BRUISERSHOT].speed += 7;
+            mobjinfo[MT_TRACER].speed += 7;
+            mobjinfo[MT_BITCHBALL].speed += 7;
+            mobjinfo[MT_ACIDMISSILE].speed += 7;
+            mobjinfo[MT_CYBERROCKET].speed += 15;
         }
         player->helltime--;
     }
@@ -1895,11 +1903,11 @@ void P_PlayerThinkPowers(player_t *player)
  * Handles the updating of the player's view angles depending on the game
  * input controllers. Control states are queried from the engine. Note
  * that this is done as often as possible (i.e., on every frame) so that
- * changes will be smooth and lag-free. 
- * 
+ * changes will be smooth and lag-free.
+ *
  * @param player  Player doing the thinking.
  * @param ticLength  Time to think, in seconds. Use as a multiplier.
- *                      Note that original game logic was always using a 
+ *                      Note that original game logic was always using a
  *                      tick duration of 1/35 seconds.
  */
 void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
@@ -1911,33 +1919,33 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     float vel, off;
     int turnSpeed;
     float offsetSensitivity = 100; // FIXME: Should be done engine-side, mouse sensitivity!
-    classinfo_t *pClassInfo = PCLASS_INFO(player->class);    
+    classinfo_t *pClassInfo = PCLASS_INFO(player->class);
 
     if(!plr->mo || player->playerstate == PST_DEAD || player->viewlock)
         return; // Nothing to control.
 
-    turnSpeed = pClassInfo->turnSpeed[0] * 35;
+    turnSpeed = pClassInfo->turnSpeed[0] * TICRATE;
 
     // Check for extra speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
     if(vel != 0)
     {
         // Hurry, good man!
-        turnSpeed = pClassInfo->turnSpeed[1] * 35;
+        turnSpeed = pClassInfo->turnSpeed[1] * TICRATE;
     }
-    
+
     // Check for strafe.
     P_GetControlState(playerNum, CTL_STRAFE, &vel, 0);
     strafe = (vel != 0);
-    
+
     if(!strafe)
     {
         // Yaw.
         P_GetControlState(playerNum, CTL_TURN, &vel, &off);
-        plr->mo->angle -= (angle_t) (FLT2FIX(turnSpeed * vel * ticLength) + 
+        plr->mo->angle -= (angle_t) (FLT2FIX(turnSpeed * vel * ticLength) +
                                      (offsetSensitivity * off) / 180 * ANGLE_180);
     }
-    
+
     // Look center requested?
     if(P_GetImpulseControlState(playerNum, CTL_LOOK_CENTER))
         player->centering = true;
@@ -1946,8 +1954,8 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     if(player->centering)
     {
         // Automatic vertical look centering.
-        float step = 8 * ticLength * 35;
-        
+        float step = 8 * ticLength * TICRATE;
+
         if(plr->lookdir > step)
         {
             plr->lookdir -= step;
@@ -1966,7 +1974,7 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     {
         // Pitch as controlled by CTL_LOOK.
         plr->lookdir += 110.f/85.f * (turnSpeed/65535.f*360 * vel * ticLength +
-                                      offsetSensitivity * off); 
+                                      offsetSensitivity * off);
         if(plr->lookdir < -110)
             plr->lookdir = -110;
         else if(plr->lookdir > 110)
@@ -1977,31 +1985,31 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
 void P_PlayerThinkUpdateControls(player_t* player)
 {
     int playerNum = player - players;
-    classinfo_t *pClassInfo = PCLASS_INFO(player->class);    
+    classinfo_t *pClassInfo = PCLASS_INFO(player->class);
     float vel, off;
     int i;
     boolean strafe = false;
     playerbrain_t *brain = &player->brain;
-    
+
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
     brain->speed = (vel != 0);
-    
+
     // Check for strafe.
     P_GetControlState(playerNum, CTL_STRAFE, &vel, 0);
     strafe = (vel != 0);
-    
+
     // Move status.
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);
     brain->forwardMove = off + vel;
     P_GetControlState(playerNum, strafe? CTL_TURN : CTL_SIDESTEP, &vel, &off);
-    if(strafe) 
-    {   
+    if(strafe)
+    {
         // Saturate.
         vel = (vel > 0? 1 : vel < 0? -1 : 0);
     }
     brain->sideMove = off + vel;
-    
+
     // Flight.
     P_GetControlState(playerNum, CTL_ZFLY, &vel, &off);
     brain->upMove = off + vel;
@@ -2013,21 +2021,21 @@ void P_PlayerThinkUpdateControls(player_t* player)
     {
         brain->fallDown = false;
     }
-    
+
     // Check for look centering based on lookSpring.
     if(cfg.lookSpring &&
        (fabs(brain->forwardMove) > .333f || fabs(brain->sideMove > .333f)))
     {
         // Center view when mlook released w/lookspring, or when moving.
         player->centering = true;
-    }    
-    
+    }
+
     // Jump.
     brain->jump = (P_GetImpulseControlState(playerNum, CTL_JUMP) != 0);
-    
+
     // Use.
     brain->use = (P_GetImpulseControlState(playerNum, CTL_USE) != 0);
-    
+
     // Fire.
     P_GetControlState(playerNum, CTL_ATTACK, &vel, &off);
     brain->attack = (vel + off != 0);
@@ -2050,26 +2058,29 @@ void P_PlayerThinkUpdateControls(player_t* player)
         brain->cycleWeapon = -1;
     }
     else
-    {        
+    {
         brain->cycleWeapon = 0;
     }
 }
 
 /**
- * Main thinker function for players. Handles both single player and multiplayer
- * games, as well as all the different types of players (normal/camera).
- * Functionality is divided to various other functions whose name begins with
- * "P_PlayerThink".
+ * Main thinker function for players. Handles both single player and
+ * multiplayer games, as well as all the different types of players
+ * (normal/camera).
+ *
+ * Functionality is divided to various other functions whose name begins
+ * with "P_PlayerThink".
  *
  * @param player        Player that is doing the thinking.
- * @param ticLength  How much time has passed in the game world, in seconds.
- *                      For instance, to be used as a multiplier on turning.
+ * @param ticLength     How much time has passed in the game world, in
+ *                      seconds. For instance, to be used as a multiplier
+ *                      on turning.
  */
 void P_PlayerThink(player_t *player, timespan_t ticLength)
 {
     if(P_IsPaused())
         return;
-    
+
     if(G_GetGameState() != GS_LEVEL)
     {
         // Just check the controls in case some UI stuff is relying on them
@@ -2077,20 +2088,20 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
         P_PlayerThinkUpdateControls(player);
         return;
     }
-    
+
     P_PlayerThinkState(player);
 
     // Adjust turn angles and look direction. This is done in fractional time.
     P_PlayerThinkLookAround(player, ticLength);
-    
+
     if(!M_CheckTrigger(DD_GetVariable(DD_SHARED_FIXED_TRIGGER), ticLength))
         return; // It's too soon.
-    
+
     P_PlayerThinkUpdateControls(player);
-    
+
     if(!IS_CLIENT) // Locally only.
     {
-        P_PlayerThinkCamera(player);      // $democam
+        P_PlayerThinkCamera(player); // $democam
         P_PlayerThinkCheat(player);
         P_PlayerThinkAttackLunge(player);
     }

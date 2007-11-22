@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_tick.c: Top-level tick stuff.
  */
 
@@ -126,7 +126,7 @@ void P_RunPlayers(timespan_t ticLength)
             // Check for special buttons (pause and netsave).
             G_SpecialButton(i);
             */
-            
+
             // The player thinks.
             P_PlayerThink(&players[i], ticLength);
         }
@@ -157,11 +157,10 @@ void P_DoTick(void)
         }
     }
 
-    // pause if in menu and at least one tic has been run
+    // Pause if in menu and at least one tic has been run.
     if(!IS_NETGAME && menuactive && !Get(DD_PLAYBACK) &&
        players[consoleplayer].plr->viewZ != 1)
         return;
-
 
     P_RunThinkers();
     P_UpdateSpecials();
@@ -171,7 +170,7 @@ void P_DoTick(void)
 #endif
 
 #if __JDOOM__ || __JSTRIFE__
-    P_RespawnSpecials();
+    P_CheckRespawnQueue();
 #elif __JHERETIC__
     P_AmbientSound();
 #else

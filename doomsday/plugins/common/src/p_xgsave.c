@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@
  * p_xgsave.c: Extended Generalized Line Types.
  *
  * Implements: Saving and loading routines for the XG data.
- * Compiles for jDoom and jHeretic
  */
 
 #if __JDOOM__ || __JHERETIC__
@@ -74,13 +73,14 @@ void SV_WriteXGLine(line_t *li)
     xgline_t *xg;
     linetype_t *info;
 
-    xg = P_XLine(li)->xg;
+    xg = P_ToXLine(li)->xg;
     info = &xg->info;
 
     // Version byte.
     SV_WriteByte(1);
 
-    /** Remember, savegames are applied on top of an initialized level.
+    /**
+     * Remember, savegames are applied on top of an initialized level.
      * No strings are saved, because they are all const strings
      * defined either in the level's DDXGDATA lump or a DED file.
      * During loading, XL_SetLineType is called with the id in the savegame.
@@ -103,7 +103,7 @@ void SV_WriteXGLine(line_t *li)
 void SV_ReadXGLine(line_t *li)
 {
     xgline_t *xg;
-    xline_t *xline = P_XLine(li);
+    xline_t *xline = P_ToXLine(li);
 
     // Read version.
     SV_ReadByte();
@@ -131,8 +131,10 @@ void SV_ReadXGLine(line_t *li)
     xg->chtimer = SV_ReadFloat();
 }
 
-// The function must belong to the specified xgsector.
-void SV_WriteXGFunction(xgsector_t * xg, function_t * fn)
+/**
+ * The function must belong to the specified xgsector.
+ */
+void SV_WriteXGFunction(xgsector_t *xg, function_t *fn)
 {
     // Version byte.
     SV_WriteByte(1);
@@ -146,7 +148,7 @@ void SV_WriteXGFunction(xgsector_t * xg, function_t * fn)
     SV_WriteFloat(fn->oldvalue);
 }
 
-void SV_ReadXGFunction(xgsector_t * xg, function_t * fn)
+void SV_ReadXGFunction(xgsector_t *xg, function_t *fn)
 {
     // Version byte.
     SV_ReadByte();
@@ -162,10 +164,10 @@ void SV_ReadXGFunction(xgsector_t * xg, function_t * fn)
 
 void SV_WriteXGSector(struct sector_s *sec)
 {
+    int         i;
     xgsector_t *xg;
     sectortype_t *info;
-    int     i;
-    xsector_t *xsec = P_XSector(sec);
+    xsector_t  *xsec = P_ToXSector(sec);
 
     xg = xsec->xg;
     info = &xg->info;
@@ -178,18 +180,18 @@ void SV_WriteXGSector(struct sector_s *sec)
     SV_Write(xg->chain_timer, sizeof(xg->chain_timer));
     SV_WriteLong(xg->timer);
     SV_WriteByte(xg->disabled);
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
         SV_WriteXGFunction(xg, &xg->rgb[i]);
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
         SV_WriteXGFunction(xg, &xg->plane[i]);
     SV_WriteXGFunction(xg, &xg->light);
 }
 
 void SV_ReadXGSector(struct sector_s *sec)
 {
+    int         i;
     xgsector_t *xg;
-    int     i;
-    xsector_t *xsec = P_XSector(sec);
+    xsector_t  *xsec = P_ToXSector(sec);
 
     // Version byte.
     SV_ReadByte();
@@ -201,20 +203,20 @@ void SV_ReadXGSector(struct sector_s *sec)
     SV_Read(xg->chain_timer, sizeof(xg->chain_timer));
     xg->timer = SV_ReadLong();
     xg->disabled = SV_ReadByte();
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
         SV_ReadXGFunction(xg, &xg->rgb[i]);
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
         SV_ReadXGFunction(xg, &xg->plane[i]);
     SV_ReadXGFunction(xg, &xg->light);
 }
 
 void SV_WriteXGPlaneMover(thinker_t *th)
 {
-    uint    i;
+    uint        i;
     xgplanemover_t *mov = (xgplanemover_t *) th;
 
     SV_WriteByte(TC_XGMOVER);
-    SV_WriteByte(1);            // Version.
+    SV_WriteByte(1); // Version.
 
     SV_WriteLong(P_ToIndex(mov->sector));
     SV_WriteByte(mov->ceiling);
@@ -227,7 +229,7 @@ void SV_WriteXGPlaneMover(thinker_t *th)
     else
         i++;
 
-    SV_WriteLong(i);            // Zero means there is no origin.
+    SV_WriteLong(i); // Zero means there is no origin.
 
     SV_WriteLong(FLT2FIX(mov->destination));
     SV_WriteLong(FLT2FIX(mov->speed));
@@ -249,7 +251,7 @@ int SV_ReadXGPlaneMover(xgplanemover_t *mov)
 {
     int         i;
 
-    SV_ReadByte();                // Version.
+    SV_ReadByte(); // Version.
 
     mov->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
@@ -288,7 +290,7 @@ void XL_UpdateActivators(void)
 
     for(i = 0; i < numlines; ++i)
     {
-        xline = P_XLine(P_ToPtr(DMU_LINE, i));
+        xline = P_ToXLine(P_ToPtr(DMU_LINE, i));
         if(xline->xg)
             xline->xg->activator = (activator? activator : &dummything);
     }

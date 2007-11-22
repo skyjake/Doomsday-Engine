@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_xgfile.c: Extended Generalized Line Types.
  *
- * Writes XG data to file. Parses DD_XGDATA lumps
- * Compiles for jDoom and jHeretic
+ * Writes XG data to file. Parses DD_XGDATA lumps.
  */
 
 #if __JDOOM__ || __WOLFTC__ || __DOOM64TC || __JHERETIC__
@@ -170,19 +169,23 @@ void Read(void *data, int len)
 }
 */
 
-// I could just return a pointer to the string, but that risks losing
-// it somewhere. Now we can be absolutely sure it can't be lost.
+/**
+ * I could just return a pointer to the string, but that risks losing
+ * it somewhere. Now we can be absolutely sure it can't be lost.
+ */
 static void ReadString(char **str)
 {
-    int     len = ReadShort();
+    int         len = ReadShort();
 
-    if(!len)                    // Null string?
+    if(!len) // Null string?
     {
         *str = 0;
         return;
     }
+
     if(len < 0)
         Con_Error("ReadString: Bogus len!\n");
+
     // Allocate memory for the string.
     *str = Z_Malloc(len + 1, PU_STATIC, 0);
     memcpy(*str, readptr, len);
@@ -190,23 +193,23 @@ static void ReadString(char **str)
     (*str)[len] = 0;
 }
 
-void XG_WriteTypes(FILE * f)
+void XG_WriteTypes(FILE *f)
 {
-    int     i, k;
-    int     linecount = 0, sectorcount = 0;
-    char    buff[6];
-    linetype_t line;
+    int         i, k;
+    int         linecount = 0, sectorcount = 0;
+    char        buff[6];
+    linetype_t  line;
     sectortype_t sec;
 
     file = f;
 
     // The first four four bytes are a header.
     // They will be updated with the real counts afterwards.
-    WriteShort(0);              // Number of lines & sectors (two shorts).
+    WriteShort(0); // Number of lines & sectors (two shorts).
     WriteShort(0);
 
     // This is a very simple way to get the definitions.
-    for(i = 1; i < 65536; i++)
+    for(i = 1; i < 65536; ++i)
     {
         sprintf(buff, "%i", i);
         if(!Def_Get(DD_DEF_LINE_TYPE, buff, &line))
@@ -252,7 +255,7 @@ void XG_WriteTypes(FILE * f)
     }
 
     // Then the sectors.
-    for(i = 1; i < 65536; i++)
+    for(i = 1; i < 65536; ++i)
     {
         sprintf(buff, "%i", i);
         if(!Def_Get(DD_DEF_SECTOR_TYPE, buff, &sec))
@@ -299,7 +302,7 @@ void XG_WriteTypes(FILE * f)
         WriteString(sec.colfunc[0]);
         WriteString(sec.colfunc[1]);
         WriteString(sec.colfunc[2]);
-        for(k = 0; k < 3; k++)
+        for(k = 0; k < 3; ++k)
         {
             WriteShort(sec.col_interval[k][0]);
             WriteShort(sec.col_interval[k][1]);
@@ -327,15 +330,15 @@ void XG_WriteTypes(FILE * f)
 
 void XG_ReadXGLump(char *name)
 {
-    int     lump = W_CheckNumForName(name);
-    void   *buffer;
-    int     lc = 0, sc = 0, i;
+    int         lump = W_CheckNumForName(name);
+    void       *buffer;
+    int         lc = 0, sc = 0, i;
     linetype_t *li;
     sectortype_t *sec;
-    boolean done = false;
+    boolean     done = false;
 
     if(lump < 0)
-        return;                    // No such lump.
+        return; // No such lump.
 
     xgdatalumps = true;
 
@@ -435,7 +438,7 @@ void XG_ReadXGLump(char *name)
             ReadString(&sec->colfunc[0]);
             ReadString(&sec->colfunc[1]);
             ReadString(&sec->colfunc[2]);
-            for(i = 0; i < 3; i++)
+            for(i = 0; i < 3; ++i)
             {
                 sec->col_interval[i][0] = ReadShort();
                 sec->col_interval[i][1] = ReadShort();
@@ -460,7 +463,9 @@ void XG_ReadXGLump(char *name)
     Z_Free(buffer);
 }
 
-// See if any line or sector types are saved in a DDXGDATA lump.
+/**
+ * See if any line or sector types are saved in a DDXGDATA lump.
+ */
 void XG_ReadTypes(void)
 {
     num_linetypes = 0;
@@ -477,22 +482,24 @@ void XG_ReadTypes(void)
 
 linetype_t *XG_GetLumpLine(int id)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < num_linetypes; i++)
+    for(i = 0; i < num_linetypes; ++i)
         if(linetypes[i].id == id)
             return linetypes + i;
-    return NULL;                // Not found.
+
+    return NULL; // Not found.
 }
 
 sectortype_t *XG_GetLumpSector(int id)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < num_sectypes; i++)
+    for(i = 0; i < num_sectypes; ++i)
         if(sectypes[i].id == id)
             return sectypes + i;
-    return NULL;                // Not found.
+
+    return NULL; // Not found.
 }
 
 #endif

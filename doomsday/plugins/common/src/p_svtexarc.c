@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * p_svtexarc.c: Archived texture names (save games).
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -125,17 +129,17 @@ void SV_InitTextureArchives(void)
 
     for(i = 0; i < numsectors; ++i)
     {
-        SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_FLOOR_TEXTURE), true, &flat_archive);
-        SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_CEILING_TEXTURE), true, &flat_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_FLOOR_MATERIAL), true, &flat_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_CEILING_MATERIAL), true, &flat_archive);
     }
     // Init textures.
     tex_archive.count = 0;
 
     for(i = 0; i < numsides; ++i)
     {
-        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_MIDDLE_TEXTURE), false, &tex_archive);
-        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_TOP_TEXTURE), false, &tex_archive);
-        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_BOTTOM_TEXTURE), false, &tex_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_MIDDLE_MATERIAL), false, &tex_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_TOP_MATERIAL), false, &tex_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_BOTTOM_MATERIAL), false, &tex_archive);
     }
 }
 

@@ -22,15 +22,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_xgsec.c: Extended Generalized Sector Types.
- *
- * Implements all XG line interactions on a map
- * Compiles for jDoom and jHeretic
  */
 
 #if __JDOOM__ || __JHERETIC__
-
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
@@ -127,7 +123,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing);
+void XS_DoChain(sector_t *sec, int ch, int activating, void *actThing);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -150,27 +146,27 @@ static sectortype_t sectypebuffer;
 sectortype_t *XS_GetType(int id)
 {
     sectortype_t *ptr;
-    char buff[5];
+    char        buff[5];
 
     // Try finding it from the DDXGDATA lump.
     ptr = XG_GetLumpSector(id);
     if(ptr)
-    {
-        // Got it!
+    {   // Got it!
         memcpy(&sectypebuffer, ptr, sizeof(*ptr));
         return &sectypebuffer;
     }
+
     sprintf(buff, "%i", id);
     if(Def_Get(DD_DEF_SECTOR_TYPE, buff, &sectypebuffer))
         return &sectypebuffer;  // A definition was found.
-    // Sorry...
-    return NULL;
+
+    return NULL; // None found.
 }
 
-void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
+void XF_Init(sector_t *sec, function_t *fn, char *func, int min, int max,
              float scale, float offset)
 {
-    xsector_t *xsec = P_XSector(sec);
+    xsector_t *xsec = P_ToXSector(sec);
 
     memset(fn, 0, sizeof(*fn));
 
@@ -180,7 +176,7 @@ void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
     // Check for links.
     if(func[0] == '=')
     {
-        switch (tolower(func[1]))
+        switch(tolower(func[1]))
         {
         case 'r':
             fn->link = &xsec->xg->rgb[0];
@@ -211,15 +207,18 @@ void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
         }
         return;
     }
+
     // Check for offsets to current values.
     if(func[0] == '+')
     {
-        // IMPORTANT!
-        // The original value ranges must be maintained due to the cross linking
-        // between sector function types i.e:
-        // RGB = 0 > 254
-        // light = 0 > 254
-        // planeheight = -32768 > 32768
+        /**
+         * \important
+         * The original value ranges must be maintained due to the cross linking
+         * between sector function types i.e:
+         * RGB = 0 > 254
+         * light = 0 > 254
+         * planeheight = -32768 > 32768
+         */
         switch(func[1])
         {
         case 'r':
@@ -255,7 +254,8 @@ void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
     {
         fn->func = func;
     }
-    fn->timer = -1;             // The first step musn't skip the first value.
+
+    fn->timer = -1; // The first step musn't skip the first value.
     fn->maxtimer = XG_RandomInt(min, max);
     fn->mininterval = min;
     fn->maxinterval = max;
@@ -272,24 +272,25 @@ int C_DECL XLTrav_LineAngle(line_t *line, boolean dummy, void *context,
 
     if(P_GetPtrp(line, DMU_FRONT_SECTOR) != sec &&
        P_GetPtrp(line, DMU_BACK_SECTOR) != sec)
-        return true;            // Wrong sector, keep looking.
+        return true; // Wrong sector, keep looking.
 
     *(angle_t *) context2 = R_PointToAngle2(0, 0, P_GetFixedp(line, DMU_DX),
                                             P_GetFixedp(line, DMU_DY));
 
-    return false;               // Stop looking after first hit.
+    return false; // Stop looking after first hit.
 }
 
 void XS_SetSectorType(struct sector_s *sec, int special)
 {
-    xsector_t *xsec = P_XSector(sec);
+    int         i;
+    xsector_t *xsec = P_ToXSector(sec);
     xgsector_t *xg;
     sectortype_t *info;
-    int     i;
 
     if(XS_GetType(special))
     {
-        XG_Dev("XS_SetSectorType: Sector %i, type %i", P_ToIndex(sec), special);
+        XG_Dev("XS_SetSectorType: Sector %i, type %i", P_ToIndex(sec),
+               special);
 
         xsec->special = special;
 
@@ -315,7 +316,7 @@ void XS_SetSectorType(struct sector_s *sec, int special)
                 info->light_interval[1], 255, 0);
 
         // Color functions.
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
         {
             XF_Init(sec, &xg->rgb[i], info->colfunc[i],
                     info->col_interval[i][0], info->col_interval[i][1], 255,
@@ -327,23 +328,27 @@ void XS_SetSectorType(struct sector_s *sec, int special)
                 info->floor_interval[0], info->floor_interval[1],
                 info->floormul, info->flooroff);
         XF_Init(sec, &xg->plane[XGSP_CEILING], info->ceilfunc,
-                info->ceil_interval[0], info->ceil_interval[1], info->ceilmul,
-                info->ceiloff);
+                info->ceil_interval[0], info->ceil_interval[1],
+                info->ceilmul, info->ceiloff);
 
         // Derive texmove angle from first act-tagged line?
-        if(info->flags & STF_ACT_TAG_TEXMOVE || info->flags & STF_ACT_TAG_WIND)
+        if((info->flags & STF_ACT_TAG_TEXMOVE) ||
+           (info->flags & STF_ACT_TAG_WIND))
         {
             angle_t angle = 0;
 
-            // -1 to support binary XG data with old flag values
-            XL_TraverseLines(0, xgdatalumps? LREF_TAGGED -1: LREF_TAGGED, info->act_tag, sec, &angle,
+            // -1 to support binary XG data with old flag values.
+            XL_TraverseLines(0, (xgdatalumps? LREF_TAGGED -1: LREF_TAGGED),
+                             info->act_tag, sec, &angle,
                              NULL, XLTrav_LineAngle);
+
             // Convert to degrees.
             if(info->flags & STF_ACT_TAG_TEXMOVE)
             {
                 info->texmove_angle[0] = info->texmove_angle[1] =
                     angle / (float) ANGLE_MAX *360;
             }
+
             if(info->flags & STF_ACT_TAG_WIND)
             {
                 info->wind_angle = angle / (float) ANGLE_MAX *360;
@@ -385,7 +390,7 @@ void XS_Init(void)
     for(i = 0; i < count; ++i)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
 
         P_GetFloatpv(sec, DMU_COLOR, xsec->origrgb);
 
@@ -408,9 +413,9 @@ void XS_SectorSound(sector_t *sec, int origin, int snd)
     S_SectorSound(sec, origin, snd);
 }
 
-void XS_MoverStopped(xgplanemover_t * mover, boolean done)
+void XS_MoverStopped(xgplanemover_t *mover, boolean done)
 {
-    xline_t *origin = P_XLine(mover->origin);
+    xline_t    *origin = P_ToXLine(mover->origin);
 
     XG_Dev("XS_MoverStopped: Sector %i (done=%i, origin line=%i)",
            P_ToIndex(mover->sector), done,
@@ -418,32 +423,36 @@ void XS_MoverStopped(xgplanemover_t * mover, boolean done)
 
     if(done)
     {
-        if(mover->flags & PMF_ACTIVATE_WHEN_DONE && mover->origin)
+        if((mover->flags & PMF_ACTIVATE_WHEN_DONE) && mover->origin)
         {
             XL_ActivateLine(true, &origin->xg->info, mover->origin, 0,
                             &dummything, XLE_AUTO);
         }
-        if(mover->flags & PMF_DEACTIVATE_WHEN_DONE && mover->origin)
+
+        if((mover->flags & PMF_DEACTIVATE_WHEN_DONE) && mover->origin)
         {
             XL_ActivateLine(false, &origin->xg->info, mover->origin, 0,
                             &dummything, XLE_AUTO);
         }
+
         // Remove this thinker.
         P_RemoveThinker((thinker_t *) mover);
     }
     else
     {
         // Normally we just wait, but if...
-        if(mover->flags & PMF_ACTIVATE_ON_ABORT && mover->origin)
+        if((mover->flags & PMF_ACTIVATE_ON_ABORT) && mover->origin)
         {
             XL_ActivateLine(true, &origin->xg->info, mover->origin, 0,
                             &dummything, XLE_AUTO);
         }
-        if(mover->flags & PMF_DEACTIVATE_ON_ABORT && mover->origin)
+
+        if((mover->flags & PMF_DEACTIVATE_ON_ABORT) && mover->origin)
         {
             XL_ActivateLine(false, &origin->xg->info, mover->origin, 0,
                             &dummything, XLE_AUTO);
         }
+
         if(mover->flags & (PMF_ACTIVATE_ON_ABORT | PMF_DEACTIVATE_ON_ABORT))
         {
             // Destroy this mover.
@@ -457,14 +466,14 @@ void XS_MoverStopped(xgplanemover_t * mover, boolean done)
  */
 void XS_PlaneMover(xgplanemover_t *mover)
 {
-    int     res, res2;
-    int     dir;
-    float   ceil = P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT);
-    float   floor = P_GetFloatp(mover->sector, DMU_FLOOR_HEIGHT);
-    xsector_t *xsec = P_XSector(mover->sector);
-    boolean docrush = (mover->flags & PMF_CRUSH) != 0;
-    boolean follows = (mover->flags & PMF_OTHER_FOLLOWS) != 0;
-    boolean setorig = (mover->flags & PMF_SET_ORIGINAL) != 0;
+    int         res, res2;
+    int         dir;
+    float       ceil = P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT);
+    float       floor = P_GetFloatp(mover->sector, DMU_FLOOR_HEIGHT);
+    xsector_t  *xsec = P_ToXSector(mover->sector);
+    boolean     docrush = (mover->flags & PMF_CRUSH) != 0;
+    boolean     follows = (mover->flags & PMF_OTHER_FOLLOWS) != 0;
+    boolean     setorig = (mover->flags & PMF_SET_ORIGINAL) != 0;
 
     // Play movesound when timer goes to zero.
     if(mover->timer-- <= 0)
@@ -474,11 +483,13 @@ void XS_PlaneMover(xgplanemover_t *mover)
         {
             mover->flags &= ~PMF_WAIT;
             // Play a sound.
-            XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling, mover->startsound);
+            XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling,
+                           mover->startsound);
         }
 
         mover->timer = XG_RandomInt(mover->mininterval, mover->maxinterval);
-        XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling, mover->movesound);
+        XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling,
+                       mover->movesound);
     }
 
     // Are we waiting?
@@ -487,14 +498,14 @@ void XS_PlaneMover(xgplanemover_t *mover)
 
     // Determine move direction.
     if((mover->destination - (mover->ceiling ? ceil : floor)) > 0)
-        dir = 1;                // Moving up.
+        dir = 1; // Moving up.
     else
-        dir = -1;               // Moving down.
+        dir = -1; // Moving down.
 
     // Do the move.
-    res =
-        T_MovePlane(mover->sector, mover->speed, mover->destination, docrush,
-                    mover->ceiling, dir);
+    res = T_MovePlane(mover->sector, mover->speed, mover->destination,
+                      docrush, mover->ceiling, dir);
+
     // Should we update origheight?
     if(setorig)
     {
@@ -507,9 +518,10 @@ void XS_PlaneMover(xgplanemover_t *mover)
     {
         float       off = (mover->ceiling? floor - ceil : ceil - floor);
 
-        res2 =
-            T_MovePlane(mover->sector, mover->speed, mover->destination + off,
-                        docrush, !mover->ceiling, dir);
+        res2 = T_MovePlane(mover->sector, mover->speed,
+                           mover->destination + off, docrush,
+                           !mover->ceiling, dir);
+
         // Should we update origheight?
         if(setorig)
         {
@@ -517,6 +529,7 @@ void XS_PlaneMover(xgplanemover_t *mover)
                 P_GetFloatp(mover->sector,
                             (!mover->ceiling)? DMU_CEILING_HEIGHT:DMU_FLOOR_HEIGHT);
         }
+
         if(res2 == crushed)
             res = crushed;
     }
@@ -532,18 +545,20 @@ void XS_PlaneMover(xgplanemover_t *mover)
             XS_ChangePlaneTexture(mover->sector, mover->ceiling,
                                   mover->setflat, NULL);
         }
+
         if(mover->setsector >= 0)
         {
             XS_SetSectorType(mover->sector, mover->setsector);
         }
+
         // Play sound?
-        XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling, mover->endsound);
+        XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling,
+                       mover->endsound);
     }
     else if(res == crushed)
     {
         if(mover->flags & PMF_CRUSH)
-        {
-            // We're crushing things.
+        {   // We're crushing things.
             mover->speed = mover->crushspeed;
         }
         else
@@ -552,22 +567,26 @@ void XS_PlaneMover(xgplanemover_t *mover)
             if((!mover->ceiling || follows) &&
                P_GetFloatp(mover->sector, DMU_FLOOR_HEIGHT) != floor)
             {
-                T_MovePlane(mover->sector, mover->speed, floor, docrush, false,
-                            -dir);
+                T_MovePlane(mover->sector, mover->speed, floor, docrush,
+                            false, -dir);
             }
+
             if((mover->ceiling || follows) &&
                P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT) != ceil)
             {
-                T_MovePlane(mover->sector, mover->speed, ceil, docrush, true,
-                            -dir);
+                T_MovePlane(mover->sector, mover->speed, ceil, docrush,
+                            true, -dir);
             }
+
             XS_MoverStopped(mover, false);
         }
     }
 }
 
-// Returns a new thinker for handling the specified plane.
-// Removes any existing thinkers associated with the plane.
+/**
+ * Returns a new thinker for handling the specified plane. Removes any
+ * existing thinkers associated with the plane.
+ */
 xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
 {
     thinker_t  *th;
@@ -580,7 +599,7 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
             if(mover->sector == sector && mover->ceiling == ceiling)
             {
                 XS_MoverStopped(mover, false);
-                P_RemoveThinker(th);    // Remove it.
+                P_RemoveThinker(th); // Remove it.
             }
         }
 
@@ -593,10 +612,11 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
     return mover;
 }
 
-void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex, float *rgb)
+void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex,
+                           float *rgb)
 {
     XG_Dev("XS_ChangePlaneTexture: Sector %i, %s, texture %i",
-           P_ToIndex(sector), ceiling ? "ceiling" : "floor", tex);
+           P_ToIndex(sector), (ceiling ? "ceiling" : "floor"), tex);
     if(rgb)
         XG_Dev("red %g, green %g, blue %g", rgb[0], rgb[1], rgb[2]);
 
@@ -606,7 +626,7 @@ void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex, float *rg
             P_SetFloatpv(sector, DMU_CEILING_COLOR, rgb);
 
         if(tex)
-            P_SetIntp(sector, DMU_CEILING_TEXTURE, tex);
+            P_SetIntp(sector, DMU_CEILING_MATERIAL, tex);
     }
     else
     {
@@ -614,26 +634,29 @@ void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex, float *rg
             P_SetFloatpv(sector, DMU_FLOOR_COLOR, rgb);
 
         if(tex)
-            P_SetIntp(sector, DMU_FLOOR_TEXTURE, tex);
+            P_SetIntp(sector, DMU_FLOOR_MATERIAL, tex);
     }
 }
 
-// One plane can get listed multiple times.
+/**
+ * \note One plane can get listed multiple times.
+ */
 int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, int *heightlist,
                        int *piclist, int *lightlist, sector_t **sectorlist)
 {
-    int     i, count = 0;
-    int     sectorLineCount;
-    line_t *lin;
-    sector_t *other;
+    int         i, count = 0;
+    int         sectorLineCount;
+    line_t     *lin;
+    sector_t   *other;
 
     if(!sector)
         return 0;
 
     sectorLineCount = P_GetIntp(sector, DMU_LINE_COUNT);
-    for(i = 0; i < sectorLineCount; i++)
+    for(i = 0; i < sectorLineCount; ++i)
     {
         lin = P_GetPtrp(sector, DMU_LINE_OF_SECTOR | i);
+
         // Only accept two-sided lines.
         if(!P_GetPtrp(lin, DMU_BACK_SECTOR) ||
            !P_GetPtrp(lin, DMU_FRONT_SECTOR))
@@ -655,9 +678,9 @@ int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, int *heightlist,
         if(piclist)
         {
             if(ceiling)
-                piclist[count] = P_GetFixedp(other, DMU_CEILING_TEXTURE);
+                piclist[count] = P_GetIntp(other, DMU_CEILING_MATERIAL);
             else
-                piclist[count] = P_GetFixedp(other, DMU_FLOOR_TEXTURE);
+                piclist[count] = P_GetIntp(other, DMU_FLOOR_MATERIAL);
         }
 
         if(lightlist)
@@ -679,11 +702,14 @@ uint FindMaxOf(int *list, uint num)
     int         max = list[0];
 
     for(i = 1; i < num; ++i)
+    {
         if(list[i] > max)
         {
             max = list[i];
             idx = i;
         }
+    }
+
     return idx;
 }
 
@@ -693,45 +719,52 @@ uint FindMinOf(int *list, uint num)
     int         min = list[0];
 
     for(i = 1; i < num; ++i)
+    {
         if(list[i] < min)
         {
             min = list[i];
             idx = i;
         }
+    }
+
     return idx;
 }
 
 int FindNextOf(int *list, int num, int h)
 {
-    int     i, min = 0, idx = -1;
+    int         i, min = 0, idx = -1;
 
-    for(i = 0; i < num; i++)
+    for(i = 0; i < num; ++i)
     {
         if(list[i] <= h)
             continue;
+
         if(idx < 0 || list[i] < min)
         {
             idx = i;
             min = list[i];
         }
     }
+
     return idx;
 }
 
 int FindPrevOf(int *list, int num, int h)
 {
-    int     i, max = 0, idx = -1;
+    int         i, max = 0, idx = -1;
 
-    for(i = 0; i < num; i++)
+    for(i = 0; i < num; ++i)
     {
         if(list[i] >= h)
             continue;
+
         if(idx < 0 || list[i] > max)
         {
             idx = i;
             max = list[i];
         }
     }
+
     return idx;
 }
 
@@ -741,26 +774,31 @@ int XS_GetTexH(int tex)
     return Get(DD_QUERY_RESULT);
 }
 
-// Really an XL_* function!
-// 1=mid, 2=top, 3=bottom. Returns MAXINT if not height n/a.
+/**
+ * Really an XL_* function!
+ *
+ * @param part              1=mid, 2=top, 3=bottom.
+ *
+ * @return                  @c MAXINT if not height n/a.
+ */
 int XS_TextureHeight(line_t *line, int part)
 {
-    side_t *side;
-    int     snum = 0;
-    int     minfloor = 0, maxfloor = 0, maxceil = 0;
-    sector_t *front = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    sector_t *back = P_GetPtrp(line, DMU_BACK_SECTOR);
-    boolean twosided = front && back;
+    side_t     *side;
+    int         snum = 0;
+    int         minfloor = 0, maxfloor = 0, maxceil = 0;
+    sector_t   *front = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    sector_t   *back = P_GetPtrp(line, DMU_BACK_SECTOR);
+    boolean     twosided = front && back;
 
     if(part != LWS_MID && !twosided)
         return DDMAXINT;
 
     if(twosided)
     {
-        int ffloor = P_GetFixedp(front, DMU_FLOOR_HEIGHT);
-        int fceil = P_GetFixedp(front, DMU_CEILING_HEIGHT);
-        int bfloor = P_GetFixedp(back, DMU_FLOOR_HEIGHT);
-        int bceil = P_GetFixedp(back, DMU_CEILING_HEIGHT);
+        int         ffloor = P_GetIntp(front, DMU_FLOOR_HEIGHT);
+        int         fceil = P_GetIntp(front, DMU_CEILING_HEIGHT);
+        int         bfloor = P_GetIntp(back, DMU_FLOOR_HEIGHT);
+        int         bceil = P_GetIntp(back, DMU_CEILING_HEIGHT);
 
         minfloor = ffloor;
         maxfloor = bfloor;
@@ -800,7 +838,7 @@ int XS_TextureHeight(line_t *line, int part)
     // Which section of the wall?
     if(part == LWS_UPPER)
     {
-        int texid = P_GetIntp(side, DMU_TOP_TEXTURE);
+        int texid = P_GetIntp(side, DMU_TOP_MATERIAL);
 
         if(!texid)
             return DDMAXINT;
@@ -809,7 +847,7 @@ int XS_TextureHeight(line_t *line, int part)
     }
     else if(part == LWS_MID)
     {
-        int texid = P_GetIntp(side, DMU_MIDDLE_TEXTURE);
+        int texid = P_GetIntp(side, DMU_MIDDLE_MATERIAL);
 
         if(!texid)
             return DDMAXINT;
@@ -818,7 +856,7 @@ int XS_TextureHeight(line_t *line, int part)
     }
     else if(part == LWS_LOWER)
     {
-        int texid = P_GetIntp(side, DMU_BOTTOM_TEXTURE);
+        int texid = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
 
         if(!texid)
             return DDMAXINT;
@@ -835,6 +873,8 @@ int XS_TextureHeight(line_t *line, int part)
  * NOTE: We cannot use the tagged sector lists here as this can be called
  * during an iteration at a higher level. Doing so would change the position
  * of the rover which would affect the other iteration.
+ *
+ * NOTE2: Re-above, obviously that is bad design and should be addressed.
  */
 sector_t *XS_FindTagged(int tag)
 {
@@ -848,7 +888,7 @@ sector_t *XS_FindTagged(int tag)
     for(k = 0; k < numsectors; ++k)
     {
         sec = P_ToPtr(DMU_SECTOR, k);
-        if(P_XSector(sec)->tag == tag)
+        if(P_ToXSector(sec)->tag == tag)
         {
             if(xgDev)
             {
@@ -880,8 +920,8 @@ sector_t *XS_FindTagged(int tag)
     return NULL;
 }
 
-/*
- * Returns a pointer to the first sector with the act tag.
+/**
+ * Returns a pointer to the first sector with the specified act tag.
  */
 sector_t *XS_FindActTagged(int tag)
 {
@@ -896,8 +936,9 @@ sector_t *XS_FindActTagged(int tag)
     for(k = 0; k < numsectors; ++k)
     {
         sec = P_ToPtr(DMU_SECTOR, k);
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
         if(xsec->xg)
+        {
             if(xsec->xg->info.act_tag == tag)
             {
                 if(xgDev)
@@ -909,10 +950,13 @@ sector_t *XS_FindActTagged(int tag)
                     }
                 }
                 else
+                {
                     return sec;
+                }
 
                 foundcount++;
             }
+        }
     }
 
     if(xgDev)
@@ -930,8 +974,9 @@ sector_t *XS_FindActTagged(int tag)
     return NULL;
 }
 
-boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
-                    int *height, int *pic, sector_t **planesector)
+boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref,
+                    uint *refdata, int *height, int *pic,
+                    sector_t **planesector)
 {
     int         idx = 0;
     uint        num;
@@ -954,11 +999,12 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
         // No reference to anywhere.
         return false;
     }
+
     // Init the values to the current sector's floor.
     if(height)
         *height = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
     if(pic)
-        *pic = P_GetIntp(sector, DMU_FLOOR_TEXTURE);
+        *pic = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
     if(planesector)
         *planesector = sector;
 
@@ -968,7 +1014,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
     {
     case SPREF_SECTOR_TAGGED_FLOOR:
     case SPREF_SECTOR_TAGGED_CEILING:
-        iter = XS_FindTagged(P_XSector(sector)->tag);
+        iter = XS_FindTagged(P_ToXSector(sector)->tag);
         if(!iter)
             return false;
         break;
@@ -978,7 +1024,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
         if(!actline)
             return false;
 
-        iter = XS_FindTagged(P_XLine(actline)->tag);
+        iter = XS_FindTagged(P_ToXLine(actline)->tag);
         if(!iter)
             return false;
         break;
@@ -995,9 +1041,10 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
         if(!iter)
             return false;
         break;
+
     case SPREF_LINE_ACT_TAGGED_FLOOR:
     case SPREF_LINE_ACT_TAGGED_CEILING:
-        xline = P_XLine(actline);
+        xline = P_ToXLine(actline);
 
         if(!xline)
             return false;
@@ -1054,14 +1101,14 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
             if(height)
                 *height = P_GetFixedp(iter, DMU_FLOOR_HEIGHT);
             if(pic)
-                *pic = P_GetIntp(iter, DMU_FLOOR_TEXTURE);
+                *pic = P_GetIntp(iter, DMU_FLOOR_MATERIAL);
         }
         else
         {
             if(height)
                 *height = P_GetFixedp(iter, DMU_CEILING_HEIGHT);
             if(pic)
-                *pic = P_GetIntp(iter, DMU_CEILING_TEXTURE);
+                *pic = P_GetIntp(iter, DMU_CEILING_MATERIAL);
         }
         return true;
     }
@@ -1082,11 +1129,12 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
         if(height)
             *height = P_GetFixedp(frontsector, DMU_FLOOR_HEIGHT);
         if(pic)
-            *pic = P_GetIntp(frontsector, DMU_FLOOR_TEXTURE);
+            *pic = P_GetIntp(frontsector, DMU_FLOOR_MATERIAL);
         if(planesector)
             *planesector = frontsector;
         return true;
     }
+
     if(ref == SPREF_BACK_FLOOR)
     {
         sector_t *backsector;
@@ -1103,11 +1151,12 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
         if(height)
             *height = P_GetFixedp(backsector, DMU_FLOOR_HEIGHT);
         if(pic)
-            *pic = P_GetIntp(backsector, DMU_FLOOR_TEXTURE);
+            *pic = P_GetIntp(backsector, DMU_FLOOR_MATERIAL);
         if(planesector)
             *planesector = backsector;
         return true;
     }
+
     if(ref == SPREF_MY_CEILING)
     {
         sector_t *frontsector;
@@ -1124,11 +1173,12 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
         if(height)
             *height = P_GetFixedp(frontsector, DMU_CEILING_HEIGHT);
         if(pic)
-            *pic = P_GetIntp(frontsector, DMU_CEILING_TEXTURE);
+            *pic = P_GetIntp(frontsector, DMU_CEILING_MATERIAL);
         if(planesector)
             *planesector = frontsector;
         return true;
     }
+
     if(ref == SPREF_BACK_CEILING)
     {
         sector_t *backsector;
@@ -1145,43 +1195,48 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
         if(height)
             *height = P_GetFixedp(backsector, DMU_CEILING_HEIGHT);
         if(pic)
-            *pic = P_GetIntp(backsector, DMU_CEILING_TEXTURE);
+            *pic = P_GetIntp(backsector, DMU_CEILING_MATERIAL);
         if(planesector)
             *planesector = backsector;
         return true;
     }
+
     if(ref == SPREF_ORIGINAL_FLOOR)
     {
         if(height)
-            *height = FLT2FIX(P_XSector(sector)->SP_floororigheight);
+            *height = FLT2FIX(P_ToXSector(sector)->SP_floororigheight);
         if(pic)
-            *pic = P_GetIntp(sector, DMU_FLOOR_TEXTURE);
+            *pic = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
         return true;
     }
+
     if(ref == SPREF_ORIGINAL_CEILING)
     {
         if(height)
-            *height = FLT2FIX(P_XSector(sector)->SP_ceilorigheight);
+            *height = FLT2FIX(P_ToXSector(sector)->SP_ceilorigheight);
         if(pic)
-            *pic = P_GetIntp(sector, DMU_CEILING_TEXTURE);
+            *pic = P_GetIntp(sector, DMU_CEILING_MATERIAL);
         return true;
     }
+
     if(ref == SPREF_CURRENT_FLOOR)
     {
         if(height)
             *height = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
         if(pic)
-            *pic = P_GetIntp(sector, DMU_FLOOR_TEXTURE);
+            *pic = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
         return true;
     }
+
     if(ref == SPREF_CURRENT_CEILING)
     {
         if(height)
             *height = P_GetFixedp(sector, DMU_CEILING_HEIGHT);
         if(pic)
-            *pic = P_GetIntp(sector, DMU_CEILING_TEXTURE);
+            *pic = P_GetIntp(sector, DMU_CEILING_MATERIAL);
         return true;
     }
+
     // Texture targets?
     if(ref >= SPREF_MIN_BOTTOM_TEXTURE && ref <= SPREF_MAX_TOP_TEXTURE)
     {
@@ -1194,7 +1249,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
             part = LWS_MID;
         else if(ref == SPREF_MIN_TOP_TEXTURE || ref == SPREF_MAX_TOP_TEXTURE)
             part = LWS_UPPER;
-        else                    // Then it's the bottom.
+        else // Then it's the bottom.
             part = LWS_LOWER;
 
         // Get the heights of the sector's textures.
@@ -1203,8 +1258,9 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
         {
             k = XS_TextureHeight(P_GetPtrp(sector, DMU_LINE_OF_SECTOR | i), part);
             if(k != DDMAXINT)
-                heights[num++] = k;
+                heights[num++] = k << FRACBITS;
         }
+
         if(!num)
             return true;
 
@@ -1220,8 +1276,10 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
         idx = FindMaxOf(heights, num);
         if(height)
             *height = heights[idx];
+
         return true;
     }
+
     // We need to figure out the heights of the adjoining sectors.
     // The results will be stored in the heights array.
     ceiling = (ref == SPREF_HIGHEST_CEILING || ref == SPREF_LOWEST_CEILING ||
@@ -1235,8 +1293,8 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
         heights[0] = ceiling ? P_GetFixedp(sector, DMU_CEILING_HEIGHT) :
                                P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
 
-        pics[0] = ceiling ? P_GetIntp(sector, DMU_CEILING_TEXTURE) :
-                            P_GetIntp(sector, DMU_FLOOR_TEXTURE);
+        pics[0] = ceiling ? P_GetIntp(sector, DMU_CEILING_MATERIAL) :
+                            P_GetIntp(sector, DMU_FLOOR_MATERIAL);
         sectorlist[0] = sector;
         num = 1;
     }
@@ -1269,42 +1327,43 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
     return true;
 }
 
-/*
+/**
  * DJS - Why find the highest??? Surely unlogical to mod authors.
- * IMO if a user references multiple sectors, the one with the lowest
- * ID should be chosen (the same way it works for FIND(act)TAGGED).
- * If that happens to be zero - so be it.
+ * IMO if a user references multiple sectors, the one with the lowest ID
+ * should be chosen (the same way it works for FIND(act)TAGGED). If that
+ * happens to be zero - so be it.
  */
-int C_DECL XSTrav_HighestSectorType(sector_t *sec, boolean ceiling, void *context,
-                                    void *context2, mobj_t *activator)
+int C_DECL XSTrav_HighestSectorType(sector_t *sec, boolean ceiling,
+                                    void *context, void *context2,
+                                    mobj_t *activator)
 {
-    int    *type = context2;
-    xsector_t *xsec = P_XSector(sec);
+    int        *type = context2;
+    xsector_t  *xsec = P_ToXSector(sec);
 
     if(xsec->special > *type)
         *type = xsec->special;
-    return true;                // Keep looking...
+
+    return true; // Keep looking...
 }
 
 void XS_InitMovePlane(line_t *line)
 {
-    xline_t *xline = P_XLine(line);
+    xline_t *xline = P_ToXLine(line);
 
-    // fdata keeps track of wait time
+    // fdata keeps track of wait time.
     xline->xg->fdata = xline->xg->info.fparm[5];
-    xline->xg->idata = true;           // play sound
+    xline->xg->idata = true; // Play sound.
 };
 
 int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
                             void *context2, mobj_t *activator)
 {
-    line_t *line = (line_t *) context;
+    line_t     *line = (line_t *) context;
     linetype_t *info = (linetype_t *) context2;
     xgplanemover_t *mover;
-    int     flat, st;
-    xline_t *xline = P_XLine(line);
-    //xsector_t *xsec = P_XSector(sector);
-    boolean playsound;
+    int         flat, st;
+    xline_t     *xline = P_ToXLine(line);
+    boolean     playsound;
 
     playsound = xline->xg->idata;
 
@@ -1366,6 +1425,7 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
         mover->timer = FLT2TIC(xline->xg->fdata);
         mover->flags |= PMF_WAIT;
     }
+
     // Increment wait time.
     xline->xg->fdata += info->fparm[6];
 
@@ -1415,8 +1475,7 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
         if(XL_TraversePlanes
            (line, info->iparm[13], info->iparm[14], 0, &st, false, 0,
             XSTrav_HighestSectorType))
-        {
-            // OK, found one or more.
+        {   // OK, found one or more.
             mover->setsector = st;
         }
         else
@@ -1428,7 +1487,7 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
     else
         mover->setsector = -1;
 
-    return true;                // Keep looking.
+    return true; // Keep looking...
 }
 
 void XS_InitStairBuilder(line_t *line)
@@ -1440,13 +1499,13 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
                    linetype_t *info, uint stepcount)
 {
     static float firstheight;
-    uint    secnum = P_ToIndex(sector);
+    uint        secnum = P_ToIndex(sector);
+    float       waittime;
     xgplanemover_t *mover;
-    float   waittime;
 
     // Make sure each sector is only processed once.
     if(builder[secnum] & BL_BUILT)
-        return false;           // Already built this one!
+        return false; // Already built this one!
     builder[secnum] |= BL_WAS_BUILT;
 
     // Create a new mover for the plane.
@@ -1460,13 +1519,17 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
 
     mover->destination =
         firstheight + (stepcount + 1) * info->fparm[1];
+
     mover->speed = (info->fparm[0] + stepcount * info->fparm[6]);
     if(mover->speed <= 0)
         mover->speed = 1 / 1000;
+
     mover->mininterval = FLT2TIC(info->fparm[4]);
     mover->maxinterval = FLT2TIC(info->fparm[5]);
+
     if(info->iparm[8])
         mover->flags = PMF_CRUSH;
+
     mover->endsound = info->iparm[6];
     mover->movesound = info->iparm[7];
 
@@ -1495,12 +1558,12 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
 
     P_AddThinker(&mover->thinker);
 
-    // Building has begun!
-    return true;
+    return true; // Building has begun!
 }
 
-int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling, void *context,
-                              void *context2, mobj_t *activator)
+int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
+                              void *context, void *context2,
+                              mobj_t *activator)
 {
     boolean     found = true;
     int         k;
@@ -1519,8 +1582,8 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling, void *context,
     // i2: (true/false) stop when texture changes
     // i3: (true/false) spread build?
 
-    mypic = ceiling ? P_GetIntp(sector, DMU_CEILING_TEXTURE) :
-                      P_GetIntp(sector, DMU_FLOOR_TEXTURE);
+    mypic = ceiling ? P_GetIntp(sector, DMU_CEILING_MATERIAL) :
+                      P_GetIntp(sector, DMU_FLOOR_MATERIAL);
 
     // Apply to first step.
     XS_DoBuild(sector, ceiling, origin, info, stepcount);
@@ -1531,11 +1594,13 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling, void *context,
 
         // Mark the sectors of the last step as processed.
         for(i = 0; i < numsectors; ++i)
+        {
             if(builder[i] & BL_WAS_BUILT)
             {
                 builder[i] &= ~BL_WAS_BUILT;
                 builder[i] |= BL_BUILT;
             }
+        }
 
         // Scan the sectors for the next ones to spread to.
         found = false;
@@ -1564,23 +1629,21 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling, void *context,
                     continue;
 
                 if(picstop)
-                {
-                    // Planepic must match.
+                {   // Planepic must match.
                     if(ceiling)
                     {
-                        if(P_GetIntp(sec, DMU_CEILING_TEXTURE) != mypic)
+                        if(P_GetIntp(sec, DMU_CEILING_MATERIAL) != mypic)
                             continue;
                     }
                     else
                     {
-                        if(P_GetIntp(sec, DMU_FLOOR_TEXTURE) != mypic)
+                        if(P_GetIntp(sec, DMU_FLOOR_MATERIAL) != mypic)
                             continue;
                     }
                 }
 
                 // Don't spread to sectors which have already spreaded.
-                if(builder[P_GetIntp(line, DMU_BACK_SECTOR)]
-                   & BL_SPREADED)
+                if(builder[P_GetIntp(line, DMU_BACK_SECTOR)] & BL_SPREADED)
                     continue;
 
                 // Build backsector.
@@ -1598,20 +1661,22 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling, void *context,
                 }
             }
         }
+
         if(!spread && found)
         {
             XS_DoBuild(P_GetPtr(DMU_LINE, lowest, DMU_BACK_SECTOR), ceiling, origin, info,
                        stepcount);
         }
     }
-    return true;                // Continue searching for planes.
+
+    return true; // Continue searching for planes...
 }
 
-int C_DECL XSTrav_SectorSound(struct sector_s *sec, boolean ceiling, void *context,
-                              void *context2, mobj_t *activator)
+int C_DECL XSTrav_SectorSound(struct sector_s *sec, boolean ceiling,
+                              void *context, void *context2,
+                              mobj_t *activator)
 {
-    int originid;
-    //line_t *line = (line_t *) context;
+    int         originid;
     linetype_t *info = context2;
 
     if(info->iparm[3])
@@ -1623,26 +1688,29 @@ int C_DECL XSTrav_SectorSound(struct sector_s *sec, boolean ceiling, void *conte
     return true;
 }
 
-int C_DECL XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling, void *context,
-                               void *context2, mobj_t *activator)
+int C_DECL XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling,
+                               void *context, void *context2,
+                               mobj_t *activator)
 {
-    line_t *line = (line_t *) context;
+    line_t     *line = (line_t *) context;
     linetype_t *info = context2;
-    int     pic;
-    float   rgb[3];
+    int         pic;
+    float       rgb[3];
 
     // i2: (spref) texture origin
     // i3: texture number (flat), used with SPREF_NONE
-        // i4: red
-        // i5: green
-        // i6: blue
+    // i4: red
+    // i5: green
+    // i6: blue
     if(info->iparm[2] == SPREF_NONE)
+    {
         pic = info->iparm[3];
+    }
     else
     {
         if(!XS_GetPlane(line, sec, info->iparm[2], NULL, 0, &pic, 0))
             XG_Dev("XSTrav_PlaneTexture: Sector %i, couldn't find suitable texture!",
-               P_ToIndex(sec));
+                   P_ToIndex(sec));
     }
 
     rgb[0] = info->iparm[4] / 255.f;
@@ -1658,25 +1726,26 @@ int C_DECL XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling, void *cont
     return true;
 }
 
-int C_DECL XSTrav_SectorType(struct sector_s *sec, boolean ceiling, void *context,
-                             void *context2, mobj_t *activator)
+int C_DECL XSTrav_SectorType(struct sector_s *sec, boolean ceiling,
+                             void *context, void *context2,
+                             mobj_t *activator)
 {
-    //line_t *line = (line_t *) context;
     linetype_t *info = context2;
 
     XS_SetSectorType(sec, info->iparm[2]);
     return true;
 }
 
-int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
-                              void *context2, mobj_t *activator)
+int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling,
+                              void *context, void *context2,
+                              mobj_t *activator)
 {
-    line_t *line = (line_t *) context;
+    line_t     *line = (line_t *) context;
     linetype_t *info = context2;
-    int     num, levels[MAX_VALS], i = 0;
-    float   uselevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
-    sector_t *frontsector, *backsector;
-    float   usergb[3];
+    int         num, levels[MAX_VALS], i = 0;
+    float       uselevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    sector_t   *frontsector, *backsector;
+    float       usergb[3];
 
     frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
@@ -1692,7 +1761,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
 
     if(info->iparm[2])
     {
-        switch (info->iparm[4])
+        switch(info->iparm[4])
         {
         case LIGHTREF_NONE:
             uselevel = 0;
@@ -1708,7 +1777,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
             break;
 
         case LIGHTREF_ORIGINAL:
-            uselevel = P_XSector(sector)->origlight;
+            uselevel = P_ToXSector(sector)->origlight;
             break;
 
         case LIGHTREF_HIGHEST:
@@ -1722,7 +1791,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
             if(!num)
                 break;
 
-            switch (info->iparm[4])
+            switch(info->iparm[4])
             {
             case LIGHTREF_HIGHEST:
                 i = FindMaxOf(levels, num);
@@ -1740,6 +1809,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
                 i = FindPrevOf(levels, num, 255.f * uselevel);
                 break;
             }
+
             if(i >= 0)
                 uselevel = (float) levels[i] / 255.f;
             break;
@@ -1763,7 +1833,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
 
     if(info->iparm[3])
     {
-        switch (info->iparm[6])
+        switch(info->iparm[6])
         {
         case LIGHTREF_MY:
             {
@@ -1781,7 +1851,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
             break;
             }
         case LIGHTREF_ORIGINAL:
-            memcpy(usergb, P_XSector(sector)->origrgb, sizeof(float) * 3);
+            memcpy(usergb, P_ToXSector(sector)->origrgb, sizeof(float) * 3);
             break;
 
         default:
@@ -1803,8 +1873,9 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
     return true;
 }
 
-int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling, void *context,
-                              void *context2, mobj_t *activator)
+int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling,
+                              void *context, void *context2,
+                              mobj_t *activator)
 {
     line_t     *line = (line_t *) context;
     linetype_t *info = context2;
@@ -1812,7 +1883,7 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling, void *context,
     uint        refdata;
 
     // Set the spref data parameter (tag or index).
-    switch (info->iparm[2])
+    switch(info->iparm[2])
     {
     case SPREF_TAGGED_FLOOR:
     case SPREF_TAGGED_CEILING:
@@ -1856,10 +1927,10 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling, void *context,
     P_ChangeSector(sector, false);
 
     // Copy type as well.
-    XS_SetSectorType(sector, P_XSector(from)->special);
+    XS_SetSectorType(sector, P_ToXSector(from)->special);
 
-    if(P_XSector(from)->xg)
-        memcpy(P_XSector(sector)->xg, P_XSector(from)->xg, sizeof(xgsector_t));
+    if(P_ToXSector(from)->xg)
+        memcpy(P_ToXSector(sector)->xg, P_ToXSector(from)->xg, sizeof(xgsector_t));
 
     return true;
 }
@@ -1867,17 +1938,11 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling, void *context,
 int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
                            void *context2, mobj_t *thing)
 {
-    mobj_t *mo = NULL;
-    boolean    ok = false;
+    mobj_t     *mo = NULL;
+    boolean     ok = false;
     linetype_t *info = context2;
-    mobj_t *flash;
-    thinker_t *thinker;
-    unsigned an;
-    fixed_t oldpos[3];
-    fixed_t thfloorz, thceilz, aboveFloor;
-    fixed_t fogDelta = 0;
 
-    // don't teleport things marked noteleport!
+    // Don't teleport things marked noteleport!
     if(thing->flags2 & MF2_NOTELEPORT)
     {
         XG_Dev("XSTrav_Teleport: Activator is unteleportable (THING type %i)",
@@ -1885,20 +1950,15 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         return false;
     }
 
-    // Is there a way to only traverse thinkers in a sector??
-    thinker = thinkercap.next;
-    for(thinker = thinkercap.next; thinker != &thinkercap; thinker = thinker->next)
+    for(mo = P_GetPtrp(sector, DMT_MOBJS); mo; mo = mo->snext)
     {
-        // not a mobj
-        if(thinker->function != P_MobjThinker)
+        thinker_t *th = (thinker_t*) mo;
+
+        // Not a mobj.
+        if(th->function != P_MobjThinker)
             continue;
 
-        mo = (mobj_t *) thinker;
-        // wrong sector
-        if(sector != P_GetPtrp(mo->subsector, DMU_SECTOR))
-            continue;
-
-        // not a teleportman
+        // Not a teleportman.
         if(mo->type != MT_TELEPORTMAN)
             continue;
 
@@ -1906,16 +1966,17 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         break;
     }
 
-    thfloorz = P_GetFixedp(thing->subsector, DMU_FLOOR_HEIGHT);
-    thceilz  = P_GetFixedp(thing->subsector, DMU_CEILING_HEIGHT);
     if(ok)
-    {   // we can teleport
+    {   // We can teleport.
+        mobj_t     *flash;
+        unsigned    an;
+        float       oldpos[3];
+        float       thfloorz, thceilz;
+        float       aboveFloor, fogDelta = 0;
+
         XG_Dev("XSTrav_Teleport: Sector %i, %s, %s%s", P_ToIndex(sector),
                 info->iparm[2]? "No Flash":"", info->iparm[3]? "Play Sound":"Silent",
                 info->iparm[4]? " Stomp" : "");
-
-        memcpy(oldpos, thing->pos, sizeof(thing->pos));
-        aboveFloor = thing->pos[VZ] - thfloorz;
 
         if(!P_TeleportMove(thing, mo->pos[VX], mo->pos[VY], (info->iparm[4] > 0? 1 : 0)))
         {
@@ -1923,29 +1984,37 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
             return false;
         }
 
+        memcpy(oldpos, thing->pos, sizeof(thing->pos));
+        thfloorz = P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT);
+        thceilz  = P_GetFloatp(thing->subsector, DMU_CEILING_HEIGHT);
+        aboveFloor = thing->pos[VZ] - thfloorz;
+
         // Players get special consideration
         if(thing->player)
         {
-            if(thing->player->plr->mo->flags2 & MF2_FLY && aboveFloor)
+            if((thing->player->plr->mo->flags2 & MF2_FLY) && aboveFloor)
             {
                 thing->pos[VZ] = thfloorz + aboveFloor;
-                if(thing->pos[VZ] + FLT2FIX(thing->height) > thceilz)
+                if(thing->pos[VZ] + thing->height > thceilz)
                 {
-                    thing->pos[VZ] = thceilz - FLT2FIX(thing->height);
+                    thing->pos[VZ] = thceilz - thing->height;
                 }
-                thing->dplayer->viewZ = FIX2FLT(thing->pos[VZ]) + thing->dplayer->viewheight;
+                thing->dplayer->viewZ =
+                    thing->pos[VZ] + thing->dplayer->viewheight;
             }
             else
             {
                 thing->pos[VZ] = thfloorz;
-                thing->dplayer->viewZ = FIX2FLT(thing->pos[VZ]) + thing->dplayer->viewheight;
-                thing->dplayer->lookdir = 0;/* $unifiedangles */
+                thing->dplayer->viewZ =
+                    thing->pos[VZ] + thing->dplayer->viewheight;
+                thing->dplayer->lookdir = 0; /* $unifiedangles */
             }
 #if __JHERETIC__
             if(!thing->player->powers[PT_WEAPONLEVEL2])
 #endif
             {
-                thing->reactiontime = 18;  // Freeze player for about .5 sec
+                // Freeze player for about .5 sec
+                thing->reactiontime = 18;
             }
 
             //thing->dplayer->clAngle = thing->angle; /* $unifiedangles */
@@ -1955,9 +2024,9 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         else if(thing->flags & MF_MISSILE)
         {
             thing->pos[VZ] = thfloorz + aboveFloor;
-            if(thing->pos[VZ] + FLT2FIX(thing->height) > thceilz)
+            if(thing->pos[VZ] + thing->height > thceilz)
             {
-                thing->pos[VZ] = thceilz - FLT2FIX(thing->height);
+                thing->pos[VZ] = thceilz - thing->height;
             }
         }
 #endif
@@ -1971,9 +2040,10 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         {
             // Old position
 #if __JHERETIC__
-            fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
+            fogDelta = ((thing->flags & MF_MISSILE)? 0 : TELEFOGHEIGHT);
 #endif
-            flash = P_SpawnMobj(oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta, MT_TFOG);
+            flash = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY],
+                                  oldpos[VZ] + fogDelta);
             // Play a sound?
             if(info->iparm[3])
                 S_StartSound(info->iparm[3], flash);
@@ -1985,8 +2055,10 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         if(!info->iparm[2])
         {
             // New position
-            flash = P_SpawnMobj(mo->pos[VX] + 20 * finecosine[an], mo->pos[VY] + 20 * finesine[an],
-                                mo->pos[VZ] + fogDelta, MT_TFOG);
+            flash = P_SpawnMobj3f(MT_TFOG,
+                                  mo->pos[VX] + 20 * FIX2FLT(finecosine[an]),
+                                  mo->pos[VY] + 20 * FIX2FLT(finesine[an]),
+                                  mo->pos[VZ] + fogDelta);
             // Play a sound?
             if(info->iparm[3])
                 S_StartSound(info->iparm[3], flash);
@@ -1998,9 +2070,10 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         // Have we teleported from/to a sector with a non-solid floor?
         if(thing->flags2 & MF2_FLOORCLIP)
         {
-            if(thing->pos[VZ] == P_GetFixedp(thing->subsector,
-                                       DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
-               P_GetThingFloorType(thing) >= FLOOR_LIQUID)
+            if(thing->pos[VZ] ==
+               P_GetFloatp(thing->subsector,
+                           DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
+               P_GetMobjFloorType(thing) >= FLOOR_LIQUID)
             {
                 thing->floorclip = 10;
             }
@@ -2013,8 +2086,8 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         if(thing->flags & MF_MISSILE)
         {
             an >>= ANGLETOFINESHIFT;
-            thing->mom[MX] = FixedMul(thing->info->speed, finecosine[an]);
-            thing->mom[MY] = FixedMul(thing->info->speed, finesine[an]);
+            thing->mom[MX] = thing->info->speed * FIX2FLT(finecosine[an]);
+            thing->mom[MY] = thing->info->speed * FIX2FLT(finesine[an]);
         }
         else
         {
@@ -2022,13 +2095,14 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         }
     }
     else
-    {   // keep looking, there may be another referenced sector we could teleport to...
+    {   // Keep looking, there may be another referenced sector we could
+        // teleport to...
         XG_Dev("XSTrav_Teleport: No teleport exit in referenced sector (ID %i)."
                " Continuing search...", P_ToIndex(sector));
         return true;
     }
 
-    return false; // only do this once
+    return false; // Only do this once.
 }
 
 int XF_FindRewindMarker(char *func, int pos)
@@ -2037,22 +2111,24 @@ int XF_FindRewindMarker(char *func, int pos)
         pos--;
     if(func[pos] == '>')
         pos++;
+
     return pos;
 }
 
 int XF_GetCount(function_t * fn, int *pos)
 {
-    char   *end;
-    int     count;
+    char       *end;
+    int         count;
 
     count = strtol(fn->func + *pos, &end, 10);
     *pos = end - fn->func;
+
     return count;
 }
 
 float XF_GetValue(function_t * fn, int pos)
 {
-    int     ch;
+    int         ch;
 
     if(fn->func[pos] == '/' || fn->func[pos] == '%')
     {
@@ -2065,17 +2141,16 @@ float XF_GetValue(function_t * fn, int pos)
     return (ch - 'a') / 25.0f;
 }
 
-/*
- * XF_FindNextPos
- *  Returns the position of the next value.
- *  Repeat counting is handled here.
- *  Poke should be true only if fn->pos is really about to move.
+/**
+ * Returns the position of the next value.
+ * Repeat counting is handled here.
+ * Poke should be true only if fn->pos is really about to move.
  */
-int XF_FindNextPos(function_t * fn, int pos, boolean poke, sector_t *sec)
+int XF_FindNextPos(function_t *fn, int pos, boolean poke, sector_t *sec)
 {
-    int     startpos = pos;
-    int     c;
-    char   *ptr;
+    int         startpos = pos;
+    int         c;
+    char       *ptr;
 
     if(fn->repeat > 0)
     {
@@ -2088,36 +2163,39 @@ int XF_FindNextPos(function_t * fn, int pos, boolean poke, sector_t *sec)
     if(fn->func[pos] == '/' || fn->func[pos] == '%')
     {
         strtod(fn->func + pos + 1, &ptr);
-        pos = ptr - fn->func;   // Go to the end.
+        pos = ptr - fn->func; // Go to the end.
     }
-    else                        // It's just a normal character [a-z,A-Z].
+    else
+    {   // It's just a normal character [a-z,A-Z].
         pos++;
+    }
 
     while(pos != startpos && fn->func[pos])
     {
         // Check for various special characters.
         if(isdigit(fn->func[pos]))
-        {
-            // A repeat! Move pos to the value to be repeated and set
-            // repeat counter.
+        {   // A repeat!
+            // Move pos to the value to be repeated and set repeat counter.
             c = XF_GetCount(fn, &pos) - 1;
             if(poke)
                 fn->repeat = c;
             return pos;
         }
-        if(fn->func[pos] == '!')    // Chain event.
-        {
+
+        if(fn->func[pos] == '!')
+        {   // Chain event.
             pos++;
             c = XF_GetCount(fn, &pos);
             if(poke)
             {
-                // sector funcs don't have activators
+                // Sector funcs don't have activators.
                 XS_DoChain(sec, XSCE_FUNCTION, c, NULL);
             }
             continue;
         }
-        if(fn->func[pos] == '#')    // Set timer.
-        {
+
+        if(fn->func[pos] == '#')
+        {   // Set timer.
             pos++;
             c = XF_GetCount(fn, &pos);
             if(poke)
@@ -2127,8 +2205,9 @@ int XF_FindNextPos(function_t * fn, int pos, boolean poke, sector_t *sec)
             }
             continue;
         }
-        if(fn->func[pos] == '?')    // Random timer.
-        {
+
+        if(fn->func[pos] == '?')
+        {   // Random timer.
             pos++;
             c = XF_GetCount(fn, &pos);
             if(poke)
@@ -2138,11 +2217,13 @@ int XF_FindNextPos(function_t * fn, int pos, boolean poke, sector_t *sec)
             }
             continue;
         }
-        if(fn->func[pos] == '<')    // Rewind.
-        {
+
+        if(fn->func[pos] == '<')
+        {   // Rewind.
             pos = XF_FindRewindMarker(fn->func, pos);
             continue;
         }
+
         if(poke)
         {
             if(islower(fn->func[pos]) || fn->func[pos] == '/')
@@ -2158,11 +2239,15 @@ int XF_FindNextPos(function_t * fn, int pos, boolean poke, sector_t *sec)
             }
         }
         else if(fn->func[pos] == '.')
+        {
             break;
+        }
+
         // Is it a value, then?
         if(isalpha(fn->func[pos]) || fn->func[pos] == '/' ||
            fn->func[pos] == '%')
             break;
+
         // A bad character, skip it.
         pos++;
     }
@@ -2170,11 +2255,13 @@ int XF_FindNextPos(function_t * fn, int pos, boolean poke, sector_t *sec)
     return pos;
 }
 
-// Tick the function, update value.
-void XF_Ticker(function_t * fn, sector_t *sec)
+/**
+ * Tick the function, update value.
+ */
+void XF_Ticker(function_t *fn, sector_t *sec)
 {
-    int     next;
-    float   inter;
+    int         next;
+    float       inter;
 
     // Store the previous value of the function.
     fn->oldvalue = fn->value;
@@ -2193,26 +2280,28 @@ void XF_Ticker(function_t * fn, sector_t *sec)
         fn->pos = XF_FindNextPos(fn, fn->pos, true, sec);
     }
 
-    // abcdefghijlkmnopqrstuvwxyz (26)
-
-    // az.< (fade from 0 to 1, break interpolation and repeat)
-    // [note that AZ.AZ is the same as AZAZ]
-    // [also note that a.z is the same as z]
-    // az.>mz< (fade from 0 to 1, break, repeat fade from
-    //   0.5 to 1 to 0.5)
-    // 10a10z is the same as aaaaaaaaaazzzzzzzzzz
-    // aB or Ba do not interpolate
-    // zaN (interpolate from 1 to 0, wait at 0, stay at N)
-    // za.N (interpolate from 1 to 0, skip to N)
-    // 1A is the same as A
+    /**
+     * Syntax:
+     *
+     * abcdefghijlkmnopqrstuvwxyz (26)
+     *
+     * az.< (fade from 0 to 1, break interpolation and repeat)
+     * [note that AZ.AZ is the same as AZAZ]
+     * [also note that a.z is the same as z]
+     * az.>mz< (fade from 0 to 1, break, repeat fade from 0.5 to 1 to 0.5)
+     * 10a10z is the same as aaaaaaaaaazzzzzzzzzz
+     * aB or Ba do not interpolate
+     * zaN (interpolate from 1 to 0, wait at 0, stay at N)
+     * za.N (interpolate from 1 to 0, skip to N)
+     * 1A is the same as A
+     */
 
     // Stop?
     if(!fn->func[fn->pos])
         return;
 
     if(isupper(fn->func[fn->pos]) || fn->func[fn->pos] == '%')
-    {
-        // No interpolation.
+    {   // No interpolation.
         fn->value = XF_GetValue(fn, fn->pos);
     }
     else
@@ -2224,9 +2313,9 @@ void XF_Ticker(function_t * fn, sector_t *sec)
             if(fn->maxtimer)
                 inter = fn->timer / (float) fn->maxtimer;
         }
-        fn->value =
-            (1 - inter) * XF_GetValue(fn, fn->pos) + inter * XF_GetValue(fn,
-                                                                         next);
+
+        fn->value = (1 - inter) * XF_GetValue(fn, fn->pos) +
+            inter * XF_GetValue(fn, next);
     }
 
     // Scale and offset.
@@ -2235,52 +2324,54 @@ void XF_Ticker(function_t * fn, sector_t *sec)
 
 void XS_UpdatePlanes(sector_t *sec)
 {
+    int         i;
     xgsector_t *xg;
     function_t *fn;
-    int     i;
-    boolean docrush;
+    boolean     docrush;
 
-    xg = P_XSector(sec)->xg;
+    xg = P_ToXSector(sec)->xg;
     docrush = (xg->info.flags & STF_CRUSH) != 0;
 
     // Update floor.
     fn = &xg->plane[XGSP_FLOOR];
-    if(UPDFUNC(fn))             // Changed?
-    {
-        // How much change?
-        i = FRACUNIT * fn->value - P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
+    if(UPDFUNC(fn))
+    {   // Changed.
+        // How different?
+        i = fn->value - P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         if(i)
+        {
             // Move the floor plane accordingly.
-            T_MovePlane(sec, abs(i), FRACUNIT * fn->value, docrush, 0,
-                        SIGN(i));
+            T_MovePlane(sec, abs(i), fn->value, docrush, 0, SIGN(i));
+        }
     }
 
     // Update celing.
     fn = &xg->plane[XGSP_CEILING];
-    if(UPDFUNC(fn))             // Changed?
-    {
+    if(UPDFUNC(fn))
+    {   // Changed.
         // How different?
-        i = FRACUNIT * fn->value - P_GetFixedp(sec, DMU_CEILING_HEIGHT);
+        i = fn->value - P_GetFloatp(sec, DMU_CEILING_HEIGHT);
         if(i)
+        {
             // Move the ceiling accordingly.
-            T_MovePlane(sec, abs(i), FRACUNIT * fn->value, docrush, 1,
-                        SIGN(i));
+            T_MovePlane(sec, abs(i), fn->value, docrush, 1, SIGN(i));
+        }
     }
 }
 
 void XS_UpdateLight(sector_t *sec)
 {
+    int         i;
+    float       c, lightlevel;
     xgsector_t *xg;
     function_t *fn;
-    int     i;
-    float   c, lightlevel;
 
-    xg = P_XSector(sec)->xg;
+    xg = P_ToXSector(sec)->xg;
 
     // Light intensity.
     fn = &xg->light;
     if(UPDFUNC(fn))
-    {
+    {   // Changed.
         lightlevel = fn->value / 255.f;
 
         if(lightlevel < 0)
@@ -2297,6 +2388,8 @@ void XS_UpdateLight(sector_t *sec)
         fn = &xg->rgb[i];
         if(!UPDFUNC(fn))
             continue;
+
+        // Changed.
         c = fn->value / 255.f;
         if(c < 0)
             c = 0;
@@ -2310,12 +2403,12 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
 {
     xgsector_t *xg;
     sectortype_t *info;
-    float   flevtime = TIC2FLT(leveltime);
-    line_t*  dummyLine;
-    xline_t* xdummyLine;
+    float       flevtime = TIC2FLT(leveltime);
+    line_t     *dummyLine;
+    xline_t    *xdummyLine;
     linetype_t *ltype;
 
-    xg = P_XSector(sec)->xg;
+    xg = P_ToXSector(sec)->xg;
     info = &xg->info;
 
     if(ch < XSCE_NUM_CHAINS)
@@ -2327,7 +2420,7 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
         // How's the time?
         if(flevtime < info->start[ch] ||
            (info->end[ch] > 0 && flevtime > info->end[ch]))
-            return;             // Not operating at this time.
+            return; // Not operating at this time.
 
         // Time to try the chain. Reset timer.
         xg->chain_timer[ch] =
@@ -2337,7 +2430,7 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
 
     // Prepare the dummy line to use for the event.
     dummyLine = P_AllocDummyLine();
-    xdummyLine = P_XLine(dummyLine);
+    xdummyLine = P_ToXLine(dummyLine);
     xdummyLine->xg = Z_Calloc(sizeof(xgline_t), PU_LEVEL, 0);
 
     P_SetPtrp(dummyLine, DMU_FRONT_SECTOR, sec);
@@ -2345,7 +2438,7 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
     xdummyLine->special =
         (ch == XSCE_FUNCTION ? activating : info->chain[ch]);
 
-    xdummyLine->tag = P_XSector(sec)->tag;
+    xdummyLine->tag = P_ToXSector(sec)->tag;
 
     ltype = XL_GetType(xdummyLine->special);
     if(!ltype)
@@ -2370,9 +2463,9 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
     XG_Dev("XS_DoChain: Dummy line will show up as %i", P_ToIndex(dummyLine));
 
     // Send the event.
-    if(XL_LineEvent((ch == XSCE_FUNCTION ? XLE_FUNC : XLE_CHAIN), 0, dummyLine, 0, act_thing))
-    {
-        // A success!
+    if(XL_LineEvent((ch == XSCE_FUNCTION ? XLE_FUNC : XLE_CHAIN), 0,
+                    dummyLine, 0, act_thing))
+    {   // Success!
         if(ch < XSCE_NUM_CHAINS)
         {
             // Decrease counter.
@@ -2401,24 +2494,24 @@ int XSTrav_SectorChain(sector_t *sec, mobj_t *mo, int ch)
 {
     xgsector_t *xg;
     sectortype_t *info;
-    player_t *player = mo->player;
-    int     flags;
-    boolean activating;
+    player_t   *player = mo->player;
+    int         flags;
+    boolean     activating;
 
-    xg = P_XSector(sec)->xg;
+    xg = P_ToXSector(sec)->xg;
     info = &xg->info;
     flags = info->chain_flags[ch];
 
     // Check mobj type.
     if(flags & (SCEF_ANY_A | SCEF_ANY_D | SCEF_TICKER_A | SCEF_TICKER_D))
         goto type_passes;
-    if(flags & (SCEF_PLAYER_A | SCEF_PLAYER_D) && player)
+    if((flags & (SCEF_PLAYER_A | SCEF_PLAYER_D)) && player)
         goto type_passes;
-    if(flags & (SCEF_OTHER_A | SCEF_OTHER_D) && !player)
+    if((flags & (SCEF_OTHER_A | SCEF_OTHER_D)) && !player)
         goto type_passes;
-    if(flags & (SCEF_MONSTER_A | SCEF_MONSTER_D) && mo->flags & MF_COUNTKILL)
+    if((flags & (SCEF_MONSTER_A | SCEF_MONSTER_D)) && (mo->flags & MF_COUNTKILL))
         goto type_passes;
-    if(flags & (SCEF_MISSILE_A | SCEF_MISSILE_D) && mo->flags & MF_MISSILE)
+    if((flags & (SCEF_MISSILE_A | SCEF_MISSILE_D)) && (mo->flags & MF_MISSILE))
     {
         goto type_passes;
     }
@@ -2441,17 +2534,17 @@ int XSTrav_SectorChain(sector_t *sec, mobj_t *mo, int ch)
         activating = !(flags & SCEF_OTHER_D);
 
     // Check for extra requirements (touching).
-    switch (ch)
+    switch(ch)
     {
     case XSCE_FLOOR:
         // Is it touching the floor?
-        if(FIX2FLT(mo->pos[VZ]) > P_GetFloatp(sec, DMU_FLOOR_HEIGHT))
+        if(mo->pos[VZ] > P_GetFloatp(sec, DMU_FLOOR_HEIGHT))
             return true;
         break;
 
     case XSCE_CEILING:
         // Is it touching the ceiling?
-        if(FIX2FLT(mo->pos[VZ]) + mo->height < P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+        if(mo->pos[VZ] + mo->height < P_GetFloatp(sec, DMU_CEILING_HEIGHT))
             return true;
         break;
 
@@ -2461,19 +2554,18 @@ int XSTrav_SectorChain(sector_t *sec, mobj_t *mo, int ch)
 
     XS_DoChain(sec, ch, activating, mo);
 
-    // Continue looking.
-    return true;
+    return true; // Continue looking...
 }
 
 int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
 {
     sectortype_t *info;
-    float   ang;
+    float       ang;
 
     if(mo->player && (mo->player->plr->flags & DDPF_CAMERA))
         return true; // Wind does not affect cameras.
 
-    info = &(P_XSector(sec)->xg->info);
+    info = &(P_ToXSector(sec)->xg->info);
     ang = PI * info->wind_angle / 180;
 
     if(IS_CLIENT)
@@ -2484,63 +2576,65 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
     }
 
     // Does wind affect this sort of things?
-    if((info->flags & STF_PLAYER_WIND && mo->player) ||
-       (info->flags & STF_OTHER_WIND && !mo->player) ||
-       (info->flags & STF_MONSTER_WIND && mo->flags & MF_COUNTKILL) ||
-       (info->flags & STF_MISSILE_WIND && mo->flags & MF_MISSILE))
+    if(((info->flags & STF_PLAYER_WIND) && mo->player) ||
+       ((info->flags & STF_OTHER_WIND) && !mo->player) ||
+       ((info->flags & STF_MONSTER_WIND) && (mo->flags & MF_COUNTKILL)) ||
+       ((info->flags & STF_MISSILE_WIND) && (mo->flags & MF_MISSILE)))
     {
-        fixed_t thfloorz = P_GetFixedp(mo->subsector, DMU_FLOOR_HEIGHT);
-        fixed_t thceilz  = P_GetFixedp(mo->subsector, DMU_CEILING_HEIGHT);
+        float       thfloorz = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+        float       thceilz  = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 
         if(!(info->flags & (STF_FLOOR_WIND | STF_CEILING_WIND)) ||
-           (info->flags & STF_FLOOR_WIND && mo->pos[VZ] <= thfloorz) ||
-           (info->flags & STF_CEILING_WIND &&
-            mo->pos[VZ] + FLT2FIX(mo->height) >= thceilz))
+           ((info->flags & STF_FLOOR_WIND) && mo->pos[VZ] <= thfloorz) ||
+           ((info->flags & STF_CEILING_WIND) &&
+            mo->pos[VZ] + mo->height >= thceilz))
         {
             // Apply vertical wind.
-            mo->mom[MZ] += FRACUNIT * info->vertical_wind;
+            mo->mom[MZ] += info->vertical_wind;
 
             // Horizontal wind.
-            mo->mom[MX] += FRACUNIT * cos(ang) * info->wind_speed;
-            mo->mom[MY] += FRACUNIT * sin(ang) * info->wind_speed;
+            mo->mom[MX] += cos(ang) * info->wind_speed;
+            mo->mom[MY] += sin(ang) * info->wind_speed;
         }
     }
 
-    // Continue applying wind.
-    return true;
+    return true; // Continue applying wind.
 }
 
-// Returns true if true was returned for each mobj.
+/**
+ * @return              @c true, if all callbacks returned @c true.
+ */
 int XS_TraverseMobjs(sector_t *sec, int data,
                      int (*func) (sector_t *sec, mobj_t *mo, int data))
 {
-    mobj_t *mo;
-    thinker_t *thinker;
+    mobj_t     *mo;
+    thinker_t  *th;
 
     // Only traverse sectorlinked things.
     //for(mo = sec->thinglist; mo; mo = mo->snext)
     //{
 
-    thinker = thinkercap.next;
-    for(thinker = thinkercap.next; thinker != &thinkercap; thinker = thinker->next)
+    th = thinkercap.next;
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
     {
-        // not a mobj
-        if(thinker->function != P_MobjThinker)
+        // Not a mobj.
+        if(th->function != P_MobjThinker)
             continue;
 
-        mo = (mobj_t *) thinker;
+        mo = (mobj_t *) th;
 
-        // wrong sector
+        // Wrong sector.
         if(sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
             continue;
 
         if(!func(sec, mo, data))
             return false;
     }
+
     return true;
 }
 
-/*
+/**
  * Makes sure the offset is in the range 0..64.
  */
 void XS_ConstrainPlaneOffset(float *offset)
@@ -2551,35 +2645,48 @@ void XS_ConstrainPlaneOffset(float *offset)
         *offset += 64;
 }
 
-/*
- * XS_Think
- *  Called for Extended Generalized sectors.
+/**
+ * Called for Extended Generalized sectors.
  */
-void XS_Think(sector_t *sector)
+void XS_Think(uint idx)
 {
+    int         i;
+    float       ang;
+    float       floorOffset[2], ceilOffset[2];
+    sector_t   *sector;
+    xsector_t  *xsector = P_GetXSector(idx);
     xgsector_t *xg;
     sectortype_t *info;
-    int     i;
-    float   ang;
-    float   flooroffx, flooroffy, ceiloffx, ceiloffy;
 
-    xg = P_XSector(sector)->xg;
-    info = &xg->info;
+    if(!xsector)
+    {
+#if _DEBUG
+Con_Message("XS_Think: Index (%i) not xsector!\n", idx);
+#endif
+        return; // Not an xsector? Perhaps we were passed a dummy index??
+    }
+
+    xg = xsector->xg;
+    if(!xg)
+        return; // Not an extended sector.
 
     if(xg->disabled)
-        return;                 // This sector is disabled.
+        return; // This sector is disabled.
+
+    sector = P_ToPtr(DMU_SECTOR, idx);
+    info = &xg->info;
 
     if(!IS_CLIENT)
     {
         // Function tickers.
-        for(i = 0; i < 2; i++)
+        for(i = 0; i < 2; ++i)
             XF_Ticker(&xg->plane[i], sector);
         XF_Ticker(&xg->light, sector);
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
             XF_Ticker(&xg->rgb[i], sector);
 
         // Update linked functions.
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
         {
             if(i < 2 && xg->plane[i].link)
                 xg->plane[i].value = xg->plane[i].link->value;
@@ -2587,6 +2694,7 @@ void XS_Think(sector_t *sector)
             if(xg->rgb[i].link)
                 xg->rgb[i].value = xg->rgb[i].link->value;
         }
+
         if(xg->light.link)
             xg->light.value = xg->light.link->value;
 
@@ -2597,10 +2705,11 @@ void XS_Think(sector_t *sector)
         XS_UpdateLight(sector);
 
         // Decrement chain timers.
-        for(i = 0; i < XSCE_NUM_CHAINS; i++)
+        for(i = 0; i < XSCE_NUM_CHAINS; ++i)
             xg->chain_timer[i]--;
 
-        // Floor chain. Check any mobjs that are touching the floor of the sector.
+        // Floor chain. Check any mobjs that are touching the floor of the
+        // sector.
         if(info->chain[XSCE_FLOOR] && xg->chain_timer[XSCE_FLOOR] <= 0)
         {
             XS_TraverseMobjs(sector, XSCE_FLOOR, XSTrav_SectorChain);
@@ -2640,28 +2749,30 @@ void XS_Think(sector_t *sector)
     }
 
     // Floor Texture movement
-    ang = PI * xg->info.texmove_angle[0] / 180;
-    // Get current values
-    flooroffx = P_GetFloatp(sector, DMU_FLOOR_OFFSET_X);
-    flooroffy = P_GetFloatp(sector, DMU_FLOOR_OFFSET_Y);
-    // Apply the offsets
-    flooroffx -= cos(ang) * xg->info.texmove_speed[0];
-    flooroffy -= sin(ang) * xg->info.texmove_speed[0];
-    // Set the results
-    P_SetFloatp(sector, DMU_FLOOR_OFFSET_X, flooroffx);
-    P_SetFloatp(sector, DMU_FLOOR_OFFSET_Y, flooroffy);
+    if(xg->info.texmove_angle[0] != 0)
+    {
+        ang = PI * xg->info.texmove_angle[0] / 180;
+        // Get current values
+        P_GetFloatpv(sector, DMU_FLOOR_MATERIAL_OFFSET_XY, floorOffset);
+        // Apply the offsets
+        floorOffset[VX] -= cos(ang) * xg->info.texmove_speed[0];
+        floorOffset[VY] -= sin(ang) * xg->info.texmove_speed[0];
+        // Set the results
+        P_SetFloatpv(sector, DMU_FLOOR_MATERIAL_OFFSET_XY, floorOffset);
+    }
 
     // Ceiling Texture movement
-    ang = PI * xg->info.texmove_angle[1] / 180;
-    // Get current values
-    ceiloffx = P_GetFloatp(sector, DMU_CEILING_OFFSET_X);
-    ceiloffy = P_GetFloatp(sector, DMU_CEILING_OFFSET_Y);
-    // Apply the offsets
-    ceiloffx -= cos(ang) * xg->info.texmove_speed[1];
-    ceiloffy -= sin(ang) * xg->info.texmove_speed[1];
-    // Set the results
-    P_SetFloatp(sector, DMU_CEILING_OFFSET_X, ceiloffx);
-    P_SetFloatp(sector, DMU_CEILING_OFFSET_Y, ceiloffy);
+    if(xg->info.texmove_angle[1] != 0)
+    {
+        ang = PI * xg->info.texmove_angle[1] / 180;
+        // Get current values
+        P_GetFloatpv(sector, DMU_CEILING_MATERIAL_OFFSET_XY, ceilOffset);
+        // Apply the offsets
+        ceilOffset[VX] -= cos(ang) * xg->info.texmove_speed[1];
+        ceilOffset[VY] -= sin(ang) * xg->info.texmove_speed[1];
+        // Set the results
+        P_SetFloatpv(sector, DMU_CEILING_MATERIAL_OFFSET_XY, ceilOffset);
+    }
 
     // Wind for all sectorlinked mobjs.
     if(xg->info.wind_speed || xg->info.vertical_wind)
@@ -2673,61 +2784,61 @@ void XS_Think(sector_t *sector)
 void XS_Ticker(void)
 {
     uint        i;
-    sector_t   *sec;
 
     for(i = 0; i < numsectors; ++i)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        if(!P_XSector(sec)->xg)
-            continue;           // Normal sector.
-
-        XS_Think(sec);
+        XS_Think(i);
     }
 }
 
-int XS_Gravity(struct sector_s *sector)
+float XS_Gravity(struct sector_s *sector)
 {
-    if(!P_XSector(sector)->xg || !(P_XSector(sector)->xg->info.flags & STF_GRAVITY))
-        return GRAVITY;         // World gravity.
+    if(!P_ToXSector(sector)->xg ||
+       !(P_ToXSector(sector)->xg->info.flags & STF_GRAVITY))
+    {
+        return P_GetGravity(); // World gravity.
+    }
     else
     {   // Sector-specific gravity.
-        int grav = FRACUNIT * P_XSector(sector)->xg->info.gravity;
+        float       gravity = P_ToXSector(sector)->xg->info.gravity;
 
         // Apply gravity modifier.
         if(IS_NETGAME && cfg.netGravity != -1)
-            grav *= (fixed_t) ((float) cfg.netGravity / 100);
+            gravity *= (float) cfg.netGravity / 100;
 
-        return grav;
+        return gravity;
     }
 }
 
-int XS_Friction(struct sector_s *sector)
+float XS_Friction(struct sector_s *sector)
 {
-    if(!P_XSector(sector)->xg || !(P_XSector(sector)->xg->info.flags & STF_FRICTION))
-        return 0xe800;          // Normal friction.
+    if(!P_ToXSector(sector)->xg || !(P_ToXSector(sector)->xg->info.flags & STF_FRICTION))
+        return FRICTION_NORMAL; // Normal friction.
 
-    return FRACUNIT * P_XSector(sector)->xg->info.friction;
+    return P_ToXSector(sector)->xg->info.friction;
 }
 
-// Returns the thrust multiplier caused by friction.
-int XS_ThrustMul(struct sector_s *sector)
+/**
+ * @return              The thrust multiplier caused by friction.
+ */
+float XS_ThrustMul(struct sector_s *sector)
 {
-    fixed_t fric = XS_Friction(sector);
-    float   x;
+    float       x = XS_Friction(sector);
 
-    if(fric <= 0xe800)
-        return FRACUNIT;        // Normal friction.
-    if(fric > 0xffff)
-        return 0;               // There's nothing to thrust from!
-    x = FIX2FLT(fric);
+    if(x <= FRICTION_NORMAL)
+        return 1; // Normal friction.
+
+    if(x > 1)
+        return 0; // There's nothing to thrust from!
+
     // {c = -93.31092643, b = 208.0448223, a = -114.7338958}
-    return FRACUNIT * (-114.7338958 * x * x + 208.0448223 * x - 93.31092643);
+    return (-114.7338958 * x * x + 208.0448223 * x - 93.31092643);
 }
 
-/*
+/**
  * During update, definitions are re-read, so the pointers need to be
  * updated. However, this is a bit messy operation, prone to errors.
- * Instead, we just disable XG.
+ * Instead, we just disable XG...
  */
 void XS_Update(void)
 {
@@ -2737,7 +2848,7 @@ void XS_Update(void)
     // It's all PU_LEVEL memory, so we can just lose it.
     for(i = 0; i < numsectors; ++i)
     {
-        xsec = P_XSector(P_ToPtr(DMU_SECTOR, i));
+        xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
         if(xsec->xg)
         {
             xsec->xg = NULL;
@@ -2773,7 +2884,7 @@ DEFCC(CCmdDumpXG)
 }
 #endif
 
-/*
+/**
  * $moveplane: Command line interface to the plane mover.
  */
 DEFCC(CCmdMovePlane)
@@ -2816,8 +2927,8 @@ DEFCC(CCmdMovePlane)
     {
         p = 4;
         sector =
-            P_GetPtrp(R_PointInSubsector(strtol(argv[2], 0, 0) << FRACBITS,
-                                         strtol(argv[3], 0, 0) << FRACBITS),
+            P_GetPtrp(R_PointInSubsector((float) strtol(argv[2], 0, 0),
+                                         (float) strtol(argv[3], 0, 0)),
                       DMU_SECTOR);
     }
     else if(!stricmp(argv[1], "tag") && argc >= 3)
@@ -2878,7 +2989,7 @@ DEFCC(CCmdMovePlane)
     else
     {
         Con_Printf("You must specify Z-units.\n");
-        return false;           // Required parameter missing.
+        return false; // Required parameter missing.
     }
 
     // The optional speed parameter.

@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * The status bar widget code.
+/**
+ * st_lib.c: The status bar widget code.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -67,7 +67,7 @@ extern boolean automapactive; // in AM_map.c
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     sttminus_i;
+int sttminus_i;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -91,19 +91,12 @@ void STlib_initNum(st_number_t * n, int x, int y, dpatch_t * pl, int *num,
     n->p = pl;
 }
 
-/*
- * A fairly efficient way to draw a number
- *  based on differences from the old number.
- * Note: worth the trouble?
- */
 void STlib_drawNum(st_number_t * n, boolean refresh)
 {
     int     numdigits = n->width;
     int     num = *n->num;
-
     int     w = n->p[0].width;
     int     x = n->x;
-
     int     neg;
 
     n->oldnum = *n->num;
@@ -119,7 +112,6 @@ void STlib_drawNum(st_number_t * n, boolean refresh)
         num = -num;
     }
 
-    // clear the area
     x = n->x - numdigits * w;
 
     // if non-number, do not draw it
@@ -128,12 +120,12 @@ void STlib_drawNum(st_number_t * n, boolean refresh)
 
     x = n->x;
 
-    // in the special case of 0, you draw 0
+    // In the special case of 0, you draw 0
     if(!num)
         WI_DrawPatch(x - w, n->y, 1, 1, 1, *n->alpha, n->p[0].lump,
                      NULL, false, ALIGN_LEFT);
 
-    // draw the new number
+    // Draw the number.
     while(num && numdigits--)
     {
         x -= w;
@@ -142,26 +134,26 @@ void STlib_drawNum(st_number_t * n, boolean refresh)
         num /= 10;
     }
 
-    // draw a minus sign if necessary
+    // Draw a minus sign if necessary.
     if(neg)
         WI_DrawPatch(x - 8, n->y, 1, 1, 1, *n->alpha, sttminus_i,
                      NULL, false, ALIGN_LEFT);
 }
 
-void STlib_updateNum(st_number_t * n, boolean refresh)
+void STlib_updateNum(st_number_t *n, boolean refresh)
 {
     if(*n->on)
         STlib_drawNum(n, refresh);
 }
 
-void STlib_initPercent(st_percent_t * p, int x, int y, dpatch_t * pl, int *num,
-                       boolean *on, dpatch_t * percent, float *alpha)
+void STlib_initPercent(st_percent_t *p, int x, int y, dpatch_t *pl, int *num,
+                       boolean *on, dpatch_t *percent, float *alpha)
 {
     STlib_initNum(&p->n, x, y, pl, num, on, 3, alpha);
     p->p = percent;
 }
 
-void STlib_updatePercent(st_percent_t * per, int refresh)
+void STlib_updatePercent(st_percent_t *per, int refresh)
 {
     if(refresh && *per->n.on)
         WI_DrawPatch(per->n.x, per->n.y, 1, 1, 1, *per->n.alpha, per->p->lump,
@@ -170,7 +162,7 @@ void STlib_updatePercent(st_percent_t * per, int refresh)
     STlib_updateNum(&per->n, refresh);
 }
 
-void STlib_initMultIcon(st_multicon_t * i, int x, int y, dpatch_t * il,
+void STlib_initMultIcon(st_multicon_t *i, int x, int y, dpatch_t *il,
                         int *inum, boolean *on, float *alpha)
 {
     i->x = x;
@@ -182,7 +174,7 @@ void STlib_initMultIcon(st_multicon_t * i, int x, int y, dpatch_t * il,
     i->p = il;
 }
 
-void STlib_updateMultIcon(st_multicon_t * mi, boolean refresh)
+void STlib_updateMultIcon(st_multicon_t *mi, boolean refresh)
 {
     if(*mi->on && (mi->oldinum != *mi->inum || refresh) && (*mi->inum != -1))
     {
@@ -192,7 +184,7 @@ void STlib_updateMultIcon(st_multicon_t * mi, boolean refresh)
     }
 }
 
-void STlib_initBinIcon(st_binicon_t * b, int x, int y, dpatch_t * i,
+void STlib_initBinIcon(st_binicon_t *b, int x, int y, dpatch_t *i,
                        boolean *val, boolean *on, int d, float *alpha)
 {
     b->x = x;
@@ -205,7 +197,7 @@ void STlib_initBinIcon(st_binicon_t * b, int x, int y, dpatch_t * i,
     b->data =d;
 }
 
-void STlib_updateBinIcon(st_binicon_t * bi, boolean refresh)
+void STlib_updateBinIcon(st_binicon_t *bi, boolean refresh)
 {
     if(*bi->on && (bi->oldval != *bi->val || refresh))
     {

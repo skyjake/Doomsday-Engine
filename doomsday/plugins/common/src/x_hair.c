@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * x_hair.c: Crosshairs. Drawing and config
+/**
+ * x_hair.c: Crosshairs, drawing and config.
+ *
+ * \todo Use the vector graphic routines currently in the automap here.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -48,7 +50,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_XLINES  16
+#define MAX_XLINES              16
 
 // TYPES -------------------------------------------------------------------
 
@@ -122,25 +124,23 @@ ccmd_t  xhairCCmds[] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Register CVARs and CCmds for the crosshair.
  */
 void X_Register(void)
 {
-    int     i;
+    int             i;
 
-    for(i = 0; xhairCVars[i].name; i++)
+    for(i = 0; xhairCVars[i].name; ++i)
         Con_AddVariable(xhairCVars + i);
-    for(i = 0; xhairCCmds[i].name; i++)
+    for(i = 0; xhairCCmds[i].name; ++i)
         Con_AddCommand(xhairCCmds + i);
 }
 
 void X_Drawer(void)
 {
-    // Where to draw the xhair?
     int     centerX = Get(DD_VIEWWINDOW_X) + (Get(DD_VIEWWINDOW_WIDTH) / 2);
-    int     centerY =
-        Get(DD_VIEWWINDOW_Y) + (Get(DD_VIEWWINDOW_HEIGHT) / 2);
+    int     centerY = Get(DD_VIEWWINDOW_Y) + (Get(DD_VIEWWINDOW_HEIGHT) / 2);
     int     i;
     float   fact = (cfg.xhairSize + 1) / 2.0f;
     byte    xcolor[4] = {
@@ -171,7 +171,7 @@ void X_Drawer(void)
 
     gl.Color4ubv(xcolor);
     gl.Begin(DGL_LINES);
-    for(i = 0; i < cross->numLines; i++)
+    for(i = 0; i < cross->numLines; ++i)
     {
         crossline_t *xline = cross->Lines + i;
 
@@ -188,7 +188,7 @@ void X_Drawer(void)
     gl.PopMatrix();
 }
 
-/*
+/**
  * Console command for configuring the crosshair.
  */
 DEFCC(CCmdCrosshair)
@@ -208,7 +208,7 @@ DEFCC(CCmdCrosshair)
                    cfg.xhairColor[1], cfg.xhairColor[2], cfg.xhairColor[3]);
         return true;
     }
-    else if(argc == 2)          // Choose.
+    else if(argc == 2) // Choose.
     {
         cfg.xhair = strtol(argv[1], NULL, 0);
         if(cfg.xhair > NUM_XHAIRS || cfg.xhair < 0)
@@ -218,7 +218,7 @@ DEFCC(CCmdCrosshair)
         }
         Con_Printf("Crosshair %d selected.\n", cfg.xhair);
     }
-    else if(argc == 3)          // Size.
+    else if(argc == 3) // Size.
     {
         if(stricmp(argv[1], "size"))
             return false;
@@ -249,6 +249,7 @@ DEFCC(CCmdCrosshair)
     }
     else
         return false;
+
     // Success!
     return true;
 }

@@ -36,7 +36,7 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
+/**
  * p_switches.c : Switches, buttons. Two-state animation. Exits.
  */
 
@@ -335,12 +335,12 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
 
 #if !__JHEXEN__
     if(!useAgain)
-        P_XLine(line)->special = 0;
+        P_ToXLine(line)->special = 0;
 #endif
 
-    texTop = P_GetIntp(sdef, DMU_TOP_TEXTURE);
-    texMid = P_GetIntp(sdef, DMU_MIDDLE_TEXTURE);
-    texBot = P_GetIntp(sdef, DMU_BOTTOM_TEXTURE);
+    texTop = P_GetIntp(sdef, DMU_TOP_MATERIAL);
+    texMid = P_GetIntp(sdef, DMU_MIDDLE_MATERIAL);
+    texBot = P_GetIntp(sdef, DMU_BOTTOM_MATERIAL);
 
 #if !__JHEXEN__
 # if __JHERETIC__ || __WOLFTC__
@@ -351,7 +351,7 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
 
     // EXIT SWITCH?
 # if !__JHERETIC__
-    if(P_XLine(line)->special == 11)
+    if(P_ToXLine(line)->special == 11)
     {
 #  if __WOLFTC__
         sound = sfx_wfeswi;
@@ -372,7 +372,7 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
 #else
             S_StartSound(sound, P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
 #endif
-            P_SetIntp(sdef, DMU_TOP_TEXTURE, switchlist[i^1]);
+            P_SetIntp(sdef, DMU_TOP_MATERIAL, switchlist[i^1]);
 
             if(useAgain)
                 P_StartButton(line, top, switchlist[i], BUTTONTIME);
@@ -387,7 +387,7 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
 #else
             S_StartSound(sound, P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
 #endif
-            P_SetIntp(sdef, DMU_MIDDLE_TEXTURE, switchlist[i^1]);
+            P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, switchlist[i^1]);
 
             if(useAgain)
                 P_StartButton(line, middle, switchlist[i], BUTTONTIME);
@@ -402,7 +402,7 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
 #else
             S_StartSound(sound, P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
 #endif
-            P_SetIntp(sdef, DMU_BOTTOM_TEXTURE, switchlist[i^1]);
+            P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, switchlist[i^1]);
 
             if(useAgain)
                 P_StartButton(line, bottom, switchlist[i], BUTTONTIME);

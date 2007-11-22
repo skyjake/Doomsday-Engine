@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * p_view.c
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -46,9 +50,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define VIEW_HEIGHT  (cfg.plrViewHeight)
+#define VIEW_HEIGHT         (cfg.plrViewHeight)
 
-#define MAXBOB  0x100000        // 16 pixels of bob.
+#define MAXBOB              (16) // pixels.
 
 // TYPES -------------------------------------------------------------------
 
@@ -66,31 +70,31 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Calculate the walking / running height adjustment.
  */
 void P_CalcHeight(player_t *player)
 {
-    boolean setz = (player == &players[consoleplayer]);
-    boolean airborne;
-    boolean morphed = false;
+    boolean     setz = (player == &players[consoleplayer]);
+    boolean     airborne;
+    boolean     morphed = false;
     ddplayer_t *dplay = player->plr;
-    mobj_t *pmo = dplay->mo;
-    float   zOffset, target, step;
+    mobj_t     *pmo = dplay->mo;
+    float       zOffset, target, step;
     static int aircounter = 0;
 
-    // Regular movement bobbing.
-    // (needs to be calculated for gun swing even if not on ground)
+    // Regular movement bobbing (needs to be calculated for gun swing even
+    // if not on ground).
     player->bob =
-        FixedMul(pmo->mom[MX], pmo->mom[MX]) + FixedMul(pmo->mom[MY], pmo->mom[MY]);
-    player->bob >>= 2;
+        (pmo->mom[MX] * pmo->mom[MX]) + (pmo->mom[MY] * pmo->mom[MY]);
+    player->bob /= 2;
     if(player->bob > MAXBOB)
         player->bob = MAXBOB;
 
     // When flying, don't bob the view.
-    if((pmo->flags2 & MF2_FLY) && pmo->pos[VZ] > FLT2FIX(pmo->floorz))
+    if((pmo->flags2 & MF2_FLY) && pmo->pos[VZ] > pmo->floorz)
     {
-        player->bob = FRACUNIT / 2;
+        player->bob = 1.0f / 2;
     }
 
 #if __JHERETIC__ || __JHEXEN__
@@ -98,18 +102,19 @@ void P_CalcHeight(player_t *player)
         morphed = true;
 #endif
 
-    // During demo playback the view is thought to be airborne
-    // if viewheight is zero (Cl_MoveLocalPlayer).
+    // During demo playback the view is thought to be airborne if viewheight
+    // is zero (Cl_MoveLocalPlayer).
     if(Get(DD_PLAYBACK))
         airborne = !dplay->viewheight;
     else
-        airborne = pmo->pos[VZ] > FLT2FIX(pmo->floorz);    // Truly in the air?
+        airborne = pmo->pos[VZ] > pmo->floorz; // Truly in the air?
 
     // Should view bobbing be done?
     if(setz)
-    {
-        if(P_IsCamera(dplay->mo) /*$democam*/ || (dplay->flags & DDPF_CHASECAM)
-           || (P_GetPlayerCheats(player) & CF_NOMOMENTUM) || airborne || morphed)    // Morphed players don't bob their view.
+    {   // Morphed players don't bob their view.
+        if(P_IsCamera(dplay->mo) /*$democam*/ ||
+           (dplay->flags & DDPF_CHASECAM) || airborne || morphed ||
+           (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
         {
             // Reduce the bob offset to zero.
             target = 0;
@@ -117,7 +122,7 @@ void P_CalcHeight(player_t *player)
         else
         {
             angle_t angle = (FINEANGLES / 20 * leveltime) & FINEMASK;
-            target = cfg.bobView * FIX2FLT(FixedMul(player->bob / 2, finesine[angle]));
+            target = cfg.bobView * ((player->bob / 2) * FIX2FLT(finesine[angle]));
         }
 
         // Do the change gradually.
@@ -141,6 +146,7 @@ void P_CalcHeight(player_t *player)
             else
                 zOffset = target;
         }
+
         DD_SetVariable(DD_VIEWZ_OFFSET, &zOffset);
 
         // The aircounter will soften the touchdown after a fall.
@@ -150,8 +156,8 @@ void P_CalcHeight(player_t *player)
     }
 
     // Should viewheight be moved? Not if camera or we're in demo.
-    if(!((P_GetPlayerCheats(player) & CF_NOMOMENTUM) || P_IsCamera(pmo) /*$democam*/ ||
-         Get(DD_PLAYBACK)))
+    if(!((P_GetPlayerCheats(player) & CF_NOMOMENTUM) ||
+        P_IsCamera(pmo) /*$democam*/ || Get(DD_PLAYBACK)))
     {
         // Move viewheight.
         if(player->playerstate == PST_LIVE)
@@ -163,12 +169,13 @@ void P_CalcHeight(player_t *player)
                 dplay->viewheight = VIEW_HEIGHT;
                 dplay->deltaviewheight = 0;
             }
-            if(dplay->viewheight < VIEW_HEIGHT / 2.0f)
+            else if(dplay->viewheight < VIEW_HEIGHT / 2.0f)
             {
                 dplay->viewheight = VIEW_HEIGHT / 2.0f;
                 if(dplay->deltaviewheight <= 0)
                     dplay->deltaviewheight = 1;
             }
+
             if(dplay->deltaviewheight)
             {
                 dplay->deltaviewheight += 0.25f;
@@ -179,23 +186,23 @@ void P_CalcHeight(player_t *player)
     }
 
     // Set the player's eye-level Z coordinate.
-    dplay->viewZ = FIX2FLT(pmo->pos[VZ]) +
+    dplay->viewZ = pmo->pos[VZ] +
                      (P_IsCamera(pmo)? 0 : dplay->viewheight);
 
-    // During demo playback (or camera mode) the viewz will not be
-    // modified any further.
-    if(!(Get(DD_PLAYBACK) || P_IsCamera(pmo) || (dplay->flags & DDPF_CHASECAM)))
+    // During demo playback (or camera mode) the viewz will not be modified
+    // any further.
+    if(!(Get(DD_PLAYBACK) || P_IsCamera(pmo) ||
+       (dplay->flags & DDPF_CHASECAM)))
     {
         if(morphed)
-        {
-            // Chicken or pig.
+        {   // Chicken or pig.
             dplay->viewZ -= 20;
         }
+
         // Foot clipping is done for living players.
         if(player->playerstate != PST_DEAD)
         {
-            // Foot clipping is done for living players.
-            if(pmo->floorclip && FIX2FLT(pmo->pos[VZ]) <= pmo->floorz)
+            if(pmo->floorclip && pmo->pos[VZ] <= pmo->floorz)
             {
                 dplay->viewZ -= pmo->floorclip;
             }

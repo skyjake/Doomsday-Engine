@@ -21,7 +21,7 @@
  */
 
 /**
- * Compiles for jDoom/jHeretic/jHexen
+ * p_start.c
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -53,19 +53,20 @@
 #include "p_mapsetup.h"
 #include "d_net.h"
 #include "p_map.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 
 #if __JDOOM__ || __JHERETIC__
-#  define TELEPORTSOUND   sfx_telept
-#  define MAX_START_SPOTS 4 // Maximum number of different player starts.
+#  define TELEPORTSOUND     sfx_telept
+#  define MAX_START_SPOTS   4 // Maximum number of different player starts.
 #else
-#  define TELEPORTSOUND   SFX_TELEPORT
-#  define MAX_START_SPOTS 8
+#  define TELEPORTSOUND     SFX_TELEPORT
+#  define MAX_START_SPOTS   8
 #endif
 
 // Time interval for item respawning.
-#define ITEMQUESIZE     128
+#define ITEMQUESIZE         128
 
 // TYPES -------------------------------------------------------------------
 
@@ -80,13 +81,13 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Maintain single and multi player starting spots.
-thing_t  deathmatchstarts[MAX_DM_STARTS];
-thing_t *deathmatch_p;
+spawnspot_t  deathmatchstarts[MAX_DM_STARTS];
+spawnspot_t *deathmatch_p;
 
-thing_t *playerstarts;
+spawnspot_t *playerstarts;
 int      numPlayerStarts = 0;
 
-thing_t *things;
+spawnspot_t *things;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -150,7 +151,7 @@ void P_Init(void)
 #endif
 }
 
-int P_RegisterPlayerStart(thing_t * mthing)
+int P_RegisterPlayerStart(spawnspot_t *mthing)
 {
     // Enough room?
     if(++numPlayerStarts > numPlayerStartsMax)
@@ -161,11 +162,11 @@ int P_RegisterPlayerStart(thing_t * mthing)
             numPlayerStartsMax = numPlayerStarts;
 
         playerstarts =
-            Z_Realloc(playerstarts, sizeof(thing_t) * numPlayerStartsMax, PU_LEVEL);
+            Z_Realloc(playerstarts, sizeof(spawnspot_t) * numPlayerStartsMax, PU_LEVEL);
     }
 
     // Copy the properties of this thing
-    memcpy(&playerstarts[numPlayerStarts -1], mthing, sizeof(thing_t));
+    memcpy(&playerstarts[numPlayerStarts -1], mthing, sizeof(spawnspot_t));
     return numPlayerStarts; // == index + 1
 }
 
@@ -188,7 +189,7 @@ void P_DealPlayerStarts(int group)
 {
     int     i, k;
     player_t *pl;
-    thing_t *mt;
+    spawnspot_t *mt;
     int     spotNumber;
 
     if(!numPlayerStarts)
@@ -204,7 +205,7 @@ void P_DealPlayerStarts(int group)
         spotNumber = i % MAX_START_SPOTS;
         pl->startspot = -1;
 
-        for(k = 0, mt = playerstarts; k < numPlayerStarts; k++, mt++)
+        for(k = 0, mt = playerstarts; k < numPlayerStarts; ++k, mt++)
         {
             if(spotNumber == mt->type - 1)
             {
@@ -222,8 +223,7 @@ void P_DealPlayerStarts(int group)
         // If still without a start spot, assign one randomly.
         if(pl->startspot == -1)
         {
-            // It's likely that some players will get the same start
-            // spots.
+            // It's likely that some players will get the same start spots.
             pl->startspot = M_Random() % numPlayerStarts;
         }
     }
@@ -231,10 +231,11 @@ void P_DealPlayerStarts(int group)
     if(IS_NETGAME)
     {
         Con_Printf("Player starting spots:\n");
-        for(i = 0, pl = players; i < MAXPLAYERS; i++, pl++)
+        for(i = 0, pl = players; i < MAXPLAYERS; ++i, pl++)
         {
             if(!pl->plr->ingame)
                 continue;
+
             Con_Printf("- pl%i: color %i, spot %i\n", i, cfg.playerColor[i],
                        pl->startspot);
         }
@@ -242,17 +243,17 @@ void P_DealPlayerStarts(int group)
 }
 
 /**
- * Returns false if the player cannot be respawned
- * at the given thing_t spot because something is occupying it
+ * Returns false if the player cannot be respawned at the given spawnspot_t
+ * spot because something is occupying it
  */
-boolean P_CheckSpot(int playernum, thing_t *mthing, boolean doTeleSpark)
+boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
 {
-    fixed_t     pos[3];
+    float       pos[3];
     ddplayer_t *ddplyr = players[playernum].plr;
     boolean     using_dummy = false;
 
-    pos[VX] = mthing->x << FRACBITS;
-    pos[VY] = mthing->y << FRACBITS;
+    pos[VX] = mthing->pos[VX];
+    pos[VY] = mthing->pos[VY];
 
     if(!ddplyr->mo)
     {
@@ -263,7 +264,7 @@ boolean P_CheckSpot(int playernum, thing_t *mthing, boolean doTeleSpark)
 
     ddplyr->mo->flags2 &= ~MF2_PASSMOBJ;
 
-    if(!P_CheckPosition(ddplyr->mo, pos[VX], pos[VY]))
+    if(!P_CheckPosition2f(ddplyr->mo, pos[VX], pos[VY]))
     {
         ddplyr->mo->flags2 |= MF2_PASSMOBJ;
 
@@ -286,15 +287,15 @@ boolean P_CheckSpot(int playernum, thing_t *mthing, boolean doTeleSpark)
     G_QueueBody(ddplyr->mo);
 #endif
 
-    if(doTeleSpark) // spawn a teleport fog
+    if(doTeleSpark) // Spawn a teleport fog
     {
-        mobj_t *mo;
-        fixed_t an = (ANG45 * (mthing->angle / 45)) >> ANGLETOFINESHIFT;
+        mobj_t     *mo;
+        uint        an = mthing->angle >> ANGLETOFINESHIFT;
 
-        mo = P_SpawnTeleFog(pos[VX] + 20 * finecosine[an],
-                            pos[VY] + 20 * finesine[an]);
+        mo = P_SpawnTeleFog(pos[VX] + 20 * FIX2FLT(finecosine[an]),
+                            pos[VY] + 20 * FIX2FLT(finesine[an]));
 
-        // don't start sound on first frame
+        // Don't start sound on first frame.
         if(players[consoleplayer].plr->viewZ != 1)
             S_StartSound(TELEPORTSOUND, mo);
     }
@@ -306,11 +307,11 @@ boolean P_CheckSpot(int playernum, thing_t *mthing, boolean doTeleSpark)
  * Try to spawn close to the mapspot. Returns false if no clear spot
  * was found.
  */
-boolean P_FuzzySpawn(thing_t * spot, int playernum, boolean doTeleSpark)
+boolean P_FuzzySpawn(spawnspot_t *spot, int playernum, boolean doTeleSpark)
 {
     int     i, k, x, y;
     int     offset = 33;        // Player radius = 16
-    thing_t place;
+    spawnspot_t place;
 
     // Try some spots in the vicinity.
     for(i = 0; i < 9; i++)
@@ -323,8 +324,8 @@ boolean P_FuzzySpawn(thing_t * spot, int playernum, boolean doTeleSpark)
             // Move a bit.
             x = k % 3 - 1;
             y = k / 3 - 1;
-            place.x += x * offset;
-            place.y += y * offset;
+            place.pos[VX] += x * offset;
+            place.pos[VY] += y * offset;
         }
 
         if(P_CheckSpot(playernum, &place, doTeleSpark))
@@ -347,13 +348,13 @@ boolean P_FuzzySpawn(thing_t * spot, int playernum, boolean doTeleSpark)
  */
 void P_SpawnThings(void)
 {
-    int i;
-    thing_t *th;
+    int         i;
+    spawnspot_t    *th;
 #if __JDOOM__
-    boolean spawn;
+    boolean     spawn;
 #elif __JHEXEN__
-    int     playerCount;
-    int     deathSpotsCount;
+    int         playerCount;
+    int         deathSpotsCount;
 #endif
 
     for(i = 0; i < numthings; ++i)
@@ -390,15 +391,13 @@ void P_SpawnThings(void)
 #if __JHEXEN__
     // \fixme This stuff should be moved!
     P_CreateTIDList();
-    P_InitCreatureCorpseQueue(false);   // false = do NOT scan for corpses
+    P_InitCreatureCorpseQueue(false); // false = do NOT scan for corpses
 
     if(!deathmatch)
-    {                           // Don't need to check deathmatch spots
-        return;
-    }
+        return; // Don't need to check deathmatch spots.
 
     playerCount = 0;
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->ingame)
             playerCount++;
@@ -422,12 +421,12 @@ void P_SpawnThings(void)
  */
 void P_SpawnPlayers(void)
 {
-    int     i;
+    int         i;
 
     // If deathmatch, randomly spawn the active players.
     if(deathmatch)
     {
-        for(i = 0; i < MAXPLAYERS; i++)
+        for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->ingame)
             {
                 players[i].plr->mo = NULL;
@@ -439,9 +438,10 @@ void P_SpawnPlayers(void)
 #ifdef __JDOOM__
         if(!IS_NETGAME)
         {
-            /** \fixme Spawn all unused player starts. This will create 'zombies'.
-            * FIXME: Also in netgames?
-	    */
+            /**
+             *\fixme Spawn all unused player starts. This will create 'zombies'.
+             * Also in netgames?
+	         */
             for(i = 0; i < numPlayerStarts; ++i)
                 if(players[0].startspot != i && playerstarts[i].type == 1)
                 {
@@ -451,7 +451,7 @@ void P_SpawnPlayers(void)
 #endif
         // Spawn everybody at their assigned places.
         // Might get messy if there aren't enough starts.
-        for(i = 0; i < MAXPLAYERS; i++)
+        for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->ingame)
             {
                 ddplayer_t *ddpl = players[i].plr;
@@ -467,26 +467,25 @@ void P_SpawnPlayers(void)
 }
 
 /**
- *  Spawns the given player at a dummy place.
+ * Spawns the given player at a dummy place.
  */
 void G_DummySpawnPlayer(int playernum)
 {
-    thing_t faraway;
+    spawnspot_t     faraway;
 
-    faraway.x = faraway.y = DDMAXSHORT;
-    faraway.angle = (short) 0;
+    faraway.pos[VX] = faraway.pos[VY] = 0;
+    faraway.angle = 0;
     P_SpawnPlayer(&faraway, playernum);
 }
 
 /**
- * Spawns a player at one of the random death match spots
- * called at level load and each death
+ * Spawns a player at one of the random death match spots.
  */
 void G_DeathMatchSpawnPlayer(int playernum)
 {
-    int     i = 0, j;
-    int     selections;
-    boolean using_dummy = false;
+    int         i = 0, j;
+    int         selections;
+    boolean     using_dummy = false;
     ddplayer_t *pl = players[playernum].plr;
 
     // Spawn player initially at a distant location.
@@ -501,7 +500,7 @@ void G_DeathMatchSpawnPlayer(int playernum)
     if(selections < 2)
         Con_Error("Only %i deathmatch spots, 2 required", selections);
 
-    for(j = 0; j < 20; j++)
+    for(j = 0; j < 20; ++j)
     {
         i = P_Random() % selections;
         if(P_CheckSpot(playernum, &deathmatchstarts[i], true))
@@ -529,19 +528,18 @@ void G_DeathMatchSpawnPlayer(int playernum)
 }
 
 /**
- * Returns the correct start for the player. The start
- * is in the given group, or zero if no such group exists.
+ * Returns the correct start for the player. The start is in the given
+ * group, or zero if no such group exists.
  *
  * With jDoom groups arn't used at all.
  */
-thing_t *P_GetPlayerStart(int group, int pnum)
+spawnspot_t *P_GetPlayerStart(int group, int pnum)
 {
 #if __JDOOM__ || __JHERETIC__
     return &playerstarts[players[pnum].startspot];
 #else
-    int i;
-
-    thing_t *mt, *g0choice = NULL;
+    int         i;
+    spawnspot_t    *mt, *g0choice = NULL;
 
     for(i = 0; i < numPlayerStarts; ++i)
     {
@@ -552,22 +550,22 @@ thing_t *P_GetPlayerStart(int group, int pnum)
         if(!mt->arg1 && mt->type - 1 == pnum)
             g0choice = mt;
     }
+
     // Return the group zero choice.
     return g0choice;
 #endif
 }
 
 #if __JHERETIC__ || __JHEXEN__
-fixed_t P_PointLineDistance(line_t *line, fixed_t x, fixed_t y,
-                            fixed_t *offset)
+float P_PointLineDistance(line_t *line, float x, float y, float *offset)
 {
     float   a[2], b[2], c[2], d[2], len;
 
     P_GetFloatpv(line, DMU_VERTEX1_XY, a);
     P_GetFloatpv(line, DMU_VERTEX2_XY, b);
 
-    c[VX] = FIX2FLT(x);
-    c[VY] = FIX2FLT(y);
+    c[VX] = x;
+    c[VY] = y;
 
     d[VX] = b[VX] - a[VX];
     d[VY] = b[VY] - a[VY];
@@ -575,10 +573,10 @@ fixed_t P_PointLineDistance(line_t *line, fixed_t x, fixed_t y,
 
     if(offset)
         *offset =
-            FRACUNIT * ((a[VY] - c[VY]) * (a[VY] - b[VY]) -
-                        (a[VX] - c[VX]) * (b[VX] - a[VX])) / len;
-    return FRACUNIT * ((a[VY] - c[VY]) * (b[VX] - a[VX]) -
-                       (a[VX] - c[VX]) * (b[VY] - a[VY])) / len;
+            ((a[VY] - c[VY]) * (a[VY] - b[VY]) -
+             (a[VX] - c[VX]) * (b[VX] - a[VX])) / len;
+    return ((a[VY] - c[VY]) * (b[VX] - a[VX]) -
+            (a[VX] - c[VX]) * (b[VY] - a[VY])) / len;
 }
 #endif
 
@@ -596,7 +594,7 @@ void P_MoveThingsOutOfWalls(void)
     uint        i, l;
     int         k, t;
     line_t     *closestline = NULL, *li;
-    fixed_t     closestdist = 0, dist, off, linelen, minrad;
+    float       closestdist = 0, dist, off, linelen, minrad;
     mobj_t     *tlist[MAXLIST];
 
     for(i = 0; i < numsectors; ++i)
@@ -605,7 +603,7 @@ void P_MoveThingsOutOfWalls(void)
         memset(tlist, 0, sizeof(tlist));
 
         // First all the things to process.
-        for(k = 0, iter = P_GetPtrp(sec, DMU_THINGS);
+        for(k = 0, iter = P_GetPtrp(sec, DMT_MOBJS);
             k < MAXLIST - 1 && iter; iter = iter->snext)
         {
             // Wall torches are most often seen inside walls.
@@ -627,8 +625,8 @@ void P_MoveThingsOutOfWalls(void)
                 if(P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
                 linelen =
-                    P_ApproxDistance(P_GetFixedp(li, DMU_DX),
-                                     P_GetFixedp(li, DMU_DY));
+                    P_ApproxDistance(P_GetFloatp(li, DMU_DX),
+                                     P_GetFloatp(li, DMU_DY));
                 dist = P_PointLineDistance(li, iter->pos[VX], iter->pos[VY], &off);
                 if(off > -minrad && off < linelen + minrad &&
                    (!closestline || dist < closestdist) && dist >= 0)
@@ -637,21 +635,24 @@ void P_MoveThingsOutOfWalls(void)
                     closestline = li;
                 }
             }
+
             if(closestline && closestdist < minrad)
             {
-                float   dx, dy, offlen = FIX2FLT(minrad - closestdist);
+                float   dx, dy, offlen = minrad - closestdist;
                 float   len;
 
                 li = closestline;
                 dy = -P_GetFloatp(li, DMU_DX);
                 dx = P_GetFloatp(li, DMU_DY);
+
                 len = sqrt(dx * dx + dy * dy);
                 dx *= offlen / len;
                 dy *= offlen / len;
-                P_UnsetThingPosition(iter);
-                iter->pos[VX] += FRACUNIT * dx;
-                iter->pos[VY] += FRACUNIT * dy;
-                P_SetThingPosition(iter);
+
+                P_UnsetMobjPosition(iter);
+                iter->pos[VX] += dx;
+                iter->pos[VY] += dy;
+                P_SetMobjPosition(iter);
             }
         }
     }
@@ -663,13 +664,14 @@ void P_MoveThingsOutOfWalls(void)
 void P_TurnGizmosAwayFromDoors(void)
 {
 #define MAXLIST 200
+
     sector_t   *sec;
     mobj_t     *iter;
     uint        i, l;
     int         k, t;
     line_t     *closestline = NULL, *li;
     xline_t    *xli;
-    fixed_t     closestdist = 0, dist, off, linelen;    //, minrad;
+    float       closestdist = 0, dist, off, linelen;    //, minrad;
     mobj_t     *tlist[MAXLIST];
 
     for(i = 0; i < numsectors; ++i)
@@ -678,11 +680,12 @@ void P_TurnGizmosAwayFromDoors(void)
         memset(tlist, 0, sizeof(tlist));
 
         // First all the things to process.
-        for(k = 0, iter = P_GetPtrp(sec, DMU_THINGS);
+        for(k = 0, iter = P_GetPtrp(sec, DMT_MOBJS);
             k < MAXLIST - 1 && iter; iter = iter->snext)
         {
-            if(iter->type == MT_KEYGIZMOBLUE || iter->type == MT_KEYGIZMOGREEN
-               || iter->type == MT_KEYGIZMOYELLOW)
+            if(iter->type == MT_KEYGIZMOBLUE ||
+               iter->type == MT_KEYGIZMOGREEN ||
+               iter->type == MT_KEYGIZMOYELLOW)
                 tlist[k++] = iter;
         }
 
@@ -697,32 +700,33 @@ void P_TurnGizmosAwayFromDoors(void)
                 if(P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
 
-                xli = P_XLine(li);
+                xli = P_ToXLine(li);
 
                 // It must be a special line with a back sector.
-                if((xli->special != 32 && xli->special != 33 && xli->special != 34
-                    && xli->special != 26 && xli->special != 27 &&
-                    xli->special != 28))
+                if((xli->special != 32 && xli->special != 33 &&
+                    xli->special != 34 && xli->special != 26 &&
+                    xli->special != 27 && xli->special != 28))
                     continue;
 
                 linelen =
-                    P_ApproxDistance(P_GetFixedp(li, DMU_DX),
-                                     P_GetFixedp(li, DMU_DY));
+                    P_ApproxDistance(P_GetFloatp(li, DMU_DX),
+                                     P_GetFloatp(li, DMU_DY));
 
-                dist = abs(P_PointLineDistance(li, iter->pos[VX], iter->pos[VY], &off));
+                dist = fabs(P_PointLineDistance(li, iter->pos[VX], iter->pos[VY], &off));
                 if(!closestline || dist < closestdist)
                 {
                     closestdist = dist;
                     closestline = li;
                 }
             }
+
             if(closestline)
             {
                 iter->angle =
-                    R_PointToAngle2(P_GetFixedp(closestline, DMU_VERTEX1_X),
-                                    P_GetFixedp(closestline, DMU_VERTEX1_Y),
-                                    P_GetFixedp(closestline, DMU_VERTEX2_X),
-                                    P_GetFixedp(closestline, DMU_VERTEX2_Y)) - ANG90;
+                    R_PointToAngle2(P_GetFloatp(closestline, DMU_VERTEX1_X),
+                                    P_GetFloatp(closestline, DMU_VERTEX1_Y),
+                                    P_GetFloatp(closestline, DMU_VERTEX2_X),
+                                    P_GetFloatp(closestline, DMU_VERTEX2_Y)) - ANG90;
             }
         }
     }
@@ -742,7 +746,7 @@ void P_TurnTorchesToFaceWalls(void)
     uint        i, l;
     int         k, t;
     line_t     *closestline = NULL, *li;
-    fixed_t     closestdist = 0, dist, off, linelen, minrad;
+    float       closestdist = 0, dist, off, linelen, minrad;
     mobj_t     *tlist[MAXLIST];
 
     for(i = 0; i < numsectors; ++i)
@@ -751,7 +755,7 @@ void P_TurnTorchesToFaceWalls(void)
         memset(tlist, 0, sizeof(tlist));
 
         // First all the things to process.
-        for(k = 0, iter = P_GetPtrp(sec, DMU_THINGS);
+        for(k = 0, iter = P_GetPtrp(sec, DMT_MOBJS);
             k < MAXLIST - 1 && iter; iter = iter->snext)
         {
             if(iter->type == MT_ZWALLTORCH ||
@@ -771,9 +775,10 @@ void P_TurnTorchesToFaceWalls(void)
                 li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | l);
                 if(P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
+
                 linelen =
-                    P_ApproxDistance(P_GetFixedp(li, DMU_DX),
-                                     P_GetFixedp(li, DMU_DY));
+                    P_ApproxDistance(P_GetFloatp(li, DMU_DX),
+                                     P_GetFloatp(li, DMU_DY));
                 dist = P_PointLineDistance(li, iter->pos[VX], iter->pos[VY], &off);
                 if(off > -minrad && off < linelen + minrad &&
                    (!closestline || dist < closestdist) && dist >= 0)
@@ -785,10 +790,10 @@ void P_TurnTorchesToFaceWalls(void)
             if(closestline && closestdist < minrad)
             {
                 iter->angle =
-                    R_PointToAngle2(P_GetFixedp(closestline, DMU_VERTEX1_X),
-                                    P_GetFixedp(closestline, DMU_VERTEX1_Y),
-                                    P_GetFixedp(closestline, DMU_VERTEX2_X),
-                                    P_GetFixedp(closestline, DMU_VERTEX2_Y)) - ANG90;
+                    R_PointToAngle2(P_GetFloatp(closestline, DMU_VERTEX1_X),
+                                    P_GetFloatp(closestline, DMU_VERTEX1_Y),
+                                    P_GetFloatp(closestline, DMU_VERTEX2_X),
+                                    P_GetFloatp(closestline, DMU_VERTEX2_Y)) - ANG90;
             }
         }
     }

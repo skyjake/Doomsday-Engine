@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_common.c : Common routines for refresh.
  */
 
@@ -116,7 +116,7 @@ void R_SetViewWindowTarget(int x, int y, int w, int h)
     targetHeight = h;
 }
 
-/*
+/**
  * Animates the game view window towards the target values.
  */
 void R_ViewWindowTicker(void)
@@ -156,7 +156,7 @@ boolean R_IsFullScreenViewWindow(void)
 
 /**
  * Does the given display player's automap obscure the window completely?
- * NOTE: Window dimensions are in fixed scale {x} 0 - 320, {y} 0 - 200.
+ * \note: Window dimensions are in fixed scale {x} 0 - 320, {y} 0 - 200.
  *
  * @param playerid  Index of the player whose map to check.
  * @param x         Top left X coordinate.
@@ -164,8 +164,8 @@ boolean R_IsFullScreenViewWindow(void)
  * @param w         Width.
  * @param h         Height.
  *
- * @return          <code>true</code> if there is no point in the given
- *                  window which is even partially visible.
+ * @return          @true if there is no point within the given window
+ *                  which is even partially visible.
  */
 boolean R_MapObscures(int playerid, int x, int y, int w, int h)
 {
