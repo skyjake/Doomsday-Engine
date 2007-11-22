@@ -66,6 +66,7 @@
 #include "p_player.h"
 #include "g_controls.h"
 #include "p_saveg.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2240,7 +2241,7 @@ void M_LoadSelect(int option, void *data)
 #if __JDOOM__ || __JHERETIC__
     char        name[256];
 
-    SV_SaveGameFile(option, name);
+    SV_GetSaveGameFileName(option, name);
     G_LoadGame(name);
 #else
     G_LoadGame(option);
@@ -2567,7 +2568,7 @@ void M_ReadSaveStrings(void)
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        SV_SaveGameFile(i, name);
+        SV_GetSaveGameFileName(i, name);
         if(!SV_GetSaveDescription(name, savegamestrings[i]))
         {
             strcpy(savegamestrings[i], EMPTYSTRING);

@@ -24,7 +24,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_mapspec.c:
  *
  * Line Tag handling. Line and Sector groups. Specialized iteration
@@ -87,7 +87,7 @@ static int numSectorTagLists = 0;
  */
 void P_DestroyLineTagLists(void)
 {
-    int     i;
+    int         i;
 
     if(numLineTagLists == 0)
         return;
@@ -109,7 +109,7 @@ void P_DestroyLineTagLists(void)
 iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
 {
     int         i;
-    taglist_t *tagList;
+    taglist_t  *tagList;
 
     // Do we have an existing list for this tag?
     for(i = 0; i < numLineTagLists; ++i)
@@ -133,7 +133,7 @@ iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
  */
 void P_DestroySectorTagLists(void)
 {
-    int     i;
+    int         i;
 
     if(numSectorTagLists == 0)
         return;
@@ -245,10 +245,10 @@ float P_FindHighestFloorSurrounding(sector_t *sec)
 }
 
 /**
- * Passed a sector and a floor height, returns the fixed point value
- * of the smallest floor height in a surrounding sector larger than
- * the floor height passed. If no such height exists the floorheight
- * passed is returned.
+ * Passed a sector and a floor height, returns the fixed point value of the
+ * smallest floor height in a surrounding sector larger than the floor
+ * height passed. If no such height exists the floor height passed is
+ * returned.
  *
  * DJS - Rewritten using Lee Killough's algorithm for avoiding the
  *       the fixed array.
@@ -350,7 +350,7 @@ float P_FindHighestCeilingSurrounding(sector_t *sec)
 }
 
 /**
- * Find minimum light from an adjacent sector
+ * Find minimum light from an adjacent sector.
  */
 float P_FindMinSurroundingLight(sector_t *sec, float min)
 {

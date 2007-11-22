@@ -27,7 +27,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_doors.c : Vertical doors (opening/closing).
  */
 
@@ -106,7 +106,7 @@ void T_VerticalDoor(vldoor_t *door)
     xsector_t *xsec;
     result_e res;
 
-    xsec = P_XSector(door->sector);
+    xsec = P_ToXSector(door->sector);
 
     switch(door->direction)
     {
@@ -187,7 +187,7 @@ void T_VerticalDoor(vldoor_t *door)
 #if __DOOM64TC__
             case instantRaise:  //d64tc
             case instantClose:  //d64tc
-                P_XSector(door->sector)->specialdata = NULL;
+                P_ToXSector(door->sector)->specialdata = NULL;
                 P_RemoveThinker(&door->thinker);  // unlink and free
                 break;
 #endif
@@ -208,7 +208,7 @@ void T_VerticalDoor(vldoor_t *door)
             case close:
                 xsec->specialdata = NULL;
 #if __JHEXEN__
-                P_TagFinished(P_XSector(door->sector)->tag);
+                P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
                 P_RemoveThinker(&door->thinker);    // unlink and free
 #if __JHERETIC__
@@ -288,7 +288,7 @@ void T_VerticalDoor(vldoor_t *door)
             case open:
                 xsec->specialdata = NULL;
 #if __JHEXEN__
-                P_TagFinished(P_XSector(door->sector)->tag);
+                P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
                 P_RemoveThinker(&door->thinker);    // unlink and free
 #if __JHERETIC__
@@ -323,7 +323,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
 
         if(xsec->specialdata)
             continue;
@@ -342,7 +342,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
         door->speed = speed;
 
 #if __JHEXEN__
-        sound = SEQ_DOOR_STONE + P_XSector(door->sector)->seqType;
+        sound = SEQ_DOOR_STONE + P_ToXSector(door->sector)->seqType;
 #else
         sound = 0;
 #endif
@@ -429,20 +429,20 @@ int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
 #else
 int EV_DoDoor(line_t *line, vldoor_e type)
 {
-    return EV_DoDoor2(P_XLine(line)->tag, VDOORSPEED, VDOORWAIT, type);
+    return EV_DoDoor2(P_ToXLine(line)->tag, VDOORSPEED, VDOORWAIT, type);
 }
 #endif
 
 /**
  * Checks whether the given linedef is a locked door.
- * If locked and the player IS ABLE to open it, return <code>true</code>.
+ * If locked and the player IS ABLE to open it, return @c true.
  * If locked and the player IS NOT ABLE to open it, send an appropriate
- * message and play a sound before returning <code>false</code>.
- * Else, NOT a locked door and can be opened, return <code>true</code> 
+ * message and play a sound before returning @c false.
+ * Else, NOT a locked door and can be opened, return @c true.
  */
 static boolean tryLockedDoor(line_t *line, player_t *p)
 {
-    xline_t *xline = P_XLine(line);
+    xline_t *xline = P_ToXLine(line);
 
     if(!p || !xline)
         return false;
@@ -518,14 +518,14 @@ static boolean tryLockedDoor(line_t *line, player_t *p)
 
 /**
  * Checks whether the given linedef is a locked manual door.
- * If locked and the player IS ABLE to open it, return <code>true</code>.
+ * If locked and the player IS ABLE to open it, return @c true.
  * If locked and the player IS NOT ABLE to open it, send an appropriate
- * message and play a sound before returning <code>false</code>.
- * Else, NOT a locked door and can be opened, return <code>true</code> 
+ * message and play a sound before returning @c false.
+ * Else, NOT a locked door and can be opened, return @c true.
  */
 static boolean tryLockedManualDoor(line_t *line, player_t *p)
 {
-    xline_t *xline = P_XLine(line);
+    xline_t *xline = P_ToXLine(line);
 
     if(!p || !xline)
         return false;
@@ -612,7 +612,7 @@ static boolean tryLockedManualDoor(line_t *line, player_t *p)
 }
 
 /**
- * Move a locked door up/down
+ * Move a locked door up/down.
  */
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
 int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
@@ -629,7 +629,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
  */
 boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
 {
-    xline_t *xline = P_XLine(line);
+    xline_t *xline = P_ToXLine(line);
     xsector_t *xsec;
     sector_t *sec;
     vldoor_t *door;
@@ -638,7 +638,7 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     if(!sec)
         return false;
 
-    xsec = P_XSector(sec);
+    xsec = P_ToXSector(sec);
 
     if(!tryLockedManualDoor(line, thing->player))
         return false;
@@ -693,7 +693,7 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     // Play a sound?
 #if __JHEXEN__
     SN_StartSequence(P_SectorSoundOrigin(door->sector),
-                     SEQ_DOOR_STONE + P_XSector(door->sector)->seqType);
+                     SEQ_DOOR_STONE + P_ToXSector(door->sector)->seqType);
 #else
     switch(xline->special)
     {
@@ -809,8 +809,8 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
 
     P_AddThinker(&door->thinker);
 
-    P_XSector(sec)->specialdata = door;
-    P_XSector(sec)->special = 0;
+    P_ToXSector(sec)->specialdata = door;
+    P_ToXSector(sec)->special = 0;
 
     door->thinker.function = T_VerticalDoor;
     door->sector = sec;
@@ -828,8 +828,8 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
 
     P_AddThinker(&door->thinker);
 
-    P_XSector(sec)->specialdata = door;
-    P_XSector(sec)->special = 0;
+    P_ToXSector(sec)->specialdata = door;
+    P_ToXSector(sec)->special = 0;
 
     door->thinker.function = T_VerticalDoor;
     door->sector = sec;
@@ -855,14 +855,14 @@ int EV_DoSplitDoor(line_t *line, int ftype, int ctype)
 
     floor = EV_DoFloor(line, ftype);
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return 0;
 
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        P_XSector(sec)->specialdata = 0;
+        P_ToXSector(sec)->specialdata = 0;
     }
 
     ceiling = EV_DoCeiling(line, ctype);

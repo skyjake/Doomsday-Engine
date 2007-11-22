@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Common code relating to actors, or "monsters".
+/**
+ * p_actor.c: Common code relating to actors, or "monsters".
  * Actor movement smoothing; the "Servo".
  */
 
@@ -45,8 +45,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MIN_STEP    ((10 * ANGLE_1) >> 16)  // degrees per tic
-#define MAX_STEP    (ANG90 >> 16)
+#define MIN_STEP        ((10 * ANGLE_1) >> 16)  // degrees per tic
+#define MAX_STEP        (ANG90 >> 16)
 
 // TYPES -------------------------------------------------------------------
 
@@ -64,28 +64,26 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * The actor has taken a step, set the corresponding short-range visual
  * offset.
  */
-void P_SetThingSRVO(mobj_t *mo, int stepx, int stepy)
+void P_SetThingSRVO(mobj_t *mo, float stepx, float stepy)
 {
-    // Shift to 8.8 fixed point.
-    mo->srvo[0] = (-stepx) >> 8;
-    mo->srvo[1] = (-stepy) >> 8;
+    mo->srvo[VX] = -stepx;
+    mo->srvo[VY] = -stepy;
 }
 
-/*
+/**
  * The actor has taken a step, set the corresponding short-range visual
  * offset.
  */
-void P_SetThingSRVOZ(mobj_t *mo, int stepz)
+void P_SetThingSRVOZ(mobj_t *mo, float stepz)
 {
-    // Shift to 8.8 fixed point.
-    mo->srvo[2] = (-stepz) >> 8;
+    mo->srvo[VZ] = -stepz;
 }
 
-/*
+/**
  * Turn visual angle towards real angle. An engine cvar controls whether
  * the visangle or the real angle is used in rendering.
  * Real-life analogy: angular momentum (you can't suddenly just take a
@@ -93,8 +91,8 @@ void P_SetThingSRVOZ(mobj_t *mo, int stepz)
  */
 void P_SRVOAngleTicker(mobj_t *mo)
 {
-    short   target, step, diff;
-    int     lstep, hgt;
+    short       target, step, diff;
+    int         lstep, hgt;
 
     // Check requirements.
     if(mo->flags & MF_MISSILE || !(mo->flags & MF_COUNTKILL))
@@ -124,6 +122,7 @@ void P_SRVOAngleTicker(mobj_t *mo)
             hgt = 30;
         if(hgt > 60)
             hgt = 60;
+
         lstep = abs(diff) * 8 / hgt;
         if(lstep < MIN_STEP)
             lstep = MIN_STEP;
@@ -141,22 +140,22 @@ void P_SRVOAngleTicker(mobj_t *mo)
         mo->visangle -= step;
 }
 
-/*
- * The thing's timer has run out, which means the thing has completed
- * its step. Or there has been a teleport.
+/**
+ * The thing's timer has run out, which means the thing has completed its
+ * step. Or there has been a teleport.
  */
 void P_ClearThingSRVO(mobj_t *mo)
 {
     memset(mo->srvo, 0, sizeof(mo->srvo));
 }
 
-/*
- * The first three bits of the selector special byte contain a
- * relative health level.
+/**
+ * The first three bits of the selector special byte contain a relative
+ * health level.
  */
 void P_UpdateHealthBits(mobj_t *mobj)
 {
-    int     i;
+    int         i;
 
     if(mobj->info && mobj->info->spawnhealth > 0)
     {

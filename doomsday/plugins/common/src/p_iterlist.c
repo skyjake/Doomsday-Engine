@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@
 /**
  * Allocate and initialize a new iterlist.
  *
- * @return      Ptr to the new list.
+ * @return          Ptr to the new list.
  */
 iterlist_t *P_CreateIterList(void)
 {
@@ -82,7 +82,7 @@ iterlist_t *P_CreateIterList(void)
 /**
  * Free any memory used by the iterlist.
  *
- * @param   list    Ptr to the list to be destroyed.
+ * @param list      Ptr to the list to be destroyed.
  */
 void P_DestroyIterList(iterlist_t *list)
 {
@@ -102,10 +102,10 @@ void P_DestroyIterList(iterlist_t *list)
 /**
  * Add the given object to iterlist.
  *
- * @param   list    Ptr to the list to add <code>obj</code> too.
- * @param   obj     Ptr to the object to be added to the list.
- * @return          The index of the object within <code>list</code> once
- *                  added, ELSE <code>-1</code>.
+ * @param list      Ptr to the list to add 'obj' too.
+ * @param obj       Ptr to the object to be added to the list.
+ * @return          The index of the object within 'list' once added,
+ *                  ELSE @c -1.
  */
 int P_AddObjectToIterList(iterlist_t *list, void *obj)
 {
@@ -126,8 +126,8 @@ int P_AddObjectToIterList(iterlist_t *list, void *obj)
 /**
  * Pop the top of the iterlist and return the next element.
  *
- * @param   list    Ptr to the list to be pop.
- * @return          Ptr to the next object in <code>list</code>.
+ * @param list      Ptr to the list to be pop.
+ * @return          Ptr to the next object in 'list'.
  */
 void* P_PopIterList(iterlist_t *list)
 {
@@ -143,7 +143,7 @@ void* P_PopIterList(iterlist_t *list)
 /**
  * Returns the next element in the iterlist.
  *
- * @param   list    Ptr to the list to iterate.
+ * @param list      Ptr to the list to iterate.
  * @return          The next object in the iterlist.
  */
 void* P_IterListIterator(iterlist_t *list)
@@ -170,8 +170,8 @@ void* P_IterListIterator(iterlist_t *list)
 /**
  * Returns the iterlist iterator to the beginning (the end).
  *
- * @param   list    Ptr to the list whoose iterator to reset.
- * @param   forward If <code>true</code> iteration will move forwards.
+ * @param list      Ptr to the list whoose iterator to reset.
+ * @param forward   @c true = iteration will move forwards.
  */
 void P_IterListResetIterator(iterlist_t *list, boolean forward)
 {
@@ -188,7 +188,7 @@ void P_IterListResetIterator(iterlist_t *list, boolean forward)
 /**
  * Empty the iterlist.
  *
- * @param   list    Ptr to the list to empty.
+ * @param list      Ptr to the list to empty.
  */
 void P_EmptyIterList(iterlist_t *list)
 {
@@ -201,7 +201,7 @@ void P_EmptyIterList(iterlist_t *list)
 /**
  * Return the size of the iterlist.
  *
- * @param   list    Ptr to the list to return the size of.
+ * @param list      Ptr to the list to return the size of.
  * @return          The size of the iterlist.
  */
 int P_IterListSize(iterlist_t *list)

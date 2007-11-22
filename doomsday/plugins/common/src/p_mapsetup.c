@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,19 +22,15 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_setup.c: Common map setup routines.
  * Management of extended map data objects (eg xlines) is done here
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#if __JHERETIC__ || __JHEXEN__
-#  include <math.h>
-# if __JHERETIC__
-#  include <ctype.h>              // has isspace
-# endif
-#endif
+#include <math.h>
+#include <ctype.h>  // has isspace
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -104,7 +100,7 @@ boolean levelSetup;
 /**
  * Converts a line to an xline.
  */
-xline_t* P_XLine(line_t *line)
+xline_t* P_ToXLine(line_t *line)
 {
     // Is it a dummy?
     if(P_IsDummy(line))
@@ -120,7 +116,7 @@ xline_t* P_XLine(line_t *line)
 /**
  * Converts a sector to an xsector.
  */
-xsector_t* P_XSector(sector_t *sector)
+xsector_t* P_ToXSector(sector_t *sector)
 {
     // Is it a dummy?
     if(P_IsDummy(sector))
@@ -134,9 +130,43 @@ xsector_t* P_XSector(sector_t *sector)
 }
 
 /**
+ * Given the index of an xline, return it.
+ *
+ * \note: This routine cannot be used with dummy lines!
+ *
+ * @param               Index of the xline to return.
+ *
+ * @return              Ptr to xline_t.
+ */
+xline_t* P_GetXLine(uint index)
+{
+    if(index >= numlines)
+        return NULL;
+
+    return &xlines[index];
+}
+
+/**
+ * Given the index of an xsector, return it.
+ *
+ * \note: This routine cannot be used with dummy sectors!
+ *
+ * @param               Index of the xsector to return.
+ *
+ * @return              Ptr to xsector_t.
+ */
+xsector_t* P_GetXSector(uint index)
+{
+    if(index >= numsectors)
+        return NULL;
+
+    return &xsectors[index];
+}
+
+/**
  * Given a subsector - find its parent xsector.
  */
-xsector_t* P_XSectorOfSubsector(subsector_t *sub)
+xsector_t* P_ToXSectorOfSubsector(subsector_t *sub)
 {
     sector_t* sec = P_GetPtrp(sub, DMU_SECTOR);
 
@@ -173,7 +203,7 @@ void P_SetupForMapData(int type, uint num)
         break;
 
     case DAM_THING:
-        things = Z_Calloc(num * sizeof(thing_t), PU_LEVEL, 0);
+        things = Z_Calloc(num * sizeof(spawnspot_t), PU_LEVEL, 0);
         break;
 
     default:
@@ -199,53 +229,56 @@ int P_SetupLevelWorker(void *ptr)
 # endif
 #endif
     char        levelId[9];
-    
-    // It begins
+
+    // It begins...
     levelSetup = true;
-    
+
     // The engine manages polyobjects, so reset the count.
     DD_SetInteger(DD_POLYOBJ_COUNT, 0);
     P_ResetWorldState();
-    
+
     // Let the engine know that we are about to start setting up a
     // level.
     R_SetupLevel(DDSLM_INITIALIZE, 0);
-    
+
     // Initialize The Logical Sound Manager.
     S_LevelChange();
-    
+
 #if __JHEXEN__
-    S_StartMusic("chess", true);    // Waiting-for-level-load song
+    S_StartMusic("chess", true); // Waiting-for-level-load song
 #endif
-    
+
     Z_FreeTags(PU_LEVEL, PU_PURGELEVEL - 1);
     P_InitThinkers();
-    
+
     P_GetMapLumpName(param->episode, param->map, levelId);
     if(!P_LoadMap(levelId))
     {
         Con_Error("P_SetupLevel: Failed loading map \"%s\".\n",levelId);
     }
-    
-    /** First job is to zero unused flags if MF_INVALID is set.
-    *
-    * \attention "This has been found to be necessary because of errors
-    *  in Ultimate DOOM's E2M7, where around 1000 linedefs have
-    *  the value 0xFE00 masked into the flags value.
-    *  There could potentially be many more maps with this problem,
-    *  as it is well-known that Hellmaker wads set all bits in
-    *  mapthings that it does not understand."
-    *  Thanks to Quasar for the heads up.
-    */
+
+    /**
+     * First job is to zero unused flags if MF_INVALID is set.
+     *
+     * \attention "This has been found to be necessary because of errors
+     *  in Ultimate DOOM's E2M7, where around 1000 linedefs have
+     *  the value 0xFE00 masked into the flags value.
+     *  There could potentially be many more maps with this problem,
+     *  as it is well-known that Hellmaker wads set all bits in
+     *  mapthings that it does not understand."
+     *  Thanks to Quasar for the heads up.
+     */
 #if !__JHEXEN__
-    /** \fixme This applies only to DOOM format maps but the game doesn't
-    * know what format the map is in (and shouldn't really) but the
-    * engine doesn't know if the game wants to do this...
-    */
+    /**
+     * \fixme This applies only to DOOM format maps but the game doesn't
+     * know what format the map is in (and shouldn't really) but the
+     * engine doesn't know if the game wants to do this...
+     */
 # if !__DOOM64TC__
-    /** \attention DJS - Can't do this with Doom64TC as it has used the ML_INVALID bit
-    * for another purpose... doh!
-    */
+    /**
+     * \attention DJS - Can't do this with Doom64TC as it has used the ML_INVALID bit
+     * for another purpose... doh!
+     */
     for(i = 0; i < numlines; ++i)
     {
         flags = P_GetInt(DMU_LINE, i, DMU_FLAGS);
@@ -257,83 +290,83 @@ int P_SetupLevelWorker(void *ptr)
     }
 # endif
 #endif
-    
+
 #if __JHERETIC__
     P_InitAmbientSound();
     P_InitMonsters();
     P_OpenWeapons();
 #endif
     P_SpawnThings();
-    
+
     // killough 3/26/98: Spawn icon landings:
 #if __JDOOM__
     if(gamemode == commercial)
         P_SpawnBrainTargets();
 #endif
-    
+
 #if __JHERETIC__
     P_CloseWeapons();
 #endif
-    
+
     /** DJS
-    * \todo This needs to be sorted out. R_SetupLevel should be called from the
-    * engine but in order to move it there we need to decide how polyobject
-    * init/setup is going to be handled.
-    */
+     * \todo This needs to be sorted out. R_SetupLevel should be called from the
+     * engine but in order to move it there we need to decide how polyobject
+     * init/setup is going to be handled.
+     */
 #if __JHEXEN__
     // Initialize polyobjs.
     Con_Message("Polyobject init\n");
     // \fixme Custom map data format support
     PO_Init(W_GetNumForName(levelId) + 1 /*ML_THINGS*/);   // Initialize the polyobjs
-    
+
     Con_Message("Load ACS scripts\n");
     // \fixme Custom map data format support
     P_LoadACScripts(W_GetNumForName(levelId) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif
-    
+
     P_DealPlayerStarts(0);
     P_SpawnPlayers();
-    
-    // set up world state
+
+    // Set up world state.
     P_SpawnSpecials();
-    
-    // preload graphics
+
+    // Preload graphics.
     if(precache)
     {
         R_PrecacheLevel();
         R_PrecachePSprites();
     }
-    
-    S_LevelMusic();    
+
+    S_LevelMusic();
     P_FinalizeLevel();
-    
-    // Someone may want to do something special now that
-    // the level has been fully set up.
+
+    // Someone may want to do something special now that the level has been
+    // fully set up.
     R_SetupLevel(DDSLM_FINALIZE, 0);
-    
+
     P_PrintMapBanner(param->episode, param->map);
-    
-    // It ends
-    levelSetup = false;    
-    
+
+    // It ends.
+    levelSetup = false;
+
     Con_BusyWorkerEnd();
     return 0;
 }
 
 /**
- * Loads map and glnode data for the requested episode and map
+ * Loads map and glnode data for the requested episode and map.
  */
 void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
 {
     setuplevelparam_t param;
-    
+
     param.episode = episode;
     param.map = map;
     param.playerMask = playerMask; // Unused?
     param.skill = skill;
-    
-    DD_Executef(true, "texreset raw"); // delete raw images to save memory
-    
+
+    DD_Executef(true, "texreset raw"); // Delete raw images to save memory.
+
     // \todo Use progress bar mode and update progress during the setup.
     Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              P_SetupLevelWorker, &param);
@@ -407,9 +440,10 @@ static void P_ResetWorldState(void)
     // Initial height of PointOfView; will be set by player think.
     players[consoleplayer].plr->viewZ = 1;
 
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        players[i].killcount = players[i].secretcount = players[i].itemcount = 0;
+        players[i].killcount =
+            players[i].secretcount = players[i].itemcount = 0;
     }
 
     bodyqueslot = 0;
@@ -447,29 +481,29 @@ static void P_FinalizeLevel(void)
             if(P_GetPtrp(line, k == 0? DMU_FRONT_SECTOR : DMU_BACK_SECTOR))
             {
                 side = P_GetPtrp(line, k == 0? DMU_SIDE0 : DMU_SIDE1);
-                yoff = P_GetFloatp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y);
-                bottomTex = P_GetIntp(side, DMU_BOTTOM_TEXTURE);
-                midTex = P_GetIntp(side, DMU_MIDDLE_TEXTURE);
+                yoff = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                bottomTex = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
+                midTex = P_GetIntp(side, DMU_MIDDLE_MATERIAL);
 
                 if(bottomTex == lumpnum && midTex == 0)
-                    P_SetFloatp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, yoff + 1.0f);
+                    P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
             }
         }
 #if __DOOM64TC__
         // kaiser - convert the unused xg linetypes to the new line type.
         // DJS - Mega kludge. Update the wad instead!
-        switch(P_XLine(line)->special)
+        switch(P_ToXLine(line)->special)
         {
         case 2011:
-            P_XLine(line)->special = 415;
+            P_ToXLine(line)->special = 415;
             break;
 
         case 2012:
-            P_XLine(line)->special = 0;
+            P_ToXLine(line)->special = 0;
             break;
 
         case 2013:
-            P_XLine(line)->special = 0;
+            P_ToXLine(line)->special = 0;
             break;
 
         case 432:
@@ -491,21 +525,47 @@ static void P_FinalizeLevel(void)
 #elif __JHEXEN__
     P_TurnTorchesToFaceWalls();
 
-    // Check if the level is a lightning level.
+    // Check if the level should have lightening.
     P_InitLightning();
 
     SN_StopAllSequences();
 #endif
 }
 
+char *P_GetMapNiceName(void)
+{
+    char       *lname, *ptr;
+
+    lname = (char *) DD_GetVariable(DD_MAP_NAME);
+
+    if(lname)
+    {
+        // Skip the ExMx part.
+        ptr = strchr(lname, ':');
+        if(ptr)
+        {
+            lname = ptr + 1;
+            while(*lname && isspace(*lname))
+                lname++;
+        }
+    }
+#if __JHEXEN__
+    // In jHexen we can look in the MAPINFO for the map name.
+    if(!lname)
+        lname = P_GetMapName(gamemap);
+#endif
+
+    return lname;
+}
+
 /**
- * Prints a banner to the console containing information
- * pertinent to the current map (eg map name, author...).
+ * Prints a banner to the console containing information pertinent to the
+ * current map (e.g. map name, author...).
  */
 static void P_PrintMapBanner(int episode, int map)
 {
 #if !__JHEXEN__
-    char    *lname, *lauthor;
+    char       *lname, *lauthor;
 
     // Retrieve the name and author strings from the engine.
     lname = (char *) DD_GetVariable(DD_MAP_NAME);

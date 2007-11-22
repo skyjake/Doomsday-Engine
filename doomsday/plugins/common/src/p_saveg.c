@@ -30,7 +30,7 @@
  * \bug Not 64bit clean: In function 'P_UnArchiveSoundTargets': cast to pointer from integer of different size, cast from pointer to integer of different size
  */
 
-/*
+/**
  * p_saveg.c: Save Game I/O
  *
  * Compiles for all supported games.
@@ -1041,7 +1041,7 @@ static void SV_WritePlayer(int playernum)
 #if !__JHEXEN__
     SV_WriteFloat(dp->lookdir);
 #endif
-    SV_WriteLong(p->bob);
+    SV_WriteLong(FLT2FIX(p->bob));
 #if __JHEXEN__
     SV_WriteLong(p->flyheight);
     SV_WriteFloat(dp->lookdir);
@@ -1132,7 +1132,15 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(dp->fixedcolormap);
     SV_WriteLong(p->colormap);
 
-    SV_Write(p->psprites, numPSprites * sizeof(pspdef_t));
+    for(i = 0; i < numPSprites; ++i)
+    {
+        pspdef_t       *psp = &p->psprites[i];
+
+        SV_WriteLong((int)psp->state);
+        SV_WriteLong(psp->tics);
+        SV_WriteLong(FLT2FIX(psp->pos[VX]));
+        SV_WriteLong(FLT2FIX(psp->pos[VY]));
+    }
 
 #if !__JHEXEN__
     SV_WriteLong(p->didsecret);
@@ -1192,7 +1200,7 @@ static void SV_ReadPlayer(player_t *p)
 #if !__JHEXEN__
     dp->lookdir = SV_ReadFloat();
 #endif
-    p->bob = SV_ReadLong();
+    p->bob = FIX2FLT(SV_ReadLong());
 #if __JHEXEN__
     p->flyheight = SV_ReadLong();
     dp->lookdir = SV_ReadFloat();
@@ -1296,7 +1304,15 @@ static void SV_ReadPlayer(player_t *p)
     dp->fixedcolormap = SV_ReadLong();
     p->colormap = SV_ReadLong();
 
-    SV_Read(p->psprites, numPSprites * sizeof(pspdef_t));
+    for(i = 0; i < numPSprites; ++i)
+    {
+        pspdef_t *psp = &p->psprites[i];
+
+        psp->state = (state_t*) SV_ReadLong();
+        psp->tics = SV_ReadLong();
+        psp->pos[VX] = FIX2FLT(SV_ReadLong());
+        psp->pos[VY] = FIX2FLT(SV_ReadLong());
+    }
 
 #if !__JHEXEN__
     p->didsecret = SV_ReadLong();
@@ -1406,9 +1422,9 @@ static void SV_WriteMobj(mobj_t *original)
 #endif
 
     // Info for drawing: position.
-    SV_WriteLong(mo->pos[VX]);
-    SV_WriteLong(mo->pos[VY]);
-    SV_WriteLong(mo->pos[VZ]);
+    SV_WriteLong(FLT2FIX(mo->pos[VX]));
+    SV_WriteLong(FLT2FIX(mo->pos[VY]));
+    SV_WriteLong(FLT2FIX(mo->pos[VZ]));
 
     //More drawing info: to determine current sprite.
     SV_WriteLong(mo->angle);     // orientation
@@ -1424,13 +1440,13 @@ static void SV_WriteMobj(mobj_t *original)
 #endif
 
     // For movement checking.
-    SV_WriteLong(mo->radius);
+    SV_WriteLong(FLT2FIX(mo->radius));
     SV_WriteLong(FLT2FIX(mo->height));
 
     // Momentums, used to update position.
-    SV_WriteLong(mo->mom[MX]);
-    SV_WriteLong(mo->mom[MY]);
-    SV_WriteLong(mo->mom[MZ]);
+    SV_WriteLong(FLT2FIX(mo->mom[MX]));
+    SV_WriteLong(FLT2FIX(mo->mom[MY]));
+    SV_WriteLong(FLT2FIX(mo->mom[MZ]));
 
     // If == VALIDCOUNT, already checked.
     SV_WriteLong(mo->valid);
@@ -1509,12 +1525,12 @@ static void SV_WriteMobj(mobj_t *original)
 
 #if !__JHEXEN__
     // For nightmare/multiplayer respawn.
-    SV_WriteLong(mo->spawninfo.pos[VX]);
-    SV_WriteLong(mo->spawninfo.pos[VY]);
-    SV_WriteLong(mo->spawninfo.pos[VZ]);
-    SV_WriteLong(mo->spawninfo.angle);
-    SV_WriteLong(mo->spawninfo.type);
-    SV_WriteLong(mo->spawninfo.options);
+    SV_WriteLong(FLT2FIX(mo->spawnspot.pos[VX]));
+    SV_WriteLong(FLT2FIX(mo->spawnspot.pos[VY]));
+    SV_WriteLong(FLT2FIX(mo->spawnspot.pos[VZ]));
+    SV_WriteLong(mo->spawnspot.angle);
+    SV_WriteLong(mo->spawnspot.type);
+    SV_WriteLong(mo->spawnspot.flags);
 
     SV_WriteLong(mo->intflags);  // killough $dropoff_fix: internal flags
     SV_WriteLong(FLT2FIX(mo->dropoffz));  // killough $dropoff_fix
@@ -1644,6 +1660,7 @@ static boolean RestoreMobj(mobj_t *mo, int ver)
 {
     mo->state = &states[(int) mo->state];
     mo->info = &mobjinfo[mo->type];
+
     if(mo->player)
     {
         // The player number translation table is used to find out the
@@ -1687,11 +1704,11 @@ static boolean RestoreMobj(mobj_t *mo, int ver)
 
     mo->thinker.function = P_MobjThinker;
 
-    P_SetThingPosition(mo);
-    mo->floorz = P_GetFloatp(mo->subsector,
-                               DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
-    mo->ceilingz = P_GetFloatp(mo->subsector,
-                                 DMU_SECTOR_OF_SUBSECTOR | DMU_CEILING_HEIGHT);
+    P_SetMobjPosition(mo);
+    mo->floorz =
+        P_GetFloatp(mo->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
+    mo->ceilingz =
+        P_GetFloatp(mo->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_CEILING_HEIGHT);
 
     return true; // Add this thinker.
 }
@@ -1734,9 +1751,9 @@ static int SV_ReadMobj(thinker_t *th)
 #endif
 
     // Info for drawing: position.
-    mo->pos[VX] = SV_ReadLong();
-    mo->pos[VY] = SV_ReadLong();
-    mo->pos[VZ] = SV_ReadLong();
+    mo->pos[VX] = FIX2FLT(SV_ReadLong());
+    mo->pos[VY] = FIX2FLT(SV_ReadLong());
+    mo->pos[VZ] = FIX2FLT(SV_ReadLong());
 
     //More drawing info: to determine current sprite.
     mo->angle = SV_ReadLong();  // orientation
@@ -1754,13 +1771,13 @@ static int SV_ReadMobj(thinker_t *th)
 #endif
 
     // For movement checking.
-    mo->radius = SV_ReadLong();
+    mo->radius = FIX2FLT(SV_ReadLong());
     mo->height = FIX2FLT(SV_ReadLong());
 
     // Momentums, used to update position.
-    mo->mom[MX] = SV_ReadLong();
-    mo->mom[MY] = SV_ReadLong();
-    mo->mom[MZ] = SV_ReadLong();
+    mo->mom[MX] = FIX2FLT(SV_ReadLong());
+    mo->mom[MY] = FIX2FLT(SV_ReadLong());
+    mo->mom[MZ] = FIX2FLT(SV_ReadLong());
 
     // If == VALIDCOUNT, already checked.
     mo->valid = SV_ReadLong();
@@ -1826,21 +1843,21 @@ static int SV_ReadMobj(thinker_t *th)
     // For nightmare respawn.
     if(ver >= 6)
     {
-        mo->spawninfo.pos[VX] = SV_ReadLong();
-        mo->spawninfo.pos[VY] = SV_ReadLong();
-        mo->spawninfo.pos[VZ] = SV_ReadLong();
-        mo->spawninfo.angle = SV_ReadLong();
-        mo->spawninfo.type = SV_ReadLong();
-        mo->spawninfo.options = SV_ReadLong();
+        mo->spawnspot.pos[VX] = FIX2FLT(SV_ReadLong());
+        mo->spawnspot.pos[VY] = FIX2FLT(SV_ReadLong());
+        mo->spawnspot.pos[VZ] = FIX2FLT(SV_ReadLong());
+        mo->spawnspot.angle = SV_ReadLong();
+        mo->spawnspot.type = SV_ReadLong();
+        mo->spawnspot.flags = SV_ReadLong();
     }
     else
     {
-        mo->spawninfo.pos[VX] = (fixed_t) (SV_ReadShort() << FRACBITS);
-        mo->spawninfo.pos[VY] = (fixed_t) (SV_ReadShort() << FRACBITS);
-        mo->spawninfo.pos[VZ] = ONFLOORZ;
-        mo->spawninfo.angle = (angle_t) (ANG45 * (SV_ReadShort() / 45));
-        mo->spawninfo.type = (int) SV_ReadShort();
-        mo->spawninfo.options = (int) SV_ReadShort();
+        mo->spawnspot.pos[VX] = (float) SV_ReadShort();
+        mo->spawnspot.pos[VY] = (float) SV_ReadShort();
+        mo->spawnspot.pos[VZ] = ONFLOORZ;
+        mo->spawnspot.angle = (angle_t) (ANG45 * (SV_ReadShort() / 45));
+        mo->spawnspot.type = (int) SV_ReadShort();
+        mo->spawnspot.flags = (int) SV_ReadShort();
     }
 
 # if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
@@ -2089,16 +2106,16 @@ Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
 static void SV_WriteSector(sector_t *sec)
 {
     int         i, type;
-    float       flooroffx = P_GetFloatp(sec, DMU_FLOOR_OFFSET_X);
-    float       flooroffy = P_GetFloatp(sec, DMU_FLOOR_OFFSET_Y);
-    float       ceiloffx = P_GetFloatp(sec, DMU_CEILING_OFFSET_X);
-    float       ceiloffy = P_GetFloatp(sec, DMU_CEILING_OFFSET_Y);
+    float       flooroffx = P_GetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_X);
+    float       flooroffy = P_GetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_Y);
+    float       ceiloffx = P_GetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_X);
+    float       ceiloffy = P_GetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_Y);
     byte        lightlevel = (byte) (P_GetFloatp(sec, DMU_LIGHT_LEVEL) / 255.0f);
     short       floorheight = (short) P_GetIntp(sec, DMU_FLOOR_HEIGHT);
     short       ceilingheight = (short) P_GetIntp(sec, DMU_CEILING_HEIGHT);
-    int         floorpic = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
-    int         ceilingpic = P_GetIntp(sec, DMU_CEILING_TEXTURE);
-    xsector_t  *xsec = P_XSector(sec);
+    int         floorpic = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
+    int         ceilingpic = P_GetIntp(sec, DMU_CEILING_MATERIAL);
+    xsector_t  *xsec = P_ToXSector(sec);
     float       rgb[3];
 
 #if !__JHEXEN__
@@ -2183,7 +2200,7 @@ static void SV_ReadSector(sector_t *sec)
     int         floorTexID;
     int         ceilingTexID;
     byte        rgb[3], lightlevel;
-    xsector_t  *xsec = P_XSector(sec);
+    xsector_t  *xsec = P_ToXSector(sec);
     int         fh, ch;
 
     // A type byte?
@@ -2214,8 +2231,8 @@ static void SV_ReadSector(sector_t *sec)
 
 #if __JHEXEN__
     // Update the "target heights" of the planes.
-    P_SetIntp(sec, DMU_FLOOR_TARGET, fh);
-    P_SetIntp(sec, DMU_CEILING_TARGET, ch);
+    P_SetIntp(sec, DMU_FLOOR_TARGET_HEIGHT, fh);
+    P_SetIntp(sec, DMU_CEILING_TARGET_HEIGHT, ch);
     // The move speed is not saved; can cause minor problems.
     P_SetIntp(sec, DMU_FLOOR_SPEED, 0);
     P_SetIntp(sec, DMU_CEILING_SPEED, 0);
@@ -2241,8 +2258,8 @@ static void SV_ReadSector(sector_t *sec)
         ceilingTexID = SV_GetArchiveFlat(ceilingTexID);
     }
 
-    P_SetIntp(sec, DMU_FLOOR_TEXTURE, floorTexID);
-    P_SetIntp(sec, DMU_CEILING_TEXTURE, ceilingTexID);
+    P_SetIntp(sec, DMU_FLOOR_MATERIAL, floorTexID);
+    P_SetIntp(sec, DMU_CEILING_MATERIAL, ceilingTexID);
 
 #if __JHEXEN__
     lightlevel = (byte) SV_ReadShort();
@@ -2289,10 +2306,10 @@ static void SV_ReadSector(sector_t *sec)
 #endif
        )
     {
-        P_SetFloatp(sec, DMU_FLOOR_OFFSET_X, SV_ReadFloat());
-        P_SetFloatp(sec, DMU_FLOOR_OFFSET_Y, SV_ReadFloat());
-        P_SetFloatp(sec, DMU_CEILING_OFFSET_X, SV_ReadFloat());
-        P_SetFloatp(sec, DMU_CEILING_OFFSET_Y, SV_ReadFloat());
+        P_SetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_X, SV_ReadFloat());
+        P_SetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_Y, SV_ReadFloat());
+        P_SetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_X, SV_ReadFloat());
+        P_SetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_Y, SV_ReadFloat());
     }
 
 #if !__JHEXEN__
@@ -2317,7 +2334,7 @@ static void SV_WriteLine(line_t *li)
     int         texid;
     float       rgba[4];
     lineclass_t type;
-    xline_t    *xli = P_XLine(li);
+    xline_t    *xli = P_ToXLine(li);
 
 #if !__JHEXEN__
     if(xli->xg)
@@ -2357,20 +2374,20 @@ static void SV_WriteLine(line_t *li)
         if(!si)
             continue;
 
-        SV_WriteShort(P_GetIntp(si, DMU_TOP_TEXTURE_OFFSET_X));
-        SV_WriteShort(P_GetIntp(si, DMU_TOP_TEXTURE_OFFSET_Y));
-        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_TEXTURE_OFFSET_X));
-        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_TEXTURE_OFFSET_Y));
-        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_TEXTURE_OFFSET_X));
-        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_TEXTURE_OFFSET_Y));
+        SV_WriteShort(P_GetIntp(si, DMU_TOP_MATERIAL_OFFSET_X));
+        SV_WriteShort(P_GetIntp(si, DMU_TOP_MATERIAL_OFFSET_Y));
+        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_X));
+        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_Y));
+        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_X));
+        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_Y));
 
-        texid = P_GetIntp(si, DMU_TOP_TEXTURE);
+        texid = P_GetIntp(si, DMU_TOP_MATERIAL);
         SV_WriteShort(SV_TextureArchiveNum(texid));
 
-        texid = P_GetIntp(si, DMU_BOTTOM_TEXTURE);
+        texid = P_GetIntp(si, DMU_BOTTOM_MATERIAL);
         SV_WriteShort(SV_TextureArchiveNum(texid));
 
-        texid = P_GetIntp(si, DMU_MIDDLE_TEXTURE);
+        texid = P_GetIntp(si, DMU_MIDDLE_MATERIAL);
         SV_WriteShort(SV_TextureArchiveNum(texid));
 
         P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
@@ -2382,7 +2399,7 @@ static void SV_WriteLine(line_t *li)
             SV_WriteByte((byte)(255 * rgba[j]));
 
         P_GetFloatpv(si, DMU_MIDDLE_COLOR, rgba);
-        for(j = 0; j < 3; ++j)
+        for(j = 0; j < 4; ++j)
             SV_WriteByte((byte)(255 * rgba[j]));
 
         SV_WriteLong(P_GetIntp(si, DMU_MIDDLE_BLENDMODE));
@@ -2410,9 +2427,8 @@ static void SV_ReadLine(line_t *li)
     int         topTexID;
     int         bottomTexID;
     int         middleTexID;
-    byte        rgba[4];
     short       flags;
-    xline_t    *xli = P_XLine(li);
+    xline_t    *xli = P_ToXLine(li);
 
     // A type byte?
 #if __JHEXEN__
@@ -2471,26 +2487,30 @@ static void SV_ReadLine(line_t *li)
         // Versions latter than 2 store per surface texture offsets.
         if(ver >= 2)
         {
-            P_SetFloatp(si, DMU_TOP_TEXTURE_OFFSET_X, (float) SV_ReadShort());
-            P_SetFloatp(si, DMU_TOP_TEXTURE_OFFSET_Y, (float) SV_ReadShort());
-            P_SetFloatp(si, DMU_MIDDLE_TEXTURE_OFFSET_X, (float) SV_ReadShort());
-            P_SetFloatp(si, DMU_MIDDLE_TEXTURE_OFFSET_Y, (float) SV_ReadShort());
-            P_SetFloatp(si, DMU_BOTTOM_TEXTURE_OFFSET_X, (float) SV_ReadShort());
-            P_SetFloatp(si, DMU_BOTTOM_TEXTURE_OFFSET_Y, (float) SV_ReadShort());
+            float       offset[2];
+
+            offset[VX] = (float) SV_ReadShort();
+            offset[VY] = (float) SV_ReadShort();
+            P_SetFloatpv(si, DMU_TOP_MATERIAL_OFFSET_XY, offset);
+
+            offset[VX] = (float) SV_ReadShort();
+            offset[VY] = (float) SV_ReadShort();
+            P_SetFloatpv(si, DMU_MIDDLE_MATERIAL_OFFSET_XY, offset);
+
+            offset[VX] = (float) SV_ReadShort();
+            offset[VY] = (float) SV_ReadShort();
+            P_SetFloatpv(si, DMU_BOTTOM_MATERIAL_OFFSET_XY, offset);
         }
         else
         {
-            float offx, offy;
+            float       offset[2];
 
-            offx = (float) SV_ReadShort();
-            offy = (float) SV_ReadShort();
+            offset[VX] = (float) SV_ReadShort();
+            offset[VY] = (float) SV_ReadShort();
 
-            P_SetFloatp(si, DMU_TOP_TEXTURE_OFFSET_X, offx);
-            P_SetFloatp(si, DMU_TOP_TEXTURE_OFFSET_Y, offy);
-            P_SetFloatp(si, DMU_MIDDLE_TEXTURE_OFFSET_X, offx);
-            P_SetFloatp(si, DMU_MIDDLE_TEXTURE_OFFSET_Y, offy);
-            P_SetFloatp(si, DMU_BOTTOM_TEXTURE_OFFSET_X, offx);
-            P_SetFloatp(si, DMU_BOTTOM_TEXTURE_OFFSET_Y, offy);
+            P_SetFloatpv(si, DMU_TOP_MATERIAL_OFFSET_XY, offset);
+            P_SetFloatpv(si, DMU_MIDDLE_MATERIAL_OFFSET_XY, offset);
+            P_SetFloatpv(si, DMU_BOTTOM_MATERIAL_OFFSET_XY, offset);
         }
 
         topTexID = SV_ReadShort();
@@ -2507,24 +2527,28 @@ static void SV_ReadLine(line_t *li)
             middleTexID = SV_GetArchiveTexture(middleTexID);
         }
 
-        P_SetIntp(si, DMU_TOP_TEXTURE, topTexID);
-        P_SetIntp(si, DMU_BOTTOM_TEXTURE, bottomTexID);
-        P_SetIntp(si, DMU_MIDDLE_TEXTURE, middleTexID);
+        P_SetIntp(si, DMU_TOP_MATERIAL, topTexID);
+        P_SetIntp(si, DMU_BOTTOM_MATERIAL, bottomTexID);
+        P_SetIntp(si, DMU_MIDDLE_MATERIAL, middleTexID);
 
         // Ver2 includes surface colours
         if(ver >= 2)
         {
-            SV_Read(rgba, 3);
-            for(j = 0; j < 3; ++j)
-                P_SetFloatp(si, DMU_TOP_COLOR_RED + j, rgba[j] / 255.f);
+            float           rgba[4];
 
-            SV_Read(rgba, 3);
             for(j = 0; j < 3; ++j)
-                P_SetFloatp(si, DMU_BOTTOM_COLOR + j, rgba[j] / 255.f);
+                rgba[j] = (float) SV_ReadByte() / 255.f;
+            rgba[3] = 1;
+            P_SetFloatpv(si, DMU_TOP_COLOR, rgba);
 
-            SV_Read(rgba, 4);
             for(j = 0; j < 3; ++j)
-                P_SetFloatp(si, DMU_MIDDLE_COLOR + j, rgba[j] / 255.f);
+                rgba[j] = (float) SV_ReadByte() / 255.f;
+            rgba[3] = 1;
+            P_SetFloatpv(si, DMU_BOTTOM_COLOR, rgba);
+
+            for(j = 0; j < 4; ++j)
+                rgba[j] = (float) SV_ReadByte() / 255.f;
+            P_SetFloatpv(si, DMU_MIDDLE_COLOR, rgba);
 
             P_SetIntp(si, DMU_MIDDLE_BLENDMODE, SV_ReadLong());
             P_SetIntp(si, DMU_FLAGS, SV_ReadShort());
@@ -2729,7 +2753,7 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
             ceiling->thinker.function = T_MoveCeiling;
     }
 
-    P_XSector(ceiling->sector)->specialdata = ceiling;
+    P_ToXSector(ceiling->sector)->specialdata = ceiling;
     return true; // Add this thinker.
 }
 
@@ -2814,7 +2838,7 @@ static int SV_ReadDoor(vldoor_t *door)
         door->topcountdown = SV_ReadLong();
     }
 
-    P_XSector(door->sector)->specialdata = door;
+    P_ToXSector(door->sector)->specialdata = door;
     door->thinker.function = T_VerticalDoor;
 
     return true; // Add this thinker.
@@ -2943,7 +2967,7 @@ static int SV_ReadFloor(floormove_t *floor)
 #endif
     }
 
-    P_XSector(floor->sector)->specialdata = floor;
+    P_ToXSector(floor->sector)->specialdata = floor;
     floor->thinker.function = T_MoveFloor;
 
     return true; // Add this thinker.
@@ -3048,7 +3072,7 @@ static int SV_ReadPlat(plat_t *plat)
             plat->thinker.function = T_PlatRaise;
     }
 
-    P_XSector(plat->sector)->specialdata = plat;
+    P_ToXSector(plat->sector)->specialdata = plat;
     return true; // Add this thinker.
 }
 
@@ -3268,12 +3292,12 @@ static void SV_WriteDoorPoly(polydoor_t *th)
     // is present as we ALWAYS add one when loading.
 
     SV_WriteLong(th->polyobj);
-    SV_WriteLong(th->speed);
+    SV_WriteLong(th->intSpeed);
     SV_WriteLong(th->dist);
     SV_WriteLong(th->totalDist);
     SV_WriteLong(th->direction);
-    SV_WriteLong(th->xSpeed);
-    SV_WriteLong(th->ySpeed);
+    SV_WriteLong(FLT2FIX(th->speed[VX]));
+    SV_WriteLong(FLT2FIX(th->speed[VY]));
     SV_WriteLong(th->tics);
     SV_WriteLong(th->waitTics);
     SV_WriteByte(th->close);
@@ -3290,12 +3314,12 @@ static int SV_ReadDoorPoly(polydoor_t *th)
         th->type = SV_ReadByte();
 
         th->polyobj = SV_ReadLong();
-        th->speed = SV_ReadLong();
+        th->intSpeed = SV_ReadLong();
         th->dist = SV_ReadLong();
         th->totalDist = SV_ReadLong();
         th->direction = SV_ReadLong();
-        th->xSpeed = SV_ReadLong();
-        th->ySpeed = SV_ReadLong();
+        th->speed[VX] = FIX2FLT(SV_ReadLong());
+        th->speed[VY] = FIX2FLT(SV_ReadLong());
         th->tics = SV_ReadLong();
         th->waitTics = SV_ReadLong();
         th->close = SV_ReadByte();
@@ -3309,12 +3333,12 @@ static int SV_ReadDoorPoly(polydoor_t *th)
 
         // Start of used data members.
         th->polyobj = SV_ReadLong();
-        th->speed = SV_ReadLong();
+        th->intSpeed = SV_ReadLong();
         th->dist = SV_ReadLong();
         th->totalDist = SV_ReadLong();
         th->direction = SV_ReadLong();
-        th->xSpeed = SV_ReadLong();
-        th->ySpeed = SV_ReadLong();
+        th->speed[VX] = FIX2FLT(SV_ReadLong());
+        th->speed[VY] = FIX2FLT(SV_ReadLong());
         th->tics = SV_ReadLong();
         th->waitTics = SV_ReadLong();
         th->type = SV_ReadByte();
@@ -3336,11 +3360,11 @@ static void SV_WriteMovePoly(polyevent_t *th)
     // is present as we ALWAYS add one when loading.
 
     SV_WriteLong(th->polyobj);
-    SV_WriteLong(th->speed);
+    SV_WriteLong(th->intSpeed);
     SV_WriteLong(th->dist);
-    SV_WriteLong(th->angle);
-    SV_WriteLong(th->xSpeed);
-    SV_WriteLong(th->ySpeed);
+    SV_WriteLong(th->fangle);
+    SV_WriteLong(FLT2FIX(th->speed[VX]));
+    SV_WriteLong(FLT2FIX(th->speed[VY]));
 }
 
 static int SV_ReadMovePoly(polyevent_t *th)
@@ -3352,11 +3376,11 @@ static int SV_ReadMovePoly(polyevent_t *th)
 
         // Start of used data members.
         th->polyobj = SV_ReadLong();
-        th->speed = SV_ReadLong();
+        th->intSpeed = SV_ReadLong();
         th->dist = SV_ReadLong();
-        th->angle = SV_ReadLong();
-        th->xSpeed = SV_ReadLong();
-        th->ySpeed = SV_ReadLong();
+        th->fangle = SV_ReadLong();
+        th->speed[VX] = FIX2FLT(SV_ReadLong());
+        th->speed[VY] = FIX2FLT(SV_ReadLong());
     }
     else
     {
@@ -3367,11 +3391,11 @@ static int SV_ReadMovePoly(polyevent_t *th)
 
         // Start of used data members.
         th->polyobj = SV_ReadLong();
-        th->speed = SV_ReadLong();
+        th->intSpeed = SV_ReadLong();
         th->dist = SV_ReadLong();
-        th->angle = SV_ReadLong();
-        th->xSpeed = SV_ReadLong();
-        th->ySpeed = SV_ReadLong();
+        th->fangle = SV_ReadLong();
+        th->speed[VX] = FIX2FLT(SV_ReadLong());
+        th->speed[VY] = FIX2FLT(SV_ReadLong());
     }
 
     th->thinker.function = T_MovePoly;
@@ -3389,11 +3413,11 @@ static void SV_WriteRotatePoly(polyevent_t *th)
     // is present as we ALWAYS add one when loading.
 
     SV_WriteLong(th->polyobj);
-    SV_WriteLong(th->speed);
+    SV_WriteLong(th->intSpeed);
     SV_WriteLong(th->dist);
-    SV_WriteLong(th->angle);
-    SV_WriteLong(th->xSpeed);
-    SV_WriteLong(th->ySpeed);
+    SV_WriteLong(th->fangle);
+    SV_WriteLong(FLT2FIX(th->speed[VX]));
+    SV_WriteLong(FLT2FIX(th->speed[VY]));
 }
 
 static int SV_ReadRotatePoly(polyevent_t *th)
@@ -3405,11 +3429,11 @@ static int SV_ReadRotatePoly(polyevent_t *th)
 
         // Start of used data members.
         th->polyobj = SV_ReadLong();
-        th->speed = SV_ReadLong();
+        th->intSpeed = SV_ReadLong();
         th->dist = SV_ReadLong();
-        th->angle = SV_ReadLong();
-        th->xSpeed = SV_ReadLong();
-        th->ySpeed = SV_ReadLong();
+        th->fangle = SV_ReadLong();
+        th->speed[VX] = FIX2FLT(SV_ReadLong());
+        th->speed[VY] = FIX2FLT(SV_ReadLong());
     }
     else
     {
@@ -3420,11 +3444,11 @@ static int SV_ReadRotatePoly(polyevent_t *th)
 
         // Start of used data members.
         th->polyobj = SV_ReadLong();
-        th->speed = SV_ReadLong();
+        th->intSpeed = SV_ReadLong();
         th->dist = SV_ReadLong();
-        th->angle = SV_ReadLong();
-        th->xSpeed = SV_ReadLong();
-        th->ySpeed = SV_ReadLong();
+        th->fangle = SV_ReadLong();
+        th->speed[VX] = FIX2FLT(SV_ReadLong());
+        th->speed[VY] = FIX2FLT(SV_ReadLong());
     }
 
     th->thinker.function = T_RotatePoly;
@@ -3496,7 +3520,7 @@ static int SV_ReadPillar(pillar_t *th)
 
     th->thinker.function = T_BuildPillar;
 
-    P_XSector(th->sector)->specialdata = th;
+    P_ToXSector(th->sector)->specialdata = th;
     return true; // Add this thinker.
 }
 
@@ -3570,7 +3594,7 @@ static int SV_ReadFloorWaggle(floorWaggle_t *th)
 
     th->thinker.function = T_FloorWaggle;
 
-    P_XSector(th->sector)->specialdata = th;
+    P_ToXSector(th->sector)->specialdata = th;
     return true; // Add this thinker.
 }
 #endif // __JHEXEN__
@@ -4150,7 +4174,7 @@ static void P_UnArchiveThinkers(void)
 
         for(i = 0; i < numlines; ++i)
         {
-            xline_t *xline = P_XLine(P_ToPtr(DMU_LINE, i));
+            xline_t *xline = P_ToXLine(P_ToPtr(DMU_LINE, i));
             if(xline->xg)
                 xline->xg->activator =
                     SV_GetArchiveThing((int) xline->xg->activator,
@@ -4209,7 +4233,7 @@ static void P_ArchiveSoundTargets(void)
     // Write the mobj references using the mobj archive.
     for(i = 0; i < numsectors; ++i)
     {
-        xsec = P_XSector(P_ToPtr(DMU_SECTOR, i));
+        xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
 
         if(xsec->soundtarget)
         {
@@ -4241,7 +4265,7 @@ static void P_UnArchiveSoundTargets(void)
         if(secid > numsectors)
             Con_Error("P_UnArchiveSoundTargets: bad sector number\n");
 
-        xsec = P_XSector(P_ToPtr(DMU_SECTOR, secid));
+        xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, secid));
         xsec->soundtarget = (mobj_t*) (int) SV_ReadShort();
             SV_GetArchiveThing((int) xsec->soundtarget, &xsec->soundtarget);
     }
@@ -4570,12 +4594,12 @@ void SV_Init(void)
 #endif
 }
 
-void SV_SaveGameFile(int slot, char *str)
+void SV_GetSaveGameFileName(int slot, char *str)
 {
     sprintf(str, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, savePath, slot);
 }
 
-void SV_ClientSaveGameFile(unsigned int game_id, char *str)
+void SV_GetClientSaveGameFileName(unsigned int game_id, char *str)
 {
     sprintf(str, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION,
             clientSavePath, game_id);
@@ -5071,7 +5095,7 @@ void SV_SaveClient(unsigned int gameid)
 
     playerHeaderOK = false; // Uninitialized.
 
-    SV_ClientSaveGameFile(gameid, name);
+    SV_GetClientSaveGameFileName(gameid, name);
     // Open the file.
     savefile = lzOpen(name, "wp");
     if(!savefile)
@@ -5096,9 +5120,9 @@ void SV_SaveClient(unsigned int gameid)
 
     // Some important information.
     // Our position and look angles.
-    SV_WriteLong(mo->pos[VX]);
-    SV_WriteLong(mo->pos[VY]);
-    SV_WriteLong(mo->pos[VZ]);
+    SV_WriteLong(FLT2FIX(mo->pos[VX]));
+    SV_WriteLong(FLT2FIX(mo->pos[VY]));
+    SV_WriteLong(FLT2FIX(mo->pos[VZ]));
     SV_WriteLong(FLT2FIX(mo->floorz));
     SV_WriteLong(FLT2FIX(mo->ceilingz));
     SV_WriteLong(mo->angle); /* $unifiedangles */
@@ -5125,7 +5149,7 @@ void SV_LoadClient(unsigned int gameid)
 
     playerHeaderOK = false; // Uninitialized.
 
-    SV_ClientSaveGameFile(gameid, name);
+    SV_GetClientSaveGameFileName(gameid, name);
     // Try to open the file.
     savefile = lzOpen(name, "rp");
     if(!savefile)
@@ -5156,11 +5180,11 @@ void SV_LoadClient(unsigned int gameid)
     }
     leveltime = hdr.leveltime;
 
-    P_UnsetThingPosition(mo);
-    mo->pos[VX] = SV_ReadLong();
-    mo->pos[VY] = SV_ReadLong();
-    mo->pos[VZ] = SV_ReadLong();
-    P_SetThingPosition(mo);
+    P_UnsetMobjPosition(mo);
+    mo->pos[VX] = FIX2FLT(SV_ReadLong());
+    mo->pos[VY] = FIX2FLT(SV_ReadLong());
+    mo->pos[VZ] = FIX2FLT(SV_ReadLong());
+    P_SetMobjPosition(mo);
     mo->floorz = FIX2FLT(SV_ReadLong());
     mo->ceilingz = FIX2FLT(SV_ReadLong());
     mo->angle = SV_ReadLong(); /* $unifiedangles */

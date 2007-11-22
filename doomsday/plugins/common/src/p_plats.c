@@ -38,7 +38,7 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
+/**
  * p_plats.c : Elevators and platforms, raising/lowering.
  */
 
@@ -183,7 +183,7 @@ void T_PlatRaise(plat_t *plat)
 
     case down:
         res =
-            T_MovePlane(plat->sector, plat->speed, plat->low, false,0, -1);
+            T_MovePlane(plat->sector, plat->speed, plat->low, false, 0, -1);
 
         if(res == pastdest)
         {
@@ -240,6 +240,9 @@ void T_PlatRaise(plat_t *plat)
     case in_stasis:
         break;
 #endif
+
+    default:
+        break;
     }
 }
 
@@ -267,7 +270,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
 
         if(xsec->specialdata)
             continue;
@@ -295,8 +298,8 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
         case raiseToNearestAndChange:
             plat->speed = PLATSPEED * .5;
 
-            P_SetIntp(sec, DMU_FLOOR_TEXTURE,
-                      P_GetIntp(frontsector, DMU_FLOOR_TEXTURE));
+            P_SetIntp(sec, DMU_FLOOR_MATERIAL,
+                      P_GetIntp(frontsector, DMU_FLOOR_MATERIAL));
 
             plat->high = P_FindNextHighestFloor(sec, floorheight);
 
@@ -310,10 +313,10 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
         case raiseAndChange:
             plat->speed = PLATSPEED * .5;
 
-            P_SetIntp(sec, DMU_FLOOR_TEXTURE,
-                      P_GetIntp(frontsector, DMU_FLOOR_TEXTURE));
+            P_SetIntp(sec, DMU_FLOOR_MATERIAL,
+                      P_GetIntp(frontsector, DMU_FLOOR_MATERIAL));
 
-            plat->high = floorheight + amount * FRACUNIT;
+            plat->high = floorheight + amount;
             plat->wait = 0;
             plat->status = up;
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMMOVE);
@@ -434,6 +437,9 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
 #endif
             break;
+
+        default:
+            break;
         }
 
         P_AddActivePlat(plat);
@@ -441,6 +447,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
         SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
 #endif
     }
+
     return rtn;
 }
 
@@ -459,7 +466,7 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
     return EV_DoPlat2(line, (int) args[0], args, type, amount);
 #else
     int         rtn = 0;
-    xline_t    *xline = P_XLine(line);
+    xline_t    *xline = P_ToXLine(line);
 
     // Activate all <type> plats that are in_stasis
     switch(type)
@@ -480,7 +487,7 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
  * Activate a plat that has been put in stasis
  * (stopped perpetual floor, instant floor/ceil toggle)
  *
- * @parm tag: the tag of the plat that should be reactivated
+ * @param tag           Tag of the plat that should be reactivated.
  */
 #if !__JHEXEN__
 int P_ActivateInStasisPlat(int tag)
@@ -488,12 +495,12 @@ int P_ActivateInStasisPlat(int tag)
     int         rtn = 0;
     platlist_t *pl;
 
-    // search the active plats
+    // Search the active plats.
     for(pl = activeplats; pl; pl = pl->next)
     {
         plat_t *plat = pl->plat;
 
-        // for one in stasis with right tag
+        // For one in stasis with right tag.
         if(plat->tag == tag && plat->status == in_stasis)
         {
             plat->status = plat->oldstatus;
@@ -501,10 +508,10 @@ int P_ActivateInStasisPlat(int tag)
             rtn = 1;
         }
     }
+
     return rtn;
 }
 #endif
-
 
 static boolean EV_StopPlat2(int tag)
 {
@@ -516,7 +523,7 @@ static boolean EV_StopPlat2(int tag)
         plat_t *plat = pl->plat;
 
 #if __JHEXEN__
-        // ...for THE one with the tag.
+        // For THE one with the tag.
         if(plat->tag == tag)
         {
             // Destroy it.
@@ -524,10 +531,10 @@ static boolean EV_StopPlat2(int tag)
             return false;
         }
 #else
-        // ..for one with the tag and not in stasis.
+        // For one with the tag and not in stasis.
         if(plat->status != in_stasis && plat->tag == tag)
         {
-            // Put it in stasis
+            // Put it in stasis.
             plat->oldstatus = plat->status;
             plat->status = in_stasis;
             plat->thinker.function = INSTASIS;
@@ -547,7 +554,7 @@ static boolean EV_StopPlat2(int tag)
  *
  * @parm line           Ptr to the line that stopped the plat.
  *
- * @return              <code>true</code> if the plat was put in stasis.
+ * @return              @c true, if the plat was put in stasis.
  */
 #if __JHEXEN__
 boolean EV_StopPlat(line_t *line, byte *args)
@@ -558,7 +565,7 @@ boolean EV_StopPlat(line_t *line)
 #if __JHEXEN__
     return EV_StopPlat2((int) args[0]);
 #else
-    return EV_StopPlat2(P_XLine(line)->tag);
+    return EV_StopPlat2(P_ToXLine(line)->tag);
 #endif
 }
 
@@ -590,9 +597,9 @@ void P_RemoveActivePlat(plat_t *plat)
 {
     platlist_t *list = plat->list;
 
-    P_XSector(plat->sector)->specialdata = NULL;
+    P_ToXSector(plat->sector)->specialdata = NULL;
 #if __JHEXEN__
-    P_TagFinished(P_XSector(plat->sector)->tag);
+    P_TagFinished(P_ToXSector(plat->sector)->tag);
 #endif
     P_RemoveThinker(&plat->thinker);
 

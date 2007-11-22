@@ -35,13 +35,11 @@
  * http://www.ravensoft.com/
  */
 
-/*
+/**
  * p_inventory.c: Common code for the player's inventory.
  *
- * Note:
- * The visual representation of which is handled in the HUD code.
- *
- * Compiles for jHeretic and jHexen.
+ * \note The visual representation of the inventory is handled separately,
+ * in the HUD code.
  */
 
 #if __JHERETIC__ || __JHEXEN__
@@ -82,15 +80,15 @@ boolean         usearti = true;
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Returns true if artifact accepted.
+/**
+ * @return              @c true, if artifact accepted.
  */
 boolean P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo)
 {
-    int     i;
+    int         i;
 #if __JHEXEN__
-    int     j;
-    boolean slidePointer = false;
+    int         j;
+    boolean     slidePointer = false;
 #endif
 
     if(!player || arti < arti_none + 1 || arti > NUMARTIFACTS - 1)
@@ -113,6 +111,7 @@ boolean P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo)
             {
                 i++;
             }
+
             if(i != player->inventorySlotNum)
             {
                 for(j = player->inventorySlotNum; j > i; j--)
@@ -133,14 +132,15 @@ boolean P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo)
     {
 #if __JHEXEN__
         if(arti >= arti_firstpuzzitem && IS_NETGAME && !deathmatch)
-        {                       // Can't carry more than 1 puzzle item in coop netplay
+        {   // Can't carry more than 1 puzzle item in coop netplay.
             return false;
         }
 #endif
         if(player->inventory[i].count >= MAXARTICOUNT)
-        {                       // Player already has max number of this item
+        {   // Player already has max number of this item.
             return false;
         }
+
         player->inventory[i].count++;
     }
 
@@ -191,14 +191,17 @@ void P_InventoryCheckReadyArtifact(player_t *player)
                 player->curpos = 0;
             }
         }
+
         if(player->inv_ptr >= player->inventorySlotNum)
         {
             player->inv_ptr = player->inventorySlotNum - 1;
         }
+
         if(player->inv_ptr < 0)
         {
             player->inv_ptr = 0;
         }
+
         player->readyArtifact = player->inventory[player->inv_ptr].type;
 
         if(!player->inventorySlotNum)
@@ -221,6 +224,7 @@ void P_InventoryNextArtifact(player_t *player)
             player->curpos = 0;
         }
     }
+
     if(player->inv_ptr < 0)
     {
         player->inv_ptr = player->inventorySlotNum - 1;
@@ -233,12 +237,13 @@ void P_InventoryNextArtifact(player_t *player)
             player->curpos = 6;
         }
     }
+
     player->readyArtifact = player->inventory[player->inv_ptr].type;
 }
 
 void P_InventoryRemoveArtifact(player_t *player, int slot)
 {
-    int     i;
+    int         i;
 
     if(!player || slot < 0 || slot > NUMINVENTORYSLOTS)
         return;
@@ -247,19 +252,18 @@ void P_InventoryRemoveArtifact(player_t *player, int slot)
     player->artifactCount--;
 
     if(!(--player->inventory[slot].count))
-    {
-        // Used last of a type - compact the artifact list
+    {   // Used last of a type - compact the artifact list
         player->readyArtifact = arti_none;
         player->inventory[slot].type = arti_none;
 
-        for(i = slot + 1; i < player->inventorySlotNum; i++)
+        for(i = slot + 1; i < player->inventorySlotNum; ++i)
         {
             player->inventory[i - 1] = player->inventory[i];
         }
 
         player->inventorySlotNum--;
 
-        // Set position markers and get next readyArtifact
+        // Set position markers and get next readyArtifact.
         player->inv_ptr--;
         if(player->inv_ptr < 6)
         {
@@ -280,23 +284,22 @@ void P_InventoryRemoveArtifact(player_t *player, int slot)
 
 boolean P_InventoryUseArtifact(player_t *player, artitype_e arti)
 {
-    int     i;
-    boolean success = false;
+    int         i;
+    boolean     success = false;
 # if __JHERETIC__
-    boolean play_sound = false;
+    boolean     play_sound = false;
 # endif
 
     if(!player || arti < arti_none + 1 || arti > NUMARTIFACTS - 1)
         return false;
 
-    for(i = 0; i < player->inventorySlotNum; i++)
+    for(i = 0; i < player->inventorySlotNum; ++i)
     {
         if(player->inventory[i].type == arti)
-        {
-            // Found match - try to use
+        {   // Found match - try to use.
             if((success = P_UseArtifactOnPlayer(player, arti)) == true)
             {
-                // Artifact was used - remove it from inventory
+                // Artifact was used - remove it from inventory.
                 P_InventoryRemoveArtifact(player, i);
 # if __JHERETIC__
                 play_sound = true;
@@ -341,16 +344,16 @@ void P_InventoryResetCursor(player_t *player)
     player->curpos = 0;
 }
 
-/*
- * Returns true if the artifact was used.
+/**
+ * @return              @c true, if the artifact was used.
  */
 boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
 {
-    mobj_t *mo;
-    angle_t angle;
+    mobj_t      *mo;
+    angle_t     angle;
 # if __JHEXEN__
-    int     i;
-    int     count;
+    int         i;
+    int         count;
 # endif
 
     if(!player || arti < arti_none + 1 || arti > NUMARTIFACTS - 1)
@@ -395,13 +398,13 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
 # if __JHERETIC__
     case arti_tomeofpower:
         if(player->morphTics)
-        {                       // Attempt to undo chicken
+        {   // Attempt to undo chicken.
             if(P_UndoPlayerMorph(player) == false)
-            {                   // Failed
+            {   // Failed.
                 P_DamageMobj(player->plr->mo, NULL, NULL, 10000);
             }
             else
-            {                   // Succeeded
+            {   // Succeeded.
                 player->morphTics = 0;
                 S_StartSound(sfx_wpnup, player->plr->mo);
             }
@@ -410,8 +413,9 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         {
             if(!P_GivePower(player, PT_WEAPONLEVEL2))
             {
-                return (false);
+                return false;
             }
+
             if(player->readyweapon == WT_FIRST)
             {
                 P_SetPsprite(player, ps_weapon, S_STAFFREADY2_1);
@@ -432,27 +436,27 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
 # if __JHERETIC__
     case arti_firebomb:
         angle = player->plr->mo->angle >> ANGLETOFINESHIFT;
-        mo = P_SpawnMobj(player->plr->mo->pos[VX] + 24 * finecosine[angle],
-                         player->plr->mo->pos[VY] + 24 * finesine[angle],
-                         player->plr->mo->pos[VZ] - FLT2FIX(player->plr->mo->floorclip + 15),
-                         MT_FIREBOMB);
+        mo = P_SpawnMobj3f(MT_FIREBOMB,
+                           player->plr->mo->pos[VX] + 24 * FIX2FLT(finecosine[angle]),
+                           player->plr->mo->pos[VY] + 24 * FIX2FLT(finesine[angle]),
+                           player->plr->mo->pos[VZ] - player->plr->mo->floorclip + 15);
         mo->target = player->plr->mo;
         break;
 # endif
     case arti_egg:
         mo = player->plr->mo;
 # if __JHEXEN__
-        P_SpawnPlayerMissile(mo, MT_EGGFX);
-        P_SPMAngle(mo, MT_EGGFX, mo->angle - (ANG45 / 6));
-        P_SPMAngle(mo, MT_EGGFX, mo->angle + (ANG45 / 6));
-        P_SPMAngle(mo, MT_EGGFX, mo->angle - (ANG45 / 3));
-        P_SPMAngle(mo, MT_EGGFX, mo->angle + (ANG45 / 3));
+        P_SpawnPlayerMissile(MT_EGGFX, mo);
+        P_SPMAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 6));
+        P_SPMAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 6));
+        P_SPMAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 3));
+        P_SPMAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 3));
 # else
-        P_SpawnMissile(mo, NULL, MT_EGGFX);
-        P_SpawnMissileAngle(mo, MT_EGGFX, mo->angle - (ANG45 / 6), -12345);
-        P_SpawnMissileAngle(mo, MT_EGGFX, mo->angle + (ANG45 / 6), -12345);
-        P_SpawnMissileAngle(mo, MT_EGGFX, mo->angle - (ANG45 / 3), -12345);
-        P_SpawnMissileAngle(mo, MT_EGGFX, mo->angle + (ANG45 / 3), -12345);
+        P_SpawnMissile(MT_EGGFX, mo, NULL);
+        P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 6), -12345);
+        P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 6), -12345);
+        P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 3), -12345);
+        P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 3), -12345);
 # endif
         break;
     case arti_teleport:
@@ -461,23 +465,23 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
     case arti_fly:
         if(!P_GivePower(player, PT_FLIGHT))
         {
-            return (false);
+            return false;
         }
 # if __JHEXEN__
-        if(player->plr->mo->mom[MZ] <= -35 * FRACUNIT)
-        {   // stop falling scream
+        if(player->plr->mo->mom[MZ] <= -35)
+        {   // Stop falling scream.
             S_StopSound(0, player->plr->mo);
         }
 # endif
         break;
 # if __JHEXEN__
     case arti_summon:
-        mo = P_SpawnPlayerMissile(player->plr->mo, MT_SUMMON_FX);
+        mo = P_SpawnPlayerMissile(MT_SUMMON_FX, player->plr->mo);
         if(mo)
         {
             mo->target = player->plr->mo;
             mo->tracer = player->plr->mo;
-            mo->mom[MZ] = 5 * FRACUNIT;
+            mo->mom[MZ] = 5;
         }
         break;
     case arti_teleportother:
@@ -487,10 +491,10 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         angle = player->plr->mo->angle >> ANGLETOFINESHIFT;
         if(player->class == PCLASS_CLERIC)
         {
-            mo = P_SpawnMobj(player->plr->mo->pos[VX] + 16 * finecosine[angle],
-                             player->plr->mo->pos[VY] + 24 * finesine[angle],
-                             player->plr->mo->pos[VZ] - FLT2FIX(player->plr->mo->floorclip + 8),
-                             MT_POISONBAG);
+            mo = P_SpawnMobj3f(MT_POISONBAG,
+                               player->plr->mo->pos[VX] + 16 * FIX2FLT(finecosine[angle]),
+                               player->plr->mo->pos[VY] + 24 * FIX2FLT(finesine[angle]),
+                               player->plr->mo->pos[VZ] - player->plr->mo->floorclip + 8);
             if(mo)
             {
                 mo->target = player->plr->mo;
@@ -498,10 +502,10 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         }
         else if(player->class == PCLASS_MAGE)
         {
-            mo = P_SpawnMobj(player->plr->mo->pos[VX] + 16 * finecosine[angle],
-                             player->plr->mo->pos[VY] + 24 * finesine[angle],
-                             player->plr->mo->pos[VZ] - FLT2FIX(player->plr->mo->floorclip + 8),
-                             MT_FIREBOMB);
+            mo = P_SpawnMobj3f(MT_FIREBOMB,
+                               player->plr->mo->pos[VX] + 16 * FIX2FLT(finecosine[angle]),
+                               player->plr->mo->pos[VY] + 24 * FIX2FLT(finesine[angle]),
+                               player->plr->mo->pos[VZ] - player->plr->mo->floorclip + 8);
             if(mo)
             {
                 mo->target = player->plr->mo;
@@ -509,33 +513,35 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         }
         else // PCLASS_FIGHTER, obviously (also pig, not so obviously)
         {
-            mo = P_SpawnMobj(player->plr->mo->pos[VX],
-                             player->plr->mo->pos[VY],
-                             player->plr->mo->pos[VZ] - FLT2FIX(player->plr->mo->floorclip +  35),
-                             MT_THROWINGBOMB);
+            mo = P_SpawnMobj3f(MT_THROWINGBOMB,
+                               player->plr->mo->pos[VX],
+                               player->plr->mo->pos[VY],
+                               player->plr->mo->pos[VZ] - player->plr->mo->floorclip + 35);
             if(mo)
             {
                 mo->angle =
                     player->plr->mo->angle + (((P_Random() & 7) - 4) << 24);
                 mo->mom[MZ] =
-                    4 * FRACUNIT +
-                    (((int) player->plr->lookdir) << (FRACBITS - 4));
-                mo->pos[VZ] += ((int) player->plr->lookdir) << (FRACBITS - 4);
+                    4 +
+                    FIX2FLT(((int) player->plr->lookdir) << (FRACBITS - 4));
+                mo->pos[VZ] += FIX2FLT(((int) player->plr->lookdir) << (FRACBITS - 4));
                 P_ThrustMobj(mo, mo->angle, mo->info->speed);
-                mo->mom[MX] += player->plr->mo->mom[MX] >> 1;
-                mo->mom[MY] += player->plr->mo->mom[MY] >> 1;
+                mo->mom[MX] += player->plr->mo->mom[MX] / 2;
+                mo->mom[MY] += player->plr->mo->mom[MY] / 2;
                 mo->target = player->plr->mo;
                 mo->tics -= P_Random() & 3;
                 P_CheckMissileSpawn(mo);
             }
         }
         break;
+
     case arti_speed:
         if(!P_GivePower(player, PT_SPEED))
         {
-            return (false);
+            return false;
         }
         break;
+
     case arti_boostmana:
         if(!P_GiveMana(player, AT_BLUEMANA, MAX_MANA))
         {
@@ -543,25 +549,27 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
             {
                 return false;
             }
-
         }
         else
         {
             P_GiveMana(player, AT_GREENMANA, MAX_MANA);
         }
         break;
+
     case arti_boostarmor:
         count = 0;
 
-        for(i = 0; i < NUMARMOR; i++)
+        for(i = 0; i < NUMARMOR; ++i)
         {
             count += P_GiveArmor(player, i, 1); // 1 point per armor type
         }
+
         if(!count)
         {
             return false;
         }
         break;
+
     case arti_blastradius:
         P_BlastRadius(player);
         break;
@@ -600,7 +608,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
     return true;
 }
 
-/*
+/**
  * Does not bother to check the validity of the params as the only
  * caller is DEFCC(CCmdInventory) (bellow).
  */
@@ -651,12 +659,12 @@ static boolean P_InventoryMove(player_t *plr, int dir)
     return true;
 }
 
-/*
+/**
  * Move the inventory selector
  */
 DEFCC(CCmdInventory)
 {
-    int     player = consoleplayer;
+    int         player = consoleplayer;
 
     if(argc > 2)
     {

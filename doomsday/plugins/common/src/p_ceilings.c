@@ -38,7 +38,7 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
+/**
  * p_ceilings.c : Moving ceilings (lowering, crushing, raising).
  */
 
@@ -156,7 +156,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
             case crushAndRaise:
                 ceiling->direction = -1;
 #if __JHEXEN__
-                ceiling->speed = ceiling->speed * 2;
+                ceiling->speed *= 2;
 #endif
                 break;
 
@@ -290,7 +290,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
 
         if(xsec->specialdata)
             continue;
@@ -365,9 +365,9 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             side_t *back = P_GetPtrp(line, DMU_SIDE1);
             float bitmipL = 0, bitmipR = 0;
 
-            bitmipL = P_GetFloatp(front, DMU_MIDDLE_TEXTURE_OFFSET_X);
+            bitmipL = P_GetFloatp(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
             if(back)
-                bitmipR = P_GetFloatp(back, DMU_MIDDLE_TEXTURE_OFFSET_X);
+                bitmipR = P_GetFloatp(back, DMU_MIDDLE_MATERIAL_OFFSET_X);
 
             if(bitmipR > 0)
             {
@@ -435,7 +435,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
         if(rtn)
         {
             SN_StartSequence(P_SectorSoundOrigin(ceiling->sector),
-                             SEQ_PLATFORM + P_XSector(ceiling->sector)->seqType);
+                             SEQ_PLATFORM + P_ToXSector(ceiling->sector)->seqType);
         }
 #endif
     }
@@ -471,9 +471,9 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
         break;
     }
 # if __DOOM64TC__
-    return EV_DoCeiling2(line, P_XLine(line)->tag, CEILSPEED, type) || rtn;
+    return EV_DoCeiling2(line, P_ToXLine(line)->tag, CEILSPEED, type) || rtn;
 # else
-    return EV_DoCeiling2(P_XLine(line)->tag, CEILSPEED, type) || rtn;
+    return EV_DoCeiling2(P_ToXLine(line)->tag, CEILSPEED, type) || rtn;
 # endif
 #endif
 }
@@ -506,9 +506,9 @@ void P_RemoveActiveCeiling(ceiling_t *ceiling)
 {
     ceilinglist_t *list = ceiling->list;
 
-    P_XSector(ceiling->sector)->specialdata = NULL;
+    P_ToXSector(ceiling->sector)->specialdata = NULL;
 #if __JHEXEN__
-    P_TagFinished(P_XSector(ceiling->sector)->tag);
+    P_TagFinished(P_ToXSector(ceiling->sector)->tag);
 #endif
     P_RemoveThinker(&ceiling->thinker);
 
@@ -537,13 +537,13 @@ void P_RemoveAllActiveCeilings(void)
  *
  * @param line          Ptr to the line reactivating the crusher.
  *
- * @return              <code>true</code> if a ceiling is reactivated.
+ * @return              @c true, if a ceiling is reactivated.
  */
 #if !__JHEXEN__
 int P_ActivateInStasisCeiling(line_t *line)
 {
     int         rtn = 0;
-    xline_t    *xline = P_XLine(line);
+    xline_t    *xline = P_ToXLine(line);
     ceilinglist_t *cl;
 
     for(cl = activeceilings; cl; cl = cl->next)
@@ -597,7 +597,7 @@ static int EV_CeilingCrushStop2(int tag)
  *
  * @param line          Ptr to the line stopping the ceilings.
  *
- * @return              <code>true</code> if a ceiling put in stasis.
+ * @return              @c true, if a ceiling put in stasis.
  */
 #if __JHEXEN__
 int EV_CeilingCrushStop(line_t *line, byte *args)
@@ -608,6 +608,6 @@ int EV_CeilingCrushStop(line_t *line)
 #if __JHEXEN__
     return EV_CeilingCrushStop2((int) args[0]);
 #else
-    return EV_CeilingCrushStop2(P_XLine(line)->tag);
+    return EV_CeilingCrushStop2(P_ToXLine(line)->tag);
 #endif
 }

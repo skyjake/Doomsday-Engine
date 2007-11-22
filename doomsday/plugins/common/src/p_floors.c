@@ -38,7 +38,7 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
+/**
  *  p_floors.c: Moving floors.
  */
 
@@ -87,7 +87,7 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
     boolean     flag;
     float       lastpos;
     float       floorheight, ceilingheight;
-    int         ptarget = (isCeiling? DMU_CEILING_TARGET : DMU_FLOOR_TARGET);
+    int         ptarget = (isCeiling? DMU_CEILING_TARGET_HEIGHT : DMU_FLOOR_TARGET_HEIGHT);
     int         pspeed = (isCeiling? DMU_CEILING_SPEED : DMU_FLOOR_SPEED);
 
     // Let the engine know about the movement of this plane.
@@ -183,6 +183,9 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
                 }
             }
             break;
+
+        default:
+            break;
         }
         break;
 
@@ -258,10 +261,16 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
                 flag = P_ChangeSector(sector, crush);
             }
             break;
+
+        default:
+            break;
         }
         break;
 
+    default:
+        break;
     }
+
     return ok;
 }
 
@@ -270,7 +279,6 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
  */
 void T_MoveFloor(floormove_t *floor)
 {
-    xsector_t *xsec = P_XSector(floor->sector);
     result_e res;
 
 #if __JHEXEN__
@@ -291,8 +299,8 @@ void T_MoveFloor(floormove_t *floor)
         floor->delayCount--;
         if(!floor->delayCount && floor->textureChange)
         {
-            P_SetIntp(floor->sector, DMU_FLOOR_TEXTURE,
-                      P_GetIntp(floor->sector, DMU_FLOOR_TEXTURE) +
+            P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL,
+                      P_GetIntp(floor->sector, DMU_FLOOR_MATERIAL) +
                       floor->textureChange);
         }
         return;
@@ -332,6 +340,7 @@ void T_MoveFloor(floormove_t *floor)
 
     if(res == pastdest)
     {
+        xsector_t *xsec = P_ToXSector(floor->sector);
         P_SetFloatp(floor->sector, DMU_FLOOR_SPEED, 0);
 
 #if __JHEXEN__
@@ -363,8 +372,8 @@ void T_MoveFloor(floormove_t *floor)
 #if __JHEXEN__
         if(floor->textureChange)
         {
-            P_SetIntp(floor->sector, DMU_FLOOR_TEXTURE,
-                      P_GetIntp(floor->sector, DMU_FLOOR_TEXTURE) -
+            P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL,
+                      P_GetIntp(floor->sector, DMU_FLOOR_MATERIAL) -
                       floor->textureChange);
         }
 #else
@@ -375,7 +384,7 @@ void T_MoveFloor(floormove_t *floor)
             case donutRaise:
                 xsec->special = floor->newspecial;
 
-                P_SetIntp(floor->sector, DMU_FLOOR_TEXTURE,
+                P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL,
                           floor->texture);
                 break;
 
@@ -390,7 +399,7 @@ void T_MoveFloor(floormove_t *floor)
             case lowerAndChange:
                 xsec->special = floor->newspecial;
 
-                P_SetIntp(floor->sector, DMU_FLOOR_TEXTURE,
+                P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL,
                           floor->texture);
                 break;
 
@@ -400,7 +409,7 @@ void T_MoveFloor(floormove_t *floor)
         }
 #endif
 #if __JHEXEN__
-        P_TagFinished(P_XSector(floor->sector)->tag);
+        P_TagFinished(P_ToXSector(floor->sector)->tag);
 #endif
         P_RemoveThinker(&floor->thinker);
     }
@@ -433,16 +442,16 @@ int EV_DoFloor(line_t *line, floor_e floortype)
     side_t *front = P_GetPtrp(line, DMU_SIDE0);
     side_t *back  = P_GetPtrp(line, DMU_SIDE1);
 
-    bitmipL = P_GetFloatp(front, DMU_MIDDLE_TEXTURE_OFFSET_X);
+    bitmipL = P_GetFloatp(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
     if(back)
-        bitmipR = P_GetFloatp(back, DMU_MIDDLE_TEXTURE_OFFSET_X);
+        bitmipR = P_GetFloatp(back, DMU_MIDDLE_MATERIAL_OFFSET_X);
     // < d64tc
 #endif
 
 #if __JHEXEN__
     list = P_GetSectorIterListForTag((int) args[0], false);
 #else
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
 #endif
     if(!list)
         return rtn;
@@ -450,7 +459,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
         // If already moving, keep going...
         if(xsec->specialdata)
             continue;
@@ -577,7 +586,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->floordestheight = P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT);
 
             //// \kludge fake the engine into accepting this special
-            P_XSector(sec)->special = bitmipR;
+            P_ToXSector(sec)->special = bitmipR;
             // < KLUDGE
             break;
 #endif
@@ -728,10 +737,10 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 
             frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 
-            P_SetIntp(sec, DMU_FLOOR_TEXTURE,
-                      P_GetIntp(frontsector, DMU_FLOOR_TEXTURE));
+            P_SetIntp(sec, DMU_FLOOR_MATERIAL,
+                      P_GetIntp(frontsector, DMU_FLOOR_MATERIAL));
 
-            xsec->special = P_XSector(frontsector)->special;
+            xsec->special = P_ToXSector(frontsector)->special;
             break;
 # if __DOOM64TC__
         case raiseFloor32: // d64tc
@@ -757,7 +766,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                 if(P_GetIntp(ln, DMU_FLAGS) & ML_TWOSIDED)
                 {
                     side = P_GetPtrp(ln, DMU_SIDE0);
-                    bottomtexture = P_GetIntp(side, DMU_BOTTOM_TEXTURE);
+                    bottomtexture = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
                     if(bottomtexture >= 0)
                     {
                         Set(DD_TEXTURE_HEIGHT_QUERY, bottomtexture);
@@ -766,7 +775,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                     }
 
                     side = P_GetPtrp(ln, DMU_SIDE1);
-                    bottomtexture = P_GetIntp(side, DMU_BOTTOM_TEXTURE);
+                    bottomtexture = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
                     if(bottomtexture >= 0)
                     {
                         Set(DD_TEXTURE_HEIGHT_QUERY, bottomtexture);
@@ -777,8 +786,8 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                 }
             }
             floor->floordestheight =
-                P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT)
-                + FIX2FLT(minsize);
+                P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT) +
+                    (float) minsize;
             }
             break;
 
@@ -787,7 +796,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->sector = sec;
             floor->speed = FLOORSPEED;
             floor->floordestheight = P_FindLowestFloorSurrounding(sec);
-            floor->texture = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
+            floor->texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
 
             for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
             {
@@ -799,13 +808,13 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                     if(P_GetPtrp(ln, DMU_FRONT_SECTOR) == sec)
                     {
                         sec = P_GetPtrp(ln, DMU_BACK_SECTOR);
-                        if(P_GetFixedp(sec, DMU_FLOOR_HEIGHT) ==
-                                                      floor->floordestheight)
+                        if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
+                           floor->floordestheight)
                         {
                             floor->texture =
-                                P_GetIntp(sec,DMU_FLOOR_TEXTURE);
+                                P_GetIntp(sec,DMU_FLOOR_MATERIAL);
                             floor->newspecial =
-                                P_XSector(sec)->special;
+                                P_ToXSector(sec)->special;
                             break;
                         }
                     }
@@ -813,12 +822,12 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                     {
                         sec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
                         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
-                                                      floor->floordestheight)
+                           floor->floordestheight)
                         {
                             floor->texture =
-                                P_GetIntp(sec, DMU_FLOOR_TEXTURE);
+                                P_GetIntp(sec, DMU_FLOOR_MATERIAL);
                             floor->newspecial =
-                                P_XSector(sec)->special;
+                                P_ToXSector(sec)->special;
                             break;
                         }
                     }
@@ -838,7 +847,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
     if(rtn)
     {
         SN_StartSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN),
-                         SEQ_PLATFORM + P_XSector(floor->sector)->seqType);
+                         SEQ_PLATFORM + P_ToXSector(floor->sector)->seqType);
     }
 #endif
     return rtn;
@@ -864,8 +873,8 @@ int EV_FloorCrushStop(line_t *line, byte *args)
 
         // Completely remove the crushing floor
         SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
-        P_XSector(floor->sector)->specialdata = NULL;
-        P_TagFinished(P_XSector(floor->sector)->tag);
+        P_ToXSector(floor->sector)->specialdata = NULL;
+        P_TagFinished(P_ToXSector(floor->sector)->tag);
         P_RemoveThinker(&floor->thinker);
         rtn = 1;
     }
@@ -898,13 +907,13 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
     * Note: floor and ceiling are capable of moving at different speeds
     * and with different target heights, we must remain compatible.
     */
-    
+
     if(raise)
     {
         floor = EV_DoFloor(line, args, FLEV_RAISEFLOORBYVALUE);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_XSector(sec)->specialdata = NULL;
+            P_ToXSector(sec)->specialdata = NULL;
         }
         ceiling = EV_DoCeiling(line, args, raiseByValue);
     }
@@ -913,7 +922,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
         floor = EV_DoFloor(line, args, FLEV_LOWERFLOORBYVALUE);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_XSector(sec)->specialdata = NULL;
+            P_ToXSector(sec)->specialdata = NULL;
         }
         ceiling = EV_DoCeiling(line, args, lowerByValue);
     }
