@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -31,8 +32,10 @@
  * version of the file, but you are not obligated to do so. If you
  * do not wish to do so, delete this exception statement from your version.
  */
-// Header file for the action routine link table
-// Generated with DED Manager 1.13
+
+/**
+ * acfnlink.h:
+ */
 
 #ifndef __ACTION_LINK_H__
 #define __ACTION_LINK_H__
@@ -276,5 +279,22 @@ void C_DECL     A_WraithMissile();
 void C_DECL     A_WraithRaise();
 void C_DECL     A_WraithRaiseInit();
 void C_DECL     A_ZapMimic();
-
+void C_DECL     A_FSwordAttack2();
+void C_DECL     A_CHolyAttack3();
+void C_DECL     A_MStaffAttack2();
+void C_DECL     A_SorcBallOrbit();
+void C_DECL     A_SorcSpinBalls();
+void C_DECL     A_SpeedBalls();
+void C_DECL     A_SlowBalls();
+void C_DECL     A_StopBalls();
+void C_DECL     A_AccelBalls();
+void C_DECL     A_DecelBalls();
+void C_DECL     A_SorcBossAttack();
+void C_DECL     A_SpawnFizzle();
+void C_DECL     A_CastSorcererSpell();
+void C_DECL     A_SorcUpdateBallAngle();
+void C_DECL     A_BounceCheck();
+void C_DECL     A_SorcFX1Seek();
+void C_DECL     A_SorcOffense1();
+void C_DECL     A_SorcOffense2();
 #endif

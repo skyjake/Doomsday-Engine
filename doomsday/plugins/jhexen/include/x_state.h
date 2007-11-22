@@ -3,7 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -32,13 +32,8 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * All the global variables that store the internal state.
- * Theoretically speaking, the internal state of the engine
- * should be found by looking at the variables collected
- * here, and every relevant module will have to include
- * this header file.
- * In practice, things are a bit messy.
+/**
+ * x_state.h: All the global variables that store the internal state.
  */
 
 #ifndef __X_STATE__
@@ -47,10 +42,6 @@
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
-
-// We need globally shared data structures,
-//  for defining the global state variables.
-//#include "doomdata.h"
 
 // We need the playr data structure as well.
 #include "x_player.h"
@@ -148,8 +139,8 @@ extern player_t players[MAXPLAYERS];
 
 // Player spawn spots for deathmatch.
 #define MAX_DM_STARTS   16
-extern thing_t deathmatchstarts[MAX_DM_STARTS];
-extern thing_t *deathmatch_p;
+extern spawnspot_t deathmatchstarts[MAX_DM_STARTS];
+extern spawnspot_t *deathmatch_p;
 
 // LUT of ammunition limits for each kind.
 // This doubles with BackPack powerup item.

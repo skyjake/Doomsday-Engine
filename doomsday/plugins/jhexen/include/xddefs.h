@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -33,6 +33,10 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
+/**
+ * xddefs.h:
+ */
+
 #ifndef __XDDEFS__
 #define __XDDEFS__
 
@@ -45,24 +49,6 @@ enum {
     PLN_FLOOR,
     PLN_CEILING
 };
-
-typedef struct {
-    short           tid;
-    short         x;
-    short         y;
-    short           height;
-    short           angle;
-    short           type;
-    short           options;
-    byte            special;
-    byte            arg1;
-    byte            arg2;
-    byte            arg3;
-    byte            arg4;
-    byte            arg5;
-} thing_t;
-
-extern thing_t* things;
 
 #define ML_BLOCKING         0x0001
 #define ML_BLOCKMONSTERS    0x0002
@@ -85,17 +71,5 @@ extern thing_t* things;
 #define SPAC_IMPACT     3          // when projectile hits line
 #define SPAC_PUSH       4          // when player/monster pushes line
 #define SPAC_PCROSS     5          // when projectile crosses line
-
-#define MTF_EASY        1
-#define MTF_NORMAL      2
-#define MTF_HARD        4
-#define MTF_AMBUSH      8
-#define MTF_DORMANT     16
-#define MTF_FIGHTER     32
-#define MTF_CLERIC      64
-#define MTF_MAGE        128
-#define MTF_GSINGLE     256
-#define MTF_GCOOP       512
-#define MTF_GDEATHMATCH 1024
 
 #endif                          // __XDDEFS__

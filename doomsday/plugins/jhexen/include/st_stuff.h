@@ -32,6 +32,7 @@
  * version of the file, but you are not obligated to do so. If you
  * do not wish to do so, delete this exception statement from your version.
  */
+
 #ifndef __ST_STUFF_H__
 #define __ST_STUFF_H__
 
@@ -43,37 +44,9 @@
 #include "x_config.h"
 
 // Size of statusbar.
-// Now sensitive for scaling.
-#define SCREEN_MUL 1
-#define ST_HEIGHT   42*SCREEN_MUL
-#define ST_WIDTH    SCREENWIDTH
-#define ST_Y        (SCREENHEIGHT - ST_HEIGHT)
-
-// Called by main loop.
-void    ST_Ticker(void);
-
-// Called by main loop.
-void    ST_Drawer(int fullscreenmode, boolean refresh);
-
-// Called when the console player is spawned on each level.
-void    ST_Start(void);
-
-void    ST_Stop(void);
-
-// Called by startup code.
-void    ST_Register(void);
-void    ST_Init(void);
-
-void    ST_updateGraphics(void);
-
-// Called when it might be neccessary for the hud to unhide.
-void    ST_HUDUnHide(hueevent_t event);
-
-// Called to execute the change of player class.
-void    SB_ChangePlayerClass(player_t *player, int newclass);
-
-// Called in P_inter & P_enemy
-void        ST_doPaletteStuff(boolean forceChange);
+#define ST_HEIGHT           (42*SCREEN_MUL)
+#define ST_WIDTH            (SCREENWIDTH)
+#define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
 
 // States for status bar code.
 typedef enum {
@@ -87,5 +60,43 @@ typedef enum {
     WaitDestState,
     GetChatState
 } st_chatstateenum_t;
+
+extern int SB_state;
+
+// Called by startup code.
+void        ST_Register(void);
+void        ST_Init(void);
+
+// Called by main loop.
+void        ST_Ticker(void);
+
+// Called by main loop.
+void        ST_Drawer(int fullscreenmode, boolean refresh);
+
+// Called when the console player is spawned on each level.
+void        ST_Start(void);
+void        ST_Stop(void);
+
+void        ST_updateGraphics(void);
+
+// Called when it might be neccessary for the hud to unhide.
+void        ST_HUDUnHide(hueevent_t event);
+
+// Called to execute the change of player class.
+void        SB_ChangePlayerClass(player_t *player, int newclass);
+
+// Called in P_inter & P_enemy
+void        ST_doPaletteStuff(boolean forceChange);
+
+void        SB_Init(void);
+void        SB_SetClassData(void);
+boolean     SB_Responder(event_t *event);
+void        SB_Ticker(void);
+void        SB_Drawer(int fullscreenmode, boolean refresh);
+void        ST_Inventory(boolean show);
+boolean     ST_IsInventoryVisible(void);
+
+void        ST_InventoryFlashCurrent(player_t *player);
+void        SB_PaletteFlash(boolean forceChange);
 
 #endif

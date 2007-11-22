@@ -33,6 +33,9 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
+/**
+ * x_player.h:
+ */
 
 #ifndef __X_PLAYER__
 #define __X_PLAYER__
@@ -45,12 +48,14 @@
 // of other structs: items (internal inventory),
 // animation states (closely tied to the sprites
 // used to represent them, unfortunately).
-//#include "d_items.h"
+#include "x_items.h"
 #include "p_pspr.h"
 
 // In addition, the player is just a special
 // case of the generic moving object/actor.
-#include "h2def.h" // "p_mobj.h"
+#include "p_mobj.h"
+
+#include "g_controls.h"
 
 #ifdef __GNUG__
 #pragma interface

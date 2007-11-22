@@ -33,7 +33,7 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
+/**
  * jhexen.h: All jHexen Headers
  *
  * A convenience header for including all jHexen headers.
@@ -47,13 +47,18 @@
 #include "../../jhexen/include/g_ctrl.h"
 #include "../../jhexen/include/m_cheat.h"
 #include "../../jhexen/include/mn_def.h"
+#include "../../jhexen/include/p_acs.h"
 #include "../../jhexen/include/p_local.h"
 #include "../../jhexen/include/p_mapinfo.h"
+#include "../../jhexen/include/p_mobj.h"
 #include "../../jhexen/include/p_pspr.h"
 #include "../../jhexen/include/p_setup.h"
 #include "../../jhexen/include/p_spec.h"
 #include "../../jhexen/include/p_spec.h"
+#include "../../jhexen/include/po_man.h"
+#include "../../jhexen/include/r_defs.h"
 #include "../../jhexen/include/r_local.h"
+#include "../../jhexen/include/s_sequence.h"
 #include "../../jhexen/include/sounds.h"
 #include "../../jhexen/include/soundst.h"
 #include "../../jhexen/include/st_stuff.h"
@@ -61,8 +66,10 @@
 #include "../../jhexen/include/version.h"
 #include "../../jhexen/include/x_config.h"
 #include "../../jhexen/include/x_event.h"
+#include "../../jhexen/include/x_items.h"
 #include "../../jhexen/include/x_player.h"
 #include "../../jhexen/include/x_state.h"
+#include "../../jhexen/include/x_think.h"
 #include "../../jhexen/include/xddefs.h"
 
 #endif // __JHEXEN_CONVENIENCE_H__

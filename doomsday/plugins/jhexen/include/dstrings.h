@@ -3,8 +3,8 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -41,13 +41,12 @@
  * http://www.ravensoft.com/
  */
 
-//**************************************************************************
-//**
-//** Dstrings.H
-//**
-//**************************************************************************
+/**
+ * dstrings.h:
+ */
 
-// MN_menu.c ---------------------------------------------------------------
+#ifndef __DSTRINGS_H__
+#define __DSTRINGS_H__
 
 #define PRESSKEY	"press a key."
 #define PRESSYN		"press y or n."
@@ -79,8 +78,6 @@
 #define GAMMALVL3	"Gamma correction level 3"
 #define GAMMALVL4	"Gamma correction level 4"
 #define	EMPTYSTRING	"empty slot"
-
-// P_inter.c ---------------------------------------------------------------
 
 // Keys
 
@@ -133,8 +130,6 @@
 #define TXT_WPNPHOENIXROD		"PHOENIX ROD"
 #define TXT_WPNGAUNTLETS		"GAUNTLETS OF THE NECROMANCER"
 
-// SB_bar.c ----------------------------------------------------------------
-
 #define TXT_CHEATGODON			"GOD MODE ON"
 #define TXT_CHEATGODOFF			"GOD MODE OFF"
 #define TXT_CHEATNOCLIPON		"NO CLIPPING ON"
@@ -162,17 +157,11 @@
 #define TXT_CHEATIDDQD			"TRYING TO CHEAT, EH?  NOW YOU DIE!"
 #define TXT_CHEATIDKFA			"CHEATER - YOU DON'T DESERVE WEAPONS"
 
-// P_doors.c ---------------------------------------------------------------
-
 #define TXT_NEEDBLUEKEY			"YOU NEED A BLUE KEY TO OPEN THIS DOOR"
 #define TXT_NEEDGREENKEY		"YOU NEED A GREEN KEY TO OPEN THIS DOOR"
 #define TXT_NEEDYELLOWKEY		"YOU NEED A YELLOW KEY TO OPEN THIS DOOR"
 
-// G_game.c ----------------------------------------------------------------
-
 #define TXT_GAMESAVED			"GAME SAVED"
-
-// M_misc.c ----------------------------------------------------------------
 
 #define HUSTR_CHATMACRO1 "I'm ready to kick butt!"
 #define HUSTR_CHATMACRO2 "I'm OK."
@@ -185,8 +174,6 @@
 #define HUSTR_CHATMACRO9 "Yes"
 #define HUSTR_CHATMACRO0 "No"
 
-// AM_map.c ----------------------------------------------------------------
-
 #define AMSTR_FOLLOWON "FOLLOW MODE ON"
 #define AMSTR_FOLLOWOFF "FOLLOW MODE OFF"
 #define AMSTR_ROTATEON "Rotate Mode ON"
@@ -197,8 +184,6 @@
 
 #define AMSTR_MARKEDSPOT "Marked Spot"
 #define AMSTR_MARKSCLEARED "All Marks Cleared"
-
-// F_finale.c --------------------------------------------------------------
 
 #define E1TEXT		"with the destruction of the iron\n"\
 					"liches and their minions, the last\n"\
@@ -253,3 +238,4 @@
 					"just have been a scream.\n\n"\
 					"then again, what about the other\n"\
 					"serpent riders?"
+#endif

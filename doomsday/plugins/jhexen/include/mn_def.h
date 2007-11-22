@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,10 +33,12 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-// Menu defines and types.
+/**
+ * mn_def.h: Menu defines and types.
+ */
 
-#ifndef __MENU_DEFS_H_
-#define __MENU_DEFS_H_
+#ifndef __MN_DEF_H__
+#define __MN_DEF_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -48,33 +50,33 @@
 
 // Macros
 
-#define LEFT_DIR        0
-#define RIGHT_DIR       1
-#define ITEM_HEIGHT     20
-#define SLOTTEXTLEN     16
-#define ASCII_CURSOR    '_'
+#define LEFT_DIR            0
+#define RIGHT_DIR           1
+#define ITEM_HEIGHT         20
+#define SLOTTEXTLEN         16
+#define ASCII_CURSOR        '_'
 
-#define LINEHEIGHT      20
-#define LINEHEIGHT_A    10
-#define LINEHEIGHT_B    20
+#define LINEHEIGHT          20
+#define LINEHEIGHT_A        10
+#define LINEHEIGHT_B        20
 
-#define SKULLXOFF       -22
-#define SKULLYOFF       -1
-#define CURSORPREF      "M_SLCTR%d"
-#define SKULLBASELMP    "FBULA0"
-#define NUMCURSORS      2
+#define SKULLXOFF           -22
+#define SKULLYOFF           -1
+#define CURSORPREF          "M_SLCTR%d"
+#define SKULLBASELMP        "FBULA0"
+#define NUMCURSORS          2
 #define MENUCURSOR_TICSPERFRAME 8
 
-#define NUMSAVESLOTS    6
+#define NUMSAVESLOTS        6
 
-#define MAX_EDIT_LEN    256
+#define MAX_EDIT_LEN        256
 
 // Types
 
 typedef struct {
-    char            text[MAX_EDIT_LEN];
-    char            oldtext[MAX_EDIT_LEN];  // If the current edit is canceled...
-    int             firstVisible;
+    char        text[MAX_EDIT_LEN];
+    char        oldtext[MAX_EDIT_LEN];  // If the current edit is canceled...
+    int         firstVisible;
 } editfield_t;
 
 typedef enum {
@@ -107,7 +109,7 @@ typedef enum {
 } menutype_t;
 
 // Menu item flags
-#define MIF_NOTALTTXT   0x01  // don't use alt text instead of lump (M_NMARE)
+#define MIF_NOTALTTXT       0x01 // Don't use alt text instead of lump (M_NMARE)
 
 typedef struct {
     menuitemtype_t  type;
@@ -120,8 +122,8 @@ typedef struct {
 } menuitem_t;
 
 // Menu flags
-#define MNF_NOHOTKEYS   0x00000001  // hotkeys are disabled.
-#define MNF_NOSCALE     0x00000002  // menu wont be scaled (e.g. readthis).
+#define MNF_NOHOTKEYS       0x00000001  // Hotkeys are disabled.
+#define MNF_NOSCALE         0x00000002  // No scaling (e.g. readthis).
 
 typedef struct {
     int             flags;
@@ -132,65 +134,86 @@ typedef struct {
     const menuitem_t *items;
     int             lastOn;
     menutype_t      prevMenu;
-    dpatch_t       *font;           // Font for menu items.
+    dpatch_t       *font; // Font for menu items.
     float          *color;
-    char           *background;     // Background lump name for this menu (if any).
+    char           *background; // Background lump name for this menu (if any).
     int             itemHeight;
-    // For multipage menus.
+
+// For multipage menus:
     int             firstItem, numVisItems;
 } menu_t;
 
-extern int      menuTime;
-extern boolean  shiftdown;
-extern menu_t  *currentMenu;
-extern short    itemOn;
+extern int menuTime;
+extern boolean shiftdown;
+extern menu_t *currentMenu;
+extern short itemOn;
 
-extern menu_t   MapDef;
-
-extern menu_t   ControlsDef;
+extern menu_t MapDef;
+extern menu_t ControlsDef;
 
 // Multiplayer menus.
 extern menu_t   MultiplayerMenu;
 extern menu_t   GameSetupMenu;
 extern menu_t   PlayerSetupMenu;
 
-void            M_StartControlPanel(void);
-void            M_DrawSaveLoadBorder(int x, int y);
-void            M_WriteMenuText(const menu_t * menu, int index, const char *text);
+void        M_StartControlPanel(void);
+void        M_DrawSaveLoadBorder(int x, int y);
+void        M_WriteMenuText(const menu_t *menu, int index, const char *text);
 
-void            M_StartMessage(char *string, void *routine, boolean input);
-void            M_StopMessage(void);
+void        M_StartMessage(char *string, void *routine, boolean input);
+void        M_StopMessage(void);
 
 // Color widget.
-void            DrawColorWidget();
-void            SCColorWidget(int index, void *data);
-void            M_WGCurrentColor(int option, void *data);
+void        DrawColorWidget();
+void        SCColorWidget(int index, void *data);
+void        M_WGCurrentColor(int option, void *data);
 
-void            M_SetupNextMenu(menu_t * menudef);
-void            M_DrawTitle(char *text, int y);
-void    MN_DrawSlider(const menu_t * menu, int item, int width, int slot);
-void    MN_DrawColorBox(const menu_t * menu, int index, float r, float g,
+void        M_SetupNextMenu(menu_t *    menudef);
+void        M_DrawTitle(char *text, int y);
+void        MN_DrawSlider(const menu_t *menu, int item, int width, int slot);
+void        MN_DrawColorBox(const menu_t *menu, int index, float r, float g,
                         float b, float a);
-void            M_StartMenu(void);
-void            M_ClearMenus(void);
-void            M_FloatMod10(float *variable, int option);
+void        M_StartMenu(void);
+void        M_ClearMenus(void);
+void        M_FloatMod10(float *variable, int option);
 
-void            SCEnterMultiplayerMenu(int option, void *data);
-void            MN_TickerEx(void); // The extended ticker.
+void        SCEnterMultiplayerMenu(int option, void *data);
+void        MN_TickerEx(void); // The extended ticker.
 
 // Widget routines.
-boolean         Cl_Responder(event_t *event);   // Handles control in a menu widget
+boolean     Cl_Responder(event_t *event); // Handles control in a menu widget
 
 // Edit field routines.
-boolean         Ed_Responder(event_t *event);
+boolean     Ed_Responder(event_t *event);
 
 // Called by Init
 // registers all the CCmds and CVars for the menu
-void            MN_Register(void);
+void        MN_Register(void);
 
-float           MN_MenuAlpha(void);
-boolean         MN_CurrentMenuHasBackground(void);
+float       MN_MenuAlpha(void);
+boolean     MN_CurrentMenuHasBackground(void);
+
+void        MN_Init(void);
+void        MN_ActivateMenu(void);
+void        MN_DeactivateMenu(void);
+boolean     M_Responder(event_t *event);
+void        MN_Ticker(void);
+void        M_Drawer(void);
+void        MN_TextFilter(char *text);
+void        MN_DrTextA(char *text, int x, int y);
+void        MN_DrTextAYellow(char *text, int x, int y);
+int         MN_TextAWidth(char *text);
+void        MN_DrTextB(char *text, int x, int y);
+int         MN_TextBWidth(char *text);
+void        MN_DrawTitle(char *text, int y);
+
+// Drawing text in the current state.
+void        MN_DrTextA_CS(char *text, int x, int y);
+void        MN_DrTextAYellow_CS(char *text, int x, int y);
+void        MN_DrTextB_CS(char *text, int x, int y);
+
+void        strcatQuoted(char *dest, char *src);
 
 DEFCC(CCmdMenuAction);
 DEFCC(CCmdMsgResponse);
-#endif                          // __MENU_DEFS_H_
+#endif
