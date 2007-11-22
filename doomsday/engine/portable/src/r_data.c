@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_data.c: Data Structures and Constants for Refresh
  */
 
@@ -244,8 +244,7 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->type = type;
 
     poly->flags = 0;
-    poly->texoffx = 0;
-    poly->texoffy = 0;
+    poly->texOffset[VX] = poly->texOffset[VY] = 0;
     poly->interpos = 0;
     poly->lightListIdx = 0;
     poly->decorlightmap = 0;
@@ -302,8 +301,8 @@ void R_MemcpyRendPoly(rendpoly_t *dest, const rendpoly_t *src)
     memcpy(&dest->intertex, &src->intertex, sizeof(gltexture_t));
     if(dest->wall && src->wall)
         memcpy(&dest->wall, &src->wall, sizeof(rendpoly_wall_t));
-    dest->texoffx = src->texoffx;
-    dest->texoffy = src->texoffy;
+    dest->texOffset[VX] = src->texOffset[VX];
+    dest->texOffset[VY] = src->texOffset[VY];
     dest->flags = src->flags;
     dest->interpos = src->interpos;
     dest->blendmode = src->interpos;

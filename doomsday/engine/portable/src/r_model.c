@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_model.c: 3D Model Resources
  *
  * MD2/DMD2 loading and setup.
@@ -741,7 +741,7 @@ float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
             duration = 1;
         if(offset == -1)
         {
-            offset = M_CycleIntoRange(THING_TO_ID(mo), duration);
+            offset = M_CycleIntoRange(MOBJ_TO_ID(mo), duration);
         }
         interp = M_CycleIntoRange(levelTime / duration + offset, 1);
         worldTime = true;

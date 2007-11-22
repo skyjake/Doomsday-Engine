@@ -37,7 +37,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXRADIUS   32*FRACUNIT
+#define MAXRADIUS   32
 
 // TYPES -------------------------------------------------------------------
 
@@ -111,12 +111,12 @@ void UpdateSegBBox(seg_t *seg)
     byte        edge;
 
     edge = (seg->SG_v1pos[VX] < seg->SG_v2pos[VX]);
-    line->bbox[BOXLEFT]  = FLT2FIX(seg->SG_vpos(edge^1)[VX]);
-    line->bbox[BOXRIGHT] = FLT2FIX(seg->SG_vpos(edge)[VX]);
+    line->bbox[BOXLEFT]  = seg->SG_vpos(edge^1)[VX];
+    line->bbox[BOXRIGHT] = seg->SG_vpos(edge)[VX];
 
     edge = (seg->SG_v1pos[VY] < seg->SG_v2pos[VY]);
-    line->bbox[BOXBOTTOM] = FLT2FIX(seg->SG_vpos(edge^1)[VY]);
-    line->bbox[BOXTOP]    = FLT2FIX(seg->SG_vpos(edge)[VY]);
+    line->bbox[BOXBOTTOM] = seg->SG_vpos(edge^1)[VY];
+    line->bbox[BOXTOP]    = seg->SG_vpos(edge)[VY];
 
     // Update the line's slopetype
     line->dx = line->L_v2pos[VX] - line->L_v1pos[VX];
@@ -143,6 +143,29 @@ void UpdateSegBBox(seg_t *seg)
 }
 
 /**
+ * Update the polyobj bounding box.
+ */
+void PO_UpdateBBox(polyobj_t *po)
+{
+    seg_t     **segPtr;
+    uint        i;
+    vec2_t      point;
+    vertex_t   *vtx;
+
+    segPtr = po->segs;
+    V2_Set(point, (*segPtr)->SG_v1pos[VX], (*segPtr)->SG_v1pos[VY]);
+    V2_InitBox(po->box, point);
+
+    for(i = 0; i < po->numsegs; ++i, segPtr++)
+    {
+        vtx = (*segPtr)->SG_v1;
+
+        V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
+        V2_AddToBox(po->box, point);
+    }
+}
+
+/**
  * Called at the start of the level after all the structures needed for
  * refresh have been setup.
  */
@@ -152,11 +175,14 @@ void PO_SetupPolyobjs(void)
     seg_t     **segList, *seg;
     line_t     *line;
     side_t     *side;
+    polyobj_t  *po;
 
     for(i = 0; i < po_NumPolyobjs; ++i)
     {
-        segList = polyobjs[i].segs;
-        num = polyobjs[i].numsegs;
+        po = &polyobjs[i];
+        segList = po->segs;
+        num = po->numsegs;
+
         for(j = 0; j < num; ++j, segList++)
         {
             seg = (*segList);
@@ -181,10 +207,13 @@ void PO_SetupPolyobjs(void)
                 }
             }
         }
+
+        PO_UnLinkPolyobj(po);
+        PO_LinkPolyobj(po);
     }
 }
 
-boolean PO_MovePolyobj(uint num, float fx, float fy)
+boolean PO_MovePolyobj(uint num, float x, float y)
 {
     uint        count;
     seg_t     **segList;
@@ -192,7 +221,6 @@ boolean PO_MovePolyobj(uint num, float fx, float fy)
     polyobj_t  *po;
     fvertex_t  *prevPts;
     boolean     blocked;
-    fixed_t     x = FLT2FIX(fx), y = FLT2FIX(fy);
 
     if(num & 0x80000000)
     {
@@ -229,11 +257,11 @@ boolean PO_MovePolyobj(uint num, float fx, float fy)
         }
         if(veryTempSeg == segList)
         {
-            (*segList)->SG_v1pos[VX] += fx;
-            (*segList)->SG_v1pos[VY] += fy;
+            (*segList)->SG_v1pos[VX] += x;
+            (*segList)->SG_v1pos[VY] += y;
         }
-        (*prevPts).pos[VX] += fx;      // previous points are unique for each seg
-        (*prevPts).pos[VY] += fy;
+        (*prevPts).pos[VX] += x;      // previous points are unique for each seg
+        (*prevPts).pos[VY] += y;
     }
     segList = po->segs;
     for(count = 0; count < po->numsegs; ++count, segList++)
@@ -268,11 +296,11 @@ boolean PO_MovePolyobj(uint num, float fx, float fy)
             }
             if(veryTempSeg == segList)
             {
-                (*segList)->SG_v1pos[VX] -= fx;
-                (*segList)->SG_v1pos[VY] -= fy;
+                (*segList)->SG_v1pos[VX] -= x;
+                (*segList)->SG_v1pos[VY] -= y;
             }
-            (*prevPts).pos[VX] -= fx;
-            (*prevPts).pos[VY] -= fy;
+            (*prevPts).pos[VX] -= x;
+            (*prevPts).pos[VY] -= y;
 
             segList++;
             prevPts++;
@@ -280,8 +308,8 @@ boolean PO_MovePolyobj(uint num, float fx, float fy)
         PO_LinkPolyobj(po);
         return false;
     }
-    po->startSpot.pos[VX] += fx;
-    po->startSpot.pos[VY] += fy;
+    po->startSpot.pos[VX] += x;
+    po->startSpot.pos[VY] += y;
     PO_LinkPolyobj(po);
 
     // A change has occured.
@@ -394,200 +422,125 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
     return true;
 }
 
-void PO_UnLinkPolyobj(polyobj_t * po)
+void PO_LinkPolyobjToRing(polyobj_t *po, linkpolyobj_t **link)
 {
-    polyblock_t *link;
-    int     i, j;
-    int     index;
-    gamemap_t *map = P_GetCurrentMap();
-    uint    bmapSize[2];
+    linkpolyobj_t *tempLink;
 
-    P_GetBlockmapSize(map->blockmap, bmapSize);
-
-    // remove the polyobj from each blockmap section
-    for(j = po->bbox[BOXBOTTOM]; j <= po->bbox[BOXTOP]; ++j)
+    if(!(*link))
+    {   // Create a new link at the current block cell.
+        *link = Z_Malloc(sizeof(linkpolyobj_t), PU_LEVEL, 0);
+        (*link)->next = NULL;
+        (*link)->prev = NULL;
+        (*link)->polyobj = po;
+        return;
+    }
+    else
     {
-        index = j * bmapSize[VX];
-        for(i = po->bbox[BOXLEFT]; i <= po->bbox[BOXRIGHT]; ++i)
+        tempLink = *link;
+        while(tempLink->next != NULL && tempLink->polyobj != NULL)
         {
-            if(i >= 0 && i < bmapSize[VX] && j >= 0 && j < bmapSize[VY])
-            {
-                link = polyblockmap[index + i];
-                while(link != NULL && link->polyobj != po)
-                {
-                    link = link->next;
-                }
-                if(link == NULL)
-                {               // polyobj not located in the link cell
-                    continue;
-                }
-                link->polyobj = NULL;
-            }
+            tempLink = tempLink->next;
         }
+    }
+
+    if(tempLink->polyobj == NULL)
+    {
+        tempLink->polyobj = po;
+        return;
+    }
+    else
+    {
+        tempLink->next =
+            Z_Malloc(sizeof(linkpolyobj_t), PU_LEVEL, 0);
+        tempLink->next->next = NULL;
+        tempLink->next->prev = tempLink;
+        tempLink->next->polyobj = po;
     }
 }
 
-void PO_LinkPolyobj(polyobj_t * po)
+void PO_UnlinkPolyobjFromRing(polyobj_t *po, linkpolyobj_t **link)
 {
-    int         leftX, rightX;
-    int         topY, bottomY;
-    seg_t     **tempSeg;
-    polyblock_t **link;
-    polyblock_t *tempLink;
-    uint        s;
-    int         i, j;
-    vertex_t   *vtx;
-    gamemap_t  *map = P_GetCurrentMap();
-    fixed_t     bmapOrigin[2];
-    uint        bmapSize[2];
-
-    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
-    P_GetBlockmapSize(map->blockmap, bmapSize);
-
-    // calculate the polyobj bbox
-    tempSeg = po->segs;
-    rightX = leftX = FLT2FIX((*tempSeg)->SG_v1pos[VX]);
-    topY = bottomY = FLT2FIX((*tempSeg)->SG_v1pos[VY]);
-
-    for(s = 0; s < po->numsegs; ++s, tempSeg++)
+    while((*link) != NULL && (*link)->polyobj != po)
     {
-        vtx = (*tempSeg)->SG_v1;
-
-        if(vtx->V_pos[VX] > rightX)
-        {
-            rightX = FLT2FIX(vtx->V_pos[VX]);
-        }
-        if(vtx->V_pos[VX] < leftX)
-        {
-            leftX = FLT2FIX(vtx->V_pos[VX]);
-        }
-        if(vtx->V_pos[VY] > topY)
-        {
-            topY = FLT2FIX(vtx->V_pos[VY]);
-        }
-        if(vtx->V_pos[VY] < bottomY)
-        {
-            bottomY = FLT2FIX(vtx->V_pos[VY]);
-        }
+        (*link) = (*link)->next;
     }
 
-    po->bbox[BOXRIGHT]  = (rightX  - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
-    po->bbox[BOXLEFT]   = (leftX   - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
-    po->bbox[BOXTOP]    = (topY    - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
-    po->bbox[BOXBOTTOM] = (bottomY - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
-
-    // Add the polyobj to each blockmap section.
-    for(j = po->bbox[BOXBOTTOM] * bmapSize[VX]; j <= po->bbox[BOXTOP] * bmapSize[VX];
-        j += bmapSize[VX])
+    if((*link) != NULL)
     {
-        for(i = po->bbox[BOXLEFT]; i <= po->bbox[BOXRIGHT]; ++i)
+        (*link)->polyobj = NULL;
+    }
+}
+
+void PO_UnLinkPolyobj(polyobj_t *po)
+{
+    P_BlockmapUnlinkPolyobj(BlockMap, po);
+}
+
+void PO_LinkPolyobj(polyobj_t *po)
+{
+    P_BlockmapLinkPolyobj(BlockMap, po);
+}
+
+typedef struct ptrmobjblockingparams_s {
+    boolean         blocked;
+    line_t         *line;
+    seg_t          *seg;
+    polyobj_t      *po;
+} ptrmobjblockingparams_t;
+
+boolean PTR_CheckMobjBlocking(mobj_t *mo, void *data)
+{
+    if((mo->ddflags & DDMF_SOLID) ||
+       (mo->dplayer && !(mo->dplayer->flags & DDPF_CAMERA)))
+    {
+        float       tmbbox[4];
+        ptrmobjblockingparams_t *params = data;
+
+        tmbbox[BOXTOP]    = mo->pos[VY] + mo->radius;
+        tmbbox[BOXBOTTOM] = mo->pos[VY] - mo->radius;
+        tmbbox[BOXLEFT]   = mo->pos[VX] - mo->radius;
+        tmbbox[BOXRIGHT]  = mo->pos[VX] + mo->radius;
+
+        if(!(tmbbox[BOXRIGHT]  <= params->line->bbox[BOXLEFT] ||
+             tmbbox[BOXLEFT]   >= params->line->bbox[BOXRIGHT] ||
+             tmbbox[BOXTOP]    <= params->line->bbox[BOXBOTTOM] ||
+             tmbbox[BOXBOTTOM] >= params->line->bbox[BOXTOP]))
         {
-            if(i >= 0 && i < bmapSize[VX] && j >= 0 && j < bmapSize[VY] * bmapSize[VX])
+            if(P_BoxOnLineSide(tmbbox, params->line) == -1)
             {
-                link = &polyblockmap[j + i];
-                if(!(*link))
-                {   // Create a new link at the current block cell.
-                    *link = Z_Malloc(sizeof(polyblock_t), PU_LEVEL, 0);
-                    (*link)->next = NULL;
-                    (*link)->prev = NULL;
-                    (*link)->polyobj = po;
-                    continue;
-                }
-                else
-                {
-                    tempLink = *link;
-                    while(tempLink->next != NULL && tempLink->polyobj != NULL)
-                    {
-                        tempLink = tempLink->next;
-                    }
-                }
+                if(po_callback)
+                    po_callback(mo, params->seg, params->po);
 
-                if(tempLink->polyobj == NULL)
-                {
-                    tempLink->polyobj = po;
-                    continue;
-                }
-                else
-                {
-                    tempLink->next =
-                        Z_Malloc(sizeof(polyblock_t), PU_LEVEL, 0);
-                    tempLink->next->next = NULL;
-                    tempLink->next->prev = tempLink;
-                    tempLink->next->polyobj = po;
-                }
+                params->blocked = true;
             }
-            // else Don't link the polyobj (since it's off the map).
         }
     }
+
+    return true; // Continue iteration.
 }
 
 static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po)
 {
-    mobj_t     *mobj, *root;
-    int         i, j;
-    int         left, right, top, bottom;
-    int         tmbbox[4];
+    uint        blockBox[4];
+    vec2_t      bbox[2];
     line_t     *ld;
-    boolean     blocked;
-    gamemap_t  *map = P_GetCurrentMap();
-    fixed_t     bmapOrigin[2];
-    uint        bmapSize[2];
+    ptrmobjblockingparams_t params;
 
-    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
-    P_GetBlockmapSize(map->blockmap, bmapSize);
+    params.blocked = false;
+    params.line = ld = seg->linedef;
+    params.seg = seg;
+    params.po = po;
 
-    ld = seg->linedef;
+    bbox[0][VX] = ld->bbox[BOXLEFT]   - MAXRADIUS;
+    bbox[0][VY] = ld->bbox[BOXBOTTOM] - MAXRADIUS;
+    bbox[1][VX] = ld->bbox[BOXRIGHT]  + MAXRADIUS;
+    bbox[1][VY] = ld->bbox[BOXTOP]    + MAXRADIUS;
 
-    top    = (ld->bbox[BOXTOP]    - bmapOrigin[VY] + MAXRADIUS) >> MAPBLOCKSHIFT;
-    bottom = (ld->bbox[BOXBOTTOM] - bmapOrigin[VY] - MAXRADIUS) >> MAPBLOCKSHIFT;
-    left   = (ld->bbox[BOXLEFT]   - bmapOrigin[VX] - MAXRADIUS) >> MAPBLOCKSHIFT;
-    right  = (ld->bbox[BOXRIGHT]  - bmapOrigin[VX] + MAXRADIUS) >> MAPBLOCKSHIFT;
+    P_BoxToBlockmapBlocks(BlockMap, blockBox, bbox);
+    P_BlockBoxMobjsIterator(BlockMap, blockBox,
+                            PTR_CheckMobjBlocking, &params);
 
-    blocked = false;
-
-    bottom = (bottom < 0? 0 : bottom);
-    bottom = (bottom >= bmapSize[VY]? bmapSize[VY] - 1 : bottom);
-    top    = (top    < 0? 0 : top);
-    top    = (top    >= bmapSize[VY]? bmapSize[VY] - 1 : top);
-    left   = (left   < 0? 0 : left);
-    left   = (left   >= bmapSize[VX]?  bmapSize[VX]  - 1 : left);
-    right  = (right  < 0? 0 : right);
-    right  = (right  >= bmapSize[VX]?  bmapSize[VX]  - 1 : right);
-
-    for(j = bottom * bmapSize[VX]; j <= top * bmapSize[VX]; j += bmapSize[VX])
-    {
-        for(i = left; i <= right; ++i)
-        {
-            root = (mobj_t *) &blockrings[j + i];
-            for(mobj = root->bnext; mobj != root; mobj = mobj->bnext)
-            {
-                if((mobj->ddflags & DDMF_SOLID) ||
-                   (mobj->dplayer && !(mobj->dplayer->flags & DDPF_CAMERA)))
-                {
-                    tmbbox[BOXTOP]    = mobj->pos[VY] + mobj->radius;
-                    tmbbox[BOXBOTTOM] = mobj->pos[VY] - mobj->radius;
-                    tmbbox[BOXLEFT]   = mobj->pos[VX] - mobj->radius;
-                    tmbbox[BOXRIGHT]  = mobj->pos[VX] + mobj->radius;
-
-                    if(tmbbox[BOXRIGHT]  <= ld->bbox[BOXLEFT] ||
-                       tmbbox[BOXLEFT]   >= ld->bbox[BOXRIGHT] ||
-                       tmbbox[BOXTOP]    <= ld->bbox[BOXBOTTOM] ||
-                       tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
-                    {
-                        continue;
-                    }
-                    if(P_BoxOnLineSide(tmbbox, ld) != -1)
-                    {
-                        continue;
-                    }
-                    if(po_callback)
-                        po_callback(mobj, seg, po);
-                    blocked = true;
-                }
-            }
-        }
-    }
-    return blocked;
+    return params.blocked;
 }
 
 /**
@@ -610,4 +563,35 @@ polyobj_t* PO_GetForDegen(void *degenMobj)
     }
 
     return NULL;
+}
+
+/**
+ * Iterate the linedefs of the polyobj calling func for each.
+ * Iteration will stop if func returns false.
+ *
+ * @param po            The polyobj whose lines are to be iterated.
+ * @param func          Call back function to call for each line of this po.
+ * @return              @c true, if all callbacks are successfull.
+ */
+boolean PO_PolyobjLineIterator(polyobj_t *po, boolean (*func) (line_t *, void *),
+                               void *data)
+{
+    uint        i;
+    seg_t     **segList;
+
+    segList = po->segs;
+    for(i = 0; i < po->numsegs; ++i, segList++)
+    {
+        line_t     *line = (*segList)->linedef;
+
+        if(line->validCount == validCount)
+            continue;
+
+        line->validCount = validCount;
+
+        if(!func(line, data))
+            return false;
+    }
+
+    return true;
 }

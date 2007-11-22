@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_particle.c: Particle Generator Management
  */
 
@@ -57,7 +57,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    P_PtcGenThinker(ptcgen_t * gen);
+void    P_PtcGenThinker(ptcgen_t *gen);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -75,7 +75,7 @@ float   particleSpawnRate = 1;  // Unmodified.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int mbox[4];
+static vec2_t mbox[2];
 static int tmpz, tmprad, tmcross, tmpx1, tmpx2, tmpy1, tmpy2;
 static line_t *ptcHitLine;
 
@@ -254,9 +254,9 @@ static void P_SpawnPlaneParticleGen(ded_ptcgen_t *def, sector_t *sec,
     if(def->flags & PGF_PARTS_PER_128)
     {
         // This is rather a rough estimate of sector area.
-        box = sec->bounds;
-        width = (box[BRIGHT] - box[BLEFT]) / 128;
-        height = (box[BBOTTOM] - box[BTOP]) / 128;
+        box = sec->bbox;
+        width = (box[BOXRIGHT] - box[BOXLEFT]) / 128;
+        height = (box[BOXTOP] - box[BOXBOTTOM]) / 128;
         gen->area = width * height;
         gen->count = def->particles * gen->area;
     }
@@ -392,8 +392,8 @@ static void P_NewParticle(ptcgen_t *gen)
     // Set proper speed.
     uncertain = def->speed * (1 - def->spd_variance * M_FRandom()) * FRACUNIT;
     len =
-        P_ApproxDistance(P_ApproxDistance(pt->mov[VX], pt->mov[VY]),
-                         pt->mov[VZ]);
+        FLT2FIX(P_ApproxDistance(P_ApproxDistance(FIX2FLT(pt->mov[VX]), FIX2FLT(pt->mov[VY])),
+                         FIX2FLT(pt->mov[VZ])));
     if(!len)
         len = FRACUNIT;
     len = FixedDiv(uncertain, len);
@@ -420,15 +420,15 @@ static void P_NewParticle(ptcgen_t *gen)
         }
         if(gen->flags & PGF_RELATIVE_VELOCITY)
         {
-            pt->mov[VX] += gen->source->mom[MX];
-            pt->mov[VY] += gen->source->mom[MY];
-            pt->mov[VZ] += gen->source->mom[MZ];
+            pt->mov[VX] += FLT2FIX(gen->source->mom[MX]);
+            pt->mov[VY] += FLT2FIX(gen->source->mom[MY]);
+            pt->mov[VZ] += FLT2FIX(gen->source->mom[MZ]);
         }
 
         // Position.
-        pt->pos[VX] = gen->source->pos[VX];
-        pt->pos[VY] = gen->source->pos[VY];
-        pt->pos[VZ] = gen->source->pos[VZ] - FLT2FIX(gen->source->floorclip);
+        pt->pos[VX] = FLT2FIX(gen->source->pos[VX]);
+        pt->pos[VY] = FLT2FIX(gen->source->pos[VY]);
+        pt->pos[VZ] = FLT2FIX(gen->source->pos[VZ] - gen->source->floorclip);
         P_Uncertain(pt->pos, FRACUNIT * def->min_spawn_radius,
                     FRACUNIT * def->spawn_radius);
 
@@ -500,23 +500,21 @@ static void P_NewParticle(ptcgen_t *gen)
             pt->pos[VZ] = FLT2FIX(gen->sector->SP_ceilheight) - i;
         }
 
-        /** Choosing the XY spot is a bit more difficult.
-        * But we must be fast and only sufficiently accurate.
-	*
-        * \fixme Nothing prevents spawning on the wrong side (or inside)
-        * of one-sided walls (large diagonal subsectors!).
-	*/
-
-        box = gen->sector->bounds;
+        /**
+         * Choosing the XY spot is a bit more difficult.
+         * But we must be fast and only sufficiently accurate.
+	     *
+         * \fixme Nothing prevents spawning on the wrong side (or inside)
+         * of one-sided walls (large diagonal subsectors!).
+	     */
+        box = gen->sector->bbox;
         for(i = 0; i < 5; ++i)  // Try a couple of times (max).
         {
             subsec =
-                R_PointInSubsector(FRACUNIT *
-                                   (box[BLEFT] +
-                                    M_FRandom() * (box[BRIGHT] - box[BLEFT])),
-                                   FRACUNIT * (box[BTOP] +
-                                               M_FRandom() * (box[BBOTTOM] -
-                                                              box[BTOP])));
+                R_PointInSubsector((box[BOXLEFT] +
+                                        M_FRandom() * (box[BOXRIGHT] - box[BOXLEFT])),
+                                   (box[BOXBOTTOM] +
+                                        M_FRandom() * (box[BOXTOP] - box[BOXBOTTOM])));
             if(subsec->sector == gen->sector)
                 break;
             else
@@ -536,7 +534,7 @@ static void P_NewParticle(ptcgen_t *gen)
                 FRACUNIT * (subsec->bbox[0].pos[VY] +
                             M_FRandom() * (subsec->bbox[1].pos[VY] -
                                            subsec->bbox[0].pos[VY]));
-            if(R_PointInSubsector(pt->pos[VX], pt->pos[VY]) == subsec)
+            if(R_PointInSubsector(FIX2FLT(pt->pos[VX]), FIX2FLT(pt->pos[VY])) == subsec)
                 break;          // This is a good place.
         }
         if(i == 10)             // No good place found?
@@ -561,9 +559,11 @@ static void P_NewParticle(ptcgen_t *gen)
 
     // The other place where this gets updated is after moving over
     // a two-sided line.
-    pt->sector =
-        gen->sector ? gen->sector : R_PointInSubsector(pt->pos[VX],
-                                                       pt->pos[VY])->sector;
+    if(gen->sector)
+        pt->sector = gen->sector;
+    else
+        pt->sector = R_PointInSubsector(FIX2FLT(pt->pos[VX]),
+                                        FIX2FLT(pt->pos[VY]))->sector;
 
     // Play a stage sound?
     P_ParticleSound(pt->pos, &def->stages[pt->stage].sound);
@@ -625,29 +625,28 @@ static void P_ManyNewParticles(ptcgen_t *gen)
 
 boolean PIT_CheckLinePtc(line_t *ld, void *data)
 {
-    int         p;
-    fixed_t     bbox[4];
+    int         pX, pY;
+    vec2_t      box[2], point;
     fixed_t     ceil, floor;
     sector_t   *front, *back;
 
     // Setup the bounding box for the line.
-    p = (ld->L_v1pos[VX] < ld->L_v2pos[VX]);
-    bbox[BOXLEFT]   = FLT2FIX(ld->L_vpos(p^1)[VX]);
-    bbox[BOXRIGHT]  = FLT2FIX(ld->L_vpos(p)[VX]);
+    pX = (ld->L_v1pos[VX] < ld->L_v2pos[VX]);
+    pY = (ld->L_v1pos[VY] < ld->L_v2pos[VY]);
+    V2_Set(point, ld->L_vpos(pX^1)[VX], ld->L_vpos(pY^1)[VY]);
+    V2_InitBox(box, point);
+    V2_Set(point, ld->L_vpos(pX)[VX], ld->L_vpos(pY)[VY]);
+    V2_AddToBox(box, point);
 
-    p = (ld->L_v1pos[VY] < ld->L_v2pos[VY]);
-    bbox[BOXBOTTOM] = FLT2FIX(ld->L_vpos(p^1)[VY]);
-    bbox[BOXTOP]    = FLT2FIX(ld->L_vpos(p)[VY]);
-
-    if(mbox[BOXRIGHT] <= bbox[BOXLEFT] || mbox[BOXLEFT] >= bbox[BOXRIGHT] ||
-       mbox[BOXTOP] <= bbox[BOXBOTTOM] || mbox[BOXBOTTOM] >= bbox[BOXTOP])
+    if(mbox[1][VX] <= box[0][VX] || mbox[0][VX] >= box[1][VX] ||
+       mbox[1][VY] <= box[0][VY] || mbox[0][VY] >= box[1][VY])
     {
-        return true;            // Bounding box misses the line completely.
+        return true; // Bounding box misses the line completely.
     }
 
     // Movement must cross the line.
-    if(P_PointOnLineSide(tmpx1, tmpy1, ld) ==
-       P_PointOnLineSide(tmpx2, tmpy2, ld))
+    if(P_PointOnLineSide(FIX2FLT(tmpx1), FIX2FLT(tmpy1), ld) ==
+       P_PointOnLineSide(FIX2FLT(tmpx2), FIX2FLT(tmpy2), ld))
         return true;
 
     // We are possibly hitting something here.
@@ -693,13 +692,15 @@ static int P_TouchParticle(particle_t *pt, ptcstage_t *stage,
         pt->stage = -1;
         return false;
     }
-    if(stage->flags & PTCF_STAGE_TOUCH ||
-       (touchWall && stage->flags & PTCF_STAGE_WALL_TOUCH) ||
-       (!touchWall && stage->flags & PTCF_STAGE_FLAT_TOUCH))
+
+    if((stage->flags & PTCF_STAGE_TOUCH) ||
+       (touchWall && (stage->flags & PTCF_STAGE_WALL_TOUCH)) ||
+       (!touchWall && (stage->flags & PTCF_STAGE_FLAT_TOUCH)))
     {
         // Particle advances to the next stage.
         pt->tics = 0;
     }
+
     // Particle survives the touch.
     return true;
 }
@@ -750,14 +751,14 @@ float P_GetParticleRadius(ded_ptcstage_t *stage_def, int ptcIDX)
 /**
  * A particle may be attached to the floor or ceiling of the sector.
  */
-fixed_t P_GetParticleZ(particle_t *pt)
+float P_GetParticleZ(particle_t *pt)
 {
     if(pt->pos[VZ] == DDMAXINT)
-        return pt->sector->SP_ceilvisheight - 2 * FRACUNIT;
+        return pt->sector->SP_ceilvisheight - 2;
     else if(pt->pos[VZ] == DDMININT)
-        return FRACUNIT * (pt->sector->SP_floorvisheight + 2);
+        return (pt->sector->SP_floorvisheight + 2);
 
-    return pt->pos[VZ];
+    return FIX2FLT(pt->pos[VZ]);
 }
 
 static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
@@ -792,18 +793,19 @@ static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
  */
 static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 {
-    int         x, y, z, xl, xh, yl, yh, bx, by;
+    int         x, y, z;
     ptcstage_t *st = gen->stages + pt->stage;
     ded_ptcstage_t *stDef = gen->def->stages + pt->stage;
     boolean     zBounce = false;
     boolean     hitFloor = false;
+    vec2_t      point;
     fixed_t     hardRadius = st->radius / 2;
 
     // Particle rotates according to spin speed.
     P_SpinParticle(gen, pt);
 
     // Changes to momentum.
-    pt->mov[VZ] -= FixedMul(mapGravity, st->gravity);
+    pt->mov[VZ] -= FixedMul(FLT2FIX(mapGravity), st->gravity);
 
     // Vector force.
     if(stDef->vector_force[VX] != 0 || stDef->vector_force[VY] != 0 ||
@@ -821,33 +823,32 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     if(st->flags & PTCF_SPHERE_FORCE &&
        (gen->source || gen->flags & PGF_UNTRIGGERED))
     {
-        fixed_t     delta[3], dist;
-        fixed_t     cross[3];
+        float       delta[3], dist;
 
         if(gen->source)
         {
-            delta[VX] = pt->pos[VX] - gen->source->pos[VX];
-            delta[VY] = pt->pos[VY] - gen->source->pos[VY];
-            delta[VZ] =
-                P_GetParticleZ(pt) - (gen->source->pos[VZ] + gen->center[VZ]);
+            delta[VX] = FIX2FLT(pt->pos[VX]) - gen->source->pos[VX];
+            delta[VY] = FIX2FLT(pt->pos[VY]) - gen->source->pos[VY];
+            delta[VZ] = P_GetParticleZ(pt) - gen->source->pos[VZ] +
+                FIX2FLT(gen->center[VZ]);
         }
         else
         {
             for(x = 0; x < 3; ++x)
-                delta[x] = pt->pos[x] - gen->center[x];
+                delta[x] = FIX2FLT(pt->pos[x] - gen->center[x]);
         }
 
         // Apply the offset (to source coords).
         for(x = 0; x < 3; ++x)
-            delta[x] -= FRACUNIT * gen->def->force_origin[x];
+            delta[x] -= gen->def->force_origin[x];
 
         // Counter the aspect ratio of old times.
-        delta[VZ] = FixedMul(delta[VZ], 1.2 * FRACUNIT);
+        delta[VZ] *= 1.2f;
 
         dist =
             P_ApproxDistance(P_ApproxDistance(delta[VX], delta[VY]),
                              delta[VZ]);
-        if(dist)
+        if(dist != 0)
         {
             // Radial force pushes the particles on the surface of a sphere.
             if(gen->def->force)
@@ -856,19 +857,19 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
                 // multiply with radial force strength.
                 for(x = 0; x < 3; ++x)
                     pt->mov[x] -=
-                        FixedMul(FixedMul
-                                 (FixedDiv(delta[x], dist),
-                                  dist - FRACUNIT * gen->def->force_radius),
-                                 FRACUNIT * gen->def->force);
+                        ((delta[x] / dist) * (dist - gen->def->force_radius)) *
+                            gen->def->force;
             }
 
             // Rotate!
             if(gen->def->force_axis[VX] || gen->def->force_axis[VY] ||
                gen->def->force_axis[VZ])
             {
-                P_FixedCrossProduct(gen->def->force_axis, delta, cross);
+                float       cross[3];
+
+                M_CrossProduct(gen->def->force_axis, delta, cross);
                 for(x = 0; x < 3; ++x)
-                    pt->mov[x] += cross[x] >> 8;
+                    pt->mov[x] += FLT2FIX(cross[x]) >> 8;
             }
         }
     }
@@ -899,12 +900,15 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
                 pt->stage = -1;
                 return;
             }
+
             if(!P_TouchParticle(pt, st, stDef, false))
                 return;
+
             z = FLT2FIX(pt->sector->SP_ceilheight) - hardRadius;
             zBounce = true;
             hitFloor = false;
         }
+
         // Also check the floor.
         if(z < FLT2FIX(pt->sector->SP_floorheight) + hardRadius)
         {
@@ -913,12 +917,15 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
                 pt->stage = -1;
                 return;
             }
+
             if(!P_TouchParticle(pt, st, stDef, false))
                 return;
+
             z = FLT2FIX(pt->sector->SP_floorheight) + hardRadius;
             zBounce = true;
             hitFloor = true;
         }
+
         if(zBounce)
         {
             pt->mov[VZ] = FixedMul(-pt->mov[VZ], st->bounce);
@@ -960,18 +967,18 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {
-                fixed_t pz = P_GetParticleZ(pt);
-                fixed_t fz, cz;
+                float       pz = P_GetParticleZ(pt);
+                float       fz, cz;
 
                 if(front->SP_floorheight > back->SP_floorheight)
-                    fz = FLT2FIX(front->SP_floorheight);
+                    fz = front->SP_floorheight;
                 else
-                    fz = FLT2FIX(back->SP_floorheight);
+                    fz = back->SP_floorheight;
 
                 if(front->SP_ceilheight < back->SP_ceilheight)
-                    cz = FLT2FIX(front->SP_ceilheight);
+                    cz = front->SP_ceilheight;
                 else
-                    cz = FLT2FIX(back->SP_ceilheight);
+                    cz = back->SP_ceilheight;
 
                 // If the particle is in the opening of a 2-sided line, it's
                 // quite likely that it shouldn't be here...
@@ -983,6 +990,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
                 }
             }
         }
+
         // Still not moving on the XY plane...
         goto quit_iteration;
     }
@@ -998,66 +1006,55 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     tmpx2 = x;
     tmpy1 = pt->pos[VY];
     tmpy2 = y;
-    mbox[BOXTOP]    = MAX_OF(y, pt->pos[VY]) + st->radius;
-    mbox[BOXBOTTOM] = MIN_OF(y, pt->pos[VY]) - st->radius;
-    mbox[BOXRIGHT]  = MAX_OF(x, pt->pos[VX]) + st->radius;
-    mbox[BOXLEFT]   = MIN_OF(x, pt->pos[VX]) - st->radius;
+    V2_Set(point, FIX2FLT(MIN_OF(x, pt->pos[VX]) - st->radius),
+                  FIX2FLT(MIN_OF(y, pt->pos[VY]) - st->radius));
+    V2_InitBox(mbox, point);
+    V2_Set(point, FIX2FLT(MAX_OF(x, pt->pos[VX]) + st->radius),
+                  FIX2FLT(MAX_OF(y, pt->pos[VY]) + st->radius));
+    V2_AddToBox(mbox, point);
 
     // Iterate the lines in the contacted blocks.
-    {
-    gamemap_t  *map = P_GetCurrentMap();
-    fixed_t     bmapOrigin[2];
-
-    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
-
-    xl = (mbox[BOXLEFT]   - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
-    xh = (mbox[BOXRIGHT]  - bmapOrigin[VX]) >> MAPBLOCKSHIFT;
-    yl = (mbox[BOXBOTTOM] - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
-    yh = (mbox[BOXTOP]    - bmapOrigin[VY]) >> MAPBLOCKSHIFT;
-    }
 
     validCount++;
-    for(bx = xl; bx <= xh; ++bx)
-        for(by = yl; by <= yh; ++by)
-            if(!P_BlockLinesIterator(bx, by, PIT_CheckLinePtc, 0))
-            {
-                int     normal[2], dotp;
+    if(!P_AllLinesBoxIteratorv(mbox, PIT_CheckLinePtc, 0))
+    {
+        int     normal[2], dotp;
 
-                // Must survive the touch.
-                if(!P_TouchParticle(pt, st, stDef, true))
-                    return;
+        // Must survive the touch.
+        if(!P_TouchParticle(pt, st, stDef, true))
+            return;
 
-                // There was a hit! Calculate bounce vector.
-                // - Project movement vector on the normal of hitline.
-                // - Calculate the difference to the point on the normal.
-                // - Add the difference to movement vector, negate movement.
-                // - Multiply with bounce.
+        // There was a hit! Calculate bounce vector.
+        // - Project movement vector on the normal of hitline.
+        // - Calculate the difference to the point on the normal.
+        // - Add the difference to movement vector, negate movement.
+        // - Multiply with bounce.
 
-                // Calculate the normal.
-                normal[VX] = -ptcHitLine->dx;
-                normal[VY] = -ptcHitLine->dy;
+        // Calculate the normal.
+        normal[VX] = -ptcHitLine->dx;
+        normal[VY] = -ptcHitLine->dy;
 
-                if(!normal[VX] && !normal[VY])
-                    goto quit_iteration;
+        if(!normal[VX] && !normal[VY])
+            goto quit_iteration;
 
-                // Calculate as floating point so we don't overflow.
-                dotp =
-                    FRACUNIT * (DOT2F(pt->mov, normal) /
-                                DOT2F(normal, normal));
-                VECMUL(normal, dotp);
-                VECSUB(normal, pt->mov);
-                VECMULADD(pt->mov, 2 * FRACUNIT, normal);
-                VECMUL(pt->mov, st->bounce);
+        // Calculate as floating point so we don't overflow.
+        dotp =
+            FRACUNIT * (DOT2F(pt->mov, normal) /
+                        DOT2F(normal, normal));
+        VECMUL(normal, dotp);
+        VECSUB(normal, pt->mov);
+        VECMULADD(pt->mov, 2 * FRACUNIT, normal);
+        VECMUL(pt->mov, st->bounce);
 
-                // Continue from the old position.
-                x = pt->pos[VX];
-                y = pt->pos[VY];
-                tmcross = false;    // Sector can't change if XY doesn't.
+        // Continue from the old position.
+        x = pt->pos[VX];
+        y = pt->pos[VY];
+        tmcross = false;    // Sector can't change if XY doesn't.
 
-                // This line is the latest contacted line.
-                pt->contact = ptcHitLine;
-                goto quit_iteration;
-            }
+        // This line is the latest contacted line.
+        pt->contact = ptcHitLine;
+        goto quit_iteration;
+    }
 
   quit_iteration:
     // The move is now OK.
@@ -1066,7 +1063,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
     // Should we update the sector pointer?
     if(tmcross)
-        pt->sector = R_PointInSubsector(x, y)->sector;
+        pt->sector = R_PointInSubsector(FIX2FLT(x), FIX2FLT(y))->sector;
 }
 
 /**
@@ -1137,6 +1134,7 @@ void P_PtcGenThinker(ptcgen_t *gen)
                 pt->stage = -1;
                 continue;
             }
+
             pt->tics =
                 def->stages[pt->stage].tics * (1 - def->stages[pt->stage].
                                                variance * M_FRandom());
@@ -1147,6 +1145,7 @@ void P_PtcGenThinker(ptcgen_t *gen)
             // A sound?
             P_ParticleSound(pt->pos, &def->stages[pt->stage].sound);
         }
+
         // Try to move.
         P_MoveParticle(gen, pt);
     }
@@ -1269,7 +1268,7 @@ void P_CheckPtcPlanes(void)
 
 /**
  * Spawns all type-triggered particle generators, regardless of whether
- * the type of thing exists in the level or not (things might be
+ * the type of mobj exists in the level or not (mobjs might be
  * dynamically created).
  */
 void P_SpawnTypeParticleGens(void)
@@ -1337,7 +1336,7 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
     ptcgen_t   *gen;
     ded_ptcgen_t *def;
     int         i;
-    fixed_t     len;
+    float       len;
 
     // Are particles allowed?
     if(isDedicated || !useParticles || !mo || !inflictor || amount <= 0)
@@ -1361,25 +1360,25 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
             gen->area = 1;
 
         // Calculate appropriate center coordinates and the vector.
-        gen->center[VX] += mo->pos[VX];
-        gen->center[VY] += mo->pos[VY];
-        gen->center[VZ] += mo->pos[VZ] + FLT2FIX(mo->height / 2);
-        gen->vector[VX] += mo->pos[VX] - inflictor->pos[VX];
-        gen->vector[VY] += mo->pos[VY] - inflictor->pos[VY];
+        gen->center[VX] += FLT2FIX(mo->pos[VX]);
+        gen->center[VY] += FLT2FIX(mo->pos[VY]);
+        gen->center[VZ] += FLT2FIX(mo->pos[VZ] + mo->height / 2);
+        gen->vector[VX] += FLT2FIX(mo->pos[VX] - inflictor->pos[VX]);
+        gen->vector[VY] += FLT2FIX(mo->pos[VY] - inflictor->pos[VY]);
         gen->vector[VZ] +=
-            mo->pos[VZ] + FLT2FIX(mo->height / 2) - inflictor->pos[VZ] - FLT2FIX(inflictor->height / 2);
+            FLT2FIX(mo->pos[VZ] + (mo->height / 2) - inflictor->pos[VZ] - (inflictor->height / 2));
 
         // Normalize the vector.
         len =
             P_ApproxDistance(P_ApproxDistance
-                             (gen->vector[VX], gen->vector[VY]),
-                             gen->vector[VZ]);
-        if(len)
+                             (FIX2FLT(gen->vector[VX]), FIX2FLT(gen->vector[VY])),
+                             FIX2FLT(gen->vector[VZ]));
+        if(len != 0)
         {
             uint        k;
 
             for(k = 0; k < 3; ++k)
-                gen->vector[k] = FixedDiv(gen->vector[k], len);
+                gen->vector[k] = FixedDiv(gen->vector[k], FLT2FIX(len));
         }
 
         // Is there a need to pre-simulate?

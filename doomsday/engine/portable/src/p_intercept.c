@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_intercept.c: Line/Object Interception
  */
 
@@ -72,10 +72,11 @@ void P_ClearIntercepts(void)
 
 /**
  * You must clear intercepts before the first time this is called.
- * The intercepts array grows if necessary. Returns a pointer to the new
- * intercept.
+ * The intercepts array grows if necessary.
+ *
+ * @return              Ptr to the new intercept.
  */
-intercept_t *P_AddIntercept(fixed_t frac, boolean isaline, void *ptr)
+intercept_t *P_AddIntercept(float frac, boolean isaline, void *ptr)
 {
     int     count = intercept_p - intercepts;
 
@@ -86,46 +87,56 @@ intercept_t *P_AddIntercept(fixed_t frac, boolean isaline, void *ptr)
         intercept_p = intercepts + count;
     }
 
+    if(isaline && P_ToIndex(ptr) >= numlines)
+    {
+        count = count;
+    }
+
     // Fill in the data that has been provided.
     intercept_p->frac = frac;
     intercept_p->isaline = isaline;
-    intercept_p->d.thing = ptr;
+    intercept_p->d.mo = ptr;
     return intercept_p++;
 }
 
 /**
- * Returns true if the traverser function returns true for all lines.
+ * @return              @c true, if the traverser function returns @c true,
+ *                      for all lines.
  */
-boolean P_TraverseIntercepts(traverser_t func, fixed_t maxfrac)
+boolean P_TraverseIntercepts(traverser_t func, float maxfrac)
 {
     intercept_t *in = NULL;
     int         count = intercept_p - intercepts;
 
     while(count--)
     {
-        fixed_t dist = DDMAXINT;
+        float       dist = FIX2FLT(DDMAXINT);
         intercept_t *scan;
 
         for(scan = intercepts; scan < intercept_p; scan++)
             if(scan->frac < dist)
                 dist = (in = scan)->frac;
+
         if(dist > maxfrac)
-            return true;        // checked everything in range
+            return true; // Checked everything in range.
         if(!func(in))
-            return false;       // don't bother going farther
-        in->frac = DDMAXINT;
+            return false; // Don't bother going farther.
+
+        in->frac = FIX2FLT(DDMAXINT);
     }
-    return true;                // everything was traversed
+
+    return true; // Everything was traversed.
 }
 
 /**
- * Returns true if the traverser function returns true for all lines.
+ * @return              @c true, if the traverser function returns @c true,
+ *                      for all lines.
  */
 boolean P_SightTraverseIntercepts(divline_t *strace,
                                   boolean (*func) (intercept_t *))
 {
     int         count;
-    fixed_t     dist;
+    float       dist;
     intercept_t *scan, *in;
     divline_t   dl;
 
@@ -139,22 +150,24 @@ boolean P_SightTraverseIntercepts(divline_t *strace,
     }
 
     // Go through in order.
-    in = 0;                     // shut up compiler warning
+    in = 0; // Shut up compiler warning.
     while(count--)
     {
-        dist = DDMAXINT;
+        dist = FIX2FLT(DDMAXINT);
         for(scan = intercepts; scan < intercept_p; scan++)
             if(scan->frac < dist)
             {
                 dist = scan->frac;
                 in = scan;
             }
-        if(!in)
-            continue;           // huh?
 
+        if(!in)
+            continue; // Huh?
         if(!func(in))
-            return false;       // don't bother going farther
-        in->frac = DDMAXINT;
+            return false; // Don't bother going farther.
+
+        in->frac = FIX2FLT(DDMAXINT);
     }
-    return true;                // everything was traversed
+
+    return true; // Everything was traversed.
 }

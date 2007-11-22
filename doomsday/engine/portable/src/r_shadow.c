@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_shadow.c: Runtime Map Shadowing (FakeRadio)
  */
 
@@ -32,15 +32,15 @@
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_misc.h"
-#include "p_bmap.h"
+#include "de_play.h"
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct boundary_s {
-    vec2_t  left, right;
-    vec2_t  a, b;
+    vec2_t      left, right;
+    vec2_t      a, b;
 } boundary_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -73,8 +73,8 @@ static uint        boundaryNum;
 void R_CornerNormalPoint(const pvec2_t line1, float dist1, const pvec2_t line2,
                          float dist2, pvec2_t point, pvec2_t lp, pvec2_t rp)
 {
-    float   len1, len2, plen;
-    vec2_t  origin = { 0, 0 }, norm1, norm2;
+    float       len1, len2, plen;
+    vec2_t      origin = { 0, 0 }, norm1, norm2;
 
     // Length of both lines.
     len1 = V2_Length(line1);
@@ -153,9 +153,9 @@ sector_t *R_GetShadowSector(shadowpoly_t *poly, uint pln, boolean getLinked)
 boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
                              boolean leftCorner)
 {
-    sector_t *sector = R_GetShadowSector(poly, 0, false);
-    line_t *neighbor;
-    int     side = !(poly->flags & SHPF_FRONTSIDE);
+    sector_t   *sector = R_GetShadowSector(poly, 0, false);
+    line_t     *neighbor;
+    int         side = !(poly->flags & SHPF_FRONTSIDE);
 
     // The line itself.
     R_ShadowDelta(leftCorner ? right : left, poly->seg->linedef, sector);
@@ -383,8 +383,8 @@ boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
 
 #if 0 // currently unused
     // Use the extended points, they are wider than inoffsets.
-    V2_Set(corners[0], FIX2FLT(poly->outer[0]->pos[VX]), FIX2FLT(poly->outer[0]->pos[VY]));
-    V2_Set(corners[1], FIX2FLT(poly->outer[1]->pos[VX]), FIX2FLT(poly->outer[1]->pos[VY]));
+    V2_Set(corners[0], poly->outer[0]->pos[VX], poly->outer[0]->pos[VY]);
+    V2_Set(corners[1], poly->outer[1]->pos[VX], poly->outer[1]->pos[VY]);
     V2_Sum(corners[2], corners[1], poly->extoffset[1]);
     V2_Sum(corners[3], corners[0], poly->extoffset[0]);
 
@@ -402,7 +402,7 @@ boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
     for(i = 0; i < 4; ++i)
     {
         if(R_PointInSubsector
-           (FRACUNIT * corners[i][VX], FRACUNIT * corners[i][VY]) == subsector)
+           (corners[i][VX], corners[i][VY]) == subsector)
         {
             // Good enough.
             R_LinkShadow(poly, subsector);
@@ -447,8 +447,8 @@ boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
 /**
  * Moves inoffset appropriately.
  *
- * @return          <code>true</code> if overlap resolving should continue
- *                  to another round of iteration.
+ * @return          @c true, if overlap resolving should continue to another
+ *                  round of iteration.
  */
 boolean R_ResolveStep(const pvec2_t outer, const pvec2_t inner,
                       pvec2_t offset)
@@ -583,8 +583,8 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
 /**
  * New shadowpolys will be allocated from the storage.
  *
- * @param storage       If <code>NULL</code> the number of polys required
- *                      will be returned else.
+ * @param storage       @c NULL = the number of polys required will be
+ *                      returned else.
  */
 uint R_MakeShadowEdges(shadowpoly_t *storage)
 {
@@ -688,8 +688,8 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
 }
 
 /**
- * Calculate sector edge shadow points, create the shadow polygons and
- * link them to the subsectors.
+ * Calculate sector edge shadow points, create the shadow polygons and link
+ * them to the subsectors.
  */
 void R_InitSectorShadows(void)
 {
@@ -709,7 +709,7 @@ void R_InitSectorShadows(void)
     // This'll make 'em for real.
     R_MakeShadowEdges(shadows);
 
-    /*
+    /**
      * The algorithm:
      *
      * 1. Use the subsector blockmap to look for all the blocks that are
@@ -738,7 +738,7 @@ void R_InitSectorShadows(void)
         V2_Sum(point, point, poly->extoffset[1]);
         V2_AddToBox(bounds, point);
 
-        P_SubsectorBoxIteratorv(bounds, R_GetShadowSector(poly, 0, false),
+        P_SubsectorsBoxIteratorv(bounds, R_GetShadowSector(poly, 0, false),
                                 RIT_ShadowSubsectorLinker, poly);
     }
 

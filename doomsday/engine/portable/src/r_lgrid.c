@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_lgrid.c: Light Grid (Large-Scale FakeRadio)
  *
  * Very simple global illumination method utilizing a 2D grid of light
@@ -50,28 +50,21 @@
 
 // TYPES -------------------------------------------------------------------
 
-//typedef struct ambientlight_s {
-//} ambientlight_t;
-
 typedef struct gridblock_s {
-    //struct sector_s *sector;    /* Main source of the light. */
-    //ambientlight_t top;
-    //ambientlight_t bottom;
-
     struct sector_s *sector;
 
-    byte flags;
+    byte        flags;
 
     // Positive bias means that the light is shining in the floor of
     // the sector.
-    char bias;
+    char        bias;
 
-    // Color of the light.
-    float rgb[3];
-    float oldrgb[3]; // Used instead of rgb if between change and update.
-
+    // Color of the light:
+    float       rgb[3];
+    float       oldrgb[3];  // Used instead of rgb if the lighting in this
+                            // block has changed and we haven't yet done a
+                            // a full grid update.
 } gridblock_t;
-
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -93,7 +86,7 @@ static int      lgShowDebug = false;
 static float    lgDebugSize = 1.5f;
 
 static int      lgBlockSize = 31;
-static fixed_t  lgOrigin[3];
+static float    lgOrigin[3];
 static int      lgBlockWidth;
 static int      lgBlockHeight;
 static gridblock_t *grid;
@@ -123,7 +116,7 @@ void LG_Register(void)
  */
 static boolean HasIndexBit(int x, int y, uint *bitfield)
 {
-    uint index = x + y*lgBlockWidth;
+    uint index = x + y * lgBlockWidth;
 
     // Assume 32-bit uint.
     return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
@@ -135,7 +128,7 @@ static boolean HasIndexBit(int x, int y, uint *bitfield)
  */
 static void AddIndexBit(int x, int y, uint *bitfield, int *count)
 {
-    uint index = x + y*lgBlockWidth;
+    uint index = x + y * lgBlockWidth;
 
     // Assume 32-bit uint.
     if(!HasIndexBit(index, 0, bitfield))
@@ -154,15 +147,14 @@ void LG_Init(void)
 
 #define MSFACTORS 7
     typedef struct lgsamplepoint_s {
-        fixed_t pos[3];
+        float   pos[3];
     } lgsamplepoint_t;
     // Diagonal in maze arrangement of natural numbers.
     // Up to 65 samples per-block(!)
     static int  multisample[] = {1, 5, 9, 17, 25, 37, 49, 65};
 
-    fixed_t     max[3];
-    fixed_t     width;
-    fixed_t     height;
+    float       max[3];
+    float       width, height;
     int         i = 0;
     int         a, b, x, y;
     int         count;
@@ -174,7 +166,7 @@ void LG_Init(void)
     int        *sampleResults = 0;
     int         n, size, numSamples, center, best;
     uint        s;
-    fixed_t     off[2];
+    float       off[2];
     lgsamplepoint_t *samplePoints = 0, sample;
 
     sector_t  **ssamples;
@@ -195,8 +187,8 @@ void LG_Init(void)
     width  = max[VX] - lgOrigin[VX];
     height = max[VY] - lgOrigin[VY];
 
-    lgBlockWidth  = ((width / lgBlockSize) >> FRACBITS) + 1;
-    lgBlockHeight = ((height / lgBlockSize) >> FRACBITS) + 1;
+    lgBlockWidth  = ROUND(width / lgBlockSize) + 1;
+    lgBlockHeight = ROUND(height / lgBlockSize) + 1;
 
     // Clamp the multisample factor.
     if(lgMXSample > MSFACTORS)
@@ -209,20 +201,25 @@ void LG_Init(void)
     // Allocate memory for sample points array.
     samplePoints = M_Malloc(sizeof(lgsamplepoint_t) * numSamples);
 
-    /** \todo It would be possible to only allocate memory for the unique
-    * sample results. And then select the appropriate sample in the loop
-    * for initializing the grid instead of copying the previous results in
-    * the loop for acquiring the sample points.
-    * Calculate with the equation (number of unique sample points):
-    * ((1 + lgBlockHeight * lgMXSample) * (1 + lgBlockWidth * lgMXSample)) +
-    * (size % 2 == 0? numBlocks : 0)
-    * OR
-    * We don't actually need to store the ENTIRE sample points array. It
-    * would be sufficent to only store the results from the start of the
-    * previous row to current col index. This would save a bit of memory.
-    * However until lightgrid init is finalized it would be rather silly
-    * to optimize this much further.
-    */
+    /**
+     * It would be possible to only allocate memory for the unique
+     * sample results. And then select the appropriate sample in the loop
+     * for initializing the grid instead of copying the previous results in
+     * the loop for acquiring the sample points.
+     *
+     * Calculate with the equation (number of unique sample points):
+     *
+     * ((1 + lgBlockHeight * lgMXSample) * (1 + lgBlockWidth * lgMXSample)) +
+     *     (size % 2 == 0? numBlocks : 0)
+     * OR
+     *
+     * We don't actually need to store the ENTIRE sample points array. It
+     * would be sufficent to only store the results from the start of the
+     * previous row to current col index. This would save a bit of memory.
+     *
+     * However until lightgrid init is finalized it would be rather silly
+     * to optimize this much further.
+     */
 
     // Allocate memory for all the sample results.
     ssamples = M_Malloc(sizeof(sector_t*) *
@@ -232,7 +229,7 @@ void LG_Init(void)
     size = center = 0;
     if(numSamples > 1)
     {
-        float f = sqrt(numSamples);
+        float       f = sqrt(numSamples);
 
         if(ceil(f) != floor(f))
         {
@@ -252,14 +249,13 @@ void LG_Init(void)
 
     if(center == 0)
     {   // Zero is the center so do that first.
-        samplePoints[0].pos[VX] = (lgBlockSize << (FRACBITS - 1));
-        samplePoints[0].pos[VY] = (lgBlockSize << (FRACBITS - 1));
+        samplePoints[0].pos[VX] = lgBlockSize / 2;
+        samplePoints[0].pos[VY] = lgBlockSize / 2;
     }
+
     if(numSamples > 1)
     {
-#define round(x) ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
-
-        float bSize = (float) lgBlockSize / (size-1);
+        float       bSize = (float) lgBlockSize / (size-1);
 
         // Is there an offset?
         if(center == 0)
@@ -270,8 +266,8 @@ void LG_Init(void)
         for(y = 0; y < size; ++y)
             for(x = 0; x < size; ++x, ++n)
             {
-                samplePoints[n].pos[VX] = FLT2FIX(round(x * bSize));
-                samplePoints[n].pos[VY] = FLT2FIX(round(y * bSize));
+                samplePoints[n].pos[VX] = ROUND(x * bSize);
+                samplePoints[n].pos[VY] = ROUND(y * bSize);
             }
     }
 
@@ -280,20 +276,20 @@ void LG_Init(void)
     for(n = 0; n < numSamples; ++n)
         Con_Message(" %i of %i %i(%f %f)\n",
                     n, numSamples, (n == center)? 1 : 0,
-                    FIX2FLT(samplePoints[n].pos[VX]), FIX2FLT(samplePoints[n].pos[VY]));
+                    samplePoints[n].pos[VX], samplePoints[n].pos[VY]);
 #endif
 */
 
     // Acquire the sectors at ALL the sample points.
     for(y = 0; y < lgBlockHeight; ++y)
     {
-        off[VY] = y * (lgBlockSize << FRACBITS);
+        off[VY] = y * lgBlockSize;
         for(x = 0; x < lgBlockWidth; ++x)
         {
-            int blk = (x + y * lgBlockWidth);
-            int idx;
+            int         blk = (x + y * lgBlockWidth);
+            int         idx;
 
-            off[VX] = x * (lgBlockSize << FRACBITS);
+            off[VX] = x * lgBlockSize;
 
             n = 0;
             if(center == 0)
@@ -327,8 +323,8 @@ void LG_Init(void)
                     if(numSamples > 1 && ((x > 0 && a == 0) || (y > 0 && b == 0)))
                     {   // We have already sampled this point.
                         // Get the previous result.
-                        int prevX, prevY, prevA, prevB;
-                        int previdx;
+                        int         prevX, prevY, prevA, prevB;
+                        int         previdx;
 
                         prevX = x; prevY = y; prevA = a; prevB = b;
                         if(x > 0 && a == 0)
@@ -390,10 +386,10 @@ void LG_Init(void)
     // Initialize the grid.
     for(block = grid, y = 0; y < lgBlockHeight; ++y)
     {
-        off[VY] = y * (lgBlockSize << FRACBITS);
+        off[VY] = y * lgBlockSize;
         for(x = 0; x < lgBlockWidth; ++x, ++block)
         {
-            off[VX] = x * (lgBlockSize << FRACBITS);
+            off[VX] = x * lgBlockSize;
 
             /**
              * Pick the sector at each of the sample points.
@@ -585,7 +581,7 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
  */
 void LG_SectorChanged(sector_t *sector)
 {
-    uint        i, j;
+    uint            i, j;
     unsigned short n;
 
     if(!lgInited)
@@ -610,6 +606,23 @@ void LG_SectorChanged(sector_t *sector)
     }
 
     needsUpdate = true;
+}
+
+/**
+ * Called when a setting is changed which affects the lightgrid.
+ */
+void LG_MarkAllForUpdate(cvar_t *unused)
+{
+    uint            i;
+
+    if(!lgInited)
+        return;
+
+    // Mark all blocks and contributors.
+    for(i = 0; i < numsectors; ++i)
+    {
+        LG_SectorChanged(&sectors[i]);
+    }
 }
 
 #if 0
@@ -764,6 +777,8 @@ void LG_Update(void)
     {
         for(x = 0; x < lgBlockWidth; ++x, ++block)
         {
+            boolean     isSkyFloor, isSkyCeil;
+
             // Unused blocks can't contribute.
             if(!(block->flags & GBF_CONTRIBUTOR) || !block->sector)
                 continue;
@@ -773,11 +788,14 @@ void LG_Update(void)
             color = R_GetSectorLightColor(sector);
             height = (int) (sector->SP_ceilheight - sector->SP_floorheight);
 
-            if(R_IsSkySurface(&sector->SP_ceilsurface))
+            isSkyFloor = R_IsSkySurface(&sector->SP_ceilsurface);
+            isSkyCeil = R_IsSkySurface(&sector->SP_floorsurface);
+
+            if(isSkyFloor && !isSkyCeil)
             {
                 bias = -height / 6;
             }
-            else if(R_IsSkySurface(&sector->SP_floorsurface))
+            else if(!isSkyFloor && isSkyCeil)
             {
                 bias = height / 6;
             }
@@ -823,8 +841,8 @@ void LG_Update(void)
 /**
  * Calculate the light level for a 3D point in the world.
  *
- * @param point  3D point.
- * @param color  Evaluated color of the point (return value).
+ * @param point     3D point.
+ * @param color     Evaluated color of the point (return value).
  */
 void LG_Evaluate(const float *point, float *color)
 {
@@ -838,8 +856,8 @@ void LG_Evaluate(const float *point, float *color)
         return;
     }
 
-    x = ((FLT2FIX(point[VX]) - lgOrigin[VX]) / lgBlockSize) >> FRACBITS;
-    y = ((FLT2FIX(point[VY]) - lgOrigin[VY]) / lgBlockSize) >> FRACBITS;
+    x = ROUND((point[VX] - lgOrigin[VX]) / lgBlockSize);
+    y = ROUND((point[VY] - lgOrigin[VY]) / lgBlockSize);
     x = MINMAX_OF(1, x, lgBlockWidth - 2);
     y = MINMAX_OF(1, y, lgBlockHeight - 2);
 
@@ -928,8 +946,8 @@ void LG_Debug(void)
         return;
 
     blink++;
-    vx = ((viewPlayer->mo->pos[VX] - lgOrigin[VX]) / lgBlockSize) >> FRACBITS;
-    vy = ((viewPlayer->mo->pos[VY] - lgOrigin[VY]) / lgBlockSize) >> FRACBITS;
+    vx = ROUND((viewPlayer->mo->pos[VX] - lgOrigin[VX]) / lgBlockSize);
+    vy = ROUND((viewPlayer->mo->pos[VY] - lgOrigin[VY]) / lgBlockSize);
     vx = MINMAX_OF(1, vx, lgBlockWidth - 2);
     vy = MINMAX_OF(1, vy, lgBlockHeight - 2);
 

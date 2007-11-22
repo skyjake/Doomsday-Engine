@@ -22,9 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_data.c: Playsim Data Structures, Macros and Constants
- *
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -48,11 +47,11 @@
 
 // TYPES -------------------------------------------------------------------
 
-// Bad texture record
+// Bad texture record.
 typedef struct {
-    char *name;
-    boolean planeTex;
-    uint count;
+    char       *name;
+    boolean     planeTex;
+    uint    count;
 } badtex_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -96,15 +95,14 @@ side_t     *sides;
 int         numthings;
 
 blockmap_t *BlockMap;
-linkmobj_t *blockrings;             // for thing rings
+blockmap_t *SSecBlockMap;
+linkmobj_t *blockrings;             // for mobj rings
 
 byte       *rejectmatrix;           // for fast sight rejection
 
-polyblock_t **polyblockmap;         // polyobj blockmap
+nodepile_t *mobjnodes, *linenodes;  // all kinds of wacky links
 
-nodepile_t *thingnodes, *linenodes;  // all kinds of wacky links
-
-fixed_t     mapGravity;
+float       mapGravity;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -146,7 +144,8 @@ void P_PlaneChanged(sector_t *sector, uint plane)
         if(!front || !front->sector || !back || !back->sector)
             continue;
 
-        /** Do as in the original Doom if the texture has not been defined -
+        /**
+         * Do as in the original Doom if the texture has not been defined -
          * extend the floor/ceiling to fill the space (unless its the skyflat),
          * or if there is a midtexture use that instead.
          */
@@ -366,13 +365,13 @@ void P_SetCurrentMap(gamemap_t *map)
     po_NumPolyobjs = map->po_NumPolyobjs;
     polyobjs = map->polyobjs;
 
-    polyblockmap = map->polyBlockMap;
     rejectmatrix = map->rejectmatrix;
-    thingnodes = &map->thingnodes;
+    mobjnodes = &map->mobjnodes;
     linenodes = &map->linenodes;
     linelinks = map->linelinks;
 
-    BlockMap = map->blockmap;
+    BlockMap = map->blockMap;
+    SSecBlockMap = map->ssecBlockMap;
     blockrings = map->blockrings;
 
     mapGravity = map->globalGravity;
@@ -403,13 +402,13 @@ const char *P_GetUniqueMapID(gamemap_t *map)
     return map->uniqueID;
 }
 
-void P_GetMapBounds(gamemap_t *map, fixed_t *min, fixed_t *max)
+void P_GetMapBounds(gamemap_t *map, float *min, float *max)
 {
-    min[VX] = FRACUNIT * map->bounds[BLEFT];
-    min[VY] = FRACUNIT * map->bounds[BTOP];
+    min[VX] = map->bbox[BOXLEFT];
+    min[VY] = map->bbox[BOXBOTTOM];
 
-    max[VX] = FRACUNIT * map->bounds[BRIGHT];
-    max[VY] = FRACUNIT * map->bounds[BBOTTOM];
+    max[VX] = map->bbox[BOXRIGHT];
+    max[VY] = map->bbox[BOXTOP];
 }
 
 /**
@@ -507,7 +506,8 @@ boolean P_LoadMap(const char *mapID)
         // Init Particle Generator links.
         PG_InitForLevel();
 
-        DL_InitForMap();
+        LO_InitForMap(); // Lumobj management.
+        DL_InitForMap(); // Projected lumobjs (dynlights) management.
 
         spawnParticleGeneratorsForMap(P_GetMapID(map));
 
@@ -618,7 +618,7 @@ void P_FreeBadTexList(void)
  * so it can be presented to the user (in P_CheckMap()) instead of loads of
  * duplicate missing texture messages from Doomsday.
  *
- * @param planeTex      <code>true</code> @name comes from a map data field
+ * @param planeTex      @c true == 'name' comes from a map data field
  *                      intended for plane textures (Flats).
  */
 int P_CheckTexture(char *name, boolean planeTex, int dataType,

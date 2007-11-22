@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,14 +22,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * p_sight.c: Line of Sight Testing
+/**
+ * p_sight.c: Line of Sight Testing.
  *
  * This uses specialized forms of the maputils routines for optimized
  * performance.
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <math.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -48,13 +50,11 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-//extern intercept_t intercepts[MAXINTERCEPTS], *intercept_p;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-fixed_t sightzstart;            // eye z of looker
-fixed_t topslope, bottomslope;  // slopes to top and bottom of target
-int     sightcounts[3];
+float sightzstart;            // eye z of looker
+float topslope, bottomslope;  // slopes to top and bottom of target
+int sightcounts[3];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -64,111 +64,39 @@ static divline_t strace;
 
 boolean PTR_SightTraverse(intercept_t *in)
 {
-    line_t *li;
-    fixed_t slope;
+    line_t     *li;
+    float       slope;
 
-    if(in == NULL) return true; // Something was out of bounds?
+    if(in == NULL)
+        return true; // Something was out of bounds?
 
     li = in->d.line;
 
     // Crosses a two sided line.
     P_LineOpening(li);
 
-    if(openbottom >= opentop)   // quick test for totally closed doors
-        return false;           // stop
+    // Check for totally closed doors.
+    if(openbottom >= opentop)
+        return false; // Stop iteration.
 
     if(li->L_frontsector->SP_floorheight != li->L_backsector->SP_floorheight)
     {
-        slope = FixedDiv(FLT2FIX(openbottom) - sightzstart, in->frac);
+        slope = (openbottom - sightzstart) / in->frac;
         if(slope > bottomslope)
             bottomslope = slope;
     }
 
     if(li->L_frontsector->SP_ceilheight != li->L_backsector->SP_ceilheight)
     {
-        slope = FixedDiv(FLT2FIX(opentop) - sightzstart, in->frac);
+        slope = (opentop - sightzstart) / in->frac;
         if(slope < topslope)
             topslope = slope;
     }
 
     if(topslope <= bottomslope)
-        return false;           // stop
+        return false; // Stop iteration.
 
-    return true;                // keep going
-}
-
-boolean P_SightPolyBlockLinesIterator(int x, int y)
-{
-    int         offset;
-    line_t     *ld;
-    int         s[2];
-    divline_t   dl;
-    polyblock_t *polyLink;
-    seg_t     **segList;
-    uint        i;
-    gamemap_t  *map = P_GetCurrentMap();
-    uint        bmapSize[2];
-
-    P_GetBlockmapSize(map->blockmap, bmapSize);
-
-    if(x >= bmapSize[VX] || y >= bmapSize[VY])
-    {
-#if _DEBUG
-        Con_Message
-            ("P_SightPolyBlockLinesIterator: x=%i, y=%i outside blockmap.\n", x,
-             y);
-#endif
-        return false;
-    }
-
-    offset = y * bmapSize[VX] + x;
-
-    polyLink = polyblockmap[offset];
-    while(polyLink)
-    {
-        if(polyLink->polyobj)
-        {                       // only check non-empty links
-            if(polyLink->polyobj->validCount != validCount)
-            {
-                segList = polyLink->polyobj->segs;
-                for(i = 0; i < polyLink->polyobj->numsegs; ++i, segList++)
-                {
-                    ld = (*segList)->linedef;
-                    if(ld->validCount == validCount)
-                        continue;
-
-                    ld->validCount = validCount;
-
-                    s[0] = P_PointOnDivlineSide(FLT2FIX(ld->L_v1pos[VX]),
-                                                FLT2FIX(ld->L_v1pos[VY]), &strace);
-                    s[1] = P_PointOnDivlineSide(FLT2FIX(ld->L_v2pos[VX]),
-                                                FLT2FIX(ld->L_v2pos[VY]), &strace);
-                    if(s[0] == s[1])
-                        continue;   // line isn't crossed
-
-                    P_MakeDivline(ld, &dl);
-                    s[0] = P_PointOnDivlineSide(strace.pos[VX], strace.pos[VY], &dl);
-                    s[1] = P_PointOnDivlineSide(strace.pos[VX] + strace.dx,
-                                                strace.pos[VY] + strace.dy, &dl);
-                    if(s[0] == s[1])
-                        continue;   // line isn't crossed
-
-                    // try to early out the check
-                    if(!ld->L_backside)
-                        return false;   // stop checking
-
-                    // store the line for later intersection testing
-                    /*intercept_p->d.line = ld;
-                       intercept_p++; */
-                    P_AddIntercept(0, true, ld);
-                }
-                polyLink->polyobj->validCount = validCount;
-            }
-        }
-        polyLink = polyLink->next;
-    }
-
-    return true;
+    return true; // Continue iteration.
 }
 
 boolean PIT_CheckSightLine(line_t *line, void *data)
@@ -176,16 +104,16 @@ boolean PIT_CheckSightLine(line_t *line, void *data)
     int         s[2];
     divline_t   dl;
 
-    s[0] = P_PointOnDivlineSide(FLT2FIX(line->L_v1pos[VX]),
-                                FLT2FIX(line->L_v1pos[VY]), &strace);
-    s[1] = P_PointOnDivlineSide(FLT2FIX(line->L_v2pos[VX]),
-                                FLT2FIX(line->L_v2pos[VY]), &strace);
+    s[0] = P_PointOnDivlineSide(line->L_v1pos[VX],
+                                line->L_v1pos[VY], &strace);
+    s[1] = P_PointOnDivlineSide(line->L_v2pos[VX],
+                                line->L_v2pos[VY], &strace);
     if(s[0] == s[1])
         return true; // Line isn't crossed, continue iteration.
 
     P_MakeDivline(line, &dl);
-    s[0] = P_PointOnDivlineSide(strace.pos[VX], strace.pos[VY], &dl);
-    s[1] = P_PointOnDivlineSide(strace.pos[VX] + strace.dx, strace.pos[VY] + strace.dy,
+    s[0] = P_PointOnDivlineSide(FIX2FLT(strace.pos[VX]), FIX2FLT(strace.pos[VY]), &dl);
+    s[1] = P_PointOnDivlineSide(FIX2FLT(strace.pos[VX] + strace.dx), FIX2FLT(strace.pos[VY] + strace.dy),
                                 &dl);
     if(s[0] == s[1])
         return true; // Line isn't crossed, continue iteration.
@@ -200,136 +128,149 @@ boolean PIT_CheckSightLine(line_t *line, void *data)
     return true; // Continue iteration.
 }
 
-boolean P_SightBlockmapLinesIterator(int x, int y)
-{
-    return P_BlockmapLinesIterator(BlockMap, x, y, PIT_CheckSightLine, NULL);
-}
-
-boolean P_SightBlockLinesIterator(int x, int y)
-{
-    if(!P_SightPolyBlockLinesIterator(x, y))
-        return false;
-
-    return P_SightBlockmapLinesIterator(x, y);
-}
-
-/*
+/**
  * Traces a line from x1,y1 to x2,y2, calling the traverser function for
- * each. Returns true if the traverser function returns true for all lines.
+ * each.
+ *
+ * @param x1            Origin X (world) coordinate.
+ * @param y1            Origin Y (world) coordinate.
+ * @param x2            Destination X (world) coordinate.
+ * @param y2            Destination Y (world) coordinate.
+ *
+ * @return              @c true if the traverser function returns @c true for
+ *                      all visited lines.
  */
-boolean P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
+boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
 {
-    fixed_t xt1, yt1, xt2, yt2;
-    fixed_t xstep, ystep;
-    fixed_t partial;
-    fixed_t xintercept, yintercept;
-    int     mapx, mapy, mapxstep, mapystep;
-    int     count;
-    gamemap_t *map = P_GetCurrentMap();
-    fixed_t bmapOrigin[2];
-    uint    bmapSize[2];
+    float       origin[2], dest[2];
+    uint        originBlock[2], destBlock[2];
+    float       delta[2];
+    float       partial;
+    fixed_t     intercept[2], step[2];
+    uint        block[2];
+    int         stepDir[2];
+    int         count;
+    gamemap_t  *map = P_GetCurrentMap();
+    vec2_t      bmapOrigin;
 
-    P_GetBlockmapOrigin(map->blockmap, bmapOrigin);
-    P_GetBlockmapSize(map->blockmap, bmapSize);
+    P_GetBlockmapBounds(map->blockMap, bmapOrigin, NULL);
 
     validCount++;
-    //intercept_p = intercepts;
     P_ClearIntercepts();
 
-    if(((x1 - bmapOrigin[VX]) & (MAPBLOCKSIZE - 1)) == 0)
-        x1 += FRACUNIT;         // Don't side exactly on a line.
-    if(((y1 - bmapOrigin[VY]) & (MAPBLOCKSIZE - 1)) == 0)
-        y1 += FRACUNIT;         // Don't side exactly on a line.
+    origin[VX] = x1;
+    origin[VY] = y1;
+    dest[VX] = x2;
+    dest[VY] = y2;
 
-    strace.pos[VX] = x1;
-    strace.pos[VY] = y1;
-    strace.dx = x2 - x1;
-    strace.dy = y2 - y1;
+    // Don't side exactly on blockmap lines.
+    if((FLT2FIX(origin[VX] - bmapOrigin[VX]) & (MAPBLOCKSIZE - 1)) == 0)
+        origin[VX] += 1;
+    if((FLT2FIX(origin[VY] - bmapOrigin[VY]) & (MAPBLOCKSIZE - 1)) == 0)
+        origin[VY] += 1;
 
-    x1 -= bmapOrigin[VX];
-    y1 -= bmapOrigin[VY];
-    xt1 = x1 >> MAPBLOCKSHIFT;
-    yt1 = y1 >> MAPBLOCKSHIFT;
+    strace.pos[VX] = FLT2FIX(origin[VX]);
+    strace.pos[VY] = FLT2FIX(origin[VY]);
+    strace.dx = FLT2FIX(dest[VX] - origin[VX]);
+    strace.dy = FLT2FIX(dest[VY] - origin[VY]);
 
-    x2 -= bmapOrigin[VX];
-    y2 -= bmapOrigin[VY];
-    xt2 = x2 >> MAPBLOCKSHIFT;
-    yt2 = y2 >> MAPBLOCKSHIFT;
-
-    // points should never be out of bounds, but check once instead of
-    // each block
-    if(xt1 < 0 || yt1 < 0 || xt1 >= bmapSize[VX] || yt1 >= bmapSize[VY] ||
-       xt2 < 0 || yt2 < 0 || xt2 >= bmapSize[VX] || yt2 >= bmapSize[VY])
+    // Points should never be out of bounds but check anyway.
+    if(!(P_ToBlockmapBlockIdx(map->blockMap, originBlock, origin) &&
+         P_ToBlockmapBlockIdx(map->blockMap, destBlock, dest)))
         return false;
 
-    if(xt2 > xt1)
+    origin[VX] -= bmapOrigin[VX];
+    origin[VY] -= bmapOrigin[VY];
+    dest[VX] -= bmapOrigin[VX];
+    dest[VY] -= bmapOrigin[VY];
+
+    if(destBlock[VX] > originBlock[VX])
     {
-        mapxstep = 1;
-        partial = FRACUNIT - ((x1 >> MAPBTOFRAC) & (FRACUNIT - 1));
-        ystep = FixedDiv(y2 - y1, abs(x2 - x1));
+        stepDir[VX] = 1;
+        partial = 1 - FIX2FLT((FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        delta[VY] = (dest[VY] - origin[VY]) / fabs(dest[VX] - origin[VX]);
     }
-    else if(xt2 < xt1)
+    else if(destBlock[VX] < originBlock[VX])
     {
-        mapxstep = -1;
-        partial = (x1 >> MAPBTOFRAC) & (FRACUNIT - 1);
-        ystep = FixedDiv(y2 - y1, abs(x2 - x1));
+        stepDir[VX] = -1;
+        partial = FIX2FLT((FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        delta[VY] = (dest[VY] - origin[VY]) / fabs(dest[VX] - origin[VX]);
     }
     else
     {
-        mapxstep = 0;
-        partial = FRACUNIT;
-        ystep = 256 * FRACUNIT;
+        stepDir[VX] = 0;
+        partial = 1;
+        delta[VY] = 256;
     }
-    yintercept = (y1 >> MAPBTOFRAC) + FixedMul(partial, ystep);
+    intercept[VY] = (FLT2FIX(origin[VY]) >> MAPBTOFRAC) +
+        FLT2FIX(partial * delta[VY]);
 
-    if(yt2 > yt1)
+    if(destBlock[VY] > originBlock[VY])
     {
-        mapystep = 1;
-        partial = FRACUNIT - ((y1 >> MAPBTOFRAC) & (FRACUNIT - 1));
-        xstep = FixedDiv(x2 - x1, abs(y2 - y1));
+        stepDir[VY] = 1;
+        partial = 1 - FIX2FLT((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
     }
-    else if(yt2 < yt1)
+    else if(destBlock[VY] < originBlock[VY])
     {
-        mapystep = -1;
-        partial = (y1 >> MAPBTOFRAC) & (FRACUNIT - 1);
-        xstep = FixedDiv(x2 - x1, abs(y2 - y1));
+        stepDir[VY] = -1;
+        partial = FIX2FLT((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
     }
     else
     {
-        mapystep = 0;
-        partial = FRACUNIT;
-        xstep = 256 * FRACUNIT;
+        stepDir[VY] = 0;
+        partial = 1;
+        delta[VX] = 256;
     }
-    xintercept = (x1 >> MAPBTOFRAC) + FixedMul(partial, xstep);
+    intercept[VX] = (FLT2FIX(origin[VX]) >> MAPBTOFRAC) +
+            FLT2FIX(partial * delta[VX]);
 
+    //
     // Step through map blocks.
-    // Count is present to prevent a round off error from skipping the break.
-    mapx = xt1;
-    mapy = yt1;
+    //
 
+    // Count is present to prevent a round off error from skipping the
+    // break and ending up in an infinite loop..
+    block[VX] = originBlock[VX];
+    block[VY] = originBlock[VY];
+    step[VX] = FLT2FIX(delta[VX]);
+    step[VY] = FLT2FIX(delta[VY]);
     for(count = 0; count < 64; count++)
     {
-        if(!P_SightBlockLinesIterator(mapx, mapy))
+        if(po_NumPolyobjs > 0)
+        {
+            if(!P_BlockmapPolyobjLinesIterator(BlockMap, block,
+                                               PIT_CheckSightLine, 0))
+            {
+                sightcounts[1]++;
+                return false; // Early out.
+            }
+        }
+
+        if(!P_BlockmapLinesIterator(BlockMap, block, PIT_CheckSightLine, 0))
         {
             sightcounts[1]++;
-            return false;       // early out
+            return false; // Early out.
         }
 
         // At or past the target?
-        if((mapx == xt2 && mapy == yt2) ||
-           (((x2 >= x1 && mapx >= xt2) || (x2 < x1 && mapx <= xt2)) &&
-            ((y2 >= y1 && mapy >= yt2) || (y2 < y1 && mapy <= yt2))))
+        if((block[VX] == destBlock[VX] && block[VY] == destBlock[VY]) ||
+           (((dest[VX] >= origin[VX] && block[VX] >= destBlock[VX]) ||
+             (dest[VX] <  origin[VX] && block[VX] <= destBlock[VX])) &&
+            ((dest[VY] >= origin[VY] && block[VY] >= destBlock[VY]) ||
+             (dest[VY] <  origin[VY] && block[VY] <= destBlock[VY]))))
             break;
 
-        if((yintercept >> FRACBITS) == mapy)
+        if(intercept[VY] >> FRACBITS == block[VY])
         {
-            yintercept += ystep;
-            mapx += mapxstep;
+            intercept[VY] += step[VY];
+            block[VX] += stepDir[VX];
         }
-        else if((xintercept >> FRACBITS) == mapx)
+        else if(intercept[VX] >> FRACBITS == block[VX])
         {
-            xintercept += xstep;
-            mapy += mapystep;
+            intercept[VX] += step[VX];
+            block[VY] += stepDir[VY];
         }
     }
 
@@ -339,142 +280,14 @@ boolean P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
     return P_SightTraverseIntercepts(&strace, PTR_SightTraverse);
 }
 
-#if 0
-boolean P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
-{
-    fixed_t xt1, yt1, xt2, yt2;
-    fixed_t xstep, ystep;
-    fixed_t partial;
-    fixed_t xintercept, yintercept;
-    int     mapx, mapy, mapxstep, mapystep;
-    int     count;
-
-    validCount++;
-    intercept_p = intercepts;
-
-    if(((x1 - bmaporgx) & (MAPBLOCKSIZE - 1)) == 0)
-        x1 += FRACUNIT;         // don't side exactly on a line
-    if(((y1 - bmaporgy) & (MAPBLOCKSIZE - 1)) == 0)
-        y1 += FRACUNIT;         // don't side exactly on a line
-
-    strace.x = x1;
-    strace.y = y1;
-    strace.dx = x2 - x1;
-    strace.dy = y2 - y1;
-
-    x1 -= bmaporgx;
-    y1 -= bmaporgy;
-    xt1 = x1 >> MAPBLOCKSHIFT;
-    yt1 = y1 >> MAPBLOCKSHIFT;
-
-    x2 -= bmaporgx;
-    y2 -= bmaporgy;
-    xt2 = x2 >> MAPBLOCKSHIFT;
-    yt2 = y2 >> MAPBLOCKSHIFT;
-
-    // points should never be out of bounds, but check once instead of
-    // each block
-    if(xt1 < 0 || yt1 < 0 || xt1 >= bmapwidth || yt1 >= bmapheight || xt2 < 0
-       || yt2 < 0 || xt2 >= bmapwidth || yt2 >= bmapheight)
-        return false;
-
-    if(xt2 > xt1)
-    {
-        mapxstep = 1;
-        partial = FRACUNIT - ((x1 >> MAPBTOFRAC) & (FRACUNIT - 1));
-        ystep = FixedDiv(y2 - y1, abs(x2 - x1));
-    }
-    else if(xt2 < xt1)
-    {
-        mapxstep = -1;
-        partial = (x1 >> MAPBTOFRAC) & (FRACUNIT - 1);
-        ystep = FixedDiv(y2 - y1, abs(x2 - x1));
-    }
-    else
-    {
-        mapxstep = 0;
-        partial = FRACUNIT;
-        ystep = 256 * FRACUNIT;
-    }
-    yintercept = (y1 >> MAPBTOFRAC) + FixedMul(partial, ystep);
-
-    if(yt2 > yt1)
-    {
-        mapystep = 1;
-        partial = FRACUNIT - ((y1 >> MAPBTOFRAC) & (FRACUNIT - 1));
-        xstep = FixedDiv(x2 - x1, abs(y2 - y1));
-    }
-    else if(yt2 < yt1)
-    {
-        mapystep = -1;
-        partial = (y1 >> MAPBTOFRAC) & (FRACUNIT - 1);
-        xstep = FixedDiv(x2 - x1, abs(y2 - y1));
-    }
-    else
-    {
-        mapystep = 0;
-        partial = FRACUNIT;
-        xstep = 256 * FRACUNIT;
-    }
-    xintercept = (x1 >> MAPBTOFRAC) + FixedMul(partial, xstep);
-
-    // Step through map blocks.
-    // Count is present to prevent a round off error from skipping the break.
-    mapx = xt1;
-    mapy = yt1;
-
-    for(count = 0; count < 64; count++)
-    {
-        /*if(mapx < 0 || mapy < 0 ||
-           mapx >= bmapwidth || mapy >= bmapheight) */
-        {
-            ST_Message("Smx=%i my=%i\n", mapx, mapy);
-            /*ST_Message("P_SPthTrv: mapx=%i mapy=%i dest=(%i,%i)\n"
-               "  xint=%f yint=%f mxst=%i myst=%i\n"
-               "  x1=%i partial=%f xstep=%f\n",
-               mapx, mapy, xt2, yt2, FIX2FLT(xintercept),
-               FIX2FLT(yintercept), mapxstep, mapystep,
-               x1>>FRACBITS, FIX2FLT(partial), FIX2FLT(xstep)); */
-        }
-        if(!P_SightBlockLinesIterator(mapx, mapy))
-        {
-            sightcounts[1]++;
-            return false;       // early out
-        }
-
-        if(mapx == xt2 && mapy == yt2)
-            break;
-
-        if((yintercept >> FRACBITS) == mapy)
-        {
-            yintercept += ystep;
-            mapx += mapxstep;
-        }
-        else if((xintercept >> FRACBITS) == mapx)
-        {
-            xintercept += xstep;
-            mapy += mapystep;
-        }
-    }
-
-    // Couldn't early out, so go through the sorted list
-    sightcounts[2]++;
-
-    return P_SightTraverseIntercepts();
-}
-#endif
-
-/*
+/**
  * Checks the reject matrix to find out if the two sectors are visible
  * from each other.
  */
 boolean P_CheckReject(sector_t *sec1, sector_t *sec2)
 {
-    int     s1;
-    int     s2;
-    int     pnum;
-    int     bytenum;
-    int     bitnum;
+    uint        s1, s2;
+    uint        pnum, bytenum, bitnum;
 
     if(rejectmatrix != NULL)
     {
@@ -496,11 +309,14 @@ boolean P_CheckReject(sector_t *sec1, sector_t *sec2)
     return true;
 }
 
-/*
- * Returns true if a straight line between t1 and t2 is unobstructed.
+/**
  * Look from eyes of t1 to any part of t2 (start from middle of t1).
- * Uses specialized forms of the maputils routines for optimized
- * performance.
+ *
+ * @param t1            The mobj doing the looking.
+ * @param t2            The mobj being looked at.
+ *
+ * @return              @c true if a straight line between t1 and t2 is
+ *                      unobstructed.
  */
 boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
 {
@@ -513,24 +329,25 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
         return false;
 
     if(t2->dplayer && t2->dplayer->flags & DDPF_CAMERA)
-        return false;           // Cameramen don't exist!
+        return false; // Cameramen don't exist!
 
     // Check precisely.
     sightzstart = t1->pos[VZ];
     if(!(t1->dplayer && t1->dplayer->flags & DDPF_CAMERA))
-        sightzstart += FLT2FIX(t1->height) + -(FLT2FIX(t1->height) >> 2);
-    topslope = (t2->pos[VZ] + FLT2FIX(t2->height)) - sightzstart;
-    bottomslope = (t2->pos[VZ]) - sightzstart;
+        sightzstart += t1->height + -(t1->height / 4);
 
-    return P_SightPathTraverse(t1->pos[VX], t1->pos[VY], t2->pos[VX], t2->pos[VY]);
+    topslope = t2->pos[VZ] + t2->height - sightzstart;
+    bottomslope = t2->pos[VZ] - sightzstart;
+
+    return P_SightPathTraverse(t1->pos[VX], t1->pos[VY],
+                               t2->pos[VX], t2->pos[VY]);
 }
 
 boolean P_CheckLineSight(float from[3], float to[3])
 {
-    sightzstart = from[VZ]*FRACUNIT;
-    topslope = to[VZ]*FRACUNIT + FRACUNIT - sightzstart;
-    bottomslope = to[VZ]*FRACUNIT - FRACUNIT - sightzstart;
+    sightzstart = from[VZ];
+    topslope = to[VZ] + 1 - sightzstart;
+    bottomslope = to[VZ] - 1 - sightzstart;
 
-    return P_SightPathTraverse(from[VX] * FRACUNIT, from[VY] * FRACUNIT,
-                               to[VX] * FRACUNIT, to[VY] * FRACUNIT);
+    return P_SightPathTraverse(from[VX], from[VY], to[VX], to[VY]);
 }

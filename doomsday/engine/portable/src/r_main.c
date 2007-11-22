@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_main.c: Refresh Subsystem
  *
  * The refresh daemon has the highest-level rendering code.
@@ -53,9 +53,9 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct viewer_s {
-    fixed_t pos[3];
-    angle_t angle;
-    float   pitch;
+    float       pos[3];
+    angle_t     angle;
+    float       pitch;
 } viewer_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -84,7 +84,7 @@ float   viewFrontVec[3], viewUpVec[3], viewSideVec[3];
 float   viewXOffset = 0, viewYOffset = 0, viewZOffset = 0;
 angle_t viewAngle;
 float   viewPitch;              // player->lookdir, global version
-fixed_t viewCos, viewSin;
+float   viewCos, viewSin;
 ddplayer_t *viewPlayer;
 boolean setSizeNeeded;
 
@@ -148,9 +148,9 @@ void R_InitSkyMap(void)
  * Is the specified flat id the same as that used for the sky?
  *
  * @param   flat        Flat id to test.
- * @return  boolean     (True) if flat num is that used for the sky.
+ * @return  boolean     @c true, if flat num is that used for the sky.
  */
-boolean R_IsSkySurface(surface_t* surface)
+boolean R_IsSkySurface(surface_t *surface)
 {
     return surface->SM_isflat && surface->SM_texture == skyFlatNum;
 }
@@ -259,7 +259,7 @@ void R_ResetViewer(void)
 void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos,
                          viewer_t *out)
 {
-    float   inv = 1 - pos;
+    float       inv = 1 - pos;
 
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
@@ -271,9 +271,9 @@ void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos,
 
 void R_SetViewPos(viewer_t *v)
 {
-    viewX = FIX2FLT(v->pos[VX]);
-    viewY = FIX2FLT(v->pos[VY]);
-    viewZ = FIX2FLT(v->pos[VZ]);
+    viewX = v->pos[VX];
+    viewY = v->pos[VY];
+    viewZ = v->pos[VZ];
     viewAngle = v->angle;
     viewPitch = v->pitch;
 }
@@ -284,9 +284,10 @@ void R_SetViewPos(viewer_t *v)
  */
 void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 {
-#define MAXMOVE (FRACUNIT*32)
-    if(abs(dst->pos[VX] - src->pos[VX]) > MAXMOVE ||
-       abs(dst->pos[VY] - src->pos[VY]) > MAXMOVE)
+#define MAXMOVE 32
+
+    if(fabs(dst->pos[VX] - src->pos[VX]) > MAXMOVE ||
+       fabs(dst->pos[VY] - src->pos[VY]) > MAXMOVE)
     {
         src->pos[VX] = dst->pos[VX];
         src->pos[VY] = dst->pos[VY];
@@ -294,6 +295,8 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
     }
     if(abs((int) dst->angle - (int) src->angle) >= ANGLE_45)
         src->angle = dst->angle;
+
+#undef MAXMOVE
 }
 
 /**
@@ -307,9 +310,9 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
     /* $unifiedangles */
     view->angle = player->mo->angle + viewAngleOffset;
     view->pitch = player->lookdir;
-    view->pos[VX] = player->mo->pos[VX] + FLT2FIX(viewXOffset);
-    view->pos[VY] = player->mo->pos[VY] + FLT2FIX(viewYOffset);
-    view->pos[VZ] = FLT2FIX(player->viewZ + viewZOffset);
+    view->pos[VX] = player->mo->pos[VX] + viewXOffset;
+    view->pos[VY] = player->mo->pos[VY] + viewYOffset;
+    view->pos[VZ] = player->viewZ + viewZOffset;
     if((player->flags & DDPF_CHASECAM) && !(player->flags & DDPF_CAMERA))
     {
         /* STUB
@@ -317,29 +320,30 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
          * camera control setup. Currently we simply project the viewer's
          * position a set distance behind the player.
          */
-        angle_t pitch = LOOKDIR2DEG(view->pitch) / 360 * ANGLE_MAX;
-        angle_t angle = view->angle;
-        fixed_t distance = 90;
+        angle_t     pitch = LOOKDIR2DEG(view->pitch) / 360 * ANGLE_MAX;
+        angle_t     angle = view->angle;
+        float       distance = 90 >> FRACBITS;
 
         angle = view->angle >> ANGLETOFINESHIFT;
         pitch >>= ANGLETOFINESHIFT;
 
-        view->pos[VX] -= distance * fineCosine[angle];
-        view->pos[VY] -= distance * finesine[angle];
-        view->pos[VZ] -= distance * finesine[pitch];
+        view->pos[VX] -= distance * FIX2FLT(fineCosine[angle]);
+        view->pos[VY] -= distance * FIX2FLT(finesine[angle]);
+        view->pos[VZ] -= distance * FIX2FLT(finesine[pitch]);
     }
 
     // Check that the viewZ doesn't go too high or low.
     // Cameras are not restricted.
     if(!(player->flags & DDPF_CAMERA))
     {
-        if(view->pos[VZ] > FLT2FIX(player->mo->ceilingz - 4))
+        if(view->pos[VZ] > player->mo->ceilingz - 4)
         {
-            view->pos[VZ] = FLT2FIX(player->mo->ceilingz - 4);
+            view->pos[VZ] = player->mo->ceilingz - 4;
         }
-        if(view->pos[VZ] < FLT2FIX(player->mo->floorz + 4))
+
+        if(view->pos[VZ] < player->mo->floorz + 4)
         {
-            view->pos[VZ] = FLT2FIX(player->mo->floorz + 4);
+            view->pos[VZ] = player->mo->floorz + 4;
         }
     }
 }
@@ -465,9 +469,9 @@ void R_SetupWorldFrame(void)
  */
 void R_SetupFrame(ddplayer_t *player)
 {
-    int     tableAngle;
-    float   yawRad, pitchRad;
-    viewer_t sharpView, smoothView;
+    int         tableAngle;
+    float       yawRad, pitchRad;
+    viewer_t    sharpView, smoothView;
 
     // Reset the DGL triangle counter.
     gl.GetInteger(DGL_POLY_COUNT);
@@ -533,16 +537,16 @@ void R_SetupFrame(ddplayer_t *player)
         if(showViewPosDeltas)
         {
             static double oldtime = 0;
-            static fixed_t oldx, oldy;
+            static float oldx, oldy;
             Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
-                    "Rdx=%-10.3f Rdy=%-10.3f\n",
-                    SECONDS_TO_TICKS(gameTime),
-                    frameTimePos,
-                    sysTime - oldtime,
-                    FIX2FLT(smoothView.pos[0] - oldx),
-                    FIX2FLT(smoothView.pos[1] - oldy),
-                    FIX2FLT(smoothView.pos[0] - oldx) / (sysTime - oldtime),
-                    FIX2FLT(smoothView.pos[1] - oldy) / (sysTime - oldtime));
+                        "Rdx=%-10.3f Rdy=%-10.3f\n",
+                        SECONDS_TO_TICKS(gameTime),
+                        frameTimePos,
+                        sysTime - oldtime,
+                        smoothView.pos[0] - oldx,
+                        smoothView.pos[1] - oldy,
+                        smoothView.pos[0] - oldx / (sysTime - oldtime),
+                        smoothView.pos[1] - oldy / (sysTime - oldtime));
             oldx = smoothView.pos[VX];
             oldy = smoothView.pos[VY];
             oldtime = sysTime;
@@ -556,8 +560,8 @@ void R_SetupFrame(ddplayer_t *player)
 
     extraLight = player->extraLight;
     tableAngle = viewAngle >> ANGLETOFINESHIFT;
-    viewSin = finesine[tableAngle];
-    viewCos = fineCosine[tableAngle];
+    viewSin = FIX2FLT(finesine[tableAngle]);
+    viewCos = FIX2FLT(fineCosine[tableAngle]);
     validCount++;
 
     // Calculate the front, up and side unit vectors.
@@ -672,7 +676,7 @@ void R_RenderPlayerView(ddplayer_t *player)
 
     if(rendInfoLums)
     {
-        Con_Printf("LumObjs: %-4i\n", DL_GetNumLuminous());
+        Con_Printf("LumObjs: %-4i\n", LO_GetNumLuminous());
     }
 
     R_InfoRendPolys();

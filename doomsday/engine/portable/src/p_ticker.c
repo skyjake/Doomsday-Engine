@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_ticker.c: Timed Playsim Events
  */
 
@@ -30,6 +30,7 @@
 
 #include "de_base.h"
 #include "de_network.h"
+#include "de_refresh.h"
 #include "de_render.h"
 #include "de_play.h"
 #include "de_misc.h"
@@ -60,7 +61,7 @@ void P_MobjTicker(mobj_t *mo)
     int         i;
 
     if(!mo->usingBias)
-        lum = DL_GetLuminous(mo->light);
+        lum = LO_GetLuminous(mo->light);
 
     // Set the high bit of halofactor if the light is clipped. This will
     // make P_Ticker diminish the factor to zero. Take the first step here
