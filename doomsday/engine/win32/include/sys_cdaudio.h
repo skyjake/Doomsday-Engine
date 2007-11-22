@@ -23,15 +23,16 @@
  */
 
 /**
- * sys_musd_win.h: Music Driver for Win32 Multimedia
+ * sys_cdaudio.c: Compact Disc-Digital Audio (CD-DA) aka "Redbook".
+ *
+ * WIN32-specific, uses the MCI interface.
  */
 
-#ifndef __DOOMSDAY_SYSTEM_MUS_WIN_H__
-#define __DOOMSDAY_SYSTEM_MUS_WIN_H__
+#ifndef __DOOMSDAY_SYSTEM_WIN32_CDAUDIO_H__
+#define __DOOMSDAY_SYSTEM_WIN32_CDAUDIO_H__
 
 #include "sys_musd.h"
 
-extern musdriver_t musd_win;
-extern musinterface_mus_t musd_win_imus;
+extern musinterface_cd_t musd_win_icd;
 
 #endif

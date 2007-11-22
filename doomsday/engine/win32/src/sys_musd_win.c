@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_musd_win.c: Music Driver for Win32 Multimedia
  *
  * Plays CD music and MUS songs (translated to a MIDI stream).
@@ -123,16 +123,6 @@ void    DM_WinMusStop(void);
 void   *DM_WinMusSongBuffer(int length);
 int     DM_WinMusPlay(int looped);
 
-        // CD Interface.
-int     DM_WinCDInit(void);
-void    DM_WinCDShutdown(void);
-void    DM_WinCDUpdate(void);
-void    DM_WinCDSet(int property, float value);
-int     DM_WinCDGet(int property, void *ptr);
-void    DM_WinCDPause(int pause);
-void    DM_WinCDStop(void);
-int     DM_WinCDPlay(int track, int looped);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -151,16 +141,6 @@ musinterface_mus_t musd_win_imus = {
     DM_WinMusStop,
     DM_WinMusSongBuffer,
     DM_WinMusPlay,
-};
-
-musinterface_cd_t musd_win_icd = {
-    DM_WinCDInit,
-    DM_WinCDUpdate,
-    DM_WinCDSet,
-    DM_WinCDGet,
-    DM_WinCDPause,
-    DM_WinCDStop,
-    DM_WinCDPlay
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -202,11 +182,6 @@ static char ctrlMus2Midi[NUM_MUS_CTRLS] = {
     121                         // Reset all controllers.
 };
 
-static int cdAvail = false, cdPlayTrack = 0;
-static int cdOrigVolume;
-static boolean cdLooping;
-static double cdStartTime, cdPauseTime, cdTrackLength;
-
 // CODE --------------------------------------------------------------------
 
 int DM_WinInit(void)
@@ -229,7 +204,7 @@ void DM_WinMusInitSongReader(MUSHeader_t *musHdr)
 /**
  * Reads the MUS data and produces the next corresponding MIDI event.
  *
- * @return: int         (false) when the score ends.
+ * @return              @c false, when the score ends.
  */
 int DM_WinMusGetNextEvent(MIDIEVENT *mev)
 {
@@ -342,7 +317,8 @@ MIDIHDR *DM_WinMusGetFreeBuffer(void)
 {
     int         i;
 
-    for(i = 0; i < MAX_BUFFERS; i++)
+    for(i = 0; i < MAX_BUFFERS; ++i)
+    {
         if(midiBuffers[i].dwUser == FALSE)
         {
             MIDIHDR *mh = midiBuffers + i;
@@ -358,13 +334,15 @@ MIDIHDR *DM_WinMusGetFreeBuffer(void)
             mh->dwFlags = 0;
             return mh;
         }
+    }
+
     return NULL;
 }
 
 /**
  * Note that lpData changes during reallocation!
  *
- * @return: int         (false) if the allocation can't be done.
+ * @return                  @c false, if the allocation can't be done.
  */
 int DM_WinMusAllocMoreBuffer(MIDIHDR *mh)
 {
@@ -439,6 +417,7 @@ void DM_WinMusPrepareBuffers(MUSHeader_t *song)
                     return;     // Oops.
             }
         }
+
         // Add the event.
         ptr = (DWORD *) (mh->lpData + mh->dwBytesRecorded);
         *ptr++ = mev.dwDeltaTime;
@@ -446,6 +425,7 @@ void DM_WinMusPrepareBuffers(MUSHeader_t *song)
         *ptr++ = mev.dwEvent;
         mh->dwBytesRecorded += 3 * sizeof(DWORD);
     }
+
     // Prepare the last buffer, too.
     midiOutPrepareHeader((HMIDIOUT) midiStr, mh, sizeof(*mh));
 }
@@ -560,7 +540,7 @@ void DM_WinMusPause(int setPause)
 }
 
 /**
- * @param vol           Volume level from 0 to 255.
+ * @param vol               Volume level from 0 to 255.
  */
 void DM_WinMusSetMasterVolume(int vol)
 {
@@ -577,7 +557,6 @@ void DM_WinMusSetMasterVolume(int vol)
     vol = (int) (255.9980469 * sqrt(vol));
     // Expand to a dword.
     //ret = midiOutSetVolume( (HMIDIOUT) midiStr, vol + (vol<<16));
-
 }
 
 void DM_WinMusSet(int property, float value)
@@ -662,7 +641,7 @@ void   *DM_WinMusSongBuffer(int length)
 }
 
 /**
- * @return          <code>true</code> if successful.
+ * @return                  @c true, if successful.
  */
 int DM_WinMusInit(void)
 {
@@ -716,165 +695,4 @@ void DM_WinMusShutdown(void)
 void DM_WinMusUpdate(void)
 {
     // No need to do anything. The callback handles restarting.
-}
-
-/**
- * Execute an MCI command string.
- *
- * @return          <code>true</code> if successful.
- */
-int DM_WinCDCommand(char *returnInfo, int returnLength, const char *format,
-                    ...)
-{
-    char        buf[300];
-    va_list     args;
-    MCIERROR    error;
-
-    va_start(args, format);
-    vsnprintf(buf, sizeof(buf), format, args);
-    va_end(args);
-
-    if((error = mciSendString(buf, returnInfo, returnLength, NULL)))
-    {
-        mciGetErrorString(error, buf, 300);
-        Con_Message("DM_WinCD: %s\n", buf);
-        return false;
-    }
-    return true;
-}
-
-int DM_WinCDInit(void)
-{
-    if(cdAvail)
-        return true;
-
-    if(!DM_WinCDCommand(0, 0, "open cdaudio alias mycd"))
-        return false;
-
-    if(!DM_WinCDCommand(0, 0, "set mycd time format tmsf"))
-        return false;
-
-    // Get the original CD volume.
-    cdOrigVolume = Sys_Mixer3i(MIX_CDAUDIO, MIX_GET, MIX_VOLUME);
-
-    // Successful initialization.
-    cdPlayTrack = 0;
-    return cdAvail = true;
-}
-
-void DM_WinCDShutdown(void)
-{
-    if(!cdAvail)
-        return;
-
-    DM_WinCDStop();
-    DM_WinCDCommand(0, 0, "close mycd");
-    // Restore original CD volume, if possible.
-    if(cdOrigVolume != MIX_ERROR)
-        Sys_Mixer4i(MIX_CDAUDIO, MIX_SET, MIX_VOLUME, cdOrigVolume);
-    cdAvail = false;
-}
-
-void DM_WinCDUpdate(void)
-{
-    if(!cdAvail)
-        return;
-
-    // Check for looping.
-    if(cdPlayTrack && cdLooping &&
-       Sys_GetSeconds() - cdStartTime > cdTrackLength)
-    {
-        // Restart the track.
-        DM_WinCDPlay(cdPlayTrack, true);
-    }
-}
-
-void DM_WinCDSet(int property, float value)
-{
-    if(!cdAvail)
-        return;
-
-    switch(property)
-    {
-    case MUSIP_VOLUME:
-        Sys_Mixer4i(MIX_CDAUDIO, MIX_SET, MIX_VOLUME, value * 255 + 0.5);
-        break;
-    }
-}
-
-int DM_WinCDGet(int property, void *ptr)
-{
-    if(!cdAvail)
-        return false;
-
-    switch(property)
-    {
-    case MUSIP_ID:
-        strcpy(ptr, "Win/CD");
-        break;
-
-    default:
-        return false;
-    }
-    return true;
-}
-
-void DM_WinCDPause(int pause)
-{
-    if(!cdAvail)
-        return;
-
-    DM_WinCDCommand(0, 0, "%s mycd", pause ? "pause" : "play");
-    if(pause)
-        cdPauseTime = Sys_GetSeconds();
-    else
-        cdStartTime += Sys_GetSeconds() - cdPauseTime;
-}
-
-void DM_WinCDStop(void)
-{
-    if(!cdAvail || !cdPlayTrack)
-        return;
-
-    cdPlayTrack = 0;
-    DM_WinCDCommand(0, 0, "stop mycd");
-}
-
-/**
- * @return          Length of the track in seconds.
- */
-int DM_WinCDGetTrackLength(int track)
-{
-    char        lenString[80];
-    int         min, sec;
-
-    if(!DM_WinCDCommand(lenString, 80, "status mycd length track %i", track))
-        return 0;
-
-    sscanf(lenString, "%i:%i", &min, &sec);
-    return min * 60 + sec;
-}
-
-int DM_WinCDPlay(int track, int looped)
-{
-    int         len;
-
-    if(!cdAvail)
-        return false;
-
-    // Get the length of the track.
-    cdTrackLength = len = DM_WinCDGetTrackLength(track);
-    if(!len)
-        return false;           // Hmm?!
-
-    // Play it!
-    if(!DM_WinCDCommand
-       (0, 0, "play mycd from %i to %i", track,
-        MCI_MAKE_TMSF(track, 0, len, 0)))
-        return false;
-
-    // Success!
-    cdLooping = looped;
-    cdStartTime = Sys_GetSeconds();
-    return cdPlayTrack = track;
 }
