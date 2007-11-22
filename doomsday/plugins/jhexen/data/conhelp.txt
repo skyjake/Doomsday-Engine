@@ -238,9 +238,6 @@ desc = Add a mark in the automap.
 [clearmarks]
 desc = Clear all marks in the automap.
 
-[grid]
-desc = Toggle the grid in the automap.
-
 [zoommax]
 desc = Zoom out to the max in the automap.
 
