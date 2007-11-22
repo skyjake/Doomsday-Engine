@@ -3,10 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright Â© 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Martin Eyre <martineyre@btinternet.com>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Handling interactions (i.e., collisions).
+/**
+ * p_inter.c: Handling interactions (i.e., collisions).
  */
 
 #ifdef MSVC
@@ -336,7 +336,7 @@ boolean P_TakePower(player_t *player, int power)
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
     {
-        if(plrmo->pos[VZ] != FLT2FIX(plrmo->floorz))
+        if(plrmo->pos[VZ] != plrmo->floorz && cfg.lookSpring)
         {
             player->centering = true;
         }
@@ -354,7 +354,7 @@ boolean P_TakePower(player_t *player, int power)
     return true;
 }
 
-void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
+void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 {
     player_t *player;
     fixed_t delta;
@@ -1150,7 +1150,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     // Don't drop at the exact same place, causes Z flickering with
     // 3D sprites.
     angle = M_Random() << (24 - ANGLETOFINESHIFT);
-    mo = P_SpawnMobj(target->pos[VX] + 3 * finecosine[angle],
+    mo = P_SpawnMobj3f(target->pos[VX] + 3 * finecosine[angle],
                      target->pos[VY] + 3 * finesine[angle], ONFLOORZ, item);
     mo->flags |= MF_DROPPED;    // special versions of items
 }
@@ -1225,7 +1225,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
                             target->pos[VX], target->pos[VY]);
 
-        thrust = damage * (FRACUNIT >> 3) * 100 / target->info->mass;
+        thrust = damage * (1.0f/8) * 100 / target->info->mass;
 
         // make fall forwards sometimes
         if(damage < 40 && damage > target->health &&
@@ -1267,7 +1267,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
 
         // end of game hell hack
-        if(P_XSectorOfSubsector(target->subsector)->special == 11
+        if(P_ToXSectorOfSubsector(target->subsector)->special == 11
            && damage >= target->health)
         {
             damage = target->health - 1;

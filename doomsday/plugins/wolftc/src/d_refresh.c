@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * d_refresh.c
  */
 
 // HEADER FILES ------------------------------------------------------------
-
-#include <ctype.h>
 
 #include "wolftc.h"
 
@@ -63,10 +61,6 @@ void    R_SetAllDoomsdayFlags(void);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int actual_leveltime;
-
- // Name graphics of each level (centered)
-extern dpatch_t *lnames;
-
 extern float lookOffset;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -161,7 +155,7 @@ void R_DrawLevelTitle(void)
     float       alpha = 1;
     int         y = 12;
     int         mapnum;
-    char       *lname, *lauthor, *ptr;
+    char       *lname, *lauthor;
 
     if(!cfg.levelTitle || actual_leveltime > 6 * 35)
         return;
@@ -179,7 +173,7 @@ void R_DrawLevelTitle(void)
         alpha = 1 - (actual_leveltime - 5 * 35) / 35.0f;
 
     // Get the strings from Doomsday
-    lname = (char *) DD_GetVariable(DD_MAP_NAME);
+    lname = P_GetMapNiceName();
     lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
 
     // Compose the mapnumber used to check the map name patches array.
@@ -190,13 +184,6 @@ void R_DrawLevelTitle(void)
 
     if(lname)
     {
-        ptr = strchr(lname, ':');   // Skip the E#M# or Level #.
-        if(ptr)
-        {
-            lname = ptr + 1;
-            while(*lname && isspace(*lname))
-                lname++;
-        }
         WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, lnames[mapnum].lump,
                      lname, false, ALIGN_CENTER);
         y += 14;                //9;
@@ -469,7 +456,7 @@ void R_SetAllDoomsdayFlags(void)
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); iter; iter = iter->snext)
+        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->snext)
             P_SetDoomsdayFlags(iter);
     }
 }
