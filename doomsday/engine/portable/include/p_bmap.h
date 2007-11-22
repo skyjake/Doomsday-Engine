@@ -29,7 +29,7 @@
 #ifndef __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
 #define __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
 
-byte    bmapShowDebug, bmapDebugLines, bmapDebugPolyobjs;
+byte    bmapShowDebug;
 float   bmapDebugSize;
 
 // Alloc/dealloc:

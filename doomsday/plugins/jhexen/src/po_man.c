@@ -124,7 +124,7 @@ void T_RotatePoly(polyevent_t *pe)
         absSpeed = abs(pe->intSpeed);
 
         if(pe->dist == -1)
-        {                       // perpetual polyobj
+        {   // perpetual polyobj.
             return;
         }
 
@@ -136,6 +136,7 @@ void T_RotatePoly(polyevent_t *pe)
             {
                 P_SetPtrp(poly, DMU_SPECIAL_DATA, NULL);
             }
+
             PO_StopSequence(poly);
             P_PolyobjFinished(PO_Tag(poly));
             P_RemoveThinker(&pe->thinker);
@@ -161,7 +162,7 @@ boolean EV_RotatePoly(line_t *line, byte *args, int direction,
     if(poly)
     {
         if(PO_SpecialData(poly) && !overRide)
-        {                       // poly is already moving
+        {   // poly is already moving
             return false;
         }
     }
@@ -207,7 +208,7 @@ boolean EV_RotatePoly(line_t *line, byte *args, int direction,
     {
         poly = GetPolyobj(mirror);
         if(poly && PO_SpecialData(poly) && !overRide)
-        {                       // mirroring poly is already in motion
+        {   // Mirroring poly is already in motion.
             break;
         }
 
@@ -274,6 +275,7 @@ void T_MovePoly(polyevent_t *pe)
             {
                 P_SetPtrp(poly, DMU_SPECIAL_DATA, NULL);
             }
+
             PO_StopSequence(poly);
             P_PolyobjFinished(PO_Tag(poly));
             P_RemoveThinker(&pe->thinker);

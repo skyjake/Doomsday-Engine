@@ -174,8 +174,6 @@ void Rend_Register(void)
     C_VAR_BYTE("rend-dev-surface-linked", &devNoLinkedSurfaces, 0, 0, 1);
 
     C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, 0, 0, 1);
-    C_VAR_BYTE("rend-dev-blockmap-debug-lines", &bmapDebugLines, 0, 0, 1);
-    C_VAR_BYTE("rend-dev-blockmap-debug-polyobjs", &bmapDebugPolyobjs, 0, 0, 1);
     C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, 0, .1f, 100);
 
     RL_Register();

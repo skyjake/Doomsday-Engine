@@ -248,6 +248,7 @@ boolean PO_MovePolyobj(uint num, float x, float y)
             (*segList)->linedef->bbox[BOXRIGHT]  += x;
             (*segList)->linedef->validCount = validCount;
         }
+
         for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
         {
             if((*veryTempSeg)->SG_v1 == (*segList)->SG_v1)
@@ -255,14 +256,17 @@ boolean PO_MovePolyobj(uint num, float x, float y)
                 break;
             }
         }
+
         if(veryTempSeg == segList)
         {
             (*segList)->SG_v1pos[VX] += x;
             (*segList)->SG_v1pos[VY] += y;
         }
+
         (*prevPts).pos[VX] += x;      // previous points are unique for each seg
         (*prevPts).pos[VY] += y;
     }
+
     segList = po->segs;
     for(count = 0; count < po->numsegs; ++count, segList++)
     {
@@ -271,6 +275,7 @@ boolean PO_MovePolyobj(uint num, float x, float y)
             blocked = true;
         }
     }
+
     if(blocked)
     {
         count = 0;
@@ -287,6 +292,7 @@ boolean PO_MovePolyobj(uint num, float x, float y)
                 (*segList)->linedef->bbox[BOXRIGHT]  -= x;
                 (*segList)->linedef->validCount = validCount;
             }
+
             for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
             {
                 if((*veryTempSeg)->SG_v1 == (*segList)->SG_v1)
@@ -294,20 +300,24 @@ boolean PO_MovePolyobj(uint num, float x, float y)
                     break;
                 }
             }
+
             if(veryTempSeg == segList)
             {
                 (*segList)->SG_v1pos[VX] -= x;
                 (*segList)->SG_v1pos[VY] -= y;
             }
+
             (*prevPts).pos[VX] -= x;
             (*prevPts).pos[VY] -= y;
 
             segList++;
             prevPts++;
         }
+
         PO_LinkPolyobj(po);
         return false;
     }
+
     po->startSpot.pos[VX] += x;
     po->startSpot.pos[VY] += y;
     PO_LinkPolyobj(po);
@@ -375,6 +385,7 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
         RotatePt(an, &vtx->V_pos[VX], &vtx->V_pos[VY],
                  po->startSpot.pos[VX], po->startSpot.pos[VY]);
     }
+
     segList = po->segs;
     blocked = false;
     validCount++;
@@ -384,13 +395,16 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
         {
             blocked = true;
         }
+
         if((*segList)->linedef->validCount != validCount)
         {
             UpdateSegBBox(*segList);
             (*segList)->linedef->validCount = validCount;
         }
+
         (*segList)->angle += angle;
     }
+
     if(blocked)
     {
         segList = po->segs;
@@ -402,6 +416,7 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
             vtx->V_pos[VX] = prevPts->pos[VX];
             vtx->V_pos[VY] = prevPts->pos[VY];
         }
+
         segList = po->segs;
         validCount++;
         for(count = 0; count < po->numsegs; ++count, segList++, prevPts++)
@@ -413,9 +428,11 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
             }
             (*segList)->angle -= angle;
         }
+
         PO_LinkPolyobj(po);
         return false;
     }
+
     po->angle += angle;
     PO_LinkPolyobj(po);
     P_PolyobjChanged(po);
@@ -458,16 +475,18 @@ void PO_LinkPolyobjToRing(polyobj_t *po, linkpolyobj_t **link)
     }
 }
 
-void PO_UnlinkPolyobjFromRing(polyobj_t *po, linkpolyobj_t **link)
+void PO_UnlinkPolyobjFromRing(polyobj_t *po, linkpolyobj_t **list)
 {
-    while((*link) != NULL && (*link)->polyobj != po)
+    linkpolyobj_t *iter = *list;
+
+    while(iter != NULL && iter->polyobj != po)
     {
-        (*link) = (*link)->next;
+        iter = iter->next;
     }
 
-    if((*link) != NULL)
+    if(iter != NULL)
     {
-        (*link)->polyobj = NULL;
+        iter->polyobj = NULL;
     }
 }
 

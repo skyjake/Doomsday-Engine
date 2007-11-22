@@ -80,8 +80,6 @@ typedef struct bmap_s {
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 byte    bmapShowDebug = false;
-byte    bmapDebugLines = true;
-byte    bmapDebugPolyobjs = true;
 float   bmapDebugSize = 1.5f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -1018,7 +1016,7 @@ void rendBlockContents(bmapblock_t *block, void *param,
                        float r, float g, float b, float a)
 {
     // Lines?
-    if(block->lines && bmapDebugLines)
+    if(block->lines)
     {
         bmapiterparams_t args;
 
@@ -1033,7 +1031,7 @@ void rendBlockContents(bmapblock_t *block, void *param,
     }
 
     // Polyobj lines?
-    if(block->polyLinks && bmapDebugPolyobjs)
+    if(block->polyLinks)
     {
         bmappoiterparams_t args;
         poiterparams_t poargs;
@@ -1070,8 +1068,8 @@ void rendSSecBlockContents(ssecmapblock_t *block, void *param,
     }
 }
 
-static void rendBlockInfo(int x, int y, long blockIdx, uint blockX,
-                          uint blockY, int lineCount, int poCount)
+static void drawInfoBox(int x, int y, long blockIdx, uint blockX,
+                        uint blockY, int lineCount, int poCount)
 {
     int         w, h;
     char        buf[160];
@@ -1088,9 +1086,9 @@ static void rendBlockInfo(int x, int y, long blockIdx, uint blockX,
     UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_Color(UIC_TITLE), 1);
 }
 
-static void rendBlockmapInfoBox(float minX, float minY, float maxX, float maxY,
-                                float blockWidth, float blockHeight,
-                                uint width, uint height)
+static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
+                         float blockWidth, float blockHeight,
+                         uint width, uint height)
 {
     int         w = 16 + FR_TextWidth("(+000.0,+000.0)(+000.0,+000.0)");
     int         th = FR_TextHeight("a"), h = th * 4 + 16;
@@ -1123,6 +1121,50 @@ static void rendBlockmapInfoBox(float minX, float minY, float maxX, float maxY,
             minX, minY, maxX, maxY);
     UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
     y += th;
+}
+
+static void drawBlockInfoBox(uint vBlock[2])
+{
+    int         lineCount = -1;
+    int         poCount = -1;
+    long        blockIdx = -1;
+    bmap_t     *bmap = (bmap_t*) BlockMap;
+    bmapblock_t *block;
+
+    block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
+    if(block)
+    {
+        blockIdx = vBlock[VY] * bmap->dimensions[VY] + vBlock[VX];
+
+        // Count the number of lines linked to this block.
+        lineCount = 0;
+        if(block->lines)
+        {
+            line_t    **iter = block->lines;
+            while(*iter)
+            {
+                lineCount++;
+                *iter++;
+            }
+        }
+
+        // Count the number of polyobjs linked to this block.
+        poCount = 0;
+        if(block->polyLinks)
+        {
+            linkpolyobj_t *link = block->polyLinks;
+            while(link)
+            {
+                linkpolyobj_t *next = link->next;
+                if(link->polyobj)
+                    poCount++;
+                link = next;
+            }
+        }
+    }
+
+    drawInfoBox(theWindow->width / 2, 30,
+                blockIdx, vBlock[VX], vBlock[VY], lineCount, poCount);
 }
 
 /**
@@ -1259,54 +1301,46 @@ void P_BlockmapDebug(blockmap_t *blockmap)
      * Draw the blockmap-linked data.
      */
 
-    if(bmapDebugLines || bmapDebugPolyobjs)
-    {
-        validCount++;
+    validCount++;
 
-        // First, the block the viewPlayer is in.
-        block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
-        if(block)
+    // First, the blocks outside the viewPlayer's range.
+    for(y = 0; y < bmap->dimensions[VY]; ++y)
+        for(x = 0; x < bmap->dimensions[VX]; ++x)
         {
-            if(bmap == (bmap_t*) SSecBlockMap)
-                rendSSecBlockContents(block, bmap->bbox, 1, 1, 0, 1);
-            else
-                rendBlockContents(block, bmap->bbox, 1, 1, 0, 1);
+            if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
+               y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
+                continue;
+
+            block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
+            if(block)
+            {
+                rendBlockContents(block, bmap->bbox, .33f, 0, 0, .75f);
+            }
         }
 
-        // Next, the blocks within the viewPlayer's extended collision range.
-        for(y = vBlockBox[BOXBOTTOM]; y <= vBlockBox[BOXTOP]; ++y)
-            for(x = vBlockBox[BOXLEFT]; x <= vBlockBox[BOXRIGHT]; ++x)
+    validCount++;
+
+    // Next, the blocks within the viewPlayer's extended collision range.
+    for(y = vBlockBox[BOXBOTTOM]; y <= vBlockBox[BOXTOP]; ++y)
+        for(x = vBlockBox[BOXLEFT]; x <= vBlockBox[BOXRIGHT]; ++x)
+        {
+            if(x == vBlock[VX] && y == vBlock[VY])
+                continue;
+
+            block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
+            if(block)
             {
-                if(x == vBlock[VX] && y == vBlock[VY])
-                    continue;
-
-                block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
-                if(block)
-                {
-                    if(bmap == (bmap_t*) SSecBlockMap)
-                        rendSSecBlockContents(block, bmap->bbox, 1, .5f, 0, 1);
-                    else
-                        rendBlockContents(block, bmap->bbox, 1, .5f, 0, 1);
-                }
+                rendBlockContents(block, bmap->bbox, 1, .5f, 0, 1);
             }
+        }
 
-        // And then the rest of the blocks.
-        for(y = 0; y < bmap->dimensions[VY]; ++y)
-            for(x = 0; x < bmap->dimensions[VX]; ++x)
-            {
-                if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
-                   y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
-                    continue;
+    validCount++;
 
-                block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
-                if(block)
-                {
-                    if(bmap == (bmap_t*) SSecBlockMap)
-                        rendSSecBlockContents(block, bmap->bbox, .33f, 0, 0, .75f);
-                    else
-                        rendBlockContents(block, bmap->bbox, .33f, 0, 0, .75f);
-                }
-            }
+    // Lastly, the block the viewPlayer is in.
+    block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
+    if(block)
+    {
+        rendBlockContents(block, bmap->bbox, 1, 1, 0, 1);
     }
 
     /**
@@ -1352,66 +1386,28 @@ void P_BlockmapDebug(blockmap_t *blockmap)
     gl.Vertex2f(start[VX], end[VY]);
     gl.Vertex2f(start[VX], start[VY]);
     gl.End();
-#if 0
+
     gl.PopMatrix();
+    gl.Enable(DGL_TEXTURING);
 
     /**
      * Lastly, draw the blockmap debug HUD displays.
      */
 
+    gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
     gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
-    gl.Enable(DGL_TEXTURING);
-    {
-    int         lineCount = -1;
-    int         poCount = -1;
-    long        blockIdx = -1;
+    drawBlockInfoBox(vBlock);
 
-    block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
-    if(block)
-    {
-        blockIdx = vBlock[VY] * bmap->dimensions[VY] + vBlock[VX];
+    drawInfoBox2(bmap->bbox[0][VX], bmap->bbox[0][VY],
+                 bmap->bbox[1][VX], bmap->bbox[1][VY],
+                 bmap->blockSize[VX], bmap->blockSize[VY],
+                 bmap->dimensions[VX], bmap->dimensions[VY]);
 
-        // Count the number of lines linked to this block.
-        lineCount = 0;
-        if(block->lines)
-        {
-            line_t    **iter = block->lines;
-            while(*iter)
-            {
-                lineCount++;
-                *iter++;
-            }
-        }
-
-        // Count the number of polyobjs linked to this block.
-        poCount = 0;
-        if(block->polyLinks)
-        {
-            linkpolyobj_t *link = block->polyLinks;
-            while(link)
-            {
-                linkpolyobj_t *next = link->next;
-                if(link->polyobj)
-                    poCount++;
-                link = next;
-            }
-        }
-    }
-
-    rendBlockmapInfoBox(bmap->bbox[0][VX], bmap->bbox[0][VY],
-                        bmap->bbox[1][VX], bmap->bbox[1][VY],
-                        bmap->blockSize[VX], bmap->blockSize[VY],
-                        bmap->dimensions[VX], bmap->dimensions[VY]);
-    rendBlockInfo(theWindow->width / 2, 30,
-                  blockIdx, vBlock[VX], vBlock[VY], lineCount, poCount);
-    }
-#endif
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
-    gl.Enable(DGL_TEXTURING); // temp!!!
 
 #undef ISINVIEW
 }

@@ -635,6 +635,12 @@ desc = Frame counter.
 [rend-dev-surface-linked]
 desc = 1=Disable linked surfaces for render.  
 
+[rend-dev-blockmap-debug]
+desc = 1=Enable drawing of the blockmap debug display.
+
+[rend-dev-blockmap-debug-size]
+desc = Scale multiplier for the blockmap debug display.
+
 [rend-info-lums]
 desc = 1=Print lumobj count after rendering a frame.
 

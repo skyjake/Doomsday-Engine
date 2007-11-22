@@ -318,7 +318,6 @@ void SN_StartSequence(mobj_t *mobj, int sequence)
         SequenceListHead = node;
     }
     ActiveSequences++;
-    return;
 }
 
 void SN_StartSequenceInSec(sector_t *sector, int seqBase)
@@ -365,14 +364,17 @@ void SN_StopSequence(mobj_t *mobj)
             {
                 SequenceListHead = node->next;
             }
+
             if(node->prev)
             {
                 node->prev->next = node->next;
             }
+
             if(node->next)
             {
                 node->next->prev = node->prev;
             }
+
             Z_Free(node);
             ActiveSequences--;
         }
