@@ -23,6 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
+/**
+ * hu_stuff.h:
+ */
+
 #ifndef __COMMON_HU_STUFF_H__
 #define __COMMON_HU_STUFF_H__
 
@@ -34,24 +38,22 @@ enum {
     ALIGN_RIGHT
 };
 
-//
-// Globally visible constants.
-//
-#define HU_FONTSTART    '!'    // the first font characters
-#define HU_FONTEND  '_'    // the last font characters
+#define HU_FONTSTART        '!' // the first font characters
+#define HU_FONTEND          '_' // the last font characters
 
 // Calculate # of glyphs in font.
 #define HU_FONTSIZE (HU_FONTEND - HU_FONTSTART + 1)
 
-//
-// HEADS UP TEXT
-//
+#define HU_BROADCAST        (5)
+
+#define HU_TITLEX           (0)
+#define HU_TITLEY           (167 - hu_font[0].height)
 
 // A combination of patch data and its lump number.
 typedef struct dpatch_s {
-    int             width, height;
-    int             leftoffset, topoffset;
-    int             lump;
+    int         width, height;
+    int         leftoffset, topoffset;
+    int         lump;
 } dpatch_t;
 
 typedef enum border_e {
@@ -63,57 +65,54 @@ typedef enum border_e {
 extern dpatch_t hu_font[HU_FONTSIZE];
 extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
 
-void    HU_Init(void);
-void    HU_Ticker(void);
-
-void    R_CachePatch(dpatch_t * dp, char *name);
-
-// Implements patch replacement.
-void    WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                     int lump, char *altstring, boolean builtin, int halign);
-
-void    WI_DrawParamText(int x, int y, char *string, dpatch_t * defFont,
-                         float defRed, float defGreen, float defBlue,
-                         float defAlpha, boolean defCase, boolean defTypeIn,
-                         int halign);
-
-void    M_WriteText(int x, int y, const char *string);
-void    M_WriteText2(int x, int y, const char *string, dpatch_t *font, float red,
-                     float green, float blue, float alpha);
-void    M_WriteText3(int x, int y, const char *string, dpatch_t *font,
-                     float red, float green, float blue, float alpha,
-                     boolean doTypeIn, int initialCount);
-
-int     M_DrawText(int x, int y, boolean direct, char *string);
-void    M_DrawTitle(char *text, int y);
-
-int     M_StringWidth(const char *string, dpatch_t * font);
-int     M_StringHeight(const char *string, dpatch_t * font);
-void    M_DrawColorBox(int x, int y, float r, float g, float b, float a);
-void    M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
-                            float blue, float alpha, boolean background,
-                            int border);
-#ifndef __JDOOM__
-void M_DrawSlider(int x, int y, int width, int slot, float alpha);
-#else
-void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha);
-#endif
-
-void Draw_BeginZoom(float s, float originX, float originY);
-void Draw_EndZoom(void);
-
-#define HU_BROADCAST    5
-
-#define HU_TITLEX    0
-#define HU_TITLEY    (167 - hu_font[0].height)
+// Name graphics of each level (centered)
+extern dpatch_t *lnames;
 
 extern boolean  message_noecho;
 
 #ifdef __JDOOM__
 // Plutonia and TNT map names.
-extern char    *mapnamesp[32], *mapnamest[32];
-
+extern char *mapnamesp[32], *mapnamest[32];
 #endif
+
+void        HU_Init(void);
+void        HU_Ticker(void);
+
+void        R_CachePatch(dpatch_t * dp, char *name);
+
+// Implements patch replacement.
+void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
+                         int lump, char *altstring, boolean builtin, int halign);
+
+void        WI_DrawParamText(int x, int y, char *string, dpatch_t * defFont,
+                             float defRed, float defGreen, float defBlue,
+                             float defAlpha, boolean defCase, boolean defTypeIn,
+                             int halign);
+
+void        M_WriteText(int x, int y, const char *string);
+void        M_WriteText2(int x, int y, const char *string, dpatch_t *font, float red,
+                         float green, float blue, float alpha);
+void        M_WriteText3(int x, int y, const char *string, dpatch_t *font,
+                         float red, float green, float blue, float alpha,
+                         boolean doTypeIn, int initialCount);
+
+int         M_DrawText(int x, int y, boolean direct, char *string);
+void        M_DrawTitle(char *text, int y);
+
+int         M_StringWidth(const char *string, dpatch_t * font);
+int         M_StringHeight(const char *string, dpatch_t * font);
+void        M_DrawColorBox(int x, int y, float r, float g, float b, float a);
+void        M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
+                                float blue, float alpha, boolean background,
+                                int border);
+#ifndef __JDOOM__
+void        M_DrawSlider(int x, int y, int width, int slot, float alpha);
+#else
+void        M_DrawSlider(int x, int y, int width, int height, int slot, float alpha);
+#endif
+
+void        Draw_BeginZoom(float s, float originX, float originY);
+void        Draw_EndZoom(void);
 
 void        HU_Register(void);
 

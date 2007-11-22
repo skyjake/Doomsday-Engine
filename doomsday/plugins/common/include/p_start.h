@@ -18,29 +18,34 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * p_start.h: Common playsim code relating to (re)spawn of map objects
- *            and map setup.
+/**
+ * p_start.h: Common playsim code relating to the (re)spawn of map objects.
  */
 
 #ifndef __COMMON_PLAYSTART_H__
 #define __COMMON_PLAYSTART_H__
 
-extern thing_t *playerstarts;
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+# include "r_defs.h"
+#else
+# include "xddefs.h"
+#endif
+
+extern spawnspot_t *playerstarts;
 extern int      numPlayerStarts;
 
 void            P_Init(void);
-int             P_RegisterPlayerStart(thing_t * mthing);
+int             P_RegisterPlayerStart(spawnspot_t *mthing);
 void            P_FreePlayerStarts(void);
-boolean         P_CheckSpot(int playernum, thing_t * mthing,
+boolean         P_CheckSpot(int playernum, spawnspot_t *mthing,
                             boolean doTeleSpark);
-boolean         P_FuzzySpawn(thing_t * spot, int playernum,
+boolean         P_FuzzySpawn(spawnspot_t *spot, int playernum,
                              boolean doTeleSpark);
-thing_t        *P_GetPlayerStart(int group, int pnum);
+spawnspot_t    *P_GetPlayerStart(int group, int pnum);
 void            P_DealPlayerStarts(int group);
 void            P_SpawnPlayers(void);
 

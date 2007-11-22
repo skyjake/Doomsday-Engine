@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * p_saveg.h: Common save game handling.
  */
 
 #ifndef __P_SAVEG__
@@ -60,7 +64,7 @@ typedef enum thinkclass_e {
 } thinkerclass_t;
 
 void            SV_Init(void);
-void            SV_SaveGameFile(int slot, char *str);
+void            SV_GetSaveGameFileName(int slot, char *str);
 int             SV_GetSaveDescription(char *filename, char *str);
 #if __JHEXEN__
 boolean         SV_SaveGame(int slot, char *description);
@@ -79,7 +83,7 @@ boolean         SV_LoadGame(char *filename);
 
 // Write a client savegame file.
 void            SV_SaveClient(unsigned int gameid);
-void            SV_ClientSaveGameFile(unsigned int game_id, char *str);
+void            SV_GetClientSaveGameFileName(unsigned int game_id, char *str);
 void            SV_LoadClient(unsigned int gameid);
 
 #if __JHEXEN__

@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * am_map.h : Automap, automap menu and related code.
  */
 
@@ -301,7 +301,6 @@ typedef enum automapobjectname_e {
     AMO_TWOSIDEDLINE,
     AMO_FLOORCHANGELINE,
     AMO_CEILINGCHANGELINE,
-    AMO_BLOCKMAPGRIDLINE,
     AMO_NUMOBJECTS
 } automapobjectname_t;
 

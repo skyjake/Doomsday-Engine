@@ -35,10 +35,8 @@
  * http://www.ravensoft.com/
  */
 
-/*
- * p_inventory.h: Common code for player inventory
- *
- * Compiles for jHeretic and jHexen
+/**
+ * p_inventory.h: Common code for player inventory.
  */
 
 #if __JHERETIC__ || __JHEXEN__

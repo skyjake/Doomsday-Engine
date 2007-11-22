@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-// Extended generalized sector types.
+/**
+ * p_xgsec.c: Extended Generalized Sector Types.
+ */
+
 #ifndef __XG_SECTORTYPE_H__
 #define __XG_SECTORTYPE_H__
 
@@ -137,18 +141,16 @@ typedef struct {
     int             endsound;      // Play when move done.
     int             movesound;     // Sound to play while moving.
     int             mininterval, maxinterval;   // Sound playing intervals.
-
     int             timer;         // Counts down to zero.
-
 } xgplanemover_t;
 
 void            XS_Init(void);
 void            XS_Ticker(void);
 void            XS_Update(void);
 
-int             XS_Gravity(struct sector_s *sector);
-int             XS_Friction(struct sector_s *sector);
-int             XS_ThrustMul(struct sector_s *sector);
+float           XS_Gravity(struct sector_s *sector);
+float           XS_Friction(struct sector_s *sector);
+float           XS_ThrustMul(struct sector_s *sector);
 
 void            XS_InitMovePlane(struct line_s *line);
 int C_DECL      XSTrav_MovePlane(struct sector_s *sector, boolean ceiling,

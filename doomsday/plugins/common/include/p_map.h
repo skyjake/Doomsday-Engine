@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_map.h : Common play/maputil functions.
  */
 
@@ -32,22 +32,26 @@
 // If "floatok" true, move would be ok
 // if within "tmfloorz - tmceilingz".
 extern boolean  floatok;
-extern float  tmfloorz;
-extern float  tmceilingz;
-extern int      tmfloorpic;
+extern float tmfloorz;
+extern float tmceilingz;
+extern int tmfloorpic;
 
 extern line_t  *ceilingline;
+extern mobj_t  *linetarget; // who got hit (or NULL)
 
 #if __JHEXEN__
 extern mobj_t *PuffSpawned;
 extern mobj_t *BlockingMobj;
 #endif
 
-boolean         P_CheckSides(mobj_t* actor, int x, int y);
+float           P_GetGravity(void);
 
-boolean         P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
-boolean         P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y,
-                                 fixed_t z);
+boolean         P_CheckSides(mobj_t* actor, float x, float y);
+
+boolean         P_CheckPosition2f(mobj_t *thing, float x, float y);
+boolean         P_CheckPosition3f(mobj_t *thing, float x, float y, float z);
+boolean         P_CheckPosition3fv(mobj_t *thing, const float pos[3]);
+
 #if __JHEXEN__
 void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance,
                     boolean damageSource);
@@ -56,23 +60,20 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance);
 #endif
 
 #if !__JHEXEN__
-boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y,
+boolean         P_TryMove(mobj_t *thing, float x, float y,
                           boolean dropoff, boolean slide);
 #else
-boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y);
+boolean         P_TryMove(mobj_t *thing, float x, float y);
 #endif
-boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean alwaysstomp);
+boolean         P_TeleportMove(mobj_t *thing, float x, float y, boolean alwaysstomp);
 void            P_SlideMove(mobj_t *mo);
 
 void            P_UseLines(player_t *player);
 
 boolean         P_ChangeSector(sector_t *sector, boolean crunch);
 
-extern mobj_t  *linetarget;        // who got hit (or NULL)
-
-fixed_t         P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance);
-
-void            P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
-                             fixed_t slope, int damage);
+float           P_AimLineAttack(mobj_t *t1, angle_t angle, float distance);
+void            P_LineAttack(mobj_t *t1, angle_t angle, float distance,
+                             float slope, int damage);
 
 #endif

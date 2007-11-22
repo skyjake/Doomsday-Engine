@@ -24,11 +24,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * p_mapspec.c:
+/**
+ * p_mapspec.c: Line Tag handling. Line and Sector groups.
  *
- * Line Tag handling. Line and Sector groups. Specialized iteration
- * routines, respective utility functions...
+ * Specialized iteration routines, respective utility functions...
  */
 
 #ifndef __COMMON_MAP_SPEC_H__

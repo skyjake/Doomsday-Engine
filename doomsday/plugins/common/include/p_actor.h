@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +18,21 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * p_actor.h: Common actor (mobj) routines.
  */
 
 #ifndef __DD_COMMON_ACTOR_H__
 #define __DD_COMMON_ACTOR_H__
 
-void            P_SetThingSRVO(mobj_t *mo, int stepx, int stepy);
-void            P_SetThingSRVOZ(mobj_t *mo, int stepz);
-void            P_SRVOAngleTicker(mobj_t *mo);
-void            P_ClearThingSRVO(mobj_t *mo);
-void            P_UpdateHealthBits(mobj_t *mobj);
+void        P_SetThingSRVO(mobj_t *mo, float stepx, float stepy);
+void        P_SetThingSRVOZ(mobj_t *mo, float stepz);
+void        P_SRVOAngleTicker(mobj_t *mo);
+void        P_ClearThingSRVO(mobj_t *mo);
+void        P_UpdateHealthBits(mobj_t *mobj);
 
 #endif
