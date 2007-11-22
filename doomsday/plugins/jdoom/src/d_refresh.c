@@ -3,11 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- *
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
+
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -20,17 +19,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * d_refresh.c
  */
 
 // HEADER FILES ------------------------------------------------------------
-
-#include <ctype.h>
 
 #include "jdoom.h"
 
@@ -47,9 +44,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define viewheight  Get(DD_VIEWWINDOW_HEIGHT)
-#define SIZEFACT 4
-#define SIZEFACT2 16
+#define viewheight          Get(DD_VIEWWINDOW_HEIGHT)
 
 // TYPES -------------------------------------------------------------------
 
@@ -64,9 +59,6 @@ void    R_SetAllDoomsdayFlags(void);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int actual_leveltime;
-
- // Name graphics of each level (centered)
-extern dpatch_t *lnames;
 
 extern float lookOffset;
 
@@ -83,8 +75,9 @@ static int setdetail;
 /**
  * Creates the translation tables to map the green color ramp to gray,
  * brown, red.
- * NOTE: Assumes a given structure of the PLAYPAL.
- *       Could be read from a lump instead.
+ *
+ * \note Assumes a given structure of the PLAYPAL. Could be read from a
+ * lump instead?
  */
 void R_InitTranslation(void)
 {
@@ -112,8 +105,8 @@ void R_InitTranslation(void)
 }
 
 /**
- * Draws a special filter over the screen
- * (eg the inversing filter used when in god mode).
+ * Draws a special filter over the screen (e.g. the inversing filter used
+ * when in god mode).
  */
 void R_DrawSpecialFilter(void)
 {
@@ -164,7 +157,7 @@ void R_DrawLevelTitle(void)
     float       alpha = 1;
     int         y = 12;
     int         mapnum;
-    char       *lname, *lauthor, *ptr;
+    char       *lname, *lauthor;
 
     if(!cfg.levelTitle || actual_leveltime > 6 * 35)
         return;
@@ -182,7 +175,7 @@ void R_DrawLevelTitle(void)
         alpha = 1 - (actual_leveltime - 5 * 35) / 35.0f;
 
     // Get the strings from Doomsday
-    lname = (char *) DD_GetVariable(DD_MAP_NAME);
+    lname = P_GetMapNiceName();
     lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
 
     // Compose the mapnumber used to check the map name patches array.
@@ -193,13 +186,6 @@ void R_DrawLevelTitle(void)
 
     if(lname)
     {
-        ptr = strchr(lname, ':');   // Skip the E#M# or Level #.
-        if(ptr)
-        {
-            lname = ptr + 1;
-            while(*lname && isspace(*lname))
-                lname++;
-        }
         WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, lnames[mapnum].lump,
                      lname, false, ALIGN_CENTER);
         y += 14;                //9;
@@ -250,10 +236,12 @@ void D_Display(void)
     }
     else
     {
-        int w = cfg.setblocks * 32;
-        int h = cfg.setblocks * (200 - ST_HEIGHT * cfg.sbarscale / 20) / 10;
-        R_SetViewWindowTarget(160 - (w >> 1),
-                              (200 - ST_HEIGHT * cfg.sbarscale / 20 - h) >> 1,
+        int         w = cfg.setblocks * 32;
+        int         h =
+            cfg.setblocks * (200 - ST_HEIGHT * cfg.sbarscale / 20) / 10;
+
+        R_SetViewWindowTarget(160 - (w / 2),
+                              (200 - ST_HEIGHT * cfg.sbarscale / 20 - h) / 2,
                               w, h);
     }
 
@@ -265,6 +253,7 @@ void D_Display(void)
     case GS_LEVEL:
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
+
         if(!IS_CLIENT && leveltime < 2)
         {
             // Don't render too early; the first couple of frames
@@ -279,7 +268,12 @@ void D_Display(void)
         if(!(MN_CurrentMenuHasBackground() && MN_MenuAlpha() >= 1) &&
            !mapHidesView)
         {
-            int viewAngleOffset = ANGLE_MAX * -G_GetLookOffset(displayplayer);
+            int         viewAngleOffset =
+                ANGLE_MAX * -G_GetLookOffset(displayplayer);
+            int         isFullBright =
+                ((player->powers[PT_INFRARED] > 4 * 32) ||
+                 (player->powers[PT_INFRARED] & 8) ||
+                 player->powers[PT_INVULNERABILITY] > 30);
 
             // Draw the player view.
             if(IS_CLIENT)
@@ -292,14 +286,13 @@ void D_Display(void)
             GL_SetFilter(players[displayplayer].plr->filter);   // $democam
 
             // How about fullbright?
-            Set(DD_FULLBRIGHT, (player->powers[PT_INFRARED] > 4 * 32) ||
-                (player->powers[PT_INFRARED] & 8) ||
-                player->powers[PT_INVULNERABILITY] > 30);
+            Set(DD_FULLBRIGHT, isFullBright);
 
             // Render the view with possible custom filters.
             R_RenderPlayerView(players[displayplayer].plr);
 
             R_DrawSpecialFilter();
+
             // Crosshair.
             if(!iscam)
                 X_Drawer();     // $democam
@@ -347,17 +340,13 @@ void D_Display2(void)
 
                 if(!iscam)
                 {
-                    if(true == (viewheight == 200))
-                    {
-                        // Fullscreen. Which mode?
-                        ST_Drawer(cfg.setblocks - 10 , redrawsbar);
-                    }
-                    else
-                    {
-                        ST_Drawer(0 , redrawsbar);
-                    }
+                    int         viewmode =
+                        ((viewheight == 200)? cfg.setblocks - 10 : 0);
+
+                    ST_Drawer(viewmode, redrawsbar);
                 }
             }
+
             HU_Drawer();
         }
         break;
@@ -375,7 +364,7 @@ void D_Display2(void)
         break;
     }
 
-    // draw pause pic (but not if InFine active)
+    // Draw pause pic (but not if InFine active).
     if(paused && !fi_active)
     {
         WI_DrawPatch(SCREENWIDTH /2, 4, 1, 1, 1, 1, W_GetNumForName("M_PAUSE"),
@@ -390,13 +379,13 @@ void D_Display2(void)
 }
 
 /**
- * Updates the mobj flags used by Doomsday with the state
- * of our local flags for the given mobj.
+ * Updates the mobj flags used by Doomsday with the state of our local flags
+ * for the given mobj.
  */
 void P_SetDoomsdayFlags(mobj_t *mo)
 {
     // Client mobjs can't be set here.
-    if(IS_CLIENT && mo->ddflags & DDMF_REMOTE)
+    if(IS_CLIENT && (mo->ddflags & DDMF_REMOTE))
         return;
 
     // Reset the flags for a new frame.
@@ -417,7 +406,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
     }
     if(mo->type == MT_LIGHTSOURCE)
         mo->ddflags |= DDMF_ALWAYSLIT | DDMF_DONTDRAW;
-    if(mo->info && mo->info->flags2 & MF2_ALWAYSLIT)
+    if(mo->info && (mo->info->flags2 & MF2_ALWAYSLIT))
         mo->ddflags |= DDMF_ALWAYSLIT;
 
     if(mo->flags2 & MF2_FLY)
@@ -427,23 +416,27 @@ void P_SetDoomsdayFlags(mobj_t *mo)
     if(P_IsCamera(mo))
         mo->ddflags |= DDMF_DONTDRAW;
 
-    if(mo->flags & MF_CORPSE && cfg.corpseTime && mo->corpsetics == -1)
+    if((mo->flags & MF_CORPSE) && cfg.corpseTime && mo->corpsetics == -1)
         mo->ddflags |= DDMF_DONTDRAW;
 
     // Choose which ddflags to set.
     if(mo->flags2 & MF2_DONTDRAW)
     {
         mo->ddflags |= DDMF_DONTDRAW;
-        return;                 // No point in checking the other flags.
+        return; // No point in checking the other flags.
     }
 
     if(mo->flags2 & MF2_LOGRAV)
         mo->ddflags |= DDMF_LOWGRAVITY;
 
-    // The torches often go into the ceiling. This'll prevent
-    // them from 'jumping'.
-    if(mo->type == MT_MISC41 || mo->type == MT_MISC42 || mo->type == MT_MISC43  // tall torches
-       || mo->type == MT_MISC44 || mo->type == MT_MISC45 || mo->type == MT_MISC46)  // short torches
+    /**
+     * The torches often go into the ceiling. This'll prevent them from
+     * 'jumping' when they do.
+     *
+     * \todo Add a thing def flag for this.
+     */
+    if(mo->type == MT_MISC41 || mo->type == MT_MISC42 || mo->type == MT_MISC43 || // tall torches
+       mo->type == MT_MISC44 || mo->type == MT_MISC45 || mo->type == MT_MISC46)  // short torches
         mo->ddflags |= DDMF_NOFITBOTTOM;
 
     if(mo->flags & MF_BRIGHTSHADOW)
@@ -451,12 +444,12 @@ void P_SetDoomsdayFlags(mobj_t *mo)
     else if(mo->flags & MF_SHADOW)
         mo->ddflags |= DDMF_SHADOW;
 
-    if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE)) ||
-       mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE &&
-                                !(mo->flags & MF_VIEWALIGN)))
+    if(((mo->flags & MF_VIEWALIGN) && !(mo->flags & MF_MISSILE)) ||
+       ((mo->flags & MF_MISSILE) && !(mo->flags & MF_VIEWALIGN)) ||
+       (mo->flags & MF_FLOAT))
         mo->ddflags |= DDMF_VIEWALIGN;
 
-    mo->ddflags |= mo->flags & MF_TRANSLATION;
+    mo->ddflags |= (mo->flags & MF_TRANSLATION);
 }
 
 /**
@@ -470,7 +463,10 @@ void R_SetAllDoomsdayFlags(void)
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); iter; iter = iter->snext)
+        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter;
+            iter = iter->snext)
+        {
             P_SetDoomsdayFlags(iter);
+        }
     }
 }

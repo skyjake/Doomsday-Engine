@@ -4,8 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +18,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * d_items.c: Weapons, ammos, healthpacks etc, etc...
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -42,9 +45,10 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-//
-// These are used if other definitions are not found.
-//
+/**
+ * Default weapon definitions.
+ * These are used if other (external) definitions are not found.
+ */
 weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    {
     { // fist
@@ -187,52 +191,56 @@ weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Return the default for a value (retrieved from Doomsday)
  */
-int GetDefInt(char *def, int *returned_value)
+int GetDefInt(char *def, int *returnVal)
 {
-    char   *data;
-    int     val;
+    char       *data;
+    int         val;
 
     // Get the value.
     if(!Def_Get(DD_DEF_VALUE, def, &data))
-        return 0;               // No such value...
+        return 0; // No such value...
+
     // Convert to integer.
     val = strtol(data, 0, 0);
-    if(returned_value)
-        *returned_value = val;
+    if(returnVal)
+        *returnVal = val;
+
     return val;
 }
 
 void GetDefState(char *def, int *val)
 {
-    char   *data;
+    char       *data;
 
     // Get the value.
     if(!Def_Get(DD_DEF_VALUE, def, &data))
         return;
+
     // Get the state number.
     *val = Def_Get(DD_DEF_STATE, data, 0);
     if(*val < 0)
         *val = 0;
 }
 
-/*
- *Initialize weapon info, maxammo and clipammo.
+/**
+ * Initialize weapon info, maxammo and clipammo.
  */
-void P_InitWeaponInfo()
+void P_InitWeaponInfo(void)
 {
-#define PLMAX "Player|Max ammo|"
-#define PLCLP "Player|Clip ammo|"
-#define WPINF "Weapon Info|"
+#define PLMAX               "Player|Max ammo|"
+#define PLCLP               "Player|Clip ammo|"
+#define WPINF               "Weapon Info|"
 
-    int     i;
-    int     pclass = PCLASS_PLAYER;
-    ammotype_t k;
-    char    buf[80];
-    char   *data;
-    char   *ammotypes[NUM_AMMO_TYPES] = { "clip", "shell", "cell", "misl"};
+    int         i;
+    int         pclass = PCLASS_PLAYER;
+    ammotype_t  k;
+    char        buf[80];
+    char       *data;
+    char       *ammotypes[NUM_AMMO_TYPES] =
+        {"clip", "shell", "cell", "misl"};
 
     // Max ammo.
     GetDefInt(PLMAX "Clip", &maxammo[AT_CLIP]);
@@ -246,7 +254,7 @@ void P_InitWeaponInfo()
     GetDefInt(PLCLP "Cell", &clipammo[AT_CELL]);
     GetDefInt(PLCLP "Misl", &clipammo[AT_MISSILE]);
 
-    for(i = 0; i < NUM_WEAPON_TYPES; i++)
+    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         //// \todo Only allows for one type of ammo per weapon.
         sprintf(buf, WPINF "%i|Type", i);
@@ -291,24 +299,33 @@ void P_InitWeaponInfo()
         sprintf(buf, WPINF "%i|Static", i);
         weaponinfo[i][pclass].mode[0].static_switch = GetDefInt(buf, 0);
     }
+
+#undef PLMAX
+#undef PLCLP
+#undef WPINF
 }
 
 void P_InitPlayerValues(player_t *p)
 {
-#define PLINA "Player|Init ammo|"
-    int     i;
-    char    buf[20];
+#define PLINA               "Player|Init ammo|"
+
+    int         i;
+    char        buf[20];
 
     GetDefInt("Player|Health", &p->health);
     GetDefInt("Player|Weapon", (int *) &p->readyweapon);
     p->pendingweapon = p->readyweapon;
-    for(i = 0; i < NUM_WEAPON_TYPES; i++)
+
+    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         sprintf(buf, "Weapon Info|%i|Owned", i);
         GetDefInt(buf, (int *) &p->weaponowned[i]);
     }
+
     GetDefInt(PLINA "Clip", &p->ammo[AT_CLIP]);
     GetDefInt(PLINA "Shell", &p->ammo[AT_SHELL]);
     GetDefInt(PLINA "Cell", &p->ammo[AT_CELL]);
     GetDefInt(PLINA "Misl", &p->ammo[AT_MISSILE]);
+
+#undef PLINA
 }

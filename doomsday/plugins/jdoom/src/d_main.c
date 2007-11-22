@@ -3,10 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * d_main.c: DOOM specifc Initialization.
+/**
+ * d_main.c: Game initialization (jDoom-specific).
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -41,8 +41,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BGCOLOR     7
-#define FGCOLOR     8
+#define BGCOLOR                 7
+#define FGCOLOR                 8
 
 // TYPES -------------------------------------------------------------------
 
@@ -76,7 +76,7 @@ int     gamemodebits;
 gamemission_t gamemission = GM_DOOM;
 
 // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-char gameModeString[17];
+char    gameModeString[17];
 
 boolean monsterinfight;
 
@@ -113,7 +113,8 @@ char *borderLumps[] = {
  * global vars.
  *
  * @param mode          The game mode to change to.
- * @return boolean      (TRUE) if we changed game modes successfully.
+ *
+ * @return              @true, if we changed game modes successfully.
  */
 boolean D_SetGameMode(gamemode_t mode)
 {
@@ -163,9 +164,10 @@ void D_GetDemoLump(int num, char *out)
 
 /**
  * Check which known IWADs are found. The purpose of this routine is to
- * find out which IWADs the user lets us to know about, but we don't
- * decide which one gets loaded or even see if the WADs are actually
- * there. The default location for IWADs is Data\GAMENAMETEXT\.
+ * find out which IWADs the user lets us to know about, but we don't decide
+ * which one gets loaded or even see if the WADs are actually there.
+ *
+ * The default location for IWADs is Data\GAMENAMETEXT\.
  */
 void DetectIWADs(void)
 {
@@ -285,12 +287,14 @@ void D_IdentifyFromData(void)
         D_SetGameMode(shareware);
         return;
     }
+
     if(ArgCheck("-doom"))
     {
         // Registered DOOM.
         D_SetGameMode(registered);
         return;
     }
+
     if(ArgCheck("-doom2") || ArgCheck("-plutonia") || ArgCheck("-tnt") || ArgCheck("-freedoom"))
     {
         // DOOM 2.
@@ -302,6 +306,7 @@ void D_IdentifyFromData(void)
             gamemission = GM_TNT;
         return;
     }
+
     if(ArgCheck("-ultimate") || ArgCheck("-udoom"))
     {
         // Retail DOOM 1: Ultimate DOOM.
@@ -349,15 +354,12 @@ void G_IdentifyVersion(void)
     memset(gameModeString, 0, sizeof(gameModeString));
 
     strcpy(gameModeString,
-           gamemode == shareware ? "doom1-share" : gamemode ==
-           registered ? "doom1" : gamemode ==
-           retail ? "doom1-ultimate" : gamemode == commercial ? (gamemission ==
-                                                                 GM_PLUT ?
-                                                                 "doom2-plut" :
-                                                                 gamemission ==
-                                                                 GM_TNT ?
-                                                                 "doom2-tnt" :
-                                                                 "doom2") :
+           gamemode == shareware ? "doom1-share" :
+           gamemode == registered ? "doom1" :
+           gamemode == retail ? "doom1-ultimate" :
+           gamemode == commercial ?
+                (gamemission == GM_PLUT ? "doom2-plut" :
+                 gamemission == GM_TNT ? "doom2-tnt" : "doom2") :
            "-");
 }
 
@@ -448,6 +450,10 @@ void D_PreInit(void)
     cfg.automapWidth = 1.0f;
     cfg.automapHeight = 1.0f;*/
 
+    /**
+     * \fixme These colors should be determined from the PLAYPAL instead
+     * as done in original DOOM.
+     */
     cfg.automapL0[0] = 0.4f;    // Unseen areas
     cfg.automapL0[1] = 0.4f;
     cfg.automapL0[2] = 0.4f;
@@ -477,7 +483,7 @@ void D_PreInit(void)
     cfg.automapZoomSpeed = .1f;
     cfg.automapPanSpeed = .5f;
     cfg.automapPanResetOnOpen = true;
-    cfg.counterCheatScale = .7f; //From jHeretic
+    cfg.counterCheatScale = .7f;
 
     cfg.msgShow = true;
     cfg.msgCount = 4;
@@ -536,28 +542,27 @@ void D_PostInit(void)
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gamemode ==
-                retail ? "The Ultimate DOOM Startup\n" : gamemode ==
-                shareware ? "DOOM Shareware Startup\n" : gamemode ==
-                registered ? "DOOM Registered Startup\n" : gamemode ==
-                commercial ? (gamemission ==
-                              GM_PLUT ?
-                              "Final DOOM: The Plutonia Experiment\n" :
-                              gamemission ==
-                              GM_TNT ? "Final DOOM: TNT: Evilution\n" :
-                              "DOOM 2: Hell on Earth\n") : "Public DOOM\n");
+                gamemode == retail ? "The Ultimate DOOM Startup\n" :
+                gamemode == shareware ? "DOOM Shareware Startup\n" :
+                gamemode == registered ? "DOOM Registered Startup\n" :
+                gamemode == commercial ?
+                    (gamemission == GM_PLUT ? "Final DOOM: The Plutonia Experiment\n" :
+                     gamemission == GM_TNT ? "Final DOOM: TNT: Evilution\n" :
+                     "DOOM 2: Hell on Earth\n") :
+                "Public DOOM\n");
+
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
     monsterinfight = GetDefInt("AI|Infight", 0);
 
-    // get skill / episode / map from parms
+    // Get skill / episode / map from parms.
     gameskill = startskill = SM_NOITEMS;
     startepisode = 1;
     startmap = 1;
     autostart = false;
 
-    // Game mode specific settings
+    // Game mode specific settings.
     // Plutonia and TNT automatically turn on the full sky.
     if(gamemode == commercial &&
        (gamemission == GM_PLUT || gamemission == GM_TNT))
@@ -565,7 +570,7 @@ void D_PostInit(void)
         Con_SetInteger("rend-sky-full", 1, true);
     }
 
-    // Command line options
+    // Command line options.
     nomonsters = ArgCheck("-nomonsters");
     respawnparm = ArgCheck("-respawn");
     fastparm = ArgCheck("-fast");
@@ -619,7 +624,7 @@ void D_PostInit(void)
         }
     }
 
-    // turbo option
+    // Turbo option.
     p = ArgCheck("-turbo");
     turbomul = 1.0f;
     if(p)
@@ -652,7 +657,7 @@ void D_PostInit(void)
     p = ArgCheck("-loadgame");
     if(p && p < myargc - 1)
     {
-        SV_SaveGameFile(Argv(p + 1)[0] - '0', file);
+        SV_GetSaveGameFileName(Argv(p + 1)[0] - '0', file);
         G_LoadGame(file);
     }
 
@@ -717,9 +722,10 @@ void D_Ticker(timespan_t ticLength)
     // Fixed ticks for the menu ticker.
     if(M_RunTrigger(&fixed, ticLength))
     {
+        // \todo Convert menu animations to fractional time.
         MN_Ticker();
     }
-    
+
     // Game gets fractional ticks.
     G_Ticker(ticLength);
 }
