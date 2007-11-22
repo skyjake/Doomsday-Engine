@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_intercept.h: Line/Object Interception
  */
 
@@ -30,9 +30,9 @@
 #define __DOOMSDAY_PLAY_INTERCEPT_H__
 
 void            P_ClearIntercepts(void);
-intercept_t    *P_AddIntercept(fixed_t frac, boolean isaline, void *ptr);
-boolean         P_TraverseIntercepts(traverser_t func, fixed_t maxfrac);
-boolean         P_SightTraverseIntercepts(divline_t * strace,
+intercept_t    *P_AddIntercept(float frac, boolean isaline, void *ptr);
+boolean         P_TraverseIntercepts(traverser_t func, float maxfrac);
+boolean         P_SightTraverseIntercepts(divline_t *strace,
                                           boolean (*func) (intercept_t *));
 
 #endif

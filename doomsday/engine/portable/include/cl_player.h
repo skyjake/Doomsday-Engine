@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * cl_player.h: Clientside Player Management
  */
 
@@ -40,14 +41,14 @@ typedef struct playerstate_s {
 	int             friction;
 } playerstate_t;
 
-extern int      psp_move_speed;
-extern int      cplr_thrust_mul;
+extern float psp_move_speed;
+extern float cplr_thrust_mul;
 extern playerstate_t playerstate[MAXPLAYERS];
 
 void            Cl_InitPlayers(void);
 void            Cl_LocalCommand(void);
 void            Cl_MovePlayer(ddplayer_t *pl);
-void            Cl_MoveLocalPlayer(int dx, int dy, int dz, boolean onground);
+void            Cl_MoveLocalPlayer(float dx, float dy, float dz, boolean onground);
 void            Cl_UpdatePlayerPos(ddplayer_t *pl);
 //void            Cl_MovePsprites(void);
 void            Cl_CoordsReceived(void);

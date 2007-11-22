@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_mapdata.h: Playsim Data Structures, Macros and Constants
  *
  * These are internal to Doomsday. The games have no direct access to
@@ -40,6 +40,7 @@
 #include "dam_main.h"
 #include "rend_bias.h"
 #include "m_nodepile.h"
+#include "m_vector.h"
 
 #define GET_VERTEX_IDX(vtx)     ((vtx) - vertexes)
 #define GET_LINE_IDX(li)        ((li) - lines)
@@ -70,7 +71,7 @@
 //#define ML_MAPPED           0x0100 // set if already drawn in automap
 
 // Node flags.
-#define NF_SUBSECTOR    0x80000000
+#define NF_SUBSECTOR        0x80000000
 
 // Runtime map data objects, such as vertices, sectors, and subsectors all
 // have this header as their first member. This makes it possible to treat
@@ -85,22 +86,22 @@ typedef struct fvertex_s {
 } fvertex_t;
 
 typedef struct shadowcorner_s {
-    float   corner;
+    float           corner;
     struct sector_s *proximity;
-    float   pOffset;
-    float   pHeight;
+    float           pOffset;
+    float           pHeight;
 } shadowcorner_t;
 
 typedef struct edgespan_s {
-    float   length;
-    float   shift;
+    float           length;
+    float           shift;
 } edgespan_t;
 
-typedef struct polyblock_s {
+typedef struct linkpolyobj_s {
     struct polyobj_s *polyobj;
-    struct polyblock_s *prev;
-    struct polyblock_s *next;
-} polyblock_t;
+    struct linkpolyobj_s *prev;
+    struct linkpolyobj_s *next;
+} linkpolyobj_t;
 
 typedef void* blockmap_t;
 
@@ -136,13 +137,13 @@ extern int      numthings;
 extern uint    *missingFronts;
 extern uint     numMissingFronts;
 
-extern fixed_t  mapGravity;
+extern float    mapGravity;
 
 typedef struct gamemap_s {
     char        levelid[9];
     char        uniqueID[256];
 
-    float       bounds[4];
+    float       bbox[4];
 
     uint        numvertexes;
     vertex_t   *vertexes;
@@ -167,19 +168,20 @@ typedef struct gamemap_s {
 
     uint        po_NumPolyobjs;
     polyobj_t  *polyobjs;
-    polyblock_t **polyBlockMap;
+    linkpolyobj_t **polyBlockMap;
 
     int         numthings;
 
-    blockmap_t *blockmap;
+    blockmap_t *blockMap;
+    blockmap_t *ssecBlockMap;
 
-    struct linkmobj_s *blockrings;      // for thing rings
-    nodepile_t  thingnodes, linenodes;  // all kinds of wacky links.
+    struct linkmobj_s *blockrings;      // for mobj rings
+    nodepile_t  mobjnodes, linenodes;   // all kinds of wacky links.
     nodeindex_t *linelinks;             // indices to roots.
 
     byte       *rejectmatrix;
 
-    fixed_t     globalGravity;          // Gravity for the current map.
+    float       globalGravity;          // Gravity for the current map.
     int         ambientLightLevel;      // Ambient lightlevel for the current map.
 } gamemap_t;
 
@@ -190,7 +192,7 @@ void        P_SetCurrentMap(gamemap_t *map);
 
 const char *P_GetMapID(gamemap_t *map);
 const char *P_GetUniqueMapID(gamemap_t *map);
-void        P_GetMapBounds(gamemap_t *map, fixed_t *min, fixed_t *max);
+void        P_GetMapBounds(gamemap_t *map, float *min, float *max);
 int         P_GetMapAmbientLightLevel(gamemap_t *map);
 
 const char *P_GenerateUniqueMapID(const char *mapID);

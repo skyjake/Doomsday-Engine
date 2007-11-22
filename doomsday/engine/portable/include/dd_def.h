@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_def.h: Internal Doomsday Macros and Constants
  */
 
@@ -84,7 +85,6 @@
 #define HEAP_LEFT(i)    (2*(i) + 1)
 #define HEAP_RIGHT(i)   (2*(i) + 2)
 
-enum { BLEFT, BTOP, BRIGHT, BBOTTOM, BFLOOR, BCEILING };
 enum { VX, VY, VZ };               // Vertex indices.
 enum { CR, CG, CB, CA };           // Color indices.
 

@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * def_share.h: Shared Definition Data Structures and Constants
  */
 
@@ -70,9 +71,9 @@ typedef struct {
 	int             deathstate;
 	int             xdeathstate;
 	int             deathsound;
-	int             speed;
-	int             radius;
-	int             height;
+	float           speed;
+	float           radius;
+	float           height;
 	int             mass;
 	int             damage;
 	int             activesound;
@@ -91,7 +92,7 @@ typedef struct {
 } musicinfo_t;
 
 typedef struct {
-	char           *text;		   // Pointer to the text (don't modify).  
+	char           *text;		   // Pointer to the text (don't modify).
 } ddtext_t;
 
 typedef struct {

@@ -117,12 +117,8 @@ typedef struct surface_s {
     blendmode_t         blendmode;
     float               normal[3];     // Surface normal
     float               oldnormal[3];
-    float               texmove[2];    // Texture movement X and Y
-    float               oldtexmove[2];
-    float               offx;          // Texture x offset
-    float               oldoffx;
-    float               offy;          // Texture y offset
-    float               oldoffy;
+    float               offset[2];     // [X, Y] Planar offset to surface material origin.
+    float               oldoffset[2];
     float               rgba[4];       // Surface color tint
     float               oldrgba[4];
     short               frameflags;
@@ -141,9 +137,7 @@ typedef struct skyfix_s {
 #define PS_normal				surface.normal
 #define PS_texture				surface.SM_texture
 #define PS_isflat				surface.SM_isflat
-#define PS_offx					surface.offx
-#define PS_offy					surface.offy
-#define PS_texmove				surface.texmove
+#define PS_offset				surface.offset
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
@@ -168,14 +162,12 @@ typedef struct plane_s {
 #define SP_planenormal(n)       SP_plane(n)->surface.normal
 #define SP_planetexture(n)      SP_plane(n)->surface.SM_texture
 #define SP_planeisflat(n)       SP_plane(n)->surface.SM_isflat
-#define SP_planeoffx(n)         SP_plane(n)->surface.offx
-#define SP_planeoffy(n)         SP_plane(n)->surface.offy
+#define SP_planeoffset(n)       SP_plane(n)->surface.offset
 #define SP_planergb(n)          SP_plane(n)->surface.rgba
 #define SP_planeglow(n)         SP_plane(n)->glow
 #define SP_planeglowrgb(n)      SP_plane(n)->glowrgb
 #define SP_planetarget(n)       SP_plane(n)->target
 #define SP_planespeed(n)        SP_plane(n)->speed
-#define SP_planetexmove(n)      SP_plane(n)->surface.texmove
 #define SP_planesoundorg(n)     SP_plane(n)->soundorg
 #define SP_planevisheight(n)	SP_plane(n)->visheight
 
@@ -184,14 +176,12 @@ typedef struct plane_s {
 #define SP_ceilnormal           SP_planenormal(PLN_CEILING)
 #define SP_ceiltexture          SP_planetexture(PLN_CEILING)
 #define SP_ceilisflat           SP_planeisflat(PLN_CEILING)
-#define SP_ceiloffx             SP_planeoffx(PLN_CEILING)
-#define SP_ceiloffy             SP_planeoffy(PLN_CEILING)
+#define SP_ceiloffset           SP_planeoffset(PLN_CEILING)
 #define SP_ceilrgb              SP_planergb(PLN_CEILING)
 #define SP_ceilglow             SP_planeglow(PLN_CEILING)
 #define SP_ceilglowrgb          SP_planeglowrgb(PLN_CEILING)
 #define SP_ceiltarget           SP_planetarget(PLN_CEILING)
 #define SP_ceilspeed            SP_planespeed(PLN_CEILING)
-#define SP_ceiltexmove          SP_planetexmove(PLN_CEILING)
 #define SP_ceilsoundorg         SP_planesoundorg(PLN_CEILING)
 #define SP_ceilvisheight        SP_planevisheight(PLN_CEILING)
 
@@ -200,14 +190,12 @@ typedef struct plane_s {
 #define SP_floornormal          SP_planenormal(PLN_FLOOR)
 #define SP_floortexture         SP_planetexture(PLN_FLOOR)
 #define SP_floorisflat          SP_planeisflat(PLN_FLOOR)
-#define SP_flooroffx            SP_planeoffx(PLN_FLOOR)
-#define SP_flooroffy            SP_planeoffy(PLN_FLOOR)
+#define SP_flooroffset          SP_planeoffset(PLN_FLOOR)
 #define SP_floorrgb             SP_planergb(PLN_FLOOR)
 #define SP_floorglow            SP_planeglow(PLN_FLOOR)
 #define SP_floorglowrgb         SP_planeglowrgb(PLN_FLOOR)
 #define SP_floortarget          SP_planetarget(PLN_FLOOR)
 #define SP_floorspeed           SP_planespeed(PLN_FLOOR)
-#define SP_floortexmove         SP_planetexmove(PLN_FLOOR)
 #define SP_floorsoundorg        SP_planesoundorg(PLN_FLOOR)
 #define SP_floorvisheight       SP_planevisheight(PLN_FLOOR)
 
@@ -236,7 +224,7 @@ typedef struct sector_s {
     float               rgb[3];
     float               oldrgb[3];
     int                 validCount;    // if == validCount, already checked.
-    struct mobj_s*      thinglist;     // List of mobjs in the sector.
+    struct mobj_s*      mobjList;      // List of mobjs in the sector.
     unsigned int        linecount;
     struct line_s**     Lines;         // [linecount+1] size.
     struct subsector_s** subsectors;   // [subscount+1] size.
@@ -247,14 +235,14 @@ typedef struct sector_s {
     skyfix_t            skyfix[2];     // floor, ceiling.
     degenmobj_t         soundorg;
     float               reverb[NUM_REVERB_DATA];
-    int                 blockbox[4];   // Mapblock bounding box.
+    unsigned int        blockbox[4];   // Mapblock bounding box.
     unsigned int        planecount;
     struct plane_s**    planes;        // [planecount+1] size.
     struct sector_s*    containsector; // Sector that contains this (if any).
     boolean             permanentlink;
     boolean             unclosed;      // An unclosed sector (some sort of fancy hack).
     boolean             selfRefHack;   // A self-referencing hack sector which ISNT enclosed by the sector referenced. Bounding box for the sector.
-    float               bounds[4];     // Bounding box for the sector
+    float               bbox[4];       // Bounding box for the sector
     int                 frameflags;
     int                 addspritecount; // frame number of last R_AddSprites
     struct sector_s*    lightsource;   // Main sky light source
@@ -276,9 +264,7 @@ typedef enum segsection_e {
 #define SW_surfacetexture(n)    SW_surface(n).SM_texture
 #define SW_surfaceisflat(n)     SW_surface(n).SM_isflat
 #define SW_surfacenormal(n)     SW_surface(n).normal
-#define SW_surfacetexmove(n)    SW_surface(n).texmove
-#define SW_surfaceoffx(n)       SW_surface(n).offx
-#define SW_surfaceoffy(n)       SW_surface(n).offy
+#define SW_surfaceoffset(n)     SW_surface(n).offset
 #define SW_surfacergba(n)       SW_surface(n).rgba
 #define SW_surfacetexlat(n)     SW_surface(n).SM_xlat
 #define SW_surfaceblendmode(n)  SW_surface(n).blendmode
@@ -289,8 +275,7 @@ typedef enum segsection_e {
 #define SW_middleisflat         SW_surfaceisflat(SEG_MIDDLE)
 #define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
 #define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
-#define SW_middleoffx           SW_surfaceoffx(SEG_MIDDLE)
-#define SW_middleoffy           SW_surfaceoffy(SEG_MIDDLE)
+#define SW_middleoffset         SW_surfaceoffset(SEG_MIDDLE)
 #define SW_middlergba           SW_surfacergba(SEG_MIDDLE)
 #define SW_middletexlat         SW_surfacetexlat(SEG_MIDDLE)
 #define SW_middleblendmode      SW_surfaceblendmode(SEG_MIDDLE)
@@ -301,8 +286,7 @@ typedef enum segsection_e {
 #define SW_topisflat            SW_surfaceisflat(SEG_TOP)
 #define SW_topnormal            SW_surfacenormal(SEG_TOP)
 #define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
-#define SW_topoffx              SW_surfaceoffx(SEG_TOP)
-#define SW_topoffy              SW_surfaceoffy(SEG_TOP)
+#define SW_topoffset            SW_surfaceoffset(SEG_TOP)
 #define SW_toprgba              SW_surfacergba(SEG_TOP)
 #define SW_toptexlat            SW_surfacetexlat(SEG_TOP)
 
@@ -312,8 +296,7 @@ typedef enum segsection_e {
 #define SW_bottomisflat         SW_surfaceisflat(SEG_BOTTOM)
 #define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
 #define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
-#define SW_bottomoffx           SW_surfaceoffx(SEG_BOTTOM)
-#define SW_bottomoffy           SW_surfaceoffy(SEG_BOTTOM)
+#define SW_bottomoffset         SW_surfaceoffset(SEG_BOTTOM)
 #define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
 #define SW_bottomtexlat         SW_surfacetexlat(SEG_BOTTOM)
 
@@ -371,7 +354,7 @@ typedef struct line_s {
     slopetype_t         slopetype;
     int                 validCount;
     struct side_s*      sides[2];
-    fixed_t             bbox[4];
+    float               bbox[4];
     struct lineowner_s* vo[2];         // Links to vertex line owner nodes [left, right]
     float               length;        // Accurate length
     binangle_t          angle;         // Calculated from front side's normal
@@ -385,17 +368,16 @@ typedef struct polyobj_s {
     int                 validCount;
     degenmobj_t         startSpot;
     angle_t             angle;
-    int                 tag;           // reference tag assigned in HereticEd
-    fvertex_t*          originalPts;   // used as the base for the rotations
-    fvertex_t*          prevPts;       // use to restore the old point values
-    fixed_t             bbox[4];
-    fvertex_t           dest;
-    int                 speed;         // Destination XY and speed.
+    int                 tag;           // Reference tag assigned in HereticEd
+    fvertex_t*          originalPts;   // Used as the base for the rotations
+    fvertex_t*          prevPts;       // Use to restore the old point values
+    vec2_t              box[2];
+    fvertex_t           dest;          // Destination XY
+    float               speed;         // Movement speed.
     angle_t             destAngle;     // Destination angle.
     angle_t             angleSpeed;    // Rotation speed.
-    boolean             crush;         // should the polyobj attempt to crush mobjs?
+    boolean             crush;         // Should the polyobj attempt to crush mobjs?
     int                 seqType;
-    fixed_t             size;          // polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
     void*               specialdata;   // pointer a thinker, if the poly is moving
 } polyobj_t;
 

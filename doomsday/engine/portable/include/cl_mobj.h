@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * cl_mobj.h: Client Map Objects
  */
 
@@ -30,12 +30,12 @@
 #define __DOOMSDAY_CLIENT_MOBJ_H__
 
 // Flags for clmobjs.
-#define CLMF_HIDDEN         0x01   // Not officially created yet
-#define CLMF_UNPREDICTABLE  0x02   // Temporarily hidden (until next delta)
-#define CLMF_SOUND          0x04   // Sound is queued for playing on unhide.
-#define CLMF_NULLED         0x08   // Once nulled, it can't be updated.
-#define CLMF_STICK_FLOOR    0x10   // Mobj will stick to the floor.
-#define CLMF_STICK_CEILING  0x20   // Mobj will stick to the ceiling.
+#define CLMF_HIDDEN         0x01 // Not officially created yet
+#define CLMF_UNPREDICTABLE  0x02 // Temporarily hidden (until next delta)
+#define CLMF_SOUND          0x04 // Sound is queued for playing on unhide.
+#define CLMF_NULLED         0x08 // Once nulled, it can't be updated.
+#define CLMF_STICK_FLOOR    0x10 // Mobj will stick to the floor.
+#define CLMF_STICK_CEILING  0x20 // Mobj will stick to the ceiling.
 
 // Clmobj knowledge flags. This keeps track of the information that has been
 // received.
@@ -48,9 +48,9 @@
 typedef struct clmobj_s {
     struct clmobj_s *next, *prev;
     int             flags;
-    uint            time;          // Time of last update.
-    int             sound;         // Queued sound ID.
-    float           volume;        // Volume for queued sound.
+    uint            time; // Time of last update.
+    int             sound; // Queued sound ID.
+    float           volume; // Volume for queued sound.
     mobj_t          mo;
 } clmobj_t;
 
@@ -62,8 +62,8 @@ void            Cl_DestroyMobj(clmobj_t *cmo);
 boolean         Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *),
                                 void *parm);
 void            Cl_PredictMovement(void);
-void            Cl_UnsetThingPosition(clmobj_t *cmo);
-void            Cl_SetThingPosition(clmobj_t *cmo);
+void            Cl_UnsetMobjPosition(clmobj_t *cmo);
+void            Cl_SetMobjPosition(clmobj_t *cmo);
 int             Cl_ReadMobjDelta(void);
 void            Cl_ReadMobjDelta2(boolean skip);
 void            Cl_ReadNullMobjDelta2(boolean skip);

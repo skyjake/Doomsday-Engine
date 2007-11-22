@@ -22,45 +22,82 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_bmap.h: Blockmaps
  */
 
 #ifndef __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
 #define __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
 
-// Subsector blockmap:
-void            P_BuildSubsectorBlockMap(gamemap_t *map);
-boolean         P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
-                                        boolean (*func) (subsector_t *,
-                                                         void *), void *parm);
+byte    bmapShowDebug, bmapDebugLines, bmapDebugPolyobjs;
+float   bmapDebugSize;
 
-boolean         P_SubsectorBoxIterator(fixed_t *box, sector_t *sector,
-                                       boolean (*func) (subsector_t *, void *),
-                                       void *parm);
-
-// Linedefs blockmap:
-blockmap_t     *P_BlockmapCreate(fixed_t originX, fixed_t originY,
+// Alloc/dealloc:
+blockmap_t     *P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
                                  uint width, uint height);
-void            P_BlockmapSetBlock(blockmap_t *bmap, uint x, uint y,
-                                   line_t **lines);
 
-void            P_GetBlockmapOrigin(blockmap_t *bmap, fixed_t *v);
-void            P_GetBlockmapSize(blockmap_t *bmap, uint *v);
-boolean         P_BlockmapLinesIterator(blockmap_t *bmap, int x, int y,
+// Management:
+void            P_BlockmapSetBlock(blockmap_t *bmap, uint x, uint y,
+                                   line_t **lines, linkpolyobj_t *link);
+void            P_SSecBlockmapSetBlock(blockmap_t *bmap, uint x, uint y,
+                                       subsector_t **ssecs);
+void            P_BuildSubsectorBlockMap(gamemap_t *map);
+
+void            P_BlockmapLinkPolyobj(blockmap_t *bmap, polyobj_t *po);
+void            P_BlockmapUnlinkPolyobj(blockmap_t *bmap, polyobj_t *po);
+
+// Utility:
+void            P_GetBlockmapBounds(blockmap_t *bmap, pvec2_t min, pvec2_t max);
+void            P_GetBlockmapDimensions(blockmap_t *bmap, uint v[2]);
+boolean         P_ToBlockmapBlockIdx(blockmap_t *bmap, uint destBlock[2],
+                                     const pvec2_t sourcePos);
+void            P_BoxToBlockmapBlocks(blockmap_t *bmap, uint blockBox[4],
+                                      const arvec2_t box);
+
+// Block Iterators:
+boolean         P_BlockmapMobjsIterator(blockmap_t *bmap, const uint block[2],
+                                         boolean (*func) (struct mobj_s *, void *),
+                                         void *data);
+boolean         P_BlockmapLinesIterator(blockmap_t *bmap, const uint block[2],
                                         boolean (*func) (line_t *, void *),
                                         void *data);
+boolean         P_BlockmapSubsectorsIterator(blockmap_t *bmap, const uint block[2],
+                                             sector_t *sector, const arvec2_t box,
+                                             int localValidCount,
+                                             boolean (*func) (subsector_t *, void*),
+                                             void *data);
+boolean         P_BlockmapPolyobjsIterator(blockmap_t *bmap, const uint block[2],
+                                           boolean (*func) (void *, void*),
+                                           void *data);
+boolean         P_BlockmapPolyobjLinesIterator(blockmap_t *bmap, const uint block[2],
+                                               boolean (*func) (line_t *, void *),
+                                               void *data);
 
-// Polyobject blockmap:
-void            P_InitPolyBlockMap(gamemap_t *map);
-boolean         P_BlockPolyobjsIterator(int x, int y,
-                                        boolean (*func) (polyobj_t *, void *),
-                                        void *data);
-boolean         P_PolyBlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
+// Block Box Iterators:
+boolean         P_BlockBoxMobjsIterator(blockmap_t *bmap, const uint blockBox[4],
+                                         boolean (*func) (struct mobj_s *, void *),
                                          void *data);
+boolean         P_BlockBoxLinesIterator(blockmap_t *bmap, const uint blockBox[4],
+                                        boolean (*func) (line_t *, void *),
+                                        void *data);
+boolean         P_BlockBoxSubsectorsIterator(blockmap_t *bmap, const uint blockBox[4],
+                                             sector_t *sector, const arvec2_t box,
+                                             int localValidCount,
+                                             boolean (*func) (subsector_t *, void*),
+                                             void *data);
+boolean         P_BlockBoxPolyobjsIterator(blockmap_t *bmap, const uint blockBox[4],
+                                           boolean (*func) (void *, void*),
+                                           void *data);
+boolean         P_BlockBoxPolyobjLinesIterator(blockmap_t *bmap, const uint blockBox[4],
+                                               boolean (*func) (line_t *, void *),
+                                               void *data);
 
-// Iterate the polyobj blockmap, then the regular blockmap.
-boolean         P_BlockLinesIterator(int x, int y,
-                                     boolean (*func) (line_t *, void *),
-                                     void *data);
+// Specialized Traversals:
+boolean         P_BlockPathTraverse(blockmap_t *bmap, const uint start[2],
+                                    const uint end[2], const float origin[2],
+                                    const float dest[2], int flags,
+                                    boolean (*func) (intercept_t *));
+
+// Misc:
+void            P_BlockmapDebug(blockmap_t *bmap);
 #endif

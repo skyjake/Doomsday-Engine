@@ -31,20 +31,23 @@
 
 typedef void* gridmap_t;
 
-gridmap_t  *M_GridmapCreate(int width, int height, size_t sizeOfBlock,
-                            int memzoneTag,
-                            int (*setBlock)(void *p, void *ctx));
+gridmap_t  *M_GridmapCreate(uint width, uint height, size_t sizeOfBlock,
+                            int memzoneTag);
 void        M_GridmapDestroy(gridmap_t *gridmap);
 
-boolean     M_GridmapSetBlock(gridmap_t *gridmap, int x, int y, void *ctx);
+void       *M_GridmapGetBlock(gridmap_t *gridmap, uint x, uint y,
+                              boolean alloc);
 
 // Iteration
 boolean     M_GridmapIterator(gridmap_t *gridmap,
                               boolean (*func) (void *p, void *ctx),
                               void *param);
 boolean     M_GridmapBoxIterator(gridmap_t *gridmap,
-                                 int xl, int xh, int yl, int yh,
+                                 uint xl, uint xh, uint yl, uint yh,
                                  boolean (*func) (void *p, void *ctx),
                                  void *param);
+boolean     M_GridmapBoxIteratorv(gridmap_t *gridmap, const uint box[4],
+                                  boolean (*func) (void *p, void *ctx),
+                                  void *param);
 
 #endif
