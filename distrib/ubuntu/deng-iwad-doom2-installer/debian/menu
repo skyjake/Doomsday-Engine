@@ -1,2 +1,0 @@
-?package(deng-iwad-doom2-installer):needs="X11" section="Games/Arcade"\
-  title="Doom II" command="/usr/games/doomsday -anifilter -texcomp -game jdoom -iwad /usr/share/games/doom/iwad/doom2/doom2.wad"

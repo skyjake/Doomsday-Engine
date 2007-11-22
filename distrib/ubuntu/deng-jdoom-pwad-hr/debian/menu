@@ -1,2 +1,0 @@
-?package(deng-jdoom-pwad-hr):needs="X11" section="Games/Arcade"\
-  title="Megawad: Hell Revealed" command="/usr/games/doomsday -anifilter -texcomp -game jdoom -iwad /usr/share/games/doom/iwad/doom2/doom2.wad -file /usr/share/games/deng/Data/jDoom/pwad-hr/hr.wad /usr/share/games/deng/Data/jDoom/pwad-hr/hrmus.wad"

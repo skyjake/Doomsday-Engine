@@ -1,9 +1,0 @@
-This package is a compilation of several upstream data packs. These individual packs
-had to be repacked, as the upstreams distributes them as a self-extracting Microsoft Windows
-.exe files and .rar fules. They have been extracted, and re-zipped according to function
-to enable deng to load the files and to allow Debian/Ubuntu users the ablity to enable/disable
-the packs like Windows users.
-
-Enjoy,
-
-Jamie.

@@ -1,2 +1,0 @@
-# We depend on deng which contains this command
-deng-jdoom-pwad-icarus: menu-command-not-in-package /usr/lib/menu/deng-jdoom-pwad-icarus:2 /usr/games/doomsday

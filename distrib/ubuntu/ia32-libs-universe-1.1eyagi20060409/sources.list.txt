@@ -1,9 +1,0 @@
-deb http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu feisty main restricted universe multiverse
-deb-src http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu feisty main restricted universe multiverse
-
-#deb http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu feisty-updates main restricted universe multiverse
-#deb-src http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu feisty-updates main restricted universe multiverse
-
-#deb http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu feisty-security main restricted universe multiverse
-#deb-src http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu feisty-security main restricted universe multiverse
-

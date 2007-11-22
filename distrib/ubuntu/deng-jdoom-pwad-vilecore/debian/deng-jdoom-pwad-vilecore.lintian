@@ -1,2 +1,0 @@
-# We depend on deng which contains this command
-deng-jdoom-pwad-vilecore: menu-command-not-in-package /usr/lib/menu/deng-jdoom-pwad-vilecore:2 /usr/games/doomsday

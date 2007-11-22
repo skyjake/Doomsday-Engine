@@ -1,2 +1,0 @@
-# We depend on deng which contains this command
-deng-jdoom-pwad-mm2: menu-command-not-in-package /usr/lib/menu/deng-jdoom-pwad-mm2:2 /usr/games/doomsday

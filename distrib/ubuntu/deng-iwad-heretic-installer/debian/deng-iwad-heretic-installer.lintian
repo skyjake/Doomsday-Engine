@@ -1,2 +1,0 @@
-# We depend on deng which contains this command
-deng-iwad-heretic-installer: menu-command-not-in-package /usr/lib/menu/deng-iwad-heretic-installer:2 /usr/games/doomsday

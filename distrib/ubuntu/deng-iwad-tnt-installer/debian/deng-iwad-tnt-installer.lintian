@@ -1,2 +1,0 @@
-# We depend on deng which contains this command
-deng-iwad-tnt-installer: menu-command-not-in-package /usr/lib/menu/deng-iwad-tnt-installer:2 /usr/games/doomsday

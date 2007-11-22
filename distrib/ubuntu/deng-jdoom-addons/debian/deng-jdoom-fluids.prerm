@@ -1,4 +1,0 @@
-#!/bin/sh
-set -e
-
-dpkg-divert --rename --remove /usr/games/share/deng/Data/jDoom.wad.orig

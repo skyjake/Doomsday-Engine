@@ -1,7 +1,0 @@
-#!/bin/sh
-cd ./debian/pkgs
-for filename in *.uu
-do
-echo $filename
-uudecode $filename
-done
