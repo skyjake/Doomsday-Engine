@@ -33,7 +33,7 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
+/**
  * jheretic.h: All jHeretic Headers
  *
  * A convenience header for including all jHeretic headers.

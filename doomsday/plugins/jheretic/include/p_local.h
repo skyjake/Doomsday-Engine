@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -41,7 +41,9 @@
  * http://www.ravensoft.com/
  */
 
-// P_local.h
+/**
+ * p_local.h:
+ */
 
 #ifndef __P_LOCAL__
 #define __P_LOCAL__
@@ -66,31 +68,28 @@
 #define NUMREDPALS      8
 #define NUMBONUSPALS    4
 
-#define FLOATSPEED      (FRACUNIT*4)
+#define FLOATSPEED      4
 
 #define DELTAMUL        6.324555320 // Used when calculating ticcmd_t.lookdirdelta
 
 #define MAXHEALTH       100
 #define MAXCHICKENHEALTH 30
-#define VIEWHEIGHT      (cfg.eyeHeight*FRACUNIT) // 41*FRACUNIT
+#define VIEWHEIGHT      41
 
 #define TOCENTER        -8
 
 // player radius for movement checking
-#define PLAYERRADIUS    16*FRACUNIT
+#define PLAYERRADIUS    16
 
 // MAXRADIUS is for precalculated sector block boxes
 // the spider demon is larger,
 // but we do not have any moving sectors nearby
-#define MAXRADIUS       32*FRACUNIT
+#define MAXRADIUS       32
+#define MAXMOVE         30
 
-#define GRAVITY     ((IS_NETGAME && cfg.netGravity != -1)? \
-                     (fixed_t) (((float) cfg.netGravity / 100) * FRACUNIT) : Get(DD_GRAVITY)) //FRACUNIT
-#define MAXMOVE     (30*FRACUNIT)
-
-#define USERANGE        (64*FRACUNIT)
-#define MELEERANGE      (64*FRACUNIT)
-#define MISSILERANGE    (32*64*FRACUNIT)
+#define USERANGE        64
+#define MELEERANGE      64
+#define MISSILERANGE    (32*64)
 
 // follow a player exlusively for 3 seconds
 #define BASETHRESHOLD   100
@@ -99,22 +98,7 @@
 // GMJ 02/02/02
 #define sentient(mobj) ((mobj)->health > 0 && (mobj)->info->seestate)
 
-#define FOOTCLIPSIZE    10*FRACUNIT
-
-typedef enum {
-    DI_EAST,
-    DI_NORTHEAST,
-    DI_NORTH,
-    DI_NORTHWEST,
-    DI_WEST,
-    DI_SOUTHWEST,
-    DI_SOUTH,
-    DI_SOUTHEAST,
-    DI_NODIR,
-    NUMDIRS
-} dirtype_t;
-
-
+#define FOOTCLIPSIZEF    (10)
 
 // ***** P_TICK *****
 
@@ -134,13 +118,9 @@ extern int      TimerGame;         // tic countdown for deathmatch
 
 // ***** P_PSPR *****
 
-#define LOWERSPEED FRACUNIT*6
-#define RAISESPEED FRACUNIT*6
-#define WEAPONBOTTOM 128*FRACUNIT
-#define WEAPONTOP 32*FRACUNIT
-#define FLAME_THROWER_TICS 10*35
-#define MAGIC_JUNK 1234
-#define MAX_MACE_SPOTS 8
+#define FLAME_THROWER_TICS  10*35
+#define MAGIC_JUNK          1234
+#define MAX_MACE_SPOTS      8
 
 #define USE_GWND_AMMO_1 1
 #define USE_GWND_AMMO_2 1
@@ -157,7 +137,7 @@ extern int      TimerGame;         // tic countdown for deathmatch
 
 void            P_OpenWeapons(void);
 void            P_CloseWeapons(void);
-void            P_AddMaceSpot(thing_t * mthing);
+void            P_AddMaceSpot(spawnspot_t *mthing);
 void            P_RepositionMace(mobj_t *mo);
 void            P_SetPsprite(player_t *player, int position, statenum_t stnum);
 void            P_SetupPsprites(player_t *curplayer);
@@ -165,13 +145,13 @@ void            P_MovePsprites(player_t *curplayer);
 void            P_DropWeapon(player_t *player);
 void            P_ActivateMorphWeapon(player_t *player);
 void            P_PostMorphWeapon(player_t *player, weapontype_t weapon);
-void            P_UpdateBeak(player_t *player, pspdef_t * psp);
+void            P_UpdateBeak(player_t *player, pspdef_t *psp);
 void            P_FireWeapon(player_t *player);
 
 // ***** P_USER *****
 
 void            P_ClientSideThink(void);
-void            P_Thrust(player_t *player, angle_t angle, fixed_t move);
+void            P_Thrust(player_t *player, angle_t angle, float move);
 boolean         P_UndoPlayerMorph(player_t *player);
 
 // ***** P_MOBJ *****
@@ -185,12 +165,17 @@ enum {
     FLOOR_SLUDGE
 };
 
-#define ONFLOORZ   DDMININT
-#define ONCEILINGZ DDMAXINT
-#define FLOATRANDZ (DDMAXINT-1)
+#define FRICTION_NORMAL     (0.90625f)
+#define FRICTION_FLY        (0.91796875f)
+#define FRICTION_HIGH       (0.5f)
+#define FRICTION_LOW        (0.97265625f)
+
+#define ONFLOORZ            DDMININT
+#define ONCEILINGZ          DDMAXINT
+#define FLOATRANDZ          (DDMAXINT-1)
 
 // Time interval for item respawning.
-#define ITEMQUESIZE     128
+#define ITEMQUESIZE         128
 
 extern int      iquehead;
 extern int      iquetail;
@@ -198,41 +183,43 @@ extern int      iquetail;
 extern mobjtype_t PuffType;
 extern mobj_t  *MissileMobj;
 
-void            P_SpawnMapThing(thing_t * th);
-mobj_t         *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
-void            P_RemoveMobj(mobj_t *th);
-boolean         P_SetMobjState(mobj_t *mobj, statenum_t state);
-boolean         P_SetMobjStateNF(mobj_t *mobj, statenum_t state);
-void            P_ThrustMobj(mobj_t *mo, angle_t angle, fixed_t move);
-void            P_WindThrust(mobj_t *mo);
-int             P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
-boolean         P_SeekerMissile(mobj_t *actor, angle_t thresh,
-                                angle_t turnMax);
-void            P_MobjThinker(mobj_t *mobj);
-void            P_BlasterMobjThinker(mobj_t *mobj);
-void            P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
-void            P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
-void            P_BloodSplatter(fixed_t x, fixed_t y, fixed_t z,
-                                mobj_t *originator);
-void            P_RipperBlood(mobj_t *mo);
-int             P_GetThingFloorType(mobj_t *thing);
-int             P_HitFloor(mobj_t *thing);
-boolean         P_CheckMissileSpawn(mobj_t *missile);
-mobj_t         *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
-mobj_t         *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type,
-                                    angle_t angle, fixed_t momz);
-void            P_SpawnPlayer(thing_t * mthing, int plrnum);
-void            P_ZMovement(mobj_t *mo);
-mobj_t         *P_SpawnTeleFog(int x, int y);
-void            P_ExplodeMissile(mobj_t *mo);
+mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z);
+mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3]);
+
+void        P_SpawnPuff(float x, float y, float z);
+void        P_SpawnBlood(float x, float y, float z, int damage);
+mobj_t     *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
+mobj_t     *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source,
+                                angle_t angle, float momz);
+mobj_t     *P_SpawnTeleFog(float x, float y);
+
+void        P_RemoveMobj(mobj_t *th);
+boolean     P_SetMobjState(mobj_t *mobj, statenum_t state);
+boolean     P_SetMobjStateNF(mobj_t *mobj, statenum_t state);
+void        P_ThrustMobj(mobj_t *mo, angle_t angle, float move);
+void        P_WindThrust(mobj_t *mo);
+int         P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
+boolean     P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax);
+void        P_MobjThinker(mobj_t *mobj);
+void        P_BlasterMobjThinker(mobj_t *mobj);
+void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t *originator);
+void        P_RipperBlood(mobj_t *mo);
+int         P_GetMobjFloorType(mobj_t *thing);
+int         P_HitFloor(mobj_t *thing);
+boolean     P_CheckMissileSpawn(mobj_t *missile);
+void        P_ZMovement(mobj_t *mo);
+void        P_ExplodeMissile(mobj_t *mo);
+
+void        P_SpawnMapThing(spawnspot_t *th);
+void        P_SpawnPlayer(spawnspot_t *mthing, int plrnum);
 
 // ***** P_ENEMY *****
 
-void            P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
-void            P_InitMonsters(void);
-void            P_AddBossSpot(fixed_t x, fixed_t y, angle_t angle);
-void            P_Massacre(void);
-void            P_DSparilTeleport(mobj_t *actor);
+void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
+void        P_InitMonsters(void);
+void        P_AddBossSpot(float x, float y, angle_t angle);
+void        P_Massacre(void);
+void        P_DSparilTeleport(mobj_t *actor);
 
 // ***** P_MAPUTL *****
 
@@ -241,8 +228,8 @@ void            P_DSparilTeleport(mobj_t *actor);
 #define openbottom          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define lowfloor            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-void            P_UnsetThingPosition(mobj_t *thing);
-void            P_SetThingPosition(mobj_t *thing);
+void            P_UnsetMobjPosition(mobj_t *thing);
+void            P_SetMobjPosition(mobj_t *thing);
 
 // ***** P_SETUP *****
 
@@ -267,7 +254,7 @@ extern int      maxammo[NUM_AMMO_TYPES];
 extern int      clipammo[NUM_AMMO_TYPES];
 
 void            P_GiveKey(player_t *player, keytype_t key);
-void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
+void            P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                              int damage);
 void            P_DamageMobj2(mobj_t *target, mobj_t *inflictor,

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -33,8 +33,8 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * Cheat code checking.
+/**
+ * m_cheat.h: Cheat code checking - jHeretic specific.
  */
 
 #ifndef __M_CHEAT__
@@ -46,11 +46,11 @@
 
 #include "h_stat.h"
 
-void        cht_Init(void);
+void        Cht_Init(void);
 
-void        cht_GodFunc(player_t *player);
-void        cht_NoClipFunc(player_t *player);
-void        cht_SuicideFunc(player_t *player);
-boolean     cht_Responder(event_t *ev);
+void        Cht_GodFunc(player_t *player);
+void        Cht_NoClipFunc(player_t *player);
+void        Cht_SuicideFunc(player_t *player);
+boolean     Cht_Responder(event_t *ev);
 
 #endif

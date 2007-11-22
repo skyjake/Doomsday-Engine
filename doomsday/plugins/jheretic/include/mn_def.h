@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Menu defines and types.
+/**
+ * mn_def.h: Menu defines and types.
  */
 
 #ifndef __MENU_DEFS_H_

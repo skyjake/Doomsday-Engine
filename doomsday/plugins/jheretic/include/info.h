@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -33,8 +33,9 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-// Sprite, state, mobjtype and text identifiers
-// Generated with DED Manager 1.1
+/**
+ * info.h: Sprite, state, mobjtype and text identifiers
+ */
 
 #ifndef __INFO_CONSTANTS_H__
 #define __INFO_CONSTANTS_H__
