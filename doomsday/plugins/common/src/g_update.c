@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
  */
 
 /**
- * Routines to call when updating the state of the engine
+ * g_update.c: Routines to call when updating the state of the engine
  * (when loading/unloading WADs and definitions).
  */
 
@@ -84,42 +84,51 @@ void    M_UnloadData(void);
  */
 void G_MangleState(void)
 {
-    thinker_t *it;
-    mobj_t *mo;
-    int     i, k;
+    thinker_t  *it;
+    mobj_t     *mo;
+    int         i, k;
 
     for(it = thinkercap.next; it != &thinkercap && it; it = it->next)
     {
         if(it->function != P_MobjThinker)
             continue;
+
         mo = (mobj_t *) it;
         mo->state = MANGLE_STATE(mo->state);
         mo->info = (mobjinfo_t *) (mo->info - mobjinfo);
     }
-    for(i = 0; i < MAXPLAYERS; i++)
-        for(k = 0; k < NUMPSPRITES; k++)
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        for(k = 0; k < NUMPSPRITES; ++k)
             players[i].psprites[k].state =
                 MANGLE_STATE(players[i].psprites[k].state);
+    }
 }
 
 void G_RestoreState(void)
 {
-    thinker_t *it;
-    mobj_t *mo;
-    int     i, k;
+    thinker_t  *it;
+    mobj_t     *mo;
+    int         i, k;
 
     for(it = thinkercap.next; it != &thinkercap && it; it = it->next)
     {
         if(it->function != P_MobjThinker)
             continue;
+
         mo = (mobj_t *) it;
         mo->state = RESTORE_STATE(mo->state);
         mo->info = &mobjinfo[(int) mo->info];
     }
-    for(i = 0; i < MAXPLAYERS; i++)
-        for(k = 0; k < NUMPSPRITES; k++)
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        for(k = 0; k < NUMPSPRITES; ++k)
             players[i].psprites[k].state =
                 RESTORE_STATE(players[i].psprites[k].state);
+    }
+
     HU_UpdatePsprites();
 }
 
@@ -128,7 +137,7 @@ void G_RestoreState(void)
  */
 void G_UpdateState(int step)
 {
-    switch (step)
+    switch(step)
     {
     case DD_GAME_MODE:
         // Set the game mode string.
@@ -151,7 +160,7 @@ void G_UpdateState(int step)
         ST_Init();
 #endif
 
-        cht_Init();
+        Cht_Init();
         MN_Init();
 
 #if __JHEXEN__
@@ -190,6 +199,7 @@ static char *ScanWord(char *ptr, char *buf)
         while(*ptr && !isspace(*ptr))
             *buf++ = *ptr++;
     }
+
     *buf = 0;
     return ptr;
 }

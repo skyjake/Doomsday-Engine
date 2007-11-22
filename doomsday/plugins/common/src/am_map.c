@@ -1,9 +1,9 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -21,9 +21,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
+/**
  * am_map.c : Automap, automap menu and related code.
  */
 
@@ -174,8 +185,10 @@ vgline_t         player_arrow[] = {
 #undef R
 
 // Translate between fixed screen dimensions to actual, current.
-#define FIXXTOSCREENX(x) (scrwidth * (x / (float) SCREENWIDTH))
-#define FIXYTOSCREENY(y) (scrheight * (y / (float) SCREENHEIGHT))
+#define FIXXTOSCREENX(x) (scrwidth * ((x) / (float) SCREENWIDTH))
+#define FIXYTOSCREENY(y) (scrheight * ((y) / (float) SCREENHEIGHT))
+#define SCREENXTOFIXX(x) ((float) SCREENWIDTH * ((x) / scrwidth))
+#define SCREENYTOFIXY(y) ((float) SCREENHEIGHT * ((y) / scrheight))
 
 // translates between frame-buffer and map distances
 #define FTOM(map, x) ((x) * (map)->scaleFTOM)
@@ -186,7 +199,6 @@ vgline_t         player_arrow[] = {
 #define CYMTOF(map, ypos)  ((map)->window.y + ((map)->window.height - MTOF((map), (ypos) - (map)->vframe[0][VY])))
 
 #define AM_MAXSPECIALLINES      32
-#define NUM_SSEC_COLORS         10
 
 // TYPES -------------------------------------------------------------------
 
@@ -226,16 +238,13 @@ typedef struct automapcfg_s {
     mapobjectinfo_t twoSidedLine;
     mapobjectinfo_t floorChangeLine;
     mapobjectinfo_t ceilingChangeLine;
-    mapobjectinfo_t blockmapGridLine;
 } automapcfg_t;
 
 #define AMF_REND_THINGS     0x01
 #define AMF_REND_KEYS       0x02
 #define AMF_REND_ALLLINES   0x04
 #define AMF_REND_XGLINES    0x08
-#define AMF_REND_SUBSECTORS 0x10
-#define AMF_REND_VERTEXES   0x20
-#define AMF_REND_BLOCKMAP   0x40
+#define AMF_REND_VERTEXES   0x10
 
 typedef struct automapspecialline_s {
     int         special;
@@ -291,7 +300,7 @@ typedef struct automap_s {
     float       oldViewScale; // Previous.
 
     float       minScaleMTOF; // Viewer frame scale limits.
-    float       maxScaleMTOF; // 
+    float       maxScaleMTOF; //
 
 // Viewer frame rotation.
     float       angleTimer;
@@ -419,7 +428,6 @@ ccmd_t  mapCCmds[] = {
     {"rotate",      "", CCmdMapAction, CMDF_NO_DEDICATED},
     {"addmark",     "", CCmdMapAction, CMDF_NO_DEDICATED},
     {"clearmarks",  "", CCmdMapAction, CMDF_NO_DEDICATED},
-    {"grid",        "", CCmdMapAction, CMDF_NO_DEDICATED},
     {"zoommax",     "", CCmdMapAction, CMDF_NO_DEDICATED},
     {NULL}
 };
@@ -474,9 +482,6 @@ static int scrheight = 0;
 static float bounds[2][2]; // {TL{x,y}, BR{x,y}}
 
 static dpatch_t markerPatches[10]; // numbers used for marking by the automap (lump indices)
-
-// Used in subsector debug display.
-static float subColors[NUM_SSEC_COLORS][3]; // ten sets of RGB
 
 // CODE --------------------------------------------------------------------
 
@@ -569,9 +574,6 @@ static mapobjectinfo_t *getMapObjectInfo(automap_t *map, int objectname)
 
     case AMO_CEILINGCHANGELINE:
         return &map->cfg.ceilingChangeLine;
-
-    case AMO_BLOCKMAPGRIDLINE:
-        return &map->cfg.blockmapGridLine;
 
     default:
         Con_Error("getMapObjectInfo: No info for object %i.", objectname);
@@ -714,15 +716,6 @@ void AM_Init(void)
         map->cfg.ceilingChangeLine.rgba[1] = 1;
         map->cfg.ceilingChangeLine.rgba[2] = 1;
         map->cfg.ceilingChangeLine.rgba[3] = 1;
-        map->cfg.blockmapGridLine.glow = NO_GLOW;
-        map->cfg.blockmapGridLine.glowAlpha = 1;
-        map->cfg.blockmapGridLine.glowWidth = 10;
-        map->cfg.blockmapGridLine.blendmode = BM_NORMAL;
-        map->cfg.blockmapGridLine.scaleWithView = false;
-        map->cfg.blockmapGridLine.rgba[0] = 1;
-        map->cfg.blockmapGridLine.rgba[1] = 1;
-        map->cfg.blockmapGridLine.rgba[2] = 1;
-        map->cfg.blockmapGridLine.rgba[3] = 1;
 
         // Register lines we want to display in a special way.
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
@@ -806,16 +799,6 @@ void AM_Init(void)
         AM_SetColorAndAlpha(i, AMO_CEILINGCHANGELINE,
                             cfg.automapL3[0], cfg.automapL3[1],
                             cfg.automapL3[2], cfg.automapLineAlpha);
-        AM_SetColorAndAlpha(i, AMO_BLOCKMAPGRIDLINE,
-                            0.3f, 0.3f, 0.3f, cfg.automapLineAlpha);
-    }
-
-    // Set the colors for the subsector debug display.
-    for(i = 0; i < NUM_SSEC_COLORS; ++i)
-    {
-        subColors[i][0] = ((float) M_Random()) / 255.f;
-        subColors[i][1] = ((float) M_Random()) / 255.f;
-        subColors[i][2] = ((float) M_Random()) / 255.f;
     }
 }
 
@@ -860,8 +843,8 @@ static void calcViewScaleFactors(automap_t *map)
     max_w = bounds[1][0] - bounds[0][0];
     max_h = bounds[1][1] - bounds[0][1];
 
-    min_w = FIX2FLT(2 * PLAYERRADIUS);    // const? never changed?
-    min_h = FIX2FLT(2 * PLAYERRADIUS);
+    min_w = 2 * PLAYERRADIUS;    // const? never changed?
+    min_h = 2 * PLAYERRADIUS;
 
     // Calculate world to screen space scale based on window width/height
     // divided by the min/max scale factors derived from map boundaries.
@@ -870,7 +853,7 @@ static void calcViewScaleFactors(automap_t *map)
 
     map->minScaleMTOF = (a < b ? a : b);
     map->maxScaleMTOF =
-        (float) map->window.height / FIX2FLT(2 * PLAYERRADIUS);
+        (float) map->window.height / (2 * PLAYERRADIUS);
 }
 
 /**
@@ -920,7 +903,7 @@ void AM_InitForLevel(void)
         if(players[map->followPlayer].plr->mo)
         {
             mobj_t* mo = players[map->followPlayer].plr->mo;
-            setViewTarget(map, FIX2FLT(mo->pos[VX]), FIX2FLT(mo->pos[VY]));
+            setViewTarget(map, mo->pos[VX], mo->pos[VY]);
         }
     }
 }
@@ -959,7 +942,7 @@ void AM_Start(int pnum)
         mobj_t *mo = players[map->followPlayer].plr->mo;
 
         if(!(map->panMode && !map->cfg.panResetOnOpen))
-            setViewTarget(map, FIX2FLT(mo->pos[VX]), FIX2FLT(mo->pos[VY]));
+            setViewTarget(map, mo->pos[VX], mo->pos[VY]);
 
         if(map->panMode && map->cfg.panResetOnOpen)
         {
@@ -987,7 +970,7 @@ void AM_Stop(int pnum)
 
     if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->ingame)
         return;
-    
+
     map = &automaps[pnum];
 
     map->active = false;
@@ -1060,7 +1043,7 @@ static void setWindowTarget(automap_t *map, int x, int y, int w, int h)
 void AM_SetWindowTarget(int pid, int x, int y, int w, int h)
 {
     automap_t *map;
-    
+
     if(IS_DEDICATED)
         return; // Just ignore.
 
@@ -1098,7 +1081,7 @@ static void setWindowFullScreenMode(automap_t *map, int value)
 void AM_SetWindowFullScreenMode(int pid, int value)
 {
     automap_t *map;
-    
+
     if(IS_DEDICATED)
         return; // Just ignore.
 
@@ -1119,7 +1102,7 @@ Con_Error("AM_SetFullScreenMode: Unknown value %i.", value);
 boolean AM_IsMapWindowInFullScreenMode(int pid)
 {
     automap_t *map;
-    
+
     if(IS_DEDICATED)
         Con_Error("AM_IsMapWindowInFullScreenMode: Not available in dedicated mode.");
 
@@ -1430,10 +1413,6 @@ void AM_SetColor(int pid, int objectname, float r, float g, float b)
         info = &map->cfg.ceilingChangeLine;
         break;
 
-    case AMO_BLOCKMAPGRIDLINE:
-        info = &map->cfg.blockmapGridLine;
-        break;
-
     default:
         Con_Error("AM_SetColor: Object %i does not use color.",
                   objectname);
@@ -1490,10 +1469,6 @@ void AM_GetColor(int pid, int objectname, float *r, float *g, float *b)
 
     case AMO_CEILINGCHANGELINE:
         info = &map->cfg.ceilingChangeLine;
-        break;
-
-    case AMO_BLOCKMAPGRIDLINE:
-        info = &map->cfg.blockmapGridLine;
         break;
 
     default:
@@ -1561,10 +1536,6 @@ void AM_SetColorAndAlpha(int pid, int objectname, float r, float g, float b,
         info = &map->cfg.ceilingChangeLine;
         break;
 
-    case AMO_BLOCKMAPGRIDLINE:
-        info = &map->cfg.blockmapGridLine;
-        break;
-
     default:
         Con_Error("AM_SetColorAndAlpha: Object %i does not use color/alpha.",
                   objectname);
@@ -1626,10 +1597,6 @@ void AM_GetColorAndAlpha(int pid, int objectname, float *r, float *g,
         info = &map->cfg.ceilingChangeLine;
         break;
 
-    case AMO_BLOCKMAPGRIDLINE:
-        info = &map->cfg.blockmapGridLine;
-        break;
-
     default:
         Con_Error("AM_GetColorAndAlpha: Object %i does not use color/alpha.",
                   objectname);
@@ -1680,10 +1647,6 @@ void AM_SetBlendmode(int pid, int objectname, blendmode_t blendmode)
         info = &map->cfg.ceilingChangeLine;
         break;
 
-    case AMO_BLOCKMAPGRIDLINE:
-        info = &map->cfg.blockmapGridLine;
-        break;
-
     default:
         Con_Error("AM_SetBlendmode: Object %i does not support blending modes.",
                   objectname);
@@ -1732,10 +1695,6 @@ void AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
 
     case AMO_CEILINGCHANGELINE:
         info = &map->cfg.ceilingChangeLine;
-        break;
-
-    case AMO_BLOCKMAPGRIDLINE:
-        info = &map->cfg.blockmapGridLine;
         break;
 
     default:
@@ -1843,7 +1802,7 @@ void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
 void AM_SetCheatLevel(int pid, int level)
 {
     automap_t *map;
-    
+
     if(IS_DEDICATED)
         return; // Just ignore.
 
@@ -1867,11 +1826,6 @@ void AM_SetCheatLevel(int pid, int level)
         map->flags |= AMF_REND_VERTEXES;
     else
         map->flags &= ~AMF_REND_VERTEXES;
-
-    if(map->cheating >= 3)
-        map->flags |= AMF_REND_SUBSECTORS;
-    else
-        map->flags &= ~AMF_REND_SUBSECTORS;
 }
 
 void AM_IncMapCheatLevel(int pid)
@@ -1896,11 +1850,6 @@ void AM_IncMapCheatLevel(int pid)
         map->flags |= (AMF_REND_THINGS | AMF_REND_XGLINES);
     else
         map->flags &= ~(AMF_REND_THINGS | AMF_REND_XGLINES);
-
-    if(map->cheating == 3)
-        map->flags |= AMF_REND_SUBSECTORS;
-    else
-        map->flags &= ~AMF_REND_SUBSECTORS;
 }
 
 /**
@@ -1967,13 +1916,13 @@ void AM_LoadData(void)
                                          0, DGL_NEAREST, DGL_LINEAR,
                                          0 /*no anisotropy*/,
                                          DGL_CLAMP, DGL_CLAMP);
-        }        
+        }
     }
 }
 
 /**
  * Unload any resources needed for the automap.
- * Called during shutdown and before a renderer restart. 
+ * Called during shutdown and before a renderer restart.
  */
 void AM_UnloadData(void)
 {
@@ -2087,7 +2036,7 @@ static void mapTicker(automap_t *map)
     // unnecessarily, as they would, if left unread.
     P_GetControlState(playerNum, CTL_MAP_PAN_X, &panX[0], &panX[1]);
     P_GetControlState(playerNum, CTL_MAP_PAN_Y, &panY[0], &panY[1]);
-    
+
     if(!map)
         return;
 
@@ -2135,15 +2084,15 @@ static void mapTicker(automap_t *map)
         // DOOM.EXE used to pan at 140 fixed pixels per second.
         float       panUnitsPerTic = (FTOM(map, FIXXTOSCREENX(140)) / TICSPERSEC) *
                         (2 * map->cfg.panSpeed);
-        
+
         if(panUnitsPerTic < 8)
             panUnitsPerTic = 8;
 
         xy[VX] = panX[0] * panUnitsPerTic + panX[1];
         xy[VY] = panY[0] * panUnitsPerTic + panY[1];
-        
+
         V2_Rotate(xy, map->angle / 360 * 2 * PI);
-        
+
         if(xy[VX] || xy[VY])
             setViewTarget(map, map->viewX + xy[VX], map->viewY + xy[VY]);
     }
@@ -2151,7 +2100,7 @@ static void mapTicker(automap_t *map)
     {
         float       angle;
 
-        setViewTarget(map, FIX2FLT(mo->pos[VX]), FIX2FLT(mo->pos[VY]));
+        setViewTarget(map, mo->pos[VX], mo->pos[VY]);
 
         /* $unifiedangles */
         if(map->rotate)
@@ -2249,7 +2198,7 @@ static void mapTicker(automap_t *map)
     angle_t     angle;
     float       v[2];
 
-    /* $unifiedangles */ 
+    /* $unifiedangles */
     angle = (float) ANGLE_MAX * (map->angle / 360);
 
     v[VX] = -width / 2;
@@ -2258,7 +2207,6 @@ static void mapTicker(automap_t *map)
     v[VX] += map->viewX;
     v[VY] += map->viewY;
 
-    // First point is always accepted.
     map->vbbox[BOXLEFT] = map->vbbox[BOXRIGHT] = v[VX];
     map->vbbox[BOXTOP] = map->vbbox[BOXBOTTOM] = v[VY];
 
@@ -2298,7 +2246,7 @@ void AM_Ticker(void)
         return; // Nothing to do.
 
     // We need to respond right away if the screen dimensions change, so
-    // keep a copy locally. 
+    // keep a copy locally.
     scrwidth = Get(DD_WINDOW_WIDTH);
     scrheight = Get(DD_WINDOW_HEIGHT);
 
@@ -2528,81 +2476,12 @@ static void rendLine2(float x1, float y1, float x2, float y2,
 }
 
 /**
- * Draws blockmap aligned grid lines.
- */
-static void renderGrid(void)
-{
-    float       x, y;
-    float       start, end;
-    float       originx = FIX2FLT(*((fixed_t*) DD_GetVariable(DD_BLOCKMAP_ORIGIN_X)));
-    float       originy = FIX2FLT(*((fixed_t*) DD_GetVariable(DD_BLOCKMAP_ORIGIN_Y)));
-    float       v1[2], v2[2];
-    float       winWidth, winHeight;
-    float       minLen, offX, offY;
-    automap_t  *map = &automaps[mapviewplayer];
-    mapobjectinfo_t *info = getMapObjectInfo(map, AMO_BLOCKMAPGRIDLINE);
-
-    // Window dimensions in map coordinate space.
-    winWidth = map->vframe[1][VX] - map->vframe[0][VX];
-    winHeight = map->vframe[1][VY] - map->vframe[0][VY];
-
-    // Determine the minimum length required for lines so that when rotated,
-    // the grid covers the entire screen.
-    minLen = sqrtf(winWidth * winWidth + winHeight * winHeight);
-    offX = (minLen - winWidth) / 2;
-    offY = (minLen - winHeight) / 2;
-
-    // Figure out start of vertical gridlines.
-    start = map->vframe[0][VX] - offX;
-    if((int) (start - originx) % MAPBLOCKUNITS)
-        start += MAPBLOCKUNITS - ((int) (start - originx) % MAPBLOCKUNITS);
-    end = map->vframe[0][VX] + minLen - offX;
-
-    // Draw vertical gridlines.
-    for(x = start; x < end; x += MAPBLOCKUNITS)
-    {
-        v1[VX] = x;
-        v1[VY] = map->vframe[0][VY] - offY;
-        v2[VX] = x;
-        v2[VY] = v1[VY] + minLen;
-
-        rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
-                  info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
-                  info->glow, info->glowAlpha, info->glowWidth,
-                  false, info->scaleWithView, false, info->blendmode,
-                  false);
-    }
-
-    // Figure out start of horizontal gridlines.
-    start = map->vframe[0][VY] - offY;
-    if((int) (start - originy) % MAPBLOCKUNITS)
-        start += MAPBLOCKUNITS - ((int) (start - originy) % MAPBLOCKUNITS);
-    end = map->vframe[0][VY] + minLen - offY;
-
-    // Draw horizontal gridlines
-    for(y = start; y < end; y += MAPBLOCKUNITS)
-    {
-        v1[VX] = map->vframe[0][VX] - offX;
-        v1[VY] = y;
-        v2[VX] = v1[VX] + minLen;
-        v2[VY] = y;
-
-        rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
-                  info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
-                  info->glow, info->glowAlpha, info->glowWidth,
-                  false, info->scaleWithView, false, info->blendmode,
-                  false);
-    }
-}
-
-/**
  * Sub-routine of renderWalls().
  */
 boolean renderWallsInSubsector(subsector_t *s, void *data)
 {
     ssecitervars_t *vars = (ssecitervars_t*) data;
     int         i, segCount, lineFlags;
-    uint        subColor = 0;
     float       v1[2], v2[2];
     line_t     *line;
     xline_t    *xLine;
@@ -2612,32 +2491,16 @@ boolean renderWallsInSubsector(subsector_t *s, void *data)
     player_t   *plr = vars->plr;
     automap_t  *map = vars->map;
 
-    if(map->flags & AMF_REND_SUBSECTORS)
-        subColor = P_ToIndex(s) % NUM_SSEC_COLORS;
-
     segCount = P_GetIntp(s, DMU_SEG_COUNT);
     for(i = 0; i < segCount; ++i)
     {
         seg = P_GetPtrp(s, DMU_SEG_OF_SUBSECTOR | i);
         line = P_GetPtrp(seg, DMU_LINE);
 
-        if(map->flags & AMF_REND_SUBSECTORS) // Debug cheat, show subsectors.
-        {
-            P_GetFloatpv(seg, DMU_VERTEX1_XY, v1);
-            P_GetFloatpv(seg, DMU_VERTEX2_XY, v2);
-
-            rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
-                      subColors[subColor][0], subColors[subColor][1],
-                      subColors[subColor][2], 1,
-                      FRONT_GLOW, 1.0f, 7.5f, true, false, false, BM_ADD,
-                      false);
-
-            continue;
-        }
         if(!line)
             continue;
 
-        xLine = P_XLine(line);
+        xLine = P_ToXLine(line);
         if(xLine->validcount == VALIDCOUNT)
             continue; // Already drawn once.
 
@@ -2746,7 +2609,6 @@ static void renderWalls(void)
     player_t   *plr = &players[mapviewplayer];
     automap_t  *map = &automaps[mapviewplayer];
     ssecitervars_t data;
-    fixed_t     bbox[4];
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -2755,13 +2617,8 @@ static void renderWalls(void)
     data.plr = plr;
     data.map = map;
 
-    // Convert the map's viewframe bounding box.
-    bbox[BOXTOP]    = FLT2FIX(map->vbbox[BOXTOP]);
-    bbox[BOXBOTTOM] = FLT2FIX(map->vbbox[BOXBOTTOM]);
-    bbox[BOXLEFT]   = FLT2FIX(map->vbbox[BOXLEFT]);
-    bbox[BOXRIGHT]  = FLT2FIX(map->vbbox[BOXRIGHT]);
-
-    P_SubsectorBoxIterator(bbox, NULL, renderWallsInSubsector, &data);
+    // Use the automap's viewframe bounding box.
+    P_SubsectorsBoxIterator(map->vbbox, NULL, renderWallsInSubsector, &data);
 }
 
 /**
@@ -2867,7 +2724,7 @@ static void addPatchQuad(float x, float y, float w, float h,
 static void renderPlayers(void)
 {
     int         i;
-    float       size = FIX2FLT(PLAYERRADIUS);
+    float       size = PLAYERRADIUS;
     vectorgrap_t *vg;
     automap_t  *map = &automaps[mapviewplayer];
 
@@ -2877,7 +2734,7 @@ static void renderPlayers(void)
         player_t   *p = &players[i];
         int         color;
         float       alpha;
-        float       v[2];
+        mobj_t     *mo;
 
         if(!p->plr->ingame)
             continue;
@@ -2894,14 +2751,12 @@ static void renderPlayers(void)
         if(p->powers[PT_INVISIBILITY])
             alpha *= 0.125;
 #endif
-
-        v[VX] = FIX2FLT(p->plr->mo->pos[VX]);
-        v[VY] = FIX2FLT(p->plr->mo->pos[VY]);
-        if(!isPointVisible(map, v[VX], v[VY]))
+        mo = p->plr->mo;
+        if(!isPointVisible(map, mo->pos[VX], mo->pos[VY]))
             continue;
 
         /* $unifiedangles */
-        addLineCharacter(vg, v[VX], v[VY], p->plr->mo->angle, size,
+        addLineCharacter(vg, mo->pos[VX], mo->pos[VY], mo->angle, size,
                          color, alpha, BM_NORMAL);
     }
 }
@@ -2914,22 +2769,19 @@ static void renderThings(int color, int colorrange)
     uint        i;
     mobj_t     *iter;
     automap_t  *map = &automaps[mapviewplayer];
-    float       size = FIX2FLT(PLAYERRADIUS);
+    float       size = PLAYERRADIUS;
     vectorgrap_t *vg = getVectorGraphic(VG_TRIANGLE);
-    float       v[2];
 
     for(i = 0; i < numsectors; ++i)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); iter;
+        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter;
             iter = iter->snext)
         {
-            v[VX] = FIX2FLT(iter->pos[VX]);
-            v[VY] = FIX2FLT(iter->pos[VY]);
-            if(!isPointVisible(map, v[VX], v[VY]))
+            if(!isPointVisible(map, iter->pos[VX], iter->pos[VY]))
                 continue;
 
-            addLineCharacter(vg, v[VX], v[VY], iter->angle, size,
-                             color, cfg.automapLineAlpha, BM_NORMAL);
+            addLineCharacter(vg, iter->pos[VX], iter->pos[VY], iter->angle,
+                             size, color, cfg.automapLineAlpha, BM_NORMAL);
         }
     }
 }
@@ -2942,13 +2794,12 @@ static void renderKeys(void)
     int         keyColor;
     thinker_t  *th;
     mobj_t     *mo;
-    float       size = FIX2FLT(PLAYERRADIUS);
-    float       v[2];
+    float       size = PLAYERRADIUS;
     automap_t  *map = &automaps[mapviewplayer];
 
     for(th = thinkercap.next; th != &thinkercap; th = th->next)
     {
-        if(th->function != P_MobjThinker)           
+        if(th->function != P_MobjThinker)
             continue;
 
         mo = (mobj_t *) th;
@@ -2977,12 +2828,11 @@ static void renderKeys(void)
 #endif
             continue; // not a key.
 
-        v[VX] = FIX2FLT(mo->pos[VX]);
-        v[VY] = FIX2FLT(mo->pos[VY]);
-        if(!isPointVisible(map, v[VX], v[VY]))
+        if(!isPointVisible(map, mo->pos[VX], mo->pos[VY]))
             continue;
 
-        addLineCharacter(getVectorGraphic(VG_KEYSQUARE), v[VX], v[VY], 0, size,
+        addLineCharacter(getVectorGraphic(VG_KEYSQUARE),
+                         mo->pos[VX], mo->pos[VY], 0, size,
                          keyColor, cfg.automapLineAlpha, BM_NORMAL);
     }
 }
@@ -3015,7 +2865,7 @@ static void drawMarks(void)
             if(!isPointVisible(map, x, y))
                 continue;
 
-            /* $unifiedangles */ 
+            /* $unifiedangles */
             angle = (float) ANGLE_MAX * (map->angle / 360);
 
             addPatchQuad(x, y, FIXXTOSCREENX(w) * map->scaleFTOM,
@@ -3249,66 +3099,66 @@ static void restoreGLStateFromMap(void)
  */
 static void drawLevelName(void)
 {
-    int         x, y, otherY, bx, by;
-    const char *lname = "";
+    float       x, y, otherY;
+    char       *lname;
     automap_t  *map = &automaps[mapviewplayer];
     automapwindow_t *win = &map->window;
-
-    lname = DD_GetVariable(DD_MAP_NAME);
-
-#if __JHEXEN__
-    // In jHexen we can look in the MAPINFO for the map name
-    if(!lname)
-        lname = P_GetMapName(gamemap);
+    int         lumpNum = -1;
+#if __JDOOM__
+    int         mapnum;
 #endif
+
+    lname = P_GetMapNiceName();
 
     if(lname)
     {
+        // Compose the mapnumber used to check the map name patches array.
+#if __JDOOM__
+        if(gamemode == commercial)
+            mapnum = gamemap -1;
+        else
+            mapnum = ((gameepisode -1) * 9) + gamemap -1;
+
+        lumpNum = lnames[mapnum].lump;
+#endif
+
         gl.MatrixMode(DGL_PROJECTION);
         gl.PushMatrix();
         gl.LoadIdentity();
-        gl.Ortho(0, 0, scrwidth, scrheight, -1, 1);
+        gl.Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
 
-        while(*lname && isspace(*lname))
-                lname++;
-
-        x = (win->x + (win->width * .5f) - (M_StringWidth((char*)lname, hu_font_a) * .5f));
-        y = (win->y + win->height);
+        x = SCREENXTOFIXX(win->x + (win->width * .5f));
+        y = SCREENYTOFIXY(win->y + win->height);
+        if(cfg.setblocks < 13)
+        {
 #if !__DOOM64TC__
-        if(cfg.setblocks <= 11 || cfg.automapHudDisplay == 2)
-        {   // We may need to adjust for the height of the statusbar
-            otherY = FIXYTOSCREENY(ST_Y);
-            otherY += FIXYTOSCREENY(ST_HEIGHT) * (1 - (cfg.sbarscale / 20.0f));
-
-            if(y > otherY)
-                y = otherY;
-        }
-        else if(cfg.setblocks == 12)
+            if(cfg.setblocks == 12)
 #endif
-        {   // We may need to adjust for the height of the HUD icons.
-            otherY = y;
-            otherY += -(y * (cfg.hudScale / 10.0f));
+            {   // We may need to adjust for the height of the HUD icons.
+                otherY = y;
+                otherY += -(y * (cfg.hudScale / 10.0f));
 
-            if(y > otherY)
-                y = otherY;
+                if(y > otherY)
+                    y = otherY;
+            }
+#if !__DOOM64TC__
+            else if(cfg.setblocks <= 11 || cfg.automapHudDisplay == 2)
+            {   // We may need to adjust for the height of the statusbar
+                otherY = ST_Y;
+                otherY += ST_HEIGHT * (1 - (cfg.sbarscale / 20.0f));
+
+                if(y > otherY)
+                    y = otherY;
+            }
+#endif
         }
 
+        Draw_BeginZoom(.4f, x, y);
         y -= 24; // border
-        
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PushMatrix();
+        WI_DrawPatch(x, y, 1, 1, 1, map->alpha, lumpNum,
+                     lname, false, ALIGN_CENTER);
+        Draw_EndZoom();
 
-        // Scale the text to be a bit smaller than traditional hu_font_a.
-        bx = x + M_StringWidth(lname, hu_font_a)/2;
-        by = y + M_StringHeight(lname, hu_font_a);
-        gl.Translatef(bx, by, 0);
-        gl.Scalef(scrwidth/320.f * .8f, scrwidth/320.f * .8f, 1);
-        gl.Translatef(-bx, -by, 0);
-
-        M_WriteText2(x, y, (char*)lname, hu_font_a, 1, 1, 1, map->alpha);
-
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PopMatrix();
         gl.MatrixMode(DGL_PROJECTION);
         gl.PopMatrix();
     }
@@ -3363,14 +3213,11 @@ void AM_Drawer(int viewplayer)
         AM_ClearAllLists(false);
 
         // Draw.
-        if(map->flags & AMF_REND_BLOCKMAP)
-            renderGrid();
-
         renderWalls();
 
         if(map->flags & AMF_REND_VERTEXES)
             renderVertexes();
-        
+
         renderPlayers();
 
         if(map->flags & AMF_REND_THINGS)
@@ -3694,7 +3541,7 @@ DEFCC(CCmdMapAction)
             //DD_SetBindClass(GBC_CLASS1, true);
             //if(map->panMode)
             //    DD_SetBindClass(GBC_CLASS2, true);
-            
+
             DD_Execute(true, "activatebclass map");
             if(map->panMode)
                 DD_Execute(true, "activatebclass map-freepan");
@@ -3764,8 +3611,8 @@ DEFCC(CCmdMapAction)
 
         if(map->active)
         {
-            num = addMark(map, FIX2FLT(plr->plr->mo->pos[VX]),
-                               FIX2FLT(plr->plr->mo->pos[VY]));
+            num = addMark(map, plr->plr->mo->pos[VX],
+                               plr->plr->mo->pos[VY]);
             if(num != -1)
             {
                 sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, num);
@@ -3785,21 +3632,6 @@ DEFCC(CCmdMapAction)
 
             P_SetMessage(plr, AMSTR_MARKSCLEARED, false);
             Con_Printf("All markers cleared on automap.\n");
-            return true;
-        }
-    }
-    else if(!stricmp(argv[0], "grid")) // toggle drawing of grid
-    {
-        player_t    *plr = &players[consoleplayer];
-        automap_t   *map = &automaps[consoleplayer];
-
-        if(map->active)
-        {
-            map->flags ^= AMF_REND_BLOCKMAP;
-
-            P_SetMessage(plr, ((map->flags & AMF_REND_BLOCKMAP)? AMSTR_GRIDON : AMSTR_GRIDOFF),
-                         false);
-            Con_Printf("Grid toggled in automap.\n");
             return true;
         }
     }

@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Heads-up displays, font handling, text drawing routines
+/**
+ * hu_stuff.c: Heads-up displays, font handling, text drawing routines
  */
 
 #ifdef MSVC
@@ -58,9 +58,9 @@
 
 #if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
 // Counter Cheat flags.
-#define CCH_KILLS           0x1
-#define CCH_ITEMS           0x2
-#define CCH_SECRET          0x4
+#define CCH_KILLS               0x1
+#define CCH_ITEMS               0x2
+#define CCH_SECRET              0x4
 #define CCH_KILLS_PRCNT         0x8
 #define CCH_ITEMS_PRCNT         0x10
 #define CCH_SECRET_PRCNT        0x20
@@ -76,7 +76,7 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern char   *borderLumps[];
+extern char *borderLumps[];
 extern boolean automapactive;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -84,7 +84,7 @@ extern boolean automapactive;
 dpatch_t hu_font[HU_FONTSIZE];
 dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
 
-int     typein_time = 0;
+int typein_time = 0;
 
 #ifdef __JDOOM__
  // Name graphics of each level (centered)
@@ -93,7 +93,7 @@ dpatch_t *lnames;
 
 boolean hu_showallfrags = false;
 
-cvar_t  hudCVars[] = {
+cvar_t hudCVars[] = {
 #if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
     {"map-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63},
     {"map-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1},
@@ -139,21 +139,20 @@ void R_CachePatch(dpatch_t *dp, char *name)
     R_PrecachePatch(dp->lump);
 }
 
-/*
+/**
  * Loads the font patches and inits various strings
- * jHEXEN Note: Don't bother with the yellow font, we'll colour the white version
+ * JHEXEN Note: Don't bother with the yellow font, we'll colour the white version
  */
 void HU_Init(void)
 {
-    int     i;
-    int     j;
-    char    buffer[9];
+    int         i, j;
+    char        buffer[9];
 #ifndef __JDOOM__
-    dpatch_t tmp;
+    dpatch_t    tmp;
 #endif
 
 #ifdef __JDOOM__
-    char    name[9];
+    char        name[9];
 #endif
 
     // Load the border patches
@@ -162,14 +161,14 @@ void HU_Init(void)
 
     // Setup strings.
 #define INIT_STRINGS(x, x_idx) \
-    for(i=0; i<sizeof(x_idx)/sizeof(int); i++) \
+    for(i=0; i<sizeof(x_idx)/sizeof(int); ++i) \
         x[i] = x_idx[i]==-1? "NEWLEVEL" : GET_TXT(x_idx[i]);
 
 #ifdef __JDOOM__
     // load the heads-up fonts
     j = HU_FONTSTART;
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
-    for(i = 0; i < HU_FONTSIZE; i++, j++)
+    for(i = 0; i < HU_FONTSIZE; ++i, ++j)
     {
         // The original small red font.
         sprintf(buffer, "STCFN%.3d", j);
@@ -207,7 +206,7 @@ void HU_Init(void)
     {
         int NUMCMAPS = 32;
         lnames = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
-        for(i = 0; i < NUMCMAPS; i++)
+        for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "CWILV%2.2d", i);
             R_CachePatch(&lnames[i], name);
@@ -218,9 +217,9 @@ void HU_Init(void)
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
         lnames = Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
-        for(j = 0; j < 4; j++) // number of episodes
+        for(j = 0; j < 4; ++j) // Number of episodes.
         {
-            for(i = 0; i < 9; i++) // number of maps per episode
+            for(i = 0; i < 9; ++i) // Number of maps per episode.
             {
                 sprintf(name, "WILV%2.2d", (j * 10) + i);
                 R_CachePatch(&lnames[(j* 9)+i], name);
@@ -236,7 +235,7 @@ void HU_Init(void)
     DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
 
     j = HU_FONTSTART;
-    for(i = 0; i < HU_FONTSIZE; i++, j++)
+    for(i = 0; i < HU_FONTSIZE; ++i, ++j)
     {
         // The original small red font.
         sprintf(buffer, "STCFN%.3d", j);
@@ -268,7 +267,7 @@ void HU_Init(void)
     // Heretic/Hexen don't use ASCII numbered font patches
     // plus they don't even have a full set eg '!' = 1 '_'= 58 !!!
     j = 1;
-    for(i = 0; i < HU_FONTSIZE; i++, j++)
+    for(i = 0; i < HU_FONTSIZE; ++i, ++j)
     {
         // Small font.
         sprintf(buffer, "FONTA%.2d", j);
@@ -330,15 +329,15 @@ void HU_Start(void)
 
 void HU_Drawer(void)
 {
-    int     i, k, x, y;
-    char    buf[80];
-    player_t *plr;
+    int         i, k, x, y;
+    char        buf[80];
+    player_t   *plr;
 
     HUMsg_Drawer();
 
     if(hu_showallfrags)
     {
-        for(y = 8, i = 0; i < MAXPLAYERS; i++)
+        for(y = 8, i = 0; i < MAXPLAYERS; ++i)
         {
             plr = &players[i];
             if(!plr->plr || !plr->plr->ingame)
@@ -349,7 +348,7 @@ void HU_Drawer(void)
             M_WriteText(0, y, buf);
 
             x = 20;
-            for(k = 0; k < MAXPLAYERS; k++, x += 18)
+            for(k = 0; k < MAXPLAYERS; ++k, x += 18)
             {
                 if(players[k].plr || !players[k].plr->ingame)
                     continue;
@@ -714,32 +713,33 @@ int MN_FilterChar(int ch)
 
 void MN_TextFilter(char *text)
 {
-    int     k;
+    int         k;
 
-    for(k = 0; text[k]; k++)
+    for(k = 0; text[k]; ++k)
     {
         text[k] = MN_FilterChar(text[k]);
     }
 }
 
-/*
+/**
  * Expected: <whitespace> = <whitespace> <float>
  */
 float WI_ParseFloat(char **str)
 {
-    float   value;
-    char   *end;
+    float       value;
+    char       *end;
 
     *str = M_SkipWhite(*str);
     if(**str != '=')
-        return 0;               // Now I'm confused!
+        return 0; // Now I'm confused!
+
     *str = M_SkipWhite(*str + 1);
     value = strtod(*str, &end);
     *str = end;
     return value;
 }
 
-/*
+/**
  * Draw a string of text controlled by parameter blocks.
  */
 void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,

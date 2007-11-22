@@ -1,6 +1,6 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -18,12 +18,24 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * Retrieves the function addresses we need from the rendering DLL.
+/**
+ * g_dglinit.c: Retrieves the function addresses we need from the
+ *              rendering DLL.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -33,7 +45,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define Imp(fname)  gl.fname = DD_GetDGLProcAddress("DG_"#fname)
+#define Imp(fname)          gl.fname = DD_GetDGLProcAddress("DG_"#fname)
 
 // TYPES -------------------------------------------------------------------
 
@@ -53,7 +65,7 @@ gamedgl_t gl;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Init the game's interface to the DGL driver.
  * Since the engine has already loaded the DGL DLL successfully, we can
  * assume no required functions are missing.

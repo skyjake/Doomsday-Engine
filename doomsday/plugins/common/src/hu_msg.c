@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,8 +25,8 @@
  */
 
 /**
- * Heads-up text and input code
- * Compiles for jDoom, jHeretic, jHexen
+ * hu_msg.c: Heads-up text and input code
+ *
  * \todo Merge chat input and menu-editbox widget
  */
 
@@ -59,27 +59,28 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define HU_INPUTX   HU_MSGX
-#define HU_INPUTY   (HU_MSGY + HU_MSGHEIGHT*(hu_font[0].height +1))
+#define HU_INPUTX           HU_MSGX
+#define HU_INPUTY           (HU_MSGY + HU_MSGHEIGHT*(hu_font[0].height +1))
 
-#define IN_RANGE(x) ((x)>=MAX_MESSAGES? (x)-MAX_MESSAGES : (x)<0? (x)+MAX_MESSAGES : (x))
+#define IN_RANGE(x) \
+    ((x)>=MAX_MESSAGES? (x)-MAX_MESSAGES : (x)<0? (x)+MAX_MESSAGES : (x))
 
-#define FLASHFADETICS  35
-#define HU_MSGX     0
-#define HU_MSGY     0
-#define HU_MSGHEIGHT    1          // in lines
+#define FLASHFADETICS       35
+#define HU_MSGX             0
+#define HU_MSGY             0
+#define HU_MSGHEIGHT        1          // in lines
 
-#define HU_MSGTIMEOUT   (4*TICRATE)
+#define HU_MSGTIMEOUT       (4*TICRATE)
 
-#define MAX_MESSAGES    8
-#define MAX_LINELEN     140
+#define MAX_MESSAGES        8
+#define MAX_LINELEN         140
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct message_s {
     char       *text;
     int         time;
-    int         duration; // time when posted.
+    int         duration; // Time when posted.
 } message_t;
 
 typedef struct msgbuffer_s {
@@ -263,9 +264,9 @@ ccmd_t  msgCCmds[] = {
 // CODE --------------------------------------------------------------------
 
 /**
- * Called during the PreInit of each game during start up
- * Register Cvars and CCmds for the opperation/look of the
- * message buffer and chat widget.
+ * Called during the PreInit of each game during start up.
+ * Register Cvars and CCmds for the opperation/look of the message buffer
+ * and chat widget.
  */
 void HUMsg_Register(void)
 {
@@ -279,7 +280,7 @@ void HUMsg_Register(void)
 }
 
 /**
- * Called by HU_init()
+ * Called by HU_init().
  */
 void HUMsg_Init(void)
 {
@@ -295,7 +296,7 @@ void HUMsg_Init(void)
 }
 
 /**
- * Called by HU_Start()
+ * Called by HU_Start().
  */
 void HUMsg_Start(void)
 {
@@ -307,7 +308,7 @@ void HUMsg_Start(void)
     HUlib_initIText(&w_chat, HU_INPUTX, HU_INPUTY, hu_font_a, HU_FONTSTART,
                     &chatOn);
 
-    //// Create the message and input buffers for all local players.
+    // Create the message and input buffers for all local players.
     //// \todo we only need buffers for active local players.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -334,13 +335,13 @@ void HUMsg_Start(void)
             msg->duration = 0;
         }
 
-        // create the inputbuffer widgets
+        // Create the inputbuffer widgets.
         HUlib_initIText(&w_chatbuffer[i], 0, 0, 0, 0, &w_chat_always_off);
     }
 }
 
 /**
- * Called by HU_ticker()
+ * Called by HU_ticker().
  */
 void HUMsg_Ticker(void)
 {
@@ -452,7 +453,7 @@ void HUMsg_ClearMessages(player_t *player)
 static void HU_MsgBufAddMessage(msgbuffer_t *buf, char *txt, int tics)
 {
     int        len;
-    message_t  *msg;
+    message_t *msg;
 
     if(!buf)
         return;
@@ -569,7 +570,7 @@ static void HU_MsgBufTick(msgbuffer_t *buf)
         }
     }
 
-    // tick down message counter if a message is up
+    // Tick down message counter if a message is up.
     if(buf->timer > 0)
         buf->timer--;
 
@@ -644,9 +645,9 @@ static void HU_MsgBufDraw(msgbuffer_t *buf)
                 col[3] = msg->time / (float) LINEHEIGHT_A * 0.9f;
         }
 
-        // draw using param text
-        // messages may use the params to override
-        // eg colour (Hexen's important messages)
+        // Draw using param text.
+        // Messages may use the params to override the way the message is
+        // is displayed, e.g. colour (Hexen's important messages).
         WI_DrawParamText(x, 1 + y, msg->text, hu_font_a,
                          col[0], col[1], col[2], col[3], false, false,
                          cfg.msgAlign);
@@ -746,8 +747,8 @@ DEFCC(CCmdLocalMessage)
 }
 
 /**
- * Handles controls (console commands) for the message
- * buffer and chat widget
+ * Handles controls (console commands) for the message buffer and chat
+ * widget
  */
 DEFCC(CCmdMsgAction)
 {
@@ -814,7 +815,7 @@ DEFCC(CCmdMsgAction)
     }
     else if(!stricmp(argv[0], "msgrefresh")) // refresh the message buffer
     {
-        int i;
+        int         i;
 
         if(chatOn)
             return false;

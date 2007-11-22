@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Common HUD psprite handling.
+/**
+ * hu_pspr.c: Common HUD psprite handling.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -62,81 +62,85 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 #if __JHERETIC__
-int     PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
+static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
 // Player
-    { 0, 5 * FRACUNIT, 15 * FRACUNIT, 15 * FRACUNIT,
-     15 * FRACUNIT, 15 * FRACUNIT, 15 * FRACUNIT, 15 * FRACUNIT},
+    { 0, 5, 15, 15, 15, 15, 15, 15},
 // Chicken
-    {15 * FRACUNIT, 15 * FRACUNIT, 15 * FRACUNIT, 15 * FRACUNIT,
-     15 * FRACUNIT, 15 * FRACUNIT, 15 * FRACUNIT, 15 * FRACUNIT}
+    {15, 15, 15, 15, 15, 15, 15, 15}
 };
 #endif
 
 #if __JHEXEN__
 // Y-adjustment values for full screen (4 weapons)
-int     PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
-    {0, -12 * FRACUNIT, -10 * FRACUNIT, 10 * FRACUNIT}, // Fighter
-    {-8 * FRACUNIT, 10 * FRACUNIT, 10 * FRACUNIT, 0},   // Cleric
-    {9 * FRACUNIT, 20 * FRACUNIT, 20 * FRACUNIT, 20 * FRACUNIT},    // Mage
-    {10 * FRACUNIT, 10 * FRACUNIT, 10 * FRACUNIT, 10 * FRACUNIT}    // Pig
+static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
+// Fighter
+    {0, -12, -10, 10},
+// Cleric
+    {-8, 10, 10, 0},
+// Mage
+    {9, 20, 20, 20},
+// Pig
+    {10, 10, 10, 10}
 };
 #endif
 
 #if __JSTRIFE__
 // Y-adjustment values for full screen (10 weapons)
-int     PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
+static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 #endif
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Calculates the Y offset for the player's psprite. The offset depends
  * on the size of the game window.
  */
-int HU_PSpriteYOffset(player_t *pl)
+float HU_PSpriteYOffset(player_t *pl)
 {
+    int         viewWindowHeight = Get(DD_VIEWWINDOW_HEIGHT);
 #if __JDOOM__
-    int     offy = FRACUNIT * (cfg.plrViewHeight - 41) * 2;
-# if !__DOOM64TC__
-    // If the status bar is visible, the sprite is moved up a bit.
-    if(Get(DD_VIEWWINDOW_HEIGHT) < 200)
-        offy -= FRACUNIT * ((ST_HEIGHT * cfg.sbarscale) / (2 * 20) - 1);
-# endif
-    return offy;
-
+    float       offy = (cfg.plrViewHeight - 41) * 2;
 #else
-    if(Get(DD_VIEWWINDOW_HEIGHT) == SCREENHEIGHT)
-        return PSpriteSY[pl->class][pl->readyweapon];
-    return PSpriteSY[pl->class][pl->readyweapon] * (20 - cfg.sbarscale) / 20.0f -
-        FRACUNIT * (39 * cfg.sbarscale) / 40.0f;
+    float       offy = PSpriteSY[pl->class][pl->readyweapon];
 #endif
+
+#if !__DOOM64TC__
+    // If the status bar is visible, the sprite is moved up a bit.
+    if(viewWindowHeight < SCREENHEIGHT)
+    {
+        offy -= (((float) ST_HEIGHT * cfg.sbarscale) / (2 * 20) - 1);
+    }
+#endif
+
+    return offy;
 }
 
-/*
+/**
  * Calculates the Y offset for the player's psprite. The offset depends
  * on the size of the game window.
  */
 void HU_UpdatePlayerSprite(int pnum)
 {
     extern float lookOffset;
-    int     i;
-    pspdef_t *psp;
+    int         i;
+    pspdef_t   *psp;
     ddpsprite_t *ddpsp;
-    float   fov = 90;           //*(float*) Con_GetVariable("r_fov")->ptr;
-    player_t *pl = players + pnum;
+    float       fov = 90; //*(float*) Con_GetVariable("r_fov")->ptr;
+    player_t   *pl = players + pnum;
 
-    for(i = 0; i < NUMPSPRITES; i++)
+    for(i = 0; i < NUMPSPRITES; ++i)
     {
         psp = pl->psprites + i;
         ddpsp = pl->plr->psprites + i;
-        if(!psp->state)         // A NULL state?
+        if(!psp->state) // A NULL state?
         {
             //ddpsp->sprite = -1;
             ddpsp->stateptr = 0;
             continue;
         }
+
         ddpsp->stateptr = psp->state;
         ddpsp->tics = psp->tics;
 
@@ -174,13 +178,11 @@ void HU_UpdatePlayerSprite(int pnum)
         else
 #endif
         if(psp->state->flags & STF_FULLBRIGHT)
-        {
-            // full bright
+        {   // Fullbright.
             ddpsp->light = 1;
         }
         else
-        {
-            // local light
+        {   // Local light.
             ddpsp->light =
                 P_GetFloatp(pl->plr->mo->subsector, DMU_LIGHT_LEVEL);
         }
@@ -200,29 +202,28 @@ void HU_UpdatePlayerSprite(int pnum)
         ddpsp->light += .1f;
 
         // Offset from center.
-        ddpsp->x = FIX2FLT(psp->sx) - G_GetLookOffset(pnum) * 1300;
+        ddpsp->pos[VX] = psp->pos[VX] - G_GetLookOffset(pnum) * 1300;
 
         if(fov > 90)
             fov = 90;
-        ddpsp->y = FIX2FLT(psp->sy) + (90 - fov) / 90 * 80;
+
+        ddpsp->pos[VY] = psp->pos[VY] + (90 - fov) / 90 * 80;
     }
 }
 
-/*
+/**
  * Updates the state of the player sprites (gives their data to the
  * engine so it can render them). Servers handle psprites of all players.
  */
 void HU_UpdatePsprites(void)
 {
-    int     i;
+    int         i;
+    float       offsetY = HU_PSpriteYOffset(&players[consoleplayer]);
 
-    Set(DD_PSPRITE_OFFSET_Y,
-        HU_PSpriteYOffset(players + consoleplayer) >> (FRACBITS - 4));
+    DD_SetVariable(DD_PSPRITE_OFFSET_Y, &offsetY);
 
-    //if(IS_CLIENT)
-    //  return;
-
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
         if(players[i].plr->ingame)
         {
             if(!IS_CLIENT || consoleplayer == i)
@@ -230,4 +231,5 @@ void HU_UpdatePsprites(void)
                 HU_UpdatePlayerSprite(i);
             }
         }
+    }
 }

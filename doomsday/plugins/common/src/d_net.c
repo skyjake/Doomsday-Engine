@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,9 +21,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
+/**
  * d_net.c : Common code related to net games.
 
  * Connecting to/from a netgame server.
@@ -306,8 +317,9 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         for(i = num = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->ingame)
                 num++;
-            snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber),
-                    (const char *) data);
+
+        snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber),
+                (const char *) data);
 
         // The chat message is already echoed by the console.
         cfg.echoMsg = false;
@@ -342,7 +354,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
                             (data ? 0 : GSF_DEMO), parm);
 
         // Send info about all players to the new one.
-        for(i = 0; i < MAXPLAYERS; i++)
+        for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->ingame && i != parm)
                 NetSv_SendPlayerInfo(i, parm);
 
@@ -361,7 +373,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
             gi.Error("D_NetWorldEvent: Too many missiles (%i).\n", parm);
 #  endif
         // Projectile data consists of shorts.
-        for(ptr = *(short **) data, i = 0; i < parm; i++)
+        for(ptr = *(short **) data, i = 0; i < parm; ++i)
         {
             flags = *(unsigned short *) ptr & DDMS_FLAG_MASK;
             mtype = *(unsigned short *) ptr & ~DDMS_FLAG_MASK;
@@ -466,7 +478,6 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
     case GPT_MESSAGE:
         snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", data);
         P_SetMessage(&players[consoleplayer], msgBuff, false);
-
         break;
 
 #ifndef __JDOOM__
@@ -559,10 +570,9 @@ void D_ChatSound(void)
 }
 
 /**
- * Show a message on screen, optionally accompanied
- * by Chat sound effect.
+ * Show a message on screen, optionally accompanied by Chat sound effect.
  *
- * @param playSound         If <code>true</code>, play the chat sound.
+ * @param playSound         @c true = play the chat sound.
  */
 static void D_NetMessageEx(char *msg, boolean playSound)
 {
@@ -602,8 +612,8 @@ void D_NetMessageNoSound(char *msg)
  * Issues a damage request when a client is trying to damage another player's
  * mobj.
  *
- * @return                  If <code>true</code> no further processing of the
- *                          damage should be done else, process the damage as
+ * @return                  @c true = no further processing of the damage
+ *                          should be done else, process the damage as
  *                          normally.
  */
 boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
@@ -725,7 +735,7 @@ DEFCC(CCmdSetClass)
  */
 DEFCC(CCmdSetMap)
 {
-    int     ep, map;
+    int         ep, map;
 
     // Only the server can change the map.
     if(!IS_SERVER)

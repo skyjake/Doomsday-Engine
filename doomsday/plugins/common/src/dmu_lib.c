@@ -1,6 +1,6 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -20,9 +20,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
+/**
  * dmu_lib.c: Helper routines for accessing the DMU API
  */
 
@@ -82,8 +93,8 @@ void P_CopyLine(line_t *from, line_t *to)
 {
     int         i, sidx;
     side_t     *sidefrom, *sideto;
-    xline_t    *xfrom = P_XLine(from);
-    xline_t    *xto = P_XLine(to);
+    xline_t    *xfrom = P_ToXLine(from);
+    xline_t    *xto = P_ToXLine(to);
 
     if(from == to)
         return; // no point copying self
@@ -107,37 +118,37 @@ void P_CopyLine(line_t *from, line_t *to)
 
 #if 0
         // P_Copyp is not implemented in Doomsday yet.
-        P_Copyp(DMU_TOP_TEXTURE_OFFSET_XY, sidefrom, sideto);
-        P_Copyp(DMU_TOP_TEXTURE, sidefrom, sideto);
+        P_Copyp(DMU_TOP_MATERIAL_OFFSET_XY, sidefrom, sideto);
+        P_Copyp(DMU_TOP_MATERIAL, sidefrom, sideto);
         P_Copyp(DMU_TOP_COLOR, sidefrom, sideto);
 
-        P_Copyp(DMU_MIDDLE_TEXTURE, sidefrom, sideto);
+        P_Copyp(DMU_MIDDLE_MATERIAL, sidefrom, sideto);
         P_Copyp(DMU_MIDDLE_COLOR, sidefrom, sideto);
         P_Copyp(DMU_MIDDLE_BLENDMODE, sidefrom, sideto);
 
-        P_Copyp(DMU_BOTTOM_TEXTURE, sidefrom, sideto);
+        P_Copyp(DMU_BOTTOM_MATERIAL, sidefrom, sideto);
         P_Copyp(DMU_BOTTOM_COLOR, sidefrom, sideto);
 #else
         {
         float temp[4];
         float itemp[2];
 
-        P_SetIntp(sideto, DMU_TOP_TEXTURE, P_GetIntp(sidefrom, DMU_TOP_TEXTURE));
-        P_GetFloatpv(sidefrom, DMU_TOP_TEXTURE_OFFSET_XY, itemp);
-        P_SetFloatpv(sideto, DMU_TOP_TEXTURE_OFFSET_XY, itemp);
+        P_SetIntp(sideto, DMU_TOP_MATERIAL, P_GetIntp(sidefrom, DMU_TOP_MATERIAL));
+        P_GetFloatpv(sidefrom, DMU_TOP_MATERIAL_OFFSET_XY, itemp);
+        P_SetFloatpv(sideto, DMU_TOP_MATERIAL_OFFSET_XY, itemp);
         P_GetFloatpv(sidefrom, DMU_TOP_COLOR, temp);
         P_SetFloatpv(sideto, DMU_TOP_COLOR, temp);
 
-        P_SetIntp(sideto, DMU_MIDDLE_TEXTURE, P_GetIntp(sidefrom, DMU_MIDDLE_TEXTURE));
+        P_SetIntp(sideto, DMU_MIDDLE_MATERIAL, P_GetIntp(sidefrom, DMU_MIDDLE_MATERIAL));
         P_GetFloatpv(sidefrom, DMU_MIDDLE_COLOR, temp);
-        P_GetFloatpv(sidefrom, DMU_MIDDLE_TEXTURE_OFFSET_XY, itemp);
-        P_SetFloatpv(sideto, DMU_MIDDLE_TEXTURE_OFFSET_XY, itemp);
+        P_GetFloatpv(sidefrom, DMU_MIDDLE_MATERIAL_OFFSET_XY, itemp);
+        P_SetFloatpv(sideto, DMU_MIDDLE_MATERIAL_OFFSET_XY, itemp);
         P_SetFloatpv(sideto, DMU_MIDDLE_COLOR, temp);
         P_SetIntp(sideto, DMU_MIDDLE_BLENDMODE, P_GetIntp(sidefrom, DMU_MIDDLE_BLENDMODE));
 
-        P_SetIntp(sideto, DMU_BOTTOM_TEXTURE, P_GetIntp(sidefrom, DMU_BOTTOM_TEXTURE));
-        P_GetFloatpv(sidefrom, DMU_BOTTOM_TEXTURE_OFFSET_XY, itemp);
-        P_SetFloatpv(sideto, DMU_BOTTOM_TEXTURE_OFFSET_XY, itemp);
+        P_SetIntp(sideto, DMU_BOTTOM_MATERIAL, P_GetIntp(sidefrom, DMU_BOTTOM_MATERIAL));
+        P_GetFloatpv(sidefrom, DMU_BOTTOM_MATERIAL_OFFSET_XY, itemp);
+        P_SetFloatpv(sideto, DMU_BOTTOM_MATERIAL_OFFSET_XY, itemp);
         P_GetFloatpv(sidefrom, DMU_BOTTOM_COLOR, temp);
         P_SetFloatpv(sideto, DMU_BOTTOM_COLOR, temp);
         }
@@ -167,8 +178,8 @@ void P_CopyLine(line_t *from, line_t *to)
  */
 void P_CopySector(sector_t *from, sector_t *to)
 {
-    xsector_t  *xfrom = P_XSector(from);
-    xsector_t  *xto = P_XSector(to);
+    xsector_t  *xfrom = P_ToXSector(from);
+    xsector_t  *xto = P_ToXSector(to);
 
     if(from == to)
         return; // no point copying self.
@@ -180,50 +191,43 @@ void P_CopySector(sector_t *from, sector_t *to)
     P_Copyp(DMU_COLOR, from, to);
 
     P_Copyp(DMU_FLOOR_HEIGHT, from, to);
-    P_Copyp(DMU_FLOOR_TEXTURE, from, to);
+    P_Copyp(DMU_FLOOR_MATERIAL, from, to);
     P_Copyp(DMU_FLOOR_COLOR, from, to);
-    P_Copyp(DMU_FLOOR_OFFSET_XY, from, to);
-    P_Copyp(DMU_FLOOR_TEXTURE_MOVE_XY, from, to);
+    P_Copyp(DMU_FLOOR_MATERIAL_OFFSET_XY, from, to);
     P_Copyp(DMU_FLOOR_SPEED, from, to);
-    P_Copyp(DMU_FLOOR_TARGET, from, to);
+    P_Copyp(DMU_FLOOR_TARGET_HEIGHT, from, to);
 
     P_Copyp(DMU_CEILING_HEIGHT, from, to);
-    P_Copyp(DMU_CEILING_TEXTURE, from, to);
+    P_Copyp(DMU_CEILING_MATERIAL, from, to);
     P_Copyp(DMU_CEILING_COLOR, from, to);
-    P_Copyp(DMU_CEILING_OFFSET_XY, from, to);
-    P_Copyp(DMU_CEILING_TEXTURE_MOVE_XY, from, to);
+    P_Copyp(DMU_CEILING_MATERIAL_OFFSET_XY, from, to);
     P_Copyp(DMU_CEILING_SPEED, from, to);
-    P_Copyp(DMU_CEILING_TARGET, from, to);
+    P_Copyp(DMU_CEILING_TARGET_HEIGHT, from, to);
 #else
     {
     float ftemp[4];
-    int  itemp[2];
 
     P_SetFloatp(to, DMU_LIGHT_LEVEL, P_GetFloatp(from, DMU_LIGHT_LEVEL));
     P_GetFloatpv(from, DMU_COLOR, ftemp);
     P_SetFloatpv(to, DMU_COLOR, ftemp);
 
-    P_SetFixedp(to, DMU_FLOOR_HEIGHT, P_GetFixedp(from, DMU_FLOOR_HEIGHT));
-    P_SetIntp(to, DMU_FLOOR_TEXTURE, P_GetIntp(from, DMU_FLOOR_TEXTURE));
+    P_SetFloatp(to, DMU_FLOOR_HEIGHT, P_GetFloatp(from, DMU_FLOOR_HEIGHT));
+    P_SetIntp(to, DMU_FLOOR_MATERIAL, P_GetIntp(from, DMU_FLOOR_MATERIAL));
     P_GetFloatpv(from, DMU_FLOOR_COLOR, ftemp);
     P_SetFloatpv(to, DMU_FLOOR_COLOR, ftemp);
-    P_GetFloatpv(from, DMU_FLOOR_OFFSET_XY, ftemp);
-    P_SetFloatpv(to, DMU_FLOOR_OFFSET_XY, ftemp);
-    P_GetIntpv(from, DMU_FLOOR_TEXTURE_MOVE_XY, itemp);
-    P_SetIntpv(to, DMU_FLOOR_TEXTURE_MOVE_XY, itemp);
+    P_GetFloatpv(from, DMU_FLOOR_MATERIAL_OFFSET_XY, ftemp);
+    P_SetFloatpv(to, DMU_FLOOR_MATERIAL_OFFSET_XY, ftemp);
     P_SetIntp(to, DMU_FLOOR_SPEED, P_GetIntp(from, DMU_FLOOR_SPEED));
-    P_SetIntp(to, DMU_FLOOR_TARGET, P_GetIntp(from, DMU_FLOOR_TARGET));
+    P_SetFloatp(to, DMU_FLOOR_TARGET_HEIGHT, P_GetFloatp(from, DMU_FLOOR_TARGET_HEIGHT));
 
-    P_SetFixedp(to, DMU_CEILING_HEIGHT, P_GetFixedp(from, DMU_CEILING_HEIGHT));
-    P_SetIntp(to, DMU_CEILING_TEXTURE, P_GetIntp(from, DMU_CEILING_TEXTURE));
+    P_SetFloatp(to, DMU_CEILING_HEIGHT, P_GetFloatp(from, DMU_CEILING_HEIGHT));
+    P_SetIntp(to, DMU_CEILING_MATERIAL, P_GetIntp(from, DMU_CEILING_MATERIAL));
     P_GetFloatpv(from, DMU_CEILING_COLOR, ftemp);
     P_SetFloatpv(to, DMU_CEILING_COLOR, ftemp);
-    P_GetFloatpv(from, DMU_CEILING_OFFSET_XY, ftemp);
-    P_SetFloatpv(to, DMU_CEILING_OFFSET_XY, ftemp);
-    P_GetIntpv(from, DMU_CEILING_TEXTURE_MOVE_XY, itemp);
-    P_SetIntpv(to, DMU_CEILING_TEXTURE_MOVE_XY, itemp);
+    P_GetFloatpv(from, DMU_CEILING_MATERIAL_OFFSET_XY, ftemp);
+    P_SetFloatpv(to, DMU_CEILING_MATERIAL_OFFSET_XY, ftemp);
     P_SetIntp(to, DMU_CEILING_SPEED, P_GetIntp(from, DMU_CEILING_SPEED));
-    P_SetIntp(to, DMU_CEILING_TARGET, P_GetIntp(from, DMU_CEILING_TARGET));
+    P_SetFloatp(to, DMU_CEILING_TARGET_HEIGHT, P_GetFloatp(from, DMU_CEILING_TARGET_HEIGHT));
     }
 #endif
 
