@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -25,8 +25,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- *  Stairs and donuts.
+/**
+ * p_floor.c: Stairs and donuts.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -67,14 +67,14 @@ int EV_BuildStairs(line_t *line, stair_e type)
     float       speed = 0;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return rtn;
 
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
 
         // ALREADY MOVING?  IF SO, KEEP GOING...
         if(xsec->specialdata)
@@ -103,7 +103,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
         height = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + stairsize;
         floor->floordestheight = height;
 
-        texture = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
+        texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
 
         // Find next sector to raise
         // 1.   Find 2-sided line with same sector side[0]
@@ -123,12 +123,12 @@ int EV_BuildStairs(line_t *line, stair_e type)
                     continue;
 
                 tsec = P_GetPtrp(ln, DMU_BACK_SECTOR);
-                if(P_GetIntp(tsec, DMU_FLOOR_TEXTURE) != texture)
+                if(P_GetIntp(tsec, DMU_FLOOR_MATERIAL) != texture)
                     continue;
 
                 height += stairsize;
 
-                if(P_XSector(tsec)->specialdata)
+                if(P_ToXSector(tsec)->specialdata)
                     continue;
 
                 sec = tsec;
@@ -136,7 +136,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
                 P_AddThinker(&floor->thinker);
 
-                P_XSector(tsec)->specialdata = floor;
+                P_ToXSector(tsec)->specialdata = floor;
                 floor->thinker.function = T_MoveFloor;
                 floor->direction = 1;
                 floor->sector = sec;
@@ -161,7 +161,7 @@ int EV_DoDonut(line_t *line)
     floormove_t *floor;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return rtn;
 
@@ -169,7 +169,7 @@ int EV_DoDonut(line_t *line)
     while((s1 = P_IterListIterator(list)) != NULL)
     {
         // ALREADY MOVING?  IF SO, KEEP GOING...
-        if(P_XSector(s1)->specialdata)
+        if(P_ToXSector(s1)->specialdata)
             continue;
 
         rtn = 1;
@@ -189,7 +189,7 @@ int EV_DoDonut(line_t *line)
             floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
             P_AddThinker(&floor->thinker);
 
-            P_XSector(s2)->specialdata = floor;
+            P_ToXSector(s2)->specialdata = floor;
 
             floor->thinker.function = T_MoveFloor;
             floor->type = donutRaise;
@@ -197,7 +197,7 @@ int EV_DoDonut(line_t *line)
             floor->direction = 1;
             floor->sector = s2;
             floor->speed = FLOORSPEED * .5;
-            floor->texture = P_GetIntp(s3, DMU_FLOOR_TEXTURE);
+            floor->texture = P_GetIntp(s3, DMU_FLOOR_MATERIAL);
             floor->newspecial = 0;
             floor->floordestheight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
 
@@ -205,7 +205,7 @@ int EV_DoDonut(line_t *line)
             floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
             P_AddThinker(&floor->thinker);
 
-            P_XSector(s1)->specialdata = floor;
+            P_ToXSector(s1)->specialdata = floor;
 
             floor->thinker.function = T_MoveFloor;
             floor->type = lowerFloor;
