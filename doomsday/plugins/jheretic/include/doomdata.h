@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,12 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Thing and linedef attributes
+/**
+ * doomdata.h: Thing and linedef attributes
  */
 
 #ifndef __DOOMDATA__
@@ -39,18 +39,6 @@ enum {
     PLN_FLOOR,
     PLN_CEILING
 };
-
-// This is the common thing_t
-typedef struct thing_s {
-    short           x;
-    short           y;
-    short           height;
-    short           angle;
-    short           type;
-    short           options;
-} thing_t;
-
-extern thing_t* things;
 
 //
 // LineDef attributes.
@@ -93,34 +81,6 @@ extern thing_t* things;
 // ML_BLOCKING -> ML_MAPPED inc will persist.
 #define ML_INVALID    2048
 #define VALIDMASK     0x000001ff
-
-//
-// Thing attributes.
-//
-
-// Appears in Easy skill modes
-#define MTF_EASY    1
-
-// Appears in Medium skill modes
-#define MTF_MEDIUM    2
-
-// Appears in Hard skill modes
-#define MTF_HARD    4
-
-// THING is deaf
-#define MTF_AMBUSH    8
-
-// Appears in Multiplayer game modes only
-#define MTF_NOTSINGLE    16
-
-// Doesn't appear in Deathmatch
-#define MTF_NOTDM    32
-
-// Doesn't appear in Coop
-#define MTF_NOTCOOP    64
-
-// THING is invulnerble and inert
-#define MTF_DORMANT    512
 
 // Special activation types
 #define SPAC_CROSS      0          // when player crosses line

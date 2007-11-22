@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,10 @@
  * you modify this file, you may extend this exception to your
  * version of the file, but you are not obligated to do so. If you
  * do not wish to do so, delete this exception statement from your version.
+ */
+
+/**
+ * h_player.h:
  */
 
 #ifndef __H_PLAYER__
@@ -88,7 +92,7 @@ typedef struct player_s {
     playerbrain_t   brain;
 
     // bounded/scaled total momentum
-    fixed_t         bob;
+    float           bob;
 
     // This is only used between levels,
     // mo->health is used during levels.
@@ -176,8 +180,6 @@ typedef struct player_s {
     int             chickenPeck;   // chicken peck countdown
     mobj_t         *rain1;         // active rain maker 1
     mobj_t         *rain2;         // active rain maker 2
-
 } player_t;
-
 
 #endif

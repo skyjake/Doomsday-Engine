@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,13 +33,12 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * All the global variables that store the internal state.
- * Theoretically speaking, the internal state of the engine
- * should be found by looking at the variables collected
- * here, and every relevant module will have to include
- * this header file.
- * In practice, things are a bit messy.
+/**
+ * h_stat.h: All the global variables that store the internal state.
+ *
+ * Theoretically speaking, the internal state of the engine should be found by
+ * looking at the variables collected here, and every relevant module will have
+ * to include this header file. In practice, things are a bit messy...
  */
 
 #ifndef __H_STATE__
@@ -164,8 +163,8 @@ extern player_t players[MAXPLAYERS];
 
 // Player spawn spots for deathmatch.
 #define MAX_DM_STARTS   16
-extern thing_t  deathmatchstarts[16];
-extern thing_t  *deathmatch_p;
+extern spawnspot_t  deathmatchstarts[16];
+extern spawnspot_t  *deathmatch_p;
 
 // Intermission stats.
 // Parameters for world map / intermission.
