@@ -4,12 +4,11 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
- *
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,8 +26,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Switches, buttons. Two-state animation. Exits.
+/**
+ * p_switch.c: Switches, buttons. Two-state animation. Exits.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -76,7 +75,7 @@ int EV_DestoryLineShield(line_t* line)
     if(!line)
         return false;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return false;
 
@@ -86,15 +85,15 @@ int EV_DestoryLineShield(line_t* line)
         for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
         {
             li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
-            xline = P_XLine(li);
+            xline = P_ToXLine(li);
             if(xline->tag != 999 || !xline->special ||
                !(P_GetIntp(li, DMU_FLAGS) & ML_TWOSIDED))
                 continue;
 
             xline->special = 0;
 
-            P_SetIntp(li, DMU_SIDE0_OF_LINE | DMU_MIDDLE_TEXTURE, 0);
-            P_SetIntp(li, DMU_SIDE1_OF_LINE | DMU_MIDDLE_TEXTURE, 0);
+            P_SetIntp(li, DMU_SIDE0_OF_LINE | DMU_MIDDLE_MATERIAL, 0);
+            P_SetIntp(li, DMU_SIDE1_OF_LINE | DMU_MIDDLE_MATERIAL, 0);
 
             flags = P_GetIntp(li, DMU_FLAGS);
             flags &= ~ML_BLOCKING;
@@ -123,7 +122,7 @@ int EV_SwitchTextureFree(line_t* line)
     if(!line)
         return false;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return false;
 
@@ -133,15 +132,15 @@ int EV_SwitchTextureFree(line_t* line)
         for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
         {
             li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
-            xline = P_XLine(li);
+            xline = P_ToXLine(li);
             if(xline->special != 418)
                 continue;
 
-            P_SetIntp(li, DMU_SIDE0_OF_LINE | DMU_MIDDLE_TEXTURE, xline->tag);
+            P_SetIntp(li, DMU_SIDE0_OF_LINE | DMU_MIDDLE_MATERIAL, xline->tag);
 
             // If there is a back side, set that too.
             if(P_GetPtrp(li, DMU_SIDE1) != NULL)
-                P_SetIntp(li, DMU_SIDE1_OF_LINE | DMU_MIDDLE_TEXTURE,
+                P_SetIntp(li, DMU_SIDE1_OF_LINE | DMU_MIDDLE_MATERIAL,
                           xline->tag);
 
             flags = P_GetIntp(li, DMU_FLAGS);
@@ -177,9 +176,9 @@ int EV_ActivateSpecial(line_t *line)
     if(!back)
         return false; // We need a twosided line
 
-    bitmip = P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_Y);
+    bitmip = P_GetIntp(back, DMU_MIDDLE_MATERIAL_OFFSET_Y);
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return false;
 
@@ -189,12 +188,12 @@ int EV_ActivateSpecial(line_t *line)
         for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
         {
             li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
-            xline = P_XLine(li);
+            xline = P_ToXLine(li);
             if(xline->special != 418)
                 continue;
 
             if(bitmip == 0)
-                xline->special = P_XSector(sec)->tag;
+                xline->special = P_ToXSector(sec)->tag;
             else
                 xline->special = bitmip;
         }
@@ -226,11 +225,11 @@ void P_SetSectorColor(line_t *line)
         return; // We need a twosided line.
 
     // Determine the color based on line texture offsets!?
-    rgb[0] = (float) P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_X) / 255.f;
-    rgb[1] = (float) P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_Y) / 255.f;
-    rgb[2] = (float) P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_X) / 255.f;
+    rgb[0] = (float) P_GetIntp(front, DMU_MIDDLE_MATERIAL_OFFSET_X) / 255.f;
+    rgb[1] = (float) P_GetIntp(front, DMU_MIDDLE_MATERIAL_OFFSET_Y) / 255.f;
+    rgb[2] = (float) P_GetIntp(back, DMU_MIDDLE_MATERIAL_OFFSET_X) / 255.f;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return;
 
@@ -247,7 +246,7 @@ void P_SetSectorColor(line_t *line)
  */
 boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
 {
-    xline_t *xline = P_XLine(line);
+    xline_t *xline = P_ToXLine(line);
 
     // Extended functionality overrides old.
     if(XL_UseLine(line, side, thing))

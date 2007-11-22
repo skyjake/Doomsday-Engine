@@ -3,11 +3,11 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Weapon sprite animation, weapon objects.
+/**
+ * p_pspr.c: Weapon sprite animation, weapon objects.
+ *
  * Action functions for weapons.
  */
 
@@ -67,7 +68,7 @@
 fixed_t swingx;
 fixed_t swingy;
 
-fixed_t bulletslope;
+float bulletslope;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -288,8 +289,8 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
         player->attackdown = false;
 
     // Bob the weapon based on movement speed.
-    psp->sx = G_GetInteger(DD_PSPRITE_BOB_X);
-    psp->sy = G_GetInteger(DD_PSPRITE_BOB_Y);
+    psp->offset[VX] = *((float *)G_GetVariable(DD_PSPRITE_BOB_X));
+    psp->offset[VY] = *((float *)G_GetVariable(DD_PSPRITE_BOB_Y));
 
     // Psprite state.
     player->plr->psprites[0].state = DDPSP_BOBBING;
@@ -457,32 +458,30 @@ void C_DECL A_GunFlash(player_t *player, pspdef_t * psp)
     P_SetPsprite(player, ps_flash, weaponinfo[player->readyweapon][player->class].mode[0].flashstate);
 }
 
-void C_DECL A_Punch(player_t *player, pspdef_t * psp)
+void C_DECL A_Punch(player_t *player, pspdef_t *psp)
 {
-    angle_t angle;
-    int     damage;
-    int     slope;
+    angle_t     angle;
+    int         damage;
+    float       slope;
 
     if(IS_CLIENT)
         return;
 
-    damage = (P_Random() % 10 + 1) << 1;
+    damage = (P_Random() % 10 + 1) * 2;
 
     if(player->powers[PT_STRENGTH])
         damage *= 10;
 
     angle = player->plr->mo->angle;
     angle += (P_Random() - P_Random()) << 18;
-    //slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
-    //P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
-    slope = P_AimLineAttack(player->plr->mo, angle, PLRMELEERANGE); // d64tc
-    P_LineAttack(player->plr->mo, angle, PLRMELEERANGE, slope, damage); // d64tc
+    slope = P_AimLineAttack(player->plr->mo, angle, PLRMELEERANGE);
+    P_LineAttack(player->plr->mo, angle, PLRMELEERANGE, slope, damage);
 
-    // turn to face target
+    // Turn to face target.
     if(linetarget)
     {
-        //S_StartSound (player->plr->mo, sfx_punch, player);
         S_StartSound(sfx_punch, player->plr->mo);
+
         player->plr->mo->angle =
             R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
                             linetarget->pos[VX], linetarget->pos[VY]);
@@ -490,35 +489,32 @@ void C_DECL A_Punch(player_t *player, pspdef_t * psp)
     }
 }
 
-void C_DECL A_Saw(player_t *player, pspdef_t * psp)
+void C_DECL A_Saw(player_t *player, pspdef_t *psp)
 {
-    angle_t angle;
-    int     damage;
-    int     slope;
+    angle_t     angle;
+    int         damage;
+    float       slope;
 
     if(IS_CLIENT)
         return;
 
-    damage = 2 * (P_Random() % 10 + 1);
+    damage = (float) (P_Random() % 10 + 1) * 2;
     angle = player->plr->mo->angle;
     angle += (P_Random() - P_Random()) << 18;
 
-    // use meleerange + 1 se the puff doesn't skip the flash
-    //slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE + 1); // d64tc
-    slope = P_AimLineAttack(player->plr->mo, angle, PLRMELEERANGE + 1); // d64tc
-    //P_LineAttack(player->plr->mo, angle, MELEERANGE + 1, slope, damage);
-    P_LineAttack(player->plr->mo, angle, PLRMELEERANGE + 1, slope, damage); // d64tc
+    // Use meleerange + 1 so the puff doesn't skip the flash.
+    slope = P_AimLineAttack(player->plr->mo, angle, PLRMELEERANGE + 1);
+    P_LineAttack(player->plr->mo, angle, PLRMELEERANGE + 1, slope, damage);
 
     if(!linetarget)
     {
-        //S_StartSound (player->plr->mo, sfx_sawful, player);
         S_StartSound(sfx_sawful, player->plr->mo);
         return;
     }
-    //S_StartSound (player->plr->mo, sfx_sawhit, player);
+
     S_StartSound(sfx_sawhit, player->plr->mo);
 
-    // turn to face target
+    // Turn to face target.
     angle =
         R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
                         linetarget->pos[VX], linetarget->pos[VY]);
@@ -567,7 +563,7 @@ void C_DECL A_Rocketpuff(mobj_t *smoke)
     if(!smoke)
         return;
 
-    P_SpawnMobj(smoke->pos[VX], smoke->pos[VY], smoke->pos[VZ], MT_ROCKETPUFF);
+    P_SpawnMobj3f(smoke->pos[VX], smoke->pos[VY], smoke->pos[VZ], MT_ROCKETPUFF);
 
     if(smoke->type == MT_GRENADE)
     {
@@ -629,7 +625,7 @@ void C_DECL A_PlasmaBuzz(player_t *player)
  */
 void C_DECL A_Lasersmoke(mobj_t *spark)
 {
-    P_SpawnMobj(spark->pos[VX], spark->pos[VY], spark->pos[VZ], MT_LASERDUST);
+    P_SpawnMobj3f(spark->pos[VX], spark->pos[VY], spark->pos[VZ], MT_LASERDUST);
 }
 
 /**
@@ -644,7 +640,7 @@ void C_DECL A_RevealFloater(mobj_t *mo)
     pos[VX] += ((P_Random() % 63) - 32) * FRACUNIT;
     pos[VY] += ((P_Random() % 63) - 32) * FRACUNIT;
 
-    mo2 = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_LASERDUST);
+    mo2 = P_SpawnMobj3f(pos[VX], pos[VY], pos[VZ], MT_LASERDUST);
 
     mo2->flags &= ~MF_NOGRAVITY;
     mo->reactiontime--;
@@ -675,7 +671,7 @@ void A_SpawnFloater(player_t *player)
     pos[VX] += FixedMul(mo->radius * 4, finecosine[ang]);
     pos[VY] += FixedMul(mo->radius * 4, finesine[ang]);
 
-    floater = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_FLOATER);
+    floater = P_SpawnMobj3f(pos[VX], pos[VY], pos[VZ], MT_FLOATER);
 
     if(floater)
     {
@@ -848,36 +844,38 @@ void C_DECL A_FireDoubleLaser2(player_t *player, pspdef_t *psp)
     P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle + (ANG45 / 3));
 }
 
-/*
- * Sets a slope so a near miss is at aproximately
- * the height of the intended target
+/**
+ * Sets a slope so a near miss is at aproximately the height of the
+ * intended target.
  */
 void P_BulletSlope(mobj_t *mo)
 {
-    angle_t an;
+    angle_t     an;
 
-    // see which target is to be aimed at
+    // See which target is to be aimed at.
     an = mo->angle;
-    bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
+    bulletslope = P_AimLineAttack(mo, an, 16 * 64);
     if(!cfg.noAutoAim)
+    {
         if(!linetarget)
         {
             an += 1 << 26;
-            bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
+            bulletslope = P_AimLineAttack(mo, an, 16 * 64);
 
             if(!linetarget)
             {
                 an -= 2 << 26;
-                bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
+                bulletslope = P_AimLineAttack(mo, an, 16 * 64);
             }
 
             if(!linetarget)
             {
                 an += 2 << 26;
                 bulletslope =
-                    FRACUNIT * (tan(LOOKDIR2RAD(mo->dplayer->lookdir)) / 1.2);
+                    tan(LOOKDIR2RAD(mo->dplayer->lookdir)) / 1.2;
             }
         }
+    }
 }
 
 void P_GunShot(mobj_t *mo, boolean accurate)
@@ -933,11 +931,11 @@ void C_DECL A_FireShotgun(player_t *player, pspdef_t * psp)
         P_GunShot(player->plr->mo, false);
 }
 
-void C_DECL A_FireShotgun2(player_t *player, pspdef_t * psp)
+void C_DECL A_FireShotgun2(player_t *player, pspdef_t *psp)
 {
-    int     i;
-    angle_t angle;
-    int     damage;
+    int         i;
+    angle_t     angle;
+    int         damage;
 
     S_StartSound(sfx_dshtgn, player->plr->mo);
     P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
@@ -959,8 +957,8 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t * psp)
         angle = player->plr->mo->angle + ANG180;
         angle >>= ANGLETOFINESHIFT;
 
-        player->plr->mo->mom[MX] += FixedMul(4 * FRACUNIT, finecosine[angle]);
-        player->plr->mo->mom[MY] += FixedMul(4 * FRACUNIT, finesine[angle]);
+        player->plr->mo->mom[MX] += 4 * FIX2FLT(finecosine[angle]);
+        player->plr->mo->mom[MY] += 4 * FIX2FLT(finesine[angle]);
     }
     // < d64tc
 
@@ -969,8 +967,9 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t * psp)
         damage = 5 * (P_Random() % 3 + 1);
         angle = player->plr->mo->angle;
         angle += (P_Random() - P_Random()) << 19;
+
         P_LineAttack(player->plr->mo, angle, MISSILERANGE,
-                     bulletslope + ((P_Random() - P_Random()) << 5), damage);
+                     bulletslope + FIX2FLT((P_Random() - P_Random()) << 5), damage);
     }
 }
 
@@ -1019,56 +1018,54 @@ void C_DECL A_Light2(player_t *player, pspdef_t * psp)
     player->plr->extraLight = 2;
 }
 
-/*
+/**
  * Spawn a BFG explosion on every monster in view
  */
 void C_DECL A_BFGSpray(mobj_t *mo)
 {
-    int     i;
-    int     j;
-    int     damage;
-    angle_t an;
+    int         i, j, damage;
+    angle_t     an;
 
-    // offset angles from its attack angle
-    for(i = 0; i < 40; i++)
+    // Offset angles from its attack angle.
+    for(i = 0; i < 40; ++i)
     {
         an = mo->angle - ANG90 / 2 + ANG90 / 40 * i;
 
-        // mo->target is the originator (player)
-        //  of the missile
-        P_AimLineAttack(mo->target, an, 16 * 64 * FRACUNIT);
+        // mo->target is the originator (player) of the missile.
+        P_AimLineAttack(mo->target, an, 16 * 64);
 
         if(!linetarget)
             continue;
 
-        P_SpawnMobj(linetarget->pos[VX], linetarget->pos[VY],
-                    linetarget->pos[VZ] + (FLT2FIX(linetarget->height) >> 2), MT_EXTRABFG);
+        P_SpawnMobj3f(MT_EXTRABFG,
+                      linetarget->pos[VX], linetarget->pos[VY],
+                      linetarget->pos[VZ] + linetarget->height / 4);
 
         damage = 0;
-        for(j = 0; j < 15; j++)
+        for(j = 0; j < 15; ++j)
             damage += (P_Random() & 7) + 1;
 
         P_DamageMobj(linetarget, mo->target, mo->target, damage);
     }
 }
 
-void C_DECL A_BFGsound(player_t *player, pspdef_t * psp)
+void C_DECL A_BFGsound(player_t *player, pspdef_t *psp)
 {
     S_StartSound(sfx_bfg, player->plr->mo);
 }
 
-/*
+/**
  * Called at start of level for each player.
  */
 void P_SetupPsprites(player_t *player)
 {
-    int     i;
+    int         i;
 
-    // remove all psprites
-    for(i = 0; i < NUMPSPRITES; i++)
+    // Remove all psprites.
+    for(i = 0; i < NUMPSPRITES; ++i)
         player->psprites[i].state = NULL;
 
-    // spawn the gun
+    // Spawn the gun.
     player->pendingweapon = player->readyweapon;
     P_BringUpWeapon(player);
 }

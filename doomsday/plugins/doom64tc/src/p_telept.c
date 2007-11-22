@@ -3,11 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +22,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * p_telept.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -52,12 +55,12 @@
 
 // CODE --------------------------------------------------------------------
 
-mobj_t *P_SpawnTeleFog(int x, int y)
+mobj_t *P_SpawnTeleFog(float x, float y)
 {
     subsector_t *ss = R_PointInSubsector(x, y);
 
-    return P_SpawnMobj(x, y, P_GetFixedp(ss, DMU_FLOOR_HEIGHT) +
-                             TELEFOGHEIGHT, MT_TFOG);
+    return P_SpawnMobj3f(MT_TFOG, x, y,
+                         P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT);
 }
 
 int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
@@ -67,8 +70,8 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
     unsigned    an;
     thinker_t  *th;
     sector_t   *sec = NULL;
-    fixed_t     oldpos[3];
-    fixed_t     aboveFloor;
+    float       oldpos[3];
+    float       aboveFloor;
     iterlist_t *list;
 
     if(thing->flags2 & MF2_NOTELEPORT)
@@ -79,7 +82,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
     if(side == 1)
         return 0;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return 0;
 
@@ -103,7 +106,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
                 continue;
 
             memcpy(oldpos, thing->pos, sizeof(thing->pos));
-            aboveFloor = thing->pos[VZ] - FLT2FIX(thing->floorz);
+            aboveFloor = thing->pos[VZ] - thing->floorz;
 
             if(!P_TeleportMove(thing, m->pos[VX], m->pos[VY], false))
                 return 0;
@@ -111,17 +114,17 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
             // In Final Doom things teleported to their destination
             // but the height wasn't set to the floor.
             if(gamemission != GM_TNT && gamemission != GM_PLUT)
-                thing->pos[VZ] = FLT2FIX(thing->floorz);
+                thing->pos[VZ] = thing->floorz;
 
             if(spawnFog)
             {
                 // spawn teleport fog at source and destination
-                fog = P_SpawnMobj(oldpos[VX], oldpos[VY], oldpos[VZ], MT_TFOG);
+                fog = P_SpawnMobj3f(FLT2FIX(oldpos[VX]), FLT2FIX(oldpos[VY]), FLT2FIX(oldpos[VZ]), MT_TFOG);
                 S_StartSound(sfx_telept, fog);
                 an = m->angle >> ANGLETOFINESHIFT;
                 fog =
-                    P_SpawnMobj(m->pos[VX] + 20 * finecosine[an],
-                                m->pos[VY] + 20 * finesine[an], thing->pos[VZ],
+                    P_SpawnMobj3f(FLT2FIX(m->pos[VX]) + 20 * finecosine[an],
+                                FLT2FIX(m->pos[VY]) + 20 * finesine[an], FLT2FIX(thing->pos[VZ]),
                                 MT_TFOG);
 
                 // emit sound, where?
@@ -131,9 +134,9 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
             thing->angle = m->angle;
             if(thing->flags2 & MF2_FLOORCLIP)
             {
-                if(thing->pos[VZ] == P_GetFixedp(thing->subsector,
+                if(thing->pos[VZ] == P_GetFloatp(thing->subsector,
                                            DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
-                   P_GetThingFloorType(thing) >= FLOOR_LIQUID)
+                   P_GetMobjFloorType(thing) >= FLOOR_LIQUID)
                 {
                     thing->floorclip = 10;
                 }
@@ -150,13 +153,13 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
                 thing->reactiontime = 18;
                 if(thing->player->powers[PT_FLIGHT] && aboveFloor)
                 {
-                    thing->pos[VZ] = FLT2FIX(thing->floorz) + aboveFloor;
-                    if(FIX2FLT(thing->pos[VZ]) + thing->height > thing->ceilingz)
+                    thing->pos[VZ] = thing->floorz + aboveFloor;
+                    if(thing->pos[VZ] + thing->height > thing->ceilingz)
                     {
-                        thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
+                        thing->pos[VZ] = thing->ceilingz - thing->height;
                     }
                     thing->dplayer->viewZ =
-                        FIX2FLT(thing->pos[VZ]) + thing->dplayer->viewheight;
+                        thing->pos[VZ] + thing->dplayer->viewheight;
                 }
                 else
                 {
@@ -275,7 +278,7 @@ int EV_FadeSpawn(line_t *line, mobj_t *thing)
     mobjtype_t  spawntype;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return 0;
 
@@ -305,7 +308,7 @@ int EV_FadeSpawn(line_t *line, mobj_t *thing)
                 pos[VY] += 20 * finesine[an];
                 pos[VZ] = thing->pos[VZ];
 
-                mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], spawntype);
+                mo = P_SpawnMobj3f(pos[VX], pos[VY], pos[VZ], spawntype);
                 if(mo)
                 {
                     mo->translucency = 255;
@@ -341,7 +344,7 @@ int EV_FadeAway(line_t *line, mobj_t *thing)
     sector_t   *sec = NULL;
     iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return 0;
 
