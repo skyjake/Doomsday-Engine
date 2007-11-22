@@ -3,11 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +24,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * m_cheat.c: Cheat sequence checking.
  */
 
@@ -151,7 +150,7 @@ static unsigned char cheat_xlate_table[256];
 
 // CODE --------------------------------------------------------------------
 
-void cht_Init(void)
+void Cht_Init(void)
 {
     // Nothing to do
 }
@@ -162,7 +161,7 @@ void cht_Init(void)
  *
  * @parm ev: ptr to the event to be checked
  */
-boolean cht_Responder(event_t *ev)
+boolean Cht_Responder(event_t *ev)
 {
     int i;
 
@@ -180,77 +179,77 @@ boolean cht_Responder(event_t *ev)
             // if (gameskill != SM_NIGHTMARE) {
 
             // 'dqd' cheat for toggleable god mode
-            if(cht_CheckCheat(&cheat_god, ev->data1))
+            if(Cht_CheckCheat(&cheat_god, ev->data1))
             {
-                cht_GodFunc(plyr);
+                Cht_GodFunc(plyr);
             }
             // 'fa' cheat for killer fucking arsenal
-            else if(cht_CheckCheat(&cheat_ammonokey, ev->data1))
+            else if(Cht_CheckCheat(&cheat_ammonokey, ev->data1))
             {
-                cht_GiveFunc(plyr, true, true, true, false, &cheat_ammonokey);
+                Cht_GiveFunc(plyr, true, true, true, false, &cheat_ammonokey);
                 P_SetMessage(plyr, STSTR_FAADDED, false);
             }
             // 'kfa' cheat for key full ammo
-            else if(cht_CheckCheat(&cheat_ammo, ev->data1))
+            else if(Cht_CheckCheat(&cheat_ammo, ev->data1))
             {
-                cht_GiveFunc(plyr, true, true, true, true, &cheat_ammo);
+                Cht_GiveFunc(plyr, true, true, true, true, &cheat_ammo);
                 P_SetMessage(plyr, STSTR_KFAADDED, false);
             }
             // 'mus' cheat for changing music
-            else if(cht_CheckCheat(&cheat_mus, ev->data1))
+            else if(Cht_CheckCheat(&cheat_mus, ev->data1))
             {
                 char    buf[3];
 
                 P_SetMessage(plyr, STSTR_MUS, false);
-                cht_GetParam(&cheat_mus, buf);
-                cht_MusicFunc(plyr, buf);   // Might set plyr->message.
+                Cht_GetParam(&cheat_mus, buf);
+                Cht_MusicFunc(plyr, buf);   // Might set plyr->message.
             }
             // Simplified, accepting both "noclip" and "idspispopd".
             // no clipping mode cheat
-            else if(cht_CheckCheat(&cheat_noclip, ev->data1) ||
-                    cht_CheckCheat(&cheat_commercial_noclip, ev->data1))
+            else if(Cht_CheckCheat(&cheat_noclip, ev->data1) ||
+                    Cht_CheckCheat(&cheat_commercial_noclip, ev->data1))
             {
-                cht_NoClipFunc(plyr);
+                Cht_NoClipFunc(plyr);
             }
             // 'behold?' power-up cheats
             for(i = 0; i < 6; i++)
             {
-                if(cht_CheckCheat(&cheat_powerup[i], ev->data1))
+                if(Cht_CheckCheat(&cheat_powerup[i], ev->data1))
                 {
-                    cht_PowerUpFunc(plyr, i);
+                    Cht_PowerUpFunc(plyr, i);
                     P_SetMessage(plyr, STSTR_BEHOLDX, false);
                 }
             }
 
             // 'behold' power-up menu
-            if(cht_CheckCheat(&cheat_powerup[6], ev->data1))
+            if(Cht_CheckCheat(&cheat_powerup[6], ev->data1))
             {
                 P_SetMessage(plyr, STSTR_BEHOLD, false);
             }
             // 'choppers' invulnerability & chainsaw
-            else if(cht_CheckCheat(&cheat_choppers, ev->data1))
+            else if(Cht_CheckCheat(&cheat_choppers, ev->data1))
             {
-                cht_ChoppersFunc(plyr);
+                Cht_ChoppersFunc(plyr);
                 P_SetMessage(plyr, STSTR_CHOPPERS, false);
             }
             // 'mypos' for player position
-            else if(cht_CheckCheat(&cheat_mypos, ev->data1))
+            else if(Cht_CheckCheat(&cheat_mypos, ev->data1))
             {
-                cht_PosFunc(plyr);
+                Cht_MyPosFunc(plyr);
             }
             // 'ddslia' for laser powerups // d64tc
-            else if(cht_CheckCheat(&cheat_laser, ev->data1))
+            else if(Cht_CheckCheat(&cheat_laser, ev->data1))
             {
                 cht_LaserFunc(plyr);
             }
         }
 
-        if(cht_CheckCheat(&cheat_clev, ev->data1))
+        if(Cht_CheckCheat(&cheat_clev, ev->data1))
         {   // 'clev' change-level cheat
             char    buf[3];
 
-            cht_GetParam(&cheat_clev, buf);
-            cht_WarpFunc(plyr, buf);
+            Cht_GetParam(&cheat_clev, buf);
+            Cht_WarpFunc(plyr, buf);
         }
     }
 
@@ -258,7 +257,7 @@ boolean cht_Responder(event_t *ev)
     {
         if(ev->state == EVS_DOWN)
         {
-            if(!deathmatch && cht_CheckCheat(&cheat_amap, (char) ev->data1))
+            if(!deathmatch && Cht_CheckCheat(&cheat_amap, (char) ev->data1))
             {
                 AM_IncMapCheatLevel(consoleplayer);
                 return false;
@@ -283,7 +282,7 @@ boolean can_cheat(void)
 /*
  * Returns a 1 if the cheat was successful, 0 if failed.
  */
-int cht_CheckCheat(cheatseq_t * cht, char key)
+int Cht_CheckCheat(cheatseq_t * cht, char key)
 {
     int     i;
     int     rc = 0;
@@ -315,7 +314,7 @@ int cht_CheckCheat(cheatseq_t * cht, char key)
     return rc;
 }
 
-void cht_GetParam(cheatseq_t * cht, char *buffer)
+void Cht_GetParam(cheatseq_t * cht, char *buffer)
 {
 
     unsigned char *p, c;
@@ -336,7 +335,7 @@ void cht_GetParam(cheatseq_t * cht, char *buffer)
 
 }
 
-void cht_GodFunc(player_t *plyr)
+void Cht_GodFunc(player_t *plyr)
 {
     plyr->cheats ^= CF_GODMODE;
     plyr->update |= PSF_STATE;
@@ -351,7 +350,7 @@ void cht_GodFunc(player_t *plyr)
                  ((P_GetPlayerCheats(plyr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), false);
 }
 
-void cht_SuicideFunc(player_t *plyr)
+void Cht_SuicideFunc(player_t *plyr)
 {
     P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000);
 }
@@ -362,7 +361,7 @@ boolean SuicideResponse(int option, void *data)
     {
         M_StopMessage();
         M_ClearMenus();
-        cht_SuicideFunc(&players[consoleplayer]);
+        Cht_SuicideFunc(&players[consoleplayer]);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
@@ -374,7 +373,7 @@ boolean SuicideResponse(int option, void *data)
     return false;
 }
 
-void cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo, boolean armor,
+void Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo, boolean armor,
                   boolean cards, cheatseq_t *cheat)
 {
     int     i;
@@ -419,7 +418,7 @@ void cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo, boolean armor,
     }
 }
 
-void cht_MusicFunc(player_t *plyr, char *buf)
+void Cht_MusicFunc(player_t *plyr, char *buf)
 {
     int     off, musnum;
 
@@ -431,7 +430,7 @@ void cht_MusicFunc(player_t *plyr, char *buf)
         S_StartMusicNum(musnum, true);
 }
 
-void cht_NoClipFunc(player_t *plyr)
+void Cht_NoClipFunc(player_t *plyr)
 {
     plyr->cheats ^= CF_NOCLIP;
     plyr->update |= PSF_STATE;
@@ -439,7 +438,7 @@ void cht_NoClipFunc(player_t *plyr)
                  ((P_GetPlayerCheats(plyr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF), false);
 }
 
-boolean cht_WarpFunc(player_t *plyr, char *buf)
+boolean Cht_WarpFunc(player_t *plyr, char *buf)
 {
     int     epsd, map;
 
@@ -460,7 +459,7 @@ boolean cht_WarpFunc(player_t *plyr, char *buf)
     return true;
 }
 
-boolean cht_PowerUpFunc(player_t *plyr, int i)
+boolean Cht_PowerUpFunc(player_t *plyr, int i)
 {
     plyr->update |= PSF_POWERS;
     if(!plyr->powers[i])
@@ -478,13 +477,13 @@ boolean cht_PowerUpFunc(player_t *plyr, int i)
     }
 }
 
-void cht_ChoppersFunc(player_t *plyr)
+void Cht_ChoppersFunc(player_t *plyr)
 {
     plyr->weaponowned[WT_EIGHTH] = true;
     plyr->powers[PT_INVULNERABILITY] = true;
 }
 
-void cht_PosFunc(player_t *plyr)
+void Cht_MyPosFunc(player_t *plyr)
 {
     static char buf[ST_MSGWIDTH];
 
@@ -558,9 +557,9 @@ static void CheatDebugFunc(player_t *player, cheat_t * cheat)
     sub = player->plr->mo->subsector;
     Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
     Con_Message("  Floorz:%d pic:%d\n", P_GetIntp(sub, DMU_FLOOR_HEIGHT),
-                P_GetIntp(sub, DMU_FLOOR_TEXTURE));
+                P_GetIntp(sub, DMU_FLOOR_MATERIAL));
     Con_Message("  Ceilingz:%d pic:%d\n", P_GetIntp(sub, DMU_CEILING_HEIGHT),
-                P_GetIntp(sub, DMU_CEILING_TEXTURE));
+                P_GetIntp(sub, DMU_CEILING_MATERIAL));
     Con_Message("Player height:%g   Player radius:%x\n",
                 player->plr->mo->height, player->plr->mo->radius);
 }
@@ -581,7 +580,7 @@ DEFCC(CCmdCheat)
         ev.state = EVS_DOWN;
         ev.data1 = argv[1][i];
         ev.data2 = ev.data3 = 0;
-        cht_Responder(&ev);
+        Cht_Responder(&ev);
     }
     return true;
 }
@@ -594,7 +593,7 @@ DEFCC(CCmdCheatGod)
     }
     else
     {
-        cht_GodFunc(&players[consoleplayer]);
+        Cht_GodFunc(&players[consoleplayer]);
     }
     return true;
 }
@@ -607,7 +606,7 @@ DEFCC(CCmdCheatNoClip)
     }
     else
     {
-        cht_NoClipFunc(&players[consoleplayer]);
+        Cht_NoClipFunc(&players[consoleplayer]);
     }
     return true;
 }
@@ -658,7 +657,7 @@ DEFCC(CCmdCheatWarp)
     else
         return false;
 
-    cht_WarpFunc(&players[consoleplayer], buf);
+    Cht_WarpFunc(&players[consoleplayer], buf);
     return true;
 }
 
@@ -673,7 +672,7 @@ DEFCC(CCmdCheatReveal)
     AM_SetCheatLevel(consoleplayer, 0);
     players[consoleplayer].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
-    if(option < 0 || option > 4)
+    if(option < 0 || option > 3)
         return false;
 
     if(option == 1)
@@ -737,37 +736,37 @@ DEFCC(CCmdCheatGive)
         {
         case 'a':
             Con_Printf("Ammo given.\n");
-            cht_GiveFunc(plyr, 0, true, 0, 0, NULL);
+            Cht_GiveFunc(plyr, 0, true, 0, 0, NULL);
             break;
 
         case 'b':
-            if(cht_PowerUpFunc(plyr, PT_STRENGTH))
+            if(Cht_PowerUpFunc(plyr, PT_STRENGTH))
                 Con_Printf("Your vision blurs! Yaarrrgh!!\n");
             break;
 
         case 'f':
-            if(cht_PowerUpFunc(plyr, PT_FLIGHT))
+            if(Cht_PowerUpFunc(plyr, PT_FLIGHT))
                 Con_Printf("You leap into the air, yet you do not fall...\n");
             break;
 
         case 'g':
             Con_Printf("Light amplification visor given.\n");
-            cht_PowerUpFunc(plyr, PT_INFRARED);
+            Cht_PowerUpFunc(plyr, PT_INFRARED);
             break;
 
         case 'i':
             Con_Printf("You feel invincible!\n");
-            cht_PowerUpFunc(plyr, PT_INVULNERABILITY);
+            Cht_PowerUpFunc(plyr, PT_INVULNERABILITY);
             break;
 
         case 'k':
             Con_Printf("Key cards and skulls given.\n");
-            cht_GiveFunc(plyr, 0, 0, 0, true, NULL);
+            Cht_GiveFunc(plyr, 0, 0, 0, true, NULL);
             break;
 
         case 'm':
             Con_Printf("Computer area map given.\n");
-            cht_PowerUpFunc(plyr, PT_ALLMAP);
+            Cht_PowerUpFunc(plyr, PT_ALLMAP);
             break;
 
         case 'p':
@@ -777,22 +776,22 @@ DEFCC(CCmdCheatGive)
 
         case 'r':
             Con_Printf("Full armor given.\n");
-            cht_GiveFunc(plyr, 0, 0, true, 0, NULL);
+            Cht_GiveFunc(plyr, 0, 0, true, 0, NULL);
             break;
 
         case 's':
             Con_Printf("Radiation shielding suit given.\n");
-            cht_PowerUpFunc(plyr, PT_IRONFEET);
+            Cht_PowerUpFunc(plyr, PT_IRONFEET);
             break;
 
         case 'v':
             Con_Printf("You are suddenly almost invisible!\n");
-            cht_PowerUpFunc(plyr, PT_INVISIBILITY);
+            Cht_PowerUpFunc(plyr, PT_INVISIBILITY);
             break;
 
         case 'w':
             Con_Printf("Weapons given.\n");
-            cht_GiveFunc(plyr, true, 0, 0, 0, NULL);
+            Cht_GiveFunc(plyr, true, 0, 0, 0, NULL);
             break;
 
         default:

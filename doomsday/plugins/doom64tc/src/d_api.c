@@ -6,7 +6,6 @@
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -65,7 +64,7 @@ int     G_PrivilegedResponder(event_t *event);
 void    P_SetupForMapData(int type, uint num);
 
 // Map Objects
-fixed_t P_GetMobjFriction(struct mobj_s *mo);
+float   P_GetMobjFriction(struct mobj_s *mo);
 void    P_MobjThinker(mobj_t *mobj);
 
 // Misc
@@ -121,16 +120,6 @@ int G_GetInteger(int id)
 {
     switch(id)
     {
-    case DD_PSPRITE_BOB_X:
-        return (int) (FRACUNIT +
-            FixedMul(FixedMul(FRACUNIT * cfg.bobWeapon, players[consoleplayer].bob),
-                     finecosine[(128 * leveltime) & FINEMASK]));
-
-    case DD_PSPRITE_BOB_Y:
-        return (int) (32 * FRACUNIT +
-            FixedMul(FixedMul(FRACUNIT * cfg.bobWeapon, players[consoleplayer].bob),
-                     finesine[(128 * leveltime) & FINEMASK & (FINEANGLES / 2 - 1)]));
-
     case DD_GAME_DMUAPI_VER:
         return DMUAPI_VER;
 
@@ -146,6 +135,8 @@ int G_GetInteger(int id)
  */
 void *G_GetVariable(int id)
 {
+    static float bob[2];
+
     switch(id)
     {
     case DD_GAME_NAME:
@@ -171,6 +162,18 @@ void *G_GetVariable(int id)
 
     case DD_XGFUNC_LINK:
         return xgClasses;
+
+    case DD_PSPRITE_BOB_X:
+        bob[VX] = 1 + (cfg.bobWeapon * players[consoleplayer].bob) *
+            FIX2FLT(finecosine[(128 * leveltime) & FINEMASK]);
+
+        return &bob[VX];
+
+    case DD_PSPRITE_BOB_Y:
+        bob[VY] = 32 + (cfg.bobWeapon * players[consoleplayer].bob) *
+            FIX2FLT(finesine[(128 * leveltime) & FINEMASK & (FINEANGLES / 2 - 1)]);
+
+        return &bob[VY];
 
     default:
         break;
@@ -205,7 +208,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.FallbackResponder = M_Responder;
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (fixed_t (*)(void *)) P_GetMobjFriction;
+    gx.MobjFriction = (float (*)(void *)) P_GetMobjFriction;
     gx.EndFrame = D_EndFrame;
     gx.ConsoleBackground = D_ConsoleBg;
     gx.UpdateState = G_UpdateState;

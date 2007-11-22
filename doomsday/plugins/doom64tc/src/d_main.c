@@ -3,12 +3,11 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +25,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * d_main.c: DOOM64TC specifc Initialization.
  */
 
@@ -509,7 +508,7 @@ void D_PostInit(void)
     p = ArgCheck("-loadgame");
     if(p && p < myargc - 1)
     {
-        SV_SaveGameFile(Argv(p + 1)[0] - '0', file);
+        SV_GetSaveGameFileName(Argv(p + 1)[0] - '0', file);
         G_LoadGame(file);
     }
 
@@ -567,13 +566,13 @@ void D_Shutdown(void)
 void D_Ticker(timespan_t ticLength)
 {
     static trigger_t fixed = { 1.0 / 35 };
-    
+
     // Fixed ticks for the menu ticker.
     if(M_RunTrigger(&fixed, ticLength))
     {
         MN_Ticker();
     }
-    
+
     // Game gets fractional ticks.
     G_Ticker(ticLength);
 }
