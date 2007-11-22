@@ -43,6 +43,10 @@
  * \bug Not 64bit clean: In function 'P_LoadACScripts': cast from pointer to integer of different size, cast to pointer from integer of different size
  */
 
+/**
+ * p_acs.c:
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "jhexen.h"
@@ -615,7 +619,7 @@ static boolean TagBusy(int tag)
     for(k = 0; k < numsectors; ++k)
     {
         sec = P_ToPtr(DMU_SECTOR, k);
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
 
         if(xsec->tag != tag)
             continue;
@@ -1244,7 +1248,7 @@ static int CmdChangeFloor(void)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        P_SetIntp(sec, DMU_FLOOR_TEXTURE, flat);
+        P_SetIntp(sec, DMU_FLOOR_MATERIAL, flat);
     }
     return SCRIPT_CONTINUE;
 }
@@ -1266,7 +1270,7 @@ static int CmdChangeFloorDirect(void)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        P_SetIntp(sec, DMU_FLOOR_TEXTURE, flat);
+        P_SetIntp(sec, DMU_FLOOR_MATERIAL, flat);
     }
     return SCRIPT_CONTINUE;
 }
@@ -1288,7 +1292,7 @@ static int CmdChangeCeiling(void)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        P_SetIntp(sec, DMU_CEILING_TEXTURE, flat);
+        P_SetIntp(sec, DMU_CEILING_MATERIAL, flat);
     }
     return SCRIPT_CONTINUE;
 }
@@ -1310,7 +1314,7 @@ static int CmdChangeCeilingDirect(void)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        P_SetIntp(sec, DMU_CEILING_TEXTURE, flat);
+        P_SetIntp(sec, DMU_CEILING_MATERIAL, flat);
     }
     return SCRIPT_CONTINUE;
 }
@@ -1418,7 +1422,7 @@ static int CmdClearLineSpecial(void)
 {
     if(ACScript->line)
     {
-        P_XLine(ACScript->line)->special = 0;
+        P_ToXLine(ACScript->line)->special = 0;
     }
     return SCRIPT_CONTINUE;
 }
@@ -1601,7 +1605,7 @@ static int CmdAmbientSound(void)
     {
         // SpawnMobj calls P_Random. We don't want that
         // the random generator gets out of sync.
-        mobj = P_SpawnMobj(plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
+        mobj = P_SpawnMobj3f(plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
                            plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
                            plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
                            MT_CAMERA); // A camera's a good temporary source.
@@ -1653,15 +1657,15 @@ static int CmdSetLineTexture(void)
                                  (side == 0? DMU_SIDE0 : DMU_SIDE1));
         if(position == TEXTURE_MIDDLE)
         {
-            P_SetIntp(sdef, DMU_MIDDLE_TEXTURE, texture);
+            P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, texture);
         }
         else if(position == TEXTURE_BOTTOM)
         {
-            P_SetIntp(sdef, DMU_BOTTOM_TEXTURE, texture);
+            P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, texture);
         }
         else
         {                       // TEXTURE_TOP
-            P_SetIntp(sdef, DMU_TOP_TEXTURE, texture);
+            P_SetIntp(sdef, DMU_TOP_MATERIAL, texture);
         }
     }
     return SCRIPT_CONTINUE;
@@ -1712,7 +1716,7 @@ static int CmdSetLineSpecial(void)
     P_IterListResetIterator(list, true);
     while((line = P_IterListIterator(list)) != NULL)
     {
-        xline_t* xline = P_XLine(line);
+        xline_t* xline = P_ToXLine(line);
         xline->special = special;
         xline->arg1 = arg1;
         xline->arg2 = arg2;

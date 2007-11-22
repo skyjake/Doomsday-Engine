@@ -96,9 +96,8 @@ unsigned char rndtable[256] = {
 int     backup_prndindex;
 int     prndindex = 0;
 
-/*
- * P_Random
- *  Returns a pseudo-random number from the table.
+/**
+ * @return                  A pseudo-random number from the table.
  */
 byte P_Random()
 {

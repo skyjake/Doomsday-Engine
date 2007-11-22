@@ -32,7 +32,7 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
+/**
  * g_ctrl.c: Control bindings - Hexen specific
  */
 

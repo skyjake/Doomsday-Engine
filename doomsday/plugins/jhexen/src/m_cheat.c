@@ -1,40 +1,48 @@
 /**\file
  *\section License
- * License: GPL + jHeretic/jHexen Exception
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+ * License: Raven
+ * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
+ * code license; you can redistribute it and/or modify it under the terms
+ * of the HERETIC / HEXEN source code license as published by Activision.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * THIS MATERIAL IS NOT MADE OR SUPPORTED BY ACTIVISION.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * WARRANTY INFORMATION.
+ * This program is provided as is. Activision and it's affiliates make no
+ * warranties of any kind, whether oral or written , express or implied,
+ * including any warranty of merchantability, fitness for a particular
+ * purpose or non-infringement, and no other representations or claims of
+ * any kind shall be binding on or obligate Activision or it's affiliates.
  *
- * In addition, as a special exception, we, the authors of deng
- * give permission to link the code of our release of deng with
- * the libjhexen and/or the libjheretic libraries (or with modified
- * versions of it that use the same license as the libjhexen or
- * libjheretic libraries), and distribute the linked executables.
- * You must obey the GNU General Public License in all respects for
- * all of the code used other than “libjhexen or libjheretic”. If
- * you modify this file, you may extend this exception to your
- * version of the file, but you are not obligated to do so. If you
- * do not wish to do so, delete this exception statement from your version.
+ * LICENSE CONDITIONS.
+ * You shall not:
+ *
+ * 1) Exploit this Program or any of its parts commercially.
+ * 2) Use this Program, or permit use of this Program, on more than one
+ *    computer, computer terminal, or workstation at the same time.
+ * 3) Make copies of this Program or any part thereof, or make copies of
+ *    the materials accompanying this Program.
+ * 4) Use the program, or permit use of this Program, in a network,
+ *    multi-user arrangement or remote access arrangement, including any
+ *    online use, except as otherwise explicitly provided by this Program.
+ * 5) Sell, rent, lease or license any copies of this Program, without
+ *    the express prior written consent of Activision.
+ * 6) Remove, disable or circumvent any proprietary notices or labels
+ *    contained on or within the Program.
+ *
+ * You should have received a copy of the HERETIC / HEXEN source code
+ * license along with this program (Ravenlic.txt); if not:
+ * http://www.ravensoft.com/
  */
 
-/*
- * m_cheat.c : Cheat sequence checking.
- *
+/**
+ * m_cheat.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -45,6 +53,7 @@
 #include "p_player.h"
 #include "p_map.h"
 #include "am_map.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -85,7 +94,7 @@ typedef struct cheat_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-boolean     cht_Responder(event_t *ev);
+boolean     Cht_Responder(event_t *ev);
 static boolean CheatAddKey(cheat_t * cheat, byte key, boolean *eat);
 static void CheatGodFunc(player_t *player, cheat_t * cheat);
 static void CheatNoClipFunc(player_t *player, cheat_t * cheat);
@@ -470,7 +479,7 @@ static cheat_t Cheats[] = {
 
 // CODE --------------------------------------------------------------------
 
-void cht_Init(void)
+void Cht_Init(void)
 {
     int     i;
 
@@ -486,7 +495,7 @@ void cht_Init(void)
  * @param       ev          ptr to the event to be checked
  * @returnval   boolean     (True) if the caller should eat the key.
  */
-boolean cht_Responder(event_t *ev)
+boolean Cht_Responder(event_t *ev)
 {
     int     i;
     byte    key = ev->data1;
@@ -612,12 +621,12 @@ static boolean CheatAddKey(cheat_t * cheat, byte key, boolean *eat)
     return (false);
 }
 
-void cht_GodFunc(player_t *player)
+void Cht_GodFunc(player_t *player)
 {
     CheatGodFunc(player, NULL);
 }
 
-void cht_NoClipFunc(player_t *player)
+void Cht_NoClipFunc(player_t *player)
 {
     CheatNoClipFunc(player, NULL);
 }
@@ -651,7 +660,7 @@ static void CheatNoClipFunc(player_t *player, cheat_t * cheat)
     }
 }
 
-void cht_SuicideFunc(player_t *plyr)
+void Cht_SuicideFunc(player_t *plyr)
 {
     P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000);
 }
@@ -662,7 +671,7 @@ boolean SuicideResponse(int option, void *data)
     {
         M_StopMessage();
         M_ClearMenus();
-        cht_SuicideFunc(&players[consoleplayer]);
+        Cht_SuicideFunc(&players[consoleplayer]);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
@@ -930,22 +939,22 @@ static void CheatDebugFunc(player_t *player, cheat_t * cheat)
         return;
 
     P_GetMapLumpName(gameepisode, gamemap, lumpName);
-    sprintf(textBuffer, "MAP [%s]  X:%5d  Y:%5d  Z:%5d",
+    sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             lumpName,
-            player->plr->mo->pos[VX] >> FRACBITS,
-            player->plr->mo->pos[VY] >> FRACBITS,
-            player->plr->mo->pos[VZ] >> FRACBITS);
+            player->plr->mo->pos[VX],
+            player->plr->mo->pos[VY],
+            player->plr->mo->pos[VZ]);
     P_SetMessage(player, textBuffer, false);
 
     // Also print some information to the console.
     Con_Message(textBuffer);
     sub = player->plr->mo->subsector;
     Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
-    Con_Message("  Floorz:%d pic:%d\n", P_GetIntp(sub, DMU_FLOOR_HEIGHT),
-                P_GetIntp(sub, DMU_FLOOR_TEXTURE));
-    Con_Message("  Ceilingz:%d pic:%d\n", P_GetIntp(sub, DMU_CEILING_HEIGHT),
-                P_GetIntp(sub, DMU_CEILING_TEXTURE));
-    Con_Message("Player height:%g   Player radius:%x\n",
+    Con_Message("  Floorz:%g pic:%d\n", P_GetFloatp(sub, DMU_FLOOR_HEIGHT),
+                P_GetIntp(sub, DMU_FLOOR_MATERIAL));
+    Con_Message("  Ceilingz:%g pic:%d\n", P_GetFloatp(sub, DMU_CEILING_HEIGHT),
+                P_GetIntp(sub, DMU_CEILING_MATERIAL));
+    Con_Message("Player height:%g   Player radius:%g\n",
                 player->plr->mo->height, player->plr->mo->radius);
 }
 
@@ -1051,7 +1060,7 @@ DEFCC(CCmdCheat)
         ev.state = EVS_DOWN;
         ev.data1 = argv[1][i];
         ev.data2 = ev.data3 = 0;
-        cht_Responder(&ev);
+        Cht_Responder(&ev);
     }
     return true;
 }
@@ -1278,7 +1287,7 @@ DEFCC(CCmdCheatReveal)
     AM_SetCheatLevel(consoleplayer, 0);
     players[consoleplayer].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
-    if(option < 0 || option > 4)
+    if(option < 0 || option > 3)
         return false;
 
     if(option == 1)

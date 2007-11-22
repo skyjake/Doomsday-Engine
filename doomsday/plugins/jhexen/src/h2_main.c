@@ -3,9 +3,9 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,14 +28,14 @@
  * versions of it that use the same license as the libjhexen or
  * libjheretic libraries), and distribute the linked executables.
  * You must obey the GNU General Public License in all respects for
- * all of the code used other than “libjhexen or libjheretic”. If
+ * all of the code used other than ?libjhexen or libjheretic?. If
  * you modify this file, you may extend this exception to your
  * version of the file, but you are not obligated to do so. If you
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * H2_main.c: Hexen specifc Initialization.
+/**
+ * h2_main.c: Hexen specifc Initialization.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -79,13 +79,16 @@ int     D_PrivilegedResponder(event_t *event);
 void    R_DrawPlayerSprites(ddplayer_t *viewplr);
 void    G_ConsoleRegistration();
 void    SB_HandleCheatNotification(int fromplayer, void *data, int length);
-int     HU_PSpriteYOffset(player_t *pl);
+float   HU_PSpriteYOffset(player_t *pl);
 
 // Map Data
 void    P_SetupForThings(int num);
 void    P_SetupForLines(int num);
 void    P_SetupForSides(int num);
 void    P_SetupForSectors(int num);
+
+void    X_CreateLUTs(void);
+void    X_DestroyLUTs(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -184,7 +187,7 @@ static execopt_t ExecOptions[] = {
  *  global vars.
  *
  * @param mode          The game mode to change to.
- * @return boolean      (TRUE) if we changed game modes successfully.
+ * @return              @c true, if we changed game modes successfully.
  */
 boolean D_SetGameMode(gamemode_t mode)
 {
@@ -266,6 +269,9 @@ void H2_PreInit(void)
 {
     int         i;
 
+    // Calculate the various LUTs used by the playsim.
+    X_CreateLUTs();
+
     D_SetGameMode(indetermined);
 
     // Config defaults. The real settings are read from the .cfg files
@@ -279,14 +285,14 @@ void H2_PreInit(void)
     cfg.hudShown[HUD_MANA] = true;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARTI] = true;
-    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
     cfg.xhairSize = 1;
     for(i = 0; i < 4; ++i)
         cfg.xhairColor[i] = 255;
-    cfg.jumpEnabled = cfg.netJumping = true;     // true by default in Hexen
+    cfg.jumpEnabled = cfg.netJumping = true; // true by default in Hexen
     cfg.jumpPower = 9;
     cfg.airborneMovement = 1;
     cfg.weaponAutoSwitch = 1; // IF BETTER
@@ -632,12 +638,13 @@ void H2_Shutdown(void)
     P_DestroySectorTagLists();
     P_FreeButtons();
     AM_Shutdown();
+    X_DestroyLUTs();
 }
 
 void H2_Ticker(timespan_t ticLength)
 {
     static trigger_t fixed = { 1.0 / 35 };
-    
+
     if(M_RunTrigger(&fixed, ticLength))
     {
         MN_Ticker();

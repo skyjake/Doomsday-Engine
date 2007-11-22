@@ -3,8 +3,8 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,14 +27,14 @@
  * versions of it that use the same license as the libjhexen or
  * libjheretic libraries), and distribute the linked executables.
  * You must obey the GNU General Public License in all respects for
- * all of the code used other than “libjhexen or libjheretic”. If
+ * all of the code used other than ?libjhexen or libjheretic?. If
  * you modify this file, you may extend this exception to your
  * version of the file, but you are not obligated to do so. If you
  * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
- * jHexen-specific refresh stuff.
+ * hrefresh.h: Console stuff - jHexen specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -42,7 +42,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "jhexen.h"
 
@@ -51,15 +50,16 @@
 #include "p_mapsetup.h"
 #include "g_controls.h"
 #include "am_map.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8) + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
 
-#define viewheight  Get(DD_VIEWWINDOW_HEIGHT)
+#define viewheight              Get(DD_VIEWWINDOW_HEIGHT)
 
-#define SIZEFACT 4
-#define SIZEFACT2 16
+#define SIZEFACT                4
+#define SIZEFACT2               16
 
 // TYPES -------------------------------------------------------------------
 
@@ -135,7 +135,7 @@ void R_DrawMapTitle(void)
     if(actual_leveltime > 5 * 35)
         alpha = 1 - (actual_leveltime - 5 * 35) / 35.0f;
 
-    lname = (char *) DD_GetVariable(DD_MAP_NAME);
+    lname = P_GetMapNiceName();
     lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
 
     // Use stardard map name if DED didn't define it.
@@ -234,7 +234,7 @@ void G_Drawer(void)
             GL_SetFilter(vplayer->plr->filter); // $democam
             // Check for the sector special 200: use sky2.
             // I wonder where this is used?
-            if(P_XSectorOfSubsector(vplayer->plr->mo->subsector)->special == 200)
+            if(P_ToXSectorOfSubsector(vplayer->plr->mo->subsector)->special == 200)
             {
                 special200 = true;
                 Rend_SkyParams(0, DD_DISABLE, 0);
@@ -260,14 +260,15 @@ void G_Drawer(void)
             {
                 R_RenderPlayerView(vplayer->plr);
             }
+
             if(special200)
             {
                 Rend_SkyParams(0, DD_ENABLE, 0);
                 Rend_SkyParams(1, DD_DISABLE, 0);
             }
-            if(!iscam)
-                X_Drawer();     // Draw the crosshair.
 
+            if(!iscam)
+                X_Drawer(); // Draw the crosshair.
         }
 
         // Draw the automap.
@@ -407,7 +408,7 @@ void R_SetAllDoomsdayFlags(void)
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
-        for(mo = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); mo; mo = mo->snext)
+        for(mo = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); mo; mo = mo->snext)
         {
             if(IS_CLIENT && mo->ddflags & DDMF_REMOTE)
                 continue;
