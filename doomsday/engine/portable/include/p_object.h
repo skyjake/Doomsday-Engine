@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_object.h: Map Objects
  */
 
@@ -36,14 +36,14 @@
 #  error "Attempted to include internal Doomsday p_object.h from a game"
 #endif
 
-// This macro can be used to calculate a thing-specific 'random' number.
-#define THING_TO_ID(mo) ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
+// This macro can be used to calculate a mobj-specific 'random' number.
+#define MOBJ_TO_ID(mo) ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
 
 // We'll use the base mobj template directly as our mobj.
 typedef struct mobj_s {
 DD_BASE_MOBJ_ELEMENTS()} mobj_t;
 
-#define DEFAULT_FRICTION    0xe800
+#define DEFAULT_FRICTION    FIX2FLT(0xe800)
 
 extern float    tmpFloorZ, tmpCeilingZ;
 extern mobj_t  *blockingMobj;
@@ -52,14 +52,14 @@ extern boolean  dontHitMobjs;
 #include "cl_def.h"                // for playerstate_s
 
 void            P_SetState(mobj_t *mo, int statenum);
-void            P_ThingMovement(mobj_t *mo);
-void            P_ThingMovement2(mobj_t *mo, void *pstate);
-void            P_ThingZMovement(mobj_t *mo);
-boolean         P_TryMoveXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z);
-boolean         P_StepMove(mobj_t *thing, fixed_t dx, fixed_t dy, fixed_t dz);
-boolean         P_CheckPosXY(mobj_t *thing, fixed_t x, fixed_t y);
-boolean         P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z);
+void            P_MobjMovement(mobj_t *mo);
+void            P_MobjMovement2(mobj_t *mo, void *pstate);
+void            P_MobjZMovement(mobj_t *mo);
+boolean         P_TryMoveXYZ(mobj_t *mo, float x, float y, float z);
+boolean         P_StepMove(mobj_t *mo, float dx, float dy, float dz);
+boolean         P_CheckPosXY(mobj_t *mo, float x, float y);
+boolean         P_CheckPosXYZ(mobj_t *mo, float x, float y, float z);
 boolean         P_SectorPlanesChanged(sector_t *sector);
 
-boolean         P_IsInVoid(ddplayer_t* p);
+boolean         P_IsInVoid(ddplayer_t *p);
 #endif

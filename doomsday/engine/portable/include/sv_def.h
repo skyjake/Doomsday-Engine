@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sv_def.h: Server Definitions
  */
 
@@ -34,7 +35,7 @@
 #define SV_VERSION			7
 #define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R7)"
 
-// Anything closer than this is always taken into consideration when 
+// Anything closer than this is always taken into consideration when
 // deltas are being generated.
 #define CLOSE_MOBJ_DIST		512
 
@@ -64,7 +65,7 @@ int             Sv_InfoToString(serverinfo_t *info, ddstring_t * msg);
 boolean         Sv_StringToInfo(const char *valuePair, serverinfo_t *info);
 int             Sv_GetNumPlayers(void);
 int             Sv_GetNumConnected(void);
-void            Sv_PlaceThing(struct mobj_s* mo, fixed_t x, fixed_t y, fixed_t z, boolean onFloor);
+void            Sv_PlaceMobj(struct mobj_s* mo, float x, float y, float z, boolean onFloor);
 
 boolean         Sv_CheckBandwidth(int playerNumber);
 

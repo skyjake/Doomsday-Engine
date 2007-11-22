@@ -154,22 +154,22 @@ typedef struct rendpoly_wall_s {
 typedef struct rendpoly_s {
     boolean         isWall;
     rendpolytype_t  type;
-    short           flags;         // RPF_*.
-    float           texoffx, texoffy;   /* Texture coordinates for left/top
-                                           (in real texcoords). */
+    short           flags;          // RPF_*.
+    float           texOffset[2];   // Texture coordinates for left/top
+                                    // (in real texcoords).
     gltexture_t     tex;
     gltexture_t     intertex;
-    float           interpos;      // Blending strength (0..1).
-    uint            lightListIdx;  // List of lights that affect this poly.
-    DGLuint         decorlightmap; // Pregen RGB lightmap for decor lights.
-    blendmode_t     blendmode;     // Primitive-specific blending mode.
+    float           interpos;       // Blending strength (0..1).
+    uint            lightListIdx;   // List of lights that affect this poly.
+    DGLuint         decorlightmap;  // Pregen RGB lightmap for decor lights.
+    blendmode_t     blendmode;      // Primitive-specific blending mode.
 
     // The geometry:
     float           normal[3];
-    byte            numvertices;   // Number of vertices for the poly.
+    byte            numvertices;    // Number of vertices for the poly.
     rendpoly_vertex_t *vertices;
 
-    rendpoly_wall_t *wall;         // Wall specific data if any.
+    rendpoly_wall_t *wall;          // Wall specific data if any.
 } rendpoly_t;
 
 // This is the dummy mobj_t used for blockring roots.
@@ -178,7 +178,7 @@ typedef struct rendpoly_s {
 // Note: the thinker and pos data could be used for something else...
 typedef struct linkmobj_s {
     thinker_t       thinker;
-    fixed_t         pos[3];
+    float           pos[3];
     struct mobj_s  *next, *prev;
 } linkmobj_t;
 
@@ -342,10 +342,10 @@ typedef struct {
 
 extern nodeindex_t *linelinks;
 extern blockmap_t *BlockMap;
+extern blockmap_t *SSecBlockMap;
 extern linkmobj_t *blockrings;
-extern polyblock_t **polyblockmap;
 extern byte    *rejectmatrix;      // for fast sight rejection
-extern nodepile_t *thingnodes, *linenodes;
+extern nodepile_t *mobjnodes, *linenodes;
 
 extern int      viewwidth, viewheight;
 extern int      numtextures;

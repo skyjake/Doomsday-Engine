@@ -22,24 +22,24 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_util.h: Refresh Utility Routines
  */
 
 #ifndef __DOOMSDAY_REFRESH_UTIL_H__
 #define __DOOMSDAY_REFRESH_UTIL_H__
 
-int             R_PointOnSide(const fixed_t x, const fixed_t y,
+int             R_PointOnSide(const float x, const float y,
                               const node_t *node);
-angle_t         R_PointToAngle(fixed_t x, fixed_t y);
-angle_t         R_PointToAngle2(const fixed_t x1, const fixed_t y1,
-                                const fixed_t x2, const fixed_t y2);
-fixed_t         R_PointToDist(const fixed_t x, const fixed_t y);
+angle_t         R_PointToAngle(float x, float y);
+angle_t         R_PointToAngle2(const float x1, const float y1,
+                                const float x2, const float y2);
+float           R_PointToDist(const float x, const float y);
 line_t         *R_GetLineForSide(const uint sideIDX);
-subsector_t    *R_PointInSubsector(const fixed_t x, const fixed_t y);
-boolean         R_IsPointInSector(const fixed_t x, const fixed_t y,
+subsector_t    *R_PointInSubsector(const float x, const float y);
+boolean         R_IsPointInSector(const float x, const float y,
                                   const sector_t *sector);
-boolean         R_IsPointInSector2(const fixed_t x, const fixed_t y,
+boolean         R_IsPointInSector2(const float x, const float y,
                                    const sector_t *sector);
 void            R_ScaleAmbientRGB(float *out, const float *in, float mul);
 sector_t*       R_GetSectorForDegen(const void *degenmobj);

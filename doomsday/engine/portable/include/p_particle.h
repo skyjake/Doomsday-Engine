@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_particle.h: Particle Generator Management
  */
 
@@ -136,6 +136,6 @@ void            P_CheckPtcPlanes(void);
 void            P_UpdateParticleGens(void);
 
 float           P_GetParticleRadius(ded_ptcstage_t *stage_def, int ptc_index);
-fixed_t         P_GetParticleZ(particle_t *pt);
+float           P_GetParticleZ(particle_t *pt);
 
 #endif

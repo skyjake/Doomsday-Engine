@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sv_pool.h: Delta Pools
  */
 
@@ -238,7 +238,7 @@ typedef struct {
     char            sideMove;
     int             angle;
     int             turnDelta;
-    int             friction;
+    float           friction;
     int             extraLight;
     int             fixedColorMap;
     int             filter;
@@ -260,7 +260,6 @@ typedef struct {
 typedef struct {
 	dt_material_t   material;
     float           rgba[4];       // Surface color tint
-    float           texmove[2];    // Texture movement X and Y.
     int             blendmode;
 } dt_surface_t;
 
@@ -304,7 +303,7 @@ typedef struct {
 
 typedef struct {
     fvertex_t       dest;
-    int             speed;
+    float           speed;
     angle_t         destAngle;
     angle_t         angleSpeed;
 } dt_poly_t;
@@ -357,9 +356,9 @@ typedef struct deltalink_s {
  */
 typedef struct ownerinfo_s {
     struct pool_s  *pool;
-    fixed_t         pos[3];       // Distance is the most important factor
+    float           pos[3];       // Distance is the most important factor
     angle_t         angle;         // Angle can change rapidly => not very important
-    fixed_t         speed;
+    float           speed;
     uint            ackThreshold;  // Expected ack time in milliseconds
 } ownerinfo_t;
 
@@ -407,8 +406,8 @@ void            Sv_GenerateFrameDeltas(void);
 boolean         Sv_IsFrameTarget(uint clientNumber);
 uint            Sv_GetTimeStamp(void);
 pool_t         *Sv_GetPool(int clientNumber);
-void            Sv_RatePool(pool_t * pool);
-delta_t        *Sv_PoolQueueExtract(pool_t * pool);
+void            Sv_RatePool(pool_t *pool);
+delta_t        *Sv_PoolQueueExtract(pool_t *pool);
 void            Sv_AckDeltaSet(uint clientNumber, int set, byte resent);
 uint            Sv_CountUnackedDeltas(uint clientNumber);
 

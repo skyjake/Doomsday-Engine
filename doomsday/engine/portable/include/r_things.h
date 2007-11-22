@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_things.h: Object Management and Refresh
  */
 
@@ -53,13 +53,13 @@ typedef struct rendmaskedwallparams_s {
         unsigned char   color[4];
     } vertices[4];
     float           texc[2][2]; // u and v coordinates.
-    
+
     DGLuint         modTex; // Texture to modulate with.
     float           modTexC[2][2]; // u and v coordinates.
     float           modColor[3];
 } rendmaskedwallparams_t;
 
-// A vissprite_t is a thing or masked wall that will be drawn during
+// A vissprite_t is a mobj or masked wall that will be drawn during
 // a refresh.
 typedef struct vissprite_s {
     struct vissprite_s *prev, *next;
@@ -116,7 +116,7 @@ typedef struct visspritelightparams_s {
 
 // Sprites are patches with a special naming convention so they can be
 // recognized by R_InitSprites.  The sprite and frame specified by a
-// thing_t is range checked at run time.
+// mobj is range checked at run time.
 
 // a sprite is a patch_t that is assumed to represent a three dimensional
 // object and may have multiple rotations pre drawn.  Horizontal flipping
@@ -153,7 +153,7 @@ extern spritedef_t *sprites;
 extern int      numSprites;
 extern spritelump_t **spritelumps;
 extern int      numSpriteLumps;
-extern int      pspOffX, pspOffY;
+extern float    pspOffset[2];
 extern int      alwaysAlign;
 extern float    weaponOffsetScale, weaponFOVShift;
 extern int      weaponOffsetScaleY;
@@ -166,11 +166,11 @@ extern vissprite_t vsprsortedhead;
 
 void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
 void            R_GetPatchInfo(int lump, spriteinfo_t *info);
-int             R_VisualRadius(struct mobj_s *mo);
+float           R_VisualRadius(struct mobj_s *mo);
 float           R_GetBobOffset(struct mobj_s *mo);
-float           R_MovementYaw(fixed_t momx, fixed_t momy);
-float           R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz);
-void            R_ProjectSprite(struct mobj_s *thing);
+float           R_MovementYaw(float momx, float momy);
+float           R_MovementPitch(float momx, float momy, float momz);
+void            R_ProjectSprite(struct mobj_s *mobj);
 void            R_ProjectPlayerSprites(void);
 void            R_SortVisSprites(void);
 vissprite_t    *R_NewVisSprite(void);
@@ -180,10 +180,10 @@ void            R_DrawSprites(void);
 void            R_InitSprites(void);
 void            R_ClearSprites(void);
 
-void            R_ClipVisSprite(vissprite_t * vis, int xl, int xh);
+void            R_ClipVisSprite(vissprite_t *vis, int xl, int xh);
 
 void            R_SetAmbientColor(float *rgba, float lightLevel, float distance);
 void            R_DetermineLightsAffectingVisSprite(const visspritelightparams_t *params,
-                                                 vlight_t **ptr, uint *num);
+                                                    vlight_t **ptr, uint *num);
 
 #endif
