@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -257,7 +257,7 @@ int DS_EAXInit(void)
 /**
  * Init DirectSound, start playing the primary buffer.
  *
- * @return              <code>true</code> if successful.
+ * @return              @ true, if successful.
  */
 int DS_DSoundInit(void)
 {
