@@ -264,9 +264,25 @@ static void drawSideText(const char *text, int line, float alpha)
 }
 #endif
 
+static __inline int consoleMinHeight(void)
+{
+    return 1.25f * fontSy + GetConsoleTitleBarHeight() /
+        theWindow->height * 200;
+}
+
 void Rend_ConsoleToggleFullscreen(void)
 {
-    ConsoleDestY = ConsoleOpenY = (ConsoleDestY == 200 ? 100 : 200);
+    float       y;
+    int         minHeight = consoleMinHeight();
+
+    if(ConsoleDestY == minHeight)
+        y = 100;
+    else if(ConsoleDestY == 100)
+        y = 200;
+    else
+        y = minHeight;
+
+    ConsoleDestY = ConsoleOpenY = y;
 }
 
 void Rend_ConsoleOpen(int yes)
@@ -290,7 +306,8 @@ void Rend_ConsoleMove(int numLines)
 
     if(numLines < 0)
     {
-        int minHeight = 1.25f*fontSy + GetConsoleTitleBarHeight() / theWindow->height * 200;
+        int         minHeight = consoleMinHeight();
+
         ConsoleOpenY -= fontSy * -numLines;
         if(ConsoleOpenY < minHeight)
             ConsoleOpenY = minHeight;
