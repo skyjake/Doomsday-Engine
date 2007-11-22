@@ -3,10 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +25,10 @@
  * \bug Not 64bit clean: In function 'SV_ReadMobj': cast to pointer from integer of different size
  * \bug Not 64bit clean: In function 'P_v19_UnArchivePlayers': cast from pointer to integer of different size
  * \bug Not 64bit clean: In function 'P_v19_UnArchiveThinkers': cast from pointer to integer of different size
+ */
+
+/**
+ * p_oldsvg.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -96,7 +99,7 @@ static void SV_ReadPlayer(player_t *pl)
     pl->plr->viewZ = FIX2FLT(SV_ReadLong());
     pl->plr->viewheight = FIX2FLT(SV_ReadLong());
     pl->plr->deltaviewheight = FIX2FLT(SV_ReadLong());
-    pl->bob = SV_ReadLong();
+    pl->bob = FLT2FIX(SV_ReadLong());
     pl->flyheight = 0;
     pl->health = SV_ReadLong();
     pl->armorpoints = SV_ReadLong();
@@ -148,9 +151,9 @@ static void SV_ReadMobj(mobj_t *mo)
     SV_ReadLong();
 
     // Info for drawing: position.
-    mo->pos[VX] = SV_ReadLong();
-    mo->pos[VY] = SV_ReadLong();
-    mo->pos[VZ] = SV_ReadLong();
+    mo->pos[VX] = FIX2FLT(SV_ReadLong());
+    mo->pos[VY] = FIX2FLT(SV_ReadLong());
+    mo->pos[VZ] = FIX2FLT(SV_ReadLong());
 
     // More list: links in sector (if needed)
     SV_ReadLong();
@@ -174,13 +177,13 @@ static void SV_ReadMobj(mobj_t *mo)
     mo->ceilingz = FIX2FLT(SV_ReadLong());
 
     // For movement checking.
-    mo->radius = SV_ReadLong();
+    mo->radius = FIX2FLT(SV_ReadLong());
     mo->height = FIX2FLT(SV_ReadLong());
 
     // Momentums, used to update position.
-    mo->mom[MX] = SV_ReadLong();
-    mo->mom[MY] = SV_ReadLong();
-    mo->mom[MZ] = SV_ReadLong();
+    mo->mom[MX] = FIX2FLT(SV_ReadLong());
+    mo->mom[MY] = FIX2FLT(SV_ReadLong());
+    mo->mom[MZ] = FIX2FLT(SV_ReadLong());
 
     // If == validcount, already checked.
     mo->valid = SV_ReadLong();
@@ -219,12 +222,12 @@ static void SV_ReadMobj(mobj_t *mo)
     mo->lastlook = SV_ReadLong();
 
     // For nightmare respawn.
-    mo->spawninfo.pos[VX] = (fixed_t) (SV_ReadShort() << FRACBITS);
-    mo->spawninfo.pos[VY] = (fixed_t) (SV_ReadShort() << FRACBITS);
-    mo->spawninfo.pos[VZ] = ONFLOORZ;
-    mo->spawninfo.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
-    mo->spawninfo.type = (int) SV_ReadShort();
-    mo->spawninfo.options = (int) SV_ReadShort();
+    mo->spawnspot.pos[VX] = (float) SV_ReadShort();
+    mo->spawnspot.pos[VY] = (float) SV_ReadShort();
+    mo->spawnspot.pos[VZ] = ONFLOORZ;
+    mo->spawnspot.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
+    mo->spawnspot.type = (int) SV_ReadShort();
+    mo->spawnspot.flags = (int) SV_ReadShort();
 
     // Thing being chased/attacked for tracers.
     SV_ReadLong();
@@ -282,12 +285,12 @@ void P_v19_UnArchiveWorld(void)
     for(i = 0; i < numsectors; ++i)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_XSector(sec);
+        xsec = P_ToXSector(sec);
 
         P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
         P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
-        P_SetIntp(sec, DMU_FLOOR_TEXTURE, *get++ + firstflat);
-        P_SetIntp(sec, DMU_CEILING_TEXTURE, *get++ + firstflat);
+        P_SetIntp(sec, DMU_FLOOR_MATERIAL, *get++ + firstflat);
+        P_SetIntp(sec, DMU_CEILING_MATERIAL, *get++ + firstflat);
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++;  // needed?
         /*xsec->tag =*/ *get++;      // needed?
@@ -299,7 +302,7 @@ void P_v19_UnArchiveWorld(void)
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
-        xline = P_XLine(line);
+        xline = P_ToXLine(line);
 
         P_SetIntp(line, DMU_FLAGS, *get++);
         xline->special = *get++;
@@ -314,15 +317,15 @@ void P_v19_UnArchiveWorld(void)
 
             offx = *get++ << FRACBITS;
             offy = *get++ << FRACBITS;
-            P_SetFixedp(sdef, DMU_TOP_TEXTURE_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_TOP_TEXTURE_OFFSET_Y, offy);
-            P_SetFixedp(sdef, DMU_MIDDLE_TEXTURE_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_MIDDLE_TEXTURE_OFFSET_Y, offy);
-            P_SetFixedp(sdef, DMU_BOTTOM_TEXTURE_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_BOTTOM_TEXTURE_OFFSET_Y, offy);
-            P_SetIntp(sdef, DMU_TOP_TEXTURE, *get++);
-            P_SetIntp(sdef, DMU_BOTTOM_TEXTURE, *get++);
-            P_SetIntp(sdef, DMU_MIDDLE_TEXTURE, *get++);
+            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_Y, offy);
+            P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
+            P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
+            P_SetIntp(sdef, DMU_TOP_MATERIAL, *get++);
+            P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, *get++);
+            P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, *get++);
         }
     }
     save_p = (byte *) get;
@@ -382,7 +385,7 @@ enum thinkerclass_e {
                 //mobj->dplayer->clAngle = mobj->angle; /* $unifiedangles */
                 mobj->dplayer->lookdir = 0; /* $unifiedangles */
             }
-            P_SetThingPosition(mobj);
+            P_SetMobjPosition(mobj);
             mobj->info = &mobjinfo[mobj->type];
             mobj->floorz =
                 P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT);
@@ -410,7 +413,7 @@ typedef struct {
     fixed_t speed;
     boolean crush;
     int     direction;
-    int     tag;                   
+    int     tag;
     int     olddirection;
 } v19_ceiling_t;
 */
@@ -438,7 +441,7 @@ typedef struct {
     if(temp + V19_THINKER_T_FUNC_OFFSET)
         ceiling->thinker.function = T_MoveCeiling;
 
-    P_XSector(ceiling->sector)->specialdata = ceiling;
+    P_ToXSector(ceiling->sector)->specialdata = ceiling;
     return true; // Add this thinker.
 }
 
@@ -475,7 +478,7 @@ typedef struct {
 
     door->thinker.function = T_VerticalDoor;
 
-    P_XSector(door->sector)->specialdata = door;
+    P_ToXSector(door->sector)->specialdata = door;
     return true; // Add this thinker.
 }
 
@@ -514,7 +517,7 @@ typedef struct {
 
     floor->thinker.function = T_MoveFloor;
 
-    P_XSector(floor->sector)->specialdata = floor;
+    P_ToXSector(floor->sector)->specialdata = floor;
     return true; // Add this thinker.
 }
 
@@ -561,7 +564,7 @@ typedef struct {
     if(temp + V19_THINKER_T_FUNC_OFFSET)
         plat->thinker.function = T_PlatRaise;
 
-    P_XSector(plat->sector)->specialdata = plat;
+    P_ToXSector(plat->sector)->specialdata = plat;
     return true; // Add this thinker.
 }
 
@@ -702,7 +705,7 @@ void P_v19_UnArchiveSpecials(void)
         case tc_ceiling:
             PADSAVEP();
             ceiling = Z_Calloc(sizeof(*ceiling), PU_LEVSPEC, NULL);
-            
+
             SV_ReadCeiling(ceiling);
 
             P_AddThinker(&ceiling->thinker);
@@ -714,7 +717,7 @@ void P_v19_UnArchiveSpecials(void)
             door = Z_Calloc(sizeof(*door), PU_LEVSPEC, NULL);
 
             SV_ReadDoor(door);
- 
+
             P_AddThinker(&door->thinker);
             break;
 

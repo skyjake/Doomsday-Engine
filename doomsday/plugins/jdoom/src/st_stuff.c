@@ -7,7 +7,6 @@
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -24,10 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Status bar code.
- *  Does the face/direction indicator animatin.
- *  Does palette indicators as well (red pain/berserk, bright pickup)
+/**
+ * st_stuff.c: Status bar code - jDoom specific.
+ *
+ * Does the face/direction indicator animation and the palette indicators as
+ * well (red pain/berserk, bright pickup)
  */
 
  // HEADER FILES ------------------------------------------------------------
@@ -646,8 +646,10 @@ void ST_updateFaceWidget(void)
             else
             {
                 badguyangle =
-                    R_PointToAngle2(plyr->plr->mo->pos[VX], plyr->plr->mo->pos[VY],
-                                    plyr->attacker->pos[VX], plyr->attacker->pos[VY]);
+                    R_PointToAngle2(FLT2FIX(plyr->plr->mo->pos[VX]),
+                                    FLT2FIX(plyr->plr->mo->pos[VY]),
+                                    FLT2FIX(plyr->attacker->pos[VX]),
+                                    FLT2FIX(plyr->attacker->pos[VY]));
 
                 if(badguyangle > plyr->plr->mo->angle)
                 {   // Whether right or left.

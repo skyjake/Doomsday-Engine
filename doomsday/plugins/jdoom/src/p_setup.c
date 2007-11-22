@@ -43,7 +43,7 @@ enum {
     CMP_THING_POS_Y,
     CMP_THING_ANGLE,
     CMP_THING_TYPE,
-    CMP_THING_OPTIONS,
+    CMP_THING_FLAGS,
     NUM_CUSTOM_MAP_PROPERTIES
 } mappropid_t;
 
@@ -103,7 +103,7 @@ void P_RegisterCustomMapProperties(void)
         {DAM_THING,     DDVT_SHORT,     "Y",            CMP_THING_POS_Y},
         {DAM_THING,     DDVT_SHORT,     "Angle",        CMP_THING_ANGLE},
         {DAM_THING,     DDVT_SHORT,     "Type",         CMP_THING_TYPE},
-        {DAM_THING,     DDVT_SHORT,     "Options",      CMP_THING_OPTIONS},
+        {DAM_THING,     DDVT_SHORT,     "Options",      CMP_THING_FLAGS},
         {0,             0,              NULL,           0} // Terminate.
     };
     uint        i, idx;
@@ -165,19 +165,19 @@ int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
         break;
     // Thing properties
     case CMP_THING_POS_X:
-        things[id].x = *(short *)data;
+        things[id].pos[VX] = (float) (*(short *)data);
         break;
     case CMP_THING_POS_Y:
-        things[id].y = *(short *)data;
+        things[id].pos[VY] = (float) (*(short *)data);
         break;
     case CMP_THING_ANGLE:
-        things[id].angle = *(short *)data;
+        things[id].angle = ANG45 * ((*(short *)data) / 45);
         break;
     case CMP_THING_TYPE:
-        things[id].type = *(short *)data;
+        things[id].type = (int) (*(short *)data);
         break;
-    case CMP_THING_OPTIONS:
-        things[id].options = *(short *)data;
+    case CMP_THING_FLAGS:
+        things[id].flags = (int) (*(short *)data);
         break;
 
     default:
@@ -209,9 +209,9 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
     case DAM_SIDE:
         switch(prop)
         {
-        case DAM_TOP_TEXTURE:
-        case DAM_MIDDLE_TEXTURE:
-        case DAM_BOTTOM_TEXTURE:
+        case DAM_TOP_MATERIAL:
+        case DAM_MIDDLE_MATERIAL:
+        case DAM_BOTTOM_MATERIAL:
             /**
              * It could be a BOOM overloaded texture name?
              * In this context Doomsday expects either -1 (a bad texture name)
