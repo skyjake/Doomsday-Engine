@@ -2475,127 +2475,151 @@ static void rendLine2(float x1, float y1, float x2, float y2,
     }
 }
 
-/**
- * Sub-routine of renderWalls().
- */
-boolean renderWallsInSubsector(subsector_t *s, void *data)
+static void renderWallSeg(seg_t *seg, void *data)
 {
     ssecitervars_t *vars = (ssecitervars_t*) data;
-    int         i, segCount, lineFlags;
+    int         lineFlags;
     float       v1[2], v2[2];
     line_t     *line;
     xline_t    *xLine;
     sector_t   *frontSector, *backSector;
-    seg_t      *seg;
     mapobjectinfo_t *info;
     player_t   *plr = vars->plr;
     automap_t  *map = vars->map;
 
-    segCount = P_GetIntp(s, DMU_SEG_COUNT);
-    for(i = 0; i < segCount; ++i)
-    {
-        seg = P_GetPtrp(s, DMU_SEG_OF_SUBSECTOR | i);
-        line = P_GetPtrp(seg, DMU_LINE);
+    line = P_GetPtrp(seg, DMU_LINE);
+    if(!line)
+        return;
 
-        if(!line)
-            continue;
+    xLine = P_ToXLine(line);
+    if(xLine->validcount == VALIDCOUNT)
+        return; // Already drawn once.
 
-        xLine = P_ToXLine(line);
-        if(xLine->validcount == VALIDCOUNT)
-            continue; // Already drawn once.
+    lineFlags = P_GetIntp(line, DMU_FLAGS);
+    if((lineFlags & ML_DONTDRAW) && !(map->flags & AMF_REND_ALLLINES))
+        return;
 
-        lineFlags = P_GetIntp(line, DMU_FLAGS);
-        if((lineFlags & ML_DONTDRAW) && !(map->flags & AMF_REND_ALLLINES))
-            continue;
-
-        frontSector = P_GetPtrp(seg, DMU_FRONT_SECTOR);
-        if(frontSector != P_GetPtrp(line, DMU_SIDE0_OF_LINE | DMU_SECTOR))
-            continue; // we only want to draw twosided lines once.
+    frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    if(frontSector != P_GetPtrp(line, DMU_SIDE0_OF_LINE | DMU_SECTOR))
+        return; // We only want to draw twosided lines once.
 
 #if !__JHEXEN__
 #if !__JSTRIFE__
-        if(map->flags & AMF_REND_XGLINES) // Debug cheat.
-        {
-            // Show active XG lines.
-            if(xLine->xg && xLine->xg->active && (leveltime & 4))
-            {
-                P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
-                P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
-
-                rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
-                          .8f, 0, .8f, 1,
-                          TWOSIDED_GLOW, 1, 5, false, true, false, BM_ADD,
-                          map->cheating);
-
-                xLine->validcount = VALIDCOUNT;  // Mark as drawn this frame.
-                continue;
-            }
-        }
-#endif
-#endif
-        info = NULL;
-        backSector = P_GetPtrp(seg, DMU_BACK_SECTOR);
-        if((map->flags & AMF_REND_ALLLINES) ||
-           xLine->mapped[mapviewplayer])
-        {
-            // Perhaps this is a specially colored line?
-            info = getInfoForSpecialLine(map, xLine->special,
-                                         frontSector, backSector);
-
-            if(!info)
-            {   // Perhaps a default colored line?
-                if(!(frontSector && backSector) || (lineFlags & ML_SECRET))
-                {
-                    // solid wall (well probably anyway...)
-                    info = getMapObjectInfo(map, AMO_SINGLESIDEDLINE);
-                }
-                else
-                {
-                    if(P_GetFloatp(backSector, DMU_FLOOR_HEIGHT) !=
-                       P_GetFloatp(frontSector, DMU_FLOOR_HEIGHT))
-                    {
-                        // Floor level change.
-                        info = getMapObjectInfo(map, AMO_FLOORCHANGELINE);
-                    }
-                    else if(P_GetFloatp(backSector, DMU_CEILING_HEIGHT) !=
-                            P_GetFloatp(frontSector, DMU_CEILING_HEIGHT))
-                    {
-                        // Ceiling level change.
-                        info = getMapObjectInfo(map, AMO_CEILINGCHANGELINE);
-                    }
-                    else if(map->flags & AMF_REND_ALLLINES)
-                    {
-                        info = getMapObjectInfo(map, AMO_UNSEENLINE);
-                    }
-                }
-            }
-        }
-        else if(plr->powers[PT_ALLMAP])
-        {
-            if(!(lineFlags & ML_DONTDRAW))
-            {
-                // An as yet, unseen line.
-                info = getMapObjectInfo(map, AMO_UNSEENLINE);
-            }
-        }
-
-        if(info)
+    if(map->flags & AMF_REND_XGLINES) // Debug cheat.
+    {
+        // Show active XG lines.
+        if(xLine->xg && xLine->xg->active && (leveltime & 4))
         {
             P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
             P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
 
             rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
-                      info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
-                      (xLine->special && !map->cfg.glowingLineSpecials ?
-                            NO_GLOW : info->glow),
-                      info->glowAlpha,
-                      info->glowWidth, false, info->scaleWithView,
-                      (info->glow && !(xLine->special && !map->cfg.glowingLineSpecials)),
-                      (xLine->special && !map->cfg.glowingLineSpecials ?
-                            BM_NORMAL : info->blendmode), map->cheating);
+                      .8f, 0, .8f, 1,
+                      TWOSIDED_GLOW, 1, 5, false, true, false, BM_ADD,
+                      map->cheating);
 
-            xLine->validcount = VALIDCOUNT; // Mark as drawn this frame.
+            xLine->validcount = VALIDCOUNT;  // Mark as drawn this frame.
+            return;
         }
+    }
+#endif
+#endif
+    info = NULL;
+    backSector = P_GetPtrp(seg, DMU_BACK_SECTOR);
+    if((map->flags & AMF_REND_ALLLINES) ||
+       xLine->mapped[mapviewplayer])
+    {
+        // Perhaps this is a specially colored line?
+        info = getInfoForSpecialLine(map, xLine->special,
+                                     frontSector, backSector);
+
+        if(!info)
+        {   // Perhaps a default colored line?
+            if(!(frontSector && backSector) || (lineFlags & ML_SECRET))
+            {
+                // solid wall (well probably anyway...)
+                info = getMapObjectInfo(map, AMO_SINGLESIDEDLINE);
+            }
+            else
+            {
+                if(P_GetFloatp(backSector, DMU_FLOOR_HEIGHT) !=
+                   P_GetFloatp(frontSector, DMU_FLOOR_HEIGHT))
+                {
+                    // Floor level change.
+                    info = getMapObjectInfo(map, AMO_FLOORCHANGELINE);
+                }
+                else if(P_GetFloatp(backSector, DMU_CEILING_HEIGHT) !=
+                        P_GetFloatp(frontSector, DMU_CEILING_HEIGHT))
+                {
+                    // Ceiling level change.
+                    info = getMapObjectInfo(map, AMO_CEILINGCHANGELINE);
+                }
+                else if(map->flags & AMF_REND_ALLLINES)
+                {
+                    info = getMapObjectInfo(map, AMO_UNSEENLINE);
+                }
+            }
+        }
+    }
+    else if(plr->powers[PT_ALLMAP])
+    {
+        if(!(lineFlags & ML_DONTDRAW))
+        {
+            // An as yet, unseen line.
+            info = getMapObjectInfo(map, AMO_UNSEENLINE);
+        }
+    }
+
+    if(info)
+    {
+        P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
+        P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
+
+        rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
+                  info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
+                  (xLine->special && !map->cfg.glowingLineSpecials ?
+                        NO_GLOW : info->glow),
+                  info->glowAlpha,
+                  info->glowWidth, false, info->scaleWithView,
+                  (info->glow && !(xLine->special && !map->cfg.glowingLineSpecials)),
+                  (xLine->special && !map->cfg.glowingLineSpecials ?
+                        BM_NORMAL : info->blendmode), map->cheating);
+
+        xLine->validcount = VALIDCOUNT; // Mark as drawn this frame.
+    }
+}
+
+/**
+ * Sub-routine of renderWalls().
+ */
+boolean drawSegsOfSubsector(subsector_t *s, void *data)
+{
+    uint        i, segCount;
+    seg_t      *seg;
+
+    segCount = P_GetIntp(s, DMU_SEG_COUNT);
+    for(i = 0; i < segCount; ++i)
+    {
+        seg = P_GetPtrp(s, DMU_SEG_OF_SUBSECTOR | i);
+        renderWallSeg(seg, data);
+    }
+
+    return true; // Continue iteration.
+}
+
+/**
+ * Sub-routine of renderWalls().
+ */
+boolean drawSegsOfPolyobject(polyobj_t *po, void *data)
+{
+    uint        i, segCount;
+    seg_t      *seg;
+
+    segCount = P_GetIntp(po, DMU_SEG_COUNT);
+    for(i = 0; i < segCount; ++i)
+    {
+        seg = P_GetPtrp(po, DMU_SEG_OF_POLYOBJ | i);
+        renderWallSeg(seg, data);
     }
 
     return true; // Continue iteration.
@@ -2618,7 +2642,10 @@ static void renderWalls(void)
     data.map = map;
 
     // Use the automap's viewframe bounding box.
-    P_SubsectorsBoxIterator(map->vbbox, NULL, renderWallsInSubsector, &data);
+    P_SubsectorsBoxIterator(map->vbbox, NULL, drawSegsOfSubsector, &data);
+
+    // Next, draw any polyobjects in view.
+    P_PolyobjsBoxIterator(map->vbbox, drawSegsOfPolyobject, &data);
 }
 
 /**
