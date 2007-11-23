@@ -60,6 +60,7 @@
 #include "p_start.h"
 #include "p_actor.h"
 #include "p_xg.h"
+#include "info.h"
 
 // Palette indices.
 // For damage/bonus red-/gold-shifts
