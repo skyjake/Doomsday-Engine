@@ -6,6 +6,7 @@ NAME            "DOOMSDAY"
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
 ; 45 formerly B_BindingsForCommand
+; 70 formerly P_BlockPolyobjsIterator
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
 ; 107 formerly GL_DoUpdate
@@ -129,7 +130,6 @@ EXPORTS
     P_PointToBlock              @255 NONAME
     P_BlockLinesIterator        @68 NONAME
     P_BlockMobjsIterator        @69 NONAME
-    P_BlockPolyobjsIterator     @70 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME

@@ -192,9 +192,6 @@ extern          "C" {
     boolean         P_BlockLinesIterator(uint x, uint y,
                                          boolean (*func) (struct line_s*, void *),
                                          void *data);
-    boolean         P_BlockPolyobjsIterator(uint x, uint y,
-                                            boolean (*func) (void *, void *),
-                                            void *);
 
     // Object in bounding box iterators.
     boolean         P_MobjsBoxIterator(const float box[4],
@@ -209,6 +206,9 @@ extern          "C" {
     boolean         P_SubsectorsBoxIterator(const float box[4], sector_t *sector,
                                            boolean (*func) (subsector_t *, void *),
                                            void *data);
+    boolean         P_PolyobjsBoxIterator(const float box[4],
+                                          boolean (*func) (polyobj_t *, void *),
+                                          void *data);
 
     // Mobj linked object iterators.
     boolean         P_MobjLinesIterator(struct mobj_s *mo,
