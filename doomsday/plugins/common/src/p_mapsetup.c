@@ -24,6 +24,7 @@
 
 /**
  * p_setup.c: Common map setup routines.
+ *
  * Management of extended map data objects (eg xlines) is done here
  */
 
@@ -130,6 +131,24 @@ xsector_t* P_ToXSector(sector_t *sector)
 }
 
 /**
+ * Given a subsector - find its parent xsector.
+ */
+xsector_t* P_ToXSectorOfSubsector(subsector_t *sub)
+{
+    sector_t* sec = P_GetPtrp(sub, DMU_SECTOR);
+
+    // Is it a dummy?
+    if(P_IsDummy(sec))
+    {
+        return P_DummyExtraData(sec);
+    }
+    else
+    {
+        return &xsectors[P_ToIndex(sec)];
+    }
+}
+
+/**
  * Given the index of an xline, return it.
  *
  * \note: This routine cannot be used with dummy lines!
@@ -161,24 +180,6 @@ xsector_t* P_GetXSector(uint index)
         return NULL;
 
     return &xsectors[index];
-}
-
-/**
- * Given a subsector - find its parent xsector.
- */
-xsector_t* P_ToXSectorOfSubsector(subsector_t *sub)
-{
-    sector_t* sec = P_GetPtrp(sub, DMU_SECTOR);
-
-    // Is it a dummy?
-    if(P_IsDummy(sec))
-    {
-        return P_DummyExtraData(sec);
-    }
-    else
-    {
-        return &xsectors[P_ToIndex(sec)];
-    }
 }
 
 /**
