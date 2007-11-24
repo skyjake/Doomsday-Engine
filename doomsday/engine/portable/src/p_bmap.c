@@ -79,7 +79,7 @@ typedef struct bmap_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte    bmapShowDebug = false;
+byte    bmapShowDebug = 0; // 1 = debug linedefs, 2 = debug ssecs.
 float   bmapDebugSize = 1.5f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -1012,9 +1012,11 @@ static boolean rendBlockSubsector(subsector_t *ssec, void *data)
     return true; // Continue iteration.
 }
 
-void rendBlockContents(bmapblock_t *block, void *param,
+void rendBlockLinedefs(void *blockPtr, void *param,
                        float r, float g, float b, float a)
 {
+    bmapblock_t *block = blockPtr;
+
     // Lines?
     if(block->lines)
     {
@@ -1050,9 +1052,11 @@ void rendBlockContents(bmapblock_t *block, void *param,
     }
 }
 
-void rendSSecBlockContents(ssecmapblock_t *block, void *param,
-                           float r, float g, float b, float a)
+void rendBlockSubsectors(void *blockPtr, void *param,
+                         float r, float g, float b, float a)
 {
+    ssecmapblock_t *block = blockPtr;
+
     if(block->ssecs)
     {
         sseciterparams_t args;
@@ -1170,32 +1174,31 @@ static void drawBlockInfoBox(uint vBlock[2])
 /**
  * Draw the blockmap in 2D HUD mode.
  */
-void P_BlockmapDebug(blockmap_t *blockmap)
+static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
+                          void (*func) (void *blockPtr, void *param,
+                                        float r, float g, float b, float a))
 {
-    bmap_t         *bmap;
+    bmap_t         *bmap = (bmap_t*) blockmap;
     void           *block;
     uint            x, y, vBlock[2], vBlockBox[4];
     float           scale, radius;
     vec2_t          start, end, box[2];
 
-    if(!blockmap || !bmapShowDebug || !viewPlayer || !viewPlayer->mo)
-        return;
-
-    bmap = (bmap_t*) blockmap;
-
     scale = bmapDebugSize / MAX_OF(theWindow->height / 100, 1);
 
-    // Determine the viewer's block.
-    V2_Set(start, viewPlayer->mo->pos[VX], viewPlayer->mo->pos[VY]);
-    P_ToBlockmapBlockIdx(blockmap, vBlock, start);
+    if(followMobj)
+    {
+        // Determine the mobj's block.
+        P_ToBlockmapBlockIdx(blockmap, vBlock, followMobj->pos);
 
-    // Determine the viewer's collision blockbox.
-    radius = viewPlayer->mo->radius + 64; // MAXRADIUS
-    V2_Set(start, viewPlayer->mo->pos[VX] - radius, viewPlayer->mo->pos[VY] - radius);
-    V2_Set(end,   viewPlayer->mo->pos[VX] + radius, viewPlayer->mo->pos[VY] + radius);
-    V2_InitBox(box, start);
-    V2_AddToBox(box, end);
-    P_BoxToBlockmapBlocks(blockmap, vBlockBox, box);
+        // Determine the mobj's collision blockbox.
+        radius = followMobj->radius + 64; // MAXRADIUS
+        V2_Set(start, followMobj->pos[VX] - radius, followMobj->pos[VY] - radius);
+        V2_Set(end,   followMobj->pos[VX] + radius, followMobj->pos[VY] + radius);
+        V2_InitBox(box, start);
+        V2_AddToBox(box, end);
+        P_BoxToBlockmapBlocks(blockmap, vBlockBox, box);
+    }
 
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
@@ -1206,11 +1209,18 @@ void P_BlockmapDebug(blockmap_t *blockmap)
     gl.Translatef((theWindow->width / 2), (theWindow->height / 2), 0);
     gl.Scalef(scale, -scale, 1);
 
-    // Offset relatively to center on the location of viewPlayer.
-    V2_Set(start,
-           (vBlock[VX] * bmap->blockSize[VX]),// + bmap->blockSize[VX] / 2,
-           (vBlock[VY] * bmap->blockSize[VY]));// + bmap->blockSize[VY] / 2);
-    gl.Translatef(-start[VX], -start[VY], 0);
+    if(followMobj)
+    {   // Offset relatively to center on the location of the mobj.
+        V2_Set(start,
+               (vBlock[VX] * bmap->blockSize[VX]),
+               (vBlock[VY] * bmap->blockSize[VY]));
+        gl.Translatef(-start[VX], -start[VY], 0);
+    }
+    else
+    {   // Offset to center the blockmap on the screen.
+        gl.Translatef(-(bmap->blockSize[VX] * bmap->dimensions[VX] / 2),
+                      -(bmap->blockSize[VY] * bmap->dimensions[VY] / 2), 0);
+    }
 
     gl.Disable(DGL_TEXTURING);
 
@@ -1238,18 +1248,22 @@ void P_BlockmapDebug(blockmap_t *blockmap)
             bmapblock_t *block =
                 M_GridmapGetBlock(bmap->gridmap, x, y, false);
 
-            if(x == vBlock[VX] && y == vBlock[VY])
-            {   // The block the viewPlayer is in.
-                gl.Color4f(.66f, .66f, 1, .66f);
-                draw = true;
+            if(followMobj)
+            {
+                if(x == vBlock[VX] && y == vBlock[VY])
+                {   // The block the viewPlayer is in.
+                    gl.Color4f(.66f, .66f, 1, .66f);
+                    draw = true;
+                }
+                else if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
+                        y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
+                {   // In the viewPlayer's extended collision range.
+                    gl.Color4f(.33f, .33f, .66f, .33f);
+                    draw = true;
+                }
             }
-            else if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
-                    y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
-            {   // In the viewPlayer's extended collision range.
-                gl.Color4f(.33f, .33f, .66f, .33f);
-                draw = true;
-            }
-            else if(!block)
+
+            if(!draw && !block)
             {   // NULL block.
                 gl.Color4f(0, 0, 0, .95f);
                 draw = true;
@@ -1303,65 +1317,80 @@ void P_BlockmapDebug(blockmap_t *blockmap)
 
     validCount++;
 
-    // First, the blocks outside the viewPlayer's range.
-    for(y = 0; y < bmap->dimensions[VY]; ++y)
-        for(x = 0; x < bmap->dimensions[VX]; ++x)
-        {
-            if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
-               y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
-                continue;
-
-            block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
-            if(block)
-            {
-                rendBlockContents(block, bmap->bbox, .33f, 0, 0, .75f);
-            }
-        }
-
-    validCount++;
-
-    // Next, the blocks within the viewPlayer's extended collision range.
-    for(y = vBlockBox[BOXBOTTOM]; y <= vBlockBox[BOXTOP]; ++y)
-        for(x = vBlockBox[BOXLEFT]; x <= vBlockBox[BOXRIGHT]; ++x)
-        {
-            if(x == vBlock[VX] && y == vBlock[VY])
-                continue;
-
-            block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
-            if(block)
-            {
-                rendBlockContents(block, bmap->bbox, 1, .5f, 0, 1);
-            }
-        }
-
-    validCount++;
-
-    // Lastly, the block the viewPlayer is in.
-    block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
-    if(block)
+    if(followMobj)
     {
-        rendBlockContents(block, bmap->bbox, 1, 1, 0, 1);
+        // First, the blocks outside the viewPlayer's range.
+        for(y = 0; y < bmap->dimensions[VY]; ++y)
+            for(x = 0; x < bmap->dimensions[VX]; ++x)
+            {
+                if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
+                   y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
+                    continue;
+
+                block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
+                if(block)
+                {
+                    func(block, bmap->bbox, .33f, 0, 0, .75f);
+                }
+            }
+
+        validCount++;
+
+        // Next, the blocks within the viewPlayer's extended collision range.
+        for(y = vBlockBox[BOXBOTTOM]; y <= vBlockBox[BOXTOP]; ++y)
+            for(x = vBlockBox[BOXLEFT]; x <= vBlockBox[BOXRIGHT]; ++x)
+            {
+                if(x == vBlock[VX] && y == vBlock[VY])
+                    continue;
+
+                block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
+                if(block)
+                {
+                    func(block, bmap->bbox, 1, .5f, 0, 1);
+                }
+            }
+
+        validCount++;
+
+        // Lastly, the block the viewPlayer is in.
+        block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
+        if(block)
+        {
+            func(block, bmap->bbox, 1, 1, 0, 1);
+        }
+
+        /**
+         * Draw the viewPlayer.
+         */
+
+        radius = viewPlayer->mo->radius;
+        V2_Set(start,
+               viewPlayer->mo->pos[VX] - bmap->bbox[0][VX] - radius,
+               viewPlayer->mo->pos[VY] - bmap->bbox[0][VY] - radius);
+        V2_Set(end,
+               viewPlayer->mo->pos[VX] - bmap->bbox[0][VX] + radius,
+               viewPlayer->mo->pos[VY] - bmap->bbox[0][VY] + radius);
+
+        gl.Color4f(0, 1, 0, 1);
+        gl.Begin(DGL_QUADS);
+        gl.Vertex2f(start[VX], start[VY]);
+        gl.Vertex2f(end[VX], start[VY]);
+        gl.Vertex2f(end[VX], end[VY]);
+        gl.Vertex2f(start[VX], end[VY]);
+        gl.End();
     }
-
-    /**
-     * Draw the viewPlayer.
-     */
-
-    radius = viewPlayer->mo->radius;
-    V2_Set(start,
-           viewPlayer->mo->pos[VX] - bmap->bbox[0][VX] - radius,
-           viewPlayer->mo->pos[VY] - bmap->bbox[0][VY] - radius);
-    V2_Set(end,
-           viewPlayer->mo->pos[VX] - bmap->bbox[0][VX] + radius,
-           viewPlayer->mo->pos[VY] - bmap->bbox[0][VY] + radius);
-
-    gl.Color4f(0, 1, 0, 1);
-    gl.Begin(DGL_QUADS);
-    gl.Vertex2f(start[VX], start[VY]);
-    gl.Vertex2f(end[VX], start[VY]);
-    gl.Vertex2f(end[VX], end[VY]);
-    gl.Vertex2f(start[VX], end[VY]);
-    gl.End();
+    else
+    {   // Just draw the lot.
+        for(y = 0; y < bmap->dimensions[VY]; ++y)
+            for(x = 0; x < bmap->dimensions[VX]; ++x)
+            {
+                block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
+                if(block)
+                {
+                    func(block, bmap->bbox, .33f, 0, 0, .75f);
+                }
+            }
+    }
 
     /**
      * Draw the blockmap bounds.
@@ -1389,18 +1418,59 @@ void P_BlockmapDebug(blockmap_t *blockmap)
 
     gl.PopMatrix();
     gl.Enable(DGL_TEXTURING);
+}
 
-    /**
-     * Lastly, draw the blockmap debug HUD displays.
-     */
+void P_BlockmapDebug(void)
+{
+    blockmap_t *blockmap;
+    bmap_t     *bmap;
+    mobj_t     *followMobj = NULL;
+    void      (*func) (void *, void *, float r, float g, float b, float a);
+
+    if(!bmapShowDebug)
+        return;
+
+    if(bmapShowDebug == 2) // Subsectors.
+    {
+        if(!SSecBlockMap)
+            return;
+
+        blockmap = SSecBlockMap;
+        func = rendBlockSubsectors;
+    }
+    else // Linedefs.
+    {
+        if(!BlockMap)
+            return;
+
+        blockmap = BlockMap;
+        func = rendBlockLinedefs;
+    }
+
+    // If possible, we'll tailor what we draw relative to the viewPlayer.
+    if(viewPlayer && viewPlayer->mo)
+        followMobj = viewPlayer->mo;
+
+    blockmapDebug(blockmap, followMobj, func);
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
     gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
-    drawBlockInfoBox(vBlock);
+    if(followMobj && bmapShowDebug == 1)
+    {
+        uint            vBlock[2];
 
+        // Determine the block mobj is in.
+        P_ToBlockmapBlockIdx(blockmap, vBlock, followMobj->pos);
+
+        // Draw info about the block mobj is in.
+        drawBlockInfoBox(vBlock);
+    }
+
+    // Draw info about the blockmap.
+    bmap = (bmap_t*) blockmap;
     drawInfoBox2(bmap->bbox[0][VX], bmap->bbox[0][VY],
                  bmap->bbox[1][VX], bmap->bbox[1][VY],
                  bmap->blockSize[VX], bmap->blockSize[VY],
@@ -1408,6 +1478,4 @@ void P_BlockmapDebug(blockmap_t *blockmap)
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
-
-#undef ISINVIEW
 }

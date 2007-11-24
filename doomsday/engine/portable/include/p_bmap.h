@@ -99,5 +99,5 @@ boolean         P_BlockPathTraverse(blockmap_t *bmap, const uint start[2],
                                     boolean (*func) (intercept_t *));
 
 // Misc:
-void            P_BlockmapDebug(blockmap_t *bmap);
+void            P_BlockmapDebug(void);
 #endif

@@ -847,7 +847,7 @@ void Net_Drawer(void)
     LG_Debug();
 
     // Draw the blockmap debug display.
-    P_BlockmapDebug(BlockMap);
+    P_BlockmapDebug();
 
     // Draw the light range debug display.
     R_DrawLightRange();

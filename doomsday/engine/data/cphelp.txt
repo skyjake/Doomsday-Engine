@@ -636,7 +636,7 @@ desc = Frame counter.
 desc = 1=Disable linked surfaces for render.  
 
 [rend-dev-blockmap-debug]
-desc = 1=Enable drawing of the blockmap debug display.
+desc = Enable drawing of the blockmap debug display: 1=Linedefs, 2=Subsectors.
 
 [rend-dev-blockmap-debug-size]
 desc = Scale multiplier for the blockmap debug display.
