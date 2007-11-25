@@ -68,9 +68,11 @@ extern          "C" {
 #endif
 
     // We need to use _vsnprintf, _snprintf in Windows
-#ifdef WIN32
+#if WIN32
+# if(_MSC_VER < 1500)
 #   define vsnprintf    _vsnprintf
-#   define snprintf     _snprintf
+# endif
+# define snprintf     _snprintf
 #endif
 
     // Format checking for printf-like functions in GCC2

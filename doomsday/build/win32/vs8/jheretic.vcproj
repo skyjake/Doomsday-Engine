@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="JHeretic"
 	ProjectGUID="{7D03FB13-8674-4473-BD32-83C43188B2D2}"
 	RootNamespace="JHeretic"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -84,6 +85,8 @@
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jheretic\api\jheretic.def"
 				ProgramDatabaseFile=".\./Bin/Release/JHeretic.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/JHeretic.lib"
 			/>
 			<Tool
@@ -103,9 +106,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -182,6 +182,8 @@
 				ModuleDefinitionFile="..\..\..\plugins\jheretic\api\jheretic.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/JHeretic.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/JHeretic.lib"
 			/>
 			<Tool
@@ -201,9 +203,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="JHexen"
 	ProjectGUID="{060CA7D4-CEF4-4F36-8950-55A3E5C46C4C}"
 	RootNamespace="JHexen"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -85,6 +86,8 @@
 				ModuleDefinitionFile="..\..\..\plugins\jhexen\api\jhexen.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/JHexen.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/JHexen.lib"
 			/>
 			<Tool
@@ -104,9 +107,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -181,6 +181,8 @@
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jhexen\api\jhexen.def"
 				ProgramDatabaseFile=".\./Bin/Release/JHexen.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/JHexen.lib"
 			/>
 			<Tool
@@ -200,9 +202,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

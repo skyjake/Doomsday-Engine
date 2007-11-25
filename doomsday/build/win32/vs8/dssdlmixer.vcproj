@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="dsSDLMixer"
 	ProjectGUID="{C9C45D56-D51C-45C7-8509-020DE447638B}"
 	RootNamespace="dsSDLMixer"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -82,6 +83,8 @@
 				SuppressStartupBanner="true"
 				ModuleDefinitionFile="..\..\..\plugins\sdlmixer\api\dssdlmixer.def"
 				ProgramDatabaseFile="./Bin/Release/dpMapLoad.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="./Bin/Release/dsSDLMixer.lib"
 			/>
 			<Tool
@@ -101,9 +104,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -178,6 +178,8 @@
 				ModuleDefinitionFile="..\..\..\plugins\sdlmixer\api\dssdlmixer.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="./Bin/Debug/dsSDLMixer.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="./Bin/Debug/dsSDLMixer.lib"
 			/>
 			<Tool
@@ -197,9 +199,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

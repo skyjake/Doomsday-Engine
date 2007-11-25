@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="dsA3D"
 	ProjectGUID="{872D3583-05F8-407F-BFAC-111C839845C7}"
 	RootNamespace="dsA3D"
 	Keyword="ManagedCProj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -79,9 +80,11 @@
 				ProgramDatabaseFile=".\./Bin/Debug/dsA3D.pdb"
 				SubSystem="0"
 				EntryPointSymbol=""
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="0"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/dsA3D.lib"
 				TargetMachine="0"
-				FixedBaseAddress="0"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -100,9 +103,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -173,9 +173,11 @@
 				ProgramDatabaseFile=".\./Bin/Release/dsA3D.pdb"
 				SubSystem="0"
 				EntryPointSymbol=""
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="0"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/dsA3D.lib"
 				TargetMachine="0"
-				FixedBaseAddress="0"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -196,9 +198,6 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -207,22 +206,27 @@
 		<AssemblyReference
 			RelativePath="System.dll"
 			AssemblyName="System, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
+			MinFrameworkVersion="131072"
 		/>
 		<AssemblyReference
 			RelativePath="System.Data.dll"
 			AssemblyName="System.Data, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=x86"
+			MinFrameworkVersion="131072"
 		/>
 		<AssemblyReference
 			RelativePath="System.Drawing.dll"
 			AssemblyName="System.Drawing, Version=2.0.0.0, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
+			MinFrameworkVersion="131072"
 		/>
 		<AssemblyReference
 			RelativePath="System.Windows.Forms.dll"
 			AssemblyName="System.Windows.Forms, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
+			MinFrameworkVersion="131072"
 		/>
 		<AssemblyReference
 			RelativePath="System.XML.dll"
 			AssemblyName="System.Xml, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
+			MinFrameworkVersion="131072"
 		/>
 	</References>
 	<Files>

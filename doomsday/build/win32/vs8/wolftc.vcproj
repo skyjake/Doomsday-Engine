@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="WolfTC"
 	ProjectGUID="{D1EE2873-F1C3-48D3-B61F-5EDBCDF1691A}"
 	RootNamespace="WolfTC"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -83,6 +84,8 @@
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\wolftc\api\wolftc.def"
 				ProgramDatabaseFile=".\./Bin/Release/WolfTC.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/WolfTC.lib"
 			/>
 			<Tool
@@ -102,9 +105,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -181,6 +181,8 @@
 				ModuleDefinitionFile="..\..\..\plugins\wolftc\api\wolftc.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/WolfTC.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/WolfTC.lib"
 			/>
 			<Tool
@@ -200,9 +202,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

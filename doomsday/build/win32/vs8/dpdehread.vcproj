@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="dpDehRead"
 	ProjectGUID="{EF5A1023-13BF-475D-B978-7ED12CD9553A}"
 	RootNamespace="dpDehRead"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -81,6 +82,8 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				ProgramDatabaseFile=".\./Bin/Release/dpDehRead.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/dpDehRead.lib"
 			/>
 			<Tool
@@ -100,9 +103,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -176,6 +176,8 @@
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/dpDehRead.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/dpDehRead.lib"
 			/>
 			<Tool
@@ -195,9 +197,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

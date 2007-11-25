@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="drOpenGL"
 	ProjectGUID="{4D082B36-9D60-4308-90D2-BF11C9C05ED7}"
 	RootNamespace="drOpenGL"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -83,6 +84,8 @@
 				ModuleDefinitionFile="..\..\..\plugins\opengl\api\drOpenGL.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/drOpenGL.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/drOpenGL.lib"
 			/>
 			<Tool
@@ -102,9 +105,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -177,6 +177,8 @@
 				SuppressStartupBanner="true"
 				ModuleDefinitionFile=".\Src\drOpenGL\drMesa.def"
 				ProgramDatabaseFile=".\./Bin/Release/drMesa.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/drMesa.lib"
 			/>
 			<Tool
@@ -196,9 +198,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -272,6 +271,8 @@
 				SuppressStartupBanner="true"
 				ModuleDefinitionFile="..\..\..\plugins\opengl\api\drOpenGL.def"
 				ProgramDatabaseFile=".\./Bin/Release/drOpenGL.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/drOpenGL.lib"
 			/>
 			<Tool
@@ -291,9 +292,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

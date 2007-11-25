@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="Doom64TC"
 	ProjectGUID="{CA7A0565-5F80-4E69-A3C2-12B81FC35768}"
 	RootNamespace="Doom64TC"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -83,6 +84,8 @@
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\doom64tc\api\doom64tc.def"
 				ProgramDatabaseFile=".\./Bin/Release/Doom64TC.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/Doom64TC.lib"
 			/>
 			<Tool
@@ -102,9 +105,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -181,6 +181,8 @@
 				ModuleDefinitionFile="..\..\..\plugins\doom64tc\api\doom64tc.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/Doom64TC.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/Doom64TC.lib"
 			/>
 			<Tool
@@ -200,9 +202,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="JDoom"
 	ProjectGUID="{A36C0FB9-8186-4747-A5D9-D7B659B9F39F}"
 	RootNamespace="JDoom"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -83,6 +84,8 @@
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jdoom\api\jdoom.def"
 				ProgramDatabaseFile=".\./Bin/Release/JDoom.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/JDoom.lib"
 			/>
 			<Tool
@@ -102,9 +105,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -181,6 +181,8 @@
 				ModuleDefinitionFile="..\..\..\plugins\jdoom\api\jdoom.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/JDoom.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/JDoom.lib"
 			/>
 			<Tool
@@ -200,9 +202,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

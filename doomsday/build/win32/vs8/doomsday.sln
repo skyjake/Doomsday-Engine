@@ -1,5 +1,5 @@
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual C++ Express 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Doomsday", "Doomsday.vcproj", "{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JDoom", "JDoom.vcproj", "{A36C0FB9-8186-4747-A5D9-D7B659B9F39F}"
