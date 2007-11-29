@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,32 +18,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * p_svtexarc.c: Archived texture names (save games).
  */
 
 #ifndef __DD_SAVEGAME_TEXTURE_ARCHIVE_H__
 #define __DD_SAVEGAME_TEXTURE_ARCHIVE_H__
 
-#define MAX_ARCHIVED_TEXTURES	1024
-
-typedef struct {
-	char            name[9];
-} texentry_t;
-
-typedef struct {
-	texentry_t      table[MAX_ARCHIVED_TEXTURES];
-	int             count;
-} texarchive_t;
-
-extern texarchive_t flat_archive;
-extern texarchive_t tex_archive;
-
 void            SV_InitTextureArchives(void);
-unsigned short  SV_TextureArchiveNum(int texnum);
-unsigned short  SV_FlatArchiveNum(int flatnum);
-int             SV_GetArchiveFlat(int archivenum);
-int             SV_GetArchiveTexture(int archivenum);
+
+unsigned short  SV_MaterialArchiveNum(int materialID, materialtype_t type);
+int             SV_GetArchiveMaterial(int archiveID, materialtype_t type);
+
 void            SV_WriteTextureArchive(void);
 void            SV_ReadTextureArchive(void);
 

@@ -466,7 +466,7 @@ void G_PreInit(void)
 
     R_SetBorderGfx(borderLumps);
 
-    DD_SetVariable(DD_SKYFLAT_NAME, SKYFLATNAME);
+    DD_SetVariable(DD_SKYMASKMATERIAL_NAME, SKYFLATNAME);
     Con_SetString("map-name", NOTAMAPNAME, 1);
 
     G_RegisterBindClasses();

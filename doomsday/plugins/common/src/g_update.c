@@ -150,6 +150,7 @@ void G_UpdateState(int step)
 
     case DD_POST:
         G_RestoreState();
+        R_Init();
         P_Init();
         //// \fixme Detect gamemode changes (GM_DOOM -> GM_DOOM2, for instance).
 #if !__JHEXEN__

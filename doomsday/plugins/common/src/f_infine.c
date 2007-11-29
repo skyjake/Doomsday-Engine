@@ -1660,7 +1660,7 @@ void FI_Drawer(void)
     if(fi->bgflat >= 0)
     {
         FI_UseColor(fi->bgcolor, 4);
-        GL_SetFlat(fi->bgflat);
+        GL_SetMaterial(fi->bgflat, MAT_FLAT);
         GL_DrawRectTiled(0, 0, 320, 200, 64, 64);
     }
     else
@@ -1816,7 +1816,7 @@ void FIC_End(void)
 
 void FIC_BGFlat(void)
 {
-    fi->bgflat = R_CheckFlatNumForName(FI_GetToken());
+    fi->bgflat = R_CheckMaterialNumForName(FI_GetToken(), MAT_FLAT);
 }
 
 void FIC_NoBGFlat(void)

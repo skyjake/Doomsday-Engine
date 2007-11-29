@@ -1819,11 +1819,11 @@ boolean XL_SwitchSwap(side_t *side, int section)
 
     // Which section of the wall are we checking?
     if(section == LWS_UPPER)
-        name = R_TextureNameForNum(P_GetIntp(side, DMU_TOP_MATERIAL));
+        name = R_MaterialNameForNum(P_GetIntp(side, DMU_TOP_MATERIAL), MAT_TEXTURE);
     else if(section == LWS_MID)
-        name = R_TextureNameForNum(P_GetIntp(side, DMU_MIDDLE_MATERIAL));
+        name = R_MaterialNameForNum(P_GetIntp(side, DMU_MIDDLE_MATERIAL), MAT_TEXTURE);
     else if(section == LWS_LOWER)
-        name = R_TextureNameForNum(P_GetIntp(side, DMU_BOTTOM_MATERIAL));
+        name = R_MaterialNameForNum(P_GetIntp(side, DMU_BOTTOM_MATERIAL), MAT_TEXTURE);
     else
         return false;
 
@@ -1838,22 +1838,22 @@ boolean XL_SwitchSwap(side_t *side, int section)
     //// checking.
     if(!stricmp(buf, "SW1ON"))
     {
-        texid = R_TextureNumForName("SW1OFF");
+        texid = R_MaterialNumForName("SW1OFF", MAT_TEXTURE);
         makeChange = true;
     }
     if(!stricmp(buf, "SW1OFF"))
     {
-        texid = R_TextureNumForName("SW1ON");
+        texid = R_MaterialNumForName("SW1ON", MAT_TEXTURE);
         makeChange = true;
     }
     if(!stricmp(buf, "SW2ON"))
     {
-        texid = R_TextureNumForName("SW2OFF");
+        texid = R_MaterialNumForName("SW2OFF", MAT_TEXTURE);
         makeChange = true;
     }
     if(!stricmp(buf, "SW2OFF"))
     {
-        texid = R_TextureNumForName("SW2ON");
+        texid = R_MaterialNumForName("SW2ON", MAT_TEXTURE);
         makeChange = true;
     }
 #endif
@@ -1861,13 +1861,13 @@ boolean XL_SwitchSwap(side_t *side, int section)
     if(!strnicmp(buf, "SW1", 3))
     {
         buf[2] = '2';
-        texid = R_TextureNumForName(buf);
+        texid = R_MaterialNumForName(buf, MAT_TEXTURE);
         makeChange = true;
     }
     if(!strnicmp(buf, "SW2", 3))
     {
         buf[2] = '1';
-        texid = R_TextureNumForName(buf);
+        texid = R_MaterialNumForName(buf, MAT_TEXTURE);
         makeChange = true;
     }
 

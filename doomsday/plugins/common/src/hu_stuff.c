@@ -1383,7 +1383,7 @@ void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
 
     if(background)
     {
-        GL_SetFlat(R_FlatNumForName(borderLumps[0]));
+        GL_SetMaterial(R_MaterialNumForName(borderLumps[0], MAT_FLAT), MAT_FLAT);
         GL_DrawRectTiled(x, y, w, h, 64, 64);
     }
 

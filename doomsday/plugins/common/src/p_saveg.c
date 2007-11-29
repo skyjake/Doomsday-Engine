@@ -2110,7 +2110,7 @@ static void SV_WriteSector(sector_t *sec)
     float       flooroffy = P_GetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_Y);
     float       ceiloffx = P_GetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_X);
     float       ceiloffy = P_GetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_Y);
-    byte        lightlevel = (byte) (P_GetFloatp(sec, DMU_LIGHT_LEVEL) / 255.0f);
+    byte        lightlevel = (byte) (255.f * P_GetFloatp(sec, DMU_LIGHT_LEVEL));
     short       floorheight = (short) P_GetIntp(sec, DMU_FLOOR_HEIGHT);
     short       ceilingheight = (short) P_GetIntp(sec, DMU_CEILING_HEIGHT);
     int         floorpic = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
@@ -2138,8 +2138,8 @@ static void SV_WriteSector(sector_t *sec)
 
     SV_WriteShort(floorheight);
     SV_WriteShort(ceilingheight);
-    SV_WriteShort(SV_FlatArchiveNum(floorpic));
-    SV_WriteShort(SV_FlatArchiveNum(ceilingpic));
+    SV_WriteShort(SV_MaterialArchiveNum(floorpic, MAT_FLAT));
+    SV_WriteShort(SV_MaterialArchiveNum(ceilingpic, MAT_FLAT));
 #if __JHEXEN__
     SV_WriteShort((short) lightlevel);
 #else
@@ -2254,8 +2254,8 @@ static void SV_ReadSector(sector_t *sec)
 #endif
     {
         // The flat numbers are actually archive numbers.
-        floorTexID = SV_GetArchiveFlat(floorTexID);
-        ceilingTexID = SV_GetArchiveFlat(ceilingTexID);
+        floorTexID = SV_GetArchiveMaterial(floorTexID, MAT_FLAT);
+        ceilingTexID = SV_GetArchiveMaterial(ceilingTexID, MAT_FLAT);
     }
 
     P_SetIntp(sec, DMU_FLOOR_MATERIAL, floorTexID);
@@ -2382,13 +2382,13 @@ static void SV_WriteLine(line_t *li)
         SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_Y));
 
         texid = P_GetIntp(si, DMU_TOP_MATERIAL);
-        SV_WriteShort(SV_TextureArchiveNum(texid));
+        SV_WriteShort(SV_MaterialArchiveNum(texid, MAT_TEXTURE));
 
         texid = P_GetIntp(si, DMU_BOTTOM_MATERIAL);
-        SV_WriteShort(SV_TextureArchiveNum(texid));
+        SV_WriteShort(SV_MaterialArchiveNum(texid, MAT_TEXTURE));
 
         texid = P_GetIntp(si, DMU_MIDDLE_MATERIAL);
-        SV_WriteShort(SV_TextureArchiveNum(texid));
+        SV_WriteShort(SV_MaterialArchiveNum(texid, MAT_TEXTURE));
 
         P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
         for(j = 0; j < 3; ++j)
@@ -2522,9 +2522,9 @@ static void SV_ReadLine(line_t *li)
 #endif
         {
             // The texture numbers are archive numbers.
-            topTexID = SV_GetArchiveTexture(topTexID);
-            bottomTexID = SV_GetArchiveTexture(bottomTexID);
-            middleTexID = SV_GetArchiveTexture(middleTexID);
+            topTexID = SV_GetArchiveMaterial(topTexID, MAT_TEXTURE);
+            bottomTexID = SV_GetArchiveMaterial(bottomTexID, MAT_TEXTURE);
+            middleTexID = SV_GetArchiveMaterial(middleTexID, MAT_TEXTURE);
         }
 
         P_SetIntp(si, DMU_TOP_MATERIAL, topTexID);

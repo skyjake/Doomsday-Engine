@@ -47,10 +47,21 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define MAX_ARCHIVED_TEXTURES	1024
 #define BADTEXNAME  "DD_BADTX"  // string that will be written in the texture
                                 // archives to denote a missing texture.
 
 // TYPES -------------------------------------------------------------------
+
+typedef struct {
+	char            name[9];
+} texentry_t;
+
+typedef struct {
+    //// \todo Remove fixed limit.
+	texentry_t      table[MAX_ARCHIVED_TEXTURES];
+	int             count;
+} texarchive_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -75,33 +86,23 @@ texarchive_t tex_archive;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Called for every texture and flat in the level before saving by
  * Sv_InitTextureArchives.
  */
-void SV_PrepareTexture(int tex, boolean isflat, texarchive_t * arc)
+void SV_PrepareTexture(int tex, materialtype_t type, texarchive_t *arc)
 {
     int     c;
     char    name[9];
 
-    // Get the name of the texture/flat.
-    if(isflat)
-   {
-        if(R_FlatNameForNum > 0)
-            strncpy(name, R_FlatNameForNum(tex), 8);
-        else
-            strncpy(name, BADTEXNAME, 8);
-
-        name[8] = 0;
-    }
+    // Get the name of the material.
+    if(R_MaterialNameForNum(tex, type))
+        strncpy(name, R_MaterialNameForNum(tex, type), 8);
     else
-    {
-        if(R_TextureNameForNum(tex))
-            strncpy(name, R_TextureNameForNum(tex), 8);
-        else
-            strncpy(name, BADTEXNAME, 8);
-        name[8] = 0;
-    }
+        strncpy(name, BADTEXNAME, 8);
+
+    name[8] = 0;
+
     // Has this already been registered?
     for(c = 0; c < arc->count; c++)
     {
@@ -111,11 +112,12 @@ void SV_PrepareTexture(int tex, boolean isflat, texarchive_t * arc)
             break;
         }
     }
+
     if(c == arc->count)
         strcpy(arc->table[arc->count++].name, name);
 }
 
-/*
+/**
  * Initializes the texture and flat archives (translation tables).
  * Must be called before saving. The tables are written before any
  * world data is saved.
@@ -129,77 +131,71 @@ void SV_InitTextureArchives(void)
 
     for(i = 0; i < numsectors; ++i)
     {
-        SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_FLOOR_MATERIAL), true, &flat_archive);
-        SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_CEILING_MATERIAL), true, &flat_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_FLOOR_MATERIAL), MAT_FLAT, &flat_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_CEILING_MATERIAL), MAT_FLAT, &flat_archive);
     }
+
     // Init textures.
     tex_archive.count = 0;
 
     for(i = 0; i < numsides; ++i)
     {
-        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_MIDDLE_MATERIAL), false, &tex_archive);
-        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_TOP_MATERIAL), false, &tex_archive);
-        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_BOTTOM_MATERIAL), false, &tex_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_MIDDLE_MATERIAL), MAT_TEXTURE, &tex_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_TOP_MATERIAL), MAT_TEXTURE, &tex_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_BOTTOM_MATERIAL), MAT_TEXTURE, &tex_archive);
     }
 }
 
-unsigned short SV_SearchArchive(texarchive_t * arc, char *name)
+unsigned short SV_SearchArchive(texarchive_t *arc, char *name)
 {
     int     i;
 
     for(i = 0; i < arc->count; i++)
         if(!stricmp(arc->table[i].name, name))
             return i;
+
     // Not found?!!!
     return 0;
 }
 
-/*
- * Returns the archive number of the given texture.
- * It will be written to the savegame file.
+/**
+ * @return              The archive number of the given texture.
  */
-unsigned short SV_TextureArchiveNum(int texnum)
+unsigned short SV_MaterialArchiveNum(int materialID, materialtype_t type)
 {
-    char    name[9];
+    char            name[9];
 
-    if(R_TextureNameForNum(texnum))
-        strncpy(name, R_TextureNameForNum(texnum), 8);
+    if(R_MaterialNameForNum(materialID, type))
+        strncpy(name, R_MaterialNameForNum(materialID, type), 8);
     else
         strncpy(name, BADTEXNAME, 8);
     name[8] = 0;
-    return SV_SearchArchive(&tex_archive, name);
+
+    return SV_SearchArchive((type == MAT_TEXTURE? &tex_archive : &flat_archive), name);
 }
 
-/*
- * Returns the archive number of the given flat.
- * It will be written to the savegame file.
- */
-unsigned short SV_FlatArchiveNum(int flatnum)
+int SV_GetArchiveMaterial(int archivenum, materialtype_t type)
 {
-    char name[9];
-
-    if(R_FlatNameForNum(flatnum))
-        strncpy(name, R_FlatNameForNum(flatnum), 8);
-    else
-        strncpy(name, BADTEXNAME, 8);
-    name[8] = 0;
-    return SV_SearchArchive(&flat_archive, name);
-}
-
-int SV_GetArchiveFlat(int archivenum)
-{
+    switch(type)
+    {
+    case MAT_FLAT:
     if(!strncmp(flat_archive.table[archivenum].name, BADTEXNAME, 8))
         return -1;
     else
-        return R_FlatNumForName(flat_archive.table[archivenum].name);
-}
+        return R_MaterialNumForName(flat_archive.table[archivenum].name, MAT_FLAT);
 
-int SV_GetArchiveTexture(int archivenum)
-{
+    case MAT_TEXTURE:
     if(!strncmp(tex_archive.table[archivenum].name, BADTEXNAME, 8))
         return -1;
     else
-        return R_TextureNumForName(tex_archive.table[archivenum].name);
+        return R_MaterialNumForName(tex_archive.table[archivenum].name, MAT_TEXTURE);
+
+    default:
+        Con_Error("SV_GetArchiveMaterial: Unknown material type %i.",
+                  type);
+    }
+
+    return -1;
 }
 
 void SV_WriteTexArchive(texarchive_t *arc)

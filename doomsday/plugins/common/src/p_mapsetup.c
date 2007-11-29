@@ -467,7 +467,7 @@ static void P_FinalizeLevel(void)
     // visible due to texture repeating and interpolation.
     {
     uint    i, k;
-    int     lumpnum = R_TextureNumForName("NUKE24");
+    int     materialID = R_MaterialNumForName("NUKE24", MAT_TEXTURE);
     int     bottomTex;
     int     midTex;
     float   yoff;
@@ -486,7 +486,7 @@ static void P_FinalizeLevel(void)
                 bottomTex = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
                 midTex = P_GetIntp(side, DMU_MIDDLE_MATERIAL);
 
-                if(bottomTex == lumpnum && midTex == 0)
+                if(bottomTex == materialID && midTex == 0)
                     P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
             }
         }

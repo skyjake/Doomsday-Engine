@@ -1510,8 +1510,8 @@ static boolean PTR_ShootTraverse(intercept_t *in)
         backsector = P_GetPtrp(li, DMU_BACK_SECTOR);
 
         if(backsector &&
-           P_GetIntp(frontsector, DMU_CEILING_MATERIAL) == skyflatnum &&
-           P_GetIntp(backsector, DMU_CEILING_MATERIAL) == skyflatnum &&
+           P_GetIntp(frontsector, DMU_CEILING_MATERIAL) == skyMaskMaterial &&
+           P_GetIntp(backsector, DMU_CEILING_MATERIAL) == skyMaskMaterial &&
            (pos[VZ] > P_GetFloatp(frontsector, DMU_CEILING_HEIGHT) ||
             pos[VZ] > P_GetFloatp(backsector, DMU_CEILING_HEIGHT)))
             return false;
@@ -1552,9 +1552,9 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 
             // We must not hit a sky plane.
             if((pos[VZ] > ctop &&
-                P_GetIntp(contact, DMU_CEILING_MATERIAL) == skyflatnum) ||
+                P_GetIntp(contact, DMU_CEILING_MATERIAL) == skyMaskMaterial) ||
                (pos[VZ] < cbottom &&
-                P_GetIntp(contact, DMU_FLOOR_MATERIAL) == skyflatnum))
+                P_GetIntp(contact, DMU_FLOOR_MATERIAL) == skyMaskMaterial))
                 return false;
 
             // Find the approximate hitpoint by stepping back and
