@@ -135,7 +135,7 @@ extern boolean singletics;
 
 extern int bodyqueslot;
 
-#define skyflatnum          Get(DD_SKYFLATNUM)
+#define skyMaskMaterial     Get(DD_SKYFLATNUM)
 #define SKYFLATNAME         "F_SKY1"
 
 extern int rndindex;

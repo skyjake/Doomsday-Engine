@@ -45,7 +45,7 @@
 // Initialization
 void    D_PreInit(void);
 void    D_PostInit(void);
-void    R_InitTranslation(void);
+void    R_Init(void);
 
 // Timeing loop
 void    D_Ticker(timespan_t ticLength);
@@ -215,7 +215,7 @@ game_export_t *GetGameAPI(game_import_t * imports)
 #undef Get
     gx.GetInteger = G_GetInteger;
     gx.GetVariable = G_GetVariable;
-    gx.R_Init = R_InitTranslation;
+    gx.R_Init = R_Init;
 
     gx.NetServerStart = D_NetServerStarted;
     gx.NetServerStop = D_NetServerClose;

@@ -253,6 +253,7 @@ void        G_IdentifyVersion(void);
 int         G_GetInteger(int id);
 void       *G_GetVariable(int id);
 
+void        R_Init(void);
 void        R_SetViewSize(int blocks, int detail);
 
 #endif
