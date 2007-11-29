@@ -85,7 +85,7 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;
  * \note Assumes a given structure of the PLAYPAL. Could be read from a
  * lump instead.
  */
-void R_InitTranslationTables(void)
+static void initTranslation(void)
 {
     int         i;
     byte       *translationtables = (byte *)
@@ -106,6 +106,11 @@ void R_InitTranslationTables(void)
                 translationtables[i + 512] = i;
         }
     }
+}
+
+void R_Init(void)
+{
+    initTranslation();
 }
 
 /**

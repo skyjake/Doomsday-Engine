@@ -445,7 +445,7 @@ void P_XYMovement(mobj_t *mo)
                         P_GetPtrp(ceilingline, DMU_BACK_SECTOR);
 
                     if(backsector &&
-                       P_GetIntp(backsector, DMU_CEILING_MATERIAL) == skyflatnum)
+                       P_GetIntp(backsector, DMU_CEILING_MATERIAL) == skyMaskMaterial)
                     {
                         // Hack to prevent missiles exploding against the sky
                         if(mo->type == MT_BLOODYSKULL)
@@ -769,7 +769,7 @@ void P_ZMovement(mobj_t *mo)
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
         {
-            if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == skyflatnum)
+            if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == skyMaskMaterial)
             {
 #if __JHERETIC__
                 if(mo->type == MT_BLOODYSKULL)
