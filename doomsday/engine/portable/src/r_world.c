@@ -126,8 +126,8 @@ plane_t *R_NewPlaneForSector(sector_t *sec, planetype_t type)
     plane->sector = sec;
 
     // Initialize the surface.
-	suf->material.texture = suf->oldmaterial.texture = -1;
-	suf->material.isflat = suf->oldmaterial.isflat = true;
+    // \todo The initial material should be the "unknown" material.
+	suf->material = NULL;
     for(i = 0; i < 4; ++i)
         suf->rgba[i] = 1;
     suf->flags = 0;
@@ -297,8 +297,8 @@ static void R_SetSectorLinks(sector_t *sec)
                             else
                                 sid = backsid;
 
-                            if((sid->SW_bottomtexture && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
-                               (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
+                            if((sid->SW_bottommaterial && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
+                               (sid->SW_middlematerial && !(sid->SW_middleflags & SUF_TEXFIX)))
                                 hackfloor = false;
                             else
                                 floorLinkCandidate = back;
@@ -315,8 +315,8 @@ static void R_SetSectorLinks(sector_t *sec)
                             else
                                 sid = backsid;
 
-                            if((sid->SW_toptexture && !(sid->SW_topflags & SUF_TEXFIX)) ||
-                               (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
+                            if((sid->SW_topmaterial && !(sid->SW_topflags & SUF_TEXFIX)) ||
+                               (sid->SW_middlematerial && !(sid->SW_middleflags & SUF_TEXFIX)))
                                 hackceil = false;
                             else
                                 ceilLinkCandidate = back;
@@ -679,7 +679,7 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
         Rend_SkyParams(DD_SKY, DD_HEIGHT, .666667f);
         Rend_SkyParams(DD_SKY, DD_HORIZON, 0);
         Rend_SkyParams(0, DD_ENABLE, 0);
-        Rend_SkyParams(0, DD_TEXTURE, R_TextureNumForName("SKY1"));
+        Rend_SkyParams(0, DD_MATERIAL, R_MaterialNumForName("SKY1", MAT_TEXTURE));
         Rend_SkyParams(0, DD_MASK, DD_NO);
         Rend_SkyParams(0, DD_OFFSET, 0);
         Rend_SkyParams(1, DD_DISABLE, 0);
@@ -696,17 +696,16 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
         k = mapinfo->sky_layers[i].flags;
         if(k & SLF_ENABLED)
         {
-            skyTex = R_TextureNumForName(mapinfo->sky_layers[i].
-                                               texture);
+            skyTex = R_MaterialNumForName(mapinfo->sky_layers[i].texture, MAT_TEXTURE);
             if(skyTex == -1)
             {
                 Con_Message("R_SetupSky: Invalid/missing texture \"%s\"\n",
                             mapinfo->sky_layers[i].texture);
-                skyTex = R_TextureNumForName("SKY1");
+                skyTex = R_MaterialNumForName("SKY1", MAT_TEXTURE);
             }
 
             Rend_SkyParams(i, DD_ENABLE, 0);
-            Rend_SkyParams(i, DD_TEXTURE, skyTex);
+            Rend_SkyParams(i, DD_MATERIAL, skyTex);
             Rend_SkyParams(i, DD_MASK, k & SLF_MASKED ? DD_YES : DD_NO);
             Rend_SkyParams(i, DD_OFFSET, mapinfo->sky_layers[i].offset);
             Rend_SkyParams(i, DD_COLOR_LIMIT,
@@ -820,7 +819,7 @@ line_t *R_FindSolidLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own
     // Check for mid texture which fills the gap between floor and ceiling.
     // We should not give away the location of false walls (secrets).
     side = (other->L_frontsector == sector? 0 : 1);
-    if(other->sides[side]->SW_middletexture != 0)
+    if(other->sides[side]->SW_middlematerial)
     {
         float oFCeil  = other->L_frontsector->SP_ceilvisheight;
         float oFFloor = other->L_frontsector->SP_floorvisheight;
@@ -1170,23 +1169,12 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
     int         texFlags, oldTexFlags;
 
     // Any change to the texture or glow properties?
-    texFlags =
-        R_GraphicResourceFlags((suf->material.isflat? RC_FLAT : RC_TEXTURE),
-                               suf->material.texture);
-    oldTexFlags =
-        R_GraphicResourceFlags((suf->oldmaterial.isflat? RC_FLAT : RC_TEXTURE),
-                               suf->oldmaterial.texture);
-
-    if(forceUpdate ||
-       suf->material.isflat != suf->oldmaterial.isflat)
-    {
-        suf->oldmaterial.isflat = suf->material.isflat;
-    }
-
+    texFlags = R_GetMaterialFlags(suf->material);
+    oldTexFlags = R_GetMaterialFlags(suf->oldmaterial);
 
     // \fixme Update glowing status?
     // The order of these tests is important.
-    if(forceUpdate || (suf->material.texture != suf->oldmaterial.texture))
+    if(forceUpdate || (suf->material != suf->oldmaterial))
     {
         // Check if the new texture is declared as glowing.
         // NOTE: Currently, we always discard the glow settings of the
@@ -1203,28 +1191,17 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
             // The new texture is glowing.
             suf->flags |= SUF_GLOW;
         }
-        else if(suf->oldmaterial.texture && (oldTexFlags & TXF_GLOW))
+        else if(suf->oldmaterial && (oldTexFlags & TXF_GLOW))
         {
             // The old texture was glowing but the new one is not.
             suf->flags &= ~SUF_GLOW;
         }
 
-        suf->oldmaterial.texture = suf->material.texture;
+        suf->oldmaterial = suf->material;
 
         // No longer a missing texture fix?
-        if(suf->material.texture && (oldTexFlags & SUF_TEXFIX))
+        if(suf->material && (oldTexFlags & SUF_TEXFIX))
             suf->flags &= ~SUF_TEXFIX;
-
-        // Update the surface's blended texture.
-        if(suf->material.isflat)
-            suf->material.xlat = &flattranslation[suf->material.texture];
-        else
-            suf->material.xlat = &texturetranslation[suf->material.texture];
-
-        if(suf->material.xlat && suf->material.texture)
-            suf->flags |= SUF_BLEND;
-        else
-            suf->flags &= ~SUF_BLEND;
     }
     else if((texFlags & TXF_GLOW) != (oldTexFlags & TXF_GLOW))
     {
@@ -1319,10 +1296,8 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         {
             plane->glow = 4; // Default height factor is 4
 
-            if(plane->PS_isflat)
-                GL_GetFlatColor(plane->PS_texture, plane->glowrgb);
-            else
-                GL_GetTextureColor(plane->PS_texture, plane->glowrgb);
+            R_GetMaterialColor(plane->PS_material->ofTypeID,
+                                plane->PS_material->type, plane->glowrgb);
         }
         else
         {

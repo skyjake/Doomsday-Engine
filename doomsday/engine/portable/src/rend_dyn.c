@@ -489,47 +489,6 @@ static dynnode_t *projectOmniLightOnSubSectorPlane(const lumobj_t *lum,
     return NULL;
 }
 
-/**
- * @return          @ true, if the texture is already used in the list of
- *                  dynlights.
- */
-#if 0 // Currently unused
-static boolean isTexUsed(dynlight_t *node, DGLuint texture)
-{
-    boolean     found;
-
-    found = false;
-    while(node && !found)
-    {
-        if(node->texture == texture)
-            found = true;
-        else
-            node = node->next;
-    }
-
-    return found;
-}
-#endif
-
-/**
- * @param surface   Surface to retreive the current texture name from.
- *
- * @return          The texture name of the decoration light map for the
- *                  flat, else @c 0 = no such texture exists.
- */
-#if 0 // Unused
-DGLuint DL_GetFlatDecorLightMap(surface_t *surface)
-{
-    ded_decor_t *decor;
-
-    if(R_IsSkySurface(surface) || !surface->isflat)
-        return 0;
-
-    decor = R_GetFlat(surface->texture)->decoration;
-    return decor ? decor->pregen_lightmap : 0;
-}
-#endif
-
 static uint newDynlightList(void)
 {
     // Ran out of light link lists?

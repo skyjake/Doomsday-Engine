@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -460,6 +460,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
 {
     uint        i;
     sector_t   *sec = SECTOR_PTR(number);
+    material_t *mat;
 
     reg->lightlevel = sec->lightlevel;
     memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
@@ -474,11 +475,22 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
         memcpy(reg->planes[i].glowrgb, sec->planes[i]->glowrgb,
                sizeof(reg->planes[i].glowrgb));
 
-        // Surface properties
-        reg->planes[i].surface.material.texture = sec->planes[i]->PS_texture;
-        reg->planes[i].surface.material.isflat = sec->planes[i]->PS_isflat;
+        // Surface properties.
         memcpy(reg->planes[i].surface.rgba, sec->planes[i]->surface.rgba,
                sizeof(reg->planes[i].surface.rgba));
+
+        // Surface material.
+        mat = sec->SP_planematerial(i);
+        if(mat)
+        {
+            reg->planes[i].surface.material.texture = mat->ofTypeID;
+            reg->planes[i].surface.material.type = mat->type;
+        }
+        else
+        {
+            reg->planes[i].surface.material.texture = 0;
+            reg->planes[i].surface.material.type = 0;
+        }
     }
 }
 
@@ -491,9 +503,9 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     side_t *side = SIDE_PTR(number);
     line_t *line = sideOwners[number];
 
-    reg->top.material.texture = side->SW_toptexture;
-    reg->middle.material.texture = side->SW_middletexture;
-    reg->bottom.material.texture = side->SW_bottomtexture;
+    reg->top.material.texture = (side->SW_topmaterial? side->SW_topmaterial->ofTypeID : 0);
+    reg->middle.material.texture = (side->SW_middlematerial? side->SW_middlematerial->ofTypeID : 0);
+    reg->bottom.material.texture = (side->SW_bottommaterial? side->SW_bottommaterial->ofTypeID : 0);
     reg->lineFlags = (line ? line->mapflags & 0xff : 0);
 
     memcpy(reg->top.rgba, side->SW_toprgba, sizeof(reg->top.rgba));
@@ -605,7 +617,7 @@ VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinke
 }
 
 /**
- * @return              <code>true</code> if the result is not void.
+ * @return              @c true, if the result is not void.
  */
 boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
                                  playerdelta_t *d)
@@ -674,7 +686,7 @@ boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
 }
 
 /**
- * @return              <code>true</code> if the result is not void.
+ * @return              @c true, if the result is not void.
  */
 boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
                                  sectordelta_t *d, byte doUpdate)
@@ -684,10 +696,16 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     int         df = 0;
 
     // Determine which data is different.
-    if(r->planes[PLN_FLOOR].surface.material.texture != s->SP_floortexture)
+    if((s->SP_floormaterial &&
+        r->planes[PLN_FLOOR].surface.material.texture != s->SP_floormaterial->ofTypeID) ||
+       (!s->SP_floormaterial &&
+        r->planes[PLN_FLOOR].surface.material.texture != 0))
         df |= SDF_FLOORPIC;
-    if(r->planes[PLN_CEILING].surface.material.texture != s->SP_ceiltexture)
-        df |= SDF_CEILINGPIC;
+    if((s->SP_ceilmaterial &&
+        r->planes[PLN_CEILING].surface.material.texture != s->SP_ceilmaterial->ofTypeID) ||
+       (!s->SP_ceilmaterial &&
+        r->planes[PLN_CEILING].surface.material.texture != 0))
+       df |= SDF_CEILINGPIC;
     if(r->lightlevel != s->lightlevel)
         df |= SDF_LIGHT;
     if(r->rgb[0] != s->rgb[0])
@@ -810,7 +828,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
 }
 
 /**
- * @eturn               <code>true</code> if the result is not void.
+ * @eturn               @c true, if the result is not void.
  */
 boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
                                byte doUpdate)
@@ -822,28 +840,67 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
     byte        lineFlags = (line ? line->mapflags & 0xff : 0);
     byte        sideFlags = s->flags & 0xff;
 
-    if(r->top.material.texture != s->SW_toptexture &&
-	   !(s->SW_topflags & SUF_TEXFIX))
+    if(s->SW_topmaterial)
     {
-        df |= SIDF_TOPTEX;
-        if(doUpdate)
-            r->top.material.texture = s->SW_toptexture;
+        if(r->top.material.texture != s->SW_topmaterial->ofTypeID &&
+	       !(s->SW_topflags & SUF_TEXFIX))
+        {
+            df |= SIDF_TOPTEX;
+            if(doUpdate)
+                r->top.material.texture = s->SW_topmaterial->ofTypeID;
+        }
+    }
+    else
+    {
+        if(r->top.material.texture != 0 &&
+           !(s->SW_topflags & SUF_TEXFIX))
+        {
+            df |= SIDF_TOPTEX;
+            if(doUpdate)
+                r->top.material.texture = 0;
+        }
     }
 
-    if(r->middle.material.texture != s->SW_middletexture &&
-       !(s->SW_middleflags & SUF_TEXFIX))
+    if(s->SW_middlematerial)
     {
-        df |= SIDF_MIDTEX;
-        if(doUpdate)
-            r->middle.material.texture = s->SW_middletexture;
+        if(r->middle.material.texture != s->SW_middlematerial->ofTypeID &&
+           !(s->SW_middleflags & SUF_TEXFIX))
+        {
+            df |= SIDF_MIDTEX;
+            if(doUpdate)
+                r->middle.material.texture = s->SW_middlematerial->ofTypeID;
+        }
+    }
+    else
+    {
+        if(r->middle.material.texture != 0 &&
+           !(s->SW_middleflags & SUF_TEXFIX))
+        {
+            df |= SIDF_MIDTEX;
+            if(doUpdate)
+                r->middle.material.texture = 0;
+        }
     }
 
-    if(r->bottom.material.texture != s->SW_bottomtexture &&
-       !(s->SW_bottomflags & SUF_TEXFIX))
+    if(s->SW_bottommaterial)
     {
-        df |= SIDF_BOTTOMTEX;
-        if(doUpdate)
-            r->bottom.material.texture = s->SW_bottomtexture;
+        if(r->bottom.material.texture != s->SW_bottommaterial->ofTypeID &&
+           !(s->SW_bottomflags & SUF_TEXFIX))
+        {
+            df |= SIDF_BOTTOMTEX;
+            if(doUpdate)
+                r->bottom.material.texture = s->SW_bottommaterial->ofTypeID;
+        }
+    }
+    else
+    {
+        if(r->bottom.material.texture != 0 &&
+           !(s->SW_bottomflags & SUF_TEXFIX))
+        {
+            df |= SIDF_BOTTOMTEX;
+            if(doUpdate)
+                r->bottom.material.texture = 0;
+        }
     }
 
     if(r->lineFlags != lineFlags)

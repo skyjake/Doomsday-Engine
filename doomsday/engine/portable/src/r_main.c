@@ -60,8 +60,6 @@ typedef struct viewer_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    R_InitSkyMap(void);
-
 void    Rend_RetrieveLightSample(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -93,7 +91,7 @@ fixed_t *fineCosine = &finesine[FINEANGLES / 4];
 
 int     extraLight;             // bumped light from gun blasts
 
-int     skyFlatNum;
+material_t *skyMaskMaterial = NULL;
 char    skyFlatName[9] = "F_SKY";
 
 float   frameTimePos;           // 0...1: fractional part for sharp game tics
@@ -141,7 +139,7 @@ void R_Register(void)
  */
 void R_InitSkyMap(void)
 {
-    skyFlatNum = R_FlatNumForName(skyFlatName);
+    skyMaskMaterial = R_GetMaterial(R_MaterialNumForName(skyFlatName, MAT_FLAT), MAT_FLAT);
 }
 
 /**
@@ -152,7 +150,7 @@ void R_InitSkyMap(void)
  */
 boolean R_IsSkySurface(surface_t *surface)
 {
-    return surface->SM_isflat && surface->SM_texture == skyFlatNum;
+    return surface->material == skyMaskMaterial;
 }
 
 /**
@@ -224,7 +222,7 @@ void R_Update(void)
         players[i].psprites[0].stateptr = players[i].psprites[1].stateptr =
             NULL;
     }
-    // The rendeling lists have persistent data that has changed during
+    // The rendering lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();
 

@@ -220,7 +220,7 @@ extern boolean usingFog;
 extern float maxLightDist;
 
 extern boolean freezeRLs;
-extern int skyFlatNum;
+extern material_t *skyMaskMaterial;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1753,7 +1753,10 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
     if((poly->flags & RPF_SKY_MASK) && debugSky)
     {
         texinfo_t *texinfo;
-        poly->tex.id = curtex = GL_PrepareFlat(skyFlatNum, &texinfo);
+
+        poly->tex.id = curtex =
+            GL_PrepareMaterial(skyMaskMaterial->ofTypeID, skyMaskMaterial->type, &texinfo);
+
         poly->tex.width = texinfo->width;
         poly->tex.height = texinfo->height;
         poly->tex.detail = 0;

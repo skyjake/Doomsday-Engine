@@ -372,21 +372,17 @@ static ded_reflection_t *getReflectionDef(material_t *material, short *width,
 {
     ded_reflection_t *ref = NULL;
 
+    if(!material)
+        return NULL;
+
     // Figure out what kind of surface properties have been defined
     // for the texture or flat in question.
-    if(material->isflat)
+    switch(material->type)
     {
-        flat_t *flatptr;
-
-        if(material->xlat)
+    case MAT_FLAT:
         {
-            // The flat is currently translated to another one.
-            flatptr = flats[material->xlat->current];
-        }
-        else
-        {
-            flatptr = flats[material->texture];
-        }
+        flat_t         *flatptr =
+            flats[flattranslation[material->ofTypeID].current];
 
         ref = flatptr->reflection;
         if(ref)
@@ -396,19 +392,12 @@ static ded_reflection_t *getReflectionDef(material_t *material, short *width,
             if(height)
                 *height = flatptr->info.height;
         }
-    }
-    else
-    {
-        texture_t *texptr;
-
-        if(material->xlat)
-        {
-            texptr = textures[material->xlat->current];
+        break;
         }
-        else
+    case MAT_TEXTURE:
         {
-            texptr = textures[material->texture];
-        }
+        texture_t      *texptr =
+            textures[texturetranslation[material->ofTypeID].current];
 
         ref = texptr->reflection;
         if(ref)
@@ -418,6 +407,10 @@ static ded_reflection_t *getReflectionDef(material_t *material, short *width,
             if(height)
                 *height = texptr->info.height;
         }
+        break;
+        }
+    default:
+        break;
     }
 
     return ref;
@@ -473,7 +466,24 @@ static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
 static void polyTexBlend(rendpoly_t *poly, material_t *material)
 {
     texinfo_t      *texinfo;
-    translation_t *xlat = material->xlat;
+    translation_t  *xlat = NULL;
+
+    if(!material)
+        return;
+
+    switch(material->type)
+    {
+    case MAT_FLAT:
+        xlat = &flattranslation[material->ofTypeID];
+        break;
+
+    case MAT_TEXTURE:
+        xlat = &texturetranslation[material->ofTypeID];
+        break;
+
+    default:
+        break;
+    }
 
     // If fog is active, inter=0 is accepted as well. Otherwise flickering
     // may occur if the rendering passes don't match for blended and
@@ -486,10 +496,8 @@ static void polyTexBlend(rendpoly_t *poly, material_t *material)
     }
 
     // Get info of the blend target.
-    if(material->isflat)
-        poly->intertex.id = GL_PrepareFlat2(xlat->next, false, &texinfo);
-    else
-        poly->intertex.id = GL_PrepareTexture2(xlat->next, false, &texinfo);
+    poly->intertex.id =
+        GL_PrepareMaterial2(xlat->next, material->type, false, &texinfo);
 
     poly->intertex.width = texinfo->width;
     poly->intertex.height = texinfo->height;
@@ -514,20 +522,29 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
         sector_t *back  = line->L_sector(backside^1);
         side_t   *side  = line->L_side(backside);
 
-        if(side->SW_middletexture != 0)
+        if(side->SW_middlematerial)
         {
             texinfo_t      *texinfo = NULL;
 
-            if(side->SW_middletexture > 0)
+            switch(side->SW_middlematerial->type)
             {
-                if(side->SW_middleisflat)
-                    GL_GetFlatInfo(side->SW_middletexture, &texinfo);
-                else
-                    GL_GetTextureInfo(side->SW_middletexture, &texinfo);
-            }
-            else // It's a DDay texture.
-            {
-                GL_GetDDTextureInfo(DDT_UNKNOWN, &texinfo);
+            case MAT_FLAT:
+                GL_GetMaterialInfo(side->SW_middlematerial->ofTypeID,
+                                   side->SW_middlematerial->type, &texinfo);
+                break;
+
+            case MAT_TEXTURE:
+                GL_GetMaterialInfo(side->SW_middlematerial->ofTypeID,
+                                   side->SW_middlematerial->type, &texinfo);
+                break;
+
+            case MAT_DDTEX:
+                GL_GetMaterialInfo(DDT_UNKNOWN, MAT_DDTEX, &texinfo);
+                break;
+
+            default:
+                Con_Error("Rend_DoesMidTextureFillGap: Unknown material type %i.",
+                          side->SW_middlematerial->type);
             }
 
             if(!side->SW_middleblendmode && side->SW_middlergba[3] >= 1 && !texinfo->masked)
@@ -589,8 +606,7 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
         if(line->L_frontside && line->L_backside)
         {
             // Check middle texture
-            if(!(side->SW_middletexture || side->SW_middletexture == -1) ||
-               side->SW_middlergba[3] <= 0) // Check alpha
+            if((!side->SW_middlematerial || side->SW_middlematerial->ofTypeID <= 0) || side->SW_middlergba[3] <= 0) // Check alpha
                 side->sections[SEG_MIDDLE].frameflags &= ~SUFINF_PVIS;
         }
 
@@ -656,7 +672,7 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
                                       texinfo_t **texinfo)
 {
     texinfo_t   *info;
-    int         flags;
+    int         flags = 0;
 
     if(R_IsSkySurface(surface))
         return 0;
@@ -664,48 +680,73 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
     // Prepare the flat/texture
     if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
-        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_GRAY, NULL);
+        poly->tex.id = curtex =
+            GL_PrepareMaterial(DDT_GRAY, MAT_DDTEX, NULL);
+
+        flags = surface->flags & ~(SUF_TEXFIX);
 
         // We need the properties of the real flat/texture.
-        if(surface->SM_texture == -1)
-            GL_GetDDTextureInfo(DDT_UNKNOWN, &info);
-        else if(surface->SM_isflat)
-            GL_GetFlatInfo(surface->SM_texture, &info);
-        else
-            GL_GetTextureInfo(surface->SM_texture, &info);
+        if(surface->material)
+        {
+            GL_GetMaterialInfo(surface->material->ofTypeID,
+                               surface->material->type, &info);
 
-        flags = surface->flags & ~(SUF_TEXFIX|SUF_BLEND);
+            poly->tex.width = info->width;
+            poly->tex.height = info->height;
+            poly->tex.detail = (r_detail && info->detail.tex? &info->detail : 0);
+            poly->tex.masked = info->masked;
+
+            if(info->masked)
+                flags &= ~SUF_NO_RADIO;
+        }
     }
     else if((surface->flags & SUF_TEXFIX) && devNoTexFix)
     {   // For debug, render the "missing" texture instead of the texture
         // chosen for surfaces to fix the HOMs.
-        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_MISSING, &info);
+        poly->tex.id = curtex =
+            GL_PrepareMaterial(DDT_MISSING, MAT_DDTEX, &info);
         flags = SUF_GLOW; // Make it stand out
     }
-    else if(surface->SM_texture == -1)
-    {   // An unknown texture.
-        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN, &info);
-        flags = SUF_GLOW; // Make it stand out
+    else if(surface->material)
+    {
+        switch(surface->material->type)
+        {
+        case MAT_DDTEX: // An unknown texture.
+            poly->tex.id = curtex =
+                GL_PrepareMaterial(DDT_UNKNOWN, MAT_DDTEX, &info);
+            flags = SUF_GLOW; // Make it stand out.
+            break;
+
+        case MAT_FLAT:
+            poly->tex.id = curtex =
+                GL_PrepareMaterial2(surface->material->ofTypeID, surface->material->type, true, &info);
+            flags = surface->flags;
+            break;
+        case MAT_TEXTURE:
+            poly->tex.id = curtex =
+                GL_PrepareMaterial2(surface->material->ofTypeID, surface->material->type, true, &info);
+            flags = surface->flags;
+            break;
+
+        default:
+            Con_Error("Rend_PrepareTextureForPoly: Unknown material type %i.",
+                      surface->material->type);
+        }
+
+        poly->tex.width = info->width;
+        poly->tex.height = info->height;
+        poly->tex.detail = (r_detail && info->detail.tex? &info->detail : 0);
+        poly->tex.masked = info->masked;
+
+        if(info->masked)
+            flags &= ~SUF_NO_RADIO;
     }
     else
-    {
-        if(surface->SM_isflat)
-            poly->tex.id = curtex =
-                GL_PrepareFlat2(surface->SM_texture, true, &info);
-        else
-            poly->tex.id = curtex =
-                GL_PrepareTexture2(surface->SM_texture, true, &info);
-
-        flags = surface->flags;
+    {   // Shouldn't ever get here!
+#if _DEBUG
+        Con_Error("Rend_PrepareTextureForPoly: Surface with no material?");
+#endif
     }
-
-    poly->tex.width = info->width;
-    poly->tex.height = info->height;
-    poly->tex.detail = (r_detail && info->detail.tex? &info->detail : 0);
-    poly->tex.masked = info->masked;
-
-    if(info->masked)
-        flags &= ~SUF_NO_RADIO;
 
     if(texinfo)
         *texinfo = info;
@@ -1016,7 +1057,7 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
 
     // Smooth Texture Animation?
     if(flags & RPF2_BLEND)
-        polyTexBlend(poly, &surface->material);
+        polyTexBlend(poly, surface->material);
 
     // Add the poly to the appropriate list
     RL_AddPoly(poly);
@@ -1031,7 +1072,7 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
         short       width = 0;
         short       height = 0;
 
-        if((ref = getReflectionDef(&surface->material, &width, &height)) != NULL)
+        if((ref = getReflectionDef(surface->material, &width, &height)) != NULL)
         {
             // Make sure the texture has been loaded.
             if(GL_LoadReflectionMap(ref))
@@ -1112,8 +1153,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
     if(bottom >= top)
         return true;
 
-    // Is there a visible surface?
-    if(surface->SM_texture != 0)
+    if(surface->material && surface->material->ofTypeID != 0)
     {
         visible = true;
     }
@@ -1124,6 +1164,10 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
         {
            visible = skyMask = true;
         }
+    }
+    else
+    {
+        solidSeg = false;
     }
 
     // Is there a visible surface?
@@ -1221,11 +1265,14 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
 
                 if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
                     tempflags |= RPF2_SHADOW;
-                if(solidSeg && surface->SM_texture != -1 && !texinfo->masked)
+                if(solidSeg &&
+                   (surface->material &&
+                    (surface->material->type == MAT_TEXTURE ||
+                     surface->material->type == MAT_FLAT)) && !texinfo->masked)
                     tempflags |= RPF2_SHINY;
                 if(surfaceFlags & SUF_GLOW)
                     tempflags |= RPF2_GLOW;
-                if((surfaceFlags & SUF_BLEND) && !(surface->flags & SUF_TEXFIX))
+                if(!(surface->flags & SUF_TEXFIX))
                     tempflags |= RPF2_BLEND;
             }
 
@@ -1265,7 +1312,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                 float           sectorLightLevel = Rend_SectorLight(frontsec);
 
                 // Check for neighborhood division?
-                if(solidSeg && !(quad->flags & RPF_MASKED))
+                if(!(quad->flags & RPF_MASKED))
                     applyWallHeightDivision(quad, seg, frontsec, vL_ZBottom, vL_ZTop);
 
                 getColorsForSegSection(sideFlags, section, &bottomColor, &topColor);
@@ -1304,7 +1351,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
 
                 // Smooth Texture Animation?
                 if(tempflags & RPF2_BLEND)
-                    polyTexBlend(quad, &surface->material);
+                    polyTexBlend(quad, surface->material);
 
                 // Add the poly to the appropriate list
                 RL_AddPoly(quad);
@@ -1324,7 +1371,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                     short width = 0;
                     short height = 0;
 
-                    if((ref = getReflectionDef(&surface->material, &width, &height)) != NULL)
+                    if((ref = getReflectionDef(surface->material, &width, &height)) != NULL)
                     {
                         // Make sure the texture has been loaded.
                         if(GL_LoadReflectionMap(ref))
@@ -1352,7 +1399,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
  */
 static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 {
-    boolean     solidSeg = false;
+    boolean     solidSeg = true;
     side_t     *side;
     line_t     *ldef;
     float       ffloor, fceil;
@@ -1397,8 +1444,8 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
                          false, true, side->flags);
     }
 
-    if(!P_IsInVoid(viewPlayer))
-        solidSeg = true;
+    if(P_IsInVoid(viewPlayer))
+        solidSeg = false;
 
     return solidSeg;
 }
@@ -1436,8 +1483,8 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     }
 
     if(backsec == frontsec &&
-       side->SW_toptexture == 0 && side->SW_bottomtexture == 0 &&
-       side->SW_middletexture == 0)
+       !side->SW_topmaterial && !side->SW_bottommaterial &&
+       !side->SW_middlematerial)
        return false; // Ugh... an obvious wall seg hack. Best take no chances...
 
     fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
@@ -1467,12 +1514,14 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             (!(ldef->mapflags & ML_BLOCKING) || !(viewPlayer->flags & DDPF_NOCLIP));
 
         // We need the properties of the real flat/texture.
-        if(surface->SM_texture < 0)
-            GL_GetDDTextureInfo(DDT_UNKNOWN, &texinfo);
-        else if(surface->SM_isflat)
-            GL_GetFlatInfo(surface->SM_texture, &texinfo);
-        else
-            GL_GetTextureInfo(surface->SM_texture, &texinfo);
+        if(surface->material)
+        {
+            if(surface->material->type == MAT_DDTEX)
+                GL_GetMaterialInfo(DDT_UNKNOWN, MAT_DDTEX, &texinfo);
+            else
+                GL_GetMaterialInfo(surface->material->ofTypeID,
+                                   surface->material->type, &texinfo);
+        }
 
         vL_ZBottom = vR_ZBottom = bottom = MAX_OF(bfloor, ffloor);
         vL_ZTop    = vR_ZTop    = top    = MIN_OF(bceil, fceil);
@@ -1545,18 +1594,18 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             // An obvious hack, what to do though??
         }
         else if((bceil <= ffloor &&
-                    ((side->SW_toptexture != 0 /* && !(side->flags & SDF_MIDTEXUPPER)*/) ||
-                     (side->SW_middletexture != 0))) ||
+                    ((side->SW_topmaterial /* && !(side->flags & SDF_MIDTEXUPPER)*/) ||
+                     (side->SW_middlematerial))) ||
                 (bfloor >= fceil &&
-                    (side->SW_bottomtexture != 0 || side->SW_middletexture !=0)))
+                    (side->SW_bottommaterial || side->SW_middlematerial)))
         {
             // A closed gap.
             solidSeg = true;
         }
         else if((seg->frameflags & SEGINF_BACKSECSKYFIX) ||
                 (bsh == 0 && bfloor > ffloor && bceil < fceil &&
-                (side->SW_toptexture != 0 /*&& !(side->flags & SDF_MIDTEXUPPER)*/) &&
-                (side->SW_bottomtexture != 0)))
+                (side->SW_topmaterial /*&& !(side->flags & SDF_MIDTEXUPPER)*/) &&
+                (side->SW_bottommaterial)))
         {
             // A zero height back segment
             solidSeg = true;
@@ -1686,8 +1735,8 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             frontsec = seg->SG_frontsector;
 
             if(backsec == frontsec &&
-               side->SW_toptexture == 0 && side->SW_bottomtexture == 0 &&
-               side->SW_middletexture == 0)
+               !side->SW_topmaterial && !side->SW_bottommaterial &&
+               !side->SW_middlematerial)
                continue; // Ugh... an obvious wall seg hack. Best take no chances...
 
             ffloor = frontsec->SP_floorvisheight;
@@ -1812,7 +1861,7 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
         // Occlusions can only happen where two sectors contact.
         if(seg->linedef && seg->SG_backsector &&
            !(seg->flags & SEGF_POLYOBJ) && // Polyobjects don't occlude.
-           (forward_facing = (seg->frameflags & SEGINF_FACINGFRONT)))
+           (forward_facing = ((seg->frameflags & SEGINF_FACINGFRONT)? true : false)))
         {
             back = seg->SG_backsector;
             backh[0] = back->SP_floorheight;
@@ -1874,6 +1923,10 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     polySector = R_GetLinkedSector(subsector, plane->type);
     surface = &polySector->planes[plane->type]->surface;
 
+    // Must have a visible surface.
+    if(!surface->material)
+        return;
+
     // We don't render planes for unclosed sectors when the polys would
     // be added to the skymask (a DOOM.EXE renderer hack).
     if(sector->unclosed && R_IsSkySurface(surface))
@@ -1891,43 +1944,38 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     // Don't bother with planes facing away from the camera.
     if(!(M_DotProduct(vec, surface->normal) < 0))
     {
+        short       tempflags = 0;
         rendpoly_t *poly =
             R_AllocRendPoly(RP_FLAT, false, subsector->numvertices);
 
         surfaceFlags = Rend_PrepareTextureForPoly(poly, surface, NULL);
 
-        // Is there a visible surface?
-        if(surface->SM_texture != 0)
+        // Fill in the remaining quad data.
+        poly->flags = 0;
+        memcpy(&poly->normal, &surface->normal, sizeof(poly->normal));
+
+        // Check for sky.
+        if(R_IsSkySurface(surface))
         {
-            short tempflags = 0;
-
-            // Fill in the remaining quad data.
-            poly->flags = 0;
-            memcpy(&poly->normal, &surface->normal, sizeof(poly->normal));
-
-            // Check for sky.
-            if(R_IsSkySurface(surface))
-            {
-                poly->flags |= RPF_SKY_MASK;
-            }
-            else
-            {
-                poly->texOffset[VX] =
-                    sector->planes[plane->type]->surface.offset[VX];
-                poly->texOffset[VY] =
-                    sector->planes[plane->type]->surface.offset[VY];
-            }
-
-            if(surface->SM_texture != -1)
-                tempflags |= RPF2_SHINY;
-            if(surfaceFlags & SUF_GLOW)
-                tempflags |= RPF2_GLOW;
-            if((surfaceFlags & SUF_BLEND) && !(surface->flags & SUF_TEXFIX))
-                tempflags |= RPF2_BLEND;
-
-            doRenderPlane(poly, polySector, subsector, plane, surface,
-                               height, tempflags);
+            poly->flags |= RPF_SKY_MASK;
         }
+        else
+        {
+            poly->texOffset[VX] =
+                sector->planes[plane->type]->surface.offset[VX];
+            poly->texOffset[VY] =
+                sector->planes[plane->type]->surface.offset[VY];
+        }
+
+        if(surface->material->type == MAT_TEXTURE || surface->material->type == MAT_FLAT)
+            tempflags |= RPF2_SHINY;
+        if(surfaceFlags & SUF_GLOW)
+            tempflags |= RPF2_GLOW;
+        if(!(surface->flags & SUF_TEXFIX))
+            tempflags |= RPF2_BLEND;
+
+        doRenderPlane(poly, polySector, subsector, plane, surface,
+                           height, tempflags);
 
         R_FreeRendPoly(poly);
     }
@@ -2684,7 +2732,7 @@ static void Rend_RenderBoundingBoxes(void)
     gl.Enable(DGL_TEXTURING);
     gl.Disable(DGL_CULL_FACE);
 
-    gl.Bind(GL_PrepareDDTexture(DDT_BBOX, NULL));
+    gl.Bind(GL_PrepareMaterial(DDT_BBOX, MAT_DDTEX, NULL));
     GL_BlendMode(BM_ADD);
 
     // For every sector

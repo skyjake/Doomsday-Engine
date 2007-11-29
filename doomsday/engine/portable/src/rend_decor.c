@@ -94,16 +94,22 @@ void Rend_DecorRegister(void)
 /**
  * Returns a pointer to the surface decoration, if any.
  */
-static ded_decor_t *getGraphicResourceDecoration(int id, boolean isFlat)
+static ded_decor_t *getMaterialDecoration(material_t *mat)
 {
-    if(id < 0 ||
-       (isFlat && id >= numflats) || (!isFlat && id >= numtextures))
+    if(!mat)
         return NULL;
 
-    if(isFlat)
-        return flats[flattranslation[id].current]->decoration;
-    else
-        return textures[texturetranslation[id].current]->decoration;
+    switch(mat->type)
+    {
+    case MAT_FLAT:
+        return flats[flattranslation[mat->ofTypeID].current]->decoration;
+
+    case MAT_TEXTURE:
+        return textures[texturetranslation[mat->ofTypeID].current]->decoration;
+
+    default:
+        return NULL;
+    }
 }
 
 /**
@@ -319,8 +325,9 @@ static void Rend_AddLightDecoration(const float pos[3],
 }
 
 /**
- * Returns true if the view point is close enough to the bounding box
- * so that there could be visible decorations inside.
+ * @return                  @c true, if the view point is close enough to
+ *                          the bounding box so that there could be visible
+ *                          decorations inside.
  */
 static boolean pointInBounds(const float bounds[6], const float viewer[3],
                              const float maxDist)
@@ -334,7 +341,8 @@ static boolean pointInBounds(const float bounds[6], const float viewer[3],
 }
 
 /**
- * Returns > 0 if the sector lightlevel passes the limit condition.
+ * @return                  @c > 0, if the sector lightlevel passes the
+ *                          limit condition.
  */
 static float checkSectorLight(const sector_t *sector,
                               const ded_decorlight_t *lightDef)
@@ -402,8 +410,7 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
         return;
 
     // Should this be decorated at all?
-    if(!(def = getGraphicResourceDecoration(surface->SM_texture,
-                                                 surface->SM_isflat)))
+    if(!(def = getMaterialDecoration(surface->material)))
         return;
 
     // Let's see which sidedef is present.
@@ -429,10 +436,8 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
     lh = top - bottom;
 
     // Setup the global texture info variables.
-    if(surface->SM_isflat)
-        GL_GetFlatInfo(surface->SM_texture, &texinfo);
-    else
-        GL_GetTextureInfo(surface->SM_texture, &texinfo);
+    GL_GetMaterialInfo(surface->material->ofTypeID,
+                       surface->material->type, &texinfo);
 
     surfTexW = texinfo->width;
     surfTexH = texinfo->height;
@@ -588,14 +593,14 @@ static void decorateLine(line_t *line)
             // Figure out the right side.
             side = getSectorSide(line, highSector);
 
-            if(side->SW_toptexture > 0)
+            if(side->SW_topmaterial &&
+               (side->SW_topmaterial->type == MAT_TEXTURE ||
+                side->SW_topmaterial->type == MAT_FLAT))
             {
                 texinfo_t *texinfo;
 
-                if(side->SW_topisflat)
-                    GL_GetFlatInfo(side->SW_toptexture, &texinfo);
-                else
-                    GL_GetTextureInfo(side->SW_toptexture, &texinfo);
+                GL_GetMaterialInfo(side->SW_topmaterial->ofTypeID,
+                                   side->SW_topmaterial->type, &texinfo);
 
                 Rend_DecorateLineSection(line, side, &side->SW_topsurface,
                                          highSector->SP_ceilvisheight,
@@ -625,7 +630,9 @@ static void decorateLine(line_t *line)
             // Figure out the right side.
             side = getSectorSide(line, lowSector);
 
-            if(side->SW_bottomtexture > 0)
+            if(side->SW_bottommaterial &&
+               (side->SW_bottommaterial->type == MAT_TEXTURE ||
+                side->SW_bottommaterial->type == MAT_FLAT))
             {
                 Rend_DecorateLineSection(line, side, &side->SW_bottomsurface,
                                          highSector->SP_floorvisheight,
@@ -635,25 +642,6 @@ static void decorateLine(line_t *line)
                                          lowSector->SP_ceilvisheight : 0);
             }
         }
-
-        // 2-sided middle texture?
-        // \fixme Since halos aren't usually clipped by 2-sided middle
-        // textures, this looks a bit silly.
-        /*if(line->L_frontside && side = line->L_frontside->SW_middletexture)
-        {
-            rendpoly_t *quad = R_AllocRendPoly(RP_QUAD, true, 4);
-
-            quad->top = MIN_OF(frontCeil, backCeil);
-            quad->bottom = MAX_OF(frontFloor, backFloor);
-            quad->texoffy = side->SW_middleoffset[VY];
-            if(Rend_MidTexturePos(&quad->top, &quad->bottom, &quad->texoffy, 0,
-                                  (line->flags & ML_DONTPEGBOTTOM) != 0))
-            {
-                Rend_DecorateLineSection(line, side, &side->SW_middlesurface,
-                                         quad->top, quad->bottom, quad->texoffy);
-            }
-            R_FreeRendPoly(quad);
-        }*/
     }
     else
     {
@@ -661,14 +649,14 @@ static void decorateLine(line_t *line)
         // middle texture.
         side = line->L_side(line->L_frontside? FRONT:BACK);
 
-        if(side->SW_middletexture > 0)
+        if(side->SW_middlematerial &&
+           (side->SW_middlematerial->type == MAT_TEXTURE ||
+            side->SW_middlematerial->type == MAT_FLAT))
         {
             texinfo_t      *texinfo;
 
-            if(side->SW_middleisflat)
-                GL_GetFlatInfo(side->SW_middletexture, &texinfo);
-            else
-                GL_GetTextureInfo(side->SW_middletexture, &texinfo);
+            GL_GetMaterialInfo(side->SW_middlematerial->ofTypeID,
+                               side->SW_middlematerial->type, &texinfo);
 
             Rend_DecorateLineSection(line, side, &side->SW_middlesurface, frontCeil,
                                      frontFloor,
@@ -773,7 +761,7 @@ static void decorateSector(const sector_t *sec)
     for(i = 0; i < sec->planecount; ++i)
     {
         pln = sec->SP_plane(i);
-        def = getGraphicResourceDecoration(pln->PS_texture, pln->PS_isflat);
+        def = getMaterialDecoration(pln->PS_material);
 
         if(def != NULL) // The surface is decorated.
             decoratePlane(sec, pln->visheight, pln->PS_normal[VZ],

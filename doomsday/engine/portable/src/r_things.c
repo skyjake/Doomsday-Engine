@@ -92,9 +92,6 @@ int     psp3d;
 spritedef_t *sprites = 0;
 int     numSprites;
 
-spritelump_t **spritelumps;
-int     numSpriteLumps;
-
 vissprite_t vissprites[MAXVISSPRITES], *vissprite_p;
 vissprite_t vispsprites[DDMAXPSPRITES];
 
@@ -122,59 +119,6 @@ static vlight_t lights[MAX_VISSPRITE_LIGHTS] = {
 float ambientColor[3];
 
 // CODE --------------------------------------------------------------------
-
-void R_InitSpriteLumps(void)
-{
-    lumppatch_t *patch;
-    spritelump_t *sl;
-    int         i;
-    char        buf[64];
-
-    sprintf(buf, "R_Init: Initializing %i sprites...", numSpriteLumps);
-    //Con_InitProgress(buf, numSpriteLumps);
-
-    for(i = 0; i < numSpriteLumps; ++i)
-    {
-        sl = spritelumps[i];
-
-        /*
-        if(!(i % 50))
-            Con_Progress(i, PBARF_SET | PBARF_DONTSHOW);*/
-
-        patch = (lumppatch_t *) W_CacheLumpNum(sl->lump, PU_CACHE);
-        sl->width = SHORT(patch->width);
-        sl->height = SHORT(patch->height);
-        sl->offset = SHORT(patch->leftoffset);
-        sl->topoffset = SHORT(patch->topoffset);
-    }
-}
-
-/**
- * @return              The new sprite lump number.
- */
-int R_NewSpriteLump(int lump)
-{
-    spritelump_t **newlist, *ptr;
-    int         i;
-
-    // Is this lump already entered?
-    for(i = 0; i < numSpriteLumps; i++)
-        if(spritelumps[i]->lump == lump)
-            return i;
-
-    newlist = Z_Malloc(sizeof(spritelump_t*) * ++numSpriteLumps, PU_SPRITE, 0);
-    if(numSpriteLumps > 1)
-    {
-        for(i = 0; i < numSpriteLumps -1; ++i)
-            newlist[i] = spritelumps[i];
-
-        Z_Free(spritelumps);
-    }
-    spritelumps = newlist;
-    ptr = spritelumps[numSpriteLumps - 1] = Z_Calloc(sizeof(spritelump_t), PU_SPRITE, 0);
-    ptr->lump = lump;
-    return numSpriteLumps - 1;
-}
 
 /**
  * Local function for R_InitSprites.

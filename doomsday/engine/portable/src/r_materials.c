@@ -1,0 +1,440 @@
+/**\file
+ *\section License
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * r_materials.c: Materials (texture/flat/sprite/etc abstract interface).
+ */
+
+// HEADER FILES ------------------------------------------------------------
+
+#include "de_base.h"
+#include "de_console.h"
+#include "de_system.h"
+#include "de_network.h"
+#include "de_refresh.h"
+#include "de_graphics.h"
+#include "de_misc.h"
+#include "de_audio.h" // For texture, environmental audio properties.
+
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern boolean levelSetup;
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+uint    numMaterials;
+material_t **materials;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// CODE --------------------------------------------------------------------
+
+/**
+ * One time initialization of the materials list. Called during init.
+ */
+void R_InitMaterials(void)
+{
+    numMaterials = 0;
+    materials = NULL;
+}
+
+/**
+ * Release all memory acquired for the materials list.
+ * Called during shutdown.
+ */
+void R_ShutdownMaterials(void)
+{
+    if(materials)
+    {
+        uint            i;
+
+        for(i = 0; i < numMaterials; ++i)
+            Z_Free(materials[i]);
+
+        Z_Free(materials);
+        materials = NULL;
+        numMaterials = 0;
+    }
+}
+
+/**
+ * Mark all existing materials as requiring an update. Called during a
+ * renderer reset.
+ */
+void R_MarkMaterialsForUpdating(void)
+{
+    uint            i;
+
+    // Mark all existing textures as in need of update.
+    for(i = 0; i < numMaterials; ++i)
+        materials[i]->flags |= MATF_CHANGED;
+}
+
+material_t *R_MaterialCreate(const char *name, int ofTypeID,
+                             materialtype_t type)
+{
+    uint            i;
+    material_t     *mat, **newList;
+
+    if(!name)
+        return NULL;
+
+    // Check if we've already created a material for this.
+    for(i = 0; i < numMaterials; ++i)
+    {
+        mat = materials[i];
+        if(mat->type == type && !strnicmp(mat->name, name, 8))
+        {
+            // Update the (possibly new) meta data.
+            mat->ofTypeID = ofTypeID;
+            mat->flags &= ~MATF_CHANGED;
+            return mat; // Yep, return it.
+        }
+    }
+
+    // A new material.
+    mat = Z_Malloc(sizeof(material_t), PU_STATIC, 0);
+    memcpy(mat->name, name, sizeof(mat->name));
+    mat->name[8] = 0;
+    mat->ofTypeID = ofTypeID;
+    mat->type = type;
+    mat->flags = 0;
+
+    /**
+     * Link the new material into the list of materials.
+     */
+
+    // Copy the existing list.
+    newList = Z_Malloc(sizeof(material_t*) * ++numMaterials, PU_STATIC, 0);
+    for(i = 0; i < numMaterials - 1; ++i)
+        newList[i] = materials[i];
+    // Add the new material;
+    newList[i] = mat;
+
+    Z_Free(materials);
+    materials = newList;
+
+    return mat;
+}
+
+material_t *R_GetMaterial(int ofTypeID, materialtype_t type)
+{
+    uint            i;
+    material_t     *mat;
+
+    for(i = 0; i < numMaterials; ++i)
+    {
+        mat = materials[i];
+
+        if(type == mat->type && mat->ofTypeID == ofTypeID)
+        {
+            if((type == MAT_FLAT && (flats[mat->ofTypeID]->flags & TXF_NO_DRAW)) ||
+               (type == MAT_TEXTURE && (textures[mat->ofTypeID]->flags & TXF_NO_DRAW)))
+               return NULL;
+
+            return mat;
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * Deletes a texture (not for sprites, rawlumptexs' etc.).
+ */
+void R_DeleteMaterial(int ofTypeID, materialtype_t type)
+{
+    switch(type)
+    {
+    case MAT_TEXTURE:
+        if(ofTypeID < 0 || ofTypeID >= numtextures)
+            return;
+
+        if(textures[ofTypeID]->tex)
+        {
+            gl.DeleteTextures(1, &textures[ofTypeID]->tex);
+            textures[ofTypeID]->tex = 0;
+        }
+        break;
+
+    case MAT_FLAT:
+        if(ofTypeID < 0 || ofTypeID >= numflats)
+            return;
+
+        if(flats[ofTypeID]->tex)
+        {
+            gl.DeleteTextures(1, &flats[ofTypeID]->tex);
+            flats[ofTypeID]->tex = 0;
+        }
+        break;
+
+    default:
+        Con_Error("R_DeleteMaterial: Unknown material type %i.", type);
+    }
+}
+
+/**
+ * @return              @c true, if the texture is probably not from
+ *                      the original game.
+ */
+boolean R_IsCustomMaterial(int ofTypeID, materialtype_t type)
+{
+    int             i, lump;
+
+    switch(type)
+    {
+    case MAT_TEXTURE:
+        // First check the texture definitions.
+        lump = W_CheckNumForName("TEXTURE1");
+        if(lump >= 0 && !W_IsFromIWAD(lump))
+            return true;
+
+        lump = W_CheckNumForName("TEXTURE2");
+        if(lump >= 0 && !W_IsFromIWAD(lump))
+            return true;
+
+        // Go through the patches.
+        for(i = 0; i < textures[ofTypeID]->patchcount; ++i)
+        {
+            if(!W_IsFromIWAD(textures[ofTypeID]->patches[i].patch))
+                return true;
+        }
+        break;
+
+    case MAT_FLAT:
+        if(!W_IsFromIWAD(flats[ofTypeID]->lump))
+            return true;
+        break;
+
+    case MAT_DDTEX:
+        return true; // Its definetely not.
+
+    default:
+        Con_Error("R_IsCustomMaterial: Unknown material type %i.", type);
+    }
+
+    // This is most likely from the original game data.
+    return false;
+}
+
+int R_SetMaterialTranslation(int ofTypeID, materialtype_t type,
+                             int translateTo)
+{
+    int             old = ofTypeID;
+
+    switch(type)
+    {
+    case MAT_FLAT:
+        old = flattranslation[ofTypeID].current;
+
+        flattranslation[ofTypeID].current =
+            flattranslation[ofTypeID].next = translateTo;
+        flattranslation[ofTypeID].inter = 0;
+        break;
+
+    case MAT_TEXTURE:
+        old = texturetranslation[ofTypeID].current;
+
+        texturetranslation[ofTypeID].current =
+            texturetranslation[ofTypeID].next = translateTo;
+        texturetranslation[ofTypeID].inter = 0;
+        break;
+
+    default:
+        Con_Error("R_SetMaterialTranslation: Unknown material type %i.",
+                  type);
+    }
+
+    return old;
+}
+
+/**
+ * Copy the averaged texture color into the dest buffer 'rgb'.
+ *
+ * @param texid         The id of the texture.
+ * @param type          Type of material.
+ * @param rgb           The dest buffer.
+ */
+void R_GetMaterialColor(int ofTypeID, materialtype_t type, float *rgb)
+{
+    switch(type)
+    {
+    case MAT_TEXTURE:
+    {
+        texture_t *tex = textures[ofTypeID];
+        memcpy(rgb, tex->color, sizeof(float) * 3);
+        break;
+    }
+    case MAT_FLAT:
+    {
+        flat_t *flat = flats[ofTypeID];
+        memcpy(rgb, flat->color, sizeof(float) * 3);
+        break;
+    }
+    default:
+        Con_Error("R_GetMaterialColor: Unknown material type %i.", type);
+    }
+}
+
+int R_GetMaterialFlags(material_t *mat)
+{
+    int             ofTypeID;
+    if(!mat)
+        return 0;
+
+    switch(mat->type)
+    {
+    case MAT_TEXTURE:  // mat->texture is a texture id
+        if(mat->ofTypeID < 0 || mat->ofTypeID >= numtextures)
+        {
+            Con_Error("R_GetMaterialFlags: RC_TEXTURE, mat->texture %i out of bounds.\n",
+                      mat->ofTypeID);
+        }
+        ofTypeID = texturetranslation[mat->ofTypeID].current;
+        if(ofTypeID < 0)
+            return 0;
+
+        return textures[ofTypeID]->flags;
+
+    case MAT_FLAT:  // mat->texture is a flat id
+        if(mat->ofTypeID < 0 || mat->ofTypeID >= numflats)
+        {
+            Con_Error("R_GetMaterialFlags: RC_FLAT, mat->texture %i out of bounds.\n",
+                      mat->ofTypeID);
+        }
+        ofTypeID = flattranslation[mat->ofTypeID].current;
+        if(ofTypeID < 0)
+            return 0;
+
+        return flats[ofTypeID]->flags;
+
+    default:
+        return 0;
+    };
+}
+
+int R_CheckMaterialNumForName(const char *name, materialtype_t type)
+{
+    int             i;
+
+    switch(type)
+    {
+    case MAT_FLAT:
+        if(name[0] == '-') // No flat marker.
+            return 0;
+
+        for(i = 0; i < numflats; ++i)
+            if(!strncasecmp(flats[i]->name, name, 8))
+            {
+                return i;
+            }
+        break;
+
+    case MAT_TEXTURE:
+        if(name[0] == '-') // No texture marker.
+            return 0;
+
+        for(i = 0; i < numtextures; ++i)
+            if(!strncasecmp(textures[i]->name, name, 8))
+            {
+                return i;
+            }
+            break;
+
+    default:
+        Con_Error("R_CheckMaterialNumForName: Unknown material type %i.",
+                  type);
+    }
+
+    return -1;
+}
+
+const char *R_MaterialNameForNum(int ofTypeID, materialtype_t type)
+{
+    switch(type)
+    {
+    case MAT_FLAT:
+        if(ofTypeID < 0 || ofTypeID > numflats - 1)
+            return NULL;
+        return flats[ofTypeID]->name;
+
+    case MAT_TEXTURE:
+        if(ofTypeID < 0 || ofTypeID > numtextures - 1)
+            return NULL;
+        return textures[ofTypeID]->name;
+
+    default:
+        Con_Error("R_MaterialNameForNum: Unknown material type %i.", type);
+    }
+
+    return NULL;
+}
+
+int R_MaterialNumForName(const char *name, materialtype_t type)
+{
+    int             i;
+
+    i = R_CheckMaterialNumForName(name, type);
+
+    if(i == -1 && !levelSetup)  // Don't announce during level setup.
+        Con_Message("R_MaterialNumForName: %.8s type %i not found!\n",
+                    name, type);
+    return i;
+}
+
+unsigned int R_GetMaterialName(int ofTypeID, materialtype_t type)
+{
+    switch(type)
+    {
+    case MAT_TEXTURE:
+        if(ofTypeID < 0 || ofTypeID >= numtextures)
+            break;
+        return textures[ofTypeID]->tex;
+
+    case MAT_FLAT:
+        if(ofTypeID < 0 || ofTypeID >= numflats)
+            break;
+        return flats[ofTypeID]->tex;
+
+    case MAT_DDTEX:
+        if(ofTypeID >= NUM_DD_TEXTURES)
+            break;
+        return ddTextures[ofTypeID].tex;
+
+    default:
+        Con_Error("R_GetMaterialName: Unknown material type %i.", type);
+    }
+
+    return 0;
+}

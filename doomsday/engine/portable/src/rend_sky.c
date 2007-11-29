@@ -342,7 +342,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
             // See if we have to re-setup the fadeout.
             // This happens if the texture is for some reason deleted
             // (forced texture reload, for example).
-            if(!GL_GetTextureName(slayer->texture))
+            if(!R_GetMaterialName(slayer->texture, MAT_TEXTURE))
                 resetup = true;
 
             // The texture is actually loaded when an update is done.
@@ -515,19 +515,19 @@ static void internalSkyParams(skylayer_t *slayer, int parm, float value)
         {
             // Invalidate the loaded texture, if necessary.
             if(!(slayer->flags & SLF_MASKED))
-                GL_DeleteTexture(slayer->texture);
+                R_DeleteMaterial(slayer->texture, MAT_TEXTURE);
             slayer->flags |= SLF_MASKED;
         }
         else
         {
             // Invalidate the loaded texture, if necessary.
             if(slayer->flags & SLF_MASKED)
-                GL_DeleteTexture(slayer->texture);
+                R_DeleteMaterial(slayer->texture, MAT_TEXTURE);
             slayer->flags &= ~SLF_MASKED;
         }
         break;
 
-    case DD_TEXTURE:
+    case DD_MATERIAL:
         slayer->texture = (int) value;
         GL_PrepareSky(slayer->texture,
                       slayer->flags & SLF_MASKED ? true : false, NULL);

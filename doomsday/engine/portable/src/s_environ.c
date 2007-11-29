@@ -64,7 +64,7 @@ typedef struct {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static materialinfo_t matInfo[NUM_MATERIAL_TYPES] = {
+static materialinfo_t matInfo[NUM_MATERIAL_CLASSES] = {
     {"Metal",     255,     255,    25},
     {"Rock",      200,     160,    100},
     {"Wood",      80,      50,     200},
@@ -79,44 +79,47 @@ static ownernode_t *unusedNodeList = NULL;
  * Given a texture/flat name, look up the associated material type.
  *
  * @param name          Name of the texture/flat to look up.
- * @param isFlat        @c true, = look for name among flats.
+ * @param type          Texture type (MAT_* e.g. MAT_FLAT).
  *
  * @return              If found; material type associated to the texture,
- *                      else @c MATTYPE_UNKNOWN.
+ *                      else @c MATCLASS_UNKNOWN.
  */
-materialtype_t S_MaterialTypeForName(const char *name, boolean isFlat)
+materialclass_t S_MaterialClassForName(const char *name, int type)
 {
     int         i, j, count;
-    materialtype_t k;
+    materialclass_t k;
     ded_tenviron_t *env;
     ded_str_t  *list;
 
+    if(type == MAT_TEXTURE || type == MAT_FLAT)
     for(i = 0, env = defs.tenviron; i < defs.count.tenviron.num; ++i, env++)
     {
-        if(isFlat)
+        switch(type)
         {
+        case MAT_TEXTURE:
             list = env->textures;
             count = env->texCount.num;
-        }
-        else
-        {
+            break;
+
+        case MAT_FLAT:
             list = env->flats;
             count = env->flatCount.num;
+            break;
         }
 
         for(j = 0; j < count; ++j)
             if(!stricmp(list[j].str, name))
             {   // A match!
                 // See if we recognise the material name.
-                for(k = 0; k < NUM_MATERIAL_TYPES; ++k)
+                for(k = 0; k < NUM_MATERIAL_CLASSES; ++k)
                     if(!stricmp(env->id, matInfo[k].name))
                         return k;
 
-                return MATTYPE_UNKNOWN;
+                return MATCLASS_UNKNOWN;
             }
     }
 
-    return MATTYPE_UNKNOWN;
+    return MATCLASS_UNKNOWN;
 }
 
 static ownernode_t *newOwnerNode(void)
@@ -264,8 +267,8 @@ static boolean calcSSecReverb(subsector_t *ssec)
     uint        i, v;
     seg_t     **ptr;
     float       total = 0;
-    materialtype_t type;
-    float       materials[NUM_MATERIAL_TYPES];
+    materialclass_t mclass;
+    float       materials[NUM_MATERIAL_CLASSES];
 
     memset(&materials, 0, sizeof(materials));
 
@@ -282,25 +285,38 @@ static boolean calcSSecReverb(subsector_t *ssec)
     {
         seg_t      *seg = *ptr;
 
-        if(seg->linedef && seg->sidedef && seg->sidedef->SW_middletexture)
+        if(seg->linedef && seg->sidedef &&
+           seg->sidedef->SW_middlematerial)
         {
+            material_t     *mat = seg->sidedef->SW_middlematerial;
+
             // The texture of the seg determines its type.
-            if(seg->sidedef->SW_middletexture >= 0)
+            if(mat->ofTypeID >= 0)
             {
-                if(seg->sidedef->SW_middleisflat)
-                    type = flats[seg->sidedef->SW_middletexture]->materialType;
-                else
-                    type = textures[seg->sidedef->SW_middletexture]->materialType;
+                switch(mat->type)
+                {
+                case MAT_FLAT:
+                    mclass = flats[mat->ofTypeID]->materialClass;
+                    break;
+
+                case MAT_TEXTURE:
+                    mclass = textures[mat->ofTypeID]->materialClass;
+                    break;
+
+                default:
+                    mclass = MATCLASS_UNKNOWN;
+                    break;
+                }
             }
             else
             {
-                type = MATTYPE_UNKNOWN;
+                mclass = MATCLASS_UNKNOWN;
             }
 
             total += seg->length;
-            if(!(type >= 0 && type < NUM_MATERIAL_TYPES))
-                type = MATTYPE_WOOD; // Assume it's wood if unknown.
-            materials[type] += seg->length;
+            if(!(mclass >= 0 && mclass < NUM_MATERIAL_CLASSES))
+                mclass = MATCLASS_WOOD; // Assume it's wood if unknown.
+            materials[mclass] += seg->length;
         }
 
         *ptr++;
@@ -314,11 +330,11 @@ static boolean calcSSecReverb(subsector_t *ssec)
     }
 
     // Average the results.
-    for(i = 0; i < NUM_MATERIAL_TYPES; ++i)
+    for(i = 0; i < NUM_MATERIAL_CLASSES; ++i)
         materials[i] /= total;
 
     // Volume.
-    for(i = 0, v = 0; i < NUM_MATERIAL_TYPES; ++i)
+    for(i = 0, v = 0; i < NUM_MATERIAL_CLASSES; ++i)
         v += materials[i] * matInfo[i].volumeMul;
     if(v < 0)
         v = 0;
@@ -327,7 +343,7 @@ static boolean calcSSecReverb(subsector_t *ssec)
     ssec->reverb[SRD_VOLUME] = v;
 
     // Decay time.
-    for(i = 0, v = 0; i < NUM_MATERIAL_TYPES; ++i)
+    for(i = 0, v = 0; i < NUM_MATERIAL_CLASSES; ++i)
         v += materials[i] * matInfo[i].decayMul;
     if(v < 0)
         v = 0;
@@ -336,7 +352,7 @@ static boolean calcSSecReverb(subsector_t *ssec)
     ssec->reverb[SRD_DECAY] = v;
 
     // High frequency damping.
-    for(i = 0, v = 0; i < NUM_MATERIAL_TYPES; ++i)
+    for(i = 0, v = 0; i < NUM_MATERIAL_CLASSES; ++i)
         v += materials[i] * matInfo[i].dampingMul;
     if(v < 0)
         v = 0;
