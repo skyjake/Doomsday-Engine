@@ -53,9 +53,9 @@ void            pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest,
                        int srcRegY, int destRegX, int destRegY, int regWidth,
                        int regHeight);
 void            PalIdxToRGB(byte *pal, int idx, byte *rgb);
-void            averageColorIdx(rgbcol_t *col, byte *data, int w, int h,
+void            averageColorIdx(rgbcol_t col, byte *data, int w, int h,
                                 byte *palette, boolean hasAlpha);
-void            averageColorRGB(rgbcol_t *col, byte *data, int w, int h);
+void            averageColorRGB(rgbcol_t col, byte *data, int w, int h);
 int             LineAverageRGB(byte *imgdata, int width, int height, int line,
                                byte *rgb, byte *palette, boolean hasAlpha);
 void            ColorOutlines(byte *buffer, int width, int height);

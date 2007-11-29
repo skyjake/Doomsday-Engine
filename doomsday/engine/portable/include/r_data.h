@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_data.h: Data Structures For Refresh
  */
 
@@ -43,16 +43,10 @@
 #define DCRF_EXTERNAL   0x4         // Can use if from external resource.
 
 // Texture flags.
-#define TXF_MASKED      0x1
-#define TXF_GLOW        0x2         // For lava etc, textures that glow.
-#define TXF_PTCGEN      0x8         // Ptcgen def has been determined.
-
-// Animation group flags.
-#define AGF_SMOOTH      0x1
-#define AGF_FIRST_ONLY  0x2
-#define AGF_TEXTURE     0x1000
-#define AGF_FLAT        0x2000
-#define AGF_PRECACHE    0x4000      // Group is just for precaching.
+#define TXF_NO_DRAW     0x1         // Texture should never be drawn.
+#define TXF_MASKED      0x2
+#define TXF_GLOW        0x8         // For lava etc, textures that glow.
+#define TXF_PTCGEN      0x10        // Ptcgen def has been determined.
 
 // Texture definition
 typedef struct {
@@ -216,9 +210,9 @@ typedef struct subplaneinfo_s {
     biasaffection_t affected[MAX_BIAS_AFFECTED];
 } subplaneinfo_t;
 
-typedef struct {
-    float           rgb[3];
-} rgbcol_t;
+typedef float       colorcomp_t;
+typedef colorcomp_t rgbcol_t[3];
+typedef colorcomp_t rgbacol_t[4];
 
 typedef struct {
     int             originx;       // block origin (allways UL), which has allready
@@ -249,7 +243,7 @@ typedef struct {
     int             flags;         // TXF_* flags.
     rgbcol_t        color;
     byte            ingroup;       // True if texture belongs to some animgroup.
-    materialtype_t  materialType;  // Used for environmental sound properties.
+    materialclass_t materialClass;  // Used for environmental sound properties.
     struct ded_decor_s *decoration; /* Pointer to the surface
                                      * decoration, if any. */
     struct ded_reflection_s *reflection; // Surface reflection definition.
@@ -273,10 +267,10 @@ typedef struct flat_s {
     DGLuint         tex;            // Name of the associated DGL texture.
     char            name[9];        // for switch changing, etc; ends in \0
     texinfo_t       info;
-    short           flags;
+    int             flags;
     rgbcol_t        color;
     byte            ingroup;        // True if belongs to some animgroup.
-    materialtype_t  materialType;   // Used for environmental sound properties.
+    materialclass_t materialClass;  // Used for environmental sound properties.
     struct ded_decor_s *decoration; // Pointer to the surface decoration,
                                     // if any.
     struct ded_reflection_s *reflection; // Surface reflection definition.
@@ -284,6 +278,21 @@ typedef struct flat_s {
     int             lump;
     struct ded_ptcgen_s *ptcgen;    // Particle generator for the flat.
 } flat_t;
+
+typedef struct {
+    int             lump;          // Real lump number.
+    short           width;
+    short           height;
+    short           offset;
+    short           topoffset;
+    float           flarex;        // Offset to flare.
+    float           flarey;
+    float           lumsize;
+    float           tc[2][2];      // Prepared texture coordinates.
+    DGLuint         tex;           // Name of the associated DGL texture.
+    DGLuint         hudtex;        // Name of the HUD sprite texture.
+    rgbcol_t        color;         // Average color, for lighting.
+} spritelump_t;
 
 // a patch is a lumppatch that has been prepared for render.
 typedef struct patch_s {
@@ -340,6 +349,38 @@ typedef struct {
     float           lightSide, darkSide;    // Factors for world light.
 } vlight_t;
 
+/**
+ * Textures used in the lighting system.
+ */
+typedef enum lightingtexid_e {
+    LST_DYNAMIC,                   // Round dynamic light
+    LST_GRADIENT,                  // Top-down gradient
+    LST_RADIO_CO,                  // FakeRadio closed/open corner shadow
+    LST_RADIO_CC,                  // FakeRadio closed/closed corner shadow
+    LST_RADIO_OO,                  // FakeRadio open/open shadow
+    LST_RADIO_OE,                  // FakeRadio open/edge shadow
+    NUM_LIGHTING_TEXTURES
+} lightingtexid_t;
+
+typedef enum flaretexid_e {
+    FXT_FLARE,                     // (flare)
+    FXT_BRFLARE,                   // (brFlare)
+    FXT_BIGFLARE,                  // (bigFlare)
+    NUM_FLARE_TEXTURES
+} flaretexid_t;
+
+/**
+ * Textures used in world rendering.
+ * eg a surface with a missing tex/flat is drawn using the "missing" graphic
+ */
+typedef enum ddtextureid_e {
+    DDT_UNKNOWN,          // Drawn if a texture/flat is unknown
+    DDT_MISSING,          // Drawn in place of HOMs in dev mode.
+    DDT_BBOX,             // Drawn when rendering bounding boxes
+    DDT_GRAY,             // For lighting debug.
+    NUM_DD_TEXTURES
+} ddtextureid_t;
+
 extern nodeindex_t *linelinks;
 extern blockmap_t *BlockMap;
 extern blockmap_t *SSecBlockMap;
@@ -353,6 +394,11 @@ extern texture_t **textures;
 extern translation_t *texturetranslation;   // for global animation
 extern int      numflats;
 extern flat_t **flats;
+
+extern spritelump_t **spritelumps;
+extern int      numSpriteLumps;
+extern int      numDDTextures;
+extern ddtexture_t ddTextures[NUM_DD_TEXTURES];
 extern translation_t *flattranslation;   // for global animation
 extern rawtex_t *rawtextures;
 extern uint numrawtextures;
@@ -372,30 +418,29 @@ void            R_InfoRendPolys(void);
 void            R_InitData(void);
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
+
 void            R_UpdateSector(struct sector_s *sec, boolean forceUpdate);
 void            R_UpdateSurface(surface_t *current, boolean forceUpdate);
 void            R_UpdateAllSurfaces(boolean forceUpdate);
+
 void            R_PrecacheLevel(void);
 void            R_PrecachePatch(int lumpnum);
+
+void            R_DestroyAnimGroups(void);
 void            R_InitAnimGroup(ded_group_t *def);
 void            R_ResetAnimGroups(void);
-boolean         R_IsInAnimGroup(int groupNum, int type, int number);
+boolean         R_IsInAnimGroup(int groupNum, materialtype_t type, int number);
 void            R_AnimateAnimGroups(void);
-int             R_GraphicResourceFlags(resourceclass_t rclass, int id);
+
+void R_InitSpriteLumps(void);
+int R_NewSpriteLump(int lump);
+
 patch_t        *R_FindPatch(int lumpnum);    // May return NULL.
 patch_t        *R_GetPatch(int lumpnum); // Creates new entries.
 patch_t       **R_CollectPatches(int *count);
 rawtex_t       *R_FindRawTex(uint lumpnum);    // May return NULL.
 rawtex_t       *R_GetRawTex(uint lumpnum); // Creates new entries.
-int             R_CheckFlatNumForName(const char *name);
-int             R_FlatNumForName(const char *name);
-const char     *R_FlatNameForNum(int num);
-int             R_CheckTextureNumForName(const char *name);
-int             R_TextureNumForName(const char *name);
-const char     *R_TextureNameForNum(int num);
-int             R_SetFlatTranslation(int flat, int translateTo);
-int             R_SetTextureTranslation(int tex, int translateTo);
-boolean         R_IsCustomTexture(int texture);
+
 boolean         R_IsAllowedDecoration(ded_decor_t *def, int index,
                                       boolean hasExternal);
 boolean         R_IsValidLightDecoration(const ded_decorlight_t *lightDef);

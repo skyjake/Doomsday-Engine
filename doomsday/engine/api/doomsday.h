@@ -365,17 +365,16 @@ extern          "C" {
     void            R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t *sprinfo);
     void            R_GetPatchInfo(int lump, spriteinfo_t *info);
-    int             R_CheckFlatNumForName(const char *name);
-    int             R_FlatNumForName(const char *name);
-    const char     *R_FlatNameForNum(int num);
-    int             R_CheckTextureNumForName(const char *name);
-    int             R_TextureNumForName(const char *name);
-    const char     *R_TextureNameForNum(int num);
-    int             R_SetFlatTranslation(int flat, int translate_to);
-    int             R_SetTextureTranslation(int tex, int translate_to);
-    int             R_CreateAnimGroup(int type, int flags);
+
+    int             R_CheckMaterialNumForName(const char *name, materialtype_t type);
+    const char     *R_MaterialNameForNum(int num, materialtype_t type);
+    int             R_MaterialNumForName(const char *name, materialtype_t type);
+    int             R_SetMaterialTranslation(int originalID, materialtype_t type, int translate_to);
+    boolean         R_IsCustomMaterial(int texture, materialtype_t type);
+    int             R_CreateAnimGroup(materialtype_t type, int flags);
     void            R_AddToAnimGroup(int groupNum, const char *name,
                                      int tics, int randomTics);
+
     angle_t         R_PointToAngle2(float x1, float y1, float x2,
                                     float y2);
     struct subsector_s *R_PointInSubsector(float x, float y);
@@ -399,8 +398,7 @@ extern          "C" {
     void            GL_SetPatch(int lump);
     void            GL_SetSprite(int pnum, int spriteType);
     void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
-    void            GL_SetFlat(int idx);
-    void            GL_SetTexture(int idx);
+    void            GL_SetMaterial(int idx, materialtype_t type);
     unsigned int    GL_SetRawImage(unsigned int lump, boolean part2);
     unsigned int    GL_LoadGraphics(const char *name, int mode);
 

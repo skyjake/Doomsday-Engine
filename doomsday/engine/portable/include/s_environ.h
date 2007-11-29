@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * s_environ.h: Environmental Sound Effects
  */
 
@@ -32,16 +32,16 @@
 #include "p_mapdata.h"
 
 typedef enum {
-    MATTYPE_UNKNOWN = -1,
-    MATTYPE_METAL = 0,
-    MATTYPE_ROCK,
-    MATTYPE_WOOD,
-    MATTYPE_CLOTH,
-    NUM_MATERIAL_TYPES
-} materialtype_t;
+    MATCLASS_UNKNOWN = -1,
+    MATCLASS_METAL = 0,
+    MATCLASS_ROCK,
+    MATCLASS_WOOD,
+    MATCLASS_CLOTH,
+    NUM_MATERIAL_CLASSES
+} materialclass_t;
 
 void            S_CalcSectorReverb(sector_t *sec);
 void            S_DetermineSubSecsAffectingSectorReverb(gamemap_t *map);
-materialtype_t  S_MaterialTypeForName(const char *name, boolean isFlat);
+materialclass_t  S_MaterialClassForName(const char *name, int type);
 
 #endif

@@ -115,4 +115,5 @@ boolean         LO_LumobjsRadiusIterator(subsector_t *subsector, float x, float 
 void            LO_ClipInSubsector(uint ssecidx);
 void            LO_ClipBySight(uint ssecidx);
 
+void            LO_DrawLumobjs(void);
 #endif

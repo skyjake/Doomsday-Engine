@@ -167,7 +167,6 @@ extern          "C" {
         DD_SERVER,
         DD_CLIENT,
         DD_ALLOW_FRAMES,
-        DD_SKYFLATNUM,
         DD_GAMETIC,
         DD_VIEWWINDOW_X,
         DD_VIEWWINDOW_Y,
@@ -218,7 +217,7 @@ extern          "C" {
         DD_MASK,
         DD_YES,
         DD_NO,
-        DD_TEXTURE,
+        DD_MATERIAL,
         DD_OFFSET,
         DD_HEIGHT,
         DD_COLUMNS,
@@ -264,7 +263,6 @@ extern          "C" {
         DD_ID,
         DD_LUMP,
         DD_CD_TRACK,
-        DD_FLAT,
         DD_GAME_MODE,              // 16 chars max (swdoom, doom1, udoom, tnt, heretic...)
         DD_GAME_CONFIG,            // String: dm/co-op, jumping, etc.
         DD_DEF_FINALE,
@@ -278,7 +276,8 @@ extern          "C" {
         DD_MODEM_DATA_QUERY,
 
         // Non-integer/special values for Set/Get
-        DD_SKYFLAT_NAME = 0x4000,
+        DD_SKYMASKMATERIAL_NAME = 0x4000,
+        DD_SKYFLATNUM,
         DD_TRANSLATIONTABLES_ADDRESS,
         DD_TRACE_ADDRESS,          // divline 'trace' used by PathTraverse.
         DD_SPRITE_REPLACEMENT,     // Sprite <-> model replacement.
@@ -320,7 +319,7 @@ extern          "C" {
         DD_CPLAYER_THRUST_MUL,
         DD_GRAVITY,
         DD_PSPRITE_OFFSET_X,       // 10x
-        DD_PSPRITE_OFFSET_Y        // 10x
+        DD_PSPRITE_OFFSET_Y,       // 10x
     };
 
     // Bounding box coordinates.
@@ -975,6 +974,12 @@ typedef enum blendmode_e {
     BM_ALPHA_SUBTRACT
 } blendmode_t;
 
+typedef enum materialtype_e {
+    MAT_TEXTURE,
+    MAT_FLAT,
+    MAT_DDTEX
+} materialtype_t;
+
     typedef struct lumppatch_s {
         short           width;     // bounding box size
         short           height;
@@ -1000,9 +1005,12 @@ typedef enum blendmode_e {
         char           *modelname;
     } spritereplacement_t;
 
-    // Anim group flags.
+// Animation group flags.
 #define AGF_SMOOTH      0x1
 #define AGF_FIRST_ONLY  0x2
+#define AGF_TEXTURE     0x1000
+#define AGF_FLAT        0x2000
+#define AGF_PRECACHE    0x4000      // Group is just for precaching.
 
     //------------------------------------------------------------------------
     //

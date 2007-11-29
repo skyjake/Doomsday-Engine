@@ -134,25 +134,8 @@ typedef struct {
     spriteframe_t  *spriteframes;
 } spritedef_t;
 
-typedef struct {
-    int             lump;          // Real lump number.
-    short           width;
-    short           height;
-    short           offset;
-    short           topoffset;
-    float           flarex;        // Offset to flare.
-    float           flarey;
-    float           lumsize;
-    float           tc[2][2];      // Prepared texture coordinates.
-    DGLuint         tex;           // Name of the associated DGL texture.
-    DGLuint         hudtex;        // Name of the HUD sprite texture.
-    rgbcol_t        color;         // Average color, for lighting.
-} spritelump_t;
-
 extern spritedef_t *sprites;
 extern int      numSprites;
-extern spritelump_t **spritelumps;
-extern int      numSpriteLumps;
 extern float    pspOffset[2];
 extern int      alwaysAlign;
 extern float    weaponOffsetScale, weaponFOVShift;

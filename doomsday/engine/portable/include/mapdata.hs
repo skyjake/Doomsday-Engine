@@ -92,20 +92,10 @@ struct subsector
 end
 
 public
-#define DMT_MATERIAL_TEXTURE DDVT_SHORT
+#define DMT_MATERIAL DDVT_SHORT
 end
 
 internal
-typedef struct material_s {
-    short       texture;
-    boolean     isflat;
-    struct translation_s* xlat;
-} material_t;
-
-#define SM_texture      material.texture
-#define SM_isflat       material.isflat
-#define SM_xlat         material.xlat
-
 // Surface flags.
 #define SUF_TEXFIX      0x1         // Current texture is a fix replacement
                                     // (not sent to clients, returned via DMU etc).
@@ -120,8 +110,8 @@ end
 struct surface
     INT     int         flags       // SUF_ flags
     -       int         oldflags
-    -       material_t  material
-    -       material_t  oldmaterial
+    -       material_s *material
+    -       material_s *oldmaterial
     BLENDMODE blendmode_t blendmode
     -       float[3]    normal      // Surface normal
     -       float[3]    oldnormal
@@ -146,8 +136,7 @@ end
 
 internal
 #define PS_normal               surface.normal
-#define PS_texture              surface.SM_texture
-#define PS_isflat               surface.SM_isflat
+#define PS_material             surface.material
 #define PS_offset               surface.offset
 end
 
@@ -172,8 +161,7 @@ internal
 #define SP_planesurface(n)      SP_plane(n)->surface
 #define SP_planeheight(n)       SP_plane(n)->height
 #define SP_planenormal(n)       SP_plane(n)->surface.normal
-#define SP_planetexture(n)      SP_plane(n)->surface.SM_texture
-#define SP_planeisflat(n)       SP_plane(n)->surface.SM_isflat
+#define SP_planematerial(n)     SP_plane(n)->surface.material
 #define SP_planeoffset(n)       SP_plane(n)->surface.offset
 #define SP_planergb(n)          SP_plane(n)->surface.rgba
 #define SP_planeglow(n)         SP_plane(n)->glow
@@ -186,8 +174,7 @@ internal
 #define SP_ceilsurface          SP_planesurface(PLN_CEILING)
 #define SP_ceilheight           SP_planeheight(PLN_CEILING)
 #define SP_ceilnormal           SP_planenormal(PLN_CEILING)
-#define SP_ceiltexture          SP_planetexture(PLN_CEILING)
-#define SP_ceilisflat           SP_planeisflat(PLN_CEILING)
+#define SP_ceilmaterial         SP_planematerial(PLN_CEILING)
 #define SP_ceiloffset           SP_planeoffset(PLN_CEILING)
 #define SP_ceilrgb              SP_planergb(PLN_CEILING)
 #define SP_ceilglow             SP_planeglow(PLN_CEILING)
@@ -200,8 +187,7 @@ internal
 #define SP_floorsurface         SP_planesurface(PLN_FLOOR)
 #define SP_floorheight          SP_planeheight(PLN_FLOOR)
 #define SP_floornormal          SP_planenormal(PLN_FLOOR)
-#define SP_floortexture         SP_planetexture(PLN_FLOOR)
-#define SP_floorisflat          SP_planeisflat(PLN_FLOOR)
+#define SP_floormaterial        SP_planematerial(PLN_FLOOR)
 #define SP_flooroffset          SP_planeoffset(PLN_FLOOR)
 #define SP_floorrgb             SP_planergb(PLN_FLOOR)
 #define SP_floorglow            SP_planeglow(PLN_FLOOR)
@@ -276,44 +262,36 @@ typedef enum segsection_e {
 // Helper macros for accessing sidedef top/middle/bottom section data elements.
 #define SW_surface(n)           sections[(n)]
 #define SW_surfaceflags(n)      SW_surface(n).flags
-#define SW_surfacetexture(n)    SW_surface(n).SM_texture
-#define SW_surfaceisflat(n)     SW_surface(n).SM_isflat
+#define SW_surfacematerial(n)   SW_surface(n).material
 #define SW_surfacenormal(n)     SW_surface(n).normal
 #define SW_surfaceoffset(n)     SW_surface(n).offset
 #define SW_surfacergba(n)       SW_surface(n).rgba
-#define SW_surfacetexlat(n)     SW_surface(n).SM_xlat
 #define SW_surfaceblendmode(n)  SW_surface(n).blendmode
 
 #define SW_middlesurface        SW_surface(SEG_MIDDLE)
 #define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
-#define SW_middletexture        SW_surfacetexture(SEG_MIDDLE)
-#define SW_middleisflat         SW_surfaceisflat(SEG_MIDDLE)
+#define SW_middlematerial       SW_surfacematerial(SEG_MIDDLE)
 #define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
 #define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
 #define SW_middleoffset         SW_surfaceoffset(SEG_MIDDLE)
 #define SW_middlergba           SW_surfacergba(SEG_MIDDLE)
-#define SW_middletexlat         SW_surfacetexlat(SEG_MIDDLE)
 #define SW_middleblendmode      SW_surfaceblendmode(SEG_MIDDLE)
 
 #define SW_topsurface           SW_surface(SEG_TOP)
 #define SW_topflags             SW_surfaceflags(SEG_TOP)
-#define SW_toptexture           SW_surfacetexture(SEG_TOP)
-#define SW_topisflat            SW_surfaceisflat(SEG_TOP)
+#define SW_topmaterial          SW_surfacematerial(SEG_TOP)
 #define SW_topnormal            SW_surfacenormal(SEG_TOP)
 #define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
 #define SW_topoffset            SW_surfaceoffset(SEG_TOP)
 #define SW_toprgba              SW_surfacergba(SEG_TOP)
-#define SW_toptexlat            SW_surfacetexlat(SEG_TOP)
 
 #define SW_bottomsurface        SW_surface(SEG_BOTTOM)
 #define SW_bottomflags          SW_surfaceflags(SEG_BOTTOM)
-#define SW_bottomtexture        SW_surfacetexture(SEG_BOTTOM)
-#define SW_bottomisflat         SW_surfaceisflat(SEG_BOTTOM)
+#define SW_bottommaterial       SW_surfacematerial(SEG_BOTTOM)
 #define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
 #define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
 #define SW_bottomoffset         SW_surfaceoffset(SEG_BOTTOM)
 #define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
-#define SW_bottomtexlat         SW_surfacetexlat(SEG_BOTTOM)
 end
 
 internal

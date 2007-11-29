@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,6 +61,7 @@ void            Rend_InitSky();
 void            Rend_ShutdownSky();
 void            Rend_SkyDetail(int quarterDivs, int rows);
 void            Rend_SkyParams(int layer, int parm, float value);
+void            Rend_SetSkyTexture(int layer, int texture);
 void            Rend_RenderSky(int hemis);
 
 #endif

@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_texmanager.h: Texture Management
  */
 
@@ -38,7 +38,7 @@
 
 #define TEXQ_BEST 8
 
-/*
+/**
  * This structure is used with GL_LoadImage. When it is no longer needed
  * it must be discarded with GL_DestroyImage.
  */
@@ -52,7 +52,7 @@ typedef struct image_s {
     byte           *pixels;
 } image_t;
 
-/*
+/**
  * Processing modes for GL_LoadGraphics.
  */
 typedef enum gfxmode_e {
@@ -61,38 +61,6 @@ typedef enum gfxmode_e {
     LGM_GRAYSCALE_ALPHA = 2,
     LGM_WHITE_ALPHA = 3
 } gfxmode_t;
-
-/*
- * Textures used in the lighting system.
- */
-typedef enum lightingtexid_e {
-    LST_DYNAMIC,                   // Round dynamic light
-    LST_GRADIENT,                  // Top-down gradient
-    LST_RADIO_CO,                  // FakeRadio closed/open corner shadow
-    LST_RADIO_CC,                  // FakeRadio closed/closed corner shadow
-    LST_RADIO_OO,                  // FakeRadio open/open shadow
-    LST_RADIO_OE,                  // FakeRadio open/edge shadow
-    NUM_LIGHTING_TEXTURES
-} lightingtexid_t;
-
-typedef enum flaretexid_e {
-    FXT_FLARE,                     // (flare)
-    FXT_BRFLARE,                   // (brFlare)
-    FXT_BIGFLARE,                  // (bigFlare)
-    NUM_FLARE_TEXTURES
-} flaretexid_t;
-
-/*
- * Textures used in world rendering.
- * eg a surface with a missing tex/flat is drawn using the "missing" graphic
- */
-typedef enum ddtextureid_e {
-    DDT_UNKNOWN,          // Drawn if a texture/flat is unknown
-    DDT_MISSING,          // Drawn in place of HOMs in dev mode.
-    DDT_BBOX,             // Drawn when rendering bounding boxes
-    DDT_GRAY,             // For lighting debug.
-    NUM_DD_TEXTURES
-} ddtextureid_t;
 
 extern int      glMaxTexSize;
 extern int      ratioLimit;
@@ -120,7 +88,6 @@ int             GL_InitPalettedTexture(void);
 void            GL_DestroySkinNames(void);
 void            GL_ResetLumpTexData(void);
 
-void            GL_SetFlat(int idx);
 void            GL_BindTexture(DGLuint texname);
 void            GL_TextureFilterMode(int target, int parm);
 DGLuint         GL_BindTexPatch(struct patch_s *p);
@@ -148,7 +115,7 @@ DGLuint         GL_LoadGraphics3(const char *name, gfxmode_t mode,
                                  int minFilter, int magFilter, int anisoFilter,
                                  int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_LoadGraphics4(resourceclass_t resClass, const char *name,
-                                 gfxmode_t mode, int useMipmap, 
+                                 gfxmode_t mode, int useMipmap,
                                  int minFilter, int magFilter, int anisoFilter,
                                  int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_UploadTexture(byte *data, int width, int height,
@@ -160,31 +127,29 @@ DGLuint         GL_UploadTexture(byte *data, int width, int height,
                                  int minFilter, int magFilter, int anisoFilter,
                                  int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
-DGLuint         GL_GetTextureInfo(int index, texinfo_t **info);
-DGLuint         GL_GetTextureInfo2(int index, boolean translate, texinfo_t **info);
-DGLuint         GL_GetFlatInfo(int idx, texinfo_t **info);
-DGLuint         GL_GetFlatInfo2(int idx, boolean translate, texinfo_t **info);
+
+DGLuint         GL_GetMaterialInfo(int index, materialtype_t type, texinfo_t **info);
+DGLuint         GL_PrepareMaterial(int idx, materialtype_t type, texinfo_t **info);
+DGLuint         GL_PrepareMaterial2(int idx, materialtype_t type, boolean translate, texinfo_t **info);
+
+DGLuint         GL_PrepareSky(int idx, boolean zeroMask, texinfo_t **info);
+DGLuint         GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
+                               texinfo_t **info);
+
 DGLuint         GL_GetPatchInfo(int idx, boolean part2, texinfo_t **info);
 DGLuint         GL_GetRawTexInfo(uint idx, boolean part2, texinfo_t **texinfo);
-DGLuint         GL_GetDDTextureInfo(ddtextureid_t which, texinfo_t **texinfo);
-DGLuint         GL_PrepareTexture(int idx, texinfo_t **info);
-DGLuint         GL_PrepareTexture2(int idx, boolean translate, texinfo_t **info);
-DGLuint         GL_PrepareFlat(int idx, texinfo_t **info);
-DGLuint         GL_PrepareFlat2(int idx, boolean translate, texinfo_t **info);
 DGLuint         GL_PreparePatch(int idx, texinfo_t **info);
 DGLuint         GL_PrepareRawTex(uint idx, boolean part2, texinfo_t **info);
 DGLuint         GL_PrepareLSTexture(lightingtexid_t which, texinfo_t **info);
 DGLuint         GL_PrepareFlareTexture(flaretexid_t flare, texinfo_t **info);
-DGLuint         GL_PrepareSky(int idx, boolean zeroMask, texinfo_t **info);
-DGLuint         GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
-                               texinfo_t **info);
-DGLuint         GL_PrepareDDTexture(ddtextureid_t idx, texinfo_t **info);
 void            GL_BufferSkyTexture(int idx, byte **outbuffer, int *width,
                                     int *height, boolean zeroMask);
 unsigned int    GL_PrepareSprite(int pnum, int spriteMode);
 byte           *GL_GetPalette(void);
 byte           *GL_GetPal18to8(void);
-void            GL_SetTexture(int idx);
+
+void            GL_SetMaterial(int idx, materialtype_t type);
+
 unsigned int    GL_SetRawImage(unsigned int lump, boolean part2);
 void            GL_SetSprite(int pnum, int spriteType);
 void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
@@ -199,15 +164,6 @@ int             GL_GetSkinTexIndex(const char *skin);
 boolean         GL_IsColorKeyed(const char *path);
 void            GL_GetSkyTopColor(int texidx, float *rgb);
 void            GL_GetSpriteColorf(int pnum, float *rgb);
-void            GL_GetFlatColor(int fnum, float *rgb);
-void            GL_GetTextureColor(int texid, float *rgb);
-
-// Returns the real DGL texture, if such exists
-unsigned int    GL_GetTextureName(int texidx);
-
-// Only for textures (not for flats, sprites, etc.)
-void            GL_DeleteTexture(int texidx);
-void            GL_DeleteFlat(int flatidx);
 
 // Load the skin texture and prepare it for rendering.
 unsigned int    GL_PrepareSkin(model_t *mdl, int skin);

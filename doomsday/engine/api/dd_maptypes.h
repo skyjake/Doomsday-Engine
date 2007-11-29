@@ -3,7 +3,7 @@
 #ifndef __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__
 #define __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__
 
-#define DMT_VERTEX_POS	DDVT_FLOAT
+#define DMT_VERTEX_POS  DDVT_FLOAT
 
 
 #define DMT_SEG_V DDVT_PTR             // [Start, End] of the segment.
@@ -23,7 +23,7 @@
 #define DMT_SUBSECTOR_SEGS DDVT_PTR    // [segcount] size.
 #define DMT_SUBSECTOR_POLY DDVT_PTR    // NULL, if there is no polyobj.
 
-#define DMT_MATERIAL_TEXTURE DDVT_SHORT
+#define DMT_MATERIAL DDVT_SHORT
 
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
 #define DMT_SURFACE_BLENDMODE DDVT_BLENDMODE
@@ -54,7 +54,7 @@
 #define DMT_SIDE_SECTOR DDVT_PTR
 #define DMT_SIDE_FLAGS DDVT_SHORT
 
-#define DMT_LINE_SEC	DDVT_PTR
+#define DMT_LINE_SEC    DDVT_PTR
 
 #define DMT_LINE_V DDVT_PTR
 #define DMT_LINE_MAPFLAGS DDVT_SHORT   // MF_* flags, read from the LINEDEFS, map data lump.

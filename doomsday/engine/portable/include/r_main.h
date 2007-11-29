@@ -60,5 +60,5 @@ void            R_RenderPlayerViewBorder(void);
 void            R_ResetViewer(void);
 void            R_ViewWindow(int x, int y, int w, int h);
 void            R_NewSharpWorld(void);
-
+void            R_InitSkyMap(void);
 #endif

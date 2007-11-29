@@ -14,7 +14,7 @@ typedef struct lineowner_s {
     binangle_t      angle;          // between this and next clockwise.
 } lineowner_t;
 
-#define V_pos					v.pos
+#define V_pos                   v.pos
 
 typedef struct vertex_s {
     runtime_mapdata_header_t header;
@@ -28,21 +28,21 @@ typedef struct vertex_s {
 #define FRONT 0
 #define BACK  1
 
-#define SG_v(n)					v[(n)]
-#define SG_vpos(n)				SG_v(n)->V_pos
+#define SG_v(n)                 v[(n)]
+#define SG_vpos(n)              SG_v(n)->V_pos
 
 #define SG_v1                   SG_v(0)
-#define SG_v1pos				SG_v(0)->V_pos
+#define SG_v1pos                SG_v(0)->V_pos
 
 #define SG_v2                   SG_v(1)
-#define SG_v2pos				SG_v(1)->V_pos
+#define SG_v2pos                SG_v(1)->V_pos
 
-#define SG_sector(n)			sec[(n)]
+#define SG_sector(n)            sec[(n)]
 #define SG_frontsector          SG_sector(FRONT)
 #define SG_backsector           SG_sector(BACK)
 
 // Seg flags
-#define SEGF_POLYOBJ			0x1 // Seg is part of a poly object.
+#define SEGF_POLYOBJ            0x1 // Seg is part of a poly object.
 
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
@@ -88,22 +88,11 @@ typedef struct subsector_s {
     unsigned int        reverb[NUM_REVERB_DATA];
 } subsector_t;
 
-typedef struct material_s {
-	short		texture;
-	boolean		isflat;
-	struct translation_s* xlat;
-} material_t;
-
-#define SM_texture		material.texture
-#define SM_isflat		material.isflat
-#define SM_xlat			material.xlat
-
 // Surface flags.
 #define SUF_TEXFIX      0x1         // Current texture is a fix replacement
                                     // (not sent to clients, returned via DMU etc).
 #define SUF_GLOW        0x2         // Surface glows (full bright).
-#define SUF_BLEND       0x4         // Surface possibly has a blended texture.
-#define SUF_NO_RADIO    0x8         // No fakeradio for this surface.
+#define SUF_NO_RADIO    0x4         // No fakeradio for this surface.
 
 // Surface frame flags
 #define SUFINF_PVIS     0x0001
@@ -112,8 +101,8 @@ typedef struct surface_s {
     runtime_mapdata_header_t header;
     int                 flags;         // SUF_ flags
     int                 oldflags;
-    material_t          material;
-    material_t          oldmaterial;
+    struct material_s   *material;
+    struct material_s   *oldmaterial;
     blendmode_t         blendmode;
     float               normal[3];     // Surface normal
     float               oldnormal[3];
@@ -134,10 +123,9 @@ typedef struct skyfix_s {
     float offset;
 } skyfix_t;
 
-#define PS_normal				surface.normal
-#define PS_texture				surface.SM_texture
-#define PS_isflat				surface.SM_isflat
-#define PS_offset				surface.offset
+#define PS_normal               surface.normal
+#define PS_material             surface.material
+#define PS_offset               surface.offset
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
@@ -155,13 +143,12 @@ typedef struct plane_s {
 } plane_t;
 
 // Helper macros for accessing sector floor/ceiling plane data elements.
-#define SP_plane(n)				planes[(n)]
+#define SP_plane(n)             planes[(n)]
 
 #define SP_planesurface(n)      SP_plane(n)->surface
 #define SP_planeheight(n)       SP_plane(n)->height
 #define SP_planenormal(n)       SP_plane(n)->surface.normal
-#define SP_planetexture(n)      SP_plane(n)->surface.SM_texture
-#define SP_planeisflat(n)       SP_plane(n)->surface.SM_isflat
+#define SP_planematerial(n)     SP_plane(n)->surface.material
 #define SP_planeoffset(n)       SP_plane(n)->surface.offset
 #define SP_planergb(n)          SP_plane(n)->surface.rgba
 #define SP_planeglow(n)         SP_plane(n)->glow
@@ -169,13 +156,12 @@ typedef struct plane_s {
 #define SP_planetarget(n)       SP_plane(n)->target
 #define SP_planespeed(n)        SP_plane(n)->speed
 #define SP_planesoundorg(n)     SP_plane(n)->soundorg
-#define SP_planevisheight(n)	SP_plane(n)->visheight
+#define SP_planevisheight(n)    SP_plane(n)->visheight
 
 #define SP_ceilsurface          SP_planesurface(PLN_CEILING)
 #define SP_ceilheight           SP_planeheight(PLN_CEILING)
 #define SP_ceilnormal           SP_planenormal(PLN_CEILING)
-#define SP_ceiltexture          SP_planetexture(PLN_CEILING)
-#define SP_ceilisflat           SP_planeisflat(PLN_CEILING)
+#define SP_ceilmaterial         SP_planematerial(PLN_CEILING)
 #define SP_ceiloffset           SP_planeoffset(PLN_CEILING)
 #define SP_ceilrgb              SP_planergb(PLN_CEILING)
 #define SP_ceilglow             SP_planeglow(PLN_CEILING)
@@ -188,8 +174,7 @@ typedef struct plane_s {
 #define SP_floorsurface         SP_planesurface(PLN_FLOOR)
 #define SP_floorheight          SP_planeheight(PLN_FLOOR)
 #define SP_floornormal          SP_planenormal(PLN_FLOOR)
-#define SP_floortexture         SP_planetexture(PLN_FLOOR)
-#define SP_floorisflat          SP_planeisflat(PLN_FLOOR)
+#define SP_floormaterial        SP_planematerial(PLN_FLOOR)
 #define SP_flooroffset          SP_planeoffset(PLN_FLOOR)
 #define SP_floorrgb             SP_planergb(PLN_FLOOR)
 #define SP_floorglow            SP_planeglow(PLN_FLOOR)
@@ -199,13 +184,13 @@ typedef struct plane_s {
 #define SP_floorsoundorg        SP_planesoundorg(PLN_FLOOR)
 #define SP_floorvisheight       SP_planevisheight(PLN_FLOOR)
 
-#define S_skyfix(n)				skyfix[(n)]
-#define S_floorskyfix			S_skyfix(PLN_FLOOR)
-#define S_ceilskyfix			S_skyfix(PLN_CEILING)
+#define S_skyfix(n)             skyfix[(n)]
+#define S_floorskyfix           S_skyfix(PLN_FLOOR)
+#define S_ceilskyfix            S_skyfix(PLN_CEILING)
 
 // Sector frame flags
-#define SIF_VISIBLE         0x1		// Sector is visible on this frame.
-#define SIF_FRAME_CLEAR     0x1		// Flags to clear before each frame.
+#define SIF_VISIBLE         0x1     // Sector is visible on this frame.
+#define SIF_FRAME_CLEAR     0x1     // Flags to clear before each frame.
 #define SIF_LIGHT_CHANGED   0x2
 
 // Sector flags.
@@ -213,8 +198,8 @@ typedef struct plane_s {
 #define SECF_INVIS_CEILING  0x2
 
 typedef struct ssecgroup_s {
-	struct sector_s**   linked;     // [sector->planecount+1] size.
-	                                // Plane attached to another sector.
+    struct sector_s**   linked;     // [sector->planecount+1] size.
+                                    // Plane attached to another sector.
 } ssecgroup_t;
 
 typedef struct sector_s {
@@ -259,46 +244,38 @@ typedef enum segsection_e {
 } segsection_t;
 
 // Helper macros for accessing sidedef top/middle/bottom section data elements.
-#define SW_surface(n)			sections[(n)]
+#define SW_surface(n)           sections[(n)]
 #define SW_surfaceflags(n)      SW_surface(n).flags
-#define SW_surfacetexture(n)    SW_surface(n).SM_texture
-#define SW_surfaceisflat(n)     SW_surface(n).SM_isflat
+#define SW_surfacematerial(n)   SW_surface(n).material
 #define SW_surfacenormal(n)     SW_surface(n).normal
 #define SW_surfaceoffset(n)     SW_surface(n).offset
 #define SW_surfacergba(n)       SW_surface(n).rgba
-#define SW_surfacetexlat(n)     SW_surface(n).SM_xlat
 #define SW_surfaceblendmode(n)  SW_surface(n).blendmode
 
 #define SW_middlesurface        SW_surface(SEG_MIDDLE)
 #define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
-#define SW_middletexture        SW_surfacetexture(SEG_MIDDLE)
-#define SW_middleisflat         SW_surfaceisflat(SEG_MIDDLE)
+#define SW_middlematerial       SW_surfacematerial(SEG_MIDDLE)
 #define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
 #define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
 #define SW_middleoffset         SW_surfaceoffset(SEG_MIDDLE)
 #define SW_middlergba           SW_surfacergba(SEG_MIDDLE)
-#define SW_middletexlat         SW_surfacetexlat(SEG_MIDDLE)
 #define SW_middleblendmode      SW_surfaceblendmode(SEG_MIDDLE)
 
 #define SW_topsurface           SW_surface(SEG_TOP)
 #define SW_topflags             SW_surfaceflags(SEG_TOP)
-#define SW_toptexture           SW_surfacetexture(SEG_TOP)
-#define SW_topisflat            SW_surfaceisflat(SEG_TOP)
+#define SW_topmaterial          SW_surfacematerial(SEG_TOP)
 #define SW_topnormal            SW_surfacenormal(SEG_TOP)
 #define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
 #define SW_topoffset            SW_surfaceoffset(SEG_TOP)
 #define SW_toprgba              SW_surfacergba(SEG_TOP)
-#define SW_toptexlat            SW_surfacetexlat(SEG_TOP)
 
 #define SW_bottomsurface        SW_surface(SEG_BOTTOM)
 #define SW_bottomflags          SW_surfaceflags(SEG_BOTTOM)
-#define SW_bottomtexture        SW_surfacetexture(SEG_BOTTOM)
-#define SW_bottomisflat         SW_surfaceisflat(SEG_BOTTOM)
+#define SW_bottommaterial       SW_surfacematerial(SEG_BOTTOM)
 #define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
 #define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
 #define SW_bottomoffset         SW_surfaceoffset(SEG_BOTTOM)
 #define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
-#define SW_bottomtexlat         SW_surfacetexlat(SEG_BOTTOM)
 
 // Sidedef flags
 #define SDF_BLENDTOPTOMID       0x01
@@ -321,20 +298,20 @@ typedef struct side_s {
 } side_t;
 
 // Helper macros for accessing linedef data elements.
-#define L_v(n)					v[(n)]
-#define L_vpos(n)				v[(n)]->V_pos
+#define L_v(n)                  v[(n)]
+#define L_vpos(n)               v[(n)]->V_pos
 
-#define L_v1					L_v(0)
-#define L_v1pos					L_v(0)->V_pos
+#define L_v1                    L_v(0)
+#define L_v1pos                 L_v(0)->V_pos
 
-#define L_v2					L_v(1)
-#define L_v2pos					L_v(1)->V_pos
+#define L_v2                    L_v(1)
+#define L_v2pos                 L_v(1)->V_pos
 
-#define L_vo(n)					vo[(n)]
+#define L_vo(n)                 vo[(n)]
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
 
-#define L_side(n)  			    sides[(n)]
+#define L_side(n)               sides[(n)]
 #define L_frontside             L_side(FRONT)
 #define L_backside              L_side(BACK)
 #define L_sector(n)             sides[(n)]->sector

@@ -3,6 +3,7 @@
 # Texture Groups
 Flag { ID = "tgf_smooth"; Value = 0x1; }
 Flag { ID = "tgf_first_only"; Value = 0x2; }
+Flag { ID = "tgf_precache"; Value = 0x4000; }
 
 # State flags
 Flag { ID = "statef_fullbright"; Value = 0x01; }

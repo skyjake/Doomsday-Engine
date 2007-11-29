@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 348 <--
+; --> 349 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -9,8 +9,13 @@ NAME            "DOOMSDAY"
 ; 70 formerly P_BlockPolyobjsIterator
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
+; 95 formerly R_FlatNumForName
+; 96 formerly R_CheckTextureNumForName
+; 98 formerly R_TextureNameForNum
+; 100 formerly R_SetTextureTranslation
 ; 107 formerly GL_DoUpdate
 ; 108 formerly GL_ChangeResolution
+; 118 formerly GL_SetTexture
 ; 206 formerly GL_Update
 ; 232 formerly R_SetAnimGroup
 ; 332 formerly P_ControlReset
@@ -268,14 +273,11 @@ EXPORTS
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME
     R_GetPatchInfo              @237 NONAME
-    R_CheckFlatNumForName       @336 NONAME
-    R_FlatNumForName            @95 NONAME
-    R_FlatNameForNum            @337 NONAME
-    R_CheckTextureNumForName    @96 NONAME
-    R_TextureNumForName         @97 NONAME
-    R_TextureNameForNum         @98 NONAME
-    R_SetFlatTranslation        @99 NONAME
-    R_SetTextureTranslation     @100 NONAME
+    R_IsCustomMaterial          @349 NONAME
+    R_CheckMaterialNumForName   @336 NONAME
+    R_MaterialNameForNum        @337 NONAME
+    R_MaterialNumForName        @97 NONAME
+    R_SetMaterialTranslation    @99 NONAME
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME
     R_CreateAnimGroup           @241 NONAME
@@ -296,8 +298,7 @@ EXPORTS
     GL_SetPatch                 @196 NONAME
     GL_SetSprite                @116 NONAME
     GL_SetTranslatedSprite      @334 NONAME
-    GL_SetFlat                  @117 NONAME
-    GL_SetTexture               @118 NONAME
+    GL_SetMaterial              @117 NONAME
     GL_SetRawImage              @119 NONAME
     GL_LoadGraphics             @244 NONAME
     GL_NewTextureWithParams2    @329 NONAME

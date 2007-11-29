@@ -31,6 +31,7 @@
 
 #include "dd_share.h"
 #include "p_object.h"
+#include "r_data.h"
 
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {
@@ -253,8 +254,8 @@ typedef struct {
 } playerdelta_t;
 
 typedef struct {
-	short           texture;
-    boolean         isflat;
+	int             texture;
+    materialtype_t  type;
 } dt_material_t;
 
 typedef struct {
