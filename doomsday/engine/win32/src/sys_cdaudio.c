@@ -35,7 +35,6 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <math.h>
-#include <tchar.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -44,6 +43,8 @@
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
+
+#define DEVICEID                "mycd"
 
 // TYPES -------------------------------------------------------------------
 
@@ -95,25 +96,21 @@ static double cdStartTime, cdPauseTime, cdTrackLength;
  *
  * @return                  @c true, if successful.
  */
-static int sendMCICmd(TCHAR *returnInfo, int returnLength, TCHAR *format,
+static int sendMCICmd(char *returnInfo, int returnLength, const char *format,
                       ...)
 {
-    TCHAR       buf[300];
+    char        buf[300];
     va_list     args;
     MCIERROR    error;
 
     va_start(args, format);
-    _vsntprintf(buf, sizeof(buf) / sizeof(TCHAR), format, args);
+    vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
 
     if((error = mciSendString(buf, returnInfo, returnLength, NULL)))
     {
-        char        mbBuf[300];
-
         mciGetErrorString(error, buf, 300);
-        WideCharToMultiByte(CP_ACP, 0, buf, wcslen(buf)+1, mbBuf , 300,
-                            NULL, NULL);
-        Con_Message("DM_WinCD: %s\n", mbBuf);
+        Con_Message("DM_WinCD: %s\n", buf);
         return false;
     }
     return true;
@@ -124,14 +121,14 @@ static int sendMCICmd(TCHAR *returnInfo, int returnLength, TCHAR *format,
  */
 static int getTrackLength(int track)
 {
-    TCHAR       lenString[80];
+    char        lenString[80];
     int         min, sec;
 
-    if(!sendMCICmd(lenString, 80, _T("status mycd length track %i"),
+    if(!sendMCICmd(lenString, 80, "status " DEVICEID " length track %i",
                    track))
         return 0;
 
-    _tscanf(lenString, "%i:%i", &min, &sec);
+    sscanf(lenString, "%i:%i", &min, &sec);
     return min * 60 + sec;
 }
 
@@ -195,10 +192,10 @@ int DM_CDAudioInit(void)
     if(cdInited)
         return true;
 
-    if(!sendMCICmd(0, 0, _T("open cdaudio alias mycd")))
+    if(!sendMCICmd(0, 0, "open cdaudio alias " DEVICEID))
         return false;
 
-    if(!sendMCICmd(0, 0, _T("set mycd time format tmsf")))
+    if(!sendMCICmd(0, 0, "set " DEVICEID " time format tmsf"))
         return false;
 
     // Get the original CD volume, we'll try to restore it on exit in case
@@ -222,7 +219,7 @@ void DM_CDAudioShutdown(void)
         return;
 
     DM_CDAudioStop();
-    sendMCICmd(0, 0, _T("close mycd"));
+    sendMCICmd(0, 0, "close " DEVICEID);
 
     // Restore original CD volume, if possible.
     if(cdOrigVolume != MIX_ERROR)
@@ -264,7 +261,7 @@ int DM_CDAudioPlay(int track, int looped)
         return false; // Hmm?!
 
     // Play it!
-    if(!sendMCICmd(0, 0, _T("play mycd from %i to %i"), track,
+    if(!sendMCICmd(0, 0, "play " DEVICEID " from %i to %i", track,
                    MCI_MAKE_TMSF(track, 0, len, 0)))
         return false;
 
@@ -282,7 +279,7 @@ void DM_CDAudioPause(int pause)
     if(!cdInited)
         return;
 
-    sendMCICmd(0, 0, _T("%6s mycd"), pause ? _T("pause") : _T("play"));
+    sendMCICmd(0, 0, "%s " DEVICEID, pause ? "pause" : "play");
     if(pause)
         cdPauseTime = Sys_GetSeconds();
     else
@@ -298,5 +295,5 @@ void DM_CDAudioStop(void)
         return;
 
     cdCurrentTrack = 0;
-    sendMCICmd(0, 0, _T("stop mycd"));
+    sendMCICmd(0, 0, "stop " DEVICEID);
 }

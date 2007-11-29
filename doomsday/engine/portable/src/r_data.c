@@ -616,7 +616,7 @@ void R_InitAnimGroup(ded_group_t *def)
             continue;
 
         // Only create a group when the first texture is found.
-        if(groupNumber != -1)
+        if(groupNumber == -1)
         {
             // Create a new animation group.
             groupNumber = R_CreateAnimGroup(type, def->flags);
