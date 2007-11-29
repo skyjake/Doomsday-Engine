@@ -34,7 +34,7 @@
  */
 
 /**
- * hrefresh.h: Console stuff - jHexen specific.
+ * hrefresh.h: - jHexen specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -99,6 +99,11 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+void R_Init(void)
+{
+    // Nothing to do.
+}
 
 /**
  * Don't really change anything here, because i might be in the middle of

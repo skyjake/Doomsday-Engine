@@ -138,7 +138,6 @@ void            R_UpdateData(void);
 
 extern fixed_t  pspritescale, pspriteiscale;
 
-void            R_InitTranslationTables(void);
 void            R_UpdateTranslationTables(void);
 
 #endif

@@ -367,6 +367,7 @@ void            H2_Main(void);
 void            G_IdentifyVersion(void);
 void            R_SetFilter(int filter);
 int             R_GetFilterColor(int filter);
+void            R_Init(void);
 
 int             G_GetInteger(int id);
 void           *G_GetVariable(int id);

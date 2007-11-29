@@ -54,7 +54,7 @@
 // Initialization
 void    H2_PreInit(void);
 void    H2_PostInit(void);
-void    R_InitTranslationTables(void);
+void    R_Init(void);
 
 // Timeing loop
 void    H2_Ticker(timespan_t ticLength);
@@ -249,6 +249,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.NetPlayerEvent = D_NetPlayerEvent;
     gx.NetWorldEvent = D_NetWorldEvent;
     gx.HandlePacket = D_HandlePacket;
+    gx.R_Init = R_Init;
 
     // The structure sizes.
     gx.ticcmd_size = sizeof(ticcmd_t);

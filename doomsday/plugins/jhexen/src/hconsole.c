@@ -251,7 +251,7 @@ void H2_ConsoleBg(int *width, int *height)
 
     if(consoleFlat)
     {
-        GL_SetFlat(consoleFlat);
+        GL_SetMaterial(consoleFlat, MAT_FLAT);
         *width = (int) (64 * consoleZoom);
         *height = (int) (64 * consoleZoom);
     }
