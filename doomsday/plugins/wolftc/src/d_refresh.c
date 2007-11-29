@@ -79,7 +79,7 @@ static int setdetail;
  * NOTE: Assumes a given structure of the PLAYPAL.
  *       Could be read from a lump instead.
  */
-void R_InitTranslation(void)
+static void initTranslation(void)
 {
     byte       *translationtables = (byte *)
                     DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
@@ -102,6 +102,11 @@ void R_InitTranslation(void)
                 translationtables[i + 512] = i;
         }
     }
+}
+
+void R_Init(void)
+{
+    initTranslation();
 }
 
 /**
@@ -250,7 +255,7 @@ void D_Display(void)
     case GS_LEVEL:
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
-        if(leveltime < 2)
+        if(!IS_CLIENT && leveltime < 2)
         {
             // Don't render too early; the first couple of frames
             // might be a bit unstable -- this should be considered

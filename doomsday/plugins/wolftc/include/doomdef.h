@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -259,13 +259,14 @@ enum { VX, VY, VZ };               // Vertex indices.
 #define IS_DEDICATED    Get(DD_DEDICATED)
 
 //returns a number from 0 to 255
-int             P_Random(void);
-void            M_ClearRandom(void);
+int         P_Random(void);
+void        M_ClearRandom(void);
 
-void            G_IdentifyVersion(void);
-int             G_GetInteger(int id);
-void           *G_GetVariable(int id);
+void        G_IdentifyVersion(void);
+int         G_GetInteger(int id);
+void       *G_GetVariable(int id);
 
-void            R_SetViewSize(int blocks, int detail);
+void        R_Init(void);
+void        R_SetViewSize(int blocks, int detail);
 
 #endif                          // __DOOMDEF__
