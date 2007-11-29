@@ -187,7 +187,6 @@ void P_InitPicAnims(void)
     int         startFrame, endFrame, ticsPerFrame;
     int         numFrames;
     int         lump = W_CheckNumForName("ANIMATED");
-    int         type;
     const char *name;
     animdef_t  *animdefs;
 
@@ -201,28 +200,16 @@ void P_InitPicAnims(void)
         // Read structures until -1 is found
         for(i = 0; animdefs[i].istexture != -1 ; ++i)
         {
-            // Is it a texture?
-            if(animdefs[i].istexture)
-            {
-                // different episode ?
-                if(R_CheckTextureNumForName(animdefs[i].startname) == -1)
-                    continue;
+            materialtype_t type =
+                (animdefs[i].istexture? MAT_TEXTURE : MAT_FLAT);
 
-                endFrame = R_TextureNumForName(animdefs[i].endname);
-                startFrame = R_TextureNumForName(animdefs[i].startname);
-            }
-            else // Its a flat.
-            {
-                if((R_CheckFlatNumForName(animdefs[i].startname)) == -1)
-                    continue;
+            if(R_CheckMaterialNumForName(animdefs[i].startname, type) == -1)
+                continue;
 
-                endFrame = R_FlatNumForName(animdefs[i].endname);
-                startFrame = R_FlatNumForName(animdefs[i].startname);
-            }
+            endFrame = R_MaterialNumForName(animdefs[i].endname, type);
+            startFrame = R_MaterialNumForName(animdefs[i].startname, type);
 
-            type = (animdefs[i].istexture? DD_TEXTURE : DD_FLAT);
             numFrames = endFrame - startFrame + 1;
-
             ticsPerFrame = LONG(animdefs[i].speed);
 
             if(numFrames < 2)
@@ -250,7 +237,7 @@ void P_InitPicAnims(void)
                 {
                     for(j = startFrame; j <= endFrame; j++)
                     {
-                        name = (type == DD_TEXTURE? R_TextureNameForNum(j) :
+                        name = (type == MAT_TEXTURE? R_MaterialNameForNum(j, MAT_TEXTURE) :
                                  W_LumpName(j));
                         R_AddToAnimGroup(groupNum, name, ticsPerFrame, 0);
                     }
@@ -259,7 +246,7 @@ void P_InitPicAnims(void)
                 {
                     for(j = endFrame; j >= startFrame; j--)
                     {
-                        name = (type == DD_TEXTURE? R_TextureNameForNum(j) :
+                        name = (type == MAT_TEXTURE? R_MaterialNameForNum(j, MAT_TEXTURE) :
                                  W_LumpName(j));
                         R_AddToAnimGroup(groupNum, name, ticsPerFrame, 0);
                     }

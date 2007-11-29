@@ -25,7 +25,7 @@
  */
 
 /**
- * d_refresh.c
+ * d_refresh.c: - Doom64TC specific
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -73,13 +73,12 @@ static int setdetail;
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Creates the translation tables to map
- * the green color ramp to gray, brown, red.
- * Assumes a given structure of the PLAYPAL.
+/**
+ * Creates the translation tables to map the green color ramp to gray,
+ * brown, red. Assumes a given structure of the PLAYPAL.
  * Could be read from a lump instead.
  */
-void R_InitTranslation(void)
+static void initTranslation(void)
 {
     byte   *translationtables = (byte *)
         DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
@@ -102,6 +101,11 @@ void R_InitTranslation(void)
                 translationtables[i + 512] = i;
         }
     }
+}
+
+void R_Init(void)
+{
+    initTranslation();
 }
 
 /**

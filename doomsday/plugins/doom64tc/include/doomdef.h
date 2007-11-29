@@ -269,13 +269,14 @@ enum { VX, VY, VZ };               // Vertex indices.
 #define IS_DEDICATED    Get(DD_DEDICATED)
 
 //returns a number from 0 to 255
-int             P_Random(void);
-void            M_ClearRandom(void);
+int         P_Random(void);
+void        M_ClearRandom(void);
 
-void            G_IdentifyVersion(void);
-int             G_GetInteger(int id);
-void           *G_GetVariable(int id);
+void        G_IdentifyVersion(void);
+int         G_GetInteger(int id);
+void       *G_GetVariable(int id);
 
-void            R_SetViewSize(int blocks, int detail);
+void        R_Init(void);
+void        R_SetViewSize(int blocks, int detail);
 
-#endif                          // __DOOMDEF__
+#endif

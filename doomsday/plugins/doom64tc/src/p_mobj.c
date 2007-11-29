@@ -272,7 +272,7 @@ void P_XYMovement(mobj_t *mo)
                         // explode a missile?
                         if(ceilingline &&
                            P_GetIntp(backsector,
-                                     DMU_CEILING_MATERIAL) == skyflatnum)
+                                     DMU_CEILING_MATERIAL) == skyMaskMaterial)
                         {
                             // Hack to prevent missiles exploding
                             // against the sky.
@@ -669,7 +669,7 @@ void P_ZMovement(mobj_t *mo)
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
         {
-            if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == skyflatnum)
+            if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == skyMaskMaterial)
             {
                 // Don't explode against sky.
                 {
