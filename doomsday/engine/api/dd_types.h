@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,17 @@
 
 #ifdef UNIX
 #  include <sys/types.h>
+#endif
+
+/** In Win32 TCHAR and related macros change size depending on if they are
+ using wide characters (unicode utf-16le) or ansi for functions and strings.
+ on Linux and OSX we use utf-8 by default - which conveniently maps to the
+ CHAR type. As a general guide, any other Win32 T style functions used,
+ should also be re-implemented here in an ANSI style form for use on Linix,
+ OSX, and any other UNIX style operating systems or build environments */
+#ifndef WIN32
+#define TCHAR CHAR
+#define _T(__v__) __v__
 #endif
 
 #ifndef _MSC_VER
