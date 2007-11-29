@@ -49,7 +49,6 @@
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
 #  include <icm.h>
-#  include <tchar.h>
 #  include <math.h>
 #endif
 
@@ -213,7 +212,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
         {
             suspendMsgPump = true;
             MessageBox(HWND_DESKTOP,
-                       _T("GL_GetGammaRamp: Main window not available."), NULL,
+                       "GL_GetGammaRamp: Main window not available.", NULL,
                        MB_ICONERROR | MB_OK);
             suspendMsgPump = false;
         }
@@ -293,7 +292,7 @@ void GL_SetGammaRamp(unsigned short *ramp)
         {
             suspendMsgPump = true;
             MessageBox(HWND_DESKTOP,
-                       _T("GL_SetGammaRamp: Main window not available."), NULL,
+                       "GL_SetGammaRamp: Main window not available.", NULL,
                        MB_ICONERROR | MB_OK);
             suspendMsgPump = false;
         }

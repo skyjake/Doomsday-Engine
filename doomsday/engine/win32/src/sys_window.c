@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_window.c: Win32-specific window management.
  *
  * This code wraps system-specific window management routines in order to
@@ -35,13 +35,12 @@
 #define WIN32_LEAN_AND_MEAN
 #define STRICT
 
-#include <stdlib.h>
-#include <tchar.h>
 #include <windows.h>
 #include <windowsx.h>
 #include <objbase.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -193,7 +192,7 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
 
     // Create the window.
     win->hWnd =
-        CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, (title),
+        CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, title,
                        WINDOWEDSTYLE,
                        CW_USEDEFAULT, CW_USEDEFAULT,
                        CW_USEDEFAULT, CW_USEDEFAULT,

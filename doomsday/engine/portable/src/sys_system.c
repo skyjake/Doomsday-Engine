@@ -30,7 +30,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef WIN32
-#  include <tchar.h>
 #  include <windows.h>
 #  include <process.h>
 #endif
@@ -229,7 +228,7 @@ void Sys_MessageBox(const char *msg, boolean iserror)
     {
         suspendMsgPump = true;
         MessageBox(HWND_DESKTOP,
-                   _T("Sys_MessageBox: Main window not available."), NULL,
+                   "Sys_MessageBox: Main window not available.", NULL,
                    MB_ICONERROR | MB_OK);
         suspendMsgPump = false;
         return;

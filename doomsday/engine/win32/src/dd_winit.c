@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_winit.h: Win32 Initialization
  *
  * Create windows, load DLLs, setup APIs.
@@ -34,13 +34,13 @@
 #define _WIN32_DCOM
 #define STRICT
 
-#include <stdlib.h>
-#include <tchar.h>
 #include <windows.h>
 #include <windowsx.h>
 #include <objbase.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "resource.h"
 
 #include "de_base.h"
