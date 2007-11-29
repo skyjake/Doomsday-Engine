@@ -23,7 +23,7 @@
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -125,7 +125,7 @@
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -605,6 +605,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\r_main.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\r_materials.c"
 				>
 			</File>
 			<File
@@ -1616,6 +1620,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\r_main.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\r_materials.h"
 				>
 			</File>
 			<File
