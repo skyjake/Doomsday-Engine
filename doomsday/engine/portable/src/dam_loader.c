@@ -522,12 +522,12 @@ static void allocateMapData(gamemap_t *map)
             side->SW_bottomrgba[c] = 1;
         }
         side->SW_middleblendmode = BM_NORMAL;
-        side->SW_topsurface.material.isflat =
-			side->SW_topsurface.oldmaterial.isflat = false;
-        side->SW_middlesurface.material.isflat =
-			side->SW_middlesurface.oldmaterial.isflat = false;
-        side->SW_bottomsurface.material.isflat =
-			side->SW_bottomsurface.oldmaterial.isflat = false;
+        side->SW_topsurface.material =
+			side->SW_topsurface.oldmaterial = NULL;
+        side->SW_middlesurface.material =
+			side->SW_middlesurface.oldmaterial = NULL;
+        side->SW_bottomsurface.material =
+			side->SW_bottomsurface.oldmaterial = NULL;
     }
 
     // Sectors.
@@ -691,12 +691,12 @@ static uint unpackSideDefs(gamemap_t *map)
                 side->SW_bottomrgba[c] = 1;
             }
             side->SW_middleblendmode = BM_NORMAL;
-            side->SW_topsurface.material.isflat =
-				side->SW_topsurface.oldmaterial.isflat = false;
-            side->SW_middlesurface.material.isflat =
-				side->SW_middlesurface.oldmaterial.isflat = false;
-            side->SW_bottomsurface.material.isflat =
-				side->SW_bottomsurface.oldmaterial.isflat = false;
+            side->SW_topsurface.material =
+				side->SW_topsurface.oldmaterial = NULL;
+            side->SW_middlesurface.material =
+				side->SW_middlesurface.oldmaterial = NULL;
+            side->SW_bottomsurface.material =
+				side->SW_bottomsurface.oldmaterial = NULL;
         }
 
         newIdx = map->numsides;
@@ -838,9 +838,9 @@ static boolean loadMapData(gamemap_t *map, listnode_t *nodes)
          * then tell us what texture to use.
          */
         selectprop_t props[] = {
-            {DAM_TOP_MATERIAL, DMT_MATERIAL_TEXTURE},
-            {DAM_MIDDLE_MATERIAL, DMT_MATERIAL_TEXTURE},
-            {DAM_BOTTOM_MATERIAL, DMT_MATERIAL_TEXTURE}
+            {DAM_TOP_MATERIAL, DMT_MATERIAL},
+            {DAM_MIDDLE_MATERIAL, DMT_MATERIAL},
+            {DAM_BOTTOM_MATERIAL, DMT_MATERIAL}
         };
 
         if(!P_ReadMapData(map, nodes, ML_SIDEDEFS, &(*props), 3,
@@ -1028,24 +1028,6 @@ static void finishLineDefs(gamemap_t* map)
             ld->bbox[BOXBOTTOM] = v[1]->V_pos[VY];
             ld->bbox[BOXTOP]    = v[0]->V_pos[VY];
         }
-    }
-}
-
-static void finishSides(gamemap_t *map)
-{
-    uint        i;
-
-    for(i = 0; i < map->numsides; ++i)
-    {
-        side_t *side = &map->sides[i];
-
-        // Make sure the texture references are good.
-        if(!side->SW_topisflat && side->SW_toptexture >= numtextures)
-            side->SW_toptexture = 0;
-        if(!side->SW_middleisflat && side->SW_middletexture >= numtextures)
-            side->SW_middletexture = 0;
-        if(!side->SW_bottomisflat && side->SW_bottomtexture >= numtextures)
-            side->SW_bottomtexture = 0;
     }
 }
 
@@ -1427,7 +1409,6 @@ static void finalizeMapData(gamemap_t *map)
     buildSectorLineLists(map);
 
     finishLineDefs(map);
-    finishSides(map);
 
     if(mustCreateBlockMap)
     {

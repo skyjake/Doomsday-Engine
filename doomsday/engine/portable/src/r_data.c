@@ -73,12 +73,18 @@ byte    precacheSkins = true;
 byte    precacheSprites = false;
 
 patchhash_t patchhash[PATCH_HASH_SIZE];
+
 int     numtextures;
 texture_t **textures;
 translation_t *texturetranslation;  // for global animation
+
 int     numflats;
 flat_t **flats;
 translation_t *flattranslation;  // for global animation
+
+int     numSpriteLumps;
+spritelump_t **spritelumps;
+
 // Raw screens.
 rawtex_t *rawtextures;
 uint numrawtextures;
@@ -148,7 +154,7 @@ void R_InitRendPolyPool(void)
  * b) matches the "isWall" specification.
  *
  * @param numverts  The number of verts required.
- * @param isWall    <code>true</code>= wall data is required.
+ * @param isWall    @c true = wall data is required.
  *
  * @return          Ptr to a suitable rendpoly.
  */
@@ -230,7 +236,7 @@ static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
  * Retrieves a suitable rendpoly. Possibly allocates a new one if necessary.
  *
  * @param type      The type of the poly to create.
- * @param isWall    <code>true</code>= wall data is required for this poly.
+ * @param isWall    @c true = wall data is required for this poly.
  * @param numverts  The number of verts required.
  *
  * @return          Ptr to a suitable rendpoly.
@@ -251,7 +257,8 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->blendmode = BM_NORMAL;
     poly->normal[0] = poly->normal[1] = poly->normal[2] = 0;
 
-    poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN, &texinfo);
+    poly->tex.id = curtex =
+        GL_PrepareMaterial(DDT_UNKNOWN, MAT_DDTEX, &texinfo);
 
     poly->tex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
     poly->tex.height = texinfo->height;
@@ -316,6 +323,7 @@ void R_MemcpyRendPoly(rendpoly_t *dest, const rendpoly_t *src)
 
 void R_ShutdownData(void)
 {
+    R_ShutdownMaterials();
 }
 
 /**
@@ -452,31 +460,11 @@ patch_t *R_GetPatch(int lumpnum)
     return p;
 }
 
-int R_SetFlatTranslation(int flat, int translateTo)
-{
-    int     old = flattranslation[flat].current;
-
-    flattranslation[flat].current = flattranslation[flat].next =
-        translateTo;
-    flattranslation[flat].inter = 0;
-    return old;
-}
-
-int R_SetTextureTranslation(int tex, int translateTo)
-{
-    int     old = texturetranslation[tex].current;
-
-    texturetranslation[tex].current = texturetranslation[tex].next =
-        translateTo;
-    texturetranslation[tex].inter = 0;
-    return old;
-}
-
 /**
  * Create a new animation group. Returns the group number.
  * This function is exported and accessible from DLLs.
  */
-int R_CreateAnimGroup(int type, int flags)
+int R_CreateAnimGroup(materialtype_t type, int flags)
 {
     animgroup_t *group;
 
@@ -492,12 +480,43 @@ int R_CreateAnimGroup(int type, int flags)
     group->id = ++numgroups;
     group->flags = flags;
 
-    if(type == DD_TEXTURE)
+    switch(type)
+    {
+    case MAT_TEXTURE:
         group->flags |= AGF_TEXTURE;
-    if(type == DD_FLAT)
+        break;
+
+    case MAT_FLAT:
         group->flags |= AGF_FLAT;
+        break;
+
+    default:
+        Con_Error("R_CreateAnimGroup: Material type %i does not support animations.",
+                  type);
+    }
 
     return group->id;
+}
+
+/**
+ * Called during engine reset to clear the existing animation groups.
+ */
+void R_DestroyAnimGroups(void)
+{
+    int             i;
+
+    if(numgroups > 0)
+    {
+        for(i = 0; i < numgroups; ++i)
+        {
+            animgroup_t    *group = &groups[i];
+            Z_Free(group->frames);
+        }
+
+        Z_Free(groups);
+        groups = NULL;
+        numgroups = 0;
+    }
 }
 
 animgroup_t *R_GetAnimGroup(int number)
@@ -523,10 +542,7 @@ void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
     if(!group)
         Con_Error("R_AddToAnimGroup: Unknown anim group %i.", groupNum);
 
-    if(group->flags & AGF_TEXTURE)
-        number = R_CheckTextureNumForName(name);
-    else
-        number = R_CheckFlatNumForName(name);
+    number = R_CheckMaterialNumForName(name, ((group->flags & AGF_TEXTURE)? MAT_TEXTURE : MAT_FLAT));
 
     if(number < 0)
     {
@@ -565,8 +581,8 @@ boolean R_IsInAnimGroup(int groupNum, int type, int number)
     if(!group)
         return false;
 
-    if((type == DD_TEXTURE && !(group->flags & AGF_TEXTURE)) ||
-       (type == DD_FLAT && !(group->flags & AGF_FLAT)))
+    if((type == MAT_TEXTURE && !(group->flags & AGF_TEXTURE)) ||
+       (type == MAT_FLAT && !(group->flags & AGF_FLAT)))
     {
         // Not the right type.
         return false;
@@ -587,26 +603,20 @@ boolean R_IsInAnimGroup(int groupNum, int type, int number)
 void R_InitAnimGroup(ded_group_t *def)
 {
     int     i;
-    int     groupNumber = 0;
+    int     groupNumber = -1;
     int     type, number;
 
-    type = (def->is_texture ? DD_TEXTURE : DD_FLAT);
+    type = (def->is_texture ? MAT_TEXTURE : MAT_FLAT);
 
     for(i = 0; i < def->count.num; ++i)
     {
-        if(def->is_texture)
-        {
-            number = R_CheckTextureNumForName(def->members[i].name);
-        }
-        else
-        {
-            number = R_CheckFlatNumForName(def->members[i].name);
-        }
+        number = R_CheckMaterialNumForName(def->members[i].name, type);
+
         if(number < 0)
             continue;
 
         // Only create a group when the first texture is found.
-        if(!groupNumber)
+        if(groupNumber != -1)
         {
             // Create a new animation group.
             groupNumber = R_CreateAnimGroup(type, def->flags);
@@ -642,39 +652,6 @@ void R_ResetAnimGroups(void)
 
     // This'll get every group started on the first step.
     R_AnimateAnimGroups();
-}
-
-/**
- * Assigns switch texture pairs (SW1/SW2) to their own texture precaching
- * groups. This'll allow them to be precached at the same time.
- */
-void R_InitSwitchAnimGroups(void)
-{
-    int     i, k, group;
-
-    for(i = 0; i < numtextures; ++i)
-    {
-        // Is this a switch texture?
-        if(strnicmp(textures[i]->name, "SW1", 3))
-            continue;
-
-        // Find the corresponding SW2.
-        for(k = 0; k < numtextures; ++k)
-        {
-            // Could this be it?
-            if(strnicmp(textures[k]->name, "SW2", 3))
-                continue;
-
-            if(!strnicmp(textures[k]->name + 3, textures[i]->name + 3, 5))
-            {
-                // Create a non-animating group for these.
-                group = R_CreateAnimGroup(DD_TEXTURE, AGF_PRECACHE);
-                R_AddToAnimGroup(group, textures[i]->name, 0, 0);
-                R_AddToAnimGroup(group, textures[k]->name, 0, 0);
-                break;
-            }
-        }
-    }
 }
 
 /**
@@ -738,8 +715,6 @@ void R_InitTextures(void)
 
     for(i = 0; i < numtextures; ++i, directory++)
     {
-        //Con_Progress(1, PBARF_DONTSHOW);
-
         if(i == numtextures1)
         {                       // Start looking in second texture file.
             maptex = maptex2;
@@ -762,7 +737,16 @@ void R_InitTextures(void)
             texture->info.width = SHORT(mtexture->width);
             texture->info.height = SHORT(mtexture->height);
 
-            texture->flags = mtexture->masked ? TXF_MASKED : 0;
+            texture->flags = 0;
+            if(mtexture->masked)
+                texture->flags |= TXF_MASKED;
+            /**
+             * DOOM.EXE had a bug in the way textures were managed
+             * resulting in the first texture being used dually as a
+             * "NULL" texture.
+             */
+            if(i == 0)
+                texture->flags |= TXF_NO_DRAW;
 
             texture->patchcount = SHORT(mtexture->patchcount);
 
@@ -797,6 +781,13 @@ void R_InitTextures(void)
             texture->info.height = SHORT(smtexture->height);
 
             texture->flags = 0;
+            /**
+             * STRIFE.EXE had a bug in the way textures were managed
+             * resulting in the first texture being used dually as a
+             * "NULL" texture.
+             */
+            if(i == 0)
+                texture->flags |= TXF_NO_DRAW;
             texture->patchcount = SHORT(smtexture->patchcount);
 
             memcpy(texture->name, smtexture->name, 8);
@@ -822,7 +813,9 @@ void R_InitTextures(void)
     if(maptex2)
         Z_Free(maptex2);
 
-    //Con_HideProgress();
+    // Create a material for every texture.
+    for(i = 0; i < numtextures; ++i)
+        R_MaterialCreate(textures[i]->name, i, MAT_TEXTURE);
 
     // Translation table for global animation.
     texturetranslation =
@@ -833,21 +826,17 @@ void R_InitTextures(void)
         texturetranslation[i].inter = 0;
 
         // Determine the texture's material type.
-        textures[i]->materialType =
-            S_MaterialTypeForName(R_TextureNameForNum(i), false);
+        textures[i]->materialClass =
+            S_MaterialClassForName(R_MaterialNameForNum(i, MAT_TEXTURE), MAT_TEXTURE);
     }
 
     M_Free(patchlookup);
-
-    // Assign switch texture pairs (SW1/SW2) to their own texture groups.
-    // This'll allow them to be precached at the same time.
-    R_InitSwitchAnimGroups();
 }
 
 /**
  * Returns the new flat lump number.
  */
-static int R_NewFlatLump(int lump)
+static int R_NewFlat(int lump)
 {
     flat_t **newlist, *ptr;
     int     i;
@@ -886,21 +875,32 @@ void R_InitFlats(void)
 
         if(!strnicmp(name, "F_START", 7))
         {
-            // We've arrived at *a* sprite block.
+            // We've arrived at *a* flat block.
             inFlatBlock = true;
             continue;
         }
         else if(!strnicmp(name, "F_END", 5))
         {
-            // The sprite block ends.
+            // The flat block ends.
             inFlatBlock = false;
             continue;
         }
         if(!inFlatBlock)
             continue;
 
-        R_NewFlatLump(i);
+        R_NewFlat(i);
     }
+
+    /**
+     * DOOM.exe had a bug in the way textures were managed resulting
+     * in the first flat being used dually as a "NULL" texture.
+     */
+    if(numflats > 0)
+        flats[0]->flags |= TXF_NO_DRAW;
+
+    // Create a material for every flat.
+    for(i = 0; i < numflats; ++i)
+        R_MaterialCreate(flats[i]->name, i, MAT_FLAT);
 
     // Translation table for global animation.
     flattranslation =
@@ -911,52 +911,71 @@ void R_InitFlats(void)
         flattranslation[i].inter = 0;
 
         // Determine the flat's material type.
-        flats[i]->materialType =
-            S_MaterialTypeForName(R_FlatNameForNum(i), true);
+        flats[i]->materialClass =
+            S_MaterialClassForName(R_MaterialNameForNum(i, MAT_FLAT), MAT_FLAT);
     }
+}
+
+void R_InitSpriteLumps(void)
+{
+    lumppatch_t *patch;
+    spritelump_t *sl;
+    int         i;
+    char        buf[64];
+
+    sprintf(buf, "R_Init: Initializing %i sprites...", numSpriteLumps);
+    //Con_InitProgress(buf, numSpriteLumps);
+
+    for(i = 0; i < numSpriteLumps; ++i)
+    {
+        sl = spritelumps[i];
+
+        /*
+        if(!(i % 50))
+            Con_Progress(i, PBARF_SET | PBARF_DONTSHOW);*/
+
+        patch = (lumppatch_t *) W_CacheLumpNum(sl->lump, PU_CACHE);
+        sl->width = SHORT(patch->width);
+        sl->height = SHORT(patch->height);
+        sl->offset = SHORT(patch->leftoffset);
+        sl->topoffset = SHORT(patch->topoffset);
+    }
+}
+
+/**
+ * @return              The new sprite lump number.
+ */
+int R_NewSpriteLump(int lump)
+{
+    spritelump_t **newlist, *ptr;
+    int         i;
+
+    // Is this lump already entered?
+    for(i = 0; i < numSpriteLumps; i++)
+        if(spritelumps[i]->lump == lump)
+            return i;
+
+    newlist = Z_Malloc(sizeof(spritelump_t*) * ++numSpriteLumps, PU_SPRITE, 0);
+    if(numSpriteLumps > 1)
+    {
+        for(i = 0; i < numSpriteLumps -1; ++i)
+            newlist[i] = spritelumps[i];
+
+        Z_Free(spritelumps);
+    }
+    spritelumps = newlist;
+    ptr = spritelumps[numSpriteLumps - 1] = Z_Calloc(sizeof(spritelump_t), PU_SPRITE, 0);
+    ptr->lump = lump;
+    return numSpriteLumps - 1;
 }
 
 void R_UpdateTexturesAndFlats(void)
 {
     Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
+    R_MarkMaterialsForUpdating();
     R_InitTextures();
     R_InitFlats();
-}
-
-int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
-{
-    if(picid < 0)
-        return 0;
-
-    switch(rclass)
-    {
-    case RC_TEXTURE:  // picid is a texture id
-        if(picid >= numtextures)
-        {
-            Con_Error("R_GraphicResourceFlags: RC_TEXTURE, picid %i out of bounds.\n",
-                      picid);
-        }
-        picid = texturetranslation[picid].current;
-        if(picid < 0)
-            return 0;
-
-        return textures[picid]->flags;
-
-    case RC_FLAT:  // picid is a flat id
-        if(picid >= numflats)
-        {
-            Con_Error("R_GraphicResourceFlags: RC_FLAT, picid %i out of bounds.\n",
-                      picid);
-        }
-        picid = flattranslation[picid].current;
-        if(picid < 0)
-            return 0;
-
-        return flats[picid]->flags;
-
-    default:
-        return 0;
-    };
+    R_InitSkyMap();
 }
 
 void R_InitPatches(void)
@@ -977,6 +996,7 @@ void R_UpdatePatches(void)
  */
 void R_InitData(void)
 {
+    R_InitMaterials();
     R_InitTextures();
     R_InitFlats();
     R_InitPatches();
@@ -1019,97 +1039,6 @@ void R_UpdateTranslationTables(void)
     R_InitTranslationTables();
 }
 
-int R_CheckFlatNumForName(const char *name)
-{
-    int     i;
-
-    if(name[0] == '-')          // no flat marker
-        return 0;
-
-    for(i = 0; i < numflats; ++i)
-        if(!strncasecmp(flats[i]->name, name, 8))
-            return i;
-
-    return -1;
-}
-
-int R_FlatNumForName(const char *name)
-{
-    int     i;
-
-    i = R_CheckFlatNumForName(name);
-
-    if(i == -1 && !levelSetup)  // dont announce during level setup
-        Con_Message("R_FlatNumForName: %.8s not found!\n", name);
-    return i;
-}
-
-const char *R_FlatNameForNum(int num)
-{
-    if(num < 0 || num > numflats - 1)
-        return NULL;
-    return flats[num]->name;
-}
-
-int R_CheckTextureNumForName(const char *name)
-{
-    int     i;
-
-    if(name[0] == '-')          // no texture marker
-        return 0;
-
-    for(i = 0; i < numtextures; ++i)
-        if(!strncasecmp(textures[i]->name, name, 8))
-            return i;
-
-    return -1;
-}
-
-int R_TextureNumForName(const char *name)
-{
-    int     i;
-
-    i = R_CheckTextureNumForName(name);
-
-    if(i == -1 && !levelSetup)  // dont announce during level setup
-        Con_Message("R_TextureNumForName: %.8s not found!\n", name);
-    return i;
-}
-
-const char *R_TextureNameForNum(int num)
-{
-    if(num < 0 || num > numtextures - 1)
-        return NULL;
-    return textures[num]->name;
-}
-
-/**
- * Returns true if the texture is probably not from the original game.
- */
-boolean R_IsCustomTexture(int texture)
-{
-    int     i, lump;
-
-    // First check the texture definitions.
-    lump = W_CheckNumForName("TEXTURE1");
-    if(lump >= 0 && !W_IsFromIWAD(lump))
-        return true;
-
-    lump = W_CheckNumForName("TEXTURE2");
-    if(lump >= 0 && !W_IsFromIWAD(lump))
-        return true;
-
-    // Go through the patches.
-    for(i = 0; i < textures[texture]->patchcount; ++i)
-    {
-        if(!W_IsFromIWAD(textures[texture]->patches[i].patch))
-            return true;
-    }
-
-    // This is most likely from the original game data.
-    return false;
-}
-
 /**
  * Returns true if the given light decoration definition is valid.
  */
@@ -1130,47 +1059,11 @@ boolean R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal)
         return (def->flags & DCRF_EXTERNAL) != 0;
     }
 
-    if(def->is_texture)
-    {
-        // Is it probably an original texture?
-        if(!R_IsCustomTexture(index))
-            return !(def->flags & DCRF_NO_IWAD);
-    }
-    else
-    {
-        if(W_IsFromIWAD(index))
-            return !(def->flags & DCRF_NO_IWAD);
-    }
+    // Is it probably an original texture?
+    if(!R_IsCustomMaterial(index, (def->is_texture? MAT_TEXTURE : MAT_FLAT)))
+        return !(def->flags & DCRF_NO_IWAD);
 
     return (def->flags & DCRF_PWAD) != 0;
-}
-
-/**
- * Prepares the specified flat and all the other flats in the same
- * animation group.
- */
-void R_PrecacheFlat(int num)
-{
-    int     i, k;
-
-    if(flats[num]->ingroup)
-    {
-        // The flat belongs in one or more animgroups.
-        for(i = 0; i < numgroups; ++i)
-        {
-            if(R_IsInAnimGroup(groups[i].id, DD_FLAT, num))
-            {
-                // Precache this group.
-                for(k = 0; k < groups[i].count; ++k)
-                    GL_PrepareFlat(groups[i].frames[k].number, NULL);
-            }
-        }
-    }
-    else
-    {
-        // Just this one flat.
-        GL_PrepareFlat(num, NULL);
-    }
 }
 
 /**
@@ -1182,30 +1075,59 @@ void R_PrecachePatch(int num)
 }
 
 /**
- * Prepares the specified texture and all the other textures in the
- * same animation group.
+ * Prepares all graphic resources associated with the specified material
+ * including any in the same animation group.
  */
-void R_PrecacheTexture(int num)
+void R_PrecacheMaterial(int num, materialtype_t type)
 {
-    int     i, k;
+    int         i, k;
 
-    if(textures[num]->ingroup)
+    switch(type)
     {
-        // The texture belongs in one or more animgroups.
-        for(i = 0; i < numgroups; ++i)
+    case MAT_FLAT:
+        if(flats[num]->ingroup)
         {
-            if(R_IsInAnimGroup(groups[i].id, DD_TEXTURE, num))
+            // The flat belongs in one or more animgroups.
+            for(i = 0; i < numgroups; ++i)
             {
-                // Precache this group.
-                for(k = 0; k < groups[i].count; ++k)
-                    GL_PrepareTexture(groups[i].frames[k].number, NULL);
+                if(R_IsInAnimGroup(groups[i].id, MAT_FLAT, num))
+                {
+                    // Precache this group.
+                    for(k = 0; k < groups[i].count; ++k)
+                        GL_PrepareMaterial(groups[i].frames[k].number, MAT_FLAT, NULL);
+                }
             }
         }
-    }
-    else
-    {
-        // Just this one texture.
-        GL_PrepareTexture(num, NULL);
+        else
+        {
+            // Just this one flat.
+            GL_PrepareMaterial(num, MAT_FLAT, NULL);
+        }
+        break;
+
+    case MAT_TEXTURE:
+        if(textures[num]->ingroup)
+        {
+            // The texture belongs in one or more animgroups.
+            for(i = 0; i < numgroups; ++i)
+            {
+                if(R_IsInAnimGroup(groups[i].id, MAT_TEXTURE, num))
+                {
+                    // Precache this group.
+                    for(k = 0; k < groups[i].count; ++k)
+                        GL_PrepareMaterial(groups[i].frames[k].number, MAT_TEXTURE, NULL);
+                }
+            }
+        }
+        else
+        {
+            // Just this one texture.
+            GL_PrepareMaterial(num, MAT_TEXTURE, NULL);
+        }
+        break;
+
+    default:
+        Con_Error("R_PrecacheMaterial: Unknown material type %i.", type);
     }
 }
 
@@ -1218,20 +1140,19 @@ void R_PrecacheTexture(int num)
  */
 void R_PrecacheLevel(void)
 {
-    char   *texturepresent, *flatpresent;
-    char   *spritepresent = NULL;
-    uint    i, j;
-    int     k, lump, mocount;
-    thinker_t *th;
-    sector_t *sec;
-    side_t *side;
-    float   starttime;
+    uint            i, j;
+    int             k, lump, mocount;
+    thinker_t      *th;
+    sector_t       *sec;
+    side_t         *side;
+    float           starttime;
+    material_t     *mat;
+    char           *texturepresent, *flatpresent;
+    char           *spritepresent = NULL;
 
     // Don't precache when playing demo.
     if(isDedicated || playback)
-    {
         return;
-    }
 
     // Precaching from 100 to 200.
     Con_SetProgress(100);
@@ -1246,42 +1167,83 @@ void R_PrecacheLevel(void)
     {
         side = SIDE_PTR(i);
 
-        if(side->SW_toptexture != -1)
+        mat = side->SW_topmaterial;
+        if(mat)
         {
-            if(side->SW_topisflat)
-                flatpresent[side->SW_toptexture] = 1;
-            else
-                texturepresent[side->SW_toptexture] = 1;
+            switch(mat->type)
+            {
+            case MAT_FLAT:
+                flatpresent[mat->ofTypeID] = 1;
+                break;
+
+            case MAT_TEXTURE:
+                texturepresent[mat->ofTypeID] = 1;
+                break;
+
+            default:
+                break;
+            }
         }
 
-        if(side->SW_middletexture != -1)
+        mat = side->SW_middlematerial;
+        if(mat)
         {
-            if(side->SW_middleisflat)
-                flatpresent[side->SW_middletexture] = 1;
-            else
-                texturepresent[side->SW_middletexture] = 1;
+            switch(mat->type)
+            {
+            case MAT_FLAT:
+                flatpresent[mat->ofTypeID] = 1;
+                break;
+
+            case MAT_TEXTURE:
+                texturepresent[mat->ofTypeID] = 1;
+                break;
+
+            default:
+                break;
+            }
         }
 
-        if(side->SW_bottomtexture != -1)
+        mat = side->SW_bottommaterial;
+        if(mat)
         {
-            if(side->SW_bottomisflat)
-                flatpresent[side->SW_bottomtexture] = 1;
-            else
-                texturepresent[side->SW_bottomtexture] = 1;
+            switch(mat->type)
+            {
+            case MAT_FLAT:
+                flatpresent[mat->ofTypeID] = 1;
+                break;
+
+            case MAT_TEXTURE:
+                texturepresent[mat->ofTypeID] = 1;
+                break;
+
+            default:
+                break;
+            }
         }
     }
+
     for(i = 0; i < numsectors; ++i)
     {
         sec = SECTOR_PTR(i);
 
         for(j = 0; j < sec->planecount; ++j)
         {
-            if(sec->SP_planetexture(j) != -1)
+            mat = sec->SP_planematerial(j);
+            if(mat)
             {
-                if(sec->SP_planeisflat(j))
-                    flatpresent[sec->SP_planetexture(j)] = 1;
-                else
-                    texturepresent[sec->SP_planetexture(j)] = 1;
+            switch(mat->type)
+            {
+                case MAT_FLAT:
+                    flatpresent[mat->ofTypeID] = 1;
+                    break;
+
+                case MAT_TEXTURE:
+                    texturepresent[mat->ofTypeID] = 1;
+                    break;
+
+                default:
+                    break;
+                }
             }
         }
     }
@@ -1293,12 +1255,12 @@ void R_PrecacheLevel(void)
     for(k = 0; k < numtextures; ++k)
         if(texturepresent[k])
         {
-            R_PrecacheTexture(k);
+            R_PrecacheMaterial(k, MAT_TEXTURE);
         }
     for(k = 0; k < numflats; ++k)
         if(flatpresent[k])
         {
-            R_PrecacheFlat(k);
+            R_PrecacheMaterial(k, MAT_FLAT);
         }
 
     // Update progress.
@@ -1390,11 +1352,11 @@ translation_t *R_GetTranslation(boolean isTexture, int number)
 {
     if(isTexture)
     {
-        return texturetranslation + number;
+        return &texturetranslation[number];
     }
     else
     {
-        return flattranslation + number;
+        return &flattranslation[number];
     }
 }
 
@@ -1421,11 +1383,11 @@ void R_AnimateAnimGroups(void)
         {
             // Advance to next frame.
             group->index = (group->index + 1) % group->count;
-            timer = group->frames[group->index].tics;
+            timer = (int) group->frames[group->index].tics;
 
             if(group->frames[group->index].random)
             {
-                timer += M_Random() % (group->frames[group->index].random + 1);
+                timer += (int) M_Random() % (group->frames[group->index].random + 1);
             }
             group->timer = group->maxtimer = timer;
 

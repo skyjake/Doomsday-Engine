@@ -34,6 +34,7 @@
 #include "de_dam.h"
 #include "de_defs.h"
 #include "de_misc.h"
+#include "de_refresh.h"
 
 #include "p_mapdata.h"
 
@@ -128,16 +129,16 @@ static mapproperty_t properties[DAM_NUM_PROPERTIES] =
     {DAM_MIDDLE_MATERIAL_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFSET, "middletextureoffsety"},
     {DAM_BOTTOM_MATERIAL_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFSET, "bottomtextureoffsetx"},
     {DAM_BOTTOM_MATERIAL_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFSET, "bottomtextureoffsety"},
-    {DAM_TOP_MATERIAL, DAM_SIDE, DMT_MATERIAL_TEXTURE, "toptexture"},
-    {DAM_MIDDLE_MATERIAL, DAM_SIDE, DMT_MATERIAL_TEXTURE, "middletexture"},
-    {DAM_BOTTOM_MATERIAL, DAM_SIDE, DMT_MATERIAL_TEXTURE, "bottomtexture"},
+    {DAM_TOP_MATERIAL, DAM_SIDE, DMT_MATERIAL, "toptexture"},
+    {DAM_MIDDLE_MATERIAL, DAM_SIDE, DMT_MATERIAL, "middletexture"},
+    {DAM_BOTTOM_MATERIAL, DAM_SIDE, DMT_MATERIAL, "bottomtexture"},
     // \todo should be DMT_SIDE_SECTOR but we require special case logic
     {DAM_FRONT_SECTOR, DAM_SIDE, DDVT_SECT_IDX, "frontsector"},
 // Sector
     {DAM_FLOOR_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "floorheight"},
     {DAM_CEILING_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "ceilingheight"},
-    {DAM_FLOOR_MATERIAL, DAM_SECTOR, DMT_MATERIAL_TEXTURE, "floortexture"},
-    {DAM_CEILING_MATERIAL, DAM_SECTOR, DMT_MATERIAL_TEXTURE, "ceilingtexture"},
+    {DAM_FLOOR_MATERIAL, DAM_SECTOR, DMT_MATERIAL, "floortexture"},
+    {DAM_CEILING_MATERIAL, DAM_SECTOR, DMT_MATERIAL, "ceilingtexture"},
     {DAM_LIGHT_LEVEL, DAM_SECTOR, DDVT_SHORT, "lightlevel"},
 };
 
@@ -1219,15 +1220,30 @@ static int SetProperty2(void *ptr, void *context)
             break;
 
         case DAM_TOP_MATERIAL:
-            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_toptexture, args, 0);
+            {
+            short           texture;
+            SetValue(DMT_MATERIAL, &texture, args, 0);
+
+            p->SW_topmaterial = R_GetMaterial(texture, MAT_TEXTURE);
+            }
             break;
 
         case DAM_MIDDLE_MATERIAL:
-            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_middletexture, args, 0);
+            {
+            short           texture;
+            SetValue(DMT_MATERIAL, &texture, args, 0);
+
+            p->SW_middlematerial = R_GetMaterial(texture, MAT_TEXTURE);
+            }
             break;
 
         case DAM_BOTTOM_MATERIAL:
-            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_bottomtexture, args, 0);
+            {
+            short           texture;
+            SetValue(DMT_MATERIAL, &texture, args, 0);
+
+            p->SW_bottommaterial = R_GetMaterial(texture, MAT_TEXTURE);
+            }
             break;
 
         case DAM_FRONT_SECTOR:
@@ -1255,11 +1271,21 @@ static int SetProperty2(void *ptr, void *context)
             break;
 
         case DAM_FLOOR_MATERIAL:
-            SetValue(DMT_MATERIAL_TEXTURE, &p->SP_floortexture, args, 0);
+            {
+            short           texture;
+            SetValue(DMT_MATERIAL, &texture, args, 0);
+
+            p->SP_floormaterial = R_GetMaterial(texture, MAT_FLAT);
+            }
             break;
 
         case DAM_CEILING_MATERIAL:
-            SetValue(DMT_MATERIAL_TEXTURE, &p->SP_ceiltexture, args, 0);
+            {
+            short           texture;
+            SetValue(DMT_MATERIAL, &texture, args, 0);
+
+            p->SP_ceilmaterial = R_GetMaterial(texture, MAT_FLAT);
+            }
             break;
 
         case DAM_LIGHT_LEVEL:

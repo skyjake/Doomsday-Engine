@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_texman.c: Texture management routines.
  *
  * Much of this stuff actually belongs in Refresh.
@@ -94,12 +94,16 @@ D_CMD(SmoothRaw);
 
 byte   *GL_LoadHighResFlat(image_t *img, char *name);
 byte   *GL_LoadHighResPatch(image_t *img, char *name);
-void    GL_DeleteDetailTexture(detailtex_t * dtex);
+void    GL_DeleteDetailTexture(detailtex_t *dtex);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void LoadPalette(void);
 static void GL_SetTexCoords(float *tc, int wid, int hgt);
+static DGLuint getFlatInfo2(int index, boolean translate,
+                            texinfo_t **texinfo);
+static DGLuint getTextureInfo2(int index, boolean translate,
+                               texinfo_t **texinfo);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -107,7 +111,7 @@ extern int ratioLimit;
 extern boolean palettedTextureExtAvailable;
 extern boolean s3tcAvailable;
 
-extern int skyFlatNum;
+extern material_t skyMaskMaterial;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -243,7 +247,7 @@ void GL_EarlyInitTextureManager(void)
         memcpy(pal18to8, W_CacheLumpNum(i, PU_CACHE), sizeof(pal18to8));
 }
 
-/*
+/**
  * This should be cleaned up once and for all.
  */
 void GL_InitTextureManager(void)
@@ -302,7 +306,7 @@ void GL_InitTextureManager(void)
     texInited = true;
 }
 
-/*
+/**
  * Call this if a full cleanup of the textures is required (engine update).
  */
 void GL_ShutdownTextureManager(void)
@@ -320,7 +324,7 @@ void GL_ShutdownTextureManager(void)
     texInited = false;
 }
 
-/*
+/**
  * This is called at final shutdown.
  */
 void GL_DestroySkinNames(void)
@@ -365,7 +369,7 @@ byte *GL_GetPal18to8(void)
     return pal18to8;
 }
 
-/*
+/**
  * Initializes the paletted texture extension.
  * Returns true if successful.
  */
@@ -388,7 +392,7 @@ int GL_InitPalettedTexture(void)
     return true;
 }
 
-/*
+/**
  * Lightmaps should be monochrome images.
  */
 void GL_LoadLightMap(ded_lightmap_t *map)
@@ -442,7 +446,7 @@ void GL_DeleteLightMap(ded_lightmap_t *map)
     map->tex = 0;
 }
 
-/*
+/**
  * Flaremaps are normally monochrome images but we'll allow full color.
  */
 void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
@@ -561,7 +565,7 @@ void GL_DeleteFlareMap(ded_flaremap_t *map)
     map->tex = 0;
 }
 
-/*
+/**
  * Loads both the shiny texture and the mask.  Returns true if there is
  * a reflection map to can be used.
  */
@@ -630,15 +634,15 @@ void GL_DeleteReflectionMap(ded_reflection_t *ref)
     }
 }
 
-/*
+/**
  * Called from GL_LoadSystemTextures.
  */
 void GL_LoadDDTextures(void)
 {
-    GL_PrepareDDTexture(DDT_UNKNOWN, NULL);
-    GL_PrepareDDTexture(DDT_MISSING, NULL);
-    GL_PrepareDDTexture(DDT_BBOX, NULL);
-    GL_PrepareDDTexture(DDT_GRAY, NULL);
+    GL_PrepareMaterial(DDT_UNKNOWN, MAT_DDTEX, NULL);
+    GL_PrepareMaterial(DDT_MISSING, MAT_DDTEX, NULL);
+    GL_PrepareMaterial(DDT_BBOX, MAT_DDTEX, NULL);
+    GL_PrepareMaterial(DDT_GRAY, MAT_DDTEX, NULL);
 }
 
 void GL_ClearDDTextures(void)
@@ -650,7 +654,7 @@ void GL_ClearDDTextures(void)
     memset(ddTextures, 0, sizeof(ddTextures));
 }
 
-/*
+/**
  * Prepares all the system textures (dlight, ptcgens).
  */
 void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
@@ -720,7 +724,7 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
     PG_InitTextures();
 }
 
-/*
+/**
  * System textures are loaded at startup and remain in memory all the time.
  * After clearing they must be manually reloaded.
  */
@@ -770,7 +774,7 @@ void GL_ClearSystemTextures(void)
     PG_ShutdownTextures();
 }
 
-/*
+/**
  * Runtime textures are not loaded until precached or actually needed.
  * They may be cleared, in which case they will be reloaded when needed.
  */
@@ -788,9 +792,9 @@ void GL_ClearRuntimeTextures(void)
 
     // Textures, flats and sprite lumps.
     for(i = 0; i < numtextures; ++i)
-        GL_DeleteTexture(i);
+        R_DeleteMaterial(i, MAT_TEXTURE);
     for(i = 0; i < numflats; ++i)
-        GL_DeleteFlat(i);
+        R_DeleteMaterial(i, MAT_FLAT);
     for(i = 0; i < numSpriteLumps; ++i)
         GL_DeleteSprite(i);
 
@@ -864,7 +868,7 @@ void GL_ClearTextureMemory(void)
     GL_ClearSystemTextures();
 }
 
-/*
+/**
  * Binds the texture if necessary.
  */
 void GL_BindTexture(DGLuint texname)
@@ -1107,7 +1111,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     return content->name;
 }
 
-/*
+/**
  * The contrast is rounded.
  */
 dtexinst_t *GL_GetDetailInstance(int lump, float contrast,
@@ -1139,7 +1143,7 @@ dtexinst_t *GL_GetDetailInstance(int lump, float contrast,
     return i;
 }
 
-/*
+/**
  * Detail textures are grayscale images.
  */
 DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
@@ -1247,7 +1251,7 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
     return inst->tex;
 }
 
-/*
+/**
  * This is only called when loading a wall texture or a flat
  * (not too time-critical).
  */
@@ -1290,15 +1294,11 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
     return 0;                   // There is no detail texture for this.
 }
 
-unsigned int GL_PrepareFlat(int idx, texinfo_t **info)
-{
-    return GL_PrepareFlat2(idx, true, info);
-}
-
-/*
- * Returns the OpenGL name of the texture.
+/**
+ * @return              The OpenGL name of the texture.
  */
-unsigned int GL_PrepareFlat2(int idx, boolean translate, texinfo_t **info)
+static unsigned int prepareFlat2(int idx, boolean translate,
+                                 texinfo_t **info)
 {
     byte   *flatptr;
     int     originalIndex = idx;
@@ -1310,18 +1310,23 @@ unsigned int GL_PrepareFlat2(int idx, boolean translate, texinfo_t **info)
     boolean hasExternal = false;
     flat_t *flat;
 
-    if(idx == 0) // No texture?
+    if(idx < 0 || idx >= numflats) // No texture?
         return 0;
 
     if(translate)
     {
         idx = flattranslation[idx].current;
     }
+
+    if(idx < 0 || idx >= numflats) // No texture?
+        return 0;
+
     flat = flats[idx];
     if(!flat->tex)
     {
         // Try to load a high resolution version of this flat.
-        if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(flat->lump)) &&
+        if((loadExtAlways || highResWithPWAD ||
+            !R_IsCustomMaterial(idx, MAT_FLAT)) &&
            (flatptr = GL_LoadHighResFlat(&image, lumpinfo[flat->lump].name)) != NULL)
         {
             RGBData = true;
@@ -1364,11 +1369,11 @@ unsigned int GL_PrepareFlat2(int idx, boolean translate, texinfo_t **info)
         // Average color for glow planes.
         if(RGBData)
         {
-            averageColorRGB(&flat->color, flatptr, width, height);
+            averageColorRGB(flat->color, flatptr, width, height);
         }
         else
         {
-            averageColorIdx(&flat->color, flatptr, width, height,
+            averageColorIdx(flat->color, flatptr, width, height,
                             GL_GetPalette(), false);
         }
 
@@ -1391,32 +1396,14 @@ unsigned int GL_PrepareFlat2(int idx, boolean translate, texinfo_t **info)
         // Get the surface reflection for this flat.
         flat->reflection = Def_GetReflection(idx, false);
     }
-    return GL_GetFlatInfo2(originalIndex, translate, info);
+    return getFlatInfo2(originalIndex, translate, info);
 }
 
 /**
- * Copy the averaged flat color into the dest buffer <code>rgb</code>.
- *
- * @param   flatid      The id of the flat.
- * @param   rgb         The dest buffer.
- */
-void GL_GetFlatColor(int flatid, float *rgb)
-{
-    flat_t *flat = flats[flatid];
-
-    memcpy(rgb, flat->color.rgb, sizeof(float) * 3);
-}
-
-void GL_SetFlat(int idx)
-{
-    gl.Bind(GL_PrepareFlat(idx, NULL));
-}
-
-/*
  * Prepares one of the "Doomsday Textures" 'which' must be one
  * of the DDT_* constants.
  */
-DGLuint GL_PrepareDDTexture(ddtextureid_t which, texinfo_t **texinfo)
+static DGLuint prepareDDTexture(ddtextureid_t which, texinfo_t **texinfo)
 {
     static const char *ddTexNames[NUM_DD_TEXTURES] = {
         "unknown",
@@ -1434,7 +1421,7 @@ DGLuint GL_PrepareDDTexture(ddtextureid_t which, texinfo_t **texinfo)
                                  DGL_TRUE, false, 0);
 
             if(!ddTextures[which].tex)
-                Con_Error("GL_PrepareDDTexture: \"%s\" not found!\n",
+                Con_Error("prepareDDTexture: \"%s\" not found!\n",
                           ddTexNames[which]);
 
             ddTextures[which].info.width =
@@ -1442,7 +1429,7 @@ DGLuint GL_PrepareDDTexture(ddtextureid_t which, texinfo_t **texinfo)
         }
     }
     else
-        Con_Error("GL_PrepareDDTexture: Invalid ddtexture %i\n", which);
+        Con_Error("prepareDDTexture: Invalid ddtexture %i\n", which);
 
     if(texinfo)
         *texinfo = &ddTextures[which].info;
@@ -1450,7 +1437,7 @@ DGLuint GL_PrepareDDTexture(ddtextureid_t which, texinfo_t **texinfo)
     return ddTextures[which].tex;
 }
 
-/*
+/**
  * Loads PCX, TGA and PNG images. The returned buffer must be freed
  * with M_Free. Color keying is done if "-ck." is found in the filename.
  * The allocated memory buffer always has enough space for 4-component
@@ -1549,7 +1536,7 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
     return img->pixels;
 }
 
-/*
+/**
  * First sees if there is a color-keyed version of the given image. If
  * there is it is loaded. Otherwise the 'regular' version is loaded.
  */
@@ -1575,7 +1562,7 @@ byte *GL_LoadImageCK(image_t * img, const char *name, boolean useModelPath)
     return GL_LoadImage(img, name, useModelPath);
 }
 
-/*
+/**
  * Frees all memory associated with the image.
  */
 void GL_DestroyImage(image_t * img)
@@ -1584,7 +1571,7 @@ void GL_DestroyImage(image_t * img)
     img->pixels = NULL;
 }
 
-/*
+/**
  * Name must end in \0.
  */
 byte *GL_LoadHighRes(image_t *img, char *name, char *prefix,
@@ -1605,7 +1592,7 @@ byte *GL_LoadHighRes(image_t *img, char *name, char *prefix,
     return GL_LoadImage(img, fileName, false);
 }
 
-/*
+/**
  * Use this when loading custom textures from the Data\*\Textures dir.
  * The returned buffer must be freed with M_Free.
  */
@@ -1614,7 +1601,7 @@ byte *GL_LoadTexture(image_t * img, char *name)
     return GL_LoadHighRes(img, name, "", true, RC_TEXTURE);
 }
 
-/*
+/**
  * Use this when loading high-res wall textures.
  * The returned buffer must be freed with M_Free.
  */
@@ -1625,7 +1612,7 @@ byte *GL_LoadHighResTexture(image_t *img, char *name)
     return GL_LoadTexture(img, name);
 }
 
-/*
+/**
  * The returned buffer must be freed with M_Free.
  */
 byte *GL_LoadHighResFlat(image_t *img, char *name)
@@ -1643,7 +1630,7 @@ byte *GL_LoadHighResFlat(image_t *img, char *name)
     return GL_LoadHighRes(img, name, "flat-", false, RC_TEXTURE);
 }
 
-/*
+/**
  * The returned buffer must be freed with M_Free.
  */
 byte *GL_LoadHighResPatch(image_t *img, char *name)
@@ -1677,7 +1664,7 @@ DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
                             otherFlags);
 }
 
-/*
+/**
  * Extended version that uses a custom resource class.
  * Set mode to 2 to include an alpha channel. Set to 3 to make the
  * actual pixel colors all white.
@@ -1757,7 +1744,7 @@ DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
     return texture;
 }
 
-/*
+/**
  * Renders the given texture into the buffer.
  */
 boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
@@ -1798,18 +1785,10 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
     return alphaChannel;
 }
 
-/*
- * Returns the DGL texture name.
+/**
+ * @return              The DGL texture name.
  */
-unsigned int GL_PrepareTexture(int idx, texinfo_t **info)
-{
-    return GL_PrepareTexture2(idx, true, info);
-}
-
-/*
- * Returns the DGL texture name.
- */
-unsigned int GL_PrepareTexture2(int idx, boolean translate, texinfo_t **info)
+static unsigned int prepareTexture2(int idx, boolean translate, texinfo_t **info)
 {
     ded_detailtexture_t *def;
     ded_decor_t *dec;
@@ -1820,18 +1799,23 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate, texinfo_t **info)
     image_t image;
     boolean hasExternal = false;
 
-    if(idx == 0) // No texture?
+    if(idx < 0 || idx >= numtextures) // No texture?
         return 0;
 
     if(translate)
     {
         idx = texturetranslation[idx].current;
     }
+
+    if(idx < 0 || idx >= numtextures) // No texture?
+        return 0;
+
     tex = textures[idx];
     if(!tex->tex)
     {
         // Try to load a high resolution version of this texture.
-        if((loadExtAlways || highResWithPWAD || !R_IsCustomTexture(idx)) &&
+        if((loadExtAlways || highResWithPWAD ||
+            !R_IsCustomMaterial(idx, MAT_TEXTURE)) &&
            GL_LoadHighResTexture(&image, tex->name) != NULL)
         {
             // High resolution texture loaded.
@@ -1887,12 +1871,12 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate, texinfo_t **info)
         // Average color for glow planes.
         if(RGBData)
         {
-            averageColorRGB(&tex->color, image.pixels, image.width,
+            averageColorRGB(tex->color, image.pixels, image.width,
                             image.height);
         }
         else
         {
-            averageColorIdx(&tex->color, image.pixels, image.width,
+            averageColorIdx(tex->color, image.pixels, image.width,
                             image.height, GL_GetPalette(), false);
         }
 
@@ -1916,10 +1900,10 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate, texinfo_t **info)
         // Get the reflection for this surface.
         tex->reflection = Def_GetReflection(idx, true);
     }
-    return GL_GetTextureInfo2(originalIndex, translate, info);
+    return getTextureInfo2(originalIndex, translate, info);
 }
 
-/*
+/**
  * Draws the given sky texture in a buffer. The returned buffer must be
  * freed by the caller. Idx must be a valid texture number.
  */
@@ -1989,7 +1973,7 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
     *outbuffer = imgdata;
 }
 
-/*
+/**
  * Sky textures are usually 256 pixels wide.
  */
 unsigned int GL_PrepareSky(int idx, boolean zeroMask, texinfo_t **info)
@@ -1997,7 +1981,7 @@ unsigned int GL_PrepareSky(int idx, boolean zeroMask, texinfo_t **info)
     return GL_PrepareSky2(idx, zeroMask, true, info);
 }
 
-/*
+/**
  * Sky textures are usually 256 pixels wide.
  */
 unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
@@ -2022,7 +2006,8 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
     if(!textures[idx]->tex)
     {
         // Try to load a high resolution version of this texture.
-        if((loadExtAlways || highResWithPWAD || !R_IsCustomTexture(idx)) &&
+        if((loadExtAlways || highResWithPWAD ||
+            !R_IsCustomMaterial(idx, MAT_TEXTURE)) &&
            GL_LoadHighResTexture(&image, textures[idx]->name) != NULL)
         {
             // High resolution texture loaded.
@@ -2094,7 +2079,7 @@ transspr_t *GL_GetTranslatedSprite(int pnum, unsigned char *table)
     return 0;
 }
 
-/*
+/**
  * Uploads the sprite in the buffer and sets the appropriate texture
  * parameters.
  */
@@ -2188,7 +2173,7 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
     return tspr->tex;
 }
 
-/*
+/**
  * Spritemodes:
  * 0 = Normal sprite
  * 1 = Psprite (HUD)
@@ -2272,10 +2257,10 @@ void GL_GetSpriteColorf(int pnum, float *rgb)
     if(pnum > numSpriteLumps - 1)
         return;
 
-    memcpy(rgb, spritelumps[pnum]->color.rgb, sizeof(float) * 3);
+    memcpy(rgb, spritelumps[pnum]->color, sizeof(float) * 3);
 }
 
-/*
+/**
  * 0 = Normal sprite
  * 1 = Psprite (HUD)
  */
@@ -2762,7 +2747,7 @@ DGLuint GL_BindTexPatch(patch_t *p)
     return p->tex;
 }
 
-/*
+/**
  * Returns the OpenGL name of the texture.
  * (idx is really a lumpnum)
  */
@@ -2786,7 +2771,7 @@ void GL_SetPatch(int idx)
     gl.Bind(curtex = GL_PreparePatch(idx, NULL));
 }
 
-/*
+/**
  * You should use Disable(DGL_TEXTURING) instead of this.
  */
 void GL_SetNoTexture(void)
@@ -2795,7 +2780,7 @@ void GL_SetNoTexture(void)
     curtex = 0;
 }
 
-/*
+/**
  * Prepare a texture used in the lighting system. 'which' must be one
  * of the LST_* constants.
  */
@@ -2902,7 +2887,7 @@ DGLuint GL_PrepareFlareTexture(flaretexid_t flare, texinfo_t **texinfo)
     return flareTextures[flare].tex;
 }
 
-/*
+/**
  * Updates the textures, flats and sprites (gameTex) or the user
  * interface textures (patches and raw screens).
  */
@@ -3054,7 +3039,7 @@ void GL_LowRes(void)
     GL_TexReset();
 }
 
-/*
+/**
  * To save texture memory, delete all raw image textures. Raw images are
  * used as interlude backgrounds, title screens, etc. Called from
  * DD_SetupLevel.
@@ -3101,41 +3086,6 @@ void GL_TextureFilterMode(int target, int parm)
         GL_UpdateTexParams(parm);
     if(target == DD_RAWSCREENS)
         GL_UpdateRawScreenParams(parm);
-}
-
-/**
- * Deletes a texture. Only for textures (not for sprites, flats, etc.).
- */
-void GL_DeleteTexture(int texidx)
-{
-    if(texidx < 0 || texidx >= numtextures)
-        return;
-
-    if(textures[texidx]->tex)
-    {
-        gl.DeleteTextures(1, &textures[texidx]->tex);
-        textures[texidx]->tex = 0;
-    }
-}
-
-unsigned int GL_GetTextureName(int texidx)
-{
-    return textures[texidx]->tex;
-}
-
-/**
- * Deletes a flat. Only for flats (not for sprites, textures, etc.).
- */
-void GL_DeleteFlat(int flatidx)
-{
-    if(flatidx < 0 || flatidx >= numflats)
-        return;
-
-    if(flats[flatidx]->tex)
-    {
-        gl.DeleteTextures(1, &flats[flatidx]->tex);
-        flats[flatidx]->tex = 0;
-    }
 }
 
 skintex_t *GL_GetSkinTex(const char *skin)
@@ -3250,22 +3200,15 @@ unsigned int GL_PrepareShinySkin(modeldef_t * md, int sub)
     return stp->tex;
 }
 
-/*
- * Returns the texture name, if it has been prepared.
+/**
+ * @return              The texture name, if it has been prepared.
  */
-DGLuint GL_GetTextureInfo(int index, texinfo_t **info)
-{
-    return GL_GetTextureInfo2(index, true, info);
-}
-
-/*
- * Returns the texture name, if it has been prepared.
- */
-DGLuint GL_GetTextureInfo2(int index, boolean translate, texinfo_t **texinfo)
+static DGLuint getTextureInfo2(int index, boolean translate,
+                               texinfo_t **texinfo)
 {
     texture_t *tex;
 
-    if(!index)
+    if(index < 0 || index >= numtextures)
         return 0;
 
     // Translate the texture.
@@ -3273,6 +3216,10 @@ DGLuint GL_GetTextureInfo2(int index, boolean translate, texinfo_t **texinfo)
     {
         index = texturetranslation[index].current;
     }
+
+    if(index < 0 || index >= numtextures)
+        return 0;
+
     tex = textures[index];
 
     if(texinfo)
@@ -3281,19 +3228,15 @@ DGLuint GL_GetTextureInfo2(int index, boolean translate, texinfo_t **texinfo)
     return tex->tex;
 }
 
-DGLuint GL_GetFlatInfo(int index, texinfo_t **texinfo)
-{
-    return GL_GetFlatInfo2(index, true, texinfo);
-}
-
-/*
- * Returns the flat name, if it has been prepared.
+/**
+ * @return              The flat name, if it has been prepared.
  */
-DGLuint GL_GetFlatInfo2(int index, boolean translate, texinfo_t **texinfo)
+static DGLuint getFlatInfo2(int index, boolean translate,
+                            texinfo_t **texinfo)
 {
-    flat_t *flat;
+    flat_t         *flat;
 
-    if(!index)
+    if(index < 0 || index >= numflats)
         return 0;
 
     // Translate the flat.
@@ -3301,6 +3244,10 @@ DGLuint GL_GetFlatInfo2(int index, boolean translate, texinfo_t **texinfo)
     {
         index = flattranslation[index].current;
     }
+
+    if(index < 0 || index >= numflats)
+        return 0;
+
     flat = flats[index];
 
     if(texinfo)
@@ -3310,7 +3257,7 @@ DGLuint GL_GetFlatInfo2(int index, boolean translate, texinfo_t **texinfo)
 }
 
 /**
- * Returns the patch name, if it has been prepared.
+ * @return          The patch name, if it has been prepared.
  */
 DGLuint GL_GetPatchInfo(int idx, boolean part2, texinfo_t **texinfo)
 {
@@ -3328,7 +3275,8 @@ DGLuint GL_GetPatchInfo(int idx, boolean part2, texinfo_t **texinfo)
 /**
  * @return          The ddtexture name, if it has been prepared.
  */
-DGLuint GL_GetDDTextureInfo(ddtextureid_t which, texinfo_t **texinfo)
+static DGLuint getDDTextureInfo(ddtextureid_t which,
+                                texinfo_t **texinfo)
 {
     if(which < NUM_DD_TEXTURES)
     {
@@ -3345,7 +3293,7 @@ DGLuint GL_GetDDTextureInfo(ddtextureid_t which, texinfo_t **texinfo)
 }
 
 /**
- * Returns the rawtex name, if it has been prepared.
+ * @return          The rawtex name, if it has been prepared.
  */
 DGLuint GL_GetRawTexInfo(uint idx, boolean part2, texinfo_t **texinfo)
 {
@@ -3361,24 +3309,6 @@ DGLuint GL_GetRawTexInfo(uint idx, boolean part2, texinfo_t **texinfo)
 }
 
 /**
- * Copy the averaged texture color into the dest buffer <code>rgb</code>.
- *
- * @param   texid       The id of the texture.
- * @param   rgb         The dest buffer.
- */
-void GL_GetTextureColor(int texid, float *rgb)
-{
-    texture_t *tex = textures[texid];
-
-    memcpy(rgb, tex->color.rgb, sizeof(float) * 3);
-}
-
-void GL_SetTexture(int idx)
-{
-    gl.Bind(GL_PrepareTexture(idx, NULL));
-}
-
-/*
  * Calculates texture coordinates based on the given dimensions. The
  * coordinates are calculated as width/CeilPow2(width), or 1 if the
  * CeilPow2 would go over glMaxTexSize.
@@ -3396,7 +3326,7 @@ static void GL_SetTexCoords(float *tc, int wid, int hgt)
     }
 }
 
-/*
+/**
  * Returns true if the given path name refers to an image, which should
  * be color keyed. Color keying is done for both (0,255,255) and
  * (255,0,255).
@@ -3410,8 +3340,89 @@ boolean GL_IsColorKeyed(const char *path)
     return strstr(buf, "-ck.") != NULL;
 }
 
-/*
- * Return a skycol_t for texidx.
+DGLuint GL_GetMaterialInfo2(int idx, materialtype_t type,
+                            boolean translate, texinfo_t **info)
+{
+    switch(type)
+    {
+    case MAT_FLAT:
+        return getFlatInfo2(idx, translate, info);
+
+    case MAT_TEXTURE:
+        return getTextureInfo2(idx, translate, info);
+
+    case MAT_DDTEX:
+        return getDDTextureInfo(idx, info);
+
+    default:
+        Con_Error("GL_GetMaterialInfo2: Unknown material type %i.",
+                  type);
+    }
+
+    return 0;
+}
+
+DGLuint GL_GetMaterialInfo(int idx, materialtype_t type,
+                           texinfo_t **info)
+{
+    return GL_GetMaterialInfo2(idx, type, true, info);
+}
+
+DGLuint GL_PrepareMaterial2(int idx, materialtype_t type,
+                            boolean translate, texinfo_t **info)
+{
+    switch(type)
+    {
+    case MAT_FLAT:
+        return prepareFlat2(idx, translate, info);
+
+    case MAT_TEXTURE:
+        return prepareTexture2(idx, translate, info);
+
+    case MAT_DDTEX:
+        return prepareDDTexture(idx, info);
+
+    default:
+        Con_Error("GL_PrepareMaterial2: Unknown material type %i.",
+                  type);
+    }
+
+    return 0;
+}
+
+DGLuint GL_PrepareMaterial(int idx, materialtype_t type,
+                           texinfo_t **info)
+{
+    return GL_PrepareMaterial2(idx, type, true, info);
+}
+
+void GL_SetMaterial(int idx, materialtype_t type)
+{
+    DGLuint         texID;
+
+    switch(type)
+    {
+    case MAT_FLAT:
+        texID = prepareFlat2(idx, true, NULL);
+        break;
+
+    case MAT_TEXTURE:
+        texID = prepareTexture2(idx, true, NULL);
+        break;
+
+    case MAT_DDTEX:
+        texID = prepareDDTexture(idx, NULL);
+        break;
+
+    default:
+        Con_Error("GL_SetMaterial: Invalid material type %i.", type);
+    }
+
+    gl.Bind(texID);
+}
+
+/**
+ * @return              A skycol_t for texidx.
  */
 skycol_t *GL_GetSkyColor(int texidx)
 {
@@ -3445,7 +3456,7 @@ skycol_t *GL_GetSkyColor(int texidx)
 }
 
 /**
- * Returns the sky fadeout color of the given texture.
+ * Retrieves the sky fadeout color of the given texture.
  */
 void GL_GetSkyTopColor(int texidx, float *rgb)
 {

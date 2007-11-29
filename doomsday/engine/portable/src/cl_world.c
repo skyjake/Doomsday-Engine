@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #include "de_console.h"
 #include "de_network.h"
 #include "de_play.h"
+#include "de_refresh.h"
 
 #include "r_util.h"
 
@@ -85,9 +86,9 @@ short *xlat_lump;
 
 /**
  * Allocates and inits the lump translation array. Clients use this
- * to make sure lump (e.g. flats) references are correct (in case the
- * server and the client are using different WAD configurations and
- * the lump index numbers happen to differ).
+ * to make sure lump references are correct (in case the server and the
+ * client are using different WAD configurations and the lump index
+ * numbers happen to differ).
  *
  * \fixme A bit questionable? Why not allow the clients to download
  * data from the server in ambiguous cases?
@@ -469,9 +470,11 @@ if(num >= numsectors)
     }
 
     if(df & SDF_FLOORPIC)
-        sec->SP_floortexture = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_floormaterial =
+            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT);
     if(df & SDF_CEILINGPIC)
-        sec->SP_ceiltexture = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_ceilmaterial =
+            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT);
     if(df & SDF_LIGHT)
         sec->lightlevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_HEIGHT)
@@ -697,18 +700,11 @@ if(num >= numsides)
     sid = SIDE_PTR(num);
 
     if(df & SIDF_TOPTEX)
-        sid->SW_toptexture = toptexture;
+        sid->SW_topmaterial = R_GetMaterial(toptexture, MAT_TEXTURE);
     if(df & SIDF_MIDTEX)
-        sid->SW_middletexture = midtexture;
+        sid->SW_middlematerial = R_GetMaterial(midtexture, MAT_TEXTURE);
     if(df & SIDF_BOTTOMTEX)
-    {
-        sid->SW_bottomtexture = bottomtexture;
-
-#ifdef _DEBUG
-Con_Printf("Cl_ReadSideDelta2: (%i) Bottom texture=%i\n", num,
-           bottomtexture);
-#endif
-    }
+        sid->SW_bottommaterial = R_GetMaterial(bottomtexture, MAT_TEXTURE);
 
     if(df & SIDF_TOP_COLOR_RED)
         sid->SW_toprgba[0] = toprgb[0];

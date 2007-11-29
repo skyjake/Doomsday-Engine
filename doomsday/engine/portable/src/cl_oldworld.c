@@ -38,6 +38,7 @@
 #include "de_console.h"
 #include "de_network.h"
 #include "de_play.h"
+#include "de_refresh.h"
 
 #include "r_util.h"
 
@@ -81,9 +82,11 @@ int Cl_ReadSectorDelta(void)
     df = Msg_ReadPackedShort();
 
     if(df & SDF_FLOORPIC)
-        sec->SP_floortexture = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_floormaterial =
+            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT);
     if(df & SDF_CEILINGPIC)
-        sec->SP_ceiltexture = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_ceilmaterial =
+            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT);
     if(df & SDF_LIGHT)
         sec->lightlevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_TARGET)
@@ -188,11 +191,14 @@ int Cl_ReadSideDelta(void)
     df = Msg_ReadByte();
 
     if(df & SIDF_TOPTEX)
-        sid->SW_toptexture = Msg_ReadPackedShort();
+        sid->SW_topmaterial =
+            R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
     if(df & SIDF_MIDTEX)
-        sid->SW_middletexture = Msg_ReadPackedShort();
+        sid->SW_middlematerial =
+            R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
     if(df & SIDF_BOTTOMTEX)
-        sid->SW_bottomtexture = Msg_ReadPackedShort();
+        sid->SW_bottommaterial =
+            R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
 
     if(df & SIDF_LINE_FLAGS)
     {

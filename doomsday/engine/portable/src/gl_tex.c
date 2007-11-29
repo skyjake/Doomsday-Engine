@@ -59,10 +59,6 @@ typedef post_t  column_t;
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    averageColorIdx(rgbcol_t * sprcol, byte *data, int w, int h,
-                        byte *palette, boolean has_alpha);
-void    averageColorRGB(rgbcol_t * col, byte *data, int w, int h);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -844,7 +840,7 @@ static void amplify(float *rgb)
  * Used by flares and dynamic lights. The resulting average color is
  * amplified to be as bright as possible.
  */
-void averageColorIdx(rgbcol_t *col, byte *data, int w, int h, byte *palette,
+void averageColorIdx(rgbcol_t col, byte *data, int w, int h, byte *palette,
                      boolean hasAlpha)
 {
     int         i;
@@ -855,7 +851,7 @@ void averageColorIdx(rgbcol_t *col, byte *data, int w, int h, byte *palette,
 
     // First clear them.
     for(i = 0; i < 3; ++i)
-        col->rgb[i] = 0;
+        col[i] = 0;
 
     r = g = b = count = 0;
     for(i = 0; i < numpels; ++i)
@@ -872,15 +868,15 @@ void averageColorIdx(rgbcol_t *col, byte *data, int w, int h, byte *palette,
     if(!count)
         return; // Line added by GMJ 22/07/01
 
-    col->rgb[0] = r / count;
-    col->rgb[1] = g / count;
-    col->rgb[2] = b / count;
+    col[0] = r / count;
+    col[1] = g / count;
+    col[2] = b / count;
 
     // Make it glow (average colors are used with flares and dynlights).
-    amplify(col->rgb);
+    amplify(col);
 }
 
-void averageColorRGB(rgbcol_t *col, byte *data, int w, int h)
+void averageColorRGB(rgbcol_t col, byte *data, int w, int h)
 {
     uint        i;
     const uint  numpels = w * h;
@@ -899,9 +895,9 @@ void averageColorRGB(rgbcol_t *col, byte *data, int w, int h)
     }
 
     for(i = 0; i < 3; ++i)
-        col->rgb[i] = cumul[i] / numpels;
+        col[i] = cumul[i] / numpels;
 
-    amplify(col->rgb);
+    amplify(col);
 }
 
 /**
@@ -1091,24 +1087,24 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         {
             // Doesn't the thing have any pixels??? Use white light.
             for(c = 0; c < 3; ++c)
-                sprcol->rgb[c] = 1;
+                (*sprcol)[c] = 1;
         }
         else
         {
             // Low-intensity color average.
             for(c = 0; c < 3; ++c)
-                sprcol->rgb[c] = lowavg[c] / lowcnt;
+                (*sprcol)[c] = lowavg[c] / lowcnt;
         }
     }
     else
     {
         // High-intensity color average.
         for(c = 0; c < 3; ++c)
-            sprcol->rgb[c] = average[c] / avcnt;
+            (*sprcol)[c] = average[c] / avcnt;
     }
 
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("GL_CalcLuminance: Proc \"%s\"\n"
+    Con_Message("GL_CalcLuminance: Proc \"%s\"\n"
                           "  width %dpx, height %dpx, bits %d\n"
                           "  cell region X[%d, %d] Y[%d, %d]\n"
                           "  flare X= %g Y=%g %s\n"
@@ -1118,13 +1114,13 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
                           region[0], region[1], region[2], region[3],
                           slump->flarex, slump->flarey,
                           (poscnt? "(average)" : "(center)"),
-                          sprcol->rgb[0], sprcol->rgb[1], sprcol->rgb[2],
+                          (*sprcol)[0], (*sprcol)[1], (*sprcol)[2],
                           (avcnt? "(hi-intensity avg)" :
-                           lowcnt? "(low-intensity avg)" : "(white light)")) );
+                           lowcnt? "(low-intensity avg)" : "(white light)"));
 #endif
 
     // Amplify color.
-    amplify(sprcol->rgb);
+    amplify(*sprcol);
     // How about the size of the light source?
     slump->lumsize = (2 * cnt + avcnt) / 3.0f / 70.0f;
     if(slump->lumsize > 1)

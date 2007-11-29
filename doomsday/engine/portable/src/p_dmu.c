@@ -1075,9 +1075,14 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_PLANE_HEIGHT, &p->height, args, 0);
             break;
         case DMU_PLANE_MATERIAL:
-            SetValue(DMT_MATERIAL_TEXTURE, &p->PS_texture, args, 0);
-            p->PS_isflat = true; // \kludge p->PS_isflat = true;
+            {
+            short           texture;
+            SetValue(DMT_MATERIAL, &texture, args, 0);
+
+            p->PS_material = R_GetMaterial(texture, MAT_FLAT);
+            }
             break;
+
         case DMU_PLANE_MATERIAL_OFFSET_X:
             SetValue(DMT_SURFACE_OFFSET, &p->surface.offset[VX], args, 0);
             break;
@@ -1204,10 +1209,12 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 0);
             break;
         case DMU_TOP_MATERIAL:
-            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_toptexture, args, 0);
-            p->SW_topisflat = false; // \kludge p->SW_topisflat = false;
-           /* if(p->SW_toptexture)
-                p->flags &= ~SDF_MIDTEXUPPER;*/
+            {
+            short           texture;
+            SetValue(DMT_MATERIAL, &texture, args, 0);
+
+            p->SW_topmaterial = R_GetMaterial(texture, MAT_TEXTURE);
+            }
             break;
         case DMU_TOP_MATERIAL_OFFSET_X:
             SetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VX], args, 0);
@@ -1241,8 +1248,12 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_BLENDMODE, &p->SW_middleblendmode, args, 0);
             break;
         case DMU_MIDDLE_MATERIAL:
-            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_middletexture, args, 0);
-            p->SW_middleisflat = false; // \kludge p->SW_middleisflat = false;
+            {
+            short           texture;
+            SetValue(DMT_MATERIAL, &texture, args, 0);
+
+            p->SW_middlematerial = R_GetMaterial(texture, MAT_TEXTURE);
+            }
             S_CalcSectorReverb(p->sector);
             break;
         case DMU_MIDDLE_MATERIAL_OFFSET_X:
@@ -1270,8 +1281,12 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 0);
             break;
         case DMU_BOTTOM_MATERIAL:
-            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_bottomtexture, args, 0);
-            p->SW_bottomisflat = false; // \kludge p->SW_bottomisflat = false;
+            {
+            short           texture;
+            SetValue(DMT_MATERIAL, &texture, args, 0);
+
+            p->SW_bottommaterial = R_GetMaterial(texture, MAT_TEXTURE);
+            }
             break;
         case DMU_BOTTOM_MATERIAL_OFFSET_X:
             SetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VX], args, 0);
@@ -1732,8 +1747,11 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_PLANE_HEIGHT, &p->height, args, 0);
             break;
         case DMU_PLANE_MATERIAL:
-            GetValue(DMT_MATERIAL_TEXTURE, &p->PS_texture, args, 0);
+        {
+            short       ofTypeID = (p->PS_material? p->PS_material->ofTypeID : 0);
+            GetValue(DMT_MATERIAL, &ofTypeID, args, 0);
             break;
+        }
         case DMU_PLANE_SOUND_ORIGIN:
         {
             degenmobj_t *dmo = &p->soundorg;
@@ -1850,15 +1868,15 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_TOP_MATERIAL:
             {
-            short texture = p->SW_toptexture;
+                short ofTypeID = (p->SW_topmaterial? p->SW_topmaterial->ofTypeID : 0);
 
             if(p->SW_topflags & SUF_TEXFIX)
-                texture = 0;
+                ofTypeID = 0;
 
            /*if(p->flags & SDF_MIDTEXUPPER)
-                texture = 0;*/
+                ofTypeID = 0;*/
 
-            GetValue(DMT_MATERIAL_TEXTURE, &texture, args, 0);
+            GetValue(DMT_MATERIAL, &ofTypeID, args, 0);
             break;
             }
         case DMU_TOP_MATERIAL_OFFSET_X:
@@ -1887,15 +1905,15 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_MIDDLE_MATERIAL:
             {
-            short texture = p->SW_middletexture;
+                short ofTypeID = (p->SW_middlematerial? p->SW_middlematerial->ofTypeID : 0);
 
             if(p->SW_middleflags & SUF_TEXFIX)
-                texture = 0;
+                ofTypeID = 0;
 
             /*if(p->flags & SDF_MIDTEXUPPER)
-                texture = p->SW_toptexture;*/
+                ofTypeID = p->SW_topmaterial->texture;*/
 
-            GetValue(DMT_MATERIAL_TEXTURE, &texture, args, 0);
+            GetValue(DMT_MATERIAL, &ofTypeID, args, 0);
             break;
             }
         case DMU_MIDDLE_MATERIAL_OFFSET_X:
@@ -1931,12 +1949,12 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_BOTTOM_MATERIAL:
             {
-            short texture = p->SW_bottomtexture;
+                short ofTypeID = (p->SW_bottommaterial? p->SW_bottommaterial->ofTypeID : 0);
 
             if(p->SW_bottomflags & SUF_TEXFIX)
-                texture = 0;
+                ofTypeID = 0;
 
-            GetValue(DMT_MATERIAL_TEXTURE, &texture, args, 0);
+            GetValue(DMT_MATERIAL, &ofTypeID, args, 0);
             break;
             }
         case DMU_BOTTOM_MATERIAL_OFFSET_X:

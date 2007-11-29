@@ -917,9 +917,11 @@ void Def_Read(void)
         int     st = Def_GetStateNum(pg->state);
 
         if(pg->surface[0])
-            pg->surfaceIndex = R_CheckFlatNumForName(pg->surface);
+            pg->surfaceIndex =
+                R_CheckMaterialNumForName(pg->surface, MAT_FLAT);
         else
             pg->surfaceIndex = -1;
+
         pg->type_num = Def_GetMobjNum(pg->type);
         pg->type2_num = Def_GetMobjNum(pg->type2);
         pg->damage_num = Def_GetMobjNum(pg->damage);
@@ -1055,8 +1057,9 @@ void Def_PostInit(void)
     for(i = 0; i < defs.count.details.num; ++i)
     {
         details[i].wall_texture =
-            R_CheckTextureNumForName(defs.details[i].wall);
-        details[i].flat_texture = R_CheckFlatNumForName(defs.details[i].flat);
+            R_CheckMaterialNumForName(defs.details[i].wall, MAT_TEXTURE);
+        details[i].flat_texture =
+            R_CheckMaterialNumForName(defs.details[i].flat, MAT_FLAT);
         details[i].detail_lump =
             W_CheckNumForName(defs.details[i].detail_lump.path);
         details[i].gltex = 0;   // Not loaded.
@@ -1067,11 +1070,9 @@ void Def_PostInit(void)
     {
         ded_decor_t *decor = defs.decorations + i;
 
-        decor->surface_index = -1;
-        if(decor->is_texture)
-            decor->surface_index = R_CheckTextureNumForName(decor->surface);
-        else
-            decor->surface_index = R_CheckFlatNumForName(decor->surface);
+        decor->surface_index =
+            R_CheckMaterialNumForName(decor->surface,
+                                      (decor->is_texture? MAT_TEXTURE : MAT_FLAT));
 
         decor->pregen_lightmap = 0;
     }
@@ -1081,11 +1082,8 @@ void Def_PostInit(void)
     {
         ded_reflection_t *ref = defs.reflections + i;
 
-        ref->surfaceIndex = -1;
-        if(ref->is_texture)
-            ref->surfaceIndex = R_CheckTextureNumForName(ref->surface);
-        else
-            ref->surfaceIndex = R_CheckFlatNumForName(ref->surface);
+        ref->surfaceIndex =
+            R_CheckMaterialNumForName(ref->surface, (ref->is_texture? MAT_TEXTURE : MAT_FLAT));
 
         // Initialize the pointers to handle textures.
         ref->shiny_tex = ref->mask_tex = 0;
@@ -1131,6 +1129,7 @@ void Def_PostInit(void)
     }
 
     // Animation groups.
+    R_DestroyAnimGroups();
     for(i = 0; i < defs.count.groups.num; ++i)
     {
         R_InitAnimGroup(defs.groups + i);
@@ -1314,8 +1313,8 @@ void Def_CopyLineType(linetype_t * l, ded_linetype_t * def)
     l->act_linetype = def->act_linetype;
     l->deact_linetype = def->deact_linetype;
     l->wallsection = def->wallsection;
-    l->act_tex = Friendly(R_CheckTextureNumForName(def->act_tex));
-    l->deact_tex = Friendly(R_CheckTextureNumForName(def->deact_tex));
+    l->act_tex = Friendly(R_CheckMaterialNumForName(def->act_tex, MAT_TEXTURE));
+    l->deact_tex = Friendly(R_CheckMaterialNumForName(def->deact_tex, MAT_TEXTURE));
     l->act_msg = def->act_msg;
     l->deact_msg = def->deact_msg;
     l->texmove_angle = def->texmove_angle;
@@ -1343,13 +1342,13 @@ void Def_CopyLineType(linetype_t * l, ded_linetype_t * def)
                 l->iparm[k] = -1;
             else
                 l->iparm[k] =
-                    Friendly(R_CheckTextureNumForName(def->iparm_str[k]));
+                    Friendly(R_CheckMaterialNumForName(def->iparm_str[k], MAT_FLAT));
         }
         else if(a & MAP_FLAT)
         {
             if(def->iparm_str[k][0])
                 l->iparm[k] =
-                    Friendly(R_CheckFlatNumForName(def->iparm_str[k]));
+                    Friendly(R_CheckMaterialNumForName(def->iparm_str[k], MAT_FLAT));
         }
         else if(a & MAP_MUS)
         {

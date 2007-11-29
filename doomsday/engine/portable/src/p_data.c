@@ -153,43 +153,37 @@ void P_PlaneChanged(sector_t *sector, uint plane)
         {
             // Check for missing lowers.
             if(front->sector->SP_floorheight < back->sector->SP_floorheight &&
-               front->SW_bottomtexture == 0)
+               !front->SW_bottommaterial)
             {
                 if(!R_IsSkySurface(&front->sector->SP_floorsurface))
                 {
                     front->SW_bottomflags |= SUF_TEXFIX;
 
-                    front->SW_bottomtexture =
-                        front->sector->SP_floortexture;
-
-                    front->SW_bottomisflat =
-                        front->sector->SP_floorisflat;
+                    front->SW_bottommaterial =
+                        front->sector->SP_floormaterial;
                 }
 
                 if(back->SW_bottomflags & SUF_TEXFIX)
                 {
                     back->SW_bottomflags &= ~SUF_TEXFIX;
-                    back->SW_bottomtexture = 0;
+                    back->SW_bottommaterial = NULL;
                 }
             }
             else if(front->sector->SP_floorheight > back->sector->SP_floorheight &&
-                    back->SW_bottomtexture == 0)
+                    !back->SW_bottommaterial)
             {
                 if(!R_IsSkySurface(&back->sector->SP_floorsurface))
                 {
                     back->SW_bottomflags |= SUF_TEXFIX;
 
-                    back->SW_bottomtexture =
-                        back->sector->SP_floortexture;
-
-                    back->SW_bottomisflat =
-                        back->sector->SP_floorisflat;
+                    back->SW_bottommaterial =
+                        back->sector->SP_floormaterial;
                 }
 
                 if(front->SW_bottomflags & SUF_TEXFIX)
                 {
                     front->SW_bottomflags &= ~SUF_TEXFIX;
-                    front->SW_bottomtexture = 0;
+                    front->SW_bottommaterial = NULL;
                 }
             }
         }
@@ -197,63 +191,55 @@ void P_PlaneChanged(sector_t *sector, uint plane)
         {
             // Check for missing uppers.
             if(front->sector->SP_ceilheight > back->sector->SP_ceilheight &&
-               front->SW_toptexture == 0)
+               !front->SW_topmaterial)
             {
                 if(!R_IsSkySurface(&front->sector->SP_ceilsurface))
                 {
                     front->SW_topflags |= SUF_TEXFIX;
                     // Preference a middle texture when doing replacements as
                     // this could be a mid tex door hack.
-                   /* if(front->SW_middletexture)
+                   /* if(front->SW_middlematerial->texture)
                     {
                         front->flags |= SDF_MIDTEXUPPER;
-                        front->SW_toptexture = front->SW_middletexture;
-                        front->SW_topisflat = front->SW_middleisflat;
+                        front->SW_topmaterial = front->SW_middlematerial;
                     }
                     else*/
                     {
-                        front->SW_toptexture =
-                            front->sector->SP_ceiltexture;
-
-                        front->SW_topisflat =
-                            front->sector->SP_ceilisflat;
+                        front->SW_topmaterial =
+                            front->sector->SP_ceilmaterial;
                     }
                 }
 
                 if(back->SW_topflags & SUF_TEXFIX)
                 {
                     back->SW_topflags &= ~SUF_TEXFIX;
-                    back->SW_toptexture = 0;
+                    back->SW_topmaterial = NULL;
                 }
             }
             else if(front->sector->SP_ceilheight < back->sector->SP_ceilheight &&
-                    back->SW_toptexture == 0)
+                    !back->SW_topmaterial)
             {
                 if(!R_IsSkySurface(&back->sector->SP_ceilsurface))
                 {
                     back->SW_topflags |= SUF_TEXFIX;
                     // Preference a middle texture when doing replacements as
                     // this could be a mid tex door hack.
-                   /* if(front->SW_middletexture)
+                   /* if(front->SW_middlematerial->texture)
                     {
                         back->flags |= SDF_MIDTEXUPPER;
-                        back->SW_toptexture = back->SW_middletexture;
-                        back->SW_topisflat = back->SW_middleisflat;
+                        back->SW_topmaterial = back->SW_middlematerial;
                     }
                     else*/
                     {
-                        back->SW_toptexture =
-                            back->sector->SP_ceiltexture;
-
-                        back->SW_topisflat =
-                            back->sector->SP_ceilisflat;
+                        back->SW_topmaterial =
+                            back->sector->SP_ceilmaterial;
                     }
                 }
 
                 if(front->SW_topflags & SUF_TEXFIX)
                 {
                     front->SW_topflags &= ~SUF_TEXFIX;
-                    front->SW_toptexture = 0;
+                    front->SW_topmaterial = NULL;
                 }
             }
         }
@@ -626,10 +612,7 @@ int P_CheckTexture(char *name, boolean planeTex, int dataType,
 {
     int         id;
 
-    if(planeTex)
-        id = R_FlatNumForName(name);
-    else
-        id = R_TextureNumForName(name);
+    id = R_MaterialNumForName(name, (planeTex? MAT_FLAT : MAT_TEXTURE));
 
     // At this point we don't know WHAT it is.
     // Perhaps the game knows what to do?

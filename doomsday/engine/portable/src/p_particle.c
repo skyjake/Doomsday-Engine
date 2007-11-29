@@ -1194,8 +1194,8 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
                     if(groups[g].flags & AGF_PRECACHE)
                         continue;
 
-                    if(R_IsInAnimGroup(groups[g].id, DD_FLAT, def->surfaceIndex) &&
-                       R_IsInAnimGroup(groups[g].id, DD_FLAT, flatpic))
+                    if(R_IsInAnimGroup(groups[g].id, MAT_FLAT, def->surfaceIndex) &&
+                       R_IsInAnimGroup(groups[g].id, MAT_FLAT, flatpic))
                     {
                         // Both are in this group! This def will do.
                         return flat->ptcgen = def;
@@ -1232,9 +1232,9 @@ static boolean P_HasActivePtcGen(sector_t *sector, int isCeiling)
  */
 void P_CheckPtcPlanes(void)
 {
-    uint        i, p, plane;
-    sector_t   *sector;
-    ded_ptcgen_t *def;
+    uint            i, p;
+    sector_t       *sector;
+    ded_ptcgen_t   *def;
 
     // There is no need to do this on every tic.
     if(isDedicated || SECONDS_TO_TICKS(gameTime) % 4)
@@ -1245,17 +1245,20 @@ void P_CheckPtcPlanes(void)
         sector = SECTOR_PTR(i);
         for(p = 0; p < 2; ++p)
         {
-            plane = p;
-            if(sector->SP_planeisflat(plane))
-            {
-                def = P_GetPtcGenForFlat(sector->SP_planetexture(plane));
+            uint                plane = p;
+            material_t         *mat = sector->SP_planematerial(plane);
 
+            if(mat && mat->type == MAT_FLAT)
+            {
+                def = P_GetPtcGenForFlat(mat->ofTypeID);
                 if(!def)
                     continue;
+
                 if(def->flags & PGF_CEILING_SPAWN)
                     plane = 1;
                 if(def->flags & PGF_FLOOR_SPAWN)
                     plane = 0;
+
                 if(!P_HasActivePtcGen(sector, plane))
                 {
                     // Spawn it!

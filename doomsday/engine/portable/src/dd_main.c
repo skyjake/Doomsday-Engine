@@ -105,7 +105,6 @@ extern HINSTANCE hInstDGL;
 #endif
 
 extern int renderTextures;
-extern int skyFlatNum;
 extern char skyFlatName[9];
 extern int gotframe;
 extern int monochrome;
@@ -793,9 +792,6 @@ void DD_AddStartupWAD(const char *file)
     wadfiles[i] = new;
 }
 
-/**
- * What is this kind of a routine doing in Console.c?
- */
 void DD_UpdateEngineState(void)
 {
     // Update refresh.
@@ -806,14 +802,13 @@ void DD_UpdateEngineState(void)
 
     gx.UpdateState(DD_PRE);
     R_Update();
+    gx.UpdateState(DD_POST);
 
     // Reset the anim groups (if in-game)
     R_ResetAnimGroups();
 
     // \fixme We need to update surfaces.
     //R_UpdateAllSurfaces(true);
-
-    gx.UpdateState(DD_POST);
 }
 
 /**
@@ -848,7 +843,6 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&isServer, 0},                         // An *open* server?
     {&isClient, 0},
     {&allowFrames, &allowFrames},
-    {&skyFlatNum, 0},
     {0, 0},
     {&viewwindowx, &viewwindowx},
     {&viewwindowy, &viewwindowy},
@@ -890,6 +884,8 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches}
 };
 /* *INDENT-ON* */
+
+int skyFlatNum;
 
 /**
  * Get a 32-bit integer value.
@@ -945,6 +941,9 @@ int DD_GetInteger(int ddvalue)
 
         case DD_WINDOW_HEIGHT:
             return theWindow->height;
+
+        case DD_SKYFLATNUM:
+            return skyFlatNum;
         }
         return 0;
     }
@@ -972,12 +971,16 @@ void DD_SetInteger(int ddvalue, int parm)
         {
             po_NumPolyobjs = parm;
         }
-        else if(ddvalue == DD_SKYFLAT_NAME)
+        else if(ddvalue == DD_SKYMASKMATERIAL_NAME)
         {
             // Dude!  This is not 64-bit safe.
             ASSERT_NOT_64BIT();
             memset(skyFlatName, 0, 9);
             strncpy(skyFlatName, (char *) parm, 9);
+        }
+        else if(ddvalue == DD_SKYFLATNUM)
+        {
+            skyFlatNum = parm;
         }
         return;
     }
@@ -1235,7 +1238,7 @@ void DD_SetVariable(int ddvalue, void *parm)
             mapGravity = *(float*) parm;
             return;
 
-        case DD_SKYFLAT_NAME:
+        case DD_SKYMASKMATERIAL_NAME:
             memset(skyFlatName, 0, 9);
             strncpy(skyFlatName, parm, 9);
             return;

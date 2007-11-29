@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,11 +19,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 #ifdef UNIX
 #include "sys_dylib.h"
@@ -69,7 +73,7 @@ typedef lt_dlhandle HINSTANCE;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-dgldriver_t __gl;               // Engine's internal function table.
+dgldriver_t __gl; // Engine's internal function table.
 
 #ifdef _DEBUG
 dgldriver_t __gl2;
@@ -77,7 +81,7 @@ dgldriver_t __gl2;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static HINSTANCE dglHandle;     // Instance handle to the rendering DLL.
+static HINSTANCE dglHandle; // Instance handle to the rendering DLL.
 
 #ifdef _DEBUG
 uint glThreadId = 0; // ID of the thread who's allowed to use the GL.
@@ -176,7 +180,7 @@ void DD_RouteAPI(void)
     glThreadId = Sys_ThreadID();
 
     memcpy(&__gl2, &__gl, sizeof(__gl));
-    
+
 #define ROUTE(n) __gl.n = Routed_##n;
     ROUTE(CreateContext);
     ROUTE(DestroyContext);
@@ -248,12 +252,13 @@ void DD_RouteAPI(void)
 }
 
 /**
- * DD_InitDGLDriver
- *  Returns true if no required functions are missing.
- *  All exported DGL functions should have the DG_ prefix (Driver/Graphics).
+ * \note All exported DGL functions should have the DG_ prefix meaning
+ * (Driver/Graphics).
+ *
+ * @return                  @c true, if no required functions are missing.
  */
 int DD_InitDGLDriver(void)
-{    
+{
     Req(Init);
     Req(Shutdown);
     Req(ChangeVideoMode);
@@ -337,40 +342,39 @@ int DD_InitDGLDriver(void)
 //    Req(ReadPixels);
 
     DD_RouteAPI();
-    
+
     // All was OK.
     return true;
 }
 
-/*
- * DD_InitDGL
- *  Load the rendering DLL and setup the driver struct. The rendering DLL
- *  could be changed at runtime (but such an operation is currently never
- *  done). Returns true if successful.
+/**
+ * Load the rendering DLL and setup the driver struct. The rendering DLL
+ * could be changed at runtime (but such an operation is currently never
+ * done).
+ *
+ * @return                  @c true if successful.
  */
 int DD_InitDGL(void)
 {
-    char   *libName = DEFAULT_LIB_NAME;
-
     if(ArgCheck("-dedicated"))
         return true;
 
     // Load the DLL.
 #ifdef WIN32
-    dglHandle = LoadLibrary((LPCTSTR) libName);
+    dglHandle = LoadLibrary(TEXT(DEFAULT_LIB_NAME));
 #endif
 #ifdef UNIX
-    dglHandle = lt_dlopenext(libName);
+    dglHandle = lt_dlopenext(DEFAULT_LIB_NAME);
 #endif
     if(!dglHandle)
     {
 #ifdef WIN32
         DD_ErrorBox(true, "DD_InitDGL: Loading of %s failed (error %i).\n",
-                    libName, GetLastError());
+                    DEFAULT_LIB_NAME, GetLastError());
 #endif
 #ifdef UNIX
         DD_ErrorBox(true, "DD_InitDGL: Loading of %s failed.\n  %s.\n",
-                    libName, lt_dlerror());
+                    DEFAULT_LIB_NAME, lt_dlerror());
 #endif
         return false;
     }
@@ -379,7 +383,7 @@ int DD_InitDGL(void)
     if(!DD_InitDGLDriver())
     {
         DD_ErrorBox(true, "DD_InitDGL: Rendering library %s "
-                    "is incompatible.\n", libName);
+                    "is incompatible.\n", DEFAULT_LIB_NAME);
         return false;
     }
 
@@ -400,9 +404,8 @@ int DD_InitDGL(void)
     return true;
 }
 
-/*
- * DD_ShutdownDGL
- *  Free the rendering DLL. You should shut it down first.
+/**
+ * Free the rendering DLL. You should shut it down first.
  */
 void DD_ShutdownDGL(void)
 {
@@ -415,10 +418,8 @@ void DD_ShutdownDGL(void)
     dglHandle = NULL;
 }
 
-/*
- * DD_GetDGLProcAddress
- *  Used by other modules (the Game) to get the addresses of the
- *  DGL routines.
+/**
+ * Used by other modules (the Game) to get the addresses of the DGL routines.
  */
 void *DD_GetDGLProcAddress(const char *name)
 {
