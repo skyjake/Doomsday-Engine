@@ -808,9 +808,6 @@ extern          "C" {
 
     typedef boolean (*traverser_t) (intercept_t * in);
 
-    // Polyobjs.
-#define PO_MAXPOLYSEGS      64
-
 #define NO_INDEX            0xffffffff
 
     //------------------------------------------------------------------------

@@ -1381,17 +1381,6 @@ static void finishSectors(gamemap_t *map)
 }
 
 /**
- * Initialize polyobject properties.
- */
-static void initPolyObjects(gamemap_t *map)
-{
-    uint        i;
-
-    for(i = 0; i < map->po_NumPolyobjs; ++i)
-        map->polyobjs[i].header.type = DMU_POLYOBJ;
-}
-
-/**
  * Builds sector line lists and subsector sector numbers.
  * Finds block bounding boxes for sectors.
  */
@@ -2281,7 +2270,6 @@ static boolean loadMap(archivedmap_t *dam, gamemap_t *map)
     markSelfReferencingLinedefs(map);
     finalizeMapData(map);
 
-    initPolyObjects(map);
     markUnclosedSectors(map);
     updateMapBounds(map);
     S_DetermineSubSecsAffectingSectorReverb(map);

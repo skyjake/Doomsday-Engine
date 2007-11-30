@@ -364,6 +364,7 @@ struct line
 end
 
 struct polyobj
+    UINT    uint        idx         // Idx of polyobject
     UINT    uint        numsegs
     PTR     seg_s**     segs
     INT     int         validCount

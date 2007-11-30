@@ -155,7 +155,7 @@ EXPORTS
 
 ; Play: Setup.
     P_LoadMap                   @254 NONAME
-    PO_Allocate                 @326 NONAME
+    PO_CreatePolyobj            @326 NONAME
 
 ; Play: Map Data Updates and Information Access.
     P_ToIndex                   @256 NONAME

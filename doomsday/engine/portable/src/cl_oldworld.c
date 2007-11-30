@@ -272,7 +272,7 @@ int Cl_ReadPolyDelta(void)
     if(!num)
         return false;
 
-    po = PO_PTR(--num);
+    po = polyobjs[--num];
 
     // Flags.
     df = Msg_ReadPackedShort();

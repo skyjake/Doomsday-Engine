@@ -335,7 +335,7 @@ polymover_t *Cl_FindActivePoly(int number)
 polymover_t *Cl_NewPolyMover(int number)
 {
     polymover_t *mover;
-    polyobj_t  *poly = PO_PTR(number);
+    polyobj_t  *poly = polyobjs[number];
 
     mover = Z_Malloc(sizeof(polymover_t), PU_LEVEL, 0);
     memset(mover, 0, sizeof(*mover));
@@ -796,7 +796,7 @@ if(num >= po_NumPolyobjs)
 }
 #endif
 
-    po = PO_PTR(num);
+    po = polyobjs[num];
 
     if(df & PODF_DEST_X)
         po->dest.pos[VX] = destX;

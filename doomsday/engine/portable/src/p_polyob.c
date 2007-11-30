@@ -59,7 +59,7 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po);
 // Called when the polyobj hits a mobj.
 void    (*po_callback) (mobj_t *mobj, void *seg, void *po);
 
-polyobj_t *polyobjs;               // list of all poly-objects on the level
+polyobj_t **polyobjs; // List of all poly-objects in the map.
 uint    po_NumPolyobjs;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -67,20 +67,97 @@ uint    po_NumPolyobjs;
 // CODE --------------------------------------------------------------------
 
 /**
+ * @return              @c  0 = Unclosed polygon.
+ */
+static int isClosedPolygon(const line_t **lineList, size_t num)
+{
+    uint            i;
+
+    for(i = 0; i < num; ++i)
+    {
+        const line_t   *line = lineList[i];
+        const line_t   *next = (i == num-1? lineList[0] : lineList[i+1]);
+
+        if(!(line->L_v2 == next->L_v1))
+             return false;
+    }
+
+    // The polygon is closed.
+    return true;
+}
+
+/**
  * Allocate memory for polyobjs.
  */
-void PO_Allocate(void)
+boolean PO_CreatePolyobj(const line_t **lineList, size_t num, uint *poIdx)
 {
-    uint        i;
+    uint                i, n, segCount;
+    polyobj_t          *po, **newList;
 
-    polyobjs = Z_Malloc(po_NumPolyobjs * sizeof(polyobj_t), PU_LEVEL, 0);
-    memset(polyobjs, 0, po_NumPolyobjs * sizeof(polyobj_t));
+    if(!lineList || num == 0)
+        return false;
 
-    // Initialize the runtime type identifiers.
-    for(i = 0; i < po_NumPolyobjs; ++i)
-    {
-        polyobjs[i].header.type = DMU_POLYOBJ;
+    // Ensure that lineList is a closed polygon.
+    if(isClosedPolygon(lineList, num) == 0)
+    {   // Nope, perhaps it needs sorting?
+        Con_Error("PO_CreatePolyobj: Linelist does not form a closed polygon.");
     }
+
+    // Allocate the new polyobj.
+    po = Z_Calloc(sizeof(*po), PU_LEVEL, 0);
+
+    /**
+     * Link the new polyobj into the global list.
+     */
+    newList = Z_Malloc(((++po_NumPolyobjs) + 1) * sizeof(polyobj_t*),
+                       PU_LEVEL, 0);
+    // Copy the existing list.
+    for(i = 0; i < po_NumPolyobjs - 1; ++i)
+    {
+        newList[i] = polyobjs[i];
+    }
+    newList[i++] = po; // Add the new polyobj.
+    newList[i] = NULL; // Terminate.
+
+    if(po_NumPolyobjs-1 > 0)
+        Z_Free(polyobjs);
+    polyobjs = newList;
+
+    /**
+     * Setup the new polyobj.
+     */
+    po->header.type = DMU_POLYOBJ;
+    po->idx = po_NumPolyobjs - 1;
+
+    // Collect all the segs of the lines that consist the polyobj.
+    segCount = 0;
+    for(i = 0; i < num; ++i)
+    {
+        const line_t       *line = lineList[i];
+        if(line->L_frontside)
+            segCount += line->L_frontside->segcount;
+    }
+    po->segs = Z_Malloc(sizeof(seg_t*) * (segCount+1), PU_LEVEL, 0);
+    for(n = 0, i = 0; i < num; ++i)
+    {
+        const line_t       *line = lineList[i];
+        if(line->L_frontside)
+        {
+            seg_t             **ptr = line->L_frontside->segs;
+            while(*ptr)
+            {
+                 po->segs[n++] = *ptr;
+                *ptr++;
+            }
+        }
+    }
+    po->segs[n] = NULL; // Terminate.
+    po->numsegs = segCount;
+
+    if(poIdx)
+        *poIdx = po->idx;
+
+    return true; // Success!
 }
 
 /**
@@ -93,22 +170,25 @@ void PO_SetCallback(void (*func) (mobj_t *, void *, void *))
 
 polyobj_t *GetPolyobj(uint polyNum)
 {
-    uint        i;
+    uint            i;
 
     for(i = 0; i < po_NumPolyobjs; ++i)
     {
-        if((uint) PO_PTR(i)->tag == polyNum)
+        polyobj_t      *po = polyobjs[i];
+
+        if((uint) po->tag == polyNum)
         {
-            return PO_PTR(i);   //&polyobjs[i];
+            return po;
         }
     }
+
     return NULL;
 }
 
 void UpdateSegBBox(seg_t *seg)
 {
-    line_t     *line = seg->linedef;
-    byte        edge;
+    line_t         *line = seg->linedef;
+    byte            edge;
 
     edge = (seg->SG_v1pos[VX] < seg->SG_v2pos[VX]);
     line->bbox[BOXLEFT]  = seg->SG_vpos(edge^1)[VX];
@@ -179,7 +259,7 @@ void PO_SetupPolyobjs(void)
 
     for(i = 0; i < po_NumPolyobjs; ++i)
     {
-        po = &polyobjs[i];
+        po = polyobjs[i];
         segList = po->segs;
         num = po->numsegs;
 
@@ -224,7 +304,7 @@ boolean PO_MovePolyobj(uint num, float x, float y)
 
     if(num & 0x80000000)
     {
-        po = PO_PTR(num & 0x7fffffff);
+        po = polyobjs[num & 0x7fffffff];
     }
     else if(!(po = GetPolyobj(num)))
     {
@@ -358,7 +438,7 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
 
     if(num & 0x80000000)
     {
-        po = PO_PTR(num & 0x7fffffff);
+        po = polyobjs[num & 0x7fffffff];
     }
     else if(!(po = GetPolyobj(num)))
     {
@@ -564,7 +644,7 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po)
 
 /**
  * @returns             Ptr to the polyobj that owns the degenmobj,
- *                      else <code>NULL</code>.
+ *                      else @c NULL.
  */
 polyobj_t* PO_GetForDegen(void *degenMobj)
 {
@@ -573,7 +653,7 @@ polyobj_t* PO_GetForDegen(void *degenMobj)
 
     for(i = 0; i < po_NumPolyobjs; ++i)
     {
-        po = PO_PTR(i);
+        po = polyobjs[i];
 
         if(&po->startSpot == degenMobj)
         {

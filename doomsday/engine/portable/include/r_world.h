@@ -60,7 +60,7 @@ void            R_UpdatePlanes(void);
 void            R_ClearSectorFlags(void);
 void            R_InitSkyFix(void);
 void            R_SkyFix(boolean fixFloors, boolean fixCeilings);
-void            R_OrderVertices(line_t *line, const sector_t *sector,
+void            R_OrderVertices(const line_t *line, const sector_t *sector,
                                 vertex_t *verts[2]);
 plane_t        *R_NewPlaneForSector(sector_t *sec, planetype_t type);
 void            R_DestroyPlaneOfSector(uint id, sector_t *sec);

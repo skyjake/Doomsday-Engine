@@ -71,8 +71,6 @@
 static polyobj_t *GetPolyobj(uint polyNum);
 static int GetPolyobjMirror(uint polyNum);
 static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t *po);
-static void IterFindPolySegs(float x, float y, seg_t **segList);
-static void SpawnPolyobj(uint polyNum, int tag, boolean crush);
 static void TranslateToStartSpot(int tag, float originX, float originY);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -83,7 +81,7 @@ extern spawnspot_t *things;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static uint PolySegCount;
+static uint PolyLineCount;
 static float PolyStart[2];
 
 // CODE --------------------------------------------------------------------
@@ -687,43 +685,44 @@ static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
 }
 
 /**
- * @param segList           @c NULL, will cause IterFindPolySegs to count
- *                          the number of segs in the polyobj.
+ * @param lineList          @c NULL, will cause IterFindPolyLines to count
+ *                          the number of lines in the polyobj.
  */
-static void IterFindPolySegs(float x, float y, seg_t **segList)
+static boolean IterFindPolyLines(float x, float y, line_t **lineList)
 {
     uint        i;
     float       v[2];
 
     if(x == PolyStart[VX] && y == PolyStart[VY])
     {
-        return;
+        return true;
     }
 
-    for(i = 0; i < numsegs; ++i)
+    for(i = 0; i < numlines; ++i)
     {
-        if(!P_GetPtr(DMU_SEG, i, DMU_LINE))
+        line_t         *line = P_ToPtr(DMU_LINE, i);
+        if(!line)
             continue;
 
-        P_GetFloatv(DMU_SEG, i, DMU_VERTEX1_XY, v);
+        P_GetFloatpv(line, DMU_VERTEX1_XY, v);
         if(v[VX] == x && v[VY] == y)
         {
-            if(!segList)
+            if(!lineList)
             {
-                PolySegCount++;
+                PolyLineCount++;
             }
             else
             {
-                *segList++ = P_ToPtr(DMU_SEG, i);
+                *lineList++ = line;
             }
 
-            P_GetFloatv(DMU_SEG, i, DMU_VERTEX2_XY, v);
-            IterFindPolySegs(v[VX], v[VY], segList);
-            return;
+            P_GetFloatpv(line, DMU_VERTEX2_XY, v);
+            IterFindPolyLines(v[VX], v[VY], lineList);
+            return true;
         }
     }
 
-    Con_Error("IterFindPolySegs:  Non-closed Polyobj located.\n");
+    return false;
 }
 
 /**
@@ -731,44 +730,56 @@ static void IterFindPolySegs(float x, float y, seg_t **segList)
  */
 static void SpawnPolyobj(uint index, int tag, boolean crush)
 {
-    uint            i, j, psIndex, psIndexOld;
-    int             seqType;
-    float           v[2];
-    seg_t          *polySegList[PO_MAXPOLYSEGS];
-    line_t         *ldef;
-    xline_t        *xline;
+#define PO_MAXPOLYLINES         32
 
-    for(i = 0; i < numsegs; ++i)
+    uint            i;
+
+    for(i = 0; i < numlines; ++i)
     {
-        line_t         *linedef = P_GetPtr(DMU_SEG, i, DMU_LINE);
-        if(!linedef)
+        line_t         *line;
+        xline_t        *xline;
+
+        line = P_ToPtr(DMU_LINE, i);
+        if(!line)
             continue;
 
-        xline = P_ToXLine(linedef);
+        xline = P_ToXLine(line);
 
-        if(xline->special == PO_LINE_START &&
-           xline->arg1 == tag)
+        if(xline->special == PO_LINE_START && xline->arg1 == tag)
         {
-            if(P_GetPtr(DMU_POLYOBJ, index, DMU_SEG_LIST))
+            byte            seqType;
+            float           v[2];
+            line_t        **lineList;
+
+            if(P_ToPtr(DMU_POLYOBJ, index))
             {
                 Con_Error("SpawnPolyobj:  Polyobj %d already spawned.\n", tag);
             }
 
             xline->special = 0;
             xline->arg1 = 0;
-            PolySegCount = 1;
+            PolyLineCount = 1;
 
-            P_GetFloatv(DMU_SEG, i, DMU_VERTEX1_XY, PolyStart);
-            P_GetFloatv(DMU_SEG, i, DMU_VERTEX2_XY, v);
-            IterFindPolySegs(v[VX], v[VY], NULL);
-            P_SetInt(DMU_POLYOBJ, index, DMU_SEG_COUNT, PolySegCount);
-            P_SetPtr(DMU_POLYOBJ, index, DMU_SEG_LIST,
-                     Z_Malloc(PolySegCount * sizeof(seg_t*), PU_LEVEL, 0));
-            P_SetPtrp(P_ToPtr(DMU_POLYOBJ, index), DMU_SEG_OF_POLYOBJ | 0,
-                      P_ToPtr(DMU_SEG, i)); // insert the first seg
+            P_GetFloatpv(line, DMU_VERTEX1_XY, PolyStart);
+            P_GetFloatpv(line, DMU_VERTEX2_XY, v);
+            if(!IterFindPolyLines(v[VX], v[VY], NULL))
+            {
+                Con_Error("SpawnPolyobj:  Non-closed Polyobj located.\n");
+            }
 
-            IterFindPolySegs(v[VX], v[VY],
-                             ((seg_t**)P_GetPtr(DMU_POLYOBJ, index, DMU_SEG_LIST)) + 1);
+            lineList = malloc((PolyLineCount+1) * sizeof(line_t*));
+
+            lineList[0] = line; // Insert the first line.
+            IterFindPolyLines(v[VX], v[VY], lineList + 1);
+            lineList[PolyLineCount] = 0; // Terminate.
+
+            if(!PO_CreatePolyobj(lineList, PolyLineCount, NULL))
+            {
+                free(lineList);
+                Con_Error("SpawnPolyobj: Failed creation of polyobj %i.", index);
+            }
+            free(lineList);
+
             P_SetBool(DMU_POLYOBJ, index, DMU_CRUSH, crush);
             P_SetInt(DMU_POLYOBJ, index, DMU_TAG, tag);
 
@@ -777,21 +788,71 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
             {
                 seqType = 0;
             }
+
             P_SetInt(DMU_POLYOBJ, index, DMU_SEQUENCE_TYPE, seqType);
-            break;
+            return;
         }
     }
 
-    if(!P_GetPtr(DMU_POLYOBJ, index, DMU_SEG_LIST))
-    {    // Didn't find a polyobj through PO_LINE_START
-        psIndex = 0;
-        P_SetInt(DMU_POLYOBJ, index, DMU_SEG_COUNT, 0);
-        for(j = 1; j < PO_MAXPOLYSEGS; ++j)
+    /**
+     * Didn't find a polyobj through PO_LINE_START.
+     * We'll try another approach...
+     */
+    {
+    line_t         *polyLineList[PO_MAXPOLYLINES];
+    uint            lineCount = 0;
+    uint            j, psIndex, psIndexOld;
+
+    psIndex = 0;
+    for(j = 1; j < PO_MAXPOLYLINES; ++j)
+    {
+        psIndexOld = psIndex;
+        for(i = 0; i < numlines; ++i)
         {
-            psIndexOld = psIndex;
-            for(i = 0; i < numsegs; ++i)
+            line_t         *line = P_ToPtr(DMU_LINE, i);
+            xline_t        *xline;
+
+            if(!line)
+                continue;
+
+            xline = P_ToXLine(line);
+            if(xline->special == PO_LINE_EXPLICIT && xline->arg1 == tag)
             {
-                line_t         *line = P_GetPtr(DMU_SEG, i, DMU_LINE);
+                if(!xline->arg2)
+                {
+                    Con_Error
+                        ("SpawnPolyobj:  Explicit line missing order number "
+                         "(probably %d) in poly %d.\n",
+                         j + 1, tag);
+                }
+
+                if(xline->arg2 == j)
+                {
+                    // Add this line to the list.
+                    polyLineList[psIndex] = line;
+                    lineCount++;
+                    psIndex++;
+                    if(psIndex > PO_MAXPOLYLINES)
+                    {
+                        Con_Error
+                            ("SpawnPolyobj:  psIndex > PO_MAXPOLYLINES\n");
+                    }
+
+                    // Clear out any special.
+                    xline->special = 0;
+                    xline->arg1 = 0;
+                }
+            }
+        }
+
+        if(psIndex == psIndexOld)
+        {   // Check if an explicit line order has been skipped
+            // A line has been skipped if there are any more explicit
+            // lines with the current tag value
+            for(i = 0; i < numlines; ++i)
+            {
+                line_t         *line = P_ToPtr(DMU_LINE, i);
+                xline_t        *xline;
 
                 if(!line)
                     continue;
@@ -800,97 +861,43 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
                 if(xline->special == PO_LINE_EXPLICIT &&
                    xline->arg1 == tag)
                 {
-                    if(!xline->arg2)
-                    {
-                        Con_Error
-                            ("SpawnPolyobj:  Explicit line missing order number "
-                             "(probably %d) in poly %d.\n",
-                             j + 1, tag);
-                    }
-
-                    if(xline->arg2 == j)
-                    {
-                        polySegList[psIndex] = P_ToPtr(DMU_SEG, i);
-                        P_SetInt(DMU_POLYOBJ, index, DMU_SEG_COUNT,
-                                 P_GetInt(DMU_POLYOBJ, index, DMU_SEG_COUNT) + 1);
-                        psIndex++;
-                        if(psIndex > PO_MAXPOLYSEGS)
-                        {
-                            Con_Error
-                                ("SpawnPolyobj:  psIndex > PO_MAXPOLYSEGS\n");
-                        }
-                    }
-                }
-            }
-
-            // Clear out any specials for these segs...we cannot clear them out
-            //  in the above loop, since we aren't guaranteed one seg per
-            //      linedef.
-            for(i = 0; i < numsegs; ++i)
-            {
-                line_t         *line = P_GetPtr(DMU_SEG, i, DMU_LINE);
-                if(!line)
-                    continue;
-
-                xline = P_ToXLine(line);
-                if(xline->special == PO_LINE_EXPLICIT && xline->arg1 == tag &&
-                   xline->arg2 == j)
-                {
-                    xline->special = 0;
-                    xline->arg1 = 0;
-                }
-            }
-
-            if(psIndex == psIndexOld)
-            {   // Check if an explicit line order has been skipped
-                // A line has been skipped if there are any more explicit
-                // lines with the current tag value
-                for(i = 0; i < numsegs; ++i)
-                {
-                    line_t         *line = P_GetPtr(DMU_SEG, i, DMU_LINE);
-                    if(!line)
-                        continue;
-
-                    xline = P_ToXLine(line);
-                    if(xline->special == PO_LINE_EXPLICIT &&
-                       xline->arg1 == tag)
-                    {
-                        Con_Error
-                            ("SpawnPolyobj:  Missing explicit line %d for poly %d\n",
-                             j, tag);
-                    }
+                    Con_Error
+                        ("SpawnPolyobj:  Missing explicit line %d for poly %d\n",
+                         j, tag);
                 }
             }
         }
-
-        if(P_GetInt(DMU_POLYOBJ, index, DMU_SEG_COUNT))
-        {
-            polyobj_t *po = P_ToPtr(DMU_POLYOBJ, index);
-            PolySegCount = P_GetInt(DMU_POLYOBJ, index, DMU_SEG_COUNT); // PolySegCount used globally
-            P_SetBool(DMU_POLYOBJ, index, DMU_CRUSH, crush);
-            P_SetInt(DMU_POLYOBJ, index, DMU_TAG, tag);
-            P_SetPtr(DMU_POLYOBJ, index, DMU_SEG_LIST,
-                Z_Malloc(PolySegCount * sizeof(seg_t *), PU_LEVEL, 0));
-
-            for(i = 0; i < PolySegCount; ++i)
-            {
-                P_SetPtrp(po, DMU_SEG_OF_POLYOBJ | i, polySegList[i]);
-            }
-
-            P_SetInt(DMU_POLYOBJ, index, DMU_SEQUENCE_TYPE,
-                P_ToXLine(P_GetPtrp(P_GetPtrp(po, DMU_SEG_OF_POLYOBJ | 0),
-                                  DMU_LINE))->arg4);
-        }
-
-        // Next, change the polyobjs first line to point to a mirror
-        //      if it exists
-        ldef = P_GetPtrp( P_GetPtrp(P_ToPtr(DMU_POLYOBJ, index),
-                                    DMU_SEG_OF_POLYOBJ | 0),
-                         DMU_LINE );
-        P_ToXLine(ldef)->arg2 = P_ToXLine(ldef)->arg3;
-        //(*polyobjs[index].Segs)->linedef->arg2 =
-        //  (*polyobjs[index].Segs)->linedef->arg3;
     }
+
+    if(lineCount)
+    {
+        if(!PO_CreatePolyobj(polyLineList, lineCount, NULL))
+        {
+            Con_Error("SpawnPolyobj: Failed creation of polyobj %i.", index);
+        }
+
+        P_SetBool(DMU_POLYOBJ, index, DMU_CRUSH, crush);
+        P_SetInt(DMU_POLYOBJ, index, DMU_TAG, tag);
+        P_SetInt(DMU_POLYOBJ, index, DMU_SEQUENCE_TYPE,
+                 P_ToXLine(polyLineList[0])->arg4);
+    }
+
+    // Next, change the polyobjs first line to point to a mirror
+    // if it exists.
+    {
+    line_t         *other;
+    xline_t        *xother;
+
+    other = P_GetPtrp(P_GetPtrp(P_ToPtr(DMU_POLYOBJ, index),
+                                DMU_SEG_OF_POLYOBJ | 0),
+                      DMU_LINE);
+    xother = P_ToXLine(other);
+
+    xother->arg2 = xother->arg3;
+    }
+    }
+
+#undef PO_MAXPOLYLINES
 }
 
 static void TranslateToStartSpot(int tag, float originX, float originY)
@@ -987,6 +994,8 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
     P_SetPtrp(sub, DMU_POLYOBJ, po);
 }
 
+
+
 /**
  * \fixme DJS - We shouldn't need to go twice round the thing list here too
  */
@@ -999,10 +1008,6 @@ void PO_Init(int lump)
     // ThrustMobj will handle polyobj <-> mobj interaction.
     PO_SetCallback(ThrustMobj);
 
-    // Engine maintains the array of polyobjs and knows how large polyobj_t
-    // actually is, so we let the engine allocate memory for them.
-    PO_Allocate();
-
     polyIndex = 0; // Index polyobj number.
 
     // Find the startSpot points, and spawn each polyobj
@@ -1013,9 +1018,9 @@ void PO_Init(int lump)
         // 3001 = no crush, 3002 = crushing
         if(mt->type == PO_SPAWN_TYPE || mt->type == PO_SPAWNCRUSH_TYPE)
         {   // Polyobj StartSpot Pt.
-            P_SetFloatv(DMU_POLYOBJ, polyIndex, DMU_START_SPOT_XY, mt->pos);
             SpawnPolyobj(polyIndex, mt->angle,
                          (mt->type == PO_SPAWNCRUSH_TYPE));
+            P_SetFloatv(DMU_POLYOBJ, polyIndex, DMU_START_SPOT_XY, mt->pos);
             polyIndex++;
         }
     }

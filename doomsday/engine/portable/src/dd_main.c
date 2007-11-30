@@ -967,11 +967,7 @@ void DD_SetInteger(int ddvalue, int parm)
     {
         DD_CheckQuery(ddvalue, parm);
         // How about some special values?
-        if(ddvalue == DD_POLYOBJ_COUNT)
-        {
-            po_NumPolyobjs = parm;
-        }
-        else if(ddvalue == DD_SKYMASKMATERIAL_NAME)
+        if(ddvalue == DD_SKYMASKMATERIAL_NAME)
         {
             // Dude!  This is not 64-bit safe.
             ASSERT_NOT_64BIT();

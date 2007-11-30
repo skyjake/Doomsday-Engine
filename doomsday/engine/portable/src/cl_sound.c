@@ -101,7 +101,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
         if(index < po_NumPolyobjs)
         {
-            poly = PO_PTR(index);
+            poly = polyobjs[index];
             emitter = (mobj_t *) &poly->startSpot;
         }
     }

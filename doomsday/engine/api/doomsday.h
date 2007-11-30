@@ -339,7 +339,7 @@ extern          "C" {
                                              int amount);
 
     // Play: Polyobjs.
-    void            PO_Allocate(void);
+    boolean         PO_CreatePolyobj(const line_t **list, size_t num, uint *poIdx);
     boolean         PO_MovePolyobj(uint num, float x, float y);
     boolean         PO_RotatePolyobj(uint num, angle_t angle);
     void            PO_UnLinkPolyobj(void *po);

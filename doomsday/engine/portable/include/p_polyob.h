@@ -31,7 +31,7 @@
 
 #include "p_mapdata.h"
 
-extern struct   polyobj_s *polyobjs; // list of all poly-objects on the level
+extern struct   polyobj_s **polyobjs; // list of all poly-objects on the level
 extern uint     po_NumPolyobjs;
 
 void            PO_SetCallback(void (*func) (mobj_t *, void *, void *));

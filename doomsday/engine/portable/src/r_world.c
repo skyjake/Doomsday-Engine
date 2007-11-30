@@ -751,7 +751,7 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
  * is the leftmost vertex and verts[1] is the rightmost vertex, when the
  * line lies at the edge of `sector.'
  */
-void R_OrderVertices(line_t *line, const sector_t *sector, vertex_t *verts[2])
+void R_OrderVertices(const line_t *line, const sector_t *sector, vertex_t *verts[2])
 {
     byte        edge;
 

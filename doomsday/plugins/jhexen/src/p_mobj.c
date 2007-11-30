@@ -1436,8 +1436,7 @@ void P_SpawnMapThing(spawnspot_t *mthing)
     }
     else if(mthing->type == PO_SPAWN_TYPE ||
             mthing->type == PO_SPAWNCRUSH_TYPE)
-    {   // Polyobj Anchor Pt.
-        DD_SetInteger(DD_POLYOBJ_COUNT, DD_GetInteger(DD_POLYOBJ_COUNT) + 1);
+    {
         return;
     }
 

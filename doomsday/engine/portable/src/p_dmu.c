@@ -551,7 +551,7 @@ uint P_ToIndex(const void* ptr)
         return GET_SECTOR_IDX((sector_t*) ptr);
 
     case DMU_POLYOBJ:
-        return GET_POLYOBJ_IDX((polyobj_t*) ptr);
+        return ((polyobj_t*) ptr)->idx;
 
     case DMU_NODE:
         return GET_NODE_IDX((node_t*) ptr);
@@ -591,7 +591,7 @@ void* P_ToPtr(int type, uint index)
         return SECTOR_PTR(index);
 
     case DMU_POLYOBJ:
-        return PO_PTR(index);
+        return (index < po_NumPolyobjs? polyobjs[index] : NULL);
 
     case DMU_NODE:
         return NODE_PTR(index);
@@ -656,7 +656,7 @@ int P_Callback(int type, uint index, void* context, int (*callback)(void* p, voi
 
     case DMU_POLYOBJ:
         if(index < po_NumPolyobjs)
-            return callback(PO_PTR(index), context);
+            return callback(polyobjs[index], context);
         break;
 
     case DMU_PLANE:
@@ -740,7 +740,7 @@ int P_CallbackAll(int type, void* context, int (*callback)(void* p, void* ctx))
 
     case DMU_POLYOBJ:
         for(i = 0; i < po_NumPolyobjs; i++)
-            if(!callback(PO_PTR(i), context)) return false;
+            if(!callback(polyobjs[i], context)) return false;
         break;
 
     case DMU_PLANE:

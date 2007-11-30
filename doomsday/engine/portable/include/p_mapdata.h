@@ -47,7 +47,6 @@
 #define GET_SIDE_IDX(si)        ((si) - sides)
 #define GET_SECTOR_IDX(sec)     ((sec) - sectors)
 #define GET_SUBSECTOR_IDX(sub)  ((sub) - subsectors)
-#define GET_POLYOBJ_IDX(po)     ((po) - polyobjs)
 #define GET_SEG_IDX(seg)        ((seg) - segs)
 #define GET_NODE_IDX(nd)        ((nd) - nodes)
 
@@ -61,7 +60,6 @@
 #define NODE_PTR(i)             (&nodes[i])
 #define LINE_PTR(i)             (&lines[i])
 #define SIDE_PTR(i)             (&sides[i])
-#define PO_PTR(i)               (&polyobjs[i])
 
 // Map line flags.
 #define ML_BLOCKING         0x0001
@@ -167,7 +165,7 @@ typedef struct gamemap_s {
     side_t     *sides;
 
     uint        po_NumPolyobjs;
-    polyobj_t  *polyobjs;
+    polyobj_t **polyobjs;
     linkpolyobj_t **polyBlockMap;
 
     int         numthings;

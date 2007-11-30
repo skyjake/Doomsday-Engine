@@ -89,7 +89,7 @@ typedef struct cregister_s {
     dt_poly_t  *polys;
 } cregister_t;
 
-/*
+/**
  * Each entity (mobj, sector, side, etc.) has an origin the world.
  */
 typedef struct origin_s {
@@ -521,7 +521,7 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
  */
 void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 {
-    polyobj_t *poly = PO_PTR(number);
+    polyobj_t *poly = polyobjs[number];
 
     reg->dest.pos[VX] = poly->dest.pos[VX];
     reg->dest.pos[VY] = poly->dest.pos[VY];
@@ -1008,7 +1008,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
 }
 
 /**
- * @return              <code>true</code> if the result is not void.
+ * @return              @c true, if the result is not void.
  */
 boolean Sv_RegisterComparePoly(cregister_t *reg, uint number,
                                polydelta_t *d)
@@ -1038,8 +1038,8 @@ boolean Sv_RegisterComparePoly(cregister_t *reg, uint number,
 }
 
 /**
- * @return              <code>true</code> if the mobj can be excluded
- *                      from delta processing.
+ * @return              @c true, if the mobj can be excluded from delta
+ *                      processing.
  */
 boolean Sv_IsMobjIgnored(mobj_t *mo)
 {
@@ -1047,8 +1047,8 @@ boolean Sv_IsMobjIgnored(mobj_t *mo)
 }
 
 /**
- * @return              <code>true</code> if the player can be excluded
- *                      from delta processing.
+ * @return              @c true, if the player can be excluded from delta
+ *                      processing.
  */
 boolean Sv_IsPlayerIgnored(uint number)
 {
@@ -1153,8 +1153,7 @@ void Sv_NewDelta(void *deltaPtr, deltatype_t type, uint id)
 }
 
 /**
- * @return              <code>true</code> if the delta contains no
- *                      information.
+ * @return              @c true, if the delta contains no information.
  */
 boolean Sv_IsVoidDelta(const void *delta)
 {
@@ -1162,7 +1161,7 @@ boolean Sv_IsVoidDelta(const void *delta)
 }
 
 /**
- * @return              <code>true</code> if the delta is a Sound delta.
+ * @return              @c true, if the delta is a Sound delta.
  */
 boolean Sv_IsSoundDelta(const void *delta)
 {
@@ -1173,8 +1172,7 @@ boolean Sv_IsSoundDelta(const void *delta)
 }
 
 /**
- * @return              <code>true</code> if the delta is a Start Sound
- *                      delta.
+ * @return              @c true, if the delta is a Start Sound delta.
  */
 boolean Sv_IsStartSoundDelta(const void *delta)
 {
@@ -1185,8 +1183,7 @@ boolean Sv_IsStartSoundDelta(const void *delta)
 }
 
 /**
- * @return              <code>true</code> if the delta is Stop Sound
- *                      delta.
+ * @return              @c true, if the delta is Stop Sound delta.
  */
 boolean Sv_IsStopSoundDelta(const void *delta)
 {
@@ -1197,8 +1194,7 @@ boolean Sv_IsStopSoundDelta(const void *delta)
 }
 
 /**
- * @return              <code>true</code> if the delta is a Null Mobj
- *                      delta.
+ * @return              @c true, if the delta is a Null Mobj delta.
  */
 boolean Sv_IsNullMobjDelta(const void *delta)
 {
@@ -1207,8 +1203,7 @@ boolean Sv_IsNullMobjDelta(const void *delta)
 }
 
 /**
- * @return              <code>true</code> if the delta is a Create Mobj
- *                      delta.
+ * @return              @c true, if the delta is a Create Mobj delta.
  */
 boolean Sv_IsCreateMobjDelta(const void *delta)
 {
@@ -1217,8 +1212,7 @@ boolean Sv_IsCreateMobjDelta(const void *delta)
 }
 
 /**
- * @return              <code>true</code> if the deltas refer to the
- *                      same object.
+ * @return              @c true, if the deltas refer to the same object.
  */
 boolean Sv_IsSameDelta(const void *delta1, const void *delta2)
 {
@@ -1548,8 +1542,7 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
  * Merges the second delta with the first one.
  * The source and destination must refer to the same entity.
  *
- * @return              <code>false</code? if the result of the merge is
- *                      a void delta.
+ * @return              @c false, if the result of the merge is a void delta.
  */
 boolean Sv_MergeDelta(void *destDelta, const void *srcDelta)
 {
@@ -1716,7 +1709,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if(delta->type == DT_POLY)
     {
-        polyobj_t *po = PO_PTR(delta->id);
+        polyobj_t *po = polyobjs[delta->id];
 
         return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
                                 info->pos[VY] - po->startSpot.pos[VY]);
@@ -1736,7 +1729,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        polyobj_t *po = PO_PTR(delta->id);
+        polyobj_t *po = polyobjs[delta->id];
 
         return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
                                 info->pos[VY] - po->startSpot.pos[VY]);
@@ -2124,8 +2117,7 @@ void Sv_PlayerRemoved(uint playerNumber)
 }
 
 /**
- * @return              <code>true</code> if the pool is in the targets
- *                      array.
+ * @return              @c true, if the pool is in the targets array.
  */
 boolean Sv_IsPoolTargeted(pool_t *pool, pool_t **targets)
 {
@@ -2470,7 +2462,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, sector_t *sourceSector,
     else if(sourcePoly != NULL)
     {
         type = DT_POLY_SOUND;
-        id = GET_POLYOBJ_IDX(sourcePoly);
+        id = sourcePoly->idx;
     }
     else if(emitter)
     {
@@ -2497,8 +2489,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, sector_t *sourceSector,
 }
 
 /**
- * @return              <code>true</code> if the client should receive
- *                      frames.
+ * @return              @c true, if the client should receive frames.
  */
 boolean Sv_IsFrameTarget(uint number)
 {
@@ -2518,7 +2509,7 @@ boolean Sv_IsFrameTarget(uint number)
  * Updating the register means that the current state of the world is stored
  * in the register after the deltas have been generated.
  *
- * clientNumber < 0: All ingame clients should get the deltas.
+ * @param clientNumber  < 0 = All ingame clients should get the deltas.
  */
 void Sv_GenerateNewDeltas(cregister_t *reg, int clientNumber,
                           boolean doUpdate)
@@ -2649,7 +2640,7 @@ void Sv_PoolQueueAdd(pool_t *pool, delta_t *delta)
 /**
  * Extracts the delta with the highest priority from the queue.
  *
- * @return              <code>NULL</code> if there are no more deltas.
+ * @return              @c NULL, if there are no more deltas.
  */
 delta_t *Sv_PoolQueueExtract(pool_t *pool)
 {
