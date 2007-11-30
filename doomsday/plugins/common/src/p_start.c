@@ -409,6 +409,9 @@ void P_SpawnThings(void)
         Con_Error("P_LoadThings: Player count (%d) exceeds deathmatch "
                   "spots (%d)", playerCount, deathSpotsCount);
     }
+
+    // Initialize polyobjs.
+    PO_InitForMap();
 #endif
 
     // We're finished with the temporary thing list

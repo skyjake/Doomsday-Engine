@@ -71,11 +71,8 @@
 static polyobj_t *GetPolyobj(uint polyNum);
 static int GetPolyobjMirror(uint polyNum);
 static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t *po);
-static void TranslateToStartSpot(int tag, float originX, float originY);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern spawnspot_t *things;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -684,245 +681,21 @@ static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
     }
 }
 
-/**
- * @param lineList          @c NULL, will cause IterFindPolyLines to count
- *                          the number of lines in the polyobj.
- */
-static boolean IterFindPolyLines(float x, float y, line_t **lineList)
-{
-    uint        i;
-    float       v[2];
-
-    if(x == PolyStart[VX] && y == PolyStart[VY])
-    {
-        return true;
-    }
-
-    for(i = 0; i < numlines; ++i)
-    {
-        line_t         *line = P_ToPtr(DMU_LINE, i);
-        if(!line)
-            continue;
-
-        P_GetFloatpv(line, DMU_VERTEX1_XY, v);
-        if(v[VX] == x && v[VY] == y)
-        {
-            if(!lineList)
-            {
-                PolyLineCount++;
-            }
-            else
-            {
-                *lineList++ = line;
-            }
-
-            P_GetFloatpv(line, DMU_VERTEX2_XY, v);
-            IterFindPolyLines(v[VX], v[VY], lineList);
-            return true;
-        }
-    }
-
-    return false;
-}
-
-/**
- * Might be best to move this over to the engine.
- */
-static void SpawnPolyobj(uint index, int tag, boolean crush)
-{
-#define PO_MAXPOLYLINES         32
-
-    uint            i;
-
-    for(i = 0; i < numlines; ++i)
-    {
-        line_t         *line;
-        xline_t        *xline;
-
-        line = P_ToPtr(DMU_LINE, i);
-        if(!line)
-            continue;
-
-        xline = P_ToXLine(line);
-
-        if(xline->special == PO_LINE_START && xline->arg1 == tag)
-        {
-            byte            seqType;
-            float           v[2];
-            line_t        **lineList;
-
-            if(P_ToPtr(DMU_POLYOBJ, index))
-            {
-                Con_Error("SpawnPolyobj:  Polyobj %d already spawned.\n", tag);
-            }
-
-            xline->special = 0;
-            xline->arg1 = 0;
-            PolyLineCount = 1;
-
-            P_GetFloatpv(line, DMU_VERTEX1_XY, PolyStart);
-            P_GetFloatpv(line, DMU_VERTEX2_XY, v);
-            if(!IterFindPolyLines(v[VX], v[VY], NULL))
-            {
-                Con_Error("SpawnPolyobj:  Non-closed Polyobj located.\n");
-            }
-
-            lineList = malloc((PolyLineCount+1) * sizeof(line_t*));
-
-            lineList[0] = line; // Insert the first line.
-            IterFindPolyLines(v[VX], v[VY], lineList + 1);
-            lineList[PolyLineCount] = 0; // Terminate.
-
-            if(!PO_CreatePolyobj(lineList, PolyLineCount, NULL))
-            {
-                free(lineList);
-                Con_Error("SpawnPolyobj: Failed creation of polyobj %i.", index);
-            }
-            free(lineList);
-
-            P_SetBool(DMU_POLYOBJ, index, DMU_CRUSH, crush);
-            P_SetInt(DMU_POLYOBJ, index, DMU_TAG, tag);
-
-            seqType = xline->arg3;
-            if(seqType < 0 || seqType >= SEQTYPE_NUMSEQ)
-            {
-                seqType = 0;
-            }
-
-            P_SetInt(DMU_POLYOBJ, index, DMU_SEQUENCE_TYPE, seqType);
-            return;
-        }
-    }
-
-    /**
-     * Didn't find a polyobj through PO_LINE_START.
-     * We'll try another approach...
-     */
-    {
-    line_t         *polyLineList[PO_MAXPOLYLINES];
-    uint            lineCount = 0;
-    uint            j, psIndex, psIndexOld;
-
-    psIndex = 0;
-    for(j = 1; j < PO_MAXPOLYLINES; ++j)
-    {
-        psIndexOld = psIndex;
-        for(i = 0; i < numlines; ++i)
-        {
-            line_t         *line = P_ToPtr(DMU_LINE, i);
-            xline_t        *xline;
-
-            if(!line)
-                continue;
-
-            xline = P_ToXLine(line);
-            if(xline->special == PO_LINE_EXPLICIT && xline->arg1 == tag)
-            {
-                if(!xline->arg2)
-                {
-                    Con_Error
-                        ("SpawnPolyobj:  Explicit line missing order number "
-                         "(probably %d) in poly %d.\n",
-                         j + 1, tag);
-                }
-
-                if(xline->arg2 == j)
-                {
-                    // Add this line to the list.
-                    polyLineList[psIndex] = line;
-                    lineCount++;
-                    psIndex++;
-                    if(psIndex > PO_MAXPOLYLINES)
-                    {
-                        Con_Error
-                            ("SpawnPolyobj:  psIndex > PO_MAXPOLYLINES\n");
-                    }
-
-                    // Clear out any special.
-                    xline->special = 0;
-                    xline->arg1 = 0;
-                }
-            }
-        }
-
-        if(psIndex == psIndexOld)
-        {   // Check if an explicit line order has been skipped
-            // A line has been skipped if there are any more explicit
-            // lines with the current tag value
-            for(i = 0; i < numlines; ++i)
-            {
-                line_t         *line = P_ToPtr(DMU_LINE, i);
-                xline_t        *xline;
-
-                if(!line)
-                    continue;
-
-                xline = P_ToXLine(line);
-                if(xline->special == PO_LINE_EXPLICIT &&
-                   xline->arg1 == tag)
-                {
-                    Con_Error
-                        ("SpawnPolyobj:  Missing explicit line %d for poly %d\n",
-                         j, tag);
-                }
-            }
-        }
-    }
-
-    if(lineCount)
-    {
-        if(!PO_CreatePolyobj(polyLineList, lineCount, NULL))
-        {
-            Con_Error("SpawnPolyobj: Failed creation of polyobj %i.", index);
-        }
-
-        P_SetBool(DMU_POLYOBJ, index, DMU_CRUSH, crush);
-        P_SetInt(DMU_POLYOBJ, index, DMU_TAG, tag);
-        P_SetInt(DMU_POLYOBJ, index, DMU_SEQUENCE_TYPE,
-                 P_ToXLine(polyLineList[0])->arg4);
-    }
-
-    // Next, change the polyobjs first line to point to a mirror
-    // if it exists.
-    {
-    line_t         *other;
-    xline_t        *xother;
-
-    other = P_GetPtrp(P_GetPtrp(P_ToPtr(DMU_POLYOBJ, index),
-                                DMU_SEG_OF_POLYOBJ | 0),
-                      DMU_LINE);
-    xother = P_ToXLine(other);
-
-    xother->arg2 = xother->arg3;
-    }
-    }
-
-#undef PO_MAXPOLYLINES
-}
-
-static void TranslateToStartSpot(int tag, float originX, float originY)
+static void translateToStartSpot(polyobj_t *po, float originX, float originY)
 {
     uint            i;
     float           delta[2];
-    ddvertexf_t     avg; // used to find a polyobj's center, and hence subsector
+    ddvertexf_t     avg; // Used to find a polyobj's center, and hence subsector.
     seg_t         **tempSeg, **veryTempSeg;
     ddvertexf_t    *tempPt;
     subsector_t    *sub;
-    polyobj_t      *po;
     int             poNumSegs = 0;
-
-    po = GetPolyobj(tag);
-    if(!po)
-    {    // didn't match the tag with a polyobj tag
-        Con_Error("TranslateToStartSpot:  Unable to match polyobj tag: %d\n",
-                  tag);
-    }
 
     if(P_GetPtrp(po, DMU_SEG_LIST) == NULL)
     {
         Con_Error
-            ("TranslateToStartSpot:  Anchor point located without a "
-             "StartSpot point: %d\n", tag);
+            ("translateToStartSpot:  Anchor point located without a "
+             "StartSpot point: %d\n", P_ToIndex(po));
     }
     poNumSegs = P_GetIntp(po, DMU_SEG_COUNT);
 
@@ -963,7 +736,7 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
         }
 
         if(veryTempSeg == tempSeg)
-        {   // the point hasn't been translated, yet
+        {   // The point hasn't been translated, yet.
             float           v1[2];
 
             P_GetFloatpv(*tempSeg, DMU_VERTEX1_XY, v1);
@@ -974,8 +747,8 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
 
         avg.pos[VX] += P_GetFloatp(*tempSeg, DMU_VERTEX1_X);
         avg.pos[VY] += P_GetFloatp(*tempSeg, DMU_VERTEX1_Y);
-        // the original Pts are based off the startSpot Pt, and are
-        // unique to each seg, not each linedef
+        // The original Pts are based off the startSpot Pt, and are unique
+        // to each seg, not each linedef.
         tempPt->pos[VX] = P_GetFloatp(*tempSeg, DMU_VERTEX1_X) -
                             P_GetFloatp(po, DMU_START_SPOT_X);
         tempPt->pos[VY] = P_GetFloatp(*tempSeg, DMU_VERTEX1_Y) -
@@ -987,63 +760,272 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
     sub = R_PointInSubsector(avg.pos[VX], avg.pos[VY]);
     if(P_GetPtrp(sub, DMU_POLYOBJ) != NULL)
     {
-        Con_Message("PO_TranslateToStartSpot: Warning: Multiple polyobjs in a single subsector\n"
+        Con_Message("translateToStartSpot: Warning: Multiple polyobjs in a single subsector\n"
                     "  (ssec %i, sector %i). Previous polyobj overridden.\n",
                     P_ToIndex(sub), P_GetIntp(sub, DMU_SECTOR));
     }
     P_SetPtrp(sub, DMU_POLYOBJ, po);
 }
 
+/**
+ * @param lineList          @c NULL, will cause IterFindPolyLines to count
+ *                          the number of lines in the polyobj.
+ */
+static boolean iterFindPolyLines(float x, float y, line_t **lineList)
+{
+    uint        i;
+    float       v[2];
 
+    if(x == PolyStart[VX] && y == PolyStart[VY])
+    {
+        return true;
+    }
+
+    for(i = 0; i < numlines; ++i)
+    {
+        line_t         *line = P_ToPtr(DMU_LINE, i);
+        if(!line)
+            continue;
+
+        P_GetFloatpv(line, DMU_VERTEX1_XY, v);
+        if(v[VX] == x && v[VY] == y)
+        {
+            if(!lineList)
+            {
+                PolyLineCount++;
+            }
+            else
+            {
+                *lineList++ = line;
+            }
+
+            P_GetFloatpv(line, DMU_VERTEX2_XY, v);
+            iterFindPolyLines(v[VX], v[VY], lineList);
+            return true;
+        }
+    }
+
+    return false;
+}
 
 /**
- * \fixme DJS - We shouldn't need to go twice round the thing list here too
+ * Find all linedefs marked as belonging to a polyobject with the given tag
+ * and attempt to create a polyobject from them.
+ *
+ * @param tag               Line tag of linedefs to search for.
+ * @param crush             Whether the polyobject should crush things.
+ *
+ * @return                  Ptr to the newly created polyobj if successful.
  */
-void PO_Init(int lump)
+polyobj_t* PO_FindAndCreatePolyobj(int tag, boolean crush)
 {
-    int         i;
-    spawnspot_t *mt;
-    uint        polyIndex;
+#define PO_MAXPOLYLINES         32
+
+    uint            i;
+
+    for(i = 0; i < numlines; ++i)
+    {
+        line_t         *line;
+        xline_t        *xline;
+
+        line = P_ToPtr(DMU_LINE, i);
+        if(!line)
+            continue;
+
+        xline = P_ToXLine(line);
+
+        if(xline->special == PO_LINE_START && xline->arg1 == tag)
+        {
+            byte            seqType;
+            float           v[2];
+            line_t        **lineList;
+            uint            poIdx;
+
+            xline->special = 0;
+            xline->arg1 = 0;
+            PolyLineCount = 1;
+
+            P_GetFloatpv(line, DMU_VERTEX1_XY, PolyStart);
+            P_GetFloatpv(line, DMU_VERTEX2_XY, v);
+            if(!iterFindPolyLines(v[VX], v[VY], NULL))
+            {
+                Con_Error("spawnPolyobj:  Non-closed Polyobj located.\n");
+            }
+
+            lineList = malloc((PolyLineCount+1) * sizeof(line_t*));
+
+            lineList[0] = line; // Insert the first line.
+            iterFindPolyLines(v[VX], v[VY], lineList + 1);
+            lineList[PolyLineCount] = 0; // Terminate.
+
+            if(PO_CreatePolyobj(lineList, PolyLineCount, &poIdx))
+            {
+                free(lineList);
+
+                P_SetBool(DMU_POLYOBJ, poIdx, DMU_CRUSH, crush);
+                P_SetInt(DMU_POLYOBJ, poIdx, DMU_TAG, tag);
+
+                seqType = xline->arg3;
+                if(seqType < 0 || seqType >= SEQTYPE_NUMSEQ)
+                {
+                    seqType = 0;
+                }
+
+                P_SetInt(DMU_POLYOBJ, poIdx, DMU_SEQUENCE_TYPE, seqType);
+                return P_ToPtr(DMU_POLYOBJ, poIdx);
+            }
+
+            free(lineList);
+        }
+    }
+
+    /**
+     * Didn't find a polyobj through PO_LINE_START.
+     * We'll try another approach...
+     */
+    {
+    line_t         *polyLineList[PO_MAXPOLYLINES];
+    uint            lineCount = 0;
+    uint            j, psIndex, psIndexOld;
+
+    psIndex = 0;
+    for(j = 1; j < PO_MAXPOLYLINES; ++j)
+    {
+        psIndexOld = psIndex;
+        for(i = 0; i < numlines; ++i)
+        {
+            line_t         *line = P_ToPtr(DMU_LINE, i);
+            xline_t        *xline;
+
+            if(!line)
+                continue;
+
+            xline = P_ToXLine(line);
+            if(xline->special == PO_LINE_EXPLICIT && xline->arg1 == tag)
+            {
+                if(!xline->arg2)
+                {
+                    Con_Error
+                        ("spawnPolyobj:  Explicit line missing order number "
+                         "(probably %d) in poly %d.\n",
+                         j + 1, tag);
+                }
+
+                if(xline->arg2 == j)
+                {
+                    // Add this line to the list.
+                    polyLineList[psIndex] = line;
+                    lineCount++;
+                    psIndex++;
+                    if(psIndex > PO_MAXPOLYLINES)
+                    {
+                        Con_Error
+                            ("spawnPolyobj:  psIndex > PO_MAXPOLYLINES\n");
+                    }
+
+                    // Clear out any special.
+                    xline->special = 0;
+                    xline->arg1 = 0;
+                }
+            }
+        }
+
+        if(psIndex == psIndexOld)
+        {   // Check if an explicit line order has been skipped
+            // A line has been skipped if there are any more explicit
+            // lines with the current tag value
+            for(i = 0; i < numlines; ++i)
+            {
+                line_t         *line = P_ToPtr(DMU_LINE, i);
+                xline_t        *xline;
+
+                if(!line)
+                    continue;
+
+                xline = P_ToXLine(line);
+                if(xline->special == PO_LINE_EXPLICIT && xline->arg1 == tag)
+                {
+                    Con_Error
+                        ("spawnPolyobj:  Missing explicit line %d for poly %d\n",
+                         j, tag);
+                }
+            }
+        }
+    }
+
+    if(lineCount)
+    {
+        uint            poIdx;
+
+        if(PO_CreatePolyobj(polyLineList, lineCount, &poIdx))
+        {
+            line_t         *other;
+            xline_t        *xother;
+
+            P_SetBool(DMU_POLYOBJ, poIdx, DMU_CRUSH, crush);
+            P_SetInt(DMU_POLYOBJ, poIdx, DMU_TAG, tag);
+            P_SetInt(DMU_POLYOBJ, poIdx, DMU_SEQUENCE_TYPE,
+                     P_ToXLine(polyLineList[0])->arg4);
+
+            // Next, change the polyobjs first line to point to a mirror
+            // if it exists.
+            other = P_GetPtrp(P_GetPtrp(P_ToPtr(DMU_POLYOBJ, poIdx),
+                                        DMU_SEG_OF_POLYOBJ | 0),
+                              DMU_LINE);
+            xother = P_ToXLine(other);
+            xother->arg2 = xother->arg3;
+
+            return P_ToPtr(DMU_POLYOBJ, poIdx);
+        }
+    }
+    }
+
+    return NULL;
+
+#undef PO_MAXPOLYLINES
+}
+
+/**
+ * Initialize all polyobjects in the current map.
+ */
+void PO_InitForMap(void)
+{
+    uint            i;
+
+    Con_Message("PO_Init: Initializing polyobjects.\n");
 
     // ThrustMobj will handle polyobj <-> mobj interaction.
     PO_SetCallback(ThrustMobj);
 
-    polyIndex = 0; // Index polyobj number.
-
-    // Find the startSpot points, and spawn each polyobj
-    for(i = 0; i < numthings; ++i)
+    // Move all polyobjects to their start positions.
+    for(i = 0; i < numpolyobjs; ++i)
     {
-        mt = &things[i];
+        int                 j, tag;
+        spawnspot_t        *mt;
 
-        // 3001 = no crush, 3002 = crushing
-        if(mt->type == PO_SPAWN_TYPE || mt->type == PO_SPAWNCRUSH_TYPE)
-        {   // Polyobj StartSpot Pt.
-            SpawnPolyobj(polyIndex, mt->angle,
-                         (mt->type == PO_SPAWNCRUSH_TYPE));
-            P_SetFloatv(DMU_POLYOBJ, polyIndex, DMU_START_SPOT_XY, mt->pos);
-            polyIndex++;
-        }
-    }
+        tag = P_GetInt(DMU_POLYOBJ, i, DMU_TAG);
 
-    for(i = 0; i < numthings; ++i, mt++)
-    {
-        mt = &things[i];
-
-        if(mt->type == PO_ANCHOR_TYPE)
-        {   // Polyobj Anchor Pt.
-            TranslateToStartSpot(mt->angle, mt->pos[VX], mt->pos[VY]);
-        }
-    }
-
-    // Check for a startspot without an anchor point.
-    for(i = 0; i < DD_GetInteger(DD_POLYOBJ_COUNT); ++i)
-    {
-        if(!P_GetPtr(DMU_POLYOBJ, i, DMU_ORIGINAL_POINTS))
+        // Find the anchor associated with this polyobj and move there.
+        j = 0;
+        mt = NULL;
+        while(j < numthings && !mt)
         {
-            Con_Error
-                ("PO_Init: StartSpot located without an Anchor point: %d\n",
-                 P_GetInt(DMU_POLYOBJ, i, DMU_TAG));
+            if(things[j].type == PO_ANCHOR_TYPE && things[j].angle == tag)
+            {   // Polyobj Anchor Pt.
+                mt = &things[j];
+            }
+            else
+            {
+                j++;
+            }
         }
+
+        if(!mt)
+            Con_Error("PO_FindAndCreatePolyobj: Missing anchor for poly %i.",
+                      i);
+
+        translateToStartSpot(P_ToPtr(DMU_POLYOBJ, i),
+                             mt->pos[VX], mt->pos[VY]);
     }
 }
 

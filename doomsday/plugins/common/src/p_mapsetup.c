@@ -297,9 +297,9 @@ int P_SetupLevelWorker(void *ptr)
     P_InitMonsters();
     P_OpenWeapons();
 #endif
+
     P_SpawnThings();
 
-    // killough 3/26/98: Spawn icon landings:
 #if __JDOOM__
     if(gamemode == commercial)
         P_SpawnBrainTargets();
@@ -309,17 +309,7 @@ int P_SetupLevelWorker(void *ptr)
     P_CloseWeapons();
 #endif
 
-    /** DJS
-     * \todo This needs to be sorted out. R_SetupLevel should be called from the
-     * engine but in order to move it there we need to decide how polyobject
-     * init/setup is going to be handled.
-     */
 #if __JHEXEN__
-    // Initialize polyobjs.
-    Con_Message("Polyobject init\n");
-    // \fixme Custom map data format support
-    PO_Init(W_GetNumForName(levelId) + 1 /*ML_THINGS*/);   // Initialize the polyobjs
-
     Con_Message("Load ACS scripts\n");
     // \fixme Custom map data format support
     P_LoadACScripts(W_GetNumForName(levelId) + 11 /*ML_BEHAVIOR*/); // ACS object code

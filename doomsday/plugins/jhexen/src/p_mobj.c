@@ -1418,7 +1418,7 @@ void P_SpawnPlayer(spawnspot_t *mthing, int playernum)
     }
 }
 
-void P_SpawnMapThing(spawnspot_t *mthing)
+void P_SpawnMapThing(spawnspot_t *spot)
 {
     int         i;
     unsigned int spawnMask;
@@ -1430,13 +1430,23 @@ void P_SpawnMapThing(spawnspot_t *mthing)
         MTF_MAGE
     };
 
-    if(mthing->type == PO_ANCHOR_TYPE)
+    if(spot->type == PO_ANCHOR_TYPE)
     {   // Polyobj Anchor Pt.
         return;
     }
-    else if(mthing->type == PO_SPAWN_TYPE ||
-            mthing->type == PO_SPAWNCRUSH_TYPE)
+    else if(spot->type == PO_SPAWN_TYPE ||
+            spot->type == PO_SPAWNCRUSH_TYPE)
     {
+        // Polyobj StartSpot Pt.
+        int             tag = spot->angle;
+        polyobj_t      *po =
+            PO_FindAndCreatePolyobj(tag, (spot->type == PO_SPAWNCRUSH_TYPE));
+
+        if(!po)
+            Con_Error("P_SpawnMapThing: Failed creation of polyobj tagged %i.",
+                      tag);
+
+        P_SetFloatpv(po, DMU_START_SPOT_XY, spot->pos);
         return;
     }
 
@@ -1444,40 +1454,40 @@ void P_SpawnMapThing(spawnspot_t *mthing)
      * We know now that this is NOT a polyobject spawn thing, so we can now
      * translate the angle propetry.
      */
-    mthing->angle = ANG45 * (mthing->angle / 45);
+    spot->angle = ANG45 * (spot->angle / 45);
 
     // Count deathmatch start positions.
-    if(mthing->type == 11)
+    if(spot->type == 11)
     {
         if(deathmatch_p < &deathmatchstarts[MAX_DM_STARTS])
         {
-            memcpy(deathmatch_p, mthing, sizeof(*mthing));
+            memcpy(deathmatch_p, spot, sizeof(*spot));
             deathmatch_p++;
         }
         return;
     }
 
     // Check for player starts 1 to 4.
-    if(mthing->type <= 4)
+    if(spot->type <= 4)
     {
-        P_RegisterPlayerStart(mthing);
+        P_RegisterPlayerStart(spot);
         return;
     }
 
     // Check for player starts 5 to 8.
-    if(mthing->type >= 9100 && mthing->type <= 9103)
+    if(spot->type >= 9100 && spot->type <= 9103)
     {
-        mthing->type = 5 + mthing->type - 9100; // Translate to 5 - 8.
-        P_RegisterPlayerStart(mthing);
+        spot->type = 5 + spot->type - 9100; // Translate to 5 - 8.
+        P_RegisterPlayerStart(spot);
         return;
     }
 
-    if(mthing->type >= 1400 && mthing->type < 1410)
+    if(spot->type >= 1400 && spot->type < 1410)
     {
         sector_t* sector = P_GetPtrp(
-            R_PointInSubsector(mthing->pos[VX], mthing->pos[VY]),
+            R_PointInSubsector(spot->pos[VX], spot->pos[VY]),
             DMU_SECTOR);
-        P_ToXSector(sector)->seqType = mthing->type - 1400;
+        P_ToXSector(sector)->seqType = spot->type - 1400;
         return;
     }
 
@@ -1495,7 +1505,7 @@ void P_SpawnMapThing(spawnspot_t *mthing)
         spawnMask = MTF_GCOOP;
     }
 
-    if(!(mthing->flags & spawnMask))
+    if(!(spot->flags & spawnMask))
         return;
 
     // Check current skill with spawn flags.
@@ -1512,13 +1522,13 @@ void P_SpawnMapThing(spawnspot_t *mthing)
         spawnMask = MTF_NORMAL;
     }
 
-    if(!(mthing->flags & spawnMask))
+    if(!(spot->flags & spawnMask))
         return;
 
     // Check current character classes with spawn flags.
     if(IS_NETGAME == false)
     {   // Single player.
-        if((mthing->flags & classFlags[cfg.playerClass[0]]) == 0)
+        if((spot->flags & classFlags[cfg.playerClass[0]]) == 0)
         {   // Not for current class.
             return;
         }
@@ -1542,7 +1552,7 @@ void P_SpawnMapThing(spawnspot_t *mthing)
             spawnMask |= MTF_FIGHTER | MTF_CLERIC | MTF_MAGE;
         }
 
-        if((mthing->flags & spawnMask) == 0)
+        if((spot->flags & spawnMask) == 0)
         {
             return;
         }
@@ -1551,7 +1561,7 @@ void P_SpawnMapThing(spawnspot_t *mthing)
     // Find which type to spawn.
     for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
     {
-        if(mthing->type == mobjinfo[i].doomednum)
+        if(spot->type == mobjinfo[i].doomednum)
         {
             break;
         }
@@ -1560,7 +1570,7 @@ void P_SpawnMapThing(spawnspot_t *mthing)
     if(i == Get(DD_NUMMOBJTYPES))
     {   // Can't find thing type.
         Con_Error("P_SpawnMapThing: Unknown type %i at (%g, %g)",
-                  mthing->type, mthing->pos[VX], mthing->pos[VY]);
+                  spot->type, spot->pos[VX], spot->pos[VY]);
     }
 
     // Clients only spawn local objects.
@@ -1582,8 +1592,8 @@ void P_SpawnMapThing(spawnspot_t *mthing)
         return;
     }
 
-    pos[VX] = mthing->pos[VX];
-    pos[VY] = mthing->pos[VY];
+    pos[VX] = spot->pos[VX];
+    pos[VY] = spot->pos[VY];
 
     if(mobjinfo[i].flags & MF_SPAWNCEILING)
     {
@@ -1595,7 +1605,7 @@ void P_SpawnMapThing(spawnspot_t *mthing)
     }
     else if(mobjinfo[i].flags2 & MF2_FLOATBOB)
     {
-        pos[VZ] = mthing->height;
+        pos[VZ] = spot->height;
     }
     else
     {
@@ -1615,24 +1625,24 @@ void P_SpawnMapThing(spawnspot_t *mthing)
     mobj = P_SpawnMobj3fv(i, pos);
     if(pos[VZ] == ONFLOORZ)
     {
-        mobj->pos[VZ] += mthing->height;
+        mobj->pos[VZ] += spot->height;
     }
     else if(pos[VZ] == ONCEILINGZ)
     {
-        mobj->pos[VZ] -= mthing->height;
+        mobj->pos[VZ] -= spot->height;
     }
 
-    mobj->tid = mthing->tid;
-    mobj->special = mthing->special;
-    mobj->args[0] = mthing->arg1;
-    mobj->args[1] = mthing->arg2;
-    mobj->args[2] = mthing->arg3;
-    mobj->args[3] = mthing->arg4;
-    mobj->args[4] = mthing->arg5;
+    mobj->tid = spot->tid;
+    mobj->special = spot->special;
+    mobj->args[0] = spot->arg1;
+    mobj->args[1] = spot->arg2;
+    mobj->args[2] = spot->arg3;
+    mobj->args[3] = spot->arg4;
+    mobj->args[4] = spot->arg5;
     if(mobj->flags2 & MF2_FLOATBOB)
     {   // Seed random starting index for bobbing motion.
         mobj->health = P_Random();
-        mobj->special1 = FLT2FIX(mthing->height);
+        mobj->special1 = FLT2FIX(spot->height);
     }
 
     if(mobj->tics > 0)
@@ -1640,14 +1650,14 @@ void P_SpawnMapThing(spawnspot_t *mthing)
         mobj->tics = 1 + (P_Random() % mobj->tics);
     }
 
-    mobj->angle = mthing->angle;
+    mobj->angle = spot->angle;
     mobj->visangle = mobj->angle >> 16; // "angle-servo"; smooth actor turning
-    if(mthing->flags & MTF_AMBUSH)
+    if(spot->flags & MTF_AMBUSH)
     {
         mobj->flags |= MF_AMBUSH;
     }
 
-    if(mthing->flags & MTF_DORMANT)
+    if(spot->flags & MTF_DORMANT)
     {
         mobj->flags2 |= MF2_DORMANT;
         if(mobj->type == MT_ICEGUY)

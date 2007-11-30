@@ -93,8 +93,10 @@ enum {
 extern polyobj_t *polyobjs; // List of all poly-objects on the level.
 extern int po_NumPolyobjs;
 
-void        PO_Init(int lump);
+void        PO_InitForMap(void);
 boolean     PO_Busy(int polyobj);
+
+polyobj_t  *PO_FindAndCreatePolyobj(int tag, boolean crush);
 
 void        T_PolyDoor(polydoor_t *pd);
 void        T_RotatePoly(polyevent_t *pe);
