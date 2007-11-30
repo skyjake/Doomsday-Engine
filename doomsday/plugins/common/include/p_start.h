@@ -35,8 +35,15 @@
 # include "xddefs.h"
 #endif
 
+#if __JHERETIC__
+extern spawnspot_t *maceSpots;
+extern int maceSpotCount;
+extern spawnspot_t *bossSpots;
+extern int bossSpotCount;
+#endif
+
 extern spawnspot_t *playerstarts;
-extern int      numPlayerStarts;
+extern int numPlayerStarts;
 
 void            P_Init(void);
 int             P_RegisterPlayerStart(spawnspot_t *mthing);

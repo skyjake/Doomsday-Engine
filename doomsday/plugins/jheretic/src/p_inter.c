@@ -61,10 +61,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct macespot_s{
-    float       pos[2];
-} macespot_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -87,9 +83,6 @@ int maxammo[NUM_AMMO_TYPES] = {
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int maceSpotCount;
-static macespot_t maceSpots[MAX_MACE_SPOTS];
 
 static int GetWeaponAmmo[NUM_WEAPON_TYPES] = {
     0, // staff
@@ -1415,65 +1408,4 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             P_SetMobjState(target, target->info->seestate);
         }
     }
-}
-
-void P_OpenWeapons(void)
-{
-    maceSpotCount = 0;
-}
-
-void P_AddMaceSpot(spawnspot_t * mthing)
-{
-    //// \fixme Remove fixed limits
-    if(maceSpotCount == MAX_MACE_SPOTS)
-    {
-        Con_Error("Too many mace spots.");
-    }
-
-    maceSpots[maceSpotCount].pos[VX] = mthing->pos[VX];
-    maceSpots[maceSpotCount].pos[VY] = mthing->pos[VY];
-    maceSpotCount++;
-}
-
-/**
- * Chooses the next spot to place the mace.
- */
-void P_RepositionMace(mobj_t *mo)
-{
-    int         spot;
-    subsector_t *ss;
-
-    P_UnsetMobjPosition(mo);
-    spot = P_Random() % maceSpotCount;
-    mo->pos[VX] = maceSpots[spot].pos[VX];
-    mo->pos[VY] = maceSpots[spot].pos[VY];
-    ss = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
-
-    mo->floorz = P_GetFloatp(ss, DMU_CEILING_HEIGHT);
-    mo->pos[VZ] = mo->floorz;
-
-    mo->ceilingz = P_GetFloatp(ss, DMU_CEILING_HEIGHT);
-    P_SetMobjPosition(mo);
-}
-
-/**
- * Called at level load after things are loaded.
- */
-void P_CloseWeapons(void)
-{
-    int     spot;
-
-    if(!maceSpotCount)
-    {   // No maces placed.
-        return;
-    }
-
-    if(!deathmatch && P_Random() < 64)
-    {   // Sometimes doesn't show up if not in deathmatch.
-        return;
-    }
-
-    spot = P_Random() % maceSpotCount;
-    P_SpawnMobj3f(MT_WMACE,
-                  maceSpots[spot].pos[VX], maceSpots[spot].pos[VY], ONFLOORZ);
 }

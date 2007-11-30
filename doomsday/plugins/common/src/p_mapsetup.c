@@ -258,6 +258,8 @@ int P_SetupLevelWorker(void *ptr)
         Con_Error("P_SetupLevel: Failed loading map \"%s\".\n",levelId);
     }
 
+    P_SpawnThings();
+
     /**
      * First job is to zero unused flags if MF_INVALID is set.
      *
@@ -294,19 +296,6 @@ int P_SetupLevelWorker(void *ptr)
 
 #if __JHERETIC__
     P_InitAmbientSound();
-    P_InitMonsters();
-    P_OpenWeapons();
-#endif
-
-    P_SpawnThings();
-
-#if __JDOOM__
-    if(gamemode == commercial)
-        P_SpawnBrainTargets();
-#endif
-
-#if __JHERETIC__
-    P_CloseWeapons();
 #endif
 
 #if __JHEXEN__

@@ -121,7 +121,6 @@ extern int      TimerGame;         // tic countdown for deathmatch
 
 #define FLAME_THROWER_TICS  10*35
 #define MAGIC_JUNK          1234
-#define MAX_MACE_SPOTS      8
 
 #define USE_GWND_AMMO_1 1
 #define USE_GWND_AMMO_2 1
@@ -136,8 +135,6 @@ extern int      TimerGame;         // tic countdown for deathmatch
 #define USE_MACE_AMMO_1 1
 #define USE_MACE_AMMO_2 5
 
-void            P_OpenWeapons(void);
-void            P_CloseWeapons(void);
 void            P_AddMaceSpot(spawnspot_t *mthing);
 void            P_RepositionMace(mobj_t *mo);
 void            P_SetPsprite(player_t *player, int position, statenum_t stnum);
@@ -217,7 +214,6 @@ void        P_SpawnPlayer(spawnspot_t *mthing, int plrnum);
 // ***** P_ENEMY *****
 
 void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
-void        P_InitMonsters(void);
 void        P_AddBossSpot(float x, float y, angle_t angle);
 void        P_Massacre(void);
 void        P_DSparilTeleport(mobj_t *actor);

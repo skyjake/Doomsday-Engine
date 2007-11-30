@@ -89,6 +89,13 @@ int      numPlayerStarts = 0;
 
 spawnspot_t *things;
 
+#if __JHERETIC__
+int maceSpotCount;
+spawnspot_t *maceSpots;
+int bossSpotCount;
+spawnspot_t *bossSpots;
+#endif
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int numPlayerStartsMax = 0;
@@ -341,6 +348,24 @@ boolean P_FuzzySpawn(spawnspot_t *spot, int playernum, boolean doTeleSpark)
     return false;
 }
 
+#if __JHERETIC__
+void P_AddMaceSpot(spawnspot_t *spot)
+{
+    maceSpots =
+        Z_Realloc(maceSpots, sizeof(*spot) * ++maceSpotCount, PU_LEVEL);
+    memcpy(&maceSpots[maceSpotCount-1], spot, sizeof(*spot));
+}
+
+void P_AddBossSpot(float x, float y, angle_t angle)
+{
+    bossSpots = Z_Realloc(bossSpots, sizeof(spawnspot_t) * ++bossSpotCount,
+                          PU_LEVEL);
+    bossSpots[bossSpotCount-1].pos[VX] = x;
+    bossSpots[bossSpotCount-1].pos[VY] = y;
+    bossSpots[bossSpotCount-1].angle = angle;
+}
+#endif
+
 /**
  * Spawns all THINGS that belong in the map.
  *
@@ -355,6 +380,12 @@ void P_SpawnThings(void)
 #elif __JHEXEN__
     int         playerCount;
     int         deathSpotsCount;
+#endif
+
+#if __JHERETIC__
+    maceSpotCount = 0;
+    maceSpots = NULL;
+    bossSpotCount = 0;
 #endif
 
     for(i = 0; i < numthings; ++i)
@@ -388,26 +419,46 @@ void P_SpawnThings(void)
         P_SpawnMapThing(th);
     }
 
+#if __JDOOM__
+    if(gamemode == commercial)
+        P_SpawnBrainTargets();
+#endif
+
+#if __JHERETIC__
+    if(maceSpotCount)
+    {
+        int     spot;
+
+        // Sometimes doesn't show up if not in deathmatch.
+        if(!(!deathmatch && P_Random() < 64))
+        {
+            spot = P_Random() % maceSpotCount;
+            P_SpawnMobj3f(MT_WMACE,
+                          maceSpots[spot].pos[VX], maceSpots[spot].pos[VY], ONFLOORZ);
+        }
+    }
+#endif
+
 #if __JHEXEN__
     // \fixme This stuff should be moved!
     P_CreateTIDList();
     P_InitCreatureCorpseQueue(false); // false = do NOT scan for corpses
 
-    if(!deathmatch)
-        return; // Don't need to check deathmatch spots.
-
-    playerCount = 0;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    if(deathmatch)
     {
-        if(players[i].plr->ingame)
-            playerCount++;
-    }
+        playerCount = 0;
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            if(players[i].plr->ingame)
+                playerCount++;
+        }
 
-    deathSpotsCount = deathmatch_p - deathmatchstarts;
-    if(deathSpotsCount < playerCount)
-    {
-        Con_Error("P_LoadThings: Player count (%d) exceeds deathmatch "
-                  "spots (%d)", playerCount, deathSpotsCount);
+        deathSpotsCount = deathmatch_p - deathmatchstarts;
+        if(deathSpotsCount < playerCount)
+        {
+            Con_Error("P_LoadThings: Player count (%d) exceeds deathmatch "
+                      "spots (%d)", playerCount, deathSpotsCount);
+        }
     }
 
     // Initialize polyobjs.

@@ -63,8 +63,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_BOSS_SPOTS      8
-
 #define MONS_LOOK_RANGE     (20*64)
 #define MONS_LOOK_LIMIT     64
 
@@ -88,11 +86,6 @@ typedef enum {
     DI_NODIR,
     NUMDIRS
 } dirtype_t;
-
-typedef struct bossspot_s {
-    float       pos[2];
-    angle_t     angle;
-} bossspot_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -132,31 +125,9 @@ int bodyqueslot;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int bossSpotCount;
-static bossspot_t bossSpots[MAX_BOSS_SPOTS];
-
 static float dropoffDelta[2], floorz;
 
 // CODE --------------------------------------------------------------------
-
-/**
- * Called at level load.
- */
-void P_InitMonsters(void)
-{
-    bossSpotCount = 0;
-}
-
-void P_AddBossSpot(float x, float y, angle_t angle)
-{
-    if(bossSpotCount == MAX_BOSS_SPOTS)
-        Con_Error("Too many boss spots.");
-
-    bossSpots[bossSpotCount].pos[VX] = x;
-    bossSpots[bossSpotCount].pos[VY] = y;
-    bossSpots[bossSpotCount].angle = angle;
-    bossSpotCount++;
-}
 
 /**
  * Wakes up all monsters in this sector

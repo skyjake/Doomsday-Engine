@@ -1428,6 +1428,27 @@ void P_SpawnMapThing(spawnspot_t *th)
     mobj->spawnspot.flags = th->flags;
 }
 
+/**
+ * Chooses the next spot to place the mace.
+ */
+void P_RepositionMace(mobj_t *mo)
+{
+    int         spot;
+    subsector_t *ss;
+
+    P_UnsetMobjPosition(mo);
+    spot = P_Random() % maceSpotCount;
+    mo->pos[VX] = maceSpots[spot].pos[VX];
+    mo->pos[VY] = maceSpots[spot].pos[VY];
+    ss = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
+
+    mo->floorz = P_GetFloatp(ss, DMU_CEILING_HEIGHT);
+    mo->pos[VZ] = mo->floorz;
+
+    mo->ceilingz = P_GetFloatp(ss, DMU_CEILING_HEIGHT);
+    P_SetMobjPosition(mo);
+}
+
 void P_SpawnPuff(float x, float y, float z)
 {
     mobj_t     *puff;
