@@ -44,9 +44,9 @@ extern mobj_t *PuffSpawned;
 extern mobj_t *BlockingMobj;
 #endif
 
-float           P_GetGravity(void);
 
-boolean         P_CheckSides(mobj_t* actor, float x, float y);
+void            P_UnsetMobjPosition(mobj_t *mo);
+void            P_SetMobjPosition(mobj_t *mo);
 
 boolean         P_CheckPosition2f(mobj_t *thing, float x, float y);
 boolean         P_CheckPosition3f(mobj_t *thing, float x, float y, float z);
@@ -76,4 +76,7 @@ float           P_AimLineAttack(mobj_t *t1, angle_t angle, float distance);
 void            P_LineAttack(mobj_t *t1, angle_t angle, float distance,
                              float slope, int damage);
 
+float           P_GetGravity(void);
+
+boolean         P_CheckSides(mobj_t* actor, float x, float y);
 #endif

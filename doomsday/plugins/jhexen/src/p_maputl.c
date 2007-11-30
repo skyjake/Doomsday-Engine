@@ -77,28 +77,6 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index);
 // CODE --------------------------------------------------------------------
 
 /**
- * Unlinks a thing from block map and sectors
- */
-void P_UnsetMobjPosition(mobj_t *thing)
-{
-    P_UnlinkMobj(thing);
-}
-
-/**
- * Links a thing into both a block and a subsector based on it's x y
- * Sets thing->subsector properly
- *
- */
-void P_SetMobjPosition(mobj_t *thing)
-{
-    byte            flags =
-        (!(thing->flags & MF_NOSECTOR)? DDLINK_SECTOR : 0) |
-        (!(thing->flags & MF_NOBLOCKMAP)? DDLINK_BLOCKMAP : 0);
-
-    P_LinkMobj(thing, flags);
-}
-
-/**
  * Searches though the surrounding mapblocks for monsters/players within the
  * specified distance (in MAPBLOCKUNITS).
  */

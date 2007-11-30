@@ -57,33 +57,6 @@ extern mobj_t *tmthing;
 // CODE --------------------------------------------------------------------
 
 /**
- * Unlinks a thing from block map and sectors.
- * On each position change, BLOCKMAP and other lookups maintaining lists to
- * things inside these structures need to be updated.
- */
-void P_UnsetMobjPosition(mobj_t *thing)
-{
-    P_UnlinkMobj(thing);
-}
-
-/**
- * Links a thing into both a block and a subsector based on it's x,y.
- * Sets thing->subsector properly.
- */
-void P_SetMobjPosition(mobj_t *thing)
-{
-    int         flags = 0;
-
-    if(!(thing->flags & MF_NOSECTOR))
-        flags |= DDLINK_SECTOR;
-
-    if(!(thing->flags & MF_NOBLOCKMAP))
-        flags |= DDLINK_BLOCKMAP;
-
-    P_LinkMobj(thing, flags);
-}
-
-/**
  * Apply "torque" to objects hanging off of ledges, so that they fall off.
  * It's not really torque, since Doom has no concept of rotation, but it's
  * a convincing effect which avoids anomalies such as lifeless objects

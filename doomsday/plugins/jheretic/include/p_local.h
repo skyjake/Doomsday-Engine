@@ -225,9 +225,6 @@ void        P_DSparilTeleport(mobj_t *actor);
 #define openbottom          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define lowfloor            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-void            P_UnsetMobjPosition(mobj_t *thing);
-void            P_SetMobjPosition(mobj_t *thing);
-
 // ***** P_SETUP *****
 
 /*extern byte *rejectmatrix;                // for fast sight rejection

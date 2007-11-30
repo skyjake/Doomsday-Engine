@@ -53,6 +53,7 @@
 #include "jheretic.h"
 
 #include "p_saveg.h"
+#include "p_map.h"
 #include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------

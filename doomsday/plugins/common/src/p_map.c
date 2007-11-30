@@ -177,6 +177,30 @@ static int tmunstuck; // $unstuck: used to check unsticking
 
 // CODE --------------------------------------------------------------------
 
+/**
+ * Unlinks a mobj from the world so that it can be moved.
+ */
+void P_UnsetMobjPosition(mobj_t *mo)
+{
+    P_UnlinkMobj(mo);
+}
+
+/**
+ * Called after a move to link the mobj back into the world.
+ */
+void P_SetMobjPosition(mobj_t *mo)
+{
+    int         flags = 0;
+
+    if(!(mo->flags & MF_NOSECTOR))
+        flags |= DDLINK_SECTOR;
+
+    if(!(mo->flags & MF_NOBLOCKMAP))
+        flags |= DDLINK_BLOCKMAP;
+
+    P_LinkMobj(mo, flags);
+}
+
 float P_GetGravity(void)
 {
     if(IS_NETGAME && cfg.netGravity != -1)

@@ -35,6 +35,7 @@
 
 #include "jdoom.h"
 
+#include "p_map.h"
 #include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
