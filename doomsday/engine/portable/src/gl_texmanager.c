@@ -3013,8 +3013,11 @@ void GL_TexReset(void)
  */
 void GL_DoUpdateTexGamma(cvar_t *unused)
 {
-    GL_TexReset();
-    LoadPalette();
+    if(texInited)
+    {
+        GL_TexReset();
+        LoadPalette();
+    }
 
     Con_Printf("Gamma correction set to %f.\n", texGamma);
 }
