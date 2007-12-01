@@ -817,9 +817,19 @@ DEFCC(CCmdCheatGive)
     if(argc == 3)
     {
         target = atoi(argv[2]);
-        if(target < 0 || target >= MAXPLAYERS || !players[target].plr->ingame)
+        if(target < 0 || target >= MAXPLAYERS)
             return false;
     }
+
+    if(G_GetGameState() != GS_LEVEL)
+    {
+        Con_Printf("Can only \"give\" when in a game!\n");
+        return true;
+    }
+
+    if(!players[target].plr->ingame)
+        return; // Can't give to a player who's not playing
+
     if(argc != 2 && argc != 3)
         tellUsage = true;
     else if(!strnicmp(argv[1], "weapons", 1))

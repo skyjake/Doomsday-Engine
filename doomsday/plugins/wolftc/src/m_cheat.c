@@ -693,13 +693,24 @@ DEFCC(CCmdCheatGive)
         Con_Printf("Example: 'give arw' corresponds the cheat IDFA.\n");
         return true;
     }
+
     if(argc == 3)
     {
         i = atoi(argv[2]);
-        if(i < 0 || i >= MAXPLAYERS || !players[i].plr->ingame)
+        if(i < 0 || i >= MAXPLAYERS)
             return false;
         plyr = &players[i];
     }
+
+    if(G_GetGameState() != GS_LEVEL)
+    {
+        Con_Printf("Can only \"give\" when in a game!\n");
+        return true;
+    }
+
+    if(!plyr->plr->ingame)
+        return; // Can't give to a player who's not playing
+
     strcpy(buf, argv[1]);       // Stuff is the 2nd arg.
     strlwr(buf);
     for(i = 0; buf[i]; i++)
