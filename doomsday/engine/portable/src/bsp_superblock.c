@@ -205,7 +205,7 @@ void BSP_IncSuperBlockHEdgeCounts(superblock_t *superblock,
     } while(superblock != NULL);
 }
 
-static void makeIntersection(cutlist_t *cutList, mvertex_t *vert,
+static void makeIntersection(cutlist_t *cutList, vertex_t *vert,
                              hedge_t *part, boolean selfRef)
 {
     intersection_t *cut = BSP_CutListFindIntersection(cutList, vert);
@@ -240,7 +240,7 @@ void BSP_DivideOneHEdge(hedge_t *cur, hedge_t *part, superblock_t *leftList,
     double      x, y;
     double      a, b;
     boolean     selfRef =
-        (cur->linedef? (cur->linedef->mlFlags & MLF_SELFREF) : false);
+        (cur->linedef? (cur->linedef->buildData.mlFlags & MLF_SELFREF) : false);
 
     // Get state of lines' relation to each other.
     a = PerpDist(part, cur->pSX, cur->pSY);
@@ -362,9 +362,9 @@ void BSP_BuildEdgeBetweenIntersections(hedge_t *part, intersection_t *start,
     // Leave 'linedef' field as NULL as these are not linedef-linked.
     // Leave 'side' as zero too.
     (*right) = BSP_CreateHEdge(NULL, part->linedef, start->vertex,
-                             end->vertex, start->after, false);
+                               end->vertex, start->after, false);
     (*left)  = BSP_CreateHEdge(NULL, part->linedef, end->vertex,
-                             start->vertex, start->after, false);
+                               start->vertex, start->after, false);
 
     // Twin the half-edges together.
     (*right)->twin = *left;
@@ -719,24 +719,39 @@ else
     return best;
 }
 
-static void findLimitWorker(superblock_t *block, int *bbox)
+static void findLimitWorker(superblock_t *block, float *bbox)
 {
     uint        num;
     hedge_t    *cur;
 
     for(cur = block->hEdges; cur; cur = cur->next)
     {
-        double      x1 = cur->v[0]->V_pos[VX];
-        double      y1 = cur->v[0]->V_pos[VY];
-        double      x2 = cur->v[1]->V_pos[VX];
-        double      y2 = cur->v[1]->V_pos[VY];
-        int         lx = (int) floor(MIN_OF(x1, x2));
-        int         ly = (int) floor(MIN_OF(y1, y2));
-        int         hx = (int) ceil(MAX_OF(x1, x2));
-        int         hy = (int) ceil(MAX_OF(y1, y2));
+        double      x1 = cur->v[0]->buildData.pos[VX];
+        double      y1 = cur->v[0]->buildData.pos[VY];
+        double      x2 = cur->v[1]->buildData.pos[VX];
+        double      y2 = cur->v[1]->buildData.pos[VY];
+        float       lx = (float) MIN_OF(x1, x2);
+        float       ly = (float) MIN_OF(y1, y2);
+        float       hx = (float) MAX_OF(x1, x2);
+        float       hy = (float) MAX_OF(y1, y2);
 
-        M_AddToBox(bbox, lx, ly);
-        M_AddToBox(bbox, hx, hy);
+        if(lx < bbox[BOXLEFT])
+            bbox[BOXLEFT] = lx;
+        else if(lx > bbox[BOXRIGHT])
+            bbox[BOXRIGHT] = lx;
+        if(ly < bbox[BOXBOTTOM])
+            bbox[BOXBOTTOM] = ly;
+        else if(ly > bbox[BOXTOP])
+            bbox[BOXTOP] = ly;
+
+        if(hx < bbox[BOXLEFT])
+            bbox[BOXLEFT] = hx;
+        else if(hx > bbox[BOXRIGHT])
+            bbox[BOXRIGHT] = hx;
+        if(hy < bbox[BOXBOTTOM])
+            bbox[BOXBOTTOM] = hy;
+        else if(hy > bbox[BOXTOP])
+            bbox[BOXTOP] = hy;
     }
 
     // Recursively handle sub-blocks.
@@ -747,20 +762,21 @@ static void findLimitWorker(superblock_t *block, int *bbox)
     }
 }
 
-static void findLimits(superblock_t *hEdgeList, int *bbox)
+static void findLimits(superblock_t *hEdgeList, float *bbox)
 {
-    M_ClearBox(bbox);
+    bbox[BOXTOP] = bbox[BOXRIGHT] = DDMINFLOAT;
+    bbox[BOXBOTTOM] = bbox[BOXLEFT] = DDMAXFLOAT;
     findLimitWorker(hEdgeList, bbox);
 }
 
 /**
  * Find the extremes of a box containing all half-edges.
  */
-void BSP_FindNodeBounds(mnode_t *node, superblock_t *hEdgesRightList,
+void BSP_FindNodeBounds(node_t *node, superblock_t *hEdgesRightList,
                         superblock_t *hEdgesLeftList)
 {
-    findLimits(hEdgesLeftList, &node->bBox[LEFT][0]);
-    findLimits(hEdgesRightList, &node->bBox[RIGHT][0]);
+    findLimits(hEdgesLeftList, &node->bbox[LEFT][0]);
+    findLimits(hEdgesRightList, &node->bbox[RIGHT][0]);
 }
 
 /**
@@ -817,9 +833,9 @@ void BSP_PrintSuperblockHEdges(superblock_t *superblock)
     {
         Con_Message("Build: %s %p sector=%d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
                     (hEdge->linedef? "NORM" : "MINI"), hEdge,
-                    hEdge->sector->index,
-                    hEdge->v[0]->V_pos[VX], hEdge->v[0]->V_pos[VY],
-                    hEdge->v[1]->V_pos[VX], hEdge->v[1]->V_pos[VY]);
+                    hEdge->sector->buildData.index,
+                    hEdge->v[0]->buildData.pos[VX], hEdge->v[0]->buildData.pos[VY],
+                    hEdge->v[1]->buildData.pos[VX], hEdge->v[1]->buildData.pos[VY]);
     }
 
     for(num = 0; num < 2; ++num)

@@ -254,7 +254,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
     mobj_t     *mo = &cmo->mo;
     boolean     onFloor = false, inCeiling = false;
 
-    if(mo->pos[VZ] == DDMININT)
+    if(mo->pos[VZ] == DDMINFLOAT)
     {
         // Make the mobj stick to the floor.
         cmo->flags |= CLMF_STICK_FLOOR;
@@ -264,7 +264,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
         mo->pos[VZ] = mo->floorz;
     }
 
-    if(mo->pos[VZ] == DDMAXINT)
+    if(mo->pos[VZ] == DDMAXFLOAT)
     {
         // Make the mobj stick to the ceiling.
         cmo->flags |= CLMF_STICK_CEILING;
@@ -962,13 +962,13 @@ void Cl_ReadMobjDelta2(boolean skip)
     // When these flags are set, the normal Z coord is not included.
     if(moreFlags & MDFE_Z_FLOOR)
     {
-        d->pos[VZ] = DDMININT;
+        d->pos[VZ] = DDMINFLOAT;
         if(cmo)
             cmo->flags |= CLMF_KNOWN_Z;
     }
     if(moreFlags & MDFE_Z_CEILING)
     {
-        d->pos[VZ] = DDMAXINT;
+        d->pos[VZ] = DDMAXFLOAT;
         if(cmo)
             cmo->flags |= CLMF_KNOWN_Z;
     }

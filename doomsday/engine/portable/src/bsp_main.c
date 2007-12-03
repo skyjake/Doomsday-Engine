@@ -77,12 +77,12 @@ void BSP_Register(void)
  *
  * @return              The list of created half-edges.
  */
-static superblock_t *createInitialHEdges(void)
+static superblock_t *createInitialHEdges(editmap_t *src)
 {
-    int         i;
-    int         bw, bh;
-    hedge_t    *back, *front;
-    superblock_t *block;
+    uint            i;
+    int             bw, bh;
+    hedge_t        *back, *front;
+    superblock_t   *block;
 
     block = BSP_SuperBlockCreate();
 
@@ -92,36 +92,37 @@ static superblock_t *createInitialHEdges(void)
     block->y2 = block->y1 + 128 * M_CeilPow2(bh);
 
     // Step through linedefs and get side numbers.
-    for(i = 0; i < numLinedefs; ++i)
+    for(i = 0; i < src->numlines; ++i)
     {
-        mlinedef_t *line = LookupLinedef(i);
+        line_t         *line = src->lines[i];
 
         front = back = NULL;
 
-        // Ignore zero-length and overlapping lines.
-        if(!(line->mlFlags & MLF_ZEROLENGTH) && !line->overlap)
+        // Ignore zero-length, overlapping and polyobj lines.
+        if(!(line->buildData.mlFlags & MLF_ZEROLENGTH) && !line->buildData.overlap &&
+           !(line->buildData.mlFlags & MLF_POLYOBJ))
         {
             // Check for Humungously long lines.
-            if(ABS(line->v[0]->V_pos[VX] - line->v[1]->V_pos[VX]) >= 10000 ||
-               ABS(line->v[0]->V_pos[VY] - line->v[1]->V_pos[VY]) >= 10000)
+            if(ABS(line->v[0]->buildData.pos[VX] - line->v[1]->buildData.pos[VX]) >= 10000 ||
+               ABS(line->v[0]->buildData.pos[VY] - line->v[1]->buildData.pos[VY]) >= 10000)
             {
                 if(3000 >=
-                   M_Length(line->v[0]->V_pos[VX] - line->v[1]->V_pos[VX],
-                            line->v[0]->V_pos[VY] - line->v[1]->V_pos[VY]))
+                   M_Length(line->v[0]->buildData.pos[VX] - line->v[1]->buildData.pos[VX],
+                            line->v[0]->buildData.pos[VY] - line->v[1]->buildData.pos[VY]))
                 {
                     Con_Message("Linedef #%d is VERY long, it may cause problems\n",
-                                line->index);
+                                line->buildData.index);
                 }
             }
 
             if(line->sides[FRONT])
             {
-                msidedef_t     *side = line->sides[FRONT];
+                side_t     *side = line->sides[FRONT];
 
                 // Check for a bad sidedef.
                 if(!side->sector)
                     Con_Message("Bad sidedef on linedef #%d (Z_CheckHeap error)\n",
-                                line->index);
+                                line->buildData.index);
 
                 front = BSP_CreateHEdge(line, line, line->v[0], line->v[1],
                                         side->sector, false);
@@ -129,16 +130,16 @@ static superblock_t *createInitialHEdges(void)
             }
             else
                 Con_Message("Linedef #%d has no front sidedef!\n",
-                            line->index);
+                            line->buildData.index);
 
             if(line->sides[BACK])
             {
-                msidedef_t     *side = line->sides[BACK];
+                side_t     *side = line->sides[BACK];
 
                 // Check for a bad sidedef.
                 if(!side->sector)
                     Con_Message("Bad sidedef on linedef #%d (Z_CheckHeap error)\n",
-                                line->index);
+                                line->buildData.index);
 
                 back = BSP_CreateHEdge(line, line, line->v[1], line->v[0],
                                        side->sector, true);
@@ -155,21 +156,21 @@ static superblock_t *createInitialHEdges(void)
             }
             else
             {
-                if(line->mlFlags & MLF_TWOSIDED)
+                if(line->buildData.mlFlags & MLF_TWOSIDED)
                 {
                     Con_Message("Linedef #%d is 2s but has no back sidedef\n",
-                                line->index);
-                    line->mlFlags &= ~MLF_TWOSIDED;
+                                line->buildData.index);
+                    line->buildData.mlFlags &= ~MLF_TWOSIDED;
                 }
 
                 // Handle the 'One-Sided Window' trick.
-                if(line->windowEffect)
+                if(line->buildData.windowEffect)
                 {
                     hedge_t    *other;
 
                     other = BSP_CreateHEdge(front->linedef, line,
                                             line->v[1], line->v[0],
-                                            line->windowEffect, true);
+                                            line->buildData.windowEffect, true);
 
                     BSP_AddHEdgeToSuperBlock(block, other);
 
@@ -183,10 +184,10 @@ static superblock_t *createInitialHEdges(void)
 
         // \todo edge tips should be created when half-edges are created.
         {
-        double x1 = line->v[0]->V_pos[VX];
-        double y1 = line->v[0]->V_pos[VY];
-        double x2 = line->v[1]->V_pos[VX];
-        double y2 = line->v[1]->V_pos[VY];
+        double x1 = line->v[0]->buildData.pos[VX];
+        double y1 = line->v[0]->buildData.pos[VY];
+        double x2 = line->v[1]->buildData.pos[VX];
+        double y2 = line->v[1]->buildData.pos[VY];
 
         BSP_CreateVertexEdgeTip(line->v[0], x2 - x1, y2 - y1, back, front);
         BSP_CreateVertexEdgeTip(line->v[1], x1 - x2, y1 - y2, front, back);
@@ -197,7 +198,7 @@ static superblock_t *createInitialHEdges(void)
 #if _DEBUG
 for(i = 0; i < numVertices; ++i)
 {
-    mvertex_t *vert = LookupVertex(i);
+    vertex_t *vert = LookupVertex(i);
     edgetip_t *tip;
 
     Con_Message("EdgeTips for vertex %d:\n", i);
@@ -220,18 +221,17 @@ for(i = 0; i < numVertices; ++i)
  * @param map           The map to build the BSP for.
  * @return              @c true, if completed successfully.
  */
-boolean BSP_Build(gamemap_t *map)
+boolean BSP_Build(gamemap_t *dest, editmap_t *src)
 {
-    mnode_t    *rootNode;
-    msubsec_t  *rootSub;
+    subsector_t *rootSub;
     superblock_t *hEdgeList;
     boolean     builtOK;
     uint        startTime;
 
     if(verbose >= 1)
     {
-        Con_Message("BSP_Build: Processing map \"%s\" using tunable "
-                    "factor of %d...\n", map->levelid, bspFactor);
+        Con_Message("BSP_Build: Processing map using tunable "
+                    "factor of %d...\n", bspFactor);
     }
 
     // It begins...
@@ -240,20 +240,19 @@ boolean BSP_Build(gamemap_t *map)
     BSP_InitSuperBlockAllocator();
     BSP_InitIntersectionAllocator();
 
-    LoadMap(map);
-    CleanMap(map);
-    BSP_InitAnalyzer();
+    BSP_InitForNodeBuild(src);
+    BSP_InitAnalyzer(src);
 
-    BSP_DetectOverlappingLines();
-    BSP_DetectWindowEffects();
+    BSP_DetectOverlappingLines(src);
+    BSP_DetectWindowEffects(src);
 
     // Create initial half-edges.
-    hEdgeList = createInitialHEdges();
+    hEdgeList = createInitialHEdges(src);
 
     // Recursively create nodes.
     {
     cutlist_t  *cutList = BSP_CutListCreate();
-    builtOK = BuildNodes(hEdgeList, &rootNode, &rootSub, 0, cutList);
+    builtOK = BuildNodes(hEdgeList, &src->rootNode, &rootSub, 0, cutList);
     BSP_CutListDestroy(cutList);
     }
 
@@ -263,22 +262,17 @@ boolean BSP_Build(gamemap_t *map)
     if(builtOK)
     {   // Success!
         // Wind the BSP tree and link to the map.
-        ClockwiseBspTree(rootNode);
-        SaveMap(map, rootNode);
+        ClockwiseBspTree(src);
+        SaveMap(dest, src);
 
         Con_Message("BSP_Build: Built %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n",
-                    map->numnodes, map->numsubsectors, map->numsegs,
-                    numNormalVert + numGLVert);
+                    dest->numnodes, dest->numsubsectors, dest->numsegs,
+                    dest->numvertexes);
 
-        if(rootNode)
+        if(src->rootNode)
             Con_Message("  Heights of left and right subtrees (%d, %d).\n",
-                        ComputeBspHeight(rootNode->children[RIGHT].node),
-                        ComputeBspHeight(rootNode->children[LEFT].node));
-    }
-    else
-    {
-        Con_Message("BSP_Build: Failed building nodes for map \"s\"!\n",
-                    map->levelid);
+                        ComputeBspHeight(src->rootNode->buildData.children[RIGHT].node),
+                        ComputeBspHeight(src->rootNode->buildData.children[LEFT].node));
     }
 
     // Free temporary storage.

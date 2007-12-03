@@ -173,13 +173,13 @@ void BSP_AddHEdgeToSuperBlock(superblock_t *block, hedge_t *hEdge)
 
         if(block->x2 - block->x1 >= block->y2 - block->y1)
         {   // Block is wider than it is high, or square.
-            p1 = hEdge->v[0]->V_pos[VX] >= midPoint[VX];
-            p2 = hEdge->v[1]->V_pos[VX] >= midPoint[VX];
+            p1 = hEdge->v[0]->buildData.pos[VX] >= midPoint[VX];
+            p2 = hEdge->v[1]->buildData.pos[VX] >= midPoint[VX];
         }
         else
         {   // Block is higher than it is wide.
-            p1 = hEdge->v[0]->V_pos[VY] >= midPoint[VY];
-            p2 = hEdge->v[1]->V_pos[VY] >= midPoint[VY];
+            p1 = hEdge->v[0]->buildData.pos[VY] >= midPoint[VY];
+            p2 = hEdge->v[1]->buildData.pos[VY] >= midPoint[VY];
         }
 
         if(p1 && p2)
@@ -221,7 +221,7 @@ void BSP_AddHEdgeToSuperBlock(superblock_t *block, hedge_t *hEdge)
     }
 }
 
-static void determineMiddle(msubsec_t *sub)
+static void determineMiddle(subsector_t *sub)
 {
     int         total = 0;
     double      midPoint[2];
@@ -230,16 +230,16 @@ static void determineMiddle(msubsec_t *sub)
     midPoint[VX] = midPoint[VY] = 0;
 
     // Compute middle coordinates.
-    for(cur = sub->hEdges; cur; cur = cur->next)
+    for(cur = sub->buildData.hEdges; cur; cur = cur->next)
     {
-        midPoint[VX] += cur->v[0]->V_pos[VX] + cur->v[1]->V_pos[VX];
-        midPoint[VY] += cur->v[0]->V_pos[VY] + cur->v[1]->V_pos[VY];
+        midPoint[VX] += cur->v[0]->buildData.pos[VX] + cur->v[1]->buildData.pos[VX];
+        midPoint[VY] += cur->v[0]->buildData.pos[VY] + cur->v[1]->buildData.pos[VY];
 
         total += 2;
     }
 
-    sub->midPoint[VX] = midPoint[VX] / total;
-    sub->midPoint[VY] = midPoint[VY] / total;
+    sub->buildData.midPoint[VX] = midPoint[VX] / total;
+    sub->buildData.midPoint[VY] = midPoint[VY] / total;
 }
 
 /**
@@ -258,10 +258,10 @@ static void sortHEdgesByAngleAroundPoint(hedge_t **hEdges, uint total,
         hedge_t    *b = hEdges[i+1];
         angle_g     angle1, angle2;
 
-        angle1 = M_SlopeToAngle(a->v[0]->V_pos[VX] - point[VX],
-                                a->v[0]->V_pos[VY] - point[VY]);
-        angle2 = M_SlopeToAngle(b->v[0]->V_pos[VX] - point[VX],
-                                b->v[0]->V_pos[VY] - point[VY]);
+        angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - point[VX],
+                                a->v[0]->buildData.pos[VY] - point[VY]);
+        angle2 = M_SlopeToAngle(b->v[0]->buildData.pos[VX] - point[VX],
+                                b->v[0]->buildData.pos[VY] - point[VY]);
 
         if(angle1 + ANG_EPSILON < angle2)
         {
@@ -287,7 +287,7 @@ static void sortHEdgesByAngleAroundPoint(hedge_t **hEdges, uint total,
  * \note Algorithm:
  * Uses the now famous "double bubble" sorter :).
  */
-static void clockwiseOrder(msubsec_t *sub)
+static void clockwiseOrder(subsector_t *sub)
 {
     int         i;
     int         total = 0;
@@ -301,36 +301,36 @@ Con_Message("Subsec: Clockwising %d\n", sub->index);
 */
 
     // Count half-edges and create an array to manipulate them.
-    for(cur = sub->hEdges; cur; cur = cur->next)
+    for(cur = sub->buildData.hEdges; cur; cur = cur->next)
         total++;
 
     hEdges = M_Malloc((total + 1) * sizeof(hedge_t *));
 
-    for(cur = sub->hEdges, i = 0; cur; cur = cur->next, ++i)
+    for(cur = sub->buildData.hEdges, i = 0; cur; cur = cur->next, ++i)
         hEdges[i] = cur;
     hEdges[total] = NULL; // Terminate.
 
     if(i != total)
         Con_Error("clockwiseOrder: Miscounted?");
 
-    sortHEdgesByAngleAroundPoint(hEdges, total, sub->midPoint);
+    sortHEdgesByAngleAroundPoint(hEdges, total, sub->buildData.midPoint);
 
     // Re-link the half-edge list in the order of the sorted array.
-    sub->hEdges = NULL;
+    sub->buildData.hEdges = NULL;
     for(i = total - 1; i >= 0; i--)
     {
         int         j = i % total;
 
-        hEdges[j]->next = sub->hEdges;
-        sub->hEdges = hEdges[j];
+        hEdges[j]->next = sub->buildData.hEdges;
+        sub->buildData.hEdges = hEdges[j];
     }
 
-    sub->hEdgeCount = total;
+    sub->buildData.hEdgeCount = total;
 
 /*
 #if _DEBUG
-Con_Message("Sorted half-edges around (%1.1f,%1.1f)\n", sub->midPoint[VX],
-            sub->midPoint[VY]);
+Con_Message("Sorted half-edges around (%1.1f,%1.1f)\n", sub->buildData.midPoint[VX],
+            sub->buildData.midPoint[VY]);
 
 {
 hedge_t    **ptr = hEdges;
@@ -338,8 +338,8 @@ while(*ptr)
 {
     hedge_t    *hEdge = *ptr;
     angle_g     angle =
-        M_SlopeToAngle(hEdge->v[0]->V_pos[VX] - sub->midPoint[VX],
-                       hEdge->v[0]->V_pos[VY] - sub->midPoint[VY]);
+        M_SlopeToAngle(hEdge->v[0]->V_pos[VX] - sub->buildData.midPoint[VX],
+                       hEdge->v[0]->V_pos[VY] - sub->buildData.midPoint[VY]);
 
     Con_Message("  half-edge %p: Angle %1.6f  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
                 hEdge, angle, hEdge->v[0]->V_pos[VX], hEdge->v[0]->V_pos[VY],
@@ -352,17 +352,17 @@ while(*ptr)
     M_Free(hEdges);
 }
 
-static void sanityCheckClosed(msubsec_t *sub)
+static void sanityCheckClosed(subsector_t *sub)
 {
     int         total = 0, gaps = 0;
     hedge_t    *cur, *next;
 
-    for(cur = sub->hEdges; cur; cur = cur->next)
+    for(cur = sub->buildData.hEdges; cur; cur = cur->next)
     {
-        next = (cur->next? cur->next : sub->hEdges);
+        next = (cur->next? cur->next : sub->buildData.hEdges);
 
-        if(cur->v[1]->V_pos[VX] != next->v[0]->V_pos[VX] ||
-           cur->v[1]->V_pos[VY] != next->v[0]->V_pos[VY])
+        if(cur->v[1]->buildData.pos[VX] != next->v[0]->buildData.pos[VX] ||
+           cur->v[1]->buildData.pos[VY] != next->v[0]->buildData.pos[VY])
             gaps++;
 
         total++;
@@ -371,27 +371,27 @@ static void sanityCheckClosed(msubsec_t *sub)
     if(gaps > 0)
     {
         Con_Message("Subsector #%d near (%1.1f,%1.1f) is not closed "
-                    "(%d gaps, %d half-edges)\n", sub->index,
-                    sub->midPoint[VX], sub->midPoint[VY], gaps, total);
+                    "(%d gaps, %d half-edges)\n", sub->buildData.index,
+                    sub->buildData.midPoint[VX], sub->buildData.midPoint[VY], gaps, total);
 /*
 #if _DEBUG
 for(cur = sub->hEdges; cur; cur = cur->next)
 {
     Con_Message("  half-edge %p  (%1.1f,%1.1f) --> (%1.1f,%1.1f)\n", cur,
-                cur->v[0]->V_pos[VX], cur->v[0]->V_pos[VY],
-                cur->v[1]->V_pos[VX], cur->v[1]->V_pos[VY]);
+                cur->v[0]->pos[VX], cur->v[0]->pos[VY],
+                cur->v[1]->pos[VX], cur->v[1]->pos[VY]);
 }
 #endif
 */
     }
 }
 
-static void sanityCheckSameSector(msubsec_t *sub)
+static void sanityCheckSameSector(subsector_t *sub)
 {
     hedge_t    *cur, *compare;
 
     // Find a suitable half-edge for comparison.
-    for(compare = sub->hEdges; compare; compare = compare->next)
+    for(compare = sub->buildData.hEdges; compare; compare = compare->next)
     {
         if(!compare->sector)
             continue;
@@ -411,41 +411,41 @@ static void sanityCheckSameSector(msubsec_t *sub)
             continue;
 
         // Prevent excessive number of warnings.
-        if(compare->sector->warnedFacing == cur->sector->index)
+        if(compare->sector->buildData.warnedFacing == cur->sector->buildData.index)
             continue;
 
-        compare->sector->warnedFacing = cur->sector->index;
+        compare->sector->buildData.warnedFacing = cur->sector->buildData.index;
 
         if(verbose >= 1)
         {
             if(cur->linedef)
                 Con_Message("Sector #%d has sidedef facing #%d (line #%d) "
-                            "near (%1.0f,%1.0f).\n", compare->sector->index,
-                            cur->sector->index, cur->linedef->index,
-                            sub->midPoint[VX], sub->midPoint[VY]);
+                            "near (%1.0f,%1.0f).\n", compare->sector->buildData.index,
+                            cur->sector->buildData.index, cur->linedef->buildData.index,
+                            sub->buildData.midPoint[VX], sub->buildData.midPoint[VY]);
             else
                 Con_Message("Sector #%d has sidedef facing #%d "
-                            "near (%1.0f,%1.0f).\n", compare->sector->index,
-                            cur->sector->index, sub->midPoint[VX], sub->midPoint[VY]);
+                            "near (%1.0f,%1.0f).\n", compare->sector->buildData.index,
+                            cur->sector->buildData.index, sub->buildData.midPoint[VX], sub->buildData.midPoint[VY]);
         }
     }
 }
 
-static void sanityCheckHasRealHEdge(msubsec_t *sub)
+static void sanityCheckHasRealHEdge(subsector_t *sub)
 {
     hedge_t    *cur;
 
-    for(cur = sub->hEdges; cur; cur = cur->next)
+    for(cur = sub->buildData.hEdges; cur; cur = cur->next)
     {
         if(cur->linedef)
             return;
     }
 
     Con_Error("SSec #%d near (%1.1f,%1.1f) has no linedef-linked half-edge!",
-              sub->index, sub->midPoint[VX], sub->midPoint[VY]);
+              sub->buildData.index, sub->buildData.midPoint[VX], sub->buildData.midPoint[VY]);
 }
 
-static void renumberSubSectorHEdges(msubsec_t *sub)
+static void renumberSubSectorHEdges(subsector_t *sub)
 {
     uint        n;
     hedge_t    *cur;
@@ -456,7 +456,7 @@ Con_Message("Subsec: Renumbering %d\n", sub->index);
 #endif
 */
     n = 0;
-    for(cur = sub->hEdges; cur; cur = cur->next)
+    for(cur = sub->buildData.hEdges; cur; cur = cur->next)
     {
         cur->index = numCompleteHEdges;
         numCompleteHEdges++;
@@ -469,7 +469,7 @@ Con_Message("Subsec:   %d: half-edge %p  Index %d\n", n, cur, cur->index);
     }
 }
 
-static void createSubSectorWorker(msubsec_t *sub, superblock_t *block)
+static void createSubSectorWorker(subsector_t *sub, superblock_t *block)
 {
     uint        num;
 
@@ -481,10 +481,10 @@ static void createSubSectorWorker(msubsec_t *sub, superblock_t *block)
         block->hEdges = cur->next;
 
         // Link it into head of the subsector's list.
-        cur->next = sub->hEdges;
+        cur->next = sub->buildData.hEdges;
         cur->block = NULL;
 
-        sub->hEdges = cur;
+        sub->buildData.hEdges = cur;
     }
 
     // Recursively handle sub-blocks.
@@ -510,12 +510,9 @@ static void createSubSectorWorker(msubsec_t *sub, superblock_t *block)
 /**
  * Create a subsector from a list of half-edges.
  */
-static msubsec_t *createSubSector(superblock_t *hEdgeList)
+static subsector_t *createSubSector(superblock_t *hEdgeList)
 {
-    msubsec_t *sub = NewSubsec();
-
-    // Compute subsector's index.
-    sub->index = numSubSecs - 1;
+    subsector_t *sub = P_NewSubsector();
 
     // Link the half-edges into the new subsector.
     createSubSectorWorker(sub, hEdgeList);
@@ -533,14 +530,14 @@ Con_Message("createSubSector: Index= %d.\n", sub->index);
 /**
  * Compute the height of the bsp tree, starting at 'node'.
  */
-int ComputeBspHeight(mnode_t *node)
+int ComputeBspHeight(node_t *node)
 {
     if(node)
     {
         int         left, right;
 
-        right = ComputeBspHeight(node->children[RIGHT].node);
-        left  = ComputeBspHeight(node->children[LEFT].node);
+        right = ComputeBspHeight(node->buildData.children[RIGHT].node);
+        left  = ComputeBspHeight(node->buildData.children[LEFT].node);
 
         return MAX_OF(left, right) + 1;
     }
@@ -559,10 +556,10 @@ int ComputeBspHeight(mnode_t *node)
  *                      created, else will be set to @c NULL.
  * @return              @c true, if successfull.
  */
-boolean BuildNodes(superblock_t *hEdgeList, mnode_t **n, msubsec_t **s,
+boolean BuildNodes(superblock_t *hEdgeList, node_t **n, subsector_t **s,
                    int depth, cutlist_t *cutList)
 {
-    mnode_t    *node;
+    node_t    *node;
     child_t    *child;
     hedge_t    *best;
     superblock_t *rights;
@@ -620,37 +617,38 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
     BSP_AddMiniHEdges(best, lefts, rights, cutList);
     BSP_CutListEmpty(cutList);
 
-    *n = node = NewNode();
+    *n = node = P_NewNode();
 
     assert(best->linedef);
 
     // Should we not be doing some rounding here? - DJS.
     if(best->side == 0)
     {   // Right.
-        node->x  = best->linedef->v[0]->V_pos[VX];
-        node->y  = best->linedef->v[0]->V_pos[VY];
-        node->dX = best->linedef->v[1]->V_pos[VX] - node->x;
-        node->dY = best->linedef->v[1]->V_pos[VY] - node->y;
+        node->x  = best->linedef->v[0]->buildData.pos[VX];
+        node->y  = best->linedef->v[0]->buildData.pos[VY];
+        node->dx = best->linedef->v[1]->buildData.pos[VX] - node->x;
+        node->dy = best->linedef->v[1]->buildData.pos[VY] - node->y;
     }
     else
     {   // Left.
-        node->x  = best->linedef->v[1]->V_pos[VX];
-        node->y  = best->linedef->v[1]->V_pos[VY];
-        node->dX = best->linedef->v[0]->V_pos[VX] - node->x;
-        node->dY = best->linedef->v[0]->V_pos[VY] - node->y;
+        node->x  = best->linedef->v[1]->buildData.pos[VX];
+        node->y  = best->linedef->v[1]->buildData.pos[VY];
+        node->dx = best->linedef->v[0]->buildData.pos[VX] - node->x;
+        node->dy = best->linedef->v[0]->buildData.pos[VY] - node->y;
     }
 
     // Check for really long partition (overflows dx,dy in NODES).
     if(best->pLength >= 30000)
     {
-        if(node->dX && node->dY && ((node->dX & 1) || (node->dY & 1)))
+        if(node->dx && node->dy &&
+           (((int)node->dx & 1) || ((int)node->dy & 1)))
         {
             VERBOSE2(Con_Message("Loss of accuracy on VERY long node: "
-                                 "(%d,%d) -> (%d,%d).\n", node->x, node->y,
-                                 node->x + node->dX, node->y + node->dY));
+                                 "(%g,%g) -> (%g,%g).\n", node->x, node->y,
+                                 node->x + node->dx, node->y + node->dy));
         }
 
-        node->tooLong = true;
+        node->buildData.tooLong = true;
     }
 
     // Find limits of vertices.
@@ -661,7 +659,7 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
 Con_Message("BuildNodes: Going left.\n");
 #endif
 */
-    child = &node->children[LEFT];
+    child = &node->buildData.children[LEFT];
     builtOK = BuildNodes(lefts, &child->node, &child->subSec, depth + 1,
                          cutList);
     BSP_SuperBlockDestroy(lefts);
@@ -673,7 +671,7 @@ Con_Message("BuildNodes: Going left.\n");
 Con_Message("BuildNodes: Going right.\n");
 #endif
 */
-        child = &node->children[RIGHT];
+        child = &node->buildData.children[RIGHT];
         builtOK = BuildNodes(rights, &child->node, &child->subSec, depth + 1,
                              cutList);
     }
@@ -695,24 +693,22 @@ Con_Message("BuildNodes: Done.\n"));
  * half-edge with a twin may insert another half-edge into that twin's list,
  * usually in the wrong place order-wise.
  */
-void ClockwiseBspTree(mnode_t *root)
+void ClockwiseBspTree(editmap_t *map)
 {
-    int         i;
-
-    (void) root; // Shutup compiler.
+    uint            i;
 
     numCompleteHEdges = 0;
-    for(i = 0; i < numSubSecs; ++i)
+    for(i = 0; i < map->numsubsectors; ++i)
     {
-        msubsec_t  *sub = LookupSubsec(i);
+        subsector_t  *ssec = map->subsectors[i];
 
-        clockwiseOrder(sub);
-        renumberSubSectorHEdges(sub);
+        clockwiseOrder(ssec);
+        renumberSubSectorHEdges(ssec);
 
         // Do some sanity checks.
-        sanityCheckClosed(sub);
-        sanityCheckSameSector(sub);
-        sanityCheckHasRealHEdge(sub);
+        sanityCheckClosed(ssec);
+        sanityCheckSameSector(ssec);
+        sanityCheckHasRealHEdge(ssec);
     }
 }
 

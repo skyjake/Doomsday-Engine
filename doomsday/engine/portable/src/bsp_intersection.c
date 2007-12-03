@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Ã‚Â© 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -221,13 +221,13 @@ void BSP_ShutdownIntersectionAllocator(void)
 /**
  * Create a new intersection.
  */
-intersection_t *BSP_IntersectionCreate(mvertex_t *vert, hedge_t *part,
+intersection_t *BSP_IntersectionCreate(vertex_t *vert, hedge_t *part,
                                        boolean selfRef)
 {
     intersection_t *cut = quickAllocIntersection();
 
     cut->vertex = vert;
-    cut->alongDist = ParallelDist(part, vert->V_pos[VX], vert->V_pos[VY]);
+    cut->alongDist = ParallelDist(part, vert->buildData.pos[VX], vert->buildData.pos[VY]);
     cut->selfRef = selfRef;
 
     cut->before = BSP_VertexCheckOpen(vert, -part->pDX, -part->pDY);
@@ -263,10 +263,10 @@ void BSP_IntersectionDestroy(intersection_t *cut)
 void BSP_IntersectionPrint(intersection_t *cut)
 {
     Con_Message("  Vertex %8X (%1.1f,%1.1f)  Along %1.2f  [%d/%d]  %s\n",
-                cut->vertex->index, cut->vertex->V_pos[VX],
-                cut->vertex->V_pos[VY], cut->alongDist,
-                (cut->before? cut->before->index : -1),
-                (cut->after? cut->after->index : -1),
+                cut->vertex->buildData.index, cut->vertex->buildData.pos[VX],
+                cut->vertex->buildData.pos[VY], cut->alongDist,
+                (cut->before? cut->before->buildData.index : -1),
+                (cut->after? cut->after->buildData.index : -1),
                 (cut->selfRef? "SELFREF" : ""));
 }
 #endif
@@ -317,7 +317,7 @@ void BSP_CutListEmpty(cutlist_t *cutList)
  *
  * @return              Ptr to the found intersection, else @c NULL;
  */
-intersection_t *BSP_CutListFindIntersection(cutlist_t *cutList, mvertex_t *v)
+intersection_t *BSP_CutListFindIntersection(cutlist_t *cutList, vertex_t *v)
 {
     clist_t    *list = (clist_t*) cutList;
     cnode_t    *node;
@@ -497,26 +497,26 @@ BSP_IntersectionPrint(cur);
             // Check for some nasty open/closed or close/open cases.
             if(cur->after && !next->before)
             {
-                if(!cur->selfRef && !cur->after->warnedUnclosed)
+                if(!cur->selfRef && !cur->after->buildData.warnedUnclosed)
                 {
                     VERBOSE(
                     Con_Message("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
-                                cur->after->index,
-                                (cur->vertex->V_pos[VX] + next->vertex->V_pos[VX]) / 2.0,
-                                (cur->vertex->V_pos[VY] + next->vertex->V_pos[VY]) / 2.0));
-                    cur->after->warnedUnclosed = true;
+                                cur->after->buildData.index,
+                                (cur->vertex->buildData.pos[VX] + next->vertex->buildData.pos[VX]) / 2.0,
+                                (cur->vertex->buildData.pos[VY] + next->vertex->buildData.pos[VY]) / 2.0));
+                    cur->after->buildData.warnedUnclosed = true;
                 }
             }
             else if(!cur->after && next->before)
             {
-                if(!next->selfRef && !next->before->warnedUnclosed)
+                if(!next->selfRef && !next->before->buildData.warnedUnclosed)
                 {
                     VERBOSE(
                     Con_Message("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
-                                next->before->index,
-                                (cur->vertex->V_pos[VX] + next->vertex->V_pos[VX]) / 2.0,
-                                (cur->vertex->V_pos[VY] + next->vertex->V_pos[VY]) / 2.0));
-                    next->before->warnedUnclosed = true;
+                                next->before->buildData.index,
+                                (cur->vertex->buildData.pos[VX] + next->vertex->buildData.pos[VX]) / 2.0,
+                                (cur->vertex->buildData.pos[VY] + next->vertex->buildData.pos[VY]) / 2.0));
+                    next->before->buildData.warnedUnclosed = true;
                 }
             }
             else
@@ -530,9 +530,9 @@ BSP_IntersectionPrint(cur);
                         VERBOSE(
                         Con_Message("Sector mismatch: #%d (%1.1f,%1.1f) != #%d "
                                     "(%1.1f,%1.1f)\n",
-                                    cur->after->index, cur->vertex->V_pos[VX],
-                                    cur->vertex->V_pos[VY], next->before->index,
-                                    next->vertex->V_pos[VX], next->vertex->V_pos[VY]));
+                                    cur->after->buildData.index, cur->vertex->buildData.pos[VX],
+                                    cur->vertex->buildData.pos[VY], next->before->buildData.index,
+                                    next->vertex->buildData.pos[VX], next->vertex->buildData.pos[VY]));
                     }
 
                     // Choose the non-self-referencing sector when we can.

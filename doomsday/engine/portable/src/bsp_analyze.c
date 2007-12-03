@@ -54,12 +54,6 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-// Stuff needed from bsp_level.c (this file closely related).
-extern mvertex_t  **levVertices;
-extern mlinedef_t **levLinedefs;
-extern msidedef_t **levSidedefs;
-extern msector_t  **levSectors;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -68,82 +62,6 @@ static int mapBounds[4];
 static int blockMapBounds[4];
 
 // CODE --------------------------------------------------------------------
-
-static int C_DECL vertexCompare(const void *p1, const void *p2)
-{
-    int         vert1 = ((const uint16_t *) p1)[0];
-    int         vert2 = ((const uint16_t *) p2)[0];
-    mvertex_t   *a, *b;
-
-    if(vert1 == vert2)
-        return 0;
-
-    a = levVertices[vert1];
-    b = levVertices[vert2];
-
-    if((int) a->V_pos[VX] != (int) b->V_pos[VX])
-        return (int) a->V_pos[VX] - (int) b->V_pos[VX];
-
-    return (int) a->V_pos[VY] - (int) b->V_pos[VY];
-}
-
-#if 0 // Currently unused.
-static int C_DECL sidedefCompare(const void *p1, const void *p2)
-{
-    int         comp;
-    int         side1 = ((const uint16_t *) p1)[0];
-    int         side2 = ((const uint16_t *) p2)[0];
-    msidedef_t  *a, *b;
-
-    if(side1 == side2)
-        return 0;
-
-    a = levSidedefs[side1];
-    b = levSidedefs[side2];
-
-    if(a->sector != b->sector)
-    {
-        if(a->sector == NULL)
-            return -1;
-        if(b->sector == NULL)
-            return +1;
-
-        return (a->sector->index - b->sector->index);
-    }
-
-    // Sidedefs must be the same.
-    return 0;
-}
-#endif
-
-#if 0 // Currently unused.
-void BSP_DetectDuplicateSidedefs(void)
-{
-    int         i;
-    uint16_t   *hits = M_Calloc(numSidedefs * sizeof(uint16_t));
-
-    // Sort array of indices.
-    for(i = 0; i < numSidedefs; ++i)
-        hits[i] = i;
-
-    qsort(hits, numSidedefs, sizeof(uint16_t), sidedefCompare);
-
-    // Now mark them off.
-    for(i = 0; i < numSidedefs - 1; ++i)
-    {
-        // A duplicate?
-        if(sidedefCompare(hits + i, hits + i + 1) == 0)
-        {   // Yes.
-            msidedef_t *a = levSidedefs[hits[i]];
-            msidedef_t *b = levSidedefs[hits[i + 1]];
-
-            b->equiv = (a->equiv? a->equiv : a);
-        }
-    }
-
-    M_Free(hits);
-}
-#endif
 
 void BSP_GetBMapBounds(int *x, int *y, int *w, int *h)
 {
@@ -157,22 +75,22 @@ void BSP_GetBMapBounds(int *x, int *y, int *w, int *h)
         *h = blockMapBounds[BOXTOP];
 }
 
-static void findMapLimits(int *bbox)
+static void findMapLimits(editmap_t *src, int *bbox)
 {
-    int         i;
+    uint        i;
 
     M_ClearBox(bbox);
 
-    for(i = 0; i < numLinedefs; ++i)
+    for(i = 0; i < src->numlines; ++i)
     {
-        mlinedef_t *L = LookupLinedef(i);
+        line_t     *L = src->lines[i];
 
-        if(!(L->mlFlags & MLF_ZEROLENGTH))
+        if(!(L->buildData.mlFlags & MLF_ZEROLENGTH))
         {
-            double      x1 = L->v[0]->V_pos[VX];
-            double      y1 = L->v[0]->V_pos[VY];
-            double      x2 = L->v[1]->V_pos[VX];
-            double      y2 = L->v[1]->V_pos[VY];
+            double      x1 = L->v[0]->buildData.pos[VX];
+            double      y1 = L->v[0]->buildData.pos[VY];
+            double      x2 = L->v[1]->buildData.pos[VX];
+            double      y2 = L->v[1]->buildData.pos[VY];
             int         lX = (int) floor(MIN_OF(x1, x2));
             int         lY = (int) floor(MIN_OF(y1, y2));
             int         hX = (int) ceil(MAX_OF(x1, x2));
@@ -184,10 +102,10 @@ static void findMapLimits(int *bbox)
     }
 }
 
-void BSP_InitAnalyzer(void)
+void BSP_InitAnalyzer(editmap_t *map)
 {
     // Find maximal vertexes, and store as map limits.
-    findMapLimits(mapBounds);
+    findMapLimits(map, mapBounds);
 
     VERBOSE(Con_Message("Map goes from (%d,%d) to (%d,%d)\n",
                         mapBounds[BOXLEFT], mapBounds[BOXBOTTOM],
@@ -202,33 +120,6 @@ void BSP_InitAnalyzer(void)
         ((mapBounds[BOXRIGHT] - blockMapBounds[BOXLEFT]) / 128) + 1;
     blockMapBounds[BOXTOP] =
         ((mapBounds[BOXTOP] - blockMapBounds[BOXBOTTOM]) / 128) + 1;
-}
-
-void BSP_DetectDuplicateVertices(void)
-{
-    int         i;
-    uint16_t   *hits = M_Calloc(numVertices * sizeof(uint16_t));
-
-    // Sort array of indices.
-    for(i = 0; i < numVertices; ++i)
-        hits[i] = i;
-
-    qsort(hits, numVertices, sizeof(uint16_t), vertexCompare);
-
-    // Now mark them off.
-    for(i = 0; i < numVertices - 1; ++i)
-    {
-        // A duplicate?
-        if(vertexCompare(hits + i, hits + i + 1) == 0)
-        {   // Yes.
-            mvertex_t *a = levVertices[hits[i]];
-            mvertex_t *b = levVertices[hits[i + 1]];
-
-            b->equiv = (a->equiv ? a->equiv : a);
-        }
-    }
-
-    M_Free(hits);
 }
 
 /**
@@ -250,80 +141,81 @@ static __inline void addIndexBit(uint index, uint *bitfield)
     bitfield[index >> 5] |= (1 << (index & 0x1f));
 }
 
-static pruneLinedefs(void)
+static pruneLinedefs(editmap_t *src)
 {
-    int         i, newNum;
+    uint            i, newNum;
 
     // Scan all linedefs.
-    for(i = 0, newNum = 0; i < numLinedefs; ++i)
+    for(i = 0, newNum = 0; i < src->numlines; ++i)
     {
-        mlinedef_t *l = levLinedefs[i];
+        line_t         *l = src->lines[i];
 
         // Handle duplicated vertices.
-        while(l->v[0]->equiv)
+        while(l->v[0]->buildData.equiv)
         {
-            l->v[0]->refCount--;
-            l->v[0] = l->v[0]->equiv;
-            l->v[0]->refCount++;
+            l->v[0]->buildData.refCount--;
+            l->v[0] = l->v[0]->buildData.equiv;
+            l->v[0]->buildData.refCount++;
         }
 
-        while(l->v[1]->equiv)
+        while(l->v[1]->buildData.equiv)
         {
-            l->v[1]->refCount--;
-            l->v[1] = l->v[1]->equiv;
-            l->v[1]->refCount++;
+            l->v[1]->buildData.refCount--;
+            l->v[1] = l->v[1]->buildData.equiv;
+            l->v[1]->buildData.refCount++;
         }
 
         // Remove zero length lines.
-        if(l->mlFlags & MLF_ZEROLENGTH)
+        if(l->buildData.mlFlags & MLF_ZEROLENGTH)
         {
-            l->v[0]->refCount--;
-            l->v[1]->refCount--;
+            l->v[0]->buildData.refCount--;
+            l->v[1]->buildData.refCount--;
 
-            M_Free(l);
+            M_Free(src->lines[i]);
+            src->lines[i] = NULL;
             continue;
         }
 
-        l->index = newNum;
-        levLinedefs[newNum++] = l;
+        l->buildData.index = newNum;
+        src->lines[newNum++] = src->lines[i];
     }
 
-    if(newNum < numLinedefs)
+    if(newNum < src->numlines)
     {
         VERBOSE(Con_Message("  Pruned %d zero-length linedefs\n",
-                            numLinedefs - newNum));
-        numLinedefs = newNum;
+                            src->numlines - newNum));
+        src->numlines = newNum;
     }
 }
 
-static void pruneVertices(void)
+static void pruneVertices(editmap_t *map)
 {
-    int         i, newNum, unused = 0;
+    uint            i, newNum, unused = 0;
 
     // Scan all vertices.
-    for(i = 0, newNum = 0; i < numVertices; ++i)
+    for(i = 0, newNum = 0; i < map->numvertexes; ++i)
     {
-        mvertex_t *v = levVertices[i];
+        vertex_t           *v = map->vertexes[i];
 
-        if(v->refCount < 0)
-            Con_Error("Vertex %d ref_count is %d", i, v->refCount);
+        if(v->buildData.refCount < 0)
+            Con_Error("Vertex %d ref_count is %d", i, v->buildData.refCount);
 
-        if(v->refCount == 0)
+        if(v->buildData.refCount == 0)
         {
-            if(v->equiv == NULL)
+            if(v->buildData.equiv == NULL)
                 unused++;
 
             M_Free(v);
             continue;
         }
 
-        v->index = newNum;
-        levVertices[newNum++] = v;
+        v->buildData.index = newNum;
+        map->vertexes[newNum++] = v;
     }
 
-    if(newNum < numVertices)
+    if(newNum < map->numvertexes)
     {
-        int         dupNum = numVertices - newNum - unused;
+        int         dupNum = map->numvertexes - newNum - unused;
 
         if(verbose >= 1)
         {
@@ -334,12 +226,11 @@ static void pruneVertices(void)
                 Con_Message("  Pruned %d duplicate vertices\n", dupNum);
         }
 
-        numVertices = newNum;
+        map->numvertexes = newNum;
     }
-
-    numNormalVert = numVertices;
 }
 
+#if 0 // Currently unused.
 static void pruneUnusedSidedefs(void)
 {
     int         i, newNum, unused = 0;
@@ -351,21 +242,21 @@ static void pruneUnusedSidedefs(void)
 
     for(i = 0; i < numLinedefs; ++i)
     {
-        mlinedef_t *l = levLinedefs[i];
+        line_t         *l = levLinedefs[i];
 
         if(l->sides[FRONT])
-            addIndexBit(l->sides[FRONT]->index, indexBitfield);
+            addIndexBit(l->sides[FRONT]->buildData.index, indexBitfield);
 
         if(l->sides[BACK])
-            addIndexBit(l->sides[BACK]->index, indexBitfield);
+            addIndexBit(l->sides[BACK]->buildData.index, indexBitfield);
     }
 
     // Scan all sidedefs.
     for(i = 0, newNum = 0; i < numSidedefs; ++i)
     {
-        msidedef_t *s = levSidedefs[i];
+        side_t *s = levSidedefs[i];
 
-        if(!hasIndexBit(s->index, indexBitfield))
+        if(!hasIndexBit(s->buildData.index, indexBitfield))
         {
             unused++;
 
@@ -373,7 +264,7 @@ static void pruneUnusedSidedefs(void)
             continue;
         }
 
-        s->index = newNum;
+        s->buildData.index = newNum;
         levSidedefs[newNum++] = s;
     }
 
@@ -395,7 +286,9 @@ static void pruneUnusedSidedefs(void)
         numSidedefs = newNum;
     }
 }
+#endif
 
+#if 0 // Currently unused.
 static void pruneUnusedSectors(void)
 {
     int         i, newNum;
@@ -407,24 +300,24 @@ static void pruneUnusedSectors(void)
 
     for(i = 0; i < numSidedefs; ++i)
     {
-        msidedef_t *s = levSidedefs[i];
+        side_t *s = levSidedefs[i];
 
         if(s->sector)
-            addIndexBit(s->sector->index, indexBitfield);
+            addIndexBit(s->sector->buildData.index, indexBitfield);
     }
 
     // Scan all sectors.
     for(i = 0, newNum = 0; i < numSectors; ++i)
     {
-        msector_t *s = levSectors[i];
+        sector_t *s = levSectors[i];
 
-        if(!hasIndexBit(s->index, indexBitfield))
+        if(!hasIndexBit(s->buildData.index, indexBitfield))
         {
             M_Free(s);
             continue;
         }
 
-        s->index = newNum;
+        s->buildData.index = newNum;
         levSectors[newNum++] = s;
     }
 
@@ -437,23 +330,24 @@ static void pruneUnusedSectors(void)
         numSectors = newNum;
     }
 }
+#endif
 
 /**
  * \note Order here is critical!
  */
-void BSP_PruneRedundantMapData(int flags)
+void BSP_PruneRedundantMapData(editmap_t *map, int flags)
 {
     if(flags & PRUNE_LINEDEFS)
-        pruneLinedefs();
+        pruneLinedefs(map);
 
     if(flags & PRUNE_VERTEXES)
-        pruneVertices();
+        pruneVertices(map);
 
-    if(flags & PRUNE_SIDEDEFS)
-        pruneUnusedSidedefs();
+    //if(flags & PRUNE_SIDEDEFS)
+    //    pruneUnusedSidedefs();
 
-    if(flags & PRUNE_SECTORS)
-        pruneUnusedSectors();
+    //if(flags & PRUNE_SECTORS)
+    //    pruneUnusedSectors();
 }
 
 /**
@@ -461,12 +355,14 @@ void BSP_PruneRedundantMapData(int flags)
  *                  line is vertical, then the bottom-most).
  *                  @c => 0 for start, 1 for end.
  */
-static __inline int lineVertexLowest(const mlinedef_t *l)
+static __inline int lineVertexLowest(const line_t *l)
 {
-    return (((int) l->v[0]->V_pos[VX] < (int) l->v[1]->V_pos[VX] ||
-             ((int) l->v[0]->V_pos[VX] == (int) l->v[1]->V_pos[VX] &&
-              (int) l->v[0]->V_pos[VY] <  (int) l->v[1]->V_pos[VY]))? 0 : 1);
+    return (((int) l->v[0]->buildData.pos[VX] < (int) l->v[1]->buildData.pos[VX] ||
+             ((int) l->v[0]->buildData.pos[VX] == (int) l->v[1]->buildData.pos[VX] &&
+              (int) l->v[0]->buildData.pos[VY] <  (int) l->v[1]->buildData.pos[VY]))? 0 : 1);
 }
+
+static editmap_t *globalMap;
 
 static int
 #ifdef WIN32
@@ -474,11 +370,11 @@ __cdecl
 #endif
 lineStartCompare(const void *p1, const void *p2)
 {
-    int         line1 = ((const int *) p1)[0];
-    int         line2 = ((const int *) p2)[0];
-    mlinedef_t  *a = levLinedefs[line1];
-    mlinedef_t  *b = levLinedefs[line2];
-    mvertex_t   *c, *d;
+    uint            line1 = ((const uint *) p1)[0];
+    uint            line2 = ((const uint *) p2)[0];
+    line_t         *a = globalMap->lines[line1];
+    line_t         *b = globalMap->lines[line2];
+    vertex_t       *c, *d;
 
     if(line1 == line2)
         return 0;
@@ -487,10 +383,10 @@ lineStartCompare(const void *p1, const void *p2)
     c = (lineVertexLowest(a)? a->v[1] : a->v[0]);
     d = (lineVertexLowest(b)? b->v[1] : b->v[0]);
 
-    if((int) c->V_pos[VX] != (int) d->V_pos[VX])
-        return (int) c->V_pos[VX] - (int) d->V_pos[VX];
+    if((int) c->buildData.pos[VX] != (int) d->buildData.pos[VX])
+        return (int) c->buildData.pos[VX] - (int) d->buildData.pos[VX];
 
-    return (int) c->V_pos[VY] - (int) d->V_pos[VY];
+    return (int) c->buildData.pos[VY] - (int) d->buildData.pos[VY];
 }
 
 static int
@@ -499,11 +395,11 @@ __cdecl
 #endif
 lineEndCompare(const void *p1, const void *p2)
 {
-    int         line1 = ((const int *) p1)[0];
-    int         line2 = ((const int *) p2)[0];
-    mlinedef_t  *a = levLinedefs[line1];
-    mlinedef_t  *b = levLinedefs[line2];
-    mvertex_t   *c, *d;
+    uint            line1 = ((const uint *) p1)[0];
+    uint            line2 = ((const uint *) p2)[0];
+    line_t         *a = globalMap->lines[line1];
+    line_t         *b = globalMap->lines[line2];
+    vertex_t       *c, *d;
 
     if(line1 == line2)
         return 0;
@@ -512,10 +408,10 @@ lineEndCompare(const void *p1, const void *p2)
     c = (lineVertexLowest(a)? a->v[0] : a->v[1]);
     d = (lineVertexLowest(b)? b->v[0] : b->v[1]);
 
-    if((int) c->V_pos[VX] != (int) d->V_pos[VX])
-        return (int) c->V_pos[VX] - (int) d->V_pos[VX];
+    if((int) c->buildData.pos[VX] != (int) d->buildData.pos[VX])
+        return (int) c->buildData.pos[VX] - (int) d->buildData.pos[VX];
 
-    return (int) c->V_pos[VY] - (int) d->V_pos[VY];
+    return (int) c->buildData.pos[VY] - (int) d->buildData.pos[VY];
 }
 
 /**
@@ -524,32 +420,34 @@ lineEndCompare(const void *p1, const void *p2)
  * Overlapping lines will then be near each other in this set but note this
  * does not detect partially overlapping lines!
  */
-void BSP_DetectOverlappingLines(void)
+void BSP_DetectOverlappingLines(editmap_t *map)
 {
-    int         i;
-    int        *hits = M_Calloc(numLinedefs * sizeof(int));
-    int         count = 0;
+    uint        i;
+    uint       *hits = M_Malloc(map->numlines * sizeof(uint));
+    uint        count = 0;
+
+    globalMap = map;
 
     // Sort array of indices.
-    for(i = 0; i < numLinedefs; ++i)
+    for(i = 0; i < map->numlines; ++i)
         hits[i] = i;
-    qsort(hits, numLinedefs, sizeof(int), lineStartCompare);
+    qsort(hits, map->numlines, sizeof(uint), lineStartCompare);
 
-    for(i = 0; i < numLinedefs - 1; ++i)
+    for(i = 0; i < map->numlines - 1; ++i)
     {
-        int         j;
+        uint        j;
 
-        for(j = i + 1; j < numLinedefs; ++j)
+        for(j = i + 1; j < map->numlines; ++j)
         {
             if(lineStartCompare(hits + i, hits + j) != 0)
                 break;
 
             if(lineEndCompare(hits + i, hits + j) == 0)
             {   // Found an overlap!
-                mlinedef_t *a = levLinedefs[hits[i]];
-                mlinedef_t *b = levLinedefs[hits[j]];
+                line_t *a = map->lines[hits[i]];
+                line_t *b = map->lines[hits[j]];
 
-                b->overlap = (a->overlap ? a->overlap : a);
+                b->buildData.overlap = (a->buildData.overlap ? a->buildData.overlap : a);
                 count++;
             }
         }
@@ -566,49 +464,48 @@ void BSP_DetectOverlappingLines(void)
  * Cast a line horizontally or vertically and see what we hit (OUCH, we
  * have to iterate over all linedefs!).
  */
-static void testForWindowEffect(mlinedef_t *l)
+static void testForWindowEffect(editmap_t *map, line_t *l)
 {
-    int         i;
-    double      mX = (l->v[0]->V_pos[VX] + l->v[1]->V_pos[VX]) / 2.0;
-    double      mY = (l->v[0]->V_pos[VY] + l->v[1]->V_pos[VY]) / 2.0;
-    double      dX =  l->v[1]->V_pos[VX] - l->v[0]->V_pos[VX];
-    double      dY =  l->v[1]->V_pos[VY] - l->v[0]->V_pos[VY];
+    uint        i;
+    double      mX = (l->v[0]->buildData.pos[VX] + l->v[1]->buildData.pos[VX]) / 2.0;
+    double      mY = (l->v[0]->buildData.pos[VY] + l->v[1]->buildData.pos[VY]) / 2.0;
+    double      dX =  l->v[1]->buildData.pos[VX] - l->v[0]->buildData.pos[VX];
+    double      dY =  l->v[1]->buildData.pos[VY] - l->v[0]->buildData.pos[VY];
     int         castHoriz = fabs(dX) < fabs(dY) ? 1 : 0;
 
     double      backDist = 999999.0;
-    msector_t  *backOpen = NULL;
+    sector_t  *backOpen = NULL;
     int         backLine = -1;
 
     double      frontDist = 999999.0;
-    msector_t  *frontOpen = NULL;
+    sector_t  *frontOpen = NULL;
     int         frontLine = -1;
 
-    for(i = 0; i < numLinedefs; ++i)
+    for(i = 0; i < map->numlines; ++i)
     {
-        mlinedef_t     *n = levLinedefs[i];
-
+        line_t         *n = map->lines[i];
         double          dist;
         boolean         isFront;
-        msidedef_t     *hitSide;
+        side_t         *hitSide;
         double          dX2, dY2;
 
-        if(n == l || (n->mlFlags & MLF_ZEROLENGTH) || n->overlap)
+        if(n == l || (n->buildData.mlFlags & MLF_ZEROLENGTH) || n->buildData.overlap)
             continue;
 
-        dX2 = n->v[1]->V_pos[VX] - n->v[0]->V_pos[VX];
-        dY2 = n->v[1]->V_pos[VY] - n->v[0]->V_pos[VY];
+        dX2 = n->v[1]->buildData.pos[VX] - n->v[0]->buildData.pos[VX];
+        dY2 = n->v[1]->buildData.pos[VY] - n->v[0]->buildData.pos[VY];
 
         if(castHoriz)
         {   // Horizontal.
             if(fabs(dY2) < DIST_EPSILON)
                 continue;
 
-            if((MAX_OF(n->v[0]->V_pos[VY], n->v[1]->V_pos[VY]) < mY - DIST_EPSILON) ||
-               (MIN_OF(n->v[0]->V_pos[VY], n->v[1]->V_pos[VY]) > mY + DIST_EPSILON))
+            if((MAX_OF(n->v[0]->buildData.pos[VY], n->v[1]->buildData.pos[VY]) < mY - DIST_EPSILON) ||
+               (MIN_OF(n->v[0]->buildData.pos[VY], n->v[1]->buildData.pos[VY]) > mY + DIST_EPSILON))
                 continue;
 
             dist =
-                (n->v[0]->V_pos[VX] + (mY - n->v[0]->V_pos[VY]) * dX2 / dY2) - mX;
+                (n->v[0]->buildData.pos[VX] + (mY - n->v[0]->buildData.pos[VY]) * dX2 / dY2) - mX;
 
             isFront = (((dY > 0) == (dist > 0)) ? true : false);
 
@@ -623,12 +520,12 @@ static void testForWindowEffect(mlinedef_t *l)
             if(fabs(dX2) < DIST_EPSILON)
                 continue;
 
-            if((MAX_OF(n->v[0]->V_pos[VX], n->v[1]->V_pos[VX]) < mX - DIST_EPSILON) ||
-               (MIN_OF(n->v[0]->V_pos[VX], n->v[1]->V_pos[VX]) > mX + DIST_EPSILON))
+            if((MAX_OF(n->v[0]->buildData.pos[VX], n->v[1]->buildData.pos[VX]) < mX - DIST_EPSILON) ||
+               (MIN_OF(n->v[0]->buildData.pos[VX], n->v[1]->buildData.pos[VX]) > mX + DIST_EPSILON))
                 continue;
 
             dist =
-                (n->v[0]->V_pos[VY] + (mX - n->v[0]->V_pos[VX]) * dY2 / dX2) - mY;
+                (n->v[0]->buildData.pos[VY] + (mX - n->v[0]->buildData.pos[VX]) * dY2 / dX2) - mY;
 
             isFront = (((dX > 0) != (dist > 0)) ? true : false);
 
@@ -675,10 +572,10 @@ Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
 */
     if(backOpen && frontOpen && l->sides[FRONT]->sector == frontOpen)
     {
-        l->windowEffect = backOpen;
+        l->buildData.windowEffect = backOpen;
         Con_Message("Linedef #%d seems to be a One-Sided Window "
-                    "(back faces sector #%d).\n", l->index,
-                    backOpen->index);
+                    "(back faces sector #%d).\n", l->buildData.index,
+                    backOpen->buildData.index);
     }
 }
 
@@ -688,16 +585,16 @@ Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
  * odd number of one-sided linedefs connected to a single vertex.
  * This idea courtesy of Graham Jackson.
  */
-void BSP_DetectWindowEffects(void)
+void BSP_DetectWindowEffects(editmap_t *map)
 {
-    int         i, oneSiders, twoSiders;
+    uint            i, oneSiders, twoSiders;
 
-    for(i = 0; i < numLinedefs; ++i)
+    for(i = 0; i < map->numlines; ++i)
     {
-        mlinedef_t *l = levLinedefs[i];
+        line_t         *l = map->lines[i];
 
-        if((l->mlFlags & MLF_TWOSIDED) || (l->mlFlags & MLF_ZEROLENGTH) ||
-            l->overlap || !l->sides[FRONT])
+        if((l->buildData.mlFlags & MLF_TWOSIDED) || (l->buildData.mlFlags & MLF_ZEROLENGTH) ||
+            l->buildData.overlap || !l->sides[FRONT])
             continue;
 
         BSP_CountEdgeTips(l->v[0], &oneSiders, &twoSiders);
@@ -707,10 +604,10 @@ void BSP_DetectWindowEffects(void)
 /*
 #if _DEBUG
 Con_Message("FUNNY LINE %d : start vertex %d has odd number of one-siders\n",
-            i, l->v[0]->index);
+            i, l->buildData.v[0]->index);
 #endif
 */
-            testForWindowEffect(l);
+            testForWindowEffect(map, l);
             continue;
         }
 
@@ -721,10 +618,10 @@ Con_Message("FUNNY LINE %d : start vertex %d has odd number of one-siders\n",
 /*
 #if _DEBUG
 Con_Message("FUNNY LINE %d : end vertex %d has odd number of one-siders\n",
-            i, l->v[1]->index));
+            i, l->buildData.v[1]->index));
 #endif
 */
-            testForWindowEffect(l);
+            testForWindowEffect(map, l);
         }
     }
 }

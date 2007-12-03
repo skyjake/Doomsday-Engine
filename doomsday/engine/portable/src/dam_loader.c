@@ -30,12 +30,12 @@
 
 #include "de_base.h"
 #include "de_dam.h"
-#include "de_bsp.h"
 #include "de_play.h"
 #include "de_defs.h"
 #include "de_refresh.h"
 #include "de_system.h"
 #include "de_misc.h"
+#include "de_edit.h"
 
 #include <math.h>
 
@@ -478,8 +478,7 @@ static void allocateMapData(gamemap_t *map)
     uint        k;
 
     // Vertexes.
-    map->vertexes = Z_Calloc(map->numvertexes * sizeof(vertex_t),
-                             PU_LEVELSTATIC, 0);
+    map->vertexes = M_Calloc(map->numvertexes * sizeof(vertex_t));
     for(k = 0; k < map->numvertexes; ++k)
     {
         vertex_t   *vtx = &map->vertexes[k];
@@ -491,7 +490,7 @@ static void allocateMapData(gamemap_t *map)
     }
 
     // Linedefs + missing fronts.
-    map->lines = Z_Calloc(map->numlines * sizeof(line_t), PU_LEVELSTATIC, 0);
+    map->lines = M_Calloc(map->numlines * sizeof(line_t));
     for(k = 0; k < map->numlines; ++k)
     {
         line_t     *lin = &map->lines[k];
@@ -502,7 +501,7 @@ static void allocateMapData(gamemap_t *map)
     }
 
     // Sidedefs.
-    map->sides = Z_Calloc(map->numsides * sizeof(side_t), PU_LEVEL, 0);
+    map->sides = M_Calloc(map->numsides * sizeof(side_t));
     for(k = 0; k < map->numsides; ++k)
     {
         side_t     *side = &map->sides[k];
@@ -531,8 +530,7 @@ static void allocateMapData(gamemap_t *map)
     }
 
     // Sectors.
-    map->sectors = Z_Calloc(map->numsectors * sizeof(sector_t),
-                            PU_LEVELSTATIC, 0);
+    map->sectors = M_Calloc(map->numsectors * sizeof(sector_t));
     for(k = 0; k < map->numsectors; ++k)
     {
         uint        j;
@@ -573,7 +571,6 @@ static void countMapElements(gamemap_t *map, listnode_t *nodes)
     map->numlines = 0;
     map->numsegs = 0;
     map->numthings = 0;
-    map->po_NumPolyobjs = 0;
 
     node = nodes;
     while(node)
@@ -671,7 +668,7 @@ static uint unpackSideDefs(gamemap_t *map)
                              line);
         }
 
-        newSides = Z_Calloc(count * sizeof(side_t), PU_LEVELSTATIC, 0);
+        newSides = M_Calloc(count * sizeof(side_t));
         for(i = 0; i < count; ++i)
         {
             side_t     *side = &newSides[i];
@@ -734,7 +731,7 @@ static uint unpackSideDefs(gamemap_t *map)
         }
         M_Free(sideOwnerLists);
 
-        Z_Free(map->sides);
+        M_Free(map->sides);
         map->sides = newSides;
         map->numsides = count;
 
@@ -983,6 +980,9 @@ static void finishLineDefs(gamemap_t* map)
     {
         ld = &map->lines[i];
 
+        if(!ld->sides[0]->segcount)
+            continue;
+        
         startSeg = ld->sides[0]->segs[0];
         endSeg = ld->sides[0]->segs[ld->sides[0]->segcount - 1];
         ld->v[0] = v[0] = startSeg->SG_v1;
@@ -1490,7 +1490,7 @@ static void updateSSecMidPoint(subsector_t *sub)
 
 static void prepareSubSectors(gamemap_t *map)
 {
-    uint        i;
+    uint            i;
 
     for(i = 0; i < map->numsubsectors; ++i)
     {
@@ -1500,12 +1500,34 @@ static void prepareSubSectors(gamemap_t *map)
     }
 }
 
-static void prepareSubSectorsForBias(gamemap_t *map)
+static void prepareForBias(gamemap_t *map)
 {
-    uint        i;
-    uint        starttime = Sys_GetRealTime();
+    uint            i;
+    uint            starttime = Sys_GetRealTime();
 
-    Con_Message("prepareSubSectorsForBias: Processing...\n");
+    Con_Message("prepareForBias: Processing...\n");
+    for(i = 0; i < map->numsegs; ++i)
+    {
+        uint            k;
+        seg_t          *seg = &map->segs[i];
+
+        for(k = 0; k < 4; ++k)
+        {
+            uint        j;
+
+            for(j = 0; j < 3; ++j)
+            {
+                uint        n;
+                seg->illum[j][k].flags = VIF_STILL_UNSEEN;
+
+                for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
+                {
+                    seg->illum[j][k].casted[n].source = -1;
+                }
+            }
+        }
+    }
+
     for(i = 0; i < map->numsubsectors; ++i)
     {
         subsector_t *ssec = &map->subsectors[i];
@@ -1514,7 +1536,7 @@ static void prepareSubSectorsForBias(gamemap_t *map)
     }
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("prepareSubSectorsForBias: Done in %.2f seconds.\n",
+            ("prepareForBias: Done in %.2f seconds.\n",
              (Sys_GetRealTime() - starttime) / 1000.0f));
 }
 
@@ -2112,7 +2134,7 @@ static void markUnclosedSectors(gamemap_t *map)
 /**
  * The test is done on subsectors.
  */
-static sector_t *getContainingSectorOf(sector_t *sec)
+static sector_t *getContainingSectorOf(gamemap_t *map, sector_t *sec)
 {
     uint        i;
     float       cdiff = -1, diff;
@@ -2122,7 +2144,7 @@ static sector_t *getContainingSectorOf(sector_t *sec)
     memcpy(inner, sec->bbox, sizeof(inner));
 
     // Try all sectors that fit in the bounding box.
-    for(i = 0, other = sectors; i < numsectors; other++, ++i)
+    for(i = 0, other = map->sectors; i < map->numsectors; other++, ++i)
     {
         if(!other->linecount || other->unclosed)
             continue;
@@ -2170,7 +2192,7 @@ static void buildSectorLinks(gamemap_t *map)
             continue;
 
         // Is this sector completely contained by another?
-        sec->containsector = getContainingSectorOf(sec);
+        sec->containsector = getContainingSectorOf(map, sec);
 
         dohack = true;
         for(k = 0; k < sec->linecount; ++k)
@@ -2244,52 +2266,157 @@ static void doInitialSkyFix(void)
              (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
-static boolean loadMap(archivedmap_t *dam, gamemap_t *map)
+static gamemap_t* loadMap(archivedmap_t *dam)
 {
+    uint                i;
+    gamemap_t          *gamemap, *tempMap;
+
+    tempMap = M_Calloc(sizeof(gamemap_t));
+    // Initialize the new tempMap.
+    strncpy(tempMap->levelid, dam->identifier, sizeof(tempMap->levelid));
+    strncpy(tempMap->uniqueID, P_GenerateUniqueMapID(dam->identifier),
+            sizeof(tempMap->uniqueID));
+
     mustCreateBlockMap = false;
 
-    countMapElements(map, dam->lumpNodes);
-    allocateMapData(map);
-    if(!loadMapData(map, dam->lumpNodes))
-        return false; // something went horribly wrong...
+    countMapElements(tempMap, dam->lumpNodes);
+    allocateMapData(tempMap);
+    if(!loadMapData(tempMap, dam->lumpNodes))
+    {
+        M_Free(tempMap);
+        return NULL; // something went horribly wrong...
+    }
+
+    // \kludge We shouldn't be changing the current map here but because
+    // the game might want to make changes to the map (i.e. for polyobjs)
+    // it will need access to DMU.
+    P_SetCurrentMap(tempMap);
+    tempMap->numpolyobjs = 0;
+    tempMap->polyobjs = NULL;
+
+    // Allow the game the option to make changes to the map before we start
+    // the nodebuild process. Ideally, the game should not be involved at
+    // all. Need to move the polyobject creation logic upwards.
+    if(gx.PreNodeBuild)
+        gx.PreNodeBuild();
+
+    // Create an editable tempMap from the loaded data.
+    P_InitMapBuild();
+    for(i = 0; i < tempMap->numvertexes; ++i)
+    {
+        vertex_t           *v = &tempMap->vertexes[i];
+        P_NewVertex(v->V_pos[VX], v->V_pos[VY]);
+    }
+    for(i = 0; i < tempMap->numsectors; ++i)
+    {
+        sector_t           *sec = &tempMap->sectors[i];
+        P_NewSector(sec->planes, sec->planecount, sec->lightlevel,
+                    sec->rgb[CR], sec->rgb[CG], sec->rgb[CB]);
+    }
+    for(i = 0; i < tempMap->numsides; ++i)
+    {
+        side_t             *side = &tempMap->sides[i];
+        P_NewSide((side->sector? (side->sector - tempMap->sectors + 1) : 0),
+                  side->flags,
+                  side->SW_topmaterial, side->SW_topoffset[VX],
+                  side->SW_topoffset[VY], side->SW_toprgba[CR],
+                  side->SW_toprgba[CG], side->SW_toprgba[CB],
+                  side->SW_middlematerial, side->SW_middleoffset[VX],
+                  side->SW_middleoffset[VY], side->SW_middlergba[CR],
+                  side->SW_middlergba[CG], side->SW_middlergba[CB],
+                  side->SW_middlergba[CA],
+                  side->SW_bottommaterial, side->SW_bottomoffset[VX],
+                  side->SW_bottomoffset[VY], side->SW_bottomrgba[CR],
+                  side->SW_bottomrgba[CG], side->SW_bottomrgba[CB]);
+    }
+    for(i = 0; i < tempMap->numlines; ++i)
+    {
+        line_t             *line = &tempMap->lines[i];
+        P_NewLine((line->L_v1? (line->L_v1 - tempMap->vertexes) + 1: 0),
+                  (line->L_v2? (line->L_v2 - tempMap->vertexes) + 1: 0),
+                  (line->L_frontside? (line->L_frontside - tempMap->sides) + 1: 0),
+                  (line->L_backside? (line->L_backside - tempMap->sides) + 1: 0),
+                  line->mapflags, line->flags);
+    }
+    for(i = 0; i < tempMap->numpolyobjs; ++i)
+    {
+        polyobj_t          *po = tempMap->polyobjs[i];
+        uint                j, *lineList;
+
+        lineList = M_Malloc(sizeof(uint) * po->buildData.lineCount);
+        for(j = 0; j < po->buildData.lineCount; ++j)
+            lineList[j] = (po->buildData.lines[j] - tempMap->lines) + 1;
+        P_NewPolyobj(lineList, po->buildData.lineCount, po->crush, po->tag,
+                     po->seqType, po->startSpot.pos[VX], po->startSpot.pos[VY]);
+        M_Free(lineList);
+    }
+
+    if((gamemap = P_HardenMap()) == NULL)
+    {
+        Con_Message("loadMap: Failed building Map \"%s\"!\n",
+                    dam->identifier);
+        return NULL;
+    }
+    P_ShutdownMapBuild();
+
+    /**
+     * Map is no longer editable and nodes have been built. 
+     */
+
+    gamemap->numthings = tempMap->numthings;
+    gamemap->rejectmatrix = tempMap->rejectmatrix;
+
+    // We've now finished with the temporary map.
+    if(tempMap->vertexes)
+        M_Free(tempMap->vertexes);
+    if(tempMap->lines)
+        M_Free(tempMap->lines);
+    if(tempMap->sides)
+        M_Free(tempMap->sides);
+    if(tempMap->sectors)
+        M_Free(tempMap->sectors);
+    if(tempMap->polyobjs)
+    {
+        uint                i;
+        for(i = 0; i < tempMap->numpolyobjs; ++i)
+        {
+            polyobj_t          *po = tempMap->polyobjs[i];
+            M_Free(po->buildData.lines);
+            M_Free(po);
+        }
+        M_Free(tempMap->polyobjs);
+    }
+    M_Free(tempMap);
 
     // Build the vertex line owner rings.
-    buildVertexOwners(map);
-
-    // Invoke glBSP.
-    if(!BSP_Build(map))
-    {
-        Con_Message("P_AttemptMapLoad: Failed building BSP for map \"%s\"!\n",
-                    map->levelid);
-        return false;
-    }
+    buildVertexOwners(gamemap);
 
     // Do any initialization/error checking work we need to do.
     // Must be called before we go any further.
-    findMissingFrontSidedefs(map);
-    markSelfReferencingLinedefs(map);
-    finalizeMapData(map);
+    findMissingFrontSidedefs(gamemap);
+    markSelfReferencingLinedefs(gamemap);
+    finalizeMapData(gamemap);
 
-    markUnclosedSectors(map);
-    updateMapBounds(map);
-    S_DetermineSubSecsAffectingSectorReverb(map);
-    prepareSubSectors(map);
+    markUnclosedSectors(gamemap);
+    updateMapBounds(gamemap);
+    S_DetermineSubSecsAffectingSectorReverb(gamemap);
+    prepareSubSectors(gamemap);
 
     // Polygonize.
-    polygonize(map);
+    polygonize(gamemap);
 
     // Must follow polygonize!
-    prepareSubSectorsForBias(map);
+    prepareForBias(gamemap);
 
     // Must be called before any mobjs are spawned.
-    R_InitLinks(map);
+    R_InitLinks(gamemap);
 
-    buildSectorLinks(map);
+    buildSectorLinks(gamemap);
 
     // Init blockmap for searching subsectors.
-    P_BuildSubsectorBlockMap(map);
+    P_BuildSubsectorBlockMap(gamemap);
 
-    return true;
+    return gamemap;
 }
 
 /**
@@ -2301,7 +2428,7 @@ static boolean loadMap(archivedmap_t *dam, gamemap_t *map)
 boolean DAM_LoadMap(archivedmap_t *dam)
 {
     int         mapFormat;
-    gamemap_t  *newmap;
+    gamemap_t  *finalMap;
     ded_mapinfo_t *mapInfo;
 
     if(!dam)
@@ -2313,17 +2440,15 @@ boolean DAM_LoadMap(archivedmap_t *dam)
     mapFormat = determineMapDataFormat(dam->lumpNodes);
     validateMapData(dam->lumpNodes);
 
-    newmap = M_Malloc(sizeof(gamemap_t));
-    // Initialize the new map.
-    strncpy(newmap->levelid, dam->identifier, sizeof(newmap->levelid));
-    strncpy(newmap->uniqueID, P_GenerateUniqueMapID(dam->identifier),
-            sizeof(newmap->uniqueID));
-
-    if(!loadMap(dam, newmap))
+    if((finalMap = loadMap(dam)) == NULL)
         return false;
 
+    strncpy(finalMap->levelid, dam->identifier, sizeof(finalMap->levelid));
+    strncpy(finalMap->uniqueID, P_GenerateUniqueMapID(dam->identifier),
+            sizeof(finalMap->uniqueID));
+
     // See what mapinfo says about this level.
-    mapInfo = Def_GetMapInfo(newmap->levelid);
+    mapInfo = Def_GetMapInfo(finalMap->levelid);
     if(!mapInfo)
         mapInfo = Def_GetMapInfo("*");
 
@@ -2332,19 +2457,19 @@ boolean DAM_LoadMap(archivedmap_t *dam)
     // Setup accordingly.
     if(mapInfo)
     {
-        newmap->globalGravity = mapInfo->gravity;
-        newmap->ambientLightLevel = mapInfo->ambient * 255;
+        finalMap->globalGravity = mapInfo->gravity;
+        finalMap->ambientLightLevel = mapInfo->ambient * 255;
     }
     else
     {
         // No map info found, so set some basic stuff.
-        newmap->globalGravity = 1.0f;
-        newmap->ambientLightLevel = 0;
+        finalMap->globalGravity = 1.0f;
+        finalMap->ambientLightLevel = 0;
     }
 
     // \todo should be called from P_LoadMap() but R_InitMap requires the
     // currentMap to be set first.
-    P_SetCurrentMap(newmap);
+    P_SetCurrentMap(finalMap);
 
     R_InitSectorShadows();
 
@@ -2353,8 +2478,6 @@ boolean DAM_LoadMap(archivedmap_t *dam)
     // Announce any issues detected with the map.
     DAM_PrintMapErrors(dam, false);
 
-    // \fixme: Should NOT be freeing this here!!
-   // M_Free(newmap);
     return true;
 }
 
