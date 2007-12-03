@@ -321,6 +321,17 @@ void D_Display2(void)
     switch(G_GetGameState())
     {
     case GS_LEVEL:
+        if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
+            break;
+
+        if(!IS_CLIENT && leveltime < 2)
+        {
+            // Don't render too early; the first couple of frames
+            // might be a bit unstable -- this should be considered
+            // a bug, but since there's an easy fix...
+            break;
+        }
+
         // These various HUD's will be drawn unless Doomsday advises not to
         if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
         {
