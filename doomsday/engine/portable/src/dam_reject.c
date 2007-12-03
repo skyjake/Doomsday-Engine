@@ -112,7 +112,7 @@ static void buildReject(gamemap_t *map)
 {
 /**
  * \fixme Needs updating since the rejNext and rejPrev pointers are
- * nolonger internal to msector_t.
+ * nolonger internal to sector_t.
  */
 #if 0
     int         i;
@@ -125,15 +125,15 @@ static void buildReject(gamemap_t *map)
     secGroups = M_Malloc(sizeof(int) * numSectors);
     for(i = 0; i < numSectors; ++i)
     {
-        msector_t  *sec = LookupSector(i);
+        sector_t  *sec = LookupSector(i);
         secGroups[i] = group++;
         sec->rejNext = sec->rejPrev = sec;
     }
 
     for(i = 0; i < numLinedefs; ++i)
     {
-        mlinedef_t  *line = LookupLinedef(i);
-        msector_t   *sec1, *sec2, *p;
+        line_t  *line = LookupLinedef(i);
+        sector_t   *sec1, *sec2, *p;
 
         if(!line->sides[FRONT] || !line->sides[BACK])
             continue;

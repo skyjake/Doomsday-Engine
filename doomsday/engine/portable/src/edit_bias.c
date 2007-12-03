@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * edit_bias.c: Bias light source editor.
  */
 
@@ -77,7 +77,7 @@ static ui_object_t ob_bias[] = {    // bias editor page
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-/*
+/**
  * Editing variables:
  *
  * edit-bias-blink: keep blinking the nearest light (unless a light is grabbed)
@@ -89,7 +89,7 @@ static float editDistance = 300;
 static float editColor[3];
 static float editIntensity;
 
-/*
+/**
  * Editor status.
  */
 static int editActive = false; // Edit mode active?
@@ -104,7 +104,7 @@ static vec3_t hueOrigin, hueSide, hueUp;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Register console variables for Shadow Bias.
  */
 void SBE_Register(void)
@@ -139,7 +139,7 @@ void SBE_Register(void)
     C_CMD_FLAGS("blmenu", "", BLEditor, CMDF_NO_DEDICATED);
 }
 
-/*
+/**
  * Editor Functionality:
  */
 

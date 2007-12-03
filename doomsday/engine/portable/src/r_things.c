@@ -1231,7 +1231,7 @@ void R_DetermineLightsAffectingVisSprite(const visspritelightparams_t *params,
         // Find the nearest sources of light. They will be used to
         // light the vertices. First initialize the array.
         for(i = numLights; i < MAX_VISSPRITE_LIGHTS; ++i)
-            lights[i].approxDist = (float) DDMAXINT;
+            lights[i].approxDist = DDMAXFLOAT;
 
         LO_LumobjsRadiusIterator(params->subsector, params->center[VX],
                              params->center[VY], (float) loMaxRadius,

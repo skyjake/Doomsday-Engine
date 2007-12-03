@@ -34,6 +34,7 @@
 #include "de_console.h"
 #include "de_play.h"
 #include "de_refresh.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -69,14 +70,14 @@ uint    po_NumPolyobjs;
 /**
  * @return              @c  0 = Unclosed polygon.
  */
-static int isClosedPolygon(const line_t **lineList, size_t num)
+static int isClosedPolygon(line_t **lineList, size_t num)
 {
     uint            i;
 
     for(i = 0; i < num; ++i)
     {
-        const line_t   *line = lineList[i];
-        const line_t   *next = (i == num-1? lineList[0] : lineList[i+1]);
+        line_t         *line = lineList[i];
+        line_t         *next = (i == num-1? lineList[0] : lineList[i+1]);
 
         if(!(line->L_v2 == next->L_v1))
              return false;
@@ -87,12 +88,15 @@ static int isClosedPolygon(const line_t **lineList, size_t num)
 }
 
 /**
- * Allocate memory for polyobjs.
+ * Create a temporary polyobj (read from the original map data).
  */
-boolean PO_CreatePolyobj(const line_t **lineList, size_t num, uint *poIdx)
+boolean PO_CreatePolyobj(line_t **lineList, uint num, uint *poIdx,
+                         boolean crush, int tag, int sequenceType,
+                         float startX, float startY)
 {
-    uint                i, n, segCount;
+    uint                i;
     polyobj_t          *po, **newList;
+    gamemap_t          *map = P_GetCurrentMap();
 
     if(!lineList || num == 0)
         return false;
@@ -104,55 +108,39 @@ boolean PO_CreatePolyobj(const line_t **lineList, size_t num, uint *poIdx)
     }
 
     // Allocate the new polyobj.
-    po = Z_Calloc(sizeof(*po), PU_LEVEL, 0);
+    po = M_Calloc(sizeof(*po));
 
     /**
      * Link the new polyobj into the global list.
      */
-    newList = Z_Malloc(((++po_NumPolyobjs) + 1) * sizeof(polyobj_t*),
-                       PU_LEVEL, 0);
+    newList = M_Malloc(((++map->numpolyobjs) + 1) * sizeof(polyobj_t*));
     // Copy the existing list.
-    for(i = 0; i < po_NumPolyobjs - 1; ++i)
+    for(i = 0; i < map->numpolyobjs - 1; ++i)
     {
-        newList[i] = polyobjs[i];
+        newList[i] = map->polyobjs[i];
     }
     newList[i++] = po; // Add the new polyobj.
     newList[i] = NULL; // Terminate.
 
-    if(po_NumPolyobjs-1 > 0)
-        Z_Free(polyobjs);
-    polyobjs = newList;
+    if(map->numpolyobjs-1 > 0)
+        M_Free(map->polyobjs);
+    map->polyobjs = newList;
 
-    /**
-     * Setup the new polyobj.
-     */
-    po->header.type = DMU_POLYOBJ;
-    po->idx = po_NumPolyobjs - 1;
-
-    // Collect all the segs of the lines that consist the polyobj.
-    segCount = 0;
+    po->idx = map->numpolyobjs-1;
+    po->crush = crush;
+    po->tag = tag;
+    po->seqType = sequenceType;
+    po->startSpot.pos[VX] = startX;
+    po->startSpot.pos[VY] = startY;
+    po->buildData.lineCount = num;
+    po->buildData.lines = M_Malloc(sizeof(line_t*) * num);
     for(i = 0; i < num; ++i)
     {
-        const line_t       *line = lineList[i];
-        if(line->L_frontside)
-            segCount += line->L_frontside->segcount;
+        // This line is part of a polyobj.
+        lineList[i]->flags |= LINEF_POLYOBJ;
+
+        po->buildData.lines[i] = lineList[i];
     }
-    po->segs = Z_Malloc(sizeof(seg_t*) * (segCount+1), PU_LEVEL, 0);
-    for(n = 0, i = 0; i < num; ++i)
-    {
-        const line_t       *line = lineList[i];
-        if(line->L_frontside)
-        {
-            seg_t             **ptr = line->L_frontside->segs;
-            while(*ptr)
-            {
-                 po->segs[n++] = *ptr;
-                *ptr++;
-            }
-        }
-    }
-    po->segs[n] = NULL; // Terminate.
-    po->numsegs = segCount;
 
     if(poIdx)
         *poIdx = po->idx;
@@ -251,41 +239,23 @@ void PO_UpdateBBox(polyobj_t *po)
  */
 void PO_SetupPolyobjs(void)
 {
-    uint        i, j, k, num;
-    seg_t     **segList, *seg;
-    line_t     *line;
-    side_t     *side;
-    polyobj_t  *po;
+    uint                i;
 
     for(i = 0; i < po_NumPolyobjs; ++i)
     {
-        po = polyobjs[i];
-        segList = po->segs;
-        num = po->numsegs;
+        polyobj_t          *po = polyobjs[i];
+        seg_t             **segPtr;
 
-        for(j = 0; j < num; ++j, segList++)
+        segPtr = po->segs;
+        while(*segPtr)
         {
-            seg = (*segList);
+            seg_t              *seg = *segPtr;
+            side_t             *side = seg->linedef->L_frontside;
 
-            // Mark this as a poly object seg.
-            seg->flags |= SEGF_POLYOBJ;
-
-            if(seg->linedef)
-            {
-                line = seg->linedef;
-
-                for(k = 0; k < 2; ++k)
-                {
-                    if(line->L_side(k))
-                    {
-                        side = line->L_side(k);
-
-                        side->SW_topflags |= SUF_NO_RADIO;
-                        side->SW_middleflags |= SUF_NO_RADIO;
-                        side->SW_bottomflags |= SUF_NO_RADIO;
-                    }
-                }
-            }
+            side->SW_topflags |= SUF_NO_RADIO;
+            side->SW_middleflags |= SUF_NO_RADIO;
+            side->SW_bottomflags |= SUF_NO_RADIO;
+            *segPtr++;
         }
 
         PO_UnLinkPolyobj(po);

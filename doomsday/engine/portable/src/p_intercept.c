@@ -110,7 +110,7 @@ boolean P_TraverseIntercepts(traverser_t func, float maxfrac)
 
     while(count--)
     {
-        float       dist = FIX2FLT(DDMAXINT);
+        float       dist = DDMAXFLOAT;
         intercept_t *scan;
 
         for(scan = intercepts; scan < intercept_p; scan++)
@@ -122,7 +122,7 @@ boolean P_TraverseIntercepts(traverser_t func, float maxfrac)
         if(!func(in))
             return false; // Don't bother going farther.
 
-        in->frac = FIX2FLT(DDMAXINT);
+        in->frac = DDMAXFLOAT;
     }
 
     return true; // Everything was traversed.
@@ -153,7 +153,7 @@ boolean P_SightTraverseIntercepts(divline_t *strace,
     in = 0; // Shut up compiler warning.
     while(count--)
     {
-        dist = FIX2FLT(DDMAXINT);
+        dist = DDMAXFLOAT;
         for(scan = intercepts; scan < intercept_p; scan++)
             if(scan->frac < dist)
             {
@@ -166,7 +166,7 @@ boolean P_SightTraverseIntercepts(divline_t *strace,
         if(!func(in))
             return false; // Don't bother going farther.
 
-        in->frac = FIX2FLT(DDMAXINT);
+        in->frac = DDMAXFLOAT;
     }
 
     return true; // Everything was traversed.

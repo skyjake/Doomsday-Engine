@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -366,11 +366,11 @@ float Sv_GetMaxedMobjZ(const mobj_t *mo)
 {
     if(mo->pos[VZ] == mo->floorz)
     {
-        return DDMININT;
+        return DDMINFLOAT;
     }
     if(mo->pos[VZ] + mo->height == mo->ceilingz)
     {
-        return DDMAXINT;
+        return DDMAXFLOAT;
     }
     return mo->pos[VZ];
 }
@@ -1632,7 +1632,7 @@ float Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
     if(isReal && !P_IsUsedMobjID(mo->thinker.id))
     {
         // This mobj does not exist any more!
-        return FIX2FLT(DDMAXINT);
+        return DDMAXFLOAT;
     }
 
     z = mo->pos[VZ];
@@ -1640,9 +1640,9 @@ float Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
     // Registered mobjs may have a maxed out Z coordinate.
     if(!isReal)
     {
-        if(z == FIX2FLT(DDMININT))
+        if(z == DDMINFLOAT)
             z = mo->floorz;
-        if(z == FIX2FLT(DDMAXINT))
+        if(z == DDMAXFLOAT)
             z = mo->ceilingz - mo->height;
     }
 
@@ -1842,7 +1842,7 @@ float Sv_GetMaxSoundDistance(const sounddelta_t *delta)
     if(volume <= 0)
     {
         // Silence is heard all over the world.
-        return FIX2FLT(DDMAXINT);
+        return DDMAXFLOAT;
     }
     return volume * sound_max_distance;
 }

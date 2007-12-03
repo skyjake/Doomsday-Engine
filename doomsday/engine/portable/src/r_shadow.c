@@ -620,7 +620,7 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
                 uint        fidx = GET_SECTOR_IDX(seg->SG_frontsector);
                 uint        bidx = GET_SECTOR_IDX(seg->SG_backsector);
 
-                // Minisegs and benign linedefs don't get shadows, even then, only one.
+                // Minisegs don't get shadows, even then, only one.
                 if(seg->linedef &&
                    !((seg->linedef->validCount == validCount) ||
                      (seg->linedef->flags & LINEF_SELFREF)))

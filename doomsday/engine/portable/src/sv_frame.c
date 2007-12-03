@@ -233,11 +233,11 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
     // Floor/ceiling z?
     if(df & MDF_POS_Z)
     {
-        if(FLT2FIX(d->pos[VZ]) == DDMININT || FLT2FIX(d->pos[VZ]) == DDMAXINT)
+        if(d->pos[VZ] == DDMINFLOAT || d->pos[VZ] == DDMAXFLOAT)
         {
             df &= ~MDF_POS_Z;
             df |= MDF_MORE_FLAGS;
-            moreFlags |= (FLT2FIX(d->pos[VZ]) == DDMININT ? MDFE_Z_FLOOR : MDFE_Z_CEILING);
+            moreFlags |= (d->pos[VZ] == DDMINFLOAT ? MDFE_Z_FLOOR : MDFE_Z_CEILING);
         }
     }
 

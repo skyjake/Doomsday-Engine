@@ -853,10 +853,8 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
     if(!seg->linedef || !seg->sidedef)
         return; // Mini-segs arn't drawn.
 
-    // \kludge: Apparently, finalizeMapData() is not fool-proof yet...
-    if(!(seg->sidedef->segcount > 0))
-        return;
-    // End kludge.
+    if(seg->flags & SEGF_POLYOBJ)
+        return; // Polyobj segs are never split.
 
     // Only segs at sidedef ends can/should be split.
     if(!((seg == seg->sidedef->segs[0] && !doRight) ||

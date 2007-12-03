@@ -203,8 +203,8 @@ static boolean PIT_CheckMobj(mobj_t *mo, void *parm)
     blockdist = mo->radius + tm->mo->radius;
 
     // Only players can move under or over other mobjs.
-    if(tm->pos[VZ] != DDMAXINT && (tm->mo->dplayer /* || mo->dplayer */
-                             || mo->ddflags & DDMF_NOGRAVITY))
+    if(tm->pos[VZ] != DDMAXFLOAT &&
+       (tm->mo->dplayer || mo->ddflags & DDMF_NOGRAVITY))
     {
         if(mo->pos[VZ] > tm->pos[VZ] + tm->height)
         {
@@ -334,7 +334,7 @@ boolean P_CheckPosXYZ(mobj_t *mo, float x, float y, float z)
  */
 boolean P_CheckPosXY(mobj_t *mo, float x, float y)
 {
-    return P_CheckPosXYZ(mo, x, y, DDMAXINT);
+    return P_CheckPosXYZ(mo, x, y, DDMAXFLOAT);
 }
 
 /**

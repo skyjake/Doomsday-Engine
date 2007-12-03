@@ -573,7 +573,7 @@ void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
     }
 }
 
-boolean R_IsInAnimGroup(int groupNum, int type, int number)
+boolean R_IsInAnimGroup(int groupNum, materialtype_t type, int number)
 {
     animgroup_t *group = R_GetAnimGroup(groupNum);
     int     i;

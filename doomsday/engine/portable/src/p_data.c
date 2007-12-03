@@ -348,7 +348,7 @@ void P_SetCurrentMap(gamemap_t *map)
     numsides = map->numsides;
     sides = map->sides;
 
-    po_NumPolyobjs = map->po_NumPolyobjs;
+    po_NumPolyobjs = map->numpolyobjs;
     polyobjs = map->polyobjs;
 
     rejectmatrix = map->rejectmatrix;
