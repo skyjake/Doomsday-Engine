@@ -81,7 +81,7 @@ void        BSP_IncSuperBlockHEdgeCounts(superblock_t *block,
                                          boolean lineLinked);
 
 hedge_t    *BSP_PickNode(superblock_t *hEdgeList, int depth);
-void        BSP_FindNodeBounds(mnode_t *node, superblock_t *hEdgeListRight,
+void        BSP_FindNodeBounds(node_t *node, superblock_t *hEdgeListRight,
                                superblock_t *hEdgeListLeft);
 void        BSP_DivideOneHEdge(hedge_t *hEdge, hedge_t *part, superblock_t *leftList,
                                superblock_t *rightList, cutlist_t *cutList);

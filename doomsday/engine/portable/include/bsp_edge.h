@@ -43,7 +43,7 @@
 #define ANG_EPSILON  (1.0 / 1024.0)
 
 typedef struct hedge_s {
-    mvertex_t  *v[2]; // [Start, End] of the half-edge..
+    vertex_t  *v[2]; // [Start, End] of the half-edge..
 
     // Half-edge on the other side, or NULL if one-sided. This relationship
     // is always one-to-one -- if one of the half-edges is split, the twin
@@ -74,22 +74,22 @@ typedef struct hedge_s {
     double      pPerp;
 
     // Linedef that this half-edge goes along, or NULL if miniseg.
-    mlinedef_t *linedef;
+    line_t *linedef;
 
     // Linedef that this half-edge initially comes from.
     // For "real" half-edges, this is just the same as the 'linedef' field
     // above. For "miniedges", this is the linedef of the partition line.
-    mlinedef_t  *sourceLine;
+    line_t  *sourceLine;
 
-    msector_t  *sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
+    sector_t  *sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
     byte        side; // 0 for right, 1 for left.
 } hedge_t;
 
 hedge_t    *LookupHEdge(int index);
 
-hedge_t    *BSP_CreateHEdge(mlinedef_t *line, mlinedef_t *sourceLine,
-                            mvertex_t *start, mvertex_t *end,
-                            msector_t *sec, boolean back);
+hedge_t    *BSP_CreateHEdge(line_t *line, line_t *sourceLine,
+                            vertex_t *start, vertex_t *end,
+                            sector_t *sec, boolean back);
 hedge_t    *BSP_SplitHEdge(hedge_t *oldHEdge, double x, double y);
 
 void        BSP_SortHEdgesByIndex(void);
@@ -97,10 +97,10 @@ void        BSP_FreeHEdges(void);
 int         BSP_GetNumHEdges(void);
 
 // Edge tip functions:
-void        BSP_CreateVertexEdgeTip(mvertex_t *vert, double dx, double dy,
+void        BSP_CreateVertexEdgeTip(vertex_t *vert, double dx, double dy,
                                     hedge_t *back, hedge_t *front);
-void        BSP_CountEdgeTips(mvertex_t *vert, int *oneSided, int *twoSided);
-msector_t  *BSP_VertexCheckOpen(mvertex_t *vert, double dx, double dy);
+void        BSP_CountEdgeTips(vertex_t *vert, uint *oneSided, uint *twoSided);
+sector_t  *BSP_VertexCheckOpen(vertex_t *vert, double dx, double dy);
 void        BSP_FreeEdgeTips(void);
 
 // Misc util functions:

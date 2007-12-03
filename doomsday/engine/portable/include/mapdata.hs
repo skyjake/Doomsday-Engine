@@ -16,6 +16,25 @@ typedef struct lineowner_s {
 } lineowner_t;
 
 #define V_pos                   v.pos
+
+typedef struct mvertex_s {
+    // Vertex index. Always valid after loading and pruning of unused
+    // vertices has occurred.
+    int         index;
+
+    // Reference count. When building normal node info, unused vertices
+    // will be pruned.
+    int         refCount;
+
+    // Usually NULL, unless this vertex occupies the same location as a
+    // previous vertex. Only used during the pruning phase.
+    struct vertex_s *equiv;
+
+    struct edgetip_s *tipSet; // Set of wall_tips.
+
+// Final data.
+    double      pos[2];
+} mvertex_t;
 end
 
 struct vertex
@@ -23,6 +42,7 @@ struct vertex
     -       uint        numlineowners // Number of line owners.
     -       lineowner_t* lineowners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     -       boolean     anchored    // One or more of our line owners are one-sided.
+    -       mvertex_t   buildData
 end
 
 internal
@@ -72,6 +92,18 @@ end
 
 internal
 #define SUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
+
+typedef struct msubsec_s {
+    // Approximate middle point.
+    double      midPoint[2];
+
+    // Subsector index. Always valid, set when the subsector is
+    // initially created.
+    int         index;
+
+    int         hEdgeCount;
+    struct hedge_s *hEdges; // Head ptr to a list of half-edges in this subsector.
+} msubsec_t;
 end
 
 struct subsector
@@ -89,6 +121,7 @@ struct subsector
     -       shadowlink_s* shadows
     -       uint        group
     -       uint[NUM_REVERB_DATA] reverb
+    -       msubsec_t   buildData
 end
 
 public
@@ -216,6 +249,15 @@ typedef struct ssecgroup_s {
     struct sector_s**   linked;     // [sector->planecount+1] size.
                                     // Plane attached to another sector.
 } ssecgroup_t;
+
+typedef struct msector_s {
+    // Sector index. Always valid after loading & pruning.
+    int         index;
+
+    // Suppress superfluous mini warnings.
+    int         warnedFacing;
+    boolean     warnedUnclosed;
+} msector_t;
 end
 
 struct sector
@@ -249,6 +291,7 @@ struct sector
     -       uint        blockcount  // Number of gridblocks in the sector.
     -       uint        changedblockcount // Number of blocks to mark changed.
     -       ushort*     blocks      // Light grid block indices.
+    -       msector_t   buildData
 end
 
 internal
@@ -300,6 +343,14 @@ internal
 #define SDF_BLENDMIDTOTOP       0x02
 #define SDF_BLENDMIDTOBOTTOM    0x04
 #define SDF_BLENDBOTTOMTOMID    0x08
+
+#define FRONT                   0
+#define BACK                    1
+
+typedef struct msidedef_s {
+    // Sidedef index. Always valid after loading & pruning.
+    int         index;
+} msidedef_t;
 end
 
 struct side
@@ -308,6 +359,7 @@ struct side
     PTR     seg_s**     segs        // [segcount] size, segs arranged left>right
     PTR     sector_s*   sector
     SHORT   short       flags
+    -       msidedef_t  buildData
 
 # The following is used with FakeRadio.
     -       int         fakeRadioUpdateCount // frame number of last update
@@ -345,6 +397,31 @@ internal
 
 // Line flags
 #define LINEF_SELFREF           0x1 // Front and back sectors of this line are the same.
+#define LINEF_POLYOBJ           0x2 // Line is part of a polyobject.
+end
+
+internal
+#define MLF_TWOSIDED            0x1 // Line is marked two-sided.
+#define MLF_ZEROLENGTH          0x2 // Zero length (line should be totally ignored).
+#define MLF_SELFREF             0x4 // Sector is the same on both sides.
+#define MLF_POLYOBJ             0x8 // Line is part of a polyobj.
+
+typedef struct mlinedef_s {
+    int         mlFlags; // MLF_* flags.
+
+    // One-sided linedef used for a special effect (windows).
+    // The value refers to the opposite sector on the back side.
+    struct sector_s *windowEffect;
+
+    // Normally NULL, except when this linedef directly overlaps an earlier
+    // one (a rarely-used trick to create higher mid-masked textures).
+    // No segs should be created for these overlapping linedefs.
+    struct line_s *overlap;
+
+    // Linedef index. Always valid after loading & pruning of zero
+    // length lines has occurred.
+    int         index;
+} mlinedef_t;
 end
 
 struct line
@@ -361,6 +438,15 @@ struct line
     -       float       length      // Accurate length
     -       binangle_t  angle       // Calculated from front side's normal
     -       boolean[DDMAXPLAYERS] mapped // Whether the line has been mapped by each player yet.
+    -       mlinedef_t  buildData
+end
+
+internal
+typedef struct mpolyobj_s {
+    int         index;
+    uint        lineCount;
+    struct line_s **lines;
+} mpolyobj_t;
 end
 
 struct polyobj
@@ -381,6 +467,31 @@ struct polyobj
     BOOL    boolean     crush       // Should the polyobj attempt to crush mobjs?
     INT     int         seqType
     PTR     void*       specialdata // pointer a thinker, if the poly is moving
+    -       mpolyobj_t  buildData
+end
+
+internal
+typedef struct child_s {
+    // Child node or subsector (one must be NULL).
+    struct node_s *node;
+    subsector_t  *subSec;
+} child_t;
+
+#define RIGHT                   0
+#define LEFT                    1
+
+typedef struct mnode_s {
+    // Node index. Only valid once the NODES or GL_NODES lump has been
+    // created.
+    int         index;
+
+    // The node is too long, and the (dx,dy) values should be halved
+    // when writing into the NODES lump.
+    boolean     tooLong;
+
+// Final data.
+    child_t     children[2]; // Children {RIGHT, LEFT}
+} mnode_t;
 end
 
 struct node
@@ -390,4 +501,5 @@ struct node
     FLOAT   float     dy            // Partition line.
     FLOAT   float[2][4] bbox        // Bounding box for each child.
     UINT    uint[2]   children      // If NF_SUBSECTOR it's a subsector.
+    -       mnode_t   buildData
 end

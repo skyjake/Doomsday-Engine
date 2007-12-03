@@ -34,14 +34,13 @@
 #ifndef __BSP_ANALYZE_H__
 #define __BSP_ANALYZE_H__
 
-void        BSP_InitAnalyzer(void);
+void        BSP_InitAnalyzer(editmap_t *map);
 
 void        BSP_GetBMapBounds(int *x, int *y, int *w, int *h);
 
 // Detection routines (for finding map errors and editing tricks).
-void        BSP_DetectDuplicateVertices(void);
-void        BSP_DetectOverlappingLines(void);
-void        BSP_DetectWindowEffects(void);
+void        BSP_DetectOverlappingLines(editmap_t *map);
+void        BSP_DetectWindowEffects(editmap_t *map);
 
 // Flags for BSP_PruneRedundantMapData().
 #define     PRUNE_LINEDEFS      0x1
@@ -50,5 +49,5 @@ void        BSP_DetectWindowEffects(void);
 #define     PRUNE_SECTORS       0x8
 #define     PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
 
-void        BSP_PruneRedundantMapData(int flags);
+void        BSP_PruneRedundantMapData(editmap_t *map, int flags);
 #endif

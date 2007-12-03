@@ -339,7 +339,9 @@ extern          "C" {
                                              int amount);
 
     // Play: Polyobjs.
-    boolean         PO_CreatePolyobj(const line_t **list, size_t num, uint *poIdx);
+    boolean         PO_CreatePolyobj(line_t **list, uint num, uint *poIdx,
+                                     boolean crush, int tag, int sequenceType,
+                                     float startX, float startY);
     boolean         PO_MovePolyobj(uint num, float x, float y);
     boolean         PO_RotatePolyobj(uint num, angle_t angle);
     void            PO_UnLinkPolyobj(void *po);

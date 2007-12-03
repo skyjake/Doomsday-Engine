@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -72,9 +72,9 @@ typedef unsigned   uint_least32_t;
 typedef long long  int_least64_t;
 typedef unsigned long long   uint_least64_t;
 
-/*  7.18.1.3  Fastest minimum-width integer types 
+/*  7.18.1.3  Fastest minimum-width integer types
  *  Not actually guaranteed to be fastest for all purposes
- *  Here we use the exact-width types for 8 and 16-bit ints. 
+ *  Here we use the exact-width types for 8 and 16-bit ints.
  */
 typedef char int_fast8_t;
 typedef unsigned char uint_fast8_t;
@@ -105,7 +105,7 @@ typedef unsigned long long   uintmax_t;
 typedef unsigned int	uint;
 typedef unsigned short	ushort;
 
-/* 
+/*
 Splint 3.1.1 --- 03 Nov 2006
 ../../api/dd_types.h:95:22: Datatype size_t declared with inconsistent type: unsigned int
 typedef unsigned int	size_t;
@@ -157,24 +157,26 @@ typedef unsigned char binangle_t;
 #define DDMAXSHORT	((short)0x7fff)
 #define DDMAXINT	((int)0x7fffffff)	// max pos 32-bit int
 #define DDMAXLONG	((long)0x7fffffff)
+#define DDMAXFLOAT  ((float)1E+37)
 
 #define DDMINCHAR	((char)0x80)
 #define DDMINSHORT	((short)0x8000)
 #define DDMININT 	((int)0x80000000)	// max negative 32-bit integer
 #define DDMINLONG	((long)0x80000000)
+#define DDMINFLOAT  ((float)1E-37)
 
 // Predeclarations for map data types. The contents of these structs is
 // declared in p_maptypes.h.
-struct node_s; 
+struct node_s;
 struct vertex_s;
-struct line_s; 
-struct side_s; 
+struct line_s;
+struct side_s;
 struct seg_s;
 struct subsector_s;
 struct sector_s;
 struct polyblock_s;
 struct polyobj_s;
 struct surface_s;
-struct plane_s; 
+struct plane_s;
 
 #endif

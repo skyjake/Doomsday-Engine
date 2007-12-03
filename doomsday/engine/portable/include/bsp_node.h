@@ -37,45 +37,14 @@
 #include "bsp_intersection.h"
 #include "p_mapdata.h"
 
-typedef struct child_s {
-    // Child node or subsector (one must be NULL).
-    struct mnode_s *node;
-    msubsec_t  *subSec;
-} child_t;
-
-#define RIGHT                   0
-#define LEFT                    1
-
-typedef struct mnode_s {
-    // Node index. Only valid once the NODES or GL_NODES lump has been
-    // created.
-    int         index;
-
-    // The node is too long, and the (dx,dy) values should be halved
-    // when writing into the NODES lump.
-    boolean     tooLong;
-
-// Final data.
-    int         x, y; // Starting point.
-    int         dX, dY; // Offset to ending point.
-
-    int         bBox[2][4]; // Bounding box for each child.
-    child_t     children[2]; // Children {RIGHT, LEFT}
-} mnode_t;
-
-extern int numNodes;
-
-mnode_t    *NewNode(void);
-mnode_t    *LookupNode(int index);
-
 int         BoxOnLineSide(struct superblock_s *box, struct hedge_s *part);
 
-boolean     BuildNodes(struct superblock_s *hEdgeList, mnode_t **n, msubsec_t **s,
+boolean     BuildNodes(struct superblock_s *hEdgeList, node_t **n, subsector_t **s,
                        int depth, cutlist_t *cutList);
 void        BSP_AddHEdgeToSuperBlock(struct superblock_s *block, struct hedge_s *hEdge);
 
-int         ComputeBspHeight(mnode_t *node);
-void        ClockwiseBspTree(mnode_t *root);
+int         ComputeBspHeight(node_t *node);
+void        ClockwiseBspTree(editmap_t *src);
 
-void        SaveMap(gamemap_t *map, mnode_t *rootNode);
+void        SaveMap(gamemap_t *dest, editmap_t *src);
 #endif

@@ -164,8 +164,9 @@ typedef struct gamemap_s {
     uint        numsides;
     side_t     *sides;
 
-    uint        po_NumPolyobjs;
+    uint        numpolyobjs;
     polyobj_t **polyobjs;
+
     linkpolyobj_t **polyBlockMap;
 
     int         numthings;

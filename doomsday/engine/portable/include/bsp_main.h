@@ -34,12 +34,12 @@
 #ifndef __BSP_MAIN_H__
 #define __BSP_MAIN_H__
 
-#include "p_mapdata.h"
+#include "de_edit.h"
 
 typedef double angle_g;  // Degrees, 0 is E, 90 is N
 
 extern int bspFactor;
 
 void        BSP_Register(void);
-boolean     BSP_Build(gamemap_t *map);
+boolean     BSP_Build(gamemap_t *dest, editmap_t *src);
 #endif
