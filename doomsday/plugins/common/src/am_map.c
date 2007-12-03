@@ -1860,8 +1860,8 @@ static void findMinMaxBoundaries(void)
     uint        i;
     float       pos[2];
 
-    bounds[0][0] = bounds[0][1] = (float) DDMAXINT;
-    bounds[1][0] = bounds[1][1] = (float) -DDMAXINT;
+    bounds[0][0] = bounds[0][1] = DDMAXFLOAT;
+    bounds[1][0] = bounds[1][1] = -DDMAXFLOAT;
 
     for(i = 0; i < numvertexes; ++i)
     {
@@ -2525,7 +2525,7 @@ static void renderWallSeg(seg_t *seg, void *data)
 #endif
 #endif
     info = NULL;
-    backSector = P_GetPtrp(seg, DMU_BACK_SECTOR);
+    backSector = P_GetPtrp(line, DMU_BACK_SECTOR);
     if((map->flags & AMF_REND_ALLLINES) ||
        xLine->mapped[mapviewplayer])
     {
