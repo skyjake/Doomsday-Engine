@@ -70,6 +70,7 @@ boolean G_Responder(event_t *ev);
 int     G_PrivilegedResponder(event_t *event);
 
 // Map Data
+void    P_PreNodeBuild(void);
 void    P_SetupForMapData(int type, uint num);
 
 // Map Objects
@@ -250,6 +251,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.NetWorldEvent = D_NetWorldEvent;
     gx.HandlePacket = D_HandlePacket;
     gx.R_Init = R_Init;
+    gx.PreNodeBuild = P_PreNodeBuild;
 
     // The structure sizes.
     gx.ticcmd_size = sizeof(ticcmd_t);

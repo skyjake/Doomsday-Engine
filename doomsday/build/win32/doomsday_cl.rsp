@@ -37,6 +37,7 @@
  ./../../engine/portable/src/rend_console.c
  ./../../engine/portable/src/rend_bias.c
  ./../../engine/portable/src/edit_bias.c
+ ./../../engine/portable/src/edit_map.c
  ./../../engine/portable/src/rend_sprite.c
  ./../../engine/portable/src/rend_sky.c
  ./../../engine/portable/src/rend_shadow.c

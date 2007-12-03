@@ -416,6 +416,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\edit_map.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\gl_defer.c"
 				>
 			</File>
@@ -1420,6 +1424,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\edit_bias.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\edit_map.h"
 				>
 			</File>
 			<File

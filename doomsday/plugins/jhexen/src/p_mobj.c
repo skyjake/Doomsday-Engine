@@ -1196,94 +1196,100 @@ void P_MobjThinker(mobj_t *mobj)
         P_SetThingSRVO(mobj, 0, 0);
 }
 
+static mobj_t *createMobj(float x, float y, float z, float radius,
+                          float height, int ddflags)
+{
+    mobj_t         *mo;
+
+    mo = Z_Calloc(sizeof(*mo), PU_LEVEL, NULL);
+    mo->pos[VX] = x;
+    mo->pos[VY] = y;
+    mo->pos[VZ] = z;
+    mo->radius = radius;
+    mo->height = height;
+    mo->ddflags = ddflags;
+
+    return mo;
+}
+
 mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
 {
-    mobj_t     *mobj;
-    mobjinfo_t *info;
-    float       space;
+    mobj_t         *mo;
+    mobjinfo_t     *info = &mobjinfo[type];
+    float           space;
+    int             ddflags = 0;
 
-    mobj = Z_Malloc(sizeof(*mobj), PU_LEVEL, NULL);
-    memset(mobj, 0, sizeof(*mobj));
+    if(info->flags & MF_SOLID)
+        ddflags |= DDMF_SOLID;
+    if(info->flags2 & MF2_DONTDRAW)
+        ddflags |= DDMF_DONTDRAW;
 
-    info = &mobjinfo[type];
-    mobj->type = type;
-    mobj->info = info;
-    mobj->pos[VX] = x;
-    mobj->pos[VY] = y;
-    mobj->radius = info->radius;
-    mobj->height = info->height;
-    mobj->flags = info->flags;
-    mobj->flags2 = info->flags2;
-    mobj->flags3 = info->flags3;
-    mobj->damage = info->damage; // this doesn't appear to actually be used
-    // see P_DamageMobj in P_inter.c
+    mo = createMobj(x, y, z, info->radius, info->height, ddflags);
+    mo->type = type;
+    mo->info = info;
+    mo->flags = info->flags;
+    mo->flags2 = info->flags2;
+    mo->flags3 = info->flags3;
+    // This doesn't appear to actually be used see P_DamageMobj in P_inter.c
+    mo->damage = info->damage;
+    mo->health = info->spawnhealth *
+        (IS_NETGAME ? cfg.netMobHealthModifier : 1);
 
-    // Let the engine know about solid objects.
-    if(mobj->flags & MF_SOLID)
-        mobj->ddflags |= DDMF_SOLID;
-    if(mobj->flags2 & MF2_DONTDRAW)
-        mobj->ddflags |= DDMF_DONTDRAW;
-
-    mobj->health =
-        info->spawnhealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
     if(gameskill != SM_NIGHTMARE)
     {
-        mobj->reactiontime = info->reactiontime;
+        mo->reactiontime = info->reactiontime;
     }
-    mobj->lastlook = P_Random() % MAXPLAYERS;
+    mo->lastlook = P_Random() % MAXPLAYERS;
 
     // Must link before setting state.
-    mobj->thinker.function = P_MobjThinker;
-    P_AddThinker(&mobj->thinker);
+    mo->thinker.function = P_MobjThinker;
+    P_AddThinker(&mo->thinker);
 
-    P_SetState(mobj, info->spawnstate);
+    P_SetState(mo, info->spawnstate);
 
     // Set subsector and/or block links.
-    P_SetMobjPosition(mobj);
-    mobj->floorz = P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT);
-    mobj->ceilingz = P_GetFloatp(mobj->subsector, DMU_CEILING_HEIGHT);
-    if(z == ONFLOORZ)
+    P_SetMobjPosition(mo);
+
+    mo->floorz = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+    mo->ceilingz = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+    if(mo->pos[VZ] == ONFLOORZ)
     {
-        mobj->pos[VZ] = mobj->floorz;
+        mo->pos[VZ] = mo->floorz;
     }
-    else if(z == ONCEILINGZ)
+    else if(mo->pos[VZ] == ONCEILINGZ)
     {
-        mobj->pos[VZ] = mobj->ceilingz - mobj->info->height;
+        mo->pos[VZ] = mo->ceilingz - mo->height;
     }
-    else if(z == FLOATRANDZ)
+    else if(mo->pos[VZ] == FLOATRANDZ)
     {
-        space = mobj->ceilingz - mobj->info->height - mobj->floorz;
+        space = mo->ceilingz - mo->height - mo->floorz;
         if(space > 48)
         {
             space -= 40;
-            mobj->pos[VZ] = ((space * P_Random()) /256) + mobj->floorz + 40;
+            mo->pos[VZ] = ((space * P_Random()) /256) + mo->floorz + 40;
         }
         else
         {
-            mobj->pos[VZ] = mobj->floorz;
+            mo->pos[VZ] = mo->floorz;
         }
     }
-    else if(mobj->flags2 & MF2_FLOATBOB)
+    else if(mo->flags2 & MF2_FLOATBOB)
     {
-        mobj->pos[VZ] = mobj->floorz + z; // Artifact z passed in as height
+        mo->pos[VZ] += mo->floorz; // Artifact z passed in as height
+    }
+
+    if((mo->flags2 & MF2_FLOORCLIP) &&
+       P_GetMobjFloorType(mo) >= FLOOR_LIQUID &&
+       mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+    {
+        mo->floorclip = 10;
     }
     else
     {
-        mobj->pos[VZ] = z;
+        mo->floorclip = 0;
     }
 
-    if((mobj->flags2 & MF2_FLOORCLIP) &&
-       P_GetMobjFloorType(mobj) >= FLOOR_LIQUID &&
-       mobj->pos[VZ] == P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT))
-    {
-        mobj->floorclip = 10;
-    }
-    else
-    {
-        mobj->floorclip = 0;
-    }
-
-    return mobj;
+    return mo;
 }
 
 mobj_t *P_SpawnMobj3fv(mobjtype_t type, float pos[3])
@@ -1430,24 +1436,11 @@ void P_SpawnMapThing(spawnspot_t *spot)
         MTF_MAGE
     };
 
-    if(spot->type == PO_ANCHOR_TYPE)
-    {   // Polyobj Anchor Pt.
-        return;
-    }
-    else if(spot->type == PO_SPAWN_TYPE ||
-            spot->type == PO_SPAWNCRUSH_TYPE)
+    if(spot->type == PO_ANCHOR_TYPE ||
+       spot->type == PO_SPAWN_TYPE ||
+       spot->type == PO_SPAWNCRUSH_TYPE)
     {
-        // Polyobj StartSpot Pt.
-        int             tag = spot->angle;
-        polyobj_t      *po =
-            PO_FindAndCreatePolyobj(tag, (spot->type == PO_SPAWNCRUSH_TYPE));
-
-        if(!po)
-            Con_Error("P_SpawnMapThing: Failed creation of polyobj tagged %i.",
-                      tag);
-
-        P_SetFloatpv(po, DMU_START_SPOT_XY, spot->pos);
-        return;
+        return; // These are never spawned.
     }
 
     /**

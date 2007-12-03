@@ -157,7 +157,7 @@ boolean EV_RotatePoly(line_t *line, byte *args, int direction,
     if(poly)
     {
         if(PO_SpecialData(poly) && !overRide)
-        {   // poly is already moving
+        {   // Poly is already moving, so keep going...
             return false;
         }
     }
@@ -815,9 +815,10 @@ static boolean iterFindPolyLines(float x, float y, line_t **lineList)
  * @param tag               Line tag of linedefs to search for.
  * @param crush             Whether the polyobject should crush things.
  *
- * @return                  Ptr to the newly created polyobj if successful.
+ * @return                  @c true = successfully created polyobj.
  */
-polyobj_t* PO_FindAndCreatePolyobj(int tag, boolean crush)
+boolean PO_FindAndCreatePolyobj(int tag, boolean crush, float startX,
+                                float startY)
 {
 #define PO_MAXPOLYLINES         32
 
@@ -858,21 +859,15 @@ polyobj_t* PO_FindAndCreatePolyobj(int tag, boolean crush)
             iterFindPolyLines(v[VX], v[VY], lineList + 1);
             lineList[PolyLineCount] = 0; // Terminate.
 
-            if(PO_CreatePolyobj(lineList, PolyLineCount, &poIdx))
+            seqType = xline->arg3;
+            if(seqType < 0 || seqType >= SEQTYPE_NUMSEQ)
+                seqType = 0;
+
+            if(PO_CreatePolyobj(lineList, PolyLineCount, &poIdx,
+                                crush, tag, seqType, startX, startY))
             {
                 free(lineList);
-
-                P_SetBool(DMU_POLYOBJ, poIdx, DMU_CRUSH, crush);
-                P_SetInt(DMU_POLYOBJ, poIdx, DMU_TAG, tag);
-
-                seqType = xline->arg3;
-                if(seqType < 0 || seqType >= SEQTYPE_NUMSEQ)
-                {
-                    seqType = 0;
-                }
-
-                P_SetInt(DMU_POLYOBJ, poIdx, DMU_SEQUENCE_TYPE, seqType);
-                return P_ToPtr(DMU_POLYOBJ, poIdx);
+                return true;
             }
 
             free(lineList);
@@ -956,31 +951,24 @@ polyobj_t* PO_FindAndCreatePolyobj(int tag, boolean crush)
     if(lineCount)
     {
         uint            poIdx;
+        int             seqType = P_ToXLine(polyLineList[0])->arg4;
 
-        if(PO_CreatePolyobj(polyLineList, lineCount, &poIdx))
+        if(PO_CreatePolyobj(polyLineList, lineCount, &poIdx, crush, tag,
+                            seqType, startX, startY))
         {
-            line_t         *other;
-            xline_t        *xother;
-
-            P_SetBool(DMU_POLYOBJ, poIdx, DMU_CRUSH, crush);
-            P_SetInt(DMU_POLYOBJ, poIdx, DMU_TAG, tag);
-            P_SetInt(DMU_POLYOBJ, poIdx, DMU_SEQUENCE_TYPE,
-                     P_ToXLine(polyLineList[0])->arg4);
+            xline_t        *xline;
 
             // Next, change the polyobjs first line to point to a mirror
             // if it exists.
-            other = P_GetPtrp(P_GetPtrp(P_ToPtr(DMU_POLYOBJ, poIdx),
-                                        DMU_SEG_OF_POLYOBJ | 0),
-                              DMU_LINE);
-            xother = P_ToXLine(other);
-            xother->arg2 = xother->arg3;
+            xline = P_ToXLine(polyLineList[0]);
+            xline->arg2 = xline->arg3;
 
-            return P_ToPtr(DMU_POLYOBJ, poIdx);
+            return true;
         }
     }
     }
 
-    return NULL;
+    return false;
 
 #undef PO_MAXPOLYLINES
 }
@@ -1021,8 +1009,7 @@ void PO_InitForMap(void)
         }
 
         if(!mt)
-            Con_Error("PO_FindAndCreatePolyobj: Missing anchor for poly %i.",
-                      i);
+            Con_Error("PO_Init: Missing anchor for poly %i.", i);
 
         translateToStartSpot(P_ToPtr(DMU_POLYOBJ, i),
                              mt->pos[VX], mt->pos[VY]);

@@ -96,7 +96,7 @@ extern int po_NumPolyobjs;
 void        PO_InitForMap(void);
 boolean     PO_Busy(int polyobj);
 
-polyobj_t  *PO_FindAndCreatePolyobj(int tag, boolean crush);
+boolean     PO_FindAndCreatePolyobj(int tag, boolean crush, float startX, float startY);
 
 void        T_PolyDoor(polydoor_t *pd);
 void        T_RotatePoly(polyevent_t *pe);

@@ -60,8 +60,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    P_SpawnThings(void);
-
 #if __JHERETIC__
 void P_TurnGizmosAwayFromDoors();
 void P_MoveThingsOutOfWalls();
@@ -212,6 +210,30 @@ void P_SetupForMapData(int type, uint num)
     }
 }
 
+/**
+ * Called during level load by the engine, prior to node building.
+ */
+#if __JHEXEN__
+void P_PreNodeBuild(void)
+{
+    int                 i;
+
+    for(i = 0; i < numthings; ++i)
+    {
+        spawnspot_t        *spot = &things[i];
+
+        if(spot->type == PO_SPAWN_TYPE || spot->type == PO_SPAWNCRUSH_TYPE)
+        {
+            // Polyobj StartSpot Pt.
+            int             tag = spot->angle;
+
+            PO_FindAndCreatePolyobj(tag, (spot->type == PO_SPAWNCRUSH_TYPE),
+                                    spot->pos[VX], spot->pos[VY]);
+        }
+    }
+}
+#endif
+
 typedef struct setuplevelparam_s {
     int episode;
     int map;
@@ -226,7 +248,6 @@ int P_SetupLevelWorker(void *ptr)
 #if !__DOOM64TC__
 # if __JDOOM__ || __JHERETIC__
     uint        i;
-    int         flags;
 # endif
 #endif
     char        levelId[9];
@@ -255,7 +276,7 @@ int P_SetupLevelWorker(void *ptr)
     P_GetMapLumpName(param->episode, param->map, levelId);
     if(!P_LoadMap(levelId))
     {
-        Con_Error("P_SetupLevel: Failed loading map \"%s\".\n",levelId);
+        Con_Error("P_SetupLevel: Failed loading map \"%s\".\n", levelId);
     }
 
     P_SpawnThings();
@@ -284,7 +305,8 @@ int P_SetupLevelWorker(void *ptr)
      */
     for(i = 0; i < numlines; ++i)
     {
-        flags = P_GetInt(DMU_LINE, i, DMU_FLAGS);
+        int             flags = P_GetInt(DMU_LINE, i, DMU_FLAGS);
+
         if(flags & ML_INVALID)
         {
             flags &= VALIDMASK;
