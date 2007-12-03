@@ -737,7 +737,7 @@ DEFCC(CCmdCheatGive)
     }
 
     if(!plyr->plr->ingame)
-        return; // Can't give to a player who's not playing
+        return true; // Can't give to a player who's not playing
 
     strcpy(buf, argv[1]);       // Stuff is the 2nd arg.
     strlwr(buf);

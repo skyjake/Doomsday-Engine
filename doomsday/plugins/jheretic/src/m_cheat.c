@@ -828,7 +828,7 @@ DEFCC(CCmdCheatGive)
     }
 
     if(!players[target].plr->ingame)
-        return; // Can't give to a player who's not playing
+        return true; // Can't give to a player who's not playing
 
     if(argc != 2 && argc != 3)
         tellUsage = true;
