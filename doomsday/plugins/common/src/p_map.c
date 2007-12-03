@@ -379,7 +379,7 @@ boolean P_CheckSides(mobj_t *actor, float x, float y)
 
     endPos[VX] = x;
     endPos[VY] = y;
-    endPos[VZ] = DDMININT; // just initialize with *something*
+    endPos[VZ] = DDMINFLOAT; // just initialize with *something*
 
     // Here is the bounding box of the trajectory
 
@@ -436,7 +436,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *data)
 
 #if !__JHEXEN__
     // Player only.
-    if(tmthing->player && tm[VZ] != DDMAXINT &&
+    if(tmthing->player && tm[VZ] != DDMAXFLOAT &&
        (cfg.moveCheckZ || (tmthing->flags2 & MF2_PASSMOBJ)))
     {
         if((thing->pos[VZ] > tm[VZ] + tmheight) ||
@@ -1024,7 +1024,7 @@ static boolean PIT_CheckLine(line_t *ld, void *data)
 #if !__JHEXEN__
     tmthing->wallhit = false;
 #endif
-    return true;
+    return true; // Continue iteration.
 }
 
 /**
@@ -1080,7 +1080,8 @@ boolean P_CheckPosition3f(mobj_t *thing, float x, float y, float z)
     blockline = floorline = NULL;
 
     // $unstuck
-    tmunstuck = thing->dplayer && thing->dplayer->mo == thing;
+    tmunstuck =
+        ((thing->dplayer && thing->dplayer->mo == thing)? true : false);
 #endif
 
     // The base floor/ceiling is from the subsector that contains the point.
@@ -1143,7 +1144,7 @@ boolean P_CheckPosition3fv(mobj_t *thing, const float pos[3])
 
 boolean P_CheckPosition2f(mobj_t *thing, float x, float y)
 {
-    return P_CheckPosition3f(thing, x, y, DDMAXINT);
+    return P_CheckPosition3f(thing, x, y, DDMAXFLOAT);
 }
 
 /**
@@ -1216,7 +1217,7 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
         // killough 8/1/98: Possibly allow escape if otherwise stuck.
         if(tmceilingz - tmfloorz < thing->height || // Doesn't fit.
            // Mobj must lower to fit.
-           (floatok == true && !(thing->flags & MF_TELEPORT) &&
+           (floatok = true, !(thing->flags & MF_TELEPORT) &&
             !(thing->flags2 & MF2_FLY) &&
             tmceilingz - thing->pos[VZ] < thing->height) ||
            // Too big a step up.
@@ -2420,7 +2421,7 @@ void P_SlideMove(mobj_t *mo)
     {
         newPos[VX] = mo->mom[MX] * bestslidefrac;
         newPos[VY] = mo->mom[MY] * bestslidefrac;
-        newPos[VZ] = DDMAXINT; // Just initialize with *something*.
+        newPos[VZ] = DDMAXFLOAT; // Just initialize with *something*.
 
         // killough $dropoff_fix
 #if __JHEXEN__

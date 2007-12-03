@@ -304,7 +304,7 @@ float P_FindLowestCeilingSurrounding(sector_t *sec)
 {
     int         i;
     int         lineCount;
-    float       height = FIX2FLT(DDMAXINT);
+    float       height = DDMAXFLOAT;
     line_t     *check;
     sector_t   *other;
 

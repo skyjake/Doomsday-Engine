@@ -133,10 +133,10 @@ enum {
 #define FRICTION_HIGH       (0.5f)
 #define FRICTION_LOW        (0.97265625f)
 
-#define ONFLOORZ            DDMININT
-#define ONCEILINGZ          DDMAXINT
-#define FLOATRANDZ          (DDMAXINT-1)
-#define FROMCEILINGZ128     (DDMAXINT-2)
+#define ONFLOORZ            DDMINFLOAT
+#define ONCEILINGZ          DDMAXFLOAT
+#define FLOATRANDZ          (DDMAXFLOAT-1)
+#define FROMCEILINGZ128     (DDMAXFLOAT-2)
 
 // Time interval for item respawning.
 #define ITEMQUESIZE         128

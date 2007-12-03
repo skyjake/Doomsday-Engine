@@ -212,8 +212,10 @@ void P_XYMovement(mobj_t *mo)
 
         if(largeNegative || mom[MX] > MAXMOVE / 2 || mom[MY] > MAXMOVE / 2)
         {
-            pos[VX] = mo->pos[VX] + (mom[MX] /= 2);
-            pos[VY] = mo->pos[VY] + (mom[MY] /= 2);
+            pos[VX] = mo->pos[VX] + mom[VX] / 2;
+            pos[VY] = mo->pos[VY] + mom[VY] / 2;
+            mom[VX] /= 2;
+            mom[VY] /= 2;
         }
         else
         {
@@ -228,10 +230,9 @@ void P_XYMovement(mobj_t *mo)
 
         // $dropoff_fix.
         if(!P_TryMove(mo, pos[VX], pos[VY], true, false))
-        {
-            // blocked move
+        {   // Blocked move.
             if(mo->flags2 & MF2_SLIDE)
-            {                   // try to slide along it
+            {   // Try to slide along it.
                 P_SlideMove(mo);
             }
             else if(mo->flags & MF_MISSILE)
@@ -243,7 +244,7 @@ void P_XYMovement(mobj_t *mo)
 
                     if(backsector)
                     {
-                        // explode a missile?
+                        // Explode a missile?
                         if(ceilingline &&
                            P_GetIntp(backsector,
                                      DMU_CEILING_MATERIAL) == skyMaskMaterial)
@@ -263,19 +264,19 @@ void P_XYMovement(mobj_t *mo)
         }
     } while(mom[MX] != 0 || mom[MY] != 0);
 
-    // slow down
+    // Slow down.
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
     {
-        // debug option for no sliding at all
+        // Debug option for no sliding at all.
         mo->mom[MX] = mo->mom[MY] = 0;
         return;
     }
 
     if(mo->flags & (MF_MISSILE | MF_SKULLFLY))
-        return;                 // no friction for missiles ever
+        return; // No friction for missiles ever.
 
     if(mo->pos[VZ] > mo->floorz && !mo->onmobj && !(mo->flags2 & MF2_FLY))
-        return;                 // no friction when falling
+        return; // No friction when falling.
 
     if(cfg.slidingCorpses)
     {
@@ -284,10 +285,9 @@ void P_XYMovement(mobj_t *mo)
         if(((mo->flags & MF_CORPSE) ||( mo->intflags & MIF_FALLING)) &&
            !mo->player)
         {
-            // do not stop sliding
-            //  if halfway off a step with some momentum
-            if(mo->mom[MX] > FIX2FLT(FRACUNIT / 4) || mo->mom[MX] < -FIX2FLT(FRACUNIT / 4) ||
-               mo->mom[MY] > FIX2FLT(FRACUNIT / 4) || mo->mom[MY] < -FIX2FLT(FRACUNIT / 4))
+            // Do not stop sliding if halfway off a step with some momentum.
+            if(mo->mom[MX] > (1.0f / 4) || mo->mom[MX] < -(1.0f / 4) ||
+               mo->mom[MY] > (1.0f / 4) || mo->mom[MY] < -(1.0f / 4))
             {
                 if(mo->floorz !=
                    P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
@@ -585,7 +585,7 @@ void P_ZMovement(mobj_t *mo)
 
     if(mo->pos[VZ] + mo->height > mo->ceilingz)
     {
-        // hit the ceiling
+        // Hit the ceiling.
         if(mo->mom[MZ] > 0)
             mo->mom[MZ] = 0;
 
@@ -598,16 +598,15 @@ void P_ZMovement(mobj_t *mo)
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
         {
+            // Don't explode against sky.
             if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == skyMaskMaterial)
             {
-                // Don't explode against sky.
-                {
-                    P_RemoveMobj(mo);
-                }
-                return;
+                P_RemoveMobj(mo);
             }
-            P_ExplodeMissile(mo);
-            return;
+            else
+            {
+                P_ExplodeMissile(mo);
+            }
         }
     }
 }
