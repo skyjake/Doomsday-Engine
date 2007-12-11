@@ -838,13 +838,22 @@ void R_InitTextures(void)
  */
 static int R_NewFlat(int lump)
 {
-    flat_t **newlist, *ptr;
-    int     i;
+    int             i;
+    flat_t        **newlist, *ptr;
 
-    // Is this lump already entered?
     for(i = 0; i < numflats; i++)
+    {
+        // Is this lump already entered?
         if(flats[i]->lump == lump)
             return i;
+
+        // Is this a known identifer? Newer idents overide old.
+        if(!strnicmp(lumpinfo[flats[i]->lump].name, lumpinfo[lump].name, 8))
+        {
+            flats[i]->lump = lump;
+            return i;
+        }
+    }
 
     newlist = Z_Malloc(sizeof(flat_t*) * ++numflats, PU_REFRESHTEX, 0);
     if(numflats > 1)
