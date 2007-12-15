@@ -109,14 +109,21 @@ int ConvertMapHook(int hookType, int param, void *data)
     int                *lumpList = (int*) data;
     boolean             result = false;
 
+    Con_Message("WadMapConverter::Convert: Attempting map conversion...\n");
     memset(map, 0, sizeof(*map));
 
     if(!IsSupportedFormat(lumpList, param))
+    {
+        Con_Message("WadMapConverter::Convert: Unknown map format, aborting.\n");
         return false; // Cannot convert.
+    }
 
     // A supported format, load it in.
     if(!LoadMap(lumpList, param))
+    {
+        Con_Message("WadMapConverter::Convert: Internal error, load failed.\n");
         return false; // Something went horribly wrong...
+    }
 
     AnalyzeMap();
     return TransferMap();

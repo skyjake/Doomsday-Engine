@@ -437,6 +437,8 @@ static void findPolyobjs(void)
 {
     uint            i;
 
+    Con_Message("WadMapConverter::findPolyobjs: Processing...\n");
+
     for(i = 0; i < map->numthings; ++i)
     {
         mthing_t       *thing = &map->things[i];
@@ -590,11 +592,13 @@ static void freeMapData(void)
  * generate the blockmap data ourselves.
  */
 #if 0 // Needs updating.
-static boolean loadBlockMap(tempmap_t *map, maplumpinfo_t *maplump)
+static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
 {
 #define MAPBLOCKUNITS       128
 
     boolean     generateBMap = (createBMap == 2)? true : false;
+
+    Con_Message("WadMapConverter::loadBlockmap: Processing...\n");
 
     // Do we have a lump to process?
     if(maplump->lumpNum == -1 || maplump->length == 0)
@@ -743,6 +747,8 @@ static boolean loadVertexes(const byte *buf, size_t len)
     size_t              elmSize;
     const byte         *ptr;
 
+    Con_Message("WadMapConverter::loadVertexes: Processing...\n");
+
     elmSize = SIZEOF_VERTEX;
     num = len / elmSize;
     for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
@@ -761,6 +767,8 @@ static boolean loadLinedefs(const byte *buf, size_t len)
     uint                num, n;
     size_t              elmSize;
     const byte         *ptr;
+
+    Con_Message("WadMapConverter::loadLinedefs: Processing...\n");
 
     elmSize =
         (map->hexenFormat? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
@@ -846,6 +854,8 @@ static boolean loadSidedefs(const byte *buf, size_t len)
     size_t              elmSize;
     const byte         *ptr;
 
+    Con_Message("WadMapConverter::loadSidedefs: Processing...\n");
+
     elmSize = SIZEOF_SIDEDEF;
     num = len / elmSize;
     for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
@@ -881,6 +891,8 @@ static boolean loadSectors(const byte *buf, size_t len)
     size_t              elmSize;
     const byte         *ptr;
 
+    Con_Message("WadMapConverter::loadSectors: Processing...\n");
+
     elmSize = SIZEOF_SECTOR;
     num = len / elmSize;
     for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
@@ -909,6 +921,8 @@ static boolean loadThings(const byte *buf, size_t len)
     uint                num, n;
     size_t              elmSize;
     const byte         *ptr;
+
+    Con_Message("WadMapConverter::loadThings: Processing...\n");
 
     elmSize = (map->hexenFormat? SIZEOF_XTHING : SIZEOF_THING);
     num = len / elmSize;

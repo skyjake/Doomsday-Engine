@@ -1342,6 +1342,7 @@ boolean DAM_MapWrite(gamemap_t *map, filename_t path)
  */
 boolean DAM_MapRead(gamemap_t *map, filename_t path)
 {
+    Con_Message("DAM_MapRead: Loading cached map. %s\n", path);
     return doArchiveMap(map, path, false);
 }
 
