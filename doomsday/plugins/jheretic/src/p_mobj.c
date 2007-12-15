@@ -1182,7 +1182,7 @@ void P_RemoveMobj(mobj_t *mobj)
  * Called when a player is spawned on the level. Most of the player
  * structure stays unchanged between levels.
  */
-void P_SpawnPlayer(spawnspot_t *mthing, int plrnum)
+void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
 {
     player_t   *p;
     float       pos[3];
@@ -1201,9 +1201,17 @@ void P_SpawnPlayer(spawnspot_t *mthing, int plrnum)
     if(p->playerstate == PST_REBORN)
         G_PlayerReborn(plrnum);
 
-    pos[VX] = mthing->pos[VX];
-    pos[VY] = mthing->pos[VY];
-    pos[VZ] = ONFLOORZ;
+    if(spot)
+    {
+        pos[VX] = spot->pos[VX];
+        pos[VY] = spot->pos[VY];
+        pos[VZ] = ONFLOORZ;
+    }
+    else
+    {
+        pos[VX] = pos[VY] = pos[VZ] = 0;
+    }
+
     mobj = P_SpawnMobj3fv(MT_PLAYER, pos);
 
     // On clients all player mobjs are remote, even the consoleplayer.
@@ -1218,7 +1226,7 @@ void P_SpawnPlayer(spawnspot_t *mthing, int plrnum)
     i = cfg.playerColor[plrnum];
     if(i > 0)
         mobj->flags |= i << MF_TRANSSHIFT;
-    mobj->angle = mthing->angle; /* $unifiedangles */
+    mobj->angle = (spot? spot->angle : 0); /* $unifiedangles */
     p->plr->lookdir = 0; /* $unifiedangles */
     p->plr->lookdir = 0;
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
@@ -1235,6 +1243,10 @@ void P_SpawnPlayer(spawnspot_t *mthing, int plrnum)
     p->rain2 = NULL;
     p->plr->extraLight = 0;
     p->plr->fixedcolormap = 0;
+
+    if(!spot)
+        p->plr->flags |= DDPF_CAMERA;
+
     if(p->plr->flags & DDPF_CAMERA)
     {
         p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;

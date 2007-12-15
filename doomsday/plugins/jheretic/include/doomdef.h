@@ -291,6 +291,11 @@ enum { VX, VY, VZ }; // Vertex indices.
 #define IS_NETGAME          Get(DD_NETGAME)
 #define IS_DEDICATED        Get(DD_DEDICATED)
 
+#define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
+
+#define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
+#define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
+
 void        G_IdentifyVersion(void);
 int         G_GetInteger(int id);
 void       *G_GetVariable(int id);
@@ -392,7 +397,7 @@ void            R_InitTranslationTables(void);
 
 // called by startup code
 
-// called by M_Responder
+// called by Hu_MenuResponder
 
 //----
 //MISC
@@ -441,12 +446,8 @@ void            ST_Drawer(int fullscreenmode, boolean refresh);
 // MENU (MN_menu.c)
 //-----------------
 
-void            MN_Init(void);
 void            MN_ActivateMenu(void);
 void            MN_DeactivateMenu(void);
-boolean         M_Responder(event_t *event);
-void            MN_Ticker(void);
-void            M_Drawer(void);
 void            MN_DrTextA(char *text, int x, int y);
 int             MN_TextAWidth(char *text);
 void            MN_DrTextB(char *text, int x, int y);

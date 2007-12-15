@@ -108,7 +108,6 @@ extern boolean  deathmatch;        // only if started as net death
 // Note that there is no way to disable the
 //  status bar explicitely.
 
-extern boolean  menuactive;        // Menu overlayed?
 extern boolean  paused;            // Game Pause?
 
 extern boolean  viewactive;

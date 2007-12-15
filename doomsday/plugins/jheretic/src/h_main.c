@@ -38,6 +38,7 @@
 
 #include "m_argv.h"
 #include "hu_stuff.h"
+#include "hu_menu.h"
 #include "hu_msg.h"
 #include "p_saveg.h"
 #include "d_net.h"
@@ -559,7 +560,7 @@ void H_PostInit(void)
         }
     }
 
-    if(gameaction != GA_LOADGAME)
+    if(G_GetGameAction() != GA_LOADGAME)
     {
         if(autostart || IS_NETGAME)
         {
@@ -591,12 +592,7 @@ void H_Shutdown(void)
 
 void H_Ticker(timespan_t ticLength)
 {
-    static trigger_t fixed = { 1.0 / 35 };
-
-    if(M_RunTrigger(&fixed, ticLength))
-    {
-        MN_Ticker();
-    }
+    Hu_MenuTicker(ticLength);
     G_Ticker(ticLength);
 }
 

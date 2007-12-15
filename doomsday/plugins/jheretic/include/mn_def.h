@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,25 +38,26 @@
 
 // Macros
 
-#define LEFT_DIR        0
-#define RIGHT_DIR       1
-#define DIR_MASK        0x1
-#define ITEM_HEIGHT     20
-#define SLOTTEXTLEN     16
-#define ASCII_CURSOR    '_'
+#define LEFT_DIR                0
+#define RIGHT_DIR               1
+#define DIR_MASK                0x1
+#define ITEM_HEIGHT             20
+#define SLOTTEXTLEN             16
+#define ASCII_CURSOR            '_'
 
-#define LINEHEIGHT      20
-#define LINEHEIGHT_A    10
-#define LINEHEIGHT_B    20
+#define LINEHEIGHT              20
+#define LINEHEIGHT_A            10
+#define LINEHEIGHT_B            20
 
-#define SKULLXOFF       -22
-#define SKULLYOFF       -1
-#define SKULLW          22
-#define SKULLH          15
-#define CURSORPREF      "M_SLCTR%d"
-#define SKULLBASELMP    "M_SKL00"
-#define NUMCURSORS      2
+#define MENUCURSOR_OFFSET_X     -22
+#define MENUCURSOR_OFFSET_Y     -1
+#define MENUCURSOR_WIDTH        22
+#define MENUCURSOR_HEIGHT       15
 #define MENUCURSOR_TICSPERFRAME 8
+
+#define CURSORPREF              "M_SLCTR%d"
+#define SKULLBASELMP            "M_SKL00"
+#define NUMCURSORS              2
 
 #define NUMSAVESLOTS    8
 
@@ -162,7 +163,6 @@ void    MN_DrawColorBox(const menu_t * menu, int index, float r, float g,
 void    M_StartControlPanel(void);
 void    M_StartMessage(char *string, void *routine, boolean input);
 void    M_StopMessage(void);
-void    M_ClearMenus(void);
 void    M_FloatMod10(float *variable, int option);
 
 

@@ -41,6 +41,8 @@
 
 #include "jheretic.h"
 
+#include "hu_menu.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -219,7 +221,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.Ticker = H_Ticker;
     gx.G_Drawer2 = D_Display2;
     gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
-    gx.FallbackResponder = M_Responder;
+    gx.FallbackResponder = Hu_MenuResponder;
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_GetMobjFriction;
