@@ -141,9 +141,6 @@ extern watchedplanelist_t *watchedPlaneList;
 
 extern uint     numthings;
 
-extern uint    *missingFronts;
-extern uint     numMissingFronts;
-
 extern float    mapGravity;
 
 typedef struct gamemap_s {
