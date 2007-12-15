@@ -70,7 +70,6 @@ extern boolean deathmatch;
 
 // Status flags for refresh.
 extern boolean statusbaractive;
-extern boolean menuactive; // Menu overlayed?
 extern boolean paused; // Game Pause?
 extern boolean viewactive;
 extern boolean nodrawers;

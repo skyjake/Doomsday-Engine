@@ -56,7 +56,7 @@ void    D_Display2(void);
 void    D_EndFrame(void);
 
 // Input responders
-boolean M_Responder(event_t *ev);
+boolean Hu_MenuResponder(event_t *ev);
 boolean G_Responder(event_t *ev);
 int     G_PrivilegedResponder(event_t *event);
 
@@ -205,7 +205,7 @@ game_export_t *GetGameAPI(game_import_t * imports)
     gx.G_Drawer = D_Display;
     gx.G_Drawer2 = D_Display2;
     gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
-    gx.FallbackResponder = M_Responder;
+    gx.FallbackResponder = Hu_MenuResponder;
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_GetMobjFriction;

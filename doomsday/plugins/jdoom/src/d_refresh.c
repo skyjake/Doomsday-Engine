@@ -32,6 +32,7 @@
 #include "jdoom.h"
 
 #include "hu_stuff.h"
+#include "hu_menu.h"
 #include "hu_pspr.h"
 #include "am_map.h"
 #include "g_common.h"
@@ -270,7 +271,7 @@ void D_Display(void)
         mapHidesView =
             R_MapObscures(displayplayer, (int) x, (int) y, (int) w, (int) h);
 
-        if(!(MN_CurrentMenuHasBackground() && MN_MenuAlpha() >= 1) &&
+        if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
            !mapHidesView)
         {
             int         viewAngleOffset =
@@ -311,7 +312,7 @@ void D_Display(void)
         break;
     }
 
-    menuactivestate = menuactive;
+    menuactivestate = Hu_MenuIsActive();
     viewactivestate = viewactive;
     oldgamestate = wipegamestate = G_GetGameState();
 }
@@ -391,7 +392,7 @@ void D_Display2(void)
     FI_Drawer();
 
     // The menu is drawn whenever active.
-    M_Drawer();
+    Hu_MenuDrawer();
 }
 
 /**

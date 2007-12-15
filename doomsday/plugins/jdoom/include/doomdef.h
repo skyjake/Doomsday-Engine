@@ -246,6 +246,11 @@ enum { VX, VY, VZ }; // Vertex indices.
 #define IS_NETGAME          Get(DD_NETGAME)
 #define IS_DEDICATED        Get(DD_DEDICATED)
 
+#define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
+
+#define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
+#define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
+
 int         P_Random(void);
 void        M_ClearRandom(void);
 

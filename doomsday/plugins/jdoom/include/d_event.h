@@ -48,8 +48,6 @@ typedef enum {
     GA_SCREENSHOT
 } gameaction_t;
 
-extern gameaction_t gameaction;
-
 /*
 //
 // Button/action code definitions.

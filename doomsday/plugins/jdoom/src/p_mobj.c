@@ -1008,7 +1008,7 @@ void P_CheckRespawnQueue(void)
  * Called when a player is spawned on the level.
  * Most of the player structure stays unchanged between levels.
  */
-void P_SpawnPlayer(spawnspot_t * mthing, int pnum)
+void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 {
     player_t   *p;
     float       pos[3];
@@ -1029,9 +1029,16 @@ void P_SpawnPlayer(spawnspot_t * mthing, int pnum)
     if(p->playerstate == PST_REBORN)
         G_PlayerReborn(pnum);
 
-    pos[VX] = mthing->pos[VX];
-    pos[VY] = mthing->pos[VY];
-    pos[VZ] = ONFLOORZ;
+    if(spot)
+    {
+        pos[VX] = spot->pos[VX];
+        pos[VY] = spot->pos[VY];
+        pos[VZ] = ONFLOORZ;
+    }
+    else
+    {
+        pos[VX] = pos[VY] = pos[VZ] = 0;
+    }
 
     mobj = P_SpawnMobj3fv(MT_PLAYER, pos);
 
@@ -1048,7 +1055,7 @@ void P_SpawnPlayer(spawnspot_t * mthing, int pnum)
     if(i > 0)
         mobj->flags |= i << MF_TRANSSHIFT;
 
-    mobj->angle = mthing->angle; /* $unifiedangles */
+    mobj->angle = (spot? spot->angle : 0); /* $unifiedangles */
     p->plr->lookdir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     mobj->player = p;
@@ -1063,6 +1070,10 @@ void P_SpawnPlayer(spawnspot_t * mthing, int pnum)
     p->plr->extraLight = 0;
     p->plr->fixedcolormap = 0;
     p->plr->lookdir = 0;
+
+    if(!spot)
+        p->plr->flags |= DDPF_CAMERA;
+
     if(p->plr->flags & DDPF_CAMERA)
     {
         p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;

@@ -52,9 +52,9 @@ typedef enum {
 } psprnum_t;
 
 typedef struct {
-    state_t        *state;          // A NULL state means not active.
+    state_t        *state; // A NULL state means not active.
     int             tics;
-    float           pos[2];      // [x, y].
+    float           pos[2]; // [x, y].
 } pspdef_t;
 
 #endif
