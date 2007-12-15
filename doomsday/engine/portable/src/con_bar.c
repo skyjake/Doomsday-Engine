@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * con_bar.c: Console Progress Bar
  */
 
@@ -37,7 +37,7 @@
 // MACROS ------------------------------------------------------------------
 
 // Time for the progress to reach the new target (seconds).
-#define PROGRESS_DELTA_TIME 1.0
+#define PROGRESS_DELTA_TIME     1.0
 
 // TYPES -------------------------------------------------------------------
 
@@ -54,8 +54,8 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 typedef struct tval_s {
-    int value;
-    timespan_t time;
+    int         value;
+    timespan_t  time;
 } tval_t;
 
 static int progressMax;
@@ -64,13 +64,8 @@ static mutex_t progressMutex;
 
 // CODE --------------------------------------------------------------------
 
-void Con_LockProgress(boolean lock)
+static void lockProgress(boolean lock)
 {
-    if(!progressMutex)
-    {
-        progressMutex = Sys_CreateMutex("ConBarProgressMutex");
-    }
-    
     if(lock)
     {
         Sys_Lock(progressMutex);
@@ -85,44 +80,56 @@ void Con_InitProgress(int maxProgress)
 {
     memset(&target, 0, sizeof(target));
     memset(&last, 0, sizeof(last));
+
     progressMax = maxProgress;
+    if(!progressMutex)
+        progressMutex = Sys_CreateMutex("ConBarProgressMutex");
 }
 
-/*
- * Updates the progress.
+void Con_ShutdownProgress(void)
+{
+    if(progressMutex)
+    {
+        Sys_DestroyMutex(progressMutex);
+    }
+}
+
+/**
+ * Updates the progress indicator.
  */
 void Con_SetProgress(int progress)
 {
-    timespan_t nowTime;
-    
-    Con_LockProgress(true);
-    
+    timespan_t      nowTime;
+
+    lockProgress(true);
+
     nowTime = Sys_GetRealSeconds();
 
     if(nowTime >= target.time)
-    {
-        // Previous movement has ended.
+    {   // Previous movement has ended.
         last.time = nowTime;
         last.value = target.value;
     }
-    
+
     target.value = progress;
     target.time = Sys_GetRealSeconds();
     if(target.value < progressMax)
     {
-        float delta = target.time - last.time;
+        float           delta = target.time - last.time;
+
         if(delta < PROGRESS_DELTA_TIME)
         {
             delta = (delta + PROGRESS_DELTA_TIME) / 2;
         }
+
         target.time += delta;
     }
     else
     {
         target.value = progressMax;
     }
-    
-    Con_LockProgress(false); 
+
+    lockProgress(false);
 }
 
 /**
@@ -130,33 +137,35 @@ void Con_SetProgress(int progress)
  */
 float Con_GetProgress(void)
 {
-    timespan_t nowTime, span;
-    float retValue = 1.0;
-    
-    Con_LockProgress(true);    
-    
+    timespan_t      nowTime, span;
+    float           retValue = 1.0;
+
+    lockProgress(true);
+
     nowTime = Sys_GetRealSeconds();
     span = target.time - last.time;
-        
+
     if(progressMax)
     {
         if(nowTime >= target.time)
-        {        
-            retValue = target.value/(float)progressMax; // Done.
+        {   // Done.
+            retValue = target.value / (float) progressMax;
         }
-        // Interpolate.
         else if(span <= 0)
-        {
+        {   // Interpolate.
             retValue = target.value;
         }
         else
         {
-            retValue = (last.value + (target.value - last.value) * (nowTime - last.time) / span) 
-                / progressMax;
+            timespan_t     inter =
+                (target.value - last.value) * (nowTime - last.time);
+
+            retValue += last.value + inter / span;
+            retValue /= progressMax;
         }
     }
 
-    Con_LockProgress(false);    
-    
+    lockProgress(false);
+
     return retValue;
 }
