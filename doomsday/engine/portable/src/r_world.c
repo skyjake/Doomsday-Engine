@@ -45,6 +45,9 @@
 
 // MACROS ------------------------------------------------------------------
 
+// $smoothplane: Maximum speed for a smoothed plane.
+#define MAX_SMOOTH_PLANE_MOVE   (64)
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -70,7 +73,144 @@ static boolean noSkyColorGiven;
 static float skyColorRGB[4], balancedRGB[4];
 static float skyColorBalance;
 
+static vertex_t *rootVtx; // Used when sorting vertex line owners.
+
 // CODE --------------------------------------------------------------------
+
+void R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln)
+{
+    uint                i;
+
+    if(!wpl || !pln)
+        return;
+
+    // Check whether we are already tracking this plane.
+    for(i = 0; i < wpl->num; ++i)
+        if(wpl->list[i] == pln)
+            return; // Yes we are.
+
+    wpl->num++;
+
+    // Only allocate memory when it's needed.
+    if(wpl->num > wpl->maxnum)
+    {
+        wpl->maxnum *= 2;
+
+        // The first time, allocate 8 watched plane nodes.
+        if(!wpl->maxnum)
+            wpl->maxnum = 8;
+
+        wpl->list =
+            Z_Realloc(wpl->list, sizeof(plane_t*) * (wpl->maxnum + 1),
+                      PU_LEVEL);
+    }
+
+    // Add the plane to the list.
+    wpl->list[wpl->num-1] = pln;
+    wpl->list[wpl->num] = NULL; // Terminate.
+}
+
+boolean R_RemoveWatchedPlane(watchedplanelist_t *wpl, const plane_t *pln)
+{
+    uint            i;
+
+    if(!wpl || !pln)
+        return false;
+
+    for(i = 0; i < wpl->num; ++i)
+    {
+        if(wpl->list[i] == pln)
+        {
+            if(i == wpl->num - 1)
+                wpl->list[i] = NULL;
+            else
+                memmove(&wpl->list[i], &wpl->list[i+1],
+                        sizeof(plane_t*) * (wpl->num - 1 - i));
+            wpl->num--;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * $smoothplane: Roll the height tracker buffers.
+ */
+void R_UpdateWatchedPlanes(watchedplanelist_t *wpl)
+{
+    uint                i;
+
+    if(!wpl)
+        return;
+
+    for(i = 0; i < wpl->num; ++i)
+    {
+        plane_t        *pln = wpl->list[i];
+
+        pln->oldheight[0] = pln->oldheight[1];
+        pln->oldheight[1] = pln->height;
+
+        if(pln->oldheight[0] != pln->oldheight[1])
+            if(fabs(pln->oldheight[0] - pln->oldheight[1]) >=
+               MAX_SMOOTH_PLANE_MOVE)
+            {
+                // Too fast: make an instantaneous jump.
+                pln->oldheight[0] = pln->oldheight[1];
+            }
+    }
+}
+
+/**
+ * $smoothplane: interpolate the visual offset.
+ */
+void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
+                                boolean resetNextViewer)
+{
+    uint                i;
+    plane_t            *pln;
+
+    if(!wpl)
+        return;
+
+    if(resetNextViewer)
+    {
+        // $smoothplane: Reset the plane height trackers.
+        for(i = 0; i < wpl->num; ++i)
+        {
+            pln = wpl->list[i];
+
+            pln->visoffset = 0;
+            pln->oldheight[0] = pln->oldheight[1] = pln->height;
+
+            // Has this plane reached its destination?
+            if(R_RemoveWatchedPlane(wpl, pln))
+                i = (i > 0? i-1 : 0);
+        }
+    }
+    // While the game is paused there is no need to calculate any
+    // visual plane offsets $smoothplane.
+    else //if(!clientPaused)
+    {
+        // $smoothplane: Set the visible offsets.
+        for(i = 0; i < wpl->num; ++i)
+        {
+            pln = wpl->list[i];
+
+            pln->visoffset = pln->oldheight[0] * (1 - frameTimePos) +
+                        pln->height * frameTimePos -
+                        pln->height;
+
+            // Visible plane height.
+            pln->visheight = pln->height + pln->visoffset;
+
+            // Has this plane reached its destination?
+            if(pln->visheight == pln->height)
+                if(R_RemoveWatchedPlane(wpl, pln))
+                    i = (i > 0? i-1 : 0);
+        }
+    }
+}
 
 /**
  * Create a new plane for the given sector. The plane will be initialized
@@ -79,16 +219,15 @@ static float skyColorBalance;
  * Post: The sector's plane list will be replaced, the new plane will be
  *       linked to the end of the list.
  *
- * @param sec           Ptr to sector for which a new plane will be created.
- * @param type          Plane type to be created (PLN_FLOOR/PLN_CEILING).
+ * @param sec       Sector for which a new plane will be created.
  *
- * @return              Ptr to the newly created plane.
+ * @return          Ptr to the newly created plane.
  */
-plane_t *R_NewPlaneForSector(sector_t *sec, planetype_t type)
+plane_t *R_NewPlaneForSector(sector_t *sec)
 {
     uint            i;
     surface_t      *suf;
-    plane_t        *plane, **newList;
+    plane_t        *plane;
 
     if(!sec)
         return NULL; // Do wha?
@@ -101,19 +240,13 @@ plane_t *R_NewPlaneForSector(sector_t *sec, planetype_t type)
     plane = Z_Calloc(sizeof(plane_t), PU_LEVEL, 0);
     suf = &plane->surface;
 
-    // Allocate a new plane list for this sector.
-    newList = Z_Malloc(sizeof(plane_t*) * (++sec->planecount + 1), PU_LEVEL, 0);
-    // Copy any existing plane ptrs.
-    for(i = 0; i < sec->planecount - 1; ++i)
-        newList[i] = sec->planes[i];
+    // Resize this sector's plane list.
+    sec->planes =
+        Z_Realloc(sec->planes, sizeof(plane_t*) * (++sec->planecount + 1),
+                  PU_LEVEL);
     // Add the new plane to the end of the list.
-    newList[i++] = plane;
-    newList[i] = NULL; // Terminate.
-
-    // Link the new plane list to the sector.
-    if(sec->planes)
-        Z_Free(sec->planes); // Free the old list.
-    sec->planes = newList;
+    sec->planes[sec->planecount-1] = plane;
+    sec->planes[sec->planecount] = NULL; // Terminate.
 
     // Setup header for DMU.
     plane->header.type = DMU_PLANE;
@@ -179,6 +312,9 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
         newList[n] = NULL; // Terminate.
     }
 
+    // If this plane is currently being watched, remove it.
+    R_RemoveWatchedPlane(watchedPlaneList, plane);
+
     // Destroy the specified plane.
     Z_Free(plane);
     sec->planecount--;
@@ -211,7 +347,7 @@ static void R_SetSectorLinks(sector_t *sec)
     sector_t   *floorLinkCandidate = 0, *ceilLinkCandidate = 0;
 
     // Must have a valid sector!
-    if(!sec || !sec->linecount || sec->permanentlink)
+    if(!sec || !sec->linecount || (sec->flags & SECF_PERMANENTLINK))
         return;                 // Can't touch permanent links.
 
     hackfloor = (!R_IsSkySurface(&sec->SP_floorsurface));
@@ -943,6 +1079,509 @@ void R_InitLinks(gamemap_t *map)
              (Sys_GetRealTime() - starttime) / 1000.0f));
 }
 
+
+static ownernode_t *unusedNodeList = NULL;
+
+static ownernode_t *newOwnerNode(void)
+{
+    ownernode_t *node;
+
+    if(unusedNodeList)
+    {   // An existing node is available for re-use.
+        node = unusedNodeList;
+        unusedNodeList = unusedNodeList->next;
+
+        node->next = NULL;
+        node->data = NULL;
+    }
+    else
+    {   // Need to allocate another.
+        node = M_Malloc(sizeof(ownernode_t));
+    }
+
+    return node;
+}
+
+static void addVertexToSSecOwnerList(ownerlist_t *ownerList, fvertex_t *v)
+{
+    ownernode_t *node;
+
+    if(!v)
+        return; // Wha?
+
+    // Add a new owner.
+    // NOTE: No need to check for duplicates.
+    ownerList->count++;
+
+    node = newOwnerNode();
+    node->data = v;
+    node->next = ownerList->head;
+    ownerList->head = node;
+}
+
+/**
+ * Create a list of vertices for the subsector which are suitable for
+ * use as the points of single a trifan.
+ *
+ * We are assured by the node building process that subsector->segs has
+ * been ordered by angle, clockwise starting from the smallest angle.
+ * So, most of the time, the points can be created directly from the
+ * seg vertexes.
+ *
+ * However, we do not want any overlapping tris so check the area of
+ * each triangle is > 0, if not; try the next vertice in the list until
+ * we find a good one to use as the center of the trifan. If a suitable
+ * point cannot be found use the center of subsector instead (it will
+ * always be valid as subsectors are convex).
+ */
+static void triangulateSubSector(subsector_t *ssec)
+{
+    uint        j;
+    seg_t     **ptr;
+    ownerlist_t subSecOwnerList;
+    boolean     found = false;
+
+    memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
+
+    // Create one node for each vertex of the subsector.
+    ptr = ssec->segs;
+    while(*ptr)
+    {
+        fvertex_t *other = &((*ptr)->SG_v1->v);
+        addVertexToSSecOwnerList(&subSecOwnerList, other);
+        *ptr++;
+    }
+
+    // We need to find a good tri-fan base vertex, (one that doesn't
+    // generate zero-area triangles).
+    if(subSecOwnerList.count <= 3)
+    {   // Always valid.
+        found = true;
+    }
+    else
+    {   // Higher vertex counts need checking, we'll test each one
+        // and pick the first good one.
+        ownernode_t *base = subSecOwnerList.head;
+
+        while(base && !found)
+        {
+            ownernode_t *current;
+            boolean     ok;
+
+            current = base;
+            ok = true;
+            j = 0;
+            while(j < subSecOwnerList.count - 2 && ok)
+            {
+#define TRIFAN_LIMIT    0.1
+
+                ownernode_t *a, *b;
+
+                if(current->next)
+                    a = current->next;
+                else
+                    a = subSecOwnerList.head;
+                if(a->next)
+                    b = a->next;
+                else
+                    b = subSecOwnerList.head;
+
+                if(TRIFAN_LIMIT >=
+                   M_TriangleArea(((fvertex_t*) base->data)->pos,
+                                  ((fvertex_t*) a->data)->pos,
+                                  ((fvertex_t*) b->data)->pos))
+                {
+                    ok = false;
+                }
+                else
+                {   // Keep checking...
+                    if(current->next)
+                        current = current->next;
+                    else
+                        current = subSecOwnerList.head;
+
+                    j++;
+                }
+
+#undef TRIFAN_LIMIT
+            }
+
+            if(ok)
+            {   // This will do nicely.
+                // Must ensure that the vertices are ordered such that
+                // base comes last (this is because when adding vertices
+                // to the ownerlist; it is done backwards).
+                ownernode_t *last;
+
+                // Find the last.
+                last = base;
+                while(last->next) last = last->next;
+
+                if(base != last)
+                {   // Need to change the order.
+                    last->next = subSecOwnerList.head;
+                    subSecOwnerList.head = base->next;
+                    base->next = NULL;
+                }
+
+                found = true;
+            }
+            else
+            {
+                base = base->next;
+            }
+        }
+    }
+
+    if(!found)
+    {   // No suitable triangle fan base vertex found.
+        ownernode_t *newNode, *last;
+
+        // Use the subsector midpoint as the base since it will always
+        // be valid.
+        ssec->flags |= SUBF_MIDPOINT;
+
+        // This entails adding the midpoint as a vertex at the start
+        // and duplicating the first vertex at the end (so the fan
+        // wraps around).
+
+        // We'll have to add the end vertex manually...
+        // Find the end.
+        last = subSecOwnerList.head;
+        while(last->next) last = last->next;
+
+        newNode = newOwnerNode();
+        newNode->data = &ssec->midpoint;
+        newNode->next = NULL;
+
+        last->next = newNode;
+        subSecOwnerList.count++;
+
+        addVertexToSSecOwnerList(&subSecOwnerList, last->data);
+    }
+
+    // We can now create the subsector vertex array by hardening the list.
+    // NOTE: The same polygon is used for all planes of this subsector.
+    ssec->numvertices = subSecOwnerList.count;
+    ssec->vertices =
+        Z_Malloc(sizeof(fvertex_t*) * (ssec->numvertices + 1),
+                 PU_LEVELSTATIC, 0);
+
+    {
+    ownernode_t *node, *p;
+
+    node = subSecOwnerList.head;
+    j = ssec->numvertices - 1;
+    while(node)
+    {
+        p = node->next;
+        ssec->vertices[j--] = (fvertex_t*) node->data;
+
+        // Move this node to the unused list for re-use.
+        node->next = unusedNodeList;
+        unusedNodeList = node;
+
+        node = p;
+    }
+    }
+
+    ssec->vertices[ssec->numvertices] = NULL; // terminate.
+}
+
+/**
+ * Polygonizes all subsectors in the map.
+ */
+void R_PolygonizeMap(gamemap_t *map)
+{
+    uint        i;
+    ownernode_t *node, *p;
+    uint        startTime;
+
+    startTime = Sys_GetRealTime();
+
+    // Init the unused ownernode list.
+    unusedNodeList = NULL;
+
+    // Polygonize each subsector.
+    for(i = 0; i < map->numsubsectors; ++i)
+    {
+        subsector_t *sub = &map->subsectors[i];
+        triangulateSubSector(sub);
+    }
+
+    // Free any nodes left in the unused list.
+    node = unusedNodeList;
+    while(node)
+    {
+        p = node->next;
+        M_Free(node);
+        node = p;
+    }
+    unusedNodeList = NULL;
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("R_PolygonizeMap: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
+
+#ifdef _DEBUG
+    Z_CheckHeap();
+#endif
+}
+
+static void initPlaneIllumination(subsector_t *ssec, uint planeID)
+{
+    uint        i, j, num;
+    subplaneinfo_t *plane = ssec->planes[planeID];
+
+    num = ssec->numvertices;
+
+    plane->illumination =
+        Z_Calloc(num * sizeof(vertexillum_t), PU_LEVELSTATIC, NULL);
+
+    for(i = 0; i < num; ++i)
+    {
+        plane->illumination[i].flags |= VIF_STILL_UNSEEN;
+
+        for(j = 0; j < MAX_BIAS_AFFECTED; ++j)
+            plane->illumination[i].casted[j].source = -1;
+    }
+}
+
+static void initSSecPlanes(subsector_t *ssec)
+{
+    uint        i;
+
+    // Allocate the subsector plane info array.
+    ssec->planes =
+        Z_Malloc(ssec->sector->planecount * sizeof(subplaneinfo_t*),
+                 PU_LEVEL, NULL);
+    for(i = 0; i < ssec->sector->planecount; ++i)
+    {
+        ssec->planes[i] =
+            Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
+
+        // Initialize the illumination for the subsector.
+        initPlaneIllumination(ssec, i);
+    }
+
+    // \fixme $nplanes
+    // Initialize the plane types.
+    ssec->planes[PLN_FLOOR]->type = PLN_FLOOR;
+    ssec->planes[PLN_CEILING]->type = PLN_CEILING;
+}
+
+static void prepareSubsectorForBias(subsector_t *ssec)
+{
+    seg_t         **segPtr;
+
+    initSSecPlanes(ssec);
+
+    segPtr = ssec->segs;
+    while(*segPtr)
+    {
+        uint            i;
+        seg_t          *seg = *segPtr;
+
+        for(i = 0; i < i; ++i)
+        {
+            uint        j;
+
+            for(j = 0; j < 3; ++j)
+            {
+                uint        n;
+                seg->illum[j][i].flags = VIF_STILL_UNSEEN;
+
+                for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
+                {
+                    seg->illum[j][i].casted[n].source = -1;
+                }
+            }
+        }
+
+        *segPtr++;
+    }
+}
+
+void R_PrepareForBias(gamemap_t *map)
+{
+    uint            i;
+    uint            starttime = Sys_GetRealTime();
+
+    Con_Message("prepareForBias: Processing...\n");
+
+    for(i = 0; i < map->numsubsectors; ++i)
+    {
+        subsector_t    *ssec = &map->subsectors[i];
+        prepareSubsectorForBias(ssec);
+    }
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("prepareForBias: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - starttime) / 1000.0f));
+}
+
+
+/*boolean DD_SubContainTest(sector_t *innersec, sector_t *outersec)
+   {
+   uint i, k;
+   boolean contained;
+   float in[4], out[4];
+   subsector_t *isub, *osub;
+
+   // Test each subsector of innersec against all subsectors of outersec.
+   for(i=0; i<numsubsectors; i++)
+   {
+   isub = SUBSECTOR_PTR(i);
+   contained = false;
+   // Only accept innersec's subsectors.
+   if(isub->sector != innersec) continue;
+   for(k=0; k<numsubsectors && !contained; k++)
+   {
+   osub = SUBSECTOR_PTR(i);
+   // Only accept outersec's subsectors.
+   if(osub->sector != outersec) continue;
+   // Test if isub is inside osub.
+   if(isub->bbox[BLEFT] >= osub->bbox[BLEFT]
+   && isub->bbox[BRIGHT] <= osub->bbox[BRIGHT]
+   && isub->bbox[BTOP] >= osub->bbox[BTOP]
+   && isub->bbox[BBOTTOM] <= osub->bbox[BBOTTOM])
+   {
+   // This is contained.
+   contained = true;
+   }
+   }
+   if(!contained) return false;
+   }
+   // All tested subsectors were contained!
+   return true;
+   } */
+
+/**
+ * The test is done on subsectors.
+ */
+static sector_t *getContainingSectorOf(gamemap_t *map, sector_t *sec)
+{
+    uint        i;
+    float       cdiff = -1, diff;
+    float       inner[4], outer[4];
+    sector_t   *other, *closest = NULL;
+
+    memcpy(inner, sec->bbox, sizeof(inner));
+
+    // Try all sectors that fit in the bounding box.
+    for(i = 0, other = map->sectors; i < map->numsectors; other++, ++i)
+    {
+        if(!other->linecount || (other->flags & SECF_UNCLOSED))
+            continue;
+
+        if(other == sec)
+            continue;           // Don't try on self!
+
+        memcpy(outer, other->bbox, sizeof(outer));
+        if(inner[BOXLEFT]  >= outer[BOXLEFT] &&
+           inner[BOXRIGHT] <= outer[BOXRIGHT] &&
+           inner[BOXTOP]   <= outer[BOXTOP] &&
+           inner[BOXBOTTOM]>= outer[BOXBOTTOM])
+        {
+            // Inside! Now we must test each of the subsectors. Otherwise
+            // we can't be sure...
+            /*if(DD_SubContainTest(sec, other))
+               { */
+            // Sec is totally and completely inside other!
+            diff = M_BoundingBoxDiff(inner, outer);
+            if(cdiff < 0 || diff <= cdiff)
+            {
+                closest = other;
+                cdiff = diff;
+            }
+            //}
+        }
+    }
+    return closest;
+}
+
+void R_BuildSectorLinks(gamemap_t *map)
+{
+#define DOMINANT_SIZE 1000
+
+    uint        i;
+
+    for(i = 0; i < map->numsectors; ++i)
+    {
+        uint        k;
+        sector_t   *other;
+        line_t     *lin;
+        sector_t   *sec = &map->sectors[i];
+        boolean     dohack;
+
+        if(!sec->linecount)
+            continue;
+
+        // Is this sector completely contained by another?
+        sec->containsector = getContainingSectorOf(map, sec);
+
+        dohack = true;
+        for(k = 0; k < sec->linecount; ++k)
+        {
+            lin = sec->Lines[k];
+            if(!lin->L_frontside || !lin->L_backside ||
+                lin->L_frontsector != lin->L_backsector)
+            {
+                dohack = false;
+                break;
+            }
+        }
+
+        if(dohack)
+        {   // Link all planes permanently.
+            sec->flags |= SECF_PERMANENTLINK;
+
+            // Only floor and ceiling can be linked, not all planes inbetween.
+            for(k = 0; k < sec->subsgroupcount; ++k)
+            {
+                ssecgroup_t *ssgrp = &sec->subsgroups[k];
+                uint        p;
+
+                for(p = 0; p < sec->planecount; ++p)
+                    ssgrp->linked[p] = sec->containsector;
+            }
+
+            Con_Printf("Linking S%i planes permanently to S%li\n", i,
+                       (long) (sec->containsector - map->sectors));
+        }
+
+        // Is this sector large enough to be a dominant light source?
+        if(sec->lightsource == NULL &&
+           (R_IsSkySurface(&sec->SP_ceilsurface) ||
+            R_IsSkySurface(&sec->SP_floorsurface)) &&
+           sec->bbox[BOXRIGHT] - sec->bbox[BOXLEFT]   > DOMINANT_SIZE &&
+           sec->bbox[BOXTOP]   - sec->bbox[BOXBOTTOM] > DOMINANT_SIZE)
+        {
+            // All sectors touching this one will be affected.
+            for(k = 0; k < sec->linecount; ++k)
+            {
+                lin = sec->Lines[k];
+                other = lin->L_frontsector;
+                if(!other || other == sec)
+                {
+                    if(lin->L_backside)
+                    {
+                        other = lin->L_backsector;
+                        if(!other || other == sec)
+                            continue;
+                    }
+                }
+
+                other->lightsource = sec;
+            }
+        }
+    }
+
+#undef DOMINANT_SIZE
+}
+
 /**
  * Called by the game at various points in the level setup process.
  */
@@ -978,7 +1617,17 @@ void R_SetupLevel(int mode, int flags)
         // Update all sectors. Set intial values of various tracked
         // and interpolated properties (lighting, smoothed planes etc).
         for(i = 0; i < numsectors; ++i)
-            R_UpdateSector(SECTOR_PTR(i), false);
+        {
+            uint            j;
+            sector_t       *sec = SECTOR_PTR(i);
+
+            R_UpdateSector(sec, false);
+            for(j = 0; j < sec->planecount; ++j)
+            {
+                sec->planes[j]->visheight = sec->planes[j]->oldheight[0] =
+                    sec->planes[j]->oldheight[1] = sec->planes[j]->height;
+            }
+        }
 
         // Do the same for side surfaces.
         for(i = 0; i < numsides; ++i)
@@ -995,8 +1644,8 @@ void R_SetupLevel(int mode, int flags)
     }
     case DDSLM_FINALIZE:
     {
-        int     j, k;
-        line_t *line;
+        int         j, k;
+        line_t     *line;
 
         // Init server data.
         Sv_InitPools();
@@ -1007,7 +1656,17 @@ void R_SetupLevel(int mode, int flags)
         // Update all sectors. Set intial values of various tracked
         // and interpolated properties (lighting, smoothed planes etc).
         for(i = 0; i < numsectors; ++i)
-            R_UpdateSector(SECTOR_PTR(i), true);
+        {
+            uint            l;
+            sector_t       *sec = SECTOR_PTR(i);
+
+            R_UpdateSector(sec, true);
+            for(l = 0; l < sec->planecount; ++l)
+            {
+                sec->planes[l]->visheight = sec->planes[l]->oldheight[0] =
+                    sec->planes[l]->oldheight[1] = sec->planes[l]->height;
+            }
+        }
 
         for(i = 0; i < numlines; ++i)
         {
@@ -1132,7 +1791,8 @@ void R_ClearSectorFlags(void)
 
 sector_t *R_GetLinkedSector(subsector_t *startssec, uint plane)
 {
-    ssecgroup_t *ssgrp = &startssec->sector->subsgroups[startssec->group];
+    ssecgroup_t        *ssgrp =
+        &startssec->sector->subsgroups[startssec->group];
 
     if(!devNoLinkedSurfaces && ssgrp->linked[plane])
         return ssgrp->linked[plane];
@@ -1202,6 +1862,8 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
         // No longer a missing texture fix?
         if(suf->material && (oldTexFlags & SUF_TEXFIX))
             suf->flags &= ~SUF_TEXFIX;
+
+        suf->flags |= SUF_UPDATE_DECORATIONS;
     }
     else if((texFlags & TXF_GLOW) != (oldTexFlags & TXF_GLOW))
     {
@@ -1224,6 +1886,8 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
             // The current flat is now glowing
             suf->flags |= SUF_GLOW;
         }
+
+        suf->flags |= SUF_UPDATE_DECORATIONS;
     }
     // < FIXME
 
@@ -1231,18 +1895,21 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
        suf->flags != suf->oldflags)
     {
         suf->oldflags = suf->flags;
+        suf->flags |= SUF_UPDATE_DECORATIONS;
     }
 
     if(forceUpdate ||
        (suf->offset[VX] != suf->oldoffset[VX]))
     {
         suf->oldoffset[VX] = suf->offset[VX];
+        suf->flags |= SUF_UPDATE_DECORATIONS;
     }
 
     if(forceUpdate ||
        (suf->offset[VY] != suf->oldoffset[VY]))
     {
         suf->oldoffset[VY] = suf->offset[VY];
+        suf->flags |= SUF_UPDATE_DECORATIONS;
     }
 
     // Surface color change?
@@ -1264,6 +1931,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     uint        i, j;
     plane_t    *plane;
     boolean     updateReverb = false;
+    boolean     updateDecorations = false;
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
@@ -1277,6 +1945,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         memcpy(sec->oldrgb, sec->rgb, sizeof(sec->oldrgb));
 
         LG_SectorChanged(sec);
+        updateDecorations = true;
     }
     else
     {
@@ -1333,7 +2002,11 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
             P_PlaneChanged(sec, i);
             updateReverb = true;
+            plane->surface.flags |= SUF_UPDATE_DECORATIONS;
         }
+
+        if(updateDecorations)
+            plane->surface.flags |= SUF_UPDATE_DECORATIONS;
     }
 
     if(updateReverb)
@@ -1341,7 +2014,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         S_CalcSectorReverb(sec);
     }
 
-    if(!sec->permanentlink) // Assign new links
+    if(!(sec->flags & SECF_PERMANENTLINK)) // Assign new links
     {
         // Only floor and ceiling can be linked, not all inbetween
         for(i = 0; i < sec->subsgroupcount; ++i)
@@ -1400,4 +2073,284 @@ const float *R_GetSectorLightColor(sector_t *sector)
     }
     // Return the sky color.
     return skyColorRGB;
+}
+
+
+/**
+ * Compares the angles of two lines that share a common vertex.
+ *
+ * pre: rootVtx must point to the vertex common between a and b
+ *      which are (lineowner_t*) ptrs.
+ */
+static int C_DECL lineAngleSorter(const void *a, const void *b)
+{
+    uint        i;
+    fixed_t     dx, dy;
+    binangle_t  angles[2];
+    lineowner_t *own[2];
+    line_t     *line;
+
+    own[0] = (lineowner_t *)a;
+    own[1] = (lineowner_t *)b;
+    for(i = 0; i < 2; ++i)
+    {
+        if(own[i]->LO_prev) // We have a cached result.
+        {
+            angles[i] = own[i]->angle;
+        }
+        else
+        {
+            vertex_t    *otherVtx;
+
+            line = own[i]->line;
+            otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
+
+            dx = otherVtx->V_pos[VX] - rootVtx->V_pos[VX];
+            dy = otherVtx->V_pos[VY] - rootVtx->V_pos[VY];
+
+            own[i]->angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
+
+            // Mark as having a cached angle.
+            own[i]->LO_prev = (lineowner_t*) 1;
+        }
+    }
+
+    return (angles[1] - angles[0]);
+}
+
+/**
+ * Merge left and right line owner lists into a new list.
+ *
+ * @return          Ptr to the newly merged list.
+ */
+static lineowner_t *mergeLineOwners(lineowner_t *left, lineowner_t *right,
+                                    int (C_DECL *compare) (const void *a,
+                                                           const void *b))
+{
+    lineowner_t tmp, *np;
+
+    np = &tmp;
+    tmp.LO_next = np;
+    while(left != NULL && right != NULL)
+    {
+        if(compare(left, right) <= 0)
+        {
+            np->LO_next = left;
+            np = left;
+
+            left = left->LO_next;
+        }
+        else
+        {
+            np->LO_next = right;
+            np = right;
+
+            right = right->LO_next;
+        }
+    }
+
+    // At least one of these lists is now empty.
+    if(left)
+        np->LO_next = left;
+    if(right)
+        np->LO_next = right;
+
+    // Is the list empty?
+    if(tmp.LO_next == &tmp)
+        return NULL;
+
+    return tmp.LO_next;
+}
+
+static lineowner_t *splitLineOwners(lineowner_t *list)
+{
+    lineowner_t *lista, *listb, *listc;
+
+    if(!list)
+        return NULL;
+
+    lista = listb = listc = list;
+    do
+    {
+        listc = listb;
+        listb = listb->LO_next;
+        lista = lista->LO_next;
+        if(lista != NULL)
+            lista = lista->LO_next;
+    } while(lista);
+
+    listc->LO_next = NULL;
+    return listb;
+}
+
+/**
+ * This routine uses a recursive mergesort algorithm; O(NlogN)
+ */
+static lineowner_t *sortLineOwners(lineowner_t *list,
+                                   int (C_DECL *compare) (const void *a,
+                                                          const void *b))
+{
+    lineowner_t *p;
+
+    if(list && list->LO_next)
+    {
+        p = splitLineOwners(list);
+
+        // Sort both halves and merge them back.
+        list = mergeLineOwners(sortLineOwners(list, compare),
+                               sortLineOwners(p, compare), compare);
+    }
+    return list;
+}
+
+static void setVertexLineOwner(vertex_t *vtx, line_t *lineptr,
+                               lineowner_t **storage)
+{
+    lineowner_t *p, *newOwner;
+
+    if(!lineptr)
+        return;
+
+    // If this is a one-sided line then this is an "anchored" vertex.
+    if(!(lineptr->L_frontside && lineptr->L_backside))
+        vtx->anchored = true;
+
+    // Has this line already been registered with this vertex?
+    if(vtx->numlineowners != 0)
+    {
+        p = vtx->lineowners;
+        while(p)
+        {
+            if(p->line == lineptr)
+                return;             // Yes, we can exit.
+
+            p = p->LO_next;
+        }
+    }
+
+    //Add a new owner.
+    vtx->numlineowners++;
+
+    newOwner = (*storage)++;
+    newOwner->line = lineptr;
+    newOwner->LO_prev = NULL;
+
+    // Link it in.
+    // NOTE: We don't bother linking everything at this stage since we'll
+    // be sorting the lists anyway. After which we'll finish the job by
+    // setting the prev and circular links.
+    // So, for now this is only linked singlely, forward.
+    newOwner->LO_next = vtx->lineowners;
+    vtx->lineowners = newOwner;
+
+    // Link the line to its respective owner node.
+    if(vtx == lineptr->L_v1)
+        lineptr->L_vo1 = newOwner;
+    else
+        lineptr->L_vo2 = newOwner;
+}
+
+/**
+ * Generates the line owner rings for each vertex. Each ring includes all
+ * the lines which the vertex belongs to sorted by angle, (the rings is
+ * arranged in clockwise order, east = 0).
+ */
+void R_BuildVertexOwners(gamemap_t *map)
+{
+    uint        startTime = Sys_GetRealTime();
+
+    uint        i;
+    lineowner_t *lineOwners, *allocator;
+
+    // We know how many vertex line owners we need (numlines * 2).
+    lineOwners =
+        Z_Malloc(sizeof(lineowner_t) * map->numlines * 2, PU_LEVELSTATIC, 0);
+    allocator = lineOwners;
+
+    for(i = 0; i < map->numlines; ++i)
+    {
+        uint        p;
+        line_t     *line = &map->lines[i];
+
+        for(p = 0; p < 2; ++p)
+        {
+            vertex_t    *vtx = line->L_v(p);
+
+            setVertexLineOwner(vtx, line, &allocator);
+        }
+    }
+
+    // Sort line owners and then finish the rings.
+    for(i = 0; i < map->numvertexes; ++i)
+    {
+        vertex_t   *v = &map->vertexes[i];
+
+        // Line owners:
+        if(v->numlineowners != 0)
+        {
+            lineowner_t *p, *last;
+            binangle_t  lastAngle = 0;
+
+            // Sort them so that they are ordered clockwise based on angle.
+            rootVtx = v;
+            v->lineowners =
+                sortLineOwners(v->lineowners, lineAngleSorter);
+
+            // Finish the linking job and convert to relative angles.
+            // They are only singly linked atm, we need them to be doubly
+            // and circularly linked.
+            last = v->lineowners;
+            p = last->LO_next;
+            while(p)
+            {
+                p->LO_prev = last;
+
+                // Convert to a relative angle between last and this.
+                last->angle = last->angle - p->angle;
+                lastAngle += last->angle;
+
+                last = p;
+                p = p->LO_next;
+            }
+            last->LO_next = v->lineowners;
+            v->lineowners->LO_prev = last;
+
+            // Set the angle of the last owner.
+            last->angle = BANG_360 - lastAngle;
+/*
+#if _DEBUG
+{
+// For checking the line owner link rings are formed correctly.
+lineowner_t *base;
+uint        idx;
+
+if(verbose >= 2)
+    Con_Message("Vertex #%i: line owners #%i\n", i, v->numlineowners);
+
+p = base = v->lineowners;
+idx = 0;
+do
+{
+    if(verbose >= 2)
+        Con_Message("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f\n",
+                    idx, p->LO_prev->line - map->lines,
+                    p->line - map->lines,
+                    p->LO_next->line - map->lines, BANG2DEG(p->angle));
+
+    if(p->LO_prev->LO_next != p || p->LO_next->LO_prev != p)
+       Con_Error("Invalid line owner link ring!");
+
+    p = p->LO_next;
+    idx++;
+} while(p != base);
+}
+#endif
+*/
+        }
+    }
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("buildVertexOwners: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 }

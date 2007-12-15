@@ -690,12 +690,12 @@ int P_Callback(int type, uint index, void* context, int (*callback)(void* p, voi
  * 'context' is passed to the callback function along with a pointer to the
  * data object.
  *
- * @return          <code>true</code> if all the calls to the callback function
- *                  return <code>true</code>.
- *                  <code>false</code> is returned when the callback function
- *                  returns <code>false</code?; in this case, the iteration is
+ * @return          @c true, if all the calls to the callback function
+ *                  return @c true,.
+ *                  @c false, is returned when the callback function
+ *                  returns @c false</code?; in this case, the iteration is
  *                  aborted immediately when the callback function returns
- *                  <code>false</code>.
+ *                  @c false,.
  */
 int P_CallbackAll(int type, void* context, int (*callback)(void* p, void* ctx))
 {
@@ -1073,6 +1073,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_PLANE_HEIGHT:
             SetValue(DMT_PLANE_HEIGHT, &p->height, args, 0);
+            R_AddWatchedPlane(watchedPlaneList, p);
             break;
         case DMU_PLANE_MATERIAL:
             {

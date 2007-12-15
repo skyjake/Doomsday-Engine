@@ -47,9 +47,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-// $smoothplane: Maximum speed for a smoothed plane.
-#define MAX_SMOOTH_PLANE_MOVE   (64*FRACUNIT)
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct viewer_s {
@@ -352,9 +349,6 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
  */
 void R_NewSharpWorld(void)
 {
-    uint        i, j;
-    sector_t   *sector;
-    plane_t    *plane;
     viewer_t    sharpView;
 
     if(!viewPlayer)
@@ -381,27 +375,7 @@ void R_NewSharpWorld(void)
     memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
 
     R_CheckViewerLimits(lastSharpView, &sharpView);
-
-    // $smoothplane: Roll the height tracker buffers.
-    for(i = 0; i < numsectors; ++i)
-    {
-        sector = SECTOR_PTR(i);
-        // For each plane
-        for(j = 0; j < sector->planecount; ++j)
-        {
-            plane = sector->planes[j];
-            plane->oldheight[0] = plane->oldheight[1];
-            plane->oldheight[1] = plane->height;
-
-            if(plane->oldheight[0] != plane->oldheight[1])
-                if(fabs(plane->oldheight[0] - plane->oldheight[1]) >=
-                   MAX_SMOOTH_PLANE_MOVE)
-                {
-                    // Too fast: make an instantaneous jump.
-                    plane->oldheight[0] = plane->oldheight[1];
-                }
-        }
-    }
+    R_UpdateWatchedPlanes(watchedPlaneList);
 }
 
 /**
@@ -410,56 +384,12 @@ void R_NewSharpWorld(void)
  */
 void R_SetupWorldFrame(void)
 {
-    uint        i, j;
-    sector_t   *sec;
-    plane_t    *plane;
-
     // Calculate the light range to be used for each player
     Rend_RetrieveLightSample();
 
     R_ClearSectorFlags();
 
-    if(resetNextViewer)
-    {
-        // $smoothplane: Reset the plane height trackers.
-        for(i = 0; i < numsectors; ++i)
-        {
-            sec = SECTOR_PTR(i);
-
-            // For each plane
-            for(j = 0; j < sec->planecount; ++j)
-            {
-                plane = sec->planes[j];
-
-                plane->visoffset = 0;
-                plane->oldheight[0] = plane->oldheight[1] = plane->height;
-            }
-        }
-    }
-    // While the game is paused there is no need to calculate any
-    // visual plane offsets $smoothplane.
-    else //if(!clientPaused)
-    {
-        // $smoothplane: Set the visible offsets.
-        for(i = 0; i < numsectors; ++i)
-        {
-            sec = SECTOR_PTR(i);
-
-            // For each plane.
-            for(j = 0; j < sec->planecount; ++j)
-            {
-                plane = sec->planes[j];
-
-                plane->visoffset =
-                            plane->oldheight[0] * (1 - frameTimePos) +
-                            plane->height * frameTimePos -
-                            plane->height;
-
-                // Visible plane height.
-                plane->visheight = plane->height + plane->visoffset;
-            }
-        }
-    }
+    R_InterpolateWatchedPlanes(watchedPlaneList, resetNextViewer);
 }
 
 /**
@@ -598,9 +528,9 @@ void R_RenderPlayerViewBorder(void)
  */
 void R_RenderPlayerView(ddplayer_t *player)
 {
-    extern boolean firstFrameAfterLoad, freezeRLs;
-    extern int psp3d, modelTriCount;
-    int     i, oldFlags = 0;
+    extern boolean  firstFrameAfterLoad, freezeRLs;
+    extern int      psp3d, modelTriCount;
+    int             i, oldFlags = 0;
 
     if(firstFrameAfterLoad)
     {
@@ -617,7 +547,7 @@ void R_RenderPlayerView(ddplayer_t *player)
     if(!freezeRLs)
         R_ClearSprites();
 
-    R_ProjectPlayerSprites();   // Only if 3D models exists for them.
+    R_ProjectPlayerSprites(); // Only if 3D models exists for them.
     PG_InitForNewFrame();
 
     // Hide the viewPlayer's mobj?

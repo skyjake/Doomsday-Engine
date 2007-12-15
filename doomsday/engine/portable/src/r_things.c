@@ -951,7 +951,8 @@ void R_AddSprites(sector_t *sec)
         {
             if(!(mo->dplayer && mo->dplayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
                mo->pos[VZ] <= sec->SP_ceilheight &&
-               mo->pos[VZ] >= sec->SP_floorheight && !sec->selfRefHack)
+               mo->pos[VZ] >= sec->SP_floorheight &&
+               !(sec->flags & SECF_SELFREFHACK))
             {
                 R_GetSpriteInfo(mo->sprite, mo->frame, &spriteInfo);
                 visibleTop = mo->pos[VZ] + spriteInfo.height;

@@ -1759,7 +1759,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             memcpy(&quad->normal, &side->SW_middlenormal, sizeof(quad->normal));
 
             // Upper/lower normal skyfixes.
-            if(!(frontsec->selfRefHack && backsec))
+            if(!((frontsec->flags & SECF_SELFREFHACK) && backsec))
             {
                 // Floor.
                 if(frontsec->skyfix[PLN_FLOOR].offset < 0)
@@ -1927,7 +1927,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
 
     // We don't render planes for unclosed sectors when the polys would
     // be added to the skymask (a DOOM.EXE renderer hack).
-    if(sector->unclosed && R_IsSkySurface(surface))
+    if((sector->flags & SECF_UNCLOSED) && R_IsSkySurface(surface))
         return;
 
     // Determine plane height.
@@ -2597,7 +2597,7 @@ void R_DrawLightRange(void)
  * @param   color3f     Color to make the box (uniform vertex color).
  * @param   alpha       Alpha to make the box (uniform vertex color).
  * @param   br          Border amount to overlap box faces.
- * @param   alignToBase If <code>true</code> align the base of the box
+ * @param   alignToBase If @c true, align the base of the box
  *                      to the Z coordinate.
  */
 void Rend_DrawBBox(float pos3f[3], float w, float l, float h,
