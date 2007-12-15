@@ -411,6 +411,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\src\hu_menu.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\src\hu_msg.c"
 				>
 			</File>
@@ -428,10 +432,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\m_multi.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\src\mn_menu.c"
 				>
 			</File>
 			<File
