@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_dgl.h: Accessing the Doomsday Graphics Library API
  */
 
@@ -52,6 +52,10 @@ typedef struct dgldriver_s {
     int             (*GetInteger) (int name);
     int             (*GetIntegerv) (int name, int *values);
     int             (*SetInteger) (int name, int value);
+    int             (*SetIntegerv) (int name, const int *values);
+    float           (*GetFloat) (int name);
+    int             (*GetFloatv) (int name, float *values);
+    int             (*SetFloat) (int name, float value);
     int             (*SetFloatv) (int name, const float *values);
     char           *(*GetString) (int name);
     int             (*Enable) (int cap);

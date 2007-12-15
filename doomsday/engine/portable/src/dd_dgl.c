@@ -159,11 +159,15 @@ DEF_VOID_4(Perspective, float, float, float, float)
 DEF_VOID_5(Arrays, void*, void*, int, void**, int)
 DEF_VOID_6(Ortho, float, float, float, float, float, float)
 DEF_1(int, GetInteger, int)
+DEF_1(float, GetFloat, int)
 DEF_1(char*, GetString, int)
 DEF_1(int, Enable, int)
 DEF_1(int, Bind, DGLuint)
 DEF_2(int, GetIntegerv, int, int*)
+DEF_2(int, SetIntegerv, int, const int*)
 DEF_2(int, SetInteger, int, int)
+DEF_2(int, SetFloat, int, float)
+DEF_2(int, GetFloatv, int, float*)
 DEF_2(int, SetFloatv, int, const float*)
 // DEF_3(int, ReadPixels, int*, int, void*)
 DEF_3(int, Project, int, gl_fc3vertex_t*, gl_fc3vertex_t*)
@@ -192,6 +196,10 @@ void DD_RouteAPI(void)
     ROUTE(GetInteger);
     ROUTE(GetIntegerv);
     ROUTE(SetInteger);
+    ROUTE(SetIntegerv);
+    ROUTE(GetFloat);
+    ROUTE(GetFloatv);
+    ROUTE(SetFloat);
     ROUTE(SetFloatv);
     ROUTE(GetString);
     ROUTE(Enable);
@@ -275,6 +283,10 @@ int DD_InitDGLDriver(void)
     Req(GetInteger);
     Req(GetIntegerv);
     Req(SetInteger);
+    Req(SetIntegerv);
+    Req(GetFloat);
+    Req(GetFloatv);
+    Req(SetFloat);
     Req(SetFloatv);
     Req(GetString);
     Req(Enable);
