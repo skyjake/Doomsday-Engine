@@ -19,8 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * g_game.h:
  */
 
 #ifndef __G_GAME__
@@ -46,20 +50,20 @@ int             G_GetLevelNumber(int episode, int map);
 
 void            G_InitNew(skillmode_t skill, int episode, int map);
 
-// Can be called by the startup code or M_Responder.
+// Can be called by the startup code or Hu_MenuResponder.
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
 void            G_DeferedInitNew(skillmode_t skill, int episode, int map);
 
 void            G_DeferedPlayDemo(char *demo);
 
-// Can be called by the startup code or M_Responder,
+// Can be called by the startup code or Hu_MenuResponder,
 // calls P_SetupLevel or W_EnterWorld.
 void            G_LoadGame(char *name);
 
 void            G_DoLoadGame(void);
 
-// Called by M_Responder.
+// Called by Hu_MenuResponder.
 void            G_SaveGame(int slot, char *description);
 
 // Only called by startup code.

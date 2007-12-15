@@ -369,17 +369,21 @@ static boolean PIT_Splash(sector_t *sector, void *data)
 
 void P_RipperBlood(mobj_t *mo)
 {
-    mobj_t *th;
-    fixed_t pos[3];
+    mobj_t         *th;
+    float           pos[3];
 
-    memcpy(pos, mo->pos, sizeof(pos));
-    pos[VX] += ((P_Random() - P_Random()) << 12);
-    pos[VY] += ((P_Random() - P_Random()) << 12);
-    pos[VZ] += ((P_Random() - P_Random()) << 12);
-    th = P_SpawnMobj3f(pos[VX], pos[VY], pos[VZ], MT_BLOOD);
+    pos[VX] = mo->pos[VX];
+    pos[VY] = mo->pos[VY];
+    pos[VZ] = mo->pos[VZ];
+
+    pos[VX] += FIX2FLT((P_Random() - P_Random()) << 12);
+    pos[VY] += FIX2FLT((P_Random() - P_Random()) << 12);
+    pos[VZ] += FIX2FLT((P_Random() - P_Random()) << 12);
+
+    th = P_SpawnMobj3fv(MT_BLOOD, pos);
     th->flags |= MF_NOGRAVITY;
-    th->mom[MX] = mo->mom[MX] >> 1;
-    th->mom[MY] = mo->mom[MY] >> 1;
+    th->mom[MX] = mo->mom[MX] / 2;
+    th->mom[MY] = mo->mom[MY] / 2;
     th->tics += P_Random() & 3;
 }
 
@@ -1024,7 +1028,7 @@ void P_CheckRespawnQueue(void)
  * Called when a player is spawned on the level.
  * Most of the player structure stays unchanged between levels.
  */
-void P_SpawnPlayer(spawnspot_t * mthing, int pnum)
+void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 {
     player_t   *p;
     float       pos[3];
@@ -1045,9 +1049,17 @@ void P_SpawnPlayer(spawnspot_t * mthing, int pnum)
     if(p->playerstate == PST_REBORN)
         G_PlayerReborn(pnum);
 
-    pos[VX] = (float) mthing->x;
-    pos[VY] = (float) mthing->y;
-    pos[VZ] = ONFLOORZ;
+    if(spot)
+    {
+        pos[VX] = spot->pos[VX];
+        pos[VY] = spot->pos[VY];
+        pos[VZ] = ONFLOORZ;
+    }
+    else
+    {
+        pos[VX] = pos[VY] = pos[VZ] = 0;
+    }
+
     mobj = P_SpawnMobj3fv(pos, MT_PLAYER);
 
     // With clients all player mobjs are remote, even the consoleplayer.
@@ -1063,7 +1075,7 @@ void P_SpawnPlayer(spawnspot_t * mthing, int pnum)
     if(i > 0)
         mobj->flags |= i << MF_TRANSSHIFT;
 
-    mobj->angle = ANG45 * (mthing->angle / 45); /* $unifiedangles */
+    mobj->angle = (spot? spot->angle : 0); /* $unifiedangles */
     p->plr->lookdir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     mobj->player = p;
@@ -1078,6 +1090,10 @@ void P_SpawnPlayer(spawnspot_t * mthing, int pnum)
     p->plr->extraLight = 0;
     p->plr->fixedcolormap = 0;
     p->plr->lookdir = 0;
+
+    if(!spot)
+        p->plr->flags |= DDPF_CAMERA;
+
     if(p->plr->flags & DDPF_CAMERA)
     {
         p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
@@ -1288,8 +1304,8 @@ void P_SpawnBlood(float x, float y, float z, int damage)
 /**
  * Moves the missile forward a bit and possibly explodes it right there.
  * @param   th  The missile to be checked.
- * @return      <code>true</code> if the missile is at a valid location
- *              else <code>false</code>.
+ * @return      @c true, if the missile is at a valid location
+ *              else @c false,.
  */
 boolean P_CheckMissileSpawn(mobj_t *th)
 {

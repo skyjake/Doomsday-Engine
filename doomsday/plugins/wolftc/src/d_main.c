@@ -678,7 +678,7 @@ void D_PostInit(void)
                  (cfg.netDeathmatch ==1)? " deathmatch" :
                     (cfg.netDeathmatch ==2)? " altdeath" : "");
 
-    if(gameaction != GA_LOADGAME)
+    if(G_GetGameAction() != GA_LOADGAME)
     {
         if(autostart || IS_NETGAME)
         {
@@ -710,15 +710,7 @@ void D_Shutdown(void)
 
 void D_Ticker(timespan_t ticLength)
 {
-    static trigger_t fixed = { 1.0 / 35 };
-
-    // Fixed ticks for the menu ticker.
-    if(M_RunTrigger(&fixed, ticLength))
-    {
-        MN_Ticker();
-    }
-
-    // Game gets fractional ticks.
+    Hu_MenuTicker(ticLength);
     G_Ticker(ticLength);
 }
 

@@ -47,11 +47,11 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LOWERSPEED      FRACUNIT*6
-#define RAISESPEED      FRACUNIT*6
+#define LOWERSPEED          (6)
+#define RAISESPEED          (6)
 
-#define WEAPONBOTTOM    128*FRACUNIT
-#define WEAPONTOP       32*FRACUNIT
+#define WEAPONBOTTOM        (128)
+#define WEAPONTOP           (32)
 
 // TYPES -------------------------------------------------------------------
 
@@ -65,9 +65,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-fixed_t swingx;
-fixed_t swingy;
-
+float swingPos[2];
 float bulletslope;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -97,8 +95,8 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
         if(state->misc[0])
         {
             // coordinate set
-            psp->sx = state->misc[0] << FRACBITS;
-            psp->sy = state->misc[1] << FRACBITS;
+            psp->offset[VX] = (float) state->misc[0];
+            psp->offset[VY] = (float) state->misc[1];
         }
 
         // Call action routine.
@@ -155,7 +153,7 @@ void P_BringUpWeapon(player_t *player)
         S_StartSound(wminfo->raisesound, player->plr->mo);
 
     player->pendingweapon = WT_NOCHANGE;
-    player->psprites[ps_weapon].sy = WEAPONBOTTOM;
+    player->psprites[ps_weapon].offset[VY] = WEAPONBOTTOM;
 
     P_SetPsprite(player, ps_weapon, wminfo->upstate);
 }
@@ -315,7 +313,7 @@ void C_DECL A_CheckReload(player_t *player, pspdef_t *psp)
  */
 void C_DECL A_Lower(player_t *player, pspdef_t * psp)
 {
-    psp->sy += LOWERSPEED;
+    psp->offset[VY] += LOWERSPEED;
 
     // Psprite state.
     player->plr->psprites[0].state = DDPSP_DOWN;
@@ -327,13 +325,13 @@ void C_DECL A_Lower(player_t *player, pspdef_t * psp)
     }
 
     // Is already down.
-    if(psp->sy < WEAPONBOTTOM)
+    if(psp->offset[VY] < WEAPONBOTTOM)
         return;
 
     // Player is dead.
     if(player->playerstate == PST_DEAD)
     {
-        psp->sy = WEAPONBOTTOM;
+        psp->offset[VY] = WEAPONBOTTOM;
 
         // don't bring weapon back up
         return;
@@ -373,15 +371,15 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
 
-    psp->sy -= RAISESPEED;
+    psp->offset[VY] -= RAISESPEED;
 
-    if(psp->sy > WEAPONTOP)
+    if(psp->offset[VY] > WEAPONTOP)
         return;
 
     // Enable the pspr Y offset once again.
     DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
 
-    psp->sy = WEAPONTOP;
+    psp->offset[VY] = WEAPONTOP;
 
     // The weapon has been raised all the way,
     //  so change to the ready state.
@@ -740,8 +738,8 @@ void P_MovePsprites(player_t *player)
         }
     }
 
-    player->psprites[ps_flash].sx = player->psprites[ps_weapon].sx;
-    player->psprites[ps_flash].sy = player->psprites[ps_weapon].sy;
+    player->psprites[ps_flash].pos[VX] = player->psprites[ps_weapon].pos[VX];
+    player->psprites[ps_flash].pos[VY] = player->psprites[ps_weapon].pos[VY];
 }
 
 
@@ -1729,7 +1727,7 @@ void C_DECL A_FireCMissile2NA(player_t *player, pspdef_t * psp)
                  weaponinfo[player->readyweapon][player->class].mode[0].flashstate +
                  (P_Random() & 1));
 
-    P_SpawnMissile(player->plr->mo, NULL, MT_CATAPMISSILE2);
+    P_SpawnMissile(MT_CATAPMISSILE2, player->plr->mo, NULL);
 }
 
 
@@ -1743,7 +1741,7 @@ void C_DECL A_FireCMissile3(player_t *player, pspdef_t * psp)
                  weaponinfo[player->readyweapon][player->class].mode[0].flashstate +
                  (P_Random() & 1));
 
-    P_SpawnMissile(player->plr->mo, NULL, MT_CATAPMISSILE2);
+    P_SpawnMissile(MT_CATAPMISSILE2, player->plr->mo, NULL);
 }
 
 //

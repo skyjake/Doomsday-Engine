@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * Internally used data structures for virtually everything,
  * key definitions, lots of other stuff.
  */
@@ -257,6 +257,11 @@ enum { VX, VY, VZ };               // Vertex indices.
 #define IS_CLIENT       Get(DD_CLIENT)
 #define IS_NETGAME      Get(DD_NETGAME)
 #define IS_DEDICATED    Get(DD_DEDICATED)
+
+#define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
+
+#define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
+#define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
 
 //returns a number from 0 to 255
 int         P_Random(void);

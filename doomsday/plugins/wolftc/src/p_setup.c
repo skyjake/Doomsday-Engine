@@ -134,7 +134,7 @@ void P_RegisterCustomMapProperties(void)
  * @param *data     Ptr to the data value (has already been expanded, size
  *                  converted and endian converted where necessary).
  *
- * @return          <code>true</code> unless there is a critical problem with
+ * @return          @c true, unless there is a critical problem with
  *                  the data supplied.
  */
 int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
@@ -165,10 +165,10 @@ int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
         break;
     // Thing properties
     case CMP_THING_POS_X:
-        things[id].x = *(short *)data;
+        things[id].pos[VX] = (float) (*(short *)data);
         break;
     case CMP_THING_POS_Y:
-        things[id].y = *(short *)data;
+        things[id].pos[VY] = (float) (*(short *)data);
         break;
     case CMP_THING_ANGLE:
         things[id].angle = *(short *)data;

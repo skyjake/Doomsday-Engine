@@ -69,7 +69,7 @@ int     clipammo[NUM_AMMO_TYPES] = { 10, 4, 20, 1 };
 /**
  * @param num       Number of clip loads, not the individual count.
  *
- * @return          <code>false</code> if the ammo can't be picked up at all.
+ * @return          @c false, if the ammo can't be picked up at all.
  */
 boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 {
@@ -196,7 +196,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 }
 
 /**
- * @return          <code>false</code> if the body isn't needed at all
+ * @return          @c false, if the body isn't needed at all
  */
 boolean P_GiveBody(player_t *player, int num)
 {
@@ -218,7 +218,7 @@ boolean P_GiveBody(player_t *player, int num)
 }
 
 /**
- * @return          <code>false</code> if the armor is worse than the
+ * @return          @c false, if the armor is worse than the
  *                  current armor.
  */
 boolean P_GiveArmor(player_t *player, int armortype)
