@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,14 +19,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_timer.c: Timing Subsystem
  *
- * Uses Win32 multimedia timing routines.
+ * \note Under WIN32, uses Win32 multimedia timing routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -91,19 +92,16 @@ unsigned int Sys_GetRealTime(void)
     static boolean first = true;
     static DWORD start;
 #ifdef WIN32
-    DWORD return_time;
+    DWORD return_time, now;
+#elif UNIX
+    Uint32 return_time, now;
 #endif
-#ifdef UNIX
-    Uint32 return_time;
-#endif
-
 
     Sys_Lock(timer_Mutex);
 #ifdef WIN32
-    DWORD   now = timeGetTime();
-#endif
-#ifdef UNIX
-    Uint32  now = SDL_GetTicks();
+    now = timeGetTime();
+#elif  UNIX
+    now = SDL_GetTicks();
 #endif
     Sys_Unlock(timer_Mutex);
 
@@ -125,7 +123,7 @@ unsigned int Sys_GetRealTime(void)
         Sys_Unlock(timer_Mutex);
         return return_time;
     }
-    
+
     return_time = now - start;
     Sys_Unlock(timer_Mutex);
     return return_time;
