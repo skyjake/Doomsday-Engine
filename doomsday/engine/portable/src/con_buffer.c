@@ -167,7 +167,7 @@ static void removeNode(cbuffer_t *buf, cbnode_t *node)
  * Creates a new console history buffer.
  *
  * @param maxNumLines       Maximum number of lines the buffer can hold,
- *                          <code>0</code> means unlimited.
+ *                          @c 0, means unlimited.
  * @param maxLineLength     Maximum length of each line in the buffer.
  * @param flags             Console buffer flags (CBF_*).
  *
@@ -409,7 +409,7 @@ static uint bufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
  * @param firstIdx      Line index of the first line to be retrieved. If
  *                      negative, the index is from the end of list.
  * @param list          Ptr to an array of console buffer ptrs which we'll
- *                      write to and terminate with <code>NULL</code>
+ *                      write to and terminate with @c NULL,
  *
  * @return              The number of elements written back to the buffer.
  */
@@ -463,7 +463,7 @@ const cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx)
  * @param buf               Ptr to the buffer to use.
  *
  * @return                  Ptr to the cbline_t with the requested index or
- *                          <code>NULL</code> if the index was invalid.
+ *                          @c NULL, if the index was invalid.
  */
 static cbline_t *bufferNewLine(cbuffer_t *buf)
 {

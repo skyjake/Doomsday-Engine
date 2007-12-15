@@ -255,13 +255,13 @@ void B_Register(void)
 void B_Init(void)
 {
     bclass_t* bc = 0;
-    
+
     if(isDedicated)
     {
         // Why sir, we are but poor folk! Them bindings are too good for us.
         return;
     }
-    
+
     B_NewClass(DEFAULT_BINDING_CLASS_NAME);
 
     // Game classes.
@@ -278,7 +278,7 @@ void B_Init(void)
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
     B_BindCommand("joy-hat-center", "print center");
-    
+
     B_BindCommand("game:key-m-press", "print hello");
     B_BindCommand("key-codex20-up", "print {space released}");
     B_BindCommand("key-up-down + key-shift + key-ctrl", "print \"shifted and controlled up\"");
@@ -311,11 +311,11 @@ void B_Init(void)
 void B_BindDefaults(void)
 {
     // Engine's highest priority class: opening control panel, opening the console.
-    
+
     // Console bindings (when open).
-    
+
     // Bias editor.
-    
+
 }
 
 /**
@@ -332,7 +332,7 @@ void B_Shutdown(void)
 int B_NewIdentifier(void)
 {
     int id = 0;
-    while(!id) 
+    while(!id)
     {
         id = ++bindingIdCounter;
     }
@@ -342,7 +342,7 @@ int B_NewIdentifier(void)
 const char* B_ParseClass(const char* desc, bclass_t** bc)
 {
     ddstring_t* str = Str_New();
-    
+
     *bc = 0;
     if(!strchr(desc, ':'))
     {
@@ -359,17 +359,17 @@ evbinding_t* B_BindCommand(const char* eventDesc, const char* command)
 {
     bclass_t* bc;
     evbinding_t *b;
-    
+
     if(isDedicated)
         return NULL;
-    
+
     // The class may be included in the descriptor.
     eventDesc = B_ParseClass(eventDesc, &bc);
     if(!bc)
     {
         bc = B_ClassByName(DEFAULT_BINDING_CLASS_NAME);
     }
-    
+
     if((b = B_NewCommandBinding(&bc->commandBinds, eventDesc, command)) != NULL)
     {
         B_UpdateDeviceStateAssociations();
@@ -386,10 +386,10 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     ddstring_t* str = 0;
     const char* ptr = 0;
     playercontrol_t* control = 0;
-    
+
     if(isDedicated)
         return NULL;
-    
+
     // The control description may begin with the local player number.
     str = Str_New();
     ptr = Str_CopyDelim(str, controlDesc, '-');
@@ -404,7 +404,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         // Skip past it.
         controlDesc = ptr;
     }
-    
+
     // The next part must be the control name.
     controlDesc = Str_CopyDelim(str, controlDesc, '-');
     control = P_PlayerControlByName(Str_Text(str));
@@ -420,7 +420,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     }
     VERBOSE( Con_Message("B_BindControl: Control '%s' in class '%s' of local player %i to be "
                          "bound to '%s'.\n", control->name, bc->name, localNum, device) );
-    
+
     conBin = B_GetControlBinding(bc, control->id);
     if(!(devBin = B_NewDeviceBinding(&conBin->deviceBinds[localNum], device)))
     {
@@ -429,9 +429,9 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         conBin = 0;
         goto finished;
     }
-    
+
     B_UpdateDeviceStateAssociations();
-    
+
 finished:
     Str_Free(str);
     return devBin;
@@ -444,7 +444,7 @@ dbinding_t* B_GetControlDeviceBindings(int localNum, int control, bclass_t** bCl
 
     if(localNum < 0 || localNum >= DDMAXPLAYERS)
         return NULL;
-    
+
     pc = P_PlayerControlById(control);
     bc = B_ClassByName(pc->bindClassName);
     if(bClass)
@@ -456,7 +456,7 @@ dbinding_t* B_GetControlDeviceBindings(int localNum, int control, bclass_t** bCl
 boolean B_Delete(int bid)
 {
     int         i;
-    
+
     for(i = 0; i < B_ClassCount(); ++i)
     {
         if(B_DeleteBinding(B_ClassByPos(i), bid))
@@ -506,7 +506,7 @@ D_CMD(ClearBindingClasses)
 D_CMD(ClearBindings)
 {
     int         i;
-    
+
     for(i = 0; i < B_ClassCount(); ++i)
     {
         Con_Printf("Clearing binding class \"%s\"...\n", B_ClassByPos(i)->name);
@@ -520,7 +520,7 @@ D_CMD(ClearBindings)
 D_CMD(DeleteBindingById)
 {
     int bid = strtoul(argv[1], NULL, 10);
-    
+
     if(B_Delete(bid))
     {
         Con_Printf("Binding %i deleted successfully.\n", bid);
@@ -538,7 +538,7 @@ D_CMD(DefaultBindings)
         return false;
 
     B_BindDefaults();
-    
+
     // Set the game's default bindings.
     Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
     return true;
@@ -548,14 +548,14 @@ D_CMD(ActivateBindingClass)
 {
     boolean doActivate = !stricmp(argv[0], "activatebclass");
     bclass_t* bc = B_ClassByName(argv[1]);
-    
+
     if(!bc)
     {
         Con_Printf("Binding class '%s' does not exist.\n", argv[1]);
         return false;
     }
     B_ActivateClass(bc, doActivate);
-    return true;    
+    return true;
 }
 
 #if 0
@@ -642,7 +642,7 @@ static binding_t __inline *bindingForEvent(ddevent_t *event)
  *
  * @param event         The event to find the command for.
  *
- * @return              Ptr to the found bindcontrol_t ELSE <code>NULL</code>.
+ * @return              Ptr to the found bindcontrol_t ELSE @c NULL,.
  */
 static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
 {
@@ -761,12 +761,12 @@ static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
  *
  * @param ev            ddevent_t we may need to respond to.
  *
- * @return              <code>true</code> If an action was executed.
+ * @return              @c true, If an action was executed.
  */
 boolean B_Responder(ddevent_t *ev)
 {
     return B_TryEvent(ev);
-    
+
     /*
     bindcontrol_t *ctrl;
 
@@ -822,12 +822,12 @@ boolean B_Responder(ddevent_t *ev)
  * @param deviceID      Device ident for the binding.
  * @param controlID     Device control index for the binding, either a
  *                      key/button number or axis index number.
- * @param isAxis        If <code>true</code> @param controlID is an axis
+ * @param isAxis        If @c true, @param controlID is an axis
  *                      index number.
- * @param createNew     If <code>true</code> a new binding_t will be 
+ * @param createNew     If @c true, a new binding_t will be
  *                      allocated if an existing one cannot be found.
  *
- * @return              Binding for the given event OR <code>NULL</code>
+ * @return              Binding for the given event OR @c NULL,
  */
 static binding_t *B_GetBinding(uint deviceID, uint controlID,
                                boolean isAxis, boolean createNew)
@@ -835,7 +835,7 @@ static binding_t *B_GetBinding(uint deviceID, uint controlID,
     uint        i, *num, idx;
     binding_t  *newb, **list;
     devcontrolbinds_t *devBinds = &devCtrlBinds[deviceID];
- 
+
     list = &devBinds->binds[isAxis? BL_AXES : BL_KEYS];
     num  = &devBinds->numBinds[isAxis? BL_AXES : BL_KEYS];
 
@@ -932,8 +932,8 @@ static void freeBindList(binding_t *list, uint num)
 /**
  * Clears all bindings for all devices, commands and axes.
  *
- * @param active    If <code>true</code> clear those from active lists.
- * @param default   If <code>true</code> clear those from defaults lists.
+ * @param active    If @c true, clear those from active lists.
+ * @param default   If @c true, clear those from defaults lists.
  */
 void B_ClearBindings(boolean active, boolean defaults)
 {
@@ -1007,7 +1007,7 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindClass)
             {
                 unused = true;
                 // Implicit; axis bindings which match bindClass are unused.
-                
+
                 // Command bindings need to be checked as each has
                 // multiple states.
                 if(bnd->binds[i].type == BND_COMMAND)
@@ -1124,17 +1124,17 @@ int B_KeyForShortName(const char *key)
     uint        idx;
 
     for(idx = 0; keyNames[idx].key; ++idx)
-    { 
+    {
         if(!stricmp(key, keyNames[idx].name))
             return keyNames[idx].key;
     }
-    
+
     if(strlen(key) == 1 && isalnum(key[0]))
     {
         // ASCII char.
         return tolower(key[0]);
     }
-    
+
     return 0;
 }
 
@@ -1257,8 +1257,8 @@ static boolean eventBuilder(char *buff, ddevent_t *ev)
  *
  * @param  buff        Destination buffer to hold the formed string.
  * @param  deviceID    Device ID the event is for (e.g. IDEV_KEYBOARD = keyboard).
- * @param  controlID   Usage depends on <code>type</code> eg keynumber.
- * @param  isAxis      If <code>true</code> @param controlID is treated
+ * @param  controlID   Usage depends on @c type, eg keynumber.
+ * @param  isAxis      If @c true, @param controlID is treated
  *                     as a device axis id.
  * @param  state       The event state (EVS_DOWN/EVS_UP/EVS_REPEAT).
  *                     Only used with keys (not with axis controls).
@@ -1373,7 +1373,7 @@ void B_FormEventString(char *buff, evtype_t type, evstate_t state,
  * @param           The symbolic bind class name to search for OR identifier
  *                  in the form "bdc#" where '#' = bind class id.
  *
- * @return          <code>true</code> if one is found.
+ * @return          @c true, if one is found.
  */
 static boolean B_GetBindClassIDbyName(const char *name, uint *id)
 {
@@ -1497,7 +1497,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
         return;
 
     for(l = 0; l < NUM_BIND_LISTS; ++l)
-    {        
+    {
         // Skip default lists.
 //        if(l == BL_KEYSD || l == BL_AXESD)
 //            continue;
@@ -1661,7 +1661,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                     default:
                         break;
                     };
-                    
+
                     if(present)
                         if(idx > classID && bindClasses[idx].active)
                         {
@@ -1672,7 +1672,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                             if(!bindClasses[idx].active)
                             {   // Que an up/center event for this.
                                 ddevent_t ev;
-                                
+
                                 ev.deviceID = deviceID;
                                 ev.obsolete.controlID = bind->controlID;
                                 if(bind->binds[idx].type == BND_AXIS)
@@ -1818,7 +1818,7 @@ void B_WriteToFile(FILE *file)
 
     // Start with a clean slate when restoring the bindings.
     fprintf(file, "clearbindings\n\n");
-    
+
     for(i = 0; i < B_ClassCount(); ++i)
     {
         B_WriteClassToFile(B_ClassByPos(i), file);
@@ -1917,7 +1917,7 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
                 {
                     const char *axisName =
                         P_ControlGetAxisName(ctl->playercontrol);
-                                            
+
                     if(bindClass >= 0)
                         Con_Printf("%-8s : %s%s\n", buffer,
 			                       (ctl->invert? "-" : ""),
@@ -1988,7 +1988,7 @@ D_CMD(BindAxis)
         axisptr = argv[1];
         ctrlptr = argv[2];
     }
-    
+
     // Get the device and the axis.
 	if(!I_ParseDeviceAxis(axisptr, &deviceID, &axis))
 	{
@@ -2019,7 +2019,7 @@ D_CMD(BindAxis)
 
 	memset(ctlName, 0, sizeof(ctlName));
 	strncpy(ctlName, name, sizeof(ctlName) - 1);
-	
+
 	ptr = strchr(ctlName, '/');
 	if(ptr)
 	{

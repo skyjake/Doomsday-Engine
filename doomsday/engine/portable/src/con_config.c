@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * con_config.c: Config Files
  */
 
@@ -107,8 +107,8 @@ static void Con_WriteHeaderComment(FILE* file)
 }
 
 /**
- * Writes the state of the console (variables, bindings, aliases) into the
- * given file, overwriting the previous contents.
+ * Writes the state of the console (variables, bindings, aliases) into
+ * the given file, overwriting the previous contents.
  */
 boolean Con_WriteState(const char *fileName, const char *bindingsFileName)
 {
@@ -167,7 +167,7 @@ boolean Con_WriteState(const char *fileName, const char *bindingsFileName)
     Con_WriteAliasesToFile(file);
 
     fclose(file);
-    
+
     if(bindingsFileName)
     {
         // Bindings go a separate file.
@@ -178,9 +178,9 @@ boolean Con_WriteState(const char *fileName, const char *bindingsFileName)
         }
         Con_WriteHeaderComment(file);
         B_WriteToFile(file);
-        fclose(file);        
+        fclose(file);
     }
-    
+
     return true;
 }
 

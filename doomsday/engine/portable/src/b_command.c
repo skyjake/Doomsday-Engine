@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * b_command.c: Event-Command Bindings
  */
 
@@ -94,22 +95,22 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
 {
     boolean successful = false;
     ddstring_t* str = Str_New();
-    
+
     // First, we expect to encounter a device name.
-    desc = Str_CopyDelim(str, desc, '-');    
+    desc = Str_CopyDelim(str, desc, '-');
     if(!Str_CompareIgnoreCase(str, "key"))
     {
         eb->device = IDEV_KEYBOARD;
         // Keyboards only have toggles (as far as we know).
         eb->type = E_TOGGLE;
-        
+
         // Parse the key.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseKeyId(Str_Text(str), &eb->id))
         {
             goto parseEnded;
         }
-        
+
         // The final part of a key event is the state of the key toggle.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseToggleState(Str_Text(str), &eb->state))
@@ -120,14 +121,14 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
     else if(!Str_CompareIgnoreCase(str, "mouse"))
     {
         eb->device = IDEV_MOUSE;
-        
+
         // Next comes a button or axis name.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseMouseTypeAndId(Str_Text(str), &eb->type, &eb->id))
         {
             goto parseEnded;
         }
-                
+
         // The last part determines the toggle state or the axis position.
         desc = Str_CopyDelim(str, desc, '-');
         if(eb->type == E_TOGGLE)
@@ -148,14 +149,14 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
     else if(!Str_CompareIgnoreCase(str, "joy"))
     {
         eb->device = IDEV_JOY1;
-        
+
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseJoystickTypeAndId(eb->device, Str_Text(str), &eb->type, &eb->id))
         {
             goto parseEnded;
         }
-        
+
         // What is the state of the toggle, axis, or hat?
         desc = Str_CopyDelim(str, desc, '-');
         if(eb->type == E_TOGGLE)
@@ -185,17 +186,17 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         Con_Message("B_ParseEvent: Device \"%s\" unknown.\n", Str_Text(str));
         goto parseEnded;
     }
-    
+
     // Anything left that wasn't used?
     if(desc)
     {
         Con_Message("B_ParseEvent: Unrecognized \"%s\".\n", desc);
         goto parseEnded;
     }
-    
+
     // No errors detected.
     successful = true;
-    
+
 parseEnded:
     Str_Free(str);
     return successful;
@@ -214,10 +215,10 @@ boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
 {
     boolean successful = false;
     ddstring_t* str = Str_New();
-    
+
     // The main part, i.e., the first part.
     desc = Str_CopyDelim(str, desc, '+');
-    
+
     if(!B_ParseEvent(eb, Str_Text(str)))
     {
         // Failure parsing the event.
@@ -231,7 +232,7 @@ boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
 
         // A new condition.
         desc = Str_CopyDelim(str, desc, '+');
-        
+
         cond = B_AllocCommandBindingCondition(eb);
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
@@ -239,10 +240,10 @@ boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
             goto parseEnded;
         }
     }
-    
+
     // Success.
     successful = true;
-    
+
 parseEnded:
     Str_Free(str);
     return successful;
@@ -260,7 +261,7 @@ parseEnded:
 evbinding_t* B_NewCommandBinding(evbinding_t* bindsList, const char* desc, const char* command)
 {
     evbinding_t* eb = B_AllocCommandBinding();
-    
+
     // Parse the description of the event.
     if(!B_ParseEventDescriptor(eb, desc))
     {
@@ -268,16 +269,16 @@ evbinding_t* B_NewCommandBinding(evbinding_t* bindsList, const char* desc, const
         B_DestroyCommandBinding(eb);
         return NULL;
     }
-    
+
     // The command string.
     eb->command = strdup(command);
-    
+
     // Link it into the list.
     eb->next = bindsList;
     eb->prev = bindsList->prev;
     bindsList->prev->next = eb;
     bindsList->prev = eb;
-    
+
     return eb;
 }
 
@@ -289,38 +290,38 @@ evbinding_t* B_NewCommandBinding(evbinding_t* bindsList, const char* desc, const
 void B_DestroyCommandBinding(evbinding_t* eb)
 {
     assert(eb->bid != 0);
-    
+
     // Unlink first, if linked.
     if(eb->prev)
     {
         eb->prev->next = eb->next;
         eb->next->prev = eb->prev;
     }
-    
+
     free(eb->command);
     free(eb->conds);
     free(eb);
 }
 
 /**
- * Checks if the event matches the binding's conditions, and if so, executes the 
+ * Checks if the event matches the binding's conditions, and if so, executes the
  * bound command.
- * 
- * @param eventClass  The event has been bound in this binding class. If the 
+ *
+ * @param eventClass  The event has been bound in this binding class. If the
  *                    bound state is associated with a higher-priority active
  *                    class, the binding cannot be executed.
  *
- * @return  @c true, if the bound command was executed. @c false otherwise, as the 
+ * @return  @c true, if the bound command was executed. @c false otherwise, as the
  *          event didn't match all the conditions.
  */
 boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* eventClass)
 {
     int         i;
     inputdev_t* dev;
-    
+
     if(eb->device != event->device || eb->type != event->type)
         return false;
-    
+
     dev = I_GetDevice(eb->device, true);
     if(!dev)
     {
@@ -330,76 +331,79 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* 
 
     switch(event->type)
     {
-        case E_TOGGLE:
-            if(eb->id != event->toggle.id)
-                return false;
-            if(eventClass && dev->keys[eb->id].bClass != eventClass)
-                return false; // Shadowed by a more important active class.
-            // Is the state as required?
-            switch(eb->state)
-            {
-                case EBTOG_UNDEFINED:
-                    // Passes no matter what.
-                    break;
-                
-                case EBTOG_DOWN:
-                    if(event->toggle.state != ETOG_DOWN)
-                        return false;
-                    break;
-                    
-                case EBTOG_UP:
-                    if(event->toggle.state != ETOG_UP)
-                        return false;
-                    break;
-                    
-                case EBTOG_REPEAT:
-                    if(event->toggle.state != ETOG_REPEAT)
-                        return false;
-                    break;
+    case E_TOGGLE:
+        if(eb->id != event->toggle.id)
+            return false;
+        if(eventClass && dev->keys[eb->id].bClass != eventClass)
+            return false; // Shadowed by a more important active class.
 
-                case EBTOG_PRESS:
-                    if(event->toggle.state == ETOG_UP)
-                        return false;
-                    break;
-                    
-                default:
+        // Is the state as required?
+        switch(eb->state)
+        {
+            case EBTOG_UNDEFINED:
+                // Passes no matter what.
+                break;
+
+            case EBTOG_DOWN:
+                if(event->toggle.state != ETOG_DOWN)
                     return false;
-            }
-            break;
-            
-        case E_AXIS:
-            if(eb->id != event->axis.id)
+                break;
+
+            case EBTOG_UP:
+                if(event->toggle.state != ETOG_UP)
+                    return false;
+                break;
+
+            case EBTOG_REPEAT:
+                if(event->toggle.state != ETOG_REPEAT)
+                    return false;
+                break;
+
+            case EBTOG_PRESS:
+                if(event->toggle.state == ETOG_UP)
+                    return false;
+                break;
+
+            default:
                 return false;
-            if(eventClass && dev->axes[eb->id].bClass != eventClass)
-                return false; // Shadowed by a more important active class.
-            // Is the position as required?
-            if(!B_CheckAxisPos(eb->state, eb->pos, 
-                               I_TransformAxis(I_GetDevice(event->device, false), 
-                                               event->axis.id, event->axis.pos)))
-                return false;
-            break;
-            
-        case E_ANGLE:
-            if(eb->id != event->angle.id)
-                return false;
-            if(eventClass && dev->hats[eb->id].bClass != eventClass)
-                return false; // Shadowed by a more important active class.
-            // Is the position as required?
-            if(event->angle.pos != eb->pos)
-                return false;
-            break;
-    
-        default:
-            return false;                
+        }
+        break;
+
+    case E_AXIS:
+        if(eb->id != event->axis.id)
+            return false;
+        if(eventClass && dev->axes[eb->id].bClass != eventClass)
+            return false; // Shadowed by a more important active class.
+
+        // Is the position as required?
+        if(!B_CheckAxisPos(eb->state, eb->pos,
+                           I_TransformAxis(I_GetDevice(event->device, false),
+                                           event->axis.id, event->axis.pos)))
+            return false;
+        break;
+
+    case E_ANGLE:
+        if(eb->id != event->angle.id)
+            return false;
+        if(eventClass && dev->hats[eb->id].bClass != eventClass)
+
+            return false; // Shadowed by a more important active class.
+        // Is the position as required?
+        if(event->angle.pos != eb->pos)
+            return false;
+        break;
+
+    default:
+        return false;
     }
-    
+
     // Any conditions on the current state of the input devices?
     for(i = 0; i < eb->numConds; ++i)
     {
         if(!B_CheckCondition(&eb->conds[i]))
             return false;
     }
-    
+
     // Do the command.
     Con_Executef(CMDS_BIND, false, eb->command);
     return true;
@@ -412,10 +416,10 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* 
 void B_EventBindingToString(const evbinding_t* eb, ddstring_t* str)
 {
     int         i;
-    
-    Str_Clear(str);    
+
+    Str_Clear(str);
     B_AppendDeviceDescToString(eb->device, eb->type, eb->id, str);
-    
+
     if(eb->type == E_TOGGLE)
     {
         B_AppendToggleStateToString(eb->state, str);
@@ -428,12 +432,12 @@ void B_EventBindingToString(const evbinding_t* eb, ddstring_t* str)
     {
         B_AppendAnglePositionToString(eb->pos, str);
     }
- 
+
     // Append any state conditions.
     for(i = 0; i < eb->numConds; ++i)
     {
         Str_Append(str, " + ");
         B_AppendConditionToString(&eb->conds[i], str);
-    }    
+    }
 }
 

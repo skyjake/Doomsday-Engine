@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * b_util.c: Bindings-related Utility Functions
  */
 
@@ -79,7 +79,7 @@ boolean B_ParseToggleState(const char* toggleName, ebstate_t* state)
         *state = EBTOG_UP;
         return true;
     }
-    
+
     Con_Message("B_ParseToggleState: \"%s\" is not a toggle state.\n", toggleName);
     return false; // Not recognized.
 }
@@ -135,7 +135,7 @@ boolean B_ParseKeyId(const char* desc, int* id)
             }
         }
     }
-    else 
+    else
     {
         // Symbolic key name.
         *id = B_KeyForShortName(desc);
@@ -144,7 +144,7 @@ boolean B_ParseKeyId(const char* desc, int* id)
             Con_Message("B_ParseKeyId: Unknown key \"%s\".\n", desc);
             return false;
         }
-    }    
+    }
     return true;
 }
 
@@ -156,9 +156,9 @@ boolean B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
     {
         // Got it.
         *type = E_TOGGLE;
-        return true; 
+        return true;
     }
-    
+
     if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6) // generic button
     {
         *type = E_TOGGLE;
@@ -185,7 +185,7 @@ boolean B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
 
 boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id)
 {
-    if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6) 
+    if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6)
     {
         *type = E_TOGGLE;
         *id = strtoul(desc + 6, NULL, 10) - 1;
@@ -195,7 +195,7 @@ boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* t
             return false;
         }
     }
-    else if(!strncasecmp(desc, "hat", 3) && strlen(desc) > 3) 
+    else if(!strncasecmp(desc, "hat", 3) && strlen(desc) > 3)
     {
         *type = E_ANGLE;
         *id = strtoul(desc + 3, NULL, 10) - 1;
@@ -249,23 +249,23 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
 {
     boolean successful = false;
     ddstring_t* str = Str_New();
-    ddeventtype_t type;        
-    
+    ddeventtype_t type;
+
     // First, we expect to encounter a device name.
-    desc = Str_CopyDelim(str, desc, '-');    
-    
+    desc = Str_CopyDelim(str, desc, '-');
+
     if(!Str_CompareIgnoreCase(str, "key"))
     {
         cond->device = IDEV_KEYBOARD;
         cond->type = SCT_TOGGLE_STATE;
-        
+
         // Parse the key.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseKeyId(Str_Text(str), &cond->id))
         {
             goto parseEnded;
         }
-        
+
         // The final part of a key event is the state of the key toggle.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseToggleState(Str_Text(str), &cond->state))
@@ -276,14 +276,14 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     else if(!Str_CompareIgnoreCase(str, "mouse"))
     {
         cond->device = IDEV_MOUSE;
-        
+
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &cond->id))
         {
             goto parseEnded;
         }
-        
+
         desc = Str_CopyDelim(str, desc, '-');
         if(type == E_TOGGLE)
         {
@@ -305,14 +305,14 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     else if(!Str_CompareIgnoreCase(str, "joy"))
     {
         cond->device = IDEV_JOY1;
-        
+
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseJoystickTypeAndId(cond->device, Str_Text(str), &type, &cond->id))
         {
             goto parseEnded;
         }
-        
+
         desc = Str_CopyDelim(str, desc, '-');
         if(type == E_TOGGLE)
         {
@@ -343,35 +343,35 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     {
         Con_Message("B_ParseEvent: Device \"%s\" unknown.\n", Str_Text(str));
         goto parseEnded;
-    }        
-    
+    }
+
     // Check for valid toggle states.
-    if(cond->type == SCT_TOGGLE_STATE && 
+    if(cond->type == SCT_TOGGLE_STATE &&
        cond->state != EBTOG_UP && cond->state != EBTOG_DOWN)
     {
         Con_Message("B_ParseStateCondition: \"%s\": Toggle condition can only be 'up' or 'down'.\n",
                     desc);
         goto parseEnded;
     }
-    
+
     // Finally, there may be the negation at the end.
     desc = Str_CopyDelim(str, desc, '-');
     if(!Str_CompareIgnoreCase(str, "not"))
     {
         cond->negate = true;
     }
-    
+
     // Anything left that wasn't used?
     if(desc)
     {
         Con_Message("B_ParseStateCondition: Unrecognized \"%s\".\n", desc);
         goto parseEnded;
     }
-    
+
     // No errors detected.
     successful = true;
-    
-parseEnded:    
+
+parseEnded:
     Str_Free(str);
     return successful;
 }
@@ -384,22 +384,22 @@ boolean B_CheckAxisPos(ebstate_t test, float testPos, float pos)
         if((pos > 0 && pos > testPos) || (pos < 0 && pos < -testPos))
             return false;
         break;
-        
+
     case EBAXIS_BEYOND:
         if(!((pos > 0 && pos >= testPos) || (pos < 0 && pos <= -testPos)))
             return false;
         break;
-        
+
     case EBAXIS_BEYOND_POSITIVE:
         if(pos < testPos)
             return false;
         break;
-        
+
     case EBAXIS_BEYOND_NEGATIVE:
         if(pos > -testPos)
             return false;
         break;
-        
+
     default:
         return false;
     }
@@ -410,7 +410,7 @@ boolean B_CheckCondition(statecondition_t* cond)
 {
     boolean fulfilled = !cond->negate;
     inputdev_t* dev = I_GetDevice(cond->device, false);
-    
+
     if(cond->type == SCT_TOGGLE_STATE)
     {
         int isDown = (dev->keys[cond->id].isDown != 0);
@@ -435,11 +435,11 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
 {
     inputdev_t* dev = I_GetDevice(device, false);
     const char* name;
-    
+
     // Name of the device.
     Str_Append(str, dev->name);
     Str_Append(str, "-");
-    
+
     switch(type)
     {
         case E_TOGGLE:
@@ -458,11 +458,11 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
             else
                 Str_Appendf(str, "button%i",id + 1);
             break;
-            
+
         case E_AXIS:
             Str_Append(str, dev->axes[id].name);
             break;
-            
+
         case E_ANGLE:
             Str_Appendf(str, "hat%i", id + 1);
             break;
@@ -508,11 +508,11 @@ void B_AppendAnglePositionToString(float pos, ddstring_t* str)
  */
 void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
 {
-    B_AppendDeviceDescToString(cond->device, 
+    B_AppendDeviceDescToString(cond->device,
                                cond->type == SCT_TOGGLE_STATE? E_TOGGLE :
                                cond->type == SCT_AXIS_BEYOND? E_AXIS : E_ANGLE,
                                cond->id, str);
-    
+
     if(cond->type == SCT_TOGGLE_STATE)
     {
         B_AppendToggleStateToString(cond->state, str);
@@ -525,7 +525,7 @@ void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
     {
         B_AppendAnglePositionToString(cond->pos, str);
     }
-    
+
     // Flags.
     if(cond->negate)
     {

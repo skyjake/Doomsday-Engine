@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_plugin.c: Plugin Subsystem
  */
 
@@ -57,10 +58,10 @@ hookreg_t hooks[NUM_HOOK_TYPES];
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Plug_AddHook
- *  This routine is called by plugin DLLs who want to register hooks.
- *  Returns true iff the hook was successfully registered.
+/**
+ * This routine is called by plugin DLLs who want to register hooks.
+ *
+ * @return              @c true, iff the hook was successfully registered.
  */
 int Plug_AddHook(int hookType, hookfunc_t hook)
 {
@@ -91,9 +92,10 @@ int Plug_AddHook(int hookType, hookfunc_t hook)
     return true;
 }
 
-/*
- * Plug_RemoveHook
- *  Removes the given hook, and returns true iff it was found.
+/**
+ * Removes the given hook.
+ *
+ * @return              @c true iff it was found.
  */
 int Plug_RemoveHook(int hookType, hookfunc_t hook)
 {
@@ -116,11 +118,10 @@ int Plug_RemoveHook(int hookType, hookfunc_t hook)
     return false;
 }
 
-/*
- * Plug_DoHook
- *  Executes all the hooks of the given type. Bit zero of the return value
- *  is set if a hook was executed successfully (returned true). Bit one is
- *  set if all the hooks that were executed returned true.
+/**
+ * Executes all the hooks of the given type. Bit zero of the return value
+ * is set if a hook was executed successfully (returned true). Bit one is
+ * set if all the hooks that were executed returned true.
  */
 int Plug_DoHook(int hookType, int parm, void *data)
 {
@@ -139,16 +140,18 @@ int Plug_DoHook(int hookType, int parm, void *data)
             else
                 allGood = false;
         }
+
     if(ret && allGood)
         ret |= 2;
+
     return ret;
 }
 
-/*
+/**
  * Check if a plugin is available of the specified type.
  *
- * @param hookType:     Type of hook to check we have a plugin for.
- * @return int:         (True) if a plugin is available for this hook type.
+ * @param hookType      Type of hook to check we have a plugin for.
+ * @return              @c true, if a plugin is available for this hook type.
  */
 int Plug_CheckForHook(int hookType)
 {

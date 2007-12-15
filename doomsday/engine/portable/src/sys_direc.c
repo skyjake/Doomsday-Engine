@@ -164,7 +164,7 @@ void Dir_FileID(const char *str, byte identifier[16])
 }
 
 /**
- * @return              <code>true</code> if the directories are equal.
+ * @return              @c true, if the directories are equal.
  */
 boolean Dir_IsEqual(directory_t *a, directory_t *b)
 {
@@ -174,7 +174,7 @@ boolean Dir_IsEqual(directory_t *a, directory_t *b)
 }
 
 /**
- * @return              <code>true</code> if the given path is absolute
+ * @return              @c true, if the given path is absolute
  *                      (starts with \ or / or the second character is
  *                      a ':' (drive).
  */

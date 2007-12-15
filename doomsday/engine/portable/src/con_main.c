@@ -485,7 +485,7 @@ static void Con_ClearExecBuffer(void)
 /**
  * The execbuffer is used to schedule commands for later.
  *
- * @return          <code>false</code> if an executed command fails.
+ * @return          @c false, if an executed command fails.
  */
 static boolean Con_CheckExecBuffer(void)
 {
@@ -1158,7 +1158,7 @@ int DD_Execute(int silent, const char *command)
  * @param   src     The source of the command (e.g. DDay internal, DED etc).
  * @param   command The command to be executed.
  * @param   silent  Non-zero indicates not to log execution of the command.
- * @param   netCmd  If <code>true</code> command was sent over the net.
+ * @param   netCmd  If @c true, command was sent over the net.
  *
  * @return          Non-zero if command was executed successfully.
  */
@@ -1258,7 +1258,7 @@ void Con_Open(int yes)
 }
 
 /**
- * @return      <code>true</code> if the event is eaten.
+ * @return      @c true, if the event is eaten.
  */
 boolean Con_Responder(ddevent_t *event)
 {

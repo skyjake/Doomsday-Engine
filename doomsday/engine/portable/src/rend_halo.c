@@ -144,7 +144,7 @@ void H_SetupState(boolean dosetup)
 }
 
 /**
- * The caller must check that <code>sourcevis</code> really has a ->light!
+ * The caller must check that @c sourcevis, really has a ->light!
  *
  * @param x             X coordinate of the center of the halo.
  * @param y             Y coordinate of the center of the halo.

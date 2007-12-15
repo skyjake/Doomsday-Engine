@@ -77,10 +77,10 @@ static void C_DECL handler(int s)
     signal(s, SIG_IGN);  // Ignore future instances of this signal.
 
     Con_Error(s==SIGSEGV ? "Segmentation Violation\n" :
-        s==SIGINT  ? "Interrupted by User\n" :
-        s==SIGILL  ? "Illegal Instruction\n" :
-        s==SIGFPE  ? "Floating Point Exception\n" :
-        s==SIGTERM ? "Killed\n" : "Terminated by signal\n");
+              s==SIGINT  ? "Interrupted by User\n" :
+              s==SIGILL  ? "Illegal Instruction\n" :
+              s==SIGFPE  ? "Floating Point Exception\n" :
+              s==SIGTERM ? "Killed\n" : "Terminated by signal\n");
 }
 #endif
 
@@ -283,17 +283,18 @@ void Sys_SuspendThread(thread_t handle, boolean dopause)
 }
 
 /**
- * Returns the return value of the thread.
+ * @return                  The return value of the thread.
  */
 int Sys_WaitThread(thread_t thread)
 {
-    int result = 0;
+    int             result = 0;
+
     SDL_WaitThread(thread, &result);
     return result;
 }
 
 /**
- * Returns the identifier of the current thread.
+ * @return                  The identifier of the current thread.
  */
 uint Sys_ThreadID(void)
 {
@@ -309,6 +310,7 @@ void Sys_DestroyMutex(mutex_t handle)
 {
     if(!handle)
         return;
+
     SDL_DestroyMutex((SDL_mutex *) handle);
 }
 
@@ -327,7 +329,9 @@ void Sys_Unlock(mutex_t handle)
 }
 
 /**
- * Create a new semaphore. Returns a handle.
+ * Create a new semaphore.
+ *
+ * @return                  New handle.
  */
 long Sem_Create(uint32_t initialValue)
 {

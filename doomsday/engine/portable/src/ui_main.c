@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * ui_main.c: Graphical User Interface
  *
  * Has ties to the console routines.
@@ -224,7 +224,7 @@ void UI_End(void)
 }
 
 /**
- * @return              <code>true</code> if the UI is currently active.
+ * @return              @c true, if the UI is currently active.
  */
 boolean UI_IsActive(void)
 {
@@ -714,7 +714,7 @@ void UI_Focus(ui_object_t *ob)
 }
 
 /**
- * @param ob            If <code>NULL</code>, capture is ended.
+ * @param ob            If @c NULL,, capture is ended.
  *                      Must be on the current page!
  */
 void UI_Capture(ui_object_t *ob)
@@ -1862,7 +1862,7 @@ int UI_MouseInsideBox(int x, int y, int w, int h)
 }
 
 /**
- * @return              <code>true</code> if the mouse is inside the object.
+ * @return              @c true, if the mouse is inside the object.
  */
 int UI_MouseInside(ui_object_t *ob)
 {
@@ -1870,7 +1870,7 @@ int UI_MouseInside(ui_object_t *ob)
 }
 
 /**
- * @return              <code>true</code> if the mouse hasn't been moved
+ * @return              @c true, if the mouse hasn't been moved
  *                      for a while.
  */
 int UI_MouseResting(ui_page_t *page)

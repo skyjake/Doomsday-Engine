@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -69,7 +70,6 @@ static thread_t busyThread;
 static timespan_t busyTime;
 static volatile boolean busyDone;
 static volatile const char* busyError = NULL;
-//static float    busyProgress = 0;
 static int      busyFont = 0;
 static int      busyFontHgt;        // Height of the font.
 
@@ -85,7 +85,7 @@ static DGLuint  texScreenshot;      // Captured screenshot of the latest frame.
  * @param worker  Worker thread that does processing while in busy mode.
  * @param workerData  Data context for the worker thread.
  *
- * @return  Return value of the worker.
+ * @return              Return value of the worker.
  */
 int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
 {
@@ -136,7 +136,7 @@ int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
 /**
  * Called by the busy worker to shutdown the engine immediately.
  *
- * @param message  Message, expected to exist until the engine closes.
+ * @param message       Message, expected to exist until the engine closes.
  */
 void Con_BusyWorkerError(const char* message)
 {

@@ -194,7 +194,7 @@ void V2_Project(pvec2_t dest, const pvec2_t a, const pvec2_t b)
 }
 
 /**
- * @return          <code>true</code> if the two vectors are parallel.
+ * @return          @c true, if the two vectors are parallel.
  */
 boolean V2_IsParallel(const pvec2_t a, const pvec2_t b)
 {
@@ -214,7 +214,7 @@ boolean V2_IsParallel(const pvec2_t a, const pvec2_t b)
 }
 
 /**
- * @return          <code>true</code> if the vector is a zero vector.
+ * @return          @c true, if the vector is a zero vector.
  */
 boolean V2_IsZero(const pvec2_t vec)
 {

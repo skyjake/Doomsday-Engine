@@ -531,7 +531,7 @@ void W_InsertLumps(filelump_t *fileinfo, filerecord_t *rec)
  * Files with a .wad extension are wadlink files with multiple lumps,
  * other files are single lumps with the base filename for the lump name.
  *
- * @return              <code>true</code> if the operation is successful.
+ * @return              @c true, if the operation is successful.
  */
 boolean W_AddFile(const char *filename, boolean allowDuplicate)
 {
@@ -725,7 +725,7 @@ void W_Reset(void)
 }
 
 /**
- * @return              <code>true</code> iff the given filename exists and
+ * @return              @c true, iff the given filename exists and
  *                      is an IWAD.
  */
 int W_IsIWAD(char *fn)
@@ -750,7 +750,7 @@ int W_IsIWAD(char *fn)
  *
  * @param fn            Path of the file.
  *
- * @return              <code>true</code>, if the file is a PK3 package.
+ * @return              @c true,, if the file is a PK3 package.
  */
 boolean W_IsPK3(const char *fn)
 {
@@ -1033,7 +1033,7 @@ static int W_ScanLumpInfo(int v[2])
 }
 
 /**
- * @return              <code>-1</code> if name not found, else lump num.
+ * @return              @c -1, if name not found, else lump num.
  */
 int W_CheckNumForName(const char *name)
 {

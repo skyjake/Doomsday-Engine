@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1997-2006 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_pcx.c: PCX Images
  */
 
@@ -54,7 +54,7 @@
 // CODE --------------------------------------------------------------------
 
 /*
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 int PCX_MemoryGetSize(void *imageData, int *w, int *h)
 {
@@ -85,7 +85,7 @@ int PCX_GetSize(const char *fn, int *w, int *h)
 }
 
 /**
- * @return              <code>true</code> if a PCX image (probably).
+ * @return              @c true, if a PCX image (probably).
  */
 int PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
                    byte *outBuffer)
@@ -94,9 +94,9 @@ int PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
 }
 
 /**
- * @param outBuffer     If <code>NULL</code>, a new buffer is allocated.
+ * @param outBuffer     If @c NULL,, a new buffer is allocated.
  *
- * @return              <code>true<code> if a PCX image (probably).
+ * @return              @c true@c  if a PCX image (probably).
  */
 byte   *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w, int *buf_h,
                             byte *outBuffer)

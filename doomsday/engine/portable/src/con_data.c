@@ -621,7 +621,7 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
 }
 
 /**
- * @return              <code>true</code> if the given string is a
+ * @return              @c true, if the given string is a
  *                      valid command or alias name.
  */
 boolean Con_IsValidCommand(const char *name)
@@ -653,7 +653,7 @@ boolean Con_IsValidCommand(const char *name)
  * ccmd's usage is validated by Doomsday.
  *
  * @param ccmd          Ptr to the ccmd to print the usage info for.
- * @param showExtra     If <code>true</code> print any additional info we
+ * @param showExtra     If @c true, print any additional info we
  *                      have about the ccmd.
  */
 void Con_PrintCCmdUsage(ddccmd_t *ccmd, boolean showExtra)

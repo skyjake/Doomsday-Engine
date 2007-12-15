@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,11 +19,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_zip.h: Zip/Pk3 Files
  *
  * Loading .pk3/.zip files.
@@ -292,7 +292,7 @@ static package_t *newPackage(void)
  * Finds the central directory end record in the end of the file.
  * Note: This gets awfully slow if the comment is long.
  *
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 static boolean locateCentralDirectory(DFILE *file)
 {
@@ -432,7 +432,7 @@ static void mapPath(char *path)
  * Opens the file zip, reads the directory and stores the info for later
  * access.
  *
- * @param prevOpened    If not <code>NULL</code>, all data will be read
+ * @param prevOpened    If not @c NULL,, all data will be read
  *                      from there.
  */
 boolean Zip_Open(const char *fileName, DFILE *prevOpened)
@@ -616,7 +616,7 @@ static void removeDuplicateFiles(void)
 
 /**
  * Iterates through the zipentry list. If the finder func returns
- * <code>true</code>; iteration stops and the the 1-based index of the
+ * @c true,; iteration stops and the the 1-based index of the
  * zipentry is returned.
  *
  * @param parm          Ptr passed to the finder func.
@@ -689,7 +689,7 @@ zipindex_t Zip_Find(const char *fileName)
 /**
  * Uses zlib to inflate a compressed entry.
  *
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 static boolean inflateEntry(void *in, size_t inSize, void *out,
                             size_t outSize)

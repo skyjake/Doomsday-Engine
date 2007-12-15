@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -397,7 +397,7 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
 }
 
 /**
- * @return              <code>false</code> if the end marker is found (lump
+ * @return              @c false, if the end marker is found (lump
  *                      index zero).
  */
 int Cl_ReadLumpDelta(void)

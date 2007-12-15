@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_input.c: System Independent Input
  */
 
@@ -234,7 +234,7 @@ static void I_DeviceAllocHats(inputdev_t *dev, uint count)
 static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint type)
 {
 	inputdevaxis_t *axis;
-	
+
 	dev->axes = M_Realloc(dev->axes, sizeof(inputdevaxis_t) * ++dev->numAxes);
 
 	axis = &dev->axes[dev->numAxes - 1];
@@ -242,7 +242,7 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
 	strcpy(axis->name, name);
 
 	axis->type = type;
-	
+
 	// Set reasonable defaults. The user's settings will be restored
 	// later.
 	axis->scale = 1;
@@ -273,7 +273,7 @@ void I_InitInputDevices(void)
 	dev = &inputDevices[IDEV_MOUSE];
 	strcpy(dev->name, "mouse");
 	I_DeviceAllocKeys(dev, IMB_MAXBUTTONS);
-    
+
     // The first five mouse buttons have symbolic names.
     dev->keys[0].name = "left";
     dev->keys[1].name = "middle";
@@ -318,7 +318,7 @@ void I_InitInputDevices(void)
     {
         dev->hats[i].pos = -1; // centered
     }
-    
+
 	// The joystick may not be active.
 	if(I_JoystickPresent())
 		dev->flags = ID_ACTIVE;
@@ -350,7 +350,7 @@ void I_ShutdownInputDevices(void)
  * @param ident         Intput device identifier (index).
  * @param ifactive      Only return if the device is active.
  *
- * @return              Ptr to the input device state OR <code>NULL</code>.
+ * @return              Ptr to the input device state OR @c NULL,.
  */
 inputdev_t *I_GetDevice(uint ident, boolean ifactive)
 {
@@ -373,7 +373,7 @@ inputdev_t *I_GetDevice(uint ident, boolean ifactive)
  * @param name          Input device name.
  * @param ifactive      Only return if the device is active.
  *
- * @return              Ptr to the input device state OR <code>NULL</code>.
+ * @return              Ptr to the input device state OR @c NULL,.
  */
 inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive)
 {
@@ -414,7 +414,7 @@ inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive)
  * @param device        Ptr to input device info, to get the axis ptr from.
  * @param id            Axis index, to search for.
  *
- * @return              Ptr to the device axis OR <code>NULL</code> if not
+ * @return              Ptr to the device axis OR @c NULL, if not
  *                      found.
  */
 inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id)
@@ -448,7 +448,7 @@ int I_GetAxisByName(inputdev_t *device, const char *name)
 int I_GetKeyByName(inputdev_t* device, const char* name)
 {
     int         i;
-    
+
     for(i = 0; i < device->numKeys; ++i)
     {
         if(device->keys[i].name && !stricmp(device->keys[i].name, name))
@@ -461,7 +461,7 @@ int I_GetKeyByName(inputdev_t* device, const char* name)
  * Check through the axes registered for the given device, see if there is
  * one identified by the given name.
  *
- * @return              <code>false</code> if the string is invalid.
+ * @return              @c false, if the string is invalid.
  */
 boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
 {
@@ -490,7 +490,7 @@ boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
 
         *axis = a - 1; // Axis indices are base 1.
     }
-   
+
 	return true;
 }
 
@@ -498,13 +498,13 @@ float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
 {
     float pos = rawPos;
 	inputdevaxis_t *a = &dev->axes[axis];
-    
+
 	// Disabled axes are always zero.
 	if(a->flags & IDA_DISABLED)
 	{
 		return 0;
 	}
-    
+
     // Apply scaling, deadzone and clamping.
 	pos *= a->scale;
 	if(a->type == IDAT_STICK) // Pointer axes are not dead-zoned or clamped.
@@ -520,13 +520,13 @@ float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
             pos = MINMAX_OF(-1.0f, pos, 1.0f);
         }
 	}
-        
+
 	if(a->flags & IDA_INVERT)
 	{
 		// Invert the axis position.
 		pos = -pos;
 	}
-    
+
     return pos;
 }
 
@@ -538,10 +538,10 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
 	inputdevaxis_t *a = &dev->axes[axis];
     float oldRealPos = a->realPosition;
     float transformed = I_TransformAxis(dev, axis, pos);
-    
+
     // The unfiltered position.
     a->realPosition = transformed;
-    
+
     if(oldRealPos != a->realPosition)
     {
         // Mark down the time of the change.
@@ -557,12 +557,12 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
 		// This is the new axis position.
 		pos = a->realPosition;
 	}
-    
+
     if(a->type == IDAT_STICK)
         a->position = pos; //a->realPosition;
     else // Cumulative.
         a->position += pos; //a->realPosition;
-    
+
 /*    if(verbose > 3)
     {
         Con_Message("I_UpdateAxis: device=%s axis=%i pos=%f\n",
@@ -576,7 +576,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
 static void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
 {
 	inputdev_t *dev;
-    
+
     if((dev = I_GetDevice(ev->device, true)) == NULL)
         return;
 
@@ -608,7 +608,7 @@ static void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
     {
         dev->keys[ev->toggle.id].isDown =
             (ev->toggle.state == ETOG_DOWN || ev->toggle.state == ETOG_REPEAT);
-        
+
         // Mark down the time when the change occurs.
         if(ev->toggle.state == ETOG_DOWN || ev->toggle.state == ETOG_UP)
             dev->keys[ev->toggle.id].time = Sys_GetRealTime();
@@ -626,11 +626,11 @@ void I_ClearDeviceClassAssociations(void)
 {
     int         i, j;
     inputdev_t* dev;
-    
+
     for(i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
         dev = &inputDevices[i];
-        
+
         // Keys.
         for(j = 0; j < dev->numKeys; ++j)
             dev->keys[j].bClass = NULL;
@@ -796,7 +796,7 @@ void DD_ProcessEvents(timespan_t ticLength)
 
         // Update the state of the input device tracking table.
 		I_TrackInput(ddev, ticLength);
-        
+
         // Copy the essentials into a cutdown version for the game.
         // Ensure the format stays the same for future compatibility!
         //
@@ -1043,18 +1043,18 @@ float I_FilterMouse(float pos, float* accumulation, float ticLength)
     int     dir;
     float   avail;
     int     used;
-    
+
     *accumulation += pos;
     dir = SIGN_OF(*accumulation);
     avail = fabs(*accumulation);
-    
+
     // Determine the target velocity.
     target = avail * (MAX_AXIS_FILTER - mouseFilter);
-    
+
     // Determine the amount of mickeys to send. It depends on the
     // current mouse velocity, and how much time has passed.
     used = target * ticLength;
-    
+
     // Don't go over the available number of update frames.
     if(used > avail)
     {
@@ -1068,7 +1068,7 @@ float I_FilterMouse(float pos, float* accumulation, float ticLength)
         else
             *accumulation += used;
     }
-    
+
     // This is the new (filtered) axis position.
     return dir * used;
 }
@@ -1123,7 +1123,7 @@ void DD_ReadMouse(timespan_t ticLength)
         xpos = I_FilterMouse(xpos, &accumulation[0], ticLength);
         ypos = I_FilterMouse(ypos, &accumulation[1], ticLength);
     }
-    
+
     // Mouse axis data may be modified if not in UI mode.
 /*
     if(allowMouseMod)
@@ -1216,7 +1216,7 @@ void DD_ReadJoystick(void)
     // Joystick buttons.
     ev.device = IDEV_JOY1;
     ev.type = E_TOGGLE;
-    
+
     for(i = 0; i < state.numButtons; ++i)
     {
         ev.toggle.id = i;
@@ -1243,13 +1243,13 @@ void DD_ReadJoystick(void)
         {
             ev.type = E_ANGLE;
             ev.angle.id = 0;
-            
+
             if(state.hatAngle[0] < 0)
             {
                 ev.angle.pos = -1;
             }
             else
-            {            
+            {
                 // The new angle becomes active.
                 ev.angle.pos = (int) (state.hatAngle[0] / 45 + .5); // Round off correctly w/.5.
             }
@@ -1261,7 +1261,7 @@ void DD_ReadJoystick(void)
 
     // Send joystick axis events, one per axis.
     ev.type = E_AXIS;
-    
+
     for(i = 0; i < state.numAxes; ++i)
     {
         ev.axis.id = i;
@@ -1278,7 +1278,7 @@ static void I_PrintAxisConfig(inputdev_t *device, inputdevaxis_t *axis)
                "  Filter: %i\n"
                "  Dead Zone: %g\n"
                "  Scale: %g\n"
-               "  Flags: (%s%s)\n", 
+               "  Flags: (%s%s)\n",
                device->name, axis->name,
                (axis->type == IDAT_STICK? "STICK" : "POINTER"),
                axis->filter, axis->deadZone, axis->scale,

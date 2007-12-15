@@ -107,7 +107,7 @@ void N_MasterShutdown(void)
 {
     // Free the server list. (What if communicating?)
     N_MasterClearList();
-	
+
 	// Clean up libcurl.
 	curl_global_cleanup();
 }
@@ -154,10 +154,10 @@ static size_t C_DECL N_MasterReadCallback(void *ptr, size_t size, size_t nmemb, 
     // Don't copy too much.
     bytes = MIN_OF(bytes, Str_Length(msg));
     memcpy(ptr, msg->str, bytes);
-    
+
     // Remove the sent portion from the buffer.
     Str_Set(msg, msg->str + bytes);
-    
+
     // Number of bytes written to the buffer.
     return bytes;
 }
@@ -170,17 +170,17 @@ static size_t C_DECL N_MasterWriteCallback(void *ptr, size_t size, size_t nmemb,
 	ddstring_t* response = stream;
 	size_t bytes = size * nmemb;
 	//size_t pos = Str_Length(response);
-	
+
 	// Append the new data to the response.
 	Str_Reserve(response, Str_Length(response) + bytes);
 	memcpy(response->str, ptr, bytes);
-	
+
 	return bytes;
 }
 
 static void N_MasterGetUrl(char* url)
 {
-    sprintf(url, "http://%s:%i%s", masterAddress, 
+    sprintf(url, "http://%s:%i%s", masterAddress,
             (masterPort? masterPort : 80), masterPath);
 #ifdef _DEBUG
 	printf("%s\n", url);
@@ -192,7 +192,7 @@ static void N_MasterGetUrl(char* url)
  *
  * @param response          The string to be parsed.
  *
- * @return                  <code>true</code> if successful.
+ * @return                  @c true, if successful.
  */
 static int N_MasterParseResponse(ddstring_t *msg)
 {
@@ -245,7 +245,7 @@ static int N_MasterParseResponse(ddstring_t *msg)
  *
  * @param parm              Not used.
  *
- * @return                  <code>true</code> if the request was sent
+ * @return                  @c true, if the request was sent
  *                          successfully.
  */
 static int C_DECL N_MasterSendRequest(void *parm)
@@ -258,15 +258,15 @@ static int C_DECL N_MasterSendRequest(void *parm)
 
 	N_MasterGetUrl(masterUrl);
 	strcat(masterUrl, "?list");
-	
+
 	Str_Init(&response);
-	
+
 	// Prepare the curl session for our HTTP GET request.
 	session = curl_easy_init();
 #ifdef _DEBUG
     curl_easy_setopt(session, CURLOPT_VERBOSE, true);
 #endif
-	curl_easy_setopt(session, CURLOPT_HEADER, false);	
+	curl_easy_setopt(session, CURLOPT_HEADER, false);
 	curl_easy_setopt(session, CURLOPT_WRITEFUNCTION, N_MasterWriteCallback);
 	curl_easy_setopt(session, CURLOPT_WRITEDATA, &response);
 	curl_easy_setopt(session, CURLOPT_URL, masterUrl);
@@ -279,7 +279,7 @@ static int C_DECL N_MasterSendRequest(void *parm)
 #ifdef _DEBUG
 		printf(Str_Text(&response));
 #endif
-		
+
 		// Let's parse the message.
 		N_MasterParseResponse(&response);
 	}
@@ -288,11 +288,11 @@ static int C_DECL N_MasterSendRequest(void *parm)
 		success = false;
 		fprintf(outFile, "N_MasterSendRequest: %s\n", errorBuf);
 	}
-	
+
 	// Cleanup the curl session.
 	curl_easy_cleanup(session);
 	session = NULL;
-	
+
     // We're done with the parsing.
     Str_Free(&response);
     communicating = false;
@@ -307,7 +307,7 @@ static int C_DECL N_MasterSendRequest(void *parm)
  *
  * @param parm              The announcement info to be sent.
  *
- * @return                  <code>true</code> if the announcement was sent
+ * @return                  @c true, if the announcement was sent
  *                          successfully and the master responds "OK".
  */
 static int C_DECL N_MasterSendAnnouncement(void *parm)
@@ -319,18 +319,18 @@ static int C_DECL N_MasterSendAnnouncement(void *parm)
     boolean		success = true;
 	CURL	   *session;
     struct curl_slist* headers = 0;
-    
-    headers = curl_slist_append(0, "Content-Type: application/x-deng-announce");  
-    
+
+    headers = curl_slist_append(0, "Content-Type: application/x-deng-announce");
+
 	// Post a server announcement.
 	N_MasterGetUrl(masterUrl);
-	
+
     // Convert the serverinfo into plain text.
     Str_Init(&msg);
     Sv_InfoToString(info, &msg);
     // Free the serverinfo, it's no longer needed.
     M_Free(info);
-	
+
 	// Prepare the curl session for our HTTP POST request.
 	session = curl_easy_init();
 #ifdef _DEBUG
@@ -338,21 +338,21 @@ static int C_DECL N_MasterSendAnnouncement(void *parm)
 #endif
     curl_easy_setopt(session, CURLOPT_POST, true);
     curl_easy_setopt(session, CURLOPT_HTTPHEADER, headers);
-	curl_easy_setopt(session, CURLOPT_HEADER, false);	
+	curl_easy_setopt(session, CURLOPT_HEADER, false);
 	curl_easy_setopt(session, CURLOPT_READFUNCTION, N_MasterReadCallback);
 	curl_easy_setopt(session, CURLOPT_READDATA, &msg);
     curl_easy_setopt(session, CURLOPT_POSTFIELDSIZE, Str_Length(&msg));
 	curl_easy_setopt(session, CURLOPT_URL, masterUrl);
 	curl_easy_setopt(session, CURLOPT_TIMEOUT, RESPONSE_TIMEOUT);
 	curl_easy_setopt(session, CURLOPT_ERRORBUFFER, errorBuf);
-    
+
     if(curl_easy_perform(session))
     {
         // Failure.
 		success = false;
 		fprintf(outFile, "N_MasterSendAnnouncement: %s\n", errorBuf);
     }
-    
+
     // Write an HTTP POST request with our info.
     /*
      N_SockPrintf(s, "POST %s HTTP/1.1\n", masterPath);
@@ -363,15 +363,15 @@ static int C_DECL N_MasterSendAnnouncement(void *parm)
      send(s, Str_Text(&msg), length, 0);
      */
     Str_Free(&msg);
-    
+
 	// Cleanup the curl session.
     curl_slist_free_all(headers);
     curl_easy_cleanup(session);
     session = NULL;
-    
+
     // The communication ends.
     communicating = false;
-    
+
     // If the master responds "OK" return true, otherwise false.
     return success;
 }
@@ -380,7 +380,7 @@ static int C_DECL N_MasterSendAnnouncement(void *parm)
  * Sends a server announcement to the master. The announcement includes our
  * IP address and other information.
  *
- * @param isOpen            If <code>true</code> then the server will be
+ * @param isOpen            If @c true, then the server will be
  *                          visible on the server list for other clients to
  *                          find by querying the server list.
  */
@@ -441,11 +441,11 @@ void N_MasterRequestList(void)
 /**
  * Returns information about the server #N.
  *
- * @return                  <code>0</code> if communication with the master
+ * @return                  @c 0, if communication with the master
  *                          is currently in progress.
- *                          If param info is <code>NULL</code>, will return
+ *                          If param info is @c NULL,, will return
  *                          the number of known servers ELSE, will return
- *                          <code>not zero</code> if param index was valid
+ *                          @c not zero, if param index was valid
  *                          and the master returned info on the requested
  *                          server.
  */

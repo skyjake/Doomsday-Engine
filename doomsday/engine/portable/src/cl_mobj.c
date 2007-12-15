@@ -817,7 +817,7 @@ void Cl_DestroyMobj(clmobj_t *cmo)
  * Call for Hidden client mobjs to make then visible.
  * If a sound is waiting, it's now played.
  *
- * @return              <code>true</code> if the mobj was revealed.
+ * @return              @c true, if the mobj was revealed.
  */
 boolean Cl_RevealMobj(clmobj_t *cmo)
 {

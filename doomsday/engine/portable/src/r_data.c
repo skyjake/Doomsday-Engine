@@ -1049,17 +1049,19 @@ void R_UpdateTranslationTables(void)
 }
 
 /**
- * Returns true if the given light decoration definition is valid.
+ * @return              @c true, if the given light decoration definition
+ *                      is valid.
  */
 boolean R_IsValidLightDecoration(const ded_decorlight_t *lightDef)
 {
-    return (lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
-            lightDef->color[2] != 0);
+    return (lightDef &&
+            (lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
+             lightDef->color[2] != 0));
 }
 
 /**
- * Returns true if the given decoration works under the specified
- * circumstances.
+ * @return              @c true, if the given decoration works under the
+ *                      specified circumstances.
  */
 boolean R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal)
 {

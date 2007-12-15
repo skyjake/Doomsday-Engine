@@ -55,7 +55,7 @@
 /**
  * The control descriptors contain a mapping between symbolic control
  * names and the identifier numbers.
- */ 
+ */
 /*
 typedef struct controldesc_s {
 	char    name[MAX_DESCRIPTOR_LENGTH + 1];
@@ -138,7 +138,7 @@ static playercontrol_t* P_AllocPlayerControl(void)
 }
 
 /**
- * Register the console commands and cvars of the player controls subsystem. 
+ * Register the console commands and cvars of the player controls subsystem.
  */
 void P_ControlRegister(void)
 {
@@ -147,9 +147,9 @@ void P_ControlRegister(void)
     C_CMD("resetctlaccum",  "",     ClearControlAccumulation);
 }
 
-/** 
+/**
  * This function is exported, so that plugins can register their controls.
- */ 
+ */
 void P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindClass)
 {
     playercontrol_t *pc = P_AllocPlayerControl();
@@ -157,7 +157,7 @@ void P_NewPlayerControl(int id, controltype_t type, const char *name, const char
     pc->type = type;
     pc->name = strdup(name);
     pc->bindClassName = strdup(bindClass);
-    
+
     if(type == CTLT_IMPULSE)
     {
         // Also allocate the impulse counter.
@@ -168,7 +168,7 @@ void P_NewPlayerControl(int id, controltype_t type, const char *name, const char
 playercontrol_t* P_PlayerControlById(int id)
 {
     int     i;
-    
+
     for(i = 0; i < playerControlCount; ++i)
     {
         if(playerControls[i].id == id)
@@ -180,7 +180,7 @@ playercontrol_t* P_PlayerControlById(int id)
 playercontrol_t* P_PlayerControlByName(const char* name)
 {
     int     i;
-    
+
     for(i = 0; i < playerControlCount; ++i)
     {
         if(!strcasecmp(playerControls[i].name, name))
@@ -192,7 +192,7 @@ playercontrol_t* P_PlayerControlByName(const char* name)
 void P_ControlShutdown(void)
 {
     int     i;
-    
+
     for(i = 0; i < playerControlCount; ++i)
     {
         free(playerControls[i].name);
@@ -207,7 +207,7 @@ void P_ControlShutdown(void)
 }
 
 void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
-{   
+{
     float tmp;
     struct bclass_s* bc = 0;
     struct dbinding_s* binds = 0;
@@ -224,7 +224,7 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
     // Ignore NULLs.
     if(!pos) pos = &tmp;
     if(!relativeOffset) relativeOffset = &tmp;
-    
+
     binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
     B_EvaluateDeviceBindingList(binds, pos, relativeOffset, bc);
 }
@@ -246,7 +246,7 @@ int P_GetImpulseControlState(int playerNum, int control)
 #endif
     if(!impulseCounts[pc - playerControls])
         return 0;
-    
+
     counter = &impulseCounts[pc - playerControls]->counts[playerNum];
     count = *counter;
     *counter = 0;
@@ -258,7 +258,7 @@ void P_Impulse(int playerNum, int control)
     playercontrol_t* pc = P_PlayerControlById(control);
 
     assert(pc);
-    
+
     // Check that this is really an impulse control.
     if(pc->type != CTLT_IMPULSE)
     {
@@ -268,7 +268,7 @@ void P_Impulse(int playerNum, int control)
 
     if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return;
-    
+
     impulseCounts[pc - playerControls]->counts[playerNum]++;
 }
 
@@ -285,12 +285,12 @@ D_CMD(ClearControlAccumulation)
 {
     int     i, p;
     playercontrol_t* pc;
-    
+
     for(i = 0; i < playerControlCount; ++i)
     {
         pc = &playerControls[i];
         for(p = 0; p < DDMAXPLAYERS; ++p)
-        {                
+        {
             if(pc->type == CTLT_NUMERIC)
                 P_GetControlState(p, pc->id, NULL, NULL);
             else if(pc->type == CTLT_IMPULSE)
@@ -313,7 +313,7 @@ void P_ControlTableInit(int player)
 	// Allocate toggle states.
 	s->toggles =
         M_Calloc(ctlClass[CC_TOGGLE].count * sizeof(controltoggle_t));
-	
+
 	// Allocate an axis state for each axis control.
 	s->axes = M_Calloc(ctlClass[CC_AXIS].count * sizeof(controlaxis_t));
 	for(i = 0; i < ctlClass[CC_AXIS].count; ++i)
@@ -323,7 +323,7 @@ void P_ControlTableInit(int player)
 			controlFind(&ctlClass[CC_TOGGLE],
 						  ctlClass[CC_AXIS].desc[i].name) - 1];
 	}
-	
+
 	// Clear the impulse buffer.
 	s->head = s->tail = 0;
 }
@@ -353,7 +353,7 @@ void P_ControlShutdown(void)
 		if(players[i].flags & DDPF_LOCAL)
             controlTableFree(i);
 	}
-	
+
 	for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
 	{
         if(ctlClass[i].desc)
@@ -402,7 +402,7 @@ float P_ControlGetAxis(int player, const char *name)
 		Con_Error("P_ControlGetAxis: '%s' is undefined.\n", name);
 	}
 #endif
-	
+
 	axis = &ctlState[player].axes[idx - 1];
 	pos = axis->pos;
 
@@ -414,7 +414,7 @@ float P_ControlGetAxis(int player, const char *name)
 		// During the slow turn time, the speed is halved.
 /*      // DJS - The time and strength of the slow speed modifier should be
         //       specified when the axis is registered by the game.
-        //       A time of zero, would mean no slow turn timer. 
+        //       A time of zero, would mean no slow turn timer.
         if(Sys_GetSeconds() - axis->toggle->time < SLOW_TURN_TIME)
 		{
 			pos /= 2;
@@ -544,7 +544,7 @@ int P_ControlGetToggles(int player)
 	if(pos >= 7)
 		Con_Error("P_ControlGetToggles: Out of bits (%i).\n", pos);
 #endif
-		
+
 	return bits;
 }
 
@@ -559,7 +559,7 @@ void P_ControlReset(int player)
     int         console;
 	uint        i, k;
 	controlstate_t *s;
-	
+
     if(player < 0)
     {   // Clear toggles for ALL players.
 	    for(i = 0, s = ctlState; i < DDMAXPLAYERS; ++i, s++)
@@ -613,7 +613,7 @@ static void controlImpulse(int player, impulse_t impulse)
  *
  * @param cmd           Ptr to the string to be tested.
  *
- * @return              <code>true</code> if valid.
+ * @return              @c true, if valid.
  */
 boolean P_IsValidControl(const char *cmd)
 {
@@ -661,7 +661,7 @@ boolean P_IsValidControl(const char *cmd)
 	    if((idx = controlFind(&ctlClass[CC_IMPULSE], name)) > 0)
 		    return true;
     }
-	
+
 	return false;
 }
 
@@ -683,7 +683,7 @@ boolean P_IsValidControl(const char *cmd)
  *
  * @param cmd           The action command to search for.
  *
- * @return              <code>true</code> if the action was changed
+ * @return              @c true, if the action was changed
  *                      successfully.
  */
 boolean P_ControlExecute(const char *cmd)
@@ -740,7 +740,7 @@ boolean P_ControlExecute(const char *cmd)
 	    {
 		    // This is the control that must be changed.
 		    controltoggle_t *toggle = state->toggles + idx - 1;
-    		
+
 		    if(newState == TG_TOGGLE)
 		    {
 			    toggle->state = (toggle->state == TG_ON? TG_OFF : TG_ON);
@@ -762,7 +762,7 @@ boolean P_ControlExecute(const char *cmd)
 		    return true;
 	    }
     }
-	
+
 	return false;
 }
 
@@ -794,7 +794,7 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 {
 //    controldesc_t *desc;
 //    ddplayer_t *plr;
-	
+
 	if(player < 0 || player >= DDMAXPLAYERS)
         return;
 
@@ -808,25 +808,25 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 #endif
 
     ctlState[player].axes[axisControlIndex].pos += delta;
-    
+
     // FIXME: These should be in PlayerThink.
     /*
     plr = &players[player];
-	
+
 	// Get a descriptor of the axis control.
 	desc = &ctlClass[CC_AXIS].desc[axisControlIndex];
 
 	switch(axisControlIndex)
 	{
 	case CTL_TURN:
-        // $unifiedangles 
+        // $unifiedangles
         if(plr->mo)
 		    plr->mo->angle -= (angle_t) (delta/180 * ANGLE_180);
 		break;
 
 	case CTL_LOOK:
 		// 110 corresponds 85 degrees.
-        // $unifiedangles 
+        // $unifiedangles
         plr->lookdir += delta * 110.0f/85.0f;
         // Clamp it.
         if(plr->lookdir > 110)
@@ -882,7 +882,7 @@ void P_ControlDrawer(void)
 
     if(!ctlInfo)
         return;
-    
+
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
@@ -890,7 +890,7 @@ void P_ControlDrawer(void)
     gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     // TODO: Draw control state here.
-    
+
     // Back to the original.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
@@ -905,12 +905,12 @@ D_CMD(ListPlayerControls)
     /*
     uint        i, j;
 	char        buf[MAX_DESCRIPTOR_LENGTH+1];
-    
+
     Con_Message("Player Controls:\n");
     for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
     {
         controlclass_t *cClass = &ctlClass[i];
-        
+
         if(cClass->count > 0)
         {
             Con_Message("%i %s:\n", cClass->count,
@@ -930,7 +930,7 @@ D_CMD(ListPlayerControls)
 D_CMD(Impulse)
 {
     int playerNum = consoleplayer;
-    
+
     if(argc < 2 || argc > 3)
     {
         Con_Printf("Usage:\n  %s (impulse-name)\n  %s (impulse-name) (player-number)\n",

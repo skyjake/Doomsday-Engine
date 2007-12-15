@@ -82,7 +82,7 @@ typedef struct ddevent_s {
         /*
         struct {
             uint            controlID;  // axis/control/key id.
-            boolean         isAxis;     // <code>true</code> = controlID is an axis id.
+            boolean         isAxis;     // @c true, = controlID is an axis id.
             uint            useclass;   // use a specific bindclass command
             boolean         noclass;
 

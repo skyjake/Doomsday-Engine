@@ -22,11 +22,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * def_read.c: Doomsday Engine Definition File Reader
- */
-
 /**
+ * def_read.c: Doomsday Engine Definition File Reader
+ *
  * A GHASTLY MESS!!! This should be rewritten.
  *
  * You have been warned!
@@ -304,7 +302,7 @@ static void UnreadToken(const char *token)
  * Current pos in the file is at the first ".
  * Does not expand escape sequences, only checks for \".
  *
- * @return          <code>true</code> if successful.
+ * @return          @c true, if successful.
  */
 static int ReadStringEx(char *dest, int maxlen, boolean inside,
                         boolean doubleq)
@@ -415,7 +413,7 @@ static int ReadNByteVector(unsigned char *dest, int max)
 }
 
 /**
- * @return          <code>true</code> if successful.
+ * @return          @c true, if successful.
  */
 static int ReadByte(unsigned char *dest)
 {
@@ -430,7 +428,7 @@ static int ReadByte(unsigned char *dest)
 }
 
 /**
- * @return          <code>true</code> if successful.
+ * @return          @c true, if successful.
  */
 static int ReadInt(int *dest, int unsign)
 {
@@ -445,7 +443,7 @@ static int ReadInt(int *dest, int unsign)
 }
 
 /**
- * @return          <code>true</code> if successful.
+ * @return          @c true, if successful.
  */
 static int ReadFloat(float *dest)
 {
@@ -507,7 +505,7 @@ static int ReadFlags(uint *dest, const char *prefix)
 }
 
 /**
- * @return          <code>true</code> if successful.
+ * @return          @c true, if successful.
  */
 static int ReadLabel(char *label)
 {
@@ -2030,7 +2028,7 @@ ded_end_read:
 /* *INDENT-ON* */
 
 /**
- * @return          <code>true</code> if the file was successfully loaded.
+ * @return          @c true, if the file was successfully loaded.
  */
 int DED_Read(ded_t *ded, const char *sPathName)
 {
