@@ -244,37 +244,13 @@ LumpFormat {
     # bottom offsets.
     #
     Property {
-        ID = "toptextureoffsetx";
+        ID = "textureoffsetx";
         Flags = fracbits;
         Size = 2;
         Offset = 0;
     }
     Property {
-        ID = "toptextureoffsety";
-        Flags = fracbits;
-        Size = 2;
-        Offset = 2;
-    }
-    Property {
-        ID = "middletextureoffsetx";
-        Flags = fracbits;
-        Size = 2;
-        Offset = 0;
-    }
-    Property {
-        ID = "middletextureoffsety";
-        Flags = fracbits;
-        Size = 2;
-        Offset = 2;
-    }
-    Property {
-        ID = "bottomtextureoffsetx";
-        Flags = fracbits;
-        Size = 2;
-        Offset = 0;
-    }
-    Property {
-        ID = "bottomtextureoffsety";
+        ID = "textureoffsety";
         Flags = fracbits;
         Size = 2;
         Offset = 2;
