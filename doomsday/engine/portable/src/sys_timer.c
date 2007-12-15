@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,6 +62,7 @@ float   ticsPerSecond = TICSPERSEC;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static double timeOffset = 0;
+static mutex_t  timer_Mutex;         // To prevent Data races in the timer
 
 // CODE --------------------------------------------------------------------
 
@@ -69,11 +71,13 @@ void Sys_ShutdownTimer(void)
 #ifdef WIN32
     timeEndPeriod(1);
 #endif
+    Sys_DestroyMutex(timer_Mutex);
 }
 
 void Sys_InitTimer(void)
 {
     Con_Message("Sys_InitTimer.\n");
+    timer_Mutex = Sys_CreateMutex("TIMER_MUTEX");
 #ifdef WIN32
     timeBeginPeriod(1);
 #endif
@@ -86,26 +90,45 @@ unsigned int Sys_GetRealTime(void)
 {
     static boolean first = true;
     static DWORD start;
+#ifdef WIN32
+    DWORD return_time;
+#endif
+#ifdef UNIX
+    Uint32 return_time;
+#endif
 
+
+    Sys_Lock(timer_Mutex);
 #ifdef WIN32
     DWORD   now = timeGetTime();
 #endif
 #ifdef UNIX
     Uint32  now = SDL_GetTicks();
 #endif
+    Sys_Unlock(timer_Mutex);
 
+    Sys_Lock(timer_Mutex);
     if(first)
     {
         first = false;
         start = now;
+        Sys_Unlock(timer_Mutex);
         return 0;
     }
+    Sys_Unlock(timer_Mutex);
 
+    Sys_Lock(timer_Mutex);
     // Wrapped around? (Every 50 days...)
     if(now < start)
-        return 0xffffffff - start + now + 1;
-
-    return now - start;
+    {
+        return_time = 0xffffffff - start + now + 1;
+        Sys_Unlock(timer_Mutex);
+        return return_time;
+    }
+    
+    return_time = now - start;
+    Sys_Unlock(timer_Mutex);
+    return return_time;
 }
 
 /**
