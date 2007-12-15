@@ -60,6 +60,7 @@
 
 #include "p_mapsetup.h"
 #include "hu_stuff.h"
+#include "hu_menu.h"
 #include "am_map.h"
 #include "g_common.h"
 #include "r_common.h"
@@ -68,6 +69,8 @@
 #include "am_rendlist.h"
 
 // MACROS ------------------------------------------------------------------
+
+#define AM_LINE_WIDTH           (1.25f)
 
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
@@ -240,11 +243,12 @@ typedef struct automapcfg_s {
     mapobjectinfo_t ceilingChangeLine;
 } automapcfg_t;
 
-#define AMF_REND_THINGS     0x01
-#define AMF_REND_KEYS       0x02
-#define AMF_REND_ALLLINES   0x04
-#define AMF_REND_XGLINES    0x08
-#define AMF_REND_VERTEXES   0x10
+#define AMF_REND_THINGS         0x01
+#define AMF_REND_KEYS           0x02
+#define AMF_REND_ALLLINES       0x04
+#define AMF_REND_XGLINES        0x08
+#define AMF_REND_VERTEXES       0x10
+#define AMF_REND_LINE_NORMALS   0x20
 
 typedef struct automapspecialline_s {
     int         special;
@@ -380,7 +384,6 @@ static void rotate2D(float *x, float *y, angle_t a);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern float menu_alpha;
 extern boolean viewactive;
 
 extern int numTexUnits;
@@ -1823,9 +1826,9 @@ void AM_SetCheatLevel(int pid, int level)
         map->flags &= ~(AMF_REND_THINGS | AMF_REND_XGLINES);
 
     if(map->cheating >= 2)
-        map->flags |= AMF_REND_VERTEXES;
+        map->flags |= (AMF_REND_VERTEXES | AMF_REND_LINE_NORMALS);
     else
-        map->flags &= ~AMF_REND_VERTEXES;
+        map->flags &= ~(AMF_REND_VERTEXES | AMF_REND_LINE_NORMALS);
 }
 
 void AM_IncMapCheatLevel(int pid)
@@ -1913,7 +1916,7 @@ void AM_LoadData(void)
             amMaskTexture =
                 GL_NewTextureWithParams2(DGL_LUMINANCE, 256, 256,
                                          W_CacheLumpName("mapmask", PU_CACHE),
-                                         0, DGL_NEAREST, DGL_LINEAR,
+                                         0x8, DGL_NEAREST, DGL_LINEAR,
                                          0 /*no anisotropy*/,
                                          DGL_CLAMP, DGL_CLAMP);
         }
@@ -1930,7 +1933,7 @@ void AM_UnloadData(void)
         return; // Nothing to do.
 
     if(amMaskTexture)
-        gl.DeleteTextures(1, &amMaskTexture);
+        gl.DeleteTextures(1, (DGLuint*) &amMaskTexture);
     amMaskTexture = 0;
 }
 
@@ -2263,7 +2266,7 @@ void AM_Ticker(void)
 /**
  * Is the given point within the viewframe of the automap?
  *
- * @return          <code>true</code> if the point is visible.
+ * @return          @c true, if the point is visible.
  */
 static boolean isPointVisible(automap_t *map, float x, float y)
 {
@@ -2280,7 +2283,7 @@ static boolean isPointVisible(automap_t *map, float x, float y)
 /**
  * Is the given vector within the viewframe of the automap?
  *
- * @return          <code>true</code> if the vector is at least partially
+ * @return          @c true, if the vector is at least partially
  *                  visible.
  */
 static boolean isVectorVisible(automap_t *map,
@@ -2304,8 +2307,8 @@ static boolean isVectorVisible(automap_t *map,
 /**
  * Draws the given line. Basic cliping is done.
  */
-static void rendLine(float x1, float y1, float x2, float y2, int color,
-                     float alpha, blendmode_t blendmode)
+static void rendLine(float x1, float y1, float x2, float y2, float width,
+                     int color, float alpha, blendmode_t blendmode)
 {
     automap_t  *map = &automaps[mapviewplayer];
 
@@ -2314,13 +2317,13 @@ static void rendLine(float x1, float y1, float x2, float y2, int color,
 
     AM_AddLine(CXMTOF(map, x1), CYMTOF(map, y1),
                CXMTOF(map, x2), CYMTOF(map, y2),
-               color, alpha, blendmode);
+               width, color, alpha, blendmode);
 }
 
 /**
  * Draws the given line including any optional extras.
  */
-static void rendLine2(float x1, float y1, float x2, float y2,
+static void rendLine2(float x1, float y1, float x2, float y2, float width,
                       float r, float g, float b, float a,
                       glowtype_t glowType, float glowAlpha, float glowWidth,
                       boolean glowOnly, boolean scaleGlowWithView,
@@ -2459,19 +2462,23 @@ static void rendLine2(float x1, float y1, float x2, float y2,
     }
 
     if(!glowOnly)
-        AM_AddLine4f(v1[VX], v1[VY], v2[VX], v2[VY],
+        AM_AddLine4f(v1[VX], v1[VY], v2[VX], v2[VY], width,
                      r, g, b, a, blend);
 
     if(drawNormal)
     {
+#define NORMTAIL_LENGTH         8
+
         float       center[2];
 
         center[VX] = v1[VX] + (length / 2) * unit[VX];
         center[VY] = v1[VY] + (length / 2) * unit[VY];
         AM_AddLine4f(center[VX], center[VY],
-                     center[VX] - normal[VX] * 8,
-                     center[VY] - normal[VY] * 8,
+                     center[VX] - normal[VX] * NORMTAIL_LENGTH,
+                     center[VY] - normal[VY] * NORMTAIL_LENGTH, 1,
                      r, g, b, a, blend);
+
+#undef NORMTAIL_LENGTH
     }
 }
 
@@ -2513,10 +2520,10 @@ static void renderWallSeg(seg_t *seg, void *data)
             P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
             P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
 
-            rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
+            rendLine2(v1[VX], v1[VY], v2[VX], v2[VY], AM_LINE_WIDTH,
                       .8f, 0, .8f, 1,
                       TWOSIDED_GLOW, 1, 5, false, true, false, BM_ADD,
-                      map->cheating);
+                      (map->flags & AMF_REND_LINE_NORMALS));
 
             xLine->validcount = VALIDCOUNT;  // Mark as drawn this frame.
             return;
@@ -2524,11 +2531,13 @@ static void renderWallSeg(seg_t *seg, void *data)
     }
 #endif
 #endif
+
     info = NULL;
-    backSector = P_GetPtrp(line, DMU_BACK_SECTOR);
     if((map->flags & AMF_REND_ALLLINES) ||
        xLine->mapped[mapviewplayer])
     {
+        backSector = P_GetPtrp(line, DMU_BACK_SECTOR);
+
         // Perhaps this is a specially colored line?
         info = getInfoForSpecialLine(map, xLine->special,
                                      frontSector, backSector);
@@ -2575,7 +2584,7 @@ static void renderWallSeg(seg_t *seg, void *data)
         P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
         P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
 
-        rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
+        rendLine2(v1[VX], v1[VY], v2[VX], v2[VY], AM_LINE_WIDTH,
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
                   (xLine->special && !map->cfg.glowingLineSpecials ?
                         NO_GLOW : info->glow),
@@ -2583,7 +2592,8 @@ static void renderWallSeg(seg_t *seg, void *data)
                   info->glowWidth, false, info->scaleWithView,
                   (info->glow && !(xLine->special && !map->cfg.glowingLineSpecials)),
                   (xLine->special && !map->cfg.glowingLineSpecials ?
-                        BM_NORMAL : info->blendmode), map->cheating);
+                        BM_NORMAL : info->blendmode),
+                  (map->flags & AMF_REND_LINE_NORMALS));
 
         xLine->validcount = VALIDCOUNT; // Mark as drawn this frame.
     }
@@ -2700,7 +2710,8 @@ static void addLineCharacter(vectorgrap_t *vg, float x, float y, angle_t angle,
         v2[VX] += x;
         v2[VY] += y;
 
-        rendLine(v1[VX], v1[VY], v2[VX], v2[VY], color, alpha, blendmode);
+        rendLine(v1[VX], v1[VY], v2[VX], v2[VY], AM_LINE_WIDTH,
+                 color, alpha, blendmode);
     }
 }
 
@@ -3341,6 +3352,7 @@ menu_t MapDef = {
  */
 void M_DrawMapMenu(void)
 {
+    float           menuAlpha;
     const menu_t *menu = &MapDef;
     static char *hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
     static char *yesno[2] = { "NO", "YES" };
@@ -3348,6 +3360,7 @@ void M_DrawMapMenu(void)
     static char *countnames[4] = { "NO", "YES", "PERCENT", "COUNT+PCNT" };
 #endif
 
+    menuAlpha = Hu_MenuAlpha();
     M_DrawTitle("Automap OPTIONS", menu->y - 26);
 
 #if __JDOOM__
@@ -3355,11 +3368,11 @@ void M_DrawMapMenu(void)
     M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
     M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
     M_WriteMenuText(menu, 3, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
-    MN_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
-    MN_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
-    MN_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
-    MN_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
-    MN_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
+    MN_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menuAlpha);
+    MN_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menuAlpha);
+    MN_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menuAlpha);
+    MN_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menuAlpha);
+    MN_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menuAlpha);
     M_WriteMenuText(menu, 11, yesno[cfg.automapShowDoors]);
     MN_DrawSlider(menu, 12, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
     MN_DrawSlider(menu, 13, 11, cfg.automapLineAlpha * 10 + .5f);
@@ -3369,20 +3382,20 @@ void M_DrawMapMenu(void)
     M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
     M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
     M_WriteMenuText(menu, 3, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
-    MN_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
-    MN_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
-    MN_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
-    MN_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
-    MN_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
+    MN_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menuAlpha);
+    MN_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menuAlpha);
+    MN_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menuAlpha);
+    MN_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menuAlpha);
+    MN_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menuAlpha);
     M_WriteMenuText(menu, 10, yesno[cfg.automapShowDoors]);
     MN_DrawSlider(menu, 12, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
     MN_DrawSlider(menu, 15, 11, cfg.automapLineAlpha * 10 + .5f);
 # else
-    MN_DrawColorBox(menu, 2, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
-    MN_DrawColorBox(menu, 3, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
-    MN_DrawColorBox(menu, 4, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
-    MN_DrawColorBox(menu, 5, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
-    MN_DrawColorBox(menu, 6, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
+    MN_DrawColorBox(menu, 2, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menuAlpha);
+    MN_DrawColorBox(menu, 3, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menuAlpha);
+    MN_DrawColorBox(menu, 4, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menuAlpha);
+    MN_DrawColorBox(menu, 5, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menuAlpha);
+    MN_DrawColorBox(menu, 6, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menuAlpha);
     M_WriteMenuText(menu, 7, yesno[cfg.automapShowDoors]);
     MN_DrawSlider(menu, 9, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
     MN_DrawSlider(menu, 12, 11, cfg.automapLineAlpha * 10 + .5f);

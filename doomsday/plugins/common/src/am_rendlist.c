@@ -101,10 +101,11 @@ typedef struct amprimlist_s {
 } amprimlist_t;
 
 typedef struct amlist_s {
-    amprimlist_t primlist;
-    uint        tex;
-    boolean     texIsPatchLumpNum;
-    blendmode_t blend;
+    amprimlist_t    primlist;
+    uint            tex;
+    boolean         texIsPatchLumpNum;
+    blendmode_t     blend;
+    float           arg1; // List-type specific arguments.
     struct amlist_s *next;
 } amlist_t;
 
@@ -264,14 +265,14 @@ static void AM_LinkPrimitiveToList(amprimlist_t *list, amprim_t *p)
  *
  * @param type      Type of primitive required (DGL_QUADS or DGL_LINES).
  * @param tex       DGLuint texture identifier/patch lump number for quad.
- * @param texIsPatchLumpNum If <code>true</code>, 'tex' is treated as a
- *                  patch lump number.
+ * @param texIsPatchLumpNum @c true = 'tex' is treated as a patch lump
+ *                  number.
  * @param blend     The blendmode required for this quad.
  *
  * @return          Ptr to the new automap render primitive.
  */
 static void *AM_AllocatePrimitive(int type, uint tex, boolean texIsPatchLumpNum,
-                                  blendmode_t blend)
+                                  blendmode_t blend, float arg1)
 {
     amlist_t *list;
     amprim_t   *p;
@@ -280,14 +281,14 @@ static void *AM_AllocatePrimitive(int type, uint tex, boolean texIsPatchLumpNum,
     if(!(type == DGL_QUADS || type == DGL_LINES))
         Con_Error("AM_AllocatePrimitive: Unsupported primitive type %i.", type);
 
-    // Find a suitable primitive list (matching texture & blend).
+    // Find a suitable primitive list (matching texture & blend & args).
     list = amListsHead;
     found = false;
     while(list && !found)
     {
         if(list->primlist.type == type &&
            list->tex == tex && list->texIsPatchLumpNum == texIsPatchLumpNum &&
-           list->blend == blend)
+           list->blend == blend && list->arg1 == arg1)
             found = true;
         else
             list = list->next;
@@ -300,6 +301,7 @@ static void *AM_AllocatePrimitive(int type, uint tex, boolean texIsPatchLumpNum,
         list->tex = tex;
         list->texIsPatchLumpNum = texIsPatchLumpNum;
         list->blend = blend;
+        list->arg1 = arg1;
         list->primlist.type = type;
         list->primlist.head = list->primlist.tail =
             list->primlist.unused = NULL;
@@ -322,7 +324,7 @@ static void *AM_AllocatePrimitive(int type, uint tex, boolean texIsPatchLumpNum,
  * Empties or destroys all primitives in the given automap render list.
  *
  * @param list      Ptr to the list to be emptied/destroyed.
- * @param destroy   If <code>true</code> all primitives in the list will be
+ * @param destroy   If @c true, all primitives in the list will be
  *                  free'd, ELSE they'll be moved to the list's unused
  *                  store, ready for later re-use.
  */
@@ -358,7 +360,7 @@ static void AM_DeleteList(amprimlist_t *list, boolean destroy)
 /**
  * Empties or destroys all primitives in ALL automap render lists.
  *
- * @param destroy   If <code>true</code> all primitives in each list will be
+ * @param destroy   If @c true, all primitives in each list will be
  *                  free'd, ELSE they'll be moved to each list's unused
  *                  store, ready for later re-use.
  */
@@ -384,12 +386,12 @@ void AM_ClearAllLists(boolean destroy)
  * @param color     Palette color idx.
  * @param alpha     Alpha value of the line (opacity).
  */
-void AM_AddLine(float x, float y, float x2, float y2, int color,
-                float alpha, blendmode_t blend)
+void AM_AddLine(float x, float y, float x2, float y2, float width,
+                int color, float alpha, blendmode_t blend)
 {
     amrline_t *l;
 
-    l = AM_AllocatePrimitive(DGL_LINES, 0, false, blend);
+    l = AM_AllocatePrimitive(DGL_LINES, 0, false, blend, width);
 
     l->a.pos[0] = x;
     l->a.pos[1] = y;
@@ -413,12 +415,12 @@ void AM_AddLine(float x, float y, float x2, float y2, int color,
  * @param b         Blue color component of the line.
  * @param a         Alpha value of the line (opacity).
  */
-void AM_AddLine4f(float x, float y, float x2, float y2,
+void AM_AddLine4f(float x, float y, float x2, float y2, float width,
                   float r, float g, float b, float a, blendmode_t blend)
 {
     amrline_t *l;
 
-    l = AM_AllocatePrimitive(DGL_LINES, 0, false, blend);
+    l = AM_AllocatePrimitive(DGL_LINES, 0, false, blend, width);
 
     l->a.pos[0] = x;
     l->a.pos[1] = y;
@@ -456,7 +458,7 @@ void AM_AddLine4f(float x, float y, float x2, float y2,
  * @param b         Blue color component of the line.
  * @param a         Alpha value of the line (opacity).
  * @param tex       DGLuint texture identifier for quad OR patch lump num.
- * @param texIsPatchLumpNum  If <code>true</code> 'tex' is a patch lump num.
+ * @param texIsPatchLumpNum  If @c true, 'tex' is a patch lump num.
  * @param blend     Blendmode used for this primitive.
  */
 void AM_AddQuad(float x1, float y1, float x2, float y2,
@@ -476,7 +478,7 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
     //
     amrquad_t *q;
 
-    q = AM_AllocatePrimitive(DGL_QUADS, tex, texIsPatchLumpNum, blend);
+    q = AM_AllocatePrimitive(DGL_QUADS, tex, texIsPatchLumpNum, blend, 0);
 
     q->rgba[0] = r;
     q->rgba[1] = g;
@@ -513,19 +515,21 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
  * blending mode.
  *
  * @param tex       DGLuint texture identifier for quads on the list.
- * @param texIsPatchLumpNum   If <code>true</code> 'tex' is a patch lump num.
+ * @param texIsPatchLumpNum   If @c true 'tex' is a patch lump num.
  * @param blend     All primitives on the list will be rendered with this
  *                  blending mode.
  * @param alpha     The alpha of primitives on the list will be rendered
  *                  using: (their alpha * alpha).
+ * @param arg1      List-specific argment.
  * @param list      Ptr to the automap render list to be rendered.
  */
 void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
-                   float alpha, amprimlist_t *list)
+                   float alpha, float arg1, amprimlist_t *list)
 {
     amprim_t   *p;
     int         normal = DGL_TEXTURE0, mask = DGL_TEXTURE1;
     int         maskID = 1;
+    float       oldLineWidth = 0;
     boolean     withMask = false, texMatrix = false;
 
     // Change render state for this list?
@@ -554,8 +558,7 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         }
         else
         {
-            AM_SelectTexUnits(1);
-            gl.SetInteger(DGL_MODULATE_TEXTURE, 12);
+            gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
             gl.Bind(amMaskTexture);
 
             tex = amMaskTexture;
@@ -611,6 +614,14 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
 
     // Write commands.
     p = list->head;
+
+    // Need to adjust the line width?
+    if(list->type == DGL_LINES)
+    {
+        oldLineWidth = gl.GetFloat(DGL_LINE_WIDTH);
+        gl.SetFloat(DGL_LINE_WIDTH, arg1);
+    }
+
     if(withMask)
     {
         gl.Begin(list->type);
@@ -808,6 +819,10 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         gl.End();
     }
 
+    // Restore previous line width.
+    if(list->type == DGL_LINES)
+        gl.SetFloat(DGL_LINE_WIDTH, oldLineWidth);
+
     // Restore previous state.
     if(texMatrix)
     {
@@ -834,7 +849,7 @@ void AM_RenderAllLists(float alpha)
     while(list)
     {
         AM_RenderList(list->tex, list->texIsPatchLumpNum, list->blend,
-                      alpha,
+                      alpha, list->arg1,
                       &list->primlist);
         list = list->next;
     }
