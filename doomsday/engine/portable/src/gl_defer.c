@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_defer.c: Deferred GL Tasks
  */
 
@@ -93,7 +93,7 @@ void GL_ShutdownDeferred(void)
         return;
 
     while((d = GL_GetNextDeferred()) != NULL)
-    {    
+    {
         GL_DestroyDeferred(d);
     }
 
@@ -106,7 +106,7 @@ int GL_GetDeferredCount(void)
 {
     int         count = 0;
     deferred_t* i = 0;
-    
+
     if(!deferredInited)
         return 0;
 
@@ -160,15 +160,15 @@ DGLuint GL_GetReservedName(void)
 {
     DGLuint     name;
 
-    if(!deferredInited) 
+    if(!deferredInited)
         Con_Error("GL_GetReserved: Deferred GL task system not initialized.");
 
     Sys_Lock(deferredMutex);
-    
+
     if(!reservedCount)
     {
         Sys_Unlock(deferredMutex);
-        while(reservedCount == 0) 
+        while(reservedCount == 0)
         {
             // Wait for someone to refill the names buffer.
             Con_Message("GL_GetReservedName: Sleeping until new names available.\n");
@@ -180,9 +180,9 @@ DGLuint GL_GetReservedName(void)
     name = reservedNames[0];
     memmove(reservedNames, reservedNames + 1, (NUM_RESERVED_NAMES - 1) * sizeof(DGLuint));
     reservedCount--;
-    
+
     Sys_Unlock(deferredMutex);
-    
+
     return name;
 }
 
@@ -203,7 +203,7 @@ void GL_InitTextureContent(texturecontent_t *content)
 void GL_UploadTextureContent(texturecontent_t* content)
 {
     int         result = 0;
-    
+
     if(content->flags & TXCF_EASY_UPLOAD)
     {
         GL_UploadTexture2(content);
@@ -214,29 +214,51 @@ void GL_UploadTextureContent(texturecontent_t* content)
         {
             gl.SetInteger(DGL_GRAY_MIPMAP, content->grayMipmap);
         }
-        
-        // The texture name must already be created.    
+
+        // The texture name must already be created.
         gl.Bind(content->name);
-        
+
         // Upload the texture.
         // No mipmapping or resizing is needed, upload directly.
         if(content->flags & TXCF_NO_COMPRESSION)
         {
             gl.Disable(DGL_TEXTURE_COMPRESSION);
         }
-        
-        result = gl.TexImage(content->format, content->width, content->height, 
-                             (content->grayMipmap >= 0? DGL_GRAY_MIPMAP : 
+
+        if((content->flags & TXCF_CONVERT_8BIT_TO_ALPHA) &&
+           (content->format == DGL_LUMINANCE ||
+            content->format == DGL_COLOR_INDEX_8 ||
+            content->format == DGL_R ||
+            content->format == DGL_G ||
+            content->format == DGL_B ||
+            content->format == DGL_A ||
+            content->format == DGL_DEPTH_COMPONENT))
+        {
+            int         p, total = content->width * content->height;
+            byte       *pixels = content->buffer;
+
+            for(p = 0; p < total; ++p)
+            {
+                // Move the average color to the alpha channel, make the
+                // actual color white.
+                pixels[total + p] = pixels[p];
+                pixels[p] = 255;
+            }
+            content->format = DGL_LUMINANCE_PLUS_A8;
+        }
+
+        result = gl.TexImage(content->format, content->width, content->height,
+                             (content->grayMipmap >= 0? DGL_GRAY_MIPMAP :
                               (content->flags & TXCF_MIPMAP) != 0),
                              content->buffer);
         assert(result == DGL_OK);
-        
+
         if(content->flags & TXCF_NO_COMPRESSION)
         {
             gl.Enable(DGL_TEXTURE_COMPRESSION);
         }
     }
-    
+
     gl.TexParameter(DGL_MIN_FILTER, content->minFilter);
     gl.TexParameter(DGL_MAG_FILTER, content->magFilter);
     gl.TexParameter(DGL_WRAP_S, content->wrap[0]);
@@ -247,49 +269,55 @@ void GL_UploadTextureContent(texturecontent_t* content)
 DGLuint GL_NewTexture(texturecontent_t *content)
 {
     // Calculate the size of the buffer automatically?
-    if(!content->bufferSize)
+    if(content->bufferSize == 0)
     {
-        int bytesPerPixel = 0;
+        int             bytesPerPixel = 0;
         switch(content->format)
         {
-            case DGL_COLOR_INDEX_8:
-            case DGL_LUMINANCE:
-            case DGL_R:
-            case DGL_G:
-            case DGL_B:
-            case DGL_A:
-            case DGL_DEPTH_COMPONENT:
+        case DGL_LUMINANCE:
+            if(TXCF_CONVERT_8BIT_TO_ALPHA)
+                bytesPerPixel = 2; // We'll need a larger buffer.
+            else
                 bytesPerPixel = 1;
-                break;
+            break;
 
-            case DGL_COLOR_INDEX_8_PLUS_A8:
-            case DGL_LUMINANCE_PLUS_A8:
-                bytesPerPixel = 2;
-                break;
+        case DGL_COLOR_INDEX_8:
+        case DGL_R:
+        case DGL_G:
+        case DGL_B:
+        case DGL_A:
+        case DGL_DEPTH_COMPONENT:
+            bytesPerPixel = 1;
+            break;
 
-            case DGL_RGB:
-                bytesPerPixel = 3;
-                break;
-                
-            case DGL_RGBA:
-                bytesPerPixel = 4;
-                break;
+        case DGL_COLOR_INDEX_8_PLUS_A8:
+        case DGL_LUMINANCE_PLUS_A8:
+            bytesPerPixel = 2;
+            break;
 
-            default:
-                Con_Error("GL_NewTexture: Unknown format %i, don't know pixel size.\n",
-                          content->format);
+        case DGL_RGB:
+            bytesPerPixel = 3;
+            break;
+
+        case DGL_RGBA:
+            bytesPerPixel = 4;
+            break;
+
+        default:
+            Con_Error("GL_NewTexture: Unknown format %i, don't know pixel size.\n",
+                      content->format);
         }
         content->bufferSize = content->width * content->height * bytesPerPixel;
     }
-    
+
     if(content->flags & TXCF_GRAY_MIPMAP)
     {
-        content->grayMipmap = ((content->flags & TXCF_GRAY_MIPMAP_LEVEL_MASK) 
+        content->grayMipmap = ((content->flags & TXCF_GRAY_MIPMAP_LEVEL_MASK)
                                >> TXCF_GRAY_MIPMAP_LEVEL_SHIFT);
     }
-    
+
     content->name = GL_GetReservedName();
-    
+
     if((content->flags & TXCF_NEVER_DEFER) || !Con_IsBusy())
     {
         // Let's do this right away. No need to take a copy.
@@ -314,15 +342,15 @@ DGLuint GL_NewTexture(texturecontent_t *content)
         deferredContentLast = d;
         Sys_Unlock(deferredMutex);
     }
-    
+
     return content->name;
 }
 
-DGLuint GL_NewTextureWithParams(int format, int width, int height, void* pixels, 
+DGLuint GL_NewTextureWithParams(int format, int width, int height, void* pixels,
                                 int flags)
 {
     texturecontent_t c;
-    
+
     GL_InitTextureContent(&c);
     c.format = format;
     c.width = width;
@@ -332,12 +360,12 @@ DGLuint GL_NewTextureWithParams(int format, int width, int height, void* pixels,
     return GL_NewTexture(&c);
 }
 
-DGLuint GL_NewTextureWithParams2(int format, int width, int height, void* pixels, 
+DGLuint GL_NewTextureWithParams2(int format, int width, int height, void* pixels,
                                  int flags, int minFilter, int magFilter,
                                  int anisoFilter, int wrapS, int wrapT)
 {
     texturecontent_t c;
-    
+
     GL_InitTextureContent(&c);
     c.format = format;
     c.width = width;
@@ -364,7 +392,7 @@ void GL_UploadDeferredContent(uint timeOutMilliSeconds)
         Con_Error("GL_UploadDeferredContent: Deferred GL task system not initialized.");
 
     startTime = Sys_GetRealTime();
-    
+
     // We'll reserve names multiple times, because the worker thread may be needing
     // new texture names while we are uploading.
     GL_ReserveNames();
