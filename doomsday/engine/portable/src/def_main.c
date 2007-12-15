@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * def_main.c: Definitions Subsystem
  */
 
@@ -1073,8 +1073,6 @@ void Def_PostInit(void)
         decor->surface_index =
             R_CheckMaterialNumForName(decor->surface,
                                       (decor->is_texture? MAT_TEXTURE : MAT_FLAT));
-
-        decor->pregen_lightmap = 0;
     }
 
     // Surface reflections.
@@ -1421,7 +1419,7 @@ void Def_CopySectorType(sectortype_t * s, ded_sectortype_t * def)
 }
 
 /**
- * @return          <code>true</code> if the definition was found.
+ * @return          @c true, if the definition was found.
  */
 int Def_Get(int type, char *id, void *out)
 {

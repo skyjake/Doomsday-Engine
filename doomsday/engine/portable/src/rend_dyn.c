@@ -225,17 +225,9 @@ static void calcDynLightColor(float *outRGB, const lumobj_t *lum, float light)
         light *= .5f;           // Would be too much.
 
     // Multiply with the light color.
-    if(lum->type == LT_OMNI && LUM_OMNI(lum)->decorMap)
-    {   // Decoration maps are pre-colored.
-       for(i = 0; i < 3; ++i)
-           outRGB[i] = light;
-    }
-    else
+    for(i = 0; i < 3; ++i)
     {
-        for(i = 0; i < 3; ++i)
-        {
-            outRGB[i] = light * lum->color[i];
-        }
+        outRGB[i] = light * lum->color[i];
     }
 }
 
@@ -643,7 +635,7 @@ uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
         return 0;
 
     // Sanity check.
-    assert(plane >= 0 && plane < ssec->sector->planecount);
+    assert(plane < ssec->sector->planecount);
 
     linkSec = R_GetLinkedSector(ssec, plane);
     if(R_IsSkySurface(&linkSec->SP_planesurface(plane)))

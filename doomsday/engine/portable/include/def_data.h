@@ -22,10 +22,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * def_data.h: Doomsday Engine Definition Files
  *
- * FIXME: Needs to be redesigned.
+ * \fixme Needs to be redesigned.
  */
 
 #ifndef __DOOMSDAY_DED_FILES_H__
@@ -469,7 +469,7 @@ extern          "C" {
         ded_count_t     stage_count;
     } ded_ptcgen_t;
 
-    typedef struct {
+    typedef struct ded_decorlight_s {
         float           pos[2];    // Coordinates on the surface.
         float           elevation; // Distance from the surface.
         float           color[3];  // Light color.
@@ -484,7 +484,7 @@ extern          "C" {
     } ded_decorlight_t;
 
     // There is a fixed number of light decorations in each decoration.
-#define DED_DECOR_NUM_LIGHTS    16
+#define DED_DECOR_NUM_LIGHTS    MAX_SURFACE_DECORATIONS
 
     typedef struct ded_decor_s {
         ded_string_t    surface;        // Texture or flat name.
@@ -492,7 +492,6 @@ extern          "C" {
         int             glow;
         ded_flags_t     flags;
         int             surface_index;  // Flat or texture index.
-        unsigned int    pregen_lightmap;
         ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
     } ded_decor_t;
 

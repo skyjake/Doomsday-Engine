@@ -60,7 +60,6 @@ typedef struct lumobj_s {           // For dynamic lighting.
             float           zOff;           // Offset to center from pos[VZ].
             DGLuint         tex;            // Lightmap texture.
             DGLuint         floorTex, ceilTex;  // Lightmaps for floor/ceil.
-            DGLuint         decorMap;       // Decoration lightmap.
 
         // For flares (halos).
             int             flareSize;

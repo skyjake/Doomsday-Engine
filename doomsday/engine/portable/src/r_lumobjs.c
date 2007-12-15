@@ -566,9 +566,6 @@ void LO_AddLuminous(mobj_t *mo)
             for(i = 0; i < 3; ++i)
                 l->color[i] = rgb[i];
 
-            // This light source is not associated with a decormap.
-            LUM_OMNI(l)->decorMap = 0;
-
             if(def)
             {
                 LUM_OMNI(l)->tex = def->sides.tex;
@@ -973,7 +970,10 @@ static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
                               l->pos[VZ] - viewZ);
 
         l->subsector = ssec;
-        memcpy(l->color, pln->glowrgb, sizeof(l->color));
+        l->color[CR] = pln->glowrgb[CR];
+        l->color[CG] = pln->glowrgb[CG];
+        l->color[CB] = pln->glowrgb[CB];
+
         LUM_PLANE(l)->intensity = pln->glow;
         LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT, NULL);
 
