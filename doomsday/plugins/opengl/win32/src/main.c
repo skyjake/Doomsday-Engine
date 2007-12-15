@@ -19,11 +19,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * main.c: DGL Driver for OpenGL
  *
  * Init and shutdown, state management.
@@ -32,7 +32,8 @@
  * http://oss.sgi.com/projects/ogl-sample/
  */
 
-/**\todo The *NIX/SDL and Windows/GDI OpenGL Routines really need to be
+/**
+ * \todo The *NIX/SDL and Windows/GDI OpenGL Routines really need to be
  * merged into a combined *NIX-Windows/SDL based system. We have far too
  * much duplication, obvious changes on the *NIX side, never propogated to
  * the Windows side. I'd use the *NIX/SDL files as the base for the new
@@ -284,7 +285,7 @@ static void checkExtensions(void)
 }
 
 /**
- * Attempt to acquire a device context for OGL rendering and then init. 
+ * Attempt to acquire a device context for OGL rendering and then init.
  *
  * @param width         Width of the OGL window.
  * @param height        Height of the OGL window.
@@ -293,7 +294,7 @@ static void checkExtensions(void)
  * @param data          Ptr to system-specific data, e.g a window handle or
  *                      similar.
  *
- * @return              <code>DGL_OK</code>= success.
+ * @return              @c DGL_OK,= success.
  */
 int DG_CreateContext(int width, int height, int bpp, int mode, void *data)
 {
@@ -335,11 +336,11 @@ int DG_CreateContext(int width, int height, int bpp, int mode, void *data)
 
     if(hdc)
         ReleaseDC(hWnd, hdc);
-    
+
     if(ok)
     {
         checkExtensions();
-        
+
         // We can get on with initializing the OGL state.
         initState();
     }

@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,15 +18,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * texture.c: Texture Handling
  *
  * Get OpenGL header files from:
- * http://oss.sgi.com/projects/ogl-sample/ 
+ * http://oss.sgi.com/projects/ogl-sample/
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -64,7 +65,7 @@ PFNGLCOLORTABLEEXTPROC glColorTableEXT = NULL;
  * Choose an internal texture format based on the number of color components.
  *
  * @param comps         Number of color components.
- * @return              The internal texture format. 
+ * @return              The internal texture format.
  */
 GLenum ChooseFormat(int comps)
 {
@@ -211,13 +212,13 @@ void setTexAniso(int level)
             level = maxAniso;
     }
 
-    
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
 					level);
 }
 
 /**
- * Works within the given data, reducing the size of the picture to half 
+ * Works within the given data, reducing the size of the picture to half
  * its original.
  *
  * @param width         Width of the final texture, must be power of two.
@@ -334,7 +335,7 @@ int grayMipmap(int format, int width, int height, void *data)
  * @param width         Width of the texture, must be power of two.
  * @param height        Height of the texture, must be power of two.
  * @param genMips       If negative, sets a specific mipmap level,
- *                      e.g. <code>-1</code> means mipmap level 1.
+ *                      e.g. @c -1, means mipmap level 1.
  * @param data          Ptr to the texture data.
  */
 int DG_TexImage(int format, int width, int height, int genMips, void *data)
@@ -342,7 +343,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 	int         mipLevel = 0;
 	byte       *bdata = data;
 
-	// Negative genMips values mean that the specific mipmap level is 
+	// Negative genMips values mean that the specific mipmap level is
 	// being uploaded.
 	if(genMips < 0)
 	{
@@ -441,7 +442,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
                     pixel[CR] = palette[bdata[i]].color[CR];
                     pixel[CG] = palette[bdata[i]].color[CG];
                     pixel[CB] = palette[bdata[i]].color[CB];
-                } 
+                }
 				break;
 
 			case DGL_COLOR_INDEX_8_PLUS_A8:
@@ -519,14 +520,14 @@ void DG_TexParameter(int pname, int param)
 	    {
 	    default:
 		    glTexParameteri(GL_TEXTURE_2D,
-						    pname == DGL_MIN_FILTER ? GL_TEXTURE_MIN_FILTER : 
-						    pname == DGL_MAG_FILTER ? GL_TEXTURE_MAG_FILTER : 
-						    pname == DGL_WRAP_S ? GL_TEXTURE_WRAP_S : 
+						    pname == DGL_MIN_FILTER ? GL_TEXTURE_MIN_FILTER :
+						    pname == DGL_MAG_FILTER ? GL_TEXTURE_MAG_FILTER :
+						    pname == DGL_WRAP_S ? GL_TEXTURE_WRAP_S :
 						    GL_TEXTURE_WRAP_T,
 						    (param >= DGL_NEAREST &&
-						     param <= DGL_LINEAR_MIPMAP_LINEAR) ? 
-						    mlevs[param - DGL_NEAREST] : 
-						    param == DGL_CLAMP ? GL_CLAMP_TO_EDGE : 
+						     param <= DGL_LINEAR_MIPMAP_LINEAR) ?
+						    mlevs[param - DGL_NEAREST] :
+						    param == DGL_CLAMP ? GL_CLAMP_TO_EDGE :
 						    GL_REPEAT);
 		    break;
 	    }
@@ -538,12 +539,12 @@ void DG_GetTexParameterv(int level, int pname, int *v)
 	switch(pname)
 	{
 	case DGL_WIDTH:
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_WIDTH, 
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_WIDTH,
             (GLint*) v);
 		break;
 
 	case DGL_HEIGHT:
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_HEIGHT, 
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_HEIGHT,
             (GLint*) v);
 		break;
 

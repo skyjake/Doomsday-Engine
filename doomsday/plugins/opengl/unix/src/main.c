@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -74,7 +74,7 @@ int     useVSync;
 boolean wireframeMode;
 boolean allowCompression;
 boolean noArrays;
-boolean forceFinishBeforeSwap = DGL_FALSE; 
+boolean forceFinishBeforeSwap = DGL_FALSE;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -135,7 +135,7 @@ int DG_Init(void)
 }
 
 /**
- * Attempt to acquire a device context for OGL rendering and then init. 
+ * Attempt to acquire a device context for OGL rendering and then init.
  *
  * @param width         Width of the OGL window.
  * @param height        Height of the OGL window.
@@ -144,7 +144,7 @@ int DG_Init(void)
  * @param data          Ptr to system-specific data, e.g a window handle or
  *                      similar.
  *
- * @return              <code>DGL_OK</code>= success.
+ * @return              @c DGL_OK,= success.
  */
 int DG_CreateContext(int width, int height, int bpp, int mode, void *data)
 {
@@ -280,7 +280,7 @@ void DG_Show(void)
     {
         glFinish();
     }
-    
+
     // Swap buffers.
     SDL_GL_SwapBuffers();
 

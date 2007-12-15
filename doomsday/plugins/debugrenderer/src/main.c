@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * main.c: Debugging Layer for the Doomsday Rendering DLLs
  *
  * The real rendering DLL can be specified using the -dgl option.
@@ -35,8 +36,8 @@
 #include "doomsday.h"
 #include "..\..\..\engine\portable\include\dd_dgl.h"
 
-/* 
- * This macro is used to import all the exported functions from the 
+/*
+ * This macro is used to import all the exported functions from the
  * rendering DLL.
  */
 #define Imp(fname)	(gl.fname = (void*) GetProcAddress(dglInstance, "DG_"#fname))
@@ -91,6 +92,10 @@ BOOL __stdcall DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		Imp(GetInteger);
 		Imp(GetIntegerv);
 		Imp(SetInteger);
+        Imp(SetIntegerv);
+        Imp(GetFloat);
+        Imp(GetFloatv);
+        Imp(SetFloat);
 		Imp(SetFloatv);
 		Imp(GetString);
 		Imp(Enable);
@@ -100,7 +105,7 @@ BOOL __stdcall DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		Imp(Arrays);
 		Imp(UnlockArrays);
 		Imp(Func);
-		//Imp(ZBias);   
+		//Imp(ZBias);
 
 		// Textures.
 		Imp(NewTexture);
@@ -321,6 +326,16 @@ int DG_SetInteger(int name, int value)
 	return result;
 }
 
+int DG_SetIntegerv(int name, const int *values)
+{
+	int     result;
+
+	in(1, "SetIntegerv (0x%x, 0x%p)", name, values);
+	result = gl.SetIntegerv(name, values);
+	out(1, "SetIntegerv: %i", result);
+	return result;
+}
+
 char *DG_GetString(int name)
 {
 	char   *result;
@@ -328,6 +343,36 @@ char *DG_GetString(int name)
 	in(1, "GetString (0x%x)", name);
 	result = gl.GetString(name);
 	out(1, "GetString: %p (%s)", result, result ? result : "(null)");
+	return result;
+}
+
+float DG_GetFloat(int name)
+{
+    float   result;
+
+    in(1, "GetFloat (0x%x)", name);
+    result = gl.GetFloat(name);
+    out(1, "GetFloat: %g", result);
+    return result;
+}
+
+int DG_SetFloat(int name, float value)
+{
+    int     result;
+
+    in(1, "SetFloat (0x%x, %g)", name, value);
+    result = gl.SetFloat(name, value);
+    out(1, "SetFloat: %i", result);
+    return result;
+}
+
+int DG_GetFloatv(int name, float *v)
+{
+	int     result;
+
+	in(1, "GetFloatv (0x%x, 0x%p)", name, v);
+	result = gl.GetFloatv(name, v);
+	out(1, "GetFloatv: %i, %g", result, v[0]);
 	return result;
 }
 

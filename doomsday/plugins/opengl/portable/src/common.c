@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * common.c : Portable OpenGL init/state routines.
  */
 
@@ -54,11 +54,14 @@ int     useFog;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static float currentLineWidth;
+
 // CODE --------------------------------------------------------------------
 
 void initState(void)
 {
-    GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
+    GLfloat         fogcol[4] = { .54f, .54f, .54f, 1 };
+    GLfloat         values[2];
 
     nearClip = 5;
     farClip = 8000;
@@ -91,6 +94,19 @@ void initState(void)
     // Also clear the texture matrix.
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
+
+    // Setup for antialiased lines/points.
+    glGetFloatv(GL_LINE_WIDTH_GRANULARITY, values);
+    Con_Message("  GL_LINE_WIDTH_GRANULARITY: %3.1f\n",
+                values[0]);
+    glGetFloatv(GL_LINE_WIDTH_RANGE, values);
+    Con_Message("  GL_LINE_WIDTH_RANGE: %3.1f %3.1f\n",
+                values[0], values[1]);
+
+    glEnable(GL_LINE_SMOOTH);
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    currentLineWidth = 1.5f;
+    glLineWidth(currentLineWidth);
 
     // Alpha blending is a go!
     glEnable(GL_BLEND);
@@ -318,7 +334,7 @@ int DG_GetIntegerv(int name, int *v)
     case DGL_GRAY_MIPMAP:
         *v = (int) (grayMipmapFactor * 255);
         break;
-        
+
     default:
         return DGL_ERROR;
     }
@@ -356,13 +372,13 @@ int DG_SetInteger(int name, int value)
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
         else if(value == 12)
-        {   // Normal texture modulation on both stages. TU 1 modulates with 
+        {   // Normal texture modulation on both stages. TU 1 modulates with
             // primary color, TU 2 with TU 1.
             activeTexture(GL_TEXTURE1);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
             activeTexture(GL_TEXTURE0);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-        }                
+        }
         else if(value == 2 || value == 3)
         {   // Texture modulation and interpolation.
             activeTexture(GL_TEXTURE1);
@@ -531,6 +547,17 @@ int DG_SetInteger(int name, int value)
     return DGL_OK;
 }
 
+int DG_SetIntegerv(int name, const int *values)
+{
+    switch(name)
+    {
+    default:
+        return DGL_ERROR;
+    }
+
+    return DGL_OK;
+}
+
 char *DG_GetString(int name)
 {
     switch(name)
@@ -542,7 +569,48 @@ char *DG_GetString(int name)
     return NULL;
 }
 
-int DG_SetFloatv(int name, float *values)
+float DG_GetFloat(int name)
+{
+    switch(name)
+    {
+    case DGL_LINE_WIDTH:
+        return currentLineWidth;
+
+    default:
+        return DGL_ERROR;
+    }
+
+    return DGL_OK;
+}
+
+int DG_GetFloatv(int name, float *values)
+{
+    switch(name)
+    {
+    default:
+        return DGL_ERROR;
+    }
+
+    return DGL_OK;
+}
+
+int DG_SetFloat(int name, float value)
+{
+    switch(name)
+    {
+    case DGL_LINE_WIDTH:
+        currentLineWidth = value;
+        glLineWidth(value);
+        break;
+
+    default:
+        return DGL_ERROR;
+    }
+
+    return DGL_OK;
+}
+
+int DG_SetFloatv(int name, const float *values)
 {
     switch(name)
     {
@@ -559,7 +627,7 @@ int DG_SetFloatv(int name, float *values)
 
 int DG_Enable(int cap)
 {
-    switch (cap)
+    switch(cap)
     {
     case DGL_TEXTURING:
 #ifndef DRMESA
@@ -625,12 +693,16 @@ int DG_Enable(int cap)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         break;
 
+    case DGL_LINE_SMOOTH:
+        glEnable(GL_LINE_SMOOTH);
+        break;
+
     case DGL_VSYNC:
         if(extVSync)
         {
 #ifdef WIN32
             wglSwapIntervalEXT(1);
-#endif            
+#endif
             useVSync = DGL_TRUE;
         }
         break;
@@ -714,12 +786,16 @@ void DG_Disable(int cap)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         break;
 
+    case DGL_LINE_SMOOTH:
+        glDisable(GL_LINE_SMOOTH);
+        break;
+
     case DGL_VSYNC:
         if(extVSync)
         {
-#ifdef WIN32        
+#ifdef WIN32
             wglSwapIntervalEXT(0);
-#endif            
+#endif
             useVSync = DGL_FALSE;
         }
         break;

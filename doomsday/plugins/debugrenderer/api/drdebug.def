@@ -12,10 +12,14 @@ EXPORTS
 	DG_Show
 	DG_Viewport
 	DG_Scissor
-	DG_GetInteger
-	DG_GetIntegerv
-	DG_SetInteger
-	DG_SetFloatv
+    DG_GetInteger
+    DG_GetIntegerv
+    DG_SetInteger
+    DG_SetIntegerv
+    DG_GetFloat
+    DG_GetFloatv
+    DG_SetFloat
+    DG_SetFloatv
 	DG_GetString
 	DG_Enable
 	DG_Disable
