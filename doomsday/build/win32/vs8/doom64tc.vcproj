@@ -263,6 +263,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\hu_menu.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\hu_msg.h"
 				>
 			</File>
