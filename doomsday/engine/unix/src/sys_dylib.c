@@ -4,8 +4,8 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -99,7 +99,7 @@ static void getBundlePath(char *path)
 #endif
 #ifdef UNIX
 #ifdef DENG_LIBRARY_DIR
-        sprintf(path, DENG_LIBRARY_DIR, appDir);
+        strcpy(path, DENG_LIBRARY_DIR);
 #else
         // Assume they are in the cwd.
         strcpy(path, appDir);

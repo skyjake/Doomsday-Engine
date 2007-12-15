@@ -3,10 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 2005 Zachary Keene <zjkeene@bellsouth.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright Â© 2005 Zachary Keene <zjkeene@bellsouth.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -302,7 +302,7 @@ void I_PollEvents(void)
         case SDL_MOUSEBUTTONUP:
             mouseClickers[MIN_OF(event.button.button - 1, IMB_MAXBUTTONS - 1)].up++;
             break;
-            
+
         case SDL_JOYBUTTONDOWN:
             joyClickers[MIN_OF(event.jbutton.button, IJOY_MAXBUTTONS - 1)].down++;
             break;
@@ -362,14 +362,14 @@ void I_InitJoystick(void)
 
         // We'll handle joystick events manually
         SDL_JoystickEventState(SDL_ENABLE);
-        
+
         if(verbose)
         {
             Con_Message("I_InitJoystick: Joystick reports %i axes, %i buttons, %i hats, "
-                        "and %i trackballs.\n", 
-                        SDL_JoystickNumAxes(joy), 
+                        "and %i trackballs.\n",
+                        SDL_JoystickNumAxes(joy),
                         SDL_JoystickNumButtons(joy),
-                        SDL_JoystickNumHats(joy), 
+                        SDL_JoystickNumHats(joy),
                         SDL_JoystickNumBalls(joy));
         }
 
@@ -385,7 +385,7 @@ void I_InitJoystick(void)
 /**
  * Initialize input.
  *
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 int I_Init(void)
 {
@@ -451,7 +451,7 @@ void I_GetMouseState(mousestate_t *state)
         return;
 
     buttons = SDL_GetRelativeMouseState(&state->x, &state->y);
-    
+
     // Ignore the first nonzero offset, it appears it's a nasty jump.
     if(!gotFirstMouseMove && (state->x || state->y))
     {
@@ -463,7 +463,7 @@ void I_GetMouseState(mousestate_t *state)
     {
         state->buttonDowns[i] = mouseClickers[i].down;
         state->buttonUps[i] = mouseClickers[i].up;
-        
+
         // Reset counters.
         mouseClickers[i].down = mouseClickers[i].up = 0;
     }
@@ -490,7 +490,7 @@ void I_GetJoystickState(joystate_t *state)
     for(i = 0; i < state->numAxes; ++i)
     {
         int value = SDL_JoystickGetAxis(joy, i);
-        // SDL returns a value between -32768 and 32767, but Doomsday is expecting 
+        // SDL returns a value between -32768 and 32767, but Doomsday is expecting
         // -10000 to 10000. We'll convert as we go.
         value = ((value + 32768) * CONVCONST) + IJOY_AXISMIN;
         state->axis[i] = value;
@@ -499,14 +499,14 @@ void I_GetJoystickState(joystate_t *state)
     {
         state->buttonDowns[i] = joyClickers[i].down;
         state->buttonUps[i] = joyClickers[i].up;
-        
+
         // Reset counters.
         joyClickers[i].down = joyClickers[i].up = 0;
     }
     for(i = 0; i < state->numHats; ++i)
     {
         pov = SDL_JoystickGetHat(joy, i);
-        
+
         /*
         {
             // Debug: Simulating the hat with buttons 1-4.
@@ -535,41 +535,41 @@ void I_GetJoystickState(joystate_t *state)
                 pov = SDL_HAT_LEFTUP;
         }
          */
-        
+
         switch(pov)
         {
             case SDL_HAT_UP:
                 state->hatAngle[i] = 0;
                 break;
-                
+
             case SDL_HAT_RIGHT:
                 state->hatAngle[i] = 90;
                 break;
-                
+
             case SDL_HAT_DOWN:
                 state->hatAngle[i] = 180;
                 break;
-                
+
             case SDL_HAT_LEFT:
                 state->hatAngle[i] = 270;
                 break;
-                
+
             case SDL_HAT_RIGHTUP:
                 state->hatAngle[i] = 45;
                 break;
-                
+
             case SDL_HAT_RIGHTDOWN:
                 state->hatAngle[i] = 135;
                 break;
-                
+
             case SDL_HAT_LEFTUP:
                 state->hatAngle[i] = 315;
                 break;
-                
+
             case SDL_HAT_LEFTDOWN:
                 state->hatAngle[i] = 225;
                 break;
-                
+
             default:
                 state->hatAngle[i] = IJOY_POV_CENTER;
         }

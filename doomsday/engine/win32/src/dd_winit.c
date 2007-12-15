@@ -148,7 +148,7 @@ static BOOL loadGamePlugin(application_t *app)
 /**
  * Loads the given plugin.
  *
- * @return              <code>true</code> if the plugin was loaded succesfully.
+ * @return              @c true, if the plugin was loaded succesfully.
  */
 static int loadPlugin(application_t *app, const char *filename)
 {

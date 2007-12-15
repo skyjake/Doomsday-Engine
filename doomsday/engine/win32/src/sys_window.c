@@ -1,4 +1,4 @@
-﻿/**\file
+/**\file
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -99,14 +99,14 @@ static __inline ddwindow_t *getWindow(uint idx)
  * Initialize the window manager.
  * Tasks include; checking the system environment for feature enumeration.
  *
- * @return              <code>true</code> if initialization was successful.
+ * @return              @c true, if initialization was successful.
  */
 boolean Sys_InitWindowManager(void)
 {
     if(winManagerInited)
         return true; // Already been here.
 
-    Con_Message("Sys_InitWindowManager: Using Win32 window management.\n"); 
+    Con_Message("Sys_InitWindowManager: Using Win32 window management.\n");
 
     winManagerInited = true;
     return true;
@@ -115,7 +115,7 @@ boolean Sys_InitWindowManager(void)
 /**
  * Shutdown the window manager.
  *
- * @return              <code>true</code> if shutdown was successful.
+ * @return              @c true, if shutdown was successful.
  */
 boolean Sys_ShutdownWindowManager(void)
 {
@@ -147,7 +147,7 @@ boolean Sys_ShutdownWindowManager(void)
  *
  * @param info          Ptr to the wminfo_t structure to complete.
  *
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 boolean Sys_GetWindowManagerInfo(wminfo_t *info)
 {
@@ -306,7 +306,7 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
  *
  * @param app           Ptr to the application structure holding our globals.
  * @param parentIDX     Index number of the window that is to be the parent
- *                      of the new window. If <code>0</code> window has no
+ *                      of the new window. If @c 0, window has no
  *                      parent.
  * @param x             X position (in desktop-space).
  * @param y             Y position (in desktop-space).
@@ -314,10 +314,10 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
  * @param h             Height (client area).
  * @param bpp           BPP (bits-per-pixel)
  * @param flags         DDWF_* flags, control appearance/behavior.
- * @param title         Window title string, ELSE <code>NULL</code>.
+ * @param title         Window title string, ELSE @c NULL,.
  * @param data          Platform specific data.
  *
- * @return              If <code>0</code> window creation was unsuccessful,
+ * @return              If @c 0, window creation was unsuccessful,
  *                      ELSE 1-based index identifier of the new window.
  */
 uint Sys_CreateWindow(application_t *app, uint parentIDX,
@@ -392,7 +392,7 @@ static void destroyDDWindow(ddwindow_t *window)
  *
  * @param idx           Index of the window to destroy (1-based).
  *
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 boolean Sys_DestroyWindow(uint idx)
 {
@@ -699,7 +699,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
  *                      'wFlags' is ignored and no change will be made to the
  *                      auto-center state of the window.
  *
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
                       int newBPP, uint wFlags, uint uFlags)
@@ -718,7 +718,7 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
  * @param idx           Index identifier (1-based) to the window.
  * @param title         New title for the window.
  *
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 boolean Sys_SetWindowTitle(uint idx, const char *title)
 {
@@ -740,7 +740,7 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
  * @param width         Address to write the width back to (if any).
  * @param height        Address to write the height back to (if any).
  *
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width,
                                 int *height)
@@ -772,7 +772,7 @@ boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width,
  * @param idx           Index identifier (1-based) to the window.
  * @param bpp           Address to write the BPP back to (if any).
  *
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 boolean Sys_GetWindowBPP(uint idx, int *bpp)
 {
@@ -796,7 +796,7 @@ boolean Sys_GetWindowBPP(uint idx, int *bpp)
  * @param idx           Index identifier (1-based) to the window.
  * @param fullscreen    Address to write the fullscreen state back to (if any).
  *
- * @return              <code>true</code> if successful.
+ * @return              @c true, if successful.
  */
 boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
 {
@@ -818,7 +818,7 @@ boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
  *
  * @param idx           Index identifier (1-based) to the window.
  *
- * @return              HWND handle if successful, ELSE <code>NULL</code>.
+ * @return              HWND handle if successful, ELSE @c NULL,.
  */
 HWND Sys_GetWindowHandle(uint idx)
 {

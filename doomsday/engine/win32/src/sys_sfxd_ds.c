@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_sfxd_ds.c: Sound Driver for DirectSound
  *
  * DirectSound Sfx Driver, with EAX 2.0.
@@ -163,7 +163,7 @@ IDirectSound3DBuffer8 *DS_DSoundGet3D(IDirectSoundBuffer8 *buf8)
  * Does the EAX implementation support getting/setting of a propertry.
  *
  * @param property      Property id (constant) to be checked.
- * @return              <code>true</code> if supported.
+ * @return              @c true, if supported.
  */
 boolean DS_EAXHasSupport(int property)
 {
@@ -189,7 +189,7 @@ boolean DS_EAXHasSupport(int property)
 /**
  * Not a driver of its own, but part of the DSound driver.
  *
- * @return              <code>true</code> if EAX is available.
+ * @return              @c true, if EAX is available.
  */
 int DS_EAXInit(void)
 {
@@ -910,7 +910,7 @@ void DS_EAXSetFailed(DWORD prop)
 }
 
 /**
- * @return              <code>true</code> if the specified property has failed.
+ * @return              @c true, if the specified property has failed.
  */
 boolean DS_EAXHasFailed(DWORD prop)
 {
@@ -925,7 +925,7 @@ boolean DS_EAXHasFailed(DWORD prop)
 /**
  * NOTE: hr must be set.
  *
- * @return              <code>true</code> if an EAX error should be reported.
+ * @return              @c true, if an EAX error should be reported.
  */
 boolean DS_EAXReportError(DWORD prop)
 {
