@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Menu defines and types.
+/**
+ * mn_def.h Menu defines and types.
  */
 
 #ifndef __MENU_DEFS_H_
@@ -39,29 +39,30 @@
 
 // Macros
 
-#define LEFT_DIR        0
-#define RIGHT_DIR       1
-#define DIR_MASK        0x1
-#define ITEM_HEIGHT     20
-#define SLOTTEXTLEN     16
-#define ASCII_CURSOR    '['
+#define LEFT_DIR                0
+#define RIGHT_DIR               1
+#define DIR_MASK                0x1
+#define ITEM_HEIGHT             20
+#define SLOTTEXTLEN             16
+#define ASCII_CURSOR            '['
 
-#define LINEHEIGHT      16
-#define LINEHEIGHT_B    15
-#define LINEHEIGHT_A    8
+#define LINEHEIGHT              16
+#define LINEHEIGHT_B            15
+#define LINEHEIGHT_A            8
 
-#define SKULLXOFF       -28
-#define SKULLYOFF       -1
-#define SKULLW          20
-#define SKULLH          19
-#define CURSORPREF      "M_SKULL%d"
-#define SKULLBASELMP    "M_SKL00"
-#define NUMCURSORS      8
+#define MENUCURSOR_OFFSET_X     -28
+#define MENUCURSOR_OFFSET_Y     -1
+#define MENUCURSOR_WIDTH        0
+#define MENUCURSOR_HEIGHT       19
 #define MENUCURSOR_TICSPERFRAME 6
 
-#define NUMSAVESLOTS    8
+#define CURSORPREF              "M_SKULL%d"
+#define SKULLBASELMP            "M_SKL00"
+#define NUMCURSORS              8
 
-#define MAX_EDIT_LEN    256
+#define NUMSAVESLOTS            8
+
+#define MAX_EDIT_LEN            256
 
 // Types
 
@@ -162,7 +163,6 @@ void    MN_DrawColorBox(const menu_t * menu, int index, float r, float g,
 void    M_StartControlPanel(void);
 void    M_StartMessage(char *string, void *routine, boolean input);
 void    M_StopMessage(void);
-void    M_ClearMenus(void);
 void    M_FloatMod10(float *variable, int option);
 
 

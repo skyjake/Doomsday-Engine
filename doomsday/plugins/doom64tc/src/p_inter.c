@@ -1027,7 +1027,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     {   // Special for Motherdemon attack
 #if 0
         /** DJS - This was originally in a sub routine called P_TouchMotherFire
-        *       but due to the fact that <code>player</code> was not initialized
+        *       but due to the fact that @c player, was not initialized
         *       this likely does not work the way kaiser expected it to.
         *       What would actually happen is not certain but I would guess it
         *       would most likely simply return without doing anything at all.

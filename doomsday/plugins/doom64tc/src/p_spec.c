@@ -968,7 +968,7 @@ void P_PlayerInSpecialSector(player_t *player)
  */
 void P_UpdateSpecials(void)
 {
-    int         x, y; // d64tc added <code>y</code>
+    int         x, y; // d64tc added @c y,
     line_t     *line;
     side_t     *side;
     button_t   *button;

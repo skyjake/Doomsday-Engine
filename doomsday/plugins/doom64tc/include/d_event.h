@@ -23,6 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
+/**
+ * d_event.h:
+ */
+
 #ifndef __D_EVENT__
 #define __D_EVENT__
 
@@ -43,8 +47,6 @@ typedef enum {
     GA_WORLDDONE,
     GA_SCREENSHOT
 } gameaction_t;
-
-extern gameaction_t gameaction;
 
 /*
 //

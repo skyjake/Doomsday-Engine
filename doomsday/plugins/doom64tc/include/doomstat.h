@@ -104,7 +104,6 @@ extern boolean  deathmatch;
 //  status bar explicitely.
 extern boolean  statusbaractive;
 
-extern boolean  menuactive;        // Menu overlayed?
 extern boolean  paused;            // Game Pause?
 
 extern boolean  viewactive;
