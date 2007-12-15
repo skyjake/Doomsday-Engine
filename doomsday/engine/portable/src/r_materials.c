@@ -105,7 +105,7 @@ material_t *R_MaterialCreate(const char *name, int ofTypeID,
                              materialtype_t type)
 {
     uint            i;
-    material_t     *mat, **newList;
+    material_t     *mat;
 
     if(!name)
         return NULL;
@@ -126,7 +126,7 @@ material_t *R_MaterialCreate(const char *name, int ofTypeID,
     // A new material.
     mat = Z_Malloc(sizeof(material_t), PU_STATIC, 0);
     memcpy(mat->name, name, sizeof(mat->name));
-    mat->name[8] = 0;
+    mat->name[8] = '\0';
     mat->ofTypeID = ofTypeID;
     mat->type = type;
     mat->flags = 0;
@@ -135,15 +135,11 @@ material_t *R_MaterialCreate(const char *name, int ofTypeID,
      * Link the new material into the list of materials.
      */
 
-    // Copy the existing list.
-    newList = Z_Malloc(sizeof(material_t*) * ++numMaterials, PU_STATIC, 0);
-    for(i = 0; i < numMaterials - 1; ++i)
-        newList[i] = materials[i];
+    // Resize the existing list.
+    materials =
+        Z_Realloc(materials, sizeof(material_t*) * ++numMaterials, PU_STATIC);
     // Add the new material;
-    newList[i] = mat;
-
-    Z_Free(materials);
-    materials = newList;
+    materials[numMaterials - 1] = mat;
 
     return mat;
 }
