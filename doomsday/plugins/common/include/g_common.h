@@ -64,6 +64,9 @@ void            G_StartTitle(void);
 gamestate_t     G_GetGameState(void);
 void            G_ChangeGameState(gamestate_t state);
 
+gameaction_t    G_GetGameAction(void);
+void            G_SetGameAction(gameaction_t action);
+
 // Spawn player at a dummy place.
 void            G_DummySpawnPlayer(int playernum);
 void            G_DeathMatchSpawnPlayer(int playernum);

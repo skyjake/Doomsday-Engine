@@ -83,11 +83,23 @@
 #define NUM_QUITMESSAGES  0
 #endif
 
+static const float MENUFOGSPEED[2] = {.05f, -.085f};
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct rgba_s {
     float *r, *g, *b, *a;
 } rgba_t;
+
+typedef struct menufogdata_s {
+    DGLuint         texture;
+    float           angle[2];
+    float           posAngle[2];
+    float           pos[2][2];
+    float           alpha;
+    float           joinY;
+    boolean         scrollDir;
+} menufogdata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -295,7 +307,7 @@ static char shiftTable[59] =    // Contains characters 32 to 90.
 };
 
 // Alpha level for the entire menu. Used primarily by M_WriteText2().
-float   menu_alpha = 0;
+float   menuAlpha = 0;
 int     menu_color = 0;
 float   skull_angle = 0;
 
@@ -374,16 +386,7 @@ static int editcolorindex = 0;        // The index of the widgetcolors array of 
 
 static float currentcolor[4] = {0, 0, 0, 0};    // Used by the widget as temporay values
 
-static int menuFogTexture = 0;
-static float mfSpeeds[2] = { 1 * .05f, 1 * -.085f };
-
-static float mfAngle[2] = { 93, 12 };
-static float mfPosAngle[2] = { 35, 77 };
-static float mfPos[2][2];
-static float mfAlpha = 0;
-
-static float mfYjoin = 0.5f;
-static boolean updown = true;
+static menufogdata_t menuFogData;
 
 static float outFade = 0;
 static boolean fadingOut = false;
@@ -1289,9 +1292,9 @@ void M_LoadData(void)
         R_CachePatch(&cursorst[i], buffer);
     }
 
-    if(!menuFogTexture && !Get(DD_NOVIDEO))
+    if(!menuFogData.texture && !Get(DD_NOVIDEO))
     {
-        menuFogTexture = GL_NewTextureWithParams2(DGL_LUMINANCE, 64, 64, W_CacheLumpName("menufog", PU_CACHE),
+        menuFogData.texture = GL_NewTextureWithParams2(DGL_LUMINANCE, 64, 64, W_CacheLumpName("menufog", PU_CACHE),
                                                   0, DGL_NEAREST, DGL_LINEAR, -1 /*best anisotropy*/, DGL_REPEAT, DGL_REPEAT);
     }
 }
@@ -1304,21 +1307,23 @@ void M_UnloadData(void)
     if(Get(DD_NOVIDEO))
         return;
 
-    if(menuFogTexture)
-        gl.DeleteTextures(1, (DGLuint*) &menuFogTexture);
-    menuFogTexture = 0;
+    if(menuFogData.texture)
+        gl.DeleteTextures(1, (DGLuint*) &menuFogData.texture);
+    menuFogData.texture = 0;
 }
 
 /**
- * Init vars, fonts, adjust the menu structs, and anything else that
- * needs to be done before the menu can be used.
+ * Menu initialization.
+ * Called during (post-engine) init and after updating game/engine state.
+ *
+ * Initializes the various vars, fonts, adjust the menu structs and
+ * anything else that needs to be done before the menu can be used.
  */
 void MN_Init(void)
 {
 #if !__DOOM64TC__
     menuitem_t *item;
 #endif
-
 #if __JDOOM__ || __JHERETIC__
     int   i, w, maxw;
 #endif
@@ -1381,8 +1386,18 @@ void MN_Init(void)
 
     currentMenu = &MainDef;
     menuactive = false;
-    menu_alpha = 0;
-    mfAlpha = 0;
+    menuAlpha = 0;
+
+    menuFogData.texture = 0;
+    menuFogData.angle[VX] = 93;
+    menuFogData.angle[VY] = 12;
+    menuFogData.posAngle[VX] = 35;
+    menuFogData.posAngle[VY] = 77;
+    menuFogData.pos[2][2];
+    menuFogData.alpha = 0;
+    menuFogData.joinY = 0.5f;
+    menuFogData.scrollDir = true;
+
     itemOn = currentMenu->lastOn;
     whichSkull = 0;
     skullAnimCounter = MENUCURSOR_TICSPERFRAME;
@@ -1458,7 +1473,9 @@ void MN_Init(void)
  */
 void MN_Ticker(void)
 {
-    int         i;
+#define fog                 (&menuFogData)
+
+    int                 i;
 
     // Check if there has been a response to a message
     if(messageToPrint)
@@ -1473,57 +1490,60 @@ void MN_Ticker(void)
     // Smooth the menu & fog alpha on a curved ramp
     if(menuactive && (!messageToPrint || quitAsk))
     {
+        if(fog->alpha < (cfg.menuFog == 3 ? 0.65f : 1))
+            fog->alpha = (fog->alpha * 1.2f) + .01f;
+        if(fog->alpha > (cfg.menuFog == 3 ? 0.65f : 1))
+            fog->alpha = (cfg.menuFog == 3 ? 0.65f : 1);
 
-        if(mfAlpha < (cfg.menuFog == 3 ? 0.65f : 1))
-            mfAlpha = (mfAlpha * 1.2f) + .01f;
-        if(mfAlpha > (cfg.menuFog == 3 ? 0.65f : 1))
-
-            mfAlpha = (cfg.menuFog == 3 ? 0.65f : 1);
-
-        if(menu_alpha < 1)
-            menu_alpha += .1f;
-        if(menu_alpha > 1)
-            menu_alpha = 1;
+        if(menuAlpha < 1)
+            menuAlpha += .1f;
+        if(menuAlpha > 1)
+            menuAlpha = 1;
     }
     else
     {
-        if(mfAlpha > 0)
-            mfAlpha = mfAlpha / 1.1f;
-        if(mfAlpha < 0)
-            mfAlpha = 0;
-        if(menu_alpha > 0)
-            menu_alpha -= .1f;
-        if(menu_alpha < 0)
-            menu_alpha = 0;
+        if(fog->alpha > 0)
+            fog->alpha = fog->alpha / 1.1f;
+        if(fog->alpha < 0)
+            fog->alpha = 0;
+
+        if(menuAlpha > 0)
+            menuAlpha -= .1f;
+        if(menuAlpha < 0)
+            menuAlpha = 0;
     }
 
     // menu zoom in/out
-    if(!menuactive && mfAlpha > 0)
+    if(!menuactive && fog->alpha > 0)
     {
         outFade += 1 / (float) slamInTicks;
         if(outFade > 1)
             fadingOut = false;
     }
 
-    if(menuactive || mfAlpha > 0)
+    if(menuactive || fog->alpha > 0)
     {
-        float   rewind = 20;
+        float               rewind = 20;
 
         for(i = 0; i < 2; ++i)
         {
             if(cfg.menuFog == 1)
             {
-                mfAngle[i] += mfSpeeds[i] / 4;
-                mfPosAngle[i] -= mfSpeeds[!i];
-                mfPos[i][VX] = 160 + 120 * cos(mfPosAngle[i] / 180 * PI);
-                mfPos[i][VY] = 100 + 100 * sin(mfPosAngle[i] / 180 * PI);
+                fog->angle[i]    += MENUFOGSPEED[i] / 4;
+                fog->posAngle[i] -= MENUFOGSPEED[!i];
+                fog->pos[i][VX] =
+                    160 + 120 * cos(fog->posAngle[i] / 180 * PI);
+                fog->pos[i][VY] =
+                    100 + 100 * sin(fog->posAngle[i] / 180 * PI);
             }
             else
             {
-                mfAngle[i] += mfSpeeds[i] / 4;
-                mfPosAngle[i] -= 1.5f * mfSpeeds[!i];
-                mfPos[i][VX] = 320 + 320 * cos(mfPosAngle[i] / 180 * PI);
-                mfPos[i][VY] = 240 + 240 * sin(mfPosAngle[i] / 180 * PI);
+                fog->angle[i]    += MENUFOGSPEED[i] / 4;
+                fog->posAngle[i] -= MENUFOGSPEED[!i] * 1.5f;
+                fog->pos[i][VX] =
+                    320 + 320 * cos(fog->posAngle[i] / 180 * PI);
+                fog->pos[i][VY] =
+                    240 + 240 * sin(fog->posAngle[i] / 180 * PI);
             }
         }
 
@@ -1548,13 +1568,13 @@ void MN_Ticker(void)
         // Calculate the height of the menuFog 3 Y join
         if(cfg.menuFog == 3)
         {
-            if(updown && mfYjoin > 0.46f)
-                mfYjoin = mfYjoin / 1.002f;
-            else if(!updown && mfYjoin < 0.54f )
-                mfYjoin = mfYjoin * 1.002f;
+            if(fog->scrollDir && fog->joinY > 0.46f)
+                fog->joinY = fog->joinY / 1.002f;
+            else if(!fog->scrollDir && fog->joinY < 0.54f )
+                fog->joinY = fog->joinY * 1.002f;
 
-            if((mfYjoin < 0.46f || mfYjoin > 0.54f))
-                updown = !updown;
+            if((fog->joinY < 0.46f || fog->joinY > 0.54f))
+                fog->scrollDir = !fog->scrollDir;
         }
 
         // Animate the cursor patches
@@ -1589,8 +1609,11 @@ void MN_Ticker(void)
         // Used for jHeretic's rotating skulls
         frame = (menuTime / 3) % 18;
     }
+
     if(menuactive)
         MN_TickerEx();
+
+#undef fog
 }
 
 void M_StartMenu(void)
@@ -1668,7 +1691,7 @@ void M_ClearMenus(void)
  */
 float MN_MenuAlpha(void)
 {
-    return mfAlpha;
+    return menuFogData.alpha;
 }
 
 /**
@@ -1697,7 +1720,7 @@ void M_SetMenuMatrix(float time)
     gl.Ortho(0, 0, 320, 200, -1, 1);
 
     // Draw menu background.
-    if(mfAlpha)
+    if(menuFogData.alpha)
         M_DrawBackground(currentMenu);
 
     if(allowScaling)
@@ -1750,7 +1773,7 @@ void M_Drawer(void)
 
     inhelpscreens = false;
 
-    if(!menuactive && menu_alpha > 0)  // fading out
+    if(!menuactive && menuAlpha > 0)  // fading out
     {
         temp = outFade + 1;
     }
@@ -1767,7 +1790,7 @@ void M_Drawer(void)
     gl.PushMatrix();
 
     // Setup matrix.
-    if(messageToPrint || ( menuactive || (menu_alpha > 0 || mfAlpha > 0)) )
+    if(messageToPrint || ( menuactive || (menuAlpha > 0 || menuFogData.alpha > 0)) )
         M_SetMenuMatrix(messageToPrint? 1 : temp);    // don't slam messages
 
     // Don't change back to the menu after a canceled quit
@@ -1809,7 +1832,7 @@ void M_Drawer(void)
         goto end_draw_menu;
     }
 
-    if(!menuactive && menu_alpha == 0 && mfAlpha == 0)
+    if(!menuactive && menuAlpha == 0 && menuFogData.alpha == 0)
         goto end_draw_menu;
 
     if(currentMenu->drawFunc)
@@ -1820,7 +1843,7 @@ void M_Drawer(void)
     y = currentMenu->y;
     max = currentMenu->itemCount;
 
-    if(menu_alpha > 0)
+    if(menuAlpha > 0)
     {
         for(i = currentMenu->firstItem;
             i < max && i < currentMenu->firstItem + currentMenu->numVisItems; ++i)
@@ -1875,7 +1898,7 @@ void M_Drawer(void)
             {
                 if(currentMenu->items[i].lumpname[0])
                 {
-                    WI_DrawPatch(x, y, r, g, b, menu_alpha,
+                    WI_DrawPatch(x, y, r, g, b, menuAlpha,
                                 W_GetNumForName(currentMenu->items[i].lumpname),
                                 (currentMenu->items[i].flags & MIF_NOTALTTXT)? NULL :
                                  currentMenu->items[i].text, true, ALIGN_LEFT);
@@ -1887,7 +1910,7 @@ void M_Drawer(void)
                 // (in jHeretic/jHexen font[0] is 1 pixel high)
                 WI_DrawParamText(x, y,
                                 currentMenu->items[i].text, currentMenu->font,
-                                r, g, b, menu_alpha,
+                                r, g, b, menuAlpha,
                                 false,
                                 cfg.usePatchReplacement? true : false,
                                 ALIGN_LEFT);
@@ -1939,7 +1962,7 @@ void M_Drawer(void)
                     gl.Rotatef(skull_angle, 0, 0, 1);
                 gl.Scalef(1, 1.2f, 1);
 
-                GL_DrawRect(-w/2.f, -h/2.f, w, h, 1, 1, 1, menu_alpha);
+                GL_DrawRect(-w/2.f, -h/2.f, w, h, 1, 1, 1, menuAlpha);
 
                 gl.MatrixMode(DGL_MODELVIEW);
                 gl.PopMatrix();
@@ -2118,33 +2141,33 @@ void DrawColorWidget(void)
 #else
                         160, (rgba? 85 : 75),
 #endif
-                             1, 1, 1, menu_alpha, true, BORDERUP);
+                             1, 1, 1, menuAlpha, true, BORDERUP);
 
         GL_SetNoTexture();
         GL_DrawRect(menu->x+w, menu->y-30, 24, 22, currentcolor[0],
                     currentcolor[1], currentcolor[2], currentcolor[3]);
         M_DrawBackgroundBox(menu->x+w, menu->y-30, 24, 22, 1, 1, 1,
-                            menu_alpha, false, BORDERDOWN);
+                            menuAlpha, false, BORDERDOWN);
 #ifdef __JDOOM__
         MN_DrawSlider(menu, 0, 11, currentcolor[0] * 10 + .25f);
         M_WriteText2(menu->x, menu->y, ColorWidgetItems[0].text,
-                     hu_font_a, 1, 1, 1, menu_alpha);
+                     hu_font_a, 1, 1, 1, menuAlpha);
         MN_DrawSlider(menu, 1, 11, currentcolor[1] * 10 + .25f);
         M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A),
-                     ColorWidgetItems[1].text, hu_font_a, 1, 1, 1, menu_alpha);
+                     ColorWidgetItems[1].text, hu_font_a, 1, 1, 1, menuAlpha);
         MN_DrawSlider(menu, 2, 11, currentcolor[2] * 10 + .25f);
         M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 2),
-                     ColorWidgetItems[2].text, hu_font_a, 1, 1, 1, menu_alpha);
+                     ColorWidgetItems[2].text, hu_font_a, 1, 1, 1, menuAlpha);
 #else
         MN_DrawSlider(menu, 1, 11, currentcolor[0] * 10 + .25f);
         M_WriteText2(menu->x, menu->y, ColorWidgetItems[0].text,
-                     hu_font_a, 1, 1, 1, menu_alpha);
+                     hu_font_a, 1, 1, 1, menuAlpha);
         MN_DrawSlider(menu, 4, 11, currentcolor[1] * 10 + .25f);
         M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 3),
-                     ColorWidgetItems[3].text, hu_font_a, 1, 1, 1, menu_alpha);
+                     ColorWidgetItems[3].text, hu_font_a, 1, 1, 1, menuAlpha);
         MN_DrawSlider(menu, 7, 11, currentcolor[2] * 10 + .25f);
         M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 6),
-                     ColorWidgetItems[6].text, hu_font_a, 1, 1, 1, menu_alpha);
+                     ColorWidgetItems[6].text, hu_font_a, 1, 1, 1, menuAlpha);
 #endif
         if(rgba)
         {
@@ -2152,12 +2175,12 @@ void DrawColorWidget(void)
             MN_DrawSlider(menu, 3, 11, currentcolor[3] * 10 + .25f);
             M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 3),
                          ColorWidgetItems[3].text, hu_font_a, 1, 1, 1,
-                         menu_alpha);
+                         menuAlpha);
 #else
             MN_DrawSlider(menu, 10, 11, currentcolor[3] * 10 + .25f);
             M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 9),
                          ColorWidgetItems[9].text, hu_font_a, 1, 1, 1,
-                         menu_alpha);
+                         menuAlpha);
 #endif
         }
 
@@ -2216,7 +2239,7 @@ void M_DrawTitle(char *text, int y)
 {
     WI_DrawParamText(160 - M_StringWidth(text, hu_font_b) / 2, y, text,
                      hu_font_b, cfg.menuColor[0], cfg.menuColor[1],
-                     cfg.menuColor[2], menu_alpha, true, true, ALIGN_LEFT);
+                     cfg.menuColor[2], menuAlpha, true, true, ALIGN_LEFT);
 }
 
 void M_WriteMenuText(const menu_t *menu, int index, const char *text)
@@ -2228,7 +2251,7 @@ void M_WriteMenuText(const menu_t *menu, int index, const char *text)
 
     M_WriteText2(menu->x + off,
                  menu->y + menu->itemHeight * (index  - menu->firstItem),
-                 text, menu->font, 1, 1, 1, menu_alpha);
+                 text, menu->font, 1, 1, 1, menuAlpha);
 }
 
 /**
@@ -2248,8 +2271,8 @@ void M_LoadSelect(int option, void *data)
 #endif
 
     menu->lastOn = option;
-    mfAlpha = 0;
-    menu_alpha = 0;
+    menuFogData.alpha = 0;
+    menuAlpha = 0;
     menuactive = false;
     fadingOut = false;
     M_ClearMenus();
@@ -2312,7 +2335,7 @@ static void M_DrawBackground(menu_t *menu)
         int lump = W_CheckNumForName(menu->background);
         if(lump != -1)
         {
-            gl.Color4f(1, 1, 1, mfAlpha);
+            gl.Color4f(1, 1, 1, menuFogData.alpha);
             GL_DrawPatch_CS(0, 0, lump);
             return;
         }
@@ -2324,21 +2347,21 @@ static void M_DrawBackground(menu_t *menu)
     if(cfg.menuFog == 4)
     {
         GL_SetNoTexture();
-        GL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, mfAlpha/2.5f);
+        GL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, menuFogData.alpha/2.5f);
         return;
     }
 
     if(cfg.menuFog == 2)
     {
         gl.Disable(DGL_TEXTURING);
-        gl.Color4f(mfAlpha, mfAlpha / 2, 0, mfAlpha / 3);
+        gl.Color4f(menuFogData.alpha, menuFogData.alpha / 2, 0, menuFogData.alpha / 3);
         gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
         GL_DrawRectTiled(0, 0, 320, 200, 1, 1);
         gl.Enable(DGL_TEXTURING);
     }
 
-    gl.Bind(menuFogTexture);
-    gl.Color3f(mfAlpha, mfAlpha, mfAlpha);
+    gl.Bind(menuFogData.texture);
+    gl.Color3f(menuFogData.alpha, menuFogData.alpha, menuFogData.alpha);
     gl.MatrixMode(DGL_TEXTURE);
     gl.PushMatrix();
 
@@ -2347,20 +2370,20 @@ static void M_DrawBackground(menu_t *menu)
         if(i || cfg.menuFog == 1)
         {
             if(cfg.menuFog == 0)
-                gl.Color3f(mfAlpha / 3, mfAlpha / 2, mfAlpha / 2);
+                gl.Color3f(menuFogData.alpha / 3, menuFogData.alpha / 2, menuFogData.alpha / 2);
             else
-                gl.Color3f(mfAlpha, mfAlpha, mfAlpha);
+                gl.Color3f(menuFogData.alpha, menuFogData.alpha, menuFogData.alpha);
 
             gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
         }
         else if(cfg.menuFog == 2)
         {
-            gl.Color3f(mfAlpha / 5, mfAlpha / 3, mfAlpha / 2);
+            gl.Color3f(menuFogData.alpha / 5, menuFogData.alpha / 3, menuFogData.alpha / 2);
             gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
         }
         else if(cfg.menuFog == 0)
         {
-            gl.Color3f(mfAlpha * 0.15, mfAlpha * 0.2, mfAlpha * 0.3);
+            gl.Color3f(menuFogData.alpha * 0.15, menuFogData.alpha * 0.2, menuFogData.alpha * 0.3);
             gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
         }
 
@@ -2371,9 +2394,9 @@ static void M_DrawBackground(menu_t *menu)
 
             gl.LoadIdentity();
 
-            gl.Translatef(mfPos[i][VX] / 320, mfPos[i][VY] / 200, 0);
-            gl.Rotatef(mfAngle[i] * 1, 0, 0, 1);
-            gl.Translatef(-mfPos[i][VX] / 320, -mfPos[i][VY] / 200, 0);
+            gl.Translatef(menuFogData.pos[i][VX] / 320, menuFogData.pos[i][VY] / 200, 0);
+            gl.Rotatef(menuFogData.angle[i] * 1, 0, 0, 1);
+            gl.Translatef(-menuFogData.pos[i][VX] / 320, -menuFogData.pos[i][VY] / 200, 0);
 
             gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
             gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
@@ -2381,36 +2404,36 @@ static void M_DrawBackground(menu_t *menu)
             gl.Begin(DGL_QUADS);
 
             // Top Half
-            gl.Color4f(mfAlpha * 0.25, mfAlpha * 0.3, mfAlpha * 0.4, 1 - (mfAlpha * 0.8) );
+            gl.Color4f(menuFogData.alpha * 0.25, menuFogData.alpha * 0.3, menuFogData.alpha * 0.4, 1 - (menuFogData.alpha * 0.8) );
             gl.TexCoord2f( 0, 0);
             gl.Vertex2f(0, 0);
 
-            gl.Color4f(mfAlpha * 0.25, mfAlpha * 0.3, mfAlpha * 0.4, 1 - (mfAlpha * 0.8) );
+            gl.Color4f(menuFogData.alpha * 0.25, menuFogData.alpha * 0.3, menuFogData.alpha * 0.4, 1 - (menuFogData.alpha * 0.8) );
             gl.TexCoord2f( xscale, 0);
             gl.Vertex2f(320, 0);
 
-            gl.Color4f(mfAlpha * 0.7, mfAlpha * 0.7, mfAlpha * 0.8, 1 - (0-(mfAlpha * 0.9)));
-            gl.TexCoord2f( xscale, yscale * mfYjoin );
-            gl.Vertex2f(320, 200 * mfYjoin);
+            gl.Color4f(menuFogData.alpha * 0.7, menuFogData.alpha * 0.7, menuFogData.alpha * 0.8, 1 - (0-(menuFogData.alpha * 0.9)));
+            gl.TexCoord2f( xscale, yscale * menuFogData.joinY );
+            gl.Vertex2f(320, 200 * menuFogData.joinY);
 
-            gl.Color4f(mfAlpha * 0.7, mfAlpha * 0.7, mfAlpha * 0.8, 1 - (0-(mfAlpha * 0.9)));
-            gl.TexCoord2f( 0, yscale * mfYjoin );
-            gl.Vertex2f(0, 200 * mfYjoin);
+            gl.Color4f(menuFogData.alpha * 0.7, menuFogData.alpha * 0.7, menuFogData.alpha * 0.8, 1 - (0-(menuFogData.alpha * 0.9)));
+            gl.TexCoord2f( 0, yscale * menuFogData.joinY );
+            gl.Vertex2f(0, 200 * menuFogData.joinY);
 
             // Bottom Half
-            gl.Color4f(mfAlpha * 0.7, mfAlpha * 0.7, mfAlpha * 0.8, 1 - (0-(mfAlpha * 0.9)));
-            gl.TexCoord2f( 0, yscale * mfYjoin );
-            gl.Vertex2f(0, 200 * mfYjoin);
+            gl.Color4f(menuFogData.alpha * 0.7, menuFogData.alpha * 0.7, menuFogData.alpha * 0.8, 1 - (0-(menuFogData.alpha * 0.9)));
+            gl.TexCoord2f( 0, yscale * menuFogData.joinY );
+            gl.Vertex2f(0, 200 * menuFogData.joinY);
 
-            gl.Color4f(mfAlpha * 0.7, mfAlpha * 0.7, mfAlpha * 0.8, 1 - (0-(mfAlpha * 0.9)));
-            gl.TexCoord2f( xscale, yscale * mfYjoin );
-            gl.Vertex2f(320, 200 * mfYjoin);
+            gl.Color4f(menuFogData.alpha * 0.7, menuFogData.alpha * 0.7, menuFogData.alpha * 0.8, 1 - (0-(menuFogData.alpha * 0.9)));
+            gl.TexCoord2f( xscale, yscale * menuFogData.joinY );
+            gl.Vertex2f(320, 200 * menuFogData.joinY);
 
-            gl.Color4f(mfAlpha * 0.25, mfAlpha * 0.3, mfAlpha * 0.4, 1 - (mfAlpha * 0.8) );
+            gl.Color4f(menuFogData.alpha * 0.25, menuFogData.alpha * 0.3, menuFogData.alpha * 0.4, 1 - (menuFogData.alpha * 0.8) );
             gl.TexCoord2f( xscale, yscale);
             gl.Vertex2f(320, 200);
 
-            gl.Color4f(mfAlpha * 0.25, mfAlpha * 0.3, mfAlpha * 0.4, 1 - (mfAlpha * 0.8) );
+            gl.Color4f(menuFogData.alpha * 0.25, menuFogData.alpha * 0.3, menuFogData.alpha * 0.4, 1 - (menuFogData.alpha * 0.8) );
             gl.TexCoord2f( 0, yscale);
             gl.Vertex2f(0, 200);
 
@@ -2421,9 +2444,9 @@ static void M_DrawBackground(menu_t *menu)
         {
             gl.LoadIdentity();
 
-            gl.Translatef(mfPos[i][VX] / 320, mfPos[i][VY] / 200, 0);
-            gl.Rotatef(mfAngle[i] * (cfg.menuFog == 0 ? 0.5 : 1), 0, 0, 1);
-            gl.Translatef(-mfPos[i][VX] / 320, -mfPos[i][VY] / 200, 0);
+            gl.Translatef(menuFogData.pos[i][VX] / 320, menuFogData.pos[i][VY] / 200, 0);
+            gl.Rotatef(menuFogData.angle[i] * (cfg.menuFog == 0 ? 0.5 : 1), 0, 0, 1);
+            gl.Translatef(-menuFogData.pos[i][VX] / 320, -menuFogData.pos[i][VY] / 200, 0);
             if(cfg.menuFog == 2)
                 GL_DrawRectTiled(0, 0, 320, 200, 270 / 8, 4 * 225);
             else if(cfg.menuFog == 0)
@@ -2446,42 +2469,42 @@ void M_DrawMainMenu(void)
 
     frame = (menuTime / 5) % 7;
 
-    gl.Color4f( 1, 1, 1, menu_alpha);
+    gl.Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(88, 0, W_GetNumForName("M_HTIC"));
     GL_DrawPatch_CS(37, 80, SkullBaseLump + (frame + 2) % 7);
     GL_DrawPatch_CS(278, 80, SkullBaseLump + frame);
 
 #elif __JHERETIC__
-    WI_DrawPatch(88, 0, 1, 1, 1, menu_alpha, W_GetNumForName("M_HTIC"),
+    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, W_GetNumForName("M_HTIC"),
                  NULL, false, ALIGN_LEFT);
 
-    gl.Color4f( 1, 1, 1, menu_alpha);
+    gl.Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(40, 10, SkullBaseLump + (17 - frame));
     GL_DrawPatch_CS(232, 10, SkullBaseLump + frame);
 #elif __JDOOM__
-    WI_DrawPatch(94, 2, 1, 1, 1, menu_alpha, W_GetNumForName("M_DOOM"),
+    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, W_GetNumForName("M_DOOM"),
                  NULL, false, ALIGN_LEFT);
 #elif __JSTRIFE__
     menu_t     *menu = &MainDef;
     int         yoffset = 0;
 
-    WI_DrawPatch(86, 2, 1, 1, 1, menu_alpha, W_GetNumForName("M_STRIFE"),
+    WI_DrawPatch(86, 2, 1, 1, 1, menuAlpha, W_GetNumForName("M_STRIFE"),
                  NULL, false, ALIGN_LEFT);
 
-    WI_DrawPatch(menu->x, menu->y + yoffset, 1, 1, 1, menu_alpha,
+    WI_DrawPatch(menu->x, menu->y + yoffset, 1, 1, 1, menuAlpha,
                  W_GetNumForName("M_NGAME"), NULL, false, ALIGN_LEFT);
     WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menu_alpha, W_GetNumForName("M_NGAME"), NULL, false, ALIGN_LEFT);
+                 menuAlpha, W_GetNumForName("M_NGAME"), NULL, false, ALIGN_LEFT);
     WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menu_alpha, W_GetNumForName("M_OPTION"), NULL, false, ALIGN_LEFT);
+                 menuAlpha, W_GetNumForName("M_OPTION"), NULL, false, ALIGN_LEFT);
     WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menu_alpha, W_GetNumForName("M_LOADG"), NULL, false, ALIGN_LEFT);
+                 menuAlpha, W_GetNumForName("M_LOADG"), NULL, false, ALIGN_LEFT);
     WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menu_alpha, W_GetNumForName("M_SAVEG"), NULL, false, ALIGN_LEFT);
+                 menuAlpha, W_GetNumForName("M_SAVEG"), NULL, false, ALIGN_LEFT);
     WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menu_alpha, W_GetNumForName("M_RDTHIS"), NULL, false, ALIGN_LEFT);
+                 menuAlpha, W_GetNumForName("M_RDTHIS"), NULL, false, ALIGN_LEFT);
     WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menu_alpha, W_GetNumForName("M_QUITG"), NULL, false, ALIGN_LEFT);
+                 menuAlpha, W_GetNumForName("M_QUITG"), NULL, false, ALIGN_LEFT);
 #endif
 }
 
@@ -2502,11 +2525,11 @@ void M_DrawClassMenu(void)
     };
 
     M_WriteText2(34, 24, "CHOOSE CLASS:", hu_font_b, menu->color[0],
-                 menu->color[1], menu->color[2], menu_alpha);
+                 menu->color[1], menu->color[2], menuAlpha);
 
     class = (playerclass_t) currentMenu->items[itemOn].option;
 
-    gl.Color4f( 1, 1, 1, menu_alpha);
+    gl.Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(174, 8, W_GetNumForName(boxLumpName[class]));
     GL_DrawPatch_CS(174 + 24, 8 + 12,
                     W_GetNumForName(walkLumpName[class]) +
@@ -2524,11 +2547,11 @@ void M_DrawEpisode(void)
 #ifdef __JHERETIC__
     M_DrawTitle("WHICH EPISODE?", 4);
 #elif __DOOM64TC__
-    WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menu_alpha,
+    WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
                  0, "{case}Which Episode{scaley=1.25,y=-3}?",
                  true, ALIGN_LEFT);
 #elif __JDOOM__
-    WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menu_alpha,
+    WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
                  W_GetNumForName("M_EPISOD"), "{case}Which Episode{scaley=1.25,y=-3}?",
                  true, ALIGN_LEFT);
 #endif
@@ -2543,9 +2566,9 @@ void M_DrawSkillMenu(void)
     M_DrawTitle("SKILL LEVEL?", 4);
 #elif __JDOOM__
     menu_t *menu = &SkillDef;
-    WI_DrawPatch(96, 14, menu->color[0], menu->color[1], menu->color[2], menu_alpha,
+    WI_DrawPatch(96, 14, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
                  W_GetNumForName("M_NEWG"), "{case}NEW GAME", true, ALIGN_LEFT);
-    WI_DrawPatch(54, 38, menu->color[0], menu->color[1], menu->color[2], menu_alpha,
+    WI_DrawPatch(54, 38, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
                  W_GetNumForName("M_SKILL"), "{case}Choose Skill Level:", true,
                  ALIGN_LEFT);
 #endif
@@ -2595,7 +2618,7 @@ void M_DrawLoad(void)
 #ifndef __JDOOM__
     M_DrawTitle("LOAD GAME", 4);
 #else
-    WI_DrawPatch(72, 28, menu->color[0], menu->color[1], menu->color[2], menu_alpha,
+    WI_DrawPatch(72, 28, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
                  W_GetNumForName("M_LOADG"), "{case}LOAD GAME", true, ALIGN_LEFT);
 #endif
     for(i = 0; i < NUMSAVESLOTS; ++i)
@@ -2605,7 +2628,7 @@ void M_DrawLoad(void)
         M_WriteText2(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y +
                      (menu->itemHeight * i),
                      savegamestrings[i], menu->font, menu->color[0], menu->color[1],
-                     menu->color[2], menu_alpha);
+                     menu->color[2], menuAlpha);
     }
 
 }
@@ -2618,7 +2641,7 @@ void M_DrawSave(void)
 #ifndef __JDOOM__
     M_DrawTitle("SAVE GAME", 4);
 #else
-    WI_DrawPatch(72, 28, menu->color[0], menu->color[1], menu->color[2], menu_alpha,
+    WI_DrawPatch(72, 28, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
                  W_GetNumForName("M_SAVEG"), "{case}SAVE GAME", true, ALIGN_LEFT);
 #endif
 
@@ -2628,7 +2651,7 @@ void M_DrawSave(void)
                              (menu->itemHeight * i));
         M_WriteText2(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i),
                      savegamestrings[i], menu->font, menu->color[0], menu->color[1],
-                     menu->color[2], menu_alpha);
+                     menu->color[2], menuAlpha);
     }
 
     if(saveStringEnter)
@@ -2636,7 +2659,7 @@ void M_DrawSave(void)
         i = M_StringWidth(savegamestrings[saveSlot], hu_font_a);
         M_WriteText2(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y +
                      (menu->itemHeight * saveSlot), "_", hu_font_a, menu->color[0],
-                     menu->color[1], menu->color[2], menu_alpha);
+                     menu->color[1], menu->color[2], menuAlpha);
     }
 
 }
@@ -2647,15 +2670,15 @@ void M_DrawSave(void)
 void M_DrawSaveLoadBorder(int x, int y)
 {
 #ifndef __JDOOM__
-    gl.Color4f( 1, 1, 1, menu_alpha);
+    gl.Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(x - 8, y - 4, W_GetNumForName("M_FSLOT"));
 #else
-    gl.Color4f( 1, 1, 1, menu_alpha);
+    gl.Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(x - 8, y + 8, W_GetNumForName("M_LSLEFT"));
     GL_DrawPatch_CS(x + 8 * 24, y + 8, W_GetNumForName("M_LSRGHT"));
 
     GL_SetPatch(W_GetNumForName("M_LSCNTR"));
-    gl.Color4f( 1, 1, 1, menu_alpha);
+    gl.Color4f( 1, 1, 1, menuAlpha);
     GL_DrawRectTiled(x - 3, y - 3, 24 * 8, 14, 8, 14);
 #endif
 }
@@ -2868,20 +2891,20 @@ void M_DrawReadThis3(void)
 void M_DrawOptions(void)
 {
 #ifndef __JDOOM__
-    WI_DrawPatch(88, 0, 1, 1, 1, menu_alpha, W_GetNumForName("M_HTIC"),
+    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, W_GetNumForName("M_HTIC"),
                  NULL, false, ALIGN_LEFT);
 
     M_DrawTitle("OPTIONS", 56);
 #else
-    WI_DrawPatch(94, 2, 1, 1, 1, menu_alpha, W_GetNumForName("M_DOOM"),
+    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, W_GetNumForName("M_DOOM"),
                  NULL, false, ALIGN_LEFT);
 # if __DOOM64TC__
     WI_DrawPatch(160, 64, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
-                 menu_alpha, 0, "{case}OPTIONS",
+                 menuAlpha, 0, "{case}OPTIONS",
                  true, ALIGN_CENTER);
 #else
     WI_DrawPatch(160, 64, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
-                 menu_alpha, W_GetNumForName("M_OPTTTL"), "{case}OPTIONS",
+                 menuAlpha, W_GetNumForName("M_OPTTTL"), "{case}OPTIONS",
                  true, ALIGN_CENTER);
 # endif
 #endif
@@ -3079,7 +3102,7 @@ void M_DrawHUDMenu(void)
     M_DrawTitle("hud options", 4);
 
     // Draw the page arrows.
-    gl.Color4f( 1, 1, 1, menu_alpha);
+    gl.Color4f( 1, 1, 1, menuAlpha);
     token = (!menu->firstItem || menuTime & 8) ? "invgeml2" : "invgeml1";
     GL_DrawPatch_CS(menu->x -20, menu->y - 16, W_GetNumForName(token));
     token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
@@ -3105,7 +3128,7 @@ void M_DrawHUDMenu(void)
         M_WriteMenuText(menu, 17, yesno[cfg.hudShown[HUD_HEALTH]]);
         M_WriteMenuText(menu, 18, yesno[cfg.hudShown[HUD_ARTI]]);
         MN_DrawColorBox(menu,19, cfg.hudColor[0], cfg.hudColor[1],
-                        cfg.hudColor[2], menu_alpha);
+                        cfg.hudColor[2], menuAlpha);
         MN_DrawSlider(menu, 21, 10, cfg.hudScale * 10 - 3 + .5f);
     }
 #elif __JHERETIC__
@@ -3126,7 +3149,7 @@ void M_DrawHUDMenu(void)
         M_WriteMenuText(menu, 19, yesno[cfg.hudShown[HUD_HEALTH]]);
         M_WriteMenuText(menu, 20, yesno[cfg.hudShown[HUD_KEYS]]);
         MN_DrawColorBox(menu, 21, cfg.hudColor[0], cfg.hudColor[1],
-                        cfg.hudColor[2], menu_alpha);
+                        cfg.hudColor[2], menuAlpha);
         MN_DrawSlider(menu, 23, 10, cfg.hudScale * 10 - 3 + .5f);
     }
 #elif __JDOOM__
@@ -3141,7 +3164,7 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, 4, yesno[cfg.hudShown[HUD_KEYS]]);
     MN_DrawSlider(menu, 5, 10, cfg.hudScale * 10 - 3 + .5f);
     MN_DrawColorBox(menu,6, cfg.hudColor[0], cfg.hudColor[1],
-                    cfg.hudColor[2], menu_alpha);
+                    cfg.hudColor[2], menuAlpha);
     M_WriteMenuText(menu, 7, yesno[cfg.msgShow != 0]);
     M_WriteMenuText(menu, 8, xhairnames[cfg.xhair]);
     MN_DrawSlider(menu, 9, 9, cfg.xhairSize);
@@ -3394,8 +3417,8 @@ boolean M_EndGameResponse(int option, void *data)
     if(messageResponse == 1)
     {
         currentMenu->lastOn = itemOn;
-        mfAlpha = 0;
-        menu_alpha = 0;
+        menuFogData.alpha = 0;
+        menuAlpha = 0;
         fadingOut = false;
         menuactive = false;
         M_StopMessage();
@@ -3646,8 +3669,8 @@ void M_ChooseSkill(int option, void *data)
     G_DeferredNewGame(option);
 #endif
 
-    mfAlpha = 0;
-    menu_alpha = 0;
+    menuFogData.alpha = 0;
+    menuAlpha = 0;
     menuactive = false;
     fadingOut = false;
     M_ClearMenus();
@@ -3750,7 +3773,7 @@ void MN_DrawSlider(const menu_t * menu, int item, int width, int slot)
     x = menu->x + 24;
     y = menu->y + 2 + (menu->itemHeight * (item  - menu->firstItem));
 
-    M_DrawSlider(x, y, width, slot, menu_alpha);
+    M_DrawSlider(x, y, width, slot, menuAlpha);
 #else
     int         x =0, y =0;
     int         height = menu->itemHeight - 1;
@@ -3762,7 +3785,7 @@ void MN_DrawSlider(const menu_t * menu, int item, int width, int slot)
     x += menu->x + 6;
     y = menu->y + menu->itemHeight * item;
 
-    M_DrawSlider(x, y, width, height, slot, menu_alpha);
+    M_DrawSlider(x, y, width, height, slot, menuAlpha);
 #endif
 }
 

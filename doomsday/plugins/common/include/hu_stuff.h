@@ -32,6 +32,8 @@
 
 #include "doomsday.h"
 
+#include "r_common.h"
+
 enum {
     ALIGN_LEFT = 0,
     ALIGN_CENTER,
@@ -49,13 +51,6 @@ enum {
 #define HU_TITLEX           (0)
 #define HU_TITLEY           (167 - hu_font[0].height)
 
-// A combination of patch data and its lump number.
-typedef struct dpatch_s {
-    int         width, height;
-    int         leftoffset, topoffset;
-    int         lump;
-} dpatch_t;
-
 typedef enum border_e {
     BORDERUP = 1,
     BORDERDOWN
@@ -69,16 +64,17 @@ extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
 extern dpatch_t *lnames;
 
 extern boolean  message_noecho;
+extern int typein_time;
+extern boolean chatOn;
 
 #ifdef __JDOOM__
 // Plutonia and TNT map names.
 extern char *mapnamesp[32], *mapnamest[32];
 #endif
 
-void        HU_Init(void);
-void        HU_Ticker(void);
+void            Hu_LoadData(void);
 
-void        R_CachePatch(dpatch_t * dp, char *name);
+void            Hu_Ticker(void);
 
 // Implements patch replacement.
 void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
@@ -123,5 +119,8 @@ char        HU_dequeueChatChar(void);
 void        HU_Erase(void);
 
 void        HU_DrawMapCounters(void);
+
+void        Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
+                             float texAngle, float alpha, float arg1);
 
 #endif

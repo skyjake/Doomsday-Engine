@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * g_dgl.h : The game's interface to DGL.
  *
  * Only includes the functions the game can safely access.
@@ -44,6 +44,11 @@ typedef struct gamedgl_s {
     int             (*GetInteger) (int name);
     int             (*GetIntegerv) (int name, int *v);
     int             (*SetInteger) (int name, int value);
+    int             (*SetIntegerv) (int name, const int *values);
+    float           (*GetFloat) (int name);
+    int             (*GetFloatv) (int name, float *v);
+    int             (*SetFloat) (int name, float value);
+    int             (*SetFloatv) (int name, const float *v);
     char           *(*GetString) (int name);
     int             (*Enable) (int cap);
     void            (*Disable) (int cap);

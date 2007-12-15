@@ -18,22 +18,34 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_common.h : Common routines for refresh.
  */
 
 #ifndef __GAME_COMMON_REFRESH_H__
 #define __GAME_COMMON_REFRESH_H__
 
-void            R_PrecachePSprites(void);
+// A combination of patch data and its lump number.
+typedef struct dpatch_s {
+    int         width, height;
+    int         leftoffset, topoffset;
+    int         lump;
+} dpatch_t;
+
 void            R_SetViewWindowTarget(int x, int y, int w, int h);
 void            R_ViewWindowTicker(void);
 void            R_GetViewWindow(float* x, float* y, float* w, float* h);
 boolean         R_IsFullScreenViewWindow(void);
 boolean         R_MapObscures(int playerid, int x, int y, int w, int h);
+
+void            R_PrecachePSprites(void);
+void            R_CachePatch(dpatch_t *dp, char *name);
+
+void            R_GetGammaMessageStrings(void);
+void            R_CycleGammaLevel(void);
 
 #endif
