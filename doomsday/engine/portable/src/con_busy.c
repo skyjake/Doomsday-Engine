@@ -69,9 +69,11 @@ static int      busyMode;
 static thread_t busyThread;
 static timespan_t busyTime;
 static volatile boolean busyDone;
+static volatile boolean busyDoneCopy;
 static volatile const char* busyError = NULL;
 static int      busyFont = 0;
 static int      busyFontHgt;        // Height of the font.
+static mutex_t  busy_Mutex;         // To prevent Data races in the busy thread.
 
 static DGLuint  texLoading[2];
 static DGLuint  texScreenshot;      // Captured screenshot of the latest frame.
@@ -91,13 +93,20 @@ int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
 {
     int result = 0;
 
+    if(!busyInited)
+    {
+        busy_Mutex = Sys_CreateMutex("BUSY_MUTEX");
+    }
+
     if(busyInited)
     {
         Con_Error("Con_Busy: Already busy.\n");
     }
 
     busyMode = flags;
+    Sys_Lock(busy_Mutex);
     busyDone = false;
+    Sys_Unlock(busy_Mutex);
 
     // Load any textures needed in this mode.
     Con_BusyLoadTextures();
@@ -153,7 +162,9 @@ void Con_BusyWorkerEnd(void)
     if(!busyInited)
         return;
 
+    Sys_Lock(busy_Mutex);
     busyDone = true;
+    Sys_Unlock(busy_Mutex);
 }
 
 boolean Con_IsBusy(void)
@@ -296,8 +307,17 @@ static void Con_BusyLoop(void)
         gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
     }
 
-    while(!busyDone || (canUpload && GL_GetDeferredCount() > 0))
+    Sys_Lock(busy_Mutex);
+    busyDoneCopy = busyDone;
+    Sys_Unlock(busy_Mutex);
+
+    while(!busyDoneCopy || (canUpload && GL_GetDeferredCount() > 0))
     {
+
+        Sys_Lock(busy_Mutex);
+        busyDoneCopy = busyDone;
+        Sys_Unlock(busy_Mutex);
+
         Sys_Sleep(20);
 
         // Make sure that any deferred content gets uploaded.
@@ -313,6 +333,7 @@ static void Con_BusyLoop(void)
         if(canDraw)
             Con_BusyDrawer();
     }
+
 
     if(canDraw)
     {
