@@ -45,6 +45,7 @@
 #endif
 
 #include "am_map.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -70,6 +71,11 @@ static float windowHeight = 200;
 static int targetX = 0, targetY = 0, targetWidth = 320, targetHeight = 200;
 static int oldWindowX = 0, oldWindowY = 0, oldWindowWidth = 320, oldWindowHeight = 200;
 static float windowPos = 0;
+
+static int gammaLevel;
+#ifndef __JHEXEN__
+char    gammamsg[5][81];
+#endif
 
 // CODE --------------------------------------------------------------------
 
@@ -208,4 +214,52 @@ boolean R_MapObscures(int playerid, int x, int y, int w, int h)
 
 #undef FIXXTOSCREENX
 #undef FIXYTOSCREENY
+}
+
+void R_CachePatch(dpatch_t *dp, char *name)
+{
+    lumppatch_t        *patch;
+
+    if(IS_DEDICATED)
+        return;
+
+    dp->lump = W_CheckNumForName(name);
+    if(dp->lump == -1)
+        return;
+
+    patch = (lumppatch_t *) W_CacheLumpNum(dp->lump, PU_CACHE);
+    dp->width = SHORT(patch->width);
+    dp->height = SHORT(patch->height);
+    dp->leftoffset = SHORT(patch->leftoffset);
+    dp->topoffset = SHORT(patch->topoffset);
+
+    // Precache the patch while we're at it.
+    R_PrecachePatch(dp->lump);
+}
+
+#ifndef __JHEXEN__
+void R_GetGammaMessageStrings(void)
+{
+    int             i;
+
+    // Init some strings.
+    for(i = 0; i < 5; ++i)
+        strcpy(gammamsg[i], GET_TXT(TXT_GAMMALVL0 + i));
+}
+#endif
+
+void R_CycleGammaLevel(void)
+{
+    char            buf[50];
+
+    gammaLevel++;
+    if(gammaLevel > 4)
+        gammaLevel = 0;
+
+#ifdef __JDOOM__
+    P_SetMessage(players + consoleplayer, gammamsg[gammaLevel], true);
+#endif
+
+    sprintf(buf, "rend-tex-gamma %f", ((float) gammaLevel / 8.0f) * 1.5f);
+    DD_Execute(false, buf);
 }

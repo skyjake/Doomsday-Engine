@@ -194,45 +194,30 @@ void P_SetupForMapData(int type, uint num)
     switch(type)
     {
     case DAM_SECTOR:
-        xsectors = Z_Calloc(num * sizeof(xsector_t), PU_LEVEL, 0);
+        if(num > 0)
+            xsectors = Z_Calloc(num * sizeof(xsector_t), PU_LEVEL, 0);
+        else
+            xsectors = NULL;
         break;
 
     case DAM_LINE:
-        xlines = Z_Calloc(num * sizeof(xline_t), PU_LEVEL, 0);
+        if(num > 0)
+            xlines = Z_Calloc(num * sizeof(xline_t), PU_LEVEL, 0);
+        else
+            xlines = NULL;
         break;
 
     case DAM_THING:
-        things = Z_Calloc(num * sizeof(spawnspot_t), PU_LEVEL, 0);
+        if(num > 0)
+            things = Z_Calloc(num * sizeof(spawnspot_t), PU_LEVEL, 0);
+        else
+            things = NULL;
         break;
 
     default:
         break;
     }
 }
-
-/**
- * Called during level load by the engine, prior to node building.
- */
-#if __JHEXEN__
-void P_PreNodeBuild(void)
-{
-    int                 i;
-
-    for(i = 0; i < numthings; ++i)
-    {
-        spawnspot_t        *spot = &things[i];
-
-        if(spot->type == PO_SPAWN_TYPE || spot->type == PO_SPAWNCRUSH_TYPE)
-        {
-            // Polyobj StartSpot Pt.
-            int             tag = spot->angle;
-
-            PO_FindAndCreatePolyobj(tag, (spot->type == PO_SPAWNCRUSH_TYPE),
-                                    spot->pos[VX], spot->pos[VY]);
-        }
-    }
-}
-#endif
 
 typedef struct setuplevelparam_s {
     int episode;

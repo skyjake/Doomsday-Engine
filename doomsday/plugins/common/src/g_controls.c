@@ -61,6 +61,7 @@
 #include "g_controls.h"
 #include "p_tick.h" // for P_IsPaused()
 #include "d_netsv.h"
+#include "hu_menu.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -338,7 +339,6 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-tab automap",
         "bindevent map:key-f follow",
         "bindevent map:key-r rotate",
-        "bindevent map:key-g grid",
         "bindcontrol mapzoom key-equals",
         "bindcontrol mapzoom key-minus-inverse",
         "bindevent map:key-0 zoommax",
@@ -372,10 +372,10 @@ DEFCC( CCmdDefaultGameBinds )
         // Menu events:
         "bindevent key-esc menu",
         "bindevent menu:key-backspace menucancel",
-        "bindevent menu:key-up menuup",
-        "bindevent menu:key-down menudown",
-        "bindevent menu:key-left menuleft",
-        "bindevent menu:key-right menuright",
+        "bindevent menu:key-up-repeat menuup",
+        "bindevent menu:key-down-repeat menudown",
+        "bindevent menu:key-left-repeat menuleft",
+        "bindevent menu:key-right-repeat menuright",
         "bindevent menu:key-enter menuselect",
 
         "bindevent message:key-y messageyes",
@@ -420,7 +420,7 @@ DEFCC( CCmdPause )
 
 void G_SetPause(boolean yes)
 {
-    if(menuactive)
+    if(Hu_MenuIsActive())
         return; // No change.
 
     if(yes)
@@ -1215,7 +1215,7 @@ boolean G_AdjustControlState(event_t* ev)
         return false;           // always let joy button events filter down
 
     case EV_POV:
-        if(!automapactive && !menuactive)
+        if(!automapactive && !Hu_MenuIsActive())
         {
             if(ev->state == EVS_UP)
                 povangle = -1;

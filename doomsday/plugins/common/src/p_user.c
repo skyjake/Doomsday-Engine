@@ -2,8 +2,8 @@
  *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2000-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © Raven Software, Corp.
  *\author Copyright © 1993-1996 by id Software, Inc.
  */
@@ -978,39 +978,42 @@ void P_ClientSideThink(void)
 
 void P_PlayerThinkState(player_t *player)
 {
-    mobj_t *plrmo = player->plr->mo;
-
-    // jDoom
-    // Selector 0 = Generic (used by default)
-    // Selector 1 = Fist
-    // Selector 2 = Pistol
-    // Selector 3 = Shotgun
-    // Selector 4 = Fist
-    // Selector 5 = Chaingun
-    // Selector 6 = Missile
-    // Selector 7 = Plasma
-    // Selector 8 = BFG
-    // Selector 9 = Chainsaw
-    // Selector 10 = Super shotgun
-
-    // jHexen
-    // Selector 0 = Generic (used by default)
-    // Selector 1..4 = Weapon 1..4
-    plrmo->selector =
-        (plrmo->selector & ~DDMOBJ_SELECTOR_MASK) | (player->readyweapon + 1);
-
 #if __JHEXEN__
     player->worldTimer++;
 #endif
 
-    // Reactiontime is used to prevent movement for a bit after a teleport.
-    if(plrmo->reactiontime > 0)
+    if(player->plr->mo)
     {
-        plrmo->reactiontime--;
-    }
-    else
-    {
-        plrmo->reactiontime = 0;
+        mobj_t             *plrmo = player->plr->mo;
+
+        // jDoom
+        // Selector 0 = Generic (used by default)
+        // Selector 1 = Fist
+        // Selector 2 = Pistol
+        // Selector 3 = Shotgun
+        // Selector 4 = Fist
+        // Selector 5 = Chaingun
+        // Selector 6 = Missile
+        // Selector 7 = Plasma
+        // Selector 8 = BFG
+        // Selector 9 = Chainsaw
+        // Selector 10 = Super shotgun
+
+        // jHexen
+        // Selector 0 = Generic (used by default)
+        // Selector 1..4 = Weapon 1..4
+        plrmo->selector =
+            (plrmo->selector & ~DDMOBJ_SELECTOR_MASK) | (player->readyweapon + 1);
+
+        // Reactiontime is used to prevent movement for a bit after a teleport.
+        if(plrmo->reactiontime > 0)
+        {
+            plrmo->reactiontime--;
+        }
+        else
+        {
+            plrmo->reactiontime = 0;
+        }
     }
 
     if(player->playerstate != PST_DEAD)
@@ -1022,20 +1025,26 @@ void P_PlayerThinkState(player_t *player)
 
 void P_PlayerThinkCheat(player_t *player)
 {
-    // fixme: do this in the cheat code
-    if(P_GetPlayerCheats(player) & CF_NOCLIP)
-        player->plr->mo->flags |= MF_NOCLIP;
-    else
-        player->plr->mo->flags &= ~MF_NOCLIP;
+    if(player->plr->mo)
+    {
+        mobj_t             *plrmo = player->plr->mo;
+
+        // fixme: do this in the cheat code
+        if(P_GetPlayerCheats(player) & CF_NOCLIP)
+            plrmo->flags |= MF_NOCLIP;
+        else
+            plrmo->flags &= ~MF_NOCLIP;
+    }
 }
 
 void P_PlayerThinkAttackLunge(player_t *player)
 {
     mobj_t     *plrmo = player->plr->mo;
-    ticcmd_t   *cmd = &player->plr->cmd;
 
-    if(plrmo->flags & MF_JUSTATTACKED)
+    if(plrmo && (plrmo->flags & MF_JUSTATTACKED))
     {
+        ticcmd_t   *cmd = &player->plr->cmd;
+
         cmd->angle = plrmo->angle >> 16;    // Don't turn.
                                             // The client must know of this.
         player->plr->flags |= DDPF_FIXANGLES;
@@ -1079,7 +1088,7 @@ void P_PlayerThinkMove(player_t *player)
 
     // Move around.
     // Reactiontime is used to prevent movement for a bit after a teleport.
-    if(!plrmo->reactiontime)
+    if(plrmo && !plrmo->reactiontime)
     {
         P_MovePlayer(player);
 

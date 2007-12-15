@@ -119,31 +119,11 @@ void HU_Register(void)
         Con_AddVariable(&hudCVars[i]);
 }
 
-void R_CachePatch(dpatch_t *dp, char *name)
-{
-    lumppatch_t *patch;
-
-    if(IS_DEDICATED)
-        return;
-
-    dp->lump = W_CheckNumForName(name);
-    if(dp->lump == -1)
-        return;
-    patch = (lumppatch_t *) W_CacheLumpNum(dp->lump, PU_CACHE);
-    dp->width = SHORT(patch->width);
-    dp->height = SHORT(patch->height);
-    dp->leftoffset = SHORT(patch->leftoffset);
-    dp->topoffset = SHORT(patch->topoffset);
-
-    // Precache the patch while we're at it.
-    R_PrecachePatch(dp->lump);
-}
-
 /**
  * Loads the font patches and inits various strings
  * JHEXEN Note: Don't bother with the yellow font, we'll colour the white version
  */
-void HU_Init(void)
+void Hu_LoadData(void)
 {
     int         i, j;
     char        buffer[9];
@@ -694,7 +674,7 @@ void HU_DrawMapCounters(void)
 #endif
 }
 
-void HU_Ticker(void)
+void Hu_Ticker(void)
 {
     HUMsg_Ticker();
 }
@@ -1481,4 +1461,128 @@ void Draw_EndZoom(void)
 {
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PopMatrix();
+}
+
+/**
+ * Draws a 'fancy' fullscreen fog effect. Used by the menu.
+ *
+ * \fixme A bit of a mess really...
+ */
+void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
+                      float texAngle, float alpha, float arg1)
+{
+    const float     xscale = 2.0f;
+    const float     yscale = 1.0f;
+
+    if(alpha <= 0)
+        return;
+
+    if(cfg.menuEffects > 1)
+        return;
+
+    if(effectID == 4)
+    {
+        GL_SetNoTexture();
+        GL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, alpha/2.5f);
+        return;
+    }
+
+    if(effectID == 2)
+    {
+        gl.Disable(DGL_TEXTURING);
+        gl.Color4f(alpha, alpha / 2, 0, alpha / 3);
+        gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
+        GL_DrawRectTiled(0, 0, 320, 200, 1, 1);
+        gl.Enable(DGL_TEXTURING);
+    }
+
+    gl.Bind(tex);
+    gl.Color3f(alpha, alpha, alpha);
+    gl.MatrixMode(DGL_TEXTURE);
+    gl.PushMatrix();
+
+    if(effectID == 1)
+    {
+        gl.Color3f(alpha / 3, alpha / 2, alpha / 2);
+        gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
+    }
+    else if(effectID == 2)
+    {
+        gl.Color3f(alpha / 5, alpha / 3, alpha / 2);
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
+    }
+    else if(effectID == 0)
+    {
+        gl.Color3f(alpha * 0.15, alpha * 0.2, alpha * 0.3);
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
+    }
+
+    if(effectID == 3)
+    {   // The fancy one.
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
+
+        gl.LoadIdentity();
+
+        gl.Translatef(texOffset[VX] / 320, texOffset[VY] / 200, 0);
+        gl.Rotatef(texAngle * 1, 0, 0, 1);
+        gl.Translatef(-texOffset[VX] / 320, -texOffset[VY] / 200, 0);
+
+        gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
+        gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
+
+        gl.Begin(DGL_QUADS);
+            // Top Half
+            gl.Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
+            gl.TexCoord2f( 0, 0);
+            gl.Vertex2f(0, 0);
+
+            gl.Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
+            gl.TexCoord2f(xscale, 0);
+            gl.Vertex2f(320, 0);
+
+            gl.Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
+            gl.TexCoord2f(xscale, yscale * arg1);
+            gl.Vertex2f(320, 200 * arg1);
+
+            gl.Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
+            gl.TexCoord2f(0, yscale * arg1);
+            gl.Vertex2f(0, 200 * arg1);
+
+            // Bottom Half
+            gl.Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
+            gl.TexCoord2f(0, yscale * arg1);
+            gl.Vertex2f(0, 200 * arg1);
+
+            gl.Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
+            gl.TexCoord2f( xscale, yscale * arg1);
+            gl.Vertex2f(320, 200 * arg1);
+
+            gl.Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
+            gl.TexCoord2f(xscale, yscale);
+            gl.Vertex2f(320, 200);
+
+            gl.Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
+            gl.TexCoord2f(0, yscale);
+            gl.Vertex2f(0, 200);
+        gl.End();
+    }
+    else
+    {
+        gl.LoadIdentity();
+
+        gl.Translatef(texOffset[VX] / 320, texOffset[VY] / 200, 0);
+        gl.Rotatef(texAngle * (effectID == 0 ? 0.5 : 1), 0, 0, 1);
+        gl.Translatef(-texOffset[VX] / 320, -texOffset[VY] / 200, 0);
+        if(effectID == 2)
+            GL_DrawRectTiled(0, 0, 320, 200, 270 / 8, 4 * 225);
+        else if(effectID == 0)
+            GL_DrawRectTiled(0, 0, 320, 200, 270 / 4, 8 * 225);
+        else
+            GL_DrawRectTiled(0, 0, 320, 200, 270, 225);
+    }
+
+    gl.MatrixMode(DGL_TEXTURE);
+    gl.PopMatrix();
+
+    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }

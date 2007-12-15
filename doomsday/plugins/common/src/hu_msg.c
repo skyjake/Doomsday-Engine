@@ -115,6 +115,7 @@ enum {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 DEFCC(CCmdMsgAction);
+DEFCC(CCmdMsgResponse);
 DEFCC(CCmdLocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -249,7 +250,7 @@ cvar_t msgCVars[] = {
     {NULL}
 };
 
-// Console commands for the message buffer
+// Console commands for the various message/chat displays.
 ccmd_t  msgCCmds[] = {
     {"chatcancel",      "",     CCmdMsgAction},
     {"chatcomplete",    "",     CCmdMsgAction},
@@ -258,6 +259,9 @@ ccmd_t  msgCCmds[] = {
     {"beginchat",       NULL,   CCmdMsgAction},
     {"message",         "s",    CCmdLocalMessage},
     {"msgrefresh",      "",     CCmdMsgAction},
+    {"messageyes",      "",     CCmdMsgResponse},
+    {"messageno",       "",     CCmdMsgResponse},
+    {"messagecancel",   "",     CCmdMsgResponse},
     {NULL}
 };
 
@@ -852,4 +856,46 @@ DEFCC(CCmdMsgAction)
     }
 
     return true;
+}
+
+void M_EndAnyKeyMsg(void);
+
+/**
+ * Handles responses to messages requiring input.
+ */
+DEFCC(CCmdMsgResponse)
+{
+    extern int messageResponse;
+    extern int messageToPrint;
+    extern boolean messageNeedsInput;
+
+    if(messageToPrint)
+    {
+        // Handle "Press any key to continue" messages
+        if(!messageNeedsInput)
+        {
+            M_EndAnyKeyMsg();
+            return true;
+        }
+        else
+        {
+            if(!stricmp(argv[0], "messageyes"))
+            {
+                messageResponse = 1;
+                return true;
+            }
+            else if(!stricmp(argv[0], "messageno"))
+            {
+                messageResponse = -1;
+                return true;
+            }
+            else if(!stricmp(argv[0], "messagecancel"))
+            {
+                messageResponse = -2;
+                return true;
+            }
+        }
+    }
+
+    return false;
 }

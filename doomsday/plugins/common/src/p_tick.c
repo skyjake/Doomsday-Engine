@@ -45,6 +45,7 @@
 #include "g_common.h"
 #include "g_controls.h"
 #include "p_player.h"
+#include "hu_menu.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -71,11 +72,11 @@ int     TimerGame;
 // CODE --------------------------------------------------------------------
 
 /**
- * Returns true if the game is currently paused.
+ * @return              @c true, if the game is currently paused.
  */
 boolean P_IsPaused(void)
 {
-    return paused || (!IS_NETGAME && menuactive);
+    return paused || (!IS_NETGAME && Hu_MenuIsActive());
 }
 
 /**
@@ -158,7 +159,7 @@ void P_DoTick(void)
     }
 
     // Pause if in menu and at least one tic has been run.
-    if(!IS_NETGAME && menuactive && !Get(DD_PLAYBACK) &&
+    if(!IS_NETGAME && Hu_MenuIsActive() && !Get(DD_PLAYBACK) &&
        players[consoleplayer].plr->viewZ != 1)
         return;
 

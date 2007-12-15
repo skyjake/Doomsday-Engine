@@ -82,6 +82,11 @@ void G_InitDGL(void)
     Imp(GetInteger);
     Imp(GetIntegerv);
     Imp(SetInteger);
+    Imp(SetIntegerv);
+    Imp(GetFloat);
+    Imp(GetFloatv);
+    Imp(SetFloat);
+    Imp(SetFloatv);
     Imp(GetString);
     Imp(Enable);
     Imp(Disable);

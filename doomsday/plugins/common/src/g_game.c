@@ -58,6 +58,7 @@
 #include "p_tick.h"
 #include "am_map.h"
 #include "hu_stuff.h"
+#include "hu_menu.h"
 #include "hu_msg.h"
 #include "g_common.h"
 #include "g_update.h"
@@ -178,7 +179,6 @@ FILE   *rndDebugfile;
 
 game_config_t cfg; // The global cfg.
 
-gameaction_t gameaction;
 skillmode_t gameskill;
 int     gameepisode;
 int     gamemap;
@@ -422,6 +422,8 @@ static int d_map;
 static int GameLoadSlot;
 #endif
 
+static gameaction_t gameaction;
+
 // CODE --------------------------------------------------------------------
 
 void G_Register(void)
@@ -430,6 +432,17 @@ void G_Register(void)
 
     for(i = 0; gamestatusCVars[i].name; ++i)
         Con_AddVariable(gamestatusCVars + i);
+}
+
+void G_SetGameAction(gameaction_t action)
+{
+    if(gameaction != action)
+        gameaction = action;
+}
+
+gameaction_t G_GetGameAction(void)
+{
+    return gameaction;
 }
 
 /**
@@ -479,7 +492,7 @@ void G_PreInit(void)
     G_Register();               // read-only game status cvars (for playsim)
     G_ControlRegister();        // for controls/input
     AM_Register();              // for the automap
-    MN_Register();              // for the menu
+    Hu_MenuRegister();          // for the menu
     HU_Register();              // for the HUD displays.
     HUMsg_Register();           // for the message buffer/chat widget
     ST_Register();              // for the hud/statusbar
@@ -509,16 +522,16 @@ void G_PostInit(void)
     Con_Message("P_Init: Init Playloop state.\n");
     P_Init();
 
-    Con_Message("HU_Init: Setting up heads up display.\n");
-    HU_Init();
+    Con_Message("Hu_LoadData: Setting up heads up display.\n");
+    Hu_LoadData();
 
     Con_Message("ST_Init: Init status bar.\n");
     ST_Init();
 
     Cht_Init();
 
-    Con_Message("MN_Init: Init miscellaneous info.\n");
-    MN_Init();
+    Con_Message("Hu_MenuInit: Init miscellaneous info.\n");
+    Hu_MenuInit();
 
     Con_Message("AM_Init: Init automap.\n");
     AM_Init();
@@ -613,7 +626,7 @@ void G_DoLoadLevel(void)
 
     P_SetupLevel(gameepisode, gamemap, 0, gameskill);
     Set(DD_DISPLAYPLAYER, consoleplayer); // View the guy you are playing
-    gameaction = GA_NONE;
+    G_SetGameAction(GA_NONE);
 
     Z_CheckHeap();
 
@@ -679,21 +692,21 @@ boolean G_Responder(event_t *ev)
 #endif
 
     // Any key/button down pops up menu if in demos.
-    if(gameaction == GA_NONE && !singledemo && !menuactive &&
+    if(G_GetGameAction() == GA_NONE && !singledemo && !Hu_MenuIsActive() &&
        (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
     {
         if(ev->state == EVS_DOWN &&
            (ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON ||
             ev->type == EV_JOY_BUTTON))
         {
-            M_StartMenu();
+            Hu_MenuCommand(MCMD_OPEN);
             return true;
         }
         return false;
     }
 
     // With the menu active, none of these should respond to input events.
-    if(!menuactive)
+    if(!Hu_MenuIsActive())
     {
         // Try Infine.
         if(FI_Responder(ev))
@@ -791,6 +804,7 @@ void G_Ticker(timespan_t ticLength)
     player_t   *plyr = &players[consoleplayer];
     static gamestate_t oldgamestate = -1;
     static trigger_t fixed = {1.0 / TICSPERSEC};
+    gameaction_t currentAction;
 
     if(IS_CLIENT && !Get(DD_GAME_READY))
         return;
@@ -798,7 +812,8 @@ void G_Ticker(timespan_t ticLength)
     // Do player reborns if needed.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(players[i].plr->ingame && players[i].playerstate == PST_REBORN)
+        if(players[i].plr->ingame && players[i].playerstate == PST_REBORN &&
+           !P_IsCamera(players[i].plr->mo))
             G_DoReborn(i);
 
         // Player has left?
@@ -824,9 +839,9 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     }
 
     // Do things to change the game state.
-    while(gameaction != GA_NONE)
+    while((currentAction = G_GetGameAction()) != GA_NONE)
     {
-        switch(gameaction)
+        switch(currentAction)
         {
 #if __JHEXEN__ || __JSTRIFE__
         case GA_INITNEW:
@@ -861,7 +876,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
             break;
 
         case GA_VICTORY:
-            gameaction = GA_NONE;
+            G_SetGameAction(GA_NONE);
             break;
 
         case GA_WORLDDONE:
@@ -870,7 +885,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 
         case GA_SCREENSHOT:
             G_DoScreenShot();
-            gameaction = GA_NONE;
+            G_SetGameAction(GA_NONE);
             break;
 
         case GA_NONE:
@@ -918,7 +933,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 
             ST_Ticker();
             AM_Ticker();
-            HU_Ticker();
+            Hu_Ticker();
             break;
 
         case GS_INTERMISSION:
@@ -1267,15 +1282,15 @@ void G_DoReborn(int playernum)
 #if __JHEXEN__ || __JSTRIFE__
         if(SV_HxRebornSlotAvailable())
         {   // Use the reborn code if the slot is available
-            gameaction = GA_SINGLEREBORN;
+            G_SetGameAction(GA_SINGLEREBORN);
         }
         else
         {   // Start a new game if there's no reborn info
-            gameaction = GA_NEWGAME;
+            G_SetGameAction(GA_NEWGAME);
         }
 #else
         // reload the level from scratch
-        gameaction = GA_LOADLEVEL;
+        G_SetGameAction(GA_LOADLEVEL);
 #endif
     }
     else                        // Netgame
@@ -1427,7 +1442,7 @@ void G_StartNewGame(skillmode_t skill)
  */
 void G_TeleportNewMap(int map, int position)
 {
-    gameaction = GA_LEAVEMAP;
+    G_SetGameAction(GA_LEAVEMAP);
     LeaveMap = map;
     LeavePosition = position;
 }
@@ -1437,13 +1452,13 @@ void G_DoTeleportNewMap(void)
     // Clients trust the server in these things.
     if(IS_CLIENT)
     {
-        gameaction = GA_NONE;
+        G_SetGameAction(GA_NONE);
         return;
     }
 
     SV_MapTeleport(LeaveMap, LeavePosition);
     G_ChangeGameState(GS_LEVEL);
-    gameaction = GA_NONE;
+    G_SetGameAction(GA_NONE);
     RebornPosition = LeavePosition;
 
     // Is there a briefing before this map?
@@ -1488,7 +1503,7 @@ void G_LeaveLevel(int map, int position, boolean secret)
   #endif
 #endif
 
-    gameaction = GA_COMPLETED;
+    G_SetGameAction(GA_COMPLETED);
 }
 
 /**
@@ -1500,27 +1515,27 @@ boolean G_IfVictory(void)
     if((gameepisode == 1 && gamemap == 30) ||
        (gameepisode == 2 && gamemap == 7))
     {
-        gameaction = GA_VICTORY;
+        G_SetGameAction(GA_VICTORY);
         return true;
     }
 #elif __JDOOM__
     if((gamemap == 8) && (gamemode != commercial))
     {
-        gameaction = GA_VICTORY;
+        G_SetGameAction(GA_VICTORY);
         return true;
     }
 
 #elif __JHERETIC__
     if(gamemap == 8)
     {
-        gameaction = GA_VICTORY;
+        G_SetGameAction(GA_VICTORY);
         return true;
     }
 
 #elif __JHEXEN__ || __JSTRIFE__
     if(LeaveMap == -1 && LeavePosition == -1)
     {
-        gameaction = GA_VICTORY;
+        G_SetGameAction(GA_VICTORY);
         return true;
     }
 #endif
@@ -1543,7 +1558,7 @@ void G_DoCompleted(void)
     if(FI_Debriefing(gameepisode, gamemap))
         return;
 
-    gameaction = GA_NONE;
+    G_SetGameAction(GA_NONE);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -1763,7 +1778,7 @@ void G_PrepareWIData(void)
 
 void G_WorldDone(void)
 {
-    gameaction = GA_WORLDDONE;
+    G_SetGameAction(GA_WORLDDONE);
 
 #if __JDOOM__
     if(secretexit)
@@ -1778,7 +1793,7 @@ void G_DoWorldDone(void)
     gamemap = wminfo.next + 1;
 #endif
     G_DoLoadLevel();
-    gameaction = GA_NONE;
+    G_SetGameAction(GA_NONE);
     viewactive = true;
 }
 
@@ -1789,7 +1804,7 @@ void G_DoWorldDone(void)
  */
 void G_DoSingleReborn(void)
 {
-    gameaction = GA_NONE;
+    G_SetGameAction(GA_NONE);
     SV_LoadGame(SV_HxGetRebornSlot());
     SB_SetClassData();
 }
@@ -1802,13 +1817,13 @@ void G_DoSingleReborn(void)
 void G_LoadGame(int slot)
 {
     GameLoadSlot = slot;
-    gameaction = GA_LOADGAME;
+    G_SetGameAction(GA_LOADGAME);
 }
 #else
 void G_LoadGame(char *name)
 {
     strcpy(savename, name);
-    gameaction = GA_LOADGAME;
+    G_SetGameAction(GA_LOADGAME);
 }
 #endif
 
@@ -1819,7 +1834,7 @@ void G_DoLoadGame(void)
 {
     G_StopDemo();
     FI_Reset();
-    gameaction = GA_NONE;
+    G_SetGameAction(GA_NONE);
 
 #if __JHEXEN__ || __JSTRIFE__
     GL_DrawPatch(100, 68, W_GetNumForName("loadicon"));
@@ -1844,7 +1859,7 @@ void G_SaveGame(int slot, char *description)
 {
     savegameslot = slot;
     strcpy(savedescription, description);
-    gameaction = GA_SAVEGAME;
+    G_SetGameAction(GA_SAVEGAME);
 }
 
 /**
@@ -1863,7 +1878,7 @@ void G_DoSaveGame(void)
     SV_SaveGame(name, savedescription);
 #endif
 
-    gameaction = GA_NONE;
+    G_SetGameAction(GA_NONE);
     savedescription[0] = 0;
 
     P_SetMessage(players + consoleplayer, TXT_GAMESAVED, false);
@@ -1873,14 +1888,14 @@ void G_DoSaveGame(void)
 void G_DeferredNewGame(skillmode_t skill)
 {
     d_skill = skill;
-    gameaction = GA_NEWGAME;
+    G_SetGameAction(GA_NEWGAME);
 }
 
 void G_DoInitNew(void)
 {
     SV_HxInitBaseSlot();
     G_InitNew(d_skill, d_episode, d_map);
-    gameaction = GA_NONE;
+    G_SetGameAction(GA_NONE);
 }
 #endif
 
@@ -1895,9 +1910,9 @@ void G_DeferedInitNew(skillmode_t skill, int episode, int map)
     d_map = map;
 
 #if __JHEXEN__ || __JSTRIFE__
-    gameaction = GA_INITNEW;
+    G_SetGameAction(GA_INITNEW);
 #else
-    gameaction = GA_NEWGAME;
+    G_SetGameAction(GA_NEWGAME);
 #endif
 }
 
@@ -1915,7 +1930,7 @@ void G_DoNewGame(void)
 #else
     G_StartNewGame(d_skill);
 #endif
-    gameaction = GA_NONE;
+    G_SetGameAction(GA_NONE);
 }
 
 /**
@@ -2301,7 +2316,7 @@ void G_DemoAborted(void)
 
 void G_ScreenShot(void)
 {
-    gameaction = GA_SCREENSHOT;
+    G_SetGameAction(GA_SCREENSHOT);
 }
 
 void G_DoScreenShot(void)

@@ -416,7 +416,7 @@ void FI_ClearState(void)
     HUMsg_ClearMessages(&players[consoleplayer]);
 
     // General game state.
-    gameaction = GA_NONE;
+    G_SetGameAction(GA_NONE);
     if(fi->mode != FIMODE_OVERLAY)
     {
         G_ChangeGameState(GS_INFINE);
@@ -682,7 +682,7 @@ void FI_End(void)
 #endif
                 return;
             }
-            gameaction = GA_COMPLETED;
+            G_SetGameAction(GA_COMPLETED);
         }
         else if(oldMode == FIMODE_BEFORE)
         {
@@ -795,7 +795,7 @@ void FI_DemoEnds(void)
         fi->suspended = false;
         fi_active = true;
         G_ChangeGameState(GS_INFINE);
-        gameaction = GA_NONE;
+        G_SetGameAction(GA_NONE);
         AM_Stop(consoleplayer);
     }
 }

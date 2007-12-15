@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,8 @@
  */
 
 /**
- * Multiplayer Menu (for jDoom, jHeretic and jHexen)
+ * m_multi.c: Multiplayer Menu (for jDoom, jHeretic and jHexen).
+ *
  * Contains an extension for edit fields.
  * \todo Remove unnecessary SC* declarations and other unused code.
  */
@@ -50,6 +51,7 @@
 #endif
 
 #include "hu_stuff.h"
+#include "hu_menu.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -98,8 +100,6 @@ void    SCEditField(int efptr, void *data);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern float menu_alpha;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -306,19 +306,19 @@ void DrANumber(int number, int x, int y)
 
     sprintf(buff, "%i", number);
 
-    M_WriteText2(x, y, buff, hu_font_a, 1, 1, 1, menu_alpha);
+    M_WriteText2(x, y, buff, hu_font_a, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void MN_DrCenterTextA_CS(char *text, int center_x, int y)
 {
     M_WriteText2(center_x - M_StringWidth(text, hu_font_a) / 2, y, text,
-                 hu_font_a, 1, 0, 0, menu_alpha);
+                 hu_font_a, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void MN_DrCenterTextB_CS(char *text, int center_x, int y)
 {
     M_WriteText2(center_x - M_StringWidth(text, hu_font_b) / 2, y, text,
-                 hu_font_b, 1, 0, 0, menu_alpha);
+                 hu_font_b, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void DrawMultiplayerMenu(void)
@@ -383,7 +383,7 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, buf);
     M_WriteText2(160 - M_StringWidth(mapName, hu_font_a) / 2,
                  menu->y + menu->itemHeight, mapName,
-                 hu_font_a, 1, 0.7f, 0.3f, menu_alpha);
+                 hu_font_a, 1, 0.7f, 0.3f, Hu_MenuAlpha());
 
     idx++;
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
@@ -419,17 +419,17 @@ static int CeilPow2(int num)
 
 void DrawPlayerSetupMenu(void)
 {
-    spriteinfo_t sprInfo;
-    menu_t *menu = &PlayerSetupMenu;
-    int     useColor = plrColor;
-
+    spriteinfo_t    sprInfo;
+    menu_t         *menu = &PlayerSetupMenu;
+    int             useColor = plrColor;
+    float           menuAlpha = Hu_MenuAlpha();
 #if __JHEXEN__
-    int     numColors = 8;
-    int     sprites[3] = { SPR_PLAY, SPR_CLER, SPR_MAGE };
+    int             numColors = 8;
+    static const int sprites[3] = { SPR_PLAY, SPR_CLER, SPR_MAGE };
 #else
-    int     plrClass = 0;
-    int     numColors = 4;
-    int     sprites[3] = { SPR_PLAY, SPR_PLAY, SPR_PLAY };
+    int             plrClass = 0;
+    int             numColors = 4;
+    static const int sprites[3] = { SPR_PLAY, SPR_PLAY, SPR_PLAY };
 #endif
 
     M_DrawTitle("PLAYER SETUP", menu->y - 28);
@@ -466,7 +466,7 @@ void DrawPlayerSetupMenu(void)
                 menu->y + 90 - sprInfo.topOffset,
 #endif
                 CeilPow2(sprInfo.width), CeilPow2(sprInfo.height), 1, 1, 1,
-                menu_alpha);
+                menuAlpha);
 
     if(plrColor == numColors)
     {
@@ -478,7 +478,7 @@ void DrawPlayerSetupMenu(void)
 #else
                       menu->y + 64,
 #endif
-                      "AUTOMATIC", hu_font_a, 1, 1, 1, menu_alpha);
+                      "AUTOMATIC", hu_font_a, 1, 1, 1, menuAlpha);
     }
 
 }
@@ -534,7 +534,7 @@ void SCEnterJoinMenu(int option, void *data)
     if(IS_NETGAME)
     {
         DD_Execute(false, "net disconnect");
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         return;
     }
     DD_Execute(false, "net setup client");
@@ -717,7 +717,7 @@ void SCOpenServer(int option, void *data)
         Executef(false, "setmap %i %i", cfg.netEpisode, cfg.netMap);
 #endif
 
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         return;
     }
 
@@ -728,7 +728,7 @@ void SCOpenServer(int option, void *data)
 void SCCloseServer(int option, void *data)
 {
     DD_Execute(false, "net server close");
-    M_ClearMenus();
+    Hu_MenuCommand(MCMD_CLOSE);
 }
 
 void SCEnterPlayerSetupMenu(int option, void *data)
@@ -889,7 +889,6 @@ void DrawEditField(menu_t *menu, int index, editfield_t *ef)
     int     x = menu->x, y = menu->y + menu->itemHeight * index, vis;
     char    buf[MAX_EDIT_LEN + 1], *text;
 
-
     M_DrawSaveLoadBorder(x + 11, y + 5);
     strcpy(buf, ef->text);
     strupr(buf);
@@ -898,7 +897,7 @@ void DrawEditField(menu_t *menu, int index, editfield_t *ef)
     text = buf + ef->firstVisible;
     vis = Ed_VisibleSlotChars(text, M_StringWidth);
     text[vis] = 0;
-    M_WriteText2(x + 8, y + 5, text, hu_font_a, 1, 1, 1, menu_alpha);
+    M_WriteText2(x + 8, y + 5, text, hu_font_a, 1, 1, 1, Hu_MenuAlpha());
 
 }
 

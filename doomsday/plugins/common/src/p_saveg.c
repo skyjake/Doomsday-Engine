@@ -977,7 +977,7 @@ int SV_HxGetRebornSlot(void)
 }
 
 /**
- * @return              <code>true</code> if the reborn slot is available.
+ * @return              @c true, if the reborn slot is available.
  */
 boolean SV_HxRebornSlotAvailable(void)
 {

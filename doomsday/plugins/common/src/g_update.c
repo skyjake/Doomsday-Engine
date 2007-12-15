@@ -49,6 +49,7 @@
 #endif
 
 #include "hu_pspr.h"
+#include "hu_menu.h"
 #include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
@@ -162,7 +163,7 @@ void G_UpdateState(int step)
 #endif
 
         Cht_Init();
-        MN_Init();
+        Hu_MenuInit();
 
 #if __JHEXEN__
         S_InitScript();

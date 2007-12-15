@@ -60,6 +60,7 @@
 #include "g_common.h"
 #include "d_net.h"
 #include "p_player.h"
+#include "hu_menu.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -186,7 +187,7 @@ int D_NetServerStarted(int before)
     G_InitNew(cfg.netSkill, cfg.netEpisode, netMap);
 
     // Close the menu, the game begins!!
-    M_ClearMenus();
+    Hu_MenuCommand(MCMD_CLOSE);
     return true;
 }
 
@@ -222,7 +223,7 @@ int D_NetConnect(int before)
 
     // Close the menu, the game begins!!
     //  advancedemo = false;
-    M_ClearMenus();
+    Hu_MenuCommand(MCMD_CLOSE);
     return true;
 }
 
@@ -476,14 +477,14 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
         break;
 
     case GPT_MESSAGE:
-        snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", data);
+        snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
         P_SetMessage(&players[consoleplayer], msgBuff, false);
         break;
 
 #ifndef __JDOOM__
 #ifndef __JHERETIC__
     case GPT_YELLOW_MESSAGE:
-        snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", data);
+        snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
         P_SetYellowMessage(&players[consoleplayer], msgBuff, false);
         break;
 #endif

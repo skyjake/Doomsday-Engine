@@ -194,13 +194,16 @@ void P_FreePlayerStarts(void)
  */
 void P_DealPlayerStarts(int group)
 {
-    int     i, k;
-    player_t *pl;
-    spawnspot_t *mt;
-    int     spotNumber;
+    int             i, k;
+    int             spotNumber;
+    player_t       *pl;
+    spawnspot_t    *mt;
 
     if(!numPlayerStarts)
-        Con_Error("No playerstarts!\n");
+    {
+        Con_Message("P_DealPlayerStarts: Warning, no playerstarts found!\n");
+        return;
+    }
 
     // First assign one start per player, only accepting perfect matches.
     for(i = 0, pl = players; i < MAXPLAYERS; i++, pl++)
@@ -316,36 +319,42 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
  */
 boolean P_FuzzySpawn(spawnspot_t *spot, int playernum, boolean doTeleSpark)
 {
-    int     i, k, x, y;
-    int     offset = 33;        // Player radius = 16
+    int         i, k, x, y;
+    int         offset = 33; // Player radius = 16
     spawnspot_t place;
 
-    // Try some spots in the vicinity.
-    for(i = 0; i < 9; i++)
+    if(spot)
     {
-        memcpy(&place, spot, sizeof(*spot));
-
-        if(i != 0)
+        // Try some spots in the vicinity.
+        for(i = 0; i < 9; i++)
         {
-            k = (i == 4 ? 0 : i);
-            // Move a bit.
-            x = k % 3 - 1;
-            y = k / 3 - 1;
-            place.pos[VX] += x * offset;
-            place.pos[VY] += y * offset;
-        }
+            memcpy(&place, spot, sizeof(*spot));
 
-        if(P_CheckSpot(playernum, &place, doTeleSpark))
-        {
-            // This is good!
-            P_SpawnPlayer(&place, playernum);
-            return true;
+            if(i != 0)
+            {
+                k = (i == 4 ? 0 : i);
+                // Move a bit.
+                x = k % 3 - 1;
+                y = k / 3 - 1;
+                place.pos[VX] += x * offset;
+                place.pos[VY] += y * offset;
+            }
+
+            if(P_CheckSpot(playernum, &place, doTeleSpark))
+            {
+                // This is good!
+                P_SpawnPlayer(&place, playernum);
+                return true;
+            }
         }
     }
 
     // No success. Just spawn at the specified spot.
     P_SpawnPlayer(spot, playernum);
-    return false;
+
+    // Camera players do not collide with the world, so we consider the
+    // spot free.
+    return (players[playernum].plr->flags & DDPF_CAMERA);
 }
 
 #if __JHERETIC__
@@ -475,7 +484,7 @@ void P_SpawnThings(void)
  */
 void P_SpawnPlayers(void)
 {
-    int         i;
+    int             i;
 
     // If deathmatch, randomly spawn the active players.
     if(deathmatch)
@@ -508,10 +517,13 @@ void P_SpawnPlayers(void)
         for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->ingame)
             {
-                ddplayer_t *ddpl = players[i].plr;
+                spawnspot_t    *spot = NULL;
+                ddplayer_t     *ddpl = players[i].plr;
 
-                if(!P_FuzzySpawn
-                   (&playerstarts[players[i].startspot], i, false))
+                if(players[i].startspot < numPlayerStarts)
+                    spot = &playerstarts[players[i].startspot];
+
+                if(!P_FuzzySpawn(spot, i, false))
                 {
                     // Gib anything at the spot.
                     P_Telefrag(ddpl->mo);
