@@ -39,7 +39,7 @@ enum                               // Hook types.
     HOOK_STARTUP = 0,              // Called ASAP after startup.
     HOOK_INIT = 1,                 // Called after engine has been initialized.
     HOOK_DEFS = 2,                 // Called after DEDs have been loaded.
-    HOOK_LOAD_MAP_LUMPS = 3,       // Called when loading map data lumps.
+    HOOK_MAP_CONVERT = 3,          // Called when a map needs converting.
     NUM_HOOK_TYPES
 };
 

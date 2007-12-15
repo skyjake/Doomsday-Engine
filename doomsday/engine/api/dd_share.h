@@ -290,7 +290,6 @@ extern          "C" {
         DD_WINDOW_HEIGHT,
         DD_WINDOW_HANDLE,
         DD_DYNLIGHT_TEXTURE,
-        DD_GAME_EXPORTS,
         DD_SECTOR_COUNT,
         DD_LINE_COUNT,
         DD_SIDE_COUNT,

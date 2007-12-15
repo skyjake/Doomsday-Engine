@@ -161,6 +161,40 @@ extern          "C" {
     int             F_Access(const char *path);
     unsigned int    F_LastModified(const char *fileName);
 
+    // Map building interface.
+    boolean         MPE_Begin(const char *name);
+    boolean         MPE_End(void);
+
+    uint            MPE_VertexCreate(float x, float y);
+    uint            MPE_SidedefCreate(uint sector, short flags,
+                                      const char *topMaterial,
+                                      materialtype_t topMaterialType,
+                                      float topOffsetX, float topOffsetY, float topRed,
+                                      float topGreen, float topBlue,
+                                      const char *middleMaterial,
+                                      materialtype_t middleMaterialType,
+                                      float middleOffsetX, float middleOffsetY,
+                                      float middleRed, float middleGreen,
+                                      float middleBlue, float middleAlpha,
+                                      const char *bottomMaterial,
+                                      materialtype_t bottomMaterialType,
+                                      float bottomOffsetX, float bottomOffsetY,
+                                      float bottomRed, float bottomGreen,
+                                      float bottomBlue);
+    uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
+                                      short mapflags, int flags);
+    uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue,
+                                     float floorHeight, const char *floorMaterial,
+                                     materialtype_t floorMaterialType, float floorOffsetX,
+                                     float floorOffsetY, float floorRed, float floorGreen,
+                                     float floorBlue, float ceilHeight,
+                                     const char *ceilMaterial,
+                                     materialtype_t ceilMaterialType, float ceilOffsetX,
+                                     float ceilOffsetY, float ceilRed, float ceilGreen,
+                                     float ceilBlue);
+    uint            MPE_PolyobjCreate(uint *lines, uint linecount, boolean crush,
+                                      int tag, int sequenceType, float startX, float startY);
+
     // Network.
     void            Net_SendPacket(int to_player, int type, void *data,
                                    int length);
@@ -339,9 +373,6 @@ extern          "C" {
                                              int amount);
 
     // Play: Polyobjs.
-    boolean         PO_CreatePolyobj(line_t **list, uint num, uint *poIdx,
-                                     boolean crush, int tag, int sequenceType,
-                                     float startX, float startY);
     boolean         PO_MovePolyobj(uint num, float x, float y);
     boolean         PO_RotatePolyobj(uint num, angle_t angle);
     void            PO_UnLinkPolyobj(void *po);

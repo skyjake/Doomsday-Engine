@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 349 <--
+; --> 356 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -18,6 +18,7 @@ NAME            "DOOMSDAY"
 ; 118 formerly GL_SetTexture
 ; 206 formerly GL_Update
 ; 232 formerly R_SetAnimGroup
+; 326 formerly PO_Alloc
 ; 332 formerly P_ControlReset
 
 EXPORTS
@@ -113,6 +114,16 @@ EXPORTS
     F_Access                    @245 NONAME
     F_LastModified              @246 NONAME
 
+; Map building interface.
+    MPE_Begin                   @350 NONAME
+    MPE_End                  @351 NONAME
+
+    MPE_VertexCreate            @352 NONAME
+    MPE_SidedefCreate           @353 NONAME
+    MPE_LinedefCreate           @354 NONAME
+    MPE_SectorCreate            @355 NONAME
+    MPE_PolyobjCreate           @356 NONAME
+
 ; Network.
     Net_SendPacket              @53 NONAME
     Net_GetTicCmd               @54 NONAME
@@ -155,7 +166,6 @@ EXPORTS
 
 ; Play: Setup.
     P_LoadMap                   @254 NONAME
-    PO_CreatePolyobj            @326 NONAME
 
 ; Play: Map Data Updates and Information Access.
     P_ToIndex                   @256 NONAME

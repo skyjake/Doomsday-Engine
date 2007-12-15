@@ -108,7 +108,6 @@ typedef struct {
     int             ticcmd_size;   // sizeof(ticcmd_t)
 
     // Map data setup
-    void            (*PreNodeBuild) (void);
     // This routine is called before any data is read
     // (with the number of items to be read) to allow the
     // game do any initialization it needs (eg create an
