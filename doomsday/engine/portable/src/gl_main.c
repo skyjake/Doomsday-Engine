@@ -903,6 +903,10 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
         if(hadFog)
             GL_UseFog(true);
     }
+
+#if _DEBUG
+    Z_CheckHeap();
+#endif
 }
 
 /**

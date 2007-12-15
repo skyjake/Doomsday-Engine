@@ -22,9 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_tex.c: Image manipulation algorithms.
- *
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -406,7 +405,7 @@ void GL_DownMipmap32(byte *in, int width, int height, int comps)
  * Determine the optimal size for a texture. Usually the dimensions are
  * scaled upwards to the next power of two.
  *
- * @param true          If <code>noStretch == true</code> and the stretching
+ * @param true          If @c noStretch == true, and the stretching
  *                      can be skipped.
  */
 boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
@@ -492,14 +491,14 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
  * @param origx         X coordinate in the dst buffer to draw the patch too.
  * @param origy         Y coordinate in the dst buffer to draw the patch too.
  * @param maskZero      Used with sky textures.
- * @param transtable    If not <code>NULL</code>, read pixels from the patch
+ * @param transtable    If not @c NULL,, read pixels from the patch
  *                      will have their color translated using this LUT.
- * @param checkForAlpha If <code>true</code> the composited image will be
+ * @param checkForAlpha If @c true, the composited image will be
  *                      checked for alpha pixels and will return accordingly
  *                      if present.
  *
- * @return              If <code>checkForAlpha == false</code>, will return
- *                      <code>false</code>. Else, <code>true</code> if the
+ * @return              If @c checkForAlpha == false,, will return
+ *                      @c false,. Else, @c true, if the
  *                      buffer really has alpha information.
  */
 int DrawRealPatch(byte *buffer, int texwidth, int texheight, lumppatch_t *patch,
@@ -1128,7 +1127,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
 }
 
 /**
- * @return          <code>true</code> if the given color is either
+ * @return          @c true, if the given color is either
  *                  (0,255,255) or (255,0,255).
  */
 static boolean ColorKey(byte *color)

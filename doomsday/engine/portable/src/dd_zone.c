@@ -357,6 +357,11 @@ void *Z_Malloc(size_t size, int tag, void *user)
             volume = Z_Create(newVolumeSize);
         }
 
+        if(!volume->zone)
+        {
+            Con_Error("Z_Malloc: Volume without zone.");
+        }
+
         // Scan through the block list looking for the first free block of
         // sufficient size, throwing out any purgable blocks along the
         // way.

@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_list.c: Doomsday Rendering Lists v3.2
  *
  * 3.2 -- Shiny walls and floors
@@ -939,7 +939,7 @@ static void allocateIndices(rendlist_t *list, int numIndices)
     void   *indices;
 
     list->last->numIndices = numIndices;
-    indices = allocateData(list, sizeof(*list->last->indices) * numIndices);
+    indices = allocateData(list, sizeof(uint) * numIndices);
 
     // list->last may change during allocateData.
     list->last->indices = indices;
@@ -1306,6 +1306,7 @@ static void writeDivQuad(rendlist_t *list, rendpoly_t *poly)
     height[0] = poly->vertices[1].pos[VZ] - poly->vertices[0].pos[VZ];
     height[1] = poly->vertices[3].pos[VZ] - poly->vertices[2].pos[VZ];
 
+    assert(list->last);
     list->last->type = PT_DOUBLE_FAN;
 
     // A divquad is composed of two triangle fans.
