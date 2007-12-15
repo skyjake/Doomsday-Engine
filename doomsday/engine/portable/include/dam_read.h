@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dam_read.h: Doomsday Archived Map (DAM), reader
  *
  * Engine-internal header for DAM.
@@ -70,10 +70,11 @@ selectprop_t* DAM_CollectProps(int type, boolean builtIn,
 selectprop_t* DAM_MergePropLists(selectprop_t *listA, uint numA,
                                     selectprop_t *listB, uint numB,
                                     uint *count);
-
-boolean     DAM_ReadMapDataFromLump(gamemap_t *map, maplumpinfo_t *mapLump,
+/*
+boolean     DAM_ReadMapDataFromLump(tempmap_t *map, maplumpinfo_t *mapLump,
                                     uint startIndex, readprop_t *props,
                                     uint numProps,
                                     int (*callback)(int type, uint index, void* ctx));
 int         DAM_SetProperty(int type, uint index, void *context);
+*/
 #endif

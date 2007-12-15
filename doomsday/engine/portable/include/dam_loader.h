@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dam_loader.h: Doomsday Archived Map (DAM) reader
  */
 
@@ -30,6 +30,7 @@
 #define __DOOMSDAY_ARCHIVED_MAP_LOADER_H__
 
 #include "dam_main.h"
+#include "p_mapdata.h"
 
 // Common map format properties.
 enum {
@@ -60,12 +61,8 @@ enum {
     DAM_SIDE0,
     DAM_SIDE1,
 
-    DAM_TOP_MATERIAL_OFFSET_X,
-    DAM_TOP_MATERIAL_OFFSET_Y,
-    DAM_MIDDLE_MATERIAL_OFFSET_X,
-    DAM_MIDDLE_MATERIAL_OFFSET_Y,
-    DAM_BOTTOM_MATERIAL_OFFSET_X,
-    DAM_BOTTOM_MATERIAL_OFFSET_Y,
+    DAM_MATERIAL_OFFSET_X,
+    DAM_MATERIAL_OFFSET_Y,
     DAM_TOP_MATERIAL,
     DAM_MIDDLE_MATERIAL,
     DAM_BOTTOM_MATERIAL,
@@ -89,8 +86,5 @@ typedef struct {
 
 const char* DAM_Str(int prop);
 int         DAM_DataTypeForLumpClass(int lumpClass);
-
-boolean     DAM_LoadMap(archivedmap_t *dam);
-boolean     DAM_PrintMapErrors(archivedmap_t *map, boolean silent);
 
 #endif

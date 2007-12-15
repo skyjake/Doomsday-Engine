@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * de_dam.h: Doomsday Archived Map (DAM) subsystem
  */
 
@@ -34,6 +34,7 @@
 #include "dam_blockmap.h"
 #include "dam_loader.h"
 #include "dam_read.h"
+#include "dam_file.h"
 #include "dam_reject.h"
 
 #endif

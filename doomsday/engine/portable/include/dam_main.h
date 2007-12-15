@@ -67,12 +67,15 @@ typedef struct listnode_s {
 } listnode_t;
 
 typedef struct archivedmap_s {
-    char       *identifier;
-    listnode_t *lumpNodes;
+    char        identifier[9];
+    int         numLumps;
+    int        *lumpList;
+    filename_t  cachedMapDataFile;
+    boolean     cachedMapFound;
     boolean     lastLoadAttemptFailed;
 } archivedmap_t;
 
-extern byte     mapCache;      
+extern byte     mapCache;
 extern byte     createBMap;
 extern byte     createReject;
 
@@ -80,6 +83,8 @@ void        DAM_Register(void);
 
 void        DAM_Init(void);
 void        DAM_Shutdown(void);
+
+void        DAM_GetCachedMapDir(char *dir, int mainLump);
 
 boolean     DAM_AttemptMapLoad(const char *mapID);
 

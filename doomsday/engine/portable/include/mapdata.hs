@@ -38,10 +38,10 @@ typedef struct mvertex_s {
 end
 
 struct vertex
-    -       fvertex_t   v
     -       uint        numlineowners // Number of line owners.
-    -       lineowner_t* lineowners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     -       boolean     anchored    // One or more of our line owners are one-sided.
+    -       lineowner_t* lineowners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
+    -       fvertex_t   v
     -       mvertex_t   buildData
 end
 
@@ -73,8 +73,6 @@ end
 
 struct seg
     PTR     vertex_s*[2] v          // [Start, End] of the segment.
-    FLOAT   float       length      // Accurate length of the segment (v1 -> v2).
-    FLOAT   float       offset
     PTR     side_s*     sidedef
     PTR     line_s*     linedef
     PTR     sector_s*[2] sec
@@ -83,11 +81,13 @@ struct seg
     ANGLE   angle_t     angle
     BYTE    byte        side        // 0=front, 1=back
     BYTE    byte        flags
-    -       short       frameflags
-    -       biastracker_s[3] tracker // 0=middle, 1=top, 2=bottom
-    -       vertexillum_s[3][4] illum
+    FLOAT   float       length      // Accurate length of the segment (v1 -> v2).
+    FLOAT   float       offset
     -       uint        updated
     -       biasaffection_s[MAX_BIAS_AFFECTED] affected
+    -       biastracker_s[3] tracker // 0=middle, 1=top, 2=bottom
+    -       vertexillum_s[3][4] illum
+    -       short       frameflags
 end
 
 internal
@@ -107,20 +107,20 @@ typedef struct msubsec_s {
 end
 
 struct subsector
-    PTR     sector_s*   sector
     UINT    uint        segcount
     PTR     seg_s**     segs        // [segcount] size.
     PTR     polyobj_s*  poly        // NULL, if there is no polyobj.
+    PTR     sector_s*   sector
     -       int         flags
+    -       int         validCount
+    -       uint        group
+    -       uint[NUM_REVERB_DATA] reverb
     -       fvertex_t   bbox[2]     // Min and max points.
     -       fvertex_t   midpoint    // Center of vertices.
     -       subplaneinfo_s** planes
     -       ushort      numvertices
     -       fvertex_s** vertices    // [numvertices] size
-    -       int         validCount
     -       shadowlink_s* shadows
-    -       uint        group
-    -       uint[NUM_REVERB_DATA] reverb
     -       msubsec_t   buildData
 end
 
@@ -136,8 +136,16 @@ internal
 #define SUF_BLEND       0x4         // Surface possibly has a blended texture.
 #define SUF_NO_RADIO    0x8         // No fakeradio for this surface.
 
+#define SUF_UPDATE_FLAG_MASK    0xff000000
+#define SUF_UPDATE_DECORATIONS  0x80000000
+
 // Surface frame flags
 #define SUFINF_PVIS     0x0001
+
+typedef struct surfacedecor_s {
+    float           pos[3];         // World coordinates of the decoration.
+    struct ded_decorlight_s *def;
+} surfacedecor_t;
 end
 
 struct surface
@@ -153,6 +161,7 @@ struct surface
     FLOAT   float[4]    rgba        // Surface color tint
     -       float[4]    oldrgba
     -       short       frameflags
+    -       surfacedecor_t decorations[MAX_SURFACE_DECORATIONS]
 end
 
 internal
@@ -171,18 +180,19 @@ internal
 #define PS_normal               surface.normal
 #define PS_material             surface.material
 #define PS_offset               surface.offset
+#define PS_rgba                 surface.rgba
 end
 
 struct plane
+    PTR     degenmobj_t soundorg    // Sound origin for plane
+    PTR     sector_s*   sector      // Owner of the plane (temp)
+    -       surface_t   surface
     FLOAT   float       height      // Current height
     -       float[2]    oldheight
-    -       surface_t   surface
     FLOAT   float       glow        // Glow amount
     FLOAT   float[3]    glowrgb     // Glow color
     FLOAT   float       target      // Target height
     FLOAT   float       speed       // Move speed
-    PTR     degenmobj_t soundorg    // Sound origin for plane
-    PTR     sector_s*   sector      // Owner of the plane (temp)
     -       float       visheight   // Visible plane height (smoothed)
     -       float       visoffset
 end
@@ -242,8 +252,9 @@ internal
 #define SIF_LIGHT_CHANGED   0x2
 
 // Sector flags.
-#define SECF_INVIS_FLOOR    0x1
-#define SECF_INVIS_CEILING  0x2
+#define SECF_PERMANENTLINK  0x1
+#define SECF_UNCLOSED       0x2     // An unclosed sector (some sort of fancy hack).
+#define SECF_SELFREFHACK    0x4     // A self-referencing hack sector which ISNT enclosed by the sector referenced. Bounding box for the sector.
 
 typedef struct ssecgroup_s {
     struct sector_s**   linked;     // [sector->planecount+1] size.
@@ -261,36 +272,34 @@ typedef struct msector_s {
 end
 
 struct sector
+    -       int         frameflags
+    -       int         addspritecount // frame number of last R_AddSprites
+    INT     int         validCount  // if == validCount, already checked.
+    -       int         flags
+    -       skyfix_t[2] skyfix      // floor, ceiling.
+    -       float[4]    bbox        // Bounding box for the sector
     FLOAT   float       lightlevel
     -       float       oldlightlevel
     FLOAT   float[3]    rgb
     -       float[3]    oldrgb
-    INT     int         validCount  // if == validCount, already checked.
     PTR     mobj_s*     mobjList    // List of mobjs in the sector.
     UINT    uint        linecount
     PTR     line_s**    Lines       // [linecount+1] size.
+    UINT    uint        subscount
     PTR     subsector_s** subsectors // [subscount+1] size.
     -       uint        numReverbSSecAttributors
     -       subsector_s** reverbSSecs // [numReverbSSecAttributors] size.
     -       uint        subsgroupcount
     -       ssecgroup_t* subsgroups // [subsgroupcount+1] size.
-    -       skyfix_t[2] skyfix      // floor, ceiling.
     PTR     degenmobj_t soundorg
-    FLOAT   float[NUM_REVERB_DATA] reverb
-    -       uint[4]     blockbox    // Mapblock bounding box.
     UINT    uint        planecount
     -       plane_s**   planes      // [planecount+1] size.
     -       sector_s*   containsector // Sector that contains this (if any).
-    -       boolean     permanentlink
-    -       boolean     unclosed    // An unclosed sector (some sort of fancy hack).
-    -       boolean     selfRefHack // A self-referencing hack sector which ISNT enclosed by the sector referenced. Bounding box for the sector.
-    -       float[4]    bbox        // Bounding box for the sector
-    -       int         frameflags
-    -       int         addspritecount // frame number of last R_AddSprites
     -       sector_s*   lightsource // Main sky light source
     -       uint        blockcount  // Number of gridblocks in the sector.
     -       uint        changedblockcount // Number of blocks to mark changed.
     -       ushort*     blocks      // Light grid block indices.
+    FLOAT   float[NUM_REVERB_DATA] reverb
     -       msector_t   buildData
 end
 
@@ -407,6 +416,9 @@ internal
 #define MLF_POLYOBJ             0x8 // Line is part of a polyobj.
 
 typedef struct mlinedef_s {
+    // Linedef index. Always valid after loading & pruning of zero
+    // length lines has occurred.
+    int         index;
     int         mlFlags; // MLF_* flags.
 
     // One-sided linedef used for a special effect (windows).
@@ -417,26 +429,22 @@ typedef struct mlinedef_s {
     // one (a rarely-used trick to create higher mid-masked textures).
     // No segs should be created for these overlapping linedefs.
     struct line_s *overlap;
-
-    // Linedef index. Always valid after loading & pruning of zero
-    // length lines has occurred.
-    int         index;
 } mlinedef_t;
 end
 
 struct line
     PTR     vertex_s*[2] v
+    -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
+    PTR     side_s*[2]  sides
     -       int         flags
-    SHORT   short       mapflags    // MF_* flags, read from the LINEDEFS, map data lump.
-    FLOAT   float       dx
-    FLOAT   float       dy
     INT     slopetype_t slopetype
     INT     int         validCount
-    PTR     side_s*[2]  sides
-    FLOAT   float[4]    bbox
-    -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
-    -       float       length      // Accurate length
+    SHORT   short       mapflags    // MF_* flags, read from the LINEDEFS, map data lump.
     -       binangle_t  angle       // Calculated from front side's normal
+    FLOAT   float       dx
+    FLOAT   float       dy
+    -       float       length      // Accurate length
+    FLOAT   float[4]    bbox
     -       boolean[DDMAXPLAYERS] mapped // Whether the line has been mapped by each player yet.
     -       mlinedef_t  buildData
 end
@@ -450,16 +458,15 @@ typedef struct mpolyobj_s {
 end
 
 struct polyobj
+    FLOAT   vec2_t[2]   box
+    INT     int         validCount
+    INT     int         tag         // Reference tag assigned in HereticEd
+    ANGLE   angle_t     angle
     UINT    uint        idx         // Idx of polyobject
     UINT    uint        numsegs
     PTR     seg_s**     segs
-    INT     int         validCount
-    PTR     degenmobj_t startSpot
-    ANGLE   angle_t     angle
-    INT     int         tag         // Reference tag assigned in HereticEd
     -       fvertex_t*  originalPts // Used as the base for the rotations
     -       fvertex_t*  prevPts     // Use to restore the old point values
-    FLOAT   vec2_t[2]   box
     -       fvertex_t   dest        // Destination XY
     FLOAT   float       speed       // Movement speed.
     ANGLE   angle_t     destAngle   // Destination angle.
@@ -467,6 +474,7 @@ struct polyobj
     BOOL    boolean     crush       // Should the polyobj attempt to crush mobjs?
     INT     int         seqType
     PTR     void*       specialdata // pointer a thinker, if the poly is moving
+    PTR     degenmobj_t startSpot
     -       mpolyobj_t  buildData
 end
 

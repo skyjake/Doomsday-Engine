@@ -42,6 +42,8 @@
 #include "m_nodepile.h"
 #include "m_vector.h"
 
+#define MAX_SURFACE_DECORATIONS     16
+
 #define GET_VERTEX_IDX(vtx)     ((vtx) - vertexes)
 #define GET_LINE_IDX(li)        ((li) - lines)
 #define GET_SIDE_IDX(si)        ((si) - sides)
@@ -101,6 +103,11 @@ typedef struct linkpolyobj_s {
     struct linkpolyobj_s *next;
 } linkpolyobj_t;
 
+typedef struct watchedplanelist_s {
+    uint        num, maxnum;
+    struct plane_s ** list;
+} watchedplanelist_t;
+
 typedef void* blockmap_t;
 
 #include "p_maptypes.h"
@@ -130,7 +137,9 @@ extern line_t  *lines;
 extern uint     numsides;
 extern side_t  *sides;
 
-extern int      numthings;
+extern watchedplanelist_t *watchedPlaneList;
+
+extern uint     numthings;
 
 extern uint    *missingFronts;
 extern uint     numMissingFronts;
@@ -169,7 +178,9 @@ typedef struct gamemap_s {
 
     linkpolyobj_t **polyBlockMap;
 
-    int         numthings;
+    uint        numthings;
+
+    watchedplanelist_t watchedPlaneList;
 
     blockmap_t *blockMap;
     blockmap_t *ssecBlockMap;

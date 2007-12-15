@@ -45,6 +45,7 @@ void            P_BuildSubsectorBlockMap(gamemap_t *map);
 
 void            P_BlockmapLinkPolyobj(blockmap_t *bmap, polyobj_t *po);
 void            P_BlockmapUnlinkPolyobj(blockmap_t *bmap, polyobj_t *po);
+void            P_InitMapBlockRings(gamemap_t *map);
 
 // Utility:
 void            P_GetBlockmapBounds(blockmap_t *bmap, pvec2_t min, pvec2_t max);

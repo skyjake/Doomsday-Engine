@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@
 #include "de_misc.h"
 #include "de_play.h"
 #include "de_edit.h"
+#include "de_refresh.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -388,19 +389,34 @@ static void hardenSectors(gamemap_t *dest, editmap_t *src)
 
     for(i = 0; i < dest->numsectors; ++i)
     {
-        uint                j;
         sector_t           *destS = &dest->sectors[i];
         sector_t           *srcS = src->sectors[i];
+        plane_t            *pln;
 
         memcpy(destS, srcS, sizeof(*destS));
-        for(j = 0; j < destS->planecount; ++j)
-            destS->planes[j]->sector = destS;
+        destS->planecount = 0;
+        destS->planes = NULL;
+
+        pln = R_NewPlaneForSector(destS);
+        memcpy(pln, srcS->planes[PLN_FLOOR], sizeof(*pln));
+        pln->sector = destS;
+
+        pln = R_NewPlaneForSector(destS);
+        memcpy(pln, srcS->planes[PLN_CEILING], sizeof(*pln));
+        pln->sector = destS;
     }
 }
 
 static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
 {
     uint            i;
+
+    if(src->numpolyobjs == 0)
+    {
+        dest->numpolyobjs = 0;
+        dest->polyobjs = NULL;
+        return;
+    }
 
     dest->numpolyobjs = src->numpolyobjs;
     dest->polyobjs = Z_Malloc((dest->numpolyobjs+1) * sizeof(polyobj_t*),
@@ -412,7 +428,7 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
         polyobj_t      *destP, *srcP = src->polyobjs[i];
         seg_t          *segs;
 
-        destP = Z_Calloc(sizeof(polyobj_t), PU_LEVEL, 0);
+        destP = Z_Calloc(sizeof(*destP), PU_LEVEL, 0);
         destP->header.type = DMU_POLYOBJ;
         destP->idx = i;
         destP->crush = srcP->crush;
@@ -472,6 +488,7 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
 
         dest->polyobjs[i] = destP;
     }
+    dest->polyobjs[i] = NULL; // Terminate.
 }
 
 void SaveMap(gamemap_t *dest, editmap_t *src)

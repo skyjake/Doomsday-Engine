@@ -430,6 +430,23 @@ void P_GetBlockmapDimensions(blockmap_t *blockmap, uint v[2])
     }
 }
 
+void P_InitMapBlockRings(gamemap_t *map)
+{
+    uint        i;
+    size_t      size;
+    uint        bmapSize[2];
+
+    P_GetBlockmapDimensions(map->blockMap, bmapSize);
+
+    // Clear out mobj rings.
+    size = sizeof(*map->blockrings) * bmapSize[VX] * bmapSize[VY];
+    map->blockrings = Z_Calloc(size, PU_LEVEL, 0);
+
+    for(i = 0; i < bmapSize[VX] * bmapSize[VY]; ++i)
+        map->blockrings[i].next =
+            map->blockrings[i].prev = (mobj_t *) &map->blockrings[i];
+}
+
 typedef struct bmapiterparams_s {
     int         localValidCount;
     boolean   (*func) (line_t *, void *);

@@ -32,6 +32,7 @@
 #include "r_materials.h"
 
 typedef struct editmap_s {
+    char            name[9];
     uint            numvertexes;
     vertex_t      **vertexes;
     uint            numlines;
@@ -52,28 +53,44 @@ typedef struct editmap_s {
     node_t         *rootNode;
 } editmap_t;
 
-boolean         P_InitMapBuild(void);
-void            P_ShutdownMapBuild(void);
-gamemap_t      *P_HardenMap(void);
+boolean         MPE_Begin(const char *name);
+boolean         MPE_End(void);
 
-vertex_t       *P_NewVertex(float x, float y);
-side_t         *P_NewSide(uint sector, short flags,
-                          material_t *topMaterial, float topOffsetX,
-                          float topOffsetY, float topRed, float topGreen,
-                          float topBlue, material_t *middleMaterial,
-                          float middleOffsetX, float middleOffsetY,
-                          float middleRed, float middleGreen, float middleBlue,
-                          float middleAlpha, material_t *bottomMaterial,
-                          float bottomOffsetX, float bottomOffsetY, float bottomRed,
-                          float bottomGreen, float bottomBlue);
-line_t         *P_NewLine(uint v1, uint v2, uint frontSide, uint backSide,
-                          short mapflags, int flags);
-sector_t       *P_NewSector(plane_t **planes, uint planecount,
-                            float lightlevel, float red, float green, float blue);
-polyobj_t      *P_NewPolyobj(uint *lines, uint linecount, boolean crush,
-                             int tag, int sequenceType, float startX, float startY);
+uint            MPE_VertexCreate(float x, float y);
+uint            MPE_SidedefCreate(uint sector, short flags,
+                                  const char *topMaterial,
+                                  materialtype_t topMaterialType,
+                                  float topOffsetX, float topOffsetY, float topRed,
+                                  float topGreen, float topBlue,
+                                  const char *middleMaterial,
+                                  materialtype_t middleMaterialType,
+                                  float middleOffsetX, float middleOffsetY,
+                                  float middleRed, float middleGreen,
+                                  float middleBlue, float middleAlpha,
+                                  const char *bottomMaterial,
+                                  materialtype_t bottomMaterialType,
+                                  float bottomOffsetX, float bottomOffsetY,
+                                  float bottomRed, float bottomGreen,
+                                  float bottomBlue);
+uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
+                                  short mapflags, int flags);
+uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue,
+                                 float floorHeight, const char *floorMaterial,
+                                 materialtype_t floorMaterialType, float floorOffsetX,
+                                 float floorOffsetY, float floorRed, float floorGreen,
+                                 float floorBlue, float ceilHeight,
+                                 const char *ceilMaterial,
+                                 materialtype_t ceilMaterialType, float ceilOffsetX,
+                                 float ceilOffsetY, float ceilRed, float ceilGreen,
+                                 float ceilBlue);
+uint            MPE_PolyobjCreate(uint *lines, uint linecount, boolean crush,
+                                  int tag, int sequenceType, float startX, float startY);
 
-// Non-public.
-subsector_t    *P_NewSubsector(void);
-node_t         *P_NewNode(void);
+// Non-public (temporary)
+gamemap_t      *MPE_GetLastBuiltMap(void);
+vertex_t       *createVertex(void);
+
+// Non-public (to be moved into the BSP code).
+subsector_t    *BSP_NewSubsector(void);
+node_t         *BSP_NewNode(void);
 #endif

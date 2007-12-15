@@ -30,9 +30,7 @@
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
- */
-
-/**
+ *
  * \notes
  * Split a list of half-edges into two using the method described at the
  * bottom of the file, this was taken from OBJECTS.C in the DEU5beta source.
@@ -512,7 +510,7 @@ static void createSubSectorWorker(subsector_t *sub, superblock_t *block)
  */
 static subsector_t *createSubSector(superblock_t *hEdgeList)
 {
-    subsector_t *sub = P_NewSubsector();
+    subsector_t *sub = BSP_NewSubsector();
 
     // Link the half-edges into the new subsector.
     createSubSectorWorker(sub, hEdgeList);
@@ -617,7 +615,7 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
     BSP_AddMiniHEdges(best, lefts, rights, cutList);
     BSP_CutListEmpty(cutList);
 
-    *n = node = P_NewNode();
+    *n = node = BSP_NewNode();
 
     assert(best->linedef);
 

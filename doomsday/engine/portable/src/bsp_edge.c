@@ -111,7 +111,7 @@ static edgetip_t *allocEdgeTip(void)
 {
 #define BLKNUM 1024
 
-    if((numHEdgeTips % BLKNUM) == 0) 
+    if((numHEdgeTips % BLKNUM) == 0)
     {
         hEdgeTips = M_Realloc(hEdgeTips, (numHEdgeTips + BLKNUM) *
             sizeof(edgetip_t *));
@@ -153,8 +153,10 @@ static void updateHEdge(hedge_t *hedge)
  */
 static vertex_t *newVertexFromSplitHEdge(hedge_t *hEdge, double x, double y)
 {
-    vertex_t *vert = P_NewVertex(x, y);
+    vertex_t *vert = createVertex();
 
+    vert->buildData.pos[VX] = x;
+    vert->buildData.pos[VY] = y;
     vert->buildData.refCount = (hEdge->twin? 4 : 2);
 
     // Compute wall_tip info.

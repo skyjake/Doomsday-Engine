@@ -34,6 +34,6 @@
 #ifndef __DOOMSDAY_ARCHIVED_MAP_REJECT_H__
 #define __DOOMSDAY_ARCHIVED_MAP_REJECT_H__
 
-boolean     DAM_BuildReject(struct gamemap_s *map);
+boolean     DAM_BuildReject(struct tempmap_s *map);
 
 #endif

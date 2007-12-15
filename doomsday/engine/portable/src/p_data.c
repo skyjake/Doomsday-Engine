@@ -66,7 +66,7 @@ extern boolean levelSetup;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-/*
+/**
  * These map data arrays are internal to the engine.
  */
 char        levelid[9]; // Name by which the game referred to the current map.
@@ -91,8 +91,10 @@ line_t     *lines;
 uint        numsides;
 side_t     *sides;
 
+watchedplanelist_t *watchedPlaneList;
+
 // mapthings are actually stored & handled game-side
-int         numthings;
+uint        numthings;
 
 blockmap_t *BlockMap;
 blockmap_t *SSecBlockMap;
@@ -347,6 +349,8 @@ void P_SetCurrentMap(gamemap_t *map)
 
     numsides = map->numsides;
     sides = map->sides;
+
+    watchedPlaneList = &map->watchedPlaneList;
 
     po_NumPolyobjs = map->numpolyobjs;
     polyobjs = map->polyobjs;
