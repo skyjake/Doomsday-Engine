@@ -25,23 +25,15 @@
  */
 
 /**
- * mn_menu.c: Common selection menu, options, episode etc.
+ * hu_menu.c: Common selection menu, options, episode etc.
  *            Sliders and icons. Kinda widget stuff.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef MSVC
-#  pragma warning(disable:4018)
-#endif
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
-
-#if __JHEXEN__ || __JSTRIFE__
-#  include <lzss.h>
-#endif
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -51,14 +43,13 @@
 #  include "jdoom.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
-#  include "g_common.h"
-#  include "m_argv.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
 #  include "jstrife.h"
 #endif
 
+#include "m_argv.h"
 #include "hu_stuff.h"
 #include "f_infine.h"
 #include "am_map.h"
@@ -67,16 +58,12 @@
 #include "g_controls.h"
 #include "p_saveg.h"
 #include "g_common.h"
+#include "hu_menu.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define OBSOLETE            CVF_HIDE|CVF_NO_ARCHIVE
-
 #define SAVESTRINGSIZE      24
-#define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
-
-#define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
-#define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
 
 // QuitDOOM messages
 #ifndef __JDOOM__
@@ -88,15 +75,19 @@ static const float MENUFOGSPEED[2] = {.05f, -.085f};
 // TYPES -------------------------------------------------------------------
 
 typedef struct rgba_s {
-    float *r, *g, *b, *a;
+    float          *r, *g, *b, *a;
 } rgba_t;
+
+typedef struct menufoglayer_s {
+    float           texOffset[2];
+    float           texAngle;
+    float           posAngle;
+} menufoglayer_t;
 
 typedef struct menufogdata_s {
     DGLuint         texture;
-    float           angle[2];
-    float           posAngle[2];
-    float           pos[2][2];
-    float           alpha;
+    menufoglayer_t  layers[2];
+    float           alpha, targetAlpha;
     float           joinY;
     boolean         scrollDir;
 } menufogdata_t;
@@ -104,11 +95,8 @@ typedef struct menufogdata_s {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern void Ed_MakeCursorVisible(void);
-extern void Ed_MakeCursorVisible(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void InitFonts(void);
 
 void M_NewGame(int option, void *data);
 void M_Episode(int option, void *data);        // Does nothing in jHEXEN
@@ -159,7 +147,6 @@ void M_XhairB(int option, void *data);
 void M_XhairAlpha(int option, void *data);
 #endif
 
-void M_StartMenu(void);
 void M_ReadSaveStrings(void);
 void M_DoSave(int slot);
 void M_DoLoad(int slot);
@@ -196,24 +183,10 @@ void M_DrawBackgroundBox(int x, int y, int w, int h,
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void M_DrawBackground(menu_t *menu);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern editfield_t *ActiveEdit;    // in Mn_def.h
-
-extern boolean chatOn;            // in heads-up code
-
-#ifdef __JDOOM__
-extern int joyaxis[3];
-#endif
-
+extern editfield_t *ActiveEdit;
 extern char *weaponNames[];
-
-extern int typein_time;    // in heads-up code
-
-extern dpatch_t hu_font[HU_FONTSIZE];
-extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -227,7 +200,7 @@ char   *endmsg[] = {
 #endif
 
 #ifdef __JDOOM__
-/// The end message strings will be initialized in MN_Init().
+/// The end message strings will be initialized in Hu_MenuInit().
 char *endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
@@ -241,13 +214,8 @@ const char* QuitEndMsg[] =
     NULL
 };
 
-char    gammamsg[5][81];
-
 boolean inhelpscreens;
-boolean menuactive;
 menu_t *currentMenu;
-
-int     screenblocks = 10;        // has default
 
 #if __JHERETIC__
 static int MenuEpisode;
@@ -268,7 +236,7 @@ int     messageLastMenuActive;
 // timed message = no input from user
 boolean messageNeedsInput;
 
-boolean    (*messageRoutine) (int response, void *data);
+boolean  (*messageRoutine) (int response, void *data);
 
 char    tempstring[80];
 
@@ -306,13 +274,10 @@ static char shiftTable[59] =    // Contains characters 32 to 90.
     /* 90 */ 0
 };
 
-// Alpha level for the entire menu. Used primarily by M_WriteText2().
-float   menuAlpha = 0;
 int     menu_color = 0;
 float   skull_angle = 0;
 
 int     frame;    // used by any graphic animations that need to be pumped
-int     gammaLevel;
 int     menuTime;
 
 short   itemOn;    // menu item skull is on
@@ -358,6 +323,11 @@ int menusnds[] = {
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static boolean  menuActive;
+
+static float    menuAlpha = 0; // Alpha level for the entire menu.
+static float    menuTargetAlpha = 0; // Target alpha for the entire UI.
 
 #ifndef __JDOOM__
 static int SkullBaseLump;
@@ -1232,7 +1202,6 @@ cvar_t menuCVars[] =
 #ifdef __JDOOM__
     {"menu-quitsound", 0, CVT_INT, &cfg.menuQuitSound, 0, 1},
 #endif
-
     {NULL}
 };
 
@@ -1255,9 +1224,6 @@ ccmd_t  menuCCmds[] = {
     {"quickload",   "", CCmdMenuAction},
     {"quit",        "", CCmdMenuAction},
     {"togglegamma", "", CCmdMenuAction},
-    {"messageyes",  "", CCmdMsgResponse},
-    {"messageno",   "", CCmdMsgResponse},
-    {"messagecancel", "", CCmdMsgResponse},
     {NULL}
 };
 
@@ -1267,9 +1233,9 @@ ccmd_t  menuCCmds[] = {
  * Called during the PreInit of each game during start up
  * Register Cvars and CCmds for the opperation/look of the menu.
  */
-void MN_Register(void)
+void Hu_MenuRegister(void)
 {
-    int         i;
+    int             i;
 
     for(i = 0; menuCVars[i].name; ++i)
         Con_AddVariable(menuCVars + i);
@@ -1278,12 +1244,12 @@ void MN_Register(void)
 }
 
 /**
- * Load any resources the menu needs on init
+ * Load any resources the menu needs.
  */
 void M_LoadData(void)
 {
-    int         i;
-    char        buffer[9];
+    int             i;
+    char            buffer[9];
 
     // Load the cursor patches
     for(i = 0; i < cursors; ++i)
@@ -1294,8 +1260,12 @@ void M_LoadData(void)
 
     if(!menuFogData.texture && !Get(DD_NOVIDEO))
     {
-        menuFogData.texture = GL_NewTextureWithParams2(DGL_LUMINANCE, 64, 64, W_CacheLumpName("menufog", PU_CACHE),
-                                                  0, DGL_NEAREST, DGL_LINEAR, -1 /*best anisotropy*/, DGL_REPEAT, DGL_REPEAT);
+        menuFogData.texture =
+            GL_NewTextureWithParams2(DGL_LUMINANCE, 64, 64,
+                                     W_CacheLumpName("menufog", PU_CACHE),
+                                     0, DGL_NEAREST, DGL_LINEAR,
+                                     -1 /*best anisotropy*/,
+                                     DGL_REPEAT, DGL_REPEAT);
     }
 }
 
@@ -1319,7 +1289,7 @@ void M_UnloadData(void)
  * Initializes the various vars, fonts, adjust the menu structs and
  * anything else that needs to be done before the menu can be used.
  */
-void MN_Init(void)
+void Hu_MenuInit(void)
 {
 #if !__DOOM64TC__
     menuitem_t *item;
@@ -1329,9 +1299,7 @@ void MN_Init(void)
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-    // Init some strings.
-    for(i = 0; i < 5; ++i)
-        strcpy(gammamsg[i], GET_TXT(TXT_GAMMALVL0 + i));
+    R_GetGammaMessageStrings();
 #endif
 
 #ifdef __JDOOM__
@@ -1382,28 +1350,32 @@ void MN_Init(void)
     SkillDef.x = 160 - maxw / 2 + 12;
 #endif
 
-    M_LoadData();
 
     currentMenu = &MainDef;
-    menuactive = false;
-    menuAlpha = 0;
+    menuActive = false;
+    menuAlpha = menuTargetAlpha = 0;
 
     menuFogData.texture = 0;
-    menuFogData.angle[VX] = 93;
-    menuFogData.angle[VY] = 12;
-    menuFogData.posAngle[VX] = 35;
-    menuFogData.posAngle[VY] = 77;
-    menuFogData.pos[2][2];
-    menuFogData.alpha = 0;
+    menuFogData.alpha = menuFogData.targetAlpha = 0;
     menuFogData.joinY = 0.5f;
     menuFogData.scrollDir = true;
+    menuFogData.layers[0].texOffset[VX] =
+        menuFogData.layers[0].texOffset[VY] = 0;
+    menuFogData.layers[0].texAngle = 93;
+    menuFogData.layers[0].posAngle = 35;
+    menuFogData.layers[1].texOffset[VX] =
+        menuFogData.layers[1].texOffset[VY] = 0;
+    menuFogData.layers[1].texAngle = 12;
+    menuFogData.layers[1].posAngle = 77;
+
+    M_LoadData();
 
     itemOn = currentMenu->lastOn;
     whichSkull = 0;
     skullAnimCounter = MENUCURSOR_TICSPERFRAME;
     messageToPrint = 0;
     messageString = NULL;
-    messageLastMenuActive = menuactive;
+    messageLastMenuActive = menuActive;
     quickSaveSlot = -1;
 
 #ifdef __JDOOM__
@@ -1469,13 +1441,47 @@ void MN_Init(void)
 }
 
 /**
+ * @return              @c true, iff the menu is currently active (open).
+ */
+boolean Hu_MenuIsActive(void)
+{
+    return menuActive;
+}
+
+/**
+ * Set the alpha level of the entire menu.
+ *
+ * @param alpha         Alpha level to set the menu too (0...1)
+ */
+void Hu_MenuSetAlpha(float alpha)
+{
+    // The menu's alpha will start moving towards this target value.
+    menuTargetAlpha = alpha;
+}
+
+/**
+ * @return              Current alpha level of the menu.
+ */
+float Hu_MenuAlpha(void)
+{
+    return menuAlpha;
+}
+
+/**
  * Updates on Game Tick.
  */
-void MN_Ticker(void)
+void Hu_MenuTicker(timespan_t time)
 {
 #define fog                 (&menuFogData)
+#define MENUALPHA_FADE_STEP (.07f)
+#define MENUFOGALPHA_FADE_STEP (.07f)
 
     int                 i;
+    float               diff;
+    static trigger_t    fixed = { 1 / 35.0 };
+
+    if(!M_RunTrigger(&fixed, time))
+        return;
 
     // Check if there has been a response to a message
     if(messageToPrint)
@@ -1487,41 +1493,37 @@ void MN_Ticker(void)
         }
     }
 
-    // Smooth the menu & fog alpha on a curved ramp
-    if(menuactive && (!messageToPrint || quitAsk))
+    // Move towards the target alpha level for the entire menu.
+    diff = menuTargetAlpha - menuAlpha;
+    if(fabs(diff) > MENUALPHA_FADE_STEP)
     {
-        if(fog->alpha < (cfg.menuFog == 3 ? 0.65f : 1))
-            fog->alpha = (fog->alpha * 1.2f) + .01f;
-        if(fog->alpha > (cfg.menuFog == 3 ? 0.65f : 1))
-            fog->alpha = (cfg.menuFog == 3 ? 0.65f : 1);
-
-        if(menuAlpha < 1)
-            menuAlpha += .1f;
-        if(menuAlpha > 1)
-            menuAlpha = 1;
+        menuAlpha += MENUALPHA_FADE_STEP * (diff > 0? 1 : -1);
     }
     else
     {
-        if(fog->alpha > 0)
-            fog->alpha = fog->alpha / 1.1f;
-        if(fog->alpha < 0)
-            fog->alpha = 0;
+        menuAlpha = menuTargetAlpha;
+    }
 
-        if(menuAlpha > 0)
-            menuAlpha -= .1f;
-        if(menuAlpha < 0)
-            menuAlpha = 0;
+    // Move towards the target alpha level for fog effect
+    diff = menuFogData.targetAlpha - menuFogData.alpha;
+    if(fabs(diff) > MENUFOGALPHA_FADE_STEP)
+    {
+        menuFogData.alpha += MENUFOGALPHA_FADE_STEP * (diff > 0? 1 : -1);
+    }
+    else
+    {
+        menuFogData.alpha = menuFogData.targetAlpha;
     }
 
     // menu zoom in/out
-    if(!menuactive && fog->alpha > 0)
+    if(!menuActive && fog->alpha > 0)
     {
         outFade += 1 / (float) slamInTicks;
         if(outFade > 1)
             fadingOut = false;
     }
 
-    if(menuactive || fog->alpha > 0)
+    if(menuActive || fog->alpha > 0)
     {
         float               rewind = 20;
 
@@ -1529,21 +1531,21 @@ void MN_Ticker(void)
         {
             if(cfg.menuFog == 1)
             {
-                fog->angle[i]    += MENUFOGSPEED[i] / 4;
-                fog->posAngle[i] -= MENUFOGSPEED[!i];
-                fog->pos[i][VX] =
-                    160 + 120 * cos(fog->posAngle[i] / 180 * PI);
-                fog->pos[i][VY] =
-                    100 + 100 * sin(fog->posAngle[i] / 180 * PI);
+                fog->layers[i].texAngle += MENUFOGSPEED[i] / 4;
+                fog->layers[i].posAngle -= MENUFOGSPEED[!i];
+                fog->layers[i].texOffset[VX] =
+                    160 + 120 * cos(fog->layers[i].posAngle / 180 * PI);
+                fog->layers[i].texOffset[VY] =
+                    100 + 100 * sin(fog->layers[i].posAngle / 180 * PI);
             }
             else
             {
-                fog->angle[i]    += MENUFOGSPEED[i] / 4;
-                fog->posAngle[i] -= MENUFOGSPEED[!i] * 1.5f;
-                fog->pos[i][VX] =
-                    320 + 320 * cos(fog->posAngle[i] / 180 * PI);
-                fog->pos[i][VY] =
-                    240 + 240 * sin(fog->posAngle[i] / 180 * PI);
+                fog->layers[i].texAngle += MENUFOGSPEED[i] / 4;
+                fog->layers[i].posAngle -= MENUFOGSPEED[!i] * 1.5f;
+                fog->layers[i].texOffset[VX] =
+                    320 + 320 * cos(fog->layers[i].posAngle / 180 * PI);
+                fog->layers[i].texOffset[VY] =
+                    240 + 240 * sin(fog->layers[i].posAngle / 180 * PI);
             }
         }
 
@@ -1610,34 +1612,12 @@ void MN_Ticker(void)
         frame = (menuTime / 3) % 18;
     }
 
-    if(menuactive)
+    if(menuActive)
         MN_TickerEx();
 
 #undef fog
-}
-
-void M_StartMenu(void)
-{
-    // intro might call this repeatedly
-    if(menuactive)
-        return;
-
-    // Aural feedback.
-    S_LocalSound(menusnds[2], NULL);
-
-    Con_Open(false);
-    menuactive = true;
-    menu_color = 0;
-    menuTime = 0;
-    fadingOut = false;
-    skull_angle = 0;
-    currentMenu = &MainDef;
-    itemOn = currentMenu->lastOn;
-    typein_time = 0;
-    quitAsk = 0;
-
-    // Enable the menu binding class
-    DD_Executef(true, "activatebclass menu");
+#undef MENUALPHA_FADE_STEP
+#undef MENUFOGALPHA_FADE_STEP
 }
 
 void M_SetupNextMenu(menu_t *menudef)
@@ -1676,31 +1656,13 @@ void M_SetupNextMenu(menu_t *menudef)
     typein_time = 0;
 }
 
-void M_ClearMenus(void)
-{
-    menuactive = false;
-    fadingOut = true;
-    outFade = 0;
-
-    // Disable the menu binding class
-    DD_Executef(true, "deactivatebclass menu");
-}
-
 /**
- * @return          Current alpha level of the menu.
- */
-float MN_MenuAlpha(void)
-{
-    return menuFogData.alpha;
-}
-
-/**
- * @return          <code>true</code> if the menu is active and there is
+ * @return          @c true, if the menu is active and there is
  *                  a background for this page.
  */
 boolean MN_CurrentMenuHasBackground(void)
 {
-    if(!menuactive)
+    if(!menuActive)
         return false;
 
     return (currentMenu->background &&
@@ -1710,18 +1672,45 @@ boolean MN_CurrentMenuHasBackground(void)
 /**
  * Sets the view matrix up for rendering the menu
  */
-void M_SetMenuMatrix(float time)
+static void setMenuMatrix(float time)
 {
-    boolean allowScaling = !(currentMenu->flags & MNF_NOSCALE);
+    boolean         allowScaling = !(currentMenu->flags & MNF_NOSCALE);
+    boolean         rendMenuEffect = true;
 
     // Use a plain 320x200 projection.
     gl.MatrixMode(DGL_PROJECTION);
     gl.LoadIdentity();
     gl.Ortho(0, 0, 320, 200, -1, 1);
 
-    // Draw menu background.
-    if(menuFogData.alpha)
-        M_DrawBackground(currentMenu);
+    // If there is a menu background raw lump, draw it instead of the
+    // background effect.
+    if(currentMenu->background)
+    {
+        int         lump = W_CheckNumForName(currentMenu->background);
+
+        if(lump != -1)
+        {
+            gl.Color4f(1, 1, 1, menuFogData.alpha);
+            GL_DrawPatch_CS(0, 0, lump);
+            rendMenuEffect = false;
+        }
+    }
+
+    // Draw a background effect?
+    if(rendMenuEffect)
+    {
+#define mfd                 (&menuFogData)
+
+        // Two layers.
+        Hu_DrawFogEffect(cfg.menuFog, mfd->texture,
+                         mfd->layers[0].texOffset, mfd->layers[0].texAngle,
+                         mfd->alpha, menuFogData.joinY);
+        Hu_DrawFogEffect(cfg.menuFog, mfd->texture,
+                         mfd->layers[1].texOffset, mfd->layers[1].texAngle,
+                         mfd->alpha, menuFogData.joinY);
+
+#undef mfd
+    }
 
     if(allowScaling)
     {
@@ -1746,34 +1735,67 @@ void M_SetMenuMatrix(float time)
     }
 }
 
-/**
- * This is the main menu drawing routine (called every tic by the drawing loop)
- * Draws the current menu 'page' by calling the funcs attached to each
- * menu item.
- *
- * Also draws any current menu message 'Are you sure you want to quit?'
- */
-void M_Drawer(void)
+static void drawMessage(void)
 {
 #define BUFSIZE 80
 
-    static short x;
-    static short y;
-    short       i;
-    short       max;
-    char        string[BUFSIZE];
-    int         start;
-    float       scale;
-    int         w, h, off_x, off_y;
+    int             x, y;
+    uint            i, start;
+    char            string[BUFSIZE];
 
-    int         effTime = (menuTime > menuDarkTicks) ? menuDarkTicks : menuTime;
-    float       temp = .5 * effTime / (float) menuDarkTicks;
+    start = 0;
 
-    boolean     allowScaling = !(currentMenu->flags & MNF_NOSCALE);
+    y = 100 - M_StringHeight(messageString, hu_font_a) / 2;
+    while(*(messageString + start))
+    {
+        for(i = 0; i < strlen(messageString + start); ++i)
+            if(*(messageString + start + i) == '\n' || i > BUFSIZE-1)
+            {
+                memset(string, 0, BUFSIZE);
+                strncpy(string, messageString + start, MIN_OF(i, BUFSIZE));
+                string[BUFSIZE - 1] = 0;
+                start += i + 1;
+                break;
+            }
 
+        if(i == strlen(messageString + start))
+        {
+            strncpy(string, messageString + start, BUFSIZE);
+            string[BUFSIZE - 1] = 0;
+            start += i;
+        }
+
+        x = 160 - M_StringWidth(string, hu_font_a) / 2;
+        M_WriteText2(x, y, string, hu_font_a, cfg.menuColor2[0],
+                     cfg.menuColor2[1], cfg.menuColor2[2], 1);
+
+        y += hu_font_a[17].height;
+    }
+
+#undef BUFSIZE
+}
+
+/**
+ * This is the main menu drawing routine (called every tic by the drawing
+ * loop) Draws the current menu 'page' by calling the funcs attached to
+ * each menu item.
+ *
+ * Also draws any current menu message 'Are you sure you want to quit?'
+ */
+void Hu_MenuDrawer(void)
+{
+    int             i;
+    int             pos[2], offset[2], width, height;
+    float           scale, temp;
+    int             effTime;
+    boolean         allowScaling =
+        (!(currentMenu->flags & MNF_NOSCALE)? true : false);
+
+    effTime = (menuTime > menuDarkTicks? menuDarkTicks : menuTime);
+    temp = .5 * effTime / (float) menuDarkTicks;
     inhelpscreens = false;
 
-    if(!menuactive && menuAlpha > 0)  // fading out
+    if(!menuActive && menuAlpha > 0.0125f)  // fading out
     {
         temp = outFade + 1;
     }
@@ -1790,65 +1812,35 @@ void M_Drawer(void)
     gl.PushMatrix();
 
     // Setup matrix.
-    if(messageToPrint || ( menuactive || (menuAlpha > 0 || menuFogData.alpha > 0)) )
-        M_SetMenuMatrix(messageToPrint? 1 : temp);    // don't slam messages
+    if(messageToPrint || ( menuActive || (menuAlpha > 0 || menuFogData.alpha > 0)) )
+        setMenuMatrix(messageToPrint? 1 : temp);    // don't slam messages
 
     // Don't change back to the menu after a canceled quit
-    if(!menuactive && quitAsk)
+    if(!menuActive && quitAsk)
         goto end_draw_menu;
 
     // Horiz. & Vertically center string and print it.
     if(messageToPrint)
     {
-        start = 0;
-
-        y = 100 - M_StringHeight(messageString, hu_font_a) / 2;
-        while(*(messageString + start))
-        {
-            for(i = 0; i < strlen(messageString + start); ++i)
-                if(*(messageString + start + i) == '\n' || i > BUFSIZE-1)
-                {
-                    memset(string, 0, BUFSIZE);
-                    strncpy(string, messageString + start, MIN_OF(i, BUFSIZE));
-                    string[BUFSIZE - 1] = 0;
-                    start += i + 1;
-                    break;
-                }
-
-            if(i == strlen(messageString + start))
-            {
-                strncpy(string, messageString + start, BUFSIZE);
-                string[BUFSIZE - 1] = 0;
-                start += i;
-            }
-
-            x = 160 - M_StringWidth(string, hu_font_a) / 2;
-            M_WriteText2(x, y, string, hu_font_a, cfg.menuColor2[0],
-                         cfg.menuColor2[1], cfg.menuColor2[2], 1);
-
-            y += hu_font_a[17].height;
-        }
-
+        drawMessage();
         goto end_draw_menu;
     }
 
-    if(!menuactive && menuAlpha == 0 && menuFogData.alpha == 0)
+    if(!menuActive && !(menuAlpha > 0) && !(menuFogData.alpha > 0))
         goto end_draw_menu;
 
     if(currentMenu->drawFunc)
-        currentMenu->drawFunc();    // call Draw routine
+        currentMenu->drawFunc(); // Call Draw routine.
 
-    // DRAW MENU
-    x = currentMenu->x;
-    y = currentMenu->y;
-    max = currentMenu->itemCount;
+    pos[VX] = currentMenu->x;
+    pos[VY] = currentMenu->y;
 
-    if(menuAlpha > 0)
+    if(menuAlpha > 0.0125f)
     {
         for(i = currentMenu->firstItem;
-            i < max && i < currentMenu->firstItem + currentMenu->numVisItems; ++i)
+            i < currentMenu->itemCount && i < currentMenu->firstItem + currentMenu->numVisItems; ++i)
         {
-            float   t, r, g, b;
+            float           t, r, g, b;
 
             // Which color?
 #if __JDOOM__
@@ -1861,7 +1853,7 @@ void M_Drawer(void)
             {
 #endif
             if(currentMenu->items[i].type == ITT_EMPTY ||
-                    currentMenu->items[i].type >= ITT_INERT)
+               currentMenu->items[i].type >= ITT_INERT)
             {
 #ifndef __JDOOM__
                 r = cfg.menuColor[0];
@@ -1898,7 +1890,7 @@ void M_Drawer(void)
             {
                 if(currentMenu->items[i].lumpname[0])
                 {
-                    WI_DrawPatch(x, y, r, g, b, menuAlpha,
+                    WI_DrawPatch(pos[VX], pos[VY], r, g, b, menuAlpha,
                                 W_GetNumForName(currentMenu->items[i].lumpname),
                                 (currentMenu->items[i].flags & MIF_NOTALTTXT)? NULL :
                                  currentMenu->items[i].text, true, ALIGN_LEFT);
@@ -1906,26 +1898,25 @@ void M_Drawer(void)
             }
             else if(currentMenu->items[i].text)
             {
-                // changed from font[0].height to font[17].height
-                // (in jHeretic/jHexen font[0] is 1 pixel high)
-                WI_DrawParamText(x, y,
+                WI_DrawParamText(pos[VX], pos[VY],
                                 currentMenu->items[i].text, currentMenu->font,
                                 r, g, b, menuAlpha,
                                 false,
                                 cfg.usePatchReplacement? true : false,
                                 ALIGN_LEFT);
             }
-            y += currentMenu->itemHeight;
+
+            pos[VY] += currentMenu->itemHeight;
         }
 
-        // DRAW Colour Widget?
+        // Draw the colour widget?
         if(widgetEdit)
         {
             Draw_BeginZoom(0.5f, 160, 100);
             DrawColorWidget();
         }
 
-        // DRAW SKULL
+        // Draw the menu cursor.
         if(allowScaling)
         {
             if(itemOn >= 0)
@@ -1933,36 +1924,28 @@ void M_Drawer(void)
                 menu_t* mn = (widgetEdit? &ColorWidgetMnu : currentMenu);
 
                 scale = mn->itemHeight / (float) LINEHEIGHT;
-                w = cursorst[whichSkull].width * scale; // skull size
-                h = cursorst[whichSkull].height * scale;
+                width = cursorst[whichSkull].width * scale;
+                height = cursorst[whichSkull].height * scale;
 
-                off_x = mn->x;
-                off_x += (SKULLXOFF * scale);
+                offset[VX] = mn->x;
+                offset[VX] += MENUCURSOR_OFFSET_X * scale;
 
-                off_y = mn->y;
-                off_y += (itemOn - mn->firstItem + 1) * mn->itemHeight;
-                off_y -= h/2.f;
-
-#ifndef __JDOOM__
-                if(mn->itemHeight < LINEHEIGHT)
-                {
-                    // In Heretic and Hexen, the small font requires a slightly
-                    // different offset.
-                    off_y += SKULLYOFF;
-                }
-#endif
+                offset[VY] = mn->y;
+                offset[VY] += (itemOn - mn->firstItem + 1) * mn->itemHeight;
+                offset[VY] -= (float) height / 2;
+                offset[VY] += MENUCURSOR_OFFSET_Y * scale;
 
                 GL_SetPatch(cursorst[whichSkull].lump);
                 gl.MatrixMode(DGL_MODELVIEW);
                 gl.PushMatrix();
 
-                gl.Translatef(off_x, off_y, 0);
+                gl.Translatef(offset[VX], offset[VY], 0);
                 gl.Scalef(1, 1.0f / 1.2f, 1);
                 if(skull_angle)
                     gl.Rotatef(skull_angle, 0, 0, 1);
                 gl.Scalef(1, 1.2f, 1);
 
-                GL_DrawRect(-w/2.f, -h/2.f, w, h, 1, 1, 1, menuAlpha);
+                GL_DrawRect(-width/2.f, -height/2.f, width, height, 1, 1, 1, menuAlpha);
 
                 gl.MatrixMode(DGL_MODELVIEW);
                 gl.PopMatrix();
@@ -1983,6 +1966,215 @@ void M_Drawer(void)
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
+}
+
+/**
+ * Execute a menu navigation/action command.
+ */
+void Hu_MenuCommand(menucommand_e cmd)
+{
+    if(!menuActive)
+    {
+        if(cmd == MCMD_OPEN)
+        {
+            S_LocalSound(menusnds[2], NULL);
+
+            Con_Open(false);
+
+            Hu_MenuSetAlpha(1);
+            menuFogData.targetAlpha = 1;
+            menuActive = true;
+            menu_color = 0;
+            menuTime = 0;
+            fadingOut = false;
+            skull_angle = 0;
+            currentMenu = &MainDef;
+            itemOn = currentMenu->lastOn;
+            typein_time = 0;
+            quitAsk = 0;
+
+            // Enable the menu binding class
+            DD_Executef(true, "activatebclass menu");
+        }
+    }
+    else
+    {
+        if(cmd == MCMD_CLOSE)
+        {
+            Hu_MenuSetAlpha(0);
+            menuFogData.targetAlpha = 0;
+            menuActive = false;
+            fadingOut = true;
+            outFade = 0;
+
+            // Disable the menu binding class
+            DD_Executef(true, "deactivatebclass menu");
+        }
+        else
+        {
+            int             i;
+            int             firstVI, lastVI; // first and last visible item
+            int             itemCountOffset = 0;
+            const menuitem_t *item;
+            menu_t         *menu = currentMenu;
+
+            if(widgetEdit)
+            {
+                menu = &ColorWidgetMnu;
+
+                if(!rgba)
+                    itemCountOffset = 1;
+            }
+
+            firstVI = menu->firstItem;
+            lastVI = firstVI + menu->numVisItems - 1 - itemCountOffset;
+            if(lastVI > menu->itemCount - 1 - itemCountOffset)
+                lastVI = menu->itemCount - 1 - itemCountOffset;
+            item = &menu->items[itemOn];
+            menu->lastOn = itemOn;
+
+            switch(cmd)
+            {
+            case MCMD_NAV_LEFT:
+                if(item->type == ITT_LRFUNC && item->func != NULL)
+                {
+                    item->func(LEFT_DIR | item->option, item->data);
+                    S_LocalSound(menusnds[4], NULL);
+                }
+                else
+                {
+                    menu_nav_left:
+
+                    // Let's try to change to the previous page.
+                    if(menu->firstItem - menu->numVisItems >= 0)
+                    {
+                        menu->firstItem -= menu->numVisItems;
+                        itemOn -= menu->numVisItems;
+
+                        // Ensure cursor points to an editable item
+                        firstVI = menu->firstItem;
+                        while(menu->items[itemOn].type == ITT_EMPTY &&
+                              (itemOn > firstVI))
+                            itemOn--;
+
+                        while(!menu->items[itemOn].type &&
+                             itemOn < menu->numVisItems)
+                            itemOn++;
+
+                        // Make a sound, too.
+                        S_LocalSound(menusnds[4], NULL);
+                    }
+                }
+                break;
+
+            case MCMD_NAV_RIGHT:
+                if(item->type == ITT_LRFUNC && item->func != NULL)
+                {
+                    item->func(RIGHT_DIR | item->option, item->data);
+                    S_LocalSound(menusnds[4], NULL);
+                }
+                else
+                {
+                    menu_nav_right:
+
+                    // Move on to the next page, if possible.
+                    if(menu->firstItem + menu->numVisItems <
+                       menu->itemCount)
+                    {
+                        menu->firstItem += menu->numVisItems;
+                        itemOn += menu->numVisItems;
+
+                        // Ensure cursor points to an editable item
+                        firstVI = menu->firstItem;
+                        while((menu->items[itemOn].type == ITT_EMPTY ||
+                               itemOn >= menu->itemCount) && itemOn > firstVI)
+                            itemOn--;
+
+                        while(menu->items[itemOn].type == ITT_EMPTY &&
+                              itemOn < menu->numVisItems)
+                            itemOn++;
+
+                        // Make a sound, too.
+                        S_LocalSound(menusnds[4], NULL);
+                    }
+                }
+                break;
+
+            case MCMD_NAV_DOWN:
+                i = 0;
+                do
+                {
+                    if(itemOn + 1 > lastVI)
+                        itemOn = firstVI;
+                    else
+                        itemOn++;
+                } while(menu->items[itemOn].type == ITT_EMPTY &&
+                        i++ < menu->itemCount);
+                menu_color = 0;
+                S_LocalSound(menusnds[3], NULL);
+                break;
+
+            case MCMD_NAV_UP:
+                i = 0;
+                do
+                {
+                    if(itemOn <= firstVI)
+                        itemOn = lastVI;
+                    else
+                        itemOn--;
+                } while(menu->items[itemOn].type == ITT_EMPTY &&
+                        i++ < menu->itemCount);
+                menu_color = 0;
+                S_LocalSound(menusnds[3], NULL);
+                break;
+
+            case MCMD_NAV_OUT:
+                menu->lastOn = itemOn;
+                if(menu->prevMenu == MENU_NONE)
+                {
+                    menu->lastOn = itemOn;
+                    S_LocalSound(menusnds[1], NULL);
+                    Hu_MenuCommand(MCMD_CLOSE);
+                }
+                else
+                {
+                    M_SetupNextMenu(menulist[menu->prevMenu]);
+                    S_LocalSound(menusnds[2], NULL);
+                }
+                break;
+
+            case MCMD_SELECT:
+                if(item->type == ITT_SETMENU)
+                {
+                    M_SetupNextMenu(menulist[item->option]);
+                    S_LocalSound(menusnds[5], NULL);
+                }
+                else if(item->type == ITT_NAVLEFT)
+                {
+                    goto menu_nav_left;
+                }
+                else if(item->type == ITT_NAVRIGHT)
+                {
+                    goto menu_nav_right;
+                }
+                else if(item->func != NULL)
+                {
+                    menu->lastOn = itemOn;
+                    if(item->type == ITT_LRFUNC)
+                    {
+                        item->func(RIGHT_DIR | item->option, item->data);
+                        S_LocalSound(menusnds[5], NULL);
+                    }
+                    else if(item->type == ITT_EFUNC)
+                    {
+                        item->func(item->option, item->data);
+                        S_LocalSound(menusnds[5], NULL);
+                    }
+                }
+                break;
+            }
+        }
+    }
 }
 
 /**
@@ -2047,7 +2239,7 @@ boolean M_EditResponder(event_t *ev)
 void M_EndAnyKeyMsg(void)
 {
     M_StopMessage();
-    M_ClearMenus();
+    Hu_MenuCommand(MCMD_CLOSE);
     S_LocalSound(menusnds[1], NULL);
 }
 
@@ -2057,9 +2249,9 @@ void M_EndAnyKeyMsg(void)
  *
  * Handles the hotkey selection in the menu and "press any key" messages.
  *
- * @return          <code>true</code> if it ate the event.
+ * @return              @c true, if it ate the event.
  */
-boolean M_Responder(event_t *ev)
+boolean Hu_MenuResponder(event_t *ev)
 {
     int         ch = -1;
     int         i;
@@ -2067,7 +2259,7 @@ boolean M_Responder(event_t *ev)
     int         firstVI, lastVI;    // first and last visible item
     boolean     skip;
 
-    if(!menuactive || widgetEdit || currentMenu->flags & MNF_NOHOTKEYS)
+    if(!menuActive || widgetEdit || currentMenu->flags & MNF_NOHOTKEYS)
         return false;
 
     if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
@@ -2271,15 +2463,15 @@ void M_LoadSelect(int option, void *data)
 #endif
 
     menu->lastOn = option;
-    menuFogData.alpha = 0;
-    menuAlpha = 0;
-    menuactive = false;
+    menuFogData.alpha = menuFogData.targetAlpha = 0;
+    menuAlpha = menuTargetAlpha = 0;
+    menuActive = false;
     fadingOut = false;
-    M_ClearMenus();
+    Hu_MenuCommand(MCMD_CLOSE);
 }
 
 /**
- * User wants to save. Start string input for M_Responder
+ * User wants to save. Start string input for Hu_MenuResponder
  */
 void M_SaveSelect(int option, void *data)
 {
@@ -2298,12 +2490,12 @@ void M_SaveSelect(int option, void *data)
 void M_StartMessage(char *string, void *routine, boolean input)
 {
     messageResponse = 0;
-    messageLastMenuActive = menuactive;
+    messageLastMenuActive = menuActive;
     messageToPrint = 1;
     messageString = string;
     messageRoutine = routine;
     messageNeedsInput = input;
-    menuactive = true;
+    menuActive = true;
     typein_time = 0;
 
     // Enable the message binding class
@@ -2312,154 +2504,11 @@ void M_StartMessage(char *string, void *routine, boolean input)
 
 void M_StopMessage(void)
 {
-    menuactive = messageLastMenuActive;
+    menuActive = messageLastMenuActive;
     messageToPrint = 0;
 
     // Disable the menu binding class
     DD_Executef(true, "deactivatebclass message");
-}
-
-/**
- * \fixme Draws a 'fancy' menu effect.
- * A bit of a mess really...
- */
-static void M_DrawBackground(menu_t *menu)
-{
-    int         i;
-    const float xscale = 2.0f;
-    const float yscale = 1.0f;
-
-    // If there is a menu background raw lump, draw it instead of the fog.
-    if(menu->background)
-    {
-        int lump = W_CheckNumForName(menu->background);
-        if(lump != -1)
-        {
-            gl.Color4f(1, 1, 1, menuFogData.alpha);
-            GL_DrawPatch_CS(0, 0, lump);
-            return;
-        }
-    }
-
-    if(cfg.menuEffects > 1)
-        return;
-
-    if(cfg.menuFog == 4)
-    {
-        GL_SetNoTexture();
-        GL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, menuFogData.alpha/2.5f);
-        return;
-    }
-
-    if(cfg.menuFog == 2)
-    {
-        gl.Disable(DGL_TEXTURING);
-        gl.Color4f(menuFogData.alpha, menuFogData.alpha / 2, 0, menuFogData.alpha / 3);
-        gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
-        GL_DrawRectTiled(0, 0, 320, 200, 1, 1);
-        gl.Enable(DGL_TEXTURING);
-    }
-
-    gl.Bind(menuFogData.texture);
-    gl.Color3f(menuFogData.alpha, menuFogData.alpha, menuFogData.alpha);
-    gl.MatrixMode(DGL_TEXTURE);
-    gl.PushMatrix();
-
-    for(i = 0; i < 2; ++i)
-    {
-        if(i || cfg.menuFog == 1)
-        {
-            if(cfg.menuFog == 0)
-                gl.Color3f(menuFogData.alpha / 3, menuFogData.alpha / 2, menuFogData.alpha / 2);
-            else
-                gl.Color3f(menuFogData.alpha, menuFogData.alpha, menuFogData.alpha);
-
-            gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
-        }
-        else if(cfg.menuFog == 2)
-        {
-            gl.Color3f(menuFogData.alpha / 5, menuFogData.alpha / 3, menuFogData.alpha / 2);
-            gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
-        }
-        else if(cfg.menuFog == 0)
-        {
-            gl.Color3f(menuFogData.alpha * 0.15, menuFogData.alpha * 0.2, menuFogData.alpha * 0.3);
-            gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
-        }
-
-        if(cfg.menuFog == 3)
-        {
-            // The fancy one
-            gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
-
-            gl.LoadIdentity();
-
-            gl.Translatef(menuFogData.pos[i][VX] / 320, menuFogData.pos[i][VY] / 200, 0);
-            gl.Rotatef(menuFogData.angle[i] * 1, 0, 0, 1);
-            gl.Translatef(-menuFogData.pos[i][VX] / 320, -menuFogData.pos[i][VY] / 200, 0);
-
-            gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-            gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
-
-            gl.Begin(DGL_QUADS);
-
-            // Top Half
-            gl.Color4f(menuFogData.alpha * 0.25, menuFogData.alpha * 0.3, menuFogData.alpha * 0.4, 1 - (menuFogData.alpha * 0.8) );
-            gl.TexCoord2f( 0, 0);
-            gl.Vertex2f(0, 0);
-
-            gl.Color4f(menuFogData.alpha * 0.25, menuFogData.alpha * 0.3, menuFogData.alpha * 0.4, 1 - (menuFogData.alpha * 0.8) );
-            gl.TexCoord2f( xscale, 0);
-            gl.Vertex2f(320, 0);
-
-            gl.Color4f(menuFogData.alpha * 0.7, menuFogData.alpha * 0.7, menuFogData.alpha * 0.8, 1 - (0-(menuFogData.alpha * 0.9)));
-            gl.TexCoord2f( xscale, yscale * menuFogData.joinY );
-            gl.Vertex2f(320, 200 * menuFogData.joinY);
-
-            gl.Color4f(menuFogData.alpha * 0.7, menuFogData.alpha * 0.7, menuFogData.alpha * 0.8, 1 - (0-(menuFogData.alpha * 0.9)));
-            gl.TexCoord2f( 0, yscale * menuFogData.joinY );
-            gl.Vertex2f(0, 200 * menuFogData.joinY);
-
-            // Bottom Half
-            gl.Color4f(menuFogData.alpha * 0.7, menuFogData.alpha * 0.7, menuFogData.alpha * 0.8, 1 - (0-(menuFogData.alpha * 0.9)));
-            gl.TexCoord2f( 0, yscale * menuFogData.joinY );
-            gl.Vertex2f(0, 200 * menuFogData.joinY);
-
-            gl.Color4f(menuFogData.alpha * 0.7, menuFogData.alpha * 0.7, menuFogData.alpha * 0.8, 1 - (0-(menuFogData.alpha * 0.9)));
-            gl.TexCoord2f( xscale, yscale * menuFogData.joinY );
-            gl.Vertex2f(320, 200 * menuFogData.joinY);
-
-            gl.Color4f(menuFogData.alpha * 0.25, menuFogData.alpha * 0.3, menuFogData.alpha * 0.4, 1 - (menuFogData.alpha * 0.8) );
-            gl.TexCoord2f( xscale, yscale);
-            gl.Vertex2f(320, 200);
-
-            gl.Color4f(menuFogData.alpha * 0.25, menuFogData.alpha * 0.3, menuFogData.alpha * 0.4, 1 - (menuFogData.alpha * 0.8) );
-            gl.TexCoord2f( 0, yscale);
-            gl.Vertex2f(0, 200);
-
-            gl.End();
-
-        }
-        else
-        {
-            gl.LoadIdentity();
-
-            gl.Translatef(menuFogData.pos[i][VX] / 320, menuFogData.pos[i][VY] / 200, 0);
-            gl.Rotatef(menuFogData.angle[i] * (cfg.menuFog == 0 ? 0.5 : 1), 0, 0, 1);
-            gl.Translatef(-menuFogData.pos[i][VX] / 320, -menuFogData.pos[i][VY] / 200, 0);
-            if(cfg.menuFog == 2)
-                GL_DrawRectTiled(0, 0, 320, 200, 270 / 8, 4 * 225);
-            else if(cfg.menuFog == 0)
-                GL_DrawRectTiled(0, 0, 320, 200, 270 / 4, 8 * 225);
-            else
-                GL_DrawRectTiled(0, 0, 320, 200, 270, 225);
-        }
-    }
-
-    gl.MatrixMode(DGL_TEXTURE);
-    gl.PopMatrix();
-
-    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }
 
 void M_DrawMainMenu(void)
@@ -2684,13 +2733,13 @@ void M_DrawSaveLoadBorder(int x, int y)
 }
 
 /**
- * \fixme M_Responder calls this when user is finished.
+ * \fixme Hu_MenuResponder calls this when user is finished.
  * not in jHexen it doesn't...
  */
 void M_DoSave(int slot)
 {
     G_SaveGame(slot, savegamestrings[slot]);
-    M_ClearMenus();
+    Hu_MenuCommand(MCMD_CLOSE);
 
     // PICK QUICKSAVE SLOT YET?
     if(quickSaveSlot == -2)
@@ -2704,13 +2753,13 @@ boolean M_QuickSaveResponse(int ch, void *data)
         M_DoSave(quickSaveSlot);
         S_LocalSound(menusnds[1], NULL);
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
     {
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         S_LocalSound(menusnds[1], NULL);
         return true;
     }
@@ -2734,7 +2783,7 @@ static void M_QuickSave(void)
 
     if(quickSaveSlot < 0)
     {
-        M_StartMenu();
+        Hu_MenuCommand(MCMD_OPEN);
         M_ReadSaveStrings();
         M_SetupNextMenu(&SaveDef);
         quickSaveSlot = -2;        // means to pick a slot now
@@ -2759,13 +2808,13 @@ boolean M_QuickLoadResponse(int ch, void *data)
         M_LoadSelect(quickSaveSlot, NULL);
         S_LocalSound(menusnds[1], NULL);
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
     {
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         S_LocalSound(menusnds[1], NULL);
         return true;
     }
@@ -3000,15 +3049,18 @@ void M_DrawWeaponMenu(void)
 #ifdef __JDOOM__
         M_WriteMenuText(menu, 4+i, GET_TXT(TXT_WEAPON0 + cfg.weaponOrder[i]));
 #elif __JHERETIC__
-        /** \fixme We should allow different weapon preferences per player class.
-        *        However, since the only other class in jHeretic is the chicken
-        *        which has only 1 weapon anyway -we'll just show the names of the
-        *        player's weapons for now.
-	*/
+        /**
+         * \fixme We should allow different weapon preferences per player
+         * class. However, since the only other class in jHeretic is the
+         * chicken which has only 1 weapon anyway -we'll just show the
+         * names of the player's weapons for now.
+	     */
         M_WriteMenuText(menu, 4+i, GET_TXT(TXT_TXT_WPNSTAFF + cfg.weaponOrder[i]));
 #elif __JHEXEN__
-        //// \fixme: We should allow different weapon preferences per player class.
-        ////  Then we can show the real names here.
+        /**
+         * \fixme We should allow different weapon preferences per player
+         * class. Then we can show the real names here.
+         */
         M_WriteMenuText(menu, 4+i, weaponids[cfg.weaponOrder[i]]);
 #endif
     }
@@ -3390,7 +3442,7 @@ boolean M_QuitResponse(int option, void *data)
     else if(messageResponse == -1 || messageResponse == -2)
     {
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         S_LocalSound(menusnds[1], NULL);
         return true;
     }
@@ -3417,19 +3469,19 @@ boolean M_EndGameResponse(int option, void *data)
     if(messageResponse == 1)
     {
         currentMenu->lastOn = itemOn;
-        menuFogData.alpha = 0;
-        menuAlpha = 0;
+        menuAlpha = menuTargetAlpha = 0;
+        menuFogData.alpha = menuFogData.targetAlpha = 0;
         fadingOut = false;
-        menuactive = false;
+        menuActive = false;
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         G_StartTitle();
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
     {
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         S_LocalSound(menusnds[1], NULL);
         return true;
     }
@@ -3622,13 +3674,13 @@ boolean M_VerifyNightmare(int option, void *data)
         G_DeferredNewGame(SM_NIGHTMARE);
 #endif
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
     {
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         S_LocalSound(menusnds[1], NULL);
         return true;
     }
@@ -3669,11 +3721,11 @@ void M_ChooseSkill(int option, void *data)
     G_DeferredNewGame(option);
 #endif
 
-    menuFogData.alpha = 0;
-    menuAlpha = 0;
-    menuactive = false;
+    menuAlpha = menuTargetAlpha = 0;
+    menuFogData.alpha = menuFogData.targetAlpha = 0;
+    menuActive = false;
     fadingOut = false;
-    M_ClearMenus();
+    Hu_MenuCommand(MCMD_CLOSE);
 }
 
 void M_SfxVol(int option, void *data)
@@ -3746,13 +3798,13 @@ void M_OpenDCP(int option, void *data)
     if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
         idx = 0;
 
-    M_ClearMenus();
+    Hu_MenuCommand(MCMD_CLOSE);
     DD_Execute(true, panelNames[idx]);
 
 #undef NUM_PANEL_NAMES
 }
 
-void MN_DrawColorBox(const menu_t * menu, int index, float r, float g,
+void MN_DrawColorBox(const menu_t *menu, int index, float r, float g,
                      float b, float a)
 {
     int         x = menu->x + 4;
@@ -3764,7 +3816,7 @@ void MN_DrawColorBox(const menu_t * menu, int index, float r, float g,
 /**
  * Draws a menu slider control
  */
-void MN_DrawSlider(const menu_t * menu, int item, int width, int slot)
+void MN_DrawSlider(const menu_t *menu, int item, int width, int slot)
 {
 #ifndef __JDOOM__
     int         x;
@@ -3790,92 +3842,31 @@ void MN_DrawSlider(const menu_t * menu, int item, int width, int slot)
 }
 
 /**
- * Handles responses to messages requiring input.
- */
-DEFCC(CCmdMsgResponse)
-{
-    if(messageToPrint)
-    {
-        // Handle "Press any key to continue" messages
-        if(!messageNeedsInput)
-        {
-            M_EndAnyKeyMsg();
-            return true;
-        }
-        else
-        {
-            if(!stricmp(argv[0], "messageyes"))
-            {
-                messageResponse = 1;
-                return true;
-            }
-            else if(!stricmp(argv[0], "messageno"))
-            {
-                messageResponse = -1;
-                return true;
-            }
-            else if(!stricmp(argv[0], "messagecancel"))
-            {
-                messageResponse = -2;
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-/**
- * Handles menu commands, actions and navigation.
+ * Routes menu commands, actions and navigation.
  */
 DEFCC(CCmdMenuAction)
 {
-    int         mode = 0, i;
+    int         mode = 0;
 
-    if(!menuactive)
+    if(!menuActive)
     {
         if(!stricmp(argv[0], "menu") && !chatOn)   // Open menu
         {
-            M_StartMenu();
+            Hu_MenuCommand(MCMD_OPEN);
             return true;
         }
     }
     else
     {
-        int         firstVI, lastVI; // first and last visible item
-        int         itemCountOffset = 0;
-        const menuitem_t *item;
-        menu_t     *menu = currentMenu;
-
         // Determine what state the menu is in currently
         if(ActiveEdit)
-        {
             mode = 1;
-        }
         else if(widgetEdit)
-        {
             mode = 2;
-            menu = &ColorWidgetMnu;
-
-            if(!rgba)
-                itemCountOffset = 1;
-
-        }
         else if(saveStringEnter)
-        {
             mode = 3;
-        }
         else if(inhelpscreens)
-        {
             mode = 4;
-        }
-
-        firstVI = menu->firstItem;
-        lastVI = firstVI + menu->numVisItems - 1 - itemCountOffset;
-        if(lastVI > menu->itemCount - 1 - itemCountOffset)
-            lastVI = menu->itemCount - 1 - itemCountOffset;
-        item = &menu->items[itemOn];
-        menu->lastOn = itemOn;
 
         if(!stricmp(argv[0], "menuup"))
         {
@@ -3888,18 +3879,10 @@ DEFCC(CCmdMenuAction)
             case 2: // Widget edit
                 if(!widgetEdit)
                     break;
+                // Fall through.
+
             case 0: // Menu nav
-                i = 0;
-                do
-                {
-                    if(itemOn <= firstVI)
-                        itemOn = lastVI;
-                    else
-                        itemOn--;
-                } while(menu->items[itemOn].type == ITT_EMPTY &&
-                        i++ < menu->itemCount);
-                menu_color = 0;
-                S_LocalSound(menusnds[3], NULL);
+                Hu_MenuCommand(MCMD_NAV_UP);
                 break;
 
             default:
@@ -3913,23 +3896,15 @@ DEFCC(CCmdMenuAction)
             if(messageToPrint)
                 return true;
 
-            switch (mode)
+            switch(mode)
             {
             case 2: // Widget edit
                 if(!widgetEdit)
                     break;
+                // Fall through.
+
             case 0: // Menu nav
-                i = 0;
-                do
-                {
-                    if(itemOn + 1 > lastVI)
-                        itemOn = firstVI;
-                    else
-                        itemOn++;
-                } while(menu->items[itemOn].type == ITT_EMPTY &&
-                        i++ < menu->itemCount);
-                menu_color = 0;
-                S_LocalSound(menusnds[3], NULL);
+                Hu_MenuCommand(MCMD_NAV_DOWN);
                 break;
 
             default:
@@ -3943,42 +3918,11 @@ DEFCC(CCmdMenuAction)
             if(messageToPrint)
                 return true;
 
-            switch (mode)
+            switch(mode)
             {
             case 0: // Menu nav
             case 2: // Widget edit
-                if(item->type == ITT_LRFUNC && item->func != NULL)
-                {
-                    item->func(LEFT_DIR | item->option, item->data);
-                    S_LocalSound(menusnds[4], NULL);
-                }
-                else
-                {
-                    if(mode == 2)
-                        break;
-
-                    menu_nav_left:
-
-                    // Let's try to change to the previous page.
-                    if(menu->firstItem - menu->numVisItems >= 0)
-                    {
-                        menu->firstItem -= menu->numVisItems;
-                        itemOn -= menu->numVisItems;
-
-                        //Ensure cursor points to an editable item
-                        firstVI = menu->firstItem;
-                        while(menu->items[itemOn].type == ITT_EMPTY &&
-                              (itemOn > firstVI))
-                            itemOn--;
-
-                        while(!menu->items[itemOn].type &&
-                             itemOn < menu->numVisItems)
-                            itemOn++;
-
-                        // Make a sound, too.
-                        S_LocalSound(menusnds[4], NULL);
-                    }
-                }
+                Hu_MenuCommand(MCMD_NAV_LEFT);
                 break;
 
             default:
@@ -3992,43 +3936,11 @@ DEFCC(CCmdMenuAction)
             if(messageToPrint)
                 return true;
 
-            switch (mode)
+            switch(mode)
             {
             case 0: // Menu nav
             case 2: // Widget edit
-                if(item->type == ITT_LRFUNC && item->func != NULL)
-                {
-                    item->func(RIGHT_DIR | item->option, item->data);
-                    S_LocalSound(menusnds[4], NULL);
-                }
-                else
-                {
-                    if(mode == 2)
-                        break;
-
-        menu_nav_right:
-
-                    // Move on to the next page, if possible.
-                    if(menu->firstItem + menu->numVisItems <
-                       menu->itemCount)
-                    {
-                        menu->firstItem += menu->numVisItems;
-                        itemOn += menu->numVisItems;
-
-                        //Ensure cursor points to an editable item
-                        firstVI = menu->firstItem;
-                        while((menu->items[itemOn].type == ITT_EMPTY ||
-                               itemOn >= menu->itemCount) && itemOn > firstVI)
-                            itemOn--;
-
-                        while(menu->items[itemOn].type == ITT_EMPTY &&
-                              itemOn < menu->numVisItems)
-                            itemOn++;
-
-                        // Make a sound, too.
-                        S_LocalSound(menusnds[4], NULL);
-                    }
-                }
+                Hu_MenuCommand(MCMD_NAV_RIGHT);
                 break;
 
             default:
@@ -4042,37 +3954,11 @@ DEFCC(CCmdMenuAction)
             if(messageToPrint)
                 return true;
 
-            switch (mode)
+            switch(mode)
             {
             case 4: // In helpscreens
             case 0: // Menu nav
-                if(item->type == ITT_SETMENU)
-                {
-                    M_SetupNextMenu(menulist[item->option]);
-                    S_LocalSound(menusnds[5], NULL);
-                }
-                else if(item->type == ITT_NAVLEFT)
-                {
-                    goto menu_nav_left;
-                }
-                else if(item->type == ITT_NAVRIGHT)
-                {
-                    goto menu_nav_right;
-                }
-                else if(item->func != NULL)
-                {
-                    menu->lastOn = itemOn;
-                    if(item->type == ITT_LRFUNC)
-                    {
-                        item->func(RIGHT_DIR | item->option, item->data);
-                        S_LocalSound(menusnds[5], NULL);
-                    }
-                    else if(item->type == ITT_EFUNC)
-                    {
-                        item->func(item->option, item->data);
-                        S_LocalSound(menusnds[5], NULL);
-                    }
-                }
+                Hu_MenuCommand(MCMD_SELECT);
                 break;
 
             case 1: // Edit Field
@@ -4113,21 +3999,10 @@ DEFCC(CCmdMenuAction)
             if(messageToPrint)
                 return true;
 
-            switch (mode)
+            switch(mode)
             {
             case 0: // Menu nav: Previous menu
-                menu->lastOn = itemOn;
-                if(menu->prevMenu == MENU_NONE)
-                {
-                    menu->lastOn = itemOn;
-                    S_LocalSound(menusnds[1], NULL);
-                    M_ClearMenus();
-                }
-                else
-                {
-                    M_SetupNextMenu(menulist[menu->prevMenu]);
-                    S_LocalSound(menusnds[2], NULL);
-                }
+                Hu_MenuCommand(MCMD_NAV_OUT);
                 break;
 
             case 1: // Edit Field: Del char
@@ -4152,18 +4027,19 @@ DEFCC(CCmdMenuAction)
                 }
                 break;
             }
+
             return true;
         }
         else if(!stricmp(argv[0], "menu"))
         {
-            switch (mode)
+            switch(mode)
             {
             case 0: // Menu nav: Close menu
                 if(messageToPrint)
                     M_StopMessage();
 
                 currentMenu->lastOn = itemOn;
-                M_ClearMenus();
+                Hu_MenuCommand(MCMD_CLOSE);
                 S_LocalSound(menusnds[1], NULL);
                 break;
 
@@ -4187,9 +4063,10 @@ DEFCC(CCmdMenuAction)
 
             case 4: // In helpscreens: Exit and close menu
                 M_SetupNextMenu(&MainDef);
-                M_ClearMenus();
+                Hu_MenuCommand(MCMD_CLOSE);
                 break;
             }
+
             return true;
         }
     }
@@ -4201,7 +4078,7 @@ DEFCC(CCmdMenuAction)
     // Hotkey menu shortcuts
     if(!stricmp(argv[0], "helpscreen"))    // F1
     {
-        M_StartMenu();
+        Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
 #ifdef __JDOOM__
         if(gamemode == retail)
@@ -4215,21 +4092,21 @@ DEFCC(CCmdMenuAction)
     }
     else if(!stricmp(argv[0], "SaveGame"))    // F2
     {
-        M_StartMenu();
+        Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
         //S_LocalSound(menusnds[2], NULL);
         M_SaveGame(0, NULL);
     }
     else if(!stricmp(argv[0], "LoadGame"))
     {
-        M_StartMenu();
+        Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
         //S_LocalSound(menusnds[2], NULL);
         M_LoadGame(0, NULL);
     }
     else if(!stricmp(argv[0], "SoundMenu"))    // F4
     {
-        M_StartMenu();
+        Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
         currentMenu = &Options2Def;
         itemOn = 0;                // sfx_vol
@@ -4272,16 +4149,7 @@ DEFCC(CCmdMenuAction)
     }
     else if(!stricmp(argv[0], "ToggleGamma"))    // F11
     {
-        char    buf[50];
-
-        gammaLevel++;
-        if(gammaLevel > 4)
-            gammaLevel = 0;
-#ifdef __JDOOM__
-        P_SetMessage(players + consoleplayer, gammamsg[gammaLevel], true);
-#endif
-        sprintf(buf, "rend-tex-gamma %f", ((float) gammaLevel / 8.0f) * 1.5f);
-        DD_Execute(false, buf);
+        R_CycleGammaLevel();
     }
 
     return true;
