@@ -3,7 +3,7 @@
  ./../../plugins/common/src/d_net.c
  ./../../plugins/common/src/dmu_lib.c
  ./../../plugins/common/src/m_multi.c
- ./../../plugins/common/src/mn_menu.c
+ ./../../plugins/common/src/hu_menu.c
  ./../../plugins/doom64tc/src/g_ctrl.c
  ./../../plugins/common/src/g_dglinit.c
  ./../../plugins/doom64tc/src/d_api.c
@@ -64,4 +64,3 @@
  ./../../plugins/common/src/g_controls.c
  ./../../plugins/doom64tc/src/d_items.c
  ./../../plugins/doom64tc/src/acfnlink.c
- 

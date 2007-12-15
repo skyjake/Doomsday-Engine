@@ -77,6 +77,7 @@
  ./../../engine/portable/src/p_data.c
  ./../../engine/portable/src/p_dmu.c
  ./../../engine/portable/src/dam_main.c
+ ./../../engine/portable/src/dam_file.c
  ./../../engine/portable/src/dam_read.c
  ./../../engine/portable/src/dam_loader.c
  ./../../engine/portable/src/dam_reject.c
