@@ -952,7 +952,8 @@ void C_AddViewRelOcclusion(float *v1, float *v2, float height, boolean tophalf)
 
     if(M_DotProduct(testPos, normal) < 0)
     {
-        Con_Error("C_AddViewRelOcclusion: wrong side!\n");
+        Con_Error("C_AddViewRelOcclusion: Wrong side - [%g,%g]>[%g,%g] "
+                  "view[%g,%g]!\n", v1[VX], v1[VY], v2[VX], v2[VY], vx, vz);
     }
 }
 #endif
