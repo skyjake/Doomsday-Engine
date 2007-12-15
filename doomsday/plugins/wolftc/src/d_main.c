@@ -516,9 +516,9 @@ void D_PreInit(void)
     G_PreInit();
 }
 
-/*
- *  Post Engine Initialization routine.
- *    All game-specific actions that should take place at this time go here.
+/**
+ * Post Engine Initialization routine.
+ * All game-specific actions that should take place at this time go here.
  */
 void D_PostInit(void)
 {

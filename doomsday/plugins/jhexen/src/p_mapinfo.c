@@ -312,7 +312,7 @@ void P_InitMapInfo(void)
 }
 
 /**
- * Special early initializer needed to start sound before R_Init()
+ * Special early initializer needed to start sound before R_InitRefresh()
  */
 void P_InitMapMusicInfo(void)
 {

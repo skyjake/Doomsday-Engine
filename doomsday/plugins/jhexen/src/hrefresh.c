@@ -109,7 +109,7 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;
 
 // CODE --------------------------------------------------------------------
 
-void R_Init(void)
+void R_InitRefresh(void)
 {
     // Nothing to do.
 }

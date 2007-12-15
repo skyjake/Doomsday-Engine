@@ -103,7 +103,7 @@ static void initTranslation(void)
     }
 }
 
-void R_Init(void)
+void R_InitRefresh(void)
 {
     initTranslation();
 }

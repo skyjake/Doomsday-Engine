@@ -98,7 +98,6 @@ typedef struct {
     void            (*G_Drawer) (void);
     void            (*G_Drawer2) (void);
     void            (*ConsoleBackground) (int *width, int *height);
-    void            (*R_Init) (void);
 
     // Miscellaneous.
     void            (*MobjThinker) ();

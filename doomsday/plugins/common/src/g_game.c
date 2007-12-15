@@ -509,6 +509,9 @@ void G_PreInit(void)
  */
 void G_PostInit(void)
 {
+    Con_Message("R_InitRefresh: Loading data for referesh.\n");
+    R_InitRefresh();
+
     // Init the save system and create the game save directory
     SV_Init();
 

@@ -175,9 +175,6 @@ void R_Init(void)
     R_InitModels();
     R_InitSkyMap();
     R_InitTranslationTables();
-    // Call the game DLL's refresh initialization, if necessary.
-    if(gx.R_Init)
-        gx.R_Init();
     Rend_Init();
     frameCount = 0;
     R_InitViewBorder();
