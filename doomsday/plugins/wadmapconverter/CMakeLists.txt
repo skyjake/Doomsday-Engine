@@ -1,6 +1,6 @@
 ## deng build scripts. 
-## Copyright © 2006 - 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
-## Copyright © 2007 Daniel Swanson <danij@dengine.net>
+## Copyright Â© 2006 - 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+## Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
 ##
 ## This file is licensed under the GNU GPLv3 or any later versions,
 ##
@@ -22,6 +22,7 @@
 ################################################################################
 ######################## WAD Map Converter Plugin ##############################
 
+INCLUDE_DIRECTORIES ( include )
 FILE(GLOB WADMAPCONVERTER_SOURCES src/*.c)
 ADD_LIBRARY (dpwadmapconverter SHARED ${WADMAPCONVERTER_SOURCES})
 
