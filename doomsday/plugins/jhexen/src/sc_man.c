@@ -41,6 +41,10 @@
  * http://www.ravensoft.com/
  */
 
+/**
+ * sc_man.c: Hexen script lump parsing.
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
@@ -325,7 +329,7 @@ void SC_UnGet(void)
 
 /**
  * @return              Index of the first match to sc_String from the passed
- *                      array of strings, ELSE <code>-1</code>.
+ *                      array of strings, ELSE @c -1,.
  */
 int SC_MatchString(char **strings)
 {

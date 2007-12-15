@@ -41,6 +41,10 @@
  * http://www.ravensoft.com/
  */
 
+/**
+ * x_event.h:
+ */
+
 #ifndef __X_EVENT__
 #define __X_EVENT__
 
@@ -62,8 +66,6 @@ typedef enum {
     GA_WORLDDONE,
     GA_SCREENSHOT
 } gameaction_t;
-
-extern gameaction_t gameaction;
 
 //
 // Button/action code definitions.

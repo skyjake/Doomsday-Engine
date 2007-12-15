@@ -41,6 +41,8 @@
 
 #include "jhexen.h"
 
+#include "hu_menu.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -70,7 +72,6 @@ boolean G_Responder(event_t *ev);
 int     G_PrivilegedResponder(event_t *event);
 
 // Map Data
-void    P_PreNodeBuild(void);
 void    P_SetupForMapData(int type, uint num);
 
 // Map Objects
@@ -233,7 +234,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.G_Drawer = G_Drawer;
     gx.G_Drawer2 = G_Drawer2;
     gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
-    gx.FallbackResponder = M_Responder;
+    gx.FallbackResponder = Hu_MenuResponder;
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_GetMobjFriction;
@@ -251,7 +252,6 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.NetWorldEvent = D_NetWorldEvent;
     gx.HandlePacket = D_HandlePacket;
     gx.R_Init = R_Init;
-    gx.PreNodeBuild = P_PreNodeBuild;
 
     // The structure sizes.
     gx.ticcmd_size = sizeof(ticcmd_t);

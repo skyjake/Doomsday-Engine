@@ -1321,7 +1321,7 @@ void P_RemoveMobj(mobj_t *mobj)
  * Called when a player is spawned on the level. Most of the player
  * structure stays unchanged between levels.
  */
-void P_SpawnPlayer(spawnspot_t *mthing, int playernum)
+void P_SpawnPlayer(spawnspot_t *spot, int playernum)
 {
     player_t   *p;
     float       pos[3];
@@ -1336,9 +1336,17 @@ void P_SpawnPlayer(spawnspot_t *mthing, int playernum)
         G_PlayerReborn(playernum);
     }
 
-    pos[VX] = mthing->pos[VX];
-    pos[VY] = mthing->pos[VY];
-    pos[VZ] = ONFLOORZ;
+    if(spot)
+    {
+        pos[VX] = spot->pos[VX];
+        pos[VY] = spot->pos[VY];
+        pos[VZ] = ONFLOORZ;
+    }
+    else
+    {
+        pos[VX] = pos[VY] = pos[VZ] = 0;
+    }
+
     if(randomclass && deathmatch)
     {
         p->class = P_Random() % 3;
@@ -1371,7 +1379,7 @@ void P_SpawnPlayer(spawnspot_t *mthing, int playernum)
     {
         // The first type should be blue, and the third should be the
         // Fighter's original gold color
-        //if(mthing->type == 1)
+        //if(spot->type == 1)
         if(p->colormap == 0)
         {
             mobj->flags |= 2 << MF_TRANSSHIFT;
@@ -1379,11 +1387,11 @@ void P_SpawnPlayer(spawnspot_t *mthing, int playernum)
     }
     else if(p->colormap > 0 && p->colormap < 8)
     {  // Set color translation bits for player sprites
-        //mobj->flags |= (mthing->type-1)<<MF_TRANSSHIFT;
+        //mobj->flags |= (spot->type-1)<<MF_TRANSSHIFT;
         mobj->flags |= p->colormap << MF_TRANSSHIFT;
     }
 
-    mobj->angle = mthing->angle; /* $unifiedangles */
+    mobj->angle = (spot? spot->angle : 0); /* $unifiedangles */
     p->plr->lookdir = 0;/* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     mobj->player = p;
@@ -1398,6 +1406,9 @@ void P_SpawnPlayer(spawnspot_t *mthing, int playernum)
     p->morphTics = 0;
     p->plr->extraLight = 0;
     p->plr->fixedcolormap = 0;
+
+    if(!spot)
+        p->plr->flags |= DDPF_CAMERA;
 
     if(p->plr->flags & DDPF_CAMERA)
     {

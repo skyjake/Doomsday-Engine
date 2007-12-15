@@ -54,6 +54,7 @@
 #include "p_map.h"
 #include "am_map.h"
 #include "g_common.h"
+#include "hu_menu.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -670,14 +671,14 @@ boolean SuicideResponse(int option, void *data)
     if(messageResponse == 1) // Yes
     {
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         Cht_SuicideFunc(&players[consoleplayer]);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
     {
         M_StopMessage();
-        M_ClearMenus();
+        Hu_MenuCommand(MCMD_CLOSE);
         return true;
     }
     return false;
@@ -841,7 +842,7 @@ static void CheatWarpFunc(player_t *player, cheat_t * cheat)
     }
     P_SetMessage(player, TXT_CHEATWARP, false);
 
-    M_ClearMenus();
+    Hu_MenuCommand(MCMD_CLOSE);
     G_TeleportNewMap(map, 0);
 }
 
@@ -1108,7 +1109,7 @@ DEFCC(CCmdCheatSuicide)
     {
         // When not in a netgame we'll ask the player to confirm.
         Con_Open(false);
-        menuactive = false;
+        Hu_MenuCommand(MCMD_CLOSE);
         M_StartMessage("Are you sure you want to suicide?\n\nPress Y or N.",
                        SuicideResponse, true);
     }

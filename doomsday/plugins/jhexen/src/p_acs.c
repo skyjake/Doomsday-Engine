@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -631,7 +631,7 @@ static boolean TagBusy(int tag)
 }
 
 /**
- * @return              The index of a script number else <code>-1</code>.
+ * @return              The index of a script number else @c -1,.
  */
 static int GetACSIndex(int number)
 {

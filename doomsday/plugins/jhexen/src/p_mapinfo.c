@@ -492,7 +492,7 @@ float P_GetMapSky2ScrollDelta(int map)
  *
  * @param map           The map (logical number) to be queried.
  *
- * @return              <code>true</code> if the map is set to doublesky.
+ * @return              @c true, if the map is set to doublesky.
  */
 boolean P_GetMapDoubleSky(int map)
 {
@@ -504,7 +504,7 @@ boolean P_GetMapDoubleSky(int map)
  *
  * @param map           The map (logical number) to be queried.
  *
- * @return              <code>true</code> if the map is set to lightning.
+ * @return              @c true, if the map is set to lightning.
  */
 boolean P_GetMapLightning(int map)
 {
@@ -528,7 +528,7 @@ int P_GetMapFadeTable(int map)
  *
  * @param map           The map (logical number) to be queried.
  *
- * @return              <code>NULL</code> if the map is set to use the
+ * @return              @c NULL, if the map is set to use the
  *                      default song lump, else a ptr to a string
  *                      containing the name of the song lump.
  */

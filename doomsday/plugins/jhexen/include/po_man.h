@@ -52,9 +52,6 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#define PO_LINE_START           1 // polyobj line start special
-#define PO_LINE_EXPLICIT        5
-
 typedef enum {
     PODOOR_NONE,
     PODOOR_SLIDE,
