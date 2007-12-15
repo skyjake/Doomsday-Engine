@@ -888,42 +888,15 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 int skyFlatNum;
 
 /**
- * Get a 32-bit integer value.
+ * Get a 32-bit signed integer value.
  */
 int DD_GetInteger(int ddvalue)
 {
     if(ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
     {
         // How about some specials?
-        switch (ddvalue)
+        switch(ddvalue)
         {
-        case DD_SECTOR_COUNT:
-            return numsectors;
-
-        case DD_LINE_COUNT:
-            return numlines;
-
-        case DD_SIDE_COUNT:
-            return numsides;
-
-        case DD_VERTEX_COUNT:
-            return numvertexes;
-
-        case DD_POLYOBJ_COUNT:
-            return po_NumPolyobjs;
-
-        case DD_SEG_COUNT:
-            return numsegs;
-
-        case DD_SUBSECTOR_COUNT:
-            return numsubsectors;
-
-        case DD_NODE_COUNT:
-            return numnodes;
-
-        case DD_THING_COUNT:
-            return numthings;
-
         case DD_DYNLIGHT_TEXTURE:
             return (int) GL_PrepareLSTexture(LST_DYNAMIC, NULL);
 
@@ -959,7 +932,7 @@ int DD_GetInteger(int ddvalue)
 }
 
 /**
- * Set a 32-bit integer value.
+ * Set a 32-bit signed integer value.
  */
 void DD_SetInteger(int ddvalue, int parm)
 {
@@ -1045,9 +1018,6 @@ void* DD_GetVariable(int ddvalue)
 
         case DD_THING_COUNT:
             return &numthings;
-
-        case DD_GAME_EXPORTS:
-            return &gx;
 
         case DD_TRACE_ADDRESS:
             return &trace;
