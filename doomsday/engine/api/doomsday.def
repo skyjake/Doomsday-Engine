@@ -6,6 +6,7 @@ NAME            "DOOMSDAY"
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
 ; 45 formerly B_BindingsForCommand
+; 65 formerly P_GetBlockRootIdx
 ; 68 formerly P_BlockLinesIterator
 ; 69 formerly P_BlockMobjsIterator
 ; 70 formerly P_BlockPolyobjsIterator
@@ -20,6 +21,7 @@ NAME            "DOOMSDAY"
 ; 118 formerly GL_SetTexture
 ; 206 formerly GL_Update
 ; 232 formerly R_SetAnimGroup
+; 255 formerly P_PointToBlock
 ; 326 formerly PO_Alloc
 ; 332 formerly P_ControlReset
 
@@ -142,10 +144,8 @@ EXPORTS
     P_PointOnDivlineSide        @62 NONAME
     P_InterceptVector           @63 NONAME
     P_LineOpening               @64 NONAME
-    P_GetBlockRootIdx           @65 NONAME
     P_LinkMobj                  @66 NONAME
     P_UnlinkMobj                @67 NONAME
-    P_PointToBlock              @255 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME

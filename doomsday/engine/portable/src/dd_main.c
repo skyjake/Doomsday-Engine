@@ -1043,81 +1043,37 @@ void* DD_GetVariable(int ddvalue)
                 return mapInfo->author;
             break;
         }
-        case DD_BLOCKMAP_MIN_X:
+        case DD_MAP_MIN_X:
         {
             gamemap_t  *map = P_GetCurrentMap();
             if(map)
-            {
-                vec2_t      bmapMin;
-                P_GetBlockmapBounds(map->blockMap, bmapMin, NULL);
-                return &bmapMin[VX];
-            }
+                return &map->bbox[BOXLEFT];
             else
                 return NULL;
         }
-        case DD_BLOCKMAP_MIN_Y:
+        case DD_MAP_MIN_Y:
         {
             gamemap_t  *map = P_GetCurrentMap();
             if(map)
-            {
-                vec2_t     bmapMin;
-                P_GetBlockmapBounds(map->blockMap, bmapMin, NULL);
-                return &bmapMin[VY];
-            }
+                return &map->bbox[BOXBOTTOM];
             else
                 return NULL;
         }
-        case DD_BLOCKMAP_MAX_X:
+        case DD_MAP_MAX_X:
         {
             gamemap_t  *map = P_GetCurrentMap();
             if(map)
-            {
-                vec2_t      bmapMax;
-                P_GetBlockmapBounds(map->blockMap, NULL, bmapMax);
-                return &bmapMax[VX];
-            }
+                return &map->bbox[BOXRIGHT];
             else
                 return NULL;
         }
-        case DD_BLOCKMAP_MAX_Y:
+        case DD_MAP_MAX_Y:
         {
             gamemap_t  *map = P_GetCurrentMap();
             if(map)
-            {
-                vec2_t     bmapMax;
-                P_GetBlockmapBounds(map->blockMap, NULL, bmapMax);
-                return &bmapMax[VY];
-            }
+                return &map->bbox[BOXTOP];
             else
                 return NULL;
-        }
-        case DD_BLOCKMAP_WIDTH:
-        {
-            gamemap_t *map = P_GetCurrentMap();
-            if(map)
-            {
-                uint        bmapSize[2];
-                P_GetBlockmapDimensions(map->blockMap, bmapSize);
-                return &bmapSize[VX];
-            }
-            else
-            {
-                return NULL;
-            }
-        }
-        case DD_BLOCKMAP_HEIGHT:
-        {
-            gamemap_t *map = P_GetCurrentMap();
-            if(map)
-            {
-                uint        bmapSize[2];
-                P_GetBlockmapDimensions(map->blockMap, bmapSize);
-                return &bmapSize[VY];
-            }
-            else
-            {
-                return NULL;
-            }
         }
         case DD_PSPRITE_OFFSET_X:
             return &pspOffset[VX];

@@ -54,6 +54,11 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct mobjtargetableparams_s {
+    mobj_t         *source;
+    mobj_t         *target;
+} mobjtargetableparams_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -76,19 +81,96 @@ int     ptflags;
 
 // CODE --------------------------------------------------------------------
 
-static mobj_t *PIT_MobjBlockLinks(int index, void *data)
+boolean PIT_MobjTargetable(mobj_t *mo, void *data)
 {
-    mobj_t         *mo = (mobj_t*) data;
-    mobj_t         *link, *root = P_GetBlockRootIdx(index);
+    mobjtargetableparams_t *params = (mobjtargetableparams_t*) data;
 
-    // If this doesn't work, check the backed-up version!
-    for(link = root->bnext; link != root; link = link->bnext)
-    {
-        if(isTargetable(mo, link))
-            return link;
+    if(params->source->player)
+    {   // Minotaur looking around player.
+        if((mo->flags & MF_COUNTKILL) || (mo->player && (mo != params->source)))
+        {
+            if(!(mo->flags & MF_SHOOTABLE) ||
+               (mo->flags2 & MF2_DORMANT) ||
+               ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source)) ||
+                (IS_NETGAME && !deathmatch && mo->player))
+                return true; // Continue iteration.
+
+            if(P_CheckSight(params->source, mo))
+            {
+                params->target = mo;
+                return false; // Stop iteration.
+            }
+        }
+    }
+    else if(params->source->type == MT_MINOTAUR)
+    {   // Looking around minotaur.
+        mobj_t             *master = params->source->tracer;
+
+        if((mo->flags & MF_COUNTKILL) ||
+           (mo->player && (mo != master)))
+        {
+            if(!(mo->flags & MF_SHOOTABLE) ||
+               (mo->flags2 & MF2_DORMANT) ||
+               ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source->tracer)) ||
+                (IS_NETGAME && !deathmatch && mo->player))
+                return true; // Continue iteration.
+
+            if(P_CheckSight(params->source, mo))
+            {
+                params->target = mo;
+                return false; // Stop iteration.
+            }
+        }
+    }
+    else if(params->source->type == MT_MSTAFF_FX2)
+    {   // bloodscourge.
+        if(((mo->flags & MF_COUNTKILL) ||
+            (mo->player && mo != params->source->target)) &&
+           !(mo->flags2 & MF2_DORMANT))
+        {
+            if(!(mo->flags & MF_SHOOTABLE) ||
+               (IS_NETGAME && !deathmatch && mo->player))
+                return true; // Continue iteration.
+
+            if(P_CheckSight(params->source, mo))
+            {
+                angle_t             angle;
+                mobj_t             *master;
+
+                master = params->source->target;
+                angle =
+                    R_PointToAngle2(master->pos[VX], master->pos[VY],
+                                    mo->pos[VY], mo->pos[VY]) -
+                                    master->angle;
+                angle >>= 24;
+                if(angle > 226 || angle < 30)
+                {
+                    params->target = mo;
+                    return false; // Stop iteration.
+                }
+            }
+        }
+    }
+    else
+    {   // spirits.
+        if(((mo->flags & MF_COUNTKILL) ||
+            (mo->player && mo != params->source->target)) &&
+           !(mo->flags2 & MF2_DORMANT))
+        {
+            if(!(mo->flags & MF_SHOOTABLE) ||
+               (IS_NETGAME && !deathmatch && mo->player) ||
+               mo == params->source->target)
+                return true; // Continue iteration.
+
+            if(P_CheckSight(params->source, mo))
+            {
+                params->target = mo;
+                return false; // Stop iteration.
+            }
+        }
     }
 
-    return NULL;
+    return true; // Continue iteration.
 }
 
 /**
@@ -98,196 +180,99 @@ static mobj_t *PIT_MobjBlockLinks(int index, void *data)
  */
 mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
 {
-    uint        blockX, blockY;
-    uint        startX, startY;
-    uint        blockIndex;
-    uint        firstStop;
-    uint        secondStop;
-    uint        thirdStop;
-    uint        finalStop;
-    uint        count;
-    mobj_t     *target;
-    uint        bmapwidth = *(uint*) DD_GetVariable(DD_BLOCKMAP_WIDTH);
-    uint        bmapheight = *(uint*) DD_GetVariable(DD_BLOCKMAP_HEIGHT);
+#define MAPBLOCKUNITS       128
+#define MAPBLOCKSHIFT       (FRACBITS+7)
+
+    int             i, block[2], startBlock[2];
+    int             count;
+    float           mapOrigin[2];
+    float           box[4];
+    mobjtargetableparams_t params;
+
+    mapOrigin[VX] = *((float*) DD_GetVariable(DD_MAP_MIN_X));
+    mapOrigin[VY] = *((float*) DD_GetVariable(DD_MAP_MIN_Y));
+
+    // The original blockmap generator added a border of 8 units.
+    mapOrigin[VX] -= 8;
+    mapOrigin[VY] -= 8;
+
+    params.source = mo;
+    params.target = NULL;
 
     // Convert from world units to map block units.
-    distance /= 128;
+    distance /= MAPBLOCKUNITS;
 
-    P_PointToBlock(mo->pos[VX], mo->pos[VY], &startX, &startY);
+    // Determine the start block.
+    startBlock[VX] = FLT2FIX(mo->pos[VX] - mapOrigin[VX]) >> MAPBLOCKSHIFT;
+    startBlock[VY] = FLT2FIX(mo->pos[VY] - mapOrigin[VY]) >> MAPBLOCKSHIFT;
 
-    if(startX >= 0 && startX < bmapwidth &&
-       startY >= 0 && startY < bmapheight)
-    {
-        target = PIT_MobjBlockLinks(startY * bmapwidth + startX, mo);
-        if(target)
-        {   // Found a target right away!
-            return target;
-        }
+    box[BOXLEFT]   = mapOrigin[VX] + startBlock[VX] * MAPBLOCKUNITS;
+    box[BOXRIGHT]  = box[BOXLEFT] + MAPBLOCKUNITS;
+    box[BOXBOTTOM] = mapOrigin[VY] + startBlock[VY] * MAPBLOCKUNITS;
+    box[BOXTOP]    = box[BOXBOTTOM] + MAPBLOCKUNITS;
+
+    // Check the first block.
+    if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+    {   // Found a target right away!
+        return params.target;
     }
 
     for(count = 1; count <= distance; count++)
     {
-        blockX = startX - count;
-        blockY = startY - count;
+        block[VX] = startBlock[VX] - count;
+        block[VY] = startBlock[VY] - count;
 
-        if(blockY < 0)
-        {
-            blockY = 0;
-        }
-        else if(blockY >= bmapheight)
-        {
-            blockY = bmapheight - 1;
-        }
-
-        if(blockX < 0)
-        {
-            blockX = 0;
-        }
-        else if(blockX >= bmapwidth)
-        {
-            blockX = bmapwidth - 1;
-        }
-
-        blockIndex = blockY * bmapwidth + blockX;
-        firstStop = startX + count;
-        if(firstStop < 0)
-        {
-            continue;
-        }
-
-        if(firstStop >= bmapwidth)
-        {
-            firstStop = bmapwidth - 1;
-        }
-
-        secondStop = startY + count;
-        if(secondStop < 0)
-        {
-            continue;
-        }
-
-        if(secondStop >= bmapheight)
-        {
-            secondStop = bmapheight - 1;
-        }
-
-        thirdStop = secondStop * bmapwidth + blockX;
-        secondStop = secondStop * bmapwidth + firstStop;
-        firstStop += blockY * bmapwidth;
-        finalStop = blockIndex;
+        box[BOXLEFT]   = mapOrigin[VX] + block[VX] * MAPBLOCKUNITS;
+        box[BOXRIGHT]  = box[BOXLEFT] + MAPBLOCKUNITS;
+        box[BOXBOTTOM] = mapOrigin[VY] + block[VY] * MAPBLOCKUNITS;
+        box[BOXTOP]    = box[BOXBOTTOM] + MAPBLOCKUNITS;
 
         // Trace the first block section (along the top).
-        for(; blockIndex <= firstStop; blockIndex++)
+        for(i = 0; i < count * 2 + 1; ++i)
         {
-            target = PIT_MobjBlockLinks(blockIndex, mo);
-            if(target)
-                return target;
+            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+                return params.target;
+
+            if(i < count * 2)
+            {
+                box[BOXLEFT]  += MAPBLOCKUNITS;
+                box[BOXRIGHT] += MAPBLOCKUNITS;
+            }
         }
 
         // Trace the second block section (right edge).
-        for(blockIndex += -1 + bmapwidth; blockIndex <= secondStop; blockIndex += bmapwidth)
+        for(i = 0; i < count * 2; ++i)
         {
-            target = PIT_MobjBlockLinks(blockIndex, mo);
-            if(target)
-                return target;
+            box[BOXBOTTOM] += MAPBLOCKUNITS;
+            box[BOXTOP]    += MAPBLOCKUNITS;
+
+            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+                return params.target;
         }
 
         // Trace the third block section (bottom edge).
-        for(blockIndex -= 1 + bmapwidth; blockIndex >= thirdStop; blockIndex--)
+        for(i = 0; i < count * 2; ++i)
         {
-            target = PIT_MobjBlockLinks(blockIndex, mo);
-            if(target)
-                return target;
+            box[BOXLEFT]  -= MAPBLOCKUNITS;
+            box[BOXRIGHT] -= MAPBLOCKUNITS;
+
+            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+                return params.target;
         }
 
         // Trace the final block section (left edge).
-        for(blockIndex += 1 - bmapwidth; blockIndex > finalStop; blockIndex -= bmapwidth)
+        for(i = 0; i < count * 2 - 1; ++i)
         {
-            target = PIT_MobjBlockLinks(blockIndex, mo);
-            if(target)
-                return target;
+            box[BOXBOTTOM] -= MAPBLOCKUNITS;
+            box[BOXTOP]    -= MAPBLOCKUNITS;
+
+            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+                return params.target;
         }
     }
 
     return NULL;
-}
 
-static boolean isTargetable(mobj_t *mo, mobj_t *target)
-{
-    if(mo->player)
-    {   // Minotaur looking around player.
-        if((target->flags & MF_COUNTKILL) || (target->player && (target != mo)))
-        {
-            if(!(target->flags & MF_SHOOTABLE) ||
-               (target->flags2 & MF2_DORMANT) ||
-               ((target->type == MT_MINOTAUR) && (target->tracer == mo)) ||
-                (IS_NETGAME && !deathmatch && target->player))
-                return false;
-
-            if(P_CheckSight(mo, target))
-                return true;
-        }
-    }
-    else if(mo->type == MT_MINOTAUR)
-    {   // Looking around minotaur.
-        mobj_t             *master = mo->tracer;
-
-        if((target->flags & MF_COUNTKILL) ||
-           (target->player && (target != master)))
-        {
-            if(!(target->flags & MF_SHOOTABLE) ||
-               (target->flags2 & MF2_DORMANT) ||
-               ((target->type == MT_MINOTAUR) && (target->tracer == mo->tracer)) ||
-                (IS_NETGAME && !deathmatch && target->player))
-                return false;
-
-            if(P_CheckSight(mo, target))
-                return true;
-        }
-    }
-    else if(mo->type == MT_MSTAFF_FX2)
-    {   // bloodscourge.
-        if(((target->flags & MF_COUNTKILL) ||
-            (target->player && target != mo->target)) &&
-           !(target->flags2 & MF2_DORMANT))
-        {
-            if(!(target->flags & MF_SHOOTABLE) ||
-               (IS_NETGAME && !deathmatch && target->player))
-                return false;
-
-            if(P_CheckSight(mo, target))
-            {
-                angle_t             angle;
-                mobj_t             *master;
-
-                master = mo->target;
-                angle =
-                    R_PointToAngle2(master->pos[VX], master->pos[VY],
-                                    target->pos[VY], target->pos[VY]) -
-                                    master->angle;
-                angle >>= 24;
-                if(angle > 226 || angle < 30)
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    else
-    {   // spirits.
-        if(((target->flags & MF_COUNTKILL) ||
-            (target->player && target != mo->target)) &&
-           !(target->flags2 & MF2_DORMANT))
-        {
-            if(!(target->flags & MF_SHOOTABLE) ||
-               (IS_NETGAME && !deathmatch && target->player) ||
-               target == mo->target)
-                return false;
-
-            if(P_CheckSight(mo, target))
-                return true;
-        }
-    }
-
-    return false;
+#undef MAPBLOCKUNITS
+#undef MAPBLOCKSHIFT
 }

@@ -94,9 +94,9 @@ void P_BoxToBlockmapBlocks(blockmap_t *blockmap, uint blockBox[4],
         bmap_t     *bmap = (bmap_t*) blockmap;
         vec2_t      m[2];
 
-        m[0][VX] = MAX_OF(bmap->bbox[0][VX], box[0][VX]);
+        m[0][VX] = MIN_OF(bmap->bbox[0][VX], box[0][VX]);
         m[1][VX] = MIN_OF(bmap->bbox[1][VX], box[1][VX]);
-        m[0][VY] = MAX_OF(bmap->bbox[0][VY], box[0][VY]);
+        m[0][VY] = MIN_OF(bmap->bbox[0][VY], box[0][VY]);
         m[1][VY] = MIN_OF(bmap->bbox[1][VY], box[1][VY]);
 
         blockBox[BOXLEFT]   = (m[0][VX] - bmap->bbox[0][VX]) / bmap->blockSize[VX];

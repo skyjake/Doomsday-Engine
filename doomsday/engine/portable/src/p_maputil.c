@@ -353,14 +353,6 @@ void P_LineOpening(line_t *linedef)
 }
 
 /**
- * The index is not checked.
- */
-mobj_t *P_GetBlockRootIdx(int index)
-{
-    return (mobj_t *) (blockrings + index);
-}
-
-/**
  * Returns a pointer to the root linkmobj_t of the given mobj. If such
  * a block does not exist, NULL is returned. This routine is exported
  * for use in Games.

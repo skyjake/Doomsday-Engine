@@ -214,10 +214,8 @@ extern          "C" {
                                          divline_t *line);
     float           P_InterceptVector(divline_t *v2, divline_t *v1);
     void            P_LineOpening(struct line_s *linedef);
-    struct mobj_s  *P_GetBlockRootIdx(int index);
     void            P_LinkMobj(struct mobj_s *mo, byte flags);
     void            P_UnlinkMobj(struct mobj_s *mo);
-    void            P_PointToBlock(float x, float y, uint *bx, uint *by);
 
     // Object in bounding box iterators.
     boolean         P_MobjsBoxIterator(const float box[4],
