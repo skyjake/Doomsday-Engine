@@ -69,6 +69,10 @@ void            R_OrderVertices(const line_t *line, const sector_t *sector,
 plane_t        *R_NewPlaneForSector(sector_t *sec);
 void            R_DestroyPlaneOfSector(uint id, sector_t *sec);
 
+void            R_CreateSurfaceDecoration(surface_t *suf, float pos[3],
+                                          ded_decorlight_t *def);
+void            R_ClearSurfaceDecorations(surface_t *suf);
+
 void            R_UpdateWatchedPlanes(watchedplanelist_t *wpl);
 void            R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
                                            boolean resetNextViewer);

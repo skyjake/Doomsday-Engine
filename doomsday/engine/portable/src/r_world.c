@@ -265,6 +265,8 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
         suf->rgba[i] = 1;
     suf->flags = 0;
     suf->offset[VX] = suf->offset[VY] = 0;
+    suf->decorations = NULL;
+    suf->numdecorations = 0;
 
     // Set normal.
     suf->normal[VX] = 0;
@@ -322,6 +324,56 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     // Link the new list to the sector.
     Z_Free(sec->planes);
     sec->planes = newList;
+}
+
+void R_CreateSurfaceDecoration(surface_t *suf, float pos[3],
+                               ded_decorlight_t *def)
+{
+    uint                i;
+    surfacedecor_t     *d, *s, *decorations;
+
+    if(!suf || !def)
+        return;
+
+    decorations =
+        Z_Malloc(sizeof(*decorations) * (++suf->numdecorations),
+                 PU_LEVEL, 0);
+
+    if(suf->numdecorations > 1)
+    {   // Copy the existing decorations.
+        for(i = 0; i < suf->numdecorations - 1; ++i)
+        {
+            d = &decorations[i];
+            s = &suf->decorations[i];
+
+            d->pos[VX] = s->pos[VX];
+            d->pos[VY] = s->pos[VY];
+            d->pos[VZ] = s->pos[VZ];
+            d->def = s->def;
+        }
+
+        Z_Free(suf->decorations);
+    }
+
+    // Add the new decoration.
+    d = &decorations[suf->numdecorations - 1];
+    d->pos[VX] = pos[VX];
+    d->pos[VY] = pos[VY];
+    d->pos[VZ] = pos[VZ];
+    d->def = def;
+
+    suf->decorations = decorations;
+}
+
+void R_ClearSurfaceDecorations(surface_t *suf)
+{
+    if(!suf)
+        return;
+
+    if(suf->decorations)
+        Z_Free(suf->decorations);
+    suf->decorations = NULL;
+    suf->numdecorations = 0;
 }
 
 #ifdef _MSC_VER

@@ -161,7 +161,8 @@ struct surface
     FLOAT   float[4]    rgba        // Surface color tint
     -       float[4]    oldrgba
     -       short       frameflags
-    -       surfacedecor_t decorations[MAX_SURFACE_DECORATIONS]
+    -       uint        numdecorations
+    -       surfacedecor_t *decorations
 end
 
 internal

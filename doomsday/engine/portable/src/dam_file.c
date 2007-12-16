@@ -514,6 +514,8 @@ static void readSide(const gamemap_t *map, uint idx)
         suf->rgba[CG] = readFloat();
         suf->rgba[CB] = readFloat();
         suf->rgba[CA] = readFloat();
+        suf->decorations = NULL;
+        suf->numdecorations = 0;
     }
     secIdx = readLong();
     s->sector = (secIdx == 0? NULL : &map->sectors[secIdx -1]);
@@ -683,6 +685,9 @@ static void readSector(const gamemap_t *map, uint idx)
         p->soundorg.pos[VX] = readFloat();
         p->soundorg.pos[VY] = readFloat();
         p->soundorg.pos[VZ] = readFloat();
+
+        p->surface.decorations = NULL;
+        p->surface.numdecorations = 0;
     }
 
     s->skyfix[PLN_FLOOR].offset = readFloat();

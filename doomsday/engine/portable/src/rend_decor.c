@@ -368,7 +368,7 @@ static void projectSurfaceDecorations(const surface_t *suf,
 {
     uint            i;
 
-    for(i = 0; i < MAX_SURFACE_DECORATIONS; ++i)
+    for(i = 0; i < suf->numdecorations; ++i)
     {
         float           brightMul;
         const surfacedecor_t *d = &suf->decorations[i];
@@ -416,7 +416,7 @@ static void decorateLineSection(const line_t *line, side_t *side,
         float       posBase[2], delta[2], pos[3];
         float       surfTexW, surfTexH, patternW, patternH;
         int         skip[2];
-        uint        i, n;
+        uint        i;
         texinfo_t  *texinfo;
 
         // Let's see which sidedef is present.
@@ -438,6 +438,8 @@ static void decorateLineSection(const line_t *line, side_t *side,
         surfaceNormal[VZ] = -delta[VX] / line->length;
         surfaceNormal[VY] = 0;
 
+        R_ClearSurfaceDecorations(suf);
+
         // Height of the section.
         lh = top - bottom;
 
@@ -449,7 +451,7 @@ static void decorateLineSection(const line_t *line, side_t *side,
         surfTexH = texinfo->height;
 
         // Generate a number of lights.
-        for(i = 0, n = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+        for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
         {
             lightDef = def->lights + i;
 
@@ -483,14 +485,7 @@ static void decorateLineSection(const line_t *line, side_t *side,
                     pos[VY] = posBase[VY] + delta[VY] * s / line->length;
                     pos[VZ] = top - t;
 
-                    if(n < MAX_SURFACE_DECORATIONS)
-                    {
-                        suf->decorations[n].pos[VX] = pos[VX];
-                        suf->decorations[n].pos[VY] = pos[VY];
-                        suf->decorations[n].pos[VZ] = pos[VZ];
-                        suf->decorations[n].def = lightDef;
-                        n++;
-                    }
+                    R_CreateSurfaceDecoration(suf, pos, lightDef);
                 }
             }
         }
@@ -768,7 +763,6 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
 
     if(suf->flags & SUF_UPDATE_DECORATIONS)
     {
-        uint                n;
         float               pos[3], tileSize = 64;
         int                 skip[2];
         ded_decorlight_t   *lightDef;
@@ -777,10 +771,10 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
         surfaceNormal[VY] = suf->normal[VY];
         surfaceNormal[VZ] = suf->normal[VZ];
 
-        memset(suf->decorations, 0, sizeof(suf->decorations));
+        R_ClearSurfaceDecorations(suf);
 
         // Generate a number of lights.
-        for(i = 0, n = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+        for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
         {
             lightDef = &def->lights[i];
 
@@ -823,14 +817,7 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
                     pos[VZ] =
                         pln->visheight + lightDef->elevation * surfaceNormal[VZ];
 
-                    if(n < MAX_SURFACE_DECORATIONS)
-                    {
-                        suf->decorations[n].pos[VX] = pos[VX];
-                        suf->decorations[n].pos[VY] = pos[VY];
-                        suf->decorations[n].pos[VZ] = pos[VZ];
-                        suf->decorations[n].def = lightDef;
-                        n++;
-                    }
+                    R_CreateSurfaceDecoration(suf, pos, lightDef);
                 }
             }
         }

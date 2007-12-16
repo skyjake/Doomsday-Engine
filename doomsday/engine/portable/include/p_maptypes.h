@@ -153,7 +153,8 @@ typedef struct surface_s {
     float               rgba[4];       // Surface color tint
     float               oldrgba[4];
     short               frameflags;
-    surfacedecor_t      decorations[MAX_SURFACE_DECORATIONS];
+    unsigned int        numdecorations;
+    surfacedecor_t      *decorations;
 } surface_t;
 
 typedef enum {

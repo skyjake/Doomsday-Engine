@@ -42,8 +42,6 @@
 #include "m_nodepile.h"
 #include "m_vector.h"
 
-#define MAX_SURFACE_DECORATIONS     16
-
 #define GET_VERTEX_IDX(vtx)     ((vtx) - vertexes)
 #define GET_LINE_IDX(li)        ((li) - lines)
 #define GET_SIDE_IDX(si)        ((si) - sides)
