@@ -223,16 +223,13 @@ extern          "C" {
     boolean         P_BlockMobjsIterator(uint x, uint y,
                                          boolean (*func)(struct mobj_s*, void*),
                                          void *data);
-    boolean         P_BlockLinesIterator(uint x, uint y,
-                                         boolean (*func) (struct line_s*, void *),
-                                         void *data);
 
     // Object in bounding box iterators.
     boolean         P_MobjsBoxIterator(const float box[4],
-                                       boolean (*func) (struct mobj_s *, void *),
+                                       boolean (*func) (struct mobj_s*, void *),
                                        void *data);
     boolean         P_LinesBoxIterator(const float box[4],
-                                       boolean (*func) (line_t *, void *),
+                                       boolean (*func) (struct line_s*, void *),
                                        void *data);
     boolean         P_AllLinesBoxIterator(const float box[4],
                                           boolean (*func) (struct line_s*, void *),
@@ -254,12 +251,11 @@ extern          "C" {
 
     // Object type touching mobjs iterators.
     boolean         P_LineMobjsIterator(struct line_s *line,
-                                         boolean (*func) (struct mobj_s *,
-                                                          void *), void *data);
+                                        boolean (*func) (struct mobj_s *,
+                                                         void *), void *data);
     boolean         P_SectorTouchingMobjsIterator
                         (sector_t *sector, boolean (*func) (struct mobj_s*, void*),
                          void *data);
-
 
     boolean         P_PathTraverse(float x1, float y1, float x2, float y2,
                                    int flags,

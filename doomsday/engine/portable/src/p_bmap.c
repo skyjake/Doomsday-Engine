@@ -894,27 +894,6 @@ boolean P_BlockMobjsIterator(uint x, uint y,
 /**
  * Part of the public Doomsday API.
  */
-boolean P_BlockLinesIterator(uint x, uint y,
-                             boolean (*func) (line_t *, void *),
-                             void *data)
-{
-    uint        block[2];
-    block[VX] = x, block[VY] = y;
-
-    // First polyobj lines.
-    if(po_NumPolyobjs > 0)
-    {
-        if(!P_BlockmapPolyobjLinesIterator(BlockMap, block, func, data))
-            return false;
-    }
-
-    // Now 'normal' lines.
-    return P_BlockmapLinesIterator(BlockMap, block, func, data);
-}
-
-/**
- * Part of the public Doomsday API.
- */
 boolean P_BlockPolyobjsIterator(uint x, uint y,
                                 boolean (*func) (void *, void*),
                                 void *data)
