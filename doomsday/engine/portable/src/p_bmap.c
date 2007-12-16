@@ -891,24 +891,6 @@ boolean P_BlockMobjsIterator(uint x, uint y,
     return P_BlockmapMobjsIterator(BlockMap, block, func, data);
 }
 
-/**
- * Part of the public Doomsday API.
- */
-boolean P_BlockPolyobjsIterator(uint x, uint y,
-                                boolean (*func) (void *, void*),
-                                void *data)
-{
-    if(po_NumPolyobjs > 0)
-    {
-        uint        block[2];
-        block[VX] = x, block[VY] = y;
-
-        return P_BlockmapPolyobjsIterator(BlockMap, block, func, data);
-    }
-
-    return true;
-}
-
 static boolean rendBlockLinedef(line_t *line, void *data)
 {
     vec2_t      start, end;
