@@ -1090,9 +1090,9 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
     if(!actor->target) // Near player monster search.
     {
         if(master && (master->health > 0) && (master->player))
-            mo = P_RoughMonsterSearch(master, 20);
+            mo = P_RoughMonsterSearch(master, 20*128);
         else
-            mo = P_RoughMonsterSearch(actor, 20);
+            mo = P_RoughMonsterSearch(actor, 20*128);
         actor->target = mo;
     }
 

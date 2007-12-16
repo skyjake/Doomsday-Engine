@@ -60,6 +60,8 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static boolean isTargetable(mobj_t *mo, mobj_t *target);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -72,13 +74,27 @@ int     ptflags;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static mobj_t *RoughBlockCheck(mobj_t *mo, int index);
-
 // CODE --------------------------------------------------------------------
 
+static mobj_t *PIT_MobjBlockLinks(int index, void *data)
+{
+    mobj_t         *mo = (mobj_t*) data;
+    mobj_t         *link, *root = P_GetBlockRootIdx(index);
+
+    // If this doesn't work, check the backed-up version!
+    for(link = root->bnext; link != root; link = link->bnext)
+    {
+        if(isTargetable(mo, link))
+            return link;
+    }
+
+    return NULL;
+}
+
 /**
- * Searches though the surrounding mapblocks for monsters/players within the
- * specified distance (in MAPBLOCKUNITS).
+ * Searches around for targetable monsters/players near mobj.
+ *
+ * @return              Ptr to the targeted mobj if found, ELSE @c NULL;
  */
 mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
 {
@@ -94,12 +110,15 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
     uint        bmapwidth = *(uint*) DD_GetVariable(DD_BLOCKMAP_WIDTH);
     uint        bmapheight = *(uint*) DD_GetVariable(DD_BLOCKMAP_HEIGHT);
 
+    // Convert from world units to map block units.
+    distance /= 128;
+
     P_PointToBlock(mo->pos[VX], mo->pos[VY], &startX, &startY);
 
     if(startX >= 0 && startX < bmapwidth &&
        startY >= 0 && startY < bmapheight)
     {
-        target = RoughBlockCheck(mo, startY * bmapwidth + startX);
+        target = PIT_MobjBlockLinks(startY * bmapwidth + startX, mo);
         if(target)
         {   // Found a target right away!
             return target;
@@ -160,31 +179,39 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
         // Trace the first block section (along the top).
         for(; blockIndex <= firstStop; blockIndex++)
         {
-            target = RoughBlockCheck(mo, blockIndex);
+            int         x = blockIndex % bmapwidth;
+            int         y = blockIndex / bmapwidth;
+            target = PIT_MobjBlockLinks(blockIndex, mo);
             if(target)
                 return target;
         }
 
         // Trace the second block section (right edge).
-        for(blockIndex--; blockIndex <= secondStop; blockIndex += bmapwidth)
+        for(blockIndex += -1 + bmapwidth; blockIndex <= secondStop; blockIndex += bmapwidth)
         {
-            target = RoughBlockCheck(mo, blockIndex);
+            int         x = blockIndex % bmapwidth;
+            int         y = blockIndex / bmapwidth;
+            target = PIT_MobjBlockLinks(blockIndex, mo);
             if(target)
                 return target;
         }
 
         // Trace the third block section (bottom edge).
-        for(blockIndex -= bmapwidth; blockIndex >= thirdStop; blockIndex--)
+        for(blockIndex -= 1 + bmapwidth; blockIndex >= thirdStop; blockIndex--)
         {
-            target = RoughBlockCheck(mo, blockIndex);
+            int         x = blockIndex % bmapwidth;
+            int         y = blockIndex / bmapwidth;
+            target = PIT_MobjBlockLinks(blockIndex, mo);
             if(target)
                 return target;
         }
 
         // Trace the final block section (left edge).
-        for(blockIndex++; blockIndex > finalStop; blockIndex -= bmapwidth)
+        for(blockIndex += 1 - bmapwidth; blockIndex > finalStop; blockIndex -= bmapwidth)
         {
-            target = RoughBlockCheck(mo, blockIndex);
+            int         x = blockIndex % bmapwidth;
+            int         y = blockIndex / bmapwidth;
+            target = PIT_MobjBlockLinks(blockIndex, mo);
             if(target)
                 return target;
         }
@@ -193,83 +220,82 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
     return NULL;
 }
 
-static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
+static boolean isTargetable(mobj_t *mo, mobj_t *target)
 {
-    mobj_t         *link, *root = P_GetBlockRootIdx(index);
-    mobj_t         *master;
-    angle_t         angle;
+    if(mo->player)
+    {   // Minotaur looking around player.
+        if((target->flags & MF_COUNTKILL) || (target->player && (target != mo)))
+        {
+            if(!(target->flags & MF_SHOOTABLE) ||
+               (target->flags2 & MF2_DORMANT) ||
+               ((target->type == MT_MINOTAUR) && (target->tracer == mo)) ||
+                (IS_NETGAME && !deathmatch && target->player))
+                return false;
 
-    // If this doesn't work, check the backed-up version!
-    for(link = root->bnext; link != root; link = link->bnext)
-    {
-        if(mo->player)
-        {   // Minotaur looking around player.
-            if((link->flags & MF_COUNTKILL) || (link->player && (link != mo)))
-            {
-                if(!(link->flags & MF_SHOOTABLE) ||
-                   (link->flags2 & MF2_DORMANT) ||
-                   ((link->type == MT_MINOTAUR) && (link->tracer == mo)) ||
-                   (IS_NETGAME && !deathmatch && link->player))
-                    continue;
-
-                if(P_CheckSight(mo, link))
-                    return link;
-            }
+            if(P_CheckSight(mo, target))
+                return true;
         }
-        else if(mo->type == MT_MINOTAUR)
-        {   // Looking around minotaur.
-            master = mo->tracer;
-            if((link->flags & MF_COUNTKILL) ||
-               (link->player && (link != master)))
-            {
-                if(!(link->flags & MF_SHOOTABLE) ||
-                   (link->flags2 & MF2_DORMANT) ||
-                   ((link->type == MT_MINOTAUR) && (link->tracer == mo->tracer)) ||
-                   (IS_NETGAME && !deathmatch && link->player))
-                    continue;
+    }
+    else if(mo->type == MT_MINOTAUR)
+    {   // Looking around minotaur.
+        mobj_t             *master = mo->tracer;
 
-                if(P_CheckSight(mo, link))
-                    return link;
-            }
+        if((target->flags & MF_COUNTKILL) ||
+           (target->player && (target != master)))
+        {
+            if(!(target->flags & MF_SHOOTABLE) ||
+               (target->flags2 & MF2_DORMANT) ||
+               ((target->type == MT_MINOTAUR) && (target->tracer == mo->tracer)) ||
+                (IS_NETGAME && !deathmatch && target->player))
+                return false;
+
+            if(P_CheckSight(mo, target))
+                return true;
         }
-        else if(mo->type == MT_MSTAFF_FX2)
-        {   // bloodscourge.
-            if((link->flags & MF_COUNTKILL || (link->player && link != mo->target)) &&
-               !(link->flags2 & MF2_DORMANT))
-            {
-                if(!(link->flags & MF_SHOOTABLE) ||
-                   (IS_NETGAME && !deathmatch && link->player))
-                    continue;
+    }
+    else if(mo->type == MT_MSTAFF_FX2)
+    {   // bloodscourge.
+        if(((target->flags & MF_COUNTKILL) ||
+            (target->player && target != mo->target)) &&
+           !(target->flags2 & MF2_DORMANT))
+        {
+            if(!(target->flags & MF_SHOOTABLE) ||
+               (IS_NETGAME && !deathmatch && target->player))
+                return false;
 
-                if(P_CheckSight(mo, link))
+            if(P_CheckSight(mo, target))
+            {
+                angle_t             angle;
+                mobj_t             *master;
+
+                master = mo->target;
+                angle =
+                    R_PointToAngle2(master->pos[VX], master->pos[VY],
+                                    target->pos[VY], target->pos[VY]) -
+                                    master->angle;
+                angle >>= 24;
+                if(angle > 226 || angle < 30)
                 {
-                    master = mo->target;
-                    angle =
-                        R_PointToAngle2(master->pos[VX], master->pos[VY],
-                                        link->pos[VY], link->pos[VY]) - master->angle;
-                    angle >>= 24;
-                    if(angle > 226 || angle < 30)
-                    {
-                        return link;
-                    }
+                    return true;
                 }
             }
         }
-        else
-        {   // spirits.
-            if(((link->flags & MF_COUNTKILL) || (link->player && link != mo->target)) &&
-               !(link->flags2 & MF2_DORMANT))
-            {
-                if(!(link->flags & MF_SHOOTABLE) ||
-                   (IS_NETGAME && !deathmatch && link->player) ||
-                   link == mo->target)
-                    continue;
+    }
+    else
+    {   // spirits.
+        if(((target->flags & MF_COUNTKILL) ||
+            (target->player && target != mo->target)) &&
+           !(target->flags2 & MF2_DORMANT))
+        {
+            if(!(target->flags & MF_SHOOTABLE) ||
+               (IS_NETGAME && !deathmatch && target->player) ||
+               target == mo->target)
+                return false;
 
-                if(P_CheckSight(mo, link))
-                    return link;
-            }
+            if(P_CheckSight(mo, target))
+                return true;
         }
     }
 
-    return NULL;
+    return false;
 }

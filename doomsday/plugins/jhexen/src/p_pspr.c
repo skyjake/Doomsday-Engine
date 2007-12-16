@@ -1106,7 +1106,7 @@ void MStaffSpawn(mobj_t *mo, angle_t angle)
     if(pmo)
     {
         pmo->target = mo;
-        pmo->tracer = P_RoughMonsterSearch(pmo, 10);
+        pmo->tracer = P_RoughMonsterSearch(pmo, 10*128);
     }
 }
 
@@ -1184,7 +1184,7 @@ void C_DECL A_MStaffTrack(mobj_t *mo)
 {
     if((mo->tracer == 0) && (P_Random() < 50))
     {
-        mo->tracer = P_RoughMonsterSearch(mo, 10);
+        mo->tracer = P_RoughMonsterSearch(mo, 10*128);
     }
     P_SeekerMissile(mo, ANGLE_1 * 2, ANGLE_1 * 10);
 }
@@ -1200,7 +1200,7 @@ void MStaffSpawn2(mobj_t *mo, angle_t angle)
     if(pmo)
     {
         pmo->target = mo;
-        pmo->tracer = P_RoughMonsterSearch(pmo, 10);
+        pmo->tracer = P_RoughMonsterSearch(pmo, 10*128);
     }
 }
 
@@ -1726,7 +1726,7 @@ static void CHolyFindTarget(mobj_t *mo)
 {
     mobj_t     *target;
 
-    target = P_RoughMonsterSearch(mo, 6);
+    target = P_RoughMonsterSearch(mo, 6*128);
     if(target)
     {
         Con_Message("CHolyFindTarget: mobj_t* converted to int! Not 64-bit compatible.\n");
