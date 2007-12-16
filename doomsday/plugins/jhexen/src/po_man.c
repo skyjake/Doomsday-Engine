@@ -799,11 +799,15 @@ void PO_InitForMap(void)
             }
         }
 
-        if(!mt)
-            Con_Error("PO_Init: Missing anchor for poly %i.", i);
-
-        translateToStartSpot(P_ToPtr(DMU_POLYOBJ, i),
-                             mt->pos[VX], mt->pos[VY]);
+        if(mt)
+        {
+            translateToStartSpot(P_ToPtr(DMU_POLYOBJ, i),
+                                 mt->pos[VX], mt->pos[VY]);
+        }
+        else
+        {
+            Con_Message("PO_Init: Warning, missing anchor for poly %i.", i);
+        }
     }
 }
 

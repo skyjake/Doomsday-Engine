@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -94,7 +95,7 @@ enum {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static uint PolyLineCount;
-static uint16_t PolyStart[2];
+static int16_t PolyStart[2];
 
 // CODE --------------------------------------------------------------------
 
@@ -933,13 +934,13 @@ static boolean loadThings(const byte *buf, size_t len)
         {
             mthing_t           *t = &map->things[n];
 
-            t->xTID = SHORT(*((const int16_t*) ptr));
-            t->pos[VX] = SHORT(*((const int16_t*) ptr+2));
-            t->pos[VY] = SHORT(*((const int16_t*) ptr+4));
-            t->xSpawnZ = SHORT(*((const int16_t*) ptr+6));
-            t->angle = SHORT(*((const int16_t*) ptr+8));
-            t->type = SHORT(*((const int16_t*) ptr+10));
-            t->flags = SHORT(*((const int16_t*) ptr+12));
+            t->xTID = SHORT(*((const int16_t*) (ptr)));
+            t->pos[VX] = SHORT(*((const int16_t*) (ptr+2)));
+            t->pos[VY] = SHORT(*((const int16_t*) (ptr+4)));
+            t->xSpawnZ = SHORT(*((const int16_t*) (ptr+6)));
+            t->angle = SHORT(*((const int16_t*) (ptr+8)));
+            t->type = SHORT(*((const int16_t*) (ptr+10)));
+            t->flags = SHORT(*((const int16_t*) (ptr+12)));
             t->xSpecial = *(ptr+14);
             t->xArgs[0] = *(ptr+15);
             t->xArgs[1] = *(ptr+16);
@@ -954,11 +955,11 @@ static boolean loadThings(const byte *buf, size_t len)
         {
             mthing_t           *t = &map->things[n];
 
-            t->pos[VX] = SHORT(*((const int16_t*) ptr));
-            t->pos[VY] = SHORT(*((const int16_t*) ptr+2));
-            t->angle = SHORT(*((const int16_t*) ptr+4));
-            t->type = SHORT(*((const int16_t*) ptr+6));
-            t->flags = SHORT(*((const int16_t*) ptr+8));
+            t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
+            t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            t->angle = SHORT(*((const int16_t*) (ptr+4)));
+            t->type = SHORT(*((const int16_t*) (ptr+6)));
+            t->flags = SHORT(*((const int16_t*) (ptr+8)));
         }
     }
 

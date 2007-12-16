@@ -1238,7 +1238,14 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, boolean crush,
     po = createPolyobj();
     po->buildData.lines = M_Calloc(sizeof(line_t*) * (lineCount+1));
     for(i = 0; i < lineCount; ++i)
-        po->buildData.lines[i] = map->lines[lines[i]-1];
+    {
+        line_t             *line = map->lines[lines[i]-1];
+
+        // This line is part of a polyobj.
+        line->flags |= LINEF_POLYOBJ;
+
+        po->buildData.lines[i] = line;
+    }
     po->buildData.lines[i] = NULL;
     po->buildData.lineCount = lineCount;
     po->tag = tag;
