@@ -879,18 +879,6 @@ boolean P_BlockPathTraverse(blockmap_t *bmap, const uint originBlock[2],
     return true;
 }
 
-/**
- * Part of the public Doomsday API.
- */
-boolean P_BlockMobjsIterator(uint x, uint y,
-                             boolean (*func) (mobj_t *, void *),
-                             void *data)
-{
-    uint        block[2];
-    block[VX] = x, block[VY] = y;
-    return P_BlockmapMobjsIterator(BlockMap, block, func, data);
-}
-
 static boolean rendBlockLinedef(line_t *line, void *data)
 {
     vec2_t      start, end;

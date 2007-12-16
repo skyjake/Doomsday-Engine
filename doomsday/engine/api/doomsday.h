@@ -219,11 +219,6 @@ extern          "C" {
     void            P_UnlinkMobj(struct mobj_s *mo);
     void            P_PointToBlock(float x, float y, uint *bx, uint *by);
 
-    // Object in map block iterators.
-    boolean         P_BlockMobjsIterator(uint x, uint y,
-                                         boolean (*func)(struct mobj_s*, void*),
-                                         void *data);
-
     // Object in bounding box iterators.
     boolean         P_MobjsBoxIterator(const float box[4],
                                        boolean (*func) (struct mobj_s*, void *),

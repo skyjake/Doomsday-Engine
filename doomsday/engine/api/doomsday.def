@@ -7,6 +7,7 @@ NAME            "DOOMSDAY"
 ; 44 formerly B_FormEventString
 ; 45 formerly B_BindingsForCommand
 ; 68 formerly P_BlockLinesIterator
+; 69 formerly P_BlockMobjsIterator
 ; 70 formerly P_BlockPolyobjsIterator
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
@@ -145,7 +146,6 @@ EXPORTS
     P_LinkMobj                  @66 NONAME
     P_UnlinkMobj                @67 NONAME
     P_PointToBlock              @255 NONAME
-    P_BlockMobjsIterator        @69 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME
