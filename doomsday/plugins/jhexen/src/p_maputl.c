@@ -179,8 +179,6 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
         // Trace the first block section (along the top).
         for(; blockIndex <= firstStop; blockIndex++)
         {
-            int         x = blockIndex % bmapwidth;
-            int         y = blockIndex / bmapwidth;
             target = PIT_MobjBlockLinks(blockIndex, mo);
             if(target)
                 return target;
@@ -189,8 +187,6 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
         // Trace the second block section (right edge).
         for(blockIndex += -1 + bmapwidth; blockIndex <= secondStop; blockIndex += bmapwidth)
         {
-            int         x = blockIndex % bmapwidth;
-            int         y = blockIndex / bmapwidth;
             target = PIT_MobjBlockLinks(blockIndex, mo);
             if(target)
                 return target;
@@ -199,8 +195,6 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
         // Trace the third block section (bottom edge).
         for(blockIndex -= 1 + bmapwidth; blockIndex >= thirdStop; blockIndex--)
         {
-            int         x = blockIndex % bmapwidth;
-            int         y = blockIndex / bmapwidth;
             target = PIT_MobjBlockLinks(blockIndex, mo);
             if(target)
                 return target;
@@ -209,8 +203,6 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
         // Trace the final block section (left edge).
         for(blockIndex += 1 - bmapwidth; blockIndex > finalStop; blockIndex -= bmapwidth)
         {
-            int         x = blockIndex % bmapwidth;
-            int         y = blockIndex / bmapwidth;
             target = PIT_MobjBlockLinks(blockIndex, mo);
             if(target)
                 return target;
