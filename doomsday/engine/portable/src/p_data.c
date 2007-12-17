@@ -437,7 +437,7 @@ static void spawnParticleGeneratorsForMap(const char *mapID)
  */
 boolean P_LoadMap(const char *mapID)
 {
-    uint        i;
+    uint            i;
 
     if(!mapID || !mapID[0])
         return false; // Yeah, ok... :P
@@ -472,8 +472,8 @@ boolean P_LoadMap(const char *mapID)
 
     if(DAM_AttemptMapLoad(mapID))
     {
-        uint        i;
-        gamemap_t  *map = P_GetCurrentMap();
+        uint            i;
+        gamemap_t      *map = P_GetCurrentMap();
 
         Cl_Reset();
         RL_DeleteLists();
@@ -482,8 +482,9 @@ boolean P_LoadMap(const char *mapID)
         // Invalidate old cmds and init player values.
         for(i = 0; i < MAXPLAYERS; ++i)
         {
-            players[i].invoid = false;
-            if(isServer && players[i].ingame)
+            ddplayer_t      *plr = &players[i];
+
+            if(isServer && plr->ingame)
                 clients[i].runTime = SECONDS_TO_TICKS(gameTime);
         }
 

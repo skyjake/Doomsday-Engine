@@ -1790,10 +1790,25 @@ void R_SetupLevel(int mode, int flags)
         // appear that no time has passed during the setup.
         DD_ResetTimer();
 
-        // Kill all local commands.
+        // Kill all local commands and determine the invoid status of players.
         for(i = 0; i < MAXPLAYERS; ++i)
         {
+            ddplayer_t         *plr = &players[i];
+
             clients[i].numTics = 0;
+
+            // Determine if the player is in the void.
+            plr->invoid = true;
+            if(plr->mo)
+            {
+                subsector_t        *ssec =
+                    R_PointInSubsector(plr->mo->pos[VX], plr->mo->pos[VY]);
+
+                if(ssec &&
+                   plr->mo->pos[VZ] > ssec->sector->SP_floorheight + 4 &&
+                   plr->mo->pos[VZ] < ssec->sector->SP_ceilheight - 4)
+                   plr->invoid = false;
+            }
         }
 
         // Reset the level tick timer.
