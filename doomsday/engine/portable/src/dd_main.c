@@ -940,14 +940,7 @@ void DD_SetInteger(int ddvalue, int parm)
     {
         DD_CheckQuery(ddvalue, parm);
         // How about some special values?
-        if(ddvalue == DD_SKYMASKMATERIAL_NAME)
-        {
-            // Dude!  This is not 64-bit safe.
-            ASSERT_NOT_64BIT();
-            memset(skyFlatName, 0, 9);
-            strncpy(skyFlatName, (char *) parm, 9);
-        }
-        else if(ddvalue == DD_SKYFLATNUM)
+        if(ddvalue == DD_SKYFLATNUM)
         {
             skyFlatNum = parm;
         }

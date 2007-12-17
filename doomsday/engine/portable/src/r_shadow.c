@@ -617,8 +617,6 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
             while(*segp)
             {
                 seg_t      *seg = *segp;
-                uint        fidx = GET_SECTOR_IDX(seg->SG_frontsector);
-                uint        bidx = GET_SECTOR_IDX(seg->SG_backsector);
 
                 // Minisegs don't get shadows, even then, only one.
                 if(seg->linedef &&

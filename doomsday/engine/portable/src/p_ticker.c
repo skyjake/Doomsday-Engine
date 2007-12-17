@@ -120,7 +120,7 @@ boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
 void P_Ticker(timespan_t time)
 {
     thinker_t *th;
-    static trigger_t fixed = { 1.0 / 35 };
+    static trigger_t fixed = { 1.0 / 35, 0 };
 
     if(!thinkercap.next)
         return;                 // Not initialized yet.

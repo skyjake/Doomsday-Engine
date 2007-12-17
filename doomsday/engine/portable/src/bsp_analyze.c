@@ -58,7 +58,7 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int mapBounds[4]; 
+static int mapBounds[4];
 static int blockMapBounds[4];
 
 // CODE --------------------------------------------------------------------
@@ -141,7 +141,7 @@ static __inline void addIndexBit(uint index, uint *bitfield)
     bitfield[index >> 5] |= (1 << (index & 0x1f));
 }
 
-static pruneLinedefs(editmap_t *src)
+static void pruneLinedefs(editmap_t *src)
 {
     uint            i, newNum;
 

@@ -55,7 +55,6 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void destroyDDWindow(ddwindow_t *win);
 static boolean setDDWindow(ddwindow_t *win, int newWidth, int newHeight,
                            int newBPP, uint wFlags, uint uFlags);
 

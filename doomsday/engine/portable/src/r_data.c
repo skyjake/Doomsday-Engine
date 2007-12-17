@@ -378,7 +378,7 @@ patch_t *R_FindPatch(int lumpnum)
 /**
  * Returns a rawtex_t* for the given lump, if one already exists.
  */
-rawtex_t *R_FindRawTex(uint lumpnum)
+rawtex_t *R_FindRawTex(int lumpnum)
 {
     uint            i;
 
@@ -395,11 +395,11 @@ rawtex_t *R_FindRawTex(uint lumpnum)
  * Get a rawtex_t data structure for a raw texture specified with a WAD lump
  * number.  Allocates a new rawtex_t if it hasn't been loaded yet.
  */
-rawtex_t *R_GetRawTex(uint lumpnum)
+rawtex_t *R_GetRawTex(int lumpnum)
 {
     rawtex_t       *r;
 
-    if(lumpnum >= (unsigned) numlumps)
+    if(lumpnum >= numlumps)
     {
         Con_Error("R_GetPatch: lumpnum = %i out of bounds (%i).\n",
                   lumpnum, numlumps);

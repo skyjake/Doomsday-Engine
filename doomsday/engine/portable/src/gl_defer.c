@@ -275,7 +275,7 @@ DGLuint GL_NewTexture(texturecontent_t *content)
         switch(content->format)
         {
         case DGL_LUMINANCE:
-            if(TXCF_CONVERT_8BIT_TO_ALPHA)
+            if(content->flags & TXCF_CONVERT_8BIT_TO_ALPHA)
                 bytesPerPixel = 2; // We'll need a larger buffer.
             else
                 bytesPerPixel = 1;

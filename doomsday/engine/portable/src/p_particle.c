@@ -438,7 +438,7 @@ static void P_NewParticle(ptcgen_t *gen)
         // Calculate XY center with mobj angle.
         ang =
             (useSRVOAngle ? (gen->source->visangle << 16) : gen->source->
-             angle) + FIX2FLT(gen->center[VY]) / 180.0f * ANG180;
+             angle) + (fixed_t) (FIX2FLT(gen->center[VY]) / 180.0f * ANG180);
         ang2 = (ang + ANG90) >> ANGLETOFINESHIFT;
         ang >>= ANGLETOFINESHIFT;
         pt->pos[VX] += FixedMul(fineCosine[ang], gen->center[VX]);
@@ -708,6 +708,7 @@ static int P_TouchParticle(particle_t *pt, ptcstage_t *stage,
 /**
  * Semi-fixed, actually.
  */
+#if 0 // Currently unused.
 static void P_FixedCrossProduct(float *fa, fixed_t *b, fixed_t *result)
 {
     result[VX] =
@@ -720,8 +721,9 @@ static void P_FixedCrossProduct(float *fa, fixed_t *b, fixed_t *result)
         FixedMul(FRACUNIT * fa[VX], b[VY]) - FixedMul(FRACUNIT * fa[VY],
                                                       b[VX]);
 }
+#endif
 
-#if 0
+#if 0 // Currently unused.
 fixed_t P_FixedDotProduct(fixed_t *a, fixed_t *b)
 {
     return FixedMul(a[VX], b[VX]) + FixedMul(a[VY], b[VY]) + FixedMul(a[VZ],

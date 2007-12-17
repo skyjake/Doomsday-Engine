@@ -35,6 +35,8 @@
 #ifndef __DOOMSDAY_ARCHIVED_MAP_BLOCKMAP_H__
 #define __DOOMSDAY_ARCHIVED_MAP_BLOCKMAP_H__
 
-boolean     DAM_BuildBlockMap(struct gamemap_s *map);
+#include "p_mapdata.h"
+
+boolean     DAM_BuildBlockMap(gamemap_t *map);
 
 #endif

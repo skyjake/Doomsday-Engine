@@ -445,11 +445,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
 
     // How many particles can we render?
     if(maxParticles)
-    {
-        i = numParts - maxParticles;
-        if(i < 0)
-            i = 0;
-    }
+        i = numParts - (unsigned) maxParticles;
     else
         i = 0;
 

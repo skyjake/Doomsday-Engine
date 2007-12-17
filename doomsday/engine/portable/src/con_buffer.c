@@ -360,7 +360,7 @@ static cbline_t const *bufferGetLine(cbuffer_t *buf, uint idx)
 static uint bufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
                            cbline_t const **list)
 {
-    if(firstIdx <= (int) buf->numLines)
+    if((long) firstIdx <= (long) buf->numLines)
     {
         uint        i, n, idx, count = reqCount;
 
@@ -373,7 +373,7 @@ static uint bufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
         }
         else
         {
-            if(buf->numLines + firstIdx < 0)
+            if((long) buf->numLines + firstIdx < 0)
                 idx = 0;
             else
                 idx = buf->numLines + firstIdx;

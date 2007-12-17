@@ -141,7 +141,7 @@ void LO_Register(void)
 /**
  * Link the given objcontact node to list.
  */
-static void __inline linkContact(objcontact_t *con, objcontact_t **list,
+static __inline void linkContact(objcontact_t *con, objcontact_t **list,
                                  uint index)
 {
     con->next = list[index];
@@ -188,7 +188,7 @@ static objcontact_t *newContact(void *data)
  *
  * @return          Ptr to the lumnode at the given index.
  */
-static lumlink_t __inline *getLumNode(uint idx)
+static __inline lumlink_t *getLumNode(uint idx)
 {
     return &luminousList[idx];
 }
@@ -1098,7 +1098,8 @@ boolean LO_LumobjsRadiusIterator(subsector_t *ssec, float x, float y,
     params.func = func;
     params.data = data;
 
-    return LO_IterateSubsectorContacts(ssec, LOIT_RadiusLumobjs, &params);
+    return LO_IterateSubsectorContacts(ssec, LOIT_RadiusLumobjs,
+                                       (void*) &params);
 }
 
 /**

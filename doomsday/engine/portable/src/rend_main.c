@@ -1124,7 +1124,7 @@ static void setSurfaceColorsForSide(side_t *side)
 
 static void lineDistanceAlpha(const float *point, float radius,
                               const float *from, const float *to,
-                              sector_t *nearSec, float *alpha)
+                              float *alpha)
 {
     // Calculate 2D distance to line.
     float       distance =  M_PointLineDistance(from, to, point);
@@ -1208,7 +1208,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                 c[VY] = mo->pos[VY];
 
                 lineDistanceAlpha(c, mo->radius * .8f,
-                                  vL_XY, vR_XY, frontsec, &alpha);
+                                  vL_XY, vR_XY, &alpha);
                 if(alpha < 1)
                     solidSeg = false;
             }
@@ -2562,7 +2562,7 @@ void R_DrawLightRange(void)
             off = lightRangeModMatrix[r-1][i];
 
             // Draw the range bar to match that of the current viewPlayer.
-            if(r == playerLightRange[viewPlayer - players])
+            if(r == (int) playerLightRange[viewPlayer - players])
                 gl.Color4f(c + off, c + off, c + off, 1);
             else
                 gl.Color4f(c + off, c + off, c + off, .75);

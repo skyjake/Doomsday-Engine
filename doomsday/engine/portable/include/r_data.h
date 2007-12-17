@@ -438,8 +438,8 @@ int R_NewSpriteLump(int lump);
 patch_t        *R_FindPatch(int lumpnum);    // May return NULL.
 patch_t        *R_GetPatch(int lumpnum); // Creates new entries.
 patch_t       **R_CollectPatches(int *count);
-rawtex_t       *R_FindRawTex(uint lumpnum);    // May return NULL.
-rawtex_t       *R_GetRawTex(uint lumpnum); // Creates new entries.
+rawtex_t       *R_FindRawTex(int lumpnum);    // May return NULL.
+rawtex_t       *R_GetRawTex(int lumpnum); // Creates new entries.
 
 boolean         R_IsAllowedDecoration(ded_decor_t *def, int index,
                                       boolean hasExternal);

@@ -572,7 +572,7 @@ uint DL_ProcessSegSection(seg_t *seg, float bottom, float top,
 
     // Process each lumobj contacting the subsector.
     LO_IterateSubsectorContacts(seg->subsector, DLIT_SegLumobjContacts,
-                                &params);
+                                (void*) &params);
 
     // Did we generate a light list?
     if(params.haveList)
@@ -666,7 +666,8 @@ uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
         params.listIdx = 0;
 
         // Process each lumobj contacting the subsector.
-        LO_IterateSubsectorContacts(ssec, DLIT_PlaneLumobjContacts, &params);
+        LO_IterateSubsectorContacts(ssec, DLIT_PlaneLumobjContacts,
+                                    (void*) &params);
 
         // Did we generate a light list?
         if(params.haveList)

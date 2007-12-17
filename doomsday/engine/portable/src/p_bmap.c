@@ -387,7 +387,7 @@ void P_BlockmapLinkPolyobj(blockmap_t *blockmap, polyobj_t *po)
         P_BoxToBlockmapBlocks(blockmap, blockBox, po->box);
 
         M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                              linkPolyobjInBlock, po);
+                              linkPolyobjInBlock, (void*) po);
     }
 }
 
@@ -402,7 +402,7 @@ void P_BlockmapUnlinkPolyobj(blockmap_t *blockmap, polyobj_t *po)
         P_BoxToBlockmapBlocks(BlockMap, blockBox, po->box);
 
         M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                              unlinkPolyobjInBlock, po);
+                              unlinkPolyobjInBlock, (void*) po);
     }
 }
 
@@ -517,7 +517,7 @@ boolean P_BlockBoxLinesIterator(blockmap_t *blockmap, const uint blockBox[4],
     args.param = data;
 
     return M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                                 bmapBlockLinesIterator, &args);
+                                 bmapBlockLinesIterator, (void*) &args);
 }
 
 typedef struct bmappoiterparams_s {
@@ -552,7 +552,7 @@ static boolean bmapBlockPolyobjsIterator(bmapblock_t *block, void *context)
 }
 
 boolean P_BlockmapPolyobjsIterator(blockmap_t *blockmap, const uint block[2],
-                                   boolean (*func) (void *, void*),
+                                   boolean (*func) (polyobj_t *, void*),
                                    void *data)
 {
     if(blockmap)
@@ -569,7 +569,7 @@ boolean P_BlockmapPolyobjsIterator(blockmap_t *blockmap, const uint block[2],
             args.func = func;
             args.param = data;
 
-            return bmapBlockPolyobjsIterator(bmapBlock, &args);
+            return bmapBlockPolyobjsIterator(bmapBlock, (void*) &args);
         }
     }
 
@@ -577,7 +577,7 @@ boolean P_BlockmapPolyobjsIterator(blockmap_t *blockmap, const uint block[2],
 }
 
 boolean P_BlockBoxPolyobjsIterator(blockmap_t *blockmap, const uint blockBox[4],
-                                   boolean (*func) (void *, void*),
+                                   boolean (*func) (polyobj_t *, void*),
                                    void *data)
 {
     bmap_t     *bmap = (bmap_t*) blockmap;
@@ -588,7 +588,7 @@ boolean P_BlockBoxPolyobjsIterator(blockmap_t *blockmap, const uint blockBox[4],
     args.param = data;
 
     return M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                                 bmapBlockPolyobjsIterator, &args);
+                                 bmapBlockPolyobjsIterator, (void*) &args);
 }
 
 typedef struct sseciterparams_s {
@@ -689,7 +689,7 @@ boolean P_BlockBoxSubsectorsIterator(blockmap_t *blockmap, const uint blockBox[4
     args.param = data;
 
     return M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                                 ssecBlockIterator, &args);
+                                 ssecBlockIterator, (void*) &args);
 }
 
 boolean P_BlockmapMobjsIterator(blockmap_t *blockmap, const uint block[2],
@@ -772,7 +772,7 @@ boolean P_BlockBoxPolyobjLinesIterator(blockmap_t *blockmap, const uint blockBox
     args.param = &poargs;
 
     return M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                                 bmapBlockPolyobjsIterator, &args);
+                                 bmapBlockPolyobjsIterator, (void*) &args);
 }
 
 boolean P_BlockPathTraverse(blockmap_t *bmap, const uint originBlock[2],
@@ -864,12 +864,12 @@ boolean P_BlockPathTraverse(blockmap_t *bmap, const uint originBlock[2],
         if(block[VX] == destBlock[VX] && block[VY] == destBlock[VY])
             break;
 
-        if(intercept[VY] >> FRACBITS == block[VY])
+        if((unsigned) (intercept[VY] >> FRACBITS) == block[VY])
         {
             intercept[VY] += step[VY];
             block[VX] += stepDir[VX];
         }
-        else if(intercept[VX] >> FRACBITS == block[VX])
+        else if((unsigned) (intercept[VX] >> FRACBITS) == block[VX])
         {
             intercept[VX] += step[VX];
             block[VY] += stepDir[VY];

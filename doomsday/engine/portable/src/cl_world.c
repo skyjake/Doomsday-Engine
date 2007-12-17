@@ -303,8 +303,8 @@ void Cl_PolyMoverThinker(polymover_t *mover)
     {
         // How much to go?
         dist = FIX2FLT(poly->destAngle - poly->angle);
-        if((abs(FLT2FIX(dist) >> 4) <= abs(((signed) poly->angleSpeed) >> 4) &&
-            poly->destAngle != -1) || !poly->angleSpeed)
+        if((abs(FLT2FIX(dist) >> 4) <= abs(((signed) poly->angleSpeed) >> 4)
+            /* && poly->destAngle != -1*/) || !poly->angleSpeed)
         {
             // We'll arrive at the destination.
             mover->rotate = false;
@@ -322,9 +322,9 @@ void Cl_PolyMoverThinker(polymover_t *mover)
         Cl_RemoveActivePoly(mover);
 }
 
-polymover_t *Cl_FindActivePoly(int number)
+polymover_t *Cl_FindActivePoly(uint number)
 {
-    int         i;
+    uint                i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activepolys[i] && activepolys[i]->number == number)
@@ -332,10 +332,10 @@ polymover_t *Cl_FindActivePoly(int number)
     return NULL;
 }
 
-polymover_t *Cl_NewPolyMover(int number)
+polymover_t *Cl_NewPolyMover(uint number)
 {
-    polymover_t *mover;
-    polyobj_t  *poly = polyobjs[number];
+    polymover_t        *mover;
+    polyobj_t          *poly = polyobjs[number];
 
     mover = Z_Malloc(sizeof(polymover_t), PU_LEVEL, 0);
     memset(mover, 0, sizeof(*mover));

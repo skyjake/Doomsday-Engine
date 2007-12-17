@@ -1082,8 +1082,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 
             if(other->L_frontside)
             {
-                if(front && front == other->L_frontside ||
-                   back && back == other->L_frontside)
+                if((front && front == other->L_frontside) ||
+                   (back && back == other->L_frontside))
                 {
                     return 0;
                 }
@@ -1091,8 +1091,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 
             if(other->L_backside)
             {
-                if(front && front == other->L_backside ||
-                   back && back == other->L_backside)
+                if((front && front == other->L_backside) ||
+                   (back && back == other->L_backside))
                 {
                     return 0;
                 }

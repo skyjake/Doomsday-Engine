@@ -289,7 +289,6 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     float       v1[2], v2[2], v3[2], v4[2];
     gl_color_t  quadColors[4];
     gl_vertex_t quadNormals[4];
-    spritelump_t *slump = spritelumps[params->lump];
 
     if(renderTextures == 1)
         GL_SetSprite(params->lump, pSprMode);

@@ -361,12 +361,13 @@ netmessage_t *N_GetNextMessage(void)
 
     while((msg = N_GetMessage()) != NULL)
     {
-        if(msg->player < 0)
+        //// \fixme When can player IDs be unknown?
+        /* if(msg->player < 0)
         {
             // From an unknown ID?
             N_ReleaseMessage(msg);
         }
-        else
+        else */
         {
             // Decode the Huffman codes. The returned buffer is static, so
             // it doesn't need to be freed (not thread-safe, though).

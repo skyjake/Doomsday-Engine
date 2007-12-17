@@ -337,7 +337,7 @@ void Cl_GetPackets(void)
 
         case PSV_CONSOLE_TEXT:
             i = Msg_ReadLong();
-            Con_FPrintf(i, (char*)netBuffer.cursor);
+            Con_FPrintf(i, "%s", (char*)netBuffer.cursor);
             break;
 
         case PKT_LOGIN:

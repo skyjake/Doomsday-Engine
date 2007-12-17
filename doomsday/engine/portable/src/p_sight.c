@@ -262,12 +262,12 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
              (dest[VY] <  origin[VY] && block[VY] <= destBlock[VY]))))
             break;
 
-        if(intercept[VY] >> FRACBITS == block[VY])
+        if((unsigned) (intercept[VY] >> FRACBITS) == block[VY])
         {
             intercept[VY] += step[VY];
             block[VX] += stepDir[VX];
         }
-        else if(intercept[VX] >> FRACBITS == block[VX])
+        else if((unsigned) (intercept[VX] >> FRACBITS) == block[VX])
         {
             intercept[VX] += step[VX];
             block[VY] += stepDir[VY];

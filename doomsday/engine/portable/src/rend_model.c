@@ -128,7 +128,7 @@ static __inline float qatan2(float y, float x)
 /**
  * Linear interpolation between two values.
  */
-float __inline Mod_Lerp(float start, float end, float pos)
+__inline float Mod_Lerp(float start, float end, float pos)
 {
     return end * pos + start * (1 - pos);
 }

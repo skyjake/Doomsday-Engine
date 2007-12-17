@@ -1399,7 +1399,9 @@ boolean Con_Responder(ddevent_t *event)
     case DDKEY_HOME:
         if(conInputLock)
             break;
-        bLineOff = MAX_OF(0, Con_BufferNumLines(histBuf) - 1);
+        bLineOff = Con_BufferNumLines(histBuf);
+        if(bLineOff != 0)
+            bLineOff--;
         return true;
 
     case DDKEY_ENTER:
@@ -2108,7 +2110,7 @@ D_CMD(If)
         {"<",   IF_LESS},
         {">=",  IF_GEQUAL},
         {"<=",  IF_LEQUAL},
-        {NULL}
+        {NULL,  0}
     };
     uint        i, oper;
     cvar_t     *var;

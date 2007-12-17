@@ -336,27 +336,21 @@ static boolean calcSSecReverb(subsector_t *ssec)
     // Volume.
     for(i = 0, v = 0; i < NUM_MATERIAL_CLASSES; ++i)
         v += materials[i] * matInfo[i].volumeMul;
-    if(v < 0)
-        v = 0;
-    else if(v > 255)
+    if(v > 255)
         v = 255;
     ssec->reverb[SRD_VOLUME] = v;
 
     // Decay time.
     for(i = 0, v = 0; i < NUM_MATERIAL_CLASSES; ++i)
         v += materials[i] * matInfo[i].decayMul;
-    if(v < 0)
-        v = 0;
-    else if(v > 255)
+    if(v > 255)
         v = 255;
     ssec->reverb[SRD_DECAY] = v;
 
     // High frequency damping.
     for(i = 0, v = 0; i < NUM_MATERIAL_CLASSES; ++i)
         v += materials[i] * matInfo[i].dampingMul;
-    if(v < 0)
-        v = 0;
-    else if(v > 255)
+    if(v > 255)
         v = 255;
     ssec->reverb[SRD_DAMPING] = v;
 

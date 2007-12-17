@@ -552,7 +552,7 @@ void UI_Ticker(timespan_t time)
 {
 #define UIALPHA_FADE_STEP .07
 
-    static trigger_t fixed = { 1 / 35.0 };
+    static trigger_t fixed = { 1 / 35.0, 0 };
     float       diff = 0;
 
     if(!uiActive)

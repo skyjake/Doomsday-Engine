@@ -93,7 +93,7 @@ boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netg
 
 boolean drawGame = true; // If false the game viewport won't be rendered
 
-trigger_t sharedFixedTrigger = { 1 / 35.0 };
+trigger_t sharedFixedTrigger = { 1 / 35.0, 0 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_network.c: Low-Level Sockets Networking
  *
  * TCP sockets are periodically polled for activity (Net_Update ->
@@ -33,11 +33,11 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef MACOSX
-	#ifndef FINK
-	#include <SDL_net/SDL_net.h>
-	#else
-	#include <SDL/SDL_net.h>
-	#endif
+#  ifndef FINK
+#    include <SDL_net/SDL_net.h>
+#  else
+#    include <SDL/SDL_net.h>
+#  endif
 #else
 #  include <SDL_net.h>
 #endif
@@ -52,19 +52,16 @@
 
 // MACROS ------------------------------------------------------------------
 
-/** The randomized transmitted is only used for simulating a poor
+/**
+ * The randomized transmitted is only used for simulating a poor
  * network connection.
- */
-/*
-#undef TRANSMIT_RANDOMIZER
-#define RANDOMIZER_DROP_PERCENT 1
-#define RANDOMIZER_MAX_DELAY    500
  */
 #undef TRANSMIT_RANDOMIZER
 #define RANDOMIZER_DROP_PERCENT 25
 #define RANDOMIZER_MAX_DELAY    500
 
-/** Defining PRINT_PACKETS will cause the UDP transmitter and receiver
+/**
+ * Defining PRINT_PACKETS will cause the UDP transmitter and receiver
  * to print a message each time they send or receive a packet.
  */
 #undef PRINT_PACKETS
@@ -335,7 +332,7 @@ static int C_DECL N_UDPReceiver(void *parm)
 {
     SDLNet_SocketSet set;
     UDPpacket *packet = NULL;
-    
+
     // Put the UDP socket in our socket set so we can wait for it.
     set = SDLNet_AllocSocketSet(1);
     SDLNet_UDP_AddSocket(set, inSock);
@@ -431,7 +428,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     UDPpacket *packet = NULL;
     int     bytes = 0;
     boolean error, read;
-    
+
     // \todo What if we get one byte? How come we are here if there's nothing to receive?
     if((bytes = SDLNet_TCP_Recv(sock, &size, 2)) != 2)
     {
@@ -474,7 +471,7 @@ boolean N_ReceiveReliably(nodeid_t from)
         msg->data = packet->data;
         msg->size = size;
         msg->handle = packet;
-        
+
 #ifdef _DEBUG
         VERBOSE2(Con_Message("N_ReceiveReliably: Posting message, from=%i, size=%i\n", from, size));
 #endif
@@ -825,7 +822,7 @@ void N_IPToString(char *buf, IPaddress *ip)
 Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
 {
     Uint16      port = (!preferPort ? defaultPort : preferPort);
-    
+
     *sock = NULL;
     if((*sock = SDLNet_UDP_Open(port)) != NULL)
         return port;
@@ -1166,7 +1163,7 @@ typedef struct socket_timeout_s {
     boolean     abort;
 } socket_timeout_t;
 
-/** 
+/**
  * Closes the socket specified with parm after SOCKET_TIMEOUT seconds.
  */
 static int C_DECL N_SocketTimeOut(void *parm)
@@ -1202,7 +1199,7 @@ boolean N_LookForHosts(const char *address, int port)
     socket_timeout_t timeout;
     void       *timeoutThread;
 #endif
-    
+
     // We must be a client.
     if(!N_IsAvailable() || netServerMode)
         return false;
@@ -1215,7 +1212,7 @@ boolean N_LookForHosts(const char *address, int port)
 #ifdef LOOK_TIMEOUT
     memset(&timeout, 0, sizeof(timeout));
 #endif
-    
+
     // Let's determine the address we will be looking into.
     SDLNet_ResolveHost(&located.addr, address, port);
 
@@ -1232,13 +1229,13 @@ boolean N_LookForHosts(const char *address, int port)
     SDLNet_TCP_Send(sock, "INFO\n", 5);
 
     Con_Message("Send INFO query.\n");
-    
+
 #ifdef LOOK_TIMEOUT
     // Setup a timeout.
     timeout.seconds = 5;
     timeoutThread = Sys_StartThread(N_SocketTimeOut, &timeout);
 #endif
-    
+
     // Let's listen to the reply.
     memset(buf, 0, sizeof(buf));
     response = Str_New();
@@ -1255,7 +1252,7 @@ boolean N_LookForHosts(const char *address, int port)
 
             if(result > 0)
             {
-                Str_Appendf(response, buf);
+                Str_Appendf(response, "%s", buf);
                 Con_Message("Append to response: %s.\n", buf);
             }
             else // Terminated.
@@ -1274,7 +1271,7 @@ boolean N_LookForHosts(const char *address, int port)
     Sys_WaitThread(timeoutThread);
     Con_Message("Timeout thread stopped.\n");
 #endif
-    
+
     // Close the connection; that was all the information we need.
     SDLNet_TCP_Close(sock);
 

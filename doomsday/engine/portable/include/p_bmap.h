@@ -68,7 +68,7 @@ boolean         P_BlockmapSubsectorsIterator(blockmap_t *bmap, const uint block[
                                              boolean (*func) (subsector_t *, void*),
                                              void *data);
 boolean         P_BlockmapPolyobjsIterator(blockmap_t *bmap, const uint block[2],
-                                           boolean (*func) (void *, void*),
+                                           boolean (*func) (polyobj_t *, void*),
                                            void *data);
 boolean         P_BlockmapPolyobjLinesIterator(blockmap_t *bmap, const uint block[2],
                                                boolean (*func) (line_t *, void *),
@@ -87,7 +87,7 @@ boolean         P_BlockBoxSubsectorsIterator(blockmap_t *bmap, const uint blockB
                                              boolean (*func) (subsector_t *, void*),
                                              void *data);
 boolean         P_BlockBoxPolyobjsIterator(blockmap_t *bmap, const uint blockBox[4],
-                                           boolean (*func) (void *, void*),
+                                           boolean (*func) (polyobj_t *, void*),
                                            void *data);
 boolean         P_BlockBoxPolyobjLinesIterator(blockmap_t *bmap, const uint blockBox[4],
                                                boolean (*func) (line_t *, void *),
