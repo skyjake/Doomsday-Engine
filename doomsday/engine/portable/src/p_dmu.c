@@ -220,8 +220,6 @@ const char* DMU_Str(uint prop)
         { DMU_SEG_LIST, "DMU_SEG_LIST" },
         { DMU_SEG_COUNT, "DMU_SEG_COUNT" },
         { DMU_TAG, "DMU_TAG" },
-        { DMU_ORIGINAL_POINTS, "DMU_ORIGINAL_POINTS" },
-        { DMU_PREVIOUS_POINTS, "DMU_PREVIOUS_POINTS" },
         { DMU_START_SPOT, "DMU_START_SPOT" },
         { DMU_START_SPOT_X, "DMU_START_SPOT_X" },
         { DMU_START_SPOT_Y, "DMU_START_SPOT_Y" },
@@ -1400,12 +1398,6 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DDVT_FLOAT, &p->dest.pos[VX], args, 0);
             SetValue(DDVT_FLOAT, &p->dest.pos[VY], args, 1);
             break;
-        case DMU_ORIGINAL_POINTS:
-            SetValue(DDVT_PTR, &p->originalPts, args, 0);
-            break;
-        case DMU_PREVIOUS_POINTS:
-            SetValue(DDVT_PTR, &p->prevPts, args, 0);
-            break;
         case DMU_ANGLE:
             SetValue(DDVT_ANGLE, &p->angle, args, 0);
             break;
@@ -2243,12 +2235,6 @@ static int GetProperty(void* ptr, void* context)
         case DMU_START_SPOT_XY:
             GetValue(DDVT_FLOAT, &p->startSpot.pos[VX], args, 0);
             GetValue(DDVT_FLOAT, &p->startSpot.pos[VY], args, 1);
-            break;
-        case DMU_ORIGINAL_POINTS:
-            GetValue(DDVT_PTR, &p->originalPts, args, 0);
-            break;
-        case DMU_PREVIOUS_POINTS:
-            GetValue(DDVT_PTR, &p->prevPts, args, 0);
             break;
         case DMU_ANGLE:
             GetValue(DDVT_ANGLE, &p->angle, args, 0);

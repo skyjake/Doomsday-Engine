@@ -282,13 +282,15 @@ void P_CeilingChanged(sector_t *sector)
 
 void P_PolyobjChanged(polyobj_t *po)
 {
-    uint        i;
-    seg_t     **seg = po->segs;
+    uint            i;
+    seg_t         **segPtr = po->segs;
 
-    for(i = 0; i < po->numsegs; ++i, ++seg)
+    for(i = 0; i < po->numsegs; ++i, segPtr++)
     {
+        seg_t          *seg = *segPtr;
+
         // Shadow bias must be told.
-        SB_SegHasMoved(*seg);
+        SB_SegHasMoved(seg);
     }
 }
 

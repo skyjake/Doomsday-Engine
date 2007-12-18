@@ -437,6 +437,13 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
         destP->startSpot.pos[VX] = srcP->startSpot.pos[VX];
         destP->startSpot.pos[VY] = srcP->startSpot.pos[VY];
 
+        destP->numsegs = srcP->buildData.lineCount;
+
+        destP->originalPts =
+            Z_Malloc(destP->numsegs * sizeof(fvertex_t), PU_LEVEL, 0);
+        destP->prevPts =
+            Z_Malloc(destP->numsegs * sizeof(fvertex_t), PU_LEVEL, 0);
+
         // Create a seg for each line of this polyobj.
         segs = Z_Calloc(sizeof(seg_t) * srcP->buildData.lineCount, PU_LEVEL, 0);
         destP->segs = Z_Malloc(sizeof(seg_t*) * (srcP->buildData.lineCount+1), PU_LEVEL, 0);
@@ -481,11 +488,18 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
                 }
             }
 
+            // The original Pts are based off the anchor Pt, and are unique
+            // to each seg, not each linedef.
+            destP->originalPts[j].pos[VX] =
+                seg->SG_v1pos[VX] - destP->startSpot.pos[VX];
+            destP->originalPts[j].pos[VY] =
+                seg->SG_v1pos[VY] - destP->startSpot.pos[VY];
+
             destP->segs[j] = seg;
         }
         destP->segs[j] = NULL; // Terminate.
-        destP->numsegs = srcP->buildData.lineCount;
 
+        // Add this polyobj to the global list.
         dest->polyobjs[i] = destP;
     }
     dest->polyobjs[i] = NULL; // Terminate.

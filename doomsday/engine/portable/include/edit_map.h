@@ -83,7 +83,7 @@ uint            MPE_SectorCreate(float lightlevel, float red, float green, float
                                  materialtype_t ceilMaterialType, float ceilOffsetX,
                                  float ceilOffsetY, float ceilRed, float ceilGreen,
                                  float ceilBlue);
-uint            MPE_PolyobjCreate(uint *lines, uint linecount, boolean crush,
+uint            MPE_PolyobjCreate(uint *lines, uint linecount,
                                   int tag, int sequenceType, float startX, float startY);
 
 // Non-public (temporary)

@@ -703,9 +703,7 @@ extern          "C" {
         DMU_SEG_LIST,               // array of seg_t*'s
         DMU_SEG_COUNT,
         DMU_TAG,
-        DMU_ORIGINAL_POINTS,        // ddvertex array
-        DMU_PREVIOUS_POINTS,        // ddvertex array
-        DMU_START_SPOT,             // degenmobj_t
+        DMU_START_SPOT,              // degenmobj_t
         DMU_START_SPOT_X,
         DMU_START_SPOT_Y,
         DMU_START_SPOT_XY,

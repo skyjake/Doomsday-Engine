@@ -107,8 +107,7 @@ typedef struct mpolyobj_s {
     uint           *lineIndices;
     int             tag; // Reference tag assigned in HereticEd
     int             seqType;
-    float           startSpot[2];
-    boolean         crush; // Should the polyobj attempt to crush mobjs?
+    int16_t         anchor[2];
 } mpolyobj_t;
 
 typedef struct map_s {

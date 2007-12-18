@@ -1225,9 +1225,8 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue,
     return s->buildData.index;
 }
 
-uint MPE_PolyobjCreate(uint *lines, uint lineCount, boolean crush,
-                       int tag, int sequenceType, float startX,
-                       float startY)
+uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag,
+                       int sequenceType, float anchorX, float anchorY)
 {
     uint                i;
     polyobj_t          *po;
@@ -1250,9 +1249,8 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, boolean crush,
     po->buildData.lineCount = lineCount;
     po->tag = tag;
     po->seqType = sequenceType;
-    po->crush = crush;
-    po->startSpot.pos[VX] = startX;
-    po->startSpot.pos[VY] = startY;
+    po->startSpot.pos[VX] = anchorX;
+    po->startSpot.pos[VY] = anchorY;
 
     return po->buildData.index;
 }

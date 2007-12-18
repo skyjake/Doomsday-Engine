@@ -459,23 +459,23 @@ typedef struct mpolyobj_s {
 end
 
 struct polyobj
-    FLOAT   vec2_t[2]   box
-    INT     int         validCount
-    INT     int         tag         // Reference tag assigned in HereticEd
-    ANGLE   angle_t     angle
     UINT    uint        idx         // Idx of polyobject
+    INT     int         tag         // Reference tag assigned in HereticEd
+    INT     int         validCount
+    FLOAT   vec2_t[2]   box
+    PTR     degenmobj_t startSpot
+    -       fvertex_t   dest        // Destination XY
+    ANGLE   angle_t     angle
+    ANGLE   angle_t     destAngle   // Destination angle.
+    ANGLE   angle_t     angleSpeed  // Rotation speed.
     UINT    uint        numsegs
     PTR     seg_s**     segs
     -       fvertex_t*  originalPts // Used as the base for the rotations
     -       fvertex_t*  prevPts     // Use to restore the old point values
-    -       fvertex_t   dest        // Destination XY
     FLOAT   float       speed       // Movement speed.
-    ANGLE   angle_t     destAngle   // Destination angle.
-    ANGLE   angle_t     angleSpeed  // Rotation speed.
     BOOL    boolean     crush       // Should the polyobj attempt to crush mobjs?
     INT     int         seqType
     PTR     void*       specialdata // pointer a thinker, if the poly is moving
-    PTR     degenmobj_t startSpot
     -       mpolyobj_t  buildData
 end
 

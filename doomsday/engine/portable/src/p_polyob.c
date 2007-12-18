@@ -134,10 +134,10 @@ void UpdateSegBBox(seg_t *seg)
  */
 void PO_UpdateBBox(polyobj_t *po)
 {
-    seg_t     **segPtr;
-    uint        i;
-    vec2_t      point;
-    vertex_t   *vtx;
+    uint            i;
+    vec2_t          point;
+    vertex_t       *vtx;
+    seg_t         **segPtr;
 
     segPtr = po->segs;
     V2_Set(point, (*segPtr)->SG_v1pos[VX], (*segPtr)->SG_v1pos[VY]);
@@ -163,7 +163,12 @@ void PO_SetupPolyobjs(void)
     for(i = 0; i < po_NumPolyobjs; ++i)
     {
         polyobj_t          *po = polyobjs[i];
-        seg_t             **segPtr;
+        seg_t            **segPtr;
+        subsector_t        *ssec;
+        fvertex_t           avg; // Used to find a polyobj's center, and hence subsector.
+
+        avg.pos[VX] = 0;
+        avg.pos[VY] = 0;
 
         segPtr = po->segs;
         while(*segPtr)
@@ -174,7 +179,26 @@ void PO_SetupPolyobjs(void)
             side->SW_topflags |= SUF_NO_RADIO;
             side->SW_middleflags |= SUF_NO_RADIO;
             side->SW_bottomflags |= SUF_NO_RADIO;
+
+            avg.pos[VX] += seg->SG_v1pos[VX];
+            avg.pos[VY] += seg->SG_v1pos[VY];
+
             *segPtr++;
+        }
+
+        avg.pos[VX] /= po->numsegs;
+        avg.pos[VY] /= po->numsegs;
+
+        ssec = R_PointInSubsector(avg.pos[VX], avg.pos[VY]);
+        if(ssec)
+        {
+            if(ssec->poly)
+            {
+                Con_Message("PO_SetupPolyobjs: Warning: Multiple polyobjs in a single subsector\n"
+                            "  (ssec %i, sector %i). Previous polyobj overridden.\n",
+                            GET_SUBSECTOR_IDX(ssec), GET_SECTOR_IDX(ssec->sector));
+            }
+            ssec->poly = po;
         }
 
         PO_UnLinkPolyobj(po);
@@ -184,12 +208,12 @@ void PO_SetupPolyobjs(void)
 
 boolean PO_MovePolyobj(uint num, float x, float y)
 {
-    uint        count;
-    seg_t     **segList;
-    seg_t     **veryTempSeg;
-    polyobj_t  *po;
-    fvertex_t  *prevPts;
-    boolean     blocked;
+    uint            count;
+    polyobj_t      *po;
+    fvertex_t      *prevPts;
+    seg_t         **segList;
+    seg_t         **veryTempSeg;
+    boolean         blocked;
 
     if(num & 0x80000000)
     {
@@ -209,18 +233,20 @@ boolean PO_MovePolyobj(uint num, float x, float y)
     validCount++;
     for(count = 0; count < po->numsegs; ++count, segList++, prevPts++)
     {
-        if((*segList)->linedef->validCount != validCount)
+        seg_t          *seg = *segList;
+
+        if(seg->linedef->validCount != validCount)
         {
-            (*segList)->linedef->bbox[BOXTOP]    += y;
-            (*segList)->linedef->bbox[BOXBOTTOM] += y;
-            (*segList)->linedef->bbox[BOXLEFT]   += x;
-            (*segList)->linedef->bbox[BOXRIGHT]  += x;
-            (*segList)->linedef->validCount = validCount;
+            seg->linedef->bbox[BOXTOP]    += y;
+            seg->linedef->bbox[BOXBOTTOM] += y;
+            seg->linedef->bbox[BOXLEFT]   += x;
+            seg->linedef->bbox[BOXRIGHT]  += x;
+            seg->linedef->validCount = validCount;
         }
 
         for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
         {
-            if((*veryTempSeg)->SG_v1 == (*segList)->SG_v1)
+            if((*veryTempSeg)->SG_v1 == seg->SG_v1)
             {
                 break;
             }
@@ -228,8 +254,8 @@ boolean PO_MovePolyobj(uint num, float x, float y)
 
         if(veryTempSeg == segList)
         {
-            (*segList)->SG_v1pos[VX] += x;
-            (*segList)->SG_v1pos[VY] += y;
+            seg->SG_v1pos[VX] += x;
+            seg->SG_v1pos[VY] += y;
         }
 
         (*prevPts).pos[VX] += x;      // previous points are unique for each seg
@@ -253,18 +279,20 @@ boolean PO_MovePolyobj(uint num, float x, float y)
         validCount++;
         while(count++ < po->numsegs)
         {
-            if((*segList)->linedef->validCount != validCount)
+            seg_t              *seg = *segList;
+
+            if(seg->linedef->validCount != validCount)
             {
-                (*segList)->linedef->bbox[BOXTOP]    -= y;
-                (*segList)->linedef->bbox[BOXBOTTOM] -= y;
-                (*segList)->linedef->bbox[BOXLEFT]   -= x;
-                (*segList)->linedef->bbox[BOXRIGHT]  -= x;
-                (*segList)->linedef->validCount = validCount;
+                seg->linedef->bbox[BOXTOP]    -= y;
+                seg->linedef->bbox[BOXBOTTOM] -= y;
+                seg->linedef->bbox[BOXLEFT]   -= x;
+                seg->linedef->bbox[BOXRIGHT]  -= x;
+                seg->linedef->validCount = validCount;
             }
 
             for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
             {
-                if((*veryTempSeg)->SG_v1 == (*segList)->SG_v1)
+                if((*veryTempSeg)->SG_v1 == seg->SG_v1)
                 {
                     break;
                 }
@@ -272,8 +300,8 @@ boolean PO_MovePolyobj(uint num, float x, float y)
 
             if(veryTempSeg == segList)
             {
-                (*segList)->SG_v1pos[VX] -= x;
-                (*segList)->SG_v1pos[VY] -= y;
+                seg->SG_v1pos[VX] -= x;
+                seg->SG_v1pos[VY] -= y;
             }
 
             (*prevPts).pos[VX] -= x;
@@ -316,14 +344,14 @@ static void RotatePt(int an, float *x, float *y, float startSpotX, float startSp
 
 boolean PO_RotatePolyobj(uint num, angle_t angle)
 {
-    uint        count;
-    seg_t     **segList;
-    fvertex_t  *originalPts;
-    fvertex_t  *prevPts;
-    int         an;
-    polyobj_t  *po;
-    boolean     blocked;
-    vertex_t   *vtx;
+    int             an;
+    uint            count;
+    fvertex_t      *originalPts;
+    fvertex_t      *prevPts;
+    polyobj_t      *po;
+    vertex_t       *vtx;
+    seg_t         **segList;
+    boolean         blocked;
 
     if(num & 0x80000000)
     {
@@ -344,7 +372,9 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
     for(count = 0; count < po->numsegs;
         ++count, segList++, originalPts++, prevPts++)
     {
-        vtx = (*segList)->SG_v1;
+        seg_t          *seg = *segList;
+
+        vtx = seg->SG_v1;
 
         prevPts->pos[VX] = vtx->V_pos[VX];
         prevPts->pos[VY] = vtx->V_pos[VY];
@@ -360,18 +390,20 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
     validCount++;
     for(count = 0; count < po->numsegs; ++count, segList++)
     {
-        if(CheckMobjBlocking(*segList, po))
+        seg_t          *seg = *segList;
+
+        if(CheckMobjBlocking(seg, po))
         {
             blocked = true;
         }
 
-        if((*segList)->linedef->validCount != validCount)
+        if(seg->linedef->validCount != validCount)
         {
-            UpdateSegBBox(*segList);
-            (*segList)->linedef->validCount = validCount;
+            UpdateSegBBox(seg);
+            seg->linedef->validCount = validCount;
         }
 
-        (*segList)->angle += angle;
+        seg->angle += angle;
     }
 
     if(blocked)
@@ -380,8 +412,9 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
         prevPts = po->prevPts;
         for(count = 0; count < po->numsegs; ++count, segList++, prevPts++)
         {
-            vtx = (*segList)->SG_v1;
+            seg_t          *seg = *segList;
 
+            vtx = seg->SG_v1;
             vtx->V_pos[VX] = prevPts->pos[VX];
             vtx->V_pos[VY] = prevPts->pos[VY];
         }
@@ -390,12 +423,14 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
         validCount++;
         for(count = 0; count < po->numsegs; ++count, segList++, prevPts++)
         {
-            if((*segList)->linedef->validCount != validCount)
+            seg_t          *seg = *segList;
+
+            if(seg->linedef->validCount != validCount)
             {
-                UpdateSegBBox(*segList);
-                (*segList)->linedef->validCount = validCount;
+                UpdateSegBBox(seg);
+                seg->linedef->validCount = validCount;
             }
-            (*segList)->angle -= angle;
+            seg->angle -= angle;
         }
 
         PO_LinkPolyobj(po);
@@ -564,13 +599,14 @@ polyobj_t* PO_GetForDegen(void *degenMobj)
 boolean PO_PolyobjLineIterator(polyobj_t *po, boolean (*func) (line_t *, void *),
                                void *data)
 {
-    uint        i;
-    seg_t     **segList;
+    uint            i;
+    seg_t         **segList;
 
     segList = po->segs;
     for(i = 0; i < po->numsegs; ++i, segList++)
     {
-        line_t     *line = (*segList)->linedef;
+        seg_t          *seg = *segList;
+        line_t         *line = seg->linedef;
 
         if(line->validCount == validCount)
             continue;

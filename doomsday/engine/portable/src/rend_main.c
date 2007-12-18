@@ -1676,7 +1676,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     rendpoly_t *quad;
     float      *vBL, *vBR, *vTL, *vTR;
     sector_t   *frontsec, *backsec;
-    uint        j, num, pass;
+    uint        j, num;
     seg_t      *seg, **list;
     side_t     *side;
 
@@ -1694,137 +1694,119 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     vTL = quad->vertices[1].pos;
     vTR = quad->vertices[3].pos;
 
-    // First pass = walls, second pass = poly objects.
-    for(pass = 0; pass < 2; ++pass)
+    num  = ssec->segcount;
+    list = ssec->segs;
+
+    for(j = 0; j < num; ++j)
     {
-        if(pass == 0)
+        seg = list[j];
+
+        if(!seg->linedef)    // "minisegs" have no linedefs.
+            continue;
+
+        // Let's first check which way this seg is facing.
+        if(!(seg->frameflags & SEGINF_FACINGFRONT))
+            continue;
+
+        side = seg->sidedef;
+        if(!side)
+            continue;
+
+        backsec = seg->SG_backsector;
+        frontsec = seg->SG_frontsector;
+
+        if(backsec == frontsec &&
+           !side->SW_topmaterial && !side->SW_bottommaterial &&
+           !side->SW_middlematerial)
+           continue; // Ugh... an obvious wall seg hack. Best take no chances...
+
+        ffloor = frontsec->SP_floorvisheight;
+        fceil = frontsec->SP_ceilvisheight;
+
+        if(backsec)
         {
-            num  = ssec->segcount;
-            list = ssec->segs;
+            bceil = backsec->SP_ceilvisheight;
+            bfloor = backsec->SP_floorvisheight;
+            bsh = bceil - bfloor;
         }
         else
-        {
-            if(!ssec->poly)
-                break; // we're done
+            bsh = bceil = bfloor = 0;
 
-            num  = ssec->poly->numsegs;
-            list = ssec->poly->segs;
+        // Get the start and end vertices, left then right. Top and bottom.
+        vBL[VX] = vTL[VX] = seg->SG_v1pos[VX];
+        vBL[VY] = vTL[VY] = seg->SG_v1pos[VY];
+        vBR[VX] = vTR[VX] = seg->SG_v2pos[VX];
+        vBR[VY] = vTR[VY] = seg->SG_v2pos[VY];
+
+        quad->wall->length = seg->length;
+        memcpy(&quad->normal, &side->SW_middlenormal, sizeof(quad->normal));
+
+        // Upper/lower normal skyfixes.
+        if(!((frontsec->flags & SECF_SELFREFHACK) && backsec))
+        {
+            // Floor.
+            if(frontsec->skyfix[PLN_FLOOR].offset < 0)
+            {
+                if(!backsec ||
+                   (backsec && backsec != seg->SG_frontsector &&
+                    (bfloor + backsec->skyfix[PLN_FLOOR].offset >
+                     ffloor + frontsec->skyfix[PLN_FLOOR].offset)))
+                {
+                    vTL[VZ] = vTR[VZ] = ffloor;
+                    vBL[VZ] = vBR[VZ] =
+                        ffloor + frontsec->skyfix[PLN_FLOOR].offset;
+                    RL_AddPoly(quad);
+                }
+            }
+
+            // Ceiling.
+            if(frontsec->skyfix[PLN_CEILING].offset > 0)
+            {
+                if(!backsec ||
+                   (backsec && backsec != seg->SG_frontsector &&
+                    (bceil + backsec->skyfix[PLN_CEILING].offset <
+                     fceil + frontsec->skyfix[PLN_CEILING].offset)))
+                {
+                    vTL[VZ] = vTR[VZ] =
+                        fceil + frontsec->skyfix[PLN_CEILING].offset;
+                    vBL[VZ] = vBR[VZ] = fceil;
+
+                    RL_AddPoly(quad);
+                }
+            }
         }
 
-        for(j = 0; j < num; ++j)
+        // Upper/lower zero height backsec skyfixes.
+        if(backsec && bsh <= 0)
         {
-            seg = list[j];
-
-            if(!seg->linedef)    // "minisegs" have no linedefs.
-                continue;
-
-            // Let's first check which way this seg is facing.
-            if(!(seg->frameflags & SEGINF_FACINGFRONT))
-                continue;
-
-            side = seg->sidedef;
-            if(!side)
-                continue;
-
-            if(seg->flags & SEGF_POLYOBJ) // No sky fixes for polyobj segs.
-                continue;
-
-            backsec = seg->SG_backsector;
-            frontsec = seg->SG_frontsector;
-
-            if(backsec == frontsec &&
-               !side->SW_topmaterial && !side->SW_bottommaterial &&
-               !side->SW_middlematerial)
-               continue; // Ugh... an obvious wall seg hack. Best take no chances...
-
-            ffloor = frontsec->SP_floorvisheight;
-            fceil = frontsec->SP_ceilvisheight;
-
-            if(backsec)
-            {
-                bceil = backsec->SP_ceilvisheight;
-                bfloor = backsec->SP_floorvisheight;
-                bsh = bceil - bfloor;
-            }
-            else
-                bsh = bceil = bfloor = 0;
-
-            // Get the start and end vertices, left then right. Top and bottom.
-            vBL[VX] = vTL[VX] = seg->SG_v1pos[VX];
-            vBL[VY] = vTL[VY] = seg->SG_v1pos[VY];
-            vBR[VX] = vTR[VX] = seg->SG_v2pos[VX];
-            vBR[VY] = vTR[VY] = seg->SG_v2pos[VY];
-
-            quad->wall->length = seg->length;
-            memcpy(&quad->normal, &side->SW_middlenormal, sizeof(quad->normal));
-
-            // Upper/lower normal skyfixes.
-            if(!((frontsec->flags & SECF_SELFREFHACK) && backsec))
+            if(R_IsSkySurface(&frontsec->SP_floorsurface) &&
+               R_IsSkySurface(&backsec->SP_floorsurface))
             {
                 // Floor.
-                if(frontsec->skyfix[PLN_FLOOR].offset < 0)
+                if(backsec->skyfix[PLN_FLOOR].offset < 0)
                 {
-                    if(!backsec ||
-                       (backsec && backsec != seg->SG_frontsector &&
-                        (bfloor + backsec->skyfix[PLN_FLOOR].offset >
-                         ffloor + frontsec->skyfix[PLN_FLOOR].offset)))
-                    {
-                        vTL[VZ] = vTR[VZ] = ffloor;
-                        vBL[VZ] = vBR[VZ] =
-                            ffloor + frontsec->skyfix[PLN_FLOOR].offset;
-                        RL_AddPoly(quad);
-                    }
+                    vTL[VZ] = vTR[VZ] = bfloor;
+                    vBL[VZ] = vBR[VZ] =
+                        bfloor + backsec->skyfix[PLN_FLOOR].offset;
+                    RL_AddPoly(quad);
                 }
-
-                // Ceiling.
-                if(frontsec->skyfix[PLN_CEILING].offset > 0)
-                {
-                    if(!backsec ||
-                       (backsec && backsec != seg->SG_frontsector &&
-                        (bceil + backsec->skyfix[PLN_CEILING].offset <
-                         fceil + frontsec->skyfix[PLN_CEILING].offset)))
-                    {
-                        vTL[VZ] = vTR[VZ] =
-                            fceil + frontsec->skyfix[PLN_CEILING].offset;
-                        vBL[VZ] = vBR[VZ] = fceil;
-
-                        RL_AddPoly(quad);
-                    }
-                }
+                // Ensure we add a solid view seg.
+                seg->frameflags |= SEGINF_BACKSECSKYFIX;
             }
 
-            // Upper/lower zero height backsec skyfixes.
-            if(backsec && bsh <= 0)
+                // Ceiling.
+            if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
+               R_IsSkySurface(&backsec->SP_ceilsurface))
             {
-                if(R_IsSkySurface(&frontsec->SP_floorsurface) &&
-                   R_IsSkySurface(&backsec->SP_floorsurface))
+                if(backsec->skyfix[PLN_CEILING].offset > 0)
                 {
-                    // Floor.
-                    if(backsec->skyfix[PLN_FLOOR].offset < 0)
-                    {
-                        vTL[VZ] = vTR[VZ] = bfloor;
-                        vBL[VZ] = vBR[VZ] =
-                            bfloor + backsec->skyfix[PLN_FLOOR].offset;
-                        RL_AddPoly(quad);
-                    }
-                    // Ensure we add a solid view seg.
-                    seg->frameflags |= SEGINF_BACKSECSKYFIX;
+                    vTL[VZ] = vTR[VZ] =
+                        bceil + backsec->skyfix[PLN_CEILING].offset;
+                    vBL[VZ] = vBR[VZ] = bceil;
+                    RL_AddPoly(quad);
                 }
-
-                    // Ceiling.
-                if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
-                   R_IsSkySurface(&backsec->SP_ceilsurface))
-                {
-                    if(backsec->skyfix[PLN_CEILING].offset > 0)
-                    {
-                        vTL[VZ] = vTR[VZ] =
-                            bceil + backsec->skyfix[PLN_CEILING].offset;
-                        vBL[VZ] = vBR[VZ] = bceil;
-                        RL_AddPoly(quad);
-                    }
-                    // Ensure we add a solid view seg.
-                    seg->frameflags |= SEGINF_BACKSECSKYFIX;
-                }
+                // Ensure we add a solid view seg.
+                seg->frameflags |= SEGINF_BACKSECSKYFIX;
             }
         }
     }

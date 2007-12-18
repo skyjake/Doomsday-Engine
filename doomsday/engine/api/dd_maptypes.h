@@ -66,20 +66,20 @@
 #define DMT_LINE_DY DDVT_FLOAT
 #define DMT_LINE_BBOX DDVT_FLOAT
 
-#define DMT_POLYOBJ_BOX DDVT_FLOAT
-#define DMT_POLYOBJ_VALIDCOUNT DDVT_INT
-#define DMT_POLYOBJ_TAG DDVT_INT       // Reference tag assigned in HereticEd
-#define DMT_POLYOBJ_ANGLE DDVT_ANGLE
 #define DMT_POLYOBJ_IDX DDVT_UINT      // Idx of polyobject
+#define DMT_POLYOBJ_TAG DDVT_INT       // Reference tag assigned in HereticEd
+#define DMT_POLYOBJ_VALIDCOUNT DDVT_INT
+#define DMT_POLYOBJ_BOX DDVT_FLOAT
+#define DMT_POLYOBJ_STARTSPOT DDVT_PTR
+#define DMT_POLYOBJ_ANGLE DDVT_ANGLE
+#define DMT_POLYOBJ_DESTANGLE DDVT_ANGLE // Destination angle.
+#define DMT_POLYOBJ_ANGLESPEED DDVT_ANGLE // Rotation speed.
 #define DMT_POLYOBJ_NUMSEGS DDVT_UINT
 #define DMT_POLYOBJ_SEGS DDVT_PTR
 #define DMT_POLYOBJ_SPEED DDVT_FLOAT   // Movement speed.
-#define DMT_POLYOBJ_DESTANGLE DDVT_ANGLE // Destination angle.
-#define DMT_POLYOBJ_ANGLESPEED DDVT_ANGLE // Rotation speed.
 #define DMT_POLYOBJ_CRUSH DDVT_BOOL    // Should the polyobj attempt to crush mobjs?
 #define DMT_POLYOBJ_SEQTYPE DDVT_INT
 #define DMT_POLYOBJ_SPECIALDATA DDVT_PTR // pointer a thinker, if the poly is moving
-#define DMT_POLYOBJ_STARTSPOT DDVT_PTR
 
 #define DMT_NODE_X DDVT_FLOAT          // Partition line.
 #define DMT_NODE_Y DDVT_FLOAT          // Partition line.

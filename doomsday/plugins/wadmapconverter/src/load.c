@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,7 @@
 
 #define PO_LINE_START           1 // polyobj line start special
 #define PO_LINE_EXPLICIT        5
+#define PO_ANCHOR_TYPE          3000
 
 #define SEQTYPE_NUMSEQ          10
 
@@ -77,12 +78,6 @@ typedef enum lumptype_e {
     ML_GLPVS,                   // GL PVS dataset
     NUM_LUMP_TYPES
 } lumptype_t;
-
-enum {
-    PO_ANCHOR_TYPE = 3000,
-    PO_SPAWN_TYPE,
-    PO_SPAWNCRUSH_TYPE
-};
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -192,8 +187,8 @@ static int isClosedPolygon(mline_t **lineList, size_t num)
  * Create a temporary polyobj (read from the original map data).
  */
 static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
-                           boolean crush, int tag, int sequenceType,
-                           float startX, float startY)
+                             int tag, int sequenceType, int16_t anchorX,
+                             int16_t anchorY)
 {
     uint                i;
     mpolyobj_t          *po, **newList;
@@ -227,11 +222,10 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
     map->polyobjs = newList;
 
     po->idx = map->numpolyobjs-1;
-    po->crush = crush;
     po->tag = tag;
     po->seqType = sequenceType;
-    po->startSpot[VX] = startX;
-    po->startSpot[VY] = startY;
+    po->anchor[VX] = anchorX;
+    po->anchor[VY] = anchorY;
     po->lineCount = num;
     po->lineIndices = malloc(sizeof(uint) * num);
     for(i = 0; i < num; ++i)
@@ -288,12 +282,11 @@ static boolean iterFindPolyLines(int16_t x, int16_t y,
  * and attempt to create a polyobject from them.
  *
  * @param tag               Line tag of linedefs to search for.
- * @param crush             Whether the polyobject should crush things.
  *
  * @return                  @c true = successfully created polyobj.
  */
-static boolean findAndCreatePolyobj(int16_t tag, boolean crush,
-                                    int16_t startX, int16_t startY)
+static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
+                                    int16_t anchorY)
 {
 #define PO_MAXPOLYLINES         32
 
@@ -333,8 +326,8 @@ static boolean findAndCreatePolyobj(int16_t tag, boolean crush,
             if(seqType < 0 || seqType >= SEQTYPE_NUMSEQ)
                 seqType = 0;
 
-            if(createPolyobj(lineList, PolyLineCount, &poIdx, crush,
-                             tag, seqType, startX, startY))
+            if(createPolyobj(lineList, PolyLineCount, &poIdx, tag,
+                             seqType, anchorX, anchorY))
             {
                 free(lineList);
                 return true;
@@ -415,8 +408,8 @@ static boolean findAndCreatePolyobj(int16_t tag, boolean crush,
         uint            poIdx;
         int             seqType = polyLineList[0]->xArgs[3];
 
-        if(createPolyobj(polyLineList, lineCount, &poIdx, crush, tag,
-                         seqType, startX, startY))
+        if(createPolyobj(polyLineList, lineCount, &poIdx, tag,
+                         seqType, anchorX, anchorY))
         {
             mline_t        *line = polyLineList[0];
 
@@ -444,14 +437,11 @@ static void findPolyobjs(void)
     {
         mthing_t       *thing = &map->things[i];
 
-        if(thing->type == PO_SPAWN_TYPE ||
-           thing->type == PO_SPAWNCRUSH_TYPE)
-        {   // A polyobj start spot.
+        if(thing->type == PO_ANCHOR_TYPE)
+        {   // A polyobj anchor.
             int             tag = thing->angle;
-            boolean         crush = (thing->type == PO_SPAWNCRUSH_TYPE);
 
-            findAndCreatePolyobj(tag, crush,
-                                 thing->pos[VX], thing->pos[VY]);
+            findAndCreatePolyobj(tag, thing->pos[VX], thing->pos[VY]);
         }
     }
 }
@@ -1118,8 +1108,9 @@ boolean TransferMap(void)
         lineList = malloc(sizeof(uint) * po->lineCount);
         for(j = 0; j < po->lineCount; ++j)
             lineList[j] = po->lineIndices[j] + 1;
-        MPE_PolyobjCreate(lineList, po->lineCount, po->crush, po->tag,
-                          po->seqType, po->startSpot[VX], po->startSpot[VY]);
+        MPE_PolyobjCreate(lineList, po->lineCount, po->tag,
+                          po->seqType, (float) po->anchor[VX],
+                          (float) po->anchor[VY]);
         free(lineList);
     }
 

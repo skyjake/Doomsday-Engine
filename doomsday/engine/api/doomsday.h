@@ -192,8 +192,8 @@ extern          "C" {
                                      materialtype_t ceilMaterialType, float ceilOffsetX,
                                      float ceilOffsetY, float ceilRed, float ceilGreen,
                                      float ceilBlue);
-    uint            MPE_PolyobjCreate(uint *lines, uint linecount, boolean crush,
-                                      int tag, int sequenceType, float startX, float startY);
+    uint            MPE_PolyobjCreate(uint *lines, uint linecount,
+                                      int tag, int sequenceType, float anchorX, float anchorY);
 
     // Network.
     void            Net_SendPacket(int to_player, int type, void *data,

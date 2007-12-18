@@ -3,7 +3,7 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
@@ -678,92 +678,6 @@ static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
     }
 }
 
-static void translateToStartSpot(polyobj_t *po, float originX, float originY)
-{
-    uint            i;
-    float           delta[2];
-    ddvertexf_t     avg; // Used to find a polyobj's center, and hence subsector.
-    seg_t         **tempSeg, **veryTempSeg;
-    ddvertexf_t    *tempPt;
-    subsector_t    *sub;
-    int             poNumSegs = 0;
-
-    if(P_GetPtrp(po, DMU_SEG_LIST) == NULL)
-    {
-        Con_Error
-            ("translateToStartSpot:  Anchor point located without a "
-             "StartSpot point: %d\n", P_ToIndex(po));
-    }
-    poNumSegs = P_GetIntp(po, DMU_SEG_COUNT);
-
-    P_SetPtrp(po, DMU_ORIGINAL_POINTS,
-              Z_Malloc(poNumSegs * sizeof(ddvertex_t), PU_LEVEL, 0));
-    P_SetPtrp(po, DMU_PREVIOUS_POINTS,
-              Z_Malloc(poNumSegs * sizeof(ddvertex_t), PU_LEVEL, 0));
-    delta[VX] = originX - P_GetFloatp(po, DMU_START_SPOT_X);
-    delta[VY] = originY - P_GetFloatp(po, DMU_START_SPOT_Y);
-
-    tempSeg = P_GetPtrp(po, DMU_SEG_LIST);
-    tempPt = P_GetPtrp(po, DMU_ORIGINAL_POINTS);
-    avg.pos[VX] = 0;
-    avg.pos[VY] = 0;
-
-    VALIDCOUNT++;
-    for(i = 0; i < (uint) poNumSegs; ++i, tempSeg++, tempPt++)
-    {
-        line_t* linedef = P_GetPtrp(*tempSeg, DMU_LINE);
-        if(P_GetIntp(linedef, DMU_VALID_COUNT) != VALIDCOUNT)
-        {
-            float          *bbox = P_GetPtrp(linedef, DMU_BOUNDING_BOX);
-            bbox[BOXTOP]    -= delta[VY];
-            bbox[BOXBOTTOM] -= delta[VY];
-            bbox[BOXLEFT]   -= delta[VX];
-            bbox[BOXRIGHT]  -= delta[VX];
-            P_SetIntp(linedef, DMU_VALID_COUNT, VALIDCOUNT);
-        }
-
-        for(veryTempSeg = P_GetPtrp(po, DMU_SEG_LIST);
-            veryTempSeg != tempSeg; veryTempSeg++)
-        {
-            if(P_GetPtrp(*veryTempSeg, DMU_VERTEX1) ==
-               P_GetPtrp(*tempSeg, DMU_VERTEX1))
-            {
-                break;
-            }
-        }
-
-        if(veryTempSeg == tempSeg)
-        {   // The point hasn't been translated, yet.
-            float           v1[2];
-
-            P_GetFloatpv(*tempSeg, DMU_VERTEX1_XY, v1);
-            v1[0] -= delta[VX];
-            v1[1] -= delta[VY];
-            P_SetFloatpv(*tempSeg, DMU_VERTEX1_XY, v1);
-        }
-
-        avg.pos[VX] += P_GetFloatp(*tempSeg, DMU_VERTEX1_X);
-        avg.pos[VY] += P_GetFloatp(*tempSeg, DMU_VERTEX1_Y);
-        // The original Pts are based off the startSpot Pt, and are unique
-        // to each seg, not each linedef.
-        tempPt->pos[VX] = P_GetFloatp(*tempSeg, DMU_VERTEX1_X) -
-                            P_GetFloatp(po, DMU_START_SPOT_X);
-        tempPt->pos[VY] = P_GetFloatp(*tempSeg, DMU_VERTEX1_Y) -
-                            P_GetFloatp(po, DMU_START_SPOT_Y);
-    }
-
-    avg.pos[VX] /= poNumSegs;
-    avg.pos[VY] /= poNumSegs;
-    sub = R_PointInSubsector(avg.pos[VX], avg.pos[VY]);
-    if(P_GetPtrp(sub, DMU_POLYOBJ) != NULL)
-    {
-        Con_Message("translateToStartSpot: Warning: Multiple polyobjs in a single subsector\n"
-                    "  (ssec %i, sector %i). Previous polyobj overridden.\n",
-                    P_ToIndex(sub), P_GetIntp(sub, DMU_SECTOR));
-    }
-    P_SetPtrp(sub, DMU_POLYOBJ, po);
-}
-
 /**
  * Initialize all polyobjects in the current map.
  */
@@ -776,7 +690,6 @@ void PO_InitForMap(void)
     // ThrustMobj will handle polyobj <-> mobj interaction.
     PO_SetCallback(ThrustMobj);
 
-    // Move all polyobjects to their start positions.
     for(i = 0; i < numpolyobjs; ++i)
     {
         int                 j, tag;
@@ -784,13 +697,14 @@ void PO_InitForMap(void)
 
         tag = P_GetInt(DMU_POLYOBJ, i, DMU_TAG);
 
-        // Find the anchor associated with this polyobj and move there.
+        // Find the spawnspot associated with this polyobj.
         j = 0;
         mt = NULL;
         while(j < numthings && !mt)
         {
-            if(things[j].type == PO_ANCHOR_TYPE && things[j].angle == tag)
-            {   // Polyobj Anchor Pt.
+            if((things[j].type == PO_SPAWN_TYPE ||
+                things[j].type == PO_SPAWNCRUSH_TYPE) && things[j].angle == tag)
+            {   // Polyobj spawnspot.
                 mt = &things[j];
             }
             else
@@ -801,12 +715,13 @@ void PO_InitForMap(void)
 
         if(mt)
         {
-            translateToStartSpot(P_ToPtr(DMU_POLYOBJ, i),
-                                 mt->pos[VX], mt->pos[VY]);
+            P_SetInt(DMU_POLYOBJ, i, DMU_CRUSH,
+                     mt->type == PO_SPAWNCRUSH_TYPE? 1 : 0);
+            PO_MovePolyobj(i, mt->pos[VX], mt->pos[VY]);
         }
         else
         {
-            Con_Message("PO_Init: Warning, missing anchor for poly %i.", i);
+            Con_Message("PO_Init: Warning, missing spawnspot for poly %i.", i);
         }
     }
 }
