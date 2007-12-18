@@ -361,7 +361,7 @@ boolean P_Move(mobj_t *mo)
     }
     else
     {
-        P_SetThingSRVO(mo, step[VX], step[VY]);
+        P_MobjSetSRVO(mo, step[VX], step[VY]);
         mo->flags &= ~MF_INFLOAT;
     }
 
@@ -654,7 +654,7 @@ void C_DECL A_Look(mobj_t *actor)
             S_StartSound(sound, actor);
         }
     }
-    P_SetMobjState(actor, actor->info->seestate);
+    P_MobjChangeState(actor, actor->info->seestate);
 }
 
 /**
@@ -704,7 +704,7 @@ void C_DECL A_Chase(mobj_t *actor)
             return;
         }
 
-        P_SetMobjState(actor, actor->info->spawnstate);
+        P_MobjChangeState(actor, actor->info->spawnstate);
         return;
     }
 
@@ -724,7 +724,7 @@ void C_DECL A_Chase(mobj_t *actor)
         {
             S_StartSound(actor->info->attacksound, actor);
         }
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleestate);
         return;
     }
 
@@ -735,7 +735,7 @@ void C_DECL A_Chase(mobj_t *actor)
         {
             if(P_CheckMissileRange(actor))
             {
-                P_SetMobjState(actor, actor->info->missilestate);
+                P_MobjChangeState(actor, actor->info->missilestate);
                 actor->flags |= MF_JUSTATTACKED;
                 return;
             }
@@ -865,13 +865,13 @@ boolean P_UpdateMorphedMonster(mobj_t *actor, int tics)
     //// \fixme Do this properly!
     oldMonster = *actor; // Save pig vars.
 
-    P_RemoveMobjFromTIDList(actor);
-    P_SetMobjState(actor, S_FREETARGMOBJ);
+    P_MobjRemoveFromTIDList(actor);
+    P_MobjChangeState(actor, S_FREETARGMOBJ);
     mo = P_SpawnMobj3fv(moType, pos);
 
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit.
-        P_RemoveMobj(mo);
+        P_MobjRemove(mo);
         mo = P_SpawnMobj3fv(oldMonster.type, pos);
 
         mo->angle = oldMonster.angle;
@@ -884,7 +884,7 @@ boolean P_UpdateMorphedMonster(mobj_t *actor, int tics)
         mo->tid = oldMonster.tid;
         memcpy(mo->args, oldMonster.args, 5);
 
-        P_InsertMobjIntoTIDList(mo, oldMonster.tid);
+        P_MobjInsertIntoTIDList(mo, oldMonster.tid);
         return false;
     }
 
@@ -894,7 +894,7 @@ boolean P_UpdateMorphedMonster(mobj_t *actor, int tics)
     mo->special = oldMonster.special;
     memcpy(mo->args, oldMonster.args, 5);
 
-    P_InsertMobjIntoTIDList(mo, oldMonster.tid);
+    P_MobjInsertIntoTIDList(mo, oldMonster.tid);
     fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT);
     S_StartSound(SFX_TELEPORT, fog);
     return true;
@@ -1160,7 +1160,7 @@ void C_DECL A_MinotaurChase(mobj_t *actor)
     if(!actor->target || (actor->target->health <= 0) ||
        !(actor->target->flags & MF_SHOOTABLE))
     {   // Look for a new target.
-        P_SetMobjState(actor, S_MNTR_LOOK1);
+        P_MobjChangeState(actor, S_MNTR_LOOK1);
         return;
     }
 
@@ -1173,14 +1173,14 @@ void C_DECL A_MinotaurChase(mobj_t *actor)
         if(actor->info->attacksound)
             S_StartSound(actor->info->attacksound, actor);
 
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleestate);
         return;
     }
 
     // Missile attack.
     if(actor->info->missilestate && P_CheckMissileRange(actor))
     {
-        P_SetMobjState(actor, actor->info->missilestate);
+        P_MobjChangeState(actor, actor->info->missilestate);
         return;
     }
 
@@ -1249,7 +1249,7 @@ void C_DECL A_MinotaurDecide(mobj_t *actor)
     {
         if(P_Random() < 100)
         {   // Floor fire attack.
-            P_SetMobjState(actor, S_MNTR_ATK3_1);
+            P_MobjChangeState(actor, S_MNTR_ATK3_1);
             actor->special2 = 0;
             return;
         }
@@ -1257,7 +1257,7 @@ void C_DECL A_MinotaurDecide(mobj_t *actor)
 
     // Swing attack.
     A_FaceTarget(actor);
-    // Don't need to call P_SetMobjState because the current state
+    // Don't need to call P_MobjChangeState because the current state
     // falls through to the swing attack.
 
 #undef MNTR_CHARGE_SPEED
@@ -1282,7 +1282,7 @@ void C_DECL A_MinotaurCharge(mobj_t *actor)
     else
     {
         actor->flags &= ~MF_SKULLFLY;
-        P_SetMobjState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seestate);
     }
 }
 
@@ -1347,7 +1347,7 @@ void C_DECL A_MinotaurAtk3(mobj_t *actor)
 
     if(P_Random() < 192 && actor->special2 == 0)
     {
-        P_SetMobjState(actor, S_MNTR_ATK3_4);
+        P_MobjChangeState(actor, S_MNTR_ATK3_4);
         actor->special2 = 1;
     }
 }
@@ -1640,7 +1640,7 @@ void C_DECL A_CheckSkullFloor(mobj_t *actor)
 {
     if(actor->pos[VZ] <= actor->floorz)
     {
-        P_SetMobjState(actor, S_BLOODYSKULLX1);
+        P_MobjChangeState(actor, S_BLOODYSKULLX1);
         S_StartSound(SFX_DRIP, actor);
     }
 }
@@ -1649,7 +1649,7 @@ void C_DECL A_CheckSkullDone(mobj_t *actor)
 {
     if(actor->special2 == 666)
     {
-        P_SetMobjState(actor, S_BLOODYSKULLX2);
+        P_MobjChangeState(actor, S_BLOODYSKULLX2);
     }
 }
 
@@ -1657,7 +1657,7 @@ void C_DECL A_CheckBurnGone(mobj_t *actor)
 {
     if(actor->special2 == 666)
     {
-        P_SetMobjState(actor, S_PLAY_FDTH20);
+        P_MobjChangeState(actor, S_PLAY_FDTH20);
     }
 }
 
@@ -1687,7 +1687,7 @@ void C_DECL A_QueueCorpse(mobj_t *actor)
     {                           // Too many corpses - remove an old one
         corpse = corpseQueue[corpseQueueSlot % CORPSEQUEUESIZE];
         if(corpse)
-            P_RemoveMobj(corpse);
+            P_MobjRemove(corpse);
     }
     corpseQueue[corpseQueueSlot % CORPSEQUEUESIZE] = actor;
     corpseQueueSlot++;
@@ -1774,7 +1774,7 @@ void C_DECL A_AddPlayerCorpse(mobj_t *actor)
 {
     if(bodyqueslot >= BODYQUESIZE)
     {   // Too many player corpses - remove an old one.
-        P_RemoveMobj(bodyque[bodyqueslot % BODYQUESIZE]);
+        P_MobjRemove(bodyque[bodyqueslot % BODYQUESIZE]);
     }
     bodyque[bodyqueslot % BODYQUESIZE] = actor;
     bodyqueslot++;
@@ -1839,7 +1839,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
         {   // Got a new target.
             return;
         }
-        P_SetMobjState(actor, actor->info->spawnstate);
+        P_MobjChangeState(actor, actor->info->spawnstate);
         return;
     }
 
@@ -1859,7 +1859,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
         {
             S_StartSound(actor->info->attacksound, actor);
         }
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleestate);
         return;
     }
 
@@ -1927,7 +1927,7 @@ void C_DECL A_SerpentHumpDecide(mobj_t *actor)
         }
         else if(P_Random() < 40)
         {   // Missile attack.
-            P_SetMobjState(actor, S_SERPENT_SURFACE1);
+            P_MobjChangeState(actor, S_SERPENT_SURFACE1);
             return;
         }
     }
@@ -1940,11 +1940,11 @@ void C_DECL A_SerpentHumpDecide(mobj_t *actor)
     {   // The hump shouldn't occur when within melee range.
         if(actor->type == MT_SERPENTLEADER && P_Random() < 128)
         {
-            P_SetMobjState(actor, S_SERPENT_SURFACE1);
+            P_MobjChangeState(actor, S_SERPENT_SURFACE1);
         }
         else
         {
-            P_SetMobjState(actor, S_SERPENT_HUMP1);
+            P_MobjChangeState(actor, S_SERPENT_HUMP1);
             S_StartSound(SFX_SERPENT_ACTIVE, actor);
         }
     }
@@ -2008,7 +2008,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
         {   // Got a new target.
             return;
         }
-        P_SetMobjState(actor, actor->info->spawnstate);
+        P_MobjChangeState(actor, actor->info->spawnstate);
         return;
     }
 
@@ -2028,7 +2028,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
         {
             S_StartSound(actor->info->attacksound, actor);
         }
-        P_SetMobjState(actor, S_SERPENT_ATK1);
+        P_MobjChangeState(actor, S_SERPENT_ATK1);
         return;
     }
 
@@ -2056,24 +2056,24 @@ void C_DECL A_SerpentCheckForAttack(mobj_t *actor)
     {
         if(!P_CheckMeleeRange(actor, false))
         {
-            P_SetMobjState(actor, S_SERPENT_ATK1);
+            P_MobjChangeState(actor, S_SERPENT_ATK1);
             return;
         }
     }
 
     if(P_CheckMeleeRange(actor, true))
     {
-        P_SetMobjState(actor, S_SERPENT_WALK1);
+        P_MobjChangeState(actor, S_SERPENT_WALK1);
     }
     else if(P_CheckMeleeRange(actor, false))
     {
         if(P_Random() < 32)
         {
-            P_SetMobjState(actor, S_SERPENT_WALK1);
+            P_MobjChangeState(actor, S_SERPENT_WALK1);
         }
         else
         {
-            P_SetMobjState(actor, S_SERPENT_ATK1);
+            P_MobjChangeState(actor, S_SERPENT_ATK1);
         }
     }
 }
@@ -2085,7 +2085,7 @@ void C_DECL A_SerpentChooseAttack(mobj_t *actor)
 
     if(actor->type == MT_SERPENTLEADER)
     {
-        P_SetMobjState(actor, S_SERPENT_MISSILE1);
+        P_MobjChangeState(actor, S_SERPENT_MISSILE1);
     }
 }
 
@@ -2172,14 +2172,14 @@ void C_DECL A_SerpentHeadCheck(mobj_t *actor)
 {
     if(actor->pos[VZ] <= actor->floorz)
     {
-        if(P_GetMobjFloorType(actor) >= FLOOR_LIQUID)
+        if(P_MobjGetFloorType(actor) >= FLOOR_LIQUID)
         {
             P_HitFloor(actor);
-            P_SetMobjState(actor, S_NULL);
+            P_MobjChangeState(actor, S_NULL);
         }
         else
         {
-            P_SetMobjState(actor, S_SERPENT_HEAD_X1);
+            P_MobjChangeState(actor, S_SERPENT_HEAD_X1);
         }
     }
 }
@@ -2248,7 +2248,7 @@ void C_DECL A_CentaurDefend(mobj_t *actor)
     if(P_CheckMeleeRange(actor, false) && P_Random() < 32)
     {
         A_UnSetInvulnerable(actor);
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleestate);
     }
 }
 
@@ -2276,7 +2276,7 @@ void C_DECL A_BishopAttack2(mobj_t *actor)
     if(!actor->target || !actor->special1)
     {
         actor->special1 = 0;
-        P_SetMobjState(actor, S_BISHOP_WALK1);
+        P_MobjChangeState(actor, S_BISHOP_WALK1);
         return;
     }
 
@@ -2337,7 +2337,7 @@ void C_DECL A_BishopDecide(mobj_t *actor)
     }
     else
     {
-        P_SetMobjState(actor, S_BISHOP_BLUR1);
+        P_MobjChangeState(actor, S_BISHOP_BLUR1);
     }
 }
 
@@ -2368,11 +2368,11 @@ void C_DECL A_BishopSpawnBlur(mobj_t *mo)
         mo->mom[MX] = mo->mom[MY] = 0;
         if(P_Random() > 96)
         {
-            P_SetMobjState(mo, S_BISHOP_WALK1);
+            P_MobjChangeState(mo, S_BISHOP_WALK1);
         }
         else
         {
-            P_SetMobjState(mo, S_BISHOP_ATK1);
+            P_MobjChangeState(mo, S_BISHOP_ATK1);
         }
     }
 
@@ -2409,7 +2409,7 @@ void C_DECL A_BishopPainBlur(mobj_t *actor)
 
     if(P_Random() < 64)
     {
-        P_SetMobjState(actor, S_BISHOP_BLUR1);
+        P_MobjChangeState(actor, S_BISHOP_BLUR1);
         return;
     }
 
@@ -2566,12 +2566,12 @@ void C_DECL A_DragonInitFlight(mobj_t *actor)
         actor->tracer = P_FindMobjFromTID(actor->tid, &search);
         if(search == -1)
         {
-            P_SetMobjState(actor, actor->info->spawnstate);
+            P_MobjChangeState(actor, actor->info->spawnstate);
             return;
         }
     } while(actor->tracer == actor);
 
-    P_RemoveMobjFromTIDList(actor);
+    P_MobjRemoveFromTIDList(actor);
 }
 
 void C_DECL A_DragonFlight(mobj_t *actor)
@@ -2599,7 +2599,7 @@ void C_DECL A_DragonFlight(mobj_t *actor)
         }
         else if(abs(actor->angle - angle) <= ANGLE_1 * 20)
         {
-            P_SetMobjState(actor, actor->info->missilestate);
+            P_MobjChangeState(actor, actor->info->missilestate);
             S_StartSound(SFX_DRAGON_ATTACK, actor);
         }
     }
@@ -2658,7 +2658,7 @@ void C_DECL A_DragonPain(mobj_t *mo)
     A_Pain(mo);
     if(!mo->tracer)
     {   // No destination spot yet.
-        P_SetMobjState(mo, S_DRAGON_INIT);
+        P_MobjChangeState(mo, S_DRAGON_INIT);
     }
 }
 
@@ -2666,7 +2666,7 @@ void C_DECL A_DragonCheckCrash(mobj_t *mo)
 {
     if(mo->pos[VZ] <= mo->floorz)
     {
-        P_SetMobjState(mo, S_DRAGON_CRASH1);
+        P_MobjChangeState(mo, S_DRAGON_CRASH1);
     }
 }
 
@@ -2838,7 +2838,7 @@ void C_DECL A_WraithRaise(mobj_t *mo)
     if(A_RaiseMobj(mo))
     {
         // Reached it's target height.
-        P_SetMobjState(mo, S_WRAITH_CHASE1);
+        P_MobjChangeState(mo, S_WRAITH_CHASE1);
     }
 
     P_SpawnDirt(mo, mo->radius);
@@ -3186,7 +3186,7 @@ void C_DECL A_FiredChase(mobj_t *actor)
     {
         if(P_CheckMissileRange(actor) && (P_Random() < 20))
         {
-            P_SetMobjState(actor, actor->info->missilestate);
+            P_MobjChangeState(actor, actor->info->missilestate);
             actor->flags |= MF_JUSTATTACKED;
             return;
         }
@@ -3402,7 +3402,7 @@ void C_DECL A_SorcBallOrbit(mobj_t *actor)
     angle_t     prevangle = (angle_t) actor->special1;
 
     if(actor->target->health <= 0)
-        P_SetMobjState(actor, actor->info->painstate);
+        P_MobjChangeState(actor, actor->info->painstate);
 
     baseangle = (angle_t) parent->special1;
     switch(actor->type)
@@ -3907,10 +3907,10 @@ void C_DECL A_SpawnBishop(mobj_t *mo)
     {
         if(!P_TestMobjLocation(pmo))
         {
-            P_SetMobjState(pmo, S_NULL);
+            P_MobjChangeState(pmo, S_NULL);
         }
     }
-    P_SetMobjState(mo, S_NULL);
+    P_MobjChangeState(mo, S_NULL);
 }
 
 void C_DECL A_SmokePuffExit(mobj_t *mo)
@@ -3959,7 +3959,7 @@ void C_DECL A_BounceCheck(mobj_t *mo)
     {
         if(mo->args[3]-- <= 0)
         {
-            P_SetMobjState(mo, mo->info->deathstate);
+            P_MobjChangeState(mo, mo->info->deathstate);
             switch(mo->type)
             {
             case MT_SORCBALL1:
@@ -4033,7 +4033,7 @@ void C_DECL A_FastChase(mobj_t *mo)
         if(P_LookForPlayers(mo, true))
             return; // Got a new target
 
-        P_SetMobjState(mo, mo->info->spawnstate);
+        P_MobjChangeState(mo, mo->info->spawnstate);
         return;
     }
 
@@ -4086,7 +4086,7 @@ void C_DECL A_FastChase(mobj_t *mo)
         if(!P_CheckMissileRange(mo))
             goto nomissile;
 
-        P_SetMobjState(mo, mo->info->missilestate);
+        P_MobjChangeState(mo, mo->info->missilestate);
         mo->flags |= MF_JUSTATTACKED;
         return;
     }
@@ -4157,7 +4157,7 @@ void C_DECL A_CheckFloor(mobj_t *mo)
     {
         mo->pos[VZ] = mo->floorz;
         mo->flags2 &= ~MF2_LOGRAV;
-        P_SetMobjState(mo, mo->info->deathstate);
+        P_MobjChangeState(mo, mo->info->deathstate);
     }
 }
 
@@ -4190,7 +4190,7 @@ void C_DECL A_IceSetTics(mobj_t *mo)
     int         floor;
 
     mo->tics = 70 + (P_Random() & 63);
-    floor = P_GetMobjFloorType(mo);
+    floor = P_MobjGetFloorType(mo);
     if(floor == FLOOR_LAVA)
     {
         mo->tics /= 4;
@@ -4205,7 +4205,7 @@ void C_DECL A_IceCheckHeadDone(mobj_t *mo)
 {
     if(mo->special2 == 666)
     {
-        P_SetMobjState(mo, S_ICECHUNK_HEAD2);
+        P_MobjChangeState(mo, S_ICECHUNK_HEAD2);
     }
 }
 
@@ -4239,7 +4239,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t *mo)
 
         pmo = P_SpawnMobj3fv(MT_ICECHUNK, pos);
 
-        P_SetMobjState(pmo, pmo->info->spawnstate + (P_Random() % 3));
+        P_MobjChangeState(pmo, pmo->info->spawnstate + (P_Random() % 3));
 
         if(pmo)
         {
@@ -4262,7 +4262,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t *mo)
         pos[VZ] += (P_Random() * mo->height) / 255;
 
         pmo = P_SpawnMobj3fv(MT_ICECHUNK, pos);
-        P_SetMobjState(pmo, pmo->info->spawnstate + (P_Random() % 3));
+        P_MobjChangeState(pmo, pmo->info->spawnstate + (P_Random() % 3));
 
         if(pmo)
         {
@@ -4279,7 +4279,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t *mo)
         pmo = P_SpawnMobj3f(MT_ICECHUNK,
                             mo->pos[VX], mo->pos[VY], mo->pos[VZ] + VIEWHEIGHT);
 
-        P_SetMobjState(pmo, S_ICECHUNK_HEAD);
+        P_MobjChangeState(pmo, S_ICECHUNK_HEAD);
 
         pmo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
         pmo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 9);
@@ -4298,8 +4298,8 @@ void C_DECL A_FreezeDeathChunks(mobj_t *mo)
         pmo->player->plr->lookdir = 0;
     }
 
-    P_RemoveMobjFromTIDList(mo);
-    P_SetMobjState(mo, S_FREETARGMOBJ);
+    P_MobjRemoveFromTIDList(mo);
+    P_MobjChangeState(mo, S_FREETARGMOBJ);
     mo->flags2 |= MF2_DONTDRAW;
 }
 
@@ -4359,7 +4359,7 @@ void C_DECL A_KoraxChase(mobj_t *actor)
 
     if(P_Random() < 30)
     {
-        P_SetMobjState(actor, actor->info->missilestate);
+        P_MobjChangeState(actor, actor->info->missilestate);
     }
     else if(P_Random() < 30)
     {
@@ -4447,7 +4447,7 @@ void KSpiritInit(mobj_t *spirit, mobj_t *korax)
     for(i = 1; i < 3; ++i)
     {
         next = P_SpawnMobj3fv(MT_HOLY_TAIL, spirit->pos);
-        P_SetMobjState(next, next->info->spawnstate + 1);
+        P_MobjChangeState(next, next->info->spawnstate + 1);
         tail->tracer = next;
         tail = next;
     }
@@ -4458,11 +4458,11 @@ void C_DECL A_KoraxDecide(mobj_t *actor)
 {
     if(P_Random() < 220)
     {
-        P_SetMobjState(actor, S_KORAX_MISSILE1);
+        P_MobjChangeState(actor, S_KORAX_MISSILE1);
     }
     else
     {
-        P_SetMobjState(actor, S_KORAX_COMMAND1);
+        P_MobjChangeState(actor, S_KORAX_COMMAND1);
     }
 }
 
@@ -4720,7 +4720,7 @@ void C_DECL A_KSpiritRoam(mobj_t *mo)
     if(mo->health-- <= 0)
     {
         S_StartSound(SFX_SPIRIT_DIE, mo);
-        P_SetMobjState(mo, S_KSPIRIT_DEATH1);
+        P_MobjChangeState(mo, S_KSPIRIT_DEATH1);
     }
     else
     {
@@ -4743,7 +4743,7 @@ void C_DECL A_KBolt(mobj_t *mo)
     // Countdown lifetime.
     if(mo->special1-- <= 0)
     {
-        P_SetMobjState(mo, S_NULL);
+        P_MobjChangeState(mo, S_NULL);
     }
 }
 

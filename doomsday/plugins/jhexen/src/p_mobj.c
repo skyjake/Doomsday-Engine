@@ -3,7 +3,7 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
@@ -110,19 +110,19 @@ static mobj_t *TIDMobj[MAX_TID_COUNT];
 /**
  * @return              @c true if the mobj is still present.
  */
-boolean P_SetMobjState(mobj_t *mobj, statenum_t state)
+boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
 {
     state_t    *st;
 
     if(state == S_NULL)
     {   // Remove mobj.
         mobj->state = (state_t *) S_NULL;
-        P_RemoveMobj(mobj);
+        P_MobjRemove(mobj);
         return false;
     }
     st = &states[state];
 
-    P_SetState(mobj, state);
+    P_MobjSetState(mobj, state);
     mobj->turntime = false; // $visangle-facetarget
     if(st->action)
     {   // Call action function.
@@ -134,26 +134,26 @@ boolean P_SetMobjState(mobj_t *mobj, statenum_t state)
 }
 
 /**
- * Same as P_SetMobjState, but does not call the state function.
+ * Same as P_MobjChangeState, but does not call the state function.
  */
 boolean P_SetMobjStateNF(mobj_t *mobj, statenum_t state)
 {
     if(state == S_NULL)
     {   // Remove mobj
         mobj->state = (state_t *) S_NULL;
-        P_RemoveMobj(mobj);
+        P_MobjRemove(mobj);
         return false;
     }
 
     mobj->turntime = false; // $visangle-facetarget
-    P_SetState(mobj, state);
+    P_MobjSetState(mobj, state);
     return true;
 }
 
 void P_ExplodeMissile(mobj_t *mo)
 {
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
-    P_SetMobjState(mo, mobjinfo[mo->type].deathstate);
+    P_MobjChangeState(mo, mobjinfo[mo->type].deathstate);
 
     if(mo->flags & MF_MISSILE)
     {
@@ -195,7 +195,7 @@ void P_FloorBounceMissile(mobj_t *mo)
             break;
 
         default:
-            P_RemoveMobj(mo);
+            P_MobjRemove(mo);
             return;
         }
     }
@@ -219,7 +219,7 @@ void P_FloorBounceMissile(mobj_t *mo)
         mo->mom[MZ] *= -0.3f;
         if(fabs(mo->mom[MZ]) < 1.0f / 2)
         {
-            P_SetMobjState(mo, S_NULL);
+            P_MobjChangeState(mo, S_NULL);
             return;
         }
         break;
@@ -360,14 +360,14 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
     return true;
 }
 
-float P_GetMobjFriction(mobj_t *mo)
+float P_MobjGetFriction(mobj_t *mo)
 {
     if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorz) &&
        !(mo->flags2 & MF2_ONMOBJ))
     {
         return FRICTION_FLY;
     }
-    else if(P_GetMobjFloorType(mo) == FLOOR_ICE)
+    else if(P_MobjGetFloorType(mo) == FLOOR_ICE)
     {
         return FRICTION_LOW;
     }
@@ -375,7 +375,7 @@ float P_GetMobjFriction(mobj_t *mo)
     return FRICTION_NORMAL;
 }
 
-void P_XYMovement(mobj_t *mo)
+void P_MobjMoveXY(mobj_t *mo)
 {
     float       posTry[2];
     player_t   *player;
@@ -394,7 +394,7 @@ void P_XYMovement(mobj_t *mo)
         {   // A flying mobj slammed into something
             mo->flags &= ~MF_SKULLFLY;
             mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
-            P_SetMobjState(mo, mo->info->seestate);
+            P_MobjChangeState(mo, mo->info->seestate);
         }
         return;
     }
@@ -606,7 +606,7 @@ explode:
                     }
                     else
                     {
-                        P_RemoveMobj(mo);
+                        P_MobjRemove(mo);
                     }
                     return;
                 }
@@ -659,7 +659,7 @@ explode:
                ((player->plr->mo->state - states) - PCLASS_INFO(player->class)->runstate) <
                4)
             {
-                P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
+                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
             }
         }
         mo->mom[MX] = 0;
@@ -667,7 +667,7 @@ explode:
     }
     else
     {
-        float       friction = P_GetMobjFriction(mo);
+        float       friction = P_MobjGetFriction(mo);
 
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
@@ -696,7 +696,7 @@ void P_MonsterFallingDamage(mobj_t *mo)
     P_DamageMobj(mo, NULL, NULL, damage);
 }
 
-void P_ZMovement(mobj_t *mo)
+void P_MobjMoveZ(mobj_t *mo)
 {
     float           gravity, dist, delta;
 
@@ -728,12 +728,12 @@ void P_ZMovement(mobj_t *mo)
             if(delta < 0 && dist < -(delta * 3))
             {
                 mo->pos[VZ] -= FLOATSPEED;
-                P_SetThingSRVOZ(mo, -FLOATSPEED);
+                P_MobjSetSRVOZ(mo, -FLOATSPEED);
             }
             else if(delta > 0 && dist < (delta * 3))
             {
                 mo->pos[VZ] += FLOATSPEED;
-                P_SetThingSRVOZ(mo, FLOATSPEED);
+                P_MobjSetSRVOZ(mo, FLOATSPEED);
             }
         }
     }
@@ -834,7 +834,7 @@ void P_ZMovement(mobj_t *mo)
                                 break;
                             }
                     }
-                    else if((P_GetMobjFloorType(mo) < FLOOR_LIQUID) &&
+                    else if((P_MobjGetFloorType(mo) < FLOOR_LIQUID) &&
                             (!mo->player->morphTics))
                     {
                         S_StartSound(SFX_PLAYER_LAND, mo);
@@ -866,7 +866,7 @@ void P_ZMovement(mobj_t *mo)
         if(mo->info->crashstate && (mo->flags & MF_CORPSE) &&
            !(mo->flags2 & MF2_ICEDAMAGE))
         {
-            P_SetMobjState(mo, mo->info->crashstate);
+            P_MobjChangeState(mo, mo->info->crashstate);
             return;
         }
     }
@@ -925,7 +925,7 @@ void P_ZMovement(mobj_t *mo)
                 }
                 else
                 {
-                    P_RemoveMobj(mo);
+                    P_MobjRemove(mo);
                 }
 
                 return;
@@ -1017,7 +1017,7 @@ void P_BlasterMobjThinker(mobj_t *mobj)
         mobj->tics--;
         while(!mobj->tics)
         {
-            if(!P_SetMobjState(mobj, mobj->state->nextstate))
+            if(!P_MobjChangeState(mobj, mobj->state->nextstate))
                 return; // Mobj was removed.
         }
     }
@@ -1078,7 +1078,7 @@ void P_MobjThinker(mobj_t *mobj)
     if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 ||
        (mobj->flags & MF_SKULLFLY))
     {
-        P_XYMovement(mobj);
+        P_MobjMoveXY(mobj);
         if(mobj->thinker.function == NOPFUNC)
         {   // Mobj was removed.
             return;
@@ -1113,7 +1113,7 @@ void P_MobjThinker(mobj_t *mobj)
             onmo = P_CheckOnMobj(mobj);
             if(!onmo)
             {
-                P_ZMovement(mobj);
+                P_MobjMoveZ(mobj);
                 if(mobj->player && mobj->flags & MF2_ONMOBJ)
                 {
                     mobj->flags2 &= ~MF2_ONMOBJ;
@@ -1166,7 +1166,7 @@ void P_MobjThinker(mobj_t *mobj)
         }
         else
         {
-            P_ZMovement(mobj);
+            P_MobjMoveZ(mobj);
         }
 
         if(mobj->thinker.function == NOPFUNC)
@@ -1179,12 +1179,12 @@ void P_MobjThinker(mobj_t *mobj)
     if(mobj->tics != -1)
     {
         mobj->tics--;
-        P_SRVOAngleTicker(mobj);
+        P_MobjAngleSRVOTicker(mobj);
         // You can cycle through multiple states in a tic.
         while(!mobj->tics)
         {
-            P_ClearThingSRVO(mobj);
-            if(!P_SetMobjState(mobj, mobj->state->nextstate))
+            P_MobjClearSRVO(mobj);
+            if(!P_MobjChangeState(mobj, mobj->state->nextstate))
             {   // Mobj was removed.
                 return;
             }
@@ -1193,23 +1193,7 @@ void P_MobjThinker(mobj_t *mobj)
 
     // Ice corpses aren't going anywhere.
     if(mobj->flags & MF_ICECORPSE)
-        P_SetThingSRVO(mobj, 0, 0);
-}
-
-static mobj_t *createMobj(float x, float y, float z, float radius,
-                          float height, int ddflags)
-{
-    mobj_t         *mo;
-
-    mo = Z_Calloc(sizeof(*mo), PU_LEVEL, NULL);
-    mo->pos[VX] = x;
-    mo->pos[VY] = y;
-    mo->pos[VZ] = z;
-    mo->radius = radius;
-    mo->height = height;
-    mo->ddflags = ddflags;
-
-    return mo;
+        P_MobjSetSRVO(mobj, 0, 0);
 }
 
 mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
@@ -1224,7 +1208,8 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     if(info->flags2 & MF2_DONTDRAW)
         ddflags |= DDMF_DONTDRAW;
 
-    mo = createMobj(x, y, z, info->radius, info->height, ddflags);
+    mo = P_MobjCreate(P_MobjThinker, x, y, z, 0, info->radius, info->height,
+                      ddflags);
     mo->type = type;
     mo->info = info;
     mo->flags = info->flags;
@@ -1242,13 +1227,10 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     mo->lastlook = P_Random() % MAXPLAYERS;
 
     // Must link before setting state.
-    mo->thinker.function = P_MobjThinker;
-    P_AddThinker(&mo->thinker);
-
-    P_SetState(mo, info->spawnstate);
+    P_MobjSetState(mo, info->spawnstate);
 
     // Set subsector and/or block links.
-    P_SetMobjPosition(mo);
+    P_MobjSetPosition(mo);
 
     mo->floorz = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
     mo->ceilingz = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
@@ -1279,7 +1261,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     }
 
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       P_GetMobjFloorType(mo) >= FLOOR_LIQUID &&
+       P_MobjGetFloorType(mo) >= FLOOR_LIQUID &&
        mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
     {
         mo->floorclip = 10;
@@ -1295,26 +1277,6 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
 mobj_t *P_SpawnMobj3fv(mobjtype_t type, float pos[3])
 {
     return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ]);
-}
-
-void P_RemoveMobj(mobj_t *mobj)
-{
-    // Remove from creature queue.
-    if(mobj->flags & MF_COUNTKILL && mobj->flags & MF_CORPSE)
-    {
-        A_DeQueueCorpse(mobj);
-    }
-
-    if(mobj->tid)
-    {   // Remove from TID list.
-        P_RemoveMobjFromTIDList(mobj);
-    }
-
-    // Unlink from sector and block lists.
-    P_UnsetMobjPosition(mobj);
-
-    S_StopSound(0, mobj);
-    P_RemoveThinker((thinker_t *) mobj);
 }
 
 /**
@@ -1666,7 +1628,7 @@ void P_SpawnMapThing(spawnspot_t *spot)
         mobj->flags2 |= MF2_DORMANT;
         if(mobj->type == MT_ICEGUY)
         {
-            P_SetMobjState(mobj, S_ICEGUY_DORMANT);
+            P_MobjChangeState(mobj, S_ICEGUY_DORMANT);
         }
         mobj->tics = -1;
     }
@@ -1701,7 +1663,7 @@ void P_CreateTIDList(void)
     TIDList[i] = 0;
 }
 
-void P_InsertMobjIntoTIDList(mobj_t *mobj, int tid)
+void P_MobjInsertIntoTIDList(mobj_t *mobj, int tid)
 {
     int         i, index;
 
@@ -1719,7 +1681,7 @@ void P_InsertMobjIntoTIDList(mobj_t *mobj, int tid)
     {   // Append required
         if(i == MAX_TID_COUNT)
         {
-            Con_Error("P_InsertMobjIntoTIDList: MAX_TID_COUNT (%d)"
+            Con_Error("P_MobjInsertIntoTIDList: MAX_TID_COUNT (%d)"
                       "exceeded.", MAX_TID_COUNT);
         }
         index = i;
@@ -1731,9 +1693,12 @@ void P_InsertMobjIntoTIDList(mobj_t *mobj, int tid)
     TIDMobj[index] = mobj;
 }
 
-void P_RemoveMobjFromTIDList(mobj_t *mobj)
+void P_MobjRemoveFromTIDList(mobj_t *mobj)
 {
     int         i;
+
+    if(!mobj->tid)
+        return;
 
     for(i = 0; TIDList[i] != 0; ++i)
     {
@@ -1840,7 +1805,7 @@ void P_RipperBlood(mobj_t *mo)
     th->tics += P_Random() & 3;
 }
 
-int P_GetMobjFloorType(mobj_t *thing)
+int P_MobjGetFloorType(mobj_t *thing)
 {
     if(thing->floorpic && !IS_CLIENT)
     {
@@ -1881,7 +1846,7 @@ int P_HitFloor(mobj_t *thing)
     if(thing->info->mass < 10)
         smallsplash = true;
 
-    switch(P_GetMobjFloorType(thing))
+    switch(P_MobjGetFloorType(thing))
     {
     case FLOOR_WATER:
         if(smallsplash)

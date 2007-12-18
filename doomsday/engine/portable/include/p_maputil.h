@@ -57,8 +57,8 @@ int             P_FloatPointOnLineSide(fvertex_t *pnt, fdivline_t *dline);
 float           P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
                                        fdivline_t *fdiv, fvertex_t *inter);
 void            P_LineOpening(line_t *linedef);
-void            P_LinkMobj(mobj_t *mo, byte flags);
-void            P_UnlinkMobj(mobj_t *mo);
+void            P_MobjLink(mobj_t *mo, byte flags);
+void            P_MobjUnlink(mobj_t *mo);
 void            P_PointToBlock(float x, float y, uint *bx, uint *by);
 
 boolean         PIT_AddLineIntercepts(line_t *ld, void *data);

@@ -519,10 +519,10 @@ int P_CameraXYMovement(mobj_t *mo)
     {
 #endif
 
-        P_UnsetMobjPosition(mo);
+        P_MobjUnsetPosition(mo);
         mo->pos[VX] += mo->mom[MX];
         mo->pos[VY] += mo->mom[MY];
-        P_SetMobjPosition(mo);
+        P_MobjSetPosition(mo);
         P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]);
         mo->floorz = tmfloorz;
         mo->ceilingz = tmceilingz;

@@ -1090,9 +1090,9 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
 
     // Init polyobjs.
     reg->polys =
-        (po_NumPolyobjs ?
-         Z_Calloc(sizeof(dt_poly_t) * po_NumPolyobjs, PU_LEVEL, 0) : NULL);
-    for(i = 0; i < po_NumPolyobjs; ++i)
+        (numpolyobjs ?
+         Z_Calloc(sizeof(dt_poly_t) * numpolyobjs, PU_LEVEL, 0) : NULL);
+    for(i = 0; i < numpolyobjs; ++i)
     {
         Sv_RegisterPoly(&reg->polys[i], i);
     }
@@ -2405,7 +2405,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     polydelta_t delta;
     uint        i;
 
-    for(i = 0; i < po_NumPolyobjs; ++i)
+    for(i = 0; i < numpolyobjs; ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {

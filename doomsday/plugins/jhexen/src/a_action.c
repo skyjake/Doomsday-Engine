@@ -117,7 +117,7 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
     for(i = (P_Random() & 3) + 3; i; i--)
     {
         mo = P_SpawnMobj3fv(MT_POTTERYBIT1, actor->pos);
-        P_SetMobjState(mo, mo->info->spawnstate + (P_Random() % 5));
+        P_MobjChangeState(mo, mo->info->spawnstate + (P_Random() % 5));
         if(mo)
         {
             mo->mom[MZ] = FIX2FLT((P_Random() & 7) + 5) * .75f;
@@ -136,12 +136,12 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
             P_SpawnMobj3fv(TranslateThingType[actor->args[0]], actor->pos);
         }
     }
-    P_RemoveMobj(actor);
+    P_MobjRemove(actor);
 }
 
 void C_DECL A_PotteryChooseBit(mobj_t *actor)
 {
-    P_SetMobjState(actor, actor->info->deathstate + (P_Random() % 5) + 1);
+    P_MobjChangeState(actor, actor->info->deathstate + (P_Random() % 5) + 1);
     actor->tics = 256 + (P_Random() << 1);
 }
 
@@ -159,7 +159,7 @@ void C_DECL A_PotteryCheck(mobj_t *actor)
                              actor->pos[VX], actor->pos[VY]) -
              pmo->angle) <= ANGLE_45))
         {   // Previous state (pottery bit waiting state)
-            P_SetMobjState(actor, actor->state - &states[0] - 1);
+            P_MobjChangeState(actor, actor->state - &states[0] - 1);
         }
         else
         {
@@ -180,7 +180,7 @@ void C_DECL A_PotteryCheck(mobj_t *actor)
                                  actor->pos[VX], actor->pos[VY]) -
                  pmo->angle) <= ANGLE_45))
             {   // Previous state (pottery bit waiting state)
-                P_SetMobjState(actor, actor->state - &states[0] - 1);
+                P_MobjChangeState(actor, actor->state - &states[0] - 1);
                 return;
             }
         }
@@ -206,7 +206,7 @@ void C_DECL A_CorpseExplode(mobj_t *actor)
     for(i = (P_Random() & 3) + 3; i; i--)
     {
         mo = P_SpawnMobj3fv(MT_CORPSEBIT, actor->pos);
-        P_SetMobjState(mo, mo->info->spawnstate + (P_Random() % 3));
+        P_MobjChangeState(mo, mo->info->spawnstate + (P_Random() % 3));
         if(mo)
         {
             mo->mom[MZ] = FIX2FLT((P_Random() & 7) + 5) * .75f;
@@ -217,7 +217,7 @@ void C_DECL A_CorpseExplode(mobj_t *actor)
 
     // Spawn a skull
     mo = P_SpawnMobj3fv(MT_CORPSEBIT, actor->pos);
-    P_SetMobjState(mo, S_CORPSEBIT_4);
+    P_MobjChangeState(mo, S_CORPSEBIT_4);
     if(mo)
     {
         n = (P_Random() & 7) + 5;
@@ -226,7 +226,7 @@ void C_DECL A_CorpseExplode(mobj_t *actor)
         mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
         S_StartSound(SFX_FIRED_DEATH, mo);
     }
-    P_RemoveMobj(actor);
+    P_MobjRemove(actor);
 }
 
 #ifdef MSVC
@@ -283,7 +283,7 @@ void C_DECL A_LeafCheck(mobj_t *actor)
     actor->special1++;
     if(actor->special1 >= 20)
     {
-        P_SetMobjState(actor, S_NULL);
+        P_MobjChangeState(actor, S_NULL);
         return;
     }
 
@@ -297,7 +297,7 @@ void C_DECL A_LeafCheck(mobj_t *actor)
         return;
     }
 
-    P_SetMobjState(actor, S_LEAF1_8);
+    P_MobjChangeState(actor, S_LEAF1_8);
     n = P_Random();
     actor->mom[MZ] = FIX2FLT(n << 9) + 1;
     P_ThrustMobj(actor, actor->target->angle, FIX2FLT(P_Random() << 9) + 2);
@@ -318,7 +318,7 @@ void C_DECL A_BridgeOrbit(mobj_t *actor)
 {
     if(actor->target->special1)
     {
-        P_SetMobjState(actor, S_NULL);
+        P_MobjChangeState(actor, S_NULL);
     }
     actor->args[0] += 3;
 
@@ -359,7 +359,7 @@ void C_DECL A_BridgeRemove(mobj_t *actor)
 {
     actor->special1 = true;     // Removing the bridge
     actor->flags &= ~MF_SOLID;
-    P_SetMobjState(actor, S_FREE_BRIDGE1);
+    P_MobjChangeState(actor, S_FREE_BRIDGE1);
 }
 
 void C_DECL A_HideThing(mobj_t *actor)
@@ -440,7 +440,7 @@ void C_DECL A_Summon(mobj_t *actor)
     {
         if(P_TestMobjLocation(mo) == false || !actor->tracer)
         {   // Didn't fit - change back to artifact.
-            P_SetMobjState(mo, S_NULL);
+            P_MobjChangeState(mo, S_NULL);
 
             mo = P_SpawnMobj3fv(MT_SUMMONMAULATOR, actor->pos);
             if(mo)
@@ -566,7 +566,7 @@ void C_DECL A_PoisonBagCheck(mobj_t *actor)
 {
     if(!--actor->special1)
     {
-        P_SetMobjState(actor, S_POISONCLOUD_X1);
+        P_MobjChangeState(actor, S_POISONCLOUD_X1);
     }
     else
     {
@@ -597,7 +597,7 @@ void C_DECL A_CheckThrowBomb(mobj_t *actor)
     if(fabs(actor->mom[MX]) < 1.5f && fabs(actor->mom[MY]) < 1.5f &&
        actor->mom[MZ] < 2 && actor->state == &states[S_THROWINGBOMB6])
     {
-        P_SetMobjState(actor, S_THROWINGBOMB7);
+        P_MobjChangeState(actor, S_THROWINGBOMB7);
         actor->pos[VZ] = actor->floorz;
         actor->mom[MZ] = 0;
         actor->flags2 &= ~MF2_FLOORBOUNCE;
@@ -607,7 +607,7 @@ void C_DECL A_CheckThrowBomb(mobj_t *actor)
 
     if(!--actor->health)
     {
-        P_SetMobjState(actor, actor->info->deathstate);
+        P_MobjChangeState(actor, actor->info->deathstate);
     }
 }
 
@@ -704,7 +704,7 @@ void C_DECL A_Quake(mobj_t *actor)
             localQuakeHappening[playnum] = false;
             players[playnum].update |= PSF_LOCAL_QUAKE;
         }
-        P_SetMobjState(actor, S_NULL);
+        P_MobjChangeState(actor, S_NULL);
     }
 }
 
@@ -748,7 +748,7 @@ void C_DECL A_CheckTeleRing(mobj_t *actor)
 {
     if(actor->special1-- <= 0)
     {
-        P_SetMobjState(actor, actor->info->deathstate);
+        P_MobjChangeState(actor, actor->info->deathstate);
     }
 }
 
@@ -831,7 +831,7 @@ void C_DECL A_ThrustRaise(mobj_t *actor)
     // Lose the dirt clump
     if(actor->floorclip < actor->height && actor->tracer)
     {
-        P_RemoveMobj(actor->tracer);
+        P_MobjRemove(actor->tracer);
         actor->tracer = NULL;
     }
 
@@ -884,7 +884,7 @@ void C_DECL A_SoAExplode(mobj_t *actor)
         pos[VZ] += FIX2FLT(P_Random() * FLT2FIX(actor->height) / 256);
 
         mo = P_SpawnMobj3fv(MT_ZARMORCHUNK, pos);
-        P_SetMobjState(mo, mo->info->spawnstate + i);
+        P_MobjChangeState(mo, mo->info->spawnstate + i);
         if(mo)
         {
             mo->mom[MZ] = ((P_Random() & 7) + 5);
@@ -904,7 +904,7 @@ void C_DECL A_SoAExplode(mobj_t *actor)
     }
 
     S_StartSound(SFX_SUITOFARMOR_BREAK, mo);
-    P_RemoveMobj(actor);
+    P_MobjRemove(actor);
 }
 #if MSVC
 #  pragma optimize("",on)
@@ -927,7 +927,7 @@ void C_DECL A_FlameCheck(mobj_t *actor)
 {
     if(!actor->args[0]--)       // Called every 8 tics
     {
-        P_SetMobjState(actor, S_NULL);
+        P_MobjChangeState(actor, S_NULL);
     }
 }
 
@@ -986,7 +986,7 @@ void C_DECL A_BatMove(mobj_t *actor)
 
     if(actor->special2 < 0)
     {
-        P_SetMobjState(actor, actor->info->deathstate);
+        P_MobjChangeState(actor, actor->info->deathstate);
     }
     actor->special2 -= 2;       // Called every 2 tics
 
@@ -1026,7 +1026,7 @@ void C_DECL A_TreeDeath(mobj_t *actor)
     }
     else
     {
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleestate);
     }
 }
 

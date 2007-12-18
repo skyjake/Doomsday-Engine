@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -108,65 +108,98 @@ void DED_Destroy(ded_t *ded)
 {
     int     i;
 
-    M_Free(ded->flags);
-    M_Free(ded->mobjs);
-    M_Free(ded->states);
-    M_Free(ded->sprites);
-    M_Free(ded->lights);
-    M_Free(ded->models);
-    M_Free(ded->sounds);
-    M_Free(ded->music);
-    M_Free(ded->mapinfo);
+    if(ded->flags)
+        M_Free(ded->flags);
+    if(ded->mobjs)
+        M_Free(ded->mobjs);
+    if(ded->states)
+        M_Free(ded->states);
+    if(ded->sprites)
+        M_Free(ded->sprites);
+    if(ded->lights)
+        M_Free(ded->lights);
+    if(ded->models)
+        M_Free(ded->models);
+    if(ded->sounds)
+        M_Free(ded->sounds);
+    if(ded->music)
+        M_Free(ded->music);
+    if(ded->mapinfo)
+        M_Free(ded->mapinfo);
 
-    for(i = 0; i < ded->count.text.num; ++i)
+    if(ded->text)
     {
-        M_Free(ded->text[i].text);
+        for(i = 0; i < ded->count.text.num; ++i)
+        {
+            M_Free(ded->text[i].text);
+        }
+        M_Free(ded->text);
     }
-    M_Free(ded->text);
 
-    for(i = 0; i < ded->count.tenviron.num; ++i)
+    if(ded->tenviron)
     {
-        M_Free(ded->tenviron[i].textures);
-        M_Free(ded->tenviron[i].flats);
+        for(i = 0; i < ded->count.tenviron.num; ++i)
+        {
+            M_Free(ded->tenviron[i].textures);
+            M_Free(ded->tenviron[i].flats);
+        }
+        M_Free(ded->tenviron);
     }
-    M_Free(ded->tenviron);
 
-    for(i = 0; i < ded->count.values.num; ++i)
+    if(ded->values)
     {
-        M_Free(ded->values[i].id);
-        M_Free(ded->values[i].text);
+        for(i = 0; i < ded->count.values.num; ++i)
+        {
+            M_Free(ded->values[i].id);
+            M_Free(ded->values[i].text);
+        }
+        M_Free(ded->values);
     }
-    M_Free(ded->values);
 
-    M_Free(ded->decorations);
+    if(ded->decorations)
+        M_Free(ded->decorations);
 
-    for(i = 0; i < ded->count.groups.num; ++i)
+    if(ded->groups)
     {
-        M_Free(ded->groups[i].members);
+        for(i = 0; i < ded->count.groups.num; ++i)
+        {
+            M_Free(ded->groups[i].members);
+        }
+        M_Free(ded->groups);
     }
-    M_Free(ded->groups);
 
-    M_Free(ded->sectors);
+    if(ded->sectors)
+        M_Free(ded->sectors);
 
-    for(i = 0; i < ded->count.ptcgens.num; ++i)
+    if(ded->ptcgens)
     {
-        M_Free(ded->ptcgens[i].stages);
+        for(i = 0; i < ded->count.ptcgens.num; ++i)
+        {
+            M_Free(ded->ptcgens[i].stages);
+        }
+        M_Free(ded->ptcgens);
     }
-    M_Free(ded->ptcgens);
 
-    M_Free(ded->finales);
+    if(ded->finales)
+        M_Free(ded->finales);
 
-    for(i = 0; i < ded->count.xgclasses.num; ++i)
+    if(ded->xgclasses)
     {
-        M_Free(ded->xgclasses[i].properties);
+        for(i = 0; i < ded->count.xgclasses.num; ++i)
+        {
+            M_Free(ded->xgclasses[i].properties);
+        }
+        M_Free(ded->xgclasses);
     }
-    M_Free(ded->xgclasses);
 
-    for(i = 0; i < ded->count.lumpformats.num; ++i)
+    if(ded->lumpformats)
     {
-        M_Free(ded->lumpformats[i].properties);
+        for(i = 0; i < ded->count.lumpformats.num; ++i)
+        {
+            M_Free(ded->lumpformats[i].properties);
+        }
+        M_Free(ded->lumpformats);
     }
-    M_Free(ded->lumpformats);
 }
 
 int DED_AddMobj(ded_t *ded, char *idstr)

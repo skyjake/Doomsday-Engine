@@ -198,7 +198,7 @@ boolean Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm)
  */
 void Cl_UnsetMobjPosition(clmobj_t *cmo)
 {
-    P_UnlinkMobj(&cmo->mo);
+    P_MobjUnlink(&cmo->mo);
 }
 
 /**
@@ -219,7 +219,7 @@ void Cl_SetMobjPosition(clmobj_t *cmo)
         return;
     }
 
-    P_LinkMobj(mo,
+    P_MobjLink(mo,
                 (mo->ddflags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
                 (mo->ddflags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
 }
@@ -233,7 +233,7 @@ void Cl_SetMobjState(mobj_t *mo, int stnum)
         return;
     do
     {
-        P_SetState(mo, stnum);
+        P_MobjSetState(mo, stnum);
         stnum = states[stnum].nextstate;
     }
     while(!mo->tics && stnum > 0);
@@ -332,10 +332,10 @@ if(!mo || !clmo)
     if(flags & (MDF_POS_X | MDF_POS_Y))
     {
         // We have to unlink the real mobj before we move it.
-        P_UnlinkMobj(mo);
+        P_MobjUnlink(mo);
         mo->pos[VX] = clmo->pos[VX];
         mo->pos[VY] = clmo->pos[VY];
-        P_LinkMobj(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
     mo->pos[VZ] = clmo->pos[VZ];
     if(flags & MDF_MOM_X)

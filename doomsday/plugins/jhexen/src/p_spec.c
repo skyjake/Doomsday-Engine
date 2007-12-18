@@ -807,7 +807,7 @@ void P_PlayerInSpecialSector(player_t *player)
     case 49:
     case 50:
     case 51:
-        // Wind specials are handled in (P_mobj):P_XYMovement
+        // Wind specials are handled in (P_mobj):P_MobjMoveXY
         break;
 
     case 26: // Stairs_Special1

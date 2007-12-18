@@ -208,7 +208,7 @@ void P_FireWeapon(player_t *player)
     // Psprite state.
     player->plr->psprites[0].state = DDPSP_FIRE;
 
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackstate);
     newstate = weaponinfo[player->readyweapon][player->class].mode[0].atkstate;
     P_SetPsprite(player, ps_weapon, newstate);
     NetSv_PSpriteChange(player - players, newstate);
@@ -238,7 +238,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
     if(player->plr->mo->state == &states[PCLASS_INFO(player->class)->attackstate] ||
        player->plr->mo->state == &states[PCLASS_INFO(player->class)->attackendstate])
     {
-        P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
+        P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
     }
 
     if(player->readyweapon != WT_NOCHANGE)
@@ -454,7 +454,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
 
 void C_DECL A_GunFlash(player_t *player, pspdef_t * psp)
 {
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
     P_SetPsprite(player, ps_flash, weaponinfo[player->readyweapon][player->class].mode[0].flashstate);
 }
 
@@ -572,7 +572,7 @@ void C_DECL A_Rocketpuff(mobj_t *smoke)
         {
             smoke->mom[MX] = smoke->mom[MY] = smoke->mom[MZ] = 0;
 
-            P_SetMobjState(smoke, smoke->info->deathstate);
+            P_MobjChangeState(smoke, smoke->info->deathstate);
             S_StartSound(smoke->info->deathsound, smoke);
         }
     }
@@ -648,7 +648,7 @@ void C_DECL A_RevealFloater(mobj_t *mo)
     // FIXME?
     if(mo->reactiontime == 0)
     {
-        P_SetMobjState(mo, S_TBALLX1);
+        P_MobjChangeState(mo, S_TBALLX1);
     }
 }
 
@@ -896,7 +896,7 @@ void C_DECL A_FirePistol(player_t *player, pspdef_t * psp)
 {
     S_StartSound(sfx_pistol, player->plr->mo);
 
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
 
     P_ShotAmmo(player);
 
@@ -915,7 +915,7 @@ void C_DECL A_FireShotgun(player_t *player, pspdef_t * psp)
     int     i;
 
     S_StartSound(sfx_shotgn, player->plr->mo);
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
 
     P_ShotAmmo(player);
 
@@ -938,7 +938,7 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t *psp)
     int         damage;
 
     S_StartSound(sfx_dshtgn, player->plr->mo);
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
 
     P_ShotAmmo(player);
 
@@ -977,7 +977,7 @@ void C_DECL A_FireCGun(player_t *player, pspdef_t *psp)
 {
     S_StartSound(sfx_pistol, player->plr->mo);
 
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
 
     P_ShotAmmo(player);
 

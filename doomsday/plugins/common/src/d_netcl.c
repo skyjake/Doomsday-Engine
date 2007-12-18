@@ -239,11 +239,11 @@ void NetCl_UpdateGameState(byte *data)
         mo = pl->plr->mo;
         if(mo)
         {
-            P_UnsetMobjPosition(mo);
+            P_MobjUnsetPosition(mo);
             mo->pos[VX] = (float) NetCl_ReadShort();
             mo->pos[VY] = (float) NetCl_ReadShort();
             mo->pos[VZ] = (float) NetCl_ReadShort();
-            P_SetMobjPosition(mo);
+            P_MobjSetPosition(mo);
             mo->angle = NetCl_ReadShort() << 16; /* $unifiedangles */
             pl->plr->viewZ = mo->pos[VZ];
             // Update floorz and ceilingz.

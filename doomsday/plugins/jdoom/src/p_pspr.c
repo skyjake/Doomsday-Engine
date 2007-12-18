@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -204,7 +204,7 @@ void P_FireWeapon(player_t *player)
     // Psprite state.
     player->plr->psprites[0].state = DDPSP_FIRE;
 
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackstate);
     newstate = weaponinfo[player->readyweapon][player->class].mode[0].atkstate;
     P_SetPsprite(player, ps_weapon, newstate);
     NetSv_PSpriteChange(player - players, newstate);
@@ -234,7 +234,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
     if(player->plr->mo->state == &states[PCLASS_INFO(player->class)->attackstate] ||
        player->plr->mo->state == &states[PCLASS_INFO(player->class)->attackendstate])
     {
-        P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
+        P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
     }
 
     if(player->readyweapon != WT_NOCHANGE)
@@ -388,7 +388,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
 
 void C_DECL A_GunFlash(player_t *player, pspdef_t *psp)
 {
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
     P_SetPsprite(player, ps_flash, weaponinfo[player->readyweapon][player->class].mode[0].flashstate);
 }
 
@@ -558,7 +558,7 @@ void C_DECL A_FirePistol(player_t *player, pspdef_t *psp)
 {
     S_StartSoundEx(sfx_pistol, player->plr->mo);
 
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
 
     P_ShotAmmo(player);
 
@@ -577,7 +577,7 @@ void C_DECL A_FireShotgun(player_t *player, pspdef_t *psp)
     int         i;
 
     S_StartSoundEx(sfx_shotgn, player->plr->mo);
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
 
     P_ShotAmmo(player);
 
@@ -601,7 +601,7 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t *psp)
     int         damage;
 
     S_StartSoundEx(sfx_dshtgn, player->plr->mo);
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
 
     P_ShotAmmo(player);
 
@@ -628,7 +628,7 @@ void C_DECL A_FireCGun(player_t *player, pspdef_t *psp)
 {
     S_StartSoundEx(sfx_pistol, player->plr->mo);
 
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackendstate);
 
     P_ShotAmmo(player);
 

@@ -518,6 +518,7 @@ boolean DAM_AttemptMapLoad(const char *mapID)
         {
             // Do any initialization/error checking work we need to do.
             // Must be called before we go any further.
+            P_InitUnusedMobjList();
             P_InitMapBlockRings(map);
 
             // Polygonize.

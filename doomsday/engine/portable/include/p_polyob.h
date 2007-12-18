@@ -32,19 +32,22 @@
 #include "p_mapdata.h"
 
 extern struct   polyobj_s **polyobjs; // list of all poly-objects on the level
-extern uint     po_NumPolyobjs;
+extern uint     numpolyobjs;
 
+// Polyobj system.
+void            PO_InitForMap(void);
 void            PO_SetCallback(void (*func) (mobj_t *, void *, void *));
-boolean         PO_MovePolyobj(uint num, float x, float y);
-boolean         PO_RotatePolyobj(uint num, angle_t angle);
-void            PO_UnLinkPolyobj(polyobj_t *po);
-void            PO_LinkPolyobj(polyobj_t *po);
-polyobj_t      *PO_GetForDegen(void *degenMobj);
-void            PO_SetupPolyobjs(void);
-void            PO_UpdateBBox(polyobj_t *po);
+polyobj_t      *PO_GetPolyobjForDegen(void *degenMobj);
 
-void            PO_LinkPolyobjToRing(polyobj_t *po, linkpolyobj_t **link);
-void            PO_UnlinkPolyobjFromRing(polyobj_t *po, linkpolyobj_t **link);
-boolean         PO_PolyobjLineIterator(polyobj_t *po, boolean (*func) (line_t *, void *),
+// Polyobject interface.
+boolean         P_PolyobjMove(uint num, float x, float y);
+boolean         P_PolyobjRotate(uint num, angle_t angle);
+void            P_PolyobjUnLink(polyobj_t *po);
+void            P_PolyobjLink(polyobj_t *po);
+void            P_PolyobjUpdateBBox(polyobj_t *po);
+
+void            P_PolyobjLinkToRing(polyobj_t *po, linkpolyobj_t **link);
+void            P_PolyobjUnlinkFromRing(polyobj_t *po, linkpolyobj_t **link);
+boolean         P_PolyobjLinesIterator(polyobj_t *po, boolean (*func) (line_t *, void *),
                                        void *data);
 #endif

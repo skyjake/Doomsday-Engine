@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 356 <--
+; --> 358 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -144,19 +144,15 @@ EXPORTS
     P_PointOnDivlineSide        @62 NONAME
     P_InterceptVector           @63 NONAME
     P_LineOpening               @64 NONAME
-    P_LinkMobj                  @66 NONAME
-    P_UnlinkMobj                @67 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME
     P_SubsectorsBoxIterator     @345 NONAME
-    P_MobjLinesIterator         @71 NONAME
-    P_MobjSectorsIterator       @72 NONAME
     P_LineMobjsIterator         @73 NONAME
     P_SectorTouchingMobjsIterator @74 NONAME
     P_PathTraverse              @75 NONAME
     P_CheckSight                @76 NONAME
-    P_SetState                  @207 NONAME
+    P_MobjSetState                  @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME
 
 ; Play: Controls.
@@ -258,12 +254,20 @@ EXPORTS
     P_RegisterCustomMapProperty @328 NONAME
     P_MergeCommand              @333 NONAME
 
+; Play: Mobjs.
+    P_MobjCreate                @357 NONAME
+    P_MobjDestroy               @358 NONAME
+    P_MobjLink                  @66 NONAME
+    P_MobjUnlink                @67 NONAME
+    P_MobjLinesIterator         @71 NONAME
+    P_MobjSectorsIterator       @72 NONAME
+
 ; Play: Polyobjs.
-    PO_MovePolyobj              @79 NONAME
-    PO_RotatePolyobj            @80 NONAME
-    PO_UnLinkPolyobj            @81 NONAME
-    PO_LinkPolyobj              @82 NONAME
-    PO_SetCallback              @83 NONAME
+    P_PolyobjMove               @79 NONAME
+    P_PolyobjRotate             @80 NONAME
+    P_PolyobjLink               @82 NONAME
+    P_PolyobjUnLink             @81 NONAME
+    PO_SetCallback        @83 NONAME
 
 ; Play: Thinkers.
     P_RunThinkers               @84 NONAME

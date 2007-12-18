@@ -370,11 +370,11 @@ void P_SetDormantArtifact(mobj_t *arti)
     if(deathmatch && (arti->type != MT_ARTIINVULNERABILITY) &&
        (arti->type != MT_ARTIINVISIBILITY))
     {
-        P_SetMobjState(arti, S_DORMANTARTI1);
+        P_MobjChangeState(arti, S_DORMANTARTI1);
     }
     else
     {   // Don't respawn.
-        P_SetMobjState(arti, S_DEADARTI1);
+        P_MobjChangeState(arti, S_DEADARTI1);
     }
 
     S_StartSound(sfx_artiup, arti);
@@ -383,7 +383,7 @@ void P_SetDormantArtifact(mobj_t *arti)
 void C_DECL A_RestoreArtifact(mobj_t *arti)
 {
     arti->flags |= MF_SPECIAL;
-    P_SetMobjState(arti, arti->info->spawnstate);
+    P_MobjChangeState(arti, arti->info->spawnstate);
     S_StartSound(sfx_respawn, arti);
 }
 
@@ -391,7 +391,7 @@ void P_HideSpecialThing(mobj_t *thing)
 {
     thing->flags &= ~MF_SPECIAL;
     thing->flags2 |= MF2_DONTDRAW;
-    P_SetMobjState(thing, S_HIDESPECIAL1);
+    P_MobjChangeState(thing, S_HIDESPECIAL1);
 }
 
 /**
@@ -411,7 +411,7 @@ void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
 void C_DECL A_RestoreSpecialThing2(mobj_t *thing)
 {
     thing->flags |= MF_SPECIAL;
-    P_SetMobjState(thing, thing->info->spawnstate);
+    P_MobjChangeState(thing, thing->info->spawnstate);
 }
 
 void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
@@ -761,7 +761,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     }
     else
     {
-        P_RemoveMobj(special);
+        P_MobjRemove(special);
     }
 
     player->bonuscount += BONUSADD;
@@ -833,7 +833,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 
         if(target->flags2 & MF2_FIREDAMAGE)
         {   // Player flame death.
-            P_SetMobjState(target, S_PLAY_FDTH1);
+            P_MobjChangeState(target, S_PLAY_FDTH1);
             return;
         }
 
@@ -844,11 +844,11 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     if(target->health < -(target->info->spawnhealth / 2) &&
        target->info->xdeathstate)
     {   // Extreme death.
-        P_SetMobjState(target, target->info->xdeathstate);
+        P_MobjChangeState(target, target->info->xdeathstate);
     }
     else
     {   // Normal death.
-        P_SetMobjState(target, target->info->deathstate);
+        P_MobjChangeState(target, target->info->deathstate);
     }
 
     target->tics -= P_Random() & 3;
@@ -932,7 +932,7 @@ boolean P_MorphPlayer(player_t *player)
     memcpy(pos, pmo->pos, sizeof(pos));
     angle = pmo->angle;
     oldFlags2 = pmo->flags2;
-    P_SetMobjState(pmo, S_FREETARGMOBJ);
+    P_MobjChangeState(pmo, S_FREETARGMOBJ);
 
     fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT);
     S_StartSound(sfx_telept, fog);
@@ -991,7 +991,7 @@ boolean P_MorphMonster(mobj_t *actor)
     angle = actor->angle;
     ghost = actor->flags & MF_SHADOW;
     target = actor->target;
-    P_SetMobjState(actor, S_FREETARGMOBJ);
+    P_MobjChangeState(actor, S_FREETARGMOBJ);
 
     fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT);
     S_StartSound(sfx_telept, fog);
@@ -1390,7 +1390,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     {
         // Fight back!
         target->flags |= MF_JUSTHIT;
-        P_SetMobjState(target, target->info->painstate);
+        P_MobjChangeState(target, target->info->painstate);
     }
 
     // We're awake now...
@@ -1405,7 +1405,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         if(target->state == &states[target->info->spawnstate] &&
            target->info->seestate != S_NULL)
         {
-            P_SetMobjState(target, target->info->seestate);
+            P_MobjChangeState(target, target->info->seestate);
         }
     }
 }

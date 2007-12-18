@@ -44,10 +44,6 @@ extern mobj_t *PuffSpawned;
 extern mobj_t *BlockingMobj;
 #endif
 
-
-void            P_UnsetMobjPosition(mobj_t *mo);
-void            P_SetMobjPosition(mobj_t *mo);
-
 boolean         P_CheckPosition2f(mobj_t *thing, float x, float y);
 boolean         P_CheckPosition3f(mobj_t *thing, float x, float y, float z);
 boolean         P_CheckPosition3fv(mobj_t *thing, const float pos[3]);

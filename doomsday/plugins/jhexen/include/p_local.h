@@ -182,19 +182,19 @@ void        P_SpawnBloodSplatter2(float x, float y, float z, mobj_t *origin);
 
 void        P_CreateTIDList(void);
 
-void        P_RemoveMobj(mobj_t *th);
+void        P_MobjRemove(mobj_t *th);
 
-boolean     P_SetMobjState(mobj_t *mo, statenum_t state);
+boolean     P_MobjChangeState(mobj_t *mo, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t *mo, statenum_t state);
 
-void        P_RemoveMobjFromTIDList(mobj_t *mo);
-void        P_InsertMobjIntoTIDList(mobj_t *mo, int tid);
+void        P_MobjRemoveFromTIDList(mobj_t *mo);
+void        P_MobjInsertIntoTIDList(mobj_t *mo, int tid);
 mobj_t     *P_FindMobjFromTID(int tid, int *searchPosition);
 
 boolean     P_CheckMissileSpawn(mobj_t *mo);
-float       P_GetMobjFriction(mobj_t *mo);
+float       P_MobjGetFriction(mobj_t *mo);
 void        P_RipperBlood(mobj_t *mo);
-int         P_GetMobjFloorType(mobj_t *mo);
+int         P_MobjGetFloorType(mobj_t *mo);
 int         P_HitFloor(mobj_t *mo);
 
 // Spawn spots.

@@ -289,6 +289,7 @@ typedef struct mobj_s {
     int             floatswitch; // d64tc
 } mobj_t;
 
+void        P_RespawnEnqueue(spawnspot_t *spot);
 void        P_CheckRespawnQueue(void);
 
 #endif

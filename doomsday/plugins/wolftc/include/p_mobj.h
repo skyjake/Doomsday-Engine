@@ -232,6 +232,7 @@ typedef struct mobj_s {
 
 extern spawnspot_t* things;
 
+void        P_RespawnEnqueue(spawnspot_t *spot);
 void        P_CheckRespawnQueue(void);
 
 #endif

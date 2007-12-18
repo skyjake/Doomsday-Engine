@@ -188,28 +188,31 @@ static void SV_v13_ReadPlayer(player_t *pl)
     SV_v13_ReadLong(); // rain2
 }
 
-static void SV_v13_ReadMobj(mobj_t *mo)
+static void SV_v13_ReadMobj(void)
 {
-    // Clear everything first.
-    memset(mo, 0, sizeof(*mo));
+    angle_t         angle;
+    spritenum_t     sprite;
+    int             frame, valid, type;
+    float           pos[3], mom[3], floorz, ceilingz, radius, height;
+    mobj_t         *mo;
 
     // The thinker was 3 ints long.
     SV_v13_ReadLong();
     SV_v13_ReadLong();
     SV_v13_ReadLong();
 
-    mo->pos[VX] = FIX2FLT(SV_v13_ReadLong());
-    mo->pos[VY] = FIX2FLT(SV_v13_ReadLong());
-    mo->pos[VZ] = FIX2FLT(SV_v13_ReadLong());
+    pos[VX] = FIX2FLT(SV_v13_ReadLong());
+    pos[VY] = FIX2FLT(SV_v13_ReadLong());
+    pos[VZ] = FIX2FLT(SV_v13_ReadLong());
 
     // Sector links.
     SV_v13_ReadLong();
     SV_v13_ReadLong();
 
-    mo->angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
-    mo->sprite = SV_v13_ReadLong();
-    mo->frame = SV_v13_ReadLong();
-    mo->frame &= ~FF_FRAMEMASK; // not used anymore.
+    angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
+    sprite = SV_v13_ReadLong();
+    frame = SV_v13_ReadLong();
+    frame &= ~FF_FRAMEMASK; // not used anymore.
 
     // Block links.
     SV_v13_ReadLong();
@@ -218,18 +221,38 @@ static void SV_v13_ReadMobj(mobj_t *mo)
     // Subsector.
     SV_v13_ReadLong();
 
-    mo->floorz = FIX2FLT(SV_v13_ReadLong());
-    mo->ceilingz = FIX2FLT(SV_v13_ReadLong());
-    mo->radius = FIX2FLT(SV_v13_ReadLong());
-    mo->height = FIX2FLT(SV_v13_ReadLong());
-    mo->mom[MX] = FIX2FLT(SV_v13_ReadLong());
-    mo->mom[MY] = FIX2FLT(SV_v13_ReadLong());
-    mo->mom[MZ] = FIX2FLT(SV_v13_ReadLong());
+    floorz = FIX2FLT(SV_v13_ReadLong());
+    ceilingz = FIX2FLT(SV_v13_ReadLong());
+    radius = FIX2FLT(SV_v13_ReadLong());
+    height = FIX2FLT(SV_v13_ReadLong());
+    mom[MX] = FIX2FLT(SV_v13_ReadLong());
+    mom[MY] = FIX2FLT(SV_v13_ReadLong());
+    mom[MZ] = FIX2FLT(SV_v13_ReadLong());
+    valid = SV_v13_ReadLong();
+    type = SV_v13_ReadLong();
 
-    mo->valid = SV_v13_ReadLong();
+    /**
+     * We now have all the information we need to create the mobj.
+     */
+    mo = P_MobjCreate(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
+                      radius, height, 0);
 
-    mo->type = SV_v13_ReadLong();
+    mo->sprite = sprite;
+    mo->frame = frame;
+    mo->floorz = floorz;
+    mo->ceilingz = ceilingz;
+    mo->mom[MX] = mom[MX];
+    mo->mom[MY] = mom[MY];
+    mo->mom[MZ] = mom[MZ];
+    mo->valid = valid;
+    mo->type = type;
+
+    /**
+     * Continue reading the mobj data.
+     */
+
     SV_v13_ReadLong();          // info
+
     mo->tics = SV_v13_ReadLong();
     mo->state = (state_t *) SV_v13_ReadLong();
     mo->damage = SV_v13_ReadLong();
@@ -254,6 +277,19 @@ static void SV_v13_ReadMobj(mobj_t *mo)
     mo->spawnspot.flags = (int) SV_v13_ReadLong();
 
     SV_UpdateReadMobjFlags(mo, 0);
+
+    mo->state = &states[(int) mo->state];
+    mo->target = NULL;
+    if(mo->player)
+    {
+        mo->player = &players[(int) mo->player - 1];
+        mo->player->plr->mo = mo;
+        mo->player->plr->mo->dplayer = mo->player->plr;
+    }
+    P_MobjSetPosition(mo);
+    mo->info = &mobjinfo[mo->type];
+    mo->floorz = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+    mo->ceilingz = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 }
 
 void P_v13_UnArchivePlayers(void)
@@ -357,7 +393,6 @@ typedef enum
 
     byte    tclass;
     thinker_t *currentthinker, *next;
-    mobj_t *mobj;
 
     // remove all the current thinkers
     currentthinker = thinkercap.next;
@@ -365,7 +400,7 @@ typedef enum
     {
         next = currentthinker->next;
         if(currentthinker->function == P_MobjThinker)
-            P_RemoveMobj((mobj_t *) currentthinker);
+            P_MobjRemove((mobj_t *) currentthinker);
         else
             Z_Free(currentthinker);
         currentthinker = next;
@@ -382,25 +417,7 @@ typedef enum
             return;             // end of list
 
         case TC_MOBJ:
-            mobj = Z_Malloc(sizeof(*mobj), PU_LEVEL, NULL);
-
-            SV_v13_ReadMobj(mobj);
-            mobj->state = &states[(int) mobj->state];
-            mobj->target = NULL;
-            if(mobj->player)
-            {
-                mobj->player = &players[(int) mobj->player - 1];
-                mobj->player->plr->mo = mobj;
-                mobj->player->plr->mo->dplayer = mobj->player->plr;
-                //mobj->player->plr->clAngle = mobj->angle; /* $unifiedangles */
-                //mobj->player->plr->clLookDir = mobj->player->plr->lookdir; /* $unifiedangles */
-            }
-            P_SetMobjPosition(mobj);
-            mobj->info = &mobjinfo[mobj->type];
-            mobj->floorz = P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT);
-            mobj->ceilingz = P_GetFloatp(mobj->subsector, DMU_CEILING_HEIGHT);
-            mobj->thinker.function = P_MobjThinker;
-            P_AddThinker(&mobj->thinker);
+            SV_v13_ReadMobj();
             break;
 
         default:

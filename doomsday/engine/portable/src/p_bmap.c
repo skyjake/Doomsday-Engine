@@ -94,9 +94,9 @@ void P_BoxToBlockmapBlocks(blockmap_t *blockmap, uint blockBox[4],
         bmap_t     *bmap = (bmap_t*) blockmap;
         vec2_t      m[2];
 
-        m[0][VX] = MIN_OF(bmap->bbox[0][VX], box[0][VX]);
+        m[0][VX] = MAX_OF(bmap->bbox[0][VX], box[0][VX]);
         m[1][VX] = MIN_OF(bmap->bbox[1][VX], box[1][VX]);
-        m[0][VY] = MIN_OF(bmap->bbox[0][VY], box[0][VY]);
+        m[0][VY] = MAX_OF(bmap->bbox[0][VY], box[0][VY]);
         m[1][VY] = MIN_OF(bmap->bbox[1][VY], box[1][VY]);
 
         blockBox[BOXLEFT]   = (m[0][VX] - bmap->bbox[0][VX]) / bmap->blockSize[VX];
@@ -364,7 +364,7 @@ boolean unlinkPolyobjInBlock(bmapblock_t *block, void *context)
 {
     polyobj_t  *po = (polyobj_t *) context;
 
-    PO_UnlinkPolyobjFromRing(po, &block->polyLinks);
+    P_PolyobjUnlinkFromRing(po, &block->polyLinks);
     return true;
 }
 
@@ -372,7 +372,7 @@ boolean linkPolyobjInBlock(bmapblock_t *block, void *context)
 {
     polyobj_t  *po = (polyobj_t *) context;
 
-    PO_LinkPolyobjToRing(po, &block->polyLinks);
+    P_PolyobjLinkToRing(po, &block->polyLinks);
     return true;
 }
 
@@ -383,7 +383,7 @@ void P_BlockmapLinkPolyobj(blockmap_t *blockmap, polyobj_t *po)
         bmap_t     *bmap = (bmap_t*) blockmap;
         uint        blockBox[4];
 
-        PO_UpdateBBox(po);
+        P_PolyobjUpdateBBox(po);
         P_BoxToBlockmapBlocks(blockmap, blockBox, po->box);
 
         M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
@@ -398,7 +398,7 @@ void P_BlockmapUnlinkPolyobj(blockmap_t *blockmap, polyobj_t *po)
         bmap_t     *bmap = (bmap_t*) blockmap;
         uint        blockBox[4];
 
-        PO_UpdateBBox(po);
+        P_PolyobjUpdateBBox(po);
         P_BoxToBlockmapBlocks(BlockMap, blockBox, po->box);
 
         M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
@@ -724,7 +724,7 @@ boolean PTR_PolyobjLines(polyobj_t *po, void *data)
 {
     poiterparams_t *args = (poiterparams_t*) data;
 
-    return PO_PolyobjLineIterator(po, args->func, args->param);
+    return P_PolyobjLinesIterator(po, args->func, args->param);
 }
 
 boolean P_BlockmapPolyobjLinesIterator(blockmap_t *blockmap, const uint block[2],
@@ -842,7 +842,7 @@ boolean P_BlockPathTraverse(blockmap_t *bmap, const uint originBlock[2],
     {
         if(flags & PT_ADDLINES)
         {
-            if(po_NumPolyobjs > 0)
+            if(numpolyobjs > 0)
             {
                 if(!P_BlockmapPolyobjLinesIterator(BlockMap, block,
                                                    PIT_AddLineIntercepts, 0))

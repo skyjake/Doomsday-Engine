@@ -280,7 +280,7 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
 
         if(using_dummy)
         {
-            P_RemoveMobj(ddplyr->mo);
+            P_MobjRemove(ddplyr->mo);
             ddplyr->mo = NULL;
         }
         return false;
@@ -289,7 +289,7 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
 
     if(using_dummy)
     {
-        P_RemoveMobj(ddplyr->mo);
+        P_MobjRemove(ddplyr->mo);
         ddplyr->mo = NULL;
     }
 
@@ -581,7 +581,7 @@ void G_DeathMatchSpawnPlayer(int playernum)
     if(using_dummy)
     {
         // Destroy the dummy.
-        P_RemoveMobj(pl->mo);
+        P_MobjRemove(pl->mo);
         pl->mo = NULL;
     }
 
@@ -715,10 +715,10 @@ void P_MoveThingsOutOfWalls(void)
                 dx *= offlen / len;
                 dy *= offlen / len;
 
-                P_UnsetMobjPosition(iter);
+                P_MobjUnsetPosition(iter);
                 iter->pos[VX] += dx;
                 iter->pos[VY] += dy;
-                P_SetMobjPosition(iter);
+                P_MobjSetPosition(iter);
             }
         }
     }

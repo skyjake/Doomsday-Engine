@@ -1398,11 +1398,11 @@ void NetSv_DoAction(int player, const char *data)
         {
             if(P_CheckPosition3fv(pl->plr->mo, pos))
             {
-                P_UnlinkMobj(pl->plr->mo);
+                P_MobjUnlink(pl->plr->mo);
                 pl->plr->mo->pos[VX] = pos[VX];
                 pl->plr->mo->pos[VY] = pos[VY];
                 pl->plr->mo->pos[VZ] = pos[VZ];
-                P_LinkMobj(pl->plr->mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+                P_MobjLink(pl->plr->mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
                 pl->plr->mo->floorz = tmfloorz;
                 pl->plr->mo->ceilingz = tmceilingz;
             }

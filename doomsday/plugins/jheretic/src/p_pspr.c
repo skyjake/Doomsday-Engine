@@ -828,7 +828,7 @@ void P_FireWeapon(player_t *player)
     if(!P_CheckAmmo(player))
         return;
 
-    P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackstate);
 
     if(player->refire)
         attackState = weaponinfo[player->readyweapon][player->class].mode[lvl].holdatkstate;
@@ -880,7 +880,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
     if(player->plr->mo->state == &states[S_PLAY_ATK1] ||
        player->plr->mo->state == &states[S_PLAY_ATK2])
     {
-        P_SetMobjState(player->plr->mo, S_PLAY);
+        P_MobjChangeState(player->plr->mo, S_PLAY);
     }
 
     if(player->readyweapon != WT_NOCHANGE)
@@ -942,7 +942,7 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
     if(player->brain.attack)
     {                           // Chicken beak attack
         player->attackdown = true;
-        P_SetMobjState(player->plr->mo, S_CHICPLAY_ATK1);
+        P_MobjChangeState(player->plr->mo, S_CHICPLAY_ATK1);
         if(player->powers[PT_WEAPONLEVEL2])
         {
             P_SetPsprite(player, ps_weapon, S_BEAKATK2_1);
@@ -959,7 +959,7 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
     {
         if(player->plr->mo->state == &states[S_CHICPLAY_ATK1])
         {   // Take out of attack state.
-            P_SetMobjState(player->plr->mo, S_CHICPLAY);
+            P_MobjChangeState(player->plr->mo, S_CHICPLAY);
         }
         player->attackdown = false;
     }
@@ -1395,7 +1395,7 @@ void C_DECL A_MaceBallImpact(mobj_t *ball)
 {
     if(ball->pos[VZ] <= ball->floorz && P_HitFloor(ball) != FLOOR_SOLID)
     {   // Landed in some sort of liquid.
-        P_RemoveMobj(ball);
+        P_MobjRemove(ball);
         return;
     }
 
@@ -1405,7 +1405,7 @@ void C_DECL A_MaceBallImpact(mobj_t *ball)
         ball->health = MAGIC_JUNK;
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
         ball->flags2 &= ~MF2_FLOORBOUNCE;
-        P_SetMobjState(ball, ball->info->spawnstate);
+        P_MobjChangeState(ball, ball->info->spawnstate);
         S_StartSound(sfx_bounce, ball);
     }
     else
@@ -1424,7 +1424,7 @@ void C_DECL A_MaceBallImpact2(mobj_t *ball)
 
     if(ball->pos[VZ] <= ball->floorz && P_HitFloor(ball) != FLOOR_SOLID)
     {   // Landed in some sort of liquid.
-        P_RemoveMobj(ball);
+        P_MobjRemove(ball);
         return;
     }
 
@@ -1437,7 +1437,7 @@ void C_DECL A_MaceBallImpact2(mobj_t *ball)
     else
     {   // Bounce
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
-        P_SetMobjState(ball, ball->info->spawnstate);
+        P_MobjChangeState(ball, ball->info->spawnstate);
 
         tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos);
         angle = ball->angle + ANG90;
@@ -1497,7 +1497,7 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
 
     if(ball->pos[VZ] <= ball->floorz && P_HitFloor(ball) != FLOOR_SOLID)
     {   // Landed in some sort of liquid.
-        P_RemoveMobj(ball);
+        P_MobjRemove(ball);
         return;
     }
 
@@ -1547,7 +1547,7 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
             ball->mom[MY] = ball->info->speed * FIX2FLT(finesine[an]);
         }
 
-        P_SetMobjState(ball, ball->info->spawnstate);
+        P_MobjChangeState(ball, ball->info->spawnstate);
         S_StartSound(sfx_pstop, ball);
     }
     else
@@ -1638,7 +1638,7 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t *psp)
     // Randomize the first frame
     if(mo && P_Random() > 128)
     {
-        P_SetMobjState(mo, S_HRODFX1_2);
+        P_MobjChangeState(mo, S_HRODFX1_2);
     }
 }
 
@@ -1734,7 +1734,7 @@ void C_DECL A_SkullRodStorm(mobj_t *actor)
 
     if(actor->health-- == 0)
     {
-        P_SetMobjState(actor, S_NULL);
+        P_MobjChangeState(actor, S_NULL);
         playerNum = (IS_NETGAME ? actor->special2 : 0);
 
         if(!players[playerNum].plr->ingame)
@@ -1788,7 +1788,7 @@ void C_DECL A_RainImpact(mobj_t *actor)
 {
     if(actor->pos[VZ] > actor->floorz)
     {
-        P_SetMobjState(actor, S_RAINAIRXPLR1_1 + actor->special2);
+        P_MobjChangeState(actor, S_RAINAIRXPLR1_1 + actor->special2);
     }
     else if(P_Random() < 40)
     {

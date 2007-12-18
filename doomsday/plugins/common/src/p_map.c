@@ -177,30 +177,6 @@ static int tmunstuck; // $unstuck: used to check unsticking
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Unlinks a mobj from the world so that it can be moved.
- */
-void P_UnsetMobjPosition(mobj_t *mo)
-{
-    P_UnlinkMobj(mo);
-}
-
-/**
- * Called after a move to link the mobj back into the world.
- */
-void P_SetMobjPosition(mobj_t *mo)
-{
-    int         flags = 0;
-
-    if(!(mo->flags & MF_NOSECTOR))
-        flags |= DDLINK_SECTOR;
-
-    if(!(mo->flags & MF_NOBLOCKMAP))
-        flags |= DDLINK_BLOCKMAP;
-
-    P_LinkMobj(mo, flags);
-}
-
 float P_GetGravity(void)
 {
     if(IS_NETGAME && cfg.netGravity != -1)
@@ -209,7 +185,7 @@ float P_GetGravity(void)
     return *((float*) DD_GetVariable(DD_GRAVITY));
 }
 
-static boolean PIT_StompThing(mobj_t *mo, void *data)
+boolean PIT_StompThing(mobj_t *mo, void *data)
 {
     int         stompAnyway;
     float       blockdist;
@@ -303,7 +279,7 @@ boolean P_TeleportMove(mobj_t *thing, float x, float y, boolean alwaysstomp)
         return false;
 
     // The move is ok, so link the thing into its new position.
-    P_UnsetMobjPosition(thing);
+    P_MobjUnsetPosition(thing);
 
     thing->floorz = tmfloorz;
     thing->ceilingz = tmceilingz;
@@ -313,8 +289,8 @@ boolean P_TeleportMove(mobj_t *thing, float x, float y, boolean alwaysstomp)
     thing->pos[VX] = x;
     thing->pos[VY] = y;
 
-    P_SetMobjPosition(thing);
-    P_ClearThingSRVO(thing);
+    P_MobjSetPosition(thing);
+    P_MobjClearSRVO(thing);
 
     return true;
 }
@@ -335,7 +311,7 @@ boolean P_TeleportMove(mobj_t *thing, float x, float y, boolean alwaysstomp)
  *
  * @param data      Unused
  */
-static boolean PIT_CrossLine(line_t *ld, void *data)
+boolean PIT_CrossLine(line_t *ld, void *data)
 {
     if(!(P_GetIntp(ld, DMU_FLAGS) & ML_TWOSIDED) ||
       (P_GetIntp(ld, DMU_FLAGS) & (ML_BLOCKING | ML_BLOCKMONSTERS)))
@@ -417,7 +393,7 @@ static int untouched(line_t *ld)
         return false;
 }
 
-static boolean PIT_CheckThing(mobj_t *thing, void *data)
+boolean PIT_CheckThing(mobj_t *thing, void *data)
 {
     int         damage;
     float       blockdist;
@@ -564,7 +540,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *data)
         tmthing->flags &= ~MF_SKULLFLY;
         tmthing->mom[MX] = tmthing->mom[MY] = tmthing->mom[MZ] = 0;
 
-        P_SetMobjState(tmthing, tmthing->info->spawnstate);
+        P_MobjChangeState(tmthing, tmthing->info->spawnstate);
 
         return false; // Stop moving.
     }
@@ -881,7 +857,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *data)
 /**
  * Adjusts tmfloorz and tmceilingz as lines are contacted
  */
-static boolean PIT_CheckLine(line_t *ld, void *data)
+boolean PIT_CheckLine(line_t *ld, void *data)
 {
     float       bbox[4];
 
@@ -1344,7 +1320,7 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
     }
 
     // The move is ok, so link the thing into its new position.
-    P_UnsetMobjPosition(thing);
+    P_MobjUnsetPosition(thing);
 
     memcpy(oldpos, thing->pos, sizeof(oldpos));
     thing->floorz = tmfloorz;
@@ -1357,12 +1333,12 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
 #endif
     thing->pos[VX] = x;
     thing->pos[VY] = y;
-    P_SetMobjPosition(thing);
+    P_MobjSetPosition(thing);
 
     if(thing->flags2 & MF2_FLOORCLIP)
     {
         if(thing->pos[VZ] == P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT) &&
-           P_GetMobjFloorType(thing) >= FLOOR_LIQUID)
+           P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
         {
             thing->floorclip = 10;
         }
@@ -1460,7 +1436,7 @@ boolean P_TryMove(mobj_t *thing, float x, float y, boolean dropoff,
  * \fixme DJS - This routine has gotten way too big, split if(in->isaline)
  * to a seperate routine?
  */
-static boolean PTR_ShootTraverse(intercept_t *in)
+boolean PTR_ShootTraverse(intercept_t *in)
 {
     float       pos[3];
     float       frac;
@@ -1728,7 +1704,7 @@ if(lineWasHit)
 /**
  * Sets linetaget and aimslope when a target is aimed at.
  */
-static boolean PTR_AimTraverse(intercept_t *in)
+boolean PTR_AimTraverse(intercept_t *in)
 {
     line_t     *li;
     mobj_t     *th;
@@ -1970,7 +1946,7 @@ void P_LineAttack(mobj_t *t1, angle_t angle, float distance, float slope,
 /**
  * "bombsource" is the creature that caused the explosion at "bombspot".
  */
-static boolean PIT_RadiusAttack(mobj_t *thing, void *data)
+boolean PIT_RadiusAttack(mobj_t *thing, void *data)
 {
     float       dx, dy, dz, dist;
 
@@ -2066,7 +2042,7 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
     P_MobjsBoxIterator(box, PIT_RadiusAttack, 0);
 }
 
-static boolean PTR_UseTraverse(intercept_t *in)
+boolean PTR_UseTraverse(intercept_t *in)
 {
     int         side;
 
@@ -2262,7 +2238,7 @@ static void P_HitSlideLine(line_t *ld)
     tmmove[MY] = newlen * FIX2FLT(finesine[lineangle]);
 }
 
-static boolean PTR_SlideTraverse(intercept_t *in)
+boolean PTR_SlideTraverse(intercept_t *in)
 {
     line_t     *li;
 
@@ -2472,11 +2448,11 @@ void P_SlideMove(mobj_t *mo)
  * was and call P_ChangeSector again to undo the changes.
  */
 
-/*
+/**
  * @param thing         The thing to check against height changes.
  * @param data          Unused.
  */
-static boolean PIT_ChangeSector(mobj_t *thing, void *data)
+boolean PIT_ChangeSector(mobj_t *thing, void *data)
 {
     mobj_t     *mo;
 
@@ -2499,13 +2475,13 @@ static boolean PIT_ChangeSector(mobj_t *thing, void *data)
 #if __JHEXEN__
         if(thing->flags & MF_NOBLOOD)
         {
-            P_RemoveMobj(thing);
+            P_MobjRemove(thing);
         }
         else
         {
             if(thing->state != &states[S_GIBS1])
             {
-                P_SetMobjState(thing, S_GIBS1);
+                P_MobjChangeState(thing, S_GIBS1);
                 thing->height = 0;
                 thing->radius = 0;
                 S_StartSound(SFX_PLAYER_FALLING_SPLAT, thing);
@@ -2515,10 +2491,10 @@ static boolean PIT_ChangeSector(mobj_t *thing, void *data)
 # if __DOOM64TC__
         //// \fixme kaiser - the def file is too fucked up..
         //// DJS - FIXME!
-        P_SetMobjState(thing, S_HEADCANDLES + 3);
+        P_MobjChangeState(thing, S_HEADCANDLES + 3);
         S_StartSound(sfx_slop, thing);
 # elif __JDOOM__
-        P_SetMobjState(thing, S_GIBS);
+        P_MobjChangeState(thing, S_GIBS);
 # endif
         thing->flags &= ~MF_SOLID;
         thing->height = 0;
@@ -2534,7 +2510,7 @@ static boolean PIT_ChangeSector(mobj_t *thing, void *data)
     if(thing->flags & MF_DROPPED)
 #endif
     {
-        P_RemoveMobj(thing);
+        P_MobjRemove(thing);
         return true; // Keep checking...
     }
 
@@ -2579,8 +2555,8 @@ boolean P_ChangeSector(sector_t *sector, boolean crunch)
     return nofit;
 }
 
-/*
- * The following routines originate from the Heretic src.
+/**
+ * The following routines originate from the Heretic src!
  */
 
 #if __JHERETIC__ || __JHEXEN__
@@ -2631,12 +2607,12 @@ static void CheckMissileImpact(mobj_t *mobj)
 }
 #endif
 
-/*
- * The following routines originate from the Hexen src
+/**
+ * The following routines originate from the Hexen src!
  */
 
 #if __JHEXEN__
-static boolean PIT_ThrustStompThing(mobj_t *thing, void *data)
+boolean PIT_ThrustStompThing(mobj_t *thing, void *data)
 {
     float       blockdist;
 
@@ -2678,7 +2654,7 @@ void PIT_ThrustSpike(mobj_t *actor)
     P_MobjsBoxIterator(bbox, PIT_ThrustStompThing, 0);
 }
 
-static boolean PIT_CheckOnmobjZ(mobj_t *thing, void *data)
+boolean PIT_CheckOnmobjZ(mobj_t *thing, void *data)
 {
     float       blockdist;
 
@@ -2854,7 +2830,7 @@ static void CheckForPushSpecial(line_t *line, int side, mobj_t *mobj)
     }
 }
 
-static boolean PTR_BounceTraverse(intercept_t *in)
+boolean PTR_BounceTraverse(intercept_t *in)
 {
     line_t     *li;
 
@@ -2944,7 +2920,7 @@ void P_BounceWall(mobj_t *mo)
     mo->mom[MY] = movelen * FIX2FLT(finesine[deltaangle]);
 }
 
-static boolean PTR_PuzzleItemTraverse(intercept_t *in)
+boolean PTR_PuzzleItemTraverse(intercept_t *in)
 {
     mobj_t     *mobj;
     int         sound;

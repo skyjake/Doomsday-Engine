@@ -214,8 +214,6 @@ extern          "C" {
                                          divline_t *line);
     float           P_InterceptVector(divline_t *v2, divline_t *v1);
     void            P_LineOpening(struct line_s *linedef);
-    void            P_LinkMobj(struct mobj_s *mo, byte flags);
-    void            P_UnlinkMobj(struct mobj_s *mo);
 
     // Object in bounding box iterators.
     boolean         P_MobjsBoxIterator(const float box[4],
@@ -234,14 +232,6 @@ extern          "C" {
                                           boolean (*func) (polyobj_t *, void *),
                                           void *data);
 
-    // Mobj linked object iterators.
-    boolean         P_MobjLinesIterator(struct mobj_s *mo,
-                                        boolean (*func) (struct line_s *,
-                                                          void *), void *);
-    boolean         P_MobjSectorsIterator(struct mobj_s *mo,
-                                          boolean (*func) (sector_t*, void*),
-                                          void *data);
-
     // Object type touching mobjs iterators.
     boolean         P_LineMobjsIterator(struct line_s *line,
                                         boolean (*func) (struct mobj_s *,
@@ -254,7 +244,6 @@ extern          "C" {
                                    int flags,
                                    boolean (*trav) (intercept_t *));
     boolean         P_CheckSight(struct mobj_s *t1, struct mobj_s *t2);
-    void            P_SetState(struct mobj_s *mo, int statenum);
 
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
@@ -361,11 +350,27 @@ extern          "C" {
                                              struct mobj_s *inflictor,
                                              int amount);
 
+    // Play: Mobjs.
+    struct mobj_s*  P_MobjCreate(think_t function, float x, float y, float z,
+                                 angle_t angle, float radius, float height, int ddflags);
+    void            P_MobjDestroy(struct mobj_s *mo);
+    void            P_MobjSetState(struct mobj_s *mo, int statenum);
+    void            P_MobjLink(struct mobj_s *mo, byte flags);
+    void            P_MobjUnlink(struct mobj_s *mo);
+    // Mobj linked object iterators.
+    boolean         P_MobjLinesIterator(struct mobj_s *mo,
+                                        boolean (*func) (struct line_s *,
+                                                          void *), void *);
+    boolean         P_MobjSectorsIterator(struct mobj_s *mo,
+                                          boolean (*func) (sector_t*, void*),
+                                          void *data);
+
     // Play: Polyobjs.
-    boolean         PO_MovePolyobj(uint num, float x, float y);
-    boolean         PO_RotatePolyobj(uint num, angle_t angle);
-    void            PO_UnLinkPolyobj(void *po);
-    void            PO_LinkPolyobj(void *po);
+    boolean         P_PolyobjMove(uint num, float x, float y);
+    boolean         P_PolyobjRotate(uint num, angle_t angle);
+    void            P_PolyobjUnLink(void *po);
+    void            P_PolyobjLink(void *po);
+
     void            PO_SetCallback(void (*func)(struct mobj_s*, void*, void*));
 
     // Play: Thinkers.

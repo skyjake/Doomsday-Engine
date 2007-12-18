@@ -337,7 +337,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     }
     else
     {
-        P_SetThingSRVO(actor, FIX2FLT(stepx), FIX2FLT(stepy));
+        P_MobjSetSRVO(actor, FIX2FLT(stepx), FIX2FLT(stepy));
         actor->flags &= ~MF_INFLOAT;
     }
 
@@ -703,7 +703,7 @@ void C_DECL A_Look(mobj_t *actor)
             S_StartSound(sound, actor);
     }
 
-    P_SetMobjState(actor, actor->info->seestate);
+    P_MobjChangeState(actor, actor->info->seestate);
 }
 
 /*
@@ -746,7 +746,7 @@ void C_DECL A_Chase(mobj_t *actor)
         if(P_LookForPlayers(actor, true))
             return;             // got a new target
 
-        P_SetMobjState(actor, actor->info->spawnstate);
+        P_MobjChangeState(actor, actor->info->spawnstate);
         return;
     }
 
@@ -765,7 +765,7 @@ void C_DECL A_Chase(mobj_t *actor)
         if(actor->info->attacksound)
             S_StartSound(actor->info->attacksound, actor);
 
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleestate);
         return;
     }
 
@@ -780,7 +780,7 @@ void C_DECL A_Chase(mobj_t *actor)
         if(!P_CheckMissileRange(actor))
             goto nomissile;
 
-        P_SetMobjState(actor, actor->info->missilestate);
+        P_MobjChangeState(actor, actor->info->missilestate);
         actor->flags |= MF_JUSTATTACKED;
         return;
     }
@@ -890,7 +890,7 @@ void C_DECL A_CPosRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_SetMobjState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seestate);
     }
 }
 
@@ -905,7 +905,7 @@ void C_DECL A_SpidRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_SetMobjState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seestate);
     }
 }
 
@@ -1205,11 +1205,11 @@ void C_DECL A_VileChase(mobj_t *actor)
             A_FaceTarget(actor);
             actor->target = temp;
 
-            P_SetMobjState(actor, S_VILE_HEAL1);
+            P_MobjChangeState(actor, S_VILE_HEAL1);
             S_StartSound(sfx_slop, corpsehit);
             info = corpsehit->info;
 
-            P_SetMobjState(corpsehit, info->raisestate);
+            P_MobjChangeState(corpsehit, info->raisestate);
 
             if(cfg.raiseghosts)
             {
@@ -1268,11 +1268,11 @@ void C_DECL A_Fire(mobj_t *actor)
 
     an = dest->angle >> ANGLETOFINESHIFT;
 
-    P_UnsetMobjPosition(actor);
+    P_MobjUnsetPosition(actor);
     memcpy(actor->pos, dest->pos, sizeof(actor->pos));
     actor->pos[VX] += FixedMul(24 * FRACUNIT, finecosine[an]);
     actor->pos[VY] += FixedMul(24 * FRACUNIT, finesine[an]);
-    P_SetMobjPosition(actor);
+    P_MobjSetPosition(actor);
 }
 
 /*
@@ -1921,7 +1921,7 @@ void C_DECL A_BrainScream(mobj_t *mo)
         th = P_SpawnMobj3f(x, y, z, MT_ROCKET);
         th->mom[MZ] = P_Random() * 512;
 
-        P_SetMobjState(th, S_BRAINEXPLODE1);
+        P_MobjChangeState(th, S_BRAINEXPLODE1);
 
         th->tics -= P_Random() & 7;
         if(th->tics < 1)
@@ -1944,7 +1944,7 @@ void C_DECL A_BrainExplode(mobj_t *mo)
     th = P_SpawnMobj3f(x, y, z, MT_ROCKET);
     th->mom[MZ] = P_Random() * 512;
 
-    P_SetMobjState(th, S_BRAINEXPLODE1);
+    P_MobjChangeState(th, S_BRAINEXPLODE1);
 
     th->tics -= P_Random() & 7;
     if(th->tics < 1)
@@ -2040,13 +2040,13 @@ void C_DECL A_SpawnFly(mobj_t *mo)
 
     newmobj = P_SpawnMobj3f(targ->pos[VX], targ->pos[VY], targ->pos[VZ], type);
     if(P_LookForPlayers(newmobj, true))
-        P_SetMobjState(newmobj, newmobj->info->seestate);
+        P_MobjChangeState(newmobj, newmobj->info->seestate);
 
     // telefrag anything in this spot
     P_TeleportMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false);
 
     // remove self (i.e., cube).
-    P_RemoveMobj(mo);
+    P_MobjRemove(mo);
 }
 
 void C_DECL A_PlayerScream(mobj_t *mo)
@@ -3387,7 +3387,7 @@ void C_DECL A_GhostDrainAttack(mobj_t *actor)
     }
     else
     {
-        P_SetMobjState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seestate);
     }
 }
 
@@ -3410,7 +3410,7 @@ void C_DECL A_RGhostDrainAttack(mobj_t *actor)
     }
     else
     {
-        P_SetMobjState(actor, S_GBOS_RUN1);
+        P_MobjChangeState(actor, S_GBOS_RUN1);
     }
 }
 
@@ -3433,7 +3433,7 @@ void C_DECL A_RLGhostDrainAttack(mobj_t *actor)
     }
     else
     {
-        P_SetMobjState(actor, S_LGBS_RUN1);
+        P_MobjChangeState(actor, S_LGBS_RUN1);
     }
 }
 
@@ -3551,7 +3551,7 @@ void C_DECL A_WaterTrollSwim(mobj_t *actor)
         if(P_LookForPlayers(actor, true))
             return;             // got a new target
 
-        P_SetMobjState(actor, actor->info->spawnstate);
+        P_MobjChangeState(actor, actor->info->spawnstate);
         return;
     }
 
@@ -3575,7 +3575,7 @@ void C_DECL A_WaterTrollSwim(mobj_t *actor)
         if(!P_CheckMissileRange(actor))
             goto nomissile;
 
-        P_SetMobjState(actor, actor->info->missilestate);
+        P_MobjChangeState(actor, actor->info->missilestate);
         actor->flags |= MF_JUSTATTACKED;
         return;
     }
@@ -3643,7 +3643,7 @@ void C_DECL A_WaterTrollChase(mobj_t *actor)
         if(P_LookForPlayers(actor, true))
             return;             // got a new target
 
-        P_SetMobjState(actor, actor->info->spawnstate);
+        P_MobjChangeState(actor, actor->info->spawnstate);
         return;
     }
 
@@ -3662,7 +3662,7 @@ void C_DECL A_WaterTrollChase(mobj_t *actor)
         if(actor->info->attacksound)
             S_StartSound(actor->info->attacksound, actor);
 
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleestate);
         return;
     }
 
@@ -3726,7 +3726,7 @@ void C_DECL A_ChaseNA(mobj_t *actor)
         if(P_LookForPlayers(actor, true))
             return;             // got a new target
 
-        P_SetMobjState(actor, actor->info->spawnstate);
+        P_MobjChangeState(actor, actor->info->spawnstate);
         return;
     }
 
@@ -3863,11 +3863,11 @@ void C_DECL A_GeneralDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_FATFACE_ATK1_1);
+        P_MobjChangeState(actor, S_FATFACE_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_FATFACE_ATK2_1);
+        P_MobjChangeState(actor, S_FATFACE_ATK2_1);
     }
 }
 
@@ -3878,11 +3878,11 @@ void C_DECL A_WillDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_WILL_ATK1_1);
+        P_MobjChangeState(actor, S_WILL_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_WILL_ATK2_1);
+        P_MobjChangeState(actor, S_WILL_ATK2_1);
     }
 }
 
@@ -3893,11 +3893,11 @@ void C_DECL A_DeathKnightDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_ABOS_ATK1_1);
+        P_MobjChangeState(actor, S_ABOS_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_ABOS_ATK2_1);
+        P_MobjChangeState(actor, S_ABOS_ATK2_1);
     }
 }
 
@@ -3908,11 +3908,11 @@ void C_DECL A_AngelDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_ANG_ATK2_1);
+        P_MobjChangeState(actor, S_ANG_ATK2_1);
     }
     else
     {
-        P_SetMobjState(actor, S_ANG_ATK3_1);
+        P_MobjChangeState(actor, S_ANG_ATK3_1);
     }
 }
 
@@ -3923,11 +3923,11 @@ void C_DECL A_AngelAttack1Continue1(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_ANG_ATK1_6);
+        P_MobjChangeState(actor, S_ANG_ATK1_6);
     }
     else
     {
-        P_SetMobjState(actor, S_ANG_ATK2_5);
+        P_MobjChangeState(actor, S_ANG_ATK2_5);
     }
 }
 
@@ -3935,11 +3935,11 @@ void C_DECL A_AngelAttack1Continue2(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_ANG_ATK1_6);
+        P_MobjChangeState(actor, S_ANG_ATK1_6);
     }
     else
     {
-        P_SetMobjState(actor, S_ANG_ATK2_7);
+        P_MobjChangeState(actor, S_ANG_ATK2_7);
     }
 }
 
@@ -3950,11 +3950,11 @@ void C_DECL A_QuarkDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_QUARK_ATK1_1);
+        P_MobjChangeState(actor, S_QUARK_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_QUARK_ATK2_1);
+        P_MobjChangeState(actor, S_QUARK_ATK2_1);
     }
 }
 
@@ -3965,11 +3965,11 @@ void C_DECL A_RobotDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_ROBOT_ATK1_1);
+        P_MobjChangeState(actor, S_ROBOT_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_ROBOT_ATK2_1);
+        P_MobjChangeState(actor, S_ROBOT_ATK2_1);
     }
 }
 
@@ -3980,11 +3980,11 @@ void C_DECL A_DevilDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_DEVIL_ATK1_1);
+        P_MobjChangeState(actor, S_DEVIL_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_DEVIL_ATK2_1);
+        P_MobjChangeState(actor, S_DEVIL_ATK2_1);
     }
 }
 
@@ -3996,11 +3996,11 @@ void C_DECL A_DevilAttack2Continue1(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_DEVIL_ATK1_6);
+        P_MobjChangeState(actor, S_DEVIL_ATK1_6);
     }
     else
     {
-        P_SetMobjState(actor, S_DEVIL_ATK2_5);
+        P_MobjChangeState(actor, S_DEVIL_ATK2_5);
     }
 }
 
@@ -4008,11 +4008,11 @@ void C_DECL A_DevilAttack2Continue2(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_DEVIL_ATK1_6);
+        P_MobjChangeState(actor, S_DEVIL_ATK1_6);
     }
     else
     {
-        P_SetMobjState(actor, S_DEVIL_ATK2_7);
+        P_MobjChangeState(actor, S_DEVIL_ATK2_7);
     }
 }
 
@@ -4023,11 +4023,11 @@ void C_DECL A_Devil2Decide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_DEVIL2_ATK1_1);
+        P_MobjChangeState(actor, S_DEVIL2_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_DEVIL2_ATK2_1);
+        P_MobjChangeState(actor, S_DEVIL2_ATK2_1);
     }
 }
 
@@ -4038,11 +4038,11 @@ void C_DECL A_Devil2Attack2Continue1(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_DEVIL2_ATK1_6);
+        P_MobjChangeState(actor, S_DEVIL2_ATK1_6);
     }
     else
     {
-        P_SetMobjState(actor, S_DEVIL2_ATK2_5);
+        P_MobjChangeState(actor, S_DEVIL2_ATK2_5);
     }
 }
 
@@ -4050,11 +4050,11 @@ void C_DECL A_Devil2Attack2Continue2(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_DEVIL2_ATK1_6);
+        P_MobjChangeState(actor, S_DEVIL2_ATK1_6);
     }
     else
     {
-        P_SetMobjState(actor, S_DEVIL2_ATK2_7);
+        P_MobjChangeState(actor, S_DEVIL2_ATK2_7);
     }
 }
 
@@ -4065,7 +4065,7 @@ void C_DECL A_BlackDemonDecide(mobj_t *actor)
 {
     if(P_Random() < 16)
     {
-        P_SetMobjState(actor, S_CBLACKDEMON_INVISIBLE1);
+        P_MobjChangeState(actor, S_CBLACKDEMON_INVISIBLE1);
     }
     else
     {
@@ -4077,7 +4077,7 @@ void C_DECL A_BlackDemonDecide2(mobj_t *actor)
 {
     if(P_Random() < 16)
     {
-        P_SetMobjState(actor, S_CBLACKDEMON_APPEAR1);
+        P_MobjChangeState(actor, S_CBLACKDEMON_APPEAR1);
     }
     else
     {
@@ -4096,7 +4096,7 @@ void C_DECL A_SkelDecideResurect(mobj_t *actor)
 {
     if(P_Random() < 32)
     {
-        P_SetMobjState(actor, S_CSKE_DIE4);
+        P_MobjChangeState(actor, S_CSKE_DIE4);
     }
 }
 
@@ -4107,7 +4107,7 @@ void C_DECL A_SkelDecideResurectTime(mobj_t *actor)
 {
     if(P_Random() < 32)
     {
-        P_SetMobjState(actor, S_CSKE_DIE6);
+        P_MobjChangeState(actor, S_CSKE_DIE6);
     }
 }
 
@@ -4122,7 +4122,7 @@ void C_DECL A_Skel2DecideResurect(mobj_t *actor)
 {
     if(P_Random() < 32)
     {
-        P_SetMobjState(actor, S_CSKE_DIE4);
+        P_MobjChangeState(actor, S_CSKE_DIE4);
     }
 }
 
@@ -4133,7 +4133,7 @@ void C_DECL A_Skel2DecideResurectTime(mobj_t *actor)
 {
     if(P_Random() < 32)
     {
-        P_SetMobjState(actor, S_CSKE_DIE6);
+        P_MobjChangeState(actor, S_CSKE_DIE6);
     }
 }
 
@@ -4144,7 +4144,7 @@ void C_DECL A_WaterTrollDecide(mobj_t *actor)
 {
     if(P_Random() < 64)
     {
-        P_SetMobjState(actor, S_CTROLLWATER_DIVE1);
+        P_MobjChangeState(actor, S_CTROLLWATER_DIVE1);
     }
     else
     {
@@ -4159,11 +4159,11 @@ void C_DECL A_NemesisDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_CNEM_ATK1_1);
+        P_MobjChangeState(actor, S_CNEM_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_CNEM_ATK2_1);
+        P_MobjChangeState(actor, S_CNEM_ATK2_1);
     }
 }
 
@@ -4174,11 +4174,11 @@ void C_DECL A_MullerDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_MULLER_ATK1_1);
+        P_MobjChangeState(actor, S_MULLER_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_MULLER_ATK2_1);
+        P_MobjChangeState(actor, S_MULLER_ATK2_1);
     }
 }
 
@@ -4189,11 +4189,11 @@ void C_DECL A_Angel2Decide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_ANG2_ATK2_1);
+        P_MobjChangeState(actor, S_ANG2_ATK2_1);
     }
     else
     {
-        P_SetMobjState(actor, S_ANG2_ATK3_1);
+        P_MobjChangeState(actor, S_ANG2_ATK3_1);
     }
 }
 
@@ -4204,11 +4204,11 @@ void C_DECL A_Angel2Attack1Continue1(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_ANG2_ATK1_6);
+        P_MobjChangeState(actor, S_ANG2_ATK1_6);
     }
     else
     {
-        P_SetMobjState(actor, S_ANG2_ATK2_5);
+        P_MobjChangeState(actor, S_ANG2_ATK2_5);
     }
 }
 
@@ -4216,11 +4216,11 @@ void C_DECL A_Angel2Attack1Continue2(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_ANG2_ATK1_6);
+        P_MobjChangeState(actor, S_ANG2_ATK1_6);
     }
     else
     {
-        P_SetMobjState(actor, S_ANG2_ATK2_7);
+        P_MobjChangeState(actor, S_ANG2_ATK2_7);
     }
 }
 
@@ -4231,11 +4231,11 @@ void C_DECL A_PoopDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_POOPDECK_ATK1_1);
+        P_MobjChangeState(actor, S_POOPDECK_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_POOPDECK_ATK2_1);
+        P_MobjChangeState(actor, S_POOPDECK_ATK2_1);
     }
 }
 
@@ -4246,11 +4246,11 @@ void C_DECL A_SchabbsDDecide(mobj_t *actor)
 {
     if(P_Random() < 128)
     {
-        P_SetMobjState(actor, S_SCHABBSD_ATK1_1);
+        P_MobjChangeState(actor, S_SCHABBSD_ATK1_1);
     }
     else
     {
-        P_SetMobjState(actor, S_SCHABBSD_ATK2_1);
+        P_MobjChangeState(actor, S_SCHABBSD_ATK2_1);
     }
 }
 
@@ -4261,11 +4261,11 @@ void C_DECL A_CandelabraDecide(mobj_t *actor)
 {
     if(P_Random() < 96)
     {
-        P_SetMobjState(actor, S_OCANDELABRA1);
+        P_MobjChangeState(actor, S_OCANDELABRA1);
     }
     else
     {
-        P_SetMobjState(actor, S_OCANDELABRA3);
+        P_MobjChangeState(actor, S_OCANDELABRA3);
     }
 }
 
@@ -4362,7 +4362,7 @@ void C_DECL A_BRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_SetMobjState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seestate);
     }
 }
 
@@ -4696,11 +4696,11 @@ void C_DECL A_AngelFire(mobj_t *actor)
 
     an = dest->angle >> ANGLETOFINESHIFT;
 
-    P_UnsetMobjPosition(actor);
+    P_MobjUnsetPosition(actor);
     actor->pos[VX] = dest->pos[VX] + FixedMul(24 * FRACUNIT, finecosine[an]);
     actor->pos[VY] = dest->pos[VY] + FixedMul(24 * FRACUNIT, finesine[an]);
     actor->pos[VZ] = dest->pos[VZ];
-    P_SetMobjPosition(actor);
+    P_MobjSetPosition(actor);
 }
 
 void C_DECL A_AngelStartFire(mobj_t *actor)
@@ -5011,7 +5011,7 @@ void C_DECL A_PlayingDeadActive(mobj_t *actor)
         if(actor->info->attacksound)
             S_StartSound(actor->info->attacksound, actor);
 
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleestate);
         return;
     }
 }
@@ -5030,7 +5030,7 @@ void C_DECL A_RavenRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_SetMobjState(actor, S_RAVEN_RUN1);
+        P_MobjChangeState(actor, S_RAVEN_RUN1);
     }
 }
 

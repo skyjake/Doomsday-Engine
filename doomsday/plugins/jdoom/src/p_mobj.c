@@ -84,7 +84,7 @@ int iquetail;
 /**
  * @return          @c true, if the mobj is still present.
  */
-boolean P_SetMobjState(mobj_t *mobj, statenum_t state)
+boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
 {
     state_t *st;
 
@@ -93,11 +93,11 @@ boolean P_SetMobjState(mobj_t *mobj, statenum_t state)
         if(state == S_NULL)
         {
             mobj->state = (state_t *) S_NULL;
-            P_RemoveMobj(mobj);
+            P_MobjRemove(mobj);
             return false;
         }
 
-        P_SetState(mobj, state);
+        P_MobjSetState(mobj, state);
         st = &states[state];
 
         mobj->turntime = false; // $visangle-facetarget
@@ -118,13 +118,13 @@ void P_ExplodeMissile(mobj_t *mo)
     if(IS_CLIENT)
     {
         // Clients won't explode missiles.
-        P_SetMobjState(mo, S_NULL);
+        P_MobjChangeState(mo, S_NULL);
         return;
     }
 
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
-    P_SetMobjState(mo, mobjinfo[mo->type].deathstate);
+    P_MobjChangeState(mo, mobjinfo[mo->type].deathstate);
 
     mo->tics -= P_Random() & 3;
 
@@ -149,13 +149,13 @@ void P_ExplodeMissile(mobj_t *mo)
 void P_FloorBounceMissile(mobj_t *mo)
 {
     mo->mom[MZ] = -mo->mom[MZ];
-    P_SetMobjState(mo, mobjinfo[mo->type].deathstate);
+    P_MobjChangeState(mo, mobjinfo[mo->type].deathstate);
 }
 
 /**
- * Returns the ground friction factor for the mobj.
+ * @return              The ground friction factor for the mobj.
  */
-float P_GetMobjFriction(mobj_t *mo)
+float P_MobjGetFriction(mobj_t *mo)
 {
     if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorz) && !mo->onmobj)
     {
@@ -165,7 +165,7 @@ float P_GetMobjFriction(mobj_t *mo)
     return XS_Friction(P_GetPtrp(mo->subsector, DMU_SECTOR));
 }
 
-void P_XYMovement(mobj_t *mo)
+void P_MobjMoveXY(mobj_t *mo)
 {
     float       pos[3], mom[3];
     player_t   *player;
@@ -185,7 +185,7 @@ void P_XYMovement(mobj_t *mo)
             // the skull slammed into something
             mo->flags &= ~MF_SKULLFLY;
             mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
-            P_SetMobjState(mo, mo->info->spawnstate);
+            P_MobjChangeState(mo, mo->info->spawnstate);
         }
 
         return;
@@ -252,7 +252,7 @@ void P_XYMovement(mobj_t *mo)
                             // Hack to prevent missiles exploding
                             // against the sky.
                             // Does not handle sky floors.
-                            P_RemoveMobj(mo);
+                            P_MobjRemove(mo);
                             return;
                         }
                     }
@@ -303,7 +303,7 @@ void P_XYMovement(mobj_t *mo)
     {
         // If in a walking frame, stop moving.
         if((unsigned) ((player->plr->mo->state - states) - PCLASS_INFO(player->class)->runstate) < 4)
-            P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
     }
 
     if((!player || (player->plr->cmd.forwardMove == 0 && player->plr->cmd.sideMove == 0)) &&
@@ -332,7 +332,7 @@ void P_XYMovement(mobj_t *mo)
 #endif
         else
         {
-            float       friction = P_GetMobjFriction(mo);
+            float       friction = P_MobjGetFriction(mo);
 
             mo->mom[MX] *= friction;
             mo->mom[MY] *= friction;
@@ -378,7 +378,7 @@ void P_RipperBlood(mobj_t *mo)
     th->tics += P_Random() & 3;
 }
 
-int P_GetMobjFloorType(mobj_t *thing)
+int P_MobjGetFloorType(mobj_t *thing)
 {
     return P_GetTerrainType(P_GetPtrp(thing->subsector, DMU_SECTOR), PLN_FLOOR);
 }
@@ -388,7 +388,7 @@ void P_HitFloor(mobj_t *mo)
     //P_MobjSectorsIterator(mo, PIT_Splash, mo);
 }
 
-void P_ZMovement(mobj_t *mo)
+void P_MobjMoveZ(mobj_t *mo)
 {
     float       gravity;
     float       dist;
@@ -437,12 +437,12 @@ void P_ZMovement(mobj_t *mo)
             if(delta < 0 && dist < -(delta * 3))
             {
                 mo->pos[VZ] -= FLOATSPEED;
-                P_SetThingSRVOZ(mo, -FLOATSPEED);
+                P_MobjSetSRVOZ(mo, -FLOATSPEED);
             }
             else if(delta > 0 && dist < (delta * 3))
             {
                 mo->pos[VZ] += FLOATSPEED;
-                P_SetThingSRVOZ(mo, FLOATSPEED);
+                P_MobjSetSRVOZ(mo, FLOATSPEED);
             }
         }
     }
@@ -601,7 +601,7 @@ void P_ZMovement(mobj_t *mo)
             // Don't explode against sky.
             if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == skyMaskMaterial)
             {
-                P_RemoveMobj(mo);
+                P_MobjRemove(mo);
             }
             else
             {
@@ -652,7 +652,7 @@ void P_NightmareRespawn(mobj_t *mobj)
     mo->reactiontime = 18;
 
     // Remove the old monster.
-    P_RemoveMobj(mobj);
+    P_MobjRemove(mobj);
 }
 
 void P_MobjThinker(mobj_t *mobj)
@@ -688,7 +688,7 @@ void P_MobjThinker(mobj_t *mobj)
     // Handle X and Y momentums
     if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || (mobj->flags & MF_SKULLFLY))
     {
-        P_XYMovement(mobj);
+        P_MobjMoveXY(mobj);
 
         //// \fixme decent NOP/NULL/Nil function pointer please.
         if(mobj->thinker.function == NOPFUNC)
@@ -717,7 +717,7 @@ void P_MobjThinker(mobj_t *mobj)
     }
     else if(mobj->pos[VZ] != mobj->floorz || mobj->mom[MZ] != 0) // GMJ 02/02/02
     {
-        P_ZMovement(mobj);
+        P_MobjMoveZ(mobj);
         if(mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
             return;             // killough - mobj was removed
     }
@@ -783,13 +783,13 @@ void P_MobjThinker(mobj_t *mobj)
     {
         mobj->tics--;
 
-        P_SRVOAngleTicker(mobj);    // "angle-servo"; smooth actor turning
+        P_MobjAngleSRVOTicker(mobj);    // "angle-servo"; smooth actor turning
 
         // you can cycle through multiple states in a tic
         if(!mobj->tics)
         {
-            P_ClearThingSRVO(mobj);
-            if(!P_SetMobjState(mobj, mobj->state->nextstate))
+            P_MobjClearSRVO(mobj);
+            if(!P_MobjChangeState(mobj, mobj->state->nextstate))
                 return;         // freed itself
         }
     }
@@ -822,88 +822,76 @@ void P_MobjThinker(mobj_t *mobj)
  */
 mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
 {
-    mobj_t     *mobj;
-    mobjinfo_t *info;
-    float       space;
+    mobj_t         *mo;
+    mobjinfo_t     *info = &mobjinfo[type];
+    float           space;
 
-    mobj = Z_Calloc(sizeof(*mobj), PU_LEVEL, NULL);
-    info = &mobjinfo[type];
+    mo = P_MobjCreate(P_MobjThinker, x, y, z, 0, info->radius, info->height,
+                      0);
+    mo->type = type;
+    mo->info = info;
+    mo->flags = info->flags;
+    mo->flags2 = info->flags2;
+    mo->flags3 = info->flags3;
 
-    mobj->type = type;
-    mobj->info = info;
-    mobj->pos[VX] = x;
-    mobj->pos[VY] = y;
-    mobj->radius = info->radius;
-    mobj->height = info->height;
-    mobj->flags = info->flags;
-    mobj->flags2 = info->flags2;
-    mobj->flags3 = info->flags3;
+    mo->damage = info->damage;
 
-    mobj->damage = info->damage;
-
-    mobj->health =
+    mo->health =
         info->spawnhealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
 
     // Let the engine know about solid objects.
-    P_SetDoomsdayFlags(mobj);
+    P_SetDoomsdayFlags(mo);
 
     if(gameskill != SM_NIGHTMARE)
-        mobj->reactiontime = info->reactiontime;
+        mo->reactiontime = info->reactiontime;
 
-    mobj->lastlook = P_Random() % MAXPLAYERS;
+    mo->lastlook = P_Random() % MAXPLAYERS;
 
-    // Do not set the state with P_SetMobjState, because action routines
+    // Do not set the state with P_MobjChangeState, because action routines
     // can not be called yet.
 
-    // Must link before setting state (ID assigned for the mobj).
-    mobj->thinker.function = P_MobjThinker;
-    P_AddThinker(&mobj->thinker);
+    // Must link before setting state (ID assigned for the mo).
+    P_MobjSetState(mo, info->spawnstate);
+    P_MobjSetPosition(mo);
 
-    P_SetState(mobj, info->spawnstate);
-    P_SetMobjPosition(mobj);
+    mo->floorz   = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+    mo->dropoffz = mo->floorz;
+    mo->ceilingz = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 
-    mobj->floorz   = P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT);
-    mobj->dropoffz = mobj->floorz;
-    mobj->ceilingz = P_GetFloatp(mobj->subsector, DMU_CEILING_HEIGHT);
-
-    if(z == ONFLOORZ)
+    if(mo->pos[VZ] == ONFLOORZ)
     {
-        mobj->pos[VZ] = mobj->floorz;
+        mo->pos[VZ] = mo->floorz;
     }
-    else if(z == ONCEILINGZ)
+    else if(mo->pos[VZ] == ONCEILINGZ)
     {
-        mobj->pos[VZ] = mobj->ceilingz - mobj->info->height;
+        mo->pos[VZ] = mo->ceilingz - mo->info->height;
     }
-    else if(z == FLOATRANDZ)
+    else if(mo->pos[VZ] == FLOATRANDZ)
     {
-        space = mobj->ceilingz - mobj->info->height - mobj->floorz;
+        space = mo->ceilingz - mo->info->height - mo->floorz;
         if(space > 48)
         {
             space -= 40;
-            mobj->pos[VZ] = ((space * P_Random()) / 256) + mobj->floorz + 40;
+            mo->pos[VZ] = ((space * P_Random()) / 256) + mo->floorz + 40;
         }
         else
         {
-            mobj->pos[VZ] = mobj->floorz;
+            mo->pos[VZ] = mo->floorz;
         }
     }
-    else
-    {
-        mobj->pos[VZ] = z;
-    }
 
-    if((mobj->flags2 & MF2_FLOORCLIP) &&
-       P_GetMobjFloorType(mobj) >= FLOOR_LIQUID &&
-       mobj->pos[VZ] == P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT))
+    if((mo->flags2 & MF2_FLOORCLIP) &&
+       P_MobjGetFloorType(mo) >= FLOOR_LIQUID &&
+       mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
     {
-        mobj->floorclip = 10;
+        mo->floorclip = 10;
     }
     else
     {
-        mobj->floorclip = 0;
+        mo->floorclip = 0;
     }
 
-    return mobj;
+    return mo;
 }
 
 mobj_t *P_SpawnMobj3fv(mobjtype_t type, float pos[3])
@@ -911,32 +899,21 @@ mobj_t *P_SpawnMobj3fv(mobjtype_t type, float pos[3])
     return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ]);
 }
 
-void P_RemoveMobj(mobj_t *mobj)
+/**
+ * Queue up a spawn from the specified spot.
+ */
+void P_RespawnEnqueue(spawnspot_t *spot)
 {
-    if((mobj->flags & MF_SPECIAL) && !(mobj->flags & MF_DROPPED) &&
-       (mobj->type != MT_INV) && (mobj->type != MT_INS))
-    {
-        // Copy the mobj's info to the respawn que
-        spawnspot_t *spawnobj = &itemrespawnque[iquehead];
+    spawnspot_t *spawnobj = &itemrespawnque[iquehead];
 
-        memcpy(spawnobj, &mobj->spawnspot, sizeof(*spawnobj));
+    memcpy(spawnobj, spot, sizeof(*spawnobj));
 
-        itemrespawntime[iquehead] = leveltime;
-        iquehead = (iquehead + 1) & (ITEMQUESIZE - 1);
+    itemrespawntime[iquehead] = leveltime;
+    iquehead = (iquehead + 1) & (ITEMQUESIZE - 1);
 
-        // lose one off the end?
-        if(iquehead == iquetail)
-            iquetail = (iquetail + 1) & (ITEMQUESIZE - 1);
-    }
-
-    // unlink from sector and block lists
-    P_UnsetMobjPosition(mobj);
-
-    // stop any playing sound
-    S_StopSound(0, mobj);
-
-    // free block
-    P_RemoveThinker((thinker_t *) mobj);
+    // lose one off the end?
+    if(iquehead == iquetail)
+        iquetail = (iquetail + 1) & (ITEMQUESIZE - 1);
 }
 
 void P_CheckRespawnQueue(void)
@@ -987,7 +964,7 @@ void P_CheckRespawnQueue(void)
     mo->angle = sobj->angle;
 
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       P_GetMobjFloorType(mo) >= FLOOR_LIQUID &&
+       P_MobjGetFloorType(mo) >= FLOOR_LIQUID &&
        mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
     {
         mo->floorclip = 10;
@@ -1264,7 +1241,7 @@ void P_SpawnPuff(float x, float y, float z)
 
     // Don't make punches spark on the wall.
     if(th && attackrange == MELEERANGE)
-        P_SetMobjState(th, S_PUFF3);
+        P_MobjChangeState(th, S_PUFF3);
 }
 
 void P_SpawnBlood(float x, float y, float z, int damage)
@@ -1280,9 +1257,9 @@ void P_SpawnBlood(float x, float y, float z, int damage)
         th->tics = 1;
 
     if(damage <= 12 && damage >= 9)
-        P_SetMobjState(th, S_BLOOD2);
+        P_MobjChangeState(th, S_BLOOD2);
     else if(damage < 9)
-        P_SetMobjState(th, S_BLOOD3);
+        P_MobjChangeState(th, S_BLOOD3);
 }
 
 /**

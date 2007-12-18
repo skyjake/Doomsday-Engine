@@ -1133,11 +1133,11 @@ void Sv_PlaceMobj(mobj_t* mo, float x, float y, float z, boolean onFloor)
 {
     P_CheckPosXYZ(mo, x, y, z);
 
-    P_UnlinkMobj(mo);
+    P_MobjUnlink(mo);
     mo->pos[VX] = x;
     mo->pos[VY] = y;
     mo->pos[VZ] = z;
-    P_LinkMobj(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+    P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     mo->floorz = tmpFloorZ;
     mo->ceilingz = tmpCeilingZ;
 

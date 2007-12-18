@@ -40,9 +40,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define PADSAVEP()      save_p += (4 - ((save_p - savebuffer) & 3)) & 3
-#define SAVESTRINGSIZE  24
-#define VERSIONSIZE     16
+#define PADSAVEP()          save_p += (4 - ((save_p - savebuffer) & 3)) & 3
+#define SAVESTRINGSIZE      24
+#define VERSIONSIZE         16
 
 #define FF_FULLBRIGHT       0x8000 // used to be flag in thing->frame
 #define FF_FRAMEMASK        0x7fff
@@ -144,28 +144,34 @@ static void SV_ReadPlayer(player_t *pl)
     pl->didsecret = SV_ReadLong();
 }
 
-static void SV_ReadMobj(mobj_t *mo)
+static void SV_ReadMobj(void)
 {
+    float               pos[3], mom[3], radius, height, floorz, ceilingz;
+    angle_t             angle;
+    spritenum_t         sprite;
+    int                 frame, valid, type;
+    mobj_t             *mo;
+
     // List: thinker links.
     SV_ReadLong();
     SV_ReadLong();
     SV_ReadLong();
 
     // Info for drawing: position.
-    mo->pos[VX] = FIX2FLT(SV_ReadLong());
-    mo->pos[VY] = FIX2FLT(SV_ReadLong());
-    mo->pos[VZ] = FIX2FLT(SV_ReadLong());
+    pos[VX] = FIX2FLT(SV_ReadLong());
+    pos[VY] = FIX2FLT(SV_ReadLong());
+    pos[VZ] = FIX2FLT(SV_ReadLong());
 
     // More list: links in sector (if needed)
     SV_ReadLong();
     SV_ReadLong();
 
     //More drawing info: to determine current sprite.
-    mo->angle = SV_ReadLong();  // orientation
-    mo->sprite = SV_ReadLong(); // used to find patch_t and flip value
-    mo->frame = SV_ReadLong();  // might be ORed with FF_FULLBRIGHT
-    if(mo->frame & FF_FULLBRIGHT)
-        mo->frame &= FF_FRAMEMASK; // not used anymore.
+    angle = SV_ReadLong();  // orientation
+    sprite = SV_ReadLong(); // used to find patch_t and flip value
+    frame = SV_ReadLong();  // might be ORed with FF_FULLBRIGHT
+    if(frame & FF_FULLBRIGHT)
+        frame &= FF_FRAMEMASK; // not used anymore.
 
     // Interaction info, by BLOCKMAP.
     // Links in blocks (if needed).
@@ -174,24 +180,42 @@ static void SV_ReadMobj(mobj_t *mo)
     SV_ReadLong();
 
     // The closest interval over all contacted Sectors.
-    mo->floorz = FIX2FLT(SV_ReadLong());
-    mo->ceilingz = FIX2FLT(SV_ReadLong());
+    floorz = FIX2FLT(SV_ReadLong());
+    ceilingz = FIX2FLT(SV_ReadLong());
 
     // For movement checking.
-    mo->radius = FIX2FLT(SV_ReadLong());
-    mo->height = FIX2FLT(SV_ReadLong());
+    radius = FIX2FLT(SV_ReadLong());
+    height = FIX2FLT(SV_ReadLong());
 
     // Momentums, used to update position.
-    mo->mom[MX] = FIX2FLT(SV_ReadLong());
-    mo->mom[MY] = FIX2FLT(SV_ReadLong());
-    mo->mom[MZ] = FIX2FLT(SV_ReadLong());
+    mom[MX] = FIX2FLT(SV_ReadLong());
+    mom[MY] = FIX2FLT(SV_ReadLong());
+    mom[MZ] = FIX2FLT(SV_ReadLong());
 
-    // If == validcount, already checked.
-    mo->valid = SV_ReadLong();
+    valid = SV_ReadLong();
+    type = SV_ReadLong();
 
-    mo->type = SV_ReadLong();
+    /**
+     * We now have all the information we need to create the mobj.
+     */
+    mo = P_MobjCreate(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
+                      radius, height, 0);
+
+    mo->sprite = sprite;
+    mo->frame = frame;
+    mo->floorz = floorz;
+    mo->ceilingz = ceilingz;
+    mo->mom[MX] = mom[MX];
+    mo->mom[MY] = mom[MY];
+    mo->mom[MZ] = mom[MZ];
+    mo->valid = valid;
+    mo->type = type;
+
+    /**
+     * Continue reading the mobj data.
+     */
     mo->info = &mobjinfo[mo->type];
-    SV_ReadLong();              // &mobjinfo[mobj->type]
+    SV_ReadLong();              // &mobjinfo[mo->type]
 
     mo->tics = SV_ReadLong();   // state tic counter
     mo->state = (state_t *) SV_ReadLong();
@@ -234,6 +258,25 @@ static void SV_ReadMobj(mobj_t *mo)
     SV_ReadLong();
 
     SV_UpdateReadMobjFlags(mo, 0);
+
+    mo->state = &states[(int) mo->state];
+    mo->target = NULL;
+    if(mo->player)
+    {
+        int     pnum = (int) mo->player - 1;
+
+        mo->player = &players[pnum];
+        mo->dplayer = mo->player->plr;
+        mo->dplayer->mo = mo;
+        //mo->dplayer->clAngle = mo->angle; /* $unifiedangles */
+        mo->dplayer->lookdir = 0; /* $unifiedangles */
+    }
+    P_MobjSetPosition(mo);
+    mo->info = &mobjinfo[mo->type];
+    mo->floorz =
+        P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+    mo->ceilingz =
+        P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 }
 
 void P_v19_UnArchivePlayers(void)
@@ -342,7 +385,6 @@ enum thinkerclass_e {
     byte    tclass;
     thinker_t *currentthinker;
     thinker_t *next;
-    mobj_t *mobj;
 
     // remove all the current thinkers
     currentthinker = thinkercap.next;
@@ -351,7 +393,7 @@ enum thinkerclass_e {
         next = currentthinker->next;
 
         if(currentthinker->function == P_MobjThinker)
-            P_RemoveMobj((mobj_t *) currentthinker);
+            P_MobjRemove((mobj_t *) currentthinker);
         else
             Z_Free(currentthinker);
 
@@ -370,30 +412,7 @@ enum thinkerclass_e {
 
         case TC_MOBJ:
             PADSAVEP();
-            mobj = Z_Calloc(sizeof(*mobj), PU_LEVEL, NULL);
-
-            SV_ReadMobj(mobj);
-
-            mobj->state = &states[(int) mobj->state];
-            mobj->target = NULL;
-            if(mobj->player)
-            {
-                int     pnum = (int) mobj->player - 1;
-
-                mobj->player = &players[pnum];
-                mobj->dplayer = mobj->player->plr;
-                mobj->dplayer->mo = mobj;
-                //mobj->dplayer->clAngle = mobj->angle; /* $unifiedangles */
-                mobj->dplayer->lookdir = 0; /* $unifiedangles */
-            }
-            P_SetMobjPosition(mobj);
-            mobj->info = &mobjinfo[mobj->type];
-            mobj->floorz =
-                P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT);
-            mobj->ceilingz =
-                P_GetFloatp(mobj->subsector, DMU_CEILING_HEIGHT);
-            mobj->thinker.function = P_MobjThinker;
-            P_AddThinker(&mobj->thinker);
+            SV_ReadMobj();
             break;
 
         default:

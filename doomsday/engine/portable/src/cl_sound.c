@@ -99,7 +99,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         uint     index = (ushort) Msg_ReadShort();
 
-        if(index < po_NumPolyobjs)
+        if(index < numpolyobjs)
         {
             poly = polyobjs[index];
             emitter = (mobj_t *) &poly->startSpot;

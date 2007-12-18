@@ -998,7 +998,7 @@ void* DD_GetVariable(int ddvalue)
             return &numvertexes;
 
         case DD_POLYOBJ_COUNT:
-            return &po_NumPolyobjs;
+            return &numpolyobjs;
 
         case DD_SEG_COUNT:
             return &numsegs;

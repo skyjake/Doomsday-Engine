@@ -331,6 +331,11 @@ void *Z_Malloc(size_t size, int tag, void *user)
     memvolume_t    *volume;
     boolean         gotoNextVolume;
 
+    if(tag < PU_STATIC || tag > PU_CACHE)
+    {
+        Con_Error("Z_Malloc: Invalid purgelevel %i.", tag);
+    }
+
     if(!size)
     {
         // You can't allocate "nothing."

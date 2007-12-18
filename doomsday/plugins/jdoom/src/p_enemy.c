@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
@@ -341,7 +341,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     }
     else
     {
-        P_SetThingSRVO(actor, step[VX], step[VY]);
+        P_MobjSetSRVO(actor, step[VX], step[VY]);
         actor->flags &= ~MF_INFLOAT;
     }
 
@@ -726,7 +726,7 @@ void C_DECL A_Look(mobj_t *actor)
         }
     }
 
-    P_SetMobjState(actor, actor->info->seestate);
+    P_MobjChangeState(actor, actor->info->seestate);
 }
 
 /**
@@ -770,7 +770,7 @@ void C_DECL A_Chase(mobj_t *actor)
         }
         else
         {
-            P_SetMobjState(actor, actor->info->spawnstate);
+            P_MobjChangeState(actor, actor->info->spawnstate);
         }
 
         return;
@@ -792,7 +792,7 @@ void C_DECL A_Chase(mobj_t *actor)
         if(actor->info->attacksound)
             S_StartSound(actor->info->attacksound, actor);
 
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleestate);
         return;
     }
 
@@ -803,7 +803,7 @@ void C_DECL A_Chase(mobj_t *actor)
         {
             if(P_CheckMissileRange(actor))
             {
-                P_SetMobjState(actor, actor->info->missilestate);
+                P_MobjChangeState(actor, actor->info->missilestate);
                 actor->flags |= MF_JUSTATTACKED;
                 return;
             }
@@ -917,7 +917,7 @@ void C_DECL A_CPosRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_SetMobjState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seestate);
     }
 }
 
@@ -932,7 +932,7 @@ void C_DECL A_SpidRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_SetMobjState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seestate);
     }
 }
 
@@ -1234,11 +1234,11 @@ void C_DECL A_VileChase(mobj_t *actor)
             A_FaceTarget(actor);
             actor->target = temp;
 
-            P_SetMobjState(actor, S_VILE_HEAL1);
+            P_MobjChangeState(actor, S_VILE_HEAL1);
             S_StartSound(sfx_slop, corpsehit);
             info = corpsehit->info;
 
-            P_SetMobjState(corpsehit, info->raisestate);
+            P_MobjChangeState(corpsehit, info->raisestate);
 
             if(cfg.raiseghosts)
             {
@@ -1297,11 +1297,11 @@ void C_DECL A_Fire(mobj_t *actor)
 
     an = dest->angle >> ANGLETOFINESHIFT;
 
-    P_UnsetMobjPosition(actor);
+    P_MobjUnsetPosition(actor);
     memcpy(actor->pos, dest->pos, sizeof(actor->pos));
     actor->pos[VX] += 24 * FIX2FLT(finecosine[an]);
     actor->pos[VY] += 24 * FIX2FLT(finesine[an]);
-    P_SetMobjPosition(actor);
+    P_MobjSetPosition(actor);
 }
 
 /**
@@ -1917,7 +1917,7 @@ void C_DECL A_BrainScream(mobj_t *mo)
         th = P_SpawnMobj3fv(MT_ROCKET, pos);
         th->mom[MZ] = FIX2FLT(P_Random() * 512);
 
-        P_SetMobjState(th, S_BRAINEXPLODE1);
+        P_MobjChangeState(th, S_BRAINEXPLODE1);
 
         th->tics -= P_Random() & 7;
         if(th->tics < 1)
@@ -1939,7 +1939,7 @@ void C_DECL A_BrainExplode(mobj_t *mo)
     th = P_SpawnMobj3fv(MT_ROCKET, pos);
     th->mom[MZ] = FIX2FLT(P_Random() * 512);
 
-    P_SetMobjState(th, S_BRAINEXPLODE1);
+    P_MobjChangeState(th, S_BRAINEXPLODE1);
 
     th->tics -= P_Random() & 7;
     if(th->tics < 1)
@@ -2035,13 +2035,13 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     newmobj = P_SpawnMobj3fv(type, targ->pos);
 
     if(P_LookForPlayers(newmobj, true))
-        P_SetMobjState(newmobj, newmobj->info->seestate);
+        P_MobjChangeState(newmobj, newmobj->info->seestate);
 
     // Telefrag anything in this spot.
     P_TeleportMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false);
 
     // Remove self (i.e., cube).
-    P_RemoveMobj(mo);
+    P_MobjRemove(mo);
 }
 
 void C_DECL A_PlayerScream(mobj_t *mo)

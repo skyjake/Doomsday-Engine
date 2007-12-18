@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * p_think.c: Thinkers
+/**
+ * p_think.c: Thinkers.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -111,7 +111,6 @@ void P_RunThinkers(void)
         assert(current->next != NULL);
         assert(current->prev != NULL);
 #endif
-
         next = current->next;
 
         if(current->function == (think_t) -1)
@@ -119,7 +118,14 @@ void P_RunThinkers(void)
             // Time to remove it.
             current->next->prev = current->prev;
             current->prev->next = current->next;
-            Z_Free(current);
+            if(current->id)
+            {   // Its a mobj.
+                P_MobjRecycle((mobj_t*) current);
+            }
+            else
+            {
+                Z_Free(current);
+            }
         }
         else if(current->function)
         {

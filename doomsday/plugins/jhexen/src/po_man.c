@@ -39,9 +39,6 @@
  * You should have received a copy of the HERETIC / HEXEN source code
  * license along with this program (Ravenlic.txt); if not:
  * http://www.ravensoft.com/
- *
- * \bug PO_TranslateToStartSpot:  Multiple polyobjs in a single subsector -> https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1530158&group_id=74815
- *
  */
 
 /**
@@ -111,7 +108,7 @@ void T_RotatePoly(polyevent_t *pe)
     unsigned int absSpeed;
     polyobj_t  *poly;
 
-    if(PO_RotatePolyobj(pe->polyobj, pe->intSpeed))
+    if(P_PolyobjRotate(pe->polyobj, pe->intSpeed))
     {
         absSpeed = abs(pe->intSpeed);
 
@@ -256,7 +253,7 @@ void T_MovePoly(polyevent_t *pe)
     unsigned int absSpeed;
     polyobj_t  *poly;
 
-    if(PO_MovePolyobj(pe->polyobj, pe->speed[MX], pe->speed[MY]))
+    if(P_PolyobjMove(pe->polyobj, pe->speed[MX], pe->speed[MY]))
     {
         absSpeed = abs(pe->intSpeed);
         pe->dist -= absSpeed;
@@ -385,7 +382,7 @@ void T_PolyDoor(polydoor_t *pd)
     switch(pd->type)
     {
     case PODOOR_SLIDE:
-        if(PO_MovePolyobj(pd->polyobj, pd->speed[MX], pd->speed[MY]))
+        if(P_PolyobjMove(pd->polyobj, pd->speed[MX], pd->speed[MY]))
         {
             absSpeed = abs(pd->intSpeed);
             pd->dist -= absSpeed;
@@ -438,7 +435,7 @@ void T_PolyDoor(polydoor_t *pd)
         break;
 
     case PODOOR_SWING:
-        if(PO_RotatePolyobj(pd->polyobj, pd->intSpeed))
+        if(P_PolyobjRotate(pd->polyobj, pd->intSpeed))
         {
             absSpeed = abs(pd->intSpeed);
             if(pd->dist == -1)
@@ -717,7 +714,7 @@ void PO_InitForMap(void)
         {
             P_SetInt(DMU_POLYOBJ, i, DMU_CRUSH,
                      mt->type == PO_SPAWNCRUSH_TYPE? 1 : 0);
-            PO_MovePolyobj(i, mt->pos[VX], mt->pos[VY]);
+            P_PolyobjMove(i, mt->pos[VX], mt->pos[VY]);
         }
         else
         {

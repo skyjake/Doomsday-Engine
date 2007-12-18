@@ -851,7 +851,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
     if(special->flags & MF_COUNTITEM)
         player->itemcount++;
-    P_RemoveMobj(special);
+    P_MobjRemove(special);
     player->bonuscount += BONUSADD;
     /*if (player == &players[consoleplayer])
        S_StartSound (NULL, sound); */
@@ -860,9 +860,8 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
 void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 {
-    mobjtype_t item;
-    mobj_t *mo;
-    //angle_t angle; d64tc
+    mobjtype_t      item;
+    mobj_t         *mo;
 
     if(!target) // nothing to kill
         return;
@@ -922,10 +921,10 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     if(target->health < -target->info->spawnhealth &&
        target->info->xdeathstate)
     {
-        P_SetMobjState(target, target->info->xdeathstate);
+        P_MobjChangeState(target, target->info->xdeathstate);
     }
     else
-        P_SetMobjState(target, target->info->deathstate);
+        P_MobjChangeState(target, target->info->deathstate);
     target->tics -= P_Random() & 3;
 
     if(target->tics < 1)
@@ -1181,7 +1180,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     {
         target->flags |= MF_JUSTHIT;    // fight back!
 
-        P_SetMobjState(target, target->info->painstate);
+        P_MobjChangeState(target, target->info->painstate);
     }
 
     target->reactiontime = 0;   // we're awake now...
@@ -1195,6 +1194,6 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         target->threshold = BASETHRESHOLD;
         if(target->state == &states[target->info->spawnstate] &&
            target->info->seestate != S_NULL)
-            P_SetMobjState(target, target->info->seestate);
+            P_MobjChangeState(target, target->info->seestate);
     }
 }

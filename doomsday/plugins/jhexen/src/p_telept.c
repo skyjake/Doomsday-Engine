@@ -139,7 +139,7 @@ void P_TeleportOther(mobj_t *victim)
         // If death action, run it upon teleport.
         if(victim->flags & MF_COUNTKILL && victim->special)
         {
-            P_RemoveMobjFromTIDList(victim);
+            P_MobjRemoveFromTIDList(victim);
             P_ExecuteLineSpecial(victim->special, victim->args, NULL, 0,
                                  victim);
             victim->special = 0;
@@ -237,7 +237,7 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
         if(mo->pos[VZ] ==
            P_GetFloatp(mo->subsector,
                        DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
-           P_GetMobjFloorType(mo) >= FLOOR_LIQUID)
+           P_MobjGetFloorType(mo) >= FLOOR_LIQUID)
         {
             mo->floorclip = 10;
         }
@@ -258,7 +258,7 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
         mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
     }
 
-    P_ClearThingSRVO(mo);
+    P_MobjClearSRVO(mo);
 
     // Update the floor pic.
     mo->floorpic = tmfloorpic;

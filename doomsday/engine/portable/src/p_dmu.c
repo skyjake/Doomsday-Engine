@@ -589,7 +589,7 @@ void* P_ToPtr(int type, uint index)
         return SECTOR_PTR(index);
 
     case DMU_POLYOBJ:
-        return (index < po_NumPolyobjs? polyobjs[index] : NULL);
+        return (index < numpolyobjs? polyobjs[index] : NULL);
 
     case DMU_NODE:
         return NODE_PTR(index);
@@ -653,7 +653,7 @@ int P_Callback(int type, uint index, void* context, int (*callback)(void* p, voi
         break;
 
     case DMU_POLYOBJ:
-        if(index < po_NumPolyobjs)
+        if(index < numpolyobjs)
             return callback(polyobjs[index], context);
         break;
 
@@ -737,7 +737,7 @@ int P_CallbackAll(int type, void* context, int (*callback)(void* p, void* ctx))
         break;
 
     case DMU_POLYOBJ:
-        for(i = 0; i < po_NumPolyobjs; i++)
+        for(i = 0; i < numpolyobjs; i++)
             if(!callback(polyobjs[i], context)) return false;
         break;
 

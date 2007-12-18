@@ -1650,7 +1650,7 @@ int C_DECL XLTrav_LineTeleport(line_t *newline, boolean dummy, void *context, vo
     // Feet clipped?
     if(mobj->flags2 & MF2_FLOORCLIP)
     {
-        if(P_GetMobjFloorType(mobj) >= FLOOR_LIQUID &&
+        if(P_MobjGetFloorType(mobj) >= FLOOR_LIQUID &&
            mobj->pos[VZ] ==
            P_GetFloatp(mobj->subsector,
                        DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT))

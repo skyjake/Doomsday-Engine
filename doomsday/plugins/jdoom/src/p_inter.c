@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -692,7 +692,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     if(special->flags & MF_COUNTITEM)
         player->itemcount++;
 
-    P_RemoveMobj(special);
+    P_MobjRemove(special);
     player->bonuscount += BONUSADD;
 
     S_ConsoleSound(sound, NULL, player - players);
@@ -761,11 +761,11 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     if(target->health < -target->info->spawnhealth &&
        target->info->xdeathstate)
     {
-        P_SetMobjState(target, target->info->xdeathstate);
+        P_MobjChangeState(target, target->info->xdeathstate);
     }
     else
     {
-        P_SetMobjState(target, target->info->deathstate);
+        P_MobjChangeState(target, target->info->deathstate);
     }
 
     target->tics -= P_Random() & 3;
@@ -992,7 +992,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     {
         target->flags |= MF_JUSTHIT; // Fight back!
 
-        P_SetMobjState(target, target->info->painstate);
+        P_MobjChangeState(target, target->info->painstate);
     }
 
     target->reactiontime = 0; // We're awake now...
@@ -1007,6 +1007,6 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
         if(target->state == &states[target->info->spawnstate] &&
            target->info->seestate != S_NULL)
-            P_SetMobjState(target, target->info->seestate);
+            P_MobjChangeState(target, target->info->seestate);
     }
 }

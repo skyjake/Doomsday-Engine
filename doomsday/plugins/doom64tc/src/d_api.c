@@ -63,7 +63,7 @@ int     G_PrivilegedResponder(event_t *event);
 void    P_SetupForMapData(int type, uint num);
 
 // Map Objects
-float   P_GetMobjFriction(struct mobj_s *mo);
+float   P_MobjGetFriction(struct mobj_s *mo);
 void    P_MobjThinker(mobj_t *mobj);
 
 // Misc
@@ -207,7 +207,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.FallbackResponder = Hu_MenuResponder;
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (float (*)(void *)) P_GetMobjFriction;
+    gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
     gx.EndFrame = D_EndFrame;
     gx.ConsoleBackground = D_ConsoleBg;
     gx.UpdateState = G_UpdateState;
@@ -224,7 +224,8 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.NetWorldEvent = D_NetWorldEvent;
 
     // Data structure sizes.
-    gx.ticcmd_size = sizeof(ticcmd_t);
+    gx.ticcmdSize = sizeof(ticcmd_t);
+    gx.mobjSize = sizeof(mobj_t);
 
     gx.SetupForMapData = P_SetupForMapData;
 

@@ -238,7 +238,7 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
     step[VY] = FLT2FIX(delta[VY]);
     for(count = 0; count < 64; count++)
     {
-        if(po_NumPolyobjs > 0)
+        if(numpolyobjs > 0)
         {
             if(!P_BlockmapPolyobjLinesIterator(BlockMap, block,
                                                PIT_CheckSightLine, 0))

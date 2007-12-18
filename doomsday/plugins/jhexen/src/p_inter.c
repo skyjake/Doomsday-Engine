@@ -105,7 +105,7 @@ void P_HideSpecialThing(mobj_t *thing)
 {
     thing->flags &= ~MF_SPECIAL;
     thing->flags2 |= MF2_DONTDRAW;
-    P_SetMobjState(thing, S_HIDESPECIAL1);
+    P_MobjChangeState(thing, S_HIDESPECIAL1);
 }
 
 /**
@@ -261,7 +261,7 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
         }
         else
         {
-            P_RemoveMobj(weapon);
+            P_MobjRemove(weapon);
         }
     }
 
@@ -357,7 +357,7 @@ static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
         }
         else
         {
-            P_RemoveMobj(pieceMobj);
+            P_MobjRemove(pieceMobj);
         }
     }
 
@@ -633,7 +633,7 @@ static void TryPickupArtifact(player_t *plr, artitype_e artifactType,
             P_SetMessage(plr, GET_TXT(artifactMessages[artifactType]), false);
             if(!IS_NETGAME || deathmatch)
             {   // Remove puzzle items if not cooperative netplay.
-                P_RemoveMobj(artifact);
+                P_MobjRemove(artifact);
             }
         }
     }
@@ -649,27 +649,27 @@ static void SetDormantArtifact(mobj_t *arti)
     {
         if(arti->type == MT_ARTIINVULNERABILITY)
         {
-            P_SetMobjState(arti, S_DORMANTARTI3_1);
+            P_MobjChangeState(arti, S_DORMANTARTI3_1);
         }
         else if(arti->type == MT_SUMMONMAULATOR || arti->type == MT_ARTIFLY)
         {
-            P_SetMobjState(arti, S_DORMANTARTI2_1);
+            P_MobjChangeState(arti, S_DORMANTARTI2_1);
         }
         else
         {
-            P_SetMobjState(arti, S_DORMANTARTI1_1);
+            P_MobjChangeState(arti, S_DORMANTARTI1_1);
         }
     }
     else
     {   // Don't respawn.
-        P_SetMobjState(arti, S_DEADARTI1);
+        P_MobjChangeState(arti, S_DEADARTI1);
     }
 }
 
 void C_DECL A_RestoreArtifact(mobj_t *arti)
 {
     arti->flags |= MF_SPECIAL;
-    P_SetMobjState(arti, arti->info->spawnstate);
+    P_MobjChangeState(arti, arti->info->spawnstate);
     S_StartSound(SFX_RESPAWN, arti);
 }
 
@@ -685,7 +685,7 @@ void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
 void C_DECL A_RestoreSpecialThing2(mobj_t *thing)
 {
     thing->flags |= MF_SPECIAL;
-    P_SetMobjState(thing, thing->info->spawnstate);
+    P_MobjChangeState(thing, thing->info->spawnstate);
 }
 
 void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
@@ -1038,7 +1038,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     }
     else
     {
-        P_RemoveMobj(special);
+        P_MobjRemove(special);
     }
 
     player->bonuscount += BONUSADD;
@@ -1153,17 +1153,17 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
             {
             case PCLASS_FIGHTER:
                 S_StartSound(SFX_PLAYER_FIGHTER_BURN_DEATH, target);
-                P_SetMobjState(target, S_PLAY_F_FDTH1);
+                P_MobjChangeState(target, S_PLAY_F_FDTH1);
                 return;
 
             case PCLASS_CLERIC:
                 S_StartSound(SFX_PLAYER_CLERIC_BURN_DEATH, target);
-                P_SetMobjState(target, S_PLAY_C_FDTH1);
+                P_MobjChangeState(target, S_PLAY_C_FDTH1);
                 return;
 
             case PCLASS_MAGE:
                 S_StartSound(SFX_PLAYER_MAGE_BURN_DEATH, target);
-                P_SetMobjState(target, S_PLAY_M_FDTH1);
+                P_MobjChangeState(target, S_PLAY_M_FDTH1);
                 return;
 
             default:
@@ -1179,19 +1179,19 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
             switch(target->player->class)
             {
             case PCLASS_FIGHTER:
-                P_SetMobjState(target, S_FPLAY_ICE);
+                P_MobjChangeState(target, S_FPLAY_ICE);
                 return;
 
             case PCLASS_CLERIC:
-                P_SetMobjState(target, S_CPLAY_ICE);
+                P_MobjChangeState(target, S_CPLAY_ICE);
                 return;
 
             case PCLASS_MAGE:
-                P_SetMobjState(target, S_MPLAY_ICE);
+                P_MobjChangeState(target, S_MPLAY_ICE);
                 return;
 
             case PCLASS_PIG:
-                P_SetMobjState(target, S_PIG_ICE);
+                P_MobjChangeState(target, S_PIG_ICE);
                 return;
 
             default:
@@ -1244,17 +1244,17 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
             {
             case MT_FIGHTER_BOSS:
                 S_StartSound(SFX_PLAYER_FIGHTER_BURN_DEATH, target);
-                P_SetMobjState(target, S_PLAY_F_FDTH1);
+                P_MobjChangeState(target, S_PLAY_F_FDTH1);
                 return;
 
             case MT_CLERIC_BOSS:
                 S_StartSound(SFX_PLAYER_CLERIC_BURN_DEATH, target);
-                P_SetMobjState(target, S_PLAY_C_FDTH1);
+                P_MobjChangeState(target, S_PLAY_C_FDTH1);
                 return;
 
             case MT_MAGE_BOSS:
                 S_StartSound(SFX_PLAYER_MAGE_BURN_DEATH, target);
-                P_SetMobjState(target, S_PLAY_M_FDTH1);
+                P_MobjChangeState(target, S_PLAY_M_FDTH1);
                 return;
 
             default:
@@ -1263,7 +1263,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         }
         else if(target->type == MT_TREEDESTRUCTIBLE)
         {
-            P_SetMobjState(target, S_ZTREEDES_X1);
+            P_MobjChangeState(target, S_ZTREEDES_X1);
             target->height = 24;
             S_StartSound(SFX_TREE_EXPLODE, target);
             return;
@@ -1276,51 +1276,51 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         switch(target->type)
         {
         case MT_BISHOP:
-            P_SetMobjState(target, S_BISHOP_ICE);
+            P_MobjChangeState(target, S_BISHOP_ICE);
             return;
 
         case MT_CENTAUR:
         case MT_CENTAURLEADER:
-            P_SetMobjState(target, S_CENTAUR_ICE);
+            P_MobjChangeState(target, S_CENTAUR_ICE);
             return;
 
         case MT_DEMON:
         case MT_DEMON2:
-            P_SetMobjState(target, S_DEMON_ICE);
+            P_MobjChangeState(target, S_DEMON_ICE);
             return;
 
         case MT_SERPENT:
         case MT_SERPENTLEADER:
-            P_SetMobjState(target, S_SERPENT_ICE);
+            P_MobjChangeState(target, S_SERPENT_ICE);
             return;
 
         case MT_WRAITH:
         case MT_WRAITHB:
-            P_SetMobjState(target, S_WRAITH_ICE);
+            P_MobjChangeState(target, S_WRAITH_ICE);
             return;
 
         case MT_ETTIN:
-            P_SetMobjState(target, S_ETTIN_ICE1);
+            P_MobjChangeState(target, S_ETTIN_ICE1);
             return;
 
         case MT_FIREDEMON:
-            P_SetMobjState(target, S_FIRED_ICE1);
+            P_MobjChangeState(target, S_FIRED_ICE1);
             return;
 
         case MT_FIGHTER_BOSS:
-            P_SetMobjState(target, S_FIGHTER_ICE);
+            P_MobjChangeState(target, S_FIGHTER_ICE);
             return;
 
         case MT_CLERIC_BOSS:
-            P_SetMobjState(target, S_CLERIC_ICE);
+            P_MobjChangeState(target, S_CLERIC_ICE);
             return;
 
         case MT_MAGE_BOSS:
-            P_SetMobjState(target, S_MAGE_ICE);
+            P_MobjChangeState(target, S_MAGE_ICE);
             return;
 
         case MT_PIG:
-            P_SetMobjState(target, S_PIG_ICE);
+            P_MobjChangeState(target, S_PIG_ICE);
             return;
 
         default:
@@ -1348,7 +1348,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     if(target->health < -(target->info->spawnhealth / 2) &&
        target->info->xdeathstate)
     {   // Extreme death.
-        P_SetMobjState(target, target->info->xdeathstate);
+        P_MobjChangeState(target, target->info->xdeathstate);
     }
     else
     {   // Normal death.
@@ -1357,11 +1357,11 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
            (target->info->xdeathstate))
         {
             // This is to fix the imps' staying in fall state.
-            P_SetMobjState(target, target->info->xdeathstate);
+            P_MobjChangeState(target, target->info->xdeathstate);
         }
         else
         {
-            P_SetMobjState(target, target->info->deathstate);
+            P_MobjChangeState(target, target->info->deathstate);
         }
     }
 
@@ -1413,7 +1413,7 @@ boolean P_MorphPlayer(player_t *player)
     pos[VZ] = pmo->pos[VZ];
     angle = pmo->angle;
     oldFlags2 = pmo->flags2;
-    P_SetMobjState(pmo, S_FREETARGMOBJ);
+    P_MobjChangeState(pmo, S_FREETARGMOBJ);
 
     fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT);
     S_StartSound(SFX_TELEPORT, fog);
@@ -1472,8 +1472,8 @@ boolean P_MorphMonster(mobj_t *actor)
     pos[VX] = actor->pos[VX];
     pos[VY] = actor->pos[VY];
     pos[VZ] = actor->pos[VZ];
-    P_RemoveMobjFromTIDList(actor);
-    P_SetMobjState(actor, S_FREETARGMOBJ);
+    P_MobjRemoveFromTIDList(actor);
+    P_MobjChangeState(actor, S_FREETARGMOBJ);
 
     fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT);
     S_StartSound(SFX_TELEPORT, fog);
@@ -1486,7 +1486,7 @@ boolean P_MorphMonster(mobj_t *actor)
     monster->angle = oldMonster.angle;
     monster->tid = oldMonster.tid;
     monster->special = oldMonster.special;
-    P_InsertMobjIntoTIDList(monster, oldMonster.tid);
+    P_MobjInsertIntoTIDList(monster, oldMonster.tid);
     memcpy(monster->args, oldMonster.args, 5);
 
     // Check for turning off minotaur power for active icon.
@@ -1959,7 +1959,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             if(P_Random() < 96)
             {
                 target->flags |= MF_JUSTHIT; // fight back!
-                P_SetMobjState(target, target->info->painstate);
+                P_MobjChangeState(target, target->info->painstate);
             }
             else
             {   // "electrocute" the target.
@@ -1981,7 +1981,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         else
         {
             target->flags |= MF_JUSTHIT; // fight back!
-            P_SetMobjState(target, target->info->painstate);
+            P_MobjChangeState(target, target->info->painstate);
             if(inflictor && inflictor->type == MT_POISONCLOUD)
             {
                 if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
@@ -2015,7 +2015,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         if(target->state == &states[target->info->spawnstate] &&
            target->info->seestate != S_NULL)
         {
-            P_SetMobjState(target, target->info->seestate);
+            P_MobjChangeState(target, target->info->seestate);
         }
     }
 }
@@ -2132,6 +2132,6 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
 
     if(!(leveltime & 63) && playPainSound)
     {
-        P_SetMobjState(target, target->info->painstate);
+        P_MobjChangeState(target, target->info->painstate);
     }
 }

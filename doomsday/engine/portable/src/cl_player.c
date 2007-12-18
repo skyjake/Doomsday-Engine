@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -347,7 +347,7 @@ void Cl_UpdatePlayerPos(ddplayer_t *pl)
     // The player's client mobj is not linked to any lists, so position
     // can be updated without any hassles.
     memcpy(clmo->pos, mo->pos, sizeof(mo->pos));
-    P_LinkMobj(clmo, 0);       // Update subsector pointer.
+    P_MobjLink(clmo, 0);       // Update subsector pointer.
     clmo->floorz = mo->floorz;
     clmo->ceilingz = mo->ceilingz;
     clmo->mom[MX] = mo->mom[MX];
@@ -520,10 +520,10 @@ void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
 
     if(dx != 0 || dy != 0)
     {
-        P_UnlinkMobj(mo);
+        P_MobjUnlink(mo);
         mo->pos[VX] += dx;
         mo->pos[VY] += dy;
-        P_LinkMobj(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
 
     mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);

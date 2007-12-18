@@ -354,7 +354,7 @@ void P_SetCurrentMap(gamemap_t *map)
 
     watchedPlaneList = &map->watchedPlaneList;
 
-    po_NumPolyobjs = map->numpolyobjs;
+    numpolyobjs = map->numpolyobjs;
     polyobjs = map->polyobjs;
 
     rejectmatrix = map->rejectmatrix;

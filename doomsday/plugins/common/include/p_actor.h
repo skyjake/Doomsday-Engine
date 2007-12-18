@@ -29,10 +29,15 @@
 #ifndef __DD_COMMON_ACTOR_H__
 #define __DD_COMMON_ACTOR_H__
 
-void        P_SetThingSRVO(mobj_t *mo, float stepx, float stepy);
-void        P_SetThingSRVOZ(mobj_t *mo, float stepz);
-void        P_SRVOAngleTicker(mobj_t *mo);
-void        P_ClearThingSRVO(mobj_t *mo);
-void        P_UpdateHealthBits(mobj_t *mobj);
+void            P_MobjRemove(mobj_t *mo);
+
+void            P_MobjUnsetPosition(mobj_t *mo);
+void            P_MobjSetPosition(mobj_t *mo);
+void            P_MobjSetSRVO(mobj_t *mo, float stepx, float stepy);
+void            P_MobjSetSRVOZ(mobj_t *mo, float stepz);
+void            P_MobjClearSRVO(mobj_t *mo);
+void            P_MobjAngleSRVOTicker(mobj_t *mo);
+
+void            P_UpdateHealthBits(mobj_t *mobj);
 
 #endif

@@ -835,7 +835,7 @@ void G_Ticker(timespan_t ticLength)
 #ifdef _DEBUG
 Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 #endif
-                P_RemoveMobj(players[i].plr->mo);
+                P_MobjRemove(players[i].plr->mo);
                 players[i].plr->mo = NULL;
             }
         }
@@ -1257,7 +1257,7 @@ void G_QueueBody(mobj_t *body)
 {
     // Flush an old corpse if needed.
     if(bodyqueslot >= BODYQUESIZE)
-        P_RemoveMobj(bodyque[bodyqueslot % BODYQUESIZE]);
+        P_MobjRemove(bodyque[bodyqueslot % BODYQUESIZE]);
 
     bodyque[bodyqueslot % BODYQUESIZE] = body;
     bodyqueslot++;

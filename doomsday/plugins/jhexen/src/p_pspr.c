@@ -551,7 +551,7 @@ void P_FireWeapon(player_t *plr)
         return;
 
     // Psprite state.
-    P_SetMobjState(plr->plr->mo, PCLASS_INFO(plr->class)->attackstate);
+    P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->attackstate);
     if(plr->class == PCLASS_FIGHTER && plr->readyweapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA] > 0)
     {   // Glowing axe.
@@ -597,7 +597,7 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     if(plr->plr->mo->state >= &states[PCLASS_INFO(plr->class)->attackstate] &&
        plr->plr->mo->state <= &states[PCLASS_INFO(plr->class)->attackendstate])
     {
-        P_SetMobjState(plr->plr->mo, PCLASS_INFO(plr->class)->normalstate);
+        P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->normalstate);
     }
 
     if(plr->readyweapon != WT_NOCHANGE)
@@ -987,7 +987,7 @@ void C_DECL A_LightningZap(mobj_t *mo)
     mo->health -= 8;
     if(mo->health <= 0)
     {
-        P_SetMobjState(mo, mo->info->deathstate);
+        P_MobjChangeState(mo, mo->info->deathstate);
         return;
     }
 
@@ -1081,7 +1081,7 @@ void C_DECL A_LastZap(mobj_t *mo)
     pmo = P_SpawnMobj3fv(MT_LIGHTNING_ZAP, mo->pos);
     if(pmo)
     {
-        P_SetMobjState(pmo, S_LIGHTNING_ZAP_X1);
+        P_MobjChangeState(pmo, S_LIGHTNING_ZAP_X1);
         pmo->mom[MZ] = 40;
     }
 }
@@ -1599,7 +1599,7 @@ void C_DECL A_CFlameMissile(mobj_t *mo)
             }
         }
 
-        P_SetMobjState(mo, S_FLAMEPUFF2_1);
+        P_MobjChangeState(mo, S_FLAMEPUFF2_1);
     }
 }
 
@@ -1681,7 +1681,7 @@ void C_DECL A_CHolyAttack2(mobj_t *mo)
         for(j = 1; j < 3; ++j)
         {
             next = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos);
-            P_SetMobjState(next, next->info->spawnstate + 1);
+            P_MobjChangeState(next, next->info->spawnstate + 1);
             tail->tracer = next;
             tail = next;
         }
@@ -1850,7 +1850,7 @@ void C_DECL A_CHolySeek(mobj_t *mo)
         mo->mom[MX] /= 4;
         mo->mom[MY] /= 4;
         mo->mom[MZ] = 0;
-        P_SetMobjState(mo, mo->info->deathstate);
+        P_MobjChangeState(mo, mo->info->deathstate);
         mo->tics -= P_Random() & 3;
         return;
     }
@@ -1921,7 +1921,7 @@ static void CHolyTailRemove(mobj_t *mo)
         CHolyTailRemove(child);
     }
 
-    P_RemoveMobj(mo);
+    P_MobjRemove(mo);
 }
 
 void C_DECL A_CHolyTail(mobj_t *mo)

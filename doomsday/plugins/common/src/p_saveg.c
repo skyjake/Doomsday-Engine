@@ -564,7 +564,7 @@ static void removeAllThinkers(void)
         next = th->next;
 
         if(th->function == P_MobjThinker)
-            P_RemoveMobj((mobj_t *) th);
+            P_MobjRemove((mobj_t *) th);
         else
             Z_Free(th);
 
@@ -1704,7 +1704,7 @@ static boolean RestoreMobj(mobj_t *mo, int ver)
 
     mo->thinker.function = P_MobjThinker;
 
-    P_SetMobjPosition(mo);
+    P_MobjSetPosition(mo);
     mo->floorz =
         P_GetFloatp(mo->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
     mo->ceilingz =
@@ -2586,11 +2586,11 @@ static int SV_ReadPolyObj(polyobj_t *po)
         Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
 
     angle = (angle_t) SV_ReadLong();
-    PO_RotatePolyobj(P_GetIntp(po, DMU_TAG), angle);
+    P_PolyobjRotate(P_GetIntp(po, DMU_TAG), angle);
     P_SetAnglep(po, DMU_DESTINATION_ANGLE, angle);
     deltaX = FIX2FLT(SV_ReadLong()) - P_GetFloatp(po, DMU_START_SPOT_X);
     deltaY = FIX2FLT(SV_ReadLong()) - P_GetFloatp(po, DMU_START_SPOT_Y);
-    PO_MovePolyobj(P_GetIntp(po, DMU_TAG), deltaX, deltaY);
+    P_PolyobjMove(P_GetIntp(po, DMU_TAG), deltaX, deltaY);
     //// \fixme What about speed? It isn't saved at all?
     return true;
 }
@@ -4069,9 +4069,18 @@ static void P_UnArchiveThinkers(void)
                 // Not for us? (it shouldn't be here anyway!).
                 if(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT))
                 {
-                    th = Z_Calloc(thInfo->size,
-                                  ((thInfo->flags & TSF_SPECIAL)? PU_LEVSPEC : PU_LEVEL),
-                                  0);
+                    // Mobjs use a special engine-side allocator.
+                    if(tClass = TC_MOBJ)
+                    {
+                        th = (thinker_t*)
+                            P_MobjCreate(P_MobjThinker, 0, 0, 0, 0, 64, 64, 0);
+                    }
+                    else
+                    {
+                        th = Z_Calloc(thInfo->size,
+                                      ((thInfo->flags & TSF_SPECIAL)? PU_LEVSPEC : PU_LEVEL),
+                                      0);
+                    }
                     knownThinker = thInfo->Read(th);
                 }
             }
@@ -5180,11 +5189,11 @@ void SV_LoadClient(unsigned int gameid)
     }
     leveltime = hdr.leveltime;
 
-    P_UnsetMobjPosition(mo);
+    P_MobjUnsetPosition(mo);
     mo->pos[VX] = FIX2FLT(SV_ReadLong());
     mo->pos[VY] = FIX2FLT(SV_ReadLong());
     mo->pos[VZ] = FIX2FLT(SV_ReadLong());
-    P_SetMobjPosition(mo);
+    P_MobjSetPosition(mo);
     mo->floorz = FIX2FLT(SV_ReadLong());
     mo->ceilingz = FIX2FLT(SV_ReadLong());
     mo->angle = SV_ReadLong(); /* $unifiedangles */
@@ -5319,7 +5328,7 @@ void SV_MapTeleport(int map, int position)
         {
             if(players[i].plr->ingame)
             {
-                P_RemoveMobj(players[i].plr->mo);
+                P_MobjRemove(players[i].plr->mo);
             }
         }
     }

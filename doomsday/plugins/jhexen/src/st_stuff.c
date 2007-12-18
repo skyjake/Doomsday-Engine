@@ -3,7 +3,7 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2005-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
@@ -2136,6 +2136,6 @@ void SB_ChangePlayerClass(player_t *player, int newclass)
         dummy.angle = oldMobj->angle;
 
         P_SpawnPlayer(&dummy, player - players);
-        P_RemoveMobj(oldMobj);
+        P_MobjRemove(oldMobj);
     }
 }

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -296,7 +296,7 @@ void Cl_PolyMoverThinker(polymover_t *mover)
         }
 
         // Do the move.
-        PO_MovePolyobj(mover->number | 0x80000000, dx, dy);
+        P_PolyobjMove(mover->number | 0x80000000, dx, dy);
     }
 
     if(mover->rotate)
@@ -314,7 +314,7 @@ void Cl_PolyMoverThinker(polymover_t *mover)
             // Adjust to speed.
             dist = FIX2FLT(poly->angleSpeed);
         }
-        PO_RotatePolyobj(mover->number | 0x80000000, FLT2FIX(dist));
+        P_PolyobjRotate(mover->number | 0x80000000, FLT2FIX(dist));
     }
 
     // Can we get rid of this mover?
@@ -789,7 +789,7 @@ void Cl_ReadPolyDelta2(boolean skip)
         return;
 
 #ifdef _DEBUG
-if(num >= po_NumPolyobjs)
+if(num >= numpolyobjs)
 {
     // This is worrisome.
     Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);

@@ -149,10 +149,10 @@ mobj_t     *P_SpawnTeleFog(float x, float y);
 mobj_t     *P_SpawnMotherMissile(mobjtype_t type, float x, float y, float z,
                                  mobj_t *source, mobj_t *dest); // d64tc
 
-void        P_RemoveMobj(mobj_t *th);
-boolean     P_SetMobjState(mobj_t *mobj, statenum_t state);
+void        P_MobjRemove(mobj_t *th);
+boolean     P_MobjChangeState(mobj_t *mobj, statenum_t state);
 void        P_MobjThinker(mobj_t *mobj);
-int         P_GetMobjFloorType(mobj_t *thing);
+int         P_MobjGetFloorType(mobj_t *thing);
 void        P_RipperBlood(mobj_t *mo);
 void        P_SetDoomsdayFlags(mobj_t *mo);
 void        P_HitFloor(mobj_t *mo);

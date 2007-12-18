@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
@@ -324,7 +324,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     }
     else
     {
-        P_SetThingSRVO(actor, FIX2FLT(stepx), FIX2FLT(stepy));
+        P_MobjSetSRVO(actor, FIX2FLT(stepx), FIX2FLT(stepy));
         actor->flags &= ~MF_INFLOAT;
     }
 
@@ -1187,7 +1187,7 @@ void C_DECL A_Look(mobj_t *actor)
             S_StartSound(sound, actor);
     }
 
-    P_SetMobjState(actor, actor->info->seestate);
+    P_MobjChangeState(actor, actor->info->seestate);
 }
 
 /*
@@ -1242,7 +1242,7 @@ void C_DECL A_Chase(mobj_t *actor)
         if(P_LookForPlayers(actor, true))
             return;             // got a new target
 
-        P_SetMobjState(actor, actor->info->spawnstate);
+        P_MobjChangeState(actor, actor->info->spawnstate);
         return;
     }
 
@@ -1261,7 +1261,7 @@ void C_DECL A_Chase(mobj_t *actor)
         if(actor->info->attacksound)
             S_StartSound(actor->info->attacksound, actor);
 
-        P_SetMobjState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleestate);
         return;
     }
 
@@ -1276,7 +1276,7 @@ void C_DECL A_Chase(mobj_t *actor)
         if(!P_CheckMissileRange(actor))
             goto nomissile;
 
-        P_SetMobjState(actor, actor->info->missilestate);
+        P_MobjChangeState(actor, actor->info->missilestate);
         actor->flags |= MF_JUSTATTACKED;
         return;
     }
@@ -1413,7 +1413,7 @@ void C_DECL A_CPosRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target) || P_Random() < 40)
     {
-        P_SetMobjState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seestate);
     }
 }
 
@@ -1428,7 +1428,7 @@ void C_DECL A_SpidRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_SetMobjState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seestate);
     }
 }
 
@@ -1884,7 +1884,7 @@ void C_DECL A_SkelMissile(mobj_t *actor)
             P_SpawnMobj3f(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_HFOG);
 
             S_StartSound(sfx_stlktp, actor);
-            P_SetMobjState(actor, S_STALK_HIDE);
+            P_MobjChangeState(actor, S_STALK_HIDE);
             actor->flags &= ~MF_SOLID;
             actor->flags &= ~MF_SHOOTABLE;
 
@@ -2403,7 +2403,7 @@ void C_DECL A_BossExplode(mobj_t *actor)
     actor->reactiontime--;
     if(actor->reactiontime <= 0)
     {
-        P_SetMobjState(actor, actor->info->deathstate + 2);
+        P_MobjChangeState(actor, actor->info->deathstate + 2);
     }
 }
 
@@ -2474,7 +2474,7 @@ void C_DECL A_SpitAcid(mobj_t* actor)
     }
     else
     {
-        P_SetMobjState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seestate);
     }
 }
 
@@ -2500,7 +2500,7 @@ void C_DECL A_AcidCharge(mobj_t *actor)
     }
     else
     {
-        P_SetMobjState(actor, actor->info->missilestate + 1);
+        P_MobjChangeState(actor, actor->info->missilestate + 1);
     }
 }
 
@@ -2892,7 +2892,7 @@ void C_DECL A_BrainScream(mobj_t *mo)
         th = P_SpawnMobj3f(x, y, z, MT_ROCKET);
         th->mom[MZ] = P_Random() * 512;
 
-        P_SetMobjState(th, S_BRAINEXPLODE1);
+        P_MobjChangeState(th, S_BRAINEXPLODE1);
 
         th->tics -= P_Random() & 7;
         if(th->tics < 1)
@@ -2915,7 +2915,7 @@ void C_DECL A_BrainExplode(mobj_t *mo)
     th = P_SpawnMobj3f(x, y, z, MT_ROCKET);
     th->mom[MZ] = P_Random() * 512;
 
-    P_SetMobjState(th, S_BRAINEXPLODE1);
+    P_MobjChangeState(th, S_BRAINEXPLODE1);
 
     th->tics -= P_Random() & 7;
     if(th->tics < 1)
@@ -3008,13 +3008,13 @@ void C_DECL A_SpawnFly(mobj_t *mo)
 
     newmobj = P_SpawnMobj3f(targ->pos[VX], targ->pos[VY], targ->pos[VZ], type);
     if(P_LookForPlayers(newmobj, true))
-        P_SetMobjState(newmobj, newmobj->info->seestate);
+        P_MobjChangeState(newmobj, newmobj->info->seestate);
 
     // telefrag anything in this spot
     P_TeleportMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false);
 
     // remove self (i.e., cube).
-    P_RemoveMobj(mo);
+    P_MobjRemove(mo);
 }
 
 void C_DECL A_PlayerScream(mobj_t *mo)

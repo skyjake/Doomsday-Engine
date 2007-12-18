@@ -43,6 +43,8 @@
 typedef struct mobj_s {
 DD_BASE_MOBJ_ELEMENTS()} mobj_t;
 
+#define MOBJ_SIZE		    gx.mobjSize
+
 #define DEFAULT_FRICTION    FIX2FLT(0xe800)
 
 extern float    tmpFloorZ, tmpCeilingZ;
@@ -51,7 +53,15 @@ extern boolean  dontHitMobjs;
 
 #include "cl_def.h"                // for playerstate_s
 
-void            P_SetState(mobj_t *mo, int statenum);
+void            P_InitUnusedMobjList(void);
+
+mobj_t         *P_MobjCreate(think_t function, float x, float y, float z,
+                             angle_t angle, float radius, float height,
+                             int ddflags);
+void            P_MobjDestroy(mobj_t *mo);
+void            P_MobjRecycle(mobj_t *mo);
+
+void            P_MobjSetState(mobj_t *mo, int statenum);
 void            P_MobjMovement(mobj_t *mo);
 void            P_MobjMovement2(mobj_t *mo, void *pstate);
 void            P_MobjZMovement(mobj_t *mo);

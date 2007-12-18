@@ -191,8 +191,8 @@ mobj_t     *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source,
                                 angle_t angle, float momz);
 mobj_t     *P_SpawnTeleFog(float x, float y);
 
-void        P_RemoveMobj(mobj_t *th);
-boolean     P_SetMobjState(mobj_t *mobj, statenum_t state);
+void        P_MobjRemove(mobj_t *th);
+boolean     P_MobjChangeState(mobj_t *mobj, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t *mobj, statenum_t state);
 void        P_ThrustMobj(mobj_t *mo, angle_t angle, float move);
 void        P_WindThrust(mobj_t *mo);
@@ -202,10 +202,10 @@ void        P_MobjThinker(mobj_t *mobj);
 void        P_BlasterMobjThinker(mobj_t *mobj);
 void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t *originator);
 void        P_RipperBlood(mobj_t *mo);
-int         P_GetMobjFloorType(mobj_t *thing);
+int         P_MobjGetFloorType(mobj_t *thing);
 int         P_HitFloor(mobj_t *thing);
 boolean     P_CheckMissileSpawn(mobj_t *missile);
-void        P_ZMovement(mobj_t *mo);
+void        P_MobjMoveZ(mobj_t *mo);
 void        P_ExplodeMissile(mobj_t *mo);
 
 void        P_SpawnMapThing(spawnspot_t *th);

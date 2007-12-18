@@ -1691,7 +1691,7 @@ void R_SetupLevel(int mode, int flags)
         }
 
         // We don't render fakeradio on polyobjects...
-        PO_SetupPolyobjs();
+        PO_InitForMap();
         return;
     }
     case DDSLM_FINALIZE:
@@ -1757,7 +1757,7 @@ void R_SetupLevel(int mode, int flags)
         }
 
         // We don't render fakeradio on polyobjects...
-        PO_SetupPolyobjs();
+        PO_InitForMap();
 
         // Run any commands specified in Map Info.
         {

@@ -272,7 +272,7 @@ void P_Thrust(player_t *player, angle_t angle, float move)
         plrmo->mom[MY] += (move / 4) * FIX2FLT(finesine[an]);
     }
 #elif __JHEXEN__
-    else if(P_GetMobjFloorType(plrmo) == FLOOR_ICE)   // Friction_Low
+    else if(P_MobjGetFloorType(plrmo) == FLOOR_ICE)   // Friction_Low
     {
         plrmo->mom[MX] += (move / 2) * FIX2FLT(finecosine[an]);
         plrmo->mom[MY] += (move / 2) * FIX2FLT(finesine[an]);
@@ -445,7 +445,7 @@ void P_MovePlayer(player_t *player)
         if((forwardMove != 0 || sideMove != 0) &&
            player->plr->mo->state == &states[pClassInfo->normalstate])
         {
-            P_SetMobjState(player->plr->mo, pClassInfo->runstate);
+            P_MobjChangeState(player->plr->mo, pClassInfo->runstate);
         }
 
         //P_CheckPlayerJump(player); // done in a different place
@@ -693,7 +693,7 @@ void P_MorphThink(player_t *player)
     if(pmo->pos[VZ] <= pmo->floorz && (P_Random() < 32))
     {   // Jump and noise
         pmo->mom[MZ] += 1;
-        P_SetMobjState(pmo, S_CHICPLAY_PAIN);
+        P_MobjChangeState(pmo, S_CHICPLAY_PAIN);
         return;
     }
 
@@ -729,7 +729,7 @@ boolean P_UndoPlayerMorph(player_t *player)
 # else
     oldBeast = MT_CHICPLAYER;
 # endif
-    P_SetMobjState(pmo, S_FREETARGMOBJ);
+    P_MobjChangeState(pmo, S_FREETARGMOBJ);
 
     playerNum = P_GetPlayerNum(player);
 # if __JHEXEN__
@@ -740,7 +740,7 @@ boolean P_UndoPlayerMorph(player_t *player)
 
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit
-        P_RemoveMobj(mo);
+        P_MobjRemove(mo);
         mo = P_SpawnMobj3fv(oldBeast, pos);
 
         mo->angle = angle;
@@ -957,7 +957,7 @@ void P_ClientSideThink(void)
     }
     else
     {   float       mul =
-            ((P_GetMobjFloorType(mo) == FLOOR_ICE) ? (1.0f / 2) : 1);
+            ((P_MobjGetFloorType(mo) == FLOOR_ICE) ? (1.0f / 2) : 1);
         DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
     }
 #else
@@ -1214,7 +1214,7 @@ void P_PlayerThinkSpecial(player_t *player)
         P_PlayerInSpecialSector(player);
 
 #if __JHEXEN__
-    if((floorType = P_GetMobjFloorType(player->plr->mo)) != FLOOR_SOLID)
+    if((floorType = P_MobjGetFloorType(player->plr->mo)) != FLOOR_SOLID)
     {
         P_PlayerOnSpecialFlat(player, floorType);
     }

@@ -152,7 +152,7 @@ boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
     {
         if(thing->pos[VZ] == P_GetFloatp(thing->subsector,
                                    DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
-           P_GetMobjFloorType(thing) >= FLOOR_LIQUID)
+           P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
         {
             thing->floorclip = 10;
         }
@@ -173,7 +173,7 @@ boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
         thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;
     }
 
-    P_ClearThingSRVO(thing);
+    P_MobjClearSRVO(thing);
     return true;
 }
 

@@ -40,12 +40,13 @@
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_misc.h"
+#include "de_audio.h"
 
 #include "def_main.h"
 
 // MACROS ------------------------------------------------------------------
 
-// Max. distance to move in one call to P_XYMovement.
+// Max. distance to move in one call to P_MobjMoveXY.
 #define MAXRADIUS       32
 #define MAXMOVE         30
 
@@ -101,12 +102,84 @@ static boolean noFit;
 static float tmpDropOffZ;
 static float tmpMom[3];
 
+static mobj_t *unusedMobjs = NULL;
+
 // CODE --------------------------------------------------------------------
+
+/**
+ * Called during map loading.
+ */
+void P_InitUnusedMobjList(void)
+{
+    // Any zone memory allocated for the mobjs will have already been purged.
+    unusedMobjs = NULL;
+}
+
+/**
+ * All mobjs must be allocated through this routine. Part of the public API.
+ */
+mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
+                     angle_t angle, float radius, float height, int ddflags)
+{
+    mobj_t         *mo;
+
+    // Do we have any unused mobjs we can reuse?
+    if(unusedMobjs)
+    {
+        mo = unusedMobjs;
+        unusedMobjs = unusedMobjs->bnext;
+        memset(mo, 0, MOBJ_SIZE);
+    }
+    else
+    {   // No, we need to allocate another.
+        mo = Z_Calloc(MOBJ_SIZE, PU_LEVEL, NULL);
+    }
+
+    mo->pos[VX] = x;
+    mo->pos[VY] = y;
+    mo->pos[VZ] = z;
+    mo->angle = angle;
+    mo->radius = radius;
+    mo->height = height;
+    mo->ddflags = ddflags;
+    mo->thinker.function = function;
+    if(mo->thinker.function)
+        P_AddThinker(&mo->thinker);
+
+    return mo;
+}
+
+/**
+ * All mobjs must be destroyed through this routine. Part of the public API.
+ *
+ * \note Does not actually destroy the mobj. Instead, mobj is marked as
+ * awaiting removal (which occurs when its turn for thinking comes around).
+ */
+void P_MobjDestroy(mobj_t *mo)
+{
+    // Unlink from sector and block lists.
+    P_MobjUnlink(mo);
+
+    S_StopSound(0, mo);
+
+    P_RemoveThinker((thinker_t *) mo);
+}
+
+/**
+ * Called when a mobj is actually removed (when it's thinking turn comes around).
+ * The mobj is moved to the unused list to be reused later.
+ */
+void P_MobjRecycle(mobj_t *mo)
+{
+    // The blocknext link is used as the unused mobj list links.
+    mo->bnext = unusedMobjs;
+    unusedMobjs = mo;
+}
 
 /**
  * 'statenum' must be a valid state (not null!).
  */
-void P_SetState(mobj_t *mobj, int statenum)
+void P_MobjSetState(mobj_t *mobj, int statenum)
 {
     state_t    *st = states + statenum;
     boolean     spawning = (mobj->state == 0);
@@ -114,7 +187,7 @@ void P_SetState(mobj_t *mobj, int statenum)
 
 #if _DEBUG
     if(statenum < 0 || statenum >= defs.count.states.num)
-        Con_Error("P_SetState: statenum %i out of bounds.\n", statenum);
+        Con_Error("P_MobjSetState: statenum %i out of bounds.\n", statenum);
 #endif
 
     mobj->state = st;
@@ -139,7 +212,7 @@ void P_SetState(mobj_t *mobj, int statenum)
 /**
  * Adjusts tmpFloorZ and tmpCeilingZ as lines are contacted.
  */
-static boolean PIT_CheckLine(line_t *ld, void *parm)
+boolean PIT_CheckLine(line_t *ld, void *parm)
 {
     int         pX, pY;
     checkpos_data_t *tm = parm;
@@ -188,7 +261,7 @@ static boolean PIT_CheckLine(line_t *ld, void *parm)
     return true;
 }
 
-static boolean PIT_CheckMobj(mobj_t *mo, void *parm)
+boolean PIT_CheckMobj(mobj_t *mo, void *parm)
 {
     checkpos_data_t *tm = parm;
     float       blockdist;
@@ -393,7 +466,7 @@ boolean P_TryMoveXYZ(mobj_t *mo, float x, float y, float z)
         links |= DDLINK_SECTOR;
     if(IS_BLOCK_LINKED(mo))
         links |= DDLINK_BLOCKMAP;
-    P_UnlinkMobj(mo);
+    P_MobjUnlink(mo);
 
     mo->floorz = tmpFloorZ;
     mo->ceilingz = tmpCeilingZ;
@@ -402,7 +475,7 @@ boolean P_TryMoveXYZ(mobj_t *mo, float x, float y, float z)
     mo->pos[VZ] = z;
 
     // Put back to the same links.
-    P_LinkMobj(mo, links);
+    P_MobjLink(mo, links);
     return true;
 }
 
@@ -480,7 +553,7 @@ boolean P_StepMove(mobj_t *mo, float dx, float dy, float dz)
  * changes height. If the mobj doesn't fit, the z will be set to the lowest
  * value and false will be returned.
  */
-static boolean P_HeightClip(mobj_t *mo)
+static boolean heightClip(mobj_t *mo)
 {
     boolean onfloor;
 
@@ -550,7 +623,7 @@ boolean P_IsInVoid(ddplayer_t *player)
  * Allows the player to slide along any angled walls. Adjusts the player's
  * momentum vector so that the next move slides along the linedef.
  */
-static void P_WallMomSlide(line_t *ld)
+static void wallMomSlide(line_t *ld)
 {
     int         side;
     uint        an;
@@ -590,7 +663,7 @@ static void P_WallMomSlide(line_t *ld)
     tmpMom[VY] = newlen * FIX2FLT(finesine[an]);
 }
 
-static boolean PTR_SlideTraverse(intercept_t *in)
+boolean PTR_SlideTraverse(intercept_t *in)
 {
     line_t     *li;
 
@@ -644,7 +717,7 @@ static boolean PTR_SlideTraverse(intercept_t *in)
  *
  * This is a kludgy mess. (No kidding?)
  */
-static void P_MobjSlideMove(mobj_t *mo)
+static void mobjSlideMove(mobj_t *mo)
 {
     float       leadPos[2];
     float       trailPos[2];
@@ -725,7 +798,7 @@ static void P_MobjSlideMove(mobj_t *mo)
     tmpMom[MX] = mo->mom[MX] * bestSlideFrac;
     tmpMom[MY] = mo->mom[MY] * bestSlideFrac;
 
-    P_WallMomSlide(bestSlideLine); // Clip the move.
+    wallMomSlide(bestSlideLine); // Clip the move.
 
     mo->mom[MX] = tmpMom[MX];
     mo->mom[MY] = tmpMom[MY];
@@ -743,10 +816,10 @@ static void P_MobjSlideMove(mobj_t *mo)
  *
  * If anything doesn't fit anymore, true will be returned.
  */
-static boolean PIT_SectorPlanesChanged(mobj_t *mo, void *data)
+boolean PIT_SectorPlanesChanged(mobj_t *mo, void *data)
 {
     // Always keep checking.
-    if(P_HeightClip(mo))
+    if(heightClip(mo))
         return true;
 
     noFit = true;
@@ -844,7 +917,7 @@ void P_MobjMovement2(mobj_t *mo, void *pstate)
                 else
                 {
                     // Try to slide along it.
-                    P_MobjSlideMove(mo);
+                    mobjSlideMove(mo);
                 }
             }
             else

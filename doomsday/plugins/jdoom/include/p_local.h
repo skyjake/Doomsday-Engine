@@ -136,10 +136,10 @@ void        P_SpawnPuff(float x, float y, float z);
 void        P_SpawnBlood(float x, float y, float z, int damage);
 mobj_t     *P_SpawnTeleFog(float x, float y);
 
-void        P_RemoveMobj(mobj_t *mo);
-boolean     P_SetMobjState(mobj_t *mo, statenum_t state);
+void        P_MobjRemove(mobj_t *mo);
+boolean     P_MobjChangeState(mobj_t *mo, statenum_t state);
 void        P_MobjThinker(mobj_t *mo);
-int         P_GetMobjFloorType(mobj_t *mo);
+int         P_MobjGetFloorType(mobj_t *mo);
 void        P_RipperBlood(mobj_t *mo);
 
 void        P_SetDoomsdayFlags(mobj_t *mo);

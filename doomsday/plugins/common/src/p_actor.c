@@ -23,8 +23,9 @@
  */
 
 /**
- * p_actor.c: Common code relating to actors, or "monsters".
- * Actor movement smoothing; the "Servo".
+ * p_actor.c: Common code relating to mobjs.
+ *
+ * Mobj management, movement smoothing etc.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -64,11 +65,60 @@
 
 // CODE --------------------------------------------------------------------
 
+void P_MobjRemove(mobj_t *mo)
+{
+#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+    if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED) &&
+       (mo->type != MT_INV) && (mo->type != MT_INS))
+    {
+        P_RespawnEnqueue(&mo->spawnspot);
+    }
+#elif __JHERETIC__
+    if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED))
+    {
+        P_RespawnEnqueue(&mo->spawnspot);
+    }
+#elif __JHEXEN__
+    if((mo->flags & MF_COUNTKILL) && (mo->flags & MF_CORPSE))
+    {
+        A_DeQueueCorpse(mo);
+    }
+
+    P_MobjRemoveFromTIDList(mo);
+#endif
+
+    P_MobjDestroy(mo);
+}
+
+/**
+ * Called after a move to link the mobj back into the world.
+ */
+void P_MobjSetPosition(mobj_t *mo)
+{
+    int         flags = 0;
+
+    if(!(mo->flags & MF_NOSECTOR))
+        flags |= DDLINK_SECTOR;
+
+    if(!(mo->flags & MF_NOBLOCKMAP))
+        flags |= DDLINK_BLOCKMAP;
+
+    P_MobjLink(mo, flags);
+}
+
+/**
+ * Unlinks a mobj from the world so that it can be moved.
+ */
+void P_MobjUnsetPosition(mobj_t *mo)
+{
+    P_MobjUnlink(mo);
+}
+
 /**
  * The actor has taken a step, set the corresponding short-range visual
  * offset.
  */
-void P_SetThingSRVO(mobj_t *mo, float stepx, float stepy)
+void P_MobjSetSRVO(mobj_t *mo, float stepx, float stepy)
 {
     mo->srvo[VX] = -stepx;
     mo->srvo[VY] = -stepy;
@@ -78,7 +128,7 @@ void P_SetThingSRVO(mobj_t *mo, float stepx, float stepy)
  * The actor has taken a step, set the corresponding short-range visual
  * offset.
  */
-void P_SetThingSRVOZ(mobj_t *mo, float stepz)
+void P_MobjSetSRVOZ(mobj_t *mo, float stepz)
 {
     mo->srvo[VZ] = -stepz;
 }
@@ -89,7 +139,7 @@ void P_SetThingSRVOZ(mobj_t *mo, float stepz)
  * Real-life analogy: angular momentum (you can't suddenly just take a
  * 90 degree turn in zero time).
  */
-void P_SRVOAngleTicker(mobj_t *mo)
+void P_MobjAngleSRVOTicker(mobj_t *mo)
 {
     short       target, step, diff;
     int         lstep, hgt;
@@ -144,7 +194,7 @@ void P_SRVOAngleTicker(mobj_t *mo)
  * The thing's timer has run out, which means the thing has completed its
  * step. Or there has been a teleport.
  */
-void P_ClearThingSRVO(mobj_t *mo)
+void P_MobjClearSRVO(mobj_t *mo)
 {
     memset(mo->srvo, 0, sizeof(mo->srvo));
 }

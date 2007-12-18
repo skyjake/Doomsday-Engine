@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -446,7 +446,7 @@ void P_UnlinkFromLines(mobj_t *mo)
 /**
  * Unlinks a mobj from everything it has been linked to.
  */
-void P_UnlinkMobj(mobj_t *mo)
+void P_MobjUnlink(mobj_t *mo)
 {
     if(IS_SECTOR_LINKED(mo))
         P_UnlinkFromSector(mo);
@@ -532,7 +532,7 @@ void P_LinkToLines(mobj_t *mo)
  * Sets mobj->subsector properly. Calling with flags==0 only updates
  * the subsector pointer. Can be called without unlinking first.
  */
-void P_LinkMobj(mobj_t *mo, byte flags)
+void P_MobjLink(mobj_t *mo, byte flags)
 {
     sector_t *sec;
     mobj_t *root;
@@ -928,7 +928,7 @@ boolean P_AllLinesBoxIteratorv(const arvec2_t box,
                                boolean (*func) (line_t *, void *),
                                void *data)
 {
-    if(po_NumPolyobjs > 0)
+    if(numpolyobjs > 0)
     {
         if(!P_PolyobjLinesBoxIteratorv(box, func, data))
             return false;
