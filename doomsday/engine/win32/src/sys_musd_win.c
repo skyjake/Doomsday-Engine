@@ -149,7 +149,7 @@ static void *song;
 static size_t songSize;
 
 static MIDIHDR midiBuffers[MAX_BUFFERS];
-static MIDIHDR *loopBuffer;
+static LPMIDIHDR loopBuffer;
 static int registered;
 static byte *readPos;
 static int readTime;            // In ticks.
@@ -313,16 +313,16 @@ int DM_WinMusGetNextEvent(MIDIEVENT *mev)
     return TRUE;
 }
 
-MIDIHDR *DM_WinMusGetFreeBuffer(void)
+LPMIDIHDR DM_WinMusGetFreeBuffer(void)
 {
     int         i;
 
     for(i = 0; i < MAX_BUFFERS; ++i)
     {
-        if(midiBuffers[i].dwUser == FALSE)
-        {
-            MIDIHDR *mh = midiBuffers + i;
+        LPMIDIHDR   mh = &midiBuffers[i];
 
+        if(mh->dwUser == FALSE)
+        {
             // Mark the header used.
             mh->dwUser = TRUE;
 
@@ -342,9 +342,9 @@ MIDIHDR *DM_WinMusGetFreeBuffer(void)
 /**
  * Note that lpData changes during reallocation!
  *
- * @return                  @c false, if the allocation can't be done.
+ * @return              @c false, if the allocation can't be done.
  */
-int DM_WinMusAllocMoreBuffer(MIDIHDR *mh)
+int DM_WinMusAllocMoreBuffer(LPMIDIHDR mh)
 {
     // Don't allocate too large buffers.
     if(mh->dwBufferLength + BUFFER_ALLOC > MAX_BUFFER_LEN)
@@ -360,35 +360,40 @@ int DM_WinMusAllocMoreBuffer(MIDIHDR *mh)
 /**
  * The buffer is ready, prepare it and stream out.
  */
-void DM_WinMusStreamOut(MIDIHDR *mh)
+void DM_WinMusStreamOut(LPMIDIHDR mh)
 {
     midiStreamOut(midiStr, mh, sizeof(*mh));
 }
 
-void CALLBACK DM_WinMusCallback(HMIDIOUT hmo, UINT wMsg, DWORD dwInstance,
+void CALLBACK DM_WinMusCallback(HMIDIOUT hmo, UINT uMsg, DWORD dwInstance,
                                 DWORD dwParam1, DWORD dwParam2)
 {
-    MIDIHDR    *mh;
+    LPMIDIHDR   mh;
 
-    if(wMsg != MOM_DONE)
-        return;
-
-    if(!playing)
-        return;
-
-    mh = (MIDIHDR *) dwParam1;
-    // This buffer has stopped. Is this the last buffer?
-    // If so, check for looping.
-    if(mh == loopBuffer)
+    switch(uMsg)
     {
-        // Play all buffers again.
-        DM_WinMusPlay(true);
+    case MOM_DONE:
+        if(!playing)
+            return;
+
+        mh = (LPMIDIHDR) dwParam1;
+        // This buffer has stopped. Is this the last buffer?
+        // If so, check for looping.
+        if(mh == loopBuffer)
+        {
+            // Play all buffers again.
+            DM_WinMusPlay(true);
+        }
+        break;
+
+    default:
+        break;
     }
 }
 
 void DM_WinMusPrepareBuffers(MUSHeader_t *song)
 {
-    MIDIHDR    *mh = DM_WinMusGetFreeBuffer();
+    LPMIDIHDR   mh = DM_WinMusGetFreeBuffer();
     MIDIEVENT   mev;
     DWORD      *ptr;
 
@@ -437,7 +442,7 @@ void DM_WinMusReleaseBuffers(void)
     for(i = 0; i < MAX_BUFFERS; ++i)
         if(midiBuffers[i].dwUser)
         {
-            MIDIHDR *mh = midiBuffers + i;
+            LPMIDIHDR mh = &midiBuffers[i];
 
             midiOutUnprepareHeader((HMIDIOUT) midiStr, mh, sizeof(*mh));
             free(mh->lpData);
@@ -596,7 +601,7 @@ int DM_WinMusOpenStream(void)
 
     devId = MIDI_MAPPER;
     if((mmres =
-        midiStreamOpen(&midiStr, &devId, 1, (DWORD) DM_WinMusCallback, 0,
+        midiStreamOpen(&midiStr, &devId, 1, (DWORD_PTR) DM_WinMusCallback, 0,
                        CALLBACK_FUNCTION)) != MMSYSERR_NOERROR)
     {
         Con_Message("DM_WinMusOpenStream: midiStreamOpen error %i.\n", mmres);
