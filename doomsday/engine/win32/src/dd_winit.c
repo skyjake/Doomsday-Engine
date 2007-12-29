@@ -92,10 +92,10 @@ BOOL InitApplication(application_t *app)
     wcex.lpfnWndProc = (WNDPROC) WndProc;
     wcex.hInstance = app->hInstance;
     wcex.hIcon =
-        (HICON) LoadImage(app->hInstance, MAKEINTRESOURCE(IDI_DOOMSDAY),
+        (HICON) LoadImage(app->hInstance, MAKEINTRESOURCE(IDI_DOOMSDAY_ICON),
                           IMAGE_ICON, 0, 0, LR_DEFAULTSIZE);
     wcex.hIconSm =
-        (HICON) LoadImage(app->hInstance, MAKEINTRESOURCE(IDI_DOOMSDAY),
+        (HICON) LoadImage(app->hInstance, MAKEINTRESOURCE(IDI_DOOMSDAY_ICON),
                           IMAGE_ICON, 16, 16, 0);
     wcex.hCursor = LoadCursor(app->hInstance, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
