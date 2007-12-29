@@ -65,8 +65,8 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -93,6 +93,8 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				OutputManifestFile="..\..\..\engine\win32\res\$(ProjectName).manifest"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -165,8 +167,8 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"
+				PreprocessorDefinitions="WIN32;_DEBUG;DEBUG;PROFILE;_WINDOWS"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -193,6 +195,8 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				OutputManifestFile="..\..\..\engine\win32\res\$(ProjectName).manifest"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -2035,7 +2039,11 @@
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
 			<File
-				RelativePath="..\..\..\engine\win32\res\Doomsday.rc"
+				RelativePath="..\..\..\engine\win32\res\doomsday.ico"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\win32\res\doomsday.rc"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -2053,10 +2061,6 @@
 						AdditionalIncludeDirectories="Src;$(NoInherit)"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\win32\res\icon2.ico"
-				>
 			</File>
 		</Filter>
 	</Files>
