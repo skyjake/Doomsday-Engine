@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,11 +19,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_input.h: Game Controllers
  */
 
@@ -46,12 +47,12 @@
 #define IJOY_POV_CENTER	-1
 
 typedef struct keyevent_s {
-	char            event;          // Type of the event.       
-	unsigned char   code;           // The scancode (extended, corresponds DI keys).
+	char            event; // Type of the event.
+	unsigned char   code; // The scancode (extended, corresponds DI keys).
 } keyevent_t;
 
 typedef struct mousestate_s {
-	int             x, y;           // Relative X and Y mickeys since last call.
+	int             x, y; // Relative X and Y mickeys since last call.
 	int             buttonDowns[IMB_MAXBUTTONS]; // Button down count.
 	int             buttonUps[IMB_MAXBUTTONS]; // Button up count.
 } mousestate_t;
@@ -69,11 +70,11 @@ typedef struct joystate_s {
 extern byte     usejoystick;
 
 void            I_Register(void);
-int             I_Init(void);
+boolean         I_Init(void);
 void            I_Shutdown(void);
 boolean         I_MousePresent(void);
 boolean         I_JoystickPresent(void);
-int             I_GetKeyEvents(keyevent_t *evbuf, int bufsize);
+size_t          I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize);
 void            I_GetMouseState(mousestate_t *state);
 void            I_GetJoystickState(joystate_t * state);
 

@@ -939,9 +939,10 @@ void DD_ClearKeyRepeaters(void)
  */
 void DD_ReadKeyboard(void)
 {
-    ddevent_t ev;
-    keyevent_t keyevs[KBDQUESIZE];
-    int     i, k, numkeyevs;
+    uint            i, k;
+    ddevent_t       ev;
+    size_t          n, numkeyevs;
+    keyevent_t      keyevs[KBDQUESIZE];
 
     if(isDedicated)
     {
@@ -985,9 +986,9 @@ void DD_ReadKeyboard(void)
     numkeyevs = I_GetKeyEvents(keyevs, KBDQUESIZE);
 
     // Translate them to Doomsday keys.
-    for(i = 0; i < numkeyevs; ++i)
+    for(n = 0; n < numkeyevs; ++n)
     {
-        keyevent_t *ke = keyevs + i;
+        keyevent_t     *ke = &keyevs[n];
 
         // Check the type of the event.
         if(ke->event == IKE_KEY_DOWN)   // Key pressed?

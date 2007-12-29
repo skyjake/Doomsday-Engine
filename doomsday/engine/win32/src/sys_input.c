@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -349,7 +349,7 @@ void I_KillDevice2(LPDIRECTINPUTDEVICE2 *dev)
  *
  * @return              @c true, if successful.
  */
-int I_Init(void)
+boolean I_Init(void)
 {
     HWND        hWnd;
 
@@ -470,19 +470,28 @@ boolean I_JoystickPresent(void)
     return (didJoy != 0);
 }
 
-int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
+/**
+ * Copy n key events from the device and encode them into given buffer.
+ *
+ * @param evbuf         Ptr to the buffer to encode events to.
+ * @param bufsize       Size of the buffer.
+ *
+ * @return              Number of key events written to the buffer.
+ */
+size_t I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
 {
     DIDEVICEOBJECTDATA keyData[KEYBUFSIZE];
-    int         tries, i, num = 0;
-    boolean     aquired;
+    byte        tries;
+    BOOL        acquired;
+    DWORD       i, num = 0;
 
     if(!initIOk)
         return 0;
 
     // Try two times to get the data.
     tries = 1;
-    aquired = false;
-    while(!aquired && tries > 0)
+    acquired = FALSE;
+    while(!acquired && tries > 0)
     {
         num = KEYBUFSIZE;
         hr = IDirectInputDevice_GetDeviceData(didKeyb,
@@ -490,7 +499,7 @@ int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
                                               keyData, &num, 0);
         if(SUCCEEDED(hr))
         {
-            aquired = true;
+            acquired = TRUE;
         }
         else if(tries > 0)
         {
@@ -500,7 +509,7 @@ int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
         }
     }
 
-    if(!aquired)
+    if(!acquired)
         return 0; // The operation is a failure.
 
     // Get the events.
@@ -510,7 +519,8 @@ int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
             (keyData[i].dwData & 0x80) ? IKE_KEY_DOWN : IKE_KEY_UP;
         evbuf[i].code = (unsigned char) keyData[i].dwOfs;
     }
-    return i;
+
+    return (size_t) i;
 }
 
 void I_GetMouseState(mousestate_t *state)

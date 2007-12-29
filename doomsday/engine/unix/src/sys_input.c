@@ -387,7 +387,7 @@ void I_InitJoystick(void)
  *
  * @return              @c true, if successful.
  */
-int I_Init(void)
+boolean I_Init(void)
 {
     if(initIOk)
         return true; // Already initialized.
@@ -416,10 +416,10 @@ boolean I_JoystickPresent(void)
     return useJoystick;
 }
 
-int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
+size_t I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
 {
     keyevent_t *e;
-    int         i = 0;
+    size_t      i = 0;
 
     if(!initIOk)
         return 0;
