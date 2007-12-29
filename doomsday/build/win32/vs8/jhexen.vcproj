@@ -77,7 +77,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib"
 				OutputFile=".\./Bin/Debug/JHexen.dll"
 				LinkIncremental="2"
@@ -89,6 +88,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/JHexen.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -184,6 +184,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/JHexen.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"

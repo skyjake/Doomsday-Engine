@@ -76,7 +76,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="eax.lib eaxguid.lib dsound.lib dxguid.lib ./bin/debug/doomsday.lib"
 				OutputFile=".\./Bin/Debug/dsCompat.dll"
 				LinkIncremental="2"
@@ -87,6 +86,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/dsCompat.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -171,7 +171,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="eax.lib eaxguid.lib dsound.lib dxguid.lib ./bin/release/doomsday.lib"
 				OutputFile=".\./Bin/Release/dsCompat.dll"
 				LinkIncremental="1"
@@ -181,6 +180,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/dsCompat.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"

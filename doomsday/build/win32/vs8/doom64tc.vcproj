@@ -76,7 +76,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib"
 				OutputFile="./Bin/Release/Doom64TC.dll"
 				LinkIncremental="1"
@@ -87,6 +86,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/Doom64TC.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -172,7 +172,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib"
 				OutputFile="./Bin/Debug/Doom64TC.dll"
 				LinkIncremental="2"
@@ -184,6 +183,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/Doom64TC.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"

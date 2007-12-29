@@ -70,7 +70,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="false"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="ia3dutild.lib ole32.lib ./bin/debug/doomsday.lib"
 				OutputFile=".\./Bin/Debug/dsA3D.dll"
 				LinkIncremental="2"
@@ -84,7 +83,7 @@
 				FixedBaseAddress="0"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/dsA3D.lib"
-				TargetMachine="0"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -163,7 +162,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="false"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="ia3dutil.lib ole32.lib ./bin/release/doomsday.lib"
 				OutputFile=".\./Bin/Release/dsA3D.dll"
 				LinkIncremental="1"
@@ -177,7 +175,7 @@
 				FixedBaseAddress="0"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/dsA3D.lib"
-				TargetMachine="0"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"

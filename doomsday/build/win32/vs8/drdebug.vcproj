@@ -76,7 +76,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./bin/debug/doomsday.lib kernel32.lib user32.lib gdi32.lib"
 				OutputFile=".\./Bin/Debug/drDebug.dll"
 				LinkIncremental="2"
@@ -87,6 +86,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/drDebug.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -170,7 +170,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./bin/release/doomsday.lib MesaGL.lib MesaGLU.lib odbc32.lib odbccp32.lib"
 				OutputFile="./Bin/Release/drMesa.dll"
 				LinkIncremental="1"
@@ -180,6 +179,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/drMesa.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -264,7 +264,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./bin/release/doomsday.lib kernel32.lib user32.lib gdi32.lib"
 				OutputFile=".\./Bin/Release/drDebug.dll"
 				LinkIncremental="1"
@@ -274,6 +273,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/drDebug.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"

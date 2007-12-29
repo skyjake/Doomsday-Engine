@@ -76,7 +76,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./Bin/Release/Doomsday.lib"
 				OutputFile=".\./Bin/Release/dpDehRead.dll"
 				LinkIncremental="1"
@@ -85,6 +84,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/dpDehRead.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -169,7 +169,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./Bin/Debug/Doomsday.lib"
 				OutputFile=".\./Bin/Debug/dpDehRead.dll"
 				LinkIncremental="2"
@@ -179,6 +178,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Debug/dpDehRead.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"

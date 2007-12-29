@@ -76,7 +76,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./Bin/Release/Doomsday.lib sdl_mixer.lib sdl.lib"
 				OutputFile="./Bin/Release/dsSDLMixer.dll"
 				LinkIncremental="1"
@@ -86,6 +85,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary="./Bin/Release/dsSDLMixer.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -170,7 +170,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./Bin/Debug/Doomsday.lib sdl_mixer.lib sdl.lib"
 				OutputFile="./Bin/Debug/dsSDLMixer.dll"
 				LinkIncremental="2"
@@ -181,6 +180,7 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary="./Bin/Debug/dsSDLMixer.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
