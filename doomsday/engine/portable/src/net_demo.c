@@ -48,18 +48,18 @@
 #define DEMOTIC SECONDS_TO_TICKS(demoTime)
 
 // Local Camera flags.
-#define LCAMF_ONGROUND  0x1
-#define LCAMF_FOV       0x2     // FOV has changed (short).
-#define LCAMF_CAMERA    0x4     // Camera mode.
+#define LCAMF_ONGROUND      0x1
+#define LCAMF_FOV           0x2 // FOV has changed (short).
+#define LCAMF_CAMERA        0x4 // Camera mode.
 
 // TYPES -------------------------------------------------------------------
 
 #pragma pack(1)
 
 typedef struct {
-    //unsigned short    angle;
+    //ushort        angle;
     //short         lookdir;
-    unsigned short length;
+    ushort          length;
 } demopacket_header_t;
 
 #pragma pack()
@@ -135,8 +135,8 @@ void Demo_Init(void)
  */
 boolean Demo_BeginRecording(char *fileName, int playerNum)
 {
-    char    buf[200];
-    client_t *cl = clients + playerNum;
+    char            buf[200];
+    client_t       *cl = clients + playerNum;
 
     // Is a demo already being recorded for this client?
     if(cl->recording || playback || (isDedicated && !playerNum) ||
@@ -151,13 +151,14 @@ boolean Demo_BeginRecording(char *fileName, int playerNum)
     // Open the demo file.
     cl->demo = lzOpen(buf, "wp");
     if(!cl->demo)
-        return false;           // Couldn't open it!
+        return false; // Couldn't open it!
+
     cl->recording = true;
     cl->recordPaused = false;
     writeInfo[playerNum].first = true;
     writeInfo[playerNum].canwrite = false;
     writeInfo[playerNum].cameratimer = 0;
-    writeInfo[playerNum].fov = -1;  // Must be written in the first packet.
+    writeInfo[playerNum].fov = -1; // Must be written in the first packet.
 
     if(isServer)
     {
@@ -184,7 +185,7 @@ boolean Demo_BeginRecording(char *fileName, int playerNum)
 
 void Demo_PauseRecording(int playerNum)
 {
-    client_t *cl = clients + playerNum;
+    client_t       *cl = clients + playerNum;
 
     // A demo is not being recorded?
     if(!cl->recording || cl->recordPaused)
@@ -199,7 +200,7 @@ void Demo_PauseRecording(int playerNum)
  */
 void Demo_ResumeRecording(int playerNum)
 {
-    client_t *cl = clients + playerNum;
+    client_t       *cl = clients + playerNum;
 
     // Not recording or not paused?
     if(!cl->recording || !cl->recordPaused)
@@ -217,11 +218,12 @@ void Demo_ResumeRecording(int playerNum)
  */
 void Demo_StopRecording(int playerNum)
 {
-    client_t *cl = clients + playerNum;
+    client_t       *cl = clients + playerNum;
 
     // A demo is not being recorded?
     if(!cl->recording)
         return;
+
     // Close demo file.
     lzClose(cl->demo);
     cl->demo = 0;
@@ -230,10 +232,10 @@ void Demo_StopRecording(int playerNum)
 
 void Demo_WritePacket(int playerNum)
 {
-    LZFILE *file;
+    LZFILE         *file;
     demopacket_header_t hdr;
-    demotimer_t *inf = writeInfo + playerNum;
-    byte    ptime;
+    demotimer_t    *inf = writeInfo + playerNum;
+    byte            ptime;
 
     if(playerNum == NSP_BROADCAST)
     {
@@ -284,12 +286,12 @@ void Demo_WritePacket(int playerNum)
     lzWrite(&ptime, 1, file);
 
     // The header.
-    hdr.length = 1 + netBuffer.length;
+    hdr.length = (ushort) 1 + netBuffer.length;
     lzWrite(&hdr, sizeof(hdr), file);
 
     // Write the packet itself.
     lzPutC(netBuffer.msg.type, file);
-    lzWrite(netBuffer.msg.data, netBuffer.length, file);
+    lzWrite(netBuffer.msg.data, (long) netBuffer.length, file);
 }
 
 void Demo_BroadcastPacket(void)
@@ -408,11 +410,13 @@ boolean Demo_ReadPacket(void)
     netBuffer.player = 0;       // From the server.
     netBuffer.msg.id = 0;
     netBuffer.msg.type = lzGetC(playdemo);
-    lzRead(netBuffer.msg.data, netBuffer.length, playdemo);
+    lzRead(netBuffer.msg.data, (long) netBuffer.length, playdemo);
     netBuffer.cursor = netBuffer.msg.data;
 
-    /*  Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
-       hdr.angle, hdr.lookdir, hdr.length, netBuffer.msg.type); */
+/*#if _DEBUG
+Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
+           hdr.angle, hdr.lookdir, hdr.length, netBuffer.msg.type);
+#endif*/
 
     // Read the next packet time.
     ptime = lzGetC(playdemo);

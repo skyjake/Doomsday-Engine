@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * net_buf.h: Network Message Handling and Buffering
  */
 
@@ -47,7 +47,7 @@ typedef struct netmessage_s {
     struct netmessage_s *next;
     nodeid_t        sender;
     uint            player;        // Set in N_GetMessage().
-    unsigned int    size;
+    size_t          size;
     byte           *data;
     void           *handle;
 } netmessage_t;
@@ -64,8 +64,8 @@ typedef struct {
 
 typedef struct netbuffer_s {
     int             player;         // Recipient or sender.
-    int             length;         // Number of bytes in the data buffer.
-    int             headerLength;   // 1 byte at the moment.
+    size_t          length;         // Number of bytes in the data buffer.
+    size_t          headerLength;   // 1 byte at the moment.
 
     byte           *cursor;         // Points into the data buffer.
 
@@ -73,13 +73,13 @@ typedef struct netbuffer_s {
                                     // receiving packets.
 } netbuffer_t;
 
-/*
+/**
  * Globally accessible data.
  */
 extern netbuffer_t netBuffer;
 extern boolean  allowSending;
 
-/*
+/**
  * Functions.
  */
 void            N_Init(void);
@@ -90,6 +90,6 @@ boolean         N_GetPacket(void);
 uint            N_IdentifyPlayer(nodeid_t id);
 void            N_PrintBufferInfo(void);
 void            N_PrintHuffmanStats(void);
-void            N_PostMessage(netmessage_t * msg);
+void            N_PostMessage(netmessage_t *msg);
 
 #endif

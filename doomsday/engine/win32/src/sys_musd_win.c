@@ -116,11 +116,11 @@ int     DM_WinMusInit(void);
 void    DM_WinMusShutdown(void);
 void    DM_WinMusReset();
 void    DM_WinMusUpdate(void);
-void    DM_WinMusSet(int property, float value);
-int     DM_WinMusGet(int property, void *ptr);
+void    DM_WinMusSet(int prop, float value);
+int     DM_WinMusGet(int prop, void *ptr);
 void    DM_WinMusPause(int pause);
 void    DM_WinMusStop(void);
-void   *DM_WinMusSongBuffer(int length);
+void   *DM_WinMusSongBuffer(size_t length);
 int     DM_WinMusPlay(int looped);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -146,7 +146,7 @@ musinterface_mus_t musd_win_imus = {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static void *song;
-static int songSize;
+static size_t songSize;
 
 static MIDIHDR midiBuffers[MAX_BUFFERS];
 static MIDIHDR *loopBuffer;
@@ -633,7 +633,7 @@ void DM_WinMusFreeSongBuffer(void)
     songSize = 0;
 }
 
-void   *DM_WinMusSongBuffer(int length)
+void *DM_WinMusSongBuffer(size_t length)
 {
     DM_WinMusFreeSongBuffer();
     songSize = length;

@@ -813,28 +813,28 @@ writeDeltaLength:
 }
 
 /**
- * Returns an estimate for the maximum frame size appropriate for the
- * client. The bandwidth rating is updated whenever a frame is sent.
+ * @return              An estimate for the maximum frame size appropriate
+ *                      for the client. The bandwidth rating is updated
+ *                      whenever a frame is sent.
  */
-int Sv_GetMaxFrameSize(int playerNumber)
+size_t Sv_GetMaxFrameSize(int playerNumber)
 {
-    int         size =
-        MINIMUM_FRAME_SIZE +
+    size_t          size = MINIMUM_FRAME_SIZE +
         FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
 
     // What about the communications medium?
-    if((uint) size > maxDatagramSize)
+    if(size > maxDatagramSize)
         size = maxDatagramSize;
 
     return size;
 }
 
 /**
- * Returns a unique resend ID. Never returns zero.
+ * @return              A unique resend ID. Never returns zero.
  */
 byte Sv_GetNewResendID(pool_t *pool)
 {
-    byte        id = pool->resendDealer;
+    byte            id = pool->resendDealer;
 
     // Advance to next ID, skipping zero.
     while(!++pool->resendDealer);
@@ -849,14 +849,13 @@ byte Sv_GetNewResendID(pool_t *pool)
 void Sv_SendFrame(int playerNumber)
 {
     pool_t     *pool = Sv_GetPool(playerNumber);
-    int         maxFrameSize, lastStart;
     byte        oldResend;
     delta_t    *delta;
     int         deltaCount = 0;
 #if _NETDEBUG
     int         endOffset = 0;
 #endif
-    int         deltaCountOffset = 0;
+    size_t      lastStart, maxFrameSize, deltaCountOffset = 0;
 
     // Does the send queue allow us to send this packet?
     // Bandwidth rating is updated during the check.

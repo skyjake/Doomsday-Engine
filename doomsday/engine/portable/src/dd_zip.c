@@ -699,11 +699,11 @@ static boolean inflateEntry(void *in, size_t inSize, void *out,
 
     memset(&stream, 0, sizeof(stream));
     stream.next_in = in;
-    stream.avail_in = inSize;
+    stream.avail_in = (uInt) inSize;
     stream.zalloc = Z_NULL;
     stream.zfree = Z_NULL;
     stream.next_out = out;
-    stream.avail_out = outSize;
+    stream.avail_out = (uInt) outSize;
 
     if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
         return false;

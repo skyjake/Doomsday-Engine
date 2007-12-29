@@ -92,40 +92,40 @@ typedef struct sqpack_s {
  * clientside, the node zero is used always.
  */
 typedef struct netnode_s {
-    TCPsocket sock;
-    char    name[128];
+    TCPsocket       sock;
+    char            name[128];
 
     // The node is owned by a client in the game.  This becomes true
     // when the client issues the JOIN request.
-    boolean hasJoined;
+    boolean         hasJoined;
 
     // This is the UDP address that the client listens to.
-    IPaddress addr;
+    IPaddress       addr;
 
     // Send queue statistics.
-    long     mutex;
-    uint    numWaiting;
-    uint    bytesWaiting;
+    long            mutex;
+    uint            numWaiting;
+    uint            bytesWaiting;
 } netnode_t;
 
 typedef struct sendqueue_s {
-    long    waiting;
-    long    mutex;
-    sqpack_t *first, *last;
-    boolean online;             // Set to false to make transmitter stop.
+    long            waiting;
+    long            mutex;
+    sqpack_t       *first, *last;
+    boolean         online; // Set to false to make transmitter stop.
 } sendqueue_t;
 
 typedef struct foundhost_s {
-    boolean valid;
-    serverinfo_t info;
-    IPaddress addr;
+    boolean         valid;
+    serverinfo_t    info;
+    IPaddress       addr;
 } foundhost_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    N_IPToString(char *buf, IPaddress *ip);
+void N_IPToString(char *buf, IPaddress *ip);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -133,7 +133,7 @@ void    N_IPToString(char *buf, IPaddress *ip);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint    maxDatagramSize = MAX_DATAGRAM_SIZE;
+size_t  maxDatagramSize = MAX_DATAGRAM_SIZE;
 
 char   *nptIPAddress = "";
 int     nptIPPort = 0;          // This is the port *we* use to communicate.
@@ -159,7 +159,7 @@ static sendqueue_t sendQ;
 static foundhost_t located;
 static volatile boolean stopReceiver;
 static byte* transmissionBuffer;
-static int transmissionBufferSize;
+static size_t transmissionBufferSize;
 
 // CODE --------------------------------------------------------------------
 
@@ -349,7 +349,7 @@ static int C_DECL N_UDPReceiver(void *parm)
             if(!packet)
             {
                 // Allocate a new packet.
-                packet = SDLNet_AllocPacket(maxDatagramSize);
+                packet = SDLNet_AllocPacket((int) maxDatagramSize);
             }
 
             // The mutex will prevent problems when new channels are
@@ -486,19 +486,18 @@ boolean N_ReceiveReliably(nodeid_t from)
  * Send the data buffer over the control link, which is a TCP
  * connection.
  */
-void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
+void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
 {
-    netnode_t *node = &netNodes[destination];
-    ushort  packetSize = SHORT(size);
-    int result;
+    int             result;
+    netnode_t      *node = &netNodes[destination];
 
-    if(size <= 0 || !node->sock || !node->hasJoined)
+    if(size == 0 || !node->sock || !node->hasJoined)
         return;
 
-    if(size > SHORT(packetSize))
+    if(size > DDMAXSHORT)
     {
         Con_Error("N_SendDataBufferReliably: Trying to send a too large data "
-                  "buffer.\n  Attempted size is %i bytes.\n", size);
+                  "buffer.\n  Attempted size is %ul bytes.\n", size);
     }
 
     // Compose the entire message in the transmission buffer.
@@ -508,18 +507,21 @@ void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
         transmissionBuffer = M_Realloc(transmissionBuffer, size + 2);
     }
 
+    {
+    short           packetSize = SHORT(size);
     memcpy(transmissionBuffer, &packetSize, 2);
+    }
     memcpy(transmissionBuffer + 2, data, size);
 
-    result = SDLNet_TCP_Send(node->sock, transmissionBuffer, size + 2);
+    result = SDLNet_TCP_Send(node->sock, transmissionBuffer, (int) size + 2);
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %i bytes, result=%i\n",
+    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %ul bytes, result=%i\n",
                           size + 2, result) );
 #endif
     if(result != size + 2)
         perror("Socket error");
 
-/*    result = SDLNet_TCP_Send(node->sock, data, SHORT(packetSize));
+/*    result = SDLNet_TCP_Send(node->sock, data, (int) size);
 #ifdef _DEBUG
     Con_Message("N_SendDataBufferReliably: Sent data, result=%i\n", result);
     if(result != size) perror("System error");
@@ -527,15 +529,14 @@ void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
 }
 
 /**
- * Send the buffer to the destination. For clients, the server is the
- * only possible destination (doesn't depend on the value of
- * 'destination').
+ * Send the buffer to the destination. For clients, the server is the only
+ * possible destination (doesn't depend on the value of 'destination').
  */
-void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
+void N_SendDataBuffer(void *data, size_t size, nodeid_t destination)
 {
-    sqpack_t *pack;
-    UDPpacket *p;
-    netnode_t *node;
+    sqpack_t       *pack;
+    UDPpacket      *p;
+    netnode_t      *node;
 
     // If the send queue is not active, we can't send anything.
     if(!sendQ.online)
@@ -551,25 +552,23 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
     }
 #endif
 
-    //#ifdef _DEBUG
     if(size > maxDatagramSize)
     {
-        Con_Error("N_SendDataBuffer: Too large packet (%i), risk of "
-                  "fragmentation (MTU=%i).\n", size, maxDatagramSize);
+        Con_Error("N_SendDataBuffer: Too large packet (%ul), risk of "
+                  "fragmentation (MTU=%ul).\n", size, maxDatagramSize);
     }
-    //#endif
 
     // This memory is freed after the packet is sent.
     pack = M_Malloc(sizeof(sqpack_t));
-    p = pack->packet = SDLNet_AllocPacket(size);
+    p = pack->packet = SDLNet_AllocPacket((int) size);
 
     // The destination node.
     pack->node = node = netNodes + destination;
 
     // Init the packet's data.
     p->channel = -1;
-    memcpy(p->data, data, size);
-    p->len = size;
+    memcpy(p->data, data, (int) size);
+    p->len = (int) size;
     memcpy(&p->address, &node->addr, sizeof(p->address));
 
 #ifdef TRANSMIT_RANDOMIZER
@@ -627,7 +626,7 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
     // Increment the statistics.
     Sem_P(node->mutex);
     node->numWaiting++;
-    node->bytesWaiting += size;
+    node->bytesWaiting += (uint) size;
     Sem_V(node->mutex);
 
     // Signal the transmitter to start working.
@@ -635,7 +634,8 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
 }
 
 /**
- * Returns the number of messages waiting in the player's send queue.
+ * @return              The number of messages waiting in the player's send
+ *                      queue.
  */
 uint N_GetSendQueueCount(int player)
 {
@@ -649,12 +649,13 @@ uint N_GetSendQueueCount(int player)
 }
 
 /**
- * Returns the number of bytes waiting in the player's send queue.
+ * @return              The number of bytes waiting in the player's send
+ *                      queue.
  */
 uint N_GetSendQueueSize(int player)
 {
-    netnode_t *node = netNodes + player;
-    uint    bytes;
+    netnode_t      *node = netNodes + player;
+    uint            bytes;
 
     Sem_P(node->mutex);
     bytes = node->bytesWaiting;
@@ -701,7 +702,7 @@ static void N_StartTransmitter(sendqueue_t *q)
  */
 static void N_StopTransmitter(sendqueue_t *q)
 {
-    uint    i;
+    uint            i;
 
     if(!hTransmitter)
         return;
@@ -781,8 +782,9 @@ void N_SystemInit(void)
     // The MTU can be customized.
     if(ArgCheckWith("-mtu", 1))
     {
-        maxDatagramSize = strtol(ArgNext(), NULL, 0);
-        Con_Message("N_SystemInit: Custom MTU: %i bytes.\n", maxDatagramSize);
+        maxDatagramSize = (size_t) strtol(ArgNext(), NULL, 0);
+        Con_Message("N_SystemInit: Custom MTU: %ul bytes.\n",
+                    maxDatagramSize);
     }
 
     // Allocate the transmission buffer.
@@ -1346,7 +1348,7 @@ boolean N_Connect(int index)
     if(!pName || !pName[0])
         pName = "Anonymous";
     sprintf(buf, "JOIN %04x %s\n", recvUDPPort, pName);
-    SDLNet_TCP_Send(svNode->sock, buf, strlen(buf));
+    SDLNet_TCP_Send(svNode->sock, buf, (int) strlen(buf));
 
     VERBOSE(Con_Message("N_Connect: %s", buf));
 
@@ -1530,7 +1532,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
         Sv_InfoToString(&info, &msg);
         Str_Appendf(&msg, "END\n");
         Con_Message("Sending: %s\n", Str_Text(&msg));
-        result = SDLNet_TCP_Send(sock, Str_Text(&msg), Str_Length(&msg));
+        result = SDLNet_TCP_Send(sock, Str_Text(&msg), (int) Str_Length(&msg));
         Con_Message("Result = %i\n", result);
         Str_Free(&msg);
     }
@@ -1552,7 +1554,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
         {
             // Successful! Send a reply.
             sprintf(buf, "ENTER %04x\n", recvUDPPort);
-            SDLNet_TCP_Send(sock, buf, strlen(buf));
+            SDLNet_TCP_Send(sock, buf, (int) strlen(buf));
         }
         else
         {
@@ -1564,7 +1566,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
     else if(!strcmp(command, "TIME"))
     {
         sprintf(buf, "%.3f\n", Sys_GetSeconds());
-        SDLNet_TCP_Send(sock, buf, strlen(buf));
+        SDLNet_TCP_Send(sock, buf, (int) strlen(buf));
     }
     else if(!strcmp(command, "BYE"))
     {

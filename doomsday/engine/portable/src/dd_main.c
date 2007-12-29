@@ -175,7 +175,7 @@ const char* value_Str(int val)
         { DDVT_SEG_IDX, "DDVT_SEG_IDX" },
         { 0, NULL }
     };
-    uint        i;
+    uint            i;
 
     for(i = 0; valuetypes[i].str; ++i)
         if(valuetypes[i].val == val)
@@ -190,11 +190,12 @@ const char* value_Str(int val)
  */
 void DD_AddIWAD(const char *path)
 {
-    int     i = 0;
-    char    buf[256];
+    int             i = 0;
+    char            buf[256];
 
     while(iwadlist[i])
         i++;
+
     M_TranslatePath(path, buf);
     iwadlist[i] = M_Calloc(strlen(buf) + 1);   // This mem is not freed?
     strcpy(iwadlist[i], buf);
@@ -203,8 +204,8 @@ void DD_AddIWAD(const char *path)
 #define ATWSEPS ",; \t"
 static void AddToWadList(char *list)
 {
-    int     len = strlen(list);
-    char   *buffer = M_Malloc(len + 1), *token;
+    size_t          len = strlen(list);
+    char	       *buffer = M_Malloc(len + 1), *token;
 
     strcpy(buffer, list);
     token = strtok(buffer, ATWSEPS);
@@ -221,7 +222,7 @@ static void AddToWadList(char *list)
  */
 static int autoDataAdder(const char *fileName, filetype_t type, void *ptr)
 {
-    autoload_t *data = ptr;
+    autoload_t     *data = ptr;
 
     // Skip directories.
     if(type == FT_DIRECTORY)
@@ -248,16 +249,16 @@ static int autoDataAdder(const char *fileName, filetype_t type, void *ptr)
  */
 int DD_AddAutoData(boolean loadFiles)
 {
-    autoload_t data;
-    const char *extensions[] = {
+    autoload_t      data;
+    const char     *extensions[] = {
         "wad", "lmp", "pk3", "zip", "deh",
 #ifdef UNIX
         "WAD", "LMP", "PK3", "ZIP", "DEH", // upper case alternatives
 #endif
         NULL
     };
-    char    pattern[256];
-    uint    i;
+    char            pattern[256];
+    uint            i;
 
     data.loadFiles = loadFiles;
     data.count = 0;
@@ -296,7 +297,7 @@ void DD_SetDefsFile(char *filename)
  */
 void DD_DefineBuiltinVDM(void)
 {
-    filename_t dest;
+    filename_t      dest;
 
     // Data files.
     sprintf(dest, "%sauto", R_GetDataPath());
@@ -313,7 +314,7 @@ void DD_DefineBuiltinVDM(void)
  */
 void DD_AutoLoad(void)
 {
-    int p;
+    int             p;
 
     /**
      * Load files from the Auto directory.  (If already loaded, won't
@@ -333,7 +334,7 @@ void DD_AutoLoad(void)
  */
 int DD_Main(void)
 {
-    int         exitCode;
+    int             exitCode;
 
 #ifdef UNIX
 #   ifndef MACOSX
@@ -457,7 +458,7 @@ int DD_Main(void)
 
 static int DD_StartupWorker(void *parm)
 {
-    int     p = 0;
+    int             p = 0;
 
 #ifdef WIN32
     // Initialize COM for this thread (needed for DirectInput).
@@ -538,10 +539,11 @@ static int DD_StartupWorker(void *parm)
     {
         for(;;)
         {
-            char   *arg = ArgNext();
+            char           *arg = ArgNext();
 
             if(!arg || arg[0] == '-')
                 break;
+
             Con_Message("Parsing: %s\n", arg);
             Con_ParseCommands(arg, false);
         }
@@ -598,11 +600,11 @@ static int DD_StartupWorker(void *parm)
 
     if(ArgCheckWith("-dumplump", 1))
     {
-        char   *arg = ArgNext();
-        char    fname[100];
-        FILE   *file;
-        int     lump = W_GetNumForName(arg);
-        byte   *lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+        char           *arg = ArgNext();
+        char            fname[100];
+        FILE           *file;
+        int             lump = W_GetNumForName(arg);
+        byte           *lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
 
         sprintf(fname, "%s.dum", arg);
         file = fopen(fname, "wb");
@@ -618,7 +620,8 @@ static int DD_StartupWorker(void *parm)
 
     if(ArgCheck("-dumpwaddir"))
     {
-        char buff[10];
+        char            buff[10];
+
         printf("Lumps (%d total):\n", numlumps);
         for(p = 0; p < numlumps; p++)
         {
@@ -667,10 +670,11 @@ static int DD_StartupWorker(void *parm)
     {
         for(;;)
         {
-            char   *arg = ArgNext();
+            char           *arg = ArgNext();
 
             if(!arg || arg[0] == '-')
                 break;
+
             Con_Message("Parsing: %s\n", arg);
             Con_ParseCommands(arg, false);
         }
@@ -681,9 +685,10 @@ static int DD_StartupWorker(void *parm)
     {
         if(stricmp(Argv(p), "-command") && stricmp(Argv(p), "-cmd"))
             continue;
+
         for(++p; p < Argc(); p++)
         {
-            char   *arg = Argv(p);
+            char           *arg = Argv(p);
 
             if(arg[0] == '-')
             {
@@ -726,7 +731,7 @@ static int DD_StartupWorker2(void *parm)
 
 static void HandleArgs(int state)
 {
-    int     order, p;
+    int             order, p;
 
     if(state == 0)
     {
@@ -747,8 +752,10 @@ static void HandleArgs(int state)
                    (order == 0 &&
                     stricmp(Argv(p), "-iwad")))
                     continue;
+
                 while(++p != Argc() && !ArgIsOption(p))
                     DD_AddStartupWAD(Argv(p));
+
                 p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
             }
         }
@@ -762,10 +769,10 @@ void DD_CheckTimeDemo(void)
     if(!checked)
     {
         checked = true;
-        if(ArgCheckWith("-timedemo", 1) // Timedemo mode.
-           || ArgCheckWith("-playdemo", 1)) // Play-once mode.
+        if(ArgCheckWith("-timedemo", 1) || // Timedemo mode.
+           ArgCheckWith("-playdemo", 1)) // Play-once mode.
         {
-            char    buf[200];
+            char            buf[200];
 
             sprintf(buf, "playdemo %s", ArgNext());
             Con_Execute(CMDS_CMDLINE, buf, false, false);
@@ -780,8 +787,8 @@ void DD_CheckTimeDemo(void)
  */
 void DD_AddStartupWAD(const char *file)
 {
-    int     i;
-    char   *new, temp[300];
+    int             i;
+    char           *new, temp[300];
 
     i = 0;
     while(wadfiles[i])
@@ -816,7 +823,7 @@ void DD_UpdateEngineState(void)
  */
 void DD_CheckQuery(int query, int parm)
 {
-    switch (query)
+    switch(query)
     {
     case DD_TEXTURE_HEIGHT_QUERY:
         queryResult = textures[parm]->info.height;

@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_pcx.h: PCX Images
  */
 
@@ -47,11 +48,11 @@ typedef struct {
 
 #pragma pack()
 
-int             PCX_MemoryGetSize(void *imageData, int *w, int *h);
-int             PCX_GetSize(const char *fn, int *w, int *h);
-int             PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
+boolean         PCX_MemoryGetSize(void *imageData, int *w, int *h);
+boolean         PCX_GetSize(const char *fn, int *w, int *h);
+boolean         PCX_MemoryLoad(byte *imgdata, size_t len, int buf_w, int buf_h,
 							   byte *outBuffer);
-byte           *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w,
+byte           *PCX_MemoryAllocLoad(byte *imgdata, size_t len, int *buf_w,
 									int *buf_h, byte *outBuffer);
 void            PCX_Load(const char *fn, int buf_w, int buf_h,
 						 byte *outBuffer);

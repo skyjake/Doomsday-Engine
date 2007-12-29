@@ -193,10 +193,11 @@ char *M_SkipLine(char *str)
     return str;
 }
 
-char *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
-                      char *buf, unsigned int bufLength)
+char *M_LimitedStrCat(const char *str, size_t maxWidth, char separator,
+                      char *buf, size_t bufLength)
 {
-    unsigned int isEmpty = !buf[0], length;
+    boolean         isEmpty = !buf[0];
+    size_t          length;
 
     // How long is this name?
     length = MIN_OF(maxWidth, strlen(str));
@@ -210,7 +211,8 @@ char *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
     {
         if(separator && !isEmpty)
         {
-            char    sepBuf[2];
+            char            sepBuf[2];
+
             sepBuf[0] = separator;
             sepBuf[1] = 0;
 
@@ -218,6 +220,7 @@ char *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
         }
         strncat(buf, str, length);
     }
+
     return buf;
 }
 
@@ -302,9 +305,9 @@ boolean M_IsComment(char *buffer)
  */
 boolean M_IsStringValidInt(const char *str)
 {
-    uint        i, len;
-    const char *c;
-    boolean     isBad;
+    size_t          i, len;
+    const char     *c;
+    boolean         isBad;
 
     if(!str)
         return false;
@@ -316,9 +319,9 @@ boolean M_IsStringValidInt(const char *str)
     for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
     {
         if(i != 0 && *c == '-')
-            isBad = true;       // sign is in the wrong place.
+            isBad = true; // sign is in the wrong place.
         else if(*c < '0' || *c > '9')
-            isBad = true;       // non-numeric character.
+            isBad = true; // non-numeric character.
     }
 
     return !isBad;
@@ -331,7 +334,7 @@ boolean M_IsStringValidByte(const char *str)
 {
     if(M_IsStringValidInt(str))
     {
-        int val = atoi(str);
+        int             val = atoi(str);
 
         if(!(val < 0 || val > 255))
             return true;
@@ -345,9 +348,9 @@ boolean M_IsStringValidByte(const char *str)
  */
 boolean M_IsStringValidFloat(const char *str)
 {
-    uint        i, len;
-    const char *c;
-    boolean     isBad, foundDP = false;
+    size_t          i, len;
+    const char     *c;
+    boolean         isBad, foundDP = false;
 
     if(!str)
         return false;
@@ -359,16 +362,16 @@ boolean M_IsStringValidFloat(const char *str)
     for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
     {
         if(i != 0 && *c == '-')
-            isBad = true;       // sign is in the wrong place.
+            isBad = true; // sign is in the wrong place.
         else if(*c == '.')
         {
             if(foundDP)
-                isBad = true;   // multiple decimal places??
+                isBad = true; // multiple decimal places??
             else
                 foundDP = true;
         }
         else if(*c < '0' || *c > '9')
-            isBad = true;       // other non-numeric character.
+            isBad = true; // other non-numeric character.
     }
 
     return !isBad;
@@ -772,12 +775,13 @@ void M_JoinBoxes(float bbox[4], const float other[4])
 
 boolean M_WriteFile(const char *name, void *source, size_t length)
 {
-    int     handle;
-    size_t  count;
+    int             handle;
+    size_t          count;
 
     handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
     if(handle == -1)
         return false;
+
     count = write(handle, source, length);
     close(handle);
 
@@ -844,10 +848,12 @@ static size_t FileReader(const char *name, byte **buffer, int mallocType)
 
                 buf = newbuf;
             }
+
             // Copy new data to buffer.
             memcpy(buf + length, rbuf, count);
             length += count;
         }
+
         lzClose(file);
         *buffer = buf;
         return length;
@@ -858,10 +864,12 @@ static size_t FileReader(const char *name, byte **buffer, int mallocType)
     {
         Con_Error("FileReader: Couldn't read file %s\n", name);
     }
+
     if(fstat(handle, &fileinfo) == -1)
     {
         Con_Error("FileReader: Couldn't read file %s\n", name);
     }
+
     length = fileinfo.st_size;
     if(mallocType == MALLOC_ZONE)
     {   // Use zone memory allocation
@@ -876,6 +884,7 @@ static size_t FileReader(const char *name, byte **buffer, int mallocType)
                       (unsigned long) length, name);
         }
     }
+
     count = read(handle, buf, length);
     close(handle);
     if(count < length)
@@ -883,6 +892,7 @@ static size_t FileReader(const char *name, byte **buffer, int mallocType)
         Con_Error("FileReader: Couldn't read file %s\n", name);
     }
     *buffer = buf;
+
     return length;
 }
 
@@ -1160,12 +1170,12 @@ const char *M_Pretty(const char *path)
 }
 
 /**
- * Concatenates src to dest as a quoted string.  " is escaped to \".
+ * Concatenates src to dest as a quoted string. " is escaped to \".
  * Returns dest.
  */
 char* M_StrCatQuoted(char *dest, char *src)
 {
-    int     k = strlen(dest) + 1, i;
+    size_t          k = strlen(dest) + 1, i;
 
     strcat(dest, "\"");
     for(i = 0; src[i]; i++)
@@ -1182,6 +1192,7 @@ char* M_StrCatQuoted(char *dest, char *src)
         }
     }
     strcat(dest, "\"");
+
     return dest;
 }
 

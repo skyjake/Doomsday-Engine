@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_direc.c: Directory Utilities
  *
  * Directory and file system related stuff.
@@ -159,7 +159,7 @@ void Dir_FileID(const char *str, byte identifier[16])
 #endif
 
     md5_init(&context);
-    md5_update(&context, (byte*) temp, strlen(temp));
+    md5_update(&context, (byte*) temp, (unsigned int) strlen(temp));
     md5_final(&context, identifier);
 }
 
@@ -197,7 +197,7 @@ int Dir_IsAbsolute(const char *str)
  */
 void Dir_FixSlashes(char *path)
 {
-    uint        i, len = strlen(path);
+    size_t          i, len = strlen(path);
 
     for(i = 0; i < len; ++i)
     {
@@ -214,7 +214,7 @@ void Dir_FixSlashes(char *path)
  */
 void Dir_ExpandHome(char *str)
 {
-    char        buf[PATH_MAX];
+    char            buf[PATH_MAX];
 
     if(str[0] != '~')
         return;
@@ -262,7 +262,7 @@ void Dir_ExpandHome(char *str)
  */
 void Dir_ValidDir(char *str)
 {
-    uint        idx, len = strlen(str);
+    size_t          idx, len = strlen(str);
 
     if(!len)
         return;                 // Nothing to do.
@@ -271,7 +271,7 @@ void Dir_ValidDir(char *str)
 
     // Remove whitespace from the end.
     idx = len - 1;
-    while(idx && isspace(str[idx]))
+    while(idx > 0 && isspace(str[idx]))
         str[idx--] = 0;
 
     // Make sure it ends in a directory separator character.

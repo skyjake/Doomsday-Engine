@@ -2367,7 +2367,7 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                 // PCX load failed. It must be an old-fashioned raw image.
                 need_free_image = false;
                 M_Free(image);
-                height = lumpinfo[lump].size / 320;
+                height = (int) (lumpinfo[lump].size / 320);
                 rgbdata = false;
                 comps = 1;
                 image = lumpdata;

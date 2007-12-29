@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_console.c: Win32 Console
  *
  * Win32 console window handling. Used in dedicated mode.
@@ -206,9 +206,11 @@ static void writeText(CHAR_INFO *line, int len)
 
 void Sys_ConPrint(int clflags, char *text)
 {
-    CHAR_INFO   line[LINELEN];
-    int         count = strlen(text), linestart, bpos;
-    char       *ptr = text, ch;
+    unsigned int    i;
+    int             linestart, bpos;
+    char           *ptr = text, ch;
+    size_t          len = strlen(text);
+    CHAR_INFO       line[LINELEN];
 
     if(needNewLine)
     {   // Need to make some room.
@@ -224,7 +226,7 @@ void Sys_ConPrint(int clflags, char *text)
 
     bpos = linestart = cx;
     setAttrib(clflags);
-    for(; count > 0; count--, ptr++)
+    for(i = 0; i < len; i++, ptr++)
     {
         ch = *ptr;
         if(ch != '\n' && bpos < LINELEN)
@@ -241,7 +243,7 @@ void Sys_ConPrint(int clflags, char *text)
             cx += bpos - linestart;
             bpos = 0;
             linestart = 0;
-            if(count > 1)
+            if(i < len - 1)
             {   // Not the last character.
                 needNewLine = false;
                 cx = 0;
@@ -293,5 +295,5 @@ void Sys_ConUpdateCmdLine(char *text)
     rect.Top = cbInfo.dwSize.Y - 1;
     rect.Bottom = cbInfo.dwSize.Y - 1;
     WriteConsoleOutput(hcScreen, line, linesize, from, &rect);
-    setCursor(strlen(text) + 1, cbInfo.dwSize.Y - 1);
+    setCursor((int) strlen(text) + 1, cbInfo.dwSize.Y - 1);
 }

@@ -145,7 +145,7 @@ void S_InitScript(void)
     {
         //// \kludge DJS - This uses a kludge to traverse the entire sound list.
         //// \fixme Implement a mechanism for walking the Def databases.
-        Def_Get(DD_DEF_SOUND_LUMPNAME, (char *) i, buf);
+        Def_Get(DD_DEF_SOUND_LUMPNAME, (char *) &i, buf);
         if(!strcmp(buf, ""))
             Def_Set(DD_DEF_SOUND, i, DD_LUMP, "default");
     }

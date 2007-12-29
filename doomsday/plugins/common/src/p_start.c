@@ -382,13 +382,13 @@ void P_AddBossSpot(float x, float y, angle_t angle)
  */
 void P_SpawnThings(void)
 {
-    int         i;
+    uint            i;
     spawnspot_t    *th;
 #if __JDOOM__
-    boolean     spawn;
+    boolean         spawn;
 #elif __JHEXEN__
-    int         playerCount;
-    int         deathSpotsCount;
+    int             playerCount;
+    int             deathSpotsCount;
 #endif
 
 #if __JHERETIC__

@@ -77,10 +77,10 @@ static mutex_t msgMutex;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Number of bytes of outgoing data transmitted.
-static uint numOutBytes;
+static size_t numOutBytes;
 
 // Number of bytes sent over the network (compressed).
-static uint numSentBytes;
+static size_t numSentBytes;
 
 // CODE --------------------------------------------------------------------
 
@@ -248,12 +248,9 @@ void N_ClearMessages(void)
  */
 void N_SendPacket(int flags)
 {
-    //  sentmessage_t *sentMsg;
-    uint    i, dest = 0;
-    void   *data;
-    uint    size;
-
-    //boolean isQueued = false;
+    uint            i, dest = 0;
+    void           *data;
+    size_t          size;
 
     // Is the network available?
     if(!allowSending || !N_IsAvailable())
@@ -305,9 +302,9 @@ void N_SendPacket(int flags)
     {
         // Ordered and confirmed messages are send over a TCP connection.
         N_SendDataBufferReliably(data, size, dest);
-#ifdef _DEBUG
-        VERBOSE2( Con_Message("N_SendPacket: Sending %i bytes reliably to %i.\n", size,
-                              dest) );
+#if _DEBUG
+VERBOSE2(
+Con_Message("N_SendPacket: Sending %ul bytes reliably to %i.\n", size, dest));
 #endif
     }
     else
@@ -447,13 +444,13 @@ void N_PrintBufferInfo(void)
  */
 void N_PrintHuffmanStats(void)
 {
-    if(!numOutBytes)
+    if(numOutBytes == 0)
     {
         Con_Printf("Huffman efficiency: Nothing has been sent yet.\n");
     }
     else
     {
-        Con_Printf("Huffman efficiency: %.3f%% (data: %i bytes, sent: %i "
+        Con_Printf("Huffman efficiency: %.3f%% (data: %ul bytes, sent: %ul "
                    "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
                    numOutBytes, numSentBytes);
     }

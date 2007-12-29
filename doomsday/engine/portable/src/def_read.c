@@ -629,43 +629,41 @@ static boolean DED_CheckCondition(const char *cond, boolean expected)
 /* *INDENT-OFF* */
 static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 {
-    char dummy[128];
-    int dummyInt;
-    int idx, retval = true;
-    char label[128], tmp[256];
-    ded_mobj_t *mo;
-    int prev_mo_idx = -1; // For "Copy".
-    ded_state_t *st;
-    int prev_state_idx = -1; // For "Copy"
-    ded_light_t *lig;
-    int prev_ligdef_idx = -1; // For "Copy".
-    ded_model_t *mdl, *prevmdl = 0;
-    int prev_modef_idx = -1; // For "Copy".
-    ded_sound_t *snd;
-    ded_mapinfo_t *mi;
-    int prev_mapinfo_idx = -1; // For "Copy".
-    ded_str_t *tn;
-    ded_value_t *val;
+    char            dummy[128];
+    int             dummyInt;
+    int             idx, retval = true;
+    char            label[128], tmp[256];
+    ded_mobj_t     *mo;
+    int             prev_mo_idx = -1; // For "Copy".
+    ded_state_t    *st;
+    int             prev_state_idx = -1; // For "Copy"
+    ded_light_t    *lig;
+    int             prev_ligdef_idx = -1; // For "Copy".
+    ded_model_t    *mdl, *prevmdl = 0;
+    int             prev_modef_idx = -1; // For "Copy".
+    ded_sound_t    *snd;
+    ded_mapinfo_t  *mi;
+    int             prev_mapinfo_idx = -1; // For "Copy".
+    ded_str_t      *tn;
+    ded_value_t    *val;
     ded_detailtexture_t *dtl;
-    int prev_dtldef_idx = -1; // For "Copy".
-    ded_ptcgen_t *gen;
-    int prev_gendef_idx = -1; // For "Copy".
-    int prev_decordef_idx = -1; // For "Copy".
-    int prev_refdef_idx = -1; // For "Copy".
-    ded_finale_t *fin;
+    int             prev_dtldef_idx = -1; // For "Copy".
+    ded_ptcgen_t   *gen;
+    int             prev_gendef_idx = -1; // For "Copy".
+    int             prev_decordef_idx = -1; // For "Copy".
+    int             prev_refdef_idx = -1; // For "Copy".
+    ded_finale_t   *fin;
     ded_linetype_t *l;
-    int prev_linetype_idx = -1; // For "Copy".
+    int             prev_linetype_idx = -1; // For "Copy".
     ded_sectortype_t *sec;
-    int prev_sectortype_idx = -1; // For "Copy".
+    int             prev_sectortype_idx = -1; // For "Copy".
     ded_lumpformat_t *lmpf;
-    int prev_lumpformat_idx = -1; // For "Copy".
-//    ded_xgclass_t *xgc;
-
-    int sub;
-    int depth;
-    char *rootstr = 0, *ptr;
-    int bCopyNext = false;
-    directory_t fileDir;
+    int             prev_lumpformat_idx = -1; // For "Copy".
+    int             sub;
+    int             depth;
+    char           *rootstr = 0, *ptr;
+    int             bCopyNext = false;
+    directory_t     fileDir;
 
     // For including other files -- we must know where we are.
     Dir_FileDir(sourceFile, &fileDir);
@@ -1165,11 +1163,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISLABEL("Text"))
                 {
                     // Allocate a 'huge' buffer.
-                    char *temp = M_Malloc(0x10000);
+                    char           *temp = M_Malloc(0x10000);
 
                     if(ReadString(temp, 0xffff))
                     {
-                        int len = strlen(temp) + 1;
+                        size_t          len = strlen(temp) + 1;
 
                         ded->text[idx].text = M_Realloc(temp, len);
                         //memcpy(ded->text[idx].text, temp, len);
@@ -1287,7 +1285,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     if(!depth)
                         break;   // End root depth.
 
-                    // Decrease level and modify roostr.
+                    // Decrease level and modify rootstr.
                     depth--;
                     sub = strlen(rootstr);
                     rootstr[sub-1] = 0; // Remove last |.
@@ -2032,11 +2030,11 @@ ded_end_read:
  */
 int DED_Read(ded_t *ded, const char *sPathName)
 {
-    DFILE  *file;
-    char   *defData;
-    int     len;
-    int     result;
-    char    translated[256];
+    DFILE          *file;
+    char           *defData;
+    size_t          len;
+    int             result;
+    char            translated[256];
 
     M_TranslatePath(sPathName, translated);
 

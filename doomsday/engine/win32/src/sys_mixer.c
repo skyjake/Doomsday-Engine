@@ -154,7 +154,7 @@ int Sys_InitMixer(void)
     }
 
     // Get the device caps.
-    mixerGetDevCaps((UINT) mixer, &mixerCaps, sizeof(mixerCaps));
+    mixerGetDevCaps((UINT_PTR) mixer, &mixerCaps, sizeof(mixerCaps));
 
     Con_Message("Sys_InitMixer: %s\n", mixerCaps.szPname);
     if(verbose)

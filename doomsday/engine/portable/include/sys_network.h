@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_network.h: Low-Level Network Services
  */
 
@@ -42,12 +43,12 @@ extern          "C" {
 
 	// If a master action fails, the action queue is emptied.
 	typedef enum {
-		MAC_REQUEST,			   // Retrieve the list of servers from the master.
-		MAC_WAIT,				   // Wait for the server list to arrive.
-		MAC_LIST				   // Print the server list in the console.
+		MAC_REQUEST, // Retrieve the list of servers from the master.
+		MAC_WAIT, // Wait for the server list to arrive.
+		MAC_LIST // Print the server list in the console.
 	} masteraction_t;
 
-	extern unsigned int maxDatagramSize;
+	extern size_t   maxDatagramSize;
 	extern boolean  allowSending;
 	extern int      maxQueuePackets;
 
@@ -80,9 +81,9 @@ extern          "C" {
 	boolean         N_ServerOpen(void);
 	boolean         N_ServerClose(void);
 
-	void            N_SendDataBuffer(void *data, uint size,
+	void            N_SendDataBuffer(void *data, size_t size,
 									 nodeid_t destination);
-	void            N_SendDataBufferReliably(void *data, int size,
+	void            N_SendDataBufferReliably(void *data, size_t size,
 											 nodeid_t destination);
 	void            N_ReturnBuffer(void *handle);
 	uint            N_GetSendQueueCount(int player);

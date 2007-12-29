@@ -357,17 +357,24 @@ int Mus_GetExt(ded_music_t *def, char *path)
             {
                 // Because the song can be in a virtual file, we must buffer
                 // it ourselves.
-                DFILE  *file = F_Open(buf, "rb");
+                DFILE          *file = F_Open(buf, "rb");
+
+	            VERBOSE(Con_Message("Mus_GetExt: Opened Song %s "
+                                    "(File \"%s\" %ul bytes)\n",
+                                    def->id, M_Pretty(def->path.path),
+                                    F_Length(file)));
+
                 ptr = iext->SongBuffer(len = F_Length(file));
-	        Con_Message("Mus_GetExt: Opening Song %s: Using File %s : File Size is %d\n", def->id, def->path.path, F_Length(file) );
                 F_Read(ptr, len, file);
                 F_Close(file);
 
                 // Clear the path so the caller knows it's in the buffer.
                 strcpy(path, "");
             }
+
             return true;
         }
+
         Con_Message("Mus_GetExt: Song %s: %s not found.\n", def->id,
                     def->path.path);
     }
@@ -377,22 +384,23 @@ int Mus_GetExt(ded_music_t *def, char *path)
     {
         // We must read the song into a buffer, because the path may
         // be a virtual file and the audio driver may not know anything about those.
-        DFILE  *file = F_Open(path, "rb");
+        DFILE          *file;
 
+        file = F_Open(path, "rb");
         ptr = iext->SongBuffer(len = F_Length(file));
         F_Read(ptr, len, file);
         F_Close(file);
         // Clear the path so the caller knows it's in the buffer.
         strcpy(path, "");
-        return true;            // Got it!
+        return true; // Got it!
     }
 
     lumpnum = W_CheckNumForName(def->lumpname);
     if(lumpnum < 0)
-        return false;           // No such lump.
+        return false; // No such lump.
 
     if(Mus_IsMUSLump(lumpnum))
-        return false;           // It's MUS!
+        return false; // It's MUS!
 
     // Take a copy. Might be a big one (since it could be an MP3), so
     // use the standard memory allocation routines.
@@ -424,8 +432,8 @@ int Mus_GetCD(ded_music_t *def)
  */
 int Mus_Start(ded_music_t *def, boolean looped)
 {
-    char    path[300];
-    int     order[3], i, song_id = def - defs.music;
+    char            path[300];
+    int             order[3], i, song_id = def - defs.music;
 
     // We will not restart the currently playing song.
     if(!mus_avail || song_id == current_song)

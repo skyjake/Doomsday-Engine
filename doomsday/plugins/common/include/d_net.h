@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * d_net.h:
  */
 
 #ifndef __GAME_NETWORK_DEF_H__
@@ -196,7 +200,7 @@ boolean         D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *sourc
                                 int damage);
 int             D_NetWorldEvent(int type, int tic, void *data);
 void            D_HandlePacket(int fromplayer, int type, void *data,
-                               int length);
+                               size_t length);
 void            D_NetConsoleRegistration(void);
 void            D_NetMessage(char *msg);
 void            D_NetMessageNoSound(char *msg);

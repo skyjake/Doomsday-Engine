@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * m_huffman.c: Huffman Codes
  *
  * Huffman encoding/decoding using predetermined, fixed frequencies.
@@ -287,9 +287,9 @@ static void Huff_BuildLookup(huffnode_t *node, uint code, uint length)
  * Checks if the encoding/decoding buffer can hold the given number of
  * bytes. If not, reallocates the buffer.
  */
-static void Huff_CheckBuffer(huffbuffer_t *buffer, uint neededSize)
+static void Huff_CheckBuffer(huffbuffer_t *buffer, size_t neededSize)
 {
-    byte *tempbuffer;
+    byte           *tempbuffer;
 
     while(neededSize > buffer->size)
     {
@@ -409,11 +409,12 @@ void Huff_Shutdown(void)
  * block of bits. The number of bytes in the encoded data is returned
  * in 'encodedSize'.
  */
-void *Huff_Encode(byte *data, uint size, uint *encodedSize)
+void *Huff_Encode(byte *data, size_t size, size_t *encodedSize)
 {
-    int     remaining, fits;
-    byte   *out, bit;
-    uint    i, code;
+    size_t          i;
+    uint            code;
+    int             remaining, fits;
+    byte           *out, bit;
 
     // The encoded message is never twice the original size
     // (longest codes are currently 11 bits).
@@ -467,12 +468,11 @@ void *Huff_Encode(byte *data, uint size, uint *encodedSize)
     // The number of valid bits - 1 in the last byte.
     huffEnc.data[0] |= bit - 1;
 
-/*
-#ifdef _DEBUG
+/*#if _DEBUG
 {
 // Test decode.
-byte *backup = M_Malloc(huffDec.size);
-uint decsize;
+byte           *backup = M_Malloc(huffDec.size);
+size_t          decsize;
 
 memcpy(backup, huffDec.data, huffDec.size);
 Huff_Decode(huffEnc.data, *encodedSize, &decsize);
@@ -483,8 +483,7 @@ if(decsize != size || memcmp(huffDec.data, data, size))
 memcpy(huffDec.data, backup, huffDec.size);
 M_Free(backup);
 }
-#endif
-*/
+#endif*/
 
     return huffEnc.data;
 }
@@ -494,10 +493,10 @@ M_Free(backup);
  */
 byte *Huff_Decode(void *data, uint size, uint *decodedSize)
 {
-    huffnode_t *node;
-    uint    outBytes = 0;
-    byte   *in = data, bit = 3, lastByteBits;
-    byte   *lastIn = in + size - 1;
+    huffnode_t     *node;
+    uint            outBytes = 0;
+    byte           *in = data, bit = 3, lastByteBits;
+    byte           *lastIn = in + size - 1;
 
     // The first three bits contain the number of valid bits in
     // the last byte.

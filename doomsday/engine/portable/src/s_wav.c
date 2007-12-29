@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * s_wav.c: WAV Files
  *
- *  A 'bare necessities' WAV loader.
+ * A 'bare necessities' WAV loader.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -45,22 +45,22 @@
 typedef unsigned short WORD;
 
 typedef struct riff_hdr_s {
-    char    id[4];              // identifier string = "RIFF"
-    uint    len;                // remaining length after this header
+    char            id[4]; // Identifier string = "RIFF"
+    uint            len; // Remaining length after this header
 } riff_hdr_t;
 
-typedef struct chunk_hdr_s {    // CHUNK 8-byte header
-    char    id[4];              // identifier, e.g. "fmt " or "data"
-    uint    len;                // remaining chunk length after header
-} chunk_hdr_t;                  // data bytes follow chunk header
+typedef struct chunk_hdr_s { // CHUNK 8-byte header
+    char            id[4]; // Identifier, e.g. "fmt " or "data"
+    uint            len; // Remaining chunk length after header
+} chunk_hdr_t;           // data bytes follow chunk header
 
 typedef struct wav_format_s {
-    WORD    wFormatTag;         // Format category
-    WORD    wChannels;          // Number of channels
-    uint    dwSamplesPerSec;    // Sampling rate
-    uint    dwAvgBytesPerSec;   // For buffer estimation
-    WORD    wBlockAlign;        // Data block size
-    WORD    wBitsPerSample;     // Sample size
+    WORD            wFormatTag; // Format category
+    WORD            wChannels; // Number of channels
+    uint            dwSamplesPerSec; // Sampling rate
+    uint            dwAvgBytesPerSec; // For buffer estimation
+    WORD            wBlockAlign; // Data block size
+    WORD            wBitsPerSample; // Sample size
 } wav_format_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -89,14 +89,14 @@ static void WRead(void **ptr, void **dest, int length)
  * Z_Free when it's no longer needed. The WAV file must have only one
  * channel! All parameters must be passed, no NULLs are allowed.
  */
-void *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
+void *WAV_MemoryLoad(byte *data, size_t datalength, int *bits, int *rate,
                      int *samples)
 {
-    byte   *end = data + datalength;
-    byte   *sampledata = NULL;
-    riff_hdr_t *riff_header;
-    chunk_hdr_t *riff_chunk;
-    wav_format_t *wave_format = NULL;
+    byte           *end = data + datalength;
+    byte           *sampledata = NULL;
+    riff_hdr_t     *riff_header;
+    chunk_hdr_t    *riff_chunk;
+    wav_format_t   *wave_format = NULL;
 
     // Read the RIFF header.
     WRead((void **) &data, (void **) &riff_header, sizeof(*riff_header));
@@ -208,10 +208,10 @@ void *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
 
 void *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
 {
-    DFILE  *file;
-    byte   *data;
-    int     size;
-    void   *sampledata;
+    DFILE          *file;
+    byte           *data;
+    size_t          size;
+    void           *sampledata;
 
     // Try to open the file.
     if((file = F_Open(filename, "b")) == NULL)
@@ -236,7 +236,7 @@ void *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
 }
 
 /**
- * @return: int         (true) if the "RIFF" and "WAVE" strings are found.
+ * @return              Non-zero if the "RIFF" and "WAVE" strings are found.
  */
 int WAV_CheckFormat(char *data)
 {

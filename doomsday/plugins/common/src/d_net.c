@@ -436,9 +436,9 @@ int D_NetWorldEvent(int type, int parm, void *data)
     return true;
 }
 
-void D_HandlePacket(int fromplayer, int type, void *data, int length)
+void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 {
-    byte   *bData = data;
+    byte           *bData = data;
 
     //
     // Server events.

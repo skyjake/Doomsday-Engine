@@ -262,28 +262,32 @@ uint Con_CursorPosition(void)
 
 void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 {
-    int     i, len = strlen(lpCmdLine);
+#define IS_ESC_CHAR(x)  ((x) == '"' || (x) == '\\' || (x) == '{' || (x) == '}')
+
+    size_t              i, len = strlen(lpCmdLine);
 
     // Prepare the data.
     memset(cargs, 0, sizeof(cmdargs_t));
     strcpy(cargs->cmdLine, lpCmdLine);
+
     // Prepare.
     for(i = 0; i < len; ++i)
     {
-#define IS_ESC_CHAR(x)  ((x) == '"' || (x) == '\\' || (x) == '{' || (x) == '}')
         // Whitespaces are separators.
         if(ISSPACE(cargs->cmdLine[i]))
             cargs->cmdLine[i] = 0;
-        if(cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1])) // Escape sequence?
-        {
+
+        if(cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1]))
+        {   // Escape sequence.
             memmove(cargs->cmdLine + i, cargs->cmdLine + i + 1,
                     sizeof(cargs->cmdLine) - i - 1);
             len--;
             continue;
         }
-        if(cargs->cmdLine[i] == '"')    // Find the end.
-        {
-            int     start = i;
+
+        if(cargs->cmdLine[i] == '"')
+        {   // Find the end.
+            size_t              start = i;
 
             cargs->cmdLine[i] = 0;
             for(++i; i < len && cargs->cmdLine[i] != '"'; ++i)
@@ -296,20 +300,22 @@ void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
                     continue;
                 }
             }
+
             // Quote not terminated?
             if(i == len)
                 break;
+
             // An empty set of quotes?
             if(i == start + 1)
                 cargs->cmdLine[i] = SC_EMPTY_QUOTE;
             else
                 cargs->cmdLine[i] = 0;
         }
-        if(cargs->cmdLine[i] == '{')    // Find matching end.
-        {
-            // Braces are another notation for quotes.
-            int     level = 0;
-            int     start = i;
+
+        if(cargs->cmdLine[i] == '{')
+        {   // Find matching end, braces are another notation for quotes.
+            int             level = 0;
+            size_t          start = i;
 
             cargs->cmdLine[i] = 0;
             for(++i; i < len; ++i)
@@ -322,18 +328,23 @@ void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
                     i++;
                     continue;
                 }
+
                 if(cargs->cmdLine[i] == '}')
                 {
                     if(!level)
                         break;
+
                     level--;
                 }
+
                 if(cargs->cmdLine[i] == '{')
                     level++;
             }
+
             // Quote not terminated?
             if(i == len)
                 break;
+
             // An empty set of braces?
             if(i == start + 1)
                 cargs->cmdLine[i] = SC_EMPTY_QUOTE;
@@ -341,18 +352,23 @@ void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
                 cargs->cmdLine[i] = 0;
         }
     }
+
     // Scan through the cmdLine and get the beginning of each token.
     cargs->argc = 0;
     for(i = 0; i < len; ++i)
     {
         if(!cargs->cmdLine[i])
             continue;
+
         // Is this an empty quote?
         if(cargs->cmdLine[i] == SC_EMPTY_QUOTE)
             cargs->cmdLine[i] = 0;  // Just an empty string.
+
         cargs->argv[cargs->argc++] = cargs->cmdLine + i;
         i += strlen(cargs->cmdLine + i);
     }
+
+#undef IS_ESC_CHAR
 }
 
 boolean Con_Init(void)
@@ -436,7 +452,7 @@ void Con_SetFont(ddfont_t *cfont)
  */
 static void Con_Send(const char *command, byte src, int silent)
 {
-    unsigned short len = strlen(command) + 1;
+    ushort          len = (ushort) (strlen(command) + 1);
 
     Msg_Begin(PKT_COMMAND2);
     // Mark high bit for silent commands.
@@ -585,16 +601,16 @@ void Con_SetMaxLineLength(void)
  */
 static void expandWithArguments(char **expCommand, cmdargs_t *args)
 {
-    char   *text = *expCommand;
-    int     size = strlen(text) + 1;
-    int     i, p, off;
+    int             p;
+    char           *text = *expCommand;
+    size_t          i, off, size = strlen(text) + 1;
 
     for(i = 0; text[i]; ++i)
     {
         if(text[i] == '%' && (text[i + 1] >= '1' && text[i + 1] <= '9'))
         {
-            char   *substr;
-            int     aidx = text[i + 1] - '1' + 1;
+            char           *substr;
+            int             aidx = text[i + 1] - '1' + 1;
 
             // Expand! (or delete)
             if(aidx > args->argc - 1)
@@ -922,11 +938,11 @@ static void Con_SplitIntoSubCommands(const char *command,
                                      timespan_t markerOffset, byte src,
                                      boolean isNetCmd)
 {
-#define BUFFSIZE 2048
-    int     gPos = 0, scPos = 0;
-    char    subCmd[BUFFSIZE];
-    int     inQuotes = false, escape = false;
-    int     len;
+#define BUFFSIZE        2048
+
+    char            subCmd[BUFFSIZE];
+    int             inQuotes = false, escape = false;
+    size_t          gPos = 0, scPos = 0, len;
 
     // Is there a command to execute?
     if(!command || command[0] == 0)
@@ -965,13 +981,16 @@ static void Con_SplitIntoSubCommands(const char *command,
             subCmd[scPos] = 0;
         }
         else
+        {
             continue;
+        }
 
         // Queue it.
         Con_QueueCmd(subCmd, sysTime + markerOffset, src, isNetCmd);
 
         scPos = 0;
     }
+
 #undef BUFFSIZE
 }
 
@@ -996,20 +1015,20 @@ static void stramb(char *amb, const char *str)
     *amb = 0;
 }
 
-/*
- * Look at the last word and try to complete it. If there are
- * several possibilities, print them.
+/**
+ * Look at the last word and try to complete it. If there are several
+ * possibilities, print them.
  *
- * @return int      Number of possible completions.
+ * @return          Number of possible completions.
  */
 static int completeWord(int mode)
 {
-    int     cp = strlen(cmdLine) - 1;
-    char    word[100], *wordBegin;
-    char    unambiguous[256];
-    char   *completion = 0;     // Pointer to the completed word.
-    cvar_t *cvar;
-    boolean justUpdated;
+    int             cp = strlen(cmdLine) - 1;
+    char            word[100], *wordBegin;
+    char            unambiguous[256];
+    char           *completion = 0; // Pointer to the completed word.
+    cvar_t         *cvar;
+    boolean         justUpdated;
 
     if(mode == 1)
         cp = complPos - 1;
@@ -1058,7 +1077,7 @@ static int completeWord(int mode)
     if(mode == 1)
     {
         // Completion Mode 1: Cycle through the possible completions.
-        unsigned int idx;
+        uint            idx;
 
         // fix me: signed/unsigned mismatch
         // use another var to note when lastCompletion is not valid.
@@ -1087,20 +1106,20 @@ static int completeWord(int mode)
             {
                 switch((*foundWord)->type)
                 {
-                    case WT_CVAR:
-                        if((cvar = Con_GetVariable((*foundWord)->word)) != NULL)
-                            Con_PrintCVar(cvar, "  ");
-                        break;
+                case WT_CVAR:
+                    if((cvar = Con_GetVariable((*foundWord)->word)) != NULL)
+                        Con_PrintCVar(cvar, "  ");
+                    break;
 
-                    case WT_CCMD:
-                    case WT_ALIAS:
-                        Con_FPrintf(CBLF_LIGHT | CBLF_YELLOW, "  %s\n",
-                                    (*foundWord)->word);
-                        break;
+                case WT_CCMD:
+                case WT_ALIAS:
+                    Con_FPrintf(CBLF_LIGHT | CBLF_YELLOW, "  %s\n",
+                                (*foundWord)->word);
+                    break;
 
-                    default:
-                        Con_Printf("  %s\n", (*foundWord)->word);
-                        break;
+                default:
+                    Con_Printf("  %s\n", (*foundWord)->word);
+                    break;
                 }
             }
 
@@ -1164,7 +1183,7 @@ int DD_Execute(int silent, const char *command)
  */
 int Con_Execute(byte src, const char *command, int silent, boolean netCmd)
 {
-    int     ret;
+    int             ret;
 
     if(silent)
         ConsoleSilent = true;
@@ -1183,8 +1202,8 @@ int Con_Execute(byte src, const char *command, int silent, boolean netCmd)
  */
 int DD_Executef(int silent, const char *command, ...)
 {
-    va_list argptr;
-    char    buffer[4096];
+    va_list         argptr;
+    char            buffer[4096];
 
     va_start(argptr, command);
     vsprintf(buffer, command, argptr);
@@ -1194,8 +1213,8 @@ int DD_Executef(int silent, const char *command, ...)
 
 int Con_Executef(byte src, int silent, const char *command, ...)
 {
-    va_list argptr;
-    char    buffer[4096];
+    va_list         argptr;
+    char            buffer[4096];
 
     va_start(argptr, command);
     vsnprintf(buffer, sizeof(buffer), command, argptr);
@@ -1581,7 +1600,7 @@ boolean Con_Responder(ddevent_t *event)
         // If not in insert mode, push the rest of the command-line forward.
         if(!cmdInsMode)
         {
-            uint    len = strlen(cmdLine);
+            size_t              len = strlen(cmdLine);
 
             if(cmdCursor < len)
             {

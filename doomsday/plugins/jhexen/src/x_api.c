@@ -94,7 +94,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data);
 int     D_NetWorldEvent(int type, int parm, void *data);
 
 // Handlers
-void    D_HandlePacket(int fromplayer, int type, void *data, int length);
+void    D_HandlePacket(int fromplayer, int type, void *data, size_t length);
 int     P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data);
 int     P_HandleMapDataPropertyValue(uint id, int dtype, int prop, int type, void *data);
 int     P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data);

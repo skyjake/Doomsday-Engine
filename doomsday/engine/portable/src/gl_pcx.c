@@ -53,12 +53,12 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * @return              @c true, if successful.
  */
-int PCX_MemoryGetSize(void *imageData, int *w, int *h)
+boolean PCX_MemoryGetSize(void *imageData, int *w, int *h)
 {
-    pcx_t  *hdr = (pcx_t *) imageData;
+    pcx_t          *hdr = (pcx_t *) imageData;
 
     if(hdr->manufacturer != 0x0a || hdr->version != 5 || hdr->encoding != 1 ||
        hdr->bits_per_pixel != 8)
@@ -70,10 +70,10 @@ int PCX_MemoryGetSize(void *imageData, int *w, int *h)
     return true;
 }
 
-int PCX_GetSize(const char *fn, int *w, int *h)
+boolean PCX_GetSize(const char *fn, int *w, int *h)
 {
-    DFILE  *file = F_Open(fn, "rb");
-    pcx_t   hdr;
+    DFILE          *file = F_Open(fn, "rb");
+    pcx_t           hdr;
 
     if(!file)
         return false;
@@ -87,27 +87,32 @@ int PCX_GetSize(const char *fn, int *w, int *h)
 /**
  * @return              @c true, if a PCX image (probably).
  */
-int PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
-                   byte *outBuffer)
+boolean PCX_MemoryLoad(byte *imgdata, size_t len, int buf_w, int buf_h,
+                       byte *outBuffer)
 {
-    return PCX_MemoryAllocLoad(imgdata, len, &buf_w, &buf_h, outBuffer) != 0;
+    if(PCX_MemoryAllocLoad(imgdata, len, &buf_w, &buf_h, outBuffer))
+        return true;
+
+    return false;
 }
 
 /**
+ * \note Memory is allocated on the stack and must be free'd with M_Free()
+ *
  * @param outBuffer     If @c NULL,, a new buffer is allocated.
  *
- * @return              @c true@c  if a PCX image (probably).
+ * @return              Ptr to a buffer containing the loaded texture data.
  */
-byte   *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w, int *buf_h,
-                            byte *outBuffer)
+byte *PCX_MemoryAllocLoad(byte *imgdata, size_t len, int *buf_w, int *buf_h,
+                          byte *outBuffer)
 {
-    pcx_t  *pcx = (pcx_t *) imgdata;
-    byte   *raw = &pcx->data, *palette;
-    int     x, y;
-    int     dataByte, runLength;
-    byte   *pix;
-    short   xmax = SHORT(pcx->xmax);
-    short   ymax = SHORT(pcx->ymax);
+    pcx_t          *pcx = (pcx_t *) imgdata;
+    byte           *raw = &pcx->data, *palette;
+    int             x, y;
+    int             dataByte, runLength;
+    byte           *pix;
+    short           xmax = SHORT(pcx->xmax);
+    short           ymax = SHORT(pcx->ymax);
 
     // Check the format.
     if(pcx->manufacturer != 0x0a || pcx->version != 5 || pcx->encoding != 1 ||
@@ -158,8 +163,8 @@ byte   *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w, int *buf_h,
         }
     }
 
-    if(raw - (byte *) pcx > len)
-        Con_Error("PCX_Load: corrupt image!\n");
+    if((size_t) (raw - (byte *) pcx) > len)
+        Con_Error("PCX_Load: Corrupt image!\n");
 
     M_Free(palette);
     return outBuffer;
@@ -173,21 +178,21 @@ void PCX_Load(const char *fn, int buf_w, int buf_h, byte *outBuffer)
 /**
  * PCX loader, partly borrowed from the Q2 utils source (lbmlib.c).
  */
-byte   *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h, byte *outBuffer)
+byte *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h, byte *outBuffer)
 {
-    DFILE  *file = F_Open(fn, "rb");
-    byte   *raw;
-    int     len;
+    DFILE          *file = F_Open(fn, "rb");
+    byte           *raw;
+    size_t          len;
 
     if(!file)
     {
-        Con_Message("PCX_Load: can't find %s.\n", fn);
+        Con_Message("PCX_Load: Can't find %s.\n", fn);
         return NULL;
     }
 
     // Load the file.
-    F_Seek(file, 0, SEEK_END);  // Seek to end.
-    len = F_Tell(file);         // How long?
+    F_Seek(file, 0, SEEK_END); // Seek to end.
+    len = F_Tell(file); // How long?
     F_Seek(file, 0, SEEK_SET);
     raw = M_Malloc(len);
     F_Read(raw, len, file);
@@ -195,7 +200,7 @@ byte   *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h, byte *outBuffer)
 
     // Parse the PCX file.
     if(!(outBuffer = PCX_MemoryAllocLoad(raw, len, buf_w, buf_h, outBuffer)))
-        Con_Message("PCX_Load: error loading %s.\n", fn);
+        Con_Message("PCX_Load: Error loading \"%s\".\n", M_Pretty(fn));
 
     M_Free(raw);
     return outBuffer;

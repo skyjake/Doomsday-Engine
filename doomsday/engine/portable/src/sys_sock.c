@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_sock.c: TCP/IP Sockets
  */
 
@@ -88,28 +89,32 @@ void N_SockShutdown(void)
 #endif
 }
 
-/*
+/**
  * Don't print too long messages with one call.
  */
 void N_SockPrintf(socket_t s, const char *format, ...)
 {
-    char    buf[512];
-    size_t  length;
-    va_list args;
+#define BUFF_SIZE           512
+
+    char        buf[BUFF_SIZE];
+    int         length;
+    va_list     args;
 
     // Print the message into the buffer.
     va_start(args, format);
-    length = vsnprintf(buf, sizeof(buf), format, args);
+    length = vsnprintf(buf, BUFF_SIZE, format, args);
     va_end(args);
 
-    if(length > sizeof(buf))
+    if(length > BUFF_SIZE)
     {
         // Oops... Something important may have been overwritten in memory.
-        length = sizeof(buf);
+        length = BUFF_SIZE;
     }
 
     // Send it.
     send(s, buf, length, 0);
+
+#undef BUFF_SIZE
 }
 
 struct hostent *N_SockGetHost(const char *hostName)

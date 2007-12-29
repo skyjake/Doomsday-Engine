@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * driver_a3d.cpp: A3D Doomsday Sfx Driver
  */
 
@@ -75,10 +75,10 @@ void            DS_Play(sfxbuffer_t *buf);
 void            DS_Stop(sfxbuffer_t *buf);
 void            DS_Refresh(sfxbuffer_t *buf);
 void            DS_Event(int type);
-void            DS_Set(sfxbuffer_t *buf, int property, float value);
-void            DS_Setv(sfxbuffer_t *buf, int property, float *values);
-void            DS_Listener(int property, float value);
-void            DS_Listenerv(int property, float *values);
+void            DS_Set(sfxbuffer_t *buf, int prop, float value);
+void            DS_Setv(sfxbuffer_t *buf, int prop, float *values);
+void            DS_Listener(int prop, float value);
+void            DS_Listenerv(int prop, float *values);
 
 }
 
@@ -107,7 +107,7 @@ static void error(const char *what, const char *msg)
 
 int DS_Init(void)
 {
-    HWND hWnd;
+    HWND            hWnd;
 
     if(initOk)
         return true;
@@ -395,7 +395,7 @@ void DS_Set(sfxbuffer_t *buf, int prop, float value)
         s->SetTransformMode(value? A3DSOURCE_TRANSFORMMODE_HEADRELATIVE
                             : A3DSOURCE_TRANSFORMMODE_NORMAL);
         break;
-        
+
     default:
         break;
     }

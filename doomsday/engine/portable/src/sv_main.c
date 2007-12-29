@@ -137,7 +137,7 @@ void Sv_GetInfo(serverinfo_t *info)
 /**
  * @return              The length of the string.
  */
-int Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
+size_t Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
 {
     unsigned int i;
 
@@ -601,9 +601,9 @@ void Sv_GetPackets(void)
             // Unpack the commands in the packet. Since the game defines the
             // ticcmd_t structure, it is the only one who can do this.
             unpacked =
-                (byte *) gx.NetPlayerEvent(netBuffer.length,
+                (byte *) gx.NetPlayerEvent((int) netBuffer.length,
                                            DDPE_READ_COMMANDS,
-                                           netBuffer.msg.data);
+                                           (void*) netBuffer.msg.data);
 
             // The first two bytes contain the number of commands.
             num = *(ushort *) unpacked;
@@ -1095,7 +1095,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
 {
     client_t   *client = &clients[playerNumber];
     uint        qSize = N_GetSendQueueSize(playerNumber);
-    uint        limit = 400; /*Sv_GetMaxFrameSize(playerNumber); */
+    uint        limit = 400;
 
     // If there are too many messages in the queue, the player's bandwidth
     // is overrated.

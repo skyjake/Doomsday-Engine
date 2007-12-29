@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * net_msg.h: Network Messaging
  */
 
@@ -34,16 +35,16 @@ void            Msg_WriteShort(short w);
 void            Msg_WritePackedShort(short w);
 void            Msg_WriteLong(int l);
 void            Msg_WritePackedLong(unsigned int l);
-void            Msg_Write(const void *src, int len);
+void            Msg_Write(const void *src, size_t len);
 byte            Msg_ReadByte(void);
 short           Msg_ReadShort(void);
 short           Msg_ReadPackedShort(void);
 int             Msg_ReadLong(void);
 unsigned int    Msg_ReadPackedLong(void);
-void            Msg_Read(void *dest, int len);
-int             Msg_Offset(void);
-void            Msg_SetOffset(int offset);
-int             Msg_MemoryLeft(void);
+void            Msg_Read(void *dest, size_t len);
+size_t          Msg_Offset(void);
+void            Msg_SetOffset(size_t offset);
+size_t          Msg_MemoryLeft(void);
 boolean         Msg_End(void);
 
 #endif

@@ -226,8 +226,8 @@ static int DH_ReadStrings(char *fileName)
  */
 void* DH_Find(const char *id)
 {
-    helpnode_t *n;
-    unsigned int length;
+    helpnode_t     *n;
+    size_t          length;
 
     if(!helpInited)
         return NULL;
@@ -235,11 +235,12 @@ void* DH_Find(const char *id)
     length = strlen(id);
     for(n = helpRoot.next; n != &helpRoot; n = n->next)
     {
-        // DJS:
-        // Don't compare unless the string is long enough.
-        // This also stops us returning a false positive when a substring
-        // matches the search string e.g.
-        // [rend-light] != [rend-light-ambient]
+        /**
+         * Don't compare unless the string is long enough.
+         * This also stops us returning a false positive when a substring
+         * matches the search string e.g:
+         *     [rend-light] != [rend-light-ambient]
+         */
         if(strlen(n->id) < length)
             continue;
 

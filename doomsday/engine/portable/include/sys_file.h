@@ -62,11 +62,11 @@ void            F_ShutdownDirec(void);
 int             F_Access(const char *path);
 DFILE          *F_Open(const char *path, const char *mode);
 void            F_Close(DFILE *file);
-int             F_Length(DFILE *file);
-int             F_Read(void *dest, int count, DFILE *file);
-int             F_GetC(DFILE *file);
-int             F_Tell(DFILE *file);
-int             F_Seek(DFILE *file, int offset, int whence);
+size_t          F_Length(DFILE *file);
+size_t          F_Read(void *dest, size_t count, DFILE *file);
+unsigned char   F_GetC(DFILE *file);
+size_t          F_Tell(DFILE *file);
+size_t          F_Seek(DFILE *file, size_t offset, int whence);
 void            F_Rewind(DFILE *file);
 int             F_ForAll(const char *filespec, void *parm,
 						 f_forall_func_t func);

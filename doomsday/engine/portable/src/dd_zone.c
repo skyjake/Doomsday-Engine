@@ -122,8 +122,8 @@ static boolean  fastMalloc = false;
  */
 long superatol(char *s)
 {
-    char   *endptr;
-    long    val = strtol(s, &endptr, 0);
+    char           *endptr;
+    long            val = strtol(s, &endptr, 0);
 
     if(*endptr == 'k' || *endptr == 'K')
         val *= 1024;
@@ -150,8 +150,8 @@ void Z_EnableFastMalloc(boolean isEnabled)
  */
 memvolume_t *Z_Create(size_t volumeSize)
 {
-    memblock_t *block;
-    memvolume_t *vol = M_Calloc(sizeof(memvolume_t));
+    memblock_t     *block;
+    memvolume_t    *vol = M_Calloc(sizeof(memvolume_t));
 
     vol->next = volumeRoot;
     volumeRoot = vol;
@@ -201,8 +201,8 @@ int Z_Init(void)
  */
 void Z_Shutdown(void)
 {
-    size_t totalMemory = 0;
-    int numVolumes = 0;
+    int             numVolumes = 0;
+    size_t          totalMemory = 0;
 
     // Destroy all the memory volumes.
     while(volumeRoot)
@@ -229,8 +229,8 @@ void Z_Shutdown(void)
 #ifdef FAKE_MEMORY_ZONE
 memblock_t *Z_GetBlock(void *ptr)
 {
-    memvolume_t *volume;
-    memblock_t *block;
+    memvolume_t    *volume;
+    memblock_t     *block;
 
     for(volume = volumeRoot; volume; volume = volume->next)
     {
@@ -254,27 +254,27 @@ memblock_t *Z_GetBlock(void *ptr)
  */
 void Z_Free(void *ptr)
 {
-    memblock_t *block, *other;
-    memvolume_t *volume;
+    memblock_t     *block, *other;
+    memvolume_t    *volume;
 
     if(!ptr)
     {
-        VERBOSE( Con_Message("Z_Free: Warning: Attempt to free NULL ignored.\n") );
+        VERBOSE(Con_Message("Z_Free: Warning: Attempt to free NULL ignored.\n") );
         return;
     }
 
     block = Z_GetBlock(ptr);
     if(block->id != ZONEID)
     {
-        Con_Error("Z_Free: attempt to free pointer without ZONEID");
+        Con_Error("Z_Free: Attempt to free pointer without ZONEID.");
     }
 
     // The block was allocated from this volume.
     volume = block->volume;
 
-    if(block->user > (void **) 0x100)   // smaller values are not pointers
-        *block->user = 0;       // clear the user's mark
-    block->user = NULL;         // mark as free
+    if(block->user > (void **) 0x100) // Smaller values are not pointers.
+        *block->user = 0; // Clear the user's mark.
+    block->user = NULL; // Mark as free.
     block->tag = 0;
     block->volume = NULL;
     block->id = 0;
@@ -284,10 +284,12 @@ void Z_Free(void *ptr)
     block->area = NULL;
 #endif
 
-    // Erase the entire sequence, if there is one.
-    // It would also be possible to carefully break the sequence in two parts,
-    // but since PU_LEVELSTATICs aren't supposed to be freed one by one, this
-    // this sufficient.
+    /**
+     * Erase the entire sequence, if there is one.
+     * It would also be possible to carefully break the sequence in two
+     * parts, but since PU_LEVELSTATICs aren't supposed to be freed one by
+     * one, this this sufficient.
+     */
     if(block->seq_first)
     {
         memblock_t* first = block->seq_first;
@@ -301,7 +303,7 @@ void Z_Free(void *ptr)
 
     other = block->prev;
     if(!other->user)
-    {                           // merge with previous free block
+    {   // Merge with previous free block.
         other->size += block->size;
         other->next = block->next;
         other->next->prev = other;
@@ -312,7 +314,7 @@ void Z_Free(void *ptr)
 
     other = block->next;
     if(!other->user)
-    {                           // merge the next free block onto the end
+    {   // Merge the next free block onto the end.
         block->size += other->size;
         block->next = other->next;
         block->next->prev = block;
@@ -664,10 +666,10 @@ void Z_ChangeTag2(void *ptr, int tag)
     memblock_t *block = Z_GetBlock(ptr);
 
     if(block->id != ZONEID)
-        Con_Error("Z_ChangeTag: modifying a block without ZONEID");
+        Con_Error("Z_ChangeTag: Modifying a block without ZONEID.");
 
     if(tag >= PU_PURGELEVEL && (unsigned long) block->user < 0x100)
-        Con_Error("Z_ChangeTag: an owner is required for purgable blocks");
+        Con_Error("Z_ChangeTag: An owner is required for purgable blocks.");
     block->tag = tag;
 }
 
@@ -679,7 +681,7 @@ void Z_ChangeUser(void *ptr, void *newUser)
     memblock_t *block = Z_GetBlock(ptr);
 
     if(block->id != ZONEID)
-        Con_Error("Z_ChangeUser: block without ZONEID");
+        Con_Error("Z_ChangeUser: Block without ZONEID.");
     block->user = newUser;
 }
 
@@ -688,10 +690,10 @@ void Z_ChangeUser(void *ptr, void *newUser)
  */
 void *Z_GetUser(void *ptr)
 {
-    memblock_t *block = Z_GetBlock(ptr);
+    memblock_t     *block = Z_GetBlock(ptr);
 
     if(block->id != ZONEID)
-        Con_Error("Z_GetUser: block without ZONEID");
+        Con_Error("Z_GetUser: Block without ZONEID.");
     return block->user;
 }
 
@@ -700,10 +702,10 @@ void *Z_GetUser(void *ptr)
  */
 int Z_GetTag(void *ptr)
 {
-    memblock_t *block = Z_GetBlock(ptr);
+    memblock_t     *block = Z_GetBlock(ptr);
 
     if(block->id != ZONEID)
-        Con_Error("Z_GetTag: block without ZONEID");
+        Con_Error("Z_GetTag: Block without ZONEID.");
     return block->tag;
 }
 
@@ -712,7 +714,7 @@ int Z_GetTag(void *ptr)
  */
 void *Z_Calloc(size_t size, int tag, void *user)
 {
-    void   *ptr = Z_Malloc(size, tag, user);
+    void           *ptr = Z_Malloc(size, tag, user);
 
     memset(ptr, 0, size);
     return ptr;
@@ -723,9 +725,9 @@ void *Z_Calloc(size_t size, int tag, void *user)
  */
 void *Z_Recalloc(void *ptr, size_t n, int callocTag)
 {
-    memblock_t *block;
-    void   *p;
-    size_t  bsize;
+    memblock_t     *block;
+    void           *p;
+    size_t          bsize;
 
     if(ptr)                     // Has old data.
     {
@@ -744,10 +746,11 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
         }
         Z_Free(ptr);
     }
-    else                        // Totally new allocation.
-    {
+    else
+    {   // Totally new allocation.
         p = Z_Calloc(n, callocTag, NULL);
     }
+
     return p;
 }
 
@@ -756,9 +759,9 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
  */
 size_t Z_FreeMemory(void)
 {
-    memvolume_t *volume;
-    memblock_t *block;
-    size_t  free = 0;
+    memvolume_t    *volume;
+    memblock_t     *block;
+    size_t          free = 0;
 
     Z_CheckHeap();
 
@@ -774,6 +777,7 @@ size_t Z_FreeMemory(void)
             }
         }
     }
+
     return free;
 }
 
@@ -783,9 +787,9 @@ size_t Z_FreeMemory(void)
  *
  * @param zblockset_t*  Block set into which the new block is added.
  */
-static void Z_AddBlockToSet(zblockset_t* set)
+static void Z_AddBlockToSet(zblockset_t *set)
 {
-    zblock_t* block = 0;
+    zblock_t       *block = 0;
 
     // Get a new block by resizing the blocks array. This is done relatively
     // seldom, since there is a large number of elements per each block.
@@ -804,9 +808,9 @@ static void Z_AddBlockToSet(zblockset_t* set)
 /**
  * Return a ptr to the next unused element in the blockset.
  *
- * @param   blockset        The blockset to return the next element from.
+ * @param blockset      The blockset to return the next element from.
  *
- * @return  void*           Ptr to the next unused element in the blockset.
+ * @return              Ptr to the next unused element in the blockset.
  */
 void *Z_BlockNewElement(zblockset_t* set)
 {
@@ -843,10 +847,10 @@ void *Z_BlockNewElement(zblockset_t* set)
  *
  * The internal state of a blockset is managed automatically.
  *
- * @param   sizeOfElement   Required size of each element.
- * @param   batchSize       Number of elements in each zblock of the set.
+ * @param sizeOfElement Required size of each element.
+ * @param batchSize     Number of elements in each zblock of the set.
  *
- * @return  zblockset*      Ptr to the newly created blockset.
+ * @return              Ptr to the newly created blockset.
  */
 zblockset_t *Z_BlockCreate(size_t sizeOfElement, unsigned int batchSize,
                            int tag)
@@ -870,11 +874,11 @@ zblockset_t *Z_BlockCreate(size_t sizeOfElement, unsigned int batchSize,
  * All memory allocated is released for all elements in all blocks and any
  * used for the blockset itself.
  *
- * @param   set      The blockset to be freed.
+ * @param set           The blockset to be freed.
  */
 void Z_BlockDestroy(zblockset_t *set)
 {
-    unsigned int i;
+    uint            i;
 
     if(!set)
         return;
@@ -886,4 +890,3 @@ void Z_BlockDestroy(zblockset_t *set)
     Z_Free(set->blocks);
     Z_Free(set);
 }
-

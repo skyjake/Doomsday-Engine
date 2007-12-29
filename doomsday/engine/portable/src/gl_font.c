@@ -389,9 +389,10 @@ int FR_PrepareFont(const char *name)
                                                  font->texWidth, font->texHeight, image,
                                                  0, DGL_LINEAR, DGL_NEAREST,
                                                  -1 /*best anisotropy*/,
-                                                 DGL_CLAMP, DGL_CLAMP);                                                 
+                                                 DGL_CLAMP, DGL_CLAMP);
 
-        M_Free(image); image = 0;
+        M_Free(image);
+        image = 0;
 
         F_Close(file);
     }
@@ -680,13 +681,15 @@ int FR_CharWidth(int ch)
 
 int FR_TextWidth(const char *text)
 {
-    int     i, width = 0, len = strlen(text);
-    jfrfont_t *cf;
+    size_t          i, len;
+    int             width = 0;
+    jfrfont_t      *cf;
 
-    if(currentFontIndex == -1)
+    if(currentFontIndex == -1 || !text)
         return 0;
 
     // Just add them together.
+    len = strlen(text);
     for(cf = fonts + currentFontIndex, i = 0; i < len; ++i)
         width += cf->chars[(byte) text[i]].w - 2*cf->marginWidth;
 
@@ -695,8 +698,9 @@ int FR_TextWidth(const char *text)
 
 int FR_TextHeight(const char *text)
 {
-    int     i, height = 0, len;
-    jfrfont_t *cf;
+    size_t          i, len;
+    int             height = 0;
+    jfrfont_t      *cf;
 
     if(currentFontIndex == -1 || !text)
         return 0;
@@ -704,7 +708,8 @@ int FR_TextHeight(const char *text)
     cf = fonts + currentFontIndex;
 
     // Find the greatest height.
-    for(len = strlen(text), i = 0; i < len; ++i)
+    len = strlen(text);
+    for(i = 0; i < len; ++i)
         height = MAX_OF(height, cf->chars[(byte) text[i]].h - 2*cf->marginHeight);
 
     return height;
@@ -754,10 +759,11 @@ int FR_GetCurrent(void)
 int FR_CustomShadowTextOut(const char *text, int x, int y, int shadowX, int shadowY,
                            float shadowAlpha)
 {
-    int     i, width = 0, len, step;
-    jfrfont_t *cf;
-    int     origColor[4];
-    boolean drawShadow = (shadowX || shadowY);
+    int             width = 0, step;
+    size_t          i, len;
+    jfrfont_t      *cf;
+    int             origColor[4];
+    boolean         drawShadow = (shadowX || shadowY);
 
     if(!text)
         return 0;
@@ -792,8 +798,8 @@ int FR_CustomShadowTextOut(const char *text, int x, int y, int shadowX, int shad
 
     if(drawShadow)
     {
-        int startX = x;
-        int startY = y;
+        int             startX = x;
+        int             startY = y;
 
         x += shadowX;
         y += shadowY;

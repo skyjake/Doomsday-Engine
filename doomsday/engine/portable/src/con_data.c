@@ -400,14 +400,14 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
     if(cmd->params != NULL)
     {
         char        c;
-        uint        l, len;
+        size_t      l, len;
         cvartype_t  type = CVT_NULL;
         boolean     unlimitedArgs;
 
         len = strlen(cmd->params);
         minArgs = 0;
         unlimitedArgs = false;
-        for(l=0; l < len; ++l)
+        for(l = 0; l < len; ++l)
         {
             c = cmd->params[l];
             switch(c)

@@ -1107,7 +1107,7 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
             break;
 
         case DDKEY_RIGHTARROW:
-            if(dat->cp < (int) strlen(ob->text))
+            if(dat->cp < (uint) strlen(ob->text))
                 dat->cp++;
             break;
 
@@ -1116,11 +1116,11 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
             break;
 
         case DDKEY_END:
-            dat->cp = strlen(ob->text);
+            dat->cp = (uint) strlen(ob->text);
             break;
 
         case DDKEY_BACKSPACE:
-            if(!dat->cp)
+            if(dat->cp == 0)
                 break;
             dat->cp--;
 
@@ -1166,7 +1166,7 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
         UI_Capture(ob);
         memset(ob->text, 0, sizeof(ob->text));
         strncpy(ob->text, dat->ptr, 255);
-        dat->cp = strlen(ob->text);
+        dat->cp = (uint) strlen(ob->text);
         return true;
     }
     return false;
@@ -1177,10 +1177,11 @@ void UIEdit_Drawer(ui_object_t *ob)
     uidata_edit_t *dat = ob->data;
     int         act = (ob->flags & UIF_ACTIVE) != 0;
     int         dis = (ob->flags & UIF_DISABLED) != 0;
+    int         textWidth;
     ui_color_t  back;
     float       t = ob->timer / 8.0f;
     char        buf[256];
-    int         curx, i, maxw = ob->w - UI_BORDER * 4, firstInBuf = 0;
+    uint        curx, i, maxw = ob->w - UI_BORDER * 4, firstInBuf = 0;
     float       alpha = (dis ? .2f : .5f);
 
     // Mix the background color.
@@ -1195,8 +1196,10 @@ void UIEdit_Drawer(ui_object_t *ob)
     // Draw text.
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     memset(buf, 0, sizeof(buf));
+
     // Does all of it fit in the box?
-    if(FR_TextWidth(ob->text) > maxw)
+    textWidth = FR_TextWidth(ob->text);
+    if(textWidth > 0 && (unsigned) textWidth > maxw)
     {
         // No, it doesn't fit.
         if(!act)

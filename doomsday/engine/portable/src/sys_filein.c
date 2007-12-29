@@ -52,29 +52,29 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    DFILE  *file;
+    DFILE          *file;
 } filehandle_t;
 
 typedef struct {
-    char    lump[9];
-    char   *path;               // Full path name.
+    char            lump[9];
+    char           *path; // Full path name.
 } lumpdirec_t;
 
 typedef struct {
-    char   *source;             // Full path name.
-    char   *target;             // Full path name.
+    char           *source; // Full path name.
+    char           *target; // Full path name.
 } vdmapping_t;
 
 typedef struct {
     f_forall_func_t func;
-    void   *parm;
-    const char *searchPath;
-    const char *pattern;
+    void           *parm;
+    const char     *searchPath;
+    const char     *pattern;
 } zipforall_t;
 
 typedef struct foundentry_s {
-    filename_t name;
-    int     attrib;
+    filename_t      name;
+    int             attrib;
 } foundentry_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -82,10 +82,9 @@ typedef struct foundentry_s {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void F_ResetMapping(void);
+void F_ResetDirec(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-void    F_ResetDirec(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -104,13 +103,14 @@ static unsigned int vdMappingsMax;
 // CODE --------------------------------------------------------------------
 
 /**
- * Returns true if the string matches the pattern.
  * This is a case-insensitive test.
  * I do hope this algorithm works like it should...
+ *
+ * @return              @c true, if the string matches the pattern.
  */
 int F_MatchName(const char *string, const char *pattern)
 {
-    const char *in = string, *st = pattern;
+    const char     *in = string, *st = pattern;
 
     while(*in)
     {
@@ -119,23 +119,29 @@ int F_MatchName(const char *string, const char *pattern)
             st++;
             continue;
         }
+
         if(*st != '?' &&
            (tolower((unsigned char) *st) != tolower((unsigned char) *in)))
         {
             // A mismatch. Hmm. Go back to a previous *.
             while(st >= pattern && *st != '*')
                 st--;
+
             if(st < pattern)
-                return false;   // No match!
+                return false; // No match!
+
             // The asterisk lets us continue.
         }
+
         // This character of the pattern is OK.
         st++;
         in++;
     }
+
     // Match is good if the end of the pattern was reached.
     while(*st == '*')
-        st++;                   // Skip remaining asterisks.
+        st++; // Skip remaining asterisks.
+
     return *st == 0;
 }
 
@@ -146,6 +152,7 @@ char *F_SkipSpace(char *ptr)
 {
     while(*ptr && *ptr != '\n' && isspace(*ptr))
         ptr++;
+
     return ptr;
 }
 
@@ -153,6 +160,7 @@ char *F_FindNewline(char *ptr)
 {
     while(*ptr && *ptr != '\n')
         ptr++;
+
     return ptr;
 }
 
@@ -176,14 +184,15 @@ int F_GetDirecIdx(char *exact_path)
  */
 void F_AddDirec(char *lumpname, char *symbolic_path)
 {
-    char    path[256], *full;
-    lumpdirec_t *ld;
-    int     i;
+    int             i;
+    char            path[256], *full;
+    lumpdirec_t    *ld;
 
     if(!lumpname[0] || !symbolic_path[0])
         return;
 
     for(i = 0; direc[i].path && i < MAX_LUMPDIRS; ++i);
+
     if(i == MAX_LUMPDIRS)
     {
         // \fixme Why no dynamic allocation?
@@ -228,9 +237,9 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
  */
 void F_AddMapping(const char* source, const char* destination)
 {
-    filename_t src;
-    filename_t dst;
-    vdmapping_t *vd;
+    filename_t      src;
+    filename_t      dst;
+    vdmapping_t    *vd;
 
     // Convert to absolute path names.
     M_TranslatePath(source, src);
@@ -267,24 +276,27 @@ void F_AddMapping(const char* source, const char* destination)
  */
 void F_ParseDirecData(char *buffer)
 {
-    char   *ptr = buffer, *end;
-    char    name[9], path[256];
-    int     len;
+    char           *ptr = buffer, *end;
+    char            name[9], path[256];
+    size_t          len;
 
     for(; *ptr;)
     {
         ptr = F_SkipSpace(ptr);
         if(!*ptr)
             break;
+
         if(*ptr == '\n')
         {
-            ptr++;              // Advance to the next line.
+            ptr++; // Advance to the next line.
             continue;
         }
+
         // We're at the lump name.
         end = M_FindWhite(ptr);
         if(!*end)
             break;
+
         len = end - ptr;
         if(len > 8)
             len = 8;
@@ -292,16 +304,20 @@ void F_ParseDirecData(char *buffer)
         strncpy(name, ptr, len);
         ptr = F_SkipSpace(end);
         if(!*ptr || *ptr == '\n')
-            continue;           // Missing filename?
+            continue; // Missing filename?
+
         // We're at the path name.
         end = F_FindNewline(ptr);
+
         // Get rid of extra whitespace.
         while(end > ptr && isspace(*end))
             end--;
         end = M_FindWhite(end);
+
         len = end - ptr;
         if(len > 255)
             len = 255;
+
         memset(path, 0, sizeof(path));
         strncpy(path, ptr, len);
         F_AddDirec(name, path);
@@ -311,8 +327,8 @@ void F_ParseDirecData(char *buffer)
 
 void F_InitMapping(void)
 {
-    int     i;
-    int     argC = Argc();
+    int             i;
+    int             argC = Argc();
 
     F_ResetMapping();
 
@@ -521,11 +537,11 @@ static unsigned int F_GetLastModified(const char *path)
 }
 
 /**
- * Returns true if the mapping matched the path.
+ * @return              @c true, if the mapping matched the path.
  */
 boolean F_MapPath(const char *path, vdmapping_t *vd, char *mapped)
 {
-    int targetLen = strlen(vd->target);
+    size_t          targetLen = strlen(vd->target);
 
     if(!strnicmp(path, vd->target, targetLen))
     {
@@ -534,6 +550,7 @@ boolean F_MapPath(const char *path, vdmapping_t *vd, char *mapped)
         strcat(mapped, path + targetLen);
         return true;
     }
+
     return false;
 }
 
@@ -676,21 +693,23 @@ void F_Close(DFILE *file)
 }
 
 /**
- * Returns the number of bytes read (up to 'count').
+ * @return              The number of bytes read (up to 'count').
  */
-int F_Read(void *dest, int count, DFILE *file)
+size_t F_Read(void *dest, size_t count, DFILE *file)
 {
-    int     bytesleft;
+    size_t          bytesleft;
 
     if(!file->flags.open)
         return 0;
-    if(file->flags.file)        // Normal file?
-    {
+
+    if(file->flags.file)
+    {   // Normal file.
         count = fread(dest, 1, count, file->data);
         if(feof((FILE *) file->data))
             file->flags.eof = true;
         return count;
     }
+
     // Is there enough room in the file?
     bytesleft = file->size - (file->pos - (char *) file->data);
     if(count > bytesleft)
@@ -698,15 +717,17 @@ int F_Read(void *dest, int count, DFILE *file)
         count = bytesleft;
         file->flags.eof = true;
     }
+
     if(count)
     {
         memcpy(dest, file->pos, count);
         file->pos += count;
     }
+
     return count;
 }
 
-int F_GetC(DFILE *file)
+unsigned char F_GetC(DFILE *file)
 {
     unsigned char ch = 0;
 
@@ -716,28 +737,31 @@ int F_GetC(DFILE *file)
     return ch;
 }
 
-int F_Tell(DFILE *file)
+size_t F_Tell(DFILE *file)
 {
     if(!file->flags.open)
         return 0;
     if(file->flags.file)
-        return ftell(file->data);
+        return (size_t) ftell(file->data);
     return file->pos - (char *) file->data;
 }
 
 /**
- * Returns the current position in the file, before the move, as an offset
- * from the beginning of the file.
+ * @return              The current position in the file, before the move,
+ *                      as an offset from the beginning of the file.
  */
-int F_Seek(DFILE *file, int offset, int whence)
+size_t F_Seek(DFILE *file, size_t offset, int whence)
 {
-    int     oldpos = F_Tell(file);
+    size_t          oldpos = F_Tell(file);
 
     if(!file->flags.open)
         return 0;
+
     file->flags.eof = false;
     if(file->flags.file)
-        fseek(file->data, offset, whence);
+    {
+        fseek(file->data, (long) offset, whence);
+    }
     else
     {
         if(whence == SEEK_SET)
@@ -747,6 +771,7 @@ int F_Seek(DFILE *file, int offset, int whence)
         else if(whence == SEEK_CUR)
             file->pos += offset;
     }
+
     return oldpos;
 }
 
@@ -756,12 +781,13 @@ void F_Rewind(DFILE *file)
 }
 
 /**
- * Returns the length of the file, in bytes.  Stream position is not
- * affected.
+ * \note Stream position is not affected.
+ *
+ * @return              The length of the file, in bytes.
  */
-int F_Length(DFILE *file)
+size_t F_Length(DFILE *file)
 {
-    int     length, currentPosition;
+    size_t          length, currentPosition;
 
     if(!file)
         return 0;
@@ -773,45 +799,48 @@ int F_Length(DFILE *file)
 }
 
 /**
- * Returns the time when the file was last modified, as seconds since
- * the Epoch.  Returns zero if the file is not found.
+ * @return              The time when the file was last modified, as seconds
+ *                      since the Epoch else zero if the file is not found.
  */
 unsigned int F_LastModified(const char *fileName)
 {
     // Try to open the file, but don't buffer any contents.
-    DFILE *file = F_Open(fileName, "rx");
-    unsigned modified = 0;
+    DFILE          *file = F_Open(fileName, "rx");
+    unsigned int    modified = 0;
 
     if(!file)
         return 0;
+
     modified = file->lastModified;
     F_Close(file);
     return modified;
 }
 
 /**
- * Returns the number of times the char appears in the path.
+ * @return              The number of times the char appears in the path.
  */
-int F_CountPathChars(const char *path, char ch)
+size_t F_CountPathChars(const char *path, char ch)
 {
-    int     count;
+    size_t          count;
 
     for(count = 0; *path; path++)
         if(*path == ch)
             count++;
+
     return count;
 }
 
 /**
- * Returns true to stop searching when forall_func returns false.
+ * @return              @c true, to indicate to stop searching, when forall_func
+ *                      returns @c false.
  */
 int F_ZipFinderForAll(const char *zipFileName, void *parm)
 {
-    zipforall_t *info = parm;
+    zipforall_t    *info = parm;
 
     if(F_MatchName(zipFileName, info->pattern))
         if(!info->func(zipFileName, FT_NORMAL, info->parm))
-            return true;        // Stop searching.
+            return true; // Stop searching.
 
     // Continue searching.
     return false;
@@ -829,11 +858,11 @@ static int C_DECL F_EntrySorter(const void* a, const void* b)
 int F_ForAllDescend(const char *pattern, const char *path, void *parm,
                     f_forall_func_t func)
 {
-    char    fn[256], spec[256];
-    char    localPattern[256];
-    finddata_t fd;
-    int     i, count, max;
-    foundentry_t *found;
+    int             i, count, max;
+    finddata_t      fd;
+    foundentry_t   *found;
+    char            fn[256], spec[256];
+    char            localPattern[256];
 
     sprintf(localPattern, "%s%s", path, pattern);
 
@@ -933,10 +962,10 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
  */
 int F_ForAll(const char *filespec, void *parm, f_forall_func_t func)
 {
-    directory_t specdir;
-    char    fn[256];
-    int     i;
-    zipforall_t zipFindInfo;
+    int             i;
+    char            fn[256];
+    directory_t     specdir;
+    zipforall_t     zipFindInfo;
 
     Dir_FileDir(filespec, &specdir);
 

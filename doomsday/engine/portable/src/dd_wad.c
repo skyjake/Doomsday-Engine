@@ -146,7 +146,7 @@ void DD_RegisterVFS(void)
 
 static void convertSlashes(char *modifiableBuffer)
 {
-    uint        i, len;
+    size_t          i, len;
 
     len = strlen(modifiableBuffer);
     for(i = 0; i < len; ++i)
@@ -750,11 +750,11 @@ int W_IsIWAD(char *fn)
  *
  * @param fn            Path of the file.
  *
- * @return              @c true,, if the file is a PK3 package.
+ * @return              @c true, if the file is a PK3 package.
  */
 boolean W_IsPK3(const char *fn)
 {
-    int         len = strlen(fn);
+    size_t      len = strlen(fn);
 
     return (len > 3 && (!strnicmp(fn + len - 4, ".pk3", 4) ||
                         !strnicmp(fn + len - 4, ".zip", 4)));

@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * ui_main.h: Graphical User Interface
  */
 
@@ -155,7 +155,7 @@ typedef struct {
     char           *ptr;           // Text to modify.
     int             maxlen;        // Maximum allowed length.
     void           *data;
-    int             cp;            // Cursor position.
+    uint            cp;            // Cursor position.
 } uidata_edit_t;
 
 typedef struct {

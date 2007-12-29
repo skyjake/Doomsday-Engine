@@ -374,32 +374,32 @@ void XS_SetSectorType(struct sector_s *sec, int special)
 
 void XS_Init(void)
 {
-    int         i;
-    int         count = DD_GetInteger(DD_SECTOR_COUNT);
-    sector_t   *sec;
-    xsector_t  *xsec;
+    if(numsectors > 0)
+    {   // Allocate stair builder data.
+        int         i;
+        sector_t   *sec;
+        xsector_t  *xsec;
 
-    // Allocate stair builder data.
+        builder = Z_Malloc(numsectors, PU_LEVEL, 0);
+        memset(builder, 0, numsectors);
 
-    builder = Z_Malloc(count, PU_LEVEL, 0);
-    memset(builder, 0, count);
+        /*  // Clients rely on the server, they don't do XG themselves.
+           if(IS_CLIENT) return; */
 
-    /*  // Clients rely on the server, they don't do XG themselves.
-       if(IS_CLIENT) return; */
+        for(i = 0; i < numsectors; ++i)
+        {
+            sec = P_ToPtr(DMU_SECTOR, i);
+            xsec = P_ToXSector(sec);
 
-    for(i = 0; i < count; ++i)
-    {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_ToXSector(sec);
+            P_GetFloatpv(sec, DMU_COLOR, xsec->origrgb);
 
-        P_GetFloatpv(sec, DMU_COLOR, xsec->origrgb);
+            xsec->SP_floororigheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+            xsec->SP_ceilorigheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            xsec->origlight = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
 
-        xsec->SP_floororigheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
-        xsec->SP_ceilorigheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
-        xsec->origlight = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
-
-        // Initialize the XG data for this sector.
-        XS_SetSectorType(sec, xsec->special);
+            // Initialize the XG data for this sector.
+            XS_SetSectorType(sec, xsec->special);
+        }
     }
 }
 

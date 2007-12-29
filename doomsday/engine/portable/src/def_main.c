@@ -1423,9 +1423,9 @@ void Def_CopySectorType(sectortype_t * s, ded_sectortype_t * def)
  */
 int Def_Get(int type, char *id, void *out)
 {
-    int     i;
-    ded_mapinfo_t *map;
-    ddmapinfo_t *mout;
+    int             i;
+    ded_mapinfo_t  *map;
+    ddmapinfo_t    *mout;
     finalescript_t *fin;
 
     switch(type)
@@ -1449,7 +1449,7 @@ int Def_Get(int type, char *id, void *out)
         return Def_GetSoundNumForName(id);
 
     case DD_DEF_SOUND_LUMPNAME:
-        i = (long) id;
+        i = *((long*) id);
         if(i < 0 || i >= count_sounds.num)
             return false;
         strcpy(out, sounds[i].lumpname);

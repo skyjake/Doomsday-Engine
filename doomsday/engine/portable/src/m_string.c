@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * m_string.c: Dynamic Strings
  *
  * Simple dynamic string management.
@@ -147,7 +147,7 @@ void Str_Reserve(ddstring_t *ds, size_t length)
 
 void Str_Set(ddstring_t *ds, const char *text)
 {
-    int     incoming = strlen(text);
+    size_t          incoming = strlen(text);
 
     Str_Alloc(ds, incoming, false);
     strcpy(ds->str, text);
@@ -156,7 +156,7 @@ void Str_Set(ddstring_t *ds, const char *text)
 
 void Str_Append(ddstring_t *ds, const char *append_text)
 {
-    int     incoming = strlen(append_text);
+    size_t          incoming = strlen(append_text);
 
     // Don't allow extremely long strings.
     if(ds->length > MAX_LENGTH)
@@ -200,7 +200,7 @@ void Str_PartAppend(ddstring_t *dest, const char *src, int start, size_t count)
  */
 void Str_Prepend(ddstring_t *ds, const char *prepend_text)
 {
-    int     incoming = strlen(prepend_text);
+    size_t          incoming = strlen(prepend_text);
 
     // Don't allow extremely long strings.
     if(ds->length > MAX_LENGTH)
@@ -282,10 +282,10 @@ void Str_StripLeft(ddstring_t *ds)
  */
 void Str_StripRight(ddstring_t *ds)
 {
-    int     i;
-    boolean isDone;
+    int             i;
+    boolean         isDone;
 
-    if(!ds->length)
+    if(ds->length == 0)
         return;
 
     i = ds->length - 1;
@@ -300,7 +300,9 @@ void Str_StripRight(ddstring_t *ds)
             i--;
         }
         else
+        {
             isDone = true;
+        }
     }
 }
 
@@ -350,32 +352,32 @@ int Str_CompareIgnoreCase(ddstring_t *ds, const char *text)
 }
 
 /**
- * Copies characters from @c to @dest until a @c delim character is encountered. 
+ * Copies characters from @c to @dest until a @c delim character is encountered.
  * Also ignores all whitespace characters.
  *
  * @param dest  Destination string.
  * @param src   Source string.
  * @param delim  Delimiter character, where copying will stop.
- * 
+ *
  * @return  Pointer to the character within @c src past the delimiter, or NULL if the
  *          source data ended.
  */
 const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delim)
 {
     Str_Clear(dest);
-    
-    if(!src) 
+
+    if(!src)
         return NULL;
-    
+
     for(; *src && *src != delim; ++src)
     {
         if(!isspace(*src))
             Str_PartAppend(dest, src, 0, 1);
     }
-    
-    if(!*src) 
+
+    if(!*src)
         return NULL; // It ended.
-    
+
     // Skip past the delimiter.
     return src + 1;
 }
