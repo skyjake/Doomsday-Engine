@@ -193,10 +193,10 @@ void setTexAniso(int level)
     }
     else
     {   // Convert from a DGL aniso level to a multiplier.
-        // i.e 0 > 0, 1 > 2, 2 > 4, 3 > 8, 4 > 16
+        // i.e 0 > 1, 1 > 2, 2 > 4, 3 > 8, 4 > 16
         switch(level)
         {
-        case 0: break;
+        case 0: level = 1; break; // x1 (normal)
         case 1: level = 2; break; // x2
         case 2: level = 4; break; // x4
         case 3: level = 8; break; // x8
@@ -211,7 +211,6 @@ void setTexAniso(int level)
         if(level > maxAniso)
             level = maxAniso;
     }
-
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
 					level);
@@ -492,6 +491,10 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 			free(buffer);
 	}
 
+#ifdef _DEBUG
+    CheckError();
+#endif
+
 	return DGL_OK;
 }
 
@@ -532,6 +535,10 @@ void DG_TexParameter(int pname, int param)
 		    break;
 	    }
     }
+
+#ifdef _DEBUG
+    CheckError();
+#endif
 }
 
 void DG_GetTexParameterv(int level, int pname, int *v)
@@ -567,6 +574,10 @@ void DG_Palette(int format, void *data)
 		palette[i].color[CA] = format == DGL_RGBA ? ptr[CA] : 0xff;
 	}
 	loadPalette(sharedPalExtAvailable);
+
+#ifdef _DEBUG
+    CheckError();
+#endif
 }
 
 int DG_Bind(DGLuint texture)
