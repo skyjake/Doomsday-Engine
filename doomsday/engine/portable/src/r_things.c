@@ -823,7 +823,7 @@ void R_ProjectSprite(mobj_t *mo)
         else if(mf->sub[0].flags & MFF_SPIN)
         {
             vis->data.mo.yaw =
-                modelSpinSpeed * 70 * levelTime + (long) mo % 360;
+                modelSpinSpeed * 70 * levelTime + MOBJ_TO_ID(mo) % 360;
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
         {
