@@ -33,10 +33,10 @@
 #define WIN32_LEAN_AND_MEAN
 #define DIRECTINPUT_VERSION 0x0800
 
-#include <stdlib.h>
 #include <windows.h>
 #include <dinput.h>
 #include <assert.h>
+#include <strsafe.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -75,7 +75,6 @@ byte    usejoystick = false;    // Joystick input enabled?
 
 static boolean initIOk = false;
 
-static HRESULT hr;
 static LPDIRECTINPUT8 dInput;
 static LPDIRECTINPUTDEVICE8 didKeyb, didMouse;
 static LPDIRECTINPUTDEVICE8 didJoy;
@@ -130,32 +129,33 @@ HRESULT I_SetRangeProperty(void *dev, REFGUID property, DWORD how, DWORD obj,
                                            property, &dipr.diph);
 }
 
-void I_InitMouse(void)
+boolean I_InitMouse(void)
 {
-    HWND        hWnd;
+    HWND            hWnd;
+    HRESULT         hr;
 
     if(ArgCheck("-nomouse") || novideo)
-        return;
+        return false;
 
     hWnd = Sys_GetWindowHandle(windowIDX);
     if(!hWnd)
     {
         Con_Error("I_InitMouse: Main window not available, cannot init mouse.");
-        return;
+        return false;
     }
 
     hr = IDirectInput_CreateDevice(dInput, &GUID_SysMouse, &didMouse, 0);
     if(FAILED(hr))
     {
-        Con_Message("I_InitMouse: failed to create device (0x%x).\n", hr);
-        return;
+        Con_Message("I_InitMouse: Failed to create device (0x%x).\n", hr);
+        return false;
     }
 
     // Set data format.
     hr = IDirectInputDevice_SetDataFormat(didMouse, &c_dfDIMouse2);
     if(FAILED(hr))
     {
-        Con_Message("I_InitMouse: failed to set data format (0x%x).\n", hr);
+        Con_Message("I_InitMouse: Failed to set data format (0x%x).\n", hr);
         goto kill_mouse;
     }
 
@@ -165,7 +165,7 @@ void I_InitMouse(void)
                                                 DISCL_EXCLUSIVE);
     if(FAILED(hr))
     {
-        Con_Message("I_InitMouse: failed to set co-op level (0x%x).\n", hr);
+        Con_Message("I_InitMouse: Failed to set co-op level (0x%x).\n", hr);
         goto kill_mouse;
     }
 
@@ -173,10 +173,11 @@ void I_InitMouse(void)
     IDirectInputDevice_Acquire(didMouse);
 
     // Init was successful.
-    return;
+    return true;
 
   kill_mouse:
     I_SAFE_RELEASE(didMouse);
+    return false;
 }
 
 BOOL CALLBACK I_JoyEnum(LPCDIDEVICEINSTANCE lpddi, void *ref)
@@ -195,10 +196,10 @@ BOOL CALLBACK I_JoyEnum(LPCDIDEVICEINSTANCE lpddi, void *ref)
     return DIENUM_CONTINUE;
 }
 
-void I_InitJoystick(void)
+boolean I_InitJoystick(void)
 {
     DIDEVICEINSTANCE ddi;
-    int         i, joyProp[] = {
+    int             i, joyProp[] = {
         DIJOFS_X, DIJOFS_Y, DIJOFS_Z,
         DIJOFS_RX, DIJOFS_RY, DIJOFS_RZ,
         DIJOFS_SLIDER(0), DIJOFS_SLIDER(1)
@@ -206,16 +207,17 @@ void I_InitJoystick(void)
     const char *axisName[] = {
         "X", "Y", "Z", "RX", "RY", "RZ", "Slider 1", "Slider 2"
     };
-    HWND        hWnd;
+    HWND            hWnd;
+    HRESULT         hr;
 
     if(ArgCheck("-nojoy"))
-        return;
+        return false;
 
     hWnd = Sys_GetWindowHandle(windowIDX);
     if(!hWnd)
     {
         Con_Error("I_InitJoystick: Main window not available, cannot init joystick.");
-        return;
+        return false;
     }
 
     // ddi will contain info for the joystick device.
@@ -232,7 +234,7 @@ void I_InitJoystick(void)
     {
         // Use the default joystick.
         if(!firstJoystick.dwSize)
-            return;             // Not found.
+            return false; // Not found.
         Con_Message("I_InitJoystick: joydevice = %i, out of range.\n",
                     joydevice);
         // Use the first joystick that was found.
@@ -246,27 +248,14 @@ void I_InitJoystick(void)
     hr = IDirectInput8_CreateDevice(dInput, &ddi.guidInstance, &didJoy, 0);
     if(FAILED(hr))
     {
-        Con_Message("I_InitJoystick: failed to create device (0x%x).\n", hr);
-        return;
+        Con_Message("I_InitJoystick: Failed to create device (0x%x).\n", hr);
+        return false;
     }
-
-    // Get a DirectInputDevice2 interface.
-    /*hr = IDirectInputDevice_QueryInterface(didJoy1, &IID_IDirectInputDevice2,
-       (void**) &didJoy);
-
-       // Release the old interface.
-       I_SAFE_RELEASE(*didJoy1);
-
-       if(FAILED(hr))
-       {
-       Con_Message("I_InitJoystick: failed to get DirectInputDevice2 (0x%x).\n", hr);
-       return;
-       } */
 
     // Set data format.
     if(FAILED(hr = IDirectInputDevice_SetDataFormat(didJoy, &c_dfDIJoystick)))
     {
-        Con_Message("I_InitJoystick: failed to set data format (0x%x).\n", hr);
+        Con_Message("I_InitJoystick: Failed to set data format (0x%x).\n", hr);
         goto kill_joy;
     }
 
@@ -277,7 +266,7 @@ void I_InitJoystick(void)
                                                DISCL_NONEXCLUSIVE |
                                                DISCL_FOREGROUND)))
     {
-        Con_Message("I_InitJoystick: failed to set co-op level (0x%x: %s).\n",
+        Con_Message("I_InitJoystick: Failed to set co-op level (0x%x: %s).\n",
                     hr, I_ErrorMsg(hr));
         goto kill_joy;
     }
@@ -291,17 +280,16 @@ void I_InitJoystick(void)
                                IJOY_AXISMIN, IJOY_AXISMAX)))
         {
             if(verbose)
-                Con_Message("I_InitJoystick: failed to set %s "
+                Con_Message("I_InitJoystick: Failed to set %s "
                             "range (0x%x: %s).\n", axisName[i], hr,
                             I_ErrorMsg(hr));
-            //goto kill_joy;
         }
     }
 
     // Set no dead zone.
     if(FAILED(hr = I_SetProperty(didJoy, DIPROP_DEADZONE, DIPH_DEVICE, 0, 0)))
     {
-        Con_Message("I_InitJoystick: failed to set dead zone (0x%x: %s).\n",
+        Con_Message("I_InitJoystick: Failed to set dead zone (0x%x: %s).\n",
                     hr, I_ErrorMsg(hr));
     }
 
@@ -312,7 +300,7 @@ void I_InitJoystick(void)
                       DIPROPAXISMODE_ABS)))
     {
         Con_Message
-            ("I_InitJoystick: failed to set absolute axis mode (0x%x: %s).\n",
+            ("I_InitJoystick: Failed to set absolute axis mode (0x%x: %s).\n",
              hr, I_ErrorMsg(hr));
     }
 
@@ -320,10 +308,11 @@ void I_InitJoystick(void)
     IDirectInputDevice_Acquire(didJoy);
 
     // Initialization was successful.
-    return;
+    return true;
 
   kill_joy:
     I_SAFE_RELEASE(didJoy);
+    return false;
 }
 
 void I_KillDevice(LPDIRECTINPUTDEVICE8 *dev)
@@ -334,15 +323,57 @@ void I_KillDevice(LPDIRECTINPUTDEVICE8 *dev)
     I_SAFE_RELEASE(*dev);
 }
 
-#if 0
-void I_KillDevice2(LPDIRECTINPUTDEVICE2 *dev)
+static boolean I_InitKeyboard(void)
 {
-    if(*dev)
-        IDirectInputDevice2_Unacquire(*dev);
+    HWND            hWnd;
+    HRESULT         hr;
 
-    I_SAFE_RELEASE2(*dev);
+    hWnd = Sys_GetWindowHandle(windowIDX);
+    if(!hWnd)
+    {
+        Con_Error("I_Init: Main window not available, cannot init keyboard.");
+        return false;
+    }
+
+    // Create the keyboard device.
+    hr = IDirectInput_CreateDevice(dInput, &GUID_SysKeyboard, &didKeyb, 0);
+    if(FAILED(hr))
+    {
+        Con_Message("I_Init: Failed to create keyboard device (0x%x).\n", hr);
+        return false;
+    }
+
+    // Setup the keyboard input device.
+    hr = IDirectInputDevice_SetDataFormat(didKeyb, &c_dfDIKeyboard);
+    if(FAILED(hr))
+    {
+        Con_Message("I_Init: Failed to set keyboard data format (0x%x).\n",
+                    hr);
+        return false;
+    }
+
+    // Set behaviour.
+    hr = IDirectInputDevice_SetCooperativeLevel(didKeyb, hWnd,
+                                                DISCL_FOREGROUND |
+                                                DISCL_NONEXCLUSIVE);
+    if(FAILED(hr))
+    {
+        Con_Message("I_Init: Failed to set keyboard co-op level (0x%x).\n",
+                    hr);
+        return false;
+    }
+
+    // The input buffer size.
+    hr = I_SetProperty(didKeyb, DIPROP_BUFFERSIZE, DIPH_DEVICE, 0, KEYBUFSIZE);
+    if(FAILED(hr))
+    {
+        Con_Message("I_Init: Failed to set keyboard buffer size (0x%x).\n",
+                    hr);
+        return false;
+    }
+
+    return true;
 }
-#endif
 
 /**
  * Initialize input.
@@ -351,17 +382,10 @@ void I_KillDevice2(LPDIRECTINPUTDEVICE2 *dev)
  */
 boolean I_Init(void)
 {
-    HWND        hWnd;
+    HRESULT         hr;
 
     if(initIOk)
         return true; // Already initialized.
-
-    hWnd = Sys_GetWindowHandle(windowIDX);
-    if(!hWnd)
-    {
-        Con_Error("I_Init: Main window not available, cannot init DirectInput.");
-        return false;
-    }
 
     // We'll create the DirectInput object. The only required input device
     // is the keyboard. The others are optional.
@@ -383,7 +407,7 @@ boolean I_Init(void)
            FAILED(hr = IDirectInput2_Initialize(dInput, app.hInstance, 0x0300)))
         {
             Con_Message
-                ("I_Init: failed to create DirectInput 3 object (0x%x).\n",
+                ("I_Init: Failed to create DirectInput 3 object (0x%x).\n",
                  hr);
             return false;
         }
@@ -396,42 +420,8 @@ boolean I_Init(void)
         return false;
     }
 
-    // Create the keyboard device.
-    hr = IDirectInput_CreateDevice(dInput, &GUID_SysKeyboard, &didKeyb, 0);
-    if(FAILED(hr))
-    {
-        Con_Message("I_Init: failed to create keyboard device (0x%x).\n", hr);
-        return false;
-    }
-
-    // Setup the keyboard input device.
-    hr = IDirectInputDevice_SetDataFormat(didKeyb, &c_dfDIKeyboard);
-    if(FAILED(hr))
-    {
-        Con_Message("I_Init: failed to set keyboard data format (0x%x).\n",
-                    hr);
-        return false;
-    }
-
-    // Set behaviour.
-    hr = IDirectInputDevice_SetCooperativeLevel(didKeyb, hWnd,
-                                                DISCL_FOREGROUND |
-                                                DISCL_NONEXCLUSIVE);
-    if(FAILED(hr))
-    {
-        Con_Message("I_Init: failed to set keyboard co-op level (0x%x).\n",
-                    hr);
-        return false;
-    }
-
-    // The input buffer size.
-    hr = I_SetProperty(didKeyb, DIPROP_BUFFERSIZE, DIPH_DEVICE, 0, KEYBUFSIZE);
-    if(FAILED(hr))
-    {
-        Con_Message("I_Init: failed to set keyboard buffer size (0x%x).\n",
-                    hr);
-        return false;
-    }
+    if(!I_InitKeyboard())
+        return false; // We must have a keyboard!
 
     // Acquire the keyboard.
     IDirectInputDevice_Acquire(didKeyb);
@@ -440,7 +430,9 @@ boolean I_Init(void)
     // fails for them.
     I_InitMouse();
     I_InitJoystick();
+
     initIOk = true;
+
     return true;
 }
 
@@ -448,7 +440,6 @@ void I_Shutdown(void)
 {
     if(!initIOk)
         return; // Not initialized.
-    initIOk = false;
 
     // Release all the input devices.
     I_KillDevice(&didKeyb);
@@ -458,6 +449,8 @@ void I_Shutdown(void)
     // Release DirectInput.
     IDirectInput_Release(dInput);
     dInput = 0;
+
+    initIOk = false;
 }
 
 boolean I_MousePresent(void)
@@ -481,9 +474,10 @@ boolean I_JoystickPresent(void)
 size_t I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
 {
     DIDEVICEOBJECTDATA keyData[KEYBUFSIZE];
-    byte        tries;
-    BOOL        acquired;
-    DWORD       i, num = 0;
+    DWORD           i, num = 0;
+    BYTE            tries;
+    BOOL            acquired;
+    HRESULT         hr;
 
     if(!initIOk)
         return 0;
@@ -516,7 +510,7 @@ size_t I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
     for(i = 0; i < num && i < bufsize; ++i)
     {
         evbuf[i].event =
-            (keyData[i].dwData & 0x80) ? IKE_KEY_DOWN : IKE_KEY_UP;
+            (keyData[i].dwData & 0x80? IKE_KEY_DOWN : IKE_KEY_UP);
         evbuf[i].code = (unsigned char) keyData[i].dwOfs;
     }
 
@@ -525,12 +519,14 @@ size_t I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
 
 void I_GetMouseState(mousestate_t *state)
 {
-    static boolean  oldButtons[8];
+    static BOOL     oldButtons[8];
     static int      oldZ;
 
-    DIMOUSESTATE2 mstate;
-    int         i, tries;
-    boolean     aquired;
+    DIMOUSESTATE2   mstate;
+    DWORD           i;
+    BYTE            tries;
+    BOOL            acquired;
+    HRESULT         hr;
 
     memset(state, 0, sizeof(*state));
 
@@ -540,14 +536,14 @@ void I_GetMouseState(mousestate_t *state)
 
     // Try to get the mouse state.
     tries = 1;
-    aquired = false;
-    while(!aquired && tries > 0)
+    acquired = false;
+    while(!acquired && tries > 0)
     {
         hr = IDirectInputDevice_GetDeviceState(didMouse, sizeof(mstate),
                                                &mstate);
         if(SUCCEEDED(hr))
         {
-            aquired = true;
+            acquired = true;
         }
         else if(tries > 0)
         {
@@ -557,12 +553,12 @@ void I_GetMouseState(mousestate_t *state)
         }
     }
 
-    if(!aquired)
+    if(!acquired)
         return; // The operation is a failure.
 
     // Fill in the state structure.
-    state->x = mstate.lX;
-    state->y = mstate.lY;
+    state->x = (int) mstate.lX;
+    state->y = (int) mstate.lY;
 
     // Handle mouse wheel (convert to buttons).
     state->buttonDowns[3] = 0;
@@ -584,12 +580,12 @@ void I_GetMouseState(mousestate_t *state)
         else if(oldZ < 0)
             state->buttonUps[4] = 1;
     }
-    oldZ = mstate.lZ;
+    oldZ = (int) mstate.lZ;
 
     for(i = 0; i < 8; ++i)
     {
-        int         id;
-        boolean     isDown = (mstate.rgbButtons[i] & 0x80);
+        BOOL            isDown = (mstate.rgbButtons[i] & 0x80? TRUE : FALSE);
+        int             id;
 
         id = i;
         switch(i)
@@ -615,11 +611,12 @@ void I_GetMouseState(mousestate_t *state)
 
 void I_GetJoystickState(joystate_t *state)
 {
-    static boolean  oldButtons[IJOY_MAXBUTTONS]; // Thats a lot of buttons.
+    static BOOL     oldButtons[IJOY_MAXBUTTONS]; // Thats a lot of buttons.
 
-    int         tries, i;
-    DIJOYSTATE  dijoy;
-    boolean     aquired;
+    DWORD           tries, i;
+    DIJOYSTATE      dijoy;
+    BOOL            acquired;
+    HRESULT         hr;
 
     memset(state, 0, sizeof(*state));
 
@@ -631,14 +628,14 @@ void I_GetJoystickState(joystate_t *state)
     IDirectInputDevice8_Poll(didJoy);
 
     tries = 1;
-    aquired = false;
-    while(!aquired && tries > 0)
+    acquired = FALSE;
+    while(!acquired && tries > 0)
     {
         hr = IDirectInputDevice8_GetDeviceState(didJoy, sizeof(dijoy), &dijoy);
 
         if(SUCCEEDED(hr))
         {
-            aquired = true;
+            acquired = TRUE;
         }
         else if(tries > 0)
         {
@@ -648,23 +645,23 @@ void I_GetJoystickState(joystate_t *state)
         }
     }
 
-    if(!aquired)
+    if(!acquired)
         return; // The operation is a failure.
 
     state->numAxes = 8;
-    state->axis[0] = dijoy.lX;
-    state->axis[1] = dijoy.lY;
-    state->axis[2] = dijoy.lZ;
-    state->axis[3] = dijoy.lRx;
-    state->axis[4] = dijoy.lRy;
-    state->axis[5] = dijoy.lRz;
-    state->axis[6] = dijoy.rglSlider[0];
-    state->axis[7] = dijoy.rglSlider[1];
+    state->axis[0] = (int) dijoy.lX;
+    state->axis[1] = (int) dijoy.lY;
+    state->axis[2] = (int) dijoy.lZ;
+    state->axis[3] = (int) dijoy.lRx;
+    state->axis[4] = (int) dijoy.lRy;
+    state->axis[5] = (int) dijoy.lRz;
+    state->axis[6] = (int) dijoy.rglSlider[0];
+    state->axis[7] = (int) dijoy.rglSlider[1];
 
     state->numButtons = 32;
     for(i = 0; i < IJOY_MAXBUTTONS; ++i)
     {
-        boolean         isDown = (dijoy.rgbButtons[i] & 0x80);
+        BOOL            isDown = (dijoy.rgbButtons[i] & 0x80? TRUE : FALSE);
 
         state->buttonDowns[i] =
             state->buttonUps[i] = 0;
@@ -679,7 +676,7 @@ void I_GetJoystickState(joystate_t *state)
     state->numHats = 4;
     for(i = 0; i < IJOY_MAXHATS; ++i)
     {
-        int     pov = dijoy.rgdwPOV[i];
+        DWORD           pov = dijoy.rgdwPOV[i];
 
         if((pov & 0xffff) == 0xffff)
             state->hatAngle[i] = IJOY_POV_CENTER;

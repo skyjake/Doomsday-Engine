@@ -578,7 +578,7 @@ void Z_FreeTags(int lowTag, int highTag)
             block != &volume->zone->blocklist;
             block = next)
         {
-            next = block->next;     // get link before freeing
+            next = block->next;     // Get link before freeing.
             if(block->user)
             {
                 if(block->tag >= lowTag && block->tag <= highTag)
