@@ -2545,7 +2545,12 @@ void R_DrawLightRange(void)
 
             // Draw the range bar to match that of the current viewPlayer.
             if(r == (int) playerLightRange[viewPlayer - players])
-                gl.Color4f(c + off, c + off, c + off, 1);
+            {
+                if(i == (int) (playerLastLightSample[viewPlayer - players].currentlight * 255))
+                    gl.Color4f(1, 0, 0, 1);
+                else
+                    gl.Color4f(c + off, c + off, c + off, 1);
+            }
             else
                 gl.Color4f(c + off, c + off, c + off, .75);
 
