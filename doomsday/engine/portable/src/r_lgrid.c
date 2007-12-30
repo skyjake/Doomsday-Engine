@@ -513,19 +513,26 @@ void LG_Init(void)
         sector->changedblockcount = changedCount;
         sector->blockcount = changedCount + count;
 
-        sector->blocks = Z_Malloc(sizeof(unsigned short) * sector->blockcount,
-                                  PU_LEVELSTATIC, 0);
-        for(x = 0, a = 0, b = changedCount; x < lgBlockWidth * lgBlockHeight;
-            ++x)
+        if(sector->blockcount > 0)
         {
-            if(HasIndexBit(x, 0, indexBitfield))
-                sector->blocks[a++] = x;
-            else if(HasIndexBit(x, 0, contributorBitfield))
-                sector->blocks[b++] = x;
-        }
+            sector->blocks = Z_Malloc(sizeof(unsigned short) * sector->blockcount,
+                                      PU_LEVELSTATIC, 0);
+            for(x = 0, a = 0, b = changedCount; x < lgBlockWidth * lgBlockHeight;
+                ++x)
+            {
+                if(HasIndexBit(x, 0, indexBitfield))
+                    sector->blocks[a++] = x;
+                else if(HasIndexBit(x, 0, contributorBitfield))
+                    sector->blocks[b++] = x;
+            }
 
-        assert(a == changedCount);
-        //assert(b == info->blockcount);
+            assert(a == changedCount);
+            //assert(b == info->blockcount);
+        }
+        else
+        {
+            sector->blocks = NULL;
+        }
     }
 
     M_Free(indexBitfield);
