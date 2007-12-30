@@ -44,9 +44,9 @@ enum
 };
 
 typedef enum ddeventtype_e {
-    E_TOGGLE,               // two-state device
-    E_AXIS,                 // axis position
-    E_ANGLE                 // hat angle
+    E_TOGGLE,               // Two-state device
+    E_AXIS,                 // Axis position
+    E_ANGLE                 // Hat angle
 } ddeventtype_t;
 
 typedef enum ddeevent_togglestate_e {
@@ -56,40 +56,29 @@ typedef enum ddeevent_togglestate_e {
 } ddevent_togglestate_t;
 
 typedef enum ddevent_axistype_e {
-    EAXIS_ABSOLUTE,         // absolute position on the axis
-    EAXIS_RELATIVE          // offset relative to the previous position
+    EAXIS_ABSOLUTE,         // Absolute position on the axis
+    EAXIS_RELATIVE          // Offset relative to the previous position
 } ddevent_axistype_t;
 
 // These are used internally, a cutdown version containing
-// only need-to-know stuff is sent down the games' responder chain.
+// only need-to-know metadata is sent down the games' responder chain.
 typedef struct ddevent_s {
     uint            device; // e.g. IDEV_KEYBOARD
     ddeventtype_t   type;   // E_TOGGLE, E_AXIS, or E_ANGLE
     union {
         struct {
-            int             id;         // button/key index number
-            ddevent_togglestate_t state;// state of the toggle
+            int             id;         // Button/key index number
+            ddevent_togglestate_t state;// State of the toggle
         } toggle;
         struct {
-            int             id;         // axis index number
-            float           pos;        // position of the axis
-            ddevent_axistype_t type;    // type of the axis (absolute or relative)
+            int             id;         // Axis index number
+            float           pos;        // Position of the axis
+            ddevent_axistype_t type;    // Type of the axis (absolute or relative)
         } axis;
         struct {
-            int             id;         // angle index number
-            float           pos;        // angle, or negative if centered
+            int             id;         // Angle index number
+            float           pos;        // Angle, or negative if centered
         } angle;
-        /*
-        struct {
-            uint            controlID;  // axis/control/key id.
-            boolean         isAxis;     // @c true, = controlID is an axis id.
-            uint            useclass;   // use a specific bindclass command
-            boolean         noclass;
-
-            int             data1;      // control is key; state (e.g. EVS_DOWN)
-                                        // control is axis; position delta.
-        } obsolete;
-         */
     };
 } ddevent_t;
 
@@ -108,8 +97,8 @@ typedef struct ddevent_s {
 // Input device axis types.
 enum
 {
-    IDAT_STICK = 0,         // joysticks, gamepads
-    IDAT_POINTER = 1        // mouse
+    IDAT_STICK = 0,         // Joysticks, gamepads
+    IDAT_POINTER = 1        // Mouse
 };
 
 // Input device axis flags.
@@ -160,15 +149,6 @@ typedef struct inputdev_s {
 extern boolean  ignoreInput;
 extern int      repWait1, repWait2;
 extern int      keyRepeatDelay1, keyRepeatDelay2;   // milliseconds
-/*
-extern int      mouseFilter;
-extern int      mouseDisableX, mouseDisableY;
-extern int      mouseInverseY;
-extern int      mouseWheelSensi;
-extern int      joySensitivity;
-extern int      joyDeadZone;
-*/
-extern byte     showScanCodes;
 extern boolean  shiftDown, altDown;
 
 void        DD_RegisterInput(void);

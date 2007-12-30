@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * ui_panel.c: Control Panel
  *
  * Doomsday Control Panel (opened with the "panel" command).
@@ -100,20 +100,14 @@ ui_object_t *panel_help_source;
 void   *panel_help;
 
 cvarbutton_t cvarbuttons[] = {
-    {0, "con-progress"},
     {0, "con-var-silent"},
     {0, "con-dump"},
-    {0, "con-key-show"},
     {0, "con-fps"},
     {0, "con-text-shadow"},
     {0, "ui-panel-help"},
     {0, "ui-panel-tips"},
-    {0, "input-mouse-y-inverse"},
-    {0, "input-mouse-x-disable"},
-    {0, "input-mouse-y-disable"},
     {0, "input-mouse-filter"},
     {0, "input-joy"},
-    {0, "input-key-show-scancodes"},
     {0, "net-nosleep"},
     {0, "net-dev"},
     {0, "net-queue-show"},
@@ -222,21 +216,39 @@ uidata_list_t lst_blend = {
 };
 
 uidata_listitem_t lstit_resolution[] = {
-    {"320 x 240", RES(320, 240)},
-    {"400 x 300", RES(400, 300)},
-    {"512 x 384", RES(512, 384)},
-    {"640 x 480", RES(640, 480)},
-    {"800 x 600", RES(800, 600)},
-    {"1024 x 768", RES(1024, 768)},
-    {"1152 x 864", RES(1152, 864)},
-    {"1280 x 960", RES(1280, 960)},
-    {"1280 x 1024", RES(1280, 1024)},
-    {"1600 x 1200", RES(1600, 1200)},
+    // 5:4
+    {"1280 x 1024 (5:4 SXGA)", RES(1280, 1024)},
+    {"2560 x 2048 (5:4 QSXGA)", RES(2560, 2048)},
+    // 4:3
+    {"320 x 240 (4:3 QVGA)", RES(320, 240)},
+    {"640 x 480 (4:3 VGA)", RES(640, 480)},
+    {"768 x 576 (4:3 PAL)", RES(768, 576)},
+    {"800 x 600 (4:3 SVGA)", RES(800, 600)},
+    {"1024 x 768 (4:3 XGA)", RES(1024, 768)},
+    {"1152 x 864 (4:3)", RES(1152, 864)},
+    {"1280 x 960 (4:3)", RES(1280, 960)},
+    {"1400 x 1050 (4:3 SXGA+)", RES(1400, 1050)},
+    {"1600 x 1200 (4:3 UXGA)", RES(1600, 1200)},
+    {"2048 x 1536 (4:3 QXGA)", RES(2048, 1536)},
+    // 3:2
+    {"720 x 480 (3:2 NTSC)", RES(720, 480)},
+    {"1152 x 768 (3:2)", RES(1152, 768)},
+    {"1280 x 854 (3:2)", RES(1280, 854)},
+    {"1440 x 960 (3:2)", RES(1440, 960)},
+    // 16:10
+    {"320 x 200 (16:10 CGA)", RES(320, 200)},
     {"800 x 500 (16:10)", RES(800, 500)},
     {"1024 x 640 (16:10)", RES(1024, 640)},
     {"1280 x 800 (16:10)", RES(1280, 800)},
+    {"1440 x 900 (16:10 WXGA)", RES(1440, 900)},
     {"1600 x 1000 (16:10)", RES(1600, 1000)},
-    {"1680 x 1050 (16:10)", RES(1680, 1050)}
+    {"1680 x 1050 (16:10 WSXGA+)", RES(1680, 1050)},
+    {"1920 x 1200 (16:10 WUXGA)", RES(1920, 1200)},
+    {"2560 x 1600 (16:10 WQXGA)", RES(2560, 1600)},
+    // 16:9
+    {"854 x 480 (16:9 WVGA)", RES(854, 480)},
+    {"1280 x 720 (16:9 WXGA/HD720)", RES(1280, 720)},
+    {"1920 x 1080 (16:9 HD1080)", RES(1920, 1080)}
 };
 uidata_list_t lst_resolution = {
     lstit_resolution, NUMITEMS(lstit_resolution)
@@ -244,8 +256,6 @@ uidata_list_t lst_resolution = {
 
 uidata_slider_t sld_con_alpha = { 0, 100, 0, 1, false, "con-alpha" };
 uidata_slider_t sld_con_light = { 0, 100, 0, 1, false, "con-light" };
-/*uidata_slider_t sld_joy_sensi = { 0, 9, 0, 1, false, "input-joy-sensi" }; */
-/*uidata_slider_t sld_joy_dead = { 0, 90, 0, 1, false, "input-joy-deadzone" }; */
 uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, "input-key-delay1" };
 uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, "input-key-delay2" };
 uidata_slider_t sld_client_pos_interval =
@@ -396,27 +406,13 @@ ui_object_t ob_panel[] =
 
     { UI_META,      4 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Input Options", UIText_BrightDrawer },
-/*  { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Invert mouse Y axis", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "input-mouse-y-inverse", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },*/
     { UI_META,      4,  0,              0, 60 },
-/*  { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Filter mouse movement", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "input-mouse-filter", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Disable mouse X axis", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "input-mouse-x-disable", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Disable mouse Y axis", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "input-mouse-y-disable", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },*/
     { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Enable joystick", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 250, 70, 55,   "input-joy", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-/*    { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Joystick sensitivity", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_joy_sensi },
-    { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Joystick dead zone (%)", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 370, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_joy_dead },*/
     { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Key repeat delay (ms)", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 430, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_keywait1 },
     { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Key repeat rate (ms)", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 490, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_keywait2 },
-    { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Print scancodes of pressed keys", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 550, 70, 55,   "input-key-show-scancodes", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
     { UI_META,      5 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Control Options", UIText_BrightDrawer },
@@ -424,8 +420,6 @@ ui_object_t ob_panel[] =
     { UI_META,      6 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options", UIText_BrightDrawer },
     { UI_META,      6,  0,              0, -60 },
-//  { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Smooth camera movement", UIText_Drawer },
-//  { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-camera-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Field Of View angle", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fov },
     { UI_BUTTON,    0,  0,              680, 190, 70, 60,   "90",       UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
@@ -466,11 +460,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 370, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_radmax },
     { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Maximum number of dynamic lights", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 430, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_max },
-//  { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Clip dynamic lights", UIText_Drawer },
-//  { UI_BUTTON2,   0,  0,              680, 490, 70, 55,   "rend-light-clip", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_META,      7,  0,              0, -120 },
-//  { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Lightpoly edge shrink units", UIText_Drawer },
-//  { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_shrink },
     { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Ambient light level", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_ambient },
     { UI_TEXT,      0,  0,              300, 670, 0, 55,    "Light range compression", UIText_Drawer },
@@ -603,8 +593,6 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display FPS counter", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "con-fps",  UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_META,      13, 0,              0, 60 },
-    { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display progress bar", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "con-progress", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Display Control Panel help window", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "ui-panel-help", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Display help indicators", UIText_Drawer },
@@ -614,8 +602,6 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "con-var-silent", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Dump messages to Doomsday.out", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "con-dump", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Show ASCII codes of pressed keys", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 250, 70, 55,   "con-key-show", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Command completion with Tab", UIText_Drawer },
     { UI_LIST,      0,  0,              680, 310, 300, 120, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_con_completion },
     { UI_TEXT,      0,  0,              300, 435, 0, 55,    "Background opacity", UIText_Drawer },

@@ -61,6 +61,8 @@ typedef struct repeater_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+void DD_DefaultKeyMapping(void);
+
 D_CMD(AxisPrintConfig);
 D_CMD(AxisChangeOption);
 D_CMD(AxisChangeValue);
@@ -77,20 +79,13 @@ D_CMD(ListInputDevices);
 boolean ignoreInput = false;
 
 int     mouseFilter = 1;        // Filtering on by default.
-/*
-int     mouseInverseY = false;
-int     joySensitivity = 5;
-int     joyDeadZone = 10;
-*/
 boolean allowMouseMod = true; // can mouse data be modified?
 
 // The initial and secondary repeater delays (tics).
 int     repWait1 = 15, repWait2 = 3;
 int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;    // milliseconds
-//int     mouseDisableX = false, mouseDisableY = false;
 unsigned int  mouseFreq = 0;
 boolean shiftDown = false, altDown = false;
-byte    showScanCodes = false;
 
 // A customizable mapping of the scantokey array.
 char    keyMapPath[NUMKKEYS] = "}Data\\KeyMaps\\";
@@ -100,8 +95,6 @@ byte    shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 /*static*/ inputdev_t inputDevices[NUM_INPUT_DEVICES];
-
-static byte showMouseInfo = false;
 
 static ddevent_t events[MAXEVENTS];
 static int eventhead;
@@ -190,18 +183,9 @@ void DD_RegisterInput(void)
     // Cvars
     C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
     C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
-    C_VAR_BYTE("input-key-show-scancodes", &showScanCodes, 0, 0, 1);
 
-//    C_VAR_INT("input-joy-sensi", &joySensitivity, 0, 0, 9);
-//    C_VAR_INT("input-joy-deadzone", &joyDeadZone, 0, 0, 90);
-
-//    C_VAR_INT("input-mouse-x-disable", &mouseDisableX, 0, 0, 1);
-//    C_VAR_INT("input-mouse-y-disable", &mouseDisableY, 0, 0, 1);
-//    C_VAR_INT("input-mouse-y-inverse", &mouseInverseY, 0, 0, 1);
     C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_AXIS_FILTER - 1);
     C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
-
-    C_VAR_BYTE("input-info-mouse", &showMouseInfo, 0, 0, 1);
 
     // Ccmds
     C_CMD("dumpkeymap", "s", DumpKeyMap);
@@ -624,8 +608,8 @@ static void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
 
 void I_ClearDeviceClassAssociations(void)
 {
-    int         i, j;
-    inputdev_t* dev;
+    uint            i, j;
+    inputdev_t     *dev;
 
     for(i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
@@ -648,7 +632,7 @@ void I_ClearDeviceClassAssociations(void)
  */
 boolean I_IsDeviceKeyDown(uint ident, uint code)
 {
-    inputdev_t *dev;
+    inputdev_t     *dev;
 
     if((dev = I_GetDevice(ident, true)) != NULL)
     {
@@ -662,12 +646,170 @@ boolean I_IsDeviceKeyDown(uint ident, uint code)
 }
 
 /**
- * Dumps the key mapping table to filename
+ * Initializes the key mappings to the default values.
  */
-void DD_DumpKeyMappings(char *fileName)
+void DD_InitInput(void)
 {
-    FILE   *file;
+    DD_DefaultKeyMapping();
+}
+
+/**
+ * @return          Either key number or the scan code for the given token.
+ */
+int DD_KeyOrCode(char *token)
+{
+    char   *end = M_FindWhite(token);
+
+    if(end - token > 1)
+    {
+        // Longer than one character, it must be a number.
+        return strtol(token, 0, !strnicmp(token, "0x", 2) ? 16 : 10);
+    }
+    // Direct mapping.
+    return (unsigned char) *token;
+}
+
+/**
+ * Sets the key mappings to the default values
+ */
+void DD_DefaultKeyMapping(void)
+{
     int     i;
+
+    for(i = 0; i < 256; ++i)
+    {
+        keyMappings[i] = scantokey[i];
+        shiftKeyMappings[i] = i >= 32 && i <= 127 &&
+            defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
+        altKeyMappings[i] = i;
+    }
+}
+
+static DFILE *openKeymapFile(const char *fileName)
+{
+    char        path[512];
+
+    // Try with and without .DKM.
+    strcpy(path, fileName);
+    if(!F_Access(path))
+    {
+        // Try the path.
+        M_TranslatePath(keyMapPath, path);
+        strcat(path, fileName);
+        if(!F_Access(path))
+        {
+            strcpy(path, fileName);
+            strcat(path, ".dkm");
+            if(!F_Access(path))
+            {
+                M_TranslatePath(keyMapPath, path);
+                strcat(path, fileName);
+                strcat(path, ".dkm");
+            }
+        }
+    }
+
+    return F_Open(path, "rt");
+}
+
+static boolean closeKeymapFile(DFILE *file)
+{
+    if(file)
+        F_Close(file);
+
+    return true;
+}
+
+static int parseKeymapFile(DFILE *file, const char *fileName)
+{
+    int         warnCount = 0;
+    char        buf[512], *ptr;
+    boolean     shiftMode = false, altMode = false;
+    int         key, mapTo, lineNumber = 0;
+
+    VERBOSE(Con_Message("parseKeymapFile: Parsing \"%s\"...\n", fileName));
+
+    do
+    {
+        lineNumber++;
+        M_ReadLine(buf, sizeof(buf), file);
+        ptr = M_SkipWhite(buf);
+        if(!*ptr || M_IsComment(ptr))
+            continue;
+
+        // Modifiers?
+        if(!strnicmp(ptr + 1, "shift", 5))
+        {
+            shiftMode = (*ptr == '+');
+            continue;
+        }
+        else if(!strnicmp(ptr + 1, "alt", 3))
+        {
+            altMode = (*ptr == '+');
+            continue;
+        }
+
+        key = DD_KeyOrCode(ptr);
+        if(key < 0 || key > 255)
+        {
+            Con_Message("  #%i: Invalid key %i.\n", lineNumber, key);
+            warnCount++;
+        }
+
+        ptr = M_SkipWhite(M_FindWhite(ptr));
+        mapTo = DD_KeyOrCode(ptr);
+        // Check the mapping.
+        if(mapTo < 0 || mapTo > 255)
+        {
+            Con_Message("  #%i: Invalid mapping %i.\n", lineNumber, mapTo);
+            warnCount++;
+        }
+
+        if(shiftMode)
+            shiftKeyMappings[key] = mapTo;
+        else if(altMode)
+            altKeyMappings[key] = mapTo;
+        else
+            keyMappings[key] = mapTo;
+    } while(!deof(file));
+
+    return warnCount;
+}
+
+boolean DD_LoadKeymap(const char *fileName)
+{
+    DFILE      *file;
+    int         warnCount;
+
+    if(!(file = openKeymapFile(fileName)))
+    {
+        Con_Message("DD_LoadKeymap: A keymap file by the name \"%s\" could "
+                    "not be found.\n", fileName);
+        return false;
+    }
+
+    // Any missing entries are set to the default.
+    DD_DefaultKeyMapping();
+
+    Con_Message("DD_LoadKeymap: Loading \"%s\"...\n", fileName);
+
+    warnCount = parseKeymapFile(file, fileName);
+    if(warnCount > 0)
+        Con_Message("  %i: Warnings.\n", warnCount);
+    closeKeymapFile(file);
+
+    Con_Message("  Loaded keymap \"%s\" successfully.\n", fileName);
+
+    return true;
+}
+
+/**
+ * Dumps the key mapping table to filename.
+ */
+void DD_DumpKeymap(const char *fileName)
+{
+    int             i;
+    FILE           *file;
 
     file = fopen(fileName, "wt");
     for(i = 0; i < 256; ++i)
@@ -699,46 +841,9 @@ void DD_DumpKeyMappings(char *fileName)
                 altKeyMappings[i]);
     }
     fclose(file);
-}
 
-/**
- * Sets the key mappings to the default values
- */
-void DD_DefaultKeyMapping(void)
-{
-    int     i;
-
-    for(i = 0; i < 256; ++i)
-    {
-        keyMappings[i] = scantokey[i];
-        shiftKeyMappings[i] = i >= 32 && i <= 127 &&
-            defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
-        altKeyMappings[i] = i;
-    }
-}
-
-/**
- * Initializes the key mappings to the default values.
- */
-void DD_InitInput(void)
-{
-    DD_DefaultKeyMapping();
-}
-
-/**
- * @return          Either key number or the scan code for the given token.
- */
-int DD_KeyOrCode(char *token)
-{
-    char   *end = M_FindWhite(token);
-
-    if(end - token > 1)
-    {
-        // Longer than one character, it must be a number.
-        return strtol(token, 0, !strnicmp(token, "0x", 2) ? 16 : 10);
-    }
-    // Direct mapping.
-    return (unsigned char) *token;
+    Con_Message("DD_DumpKeymap: Current keymap was dumped to \"%s\".\n",
+                fileName);
 }
 
 /**
@@ -893,7 +998,7 @@ byte DD_ScanToKey(byte scan)
     return keyMappings[scan];
 }
 
-/*
+/**
  * Apply all active modifiers to the key.
  */
 byte DD_ModKey(byte key)
@@ -912,7 +1017,7 @@ byte DD_ModKey(byte key)
     return key;
 }
 
-/*
+/**
  * Converts a keymap key id to a scan code.
  */
 byte DD_KeyToScan(byte key)
@@ -925,7 +1030,7 @@ byte DD_KeyToScan(byte key)
     return 0;
 }
 
-/*
+/**
  * Clears the repeaters array.
  */
 void DD_ClearKeyRepeaters(void)
@@ -1007,10 +1112,6 @@ void DD_ReadKeyboard(void)
 #ifdef UNIX
         ev.toggle.id = ke->code;
 #endif
-
-        // Should we print a message in the console?
-        if(showScanCodes && ev.toggle.id == EVS_DOWN)
-            Con_Printf("Scancode: %i (0x%x)\n", ev.toggle.id, ev.toggle.id);
 
         // Maintain the repeater table.
         if(ev.toggle.state == ETOG_DOWN)
@@ -1400,8 +1501,7 @@ D_CMD(ListInputDevices)
  */
 D_CMD(DumpKeyMap)
 {
-    DD_DumpKeyMappings(argv[1]);
-    Con_Printf("The current keymap was dumped to %s.\n", argv[1]);
+    DD_DumpKeymap(argv[1]);
     return true;
 }
 
@@ -1410,79 +1510,6 @@ D_CMD(DumpKeyMap)
  */
 D_CMD(KeyMap)
 {
-    DFILE  *file;
-    char    line[512], *ptr;
-    boolean shiftMode = false, altMode = false;
-    int     key, mapTo, lineNumber = 0;
-
-    // Try with and without .DKM.
-    strcpy(line, argv[1]);
-    if(!F_Access(line))
-    {
-        // Try the path.
-        M_TranslatePath(keyMapPath, line);
-        strcat(line, argv[1]);
-        if(!F_Access(line))
-        {
-            strcpy(line, argv[1]);
-            strcat(line, ".dkm");
-            if(!F_Access(line))
-            {
-                M_TranslatePath(keyMapPath, line);
-                strcat(line, argv[1]);
-                strcat(line, ".dkm");
-            }
-        }
-    }
-    if(!(file = F_Open(line, "rt")))
-    {
-        Con_Printf("%s: file not found.\n", argv[1]);
-        return false;
-    }
-    // Any missing entries are set to the default.
-    DD_DefaultKeyMapping();
-    do
-    {
-        lineNumber++;
-        M_ReadLine(line, sizeof(line), file);
-        ptr = M_SkipWhite(line);
-        if(!*ptr || M_IsComment(ptr))
-            continue;
-        // Modifiers? Only shift is supported at the moment.
-        if(!strnicmp(ptr + 1, "shift", 5))
-        {
-            shiftMode = (*ptr == '+');
-            continue;
-        }
-        else if(!strnicmp(ptr + 1, "alt", 3))
-        {
-            altMode = (*ptr == '+');
-            continue;
-        }
-        key = DD_KeyOrCode(ptr);
-        if(key < 0 || key > 255)
-        {
-            Con_Printf("%s(%i): Invalid key %i.\n", argv[1], lineNumber, key);
-            continue;
-        }
-        ptr = M_SkipWhite(M_FindWhite(ptr));
-        mapTo = DD_KeyOrCode(ptr);
-        // Check the mapping.
-        if(mapTo < 0 || mapTo > 255)
-        {
-            Con_Printf("%s(%i): Invalid mapping %i.\n", argv[1], lineNumber,
-                       mapTo);
-            continue;
-        }
-        if(shiftMode)
-            shiftKeyMappings[key] = mapTo;
-        else if(altMode)
-            altKeyMappings[key] = mapTo;
-        else
-            keyMappings[key] = mapTo;
-    }
-    while(!deof(file));
-    F_Close(file);
-    Con_Printf("Keymap %s loaded.\n", argv[1]);
+    DD_LoadKeymap(argv[1]);
     return true;
 }

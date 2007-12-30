@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * b_class.c: Binding Classs
  */
 
@@ -65,7 +66,7 @@ static bclass_t** bindClasses;
 void B_DestroyAllClasses(void)
 {
     int     i;
-    
+
     for(i = 0; i < bindClassCount; ++i)
     {
         B_DestroyClass(bindClasses[i]);
@@ -77,22 +78,22 @@ void B_DestroyAllClasses(void)
 
 /**
  * Marks all device states with the highest-priority binding class to which they have
- * a connection via device bindings. This ensures that if a high-priority class is 
- * using a particular device state, lower-priority classes will not be using the 
- * same state for their own controls. 
+ * a connection via device bindings. This ensures that if a high-priority class is
+ * using a particular device state, lower-priority classes will not be using the
+ * same state for their own controls.
  *
- * Called automatically whenever a class is activated or deactivated. 
+ * Called automatically whenever a class is activated or deactivated.
  */
 void B_UpdateDeviceStateAssociations(void)
 {
-    bclass_t*   bc;
-    evbinding_t* eb;
+    uint            i, k;
+    bclass_t       *bc;
+    evbinding_t    *eb;
     controlbinding_t* conBin;
-    dbinding_t* db;
-    int         i, k;
-    
+    dbinding_t     *db;
+
     I_ClearDeviceClassAssociations();
-    
+
     // We need to iterate through all the device bindings in all class.
     for(i = 0; i < bindClassCount; ++i)
     {
@@ -100,7 +101,7 @@ void B_UpdateDeviceStateAssociations(void)
         // Skip inactive classes.
         if(!bc->active)
             continue;
-        
+
         // Mark all event bindings in the class.
         for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
         {
@@ -111,21 +112,21 @@ void B_UpdateDeviceStateAssociations(void)
                     if(!dev->keys[eb->id].bClass)
                         dev->keys[eb->id].bClass = bc;
                     break;
-                    
+
                 case E_AXIS:
                     if(!dev->axes[eb->id].bClass)
                         dev->axes[eb->id].bClass = bc;
                     break;
-                    
+
                 case E_ANGLE:
                     if(!dev->hats[eb->id].bClass)
                         dev->hats[eb->id].bClass = bc;
                     break;
             }
         }
-        
+
         // All controls in the class.
-        for(conBin = bc->controlBinds.next; conBin != &bc->controlBinds; 
+        for(conBin = bc->controlBinds.next; conBin != &bc->controlBinds;
             conBin = conBin->next)
         {
             for(k = 0; k < DDMAXPLAYERS; ++k)
@@ -134,32 +135,32 @@ void B_UpdateDeviceStateAssociations(void)
                 for(db = conBin->deviceBinds[k].next; db != &conBin->deviceBinds[k];
                     db = db->next)
                 {
-                    inputdev_t* dev = I_GetDevice(db->device, false);
+                    inputdev_t     *dev = I_GetDevice(db->device, false);
                     switch(db->type)
                     {
-                        case CBD_TOGGLE:
-                            if(!dev->keys[db->id].bClass)
-                                dev->keys[db->id].bClass = bc;
-                            break;
-                            
-                        case CBD_AXIS:
-                            if(!dev->axes[db->id].bClass)
-                                dev->axes[db->id].bClass = bc;
-                            break;
+                    case CBD_TOGGLE:
+                        if(!dev->keys[db->id].bClass)
+                            dev->keys[db->id].bClass = bc;
+                        break;
 
-                        case CBD_ANGLE:
-                            if(!dev->hats[db->id].bClass)
-                                dev->hats[db->id].bClass = bc;
-                            break;
+                    case CBD_AXIS:
+                        if(!dev->axes[db->id].bClass)
+                            dev->axes[db->id].bClass = bc;
+                        break;
+
+                    case CBD_ANGLE:
+                        if(!dev->hats[db->id].bClass)
+                            dev->hats[db->id].bClass = bc;
+                        break;
                     }
-                }                
+                }
             }
         }
-        
+
         // If the class have made a broad device acquisition, mark all relevant states.
         if(bc->acquireKeyboard)
         {
-            inputdev_t* dev = I_GetDevice(IDEV_KEYBOARD, false);
+            inputdev_t     *dev = I_GetDevice(IDEV_KEYBOARD, false);
             for(k = 0; k < dev->numKeys; ++k)
             {
                 if(!dev->keys[k].bClass)
@@ -178,7 +179,7 @@ static void B_SetClassCount(int count)
 static void B_InsertClass(bclass_t* bc, int where)
 {
     B_SetClassCount(bindClassCount + 1);
-    memmove(&bindClasses[where + 1], &bindClasses[where], sizeof(bclass_t*) * 
+    memmove(&bindClasses[where + 1], &bindClasses[where], sizeof(bclass_t*) *
             (bindClassCount - 1 - where));
     bindClasses[where] = bc;
 }
@@ -195,7 +196,7 @@ static void B_RemoveClass(bclass_t* bc)
 }
 
 /**
- * Creates a new binding class. The new class has the highest priority of all existing 
+ * Creates a new binding class. The new class has the highest priority of all existing
  * classes, and is inactive.
  */
 bclass_t* B_NewClass(const char* name)
@@ -227,8 +228,8 @@ void B_ActivateClass(bclass_t* bc, boolean doActivate)
 {
     if(!bc)
         return;
-    
-    bc->active = doActivate;    
+
+    bc->active = doActivate;
     B_UpdateDeviceStateAssociations();
 }
 
@@ -241,7 +242,7 @@ void B_AcquireKeyboard(bclass_t* bc, boolean doAcquire)
 bclass_t* B_ClassByName(const char* name)
 {
     int     i;
-    
+
     for(i = 0; i < bindClassCount; ++i)
     {
         if(!strcasecmp(name, bindClasses[i]->name))
@@ -283,7 +284,7 @@ void B_ReorderClass(bclass_t* bc, int pos)
 controlbinding_t* B_NewControlBinding(bclass_t* bc)
 {
     int     i;
-    
+
     controlbinding_t* conBin = M_Calloc(sizeof(controlbinding_t));
     conBin->bid = B_NewIdentifier();
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -295,15 +296,15 @@ controlbinding_t* B_NewControlBinding(bclass_t* bc)
     conBin->next = &bc->controlBinds;
     conBin->prev = bc->controlBinds.prev;
     bc->controlBinds.prev->next = conBin;
-    bc->controlBinds.prev = conBin;    
-    
+    bc->controlBinds.prev = conBin;
+
     return conBin;
 }
 
 controlbinding_t* B_GetControlBinding(bclass_t* bc, int control)
 {
     controlbinding_t* i;
-    
+
     for(i = bc->controlBinds.next; i != &bc->controlBinds; i = i->next)
     {
         if(i->control == control)
@@ -318,9 +319,9 @@ controlbinding_t* B_GetControlBinding(bclass_t* bc, int control)
 void B_DestroyControlBinding(controlbinding_t* conBin)
 {
     int     i;
-    
+
     assert(conBin->bid != 0);
-    
+
     // Unlink first, if linked.
     if(conBin->prev)
     {
@@ -358,7 +359,7 @@ boolean B_DeleteBinding(bclass_t* bc, int bid)
     controlbinding_t* conBin = 0;
     dbinding_t* db = 0;
     int         i;
-    
+
     // Check if it one of the command bindings.
     for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
     {
@@ -368,7 +369,7 @@ boolean B_DeleteBinding(bclass_t* bc, int bid)
             return true;
         }
     }
-    
+
     // How about one fo the control bindings?
     for(conBin = bc->controlBinds.next; conBin != &bc->controlBinds; conBin = conBin->next)
     {
@@ -377,7 +378,7 @@ boolean B_DeleteBinding(bclass_t* bc, int bid)
             B_DestroyControlBinding(conBin);
             return true;
         }
-        
+
         // It may also be a device binding.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
@@ -391,7 +392,7 @@ boolean B_DeleteBinding(bclass_t* bc, int bid)
             }
         }
     }
-    
+
     return false;
 }
 
@@ -399,14 +400,14 @@ boolean B_TryEvent(ddevent_t* event)
 {
     int     i;
     evbinding_t* eb;
-    
+
     for(i = 0; i < bindClassCount; ++i)
     {
         bclass_t* bc = bindClasses[i];
 
         if(!bc->active)
             continue;
-        
+
         // See if the command bindings will have it.
         for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
         {
@@ -422,9 +423,9 @@ void B_PrintClasses(void)
 {
     int         i;
     bclass_t*   bc;
-    
+
     Con_Printf("%i binding classes defined:\n", bindClassCount);
-    
+
     for(i = 0; i < bindClassCount; ++i)
     {
         bc = bindClasses[i];
@@ -442,16 +443,16 @@ void B_PrintAllBindings(void)
     controlbinding_t* c;
     dbinding_t* d;
     ddstring_t* str = Str_New();
-    
+
     Con_Printf("%i binding classes defined.\n", bindClassCount);
-    
+
 #define BIDFORMAT   "[%3i]"
     for(i = 0; i < bindClassCount; ++i)
     {
         bc = bindClasses[i];
-        
+
         Con_Printf("Class \"%s\" (%s):\n", bc->name, bc->active? "active" : "inactive");
-        
+
         // Commands.
         for(count = 0, e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next, count++);
         if(count)
@@ -461,7 +462,7 @@ void B_PrintAllBindings(void)
             B_EventBindingToString(e, str);
             Con_Printf("  "BIDFORMAT" %s : %s\n", e->bid, Str_Text(str), e->command);
         }
-        
+
         // Controls.
         for(count = 0, c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next, count++);
         if(count)
@@ -472,19 +473,19 @@ void B_PrintAllBindings(void)
             Con_Printf("  Control \"%s\" "BIDFORMAT":\n", controlName, c->bid);
             for(k = 0; k < DDMAXPLAYERS; ++k)
             {
-                for(count = 0, d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; 
+                for(count = 0, d = c->deviceBinds[k].next; d != &c->deviceBinds[k];
                     d = d->next, count++);
                 if(!count) continue;
-                Con_Printf("    Local player %i has %i device bindings for \"%s\":\n", 
+                Con_Printf("    Local player %i has %i device bindings for \"%s\":\n",
                            k + 1, count, controlName);
                 for(d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
                 {
                     B_DeviceBindingToString(d, str);
                     Con_Printf("    "BIDFORMAT" %s\n", d->bid, Str_Text(str));
-                }                
-            }            
+                }
+            }
         }
-    }             
+    }
     Str_Free(str);
 }
 
@@ -495,7 +496,7 @@ void B_WriteClassToFile(const bclass_t* bc, FILE* file)
     dbinding_t* d;
     int         k;
     ddstring_t* str = Str_New();
-    
+
     // Commands.
     for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
     {
@@ -504,7 +505,7 @@ void B_WriteClassToFile(const bclass_t* bc, FILE* file)
         M_WriteTextEsc(file, e->command);
         fprintf(file, "\"\n");
     }
-    
+
     // Controls.
     for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
     {
@@ -515,8 +516,8 @@ void B_WriteClassToFile(const bclass_t* bc, FILE* file)
             {
                 B_DeviceBindingToString(d, str);
                 fprintf(file, "bindcontrol local%i-%s \"%s\"\n", k + 1, controlName, Str_Text(str));
-            }                
-        }            
+            }
+        }
     }
     Str_Free(str);
 }

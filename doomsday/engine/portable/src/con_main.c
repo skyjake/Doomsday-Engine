@@ -147,7 +147,6 @@ int     conCompMode = 0;        // Completion mode.
 int     conSilentCVars = 1;
 byte    consoleDump = true;
 int     consoleActiveKey = '`'; // Tilde.
-byte    consoleShowKeys = false;
 byte    consoleSnapBackOnPrint = false;
 
 char    trimmedFloatBuffer[32]; // Returned by TrimmedFloat().
@@ -219,10 +218,8 @@ static void Con_Register(void)
     C_VAR_INT("con-completion", &conCompMode, 0, 0, 1);
     C_VAR_BYTE("con-dump", &consoleDump, 0, 0, 1);
     C_VAR_INT("con-key-activate", &consoleActiveKey, 0, 0, 255);
-    C_VAR_BYTE("con-key-show", &consoleShowKeys, 0, 0, 1);
     C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1);
     C_VAR_BYTE("con-snapback", &consoleSnapBackOnPrint, 0, 0, 1);
-    //C_VAR_BYTE("con-progress", &progress_enabled, 0, 0, 1);
 
     // File
     C_VAR_CHARPTR("file-startup", &defaultWads, 0, 0, 0);
@@ -1284,11 +1281,6 @@ boolean Con_Responder(ddevent_t *event)
     // The console is only interested in keyboard toggle events.
     if(!IS_KEY_TOGGLE(event))
         return false;
-
-    if(consoleShowKeys && event->toggle.state == ETOG_DOWN)
-    {
-        Con_Printf("Keydown: ASCII %i (0x%x)\n", event->toggle.id, event->toggle.id);
-    }
 
     // Special console key: Shift-Escape opens the Control Panel.
     if(!conInputLock && shiftDown && IS_TOGGLE_DOWN_ID(event, DDKEY_ESCAPE))
