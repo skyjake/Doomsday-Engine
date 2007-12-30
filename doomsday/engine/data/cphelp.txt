@@ -51,14 +51,6 @@ def = No
 desc = The status of all sound channels is drawn on screen. This is intended for debugging. The displayed information consists of sample cache size, channel flags, volume, frequency, latest start time, cursor positions, buffer flags and sample information.\bO = Origin, A = Attenuated, E = Emitter, 3 = 3D, P = Playing, R = Repeat, L = Reload.
 
 #
-# INPUT
-#
-[Joystick sensitivity]
-cvar = input-joy-sensi
-def = 5
-desc = With the sensitivity value of zero the whole axis range is in use. When the sensitivity is increased, the axis values are scaled so that their limits are closer to the center position. Use small values like zero or one for the best control with joysticks. With pad controllers this setting may have little effect, but it's best to keep the sensitivity at the default value of five.
-
-#
 # GRAPHICS 
 #
 [Field Of View angle]
@@ -581,14 +573,8 @@ desc = 1=Dump all console messages to Doomsday.out.
 [con-key-activate]
 desc = Key to activate the console (ASCII code, default is tilde, 96).
 
-[con-key-show]
-desc = 1=Show ASCII codes of pressed keys in the console.
-
 [con-var-silent]
 desc = 1=Don't show the value of a cvar when setting it.
-
-[con-progress]
-desc = 1=Show progress bar.
 
 [con-fps]
 desc = 1=Show FPS counter on screen.
@@ -956,27 +942,6 @@ desc = The number of milliseconds to wait before first key repeat.
 [input-key-delay2]
 desc = The number of milliseconds to wait between key repeats.
 
-[input-key-show-scancodes]
-desc = 1=Show scancodes of all pressed keys in the console.
-
-[input-joy-sensi]
-desc = Joystick sensitivity.
-
-[input-joy-deadzone]
-desc = Joystick dead zone, in percents.
-
-[input-mouse-wheel-sensi]
-desc = Mouse wheel sensitivity.
-
-[input-mouse-x-disable]
-desc = 1=Disable mouse X axis.
-
-[input-mouse-y-disable]
-desc = 1=Disable mouse Y axis.
-
-[input-mouse-y-inverse]
-desc = 1=Inversed mouse Y axis.
-
 [input-mouse-filter]
 desc = Filter strength for mouse movement.
 
@@ -988,30 +953,6 @@ desc = ID of joystick to use (if more than one).
 
 [input-joy]
 desc = 1=Enable joystick input.
-
-[input-joy-x-inverse]
-desc = 1=Inverse joystick X axis.
-
-[input-joy-y-inverse]
-desc = 1=Inverse joystick Y axis.
-
-[input-joy-z-inverse]
-desc = 1=Inverse joystick Z axis.
-
-[input-joy-rx-inverse]
-desc = 1=Inverse joystick RX axis.
-
-[input-joy-ry-inverse]
-desc = 1=Inverse joystick RY axis.
-
-[input-joy-rz-inverse]
-desc = 1=Inverse joystick RZ axis.
-
-[input-joy-slider1-inverse]
-desc = 1=Inverse joystick slider 1.
-
-[input-joy-slider2-inverse]
-desc = 1=Inverse joystick slider 2.
 
 [net-ip-address]
 desc = TCP/IP address for searching servers.
