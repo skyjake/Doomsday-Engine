@@ -111,7 +111,7 @@ void Rend_RadioRegister(void)
 
 static __inline float Rend_RadioShadowDarkness(float lightlevel)
 {
-    return (.65f - lightlevel * 0.3f) * rendFakeRadioDarkness;
+    return (0.6f - lightlevel * 0.4f) * rendFakeRadioDarkness;
 }
 
 void Rend_RadioInitForFrame(void)
@@ -1202,7 +1202,7 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     const uint *idx;
     rendpoly_t *q;
     rendpoly_vertex_t *vtx;
-    float       pos;
+    float       pos, shadowAlpha;
     static const uint floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static const uint ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
     vec2_t      inner[2];
@@ -1211,7 +1211,7 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     if(darkness > 1)
         darkness = 1;
 
-    darkness *= shadowDark;
+    shadowAlpha = shadowDark * darkness;
 
     // Determine the inner shadow corners.
     for(i = 0; i < 2; ++i)
@@ -1349,7 +1349,7 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     vtx[idx[0]].pos[VX] = shadow->outer[0]->V_pos[VX];
     vtx[idx[0]].pos[VY] = shadow->outer[0]->V_pos[VY];
     vtx[idx[0]].pos[VZ] = z;
-    vtx[idx[0]].color.rgba[CA] = (DGLubyte) (255 * darkness);
+    vtx[idx[0]].color.rgba[CA] = (DGLubyte) (255 * shadowAlpha);
 
     if(renderWireframe)
         vtx[idx[0]].color.rgba[CR] = vtx[idx[0]].color.rgba[CG] =
@@ -1362,7 +1362,7 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     vtx[idx[1]].pos[VX] = shadow->outer[1]->V_pos[VX];
     vtx[idx[1]].pos[VY] = shadow->outer[1]->V_pos[VY];
     vtx[idx[1]].pos[VZ] = z;
-    vtx[idx[1]].color.rgba[CA] = (DGLubyte) (255 * darkness);
+    vtx[idx[1]].color.rgba[CA] = (DGLubyte) (255 * shadowAlpha);
 
     if(renderWireframe)
         vtx[idx[1]].color.rgba[CR] = vtx[idx[1]].color.rgba[CG] =
