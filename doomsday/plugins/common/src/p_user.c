@@ -705,6 +705,7 @@ void P_MorphThink(player_t *player)
 }
 
 boolean P_UndoPlayerMorph(player_t *player)
+// REWRITE ME - I MATCH HEXEN FROM HERE
 {
     mobj_t     *fog = 0, *mo = 0, *pmo = 0;
     float       pos[3];
@@ -795,6 +796,7 @@ boolean P_UndoPlayerMorph(player_t *player)
     player->class = cfg.playerClass[playerNum];
 # endif
     angle >>= ANGLETOFINESHIFT;
+// REWRITE ME - I MATCH HEXEN UNTIL HERE
 
     fog =
         P_SpawnMobj3f(MT_TFOG,
@@ -1093,6 +1095,7 @@ void P_PlayerThinkMove(player_t *player)
         P_MovePlayer(player);
 
 #if __JHEXEN__
+// REWRITE ME - I MATCH HEXEN FROM HERE
         plrmo = player->plr->mo;
         if(player->powers[PT_SPEED] && !(leveltime & 1) &&
            P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) > 12)
@@ -1140,6 +1143,7 @@ void P_PlayerThinkMove(player_t *player)
             }
         }
 #endif
+// REWRITE ME - I MATCH HEXEN UNTIL HERE
     }
 }
 
@@ -1226,6 +1230,7 @@ void P_PlayerThinkSounds(player_t *player)
 #ifdef __JHEXEN__
     mobj_t *plrmo = player->plr->mo;
 
+// REWRITE ME - I MATCH HEXEN FROM HERE
     switch(player->class)
     {
         case PCLASS_FIGHTER:
@@ -1258,6 +1263,7 @@ void P_PlayerThinkSounds(player_t *player)
         default:
             break;
     }
+// REWRITE ME - I MATCH HEXEN UNTIL HERE
 #endif
 }
 
@@ -1499,6 +1505,7 @@ void P_PlayerThinkUse(player_t *player)
 
     // check for use
     if(player->brain.use)
+// REWRITE ME - I MATCH HEXEN FROM HERE
     {
         if(!player->usedown)
         {
@@ -1708,6 +1715,7 @@ void P_PlayerThinkPowers(player_t *player)
         }
         P_PoisonDamage(player, player->poisoner, 1, true);
     }
+// REWRITE ME - I MATCH HEXEN UNTIL HERE
 #endif // __JHEXEN__
 
 #if __DOOM64TC__
