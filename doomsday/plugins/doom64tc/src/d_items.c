@@ -4,9 +4,8 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +21,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * d_items.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -316,12 +319,12 @@ void P_InitPlayerValues(player_t *p)
     char    buf[20];
 
     GetDefInt("Player|Health", &p->health);
-    GetDefInt("Player|Weapon", (int *) &p->readyweapon);
-    p->pendingweapon = p->readyweapon;
+    GetDefInt("Player|Weapon", (int *) &p->readyWeapon);
+    p->pendingWeapon = p->readyWeapon;
     for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
         sprintf(buf, "Weapon Info|%i|Owned", i);
-        GetDefInt(buf, (int *) &p->weaponowned[i]);
+        GetDefInt(buf, (int *) &p->weaponOwned[i]);
     }
     GetDefInt(PLINA "Clip", &p->ammo[AT_CLIP]);
     GetDefInt(PLINA "Shell", &p->ammo[AT_SHELL]);

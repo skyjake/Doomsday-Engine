@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -383,18 +383,18 @@ void Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo, boolean armor,
         // Support idfa/idkfa DEH Misc values
         if(cheat == &cheat_ammonokey)
         {
-            plyr->armorpoints = armorpoints[2]; //200;
-            plyr->armortype = armorclass[2];    //2;
+            plyr->armorPoints = armorpoints[2]; //200;
+            plyr->armorType = armorclass[2];    //2;
         }
         else if(cheat == &cheat_ammo)
         {
-            plyr->armorpoints = armorpoints[3];
-            plyr->armortype = armorclass[3];
+            plyr->armorPoints = armorpoints[3];
+            plyr->armorType = armorclass[3];
         }
         else
         {
-            plyr->armorpoints = armorpoints[1];
-            plyr->armortype = armorclass[1];
+            plyr->armorPoints = armorpoints[1];
+            plyr->armorType = armorclass[1];
         }
         plyr->update |= PSF_STATE | PSF_ARMOR_POINTS;
     }
@@ -402,13 +402,13 @@ void Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo, boolean armor,
     {
         plyr->update |= PSF_OWNED_WEAPONS;
         for(i = 0; i < NUM_WEAPON_TYPES; i++)
-            plyr->weaponowned[i] = true;
+            plyr->weaponOwned[i] = true;
     }
     if(ammo)
     {
         plyr->update |= PSF_AMMO;
         for(i = 0; i < NUM_AMMO_TYPES; i++)
-            plyr->ammo[i] = plyr->maxammo[i];
+            plyr->ammo[i] = plyr->maxAmmo[i];
     }
     if(cards)
     {
@@ -479,7 +479,7 @@ boolean Cht_PowerUpFunc(player_t *plyr, int i)
 
 void Cht_ChoppersFunc(player_t *plyr)
 {
-    plyr->weaponowned[WT_EIGHTH] = true;
+    plyr->weaponOwned[WT_EIGHTH] = true;
     plyr->powers[PT_INVULNERABILITY] = true;
 }
 
@@ -736,7 +736,7 @@ DEFCC(CCmdCheatGive)
         return true;
     }
 
-    if(!plyr->plr->ingame)
+    if(!plyr->plr->inGame)
         return true; // Can't give to a player who's not playing
 
     strcpy(buf, argv[1]);       // Stuff is the 2nd arg.

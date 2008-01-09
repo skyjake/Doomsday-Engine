@@ -4,10 +4,9 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
- *
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,10 +24,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Status bar code.
- *  Does the face/direction indicator animatin.
- *  Does palette indicators as well (red pain/berserk, bright pickup)
+/**
+ * st_stuff.c: Status bar code.
+ *
+ * Does the face/direction indicator animatin.
+ * Does palette indicators as well (red pain/berserk, bright pickup)
  */
 
  // HEADER FILES ------------------------------------------------------------
@@ -265,7 +265,7 @@ void ST_updateWidgets(void)
 
     for(i = 0; i < MAXPLAYERS; i++)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         st_fragscount += plr->frags[i] * (i != consoleplayer ? 1 : -1);
@@ -328,7 +328,7 @@ void ST_doPaletteStuff(void)
     int     bzc;
     player_t *plyr = &players[consoleplayer];
 
-    cnt = plyr->damagecount;
+    cnt = plyr->damageCount;
 
     if(plyr->powers[PT_STRENGTH])
     {
@@ -349,9 +349,9 @@ void ST_doPaletteStuff(void)
         palette += STARTREDPALS;
     }
 
-    else if(plyr->bonuscount)
+    else if(plyr->bonusCount)
     {
-        palette = (plyr->bonuscount + 7) >> 3;
+        palette = (plyr->bonusCount + 7) >> 3;
 
         if(palette >= NUMBONUSPALS)
             palette = NUMBONUSPALS - 1;
@@ -435,7 +435,7 @@ void ST_drawHUDSprite(int sprite, int x, int y, int hotspot, float alpha)
         y -= h;
         break;
     }
-    gl.Color4f(1, 1, 1, alpha );
+    DGL_Color4f(1, 1, 1, alpha );
     GL_DrawPSprite(x, y, sprite == SPR_ROCK ? 1 / 1.5 : 1, false,
                    sprInfo.lump);
 }
@@ -472,9 +472,9 @@ void ST_doFullscreenStuff(void)
     }
 
     // Setup the scaling matrix.
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
-    gl.Scalef(cfg.hudScale, cfg.hudScale, 1);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     // draw the visible HUD data, first health
     if(cfg.hudShown[HUD_HEALTH])
@@ -565,7 +565,7 @@ void ST_doFullscreenStuff(void)
         //// for each type of ammo this weapon takes.
         for(ammotype=0; ammotype < NUM_AMMO_TYPES; ++ammotype)
         {
-            if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[ammotype])
+            if(!weaponinfo[plr->readyWeapon][plr->class].mode[0].ammotype[ammotype])
                 continue;
 
             sprintf(buf, "%i", plr->ammo[ammotype]);
@@ -585,7 +585,7 @@ void ST_doFullscreenStuff(void)
                      h_height - HUDBORDERY - hu_font[0].height - 4,
                      buf, hu_font_a, 1, 1, 1, iconalpha);
 
-        sprintf(buf, "%i", plr->armorpoints);
+        sprintf(buf, "%i", plr->armorPoints);
         M_WriteText2(h_width - (w/2) - (M_StringWidth(buf, hu_font_b)/2) - HUDBORDERX,
                      h_height - HUDBORDERY,
                      buf, hu_font_b, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
@@ -618,8 +618,8 @@ Draw_BeginZoom(0.75f, pos , h_height - HUDBORDERY);
 Draw_EndZoom();
     }
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 void ST_Drawer(int fullscreenmode, boolean refresh)
@@ -725,7 +725,7 @@ void ST_initData(void)
 
     for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
-        oldweaponsowned[i] = plyr->weaponowned[i];
+        oldweaponsowned[i] = plyr->weaponOwned[i];
     }
 
     for(i = 0; i < 3; i++)

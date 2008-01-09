@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *
@@ -156,7 +156,7 @@ static boolean PIT_ApplyTorque(line_t *ld, void *data)
 void P_ApplyTorque(mobj_t *mo)
 {
     // Remember the current state, for gear-change
-    int     flags = mo->intflags;
+    int     flags = mo->intFlags;
 
     // 2003-4-16 (jk): corpse sliding anomalies, made configurable
     if(!cfg.slidingCorpses)
@@ -171,10 +171,10 @@ void P_ApplyTorque(mobj_t *mo)
 
     // If any momentum, mark object as 'falling' using engine-internal flags
     if(mo->mom[MX] | mo->mom[MY])
-        mo->intflags |= MIF_FALLING;
+        mo->intFlags |= MIF_FALLING;
     else
         // Clear the engine-internal flag indicating falling object.
-        mo->intflags &= ~MIF_FALLING;
+        mo->intFlags &= ~MIF_FALLING;
 
     // If the object has been moving, step up the gear.
     // This helps reach equilibrium and avoid oscillations.
@@ -184,7 +184,7 @@ void P_ApplyTorque(mobj_t *mo)
     // systems somehow :)
 
     // If not falling for a while, reset it to full strength
-    if(!((mo->intflags | flags) & MIF_FALLING))
+    if(!((mo->intFlags | flags) & MIF_FALLING))
         mo->gear = 0;
     else if(mo->gear < MAXGEAR)
         // Else if not at max gear, move up a gear

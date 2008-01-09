@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
@@ -130,13 +130,13 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
 
     // wake up all monsters in this sector
     if(P_GetIntp(sec, DMU_VALID_COUNT) == VALIDCOUNT &&
-       xsec->soundtraversed <= soundblocks + 1)
+       xsec->soundTraversed <= soundblocks + 1)
         return;                 // already flooded
 
     P_SetIntp(sec, DMU_VALID_COUNT, VALIDCOUNT);
 
-    xsec->soundtraversed = soundblocks + 1;
-    xsec->soundtarget = soundtarget;
+    xsec->soundTraversed = soundblocks + 1;
+    xsec->soundTarget = soundtarget;
 
     for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); i++)
     {
@@ -222,7 +222,7 @@ boolean P_CheckMissileRange(mobj_t *actor)
         return true;
     }
 
-    if(actor->reactiontime)
+    if(actor->reactionTime)
         return false;           // do not attack yet
 
     // OPTIMIZE: get this from a global checksight
@@ -230,7 +230,7 @@ boolean P_CheckMissileRange(mobj_t *actor)
         P_ApproxDistance(actor->pos[VX] - actor->target->pos[VX],
                          actor->pos[VY] - actor->target->pos[VY]) - 64;
 
-    if(!actor->info->meleestate)
+    if(!actor->info->meleeState)
         dist -= 128; // no melee attack, so fire more
 
     if(actor->type == MT_CYBORG || actor->type == MT_SPIDER ||
@@ -263,14 +263,14 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     line_t *ld;
     boolean good;
 
-    if(actor->movedir == DI_NODIR)
+    if(actor->moveDir == DI_NODIR)
         return false;
 
-    if((unsigned) actor->movedir >= 8)
-        Con_Error("Weird actor->movedir!");
+    if((unsigned) actor->moveDir >= 8)
+        Con_Error("Weird actor->moveDir!");
 
-    stepx = actor->info->speed / FRACUNIT * xspeed[actor->movedir];
-    stepy = actor->info->speed / FRACUNIT * yspeed[actor->movedir];
+    stepx = actor->info->speed / FRACUNIT * xspeed[actor->moveDir];
+    stepy = actor->info->speed / FRACUNIT * yspeed[actor->moveDir];
     tryx = actor->pos[VX] + stepx;
     tryy = actor->pos[VY] + stepy;
 
@@ -293,7 +293,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
         if(!P_IterListSize(spechit))
             return false;
 
-        actor->movedir = DI_NODIR;
+        actor->moveDir = DI_NODIR;
         good = false;
         while((ld = P_PopIterList(spechit)) != NULL)
         {
@@ -331,10 +331,10 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     // $dropoff_fix: fall more slowly, under gravity, if felldown==true
     if(!(actor->flags & MF_FLOAT) && !felldown)
     {
-        if(actor->pos[VZ] > actor->floorz)
+        if(actor->pos[VZ] > actor->floorZ)
             P_HitFloor(actor);
 
-        actor->pos[VZ] = actor->floorz;
+        actor->pos[VZ] = actor->floorZ;
     }
     return true;
 }
@@ -353,14 +353,14 @@ boolean P_TryWalk(mobj_t *actor)
         return false;
     }
 
-    actor->movecount = P_Random() & 15;
+    actor->moveCount = P_Random() & 15;
     return true;
 }
 
 static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
 {
     dirtype_t xdir, ydir, tdir;
-    dirtype_t olddir = actor->movedir;
+    dirtype_t olddir = actor->moveDir;
     dirtype_t turnaround = olddir;
 
     if(turnaround != DI_NODIR)  // find reverse direction
@@ -376,7 +376,7 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
 
     // try direct route
     if(xdir != DI_NODIR && ydir != DI_NODIR &&
-       turnaround != (actor->movedir =
+       turnaround != (actor->moveDir =
                       deltay < 0 ? deltax >
                       0 ? DI_SOUTHEAST : DI_SOUTHWEST : deltax >
                       0 ? DI_NORTHEAST : DI_NORTHWEST) && P_TryWalk(actor))
@@ -387,31 +387,31 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
         tdir = xdir, xdir = ydir, ydir = tdir;
 
     if((xdir == turnaround ? xdir = DI_NODIR : xdir) != DI_NODIR &&
-       (actor->movedir = xdir, P_TryWalk(actor)))
+       (actor->moveDir = xdir, P_TryWalk(actor)))
         return;                 // either moved forward or attacked
 
     if((ydir == turnaround ? ydir = DI_NODIR : ydir) != DI_NODIR &&
-       (actor->movedir = ydir, P_TryWalk(actor)))
+       (actor->moveDir = ydir, P_TryWalk(actor)))
         return;
 
     // there is no direct path to the player, so pick another direction.
-    if(olddir != DI_NODIR && (actor->movedir = olddir, P_TryWalk(actor)))
+    if(olddir != DI_NODIR && (actor->moveDir = olddir, P_TryWalk(actor)))
         return;
 
     // randomly determine direction of search
     if(P_Random() & 1)
     {
         for(tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
-            if(tdir != turnaround && (actor->movedir = tdir, P_TryWalk(actor)))
+            if(tdir != turnaround && (actor->moveDir = tdir, P_TryWalk(actor)))
                 return;
     }
     else
         for(tdir = DI_SOUTHEAST; tdir != DI_EAST - 1; tdir--)
-            if(tdir != turnaround && (actor->movedir = tdir, P_TryWalk(actor)))
+            if(tdir != turnaround && (actor->moveDir = tdir, P_TryWalk(actor)))
                 return;
 
-    if((actor->movedir = turnaround) != DI_NODIR && !P_TryWalk(actor))
-        actor->movedir = DI_NODIR;
+    if((actor->moveDir = turnaround) != DI_NODIR && !P_TryWalk(actor))
+        actor->moveDir = DI_NODIR;
 }
 
 /*
@@ -489,8 +489,8 @@ void P_NewChaseDir(mobj_t *actor)
     fixed_t deltax = target->pos[VX] - actor->pos[VX];
     fixed_t deltay = target->pos[VY] - actor->pos[VY];
 
-    if(actor->floorz - FIX2FLT(actor->dropoffz) > 24 &&
-       actor->pos[VZ] <= FLT2FIX(actor->floorz) &&
+    if(actor->floorZ - FIX2FLT(actor->dropOffZ) > 24 &&
+       actor->pos[VZ] <= FLT2FIX(actor->floorZ) &&
        !(actor->flags & (MF_DROPOFF | MF_FLOAT)) &&
        !cfg.avoidDropoffs && P_AvoidDropoff(actor))
     {
@@ -501,7 +501,7 @@ void P_NewChaseDir(mobj_t *actor)
         // If moving away from drop off, set movecount to 1 so that
         // small steps are taken to get monster away from drop off.
 
-        actor->movecount = 1;
+        actor->moveCount = 1;
         return;
     }
 
@@ -522,7 +522,7 @@ boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
     int         playerCount;
 
     for(c = playerCount = 0; c < MAXPLAYERS; c++)
-        if(players[c].plr->ingame)
+        if(players[c].plr->inGame)
             playerCount++;
 
     // Are there any players?
@@ -530,20 +530,20 @@ boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
         return false;
 
     c = 0;
-    stop = (actor->lastlook - 1) & 3;
+    stop = (actor->lastLook - 1) & 3;
 
-    for(;; actor->lastlook = (actor->lastlook + 1) & 3)
+    for(;; actor->lastLook = (actor->lastLook + 1) & 3)
     {
-        if(!players[actor->lastlook].plr->ingame)
+        if(!players[actor->lastLook].plr->inGame)
             continue;
 
-        if(c++ == 2 || actor->lastlook == stop)
+        if(c++ == 2 || actor->lastLook == stop)
         {
             // done looking
             return false;
         }
 
-        player = &players[actor->lastlook];
+        player = &players[actor->lastLook];
 
         if(player->powers[PT_UNSEE]) // d64tc
             continue;
@@ -586,7 +586,7 @@ int P_Massacre(void)
     if(G_GetGameState() != GS_LEVEL)
         return 0;
 
-    for(think = thinkercap.next; think != &thinkercap; think = think->next)
+    for(think = thinkerCap.next; think != &thinkerCap; think = think->next)
     {
         if(think->function != P_MobjThinker)
         {                       // Not a mobj thinker
@@ -625,7 +625,7 @@ void C_DECL A_PossSpecial(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -657,7 +657,7 @@ void C_DECL A_SposSpecial(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -689,7 +689,7 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -721,7 +721,7 @@ void C_DECL A_NtroSpecial(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -753,7 +753,7 @@ void C_DECL A_SargSpecial(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -785,7 +785,7 @@ void C_DECL A_Sar2Special(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -817,7 +817,7 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -849,7 +849,7 @@ void C_DECL A_Hed2Special(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -881,7 +881,7 @@ void C_DECL A_SkulSpecial(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -913,7 +913,7 @@ void C_DECL A_Bos2Special(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -945,7 +945,7 @@ void C_DECL A_BossSpecial(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -977,7 +977,7 @@ void C_DECL A_PainSpecial(mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -1009,7 +1009,7 @@ void C_DECL A_FattSpecial (mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -1041,7 +1041,7 @@ void C_DECL A_BabySpecial (mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -1073,7 +1073,7 @@ void C_DECL A_CybrSpecial (mobj_t* mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -1108,7 +1108,7 @@ void C_DECL A_BitchSpecial(mobj_t *mo)
 
     // scan the remaining thinkers
     // to see if all Keens are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -1139,7 +1139,7 @@ void C_DECL A_Look(mobj_t *actor)
 
     actor->threshold = 0;       // any shot will wake up
     sec = P_GetPtrp(actor->subsector, DMU_SECTOR);
-    targ = P_ToXSector(sec)->soundtarget;
+    targ = P_ToXSector(sec)->soundTarget;
 
     if(targ && (targ->flags & MF_SHOOTABLE))
     {
@@ -1159,11 +1159,11 @@ void C_DECL A_Look(mobj_t *actor)
 
     // go into chase state
   seeyou:
-    if(actor->info->seesound)
+    if(actor->info->seeSound)
     {
         int     sound;
 
-        switch (actor->info->seesound)
+        switch (actor->info->seeSound)
         {
         case sfx_posit1:
         case sfx_posit2:
@@ -1177,7 +1177,7 @@ void C_DECL A_Look(mobj_t *actor)
             break;
 
         default:
-            sound = actor->info->seesound;
+            sound = actor->info->seeSound;
             break;
         }
 
@@ -1187,7 +1187,7 @@ void C_DECL A_Look(mobj_t *actor)
             S_StartSound(sound, actor);
     }
 
-    P_MobjChangeState(actor, actor->info->seestate);
+    P_MobjChangeState(actor, actor->info->seeState);
 }
 
 /*
@@ -1210,8 +1210,8 @@ void C_DECL A_Chase(mobj_t *actor)
     }
     // < d64tc
 
-    if(actor->reactiontime)
-        actor->reactiontime--;
+    if(actor->reactionTime)
+        actor->reactionTime--;
 
     // modify target threshold
     if(actor->threshold)
@@ -1225,10 +1225,10 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     // turn towards movement direction if not there yet
-    if(actor->movedir < 8)
+    if(actor->moveDir < 8)
     {
         actor->angle &= (7 << 29);
-        delta = actor->angle - (actor->movedir << 29);
+        delta = actor->angle - (actor->moveDir << 29);
 
         if(delta > 0)
             actor->angle -= ANG90 / 2;
@@ -1242,7 +1242,7 @@ void C_DECL A_Chase(mobj_t *actor)
         if(P_LookForPlayers(actor, true))
             return;             // got a new target
 
-        P_MobjChangeState(actor, actor->info->spawnstate);
+        P_MobjChangeState(actor, actor->info->spawnState);
         return;
     }
 
@@ -1256,19 +1256,19 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     // check for melee attack
-    if(actor->info->meleestate && P_CheckMeleeRange(actor))
+    if(actor->info->meleeState && P_CheckMeleeRange(actor))
     {
-        if(actor->info->attacksound)
-            S_StartSound(actor->info->attacksound, actor);
+        if(actor->info->attackSound)
+            S_StartSound(actor->info->attackSound, actor);
 
-        P_MobjChangeState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleeState);
         return;
     }
 
     // check for missile attack
-    if(actor->info->missilestate)
+    if(actor->info->missileState)
     {
-        if(gameskill < SM_NIGHTMARE && !fastparm && actor->movecount)
+        if(gameskill < SM_NIGHTMARE && !fastparm && actor->moveCount)
         {
             goto nomissile;
         }
@@ -1276,7 +1276,7 @@ void C_DECL A_Chase(mobj_t *actor)
         if(!P_CheckMissileRange(actor))
             goto nomissile;
 
-        P_MobjChangeState(actor, actor->info->missilestate);
+        P_MobjChangeState(actor, actor->info->missileState);
         actor->flags |= MF_JUSTATTACKED;
         return;
     }
@@ -1291,15 +1291,15 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     // chase towards player
-    if(--actor->movecount < 0 || !P_Move(actor, false))
+    if(--actor->moveCount < 0 || !P_Move(actor, false))
     {
         P_NewChaseDir(actor);
     }
 
     // make active sound
-    if(actor->info->activesound && P_Random() < 3)
+    if(actor->info->activeSound && P_Random() < 3)
     {
-        S_StartSound(actor->info->activesound, actor);
+        S_StartSound(actor->info->activeSound, actor);
     }
 }
 
@@ -1308,7 +1308,7 @@ void C_DECL A_FaceTarget(mobj_t *actor)
     if(!actor->target)
         return;
 
-    actor->turntime = true;     // $visangle-facetarget
+    actor->turnTime = true;     // $visangle-facetarget
     actor->flags &= ~MF_AMBUSH;
     actor->angle =
         R_PointToAngle2(actor->pos[VX], actor->pos[VY],
@@ -1413,7 +1413,7 @@ void C_DECL A_CPosRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target) || P_Random() < 40)
     {
-        P_MobjChangeState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seeState);
     }
 }
 
@@ -1428,7 +1428,7 @@ void C_DECL A_SpidRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_MobjChangeState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seeState);
     }
 }
 
@@ -1456,7 +1456,7 @@ void BabyFire(mobj_t *actor, int type, boolean right)
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += BABY_ARM_EXTENSION_SHORT * FIX2FLT(finecosine[ang]);
     pos[VY] += BABY_ARM_EXTENSION_SHORT * FIX2FLT(finesine[ang]);
-    pos[VZ] -= actor->floorclip + BABY_ARM_HEIGHT;
+    pos[VZ] -= actor->floorClip + BABY_ARM_HEIGHT;
 
     mo = P_SpawnMotherMissile(type, pos[VX], pos[VY], pos[VZ],
                               actor, actor->target);
@@ -1628,7 +1628,7 @@ void MotherFire(mobj_t *actor, int type, angle_t angle, fixed_t distance,
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += FIX2FLT(FixedMul(distance, finecosine[ang]));
     pos[VY] += FIX2FLT(FixedMul(distance, finesine[ang]));
-    pos[VZ] += -actor->floorclip + FIX2FLT(height);
+    pos[VZ] += -actor->floorClip + FIX2FLT(height);
 
     P_SpawnMotherMissile(type, pos[VX], pos[VY], pos[VZ],
                          actor, actor->target);
@@ -1674,7 +1674,7 @@ void C_DECL A_SetFloorFire(mobj_t *actor)
     mobj_t     *mo;
     float       pos[3];
 
-    actor->pos[VZ] = actor->floorz; // DJS - why?
+    actor->pos[VZ] = actor->floorZ; // DJS - why?
 #if 0
     // DJS - Fixme!
     memcpy(pos, actor->pos, sizeof(pos));
@@ -1784,7 +1784,7 @@ void C_DECL A_CyberAttack(mobj_t *actor)
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += CYBER_ARM_EXTENSION_SHORT * FIX2FLT(finecosine[ang]);
     pos[VY] += CYBER_ARM_EXTENSION_SHORT * FIX2FLT(finesine[ang]);
-    pos[VZ] += -actor->floorclip + CYBER_ARM1_HEIGHT;
+    pos[VZ] += -actor->floorClip + CYBER_ARM1_HEIGHT;
 
     P_SpawnMotherMissile(MT_CYBERROCKET, pos[VX], pos[VY], pos[VZ],
                          actor, actor->target);
@@ -2036,7 +2036,7 @@ void FatFire(mobj_t *actor, int type, int spread, int angle,
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += FIX2FLT(FixedMul(distance, finecosine[ang]));
     pos[VY] += FIX2FLT(FixedMul(distance, finesine[ang]));
-    pos[VZ] += -actor->floorclip + FIX2FLT(height);
+    pos[VZ] += -actor->floorClip + FIX2FLT(height);
 
     mo = P_SpawnMotherMissile(type, pos[VX], pos[VY], pos[VZ],
                               actor, actor->targettype);
@@ -2156,7 +2156,7 @@ void C_DECL A_SkullAttack(mobj_t *actor)
     dest = actor->target;
     actor->flags |= MF_SKULLFLY;
 
-    S_StartSound(actor->info->attacksound, actor);
+    S_StartSound(actor->info->attackSound, actor);
     A_FaceTarget(actor);
 
     an = actor->angle >> ANGLETOFINESHIFT;
@@ -2192,8 +2192,8 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
         // count total number of skull currently on the level
         count = 0;
 
-        currentthinker = thinkercap.next;
-        while(currentthinker != &thinkercap)
+        currentthinker = thinkerCap.next;
+        while(currentthinker != &thinkerCap)
         {
             if((currentthinker->function == P_MobjThinker) &&
                ((mobj_t *) currentthinker)->type == MT_SKULL)
@@ -2325,7 +2325,7 @@ void C_DECL A_Scream(mobj_t *actor)
 {
     int     sound;
 
-    switch (actor->info->deathsound)
+    switch (actor->info->deathSound)
     {
     case 0:
         return;
@@ -2342,7 +2342,7 @@ void C_DECL A_Scream(mobj_t *actor)
         break;
 
     default:
-        sound = actor->info->deathsound;
+        sound = actor->info->deathSound;
         break;
     }
 
@@ -2352,7 +2352,7 @@ void C_DECL A_Scream(mobj_t *actor)
     {
         // full volume
         S_StartSound(sound | DDSF_NO_ATTENUATION, NULL);
-        actor->reactiontime += 30;  // d64tc
+        actor->reactionTime += 30;  // d64tc
     }
     else
         S_StartSound(sound, actor);
@@ -2400,8 +2400,8 @@ void C_DECL A_BossExplode(mobj_t *actor)
         mo->target = actor;
     }
 
-    actor->reactiontime--;
-    if(actor->reactiontime <= 0)
+    actor->reactionTime--;
+    if(actor->reactionTime <= 0)
     {
         P_MobjChangeState(actor, actor->info->deathstate + 2);
     }
@@ -2474,7 +2474,7 @@ void C_DECL A_SpitAcid(mobj_t* actor)
     }
     else
     {
-        P_MobjChangeState(actor, actor->info->seestate);
+        P_MobjChangeState(actor, actor->info->seeState);
     }
 }
 
@@ -2500,7 +2500,7 @@ void C_DECL A_AcidCharge(mobj_t *actor)
     }
     else
     {
-        P_MobjChangeState(actor, actor->info->missilestate + 1);
+        P_MobjChangeState(actor, actor->info->missileState + 1);
     }
 }
 
@@ -2511,8 +2511,8 @@ void C_DECL A_XScream(mobj_t *actor)
 
 void C_DECL A_Pain(mobj_t *actor)
 {
-    if(actor->info->painsound)
-        S_StartSound(actor->info->painsound, actor);
+    if(actor->info->painSound)
+        S_StartSound(actor->info->painSound, actor);
 }
 
 void C_DECL A_Fall(mobj_t *actor)
@@ -2645,7 +2645,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
 
     // make sure there is a player alive for victory
     for(i = 0; i < MAXPLAYERS; i++)
-        if(players[i].plr->ingame && players[i].health > 0)
+        if(players[i].plr->inGame && players[i].health > 0)
             break;
 
     if(i == MAXPLAYERS)
@@ -2653,7 +2653,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
 
     // scan the remaining thinkers to see
     // if all bosses are dead
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -2832,7 +2832,7 @@ void P_SpawnBrainTargets(void)
     mobj_t *m;
 
     // find all the target spots
-    for(thinker = thinkercap.next; thinker != &thinkercap;
+    for(thinker = thinkerCap.next; thinker != &thinkerCap;
         thinker = thinker->next)
     {
         if(thinker->function != P_MobjThinker)
@@ -2947,7 +2947,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
     // spawn brain missile
     newmobj = P_SpawnMissile(MT_SPAWNSHOT, mo, targ);
     newmobj->target = targ;
-    newmobj->reactiontime =
+    newmobj->reactionTime =
         ((targ->pos[VY] - mo->pos[VY]) / newmobj->mom[MY]) / newmobj->state->tics;
 
     S_StartSound(sfx_bospit, NULL);
@@ -2971,7 +2971,7 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     int     r;
     mobjtype_t type;
 
-    if(--mo->reactiontime)
+    if(--mo->reactionTime)
         return;                 // still flying
 
     targ = mo->target;
@@ -3008,7 +3008,7 @@ void C_DECL A_SpawnFly(mobj_t *mo)
 
     newmobj = P_SpawnMobj3f(targ->pos[VX], targ->pos[VY], targ->pos[VZ], type);
     if(P_LookForPlayers(newmobj, true))
-        P_MobjChangeState(newmobj, newmobj->info->seestate);
+        P_MobjChangeState(newmobj, newmobj->info->seeState);
 
     // telefrag anything in this spot
     P_TeleportMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false);
