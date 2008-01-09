@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
- * \bug Not 64bit clean: In function 'G_RestoreState': cast from pointer to integer of different size
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
  * g_update.c: Routines to call when updating the state of the engine
- * (when loading/unloading WADs and definitions).
+ *
+ * \bug Not 64bit clean: In function 'G_RestoreState': cast from pointer to integer of different size
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -85,49 +95,53 @@ void    M_UnloadData(void);
  */
 void G_MangleState(void)
 {
-    thinker_t  *it;
-    mobj_t     *mo;
-    int         i, k;
+    int             i, k;
+    thinker_t      *it;
+    mobj_t         *mo;
 
-    for(it = thinkercap.next; it != &thinkercap && it; it = it->next)
+    for(it = thinkerCap.next; it != &thinkerCap && it; it = it->next)
     {
         if(it->function != P_MobjThinker)
             continue;
 
         mo = (mobj_t *) it;
         mo->state = MANGLE_STATE(mo->state);
-        mo->info = (mobjinfo_t *) (mo->info - mobjinfo);
+        mo->info = (mobjinfo_t *) (mo->info - mobjInfo);
     }
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
+        player_t       *plr = &players[i];
+
         for(k = 0; k < NUMPSPRITES; ++k)
-            players[i].psprites[k].state =
-                MANGLE_STATE(players[i].psprites[k].state);
+            plr->pSprites[k].state =
+                MANGLE_STATE(plr->pSprites[k].state);
     }
 }
 
 void G_RestoreState(void)
 {
-    thinker_t  *it;
-    mobj_t     *mo;
-    int         i, k;
+    int             i, k;
+    thinker_t      *it;
+    mobj_t         *mo;
 
-    for(it = thinkercap.next; it != &thinkercap && it; it = it->next)
+    for(it = thinkerCap.next; it != &thinkerCap && it; it = it->next)
     {
         if(it->function != P_MobjThinker)
             continue;
 
         mo = (mobj_t *) it;
         mo->state = RESTORE_STATE(mo->state);
-        mo->info = &mobjinfo[(int) mo->info];
+        mo->info = &mobjInfo[(int) mo->info];
     }
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
+        player_t       *plr = &players[i];
+
         for(k = 0; k < NUMPSPRITES; ++k)
-            players[i].psprites[k].state =
-                RESTORE_STATE(players[i].psprites[k].state);
+            plr->pSprites[k].state =
+                RESTORE_STATE(plr->pSprites[k].state);
     }
 
     HU_UpdatePsprites();

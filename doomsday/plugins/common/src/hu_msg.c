@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -22,6 +22,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -612,7 +623,7 @@ static void HU_MsgBufDraw(msgbuffer_t *buf)
     }
 
     Draw_BeginZoom(cfg.msgScale, x, 0);
-    gl.Translatef(0, -buf->yoffset, 0);
+    DGL_Translatef(0, -buf->yoffset, 0);
 
     // First 'num' messages starting from the last one.
     for(y = (num - 1) * lh, m = IN_RANGE(buf->lastmsg - 1); num;
@@ -700,7 +711,7 @@ static void sendMessage(char *msg)
     else
     {   // Send to all of the destination color.
         for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->ingame && cfg.playerColor[i] == chatTo)
+            if(players[i].plr->inGame && cfg.playerColor[i] == chatTo)
             {
                 sprintf(buff, "chatNum %d ", i);
                 M_StrCatQuoted(buff, msg);

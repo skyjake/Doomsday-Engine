@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -222,19 +233,19 @@ void XF_Init(sector_t *sec, function_t *fn, char *func, int min, int max,
         switch(func[1])
         {
         case 'r':
-            offset += 255.f * xsec->origrgb[0];
+            offset += 255.f * xsec->origRGB[0];
             break;
 
         case 'g':
-            offset += 255.f * xsec->origrgb[1];
+            offset += 255.f * xsec->origRGB[1];
             break;
 
         case 'b':
-            offset += 255.f * xsec->origrgb[2];
+            offset += 255.f * xsec->origRGB[2];
             break;
 
         case 'l':
-            offset += 255.0f * xsec->origlight;
+            offset += 255.0f * xsec->origLight;
             break;
 
         case 'f':
@@ -256,13 +267,13 @@ void XF_Init(sector_t *sec, function_t *fn, char *func, int min, int max,
     }
 
     fn->timer = -1; // The first step musn't skip the first value.
-    fn->maxtimer = XG_RandomInt(min, max);
-    fn->mininterval = min;
-    fn->maxinterval = max;
+    fn->maxTimer = XG_RandomInt(min, max);
+    fn->minInterval = min;
+    fn->maxInterval = max;
     fn->scale = scale;
     fn->offset = offset;
     // Make sure oldvalue is out of range.
-    fn->oldvalue = -scale + offset;
+    fn->oldValue = -scale + offset;
 }
 
 int C_DECL XLTrav_LineAngle(line_t *line, boolean dummy, void *context,
@@ -308,28 +319,28 @@ void XS_SetSectorType(struct sector_s *sec, int special)
 
         // Init timer so ambient doesn't play immediately at level start.
         xg->timer =
-            XG_RandomInt(FLT2TIC(xg->info.sound_interval[0]),
-                         FLT2TIC(xg->info.sound_interval[1]));
+            XG_RandomInt(FLT2TIC(xg->info.soundInterval[0]),
+                         FLT2TIC(xg->info.soundInterval[1]));
 
         // Light function.
-        XF_Init(sec, &xg->light, info->lightfunc, info->light_interval[0],
-                info->light_interval[1], 255, 0);
+        XF_Init(sec, &xg->light, info->lightFunc, info->lightInterval[0],
+                info->lightInterval[1], 255, 0);
 
         // Color functions.
         for(i = 0; i < 3; ++i)
         {
-            XF_Init(sec, &xg->rgb[i], info->colfunc[i],
-                    info->col_interval[i][0], info->col_interval[i][1], 255,
+            XF_Init(sec, &xg->rgb[i], info->colFunc[i],
+                    info->colInterval[i][0], info->colInterval[i][1], 255,
                     0);
         }
 
         // Plane functions / floor.
-        XF_Init(sec, &xg->plane[XGSP_FLOOR], info->floorfunc,
-                info->floor_interval[0], info->floor_interval[1],
-                info->floormul, info->flooroff);
-        XF_Init(sec, &xg->plane[XGSP_CEILING], info->ceilfunc,
-                info->ceil_interval[0], info->ceil_interval[1],
-                info->ceilmul, info->ceiloff);
+        XF_Init(sec, &xg->plane[XGSP_FLOOR], info->floorFunc,
+                info->floorInterval[0], info->floorInterval[1],
+                info->floorMul, info->floorOff);
+        XF_Init(sec, &xg->plane[XGSP_CEILING], info->ceilFunc,
+                info->ceilInterval[0], info->ceilInterval[1],
+                info->ceilMul, info->ceilOff);
 
         // Derive texmove angle from first act-tagged line?
         if((info->flags & STF_ACT_TAG_TEXMOVE) ||
@@ -339,19 +350,19 @@ void XS_SetSectorType(struct sector_s *sec, int special)
 
             // -1 to support binary XG data with old flag values.
             XL_TraverseLines(0, (xgdatalumps? LREF_TAGGED -1: LREF_TAGGED),
-                             info->act_tag, sec, &angle,
+                             info->actTag, sec, &angle,
                              NULL, XLTrav_LineAngle);
 
             // Convert to degrees.
             if(info->flags & STF_ACT_TAG_TEXMOVE)
             {
-                info->texmove_angle[0] = info->texmove_angle[1] =
+                info->texMoveAngle[0] = info->texMoveAngle[1] =
                     angle / (float) ANGLE_MAX *360;
             }
 
             if(info->flags & STF_ACT_TAG_WIND)
             {
-                info->wind_angle = angle / (float) ANGLE_MAX *360;
+                info->windAngle = angle / (float) ANGLE_MAX *360;
             }
         }
     }
@@ -376,7 +387,7 @@ void XS_Init(void)
 {
     if(numsectors > 0)
     {   // Allocate stair builder data.
-        int         i;
+        uint        i;
         sector_t   *sec;
         xsector_t  *xsec;
 
@@ -391,11 +402,11 @@ void XS_Init(void)
             sec = P_ToPtr(DMU_SECTOR, i);
             xsec = P_ToXSector(sec);
 
-            P_GetFloatpv(sec, DMU_COLOR, xsec->origrgb);
+            P_GetFloatpv(sec, DMU_COLOR, xsec->origRGB);
 
             xsec->SP_floororigheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
             xsec->SP_ceilorigheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
-            xsec->origlight = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
+            xsec->origLight = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
 
             // Initialize the XG data for this sector.
             XS_SetSectorType(sec, xsec->special);
@@ -484,12 +495,12 @@ void XS_PlaneMover(xgplanemover_t *mover)
             mover->flags &= ~PMF_WAIT;
             // Play a sound.
             XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling,
-                           mover->startsound);
+                           mover->startSound);
         }
 
-        mover->timer = XG_RandomInt(mover->mininterval, mover->maxinterval);
+        mover->timer = XG_RandomInt(mover->minInterval, mover->maxInterval);
         XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling,
-                       mover->movesound);
+                       mover->moveSound);
     }
 
     // Are we waiting?
@@ -509,7 +520,7 @@ void XS_PlaneMover(xgplanemover_t *mover)
     // Should we update origheight?
     if(setorig)
     {
-        xsec->planes[mover->ceiling? PLN_CEILING:PLN_FLOOR].origheight =
+        xsec->planes[mover->ceiling? PLN_CEILING:PLN_FLOOR].origHeight =
             P_GetFloatp(mover->sector,
                         mover->ceiling? DMU_CEILING_HEIGHT:DMU_FLOOR_HEIGHT);
     }
@@ -525,7 +536,7 @@ void XS_PlaneMover(xgplanemover_t *mover)
         // Should we update origheight?
         if(setorig)
         {
-            xsec->planes[(!mover->ceiling)? PLN_CEILING:PLN_FLOOR].origheight =
+            xsec->planes[(!mover->ceiling)? PLN_CEILING:PLN_FLOOR].origHeight =
                 P_GetFloatp(mover->sector,
                             (!mover->ceiling)? DMU_CEILING_HEIGHT:DMU_FLOOR_HEIGHT);
         }
@@ -540,26 +551,26 @@ void XS_PlaneMover(xgplanemover_t *mover)
         XS_MoverStopped(mover, true);
 
         // The move is done. Do end stuff.
-        if(mover->setflat > 0)
+        if(mover->setFlat > 0)
         {
             XS_ChangePlaneTexture(mover->sector, mover->ceiling,
-                                  mover->setflat, NULL);
+                                  mover->setFlat, NULL);
         }
 
-        if(mover->setsector >= 0)
+        if(mover->setSectorType >= 0)
         {
-            XS_SetSectorType(mover->sector, mover->setsector);
+            XS_SetSectorType(mover->sector, mover->setSectorType);
         }
 
         // Play sound?
         XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling,
-                       mover->endsound);
+                       mover->endSound);
     }
     else if(res == crushed)
     {
         if(mover->flags & PMF_CRUSH)
         {   // We're crushing things.
-            mover->speed = mover->crushspeed;
+            mover->speed = mover->crushSpeed;
         }
         else
         {
@@ -592,7 +603,7 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
     thinker_t  *th;
     xgplanemover_t *mover;
 
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
         if(th->function == XS_PlaneMover)
         {
             mover = (xgplanemover_t *) th;
@@ -939,7 +950,7 @@ sector_t *XS_FindActTagged(int tag)
         xsec = P_ToXSector(sec);
         if(xsec->xg)
         {
-            if(xsec->xg->info.act_tag == tag)
+            if(xsec->xg->info.actTag == tag)
             {
                 if(xgDev)
                 {
@@ -1054,13 +1065,13 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref,
             XG_Dev("  ACT LINE IS NOT AN XG LINE!");
             return false;
         }
-        if(!xline->xg->info.act_tag)
+        if(!xline->xg->info.actTag)
         {
             XG_Dev("  ACT LINE DOES NOT HAVE AN ACT TAG!");
             return false;
         }
 
-        iter = XS_FindActTagged(xline->xg->info.act_tag);
+        iter = XS_FindActTagged(xline->xg->info.actTag);
         if(!iter)
             return false;
         break;
@@ -1400,24 +1411,24 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
     mover->destination = FIX2FLT(temp) + info->fparm[2];
     }
     mover->speed = info->fparm[0];
-    mover->crushspeed = info->fparm[1];
-    mover->mininterval = FLT2TIC(info->fparm[3]);
-    mover->maxinterval = FLT2TIC(info->fparm[4]);
+    mover->crushSpeed = info->fparm[1];
+    mover->minInterval = FLT2TIC(info->fparm[3]);
+    mover->maxInterval = FLT2TIC(info->fparm[4]);
     mover->flags = info->iparm[3];
-    mover->endsound = playsound ? info->iparm[5] : 0;
-    mover->movesound = playsound ? info->iparm[6] : 0;
+    mover->endSound = playsound ? info->iparm[5] : 0;
+    mover->moveSound = playsound ? info->iparm[6] : 0;
 
     // Change texture at end?
     if(info->iparm[9] == SPREF_NONE || info->iparm[9] == SPREF_SPECIAL)
-        mover->setflat = info->iparm[10];
+        mover->setFlat = info->iparm[10];
     else
     {
-        if(!XS_GetPlane(line, sector, info->iparm[9], NULL, 0, &mover->setflat, 0))
+        if(!XS_GetPlane(line, sector, info->iparm[9], NULL, 0, &mover->setFlat, 0))
             XG_Dev("  Couldn't find suitable texture to set when move ends!");
     }
 
     // Init timer.
-    mover->timer = XG_RandomInt(mover->mininterval, mover->maxinterval);
+    mover->timer = XG_RandomInt(mover->minInterval, mover->maxInterval);
 
     // Do we need to wait before starting the move?
     if(xline->xg->fdata > 0)
@@ -1476,16 +1487,16 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
            (line, info->iparm[13], info->iparm[14], 0, &st, false, 0,
             XSTrav_HighestSectorType))
         {   // OK, found one or more.
-            mover->setsector = st;
+            mover->setSectorType = st;
         }
         else
         {
             XG_Dev("  SECTOR TYPE WON'T BE CHANGED AT END (nothing referenced)");
-            mover->setsector = -1;
+            mover->setSectorType = -1;
         }
     }
     else
-        mover->setsector = -1;
+        mover->setSectorType = -1;
 
     return true; // Keep looking...
 }
@@ -1524,14 +1535,14 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
     if(mover->speed <= 0)
         mover->speed = 1 / 1000;
 
-    mover->mininterval = FLT2TIC(info->fparm[4]);
-    mover->maxinterval = FLT2TIC(info->fparm[5]);
+    mover->minInterval = FLT2TIC(info->fparm[4]);
+    mover->maxInterval = FLT2TIC(info->fparm[5]);
 
     if(info->iparm[8])
         mover->flags = PMF_CRUSH;
 
-    mover->endsound = info->iparm[6];
-    mover->movesound = info->iparm[7];
+    mover->endSound = info->iparm[6];
+    mover->moveSound = info->iparm[7];
 
     // Wait before starting?
     waittime = info->fparm[2] + info->fparm[3] * stepcount;
@@ -1540,11 +1551,11 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
         mover->timer = FLT2TIC(waittime);
         mover->flags |= PMF_WAIT;
         // Play start sound when waiting ends.
-        mover->startsound = info->iparm[5];
+        mover->startSound = info->iparm[5];
     }
     else
     {
-        mover->timer = XG_RandomInt(mover->mininterval, mover->maxinterval);
+        mover->timer = XG_RandomInt(mover->minInterval, mover->maxInterval);
         // Play step start sound immediately.
         XS_SectorSound(sector, SORG_FLOOR + ceiling, info->iparm[5]);
     }
@@ -1777,7 +1788,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling,
             break;
 
         case LIGHTREF_ORIGINAL:
-            uselevel = P_ToXSector(sector)->origlight;
+            uselevel = P_ToXSector(sector)->origLight;
             break;
 
         case LIGHTREF_HIGHEST:
@@ -1851,7 +1862,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling,
             break;
             }
         case LIGHTREF_ORIGINAL:
-            memcpy(usergb, P_ToXSector(sector)->origrgb, sizeof(float) * 3);
+            memcpy(usergb, P_ToXSector(sector)->origRGB, sizeof(float) * 3);
             break;
 
         default:
@@ -1897,8 +1908,8 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling,
 
     case SPREF_LINE_ACT_TAGGED_FLOOR:
     case SPREF_LINE_ACT_TAGGED_CEILING:
-        if(info->act_tag >= 0);
-            refdata = info->act_tag;
+        if(info->actTag >= 0);
+            refdata = info->actTag;
         break;
 
     default:
@@ -1950,7 +1961,7 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         return false;
     }
 
-    for(mo = P_GetPtrp(sector, DMT_MOBJS); mo; mo = mo->snext)
+    for(mo = P_GetPtrp(sector, DMT_MOBJS); mo; mo = mo->sNext)
     {
         thinker_t *th = (thinker_t*) mo;
 
@@ -1999,26 +2010,26 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
                 {
                     thing->pos[VZ] = thceilz - thing->height;
                 }
-                thing->dplayer->viewZ =
-                    thing->pos[VZ] + thing->dplayer->viewheight;
+                thing->dPlayer->viewZ =
+                    thing->pos[VZ] + thing->dPlayer->viewHeight;
             }
             else
             {
                 thing->pos[VZ] = thfloorz;
-                thing->dplayer->viewZ =
-                    thing->pos[VZ] + thing->dplayer->viewheight;
-                thing->dplayer->lookdir = 0; /* $unifiedangles */
+                thing->dPlayer->viewZ =
+                    thing->pos[VZ] + thing->dPlayer->viewHeight;
+                thing->dPlayer->lookDir = 0; /* $unifiedangles */
             }
 #if __JHERETIC__
             if(!thing->player->powers[PT_WEAPONLEVEL2])
 #endif
             {
                 // Freeze player for about .5 sec
-                thing->reactiontime = 18;
+                thing->reactionTime = 18;
             }
 
-            //thing->dplayer->clAngle = thing->angle; /* $unifiedangles */
-            thing->dplayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+            //thing->dPlayer->clAngle = thing->angle; /* $unifiedangles */
+            thing->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
         }
 #if __JHERETIC__
         else if(thing->flags & MF_MISSILE)
@@ -2075,11 +2086,11 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
                            DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
                P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
             {
-                thing->floorclip = 10;
+                thing->floorClip = 10;
             }
             else
             {
-                thing->floorclip = 0;
+                thing->floorClip = 0;
             }
         }
 
@@ -2201,7 +2212,7 @@ int XF_FindNextPos(function_t *fn, int pos, boolean poke, sector_t *sec)
             if(poke)
             {
                 fn->timer = 0;
-                fn->maxtimer = c;
+                fn->maxTimer = c;
             }
             continue;
         }
@@ -2213,7 +2224,7 @@ int XF_FindNextPos(function_t *fn, int pos, boolean poke, sector_t *sec)
             if(poke)
             {
                 fn->timer = 0;
-                fn->maxtimer = XG_RandomInt(0, c);
+                fn->maxTimer = XG_RandomInt(0, c);
             }
             continue;
         }
@@ -2264,17 +2275,17 @@ void XF_Ticker(function_t *fn, sector_t *sec)
     float       inter;
 
     // Store the previous value of the function.
-    fn->oldvalue = fn->value;
+    fn->oldValue = fn->value;
 
     // Is there a function?
     if(!ISFUNC(fn) || fn->link)
         return;
 
     // Increment time.
-    if(fn->timer++ >= fn->maxtimer)
+    if(fn->timer++ >= fn->maxTimer)
     {
         fn->timer = 0;
-        fn->maxtimer = XG_RandomInt(fn->mininterval, fn->maxinterval);
+        fn->maxTimer = XG_RandomInt(fn->minInterval, fn->maxInterval);
 
         // Advance to next pos.
         fn->pos = XF_FindNextPos(fn, fn->pos, true, sec);
@@ -2310,8 +2321,8 @@ void XF_Ticker(function_t *fn, sector_t *sec)
         next = XF_FindNextPos(fn, fn->pos, false, sec);
         if(islower(fn->func[next]) || fn->func[next] == '/')
         {
-            if(fn->maxtimer)
-                inter = fn->timer / (float) fn->maxtimer;
+            if(fn->maxTimer)
+                inter = fn->timer / (float) fn->maxTimer;
         }
 
         fn->value = (1 - inter) * XF_GetValue(fn, fn->pos) +
@@ -2423,7 +2434,7 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
             return; // Not operating at this time.
 
         // Time to try the chain. Reset timer.
-        xg->chain_timer[ch] =
+        xg->chainTimer[ch] =
             XG_RandomInt(FLT2TIC(info->interval[ch][0]),
                          FLT2TIC(info->interval[ch][1]));
     }
@@ -2500,7 +2511,7 @@ int XSTrav_SectorChain(sector_t *sec, mobj_t *mo, int ch)
 
     xg = P_ToXSector(sec)->xg;
     info = &xg->info;
-    flags = info->chain_flags[ch];
+    flags = info->chainFlags[ch];
 
     // Check mobj type.
     if(flags & (SCEF_ANY_A | SCEF_ANY_D | SCEF_TICKER_A | SCEF_TICKER_D))
@@ -2566,7 +2577,7 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
         return true; // Wind does not affect cameras.
 
     info = &(P_ToXSector(sec)->xg->info);
-    ang = PI * info->wind_angle / 180;
+    ang = PI * info->windAngle / 180;
 
     if(IS_CLIENT)
     {
@@ -2590,11 +2601,11 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
             mo->pos[VZ] + mo->height >= thceilz))
         {
             // Apply vertical wind.
-            mo->mom[MZ] += info->vertical_wind;
+            mo->mom[MZ] += info->verticalWind;
 
             // Horizontal wind.
-            mo->mom[MX] += cos(ang) * info->wind_speed;
-            mo->mom[MY] += sin(ang) * info->wind_speed;
+            mo->mom[MX] += cos(ang) * info->windSpeed;
+            mo->mom[MY] += sin(ang) * info->windSpeed;
         }
     }
 
@@ -2611,11 +2622,11 @@ int XS_TraverseMobjs(sector_t *sec, int data,
     thinker_t  *th;
 
     // Only traverse sectorlinked things.
-    //for(mo = sec->thinglist; mo; mo = mo->snext)
+    //for(mo = sec->thinglist; mo; mo = mo->sNext)
     //{
 
-    th = thinkercap.next;
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    th = thinkerCap.next;
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         // Not a mobj.
         if(th->function != P_MobjThinker)
@@ -2706,76 +2717,76 @@ Con_Message("XS_Think: Index (%i) not xsector!\n", idx);
 
         // Decrement chain timers.
         for(i = 0; i < XSCE_NUM_CHAINS; ++i)
-            xg->chain_timer[i]--;
+            xg->chainTimer[i]--;
 
         // Floor chain. Check any mobjs that are touching the floor of the
         // sector.
-        if(info->chain[XSCE_FLOOR] && xg->chain_timer[XSCE_FLOOR] <= 0)
+        if(info->chain[XSCE_FLOOR] && xg->chainTimer[XSCE_FLOOR] <= 0)
         {
             XS_TraverseMobjs(sector, XSCE_FLOOR, XSTrav_SectorChain);
         }
 
         // Ceiling chain. Check any mobjs that are touching the ceiling.
-        if(info->chain[XSCE_CEILING] && xg->chain_timer[XSCE_CEILING] <= 0)
+        if(info->chain[XSCE_CEILING] && xg->chainTimer[XSCE_CEILING] <= 0)
         {
             XS_TraverseMobjs(sector, XSCE_CEILING, XSTrav_SectorChain);
         }
 
         // Inside chain. Check any sectorlinked mobjs.
-        if(info->chain[XSCE_INSIDE] && xg->chain_timer[XSCE_INSIDE] <= 0)
+        if(info->chain[XSCE_INSIDE] && xg->chainTimer[XSCE_INSIDE] <= 0)
         {
             XS_TraverseMobjs(sector, XSCE_INSIDE, XSTrav_SectorChain);
         }
 
         // Ticker chain. Send an activate event if TICKER_D flag is not set.
-        if(info->chain[XSCE_TICKER] && xg->chain_timer[XSCE_TICKER] <= 0)
+        if(info->chain[XSCE_TICKER] && xg->chainTimer[XSCE_TICKER] <= 0)
         {
             XS_DoChain(sector, XSCE_TICKER,
-                       !(info->chain_flags[XSCE_TICKER] & SCEF_TICKER_D),
+                       !(info->chainFlags[XSCE_TICKER] & SCEF_TICKER_D),
                        &dummything);
         }
 
         // Play ambient sounds.
-        if(xg->info.ambient_sound)
+        if(xg->info.ambientSound)
         {
             if(xg->timer-- < 0)
             {
                 xg->timer =
-                    XG_RandomInt(FLT2TIC(xg->info.sound_interval[0]),
-                                 FLT2TIC(xg->info.sound_interval[1]));
-                S_SectorSound(sector, SORG_CENTER, xg->info.ambient_sound);
+                    XG_RandomInt(FLT2TIC(xg->info.soundInterval[0]),
+                                 FLT2TIC(xg->info.soundInterval[1]));
+                S_SectorSound(sector, SORG_CENTER, xg->info.ambientSound);
             }
         }
     }
 
     // Floor Texture movement
-    if(xg->info.texmove_angle[0] != 0)
+    if(xg->info.texMoveAngle[0] != 0)
     {
-        ang = PI * xg->info.texmove_angle[0] / 180;
+        ang = PI * xg->info.texMoveAngle[0] / 180;
         // Get current values
         P_GetFloatpv(sector, DMU_FLOOR_MATERIAL_OFFSET_XY, floorOffset);
         // Apply the offsets
-        floorOffset[VX] -= cos(ang) * xg->info.texmove_speed[0];
-        floorOffset[VY] -= sin(ang) * xg->info.texmove_speed[0];
+        floorOffset[VX] -= cos(ang) * xg->info.texMoveSpeed[0];
+        floorOffset[VY] -= sin(ang) * xg->info.texMoveSpeed[0];
         // Set the results
         P_SetFloatpv(sector, DMU_FLOOR_MATERIAL_OFFSET_XY, floorOffset);
     }
 
     // Ceiling Texture movement
-    if(xg->info.texmove_angle[1] != 0)
+    if(xg->info.texMoveAngle[1] != 0)
     {
-        ang = PI * xg->info.texmove_angle[1] / 180;
+        ang = PI * xg->info.texMoveAngle[1] / 180;
         // Get current values
         P_GetFloatpv(sector, DMU_CEILING_MATERIAL_OFFSET_XY, ceilOffset);
         // Apply the offsets
-        ceilOffset[VX] -= cos(ang) * xg->info.texmove_speed[1];
-        ceilOffset[VY] -= sin(ang) * xg->info.texmove_speed[1];
+        ceilOffset[VX] -= cos(ang) * xg->info.texMoveSpeed[1];
+        ceilOffset[VY] -= sin(ang) * xg->info.texMoveSpeed[1];
         // Set the results
         P_SetFloatpv(sector, DMU_CEILING_MATERIAL_OFFSET_XY, ceilOffset);
     }
 
     // Wind for all sectorlinked mobjs.
-    if(xg->info.wind_speed || xg->info.vertical_wind)
+    if(xg->info.windSpeed || xg->info.verticalWind)
     {
         XS_TraverseMobjs(sector, 0, XSTrav_Wind);
     }
@@ -3026,7 +3037,7 @@ DEFCC(CCmdMovePlane)
     mover->speed = speed;
     if(isCrusher)
     {
-        mover->crushspeed = speed * .5;  // Crush at half speed.
+        mover->crushSpeed = speed * .5;  // Crush at half speed.
         mover->flags |= PMF_CRUSH;
     }
     if(isBoth)

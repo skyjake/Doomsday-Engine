@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
@@ -39,7 +39,7 @@
  */
 
 /**
- *  p_floors.c: Moving floors.
+ * p_floors.c: Moving floors.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -287,7 +287,7 @@ void T_MoveFloor(floormove_t *floor)
         floor->resetDelayCount--;
         if(!floor->resetDelayCount)
         {
-            floor->floordestheight = floor->resetHeight;
+            floor->floorDestHeight = floor->resetHeight;
             floor->direction = -floor->direction;
             floor->resetDelay = 0;
             floor->delayCount = 0;
@@ -308,7 +308,7 @@ void T_MoveFloor(floormove_t *floor)
 #endif
 
     res =
-        T_MovePlane(floor->sector, floor->speed, floor->floordestheight,
+        T_MovePlane(floor->sector, floor->speed, floor->floorDestHeight,
                     floor->crush, 0, floor->direction);
 
 #if __JHEXEN__
@@ -368,7 +368,7 @@ void T_MoveFloor(floormove_t *floor)
             return;
         }
 #endif
-        xsec->specialdata = NULL;
+        xsec->specialData = NULL;
 #if __JHEXEN__
         if(floor->textureChange)
         {
@@ -382,7 +382,7 @@ void T_MoveFloor(floormove_t *floor)
             switch(floor->type)
             {
             case donutRaise:
-                xsec->special = floor->newspecial;
+                xsec->special = floor->newSpecial;
 
                 P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL,
                           floor->texture);
@@ -397,7 +397,7 @@ void T_MoveFloor(floormove_t *floor)
             switch(floor->type)
             {
             case lowerAndChange:
-                xsec->special = floor->newspecial;
+                xsec->special = floor->newSpecial;
 
                 P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL,
                           floor->texture);
@@ -461,7 +461,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
     {
         xsec = P_ToXSector(sec);
         // If already moving, keep going...
-        if(xsec->specialdata)
+        if(xsec->specialData)
             continue;
 
         // New floor thinker.
@@ -471,7 +471,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         memset(floor, 0, sizeof(*floor));
 #endif
         P_AddThinker(&floor->thinker);
-        xsec->specialdata = floor;
+        xsec->specialData = floor;
         floor->thinker.function = T_MoveFloor;
         floor->type = floortype;
         floor->crush = false;
@@ -498,7 +498,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->speed *= 4;
 # endif
 #endif
-            floor->floordestheight = P_FindHighestFloorSurrounding(sec);
+            floor->floorDestHeight = P_FindHighestFloorSurrounding(sec);
             break;
 #if __JHEXEN__
         case FLEV_LOWERFLOORTOLOWEST:
@@ -513,13 +513,13 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->speed *= 4;
 # endif
 #endif
-            floor->floordestheight = P_FindLowestFloorSurrounding(sec);
+            floor->floorDestHeight = P_FindLowestFloorSurrounding(sec);
             break;
 #if __JHEXEN__
         case FLEV_LOWERFLOORBYVALUE:
             floor->direction = -1;
             floor->sector = sec;
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - (float) args[2];
             break;
 
@@ -527,7 +527,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         case FLEV_LOWERBYVALUETIMES8:
             floor->direction = -1;
             floor->sector = sec;
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - (float) args[2] * 8;
             break;
 #endif
@@ -536,13 +536,13 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->direction = -1;
             floor->sector = sec;
             floor->speed = FLOORSPEED * 4;
-            floor->floordestheight = P_FindHighestFloorSurrounding(sec);
+            floor->floorDestHeight = P_FindHighestFloorSurrounding(sec);
 # if __JHERETIC__
-            floor->floordestheight += 8;
+            floor->floorDestHeight += 8;
 # else
-            if(floor->floordestheight != P_GetFloatp(sec,
+            if(floor->floorDestHeight != P_GetFloatp(sec,
                                                      DMU_FLOOR_HEIGHT))
-                floor->floordestheight += 8;
+                floor->floorDestHeight += 8;
 # endif
             break;
 #endif
@@ -551,10 +551,10 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->direction = -1;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
-            floor->floordestheight = P_FindHighestFloorSurrounding(sec);
-            if(floor->floordestheight != P_GetFloatp(sec,
+            floor->floorDestHeight = P_FindHighestFloorSurrounding(sec);
+            if(floor->floorDestHeight != P_GetFloatp(sec,
                                                      DMU_FLOOR_HEIGHT))
-                floor->floordestheight += 8;
+                floor->floorDestHeight += 8;
             break;
 
         case customFloor: // d64tc
@@ -563,18 +563,18 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                 floor->direction = -1;
                 floor->sector = sec;
                 floor->speed = FLOORSPEED * bitmipL;
-                floor->floordestheight = P_FindHighestFloorSurrounding(sec);
+                floor->floorDestHeight = P_FindHighestFloorSurrounding(sec);
 
-                if(floor->floordestheight != P_GetFloatp(sec,
+                if(floor->floorDestHeight != P_GetFloatp(sec,
                                                          DMU_FLOOR_HEIGHT))
-                    floor->floordestheight += bitmipR;
+                    floor->floorDestHeight += bitmipR;
             }
             else
             {
                 floor->direction = 1;
                 floor->sector = sec;
                 floor->speed = FLOORSPEED * bitmipL;
-                floor->floordestheight =
+                floor->floorDestHeight =
                     P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT) - bitmipR;
             }
             break;
@@ -583,7 +583,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->direction = 1;
             floor->sector = sec;
             floor->speed = FLOORSPEED * 16;
-            floor->floordestheight = P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT);
+            floor->floorDestHeight = P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT);
 
             //// \kludge fake the engine into accepting this special
             P_ToXSector(sec)->special = bitmipR;
@@ -609,14 +609,14 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 # endif
 #endif
 #if __JHEXEN__
-            floor->floordestheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT)-8;
+            floor->floorDestHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT)-8;
 #else
-            floor->floordestheight = P_FindLowestCeilingSurrounding(sec);
+            floor->floorDestHeight = P_FindLowestCeilingSurrounding(sec);
 
-            if(floor->floordestheight > P_GetFloatp(sec, DMU_CEILING_HEIGHT))
-                floor->floordestheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            if(floor->floorDestHeight > P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+                floor->floorDestHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
 
-            floor->floordestheight -= 8 * (floortype == raiseFloorCrush);
+            floor->floorDestHeight -= 8 * (floortype == raiseFloorCrush);
 #endif
             break;
 
@@ -633,13 +633,13 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->speed *= 4;
 # endif
 #endif
-            floor->floordestheight = P_FindLowestCeilingSurrounding(sec);
+            floor->floorDestHeight = P_FindLowestCeilingSurrounding(sec);
 
-            if(floor->floordestheight > P_GetFloatp(sec, DMU_CEILING_HEIGHT))
-                floor->floordestheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            if(floor->floorDestHeight > P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+                floor->floorDestHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
 
 #if !__JHEXEN__
-            floor->floordestheight -= 8 * (floortype == raiseFloorCrush);
+            floor->floorDestHeight -= 8 * (floortype == raiseFloorCrush);
 #endif
             break;
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
@@ -650,7 +650,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 # if __DOOM64TC__
             floor->speed *= 2;
 # endif
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_FindNextHighestFloor(sec, P_GetFloatp(sec,
                                                         DMU_FLOOR_HEIGHT));
             break;
@@ -668,7 +668,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->speed *= 8;
 # endif
 #endif
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_FindNextHighestFloor(sec, P_GetFloatp(sec,
                                                         DMU_FLOOR_HEIGHT));
             break;
@@ -676,7 +676,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         case FLEV_RAISEFLOORBYVALUE:
             floor->direction = 1;
             floor->sector = sec;
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + (float) args[2];
             break;
 
@@ -684,19 +684,19 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         case FLEV_RAISEBYVALUETIMES8:
             floor->direction = 1;
             floor->sector = sec;
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + (float) args[2] * 8;
             break;
 
         case FLEV_MOVETOVALUETIMES8:
             floor->sector = sec;
-            floor->floordestheight = (float) args[2] * 8;
+            floor->floorDestHeight = (float) args[2] * 8;
             if(args[3])
-                floor->floordestheight = -floor->floordestheight;
+                floor->floorDestHeight = -floor->floorDestHeight;
 
-            if(floor->floordestheight > P_GetFloatp(sec, DMU_FLOOR_HEIGHT))
+            if(floor->floorDestHeight > P_GetFloatp(sec, DMU_FLOOR_HEIGHT))
                 floor->direction = 1;
-            else if(floor->floordestheight < P_GetFloatp(sec, DMU_FLOOR_HEIGHT))
+            else if(floor->floorDestHeight < P_GetFloatp(sec, DMU_FLOOR_HEIGHT))
                 floor->direction = -1;
             else
                 rtn = 0; // Already at lowest position.
@@ -711,7 +711,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 # if __DOOM64TC__
             floor->speed *= 8;
 # endif
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT) + 24;
             break;
 #endif
@@ -720,7 +720,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->direction = 1;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT) + 512;
             break;
 #endif
@@ -732,7 +732,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 # if __DOOM64TC__
             floor->speed *= 8;
 # endif
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT) + 24;
 
             frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
@@ -747,7 +747,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->direction = 1;
             floor->sector = sec;
             floor->speed = FLOORSPEED * 8;
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT) + 32;
             break;
 # endif
@@ -785,7 +785,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                     }
                 }
             }
-            floor->floordestheight =
+            floor->floorDestHeight =
                 P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT) +
                     (float) minsize;
             }
@@ -795,7 +795,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->direction = -1;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
-            floor->floordestheight = P_FindLowestFloorSurrounding(sec);
+            floor->floorDestHeight = P_FindLowestFloorSurrounding(sec);
             floor->texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
 
             for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
@@ -809,11 +809,11 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                     {
                         sec = P_GetPtrp(ln, DMU_BACK_SECTOR);
                         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
-                           floor->floordestheight)
+                           floor->floorDestHeight)
                         {
                             floor->texture =
                                 P_GetIntp(sec,DMU_FLOOR_MATERIAL);
-                            floor->newspecial =
+                            floor->newSpecial =
                                 P_ToXSector(sec)->special;
                             break;
                         }
@@ -822,11 +822,11 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                     {
                         sec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
                         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
-                           floor->floordestheight)
+                           floor->floorDestHeight)
                         {
                             floor->texture =
                                 P_GetIntp(sec, DMU_FLOOR_MATERIAL);
-                            floor->newspecial =
+                            floor->newSpecial =
                                 P_ToXSector(sec)->special;
                             break;
                         }
@@ -861,7 +861,7 @@ int EV_FloorCrushStop(line_t *line, byte *args)
     boolean     rtn;
 
     rtn = 0;
-    for(think = thinkercap.next; think != &thinkercap && think;
+    for(think = thinkerCap.next; think != &thinkerCap && think;
         think = think->next)
     {
         if(think->function != T_MoveFloor)
@@ -873,7 +873,7 @@ int EV_FloorCrushStop(line_t *line, byte *args)
 
         // Completely remove the crushing floor
         SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
-        P_ToXSector(floor->sector)->specialdata = NULL;
+        P_ToXSector(floor->sector)->specialData = NULL;
         P_TagFinished(P_ToXSector(floor->sector)->tag);
         P_RemoveThinker(&floor->thinker);
         rtn = 1;
@@ -913,7 +913,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
         floor = EV_DoFloor(line, args, FLEV_RAISEFLOORBYVALUE);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_ToXSector(sec)->specialdata = NULL;
+            P_ToXSector(sec)->specialData = NULL;
         }
         ceiling = EV_DoCeiling(line, args, raiseByValue);
     }
@@ -922,7 +922,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
         floor = EV_DoFloor(line, args, FLEV_LOWERFLOORBYVALUE);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_ToXSector(sec)->specialdata = NULL;
+            P_ToXSector(sec)->specialData = NULL;
         }
         ceiling = EV_DoCeiling(line, args, lowerByValue);
     }

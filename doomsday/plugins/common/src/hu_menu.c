@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -22,6 +22,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -1278,7 +1289,7 @@ void M_UnloadData(void)
         return;
 
     if(menuFogData.texture)
-        gl.DeleteTextures(1, (DGLuint*) &menuFogData.texture);
+        DGL_DeleteTextures(1, (DGLuint*) &menuFogData.texture);
     menuFogData.texture = 0;
 }
 
@@ -1678,9 +1689,9 @@ static void setMenuMatrix(float time)
     boolean         rendMenuEffect = true;
 
     // Use a plain 320x200 projection.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, 320, 200, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, 320, 200, -1, 1);
 
     // If there is a menu background raw lump, draw it instead of the
     // background effect.
@@ -1690,7 +1701,7 @@ static void setMenuMatrix(float time)
 
         if(lump != -1)
         {
-            gl.Color4f(1, 1, 1, menuFogData.alpha);
+            DGL_Color4f(1, 1, 1, menuFogData.alpha);
             GL_DrawPatch_CS(0, 0, lump);
             rendMenuEffect = false;
         }
@@ -1715,23 +1726,23 @@ static void setMenuMatrix(float time)
     if(allowScaling)
     {
         // Scale by the menuScale.
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.Translatef(160, 100, 0);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(160, 100, 0);
 
         if(cfg.menuSlam){
             if(time > 1 && time <= 2)
             {
                 time = 2 - time;
-                gl.Scalef(cfg.menuScale * (.9f + time * .1f),
+                DGL_Scalef(cfg.menuScale * (.9f + time * .1f),
                       cfg.menuScale * (.9f + time * .1f), 1);
             } else {
-                gl.Scalef(cfg.menuScale * (2 - time),
+                DGL_Scalef(cfg.menuScale * (2 - time),
                       cfg.menuScale * (2 - time), 1);
             }
         } else
-            gl.Scalef(cfg.menuScale, cfg.menuScale, 1);
+            DGL_Scalef(cfg.menuScale, cfg.menuScale, 1);
 
-        gl.Translatef(-160, -100, 0);
+        DGL_Translatef(-160, -100, 0);
     }
 }
 
@@ -1806,10 +1817,10 @@ void Hu_MenuDrawer(void)
     }
 
     // These are popped in the end of the function.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
     // Setup matrix.
     if(messageToPrint || ( menuActive || (menuAlpha > 0 || menuFogData.alpha > 0)) )
@@ -1935,20 +1946,20 @@ void Hu_MenuDrawer(void)
                 offset[VY] -= (float) height / 2;
                 offset[VY] += MENUCURSOR_OFFSET_Y * scale;
 
-                GL_SetPatch(cursorst[whichSkull].lump);
-                gl.MatrixMode(DGL_MODELVIEW);
-                gl.PushMatrix();
+                GL_SetPatch(cursorst[whichSkull].lump, DGL_CLAMP, DGL_CLAMP);
+                DGL_MatrixMode(DGL_MODELVIEW);
+                DGL_PushMatrix();
 
-                gl.Translatef(offset[VX], offset[VY], 0);
-                gl.Scalef(1, 1.0f / 1.2f, 1);
+                DGL_Translatef(offset[VX], offset[VY], 0);
+                DGL_Scalef(1, 1.0f / 1.2f, 1);
                 if(skull_angle)
-                    gl.Rotatef(skull_angle, 0, 0, 1);
-                gl.Scalef(1, 1.2f, 1);
+                    DGL_Rotatef(skull_angle, 0, 0, 1);
+                DGL_Scalef(1, 1.2f, 1);
 
                 GL_DrawRect(-width/2.f, -height/2.f, width, height, 1, 1, 1, menuAlpha);
 
-                gl.MatrixMode(DGL_MODELVIEW);
-                gl.PopMatrix();
+                DGL_MatrixMode(DGL_MODELVIEW);
+                DGL_PopMatrix();
             }
         }
 
@@ -1961,11 +1972,11 @@ void Hu_MenuDrawer(void)
   end_draw_menu:
 
     // Restore original matrices.
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }
 
 /**
@@ -2518,7 +2529,7 @@ void M_DrawMainMenu(void)
 
     frame = (menuTime / 5) % 7;
 
-    gl.Color4f( 1, 1, 1, menuAlpha);
+    DGL_Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(88, 0, W_GetNumForName("M_HTIC"));
     GL_DrawPatch_CS(37, 80, SkullBaseLump + (frame + 2) % 7);
     GL_DrawPatch_CS(278, 80, SkullBaseLump + frame);
@@ -2527,7 +2538,7 @@ void M_DrawMainMenu(void)
     WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, W_GetNumForName("M_HTIC"),
                  NULL, false, ALIGN_LEFT);
 
-    gl.Color4f( 1, 1, 1, menuAlpha);
+    DGL_Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(40, 10, SkullBaseLump + (17 - frame));
     GL_DrawPatch_CS(232, 10, SkullBaseLump + frame);
 #elif __JDOOM__
@@ -2578,7 +2589,7 @@ void M_DrawClassMenu(void)
 
     class = (playerclass_t) currentMenu->items[itemOn].option;
 
-    gl.Color4f( 1, 1, 1, menuAlpha);
+    DGL_Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(174, 8, W_GetNumForName(boxLumpName[class]));
     GL_DrawPatch_CS(174 + 24, 8 + 12,
                     W_GetNumForName(walkLumpName[class]) +
@@ -2719,15 +2730,15 @@ void M_DrawSave(void)
 void M_DrawSaveLoadBorder(int x, int y)
 {
 #ifndef __JDOOM__
-    gl.Color4f( 1, 1, 1, menuAlpha);
+    DGL_Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(x - 8, y - 4, W_GetNumForName("M_FSLOT"));
 #else
-    gl.Color4f( 1, 1, 1, menuAlpha);
+    DGL_Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(x - 8, y + 8, W_GetNumForName("M_LSLEFT"));
     GL_DrawPatch_CS(x + 8 * 24, y + 8, W_GetNumForName("M_LSRGHT"));
 
-    GL_SetPatch(W_GetNumForName("M_LSCNTR"));
-    gl.Color4f( 1, 1, 1, menuAlpha);
+    GL_SetPatch(W_GetNumForName("M_LSCNTR"), DGL_REPEAT, DGL_REPEAT);
+    DGL_Color4f( 1, 1, 1, menuAlpha);
     GL_DrawRectTiled(x - 3, y - 3, 24 * 8, 14, 8, 14);
 #endif
 }
@@ -2774,7 +2785,7 @@ static void M_QuickSave(void)
 {
     player_t   *player = &players[consoleplayer];
 
-    if(player->playerstate == PST_DEAD || G_GetGameState() != GS_LEVEL ||
+    if(player->playerState == PST_DEAD || G_GetGameState() != GS_LEVEL ||
        Get(DD_PLAYBACK))
     {
         M_StartMessage(SAVEDEAD, NULL, false);
@@ -3154,7 +3165,7 @@ void M_DrawHUDMenu(void)
     M_DrawTitle("hud options", 4);
 
     // Draw the page arrows.
-    gl.Color4f( 1, 1, 1, menuAlpha);
+    DGL_Color4f( 1, 1, 1, menuAlpha);
     token = (!menu->firstItem || menuTime & 8) ? "invgeml2" : "invgeml1";
     GL_DrawPatch_CS(menu->x -20, menu->y - 16, W_GetNumForName(token));
     token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
@@ -3565,7 +3576,7 @@ void M_SaveGame(int option, void *data)
 {
     player_t *player = &players[consoleplayer];
 
-    if(player->playerstate == PST_DEAD || G_GetGameState() != GS_LEVEL ||
+    if(player->playerState == PST_DEAD || G_GetGameState() != GS_LEVEL ||
        Get(DD_PLAYBACK))
     {
         M_StartMessage(SAVEDEAD, NULL, false);

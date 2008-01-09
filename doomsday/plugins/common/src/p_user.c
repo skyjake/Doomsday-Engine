@@ -3,7 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  *
  *\author Copyright © 2000-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © Raven Software, Corp.
  *\author Copyright © 1993-1996 by id Software, Inc.
  */
@@ -250,14 +250,14 @@ void P_Thrust(player_t *player, angle_t angle, float move)
     sector_t   *sector = P_GetPtrp(plrmo->subsector, DMU_SECTOR);
 #endif
 
-    if(player->powers[PT_FLIGHT] && !(plrmo->pos[VZ] <= plrmo->floorz))
+    if(player->powers[PT_FLIGHT] && !(plrmo->pos[VZ] <= plrmo->floorZ))
     {
         /*float xmul=1, ymul=1;
 
            // How about Quake-flying? -- jk
            if(quakeFly)
            {
-           float ang = LOOKDIR2RAD(player->plr->lookdir);
+           float ang = LOOKDIR2RAD(player->plr->lookDir);
            xmul = ymul = cos(ang);
            mo->mom[MZ] += sin(ang) * move;
            } */
@@ -298,7 +298,7 @@ void P_Thrust(player_t *player, angle_t angle, float move)
 boolean P_IsPlayerOnGround(player_t *player)
 {
     boolean onground =
-        (player->plr->mo->pos[VZ] <= player->plr->mo->floorz);
+        (player->plr->mo->pos[VZ] <= player->plr->mo->floorZ);
 
 #if __JHEXEN__
     if((player->plr->mo->flags2 & MF2_ONMOBJ) && !onground)
@@ -308,9 +308,9 @@ boolean P_IsPlayerOnGround(player_t *player)
         onground = true; //(player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
     }
 #else
-    if(player->plr->mo->onmobj && !onground && !(player->plr->mo->flags2 & MF2_FLY))
+    if(player->plr->mo->onMobj && !onground && !(player->plr->mo->flags2 & MF2_FLY))
     {
-        mobj_t *on = player->plr->mo->onmobj;
+        mobj_t *on = player->plr->mo->onMobj;
 
         onground = (player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
     }
@@ -331,7 +331,7 @@ void P_CheckPlayerJump(player_t *player)
 
     // Check if we are allowed to jump.
     if(cfg.jumpEnabled && power > 0 && P_IsPlayerOnGround(player) &&
-       player->brain.jump && player->jumptics <= 0)
+       player->brain.jump && player->jumpTics <= 0)
     {
         // Jump, then!
 #if __JHEXEN__
@@ -341,7 +341,7 @@ void P_CheckPlayerJump(player_t *player)
 #endif
             player->plr->mo->mom[MZ] = power;
 
-        player->jumptics = PCLASS_INFO(player->class)->jumptics;
+        player->jumpTics = PCLASS_INFO(player->class)->jumpTics;
 
 #if __JHEXEN__
         player->plr->mo->flags2 &= ~MF2_ONMOBJ;
@@ -363,7 +363,7 @@ void P_MovePlayer(player_t *player)
     /* $unifiedangles */
    /*if(IS_SERVER && player != &players[0])
     {
-        if(dp->fixcounter.angles == dp->fixacked.angles)  // all acked?
+        if(dp->fixCounter.angles == dp->fixAcked.angles)  // all acked?
         {
 #ifdef _DEBUG
             VERBOSE2( Con_Message("Server accepts client %i angle from command (ang=%i).\n",
@@ -371,7 +371,7 @@ void P_MovePlayer(player_t *player)
 #endif
             // Accept the client's version of the angles.
             plrmo->angle = cmd->angle << 16;
-            dp->lookdir = cmd->pitch / (float) DDMAXSHORT *110;
+            dp->lookDir = cmd->pitch / (float) DDMAXSHORT *110;
         }
     }*/
 
@@ -387,7 +387,7 @@ void P_MovePlayer(player_t *player)
         static const fixed_t cameraSpeed[2] = {0x19, 0x31};
 
         // Cameramen have a 3D thrusters!
-        P_Thrust3D(player, plrmo->angle, dp->lookdir,
+        P_Thrust3D(player, plrmo->angle, dp->lookDir,
                    brain->forwardMove * cameraSpeed[speed] * 2048,
                    brain->sideMove * cameraSpeed[speed] * 2048);
     }
@@ -395,22 +395,17 @@ void P_MovePlayer(player_t *player)
     {
         // 'Move while in air' hack (server doesn't know about this!!).
         // Movement while in air traditionally disabled.
-        int movemul = (onground || plrmo->flags2 & MF2_FLY) ? pClassInfo->movemul :
-                       (cfg.airborneMovement) ? cfg.airborneMovement * 64 : 0;
+        float           maxMove = FIX2FLT(pClassInfo->maxMove);
+        int             movemul =
+            (onground || plrmo->flags2 & MF2_FLY) ? pClassInfo->moveMul :
+                (cfg.airborneMovement) ? cfg.airborneMovement * 64 : 0;
 
         forwardMove =
-            FIX2FLT(brain->forwardMove * pClassInfo->forwardmove[speed] * turbomul);
-        sideMove =
-            FIX2FLT(brain->sideMove * pClassInfo->sidemove[speed] * turbomul);
+            FIX2FLT(pClassInfo->forwardMove[speed]) * brain->forwardMove;
+        sideMove = FIX2FLT(pClassInfo->sideMove[speed]) * brain->sideMove;
 
-        if(forwardMove > FIX2FLT(pClassInfo->maxmove))
-            forwardMove = FIX2FLT(pClassInfo->maxmove);
-        else if(forwardMove < -FIX2FLT(pClassInfo->maxmove))
-            forwardMove = -FIX2FLT(pClassInfo->maxmove);
-        if(sideMove > FIX2FLT(pClassInfo->maxmove))
-            sideMove = FIX2FLT(pClassInfo->maxmove);
-        else if(sideMove < -FIX2FLT(pClassInfo->maxmove))
-            sideMove = -FIX2FLT(pClassInfo->maxmove);
+        forwardMove *= turbomul;
+        sideMove    *= turbomul;
 
 #if __JHEXEN__
         if(player->powers[PT_SPEED] && !player->morphTics)
@@ -421,15 +416,16 @@ void P_MovePlayer(player_t *player)
         }
 #endif
 
-        if(cfg.playerMoveSpeed > 1)
-            cfg.playerMoveSpeed = 1;
-        if(cfg.playerMoveSpeed < 0)
-            cfg.playerMoveSpeed = 0;
+        forwardMove = CLAMP(forwardMove, -maxMove, maxMove);
+        sideMove    = CLAMP(sideMove,    -maxMove, maxMove);
 
-        if(cfg.playerMoveSpeed < 1)
-        {
-            forwardMove *= cfg.playerMoveSpeed;
-            sideMove *= cfg.playerMoveSpeed;
+        // Players can opt to reduce their maximum possible movement speed.
+        if((int) cfg.playerMoveSpeed != 1)
+        {   // A divsor has been specified, apply it.
+            float           m = CLAMP(cfg.playerMoveSpeed, 0, 1);
+
+            forwardMove *= m;
+            sideMove    *= m;
         }
 
         if(forwardMove != 0 && movemul)
@@ -443,9 +439,9 @@ void P_MovePlayer(player_t *player)
         }
 
         if((forwardMove != 0 || sideMove != 0) &&
-           player->plr->mo->state == &states[pClassInfo->normalstate])
+           player->plr->mo->state == &states[pClassInfo->normalState])
         {
-            P_MobjChangeState(player->plr->mo, pClassInfo->runstate);
+            P_MobjChangeState(player->plr->mo, pClassInfo->runState);
         }
 
         //P_CheckPlayerJump(player); // done in a different place
@@ -457,14 +453,14 @@ void P_MovePlayer(player_t *player)
        float fd = cmd->lookdirdelta / DELTAMUL;
        float delta = fd * fd;
        if(cmd->lookdirdelta < 0) delta = -delta;
-       player->plr->lookdir += delta;
+       player->plr->lookDir += delta;
        } */
 
     // 110 corresponds 85 degrees.
-    if(player->plr->lookdir > 110)
-        player->plr->lookdir = 110;
-    if(player->plr->lookdir < -110)
-        player->plr->lookdir = -110;
+    if(player->plr->lookDir > 110)
+        player->plr->lookDir = 110;
+    if(player->plr->lookDir < -110)
+        player->plr->lookDir = -110;
 #endif
 }
 
@@ -482,7 +478,7 @@ void P_DeathThink(player_t *player)
 
     P_MovePsprites(player);
 
-    onground = (player->plr->mo->pos[VZ] <= player->plr->mo->floorz);
+    onground = (player->plr->mo->pos[VZ] <= player->plr->mo->floorZ);
 #if __JDOOM__
     if(cfg.deathLookUp)
 #elif __JHERETIC__
@@ -492,14 +488,14 @@ void P_DeathThink(player_t *player)
        player->plr->mo->type == MT_ICECHUNK)
 #endif
     {   // Flying bloody skull
-        player->plr->viewheight = 6;
-        player->plr->deltaviewheight = 0;
+        player->plr->viewHeight = 6;
+        player->plr->viewHeightDelta = 0;
 
         if(onground)
         {
-            if(player->plr->lookdir < 60)
+            if(player->plr->lookDir < 60)
             {
-                lookDelta = (60 - player->plr->lookdir) / 8;
+                lookDelta = (60 - player->plr->lookDir) / 8;
                 if(lookDelta < 1 && (leveltime & 1))
                 {
                     lookDelta = 1;
@@ -508,7 +504,7 @@ void P_DeathThink(player_t *player)
                 {
                     lookDelta = 6;
                 }
-                player->plr->lookdir += lookDelta;
+                player->plr->lookDir += lookDelta;
                 player->plr->flags |= DDPF_INTERPITCH;
             }
         }
@@ -519,22 +515,22 @@ void P_DeathThink(player_t *player)
     else // fall to the ground
 #endif
     {
-        if(player->plr->viewheight > 6)
-            player->plr->viewheight -= 1;
+        if(player->plr->viewHeight > 6)
+            player->plr->viewHeight -= 1;
 
-        if(player->plr->viewheight < 6)
-            player->plr->viewheight = 6;
+        if(player->plr->viewHeight < 6)
+            player->plr->viewHeight = 6;
 
-        player->plr->deltaviewheight = 0;
+        player->plr->viewHeightDelta = 0;
 
 #if  __JHERETIC__ || __JHEXEN__
-        if(player->plr->lookdir > 0)
-            player->plr->lookdir -= 6;
-        else if(player->plr->lookdir < 0)
-            player->plr->lookdir += 6;
+        if(player->plr->lookDir > 0)
+            player->plr->lookDir -= 6;
+        else if(player->plr->lookDir < 0)
+            player->plr->lookDir += 6;
 
-        if(abs((int) player->plr->lookdir) < 6)
-            player->plr->lookdir = 0;
+        if(abs((int) player->plr->lookDir) < 6)
+            player->plr->lookDir = 0;
 #endif
         player->plr->flags |= DDPF_INTERPITCH;
     }
@@ -556,13 +552,13 @@ void P_DeathThink(player_t *player)
         int dir = P_FaceMobj(player->plr->mo, player->attacker, &delta);
         if(delta < ANGLE_1 * 10)
         {   // Looking at killer, so fade damage and poison counters
-            if(player->damagecount)
+            if(player->damageCount)
             {
-                player->damagecount--;
+                player->damageCount--;
             }
-            if(player->poisoncount)
+            if(player->poisonCount)
             {
-                player->poisoncount--;
+                player->poisonCount--;
             }
         }
         delta = delta / 8;
@@ -585,8 +581,8 @@ void P_DeathThink(player_t *player)
         {
             // Looking at killer, so fade damage flash down.
             player->plr->mo->angle = angle;
-            if(player->damagecount)
-                player->damagecount--;
+            if(player->damageCount)
+                player->damageCount--;
         }
         else if(delta < ANG180)
             player->plr->mo->angle += ANG5; // Turn clockwise
@@ -598,12 +594,12 @@ void P_DeathThink(player_t *player)
     }
     else
     {
-        if(player->damagecount)
-            player->damagecount--;
+        if(player->damageCount)
+            player->damageCount--;
 
 #if __JHEXEN__
-        if(player->poisoncount)
-            player->poisoncount--;
+        if(player->poisonCount)
+            player->poisonCount--;
 #endif
     }
 
@@ -627,7 +623,7 @@ void P_DeathThink(player_t *player)
  */
 void P_RaiseDeadPlayer(player_t *player)
 {
-    player->playerstate = PST_REBORN;
+    player->playerState = PST_REBORN;
 #if __JHERETIC__ || __JHEXEN__
     P_InventoryResetCursor(player);
 
@@ -678,7 +674,7 @@ void P_MorphThink(player_t *player)
     }
 # else
     if(player->health > 0)
-        P_UpdateBeak(player, &player->psprites[ps_weapon]); // Handle beak movement
+        P_UpdateBeak(player, &player->pSprites[ps_weapon]); // Handle beak movement
 
     if(IS_CLIENT || player->morphTics & 15)
         return;
@@ -690,7 +686,7 @@ void P_MorphThink(player_t *player)
         pmo->angle += (P_Random() - P_Random()) << 19;
     }
 
-    if(pmo->pos[VZ] <= pmo->floorz && (P_Random() < 32))
+    if(pmo->pos[VZ] <= pmo->floorZ && (P_Random() < 32))
     {   // Jump and noise
         pmo->mom[MZ] += 1;
         P_MobjChangeState(pmo, S_CHICPLAY_PAIN);
@@ -734,7 +730,7 @@ boolean P_UndoPlayerMorph(player_t *player)
 
     playerNum = P_GetPlayerNum(player);
 # if __JHEXEN__
-    mo = P_SpawnMobj3fv(PCLASS_INFO(cfg.playerClass[playerNum])->mobjtype, pos);
+    mo = P_SpawnMobj3fv(PCLASS_INFO(cfg.playerClass[playerNum])->mobjType, pos);
 # else
     mo = P_SpawnMobj3fv(MT_PLAYER, pos);
 # endif
@@ -748,7 +744,7 @@ boolean P_UndoPlayerMorph(player_t *player)
         mo->health = player->health;
         mo->special1 = weapon;
         mo->player = player;
-        mo->dplayer = player->plr;
+        mo->dPlayer = player->plr;
         mo->flags = oldFlags;
         mo->flags2 = oldFlags2;
         player->plr->mo = mo;
@@ -775,8 +771,8 @@ boolean P_UndoPlayerMorph(player_t *player)
 
     mo->angle = angle;
     mo->player = player;
-    mo->dplayer = player->plr;
-    mo->reactiontime = 18;
+    mo->dPlayer = player->plr;
+    mo->reactionTime = 18;
 
     if(oldFlags2 & MF2_FLY)
     {
@@ -851,7 +847,7 @@ void P_ClientSideThink(void)
     if(!mo)
         return;
 
-    if(pl->playerstate == PST_DEAD)
+    if(pl->playerState == PST_DEAD)
     {
         P_DeathThink(pl);
     }
@@ -897,8 +893,8 @@ void P_ClientSideThink(void)
     }
 
     // Jumping.
-    if(pl->jumptics)
-        pl->jumptics--;
+    if(pl->jumpTics)
+        pl->jumpTics--;
 
     P_CheckPlayerJump(pl);
 
@@ -908,34 +904,34 @@ void P_ClientSideThink(void)
     {
         if(fly != TOCENTER)
         {
-            pl->flyheight = fly * 2;
-            if(!(mo->ddflags & DDMF_FLY))
+            pl->flyHeight = fly * 2;
+            if(!(mo->ddFlags & DDMF_FLY))
             {
                 // Start flying.
-                //      mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
+                //      mo->ddFlags |= DDMF_FLY | DDMF_NOGRAVITY;
             }
         }
         else
         {
-            //  mo->ddflags &= ~(DDMF_FLY | DDMF_NOGRAVITY);
+            //  mo->ddFlags &= ~(DDMF_FLY | DDMF_NOGRAVITY);
         }
     }
     // We are flying when the Fly flag is set.
-    if(mo->ddflags & DDMF_FLY)
+    if(mo->ddFlags & DDMF_FLY)
     {
         // If we were on a mobj, we are NOT now.
-        if(mo->onmobj)
-            mo->onmobj = NULL;
+        if(mo->onMobj)
+            mo->onMobj = NULL;
 
         // Keep the fly flag in sync.
         mo->flags2 |= MF2_FLY;
 
-        mo->mom[MZ] = (float) pl->flyheight;
-        if(pl->flyheight)
-            pl->flyheight /= 2;
+        mo->mom[MZ] = (float) pl->flyHeight;
+        if(pl->flyHeight)
+            pl->flyHeight /= 2;
         // Do some fly-bobbing.
-        if(mo->pos[VZ] > mo->floorz && (mo->flags2 & MF2_FLY) &&
-           !mo->onmobj && (leveltime & 2))
+        if(mo->pos[VZ] > mo->floorZ && (mo->flags2 & MF2_FLY) &&
+           !mo->onMobj && (leveltime & 2))
             mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * leveltime >> 2) & FINEMASK]);
     }
 #if __JHEXEN__
@@ -952,9 +948,9 @@ void P_ClientSideThink(void)
         P_PlayerInSpecialSector(pl);
 */
     // Set consoleplayer thrust multiplier.
-    if(mo->pos[VZ] > mo->floorz)      // Airborne?
+    if(mo->pos[VZ] > mo->floorZ)      // Airborne?
     {
-        float       mul = (mo->ddflags & DDMF_FLY) ? 1 : 0;
+        float       mul = (mo->ddFlags & DDMF_FLY) ? 1 : 0;
         DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
     }
     else
@@ -975,7 +971,7 @@ void P_ClientSideThink(void)
 
     // Update view angles. The server fixes them if necessary.
     /*mo->angle = dpl->clAngle;
-    dpl->lookdir = dpl->clLookDir;*/ /* $unifiedangles */
+    dpl->lookDir = dpl->clLookDir;*/ /* $unifiedangles */
 }
 
 void P_PlayerThinkState(player_t *player)
@@ -1005,20 +1001,20 @@ void P_PlayerThinkState(player_t *player)
         // Selector 0 = Generic (used by default)
         // Selector 1..4 = Weapon 1..4
         plrmo->selector =
-            (plrmo->selector & ~DDMOBJ_SELECTOR_MASK) | (player->readyweapon + 1);
+            (plrmo->selector & ~DDMOBJ_SELECTOR_MASK) | (player->readyWeapon + 1);
 
         // Reactiontime is used to prevent movement for a bit after a teleport.
-        if(plrmo->reactiontime > 0)
+        if(plrmo->reactionTime > 0)
         {
-            plrmo->reactiontime--;
+            plrmo->reactionTime--;
         }
         else
         {
-            plrmo->reactiontime = 0;
+            plrmo->reactionTime = 0;
         }
     }
 
-    if(player->playerstate != PST_DEAD)
+    if(player->playerState != PST_DEAD)
     {
         // Clear the view angle interpolation flags by default.
         player->plr->flags &= ~(DDPF_INTERYAW | DDPF_INTERPITCH);
@@ -1062,7 +1058,7 @@ void P_PlayerThinkAttackLunge(player_t *player)
  */
 boolean P_PlayerThinkDeath(player_t *player)
 {
-    if(player->playerstate == PST_DEAD)
+    if(player->playerState == PST_DEAD)
     {
         P_DeathThink(player);
         return true; // stop!
@@ -1090,7 +1086,7 @@ void P_PlayerThinkMove(player_t *player)
 
     // Move around.
     // Reactiontime is used to prevent movement for a bit after a teleport.
-    if(plrmo && !plrmo->reactiontime)
+    if(plrmo && !plrmo->reactionTime)
     {
         P_MovePlayer(player);
 
@@ -1135,7 +1131,7 @@ void P_PlayerThinkMove(player_t *player)
                 }
 
                 speedMo->sprite = plrmo->sprite;
-                speedMo->floorclip = plrmo->floorclip;
+                speedMo->floorClip = plrmo->floorClip;
                 if(player == &players[consoleplayer])
                 {
                     speedMo->flags2 |= MF2_DONTDRAW;
@@ -1152,7 +1148,7 @@ void P_PlayerThinkFly(player_t *player)
     mobj_t     *plrmo = player->plr->mo;
 
     // Reactiontime is used to prevent movement for a bit after a teleport.
-    if(plrmo->reactiontime)
+    if(plrmo->reactionTime)
         return;
 
     // Is flying allowed?
@@ -1166,7 +1162,7 @@ void P_PlayerThinkFly(player_t *player)
     }
     else if(player->brain.upMove != 0 && player->powers[PT_FLIGHT])
     {
-        player->flyheight = player->brain.upMove * 10;
+        player->flyHeight = player->brain.upMove * 10;
         if(!(plrmo->flags2 & MF2_FLY))
         {
             plrmo->flags2 |= MF2_FLY;
@@ -1183,22 +1179,22 @@ void P_PlayerThinkFly(player_t *player)
     // Apply Z momentum based on flight speed.
     if(plrmo->flags2 & MF2_FLY)
     {
-        plrmo->mom[MZ] = (float) player->flyheight;
-        if(player->flyheight)
+        plrmo->mom[MZ] = (float) player->flyHeight;
+        if(player->flyHeight)
         {
-            player->flyheight /= 2;
+            player->flyHeight /= 2;
         }
     }
 }
 
 void P_PlayerThinkJump(player_t *player)
 {
-    if(player->plr->mo->reactiontime)
+    if(player->plr->mo->reactionTime)
         return; // Not yet.
 
     // Jumping.
-    if(player->jumptics)
-        player->jumptics--;
+    if(player->jumpTics)
+        player->jumpTics--;
 
     P_CheckPlayerJump(player);
 }
@@ -1281,7 +1277,7 @@ void P_PlayerThinkItems(player_t *player)
     {
         if(player->brain.speed && artiskip)
         {
-            if(player->inventory[player->inv_ptr].type != arti_none)
+            if(player->inventory[player->invPtr].type != arti_none)
             {
                 arti = 0xff;
             }
@@ -1291,18 +1287,18 @@ void P_PlayerThinkItems(player_t *player)
             // If the inventory is visible, just close it (depending on cfg.chooseAndUse).
             if(ST_IsInventoryVisible())
             {
-                player->readyArtifact = player->inventory[player->inv_ptr].type;
+                player->readyArtifact = player->inventory[player->invPtr].type;
 
                 ST_Inventory(false); // close the inventory
 
                 if(cfg.chooseAndUse)
-                    arti = player->inventory[player->inv_ptr].type;
+                    arti = player->inventory[player->invPtr].type;
                 else
                     arti = 0;
             }
             else
             {
-                arti = player->inventory[player->inv_ptr].type;
+                arti = player->inventory[player->invPtr].type;
             }
         }
     }
@@ -1413,12 +1409,12 @@ void P_PlayerThinkItems(player_t *player)
 void P_PlayerThinkWeapons(player_t *player)
 {
     playerbrain_t *brain = &player->brain;
-    weapontype_t oldweapon = player->pendingweapon;
+    weapontype_t oldweapon = player->pendingWeapon;
     weapontype_t newweapon;
 
     if(brain->cycleWeapon)
     {
-        player->pendingweapon = P_PlayerFindWeapon(player, brain->cycleWeapon > 0);
+        player->pendingWeapon = P_PlayerFindWeapon(player, brain->cycleWeapon > 0);
     }
 
     // Check for weapon change.
@@ -1429,15 +1425,15 @@ void P_PlayerThinkWeapons(player_t *player)
 #endif
     {
 #if __JDOOM__ || __JHERETIC__
-#  define HAS_WEAPON(x) (player->weaponowned[x])
-#  define CUR_WEAPON(x)  (palyer->readyweapon == x)
+#  define HAS_WEAPON(x) (player->weaponOwned[x])
+#  define CUR_WEAPON(x)  (palyer->readyWeapon == x)
 #endif
 
         // The actual changing of the weapon is done when the weapon psprite
         // can do it (read: not in the middle of an attack).
         newweapon = brain->changeWeapon;
 #if __JDOOM__
-        if(newweapon == player->readyweapon)
+        if(newweapon == player->readyWeapon)
         {
             // Swapping between fists and chaingun.
             if(newweapon == WT_FIRST)
@@ -1466,7 +1462,7 @@ void P_PlayerThinkWeapons(player_t *player)
 
 #if __JHERETIC__
         // Swapping between staff and gauntlets.
-        if(newweapon == player->readyweapon)
+        if(newweapon == player->readyWeapon)
         {
             if(newweapon == WT_FIRST)
                 newweapon = WT_EIGHTH;
@@ -1475,17 +1471,17 @@ void P_PlayerThinkWeapons(player_t *player)
         }
 #endif // __JHERETIC__
 
-        if(player->weaponowned[newweapon] && newweapon != player->readyweapon)
+        if(player->weaponOwned[newweapon] && newweapon != player->readyWeapon)
         {
             if(weaponinfo[newweapon][player->class].mode[0].gamemodebits
                & gamemodebits)
             {
-                player->pendingweapon = newweapon;
+                player->pendingWeapon = newweapon;
             }
         }
     }
 
-    if(player->pendingweapon != oldweapon)
+    if(player->pendingWeapon != oldweapon)
     {
 #if __JDOOM__
         player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
@@ -1507,14 +1503,14 @@ void P_PlayerThinkUse(player_t *player)
     if(player->brain.use)
 // REWRITE ME - I MATCH HEXEN FROM HERE
     {
-        if(!player->usedown)
+        if(!player->useDown)
         {
             P_UseLines(player);
-            player->usedown = true;
+            player->useDown = true;
         }
     }
     else
-        player->usedown = false;
+        player->useDown = false;
 }
 
 void P_PlayerThinkPsprites(player_t *player)
@@ -1552,11 +1548,11 @@ void P_PlayerThinkPowers(player_t *player)
         player->powers[PT_INFRARED]--;
 #endif
 
-    if(player->damagecount)
-        player->damagecount--;
+    if(player->damageCount)
+        player->damageCount--;
 
-    if(player->bonuscount)
-        player->bonuscount--;
+    if(player->bonusCount)
+        player->bonusCount--;
 
 #if __JHERETIC__ || __JHEXEN__
 # if __JHERETIC__
@@ -1567,7 +1563,7 @@ void P_PlayerThinkPowers(player_t *player)
     {
         if(!--player->powers[PT_FLIGHT])
         {
-            if(player->plr->mo->pos[VZ] != player->plr->mo->floorz && cfg.lookSpring)
+            if(player->plr->mo->pos[VZ] != player->plr->mo->floorZ && cfg.lookSpring)
             {
                 player->centering = true;
             }
@@ -1583,19 +1579,19 @@ void P_PlayerThinkPowers(player_t *player)
     {
         if(!--player->powers[PT_WEAPONLEVEL2])
         {
-            if((player->readyweapon == WT_SIXTH) &&
-               (player->psprites[ps_weapon].state != &states[S_PHOENIXREADY])
-               && (player->psprites[ps_weapon].state != &states[S_PHOENIXUP]))
+            if((player->readyWeapon == WT_SIXTH) &&
+               (player->pSprites[ps_weapon].state != &states[S_PHOENIXREADY])
+               && (player->pSprites[ps_weapon].state != &states[S_PHOENIXUP]))
             {
                 P_SetPsprite(player, ps_weapon, S_PHOENIXREADY);
                 player->ammo[AT_FIREORB] -= USE_PHRD_AMMO_2;
                 player->refire = 0;
                 player->update |= PSF_AMMO;
             }
-            else if((player->readyweapon == WT_EIGHTH) ||
-                    (player->readyweapon == WT_FIRST))
+            else if((player->readyWeapon == WT_EIGHTH) ||
+                    (player->readyWeapon == WT_FIRST))
             {
-                player->pendingweapon = player->readyweapon;
+                player->pendingWeapon = player->readyWeapon;
                 player->update |= PSF_PENDING_WEAPON;
             }
         }
@@ -1610,11 +1606,11 @@ void P_PlayerThinkPowers(player_t *player)
         {
             if(player->powers[PT_INFRARED] & 8)
             {
-                player->plr->fixedcolormap = 0;
+                player->plr->fixedColorMap = 0;
             }
             else
             {
-                player->plr->fixedcolormap = 1;
+                player->plr->fixedColorMap = 1;
             }
         }
         else if(!(leveltime & 16))  /* && player == &players[consoleplayer]) */
@@ -1624,15 +1620,15 @@ void P_PlayerThinkPowers(player_t *player)
 
             if(newtorch[playerNumber])
             {
-                if(dp->fixedcolormap + newtorchdelta[playerNumber] > 7 ||
-                   dp->fixedcolormap + newtorchdelta[playerNumber] < 1 ||
-                   newtorch[playerNumber] == dp->fixedcolormap)
+                if(dp->fixedColorMap + newtorchdelta[playerNumber] > 7 ||
+                   dp->fixedColorMap + newtorchdelta[playerNumber] < 1 ||
+                   newtorch[playerNumber] == dp->fixedColorMap)
                 {
                     newtorch[playerNumber] = 0;
                 }
                 else
                 {
-                    dp->fixedcolormap += newtorchdelta[playerNumber];
+                    dp->fixedColorMap += newtorchdelta[playerNumber];
                 }
             }
             else
@@ -1640,14 +1636,14 @@ void P_PlayerThinkPowers(player_t *player)
                 newtorch[playerNumber] = (M_Random() & 7) + 1;
                 newtorchdelta[playerNumber] =
                     (newtorch[playerNumber] ==
-                     dp->fixedcolormap) ? 0 : ((newtorch[playerNumber] >
-                                                dp->fixedcolormap) ? 1 : -1);
+                     dp->fixedColorMap) ? 0 : ((newtorch[playerNumber] >
+                                                dp->fixedColorMap) ? 1 : -1);
             }
         }
     }
     else
     {
-        player->plr->fixedcolormap = 0;
+        player->plr->fixedColorMap = 0;
     }
 #endif
 
@@ -1706,12 +1702,12 @@ void P_PlayerThinkPowers(player_t *player)
         player->powers[PT_SPEED]--;
     }
 
-    if(player->poisoncount && !(leveltime & 15))
+    if(player->poisonCount && !(leveltime & 15))
     {
-        player->poisoncount -= 5;
-        if(player->poisoncount < 0)
+        player->poisonCount -= 5;
+        if(player->poisonCount < 0)
         {
-            player->poisoncount = 0;
+            player->poisonCount = 0;
         }
         P_PoisonDamage(player, player->poisoner, 1, true);
     }
@@ -1809,16 +1805,16 @@ void P_PlayerThinkPowers(player_t *player)
                 states[i].tics += 12;
 
             // projectiles
-            mobjinfo[MT_TROOPSHOT].speed -= 7;
-            mobjinfo[MT_HEADSHOT].speed -= 7;
-            mobjinfo[MT_ARACHPLAZ].speed -= 7;
-            mobjinfo[MT_BRUISERSHOTRED].speed -= 7;
-            mobjinfo[MT_NTROSHOT].speed -= 13;
-            mobjinfo[MT_BRUISERSHOT].speed -= 7;
-            mobjinfo[MT_TRACER].speed -= 7;
-            mobjinfo[MT_BITCHBALL].speed -= 7;
-            mobjinfo[MT_ACIDMISSILE].speed -= 7;
-            mobjinfo[MT_CYBERROCKET].speed -= 15;
+            mobjInfo[MT_TROOPSHOT].speed -= 7;
+            mobjInfo[MT_HEADSHOT].speed -= 7;
+            mobjInfo[MT_ARACHPLAZ].speed -= 7;
+            mobjInfo[MT_BRUISERSHOTRED].speed -= 7;
+            mobjInfo[MT_NTROSHOT].speed -= 13;
+            mobjInfo[MT_BRUISERSHOT].speed -= 7;
+            mobjInfo[MT_TRACER].speed -= 7;
+            mobjInfo[MT_BITCHBALL].speed -= 7;
+            mobjInfo[MT_ACIDMISSILE].speed -= 7;
+            mobjInfo[MT_CYBERROCKET].speed -= 15;
         }
         else if(player->helltime == 1)
         {
@@ -1896,16 +1892,16 @@ void P_PlayerThinkPowers(player_t *player)
                 states[i].tics -= 12;
 
             // projectiles
-            mobjinfo[MT_TROOPSHOT].speed += 7;
-            mobjinfo[MT_HEADSHOT].speed += 7;
-            mobjinfo[MT_ARACHPLAZ].speed += 7;
-            mobjinfo[MT_BRUISERSHOTRED].speed += 7;
-            mobjinfo[MT_NTROSHOT].speed += 13;
-            mobjinfo[MT_BRUISERSHOT].speed += 7;
-            mobjinfo[MT_TRACER].speed += 7;
-            mobjinfo[MT_BITCHBALL].speed += 7;
-            mobjinfo[MT_ACIDMISSILE].speed += 7;
-            mobjinfo[MT_CYBERROCKET].speed += 15;
+            mobjInfo[MT_TROOPSHOT].speed += 7;
+            mobjInfo[MT_HEADSHOT].speed += 7;
+            mobjInfo[MT_ARACHPLAZ].speed += 7;
+            mobjInfo[MT_BRUISERSHOTRED].speed += 7;
+            mobjInfo[MT_NTROSHOT].speed += 13;
+            mobjInfo[MT_BRUISERSHOT].speed += 7;
+            mobjInfo[MT_TRACER].speed += 7;
+            mobjInfo[MT_BITCHBALL].speed += 7;
+            mobjInfo[MT_ACIDMISSILE].speed += 7;
+            mobjInfo[MT_CYBERROCKET].speed += 15;
         }
         player->helltime--;
     }
@@ -1938,7 +1934,7 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     float offsetSensitivity = 100; // FIXME: Should be done engine-side, mouse sensitivity!
     classinfo_t *pClassInfo = PCLASS_INFO(player->class);
 
-    if(!plr->mo || player->playerstate == PST_DEAD || player->viewlock)
+    if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
 
     turnSpeed = pClassInfo->turnSpeed[0] * TICRATE;
@@ -1973,29 +1969,29 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
         // Automatic vertical look centering.
         float step = 8 * ticLength * TICRATE;
 
-        if(plr->lookdir > step)
+        if(plr->lookDir > step)
         {
-            plr->lookdir -= step;
+            plr->lookDir -= step;
         }
-        else if(plr->lookdir < -step)
+        else if(plr->lookDir < -step)
         {
-            plr->lookdir += step;
+            plr->lookDir += step;
         }
         else
         {
-            plr->lookdir = 0;
+            plr->lookDir = 0;
             player->centering = false;
         }
     }
     else
     {
         // Pitch as controlled by CTL_LOOK.
-        plr->lookdir += 110.f/85.f * (turnSpeed/65535.f*360 * vel * ticLength +
+        plr->lookDir += 110.f/85.f * (turnSpeed/65535.f*360 * vel * ticLength +
                                       offsetSensitivity * off);
-        if(plr->lookdir < -110)
-            plr->lookdir = -110;
-        else if(plr->lookdir > 110)
-            plr->lookdir = 110;
+        if(plr->lookDir < -110)
+            plr->lookDir = -110;
+        else if(plr->lookDir > 110)
+            plr->lookDir = 110;
     }
 }
 

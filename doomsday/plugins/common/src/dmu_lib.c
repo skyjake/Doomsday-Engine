@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -234,23 +234,23 @@ void P_CopySector(sector_t *from, sector_t *to)
     // Copy the extended properties too
 #if __JDOOM__ || __JHERETIC__
     xto->special = xfrom->special;
-    xto->soundtraversed = xfrom->soundtraversed;
-    xto->soundtarget = xfrom->soundtarget;
+    xto->soundTraversed = xfrom->soundTraversed;
+    xto->soundTarget = xfrom->soundTarget;
 #if __JHERETIC__
     xto->seqType = xfrom->seqType;
 #endif
     xto->SP_floororigheight = xfrom->SP_floororigheight;
     xto->SP_ceilorigheight = xfrom->SP_ceilorigheight;
-    xto->origlight = xfrom->origlight;
-    memcpy(xto->origrgb, xfrom->origrgb, sizeof(float) * 3);
+    xto->origLight = xfrom->origLight;
+    memcpy(xto->origRGB, xfrom->origRGB, sizeof(float) * 3);
     if(xfrom->xg && xto->xg)
         memcpy(xto->xg, xfrom->xg, sizeof(*xto->xg));
     else
         xto->xg = NULL;
 #else
     xto->special = xfrom->special;
-    xto->soundtraversed = xfrom->soundtraversed;
-    xto->soundtarget = xfrom->soundtarget;
+    xto->soundTraversed = xfrom->soundTraversed;
+    xto->soundTarget = xfrom->soundTarget;
     xto->seqType = xfrom->seqType;
 #endif
 }

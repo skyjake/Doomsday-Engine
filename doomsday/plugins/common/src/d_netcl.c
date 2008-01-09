@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -252,8 +252,8 @@ void NetCl_UpdateGameState(byte *data)
 #else
             P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]);
 #endif
-            mo->floorz = tmfloorz;
-            mo->ceilingz = tmceilingz;
+            mo->floorZ = tmfloorz;
+            mo->ceilingZ = tmceilingz;
         }
         else // mo == NULL
         {
@@ -272,7 +272,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 {
     player_t *pl = &players[plrNum];
     unsigned int flags;
-    //int     oldstate = pl->playerstate;
+    //int     oldstate = pl->playerState;
     byte    b;
     int     i, k;
 
@@ -297,34 +297,34 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
             val = (k & (1 << i)) != 0;
 
             // Maybe unhide the HUD?
-            if(val == true && pl->weaponowned[i] == false &&
+            if(val == true && pl->weaponOwned[i] == false &&
                pl == &players[consoleplayer])
                 ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
-            pl->weaponowned[i] = val;
+            pl->weaponOwned[i] = val;
         }
     }
 
     if(flags & PSF2_STATE)
     {
         b = NetCl_ReadByte();
-        pl->playerstate = b & 0xf;
+        pl->playerState = b & 0xf;
 #if __JDOOM__ || __JHERETIC__
-        pl->armortype = b >> 4;
+        pl->armorType = b >> 4;
 #endif
 
 #ifdef _DEBUG
         Con_Message("NetCl_UpdatePlayerState2: New state = %i\n",
-                    pl->playerstate);
+                    pl->playerState);
 #endif
 
         // Set or clear the DEAD flag for this player.
-        if(pl->playerstate == PST_LIVE)
+        if(pl->playerState == PST_LIVE)
             pl->plr->flags &= ~DDPF_DEAD;
         else
             pl->plr->flags |= DDPF_DEAD;
 
-        //if(pl->playerstate != oldstate)
+        //if(pl->playerState != oldstate)
         {
             P_SetupPsprites(pl);
         }
@@ -357,17 +357,17 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     if(flags & PSF_STATE)       // and armor type (the same bit)
     {
         b = NetCl_ReadByte();
-        pl->playerstate = b & 0xf;
+        pl->playerState = b & 0xf;
 #if __JDOOM__ || __JHERETIC__
-        pl->armortype = b >> 4;
+        pl->armorType = b >> 4;
 #endif
         // Set or clear the DEAD flag for this player.
-        if(pl->playerstate == PST_LIVE)
+        if(pl->playerState == PST_LIVE)
             pl->plr->flags &= ~DDPF_DEAD;
         else
             pl->plr->flags |= DDPF_DEAD;
 
-        //if(oldstate != pl->playerstate) // && oldstate == PST_DEAD)
+        //if(oldstate != pl->playerState) // && oldstate == PST_DEAD)
         {
             P_SetupPsprites(pl);
         }
@@ -393,20 +393,20 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             ap = NetCl_ReadByte();
 
             // Maybe unhide the HUD?
-            if(ap >= pl->armorpoints[i] &&
+            if(ap >= pl->armorPoints[i] &&
                 pl == &players[consoleplayer])
                 ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
 
-            pl->armorpoints[i] = ap;
+            pl->armorPoints[i] = ap;
         }
 #else
         ap = NetCl_ReadByte();
 
         // Maybe unhide the HUD?
-        if(ap >= pl->armorpoints && pl == &players[consoleplayer])
+        if(ap >= pl->armorPoints && pl == &players[consoleplayer])
             ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
 
-        pl->armorpoints = ap;
+        pl->armorPoints = ap;
 #endif
 
     }
@@ -526,11 +526,11 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             val = (b & (1 << i)) != 0;
 
             // Maybe unhide the HUD?
-            if(val == true && pl->weaponowned[i] == false &&
+            if(val == true && pl->weaponOwned[i] == false &&
                pl == &players[consoleplayer])
                 ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
-            pl->weaponowned[i] = val;
+            pl->weaponOwned[i] = val;
         }
     }
 
@@ -556,18 +556,18 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     {
 #if __JDOOM__ || __JHERETIC__                   // Hexen has no use for max ammo.
         for(i = 0; i < NUM_AMMO_TYPES; i++)
-            pl->maxammo[i] = NetCl_ReadShort();
+            pl->maxAmmo[i] = NetCl_ReadShort();
 #endif
     }
 
     if(flags & PSF_COUNTERS)
     {
-        pl->killcount = NetCl_ReadShort();
-        pl->itemcount = NetCl_ReadByte();
-        pl->secretcount = NetCl_ReadByte();
+        pl->killCount = NetCl_ReadShort();
+        pl->itemCount = NetCl_ReadByte();
+        pl->secretCount = NetCl_ReadByte();
 
         /*Con_Printf( "plr%i: kills=%i items=%i secret=%i\n", pl-players,
-           pl->killcount, pl->itemcount, pl->secretcount); */
+           pl->killCount, pl->itemCount, pl->secretCount); */
     }
 
     if(flags & PSF_PENDING_WEAPON || flags & PSF_READY_WEAPON)
@@ -575,22 +575,22 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         b = NetCl_ReadByte();
         if(flags & PSF_PENDING_WEAPON)
         {
-            pl->pendingweapon = b & 0xf;
+            pl->pendingWeapon = b & 0xf;
         }
 
         if(flags & PSF_READY_WEAPON)
         {
-            pl->readyweapon = b >> 4;
+            pl->readyWeapon = b >> 4;
 
 #if _DEBUG
-            Con_Message("NetCl_UpdatePlayerState: readyweapon=%i\n", pl->readyweapon);
+            Con_Message("NetCl_UpdatePlayerState: readyweapon=%i\n", pl->readyWeapon);
 #endif
         }
     }
 
     if(flags & PSF_VIEW_HEIGHT)
     {
-        pl->plr->viewheight = (float) NetCl_ReadByte();
+        pl->plr->viewHeight = (float) NetCl_ReadByte();
     }
 
 #if __JHERETIC || __JHEXEN__ || __JSTRIFE__
@@ -646,12 +646,12 @@ void NetCl_Intermission(byte *data)
 #ifdef __JDOOM__
     if(flags & IMF_BEGIN)
     {
-        wminfo.maxkills = NetCl_ReadShort();
-        wminfo.maxitems = NetCl_ReadShort();
-        wminfo.maxsecret = NetCl_ReadShort();
+        wminfo.maxKills = NetCl_ReadShort();
+        wminfo.maxItems = NetCl_ReadShort();
+        wminfo.maxSecret = NetCl_ReadShort();
         wminfo.next = NetCl_ReadByte();
         wminfo.last = NetCl_ReadByte();
-        wminfo.didsecret = NetCl_ReadByte();
+        wminfo.didSecret = NetCl_ReadByte();
 
         G_PrepareWIData();
 
@@ -660,10 +660,12 @@ void NetCl_Intermission(byte *data)
 
         WI_Start(&wminfo);
     }
+
     if(flags & IMF_END)
     {
         WI_End();
     }
+
     if(flags & IMF_STATE)
     {
         WI_SetState(NetCl_ReadByte());
@@ -992,10 +994,10 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType)
 
     // Which way is the player looking at?
     *ptr++ = LONG(player->plr->mo->angle);
-    *ptr++ = LONG(FLT2FIX(player->plr->lookdir));
+    *ptr++ = LONG(FLT2FIX(player->plr->lookDir));
 
     // Currently active weapon.
-    *ptr++ = LONG(player->readyweapon);
+    *ptr++ = LONG(player->readyWeapon);
 
     Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, msg, MSG_SIZE);
 }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
@@ -272,7 +272,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
     {
         xsec = P_ToXSector(sec);
 
-        if(xsec->specialdata)
+        if(xsec->specialData)
             continue;
 
         // Find lowest & highest floors around sector
@@ -283,7 +283,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
         plat->type = type;
         plat->sector = sec;
 
-        xsec->specialdata = plat;
+        xsec->specialData = plat;
         plat->thinker.function = T_PlatRaise;
 
         plat->crush = false;
@@ -503,7 +503,7 @@ int P_ActivateInStasisPlat(int tag)
         // For one in stasis with right tag.
         if(plat->tag == tag && plat->status == in_stasis)
         {
-            plat->status = plat->oldstatus;
+            plat->status = plat->oldStatus;
             plat->thinker.function = T_PlatRaise;
             rtn = 1;
         }
@@ -535,7 +535,7 @@ static boolean EV_StopPlat2(int tag)
         if(plat->status != in_stasis && plat->tag == tag)
         {
             // Put it in stasis.
-            plat->oldstatus = plat->status;
+            plat->oldStatus = plat->status;
             plat->status = in_stasis;
             plat->thinker.function = INSTASIS;
         }
@@ -597,7 +597,7 @@ void P_RemoveActivePlat(plat_t *plat)
 {
     platlist_t *list = plat->list;
 
-    P_ToXSector(plat->sector)->specialdata = NULL;
+    P_ToXSector(plat->sector)->specialData = NULL;
 #if __JHEXEN__
     P_TagFinished(P_ToXSector(plat->sector)->tag);
 #endif

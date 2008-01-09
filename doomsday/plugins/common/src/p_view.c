@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -92,7 +103,7 @@ void P_CalcHeight(player_t *player)
         player->bob = MAXBOB;
 
     // When flying, don't bob the view.
-    if((pmo->flags2 & MF2_FLY) && pmo->pos[VZ] > pmo->floorz)
+    if((pmo->flags2 & MF2_FLY) && pmo->pos[VZ] > pmo->floorZ)
     {
         player->bob = 1.0f / 2;
     }
@@ -105,9 +116,9 @@ void P_CalcHeight(player_t *player)
     // During demo playback the view is thought to be airborne if viewheight
     // is zero (Cl_MoveLocalPlayer).
     if(Get(DD_PLAYBACK))
-        airborne = !dplay->viewheight;
+        airborne = !dplay->viewHeight;
     else
-        airborne = pmo->pos[VZ] > pmo->floorz; // Truly in the air?
+        airborne = pmo->pos[VZ] > pmo->floorZ; // Truly in the air?
 
     // Should view bobbing be done?
     if(setz)
@@ -160,34 +171,34 @@ void P_CalcHeight(player_t *player)
         P_IsCamera(pmo) /*$democam*/ || Get(DD_PLAYBACK)))
     {
         // Move viewheight.
-        if(player->playerstate == PST_LIVE)
+        if(player->playerState == PST_LIVE)
         {
-            dplay->viewheight += dplay->deltaviewheight;
+            dplay->viewHeight += dplay->viewHeightDelta;
 
-            if(dplay->viewheight > VIEW_HEIGHT)
+            if(dplay->viewHeight > VIEW_HEIGHT)
             {
-                dplay->viewheight = VIEW_HEIGHT;
-                dplay->deltaviewheight = 0;
+                dplay->viewHeight = VIEW_HEIGHT;
+                dplay->viewHeightDelta = 0;
             }
-            else if(dplay->viewheight < VIEW_HEIGHT / 2.0f)
+            else if(dplay->viewHeight < VIEW_HEIGHT / 2.0f)
             {
-                dplay->viewheight = VIEW_HEIGHT / 2.0f;
-                if(dplay->deltaviewheight <= 0)
-                    dplay->deltaviewheight = 1;
+                dplay->viewHeight = VIEW_HEIGHT / 2.0f;
+                if(dplay->viewHeightDelta <= 0)
+                    dplay->viewHeightDelta = 1;
             }
 
-            if(dplay->deltaviewheight)
+            if(dplay->viewHeightDelta)
             {
-                dplay->deltaviewheight += 0.25f;
-                if(!dplay->deltaviewheight)
-                    dplay->deltaviewheight = 1;
+                dplay->viewHeightDelta += 0.25f;
+                if(!dplay->viewHeightDelta)
+                    dplay->viewHeightDelta = 1;
             }
         }
     }
 
     // Set the player's eye-level Z coordinate.
     dplay->viewZ = pmo->pos[VZ] +
-                     (P_IsCamera(pmo)? 0 : dplay->viewheight);
+                     (P_IsCamera(pmo)? 0 : dplay->viewHeight);
 
     // During demo playback (or camera mode) the viewz will not be modified
     // any further.
@@ -200,11 +211,11 @@ void P_CalcHeight(player_t *player)
         }
 
         // Foot clipping is done for living players.
-        if(player->playerstate != PST_DEAD)
+        if(player->playerState != PST_DEAD)
         {
-            if(pmo->floorclip && pmo->pos[VZ] <= pmo->floorz)
+            if(pmo->floorClip && pmo->pos[VZ] <= pmo->floorZ)
             {
-                dplay->viewZ -= pmo->floorclip;
+                dplay->viewZ -= pmo->floorClip;
             }
         }
     }

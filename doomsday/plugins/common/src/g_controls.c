@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 1999-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,7 @@
  */
 
  /**
-  * g_controls.c Game controls, ticcmd building/merging
+  * g_controls.c: Game controls, ticcmd building/merging
   */
 
 // HEADER FILES ------------------------------------------------------------
@@ -66,8 +66,8 @@
 // MACROS ------------------------------------------------------------------
 
 #if __JDOOM__ || __JHERETIC__
-#  define GOTWPN(x)         (plr->weaponowned[x])
-#  define ISWPN(x)          (plr->readyweapon == x)
+#  define GOTWPN(x)         (plr->weaponOwned[x])
+#  define ISWPN(x)          (plr->readyWeapon == x)
 #endif
 
 #define SLOWTURNTICS        6
@@ -479,8 +479,8 @@ char G_MakeLookDelta(float offset)
  */
 static void G_AdjustAngle(player_t *player, int turn, float elapsed)
 {
-    if(!player->plr->mo || player->playerstate == PST_DEAD ||
-       player->viewlock)
+    if(!player->plr->mo || player->playerState == PST_DEAD ||
+       player->viewLock)
         return; // Sorry, can't help you, pal.
 
     /* $unifiedangles */
@@ -499,7 +499,7 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
         }
         else
         {
-            ddplr->lookdir += cfg.lookSpeed * look * elapsed * 35; /* $unifiedangles */
+            ddplr->lookDir += cfg.lookSpeed * look * elapsed * 35; /* $unifiedangles */
         }
     }
 
@@ -508,17 +508,17 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
         float step = 8 * elapsed * 35;
 
         /* $unifiedangles */
-        if(ddplr->lookdir > step)
+        if(ddplr->lookDir > step)
         {
-            ddplr->lookdir -= step;
+            ddplr->lookDir -= step;
         }
-        else if(ddplr->lookdir < -step)
+        else if(ddplr->lookDir < -step)
         {
-            ddplr->lookdir += step;
+            ddplr->lookDir += step;
         }
         else
         {
-            ddplr->lookdir = 0;
+            ddplr->lookDir = 0;
             player->centering = false;
         }
     }
@@ -778,7 +778,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     {
         if(PLAYER_ACTION(pnum, A_SPEED) && artiskip)
         {
-            if(plr->inventory[plr->inv_ptr].type != arti_none)
+            if(plr->inventory[plr->invPtr].type != arti_none)
             {
                 PLAYER_ACTION(pnum, A_USEARTIFACT) = false;
 
@@ -789,12 +789,12 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         {
             if(ST_IsInventoryVisible())
             {
-                plr->readyArtifact = plr->inventory[plr->inv_ptr].type;
+                plr->readyArtifact = plr->inventory[plr->invPtr].type;
 
                 ST_Inventory(false); // close the inventory
 
                 if(cfg.chooseAndUse)
-                    cmd->arti = plr->inventory[plr->inv_ptr].type;
+                    cmd->arti = plr->inventory[plr->invPtr].type;
                 else
                     cmd->arti = 0;
 
@@ -802,7 +802,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
             }
             else if(usearti)
             {
-                cmd->arti = plr->inventory[plr->inv_ptr].type;
+                cmd->arti = plr->inventory[plr->invPtr].type;
                 usearti = false;
             }
         }
@@ -1040,7 +1040,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     {
         // Mouse angle changes are immediate.
         if(!pausestate && plr->plr->mo &&
-           plr->playerstate != PST_DEAD)
+           plr->playerState != PST_DEAD)
         {
             plr->plr->mo->angle += FLT2FIX(mousex * -8); //G_AdjustAngle(plr, mousex * -8, 1);
         }
@@ -1052,7 +1052,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         G_AdjustAngle(plr, turn, elapsedTime);
 
         if(strafe || (!cfg.usemlook && !PLAYER_ACTION(pnum, A_MLOOK)) ||
-           plr->playerstate == PST_DEAD)
+           plr->playerState == PST_DEAD)
         {
             forward += 8 * mousey * elapsedTics;
         }
@@ -1064,16 +1064,16 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 
             if(cfg.mlookInverseY)
                 adj = -adj;
-            plr->plr->lookdir += adj; /* $unifiedangles */
+            plr->plr->lookDir += adj; /* $unifiedangles */
         }
         if(cfg.usejlook)
         {
             if(cfg.jlookDeltaMode) /* $unifiedangles */
-                plr->plr->lookdir +=
+                plr->plr->lookDir +=
                     joylook / 20.0f * cfg.lookSpeed *
                     (cfg.jlookInverseY ? -1 : 1) * elapsedTics;
             else
-                plr->plr->lookdir =
+                plr->plr->lookDir =
                     joylook * 1.1f * (cfg.jlookInverseY ? -1 : 1);
         }
     }
@@ -1115,7 +1115,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         look = TOCENTER;
     }
 
-    if(plr->playerstate == PST_LIVE && !pausestate)
+    if(plr->playerState == PST_LIVE && !pausestate)
         G_AdjustLookDir(plr, look, elapsedTime);
 
     cmd->fly = flyheight;
@@ -1142,7 +1142,7 @@ void G_ControlReset(int player)
 /*void G_SpecialButton(int pnum)
 {
     player_t *pl = &players[pnum];
-    if(pl->plr->ingame)
+    if(pl->plr->inGame)
     {
         if(pl->plr->cmd.actions & BT_SPECIAL)
         {

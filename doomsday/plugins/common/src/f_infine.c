@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,115 +65,114 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define STACK_SIZE      16      // Size of the InFine state stack.
-#define MAX_TOKEN_LEN   8192
-#define MAX_SEQUENCE    64
-#define MAX_PICS        128
-#define MAX_TEXT        64
-#define MAX_HANDLERS    128
+#define STACK_SIZE          16 // Size of the InFine state stack.
+#define MAX_TOKEN_LEN       8192
+#define MAX_SEQUENCE        64
+#define MAX_PICS            128
+#define MAX_TEXT            64
+#define MAX_HANDLERS        128
 
-#define FI_REPEAT       -2
+#define FI_REPEAT           -2
 
 // TYPES -------------------------------------------------------------------
 
 typedef char handle_t[32];
 
 typedef struct ficmd_s {
-    char   *token;
-    int     operands;
-    void    (*func) (void);
-    boolean when_skipping;
-    boolean when_cond_skipping; // Skipping because condition failed.
+    char           *token;
+    int             operands;
+    void          (*func) (void);
+    boolean         whenSkipping;
+    boolean         whenCondSkipping; // Skipping because condition failed.
 } ficmd_t;
 
 typedef struct fivalue_s {
-    float   value;
-    float   target;
-    int     steps;
+    float           value;
+    float           target;
+    int             steps;
 } fivalue_t;
 
 typedef struct fi_obj_s {
-    boolean used;
-    handle_t handle;
-    fivalue_t color[4];
-    fivalue_t scale[2];
-    fivalue_t x, y;
-    fivalue_t angle;
-    //byte centered[2];     // Should be centered in X/Y direction?
+    boolean         used;
+    handle_t        handle;
+    fivalue_t       color[4];
+    fivalue_t       scale[2];
+    fivalue_t       x, y;
+    fivalue_t       angle;
 } fiobj_t;
 
 typedef struct fipic_s {
-    fiobj_t object;
+    fiobj_t         object;
     struct fipicflags_s {
-        char    is_patch:1;     // Raw image or patch.
-        char    done:1;         // Animation finished (or repeated).
-        char    is_rect:1;
-        char    is_ximage:1;    // External graphics resource.
+        char            is_patch:1; // Raw image or patch.
+        char            done:1; // Animation finished (or repeated).
+        char            is_rect:1;
+        char            is_ximage:1; // External graphics resource.
     } flags;
-    int     seq;
-    int     seq_wait[MAX_SEQUENCE], seq_timer;
-    int     lump[MAX_SEQUENCE];
-    char    flip[MAX_SEQUENCE];
-    short   sound[MAX_SEQUENCE];
+    int             seq;
+    int             seqWait[MAX_SEQUENCE], seqTimer;
+    int             lump[MAX_SEQUENCE];
+    char            flip[MAX_SEQUENCE];
+    short           sound[MAX_SEQUENCE];
 
     // For rectangle-objects.
-    fivalue_t other_color[4];
-    fivalue_t edge_color[4];
-    fivalue_t other_edge_color[4];
+    fivalue_t       otherColor[4];
+    fivalue_t       edgeColor[4];
+    fivalue_t       otherEdgeColor[4];
 } fipic_t;
 
 typedef struct fitext_s {
-    fiobj_t object;
+    fiobj_t         object;
     struct fitextflags_s {
-        char    centered:1;
-        char    font_b:1;
-        char    all_visible:1;
+        char            centered:1;
+        char            font_b:1;
+        char            all_visible:1;
     } flags;
-    int     scroll_wait, scroll_timer;  // Automatic scrolling upwards.
-    int     pos;
-    int     wait, timer;
-    int     lineheight;
-    char   *text;
+    int             scrollWait, scrollTimer; // Automatic scrolling upwards.
+    int             pos;
+    int             wait, timer;
+    int             lineheight;
+    char           *text;
 } fitext_t;
 
 typedef struct fihandler_s {
-    int     code;
-    handle_t marker;
+    int             code;
+    handle_t        marker;
 } fihandler_t;
 
 typedef struct fistate_s {
-    char   *script;             // A copy of the script.
-    char   *cp;                 // The command cursor.
-    infinemode_t mode;
-    int     overlay_gamestate;  // Overlay scripts run only in one gamemode.
-    int     timer;
-    boolean conditions[NUM_FICONDS];
-    int     intime;
-    boolean canskip, skipping;
-    int     dolevel;            // Level of DO-skipping.
-    int     wait;
-    boolean suspended, paused, eatevents, showmenu;
-    boolean gotoskip, skipnext, lastskipped;
-    handle_t gototarget;
-    fitext_t *waitingtext;
-    fipic_t *waitingpic;
-    fihandler_t keyhandlers[MAX_HANDLERS];
-    int     bgflat;
-    fivalue_t bgcolor[4];
-    fivalue_t imgcolor[4];
-    fivalue_t imgoffset[2];
-    fivalue_t filter[4];
-    fivalue_t textcolor[9][3];
-    fipic_t pics[MAX_PICS];
-    fitext_t text[MAX_TEXT];
+    char           *script; // A copy of the script.
+    char           *cp; // The command cursor.
+    infinemode_t    mode;
+    int             overlayGameState; // Overlay scripts run only in one gamemode.
+    int             timer;
+    boolean         conditions[NUM_FICONDS];
+    int             inTime;
+    boolean         canSkip, skipping;
+    int             doLevel; // Level of DO-skipping.
+    int             wait;
+    boolean         suspended, paused, eatEvents, showMenu;
+    boolean         gotoSkip, skipNext, lastSkipped;
+    handle_t        gotoTarget;
+    fitext_t       *waitingText;
+    fipic_t        *waitingPic;
+    fihandler_t     keyHandlers[MAX_HANDLERS];
+    int             bgFlat;
+    fivalue_t       bgColor[4];
+    fivalue_t       imgColor[4];
+    fivalue_t       imgOffset[2];
+    fivalue_t       filter[4];
+    fivalue_t       textColor[9][3];
+    fipic_t         pics[MAX_PICS];
+    fitext_t        text[MAX_TEXT];
 } fistate_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    FI_InitValue(fivalue_t * val, float num);
-int     FI_TextObjectLength(fitext_t * tex);
+void    FI_InitValue(fivalue_t *val, float num);
+int     FI_TextObjectLength(fitext_t *tex);
 
 // Command functions.
 void    FIC_Do(void);
@@ -282,7 +281,7 @@ boolean brief_disabled = false;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 boolean fi_active = false;
-boolean fi_cmd_executed = false;    // Set to true after first command.
+boolean fi_cmd_executed = false; // Set to true after first command.
 
 // Time is measured in seconds.
 // Colors are floating point and [0,1].
@@ -428,31 +427,31 @@ void FI_ClearState(void)
 
     fi->suspended = false;
     fi->timer = 0;
-    fi->canskip = true;         // By default skipping is enabled.
+    fi->canSkip = true;         // By default skipping is enabled.
     fi->skipping = false;
     fi->wait = 0;               // Not waiting for anything.
-    fi->intime = 0;             // Interpolation is off.
-    fi->bgflat = -1;            // No background flat.
+    fi->inTime = 0;             // Interpolation is off.
+    fi->bgFlat = -1;            // No background flat.
     fi->paused = false;
-    fi->gotoskip = false;
-    fi->skipnext = false;
+    fi->gotoSkip = false;
+    fi->skipNext = false;
 
-    fi->waitingtext = NULL;
-    fi->waitingpic = NULL;
-    memset(fi->gototarget, 0, sizeof(fi->gototarget));
+    fi->waitingText = NULL;
+    fi->waitingPic = NULL;
+    memset(fi->gotoTarget, 0, sizeof(fi->gotoTarget));
     GL_SetFilter(0);            // Clear the current filter.
     for(i = 0; i < 4; i++)
     {
-        FI_InitValue(fi->bgcolor + i, 1);
+        FI_InitValue(fi->bgColor + i, 1);
     }
     memset(fi->pics, 0, sizeof(fi->pics));
-    memset(fi->imgoffset, 0, sizeof(fi->imgoffset));
+    memset(fi->imgOffset, 0, sizeof(fi->imgOffset));
     memset(fi->text, 0, sizeof(fi->text));
     memset(fi->filter, 0, sizeof(fi->filter));
     for(i = 0; i < 9; i++)
     {
         for(c = 0; c < 3; c++)
-            FI_InitValue(&fi->textcolor[i][c], 1);
+            FI_InitValue(&fi->textColor[i][c], 1);
     }
 }
 
@@ -494,7 +493,7 @@ void FI_NewState(const char *script)
 
 void FI_DeleteXImage(fipic_t *pic)
 {
-    gl.DeleteTextures(1, (DGLuint*)&pic->lump[0]);
+    DGL_DeleteTextures(1, (DGLuint*)&pic->lump[0]);
     pic->lump[0] = 0;
     pic->flags.is_ximage = false;
 }
@@ -630,7 +629,7 @@ void FI_Start(char *finalescript, infinemode_t mode)
     if(mode == FIMODE_OVERLAY)
     {
         // Overlay scripts stop when the gamemode changes.
-        fi->overlay_gamestate = G_GetGameState();
+        fi->overlayGameState = G_GetGameState();
     }
 
     if(mode != FIMODE_LOCAL)
@@ -652,7 +651,7 @@ void FI_End(void)
 {
     int     oldMode;
 
-    if(!fi_active || !fi->canskip)
+    if(!fi_active || !fi->canSkip)
         return;
 
     oldMode = fi->mode;
@@ -735,7 +734,7 @@ DEFCC(CCmdStopInFine)
 {
     if(!fi_active)
         return false;
-    fi->canskip = true;
+    fi->canSkip = true;
     FI_End();
     return true;
 }
@@ -866,13 +865,13 @@ void FI_Execute(char *cmd)
     // Semicolon terminates DO-blocks.
     if(!strcmp(cmd, ";"))
     {
-        if(fi->dolevel > 0)
+        if(fi->doLevel > 0)
         {
-            if(--fi->dolevel == 0)
+            if(--fi->doLevel == 0)
             {
                 // The DO-skip has been completed.
-                fi->skipnext = false;
-                fi->lastskipped = true;
+                fi->skipNext = false;
+                fi->lastSkipped = true;
             }
         }
         return;
@@ -897,19 +896,21 @@ void FI_Execute(char *cmd)
                     break;
                 }
             // Should we skip this command?
-            if((fi->skipnext && !fi_commands[i].when_cond_skipping) ||
-               ((fi->skipping || fi->gotoskip) &&
-                !fi_commands[i].when_skipping))
+            if((fi->skipNext && !fi_commands[i].whenCondSkipping) ||
+               ((fi->skipping || fi->gotoSkip) &&
+                !fi_commands[i].whenSkipping))
             {
                 // While not DO-skipping, the condskip has now been done.
-                if(!fi->dolevel)
+                if(!fi->doLevel)
                 {
-                    if(fi->skipnext)
-                        fi->lastskipped = true;
-                    fi->skipnext = false;
+                    if(fi->skipNext)
+                        fi->lastSkipped = true;
+                    fi->skipNext = false;
                 }
+
                 return;
             }
+
             // If there were enough operands, execute the command.
             fi->cp = oldcp;
             if(!k)
@@ -920,42 +921,44 @@ void FI_Execute(char *cmd)
                 return;
 
             // Now we've executed the latest command.
-            fi->lastskipped = false;
+            fi->lastSkipped = false;
             return;
         }
+
     // The command was not found!
     Con_Message("FI_Execute: Unknown command \"%s\".\n", cmd);
 }
 
 /**
- * Returns true if a command was found. Only returns false if there are
- * no more commands in the script.
+ * @return          @c true, if a command was found.
+ *                  @c false if there are no more commands in the script.
  */
 int FI_ExecuteNextCommand(void)
 {
-    char   *cmd = FI_GetToken();
+    char           *cmd = FI_GetToken();
 
     if(!cmd)
         return false;
+
     FI_Execute(cmd);
     return true;
 }
 
-void FI_InitValue(fivalue_t * val, float num)
+void FI_InitValue(fivalue_t *val, float num)
 {
     val->target = val->value = num;
     val->steps = 0;
 }
 
-void FI_SetValue(fivalue_t * val, float num)
+void FI_SetValue(fivalue_t *val, float num)
 {
     val->target = num;
-    val->steps = fi->intime;
+    val->steps = fi->inTime;
     if(!val->steps)
         val->value = val->target;
 }
 
-void FI_ValueThink(fivalue_t * val)
+void FI_ValueThink(fivalue_t *val)
 {
     if(val->steps <= 0)
     {
@@ -963,32 +966,33 @@ void FI_ValueThink(fivalue_t * val)
         val->value = val->target;
         return;
     }
+
     val->value += (val->target - val->value) / val->steps;
     val->steps--;
 }
 
-void FI_ValueArrayThink(fivalue_t * val, int num)
+void FI_ValueArrayThink(fivalue_t *val, int num)
 {
-    int     i;
+    int             i;
 
-    for(i = 0; i < num; i++)
+    for(i = 0; i < num; ++i)
         FI_ValueThink(val + i);
 }
 
 fihandler_t *FI_GetHandler(int code)
 {
-    int     i;
+    int             i;
     fihandler_t *vacant = NULL;
 
-    for(i = 0; i < MAX_HANDLERS; i++)
+    for(i = 0; i < MAX_HANDLERS; ++i)
     {
         // Use this if a suitable handler is not already set?
-        if(!vacant && !fi->keyhandlers[i].code)
-            vacant = fi->keyhandlers + i;
+        if(!vacant && !fi->keyHandlers[i].code)
+            vacant = fi->keyHandlers + i;
 
-        if(fi->keyhandlers[i].code == code)
+        if(fi->keyHandlers[i].code == code)
         {
-            return fi->keyhandlers + i;
+            return fi->keyHandlers + i;
         }
     }
 
@@ -1005,42 +1009,46 @@ void FI_ClearAnimation(fipic_t *pic)
     memset(pic->lump, -1, sizeof(pic->lump));
     memset(pic->flip, 0, sizeof(pic->flip));
     memset(pic->sound, -1, sizeof(pic->sound));
-    memset(pic->seq_wait, 0, sizeof(pic->seq_wait));
+    memset(pic->seqWait, 0, sizeof(pic->seqWait));
     pic->seq = 0;
     pic->flags.done = true;
 }
 
 int FI_GetNextSeq(fipic_t *pic)
 {
-    int     i;
+    int             i;
 
-    for(i = 0; i < MAX_SEQUENCE; i++)
+    for(i = 0; i < MAX_SEQUENCE; ++i)
+    {
         if(pic->lump[i] <= 0)
             break;
+    }
+
     return i;
 }
 
 fipic_t *FI_FindPic(const char *handle)
 {
-    int     i;
+    int             i;
 
     if(!handle)
         return NULL;
 
-    for(i = 0; i < MAX_PICS; i++)
+    for(i = 0; i < MAX_PICS; ++i)
     {
         if(fi->pics[i].object.used &&
            !stricmp(fi->pics[i].object.handle, handle))
         {
-            return fi->pics + i;
+            return &fi->pics[i];
         }
     }
+
     return NULL;
 }
 
 void FI_InitRect(fipic_t *pic)
 {
-    int     i;
+    int             i;
 
     FI_InitValue(&pic->object.x, 0);
     FI_InitValue(&pic->object.y, 0);
@@ -1048,35 +1056,36 @@ void FI_InitRect(fipic_t *pic)
     FI_InitValue(&pic->object.scale[1], 1);
 
     // Default colors.
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
     {
         FI_InitValue(&pic->object.color[i], 1);
-        FI_InitValue(&pic->other_color[i], 1);
+        FI_InitValue(&pic->otherColor[i], 1);
         // Edge alpha is zero by default.
-        FI_InitValue(&pic->edge_color[i], i < 3 ? 1 : 0);
-        FI_InitValue(&pic->other_edge_color[i], i < 3 ? 1 : 0);
+        FI_InitValue(&pic->edgeColor[i], i < 3 ? 1 : 0);
+        FI_InitValue(&pic->otherEdgeColor[i], i < 3 ? 1 : 0);
     }
 }
 
 fitext_t *FI_FindText(const char *handle)
 {
-    int     i;
+    int             i;
 
-    for(i = 0; i < MAX_TEXT; i++)
+    for(i = 0; i < MAX_TEXT; ++i)
     {
         if(fi->text[i].object.used &&
            !stricmp(fi->text[i].object.handle, handle))
         {
-            return fi->text + i;
+            return &fi->text[i];
         }
     }
+
     return NULL;
 }
 
 fiobj_t *FI_FindObject(const char *handle)
 {
-    fipic_t *pic;
-    fitext_t *text;
+    fipic_t        *pic;
+    fitext_t       *text;
 
     // First check all pics.
     if((pic = FI_FindPic(handle)) != NULL)
@@ -1095,61 +1104,68 @@ fiobj_t *FI_FindObject(const char *handle)
 
 fipic_t *FI_GetPic(const char *handle)
 {
-    int     i;
-    fipic_t *unused = NULL;
+    int             i;
+    fipic_t        *unused = NULL;
 
-    for(i = 0; i < MAX_PICS; i++)
+    for(i = 0; i < MAX_PICS; ++i)
     {
         if(!fi->pics[i].object.used)
         {
             if(!unused)
-                unused = fi->pics + i;
+                unused = &fi->pics[i];
+
             continue;
         }
+
         if(!stricmp(fi->pics[i].object.handle, handle))
-            return fi->pics + i;
+            return &fi->pics[i];
     }
 
     // Allocate an empty one.
     if(!unused)
     {
         Con_Message("FI_GetPic: No room for \"%s\".", handle);
-        return &fi_dummypic;    // No more space.
+        return &fi_dummypic; // No more space.
     }
+
     memset(unused, 0, sizeof(*unused));
     strncpy(unused->object.handle, handle, sizeof(unused->object.handle) - 1);
     unused->object.used = true;
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
         FI_InitValue(&unused->object.color[i], 1);
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
         FI_InitValue(&unused->object.scale[i], 1);
     FI_ClearAnimation(unused);
+
     return unused;
 }
 
 fitext_t *FI_GetText(char *handle)
 {
-    fitext_t *unused = NULL;
-    int     i;
+    int             i;
+    fitext_t       *unused = NULL;
 
-    for(i = 0; i < MAX_TEXT; i++)
+    for(i = 0; i < MAX_TEXT; ++i)
     {
         if(!fi->text[i].object.used)
         {
             if(!unused)
-                unused = fi->text + i;
+                unused = &fi->text[i];
+
             continue;
         }
+
         if(!stricmp(fi->text[i].object.handle, handle))
-            return fi->text + i;
+            return &fi->text[i];
     }
 
     // Allocate an empty one.
     if(!unused)
     {
         Con_Message("FI_GetText: No room for \"%s\".", handle);
-        return &fi_dummytext;   // No more space.
+        return &fi_dummytext; // No more space.
     }
+
     if(unused->text)
         Z_Free(unused->text);
     memset(unused, 0, sizeof(*unused));
@@ -1158,30 +1174,31 @@ fitext_t *FI_GetText(char *handle)
     unused->wait = 3;
 #if __JDOOM__
     unused->lineheight = 11;
-    FI_InitValue(&unused->object.color[0], 1);  // Red text by default.
+    FI_InitValue(&unused->object.color[0], 1); // Red text by default.
 #else
     unused->lineheight = 9;
     // White text.
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
         FI_InitValue(&unused->object.color[i], 1);
 #endif
-    FI_InitValue(&unused->object.color[3], 1);  // Opaque.
-    for(i = 0; i < 2; i++)
+    FI_InitValue(&unused->object.color[3], 1); // Opaque.
+    for(i = 0; i < 2; ++i)
         FI_InitValue(&unused->object.scale[i], 1);
+
     return unused;
 }
 
-void FI_SetText(fitext_t * tex, char *str)
+void FI_SetText(fitext_t *tex, char *str)
 {
-    int     len = strlen(str) + 1;
+    int             len = strlen(str) + 1;
 
     if(tex->text)
-        Z_Free(tex->text);      // Free any previous text.
+        Z_Free(tex->text); // Free any previous text.
     tex->text = Z_Malloc(len, PU_STATIC, 0);
     memcpy(tex->text, str, len);
 }
 
-void FI_ObjectThink(fiobj_t * obj)
+void FI_ObjectThink(fiobj_t *obj)
 {
     FI_ValueThink(&obj->x);
     FI_ValueThink(&obj->y);
@@ -1192,9 +1209,9 @@ void FI_ObjectThink(fiobj_t * obj)
 
 void FI_Ticker(void)
 {
-    int     i, k, last = 0;
-    fipic_t *pic;
-    fitext_t *tex;
+    int             i, k, last = 0;
+    fipic_t        *pic;
+    fitext_t       *tex;
 
     if(!fi_active)
         return;
@@ -1202,7 +1219,7 @@ void FI_Ticker(void)
     if(fi->mode == FIMODE_OVERLAY)
     {
         // Has the game mode changed?
-        if(fi->overlay_gamestate != G_GetGameState())
+        if(fi->overlayGameState != G_GetGameState())
         {
             // Overlay scripts don't survive this...
             FI_End();
@@ -1213,23 +1230,24 @@ void FI_Ticker(void)
     fi->timer++;
 
     // Interpolateable values.
-    FI_ValueArrayThink(fi->bgcolor, 4);
-    FI_ValueArrayThink(fi->imgoffset, 2);
+    FI_ValueArrayThink(fi->bgColor, 4);
+    FI_ValueArrayThink(fi->imgOffset, 2);
     FI_ValueArrayThink(fi->filter, 4);
-    for(i = 0; i < 9; i++)
-        FI_ValueArrayThink(fi->textcolor[i], 3);
-    for(i = 0, pic = fi->pics; i < MAX_PICS; i++, pic++)
+    for(i = 0; i < 9; ++i)
+        FI_ValueArrayThink(fi->textColor[i], 3);
+    for(i = 0, pic = fi->pics; i < MAX_PICS; ++i, pic++)
     {
         if(!pic->object.used)
             continue;
+
         FI_ObjectThink(&pic->object);
-        FI_ValueArrayThink(pic->other_color, 4);
-        FI_ValueArrayThink(pic->edge_color, 4);
-        FI_ValueArrayThink(pic->other_edge_color, 4);
+        FI_ValueArrayThink(pic->otherColor, 4);
+        FI_ValueArrayThink(pic->edgeColor, 4);
+        FI_ValueArrayThink(pic->otherEdgeColor, 4);
         // If animating, decrease the sequence timer.
-        if(pic->seq_wait[pic->seq])
+        if(pic->seqWait[pic->seq])
         {
-            if(--pic->seq_timer <= 0)
+            if(--pic->seqTimer <= 0)
             {
                 // Advance the sequence position. k = next pos.
                 k = pic->seq + 1;
@@ -1242,23 +1260,27 @@ void FI_Ticker(void)
                 else if(pic->lump[k] <= 0)
                 {
                     // This is the end. Stop sequence.
-                    pic->seq_wait[k = pic->seq] = 0;
+                    pic->seqWait[k = pic->seq] = 0;
                     pic->flags.done = true;
                 }
+
                 // Advance to the next pos.
                 pic->seq = k;
-                pic->seq_timer = pic->seq_wait[k];
+                pic->seqTimer = pic->seqWait[k];
+
                 // Play a sound?
                 if(pic->sound[k] > 0)
                     S_LocalSound(pic->sound[k], NULL);
             }
         }
     }
+
     // Text objects.
-    for(i = 0, tex = fi->text; i < MAX_TEXT; i++, tex++)
+    for(i = 0, tex = fi->text; i < MAX_TEXT; ++i, tex++)
     {
         if(!tex->object.used)
             continue;
+
         FI_ObjectThink(&tex->object);
         if(tex->wait)
         {
@@ -1268,18 +1290,20 @@ void FI_Ticker(void)
                 tex->pos++;
             }
         }
-        if(tex->scroll_wait)
+
+        if(tex->scrollWait)
         {
-            if(--tex->scroll_timer <= 0)
+            if(--tex->scrollTimer <= 0)
             {
-                tex->scroll_timer = tex->scroll_wait;
+                tex->scrollTimer = tex->scrollWait;
                 tex->object.y.target -= 1;
-                tex->object.y.steps = tex->scroll_wait;
+                tex->object.y.steps = tex->scrollWait;
             }
         }
+
         // Is the text object fully visible?
-        tex->flags.all_visible = (!tex->wait ||
-                                  tex->pos >= FI_TextObjectLength(tex));
+        tex->flags.all_visible =
+            (!tex->wait || tex->pos >= FI_TextObjectLength(tex));
     }
 
     // If we're waiting, don't execute any commands.
@@ -1291,24 +1315,27 @@ void FI_Ticker(void)
         return;
 
     // If we're waiting for a text to finish typing, do nothing.
-    if(fi->waitingtext)
+    if(fi->waitingText)
     {
-        if(!fi->waitingtext->flags.all_visible)
+        if(!fi->waitingText->flags.all_visible)
             return;
-        fi->waitingtext = NULL;
+
+        fi->waitingText = NULL;
     }
 
     // Waiting for an animation to reach its end?
-    if(fi->waitingpic)
+    if(fi->waitingPic)
     {
-        if(!fi->waitingpic->flags.done)
+        if(!fi->waitingPic->flags.done)
             return;
-        fi->waitingpic = NULL;
+
+        fi->waitingPic = NULL;
     }
 
     // Execute commands until a wait time is set or we reach the end of
     // the script. If the end is reached, the finale really ends (FI_End).
-    while(fi_active && !fi->wait && !fi->waitingtext && !fi->waitingpic && !last)
+    while(fi_active && !fi->wait && !fi->waitingText && !fi->waitingPic &&
+          !last)
         last = !FI_ExecuteNextCommand();
 
     // The script has ended!
@@ -1318,11 +1345,11 @@ void FI_Ticker(void)
 
 void FI_SkipTo(const char *marker)
 {
-    memset(fi->gototarget, 0, sizeof(fi->gototarget));
-    strncpy(fi->gototarget, marker, sizeof(fi->gototarget) - 1);
+    memset(fi->gotoTarget, 0, sizeof(fi->gotoTarget));
+    strncpy(fi->gotoTarget, marker, sizeof(fi->gotoTarget) - 1);
 
     // Start skipping until the marker is found.
-    fi->gotoskip = true;
+    fi->gotoSkip = true;
 
     // Stop any waiting.
     fi->wait = 0;
@@ -1336,8 +1363,8 @@ void FI_SkipTo(const char *marker)
  */
 int FI_SkipRequest(void)
 {
-    fi->waitingtext = NULL;     // Stop waiting for things.
-    fi->waitingpic = NULL;
+    fi->waitingText = NULL; // Stop waiting for things.
+    fi->waitingPic = NULL;
     if(fi->paused)
     {
         // Un-pause.
@@ -1345,24 +1372,26 @@ int FI_SkipRequest(void)
         fi->wait = 0;
         return true;
     }
-    if(fi->canskip)
+
+    if(fi->canSkip)
     {
         // Start skipping ahead.
         fi->skipping = true;
         fi->wait = 0;
         return true;
     }
-    return fi->eatevents;
+
+    return fi->eatEvents;
 }
 
-/*
- * Returns true if the event should open the menu.
+/**
+ * @return          @c true, if the event should open the menu.
  */
 boolean FI_IsMenuTrigger(event_t *ev)
 {
     if(!fi_active)
         return false;
-    return fi->showmenu;
+    return fi->showMenu;
 }
 
 int FI_AteEvent(event_t *ev)
@@ -1371,12 +1400,12 @@ int FI_AteEvent(event_t *ev)
     if(ev->state == EVS_UP)
         return false;
 
-    return fi->eatevents;
+    return fi->eatEvents;
 }
 
 int FI_Responder(event_t *ev)
 {
-    int     i;
+    int             i;
 
     if(!fi_active || IS_CLIENT)
         return false;
@@ -1390,16 +1419,16 @@ int FI_Responder(event_t *ev)
         // Any handlers for this key event?
         for(i = 0; i < MAX_HANDLERS; i++)
         {
-            if(fi->keyhandlers[i].code == ev->data1)
+            if(fi->keyHandlers[i].code == ev->data1)
             {
-                FI_SkipTo(fi->keyhandlers[i].marker);
+                FI_SkipTo(fi->keyHandlers[i].marker);
                 return FI_AteEvent(ev);
             }
         }
     }
 
     // If we can't skip, there's no interaction of any kind.
-    if(!fi->canskip && !fi->paused)
+    if(!fi->canSkip && !fi->paused)
         return FI_AteEvent(ev);
 
     // We are only interested in key/button down presses.
@@ -1424,7 +1453,8 @@ int FI_FilterChar(int ch)
     else if(ch == '\\')
         ch = '/';
     else if(ch < 32 || ch > 'Z')
-        ch = 32;                // We don't have this char.
+        ch = 32; // We don't have this char.
+
     return ch;
 }
 
@@ -1434,13 +1464,14 @@ int FI_CharWidth(int ch, boolean fontb)
 
     if(ch < 33)
         return 4;
+
     return fontb ? hu_font_b[ch - HU_FONTSTART].width :
         hu_font_a[ch - HU_FONTSTART].width;
 }
 
 int FI_GetLineWidth(char *text, boolean fontb)
 {
-    int     width = 0;
+    int             width = 0;
 
     for(; *text; text++)
     {
@@ -1457,12 +1488,13 @@ int FI_GetLineWidth(char *text, boolean fontb)
         }
         width += FI_CharWidth(*text, fontb);
     }
+
     return width;
 }
 
 int FI_DrawChar(int x, int y, int ch, boolean fontb)
 {
-    int     lump;
+    int             lump;
 
     ch = FI_FilterChar(ch);
 
@@ -1474,23 +1506,24 @@ int FI_DrawChar(int x, int y, int ch, boolean fontb)
     // Draw the character. Don't try to draw spaces.
     if(ch > 32)
         GL_DrawPatch_CS(x, y, lump);
+
     return FI_CharWidth(ch, fontb);
 }
 
-void FI_UseColor(fivalue_t * color, int components)
+void FI_UseColor(fivalue_t *color, int components)
 {
     if(components == 3)
     {
-        gl.Color3f(color[0].value, color[1].value, color[2].value);
+        DGL_Color3f(color[0].value, color[1].value, color[2].value);
     }
     else if(components == 4)
     {
-        gl.Color4f(color[0].value, color[1].value, color[2].value,
+        DGL_Color4f(color[0].value, color[1].value, color[2].value,
                    color[3].value);
     }
 }
 
-void FI_UseTextColor(fitext_t * tex, int idx)
+void FI_UseTextColor(fitext_t *tex, int idx)
 {
     if(!idx)
     {
@@ -1499,25 +1532,25 @@ void FI_UseTextColor(fitext_t * tex, int idx)
     }
     else
     {
-        gl.Color4f(fi->textcolor[idx - 1][0].value,
-                   fi->textcolor[idx - 1][1].value,
-                   fi->textcolor[idx - 1][2].value,
-                   tex->object.color[3].value);
+        DGL_Color4f(fi->textColor[idx - 1][0].value,
+                    fi->textColor[idx - 1][1].value,
+                    fi->textColor[idx - 1][2].value,
+                    tex->object.color[3].value);
     }
 }
 
 /**
- * Returns the length as a counter.
+ * @return          The length as a counter.
  */
-int FI_TextObjectLength(fitext_t * tex)
+int FI_TextObjectLength(fitext_t *tex)
 {
-    int     cnt;
-    char   *ptr;
-    float   secondLen = (tex->wait ? 35.0f / tex->wait : 0);
+    int             cnt;
+    char           *ptr;
+    float           secondLen = (tex->wait ? 35.0f / tex->wait : 0);
 
     for(cnt = 0, ptr = tex->text; *ptr; ptr++)
     {
-        if(*ptr == '\\')        // Escape?
+        if(*ptr == '\\') // Escape?
         {
             if(!*++ptr)
                 break;
@@ -1532,31 +1565,33 @@ int FI_TextObjectLength(fitext_t * tex)
             if((*ptr >= '0' && *ptr <= '9') || *ptr == 'n' || *ptr == 'N')
                 continue;
         }
-        cnt++;                  // An actual character.
+
+        cnt++; // An actual character.
     }
+
     return cnt;
 }
 
 void FI_Rotate(float angle)
 {
     // Counter the VGA aspect ratio.
-    gl.Scalef(1, 200.0f / 240.0f, 1);
-    gl.Rotatef(angle, 0, 0, 1);
-    gl.Scalef(1, 240.0f / 200.0f, 1);
+    DGL_Scalef(1, 200.0f / 240.0f, 1);
+    DGL_Rotatef(angle, 0, 0, 1);
+    DGL_Scalef(1, 240.0f / 200.0f, 1);
 }
 
-void FI_DrawText(fitext_t * tex)
+void FI_DrawText(fitext_t *tex)
 {
-    int     cnt, x = 0, y = 0;
-    char   *ptr;
-    int     linew = -1;
-    int     ch;
+    int             cnt, x = 0, y = 0;
+    char           *ptr;
+    int             linew = -1;
+    int             ch;
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
-    gl.Translatef(tex->object.x.value, tex->object.y.value, 0);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(tex->object.x.value, tex->object.y.value, 0);
     FI_Rotate(tex->object.angle.value);
-    gl.Scalef(tex->object.scale[0].value, tex->object.scale[1].value, 1);
+    DGL_Scalef(tex->object.scale[0].value, tex->object.scale[1].value, 1);
 
     // Set color zero (the normal color).
     FI_UseTextColor(tex, 0);
@@ -1567,42 +1602,49 @@ void FI_DrawText(fitext_t * tex)
     {
         if(linew < 0)
             linew = FI_GetLineWidth(ptr, tex->flags.font_b);
+
         ch = *ptr;
-        if(*ptr == '\\')        // Escape?
+        if(*ptr == '\\') // Escape?
         {
             if(!*++ptr)
                 break;
+
             // Change of color.
             if(*ptr >= '0' && *ptr <= '9')
             {
                 FI_UseTextColor(tex, *ptr - '0');
                 continue;
             }
+
             // 'w' = half a second wait, 'W' = second's wait
-            if(*ptr == 'w' || *ptr == 'W')  // Wait?
+            if(*ptr == 'w' || *ptr == 'W') // Wait?
             {
                 if(tex->wait)
                     cnt += (int) (35.0 / tex->wait / (*ptr == 'w' ? 2 : 1));
                 continue;
             }
+
             // 'p' = 5 second wait, 'P' = 10 second wait
-            if(*ptr == 'p' || *ptr == 'P')  // Longer pause?
+            if(*ptr == 'p' || *ptr == 'P') // Longer pause?
             {
                 if(tex->wait)
                     cnt += (int) (35.0 / tex->wait * (*ptr == 'p' ? 5 : 10));
                 continue;
             }
-            if(*ptr == 'n' || *ptr == 'N')  // Newline?
+
+            if(*ptr == 'n' || *ptr == 'N') // Newline?
             {
                 x = 0;
                 y += tex->lineheight;
                 linew = -1;
-                cnt++;          // Include newlines in the wait count.
+                cnt++; // Include newlines in the wait count.
                 continue;
             }
+
             if(*ptr == '_')
                 ch = ' ';
         }
+
         // Let's do Y-clipping (in case of tall text blocks).
         if(tex->object.scale[1].value * y + tex->object.y.value >=
            -tex->object.scale[1].value * tex->lineheight &&
@@ -1611,11 +1653,12 @@ void FI_DrawText(fitext_t * tex)
             x += FI_DrawChar(tex->flags.centered ? x - linew / 2 : x, y, ch,
                              tex->flags.font_b);
         }
-        cnt++;                  // Actual character drawn.
+
+        cnt++; // Actual character drawn.
     }
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 void FI_GetTurnCenter(fipic_t *pic, float *center)
@@ -1647,29 +1690,29 @@ void FI_GetTurnCenter(fipic_t *pic, float *center)
  */
 void FI_Drawer(void)
 {
-    int     i, sq;
-    float   mid[2];
-    fipic_t *pic;
-    fitext_t *tex;
+    int             i, sq;
+    float           mid[2];
+    fipic_t        *pic;
+    fitext_t       *tex;
 
     // Don't draw anything until we are sure the script has started.
     if(!fi_active || !fi_cmd_executed)
         return;
 
     // Draw the background.
-    if(fi->bgflat >= 0)
+    if(fi->bgFlat >= 0)
     {
-        FI_UseColor(fi->bgcolor, 4);
-        GL_SetMaterial(fi->bgflat, MAT_FLAT);
+        FI_UseColor(fi->bgColor, 4);
+        GL_SetMaterial(fi->bgFlat, MAT_FLAT);
         GL_DrawRectTiled(0, 0, 320, 200, 64, 64);
     }
     else
     {
         // Just clear the screen, then.
-        gl.Disable(DGL_TEXTURING);
-        GL_DrawRect(0, 0, 320, 200, fi->bgcolor[0].value, fi->bgcolor[1].value,
-                    fi->bgcolor[2].value, fi->bgcolor[3].value);
-        gl.Enable(DGL_TEXTURING);
+        DGL_Disable(DGL_TEXTURING);
+        GL_DrawRect(0, 0, 320, 200, fi->bgColor[0].value, fi->bgColor[1].value,
+                    fi->bgColor[2].value, fi->bgColor[3].value);
+        DGL_Enable(DGL_TEXTURING);
     }
 
     // Draw images.
@@ -1686,15 +1729,15 @@ void FI_Drawer(void)
         FI_GetTurnCenter(pic, mid);
 
         // Setup the transformation.
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PushMatrix();
-        gl.Translatef(pic->object.x.value - fi->imgoffset[0].value,
-                      pic->object.y.value - fi->imgoffset[1].value, 0);
-        gl.Translatef(mid[VX], mid[VY], 0);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        DGL_Translatef(pic->object.x.value - fi->imgOffset[0].value,
+                      pic->object.y.value - fi->imgOffset[1].value, 0);
+        DGL_Translatef(mid[VX], mid[VY], 0);
         FI_Rotate(pic->object.angle.value);
         // Move to origin.
-        gl.Translatef(-mid[VX], -mid[VY], 0);
-        gl.Scalef((pic->flip[sq] ? -1 : 1) * pic->object.scale[0].value,
+        DGL_Translatef(-mid[VX], -mid[VY], 0);
+        DGL_Scalef((pic->flip[sq] ? -1 : 1) * pic->object.scale[0].value,
                   pic->object.scale[1].value, 1);
 
         // Draw it.
@@ -1702,50 +1745,50 @@ void FI_Drawer(void)
         {
             if(pic->flags.is_ximage)
             {
-                gl.Enable(DGL_TEXTURING);
-                gl.Bind(pic->lump[sq]);
+                DGL_Enable(DGL_TEXTURING);
+                DGL_Bind(pic->lump[sq]);
             }
             else
             {
                 // The fill.
-                gl.Disable(DGL_TEXTURING);
+                DGL_Disable(DGL_TEXTURING);
             }
 
-            gl.Begin(DGL_QUADS);
+            DGL_Begin(DGL_QUADS);
             {
                 FI_UseColor(pic->object.color, 4);
-                gl.TexCoord2f(0, 0);
-                gl.Vertex2f(0, 0);
-                gl.TexCoord2f(1, 0);
-                gl.Vertex2f(1, 0);
-                FI_UseColor(pic->other_color, 4);
-                gl.TexCoord2f(1, 1);
-                gl.Vertex2f(1, 1);
-                gl.TexCoord2f(0, 1);
-                gl.Vertex2f(0, 1);
+                DGL_TexCoord2f(0, 0);
+                DGL_Vertex2f(0, 0);
+                DGL_TexCoord2f(1, 0);
+                DGL_Vertex2f(1, 0);
+                FI_UseColor(pic->otherColor, 4);
+                DGL_TexCoord2f(1, 1);
+                DGL_Vertex2f(1, 1);
+                DGL_TexCoord2f(0, 1);
+                DGL_Vertex2f(0, 1);
             }
-            gl.End();
+            DGL_End();
 
             // The edges never have a texture.
-            gl.Disable(DGL_TEXTURING);
+            DGL_Disable(DGL_TEXTURING);
 
-            gl.Begin(DGL_LINES);
+            DGL_Begin(DGL_LINES);
             {
-                FI_UseColor(pic->edge_color, 4);
-                gl.Vertex2f(0, 0);
-                gl.Vertex2f(1, 0);
-                gl.Vertex2f(1, 0);
-                FI_UseColor(pic->other_edge_color, 4);
-                gl.Vertex2f(1, 1);
-                gl.Vertex2f(1, 1);
-                gl.Vertex2f(0, 1);
-                gl.Vertex2f(0, 1);
-                FI_UseColor(pic->edge_color, 4);
-                gl.Vertex2f(0, 0);
+                FI_UseColor(pic->edgeColor, 4);
+                DGL_Vertex2f(0, 0);
+                DGL_Vertex2f(1, 0);
+                DGL_Vertex2f(1, 0);
+                FI_UseColor(pic->otherEdgeColor, 4);
+                DGL_Vertex2f(1, 1);
+                DGL_Vertex2f(1, 1);
+                DGL_Vertex2f(0, 1);
+                DGL_Vertex2f(0, 1);
+                FI_UseColor(pic->edgeColor, 4);
+                DGL_Vertex2f(0, 0);
             }
-            gl.End();
+            DGL_End();
 
-            gl.Enable(DGL_TEXTURING);
+            DGL_Enable(DGL_TEXTURING);
         }
         else if(pic->flags.is_patch)
         {
@@ -1756,16 +1799,16 @@ void FI_Drawer(void)
             //// \fixme The raw screen drawer should not ignore rotation.
             //// It should allow the caller to set up a transformation matrix.
             GL_DrawRawScreen_CS(pic->lump[sq],
-                                pic->object.x.value - fi->imgoffset[0].value,
-                                pic->object.y.value - fi->imgoffset[1].value,
+                                pic->object.x.value - fi->imgOffset[0].value,
+                                pic->object.y.value - fi->imgOffset[1].value,
                                 (pic->flip[sq] ? -1 : 1) *
                                 pic->object.scale[0].value,
                                 pic->object.scale[1].value);
         }
 
         // Restore original transformation.
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
     }
 
     // Draw text.
@@ -1780,15 +1823,15 @@ void FI_Drawer(void)
     if(fi->filter[3].value > 0)
     {
         // Only draw if necessary.
-        gl.Disable(DGL_TEXTURING);
+        DGL_Disable(DGL_TEXTURING);
         FI_UseColor(fi->filter, 4);
-        gl.Begin(DGL_QUADS);
-        gl.Vertex2f(0, 0);
-        gl.Vertex2f(320, 0);
-        gl.Vertex2f(320, 200);
-        gl.Vertex2f(0, 200);
-        gl.End();
-        gl.Enable(DGL_TEXTURING);
+        DGL_Begin(DGL_QUADS);
+        DGL_Vertex2f(0, 0);
+        DGL_Vertex2f(320, 0);
+        DGL_Vertex2f(320, 200);
+        DGL_Vertex2f(0, 200);
+        DGL_End();
+        DGL_Enable(DGL_TEXTURING);
     }
 }
 
@@ -1799,12 +1842,12 @@ void FI_Drawer(void)
 void FIC_Do(void)
 {
     // This command is called even when (cond)skipping.
-    if(fi->skipnext)
+    if(fi->skipNext)
     {
         // A conditional skip has been issued.
         // We'll go into DO-skipping mode. skipnext won't be cleared
         // until the matching semicolon is found.
-        fi->dolevel++;
+        fi->doLevel++;
     }
 }
 
@@ -1816,17 +1859,17 @@ void FIC_End(void)
 
 void FIC_BGFlat(void)
 {
-    fi->bgflat = R_CheckMaterialNumForName(FI_GetToken(), MAT_FLAT);
+    fi->bgFlat = R_CheckMaterialNumForName(FI_GetToken(), MAT_FLAT);
 }
 
 void FIC_NoBGFlat(void)
 {
-    fi->bgflat = -1;
+    fi->bgFlat = -1;
 }
 
 void FIC_InTime(void)
 {
-    fi->intime = FI_GetTics();
+    fi->inTime = FI_GetTics();
 }
 
 void FIC_Tic(void)
@@ -1841,12 +1884,12 @@ void FIC_Wait(void)
 
 void FIC_WaitText(void)
 {
-    fi->waitingtext = FI_GetText(FI_GetToken());
+    fi->waitingText = FI_GetText(FI_GetToken());
 }
 
 void FIC_WaitAnim(void)
 {
-    fi->waitingpic = FI_GetPic(FI_GetToken());
+    fi->waitingPic = FI_GetPic(FI_GetToken());
 }
 
 void FIC_Color(void)
@@ -1854,7 +1897,7 @@ void FIC_Color(void)
     int     i;
 
     for(i = 0; i < 3; i++)
-        FI_SetValue(fi->bgcolor + i, FI_GetFloat());
+        FI_SetValue(fi->bgColor + i, FI_GetFloat());
 }
 
 void FIC_ColorAlpha(void)
@@ -1862,7 +1905,7 @@ void FIC_ColorAlpha(void)
     int     i;
 
     for(i = 0; i < 4; i++)
-        FI_SetValue(fi->bgcolor + i, FI_GetFloat());
+        FI_SetValue(fi->bgColor + i, FI_GetFloat());
 }
 
 void FIC_Pause(void)
@@ -1873,12 +1916,12 @@ void FIC_Pause(void)
 
 void FIC_CanSkip(void)
 {
-    fi->canskip = true;
+    fi->canSkip = true;
 }
 
 void FIC_NoSkip(void)
 {
-    fi->canskip = false;
+    fi->canSkip = false;
 }
 
 void FIC_SkipHere(void)
@@ -1889,13 +1932,13 @@ void FIC_SkipHere(void)
 void FIC_Events(void)
 {
     // Script will eat all input events.
-    fi->eatevents = true;
+    fi->eatEvents = true;
 }
 
 void FIC_NoEvents(void)
 {
     // Script will pass unprocessed events to other responders.
-    fi->eatevents = false;
+    fi->eatEvents = false;
 }
 
 void FIC_OnKey(void)
@@ -1992,21 +2035,21 @@ void FIC_If(void)
         Con_Message("FIC_If: Unknown condition \"%s\".\n", fi_token);
     }
     // Skip the next command if the value is false.
-    fi->skipnext = !val;
+    fi->skipNext = !val;
 }
 
 void FIC_IfNot(void)
 {
     // This is the same as "if" but the skip condition is the opposite.
     FIC_If();
-    fi->skipnext = !fi->skipnext;
+    fi->skipNext = !fi->skipNext;
 }
 
 void FIC_Else(void)
 {
     // The only time the ELSE condition doesn't skip is immediately
     // after a skip.
-    fi->skipnext = !fi->lastskipped;
+    fi->skipNext = !fi->lastSkipped;
 }
 
 void FIC_GoTo(void)
@@ -2018,8 +2061,8 @@ void FIC_Marker(void)
 {
     FI_GetToken();
     // Does it match the goto string?
-    if(!stricmp(fi->gototarget, fi_token))
-        fi->gotoskip = false;
+    if(!stricmp(fi->gotoTarget, fi_token))
+        fi->gotoSkip = false;
 }
 
 void FIC_Delete(void)
@@ -2116,7 +2159,7 @@ void FIC_Anim(void)
     if(i == MAX_SEQUENCE)
         return;                 // Can't do it...
     pic->lump[i] = lump;
-    pic->seq_wait[i] = time;
+    pic->seqWait[i] = time;
     pic->flags.is_patch = true;
     pic->flags.done = false;
 }
@@ -2133,7 +2176,7 @@ void FIC_AnimImage(void)
     if(i == MAX_SEQUENCE)
         return;                 // Can't do it...
     pic->lump[i] = lump;
-    pic->seq_wait[i] = time;
+    pic->seqWait[i] = time;
     pic->flags.is_patch = false;
     pic->flags.is_rect = false;
     pic->flags.done = false;
@@ -2151,29 +2194,33 @@ void FIC_Repeat(void)
 
 void FIC_StateAnim(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
-    int     i;
-    int     st = Def_Get(DD_DEF_STATE, FI_GetToken(), 0);
-    int     count = FI_GetInteger();
-    spriteinfo_t sinf;
+    fipic_t        *pic = FI_GetPic(FI_GetToken());
+    int             i;
+    int             s = Def_Get(DD_DEF_STATE, FI_GetToken(), 0);
+    int             count = FI_GetInteger();
+    spriteinfo_t    sinf;
 
     // Animate N states starting from the given one.
     pic->flags.is_patch = true;
     pic->flags.is_rect = false;
     pic->flags.done = false;
-    for(; count > 0 && st > 0; count--)
+    for(; count > 0 && s > 0; count--)
     {
+        state_t            *st = &states[s];
+
         i = FI_GetNextSeq(pic);
         if(i == MAX_SEQUENCE)
-            break;              // No room!
-        R_GetSpriteInfo(states[st].sprite, states[st].frame & 0x7fff, &sinf);
+            break; // No room!
+
+        R_GetSpriteInfo(st->sprite, st->frame & 0x7fff, &sinf);
         pic->lump[i] = sinf.realLump;
         pic->flip[i] = sinf.flip;
-        pic->seq_wait[i] = states[st].tics;
-        if(pic->seq_wait[i] == 0)
-            pic->seq_wait[i] = 1;
+        pic->seqWait[i] = st->tics;
+        if(pic->seqWait[i] == 0)
+            pic->seqWait[i] = 1;
+
         // Go to the next state.
-        st = states[st].nextstate;
+        s = st->nextState;
     }
 }
 
@@ -2227,9 +2274,9 @@ void FIC_ObjectRGB(void)
             if(pic && pic->flags.is_rect)
             {
                 // This affects all the colors.
-                FI_SetValue(pic->other_color + i, value);
-                FI_SetValue(pic->edge_color + i, value);
-                FI_SetValue(pic->other_edge_color + i, value);
+                FI_SetValue(pic->otherColor + i, value);
+                FI_SetValue(pic->edgeColor + i, value);
+                FI_SetValue(pic->otherEdgeColor + i, value);
             }
         }
         else
@@ -2251,9 +2298,9 @@ void FIC_ObjectAlpha(void)
 
         if(pic && pic->flags.is_rect)
         {
-            FI_SetValue(pic->other_color + 3, value);
-            /*FI_SetValue(pic->edge_color + 3, value);
-               FI_SetValue(pic->other_edge_color + 3, value); */
+            FI_SetValue(pic->otherColor + 3, value);
+            /*FI_SetValue(pic->edgeColor + 3, value);
+               FI_SetValue(pic->otherEdgeColor + 3, value); */
         }
     }
 }
@@ -2368,7 +2415,7 @@ void FIC_FillColor(void)
         if(which & 1)
             FI_SetValue(obj->color + i, color);
         if(which & 2)
-            FI_SetValue(pic->other_color + i, color);
+            FI_SetValue(pic->otherColor + i, color);
     }
 }
 
@@ -2404,20 +2451,20 @@ void FIC_EdgeColor(void)
         color = FI_GetFloat();
 
         if(which & 1)
-            FI_SetValue(pic->edge_color + i, color);
+            FI_SetValue(pic->edgeColor + i, color);
         if(which & 2)
-            FI_SetValue(pic->other_edge_color + i, color);
+            FI_SetValue(pic->otherEdgeColor + i, color);
     }
 }
 
 void FIC_OffsetX(void)
 {
-    FI_SetValue(fi->imgoffset, FI_GetFloat());
+    FI_SetValue(fi->imgOffset, FI_GetFloat());
 }
 
 void FIC_OffsetY(void)
 {
-    FI_SetValue(fi->imgoffset + 1, FI_GetFloat());
+    FI_SetValue(fi->imgOffset + 1, FI_GetFloat());
 }
 
 void FIC_Sound(void)
@@ -2443,18 +2490,18 @@ void FIC_SeeSound(void)
 {
     int     num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
 
-    if(num < 0 || mobjinfo[num].seesound <= 0)
+    if(num < 0 || mobjInfo[num].seeSound <= 0)
         return;
-    S_LocalSound(mobjinfo[num].seesound, NULL);
+    S_LocalSound(mobjInfo[num].seeSound, NULL);
 }
 
 void FIC_DieSound(void)
 {
     int     num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
 
-    if(num < 0 || mobjinfo[num].deathsound <= 0)
+    if(num < 0 || mobjInfo[num].deathSound <= 0)
         return;
-    S_LocalSound(mobjinfo[num].deathsound, NULL);
+    S_LocalSound(mobjInfo[num].deathSound, NULL);
 }
 
 void FIC_Music(void)
@@ -2575,7 +2622,7 @@ void FIC_TextColor(void)
     if(idx > 9)
         idx = 9;
     for(c = 0; c < 3; c++)
-        FI_SetValue(&fi->textcolor[idx - 1][c], FI_GetFloat());
+        FI_SetValue(&fi->textColor[idx - 1][c], FI_GetFloat());
 }
 
 void FIC_TextRGB(void)
@@ -2626,8 +2673,8 @@ void FIC_TextScroll(void)
 {
     fitext_t *tex = FI_GetText(FI_GetToken());
 
-    tex->scroll_timer = 0;
-    tex->scroll_wait = FI_GetInteger();
+    tex->scrollTimer = 0;
+    tex->scrollWait = FI_GetInteger();
 }
 
 void FIC_TextPos(void)
@@ -2727,10 +2774,10 @@ void FIC_Command(void)
 
 void FIC_ShowMenu(void)
 {
-    fi->showmenu = true;
+    fi->showMenu = true;
 }
 
 void FIC_NoShowMenu(void)
 {
-    fi->showmenu = false;
+    fi->showMenu = false;
 }

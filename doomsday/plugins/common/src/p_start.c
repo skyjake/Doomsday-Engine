@@ -2,7 +2,7 @@
  *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © Raven Software, Corp.
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -208,12 +208,12 @@ void P_DealPlayerStarts(int group)
     // First assign one start per player, only accepting perfect matches.
     for(i = 0, pl = players; i < MAXPLAYERS; i++, pl++)
     {
-        if(!pl->plr->ingame)
+        if(!pl->plr->inGame)
             continue;
 
         // The number of the start spot this player will use.
         spotNumber = i % MAX_START_SPOTS;
-        pl->startspot = -1;
+        pl->startSpot = -1;
 
         for(k = 0, mt = playerstarts; k < numPlayerStarts; ++k, mt++)
         {
@@ -222,19 +222,19 @@ void P_DealPlayerStarts(int group)
                 // This is a match.
 #if __JHEXEN__
                 if(mt->arg1 == group) // Group must match too.
-                    pl->startspot = k;
+                    pl->startSpot = k;
 #else
-                pl->startspot = k;
+                pl->startSpot = k;
 #endif
                 // Keep looking.
             }
         }
 
         // If still without a start spot, assign one randomly.
-        if(pl->startspot == -1)
+        if(pl->startSpot == -1)
         {
             // It's likely that some players will get the same start spots.
-            pl->startspot = M_Random() % numPlayerStarts;
+            pl->startSpot = M_Random() % numPlayerStarts;
         }
     }
 
@@ -243,11 +243,11 @@ void P_DealPlayerStarts(int group)
         Con_Printf("Player starting spots:\n");
         for(i = 0, pl = players; i < MAXPLAYERS; ++i, pl++)
         {
-            if(!pl->plr->ingame)
+            if(!pl->plr->inGame)
                 continue;
 
             Con_Printf("- pl%i: color %i, spot %i\n", i, cfg.playerColor[i],
-                       pl->startspot);
+                       pl->startSpot);
         }
     }
 }
@@ -458,7 +458,7 @@ void P_SpawnThings(void)
         playerCount = 0;
         for(i = 0; i < MAXPLAYERS; ++i)
         {
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
                 playerCount++;
         }
 
@@ -490,7 +490,7 @@ void P_SpawnPlayers(void)
     if(deathmatch)
     {
         for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
             {
                 players[i].plr->mo = NULL;
                 G_DeathMatchSpawnPlayer(i);
@@ -506,22 +506,24 @@ void P_SpawnPlayers(void)
              * Also in netgames?
 	         */
             for(i = 0; i < numPlayerStarts; ++i)
-                if(players[0].startspot != i && playerstarts[i].type == 1)
+            {
+                if(players[0].startSpot != i && playerstarts[i].type == 1)
                 {
                     P_SpawnPlayer(&playerstarts[i], 0);
                 }
+            }
         }
 #endif
         // Spawn everybody at their assigned places.
         // Might get messy if there aren't enough starts.
         for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
             {
                 spawnspot_t    *spot = NULL;
                 ddplayer_t     *ddpl = players[i].plr;
 
-                if(players[i].startspot < numPlayerStarts)
-                    spot = &playerstarts[players[i].startspot];
+                if(players[i].startSpot < numPlayerStarts)
+                    spot = &playerstarts[players[i].startSpot];
 
                 if(!P_FuzzySpawn(spot, i, false))
                 {
@@ -602,7 +604,7 @@ void G_DeathMatchSpawnPlayer(int playernum)
 spawnspot_t *P_GetPlayerStart(int group, int pnum)
 {
 #if __JDOOM__ || __JHERETIC__
-    return &playerstarts[players[pnum].startspot];
+    return &playerstarts[players[pnum].startSpot];
 #else
     int         i;
     spawnspot_t    *mt, *g0choice = NULL;
@@ -670,7 +672,7 @@ void P_MoveThingsOutOfWalls(void)
 
         // First all the things to process.
         for(k = 0, iter = P_GetPtrp(sec, DMT_MOBJS);
-            k < MAXLIST - 1 && iter; iter = iter->snext)
+            k < MAXLIST - 1 && iter; iter = iter->sNext)
         {
             // Wall torches are most often seen inside walls.
             if(iter->type == MT_MISC10)
@@ -747,7 +749,7 @@ void P_TurnGizmosAwayFromDoors(void)
 
         // First all the things to process.
         for(k = 0, iter = P_GetPtrp(sec, DMT_MOBJS);
-            k < MAXLIST - 1 && iter; iter = iter->snext)
+            k < MAXLIST - 1 && iter; iter = iter->sNext)
         {
             if(iter->type == MT_KEYGIZMOBLUE ||
                iter->type == MT_KEYGIZMOGREEN ||
@@ -822,7 +824,7 @@ void P_TurnTorchesToFaceWalls(void)
 
         // First all the things to process.
         for(k = 0, iter = P_GetPtrp(sec, DMT_MOBJS);
-            k < MAXLIST - 1 && iter; iter = iter->snext)
+            k < MAXLIST - 1 && iter; iter = iter->sNext)
         {
             if(iter->type == MT_ZWALLTORCH ||
                iter->type == MT_ZWALLTORCH_UNLIT)

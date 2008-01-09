@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -207,7 +207,7 @@ vgline_t         player_arrow[] = {
 
 typedef struct mapobjectinfo_s {
     float       rgba[4];
-    int         blendmode;
+    int         blendMode;
 
     float       glowAlpha;
     float       glowWidth;
@@ -677,7 +677,7 @@ void AM_Init(void)
         map->cfg.unseenLine.glow = NO_GLOW;
         map->cfg.unseenLine.glowAlpha = 1;
         map->cfg.unseenLine.glowWidth = 10;
-        map->cfg.unseenLine.blendmode = BM_NORMAL;
+        map->cfg.unseenLine.blendMode = BM_NORMAL;
         map->cfg.unseenLine.scaleWithView = false;
         map->cfg.unseenLine.rgba[0] = 1;
         map->cfg.unseenLine.rgba[1] = 1;
@@ -686,7 +686,7 @@ void AM_Init(void)
         map->cfg.singleSidedLine.glow = NO_GLOW;
         map->cfg.singleSidedLine.glowAlpha = 1;
         map->cfg.singleSidedLine.glowWidth = 10;
-        map->cfg.singleSidedLine.blendmode = BM_NORMAL;
+        map->cfg.singleSidedLine.blendMode = BM_NORMAL;
         map->cfg.singleSidedLine.scaleWithView = false;
         map->cfg.singleSidedLine.rgba[0] = 1;
         map->cfg.singleSidedLine.rgba[1] = 1;
@@ -695,7 +695,7 @@ void AM_Init(void)
         map->cfg.twoSidedLine.glow = NO_GLOW;
         map->cfg.twoSidedLine.glowAlpha = 1;
         map->cfg.twoSidedLine.glowWidth = 10;
-        map->cfg.twoSidedLine.blendmode = BM_NORMAL;
+        map->cfg.twoSidedLine.blendMode = BM_NORMAL;
         map->cfg.twoSidedLine.scaleWithView = false;
         map->cfg.twoSidedLine.rgba[0] = 1;
         map->cfg.twoSidedLine.rgba[1] = 1;
@@ -704,7 +704,7 @@ void AM_Init(void)
         map->cfg.floorChangeLine.glow = NO_GLOW;
         map->cfg.floorChangeLine.glowAlpha = 1;
         map->cfg.floorChangeLine.glowWidth = 10;
-        map->cfg.floorChangeLine.blendmode = BM_NORMAL;
+        map->cfg.floorChangeLine.blendMode = BM_NORMAL;
         map->cfg.floorChangeLine.scaleWithView = false;
         map->cfg.floorChangeLine.rgba[0] = 1;
         map->cfg.floorChangeLine.rgba[1] = 1;
@@ -713,7 +713,7 @@ void AM_Init(void)
         map->cfg.ceilingChangeLine.glow = NO_GLOW;
         map->cfg.ceilingChangeLine.glowAlpha = 1;
         map->cfg.ceilingChangeLine.glowWidth = 10;
-        map->cfg.ceilingChangeLine.blendmode = BM_NORMAL;
+        map->cfg.ceilingChangeLine.blendMode = BM_NORMAL;
         map->cfg.ceilingChangeLine.scaleWithView = false;
         map->cfg.ceilingChangeLine.rgba[0] = 1;
         map->cfg.ceilingChangeLine.rgba[1] = 1;
@@ -876,7 +876,7 @@ void AM_InitForLevel(void)
     // Setup all players' maps.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         map = &automaps[i];
@@ -921,7 +921,7 @@ void AM_Start(int pnum)
     if(IS_DEDICATED)
         return; // nothing to do.
 
-    if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->ingame)
+    if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->inGame)
         return;
 
     if(G_GetGameState() != GS_LEVEL)
@@ -934,7 +934,7 @@ void AM_Start(int pnum)
     map->active = true;
     AM_SetGlobalAlphaTarget(pnum, 1);
 
-    if(!players[map->followPlayer].plr->ingame)
+    if(!players[map->followPlayer].plr->inGame)
     {   // Set viewer target to the center of the map.
         setViewTarget(map, (bounds[1][VX] - bounds[0][VX]) / 2,
                             (bounds[1][VY] - bounds[0][VY]) / 2);
@@ -971,7 +971,7 @@ void AM_Stop(int pnum)
     if(IS_DEDICATED)
         return; // nothing to do.
 
-    if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->ingame)
+    if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->inGame)
         return;
 
     map = &automaps[pnum];
@@ -1656,7 +1656,7 @@ void AM_SetBlendmode(int pid, int objectname, blendmode_t blendmode)
         break;
     }
 
-    info->blendmode = blendmode;
+    info->blendMode = blendmode;
 }
 
 void AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
@@ -1799,7 +1799,7 @@ void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
     line->info.glowAlpha = CLAMP(glowAlpha, 0, 1);
     line->info.glowWidth = glowWidth;
     line->info.scaleWithView = scaleGlowWithView;
-    line->info.blendmode = blendmode;
+    line->info.blendMode = blendmode;
 }
 
 void AM_SetCheatLevel(int pid, int level)
@@ -1933,7 +1933,7 @@ void AM_UnloadData(void)
         return; // Nothing to do.
 
     if(amMaskTexture)
-        gl.DeleteTextures(1, (DGLuint*) &amMaskTexture);
+        DGL_DeleteTextures(1, (DGLuint*) &amMaskTexture);
     amMaskTexture = 0;
 }
 
@@ -2080,7 +2080,7 @@ static void mapTicker(automap_t *map)
     }
 
     // Map viewer location paning control.
-    if(map->panMode || !players[map->followPlayer].plr->ingame)
+    if(map->panMode || !players[map->followPlayer].plr->inGame)
     {
         float       xy[2] = { 0, 0 }; // deltas
 
@@ -2256,7 +2256,7 @@ void AM_Ticker(void)
     // All maps get to tick if their player is in-game.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         mapTicker(&automaps[i]);
@@ -2499,7 +2499,7 @@ static void renderWallSeg(seg_t *seg, void *data)
         return;
 
     xLine = P_ToXLine(line);
-    if(xLine->validcount == VALIDCOUNT)
+    if(xLine->validCount == VALIDCOUNT)
         return; // Already drawn once.
 
     lineFlags = P_GetIntp(line, DMU_FLAGS);
@@ -2525,7 +2525,7 @@ static void renderWallSeg(seg_t *seg, void *data)
                       TWOSIDED_GLOW, 1, 5, false, true, false, BM_ADD,
                       (map->flags & AMF_REND_LINE_NORMALS));
 
-            xLine->validcount = VALIDCOUNT;  // Mark as drawn this frame.
+            xLine->validCount = VALIDCOUNT;  // Mark as drawn this frame.
             return;
         }
     }
@@ -2592,10 +2592,10 @@ static void renderWallSeg(seg_t *seg, void *data)
                   info->glowWidth, false, info->scaleWithView,
                   (info->glow && !(xLine->special && !map->cfg.glowingLineSpecials)),
                   (xLine->special && !map->cfg.glowingLineSpecials ?
-                        BM_NORMAL : info->blendmode),
+                        BM_NORMAL : info->blendMode),
                   (map->flags & AMF_REND_LINE_NORMALS));
 
-        xLine->validcount = VALIDCOUNT; // Mark as drawn this frame.
+        xLine->validCount = VALIDCOUNT; // Mark as drawn this frame.
     }
 }
 
@@ -2774,7 +2774,7 @@ static void renderPlayers(void)
         float       alpha;
         mobj_t     *mo;
 
-        if(!p->plr->ingame)
+        if(!p->plr->inGame)
             continue;
 
 #if __JDOOM__ || __JHERETIC__
@@ -2813,7 +2813,7 @@ static void renderThings(int color, int colorrange)
     for(i = 0; i < numsectors; ++i)
     {
         for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter;
-            iter = iter->snext)
+            iter = iter->sNext)
         {
             if(!isPointVisible(map, iter->pos[VX], iter->pos[VY]))
                 continue;
@@ -2835,7 +2835,7 @@ static void renderKeys(void)
     float       size = PLAYERRADIUS;
     automap_t  *map = &automaps[mapviewplayer];
 
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(th->function != P_MobjThinker)
             continue;
@@ -3010,32 +3010,30 @@ static void setupGLStateForMap(void)
 */
     // check for scissor box (to clip the map lines and stuff).
     // Store the old scissor state.
-    gl.GetIntegerv(DGL_SCISSOR_TEST, scissorState);
-    gl.GetIntegerv(DGL_SCISSOR_BOX, scissorState + 1);
+    DGL_GetIntegerv(DGL_SCISSOR_TEST, scissorState);
+    DGL_GetIntegerv(DGL_SCISSOR_BOX, scissorState + 1);
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, scrwidth, scrheight, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, scrwidth, scrheight, -1, 1);
 
     // Do we want a background texture?
     if(maplumpnum)
     {
         // Apply the background texture onto a parallaxing layer which
         // follows the map view target (not player).
-        gl.Enable(DGL_TEXTURING);
+        DGL_Enable(DGL_TEXTURING);
 
-        gl.MatrixMode(DGL_TEXTURE);
-        gl.PushMatrix();
-        gl.LoadIdentity();
+        DGL_MatrixMode(DGL_TEXTURE);
+        DGL_PushMatrix();
+        DGL_LoadIdentity();
 
-        GL_SetRawImage(maplumpnum, false); // We only want the left portion.
-
-        gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-        gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
+         // We only want the left portion.
+        GL_SetRawImage(maplumpnum, false, DGL_REPEAT, DGL_REPEAT);
 
         GL_SetColorAndAlpha(map->cfg.backgroundRGBA[0],
                             map->cfg.backgroundRGBA[1],
@@ -3043,31 +3041,31 @@ static void setupGLStateForMap(void)
                             map->alpha * map->cfg.backgroundRGBA[3]);
 
         // Scale from texture to window space
-        gl.Translatef(win->x, win->y, 0);
+        DGL_Translatef(win->x, win->y, 0);
 
         // Apply the parallax scrolling, map rotation and counteract the
         // aspect of the quad (sized to map window dimensions).
-        gl.Translatef(MTOF(map, map->viewPLX) + .5f,
+        DGL_Translatef(MTOF(map, map->viewPLX) + .5f,
                       MTOF(map, map->viewPLY) + .5f, 0);
-        gl.Rotatef(map->angle, 0, 0, 1);
-        gl.Scalef(1, win->height / win->width, 1);
-        gl.Translatef(-(.5f), -(.5f), 0);
+        DGL_Rotatef(map->angle, 0, 0, 1);
+        DGL_Scalef(1, win->height / win->width, 1);
+        DGL_Translatef(-(.5f), -(.5f), 0);
 
-        gl.Begin(DGL_QUADS);
-        gl.TexCoord2f(0, 1);
-        gl.Vertex2f(win->x, win->y);
-        gl.TexCoord2f(1, 1);
-        gl.Vertex2f(win->x + win->width, win->y);
-        gl.TexCoord2f(1, 0);
-        gl.Vertex2f(win->x + win->width, win->y + win->height);
-        gl.TexCoord2f(0, 0);
-        gl.Vertex2f(win->x, win->y + win->height);
-        gl.End();
+        DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, 1);
+        DGL_Vertex2f(win->x, win->y);
+        DGL_TexCoord2f(1, 1);
+        DGL_Vertex2f(win->x + win->width, win->y);
+        DGL_TexCoord2f(1, 0);
+        DGL_Vertex2f(win->x + win->width, win->y + win->height);
+        DGL_TexCoord2f(0, 0);
+        DGL_Vertex2f(win->x, win->y + win->height);
+        DGL_End();
 
-        gl.MatrixMode(DGL_TEXTURE);
-        gl.PopMatrix();
+        DGL_MatrixMode(DGL_TEXTURE);
+        DGL_PopMatrix();
 
-        gl.MatrixMode(DGL_PROJECTION);
+        DGL_MatrixMode(DGL_PROJECTION);
     }
     else
     {
@@ -3083,37 +3081,37 @@ static void setupGLStateForMap(void)
     // How about an outside border?
 /*    if(win->width < srcwidth || win->height < scrheight)
     {
-        gl.Begin(DGL_LINES);
-        gl.Color4f(0.5f, 1, 0.5f, map->alpha - (1 - (cfg.automapLineAlpha /2)) );
+        DGL_Begin(DGL_LINES);
+        DGL_Color4f(0.5f, 1, 0.5f, map->alpha - (1 - (cfg.automapLineAlpha /2)) );
 
         if(win->height < srcwidth)
         {
-            gl.Vertex2f(win->x + win->width + 1, win->y - 1);
-            gl.Vertex2f(win->x + win->width + 1, win->y + win->height + 1);
+            DGL_Vertex2f(win->x + win->width + 1, win->y - 1);
+            DGL_Vertex2f(win->x + win->width + 1, win->y + win->height + 1);
 
-            gl.Vertex2f(win->x - 1, win->y + win->height + 1);
-            gl.Vertex2f(win->x - 1, win->y - 1);
+            DGL_Vertex2f(win->x - 1, win->y + win->height + 1);
+            DGL_Vertex2f(win->x - 1, win->y - 1);
         }
         if(cfg.automapHeight != 1)
         {
-            gl.Vertex2f(win->x - 1, win->y - 1);
-            gl.Vertex2f(win->X + win->width + 1, win->y - 1);
+            DGL_Vertex2f(win->x - 1, win->y - 1);
+            DGL_Vertex2f(win->X + win->width + 1, win->y - 1);
 
-            gl.Vertex2f(win->x + win->width + 1, win->y + win->height + 1);
-            gl.Vertex2f(win->x - 1, win->y + win->height + 1);
+            DGL_Vertex2f(win->x + win->width + 1, win->y + win->height + 1);
+            DGL_Vertex2f(win->x - 1, win->y + win->height + 1);
         }
-        gl.End();
+        DGL_End();
     }*/
 
     // Setup the scissor clipper.
-    gl.Scissor(win->x, win->y, win->width, win->height);
-    gl.Enable(DGL_SCISSOR_TEST);
+    DGL_Scissor(win->x, win->y, win->width, win->height);
+    DGL_Enable(DGL_SCISSOR_TEST);
 
     // Rotate map?
-    gl.Translatef(win->x + (win->width / 2.0f),
+    DGL_Translatef(win->x + (win->width / 2.0f),
                   win->y + (win->height / 2.0f), 0);
-    gl.Rotatef(map->angle, 0, 0, 1);
-    gl.Translatef(-(win->x + (win->width / 2.0f)),
+    DGL_Rotatef(map->angle, 0, 0, 1);
+    DGL_Translatef(-(win->x + (win->width / 2.0f)),
                   -(win->y + (win->height /2.0f)), 0);
 }
 
@@ -3123,12 +3121,12 @@ static void setupGLStateForMap(void)
 static void restoreGLStateFromMap(void)
 {
     // Return to the normal GL state.
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
     if(!scissorState[0])
-        gl.Disable(DGL_SCISSOR_TEST);
-    gl.Scissor(scissorState[1], scissorState[2], scissorState[3],
+        DGL_Disable(DGL_SCISSOR_TEST);
+    DGL_Scissor(scissorState[1], scissorState[2], scissorState[3],
                scissorState[4]);
 }
 
@@ -3160,10 +3158,10 @@ static void drawLevelName(void)
         lumpNum = lnames[mapnum].lump;
 #endif
 
-        gl.MatrixMode(DGL_PROJECTION);
-        gl.PushMatrix();
-        gl.LoadIdentity();
-        gl.Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PushMatrix();
+        DGL_LoadIdentity();
+        DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
 
         x = SCREENXTOFIXX(win->x + (win->width * .5f));
         y = SCREENYTOFIXY(win->y + win->height);
@@ -3197,8 +3195,8 @@ static void drawLevelName(void)
                      lname, false, ALIGN_CENTER);
         Draw_EndZoom();
 
-        gl.MatrixMode(DGL_PROJECTION);
-        gl.PopMatrix();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PopMatrix();
     }
 }
 
@@ -3232,7 +3230,7 @@ void AM_Drawer(int viewplayer)
         return; // Nothing to do.
 
     if(viewplayer < 0 || viewplayer >= MAXPLAYERS ||
-       !players[viewplayer].plr->ingame)
+       !players[viewplayer].plr->inGame)
         return;
 
     mapviewplayer = viewplayer;
@@ -3269,8 +3267,8 @@ void AM_Drawer(int viewplayer)
     }
     AM_RenderAllLists(map->alpha);
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 
     drawLevelName();
     restoreGLStateFromMap();

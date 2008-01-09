@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ typedef struct amprim_s {
 } amprim_t;
 
 typedef struct amprimlist_s {
-    int         type; // DGL_QUAD or DGL_LINES
+    glprimtype_t    type; // DGL_QUAD or DGL_LINES
     amprim_t *head, *tail, *unused;
 } amprimlist_t;
 
@@ -158,8 +158,8 @@ void AM_ListRegister(void)
 void AM_ListInit(void)
 {
     // Does the graphics library support multitexturing?
-    numTexUnits = gl.GetInteger(DGL_MAX_TEXTURE_UNITS);
-    envModAdd = gl.GetInteger(DGL_MODULATE_ADD_COMBINE);
+    numTexUnits = DGL_GetInteger(DGL_MAX_TEXTURE_UNITS);
+    envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
 }
 
 /**
@@ -194,8 +194,8 @@ void AM_ListShutdown(void)
 
 void AM_BindTo(int unit, DGLuint texture)
 {
-    gl.SetInteger(DGL_ACTIVE_TEXTURE, unit);
-    gl.Bind(texture);
+    DGL_SetInteger(DGL_ACTIVE_TEXTURE, unit);
+    DGL_Bind(texture);
 }
 
 /**
@@ -207,7 +207,7 @@ void AM_SelectTexUnits(int count)
 
     // Disable extra units.
     for(i = numTexUnits - 1; i >= count; i--)
-        gl.Disable(DGL_TEXTURE0 + i);
+        DGL_DisableTexUnit(0 + i);
 
     // Enable the selected units.
     for(i = count - 1; i >= 0; i--)
@@ -215,7 +215,7 @@ void AM_SelectTexUnits(int count)
         if(i >= numTexUnits)
             continue;
 
-        gl.Enable(DGL_TEXTURE0 + i);
+        DGL_EnableTexUnit(0 + i);
     }
 }
 
@@ -271,7 +271,7 @@ static void AM_LinkPrimitiveToList(amprimlist_t *list, amprim_t *p)
  *
  * @return          Ptr to the new automap render primitive.
  */
-static void *AM_AllocatePrimitive(int type, uint tex, boolean texIsPatchLumpNum,
+static void *AM_AllocatePrimitive(glprimtype_t type, uint tex, boolean texIsPatchLumpNum,
                                   blendmode_t blend, float arg1)
 {
     amlist_t *list;
@@ -527,7 +527,7 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
                    float alpha, float arg1, amprimlist_t *list)
 {
     amprim_t   *p;
-    int         normal = DGL_TEXTURE0, mask = DGL_TEXTURE1;
+    int         normal = 0, mask = 1;
     int         maskID = 1;
     float       oldLineWidth = 0;
     boolean     withMask = false, texMatrix = false;
@@ -541,14 +541,17 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         if(tex)
         {
             if(texIsPatchLumpNum)
-            {   //// \fixme Can not modulate these primitives as we don't know
-                //// the GL texture name (DGLuint).
-                GL_SetPatch(tex);
+            {   /**
+                 * \fixme Can not modulate these primitives as we don't know
+                 * the GL texture name (DGLuint).
+                 * \fixme Need to store the wrap mode in the list.
+                 */
+                GL_SetPatch(tex, DGL_CLAMP, DGL_CLAMP);
             }
             else
             {
                 AM_SelectTexUnits(2);
-                gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+                DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
 
                 AM_BindTo(0, tex);
                 AM_BindTo(1, amMaskTexture);
@@ -558,8 +561,8 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         }
         else
         {
-            gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
-            gl.Bind(amMaskTexture);
+            DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+            DGL_Bind(amMaskTexture);
 
             tex = amMaskTexture;
             maskID = 0;
@@ -567,22 +570,23 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
             texMatrix = true;
         }
 
-        gl.Enable(DGL_TEXTURING);
+        DGL_Enable(DGL_TEXTURING);
     }
     else
     {
         if(tex)
         {
             if(texIsPatchLumpNum)
-                GL_SetPatch(tex);
+                //// \fixme Need to store the wrap mode in the list.
+                GL_SetPatch(tex, DGL_CLAMP, DGL_CLAMP);
             else
-                gl.Bind(tex);
+                DGL_Bind(tex);
 
-            gl.Enable(DGL_TEXTURING);
+            DGL_Enable(DGL_TEXTURING);
         }
         else
         {
-            gl.Disable(DGL_TEXTURING);
+            DGL_Disable(DGL_TEXTURING);
         }
     }
 
@@ -595,21 +599,21 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         AM_GetWindow(mapviewplayer, &x, &y, &w, &h);
         angle = AM_ViewAngle(mapviewplayer);
 
-        gl.SetInteger(DGL_ACTIVE_TEXTURE, maskID);
-        gl.MatrixMode(DGL_TEXTURE);
-        gl.PushMatrix();
-        gl.LoadIdentity();
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, maskID);
+        DGL_MatrixMode(DGL_TEXTURE);
+        DGL_PushMatrix();
+        DGL_LoadIdentity();
 
         // Scale from texture to window space.
-        gl.Scalef(1.0f / w, 1.0f / h, 1);
+        DGL_Scalef(1.0f / w, 1.0f / h, 1);
 
         // Translate to the view origin, apply map rotation.
-        gl.Translatef(w / 2, h / 2, 0);
-        gl.Rotatef(angle, 0, 0, 1);
-        gl.Translatef(-(w / 2), -(h / 2), 0);
+        DGL_Translatef(w / 2, h / 2, 0);
+        DGL_Rotatef(angle, 0, 0, 1);
+        DGL_Translatef(-(w / 2), -(h / 2), 0);
 
         // Undo the texture to window space translation.
-        gl.Translatef(-x, -y, 0);
+        DGL_Translatef(-x, -y, 0);
     }
 
     // Write commands.
@@ -618,66 +622,66 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
     // Need to adjust the line width?
     if(list->type == DGL_LINES)
     {
-        oldLineWidth = gl.GetFloat(DGL_LINE_WIDTH);
-        gl.SetFloat(DGL_LINE_WIDTH, arg1);
+        oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
+        DGL_SetFloat(DGL_LINE_WIDTH, arg1);
     }
 
     if(withMask)
     {
-        gl.Begin(list->type);
+        DGL_Begin(list->type);
         switch(list->type)
         {
         case DGL_QUADS:
             while(p)
             {
-                gl.Color4f(p->data.quad.rgba[0],
+                DGL_Color4f(p->data.quad.rgba[0],
                            p->data.quad.rgba[1],
                            p->data.quad.rgba[2],
                            p->data.quad.rgba[3] * alpha);
 
                 // V1
                 if(tex)
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[0].tex[0],
                                    p->data.quad.verts[0].tex[1]);
-                gl.MultiTexCoord2f(mask,
+                DGL_MultiTexCoord2f(mask,
                                    p->data.quad.verts[0].pos[0],
                                    p->data.quad.verts[0].pos[1]);
 
-                gl.Vertex2f(p->data.quad.verts[0].pos[0],
+                DGL_Vertex2f(p->data.quad.verts[0].pos[0],
                             p->data.quad.verts[0].pos[1]);
                 // V2
                 if(tex)
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[1].tex[0],
                                    p->data.quad.verts[1].tex[1]);
-                gl.MultiTexCoord2f(mask,
+                DGL_MultiTexCoord2f(mask,
                                    p->data.quad.verts[1].pos[0],
                                    p->data.quad.verts[1].pos[1]);
 
-                gl.Vertex2f(p->data.quad.verts[1].pos[0],
+                DGL_Vertex2f(p->data.quad.verts[1].pos[0],
                             p->data.quad.verts[1].pos[1]);
                 // V3
                 if(tex)
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[2].tex[0],
                                    p->data.quad.verts[2].tex[1]);
-                gl.MultiTexCoord2f(mask,
+                DGL_MultiTexCoord2f(mask,
                                    p->data.quad.verts[2].pos[0],
                                    p->data.quad.verts[2].pos[1]);
 
-                gl.Vertex2f(p->data.quad.verts[2].pos[0],
+                DGL_Vertex2f(p->data.quad.verts[2].pos[0],
                             p->data.quad.verts[2].pos[1]);
                 // V4
                 if(tex)
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[3].tex[0],
                                    p->data.quad.verts[3].tex[1]);
-                gl.MultiTexCoord2f(mask,
+                DGL_MultiTexCoord2f(mask,
                                    p->data.quad.verts[3].pos[0],
                                    p->data.quad.verts[3].pos[1]);
 
-                gl.Vertex2f(p->data.quad.verts[3].pos[0],
+                DGL_Vertex2f(p->data.quad.verts[3].pos[0],
                             p->data.quad.verts[3].pos[1]);
 
                 p = p->next;
@@ -694,23 +698,23 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
                 }
                 else
                 {
-                    gl.Color4f(p->data.line.coldata.f4color.rgba[0],
+                    DGL_Color4f(p->data.line.coldata.f4color.rgba[0],
                                p->data.line.coldata.f4color.rgba[1],
                                p->data.line.coldata.f4color.rgba[2],
                                p->data.line.coldata.f4color.rgba[3] * alpha);
                 }
 
                 if(tex)
-                    gl.MultiTexCoord2f(normal, 0, 0);
-                gl.MultiTexCoord2f(mask, p->data.line.a.pos[0],
+                    DGL_MultiTexCoord2f(normal, 0, 0);
+                DGL_MultiTexCoord2f(mask, p->data.line.a.pos[0],
                                    p->data.line.a.pos[1]);
-                gl.Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
+                DGL_Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
 
                 if(tex)
-                    gl.MultiTexCoord2f(normal, 1, 1);
-                gl.MultiTexCoord2f(mask, p->data.line.b.pos[0],
+                    DGL_MultiTexCoord2f(normal, 1, 1);
+                DGL_MultiTexCoord2f(mask, p->data.line.b.pos[0],
                                    p->data.line.b.pos[1]);
-                gl.Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
+                DGL_Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
 
                 p = p->next;
             }
@@ -719,67 +723,67 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         default:
             break;
         }
-        gl.End();
+        DGL_End();
     }
     else
     {
-        gl.Begin(list->type);
+        DGL_Begin(list->type);
         switch(list->type)
         {
         case DGL_QUADS:
             while(p)
             {
-                gl.Color4f(p->data.quad.rgba[0],
+                DGL_Color4f(p->data.quad.rgba[0],
                            p->data.quad.rgba[1],
                            p->data.quad.rgba[2],
                            p->data.quad.rgba[3] * alpha);
                 // V1
                 if(tex && maskID == 0)
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[0].pos[0],
                                    p->data.quad.verts[0].pos[1]);
                 else
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[0].tex[0],
                                    p->data.quad.verts[0].tex[1]);
 
-                gl.Vertex2f(p->data.quad.verts[0].pos[0],
+                DGL_Vertex2f(p->data.quad.verts[0].pos[0],
                             p->data.quad.verts[0].pos[1]);
                 // V2
                 if(tex && maskID == 0)
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[1].pos[0],
                                    p->data.quad.verts[1].pos[1]);
                 else
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[1].tex[0],
                                    p->data.quad.verts[1].tex[1]);
 
-                gl.Vertex2f(p->data.quad.verts[1].pos[0],
+                DGL_Vertex2f(p->data.quad.verts[1].pos[0],
                             p->data.quad.verts[1].pos[1]);
                 // V3
                 if(tex && maskID == 0)
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[2].pos[0],
                                    p->data.quad.verts[2].pos[1]);
                 else
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[2].tex[0],
                                    p->data.quad.verts[2].tex[1]);
 
-                gl.Vertex2f(p->data.quad.verts[2].pos[0],
+                DGL_Vertex2f(p->data.quad.verts[2].pos[0],
                             p->data.quad.verts[2].pos[1]);
                 // V4
                 if(tex && maskID == 0)
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[3].pos[0],
                                    p->data.quad.verts[3].pos[1]);
                 else
-                gl.MultiTexCoord2f(normal,
+                DGL_MultiTexCoord2f(normal,
                                    p->data.quad.verts[3].tex[0],
                                    p->data.quad.verts[3].tex[1]);
 
-                gl.Vertex2f(p->data.quad.verts[3].pos[0],
+                DGL_Vertex2f(p->data.quad.verts[3].pos[0],
                             p->data.quad.verts[3].pos[1]);
 
                 p = p->next;
@@ -796,18 +800,18 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
                 }
                 else
                 {
-                    gl.Color4f(p->data.line.coldata.f4color.rgba[0],
+                    DGL_Color4f(p->data.line.coldata.f4color.rgba[0],
                                p->data.line.coldata.f4color.rgba[1],
                                p->data.line.coldata.f4color.rgba[2],
                                p->data.line.coldata.f4color.rgba[3] * alpha);
                 }
 
                 if(tex && maskID == 0)
-                    gl.MultiTexCoord2f(normal, p->data.line.a.pos[0], p->data.line.a.pos[1]);
-                gl.Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
+                    DGL_MultiTexCoord2f(normal, p->data.line.a.pos[0], p->data.line.a.pos[1]);
+                DGL_Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
                 if(tex && maskID == 0)
-                    gl.MultiTexCoord2f(normal, p->data.line.b.pos[0], p->data.line.b.pos[1]);
-                gl.Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
+                    DGL_MultiTexCoord2f(normal, p->data.line.b.pos[0], p->data.line.b.pos[1]);
+                DGL_Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
 
                 p = p->next;
             }
@@ -816,24 +820,24 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         default:
             break;
         }
-        gl.End();
+        DGL_End();
     }
 
     // Restore previous line width.
     if(list->type == DGL_LINES)
-        gl.SetFloat(DGL_LINE_WIDTH, oldLineWidth);
+        DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
 
     // Restore previous state.
     if(texMatrix)
     {
-        gl.MatrixMode(DGL_TEXTURE);
-        gl.PopMatrix();
+        DGL_MatrixMode(DGL_TEXTURE);
+        DGL_PopMatrix();
     }
 
     AM_SelectTexUnits(1);
-    gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+    DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
     if(!tex)
-        gl.Enable(DGL_TEXTURING);
+        DGL_Enable(DGL_TEXTURING);
 
     GL_BlendMode(BM_NORMAL);
 }

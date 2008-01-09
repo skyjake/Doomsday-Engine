@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
+ */
+
+/**
+ * p_saveg.c: Save Game I/O
+ *
+ * Compiles for all supported games.
+ *
  * \bug Not 64bit clean: In function 'SV_ReadPlayer': cast from pointer to integer of different size
  * \bug Not 64bit clean: In function 'SV_WriteMobj': cast from pointer to integer of different size
  * \bug Not 64bit clean: In function 'RestoreMobj': cast from pointer to integer of different size
@@ -28,12 +45,6 @@
  * \bug Not 64bit clean: In function 'P_UnArchiveThinkers': cast from pointer to integer of different size
  * \bug Not 64bit clean: In function 'P_UnArchiveBrain': cast to pointer from integer of different size, cast from pointer to integer of different size
  * \bug Not 64bit clean: In function 'P_UnArchiveSoundTargets': cast to pointer from integer of different size, cast from pointer to integer of different size
- */
-
-/**
- * p_saveg.c: Save Game I/O
- *
- * Compiles for all supported games.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -558,8 +569,8 @@ static void removeAllThinkers(void)
 {
     thinker_t *th, *next;
 
-    th = thinkercap.next;
-    while(th != &thinkercap && th)
+    th = thinkerCap.next;
+    while(th != &thinkerCap && th)
     {
         next = th->next;
 
@@ -594,8 +605,8 @@ static uint SV_InitThingArchive(boolean load, boolean savePlayers)
         thinker_t *th;
 
         // Count the number of mobjs we'll be writing.
-        th = thinkercap.next;
-        while(th != &thinkercap)
+        th = thinkerCap.next;
+        while(th != &thinkerCap)
         {
             if(th->function == P_MobjThinker &&
                !(((mobj_t *) th)->player && !savePlayers))
@@ -1011,10 +1022,11 @@ static void SV_WritePlayer(int playernum)
     // Convert the psprite states.
     for(i = 0; i < numPSprites; ++i)
     {
-        if(temp.psprites[i].state)
+        pspdef_t       *pspDef = &temp.pSprites[i];
+
+        if(pspDef->state)
         {
-            temp.psprites[i].state =
-                (state_t *) (temp.psprites[i].state - states);
+            pspDef->state = (state_t *) (pspDef->state - states);
         }
     }
 
@@ -1031,29 +1043,29 @@ static void SV_WritePlayer(int playernum)
     SV_WriteByte(cfg.playerClass[playernum]);
 #endif
 
-    SV_WriteLong(p->playerstate);
+    SV_WriteLong(p->playerState);
 #if __JHEXEN__
     SV_WriteLong(p->class);    // 2nd class...?
 #endif
     SV_WriteLong(FLT2FIX(dp->viewZ));
-    SV_WriteLong(FLT2FIX(dp->viewheight));
-    SV_WriteLong(FLT2FIX(dp->deltaviewheight));
+    SV_WriteLong(FLT2FIX(dp->viewHeight));
+    SV_WriteLong(FLT2FIX(dp->viewHeightDelta));
 #if !__JHEXEN__
-    SV_WriteFloat(dp->lookdir);
+    SV_WriteFloat(dp->lookDir);
 #endif
     SV_WriteLong(FLT2FIX(p->bob));
 #if __JHEXEN__
-    SV_WriteLong(p->flyheight);
-    SV_WriteFloat(dp->lookdir);
+    SV_WriteLong(p->flyHeight);
+    SV_WriteFloat(dp->lookDir);
     SV_WriteLong(p->centering);
 #endif
     SV_WriteLong(p->health);
 
 #if __JHEXEN__
-    SV_Write(p->armorpoints, GetPlayerHeader()->numarmortypes * 4);
+    SV_Write(p->armorPoints, GetPlayerHeader()->numarmortypes * 4);
 #else
-    SV_WriteLong(p->armorpoints);
-    SV_WriteLong(p->armortype);
+    SV_WriteLong(p->armorPoints);
+    SV_WriteLong(p->armorType);
 #endif
 
 #if __JHEXEN__
@@ -1101,40 +1113,40 @@ static void SV_WritePlayer(int playernum)
 
     SV_Write(p->frags, GetPlayerHeader()->numfrags * 4);
 
-    SV_WriteLong(p->readyweapon);
+    SV_WriteLong(p->readyWeapon);
 #if !__JHEXEN__
-    SV_WriteLong(p->pendingweapon);
+    SV_WriteLong(p->pendingWeapon);
 #endif
-    SV_Write(p->weaponowned, GetPlayerHeader()->numweapons * 4);
+    SV_Write(p->weaponOwned, GetPlayerHeader()->numweapons * 4);
     SV_Write(p->ammo, GetPlayerHeader()->numammotypes * 4);
 #if !__JHEXEN__
-    SV_Write(p->maxammo, GetPlayerHeader()->numammotypes * 4);
+    SV_Write(p->maxAmmo, GetPlayerHeader()->numammotypes * 4);
 #endif
 
-    SV_WriteLong(p->attackdown);
-    SV_WriteLong(p->usedown);
+    SV_WriteLong(p->attackDown);
+    SV_WriteLong(p->useDown);
 
     SV_WriteLong(p->cheats);
 
     SV_WriteLong(p->refire);
 
-    SV_WriteLong(p->killcount);
-    SV_WriteLong(p->itemcount);
-    SV_WriteLong(p->secretcount);
+    SV_WriteLong(p->killCount);
+    SV_WriteLong(p->itemCount);
+    SV_WriteLong(p->secretCount);
 
-    SV_WriteLong(p->damagecount);
-    SV_WriteLong(p->bonuscount);
+    SV_WriteLong(p->damageCount);
+    SV_WriteLong(p->bonusCount);
 #if __JHEXEN__
-    SV_WriteLong(p->poisoncount);
+    SV_WriteLong(p->poisonCount);
 #endif
 
     SV_WriteLong(dp->extraLight);
-    SV_WriteLong(dp->fixedcolormap);
-    SV_WriteLong(p->colormap);
+    SV_WriteLong(dp->fixedColorMap);
+    SV_WriteLong(p->colorMap);
 
     for(i = 0; i < numPSprites; ++i)
     {
-        pspdef_t       *psp = &p->psprites[i];
+        pspdef_t       *psp = &p->pSprites[i];
 
         SV_WriteLong((int)psp->state);
         SV_WriteLong(psp->tics);
@@ -1143,10 +1155,10 @@ static void SV_WritePlayer(int playernum)
     }
 
 #if !__JHEXEN__
-    SV_WriteLong(p->didsecret);
+    SV_WriteLong(p->didSecret);
 
     // Added in ver 2 with __JDOOM__
-    SV_WriteLong(p->flyheight);
+    SV_WriteLong(p->flyHeight);
 #endif
 
 #ifdef __JHERETIC__
@@ -1162,10 +1174,10 @@ static void SV_WritePlayer(int playernum)
 #endif
 
 #if __JHEXEN__
-    SV_WriteLong(p->jumptics);
+    SV_WriteLong(p->jumpTics);
     SV_WriteLong(p->worldTimer);
 #elif __JHERETIC__
-    SV_WriteLong(p->flamecount);
+    SV_WriteLong(p->flameCount);
 
     // Added in ver 2
     SV_WriteByte(p->class);
@@ -1190,30 +1202,30 @@ static void SV_ReadPlayer(player_t *p)
     p->plr = dp;                // but restore the ddplayer pointer.
 #endif
 
-    p->playerstate = SV_ReadLong();
+    p->playerState = SV_ReadLong();
 #if __JHEXEN__
     p->class = SV_ReadLong();        // 2nd class...?
 #endif
     dp->viewZ = FIX2FLT(SV_ReadLong());
-    dp->viewheight = FIX2FLT(SV_ReadLong());
-    dp->deltaviewheight = FIX2FLT(SV_ReadLong());
+    dp->viewHeight = FIX2FLT(SV_ReadLong());
+    dp->viewHeightDelta = FIX2FLT(SV_ReadLong());
 #if !__JHEXEN__
-    dp->lookdir = SV_ReadFloat();
+    dp->lookDir = SV_ReadFloat();
 #endif
     p->bob = FIX2FLT(SV_ReadLong());
 #if __JHEXEN__
-    p->flyheight = SV_ReadLong();
-    dp->lookdir = SV_ReadFloat();
+    p->flyHeight = SV_ReadLong();
+    dp->lookDir = SV_ReadFloat();
     p->centering = SV_ReadLong();
 #endif
 
     p->health = SV_ReadLong();
 
 #if __JHEXEN__
-    SV_Read(p->armorpoints, GetPlayerHeader()->numarmortypes * 4);
+    SV_Read(p->armorPoints, GetPlayerHeader()->numarmortypes * 4);
 #else
-    p->armorpoints = SV_ReadLong();
-    p->armortype = SV_ReadLong();
+    p->armorPoints = SV_ReadLong();
+    p->armorType = SV_ReadLong();
 #endif
 
 #if __JHEXEN__
@@ -1261,29 +1273,29 @@ static void SV_ReadPlayer(player_t *p)
     SV_Read(p->frags, GetPlayerHeader()->numfrags * 4);
 
 #if __JHEXEN__
-    p->pendingweapon = p->readyweapon = SV_ReadLong();
+    p->pendingWeapon = p->readyWeapon = SV_ReadLong();
 #else
-    p->readyweapon = SV_ReadLong();
-    p->pendingweapon = SV_ReadLong();
+    p->readyWeapon = SV_ReadLong();
+    p->pendingWeapon = SV_ReadLong();
 #endif
 
-    SV_Read(p->weaponowned, GetPlayerHeader()->numweapons * 4);
+    SV_Read(p->weaponOwned, GetPlayerHeader()->numweapons * 4);
     SV_Read(p->ammo, GetPlayerHeader()->numammotypes * 4);
 
 #if !__JHEXEN__
-    SV_Read(p->maxammo, GetPlayerHeader()->numammotypes * 4);
+    SV_Read(p->maxAmmo, GetPlayerHeader()->numammotypes * 4);
 #endif
 
-    p->attackdown = SV_ReadLong();
-    p->usedown = SV_ReadLong();
+    p->attackDown = SV_ReadLong();
+    p->useDown = SV_ReadLong();
 
     p->cheats = SV_ReadLong();
 
     p->refire = SV_ReadLong();
 
-    p->killcount = SV_ReadLong();
-    p->itemcount = SV_ReadLong();
-    p->secretcount = SV_ReadLong();
+    p->killCount = SV_ReadLong();
+    p->itemCount = SV_ReadLong();
+    p->secretCount = SV_ReadLong();
 
 #if __JHEXEN__
     if(ver <= 1)
@@ -1294,19 +1306,19 @@ static void SV_ReadPlayer(player_t *p)
     }
 #endif
 
-    p->damagecount = SV_ReadLong();
-    p->bonuscount = SV_ReadLong();
+    p->damageCount = SV_ReadLong();
+    p->bonusCount = SV_ReadLong();
 #if __JHEXEN__
-    p->poisoncount = SV_ReadLong();
+    p->poisonCount = SV_ReadLong();
 #endif
 
     dp->extraLight = SV_ReadLong();
-    dp->fixedcolormap = SV_ReadLong();
-    p->colormap = SV_ReadLong();
+    dp->fixedColorMap = SV_ReadLong();
+    p->colorMap = SV_ReadLong();
 
     for(i = 0; i < numPSprites; ++i)
     {
-        pspdef_t *psp = &p->psprites[i];
+        pspdef_t *psp = &p->pSprites[i];
 
         psp->state = (state_t*) SV_ReadLong();
         psp->tics = SV_ReadLong();
@@ -1315,20 +1327,20 @@ static void SV_ReadPlayer(player_t *p)
     }
 
 #if !__JHEXEN__
-    p->didsecret = SV_ReadLong();
+    p->didSecret = SV_ReadLong();
 
 # if __JDOOM__
     if(ver == 2) // nolonger used in >= ver 3
         /*p->messageTics =*/ SV_ReadLong();
 
     if(ver >= 2)
-        p->flyheight = SV_ReadLong();
+        p->flyHeight = SV_ReadLong();
 
 # elif __JHERETIC__
     if(ver < 3) // nolonger used in >= ver 3
         /*p->messageTics =*/ SV_ReadLong();
 
-    p->flyheight = SV_ReadLong();
+    p->flyHeight = SV_ReadLong();
     SV_Read(p->inventory, 4 * 2 * 14);
     p->readyArtifact = SV_ReadLong();
     p->artifactCount = SV_ReadLong();
@@ -1342,10 +1354,10 @@ static void SV_ReadPlayer(player_t *p)
 #endif
 
 #if __JHEXEN__
-    p->jumptics = SV_ReadLong();
+    p->jumpTics = SV_ReadLong();
     p->worldTimer = SV_ReadLong();
 #elif __JHERETIC__
-    p->flamecount = SV_ReadLong();
+    p->flameCount = SV_ReadLong();
 
     if(ver >= 2)
         p->class = SV_ReadByte();
@@ -1359,9 +1371,9 @@ static void SV_ReadPlayer(player_t *p)
 
     // Demangle it.
     for(i = 0; i < numPSprites; ++i)
-        if(p->psprites[i].state)
+        if(p->pSprites[i].state)
         {
-            p->psprites[i].state = &states[(int) p->psprites[i].state];
+            p->pSprites[i].state = &states[(int) p->pSprites[i].state];
         }
 
     // Mark the player for fixpos and fixangles.
@@ -1418,7 +1430,7 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteShort(SV_ThingArchiveNum(mo->tracer));
 # endif
 
-    SV_WriteShort(SV_ThingArchiveNum(mo->onmobj));
+    SV_WriteShort(SV_ThingArchiveNum(mo->onMobj));
 #endif
 
     // Info for drawing: position.
@@ -1432,11 +1444,11 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(mo->frame);
 
 # if __JHEXEN__
-    SV_WriteLong(mo->floorpic);
+    SV_WriteLong(mo->floorPic);
 #else
     // The closest interval over all contacted Sectors.
-    SV_WriteLong(FLT2FIX(mo->floorz));
-    SV_WriteLong(FLT2FIX(mo->ceilingz));
+    SV_WriteLong(FLT2FIX(mo->floorZ));
+    SV_WriteLong(FLT2FIX(mo->ceilingZ));
 #endif
 
     // For movement checking.
@@ -1493,8 +1505,8 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(mo->health);
 
     // Movement direction, movement generation (zig-zagging).
-    SV_WriteLong(mo->movedir);   // 0-7
-    SV_WriteLong(mo->movecount); // when 0, select a new dir
+    SV_WriteLong(mo->moveDir);   // 0-7
+    SV_WriteLong(mo->moveCount); // when 0, select a new dir
 
 #if __JHEXEN__
     if(mo->flags & MF_CORPSE)
@@ -1505,7 +1517,7 @@ static void SV_WriteMobj(mobj_t *original)
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
-    SV_WriteLong(mo->reactiontime);
+    SV_WriteLong(mo->reactionTime);
 
 #if __DOOM64TC__
     SV_WriteLong(mo->floatswitch); // added in outcast
@@ -1521,19 +1533,19 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong((int) mo->player);
 
     // Player number last looked for.
-    SV_WriteLong(mo->lastlook);
+    SV_WriteLong(mo->lastLook);
 
 #if !__JHEXEN__
     // For nightmare/multiplayer respawn.
-    SV_WriteLong(FLT2FIX(mo->spawnspot.pos[VX]));
-    SV_WriteLong(FLT2FIX(mo->spawnspot.pos[VY]));
-    SV_WriteLong(FLT2FIX(mo->spawnspot.pos[VZ]));
-    SV_WriteLong(mo->spawnspot.angle);
-    SV_WriteLong(mo->spawnspot.type);
-    SV_WriteLong(mo->spawnspot.flags);
+    SV_WriteLong(FLT2FIX(mo->spawnSpot.pos[VX]));
+    SV_WriteLong(FLT2FIX(mo->spawnSpot.pos[VY]));
+    SV_WriteLong(FLT2FIX(mo->spawnSpot.pos[VZ]));
+    SV_WriteLong(mo->spawnSpot.angle);
+    SV_WriteLong(mo->spawnSpot.type);
+    SV_WriteLong(mo->spawnSpot.flags);
 
-    SV_WriteLong(mo->intflags);  // killough $dropoff_fix: internal flags
-    SV_WriteLong(FLT2FIX(mo->dropoffz));  // killough $dropoff_fix
+    SV_WriteLong(mo->intFlags);  // killough $dropoff_fix: internal flags
+    SV_WriteLong(FLT2FIX(mo->dropOffZ));  // killough $dropoff_fix
     SV_WriteLong(mo->gear);      // killough used in torque simulation
 
     SV_WriteLong(mo->damage);
@@ -1545,17 +1557,17 @@ static void SV_WriteMobj(mobj_t *original)
 # endif
 
     SV_WriteByte(mo->translucency);
-    SV_WriteByte((byte)(mo->vistarget +1));
+    SV_WriteByte((byte)(mo->visTarget +1));
 #endif
 
-    SV_WriteLong(FLT2FIX(mo->floorclip));
+    SV_WriteLong(FLT2FIX(mo->floorClip));
 #if __JHEXEN__
     SV_WriteLong(SV_ThingArchiveNum(original));
     SV_WriteLong(mo->tid);
     SV_WriteLong(mo->special);
     SV_Write(mo->args, sizeof(mo->args));
     SV_WriteByte(mo->translucency);
-    SV_WriteByte((byte)(mo->vistarget +1));
+    SV_WriteByte((byte)(mo->visTarget +1));
 
     switch(mo->type)
     {
@@ -1584,7 +1596,7 @@ Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
         break;
     }
 
-    SV_WriteLong((int) mo->lastenemy);
+    SV_WriteLong((int) mo->lastEnemy);
 #elif __JHERETIC__
     // Ver 7 features: generator
     SV_WriteShort(SV_ThingArchiveNum(mo->generator));
@@ -1606,9 +1618,9 @@ void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
     // Restore DDMF flags set only in P_SpawnMobj. R_SetAllDoomsdayFlags
     // might not set these because it only iterates seclinked mobjs.
     if(mo->flags & MF_SOLID)
-        mo->ddflags |= DDMF_SOLID;
+        mo->ddFlags |= DDMF_SOLID;
     if(mo->flags2 & MF2_DONTDRAW)
-        mo->ddflags |= DDMF_DONTDRAW;
+        mo->ddFlags |= DDMF_DONTDRAW;
 #else
     if(ver < 6)
     {
@@ -1659,7 +1671,7 @@ void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
 static boolean RestoreMobj(mobj_t *mo, int ver)
 {
     mo->state = &states[(int) mo->state];
-    mo->info = &mobjinfo[mo->type];
+    mo->info = &mobjInfo[mo->type];
 
     if(mo->player)
     {
@@ -1679,19 +1691,19 @@ static boolean RestoreMobj(mobj_t *mo, int ver)
 #endif
 
         mo->player = &players[pNum];
-        mo->dplayer = mo->player->plr;
-        mo->dplayer->mo = mo;
-        //mo->dplayer->clAngle = mo->angle; /* $unifiedangles */
-        mo->dplayer->lookdir = 0; /* $unifiedangles */
+        mo->dPlayer = mo->player->plr;
+        mo->dPlayer->mo = mo;
+        //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
+        mo->dPlayer->lookDir = 0; /* $unifiedangles */
     }
 
-    mo->visangle = mo->angle >> 16;
+    mo->visAngle = mo->angle >> 16;
 
 #if !__JHEXEN__
-    if(mo->dplayer && !mo->dplayer->ingame)
+    if(mo->dPlayer && !mo->dPlayer->inGame)
     {
-        if(mo->dplayer)
-            mo->dplayer->mo = NULL;
+        if(mo->dPlayer)
+            mo->dPlayer->mo = NULL;
         Z_Free(mo);
 
         return false; // Don't add this thinker.
@@ -1705,9 +1717,9 @@ static boolean RestoreMobj(mobj_t *mo, int ver)
     mo->thinker.function = P_MobjThinker;
 
     P_MobjSetPosition(mo);
-    mo->floorz =
+    mo->floorZ =
         P_GetFloatp(mo->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
-    mo->ceilingz =
+    mo->ceilingZ =
         P_GetFloatp(mo->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_CEILING_HEIGHT);
 
     return true; // Add this thinker.
@@ -1739,14 +1751,14 @@ static int SV_ReadMobj(thinker_t *th)
         mo->tracer = (mobj_t *) (int) SV_ReadShort();
 # endif
         // mobj this one is on top of (updated after all mobjs are loaded).
-        mo->onmobj = (mobj_t *) (int) SV_ReadShort();
+        mo->onMobj = (mobj_t *) (int) SV_ReadShort();
     }
     else
     {
 # if __JDOOM__
         mo->tracer = NULL;
 # endif
-        mo->onmobj = NULL;
+        mo->onMobj = NULL;
     }
 #endif
 
@@ -1763,11 +1775,11 @@ static int SV_ReadMobj(thinker_t *th)
         mo->frame &= FF_FRAMEMASK; // not used anymore.
 
 #if __JHEXEN__
-    mo->floorpic = SV_ReadLong();
+    mo->floorPic = SV_ReadLong();
 #else
     // The closest interval over all contacted Sectors.
-    mo->floorz = FIX2FLT(SV_ReadLong());
-    mo->ceilingz = FIX2FLT(SV_ReadLong());
+    mo->floorZ = FIX2FLT(SV_ReadLong());
+    mo->ceilingZ = FIX2FLT(SV_ReadLong());
 #endif
 
     // For movement checking.
@@ -1785,7 +1797,7 @@ static int SV_ReadMobj(thinker_t *th)
 #if __JHEXEN__
     mo->info = (mobjinfo_t *) SV_ReadLong();
 #else
-    mo->info = &mobjinfo[mo->type];
+    mo->info = &mobjInfo[mo->type];
 #endif
 
     mo->tics = SV_ReadLong();   // state tic counter
@@ -1808,8 +1820,8 @@ static int SV_ReadMobj(thinker_t *th)
     mo->health = SV_ReadLong();
 
     // Movement direction, movement generation (zig-zagging).
-    mo->movedir = SV_ReadLong();    // 0-7
-    mo->movecount = SV_ReadLong();  // when 0, select a new dir
+    mo->moveDir = SV_ReadLong();    // 0-7
+    mo->moveCount = SV_ReadLong();  // when 0, select a new dir
 
 #if __JHEXEN__
     mo->target = (mobj_t *) SV_ReadLong();
@@ -1817,7 +1829,7 @@ static int SV_ReadMobj(thinker_t *th)
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
-    mo->reactiontime = SV_ReadLong();
+    mo->reactionTime = SV_ReadLong();
 
 #if __DOOM64TC__
     mo->floatswitch = SV_ReadLong(); // added in outcast
@@ -1833,31 +1845,31 @@ static int SV_ReadMobj(thinker_t *th)
     mo->player = (player_t *) SV_ReadLong();
 
     // Player number last looked for.
-    mo->lastlook = SV_ReadLong();
+    mo->lastLook = SV_ReadLong();
 
 #if __JHEXEN__
-    mo->floorclip = FIX2FLT(SV_ReadLong());
+    mo->floorClip = FIX2FLT(SV_ReadLong());
     SV_SetArchiveThing(mo, SV_ReadLong());
     mo->tid = SV_ReadLong();
 #else
     // For nightmare respawn.
     if(ver >= 6)
     {
-        mo->spawnspot.pos[VX] = FIX2FLT(SV_ReadLong());
-        mo->spawnspot.pos[VY] = FIX2FLT(SV_ReadLong());
-        mo->spawnspot.pos[VZ] = FIX2FLT(SV_ReadLong());
-        mo->spawnspot.angle = SV_ReadLong();
-        mo->spawnspot.type = SV_ReadLong();
-        mo->spawnspot.flags = SV_ReadLong();
+        mo->spawnSpot.pos[VX] = FIX2FLT(SV_ReadLong());
+        mo->spawnSpot.pos[VY] = FIX2FLT(SV_ReadLong());
+        mo->spawnSpot.pos[VZ] = FIX2FLT(SV_ReadLong());
+        mo->spawnSpot.angle = SV_ReadLong();
+        mo->spawnSpot.type = SV_ReadLong();
+        mo->spawnSpot.flags = SV_ReadLong();
     }
     else
     {
-        mo->spawnspot.pos[VX] = (float) SV_ReadShort();
-        mo->spawnspot.pos[VY] = (float) SV_ReadShort();
-        mo->spawnspot.pos[VZ] = ONFLOORZ;
-        mo->spawnspot.angle = (angle_t) (ANG45 * (SV_ReadShort() / 45));
-        mo->spawnspot.type = (int) SV_ReadShort();
-        mo->spawnspot.flags = (int) SV_ReadShort();
+        mo->spawnSpot.pos[VX] = (float) SV_ReadShort();
+        mo->spawnSpot.pos[VY] = (float) SV_ReadShort();
+        mo->spawnSpot.pos[VZ] = ONFLOORZ;
+        mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_ReadShort() / 45));
+        mo->spawnSpot.type = (int) SV_ReadShort();
+        mo->spawnSpot.flags = (int) SV_ReadShort();
     }
 
 # if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
@@ -1866,8 +1878,8 @@ static int SV_ReadMobj(thinker_t *th)
     if(ver >= 5)
 # endif
     {
-        mo->intflags = SV_ReadLong();   // killough $dropoff_fix: internal flags
-        mo->dropoffz = FIX2FLT(SV_ReadLong());   // killough $dropoff_fix
+        mo->intFlags = SV_ReadLong();   // killough $dropoff_fix: internal flags
+        mo->dropOffZ = FIX2FLT(SV_ReadLong());   // killough $dropoff_fix
         mo->gear = SV_ReadLong();   // killough used in torque simulation
     }
 
@@ -1910,17 +1922,17 @@ static int SV_ReadMobj(thinker_t *th)
 #else
     if(ver >= 5)
 #endif
-        mo->vistarget = (short) (SV_ReadByte()) -1;
+        mo->visTarget = (short) (SV_ReadByte()) -1;
 
 #if __JHEXEN__
     if(ver >= 4)
         mo->tracer = (mobj_t *) SV_ReadLong();
 
     if(ver >= 4)
-        mo->lastenemy = (mobj_t *) SV_ReadLong();
+        mo->lastEnemy = (mobj_t *) SV_ReadLong();
 #else
     if(ver >= 5)
-        mo->floorclip = FIX2FLT(SV_ReadLong());
+        mo->floorClip = FIX2FLT(SV_ReadLong());
 #endif
 
 #if __JHERETIC__
@@ -2042,13 +2054,13 @@ static void P_ArchivePlayers(void)
 #if __JHEXEN__
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        SV_WriteByte(players[i].plr->ingame);
+        SV_WriteByte(players[i].plr->inGame);
     }
 #endif
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
         SV_WriteLong(Net_GetPlayerID(i));
         SV_WritePlayer(i);
@@ -2184,7 +2196,7 @@ static void SV_WriteSector(sector_t *sec)
     }
 
     // Count the number of sound targets
-    if(xsec->soundtarget)
+    if(xsec->soundTarget)
         numSoundTargets++;
 #endif
 }
@@ -2321,11 +2333,11 @@ static void SV_ReadSector(sector_t *sec)
     if(hdr.version <= 1)
 #endif
     {
-        xsec->specialdata = 0;
+        xsec->specialData = 0;
     }
 
     // We'll restore the sound targets latter on
-    xsec->soundtarget = 0;
+    xsec->soundTarget = 0;
 }
 
 static void SV_WriteLine(line_t *li)
@@ -2666,15 +2678,15 @@ static void SV_WriteCeiling(ceiling_t *ceiling)
     SV_WriteByte((byte) ceiling->type);
     SV_WriteLong(P_ToIndex(ceiling->sector));
 
-    SV_WriteShort((int)ceiling->bottomheight);
-    SV_WriteShort((int)ceiling->topheight);
+    SV_WriteShort((int)ceiling->bottomHeight);
+    SV_WriteShort((int)ceiling->topHeight);
     SV_WriteLong(FLT2FIX(ceiling->speed));
 
     SV_WriteByte(ceiling->crush);
 
     SV_WriteLong(ceiling->direction);
     SV_WriteLong(ceiling->tag);
-    SV_WriteLong(ceiling->olddirection);
+    SV_WriteLong(ceiling->oldDirection);
 }
 
 static int SV_ReadCeiling(ceiling_t *ceiling)
@@ -2702,15 +2714,15 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 
         ceiling->sector = sector;
 
-        ceiling->bottomheight = (float) SV_ReadShort();
-        ceiling->topheight = (float) SV_ReadShort();
+        ceiling->bottomHeight = (float) SV_ReadShort();
+        ceiling->topHeight = (float) SV_ReadShort();
         ceiling->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
         ceiling->crush = SV_ReadByte();
 
         ceiling->direction = SV_ReadLong();
         ceiling->tag = SV_ReadLong();
-        ceiling->olddirection = SV_ReadLong();
+        ceiling->oldDirection = SV_ReadLong();
     }
     else
     {
@@ -2738,14 +2750,14 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
         ceiling->sector = sector;
 #endif
 
-        ceiling->bottomheight = FIX2FLT((fixed_t) SV_ReadLong());
-        ceiling->topheight = FIX2FLT((fixed_t) SV_ReadLong());
+        ceiling->bottomHeight = FIX2FLT((fixed_t) SV_ReadLong());
+        ceiling->topHeight = FIX2FLT((fixed_t) SV_ReadLong());
         ceiling->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
         ceiling->crush = SV_ReadLong();
         ceiling->direction = SV_ReadLong();
         ceiling->tag = SV_ReadLong();
-        ceiling->olddirection = SV_ReadLong();
+        ceiling->oldDirection = SV_ReadLong();
 
 #if !__JHEXEN__
         if(junk.function)
@@ -2753,7 +2765,7 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
             ceiling->thinker.function = T_MoveCeiling;
     }
 
-    P_ToXSector(ceiling->sector)->specialdata = ceiling;
+    P_ToXSector(ceiling->sector)->specialData = ceiling;
     return true; // Add this thinker.
 }
 
@@ -2770,12 +2782,12 @@ static void SV_WriteDoor(vldoor_t *door)
 
     SV_WriteLong(P_ToIndex(door->sector));
 
-    SV_WriteShort((int)door->topheight);
+    SV_WriteShort((int)door->topHeight);
     SV_WriteLong(FLT2FIX(door->speed));
 
     SV_WriteLong(door->direction);
-    SV_WriteLong(door->topwait);
-    SV_WriteLong(door->topcountdown);
+    SV_WriteLong(door->topWait);
+    SV_WriteLong(door->topCountDown);
 }
 
 static int SV_ReadDoor(vldoor_t *door)
@@ -2799,12 +2811,12 @@ static int SV_ReadDoor(vldoor_t *door)
 
         door->sector = sector;
 
-        door->topheight = (float) SV_ReadShort();
+        door->topHeight = (float) SV_ReadShort();
         door->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
         door->direction = SV_ReadLong();
-        door->topwait = SV_ReadLong();
-        door->topcountdown = SV_ReadLong();
+        door->topWait = SV_ReadLong();
+        door->topCountDown = SV_ReadLong();
     }
     else
     {
@@ -2830,15 +2842,15 @@ static int SV_ReadDoor(vldoor_t *door)
             Con_Error("TC_DOOR: bad sector number\n");
         door->sector = sector;
 #endif
-        door->topheight = FIX2FLT((fixed_t) SV_ReadLong());
+        door->topHeight = FIX2FLT((fixed_t) SV_ReadLong());
         door->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
         door->direction = SV_ReadLong();
-        door->topwait = SV_ReadLong();
-        door->topcountdown = SV_ReadLong();
+        door->topWait = SV_ReadLong();
+        door->topCountDown = SV_ReadLong();
     }
 
-    P_ToXSector(door->sector)->specialdata = door;
+    P_ToXSector(door->sector)->specialData = door;
     door->thinker.function = T_VerticalDoor;
 
     return true; // Add this thinker.
@@ -2860,11 +2872,11 @@ static void SV_WriteFloor(floormove_t *floor)
     SV_WriteByte((byte) floor->crush);
 
     SV_WriteLong(floor->direction);
-    SV_WriteLong(floor->newspecial);
+    SV_WriteLong(floor->newSpecial);
 
     SV_WriteShort(floor->texture);
 
-    SV_WriteShort((int)floor->floordestheight);
+    SV_WriteShort((int)floor->floorDestHeight);
     SV_WriteLong(FLT2FIX(floor->speed));
 
 #if __JHEXEN__
@@ -2903,11 +2915,11 @@ static int SV_ReadFloor(floormove_t *floor)
         floor->crush = (boolean) SV_ReadByte();
 
         floor->direction = SV_ReadLong();
-        floor->newspecial = SV_ReadLong();
+        floor->newSpecial = SV_ReadLong();
 
         floor->texture = SV_ReadShort();
 
-        floor->floordestheight = (float) SV_ReadShort();
+        floor->floorDestHeight = (float) SV_ReadShort();
         floor->speed = FIX2FLT(SV_ReadLong());
 
 #if __JHEXEN__
@@ -2949,10 +2961,10 @@ static int SV_ReadFloor(floormove_t *floor)
         floor->sector = sector;
 #endif
         floor->direction = SV_ReadLong();
-        floor->newspecial = SV_ReadLong();
+        floor->newSpecial = SV_ReadLong();
         floor->texture = SV_ReadShort();
 
-        floor->floordestheight = FIX2FLT((fixed_t) SV_ReadLong());
+        floor->floorDestHeight = FIX2FLT((fixed_t) SV_ReadLong());
         floor->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
 #if __JHEXEN__
@@ -2967,7 +2979,7 @@ static int SV_ReadFloor(floormove_t *floor)
 #endif
     }
 
-    P_ToXSector(floor->sector)->specialdata = floor;
+    P_ToXSector(floor->sector)->specialData = floor;
     floor->thinker.function = T_MoveFloor;
 
     return true; // Add this thinker.
@@ -2996,7 +3008,7 @@ static void SV_WritePlat(plat_t *plat)
     SV_WriteLong(plat->count);
 
     SV_WriteByte((byte) plat->status);
-    SV_WriteByte((byte) plat->oldstatus);
+    SV_WriteByte((byte) plat->oldStatus);
     SV_WriteByte((byte) plat->crush);
 
     SV_WriteLong(plat->tag);
@@ -3035,7 +3047,7 @@ static int SV_ReadPlat(plat_t *plat)
         plat->count = SV_ReadLong();
 
         plat->status = (plat_e) SV_ReadByte();
-        plat->oldstatus = (plat_e) SV_ReadByte();
+        plat->oldStatus = (plat_e) SV_ReadByte();
         plat->crush = (boolean) SV_ReadByte();
 
         plat->tag = SV_ReadLong();
@@ -3061,7 +3073,7 @@ static int SV_ReadPlat(plat_t *plat)
         plat->wait = SV_ReadLong();
         plat->count = SV_ReadLong();
         plat->status = SV_ReadLong();
-        plat->oldstatus = SV_ReadLong();
+        plat->oldStatus = SV_ReadLong();
         plat->crush = SV_ReadLong();
         plat->tag = SV_ReadLong();
         plat->type = SV_ReadLong();
@@ -3072,7 +3084,7 @@ static int SV_ReadPlat(plat_t *plat)
             plat->thinker.function = T_PlatRaise;
     }
 
-    P_ToXSector(plat->sector)->specialdata = plat;
+    P_ToXSector(plat->sector)->specialData = plat;
     return true; // Add this thinker.
 }
 
@@ -3468,8 +3480,8 @@ static void SV_WritePillar(pillar_t *th)
 
     SV_WriteLong(FLT2FIX(th->ceilingSpeed));
     SV_WriteLong(FLT2FIX(th->floorSpeed));
-    SV_WriteLong(FLT2FIX(th->floordest));
-    SV_WriteLong(FLT2FIX(th->ceilingdest));
+    SV_WriteLong(FLT2FIX(th->floorDest));
+    SV_WriteLong(FLT2FIX(th->ceilingDest));
     SV_WriteLong(th->direction);
     SV_WriteLong(th->crush);
 }
@@ -3491,8 +3503,8 @@ static int SV_ReadPillar(pillar_t *th)
 
         th->ceilingSpeed = FIX2FLT((fixed_t) SV_ReadLong());
         th->floorSpeed = FIX2FLT((fixed_t) SV_ReadLong());
-        th->floordest = FIX2FLT((fixed_t) SV_ReadLong());
-        th->ceilingdest = FIX2FLT((fixed_t) SV_ReadLong());
+        th->floorDest = FIX2FLT((fixed_t) SV_ReadLong());
+        th->ceilingDest = FIX2FLT((fixed_t) SV_ReadLong());
         th->direction = SV_ReadLong();
         th->crush = SV_ReadLong();
     }
@@ -3512,15 +3524,15 @@ static int SV_ReadPillar(pillar_t *th)
 
         th->ceilingSpeed = FIX2FLT((fixed_t) SV_ReadLong());
         th->floorSpeed = FIX2FLT((fixed_t) SV_ReadLong());
-        th->floordest = FIX2FLT((fixed_t) SV_ReadLong());
-        th->ceilingdest = FIX2FLT((fixed_t) SV_ReadLong());
+        th->floorDest = FIX2FLT((fixed_t) SV_ReadLong());
+        th->ceilingDest = FIX2FLT((fixed_t) SV_ReadLong());
         th->direction = SV_ReadLong();
         th->crush = SV_ReadLong();
     }
 
     th->thinker.function = T_BuildPillar;
 
-    P_ToXSector(th->sector)->specialdata = th;
+    P_ToXSector(th->sector)->specialData = th;
     return true; // Add this thinker.
 }
 
@@ -3594,7 +3606,7 @@ static int SV_ReadFloorWaggle(floorWaggle_t *th)
 
     th->thinker.function = T_FloorWaggle;
 
-    P_ToXSector(th->sector)->specialdata = th;
+    P_ToXSector(th->sector)->specialData = th;
     return true; // Add this thinker.
 }
 #endif // __JHEXEN__
@@ -3612,10 +3624,10 @@ static void SV_WriteFlash(lightflash_t* flash)
     SV_WriteLong(P_ToIndex(flash->sector));
 
     SV_WriteLong(flash->count);
-    SV_WriteLong((int) (255.0f * flash->maxlight));
-    SV_WriteLong((int) (255.0f * flash->minlight));
-    SV_WriteLong(flash->maxtime);
-    SV_WriteLong(flash->mintime);
+    SV_WriteLong((int) (255.0f * flash->maxLight));
+    SV_WriteLong((int) (255.0f * flash->minLight));
+    SV_WriteLong(flash->maxTime);
+    SV_WriteLong(flash->minTime);
 }
 
 static int SV_ReadFlash(lightflash_t* flash)
@@ -3633,10 +3645,10 @@ static int SV_ReadFlash(lightflash_t* flash)
         flash->sector = sector;
 
         flash->count = SV_ReadLong();
-        flash->maxlight = (float) SV_ReadLong() / 255.0f;
-        flash->minlight = (float) SV_ReadLong() / 255.0f;
-        flash->maxtime = SV_ReadLong();
-        flash->mintime = SV_ReadLong();
+        flash->maxLight = (float) SV_ReadLong() / 255.0f;
+        flash->minLight = (float) SV_ReadLong() / 255.0f;
+        flash->maxTime = SV_ReadLong();
+        flash->minTime = SV_ReadLong();
     }
     else
     {
@@ -3652,10 +3664,10 @@ static int SV_ReadFlash(lightflash_t* flash)
         flash->sector = sector;
 
         flash->count = SV_ReadLong();
-        flash->maxlight = (float) SV_ReadLong() / 255.0f;
-        flash->minlight = (float) SV_ReadLong() / 255.0f;
-        flash->maxtime = SV_ReadLong();
-        flash->mintime = SV_ReadLong();
+        flash->maxLight = (float) SV_ReadLong() / 255.0f;
+        flash->minLight = (float) SV_ReadLong() / 255.0f;
+        flash->maxTime = SV_ReadLong();
+        flash->minTime = SV_ReadLong();
     }
 
     flash->thinker.function = T_LightFlash;
@@ -3674,10 +3686,10 @@ static void SV_WriteStrobe(strobe_t* strobe)
     SV_WriteLong(P_ToIndex(strobe->sector));
 
     SV_WriteLong(strobe->count);
-    SV_WriteLong((int) (255.0f * strobe->maxlight));
-    SV_WriteLong((int) (255.0f * strobe->minlight));
-    SV_WriteLong(strobe->darktime);
-    SV_WriteLong(strobe->brighttime);
+    SV_WriteLong((int) (255.0f * strobe->maxLight));
+    SV_WriteLong((int) (255.0f * strobe->minLight));
+    SV_WriteLong(strobe->darkTime);
+    SV_WriteLong(strobe->brightTime);
 }
 
 static int SV_ReadStrobe(strobe_t *strobe)
@@ -3694,10 +3706,10 @@ static int SV_ReadStrobe(strobe_t *strobe)
         strobe->sector = sector;
 
         strobe->count = SV_ReadLong();
-        strobe->maxlight = (float) SV_ReadLong() / 255.0f;
-        strobe->minlight = (float) SV_ReadLong() / 255.0f;
-        strobe->darktime = SV_ReadLong();
-        strobe->brighttime = SV_ReadLong();
+        strobe->maxLight = (float) SV_ReadLong() / 255.0f;
+        strobe->minLight = (float) SV_ReadLong() / 255.0f;
+        strobe->darkTime = SV_ReadLong();
+        strobe->brightTime = SV_ReadLong();
     }
     else
     {
@@ -3713,10 +3725,10 @@ static int SV_ReadStrobe(strobe_t *strobe)
         strobe->sector = sector;
 
         strobe->count = SV_ReadLong();
-        strobe->minlight = (float) SV_ReadLong() / 255.0f;
-        strobe->maxlight = (float) SV_ReadLong() / 255.0f;
-        strobe->darktime = SV_ReadLong();
-        strobe->brighttime = SV_ReadLong();
+        strobe->minLight = (float) SV_ReadLong() / 255.0f;
+        strobe->maxLight = (float) SV_ReadLong() / 255.0f;
+        strobe->darkTime = SV_ReadLong();
+        strobe->brightTime = SV_ReadLong();
     }
 
     strobe->thinker.function = T_StrobeFlash;
@@ -3734,8 +3746,8 @@ static void SV_WriteGlow(glow_t *glow)
 
     SV_WriteLong(P_ToIndex(glow->sector));
 
-    SV_WriteLong((int) (255.0f * glow->maxlight));
-    SV_WriteLong((int) (255.0f * glow->minlight));
+    SV_WriteLong((int) (255.0f * glow->maxLight));
+    SV_WriteLong((int) (255.0f * glow->minLight));
     SV_WriteLong(glow->direction);
 }
 
@@ -3752,8 +3764,8 @@ static int SV_ReadGlow(glow_t *glow)
             Con_Error("TC_GLOW: bad sector number\n");
         glow->sector = sector;
 
-        glow->maxlight = (float) SV_ReadLong() / 255.0f;
-        glow->minlight = (float) SV_ReadLong() / 255.0f;
+        glow->maxLight = (float) SV_ReadLong() / 255.0f;
+        glow->minLight = (float) SV_ReadLong() / 255.0f;
         glow->direction = SV_ReadLong();
     }
     else
@@ -3769,8 +3781,8 @@ static int SV_ReadGlow(glow_t *glow)
             Con_Error("TC_GLOW: bad sector number\n");
         glow->sector = sector;
 
-        glow->minlight = (float) SV_ReadLong() / 255.0f;
-        glow->maxlight = (float) SV_ReadLong() / 255.0f;
+        glow->minLight = (float) SV_ReadLong() / 255.0f;
+        glow->maxLight = (float) SV_ReadLong() / 255.0f;
         glow->direction = SV_ReadLong();
     }
 
@@ -3790,8 +3802,8 @@ static void SV_WriteFlicker(fireflicker_t *flicker)
 
     SV_WriteLong(P_ToIndex(flicker->sector));
 
-    SV_WriteLong((int) (255.0f * flicker->maxlight));
-    SV_WriteLong((int) (255.0f * flicker->minlight));
+    SV_WriteLong((int) (255.0f * flicker->maxLight));
+    SV_WriteLong((int) (255.0f * flicker->minLight));
 }
 
 /**
@@ -3809,8 +3821,8 @@ static int SV_ReadFlicker(fireflicker_t *flicker)
         Con_Error("TC_FLICKER: bad sector number\n");
     flicker->sector = sector;
 
-    flicker->maxlight = (float) SV_ReadLong() / 255.0f;
-    flicker->minlight = (float) SV_ReadLong() / 255.0f;
+    flicker->maxLight = (float) SV_ReadLong() / 255.0f;
+    flicker->minLight = (float) SV_ReadLong() / 255.0f;
 
     flicker->thinker.function = T_FireFlicker;
     return true; // Add this thinker.
@@ -3830,10 +3842,10 @@ static void SV_WriteBlink(lightblink_t *blink)
     SV_WriteLong(P_ToIndex(blink->sector));
 
     SV_WriteLong(blink->count);
-    SV_WriteLong((int) (255.0f * blink->maxlight));
-    SV_WriteLong((int) (255.0f * blink->minlight));
-    SV_WriteLong(blink->maxtime);
-    SV_WriteLong(blink->mintime);
+    SV_WriteLong((int) (255.0f * blink->maxLight));
+    SV_WriteLong((int) (255.0f * blink->minLight));
+    SV_WriteLong(blink->maxTime);
+    SV_WriteLong(blink->minTime);
 }
 
 /**
@@ -3852,10 +3864,10 @@ static int SV_ReadBlink(lightblink_t *blink)
     blink->sector = sector;
 
     blink->count = SV_ReadLong();
-    blink->maxlight = (float) SV_ReadLong() / 255.0f;
-    blink->minlight = (float) SV_ReadLong() / 255.0f;
-    blink->maxtime = SV_ReadLong();
-    blink->mintime = SV_ReadLong();
+    blink->maxLight = (float) SV_ReadLong() / 255.0f;
+    blink->minLight = (float) SV_ReadLong() / 255.0f;
+    blink->maxTime = SV_ReadLong();
+    blink->minTime = SV_ReadLong();
 
     blink->thinker.function = T_LightBlink;
     return true; // Add this thinker.
@@ -3925,7 +3937,7 @@ static void P_ArchiveThinkers(boolean savePlayers)
 #endif
 
     // Save off the current thinkers
-    for(th = thinkercap.next; th != &thinkercap && th; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap && th; th = th->next)
     {
 #if !__JHEXEN__
         if(th->function == INSTASIS) // Special case for thinkers in stasis.
@@ -4104,7 +4116,7 @@ static void P_UnArchiveThinkers(void)
     {
         mobj_t* mo;
 
-        for(th = thinkercap.next; th != &thinkercap; th = th->next)
+        for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
         {
             if(th->function != P_MobjThinker)
                 continue;
@@ -4164,7 +4176,7 @@ static void P_UnArchiveThinkers(void)
     {
         mobj_t* mo;
 
-        for(th = thinkercap.next; th != &thinkercap; th = th->next)
+        for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
         {
             if(th->function != P_MobjThinker)
                 continue;
@@ -4172,7 +4184,7 @@ static void P_UnArchiveThinkers(void)
             mo = (mobj_t *) th;
 
             mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
-            mo->onmobj = SV_GetArchiveThing((int) mo->onmobj, &mo->onmobj);
+            mo->onMobj = SV_GetArchiveThing((int) mo->onMobj, &mo->onMobj);
 # if __JDOOM__
             mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
 # endif
@@ -4204,7 +4216,7 @@ static void P_ArchiveBrain(void)
     int     i;
 
     SV_WriteByte(numbraintargets);
-    SV_WriteByte(brain.targeton);
+    SV_WriteByte(brain.targetOn);
     // Write the mobj references using the mobj archive.
     for(i = 0; i < numbraintargets; ++i)
         SV_WriteShort(SV_ThingArchiveNum(braintargets[i]));
@@ -4218,7 +4230,7 @@ static void P_UnArchiveBrain(void)
         return;    // No brain data before version 3.
 
     numbraintargets = SV_ReadByte();
-    brain.targeton = SV_ReadByte();
+    brain.targetOn = SV_ReadByte();
     for(i = 0; i < numbraintargets; ++i)
     {
         braintargets[i] = (mobj_t*) (int) SV_ReadShort();
@@ -4244,10 +4256,10 @@ static void P_ArchiveSoundTargets(void)
     {
         xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
 
-        if(xsec->soundtarget)
+        if(xsec->soundTarget)
         {
             SV_WriteLong(i);
-            SV_WriteShort(SV_ThingArchiveNum(xsec->soundtarget));
+            SV_WriteShort(SV_ThingArchiveNum(xsec->soundTarget));
         }
     }
 }
@@ -4275,8 +4287,8 @@ static void P_UnArchiveSoundTargets(void)
             Con_Error("P_UnArchiveSoundTargets: bad sector number\n");
 
         xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, secid));
-        xsec->soundtarget = (mobj_t*) (int) SV_ReadShort();
-            SV_GetArchiveThing((int) xsec->soundtarget, &xsec->soundtarget);
+        xsec->soundTarget = (mobj_t*) (int) SV_ReadShort();
+            SV_GetArchiveThing((int) xsec->soundTarget, &xsec->soundTarget);
     }
 }
 #endif
@@ -4693,7 +4705,7 @@ int SV_SaveGameWorker(void *ptr)
     hdr.leveltime = leveltime;
     hdr.gameid = SV_GameID();
     for(i = 0; i < MAXPLAYERS; i++)
-        hdr.players[i] = players[i].plr->ingame;
+        hdr.players[i] = players[i].plr->inGame;
     lzWrite(&hdr, sizeof(hdr), savefile);
 
     // In netgames the server tells the clients to save their games.
@@ -4967,7 +4979,7 @@ static boolean SV_LoadGame2(void)
 
         memcpy(&players[i], &playerBackup[i], sizeof(player_t));
         players[i].plr->mo = mo;
-        players[i].readyArtifact = players[i].inventory[players[i].inv_ptr].type;
+        players[i].readyArtifact = players[i].inventory[players[i].invPtr].type;
 
         P_InventoryResetCursor(&players[i]);
     }
@@ -4984,7 +4996,7 @@ static boolean SV_LoadGame2(void)
         boolean notLoaded = false;
 
 #if __JHEXEN__
-        if(players[i].plr->ingame)
+        if(players[i].plr->inGame)
         {
             // Try to find a saved player that corresponds this one.
             for(k = 0; k < MAXPLAYERS; ++k)
@@ -4993,7 +5005,7 @@ static boolean SV_LoadGame2(void)
             if(k < MAXPLAYERS)
                 continue;           // Found; don't bother this player.
 
-            players[i].playerstate = PST_REBORN;
+            players[i].playerState = PST_REBORN;
 
             if(!i)
             {
@@ -5008,7 +5020,7 @@ static boolean SV_LoadGame2(void)
             }
         }
 #else
-        if(!loaded[i] && players[i].plr->ingame)
+        if(!loaded[i] && players[i].plr->inGame)
         {
             if(!i)
             {
@@ -5132,10 +5144,10 @@ void SV_SaveClient(unsigned int gameid)
     SV_WriteLong(FLT2FIX(mo->pos[VX]));
     SV_WriteLong(FLT2FIX(mo->pos[VY]));
     SV_WriteLong(FLT2FIX(mo->pos[VZ]));
-    SV_WriteLong(FLT2FIX(mo->floorz));
-    SV_WriteLong(FLT2FIX(mo->ceilingz));
+    SV_WriteLong(FLT2FIX(mo->floorZ));
+    SV_WriteLong(FLT2FIX(mo->ceilingZ));
     SV_WriteLong(mo->angle); /* $unifiedangles */
-    SV_WriteFloat(pl->plr->lookdir); /* $unifiedangles */
+    SV_WriteFloat(pl->plr->lookDir); /* $unifiedangles */
     P_ArchivePlayerHeader();
     SV_WritePlayer(consoleplayer);
 
@@ -5194,10 +5206,10 @@ void SV_LoadClient(unsigned int gameid)
     mo->pos[VY] = FIX2FLT(SV_ReadLong());
     mo->pos[VZ] = FIX2FLT(SV_ReadLong());
     P_MobjSetPosition(mo);
-    mo->floorz = FIX2FLT(SV_ReadLong());
-    mo->ceilingz = FIX2FLT(SV_ReadLong());
+    mo->floorZ = FIX2FLT(SV_ReadLong());
+    mo->ceilingZ = FIX2FLT(SV_ReadLong());
     mo->angle = SV_ReadLong(); /* $unifiedangles */
-    cpl->plr->lookdir = SV_ReadFloat(); /* $unifiedangles */
+    cpl->plr->lookDir = SV_ReadFloat(); /* $unifiedangles */
     P_UnArchivePlayerHeader();
     SV_ReadPlayer(cpl);
 
@@ -5326,7 +5338,7 @@ void SV_MapTeleport(int map, int position)
         // Destroy all freshly spawned players
         for(i = 0; i < MAXPLAYERS; ++i)
         {
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
             {
                 P_MobjRemove(players[i].plr->mo);
             }
@@ -5337,7 +5349,7 @@ void SV_MapTeleport(int map, int position)
     targetPlayerMobj = NULL;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
         {
             continue;
         }
@@ -5348,9 +5360,9 @@ void SV_MapTeleport(int map, int position)
 
         if(IS_NETGAME || deathmatch)
         {
-            if(players[i].playerstate == PST_DEAD)
+            if(players[i].playerState == PST_DEAD)
             {   // In a network game, force all players to be alive
-                players[i].playerstate = PST_REBORN;
+                players[i].playerState = PST_REBORN;
             }
             if(!deathmatch)
             {   // Cooperative net-play, retain keys and weapons
@@ -5358,11 +5370,11 @@ void SV_MapTeleport(int map, int position)
                 oldPieces = players[i].pieces;
                 for(j = 0; j < NUM_WEAPON_TYPES; j++)
                 {
-                    oldWeaponowned[j] = players[i].weaponowned[j];
+                    oldWeaponowned[j] = players[i].weaponOwned[j];
                 }
             }
         }
-        playerWasReborn = (players[i].playerstate == PST_REBORN);
+        playerWasReborn = (players[i].playerState == PST_REBORN);
         if(deathmatch)
         {
             memset(players[i].frags, 0, sizeof(players[i].frags));
@@ -5383,14 +5395,14 @@ void SV_MapTeleport(int map, int position)
                 if(oldWeaponowned[j])
                 {
                     bestWeapon = j;
-                    players[i].weaponowned[j] = true;
+                    players[i].weaponOwned[j] = true;
                 }
             }
             players[i].ammo[AT_BLUEMANA] = 25;
             players[i].ammo[AT_GREENMANA] = 25;
             if(bestWeapon)
             {                   // Bring up the best weapon
-                players[i].pendingweapon = bestWeapon;
+                players[i].pendingWeapon = bestWeapon;
             }
         }
 
@@ -5425,7 +5437,7 @@ void SV_MapTeleport(int map, int position)
     // Destroy all things touching players
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(players[i].plr->ingame)
+        if(players[i].plr->inGame)
         {
             P_TeleportMove(players[i].plr->mo, players[i].plr->mo->pos[VX],
                            players[i].plr->mo->pos[VY], true);

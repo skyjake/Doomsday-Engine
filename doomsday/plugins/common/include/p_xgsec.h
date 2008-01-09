@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -96,10 +107,10 @@ typedef struct function_s {
     int             flags;
     int             pos;
     int             repeat;
-    int             timer, maxtimer;
-    int             mininterval, maxinterval;
+    int             timer, maxTimer;
+    int             minInterval, maxInterval;
     float           scale, offset;
-    float           value, oldvalue;
+    float           value, oldValue;
 } function_t;
 
 enum {
@@ -113,35 +124,35 @@ enum {
 
 typedef struct {
     boolean         disabled;
-    function_t      rgb[3];        // Don't move the functions around in the struct.
+    function_t      rgb[3]; // Don't move the functions around in the struct.
     function_t      plane[2];
     function_t      light;
     sectortype_t    info;
     int             timer;
-    int             chain_timer[DDLT_MAX_CHAINS];
+    int             chainTimer[DDLT_MAX_CHAINS];
 } xgsector_t;
 
 typedef struct {
     thinker_t       thinker;
 
     struct sector_s *sector;
-    boolean         ceiling;       // True if operates on the ceiling.
+    boolean         ceiling; // True if operates on the ceiling.
 
     int             flags;
     struct line_s  *origin;
 
     float           destination;
-    float           speed;        // Signed.
-    float           crushspeed;   // Signed (speed to use when crushing).
+    float           speed; // Signed.
+    float           crushSpeed; // Signed (speed to use when crushing).
 
-    int             setflat;       // Set flat when move done.
-    int             setsector;     // Sector type to set when move done
+    int             setFlat; // Set flat when move done.
+    int             setSectorType; // Sector type to set when move done
     // (-1 if no change).
-    int             startsound;    // Played after waiting.
-    int             endsound;      // Play when move done.
-    int             movesound;     // Sound to play while moving.
-    int             mininterval, maxinterval;   // Sound playing intervals.
-    int             timer;         // Counts down to zero.
+    int             startSound; // Played after waiting.
+    int             endSound; // Play when move done.
+    int             moveSound; // Sound to play while moving.
+    int             minInterval, maxInterval; // Sound playing intervals.
+    int             timer; // Counts down to zero.
 } xgplanemover_t;
 
 void            XS_Init(void);

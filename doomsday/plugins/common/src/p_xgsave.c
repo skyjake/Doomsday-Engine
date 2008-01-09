@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,13 +21,24 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
- * \bug Not 64bit clean: In function 'SV_ReadXGLine': cast to pointer from integer of different size
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
  * p_xgsave.c: Extended Generalized Line Types.
  *
  * Implements: Saving and loading routines for the XG data.
+ *
+ * \bug Not 64bit clean: In function 'SV_ReadXGLine': cast to pointer from integer of different size
  */
 
 #if __JDOOM__ || __JHERETIC__
@@ -87,17 +98,17 @@ void SV_WriteXGLine(line_t *li)
      */
 
     SV_WriteLong(info->id);
-    SV_WriteLong(info->act_count);
+    SV_WriteLong(info->actCount);
 
     SV_WriteByte(xg->active);
     SV_WriteByte(xg->disabled);
     SV_WriteLong(xg->timer);
-    SV_WriteLong(xg->ticker_timer);
+    SV_WriteLong(xg->tickerTimer);
     SV_WriteShort(SV_ThingArchiveNum(xg->activator));
     SV_WriteLong(xg->idata);
     SV_WriteFloat(xg->fdata);
-    SV_WriteLong(xg->chidx);
-    SV_WriteFloat(xg->chtimer);
+    SV_WriteLong(xg->chIdx);
+    SV_WriteFloat(xg->chTimer);
 }
 
 void SV_ReadXGLine(line_t *li)
@@ -116,19 +127,19 @@ void SV_ReadXGLine(line_t *li)
 
     xg = xline->xg;
 
-    xg->info.act_count = SV_ReadLong();
+    xg->info.actCount = SV_ReadLong();
     xg->active = SV_ReadByte();
     xg->disabled = SV_ReadByte();
     xg->timer = SV_ReadLong();
-    xg->ticker_timer = SV_ReadLong();
+    xg->tickerTimer = SV_ReadLong();
 
     // Will be updated later.
     xg->activator = (void *) (unsigned int) SV_ReadShort();
 
     xg->idata = SV_ReadLong();
     xg->fdata = SV_ReadFloat();
-    xg->chidx = SV_ReadLong();
-    xg->chtimer = SV_ReadFloat();
+    xg->chIdx = SV_ReadLong();
+    xg->chTimer = SV_ReadFloat();
 }
 
 /**
@@ -143,9 +154,9 @@ void SV_WriteXGFunction(xgsector_t *xg, function_t *fn)
     SV_WriteShort(fn->pos);
     SV_WriteShort(fn->repeat);
     SV_WriteShort(fn->timer);
-    SV_WriteShort(fn->maxtimer);
+    SV_WriteShort(fn->maxTimer);
     SV_WriteFloat(fn->value);
-    SV_WriteFloat(fn->oldvalue);
+    SV_WriteFloat(fn->oldValue);
 }
 
 void SV_ReadXGFunction(xgsector_t *xg, function_t *fn)
@@ -157,9 +168,9 @@ void SV_ReadXGFunction(xgsector_t *xg, function_t *fn)
     fn->pos = SV_ReadShort();
     fn->repeat = SV_ReadShort();
     fn->timer = SV_ReadShort();
-    fn->maxtimer = SV_ReadShort();
+    fn->maxTimer = SV_ReadShort();
     fn->value = SV_ReadFloat();
-    fn->oldvalue = SV_ReadFloat();
+    fn->oldValue = SV_ReadFloat();
 }
 
 void SV_WriteXGSector(struct sector_s *sec)
@@ -177,7 +188,7 @@ void SV_WriteXGSector(struct sector_s *sec)
 
     SV_WriteLong(info->id);
     SV_Write(info->count, sizeof(info->count));
-    SV_Write(xg->chain_timer, sizeof(xg->chain_timer));
+    SV_Write(xg->chainTimer, sizeof(xg->chainTimer));
     SV_WriteLong(xg->timer);
     SV_WriteByte(xg->disabled);
     for(i = 0; i < 3; ++i)
@@ -200,7 +211,7 @@ void SV_ReadXGSector(struct sector_s *sec)
     XS_SetSectorType(sec, SV_ReadLong());
     xg = xsec->xg;
     SV_Read(xg->info.count, sizeof(xg->info.count));
-    SV_Read(xg->chain_timer, sizeof(xg->chain_timer));
+    SV_Read(xg->chainTimer, sizeof(xg->chainTimer));
     xg->timer = SV_ReadLong();
     xg->disabled = SV_ReadByte();
     for(i = 0; i < 3; ++i)
@@ -233,14 +244,14 @@ void SV_WriteXGPlaneMover(thinker_t *th)
 
     SV_WriteLong(FLT2FIX(mov->destination));
     SV_WriteLong(FLT2FIX(mov->speed));
-    SV_WriteLong(FLT2FIX(mov->crushspeed));
-    SV_WriteLong(mov->setflat);
-    SV_WriteLong(mov->setsector);
-    SV_WriteLong(mov->startsound);
-    SV_WriteLong(mov->endsound);
-    SV_WriteLong(mov->movesound);
-    SV_WriteLong(mov->mininterval);
-    SV_WriteLong(mov->maxinterval);
+    SV_WriteLong(FLT2FIX(mov->crushSpeed));
+    SV_WriteLong(mov->setFlat);
+    SV_WriteLong(mov->setSectorType);
+    SV_WriteLong(mov->startSound);
+    SV_WriteLong(mov->endSound);
+    SV_WriteLong(mov->moveSound);
+    SV_WriteLong(mov->minInterval);
+    SV_WriteLong(mov->maxInterval);
     SV_WriteLong(mov->timer);
 }
 
@@ -264,14 +275,14 @@ int SV_ReadXGPlaneMover(xgplanemover_t *mov)
 
     mov->destination = FIX2FLT(SV_ReadLong());
     mov->speed = FIX2FLT(SV_ReadLong());
-    mov->crushspeed = FIX2FLT(SV_ReadLong());
-    mov->setflat = SV_ReadLong();
-    mov->setsector = SV_ReadLong();
-    mov->startsound = SV_ReadLong();
-    mov->endsound = SV_ReadLong();
-    mov->movesound = SV_ReadLong();
-    mov->mininterval = SV_ReadLong();
-    mov->maxinterval = SV_ReadLong();
+    mov->crushSpeed = FIX2FLT(SV_ReadLong());
+    mov->setFlat = SV_ReadLong();
+    mov->setSectorType = SV_ReadLong();
+    mov->startSound = SV_ReadLong();
+    mov->endSound = SV_ReadLong();
+    mov->moveSound = SV_ReadLong();
+    mov->minInterval = SV_ReadLong();
+    mov->maxInterval = SV_ReadLong();
     mov->timer = SV_ReadLong();
 
     mov->thinker.function = XS_PlaneMover;

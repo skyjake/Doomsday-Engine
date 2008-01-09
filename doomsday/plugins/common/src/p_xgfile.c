@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -224,28 +235,28 @@ void XG_WriteTypes(FILE *f)
         WriteLong(line.flags);
         WriteLong(line.flags2);
         WriteLong(line.flags3);
-        WriteShort(line.line_class);
-        WriteByte(line.act_type);
-        WriteShort(line.act_count);
-        WriteFloat(line.act_time);
-        WriteLong(line.act_tag);
+        WriteShort(line.lineClass);
+        WriteByte(line.actType);
+        WriteShort(line.actCount);
+        WriteFloat(line.actTime);
+        WriteLong(line.actTag);
         for(k = 0; k < DDLT_MAX_APARAMS; ++k)
             WriteLong(line.aparm[k]);
-        WriteFloat(line.ticker_start);
-        WriteFloat(line.ticker_end);
-        WriteLong(line.ticker_interval);
-        WriteShort(line.act_sound);
-        WriteShort(line.deact_sound);
-        WriteShort(line.ev_chain);
-        WriteShort(line.act_chain);
-        WriteShort(line.deact_chain);
-        WriteByte(line.wallsection);
-        WriteShort(line.act_tex);
-        WriteShort(line.deact_tex);
-        WriteString(line.act_msg);
-        WriteString(line.deact_msg);
-        WriteFloat(line.texmove_angle);
-        WriteFloat(line.texmove_speed);
+        WriteFloat(line.tickerStart);
+        WriteFloat(line.tickerEnd);
+        WriteLong(line.tickerInterval);
+        WriteShort(line.actSound);
+        WriteShort(line.deactSound);
+        WriteShort(line.evChain);
+        WriteShort(line.actChain);
+        WriteShort(line.deactChain);
+        WriteByte(line.wallSection);
+        WriteShort(line.actTex);
+        WriteShort(line.deactTex);
+        WriteString(line.actMsg);
+        WriteString(line.deactMsg);
+        WriteFloat(line.texMoveAngle);
+        WriteFloat(line.texMoveSpeed);
         for(k = 0; k < DDLT_MAX_PARAMS; ++k)
             WriteLong(line.iparm[k]);
         for(k = 0; k < DDLT_MAX_PARAMS; ++k)
@@ -268,11 +279,11 @@ void XG_WriteTypes(FILE *f)
 
         WriteShort(sec.id);
         WriteLong(sec.flags);
-        WriteLong(sec.act_tag);
+        WriteLong(sec.actTag);
         for(k = 0; k < DDLT_MAX_CHAINS; ++k)
             WriteLong(sec.chain[k]);
         for(k = 0; k < DDLT_MAX_CHAINS; ++k)
-            WriteLong(sec.chain_flags[k]);
+            WriteLong(sec.chainFlags[k]);
         for(k = 0; k < DDLT_MAX_CHAINS; ++k)
             WriteFloat(sec.start[k]);
         for(k = 0; k < DDLT_MAX_CHAINS; ++k)
@@ -284,39 +295,39 @@ void XG_WriteTypes(FILE *f)
         }
         for(k = 0; k < DDLT_MAX_CHAINS; ++k)
             WriteLong(sec.count[k]);
-        WriteShort(sec.ambient_sound);
-        WriteFloat(sec.sound_interval[0]);
-        WriteFloat(sec.sound_interval[1]);
-        WriteFloat(sec.texmove_angle[0]);
-        WriteFloat(sec.texmove_angle[1]);
-        WriteFloat(sec.texmove_speed[0]);
-        WriteFloat(sec.texmove_speed[1]);
-        WriteFloat(sec.wind_angle);
-        WriteFloat(sec.wind_speed);
-        WriteFloat(sec.vertical_wind);
+        WriteShort(sec.ambientSound);
+        WriteFloat(sec.soundInterval[0]);
+        WriteFloat(sec.soundInterval[1]);
+        WriteFloat(sec.texMoveAngle[0]);
+        WriteFloat(sec.texMoveAngle[1]);
+        WriteFloat(sec.texMoveSpeed[0]);
+        WriteFloat(sec.texMoveSpeed[1]);
+        WriteFloat(sec.windAngle);
+        WriteFloat(sec.windSpeed);
+        WriteFloat(sec.verticalWind);
         WriteFloat(sec.gravity);
         WriteFloat(sec.friction);
-        WriteString(sec.lightfunc);
-        WriteShort(sec.light_interval[0]);
-        WriteShort(sec.light_interval[1]);
-        WriteString(sec.colfunc[0]);
-        WriteString(sec.colfunc[1]);
-        WriteString(sec.colfunc[2]);
+        WriteString(sec.lightFunc);
+        WriteShort(sec.lightInterval[0]);
+        WriteShort(sec.lightInterval[1]);
+        WriteString(sec.colFunc[0]);
+        WriteString(sec.colFunc[1]);
+        WriteString(sec.colFunc[2]);
         for(k = 0; k < 3; ++k)
         {
-            WriteShort(sec.col_interval[k][0]);
-            WriteShort(sec.col_interval[k][1]);
+            WriteShort(sec.colInterval[k][0]);
+            WriteShort(sec.colInterval[k][1]);
         }
-        WriteString(sec.floorfunc);
-        WriteFloat(sec.floormul);
-        WriteFloat(sec.flooroff);
-        WriteShort(sec.floor_interval[0]);
-        WriteShort(sec.floor_interval[1]);
-        WriteString(sec.ceilfunc);
-        WriteFloat(sec.ceilmul);
-        WriteFloat(sec.ceiloff);
-        WriteShort(sec.ceil_interval[0]);
-        WriteShort(sec.ceil_interval[1]);
+        WriteString(sec.floorFunc);
+        WriteFloat(sec.floorMul);
+        WriteFloat(sec.floorOff);
+        WriteShort(sec.floorInterval[0]);
+        WriteShort(sec.floorInterval[1]);
+        WriteString(sec.ceilFunc);
+        WriteFloat(sec.ceilMul);
+        WriteFloat(sec.ceilOff);
+        WriteShort(sec.ceilInterval[0]);
+        WriteShort(sec.ceilInterval[1]);
     }
 
     // Write the end marker.
@@ -369,28 +380,28 @@ void XG_ReadXGLump(char *name)
             li->flags = ReadLong();
             li->flags2 = ReadLong();
             li->flags3 = ReadLong();
-            li->line_class = ReadShort();
-            li->act_type = ReadByte();
-            li->act_count = ReadShort();
-            li->act_time = ReadFloat();
-            li->act_tag = ReadLong();
+            li->lineClass = ReadShort();
+            li->actType = ReadByte();
+            li->actCount = ReadShort();
+            li->actTime = ReadFloat();
+            li->actTag = ReadLong();
             for(i = 0; i < DDLT_MAX_APARAMS; ++i)
                 li->aparm[i] = ReadLong();
-            li->ticker_start = ReadFloat();
-            li->ticker_end = ReadFloat();
-            li->ticker_interval = ReadLong();
-            li->act_sound = ReadShort();
-            li->deact_sound = ReadShort();
-            li->ev_chain = ReadShort();
-            li->act_chain = ReadShort();
-            li->deact_chain = ReadShort();
-            li->wallsection = ReadByte();
-            li->act_tex = ReadShort();
-            li->deact_tex = ReadShort();
-            ReadString(&li->act_msg);
-            ReadString(&li->deact_msg);
-            li->texmove_angle = ReadFloat();
-            li->texmove_speed = ReadFloat();
+            li->tickerStart = ReadFloat();
+            li->tickerEnd = ReadFloat();
+            li->tickerInterval = ReadLong();
+            li->actSound = ReadShort();
+            li->deactSound = ReadShort();
+            li->evChain = ReadShort();
+            li->actChain = ReadShort();
+            li->deactChain = ReadShort();
+            li->wallSection = ReadByte();
+            li->actTex = ReadShort();
+            li->deactTex = ReadShort();
+            ReadString(&li->actMsg);
+            ReadString(&li->deactMsg);
+            li->texMoveAngle = ReadFloat();
+            li->texMoveSpeed = ReadFloat();
             for(i = 0; i < DDLT_MAX_PARAMS; ++i)
                 li->iparm[i] = ReadLong();
             for(i = 0; i < DDLT_MAX_PARAMS; ++i)
@@ -404,11 +415,11 @@ void XG_ReadXGLump(char *name)
             // Read the def.
             sec->id = ReadShort();
             sec->flags = ReadLong();
-            sec->act_tag = ReadLong();
+            sec->actTag = ReadLong();
             for(i = 0; i < DDLT_MAX_CHAINS; ++i)
                 sec->chain[i] = ReadLong();
             for(i = 0; i < DDLT_MAX_CHAINS; ++i)
-                sec->chain_flags[i] = ReadLong();
+                sec->chainFlags[i] = ReadLong();
             for(i = 0; i < DDLT_MAX_CHAINS; ++i)
                 sec->start[i] = ReadFloat();
             for(i = 0; i < DDLT_MAX_CHAINS; ++i)
@@ -420,39 +431,39 @@ void XG_ReadXGLump(char *name)
             }
             for(i = 0; i < DDLT_MAX_CHAINS; ++i)
                 sec->count[i] = ReadLong();
-            sec->ambient_sound = ReadShort();
-            sec->sound_interval[0] = ReadFloat();
-            sec->sound_interval[1] = ReadFloat();
-            sec->texmove_angle[0] = ReadFloat();
-            sec->texmove_angle[1] = ReadFloat();
-            sec->texmove_speed[0] = ReadFloat();
-            sec->texmove_speed[1] = ReadFloat();
-            sec->wind_angle = ReadFloat();
-            sec->wind_speed = ReadFloat();
-            sec->vertical_wind = ReadFloat();
+            sec->ambientSound = ReadShort();
+            sec->soundInterval[0] = ReadFloat();
+            sec->soundInterval[1] = ReadFloat();
+            sec->texMoveAngle[0] = ReadFloat();
+            sec->texMoveAngle[1] = ReadFloat();
+            sec->texMoveSpeed[0] = ReadFloat();
+            sec->texMoveSpeed[1] = ReadFloat();
+            sec->windAngle = ReadFloat();
+            sec->windSpeed = ReadFloat();
+            sec->verticalWind = ReadFloat();
             sec->gravity = ReadFloat();
             sec->friction = ReadFloat();
-            ReadString(&sec->lightfunc);
-            sec->light_interval[0] = ReadShort();
-            sec->light_interval[1] = ReadShort();
-            ReadString(&sec->colfunc[0]);
-            ReadString(&sec->colfunc[1]);
-            ReadString(&sec->colfunc[2]);
+            ReadString(&sec->lightFunc);
+            sec->lightInterval[0] = ReadShort();
+            sec->lightInterval[1] = ReadShort();
+            ReadString(&sec->colFunc[0]);
+            ReadString(&sec->colFunc[1]);
+            ReadString(&sec->colFunc[2]);
             for(i = 0; i < 3; ++i)
             {
-                sec->col_interval[i][0] = ReadShort();
-                sec->col_interval[i][1] = ReadShort();
+                sec->colInterval[i][0] = ReadShort();
+                sec->colInterval[i][1] = ReadShort();
             }
-            ReadString(&sec->floorfunc);
-            sec->floormul = ReadFloat();
-            sec->flooroff = ReadFloat();
-            sec->floor_interval[0] = ReadShort();
-            sec->floor_interval[1] = ReadShort();
-            ReadString(&sec->ceilfunc);
-            sec->ceilmul = ReadFloat();
-            sec->ceiloff = ReadFloat();
-            sec->ceil_interval[0] = ReadShort();
-            sec->ceil_interval[1] = ReadShort();
+            ReadString(&sec->floorFunc);
+            sec->floorMul = ReadFloat();
+            sec->floorOff = ReadFloat();
+            sec->floorInterval[0] = ReadShort();
+            sec->floorInterval[1] = ReadShort();
+            ReadString(&sec->ceilFunc);
+            sec->ceilMul = ReadFloat();
+            sec->ceilOff = ReadFloat();
+            sec->ceilInterval[0] = ReadShort();
+            sec->ceilInterval[1] = ReadShort();
             break;
 
         default:

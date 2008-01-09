@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
@@ -111,7 +111,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
 #endif
     case 1: // Going up.
         res =
-            T_MovePlane(ceiling->sector, ceiling->speed, ceiling->topheight,
+            T_MovePlane(ceiling->sector, ceiling->speed, ceiling->topHeight,
                         false, 1, ceiling->direction);
 
         // Play a "while-moving" sound?
@@ -172,7 +172,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
 
     case -1: // Going down.
         res =
-            T_MovePlane(ceiling->sector, ceiling->speed, ceiling->bottomheight,
+            T_MovePlane(ceiling->sector, ceiling->speed, ceiling->bottomHeight,
                         ceiling->crush, 1, ceiling->direction);
 
         // Play a "while-moving" sound?
@@ -292,14 +292,14 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
     {
         xsec = P_ToXSector(sec);
 
-        if(xsec->specialdata)
+        if(xsec->specialData)
             continue;
 
         // new door thinker
         rtn = 1;
         ceiling = Z_Malloc(sizeof(*ceiling), PU_LEVSPEC, 0);
         P_AddThinker(&ceiling->thinker);
-        xsec->specialdata = ceiling;
+        xsec->specialData = ceiling;
         ceiling->thinker.function = T_MoveCeiling;
         ceiling->sector = sec;
         ceiling->crush = false;
@@ -310,8 +310,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 #if __JDOOM__ || __JHERETIC__ || __WOLFTC__ || __DOOM64TC__
         case fastCrushAndRaise:
             ceiling->crush = true;
-            ceiling->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
-            ceiling->bottomheight =
+            ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            ceiling->bottomHeight =
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
 
             ceiling->direction = -1;
@@ -321,8 +321,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 #if __JHEXEN__
         case crushRaiseAndStay:
             ceiling->crush = (int) arg[2];    // arg[2] = crushing value
-            ceiling->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
-            ceiling->bottomheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
+            ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
             ceiling->direction = -1;
             break;
 #endif
@@ -333,17 +333,17 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 #if !__JHEXEN__
             ceiling->crush = true;
 #endif
-            ceiling->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
 
         case lowerAndCrush:
 #if __JHEXEN__
             ceiling->crush = (int) arg[2];    // arg[2] = crushing value
 #endif
         case lowerToFloor:
-            ceiling->bottomheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+            ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
 
             if(type != lowerToFloor)
-                ceiling->bottomheight += 8;
+                ceiling->bottomHeight += 8;
             ceiling->direction = -1;
 #if __DOOM64TC__
             ceiling->speed *= 8; // d64tc
@@ -351,9 +351,9 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             break;
 
         case raiseToHighest:
-            ceiling->topheight = P_FindHighestCeilingSurrounding(sec);
+            ceiling->topHeight = P_FindHighestCeilingSurrounding(sec);
 #if __DOOM64TC__
-            ceiling->topheight -= 8;   // d64tc
+            ceiling->topHeight -= 8;   // d64tc
 #endif
             ceiling->direction = 1;
             break;
@@ -371,15 +371,15 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 
             if(bitmipR > 0)
             {
-                ceiling->topheight = P_FindHighestCeilingSurrounding(sec);
+                ceiling->topHeight = P_FindHighestCeilingSurrounding(sec);
                 ceiling->direction = 1;
                 ceiling->speed *= bitmipL;
-                ceiling->topheight -= bitmipR;
+                ceiling->topHeight -= bitmipR;
             }
             else
             {
-                ceiling->bottomheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
-                ceiling->bottomheight -= bitmipR;
+                ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+                ceiling->bottomHeight -= bitmipR;
                 ceiling->direction = -1;
                 ceiling->speed *= bitmipL;
             }
@@ -387,13 +387,13 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 #endif
 #if __JHEXEN__
         case lowerByValue:
-            ceiling->bottomheight =
+            ceiling->bottomHeight =
                 P_GetFloatp(sec, DMU_CEILING_HEIGHT) - (float) arg[2];
             ceiling->direction = -1;
             break;
 
         case raiseByValue:
-            ceiling->topheight =
+            ceiling->topHeight =
                 P_GetFloatp(sec, DMU_CEILING_HEIGHT) + (float) arg[2];
             ceiling->direction = 1;
             break;
@@ -408,14 +408,14 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) <= destHeight)
             {
                 ceiling->direction = 1;
-                ceiling->topheight = destHeight;
+                ceiling->topHeight = destHeight;
                 if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) == destHeight)
                     rtn = 0;
             }
             else if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) > destHeight)
             {
                 ceiling->direction = -1;
-                ceiling->bottomheight = destHeight;
+                ceiling->bottomHeight = destHeight;
             }
             break;
             }
@@ -506,7 +506,7 @@ void P_RemoveActiveCeiling(ceiling_t *ceiling)
 {
     ceilinglist_t *list = ceiling->list;
 
-    P_ToXSector(ceiling->sector)->specialdata = NULL;
+    P_ToXSector(ceiling->sector)->specialData = NULL;
 #if __JHEXEN__
     P_TagFinished(P_ToXSector(ceiling->sector)->tag);
 #endif
@@ -552,7 +552,7 @@ int P_ActivateInStasisCeiling(line_t *line)
 
         if(ceiling->direction == 0 && ceiling->tag == xline->tag)
         {
-            ceiling->direction = ceiling->olddirection;
+            ceiling->direction = ceiling->oldDirection;
             ceiling->thinker.function = T_MoveCeiling;
             rtn = 1;
         }
@@ -581,7 +581,7 @@ static int EV_CeilingCrushStop2(int tag)
 #else
         if(ceiling->direction != 0 && ceiling->tag == tag)
         {   // Put it into stasis.
-            ceiling->olddirection = ceiling->direction;
+            ceiling->oldDirection = ceiling->direction;
             ceiling->direction = 0;
             ceiling->thinker.function = INSTASIS;
             rtn = 1;

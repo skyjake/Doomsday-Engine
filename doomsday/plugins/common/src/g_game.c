@@ -3,7 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  *
  *\author Copyright © 1999-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © Raven Software, Corp.
  *\author Copyright © 1993-1996 by id Software, Inc.
  */
@@ -23,7 +23,7 @@
  */
 
 /**
- * g_game.c : Top-level (common) game routines.
+ * g_game.c: Top-level (common) game routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -463,14 +463,11 @@ void G_PreInit(void)
 
     verbose = ArgExists("-verbose");
 
-    // Setup the DGL interface.
-    G_InitDGL();
-
     // Setup the players.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         players[i].plr = DD_GetPlayer(i);
-        players[i].plr->extradata = (void *) &players[i];
+        players[i].plr->extraData = (void *) &players[i];
     }
 
     DD_SetConfigFile( CONFIGFILE );
@@ -586,8 +583,8 @@ void G_StartTitle(void)
 
 void G_DoLoadLevel(void)
 {
-    int         i;
-    char       *lname, *ptr;
+    int             i;
+    char           *lname, *ptr;
 
 #if __JHEXEN__ || __JSTRIFE__
     static int firstFragReset = 1;
@@ -601,18 +598,20 @@ void G_DoLoadLevel(void)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(players[i].plr->ingame && players[i].playerstate == PST_DEAD)
-            players[i].playerstate = PST_REBORN;
+        player_t       *plr = &players[i];
+
+        if(plr->plr->inGame && plr->playerState == PST_DEAD)
+            plr->playerState = PST_REBORN;
 
 #if __JHEXEN__ || __JSTRIFE__
         if(!IS_NETGAME || (IS_NETGAME != 0 && deathmatch != 0) ||
             firstFragReset == 1)
         {
-            memset(players[i].frags, 0, sizeof(players[i].frags));
+            memset(plr->frags, 0, sizeof(plr->frags));
             firstFragReset = 0;
         }
 #else
-        memset(players[i].frags, 0, sizeof(players[i].frags));
+        memset(plr->frags, 0, sizeof(plr->frags));
 #endif
     }
 
@@ -687,7 +686,7 @@ boolean G_Responder(event_t *ev)
     {   // Flag to denote that it's okay to use an artifact.
         if(!ST_IsInventoryVisible())
         {
-            plr->readyArtifact = plr->inventory[plr->inv_ptr].type;
+            plr->readyArtifact = plr->inventory[plr->invPtr].type;
         }
         usearti = true;
     }
@@ -750,19 +749,19 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
     gsvHealth = pl->health;
 #if !__JHEXEN__
     // Level stats
-    gsvKills = pl->killcount;
-    gsvItems = pl->itemcount;
-    gsvSecrets = pl->secretcount;
+    gsvKills = pl->killCount;
+    gsvItems = pl->itemCount;
+    gsvSecrets = pl->secretCount;
 #endif
         // armor
 #if __JHEXEN__
-    gsvArmor = FixedDiv(PCLASS_INFO(pl->class)->autoarmorsave +
-                        pl->armorpoints[ARMOR_ARMOR] +
-                        pl->armorpoints[ARMOR_SHIELD] +
-                        pl->armorpoints[ARMOR_HELMET] +
-                        pl->armorpoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+    gsvArmor = FixedDiv(PCLASS_INFO(pl->class)->autoArmorSave +
+                        pl->armorPoints[ARMOR_ARMOR] +
+                        pl->armorPoints[ARMOR_SHIELD] +
+                        pl->armorPoints[ARMOR_HELMET] +
+                        pl->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
 #else
-    gsvArmor = pl->armorpoints;
+    gsvArmor = pl->armorPoints;
 #endif
     // Owned keys
     for(i = 0; i < NUM_KEY_TYPES; ++i)
@@ -772,11 +771,11 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
         gsvKeys[i] = pl->keys[i];
 #endif
     // current weapon
-    gsvCurrentWeapon = pl->readyweapon;
+    gsvCurrentWeapon = pl->readyWeapon;
 
     // owned weapons
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-        gsvWeapons[i] = pl->weaponowned[i];
+        gsvWeapons[i] = pl->weaponOwned[i];
 
 #if __JHEXEN__
     // weapon pieces
@@ -803,11 +802,11 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
  */
 void G_Ticker(timespan_t ticLength)
 {
-    int         i;
-    player_t   *plyr = &players[consoleplayer];
     static gamestate_t oldgamestate = -1;
     static trigger_t fixed = {1.0 / TICSPERSEC};
-    gameaction_t currentAction;
+
+    int             i;
+    gameaction_t    currentAction;
 
     if(IS_CLIENT && !Get(DD_GAME_READY))
         return;
@@ -815,28 +814,30 @@ void G_Ticker(timespan_t ticLength)
     // Do player reborns if needed.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(players[i].plr->ingame && players[i].playerstate == PST_REBORN &&
-           !P_IsCamera(players[i].plr->mo))
+        player_t       *plr = &players[i];
+
+        if(plr->plr->inGame && plr->playerState == PST_REBORN &&
+           !P_IsCamera(plr->plr->mo))
             G_DoReborn(i);
 
         // Player has left?
-        if(players[i].playerstate == PST_GONE)
+        if(plr->playerState == PST_GONE)
         {
-            players[i].playerstate = PST_REBORN;
-            if(players[i].plr->mo)
+            plr->playerState = PST_REBORN;
+            if(plr->plr->mo)
             {
                 if(!IS_CLIENT)
                 {
-                    P_SpawnTeleFog(players[i].plr->mo->pos[VX],
-                                   players[i].plr->mo->pos[VY]);
+                    P_SpawnTeleFog(plr->plr->mo->pos[VX],
+                                   plr->plr->mo->pos[VY]);
                 }
 
                 // Let's get rid of the mobj.
 #ifdef _DEBUG
 Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 #endif
-                P_MobjRemove(players[i].plr->mo);
-                players[i].plr->mo = NULL;
+                P_MobjRemove(plr->plr->mo);
+                plr->plr->mo = NULL;
             }
         }
     }
@@ -850,11 +851,13 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
         case GA_INITNEW:
             G_DoInitNew();
             break;
+
         case GA_SINGLEREBORN:
             G_DoSingleReborn();
             break;
+
         case GA_LEAVEMAP:
-            Draw_TeleportIcon();
+            //Draw_TeleportIcon();
             G_DoTeleportNewMap();
             break;
 #endif
@@ -940,11 +943,11 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
             break;
 
         case GS_INTERMISSION:
-    #if __JDOOM__
+#if __JDOOM__
             WI_Ticker();
-    #else
+#else
             IN_Ticker();
-    #endif
+#endif
 
         default:
             if(oldgamestate != G_GetGameState())
@@ -958,7 +961,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
         }
 
         // Update the game status cvars for player data.
-        G_UpdateGSVarsForPlayer(plyr);
+        G_UpdateGSVarsForPlayer(&players[consoleplayer]);
 
         // Update view window size.
         R_ViewWindowTicker();
@@ -1071,24 +1074,24 @@ void G_PlayerExitMap(int player)
     p->update |= PSF_MORPH_TIME;
     if(p->morphTics)
     {
-        p->readyweapon = p->plr->mo->special1; // Restore weapon.
+        p->readyWeapon = p->plr->mo->special1; // Restore weapon.
         p->morphTics = 0;
     }
 #endif
 
-    p->plr->lookdir = 0;
+    p->plr->lookDir = 0;
     p->plr->mo->flags &= ~MF_SHADOW; // Cancel invisibility.
     p->plr->extraLight = 0; // Cancel gun flashes.
-    p->plr->fixedcolormap = 0; // Cancel IR goggles.
+    p->plr->fixedColorMap = 0; // Cancel IR goggles.
 
     // Clear filter.
     p->plr->filter = 0;
     p->plr->flags |= DDPF_FILTER;
-    p->damagecount = 0; // No palette changes.
-    p->bonuscount = 0;
+    p->damageCount = 0; // No palette changes.
+    p->bonusCount = 0;
 
 #if __JHEXEN__ || __JSTRIFE__
-    p->poisoncount = 0;
+    p->poisonCount = 0;
 #endif
 
     HUMsg_ClearMessages(p);
@@ -1100,14 +1103,14 @@ void G_PlayerExitMap(int player)
 void ClearPlayer(player_t *p)
 {
     ddplayer_t *ddplayer = p->plr;
-    int         playeringame = ddplayer->ingame;
+    int         playeringame = ddplayer->inGame;
     int         flags = ddplayer->flags;
-    int         start = p->startspot;
+    int         start = p->startSpot;
     fixcounters_t counter, acked;
 
     // Restore counters.
-    counter = ddplayer->fixcounter;
-    acked = ddplayer->fixacked;
+    counter = ddplayer->fixCounter;
+    acked = ddplayer->fixAcked;
 
     memset(p, 0, sizeof(*p));
     // Restore the pointer to ddplayer.
@@ -1115,28 +1118,28 @@ void ClearPlayer(player_t *p)
     // Also clear ddplayer.
     memset(ddplayer, 0, sizeof(*ddplayer));
     // Restore the pointer to this player.
-    ddplayer->extradata = p;
+    ddplayer->extraData = p;
     // Restore the playeringame data.
-    ddplayer->ingame = playeringame;
+    ddplayer->inGame = playeringame;
     ddplayer->flags = flags & ~(DDPF_INTERYAW | DDPF_INTERPITCH);
     // Don't clear the start spot.
-    p->startspot = start;
+    p->startSpot = start;
     // Restore counters.
-    ddplayer->fixcounter = counter;
-    ddplayer->fixacked = acked;
+    ddplayer->fixCounter = counter;
+    ddplayer->fixAcked = acked;
 
-    ddplayer->fixcounter.angles++;
-    ddplayer->fixcounter.pos++;
-    ddplayer->fixcounter.mom++;
+    ddplayer->fixCounter.angles++;
+    ddplayer->fixCounter.pos++;
+    ddplayer->fixCounter.mom++;
 
-/*    ddplayer->fixacked.angles =
-        ddplayer->fixacked.pos =
-        ddplayer->fixacked.mom = -1;
+/*    ddplayer->fixAcked.angles =
+        ddplayer->fixAcked.pos =
+        ddplayer->fixAcked.mom = -1;
 #ifdef _DEBUG
     Con_Message("ClearPlayer: fixacked set to -1 (counts:%i, %i, %i)\n",
-                ddplayer->fixcounter.angles,
-                ddplayer->fixcounter.pos,
-                ddplayer->fixcounter.mom);
+                ddplayer->fixCounter.angles,
+                ddplayer->fixCounter.pos,
+                ddplayer->fixCounter.mom);
 #endif*/
 }
 
@@ -1146,87 +1149,91 @@ void ClearPlayer(player_t *p)
  */
 void G_PlayerReborn(int player)
 {
-    player_t   *p;
-    int         frags[MAXPLAYERS];
-    int         killcount, itemcount, secretcount;
+    player_t       *p;
+    int             frags[MAXPLAYERS];
+    int             killcount, itemcount, secretcount;
 
 #if __JDOOM__ || __JHERETIC__
-    int         i;
+    int             i;
 #endif
 #if __JHERETIC__
-    boolean     secret = false;
-    int         spot;
+    boolean         secret = false;
+    int             spot;
 #elif __JHEXEN__ || __JSTRIFE__
-    uint        worldTimer;
+    uint            worldTimer;
 #endif
 
-    memcpy(frags, players[player].frags, sizeof(frags));
-    killcount = players[player].killcount;
-    itemcount = players[player].itemcount;
-    secretcount = players[player].secretcount;
-#if __JHEXEN__ || __JSTRIFE__
-    worldTimer = players[player].worldTimer;
-#endif
+    if(player < 0 || player >= MAXPLAYERS)
+        return; // Wha?
 
     p = &players[player];
+
+    memcpy(frags, p->frags, sizeof(frags));
+    killcount = p->killCount;
+    itemcount = p->itemCount;
+    secretcount = p->secretCount;
+#if __JHEXEN__ || __JSTRIFE__
+    worldTimer = p->worldTimer;
+#endif
+
 #if __JHERETIC__
-    if(p->didsecret)
+    if(p->didSecret)
         secret = true;
-    spot = p->startspot;
+    spot = p->startSpot;
 #endif
 
     // Clears (almost) everything.
     ClearPlayer(p);
 
 #if __JHERETIC__
-    p->startspot = spot;
+    p->startSpot = spot;
 #endif
 
-    memcpy(players[player].frags, frags, sizeof(players[player].frags));
-    players[player].killcount = killcount;
-    players[player].itemcount = itemcount;
-    players[player].secretcount = secretcount;
+    memcpy(p->frags, frags, sizeof(p->frags));
+    p->killCount = killcount;
+    p->itemCount = itemcount;
+    p->secretCount = secretcount;
 #if __JHEXEN__ || __JSTRIFE__
-    players[player].worldTimer = worldTimer;
-    players[player].colormap = cfg.playerColor[player];
+    p->worldTimer = worldTimer;
+    p->colorMap = cfg.playerColor[player];
 #endif
 #if __JHEXEN__
-    players[player].class = cfg.playerClass[player];
+    p->class = cfg.playerClass[player];
 #endif
-    p->usedown = p->attackdown = true;  // don't do anything immediately
-    p->playerstate = PST_LIVE;
+    p->useDown = p->attackDown = true; // Don't do anything immediately.
+    p->playerState = PST_LIVE;
     p->health = MAXHEALTH;
 
 #if __JDOOM__
-    p->readyweapon = p->pendingweapon = WT_SECOND;
-    p->weaponowned[WT_FIRST] = true;
-    p->weaponowned[WT_SECOND] = true;
+    p->readyWeapon = p->pendingWeapon = WT_SECOND;
+    p->weaponOwned[WT_FIRST] = true;
+    p->weaponOwned[WT_SECOND] = true;
     p->ammo[AT_CLIP] = 50;
 
     // See if the Values specify anything.
     P_InitPlayerValues(p);
 
 #elif __JHERETIC__
-    p->readyweapon = p->pendingweapon = WT_SECOND;
-    p->weaponowned[WT_FIRST] = true;
-    p->weaponowned[WT_SECOND] = true;
+    p->readyWeapon = p->pendingWeapon = WT_SECOND;
+    p->weaponOwned[WT_FIRST] = true;
+    p->weaponOwned[WT_SECOND] = true;
     p->ammo[AT_CRYSTAL] = 50;
 
     if(gamemap == 9 || secret)
     {
-        p->didsecret = true;
+        p->didSecret = true;
     }
 
 #else
-    p->readyweapon = p->pendingweapon = WT_FIRST;
-    p->weaponowned[WT_FIRST] = true;
+    p->readyWeapon = p->pendingWeapon = WT_FIRST;
+    p->weaponOwned[WT_FIRST] = true;
     localQuakeHappening[player] = false;
 #endif
 
 #if __JDOOM__ || __JHERETIC__
     // Reset maxammo.
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
-        p->maxammo[i] = maxammo[i];
+        p->maxAmmo[i] = maxammo[i];
 #endif
 
 #if !__JDOOM__
@@ -1267,12 +1274,18 @@ void G_QueueBody(mobj_t *body)
 void G_DoReborn(int playernum)
 {
 #if __JHEXEN__ || __JSTRIFE__
-    int         i;
-    boolean     oldWeaponowned[NUM_WEAPON_TYPES];
-    int         oldKeys, oldPieces, bestWeapon;
+    int             i;
+    boolean         oldWeaponowned[NUM_WEAPON_TYPES];
+    int             oldKeys, oldPieces, bestWeapon;
 #endif
-    boolean     foundSpot;
+    boolean         foundSpot;
     spawnspot_t    *assigned;
+    player_t       *p;
+
+    if(playernum < 0 || playernum >= MAXPLAYERS)
+        return; // Wha?
+
+    p = &players[playernum];
 
     // Clear the currently playing script, if any.
     FI_Reset();
@@ -1296,13 +1309,13 @@ void G_DoReborn(int playernum)
         G_SetGameAction(GA_LOADLEVEL);
 #endif
     }
-    else                        // Netgame
-    {
-        if(players[playernum].plr->mo)
+    else
+    {   // In a net game.
+        if(p->plr->mo)
         {
-            // first dissasociate the corpse
-            players[playernum].plr->mo->player = NULL;
-            players[playernum].plr->mo->dplayer = NULL;
+            // First dissasociate the corpse.
+            p->plr->mo->player = NULL;
+            p->plr->mo->dPlayer = NULL;
         }
 
         if(IS_CLIENT)
@@ -1311,12 +1324,13 @@ void G_DoReborn(int playernum)
             {
                 G_DummySpawnPlayer(playernum);
             }
+
             return;
         }
 
         Con_Printf("G_DoReborn for %i.\n", playernum);
 
-        // spawn at random spot if in death match
+        // Spawn at random spot if in death match.
         if(deathmatch)
         {
             G_DeathMatchSpawnPlayer(playernum);
@@ -1325,10 +1339,10 @@ void G_DoReborn(int playernum)
 
 #if __JHEXEN__ || __JSTRIFE__
         // Cooperative net-play, retain keys and weapons
-        oldKeys = players[playernum].keys;
-        oldPieces = players[playernum].pieces;
+        oldKeys = p->keys;
+        oldPieces = p->pieces;
         for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-            oldWeaponowned[i] = players[playernum].weaponowned[i];
+            oldWeaponowned[i] = p->weaponOwned[i];
 #endif
 
         // Try to spawn at the assigned spot.
@@ -1340,9 +1354,9 @@ void G_DoReborn(int playernum)
                                     0,
 #endif
                                     playernum);
+
         if(P_CheckSpot(playernum, assigned, true))
-        {
-            // Appropriate player start spot is open.
+        {   // Appropriate player start spot is open.
             Con_Printf("- spawning at assigned spot\n");
             P_SpawnPlayer(assigned, playernum);
             foundSpot = true;
@@ -1350,13 +1364,13 @@ void G_DoReborn(int playernum)
 #if __JDOOM__ || __JHERETIC__
         else
         {
-            Con_Printf("- force spawning at %i.\n", players[playernum].startspot);
+            Con_Printf("- force spawning at %i.\n", p->startSpot);
 
             // Fuzzy returns false if it needs telefragging.
             if(!P_FuzzySpawn(assigned, playernum, true))
             {
-                // Spawn at the assigned spot, telefrag whoever's there.
-                P_Telefrag(players[playernum].plr->mo);
+                // Spawn at the assigned spot, telefrag whoever else is there.
+                P_Telefrag(p->plr->mo);
             }
         }
 #else
@@ -1378,29 +1392,28 @@ void G_DoReborn(int playernum)
         }
 
         if(!foundSpot)
-        {
-            // Player's going to be inside something.
+        {   // Player's going to be inside something.
             P_SpawnPlayer(P_GetPlayerStart(RebornPosition, playernum),
                           playernum);
         }
 
         // Restore keys and weapons
-        players[playernum].keys = oldKeys;
-        players[playernum].pieces = oldPieces;
+        p->keys = oldKeys;
+        p->pieces = oldPieces;
         for(bestWeapon = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
         {
             if(oldWeaponowned[i])
             {
                 bestWeapon = i;
-                players[playernum].weaponowned[i] = true;
+                p->weaponOwned[i] = true;
             }
         }
 
-        players[playernum].ammo[AT_BLUEMANA] = 25;
-        players[playernum].ammo[AT_GREENMANA] = 25;
+        p->ammo[AT_BLUEMANA] = 25;
+        p->ammo[AT_GREENMANA] = 25;
         if(bestWeapon)
         {   // Bring up the best weapon.
-            players[playernum].pendingweapon = bestWeapon;
+            p->pendingWeapon = bestWeapon;
         }
 #endif
     }
@@ -1565,7 +1578,7 @@ void G_DoCompleted(void)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(players[i].plr->ingame)
+        if(players[i].plr->inGame)
         {
             G_PlayerExitMap(i); // take away cards and stuff
 
@@ -1606,11 +1619,11 @@ void G_DoCompleted(void)
     if(gamemode != commercial && gamemap == 9)
     {
         for(i = 0; i < MAXPLAYERS; ++i)
-            players[i].didsecret = true;
+            players[i].didSecret = true;
     }
 # endif
 
-    wminfo.didsecret = players[consoleplayer].didsecret;
+    wminfo.didSecret = players[consoleplayer].didSecret;
     wminfo.last = gamemap - 1;
 
 # if __DOOM64TC__
@@ -1722,9 +1735,9 @@ void G_DoCompleted(void)
         nextmap = 0;
     }
 
-    wminfo.maxkills = totalkills;
-    wminfo.maxitems = totalitems;
-    wminfo.maxsecret = totalsecret;
+    wminfo.maxKills = totalkills;
+    wminfo.maxItems = totalitems;
+    wminfo.maxSecret = totalsecret;
 
     G_PrepareWIData();
 
@@ -1750,31 +1763,34 @@ void G_DoCompleted(void)
 #if __JDOOM__
 void G_PrepareWIData(void)
 {
-    int         i;
-    ddmapinfo_t minfo;
-    char        levid[8];
+    int             i;
+    ddmapinfo_t     minfo;
+    char            levid[8];
+    wbstartstruct_t *info = &wminfo;
 
-    wminfo.epsd = gameepisode - 1;
-    wminfo.maxfrags = 0;
+    info->epsd = gameepisode - 1;
+    info->maxFrags = 0;
 
     P_GetMapLumpName(gameepisode, gamemap, levid);
 
     // See if there is a par time definition.
-    if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.partime > 0)
-        wminfo.partime = 35 * (int) minfo.partime;
+    if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.parTime > 0)
+        info->parTime = 35 * (int) minfo.parTime;
     else
-        wminfo.partime = -1; // unknown
+        info->parTime = -1; // Unknown.
 
-    wminfo.pnum = consoleplayer;
+    info->pNum = consoleplayer;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        wminfo.plyr[i].in = players[i].plr->ingame;
-        wminfo.plyr[i].skills = players[i].killcount;
-        wminfo.plyr[i].sitems = players[i].itemcount;
-        wminfo.plyr[i].ssecret = players[i].secretcount;
-        wminfo.plyr[i].stime = leveltime;
-        memcpy(wminfo.plyr[i].frags, players[i].frags,
-               sizeof(wminfo.plyr[i].frags));
+        player_t       *p = &players[i];
+        wbplayerstruct_t *pStats = &info->plyr[i];
+
+        pStats->inGame = p->plr->inGame;
+        pStats->kills = p->killCount;
+        pStats->items = p->itemCount;
+        pStats->secret = p->secretCount;
+        pStats->time = leveltime;
+        memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
     }
 }
 #endif
@@ -1785,7 +1801,7 @@ void G_WorldDone(void)
 
 #if __JDOOM__
     if(secretexit)
-        players[consoleplayer].didsecret = true;
+        players[consoleplayer].didSecret = true;
 #endif
 }
 
@@ -2010,7 +2026,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 
     for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
     {
-        mobjinfo[MonsterMissileInfo[i].type].speed =
+        mobjInfo[MonsterMissileInfo[i].type].speed =
             MonsterMissileInfo[i].speed[speed];
     }
 #endif
@@ -2021,11 +2037,13 @@ void G_InitNew(skillmode_t skill, int episode, int map)
         // Force players to be initialized upon first level load.
         for(i = 0; i < MAXPLAYERS; ++i)
         {
-            players[i].playerstate = PST_REBORN;
+            player_t           *plr = &players[i];
+
+            plr->playerState = PST_REBORN;
 #if __JHEXEN__ || __JSTRIFE__
-            players[i].worldTimer = 0;
+            plr->worldTimer = 0;
 #else
-            players[i].didsecret = false;
+            plr->didSecret = false;
 #endif
         }
     }

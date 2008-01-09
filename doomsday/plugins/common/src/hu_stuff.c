@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -320,7 +331,7 @@ void HU_Drawer(void)
         for(y = 8, i = 0; i < MAXPLAYERS; ++i)
         {
             plr = &players[i];
-            if(!plr->plr || !plr->plr->ingame)
+            if(!plr->plr || !plr->plr->inGame)
                 continue;
 
             sprintf(buf, "%i%s", i, (i == consoleplayer ? "=" : ":"));
@@ -330,7 +341,7 @@ void HU_Drawer(void)
             x = 20;
             for(k = 0; k < MAXPLAYERS; ++k, x += 18)
             {
-                if(players[k].plr || !players[k].plr->ingame)
+                if(players[k].plr || !players[k].plr->inGame)
                     continue;
 
                 sprintf(buf, "%i", plr->frags[k]);
@@ -358,7 +369,7 @@ static void drawFragsTable(void)
     memset(totalFrags, 0, sizeof(totalFrags));
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         inCount++;
@@ -377,7 +388,7 @@ static void drawFragsTable(void)
         // Find the largest.
         for(max = FRAGS_DRAWN + 1, k = 0; k < MAXPLAYERS; ++k)
         {
-            if(!players[k].plr->ingame || totalFrags[k] == FRAGS_DRAWN)
+            if(!players[k].plr->inGame || totalFrags[k] == FRAGS_DRAWN)
                 continue;
 
             if(totalFrags[k] > max)
@@ -392,19 +403,19 @@ static void drawFragsTable(void)
         switch(cfg.playerColor[choose])
         {
         case 0:                // green
-            gl.Color3f(0, .8f, 0);
+            DGL_Color3f(0, .8f, 0);
             break;
 
         case 1:                // gray
-            gl.Color3f(.45f, .45f, .45f);
+            DGL_Color3f(.45f, .45f, .45f);
             break;
 
         case 2:                // brown
-            gl.Color3f(.7f, .5f, .4f);
+            DGL_Color3f(.7f, .5f, .4f);
             break;
 
         case 3:                // red
-            gl.Color3f(1, 0, 0);
+            DGL_Color3f(1, 0, 0);
             break;
         }
 
@@ -453,12 +464,12 @@ static const int their_colors[] = {
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         for(j = 0; j < MAXPLAYERS; ++j)
         {
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
             {
                 fragCount[i] += players[i].frags[j];
             }
@@ -487,7 +498,7 @@ static const int their_colors[] = {
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(order[i] < 0 || !players[order[i]].plr ||
-           !players[order[i]].plr->ingame)
+           !players[order[i]].plr->inGame)
         {
             continue;
         }
@@ -571,13 +582,13 @@ void HU_DrawMapCounters(void)
     plr = &players[displayplayer];
 
 #if __JDOOM__ || __JHERETIC__
-    gl.Color3f(1, 1, 1);
+    DGL_Color3f(1, 1, 1);
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 #endif
 
-    gl.Enable(DGL_TEXTURING);
+    DGL_Enable(DGL_TEXTURING);
 
     drawWorldTimer();
 
@@ -592,13 +603,13 @@ void HU_DrawMapCounters(void)
             strcpy(buf, "Kills: ");
             if(cfg.counterCheat & CCH_KILLS)
             {
-                sprintf(tmp, "%i/%i ", plr->killcount, totalkills);
+                sprintf(tmp, "%i/%i ", plr->killCount, totalkills);
                 strcat(buf, tmp);
             }
             if(cfg.counterCheat & CCH_KILLS_PRCNT)
             {
                 sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_KILLS ? "(" : ""),
-                        totalkills ? plr->killcount * 100 / totalkills : 100,
+                        totalkills ? plr->killCount * 100 / totalkills : 100,
                         (cfg.counterCheat & CCH_KILLS ? ")" : ""));
                 strcat(buf, tmp);
             }
@@ -614,13 +625,13 @@ void HU_DrawMapCounters(void)
             strcpy(buf, "Items: ");
             if(cfg.counterCheat & CCH_ITEMS)
             {
-                sprintf(tmp, "%i/%i ", plr->itemcount, totalitems);
+                sprintf(tmp, "%i/%i ", plr->itemCount, totalitems);
                 strcat(buf, tmp);
             }
             if(cfg.counterCheat & CCH_ITEMS_PRCNT)
             {
                 sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_ITEMS ? "(" : ""),
-                        totalitems ? plr->itemcount * 100 / totalitems : 100,
+                        totalitems ? plr->itemCount * 100 / totalitems : 100,
                         (cfg.counterCheat & CCH_ITEMS ? ")" : ""));
                 strcat(buf, tmp);
             }
@@ -636,13 +647,13 @@ void HU_DrawMapCounters(void)
             strcpy(buf, "Secret: ");
             if(cfg.counterCheat & CCH_SECRET)
             {
-                sprintf(tmp, "%i/%i ", plr->secretcount, totalsecret);
+                sprintf(tmp, "%i/%i ", plr->secretCount, totalsecret);
                 strcat(buf, tmp);
             }
             if(cfg.counterCheat & CCH_SECRET_PRCNT)
             {
                 sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_SECRET ? "(" : ""),
-                        totalsecret ? plr->secretcount * 100 / totalsecret : 100,
+                        totalsecret ? plr->secretCount * 100 / totalsecret : 100,
                         (cfg.counterCheat & CCH_SECRET ? ")" : ""));
                 strcat(buf, tmp);
             }
@@ -660,8 +671,8 @@ void HU_DrawMapCounters(void)
         drawFragsTable();
 #endif
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
 #endif
 
@@ -967,8 +978,8 @@ void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
             }
 
             // Setup the scaling.
-            gl.MatrixMode(DGL_MODELVIEW);
-            gl.PushMatrix();
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PushMatrix();
 
             // Rotate.
             if(angle != 0)
@@ -976,18 +987,18 @@ void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
                 // The origin is the specified (x,y) for the patch.
                 // We'll undo the VGA aspect ratio (otherwise the result would
                 // be skewed).
-                gl.Translatef(x, y, 0);
-                gl.Scalef(1, 200.0f / 240.0f, 1);
-                gl.Rotatef(angle, 0, 0, 1);
-                gl.Scalef(1, 240.0f / 200.0f, 1);
-                gl.Translatef(-x, -y, 0);
+                DGL_Translatef(x, y, 0);
+                DGL_Scalef(1, 200.0f / 240.0f, 1);
+                DGL_Rotatef(angle, 0, 0, 1);
+                DGL_Scalef(1, 240.0f / 200.0f, 1);
+                DGL_Translatef(-x, -y, 0);
             }
 
-            gl.Translatef(cx + offX - alignx,
+            DGL_Translatef(cx + offX - alignx,
                           cy + offY +
                           (caseScale ? caseMod[curCase].offset : 0), 0);
             extraScale = (caseScale ? caseMod[curCase].scale : 1);
-            gl.Scalef(scaleX, scaleY * extraScale, 1);
+            DGL_Scalef(scaleX, scaleY * extraScale, 1);
 
             // Draw it.
             M_WriteText3(0, 0, temp, font, r, g, b, a, typeIn,
@@ -997,8 +1008,8 @@ void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
             // Advance the current position.
             cx += scaleX * M_StringWidth(temp, font);
 
-            gl.MatrixMode(DGL_MODELVIEW);
-            gl.PopMatrix();
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PopMatrix();
         }
     }
 }
@@ -1073,22 +1084,22 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float red,
     CLAMP(blue, 0.0f, 1.0f);
 
     // Store original color.
-    gl.GetIntegerv(DGL_RGBA, origColor);
+    DGL_GetIntegerv(DGL_CURRENT_COLOR_RGBA, origColor);
 
-    gl.Bind(Get(DD_DYNLIGHT_TEXTURE));
+    DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
     if(bright)
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+        GL_BlendMode(BM_ADD);
     else
-        gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_ALPHA);
+        DGL_BlendFunc(DGL_ZERO, DGL_ONE_MINUS_SRC_ALPHA);
 
     GL_DrawRect(x + w / 2.0f - fw / 2, y + h / 2.0f - fh / 2, fw, fh, red,
                 green, blue, alpha);
 
-    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+    GL_BlendMode(BM_NORMAL);
 
     // Restore original color.
-    gl.Color4ub(origColor[0], origColor[1], origColor[2], origColor[3]);
+    DGL_Color4ub(origColor[0], origColor[1], origColor[2], origColor[3]);
 }
 
 /*
@@ -1137,7 +1148,7 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
             maxCount = 0xffff;
 
         if(red >= 0)
-            gl.Color4f(red, green, blue, alpha);
+            DGL_Color4f(red, green, blue, alpha);
 
         ch = string;
         cx = x;
@@ -1153,26 +1164,26 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
             {
                 flash = 1;
                 if(red >= 0)
-                    gl.Color4f(1, 1, 1, 1);
+                    DGL_Color4f(1, 1, 1, 1);
             }
             else if(count + 1 == maxCount)
             {
                 flash = 0.5f;
                 if(red >= 0)
-                    gl.Color4f((1 + red) / 2, (1 + green) / 2, (1 + blue) / 2,
+                    DGL_Color4f((1 + red) / 2, (1 + green) / 2, (1 + blue) / 2,
                                alpha);
             }
             else if(count + 2 == maxCount)
             {
                 flash = 0.25f;
                 if(red >= 0)
-                    gl.Color4f(red, green, blue, alpha);
+                    DGL_Color4f(red, green, blue, alpha);
             }
             else if(count + 3 == maxCount)
             {
                 flash = 0.12f;
                 if(red >= 0)
-                    gl.Color4f(red, green, blue, alpha);
+                    DGL_Color4f(red, green, blue, alpha);
             }
             else if(count > maxCount)
             {
@@ -1219,7 +1230,7 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
                 // Shadow.
                 M_LetterFlash(cx, cy + yoff, w, h, false, 1, 1, 1,
                               (red <
-                               0 ? gl.GetInteger(DGL_A) /
+                               0 ? DGL_GetInteger(DGL_CURRENT_COLOR_A) /
                                255.0f : alpha) * cfg.menuShadow);
             }
 
@@ -1301,7 +1312,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     else if(halign == ALIGN_RIGHT)
         posx -= SHORT(patch->width);
 
-    gl.Color4f(1, 1, 1, a);
+    DGL_Color4f(1, 1, 1, a);
     GL_DrawPatch_CS(posx, y, lump);
 }
 
@@ -1370,41 +1381,39 @@ void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
     if(border)
     {
         // Top
-        GL_SetPatch(t->lump);
+        GL_SetPatch(t->lump, DGL_REPEAT, DGL_REPEAT);
         GL_DrawRectTiled(x, y - t->height, w, t->height,
                          up * t->width, up * t->height);
         // Bottom
-        GL_SetPatch(b->lump);
+        GL_SetPatch(b->lump, DGL_REPEAT, DGL_REPEAT);
         GL_DrawRectTiled(x, y + h, w, b->height, up * b->width,
                          up * b->height);
         // Left
-        GL_SetPatch(l->lump);
+        GL_SetPatch(l->lump, DGL_REPEAT, DGL_REPEAT);
         GL_DrawRectTiled(x - l->width, y, l->width, h,
                          up * l->width, up * l->height);
         // Right
-        GL_SetPatch(r->lump);
+        GL_SetPatch(r->lump, DGL_REPEAT, DGL_REPEAT);
         GL_DrawRectTiled(x + w, y, r->width, h, up * r->width,
                          up * r->height);
 
         // Top Left
-        GL_SetPatch(tl->lump);
-        GL_DrawRectTiled(x - tl->width, y - tl->height,
-                         tl->width, tl->height,
-                         up * tl->width, up * tl->height);
+        GL_SetPatch(tl->lump, DGL_CLAMP, DGL_CLAMP);
+        GL_DrawRect(x - tl->width, y - tl->height,
+                    tl->width, tl->height,
+                    red, green, blue, alpha);
         // Top Right
-        GL_SetPatch(tr->lump);
-        GL_DrawRectTiled(x + w, y - tr->height, tr->width,
-                         tr->height, up * tr->width,
-                         up * tr->height);
+        GL_SetPatch(tr->lump, DGL_CLAMP, DGL_CLAMP);
+        GL_DrawRect(x + w, y - tr->height, tr->width, tr->height,
+                    red, green, blue, alpha);
         // Bottom Right
-        GL_SetPatch(br->lump);
-        GL_DrawRectTiled(x + w, y + h, br->width, br->height,
-                         up * br->width, up * br->height);
+        GL_SetPatch(br->lump, DGL_CLAMP, DGL_CLAMP);
+        GL_DrawRect(x + w, y + h, br->width, br->height,
+                    red, green, blue, alpha);
         // Bottom Left
-        GL_SetPatch(bl->lump);
-        GL_DrawRectTiled(x - bl->width, y + h, bl->width,
-                         bl->height, up * bl->width,
-                         up * bl->height);
+        GL_SetPatch(bl->lump, DGL_CLAMP, DGL_CLAMP);
+        GL_DrawRect(x - bl->width, y + h, bl->width, bl->height,
+                    red, green, blue, alpha);
     }
 }
 
@@ -1418,30 +1427,31 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
 #endif
 {
 #ifndef __JDOOM__
-    gl.Color4f( 1, 1, 1, alpha);
+    DGL_Color4f( 1, 1, 1, alpha);
 
     GL_DrawPatch_CS(x - 32, y, W_GetNumForName("M_SLDLT"));
     GL_DrawPatch_CS(x + width * 8, y, W_GetNumForName("M_SLDRT"));
 
-    GL_SetPatch(W_GetNumForName("M_SLDMD1"));
+    GL_SetPatch(W_GetNumForName("M_SLDMD1"), DGL_REPEAT, DGL_REPEAT);
     GL_DrawRectTiled(x - 1, y + 1, width * 8 + 2, 13, 8, 13);
 
-    gl.Color4f( 1, 1, 1, alpha);
+    DGL_Color4f( 1, 1, 1, alpha);
     GL_DrawPatch_CS(x + 4 + slot * 8, y + 7, W_GetNumForName("M_SLDKB"));
 #else
     int         xx;
     float       scale = height / 13.0f;
 
     xx = x;
-    GL_SetPatch(W_GetNumForName("M_THERML"));
+    GL_SetPatch(W_GetNumForName("M_THERML"), DGL_CLAMP, DGL_CLAMP);
     GL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
     xx += 6 * scale;
-    GL_SetPatch(W_GetNumForName("M_THERM2"));    // in jdoom.wad
+    GL_SetPatch(W_GetNumForName("M_THERM2"), DGL_REPEAT, DGL_CLAMP);
     GL_DrawRectTiled(xx, y, 8 * width * scale, height, 8 * scale, height);
     xx += 8 * width * scale;
-    GL_SetPatch(W_GetNumForName("M_THERMR"));
+    GL_SetPatch(W_GetNumForName("M_THERMR"), DGL_CLAMP, DGL_CLAMP);
     GL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
-    GL_SetPatch(W_GetNumForName("M_THERMO"));
+
+    GL_SetPatch(W_GetNumForName("M_THERMO"), DGL_CLAMP, DGL_CLAMP);
     GL_DrawRect(x + (6 + slot * 8) * scale, y, 6 * scale, height, 1, 1, 1,
                 alpha);
 #endif
@@ -1449,18 +1459,18 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
 
 void Draw_BeginZoom(float s, float originX, float originY)
 {
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
-    gl.Translatef(originX, originY, 0);
-    gl.Scalef(s, s, 1);
-    gl.Translatef(-originX, -originY, 0);
+    DGL_Translatef(originX, originY, 0);
+    DGL_Scalef(s, s, 1);
+    DGL_Translatef(-originX, -originY, 0);
 }
 
 void Draw_EndZoom(void)
 {
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 /**
@@ -1489,90 +1499,87 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
 
     if(effectID == 2)
     {
-        gl.Disable(DGL_TEXTURING);
-        gl.Color4f(alpha, alpha / 2, 0, alpha / 3);
-        gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
+        DGL_Disable(DGL_TEXTURING);
+        DGL_Color4f(alpha, alpha / 2, 0, alpha / 3);
+        GL_BlendMode(BM_INVERSE_MUL);
         GL_DrawRectTiled(0, 0, 320, 200, 1, 1);
-        gl.Enable(DGL_TEXTURING);
+        DGL_Enable(DGL_TEXTURING);
     }
 
-    gl.Bind(tex);
-    gl.Color3f(alpha, alpha, alpha);
-    gl.MatrixMode(DGL_TEXTURE);
-    gl.PushMatrix();
+    DGL_Bind(tex);
+    DGL_Color3f(alpha, alpha, alpha);
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PushMatrix();
 
     if(effectID == 1)
     {
-        gl.Color3f(alpha / 3, alpha / 2, alpha / 2);
-        gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
+        DGL_Color3f(alpha / 3, alpha / 2, alpha / 2);
+        GL_BlendMode(BM_INVERSE_MUL);
     }
     else if(effectID == 2)
     {
-        gl.Color3f(alpha / 5, alpha / 3, alpha / 2);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
+        DGL_Color3f(alpha / 5, alpha / 3, alpha / 2);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_SRC_ALPHA);
     }
     else if(effectID == 0)
     {
-        gl.Color3f(alpha * 0.15, alpha * 0.2, alpha * 0.3);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
+        DGL_Color3f(alpha * 0.15, alpha * 0.2, alpha * 0.3);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_SRC_ALPHA);
     }
 
     if(effectID == 3)
     {   // The fancy one.
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_SRC_ALPHA);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_SRC_ALPHA);
 
-        gl.LoadIdentity();
+        DGL_LoadIdentity();
 
-        gl.Translatef(texOffset[VX] / 320, texOffset[VY] / 200, 0);
-        gl.Rotatef(texAngle * 1, 0, 0, 1);
-        gl.Translatef(-texOffset[VX] / 320, -texOffset[VY] / 200, 0);
+        DGL_Translatef(texOffset[VX] / 320, texOffset[VY] / 200, 0);
+        DGL_Rotatef(texAngle * 1, 0, 0, 1);
+        DGL_Translatef(-texOffset[VX] / 320, -texOffset[VY] / 200, 0);
 
-        gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-        gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
-
-        gl.Begin(DGL_QUADS);
+        DGL_Begin(DGL_QUADS);
             // Top Half
-            gl.Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
-            gl.TexCoord2f( 0, 0);
-            gl.Vertex2f(0, 0);
+            DGL_Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
+            DGL_TexCoord2f( 0, 0);
+            DGL_Vertex2f(0, 0);
 
-            gl.Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
-            gl.TexCoord2f(xscale, 0);
-            gl.Vertex2f(320, 0);
+            DGL_Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
+            DGL_TexCoord2f(xscale, 0);
+            DGL_Vertex2f(320, 0);
 
-            gl.Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
-            gl.TexCoord2f(xscale, yscale * arg1);
-            gl.Vertex2f(320, 200 * arg1);
+            DGL_Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
+            DGL_TexCoord2f(xscale, yscale * arg1);
+            DGL_Vertex2f(320, 200 * arg1);
 
-            gl.Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
-            gl.TexCoord2f(0, yscale * arg1);
-            gl.Vertex2f(0, 200 * arg1);
+            DGL_Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
+            DGL_TexCoord2f(0, yscale * arg1);
+            DGL_Vertex2f(0, 200 * arg1);
 
             // Bottom Half
-            gl.Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
-            gl.TexCoord2f(0, yscale * arg1);
-            gl.Vertex2f(0, 200 * arg1);
+            DGL_Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
+            DGL_TexCoord2f(0, yscale * arg1);
+            DGL_Vertex2f(0, 200 * arg1);
 
-            gl.Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
-            gl.TexCoord2f( xscale, yscale * arg1);
-            gl.Vertex2f(320, 200 * arg1);
+            DGL_Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
+            DGL_TexCoord2f( xscale, yscale * arg1);
+            DGL_Vertex2f(320, 200 * arg1);
 
-            gl.Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
-            gl.TexCoord2f(xscale, yscale);
-            gl.Vertex2f(320, 200);
+            DGL_Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
+            DGL_TexCoord2f(xscale, yscale);
+            DGL_Vertex2f(320, 200);
 
-            gl.Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
-            gl.TexCoord2f(0, yscale);
-            gl.Vertex2f(0, 200);
-        gl.End();
+            DGL_Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
+            DGL_TexCoord2f(0, yscale);
+            DGL_Vertex2f(0, 200);
+        DGL_End();
     }
     else
     {
-        gl.LoadIdentity();
+        DGL_LoadIdentity();
 
-        gl.Translatef(texOffset[VX] / 320, texOffset[VY] / 200, 0);
-        gl.Rotatef(texAngle * (effectID == 0 ? 0.5 : 1), 0, 0, 1);
-        gl.Translatef(-texOffset[VX] / 320, -texOffset[VY] / 200, 0);
+        DGL_Translatef(texOffset[VX] / 320, texOffset[VY] / 200, 0);
+        DGL_Rotatef(texAngle * (effectID == 0 ? 0.5 : 1), 0, 0, 1);
+        DGL_Translatef(-texOffset[VX] / 320, -texOffset[VY] / 200, 0);
         if(effectID == 2)
             GL_DrawRectTiled(0, 0, 320, 200, 270 / 8, 4 * 225);
         else if(effectID == 0)
@@ -1581,8 +1588,8 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
             GL_DrawRectTiled(0, 0, 320, 200, 270, 225);
     }
 
-    gl.MatrixMode(DGL_TEXTURE);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PopMatrix();
 
-    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+    GL_BlendMode(BM_NORMAL);
 }

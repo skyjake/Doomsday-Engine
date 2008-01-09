@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -281,12 +281,12 @@ void NetSv_Ticker(void)
     // Set the camera filters for players.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         plr = &players[i];
 
-        red = plr->damagecount;
+        red = plr->damageCount;
 #ifdef __JDOOM__
         if(plr->powers[PT_STRENGTH])
         {
@@ -306,9 +306,9 @@ void NetSv_Ticker(void)
             }
             palette += STARTREDPALS;
         }
-        else if(plr->bonuscount)
+        else if(plr->bonusCount)
         {
-            palette = (plr->bonuscount + 7) >> 3;
+            palette = (plr->bonusCount + 7) >> 3;
             if(palette >= NUMBONUSPALS)
             {
                 palette = NUMBONUSPALS - 1;
@@ -320,9 +320,9 @@ void NetSv_Ticker(void)
                 plr->powers[PT_IRONFEET] & 8)
             palette = 13;       //RADIATIONPAL;
 #elif __JHEXEN__
-        else if(plr->poisoncount)
+        else if(plr->poisonCount)
         {
-            palette = (plr->poisoncount + 7) >> 3;
+            palette = (plr->poisonCount + 7) >> 3;
             if(palette >= NUMPOISONPALS)
             {
                 palette = NUMPOISONPALS - 1;
@@ -355,7 +355,7 @@ void NetSv_Ticker(void)
     // pl->class on the clientside).
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         if(oldClasses[i] != players[i].class)
@@ -373,7 +373,7 @@ void NetSv_Ticker(void)
         netJumpPower = power;
         for(i = 0; i < MAXPLAYERS; ++i)
         {
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
                 NetSv_SendJumpPower(i, power);
         }
     }
@@ -385,7 +385,7 @@ void NetSv_Ticker(void)
         // players at the same time.
         if((gametic + i) % 10)
             continue;
-        if(!plr->plr->ingame || !plr->update)
+        if(!plr->plr->inGame || !plr->update)
             continue;
 
         // Owned weapons and player state will be sent in a new kind of
@@ -635,7 +635,7 @@ void NetSv_CheckCycling(void)
             {
                 for(i = 0; i < MAXPLAYERS; i++)
                 {
-                    if(!players[i].plr->ingame)
+                    if(!players[i].plr->inGame)
                         continue;
                     if((f = NetSv_GetFrags(i)) >= rules.frags)
                     {
@@ -730,7 +730,7 @@ void NetSv_NewPlayerEnters(int plrnumber)
 
     Con_Message("NetSv_NewPlayerEnters: spawning player %i.\n", plrnumber);
 
-    plr->playerstate = PST_REBORN;  // Force an init.
+    plr->playerState = PST_REBORN;  // Force an init.
 
     // Re-deal player starts.
     P_DealPlayerStarts(0);
@@ -743,7 +743,7 @@ void NetSv_NewPlayerEnters(int plrnumber)
     else
     {
         //// \fixme Spawn a telefog in front of the player.
-        P_SpawnPlayer(&playerstarts[plr->startspot], plrnumber);
+        P_SpawnPlayer(&playerstarts[plr->startSpot], plrnumber);
     }
 
     // Get rid of anybody at the starting spot.
@@ -763,12 +763,12 @@ void NetSv_Intermission(int flags, int state, int time)
     if(flags & IMF_BEGIN)
     {
         // Only include the necessary information.
-        WRITE_SHORT(ptr, wminfo.maxkills);
-        WRITE_SHORT(ptr, wminfo.maxitems);
-        WRITE_SHORT(ptr, wminfo.maxsecret);
+        WRITE_SHORT(ptr, wminfo.maxKills);
+        WRITE_SHORT(ptr, wminfo.maxItems);
+        WRITE_SHORT(ptr, wminfo.maxSecret);
         *ptr++ = wminfo.next;
         *ptr++ = wminfo.last;
-        *ptr++ = wminfo.didsecret;
+        *ptr++ = wminfo.didSecret;
     }
 #endif
 
@@ -864,7 +864,7 @@ void NetSv_SendGameState(int flags, int to)
 #endif
         //int k;
 
-        if(!players[i].plr->ingame || (to != DDSP_ALL_PLAYERS && to != i))
+        if(!players[i].plr->inGame || (to != DDSP_ALL_PLAYERS && to != i))
             continue;
 
         ptr = buffer;
@@ -935,9 +935,9 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
     int         i, fl;
 
     // Check that this is a valid call.
-    if(IS_CLIENT || !pl->plr->ingame ||
+    if(IS_CLIENT || !pl->plr->inGame ||
        (destPlrNum >= 0 && destPlrNum < MAXPLAYERS &&
-        !players[destPlrNum].plr->ingame))
+        !players[destPlrNum].plr->inGame))
         return;
 
     // Include the player number if necessary.
@@ -949,16 +949,16 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
     {
         // This supports up to 16 weapons.
         for(fl = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
-            if(pl->weaponowned[i])
+            if(pl->weaponOwned[i])
                 fl |= 1 << i;
         WRITE_SHORT(ptr, fl);
     }
 
     if(flags & PSF2_STATE)
     {
-        *ptr++ = pl->playerstate |
+        *ptr++ = pl->playerState |
 #if __JDOOM__ || __JHERETIC__               // Hexen doesn't have armortype.
-            (pl->armortype << 4);
+            (pl->armorType << 4);
 #else
             0;
 #endif
@@ -979,9 +979,9 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     byte        buffer[UPD_BUFFER_LEN], *ptr = buffer, fl;
     int         i, k;
 
-    if(IS_CLIENT || !pl->plr->ingame ||
+    if(IS_CLIENT || !pl->plr->inGame ||
        (destPlrNum >= 0 && destPlrNum < MAXPLAYERS &&
-        !players[destPlrNum].plr->ingame))
+        !players[destPlrNum].plr->inGame))
         return;
 
     // Include the player number if necessary.
@@ -992,9 +992,9 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     WRITE_SHORT(ptr, flags);
     if(flags & PSF_STATE)
     {
-        *ptr++ = pl->playerstate |
+        *ptr++ = pl->playerState |
 #if __JDOOM__ || __JHERETIC__                   // Hexen doesn't have armortype.
-            (pl->armortype << 4);
+            (pl->armorType << 4);
 #else
             0;
 #endif
@@ -1007,9 +1007,9 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 #if __JHEXEN__
         // Hexen has many types of armor points, send them all.
         for(i = 0; i < NUMARMOR; ++i)
-            *ptr++ = pl->armorpoints[i];
+            *ptr++ = pl->armorPoints[i];
 #else
-        *ptr++ = pl->armorpoints;
+        *ptr++ = pl->armorPoints;
 #endif
     }
 
@@ -1093,7 +1093,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     if(flags & PSF_OWNED_WEAPONS)
     {
         for(k = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
-            if(pl->weaponowned[i])
+            if(pl->weaponOwned[i])
                 k |= 1 << i;
         *ptr++ = k;
     }
@@ -1112,15 +1112,15 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     {
 #if __JDOOM__ || __JHERETIC__               // Hexen has no use for max ammo.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
-            WRITE_SHORT(ptr, pl->maxammo[i]);
+            WRITE_SHORT(ptr, pl->maxAmmo[i]);
 #endif
     }
 
     if(flags & PSF_COUNTERS)
     {
-        WRITE_SHORT(ptr, pl->killcount);
-        *ptr++ = pl->itemcount;
-        *ptr++ = pl->secretcount;
+        WRITE_SHORT(ptr, pl->killCount);
+        *ptr++ = pl->itemCount;
+        *ptr++ = pl->secretCount;
     }
 
     if(flags & PSF_PENDING_WEAPON || flags & PSF_READY_WEAPON)
@@ -1128,15 +1128,15 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
         // These two will be in the same byte.
         fl = 0;
         if(flags & PSF_PENDING_WEAPON)
-            fl |= pl->pendingweapon & 0xf;
+            fl |= pl->pendingWeapon & 0xf;
         if(flags & PSF_READY_WEAPON)
-            fl |= (pl->readyweapon & 0xf) << 4;
+            fl |= (pl->readyWeapon & 0xf) << 4;
         *ptr++ = fl;
     }
 
     if(flags & PSF_VIEW_HEIGHT)
     {
-        *ptr++ = (byte) pl->plr->viewheight;
+        *ptr++ = (byte) pl->plr->viewHeight;
     }
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
@@ -1207,7 +1207,7 @@ void NetSv_ChangePlayerInfo(int from, byte *data)
     // The 'colormap' variable controls the setting of the color
     // translation flags when the player is (re)spawned (which will
     // be done in SB_ChangePlayerClass).
-    pl->colormap = cfg.playerColor[from];
+    pl->colorMap = cfg.playerColor[from];
 #else
     if(pl->plr->mo)
     {
@@ -1272,7 +1272,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, boolean stomping)
     // Choose the right kill message template.
     in = GET_TXT(stomping ? TXT_KILLMSG_STOMP : killer ==
                  fragged ? TXT_KILLMSG_SUICIDE : TXT_KILLMSG_WEAPON0 +
-                 killer->readyweapon);
+                 killer->readyWeapon);
     for(; *in; in++)
     {
         if(in[0] == '%')
@@ -1383,7 +1383,7 @@ void NetSv_DoAction(int player, const char *data)
                 angle, lookDir);
 #endif
 
-    if(pl->playerstate == PST_DEAD)
+    if(pl->playerState == PST_DEAD)
     {
         // This player is dead. Rise, my friend!
         P_RaiseDeadPlayer(pl);
@@ -1403,11 +1403,11 @@ void NetSv_DoAction(int player, const char *data)
                 pl->plr->mo->pos[VY] = pos[VY];
                 pl->plr->mo->pos[VZ] = pos[VZ];
                 P_MobjLink(pl->plr->mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-                pl->plr->mo->floorz = tmfloorz;
-                pl->plr->mo->ceilingz = tmceilingz;
+                pl->plr->mo->floorZ = tmfloorz;
+                pl->plr->mo->ceilingZ = tmceilingz;
             }
             pl->plr->mo->angle = angle;
-            pl->plr->lookdir = lookDir;
+            pl->plr->lookDir = lookDir;
 
             if(type == GPA_USE)
                 P_UseLines(pl);
@@ -1456,7 +1456,7 @@ void NetSv_SendMessageEx(int plrNum, char *msg, boolean yellow)
         return;
 
     if(plrNum >= 0 && plrNum < MAXPLAYERS)
-        if(!players[plrNum].plr->ingame)
+        if(!players[plrNum].plr->inGame)
             return;
 
     if(plrNum == DDSP_ALL_PLAYERS)

@@ -1,45 +1,46 @@
-/* DE1: $Id: template.c 2645 2006-01-21 12:58:39Z skyjake $
- * Copyright (C) 1999- Activision
+/**\file
+ *\section License
+ * License: GPL + jHeretic/jHexen Exception
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
- * code license; you can redistribute it and/or modify it under the terms
- * of the HERETIC / HEXEN source code license as published by Activision.
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * THIS MATERIAL IS NOT MADE OR SUPPORTED BY ACTIVISION.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * WARRANTY INFORMATION.
- * This program is provided as is. Activision and it's affiliates make no
- * warranties of any kind, whether oral or written , express or implied,
- * including any warranty of merchantability, fitness for a particular
- * purpose or non-infringement, and no other representations or claims of
- * any kind shall be binding on or obligate Activision or it's affiliates.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * LICENSE CONDITIONS.
- * You shall not:
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  *
- * 1) Exploit this Program or any of its parts commercially.
- * 2) Use this Program, or permit use of this Program, on more than one
- *    computer, computer terminal, or workstation at the same time.
- * 3) Make copies of this Program or any part thereof, or make copies of
- *    the materials accompanying this Program.
- * 4) Use the program, or permit use of this Program, in a network,
- *    multi-user arrangement or remote access arrangement, including any
- *    online use, except as otherwise explicitly provided by this Program.
- * 5) Sell, rent, lease or license any copies of this Program, without
- *    the express prior written consent of Activision.
- * 6) Remove, disable or circumvent any proprietary notices or labels
- *    contained on or within the Program.
- *
- * You should have received a copy of the HERETIC / HEXEN source code
- * license along with this program (Ravenlic.txt); if not:
- * http://www.ravensoft.com/
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
  * p_inventory.c: Common code for the player's inventory.
  *
  * \note The visual representation of the inventory is handled separately,
- * in the HUD code.
+ * 		 in the HUD code.
+ * \bug This file currently contains the various "do" functions for the
+ *		artifacts which are Raven code. They should be moved out of here and
+ *		interfaced through a callback interface.
  */
 
 #if __JHERETIC__ || __JHEXEN__
@@ -149,19 +150,19 @@ boolean P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo)
         player->readyArtifact = arti;
     }
 #if __JHEXEN__
-    else if(slidePointer && i <= player->inv_ptr)
+    else if(slidePointer && i <= player->invPtr)
     {
-        player->inv_ptr++;
-        player->curpos++;
-        if(player->curpos > 6)
+        player->invPtr++;
+        player->curPos++;
+        if(player->curPos > 6)
         {
-            player->curpos = 6;
+            player->curPos = 6;
         }
     }
 #else
     if(mo && (mo->flags & MF_COUNTITEM))
     {
-        player->itemcount++;
+        player->itemCount++;
     }
 #endif
 
@@ -179,30 +180,30 @@ void P_InventoryCheckReadyArtifact(player_t *player)
     if(!player)
         return;
 
-    if(!player->inventory[player->inv_ptr].count)
+    if(!player->inventory[player->invPtr].count)
     {
         // Set position markers and get next readyArtifact
-        player->inv_ptr--;
-        if(player->inv_ptr < 6)
+        player->invPtr--;
+        if(player->invPtr < 6)
         {
-            player->curpos--;
-            if(player->curpos < 0)
+            player->curPos--;
+            if(player->curPos < 0)
             {
-                player->curpos = 0;
+                player->curPos = 0;
             }
         }
 
-        if(player->inv_ptr >= player->inventorySlotNum)
+        if(player->invPtr >= player->inventorySlotNum)
         {
-            player->inv_ptr = player->inventorySlotNum - 1;
+            player->invPtr = player->inventorySlotNum - 1;
         }
 
-        if(player->inv_ptr < 0)
+        if(player->invPtr < 0)
         {
-            player->inv_ptr = 0;
+            player->invPtr = 0;
         }
 
-        player->readyArtifact = player->inventory[player->inv_ptr].type;
+        player->readyArtifact = player->inventory[player->invPtr].type;
 
         if(!player->inventorySlotNum)
             player->readyArtifact = arti_none;
@@ -215,30 +216,30 @@ void P_InventoryNextArtifact(player_t *player)
     if(!player)
         return;
 
-    player->inv_ptr--;
-    if(player->inv_ptr < 6)
+    player->invPtr--;
+    if(player->invPtr < 6)
     {
-        player->curpos--;
-        if(player->curpos < 0)
+        player->curPos--;
+        if(player->curPos < 0)
         {
-            player->curpos = 0;
+            player->curPos = 0;
         }
     }
 
-    if(player->inv_ptr < 0)
+    if(player->invPtr < 0)
     {
-        player->inv_ptr = player->inventorySlotNum - 1;
-        if(player->inv_ptr < 6)
+        player->invPtr = player->inventorySlotNum - 1;
+        if(player->invPtr < 6)
         {
-            player->curpos = player->inv_ptr;
+            player->curPos = player->invPtr;
         }
         else
         {
-            player->curpos = 6;
+            player->curPos = 6;
         }
     }
 
-    player->readyArtifact = player->inventory[player->inv_ptr].type;
+    player->readyArtifact = player->inventory[player->invPtr].type;
 }
 
 void P_InventoryRemoveArtifact(player_t *player, int slot)
@@ -264,21 +265,21 @@ void P_InventoryRemoveArtifact(player_t *player, int slot)
         player->inventorySlotNum--;
 
         // Set position markers and get next readyArtifact.
-        player->inv_ptr--;
-        if(player->inv_ptr < 6)
+        player->invPtr--;
+        if(player->invPtr < 6)
         {
-            player->curpos--;
-            if(player->curpos < 0)
-                player->curpos = 0;
+            player->curPos--;
+            if(player->curPos < 0)
+                player->curPos = 0;
         }
 
-        if(player->inv_ptr >= player->inventorySlotNum)
-            player->inv_ptr = player->inventorySlotNum - 1;
+        if(player->invPtr >= player->inventorySlotNum)
+            player->invPtr = player->inventorySlotNum - 1;
 
-        if(player->inv_ptr < 0)
-            player->inv_ptr = 0;
+        if(player->invPtr < 0)
+            player->invPtr = 0;
 
-        player->readyArtifact = player->inventory[player->inv_ptr].type;
+        player->readyArtifact = player->inventory[player->invPtr].type;
     }
 }
 
@@ -340,8 +341,8 @@ void P_InventoryResetCursor(player_t *player)
     if(!player)
         return;
 
-    player->inv_ptr = 0;
-    player->curpos = 0;
+    player->invPtr = 0;
+    player->curPos = 0;
 }
 
 /**
@@ -416,11 +417,11 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
                 return false;
             }
 
-            if(player->readyweapon == WT_FIRST)
+            if(player->readyWeapon == WT_FIRST)
             {
                 P_SetPsprite(player, ps_weapon, S_STAFFREADY2_1);
             }
-            else if(player->readyweapon == WT_EIGHTH)
+            else if(player->readyWeapon == WT_EIGHTH)
             {
                 P_SetPsprite(player, ps_weapon, S_GAUNTLETREADY2_1);
             }
@@ -439,7 +440,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         mo = P_SpawnMobj3f(MT_FIREBOMB,
                            player->plr->mo->pos[VX] + 24 * FIX2FLT(finecosine[angle]),
                            player->plr->mo->pos[VY] + 24 * FIX2FLT(finesine[angle]),
-                           player->plr->mo->pos[VZ] - player->plr->mo->floorclip + 15);
+                           player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 15);
         mo->target = player->plr->mo;
         break;
 # endif
@@ -494,7 +495,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
             mo = P_SpawnMobj3f(MT_POISONBAG,
                                player->plr->mo->pos[VX] + 16 * FIX2FLT(finecosine[angle]),
                                player->plr->mo->pos[VY] + 24 * FIX2FLT(finesine[angle]),
-                               player->plr->mo->pos[VZ] - player->plr->mo->floorclip + 8);
+                               player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 8);
             if(mo)
             {
                 mo->target = player->plr->mo;
@@ -505,7 +506,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
             mo = P_SpawnMobj3f(MT_FIREBOMB,
                                player->plr->mo->pos[VX] + 16 * FIX2FLT(finecosine[angle]),
                                player->plr->mo->pos[VY] + 24 * FIX2FLT(finesine[angle]),
-                               player->plr->mo->pos[VZ] - player->plr->mo->floorclip + 8);
+                               player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 8);
             if(mo)
             {
                 mo->target = player->plr->mo;
@@ -516,15 +517,15 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
             mo = P_SpawnMobj3f(MT_THROWINGBOMB,
                                player->plr->mo->pos[VX],
                                player->plr->mo->pos[VY],
-                               player->plr->mo->pos[VZ] - player->plr->mo->floorclip + 35);
+                               player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 35);
             if(mo)
             {
                 mo->angle =
                     player->plr->mo->angle + (((P_Random() & 7) - 4) << 24);
                 mo->mom[MZ] =
                     4 +
-                    FIX2FLT(((int) player->plr->lookdir) << (FRACBITS - 4));
-                mo->pos[VZ] += FIX2FLT(((int) player->plr->lookdir) << (FRACBITS - 4));
+                    FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
+                mo->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
                 P_ThrustMobj(mo, mo->angle, mo->info->speed);
                 mo->mom[MX] += player->plr->mo->mom[MX] / 2;
                 mo->mom[MY] += player->plr->mo->mom[MY] / 2;
@@ -624,35 +625,35 @@ static boolean P_InventoryMove(player_t *plr, int dir)
 
     if(dir == 0)
     {
-        plr->inv_ptr--;
-        if(plr->inv_ptr < 0)
+        plr->invPtr--;
+        if(plr->invPtr < 0)
         {
-            plr->inv_ptr = 0;
+            plr->invPtr = 0;
         }
         else
         {
-            plr->curpos--;
-            if(plr->curpos < 0)
+            plr->curPos--;
+            if(plr->curPos < 0)
             {
-                plr->curpos = 0;
+                plr->curPos = 0;
             }
         }
     }
     else
     {
-        plr->inv_ptr++;
-        if(plr->inv_ptr >= plr->inventorySlotNum)
+        plr->invPtr++;
+        if(plr->invPtr >= plr->inventorySlotNum)
         {
-            plr->inv_ptr--;
-            if(plr->inv_ptr < 0)
-                plr->inv_ptr = 0;
+            plr->invPtr--;
+            if(plr->invPtr < 0)
+                plr->invPtr = 0;
         }
         else
         {
-            plr->curpos++;
-            if(plr->curpos > 6)
+            plr->curPos++;
+            if(plr->curPos > 6)
             {
-                plr->curpos = 6;
+                plr->curPos = 6;
             }
         }
     }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@
 
 /**
  * d_net.c : Common code related to net games.
-
+ *
  * Connecting to/from a netgame server.
  * Netgame events (player and world) and netgame commands.
  */
@@ -299,7 +299,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     {
         Con_Message("PE: player %i has left.\n", plrNumber);
 
-        players[plrNumber].playerstate = PST_GONE;
+        players[plrNumber].playerState = PST_GONE;
 
         // Print a notification.
         snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s left the game", Net_GetPlayerName(plrNumber));
@@ -316,7 +316,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 
         // Count the number of players.
         for(i = num = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
                 num++;
 
         snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber),
@@ -356,7 +356,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
 
         // Send info about all players to the new one.
         for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->ingame && i != parm)
+            if(players[i].plr->inGame && i != parm)
                 NetSv_SendPlayerInfo(i, parm);
 
         // Send info about our jump power.
@@ -689,7 +689,7 @@ DEFCC(CCmdSetColor)
                                0 ? 2 : cfg.playerColor[0] ==
                                2 ? 0 : cfg.playerColor[0]) : cfg.
              playerColor[0]) << MF_TRANSSHIFT;
-        players[0].colormap = cfg.playerColor[0];
+        players[0].colorMap = cfg.playerColor[0];
 #else
         players[0].plr->mo->flags |= cfg.playerColor[0] << MF_TRANSSHIFT;
 #endif

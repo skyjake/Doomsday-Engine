@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -71,12 +82,12 @@ void P_MobjRemove(mobj_t *mo)
     if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED) &&
        (mo->type != MT_INV) && (mo->type != MT_INS))
     {
-        P_RespawnEnqueue(&mo->spawnspot);
+        P_RespawnEnqueue(&mo->spawnSpot);
     }
 #elif __JHERETIC__
     if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED))
     {
-        P_RespawnEnqueue(&mo->spawnspot);
+        P_RespawnEnqueue(&mo->spawnSpot);
     }
 #elif __JHEXEN__
     if((mo->flags & MF_COUNTKILL) && (mo->flags & MF_CORPSE))
@@ -147,14 +158,14 @@ void P_MobjAngleSRVOTicker(mobj_t *mo)
     // Check requirements.
     if(mo->flags & MF_MISSILE || !(mo->flags & MF_COUNTKILL))
     {
-        mo->visangle = mo->angle >> 16;
+        mo->visAngle = mo->angle >> 16;
         return; // This is not for us.
     }
 
     target = mo->angle >> 16;
-    diff = target - mo->visangle;
+    diff = target - mo->visAngle;
 
-    if(mo->turntime)
+    if(mo->turnTime)
     {
         if(mo->tics)
             step = abs(diff) / mo->tics;
@@ -183,11 +194,11 @@ void P_MobjAngleSRVOTicker(mobj_t *mo)
 
     // Do the step.
     if(abs(diff) <= step)
-        mo->visangle = target;
+        mo->visAngle = target;
     else if(diff > 0)
-        mo->visangle += step;
+        mo->visAngle += step;
     else if(diff < 0)
-        mo->visangle -= step;
+        mo->visAngle -= step;
 }
 
 /**
@@ -207,10 +218,10 @@ void P_UpdateHealthBits(mobj_t *mobj)
 {
     int         i;
 
-    if(mobj->info && mobj->info->spawnhealth > 0)
+    if(mobj->info && mobj->info->spawnHealth > 0)
     {
         mobj->selector &= DDMOBJ_SELECTOR_MASK; // Clear high byte.
-        i = (mobj->health << 3) / mobj->info->spawnhealth;
+        i = (mobj->health << 3) / mobj->info->spawnHealth;
         if(i > 7)
             i = 7;
         if(i < 0)

@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -125,7 +136,7 @@ void P_ShotAmmo(player_t *player)
 {
     ammotype_t  i;
     int         lvl;
-    weaponinfo_t *win = &weaponinfo[player->readyweapon][player->class];
+    weaponinfo_t *win = &weaponinfo[player->readyWeapon][player->class];
 
 #if __JHERETIC__
     lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -212,7 +223,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                 continue;
 
             // Does the player actually own this candidate?
-            if(!player->weaponowned[candidate])
+            if(!player->weaponOwned[candidate])
                 continue;
 
             // Is there sufficent ammo for the candidate weapon?
@@ -278,7 +289,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     {   // weapon has a higher priority than the readyweapon.
                         returnval = weapon;
                     }
-                    else if(player->readyweapon == candidate)
+                    else if(player->readyWeapon == candidate)
                     {   // readyweapon has a higher priority so don't change.
                         break;
                     }
@@ -304,7 +315,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     continue;
 
                 // Does the player actually own this candidate?
-                if(!player->weaponowned[candidate])
+                if(!player->weaponOwned[candidate])
                     continue;
 
                 // Does the weapon use this type of ammo?
@@ -327,7 +338,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     break;
                 }
                 else if(cfg.ammoAutoSwitch == 1 &&
-                        player->readyweapon == candidate)
+                        player->readyWeapon == candidate)
                 {   // readyweapon has a higher priority so don't change.
                     break;
                 }
@@ -336,13 +347,13 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     }
 
     // Don't change to the exisitng weapon.
-    if(returnval == player->readyweapon)
+    if(returnval == player->readyWeapon)
         returnval = WT_NOCHANGE;
 
     // Choosen a weapon to change to?
     if(returnval != WT_NOCHANGE)
     {
-        player->pendingweapon = returnval;
+        player->pendingWeapon = returnval;
         player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
     }
 
@@ -401,7 +412,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
 
     // Find the current position in the weapon list.
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-        if(list[i] == player->readyweapon)
+        if(list[i] == player->readyWeapon)
             break;
 
     // Locate the next or previous weapon owned by the player.
@@ -418,13 +429,13 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
             i = 0;
 
         // Have we circled around?
-        if(list[i] == player->readyweapon)
+        if(list[i] == player->readyWeapon)
             break;
 
         // Available in this game mode? And a valid weapon?
         if((weaponinfo[list[i]][player->class].mode[lvl].
             gamemodebits & gamemodebits) &&
-           player->weaponowned[list[i]])
+           player->weaponOwned[list[i]])
             break;
     }
 
@@ -524,8 +535,8 @@ int P_CameraXYMovement(mobj_t *mo)
         mo->pos[VY] += mo->mom[MY];
         P_MobjSetPosition(mo);
         P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]);
-        mo->floorz = tmfloorz;
-        mo->ceilingz = tmceilingz;
+        mo->floorZ = tmfloorz;
+        mo->ceilingZ = tmceilingz;
 
 #if __JDOOM__
     }
@@ -580,7 +591,7 @@ void P_PlayerThinkCamera(player_t *player)
     // If this player is not a camera, get out of here.
     if(!(player->plr->flags & DDPF_CAMERA))
     {
-        if(player->playerstate == PST_LIVE)
+        if(player->playerState == PST_LIVE)
             player->plr->mo->flags |= (MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
         return;
     }
@@ -590,16 +601,16 @@ void P_PlayerThinkCamera(player_t *player)
     mo->flags &= ~(MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
 
     // How about viewlock?
-    if(player->viewlock)
+    if(player->viewLock)
     {
         angle_t     angle;
         int         full;
         float       dist;
-        mobj_t     *target = players->viewlock;
+        mobj_t     *target = players->viewLock;
 
-        if(!target->player || !target->player->plr->ingame)
+        if(!target->player || !target->player->plr->inGame)
         {
-            player->viewlock = NULL;
+            player->viewLock = NULL;
             return;
         }
 
@@ -622,15 +633,15 @@ void P_PlayerThinkCamera(player_t *player)
                                 target->pos[VZ] + (target->height / 2) - mo->pos[VZ],
                                 dist);
             //player->plr->clLookDir =
-            player->plr->lookdir =
+            player->plr->lookDir =
                 -(angle / (float) ANGLE_MAX * 360.0f - 90);
-            if(player->plr->lookdir > 180)
-                player->plr->lookdir -= 360;
-            player->plr->lookdir *= 110.0f / 85.0f;
-            if(player->plr->lookdir > 110)
-                player->plr->lookdir = 110;
-            if(player->plr->lookdir < -110)
-                player->plr->lookdir = -110;
+            if(player->plr->lookDir > 180)
+                player->plr->lookDir -= 360;
+            player->plr->lookDir *= 110.0f / 85.0f;
+            if(player->plr->lookDir > 110)
+                player->plr->lookDir = 110;
+            if(player->plr->lookDir < -110)
+                player->plr->lookDir = -110;
 
             player->plr->flags |= DDPF_INTERPITCH;
         }
@@ -652,17 +663,17 @@ DEFCC(CCmdSetCamera)
     player = &players[p];
 
     player->plr->flags ^= DDPF_CAMERA;
-    if(player->plr->ingame)
+    if(player->plr->inGame)
     {
         if(player->plr->flags & DDPF_CAMERA)
         {   // Is now a camera.
             if(player->plr->mo)
-                player->plr->mo->pos[VZ] += player->plr->viewheight;
+                player->plr->mo->pos[VZ] += player->plr->viewHeight;
         }
         else
         {   // Is now a "real" player.
             if(player->plr->mo)
-                player->plr->mo->pos[VZ] -= player->plr->viewheight;
+                player->plr->mo->pos[VZ] -= player->plr->viewHeight;
         }
     }
     return true;
@@ -710,21 +721,22 @@ DEFCC(CCmdSetViewLock)
 
     if(!(lock == pl || lock < 0 || lock >= MAXPLAYERS))
     {
-        if(players[lock].plr->ingame && players[lock].plr->mo)
+        if(players[lock].plr->inGame && players[lock].plr->mo)
         {
-            players[pl].viewlock = players[lock].plr->mo;
+            players[pl].viewLock = players[lock].plr->mo;
             return true;
         }
     }
 
-    players[pl].viewlock = NULL;
+    players[pl].viewLock = NULL;
     return false;
 }
 
 DEFCC(CCmdMakeLocal)
 {
-    int         p;
-    char        buf[20];
+    int             p;
+    char            buf[20];
+    player_t       *plr;
 
     if(G_GetGameState() != GS_LEVEL)
     {
@@ -738,15 +750,16 @@ DEFCC(CCmdMakeLocal)
         Con_Printf("Invalid console number %i.\n", p);
         return false;
     }
+    plr = &players[p];
 
-    if(players[p].plr->ingame)
+    if(plr->plr->inGame)
     {
         Con_Printf("Player %i is already in the game.\n", p);
         return false;
     }
 
-    players[p].playerstate = PST_REBORN;
-    players[p].plr->ingame = true;
+    plr->playerState = PST_REBORN;
+    plr->plr->inGame = true;
     sprintf(buf, "conlocp %i", p);
     DD_Execute(false, buf);
     P_DealPlayerStarts(0);
@@ -758,7 +771,7 @@ DEFCC(CCmdMakeLocal)
  */
 DEFCC(CCmdPrintPlayerCoords)
 {
-    mobj_t *mo = players[consoleplayer].plr->mo;
+    mobj_t         *mo = players[consoleplayer].plr->mo;
 
     if(!mo || G_GetGameState() != GS_LEVEL)
         return false;
@@ -783,7 +796,7 @@ DEFCC(CCmdCycleSpy)
             {
                 Set(DD_DISPLAYPLAYER, 0);
             }
-        } while(!players[displayplayer].plr->ingame &&
+        } while(!players[displayplayer].plr->inGame &&
                 displayplayer != consoleplayer);
     }
 #endif
@@ -853,7 +866,7 @@ DEFCC(CCmdSpawnMobj)
         mo->translucency = 255;
 
         S_StartSound(sfx_itmbk, mo); // If not dart, then spawn itmbk sound
-        mo->intflags = MIF_FADE;
+        mo->intFlags = MIF_FADE;
         mo->translucency = 255;
     }
     // << d64tc

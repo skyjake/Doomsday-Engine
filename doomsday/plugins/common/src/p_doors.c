@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
@@ -25,6 +25,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -112,7 +123,7 @@ void T_VerticalDoor(vldoor_t *door)
     {
     case 0:
         // WAITING
-        if(!--door->topcountdown)
+        if(!--door->topCountDown)
         {
             switch(door->type)
             {
@@ -152,7 +163,7 @@ void T_VerticalDoor(vldoor_t *door)
 
     case 2:
         //  INITIAL WAIT
-        if(!--door->topcountdown)
+        if(!--door->topCountDown)
         {
             switch(door->type)
             {
@@ -187,14 +198,14 @@ void T_VerticalDoor(vldoor_t *door)
 #if __DOOM64TC__
             case instantRaise:  //d64tc
             case instantClose:  //d64tc
-                P_ToXSector(door->sector)->specialdata = NULL;
+                P_ToXSector(door->sector)->specialData = NULL;
                 P_RemoveThinker(&door->thinker);  // unlink and free
                 break;
 #endif
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
             case blazeRaise:
             case blazeClose:
-                xsec->specialdata = NULL;
+                xsec->specialData = NULL;
                 P_RemoveThinker(&door->thinker);    // unlink and free
 
                 // DOOMII BUG:
@@ -206,7 +217,7 @@ void T_VerticalDoor(vldoor_t *door)
 #endif
             case normal:
             case close:
-                xsec->specialdata = NULL;
+                xsec->specialData = NULL;
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
@@ -218,7 +229,7 @@ void T_VerticalDoor(vldoor_t *door)
 
             case close30ThenOpen:
                 door->direction = 0;
-                door->topcountdown = 30 * TICSPERSEC;
+                door->topCountDown = 30 * TICSPERSEC;
                 break;
 
             default:
@@ -251,7 +262,7 @@ void T_VerticalDoor(vldoor_t *door)
     case 1:
         // UP
         res =
-            T_MovePlane(door->sector, door->speed, door->topheight, false, 1,
+            T_MovePlane(door->sector, door->speed, door->topHeight, false, 1,
                         door->direction);
 
         if(res == pastdest)
@@ -269,7 +280,7 @@ void T_VerticalDoor(vldoor_t *door)
                  * that way there won't be a big delay when the
                  * animation starts -kaiser
                  */
-                door->topcountdown = 160;
+                door->topCountDown = 160;
                 break;
 #endif
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
@@ -278,7 +289,7 @@ void T_VerticalDoor(vldoor_t *door)
 
             case normal:
                 door->direction = 0;    // wait at top
-                door->topcountdown = door->topwait;
+                door->topCountDown = door->topWait;
                 break;
 
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
@@ -286,7 +297,7 @@ void T_VerticalDoor(vldoor_t *door)
 #endif
             case close30ThenOpen:
             case open:
-                xsec->specialdata = NULL;
+                xsec->specialData = NULL;
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
@@ -325,20 +336,20 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
     {
         xsec = P_ToXSector(sec);
 
-        if(xsec->specialdata)
+        if(xsec->specialData)
             continue;
 
         // new door thinker
         rtn = 1;
         door = Z_Malloc(sizeof(*door), PU_LEVSPEC, 0);
         P_AddThinker(&door->thinker);
-        xsec->specialdata = door;
+        xsec->specialData = door;
 
         door->thinker.function = T_VerticalDoor;
         door->sector = sec;
 
         door->type = type;
-        door->topwait = topwait;
+        door->topWait = topwait;
         door->speed = speed;
 
 #if __JHEXEN__
@@ -351,16 +362,16 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
         {
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
         case blazeClose:
-            door->topheight = P_FindLowestCeilingSurrounding(sec);
-            door->topheight -= 4;
+            door->topHeight = P_FindLowestCeilingSurrounding(sec);
+            door->topHeight -= 4;
             door->direction = -1;
             door->speed *= 4;
             sound = SFX_DOORBLAZECLOSE;
             break;
 #endif
         case close:
-            door->topheight = P_FindLowestCeilingSurrounding(sec);
-            door->topheight -= 4;
+            door->topHeight = P_FindLowestCeilingSurrounding(sec);
+            door->topHeight -= 4;
             door->direction = -1;
 #if !__JHEXEN__
             sound = SFX_DOORCLOSE;
@@ -368,7 +379,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
             break;
 
         case close30ThenOpen:
-            door->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            door->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
             door->direction = -1;
 #if !__JHEXEN__
             sound = SFX_DOORCLOSE;
@@ -381,14 +392,14 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
 #if !__JHEXEN__
         case blazeOpen:
             door->direction = 1;
-            door->topheight = P_FindLowestCeilingSurrounding(sec);
-            door->topheight -= 4;
+            door->topHeight = P_FindLowestCeilingSurrounding(sec);
+            door->topHeight -= 4;
 # if __JHERETIC__
             door->speed *= 3;
 # else
             door->speed *= 4;
 # endif
-            if(door->topheight != P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+            if(door->topHeight != P_GetFloatp(sec, DMU_CEILING_HEIGHT))
                 sound = SFX_DOORBLAZEOPEN;
             break;
 #endif
@@ -396,11 +407,11 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
         case normal:
         case open:
             door->direction = 1;
-            door->topheight = P_FindLowestCeilingSurrounding(sec);
-            door->topheight -= 4;
+            door->topHeight = P_FindLowestCeilingSurrounding(sec);
+            door->topHeight -= 4;
 
 #if !__JHEXEN__
-            if(door->topheight != P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+            if(door->topHeight != P_GetFloatp(sec, DMU_CEILING_HEIGHT))
                 sound = SFX_DOOROPEN;
 #endif
             break;
@@ -644,12 +655,12 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
         return false;
 
     // If the sector has an active thinker, use it.
-    if(xsec->specialdata)
+    if(xsec->specialData)
     {
 #if __JHEXEN__
         return false;
 #else
-        door = xsec->specialdata;
+        door = xsec->specialData;
         switch(xline->special)
         {
         case 1:
@@ -685,7 +696,7 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     // New door thinker.
     door = Z_Malloc(sizeof(*door), PU_LEVSPEC, 0);
     P_AddThinker(&door->thinker);
-    xsec->specialdata = door;
+    xsec->specialData = door;
     door->thinker.function = T_VerticalDoor;
     door->sector = sec;
     door->direction = 1;
@@ -729,7 +740,7 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     case 11:
         door->type = open;
         door->speed = (float) xline->arg2 * (1.0 / 8);
-        door->topwait = (int) xline->arg3;
+        door->topWait = (int) xline->arg3;
         xline->special = 0;
         break;
 #else
@@ -739,7 +750,7 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     case 34:
         door->type = open;
         door->speed = VDOORSPEED;
-        door->topwait = VDOORWAIT;
+        door->topWait = VDOORWAIT;
         xline->special = 0;
         break;
 #endif
@@ -749,7 +760,7 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     case 13:
         door->type = normal;
         door->speed = (float) xline->arg2 * (1.0 / 8);
-        door->topwait = (int) xline->arg3;
+        door->topWait = (int) xline->arg3;
         break;
 #else
     case 1:
@@ -758,7 +769,7 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     case 28:
         door->type = normal;
         door->speed = VDOORSPEED;
-        door->topwait = VDOORWAIT;
+        door->topWait = VDOORWAIT;
         break;
 #endif
 
@@ -771,13 +782,13 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
 # endif
         door->type = blazeRaise;
         door->speed = VDOORSPEED * 4;
-        door->topwait = VDOORWAIT;
+        door->topWait = VDOORWAIT;
         break;
 
     case 118:                   // blazing door open
         door->type = blazeOpen;
         door->speed = VDOORSPEED * 4;
-        door->topwait = VDOORWAIT;
+        door->topWait = VDOORWAIT;
         xline->special = 0;
         break;
 #endif
@@ -786,17 +797,17 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
 #if __JHEXEN__
         door->type = normal;
         door->speed = (float) xline->arg2 * (1.0 / 8);
-        door->topwait = (int) xline->arg3;
+        door->topWait = (int) xline->arg3;
 #else
         door->speed = VDOORSPEED;
-        door->topwait = VDOORWAIT;
+        door->topWait = VDOORWAIT;
 #endif
         break;
     }
 
     // find the top and bottom of the movement range
-    door->topheight = P_FindLowestCeilingSurrounding(sec);
-    door->topheight -= 4;
+    door->topHeight = P_FindLowestCeilingSurrounding(sec);
+    door->topHeight -= 4;
     return true;
 }
 
@@ -809,7 +820,7 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
 
     P_AddThinker(&door->thinker);
 
-    P_ToXSector(sec)->specialdata = door;
+    P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
 
     door->thinker.function = T_VerticalDoor;
@@ -817,7 +828,7 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
     door->direction = 0;
     door->type = normal;
     door->speed = VDOORSPEED;
-    door->topcountdown = 30 * TICSPERSEC;
+    door->topCountDown = 30 * TICSPERSEC;
 }
 
 void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
@@ -828,7 +839,7 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
 
     P_AddThinker(&door->thinker);
 
-    P_ToXSector(sec)->specialdata = door;
+    P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
 
     door->thinker.function = T_VerticalDoor;
@@ -836,10 +847,10 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
     door->direction = 2;
     door->type = raiseIn5Mins;
     door->speed = VDOORSPEED;
-    door->topheight = P_FindLowestCeilingSurrounding(sec);
-    door->topheight -= 4;
-    door->topwait = VDOORWAIT;
-    door->topcountdown = 5 * 60 * TICSPERSEC;
+    door->topHeight = P_FindLowestCeilingSurrounding(sec);
+    door->topHeight -= 4;
+    door->topWait = VDOORWAIT;
+    door->topCountDown = 5 * 60 * TICSPERSEC;
 }
 #endif
 
@@ -862,7 +873,7 @@ int EV_DoSplitDoor(line_t *line, int ftype, int ctype)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        P_ToXSector(sec)->specialdata = 0;
+        P_ToXSector(sec)->specialData = 0;
     }
 
     ceiling = EV_DoCeiling(line, ctype);

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -280,26 +280,26 @@ void P_InitSwitchList(void)
  * the button, the texture number of the button, and the time the button is
  * to remain active in gametics.
  */
-void P_StartButton(line_t *line, bwhere_e w, int texture, int time)
+void P_StartButton(line_t *line, linesection_t section, int texture, int time)
 {
     button_t *button;
 
     // See if button is already pressed
     for(button = buttonlist; button; button = button->next)
     {
-        if(button->btimer && button->line == line)
+        if(button->timer && button->line == line)
             return;
     }
 
     for(button = buttonlist; button; button = button->next)
     {
-        if(!button->btimer) // use first unused element of list
+        if(!button->timer) // use first unused element of list
         {
             button->line = line;
-            button->where = w;
-            button->btexture = texture;
-            button->btimer = time;
-            button->soundorg =
+            button->section = section;
+            button->texture = texture;
+            button->timer = time;
+            button->soundOrg =
                 P_GetPtrp(P_GetPtrp(line, DMU_FRONT_SECTOR), DMU_SOUND_ORIGIN);
             return;
         }
@@ -307,10 +307,10 @@ void P_StartButton(line_t *line, bwhere_e w, int texture, int time)
 
     button = malloc(sizeof(button_t));
     button->line = line;
-    button->where = w;
-    button->btexture = texture;
-    button->btimer = time;
-    button->soundorg =
+    button->section = section;
+    button->texture = texture;
+    button->timer = time;
+    button->soundOrg =
         P_GetPtrp(P_GetPtrp(line, DMU_FRONT_SECTOR), DMU_SOUND_ORIGIN);
 
     if(buttonlist)
@@ -377,7 +377,7 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
             P_SetIntp(sdef, DMU_TOP_MATERIAL, switchlist[i^1]);
 
             if(useAgain)
-                P_StartButton(line, top, switchlist[i], BUTTONTIME);
+                P_StartButton(line, LS_TOP, switchlist[i], BUTTONTIME);
 
             return;
         }
@@ -392,7 +392,7 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
             P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, switchlist[i^1]);
 
             if(useAgain)
-                P_StartButton(line, middle, switchlist[i], BUTTONTIME);
+                P_StartButton(line, LS_MIDDLE, switchlist[i], BUTTONTIME);
 
             return;
         }
@@ -407,7 +407,7 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
             P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, switchlist[i^1]);
 
             if(useAgain)
-                P_StartButton(line, bottom, switchlist[i], BUTTONTIME);
+                P_StartButton(line, LS_BOTTOM, switchlist[i], BUTTONTIME);
 
             return;
         }

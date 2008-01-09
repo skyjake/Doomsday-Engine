@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -64,7 +75,7 @@ typedef struct crossline_s {
 
 typedef struct cross_s {
     int     numLines;
-    crossline_t Lines[MAX_XLINES];
+    crossline_t lines[MAX_XLINES];
 } cross_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -155,37 +166,37 @@ void X_Drawer(void)
     if(cfg.xhair < 1 || cfg.xhair > NUM_XHAIRS || !xcolor[3])
         return;
 
-    gl.Disable(DGL_TEXTURING);
+    DGL_Disable(DGL_TEXTURING);
 
     // Push the current matrices.
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
 
-    gl.Ortho(0, 0, 320, 200, -1, 1);
+    DGL_Ortho(0, 0, 320, 200, -1, 1);
 
     cross = crosshairs + cfg.xhair - 1;
 
-    gl.Color4ubv(xcolor);
-    gl.Begin(DGL_LINES);
+    DGL_Color4ubv(xcolor);
+    DGL_Begin(DGL_LINES);
     for(i = 0; i < cross->numLines; ++i)
     {
-        crossline_t *xline = cross->Lines + i;
+        crossline_t *xline = cross->lines + i;
 
-        gl.Vertex2f(fact * xline->a.x + centerX, fact * xline->a.y + centerY);
-        gl.Vertex2f(fact * xline->b.x + centerX, fact * xline->b.y + centerY);
+        DGL_Vertex2f(fact * xline->a.x + centerX, fact * xline->a.y + centerY);
+        DGL_Vertex2f(fact * xline->b.x + centerX, fact * xline->b.y + centerY);
     }
-    gl.End();
+    DGL_End();
 
-    gl.Enable(DGL_TEXTURING);
+    DGL_Enable(DGL_TEXTURING);
 
     // Pop back the old matrices.
-    gl.PopMatrix();
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 /**
