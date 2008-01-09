@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -102,7 +102,7 @@ typedef struct linkpolyobj_s {
 } linkpolyobj_t;
 
 typedef struct watchedplanelist_s {
-    uint        num, maxnum;
+    uint            num, maxNum;
     struct plane_s ** list;
 } watchedplanelist_t;
 
@@ -142,49 +142,49 @@ extern uint     numthings;
 extern float    mapGravity;
 
 typedef struct gamemap_s {
-    char        levelid[9];
+    char        levelID[9];
     char        uniqueID[256];
 
-    float       bbox[4];
+    float       bBox[4];
 
-    uint        numvertexes;
+    uint        numVertexes;
     vertex_t   *vertexes;
 
-    uint        numsegs;
+    uint        numSegs;
     seg_t      *segs;
 
-    uint        numsectors;
+    uint        numSectors;
     sector_t   *sectors;
 
-    uint        numsubsectors;
+    uint        numSubsectors;
     subsector_t *subsectors;
 
-    uint        numnodes;
+    uint        numNodes;
     node_t     *nodes;
 
-    uint        numlines;
+    uint        numLines;
     line_t     *lines;
 
-    uint        numsides;
+    uint        numSides;
     side_t     *sides;
 
-    uint        numpolyobjs;
+    uint        numPolyobjs;
     polyobj_t **polyobjs;
 
     linkpolyobj_t **polyBlockMap;
 
-    uint        numthings;
+    uint        numThings;
 
     watchedplanelist_t watchedPlaneList;
 
     blockmap_t *blockMap;
     blockmap_t *ssecBlockMap;
 
-    struct linkmobj_s *blockrings;      // for mobj rings
-    nodepile_t  mobjnodes, linenodes;   // all kinds of wacky links.
-    nodeindex_t *linelinks;             // indices to roots.
+    struct linkmobj_s *blockRings;      // for mobj rings
+    nodepile_t  mobjNodes, lineNodes;   // all kinds of wacky links.
+    nodeindex_t *lineLinks;             // indices to roots.
 
-    byte       *rejectmatrix;
+    byte       *rejectMatrix;
 
     float       globalGravity;          // Gravity for the current map.
     int         ambientLightLevel;      // Ambient lightlevel for the current map.

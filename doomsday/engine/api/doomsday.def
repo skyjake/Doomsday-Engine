@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 358 <--
+; --> 407 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -16,6 +16,7 @@ NAME            "DOOMSDAY"
 ; 96 formerly R_CheckTextureNumForName
 ; 98 formerly R_TextureNameForNum
 ; 100 formerly R_SetTextureTranslation
+; 106 formerly DD_GetDGLProcAddress
 ; 107 formerly GL_DoUpdate
 ; 108 formerly GL_ChangeResolution
 ; 118 formerly GL_SetTexture
@@ -36,7 +37,6 @@ EXPORTS
     Plug_DoHook                 @3 NONAME
 
 ; Base.
-    DD_GetDGLProcAddress        @106 NONAME
     DD_AddIWAD                  @4 NONAME
     DD_AddStartupWAD            @5 NONAME
     DD_SetConfigFile            @6 NONAME
@@ -120,7 +120,7 @@ EXPORTS
 
 ; Map building interface.
     MPE_Begin                   @350 NONAME
-    MPE_End                  @351 NONAME
+    MPE_End                     @351 NONAME
 
     MPE_VertexCreate            @352 NONAME
     MPE_SidedefCreate           @353 NONAME
@@ -152,7 +152,7 @@ EXPORTS
     P_SectorTouchingMobjsIterator @74 NONAME
     P_PathTraverse              @75 NONAME
     P_CheckSight                @76 NONAME
-    P_MobjSetState                  @207 NONAME
+    P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME
 
 ; Play: Controls.
@@ -267,7 +267,7 @@ EXPORTS
     P_PolyobjRotate             @80 NONAME
     P_PolyobjLink               @82 NONAME
     P_PolyobjUnLink             @81 NONAME
-    PO_SetCallback        @83 NONAME
+    PO_SetCallback				@83 NONAME
 
 ; Play: Thinkers.
     P_RunThinkers               @84 NONAME
@@ -296,6 +296,51 @@ EXPORTS
     R_PointInSubsector          @102 NONAME
     R_CreateAnimGroup           @241 NONAME
     R_AddToAnimGroup            @242 NONAME
+
+; DGL.
+	DGL_Enable					@387 NONAME
+	DGL_Disable					@388 NONAME
+	DGL_EnableTexUnit			@405 NONAME
+	DGL_DisableTexUnit			@406 NONAME
+	DGL_GetIntegerv				@392 NONAME
+	DGL_GetInteger				@393 NONAME
+	DGL_SetInteger				@394 NONAME
+	DGL_GetFloat				@399 NONAME
+	DGL_SetFloat				@401 NONAME
+	DGL_BlendFunc					@389 NONAME
+	DGL_BlendOp					@407 NONAME
+	DGL_MatrixMode				@359 NONAME
+	DGL_PushMatrix				@360 NONAME
+	DGL_PopMatrix				@361 NONAME
+	DGL_LoadIdentity			@362 NONAME
+	DGL_Ortho					@390 NONAME
+	DGL_Scissor					@404 NONAME
+	DGL_Bind					@396 NONAME
+	DGL_DeleteTextures			@403 NONAME
+	DGL_Begin					@363 NONAME
+	DGL_End						@364 NONAME
+	DGL_Translatef				@384 NONAME
+	DGL_Rotatef					@385 NONAME
+	DGL_Scalef					@386 NONAME
+	DGL_Color3ub				@365 NONAME
+	DGL_Color3ubv				@366 NONAME
+	DGL_Color4ub				@367 NONAME
+	DGL_Color4ubv				@368 NONAME
+	DGL_Color3f					@369 NONAME
+	DGL_Color3fv				@370 NONAME
+	DGL_Color4f					@371 NONAME
+	DGL_Color4fv				@372 NONAME
+	DGL_TexCoord2f				@373 NONAME
+	DGL_TexCoord2fv				@374 NONAME
+	DGL_MultiTexCoord2f			@375 NONAME
+	DGL_MultiTexCoord2fv		@376 NONAME
+	DGL_Vertex2f				@377 NONAME
+	DGL_Vertex2fv				@378 NONAME
+	DGL_Vertex3f				@379 NONAME
+	DGL_Vertex3fv				@380 NONAME
+	DGL_Vertices2ftv			@381 NONAME
+	DGL_Vertices3ftv			@382 NONAME
+	DGL_Vertices3fctv			@383 NONAME
 
 ; Renderer.
     Rend_Reset                  @103 NONAME
@@ -417,7 +462,7 @@ EXPORTS
     DED_AddMusic                @166 NONAME
     DED_AddMapInfo              @167 NONAME
     DED_AddText                 @168 NONAME
-    DED_AddTexEnviron           @169 NONAME
+    DED_AddTextureEnv           @169 NONAME
     DED_AddValue                @170 NONAME
     DED_AddDetail               @171 NONAME
     DED_AddPtcGen               @172 NONAME
@@ -433,7 +478,7 @@ EXPORTS
     DED_RemoveMusic             @183 NONAME
     DED_RemoveMapInfo           @184 NONAME
     DED_RemoveText              @185 NONAME
-    DED_RemoveTexEnviron        @186 NONAME
+    DED_RemoveTextureEnv        @186 NONAME
     DED_RemoveValue             @187 NONAME
     DED_RemoveDetail            @188 NONAME
     DED_RemovePtcGen            @189 NONAME

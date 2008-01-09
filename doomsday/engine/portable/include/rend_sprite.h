@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_sprite.h: Rendering Map Objects as 2D Sprites
  */
 
@@ -31,28 +31,28 @@
 
 typedef struct rendspriteparams_s {
 // Position/Orientation/Scale
-    float       center[3]; // The real center point.
-    float       width, height;
-    float       viewOffX; // View-aligned offset to center point.
-    float       srvo[3]; // Short-range visual offset.
-    float       distance; // Distance from viewer.
-    boolean     viewAligned;
+    float           center[3]; // The real center point.
+    float           width, height;
+    float           viewOffX; // View-aligned offset to center point.
+    float           srvo[3]; // Short-range visual offset.
+    float           distance; // Distance from viewer.
+    boolean         viewAligned;
 
 // Appearance
-    boolean     noZWrite;
+    boolean         noZWrite;
 
     // Texture:
-    int         patchNum, tmap, tclass;
-    float       texOffset[2];
-    boolean     texFlip[2]; // {X, Y} Flip along the specified axis.
+    int             patchNum, tMap, tClass;
+    float           texOffset[2];
+    boolean         texFlip[2]; // {X, Y} Flip along the specified axis.
 
     // Lighting/color:
-    float       rgba[4];
-    blendmode_t blendMode;
-    float       lightLevel;
+    float           rgba[4];
+    blendmode_t     blendMode;
+    float           lightLevel;
 
-    uint        numLights;
-    vlight_t   *lights;
+    uint            numLights;
+    vlight_t       *lights;
 
 // Misc
     struct subsector_s *subsector;
@@ -60,21 +60,21 @@ typedef struct rendspriteparams_s {
 
 typedef struct rendpspriteparams_s {
 // Position/Orientation/Scale
-    float       pos[2]; // {X, Y} Screen-space position.
-    float       width, height;
+    float           pos[2]; // {X, Y} Screen-space position.
+    float           width, height;
 
 // Appearance
     // Texture:
-    int         lump;
-    float       texOffset[2];
-    boolean     texFlip[2]; // {X, Y} Flip along the specified axis.
+    int             lump;
+    float           texOffset[2];
+    boolean         texFlip[2]; // {X, Y} Flip along the specified axis.
 
     // Lighting/color:
-    float       rgba[4];
-    float       lightLevel;
+    float           rgba[4];
+    float           lightLevel;
 
-    uint        numLights;
-    vlight_t   *lights;
+    uint            numLights;
+    vlight_t       *lights;
 
 // Misc
     struct subsector_s *subsector;

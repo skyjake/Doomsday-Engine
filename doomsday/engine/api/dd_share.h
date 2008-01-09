@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -763,11 +763,11 @@ extern          "C" {
     } degenmobj_t;
 
     typedef struct {
-        fixed_t         pos[2], dx, dy;
+        fixed_t         pos[2], dX, dY;
     } divline_t;
 
     typedef struct {
-        float           pos[2], dx, dy;
+        float           pos[2], dX, dY;
     } fdivline_t;
 
     // For PathTraverse.
@@ -791,9 +791,14 @@ extern          "C" {
 #define DDLINK_BLOCKMAP     0x2
 #define DDLINK_NOLINE       0x4
 
+    typedef enum intercepttype_e {
+        ICPT_MOBJ,
+        ICPT_LINE
+    } intercepttype_t;
+
     typedef struct intercept_s {
         float           frac;      // Along trace line.
-        boolean         isaline;
+        intercepttype_t type;
         union {
             struct mobj_s  *mo;
             struct line_s  *line;
@@ -875,9 +880,9 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     thinker_t       thinker;            /* thinker node */ \
     float           pos[3];             /* position [x,y,z] */ \
 \
-    struct mobj_s   *bnext, *bprev;     /* links in blocks (if needed) */ \
-    nodeindex_t     lineroot;           /* lines to which this is linked */ \
-    struct mobj_s   *snext, **sprev;    /* links in sector (if needed) */ \
+    struct mobj_s   *bNext, *bPrev;     /* links in blocks (if needed) */ \
+    nodeindex_t     lineRoot;           /* lines to which this is linked */ \
+    struct mobj_s   *sNext, **sPrev;    /* links in sector (if needed) */ \
 \
     struct subsector_s *subsector;      /* subsector in which this resides */ \
     float           mom[3];   \
@@ -887,28 +892,28 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     int             frame;              /* might be ord with FF_FULLBRIGHT */ \
     float           radius; \
     float           height; \
-    int             ddflags;            /* Doomsday mobj flags (DDMF_*) */ \
-    float           floorclip;          /* value to use for floor clipping */ \
+    int             ddFlags;            /* Doomsday mobj flags (DDMF_*) */ \
+    float           floorClip;          /* value to use for floor clipping */ \
     int             valid;              /* if == valid, already checked */ \
     int             type;               /* mobj type */ \
     struct state_s  *state; \
     int             tics;               /* state tic counter */ \
-    float           floorz;             /* highest contacted floor */ \
-    float           ceilingz;           /* lowest contacted ceiling */ \
-    struct mobj_s*  onmobj;             /* the mobj this one is on top of. */ \
-    boolean         wallhit;            /* the mobj is hitting a wall. */ \
-    struct ddplayer_s *dplayer;         /* NULL if not a player mobj. */ \
+    float           floorZ;             /* highest contacted floor */ \
+    float           ceilingZ;           /* lowest contacted ceiling */ \
+    struct mobj_s*  onMobj;             /* the mobj this one is on top of. */ \
+    boolean         wallHit;            /* the mobj is hitting a wall. */ \
+    struct ddplayer_s *dPlayer;         /* NULL if not a player mobj. */ \
     float           srvo[3];            /* short-range visual offset (xyz) */ \
-    short           visangle;           /* visual angle ("angle-servo") */ \
+    short           visAngle;           /* visual angle ("angle-servo") */ \
     int             selector;           /* multipurpose info */ \
     int             validCount;         /* used in iterating */ \
     unsigned int    light;              /* index+1 of the lumobj/bias source, or 0 */ \
     boolean         usingBias;          /* if true, "light" is the bias source index+1 */ \
-    byte            halofactor;         /* strength of halo */ \
+    byte            haloFactor;         /* strength of halo */ \
     byte            translucency;       /* default = 0 = opaque */ \
-    short           vistarget;          /* -1 = mobj is becoming less visible, */ \
+    short           visTarget;          /* -1 = mobj is becoming less visible, */ \
                                         /* 0 = no change, 2= mobj is becoming more visible */ \
-    int             reactiontime;       /* if not zero, freeze controls */
+    int             reactionTime;       /* if not zero, freeze controls */
 
     typedef struct ddmobj_base_s {
     DD_BASE_MOBJ_ELEMENTS()} ddmobj_base_t;
@@ -927,6 +932,149 @@ enum { MX, MY, MZ };               // Momentum axis indices.
 
     //------------------------------------------------------------------------
     //
+    // Rendering
+    //
+    //------------------------------------------------------------------------
+
+// Types.
+typedef unsigned char DGLubyte;
+typedef unsigned int DGLuint;
+
+typedef struct gl_vertex_s {
+    float           xyz[4];        // The fourth is padding.
+} gl_vertex_t;
+
+typedef struct gl_texcoord_s {
+    float           st[2];
+} gl_texcoord_t;
+
+typedef struct gl_color_s {
+    byte            rgba[4];
+} gl_color_t;
+
+typedef struct {
+    DGLubyte        rgb[3];
+} gl_rgb_t;
+
+typedef struct {
+    DGLubyte        rgba[4];
+} gl_rgba_t;
+
+// A 2-vertex with texture coordinates, using floats
+typedef struct {
+    float           pos[2];
+    float           tex[2];
+} gl_ft2vertex_t;
+
+// A 3-vertex with texture coordinates, using floats
+typedef struct {
+    float           pos[3];
+    float           tex[2];
+} gl_ft3vertex_t;
+
+// A 3-vertex with texture coordinates and a color, using floats
+typedef struct {
+    float           pos[3];
+    float           tex[2];
+    float           color[4];
+} gl_fct3vertex_t;
+
+// A colored 3-vertex, using floats
+typedef struct {
+    float           pos[3];
+    float           color[4];
+} gl_fc3vertex_t;
+
+// GL texture formats:
+typedef enum gltexformat_e {
+    DGL_RGB,
+    DGL_RGBA,
+    DGL_COLOR_INDEX_8,
+    DGL_COLOR_INDEX_8_PLUS_A8,
+    DGL_LUMINANCE,
+    DGL_DEPTH_COMPONENT,
+    DGL_LUMINANCE_PLUS_A8
+} gltexformat_t;
+
+typedef enum glprimtype_e {
+    DGL_LINES,
+    DGL_TRIANGLES,
+    DGL_TRIANGLE_FAN,
+    DGL_TRIANGLE_STRIP,
+    DGL_QUADS,
+    DGL_QUAD_STRIP,
+    DGL_POINTS
+} glprimtype_t;
+
+enum {
+    // Values
+    DGL_COLOR_BITS,
+    DGL_MAX_TEXTURE_SIZE,
+    DGL_SCISSOR_BOX,
+    DGL_POLY_COUNT,
+    DGL_TEXTURE_BINDING,
+    DGL_MAX_TEXTURE_UNITS,
+    DGL_ACTIVE_TEXTURE,
+
+    DGL_CURRENT_COLOR_R,
+    DGL_CURRENT_COLOR_G,
+    DGL_CURRENT_COLOR_B,
+    DGL_CURRENT_COLOR_A,
+    DGL_CURRENT_COLOR_RGBA,
+
+    // Matrices
+    DGL_MODELVIEW = 0x4000,
+    DGL_PROJECTION,
+    DGL_TEXTURE,
+
+    // Caps
+    DGL_TEXTURING = 0x5000,
+    DGL_SCISSOR_TEST = 0x5004,
+    DGL_FOG = 0x5008,
+    DGL_PALETTED_TEXTURES = 0x5009,
+    DGL_PALETTED_GENMIPS = 0x500B,
+    DGL_MODULATE_ADD_COMBINE = 0x500C,
+    DGL_MODULATE_TEXTURE = 0x500D,
+    DGL_TEXTURE_COMPRESSION = 0x500F,
+    DGL_VSYNC = 0x5011,
+
+    // Blending functions
+    DGL_ZERO = 0x6000,
+    DGL_ONE,
+    DGL_DST_COLOR,
+    DGL_ONE_MINUS_DST_COLOR,
+    DGL_DST_ALPHA,
+    DGL_ONE_MINUS_DST_ALPHA,
+    DGL_SRC_COLOR,
+    DGL_ONE_MINUS_SRC_COLOR,
+    DGL_SRC_ALPHA,
+    DGL_ONE_MINUS_SRC_ALPHA,
+    DGL_SRC_ALPHA_SATURATE,
+    DGL_ADD,
+    DGL_SUBTRACT,
+    DGL_REVERSE_SUBTRACT,
+
+    // Miscellaneous
+    DGL_MIN_FILTER = 0xF000,
+    DGL_MAG_FILTER,
+    DGL_ANISO_FILTER,
+    DGL_NEAREST,
+    DGL_LINEAR,
+    DGL_NEAREST_MIPMAP_NEAREST,
+    DGL_LINEAR_MIPMAP_NEAREST,
+    DGL_NEAREST_MIPMAP_LINEAR,
+    DGL_LINEAR_MIPMAP_LINEAR,
+    DGL_CLAMP,
+    DGL_REPEAT,
+    DGL_GRAY_MIPMAP,
+    DGL_LINE_WIDTH,
+
+    // Various bits
+    DGL_ALL_BITS = 0xFFFFFFFF
+};
+
+    //------------------------------------------------------------------------
+    //
     // Sound
     //
     //------------------------------------------------------------------------
@@ -936,14 +1084,14 @@ enum { MX, MY, MZ };               // Momentum axis indices.
 #define DDSF_REPEAT             0x40000000
 
     typedef struct {
-        float           volume;    // 0..1
-        float           decay;     // Decay factor: 0 (acoustically dead) ... 1 (live)
-        float           damping;   // High frequency damping factor: 0..1
-        float           space;     // 0 (small space) ... 1 (large space)
+        float           volume; // 0..1
+        float           decay; // Decay factor: 0 (acoustically dead) ... 1 (live)
+        float           damping; // High frequency damping factor: 0..1
+        float           space; // 0 (small space) ... 1 (large space)
     } reverb_t;
 
     // Use with PlaySong().
-#define DDMUSICF_EXTERNAL   0x80000000
+#define DDMUSICF_EXTERNAL       0x80000000
 
     //------------------------------------------------------------------------
     //
@@ -951,7 +1099,7 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     //
     //------------------------------------------------------------------------
 
-#define DDNUM_BLENDMODES 9
+#define DDNUM_BLENDMODES        9
 
 typedef enum blendmode_e {
     BM_ZEROALPHA = -1,
@@ -961,6 +1109,7 @@ typedef enum blendmode_e {
     BM_SUBTRACT,
     BM_REVERSE_SUBTRACT,
     BM_MUL,
+    BM_INVERSE,
     BM_INVERSE_MUL,
     BM_ALPHA_SUBTRACT
 } blendmode_t;
@@ -972,17 +1121,17 @@ typedef enum materialtype_e {
 } materialtype_t;
 
     typedef struct lumppatch_s {
-        short           width;     // bounding box size
+        short           width; // bounding box size
         short           height;
-        short           leftoffset; // pixels to the left of origin
-        short           topoffset; // pixels below the origin
-        int             columnofs[8];   // only [width] used
+        short           leftOffset; // pixels to the left of origin
+        short           topOffset; // pixels below the origin
+        int             columnOfs[8]; // only [width] used
         // the [0] is &columnofs[width]
     } lumppatch_t;
 
     typedef struct {
-        int             lump;      // Sprite lump number.
-        int             realLump;  // Real lump number.
+        int             lump; // Sprite lump number.
+        int             realLump; // Real lump number.
         int             flip;
         int             offset;
         int             topOffset;
@@ -992,8 +1141,8 @@ typedef enum materialtype_e {
     } spriteinfo_t;
 
     typedef struct {
-        int             spritenum;
-        char           *modelname;
+        int             spriteNum;
+        char           *modelName;
     } spritereplacement_t;
 
 // Animation group flags.
@@ -1018,21 +1167,21 @@ typedef enum materialtype_e {
 #define BUSYF_STARTUP           0x20    // Startup mode: normal fonts, texman not available.
 
     // These correspond the good old text mode VGA colors.
-#define CBLF_BLACK      0x00000001
-#define CBLF_BLUE       0x00000002
-#define CBLF_GREEN      0x00000004
-#define CBLF_CYAN       0x00000008
-#define CBLF_RED        0x00000010
-#define CBLF_MAGENTA    0x00000020
-#define CBLF_YELLOW     0x00000040
-#define CBLF_WHITE      0x00000080
-#define CBLF_LIGHT      0x00000100
-#define CBLF_RULER      0x00000200
-#define CBLF_CENTER     0x00000400
-#define CBLF_TRANSMIT   0x80000000 // If server, sent to all clients.
+#define CBLF_BLACK              0x00000001
+#define CBLF_BLUE               0x00000002
+#define CBLF_GREEN              0x00000004
+#define CBLF_CYAN               0x00000008
+#define CBLF_RED                0x00000010
+#define CBLF_MAGENTA            0x00000020
+#define CBLF_YELLOW             0x00000040
+#define CBLF_WHITE              0x00000080
+#define CBLF_LIGHT              0x00000100
+#define CBLF_RULER              0x00000200
+#define CBLF_CENTER             0x00000400
+#define CBLF_TRANSMIT           0x80000000 // If server, sent to all clients.
 
     // Font flags.
-#define DDFONT_WHITE        0x1    // The font data is white, can be colored.
+#define DDFONT_WHITE            0x1 // The font data is white, can be colored.
 
     // Windows sure is fun... <sound of teeth being ground>
 #ifdef TextOut
@@ -1316,7 +1465,7 @@ typedef struct ticcmd_s {
 
     // Player sprites.
     typedef struct {
-        state_t        *stateptr;
+        state_t        *statePtr;
         int             tics;
         float           light, alpha;
         float           pos[2];
@@ -1341,22 +1490,22 @@ typedef struct ticcmd_s {
         ticcmd_t        cmd;
         struct mobj_s  *mo;         // pointer to a (game specific) mobj
         float           viewZ;      // focal origin above r.z
-        float           viewheight; // base height above floor for viewZ
-        float           deltaviewheight;
-        float           lookdir;    // It's now a float, for mlook.
-        int             fixedcolormap;  // can be set to REDCOLORMAP, etc
+        float           viewHeight; // base height above floor for viewZ
+        float           viewHeightDelta;
+        float           lookDir;    // It's now a float, for mlook.
+        int             fixedColorMap;  // can be set to REDCOLORMAP, etc
         int             extraLight; // so gun flashes light up areas
-        int             ingame;     // is this player in game?
-        int             invoid;     // True if player is in the void
+        int             inGame;     // is this player in game?
+        int             inVoid;     // True if player is in the void
                                     // (not entirely accurate so it shouldn't
                                     /// be used for anything critical).
         int             flags;
         int             filter;     // RGBA filter for the camera
-        fixcounters_t   fixcounter;
-        fixcounters_t   fixacked;
-        angle_t         lastangle;  // For calculating turndeltas.
-        ddpsprite_t     psprites[DDMAXPSPRITES];    // Player sprites.
-        void           *extradata;  // Pointer to any game-specific data.
+        fixcounters_t   fixCounter;
+        fixcounters_t   fixAcked;
+        angle_t         lastAngle;  // For calculating turndeltas.
+        ddpsprite_t     pSprites[DDMAXPSPRITES];    // Player sprites.
+        void           *extraData;  // Pointer to any game-specific data.
     } ddplayer_t;
 
 #ifdef __cplusplus

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_think.h: Thinkers
  */
 
@@ -35,10 +35,10 @@ typedef void    (*think_t) ();
 typedef struct thinker_s {
     struct thinker_s *prev, *next;
     think_t         function;
-    thid_t          id;            // Only used for mobjs (zero is not an ID).
+    thid_t          id; // Only used for mobjs (zero is not an ID).
 } thinker_t;
 
-extern thinker_t thinkercap;       // both the head and tail of the thinker list
+extern thinker_t thinkerCap; // both the head and tail of the thinker list
 
 void            P_RunThinkers(void);
 void            P_InitThinkers(void);

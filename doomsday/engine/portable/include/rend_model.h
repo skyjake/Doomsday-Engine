@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_model.h: 3D Models
  */
 
@@ -31,53 +31,53 @@
 
 #include "r_things.h"
 
-extern int      modelLight;
-extern int      frameInter;
-extern int      mirrorHudModels;
-extern int      modelShinyMultitex;
-extern float    rend_model_lod;
-
 typedef struct modelparams_s {
 // Animation, frame interpolation.
-    struct modeldef_s *mf, *nextmf;
-    float       inter;
-    boolean     alwaysInterpolate;
-    int         id; // For a unique skin offset.
-    int         selector;
+    struct modeldef_s *mf, *nextMF;
+    float           inter;
+    boolean         alwaysInterpolate;
+    int             id; // For a unique skin offset.
+    int             selector;
 
 // Position/Orientation/Scale
-    float       center[3], gzt; // The real center point and global top z for silhouette clipping.
-    float       srvo[3]; // Short-range visual offset.
-    float       distance; // Distance from viewer.
-    float       yaw, extraYawAngle, yawAngleOffset; // \todo we don't need three sets of angles, update users of this struct instead.
-    float       pitch, extraPitchAngle, pitchAngleOffset;
+    float           center[3], gzt; // The real center point and global top z for silhouette clipping.
+    float           srvo[3]; // Short-range visual offset.
+    float           distance; // Distance from viewer.
+    float           yaw, extraYawAngle, yawAngleOffset; // \todo we don't need three sets of angles, update users of this struct instead.
+    float           pitch, extraPitchAngle, pitchAngleOffset;
 
-    float       extraScale;
+    float           extraScale;
 
-    boolean     viewAligned;
-    boolean     mirror; // If true the model will be mirrored about its Z axis (in model space).
+    boolean         viewAligned;
+    boolean         mirror; // If true the model will be mirrored about its Z axis (in model space).
 
 // Appearance
-    int         flags; // Mobj flags.
+    int             flags; // Mobj flags.
 
     // Lighting/color:
-    float       lightLevel; // Light level of the sector the model is in. All modifiers applied (i.e. light adaptation).
-    float       rgb[3];
-    boolean     uniformColor;
-    float       alpha;
+    float           lightLevel; // Light level of the sector the model is in. All modifiers applied (i.e. light adaptation).
+    float           rgb[3];
+    boolean         uniformColor;
+    float           alpha;
 
-    uint        numLights;
-    vlight_t   *lights;
+    uint            numLights;
+    vlight_t       *lights;
 
     // Shinemaping:
-    float       shineYawOffset;
-    float       shinePitchOffset;
-    boolean     shineTranslateWithViewerPos;
-    boolean     shinepspriteCoordSpace; // Use the psprite coordinate space hack.
+    float           shineYawOffset;
+    float           shinePitchOffset;
+    boolean         shineTranslateWithViewerPos;
+    boolean         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
 
 // Misc
     struct subsector_s *subsector;
 } modelparams_t;
+
+extern int      modelLight;
+extern int      frameInter;
+extern int      mirrorHudModels;
+extern int      modelShinyMultitex;
+extern float    rendModelLOD;
 
 void            Rend_ModelRegister(void);
 void            Rend_RenderModel(const modelparams_t *params);

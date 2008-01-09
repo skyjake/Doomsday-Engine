@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,7 +68,6 @@ extern          "C" {
 #include "dd_plugin.h"
 
     // Base.
-    void           *DD_GetDGLProcAddress(const char *name);
     void            DD_AddIWAD(const char *path);
     void            DD_AddStartupWAD(const char *file);
     void            DD_SetConfigFile(char *filename);
@@ -406,6 +405,53 @@ extern          "C" {
                                     float y2);
     struct subsector_s *R_PointInSubsector(float x, float y);
 
+    // DGL.
+    void            DGL_DeleteTextures(int num, const DGLuint *names);
+    int             DGL_Enable(int cap);
+    void            DGL_Disable(int cap);
+    void            DGL_EnableTexUnit(byte id);
+    void            DGL_DisableTexUnit(byte id);
+    boolean         DGL_GetIntegerv(int name, int *v);
+    int             DGL_GetInteger(int name);
+    boolean         DGL_SetInteger(int name, int value);
+    float           DGL_GetFloat(int name);
+    boolean         DGL_SetFloat(int name, float value);
+    void            DGL_BlendFunc(int param1, int param2);
+    void            DGL_BlendOp(int op);
+    void            DGL_MatrixMode(int mode);
+    void            DGL_PushMatrix(void);
+    void            DGL_PopMatrix(void);
+    void            DGL_LoadIdentity(void);
+    void            DGL_Ortho(float left, float top, float right, float bottom, float znear,
+                              float zfar);
+    void            DGL_Scissor(int x, int y, int width, int height);
+    void            DGL_Clear(int bufferbits);
+    int             DGL_Bind(DGLuint texture);
+    void            DGL_Begin(glprimtype_t type);
+    void            DGL_End(void);
+    void            DGL_Translatef(float x, float y, float z);
+    void            DGL_Rotatef(float angle, float x, float y, float z);
+    void            DGL_Scalef(float x, float y, float z);
+    void            DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
+    void            DGL_Color3ubv(const DGLubyte *data);
+    void            DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
+    void            DGL_Color4ubv(const DGLubyte *data);
+    void            DGL_Color3f(float r, float g, float b);
+    void            DGL_Color3fv(const float *data);
+    void            DGL_Color4f(float r, float g, float b, float a);
+    void            DGL_Color4fv(const float *data);
+    void            DGL_TexCoord2f(float s, float t);
+    void            DGL_TexCoord2fv(const float *data);
+    void            DGL_MultiTexCoord2f(byte target, float s, float t);
+    void            DGL_MultiTexCoord2fv(byte target, float *data);
+    void            DGL_Vertex2f(float x, float y);
+    void            DGL_Vertex2fv(const float *data);
+    void            DGL_Vertex3f(float x, float y, float z);
+    void            DGL_Vertex3fv(const float *data);
+    void            DGL_Vertices2ftv(int num, const gl_ft2vertex_t *data);
+    void            DGL_Vertices3ftv(int num, const gl_ft3vertex_t *data);
+    void            DGL_Vertices3fctv(int num, const gl_fct3vertex_t *data);
+
     // Renderer.
     void            Rend_Reset(void);
     void            Rend_SkyParams(int layer, int parm, float value);
@@ -422,11 +468,12 @@ extern          "C" {
     void            GL_SetColorAndAlpha(float r, float g, float b, float a);
     void            GL_BlendMode(blendmode_t mode);
     void            GL_SetNoTexture(void);
-    void            GL_SetPatch(int lump);
-    void            GL_SetSprite(int pnum, int spriteType);
+    void            GL_SetPatch(int lump, int wrapS, int wrapT);
+    void            GL_SetSprite(int pnum);
+    void            GL_SetPSprite(int pnum);
     void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
     void            GL_SetMaterial(int idx, materialtype_t type);
-    unsigned int    GL_SetRawImage(unsigned int lump, boolean part2);
+    unsigned int    GL_SetRawImage(unsigned int lump, boolean part2, int wrapS, int wrapT);
     unsigned int    GL_LoadGraphics(const char *name, int mode);
 
     // Graphics: 2D drawing.

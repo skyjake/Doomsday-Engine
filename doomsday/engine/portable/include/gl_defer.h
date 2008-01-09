@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-20078 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,13 +37,13 @@ typedef struct texturecontent_s {
     DGLuint         name;
     void           *buffer;
     size_t          bufferSize;
-    int             format;
+    gltexformat_t   format;
     int             width;
     int             height;
     int             minFilter;
     int             magFilter;
     int             anisoFilter;
-    int             wrap[2];
+    boolean         wrap[2];
     int             grayMipmap;
     int             flags;
 } texturecontent_t;
@@ -68,10 +68,10 @@ void            GL_UploadDeferredContent(uint timeOutMilliSeconds);
 int             GL_GetDeferredCount(void);
 void            GL_InitTextureContent(texturecontent_t *content);
 DGLuint         GL_NewTexture(texturecontent_t *content);
-DGLuint         GL_NewTextureWithParams(int format, int width, int height, void* pixels,
+DGLuint         GL_NewTextureWithParams(gltexformat_t format, int width, int height, void* pixels,
                                         int flags);
-DGLuint         GL_NewTextureWithParams2(int format, int width, int height, void* pixels,
+DGLuint         GL_NewTextureWithParams2(gltexformat_t format, int width, int height, void* pixels,
                                          int flags, int minFilter, int magFilter, int anisoFilter,
-                                         int wrapS, int wrapT);
+                                         boolean wrapS, boolean wrapT);
 
 #endif

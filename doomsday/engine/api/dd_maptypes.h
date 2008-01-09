@@ -43,9 +43,9 @@
 #define DMT_SECTOR_RGB DDVT_FLOAT
 #define DMT_SECTOR_MOBJLIST DDVT_PTR   // List of mobjs in the sector.
 #define DMT_SECTOR_LINECOUNT DDVT_UINT
-#define DMT_SECTOR_LINES DDVT_PTR      // [linecount+1] size.
+#define DMT_SECTOR_LINES DDVT_PTR      // [lineCount+1] size.
 #define DMT_SECTOR_SUBSCOUNT DDVT_UINT
-#define DMT_SECTOR_SUBSECTORS DDVT_PTR // [subscount+1] size.
+#define DMT_SECTOR_SUBSECTORS DDVT_PTR // [subsCount+1] size.
 #define DMT_SECTOR_SOUNDORG DDVT_PTR
 #define DMT_SECTOR_PLANECOUNT DDVT_UINT
 #define DMT_SECTOR_REVERB DDVT_FLOAT

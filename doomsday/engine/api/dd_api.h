@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,32 +39,33 @@
  * using this structure (most importantly the map data).
  */
 typedef struct game_import_s {
-    size_t          apiSize;       // sizeof(game_import_t)
-    int             version;       // Doomsday Engine version.
+    size_t          apiSize; // sizeof(game_import_t)
+    int             version; // Doomsday Engine version.
 
     //
     // DATA
     //
     // Data arrays.
-    mobjinfo_t    **mobjinfo;
+    mobjinfo_t    **mobjInfo;
     state_t       **states;
-    sprname_t     **sprnames;
+    sprname_t     **sprNames;
     ddtext_t      **text;
 
     // General information.
     int            *validCount;
-    float          *topslope;
-    float          *bottomslope;
+    float          *topSlope;
+    float          *bottomSlope;
 
     // Thinker data (DO NOT CHANGE).
-    thinker_t      *thinkercap;    // The head and tail of the thinker list
-} game_import_t;                   // game import == engine export
+    thinker_t      *thinkerCap; /* The head and tail of the thinker list
+                                   game import == engine export */
+} game_import_t;
 
 /**
  * The routines/data exported from the game DLL.
  */
 typedef struct {
-    size_t          apiSize;       // sizeof(game_export_t)
+    size_t          apiSize; // sizeof(game_export_t)
 
     // Base-level.
     void          (*PreInit) (void);
@@ -101,10 +102,10 @@ typedef struct {
 
     // Miscellaneous.
     void          (*MobjThinker) ();
-    float         (*MobjFriction) (void *mobj);   // Returns a friction factor.
+    float         (*MobjFriction) (void *mobj); // Returns a friction factor.
 
     // Main structure sizes.
-    size_t          ticcmdSize;   // sizeof(ticcmd_t)
+    size_t          ticcmdSize; // sizeof(ticcmd_t)
     size_t          mobjSize; // sizeof(mobj_t)
 
     // Map data setup

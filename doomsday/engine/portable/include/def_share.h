@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,9 +31,9 @@
 
 #include "dd_types.h"
 
-#define NUM_MOBJ_FLAGS	3
-#define NUM_MOBJ_MISC	4
-#define NUM_STATE_MISC	3
+#define NUM_MOBJ_FLAGS	        3
+#define NUM_MOBJ_MISC	        4
+#define NUM_STATE_MISC	        3
 
 typedef struct {
 	char            name[5];
@@ -47,47 +47,47 @@ typedef struct state_s {
 	int             frame;
 	int             tics;
 	acfnptr_t       action;
-	int             nextstate;
+	int             nextState;
 	int             misc[NUM_STATE_MISC];
 	void           *model;
 	void           *light;
-	void           *ptrigger;
+	void           *pTrigger;
 } state_t;
 
 typedef struct {
-	int             doomednum;
-	int             spawnstate;
-	int             spawnhealth;
-	int             seestate;
-	int             seesound;
-	int             reactiontime;
-	int             attacksound;
-	int             painstate;
-	int             painchance;
-	int             painsound;
-	int             meleestate;
-	int             missilestate;
-	int             crashstate;
-	int             deathstate;
-	int             xdeathstate;
-	int             deathsound;
+	int             doomedNum;
+	int             spawnState;
+	int             spawnHealth;
+	int             seeState;
+	int             seeSound;
+	int             reactionTime;
+	int             attackSound;
+	int             painState;
+	int             painChance;
+	int             painSound;
+	int             meleeState;
+	int             missileState;
+	int             crashState;
+	int             deathState;
+	int             xDeathState;
+	int             deathSound;
 	float           speed;
 	float           radius;
 	float           height;
 	int             mass;
 	int             damage;
-	int             activesound;
+	int             activeSound;
 	int             flags;
 	int             flags2;
 	int             flags3;
-	int             raisestate;
+	int             raiseState;
 	int             misc[NUM_MOBJ_MISC];
 } mobjinfo_t;
 
 typedef struct {
-	char            lumpname[9];
-	int             lumpnum;
-	char           *extfile;
+	char            lumpName[9];
+	int             lumpNum;
+	char           *extFile;
 	void           *data;
 } musicinfo_t;
 
@@ -102,7 +102,7 @@ typedef struct {
 	int             flags;
 	float           ambient;
 	float           gravity;
-	float           partime;
+	float           parTime;
 } ddmapinfo_t;
 
 typedef struct {
@@ -123,21 +123,21 @@ typedef struct {
 	int             flags;
 	int             flags2;
 	int             flags3;
-	int             line_class;
-	int             act_type;
-	int             act_count;
-	float           act_time;
-	int             act_tag;
+	int             lineClass;
+	int             actType;
+	int             actCount;
+	float           actTime;
+	int             actTag;
 	int             aparm[DDLT_MAX_APARAMS];
-	float           ticker_start, ticker_end;
-	int             ticker_interval;
-	int             act_sound, deact_sound;
-	int             ev_chain, act_chain, deact_chain;
-	int             wallsection, act_tex, deact_tex;
-    int             act_linetype, deact_linetype;
-	char           *act_msg, *deact_msg;
-	float           texmove_angle;
-	float           texmove_speed;
+	float           tickerStart, tickerEnd;
+	int             tickerInterval;
+	int             actSound, deactSound;
+	int             evChain, actChain, deactChain;
+	int             wallSection, actTex, deactTex;
+    int             actLineType, deactLineType;
+	char           *actMsg, *deactMsg;
+	float           texMoveAngle;
+	float           texMoveSpeed;
 	int             iparm[DDLT_MAX_PARAMS];
 	float           fparm[DDLT_MAX_PARAMS];
 	char           *sparm[DDLT_MAX_SPARAMS];
@@ -148,32 +148,32 @@ typedef struct {
 typedef struct {
 	int             id;
 	int             flags;
-	int             act_tag;
+	int             actTag;
 	int             chain[DDLT_MAX_CHAINS];
-	int             chain_flags[DDLT_MAX_CHAINS];
+	int             chainFlags[DDLT_MAX_CHAINS];
 	float           start[DDLT_MAX_CHAINS];
 	float           end[DDLT_MAX_CHAINS];
 	float           interval[DDLT_MAX_CHAINS][2];
 	int             count[DDLT_MAX_CHAINS];
-	int             ambient_sound;
-	float           sound_interval[2];	// min,max
-	float           texmove_angle[2];	// floor, ceil
-	float           texmove_speed[2];	// floor, ceil
-	float           wind_angle;
-	float           wind_speed;
-	float           vertical_wind;
+	int             ambientSound;
+	float           soundInterval[2];	// min,max
+	float           texMoveAngle[2];	// floor, ceil
+	float           texMoveSpeed[2];	// floor, ceil
+	float           windAngle;
+	float           windSpeed;
+	float           verticalWind;
 	float           gravity;
 	float           friction;
-	char           *lightfunc;
-	int             light_interval[2];
-	char           *colfunc[3];	   // RGB
-	int             col_interval[3][2];
-	char           *floorfunc;
-	float           floormul, flooroff;
-	int             floor_interval[2];
-	char           *ceilfunc;
-	float           ceilmul, ceiloff;
-	int             ceil_interval[2];
+	char           *lightFunc;
+	int             lightInterval[2];
+	char           *colFunc[3];	   // RGB
+	int             colInterval[3][2];
+	char           *floorFunc;
+	float           floorMul, floorOff;
+	int             floorInterval[2];
+	char           *ceilFunc;
+	float           ceilMul, ceilOff;
+	int             ceilInterval[2];
 } sectortype_t;
 
 #endif

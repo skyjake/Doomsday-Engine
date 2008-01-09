@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,8 +34,8 @@
 
 #define MAXINTERCEPTS   128
 
-#define IS_SECTOR_LINKED(mo)    ((mo)->sprev != NULL)
-#define IS_BLOCK_LINKED(mo)     ((mo)->bnext != NULL)
+#define IS_SECTOR_LINKED(mo)    ((mo)->sPrev != NULL)
+#define IS_BLOCK_LINKED(mo)     ((mo)->bNext != NULL)
 
 extern float  opentop, openbottom, openrange, lowfloor;
 extern divline_t trace;

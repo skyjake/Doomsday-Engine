@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,16 +46,16 @@ enum {
 typedef struct rendmaskedwallparams_s {
     int             texture;
     boolean         masked;
-    blendmode_t     blendmode; // Blendmode to be used when drawing
+    blendmode_t     blendMode; // Blendmode to be used when drawing
                                // (two sided mid textures only)
     struct wall_vertex_s {
         float           pos[3]; // x y and z coordinates.
         unsigned char   color[4];
     } vertices[4];
-    float           texc[2][2]; // u and v coordinates.
+    float           texCoord[2][2]; // u and v coordinates.
 
     DGLuint         modTex; // Texture to modulate with.
-    float           modTexC[2][2]; // u and v coordinates.
+    float           modTexCoord[2][2]; // u and v coordinates.
     float           modColor[3];
 } rendmaskedwallparams_t;
 
@@ -73,23 +73,23 @@ typedef struct vissprite_s {
         struct vissprite_mobj_s {
             int             patch;
             subsector_t    *subsector;
-            float           gzt;    // global top for silhouette clipping
+            float           gzt; // global top for silhouette clipping
             boolean         texFlip[2]; // {X, Y} Flip texture?
             int             flags; // for color translation and shadow draw
             uint            id;
             int             selector;
-            int             pclass; // player class (used in translation)
-            float           floorclip;
-            boolean         viewaligned;    // Align to view plane.
-            float           secfloor, secceil;
+            int             pClass; // player class (used in translation)
+            float           floorClip;
+            boolean         viewAligned;    // Align to view plane.
+            float           secFloor, secCeil;
             float           rgb[3]; // Sector light color.
-            float           lightlevel;
+            float           lightLevel;
             float           alpha;
-            float           visoff[3];  // Last-minute offset to coords.
-            boolean         flooradjust; // Allow moving sprite to match visible floor.
+            float           visOff[3]; // Last-minute offset to coords.
+            boolean         floorAdjust; // Allow moving sprite to match visible floor.
 
             // For models:
-            struct modeldef_s *mf, *nextmf;
+            struct modeldef_s *mf, *nextMF;
             float           yaw, pitch;
             float           pitchAngleOffset;
             float           yawAngleOffset;
@@ -98,7 +98,7 @@ typedef struct vissprite_s {
         rendmaskedwallparams_t wall;
         struct vissprite_hudsprite_s {
             subsector_t    *subsector;
-            float           lightlevel;
+            float           lightLevel;
             float           alpha;
             float           rgb[3];
             ddpsprite_t    *psp;
@@ -107,11 +107,11 @@ typedef struct vissprite_s {
 } vissprite_t;
 
 typedef struct visspritelightparams_s {
-    float       center[3];
-    subsector_t *subsector;
+    float           center[3];
+    subsector_t    *subsector;
 
-    uint        maxLights;
-    boolean     starkLight; // World light has a more pronounced effect.
+    uint            maxLights;
+    boolean         starkLight; // World light has a more pronounced effect.
 } visspritelightparams_t;
 
 // Sprites are patches with a special naming convention so they can be
@@ -130,8 +130,8 @@ typedef struct {
 } spriteframe_t;
 
 typedef struct {
-    int             numframes;
-    spriteframe_t  *spriteframes;
+    int             numFrames;
+    spriteframe_t  *spriteFrames;
 } spritedef_t;
 
 extern spritedef_t *sprites;
@@ -143,9 +143,9 @@ extern int      weaponOffsetScaleY;
 extern float    modelSpinSpeed;
 extern int      maxModelDistance, noSpriteZWrite;
 extern int      useSRVO, useSRVOAngle;
-extern vissprite_t vissprites[MAXVISSPRITES], *vissprite_p;
-extern vissprite_t vispsprites[DDMAXPSPRITES];
-extern vissprite_t vsprsortedhead;
+extern vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
+extern vissprite_t visPSprites[DDMAXPSPRITES];
+extern vissprite_t visSprSortedHead;
 
 void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
 void            R_GetPatchInfo(int lump, spriteinfo_t *info);

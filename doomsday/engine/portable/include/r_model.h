@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_model.h: 3D Model Resources
  */
 
@@ -67,13 +68,13 @@
 typedef struct {
     short           model;
     short           frame;
-    char            framerange;
+    char            frameRange;
     int             flags;
     short           skin;
-    char            skinrange;
+    char            skinRange;
     float           offset[3];
     byte            alpha;
-    short           shinyskin;     // Skinname ID (index)
+    short           shinySkin;     // Skinname ID (index)
 } submodeldef_t;
 
 typedef struct modeldef_s {
@@ -83,20 +84,20 @@ typedef struct modeldef_s {
     int             flags;
     unsigned int    group;
     int             select;
-    short           skintics;
-    float           intermark;     // [0,1) When is this frame in effect?
-    float           interrange[2];
+    short           skinTics;
+    float           interMark;     // [0,1) When is this frame in effect?
+    float           interRange[2];
     float           offset[3];
     float           resize, scale[3];
-    float           ptcoffset[MAX_FRAME_MODELS][3];
-    float           visualradius;
+    float           ptcOffset[MAX_FRAME_MODELS][3];
+    float           visualRadius;
     ded_model_t    *def;
 
     // Points to next inter-frame, or NULL.
-    struct modeldef_s *internext;
+    struct modeldef_s *interNext;
 
     // Points to next selector, or NULL (only for "base" modeldefs).
-    struct modeldef_s *selectnext;
+    struct modeldef_s *selectNext;
 
     // Submodels.
     submodeldef_t   sub[MAX_FRAME_MODELS];  // 8

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,40 +50,38 @@
 
 // Texture definition
 typedef struct {
-    short           originx;
-    short           originy;
-    short           patch;
-    short           stepdir;
-    short           colormap;
+    int16_t         originX;
+    int16_t         originY;
+    int16_t         patch;
+    int16_t         stepDir;
+    int16_t         colorMap;
 } mappatch_t;
 
 typedef struct {
     char            name[8];
-    boolean         masked;
-    short           width;
-    short           height;
-    //void          **columndirectory;  // OBSOLETE
-    int             columndirectorypadding;
-    short           patchcount;
+    int32_t         masked;
+    int16_t         width;
+    int16_t         height;
+    //void          **columnDirectory;  // OBSOLETE
+    int32_t         columnDirectoryPadding;
+    int16_t         patchCount;
     mappatch_t      patches[1];
 } maptexture_t;
 
 // strifeformat texture definition variants
-typedef struct
-{
-    short   originx;
-    short   originy;
-    short   patch;
+typedef struct {
+    int16_t         originX;
+    int16_t         originY;
+    int16_t         patch;
 } strifemappatch_t;
 
-typedef struct
-{
-    char        name[8];
-    boolean     unused;
-    short       width;
-    short       height;
-    short       patchcount;
-    strifemappatch_t    patches[1];
+typedef struct {
+    char            name[8];
+    int32_t         unused;
+    int16_t         width;
+    int16_t         height;
+    int16_t         patchCount;
+    strifemappatch_t patches[1];
 } strifemaptexture_t;
 
 // Detail texture information.
@@ -92,7 +90,7 @@ typedef struct detailinfo_s {
     int             width, height;
     float           strength;
     float           scale;
-    float           maxdist;
+    float           maxDist;
 } detailinfo_t;
 
 typedef struct gltexture_s {
@@ -152,15 +150,14 @@ typedef struct rendpoly_s {
     float           texOffset[2];   // Texture coordinates for left/top
                                     // (in real texcoords).
     gltexture_t     tex;
-    gltexture_t     intertex;
-    float           interpos;       // Blending strength (0..1).
+    gltexture_t     interTex;
+    float           interPos;       // Blending strength (0..1).
     uint            lightListIdx;   // List of lights that affect this poly.
-    DGLuint         decorlightmap;  // Pregen RGB lightmap for decor lights.
-    blendmode_t     blendmode;      // Primitive-specific blending mode.
+    blendmode_t     blendMode;      // Primitive-specific blending mode.
 
     // The geometry:
     float           normal[3];
-    byte            numvertices;    // Number of vertices for the poly.
+    byte            numVertices;    // Number of vertices for the poly.
     rendpoly_vertex_t *vertices;
 
     rendpoly_wall_t *wall;          // Wall specific data if any.
@@ -190,11 +187,11 @@ typedef struct shadowpoly_s {
     struct seg_s   *seg;
     struct subsector_s *ssec;
     short           flags;
-    ushort          visframe;      // Last visible frame (for rendering).
+    ushort          visFrame;      // Last visible frame (for rendering).
     struct vertex_s *outer[2];      // Left and right.
-    float           inoffset[2][2]; // Inner offset from 'outer.'
-    float           extoffset[2][2];    // Extended: offset from 'outer.'
-    shadowpolyoffset_t bextoffset[2][MAX_BEXOFFSETS];   // Back-extended: offset frmo 'outer.'
+    float           inOffset[2][2]; // Inner offset from 'outer.'
+    float           extOffset[2][2];    // Extended: offset from 'outer.'
+    shadowpolyoffset_t bExtOffset[2][MAX_BEXOFFSETS];   // Back-extended: offset frmo 'outer.'
 } shadowpoly_t;
 
 typedef struct shadowlink_s {
@@ -215,8 +212,8 @@ typedef colorcomp_t rgbcol_t[3];
 typedef colorcomp_t rgbacol_t[4];
 
 typedef struct {
-    int             originx;       // block origin (allways UL), which has allready
-    int             originy;       // accounted  for the patch's internal origin
+    int             originX;       // block origin (allways UL), which has allready
+    int             originY;       // accounted  for the patch's internal origin
     int             patch;
 } texpatch_t;
 
@@ -242,13 +239,13 @@ typedef struct {
     texinfo_t       info;
     int             flags;         // TXF_* flags.
     rgbcol_t        color;
-    byte            ingroup;       // True if texture belongs to some animgroup.
+    byte            inGroup;       // True if texture belongs to some animgroup.
     materialclass_t materialClass;  // Used for environmental sound properties.
     struct ded_decor_s *decoration; /* Pointer to the surface
                                      * decoration, if any. */
     struct ded_reflection_s *reflection; // Surface reflection definition.
 
-    short           patchcount;
+    short           patchCount;
     texpatch_t      patches[1];    // [patchcount] drawn back to front
 } texture_t;                       //   into the cached texture
 
@@ -269,14 +266,14 @@ typedef struct flat_s {
     texinfo_t       info;
     int             flags;
     rgbcol_t        color;
-    byte            ingroup;        // True if belongs to some animgroup.
+    byte            inGroup;        // True if belongs to some animgroup.
     materialclass_t materialClass;  // Used for environmental sound properties.
     struct ded_decor_s *decoration; // Pointer to the surface decoration,
                                     // if any.
     struct ded_reflection_s *reflection; // Surface reflection definition.
 
     int             lump;
-    struct ded_ptcgen_s *ptcgen;    // Particle generator for the flat.
+    struct ded_ptcgen_s *ptcGen;    // Particle generator for the flat.
 } flat_t;
 
 typedef struct {
@@ -284,20 +281,20 @@ typedef struct {
     short           width;
     short           height;
     short           offset;
-    short           topoffset;
-    float           flarex;        // Offset to flare.
-    float           flarey;
-    float           lumsize;
-    float           tc[2][2];      // Prepared texture coordinates.
+    short           topOffset;
+    float           flareX;        // Offset to flare.
+    float           flareY;
+    float           lumSize;
+    float           texCoord[2][2]; // Prepared texture coordinates.
     DGLuint         tex;           // Name of the associated DGL texture.
-    DGLuint         hudtex;        // Name of the HUD sprite texture.
+    DGLuint         hudTex;        // Name of the HUD sprite texture.
     rgbcol_t        color;         // Average color, for lighting.
 } spritelump_t;
 
 // a patch is a lumppatch that has been prepared for render.
 typedef struct patch_s {
     int             lump;
-    short           offx, offy;
+    short           offX, offY;
 
     // Part 1
     DGLuint         tex;          // Name of the associated DGL texture.
@@ -332,7 +329,7 @@ typedef struct animgroup_s {
     int             id;
     int             flags;
     int             index;
-    int             maxtimer;
+    int             maxTimer;
     int             timer;
     int             count;
     animframe_t    *frames;
@@ -385,8 +382,8 @@ extern nodeindex_t *linelinks;
 extern blockmap_t *BlockMap;
 extern blockmap_t *SSecBlockMap;
 extern linkmobj_t *blockrings;
-extern byte    *rejectmatrix;      // for fast sight rejection
-extern nodepile_t *mobjnodes, *linenodes;
+extern byte    *rejectMatrix;      // for fast sight rejection
+extern nodepile_t *mobjNodes, *lineNodes;
 
 extern int      viewwidth, viewheight;
 extern int      numtextures;

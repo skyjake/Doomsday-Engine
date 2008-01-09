@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -74,14 +74,14 @@ typedef struct hedge_s {
     double      pPerp;
 
     // Linedef that this half-edge goes along, or NULL if miniseg.
-    line_t *linedef;
+    line_t     *lineDef;
 
     // Linedef that this half-edge initially comes from.
     // For "real" half-edges, this is just the same as the 'linedef' field
     // above. For "miniedges", this is the linedef of the partition line.
-    line_t  *sourceLine;
+    line_t     *sourceLine;
 
-    sector_t  *sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
+    sector_t   *sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
     byte        side; // 0 for right, 1 for left.
 } hedge_t;
 

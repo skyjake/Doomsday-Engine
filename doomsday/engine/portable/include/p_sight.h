@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,15 +22,15 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * de_play.h: Line of Sight Testing
  */
 
 #ifndef __DOOMSDAY_PLAY_SIGHT_H__
 #define __DOOMSDAY_PLAY_SIGHT_H__
 
-extern float topslope;
-extern float bottomslope;
+extern float topSlope;
+extern float bottomSlope;
 
 boolean         P_CheckReject(sector_t *sec1, sector_t *sec2);
 boolean         P_CheckFrustum(int plrNum, mobj_t *mo);

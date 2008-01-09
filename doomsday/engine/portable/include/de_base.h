@@ -3,6 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * de_base.h: Engine Core
  */
 
@@ -33,7 +34,6 @@
 #include "dd_def.h"
 #include "dd_share.h"
 #include "dd_api.h"
-#include "dd_dgl.h"
 #include "dd_plugin.h"
 #include "dd_wad.h"
 #include "dd_zone.h"
@@ -42,7 +42,6 @@
 #include "dd_loop.h"
 #include "dd_help.h"
 #include "dd_zip.h"
-
 
 // System headers needed everywhere.
 #include <assert.h>

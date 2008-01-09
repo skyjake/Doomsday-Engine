@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@
 #include "gl_model.h"
 #include "gl_defer.h"
 
-#define TEXQ_BEST 8
+#define TEXQ_BEST               8
 
 /**
  * This structure is used with GL_LoadImage. When it is no longer needed
@@ -72,6 +72,7 @@ extern int      texMagMode;
 extern int      upscaleAndSharpenPatches;
 
 extern unsigned int curtex;
+extern int      pallump;
 
 void            GL_TexRegister(void);
 void            GL_EarlyInitTextureManager(void);
@@ -92,12 +93,10 @@ void            GL_BindTexture(DGLuint texname);
 void            GL_TextureFilterMode(int target, int parm);
 DGLuint         GL_BindTexPatch(struct patch_s *p);
 DGLuint         GL_GetPatchOtherPart(int lump, texinfo_t **info);
-void            GL_SetPatch(int lump);  // No mipmaps are generated.
+void            GL_SetPatch(int lump, int wrapS, int wrapT); // No mipmaps are generated.
 DGLuint         GL_BindTexRaw(struct rawtex_s *r);
 DGLuint         GL_GetRawOtherPart(int lump, texinfo_t **info);
 void            GL_SetRawTex(int lump, int part);
-
-extern int      pallump;
 
 void            GL_LowRes(void);
 void            TranslatePatch(lumppatch_t *patch, byte *transTable);
@@ -150,8 +149,9 @@ byte           *GL_GetPal18to8(void);
 
 void            GL_SetMaterial(int idx, materialtype_t type);
 
-unsigned int    GL_SetRawImage(unsigned int lump, boolean part2);
-void            GL_SetSprite(int pnum, int spriteType);
+unsigned int    GL_SetRawImage(unsigned int lump, boolean part2, int wrapS, int wrapT);
+void            GL_SetSprite(int pnum);
+void            GL_SetPSprite(int pnum);
 void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
 void            GL_NewSplitTex(int lump, DGLuint part2name);
 void            GL_SetNoTexture(void);
