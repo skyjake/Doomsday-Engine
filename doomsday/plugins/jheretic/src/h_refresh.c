@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -127,31 +127,21 @@ void R_DrawSpecialFilter(void)
         return;
 
     R_GetViewWindow(&x, &y, &w, &h);
-    gl.Disable(DGL_TEXTURING);
+    DGL_Disable(DGL_TEXTURING);
     if(cfg.ringFilter == 1)
     {
-        gl.Func(DGL_BLENDING, DGL_SRC_COLOR, DGL_SRC_COLOR);
+        DGL_BlendFunc(DGL_SRC_COLOR, DGL_SRC_COLOR);
         GL_DrawRect(x, y, w, h, .5f, .35f, .1f, 1);
-
-        /*gl.Func(DGL_BLENDING, DGL_ZERO, DGL_SRC_COLOR);
-           GL_DrawRect(x, y, w, h, 1, .7f, 0, 1);
-           gl.Func(DGL_BLENDING, DGL_ONE, DGL_DST_COLOR);
-           GL_DrawRect(x, y, w, h, .1f, 0, 0, 1); */
-
-        /*gl.Func(DGL_BLENDING, DGL_ZERO, DGL_SRC_COLOR);
-           GL_DrawRect(x, y, w, h, 0, .6f, 0, 1);
-           gl.Func(DGL_BLENDING, DGL_ONE_MINUS_DST_COLOR, DGL_ONE_MINUS_SRC_COLOR);
-           GL_DrawRect(x, y, w, h, 1, 0, 0, 1); */
     }
     else
     {
-        gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_SRC_COLOR);
+        DGL_BlendFunc(DGL_DST_COLOR, DGL_SRC_COLOR);
         GL_DrawRect(x, y, w, h, 0, 0, .6f, 1);
     }
 
     // Restore the normal rendering state.
-    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-    gl.Enable(DGL_TEXTURING);
+    GL_BlendMode(BM_NORMAL);
+    DGL_Enable(DGL_TEXTURING);
 }
 
 void R_DrawLevelTitle(int x, int y, float alpha, dpatch_t *font,
@@ -361,7 +351,7 @@ void D_Display2(void)
 
     case GS_WAITING:
         // Clear the screen while waiting, doesn't mess up the menu.
-        gl.Clear(DGL_COLOR_BUFFER_BIT);
+        //gl.Clear(DGL_COLOR_BUFFER_BIT);
         break;
 
     default:
@@ -388,60 +378,60 @@ void D_Display2(void)
 void R_SetDoomsdayFlags(mobj_t *mo)
 {
     // Client mobjs can't be set here.
-    if(IS_CLIENT && mo->ddflags & DDMF_REMOTE)
+    if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
         return;
 
     // Reset the flags for a new frame.
-    mo->ddflags &= DDMF_CLEAR_MASK;
+    mo->ddFlags &= DDMF_CLEAR_MASK;
 
     // Local objects aren't sent to clients.
     if(mo->flags & MF_LOCAL)
-        mo->ddflags |= DDMF_LOCAL;
+        mo->ddFlags |= DDMF_LOCAL;
     if(mo->flags & MF_SOLID)
-        mo->ddflags |= DDMF_SOLID;
+        mo->ddFlags |= DDMF_SOLID;
     if(mo->flags & MF_NOGRAVITY)
-        mo->ddflags |= DDMF_NOGRAVITY;
+        mo->ddFlags |= DDMF_NOGRAVITY;
     if(mo->flags2 & MF2_FLOATBOB)
-        mo->ddflags |= DDMF_NOGRAVITY | DDMF_BOB;
+        mo->ddFlags |= DDMF_NOGRAVITY | DDMF_BOB;
     if(mo->flags & MF_MISSILE)
     {   // Mace death balls are controlled by the server.
         //if(mo->type != MT_MACEFX4)
-        mo->ddflags |= DDMF_MISSILE;
+        mo->ddFlags |= DDMF_MISSILE;
     }
     if(mo->info && (mo->info->flags2 & MF2_ALWAYSLIT))
-        mo->ddflags |= DDMF_ALWAYSLIT;
+        mo->ddFlags |= DDMF_ALWAYSLIT;
 
     if(mo->flags2 & MF2_FLY)
-        mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
+        mo->ddFlags |= DDMF_FLY | DDMF_NOGRAVITY;
 
     // $democam: cameramen are invisible.
     if(P_IsCamera(mo))
-        mo->ddflags |= DDMF_DONTDRAW;
+        mo->ddFlags |= DDMF_DONTDRAW;
 
-    if((mo->flags & MF_CORPSE) && cfg.corpseTime && mo->corpsetics == -1)
-        mo->ddflags |= DDMF_DONTDRAW;
+    if((mo->flags & MF_CORPSE) && cfg.corpseTime && mo->corpseTics == -1)
+        mo->ddFlags |= DDMF_DONTDRAW;
 
     // Choose which ddflags to set.
     if(mo->flags2 & MF2_DONTDRAW)
     {
-        mo->ddflags |= DDMF_DONTDRAW;
+        mo->ddFlags |= DDMF_DONTDRAW;
         return; // No point in checking the other flags.
     }
 
     if(mo->flags2 & MF2_LOGRAV)
-        mo->ddflags |= DDMF_LOWGRAVITY;
+        mo->ddFlags |= DDMF_LOWGRAVITY;
 
     if(mo->flags & MF_BRIGHTSHADOW)
-        mo->ddflags |= DDMF_BRIGHTSHADOW;
+        mo->ddFlags |= DDMF_BRIGHTSHADOW;
     else if(mo->flags & MF_SHADOW)
-        mo->ddflags |= DDMF_ALTSHADOW;
+        mo->ddFlags |= DDMF_ALTSHADOW;
 
     if(((mo->flags & MF_VIEWALIGN) && !(mo->flags & MF_MISSILE)) ||
        (mo->flags & MF_FLOAT) ||
        ((mo->flags & MF_MISSILE) && !(mo->flags & MF_VIEWALIGN)))
-        mo->ddflags |= DDMF_VIEWALIGN;
+        mo->ddFlags |= DDMF_VIEWALIGN;
 
-    mo->ddflags |= (mo->flags & MF_TRANSLATION);
+    mo->ddFlags |= (mo->flags & MF_TRANSLATION);
 }
 
 /**
@@ -460,7 +450,7 @@ void R_SetAllDoomsdayFlags(void)
         while(iter)
         {
             R_SetDoomsdayFlags(iter);
-            iter = iter->snext;
+            iter = iter->sNext;
         }
     }
 }

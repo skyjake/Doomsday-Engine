@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,8 +61,8 @@
 //  used by play and refresh
 //
 
-#define SP_floororigheight      planes[PLN_FLOOR].origheight
-#define SP_ceilorigheight       planes[PLN_CEILING].origheight
+#define SP_floororigheight      planes[PLN_FLOOR].origHeight
+#define SP_ceilorigheight       planes[PLN_CEILING].origHeight
 
 //
 // The SECTORS record, at runtime.
@@ -73,25 +73,24 @@ typedef struct xsector_s {
     short           tag;
 
     // 0 = untraversed, 1,2 = sndlines -1
-    int             soundtraversed;
+    int             soundTraversed;
 
     // thing that made a sound (or null)
-    struct mobj_s  *soundtarget;
+    struct mobj_s  *soundTarget;
 
     // thinker_t for reversable actions
-    void           *specialdata;
+    void           *specialData;
 
     // stone, metal, heavy, etc...
     byte            seqType;       // NOT USED ATM
 
     struct {
-        float       origheight;
+        float       origHeight;
     } planes[2];    // {floor, ceiling}
 
-    float           origlight;
-    float           origrgb[3];
+    float           origLight;
+    float           origRGB[3];
     xgsector_t     *xg;
-
 } xsector_t;
 
 typedef struct xline_s {
@@ -101,7 +100,7 @@ typedef struct xline_s {
     // Has been rendered at least once and needs to appear in the map,
     // for each player.
     boolean         mapped[MAXPLAYERS];
-    int             validcount;
+    int             validCount;
 
     // Extended generalized lines.
     xgline_t       *xg;

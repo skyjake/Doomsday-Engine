@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -176,25 +176,25 @@ typedef struct mobj_s {
     int             special1;      // Special info
     int             special2;      // Special info
     int             health;
-    int             movedir;       // 0-7
-    int             movecount;     // when 0, select a new dir
+    int             moveDir;       // 0-7
+    int             moveCount;     // when 0, select a new dir
     struct mobj_s  *target;        // thing being chased/attacked (or NULL)
     // also the originator for missiles
     // used by player to freeze a bit after
     // teleporting
     int             threshold;     // if >0, the target will be chased
 
-    int             intflags;      // killough $dropoff_fix: internal flags
-    float           dropoffz;      // killough $dropoff_fix
+    int             intFlags;      // killough $dropoff_fix: internal flags
+    float           dropOffZ;      // killough $dropoff_fix
     short           gear;          // killough 11/98: used in torque simulation
-    boolean         wallrun;       // true = last move was the result of a wallrun
+    boolean         wallRun;       // true = last move was the result of a wallrun
 
     // no matter what (even if shot)
     struct player_s *player;       // only valid if type == MT_PLAYER
-    int             lastlook;      // player number last looked for
+    int             lastLook;      // player number last looked for
 
     // For nightmare/multiplayer respawn.
-    spawnspot_t     spawnspot;
+    spawnspot_t     spawnSpot;
 
     // Thing being chased/attacked for tracers.
     struct mobj_s  *tracer;
@@ -202,8 +202,8 @@ typedef struct mobj_s {
     // Used for pod generating.
     struct mobj_s  *generator;
 
-    int             turntime;      // $visangle-facetarget
-    int             corpsetics;    // $vanish: how long has this been dead?
+    int             turnTime;      // $visangle-facetarget
+    int             corpseTics;    // $vanish: how long has this been dead?
 } mobj_t;
 
 extern spawnspot_t* things;

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -78,13 +78,13 @@ int EV_BuildStairs(line_t *line, stair_e type)
     {
         xsec = P_ToXSector(sec);
 
-        if(xsec->specialdata)
+        if(xsec->specialData)
             continue; // Already moving, so keep going.
 
         rtn = 1;
         floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
         P_AddThinker(&floor->thinker);
-        xsec->specialdata = floor;
+        xsec->specialData = floor;
         floor->thinker.function = T_MoveFloor;
         floor->direction = 1;
         floor->sector = sec;
@@ -101,7 +101,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
         floor->speed = FLOORSPEED;
         height = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + stairsize;
-        floor->floordestheight = height;
+        floor->floorDestHeight = height;
 
         texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
 
@@ -128,7 +128,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
                 height += stairsize;
 
-                if(P_ToXSector(tsec)->specialdata)
+                if(P_ToXSector(tsec)->specialData)
                     continue;
 
                 sec = tsec;
@@ -136,13 +136,13 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
                 P_AddThinker(&floor->thinker);
 
-                P_ToXSector(tsec)->specialdata = floor;
+                P_ToXSector(tsec)->specialData = floor;
                 floor->thinker.function = T_MoveFloor;
                 floor->type = raiseBuildStep;
                 floor->direction = 1;
                 floor->sector = sec;
                 floor->speed = FLOORSPEED;
-                floor->floordestheight = height;
+                floor->floorDestHeight = height;
                 ok = 1;
                 break;
             }
@@ -169,7 +169,7 @@ int EV_DoDonut(line_t *line)
     P_IterListResetIterator(list, true);
     while((s1 = P_IterListIterator(list)) != NULL)
     {
-        if(P_ToXSector(s1)->specialdata)
+        if(P_ToXSector(s1)->specialData)
             continue; // Already moving, so keep going.
 
         rtn = 1;
@@ -189,7 +189,7 @@ int EV_DoDonut(line_t *line)
             floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
             P_AddThinker(&floor->thinker);
 
-            P_ToXSector(s2)->specialdata = floor;
+            P_ToXSector(s2)->specialData = floor;
 
             floor->thinker.function = T_MoveFloor;
             floor->type = donutRaise;
@@ -198,14 +198,14 @@ int EV_DoDonut(line_t *line)
             floor->sector = s2;
             floor->speed = FLOORSPEED * .5;
             floor->texture = P_GetIntp(s3, DMU_FLOOR_MATERIAL);
-            floor->newspecial = 0;
-            floor->floordestheight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
+            floor->newSpecial = 0;
+            floor->floorDestHeight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
 
             //  Spawn lowering donut-hole
             floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
             P_AddThinker(&floor->thinker);
 
-            P_ToXSector(s1)->specialdata = floor;
+            P_ToXSector(s1)->specialData = floor;
 
             floor->thinker.function = T_MoveFloor;
             floor->type = lowerFloor;
@@ -213,7 +213,7 @@ int EV_DoDonut(line_t *line)
             floor->direction = -1;
             floor->sector = s1;
             floor->speed = FLOORSPEED * .5;
-            floor->floordestheight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
+            floor->floorDestHeight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
             break;
         }
     }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -490,25 +490,25 @@ static void CheatWeaponsFunc(player_t *player, Cheat_t * cheat)
         PSF_ARMOR_POINTS | PSF_STATE | PSF_MAX_AMMO | PSF_AMMO |
         PSF_OWNED_WEAPONS;
 
-    player->armorpoints = 200;
-    player->armortype = 2;
+    player->armorPoints = 200;
+    player->armorType = 2;
     if(!player->backpack)
     {
         for(i = 0; i < NUM_AMMO_TYPES; i++)
         {
-            player->maxammo[i] *= 2;
+            player->maxAmmo[i] *= 2;
         }
         player->backpack = true;
     }
     for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
         if(weaponinfo[i][0].mode[0].gamemodebits & gamemodebits)
-            player->weaponowned[i] = true;
+            player->weaponOwned[i] = true;
     }
 
     for(i = 0; i < NUM_AMMO_TYPES; i++)
     {
-        player->ammo[i] = player->maxammo[i];
+        player->ammo[i] = player->maxAmmo[i];
     }
     P_SetMessage(player, TXT_CHEATWEAPONS, false);
 }
@@ -683,9 +683,9 @@ static void CheatIDKFAFunc(player_t *player, Cheat_t * cheat)
     }
     for(i = 1; i < 8; i++)
     {
-        player->weaponowned[i] = false;
+        player->weaponOwned[i] = false;
     }
-    player->pendingweapon = WT_FIRST;
+    player->pendingWeapon = WT_FIRST;
     P_SetMessage(player, TXT_CHEATIDKFA, false);
 }
 
@@ -828,7 +828,7 @@ DEFCC(CCmdCheatGive)
         return true;
     }
 
-    if(!players[target].plr->ingame)
+    if(!players[target].plr->inGame)
         return true; // Can't give to a player who's not playing
 
     if(argc != 2 && argc != 3)

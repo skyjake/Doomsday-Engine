@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -90,7 +90,7 @@ boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
     mobj_t     *fog;
 
     memcpy(oldpos, thing->pos, sizeof(oldpos));
-    aboveFloor = thing->pos[VZ] - thing->floorz;
+    aboveFloor = thing->pos[VZ] - thing->floorZ;
     if(!P_TeleportMove(thing, x, y, false))
     {
         return false;
@@ -101,34 +101,34 @@ boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
         player = thing->player;
         if(player->powers[PT_FLIGHT] && aboveFloor)
         {
-            thing->pos[VZ] = thing->floorz + aboveFloor;
-            if(thing->pos[VZ] + thing->height > thing->ceilingz)
+            thing->pos[VZ] = thing->floorZ + aboveFloor;
+            if(thing->pos[VZ] + thing->height > thing->ceilingZ)
             {
-                thing->pos[VZ] = thing->ceilingz - thing->height;
+                thing->pos[VZ] = thing->ceilingZ - thing->height;
             }
-            player->plr->viewZ = thing->pos[VZ] + player->plr->viewheight;
+            player->plr->viewZ = thing->pos[VZ] + player->plr->viewHeight;
         }
         else
         {
-            thing->pos[VZ] = thing->floorz;
-            player->plr->viewZ = thing->pos[VZ] + player->plr->viewheight;
+            thing->pos[VZ] = thing->floorZ;
+            player->plr->viewZ = thing->pos[VZ] + player->plr->viewHeight;
             //player->plr->clLookDir = 0; /* $unifiedangles */
-            player->plr->lookdir = 0;
+            player->plr->lookDir = 0;
         }
         //player->plr->clAngle = angle; /* $unifiedangles */
         player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     }
     else if(thing->flags & MF_MISSILE)
     {
-        thing->pos[VZ] = thing->floorz + aboveFloor;
-        if(thing->pos[VZ] + thing->height > thing->ceilingz)
+        thing->pos[VZ] = thing->floorZ + aboveFloor;
+        if(thing->pos[VZ] + thing->height > thing->ceilingZ)
         {
-            thing->pos[VZ] = thing->ceilingz - thing->height;
+            thing->pos[VZ] = thing->ceilingZ - thing->height;
         }
     }
     else
     {
-        thing->pos[VZ] = thing->floorz;
+        thing->pos[VZ] = thing->floorZ;
     }
 
     // Spawn teleport fog at source and destination
@@ -144,7 +144,7 @@ boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
     S_StartSound(sfx_telept, fog);
     if(thing->player && !thing->player->powers[PT_WEAPONLEVEL2])
     {   // Freeze player for about .5 sec.
-        thing->reactiontime = 18;
+        thing->reactionTime = 18;
     }
 
     thing->angle = angle;
@@ -154,11 +154,11 @@ boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
                                    DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
            P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
         {
-            thing->floorclip = 10;
+            thing->floorClip = 10;
         }
         else
         {
-            thing->floorclip = 0;
+            thing->floorClip = 0;
         }
     }
 
@@ -198,8 +198,8 @@ boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        th = thinkercap.next;
-        for(th = thinkercap.next; th != &thinkercap; th = th->next)
+        th = thinkerCap.next;
+        for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
         {
             if(th->function != P_MobjThinker)
                 continue; // Not a mobj.

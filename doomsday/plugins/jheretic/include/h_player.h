@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ typedef enum {
 
 typedef struct player_s {
     ddplayer_t     *plr;           // Pointer to the engine's player data.
-    playerstate_t   playerstate;
+    playerstate_t   playerState;
     playerclass_t   class;         // player class type
     playerbrain_t   brain;
 
@@ -97,9 +97,9 @@ typedef struct player_s {
     // This is only used between levels,
     // mo->health is used during levels.
     int             health;
-    int             armorpoints;
+    int             armorPoints;
     // Armor type is 0-2.
-    int             armortype;
+    int             armorType;
 
     // Power ups. invinc and invis are tic counters.
     int             powers[NUM_POWER_TYPES];
@@ -107,18 +107,18 @@ typedef struct player_s {
     boolean         backpack;
 
     signed int      frags[MAXPLAYERS];
-    weapontype_t    readyweapon;
+    weapontype_t    readyWeapon;
 
     // Is wp_nochange if not changing.
-    weapontype_t    pendingweapon;
+    weapontype_t    pendingWeapon;
 
-    boolean         weaponowned[NUM_WEAPON_TYPES];
+    boolean         weaponOwned[NUM_WEAPON_TYPES];
     int             ammo[NUM_AMMO_TYPES];
-    int             maxammo[NUM_AMMO_TYPES];
+    int             maxAmmo[NUM_AMMO_TYPES];
 
     // true if button down last tic
-    int             attackdown;
-    int             usedown;
+    int             attackDown;
+    int             useDown;
 
     // Bit flags, for cheats and debug.
     // See cheat_t, above.
@@ -128,58 +128,57 @@ typedef struct player_s {
     int             refire;
 
     // For intermission stats.
-    int             killcount;
-    int             itemcount;
-    int             secretcount;
+    int             killCount;
+    int             itemCount;
+    int             secretCount;
 
     // For screen flashing (red or bright).
-    int             damagecount;
-    int             bonuscount;
+    int             damageCount;
+    int             bonusCount;
 
     // Who did damage (NULL for floors/ceilings).
     mobj_t         *attacker;
 
     // Player skin colorshift,
     //  0-3 for which color to draw player.
-    int             colormap;
+    int             colorMap;
 
     // Overlay view sprites (gun, etc).
-    pspdef_t        psprites[NUMPSPRITES];
+    pspdef_t        pSprites[NUMPSPRITES];
 
     // True if secret level has been done.
-    boolean         didsecret;
+    boolean         didSecret;
 
     // The player's view pitch is centering back to zero.
     boolean         centering;
 
     // The player can jump if this counter is zero.
-    int             jumptics;
+    int             jumpTics;
 
-    int             update, startspot;
+    int             update, startSpot;
 
     // Target view to a mobj (NULL=disabled).
-    mobj_t*         viewlock;      // $democam
+    mobj_t*         viewLock; // $democam
     int             lockFull;
 
-    int             flyheight;
+    int             flyHeight;
 
     //
     // DJS - Here follows Heretic specific player_t properties
     //
     inventory_t     inventory[NUMINVENTORYSLOTS];
-    int             inv_ptr;
-    int             curpos;
+    int             invPtr;
+    int             curPos;
     artitype_e      readyArtifact;
     int             artifactCount;
     int             inventorySlotNum;
 
-    int             flamecount;    // for flame thrower duration
+    int             flameCount; // For flame thrower duration.
 
-
-    int             morphTics;     // player is a chicken if > 0
-    int             chickenPeck;   // chicken peck countdown
-    mobj_t         *rain1;         // active rain maker 1
-    mobj_t         *rain2;         // active rain maker 2
+    int             morphTics; // player is a chicken if > 0.
+    int             chickenPeck; // chicken peck countdown.
+    mobj_t         *rain1; // Active rain maker 1.
+    mobj_t         *rain2; // Active rain maker 2.
 } player_t;
 
 #endif

@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -109,7 +109,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     if(ammo < 0 || ammo > NUM_AMMO_TYPES)
         Con_Error("P_GiveAmmo: bad type %i", ammo);
 
-    if(player->ammo[ammo] == player->maxammo[ammo])
+    if(player->ammo[ammo] == player->maxAmmo[ammo])
         return false;
 
     if(gameskill == SM_BABY || gameskill == SM_NIGHTMARE)
@@ -124,8 +124,8 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     player->ammo[ammo] += num;
     player->update |= PSF_AMMO;
 
-    if(player->ammo[ammo] > player->maxammo[ammo])
-        player->ammo[ammo] = player->maxammo[ammo];
+    if(player->ammo[ammo] > player->maxAmmo[ammo])
+        player->ammo[ammo] = player->maxAmmo[ammo];
 
     // Maybe unhide the HUD?
     if(player == &players[consoleplayer])
@@ -147,11 +147,11 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
     if(IS_NETGAME && !deathmatch)
     {
         // Leave placed weapons forever on net games.
-        if(player->weaponowned[weapon])
+        if(player->weaponOwned[weapon])
             return false;
 
-        player->bonuscount += BONUSADD;
-        player->weaponowned[weapon] = true;
+        player->bonusCount += BONUSADD;
+        player->weaponOwned[weapon] = true;
         player->update |= PSF_OWNED_WEAPONS;
 
         // Give some of each of the ammo types used by this weapon.
@@ -186,12 +186,12 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
                 gaveammo = true; // At least ONE type of ammo was given.
         }
 
-        if(player->weaponowned[weapon])
+        if(player->weaponOwned[weapon])
             gaveweapon = false;
         else
         {
             gaveweapon = true;
-            player->weaponowned[weapon] = true;
+            player->weaponOwned[weapon] = true;
             player->update |= PSF_OWNED_WEAPONS;
 
             // Should we change weapon automatically?
@@ -249,11 +249,11 @@ boolean P_GiveArmor(player_t *player, int armortype)
     int         hits;
 
     hits = armortype * 100;
-    if(player->armorpoints >= hits)
+    if(player->armorPoints >= hits)
         return false;
 
-    player->armortype = armortype;
-    player->armorpoints = hits;
+    player->armorType = armortype;
+    player->armorPoints = hits;
     player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
 
     // Maybe unhide the HUD?
@@ -273,7 +273,7 @@ void P_GiveKey(player_t *player, keytype_t key)
         playerkeys |= 1 << key;
     }
 
-    player->bonuscount = BONUSADD;
+    player->bonusCount = BONUSADD;
     player->keys[key] = true;
     player->update |= PSF_KEYS;
 
@@ -324,9 +324,9 @@ boolean P_GivePower(player_t *player, powertype_t power)
             player->powers[power] = FLIGHTTICS;
             plrmo->flags2 |= MF2_FLY;
             plrmo->flags |= MF_NOGRAVITY;
-            if(plrmo->pos[VZ] <= plrmo->floorz)
+            if(plrmo->pos[VZ] <= plrmo->floorZ)
             {
-                player->flyheight = 10; // Thrust the player in the air a bit.
+                player->flyHeight = 10; // Thrust the player in the air a bit.
                 player->plr->flags |= DDPF_FIXMOM;
             }
             retval = true;
@@ -383,7 +383,7 @@ void P_SetDormantArtifact(mobj_t *arti)
 void C_DECL A_RestoreArtifact(mobj_t *arti)
 {
     arti->flags |= MF_SPECIAL;
-    P_MobjChangeState(arti, arti->info->spawnstate);
+    P_MobjChangeState(arti, arti->info->spawnState);
     S_StartSound(sfx_respawn, arti);
 }
 
@@ -411,7 +411,7 @@ void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
 void C_DECL A_RestoreSpecialThing2(mobj_t *thing)
 {
     thing->flags |= MF_SPECIAL;
-    P_MobjChangeState(thing, thing->info->spawnstate);
+    P_MobjChangeState(thing, thing->info->spawnState);
 }
 
 void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
@@ -468,7 +468,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         {
             for(i = 0; i < NUM_AMMO_TYPES; ++i)
             {
-                player->maxammo[i] *= 2;
+                player->maxAmmo[i] *= 2;
             }
             player->backpack = true;
         }
@@ -752,7 +752,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
     if(special->flags & MF_COUNTITEM)
     {
-        player->itemcount++;
+        player->itemCount++;
     }
 
     if(deathmatch && respawn && !(special->flags & MF_DROPPED))
@@ -764,7 +764,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         P_MobjRemove(special);
     }
 
-    player->bonuscount += BONUSADD;
+    player->bonusCount += BONUSADD;
 
     if(player == &players[consoleplayer])
         ST_doPaletteStuff();
@@ -780,13 +780,13 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     target->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY | MF_NOGRAVITY);
     target->flags |= MF_CORPSE | MF_DROPOFF;
     target->flags2 &= ~MF2_PASSMOBJ;
-    target->corpsetics = 0;
+    target->corpseTics = 0;
     target->height /= 2*2;
     if(source && source->player)
     {
         if(target->flags & MF_COUNTKILL)
         {   // Count for intermission.
-            source->player->killcount++;
+            source->player->killCount++;
         }
 
         if(target->player)
@@ -811,7 +811,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     }
     else if(!IS_NETGAME && (target->flags & MF_COUNTKILL))
     {   // Count all monster deaths.
-        players[0].killcount++;
+        players[0].killCount++;
     }
 
     if(target->player)
@@ -826,7 +826,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         target->flags2 &= ~MF2_FLY;
         target->player->powers[PT_FLIGHT] = 0;
         target->player->powers[PT_WEAPONLEVEL2] = 0;
-        target->player->playerstate = PST_DEAD;
+        target->player->playerState = PST_DEAD;
         target->player->plr->flags |= DDPF_DEAD;
         target->player->update |= PSF_STATE;
         P_DropWeapon(target->player);
@@ -841,14 +841,14 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         AM_Stop(target->player - players);
     }
 
-    if(target->health < -(target->info->spawnhealth / 2) &&
-       target->info->xdeathstate)
+    if(target->health < -(target->info->spawnHealth / 2) &&
+       target->info->xDeathState)
     {   // Extreme death.
-        P_MobjChangeState(target, target->info->xdeathstate);
+        P_MobjChangeState(target, target->info->xDeathState);
     }
     else
     {   // Normal death.
-        P_MobjChangeState(target, target->info->deathstate);
+        P_MobjChangeState(target, target->info->deathState);
     }
 
     target->tics -= P_Random() & 3;
@@ -870,7 +870,7 @@ void P_MinotaurSlam(mobj_t *source, mobj_t *target)
     P_DamageMobj(target, NULL, NULL, HITDICE(6));
     if(target->player)
     {
-        target->reactiontime = 14 + (P_Random() & 7);
+        target->reactionTime = 14 + (P_Random() & 7);
     }
 }
 
@@ -938,14 +938,14 @@ boolean P_MorphPlayer(player_t *player)
     S_StartSound(sfx_telept, fog);
 
     chicken = P_SpawnMobj3fv(MT_CHICPLAYER, pos);
-    chicken->special1 = player->readyweapon;
+    chicken->special1 = player->readyWeapon;
     chicken->angle = angle;
     chicken->player = player;
-    chicken->dplayer = player->plr;
+    chicken->dPlayer = player->plr;
 
     player->health = chicken->health = MAXCHICKENHEALTH;
     player->plr->mo = chicken;
-    player->armorpoints = player->armortype = 0;
+    player->armorPoints = player->armorType = 0;
     player->powers[PT_INVISIBILITY] = 0;
     player->powers[PT_WEAPONLEVEL2] = 0;
 
@@ -1199,7 +1199,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             if(target->player && P_Random() < 128)
             {
                 // Freeze player for a bit.
-                target->reactiontime += 4;
+                target->reactionTime += 4;
             }
             break;
 
@@ -1244,7 +1244,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     // Push the target unless source is using the gauntlets.
     if(inflictor && !(target->flags & MF_NOCLIP) &&
        (!source || !source->player ||
-        source->player->readyweapon != WT_EIGHTH) &&
+        source->player->readyWeapon != WT_EIGHTH) &&
        !(inflictor->flags2 & MF2_NODMGTHRUST))
     {
         uint        an;
@@ -1266,7 +1266,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
         if(source && source->player && (source == inflictor) &&
            source->player->powers[PT_WEAPONLEVEL2] &&
-           source->player->readyweapon == WT_FIRST)
+           source->player->readyWeapon == WT_FIRST)
         {
             // Staff power level 2
             target->mom[MX] += 10 * FIX2FLT(finecosine[an]);
@@ -1282,15 +1282,15 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             target->mom[MY] += thrust * FIX2FLT(finesine[an]);
         }
 
-        if(target->dplayer)
+        if(target->dPlayer)
         {
             // Only fix momentum. Otherwise clients will find it difficult
             // to escape from the damage inflictor.
-            target->dplayer->flags |= DDPF_FIXMOM;
+            target->dPlayer->flags |= DDPF_FIXMOM;
         }
 
         // $dropoff_fix: thrust objects hanging off ledges.
-        if((target->intflags & MIF_FALLING) && target->gear >= MAXGEAR)
+        if((target->intFlags & MIF_FALLING) && target->gear >= MAXGEAR)
             target->gear = 0;
     }
 
@@ -1304,9 +1304,9 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             return;
         }
 
-        if(player->armortype)
+        if(player->armorType)
         {
-            if(player->armortype == 1)
+            if(player->armorType == 1)
             {
                 saved = damage / 2;
             }
@@ -1315,14 +1315,14 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                 saved = (damage / 2) + (damage / 4);
             }
 
-            if(player->armorpoints <= saved)
+            if(player->armorPoints <= saved)
             {
                 // Armor is used up.
-                saved = player->armorpoints;
-                player->armortype = 0;
+                saved = player->armorPoints;
+                player->armorType = 0;
             }
 
-            player->armorpoints -= saved;
+            player->armorPoints -= saved;
             damage -= saved;
             player->update |= PSF_ARMOR_POINTS;
         }
@@ -1342,10 +1342,10 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         player->update |= PSF_HEALTH;
         player->attacker = source;
 
-        player->damagecount += damage; // Add damage after armor / invuln.
-        if(player->damagecount > 100)
+        player->damageCount += damage; // Add damage after armor / invuln.
+        if(player->damageCount > 100)
         {
-            player->damagecount = 100; // Teleport stomp does 10k points...
+            player->damageCount = 100; // Teleport stomp does 10k points...
         }
         temp = damage < 100 ? damage : 100;
 
@@ -1385,16 +1385,16 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         return;
     }
 
-    if((P_Random() < target->info->painchance) &&
+    if((P_Random() < target->info->painChance) &&
        !(target->flags & MF_SKULLFLY))
     {
         // Fight back!
         target->flags |= MF_JUSTHIT;
-        P_MobjChangeState(target, target->info->painstate);
+        P_MobjChangeState(target, target->info->painState);
     }
 
     // We're awake now...
-    target->reactiontime = 0;
+    target->reactionTime = 0;
     if(!target->threshold && source && !(source->flags3 & MF3_NOINFIGHT) &&
        !(target->type == MT_SORCERER2 && source->type == MT_WIZARD))
     {
@@ -1402,10 +1402,10 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         // after the source of the damage.
         target->target = source;
         target->threshold = BASETHRESHOLD;
-        if(target->state == &states[target->info->spawnstate] &&
-           target->info->seestate != S_NULL)
+        if(target->state == &states[target->info->spawnState] &&
+           target->info->seeState != S_NULL)
         {
-            P_MobjChangeState(target, target->info->seestate);
+            P_MobjChangeState(target, target->info->seeState);
         }
     }
 }

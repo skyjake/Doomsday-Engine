@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -246,7 +246,7 @@ void IN_InitStats(void)
         memset(playerTeam, 0, sizeof(playerTeam));
         for(i = 0; i < MAXPLAYERS; i++)
         {
-            if(!players[i].plr->ingame)
+            if(!players[i].plr->inGame)
                 continue;
             playerTeam[i] = cfg.playerColor[i];
             teamInfo[playerTeam[i]].members++;
@@ -276,23 +276,23 @@ void IN_InitStats(void)
         memset(secretPercent, 0, sizeof(secretPercent));
         for(i = 0; i < MAXPLAYERS; i++)
         {
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
             {
                 if(totalkills)
                 {
-                    j = players[i].killcount * 100 / totalkills;
+                    j = players[i].killCount * 100 / totalkills;
                     if(j > killPercent[playerTeam[i]])
                         killPercent[playerTeam[i]] = j;
                 }
                 if(totalitems)
                 {
-                    j = players[i].itemcount * 100 / totalitems;
+                    j = players[i].itemCount * 100 / totalitems;
                     if(j > bonusPercent[playerTeam[i]])
                         bonusPercent[playerTeam[i]] = j;
                 }
                 if(totalsecret)
                 {
-                    j = players[i].secretcount * 100 / totalsecret;
+                    j = players[i].secretCount * 100 / totalsecret;
                     if(j > secretPercent[playerTeam[i]])
                         secretPercent[playerTeam[i]] = j;
                 }
@@ -310,11 +310,11 @@ void IN_InitStats(void)
         for(i = 0; i < MAXPLAYERS; i++)
         {
             team = playerTeam[i];
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
             {
                 for(j = 0; j < MAXPLAYERS; j++)
                 {
-                    if(players[j].plr->ingame)
+                    if(players[j].plr->inGame)
                     {
                         teamInfo[team].frags[playerTeam[j]] +=
                             players[i].frags[j];
@@ -480,31 +480,31 @@ void IN_CheckForSkip(void)
 
     for(i = 0, player = players; i < MAXPLAYERS; ++i, player++)
     {
-        if(players->plr->ingame)
+        if(players->plr->inGame)
         {
             if(player->brain.attack)
             {
-                if(!player->attackdown)
+                if(!player->attackDown)
                 {
                     skipintermission = 1;
                 }
-                player->attackdown = true;
+                player->attackDown = true;
             }
             else
             {
-                player->attackdown = false;
+                player->attackDown = false;
             }
             if(player->brain.use)
             {
-                if(!player->usedown)
+                if(!player->useDown)
                 {
                     skipintermission = 1;
                 }
-                player->usedown = true;
+                player->useDown = true;
             }
             else
             {
-                player->usedown = false;
+                player->useDown = false;
             }
         }
     }
@@ -573,7 +573,7 @@ void IN_Drawer(void)
 
 void IN_DrawStatBack(void)
 {
-    gl.Color4f(1, 1, 1, 1);
+    DGL_Color4f(1, 1, 1, 1);
     GL_SetMaterial(R_MaterialNumForName("FLOOR16", MAT_FLAT), MAT_FLAT);
     GL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
 }
@@ -610,7 +610,7 @@ void IN_DrawOldLevel(void)
             GL_DrawPatch(YAHspot[gameepisode - 1][i].x,
                          YAHspot[gameepisode - 1][i].y, beenthere);
         }
-        if(players[consoleplayer].didsecret)
+        if(players[consoleplayer].didSecret)
         {
             GL_DrawPatch(YAHspot[gameepisode - 1][8].x,
                          YAHspot[gameepisode - 1][8].y, beenthere);
@@ -644,7 +644,7 @@ void IN_DrawYAH(void)
         GL_DrawPatch(YAHspot[gameepisode - 1][i].x,
                      YAHspot[gameepisode - 1][i].y, beenthere);
     }
-    if(players[consoleplayer].didsecret)
+    if(players[consoleplayer].didSecret)
     {
         GL_DrawPatch(YAHspot[gameepisode - 1][8].x,
                      YAHspot[gameepisode - 1][8].y, beenthere);
@@ -683,9 +683,9 @@ void IN_DrawSingleStats(void)
         S_LocalSound(sfx_dorcls, NULL);
         sounds++;
     }
-    IN_DrawNumber(players[consoleplayer].killcount, 200, 65, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+    IN_DrawNumber(players[consoleplayer].killCount, 200, 65, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
     GL_DrawPatchLitAlpha(250, 67, 0, .4f, slash);
-    gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+    DGL_Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
     GL_DrawPatch_CS(248, 65, slash);
     IN_DrawNumber(totalkills, 248, 65, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
     if(intertime < 60)
@@ -697,9 +697,9 @@ void IN_DrawSingleStats(void)
         S_LocalSound(sfx_dorcls, NULL);
         sounds++;
     }
-    IN_DrawNumber(players[consoleplayer].itemcount, 200, 90, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+    IN_DrawNumber(players[consoleplayer].itemCount, 200, 90, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
     GL_DrawPatchLitAlpha(250, 92, 0, .4f, slash);
-    gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+    DGL_Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
     GL_DrawPatch_CS(248, 90, slash);
     IN_DrawNumber(totalitems, 248, 90, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
     if(intertime < 90)
@@ -711,9 +711,9 @@ void IN_DrawSingleStats(void)
         S_LocalSound(sfx_dorcls, NULL);
         sounds++;
     }
-    IN_DrawNumber(players[consoleplayer].secretcount, 200, 115, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+    IN_DrawNumber(players[consoleplayer].secretCount, 200, 115, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
     GL_DrawPatchLitAlpha(250, 117, 0, .4f, slash);
-    gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+    DGL_Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
     GL_DrawPatch_CS(248, 115, slash);
     IN_DrawNumber(totalsecret, 248, 115, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
     if(intertime < 150)
@@ -768,10 +768,10 @@ void IN_DrawCoopStats(void)
     ypos = 50;
     for(i = 0; i < NUMTEAMS; i++)
     {
-        if(teamInfo[i].members) //players[i].plr->ingame)
+        if(teamInfo[i].members) //players[i].plr->inGame)
         {
             GL_DrawPatchLitAlpha(27, ypos+2, 0, .4f, patchFaceOkayBase + i);
-            gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+            DGL_Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
             GL_DrawPatch_CS(25, ypos, patchFaceOkayBase + i);
             if(intertime < 40)
             {
@@ -786,15 +786,15 @@ void IN_DrawCoopStats(void)
             }
             IN_DrawNumber(killPercent[i], 85, ypos + 10, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
             GL_DrawPatchLitAlpha(123, ypos + 12, 0, .4f, percent);
-            gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+            DGL_Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
             GL_DrawPatch_CS(121, ypos + 10, percent);
             IN_DrawNumber(bonusPercent[i], 160, ypos + 10, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
             GL_DrawPatchLitAlpha(198, ypos + 12, 0, .4f, percent);
-            gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+            DGL_Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
             GL_DrawPatch_CS(196, ypos + 10, percent);
             IN_DrawNumber(secretPercent[i], 237, ypos + 10, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
             GL_DrawPatchLitAlpha(275, ypos + 12, 0, .4f, percent);
-            gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+            DGL_Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
             GL_DrawPatch_CS(273, ypos + 10, percent);
             ypos += 37;
         }
@@ -827,7 +827,7 @@ void IN_DrawDMStats(void)
     {
         for(i = 0; i < NUMTEAMS; i++)
         {
-            if(teamInfo[i].members) //players[i].plr->ingame)
+            if(teamInfo[i].members) //players[i].plr->inGame)
             {
                 GL_DrawShadowedPatch(40,
                                      ((ypos << FRACBITS) +
@@ -853,7 +853,7 @@ void IN_DrawDMStats(void)
     }
     for(i = 0; i < NUMTEAMS; i++)
     {
-        if(teamInfo[i].members) //players[i].plr->ingame)
+        if(teamInfo[i].members) //players[i].plr->inGame)
         {
             if(intertime < 100 || i == playerTeam[consoleplayer])
             {
@@ -868,7 +868,7 @@ void IN_DrawDMStats(void)
             kpos = 86;
             for(j = 0; j < NUMTEAMS; j++)
             {
-                if(teamInfo[j].members) //players[j].plr->ingame)
+                if(teamInfo[j].members) //players[j].plr->inGame)
                 {
                     IN_DrawNumber(teamInfo[i].frags[j]
                                   /*players[i].frags[j] */ , kpos, ypos + 10,
@@ -964,7 +964,7 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     if(digits == 4)
     {
         GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val / 1000].width / 2 - 12, y + 2, 0, .4f, numbers[val / 1000]);
-        gl.Color4f(r, g, b, a);
+        DGL_Color4f(r, g, b, a);
         GL_DrawPatch_CS(xpos + 6 - hu_font_b[val / 1000].width / 2 - 12, y, numbers[val / 1000]);
     }
     if(digits > 2)
@@ -972,7 +972,7 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
         if(realdigits > 2)
         {
             GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val / 100].width / 2, y+2, 0, .4f, numbers[val / 100]);
-            gl.Color4f(r, g, b, a);
+            DGL_Color4f(r, g, b, a);
             GL_DrawPatch_CS(xpos + 6 - hu_font_b[val / 100].width / 2, y, numbers[val / 100]);
         }
         xpos += 12;
@@ -983,25 +983,25 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
         if(val > 9)
         {
             GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val / 10].width / 2, y+2, 0, .4f, numbers[val / 10]);
-            gl.Color4f(r, g, b, a);
+            DGL_Color4f(r, g, b, a);
             GL_DrawPatch_CS(xpos + 6 - hu_font_b[val / 10].width / 2, y, numbers[val / 10]);
         }
         else if(digits == 2 || oldval > 99)
         {
             GL_DrawPatchLitAlpha(xpos+2, y+2, 0, .4f, numbers[0]);
-            gl.Color4f(r, g, b, a);
+            DGL_Color4f(r, g, b, a);
             GL_DrawPatch_CS(xpos, y, numbers[0]);
         }
         xpos += 12;
     }
     val = val % 10;
     GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val].width / 2, y+2, 0, .4f, numbers[val]);
-    gl.Color4f(r, g, b, a);
+    DGL_Color4f(r, g, b, a);
     GL_DrawPatch_CS(xpos + 6 - hu_font_b[val].width / 2, y, numbers[val]);
     if(neg)
     {
         GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[negative].width / 2 - 12 * (realdigits), y+2, 0, .4f, negative);
-        gl.Color4f(r, g, b, a);
+        DGL_Color4f(r, g, b, a);
         GL_DrawPatch_CS(xpos + 6 - hu_font_b[negative].width / 2 - 12 * (realdigits), y, negative);
     }
 }

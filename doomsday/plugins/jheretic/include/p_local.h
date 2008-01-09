@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -97,15 +97,15 @@
 
 
 // GMJ 02/02/02
-#define sentient(mobj) ((mobj)->health > 0 && (mobj)->info->seestate)
+#define sentient(mobj) ((mobj)->health > 0 && (mobj)->info->seeState)
 
 #define FOOTCLIPSIZEF    (10)
 
 // ***** P_TICK *****
 
-//extern thinker_t thinkercap; // both the head and tail of the thinker list
+//extern thinker_t thinkerCap; // both the head and tail of the thinker list
 
-#define thinkercap      (*gi.thinkercap)
+#define thinkerCap      (*gi.thinkerCap)
 
 extern int      TimerGame;         // tic countdown for deathmatch
 
@@ -227,7 +227,7 @@ void        P_DSparilTeleport(mobj_t *actor);
 
 // ***** P_SETUP *****
 
-/*extern byte *rejectmatrix;                // for fast sight rejection
+/*extern byte *rejectMatrix;                // for fast sight rejection
    extern short *blockmaplump;              // offsets in blockmap are from here
    extern short *blockmap;
    extern int bmapwidth, bmapheight;        // in mapblocks

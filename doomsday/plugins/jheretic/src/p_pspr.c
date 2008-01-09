@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -703,7 +703,7 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
     pspdef_t   *psp;
     state_t    *state;
 
-    psp = &player->psprites[position];
+    psp = &player->pSprites[position];
     do
     {
         if(!stnum)
@@ -729,26 +729,26 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
                 break;
             }
         }
-        stnum = psp->state->nextstate;
+        stnum = psp->state->nextState;
     } while(!psp->tics); // An initial state of 0 could cycle through.
 }
 
 void P_ActivateMorphWeapon(player_t *player)
 {
-    player->pendingweapon = WT_NOCHANGE;
-    player->readyweapon = WT_FIRST;
+    player->pendingWeapon = WT_NOCHANGE;
+    player->readyWeapon = WT_FIRST;
     player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
-    player->psprites[ps_weapon].pos[VY] = WEAPONTOP;
+    player->pSprites[ps_weapon].pos[VY] = WEAPONTOP;
     P_SetPsprite(player, ps_weapon, S_BEAKREADY);
     NetSv_PSpriteChange(player - players, S_BEAKREADY);
 }
 
 void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
 {
-    player->pendingweapon = WT_NOCHANGE;
-    player->readyweapon = weapon;
+    player->pendingWeapon = WT_NOCHANGE;
+    player->readyWeapon = weapon;
     player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
-    player->psprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
+    player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
     P_SetPsprite(player, ps_weapon, weaponinfo[weapon][player->class].mode[0].upstate);
 }
 
@@ -759,17 +759,17 @@ void P_BringUpWeapon(player_t *player)
 {
     weaponmodeinfo_t *wminfo;
 
-    wminfo = WEAPON_INFO(player->pendingweapon, player->class,
+    wminfo = WEAPON_INFO(player->pendingWeapon, player->class,
                          (player->powers[PT_WEAPONLEVEL2]? 1:0));
 
-    if(player->pendingweapon == WT_NOCHANGE)
-        player->pendingweapon = player->readyweapon;
+    if(player->pendingWeapon == WT_NOCHANGE)
+        player->pendingWeapon = player->readyWeapon;
 
     if(wminfo->raisesound)
         S_StartSoundEx(wminfo->raisesound, player->plr->mo);
 
-    player->pendingweapon = WT_NOCHANGE;
-    player->psprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
+    player->pendingWeapon = WT_NOCHANGE;
+    player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
 
     P_SetPsprite(player, ps_weapon, wminfo->upstate);
 }
@@ -796,11 +796,11 @@ boolean P_CheckAmmo(player_t *player)
     good = true;
     for(i = 0; i < NUM_AMMO_TYPES && good; ++i)
     {
-        if(!weaponinfo[player->readyweapon][player->class].mode[lvl].ammotype[i])
+        if(!weaponinfo[player->readyWeapon][player->class].mode[lvl].ammotype[i])
             continue; // Weapon does not take this type of ammo.
 
         // Minimal amount for one shot varies.
-        count = weaponinfo[player->readyweapon][player->class].mode[lvl].pershot[i];
+        count = weaponinfo[player->readyWeapon][player->class].mode[lvl].pershot[i];
 
         // Return if current ammunition sufficient.
         if(player->ammo[i] < count)
@@ -816,7 +816,7 @@ boolean P_CheckAmmo(player_t *player)
     P_MaybeChangeWeapon(player, WT_NOCHANGE, AT_NOAMMO, false);
 
     P_SetPsprite(player, ps_weapon,
-                 weaponinfo[player->readyweapon][player->class].mode[lvl].downstate);
+                 weaponinfo[player->readyWeapon][player->class].mode[lvl].downstate);
     return false;
 }
 
@@ -828,18 +828,18 @@ void P_FireWeapon(player_t *player)
     if(!P_CheckAmmo(player))
         return;
 
-    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackstate);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackState);
 
     if(player->refire)
-        attackState = weaponinfo[player->readyweapon][player->class].mode[lvl].holdatkstate;
+        attackState = weaponinfo[player->readyWeapon][player->class].mode[lvl].holdatkstate;
     else
-        attackState = weaponinfo[player->readyweapon][player->class].mode[lvl].atkstate;
+        attackState = weaponinfo[player->readyWeapon][player->class].mode[lvl].atkstate;
 
     NetSv_PSpriteChange(player - players, attackState);
     P_SetPsprite(player, ps_weapon, attackState);
 
     P_NoiseAlert(player->plr->mo, player->plr->mo);
-    if(player->readyweapon == WT_EIGHTH && !player->refire)
+    if(player->readyWeapon == WT_EIGHTH && !player->refire)
     {
         // Play the sound for the initial gauntlet attack
         S_StartSoundEx(sfx_gntuse, player->plr->mo);
@@ -848,7 +848,7 @@ void P_FireWeapon(player_t *player)
     player->update |= PSF_AMMO;
 
     // Psprite state.
-    player->plr->psprites[0].state = DDPSP_FIRE;
+    player->plr->pSprites[0].state = DDPSP_FIRE;
 }
 
 /**
@@ -859,12 +859,12 @@ void P_DropWeapon(player_t *player)
     if(player->powers[PT_WEAPONLEVEL2])
     {
         P_SetPsprite(player, ps_weapon,
-                     weaponinfo[player->readyweapon][player->class].mode[1].downstate);
+                     weaponinfo[player->readyWeapon][player->class].mode[1].downstate);
     }
     else
     {
         P_SetPsprite(player, ps_weapon,
-                     weaponinfo[player->readyweapon][player->class].mode[0].downstate);
+                     weaponinfo[player->readyWeapon][player->class].mode[0].downstate);
     }
 }
 
@@ -883,9 +883,9 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
         P_MobjChangeState(player->plr->mo, S_PLAY);
     }
 
-    if(player->readyweapon != WT_NOCHANGE)
+    if(player->readyWeapon != WT_NOCHANGE)
     {
-        wminfo = WEAPON_INFO(player->readyweapon, player->class, (player->powers[PT_WEAPONLEVEL2]?1:0));
+        wminfo = WEAPON_INFO(player->readyWeapon, player->class, (player->powers[PT_WEAPONLEVEL2]?1:0));
 
         // A weaponready sound?
         if(psp->state == &states[wminfo->readystate] && wminfo->readysound)
@@ -895,7 +895,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
             S_StartSoundEx(wminfo->readysound, player->plr->mo);
 
         // Check for change if player is dead, put the weapon away.
-        if(player->pendingweapon != WT_NOCHANGE || !player->health)
+        if(player->pendingWeapon != WT_NOCHANGE || !player->health)
         {   //  (pending weapon should allready be validated)
             P_SetPsprite(player, ps_weapon, wminfo->downstate);
             return;
@@ -905,19 +905,19 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
     // Check for autofire.
     if(player->brain.attack)
     {
-        wminfo = WEAPON_INFO(player->readyweapon, player->class, 0);
+        wminfo = WEAPON_INFO(player->readyWeapon, player->class, 0);
 
-        if(!player->attackdown || wminfo->autofire)
+        if(!player->attackDown || wminfo->autofire)
         {
-            player->attackdown = true;
+            player->attackDown = true;
             P_FireWeapon(player);
             return;
         }
     }
     else
-        player->attackdown = false;
+        player->attackDown = false;
 
-    ddpsp = player->plr->psprites;
+    ddpsp = player->plr->pSprites;
 
     if(!player->morphTics)
     {
@@ -941,7 +941,7 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
 {
     if(player->brain.attack)
     {                           // Chicken beak attack
-        player->attackdown = true;
+        player->attackDown = true;
         P_MobjChangeState(player->plr->mo, S_CHICPLAY_ATK1);
         if(player->powers[PT_WEAPONLEVEL2])
         {
@@ -961,7 +961,7 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
         {   // Take out of attack state.
             P_MobjChangeState(player->plr->mo, S_CHICPLAY);
         }
-        player->attackdown = false;
+        player->attackDown = false;
     }
 }
 
@@ -971,7 +971,7 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
 void C_DECL A_ReFire(player_t *player, pspdef_t *psp)
 {
     if((player->brain.attack) &&
-       player->pendingweapon == WT_NOCHANGE && player->health)
+       player->pendingWeapon == WT_NOCHANGE && player->health)
     {
         player->refire++;
         P_FireWeapon(player);
@@ -994,13 +994,13 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
         psp->pos[VY] += LOWERSPEED;
 
     // Psprite state.
-    player->plr->psprites[0].state = DDPSP_DOWN;
+    player->plr->pSprites[0].state = DDPSP_DOWN;
 
     // Should we disable the lowering?
     if(!cfg.bobWeaponLower ||
       ((player->powers[PT_WEAPONLEVEL2] &&
-        weaponinfo[player->readyweapon][player->class].mode[1].static_switch) ||
-       weaponinfo[player->readyweapon][player->class].mode[0].static_switch))
+        weaponinfo[player->readyWeapon][player->class].mode[1].static_switch) ||
+       weaponinfo[player->readyWeapon][player->class].mode[0].static_switch))
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
@@ -1010,7 +1010,7 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
         return;
 
     // Player is dead.
-    if(player->playerstate == PST_DEAD)
+    if(player->playerState == PST_DEAD)
     {
         psp->pos[VY] = WEAPONBOTTOM;
 
@@ -1026,13 +1026,13 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
         return;
     }
 
-    player->readyweapon = player->pendingweapon;
+    player->readyWeapon = player->pendingWeapon;
 
     // Should we suddenly lower the weapon?
     if(cfg.bobWeaponLower &&
       ((player->powers[PT_WEAPONLEVEL2] &&
-        !weaponinfo[player->readyweapon][player->class].mode[1].static_switch) ||
-       !weaponinfo[player->readyweapon][player->class].mode[0].static_switch))
+        !weaponinfo[player->readyWeapon][player->class].mode[1].static_switch) ||
+       !weaponinfo[player->readyWeapon][player->class].mode[0].static_switch))
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
     }
@@ -1044,7 +1044,7 @@ void C_DECL A_BeakRaise(player_t *player, pspdef_t *psp)
 {
     psp->pos[VY] = WEAPONTOP;
     P_SetPsprite(player, ps_weapon,
-                 weaponinfo[player->readyweapon][player->class].mode[0].readystate);
+                 weaponinfo[player->readyWeapon][player->class].mode[0].readystate);
 }
 
 void C_DECL A_Raise(player_t *player, pspdef_t *psp)
@@ -1052,13 +1052,13 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
     statenum_t newstate;
 
     // Psprite state.
-    player->plr->psprites[0].state = DDPSP_UP;
+    player->plr->pSprites[0].state = DDPSP_UP;
 
     // Should we disable the lowering?
     if(!cfg.bobWeaponLower ||
       ((player->powers[PT_WEAPONLEVEL2] &&
-        weaponinfo[player->readyweapon][player->class].mode[1].static_switch) ||
-       weaponinfo[player->readyweapon][player->class].mode[0].static_switch))
+        weaponinfo[player->readyWeapon][player->class].mode[1].static_switch) ||
+       weaponinfo[player->readyWeapon][player->class].mode[0].static_switch))
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
@@ -1076,9 +1076,9 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
     // The weapon has been raised all the way,
     //  so change to the ready state.
     if(player->powers[PT_WEAPONLEVEL2])
-        newstate = weaponinfo[player->readyweapon][player->class].mode[1].readystate;
+        newstate = weaponinfo[player->readyWeapon][player->class].mode[1].readystate;
     else
-        newstate = weaponinfo[player->readyweapon][player->class].mode[0].readystate;
+        newstate = weaponinfo[player->readyWeapon][player->class].mode[0].readystate;
 
     P_SetPsprite(player, ps_weapon, newstate);
 }
@@ -1114,7 +1114,7 @@ void P_BulletSlope(mobj_t *mo)
     }
 
     // Fall back to manual aiming by lookdir.
-    bulletslope = tan(LOOKDIR2RAD(mo->dplayer->lookdir)) / 1.2;
+    bulletslope = tan(LOOKDIR2RAD(mo->dPlayer->lookDir)) / 1.2;
 }
 
 void C_DECL A_BeakAttackPL1(player_t *player, pspdef_t *psp)
@@ -1293,7 +1293,7 @@ void C_DECL A_FireGoldWandPL2(player_t *player, pspdef_t *psp)
 
     PuffType = MT_GOLDWANDPUFF2;
     P_BulletSlope(mo);
-    momZ = mobjinfo[MT_GOLDWANDFX2].speed * bulletslope;
+    momZ = mobjInfo[MT_GOLDWANDFX2].speed * bulletslope;
 
     P_SpawnMissileAngle(MT_GOLDWANDFX2, mo, mo->angle - (ANG45 / 8), momZ);
     P_SpawnMissileAngle(MT_GOLDWANDFX2, mo, mo->angle + (ANG45 / 8), momZ);
@@ -1322,13 +1322,13 @@ void C_DECL A_FireMacePL1B(player_t *player, pspdef_t *psp)
 
     pmo = player->plr->mo;
     ball = P_SpawnMobj3f(MT_MACEFX2, pmo->pos[VX], pmo->pos[VY],
-                         pmo->pos[VZ] - pmo->floorclip + 28);
+                         pmo->pos[VZ] - pmo->floorClip + 28);
     ball->mom[MZ] =
-        2 + FIX2FLT(((int) player->plr->lookdir) << (FRACBITS - 5));
+        2 + FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 5));
     angle = pmo->angle;
     ball->target = pmo;
     ball->angle = angle;
-    ball->pos[VZ] += FIX2FLT(((int) player->plr->lookdir) << (FRACBITS - 4));
+    ball->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
     an = angle >> ANGLETOFINESHIFT;
 
     ball->mom[MX] = (pmo->mom[MX] / 2) +
@@ -1393,19 +1393,19 @@ void C_DECL A_MacePL1Check(mobj_t *ball)
 
 void C_DECL A_MaceBallImpact(mobj_t *ball)
 {
-    if(ball->pos[VZ] <= ball->floorz && P_HitFloor(ball) != FLOOR_SOLID)
+    if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball) != FLOOR_SOLID)
     {   // Landed in some sort of liquid.
         P_MobjRemove(ball);
         return;
     }
 
-    if(ball->health != MAGIC_JUNK && ball->pos[VZ] <= ball->floorz &&
+    if(ball->health != MAGIC_JUNK && ball->pos[VZ] <= ball->floorZ &&
        ball->mom[MZ] != 0)
     {   // Bounce.
         ball->health = MAGIC_JUNK;
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
         ball->flags2 &= ~MF2_FLOORBOUNCE;
-        P_MobjChangeState(ball, ball->info->spawnstate);
+        P_MobjChangeState(ball, ball->info->spawnState);
         S_StartSound(sfx_bounce, ball);
     }
     else
@@ -1422,13 +1422,13 @@ void C_DECL A_MaceBallImpact2(mobj_t *ball)
     angle_t     angle;
     uint        an;
 
-    if(ball->pos[VZ] <= ball->floorz && P_HitFloor(ball) != FLOOR_SOLID)
+    if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball) != FLOOR_SOLID)
     {   // Landed in some sort of liquid.
         P_MobjRemove(ball);
         return;
     }
 
-    if(ball->pos[VZ] != ball->floorz || ball->mom[MZ] < 2)
+    if(ball->pos[VZ] != ball->floorZ || ball->mom[MZ] < 2)
     {   // Explode
         ball->mom[MX] = ball->mom[MY] = ball->mom[MZ] = 0;
         ball->flags |= MF_NOGRAVITY;
@@ -1437,7 +1437,7 @@ void C_DECL A_MaceBallImpact2(mobj_t *ball)
     else
     {   // Bounce
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
-        P_MobjChangeState(ball, ball->info->spawnstate);
+        P_MobjChangeState(ball, ball->info->spawnState);
 
         tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos);
         angle = ball->angle + ANG90;
@@ -1481,7 +1481,7 @@ void C_DECL A_FireMacePL2(player_t *player, pspdef_t *psp)
         mo->mom[MX] += player->plr->mo->mom[MX];
         mo->mom[MY] += player->plr->mo->mom[MY];
         mo->mom[MZ] =
-            2 + FIX2FLT(((int) player->plr->lookdir) << (FRACBITS - 5));
+            2 + FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 5));
 
         if(linetarget)
             mo->tracer = linetarget;
@@ -1495,13 +1495,13 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
     angle_t     angle;
     boolean     newAngle;
 
-    if(ball->pos[VZ] <= ball->floorz && P_HitFloor(ball) != FLOOR_SOLID)
+    if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball) != FLOOR_SOLID)
     {   // Landed in some sort of liquid.
         P_MobjRemove(ball);
         return;
     }
 
-    if(ball->pos[VZ] <= ball->floorz && ball->mom[MZ] != 0)
+    if(ball->pos[VZ] <= ball->floorZ && ball->mom[MZ] != 0)
     {   // Bounce.
         newAngle = false;
         target = ball->tracer;
@@ -1547,7 +1547,7 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
             ball->mom[MY] = ball->info->speed * FIX2FLT(finesine[an]);
         }
 
-        P_MobjChangeState(ball, ball->info->spawnstate);
+        P_MobjChangeState(ball, ball->info->spawnState);
         S_StartSound(sfx_pstop, ball);
     }
     else
@@ -1683,7 +1683,7 @@ void C_DECL A_AddPlayerRain(mobj_t *actor)
     player_t   *player;
 
     playerNum = IS_NETGAME ? actor->special2 : 0;
-    if(!players[playerNum].plr->ingame)
+    if(!players[playerNum].plr->inGame)
     {   // Player not left the game.
         return;
     }
@@ -1737,7 +1737,7 @@ void C_DECL A_SkullRodStorm(mobj_t *actor)
         P_MobjChangeState(actor, S_NULL);
         playerNum = (IS_NETGAME ? actor->special2 : 0);
 
-        if(!players[playerNum].plr->ingame)
+        if(!players[playerNum].plr->inGame)
         {   // Player not left the game.
             return;
         }
@@ -1786,7 +1786,7 @@ void C_DECL A_SkullRodStorm(mobj_t *actor)
 
 void C_DECL A_RainImpact(mobj_t *actor)
 {
-    if(actor->pos[VZ] > actor->floorz)
+    if(actor->pos[VZ] > actor->floorZ)
     {
         P_MobjChangeState(actor, S_RAINAIRXPLR1_1 + actor->special2);
     }
@@ -1798,7 +1798,7 @@ void C_DECL A_RainImpact(mobj_t *actor)
 
 void C_DECL A_HideInCeiling(mobj_t *actor)
 {
-    actor->pos[VZ] = actor->ceilingz + 4;
+    actor->pos[VZ] = actor->ceilingZ + 4;
 }
 
 void C_DECL A_FirePhoenixPL1(player_t *player, pspdef_t *psp)
@@ -1844,7 +1844,7 @@ void C_DECL A_PhoenixPuff(mobj_t *actor)
 
 void C_DECL A_InitPhoenixPL2(player_t *player, pspdef_t *psp)
 {
-    player->flamecount = FLAME_THROWER_TICS;
+    player->flameCount = FLAME_THROWER_TICS;
 }
 
 /**
@@ -1860,7 +1860,7 @@ void C_DECL A_FirePhoenixPL2(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    if(--player->flamecount == 0)
+    if(--player->flameCount == 0)
     {   // Out of flame
         P_SetPsprite(player, ps_weapon, S_PHOENIXATK2_4);
         NetSv_PSpriteChange(player - players, S_PHOENIXATK2_4);
@@ -1873,10 +1873,10 @@ void C_DECL A_FirePhoenixPL2(player_t *player, pspdef_t *psp)
     memcpy(pos, pmo->pos, sizeof(pos));
     pos[VX] += FIX2FLT((P_Random() - P_Random()) << 9);
     pos[VY] += FIX2FLT((P_Random() - P_Random()) << 9);
-    pos[VZ] += 26 + player->plr->lookdir / 173;
-    pos[VZ] -= pmo->floorclip;
+    pos[VZ] += 26 + player->plr->lookDir / 173;
+    pos[VZ] -= pmo->floorClip;
 
-    slope = sin(LOOKDIR2RAD(player->plr->lookdir)) / 1.2;
+    slope = sin(LOOKDIR2RAD(player->plr->lookDir)) / 1.2;
 
     mo = P_SpawnMobj3fv(MT_PHOENIXFX2, pos);
     mo->target = pmo;
@@ -2015,11 +2015,11 @@ void P_SetupPsprites(player_t *player)
     // Remove all psprites.
     for(i = 0; i < NUMPSPRITES; ++i)
     {
-        player->psprites[i].state = NULL;
+        player->pSprites[i].state = NULL;
     }
 
     // Spawn the ready weapon.
-    player->pendingweapon = player->readyweapon;
+    player->pendingWeapon = player->readyWeapon;
     P_BringUpWeapon(player);
 }
 
@@ -2032,7 +2032,7 @@ void P_MovePsprites(player_t *player)
     pspdef_t   *psp;
     state_t    *state;
 
-    psp = &player->psprites[0];
+    psp = &player->pSprites[0];
     for(i = 0; i < NUMPSPRITES; ++i, psp++)
     {
         // A null state means not active.
@@ -2047,12 +2047,12 @@ void P_MovePsprites(player_t *player)
                 psp->tics--;
                 if(!psp->tics)
                 {
-                    P_SetPsprite(player, i, psp->state->nextstate);
+                    P_SetPsprite(player, i, psp->state->nextState);
                 }
             }
         }
     }
 
-    player->psprites[ps_flash].pos[VX] = player->psprites[ps_weapon].pos[VX];
-    player->psprites[ps_flash].pos[VY] = player->psprites[ps_weapon].pos[VY];
+    player->pSprites[ps_flash].pos[VX] = player->pSprites[ps_weapon].pos[VX];
+    player->pSprites[ps_flash].pos[VY] = player->pSprites[ps_weapon].pos[VY];
 }
