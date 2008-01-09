@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -24,8 +24,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Status bar code.
+/**
+ * st_stuff.c: Status bar code.
+ *
  *  Does the face/direction indicator animatin.
  *  Does palette indicators as well (red pain/berserk, bright pickup)
  */
@@ -459,9 +460,9 @@ void ST_refreshBackground(void)
     {
         // Alpha blended status bar, we'll need to cut it up into smaller bits...
 
-        gl.Color4f(1, 1, 1, alpha);
+        DGL_Color4f(1, 1, 1, alpha);
 
-        gl.Begin(DGL_QUADS);
+        DGL_Begin(DGL_QUADS);
 
         // (up to faceback if deathmatch, else ST_ARMS)
         x = ST_X;
@@ -470,14 +471,14 @@ void ST_refreshBackground(void)
         h = 32;
         cw = st_armson ? 0.325f : 0.446875f;
 
-        gl.TexCoord2f(0, 0);
-        gl.Vertex2f(x, y);
-        gl.TexCoord2f(cw, 0);
-        gl.Vertex2f(x + w, y);
-        gl.TexCoord2f(cw, 1);
-        gl.Vertex2f(x + w, y + h);
-        gl.TexCoord2f(0, 1);
-        gl.Vertex2f(x, y + h);
+        DGL_TexCoord2f(0, 0);
+        DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(cw, 0);
+        DGL_Vertex2f(x + w, y);
+        DGL_TexCoord2f(cw, 1);
+        DGL_Vertex2f(x + w, y + h);
+        DGL_TexCoord2f(0, 1);
+        DGL_Vertex2f(x, y + h);
 
         if(IS_NETGAME)
         {
@@ -490,14 +491,14 @@ void ST_refreshBackground(void)
             cw2 = 0.55625f;
             ch = 0.03125f;
 
-            gl.TexCoord2f(cw, 0);
-            gl.Vertex2f(x, y);
-            gl.TexCoord2f(cw2, 0);
-            gl.Vertex2f(x + w, y);
-            gl.TexCoord2f(cw2, ch);
-            gl.Vertex2f(x + w, y + h);
-            gl.TexCoord2f(cw, ch);
-            gl.Vertex2f(x, y + h);
+            DGL_TexCoord2f(cw, 0);
+            DGL_Vertex2f(x, y);
+            DGL_TexCoord2f(cw2, 0);
+            DGL_Vertex2f(x + w, y);
+            DGL_TexCoord2f(cw2, ch);
+            DGL_Vertex2f(x + w, y + h);
+            DGL_TexCoord2f(cw, ch);
+            DGL_Vertex2f(x, y + h);
 
             // (after faceback)
             x = ST_X + 178;
@@ -517,16 +518,16 @@ void ST_refreshBackground(void)
             cw = 0.45f;
         }
 
-        gl.TexCoord2f(cw, 0);
-        gl.Vertex2f(x, y);
-        gl.TexCoord2f(1, 0);
-        gl.Vertex2f(x + w, y);
-        gl.TexCoord2f(1, 1);
-        gl.Vertex2f(x + w, y + h);
-        gl.TexCoord2f(cw, 1);
-        gl.Vertex2f(x, y + h);
+        DGL_TexCoord2f(cw, 0);
+        DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(1, 0);
+        DGL_Vertex2f(x + w, y);
+        DGL_TexCoord2f(1, 1);
+        DGL_Vertex2f(x + w, y + h);
+        DGL_TexCoord2f(cw, 1);
+        DGL_Vertex2f(x, y + h);
 
-        gl.End();
+        DGL_End();
 
         if(st_armson)  // arms baground
         {
@@ -601,17 +602,17 @@ void ST_updateFaceWidget(void)
 
     if(priority < 9)
     {
-        if(plyr->bonuscount)
+        if(plyr->bonusCount)
         {
             // picking up bonus
             doevilgrin = false;
 
             for(i = 0; i < NUM_WEAPON_TYPES; i++)
             {
-                if(oldweaponsowned[i] != plyr->weaponowned[i])
+                if(oldweaponsowned[i] != plyr->weaponOwned[i])
                 {
                     doevilgrin = true;
-                    oldweaponsowned[i] = plyr->weaponowned[i];
+                    oldweaponsowned[i] = plyr->weaponOwned[i];
                 }
             }
             if(doevilgrin)
@@ -627,7 +628,7 @@ void ST_updateFaceWidget(void)
 
     if(priority < 8)
     {
-        if(plyr->damagecount && plyr->attacker &&
+        if(plyr->damageCount && plyr->attacker &&
            plyr->attacker != plyr->plr->mo)
         {
             // being attacked
@@ -689,7 +690,7 @@ void ST_updateFaceWidget(void)
     if(priority < 7)
     {
         // getting hurt because of your own damn stupidity
-        if(plyr->damagecount)
+        if(plyr->damageCount)
         {
             if(plyr->health - st_oldhealth > ST_MUCHPAIN)
             {
@@ -711,7 +712,7 @@ void ST_updateFaceWidget(void)
     if(priority < 6)
     {
         // rapid firing
-        if(plyr->attackdown)
+        if(plyr->attackDown)
         {
             if(lastattackdown == -1)
                 lastattackdown = ST_RAMPAGEDELAY;
@@ -774,7 +775,7 @@ void ST_updateWidgets(void)
     found = false;
     for(ammotype=0; ammotype < NUM_AMMO_TYPES && !found; ++ammotype)
     {
-        if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[ammotype])
+        if(!weaponinfo[plr->readyWeapon][plr->class].mode[0].ammotype[ammotype])
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon
@@ -786,7 +787,7 @@ void ST_updateWidgets(void)
         w_ready.num = &largeammo;
     }
 
-    w_ready.data = plr->readyweapon;
+    w_ready.data = plr->readyWeapon;
 
     // update keycard multiple widgets
     for(i = 0; i < 3; i++)
@@ -812,7 +813,7 @@ void ST_updateWidgets(void)
 
     for(i = 0; i < MAXPLAYERS; i++)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         st_fragscount += plr->frags[i] * (i != consoleplayer ? 1 : -1);
@@ -875,7 +876,7 @@ void ST_doPaletteStuff(void)
     int     bzc;
     player_t *plyr = &players[consoleplayer];
 
-    cnt = plyr->damagecount;
+    cnt = plyr->damageCount;
 
     if(plyr->powers[PT_STRENGTH])
     {
@@ -896,9 +897,9 @@ void ST_doPaletteStuff(void)
         palette += STARTREDPALS;
     }
 
-    else if(plyr->bonuscount)
+    else if(plyr->bonusCount)
     {
-        palette = (plyr->bonuscount + 7) >> 3;
+        palette = (plyr->bonusCount + 7) >> 3;
 
         if(palette >= NUMBONUSPALS)
             palette = NUMBONUSPALS - 1;
@@ -961,10 +962,10 @@ void ST_doRefresh(void)
         float fscale = cfg.sbarscale / 20.0f;
         float h = 200 * (1 - fscale);
 
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PushMatrix();
-        gl.Translatef(160 - 320 * fscale / 2, h /showbar, 0);
-        gl.Scalef(fscale, fscale, 1);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        DGL_Translatef(160 - 320 * fscale / 2, h /showbar, 0);
+        DGL_Scalef(fscale, fscale, 1);
     }
 
     // draw status bar background
@@ -976,8 +977,8 @@ void ST_doRefresh(void)
     if(cfg.sbarscale < 20 || (cfg.sbarscale == 20 && showbar < 1.0f))
     {
         // Restore the normal modelview matrix.
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
     }
 }
 
@@ -1023,7 +1024,7 @@ void ST_drawHUDSprite(int sprite, int x, int y, int hotspot, float alpha)
         y -= h;
         break;
     }
-    gl.Color4f(1, 1, 1, alpha );
+    DGL_Color4f(1, 1, 1, alpha );
     GL_DrawPSprite(x, y, sprite == SPR_HRCK ? 1 / 1.5 : 1, false,
                    sprInfo.lump);
 }
@@ -1058,9 +1059,9 @@ void ST_doFullscreenStuff(void)
 
 
     // Setup the scaling matrix.
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
-    gl.Scalef(cfg.hudScale, cfg.hudScale, 1);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     // draw the visible HUD data, first health
     if(cfg.hudShown[HUD_HEALTH])
@@ -1081,7 +1082,7 @@ void ST_doFullscreenStuff(void)
         //// for each type of ammo this weapon takes.
         for(ammotype=0; ammotype < NUM_AMMO_TYPES; ++ammotype)
         {
-            if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[ammotype])
+            if(!weaponinfo[plr->readyWeapon][plr->class].mode[0].ammotype[ammotype])
                 continue;
 
             spr = ammo_sprite[ammotype];
@@ -1100,7 +1101,7 @@ void ST_doFullscreenStuff(void)
         pos = (h_width/2) -(faceback.width/2) + 6;
 
 Draw_BeginZoom(0.7f, pos , h_height - 1);
-        gl.Color4f(1,1,1,iconalpha);
+        DGL_Color4f(1,1,1,iconalpha);
         if(IS_NETGAME)
             GL_DrawPatch_CS( pos, h_height - faceback.height + 1, faceback.lump);
 
@@ -1111,8 +1112,8 @@ Draw_EndZoom();
     pos = h_width - 1;
     if(cfg.hudShown[HUD_ARMOR])
     {
-        sprintf(buf, "%i%%", plr->armorpoints);
-        spr = plr->armortype == 2 ? SPR_HAR2 : SPR_HAR1;
+        sprintf(buf, "%i%%", plr->armorPoints);
+        spr = plr->armorType == 2 ? SPR_HAR2 : SPR_HAR1;
         ST_drawHUDSprite(spr, h_width - 49, h_height - 2, HOT_BRIGHT, iconalpha);
         ST_HUDSpriteSize(spr, &w, &h);
 
@@ -1146,8 +1147,8 @@ Draw_BeginZoom(0.75f, pos , h_height - 2);
 Draw_EndZoom();
     }
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 void ST_Drawer(int fullscreenmode, boolean refresh)
@@ -1317,7 +1318,7 @@ void ST_initData(void)
 
     for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
-        oldweaponsowned[i] = plyr->weaponowned[i];
+        oldweaponsowned[i] = plyr->weaponOwned[i];
     }
 
     for(i = 0; i < 3; i++)
@@ -1342,7 +1343,7 @@ void ST_createWidgets(void)
     found = false;
     for(ammotype=0; ammotype < NUM_AMMO_TYPES && !found; ++ammotype)
     {
-        if(!weaponinfo[plyr->readyweapon][plyr->class].mode[0].ammotype[ammotype])
+        if(!weaponinfo[plyr->readyWeapon][plyr->class].mode[0].ammotype[ammotype])
             continue; // Weapon does not take this ammo.
 
         STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, tallnum, &plyr->ammo[ammotype],
@@ -1352,11 +1353,11 @@ void ST_createWidgets(void)
     if(!found) // Weapon requires no ammo at all.
     {
         // DOOM.EXE returns an address beyond plyr->ammo[NUM_AMMO_TYPES]
-        // if weaponinfo[plyr->readyweapon].ammo == am_noammo
+        // if weaponinfo[plyr->readyWeapon].ammo == am_noammo
         // ...obviously a bug.
 
         //STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, tallnum,
-        //              &plyr->ammo[weaponinfo[plyr->readyweapon].ammo],
+        //              &plyr->ammo[weaponinfo[plyr->readyWeapon].ammo],
         //              &st_statusbaron, ST_AMMOWIDTH, &statusbarCounterAlpha);
 
 
@@ -1365,7 +1366,7 @@ void ST_createWidgets(void)
     }
 
     // the last weapon type
-    w_ready.data = plyr->readyweapon;
+    w_ready.data = plyr->readyWeapon;
 
     // health percentage
     STlib_initPercent(&w_health, ST_HEALTHX, ST_HEALTHY, tallnum,
@@ -1377,7 +1378,7 @@ void ST_createWidgets(void)
     {
         STlib_initMultIcon(&w_arms[i], ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
                            ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i],
-                           (int *) &plyr->weaponowned[i + 1], &st_armson,
+                           (int *) &plyr->weaponOwned[i + 1], &st_armson,
                            &statusbarCounterAlpha);
     }
 
@@ -1391,7 +1392,7 @@ void ST_createWidgets(void)
 
     // armor percentage - should be colored later
     STlib_initPercent(&w_armor, ST_ARMORX, ST_ARMORY, tallnum,
-                      &plyr->armorpoints, &st_statusbaron, &tallpercent,
+                      &plyr->armorPoints, &st_statusbaron, &tallpercent,
                       &statusbarCounterAlpha);
 
     // keyboxes 0-2
@@ -1419,19 +1420,19 @@ void ST_createWidgets(void)
 
     // max ammo count (all four kinds)
     STlib_initNum(&w_maxammo[0], ST_MAXAMMO0X, ST_MAXAMMO0Y, shortnum,
-                  &plyr->maxammo[0], &st_statusbaron, ST_MAXAMMO0WIDTH,
+                  &plyr->maxAmmo[0], &st_statusbaron, ST_MAXAMMO0WIDTH,
                   &statusbarCounterAlpha);
 
     STlib_initNum(&w_maxammo[1], ST_MAXAMMO1X, ST_MAXAMMO1Y, shortnum,
-                  &plyr->maxammo[1], &st_statusbaron, ST_MAXAMMO1WIDTH,
+                  &plyr->maxAmmo[1], &st_statusbaron, ST_MAXAMMO1WIDTH,
                   &statusbarCounterAlpha);
 
     STlib_initNum(&w_maxammo[2], ST_MAXAMMO2X, ST_MAXAMMO2Y, shortnum,
-                  &plyr->maxammo[2], &st_statusbaron, ST_MAXAMMO2WIDTH,
+                  &plyr->maxAmmo[2], &st_statusbaron, ST_MAXAMMO2WIDTH,
                   &statusbarCounterAlpha);
 
     STlib_initNum(&w_maxammo[3], ST_MAXAMMO3X, ST_MAXAMMO3Y, shortnum,
-                  &plyr->maxammo[3], &st_statusbaron, ST_MAXAMMO3WIDTH,
+                  &plyr->maxAmmo[3], &st_statusbaron, ST_MAXAMMO3WIDTH,
                   &statusbarCounterAlpha);
 
 }

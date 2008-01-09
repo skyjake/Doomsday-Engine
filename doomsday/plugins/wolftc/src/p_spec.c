@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -834,7 +834,7 @@ void P_PlayerInSpecialSector(player_t *player)
 
     case 9:
         // SECRET SECTOR
-        player->secretcount++;
+        player->secretCount++;
         P_ToXSector(sector)->special = 0;
         if(cfg.secretMsg)
         {
@@ -901,10 +901,10 @@ void P_UpdateSpecials(void)
     //  DO BUTTONS
     for(button = buttonlist; button; button = button->next)
     {
-        if(button->btimer)
+        if(button->timer)
         {
-            button->btimer--;
-            if(!button->btimer)
+            button->timer--;
+            if(!button->timer)
             {
                 side_t     *sdef = P_GetPtrp(button->line, DMU_SIDE0);
                 sector_t   *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
@@ -912,15 +912,15 @@ void P_UpdateSpecials(void)
                 switch(button->where)
                 {
                 case top:
-                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->btexture);
+                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->texture);
                     break;
 
                 case middle:
-                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->btexture);
+                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->texture);
                     break;
 
                 case bottom:
-                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->btexture);
+                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->texture);
                     break;
 
                 default:
@@ -933,8 +933,8 @@ void P_UpdateSpecials(void)
 
                 button->line = NULL;
                 button->where = 0;
-                button->btexture = 0;
-                button->soundorg = NULL;
+                button->texture = 0;
+                button->soundOrg = NULL;
             }
         }
     }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -65,11 +65,11 @@ void T_FireFlicker(fireflicker_t *flick)
 
     amount = ((P_Random() & 3) * 16) / 255.0f;
 
-    if(lightlevel - amount < flick->minlight)
-        P_SetFloatp(flick->sector, DMU_LIGHT_LEVEL, flick->minlight);
+    if(lightlevel - amount < flick->minLight)
+        P_SetFloatp(flick->sector, DMU_LIGHT_LEVEL, flick->minLight);
     else
         P_SetFloatp(flick->sector, DMU_LIGHT_LEVEL,
-                    flick->maxlight - amount);
+                    flick->maxLight - amount);
 
     flick->count = 4;
 }
@@ -89,8 +89,8 @@ void P_SpawnFireFlicker(sector_t *sector)
 
     flick->thinker.function = T_FireFlicker;
     flick->sector = sector;
-    flick->maxlight = lightlevel;
-    flick->minlight =
+    flick->maxLight = lightlevel;
+    flick->minLight =
         P_FindMinSurroundingLight(sector, lightlevel) + (16.0f/255.0f);
     flick->count = 4;
 }
@@ -105,15 +105,15 @@ void T_LightFlash(lightflash_t *flash)
     if(--flash->count)
         return;
 
-    if(lightlevel == flash->maxlight)
+    if(lightlevel == flash->maxLight)
     {
-        P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->minlight);
-        flash->count = (P_Random() & flash->mintime) + 1;
+        P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->minLight);
+        flash->count = (P_Random() & flash->minTime) + 1;
     }
     else
     {
-        P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->maxlight);
-        flash->count = (P_Random() & flash->maxtime) + 1;
+        P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->maxLight);
+        flash->count = (P_Random() & flash->maxTime) + 1;
     }
 }
 
@@ -135,12 +135,12 @@ void P_SpawnLightFlash(sector_t *sector)
 
     flash->thinker.function = T_LightFlash;
     flash->sector = sector;
-    flash->maxlight = lightlevel;
+    flash->maxLight = lightlevel;
 
-    flash->minlight = P_FindMinSurroundingLight(sector, lightlevel);
-    flash->maxtime = 64;
-    flash->mintime = 7;
-    flash->count = (P_Random() & flash->maxtime) + 1;
+    flash->minLight = P_FindMinSurroundingLight(sector, lightlevel);
+    flash->maxTime = 64;
+    flash->minTime = 7;
+    flash->count = (P_Random() & flash->maxTime) + 1;
 }
 
 /**
@@ -153,15 +153,15 @@ void T_StrobeFlash(strobe_t *flash)
     if(--flash->count)
         return;
 
-    if(lightlevel == flash->minlight)
+    if(lightlevel == flash->minLight)
     {
-        P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->maxlight);
-        flash->count = flash->brighttime;
+        P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->maxLight);
+        flash->count = flash->brightTime;
     }
     else
     {
-        P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->minlight);
-        flash->count = flash->darktime;
+        P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->minLight);
+        flash->count = flash->darkTime;
     }
 }
 
@@ -179,14 +179,14 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
     P_AddThinker(&flash->thinker);
 
     flash->sector = sector;
-    flash->darktime = fastOrSlow;
-    flash->brighttime = STROBEBRIGHT;
+    flash->darkTime = fastOrSlow;
+    flash->brightTime = STROBEBRIGHT;
     flash->thinker.function = T_StrobeFlash;
-    flash->maxlight = lightlevel;
-    flash->minlight = P_FindMinSurroundingLight(sector, lightlevel);
+    flash->maxLight = lightlevel;
+    flash->minLight = P_FindMinSurroundingLight(sector, lightlevel);
 
-    if(flash->minlight == flash->maxlight)
-        flash->minlight = 0;
+    if(flash->minLight == flash->maxLight)
+        flash->minLight = 0;
 
     // nothing special about it during gameplay
     P_ToXSector(sector)->special = 0;
@@ -212,7 +212,7 @@ void EV_StartLightStrobing(line_t *line)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        if(P_ToXSector(sec)->specialdata)
+        if(P_ToXSector(sec)->specialData)
             continue;
 
         P_SpawnStrobeFlash(sec, SLOWDARK, 0);
@@ -302,7 +302,7 @@ void T_Glow(glow_t *g)
     case -1:
         // DOWN
         lightlevel -= glowDelta;
-        if(lightlevel <= g->minlight)
+        if(lightlevel <= g->minLight)
         {
             lightlevel += glowDelta;
             g->direction = 1;
@@ -312,7 +312,7 @@ void T_Glow(glow_t *g)
     case 1:
         // UP
         lightlevel += glowDelta;
-        if(lightlevel >= g->maxlight)
+        if(lightlevel >= g->maxLight)
         {
             lightlevel -= glowDelta;
             g->direction = -1;
@@ -333,8 +333,8 @@ void P_SpawnGlowingLight(sector_t *sector)
     P_AddThinker(&g->thinker);
 
     g->sector = sector;
-    g->minlight = P_FindMinSurroundingLight(sector, lightlevel);
-    g->maxlight = lightlevel;
+    g->minLight = P_FindMinSurroundingLight(sector, lightlevel);
+    g->maxLight = lightlevel;
     g->thinker.function = T_Glow;
     g->direction = -1;
 

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -24,8 +24,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Intermission/stat screens
+/**
+ * wi_stuff.c: Intermission/stat screens
  *
  * Different between registered DOOM (1994) and
  * Ultimate DOOM - Final edition (retail, 1995?).
@@ -771,7 +771,7 @@ void WI_drawShowNextLoc(void)
             WI_drawOnLnode(i, &splat);
 
         // splat the secret level?
-        if(wbs->didsecret)
+        if(wbs->didSecret)
             WI_drawOnLnode(8, &splat);
 
         // draw flashing ptr
@@ -797,7 +797,7 @@ int WI_fragSum(int teamnum)
 
        for(i=0; i<NUM_TEAMS; i++)
        {
-       if(players[i].plr->ingame && i!=playernum)
+       if(players[i].plr->inGame && i!=playernum)
        {
        frags += plrs[playernum].frags[i];
        }
@@ -849,7 +849,7 @@ void WI_updateDeathmatchStats(void)
             //          {
             for(j = 0; j < NUM_TEAMS; j++)
             {
-                //              if (players[i].plr->ingame)
+                //              if (players[i].plr->inGame)
                 dm_frags[i][j] = teaminfo[i].frags[j];
             }
             dm_totals[i] = WI_fragSum(i);
@@ -866,11 +866,11 @@ void WI_updateDeathmatchStats(void)
         stillticking = false;
         for(i = 0; i < NUM_TEAMS; i++)
         {
-            //          if (players[i].plr->ingame)
+            //          if (players[i].plr->inGame)
             {
                 for(j = 0; j < NUM_TEAMS; j++)
                 {
-                    if( /*players[i].plr->ingame && */ dm_frags[i][j] !=
+                    if( /*players[i].plr->inGame && */ dm_frags[i][j] !=
                        teaminfo[i].frags[j])
                     {
                         if(teaminfo[i].frags[j] < 0)
@@ -1038,7 +1038,7 @@ void WI_initNetgameStats(void)
 
     for(i = 0; i < NUM_TEAMS; i++)
     {
-        /*if (!players[i].plr->ingame)
+        /*if (!players[i].plr->inGame)
            continue;
 
            cnt_kills[i] = cnt_items[i] = cnt_secret[i] = cnt_frags[i] = 0; */
@@ -1062,10 +1062,10 @@ void WI_updateNetgameStats(void)
         acceleratestage = 0;
         for(i = 0; i < NUM_TEAMS; i++)
         {
-            //if (!players[i].plr->ingame) continue;
-            cnt_kills[i] = (teaminfo[i].kills * 100) / wbs->maxkills;
-            cnt_items[i] = (teaminfo[i].items * 100) / wbs->maxitems;
-            cnt_secret[i] = (teaminfo[i].secret * 100) / wbs->maxsecret;
+            //if (!players[i].plr->inGame) continue;
+            cnt_kills[i] = (teaminfo[i].kills * 100) / wbs->maxKills;
+            cnt_items[i] = (teaminfo[i].items * 100) / wbs->maxItems;
+            cnt_secret[i] = (teaminfo[i].secret * 100) / wbs->maxSecret;
 
             if(dofrags)
                 cnt_frags[i] = teaminfo[i].totalfrags;  //WI_fragSum(i);
@@ -1082,12 +1082,12 @@ void WI_updateNetgameStats(void)
 
         for(i = 0; i < NUM_TEAMS; i++)
         {
-            //if (!players[i].plr->ingame) continue;
+            //if (!players[i].plr->inGame) continue;
 
             cnt_kills[i] += 2;
 
-            if(cnt_kills[i] >= (teaminfo[i].kills * 100) / wbs->maxkills)
-                cnt_kills[i] = (teaminfo[i].kills * 100) / wbs->maxkills;
+            if(cnt_kills[i] >= (teaminfo[i].kills * 100) / wbs->maxKills)
+                cnt_kills[i] = (teaminfo[i].kills * 100) / wbs->maxKills;
             else
                 stillticking = true;
         }
@@ -1105,11 +1105,11 @@ void WI_updateNetgameStats(void)
 
         for(i = 0; i < NUM_TEAMS; i++)
         {
-            //if (!players[i].plr->ingame) continue;
+            //if (!players[i].plr->inGame) continue;
 
             cnt_items[i] += 2;
-            if(cnt_items[i] >= (teaminfo[i].items * 100) / wbs->maxitems)
-                cnt_items[i] = (teaminfo[i].items * 100) / wbs->maxitems;
+            if(cnt_items[i] >= (teaminfo[i].items * 100) / wbs->maxItems)
+                cnt_items[i] = (teaminfo[i].items * 100) / wbs->maxItems;
             else
                 stillticking = true;
         }
@@ -1128,12 +1128,12 @@ void WI_updateNetgameStats(void)
 
         for(i = 0; i < NUM_TEAMS; i++)
         {
-            //if (!players[i].plr->ingame) continue;
+            //if (!players[i].plr->inGame) continue;
 
             cnt_secret[i] += 2;
 
-            if(cnt_secret[i] >= (teaminfo[i].secret * 100) / wbs->maxsecret)
-                cnt_secret[i] = (teaminfo[i].secret * 100) / wbs->maxsecret;
+            if(cnt_secret[i] >= (teaminfo[i].secret * 100) / wbs->maxSecret)
+                cnt_secret[i] = (teaminfo[i].secret * 100) / wbs->maxSecret;
             else
                 stillticking = true;
         }
@@ -1152,7 +1152,7 @@ void WI_updateNetgameStats(void)
 
         for(i = 0; i < NUM_TEAMS; i++)
         {
-            //if (!players[i].plr->ingame) continue;
+            //if (!players[i].plr->inGame) continue;
 
             cnt_frags[i] += 1;
 
@@ -1276,9 +1276,9 @@ void WI_updateStats(void)
     if(acceleratestage && sp_state != 10)
     {
         acceleratestage = 0;
-        cnt_kills[0] = (plrs[me].skills * 100) / wbs->maxkills;
-        cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxitems;
-        cnt_secret[0] = (plrs[me].ssecret * 100) / wbs->maxsecret;
+        cnt_kills[0] = (plrs[me].skills * 100) / wbs->maxKills;
+        cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxItems;
+        cnt_secret[0] = (plrs[me].ssecret * 100) / wbs->maxSecret;
         cnt_time = plrs[me].stime / TICRATE;
         if(wbs->partime != -1)
             cnt_par = wbs->partime / TICRATE;
@@ -1293,9 +1293,9 @@ void WI_updateStats(void)
         if(!(bcnt & 3))
             S_LocalSound(sfx_intcnt, 0);
 
-        if(cnt_kills[0] >= (plrs[me].skills * 100) / wbs->maxkills)
+        if(cnt_kills[0] >= (plrs[me].skills * 100) / wbs->maxKills)
         {
-            cnt_kills[0] = (plrs[me].skills * 100) / wbs->maxkills;
+            cnt_kills[0] = (plrs[me].skills * 100) / wbs->maxKills;
             S_LocalSound(sfx_intcmp, 0);
             sp_state++;
         }
@@ -1307,9 +1307,9 @@ void WI_updateStats(void)
         if(!(bcnt & 3))
             S_LocalSound(sfx_intcnt, 0);
 
-        if(cnt_items[0] >= (plrs[me].sitems * 100) / wbs->maxitems)
+        if(cnt_items[0] >= (plrs[me].sitems * 100) / wbs->maxItems)
         {
-            cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxitems;
+            cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxItems;
             S_LocalSound(sfx_intcmp, 0);
             sp_state++;
         }
@@ -1321,9 +1321,9 @@ void WI_updateStats(void)
         if(!(bcnt & 3))
             S_LocalSound(sfx_intcnt, 0);
 
-        if(cnt_secret[0] >= (plrs[me].ssecret * 100) / wbs->maxsecret)
+        if(cnt_secret[0] >= (plrs[me].ssecret * 100) / wbs->maxSecret)
         {
-            cnt_secret[0] = (plrs[me].ssecret * 100) / wbs->maxsecret;
+            cnt_secret[0] = (plrs[me].ssecret * 100) / wbs->maxSecret;
             S_LocalSound(sfx_intcmp, 0);
             sp_state++;
         }
@@ -1426,24 +1426,24 @@ void WI_checkForAccelerate(void)
     // check for button presses to skip delays
     for(i = 0, player = players; i < MAXPLAYERS; i++, player++)
     {
-        if(players[i].plr->ingame)
+        if(players[i].plr->inGame)
         {
             if(player->brain.attack)
             {
-                if(!player->attackdown)
+                if(!player->attackDown)
                     acceleratestage = 1;
-                player->attackdown = true;
+                player->attackDown = true;
             }
             else
-                player->attackdown = false;
+                player->attackDown = false;
             if(player->brain.use)
             {
-                if(!player->usedown)
+                if(!player->useDown)
                     acceleratestage = 1;
-                player->usedown = true;
+                player->useDown = true;
             }
             else
-                player->usedown = false;
+                player->useDown = false;
         }
     }
 }
@@ -1739,12 +1739,12 @@ void WI_initVariables(wbstartstruct_t * wbstartstruct)
     myteam = cfg.playerColor[wbs->pnum];
     plrs = wbs->plyr;
 
-    if(!wbs->maxkills)
-        wbs->maxkills = 1;
-    if(!wbs->maxitems)
-        wbs->maxitems = 1;
-    if(!wbs->maxsecret)
-        wbs->maxsecret = 1;
+    if(!wbs->maxKills)
+        wbs->maxKills = 1;
+    if(!wbs->maxItems)
+        wbs->maxItems = 1;
+    if(!wbs->maxSecret)
+        wbs->maxSecret = 1;
 
     if(gamemode != retail)
         if(wbs->epsd > 2)

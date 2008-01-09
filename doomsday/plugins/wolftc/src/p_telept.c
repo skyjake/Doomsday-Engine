@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -87,8 +87,8 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        thinker = thinkercap.next;
-        for(thinker = thinkercap.next; thinker != &thinkercap;
+        thinker = thinkerCap.next;
+        for(thinker = thinkerCap.next; thinker != &thinkerCap;
             thinker = thinker->next)
         {
             // not a mobj
@@ -107,7 +107,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
                 continue;
 
             memcpy(oldpos, thing->pos, sizeof(thing->pos));
-            aboveFloor = thing->pos[VZ] - thing->floorz;
+            aboveFloor = thing->pos[VZ] - thing->floorZ;
 
             if(!P_TeleportMove(thing, m->pos[VX], m->pos[VY], false))
                 return 0;
@@ -115,7 +115,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
             // In Final Doom things teleported to their destination
             // but the height wasn't set to the floor.
             if(gamemission != GM_TNT && gamemission != GM_PLUT)
-                thing->pos[VZ] = thing->floorz;
+                thing->pos[VZ] = thing->floorZ;
 #if 0
             // Spawn teleport fog at source and destination.
             fog = P_SpawnMobj3fv(MT_TFOG, oldpos);
@@ -137,11 +137,11 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
                                            DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
                    P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
                 {
-                    thing->floorclip = 10;
+                    thing->floorClip = 10;
                 }
                 else
                 {
-                    thing->floorclip = 0;
+                    thing->floorClip = 0;
                 }
             }
             thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;
@@ -149,25 +149,25 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
             // don't move for a bit
             if(thing->player)
             {
-                thing->reactiontime = 18;
+                thing->reactionTime = 18;
                 if(thing->player->powers[PT_FLIGHT] && aboveFloor)
                 {
-                    thing->pos[VZ] = thing->floorz + aboveFloor;
-                    if(thing->pos[VZ] + thing->height > thing->ceilingz)
+                    thing->pos[VZ] = thing->floorZ + aboveFloor;
+                    if(thing->pos[VZ] + thing->height > thing->ceilingZ)
                     {
-                        thing->pos[VZ] = thing->ceilingz - thing->height;
+                        thing->pos[VZ] = thing->ceilingZ - thing->height;
                     }
-                    thing->dplayer->viewZ =
-                        thing->pos[VZ] + thing->dplayer->viewheight;
+                    thing->dPlayer->viewZ =
+                        thing->pos[VZ] + thing->dPlayer->viewHeight;
                 }
                 else
                 {
-                    //thing->dplayer->clLookDir = 0; /* $unifiedangles */
-                    thing->dplayer->lookdir = 0;
+                    //thing->dPlayer->clLookDir = 0; /* $unifiedangles */
+                    thing->dPlayer->lookDir = 0;
                 }
 
-                //thing->dplayer->clAngle = thing->angle; /* $unifiedangles */
-                thing->dplayer->flags |=
+                //thing->dPlayer->clAngle = thing->angle; /* $unifiedangles */
+                thing->dPlayer->flags |=
                     DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
             }
             return 1;

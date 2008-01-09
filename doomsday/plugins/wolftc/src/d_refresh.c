@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -115,14 +115,14 @@ void R_InitRefresh(void)
  */
 void R_DrawSpecialFilter(void)
 {
-    player_t *player = &players[displayplayer];
+    player_t       *player = &players[displayplayer];
 
     if(player->powers[PT_INVULNERABILITY])
     {
-        float       x, y, w, h;
-        float       max = 30;
-        float       str, r, g, b;
-        int         t = player->powers[PT_INVULNERABILITY];
+        float           x, y, w, h;
+        float           max = 30;
+        float           str, r, g, b;
+        int             t = player->powers[PT_INVULNERABILITY];
 
         if(t < max)
             str = t / max;
@@ -131,11 +131,12 @@ void R_DrawSpecialFilter(void)
         else if(t > INVULNTICS - max)
             str = (INVULNTICS - t) / max;
         else
-            str = 1;            // Full inversion.
+            str = 1; // Full inversion.
+
         // Draw an inversing filter.
-        gl.Disable(DGL_TEXTURING);
-        gl.Func(DGL_BLENDING, DGL_ONE_MINUS_DST_COLOR,
-                DGL_ONE_MINUS_SRC_COLOR);
+        DGL_Disable(DGL_TEXTURING);
+        GL_BlendMode(BM_INVERSE);
+
         r = str * 2;
         g = str * 2 - .4;
         b = str * 2 - .8;
@@ -147,8 +148,8 @@ void R_DrawSpecialFilter(void)
         GL_DrawRect(x, y, w, h, r, g, b, 1);
 
         // Restore the normal rendering state.
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-        gl.Enable(DGL_TEXTURING);
+        GL_BlendMode(BM_NORMAL);
+        DGL_Enable(DGL_TEXTURING);
     }
 }
 
@@ -166,11 +167,11 @@ void R_DrawLevelTitle(void)
         return;
 
     // Make the text a bit smaller.
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
-    gl.Translatef(160, y, 0);
-    gl.Scalef(.7f, .7f, 1);
-    gl.Translatef(-160, -y, 0);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(160, y, 0);
+    DGL_Scalef(.7f, .7f, 1);
+    DGL_Translatef(-160, -y, 0);
 
     if(actual_leveltime < 35)
         alpha = actual_leveltime / 35.0f;
@@ -194,7 +195,7 @@ void R_DrawLevelTitle(void)
         y += 14;                //9;
     }
 
-    //gl.Color4f(.5f, .5f, .5f, alpha);
+    //DGL_Color4f(.5f, .5f, .5f, alpha);
     if(lauthor && W_IsFromIWAD(lnames[mapnum].lump) &&
        (!cfg.hideAuthorIdSoft || stricmp(lauthor, "id software")))
     {
@@ -202,8 +203,8 @@ void R_DrawLevelTitle(void)
                      hu_font_a, .5f, .5f, .5f, alpha, false, 0);
     }
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 /**
@@ -369,8 +370,8 @@ void D_Display2(void)
         break;
 
     case GS_WAITING:
-        gl.Clear(DGL_COLOR_BUFFER_BIT);
-        M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", hu_font_a, 1, 0, 0, 1);
+        //gl.Clear(DGL_COLOR_BUFFER_BIT);
+        //M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", hu_font_a, 1, 0, 0, 1);
         break;
 
     default:
@@ -398,67 +399,67 @@ void D_Display2(void)
 void P_SetDoomsdayFlags(mobj_t *mo)
 {
     // Client mobjs can't be set here.
-    if(IS_CLIENT && mo->ddflags & DDMF_REMOTE)
+    if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
         return;
 
     // Reset the flags for a new frame.
-    mo->ddflags &= DDMF_CLEAR_MASK;
+    mo->ddFlags &= DDMF_CLEAR_MASK;
 
     // Local objects aren't sent to clients.
     if(mo->flags & MF_LOCAL)
-        mo->ddflags |= DDMF_LOCAL;
+        mo->ddFlags |= DDMF_LOCAL;
     if(mo->flags & MF_SOLID)
-        mo->ddflags |= DDMF_SOLID;
+        mo->ddFlags |= DDMF_SOLID;
     if(mo->flags & MF_NOGRAVITY)
-        mo->ddflags |= DDMF_NOGRAVITY;
+        mo->ddFlags |= DDMF_NOGRAVITY;
     if(mo->flags2 & MF2_FLOATBOB)
-        mo->ddflags |= DDMF_NOGRAVITY | DDMF_BOB;
+        mo->ddFlags |= DDMF_NOGRAVITY | DDMF_BOB;
     if(mo->flags & MF_MISSILE)
     {
-        mo->ddflags |= DDMF_MISSILE;
+        mo->ddFlags |= DDMF_MISSILE;
     }
     if(mo->type == MT_LIGHTSOURCE)
-        mo->ddflags |= DDMF_ALWAYSLIT | DDMF_DONTDRAW;
+        mo->ddFlags |= DDMF_ALWAYSLIT | DDMF_DONTDRAW;
     if(mo->info && mo->info->flags2 & MF2_ALWAYSLIT)
-        mo->ddflags |= DDMF_ALWAYSLIT;
+        mo->ddFlags |= DDMF_ALWAYSLIT;
 
     if(mo->flags2 & MF2_FLY)
-        mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
+        mo->ddFlags |= DDMF_FLY | DDMF_NOGRAVITY;
 
     // $democam: cameramen are invisible
     if(P_IsCamera(mo))
-        mo->ddflags |= DDMF_DONTDRAW;
+        mo->ddFlags |= DDMF_DONTDRAW;
 
-    if(mo->flags & MF_CORPSE && cfg.corpseTime && mo->corpsetics == -1)
-        mo->ddflags |= DDMF_DONTDRAW;
+    if(mo->flags & MF_CORPSE && cfg.corpseTime && mo->corpseTics == -1)
+        mo->ddFlags |= DDMF_DONTDRAW;
 
     // Choose which ddflags to set.
     if(mo->flags2 & MF2_DONTDRAW)
     {
-        mo->ddflags |= DDMF_DONTDRAW;
+        mo->ddFlags |= DDMF_DONTDRAW;
         return;                 // No point in checking the other flags.
     }
 
     if(mo->flags2 & MF2_LOGRAV)
-        mo->ddflags |= DDMF_LOWGRAVITY;
+        mo->ddFlags |= DDMF_LOWGRAVITY;
 
     // The torches often go into the ceiling. This'll prevent
     // them from 'jumping'.
     if(mo->type == MT_MISC41 || mo->type == MT_MISC42 || mo->type == MT_MISC43  // tall torches
        || mo->type == MT_MISC44 || mo->type == MT_MISC45 || mo->type == MT_MISC46)  // short torches
-        mo->ddflags |= DDMF_NOFITBOTTOM;
+        mo->ddFlags |= DDMF_NOFITBOTTOM;
 
     if(mo->flags & MF_BRIGHTSHADOW)
-        mo->ddflags |= DDMF_BRIGHTSHADOW;
+        mo->ddFlags |= DDMF_BRIGHTSHADOW;
     else if(mo->flags & MF_SHADOW)
-        mo->ddflags |= DDMF_SHADOW;
+        mo->ddFlags |= DDMF_SHADOW;
 
     if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE)) ||
        mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE &&
                                 !(mo->flags & MF_VIEWALIGN)))
-        mo->ddflags |= DDMF_VIEWALIGN;
+        mo->ddFlags |= DDMF_VIEWALIGN;
 
-    mo->ddflags |= mo->flags & MF_TRANSLATION;
+    mo->ddFlags |= mo->flags & MF_TRANSLATION;
 }
 
 /**
@@ -472,7 +473,7 @@ void R_SetAllDoomsdayFlags(void)
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->snext)
+        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
             P_SetDoomsdayFlags(iter);
     }
 }
