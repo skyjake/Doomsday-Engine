@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ typedef struct mline_s {
 typedef struct msector_s {
     int16_t         floorHeight;
     int16_t         ceilHeight;
-    int16_t         lightlevel;
+    int16_t         lightLevel;
     int16_t         type;
     int16_t         tag;
     uint            floorMaterial;
@@ -112,13 +112,13 @@ typedef struct mpolyobj_s {
 
 typedef struct map_s {
     char            name[9];
-    uint            numvertexes;
-    uint            numsectors;
-    uint            numlines;
-    uint            numsides;
-    uint            numpolyobjs;
-    uint            numthings;
-    uint            nummaterials;
+    uint            numVertexes;
+    uint            numSectors;
+    uint            numLines;
+    uint            numSides;
+    uint            numPolyobjs;
+    uint            numThings;
+    uint            numMaterials;
 
     mvertex_t      *vertexes;
     msector_t      *sectors;
@@ -131,7 +131,7 @@ typedef struct map_s {
 
     boolean         hexenFormat;
 
-    byte           *rejectmatrix;
+    byte           *rejectMatrix;
     void           *blockMap;
 } map_t;
 

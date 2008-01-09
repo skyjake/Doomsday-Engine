@@ -100,7 +100,7 @@ static uint registerMaterial(const char *name, boolean isFlat)
     materialref_t      *m;
 
     // Check if this material has already been registered.
-    for(i = 0; i < map->nummaterials; ++i)
+    for(i = 0; i < map->numMaterials; ++i)
     {
         m = map->materials[i];
 
@@ -120,9 +120,9 @@ static uint registerMaterial(const char *name, boolean isFlat)
     m->isFlat = isFlat;
 
     // Add it to the list of known materials.
-    map->materials = realloc(map->materials, sizeof(m) * ++map->nummaterials);
-    map->materials[map->nummaterials-1] = m;
-    return map->nummaterials-1; // 0-based index.
+    map->materials = realloc(map->materials, sizeof(m) * ++map->numMaterials);
+    map->materials[map->numMaterials-1] = m;
+    return map->numMaterials-1; // 0-based index.
 }
 
 int DataTypeForLumpName(const char *name)
@@ -208,20 +208,20 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
     /**
      * Link the new polyobj into the global list.
      */
-    newList = malloc(((++map->numpolyobjs) + 1) * sizeof(mpolyobj_t*));
+    newList = malloc(((++map->numPolyobjs) + 1) * sizeof(mpolyobj_t*));
     // Copy the existing list.
-    for(i = 0; i < map->numpolyobjs - 1; ++i)
+    for(i = 0; i < map->numPolyobjs - 1; ++i)
     {
         newList[i] = map->polyobjs[i];
     }
     newList[i++] = po; // Add the new polyobj.
     newList[i] = NULL; // Terminate.
 
-    if(map->numpolyobjs-1 > 0)
+    if(map->numPolyobjs-1 > 0)
         free(map->polyobjs);
     map->polyobjs = newList;
 
-    po->idx = map->numpolyobjs-1;
+    po->idx = map->numPolyobjs-1;
     po->tag = tag;
     po->seqType = sequenceType;
     po->anchor[VX] = anchorX;
@@ -256,7 +256,7 @@ static boolean iterFindPolyLines(int16_t x, int16_t y,
         return true;
     }
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         mline_t        *line = &map->lines[i];
         mvertex_t      *v1 = &map->vertexes[line->v[0]-1];
@@ -292,7 +292,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
 
     uint            i;
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         mline_t        *line = &map->lines[i];
 
@@ -350,7 +350,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
     for(j = 1; j < PO_MAXPOLYLINES; ++j)
     {
         psIndexOld = psIndex;
-        for(i = 0; i < map->numlines; ++i)
+        for(i = 0; i < map->numLines; ++i)
         {
             mline_t         *line = &map->lines[i];
 
@@ -388,7 +388,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
         {   // Check if an explicit line order has been skipped
             // A line has been skipped if there are any more explicit
             // lines with the current tag value
-            for(i = 0; i < map->numlines; ++i)
+            for(i = 0; i < map->numLines; ++i)
             {
                 mline_t         *line = &map->lines[i];
 
@@ -433,7 +433,7 @@ static void findPolyobjs(void)
 
     Con_Message("WadMapConverter::findPolyobjs: Processing...\n");
 
-    for(i = 0; i < map->numthings; ++i)
+    for(i = 0; i < map->numThings; ++i)
     {
         mthing_t       *thing = &map->things[i];
 
@@ -478,27 +478,27 @@ boolean IsSupportedFormat(const int *lumpList, int numLumps)
         switch(DataTypeForLumpName(W_LumpName(lumpList[i])))
         {
         case ML_VERTEXES:
-            ptr = &map->numvertexes;
+            ptr = &map->numVertexes;
             elmSize = SIZEOF_VERTEX;
             break;
 
         case ML_THINGS:
-            ptr = &map->numthings;
+            ptr = &map->numThings;
             elmSize = (map->hexenFormat? SIZEOF_XTHING : SIZEOF_THING);
             break;
 
         case ML_LINEDEFS:
-            ptr = &map->numlines;
+            ptr = &map->numLines;
             elmSize = (map->hexenFormat? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
             break;
 
         case ML_SIDEDEFS:
-            ptr = &map->numsides;
+            ptr = &map->numSides;
             elmSize = SIZEOF_SIDEDEF;
             break;
 
         case ML_SECTORS:
-            ptr = &map->numsectors;
+            ptr = &map->numSectors;
             elmSize = SIZEOF_SECTOR;
             break;
 
@@ -517,8 +517,8 @@ boolean IsSupportedFormat(const int *lumpList, int numLumps)
         }
     }
 
-    if(map->numvertexes > 0 && map->numlines > 0 && map->numsides > 0 &&
-       map->numsectors > 0 && map->numthings > 0)
+    if(map->numVertexes > 0 && map->numLines > 0 && map->numSides > 0 &&
+       map->numSectors > 0 && map->numThings > 0)
     {
         supported = true;
     }
@@ -551,7 +551,7 @@ static void freeMapData(void)
     if(map->polyobjs)
     {
         uint                i;
-        for(i = 0; i < map->numpolyobjs; ++i)
+        for(i = 0; i < map->numPolyobjs; ++i)
         {
             mpolyobj_t         *po = map->polyobjs[i];
             free(po->lineIndices);
@@ -564,7 +564,7 @@ static void freeMapData(void)
     if(map->materials)
     {
         uint                i;
-        for(i = 0; i < map->nummaterials; ++i)
+        for(i = 0; i < map->numMaterials; ++i)
         {
             materialref_t      *m = map->materials[i];
             free(m);
@@ -697,7 +697,7 @@ if(SHORT(blockmapLump[offset]) != 0)
                     while((idx = SHORT(blockmapLump[offset + 1 + count])) != -1)
                     {
 #if _DEBUG
-if(idx < 0 || idx >= (long) map->numlines)
+if(idx < 0 || idx >= (long) map->numLines)
 {
     Con_Error("loadBlockMap: Invalid linedef id %li\n!", idx);
 }
@@ -899,7 +899,7 @@ static boolean loadSectors(const byte *buf, size_t len)
         memcpy(name, ptr+12, 8);
         name[8] = '\0';
         s->ceilMaterial = registerMaterial(name, true);
-        s->lightlevel = SHORT(*((const int16_t*) (ptr+20)));
+        s->lightLevel = SHORT(*((const int16_t*) (ptr+20)));
         s->type = SHORT(*((const int16_t*) (ptr+22)));
         s->tag = SHORT(*((const int16_t*) (ptr+24)));
     }
@@ -979,11 +979,11 @@ boolean LoadMap(const int *lumpList, int numLumps)
     size_t              oldLen = 0;
 
     // Allocate the data structure arrays.
-    map->vertexes = malloc(map->numvertexes * sizeof(mvertex_t));
-    map->lines = malloc(map->numlines * sizeof(mline_t));
-    map->sides = malloc(map->numsides * sizeof(mside_t));
-    map->sectors = malloc(map->numsectors * sizeof(msector_t));
-    map->things = malloc(map->numthings * sizeof(mthing_t));
+    map->vertexes = malloc(map->numVertexes * sizeof(mvertex_t));
+    map->lines = malloc(map->numLines * sizeof(mline_t));
+    map->sides = malloc(map->numSides * sizeof(mside_t));
+    map->sectors = malloc(map->numSectors * sizeof(msector_t));
+    map->things = malloc(map->numThings * sizeof(mthing_t));
 
     for(i = 0; i < numLumps; ++i)
     {
@@ -1038,16 +1038,16 @@ boolean TransferMap(void)
     MPE_Begin(map->name);
 
     // Create all the data structures.
-    for(i = 0; i < map->numvertexes; ++i)
+    for(i = 0; i < map->numVertexes; ++i)
     {
         mvertex_t          *v = &map->vertexes[i];
         MPE_VertexCreate(v->pos[VX], v->pos[VY]);
     }
 
-    for(i = 0; i < map->numsectors; ++i)
+    for(i = 0; i < map->numSectors; ++i)
     {
         msector_t          *sec = &map->sectors[i];
-        MPE_SectorCreate((float) sec->lightlevel / 255.0f, 1, 1, 1,
+        MPE_SectorCreate((float) sec->lightLevel / 255.0f, 1, 1, 1,
                          sec->floorHeight,
                          map->materials[sec->floorMaterial]->name,
                          (map->materials[sec->floorMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
@@ -1058,7 +1058,7 @@ boolean TransferMap(void)
                          0, 0, 1, 1, 1);
     }
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         mline_t            *l = &map->lines[i];
         mside_t            *front, *back;
@@ -1100,7 +1100,7 @@ boolean TransferMap(void)
                           0);
     }
 
-    for(i = 0; i < map->numpolyobjs; ++i)
+    for(i = 0; i < map->numPolyobjs; ++i)
     {
         mpolyobj_t         *po = map->polyobjs[i];
         uint                j, *lineList;
