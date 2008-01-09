@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -191,8 +191,8 @@ typedef struct mobj_s {
         // Hexen-specific data:
     struct player_s *player;       // only valid if type == MT_PLAYER
 
-    int             floorpic;      // contacted sec floorpic
-    mobjinfo_t     *info;          // &mobjinfo[mobj->type]
+    int             floorPic;      // contacted sec floorpic
+    mobjinfo_t     *info;          // &mobjInfo[mobj->type]
     int             damage;        // For missiles
     int             flags;
     int             flags2;        // Heretic flags
@@ -200,26 +200,26 @@ typedef struct mobj_s {
     int             special1;      // Special info
     int             special2;      // Special info
     int             health;
-    int             movedir;       // 0-7
-    int             movecount;     // when 0, select a new dir
+    int             moveDir;       // 0-7
+    int             moveCount;     // when 0, select a new dir
     struct mobj_s  *target;        // thing being chased/attacked (or NULL)
     // also the originator for missiles
     // used by player to freeze a bit after
     // teleporting
     int             threshold;     // if > 0, the target will be chased
     // no matter what (even if shot)
-    int             lastlook;      // player number last looked for
+    int             lastLook;      // player number last looked for
     short           tid;           // thing identifier
     byte            special;       // special
     byte            args[5];       // special arguments
-    int             turntime;      // $visangle-facetarget
+    int             turnTime;      // $visangle-facetarget
     int             alpha;         // $mobjalpha
 
     // Thing being chased/attacked for tracers.
     struct mobj_s  *tracer;
 
     // Used by lightning zap
-    struct mobj_s  *lastenemy;
+    struct mobj_s  *lastEnemy;
 } mobj_t;
 
 #endif

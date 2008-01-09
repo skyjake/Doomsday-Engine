@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -127,18 +127,18 @@ typedef struct {
     int             soundID;
 } switchlist_t;
 
-typedef enum {
-    top,
-    middle,
-    bottom
-} bwhere_e;
+typedef enum linesection_e{
+    LS_MIDDLE,
+    LS_BOTTOM,
+    LS_TOP
+} linesection_t;
 
 typedef struct button_s {
     line_t         *line;
-    bwhere_e        where;
-    int             btexture;
-    int             btimer;
-    mobj_t         *soundorg;
+    linesection_t   section;
+    int             texture;
+    int             timer;
+    mobj_t         *soundOrg;
 
     struct button_s *next;
 } button_t;
@@ -176,7 +176,7 @@ typedef struct {
     int             wait;
     int             count;
     plat_e          status;
-    plat_e          oldstatus;
+    plat_e          oldStatus;
     int             crush;
     int             tag;
     plattype_e      type;
@@ -212,11 +212,11 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     vldoor_e        type;
-    float           topheight;
+    float           topHeight;
     float           speed;
     int             direction; // 1 = up, 0 = waiting at top, -1 = down
-    int             topwait; // tics to wait at the top (keep in case a door going down is reset)
-    int             topcountdown; // when it reaches 0, start going down
+    int             topWait; // tics to wait at the top (keep in case a door going down is reset)
+    int             topCountDown; // when it reaches 0, start going down
 } vldoor_t;
 
 #define VDOORSPEED              1*2
@@ -241,13 +241,13 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     ceiling_e       type;
-    float           bottomheight;
-    float           topheight;
+    float           bottomHeight;
+    float           topHeight;
     float           speed;
     int             crush;
     int             direction; // 1 = up, 0 = waiting, -1 = down
     int             tag; // ID
-    int             olddirection;
+    int             oldDirection;
 
     struct ceilinglist_s *list;
 } ceiling_t;
@@ -289,9 +289,9 @@ typedef struct {
     floor_e         type;
     int             crush;
     int             direction;
-    int             newspecial;
+    int             newSpecial;
     short           texture;
-    float           floordestheight;
+    float           floorDestHeight;
     float           speed;
     int             delayCount;
     int             delayTotal;
@@ -308,8 +308,8 @@ typedef struct {
     sector_t       *sector;
     float           ceilingSpeed;
     float           floorSpeed;
-    float           floordest;
-    float           ceilingdest;
+    float           floorDest;
+    float           ceilingDest;
     int             direction;
     int             crush;
 } pillar_t;

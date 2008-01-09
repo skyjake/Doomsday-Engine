@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -255,12 +255,12 @@ static void InitStats(void)
         for(i = 0; i < MAXPLAYERS; i++)
         {
             totalFrags[i] = 0;
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
             {
                 playercount++;
                 for(j = 0; j < MAXPLAYERS; j++)
                 {
-                    if(players[i].plr->ingame)
+                    if(players[i].plr->inGame)
                     {
                         totalFrags[i] += players[i].frags[j];
                     }
@@ -347,31 +347,31 @@ static void CheckForSkip(void)
 
     for(i = 0, player = players; i < MAXPLAYERS; ++i, player++)
     {
-        if(players[i].plr->ingame)
+        if(players[i].plr->inGame)
         {
             if(player->brain.attack)
             {
-                if(!player->attackdown)
+                if(!player->attackDown)
                 {
                     skipintermission = 1;
                 }
-                player->attackdown = true;
+                player->attackDown = true;
             }
             else
             {
-                player->attackdown = false;
+                player->attackDown = false;
             }
             if(player->brain.use)
             {
-                if(!player->usedown)
+                if(!player->useDown)
                 {
                     skipintermission = 1;
                 }
-                player->usedown = true;
+                player->useDown = true;
             }
             else
             {
-                player->usedown = false;
+                player->useDown = false;
             }
         }
     }
@@ -459,7 +459,7 @@ static void DrDeathTally(void)
         {
             x = xPos >> FRACBITS;
             bold = (i == consoleplayer || j == consoleplayer);
-            if(players[i].plr->ingame && players[j].plr->ingame)
+            if(players[i].plr->inGame && players[j].plr->inGame)
             {
                 if(bold)
                 {
@@ -483,7 +483,7 @@ static void DrDeathTally(void)
                 }
             }
         }
-        if(showTotals && players[i].plr->ingame &&
+        if(showTotals && players[i].plr->inGame &&
            !((slaughterboy & (1 << i)) && !(intertime & 16)))
         {
             DrNumber(totalFrags[i], TALLY_TOTALS_X, y, 1000);

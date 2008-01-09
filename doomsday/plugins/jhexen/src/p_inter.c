@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -142,7 +142,7 @@ boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
         plr->ammo[ammo] = MAX_MANA;
 
     //// \fixme - DJS: This shouldn't be actioned from here.
-    if(plr->class == PCLASS_FIGHTER && plr->readyweapon == WT_SECOND &&
+    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        ammo == AT_BLUEMANA && prevMana <= 0)
     {
         P_SetPsprite(plr, ps_weapon, S_FAXEREADY_G);
@@ -188,12 +188,12 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
     }
     else if(IS_NETGAME && !deathmatch)
     {   // Cooperative net-game.
-        if(plr->weaponowned[weaponType])
+        if(plr->weaponOwned[weaponType])
         {
             return;
         }
 
-        plr->weaponowned[weaponType] = true;
+        plr->weaponOwned[weaponType] = true;
         plr->update |= PSF_OWNED_WEAPONS;
         if(weaponType == WT_SECOND)
         {
@@ -203,7 +203,7 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
         {
             P_GiveMana(plr, AT_GREENMANA, 25);
         }
-        plr->pendingweapon = weaponType;
+        plr->pendingWeapon = weaponType;
         remove = false;
 
         // Maybe unhide the HUD?
@@ -221,14 +221,14 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
             gaveMana = P_GiveMana(plr, AT_GREENMANA, 25);
         }
 
-        if(plr->weaponowned[weaponType])
+        if(plr->weaponOwned[weaponType])
         {
             gaveWeapon = false;
         }
         else
         {
             gaveWeapon = true;
-            plr->weaponowned[weaponType] = true;
+            plr->weaponOwned[weaponType] = true;
             plr->update |= PSF_OWNED_WEAPONS;
 
             // Should we change weapon automatically?
@@ -265,7 +265,7 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
         }
     }
 
-    plr->bonuscount += BONUSADD;
+    plr->bonusCount += BONUSADD;
     S_ConsoleSound(SFX_PICKUP_WEAPON, NULL, plr - players);
     if(plr == &players[consoleplayer])
     {
@@ -361,7 +361,7 @@ static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
         }
     }
 
-    plr->bonuscount += BONUSADD;
+    plr->bonusCount += BONUSADD;
     if(plr == &players[consoleplayer])
     {
         ST_doPaletteStuff(false);
@@ -374,8 +374,8 @@ static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
         if(plr->pieces == (WPIECE1 | WPIECE2 | WPIECE3))
         {
             gaveWeapon = true;
-            plr->weaponowned[WT_FOURTH] = true;
-            plr->pendingweapon = WT_FOURTH;
+            plr->weaponOwned[WT_FOURTH] = true;
+            plr->pendingWeapon = WT_FOURTH;
             plr->update |= PSF_WEAPONS | PSF_OWNED_WEAPONS;
         }
     }
@@ -440,27 +440,27 @@ boolean P_GiveArmor(player_t *plr, armortype_t armortype, int amount)
     plr->update |= PSF_ARMOR;
     if(amount == -1)
     {
-        hits = PCLASS_INFO(plr->class)->armorincrement[armortype];
-        if(plr->armorpoints[armortype] >= hits)
+        hits = PCLASS_INFO(plr->class)->armorIncrement[armortype];
+        if(plr->armorPoints[armortype] >= hits)
         {
             return false;
         }
         else
         {
-            plr->armorpoints[armortype] = hits;
+            plr->armorPoints[armortype] = hits;
         }
     }
     else
     {
         hits = amount * 5 * FRACUNIT;
         totalArmor =
-            plr->armorpoints[ARMOR_ARMOR] +
-            plr->armorpoints[ARMOR_SHIELD] +
-            plr->armorpoints[ARMOR_HELMET] +
-            plr->armorpoints[ARMOR_AMULET] + PCLASS_INFO(plr->class)->autoarmorsave;
-        if(totalArmor < PCLASS_INFO(plr->class)->maxarmor * 5 * FRACUNIT)
+            plr->armorPoints[ARMOR_ARMOR] +
+            plr->armorPoints[ARMOR_SHIELD] +
+            plr->armorPoints[ARMOR_HELMET] +
+            plr->armorPoints[ARMOR_AMULET] + PCLASS_INFO(plr->class)->autoArmorSave;
+        if(totalArmor < PCLASS_INFO(plr->class)->maxArmor * 5 * FRACUNIT)
         {
-            plr->armorpoints[armortype] += hits;
+            plr->armorPoints[armortype] += hits;
         }
         else
         {
@@ -482,7 +482,7 @@ int P_GiveKey(player_t *plr, keytype_t key)
         return false;
     }
 
-    plr->bonuscount += BONUSADD;
+    plr->bonusCount += BONUSADD;
     plr->keys |= 1 << key;
     plr->update |= PSF_KEYS;
 
@@ -523,9 +523,9 @@ boolean P_GivePower(player_t *plr, powertype_t power)
             plr->powers[power] = FLIGHTTICS;
             plr->plr->mo->flags2 |= MF2_FLY;
             plr->plr->mo->flags |= MF_NOGRAVITY;
-            if(plr->plr->mo->pos[VZ] <= plr->plr->mo->floorz)
+            if(plr->plr->mo->pos[VZ] <= plr->plr->mo->floorZ)
             {
-                plr->flyheight = 10; // Thrust the plr in the air a bit.
+                plr->flyHeight = 10; // Thrust the plr in the air a bit.
                 plr->plr->flags |= DDPF_FIXMOM;
             }
             retval = true;
@@ -620,7 +620,7 @@ static void TryPickupArtifact(player_t *plr, artitype_e artifactType,
             artifact->special = 0;
         }
 
-        plr->bonuscount += BONUSADD;
+        plr->bonusCount += BONUSADD;
         if(artifactType < arti_firstpuzzitem)
         {
             SetDormantArtifact(artifact);
@@ -669,7 +669,7 @@ static void SetDormantArtifact(mobj_t *arti)
 void C_DECL A_RestoreArtifact(mobj_t *arti)
 {
     arti->flags |= MF_SPECIAL;
-    P_MobjChangeState(arti, arti->info->spawnstate);
+    P_MobjChangeState(arti, arti->info->spawnState);
     S_StartSound(SFX_RESPAWN, arti);
 }
 
@@ -685,7 +685,7 @@ void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
 void C_DECL A_RestoreSpecialThing2(mobj_t *thing)
 {
     thing->flags |= MF_SPECIAL;
-    P_MobjChangeState(thing, thing->info->spawnstate);
+    P_MobjChangeState(thing, thing->info->spawnState);
 }
 
 void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
@@ -786,7 +786,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         {   // Only remove keys in single player game.
             break;
         }
-        player->bonuscount += BONUSADD;
+        player->bonusCount += BONUSADD;
         S_ConsoleSound(sound, NULL, player - players);
         if(player == &players[consoleplayer])
         {
@@ -1041,7 +1041,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         P_MobjRemove(special);
     }
 
-    player->bonuscount += BONUSADD;
+    player->bonusCount += BONUSADD;
     S_ConsoleSound(sound, NULL, player - players);
     if(player == &players[consoleplayer])
     {
@@ -1056,7 +1056,7 @@ mobj_t *ActiveMinotaur(player_t *master)
     thinker_t      *think;
     unsigned int  *starttime;
 
-    for(think = thinkercap.next; think != &thinkercap && think;
+    for(think = thinkerCap.next; think != &thinkerCap && think;
         think = think->next)
     {
         if(think->function != P_MobjThinker)
@@ -1139,7 +1139,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         target->flags &= ~MF_SOLID;
         target->flags2 &= ~MF2_FLY;
         target->player->powers[PT_FLIGHT] = 0;
-        target->player->playerstate = PST_DEAD;
+        target->player->playerState = PST_DEAD;
         target->player->update |= PSF_STATE | PSF_POWERS;
 
         // Let the engine know about this, too. The DEAD flag will be
@@ -1345,23 +1345,23 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         target->height = 24;
     }
 
-    if(target->health < -(target->info->spawnhealth / 2) &&
-       target->info->xdeathstate)
+    if(target->health < -(target->info->spawnHealth / 2) &&
+       target->info->xDeathState)
     {   // Extreme death.
-        P_MobjChangeState(target, target->info->xdeathstate);
+        P_MobjChangeState(target, target->info->xDeathState);
     }
     else
     {   // Normal death.
         if((target->type == MT_FIREDEMON) &&
-           (target->pos[VZ] <= target->floorz + 2) &&
-           (target->info->xdeathstate))
+           (target->pos[VZ] <= target->floorZ + 2) &&
+           (target->info->xDeathState))
         {
             // This is to fix the imps' staying in fall state.
-            P_MobjChangeState(target, target->info->xdeathstate);
+            P_MobjChangeState(target, target->info->xDeathState);
         }
         else
         {
-            P_MobjChangeState(target, target->info->deathstate);
+            P_MobjChangeState(target, target->info->deathState);
         }
     }
 
@@ -1384,7 +1384,7 @@ void P_MinotaurSlam(mobj_t *source, mobj_t *target)
     P_DamageMobj(target, NULL, source, HITDICE(4));
     if(target->player)
     {
-        target->reactiontime = 14 + (P_Random() & 7);
+        target->reactionTime = 14 + (P_Random() & 7);
     }
 
     source->args[0] = 0; // Stop charging.
@@ -1419,14 +1419,14 @@ boolean P_MorphPlayer(player_t *player)
     S_StartSound(SFX_TELEPORT, fog);
 
     beastMo = P_SpawnMobj3fv(MT_PIGPLAYER, pos);
-    beastMo->special1 = player->readyweapon;
+    beastMo->special1 = player->readyWeapon;
     beastMo->angle = angle;
     beastMo->player = player;
-    beastMo->dplayer = player->plr;
+    beastMo->dPlayer = player->plr;
 
     player->health = beastMo->health = MAXMORPHHEALTH;
     player->plr->mo = beastMo;
-    memset(&player->armorpoints[0], 0, NUMARMOR * sizeof(int));
+    memset(&player->armorPoints[0], 0, NUMARMOR * sizeof(int));
     player->class = PCLASS_PIG;
 
     if(oldFlags2 & MF2_FLY)
@@ -1772,7 +1772,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         case MT_POISONCLOUD:
             if(target->player)
             {
-                if(target->player->poisoncount < 4)
+                if(target->player->poisonCount < 4)
                 {
                     P_PoisonDamage(target->player, source, 15 + (P_Random() & 15), false);  // Don't play painsound
                     P_PoisonPlayer(target->player, source, 50);
@@ -1821,11 +1821,11 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         an = angle >>ANGLETOFINESHIFT;
         target->mom[MX] += thrust * FIX2FLT(finecosine[an]);
         target->mom[MY] += thrust * FIX2FLT(finesine[an]);
-        if(target->dplayer)
+        if(target->dPlayer)
         {
             // Only fix momentum. Otherwise clients will find it difficult
             // to escape from the damage inflictor.
-            target->dplayer->flags |= DDPF_FIXMOM;
+            target->dPlayer->flags |= DDPF_FIXMOM;
         }
     }
 
@@ -1835,10 +1835,10 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     if(player)
     {
         savedPercent = FIX2FLT(
-            PCLASS_INFO(player->class)->autoarmorsave + player->armorpoints[ARMOR_ARMOR] +
-            player->armorpoints[ARMOR_SHIELD] +
-            player->armorpoints[ARMOR_HELMET] +
-            player->armorpoints[ARMOR_AMULET]);
+            PCLASS_INFO(player->class)->autoArmorSave + player->armorPoints[ARMOR_ARMOR] +
+            player->armorPoints[ARMOR_SHIELD] +
+            player->armorPoints[ARMOR_HELMET] +
+            player->armorPoints[ARMOR_AMULET]);
         if(savedPercent)
         {   // Armor absorbed some damage.
             if(savedPercent > 100)
@@ -1848,15 +1848,15 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
             for(i = 0; i < NUMARMOR; ++i)
             {
-                if(player->armorpoints[i])
+                if(player->armorPoints[i])
                 {
-                    player->armorpoints[i] -=
-                        FLT2FIX(((float) damage * FIX2FLT(PCLASS_INFO(player->class)->armorincrement[i])) /
+                    player->armorPoints[i] -=
+                        FLT2FIX(((float) damage * FIX2FLT(PCLASS_INFO(player->class)->armorIncrement[i])) /
                                  300);
 
-                    if(player->armorpoints[i] < 2 * FRACUNIT)
+                    if(player->armorPoints[i] < 2 * FRACUNIT)
                     {
-                        player->armorpoints[i] = 0;
+                        player->armorPoints[i] = 0;
                     }
                 }
             }
@@ -1880,10 +1880,10 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             player->health = 0;
 
         player->attacker = source;
-        player->damagecount += damage; // Add damage after armor / invuln.
+        player->damageCount += damage; // Add damage after armor / invuln.
 
-        if(player->damagecount > 100)
-            player->damagecount = 100; // Teleport stomp does 10k points...
+        if(player->damageCount > 100)
+            player->damageCount = 100; // Teleport stomp does 10k points...
 
         temp = (damage < 100 ? damage : 100);
 
@@ -1940,7 +1940,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
 
         if(source && (source->player) &&
-           (source->player->readyweapon == WT_FOURTH))
+           (source->player->readyWeapon == WT_FOURTH))
         {
             // Always extreme death from fourth weapon.
             target->health = -5000;
@@ -1949,7 +1949,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         return;
     }
 
-    if((P_Random() < target->info->painchance) &&
+    if((P_Random() < target->info->painChance) &&
        !(target->flags & MF_SKULLFLY))
     {
         if(inflictor &&
@@ -1959,7 +1959,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             if(P_Random() < 96)
             {
                 target->flags |= MF_JUSTHIT; // fight back!
-                P_MobjChangeState(target, target->info->painstate);
+                P_MobjChangeState(target, target->info->painState);
             }
             else
             {   // "electrocute" the target.
@@ -1981,7 +1981,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         else
         {
             target->flags |= MF_JUSTHIT; // fight back!
-            P_MobjChangeState(target, target->info->painstate);
+            P_MobjChangeState(target, target->info->painState);
             if(inflictor && inflictor->type == MT_POISONCLOUD)
             {
                 if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
@@ -1998,7 +1998,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
     }
 
-    target->reactiontime = 0;   // we're awake now...
+    target->reactionTime = 0;   // we're awake now...
     if(!target->threshold && source && !(source->flags3 & MF3_NOINFIGHT) &&
        !(target->type == MT_BISHOP) && !(target->type == MT_MINOTAUR))
     {
@@ -2012,10 +2012,10 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
         target->target = source;
         target->threshold = BASETHRESHOLD;
-        if(target->state == &states[target->info->spawnstate] &&
-           target->info->seestate != S_NULL)
+        if(target->state == &states[target->info->spawnState] &&
+           target->info->seeState != S_NULL)
         {
-            P_MobjChangeState(target, target->info->seestate);
+            P_MobjChangeState(target, target->info->seeState);
         }
     }
 }
@@ -2054,11 +2054,11 @@ void P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison)
        player->powers[PT_INVULNERABILITY])
         return;
 
-    player->poisoncount += poison;
+    player->poisonCount += poison;
     player->poisoner = poisoner;
 
-    if(player->poisoncount > 100)
-        player->poisoncount = 100;
+    if(player->poisonCount > 100)
+        player->poisonCount = 100;
 }
 
 /**
@@ -2132,6 +2132,6 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
 
     if(!(leveltime & 63) && playPainSound)
     {
-        P_MobjChangeState(target, target->info->painstate);
+        P_MobjChangeState(target, target->info->painState);
     }
 }

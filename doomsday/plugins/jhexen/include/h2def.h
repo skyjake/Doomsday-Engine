@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -61,7 +61,6 @@
 
 #include "doomsday.h"
 #include "dd_api.h"
-#include "g_dgl.h"
 #include "version.h"
 #include "info.h"
 
@@ -88,7 +87,7 @@ extern game_export_t gx;
 // Global parameters/defines.
 //
 
-#define mobjinfo            (*gi.mobjinfo)
+#define mobjInfo            (*gi.mobjInfo)
 #define states              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
@@ -146,22 +145,22 @@ typedef enum {
 #define PCLASS_INFO(class)  (&classInfo[class])
 
 typedef struct classinfo_s{
-    mobjtype_t  mobjtype;
-    int         normalstate;
-    int         runstate;
-    int         attackstate;
-    int         attackendstate;
-    int         maxarmor;
-    int         autoarmorsave;
-    fixed_t     maxmove;
-    fixed_t     forwardmove[2]; // walk, run.
-    fixed_t     sidemove[2]; // walk, run.
-    int         movemul; // multiplier for above.
+    mobjtype_t  mobjType;
+    int         normalState;
+    int         runState;
+    int         attackState;
+    int         attackEndState;
+    int         maxArmor;
+    int         autoArmorSave;
+    fixed_t     maxMove;
+    fixed_t     forwardMove[2]; // walk, run.
+    fixed_t     sideMove[2]; // walk, run.
+    int         moveMul; // multiplier for above.
     fixed_t     turnSpeed[3]; // [normal, speed, initial].
-    int         jumptics; // wait inbetween jumps.
+    int         jumpTics; // wait inbetween jumps.
     int         failUseSound; // sound played when a use fails.
-    int         armorincrement[NUMARMOR];
-    int         piecex[3]; // temp.
+    int         armorIncrement[NUMARMOR];
+    int         pieceX[3]; // temp.
 } classinfo_t;
 
 extern classinfo_t classInfo[NUM_PLAYER_CLASSES];

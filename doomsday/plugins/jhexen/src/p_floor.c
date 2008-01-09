@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -145,12 +145,12 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
     floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
     memset(floor, 0, sizeof(*floor));
     P_AddThinker(&floor->thinker);
-    P_ToXSector(sec)->specialdata = floor;
+    P_ToXSector(sec)->specialData = floor;
     floor->thinker.function = T_MoveFloor;
     floor->type = FLEV_RAISEBUILDSTEP;
     floor->direction = stairData.direction;
     floor->sector = sec;
-    floor->floordestheight = height;
+    floor->floorDestHeight = height;
     switch(stairsType)
     {
     case STAIRS_NORMAL:
@@ -195,7 +195,7 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
 
         tsec = P_GetPtrp(line, DMU_FRONT_SECTOR);
         xtsec = P_ToXSector(tsec);
-        if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialdata &&
+        if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialData &&
            P_GetIntp(tsec, DMU_FLOOR_MATERIAL) == stairData.texture &&
            P_GetIntp(tsec, DMU_VALID_COUNT) != VALIDCOUNT)
         {
@@ -205,7 +205,7 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
 
         tsec = P_GetPtrp(line, DMU_BACK_SECTOR);
         xtsec = P_ToXSector(tsec);
-        if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialdata &&
+        if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialData &&
            P_GetIntp(tsec, DMU_FLOOR_MATERIAL) == stairData.texture &&
            P_GetIntp(tsec, DMU_VALID_COUNT) != VALIDCOUNT)
         {
@@ -257,7 +257,7 @@ int EV_BuildStairs(line_t *line, byte *args, int direction,
         stairData.startHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
 
         // ALREADY MOVING?  IF SO, KEEP GOING...
-        if(P_ToXSector(sec)->specialdata)
+        if(P_ToXSector(sec)->specialData)
             continue; // Already moving, so keep going...
 
         enqueueStairSector(sec, 0, P_GetFloatp(sec, DMU_FLOOR_HEIGHT));
@@ -278,14 +278,14 @@ void T_BuildPillar(pillar_t *pillar)
     result_e res2;
 
     // First, raise the floor
-    res1 = T_MovePlane(pillar->sector, pillar->floorSpeed, pillar->floordest, pillar->crush, 0, pillar->direction); // floorOrCeiling, direction
+    res1 = T_MovePlane(pillar->sector, pillar->floorSpeed, pillar->floorDest, pillar->crush, 0, pillar->direction); // floorOrCeiling, direction
     // Then, lower the ceiling
     res2 =
-        T_MovePlane(pillar->sector, pillar->ceilingSpeed, pillar->ceilingdest,
+        T_MovePlane(pillar->sector, pillar->ceilingSpeed, pillar->ceilingDest,
                     pillar->crush, 1, -pillar->direction);
     if(res1 == pastdest && res2 == pastdest)
     {
-        P_ToXSector(pillar->sector)->specialdata = NULL;
+        P_ToXSector(pillar->sector)->specialData = NULL;
         SN_StopSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN));
         P_TagFinished(P_ToXSector(pillar->sector)->tag);
         P_RemoveThinker(&pillar->thinker);
@@ -307,7 +307,7 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        if(P_ToXSector(sec)->specialdata)
+        if(P_ToXSector(sec)->specialData)
             continue; // Already moving, so keep going.
 
         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
@@ -329,7 +329,7 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
         }
 
         pillar = Z_Malloc(sizeof(*pillar), PU_LEVSPEC, 0);
-        P_ToXSector(sec)->specialdata = pillar;
+        P_ToXSector(sec)->specialData = pillar;
         P_AddThinker(&pillar->thinker);
         pillar->thinker.function = T_BuildPillar;
         pillar->sector = sec;
@@ -356,8 +356,8 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
                                   (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - newHeight));
         }
 
-        pillar->floordest = newHeight;
-        pillar->ceilingdest = newHeight;
+        pillar->floorDest = newHeight;
+        pillar->ceilingDest = newHeight;
         pillar->direction = 1;
         pillar->crush = crush * (int) args[3];
         SN_StartSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN),
@@ -380,7 +380,7 @@ int EV_OpenPillar(line_t *line, byte *args)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        if(P_ToXSector(sec)->specialdata)
+        if(P_ToXSector(sec)->specialData)
             continue; // Already moving, so keep going...
 
         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) !=
@@ -389,46 +389,46 @@ int EV_OpenPillar(line_t *line, byte *args)
 
         rtn = 1;
         pillar = Z_Malloc(sizeof(*pillar), PU_LEVSPEC, 0);
-        P_ToXSector(sec)->specialdata = pillar;
+        P_ToXSector(sec)->specialData = pillar;
         P_AddThinker(&pillar->thinker);
         pillar->thinker.function = T_BuildPillar;
         pillar->sector = sec;
         if(!args[2])
         {
-            pillar->floordest = P_FindLowestFloorSurrounding(sec);
+            pillar->floorDest = P_FindLowestFloorSurrounding(sec);
         }
         else
         {
-            pillar->floordest =
+            pillar->floorDest =
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - (float) args[2];
         }
 
         if(!args[3])
         {
-            pillar->ceilingdest = P_FindHighestCeilingSurrounding(sec);
+            pillar->ceilingDest = P_FindHighestCeilingSurrounding(sec);
         }
         else
         {
-            pillar->ceilingdest =
+            pillar->ceilingDest =
                 P_GetFloatp(sec, DMU_CEILING_HEIGHT) + (float) args[3];
         }
 
-        if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - pillar->floordest >=
-           pillar->ceilingdest - P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+        if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - pillar->floorDest >=
+           pillar->ceilingDest - P_GetFloatp(sec, DMU_CEILING_HEIGHT))
         {
             pillar->floorSpeed = (float) args[1] * (1.0f / 8);
             pillar->ceilingSpeed =
-                (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - pillar->ceilingdest) *
+                (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - pillar->ceilingDest) *
                     (pillar->floorSpeed /
-                        (pillar->floordest - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)));
+                        (pillar->floorDest - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)));
         }
         else
         {
             pillar->ceilingSpeed = (float) args[1] * (1.0f / 8);
             pillar->floorSpeed =
-                (pillar->floordest - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) *
+                (pillar->floorDest - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) *
                     (pillar->ceilingSpeed /
-                        (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - pillar->ceilingdest));
+                        (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - pillar->ceilingDest));
         }
 
         pillar->direction = -1; // Open the pillar.
@@ -470,7 +470,7 @@ void T_FloorWaggle(floorWaggle_t *waggle)
             P_SetFloatp(waggle->sector, DMU_FLOOR_HEIGHT,
                         waggle->originalHeight);
             P_ChangeSector(waggle->sector, true);
-            P_ToXSector(waggle->sector)->specialdata = NULL;
+            P_ToXSector(waggle->sector)->specialData = NULL;
             P_TagFinished(P_ToXSector(waggle->sector)->tag);
             P_RemoveThinker(&waggle->thinker);
             return;
@@ -502,12 +502,12 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        if(P_ToXSector(sec)->specialdata)
+        if(P_ToXSector(sec)->specialData)
             continue; // Already moving, so keep going...
 
         retCode = true;
         waggle = Z_Malloc(sizeof(*waggle), PU_LEVSPEC, 0);
-        P_ToXSector(sec)->specialdata = waggle;
+        P_ToXSector(sec)->specialData = waggle;
         waggle->thinker.function = T_FloorWaggle;
         waggle->sector = sec;
         waggle->originalHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);

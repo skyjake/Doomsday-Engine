@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -87,7 +87,7 @@ void P_TeleportToPlayerStarts(mobj_t *victim)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         selections++;
@@ -170,7 +170,7 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
 
     memcpy(oldpos, mo->pos, sizeof(oldpos));
 
-    aboveFloor = mo->pos[VZ] - mo->floorz;
+    aboveFloor = mo->pos[VZ] - mo->floorZ;
     if(!P_TeleportMove(mo, x, y, false))
         return false;
 
@@ -180,34 +180,34 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
         player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
         if(player->powers[PT_FLIGHT] && aboveFloor)
         {
-            mo->pos[VZ] = mo->floorz + aboveFloor;
-            if(mo->pos[VZ] + mo->height > mo->ceilingz)
+            mo->pos[VZ] = mo->floorZ + aboveFloor;
+            if(mo->pos[VZ] + mo->height > mo->ceilingZ)
             {
-                mo->pos[VZ] = mo->ceilingz - mo->height;
+                mo->pos[VZ] = mo->ceilingZ - mo->height;
             }
-            player->plr->viewZ = mo->pos[VZ] + player->plr->viewheight;
+            player->plr->viewZ = mo->pos[VZ] + player->plr->viewHeight;
         }
         else
         {
-            mo->pos[VZ] = mo->floorz;
-            player->plr->viewZ = mo->pos[VZ] + player->plr->viewheight;
+            mo->pos[VZ] = mo->floorZ;
+            player->plr->viewZ = mo->pos[VZ] + player->plr->viewHeight;
             if(useFog)
             {
-                player->plr->lookdir = 0;
+                player->plr->lookDir = 0;
             }
         }
     }
     else if(mo->flags & MF_MISSILE)
     {
-        mo->pos[VZ] = mo->floorz + aboveFloor;
-        if(mo->pos[VZ] + mo->height > mo->ceilingz)
+        mo->pos[VZ] = mo->floorZ + aboveFloor;
+        if(mo->pos[VZ] + mo->height > mo->ceilingZ)
         {
-            mo->pos[VZ] = mo->ceilingz - mo->height;
+            mo->pos[VZ] = mo->ceilingZ - mo->height;
         }
     }
     else
     {
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = mo->floorZ;
     }
 
     // Spawn teleport fog at source and destination
@@ -227,7 +227,7 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
 
         if(mo->player && !mo->player->powers[PT_SPEED])
         {   // Freeze player for about .5 sec
-            mo->reactiontime = 18;
+            mo->reactionTime = 18;
         }
         mo->angle = angle;
     }
@@ -239,11 +239,11 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
                        DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
            P_MobjGetFloorType(mo) >= FLOOR_LIQUID)
         {
-            mo->floorclip = 10;
+            mo->floorClip = 10;
         }
         else
         {
-            mo->floorclip = 0;
+            mo->floorClip = 0;
         }
     }
 
@@ -261,7 +261,7 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
     P_MobjClearSRVO(mo);
 
     // Update the floor pic.
-    mo->floorpic = tmfloorpic;
+    mo->floorPic = tmfloorpic;
     return true;
 }
 

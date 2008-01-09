@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -138,11 +138,11 @@ void R_DrawMapTitle(void)
         return;
 
     // Make the text a bit smaller.
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
-    gl.Translatef(160, y, 0);
-    gl.Scalef(.75f, .75f, 1);   // Scale to 3/4
-    gl.Translatef(-160, -y, 0);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(160, y, 0);
+    DGL_Scalef(.75f, .75f, 1);   // Scale to 3/4
+    DGL_Translatef(-160, -y, 0);
 
     if(actual_leveltime < 35)
         alpha = actual_leveltime / 35.0f;
@@ -174,8 +174,8 @@ void R_DrawMapTitle(void)
 
     Draw_EndZoom();
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 void G_Drawer(void)
@@ -366,7 +366,7 @@ void G_Drawer2(void)
 
     case GS_WAITING:
         GL_DrawRawScreen(W_GetNumForName("TITLE"), 0, 0);
-        gl.Color3f(1, 1, 1);
+        DGL_Color3f(1, 1, 1);
         MN_DrCenterTextA_CS("WAITING... PRESS ESC FOR MENU", 160, 188);
         break;
 
@@ -433,57 +433,57 @@ void R_SetAllDoomsdayFlags(void)
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
-        for(mo = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); mo; mo = mo->snext)
+        for(mo = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); mo; mo = mo->sNext)
         {
-            if(IS_CLIENT && mo->ddflags & DDMF_REMOTE)
+            if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
                 continue;
 
             // Reset the flags for a new frame.
-            mo->ddflags &= DDMF_CLEAR_MASK;
+            mo->ddFlags &= DDMF_CLEAR_MASK;
 
             if(mo->flags & MF_LOCAL)
-                mo->ddflags |= DDMF_LOCAL;
+                mo->ddFlags |= DDMF_LOCAL;
             if(mo->flags & MF_SOLID)
-                mo->ddflags |= DDMF_SOLID;
+                mo->ddFlags |= DDMF_SOLID;
             if(mo->flags & MF_MISSILE)
-                mo->ddflags |= DDMF_MISSILE;
+                mo->ddFlags |= DDMF_MISSILE;
             if(mo->flags2 & MF2_FLY)
-                mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
+                mo->ddFlags |= DDMF_FLY | DDMF_NOGRAVITY;
             if(mo->flags2 & MF2_FLOATBOB)
-                mo->ddflags |= DDMF_BOB | DDMF_NOGRAVITY;
+                mo->ddFlags |= DDMF_BOB | DDMF_NOGRAVITY;
             if(mo->flags2 & MF2_LOGRAV)
-                mo->ddflags |= DDMF_LOWGRAVITY;
+                mo->ddFlags |= DDMF_LOWGRAVITY;
             if(mo->flags & MF_NOGRAVITY /* || mo->flags2 & MF2_FLY */ )
-                mo->ddflags |= DDMF_NOGRAVITY;
+                mo->ddFlags |= DDMF_NOGRAVITY;
 
             // $democam: cameramen are invisible
             if(P_IsCamera(mo))
-                mo->ddflags |= DDMF_DONTDRAW;
+                mo->ddFlags |= DDMF_DONTDRAW;
 
             // Choose which ddflags to set.
             if(mo->flags2 & MF2_DONTDRAW)
             {
-                mo->ddflags |= DDMF_DONTDRAW;
+                mo->ddFlags |= DDMF_DONTDRAW;
                 continue;       // No point in checking the other flags.
             }
 
             if((mo->flags & MF_BRIGHTSHADOW) == MF_BRIGHTSHADOW)
-                mo->ddflags |= DDMF_BRIGHTSHADOW;
+                mo->ddFlags |= DDMF_BRIGHTSHADOW;
             else
             {
                 if(mo->flags & MF_SHADOW)
-                    mo->ddflags |= DDMF_SHADOW;
+                    mo->ddFlags |= DDMF_SHADOW;
                 if(mo->flags & MF_ALTSHADOW ||
                    (cfg.translucentIceCorpse && mo->flags & MF_ICECORPSE))
-                    mo->ddflags |= DDMF_ALTSHADOW;
+                    mo->ddFlags |= DDMF_ALTSHADOW;
             }
 
             if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE)) ||
                mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE &&
                                         !(mo->flags & MF_VIEWALIGN)))
-                mo->ddflags |= DDMF_VIEWALIGN;
+                mo->ddFlags |= DDMF_VIEWALIGN;
 
-            mo->ddflags |= mo->flags & MF_TRANSLATION;
+            mo->ddFlags |= mo->flags & MF_TRANSLATION;
 
             // Which translation table to use?
             if(mo->flags & MF_TRANSLATION)
@@ -501,18 +501,18 @@ void R_SetAllDoomsdayFlags(void)
                     Class = 0;
                 }
                 // The last two bits.
-                mo->ddflags |= Class << DDMF_CLASSTRSHIFT;
+                mo->ddFlags |= Class << DDMF_CLASSTRSHIFT;
             }
 
             // An offset for the light emitted by this object.
             /*          Class = MobjLightOffsets[mo->type];
                if(Class < 0) Class = 8-Class;
                // Class must now be in range 0-15.
-               mo->ddflags |= Class << DDMF_LIGHTOFFSETSHIFT; */
+               mo->ddFlags |= Class << DDMF_LIGHTOFFSETSHIFT; */
 
             // The Mage's ice shards need to be a bit smaller.
             // This'll make them half the normal size.
             if(mo->type == MT_SHARDFX1)
-                mo->ddflags |= 2 << DDMF_LIGHTSCALESHIFT;
+                mo->ddFlags |= 2 << DDMF_LIGHTSCALESHIFT;
         }
 }

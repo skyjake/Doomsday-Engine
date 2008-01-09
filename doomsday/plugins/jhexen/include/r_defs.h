@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -57,10 +57,10 @@
 
 typedef struct xsector_s {
     short           special, tag;
-    int             soundtraversed; // 0 = untraversed, 1,2 = sndlines -1
-    mobj_t         *soundtarget;   // thing that made a sound (or null)
+    int             soundTraversed; // 0 = untraversed, 1,2 = sndlines -1
+    mobj_t         *soundTarget;   // thing that made a sound (or null)
     seqtype_t       seqType;       // stone, metal, heavy, etc...
-    void           *specialdata;   // thinker_t for reversable actions
+    void           *specialData;   // thinker_t for reversable actions
 } xsector_t;
 
 typedef struct xline_s {
@@ -73,7 +73,7 @@ typedef struct xline_s {
     // Has been rendered at least once and needs to appear in the map,
     // for each player.
     boolean         mapped[MAXPLAYERS];
-    int             validcount;
+    int             validCount;
 } xline_t;
 
 xline_t*    P_ToXLine(line_t* line);

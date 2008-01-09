@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -692,12 +692,12 @@ static void CheatWeaponsFunc(player_t *player, cheat_t * cheat)
 
     for(i = 0; i < NUMARMOR; i++)
     {
-        player->armorpoints[i] = PCLASS_INFO(player->class)->armorincrement[i];
+        player->armorPoints[i] = PCLASS_INFO(player->class)->armorIncrement[i];
     }
 
     for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
-        player->weaponowned[i] = true;
+        player->weaponOwned[i] = true;
     }
 
     for(i = 0; i < NUM_AMMO_TYPES; i++)
@@ -881,9 +881,9 @@ static void CheatIDKFAFunc(player_t *player, cheat_t * cheat)
     }
     for(i = 1; i < 8; i++)
     {
-        player->weaponowned[i] = false;
+        player->weaponOwned[i] = false;
     }
-    player->pendingweapon = WT_FIRST;
+    player->pendingWeapon = WT_FIRST;
     P_SetMessage(player, TXT_CHEATIDKFA, false);
 }
 
@@ -1165,7 +1165,7 @@ DEFCC(CCmdCheatGive)
         return true;
     }
 
-    if(!plyr->plr->ingame)
+    if(!plyr->plr->inGame)
         return true; // Can't give to a player who's not playing
 
     strcpy(buf, argv[1]);       // Stuff is the 2nd arg.
@@ -1204,7 +1204,7 @@ DEFCC(CCmdCheatGive)
             weapNum = ((int) buf[i]) - 48;
             if(weapNum >= 0 && weapNum < NUM_WEAPON_TYPES)
             {
-               plyr->weaponowned[weapNum] = true;
+               plyr->weaponOwned[weapNum] = true;
             }
             else// Unrecognized
                 Con_Printf("What do you mean, '%c'?\n", buf[i]);

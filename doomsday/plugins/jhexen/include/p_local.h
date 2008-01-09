@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 1999-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -100,7 +100,7 @@
 
 extern int TimerGame; // Tic countdown for deathmatch.
 
-#define thinkercap          (*gi.thinkercap)
+#define thinkerCap          (*gi.thinkerCap)
 
 #define USE_MANA1           1
 #define USE_MANA2           1

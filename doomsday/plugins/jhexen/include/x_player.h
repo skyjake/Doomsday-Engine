@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -97,54 +97,51 @@ typedef enum {
 // Extended player information, Hexen specific.
 typedef struct player_s {
     ddplayer_t     *plr;           // Pointer to the engine's player data.
-    playerstate_t   playerstate;
+    playerstate_t   playerState;
     playerclass_t   class;         // player class type
     playerbrain_t   brain;
 
-    //  fixed_t     viewheight;             // base height above floor for viewz
-    //  fixed_t     deltaviewheight;        // squat speed
     fixed_t         bob;           // bounded/scaled total momentum
 
-    int             flyheight;
-    //int           lookdir;
+    int             flyHeight;
     boolean         centering;
     int             health;        // only used between levels, mo->health
     // is used during levels
-    int             armorpoints[NUMARMOR];
+    int             armorPoints[NUMARMOR];
 
     inventory_t     inventory[NUMINVENTORYSLOTS];
-    int             inv_ptr;
-    int             curpos;
+    int             invPtr;
+    int             curPos;
     artitype_e      readyArtifact;
     int             artifactCount;
     int             inventorySlotNum;
     int             powers[NUM_POWER_TYPES];
     int             keys;
-    int             pieces;        // Fourth Weapon pieces
-    weapontype_t    readyweapon;
-    weapontype_t    pendingweapon; // wp_nochange if not changing
-    boolean         weaponowned[NUM_WEAPON_TYPES];
-    int             ammo[NUM_AMMO_TYPES];  // mana
-    int             attackdown, usedown;    // true if button down last tic
-    int             cheats;        // bit flags
-    signed int      frags[MAXPLAYERS];  // kills of other players
+    int             pieces; // Fourth Weapon pieces
+    weapontype_t    readyWeapon;
+    weapontype_t    pendingWeapon; // wp_nochange if not changing
+    boolean         weaponOwned[NUM_WEAPON_TYPES];
+    int             ammo[NUM_AMMO_TYPES]; // mana
+    int             attackDown, useDown; // true if button down last tic
+    int             cheats; // bit flags
+    signed int      frags[MAXPLAYERS]; // kills of other players
 
-    int             refire;        // refired shots are less accurate
+    int             refire; // refired shots are less accurate
 
-    int             killcount, itemcount, secretcount;  // for intermission
+    int             killCount, itemCount, secretCount; // for intermission
 
-    int             damagecount, bonuscount;    // for screen flashing
-    int             poisoncount;   // screen flash for poison damage
-    mobj_t         *poisoner;      // NULL for non-player mobjs
-    mobj_t         *attacker;      // who did damage (NULL for floors)
-    int             colormap;      // 0-3 for which color to draw player
-    pspdef_t        psprites[NUMPSPRITES];  // view sprites (gun, etc)
-    int             morphTics;     // player is a pig if > 0
-    uint            jumptics;      // delay the next jump for a moment
-    unsigned int    worldTimer;    // total time the player's been playing
-    int             update, startspot;
+    int             damageCount, bonusCount; // for screen flashing
+    int             poisonCount; // screen flash for poison damage
+    mobj_t         *poisoner; // NULL for non-player mobjs
+    mobj_t         *attacker; // who did damage (NULL for floors)
+    int             colorMap; // 0-3 for which color to draw player
+    pspdef_t        pSprites[NUMPSPRITES];  // view sprites (gun, etc)
+    int             morphTics; // player is a pig if > 0
+    uint            jumpTics; // delay the next jump for a moment
+    unsigned int    worldTimer; // total time the player's been playing
+    int             update, startSpot;
     // Target view to a mobj (NULL=disabled).
-    mobj_t*         viewlock;      // $democam
+    mobj_t*         viewLock; // $democam
     int             lockFull;
 } player_t;
 

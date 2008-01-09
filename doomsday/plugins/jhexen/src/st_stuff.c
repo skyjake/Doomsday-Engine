@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -713,7 +713,7 @@ void ST_updateWidgets(void)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         st_fragscount += plr->frags[i] * (i != consoleplayer ? 1 : -1);
@@ -727,22 +727,22 @@ void ST_updateWidgets(void)
         oldarti = -1; // so that the correct artifact fills in after the flash
     }
     else if(oldarti != plr->readyArtifact ||
-            oldartiCount != plr->inventory[plr->inv_ptr].count)
+            oldartiCount != plr->inventory[plr->invPtr].count)
     {
         if(plr->readyArtifact > 0)
         {
             st_artici = plr->readyArtifact + 5;
         }
         oldarti = plr->readyArtifact;
-        oldartiCount = plr->inventory[plr->inv_ptr].count;
+        oldartiCount = plr->inventory[plr->invPtr].count;
     }
 
     // Armor
     armorlevel = FixedDiv(
-        PCLASS_INFO(plr->class)->autoarmorsave + plr->armorpoints[ARMOR_ARMOR] +
-        plr->armorpoints[ARMOR_SHIELD] +
-        plr->armorpoints[ARMOR_HELMET] +
-        plr->armorpoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+        PCLASS_INFO(plr->class)->autoArmorSave + plr->armorPoints[ARMOR_ARMOR] +
+        plr->armorPoints[ARMOR_SHIELD] +
+        plr->armorPoints[ARMOR_HELMET] +
+        plr->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
 
     // mana A
     manaACount = plr->ammo[0];
@@ -761,7 +761,7 @@ void ST_updateWidgets(void)
 
 
     // Update mana graphics based upon mana count weapon type
-    if(plr->readyweapon == WT_FIRST)
+    if(plr->readyWeapon == WT_FIRST)
     {
         st_manaAicon = 0;
         st_manaBicon = 0;
@@ -769,7 +769,7 @@ void ST_updateWidgets(void)
         st_manaAvial = 0;
         st_manaBvial = 0;
     }
-    else if(plr->readyweapon == WT_SECOND)
+    else if(plr->readyWeapon == WT_SECOND)
     {
         // If there is mana for this weapon, make it bright!
         if(st_manaAicon == -1)
@@ -782,7 +782,7 @@ void ST_updateWidgets(void)
         st_manaBicon = 0;
         st_manaBvial = 0;
     }
-    else if(plr->readyweapon == WT_THIRD)
+    else if(plr->readyWeapon == WT_THIRD)
     {
         st_manaAicon = 0;
         st_manaAvial = 0;
@@ -813,7 +813,7 @@ void ST_updateWidgets(void)
 
     // update the inventory
 
-    x = plr->inv_ptr - plr->curpos;
+    x = plr->invPtr - plr->curPos;
 
     for(i = 0; i < NUMVISINVSLOTS; ++i)
     {
@@ -883,7 +883,7 @@ void ST_Ticker(void)
     // turn inventory off after a certain amount of time
     if(inventory && !(--inventoryTics))
     {
-        plr->readyArtifact = plr->inventory[plr->inv_ptr].type;
+        plr->readyArtifact = plr->inventory[plr->invPtr].type;
         inventory = false;
     }
 }
@@ -896,7 +896,7 @@ static void DrINumber(signed int val, int x, int y, float r, float g,
 {
     int         oldval;
 
-    gl.Color4f(r,g,b,a);
+    DGL_Color4f(r,g,b,a);
 
     // Make sure it's a three digit number.
     if(val < -999)
@@ -1034,7 +1034,7 @@ static void DrBNumber(signed int val, int x, int y, float red, float green,
  */
 static void DrSmallNumber(int val, int x, int y, float r, float g, float b, float a)
 {
-    gl.Color4f(r,g,b,a);
+    DGL_Color4f(r,g,b,a);
 
     if(val <= 0)
     {
@@ -1176,27 +1176,27 @@ void ST_refreshBackground(void)
     }
     else
     {
-        gl.Color4f(1, 1, 1, alpha);
+        DGL_Color4f(1, 1, 1, alpha);
 
-        GL_SetPatch(PatchNumH2BAR.lump);
+        GL_SetPatch(PatchNumH2BAR.lump, DGL_REPEAT, DGL_REPEAT);
 
-        gl.Begin(DGL_QUADS);
+        DGL_Begin(DGL_QUADS);
 
         // top
         x = 0;
         y = 135;
         w = 320;
         h = 27;
-        ch = 0.41538461538461538461538461538462f;
+        ch = 0.41538461538461538461538461538462;
 
-        gl.TexCoord2f(0, 0);
-        gl.Vertex2f(x, y);
-        gl.TexCoord2f(1, 0);
-        gl.Vertex2f(x + w, y);
-        gl.TexCoord2f(1, ch);
-        gl.Vertex2f(x + w, y + h);
-        gl.TexCoord2f(0, ch);
-        gl.Vertex2f(x, y + h);
+        DGL_TexCoord2f(0, 0);
+        DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(1, 0);
+        DGL_Vertex2f(x + w, y);
+        DGL_TexCoord2f(1, ch);
+        DGL_Vertex2f(x + w, y + h);
+        DGL_TexCoord2f(0, ch);
+        DGL_Vertex2f(x, y + h);
 
         // left statue
         x = 0;
@@ -1204,16 +1204,16 @@ void ST_refreshBackground(void)
         w = 38;
         h = 38;
         cw = 0.11875f;
-        ch = 0.41538461538461538461538461538462f;
+        ch = 0.41538461538461538461538461538462;
 
-        gl.TexCoord2f(0, ch);
-        gl.Vertex2f(x, y);
-        gl.TexCoord2f(cw, ch);
-        gl.Vertex2f(x + w, y);
-        gl.TexCoord2f(cw, 1);
-        gl.Vertex2f(x + w, y + h);
-        gl.TexCoord2f(0, 1);
-        gl.Vertex2f(x, y + h);
+        DGL_TexCoord2f(0, ch);
+        DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(cw, ch);
+        DGL_Vertex2f(x + w, y);
+        DGL_TexCoord2f(cw, 1);
+        DGL_Vertex2f(x + w, y + h);
+        DGL_TexCoord2f(0, 1);
+        DGL_Vertex2f(x, y + h);
 
         // right statue
         x = 282;
@@ -1223,14 +1223,14 @@ void ST_refreshBackground(void)
         cw = 0.88125f;
         ch = 0.41538461538461538461538461538462f;
 
-        gl.TexCoord2f(cw, ch);
-        gl.Vertex2f(x, y);
-        gl.TexCoord2f(1, ch);
-        gl.Vertex2f(x + w, y);
-        gl.TexCoord2f(1, 1);
-        gl.Vertex2f(x + w, y + h);
-        gl.TexCoord2f(cw, 1);
-        gl.Vertex2f(x, y + h);
+        DGL_TexCoord2f(cw, ch);
+        DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(1, ch);
+        DGL_Vertex2f(x + w, y);
+        DGL_TexCoord2f(1, 1);
+        DGL_Vertex2f(x + w, y + h);
+        DGL_TexCoord2f(cw, 1);
+        DGL_Vertex2f(x, y + h);
 
         // bottom (behind the chain)
         x = 38;
@@ -1241,16 +1241,16 @@ void ST_refreshBackground(void)
         cw2 = 0.88125f;
         ch = 0.87692307692307692307692307692308f;
 
-        gl.TexCoord2f(cw, ch);
-        gl.Vertex2f(x, y);
-        gl.TexCoord2f(cw2, ch);
-        gl.Vertex2f(x + w, y);
-        gl.TexCoord2f(cw2, 1);
-        gl.Vertex2f(x + w, y + h);
-        gl.TexCoord2f(cw, 1);
-        gl.Vertex2f(x, y + h);
+        DGL_TexCoord2f(cw, ch);
+        DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(cw2, ch);
+        DGL_Vertex2f(x + w, y);
+        DGL_TexCoord2f(cw2, 1);
+        DGL_Vertex2f(x + w, y + h);
+        DGL_TexCoord2f(cw, 1);
+        DGL_Vertex2f(x, y + h);
 
-        gl.End();
+        DGL_End();
 
         if(!inventory)
         {
@@ -1263,8 +1263,8 @@ void ST_refreshBackground(void)
                 }
 
                 // left of statbar (upto weapon puzzle display)
-                GL_SetPatch(PatchNumSTATBAR.lump);
-                gl.Begin(DGL_QUADS);
+                GL_SetPatch(PatchNumSTATBAR.lump, DGL_CLAMP, DGL_CLAMP);
+                DGL_Begin(DGL_QUADS);
 
                 x = deathmatch ? 68 : 38;
                 y = 162;
@@ -1274,14 +1274,14 @@ void ST_refreshBackground(void)
                 cw2 = 0.62295081967213114754098360655738f;
                 ch = 0.96774193548387096774193548387097f;
 
-                gl.TexCoord2f(cw, 0);
-                gl.Vertex2f(x, y);
-                gl.TexCoord2f(cw2, 0);
-                gl.Vertex2f(x + w, y);
-                gl.TexCoord2f(cw2, ch);
-                gl.Vertex2f(x + w, y + h);
-                gl.TexCoord2f(cw, ch);
-                gl.Vertex2f(x, y + h);
+                DGL_TexCoord2f(cw, 0);
+                DGL_Vertex2f(x, y);
+                DGL_TexCoord2f(cw2, 0);
+                DGL_Vertex2f(x + w, y);
+                DGL_TexCoord2f(cw2, ch);
+                DGL_Vertex2f(x + w, y + h);
+                DGL_TexCoord2f(cw, ch);
+                DGL_Vertex2f(x, y + h);
 
                 // right of statbar (after weapon puzzle display)
                 x = 247;
@@ -1291,16 +1291,16 @@ void ST_refreshBackground(void)
                 cw = 0.85655737704918032786885245901639f;
                 ch = 0.96774193548387096774193548387097f;
 
-                gl.TexCoord2f(cw, 0);
-                gl.Vertex2f(x, y);
-                gl.TexCoord2f(1, 0);
-                gl.Vertex2f(x + w, y);
-                gl.TexCoord2f(1, ch);
-                gl.Vertex2f(x + w, y + h);
-                gl.TexCoord2f(cw, ch);
-                gl.Vertex2f(x, y + h);
+                DGL_TexCoord2f(cw, 0);
+                DGL_Vertex2f(x, y);
+                DGL_TexCoord2f(1, 0);
+                DGL_Vertex2f(x + w, y);
+                DGL_TexCoord2f(1, ch);
+                DGL_Vertex2f(x + w, y + h);
+                DGL_TexCoord2f(cw, ch);
+                DGL_Vertex2f(x, y + h);
 
-                gl.End();
+                DGL_End();
 
                 DrawWeaponPieces();
             }
@@ -1312,8 +1312,8 @@ void ST_refreshBackground(void)
         else
         {
             // INVBAR
-            GL_SetPatch(PatchNumINVBAR.lump);
-            gl.Begin(DGL_QUADS);
+            GL_SetPatch(PatchNumINVBAR.lump, DGL_CLAMP, DGL_CLAMP);
+            DGL_Begin(DGL_QUADS);
 
             x = 38;
             y = 162;
@@ -1321,16 +1321,16 @@ void ST_refreshBackground(void)
             h = 30;
             ch = 0.96774193548387096774193548387097f;
 
-            gl.TexCoord2f(0, 0);
-            gl.Vertex2f(x, y);
-            gl.TexCoord2f(1, 0);
-            gl.Vertex2f(x + w, y);
-            gl.TexCoord2f(1, ch);
-            gl.Vertex2f(x + w, y + h);
-            gl.TexCoord2f(0, ch);
-            gl.Vertex2f(x, y + h);
+            DGL_TexCoord2f(0, 0);
+            DGL_Vertex2f(x, y);
+            DGL_TexCoord2f(1, 0);
+            DGL_Vertex2f(x + w, y);
+            DGL_TexCoord2f(1, ch);
+            DGL_Vertex2f(x + w, y + h);
+            DGL_TexCoord2f(0, ch);
+            DGL_Vertex2f(x, y + h);
 
-            gl.End();
+            DGL_End();
         }
 
         DrawChain();
@@ -1366,10 +1366,10 @@ void ST_doRefresh(void)
         float fscale = cfg.sbarscale / 20.0f;
         float h = 200 * (1 - fscale);
 
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PushMatrix();
-        gl.Translatef(160 - 320 * fscale / 2, h /showbar, 0);
-        gl.Scalef(fscale, fscale, 1);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        DGL_Translatef(160 - 320 * fscale / 2, h /showbar, 0);
+        DGL_Scalef(fscale, fscale, 1);
     }
 
     // draw status bar background
@@ -1381,8 +1381,8 @@ void ST_doRefresh(void)
     if(cfg.sbarscale < 20 || (cfg.sbarscale == 20 && showbar < 1.0f))
     {
         // Restore the normal modelview matrix.
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
     }
 }
 
@@ -1550,7 +1550,7 @@ static void DrawAnimatedIcons(void)
 
 /**
  * Sets the new palette based upon the current values of
- * consoleplayer->damagecount and consoleplayer->bonuscount.
+ * consoleplayer->damageCount and consoleplayer->bonusCount.
  */
 void ST_doPaletteStuff(boolean forceChange)
 {
@@ -1566,28 +1566,28 @@ void ST_doPaletteStuff(boolean forceChange)
     if(G_GetGameState() == GS_LEVEL)
     {
         plyr = &players[consoleplayer];
-        if(plyr->poisoncount)
+        if(plyr->poisonCount)
         {
             palette = 0;
-            palette = (plyr->poisoncount + 7) >> 3;
+            palette = (plyr->poisonCount + 7) >> 3;
             if(palette >= NUMPOISONPALS)
             {
                 palette = NUMPOISONPALS - 1;
             }
             palette += STARTPOISONPALS;
         }
-        else if(plyr->damagecount)
+        else if(plyr->damageCount)
         {
-            palette = (plyr->damagecount + 7) >> 3;
+            palette = (plyr->damageCount + 7) >> 3;
             if(palette >= NUMREDPALS)
             {
                 palette = NUMREDPALS - 1;
             }
             palette += STARTREDPALS;
         }
-        else if(plyr->bonuscount)
+        else if(plyr->bonusCount)
         {
-            palette = (plyr->bonuscount + 7) >> 3;
+            palette = (plyr->bonusCount + 7) >> 3;
             if(palette >= NUMBONUSPALS)
             {
                 palette = NUMBONUSPALS - 1;
@@ -1638,27 +1638,25 @@ void DrawChain(void)
     h = 7;
     cw = (healthPos / 113) + 0.054f;
 
-    GL_SetPatch(PatchNumCHAIN.lump);
+    GL_SetPatch(PatchNumCHAIN.lump, DGL_REPEAT, DGL_CLAMP);
 
-    gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
+    DGL_Color4f(1, 1, 1, statusbarCounterAlpha);
 
-    gl.Color4f(1, 1, 1, statusbarCounterAlpha);
+    DGL_Begin(DGL_QUADS);
 
-    gl.Begin(DGL_QUADS);
+    DGL_TexCoord2f( 0 - cw, 0);
+    DGL_Vertex2f(x, y);
 
-    gl.TexCoord2f( 0 - cw, 0);
-    gl.Vertex2f(x, y);
+    DGL_TexCoord2f( 0.948f - cw, 0);
+    DGL_Vertex2f(x + w, y);
 
-    gl.TexCoord2f( 0.948f - cw, 0);
-    gl.Vertex2f(x + w, y);
+    DGL_TexCoord2f( 0.948f - cw, 1);
+    DGL_Vertex2f(x + w, y + h);
 
-    gl.TexCoord2f( 0.948f - cw, 1);
-    gl.Vertex2f(x + w, y + h);
+    DGL_TexCoord2f( 0 - cw, 1);
+    DGL_Vertex2f(x, y + h);
 
-    gl.TexCoord2f( 0 - cw, 1);
-    gl.Vertex2f(x, y + h);
-
-    gl.End();
+    DGL_End();
 
 
     healthPos = ((healthPos * 256) / 117) - gemoffset;
@@ -1693,35 +1691,35 @@ void DrawChain(void)
         cw2 = 1;
     }
 
-    GL_SetPatch(PatchNumLIFEGEM);
+    GL_SetPatch(PatchNumLIFEGEM, DGL_CLAMP, DGL_CLAMP);
 
-    // draw the life gem
-    gl.Color4f(1, 1, 1, statusbarCounterAlpha);
+    // Draw the life gem.
+    DGL_Color4f(1, 1, 1, statusbarCounterAlpha);
 
-    gl.Begin(DGL_QUADS);
+    DGL_Begin(DGL_QUADS);
 
-    gl.TexCoord2f( cw, 0);
-    gl.Vertex2f(x2, y);
+    DGL_TexCoord2f( cw, 0);
+    DGL_Vertex2f(x2, y);
 
-    gl.TexCoord2f( cw2, 0);
-    gl.Vertex2f(x2 + w3, y);
+    DGL_TexCoord2f( cw2, 0);
+    DGL_Vertex2f(x2 + w3, y);
 
-    gl.TexCoord2f( cw2, 1);
-    gl.Vertex2f(x2 + w3, y + h);
+    DGL_TexCoord2f( cw2, 1);
+    DGL_Vertex2f(x2 + w3, y + h);
 
-    gl.TexCoord2f( cw, 1);
-    gl.Vertex2f(x2, y + h);
+    DGL_TexCoord2f( cw, 1);
+    DGL_Vertex2f(x2, y + h);
 
-    gl.End();
+    DGL_End();
 
     // how about a glowing gem?
-    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
-    gl.Bind(Get(DD_DYNLIGHT_TEXTURE));
+    GL_BlendMode(BM_ADD);
+    DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
     GL_DrawRect(x + healthPos + 25, y - 3, 34, 18, 1, 0, 0,
                 gemglow - (1 - statusbarCounterAlpha));
 
-    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+    GL_BlendMode(BM_NORMAL);
 }
 
 void ST_drawWidgets(boolean refresh)
@@ -1748,7 +1746,7 @@ void ST_drawWidgets(boolean refresh)
             if(plyr->readyArtifact > 0)
             {
                 STlib_updateMultIcon(&w_artici, refresh);
-                if(!ArtifactFlash && plyr->inventory[plyr->inv_ptr].count > 1)
+                if(!ArtifactFlash && plyr->inventory[plyr->invPtr].count > 1)
                     STlib_updateNum(&w_articount, refresh);
             }
 
@@ -1789,7 +1787,7 @@ void ST_drawWidgets(boolean refresh)
     else
     {   // Draw Inventory
 
-        x = plyr->inv_ptr - plyr->curpos;
+        x = plyr->invPtr - plyr->curPos;
 
         for(i = 0; i < NUMVISINVSLOTS; ++i)
         {
@@ -1803,7 +1801,7 @@ void ST_drawWidgets(boolean refresh)
         }
 
         // Draw selector box
-        GL_DrawPatch(ST_INVENTORYX + plyr->curpos * 31, 163, PatchNumSELECTBOX.lump);
+        GL_DrawPatch(ST_INVENTORYX + plyr->curPos * 31, 163, PatchNumSELECTBOX.lump);
 
         // Draw more left indicator
         if(x != 0)
@@ -1836,23 +1834,23 @@ void DrawKeyBar(void)
     }
 
     temp =
-        PCLASS_INFO(plyr->class)->autoarmorsave + plyr->armorpoints[ARMOR_ARMOR] +
-        plyr->armorpoints[ARMOR_SHIELD] +
-        plyr->armorpoints[ARMOR_HELMET] +
-        plyr->armorpoints[ARMOR_AMULET];
+        PCLASS_INFO(plyr->class)->autoArmorSave + plyr->armorPoints[ARMOR_ARMOR] +
+        plyr->armorPoints[ARMOR_SHIELD] +
+        plyr->armorPoints[ARMOR_HELMET] +
+        plyr->armorPoints[ARMOR_AMULET];
 
     for(i = 0; i < NUMARMOR; ++i)
     {
-        if(!plyr->armorpoints[i])
+        if(!plyr->armorPoints[i])
             continue;
 
-        if(plyr->armorpoints[i] <= (PCLASS_INFO(plyr->class)->armorincrement[i] >> 2))
+        if(plyr->armorPoints[i] <= (PCLASS_INFO(plyr->class)->armorIncrement[i] >> 2))
         {
             GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, statusbarCounterAlpha * 0.3,
                              W_GetNumForName("armslot1") + i);
         }
-        else if(plyr->armorpoints[i] <=
-                (PCLASS_INFO(plyr->class)->armorincrement[i] >> 1))
+        else if(plyr->armorPoints[i] <=
+                (PCLASS_INFO(plyr->class)->armorIncrement[i] >> 1))
         {
             GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, statusbarCounterAlpha * 0.6,
                                 W_GetNumForName("armslot1") + i);
@@ -1882,17 +1880,17 @@ static void DrawWeaponPieces(void)
     {
         if(plyr->pieces & WPIECE1)
         {
-            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->piecex[0], 162,
+            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->pieceX[0], 162,
                             1, statusbarCounterAlpha, PatchNumPIECE1.lump);
         }
         if(plyr->pieces & WPIECE2)
         {
-            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->piecex[1], 162,
+            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->pieceX[1], 162,
                             1, statusbarCounterAlpha, PatchNumPIECE2.lump);
         }
         if(plyr->pieces & WPIECE3)
         {
-            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->piecex[2], 162,
+            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->pieceX[2], 162,
                             1, statusbarCounterAlpha, PatchNumPIECE3.lump);
         }
     }
@@ -1938,24 +1936,24 @@ void ST_doFullscreenStuff(void)
         for(i = 0; i < 2; i++)
             if(plyr->ammo[i] == 0)
                 patches[i] = dim[i];
-        if(plyr->readyweapon == WT_FIRST)
+        if(plyr->readyWeapon == WT_FIRST)
         {
             for(i = 0; i < 2; i++)
                 patches[i] = dim[i];
         }
-        if(plyr->readyweapon == WT_SECOND)
+        if(plyr->readyWeapon == WT_SECOND)
         {
             if(!patches[0])
                 patches[0] = bright[0];
             patches[1] = dim[1];
         }
-        if(plyr->readyweapon == WT_THIRD)
+        if(plyr->readyWeapon == WT_THIRD)
         {
             patches[0] = dim[0];
             if(!patches[1])
                 patches[1] = bright[1];
         }
-        if(plyr->readyweapon == WT_FOURTH)
+        if(plyr->readyWeapon == WT_FOURTH)
         {
             for(i = 0; i < 2; i++)
                 if(!patches[i])
@@ -1975,7 +1973,7 @@ void ST_doFullscreenStuff(void)
         temp = 0;
         for(i = 0; i < MAXPLAYERS; i++)
         {
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
             {
                 temp += plyr->frags[i];
             }
@@ -1993,9 +1991,9 @@ void ST_doFullscreenStuff(void)
                 GL_DrawPatchLitAlpha(286, 170, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
                 GL_DrawPatchLitAlpha(284, 169, 1, iconalpha,
                          W_GetNumForName(artifactlist[plyr->readyArtifact+5]));
-                if(plyr->inventory[plyr->inv_ptr].count > 1)
+                if(plyr->inventory[plyr->invPtr].count > 1)
                 {
-                    DrSmallNumber(plyr->inventory[plyr->inv_ptr].count,
+                    DrSmallNumber(plyr->inventory[plyr->invPtr].count,
                                   302, 192, 1, 1, 1, textalpha);
                 }
                     Draw_EndZoom();
@@ -2009,25 +2007,25 @@ void ST_doFullscreenStuff(void)
         invScale = MINMAX_OF(0.25f, cfg.hudScale - 0.25f, 0.8f);
 
         Draw_BeginZoom(invScale, 160, 198);
-        x = plyr->inv_ptr - plyr->curpos;
+        x = plyr->invPtr - plyr->curPos;
         for(i = 0; i < 7; i++)
         {
             GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
             if(plyr->inventorySlotNum > x + i &&
                plyr->inventory[x + i].type != arti_none)
             {
-                GL_DrawPatchLitAlpha(49 + i * 31, 167, 1, i==plyr->curpos? hudalpha : iconalpha,
+                GL_DrawPatchLitAlpha(49 + i * 31, 167, 1, i==plyr->curPos? hudalpha : iconalpha,
                              W_GetNumForName(artifactlist[plyr->inventory
                                                        [x + i].type+5]));
 
                 if(plyr->inventory[x + i].count > 1)
                 {
                     DrSmallNumber(plyr->inventory[x + i].count, 66 + i * 31,
-                                  188,1, 1, 1, i==plyr->curpos? hudalpha : textalpha/2);
+                                  188,1, 1, 1, i==plyr->curPos? hudalpha : textalpha/2);
                 }
             }
         }
-        GL_DrawPatchLitAlpha(50 + plyr->curpos * 31, 167, 1, hudalpha,PatchNumSELECTBOX.lump);
+        GL_DrawPatchLitAlpha(50 + plyr->curPos * 31, 167, 1, hudalpha,PatchNumSELECTBOX.lump);
         if(x != 0)
         {
             GL_DrawPatchLitAlpha(40, 167, 1, iconalpha,
@@ -2044,27 +2042,17 @@ void ST_doFullscreenStuff(void)
     }
 }
 
+/**
+ * Draw teleport icon and show it on screen.
+ */
 void Draw_TeleportIcon(void)
 {
-    // Draw teleport icon and show it on screen.
-    // We'll do it twice, and also clear the screen.
-    // This way there's be no flickering with video cards that use
-    // page flipping (progress bar!).
-    int     i;
-
     // Dedicated servers don't draw anything.
     if(IS_DEDICATED)
         return;
 
-    for(i = 0; i < 2; i++)
-    {
-        gl.Clear(DGL_COLOR_BUFFER_BIT);
-        GL_DrawRawScreen(W_CheckNumForName("TRAVLPIC"), 0, 0);
-        GL_DrawPatch(100, 68, W_GetNumForName("teleicon"));
-        if(i)
-            break;
-        gl.Show();
-    }
+    GL_DrawRawScreen(W_CheckNumForName("TRAVLPIC"), 0, 0);
+    GL_DrawPatch(100, 68, W_GetNumForName("teleicon"));
 }
 
 /**
@@ -2120,7 +2108,7 @@ void SB_ChangePlayerClass(player_t *player, int newclass)
     player->class = newclass;
     // Take away armor.
     for(i = 0; i < NUMARMOR; i++)
-        player->armorpoints[i] = 0;
+        player->armorPoints[i] = 0;
     cfg.playerClass[player - players] = newclass;
     P_PostMorphWeapon(player, WT_FIRST);
     if(player == players + consoleplayer)

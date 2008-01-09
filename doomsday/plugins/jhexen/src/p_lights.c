@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -287,7 +287,7 @@ void P_SpawnPhasedLight(sector_t *sector, float base, int index)
     P_AddThinker(&phase->thinker);
     phase->sector = sector;
     if(index == -1)
-    {   // Sector->lightlevel as the index.
+    {   // Sector->lightLevel as the index.
         phase->index = (int) (255.0f * P_SectorLight(sector)) & 63;
     }
     else

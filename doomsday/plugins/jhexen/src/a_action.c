@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -117,7 +117,7 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
     for(i = (P_Random() & 3) + 3; i; i--)
     {
         mo = P_SpawnMobj3fv(MT_POTTERYBIT1, actor->pos);
-        P_MobjChangeState(mo, mo->info->spawnstate + (P_Random() % 5));
+        P_MobjChangeState(mo, mo->info->spawnState + (P_Random() % 5));
         if(mo)
         {
             mo->mom[MZ] = FIX2FLT((P_Random() & 7) + 5) * .75f;
@@ -130,7 +130,7 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
     if(actor->args[0])
     {   // Spawn an item
         if(!nomonsters ||
-           !(mobjinfo[TranslateThingType[actor->args[0]]].
+           !(mobjInfo[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
         {   // Only spawn monsters if not -nomonsters
             P_SpawnMobj3fv(TranslateThingType[actor->args[0]], actor->pos);
@@ -141,7 +141,7 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
 
 void C_DECL A_PotteryChooseBit(mobj_t *actor)
 {
-    P_MobjChangeState(actor, actor->info->deathstate + (P_Random() % 5) + 1);
+    P_MobjChangeState(actor, actor->info->deathState + (P_Random() % 5) + 1);
     actor->tics = 256 + (P_Random() << 1);
 }
 
@@ -170,7 +170,7 @@ void C_DECL A_PotteryCheck(mobj_t *actor)
     {
         for(i = 0; i < MAXPLAYERS; ++i)
         {
-            if(!players[i].plr->ingame)
+            if(!players[i].plr->inGame)
                 continue;
 
             pmo = players[i].plr->mo;
@@ -206,7 +206,7 @@ void C_DECL A_CorpseExplode(mobj_t *actor)
     for(i = (P_Random() & 3) + 3; i; i--)
     {
         mo = P_SpawnMobj3fv(MT_CORPSEBIT, actor->pos);
-        P_MobjChangeState(mo, mo->info->spawnstate + (P_Random() % 3));
+        P_MobjChangeState(mo, mo->info->spawnState + (P_Random() % 3));
         if(mo)
         {
             mo->mom[MZ] = FIX2FLT((P_Random() & 7) + 5) * .75f;
@@ -528,7 +528,7 @@ void C_DECL A_FogMove(mobj_t *actor)
 
     if(actor->args[3]-- <= 0)
     {
-        P_SetMobjStateNF(actor, actor->info->deathstate);
+        P_SetMobjStateNF(actor, actor->info->deathState);
         return;
     }
 
@@ -598,7 +598,7 @@ void C_DECL A_CheckThrowBomb(mobj_t *actor)
        actor->mom[MZ] < 2 && actor->state == &states[S_THROWINGBOMB6])
     {
         P_MobjChangeState(actor, S_THROWINGBOMB7);
-        actor->pos[VZ] = actor->floorz;
+        actor->pos[VZ] = actor->floorZ;
         actor->mom[MZ] = 0;
         actor->flags2 &= ~MF2_FLOORBOUNCE;
         actor->flags &= ~MF_MISSILE;
@@ -607,7 +607,7 @@ void C_DECL A_CheckThrowBomb(mobj_t *actor)
 
     if(!--actor->health)
     {
-        P_MobjChangeState(actor, actor->info->deathstate);
+        P_MobjChangeState(actor, actor->info->deathState);
     }
 }
 
@@ -665,7 +665,7 @@ void C_DECL A_Quake(mobj_t *actor)
         for(playnum = 0; playnum < MAXPLAYERS; ++playnum)
         {
             player = &players[playnum];
-            if(!players[playnum].plr->ingame)
+            if(!players[playnum].plr->inGame)
                 continue;
 
             victim = player->plr->mo;
@@ -684,7 +684,7 @@ void C_DECL A_Quake(mobj_t *actor)
 
             // Check if in damage radius
             if(dist < FIX2FLT(actor->args[2]) &&
-               victim->pos[VZ] <= victim->floorz)
+               victim->pos[VZ] <= victim->floorZ)
             {
                 if(P_Random() < 50)
                 {
@@ -748,7 +748,7 @@ void C_DECL A_CheckTeleRing(mobj_t *actor)
 {
     if(actor->special1-- <= 0)
     {
-        P_MobjChangeState(actor, actor->info->deathstate);
+        P_MobjChangeState(actor, actor->info->deathState);
     }
 }
 
@@ -798,7 +798,7 @@ void C_DECL A_ThrustInitUp(mobj_t *actor)
 {
     actor->special2 = 5;
     actor->args[0] = 1;
-    actor->floorclip = 0;
+    actor->floorClip = 0;
     actor->flags = MF_SOLID;
     actor->flags2 = MF2_NOTELEPORT | MF2_FLOORCLIP;
     actor->tracer = NULL;
@@ -810,7 +810,7 @@ void C_DECL A_ThrustInitDn(mobj_t *actor)
 
     actor->special2 = 5;
     actor->args[0] = 0;
-    actor->floorclip = actor->info->height;
+    actor->floorClip = actor->info->height;
     actor->flags = 0;
     actor->flags2 = MF2_NOTELEPORT | MF2_FLOORCLIP | MF2_DONTDRAW;
     mo = P_SpawnMobj3fv(MT_DIRTCLUMP, actor->pos);
@@ -829,7 +829,7 @@ void C_DECL A_ThrustRaise(mobj_t *actor)
     }
 
     // Lose the dirt clump
-    if(actor->floorclip < actor->height && actor->tracer)
+    if(actor->floorClip < actor->height && actor->tracer)
     {
         P_MobjRemove(actor->tracer);
         actor->tracer = NULL;
@@ -884,7 +884,7 @@ void C_DECL A_SoAExplode(mobj_t *actor)
         pos[VZ] += FIX2FLT(P_Random() * FLT2FIX(actor->height) / 256);
 
         mo = P_SpawnMobj3fv(MT_ZARMORCHUNK, pos);
-        P_MobjChangeState(mo, mo->info->spawnstate + i);
+        P_MobjChangeState(mo, mo->info->spawnState + i);
         if(mo)
         {
             mo->mom[MZ] = ((P_Random() & 7) + 5);
@@ -896,7 +896,7 @@ void C_DECL A_SoAExplode(mobj_t *actor)
     if(actor->args[0])
     {                           // Spawn an item
         if(!nomonsters ||
-           !(mobjinfo[TranslateThingType[actor->args[0]]].
+           !(mobjInfo[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
         {   // Only spawn monsters if not -nomonsters
             P_SpawnMobj3fv(TranslateThingType[actor->args[0]], actor->pos);
@@ -986,7 +986,7 @@ void C_DECL A_BatMove(mobj_t *actor)
 
     if(actor->special2 < 0)
     {
-        P_MobjChangeState(actor, actor->info->deathstate);
+        P_MobjChangeState(actor, actor->info->deathState);
     }
     actor->special2 -= 2;       // Called every 2 tics
 
@@ -1026,7 +1026,7 @@ void C_DECL A_TreeDeath(mobj_t *actor)
     }
     else
     {
-        P_MobjChangeState(actor, actor->info->meleestate);
+        P_MobjChangeState(actor, actor->info->meleeState);
     }
 }
 

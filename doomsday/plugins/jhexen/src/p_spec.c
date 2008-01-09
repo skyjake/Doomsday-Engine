@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -516,7 +516,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
         if(side == 0) // Only teleport when crossing the front side of a line
         {
             // Players must be alive to teleport
-            if(!(mo && mo->player && mo->player->playerstate == PST_DEAD))
+            if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 G_LeaveLevel(args[0], args[1], false);
                 buttonSuccess = true;
@@ -528,7 +528,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
         if(side == 0)  // Only teleport when crossing the front side of a line
         {
             // Players must be alive to teleport
-            if(!(mo && mo->player && mo->player->playerstate == PST_DEAD))
+            if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 buttonSuccess = true;
                 if(deathmatch)
@@ -743,7 +743,7 @@ void P_PlayerInSpecialSector(player_t *player)
     switch(xsector->special)
     {
     case 9: // SecretArea
-        player->secretcount++;
+        player->secretCount++;
         xsector->special = 0;
         break;
 
@@ -860,37 +860,37 @@ void P_UpdateSpecials(void)
     //  DO BUTTONS
     for(button = buttonlist; button; button = button->next)
     {
-        if(button->btimer)
+        if(button->timer)
         {
-            button->btimer--;
-            if(!button->btimer)
+            button->timer--;
+            if(!button->timer)
             {
                 side_t     *sdef = P_GetPtrp(button->line, DMU_SIDE0);
                 //sector_t *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
 
-                switch(button->where)
+                switch(button->section)
                 {
-                case top:
-                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->btexture);
+                case LS_TOP:
+                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->texture);
                     break;
 
-                case middle:
-                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->btexture);
+                case LS_MIDDLE:
+                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->texture);
                     break;
 
-                case bottom:
-                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->btexture);
+                case LS_BOTTOM:
+                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->texture);
                     break;
 
                 default:
-                    Con_Error("P_UpdateSpecials: Unknown sidedef section \"%d\".",
-                              button->where);
+                    Con_Error("P_UpdateSpecials: Unknown sidedef section \"%i\".",
+                              (int) button->section);
                 }
 
                 button->line = NULL;
-                button->where = 0;
-                button->btexture = 0;
-                button->soundorg = NULL;
+                button->section = 0;
+                button->texture = 0;
+                button->soundOrg = NULL;
             }
         }
     }
@@ -945,7 +945,7 @@ void P_SpawnSpecials(void)
         switch(xsec->special)
         {
         case 1: // Phased light
-            // Hardcoded base, use sector->lightlevel as the index
+            // Hardcoded base, use sector->lightLevel as the index
             P_SpawnPhasedLight(sec, (80.f / 255.0f), -1);
             break;
 

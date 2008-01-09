@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -369,7 +369,7 @@ weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
  */
 void P_SetPSpriteOffset(pspdef_t *psp, player_t *plr, state_t *state)
 {
-    ddpsprite_t *ddpsp = plr->plr->psprites;
+    ddpsprite_t *ddpsp = plr->plr->pSprites;
 
     // Clear the Offset flag by default.
     //ddpsp->flags &= ~DDPSPF_OFFSET;
@@ -395,7 +395,7 @@ void P_SetPsprite(player_t *plr, int position, statenum_t stnum)
     pspdef_t       *psp;
     state_t        *state;
 
-    psp = &plr->psprites[position];
+    psp = &plr->pSprites[position];
     do
     {
         if(!stnum)
@@ -418,7 +418,7 @@ void P_SetPsprite(player_t *plr, int position, statenum_t stnum)
             }
         }
 
-        stnum = psp->state->nextstate;
+        stnum = psp->state->nextState;
     } while(!psp->tics); // An initial state of 0 could cycle through.
 }
 
@@ -430,7 +430,7 @@ void P_SetPspriteNF(player_t *plr, int position, statenum_t stnum)
     pspdef_t       *psp;
     state_t        *state;
 
-    psp = &plr->psprites[position];
+    psp = &plr->pSprites[position];
     do
     {
         if(!stnum)
@@ -444,24 +444,24 @@ void P_SetPspriteNF(player_t *plr, int position, statenum_t stnum)
         psp->tics = state->tics; // could be 0
 
         P_SetPSpriteOffset(psp, plr, state);
-        stnum = psp->state->nextstate;
+        stnum = psp->state->nextState;
     } while(!psp->tics); // An initial state of 0 could cycle through.
 }
 
 void P_ActivateMorphWeapon(player_t *plr)
 {
-    plr->pendingweapon = WT_NOCHANGE;
-    plr->psprites[ps_weapon].pos[VY] = WEAPONTOP;
-    plr->readyweapon = WT_FIRST; // Snout is the first weapon
+    plr->pendingWeapon = WT_NOCHANGE;
+    plr->pSprites[ps_weapon].pos[VY] = WEAPONTOP;
+    plr->readyWeapon = WT_FIRST; // Snout is the first weapon
     plr->update |= PSF_WEAPONS;
     P_SetPsprite(plr, ps_weapon, S_SNOUTREADY);
 }
 
 void P_PostMorphWeapon(player_t *plr, weapontype_t weapon)
 {
-    plr->pendingweapon = WT_NOCHANGE;
-    plr->readyweapon = weapon;
-    plr->psprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
+    plr->pendingWeapon = WT_NOCHANGE;
+    plr->readyWeapon = weapon;
+    plr->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
     plr->update |= PSF_WEAPONS;
     P_SetPsprite(plr, ps_weapon, weaponinfo[weapon][plr->class].mode[0].upstate);
 }
@@ -474,23 +474,23 @@ void P_BringUpWeapon(player_t *plr)
     statenum_t newState;
     weaponmodeinfo_t *wminfo;
 
-    wminfo = WEAPON_INFO(plr->pendingweapon, plr->class, 0);
+    wminfo = WEAPON_INFO(plr->pendingWeapon, plr->class, 0);
 
     newState = wminfo->upstate;
-    if(plr->class == PCLASS_FIGHTER && plr->pendingweapon == WT_SECOND &&
+    if(plr->class == PCLASS_FIGHTER && plr->pendingWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA])
     {
         newState = S_FAXEUP_G;
     }
 
-    if(plr->pendingweapon == WT_NOCHANGE)
-        plr->pendingweapon = plr->readyweapon;
+    if(plr->pendingWeapon == WT_NOCHANGE)
+        plr->pendingWeapon = plr->readyWeapon;
 
     if(wminfo->raisesound)
         S_StartSound(wminfo->raisesound, plr->plr->mo);
 
-    plr->pendingweapon = WT_NOCHANGE;
-    plr->psprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
+    plr->pendingWeapon = WT_NOCHANGE;
+    plr->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
     P_SetPsprite(plr, ps_weapon, newState);
 }
 
@@ -510,7 +510,7 @@ boolean P_CheckAmmo(player_t *plr)
     //// \kludge Work around the multiple firing modes problems.
     //// We need to split the weapon firing routines and implement them as
     //// new fire modes.
-    if(plr->class == PCLASS_FIGHTER && plr->readyweapon != WT_FOURTH)
+    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)
         return true;
     // < KLUDGE
 
@@ -519,11 +519,11 @@ boolean P_CheckAmmo(player_t *plr)
 
     for(i = 0; i < NUM_AMMO_TYPES && good; ++i)
     {
-        if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[i])
+        if(!weaponinfo[plr->readyWeapon][plr->class].mode[0].ammotype[i])
             continue; // Weapon does not take this type of ammo.
 
         // Minimal amount for one shot varies.
-        count = weaponinfo[plr->readyweapon][plr->class].mode[0].pershot[i];
+        count = weaponinfo[plr->readyWeapon][plr->class].mode[0].pershot[i];
 
         // Return if current ammunition sufficient.
         if(plr->ammo[i] < count)
@@ -539,7 +539,7 @@ boolean P_CheckAmmo(player_t *plr)
 
     // Now set appropriate weapon overlay.
     P_SetPsprite(plr, ps_weapon,
-                 weaponinfo[plr->readyweapon][plr->class].mode[0].downstate);
+                 weaponinfo[plr->readyWeapon][plr->class].mode[0].downstate);
     return false;
 }
 
@@ -551,8 +551,8 @@ void P_FireWeapon(player_t *plr)
         return;
 
     // Psprite state.
-    P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->attackstate);
-    if(plr->class == PCLASS_FIGHTER && plr->readyweapon == WT_SECOND &&
+    P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->attackState);
+    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA] > 0)
     {   // Glowing axe.
         attackState = S_FAXEATK_G1;
@@ -561,10 +561,10 @@ void P_FireWeapon(player_t *plr)
     {
         if(plr->refire)
             attackState =
-                weaponinfo[plr->readyweapon][plr->class].mode[0].holdatkstate;
+                weaponinfo[plr->readyWeapon][plr->class].mode[0].holdatkstate;
         else
             attackState =
-                weaponinfo[plr->readyweapon][plr->class].mode[0].atkstate;
+                weaponinfo[plr->readyWeapon][plr->class].mode[0].atkstate;
     }
 
     P_SetPsprite(plr, ps_weapon, attackState);
@@ -573,7 +573,7 @@ void P_FireWeapon(player_t *plr)
     plr->update |= PSF_AMMO;
 
     // Psprite state.
-    plr->plr->psprites[0].state = DDPSP_FIRE;
+    plr->plr->pSprites[0].state = DDPSP_FIRE;
 }
 
 /**
@@ -582,7 +582,7 @@ void P_FireWeapon(player_t *plr)
 void P_DropWeapon(player_t *plr)
 {
     P_SetPsprite(plr, ps_weapon,
-                 weaponinfo[plr->readyweapon][plr->class].mode[0].downstate);
+                 weaponinfo[plr->readyWeapon][plr->class].mode[0].downstate);
 }
 
 /**
@@ -594,22 +594,22 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     ddpsprite_t *ddpsp;
 
     // Change plr from attack state
-    if(plr->plr->mo->state >= &states[PCLASS_INFO(plr->class)->attackstate] &&
-       plr->plr->mo->state <= &states[PCLASS_INFO(plr->class)->attackendstate])
+    if(plr->plr->mo->state >= &states[PCLASS_INFO(plr->class)->attackState] &&
+       plr->plr->mo->state <= &states[PCLASS_INFO(plr->class)->attackEndState])
     {
-        P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->normalstate);
+        P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->normalState);
     }
 
-    if(plr->readyweapon != WT_NOCHANGE)
+    if(plr->readyWeapon != WT_NOCHANGE)
     {
-        wminfo = WEAPON_INFO(plr->readyweapon, plr->class, 0);
+        wminfo = WEAPON_INFO(plr->readyWeapon, plr->class, 0);
 
         // A weaponready sound?
         if(psp->state == &states[wminfo->readystate] && wminfo->readysound)
             S_StartSound(wminfo->readysound, plr->plr->mo);
 
         // Check for change, if plr is dead, put the weapon away.
-        if(plr->pendingweapon != WT_NOCHANGE || !plr->health)
+        if(plr->pendingWeapon != WT_NOCHANGE || !plr->health)
         {   //  (pending weapon should allready be validated)
             P_SetPsprite(plr, ps_weapon, wminfo->downstate);
             return;
@@ -619,21 +619,21 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     // Check for autofire.
     if(plr->brain.attack)
     {
-        wminfo = WEAPON_INFO(plr->readyweapon, plr->class, 0);
+        wminfo = WEAPON_INFO(plr->readyWeapon, plr->class, 0);
 
-        if(!plr->attackdown || wminfo->autofire)
+        if(!plr->attackDown || wminfo->autofire)
         {
-            plr->attackdown = true;
+            plr->attackDown = true;
             P_FireWeapon(plr);
             return;
         }
     }
     else
     {
-        plr->attackdown = false;
+        plr->attackDown = false;
     }
 
-    ddpsp = plr->plr->psprites;
+    ddpsp = plr->plr->pSprites;
 
     if(!plr->morphTics)
     {
@@ -654,7 +654,7 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
 void C_DECL A_ReFire(player_t *plr, pspdef_t *psp)
 {
     if((plr->brain.attack) &&
-       plr->pendingweapon == WT_NOCHANGE && plr->health)
+       plr->pendingWeapon == WT_NOCHANGE && plr->health)
     {
         plr->refire++;
         P_FireWeapon(plr);
@@ -669,7 +669,7 @@ void C_DECL A_ReFire(player_t *plr, pspdef_t *psp)
 void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
 {
     // Psprite state.
-    plr->plr->psprites[0].state = DDPSP_DOWN;
+    plr->plr->pSprites[0].state = DDPSP_DOWN;
 
     if(plr->morphTics)
     {
@@ -685,7 +685,7 @@ void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
         return;
     }
 
-    if(plr->playerstate == PST_DEAD)
+    if(plr->playerState == PST_DEAD)
     {   // Player is dead, so don't bring up a pending weapon.
         psp->pos[VY] = WEAPONBOTTOM;
         return;
@@ -697,7 +697,7 @@ void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
         return;
     }
 
-    plr->readyweapon = plr->pendingweapon;
+    plr->readyWeapon = plr->pendingWeapon;
     plr->update |= PSF_WEAPONS;
     P_BringUpWeapon(plr);
 }
@@ -705,7 +705,7 @@ void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
 void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
 {
     // Psprite state.
-    plr->plr->psprites[0].state = DDPSP_UP;
+    plr->plr->pSprites[0].state = DDPSP_UP;
 
     psp->pos[VY] -= RAISESPEED;
     if(psp->pos[VY] > WEAPONTOP)
@@ -714,7 +714,7 @@ void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
     }
 
     psp->pos[VY] = WEAPONTOP;
-    if(plr->class == PCLASS_FIGHTER && plr->readyweapon == WT_SECOND &&
+    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA])
     {
         P_SetPsprite(plr, ps_weapon, S_FAXEREADY_G);
@@ -722,7 +722,7 @@ void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
     else
     {
         P_SetPsprite(plr, ps_weapon,
-                     weaponinfo[plr->readyweapon][plr->class].mode[0].
+                     weaponinfo[plr->readyWeapon][plr->class].mode[0].
                      readystate);
     }
 }
@@ -835,7 +835,7 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
 
   hammerdone:
     if(plr->ammo[AT_GREENMANA] <
-       weaponinfo[plr->readyweapon][plr->class].mode[0].pershot[AT_GREENMANA])
+       weaponinfo[plr->readyWeapon][plr->class].mode[0].pershot[AT_GREENMANA])
     {   // Don't spawn a hammer if the plr doesn't have enough mana.
         mo->special1 = false;
     }
@@ -928,18 +928,18 @@ void C_DECL A_LightningClip(mobj_t *mo)
 
     if(mo->type == MT_LIGHTNING_FLOOR)
     {
-        mo->pos[VZ] = mo->floorz;
-        target = mo->lastenemy->tracer;
+        mo->pos[VZ] = mo->floorZ;
+        target = mo->lastEnemy->tracer;
     }
     else if(mo->type == MT_LIGHTNING_CEILING)
     {
-        mo->pos[VZ] = mo->ceilingz - mo->height;
+        mo->pos[VZ] = mo->ceilingZ - mo->height;
         target = mo->tracer;
     }
 
     if(mo->type == MT_LIGHTNING_FLOOR)
     {   // Floor lightning zig-zags, and forces the ceiling lightning to mimic.
-        cMo = mo->lastenemy;
+        cMo = mo->lastEnemy;
         zigZag = P_Random();
         if((zigZag > 128 && mo->special1 < 2) || mo->special1 < -2)
         {
@@ -987,7 +987,7 @@ void C_DECL A_LightningZap(mobj_t *mo)
     mo->health -= 8;
     if(mo->health <= 0)
     {
-        P_MobjChangeState(mo, mo->info->deathstate);
+        P_MobjChangeState(mo, mo->info->deathState);
         return;
     }
 
@@ -1006,7 +1006,7 @@ void C_DECL A_LightningZap(mobj_t *mo)
                         mo->pos[VZ] + deltaZ);
     if(pmo)
     {
-        pmo->lastenemy = mo;
+        pmo->lastEnemy = mo;
         pmo->mom[MX] = mo->mom[MX];
         pmo->mom[MY] = mo->mom[MY];
         pmo->target = mo->target;
@@ -1035,14 +1035,14 @@ void C_DECL A_MLightningAttack2(mobj_t *mo)
     if(fmo)
     {
         fmo->special1 = 0;
-        fmo->lastenemy = cmo;
+        fmo->lastEnemy = cmo;
         A_LightningZap(fmo);
     }
 
     if(cmo)
     {
         cmo->tracer = NULL; // Mobj that it will track.
-        cmo->lastenemy = fmo;
+        cmo->lastEnemy = fmo;
         A_LightningZap(cmo);
     }
     S_StartSound(SFX_MAGE_LIGHTNING_FIRE, mo);
@@ -1058,10 +1058,10 @@ void C_DECL A_ZapMimic(mobj_t *mo)
 {
     mobj_t         *target;
 
-    target = mo->lastenemy;
+    target = mo->lastEnemy;
     if(target)
     {
-        if(target->state >= &states[target->info->deathstate] ||
+        if(target->state >= &states[target->info->deathState] ||
            target->state == &states[S_FREETARGMOBJ])
         {
             P_ExplodeMissile(mo);
@@ -1090,10 +1090,10 @@ void C_DECL A_LightningRemove(mobj_t *mo)
 {
     mobj_t         *target;
 
-    target = mo->lastenemy;
+    target = mo->lastEnemy;
     if(target)
     {
-        target->lastenemy = NULL;
+        target->lastEnemy = NULL;
         P_ExplodeMissile(target);
     }
 }
@@ -1125,8 +1125,8 @@ void C_DECL A_MStaffAttack(player_t *plr, pspdef_t *psp)
     S_StartSound(SFX_MAGE_STAFF_FIRE, plr->plr->mo);
     if(plr == &players[consoleplayer])
     {
-        plr->damagecount = 0;
-        plr->bonuscount = 0;
+        plr->damageCount = 0;
+        plr->bonusCount = 0;
 
         R_SetFilter(STARTSCOURGEPAL);
     }
@@ -1173,9 +1173,9 @@ void C_DECL A_MStaffWeave(mobj_t *mo)
     weaveZ = (weaveZ + 3) & 63;
     mo->pos[VZ] += FLOATBOBOFFSET(weaveZ) * 2;
 
-    if(mo->pos[VZ] <= mo->floorz)
+    if(mo->pos[VZ] <= mo->floorZ)
     {
-        mo->pos[VZ] = mo->floorz + 1;
+        mo->pos[VZ] = mo->floorZ + 1;
     }
     mo->special2 = weaveZ + (weaveXY << 16);
 }
@@ -1681,7 +1681,7 @@ void C_DECL A_CHolyAttack2(mobj_t *mo)
         for(j = 1; j < 3; ++j)
         {
             next = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos);
-            P_MobjChangeState(next, next->info->spawnstate + 1);
+            P_MobjChangeState(next, next->info->spawnState + 1);
             tail->tracer = next;
             tail = next;
         }
@@ -1698,8 +1698,8 @@ void C_DECL A_CHolyAttack(player_t *plr, pspdef_t *psp)
     pmo = P_SpawnPlayerMissile(MT_HOLY_MISSILE, plr->plr->mo);
     if(plr == &players[consoleplayer])
     {
-        plr->damagecount = 0;
-        plr->bonuscount = 0;
+        plr->damageCount = 0;
+        plr->bonusCount = 0;
 
         R_SetFilter(STARTHOLYPAL);
     }
@@ -1850,7 +1850,7 @@ void C_DECL A_CHolySeek(mobj_t *mo)
         mo->mom[MX] /= 4;
         mo->mom[MY] /= 4;
         mo->mom[MZ] = 0;
-        P_MobjChangeState(mo, mo->info->deathstate);
+        P_MobjChangeState(mo, mo->info->deathState);
         mo->tics -= P_Random() & 3;
         return;
     }
@@ -1931,7 +1931,7 @@ void C_DECL A_CHolyTail(mobj_t *mo)
     parent = mo->target;
     if(parent)
     {
-        if(parent->state >= &states[parent->info->deathstate])
+        if(parent->state >= &states[parent->info->deathState])
         {   // Ghost removed, so remove all tail parts.
             CHolyTailRemove(mo);
         }
@@ -2114,11 +2114,11 @@ void P_SetupPsprites(player_t *plr)
     // Remove all psprites.
     for(i = 0; i < NUMPSPRITES; ++i)
     {
-        plr->psprites[i].state = NULL;
+        plr->pSprites[i].state = NULL;
     }
 
     // Spawn the ready weapon
-    plr->pendingweapon = plr->readyweapon;
+    plr->pendingWeapon = plr->readyWeapon;
     P_BringUpWeapon(plr);
 }
 
@@ -2131,7 +2131,7 @@ void P_MovePsprites(player_t *plr)
     pspdef_t   *psp;
     state_t    *state;
 
-    psp = &plr->psprites[0];
+    psp = &plr->pSprites[0];
     for(i = 0; i < NUMPSPRITES; ++i, psp++)
     {
         if((state = psp->state) != 0) // A null state means not active.
@@ -2142,12 +2142,12 @@ void P_MovePsprites(player_t *plr)
                 psp->tics--;
                 if(!psp->tics)
                 {
-                    P_SetPsprite(plr, i, psp->state->nextstate);
+                    P_SetPsprite(plr, i, psp->state->nextState);
                 }
             }
         }
     }
 
-    plr->psprites[ps_flash].pos[VX] = plr->psprites[ps_weapon].pos[VX];
-    plr->psprites[ps_flash].pos[VY] = plr->psprites[ps_weapon].pos[VY];
+    plr->pSprites[ps_flash].pos[VX] = plr->pSprites[ps_weapon].pos[VX];
+    plr->pSprites[ps_flash].pos[VY] = plr->pSprites[ps_weapon].pos[VY];
 }

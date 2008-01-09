@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -624,7 +624,7 @@ static boolean TagBusy(int tag)
         if(xsec->tag != tag)
             continue;
 
-        if(xsec->specialdata)
+        if(xsec->specialData)
             return true;
     }
     return false;
@@ -1180,7 +1180,7 @@ static void ThingCount(int type, int tid)
     }
     else
     {   // Count only types
-        for(think = thinkercap.next; think != &thinkercap && think;
+        for(think = thinkerCap.next; think != &thinkerCap && think;
             think = think->next)
         {
             if(think->function != P_MobjThinker)
@@ -1459,7 +1459,7 @@ static int CmdEndPrint(void)
 
         // Send to everybody.
         for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->ingame)
+            if(players[i].plr->inGame)
                 P_SetMessage(&players[i], PrintBuffer, false);
     }
 
@@ -1472,7 +1472,7 @@ static int CmdEndPrintBold(void)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(players[i].plr->ingame)
+        if(players[i].plr->inGame)
         {
             P_SetYellowMessage(&players[i], PrintBuffer, false);
         }
@@ -1513,7 +1513,7 @@ static int CmdPlayerCount(void)
     count = 0;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        count += players[i].plr->ingame;
+        count += players[i].plr->inGame;
     }
     Push(count);
     return SCRIPT_CONTINUE;
