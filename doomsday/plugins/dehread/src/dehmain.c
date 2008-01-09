@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1998-2003 Randy Heit. <rheit@iastate.edu> (Zdoom)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@
  */
 
 
-/*
+/**
  * dehmain.c: Dehacked Reader Plugin for Doomsday
  *
  * Much of this has been taken from or is based on ZDoom's DEH reader.
@@ -722,188 +722,118 @@ int HandleMode(const char *mode, int num)
 
 int PatchThing(int thingy)
 {
-    size_t  thingNum = (size_t) thingy;
+    size_t          thingNum = (size_t) thingy;
 
     static const struct Key keys[] = {
-        {"ID #", myoffsetof(ded_mobj_t, doomednum, 0)},
-        {"Initial frame", myoffsetof(ded_mobj_t, spawnstate, OFF_STATE)},
-        {"Hit points", myoffsetof(ded_mobj_t, spawnhealth, 0)},
-        {"First moving frame", myoffsetof(ded_mobj_t, seestate, OFF_STATE)},
-        {"Reaction time", myoffsetof(ded_mobj_t, reactiontime, 0)},
-        {"Injury frame", myoffsetof(ded_mobj_t, painstate, OFF_STATE)},
-        {"Pain chance", myoffsetof(ded_mobj_t, painchance, 0)},
-        {"Close attack frame", myoffsetof(ded_mobj_t, meleestate, OFF_STATE)},
-        {"Far attack frame", myoffsetof(ded_mobj_t, missilestate, OFF_STATE)},
-        {"Death frame", myoffsetof(ded_mobj_t, deathstate, OFF_STATE)},
-        {"Exploding frame", myoffsetof(ded_mobj_t, xdeathstate, OFF_STATE)},
+        {"ID #", myoffsetof(ded_mobj_t, doomedNum, 0)},
+        {"Initial frame", myoffsetof(ded_mobj_t, spawnState, OFF_STATE)},
+        {"Hit points", myoffsetof(ded_mobj_t, spawnHealth, 0)},
+        {"First moving frame", myoffsetof(ded_mobj_t, seeState, OFF_STATE)},
+        {"Reaction time", myoffsetof(ded_mobj_t, reactionTime, 0)},
+        {"Injury frame", myoffsetof(ded_mobj_t, painState, OFF_STATE)},
+        {"Pain chance", myoffsetof(ded_mobj_t, painChance, 0)},
+        {"Close attack frame", myoffsetof(ded_mobj_t, meleeState, OFF_STATE)},
+        {"Far attack frame", myoffsetof(ded_mobj_t, missileState, OFF_STATE)},
+        {"Death frame", myoffsetof(ded_mobj_t, deathState, OFF_STATE)},
+        {"Exploding frame", myoffsetof(ded_mobj_t, xDeathState, OFF_STATE)},
         {"Speed", myoffsetof(ded_mobj_t, speed, OFF_FLOAT)},
         {"Width", myoffsetof(ded_mobj_t, radius, OFF_FIXED)},
         {"Height", myoffsetof(ded_mobj_t, height, OFF_FIXED)},
         {"Mass", myoffsetof(ded_mobj_t, mass, 0)},
         {"Missile damage", myoffsetof(ded_mobj_t, damage, 0)},
-        {"Respawn frame", myoffsetof(ded_mobj_t, raisestate, OFF_STATE)},
+        {"Respawn frame", myoffsetof(ded_mobj_t, raiseState, OFF_STATE)},
         //{ "Translucency",     myoffsetof(ded_mobj_t,translucency,0) },
-        {"Alert sound", myoffsetof(ded_mobj_t, seesound, OFF_SOUND)},
-        {"Attack sound", myoffsetof(ded_mobj_t, attacksound, OFF_SOUND)},
-        {"Pain sound", myoffsetof(ded_mobj_t, painsound, OFF_SOUND)},
-        {"Death sound", myoffsetof(ded_mobj_t, deathsound, OFF_SOUND)},
-        {"Action sound", myoffsetof(ded_mobj_t, activesound, OFF_SOUND)},
+        {"Alert sound", myoffsetof(ded_mobj_t, seeSound, OFF_SOUND)},
+        {"Attack sound", myoffsetof(ded_mobj_t, attackSound, OFF_SOUND)},
+        {"Pain sound", myoffsetof(ded_mobj_t, painSound, OFF_SOUND)},
+        {"Death sound", myoffsetof(ded_mobj_t, deathSound, OFF_SOUND)},
+        {"Action sound", myoffsetof(ded_mobj_t, activeSound, OFF_SOUND)},
         {NULL,}
     };
 
     // flags can be specified by name (a .bex extension):
     static const struct {
-        short   bit;
-        short   whichflags;
-        const char *name;
+        short           bit;
+        short           whichflags;
+        const char     *name;
     } bitnames[] =
     {
-        {
-        0, 0, "SPECIAL"},
-        {
-        1, 0, "SOLID"},
-        {
-        2, 0, "SHOOTABLE"},
-        {
-        3, 0, "NOSECTOR"},
-        {
-        4, 0, "NOBLOCKMAP"},
-        {
-        5, 0, "AMBUSH"},
-        {
-        6, 0, "JUSTHIT"},
-        {
-        7, 0, "JUSTATTACKED"},
-        {
-        8, 0, "SPAWNCEILING"},
-        {
-        9, 0, "NOGRAVITY"},
-        {
-        10, 0, "DROPOFF"},
-        {
-        11, 0, "PICKUP"},
-        {
-        12, 0, "NOCLIP"},
-        {
-        14, 0, "FLOAT"},
-        {
-        15, 0, "TELEPORT"},
-        {
-        16, 0, "MISSILE"},
-        {
-        17, 0, "DROPPED"},
-        {
-        18, 0, "SHADOW"},
-        {
-        19, 0, "NOBLOOD"},
-        {
-        20, 0, "CORPSE"},
-        {
-        21, 0, "INFLOAT"},
-        {
-        22, 0, "COUNTKILL"},
-        {
-        23, 0, "COUNTITEM"},
-        {
-        24, 0, "SKULLFLY"},
-        {
-        25, 0, "NOTDMATCH"},
-        {
-        26, 0, "TRANSLATION1"},
-        {
-        26, 0, "TRANSLATION"},  // BOOM compatibility
-        {
-        27, 0, "TRANSLATION2"},
-        {
-        27, 0, "UNUSED1"},      // BOOM compatibility
-        {
-        28, 0, "STEALTH"},
-        {
-        28, 0, "UNUSED2"},      // BOOM compatibility
-        {
-        29, 0, "TRANSLUC25"},
-        {
-        29, 0, "UNUSED3"},      // BOOM compatibility
-        {
-        30, 0, "TRANSLUC50"},
-        {
-        (29 << 8) | 30, 0, "TRANSLUC75"},
-        {
-        30, 0, "UNUSED4"},      // BOOM compatibility
-        {
-        30, 0, "TRANSLUCENT"},  // BOOM compatibility?
-        {
-        31, 0, "RESERVED"},
-            // Names for flags2
-        {
-        0, 1, "LOGRAV"},
-        {
-        1, 1, "WINDTHRUST"},
-        {
-        2, 1, "FLOORBOUNCE"},
-        {
-        3, 1, "BLASTED"},
-        {
-        4, 1, "FLY"},
-        {
-        5, 1, "FLOORCLIP"},
-        {
-        6, 1, "SPAWNFLOAT"},
-        {
-        7, 1, "NOTELEPORT"},
-        {
-        8, 1, "RIP"},
-        {
-        9, 1, "PUSHABLE"},
-        {
-        10, 1, "CANSLIDE"},     // Avoid conflict with SLIDE from BOOM
-        {
-        11, 1, "ONMOBJ"},
-        {
-        12, 1, "PASSMOBJ"},
-        {
-        13, 1, "CANNOTPUSH"},
-        {
-        14, 1, "DROPPED"},
-        {
-        15, 1, "BOSS"},
-        {
-        16, 1, "FIREDAMAGE"},
-        {
-        17, 1, "NODMGTHRUST"},
-        {
-        18, 1, "TELESTOMP"},
-        {
-        19, 1, "FLOATBOB"},
-        {
-        20, 1, "DONTDRAW"},
-        {
-        21, 1, "IMPACT"},
-        {
-        22, 1, "PUSHWALL"},
-        {
-        23, 1, "MCROSS"},
-        {
-        24, 1, "PCROSS"},
-        {
-        25, 1, "CANTLEAVEFLOORPIC"},
-        {
-        26, 1, "NONSHOOTABLE"},
-        {
-        27, 1, "INVULNERABLE"},
-        {
-        28, 1, "DORMANT"},
-        {
-        29, 1, "ICEDAMAGE"},
-        {
-        30, 1, "SEEKERMISSILE"},
-        {
-        31, 1, "REFLECTIVE"}
+        {0, 0, "SPECIAL"},
+        {1, 0, "SOLID"},
+        {2, 0, "SHOOTABLE"},
+        {3, 0, "NOSECTOR"},
+        {4, 0, "NOBLOCKMAP"},
+        {5, 0, "AMBUSH"},
+        {6, 0, "JUSTHIT"},
+        {7, 0, "JUSTATTACKED"},
+        {8, 0, "SPAWNCEILING"},
+        {9, 0, "NOGRAVITY"},
+        {10, 0, "DROPOFF"},
+        {11, 0, "PICKUP"},
+        {12, 0, "NOCLIP"},
+        {14, 0, "FLOAT"},
+        {15, 0, "TELEPORT"},
+        {16, 0, "MISSILE"},
+        {17, 0, "DROPPED"},
+        {18, 0, "SHADOW"},
+        {19, 0, "NOBLOOD"},
+        {20, 0, "CORPSE"},
+        {21, 0, "INFLOAT"},
+        {22, 0, "COUNTKILL"},
+        {23, 0, "COUNTITEM"},
+        {24, 0, "SKULLFLY"},
+        {25, 0, "NOTDMATCH"},
+        {26, 0, "TRANSLATION1"},
+        {26, 0, "TRANSLATION"},  // BOOM compatibility
+        {27, 0, "TRANSLATION2"},
+        {27, 0, "UNUSED1"},      // BOOM compatibility
+        {28, 0, "STEALTH"},
+        {28, 0, "UNUSED2"},      // BOOM compatibility
+        {29, 0, "TRANSLUC25"},
+        {29, 0, "UNUSED3"},      // BOOM compatibility
+        {30, 0, "TRANSLUC50"},
+        {(29 << 8) | 30, 0, "TRANSLUC75"},
+        {30, 0, "UNUSED4"},      // BOOM compatibility
+        {30, 0, "TRANSLUCENT"},  // BOOM compatibility?
+        {31, 0, "RESERVED"},
+        // Names for flags2
+        {0, 1, "LOGRAV"},
+        {1, 1, "WINDTHRUST"},
+        {2, 1, "FLOORBOUNCE"},
+        {3, 1, "BLASTED"},
+        {4, 1, "FLY"},
+        {5, 1, "FLOORCLIP"},
+        {6, 1, "SPAWNFLOAT"},
+        {7, 1, "NOTELEPORT"},
+        {8, 1, "RIP"},
+        {9, 1, "PUSHABLE"},
+        {10, 1, "CANSLIDE"},     // Avoid conflict with SLIDE from BOOM
+        {11, 1, "ONMOBJ"},
+        {12, 1, "PASSMOBJ"},
+        {13, 1, "CANNOTPUSH"},
+        {14, 1, "DROPPED"},
+        {15, 1, "BOSS"},
+        {16, 1, "FIREDAMAGE"},
+        {17, 1, "NODMGTHRUST"},
+        {18, 1, "TELESTOMP"},
+        {19, 1, "FLOATBOB"},
+        {20, 1, "DONTDRAW"},
+        {21, 1, "IMPACT"},
+        {22, 1, "PUSHWALL"},
+        {23, 1, "MCROSS"},
+        {24, 1, "PCROSS"},
+        {25, 1, "CANTLEAVEFLOORPIC"},
+        {26, 1, "NONSHOOTABLE"},
+        {27, 1, "INVULNERABLE"},
+        {28, 1, "DORMANT"},
+        {29, 1, "ICEDAMAGE"},
+        {30, 1, "SEEKERMISSILE"},
+        {31, 1, "REFLECTIVE"}
     };
-    int     result;
-    ded_mobj_t *info, dummy;
-    boolean hadHeight = false;
-    boolean checkHeight = false;
+    int             result;
+    ded_mobj_t     *info, dummy;
+    boolean         hadHeight = false;
+    boolean         checkHeight = false;
 
     thingNum--;
     if(thingNum < (unsigned) ded->count.mobjs.num)
@@ -921,7 +851,7 @@ int PatchThing(int thingy)
 
     while((result = GetLine()) == 1)
     {
-        size_t  sndmap = atoi(Line2);
+        size_t          sndmap = atoi(Line2);
 
         if(sndmap >= sizeof(SoundMap))
             sndmap = 0;
@@ -930,9 +860,9 @@ int PatchThing(int thingy)
         {
             if(!stricmp(Line1, "Bits"))
             {
-                int     value = 0, value2 = 0;
-                boolean vchanged = false, v2changed = false;
-                char   *strval;
+                int             value = 0, value2 = 0;
+                boolean         vchanged = false, v2changed = false;
+                char           *strval;
 
                 for(strval = Line2; (strval = strtok(strval, ",+| \t\f\r"));
                     strval = NULL)
@@ -967,18 +897,21 @@ int PatchThing(int thingy)
                                         value |= 1 << (bitnames[iy].bit >> 8);
                                     value |= 1 << (bitnames[iy].bit & 0xff);
                                 }
+
                                 break;
                             }
                         }
+
                         if(iy >= sizeof(bitnames) / sizeof(bitnames[0]))
                             LPrintf("Unknown bit mnemonic %s\n", strval);
                     }
                 }
+
                 if(vchanged)
                 {
                     info->flags[0] = value;
 
-                    if(value & 0x100)   // Spawnceiling?
+                    if(value & 0x100) // Spawnceiling?
                         checkHeight = true;
 
                     // Bit flags are no longer used to specify translucency.
@@ -986,9 +919,10 @@ int PatchThing(int thingy)
                     /*if (info->flags & 0x60000000)
                        info->translucency = (info->flags & 0x60000000) >> 15; */
                 }
+
                 if(v2changed)
-                    //info->flags2 = value2;
                     info->flags[1] = value2;
+
                 if(verbose)
                     LPrintf("Bits: %d,%d (0x%08x,0x%08x)\n", value, value2,
                             value, value2);
@@ -1004,7 +938,7 @@ int PatchThing(int thingy)
 
     if(checkHeight && !hadHeight && thingNum < sizeof(OrgHeights))
     {
-        info->height = OrgHeights[thingNum];    // * FRACUNIT;
+        info->height = OrgHeights[thingNum];
     }
 
     return result;
@@ -1074,7 +1008,7 @@ int PatchFrame(int frameNum)
         {"Sprite number", myoffsetof(ded_state_t, sprite, OFF_SPRITE)},
         {"Sprite subnumber", myoffsetof(ded_state_t, frame, 0)},
         {"Duration", myoffsetof(ded_state_t, tics, 0)},
-        {"Next frame", myoffsetof(ded_state_t, nextstate, OFF_STATE)},
+        {"Next frame", myoffsetof(ded_state_t, nextState, OFF_STATE)},
         {"Unknown 1", 0 /*myoffsetof(ded_state_t,misc[0],0) */ },
         {"Unknown 2", 0 /*myoffsetof(ded_state_t,misc[1],0) */ },
         {NULL,}
@@ -1136,7 +1070,7 @@ int PatchSprite(int sprNum)
 
         if(offset >= 0 && offset < ded->count.sprites.num)
         {
-            //sprnames[sprNum] = OrgSprNames[offset];
+            //sprNames[sprNum] = OrgSprNames[offset];
             strcpy(ded->sprites[sprNum].id, OrgSprNames[offset]);
         }
         else
@@ -1543,14 +1477,14 @@ int PatchPars(int dummy)
            Printf (PRINT_HIGH, "No map %s\n", mapname);
            continue;
            } */
-        for(i = 0; i < ded->count.mapinfo.num; i++)
-            if(!stricmp(ded->mapinfo[i].id, mapname))
+        for(i = 0; i < ded->count.mapInfo.num; i++)
+            if(!stricmp(ded->mapInfo[i].id, mapname))
             {
-                info = ded->mapinfo + i;
+                info = ded->mapInfo + i;
                 break;
             }
 
-        info->partime = (float) par;
+        info->parTime = (float) par;
         LPrintf("Par for %s changed to %d\n", mapname, par);
     }
     return result;
@@ -1727,11 +1661,11 @@ int PatchText(int oldSize)
         sprintf(buf, "d_%s", oldStr);
         for(i = 0; i < ded->count.music.num; i++)
         {
-            if(!stricmp(ded->music[i].lumpname, buf))
+            if(!stricmp(ded->music[i].lumpName, buf))
             {
                 good = true;
-                sprintf(ded->music[i].lumpname, "D_%s", newStr);
-                strupr(ded->music[i].lumpname); // looks nicer...
+                sprintf(ded->music[i].lumpName, "D_%s", newStr);
+                strupr(ded->music[i].lumpName); // looks nicer...
             }
         }
     }
@@ -1739,10 +1673,10 @@ int PatchText(int oldSize)
         goto donewithtext;
 
     // Seach map names
-    for(i = 0; i < ded->count.mapinfo.num; i++)
-        if(!stricmp(ded->mapinfo[i].name, oldStr))
+    for(i = 0; i < ded->count.mapInfo.num; i++)
+        if(!stricmp(ded->mapInfo[i].name, oldStr))
         {
-            strcpy(ded->mapinfo[i].name, newStr);
+            strcpy(ded->mapInfo[i].name, newStr);
             good = true;
         }
     if(good)
