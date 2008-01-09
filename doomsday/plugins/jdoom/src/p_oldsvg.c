@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-20078 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -95,53 +95,53 @@ static void SV_ReadPlayer(player_t *pl)
     int     temp[3];
 
     SV_ReadLong();
-    pl->playerstate = SV_ReadLong();
+    pl->playerState = SV_ReadLong();
     SV_Read(temp, 8);
     pl->plr->viewZ = FIX2FLT(SV_ReadLong());
-    pl->plr->viewheight = FIX2FLT(SV_ReadLong());
-    pl->plr->deltaviewheight = FIX2FLT(SV_ReadLong());
+    pl->plr->viewHeight = FIX2FLT(SV_ReadLong());
+    pl->plr->viewHeightDelta = FIX2FLT(SV_ReadLong());
     pl->bob = FLT2FIX(SV_ReadLong());
-    pl->flyheight = 0;
+    pl->flyHeight = 0;
     pl->health = SV_ReadLong();
-    pl->armorpoints = SV_ReadLong();
-    pl->armortype = SV_ReadLong();
+    pl->armorPoints = SV_ReadLong();
+    pl->armorType = SV_ReadLong();
 
     SV_Read(pl->powers, 6 * 4);
     SV_Read(pl->keys, 6 * 4);
     pl->backpack = SV_ReadLong();
 
     SV_Read(pl->frags, 4 * 4);
-    pl->readyweapon = SV_ReadLong();
-    pl->pendingweapon = SV_ReadLong();
+    pl->readyWeapon = SV_ReadLong();
+    pl->pendingWeapon = SV_ReadLong();
 
-    SV_Read(pl->weaponowned, 9 * 4);
+    SV_Read(pl->weaponOwned, 9 * 4);
     SV_Read(pl->ammo, 4 * 4);
-    SV_Read(pl->maxammo, 4 * 4);
+    SV_Read(pl->maxAmmo, 4 * 4);
 
-    pl->attackdown = SV_ReadLong();
-    pl->usedown = SV_ReadLong();
+    pl->attackDown = SV_ReadLong();
+    pl->useDown = SV_ReadLong();
 
     pl->cheats = SV_ReadLong();
 
     pl->refire = SV_ReadLong();
 
-    pl->killcount = SV_ReadLong();
-    pl->itemcount = SV_ReadLong();
-    pl->secretcount = SV_ReadLong();
+    pl->killCount = SV_ReadLong();
+    pl->itemCount = SV_ReadLong();
+    pl->secretCount = SV_ReadLong();
 
     SV_ReadLong();
 
-    pl->damagecount = SV_ReadLong();
-    pl->bonuscount = SV_ReadLong();
+    pl->damageCount = SV_ReadLong();
+    pl->bonusCount = SV_ReadLong();
 
     SV_ReadLong();
 
     pl->plr->extraLight = SV_ReadLong();
-    pl->plr->fixedcolormap = SV_ReadLong();
-    pl->colormap = SV_ReadLong();
-    SV_Read(pl->psprites, 2 * sizeof(pspdef_t));
+    pl->plr->fixedColorMap = SV_ReadLong();
+    pl->colorMap = SV_ReadLong();
+    SV_Read(pl->pSprites, 2 * sizeof(pspdef_t));
 
-    pl->didsecret = SV_ReadLong();
+    pl->didSecret = SV_ReadLong();
 }
 
 static void SV_ReadMobj(void)
@@ -203,8 +203,8 @@ static void SV_ReadMobj(void)
 
     mo->sprite = sprite;
     mo->frame = frame;
-    mo->floorz = floorz;
-    mo->ceilingz = ceilingz;
+    mo->floorZ = floorz;
+    mo->ceilingZ = ceilingz;
     mo->mom[MX] = mom[MX];
     mo->mom[MY] = mom[MY];
     mo->mom[MZ] = mom[MZ];
@@ -214,7 +214,7 @@ static void SV_ReadMobj(void)
     /**
      * Continue reading the mobj data.
      */
-    mo->info = &mobjinfo[mo->type];
+    mo->info = &mobjInfo[mo->type];
     SV_ReadLong();              // &mobjinfo[mo->type]
 
     mo->tics = SV_ReadLong();   // state tic counter
@@ -224,8 +224,8 @@ static void SV_ReadMobj(void)
     mo->health = SV_ReadLong();
 
     // Movement direction, movement generation (zig-zagging).
-    mo->movedir = SV_ReadLong();    // 0-7
-    mo->movecount = SV_ReadLong();  // when 0, select a new dir
+    mo->moveDir = SV_ReadLong();    // 0-7
+    mo->moveCount = SV_ReadLong();  // when 0, select a new dir
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
@@ -233,7 +233,7 @@ static void SV_ReadMobj(void)
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
-    mo->reactiontime = SV_ReadLong();
+    mo->reactionTime = SV_ReadLong();
 
     // If >0, the target will be chased
     // no matter what (even if shot)
@@ -244,15 +244,15 @@ static void SV_ReadMobj(void)
     mo->player = (player_t *) SV_ReadLong();
 
     // Player number last looked for.
-    mo->lastlook = SV_ReadLong();
+    mo->lastLook = SV_ReadLong();
 
     // For nightmare respawn.
-    mo->spawnspot.pos[VX] = (float) SV_ReadShort();
-    mo->spawnspot.pos[VY] = (float) SV_ReadShort();
-    mo->spawnspot.pos[VZ] = ONFLOORZ;
-    mo->spawnspot.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
-    mo->spawnspot.type = (int) SV_ReadShort();
-    mo->spawnspot.flags = (int) SV_ReadShort();
+    mo->spawnSpot.pos[VX] = (float) SV_ReadShort();
+    mo->spawnSpot.pos[VY] = (float) SV_ReadShort();
+    mo->spawnSpot.pos[VZ] = ONFLOORZ;
+    mo->spawnSpot.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
+    mo->spawnSpot.type = (int) SV_ReadShort();
+    mo->spawnSpot.flags = (int) SV_ReadShort();
 
     // Thing being chased/attacked for tracers.
     SV_ReadLong();
@@ -266,16 +266,16 @@ static void SV_ReadMobj(void)
         int     pnum = (int) mo->player - 1;
 
         mo->player = &players[pnum];
-        mo->dplayer = mo->player->plr;
-        mo->dplayer->mo = mo;
-        //mo->dplayer->clAngle = mo->angle; /* $unifiedangles */
-        mo->dplayer->lookdir = 0; /* $unifiedangles */
+        mo->dPlayer = mo->player->plr;
+        mo->dPlayer->mo = mo;
+        //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
+        mo->dPlayer->lookDir = 0; /* $unifiedangles */
     }
     P_MobjSetPosition(mo);
-    mo->info = &mobjinfo[mo->type];
-    mo->floorz =
+    mo->info = &mobjInfo[mo->type];
+    mo->floorZ =
         P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
-    mo->ceilingz =
+    mo->ceilingZ =
         P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 }
 
@@ -286,7 +286,7 @@ void P_v19_UnArchivePlayers(void)
 
     for(i = 0; i < 4; i++)
     {
-        if(!players[i].plr->ingame)
+        if(!players[i].plr->inGame)
             continue;
 
         PADSAVEP();
@@ -303,10 +303,10 @@ void P_v19_UnArchivePlayers(void)
 
         for(j = 0; j < NUMPSPRITES; j++)
         {
-            if(players[i].psprites[j].state)
+            if(players[i].pSprites[j].state)
             {
-                players[i].psprites[j].state =
-                    &states[(int) players[i].psprites[j].state];
+                players[i].pSprites[j].state =
+                    &states[(int) players[i].pSprites[j].state];
             }
         }
     }
@@ -338,8 +338,8 @@ void P_v19_UnArchiveWorld(void)
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++;  // needed?
         /*xsec->tag =*/ *get++;      // needed?
-        xsec->specialdata = 0;
-        xsec->soundtarget = 0;
+        xsec->specialData = 0;
+        xsec->soundTarget = 0;
     }
 
     // do lines
@@ -387,8 +387,8 @@ enum thinkerclass_e {
     thinker_t *next;
 
     // remove all the current thinkers
-    currentthinker = thinkercap.next;
-    while(currentthinker != &thinkercap)
+    currentthinker = thinkerCap.next;
+    while(currentthinker != &thinkerCap)
     {
         next = currentthinker->next;
 
@@ -450,18 +450,18 @@ typedef struct {
     if(!ceiling->sector)
         Con_Error("tc_ceiling: bad sector number\n");
 
-    ceiling->bottomheight = FIX2FLT(SV_ReadLong());
-    ceiling->topheight = FIX2FLT(SV_ReadLong());
+    ceiling->bottomHeight = FIX2FLT(SV_ReadLong());
+    ceiling->topHeight = FIX2FLT(SV_ReadLong());
     ceiling->speed = FIX2FLT(SV_ReadLong());
     ceiling->crush = SV_ReadLong();
     ceiling->direction = SV_ReadLong();
     ceiling->tag = SV_ReadLong();
-    ceiling->olddirection = SV_ReadLong();
+    ceiling->oldDirection = SV_ReadLong();
 
     if(temp + V19_THINKER_T_FUNC_OFFSET)
         ceiling->thinker.function = T_MoveCeiling;
 
-    P_ToXSector(ceiling->sector)->specialdata = ceiling;
+    P_ToXSector(ceiling->sector)->specialData = ceiling;
     return true; // Add this thinker.
 }
 
@@ -490,15 +490,15 @@ typedef struct {
     if(!door->sector)
         Con_Error("tc_door: bad sector number\n");
 
-    door->topheight = FIX2FLT(SV_ReadLong());
+    door->topHeight = FIX2FLT(SV_ReadLong());
     door->speed = FIX2FLT(SV_ReadLong());
     door->direction = SV_ReadLong();
-    door->topwait = SV_ReadLong();
-    door->topcountdown = SV_ReadLong();
+    door->topWait = SV_ReadLong();
+    door->topCountDown = SV_ReadLong();
 
     door->thinker.function = T_VerticalDoor;
 
-    P_ToXSector(door->sector)->specialdata = door;
+    P_ToXSector(door->sector)->specialData = door;
     return true; // Add this thinker.
 }
 
@@ -530,14 +530,14 @@ typedef struct {
         Con_Error("tc_floor: bad sector number\n");
 
     floor->direction = SV_ReadLong();
-    floor->newspecial = SV_ReadLong();
+    floor->newSpecial = SV_ReadLong();
     floor->texture = SV_ReadShort();
-    floor->floordestheight = FIX2FLT(SV_ReadLong());
+    floor->floorDestHeight = FIX2FLT(SV_ReadLong());
     floor->speed = FIX2FLT(SV_ReadLong());
 
     floor->thinker.function = T_MoveFloor;
 
-    P_ToXSector(floor->sector)->specialdata = floor;
+    P_ToXSector(floor->sector)->specialData = floor;
     return true; // Add this thinker.
 }
 
@@ -576,7 +576,7 @@ typedef struct {
     plat->wait = SV_ReadLong();
     plat->count = SV_ReadLong();
     plat->status = SV_ReadLong();
-    plat->oldstatus = SV_ReadLong();
+    plat->oldStatus = SV_ReadLong();
     plat->crush = SV_ReadLong();
     plat->tag = SV_ReadLong();
     plat->type = SV_ReadLong();
@@ -584,7 +584,7 @@ typedef struct {
     if(temp + V19_THINKER_T_FUNC_OFFSET)
         plat->thinker.function = T_PlatRaise;
 
-    P_ToXSector(plat->sector)->specialdata = plat;
+    P_ToXSector(plat->sector)->specialData = plat;
     return true; // Add this thinker.
 }
 
@@ -611,10 +611,10 @@ typedef struct {
         Con_Error("tc_flash: bad sector number\n");
 
     flash->count = SV_ReadLong();
-    flash->maxlight = (float) SV_ReadLong() / 255.0f;
-    flash->minlight = (float) SV_ReadLong() / 255.0f;
-    flash->maxtime = SV_ReadLong();
-    flash->mintime = SV_ReadLong();
+    flash->maxLight = (float) SV_ReadLong() / 255.0f;
+    flash->minLight = (float) SV_ReadLong() / 255.0f;
+    flash->maxTime = SV_ReadLong();
+    flash->minTime = SV_ReadLong();
 
     flash->thinker.function = T_LightFlash;
     return true; // Add this thinker.
@@ -643,10 +643,10 @@ typedef struct {
         Con_Error("tc_strobe: bad sector number\n");
 
     strobe->count = SV_ReadLong();
-    strobe->minlight = (float) SV_ReadLong() / 255.0f;
-    strobe->maxlight = (float) SV_ReadLong() / 255.0f;
-    strobe->darktime = SV_ReadLong();
-    strobe->brighttime = SV_ReadLong();
+    strobe->minLight = (float) SV_ReadLong() / 255.0f;
+    strobe->maxLight = (float) SV_ReadLong() / 255.0f;
+    strobe->darkTime = SV_ReadLong();
+    strobe->brightTime = SV_ReadLong();
 
     strobe->thinker.function = T_StrobeFlash;
     return true; // Add this thinker.
@@ -672,8 +672,8 @@ typedef struct {
     if(!glow->sector)
         Con_Error("tc_glow: bad sector number\n");
 
-    glow->minlight = (float) SV_ReadLong() / 255.0f;
-    glow->maxlight = (float) SV_ReadLong() / 255.0f;
+    glow->minLight = (float) SV_ReadLong() / 255.0f;
+    glow->maxLight = (float) SV_ReadLong() / 255.0f;
     glow->direction = SV_ReadLong();
 
     glow->thinker.function = T_Glow;
@@ -827,7 +827,7 @@ void SV_v19_LoadGame(char *savename)
     gameepisode = *save_p++;
     gamemap = *save_p++;
     for(i = 0; i < 4; i++)
-        players[i].plr->ingame = *save_p++;
+        players[i].plr->inGame = *save_p++;
 
     // Load a base level.
     G_InitNew(gameskill, gameepisode, gamemap);

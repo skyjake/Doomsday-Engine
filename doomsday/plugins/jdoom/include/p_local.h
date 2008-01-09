@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -72,13 +72,13 @@
 #define BASETHRESHOLD   100
 
 // GMJ 02/02/02
-#define sentient(mobj)  ((mobj)->health > 0 && (mobj)->info->seestate)
+#define sentient(mobj)  ((mobj)->health > 0 && (mobj)->info->seeState)
 
 //
 // P_TICK
 //
 
-#define thinkercap      (*gi.thinkercap)
+#define thinkerCap      (*gi.thinkerCap)
 
 extern int TimerGame;         // tic countdown for deathmatch
 
@@ -157,7 +157,7 @@ void        P_SpawnBrainTargets(void);
 // Global state of boss brain.
 extern struct brain_s {
     int         easy;
-    int         targeton;
+    int         targetOn;
 } brain;
 
 extern mobj_t **braintargets;

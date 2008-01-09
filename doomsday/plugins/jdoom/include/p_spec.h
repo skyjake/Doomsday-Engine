@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -73,35 +73,35 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     int             count;
-    float           maxlight;
-    float           minlight;
+    float           maxLight;
+    float           minLight;
 } fireflicker_t;
 
 typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     int             count;
-    float           maxlight;
-    float           minlight;
-    int             maxtime;
-    int             mintime;
+    float           maxLight;
+    float           minLight;
+    int             maxTime;
+    int             minTime;
 } lightflash_t;
 
 typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     int             count;
-    float           minlight;
-    float           maxlight;
-    int             darktime;
-    int             brighttime;
+    float           minLight;
+    float           maxLight;
+    int             darkTime;
+    int             brightTime;
 } strobe_t;
 
 typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
-    float           minlight;
-    float           maxlight;
+    float           minLight;
+    float           maxLight;
     int             direction;
 } glow_t;
 
@@ -142,18 +142,18 @@ typedef struct {
 
 #define BUTTONTIME              (TICSPERSEC) // 1 second, in ticks.
 
-typedef enum {
-    top,
-    middle,
-    bottom
-} bwhere_e;
+typedef enum linesection_e{
+    LS_MIDDLE,
+    LS_BOTTOM,
+    LS_TOP
+} linesection_t;
 
 typedef struct button_s{
     line_t         *line;
-    bwhere_e        where;
-    int             btexture;
-    int             btimer;
-    mobj_t         *soundorg;
+    linesection_t   section;
+    int             texture;
+    int             timer;
+    mobj_t         *soundOrg;
 
     struct button_s *next;
 } button_t;
@@ -189,7 +189,7 @@ typedef struct plat_s {
     int             wait;
     int             count;
     plat_e          status;
-    plat_e          oldstatus;
+    plat_e          oldStatus;
     boolean         crush;
     int             tag;
     plattype_e      type;
@@ -230,17 +230,17 @@ typedef struct {
     thinker_t       thinker;
     vldoor_e        type;
     sector_t       *sector;
-    float           topheight;
+    float           topHeight;
     float           speed;
 
     // 1 = up, 0 = waiting at top, -1 = down
     int             direction;
 
     // tics to wait at the top
-    int             topwait;
+    int             topWait;
     // (keep in case a door going down is reset)
     // when it reaches 0, start going down
-    int             topcountdown;
+    int             topCountDown;
 } vldoor_t;
 
 #define VDOORSPEED          2
@@ -267,8 +267,8 @@ typedef struct {
     thinker_t       thinker;
     ceiling_e       type;
     sector_t       *sector;
-    float           bottomheight;
-    float           topheight;
+    float           bottomHeight;
+    float           topHeight;
     float           speed;
     boolean         crush;
 
@@ -277,7 +277,7 @@ typedef struct {
 
     // ID
     int             tag;
-    int             olddirection;
+    int             oldDirection;
 
     struct ceilinglist_s *list;
 } ceiling_t;
@@ -343,9 +343,9 @@ typedef struct {
     boolean         crush;
     sector_t       *sector;
     int             direction;
-    int             newspecial;
+    int             newSpecial;
     short           texture;
-    float           floordestheight;
+    float           floorDestHeight;
     float           speed;
 } floormove_t;
 

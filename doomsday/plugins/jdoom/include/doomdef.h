@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -45,7 +45,6 @@
 
 #include "doomsday.h"
 #include "dd_api.h"
-#include "g_dgl.h"
 #include "version.h"
 
 #define Set                 DD_SetInteger
@@ -64,7 +63,7 @@ extern game_export_t gx;
 // Global parameters/defines.
 //
 
-#define mobjinfo            (*gi.mobjinfo)
+#define mobjInfo            (*gi.mobjInfo)
 #define states              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
@@ -146,17 +145,17 @@ typedef enum {
 #define PCLASS_INFO(class)  (&classInfo[class])
 
 typedef struct classinfo_s{
-    int         normalstate;
-    int         runstate;
-    int         attackstate;
-    int         attackendstate;
-    int         maxarmor;
-    fixed_t     maxmove;
-    fixed_t     forwardmove[2]; // walk, run
-    fixed_t     sidemove[2]; // walk, run
-    int         movemul; // multiplier for above
+    int         normalState;
+    int         runState;
+    int         attackState;
+    int         attackEndState;
+    int         maxArmor;
+    fixed_t     maxMove;
+    fixed_t     forwardMove[2]; // walk, run
+    fixed_t     sideMove[2]; // walk, run
+    int         moveMul; // multiplier for above
     fixed_t     turnSpeed[3]; // [normal, speed, initial]
-    int         jumptics; // wait in between jumps
+    int         jumpTics; // wait in between jumps
     int         failUseSound; // sound played when a use fails.
 } classinfo_t;
 

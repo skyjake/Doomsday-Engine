@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ typedef enum {
 
 typedef struct player_s {
     ddplayer_t     *plr;           // Pointer to the engine's player data.
-    playerstate_t   playerstate;
+    playerstate_t   playerState;
     playerclass_t   class;         // player class type
     playerbrain_t   brain;
 
@@ -86,9 +86,9 @@ typedef struct player_s {
     // This is only used between levels,
     // mo->health is used during levels.
     int             health;
-    int             armorpoints;
+    int             armorPoints;
     // Armor type is 0-2.
-    int             armortype;
+    int             armorType;
 
     // Power ups. invinc and invis are tic counters.
     int             powers[NUM_POWER_TYPES];
@@ -96,18 +96,18 @@ typedef struct player_s {
     boolean         backpack;
 
     int             frags[MAXPLAYERS];
-    weapontype_t    readyweapon;
+    weapontype_t    readyWeapon;
 
     // Is wp_nochange if not changing.
-    weapontype_t    pendingweapon;
+    weapontype_t    pendingWeapon;
 
-    boolean         weaponowned[NUM_WEAPON_TYPES];
+    boolean         weaponOwned[NUM_WEAPON_TYPES];
     int             ammo[NUM_AMMO_TYPES];
-    int             maxammo[NUM_AMMO_TYPES];
+    int             maxAmmo[NUM_AMMO_TYPES];
 
     // True if button down last tic.
-    int             attackdown;
-    int             usedown;
+    int             attackDown;
+    int             useDown;
 
     // Bit flags, for cheats and debug.
     // See cheat_t, above.
@@ -117,40 +117,40 @@ typedef struct player_s {
     int             refire;
 
     // For intermission stats.
-    int             killcount;
-    int             itemcount;
-    int             secretcount;
+    int             killCount;
+    int             itemCount;
+    int             secretCount;
 
     // For screen flashing (red or bright).
-    int             damagecount;
-    int             bonuscount;
+    int             damageCount;
+    int             bonusCount;
 
     // Who did damage (NULL for floors/ceilings).
     mobj_t         *attacker;
 
     // Player skin colorshift,
     //  0-3 for which color to draw player.
-    int             colormap;
+    int             colorMap;
 
     // Overlay view sprites (gun, etc).
-    pspdef_t        psprites[NUMPSPRITES];
+    pspdef_t        pSprites[NUMPSPRITES];
 
     // True if secret level has been done.
-    boolean         didsecret;
+    boolean         didSecret;
 
     // The player's view pitch is centering back to zero.
     boolean         centering;
 
     // The player can jump if this counter is zero.
-    int             jumptics;
+    int             jumpTics;
 
-    int             update, startspot;
+    int             update, startSpot;
 
     // Target view to a mobj (NULL=disabled).
-    mobj_t*         viewlock;      // $democam
+    mobj_t*         viewLock; // $democam
     int             lockFull;
 
-    int             flyheight;
+    int             flyHeight;
 } player_t;
 
 //
@@ -158,41 +158,28 @@ typedef struct player_s {
 // Structure passed e.g. to WI_Start(wb)
 //
 typedef struct {
-    boolean         in;            // whether the player is in game
+    boolean         inGame; // whether the player is in game
 
     // Player stats, kills, collected items etc.
-    int             skills;
-    int             sitems;
-    int             ssecret;
-    int             stime;
+    int             kills;
+    int             items;
+    int             secret;
+    int             time;
     int             frags[MAXPLAYERS];
-    int             score;         // current score on entry, modified on return
-
+    int             score; // current score on entry, modified on return
 } wbplayerstruct_t;
 
 typedef struct {
-    int             epsd;          // episode # (0-2)
-
-    // if true, splash the secret level
-    boolean         didsecret;
-
-    // previous and next levels, origin 0
-    int             last;
-    int             next;
-
-    int             maxkills;
-    int             maxitems;
-    int             maxsecret;
-    int             maxfrags;
-
-    // the par time
-    int             partime;
-
-    // index of this player in game
-    int             pnum;
-
+    int             epsd; // episode # (0-2)
+    boolean         didSecret; // if true, splash the secret level
+    int             last, next; // previous and next levels, origin 0
+    int             maxKills;
+    int             maxItems;
+    int             maxSecret;
+    int             maxFrags;
+    int             parTime;
+    int             pNum; // index of this player in game
     wbplayerstruct_t plyr[MAXPLAYERS];
-
 } wbstartstruct_t;
 
 #endif
