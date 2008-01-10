@@ -533,6 +533,11 @@ boolean DLIT_SegLumobjContacts(lumobj_t *lum, void *data)
     case LT_PLANE:
         node = projectPlaneGlowOnSegSection(lum, params->bottom, params->top);
         break;
+
+    default:
+        Con_Error("DLIT_SegLumobjContacts: Invalid value, lum->type = %i.",
+                  (int) lum->type);
+        break;
     }
 
     if(node)
@@ -603,6 +608,11 @@ boolean DLIT_PlaneLumobjContacts(lumobj_t *lum, void *data)
 
     case LT_PLANE: // Planar lights don't affect planes currently.
         node = NULL;
+        break;
+
+    default:
+        Con_Error("DLIT_PlaneLumobjContacts: Invalid value, lum->type = %i.",
+                  (int) lum->type);
         break;
     }
 

@@ -269,20 +269,29 @@ void R_InitSpriteDefs(void)
         maxFrame++;
         for(frame = 0; frame < maxFrame; frame++)
         {
-            switch ((int) sprTemp[frame].rotate)
+            switch((int) sprTemp[frame].rotate)
             {
-            case -1:        // no rotations were found for that frame at all
+            case -1: // no rotations were found for that frame at all
                 Con_Error("R_InitSprites: No patches found for %s frame %c",
                           spriteName, frame + 'A');
-            case 0:         // only the first rotation is needed
                 break;
 
-            case 1:         // must have all 8 frames
+            case 0: // only the first rotation is needed
+                break;
+
+            case 1: // must have all 8 frames
                 for(rotation = 0; rotation < 8; rotation++)
                     if(sprTemp[frame].lump[rotation] == -1)
                         Con_Error("R_InitSprites: Sprite %s frame %c is "
                                   "missing rotations", spriteName,
                                   frame + 'A');
+                break;
+
+            default:
+                Con_Error("R_InitSpriteDefs: Invalid value, "
+                          "sprTemp[frame].rotate = %i.",
+                          (int) sprTemp[frame].rotate);
+                break;
             }
         }
 
@@ -1124,6 +1133,11 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
             }
         }
         break;
+
+    default:
+        Con_Error("visSpriteLightIterator: Invalid value, lum->type = %i.",
+                  (int) lum->type);
+        break;
     }
 
     // If the light is not close enough, skip it.
@@ -1168,6 +1182,11 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
                 dist = 1 - dist / glowHeight;
                 scaleFloatRGB(light->color, lum->color, dist);
                 R_ScaleAmbientRGB(ambientColor, lum->color, dist / 3);
+                break;
+
+            default:
+                Con_Error("visSpriteLightIterator: Invalid value, "
+                          "lum->type = %i.", (int) lum->type);
                 break;
             }
 

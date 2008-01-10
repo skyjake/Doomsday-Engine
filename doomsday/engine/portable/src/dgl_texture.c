@@ -524,6 +524,10 @@ void DGL_TexFilter(int pname, int param)
 					        GL_TEXTURE_MAG_FILTER, mlevs[param - DGL_NEAREST]);
 	    break;
         }
+
+    default:
+        Con_Error("DGL_TexFilter: Invalid value, pname = %i", pname);
+        break;
     }
 }
 

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -173,7 +173,7 @@ void N_NETicker(void)
 	// Is there a master action to worry about?
 	if(N_MAGet(&act))
 	{
-		switch (act)
+		switch(act)
 		{
 		case MAC_REQUEST:
 			// Send the request for servers.
@@ -212,7 +212,11 @@ void N_NETicker(void)
 					   num != 1 ? "s were" : " was");
 			N_MARemove();
 			break;
-		}
+
+        default:
+            Con_Error("N_NETicker: Invalid value, act = %i.", (int) act);
+            break;
+        }
 	}
 }
 
@@ -254,7 +258,11 @@ void N_Update(void)
 				N_Disconnect();
 			}
 			break;
-		}
+
+        default:
+            Con_Error("N_Update: Invalid value, nevent.type = %i.", (int) nevent.type);
+            break;
+        }
 	}
 }
 

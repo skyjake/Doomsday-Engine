@@ -1014,6 +1014,11 @@ static void getColorsForSegSection(short sideFlags, segsection_t section,
             *bottomColor = NULL;
         }
         break;
+
+    default:
+        Con_Error("getColorsForSegSection: Invalid value, section = %i",
+                  (int) section);
+        break;
     }
 }
 

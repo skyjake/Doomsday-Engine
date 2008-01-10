@@ -109,20 +109,25 @@ void B_UpdateDeviceStateAssociations(void)
             inputdev_t* dev = I_GetDevice(eb->device, false);
             switch(eb->type)
             {
-                case E_TOGGLE:
-                    if(!dev->keys[eb->id].bClass)
-                        dev->keys[eb->id].bClass = bc;
-                    break;
+            case E_TOGGLE:
+                if(!dev->keys[eb->id].bClass)
+                    dev->keys[eb->id].bClass = bc;
+                break;
 
-                case E_AXIS:
-                    if(!dev->axes[eb->id].bClass)
-                        dev->axes[eb->id].bClass = bc;
-                    break;
+            case E_AXIS:
+                if(!dev->axes[eb->id].bClass)
+                    dev->axes[eb->id].bClass = bc;
+                break;
 
-                case E_ANGLE:
-                    if(!dev->hats[eb->id].bClass)
-                        dev->hats[eb->id].bClass = bc;
-                    break;
+            case E_ANGLE:
+                if(!dev->hats[eb->id].bClass)
+                    dev->hats[eb->id].bClass = bc;
+                break;
+
+            default:
+                Con_Error("B_UpdateDeviceStateAssociations: Invalid value, "
+                          "eb->type = %i.", (int) eb->type);
+                break;
             }
         }
 
@@ -152,6 +157,11 @@ void B_UpdateDeviceStateAssociations(void)
                     case CBD_ANGLE:
                         if(!dev->hats[db->id].bClass)
                             dev->hats[db->id].bClass = bc;
+                        break;
+
+                    default:
+                        Con_Error("B_UpdateDeviceStateAssociations: Invalid value, "
+                                  "db->type = %i.", (int) db->type);
                         break;
                     }
                 }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -442,30 +442,35 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
 
     switch(type)
     {
-        case E_TOGGLE:
-            if(dev->keys[id].name)
-            {
-                Str_Append(str, dev->keys[id].name);
-            }
-            else if(device == IDEV_KEYBOARD)
-            {
-                name = B_ShortNameForKey(id);
-                if(name)
-                    Str_Append(str, name);
-                else
-                    Str_Appendf(str, "code%03i", id);
-            }
+    case E_TOGGLE:
+        if(dev->keys[id].name)
+        {
+            Str_Append(str, dev->keys[id].name);
+        }
+        else if(device == IDEV_KEYBOARD)
+        {
+            name = B_ShortNameForKey(id);
+            if(name)
+                Str_Append(str, name);
             else
-                Str_Appendf(str, "button%i",id + 1);
-            break;
+                Str_Appendf(str, "code%03i", id);
+        }
+        else
+            Str_Appendf(str, "button%i",id + 1);
+        break;
 
-        case E_AXIS:
-            Str_Append(str, dev->axes[id].name);
-            break;
+    case E_AXIS:
+        Str_Append(str, dev->axes[id].name);
+        break;
 
-        case E_ANGLE:
-            Str_Appendf(str, "hat%i", id + 1);
-            break;
+    case E_ANGLE:
+        Str_Appendf(str, "hat%i", id + 1);
+        break;
+
+    default:
+        Con_Error("B_AppendDeviceDescToString: Invalid value, type = %i.",
+                  (int) type);
+        break;
     }
 }
 

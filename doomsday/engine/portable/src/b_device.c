@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * b_device.c: Control-Device Bindings
  */
 
@@ -96,14 +97,14 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
     boolean successful = false;
     ddstring_t* str = Str_New();
     ddeventtype_t type;
-    
+
     // First, the device name.
     desc = Str_CopyDelim(str, desc, '-');
     if(!Str_CompareIgnoreCase(str, "key"))
     {
         cb->device = IDEV_KEYBOARD;
         cb->type = CBD_TOGGLE;
-        
+
         // Parse the key.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseKeyId(Str_Text(str), &cb->id))
@@ -114,7 +115,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
     else if(!Str_CompareIgnoreCase(str, "mouse"))
     {
         cb->device = IDEV_MOUSE;
-        
+
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &cb->id))
         {
@@ -125,7 +126,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
     else if(!Str_CompareIgnoreCase(str, "joy"))
     {
         cb->device = IDEV_JOY1;
-        
+
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseJoystickTypeAndId(cb->device, Str_Text(str), &type, &cb->id))
@@ -133,7 +134,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
             goto parseEnded;
         }
         cb->type = EVTYPE_TO_CBDTYPE(type);
-        
+
         // Hats include the angle.
         if(type == E_ANGLE)
         {
@@ -163,10 +164,10 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
             goto parseEnded;
         }
     }
-    
+
     // Success.
     successful = true;
-    
+
 parseEnded:
     Str_Free(str);
     return successful;
@@ -176,16 +177,16 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
 {
     boolean successful = false;
     ddstring_t* str = Str_New();
-    
+
     // The first part specifies the device state.
     desc = Str_CopyDelim(str, desc, '+');
-    
+
     if(!B_ParseDevice(cb, Str_Text(str)))
     {
         // Failure in parsing the device.
         goto parseEnded;
     }
-    
+
     // Any conditions?
     while(desc)
     {
@@ -193,7 +194,7 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
 
         // A new condition.
         desc = Str_CopyDelim(str, desc, '+');
-        
+
         cond = B_AllocDeviceBindingCondition(cb);
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
@@ -201,10 +202,10 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
             goto parseEnded;
         }
     }
-    
+
     // Success.
     successful = true;
-    
+
 parseEnded:
     Str_Free(str);
     return successful;
@@ -213,7 +214,7 @@ parseEnded:
 dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc)
 {
     dbinding_t* cb = B_AllocDeviceBinding();
-    
+
     // Parse the description of the event.
     if(!B_ParseDeviceDescriptor(cb, deviceDesc))
     {
@@ -221,27 +222,27 @@ dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc)
         B_DestroyDeviceBinding(cb);
         return NULL;
     }
-    
+
     // Link it into the list.
     cb->next = listRoot;
     cb->prev = listRoot->prev;
     listRoot->prev->next = cb;
     listRoot->prev = cb;
-    
+
     return cb;
 }
 
 void B_DestroyDeviceBinding(dbinding_t* cb)
 {
     assert(cb->bid != 0);
-    
+
     // Unlink first, if linked.
     if(cb->prev)
     {
         cb->prev->next = cb->next;
         cb->next->prev = cb->prev;
     }
-    
+
     free(cb->conds);
     free(cb);
 }
@@ -258,13 +259,13 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
     float       deviceOffset;
     uint        deviceTime;
     uint        nowTime = Sys_GetRealTime();
-    
+
     *pos = 0;
     *relativeOffset = 0;
-    
+
     if(!listRoot)
         return;
-    
+
     for(cb = listRoot->next; cb != listRoot; cb = cb->next)
     {
         // If this binding has conditions, they may prevent using it.
@@ -274,62 +275,67 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
             if(!B_CheckCondition(&cb->conds[i]))
             {
                 skip = true;
-                break;                
+                break;
             }
         }
         if(skip)
             continue;
-        
+
         // Get the device.
         dev = I_GetDevice(cb->device, true);
         if(!dev)
             continue; // Not available.
-        
+
         devicePos = 0;
         deviceOffset = 0;
         deviceTime = 0;
 
         switch(cb->type)
         {
-            case CBD_TOGGLE:
-                if(controlClass && dev->keys[cb->id].bClass != controlClass)
-                    continue; // Shadowed by a more important active class.
-                
-                devicePos = (dev->keys[cb->id].isDown? 1.0f : 0.0f);
-                deviceTime = dev->keys[cb->id].time;
-                break;
-                
-            case CBD_AXIS:
-                if(controlClass && dev->axes[cb->id].bClass != controlClass)
-                    continue; // Shadowed by a more important active class.
+        case CBD_TOGGLE:
+            if(controlClass && dev->keys[cb->id].bClass != controlClass)
+                continue; // Shadowed by a more important active class.
 
-                axis = &dev->axes[cb->id];
-                if(axis->type == IDAT_POINTER)
-                {
-                    deviceOffset = axis->position;
-                    axis->position = 0;
-                }
-                else
-                {        
-                    devicePos = axis->position;
-                }
-                deviceTime = axis->time;
-                break;
-                
-            case CBD_ANGLE:
-                if(controlClass && dev->hats[cb->id].bClass != controlClass)
-                    continue; // Shadowed by a more important active class.
+            devicePos = (dev->keys[cb->id].isDown? 1.0f : 0.0f);
+            deviceTime = dev->keys[cb->id].time;
+            break;
 
-                devicePos = (dev->hats[cb->id].pos == cb->angle? 1.0f : 0.0f);
-                deviceTime = dev->hats[cb->id].time;
-                break;
+        case CBD_AXIS:
+            if(controlClass && dev->axes[cb->id].bClass != controlClass)
+                continue; // Shadowed by a more important active class.
+
+            axis = &dev->axes[cb->id];
+            if(axis->type == IDAT_POINTER)
+            {
+                deviceOffset = axis->position;
+                axis->position = 0;
+            }
+            else
+            {
+                devicePos = axis->position;
+            }
+            deviceTime = axis->time;
+            break;
+
+        case CBD_ANGLE:
+            if(controlClass && dev->hats[cb->id].bClass != controlClass)
+                continue; // Shadowed by a more important active class.
+
+            devicePos = (dev->hats[cb->id].pos == cb->angle? 1.0f : 0.0f);
+            deviceTime = dev->hats[cb->id].time;
+            break;
+
+        default:
+            Con_Error("B_EvaluateDeviceBindingList: Invalid value, "
+                      "cb->type = %i.", cb->type);
+            break;
         }
-            
+
         // Apply further modifications based on flags.
         if(cb->flags & CBDF_INVERSE)
         {
             devicePos = -devicePos;
-            deviceOffset = -deviceOffset;            
+            deviceOffset = -deviceOffset;
         }
         if(cb->flags & CBDF_TIME_STAGED)
         {
@@ -338,11 +344,11 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
                 devicePos *= stageFactor;
             }
         }
-        
+
         *pos += devicePos;
         *relativeOffset += deviceOffset;
     }
-    
+
     // Clamp appropriately.
     *pos = MINMAX_OF(-1.0f, *pos, 1.0f);
 }
@@ -354,17 +360,17 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
 void B_DeviceBindingToString(const dbinding_t* b, ddstring_t* str)
 {
     int         i;
-    
+
     Str_Clear(str);
-    
+
     // Name of the device and the key/axis/hat.
     B_AppendDeviceDescToString(b->device, CBDTYPE_TO_EVTYPE(b->type), b->id, str);
-    
+
     if(b->type == CBD_ANGLE)
     {
         B_AppendAnglePositionToString(b->angle, str);
     }
-    
+
     // Additional flags.
     if(b->flags & CBDF_TIME_STAGED)
     {
@@ -374,7 +380,7 @@ void B_DeviceBindingToString(const dbinding_t* b, ddstring_t* str)
     {
         Str_Append(str, "-inverse");
     }
-    
+
     // Append any state conditions.
     for(i = 0; i < b->numConds; ++i)
     {

@@ -778,7 +778,7 @@ void GL_SwitchTo3DState(boolean push_state)
 
 void GL_Restore2DState(int step)
 {
-    switch (step)
+    switch(step)
     {
     case 1: // After Restore Step 1 normal player sprites are rendered.
         DGL_MatrixMode(DGL_PROJECTION);
@@ -803,6 +803,10 @@ void GL_Restore2DState(int step)
         DGL_PopMatrix();
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
+        break;
+
+    default:
+        Con_Error("GL_Restore2DState: Invalid value, step = %i.", step);
         break;
     }
 }

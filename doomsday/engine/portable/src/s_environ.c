@@ -105,6 +105,9 @@ materialclass_t S_MaterialClassForName(const char *name, int type)
             list = env->flats;
             count = env->flatCount.num;
             break;
+
+        default:
+            continue;
         }
 
         for(j = 0; j < count; ++j)

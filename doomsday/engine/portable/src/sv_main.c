@@ -487,6 +487,11 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
         Net_SendPacket(DDSP_CONFIRM | DDSP_ALL_PLAYERS, PKT_PLAYER_INFO,
                        &info, sizeof(info));
         break;
+
+    default:
+        Con_Error("Sv_HandlePacket: Invalid value, netBuffer.msg.type = %i.",
+                  (int) netBuffer.msg.type);
+        break;
     }
 }
 

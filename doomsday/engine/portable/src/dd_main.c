@@ -924,6 +924,9 @@ int DD_GetInteger(int ddvalue)
 
         case DD_SKYFLATNUM:
             return skyFlatNum;
+
+        default:
+            break;
         }
         return 0;
     }
@@ -1094,6 +1097,8 @@ void* DD_GetVariable(int ddvalue)
         case DD_WINDOW_HANDLE:
             return Sys_GetWindowHandle(windowIDX);
 #endif
+        default:
+            break;
         }
         return 0;
     }

@@ -493,6 +493,10 @@ int Mus_Start(ded_music_t *def, boolean looped)
             if(Mus_GetMUS(def))
                 return imus->Play(looped);
             break;
+
+        default:
+            Con_Error("Mus_Start: Invalid value, order[i] = %i.", order[i]);
+            break;
         }
     }
 

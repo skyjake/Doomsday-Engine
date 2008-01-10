@@ -1129,17 +1129,17 @@ D_CMD(Chat)
     buffer[80] = 0;
 
     // Send the message.
-    switch (mode)
+    switch(mode)
     {
-    case 0:                 // chat
+    case 0: // chat
         mask = ~0;
         break;
 
-    case 1:                 // chatNum
+    case 1: // chatNum
         mask = 1 << atoi(argv[1]);
         break;
 
-    case 2:                 // chatTo
+    case 2: // chatTo
         {
         boolean     found = false;
 
@@ -1150,6 +1150,10 @@ D_CMD(Chat)
                 found = true;
             }
         }
+
+    default:
+        Con_Error("CCMD_Chat: Invalid value, mode = %i.", mode);
+        break;
     }
     Msg_Begin(PKT_CHAT);
     Msg_WriteByte(consoleplayer);
