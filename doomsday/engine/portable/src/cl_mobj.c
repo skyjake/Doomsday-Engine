@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -211,7 +211,7 @@ void Cl_SetMobjPosition(clmobj_t *cmo)
 {
     mobj_t *mo = &cmo->mo;
 
-    if((cmo->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE)) || mo->dplayer)
+    if((cmo->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE)) || mo->dPlayer)
     {
         // We do not yet have all the details about Hidden mobjs.
         // The server hasn't sent us a Create Mobj delta for them.
@@ -220,8 +220,8 @@ void Cl_SetMobjPosition(clmobj_t *cmo)
     }
 
     P_MobjLink(mo,
-                (mo->ddflags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
-                (mo->ddflags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
+                (mo->ddFlags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
+                (mo->ddFlags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
 }
 
 /**
@@ -234,14 +234,14 @@ void Cl_SetMobjState(mobj_t *mo, int stnum)
     do
     {
         P_MobjSetState(mo, stnum);
-        stnum = states[stnum].nextstate;
+        stnum = states[stnum].nextState;
     }
     while(!mo->tics && stnum > 0);
 
     // Update mobj's type (this is not perfectly reliable...)
-    // from the stateowners table.
-    if(stateowners[stnum])
-        mo->type = stateowners[stnum] - mobjinfo;
+    // from the stateOwners table.
+    if(stateOwners[stnum])
+        mo->type = stateOwners[stnum] - mobjInfo;
     else
         mo->type = 0;
 }
@@ -261,7 +261,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 
         // Give it a real Z coordinate.
         onFloor = true;
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = mo->floorZ;
     }
 
     if(mo->pos[VZ] == DDMAXFLOAT)
@@ -271,21 +271,21 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 
         // Give it a real Z coordinate.
         inCeiling = true;
-        mo->pos[VZ] = mo->ceilingz - mo->height;
+        mo->pos[VZ] = mo->ceilingZ - mo->height;
     }
 
     // Find out floor and ceiling z.
     P_CheckPosXYZ(mo, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
-    mo->floorz = tmpFloorZ;
-    mo->ceilingz = tmpCeilingZ;
+    mo->floorZ = tmpFloorZ;
+    mo->ceilingZ = tmpCeilingZ;
 
     if(onFloor)
     {
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = mo->floorZ;
     }
     if(inCeiling)
     {
-        mo->pos[VZ] = mo->ceilingz - mo->height;
+        mo->pos[VZ] = mo->ceilingZ - mo->height;
     }
 
 #if 0
@@ -293,14 +293,14 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 #  ifdef _DEBUG
     /*if(blockingMobj)
        Con_Printf("Collision %i\n", mo->thinker.id); */
-    if(justCreated && mo->ddflags & DDMF_MISSILE)
+    if(justCreated && mo->ddFlags & DDMF_MISSILE)
     {
         Con_Printf("Misl creat %i, (%g %g %g) mom (%g %g %g)\n",
                    mo->thinker.id, mo->pos[VX], mo->pos[VY], mo->pos[VZ],
                    mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
     }
 #  endif
-    if(justCreated && mo->ddflags & DDMF_MISSILE && blockingMobj != NULL)
+    if(justCreated && mo->ddFlags & DDMF_MISSILE && blockingMobj != NULL)
     {
         // This happens when a missile is created inside an object
         // (the shooter, typically). We allow the missile to noclip
@@ -357,17 +357,17 @@ VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p angle=%x\n", mo, mo->angle)
     mo->tics = clmo->tics;
     mo->state = clmo->state;
     //mo->nexttime = clmo->nexttime;
-    mo->ddflags = clmo->ddflags;
+    mo->ddFlags = clmo->ddFlags;
     mo->radius = clmo->radius;
     mo->height = clmo->height;
-    mo->floorclip = clmo->floorclip;
-    mo->floorz = clmo->floorz;
-    mo->ceilingz = clmo->ceilingz;
+    mo->floorClip = clmo->floorClip;
+    mo->floorZ = clmo->floorZ;
+    mo->ceilingZ = clmo->ceilingZ;
     mo->selector &= ~DDMOBJ_SELECTOR_MASK;
     mo->selector |= clmo->selector & DDMOBJ_SELECTOR_MASK;
-    mo->visangle = clmo->angle >> 16;
+    mo->visAngle = clmo->angle >> 16;
 
-    //if(flags & MDF_FLAGS) CON_Printf("Cl_RMD: ddf=%x\n", mo->ddflags);
+    //if(flags & MDF_FLAGS) CON_Printf("Cl_RMD: ddf=%x\n", mo->ddFlags);
 }
 
 /**
@@ -400,7 +400,7 @@ int Cl_ReadMobjDelta(void)
         // This is a new ID, allocate a new mobj.
         cmo = Z_Malloc(sizeof(*cmo), PU_LEVEL, 0);
         memset(cmo, 0, sizeof(*cmo));
-        cmo->mo.ddflags |= DDMF_REMOTE;
+        cmo->mo.ddFlags |= DDMF_REMOTE;
         Cl_LinkMobj(cmo, id);
         P_SetMobjID(id, true);  // Mark this ID as used.
         linked = false;
@@ -419,9 +419,9 @@ if(justCreated)         //Con_Error("justCreated!\n");
 #endif
 
         // A Null Delta. We should delete this mobj.
-        if(cmo->mo.dplayer)
+        if(cmo->mo.dPlayer)
         {
-            playerstate[cmo->mo.dplayer - players].cmo = NULL;
+            playerstate[cmo->mo.dPlayer - players].cmo = NULL;
         }
         Cl_DestroyMobj(cmo);
         return true;            // Continue.
@@ -438,7 +438,7 @@ if(justCreated && (!(df & MDF_POS_X) || !(df & MDF_POS_Y)))
 
     // Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
     if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && linked &&
-       !d->dplayer)
+       !d->dPlayer)
     {
         linked = false;
         Cl_UnsetMobjPosition(cmo);
@@ -486,8 +486,8 @@ if(d->pos[VX] == 0 && d->pos[VY] == 0)
     if(df & MDF_FLAGS)
     {
         // Only the flags in the pack mask are affected.
-        d->ddflags &= ~DDMF_PACK_MASK;
-        d->ddflags |= DDMF_REMOTE | (Msg_ReadLong() & DDMF_PACK_MASK);
+        d->ddFlags &= ~DDMF_PACK_MASK;
+        d->ddFlags |= DDMF_REMOTE | (Msg_ReadLong() & DDMF_PACK_MASK);
     }
 
     // Radius, height and floorclip are all bytes.
@@ -498,13 +498,13 @@ if(d->pos[VX] == 0 && d->pos[VY] == 0)
     if(df & MDF_FLOORCLIP)
     {
         if(df & MDF_LONG_FLOORCLIP)
-            d->floorclip = FIX2FLT(Msg_ReadPackedShort() << 14);
+            d->floorClip = FIX2FLT(Msg_ReadPackedShort() << 14);
         else
-            d->floorclip = FIX2FLT(Msg_ReadByte() << 14);
+            d->floorClip = FIX2FLT(Msg_ReadByte() << 14);
     }
 
     // Link again.
-    if(!linked && !d->dplayer)
+    if(!linked && !d->dPlayer)
         Cl_SetMobjPosition(cmo);
 
     if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z))
@@ -514,10 +514,10 @@ if(d->pos[VX] == 0 && d->pos[VY] == 0)
     }
 
     // Update players.
-    if(d->dplayer)
+    if(d->dPlayer)
     {
         // Players have real mobjs. The client mobj is hidden (unlinked).
-        Cl_UpdateRealPlayerMobj(d->dplayer->mo, d, df);
+        Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df);
     }
 
     // Continue reading.
@@ -551,7 +551,7 @@ void Cl_DestroyClientMobjs(void)
         for(cmo = cmHash[i].first; cmo; cmo = cmo->next)
         {
             // Players' clmobjs are not linked anywhere.
-            if(!cmo->mo.dplayer)
+            if(!cmo->mo.dPlayer)
                 Cl_UnsetMobjPosition(cmo);
         }
     }
@@ -588,7 +588,7 @@ void Cl_MobjMove(clmobj_t *cmo)
     {
         // Missiles don't hit mobjs only after a short delay. This'll
         // allow the missile to move free of the shooter. (Quite a hack!)
-        if(mo->ddflags & DDMF_MISSILE &&
+        if(mo->ddFlags & DDMF_MISSILE &&
            Sys_GetRealTime() - cmo->time < MISSILE_FREE_MOVE_TIME)
         {
             // The mobj should be allowed to move freely though mobjs.
@@ -611,32 +611,32 @@ void Cl_MobjMove(clmobj_t *cmo)
     {
         mo->pos[VZ] += mo->mom[MZ];
 
-        if(mo->pos[VZ] < mo->floorz)
+        if(mo->pos[VZ] < mo->floorZ)
         {
-            mo->pos[VZ] = mo->floorz;
+            mo->pos[VZ] = mo->floorZ;
             mo->mom[MZ] = 0;
             collided = true;
         }
 
-        if(mo->pos[VZ] + mo->height > mo->ceilingz)
+        if(mo->pos[VZ] + mo->height > mo->ceilingZ)
         {
-            mo->pos[VZ] = mo->ceilingz - mo->height;
+            mo->pos[VZ] = mo->ceilingZ - mo->height;
             mo->mom[MZ] = 0;
             collided = true;
         }
     }
 
-    if(mo->pos[VZ] > mo->floorz)
+    if(mo->pos[VZ] > mo->floorZ)
     {   // Gravity will affect the prediction.
         //// \fixme What about sector-specific gravity?
-        if(mo->ddflags & DDMF_LOWGRAVITY)
+        if(mo->ddFlags & DDMF_LOWGRAVITY)
         {
             if(mo->mom[MZ] == 0)
                 mo->mom[MZ] = -(gravity / 8) * 2;
             else
                 mo->mom[MZ] -= gravity / 8;
         }
-        else if(!(mo->ddflags & DDMF_NOGRAVITY))
+        else if(!(mo->ddFlags & DDMF_NOGRAVITY))
         {
             if(mo->mom[MZ] == 0)
                 mo->mom[MZ] = -gravity * 2;
@@ -649,7 +649,7 @@ void Cl_MobjMove(clmobj_t *cmo)
     {
         // Missiles are immediately removed.
         // (An explosion should follow shortly.)
-        if(mo->ddflags & DDMF_MISSILE)
+        if(mo->ddFlags & DDMF_MISSILE)
         {
             // We don't know how to proceed from this, but merely
             // stopping the mobj is not enough. Let's hide it until
@@ -663,11 +663,11 @@ void Cl_MobjMove(clmobj_t *cmo)
     // Stick to a plane?
     if(cmo->flags & CLMF_STICK_FLOOR)
     {
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = mo->floorZ;
     }
     if(cmo->flags & CLMF_STICK_CEILING)
     {
-        mo->pos[VZ] = mo->ceilingz - mo->height;
+        mo->pos[VZ] = mo->ceilingZ - mo->height;
     }
 }
 
@@ -683,15 +683,15 @@ void Cl_MobjAnimate(mobj_t *mo)
     if(mo->tics <= 0)
     {
         // Go to next state, if possible.
-        if(mo->state->nextstate >= 0)
+        if(mo->state->nextState >= 0)
         {
-            Cl_SetMobjState(mo, mo->state->nextstate);
+            Cl_SetMobjState(mo, mo->state->nextState);
 
             // Players have both client mobjs and regular mobjs. This
             // routine modifies the *client* mobj, so for players we need
             // to update the real, visible mobj as well.
-            if(mo->dplayer)
-                Cl_UpdateRealPlayerMobj(mo->dplayer->mo, mo, 0);
+            if(mo->dPlayer)
+                Cl_UpdateRealPlayerMobj(mo->dPlayer->mo, mo, 0);
         }
         else
         {
@@ -721,9 +721,9 @@ void Cl_PredictMovement(void)
             next = cmo->next;
             moCount++;
 
-            if(cmo->mo.dplayer != &ddplayers[consoleplayer] &&
+            if(cmo->mo.dPlayer != &ddplayers[consoleplayer] &&
                cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN) /*||
-               cmo->mo.ddflags & DDMF_MISSILE*/)
+               cmo->mo.ddFlags & DDMF_MISSILE*/)
             {
                 // Has this mobj timed out?
                 if(nowTime - cmo->time > CLMOBJ_TIMEOUT)
@@ -740,9 +740,9 @@ void Cl_PredictMovement(void)
             }
 
             // The local player gets a bit more complex prediction.
-            if(cmo->mo.dplayer)
+            if(cmo->mo.dPlayer)
             {
-                Cl_MovePlayer(cmo->mo.dplayer);
+                Cl_MovePlayer(cmo->mo.dPlayer);
             }
             else
             {
@@ -766,7 +766,7 @@ if(!cmo->mo.thinker.id)
             }
 
             // Update the visual angle of the mobj (no SRVO action).
-            cmo->mo.visangle = cmo->mo.angle >> 16;
+            cmo->mo.visAngle = cmo->mo.angle >> 16;
         }
     }
 #ifdef _DEBUG
@@ -790,7 +790,7 @@ clmobj_t *Cl_CreateMobj(thid_t id)
 {
     clmobj_t   *cmo = Z_Calloc(sizeof(*cmo), PU_LEVEL, 0);
 
-    cmo->mo.ddflags |= DDMF_REMOTE;
+    cmo->mo.ddFlags |= DDMF_REMOTE;
     cmo->time = Sys_GetRealTime();
     Cl_LinkMobj(cmo, id);
     P_SetMobjID(id, true);      // Mark this ID as used.
@@ -822,7 +822,7 @@ void Cl_DestroyMobj(clmobj_t *cmo)
 boolean Cl_RevealMobj(clmobj_t *cmo)
 {
     // Check that we know enough about the clmobj.
-    if(cmo->mo.dplayer != &ddplayers[consoleplayer] &&
+    if(cmo->mo.dPlayer != &ddplayers[consoleplayer] &&
        (!(cmo->flags & CLMF_KNOWN_X) ||
         !(cmo->flags & CLMF_KNOWN_Y) ||
         !(cmo->flags & CLMF_KNOWN_Z) ||
@@ -894,7 +894,7 @@ void Cl_ReadMobjDelta2(boolean skip)
         {
             // This is a new ID, allocate a new mobj.
             cmo = Cl_CreateMobj(id);
-            cmo->mo.ddflags |= DDMF_NOGRAVITY; // safer this way
+            cmo->mo.ddFlags |= DDMF_NOGRAVITY; // safer this way
             justCreated = true;
             needsLinking = true;
 
@@ -914,7 +914,7 @@ void Cl_ReadMobjDelta2(boolean skip)
 
         d = &cmo->mo;
 
-        /*if(d->dplayer && d->dplayer == &ddplayers[consoleplayer])
+        /*if(d->dPlayer && d->dPlayer == &ddplayers[consoleplayer])
         {
             // Mark the local player known.
             cmo->flags |= CLMF_KNOWN;
@@ -922,7 +922,7 @@ void Cl_ReadMobjDelta2(boolean skip)
 
         // Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
         if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) &&
-           !justCreated && !d->dplayer)
+           !justCreated && !d->dPlayer)
         {
             needsLinking = true;
             Cl_UnsetMobjPosition(cmo);
@@ -1015,8 +1015,8 @@ void Cl_ReadMobjDelta2(boolean skip)
     if(df & MDF_FLAGS)
     {
         // Only the flags in the pack mask are affected.
-        d->ddflags &= ~DDMF_PACK_MASK;
-        d->ddflags |= DDMF_REMOTE | (Msg_ReadLong() & DDMF_PACK_MASK);
+        d->ddFlags &= ~DDMF_PACK_MASK;
+        d->ddFlags |= DDMF_REMOTE | (Msg_ReadLong() & DDMF_PACK_MASK);
     }
 
     // Radius, height and floorclip are all bytes.
@@ -1027,16 +1027,16 @@ void Cl_ReadMobjDelta2(boolean skip)
     if(df & MDF_FLOORCLIP)
     {
         if(df & MDF_LONG_FLOORCLIP)
-            d->floorclip = FIX2FLT(Msg_ReadPackedShort() << 14);
+            d->floorClip = FIX2FLT(Msg_ReadPackedShort() << 14);
         else
-            d->floorclip = FIX2FLT(Msg_ReadByte() << 14);
+            d->floorClip = FIX2FLT(Msg_ReadByte() << 14);
     }
 
     if(moreFlags & MDFE_TRANSLUCENCY)
         d->translucency = Msg_ReadByte();
 
     if(moreFlags & MDFE_FADETARGET)
-        d->vistarget = ((short)Msg_ReadByte()) -1;
+        d->visTarget = ((short)Msg_ReadByte()) -1;
 
     // The delta has now been read. We can now skip if necessary.
     if(skip)
@@ -1066,16 +1066,16 @@ void Cl_ReadMobjDelta2(boolean skip)
     if(!(cmo->flags & (CLMF_HIDDEN | CLMF_NULLED)))
     {
         // Link again.
-        if(needsLinking && !d->dplayer)
+        if(needsLinking && !d->dPlayer)
         {
             Cl_SetMobjPosition(cmo);
         }
 
         // Update players.
-        if(d->dplayer)
+        if(d->dPlayer)
         {
             // Players have real mobjs. The client mobj is hidden (unlinked).
-            Cl_UpdateRealPlayerMobj(d->dplayer->mo, d, df);
+            Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df);
         }
     }
 }
@@ -1110,14 +1110,14 @@ Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
     }
 
     // Get rid of this mobj.
-    if(!cmo->mo.dplayer)
+    if(!cmo->mo.dPlayer)
     {
         Cl_UnsetMobjPosition(cmo);
     }
     else
     {
         // The clmobjs of players aren't linked.
-        playerstate[cmo->mo.dplayer - players].cmo = NULL;
+        playerstate[cmo->mo.dPlayer - players].cmo = NULL;
     }
 
     // This'll allow playing sounds from the mobj for a little while.

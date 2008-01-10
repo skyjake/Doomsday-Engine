@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
@@ -120,7 +120,7 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
     blockmap_t *blockmap;
 
     // scan for map limits, which the blockmap must enclose
-    for(i = 0; i < map->numvertexes; ++i)
+    for(i = 0; i < map->numVertexes; ++i)
     {
         vtx = &map->vertexes[i];
         V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
@@ -175,7 +175,7 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
     int         bx, by;
     int         minx, maxx, miny, maxy;
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         line_t *line = &map->lines[i];
 

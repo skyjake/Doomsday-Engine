@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -195,7 +195,7 @@ static void buildReject(gamemap_t *map)
         }
 
     M_Free(secGroups);
-    map->rejectmatrix = matrix;
+    map->rejectMatrix = matrix;
 #endif
 }
 

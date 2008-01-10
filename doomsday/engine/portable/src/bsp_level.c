@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,9 +82,9 @@ static void hardenSideSegList(gamemap_t *map, side_t *side, seg_t *seg,
     }
 
     // Allocate the final side seg table.
-    side->segcount = count;
+    side->segCount = count;
     side->segs =
-        Z_Malloc(sizeof(seg_t*) * (side->segcount + 1), PU_LEVELSTATIC, 0);
+        Z_Malloc(sizeof(seg_t*) * (side->segCount + 1), PU_LEVELSTATIC, 0);
 
     count = 0;
     other = first;
@@ -102,10 +102,10 @@ static void buildSegsFromHEdges(gamemap_t *dest)
 
     BSP_SortHEdgesByIndex();
 
-    dest->numsegs = BSP_GetNumHEdges();
+    dest->numSegs = BSP_GetNumHEdges();
 
-    dest->segs = Z_Calloc(dest->numsegs * sizeof(seg_t), PU_LEVELSTATIC, 0);
-    for(i = 0; i < dest->numsegs; ++i)
+    dest->segs = Z_Calloc(dest->numSegs * sizeof(seg_t), PU_LEVELSTATIC, 0);
+    for(i = 0; i < dest->numSegs; ++i)
     {
         seg_t      *seg = &dest->segs[i];
         hedge_t    *hEdge = LookupHEdge(i);
@@ -116,42 +116,42 @@ static void buildSegsFromHEdges(gamemap_t *dest)
         seg->SG_v2 = &dest->vertexes[hEdge->v[1]->buildData.index - 1];
 
         seg->side  = hEdge->side;
-        if(hEdge->linedef)
-            seg->linedef = &dest->lines[hEdge->linedef->buildData.index - 1];
+        if(hEdge->lineDef)
+            seg->lineDef = &dest->lines[hEdge->lineDef->buildData.index - 1];
         if(hEdge->twin)
-            seg->backseg = &dest->segs[hEdge->twin->index];
+            seg->backSeg = &dest->segs[hEdge->twin->index];
 
         seg->flags = 0;
-        if(seg->linedef)
+        if(seg->lineDef)
         {
-            line_t     *ldef = seg->linedef;
-            vertex_t   *vtx = seg->linedef->L_v(seg->side);
+            line_t     *ldef = seg->lineDef;
+            vertex_t   *vtx = seg->lineDef->L_v(seg->side);
 
             seg->SG_frontsector = ldef->L_side(seg->side)->sector;
 
-            if((ldef->mapflags & ML_TWOSIDED) && ldef->L_side(seg->side ^ 1))
+            if((ldef->mapFlags & ML_TWOSIDED) && ldef->L_side(seg->side ^ 1))
             {
                 seg->SG_backsector = ldef->L_side(seg->side ^ 1)->sector;
             }
             else
             {
-                ldef->mapflags &= ~ML_TWOSIDED;
+                ldef->mapFlags &= ~ML_TWOSIDED;
                 seg->SG_backsector = 0;
             }
 
-            seg->sidedef = ldef->L_side(seg->side);
+            seg->sideDef = ldef->L_side(seg->side);
             seg->offset = P_AccurateDistance(seg->SG_v1pos[VX] - vtx->V_pos[VX],
                                              seg->SG_v1pos[VY] - vtx->V_pos[VY]);
         }
         else
         {
-            seg->linedef = NULL;
+            seg->lineDef = NULL;
             seg->SG_frontsector = NULL;
             seg->SG_backsector = NULL;
         }
 
-        if(seg->sidedef)
-            hardenSideSegList(dest, seg->sidedef, seg, hEdge);
+        if(seg->sideDef)
+            hardenSideSegList(dest, seg->sideDef, seg, hEdge);
 
         seg->angle =
             bamsAtan2((int) (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]),
@@ -167,17 +167,17 @@ static void buildSegsFromHEdges(gamemap_t *dest)
 
         // Calculate the surface normals
         // Front first
-        if(seg->sidedef)
+        if(seg->sideDef)
         {
-            surface_t *surface = &seg->sidedef->SW_topsurface;
+            surface_t *surface = &seg->sideDef->SW_topsurface;
 
             surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
             surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
             surface->normal[VZ] = 0;
 
             // All surfaces of a sidedef have the same normal.
-            memcpy(seg->sidedef->SW_middlenormal, surface->normal, sizeof(surface->normal));
-            memcpy(seg->sidedef->SW_bottomnormal, surface->normal, sizeof(surface->normal));
+            memcpy(seg->sideDef->SW_middlenormal, surface->normal, sizeof(surface->normal));
+            memcpy(seg->sideDef->SW_bottomnormal, surface->normal, sizeof(surface->normal));
         }
     }
 }
@@ -205,16 +205,16 @@ static void hardenSubSectors(gamemap_t *dest, editmap_t *src)
 {
     uint        i;
 
-    dest->numsubsectors = src->numsubsectors;
-    dest->subsectors = Z_Malloc(dest->numsubsectors * sizeof(subsector_t),
+    dest->numSubsectors = src->numSubsectors;
+    dest->subsectors = Z_Malloc(dest->numSubsectors * sizeof(subsector_t),
                                PU_LEVELSTATIC, 0);
-    for(i = 0; i < dest->numsubsectors; ++i)
+    for(i = 0; i < dest->numSubsectors; ++i)
     {
         subsector_t *destS = &dest->subsectors[i];
         subsector_t *srcS = src->subsectors[i];
 
         memcpy(destS, srcS, sizeof(*destS));
-        destS->segcount = srcS->buildData.hEdgeCount;
+        destS->segCount = srcS->buildData.hEdgeCount;
         destS->sector = (srcS->sector? &dest->sectors[srcS->sector->buildData.index-1] : NULL);
         destS->shadows = NULL;
         destS->planes = NULL;
@@ -241,18 +241,18 @@ static void hardenNode(gamemap_t *dest, node_t *mnode)
 
     node->x = mnode->x;
     node->y = mnode->y;
-    node->dx = mnode->dx / (mnode->buildData.tooLong? 2 : 1);
-    node->dy = mnode->dy / (mnode->buildData.tooLong? 2 : 1);
+    node->dX = mnode->dX / (mnode->buildData.tooLong? 2 : 1);
+    node->dY = mnode->dY / (mnode->buildData.tooLong? 2 : 1);
 
-    node->bbox[RIGHT][BOXTOP]    = mnode->bbox[RIGHT][BOXTOP];
-    node->bbox[RIGHT][BOXBOTTOM] = mnode->bbox[RIGHT][BOXBOTTOM];
-    node->bbox[RIGHT][BOXLEFT]   = mnode->bbox[RIGHT][BOXLEFT];
-    node->bbox[RIGHT][BOXRIGHT]  = mnode->bbox[RIGHT][BOXRIGHT];
+    node->bBox[RIGHT][BOXTOP]    = mnode->bBox[RIGHT][BOXTOP];
+    node->bBox[RIGHT][BOXBOTTOM] = mnode->bBox[RIGHT][BOXBOTTOM];
+    node->bBox[RIGHT][BOXLEFT]   = mnode->bBox[RIGHT][BOXLEFT];
+    node->bBox[RIGHT][BOXRIGHT]  = mnode->bBox[RIGHT][BOXRIGHT];
 
-    node->bbox[LEFT][BOXTOP]     = mnode->bbox[LEFT][BOXTOP];
-    node->bbox[LEFT][BOXBOTTOM]  = mnode->bbox[LEFT][BOXBOTTOM];
-    node->bbox[LEFT][BOXLEFT]    = mnode->bbox[LEFT][BOXLEFT];
-    node->bbox[LEFT][BOXRIGHT]   = mnode->bbox[LEFT][BOXRIGHT];
+    node->bBox[LEFT][BOXTOP]     = mnode->bBox[LEFT][BOXTOP];
+    node->bBox[LEFT][BOXBOTTOM]  = mnode->bBox[LEFT][BOXBOTTOM];
+    node->bBox[LEFT][BOXLEFT]    = mnode->bBox[LEFT][BOXLEFT];
+    node->bBox[LEFT][BOXRIGHT]   = mnode->bBox[LEFT][BOXRIGHT];
 
     if(right->node)
         node->children[RIGHT] = right->node->buildData.index;
@@ -269,9 +269,9 @@ static void hardenNodes(gamemap_t *dest, editmap_t *src)
 {
     nodeCurIndex = 0;
 
-    dest->numnodes = src->numnodes;
+    dest->numNodes = src->numNodes;
     dest->nodes =
-        Z_Calloc(dest->numnodes * sizeof(node_t), PU_LEVELSTATIC, 0);
+        Z_Calloc(dest->numNodes * sizeof(node_t), PU_LEVELSTATIC, 0);
 
     if(src->rootNode)
         hardenNode(dest, src->rootNode);
@@ -281,7 +281,7 @@ void BSP_InitForNodeBuild(editmap_t *map)
 {
     uint        i;
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         line_t     *l = map->lines[i];
         vertex_t   *start = l->v[0];
@@ -320,10 +320,10 @@ static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
 {
     uint        i;
 
-    dest->numlines = src->numlines;
-    dest->lines = Z_Calloc(dest->numlines * sizeof(line_t), PU_LEVELSTATIC, 0);
+    dest->numLines = src->numLines;
+    dest->lines = Z_Calloc(dest->numLines * sizeof(line_t), PU_LEVELSTATIC, 0);
 
-    for(i = 0; i < dest->numlines; ++i)
+    for(i = 0; i < dest->numLines; ++i)
     {
         line_t     *destL = &dest->lines[i];
         line_t     *srcL = src->lines[i];
@@ -343,18 +343,18 @@ static void hardenVertexes(gamemap_t *dest, editmap_t *src)
 {
     uint            i;
 
-    dest->numvertexes = src->numvertexes;
+    dest->numVertexes = src->numVertexes;
     dest->vertexes =
-        Z_Calloc(dest->numvertexes * sizeof(vertex_t), PU_LEVELSTATIC, 0);
+        Z_Calloc(dest->numVertexes * sizeof(vertex_t), PU_LEVELSTATIC, 0);
 
-    for(i = 0; i < dest->numvertexes; ++i)
+    for(i = 0; i < dest->numVertexes; ++i)
     {
         vertex_t   *destV = &dest->vertexes[i];
         vertex_t   *srcV = src->vertexes[i];
 
         destV->header.type = DMU_VERTEX;
-        destV->numlineowners = 0;
-        destV->lineowners = NULL;
+        destV->numLineOwners = 0;
+        destV->lineOwners = NULL;
         destV->anchored = false;
 
         //// \fixme Add some rounding.
@@ -367,10 +367,10 @@ static void hardenSidedefs(gamemap_t *dest, editmap_t *src)
 {
     uint            i;
 
-    dest->numsides = src->numsides;
-    dest->sides = Z_Malloc(dest->numsides * sizeof(side_t), PU_LEVELSTATIC, 0);
+    dest->numSides = src->numSides;
+    dest->sides = Z_Malloc(dest->numSides * sizeof(side_t), PU_LEVELSTATIC, 0);
 
-    for(i = 0; i < dest->numsides; ++i)
+    for(i = 0; i < dest->numSides; ++i)
     {
         side_t         *destS = &dest->sides[i];
         side_t         *srcS = src->sides[i];
@@ -384,17 +384,17 @@ static void hardenSectors(gamemap_t *dest, editmap_t *src)
 {
     uint            i;
 
-    dest->numsectors = src->numsectors;
-    dest->sectors = Z_Malloc(dest->numsectors * sizeof(sector_t), PU_LEVELSTATIC, 0);
+    dest->numSectors = src->numSectors;
+    dest->sectors = Z_Malloc(dest->numSectors * sizeof(sector_t), PU_LEVELSTATIC, 0);
 
-    for(i = 0; i < dest->numsectors; ++i)
+    for(i = 0; i < dest->numSectors; ++i)
     {
         sector_t           *destS = &dest->sectors[i];
         sector_t           *srcS = src->sectors[i];
         plane_t            *pln;
 
         memcpy(destS, srcS, sizeof(*destS));
-        destS->planecount = 0;
+        destS->planeCount = 0;
         destS->planes = NULL;
 
         pln = R_NewPlaneForSector(destS);
@@ -411,18 +411,18 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
 {
     uint            i;
 
-    if(src->numpolyobjs == 0)
+    if(src->numPolyobjs == 0)
     {
-        dest->numpolyobjs = 0;
+        dest->numPolyobjs = 0;
         dest->polyobjs = NULL;
         return;
     }
 
-    dest->numpolyobjs = src->numpolyobjs;
-    dest->polyobjs = Z_Malloc((dest->numpolyobjs+1) * sizeof(polyobj_t*),
+    dest->numPolyobjs = src->numPolyobjs;
+    dest->polyobjs = Z_Malloc((dest->numPolyobjs+1) * sizeof(polyobj_t*),
                               PU_LEVEL, 0);
 
-    for(i = 0; i < dest->numpolyobjs; ++i)
+    for(i = 0; i < dest->numPolyobjs; ++i)
     {
         uint            j;
         polyobj_t      *destP, *srcP = src->polyobjs[i];
@@ -437,12 +437,12 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
         destP->startSpot.pos[VX] = srcP->startSpot.pos[VX];
         destP->startSpot.pos[VY] = srcP->startSpot.pos[VY];
 
-        destP->numsegs = srcP->buildData.lineCount;
+        destP->numSegs = srcP->buildData.lineCount;
 
         destP->originalPts =
-            Z_Malloc(destP->numsegs * sizeof(fvertex_t), PU_LEVEL, 0);
+            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_LEVEL, 0);
         destP->prevPts =
-            Z_Malloc(destP->numsegs * sizeof(fvertex_t), PU_LEVEL, 0);
+            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_LEVEL, 0);
 
         // Create a seg for each line of this polyobj.
         segs = Z_Calloc(sizeof(seg_t) * srcP->buildData.lineCount, PU_LEVEL, 0);
@@ -458,14 +458,14 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
             line->flags |= LINEF_POLYOBJ;
 
             seg->header.type = DMU_SEG;
-            seg->linedef = line;
+            seg->lineDef = line;
             seg->SG_v1 = line->L_v1;
             seg->SG_v2 = line->L_v2;
             dx = line->L_v2pos[VX] - line->L_v1pos[VX];
             dy = line->L_v2pos[VY] - line->L_v1pos[VY];
             seg->length = P_AccurateDistance(dx, dy);
-            seg->backseg = NULL;
-            seg->sidedef = line->L_frontside;
+            seg->backSeg = NULL;
+            seg->sideDef = line->L_frontside;
             seg->subsector = NULL;
             seg->SG_frontsector = line->L_frontsector;
             seg->SG_backsector = NULL;

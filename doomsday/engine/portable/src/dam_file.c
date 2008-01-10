@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -145,15 +145,15 @@ static void initMaterialDict(const gamemap_t *map, materialdict_t *dict)
 {
     uint                i, j;
 
-    for(i = 0; i < map->numsectors; ++i)
+    for(i = 0; i < map->numSectors; ++i)
     {
         sector_t           *sec = &map->sectors[i];
 
-        for(j = 0; j < sec->planecount; ++j)
+        for(j = 0; j < sec->planeCount; ++j)
             addMaterialToDict(dict, sec->SP_planematerial(j));
     }
 
-    for(i = 0; i < map->numsides; ++i)
+    for(i = 0; i < map->numSides; ++i)
     {
         side_t             *side = &map->sides[i];
 
@@ -305,13 +305,13 @@ static void writeVertex(const gamemap_t *map, uint idx)
     writeFloat(v->V_pos[VX]);
     writeFloat(v->V_pos[VY]);
     writeByte((v->anchored? 1 : 0));
-    writeLong((long) v->numlineowners);
+    writeLong((long) v->numLineOwners);
 
-    if(v->numlineowners > 0)
+    if(v->numLineOwners > 0)
     {
         lineowner_t        *own, *base;
 
-        own = base = (v->lineowners)->LO_prev;
+        own = base = (v->lineOwners)->LO_prev;
         do
         {
             writeLong((long) ((own->line - map->lines) + 1));
@@ -329,30 +329,30 @@ static void readVertex(const gamemap_t *map, uint idx)
     v->V_pos[VX] = readFloat();
     v->V_pos[VY] = readFloat();
     v->anchored = (readByte()? true : false);
-    v->numlineowners = (uint) readLong();
+    v->numLineOwners = (uint) readLong();
 
-    if(v->numlineowners > 0)
+    if(v->numLineOwners > 0)
     {
         lineowner_t        *own;
 
-        v->lineowners = NULL;
-        for(i = 0; i < v->numlineowners; ++i)
+        v->lineOwners = NULL;
+        for(i = 0; i < v->numLineOwners; ++i)
         {
             own = Z_Malloc(sizeof(lineowner_t), PU_LEVEL, 0);
             own->line = &map->lines[(unsigned) (readLong() - 1)];
             own->angle = (binangle_t) readLong();
 
-            own->LO_next = v->lineowners;
-            v->lineowners = own;
+            own->LO_next = v->lineOwners;
+            v->lineOwners = own;
         }
 
-        own = v->lineowners;
+        own = v->lineOwners;
         do
         {
             own->LO_next->LO_prev = own;
             own = own->LO_next;
         } while(own);
-        own->LO_prev = v->lineowners;
+        own->LO_prev = v->lineOwners;
     }
 }
 
@@ -367,14 +367,14 @@ static void archiveVertexes(gamemap_t *map, boolean write)
 
     if(write)
     {
-        writeLong((long) map->numvertexes);
-        for(i = 0; i < map->numvertexes; ++i)
+        writeLong((long) map->numVertexes);
+        for(i = 0; i < map->numVertexes; ++i)
             writeVertex(map, i);
     }
     else
     {
-        map->numvertexes = (uint) readLong();
-        for(i = 0; i < map->numvertexes; ++i)
+        map->numVertexes = (uint) readLong();
+        for(i = 0; i < map->numVertexes; ++i)
             readVertex(map, i);
     }
 
@@ -392,16 +392,16 @@ static void writeLine(const gamemap_t *map, uint idx)
     writeLong((long) ((l->v[0] - map->vertexes) + 1));
     writeLong((long) ((l->v[1] - map->vertexes) + 1));
     writeLong(l->flags);
-    writeShort(l->mapflags);
-    writeFloat(l->dx);
-    writeFloat(l->dy);
-    writeLong((long) l->slopetype);
+    writeShort(l->mapFlags);
+    writeFloat(l->dX);
+    writeFloat(l->dY);
+    writeLong((long) l->slopeType);
     writeLong((long) (l->sides[0]? ((l->sides[0] - map->sides) + 1) : 0));
     writeLong((long) (l->sides[1]? ((l->sides[1] - map->sides) + 1) : 0));
-    writeFloat(l->bbox[BOXLEFT]);
-    writeFloat(l->bbox[BOXRIGHT]);
-    writeFloat(l->bbox[BOXBOTTOM]);
-    writeFloat(l->bbox[BOXTOP]);
+    writeFloat(l->bBox[BOXLEFT]);
+    writeFloat(l->bBox[BOXRIGHT]);
+    writeFloat(l->bBox[BOXBOTTOM]);
+    writeFloat(l->bBox[BOXTOP]);
     writeFloat(l->length);
     writeLong((long) l->angle);
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -417,18 +417,18 @@ static void readLine(const gamemap_t *map, uint idx)
     l->v[0] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->v[1] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->flags = (int) readLong();
-    l->mapflags = readShort();
-    l->dx = readFloat();
-    l->dy = readFloat();
-    l->slopetype = (slopetype_t) readLong();
+    l->mapFlags = readShort();
+    l->dX = readFloat();
+    l->dY = readFloat();
+    l->slopeType = (slopetype_t) readLong();
     sideIdx = readLong();
     l->sides[0] = (sideIdx == 0? NULL : &map->sides[sideIdx-1]);
     sideIdx = readLong();
     l->sides[1] = (sideIdx == 0? NULL : &map->sides[sideIdx-1]);
-    l->bbox[BOXLEFT] = readFloat();
-    l->bbox[BOXRIGHT] = readFloat();
-    l->bbox[BOXBOTTOM] = readFloat();
-    l->bbox[BOXTOP] = readFloat();
+    l->bBox[BOXLEFT] = readFloat();
+    l->bBox[BOXRIGHT] = readFloat();
+    l->bBox[BOXBOTTOM] = readFloat();
+    l->bBox[BOXTOP] = readFloat();
     l->length = readFloat();
     l->angle = (binangle_t) readLong();
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -446,14 +446,14 @@ static void archiveLines(gamemap_t *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numlines);
-        for(i = 0; i < map->numlines; ++i)
+        writeLong(map->numLines);
+        for(i = 0; i < map->numLines; ++i)
             writeLine(map, i);
     }
     else
     {
-        map->numlines = readLong();
-        for(i = 0; i < map->numlines; ++i)
+        map->numLines = readLong();
+        for(i = 0; i < map->numLines; ++i)
             readLine(map, i);
     }
 
@@ -474,7 +474,7 @@ static void writeSide(const gamemap_t *map, uint idx)
 
         writeLong(suf->flags);
         writeLong(getMaterialDictID(materialDict, suf->material));
-        writeLong((long) suf->blendmode);
+        writeLong((long) suf->blendMode);
         writeFloat(suf->normal[VX]);
         writeFloat(suf->normal[VY]);
         writeFloat(suf->normal[VZ]);
@@ -487,8 +487,8 @@ static void writeSide(const gamemap_t *map, uint idx)
     }
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
     writeShort(s->flags);
-    writeLong((long) s->segcount);
-    for(i = 0; i < s->segcount; ++i)
+    writeLong((long) s->segCount);
+    for(i = 0; i < s->segCount; ++i)
         writeLong((s->segs[i] - map->segs) + 1);
 }
 
@@ -504,7 +504,7 @@ static void readSide(const gamemap_t *map, uint idx)
 
         suf->flags = (int) readLong();
         suf->material = lookupMaterialFromDict(materialDict, readLong());
-        suf->blendmode = (blendmode_t) readLong();
+        suf->blendMode = (blendmode_t) readLong();
         suf->normal[VX] = readFloat();
         suf->normal[VY] = readFloat();
         suf->normal[VZ] = readFloat();
@@ -515,14 +515,14 @@ static void readSide(const gamemap_t *map, uint idx)
         suf->rgba[CB] = readFloat();
         suf->rgba[CA] = readFloat();
         suf->decorations = NULL;
-        suf->numdecorations = 0;
+        suf->numDecorations = 0;
     }
     secIdx = readLong();
     s->sector = (secIdx == 0? NULL : &map->sectors[secIdx -1]);
     s->flags = readShort();
-    s->segcount = (uint) readLong();
-    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segcount + 1), PU_LEVEL, 0);
-    for(i = 0; i < s->segcount; ++i)
+    s->segCount = (uint) readLong();
+    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segCount + 1), PU_LEVEL, 0);
+    for(i = 0; i < s->segCount; ++i)
         s->segs[i] = &map->segs[(unsigned) readLong() - 1];
     s->segs[i] = NULL; // Terminate.
 }
@@ -538,14 +538,14 @@ static void archiveSides(gamemap_t *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numsides);
-        for(i = 0; i < map->numsides; ++i)
+        writeLong(map->numSides);
+        for(i = 0; i < map->numSides; ++i)
             writeSide(map, i);
     }
     else
     {
-        map->numsides = readLong();
-        for(i = 0; i < map->numsides; ++i)
+        map->numSides = readLong();
+        for(i = 0; i < map->numSides; ++i)
             readSide(map, i);
     }
 
@@ -560,28 +560,28 @@ static void writeSector(const gamemap_t *map, uint idx)
     uint                i, j;
     sector_t           *s = &map->sectors[idx];
 
-    writeFloat(s->lightlevel);
+    writeFloat(s->lightLevel);
     writeFloat(s->rgb[CR]);
     writeFloat(s->rgb[CG]);
     writeFloat(s->rgb[CB]);
-    writeLong(s->planecount);
-    for(i = 0; i < s->planecount; ++i)
+    writeLong(s->planeCount);
+    for(i = 0; i < s->planeCount; ++i)
     {
         plane_t            *p = s->planes[i];
 
         writeFloat(p->height);
         writeFloat(p->glow);
-        writeFloat(p->glowrgb[CR]);
-        writeFloat(p->glowrgb[CG]);
-        writeFloat(p->glowrgb[CB]);
+        writeFloat(p->glowRGB[CR]);
+        writeFloat(p->glowRGB[CG]);
+        writeFloat(p->glowRGB[CB]);
         writeFloat(p->target);
         writeFloat(p->speed);
-        writeFloat(p->visheight);
-        writeFloat(p->visoffset);
+        writeFloat(p->visHeight);
+        writeFloat(p->visOffset);
 
         writeLong((long) p->surface.flags);
         writeLong(getMaterialDictID(materialDict, p->surface.material));
-        writeLong((long) p->surface.blendmode);
+        writeLong((long) p->surface.blendMode);
         writeFloat(p->surface.normal[VX]);
         writeFloat(p->surface.normal[VY]);
         writeFloat(p->surface.normal[VZ]);
@@ -592,41 +592,41 @@ static void writeSector(const gamemap_t *map, uint idx)
         writeFloat(p->surface.rgba[CB]);
         writeFloat(p->surface.rgba[CA]);
 
-        writeFloat(p->soundorg.pos[VX]);
-        writeFloat(p->soundorg.pos[VY]);
-        writeFloat(p->soundorg.pos[VZ]);
+        writeFloat(p->soundOrg.pos[VX]);
+        writeFloat(p->soundOrg.pos[VY]);
+        writeFloat(p->soundOrg.pos[VZ]);
     }
 
-    writeFloat(s->skyfix[PLN_FLOOR].offset);
-    writeFloat(s->skyfix[PLN_CEILING].offset);
-    writeLong(s->containsector? ((s->containsector - map->sectors) + 1) : 0);
+    writeFloat(s->skyFix[PLN_FLOOR].offset);
+    writeFloat(s->skyFix[PLN_CEILING].offset);
+    writeLong(s->containSector? ((s->containSector - map->sectors) + 1) : 0);
     writeLong(s->flags);
-    writeFloat(s->bbox[BOXLEFT]);
-    writeFloat(s->bbox[BOXRIGHT]);
-    writeFloat(s->bbox[BOXBOTTOM]);
-    writeFloat(s->bbox[BOXTOP]);
-    writeLong(s->lightsource? ((s->lightsource - map->sectors) + 1) : 0);
-    writeFloat(s->soundorg.pos[VX]);
-    writeFloat(s->soundorg.pos[VY]);
-    writeFloat(s->soundorg.pos[VZ]);
+    writeFloat(s->bBox[BOXLEFT]);
+    writeFloat(s->bBox[BOXRIGHT]);
+    writeFloat(s->bBox[BOXBOTTOM]);
+    writeFloat(s->bBox[BOXTOP]);
+    writeLong(s->lightSource? ((s->lightSource - map->sectors) + 1) : 0);
+    writeFloat(s->soundOrg.pos[VX]);
+    writeFloat(s->soundOrg.pos[VY]);
+    writeFloat(s->soundOrg.pos[VZ]);
 
     for(i = 0; i < NUM_REVERB_DATA; ++i)
         writeFloat(s->reverb[i]);
 
     // Lightgrid block indices.
-    writeLong((long) s->changedblockcount);
-    writeLong((long) s->blockcount);
-    for(i = 0; i < s->blockcount; ++i)
+    writeLong((long) s->changedBlockCount);
+    writeLong((long) s->blockCount);
+    for(i = 0; i < s->blockCount; ++i)
         writeShort(s->blocks[i]);
 
     // Line list.
-    writeLong((long) s->linecount);
-    for(i = 0; i < s->linecount; ++i)
-        writeLong((s->Lines[i] - map->lines) + 1);
+    writeLong((long) s->lineCount);
+    for(i = 0; i < s->lineCount; ++i)
+        writeLong((s->lines[i] - map->lines) + 1);
 
     // Subsector list.
-    writeLong((long) s->subscount);
-    for(i = 0; i < s->subscount; ++i)
+    writeLong((long) s->subsCount);
+    for(i = 0; i < s->subsCount; ++i)
         writeLong((s->subsectors[i] - map->subsectors) + 1);
 
     // Reverb subsector attributors.
@@ -635,11 +635,11 @@ static void writeSector(const gamemap_t *map, uint idx)
         writeLong((s->reverbSSecs[i] - map->subsectors) + 1);
 
     // Sector subsector groups.
-    writeLong((long) s->subsgroupcount);
-    for(i = 0; i < s->subsgroupcount; ++i)
+    writeLong((long) s->subsGroupCount);
+    for(i = 0; i < s->subsGroupCount; ++i)
     {
-        ssecgroup_t        *g = &s->subsgroups[i];
-        for(j = 0; j < s->planecount; ++j)
+        ssecgroup_t        *g = &s->subsGroups[i];
+        for(j = 0; j < s->planeCount; ++j)
             writeLong((g->linked[j] - map->sectors) + 1);
     }
 }
@@ -650,7 +650,7 @@ static void readSector(const gamemap_t *map, uint idx)
     long                secIdx;
     sector_t           *s = &map->sectors[idx];
 
-    s->lightlevel = readFloat();
+    s->lightLevel = readFloat();
     s->rgb[CR] = readFloat();
     s->rgb[CG] = readFloat();
     s->rgb[CB] = readFloat();
@@ -661,17 +661,17 @@ static void readSector(const gamemap_t *map, uint idx)
 
         p->height = readFloat();
         p->glow = readFloat();
-        p->glowrgb[CR] = readFloat();
-        p->glowrgb[CG] = readFloat();
-        p->glowrgb[CB] = readFloat();
+        p->glowRGB[CR] = readFloat();
+        p->glowRGB[CG] = readFloat();
+        p->glowRGB[CB] = readFloat();
         p->target = readFloat();
         p->speed = readFloat();
-        p->visheight = readFloat();
-        p->visoffset = readFloat();
+        p->visHeight = readFloat();
+        p->visOffset = readFloat();
 
         p->surface.flags = (int) readLong();
         p->surface.material = lookupMaterialFromDict(materialDict, readLong());
-        p->surface.blendmode = (blendmode_t) readLong();
+        p->surface.blendMode = (blendmode_t) readLong();
         p->surface.normal[VX] = readFloat();
         p->surface.normal[VY] = readFloat();
         p->surface.normal[VZ] = readFloat();
@@ -682,51 +682,51 @@ static void readSector(const gamemap_t *map, uint idx)
         p->surface.rgba[CB] = readFloat();
         p->surface.rgba[CA] = readFloat();
 
-        p->soundorg.pos[VX] = readFloat();
-        p->soundorg.pos[VY] = readFloat();
-        p->soundorg.pos[VZ] = readFloat();
+        p->soundOrg.pos[VX] = readFloat();
+        p->soundOrg.pos[VY] = readFloat();
+        p->soundOrg.pos[VZ] = readFloat();
 
         p->surface.decorations = NULL;
-        p->surface.numdecorations = 0;
+        p->surface.numDecorations = 0;
     }
 
-    s->skyfix[PLN_FLOOR].offset = readFloat();
-    s->skyfix[PLN_CEILING].offset = readFloat();
+    s->skyFix[PLN_FLOOR].offset = readFloat();
+    s->skyFix[PLN_CEILING].offset = readFloat();
     secIdx = readLong();
-    s->containsector = (secIdx == 0? NULL : &map->sectors[secIdx - 1]);
+    s->containSector = (secIdx == 0? NULL : &map->sectors[secIdx - 1]);
     s->flags = readLong();
-    s->bbox[BOXLEFT] = readFloat();
-    s->bbox[BOXRIGHT] = readFloat();
-    s->bbox[BOXBOTTOM] = readFloat();
-    s->bbox[BOXTOP] = readFloat();
+    s->bBox[BOXLEFT] = readFloat();
+    s->bBox[BOXRIGHT] = readFloat();
+    s->bBox[BOXBOTTOM] = readFloat();
+    s->bBox[BOXTOP] = readFloat();
     secIdx = readLong();
-    s->lightsource = (secIdx == 0? NULL : &map->sectors[secIdx - 1]);
-    s->soundorg.pos[VX] = readFloat();
-    s->soundorg.pos[VY] = readFloat();
-    s->soundorg.pos[VZ] = readFloat();
+    s->lightSource = (secIdx == 0? NULL : &map->sectors[secIdx - 1]);
+    s->soundOrg.pos[VX] = readFloat();
+    s->soundOrg.pos[VY] = readFloat();
+    s->soundOrg.pos[VZ] = readFloat();
 
     for(i = 0; i < NUM_REVERB_DATA; ++i)
         s->reverb[i] = readFloat();
 
     // Lightgrid block indices.
-    s->changedblockcount = (uint) readLong();
-    s->blockcount = (uint) readLong();
-    s->blocks = Z_Malloc(sizeof(short) * s->blockcount, PU_LEVEL, 0);
-    for(i = 0; i < s->blockcount; ++i)
+    s->changedBlockCount = (uint) readLong();
+    s->blockCount = (uint) readLong();
+    s->blocks = Z_Malloc(sizeof(short) * s->blockCount, PU_LEVEL, 0);
+    for(i = 0; i < s->blockCount; ++i)
         s->blocks[i] = readShort();
 
     // Line list.
-    s->linecount = (uint) readLong();
-    s->Lines = Z_Malloc(sizeof(line_t*) * (s->linecount + 1), PU_LEVEL, 0);
-    for(i = 0; i < s->linecount; ++i)
-        s->Lines[i] = &map->lines[(unsigned) readLong() - 1];
-    s->Lines[i] = NULL; // Terminate.
+    s->lineCount = (uint) readLong();
+    s->lines = Z_Malloc(sizeof(line_t*) * (s->lineCount + 1), PU_LEVEL, 0);
+    for(i = 0; i < s->lineCount; ++i)
+        s->lines[i] = &map->lines[(unsigned) readLong() - 1];
+    s->lines[i] = NULL; // Terminate.
 
     // Subsector list.
-    s->subscount = (uint) readLong();
+    s->subsCount = (uint) readLong();
     s->subsectors =
-        Z_Malloc(sizeof(subsector_t*) * (s->subscount + 1), PU_LEVEL, 0);
-    for(i = 0; i < s->subscount; ++i)
+        Z_Malloc(sizeof(subsector_t*) * (s->subsCount + 1), PU_LEVEL, 0);
+    for(i = 0; i < s->subsCount; ++i)
         s->subsectors[i] = &map->subsectors[(unsigned) readLong() - 1];
     s->subsectors[i] = NULL; // Terminate.
 
@@ -739,16 +739,16 @@ static void readSector(const gamemap_t *map, uint idx)
     s->reverbSSecs[i] = NULL; // Terminate.
 
     // Subsector groups.
-    s->subsgroupcount = (uint) readLong();
-    s->subsgroups =
-        Z_Malloc(sizeof(ssecgroup_t) * s->subsgroupcount, PU_LEVEL, 0);
-    for(i = 0; i < s->subsgroupcount; ++i)
+    s->subsGroupCount = (uint) readLong();
+    s->subsGroups =
+        Z_Malloc(sizeof(ssecgroup_t) * s->subsGroupCount, PU_LEVEL, 0);
+    for(i = 0; i < s->subsGroupCount; ++i)
     {
-        ssecgroup_t        *g = &s->subsgroups[i];
+        ssecgroup_t        *g = &s->subsGroups[i];
 
         g->linked =
-            Z_Malloc(sizeof(sector_t*) * (s->planecount + 1), PU_LEVEL, 0);
-        for(j = 0; j < s->planecount; ++j)
+            Z_Malloc(sizeof(sector_t*) * (s->planeCount + 1), PU_LEVEL, 0);
+        for(j = 0; j < s->planeCount; ++j)
             g->linked[j] = &map->sectors[(unsigned) readLong() - 1];
         g->linked[j] = NULL; // Terminate.
     }
@@ -765,14 +765,14 @@ static void archiveSectors(gamemap_t *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numsectors);
-        for(i = 0; i < map->numsectors; ++i)
+        writeLong(map->numSectors);
+        for(i = 0; i < map->numSectors; ++i)
             writeSector(map, i);
     }
     else
     {
-        map->numsectors = readLong();
-        for(i = 0; i < map->numsectors; ++i)
+        map->numSectors = readLong();
+        for(i = 0; i < map->numSectors; ++i)
             readSector(map, i);
     }
 
@@ -788,15 +788,15 @@ static void writeSubsector(const gamemap_t *map, uint idx)
     subsector_t        *s = &map->subsectors[idx];
 
     writeLong((long) s->flags);
-    writeFloat(s->bbox[0].pos[VX]);
-    writeFloat(s->bbox[0].pos[VY]);
-    writeFloat(s->bbox[0].pos[VZ]);
-    writeFloat(s->bbox[1].pos[VX]);
-    writeFloat(s->bbox[1].pos[VY]);
-    writeFloat(s->bbox[1].pos[VZ]);
-    writeFloat(s->midpoint.pos[VX]);
-    writeFloat(s->midpoint.pos[VY]);
-    writeFloat(s->midpoint.pos[VZ]);
+    writeFloat(s->bBox[0].pos[VX]);
+    writeFloat(s->bBox[0].pos[VY]);
+    writeFloat(s->bBox[0].pos[VZ]);
+    writeFloat(s->bBox[1].pos[VX]);
+    writeFloat(s->bBox[1].pos[VY]);
+    writeFloat(s->bBox[1].pos[VZ]);
+    writeFloat(s->midPoint.pos[VX]);
+    writeFloat(s->midPoint.pos[VY]);
+    writeFloat(s->midPoint.pos[VZ]);
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
     writeLong(s->poly? (s->poly->idx + 1) : 0);
     writeLong((long) s->group);
@@ -806,8 +806,8 @@ static void writeSubsector(const gamemap_t *map, uint idx)
         writeLong((long) s->reverb[i]);
 
     // Subsector segs list.
-    writeLong((long) s->segcount);
-    for(i = 0; i < s->segcount; ++i)
+    writeLong((long) s->segCount);
+    for(i = 0; i < s->segCount; ++i)
         writeLong((s->segs[i] - map->segs) + 1);
 }
 
@@ -818,15 +818,15 @@ static void readSubsector(const gamemap_t *map, uint idx)
     subsector_t        *s = &map->subsectors[idx];
 
     s->flags = (int) readLong();
-    s->bbox[0].pos[VX] = readFloat();
-    s->bbox[0].pos[VY] = readFloat();
-    s->bbox[0].pos[VZ] = readFloat();
-    s->bbox[1].pos[VX] = readFloat();
-    s->bbox[1].pos[VY] = readFloat();
-    s->bbox[1].pos[VZ] = readFloat();
-    s->midpoint.pos[VX] = readFloat();
-    s->midpoint.pos[VY] = readFloat();
-    s->midpoint.pos[VZ] = readFloat();
+    s->bBox[0].pos[VX] = readFloat();
+    s->bBox[0].pos[VY] = readFloat();
+    s->bBox[0].pos[VZ] = readFloat();
+    s->bBox[1].pos[VX] = readFloat();
+    s->bBox[1].pos[VY] = readFloat();
+    s->bBox[1].pos[VZ] = readFloat();
+    s->midPoint.pos[VX] = readFloat();
+    s->midPoint.pos[VY] = readFloat();
+    s->midPoint.pos[VZ] = readFloat();
     obIdx = readLong();
     s->sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
     obIdx = readLong();
@@ -837,9 +837,9 @@ static void readSubsector(const gamemap_t *map, uint idx)
         s->reverb[i] = (uint) readLong();
 
     // Subsector segs list.
-    s->segcount = (uint) readLong();
-    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segcount + 1), PU_LEVEL, 0);
-    for(i = 0; i < s->segcount; ++i)
+    s->segCount = (uint) readLong();
+    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segCount + 1), PU_LEVEL, 0);
+    for(i = 0; i < s->segCount; ++i)
         s->segs[i] = &map->segs[(unsigned) readLong() - 1];
     s->segs[i] = NULL; // Terminate.
 }
@@ -855,14 +855,14 @@ static void archiveSubsectors(gamemap_t *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numsubsectors);
-        for(i = 0; i < map->numsubsectors; ++i)
+        writeLong(map->numSubsectors);
+        for(i = 0; i < map->numSubsectors; ++i)
             writeSubsector(map, i);
     }
     else
     {
-        map->numsubsectors = readLong();
-        for(i = 0; i < map->numsubsectors; ++i)
+        map->numSubsectors = readLong();
+        for(i = 0; i < map->numSubsectors; ++i)
             readSubsector(map, i);
     }
 
@@ -880,12 +880,12 @@ static void writeSeg(const gamemap_t *map, uint idx)
     writeLong((s->v[1] - map->vertexes) + 1);
     writeFloat(s->length);
     writeFloat(s->offset);
-    writeLong(s->sidedef? ((s->sidedef - map->sides) + 1) : 0);
-    writeLong(s->linedef? ((s->linedef - map->lines) + 1) : 0);
+    writeLong(s->sideDef? ((s->sideDef - map->sides) + 1) : 0);
+    writeLong(s->lineDef? ((s->lineDef - map->lines) + 1) : 0);
     writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
     writeLong(s->sec[BACK]? ((s->sec[BACK] - map->sectors) + 1) : 0);
     writeLong(s->subsector? ((s->subsector - map->subsectors) + 1) : 0);
-    writeLong(s->backseg? ((s->backseg - map->segs) + 1) : 0);
+    writeLong(s->backSeg? ((s->backSeg - map->segs) + 1) : 0);
     writeLong((long) s->angle);
     writeByte(s->side);
     writeByte(s->flags);
@@ -901,9 +901,9 @@ static void readSeg(const gamemap_t *map, uint idx)
     s->length = readFloat();
     s->offset = readFloat();
     obIdx = readLong();
-    s->sidedef = (obIdx == 0? NULL : &map->sides[(unsigned) obIdx - 1]);
+    s->sideDef = (obIdx == 0? NULL : &map->sides[(unsigned) obIdx - 1]);
     obIdx = readLong();
-    s->linedef = (obIdx == 0? NULL : &map->lines[(unsigned) obIdx - 1]);
+    s->lineDef = (obIdx == 0? NULL : &map->lines[(unsigned) obIdx - 1]);
     obIdx = readLong();
     s->sec[FRONT] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
     obIdx = readLong();
@@ -911,7 +911,7 @@ static void readSeg(const gamemap_t *map, uint idx)
     obIdx = readLong();
     s->subsector = (obIdx == 0? NULL : &map->subsectors[(unsigned) obIdx - 1]);
     obIdx = readLong();
-    s->backseg = (obIdx == 0? NULL : &map->segs[(unsigned) obIdx - 1]);
+    s->backSeg = (obIdx == 0? NULL : &map->segs[(unsigned) obIdx - 1]);
     s->angle = (angle_t) readLong();
     s->side = readByte();
     s->flags = readByte();
@@ -928,14 +928,14 @@ static void archiveSegs(gamemap_t *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numsegs);
-        for(i = 0; i < map->numsegs; ++i)
+        writeLong(map->numSegs);
+        for(i = 0; i < map->numSegs; ++i)
             writeSeg(map, i);
     }
     else
     {
-        map->numsegs = readLong();
-        for(i = 0; i < map->numsegs; ++i)
+        map->numSegs = readLong();
+        for(i = 0; i < map->numSegs; ++i)
             readSeg(map, i);
     }
 
@@ -951,16 +951,16 @@ static void writeNode(const gamemap_t *map, uint idx)
 
     writeFloat(n->x);
     writeFloat(n->y);
-    writeFloat(n->dx);
-    writeFloat(n->dy);
-    writeFloat(n->bbox[RIGHT][BOXLEFT]);
-    writeFloat(n->bbox[RIGHT][BOXRIGHT]);
-    writeFloat(n->bbox[RIGHT][BOXBOTTOM]);
-    writeFloat(n->bbox[RIGHT][BOXTOP]);
-    writeFloat(n->bbox[LEFT][BOXLEFT]);
-    writeFloat(n->bbox[LEFT][BOXRIGHT]);
-    writeFloat(n->bbox[LEFT][BOXBOTTOM]);
-    writeFloat(n->bbox[LEFT][BOXTOP]);
+    writeFloat(n->dX);
+    writeFloat(n->dY);
+    writeFloat(n->bBox[RIGHT][BOXLEFT]);
+    writeFloat(n->bBox[RIGHT][BOXRIGHT]);
+    writeFloat(n->bBox[RIGHT][BOXBOTTOM]);
+    writeFloat(n->bBox[RIGHT][BOXTOP]);
+    writeFloat(n->bBox[LEFT][BOXLEFT]);
+    writeFloat(n->bBox[LEFT][BOXRIGHT]);
+    writeFloat(n->bBox[LEFT][BOXBOTTOM]);
+    writeFloat(n->bBox[LEFT][BOXTOP]);
     writeLong((long) n->children[RIGHT]);
     writeLong((long) n->children[LEFT]);
 }
@@ -971,16 +971,16 @@ static void readNode(const gamemap_t *map, uint idx)
 
     n->x = readFloat();
     n->y = readFloat();
-    n->dx = readFloat();
-    n->dy = readFloat();
-    n->bbox[RIGHT][BOXLEFT] = readFloat();
-    n->bbox[RIGHT][BOXRIGHT] = readFloat();
-    n->bbox[RIGHT][BOXBOTTOM] = readFloat();
-    n->bbox[RIGHT][BOXTOP] = readFloat();
-    n->bbox[LEFT][BOXLEFT] = readFloat();
-    n->bbox[LEFT][BOXRIGHT] = readFloat();
-    n->bbox[LEFT][BOXBOTTOM] = readFloat();
-    n->bbox[LEFT][BOXTOP] = readFloat();
+    n->dX = readFloat();
+    n->dY = readFloat();
+    n->bBox[RIGHT][BOXLEFT] = readFloat();
+    n->bBox[RIGHT][BOXRIGHT] = readFloat();
+    n->bBox[RIGHT][BOXBOTTOM] = readFloat();
+    n->bBox[RIGHT][BOXTOP] = readFloat();
+    n->bBox[LEFT][BOXLEFT] = readFloat();
+    n->bBox[LEFT][BOXRIGHT] = readFloat();
+    n->bBox[LEFT][BOXBOTTOM] = readFloat();
+    n->bBox[LEFT][BOXTOP] = readFloat();
     n->children[RIGHT] = (uint) readLong();
     n->children[LEFT] = (uint) readLong();
 }
@@ -996,14 +996,14 @@ static void archiveNodes(gamemap_t *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numnodes);
-        for(i = 0; i < map->numnodes; ++i)
+        writeLong(map->numNodes);
+        for(i = 0; i < map->numNodes; ++i)
             writeNode(map, i);
     }
     else
     {
-        map->numnodes = readLong();
-        for(i = 0; i < map->numnodes; ++i)
+        map->numNodes = readLong();
+        for(i = 0; i < map->numNodes; ++i)
             readNode(map, i);
     }
 
@@ -1062,8 +1062,8 @@ static void writePolyobj(const gamemap_t *map, uint idx)
     writeByte(p->crush? 1 : 0);
     writeLong((long) p->seqType);
 
-    writeLong((long) p->numsegs);
-    for(i = 0; i < p->numsegs; ++i)
+    writeLong((long) p->numSegs);
+    for(i = 0; i < p->numSegs; ++i)
     {
         seg_t              *s = p->segs[i];
 
@@ -1071,8 +1071,8 @@ static void writePolyobj(const gamemap_t *map, uint idx)
         writeLong((s->v[1] - map->vertexes) + 1);
         writeFloat(s->length);
         writeFloat(s->offset);
-        writeLong(s->sidedef? ((s->sidedef - map->sides) + 1) : 0);
-        writeLong(s->linedef? ((s->linedef - map->lines) + 1) : 0);
+        writeLong(s->sideDef? ((s->sideDef - map->sides) + 1) : 0);
+        writeLong(s->lineDef? ((s->lineDef - map->lines) + 1) : 0);
         writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
         writeLong((long) s->angle);
         writeByte(s->side);
@@ -1105,9 +1105,9 @@ static void readPolyobj(const gamemap_t *map, uint idx)
     p->seqType = (int) readLong();
 
     // Polyobj seg list.
-    p->numsegs = (uint) readLong();
-    p->segs = Z_Malloc(sizeof(seg_t*) * (p->numsegs + 1), PU_LEVEL, 0);
-    for(i = 0; i < p->numsegs; ++i)
+    p->numSegs = (uint) readLong();
+    p->segs = Z_Malloc(sizeof(seg_t*) * (p->numSegs + 1), PU_LEVEL, 0);
+    for(i = 0; i < p->numSegs; ++i)
     {
         seg_t              *s =
             Z_Calloc(sizeof(*s), PU_LEVEL, 0);
@@ -1117,9 +1117,9 @@ static void readPolyobj(const gamemap_t *map, uint idx)
         s->length = readFloat();
         s->offset = readFloat();
         obIdx = readLong();
-        s->sidedef = (obIdx == 0? NULL : &map->sides[(unsigned) obIdx - 1]);
+        s->sideDef = (obIdx == 0? NULL : &map->sides[(unsigned) obIdx - 1]);
         obIdx = readLong();
-        s->linedef = (obIdx == 0? NULL : &map->lines[(unsigned) obIdx - 1]);
+        s->lineDef = (obIdx == 0? NULL : &map->lines[(unsigned) obIdx - 1]);
         obIdx = readLong();
         s->sec[FRONT] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
         s->angle = (angle_t) readLong();
@@ -1142,14 +1142,14 @@ static void archivePolyobjs(gamemap_t *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numpolyobjs);
-        for(i = 0; i < map->numpolyobjs; ++i)
+        writeLong(map->numPolyobjs);
+        for(i = 0; i < map->numPolyobjs; ++i)
             writePolyobj(map, i);
     }
     else
     {
-        map->numpolyobjs = readLong();
-        for(i = 0; i < map->numpolyobjs; ++i)
+        map->numPolyobjs = readLong();
+        for(i = 0; i < map->numPolyobjs; ++i)
             readPolyobj(map, i);
     }
 
@@ -1180,14 +1180,14 @@ static void archiveThings(gamemap_t *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numthings);
-        for(i = 0; i < map->numthings; ++i)
+        writeLong(map->numThings);
+        for(i = 0; i < map->numThings; ++i)
             writeThing(map, i);
     }
     else
     {
-        map->numthings = readLong();
-        for(i = 0; i < map->numthings; ++i)
+        map->numThings = readLong();
+        for(i = 0; i < map->numThings; ++i)
             readThing(map, i);
     }
 
@@ -1208,11 +1208,11 @@ static void archiveMap(gamemap_t *map, boolean write)
         // Call the game's setup routines.
         if(gx.SetupForMapData)
         {
-            gx.SetupForMapData(DAM_VERTEX, map->numvertexes);
-            gx.SetupForMapData(DAM_THING, map->numthings);
-            gx.SetupForMapData(DAM_LINE, map->numlines);
-            gx.SetupForMapData(DAM_SIDE, map->numsides);
-            gx.SetupForMapData(DAM_SECTOR, map->numsectors);
+            gx.SetupForMapData(DAM_VERTEX, map->numVertexes);
+            gx.SetupForMapData(DAM_THING, map->numThings);
+            gx.SetupForMapData(DAM_LINE, map->numLines);
+            gx.SetupForMapData(DAM_SIDE, map->numSides);
+            gx.SetupForMapData(DAM_SECTOR, map->numSectors);
         }
     }
 

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_pinit.c: Portable Engine Initialization
  *
  * Platform independent routines for initializing the engine.
@@ -125,15 +125,15 @@ void SetGameImports(game_import_t *imp)
     imp->version = DOOMSDAY_VERSION;
 
     // Data.
-    imp->mobjinfo = &mobjinfo;
+    imp->mobjInfo = &mobjInfo;
     imp->states = &states;
-    imp->sprnames = &sprnames;
+    imp->sprNames = &sprNames;
     imp->text = &texts;
 
     imp->validCount = &validCount;
-    imp->topslope = &topslope;
-    imp->bottomslope = &bottomslope;
-    imp->thinkercap = &thinkercap;
+    imp->topSlope = &topSlope;
+    imp->bottomSlope = &bottomSlope;
+    imp->thinkerCap = &thinkerCap;
 }
 
 void DD_InitAPI(void)
@@ -206,7 +206,7 @@ boolean DD_EarlyInit(void)
         isDedicated = true;
         Sys_ConInit();
     }
-    
+
     // We'll redirect stdout to a log file.
     DD_CheckArg("-out", &outfilename);
     outFile = fopen(outfilename, "w");
@@ -277,7 +277,6 @@ void DD_ShutdownAll(void)
     FH_Clear();
     ArgShutdown();
     Z_Shutdown();
-    DD_ShutdownDGL();
     Sys_ShutdownWindowManager();
 
     // Close the message output file.

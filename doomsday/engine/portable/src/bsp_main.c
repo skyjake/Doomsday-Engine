@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -92,7 +92,7 @@ static superblock_t *createInitialHEdges(editmap_t *src)
     block->y2 = block->y1 + 128 * M_CeilPow2(bh);
 
     // Step through linedefs and get side numbers.
-    for(i = 0; i < src->numlines; ++i)
+    for(i = 0; i < src->numLines; ++i)
     {
         line_t         *line = src->lines[i];
 
@@ -168,7 +168,7 @@ static superblock_t *createInitialHEdges(editmap_t *src)
                 {
                     hedge_t    *other;
 
-                    other = BSP_CreateHEdge(front->linedef, line,
+                    other = BSP_CreateHEdge(front->lineDef, line,
                                             line->v[1], line->v[0],
                                             line->buildData.windowEffect, true);
 
@@ -266,8 +266,8 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
         SaveMap(dest, src);
 
         Con_Message("BSP_Build: Built %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n",
-                    dest->numnodes, dest->numsubsectors, dest->numsegs,
-                    dest->numvertexes);
+                    dest->numNodes, dest->numSubsectors, dest->numSegs,
+                    dest->numVertexes);
 
         if(src->rootNode)
             Con_Message("  Heights of left and right subtrees (%d, %d).\n",

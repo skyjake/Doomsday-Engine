@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_platform.h"
+#include "de_dgl.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -196,19 +197,20 @@ void DD_DrawAndBlit(void)
         Con_Error("DD_DrawAndBlit: Console is busy, can't draw!\n");
     }
 
-    /**
-     * This'll let DGL know that some serious rendering is about to begin.
-     * OpenGL doesn't need it, but Direct3D will do the BeginScene call.
-     */
-    gl.Begin(DGL_SEQUENCE);
+    if(renderWireframe)
+    {
+        // When rendering is wireframe mode, we must clear the screen
+        // before rendering a frame.
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
 
     if(drawGame)
     {
         // Set up the basic 320x200 legacy projection for the game.
-        gl.MatrixMode(DGL_PROJECTION);
-        gl.PushMatrix();
-        gl.LoadIdentity();
-        gl.Ortho(0, 0, 320, 200, -1, 1);
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PushMatrix();
+        DGL_LoadIdentity();
+        DGL_Ortho(0, 0, 320, 200, -1, 1);
 
         // Update the world ready for drawing view(s) of it.
         R_SetupWorldFrame();
@@ -227,8 +229,8 @@ void DD_DrawAndBlit(void)
         }
 
         // Restore the projection mode that was previously in effect.
-        gl.MatrixMode(DGL_PROJECTION);
-        gl.PopMatrix();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PopMatrix();
 
         // Debug information.
         Net_Drawer();
@@ -245,7 +247,7 @@ void DD_DrawAndBlit(void)
     Rend_Console();
 
     // End the sequence.
-    gl.End();
+    DGL_End();
 
     // Flush buffered stuff to screen (blits everything).
     GL_DoUpdate();

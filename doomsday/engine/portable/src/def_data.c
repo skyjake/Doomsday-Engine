@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -124,8 +124,8 @@ void DED_Destroy(ded_t *ded)
         M_Free(ded->sounds);
     if(ded->music)
         M_Free(ded->music);
-    if(ded->mapinfo)
-        M_Free(ded->mapinfo);
+    if(ded->mapInfo)
+        M_Free(ded->mapInfo);
 
     if(ded->text)
     {
@@ -136,14 +136,14 @@ void DED_Destroy(ded_t *ded)
         M_Free(ded->text);
     }
 
-    if(ded->tenviron)
+    if(ded->textureEnv)
     {
-        for(i = 0; i < ded->count.tenviron.num; ++i)
+        for(i = 0; i < ded->count.textureEnv.num; ++i)
         {
-            M_Free(ded->tenviron[i].textures);
-            M_Free(ded->tenviron[i].flats);
+            M_Free(ded->textureEnv[i].textures);
+            M_Free(ded->textureEnv[i].flats);
         }
-        M_Free(ded->tenviron);
+        M_Free(ded->textureEnv);
     }
 
     if(ded->values)
@@ -171,34 +171,25 @@ void DED_Destroy(ded_t *ded)
     if(ded->sectors)
         M_Free(ded->sectors);
 
-    if(ded->ptcgens)
+    if(ded->ptcGens)
     {
-        for(i = 0; i < ded->count.ptcgens.num; ++i)
+        for(i = 0; i < ded->count.ptcGens.num; ++i)
         {
-            M_Free(ded->ptcgens[i].stages);
+            M_Free(ded->ptcGens[i].stages);
         }
-        M_Free(ded->ptcgens);
+        M_Free(ded->ptcGens);
     }
 
     if(ded->finales)
         M_Free(ded->finales);
 
-    if(ded->xgclasses)
+    if(ded->xgClasses)
     {
-        for(i = 0; i < ded->count.xgclasses.num; ++i)
+        for(i = 0; i < ded->count.xgClasses.num; ++i)
         {
-            M_Free(ded->xgclasses[i].properties);
+            M_Free(ded->xgClasses[i].properties);
         }
-        M_Free(ded->xgclasses);
-    }
-
-    if(ded->lumpformats)
-    {
-        for(i = 0; i < ded->count.lumpformats.num; ++i)
-        {
-            M_Free(ded->lumpformats[i].properties);
-        }
-        M_Free(ded->lumpformats);
+        M_Free(ded->xgClasses);
     }
 }
 
@@ -219,16 +210,16 @@ void DED_RemoveMobj(ded_t *ded, int index)
 
 int DED_AddXGClass(ded_t *ded)
 {
-    ded_xgclass_t *xgc = DED_NewEntry((void **) &ded->xgclasses,
-                                        &ded->count.xgclasses,
+    ded_xgclass_t *xgc = DED_NewEntry((void **) &ded->xgClasses,
+                                        &ded->count.xgClasses,
                                         sizeof(ded_xgclass_t));
-    return xgc - ded->xgclasses;
+    return xgc - ded->xgClasses;
 }
 
 int DED_AddXGClassProperty(ded_xgclass_t *xgc)
 {
     ded_xgclass_property_t *xgcp = DED_NewEntry((void **) &xgc->properties,
-                                         &xgc->properties_count,
+                                         &xgc->propertiesCount,
                                          sizeof(ded_xgclass_property_t));
 
     return xgcp - xgc->properties;
@@ -236,32 +227,8 @@ int DED_AddXGClassProperty(ded_xgclass_t *xgc)
 
 void DED_RemoveXGClass(ded_t *ded, int index)
 {
-    DED_DelEntry(index, (void **) &ded->xgclasses, &ded->count.xgclasses,
+    DED_DelEntry(index, (void **) &ded->xgClasses, &ded->count.xgClasses,
                  sizeof(ded_xgclass_t));
-}
-
-int DED_AddLumpFormat(ded_t *ded)
-{
-    ded_lumpformat_t *lf = DED_NewEntry((void **) &ded->lumpformats,
-                                        &ded->count.lumpformats,
-                                        sizeof(ded_lumpformat_t));
-
-    return lf - ded->lumpformats;
-}
-
-int DED_AddLumpFormatMember(ded_lumpformat_t *lmpf)
-{
-    ded_lumpformat_property_t *lmpfm = DED_NewEntry((void **) &lmpf->properties,
-                                         &lmpf->property_count,
-                                         sizeof(ded_lumpformat_property_t));
-
-    return lmpfm - lmpf->properties;
-}
-
-void DED_RemoveLumpFormat(ded_t *ded, int index)
-{
-    DED_DelEntry(index, (void **) &ded->lumpformats, &ded->count.lumpformats,
-                 sizeof(ded_lumpformat_t));
 }
 
 int DED_AddFlag(ded_t *ded, char *name, char *text, int value)
@@ -288,13 +255,14 @@ int DED_AddModel(ded_t *ded, char *spr)
                                    &ded->count.models, sizeof(ded_model_t));
 
     strcpy(md->sprite.id, spr);
-    md->interrange[1] = 1;
+    md->interRange[1] = 1;
     md->scale[0] = md->scale[1] = md->scale[2] = 1;
-    for(i = 0; i < 4; ++i)      // Init submodels, too.
+    // Init submodels.
+    for(i = 0; i < 4; ++i)
     {
-        md->sub[i].shinycolor[0] = md->sub[i].shinycolor[1] =
-            md->sub[i].shinycolor[2] = 1;
-        md->sub[i].shinyreact = 1.0f;
+        md->sub[i].shinyColor[0] = md->sub[i].shinyColor[1] =
+            md->sub[i].shinyColor[2] = 1;
+        md->sub[i].shinyReact = 1.0f;
     }
     return md - ded->models;
 }
@@ -382,31 +350,31 @@ void DED_RemoveMusic(ded_t *ded, int index)
 
 int DED_AddMapInfo(ded_t *ded, char *str)
 {
-    ded_mapinfo_t *inf = DED_NewEntry((void **) &ded->mapinfo,
-                                      &ded->count.mapinfo,
+    ded_mapinfo_t *inf = DED_NewEntry((void **) &ded->mapInfo,
+                                      &ded->count.mapInfo,
                                       sizeof(ded_mapinfo_t));
     int     i;
 
     strcpy(inf->id, str);
     inf->gravity = 1;
-    inf->sky_height = .666667f;
-    inf->partime = -1; // unknown
+    inf->skyHeight = .666667f;
+    inf->parTime = -1; // unknown
 
     for(i = 0; i < NUM_SKY_MODELS; ++i)
     {
-        inf->sky_models[i].frame_interval = 1;
-        inf->sky_models[i].color[0] = 1;
-        inf->sky_models[i].color[1] = 1;
-        inf->sky_models[i].color[2] = 1;
-        inf->sky_models[i].color[3] = 1;
+        inf->skyModels[i].frameInterval = 1;
+        inf->skyModels[i].color[0] = 1;
+        inf->skyModels[i].color[1] = 1;
+        inf->skyModels[i].color[2] = 1;
+        inf->skyModels[i].color[3] = 1;
     }
 
-    return inf - ded->mapinfo;
+    return inf - ded->mapInfo;
 }
 
 void DED_RemoveMapInfo(ded_t *ded, int index)
 {
-    DED_DelEntry(index, (void **) &ded->mapinfo, &ded->count.mapinfo,
+    DED_DelEntry(index, (void **) &ded->mapInfo, &ded->count.mapInfo,
                  sizeof(ded_mapinfo_t));
 }
 
@@ -426,21 +394,21 @@ void DED_RemoveText(ded_t *ded, int index)
                  sizeof(ded_text_t));
 }
 
-int DED_AddTexEnviron(ded_t *ded, char *id)
+int DED_AddTextureEnv(ded_t *ded, char *id)
 {
-    ded_tenviron_t *env = DED_NewEntry((void **) &ded->tenviron,
-                                       &ded->count.tenviron,
+    ded_tenviron_t *env = DED_NewEntry((void **) &ded->textureEnv,
+                                       &ded->count.textureEnv,
                                        sizeof(ded_tenviron_t));
 
     strcpy(env->id, id);
-    return env - ded->tenviron;
+    return env - ded->textureEnv;
 }
 
-void DED_RemoveTexEnviron(ded_t *ded, int index)
+void DED_RemoveTextureEnv(ded_t *ded, int index)
 {
-    M_Free(ded->tenviron[index].textures);
-    M_Free(ded->tenviron[index].flats);
-    DED_DelEntry(index, (void **) &ded->tenviron, &ded->count.tenviron,
+    M_Free(ded->textureEnv[index].textures);
+    M_Free(ded->textureEnv[index].flats);
+    DED_DelEntry(index, (void **) &ded->textureEnv, &ded->count.textureEnv,
                  sizeof(ded_tenviron_t));
 }
 
@@ -471,7 +439,7 @@ int DED_AddDetail(ded_t *ded, const char *lumpname)
                                             &ded->count.details,
                                             sizeof(ded_detailtexture_t));
 
-    strcpy(dtl->detail_lump.path, lumpname);
+    strcpy(dtl->detailLump.path, lumpname);
     dtl->scale = 1;
     dtl->strength = 1;
     return dtl - ded->details;
@@ -485,34 +453,34 @@ void DED_RemoveDetail(ded_t *ded, int index)
 
 int DED_AddPtcGen(ded_t *ded, const char *state)
 {
-    ded_ptcgen_t *gen = DED_NewEntry((void **) &ded->ptcgens,
-                                     &ded->count.ptcgens,
+    ded_ptcgen_t *gen = DED_NewEntry((void **) &ded->ptcGens,
+                                     &ded->count.ptcGens,
                                      sizeof(ded_ptcgen_t));
 
     strcpy(gen->state, state);
 
     // Default choice (use either submodel zero or one).
-    gen->submodel = -1;
+    gen->subModel = -1;
 
-    return gen - ded->ptcgens;
+    return gen - ded->ptcGens;
 }
 
 int DED_AddPtcGenStage(ded_ptcgen_t *gen)
 {
     ded_ptcstage_t *stage = DED_NewEntry((void **) &gen->stages,
-                                         &gen->stage_count,
+                                         &gen->stageCount,
                                          sizeof(ded_ptcstage_t));
 
     stage->model = -1;
     stage->sound.volume = 1;
-    stage->hit_sound.volume = 1;
+    stage->hitSound.volume = 1;
 
     return stage - gen->stages;
 }
 
 void DED_RemovePtcGen(ded_t *ded, int index)
 {
-    DED_DelEntry(index, (void **) &ded->ptcgens, &ded->count.ptcgens,
+    DED_DelEntry(index, (void **) &ded->ptcGens, &ded->count.ptcGens,
                  sizeof(ded_ptcgen_t));
 }
 
@@ -564,9 +532,9 @@ int DED_AddReflection(ded_t *ded)
                                          sizeof(ded_reflection_t));
     // Init to defaults.
     ref->shininess = 1.0f;
-    ref->mask_width = 1.0f;
-    ref->mask_height = 1.0f;
-    ref->blend_mode = BM_ADD;
+    ref->maskWidth = 1.0f;
+    ref->maskHeight = 1.0f;
+    ref->blendMode = BM_ADD;
 
     return ref - ded->reflections;
 }
@@ -623,7 +591,7 @@ int DED_AddLine(ded_t *ded, int id)
                                       sizeof(ded_linetype_t));
 
     li->id = id;
-    //li->act_count = -1;
+    //li->actCount = -1;
     return li - ded->lines;
 }
 

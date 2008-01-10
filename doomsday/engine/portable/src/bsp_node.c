@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -158,7 +158,7 @@ void BSP_AddHEdgeToSuperBlock(superblock_t *block, hedge_t *hEdge)
         midPoint[VY] = (block->y1 + block->y2) / 2;
 
         // Update half-edge counts.
-        if(hEdge->linedef)
+        if(hEdge->lineDef)
             block->realNum++;
         else
             block->miniNum++;
@@ -416,10 +416,10 @@ static void sanityCheckSameSector(subsector_t *sub)
 
         if(verbose >= 1)
         {
-            if(cur->linedef)
+            if(cur->lineDef)
                 Con_Message("Sector #%d has sidedef facing #%d (line #%d) "
                             "near (%1.0f,%1.0f).\n", compare->sector->buildData.index,
-                            cur->sector->buildData.index, cur->linedef->buildData.index,
+                            cur->sector->buildData.index, cur->lineDef->buildData.index,
                             sub->buildData.midPoint[VX], sub->buildData.midPoint[VY]);
             else
                 Con_Message("Sector #%d has sidedef facing #%d "
@@ -435,7 +435,7 @@ static void sanityCheckHasRealHEdge(subsector_t *sub)
 
     for(cur = sub->buildData.hEdges; cur; cur = cur->next)
     {
-        if(cur->linedef)
+        if(cur->lineDef)
             return;
     }
 
@@ -617,33 +617,33 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
 
     *n = node = BSP_NewNode();
 
-    assert(best->linedef);
+    assert(best->lineDef);
 
     // Should we not be doing some rounding here? - DJS.
     if(best->side == 0)
     {   // Right.
-        node->x  = best->linedef->v[0]->buildData.pos[VX];
-        node->y  = best->linedef->v[0]->buildData.pos[VY];
-        node->dx = best->linedef->v[1]->buildData.pos[VX] - node->x;
-        node->dy = best->linedef->v[1]->buildData.pos[VY] - node->y;
+        node->x  = best->lineDef->v[0]->buildData.pos[VX];
+        node->y  = best->lineDef->v[0]->buildData.pos[VY];
+        node->dX = best->lineDef->v[1]->buildData.pos[VX] - node->x;
+        node->dY = best->lineDef->v[1]->buildData.pos[VY] - node->y;
     }
     else
     {   // Left.
-        node->x  = best->linedef->v[1]->buildData.pos[VX];
-        node->y  = best->linedef->v[1]->buildData.pos[VY];
-        node->dx = best->linedef->v[0]->buildData.pos[VX] - node->x;
-        node->dy = best->linedef->v[0]->buildData.pos[VY] - node->y;
+        node->x  = best->lineDef->v[1]->buildData.pos[VX];
+        node->y  = best->lineDef->v[1]->buildData.pos[VY];
+        node->dX = best->lineDef->v[0]->buildData.pos[VX] - node->x;
+        node->dY = best->lineDef->v[0]->buildData.pos[VY] - node->y;
     }
 
     // Check for really long partition (overflows dx,dy in NODES).
     if(best->pLength >= 30000)
     {
-        if(node->dx && node->dy &&
-           (((int)node->dx & 1) || ((int)node->dy & 1)))
+        if(node->dX && node->dY &&
+           (((int)node->dX & 1) || ((int)node->dY & 1)))
         {
             VERBOSE2(Con_Message("Loss of accuracy on VERY long node: "
                                  "(%g,%g) -> (%g,%g).\n", node->x, node->y,
-                                 node->x + node->dx, node->y + node->dy));
+                                 node->x + node->dX, node->y + node->dY));
         }
 
         node->buildData.tooLong = true;
@@ -696,7 +696,7 @@ void ClockwiseBspTree(editmap_t *map)
     uint            i;
 
     numCompleteHEdges = 0;
-    for(i = 0; i < map->numsubsectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
         subsector_t  *ssec = map->subsectors[i];
 

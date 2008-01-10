@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -240,7 +240,7 @@ void BSP_DivideOneHEdge(hedge_t *cur, hedge_t *part, superblock_t *leftList,
     double      x, y;
     double      a, b;
     boolean     selfRef =
-        (cur->linedef? (cur->linedef->buildData.mlFlags & MLF_SELFREF) : false);
+        (cur->lineDef? (cur->lineDef->buildData.mlFlags & MLF_SELFREF) : false);
 
     // Get state of lines' relation to each other.
     a = PerpDist(part, cur->pSX, cur->pSY);
@@ -361,9 +361,9 @@ void BSP_BuildEdgeBetweenIntersections(hedge_t *part, intersection_t *start,
     // Create the half-edge pair.
     // Leave 'linedef' field as NULL as these are not linedef-linked.
     // Leave 'side' as zero too.
-    (*right) = BSP_CreateHEdge(NULL, part->linedef, start->vertex,
+    (*right) = BSP_CreateHEdge(NULL, part->lineDef, start->vertex,
                                end->vertex, start->after, false);
-    (*left)  = BSP_CreateHEdge(NULL, part->linedef, end->vertex,
+    (*left)  = BSP_CreateHEdge(NULL, part->lineDef, end->vertex,
                                start->vertex, start->after, false);
 
     // Twin the half-edges together.
@@ -393,13 +393,13 @@ static int evalPartitionWorker(superblock_t *hEdgeList, hedge_t *part,
 {
 #define ADD_LEFT()  \
       do {  \
-        if (check->linedef) info->realLeft += 1;  \
+        if (check->lineDef) info->realLeft += 1;  \
         else                info->miniLeft += 1;  \
       } while (0)
 
 #define ADD_RIGHT()  \
       do {  \
-        if (check->linedef) info->realRight += 1;  \
+        if (check->lineDef) info->realRight += 1;  \
         else                info->miniRight += 1;  \
       } while (0)
 
@@ -643,14 +643,14 @@ static int pickNodeWorker(superblock_t *partList, superblock_t *hEdgeList,
 /*
 #if _DEBUG
 Con_Message("PickNode: %sSEG %p sector=%d  (%1.1f,%1.1f) -> "
-            "(%1.1f,%1.1f)\n", (part->linedef? "" : "MINI"), part,
+            "(%1.1f,%1.1f)\n", (part->lineDef? "" : "MINI"), part,
             (part->sector? part->sector->index : -1),
             part->v[0]->V_pos[VX], part->v[0]->V_pos[VY],
             part->v[1]->V_pos[VX], part->v[1]->V_pos[VY]);
 #endif
 */
         // Ignore minihedges as partition candidates.
-        if(!part->linedef)
+        if(!part->lineDef)
             continue;
 
         cost = evalPartition(hEdgeList, part, *bestCost);
@@ -682,7 +682,7 @@ Con_Message("PickNode: %sSEG %p sector=%d  (%1.1f,%1.1f) -> "
  * @param hEdgeList     List of half-edges to choose from.
  * @param depth         Current node depth.
  * @return              Ptr to a half-edge suitable for use as a partition,
- *                      else @c NULL. 
+ *                      else @c NULL.
  */
 hedge_t *BSP_PickNode(superblock_t *hEdgeList, int depth)
 {
@@ -775,8 +775,8 @@ static void findLimits(superblock_t *hEdgeList, float *bbox)
 void BSP_FindNodeBounds(node_t *node, superblock_t *hEdgesRightList,
                         superblock_t *hEdgesLeftList)
 {
-    findLimits(hEdgesLeftList, &node->bbox[LEFT][0]);
-    findLimits(hEdgesRightList, &node->bbox[RIGHT][0]);
+    findLimits(hEdgesLeftList, &node->bBox[LEFT][0]);
+    findLimits(hEdgesRightList, &node->bBox[RIGHT][0]);
 }
 
 /**
@@ -832,7 +832,7 @@ void BSP_PrintSuperblockHEdges(superblock_t *superblock)
     for(hEdge = superblock->hEdges; hEdge; hEdge = hEdge->next)
     {
         Con_Message("Build: %s %p sector=%d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-                    (hEdge->linedef? "NORM" : "MINI"), hEdge,
+                    (hEdge->lineDef? "NORM" : "MINI"), hEdge,
                     hEdge->sector->buildData.index,
                     hEdge->v[0]->buildData.pos[VX], hEdge->v[0]->buildData.pos[VY],
                     hEdge->v[1]->buildData.pos[VX], hEdge->v[1]->buildData.pos[VY]);
@@ -852,7 +852,7 @@ static void testSuperWorker(superblock_t *block, int *real, int *mini)
 
     for(cur = block->hEdges; cur; cur = cur->next)
     {
-        if(cur->linedef)
+        if(cur->lineDef)
             (*real) += 1;
         else
             (*mini) += 1;

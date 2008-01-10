@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -112,8 +112,8 @@
 #define RV_END          { SetError2("Unknown label.", label); retval = false; goto ded_end_read; }
 
 #define RV_XGIPARM(lab, S, I, IP) if(ISLABEL(lab)) { \
-                   if(xgClassLinks[l->line_class].iparm[IP].flagprefix) { \
-                   if(!ReadFlags(&I, xgClassLinks[l->line_class].iparm[IP].flagprefix)) { \
+                   if(xgClassLinks[l->lineClass].iparm[IP].flagPrefix) { \
+                   if(!ReadFlags(&I, xgClassLinks[l->lineClass].iparm[IP].flagPrefix)) { \
                      FAILURE } } \
                    else { if(!ReadString(S,sizeof(S))) { \
                      I = strtol(token,0,0); } } } else
@@ -657,8 +657,6 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
     int             prev_linetype_idx = -1; // For "Copy".
     ded_sectortype_t *sec;
     int             prev_sectortype_idx = -1; // For "Copy".
-    ded_lumpformat_t *lmpf;
-    int             prev_lumpformat_idx = -1; // For "Copy".
     int             sub;
     int             depth;
     char           *rootstr = 0, *ptr;
@@ -756,10 +754,10 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_STR("Sfx prefix", dummy)
                 RV_STR("Mus prefix", dummy)
                 RV_STR("Text prefix", dummy)
-                RV_STR("Model path", ded->model_path)
-                RV_FLAGS("Common model flags", ded->model_flags, "df_")
-                RV_FLT("Default model scale", ded->model_scale)
-                RV_FLT("Default model offset", ded->model_offset)
+                RV_STR("Model path", ded->modelPath)
+                RV_FLAGS("Common model flags", ded->modelFlags, "df_")
+                RV_FLT("Default model scale", ded->modelScale)
+                RV_FLT("Default model offset", ded->modelOffset)
                 RV_END
                 CHECKSC;
             }
@@ -796,25 +794,25 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             {
                 READLABEL;
                 RV_STR("ID", mo->id)
-                RV_INT("DoomEd number", mo->doomednum)
+                RV_INT("DoomEd number", mo->doomedNum)
                 RV_STR("Name", mo->name)
-                RV_STR("Spawn state", mo->spawnstate)
-                RV_STR("See state", mo->seestate)
-                RV_STR("Pain state", mo->painstate)
-                RV_STR("Melee state", mo->meleestate)
-                RV_STR("Missile state", mo->missilestate)
-                RV_STR("Crash state", mo->crashstate)
-                RV_STR("Death state", mo->deathstate)
-                RV_STR("Xdeath state", mo->xdeathstate)
-                RV_STR("Raise state", mo->raisestate)
-                RV_STR("See sound", mo->seesound)
-                RV_STR("Attack sound", mo->attacksound)
-                RV_STR("Pain sound", mo->painsound)
-                RV_STR("Death sound", mo->deathsound)
-                RV_STR("Active sound", mo->activesound)
-                RV_INT("Reaction time", mo->reactiontime)
-                RV_INT("Pain chance", mo->painchance)
-                RV_INT("Spawn health", mo->spawnhealth)
+                RV_STR("Spawn state", mo->spawnState)
+                RV_STR("See state", mo->seeState)
+                RV_STR("Pain state", mo->painState)
+                RV_STR("Melee state", mo->meleeState)
+                RV_STR("Missile state", mo->missileState)
+                RV_STR("Crash state", mo->crashState)
+                RV_STR("Death state", mo->deathState)
+                RV_STR("Xdeath state", mo->xDeathState)
+                RV_STR("Raise state", mo->raiseState)
+                RV_STR("See sound", mo->seeSound)
+                RV_STR("Attack sound", mo->attackSound)
+                RV_STR("Pain sound", mo->painSound)
+                RV_STR("Death sound", mo->deathSound)
+                RV_STR("Active sound", mo->activeSound)
+                RV_INT("Reaction time", mo->reactionTime)
+                RV_INT("Pain chance", mo->painChance)
+                RV_INT("Spawn health", mo->spawnHealth)
                 RV_FLT("Speed", mo->speed)
                 RV_FLT("Radius", mo->radius)
                 RV_FLT("Height", mo->height)
@@ -854,7 +852,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_INT("Frame", st->frame)
                 RV_INT("Tics", st->tics)
                 RV_STR("Action", st->action)
-                RV_STR("Next state", st->nextstate)
+                RV_STR("Next state", st->nextState)
                 RV_INT("Misc1", st->misc[0])
                 RV_INT("Misc2", st->misc[1])
                 RV_INT("Misc3", st->misc[2])
@@ -908,12 +906,12 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     FINDBEGIN;
                     for(b = 0; b < 2; ++b)
                     {
-                        READFLT(lig->lightlevel[b])
-                        lig->lightlevel[b] /= 255.0f;
-                        if(lig->lightlevel[b] < 0)
-                            lig->lightlevel[b] = 0;
-                        else if(lig->lightlevel[b] > 1)
-                            lig->lightlevel[b] = 1;
+                        READFLT(lig->lightLevel[b])
+                        lig->lightLevel[b] /= 255.0f;
+                        if(lig->lightLevel[b] < 0)
+                            lig->lightLevel[b] = 0;
+                        else if(lig->lightLevel[b] > 1)
+                            lig->lightLevel[b] = 1;
                     }
                     ReadToken();
                 }
@@ -923,7 +921,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_STR("Bottom map", lig->down.id)
                 RV_STR("Side map", lig->sides.id)
                 RV_STR("Flare map", lig->flare.id)
-                RV_FLT("Halo radius", lig->halo_radius)
+                RV_FLT("Halo radius", lig->haloRadius)
                 RV_END
                 CHECKSC;
             }
@@ -949,12 +947,12 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_STR("State", mdl->state)
                 RV_INT("Off", mdl->off)
                 RV_STR("Sprite", mdl->sprite.id)
-                RV_INT("Sprite frame", mdl->spriteframe)
+                RV_INT("Sprite frame", mdl->spriteFrame)
                 RV_FLAGS("Group", mdl->group, "mg_")
                 RV_INT("Selector", mdl->selector)
                 RV_FLAGS("Flags", mdl->flags, "df_")
-                RV_FLT("Inter", mdl->intermark)
-                RV_INT("Skin tics", mdl->skintics)
+                RV_FLT("Inter", mdl->interMark)
+                RV_INT("Skin tics", mdl->skinTics)
                 RV_FLT("Resize", mdl->resize)
                 if(ISLABEL("Scale"))
                 {
@@ -964,8 +962,8 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 else RV_VEC("Scale XYZ", mdl->scale, 3)
                 RV_FLT("Offset", mdl->offset[1])
                 RV_VEC("Offset XYZ", mdl->offset, 3)
-                RV_VEC("Interpolate", mdl->interrange, 2)
-                RV_FLT("Shadow radius", mdl->shadowradius)
+                RV_VEC("Interpolate", mdl->interRange, 2)
+                RV_FLT("Shadow radius", mdl->shadowRadius)
                 if(ISLABEL("Md2") || ISLABEL("Sub"))
                 {
                     if(sub >= DED_MAX_SUB_MODELS)
@@ -977,22 +975,22 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         READLABEL;
                         RV_STR("File", mdl->sub[sub].filename.path)
                         RV_STR("Frame", mdl->sub[sub].frame)
-                        RV_INT("Frame range", mdl->sub[sub].framerange)
-                        RV_FLAGS("Blending mode", mdl->sub[sub].blendmode, "bm_")
+                        RV_INT("Frame range", mdl->sub[sub].frameRange)
+                        RV_FLAGS("Blending mode", mdl->sub[sub].blendMode, "bm_")
                         RV_INT("Skin", mdl->sub[sub].skin)
-                        RV_STR("Skin file", mdl->sub[sub].skinfilename.path)
-                        RV_INT("Skin range", mdl->sub[sub].skinrange)
+                        RV_STR("Skin file", mdl->sub[sub].skinFilename.path)
+                        RV_INT("Skin range", mdl->sub[sub].skinRange)
                         RV_VEC("Offset XYZ", mdl->sub[sub].offset, 3)
                         RV_FLAGS("Flags", mdl->sub[sub].flags, "df_")
                         RV_FLT("Transparent", mdl->sub[sub].alpha)
                         RV_FLT("Parm", mdl->sub[sub].parm)
-                        RV_BYTE("Selskin mask", mdl->sub[sub].selskinbits[0])
-                        RV_BYTE("Selskin shift", mdl->sub[sub].selskinbits[1])
-                        RV_NBVEC("Selskins", mdl->sub[sub].selskins, 8)
-                        RV_STR("Shiny skin", mdl->sub[sub].shinyskin)
+                        RV_BYTE("Selskin mask", mdl->sub[sub].selSkinBits[0])
+                        RV_BYTE("Selskin shift", mdl->sub[sub].selSkinBits[1])
+                        RV_NBVEC("Selskins", mdl->sub[sub].selSkins, 8)
+                        RV_STR("Shiny skin", mdl->sub[sub].shinySkin)
                         RV_FLT("Shiny", mdl->sub[sub].shiny)
-                        RV_VEC("Shiny color", mdl->sub[sub].shinycolor, 3)
-                        RV_FLT("Shiny reaction", mdl->sub[sub].shinyreact)
+                        RV_VEC("Shiny color", mdl->sub[sub].shinyColor, 3)
+                        RV_FLT("Shiny reaction", mdl->sub[sub].shinyReact)
                         RV_END
                         CHECKSC;
                     }
@@ -1029,11 +1027,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             {
                 READLABEL;
                 RV_STR("ID", snd->id)
-                RV_STR("Lump", snd->lumpname)
+                RV_STR("Lump", snd->lumpName)
                 RV_STR("Name", snd->name)
                 RV_STR("Link", snd->link)
-                RV_INT("Link pitch", snd->link_pitch)
-                RV_INT("Link volume", snd->link_volume)
+                RV_INT("Link pitch", snd->linkPitch)
+                RV_INT("Link volume", snd->linkVolume)
                 RV_INT("Priority", snd->priority)
                 RV_INT("Max channels", snd->channels)
                 RV_INT("Group", snd->group)
@@ -1054,11 +1052,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             {
                 READLABEL;
                 RV_STR("ID", ded->music[idx].id)
-                RV_STR("Lump", ded->music[idx].lumpname)
+                RV_STR("Lump", ded->music[idx].lumpName)
                 RV_STR("File name", ded->music[idx].path.path)
                 RV_STR("File", ded->music[idx].path.path)
                 RV_STR("Ext", ded->music[idx].path.path) // Both work.
-                RV_INT("CD track", ded->music[idx].cdtrack)
+                RV_INT("CD track", ded->music[idx].cdTrack)
                 RV_END
                 CHECKSC;
             }
@@ -1067,17 +1065,17 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         {
             // A new map info.
             idx = DED_AddMapInfo(ded, "");
-            mi = ded->mapinfo + idx;
+            mi = ded->mapInfo + idx;
             if(prev_mapinfo_idx >= 0 && bCopyNext)
             {
                 int m;
                 // Should we copy the previous definition?
-                memcpy(mi, ded->mapinfo + prev_mapinfo_idx, sizeof(*mi));
+                memcpy(mi, ded->mapInfo + prev_mapinfo_idx, sizeof(*mi));
                 mi->execute = sdup(mi->execute);
                 for(m = 0; m < NUM_SKY_MODELS; ++m)
                 {
-                    mi->sky_models[m].execute
-                        = sdup(mi->sky_models[m].execute);
+                    mi->skyModels[m].execute
+                        = sdup(mi->skyModels[m].execute);
                 }
             }
             prev_mapinfo_idx = idx;
@@ -1091,22 +1089,22 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_STR("Author", mi->author)
                 RV_FLAGS("Flags", mi->flags, "mif_")
                 RV_STR("Music", mi->music)
-                RV_FLT("Par time", mi->partime)
-                RV_FLT("Fog color R", mi->fog_color[0])
-                RV_FLT("Fog color G", mi->fog_color[1])
-                RV_FLT("Fog color B", mi->fog_color[2])
-                RV_FLT("Fog start", mi->fog_start)
-                RV_FLT("Fog end", mi->fog_end)
-                RV_FLT("Fog density", mi->fog_density)
+                RV_FLT("Par time", mi->parTime)
+                RV_FLT("Fog color R", mi->fogColor[0])
+                RV_FLT("Fog color G", mi->fogColor[1])
+                RV_FLT("Fog color B", mi->fogColor[2])
+                RV_FLT("Fog start", mi->fogStart)
+                RV_FLT("Fog end", mi->fogEnd)
+                RV_FLT("Fog density", mi->fogDensity)
                 RV_FLT("Ambient light", mi->ambient)
                 RV_FLT("Gravity", mi->gravity)
-                RV_FLT("Sky height", mi->sky_height)
-                RV_FLT("Horizon offset", mi->horizon_offset)
+                RV_FLT("Sky height", mi->skyHeight)
+                RV_FLT("Horizon offset", mi->horizonOffset)
                 RV_ANYSTR("Execute", mi->execute)
-                RV_VEC("Sky light color", mi->sky_color, 3)
+                RV_VEC("Sky light color", mi->skyColor, 3)
                 if(ISLABEL("Sky Layer 1") || ISLABEL("Sky Layer 2"))
                 {
-                    ded_skylayer_t *sl = mi->sky_layers + atoi(label+10) - 1;
+                    ded_skylayer_t *sl = mi->skyLayers + atoi(label+10) - 1;
                     FINDBEGIN;
                     for(;;)
                     {
@@ -1114,14 +1112,14 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         RV_FLAGS("Flags", sl->flags, "slf_")
                         RV_STR("Texture", sl->texture)
                         RV_FLT("Offset", sl->offset)
-                        RV_FLT("Color limit", sl->color_limit)
+                        RV_FLT("Color limit", sl->colorLimit)
                         RV_END
                         CHECKSC;
                     }
                 }
                 else if(ISLABEL("Sky Model"))
                 {
-                    ded_skymodel_t *sm = mi->sky_models + sub;
+                    ded_skymodel_t *sm = mi->skyModels + sub;
                     if(sub == NUM_SKY_MODELS)
                     {
                         // Too many!
@@ -1136,11 +1134,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         READLABEL;
                         RV_STR("ID", sm->id)
                         RV_INT("Layer", sm->layer)
-                        RV_FLT("Frame interval", sm->frame_interval)
+                        RV_FLT("Frame interval", sm->frameInterval)
                         RV_FLT("Yaw", sm->yaw)
-                        RV_FLT("Yaw speed", sm->yaw_speed)
+                        RV_FLT("Yaw speed", sm->yawSpeed)
                         RV_VEC("Rotate", sm->rotate, 2)
-                        RV_VEC("Offset factor", sm->coord_factor, 3)
+                        RV_VEC("Offset factor", sm->coordFactor, 3)
                         RV_VEC("Color", sm->color, 4)
                         RV_ANYSTR("Execute", sm->execute)
                         RV_END
@@ -1187,17 +1185,17 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         if(ISTOKEN("Texture")) // Environment
         {
             // A new texenv.
-            idx = DED_AddTexEnviron(ded, "");
+            idx = DED_AddTextureEnv(ded, "");
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
-                RV_STR("ID", ded->tenviron[idx].id)
+                RV_STR("ID", ded->textureEnv[idx].id)
                 if(ISLABEL("Texture"))
                 {
                     // A new texture name.
-                    tn = DED_NewEntry((void**)&ded->tenviron[idx].textures,
-                                      &ded->tenviron[idx].texCount, sizeof(*tn));
+                    tn = DED_NewEntry((void**)&ded->textureEnv[idx].textures,
+                                      &ded->textureEnv[idx].texCount, sizeof(*tn));
                     FINDBEGIN;
                     for(;;)
                     {
@@ -1210,8 +1208,8 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 else if(ISLABEL("Flat"))
                 {
                     // A new flat name.
-                    tn = DED_NewEntry((void**)&ded->tenviron[idx].flats,
-                                      &ded->tenviron[idx].flatCount, sizeof(*tn));
+                    tn = DED_NewEntry((void**)&ded->textureEnv[idx].flats,
+                                      &ded->textureEnv[idx].flatCount, sizeof(*tn));
                     FINDBEGIN;
                     for(;;)
                     {
@@ -1332,18 +1330,18 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_STR("Flat", dtl->flat)
                 if(ISLABEL("Lump"))
                 {
-                    READSTR(dtl->detail_lump.path)
-                    dtl->is_external = false;
+                    READSTR(dtl->detailLump.path)
+                    dtl->isExternal = false;
                 }
                 else if(ISLABEL("File"))
                 {
-                    READSTR(dtl->detail_lump.path)
-                    dtl->is_external = true;
+                    READSTR(dtl->detailLump.path)
+                    dtl->isExternal = true;
                 }
                 else
                 RV_FLT("Scale", dtl->scale)
                 RV_FLT("Strength", dtl->strength)
-                RV_FLT("Distance", dtl->maxdist)
+                RV_FLT("Distance", dtl->maxDist)
                 RV_END
                 CHECKSC;
             }
@@ -1367,21 +1365,21 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             {
                 READLABEL;
                 RV_FLT("Shininess", ref->shininess)
-                RV_VEC("Min color", ref->min_color, 3)
-                RV_FLAGS("Blending mode", ref->blend_mode, "bm_")
-                RV_STR("Shiny map", ref->shiny_map.path)
-                RV_STR("Mask map", ref->mask_map.path)
-                RV_FLT("Mask width", ref->mask_width)
-                RV_FLT("Mask height", ref->mask_height)
+                RV_VEC("Min color", ref->minColor, 3)
+                RV_FLAGS("Blending mode", ref->blendMode, "bm_")
+                RV_STR("Shiny map", ref->shinyMap.path)
+                RV_STR("Mask map", ref->maskMap.path)
+                RV_FLT("Mask width", ref->maskWidth)
+                RV_FLT("Mask height", ref->maskHeight)
                 if(ISLABEL("Texture"))
                 {
                     READSTR(ref->surface)
-                    ref->is_texture = true;
+                    ref->isTexture = true;
                 }
                 else if(ISLABEL("Flat"))
                 {
                     READSTR(ref->surface)
-                    ref->is_texture = false;
+                    ref->isTexture = false;
                 }
                 else RV_END
                 CHECKSC;
@@ -1391,20 +1389,20 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         if(ISTOKEN("Generator")) // Particle Generator
         {
             idx = DED_AddPtcGen(ded, "");
-            gen = ded->ptcgens + idx;
+            gen = ded->ptcGens + idx;
             sub = 0;
             if(prev_gendef_idx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(gen, ded->ptcgens + prev_gendef_idx, sizeof(*gen));
+                memcpy(gen, ded->ptcGens + prev_gendef_idx, sizeof(*gen));
 
                 // Duplicate the stages array.
-                if(ded->ptcgens[prev_gendef_idx].stages)
+                if(ded->ptcGens[prev_gendef_idx].stages)
                 {
                     gen->stages = M_Malloc(sizeof(ded_ptcstage_t) *
-                                           gen->stage_count.max);
-                    memcpy(gen->stages, ded->ptcgens[prev_gendef_idx].stages,
-                           sizeof(ded_ptcstage_t) * gen->stage_count.num);
+                                           gen->stageCount.max);
+                    memcpy(gen->stages, ded->ptcGens[prev_gendef_idx].stages,
+                           sizeof(ded_ptcstage_t) * gen->stageCount.num);
                 }
             }
             FINDBEGIN;
@@ -1415,7 +1413,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISLABEL("Flat"))
                 {
                     READSTR(gen->surface)
-                    gen->is_texture = false;
+                    gen->isTexture = false;
                 }
                 else
                 RV_STR("Mobj", gen->type)
@@ -1424,32 +1422,32 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_STR("Map", gen->map)
                 RV_FLAGS("Flags", gen->flags, "gnf_")
                 RV_FLT("Speed", gen->speed)
-                RV_FLT("Speed Rnd", gen->spd_variance)
+                RV_FLT("Speed Rnd", gen->speedVariance)
                 RV_VEC("Vector", gen->vector, 3)
-                RV_FLT("Vector Rnd", gen->vec_variance)
-                RV_FLT("Init vector Rnd", gen->init_vec_variance)
+                RV_FLT("Vector Rnd", gen->vectorVariance)
+                RV_FLT("Init vector Rnd", gen->initVectorVariance)
                 RV_VEC("Center", gen->center, 3)
-                RV_INT("Submodel", gen->submodel)
-                RV_FLT("Spawn radius", gen->spawn_radius)
-                RV_FLT("Min spawn radius", gen->min_spawn_radius)
-                RV_FLT("Distance", gen->maxdist)
-                RV_INT("Spawn age", gen->spawn_age)
-                RV_INT("Max age", gen->max_age)
+                RV_INT("Submodel", gen->subModel)
+                RV_FLT("Spawn radius", gen->spawnRadius)
+                RV_FLT("Min spawn radius", gen->spawnRadiusMin)
+                RV_FLT("Distance", gen->maxDist)
+                RV_INT("Spawn age", gen->spawnAge)
+                RV_INT("Max age", gen->maxAge)
                 RV_INT("Particles", gen->particles)
-                RV_FLT("Spawn rate", gen->spawn_rate)
-                RV_FLT("Spawn Rnd", gen->spawn_variance)
-                RV_INT("Presim", gen->presim)
-                RV_INT("Alt start", gen->alt_start)
-                RV_FLT("Alt Rnd", gen->alt_variance)
-                RV_VEC("Force axis", gen->force_axis, 3)
-                RV_FLT("Force radius", gen->force_radius)
+                RV_FLT("Spawn rate", gen->spawnRate)
+                RV_FLT("Spawn Rnd", gen->spawnRateVariance)
+                RV_INT("Presim", gen->preSim)
+                RV_INT("Alt start", gen->altStart)
+                RV_FLT("Alt Rnd", gen->altStartVariance)
+                RV_VEC("Force axis", gen->forceAxis, 3)
+                RV_FLT("Force radius", gen->forceRadius)
                 RV_FLT("Force", gen->force)
-                RV_VEC("Force origin", gen->force_origin, 3)
+                RV_VEC("Force origin", gen->forceOrigin, 3)
                 if(ISLABEL("Stage"))
                 {
                     ded_ptcstage_t *st = NULL;
 
-                    if(sub >= gen->stage_count.num)
+                    if(sub >= gen->stageCount.num)
                     {
                         // Allocate new stage.
                         sub = DED_AddPtcGenStage(gen);
@@ -1466,20 +1464,20 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         RV_FLT("Rnd", st->variance)
                         RV_VEC("Color", st->color, 4)
                         RV_FLT("Radius", st->radius)
-                        RV_FLT("Radius rnd", st->radius_variance)
+                        RV_FLT("Radius rnd", st->radiusVariance)
                         RV_FLAGS("Flags", st->flags, "ptf_")
                         RV_FLT("Bounce", st->bounce)
                         RV_FLT("Gravity", st->gravity)
                         RV_FLT("Resistance", st->resistance)
-                        RV_STR("Frame", st->frame_name)
-                        RV_STR("End frame", st->end_frame_name)
+                        RV_STR("Frame", st->frameName)
+                        RV_STR("End frame", st->endFrameName)
                         RV_VEC("Spin", st->spin, 2)
-                        RV_VEC("Spin resistance", st->spin_resistance, 2)
+                        RV_VEC("Spin resistance", st->spinResistance, 2)
                         RV_STR("Sound", st->sound.name)
                         RV_FLT("Volume", st->sound.volume)
-                        RV_STR("Hit sound", st->hit_sound.name)
-                        RV_FLT("Hit volume", st->hit_sound.volume)
-                        RV_VEC("Force", st->vector_force, 3)
+                        RV_STR("Hit sound", st->hitSound.name)
+                        RV_FLT("Hit volume", st->hitSound.volume)
+                        RV_VEC("Force", st->vectorForce, 3)
                         RV_END
                         CHECKSC;
                     }
@@ -1555,12 +1553,12 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISLABEL("Texture"))
                 {
                     READSTR(decor->surface)
-                    decor->is_texture = true;
+                    decor->isTexture = true;
                 }
                 else if(ISLABEL("Flat"))
                 {
                     READSTR(decor->surface)
-                    decor->is_texture = false;
+                    decor->isTexture = false;
                 }
                 else if(ISLABEL("Glow"))
                 {
@@ -1591,26 +1589,26 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         RV_FLT("Distance", dl->elevation)
                         RV_VEC("Color", dl->color, 3)
                         RV_FLT("Radius", dl->radius)
-                        RV_FLT("Halo radius", dl->halo_radius)
-                        RV_IVEC("Pattern offset", dl->pattern_offset, 2)
-                        RV_IVEC("Pattern skip", dl->pattern_skip, 2)
+                        RV_FLT("Halo radius", dl->haloRadius)
+                        RV_IVEC("Pattern offset", dl->patternOffset, 2)
+                        RV_IVEC("Pattern skip", dl->patternSkip, 2)
                         if(ISLABEL("Levels"))
                         {
                             int     b;
                             FINDBEGIN;
                             for(b = 0; b < 2; ++b)
                             {
-                                READFLT(dl->lightlevels[b])
-                                dl->lightlevels[b] /= 255.0f;
-                                if(dl->lightlevels[b] < 0)
-                                    dl->lightlevels[b] = 0;
-                                else if(dl->lightlevels[b] > 1)
-                                    dl->lightlevels[b] = 1;
+                                READFLT(dl->lightLevels[b])
+                                dl->lightLevels[b] /= 255.0f;
+                                if(dl->lightLevels[b] < 0)
+                                    dl->lightLevels[b] = 0;
+                                else if(dl->lightLevels[b] > 1)
+                                    dl->lightLevels[b] = 1;
                             }
                             ReadToken();
                         }
                         else
-                        RV_INT("Flare texture", dl->flare_texture)
+                        RV_INT("Flare texture", dl->flareTexture)
                         RV_STR("Flare map", dl->flare.id)
                         RV_STR("Top map", dl->up.id)
                         RV_STR("Bottom map", dl->down.id)
@@ -1639,7 +1637,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 {
                     ded_group_member_t *memb;
 
-                    grp->is_texture = ISLABEL("Texture");
+                    grp->isTexture = ISLABEL("Texture");
 
                     if(sub >= grp->count.num)
                     {
@@ -1655,7 +1653,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         READLABEL;
                         RV_STR("ID", memb->name)
                         RV_FLT("Tics", memb->tics)
-                        RV_FLT("Random", memb->random_tics)
+                        RV_FLT("Random", memb->randomTics)
                         RV_END
                         CHECKSC;
                     }
@@ -1666,67 +1664,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
-        if(ISTOKEN("LumpFormat"))     // Binary Lump Format
-        {
-            // A new binary lump format.
-            idx = DED_AddLumpFormat(ded);
-            lmpf = ded->lumpformats + idx;
-            sub = 0;
-            if(prev_lumpformat_idx >= 0 && bCopyNext)
-            {
-                // Should we copy the previous definition?
-                memcpy(lmpf, ded->lumpformats + prev_lumpformat_idx, sizeof(*lmpf));
-
-                // Duplicate the properties array.
-                if(ded->lumpformats[prev_lumpformat_idx].properties)
-                {
-                    lmpf->properties =
-                        M_Malloc(sizeof(ded_lumpformat_property_t) * lmpf->property_count.max);
-                    memcpy(lmpf->properties, ded->lumpformats[prev_lumpformat_idx].properties,
-                           sizeof(ded_lumpformat_property_t) * lmpf->property_count.num);
-                }
-            }
-            FINDBEGIN;
-            for(;;)
-            {
-                READLABEL;
-                RV_STR("ID", lmpf->id)
-                RV_FLAGS("Class", lmpf->type, "damlmpc_")
-                RV_INT("ElementSize", lmpf->elmsize)
-                if(ISLABEL("Property"))
-                {
-                    ded_lumpformat_property_t *lfm = NULL;
-
-                    if(sub >= lmpf->property_count.num)
-                    {
-                        // Allocate a new property.
-                        sub = DED_AddLumpFormatMember(lmpf);
-                    }
-
-                    lfm = &lmpf->properties[sub];
-                    FINDBEGIN;
-                    for(;;)
-                    {
-                        READLABEL;
-                        RV_STR("ID", lfm->id)
-                        RV_FLAGS("Flags", lfm->flags, "dampf_")
-                        RV_INT("Size", lfm->size)
-                        RV_INT("Offset", lfm->offset)
-                        RV_END
-                        CHECKSC;
-                    }
-                    sub++;
-                }
-                else RV_END
-                CHECKSC;
-            }
-            prev_lumpformat_idx = idx;
-        }
         /*if(ISTOKEN("XGClass"))     // XG Class
         {
             // A new XG Class definition
             idx = DED_AddXGClass(ded);
-            xgc = ded->xgclasses + idx;
+            xgc = ded->xgClasses + idx;
             sub = 0;
 
             FINDBEGIN;
@@ -1785,11 +1727,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_FLAGS("Flags", l->flags[0], "ltf_")
                 RV_FLAGS("Flags2", l->flags[1], "ltf2_")
                 RV_FLAGS("Flags3", l->flags[2], "ltf3_")
-                RV_FLAGS("Class", l->line_class, "ltc_")
-                RV_FLAGS("Type", l->act_type, "lat_")
-                RV_INT("Count", l->act_count)
-                RV_FLT("Time", l->act_time)
-                RV_INT("Act tag", l->act_tag)
+                RV_FLAGS("Class", l->lineClass, "ltc_")
+                RV_FLAGS("Type", l->actType, "lat_")
+                RV_INT("Count", l->actCount)
+                RV_FLT("Time", l->actTime)
+                RV_INT("Act tag", l->actTag)
                 RV_INT("Ap0", l->aparm[0])
                 RV_INT("Ap1", l->aparm[1])
                 RV_INT("Ap2", l->aparm[2])
@@ -1810,43 +1752,43 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_INT("Line inact lrefd", l->aparm[7])
                 RV_INT("Color", l->aparm[8])
                 RV_STR("Thing type", l->aparm9)
-                RV_FLT("Ticker start time", l->ticker_start)
-                RV_FLT("Ticker end time", l->ticker_end)
-                RV_INT("Ticker tics", l->ticker_interval)
-                RV_STR("Act sound", l->act_sound)
-                RV_STR("Deact sound", l->deact_sound)
-                RV_INT("Event chain", l->ev_chain)
-                RV_INT("Act chain", l->act_chain)
-                RV_INT("Deact chain", l->deact_chain)
-                RV_FLAGS("Wall section", l->wallsection, "lws_")
-                RV_STR("Act texture", l->act_tex)
-                RV_STR("Deact texture", l->deact_tex)
-                RV_INT("Act type", l->act_linetype)
-                RV_INT("Deact type", l->deact_linetype)
-                RV_STR("Act message", l->act_msg)
-                RV_STR("Deact message", l->deact_msg)
-                RV_FLT("Texmove angle", l->texmove_angle)
-                RV_FLT("Texmove speed", l->texmove_speed)
-                RV_STR_INT("Ip0", l->iparm_str[0], l->iparm[0])
-                RV_STR_INT("Ip1", l->iparm_str[1], l->iparm[1])
-                RV_STR_INT("Ip2", l->iparm_str[2], l->iparm[2])
-                RV_STR_INT("Ip3", l->iparm_str[3], l->iparm[3])
-                RV_STR_INT("Ip4", l->iparm_str[4], l->iparm[4])
-                RV_STR_INT("Ip5", l->iparm_str[5], l->iparm[5])
-                RV_STR_INT("Ip6", l->iparm_str[6], l->iparm[6])
-                RV_STR_INT("Ip7", l->iparm_str[7], l->iparm[7])
-                RV_STR_INT("Ip8", l->iparm_str[8], l->iparm[8])
-                RV_STR_INT("Ip9", l->iparm_str[9], l->iparm[9])
-                RV_STR_INT("Ip10", l->iparm_str[10], l->iparm[10])
-                RV_STR_INT("Ip11", l->iparm_str[11], l->iparm[11])
-                RV_STR_INT("Ip12", l->iparm_str[12], l->iparm[12])
-                RV_STR_INT("Ip13", l->iparm_str[13], l->iparm[13])
-                RV_STR_INT("Ip14", l->iparm_str[14], l->iparm[14])
-                RV_STR_INT("Ip15", l->iparm_str[15], l->iparm[15])
-                RV_STR_INT("Ip16", l->iparm_str[16], l->iparm[16])
-                RV_STR_INT("Ip17", l->iparm_str[17], l->iparm[17])
-                RV_STR_INT("Ip18", l->iparm_str[18], l->iparm[18])
-                RV_STR_INT("Ip19", l->iparm_str[19], l->iparm[19])
+                RV_FLT("Ticker start time", l->tickerStart)
+                RV_FLT("Ticker end time", l->tickerEnd)
+                RV_INT("Ticker tics", l->tickerInterval)
+                RV_STR("Act sound", l->actSound)
+                RV_STR("Deact sound", l->deactSound)
+                RV_INT("Event chain", l->evChain)
+                RV_INT("Act chain", l->actChain)
+                RV_INT("Deact chain", l->deactChain)
+                RV_FLAGS("Wall section", l->wallSection, "lws_")
+                RV_STR("Act texture", l->actTex)
+                RV_STR("Deact texture", l->deactTex)
+                RV_INT("Act type", l->actLineType)
+                RV_INT("Deact type", l->deactLineType)
+                RV_STR("Act message", l->actMsg)
+                RV_STR("Deact message", l->deactMsg)
+                RV_FLT("Texmove angle", l->texMoveAngle)
+                RV_FLT("Texmove speed", l->texMoveSpeed)
+                RV_STR_INT("Ip0", l->iparmStr[0], l->iparm[0])
+                RV_STR_INT("Ip1", l->iparmStr[1], l->iparm[1])
+                RV_STR_INT("Ip2", l->iparmStr[2], l->iparm[2])
+                RV_STR_INT("Ip3", l->iparmStr[3], l->iparm[3])
+                RV_STR_INT("Ip4", l->iparmStr[4], l->iparm[4])
+                RV_STR_INT("Ip5", l->iparmStr[5], l->iparm[5])
+                RV_STR_INT("Ip6", l->iparmStr[6], l->iparm[6])
+                RV_STR_INT("Ip7", l->iparmStr[7], l->iparm[7])
+                RV_STR_INT("Ip8", l->iparmStr[8], l->iparm[8])
+                RV_STR_INT("Ip9", l->iparmStr[9], l->iparm[9])
+                RV_STR_INT("Ip10", l->iparmStr[10], l->iparm[10])
+                RV_STR_INT("Ip11", l->iparmStr[11], l->iparm[11])
+                RV_STR_INT("Ip12", l->iparmStr[12], l->iparm[12])
+                RV_STR_INT("Ip13", l->iparmStr[13], l->iparm[13])
+                RV_STR_INT("Ip14", l->iparmStr[14], l->iparm[14])
+                RV_STR_INT("Ip15", l->iparmStr[15], l->iparm[15])
+                RV_STR_INT("Ip16", l->iparmStr[16], l->iparm[16])
+                RV_STR_INT("Ip17", l->iparmStr[17], l->iparm[17])
+                RV_STR_INT("Ip18", l->iparmStr[18], l->iparm[18])
+                RV_STR_INT("Ip19", l->iparmStr[19], l->iparm[19])
                 RV_FLT("Fp0", l->fparm[0])
                 RV_FLT("Fp1", l->fparm[1])
                 RV_FLT("Fp2", l->fparm[2])
@@ -1872,50 +1814,50 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_STR("Sp2", l->sparm[2])
                 RV_STR("Sp3", l->sparm[3])
                 RV_STR("Sp4", l->sparm[4])
-                if(l->line_class)
+                if(l->lineClass)
                 {
                     // IpX Alt names can only be used if the class is defined first!
                     // they also support the DED v6 flags format
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[0].name,
-                               l->iparm_str[0], l->iparm[0], 0)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[1].name,
-                               l->iparm_str[1], l->iparm[1], 1)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[2].name,
-                               l->iparm_str[2], l->iparm[2], 2)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[3].name,
-                               l->iparm_str[3], l->iparm[3], 3)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[4].name,
-                               l->iparm_str[4], l->iparm[4], 4)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[5].name,
-                               l->iparm_str[5], l->iparm[5], 5)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[6].name,
-                               l->iparm_str[6], l->iparm[6], 6)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[7].name,
-                               l->iparm_str[7], l->iparm[7], 7)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[8].name,
-                               l->iparm_str[8], l->iparm[8], 8)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[9].name,
-                               l->iparm_str[9], l->iparm[9], 9)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[10].name,
-                               l->iparm_str[10], l->iparm[10], 10)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[11].name,
-                               l->iparm_str[11], l->iparm[11], 11)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[12].name,
-                               l->iparm_str[12], l->iparm[12], 12)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[13].name,
-                               l->iparm_str[13], l->iparm[13], 13)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[14].name,
-                               l->iparm_str[14], l->iparm[14], 14)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[15].name,
-                               l->iparm_str[15], l->iparm[15], 15)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[16].name,
-                               l->iparm_str[16], l->iparm[16], 16)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[17].name,
-                               l->iparm_str[17], l->iparm[17], 17)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[18].name,
-                               l->iparm_str[18], l->iparm[18], 18)
-                    RV_XGIPARM(xgClassLinks[l->line_class].iparm[19].name,
-                               l->iparm_str[19], l->iparm[19], 19)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[0].name,
+                               l->iparmStr[0], l->iparm[0], 0)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[1].name,
+                               l->iparmStr[1], l->iparm[1], 1)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[2].name,
+                               l->iparmStr[2], l->iparm[2], 2)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[3].name,
+                               l->iparmStr[3], l->iparm[3], 3)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[4].name,
+                               l->iparmStr[4], l->iparm[4], 4)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[5].name,
+                               l->iparmStr[5], l->iparm[5], 5)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[6].name,
+                               l->iparmStr[6], l->iparm[6], 6)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[7].name,
+                               l->iparmStr[7], l->iparm[7], 7)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[8].name,
+                               l->iparmStr[8], l->iparm[8], 8)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[9].name,
+                               l->iparmStr[9], l->iparm[9], 9)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[10].name,
+                               l->iparmStr[10], l->iparm[10], 10)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[11].name,
+                               l->iparmStr[11], l->iparm[11], 11)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[12].name,
+                               l->iparmStr[12], l->iparm[12], 12)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[13].name,
+                               l->iparmStr[13], l->iparm[13], 13)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[14].name,
+                               l->iparmStr[14], l->iparm[14], 14)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[15].name,
+                               l->iparmStr[15], l->iparm[15], 15)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[16].name,
+                               l->iparmStr[16], l->iparm[16], 16)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[17].name,
+                               l->iparmStr[17], l->iparm[17], 17)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[18].name,
+                               l->iparmStr[18], l->iparm[18], 18)
+                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[19].name,
+                               l->iparmStr[19], l->iparm[19], 19)
                     RV_END
 
                 } else
@@ -1944,15 +1886,15 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_INT("ID", sec->id)
                 RV_STR("Comment", sec->comment)
                 RV_FLAGS("Flags", sec->flags, "stf_")
-                RV_INT("Act tag", sec->act_tag)
+                RV_INT("Act tag", sec->actTag)
                 RV_INT("Floor chain", sec->chain[0])
                 RV_INT("Ceiling chain", sec->chain[1])
                 RV_INT("Inside chain", sec->chain[2])
                 RV_INT("Ticker chain", sec->chain[3])
-                RV_FLAGS("Floor chain flags", sec->chain_flags[0], "scef_")
-                RV_FLAGS("Ceiling chain flags", sec->chain_flags[1], "scef_")
-                RV_FLAGS("Inside chain flags", sec->chain_flags[2], "scef_")
-                RV_FLAGS("Ticker chain flags", sec->chain_flags[3], "scef_")
+                RV_FLAGS("Floor chain flags", sec->chainFlags[0], "scef_")
+                RV_FLAGS("Ceiling chain flags", sec->chainFlags[1], "scef_")
+                RV_FLAGS("Inside chain flags", sec->chainFlags[2], "scef_")
+                RV_FLAGS("Ticker chain flags", sec->chainFlags[3], "scef_")
                 RV_FLT("Floor chain start time", sec->start[0])
                 RV_FLT("Ceiling chain start time", sec->start[1])
                 RV_FLT("Inside chain start time", sec->start[2])
@@ -1973,40 +1915,40 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_INT("Ceiling chain count", sec->count[1])
                 RV_INT("Inside chain count", sec->count[2])
                 RV_INT("Ticker chain count", sec->count[3])
-                RV_STR("Ambient sound", sec->ambient_sound)
-                RV_FLT("Ambient min interval", sec->sound_interval[0])
-                RV_FLT("Ambient max interval", sec->sound_interval[1])
-                RV_FLT("Floor texmove angle", sec->texmove_angle[0])
-                RV_FLT("Ceiling texmove angle", sec->texmove_angle[1])
-                RV_FLT("Floor texmove speed", sec->texmove_speed[0])
-                RV_FLT("Ceiling texmove speed", sec->texmove_speed[1])
-                RV_FLT("Wind angle", sec->wind_angle)
-                RV_FLT("Wind speed", sec->wind_speed)
-                RV_FLT("Vertical wind", sec->vertical_wind)
+                RV_STR("Ambient sound", sec->ambientSound)
+                RV_FLT("Ambient min interval", sec->soundInterval[0])
+                RV_FLT("Ambient max interval", sec->soundInterval[1])
+                RV_FLT("Floor texmove angle", sec->texMoveAngle[0])
+                RV_FLT("Ceiling texmove angle", sec->texMoveAngle[1])
+                RV_FLT("Floor texmove speed", sec->texMoveSpeed[0])
+                RV_FLT("Ceiling texmove speed", sec->texMoveSpeed[1])
+                RV_FLT("Wind angle", sec->windAngle)
+                RV_FLT("Wind speed", sec->windSpeed)
+                RV_FLT("Vertical wind", sec->verticalWind)
                 RV_FLT("Gravity", sec->gravity)
                 RV_FLT("Friction", sec->friction)
-                RV_STR("Light fn", sec->lightfunc)
-                RV_INT("Light fn min tics", sec->light_interval[0])
-                RV_INT("Light fn max tics", sec->light_interval[1])
-                RV_STR("Red fn", sec->colfunc[0])
-                RV_STR("Green fn", sec->colfunc[1])
-                RV_STR("Blue fn", sec->colfunc[2])
-                RV_INT("Red fn min tics", sec->col_interval[0][0])
-                RV_INT("Red fn max tics", sec->col_interval[0][1])
-                RV_INT("Green fn min tics", sec->col_interval[1][0])
-                RV_INT("Green fn max tics", sec->col_interval[1][1])
-                RV_INT("Blue fn min tics", sec->col_interval[2][0])
-                RV_INT("Blue fn max tics", sec->col_interval[2][1])
-                RV_STR("Floor fn", sec->floorfunc)
-                RV_FLT("Floor fn scale", sec->floormul)
-                RV_FLT("Floor fn offset", sec->flooroff)
-                RV_INT("Floor fn min tics", sec->floor_interval[0])
-                RV_INT("Floor fn max tics", sec->floor_interval[1])
-                RV_STR("Ceiling fn", sec->ceilfunc)
-                RV_FLT("Ceiling fn scale", sec->ceilmul)
-                RV_FLT("Ceiling fn offset", sec->ceiloff)
-                RV_INT("Ceiling fn min tics", sec->ceil_interval[0])
-                RV_INT("Ceiling fn max tics", sec->ceil_interval[1])
+                RV_STR("Light fn", sec->lightFunc)
+                RV_INT("Light fn min tics", sec->lightInterval[0])
+                RV_INT("Light fn max tics", sec->lightInterval[1])
+                RV_STR("Red fn", sec->colFunc[0])
+                RV_STR("Green fn", sec->colFunc[1])
+                RV_STR("Blue fn", sec->colFunc[2])
+                RV_INT("Red fn min tics", sec->colInterval[0][0])
+                RV_INT("Red fn max tics", sec->colInterval[0][1])
+                RV_INT("Green fn min tics", sec->colInterval[1][0])
+                RV_INT("Green fn max tics", sec->colInterval[1][1])
+                RV_INT("Blue fn min tics", sec->colInterval[2][0])
+                RV_INT("Blue fn max tics", sec->colInterval[2][1])
+                RV_STR("Floor fn", sec->floorFunc)
+                RV_FLT("Floor fn scale", sec->floorMul)
+                RV_FLT("Floor fn offset", sec->floorOff)
+                RV_INT("Floor fn min tics", sec->floorInterval[0])
+                RV_INT("Floor fn max tics", sec->floorInterval[1])
+                RV_STR("Ceiling fn", sec->ceilFunc)
+                RV_FLT("Ceiling fn scale", sec->ceilMul)
+                RV_FLT("Ceiling fn offset", sec->ceilOff)
+                RV_INT("Ceiling fn min tics", sec->ceilInterval[0])
+                RV_INT("Ceiling fn max tics", sec->ceilInterval[1])
                 RV_END
                 CHECKSC;
             }

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -176,7 +176,7 @@ hedge_t *BSP_CreateHEdge(line_t *line, line_t *sourceLine,
 
     hEdge->v[0] = start;
     hEdge->v[1] = end;
-    hEdge->linedef = line;
+    hEdge->lineDef = line;
     hEdge->side = (back? 1 : 0);
     hEdge->sector = sec;
     hEdge->twin = NULL;
@@ -213,9 +213,9 @@ hedge_t *BSP_SplitHEdge(hedge_t *oldHEdge, double x, double y)
     vertex_t  *newVert;
 /*
 #if _DEBUG
-if(oldHEdge->linedef)
+if(oldHEdge->lineDef)
     Con_Message("Splitting Linedef %d (%p) at (%1.1f,%1.1f)\n",
-                oldHEdge->linedef->index, oldHEdge, x, y);
+                oldHEdge->lineDef->index, oldHEdge, x, y);
 else
     Con_Message("Splitting MiniHEdge %p at (%1.1f,%1.1f)\n", oldHEdge, x, y);
 #endif
@@ -223,7 +223,7 @@ else
     // Update superblock, if needed.
     if(oldHEdge->block)
         BSP_IncSuperBlockHEdgeCounts(oldHEdge->block,
-                                     (oldHEdge->linedef != NULL));
+                                     (oldHEdge->lineDef != NULL));
 
     newVert = newVertexFromSplitHEdge(oldHEdge, x, y);
     newHEdge = allocHEdge();

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -118,11 +118,11 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         // Should we use a specific origin?
         if(flags & SNDDF_FLOOR)
-            emitter = (mobj_t *) &sector->planes[PLN_FLOOR]->soundorg;
+            emitter = (mobj_t *) &sector->planes[PLN_FLOOR]->soundOrg;
         else if(flags & SNDDF_CEILING)
-            emitter = (mobj_t *) &sector->planes[PLN_CEILING]->soundorg;
+            emitter = (mobj_t *) &sector->planes[PLN_CEILING]->soundOrg;
         else
-            emitter = (mobj_t *) &sector->soundorg;
+            emitter = (mobj_t *) &sector->soundOrg;
     }
 
     if(flags & SNDDF_VOLUME)
@@ -291,7 +291,7 @@ Con_Printf("Cl_Sound: %i\n", sound);
             Con_Message("Cl_Sound: Invalid sector number %i.\n", num);
             return;
         }
-        mo = (mobj_t *) &SECTOR_PTR(num)->soundorg;
+        mo = (mobj_t *) &SECTOR_PTR(num)->soundOrg;
         //S_StopSound(0, mo);
         S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
     }

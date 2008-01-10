@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -175,7 +175,7 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
     gameTime = shake.gameTime / 100.0;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        players[i].ingame = (shake.playerMask & (1 << i)) != 0;
+        players[i].inGame = (shake.playerMask & (1 << i)) != 0;
     }
     consoleplayer = displayplayer = shake.yourConsole;
     clients[consoleplayer].numTics = 0;
@@ -223,8 +223,8 @@ void Cl_HandlePlayerInfo(playerinfo_packet_t *info)
     if(info->console >= MAXPLAYERS)
         return;
 
-    present = players[info->console].ingame;
-    players[info->console].ingame = true;
+    present = players[info->console].inGame;
+    players[info->console].inGame = true;
     strcpy(clients[info->console].name, info->name);
 
     if(!present)
@@ -237,7 +237,7 @@ void Cl_HandlePlayerInfo(playerinfo_packet_t *info)
 void Cl_PlayerLeaves(int number)
 {
     Con_Printf("Cl_PlayerLeaves: player %i has left.\n", number);
-    players[number].ingame = false;
+    players[number].inGame = false;
     gx.NetPlayerEvent(number, DDPE_EXIT, 0);
 }
 

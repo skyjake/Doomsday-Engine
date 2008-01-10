@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -163,11 +163,11 @@ Con_Message("Pl%i: mobj=%i old=%x\n", num, s->mobjId, old);
 Con_Message("  x=%f y=%f z=%f\n", s->cmo->mo.pos[VX],
             s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ]);
 #endif
-            s->cmo->mo.dplayer = pl;
+            s->cmo->mo.dPlayer = pl;
 
 #ifdef _DEBUG
 Con_Message("Cl_RPlD: pl=%i => moid=%i\n",
-            s->cmo->mo.dplayer - players, s->mobjId);
+            s->cmo->mo.dPlayer - players, s->mobjId);
 #endif
 
             // Unlink this cmo (not interactive or visible).
@@ -175,7 +175,7 @@ Con_Message("Cl_RPlD: pl=%i => moid=%i\n",
             // Make the old clmobj a non-player one.
             if(old)
             {
-                old->mo.dplayer = NULL;
+                old->mo.dPlayer = NULL;
                 Cl_SetMobjPosition(old);
                 Cl_UpdateRealPlayerMobj(pl->mo, &s->cmo->mo, ~0);
             }
@@ -207,7 +207,7 @@ Con_Message("Cl_RPlD: pl=%i => moid=%i\n",
     if(df & PDF_EXTRALIGHT)
     {
         i = Msg_ReadByte();
-        pl->fixedcolormap = i & 7;
+        pl->fixedColorMap = i & 7;
         pl->extraLight = i & 0xf8;
     }
     if(df & PDF_FILTER)
@@ -224,16 +224,16 @@ Con_Message("Cl_RPlD: pl=%i => moid=%i\n",
         {
             // First the flags.
             psdf = Msg_ReadByte();
-            psp = pl->psprites + i;
+            psp = pl->pSprites + i;
             if(psdf & PSDF_STATEPTR)
             {
                 idx = Msg_ReadPackedShort();
                 if(!idx)
-                    psp->stateptr = 0;
-                else if(idx < count_states.num)
+                    psp->statePtr = 0;
+                else if(idx < countStates.num)
                 {
-                    psp->stateptr = states + (idx - 1);
-                    psp->tics = psp->stateptr->tics;
+                    psp->statePtr = states + (idx - 1);
+                    psp->tics = psp->statePtr->tics;
                 }
             }
             //if(psdf & PSDF_SPRITE) psp->sprite = Msg_ReadPackedShort() - 1;
@@ -309,9 +309,9 @@ void Cl_MovePlayer(ddplayer_t *pl)
     {
         float       airThrust = 1.0f / 32;
         boolean     airborne =
-            (mo->pos[VZ] > mo->floorz && !(mo->ddflags & DDMF_FLY));
+            (mo->pos[VZ] > mo->floorZ && !(mo->ddFlags & DDMF_FLY));
 
-        if(!(pl->flags & DDPF_DEAD) && !mo->reactiontime) // Dead players do not move willfully.
+        if(!(pl->flags & DDPF_DEAD) && !mo->reactionTime) // Dead players do not move willfully.
         {
             float       mul = (airborne? airThrust : cplr_thrust_mul);
 
@@ -348,8 +348,8 @@ void Cl_UpdatePlayerPos(ddplayer_t *pl)
     // can be updated without any hassles.
     memcpy(clmo->pos, mo->pos, sizeof(mo->pos));
     P_MobjLink(clmo, 0);       // Update subsector pointer.
-    clmo->floorz = mo->floorz;
-    clmo->ceilingz = mo->ceilingz;
+    clmo->floorZ = mo->floorZ;
+    clmo->ceilingZ = mo->ceilingZ;
     clmo->mom[MX] = mo->mom[MX];
     clmo->mom[MY] = mo->mom[MY];
     clmo->mom[MZ] = mo->mom[MZ];
@@ -382,13 +382,13 @@ void Cl_HandlePlayerFix(void)
 
     if(fixes & 1) // fix angles?
     {
-        plr->fixcounter.angles = plr->fixacked.angles = Msg_ReadLong();
+        plr->fixCounter.angles = plr->fixAcked.angles = Msg_ReadLong();
         angle = Msg_ReadLong();
         lookdir = FIX2FLT(Msg_ReadLong());
 
 #ifdef _DEBUG
 Con_Message("Cl_HandlePlayerFix: Fix angles %i. Angle=%f, lookdir=%f\n",
-            plr->fixacked.angles, FIX2FLT(angle), lookdir);
+            plr->fixAcked.angles, FIX2FLT(angle), lookdir);
 #endif
         if(mo)
         {
@@ -396,7 +396,7 @@ Con_Message("Cl_HandlePlayerFix: Fix angles %i. Angle=%f, lookdir=%f\n",
 Con_Message("  Applying to mobj %p...\n", mo);
 #endif
             mo->angle = angle;
-            plr->lookdir = lookdir;
+            plr->lookDir = lookdir;
         }
         if(clmo)
         {
@@ -411,14 +411,14 @@ Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
     {
         float       pos[3];
 
-        plr->fixcounter.pos = plr->fixacked.pos = Msg_ReadLong();
+        plr->fixCounter.pos = plr->fixAcked.pos = Msg_ReadLong();
         pos[VX] = FIX2FLT(Msg_ReadLong());
         pos[VY] = FIX2FLT(Msg_ReadLong());
         pos[VZ] = FIX2FLT(Msg_ReadLong());
 
 #ifdef _DEBUG
 Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
-            plr->fixacked.pos, pos[VX], pos[VY], pos[VZ]);
+            plr->fixAcked.pos, pos[VX], pos[VY], pos[VZ]);
 #endif
         if(mo)
         {
@@ -426,7 +426,7 @@ Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
 Con_Message("  Applying to mobj %p...\n", mo);
 #endif
             Sv_PlaceMobj(mo, pos[VX], pos[VY], pos[VZ], false);
-            mo->reactiontime = 18;
+            mo->reactionTime = 18;
         }
         if(clmo)
         {
@@ -441,7 +441,7 @@ Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
     {
         float       pos[3];
 
-        plr->fixcounter.mom = plr->fixacked.mom = Msg_ReadLong();
+        plr->fixCounter.mom = plr->fixAcked.mom = Msg_ReadLong();
 
         pos[0] = FIX2FLT(Msg_ReadLong());
         pos[1] = FIX2FLT(Msg_ReadLong());
@@ -449,7 +449,7 @@ Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
 
 #ifdef _DEBUG
 Con_Message("Cl_HandlePlayerFix: Fix momentum %i. Mom=%f, %f, %f\n",
-            plr->fixacked.mom, pos[0], pos[1], pos[2]);
+            plr->fixAcked.mom, pos[0], pos[1], pos[2]);
 #endif
         if(mo)
         {
@@ -473,9 +473,9 @@ Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
 
     // Send an acknowledgement.
     Msg_Begin(PCL_ACK_PLAYER_FIX);
-    Msg_WriteLong(plr->fixacked.angles);
-    Msg_WriteLong(plr->fixacked.pos);
-    Msg_WriteLong(plr->fixacked.mom);
+    Msg_WriteLong(plr->fixAcked.angles);
+    Msg_WriteLong(plr->fixAcked.pos);
+    Msg_WriteLong(plr->fixAcked.mom);
     Net_SendBuffer(0, SPF_ORDERED | SPF_CONFIRM);
 }
 
@@ -527,18 +527,18 @@ void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
     }
 
     mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
-    mo->floorz = mo->subsector->sector->SP_floorheight;
-    mo->ceilingz = mo->subsector->sector->SP_ceilheight;
+    mo->floorZ = mo->subsector->sector->SP_floorheight;
+    mo->ceilingZ = mo->subsector->sector->SP_ceilheight;
 
     if(onground)
     {
         mo->pos[VZ] = z - 1;
-        pl->viewheight = 1;
+        pl->viewHeight = 1;
     }
     else
     {
         mo->pos[VZ] = z;
-        pl->viewheight = 0;
+        pl->viewHeight = 0;
     }
 
     Cl_UpdatePlayerPos(players + consoleplayer);
@@ -551,7 +551,7 @@ void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
 void Cl_MovePsprites(void)
 {
     ddplayer_t *pl = players + consoleplayer;
-    ddpsprite_t *psp = pl->psprites;
+    ddpsprite_t *psp = pl->pSprites;
     int         i;
 
     for(i = 0; i < 2; ++i)
@@ -593,10 +593,10 @@ void Cl_MovePsprites(void)
 
     if(psp->state != DDPSP_BOBBING)
     {
-        if(psp->offx)
-            psp->x = psp->offx;
-        if(psp->offy)
-            psp->y = psp->offy;
+        if(psp->offX)
+            psp->x = psp->offX;
+        if(psp->offY)
+            psp->y = psp->offY;
     }
 
     // The other psprite gets the same coords.
@@ -673,12 +673,12 @@ void Cl_ReadPlayerDelta2(boolean skip)
                 Cl_UnsetMobjPosition(s->cmo);
             }
 
-            s->cmo->mo.dplayer = pl;
+            s->cmo->mo.dPlayer = pl;
 
             // Make the old clmobj a non-player one (if any).
             if(old)
             {
-                old->mo.dplayer = NULL;
+                old->mo.dPlayer = NULL;
                 Cl_SetMobjPosition(old);
             }
 
@@ -705,9 +705,9 @@ Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%x\n", num, s->mobjId,
             old);
 Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", s->cmo->mo.pos[VX],
             s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ],
-            s->cmo->mo.floorz, s->cmo->mo.ceilingz);
+            s->cmo->mo.floorZ, s->cmo->mo.ceilingZ);
 Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
-            s->cmo->mo.dplayer - players, s->mobjId);
+            s->cmo->mo.dPlayer - players, s->mobjId);
 #endif
         }
     }
@@ -728,7 +728,7 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
     if(df & PDF_EXTRALIGHT)
     {
         i = Msg_ReadByte();
-        pl->fixedcolormap = i & 7;
+        pl->fixedColorMap = i & 7;
         pl->extraLight = i & 0xf8;
     }
     if(df & PDF_FILTER)
@@ -745,16 +745,16 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
         {
             // First the flags.
             psdf = Msg_ReadByte();
-            psp = pl->psprites + i;
+            psp = pl->pSprites + i;
             if(psdf & PSDF_STATEPTR)
             {
                 idx = Msg_ReadPackedShort();
                 if(!idx)
-                    psp->stateptr = 0;
-                else if(idx < count_states.num)
+                    psp->statePtr = 0;
+                else if(idx < countStates.num)
                 {
-                    psp->stateptr = states + (idx - 1);
-                    psp->tics = psp->stateptr->tics;
+                    psp->statePtr = states + (idx - 1);
+                    psp->tics = psp->statePtr->tics;
                 }
             }
             if(psdf & PSDF_LIGHT)
@@ -784,6 +784,6 @@ boolean Cl_IsFreeToMove(int player)
 
     if(!mo)
         return false;
-    return (mo->pos[VZ] >= mo->floorz &&
-            mo->pos[VZ] + mo->height <= mo->ceilingz);
+    return (mo->pos[VZ] >= mo->floorZ &&
+            mo->pos[VZ] + mo->height <= mo->ceilingZ);
 }

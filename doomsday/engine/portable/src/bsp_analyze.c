@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -81,7 +81,7 @@ static void findMapLimits(editmap_t *src, int *bbox)
 
     M_ClearBox(bbox);
 
-    for(i = 0; i < src->numlines; ++i)
+    for(i = 0; i < src->numLines; ++i)
     {
         line_t     *L = src->lines[i];
 
@@ -146,7 +146,7 @@ static void pruneLinedefs(editmap_t *src)
     uint            i, newNum;
 
     // Scan all linedefs.
-    for(i = 0, newNum = 0; i < src->numlines; ++i)
+    for(i = 0, newNum = 0; i < src->numLines; ++i)
     {
         line_t         *l = src->lines[i];
 
@@ -180,11 +180,11 @@ static void pruneLinedefs(editmap_t *src)
         src->lines[newNum++] = src->lines[i];
     }
 
-    if(newNum < src->numlines)
+    if(newNum < src->numLines)
     {
         VERBOSE(Con_Message("  Pruned %d zero-length linedefs\n",
-                            src->numlines - newNum));
-        src->numlines = newNum;
+                            src->numLines - newNum));
+        src->numLines = newNum;
     }
 }
 
@@ -193,7 +193,7 @@ static void pruneVertices(editmap_t *map)
     uint            i, newNum, unused = 0;
 
     // Scan all vertices.
-    for(i = 0, newNum = 0; i < map->numvertexes; ++i)
+    for(i = 0, newNum = 0; i < map->numVertexes; ++i)
     {
         vertex_t           *v = map->vertexes[i];
 
@@ -213,9 +213,9 @@ static void pruneVertices(editmap_t *map)
         map->vertexes[newNum++] = v;
     }
 
-    if(newNum < map->numvertexes)
+    if(newNum < map->numVertexes)
     {
-        int         dupNum = map->numvertexes - newNum - unused;
+        int         dupNum = map->numVertexes - newNum - unused;
 
         if(verbose >= 1)
         {
@@ -226,7 +226,7 @@ static void pruneVertices(editmap_t *map)
                 Con_Message("  Pruned %d duplicate vertices\n", dupNum);
         }
 
-        map->numvertexes = newNum;
+        map->numVertexes = newNum;
     }
 }
 
@@ -423,21 +423,21 @@ lineEndCompare(const void *p1, const void *p2)
 void BSP_DetectOverlappingLines(editmap_t *map)
 {
     uint        i;
-    uint       *hits = M_Malloc(map->numlines * sizeof(uint));
+    uint       *hits = M_Malloc(map->numLines * sizeof(uint));
     uint        count = 0;
 
     globalMap = map;
 
     // Sort array of indices.
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
         hits[i] = i;
-    qsort(hits, map->numlines, sizeof(uint), lineStartCompare);
+    qsort(hits, map->numLines, sizeof(uint), lineStartCompare);
 
-    for(i = 0; i < map->numlines - 1; ++i)
+    for(i = 0; i < map->numLines - 1; ++i)
     {
         uint        j;
 
-        for(j = i + 1; j < map->numlines; ++j)
+        for(j = i + 1; j < map->numLines; ++j)
         {
             if(lineStartCompare(hits + i, hits + j) != 0)
                 break;
@@ -481,7 +481,7 @@ static void testForWindowEffect(editmap_t *map, line_t *l)
     sector_t  *frontOpen = NULL;
     int         frontLine = -1;
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         line_t         *n = map->lines[i];
         double          dist;
@@ -589,7 +589,7 @@ void BSP_DetectWindowEffects(editmap_t *map)
 {
     uint            i, oneSiders, twoSiders;
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         line_t         *l = map->lines[i];
 
