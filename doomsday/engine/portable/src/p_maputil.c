@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,12 +116,12 @@ float P_ApproxDistance3(float dx, float dy, float dz)
  */
 void P_LineUnitVector(line_t *line, float *unitvec)
 {
-    float       len = M_ApproxDistancef(line->dx, line->dy);
+    float       len = M_ApproxDistancef(line->dX, line->dY);
 
     if(len)
     {
-        unitvec[VX] = line->dx / len;
-        unitvec[VY] = line->dy / len;
+        unitvec[VX] = line->dX / len;
+        unitvec[VY] = line->dY / len;
     }
     else
     {
@@ -181,8 +181,8 @@ int P_FloatPointOnLineSide(fvertex_t *pnt, fdivline_t *dline)
        If s=0      C is on AB
      */
     // We'll return false if the point c is on the left side.
-    return ((dline->pos[VY] - pnt->pos[VY]) * dline->dx -
-            (dline->pos[VX] - pnt->pos[VX]) * dline->dy >= 0);
+    return ((dline->pos[VY] - pnt->pos[VY]) * dline->dX -
+            (dline->pos[VX] - pnt->pos[VX]) * dline->dY >= 0);
 }
 
 /**
@@ -194,7 +194,7 @@ float P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
     float   ax = start->pos[VX], ay = start->pos[VY];
     float   bx = end->pos[VX], by = end->pos[VY];
     float   cx = fdiv->pos[VX], cy = fdiv->pos[VY];
-    float   dx = cx + fdiv->dx, dy = cy + fdiv->dy;
+    float   dx = cx + fdiv->dX, dy = cy + fdiv->dY;
 
     /*
        (YA-YC)(XD-XC)-(XA-XC)(YD-YC)
@@ -225,9 +225,9 @@ int P_PointOnLineSide(float x, float y, line_t *line)
 {
     vertex_t   *vtx1 = line->L_v1;
 
-    return  !line->dx? x <= vtx1->V_pos[VX]? line->dy > 0 : line->dy <
-        0 : !line->dy? y <= vtx1->V_pos[VY]? line->dx < 0 : line->dx >
-        0 : (y - vtx1->V_pos[VY]) * line->dx >= line->dy * (x - vtx1->V_pos[VX]);
+    return  !line->dX? x <= vtx1->V_pos[VX]? line->dY > 0 : line->dY <
+        0 : !line->dY? y <= vtx1->V_pos[VY]? line->dX < 0 : line->dX >
+        0 : (y - vtx1->V_pos[VY]) * line->dX >= line->dY * (x - vtx1->V_pos[VX]);
 }
 
 /**
@@ -239,20 +239,20 @@ int P_BoxOnLineSide2(float xl, float xh, float yl, float yh, line_t *ld)
 {
     int         p;
 
-    switch(ld->slopetype)
+    switch(ld->slopeType)
     {
     default: // shutup compiler.
     case ST_HORIZONTAL:
     {
         float ly = ld->L_v1pos[VY];
         return (yl > ly) ==
-                (p = yh > ly) ? p ^ (ld->dx < 0) : -1;
+                (p = yh > ly) ? p ^ (ld->dX < 0) : -1;
     }
     case ST_VERTICAL:
     {
         float lx = ld->L_v1pos[VX];
         return (xl < lx) ==
-                (p = xh < lx) ? p ^ (ld->dy < 0) : -1;
+                (p = xh < lx) ? p ^ (ld->dY < 0) : -1;
     }
     case ST_POSITIVE:
         return P_PointOnLineSide(xh, yl, ld) ==
@@ -278,11 +278,11 @@ int P_PointOnDivlineSide(float fx, float fy, divline_t *line)
     fixed_t     x = FLT2FIX(fx);
     fixed_t     y = FLT2FIX(fy);
 
-    return  !line->dx? x <= line->pos[VX]? line->dy > 0 : line->dy <
-        0 : !line->dy? y <= line->pos[VY]? line->dx < 0 : line->dx >
-        0 : (line->dy ^ line->dx ^ (x -= line->pos[VX]) ^ (y -= line->pos[VY])) <
-        0? (line->dy ^ x) < 0 : FixedMul(y >> 8, line->dx >> 8) >=
-        FixedMul(line->dy >> 8, x >> 8);
+    return  !line->dX? x <= line->pos[VX]? line->dY > 0 : line->dY <
+        0 : !line->dY? y <= line->pos[VY]? line->dX < 0 : line->dX >
+        0 : (line->dY ^ line->dX ^ (x -= line->pos[VX]) ^ (y -= line->pos[VY])) <
+        0? (line->dY ^ x) < 0 : FixedMul(y >> 8, line->dX >> 8) >=
+        FixedMul(line->dY >> 8, x >> 8);
 }
 
 void P_MakeDivline(line_t *li, divline_t *dl)
@@ -291,8 +291,8 @@ void P_MakeDivline(line_t *li, divline_t *dl)
 
     dl->pos[VX] = FLT2FIX(vtx->V_pos[VX]);
     dl->pos[VY] = FLT2FIX(vtx->V_pos[VY]);
-    dl->dx = FLT2FIX(li->dx);
-    dl->dy = FLT2FIX(li->dy);
+    dl->dX = FLT2FIX(li->dX);
+    dl->dY = FLT2FIX(li->dY);
 }
 
 /**
@@ -304,13 +304,13 @@ float P_InterceptVector(divline_t *v2, divline_t *v1)
 {
     float       frac = 0;
     fixed_t     den =
-        FixedMul(v1->dy >> 8, v2->dx) - FixedMul(v1->dx >> 8, v2->dy);
+        FixedMul(v1->dY >> 8, v2->dX) - FixedMul(v1->dX >> 8, v2->dY);
 
     if(den)
     {
         frac =
-            FIX2FLT(FixedDiv((FixedMul((v1->pos[VX] - v2->pos[VX]) >> 8, v1->dy) +
-                  FixedMul((v2->pos[VY] - v1->pos[VY]) >> 8, v1->dx)), den));
+            FIX2FLT(FixedDiv((FixedMul((v1->pos[VX] - v2->pos[VX]) >> 8, v1->dY) +
+                  FixedMul((v2->pos[VY] - v1->pos[VY]) >> 8, v1->dX)), den));
     }
 
     return frac;
@@ -395,12 +395,12 @@ mobj_t *P_GetBlockRootXY(float x, float y)
  */
 void P_UnlinkFromSector(mobj_t *mo)
 {
-    if((*mo->sprev = mo->snext))
-        mo->snext->sprev = mo->sprev;
+    if((*mo->sPrev = mo->sNext))
+        mo->sNext->sPrev = mo->sPrev;
 
     // Not linked any more.
-    mo->snext = NULL;
-    mo->sprev = NULL;
+    mo->sNext = NULL;
+    mo->sPrev = NULL;
 }
 
 /**
@@ -408,9 +408,9 @@ void P_UnlinkFromSector(mobj_t *mo)
  */
 void P_UnlinkFromBlock(mobj_t *mo)
 {
-    (mo->bnext->bprev = mo->bprev)->bnext = mo->bnext;
+    (mo->bNext->bPrev = mo->bPrev)->bNext = mo->bNext;
     // Not linked any more.
-    mo->bnext = mo->bprev = NULL;
+    mo->bNext = mo->bPrev = NULL;
 }
 
 /**
@@ -419,28 +419,28 @@ void P_UnlinkFromBlock(mobj_t *mo)
  */
 void P_UnlinkFromLines(mobj_t *mo)
 {
-    linknode_t *tn = mobjnodes->nodes;
+    linknode_t *tn = mobjNodes->nodes;
     nodeindex_t nix;
 
     // Try unlinking from lines.
-    if(!mo->lineroot)
+    if(!mo->lineRoot)
         return; // A zero index means it's not linked.
 
     // Unlink from each line.
-    for(nix = tn[mo->lineroot].next; nix != mo->lineroot;
+    for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
         nix = tn[nix].next)
     {
         // Data is the linenode index that corresponds this mobj.
-        NP_Unlink(linenodes, tn[nix].data);
+        NP_Unlink(lineNodes, tn[nix].data);
         // We don't need these nodes any more, mark them as unused.
         // Dismissing is a macro.
-        NP_Dismiss(linenodes, tn[nix].data);
-        NP_Dismiss(mobjnodes, nix);
+        NP_Dismiss(lineNodes, tn[nix].data);
+        NP_Dismiss(mobjNodes, nix);
     }
 
     // The mobj no longer has a line ring.
-    NP_Dismiss(mobjnodes, mo->lineroot);
-    mo->lineroot = 0;
+    NP_Dismiss(mobjNodes, mo->lineRoot);
+    mo->lineRoot = 0;
 }
 
 /**
@@ -495,12 +495,12 @@ boolean PIT_LinkToLines(line_t *ld, void *parm)
     // called only once for each line.
 
     // Add a node to the mobj's ring.
-    NP_Link(mobjnodes, nix = NP_New(mobjnodes, ld), data->mo->lineroot);
+    NP_Link(mobjNodes, nix = NP_New(mobjNodes, ld), data->mo->lineRoot);
 
     // Add a node to the line's ring. Also store the linenode's index
     // into the mobjring's node, so unlinking is easy.
-    NP_Link(linenodes, mobjnodes->nodes[nix].data =
-            NP_New(linenodes, data->mo), linelinks[GET_LINE_IDX(ld)]);
+    NP_Link(lineNodes, mobjNodes->nodes[nix].data =
+            NP_New(lineNodes, data->mo), linelinks[GET_LINE_IDX(ld)]);
 
     return true;
 }
@@ -514,7 +514,7 @@ void P_LinkToLines(mobj_t *mo)
     vec2_t      point;
 
     // Get a new root node.
-    mo->lineroot = NP_New(mobjnodes, NP_ROOT_NODE);
+    mo->lineRoot = NP_New(mobjNodes, NP_ROOT_NODE);
 
     // Set up a line iterator for doing the linking.
     data.mo = mo;
@@ -544,24 +544,24 @@ void P_MobjLink(mobj_t *mo, byte flags)
     if(flags & DDLINK_SECTOR)
     {
         // Unlink from the current sector, if any.
-        if(mo->sprev)
+        if(mo->sPrev)
             P_UnlinkFromSector(mo);
 
         // Link the new mobj to the head of the list.
         // Prev pointers point to the pointer that points back to us.
         // (Which practically disallows traversing the list backwards.)
 
-        if((mo->snext = sec->mobjList))
-            mo->snext->sprev = &mo->snext;
+        if((mo->sNext = sec->mobjList))
+            mo->sNext->sPrev = &mo->sNext;
 
-        *(mo->sprev = &sec->mobjList) = mo;
+        *(mo->sPrev = &sec->mobjList) = mo;
     }
 
     // Link into blockmap.
     if(flags & DDLINK_BLOCKMAP)
     {
         // Unlink from the old block, if any.
-        if(mo->bnext)
+        if(mo->bNext)
             P_UnlinkFromBlock(mo);
 
         // Link into the block we're currently in.
@@ -569,9 +569,9 @@ void P_MobjLink(mobj_t *mo, byte flags)
         if(root)
         {
             // Only link if we're inside the blockmap.
-            mo->bprev = root;
-            mo->bnext = root->bnext;
-            mo->bnext->bprev = root->bnext = mo;
+            mo->bPrev = root;
+            mo->bNext = root->bNext;
+            mo->bNext->bPrev = root->bNext = mo;
         }
     }
 
@@ -587,15 +587,15 @@ void P_MobjLink(mobj_t *mo, byte flags)
 
     // If this is a player - perform addtional tests to see if they have
     // entered or exited the void.
-    if(mo->dplayer)
+    if(mo->dPlayer)
     {
-        ddplayer_t* player = mo->dplayer;
+        ddplayer_t* player = mo->dPlayer;
 
-        player->invoid = true;
+        player->inVoid = true;
         if(R_IsPointInSector2(player->mo->pos[VX],
                               player->mo->pos[VY],
                               player->mo->subsector->sector))
-            player->invoid = false;
+            player->inVoid = false;
     }
 }
 
@@ -609,7 +609,7 @@ boolean P_BlockRingMobjsIterator(uint x, uint y, boolean (*func) (mobj_t *, void
         return true;            // Not inside the blockmap.
 
     // Gather all the mobjs in the block into the list.
-    for(mobj = root->bnext; mobj != root; mobj = mobj->bnext)
+    for(mobj = root->bNext; mobj != root; mobj = mobj->bNext)
         *end++ = mobj;
 
     DO_LINKS(it, end);
@@ -624,13 +624,13 @@ boolean P_MobjLinesIterator(mobj_t *mo, boolean (*func) (line_t *, void *),
                              void *data)
 {
     nodeindex_t nix;
-    linknode_t *tn = mobjnodes->nodes;
+    linknode_t *tn = mobjNodes->nodes;
     void       *linkstore[MAXLINKED], **end = linkstore, **it;
 
-    if(!mo->lineroot)
+    if(!mo->lineRoot)
         return true; // No lines to process.
 
-    for(nix = tn[mo->lineroot].next; nix != mo->lineroot;
+    for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
         nix = tn[nix].next)
         *end++ = tn[nix].ptr;
 
@@ -650,7 +650,7 @@ boolean P_MobjSectorsIterator(mobj_t *mo,
 {
     void       *linkstore[MAXLINKED], **end = linkstore, **it;
     nodeindex_t nix;
-    linknode_t *tn = mobjnodes->nodes;
+    linknode_t *tn = mobjNodes->nodes;
     line_t     *ld;
     sector_t   *sec;
 
@@ -659,9 +659,9 @@ boolean P_MobjSectorsIterator(mobj_t *mo,
     sec->validCount = validCount;
 
     // Any good lines around here?
-    if(mo->lineroot)
+    if(mo->lineRoot)
     {
-        for(nix = tn[mo->lineroot].next; nix != mo->lineroot;
+        for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
             nix = tn[nix].next)
         {
             ld = (line_t *) tn[nix].ptr;
@@ -695,7 +695,7 @@ boolean P_LineMobjsIterator(line_t *line, boolean (*func) (mobj_t *, void *),
 {
     void       *linkstore[MAXLINKED], **end = linkstore, **it;
     nodeindex_t root = linelinks[GET_LINE_IDX(line)], nix;
-    linknode_t *ln = linenodes->nodes;
+    linknode_t *ln = lineNodes->nodes;
 
     for(nix = ln[root].next; nix != root; nix = ln[nix].next)
         *end++ = ln[nix].ptr;
@@ -720,11 +720,11 @@ boolean P_SectorTouchingMobjsIterator(sector_t *sector,
     mobj_t     *mo;
     line_t     *li;
     nodeindex_t root, nix;
-    linknode_t *ln = linenodes->nodes;
+    linknode_t *ln = lineNodes->nodes;
     uint        i;
 
     // First process the mobjs that obviously are in the sector.
-    for(mo = sector->mobjList; mo; mo = mo->snext)
+    for(mo = sector->mobjList; mo; mo = mo->sNext)
     {
         if(mo->validCount == validCount)
             continue;
@@ -734,9 +734,9 @@ boolean P_SectorTouchingMobjsIterator(sector_t *sector,
     }
 
     // Then check the sector's lines.
-    for(i = 0; i < sector->linecount; ++i)
+    for(i = 0; i < sector->lineCount; ++i)
     {
-        li = sector->Lines[i];
+        li = sector->lines[i];
 
         // Iterate all mobjs on the line.
         root = linelinks[GET_LINE_IDX(li)];
@@ -951,8 +951,8 @@ boolean PIT_AddLineIntercepts(line_t *ld, void *data)
     divline_t   dl;
 
     // Avoid precision problems with two routines.
-    if(trace.dx > FRACUNIT * 16 || trace.dy > FRACUNIT * 16 ||
-       trace.dx < -FRACUNIT * 16 || trace.dy < -FRACUNIT * 16)
+    if(trace.dX > FRACUNIT * 16 || trace.dY > FRACUNIT * 16 ||
+       trace.dX < -FRACUNIT * 16 || trace.dY < -FRACUNIT * 16)
     {
         s[0] = P_PointOnDivlineSide(ld->L_v1pos[VX],
                                     ld->L_v1pos[VY], &trace);
@@ -962,7 +962,8 @@ boolean PIT_AddLineIntercepts(line_t *ld, void *data)
     else
     {
         s[0] = P_PointOnLineSide(FIX2FLT(trace.pos[VX]), FIX2FLT(trace.pos[VY]), ld);
-        s[1] = P_PointOnLineSide(FIX2FLT(trace.pos[VX] + trace.dx), FIX2FLT(trace.pos[VY] + trace.dy), ld);
+        s[1] = P_PointOnLineSide(FIX2FLT(trace.pos[VX] + trace.dX),
+                                 FIX2FLT(trace.pos[VY] + trace.dY), ld);
     }
 
     if(s[0] == s[1])
@@ -993,10 +994,10 @@ boolean PIT_AddMobjIntercepts(mobj_t *mo, void *data)
     divline_t   dl;
     float       frac;
 
-    if(mo->dplayer && (mo->dplayer->flags & DDPF_CAMERA))
+    if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
         return true; // $democam: ssshh, keep going, we're not here...
 
-    tracepositive = (trace.dx ^ trace.dy) > 0;
+    tracepositive = (trace.dX ^ trace.dY) > 0;
 
     // Check a corner to corner crossection for hit.
     if(tracepositive)
@@ -1023,8 +1024,8 @@ boolean PIT_AddMobjIntercepts(mobj_t *mo, void *data)
 
     dl.pos[VX] = FLT2FIX(x1);
     dl.pos[VY] = FLT2FIX(y1);
-    dl.dx = FLT2FIX(x2 - x1);
-    dl.dy = FLT2FIX(y2 - y1);
+    dl.dX = FLT2FIX(x2 - x1);
+    dl.dY = FLT2FIX(y2 - y1);
 
     frac = P_InterceptVector(&trace, &dl);
     if(frac < 0)
@@ -1066,8 +1067,8 @@ boolean P_PathTraverse(float x1, float y1, float x2, float y2,
 
     trace.pos[VX] = FLT2FIX(origin[VX]);
     trace.pos[VY] = FLT2FIX(origin[VY]);
-    trace.dx = FLT2FIX(dest[VX] - origin[VX]);
-    trace.dy = FLT2FIX(dest[VY] - origin[VY]);
+    trace.dX = FLT2FIX(dest[VX] - origin[VX]);
+    trace.dY = FLT2FIX(dest[VY] - origin[VY]);
 
     // \todo Clip path so that both start and end are within the blockmap.
     // If the path is completely outside the blockmap, we can be sure that

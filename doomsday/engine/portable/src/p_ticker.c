@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,28 +68,28 @@ void P_MobjTicker(mobj_t *mo)
     // and now, though.
     if(!lum || lum->flags & LUMF_CLIPPED)
     {
-        if(mo->halofactor & 0x80)
+        if(mo->haloFactor & 0x80)
         {
-            i = (mo->halofactor & 0x7f);    // - haloOccludeSpeed;
+            i = (mo->haloFactor & 0x7f);    // - haloOccludeSpeed;
             if(i < 0)
                 i = 0;
-            mo->halofactor = i;
+            mo->haloFactor = i;
         }
     }
     else
     {
-        if(!(mo->halofactor & 0x80))
+        if(!(mo->haloFactor & 0x80))
         {
-            i = (mo->halofactor & 0x7f);    // + haloOccludeSpeed;
+            i = (mo->haloFactor & 0x7f);    // + haloOccludeSpeed;
             if(i > 127)
                 i = 127;
-            mo->halofactor = 0x80 | i;
+            mo->haloFactor = 0x80 | i;
         }
     }
 
     // Handle halofactor.
-    i = mo->halofactor & 0x7f;
-    if(mo->halofactor & 0x80)
+    i = mo->haloFactor & 0x7f;
+    if(mo->haloFactor & 0x80)
     {
         // Going up.
         i += haloOccludeSpeed;
@@ -103,8 +103,8 @@ void P_MobjTicker(mobj_t *mo)
         if(i < 0)
             i = 0;
     }
-    mo->halofactor &= ~0x7f;
-    mo->halofactor |= i;
+    mo->haloFactor &= ~0x7f;
+    mo->haloFactor |= i;
 }
 
 boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
@@ -122,7 +122,7 @@ void P_Ticker(timespan_t time)
     thinker_t *th;
     static trigger_t fixed = { 1.0 / 35, 0 };
 
-    if(!thinkercap.next)
+    if(!thinkerCap.next)
         return;                 // Not initialized yet.
 
     if(!M_RunTrigger(&fixed, time))
@@ -134,7 +134,7 @@ void P_Ticker(timespan_t time)
     R_SkyTicker();
 
     // Check all mobjs.
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(!P_IsMobjThinker(th->function))
             continue;

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,11 +73,11 @@ vertex_t *createVertex(void)
     vtx->header.type = DMU_VERTEX;
 
     map->vertexes =
-        M_Realloc(map->vertexes, sizeof(vtx) * (++map->numvertexes + 1));
-    map->vertexes[map->numvertexes-1] = vtx;
-    map->vertexes[map->numvertexes] = NULL;
+        M_Realloc(map->vertexes, sizeof(vtx) * (++map->numVertexes + 1));
+    map->vertexes[map->numVertexes-1] = vtx;
+    map->vertexes[map->numVertexes] = NULL;
 
-    vtx->buildData.index = map->numvertexes; // 1-based index, 0 = NIL.
+    vtx->buildData.index = map->numVertexes; // 1-based index, 0 = NIL.
     return vtx;
 }
 
@@ -89,11 +89,11 @@ static line_t *createLine(void)
     line->header.type = DMU_LINE;
 
     map->lines =
-        M_Realloc(map->lines, sizeof(line) * (++map->numlines + 1));
-    map->lines[map->numlines-1] = line;
-    map->lines[map->numlines] = NULL;
+        M_Realloc(map->lines, sizeof(line) * (++map->numLines + 1));
+    map->lines[map->numLines-1] = line;
+    map->lines[map->numLines] = NULL;
 
-    line->buildData.index = map->numlines; // 1-based index, 0 = NIL.
+    line->buildData.index = map->numLines; // 1-based index, 0 = NIL.
     return line;
 }
 
@@ -105,11 +105,11 @@ static side_t *createSide(void)
     side->header.type = DMU_SIDE;
 
     map->sides =
-        M_Realloc(map->sides, sizeof(side) * (++map->numsides + 1));
-    map->sides[map->numsides-1] = side;
-    map->sides[map->numsides] = NULL;
+        M_Realloc(map->sides, sizeof(side) * (++map->numSides + 1));
+    map->sides[map->numSides-1] = side;
+    map->sides[map->numSides] = NULL;
 
-    side->buildData.index = map->numsides; // 1-based index, 0 = NIL.
+    side->buildData.index = map->numSides; // 1-based index, 0 = NIL.
     return side;
 }
 
@@ -120,11 +120,11 @@ static sector_t *createSector(void)
     sec = M_Calloc(sizeof(*sec));
     sec->header.type = DMU_SECTOR;
 
-    map->sectors = M_Realloc(map->sectors, sizeof(sec) * (++map->numsectors + 1));
-    map->sectors[map->numsectors-1] = sec;
-    map->sectors[map->numsectors] = NULL;
+    map->sectors = M_Realloc(map->sectors, sizeof(sec) * (++map->numSectors + 1));
+    map->sectors[map->numSectors-1] = sec;
+    map->sectors[map->numSectors] = NULL;
 
-    sec->buildData.index = map->numsectors; // 1-based index, 0 = NIL.
+    sec->buildData.index = map->numSectors; // 1-based index, 0 = NIL.
     return sec;
 }
 
@@ -136,11 +136,11 @@ static subsector_t *createSubsector(void)
     ssec->header.type = DMU_SUBSECTOR;
 
     map->subsectors =
-        M_Realloc(map->subsectors, sizeof(ssec) * (++map->numsubsectors + 1));
-    map->subsectors[map->numsubsectors-1] = ssec;
-    map->subsectors[map->numsubsectors] = NULL;
+        M_Realloc(map->subsectors, sizeof(ssec) * (++map->numSubsectors + 1));
+    map->subsectors[map->numSubsectors-1] = ssec;
+    map->subsectors[map->numSubsectors] = NULL;
 
-    ssec->buildData.index = map->numsubsectors; // 1-based index, 0 = NIL.
+    ssec->buildData.index = map->numSubsectors; // 1-based index, 0 = NIL.
     return ssec;
 }
 
@@ -151,11 +151,11 @@ static node_t *createNode(void)
     node = M_Calloc(sizeof(*node));
     node->header.type = DMU_NODE;
 
-    map->nodes = M_Realloc(map->nodes, sizeof(node) * (++map->numnodes + 1));
-    map->nodes[map->numnodes-1] = node;
-    map->nodes[map->numnodes] = NULL;
+    map->nodes = M_Realloc(map->nodes, sizeof(node) * (++map->numNodes + 1));
+    map->nodes[map->numNodes-1] = node;
+    map->nodes[map->numNodes] = NULL;
 
-    node->buildData.index = map->numnodes; // 1-based index, 0 = NIL.
+    node->buildData.index = map->numNodes; // 1-based index, 0 = NIL.
     return node;
 }
 
@@ -166,11 +166,11 @@ static polyobj_t *createPolyobj(void)
     po = M_Calloc(sizeof(*po));
     po->header.type = DMU_POLYOBJ;
 
-    map->polyobjs = M_Realloc(map->polyobjs, sizeof(po) * (++map->numpolyobjs + 1));
-    map->polyobjs[map->numpolyobjs-1] = po;
-    map->polyobjs[map->numpolyobjs] = NULL;
+    map->polyobjs = M_Realloc(map->polyobjs, sizeof(po) * (++map->numPolyobjs + 1));
+    map->polyobjs[map->numPolyobjs-1] = po;
+    map->polyobjs[map->numPolyobjs] = NULL;
 
-    po->buildData.index = map->numpolyobjs; // 1-based index, 0 = NIL.
+    po->buildData.index = map->numPolyobjs; // 1-based index, 0 = NIL.
     return po;
 }
 
@@ -181,29 +181,29 @@ static void destroyMap(void)
     if(map->vertexes)
         M_Free(map->vertexes);
     map->vertexes = NULL;
-    map->numvertexes = 0;
+    map->numVertexes = 0;
 
     if(map->lines)
         M_Free(map->lines);
     map->lines = NULL;
-    map->numlines = 0;
+    map->numLines = 0;
 
     if(map->sides)
         M_Free(map->sides);
     map->sides = NULL;
-    map->numsides = 0;
+    map->numSides = 0;
 
     if(map->sectors)
     {
         uint                i;
-        for(i = 0; i < map->numsectors; ++i)
+        for(i = 0; i < map->numSectors; ++i)
         {
             uint                j;
             sector_t           *s = map->sectors[i];
 
             if(s->planes)
             {
-                for(j = 0; j < s->planecount; ++j)
+                for(j = 0; j < s->planeCount; ++j)
                 {
                     M_Free(s->planes[j]);
                 }
@@ -213,28 +213,28 @@ static void destroyMap(void)
         M_Free(map->sectors);
     }
     map->sectors = NULL;
-    map->numsectors = 0;
+    map->numSectors = 0;
 
     if(map->segs)
         M_Free(map->segs);
     map->segs = NULL;
-    map->numsegs = 0;
+    map->numSegs = 0;
 
     if(map->subsectors)
         M_Free(map->subsectors);
     map->subsectors = NULL;
-    map->numsubsectors = 0;
+    map->numSubsectors = 0;
 
     if(map->nodes)
         M_Free(map->nodes);
     map->nodes = NULL;
     map->rootNode = NULL;
-    map->numnodes = 0;
+    map->numNodes = 0;
 
     if(map->polyobjs)
     {
         uint                i;
-        for(i = 0; i < map->numpolyobjs; ++i)
+        for(i = 0; i < map->numPolyobjs; ++i)
         {
             polyobj_t          *po = map->polyobjs[i];
             M_Free(po->buildData.lines);
@@ -243,7 +243,7 @@ static void destroyMap(void)
         M_Free(map->polyobjs);
     }
     map->polyobjs = NULL;
-    map->numpolyobjs = 0;
+    map->numPolyobjs = 0;
 }
 
 static int C_DECL vertexCompare(const void *p1, const void *p2)
@@ -267,16 +267,16 @@ static int C_DECL vertexCompare(const void *p1, const void *p2)
 void MPE_DetectDuplicateVertices(editmap_t *map)
 {
     uint        i;
-    uint       *hits = M_Malloc(map->numvertexes * sizeof(uint));
+    uint       *hits = M_Malloc(map->numVertexes * sizeof(uint));
 
     // Sort array of indices.
-    for(i = 0; i < map->numvertexes; ++i)
+    for(i = 0; i < map->numVertexes; ++i)
         hits[i] = i;
 
-    qsort(hits, map->numvertexes, sizeof(uint), vertexCompare);
+    qsort(hits, map->numVertexes, sizeof(uint), vertexCompare);
 
     // Now mark them off.
-    for(i = 0; i < map->numvertexes - 1; ++i)
+    for(i = 0; i < map->numVertexes - 1; ++i)
     {
         // A duplicate?
         if(vertexCompare(hits + i, hits + i + 1) == 0)
@@ -315,9 +315,9 @@ static void findMissingFrontSidedefs(gamemap_t *map)
     uint        i;
 
     numMissingFronts = 0;
-    missingFronts = M_Calloc(map->numlines * sizeof(uint));
+    missingFronts = M_Calloc(map->numLines * sizeof(uint));
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         line_t     *li = &map->lines[i];
 
@@ -333,7 +333,7 @@ static void markSelfReferencingLinedefs(gamemap_t *map)
 {
     uint        i;
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         line_t     *li = &map->lines[i];
 
@@ -348,7 +348,7 @@ static void linkSSecsToSectors(gamemap_t *map)
 {
     uint        i;
 
-    for(i = 0; i < map->numsubsectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
         subsector_t *ssec = &map->subsectors[i];
         seg_t      **segp;
@@ -360,9 +360,9 @@ static void linkSSecsToSectors(gamemap_t *map)
         {
             seg_t      *seg = *segp;
 
-            if(!found && seg->sidedef)
+            if(!found && seg->sideDef)
             {
-                ssec->sector = seg->sidedef->sector;
+                ssec->sector = seg->sideDef->sector;
                 found = true;
             }
 
@@ -380,7 +380,7 @@ static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
     sector_t   *sec = &map->sectors[secIDX];
 
     count = 0;
-    for(i = 0; i < map->numsubsectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
         subsector_t *ssec = &map->subsectors[i];
         if(ssec->sector == sec)
@@ -391,14 +391,14 @@ static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
         Z_Malloc((count + 1) * sizeof(subsector_t*), PU_LEVELSTATIC, NULL);
 
     n = 0;
-    for(i = 0; i < map->numsubsectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
         subsector_t *ssec = &map->subsectors[i];
         if(ssec->sector == sec)
             sec->subsectors[n++] = ssec;
     }
     sec->subsectors[n] = NULL; // Terminate.
-    sec->subscount = count;
+    sec->subsCount = count;
 }
 
 /**
@@ -408,7 +408,7 @@ static void buildSectorSSecLists(gamemap_t *map)
 {
     uint        i;
 
-    for(i = 0; i < map->numsectors; ++i)
+    for(i = 0; i < map->numSectors; ++i)
     {
         hardenSectorSSecList(map, i);
     }
@@ -431,9 +431,9 @@ static void buildSectorLineLists(gamemap_t *map)
 
     // build line tables for each sector.
     lineLinksBlockSet = Z_BlockCreate(sizeof(linelink_t), 512, PU_STATIC);
-    sectorLineLinks = M_Calloc(sizeof(linelink_t*) * map->numsectors);
+    sectorLineLinks = M_Calloc(sizeof(linelink_t*) * map->numSectors);
     totallinks = 0;
-    for(i = 0, li = map->lines; i < map->numlines; ++i, li++)
+    for(i = 0, li = map->lines; i < map->numLines; ++i, li++)
     {
         uint        secIDX;
         linelink_t *link;
@@ -447,7 +447,7 @@ static void buildSectorLineLists(gamemap_t *map)
 
             link->next = sectorLineLinks[secIDX];
             sectorLineLinks[secIDX] = link;
-            li->L_frontsector->linecount++;
+            li->L_frontsector->lineCount++;
             totallinks++;
         }
 
@@ -460,7 +460,7 @@ static void buildSectorLineLists(gamemap_t *map)
 
             link->next = sectorLineLinks[secIDX];
             sectorLineLinks[secIDX] = link;
-            li->L_backsector->linecount++;
+            li->L_backsector->lineCount++;
             totallinks++;
         }
     }
@@ -470,30 +470,30 @@ static void buildSectorLineLists(gamemap_t *map)
     line_t    **linebuffer;
     line_t    **linebptr;
 
-    linebuffer = Z_Malloc((totallinks + map->numsectors) * sizeof(line_t*),
+    linebuffer = Z_Malloc((totallinks + map->numSectors) * sizeof(line_t*),
                           PU_LEVELSTATIC, 0);
     linebptr = linebuffer;
 
-    for(i = 0, sec = map->sectors; i < map->numsectors; ++i, sec++)
+    for(i = 0, sec = map->sectors; i < map->numSectors; ++i, sec++)
     {
         if(sectorLineLinks[i])
         {
             linelink_t *link = sectorLineLinks[i];
-            sec->Lines = linebptr;
+            sec->lines = linebptr;
             j = 0;
             while(link)
             {
-                sec->Lines[j++] = link->line;
+                sec->lines[j++] = link->line;
                 link = link->next;
             }
-            sec->Lines[j] = NULL; // terminate.
-            sec->linecount = j;
+            sec->lines[j] = NULL; // terminate.
+            sec->lineCount = j;
             linebptr += j + 1;
         }
         else
         {
-            sec->Lines = NULL;
-            sec->linecount = 0;
+            sec->lines = NULL;
+            sec->lineCount = 0;
         }
     }
     }
@@ -515,14 +515,14 @@ static void findSectorSSecGroups(sector_t *sec)
     if(!sec)
         return;
 
-    sec->subsgroupcount = 1;
-    sec->subsgroups =
-        Z_Malloc(sizeof(ssecgroup_t) * sec->subsgroupcount, PU_LEVEL, 0);
+    sec->subsGroupCount = 1;
+    sec->subsGroups =
+        Z_Malloc(sizeof(ssecgroup_t) * sec->subsGroupCount, PU_LEVEL, 0);
 
-    sec->subsgroups[0].linked =
-        Z_Malloc(sizeof(sector_t*) * sec->planecount, PU_LEVEL, 0);
-    for(i = 0; i < sec->planecount; ++i)
-        sec->subsgroups[0].linked[i] = NULL;
+    sec->subsGroups[0].linked =
+        Z_Malloc(sizeof(sector_t*) * sec->planeCount, PU_LEVEL, 0);
+    for(i = 0; i < sec->planeCount; ++i)
+        sec->subsGroups[0].linked[i] = NULL;
 }
 
 
@@ -538,21 +538,21 @@ static void updateSectorBounds(sector_t *sec)
     if(!sec)
         return;
 
-    bbox = sec->bbox;
+    bbox = sec->bBox;
 
-    if(!(sec->linecount > 0))
+    if(!(sec->lineCount > 0))
     {
-        memset(sec->bbox, 0, sizeof(sec->bbox));
+        memset(sec->bBox, 0, sizeof(sec->bBox));
         return;
     }
 
-    vtx = sec->Lines[0]->L_v1;
+    vtx = sec->lines[0]->L_v1;
     bbox[BOXLEFT] = bbox[BOXRIGHT]  = vtx->V_pos[VX];
     bbox[BOXTOP]  = bbox[BOXBOTTOM] = vtx->V_pos[VY];
 
-    for(i = 1; i < sec->linecount; ++i)
+    for(i = 1; i < sec->lineCount; ++i)
     {
-        vtx = sec->Lines[i]->L_v1;
+        vtx = sec->lines[i]->L_v1;
 
         if(vtx->V_pos[VX] < bbox[BOXLEFT])
             bbox[BOXLEFT]   = vtx->V_pos[VX];
@@ -570,11 +570,11 @@ static void updateSectorBounds(sector_t *sec)
  */
 void P_GetSectorBounds(sector_t *sec, float *min, float *max)
 {
-    min[VX] = sec->bbox[BOXLEFT];
-    min[VY] = sec->bbox[BOXBOTTOM];
+    min[VX] = sec->bBox[BOXLEFT];
+    min[VY] = sec->bBox[BOXBOTTOM];
 
-    max[VX] = sec->bbox[BOXRIGHT];
-    max[VY] = sec->bbox[BOXTOP];
+    max[VX] = sec->bBox[BOXRIGHT];
+    max[VY] = sec->bBox[BOXTOP];
 }
 
 static void finishSectors(gamemap_t *map)
@@ -586,7 +586,7 @@ static void finishSectors(gamemap_t *map)
     P_GetBlockmapBounds(map->blockMap, bmapOrigin, NULL);
     P_GetBlockmapDimensions(map->blockMap, bmapSize);
 
-    for(i = 0; i < map->numsectors; ++i)
+    for(i = 0; i < map->numSectors; ++i)
     {
         uint        k;
         float       min[2], max[2];
@@ -594,7 +594,7 @@ static void finishSectors(gamemap_t *map)
 
         findSectorSSecGroups(sec);
 
-        if(!(sec->linecount > 0))
+        if(!(sec->lineCount > 0))
         {   // Its a "benign" sector.
             // Send the game a status report (we don't need to do anything).
             if(gx.HandleMapObjectStatusReport)
@@ -608,19 +608,19 @@ static void finishSectors(gamemap_t *map)
         P_GetSectorBounds(sec, min, max);
 
         // Set the degenmobj_t to the middle of the bounding box
-        sec->soundorg.pos[VX] = (min[VX] + max[VX]) / 2;
-        sec->soundorg.pos[VY] = (min[VY] + max[VY]) / 2;
+        sec->soundOrg.pos[VX] = (min[VX] + max[VX]) / 2;
+        sec->soundOrg.pos[VY] = (min[VY] + max[VY]) / 2;
 
         // Set the z height of the sector sound origin
-        sec->soundorg.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
+        sec->soundOrg.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
 
         // Set the position of the sound origin for all plane sound origins.
         // Set target heights for all planes.
-        for(k = 0; k < sec->planecount; ++k)
+        for(k = 0; k < sec->planeCount; ++k)
         {
-            sec->planes[k]->soundorg.pos[VX] = sec->soundorg.pos[VX];
-            sec->planes[k]->soundorg.pos[VY] = sec->soundorg.pos[VY];
-            sec->planes[k]->soundorg.pos[VZ] = sec->planes[k]->height;
+            sec->planes[k]->soundOrg.pos[VX] = sec->soundOrg.pos[VX];
+            sec->planes[k]->soundOrg.pos[VY] = sec->soundOrg.pos[VY];
+            sec->planes[k]->soundOrg.pos[VZ] = sec->planes[k]->height;
 
             sec->planes[k]->target = sec->planes[k]->height;
         }
@@ -641,57 +641,57 @@ static void finishLineDefs(gamemap_t* map)
 
     VERBOSE2(Con_Message("Finalizing Linedefs...\n"));
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         ld = &map->lines[i];
 
-        if(!ld->sides[0]->segcount)
+        if(!ld->sides[0]->segCount)
             continue;
 
         startSeg = ld->sides[0]->segs[0];
-        endSeg = ld->sides[0]->segs[ld->sides[0]->segcount - 1];
+        endSeg = ld->sides[0]->segs[ld->sides[0]->segCount - 1];
         ld->v[0] = v[0] = startSeg->SG_v1;
         ld->v[1] = v[1] = endSeg->SG_v2;
-        ld->dx = v[1]->V_pos[VX] - v[0]->V_pos[VX];
-        ld->dy = v[1]->V_pos[VY] - v[0]->V_pos[VY];
+        ld->dX = v[1]->V_pos[VX] - v[0]->V_pos[VX];
+        ld->dY = v[1]->V_pos[VY] - v[0]->V_pos[VY];
 
         // Calculate the accurate length of each line.
-        ld->length = P_AccurateDistance(ld->dx, ld->dy);
+        ld->length = P_AccurateDistance(ld->dX, ld->dY);
         ld->angle = bamsAtan2((int) (ld->v[1]->V_pos[VY] - ld->v[0]->V_pos[VY]),
                       (int) (ld->v[1]->V_pos[VX] - ld->v[0]->V_pos[VX])) << FRACBITS;
 
-        if(!ld->dx)
-            ld->slopetype = ST_VERTICAL;
-        else if(!ld->dy)
-            ld->slopetype = ST_HORIZONTAL;
+        if(!ld->dX)
+            ld->slopeType = ST_VERTICAL;
+        else if(!ld->dY)
+            ld->slopeType = ST_HORIZONTAL;
         else
         {
-            if(ld->dy / ld->dx > 0)
-                ld->slopetype = ST_POSITIVE;
+            if(ld->dY / ld->dX > 0)
+                ld->slopeType = ST_POSITIVE;
             else
-                ld->slopetype = ST_NEGATIVE;
+                ld->slopeType = ST_NEGATIVE;
         }
 
         if(v[0]->V_pos[VX] < v[1]->V_pos[VX])
         {
-            ld->bbox[BOXLEFT]   = v[0]->V_pos[VX];
-            ld->bbox[BOXRIGHT]  = v[1]->V_pos[VX];
+            ld->bBox[BOXLEFT]   = v[0]->V_pos[VX];
+            ld->bBox[BOXRIGHT]  = v[1]->V_pos[VX];
         }
         else
         {
-            ld->bbox[BOXLEFT]   = v[1]->V_pos[VX];
-            ld->bbox[BOXRIGHT]  = v[0]->V_pos[VX];
+            ld->bBox[BOXLEFT]   = v[1]->V_pos[VX];
+            ld->bBox[BOXRIGHT]  = v[0]->V_pos[VX];
         }
 
         if(v[0]->V_pos[VY] < v[1]->V_pos[VY])
         {
-            ld->bbox[BOXBOTTOM] = v[0]->V_pos[VY];
-            ld->bbox[BOXTOP]    = v[1]->V_pos[VY];
+            ld->bBox[BOXBOTTOM] = v[0]->V_pos[VY];
+            ld->bBox[BOXTOP]    = v[1]->V_pos[VY];
         }
         else
         {
-            ld->bbox[BOXBOTTOM] = v[1]->V_pos[VY];
-            ld->bbox[BOXTOP]    = v[0]->V_pos[VY];
+            ld->bBox[BOXBOTTOM] = v[1]->V_pos[VY];
+            ld->bBox[BOXTOP]    = v[0]->V_pos[VY];
         }
     }
 }
@@ -732,20 +732,20 @@ static void updateMapBounds(gamemap_t *map)
 {
     uint        i;
 
-    memset(map->bbox, 0, sizeof(map->bbox));
-    for(i = 0; i < map->numsectors; ++i)
+    memset(map->bBox, 0, sizeof(map->bBox));
+    for(i = 0; i < map->numSectors; ++i)
     {
         sector_t   *sec = &map->sectors[i];
 
         if(i == 0)
         {
             // The first sector is used as is.
-            memcpy(map->bbox, sec->bbox, sizeof(map->bbox));
+            memcpy(map->bBox, sec->bBox, sizeof(map->bBox));
         }
         else
         {
             // Expand the bounding box.
-            M_JoinBoxes(map->bbox, sec->bbox);
+            M_JoinBoxes(map->bBox, sec->bBox);
         }
     }
 }
@@ -754,12 +754,12 @@ static void markUnclosedSectors(gamemap_t *map)
 {
     uint        i;
 
-    for(i = 0; i < map->numsectors; ++i)
+    for(i = 0; i < map->numSectors; ++i)
     {
         boolean     unclosed = false;
         sector_t   *sec = &map->sectors[i];
 
-        if(sec->linecount < 3)
+        if(sec->lineCount < 3)
         {
             unclosed = true;
         }
@@ -782,36 +782,36 @@ static void updateSSecMidPoint(subsector_t *sub)
     // Find the center point. First calculate the bounding box.
     ptr = sub->segs;
     vtx = &((*ptr)->SG_v1->v);
-    sub->bbox[0].pos[VX] = sub->bbox[1].pos[VX] = sub->midpoint.pos[VX] = vtx->pos[VX];
-    sub->bbox[0].pos[VY] = sub->bbox[1].pos[VY] = sub->midpoint.pos[VY] = vtx->pos[VY];
+    sub->bBox[0].pos[VX] = sub->bBox[1].pos[VX] = sub->midPoint.pos[VX] = vtx->pos[VX];
+    sub->bBox[0].pos[VY] = sub->bBox[1].pos[VY] = sub->midPoint.pos[VY] = vtx->pos[VY];
 
     *ptr++;
     while(*ptr)
     {
         vtx = &((*ptr)->SG_v1->v);
-        if(vtx->pos[VX] < sub->bbox[0].pos[VX])
-            sub->bbox[0].pos[VX] = vtx->pos[VX];
-        if(vtx->pos[VY] < sub->bbox[0].pos[VY])
-            sub->bbox[0].pos[VY] = vtx->pos[VY];
-        if(vtx->pos[VX] > sub->bbox[1].pos[VX])
-            sub->bbox[1].pos[VX] = vtx->pos[VX];
-        if(vtx->pos[VY] > sub->bbox[1].pos[VY])
-            sub->bbox[1].pos[VY] = vtx->pos[VY];
+        if(vtx->pos[VX] < sub->bBox[0].pos[VX])
+            sub->bBox[0].pos[VX] = vtx->pos[VX];
+        if(vtx->pos[VY] < sub->bBox[0].pos[VY])
+            sub->bBox[0].pos[VY] = vtx->pos[VY];
+        if(vtx->pos[VX] > sub->bBox[1].pos[VX])
+            sub->bBox[1].pos[VX] = vtx->pos[VX];
+        if(vtx->pos[VY] > sub->bBox[1].pos[VY])
+            sub->bBox[1].pos[VY] = vtx->pos[VY];
 
-        sub->midpoint.pos[VX] += vtx->pos[VX];
-        sub->midpoint.pos[VY] += vtx->pos[VY];
+        sub->midPoint.pos[VX] += vtx->pos[VX];
+        sub->midPoint.pos[VY] += vtx->pos[VY];
         *ptr++;
     }
 
-    sub->midpoint.pos[VX] /= sub->segcount; // num vertices.
-    sub->midpoint.pos[VY] /= sub->segcount;
+    sub->midPoint.pos[VX] /= sub->segCount; // num vertices.
+    sub->midPoint.pos[VY] /= sub->segCount;
 }
 
 static void prepareSubSectors(gamemap_t *map)
 {
     uint            i;
 
-    for(i = 0; i < map->numsubsectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
         subsector_t *ssec = &map->subsectors[i];
 
@@ -851,11 +851,11 @@ boolean MPE_End(void)
     // Call the game's setup routines.
     if(gx.SetupForMapData)
     {
-        // gx.SetupForMapData(DAM_THING, map->numthings);
-        gx.SetupForMapData(DAM_VERTEX, map->numvertexes);
-        gx.SetupForMapData(DAM_LINE, map->numlines);
-        gx.SetupForMapData(DAM_SIDE, map->numsides);
-        gx.SetupForMapData(DAM_SECTOR, map->numsectors);
+        // gx.SetupForMapData(DAM_THING, map->numThings);
+        gx.SetupForMapData(DAM_VERTEX, map->numVertexes);
+        gx.SetupForMapData(DAM_LINE, map->numLines);
+        gx.SetupForMapData(DAM_SIDE, map->numSides);
+        gx.SetupForMapData(DAM_SECTOR, map->numSectors);
     }
 
     // Build the vertex line owner rings.
@@ -1007,7 +1007,7 @@ uint MPE_SidedefCreate(uint sector, short flags,
     if(!editMapInited)
         return 0;
 
-    if(sector > map->numsectors)
+    if(sector > map->numSectors)
         return 0;
 
     s = createSide();
@@ -1056,13 +1056,13 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     if(!editMapInited)
         return 0;
 
-    if(frontSide > map->numsides)
+    if(frontSide > map->numSides)
         return 0;
-    if(backSide > map->numsides)
+    if(backSide > map->numSides)
         return 0;
-    if(v1 > map->numvertexes)
+    if(v1 > map->numVertexes)
         return 0;
-    if(v2 > map->numvertexes)
+    if(v2 > map->numVertexes)
         return 0;
     if(v1 == v2)
         return 0;
@@ -1076,7 +1076,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     if(front || back)
     {
         uint                i;
-        for(i = 0; i < map->numlines; ++i)
+        for(i = 0; i < map->numLines; ++i)
         {
             line_t             *other = map->lines[i];
 
@@ -1101,51 +1101,51 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     }
 
     l = createLine();
-    l->mapflags = mapflags;
+    l->mapFlags = mapflags;
     l->flags = flags;
     l->L_v1 = (v1 == 0? NULL : map->vertexes[v1-1]);
     l->L_v2 = (v2 == 0? NULL : map->vertexes[v2-1]);
 
-    l->dx = l->L_v2pos[VX] - l->L_v1pos[VX];
-    l->dy = l->L_v2pos[VY] - l->L_v1pos[VY];
-    l->length = P_AccurateDistance(l->dx, l->dy);
+    l->dX = l->L_v2pos[VX] - l->L_v1pos[VX];
+    l->dY = l->L_v2pos[VY] - l->L_v1pos[VY];
+    l->length = P_AccurateDistance(l->dX, l->dY);
 
     l->angle =
         bamsAtan2((int) (l->L_v2pos[VY] - l->L_v1pos[VY]),
                   (int) (l->L_v2pos[VX] - l->L_v1pos[VX])) << FRACBITS;
 
-    if(l->dx == 0)
-        l->slopetype = ST_VERTICAL;
-    else if(l->dy == 0)
-        l->slopetype = ST_HORIZONTAL;
+    if(l->dX == 0)
+        l->slopeType = ST_VERTICAL;
+    else if(l->dY == 0)
+        l->slopeType = ST_HORIZONTAL;
     else
     {
-        if(l->dy / l->dx > 0)
-            l->slopetype = ST_POSITIVE;
+        if(l->dY / l->dX > 0)
+            l->slopeType = ST_POSITIVE;
         else
-            l->slopetype = ST_NEGATIVE;
+            l->slopeType = ST_NEGATIVE;
     }
 
     if(l->L_v1pos[VX] < l->L_v2pos[VX])
     {
-        l->bbox[BOXLEFT]   = l->L_v1pos[VX];
-        l->bbox[BOXRIGHT]  = l->L_v2pos[VX];
+        l->bBox[BOXLEFT]   = l->L_v1pos[VX];
+        l->bBox[BOXRIGHT]  = l->L_v2pos[VX];
     }
     else
     {
-        l->bbox[BOXLEFT]   = l->L_v2pos[VX];
-        l->bbox[BOXRIGHT]  = l->L_v1pos[VX];
+        l->bBox[BOXLEFT]   = l->L_v2pos[VX];
+        l->bBox[BOXRIGHT]  = l->L_v1pos[VX];
     }
 
     if(l->L_v1pos[VY] < l->L_v2pos[VY])
     {
-        l->bbox[BOXBOTTOM] = l->L_v1pos[VY];
-        l->bbox[BOXTOP]    = l->L_v2pos[VY];
+        l->bBox[BOXBOTTOM] = l->L_v1pos[VY];
+        l->bBox[BOXTOP]    = l->L_v2pos[VY];
     }
     else
     {
-        l->bbox[BOXBOTTOM] = l->L_v1pos[VY];
-        l->bbox[BOXTOP]    = l->L_v2pos[VY];
+        l->bBox[BOXBOTTOM] = l->L_v1pos[VY];
+        l->bBox[BOXTOP]    = l->L_v2pos[VY];
     }
 
     l->L_frontside = front;
@@ -1175,10 +1175,10 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue,
     s->rgb[CR] = MINMAX_OF(0, red, 1);
     s->rgb[CG] = MINMAX_OF(0, green, 1);
     s->rgb[CB] = MINMAX_OF(0, blue, 1);
-    s->lightlevel = MINMAX_OF(0, lightlevel, 1);
+    s->lightLevel = MINMAX_OF(0, lightlevel, 1);
     s->buildData.warnedFacing = -1;
-    s->planecount = 2;
-    s->planes = M_Malloc(sizeof(plane_t*) * (s->planecount+1));
+    s->planeCount = 2;
+    s->planes = M_Malloc(sizeof(plane_t*) * (s->planeCount+1));
     for(i = 0; i < 2; ++i)
     {
         plane_t            *pln = M_Calloc(sizeof(plane_t));

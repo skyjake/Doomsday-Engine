@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,28 +71,28 @@ int R_PointOnSide(const float x, const float y, const node_t *node)
     float       dx, dy;
     float       left, right;
 
-    if(!node->dx)
+    if(!node->dX)
     {
         if(x <= node->x)
-            return (node->dy > 0? 1:0);
+            return (node->dY > 0? 1:0);
         else
-            return (node->dy < 0? 1:0);
+            return (node->dY < 0? 1:0);
     }
-    if(!node->dy)
+    if(!node->dY)
     {
         if(y <= node->y)
-            return (node->dx < 0? 1:0);
+            return (node->dX < 0? 1:0);
         else
-            return (node->dx > 0? 1:0);
+            return (node->dX > 0? 1:0);
     }
 
     dx = (x - node->x);
     dy = (y - node->y);
 
     // Try to quickly decide by looking at the signs.
-    if(node->dx < 0)
+    if(node->dX < 0)
     {
-        if(node->dy < 0)
+        if(node->dY < 0)
         {
             if(dx < 0)
             {
@@ -115,7 +115,7 @@ int R_PointOnSide(const float x, const float y, const node_t *node)
     }
     else
     {
-        if(node->dy < 0)
+        if(node->dY < 0)
         {
             if(dx < 0)
             {
@@ -137,8 +137,8 @@ int R_PointOnSide(const float x, const float y, const node_t *node)
         }
     }
 
-    left = node->dy * dx;
-    right = dy * node->dx;
+    left = node->dY * dx;
+    right = dy * node->dX;
 
     if(right < left)
         return 0;               // front side
@@ -282,11 +282,11 @@ line_t *R_GetLineForSide(const uint sideNumber)
     if(!sector)
         return NULL;
 
-    for(i = 0; i < sector->linecount; ++i)
-        if(sector->Lines[i]->L_frontside == side ||
-           sector->Lines[i]->L_backside == side)
+    for(i = 0; i < sector->lineCount; ++i)
+        if(sector->lines[i]->L_frontside == side ||
+           sector->lines[i]->L_backside == side)
         {
-            return sector->Lines[i];
+            return sector->lines[i];
         }
 
     return NULL;
@@ -309,9 +309,9 @@ boolean R_IsPointInSector(const float x, const float y,
     uint        i;
     boolean     isOdd = false;
 
-    for(i = 0; i < sector->linecount; ++i)
+    for(i = 0; i < sector->lineCount; ++i)
     {
-        line_t      *line = sector->Lines[i];
+        line_t      *line = sector->lines[i];
         vertex_t    *vtx[2];
 
         // Skip lines that aren't sector boundaries.
@@ -367,10 +367,10 @@ boolean R_IsPointInSector2(const float x, const float y,
         return false;
     }
 
-    for(i = 0; i < subsector->segcount; ++i)
+    for(i = 0; i < subsector->segCount; ++i)
     {
         vi = &subsector->segs[i]->SG_v1->v;
-        vj = &subsector->segs[(i + 1) % subsector->segcount]->SG_v1->v;
+        vj = &subsector->segs[(i + 1) % subsector->segCount]->SG_v1->v;
 
         if(((vi->pos[VY] - y) * (vj->pos[VX] - vi->pos[VX]) -
             (vi->pos[VX] - x) * (vj->pos[VY] - vi->pos[VY])) < 0)
@@ -433,12 +433,12 @@ sector_t *R_GetSectorForDegen(const void *degenmobj)
     {
         sec = SECTOR_PTR(i);
 
-        if(degenmobj == &sec->soundorg)
+        if(degenmobj == &sec->soundOrg)
             return sec;
         else
         {   // Check the planes of this sector
-            for(k = 0; k < sec->planecount; ++k)
-                if(degenmobj == &sec->planes[k]->soundorg)
+            for(k = 0; k < sec->planeCount; ++k)
+                if(degenmobj == &sec->planes[k]->soundOrg)
                 {
                     return sec;
                 }

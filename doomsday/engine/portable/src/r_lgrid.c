@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
@@ -61,7 +62,7 @@ typedef struct gridblock_s {
 
     // Color of the light:
     float       rgb[3];
-    float       oldrgb[3];  // Used instead of rgb if the lighting in this
+    float       oldRGB[3];  // Used instead of rgb if the lighting in this
                             // block has changed and we haven't yet done a
                             // a full grid update.
 } gridblock_t;
@@ -510,12 +511,12 @@ void LG_Init(void)
 
         VERBOSE2(Con_Message("  Sector %i: %i / %i\n", s, changedCount, count));
 
-        sector->changedblockcount = changedCount;
-        sector->blockcount = changedCount + count;
+        sector->changedBlockCount = changedCount;
+        sector->blockCount = changedCount + count;
 
-        if(sector->blockcount > 0)
+        if(sector->blockCount > 0)
         {
-            sector->blocks = Z_Malloc(sizeof(unsigned short) * sector->blockcount,
+            sector->blocks = Z_Malloc(sizeof(unsigned short) * sector->blockCount,
                                       PU_LEVELSTATIC, 0);
             for(x = 0, a = 0, b = changedCount; x < lgBlockWidth * lgBlockHeight;
                 ++x)
@@ -527,7 +528,7 @@ void LG_Init(void)
             }
 
             assert(a == changedCount);
-            //assert(b == info->blockcount);
+            //assert(b == info->blockCount);
         }
         else
         {
@@ -595,19 +596,19 @@ void LG_SectorChanged(sector_t *sector)
         return;
 
     // Mark changed blocks and contributors.
-    for(i = 0; i < sector->changedblockcount; ++i)
+    for(i = 0; i < sector->changedBlockCount; ++i)
     {
         n = sector->blocks[i];
         // The color will be recalculated.
         if(!(grid[n].flags & GBF_CHANGED))
-            memcpy(grid[n].oldrgb, grid[n].rgb, sizeof(float) * 3);
+            memcpy(grid[n].oldRGB, grid[n].rgb, sizeof(grid[n].oldRGB));
 
         for(j = 0; j < 3; ++j)
             grid[n].rgb[j] = 0;
 
         grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
     }
-    for(; i < sector->blockcount; ++i)
+    for(; i < sector->blockCount; ++i)
     {
         grid[sector->blocks[i]].flags |= GBF_CONTRIBUTOR;
     }
@@ -827,7 +828,7 @@ void LG_Update(void)
 
                     if(other->flags & GBF_CHANGED)
                     {
-                        LG_ApplySector(other, color, sector->lightlevel,
+                        LG_ApplySector(other, color, sector->lightLevel,
                                        factors[(b + 2)*5 + a + 2]/8, bias);
                     }
                 }
@@ -889,9 +890,9 @@ void LG_Evaluate(const float *point, float *color)
 
         if(block->flags & GBF_CHANGED)
         {   // We are waiting for an updated value, for now use the old.
-            color[0] = block->oldrgb[0];
-            color[1] = block->oldrgb[1];
-            color[2] = block->oldrgb[2];
+            color[0] = block->oldRGB[0];
+            color[1] = block->oldRGB[1];
+            color[2] = block->oldRGB[2];
         }
         else
         {
@@ -959,36 +960,36 @@ void LG_Debug(void)
     vy = MINMAX_OF(1, vy, lgBlockHeight - 2);
 
     // Go into screen projection mode.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
-    gl.Disable(DGL_TEXTURING);
+    DGL_Disable(DGL_TEXTURING);
 
     for(block = grid, y = 0; y < lgBlockHeight; ++y)
     {
-        gl.Begin(DGL_QUADS);
+        DGL_Begin(DGL_QUADS);
         for(x = 0; x < lgBlockWidth; ++x, ++block)
         {
             if(!block->sector)
                 continue;
 
             if(x == vx && y == vy && (blink & 16))
-                gl.Color3f(1, 0, 0);
+                DGL_Color3f(1, 0, 0);
             else
-                gl.Color3fv(block->rgb);
+                DGL_Color3fv(block->rgb);
 
-            gl.Vertex2f(x * lgDebugSize, y * lgDebugSize);
-            gl.Vertex2f(x * lgDebugSize + lgDebugSize, y * lgDebugSize);
-            gl.Vertex2f(x * lgDebugSize + lgDebugSize,
+            DGL_Vertex2f(x * lgDebugSize, y * lgDebugSize);
+            DGL_Vertex2f(x * lgDebugSize + lgDebugSize, y * lgDebugSize);
+            DGL_Vertex2f(x * lgDebugSize + lgDebugSize,
                         y * lgDebugSize + lgDebugSize);
-            gl.Vertex2f(x * lgDebugSize, y * lgDebugSize + lgDebugSize);
+            DGL_Vertex2f(x * lgDebugSize, y * lgDebugSize + lgDebugSize);
         }
-        gl.End();
+        DGL_End();
     }
 
-    gl.Enable(DGL_TEXTURING);
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_Enable(DGL_TEXTURING);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }

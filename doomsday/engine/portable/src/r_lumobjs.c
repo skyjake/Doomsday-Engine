@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -392,8 +392,8 @@ void LO_AddLuminous(mobj_t *mo)
         mo->light = 0;
 
     if(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
-         !(mo->ddflags & DDMF_DONTDRAW)) ||
-       (mo->ddflags & DDMF_ALWAYSLIT))
+         !(mo->ddFlags & DDMF_DONTDRAW)) ||
+       (mo->ddFlags & DDMF_ALWAYSLIT))
     {
         // Are the automatically calculated light values for fullbright
         // sprite frames in use?
@@ -404,7 +404,7 @@ void LO_AddLuminous(mobj_t *mo)
 
         // Determine the sprite frame lump of the source.
         sprdef = &sprites[mo->sprite];
-        sprframe = &sprdef->spriteframes[mo->frame];
+        sprframe = &sprdef->spriteFrames[mo->frame];
         if(sprframe->rotate)
         {
             lump =
@@ -421,9 +421,9 @@ void LO_AddLuminous(mobj_t *mo)
         GL_PrepareSprite(lump, 0);
 
         // Let's see what our light should look like.
-        cf.size = cf.flareSize = spritelumps[lump]->lumsize;
-        cf.xOffset = spritelumps[lump]->flarex;
-        cf.yOffset = spritelumps[lump]->flarey;
+        cf.size = cf.flareSize = spritelumps[lump]->lumSize;
+        cf.xOffset = spritelumps[lump]->flareX;
+        cf.yOffset = spritelumps[lump]->flareY;
 
         // X offset to the flare position.
         xOff = cf.xOffset - (float) spritelumps[lump]->width / 2.0f;
@@ -441,21 +441,21 @@ void LO_AddLuminous(mobj_t *mo)
             }
             if(def->offset[VY])
                 cf.yOffset = def->offset[VY];
-            if(def->halo_radius)
-                cf.flareSize = def->halo_radius;
+            if(def->haloRadius)
+                cf.flareSize = def->haloRadius;
             flags |= def->flags;
         }
 
         center =
-            spritelumps[lump]->topoffset -
-            mo->floorclip - R_GetBobOffset(mo) -
+            spritelumps[lump]->topOffset -
+            mo->floorClip - R_GetBobOffset(mo) -
             cf.yOffset;
 
         // Will the sprite be allowed to go inside the floor?
         mul =
-            mo->pos[VZ] + spritelumps[lump]->topoffset -
+            mo->pos[VZ] + spritelumps[lump]->topOffset -
             (float) spritelumps[lump]->height - mo->subsector->sector->SP_floorheight;
-        if(!(mo->ddflags & DDMF_NOFITBOTTOM) && mul < 0)
+        if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
         {
             // Must adjust.
             center -= mul;
@@ -476,13 +476,13 @@ void LO_AddLuminous(mobj_t *mo)
             flareSize = 8;
 
         // Does the mobj use a light scale?
-        if(mo->ddflags & DDMF_LIGHTSCALE)
+        if(mo->ddFlags & DDMF_LIGHTSCALE)
         {
             // Also reduce the size of the light according to
             // the scale flags. *Won't affect the flare.*
             mul =
                 1.0f -
-                ((mo->ddflags & DDMF_LIGHTSCALE) >> DDMF_LIGHTSCALESHIFT) /
+                ((mo->ddFlags & DDMF_LIGHTSCALE) >> DDMF_LIGHTSCALESHIFT) /
                 4.0f;
             radius *= mul;
         }
@@ -552,7 +552,7 @@ void LO_AddLuminous(mobj_t *mo)
                                   mo->pos[VZ] - viewZ);
 
             l->subsector = mo->subsector;
-            LUM_OMNI(l)->halofactor = mo->halofactor;
+            LUM_OMNI(l)->haloFactor = mo->haloFactor;
             LUM_OMNI(l)->zOff = center;
             LUM_OMNI(l)->xOff = xOff;
 
@@ -683,10 +683,10 @@ boolean LOIT_ContactFinder(line_t *line, void *data)
     }
 
     // Is this line inside the light's bounds?
-    if(line->bbox[BOXRIGHT]  <= light->box[0][VX] ||
-       line->bbox[BOXLEFT]   >= light->box[1][VX] ||
-       line->bbox[BOXTOP]    <= light->box[0][VY] ||
-       line->bbox[BOXBOTTOM] >= light->box[1][VY])
+    if(line->bBox[BOXRIGHT]  <= light->box[0][VX] ||
+       line->bBox[BOXLEFT]   >= light->box[1][VX] ||
+       line->bBox[BOXTOP]    <= light->box[0][VY] ||
+       line->bBox[BOXBOTTOM] >= light->box[1][VY])
     {
         // The line is not inside the light's bounds.
         return true;
@@ -704,8 +704,8 @@ boolean LOIT_ContactFinder(line_t *line, void *data)
     // Calculate distance to line.
     vtx = line->L_v1;
     distance =
-        ((vtx->V_pos[VY] - l->pos[VY]) * line->dx -
-         (vtx->V_pos[VX] - l->pos[VX]) * line->dy)
+        ((vtx->V_pos[VY] - l->pos[VY]) * line->dX -
+         (vtx->V_pos[VX] - l->pos[VX]) * line->dY)
          / line->length;
 
     if((source == line->L_frontsector && distance < 0) ||
@@ -809,10 +809,10 @@ static void spreadLumobjsInSubSector(subsector_t *subsector)
     int        *count;
     lumlink_t  *iter;
 
-    xl = X_TO_DLBX(FLT2FIX(subsector->bbox[0].pos[VX] - loMaxRadius));
-    xh = X_TO_DLBX(FLT2FIX(subsector->bbox[1].pos[VX] + loMaxRadius));
-    yl = Y_TO_DLBY(FLT2FIX(subsector->bbox[0].pos[VY] - loMaxRadius));
-    yh = Y_TO_DLBY(FLT2FIX(subsector->bbox[1].pos[VY] + loMaxRadius));
+    xl = X_TO_DLBX(FLT2FIX(subsector->bBox[0].pos[VX] - loMaxRadius));
+    xh = X_TO_DLBX(FLT2FIX(subsector->bBox[1].pos[VX] + loMaxRadius));
+    yl = Y_TO_DLBY(FLT2FIX(subsector->bBox[0].pos[VY] - loMaxRadius));
+    yh = Y_TO_DLBY(FLT2FIX(subsector->bBox[1].pos[VY] + loMaxRadius));
 
     // Are we completely outside the blockmap?
     if(xh < 0 || xl >= loBlockWidth || yh < 0 || yl >= loBlockHeight)
@@ -955,9 +955,9 @@ static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
 
         l = LO_GetLuminous(light);
         l->flags = LUMF_NOHALO | LUMF_CLIPPED;
-        l->pos[VX] = ssec->midpoint.pos[VX];
-        l->pos[VY] = ssec->midpoint.pos[VY];
-        l->pos[VZ] = pln->visheight;
+        l->pos[VX] = ssec->midPoint.pos[VX];
+        l->pos[VY] = ssec->midPoint.pos[VY];
+        l->pos[VZ] = pln->visHeight;
 
         LUM_PLANE(l)->normal[VX] = pln->PS_normal[VX];
         LUM_PLANE(l)->normal[VY] = pln->PS_normal[VY];
@@ -970,9 +970,9 @@ static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
                               l->pos[VZ] - viewZ);
 
         l->subsector = ssec;
-        l->color[CR] = pln->glowrgb[CR];
-        l->color[CG] = pln->glowrgb[CG];
-        l->color[CB] = pln->glowrgb[CB];
+        l->color[CR] = pln->glowRGB[CR];
+        l->color[CG] = pln->glowRGB[CG];
+        l->color[CB] = pln->glowRGB[CB];
 
         LUM_PLANE(l)->intensity = pln->glow;
         LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT, NULL);
@@ -1009,7 +1009,7 @@ BEGIN_PROF( PROF_DYN_INIT_ADD );
 
     for(i = 0, seciter = sectors; i < numsectors; seciter++, ++i)
     {
-        for(iter = seciter->mobjList; iter; iter = iter->snext)
+        for(iter = seciter->mobjList; iter; iter = iter->sNext)
         {
             LO_AddLuminous(iter);
         }
@@ -1149,7 +1149,7 @@ void LO_ClipBySight(uint ssecidx)
 
     V2_Set(eye, vx, vz);
 
-    num = ssec->poly->numsegs;
+    num = ssec->poly->numSegs;
     for(lumi = loSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
     {
         lumobj_t   *lobj = &lumi->lum;
@@ -1164,7 +1164,7 @@ void LO_ClipBySight(uint ssecidx)
                 seg_t      *seg = ssec->poly->segs[i];
 
                 // Ignore segs facing the wrong way.
-                if(seg->frameflags & SEGINF_FACINGFRONT)
+                if(seg->frameFlags & SEGINF_FACINGFRONT)
                 {
                     vec2_t      source;
 

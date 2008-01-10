@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1175,7 +1175,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_LINE_VALIDCOUNT, &p->validCount, args, 0);
             break;
         case DMU_FLAGS:
-            SetValue(DMT_LINE_MAPFLAGS, &p->mapflags, args, 0);
+            SetValue(DMT_LINE_MAPFLAGS, &p->mapFlags, args, 0);
             break;
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_LINE.\n",
@@ -1343,7 +1343,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SECTOR_RGB, &p->rgb[2], args, 0);
             break;
         case DMU_LIGHT_LEVEL:
-            SetValue(DMT_SECTOR_LIGHTLEVEL, &p->lightlevel, args, 0);
+            SetValue(DMT_SECTOR_LIGHTLEVEL, &p->lightLevel, args, 0);
             break;
         case DMU_VALID_COUNT:
             SetValue(DMT_SECTOR_VALIDCOUNT, &p->validCount, args, 0);
@@ -1364,7 +1364,7 @@ static int SetProperty(void* ptr, void* context)
         polyobj_t* p = ptr;
         if(args->modifiers & DMU_SEG_OF_POLYOBJ)
         {
-            if(args->prop < p->numsegs)
+            if(args->prop < p->numSegs)
             {
                 SetValue(DDVT_PTR, &p->segs[args->prop], args, 0);
                 break;
@@ -1372,7 +1372,7 @@ static int SetProperty(void* ptr, void* context)
             else
             {
                 Con_Error("SetProperty: Polyobj seg out of range (%i out of %i).\n",
-                          args->prop, p->numsegs);
+                          args->prop, p->numSegs);
             }
         }
 
@@ -1420,13 +1420,13 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DDVT_INT, &p->seqType, args, 0);
             break;
         case DMU_SEG_COUNT:
-            SetValue(DDVT_INT, &p->numsegs, args, 0);
+            SetValue(DDVT_INT, &p->numSegs, args, 0);
             break;
         case DMU_SEG_LIST:
             SetValue(DDVT_PTR, &p->segs, args, 0);
             break;
         case DMU_SPECIAL_DATA:
-            SetValue(DDVT_PTR, &p->specialdata, args, 0);
+            SetValue(DDVT_PTR, &p->specialData, args, 0);
             break;
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_POLYOBJ.\n",
@@ -1653,12 +1653,12 @@ static int GetProperty(void* ptr, void* context)
        (args->modifiers & DMU_LINE_OF_SECTOR))
     {
         sector_t* p = ptr;
-        if(args->prop >= p->linecount)
+        if(args->prop >= p->lineCount)
         {
             Con_Error("GetProperty: DMU_LINE_OF_SECTOR %i does not exist.\n",
                       args->prop);
         }
-        GetValue(DDVT_PTR, &p->Lines[args->prop], args, 0);
+        GetValue(DDVT_PTR, &p->lines[args->prop], args, 0);
         return false; // stop iteration
     }
 
@@ -1667,7 +1667,7 @@ static int GetProperty(void* ptr, void* context)
     {
         subsector_t* p = ptr;
         seg_t* segptr;
-        if(args->prop >= p->segcount)
+        if(args->prop >= p->segCount)
         {
             Con_Error("GetProperty: DMU_SEG_OF_SECTOR %i does not exist.\n",
                       args->prop);
@@ -1747,7 +1747,7 @@ static int GetProperty(void* ptr, void* context)
         }
         case DMU_PLANE_SOUND_ORIGIN:
         {
-            degenmobj_t *dmo = &p->soundorg;
+            degenmobj_t *dmo = &p->soundOrg;
             GetValue(DMT_PLANE_SOUNDORG, &dmo, args, 0);
             break;
         }
@@ -1787,7 +1787,7 @@ static int GetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_LIGHT_LEVEL:
-            GetValue(DMT_SECTOR_LIGHTLEVEL, &p->lightlevel, args, 0);
+            GetValue(DMT_SECTOR_LIGHTLEVEL, &p->lightLevel, args, 0);
             break;
         case DMU_COLOR:
             GetValue(DMT_SECTOR_RGB, &p->rgb[0], args, 0);
@@ -1805,16 +1805,16 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_SOUND_ORIGIN:
         {
-            degenmobj_t *dmo = &p->soundorg;
+            degenmobj_t *dmo = &p->soundOrg;
             GetValue(DMT_SECTOR_SOUNDORG, &dmo, args, 0);
             break;
         }
         case DMU_LINE_COUNT:
         {
             // FIXME:
-            //GetValue(DMT_SECTOR_LINECOUNT, &p->linecount, args, 0);
+            //GetValue(DMT_SECTOR_LINECOUNT, &p->lineCount, args, 0);
 
-            int val = (int) p->linecount;
+            int val = (int) p->lineCount;
             GetValue(DDVT_INT, &val, args, 0);
             break;
         }
@@ -2045,15 +2045,15 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SEG_OFFSET, &p->offset, args, 0);
             break;
         case DMU_SIDE:
-            GetValue(DMT_SEG_SIDEDEF, &p->sidedef, args, 0);
+            GetValue(DMT_SEG_SIDEDEF, &p->sideDef, args, 0);
             break;
         case DMU_LINE:
-            GetValue(DMT_SEG_LINEDEF, &p->linedef, args, 0);
+            GetValue(DMT_SEG_LINEDEF, &p->lineDef, args, 0);
             break;
         case DMU_FRONT_SECTOR:
         {
             sector_t *sec = NULL;
-            if(p->SG_frontsector && p->linedef)
+            if(p->SG_frontsector && p->lineDef)
                 sec = p->SG_frontsector;
             GetValue(DMT_SEG_SEC, &sec, args, 0);
             break;
@@ -2061,7 +2061,7 @@ static int GetProperty(void* ptr, void* context)
         case DMU_BACK_SECTOR:
         {
             sector_t *sec = NULL;
-            if(p->SG_backsector && p->linedef)
+            if(p->SG_backsector && p->lineDef)
                 sec = p->SG_backsector;
             GetValue(DMT_SEG_SEC, &p->SG_backsector, args, 0);
             break;
@@ -2110,10 +2110,10 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_VERTEX_POS, &p->L_v2pos[VY], args, 1);
             break;
         case DMU_DX:
-            GetValue(DMT_LINE_DX, &p->dx, args, 0);
+            GetValue(DMT_LINE_DX, &p->dX, args, 0);
             break;
         case DMU_DY:
-            GetValue(DMT_LINE_DY, &p->dy, args, 0);
+            GetValue(DMT_LINE_DY, &p->dY, args, 0);
             break;
         case DMU_LENGTH:
             GetValue(DDVT_FLOAT, &p->length, args, 0);
@@ -2122,7 +2122,7 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DDVT_ANGLE, &p->angle, args, 0);
             break;
         case DMU_SLOPE_TYPE:
-            GetValue(DMT_LINE_SLOPETYPE, &p->slopetype, args, 0);
+            GetValue(DMT_LINE_SLOPETYPE, &p->slopeType, args, 0);
             break;
         case DMU_FRONT_SECTOR:
         {
@@ -2137,7 +2137,7 @@ static int GetProperty(void* ptr, void* context)
             break;
         }
         case DMU_FLAGS:
-            GetValue(DMT_LINE_MAPFLAGS, &p->mapflags, args, 0);
+            GetValue(DMT_LINE_MAPFLAGS, &p->mapFlags, args, 0);
             break;
         case DMU_SIDE0:
             GetValue(DDVT_PTR, &p->L_frontside, args, 0);
@@ -2149,15 +2149,15 @@ static int GetProperty(void* ptr, void* context)
         case DMU_BOUNDING_BOX:
             if(args->valueType == DDVT_PTR)
             {
-                float* bbox = p->bbox;
+                float* bbox = p->bBox;
                 GetValue(DDVT_PTR, &bbox, args, 0);
             }
             else
             {
-                GetValue(DMT_LINE_BBOX, &p->bbox[0], args, 0);
-                GetValue(DMT_LINE_BBOX, &p->bbox[1], args, 1);
-                GetValue(DMT_LINE_BBOX, &p->bbox[2], args, 2);
-                GetValue(DMT_LINE_BBOX, &p->bbox[3], args, 3);
+                GetValue(DMT_LINE_BBOX, &p->bBox[0], args, 0);
+                GetValue(DMT_LINE_BBOX, &p->bBox[1], args, 1);
+                GetValue(DMT_LINE_BBOX, &p->bBox[2], args, 2);
+                GetValue(DMT_LINE_BBOX, &p->bBox[3], args, 3);
             }
             break;
         case DMU_VALID_COUNT:
@@ -2178,7 +2178,7 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SUBSECTOR_SECTOR, &p->sector, args, 0);
             break;
         case DMU_LIGHT_LEVEL:
-            GetValue(DMT_SECTOR_LIGHTLEVEL, &p->sector->lightlevel, args, 0);
+            GetValue(DMT_SECTOR_LIGHTLEVEL, &p->sector->lightLevel, args, 0);
             break;
         case DMT_MOBJS:
             GetValue(DMT_SECTOR_MOBJLIST, &p->sector->mobjList, args, 0);
@@ -2189,8 +2189,8 @@ static int GetProperty(void* ptr, void* context)
         case DMU_SEG_COUNT:
         {
             // FIXME:
-            //GetValue(DMT_SUBSECTOR_SEGCOUNT, &p->segcount, args, 0);
-            int val = (int) p->segcount;
+            //GetValue(DMT_SUBSECTOR_SEGCOUNT, &p->segCount, args, 0);
+            int val = (int) p->segCount;
             GetValue(DDVT_INT, &val, args, 0);
             break;
         }
@@ -2206,7 +2206,7 @@ static int GetProperty(void* ptr, void* context)
         polyobj_t* p = ptr;
         if(args->modifiers & DMU_SEG_OF_POLYOBJ)
         {
-            if(args->prop < p->numsegs)
+            if(args->prop < p->numSegs)
             {
                 GetValue(DDVT_PTR, &p->segs[args->prop], args, 0);
                 break;
@@ -2214,7 +2214,7 @@ static int GetProperty(void* ptr, void* context)
             else
             {
                 Con_Error("GetProperty: Polyobj seg out of range (%i out of %i).\n",
-                          args->prop, p->numsegs);
+                          args->prop, p->numSegs);
             }
         }
 
@@ -2252,7 +2252,7 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DDVT_PTR, &p->segs, args, 0);
             break;
         case DMU_SEG_COUNT:
-            GetValue(DDVT_INT, &p->numsegs, args, 0);
+            GetValue(DDVT_INT, &p->numSegs, args, 0);
             break;
         case DMU_CRUSH:
             GetValue(DDVT_BOOL, &p->crush, args, 0);
@@ -2261,7 +2261,7 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DDVT_INT, &p->seqType, args, 0);
             break;
         case DMU_SPECIAL_DATA:
-            GetValue(DDVT_PTR, &p->specialdata, args, 0);
+            GetValue(DDVT_PTR, &p->specialData, args, 0);
             break;
         default:
             Con_Error("GetProperty: DMU_POLYOBJ has no property %s.\n",

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,8 +52,8 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-float sightzstart;            // eye z of looker
-float topslope, bottomslope;  // slopes to top and bottom of target
+float sightStartZ;            // eye z of looker
+float topSlope, bottomSlope;  // slopes to top and bottom of target
 int sightcounts[3];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -81,19 +81,19 @@ boolean PTR_SightTraverse(intercept_t *in)
 
     if(li->L_frontsector->SP_floorheight != li->L_backsector->SP_floorheight)
     {
-        slope = (openbottom - sightzstart) / in->frac;
-        if(slope > bottomslope)
-            bottomslope = slope;
+        slope = (openbottom - sightStartZ) / in->frac;
+        if(slope > bottomSlope)
+            bottomSlope = slope;
     }
 
     if(li->L_frontsector->SP_ceilheight != li->L_backsector->SP_ceilheight)
     {
-        slope = (opentop - sightzstart) / in->frac;
-        if(slope < topslope)
-            topslope = slope;
+        slope = (opentop - sightStartZ) / in->frac;
+        if(slope < topSlope)
+            topSlope = slope;
     }
 
-    if(topslope <= bottomslope)
+    if(topSlope <= bottomSlope)
         return false; // Stop iteration.
 
     return true; // Continue iteration.
@@ -113,7 +113,8 @@ boolean PIT_CheckSightLine(line_t *line, void *data)
 
     P_MakeDivline(line, &dl);
     s[0] = P_PointOnDivlineSide(FIX2FLT(strace.pos[VX]), FIX2FLT(strace.pos[VY]), &dl);
-    s[1] = P_PointOnDivlineSide(FIX2FLT(strace.pos[VX] + strace.dx), FIX2FLT(strace.pos[VY] + strace.dy),
+    s[1] = P_PointOnDivlineSide(FIX2FLT(strace.pos[VX] + strace.dX),
+                                FIX2FLT(strace.pos[VY] + strace.dY),
                                 &dl);
     if(s[0] == s[1])
         return true; // Line isn't crossed, continue iteration.
@@ -171,8 +172,8 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
 
     strace.pos[VX] = FLT2FIX(origin[VX]);
     strace.pos[VY] = FLT2FIX(origin[VY]);
-    strace.dx = FLT2FIX(dest[VX] - origin[VX]);
-    strace.dy = FLT2FIX(dest[VY] - origin[VY]);
+    strace.dX = FLT2FIX(dest[VX] - origin[VX]);
+    strace.dY = FLT2FIX(dest[VY] - origin[VY]);
 
     // Points should never be out of bounds but check anyway.
     if(!(P_ToBlockmapBlockIdx(map->blockMap, originBlock, origin) &&
@@ -289,7 +290,7 @@ boolean P_CheckReject(sector_t *sec1, sector_t *sec2)
     uint        s1, s2;
     uint        pnum, bytenum, bitnum;
 
-    if(rejectmatrix != NULL)
+    if(rejectMatrix != NULL)
     {
         // Determine subsector entries in REJECT table.
         s1 = GET_SECTOR_IDX(sec1);
@@ -299,7 +300,7 @@ boolean P_CheckReject(sector_t *sec1, sector_t *sec2)
         bitnum = 1 << (pnum & 7);
 
         // Check in REJECT table.
-        if(rejectmatrix[bytenum] & bitnum)
+        if(rejectMatrix[bytenum] & bitnum)
         {
             sightcounts[0]++;
             // Can't possibly be connected.
@@ -328,16 +329,16 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
     if(!P_CheckReject(t1->subsector->sector, t2->subsector->sector))
         return false;
 
-    if(t2->dplayer && t2->dplayer->flags & DDPF_CAMERA)
+    if(t2->dPlayer && t2->dPlayer->flags & DDPF_CAMERA)
         return false; // Cameramen don't exist!
 
     // Check precisely.
-    sightzstart = t1->pos[VZ];
-    if(!(t1->dplayer && t1->dplayer->flags & DDPF_CAMERA))
-        sightzstart += t1->height + -(t1->height / 4);
+    sightStartZ = t1->pos[VZ];
+    if(!(t1->dPlayer && t1->dPlayer->flags & DDPF_CAMERA))
+        sightStartZ += t1->height + -(t1->height / 4);
 
-    topslope = t2->pos[VZ] + t2->height - sightzstart;
-    bottomslope = t2->pos[VZ] - sightzstart;
+    topSlope = t2->pos[VZ] + t2->height - sightStartZ;
+    bottomSlope = t2->pos[VZ] - sightStartZ;
 
     return P_SightPathTraverse(t1->pos[VX], t1->pos[VY],
                                t2->pos[VX], t2->pos[VY]);
@@ -345,9 +346,9 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
 
 boolean P_CheckLineSight(float from[3], float to[3])
 {
-    sightzstart = from[VZ];
-    topslope = to[VZ] + 1 - sightzstart;
-    bottomslope = to[VZ] - 1 - sightzstart;
+    sightStartZ = from[VZ];
+    topSlope = to[VZ] + 1 - sightStartZ;
+    bottomSlope = to[VZ] - 1 - sightStartZ;
 
     return P_SightPathTraverse(from[VX], from[VY], to[VX], to[VY]);
 }

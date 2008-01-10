@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * net_ping.c: Pinging Clients and the Server
  *
  * Warning: This is not a very accurate ping.
@@ -171,7 +172,7 @@ D_CMD(Ping)
     }
     // Check that the given parameters are valid.
     if(count <= 0 || count > MAX_PINGS || dest < 0 || dest >= MAXPLAYERS ||
-       dest == consoleplayer || (dest && !players[dest].ingame))
+       dest == consoleplayer || (dest && !players[dest].inGame))
         return false;
 
     Net_SendPing(dest, count);

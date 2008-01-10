@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -140,7 +140,7 @@ boolean Demo_BeginRecording(char *fileName, int playerNum)
 
     // Is a demo already being recorded for this client?
     if(cl->recording || playback || (isDedicated && !playerNum) ||
-       !players[playerNum].ingame)
+       !players[playerNum].inGame)
         return false;
 
     // Compose the real file name.
@@ -440,7 +440,7 @@ void Demo_WriteLocalCamera(int plnum)
 
     Msg_Begin(clients[plnum].recordPaused ? PKT_DEMOCAM_RESUME : PKT_DEMOCAM);
     // Flags.
-    flags = (mo->pos[VZ] <= mo->floorz ? LCAMF_ONGROUND : 0)  // On ground?
+    flags = (mo->pos[VZ] <= mo->floorZ ? LCAMF_ONGROUND : 0)  // On ground?
         | (incfov ? LCAMF_FOV : 0);
     if(players[plnum].flags & DDPF_CAMERA)
     {
@@ -463,7 +463,7 @@ void Demo_WriteLocalCamera(int plnum)
     Msg_WriteByte(z >> 8);
 
     Msg_WriteShort(mo->angle /*players[plnum].clAngle*/ >> 16); /* $unifiedangles */
-    Msg_WriteShort(players[plnum].lookdir / 110 * DDMAXSHORT /* $unifiedangles */);
+    Msg_WriteShort(players[plnum].lookDir / 110 * DDMAXSHORT /* $unifiedangles */);
     // Field of view is optional.
     if(incfov)
     {
@@ -530,7 +530,7 @@ void Demo_ReadLocalCamera(void)
         /*pl->clAngle = dang;
         pl->clLookDir = dlook;*/
         pl->mo->angle = dang;
-        pl->lookdir = dlook;
+        pl->lookDir = dlook;
         /* $unifiedangles */
         viewangleDelta = 0;
         lookdirDelta = 0;
@@ -538,7 +538,7 @@ void Demo_ReadLocalCamera(void)
     else
     {
         viewangleDelta = (dang - pl->mo->angle) / intertics;
-        lookdirDelta = (dlook - pl->lookdir) / intertics;
+        lookdirDelta = (dlook - pl->lookDir) / intertics;
         /* $unifiedangles */
     }
 
@@ -581,7 +581,7 @@ void Demo_Ticker(timespan_t time)
     if(playback)
     {
         pl->mo->angle += viewangleDelta;
-        pl->lookdir += lookdirDelta;
+        pl->lookDir += lookdirDelta;
         /* $unifiedangles */
         // Move player (i.e. camera).
         Cl_MoveLocalPlayer(posDelta[VX], posDelta[VY], demoFrameZ + demoZ,
@@ -592,7 +592,7 @@ void Demo_Ticker(timespan_t time)
     else
     {
         for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].ingame && clients[i].recording &&
+            if(players[i].inGame && clients[i].recording &&
                !clients[i].recordPaused &&
                ++writeInfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
             {

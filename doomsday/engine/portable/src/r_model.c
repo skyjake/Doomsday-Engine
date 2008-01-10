@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -688,7 +688,7 @@ static modeldef_t *GetStateModel(state_t *st, int select)
         // Choose the correct selector, or selector zero if the given
         // one not available.
         found = false;
-        for(iter = modef; iter && !found; iter = iter->selectnext)
+        for(iter = modef; iter && !found; iter = iter->selectNext)
             if(iter->select == mosel)
             {
                 modef = iter;
@@ -733,8 +733,8 @@ float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
     // World time animation?
     if((*modef)->flags & MFF_WORLD_TIME_ANIM)
     {
-        float   duration = (*modef)->interrange[0];
-        float   offset = (*modef)->interrange[1];
+        float   duration = (*modef)->interRange[0];
+        float   offset = (*modef)->interRange[1];
 
         // Validate/modify the values.
         if(duration == 0)
@@ -753,7 +753,7 @@ float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
     }
 /*
 #if _DEBUG
-if(mo->dplayer)
+if(mo->dPlayer)
     Con_Printf("itp:%f mot:%i stt:%i\n", interp, mo->tics, st->tics);
 #endif
 */
@@ -762,36 +762,36 @@ if(mo->dplayer)
     // than interrange.
 
     // Scan interlinks.
-    while((*modef)->internext && (*modef)->internext->intermark <= interp)
-        *modef = (*modef)->internext;
+    while((*modef)->interNext && (*modef)->interNext->interMark <= interp)
+        *modef = (*modef)->interNext;
 
     if(!worldTime)
     {
         // Scale to the modeldef's interpolation range.
         interp =
-            (*modef)->interrange[0] + interp * ((*modef)->interrange[1] -
-                                                (*modef)->interrange[0]);
+            (*modef)->interRange[0] + interp * ((*modef)->interRange[1] -
+                                                (*modef)->interRange[0]);
     }
 
     // What would be the next model? Check interlinks first.
-    if((*modef)->internext)
+    if((*modef)->interNext)
     {
-        *nextmodef = (*modef)->internext;
+        *nextmodef = (*modef)->interNext;
     }
     else if(worldTime)
     {
         *nextmodef = GetStateModel(st, mo->selector);
     }
-    else if(st->nextstate > 0)  // Check next state.
+    else if(st->nextState > 0)  // Check next state.
     {
         int         max;
         boolean     foundNext;
         state_t    *it;
 
         // Find the appropriate state based on interrange.
-        it = states + st->nextstate;
+        it = states + st->nextState;
         foundNext = false;
-        if((*modef)->interrange[1] < 1)
+        if((*modef)->interRange[1] < 1)
         {
             boolean     stopScan;
 
@@ -802,23 +802,23 @@ if(mo->dplayer)
             max = 20; // Let's not be here forever...
             while(!stopScan)
             {
-                if(!((!it->model || GetStateModel(it, mo->selector)->interrange[0] > 0) &&
-                     it->nextstate > 0))
+                if(!((!it->model || GetStateModel(it, mo->selector)->interRange[0] > 0) &&
+                     it->nextState > 0))
                 {
                     stopScan = true;
                 }
                 else
                 {
                     // Scan interlinks, then go to the next state.
-                    if((mdit = GetStateModel(it, mo->selector)) && mdit->internext)
+                    if((mdit = GetStateModel(it, mo->selector)) && mdit->interNext)
                     {
                         boolean isDone = false;
                         while(!isDone)
                         {
-                            mdit = mdit->internext;
+                            mdit = mdit->interNext;
                             if(mdit)
                             {
-                                if(mdit->interrange[0] <= 0)    // A new beginning?
+                                if(mdit->interRange[0] <= 0)    // A new beginning?
                                 {
                                     *nextmodef = mdit;
                                     foundNext = true;
@@ -838,7 +838,7 @@ if(mo->dplayer)
                     }
                     else
                     {
-                        it = states + it->nextstate;
+                        it = states + it->nextState;
                     }
                 }
 
@@ -930,11 +930,11 @@ static void R_ScaleModelToSprite(modeldef_t *mf, int sprite, int frame)
     spritedef_t *spr = sprites + sprite;
     int         lump, off;
 
-    if(!spr->numframes || spr->spriteframes == NULL)
+    if(!spr->numFrames || spr->spriteFrames == NULL)
         return;
 
-    lump = spr->spriteframes[frame].lump[0];
-    off = spritelumps[lump]->topoffset - spritelumps[lump]->height;
+    lump = spr->spriteFrames[frame].lump[0];
+    off = spritelumps[lump]->topOffset - spritelumps[lump]->height;
     if(off < 0)
         off = 0;
     R_ScaleModel(mf, spritelumps[lump]->height, off);
@@ -1011,18 +1011,18 @@ static modeldef_t *R_GetIDModelDef(const char *id)
  * Create a new modeldef or find an existing one. There can be only one
  * model definition associated with a state/intermark pair.
  */
-static modeldef_t *R_GetModelDef(int state, float intermark, int select)
+static modeldef_t *R_GetModelDef(int state, float interMark, int select)
 {
-    int         i;
-    modeldef_t *md;
+    int             i;
+    modeldef_t     *md;
 
-    if(state < 0 || state >= count_states.num)
-        return NULL;            // Not a valid state.
+    if(state < 0 || state >= countStates.num)
+        return NULL; // Not a valid state.
 
     // First try to find an existing modef.
     for(i = 0; i < numModelDefs; ++i)
         if(modefs[i].state == &states[state] &&
-           modefs[i].intermark == intermark && modefs[i].select == select)
+           modefs[i].interMark == interMark && modefs[i].select == select)
         {
             // Models are loaded in reverse order; this one already has
             // a model.
@@ -1038,7 +1038,7 @@ static modeldef_t *R_GetModelDef(int state, float intermark, int select)
 
     // Set initial data.
     md->state = &states[state];
-    md->intermark = intermark;
+    md->interMark = interMark;
     md->select = select;
     return md;
 }
@@ -1054,7 +1054,7 @@ static modeldef_t *R_GetModelDef(int state, float intermark, int select)
 static void R_SetupModel(ded_model_t *def)
 {
     modeldef_t *modef;
-    int         model_scope_flags = def->flags | defs.model_flags;
+    int         model_scope_flags = def->flags | defs.modelFlags;
     ded_submodel_t *subdef;
     submodeldef_t *sub;
     int         i, k, statenum = Def_GetStateNum(def->state);
@@ -1071,7 +1071,7 @@ static void R_SetupModel(ded_model_t *def)
         }
 
         modef =
-            R_GetModelDef(statenum + def->off, def->intermark, def->selector);
+            R_GetModelDef(statenum + def->off, def->interMark, def->selector);
 
         if(!modef)
             return;             // Can't get a modef, quit!
@@ -1086,16 +1086,16 @@ static void R_SetupModel(ded_model_t *def)
         modef->offset[i] = def->offset[i];
         modef->scale[i] = def->scale[i];
     }
-    modef->offset[VY] += defs.model_offset; // Common Y axis offset.
-    modef->scale[VY] *= defs.model_scale;   // Common Y axis scaling.
+    modef->offset[VY] += defs.modelOffset; // Common Y axis offset.
+    modef->scale[VY] *= defs.modelScale;   // Common Y axis scaling.
     modef->resize = def->resize;
-    modef->skintics = def->skintics;
+    modef->skinTics = def->skinTics;
     for(i = 0; i < 2; ++i)
     {
-        modef->interrange[i] = def->interrange[i];
+        modef->interRange[i] = def->interRange[i];
     }
-    if(modef->skintics < 1)
-        modef->skintics = 1;
+    if(modef->skinTics < 1)
+        modef->skinTics = 1;
 
     // Submodels.
     for(i = 0, subdef = def->sub, sub = modef->sub; i < MAX_FRAME_MODELS;
@@ -1107,37 +1107,37 @@ static void R_SetupModel(ded_model_t *def)
             continue;
 
         sub->frame = R_ModelFrameNumForName(sub->model, subdef->frame);
-        sub->framerange = subdef->framerange;
+        sub->frameRange = subdef->frameRange;
         // Frame range must always be greater than zero.
-        if(sub->framerange < 1)
-            sub->framerange = 1;
+        if(sub->frameRange < 1)
+            sub->frameRange = 1;
 
         // Submodel-specific flags cancel out model-scope flags!
         sub->flags = model_scope_flags ^ subdef->flags;
-        if(subdef->skinfilename.path[0])
+        if(subdef->skinFilename.path[0])
         {
             // A specific file name has been given for the skin.
             sub->skin =
                 R_NewModelSkin(modellist[sub->model],
-                               subdef->skinfilename.path);
+                               subdef->skinFilename.path);
         }
         else
         {
             sub->skin = subdef->skin;
         }
 
-        sub->skinrange = subdef->skinrange;
+        sub->skinRange = subdef->skinRange;
         // Skin range must always be greater than zero.
-        if(sub->skinrange < 1)
-            sub->skinrange = 1;
+        if(sub->skinRange < 1)
+            sub->skinRange = 1;
 
         // Offset within the model.
         for(k = 0; k < 3; ++k)
             sub->offset[k] = subdef->offset[k];
 
         sub->alpha = (byte) (subdef->alpha * 255);
-        sub->shinyskin =
-            R_RegisterSkin(subdef->shinyskin, subdef->filename.path, NULL);
+        sub->shinySkin =
+            R_RegisterSkin(subdef->shinySkin, subdef->filename.path, NULL);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
@@ -1155,7 +1155,7 @@ static void R_SetupModel(ded_model_t *def)
     else if(modef->state && modef->sub[0].flags & MFF_AUTOSCALE)
     {
         int     sprNum = Def_GetSpriteNum(def->sprite.id);
-        int     sprFrame = def->spriteframe;
+        int     sprFrame = def->spriteFrame;
 
         if(sprNum < 0)          // No sprite ID given?
         {
@@ -1177,7 +1177,7 @@ static void R_SetupModel(ded_model_t *def)
         {
             modeldef_t *other = (modeldef_t *) modef->state->model;
 
-            if((modef->intermark <= other->intermark    // Should never be ==
+            if((modef->interMark <= other->interMark // Should never be ==
                 && modef->select == other->select) || modef->select < other->select)    // Smallest selector?
                 modef->state->model = modef;
         }
@@ -1193,25 +1193,25 @@ static void R_SetupModel(ded_model_t *def)
             // Apply the various scalings and offsets.
             for(k = 0; k < 3; ++k)
             {
-                modef->ptcoffset[i][k] =
+                modef->ptcOffset[i][k] =
                     ((max[k] + min[k]) / 2 + sub->offset[k]) * modef->scale[k] +
                     modef->offset[k];
             }
         }
         else
         {
-            memset(modef->ptcoffset[i], 0, sizeof(modef->ptcoffset[i]));
+            memset(modef->ptcOffset[i], 0, sizeof(modef->ptcOffset[i]));
         }
     }
 
     // Calculate visual radius for shadows.
-    if(def->shadowradius)
+    if(def->shadowRadius)
     {
-        modef->visualradius = def->shadowradius;
+        modef->visualRadius = def->shadowRadius;
     }
     else
     {
-        modef->visualradius = R_GetModelVisualRadius(modef);
+        modef->visualRadius = R_GetModelVisualRadius(modef);
     }
 }
 
@@ -1251,7 +1251,7 @@ void R_InitModels(void)
     numModelDefs = 0;
 
     // Clear the modef pointers of all States.
-    for(i = 0; i < count_states.num; ++i)
+    for(i = 0; i < countStates.num; ++i)
         states[i].model = NULL;
 
     // Read in the model files and their data, 'n stuff.
@@ -1274,14 +1274,14 @@ void R_InitModels(void)
         {
             // Same state and a bigger order are the requirements.
             if(other->state == me->state && other->def > me->def    // Defined after me.
-               && other->intermark > me->intermark &&
-               other->intermark < minmark)
+               && other->interMark > me->interMark &&
+               other->interMark < minmark)
             {
-                minmark = other->intermark;
+                minmark = other->interMark;
                 closest = other;
             }
         }
-        me->internext = closest;
+        me->interNext = closest;
     }
 
     // Create selectlinks.
@@ -1295,13 +1295,13 @@ void R_InitModels(void)
             // Same state and a bigger order are the requirements.
             if(other->state == me->state && other->def > me->def    // Defined after me.
                && other->select > me->select && other->select < minsel &&
-               other->intermark >= me->intermark)
+               other->interMark >= me->interMark)
             {
                 minsel = other->select;
                 closest = other;
             }
         }
-        me->selectnext = closest;
+        me->selectNext = closest;
 /*
 #if _DEBUG
 if(closest)
@@ -1427,7 +1427,7 @@ void R_PrecacheSkinsForMobj(mobj_t *mo)
             continue;
         if(mo->type < 0 || mo->type >= defs.count.mobjs.num)
             continue;           // Hmm?
-        if(stateowners[modef->state - states] != mobjinfo + mo->type)
+        if(stateOwners[modef->state - states] != &mobjInfo[mo->type])
             continue;
 
         R_PrecacheModelSkins(modef);

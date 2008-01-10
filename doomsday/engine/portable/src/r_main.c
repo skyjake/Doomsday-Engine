@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@
 #include <assert.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
@@ -78,7 +79,7 @@ float   viewX, viewY, viewZ;
 float   viewFrontVec[3], viewUpVec[3], viewSideVec[3];
 float   viewXOffset = 0, viewYOffset = 0, viewZOffset = 0;
 angle_t viewAngle;
-float   viewPitch;              // player->lookdir, global version
+float   viewPitch;              // player->lookDir, global version
 float   viewCos, viewSin;
 ddplayer_t *viewPlayer;
 boolean setSizeNeeded;
@@ -193,10 +194,10 @@ void R_Update(void)
     S_Reset();
 
     GL_InitVarFont();
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
     GL_TotalReset(true, false, false);
     GL_TotalReset(false, false, false);    // Bring GL back online (no lightmaps, flares yet).
     R_UpdateData();
@@ -213,15 +214,15 @@ void R_Update(void)
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         // States have changed, the states are unknown.
-        players[i].psprites[0].stateptr = players[i].psprites[1].stateptr =
+        players[i].pSprites[0].statePtr = players[i].pSprites[1].statePtr =
             NULL;
     }
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 
     GL_ShutdownVarFont();
 
@@ -301,7 +302,7 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
 
     /* $unifiedangles */
     view->angle = player->mo->angle + viewAngleOffset;
-    view->pitch = player->lookdir;
+    view->pitch = player->lookDir;
     view->pos[VX] = player->mo->pos[VX] + viewXOffset;
     view->pos[VY] = player->mo->pos[VY] + viewYOffset;
     view->pos[VZ] = player->viewZ + viewZOffset;
@@ -328,14 +329,14 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
     // Cameras are not restricted.
     if(!(player->flags & DDPF_CAMERA))
     {
-        if(view->pos[VZ] > player->mo->ceilingz - 4)
+        if(view->pos[VZ] > player->mo->ceilingZ - 4)
         {
-            view->pos[VZ] = player->mo->ceilingz - 4;
+            view->pos[VZ] = player->mo->ceilingZ - 4;
         }
 
-        if(view->pos[VZ] < player->mo->floorz + 4)
+        if(view->pos[VZ] < player->mo->floorZ + 4)
         {
-            view->pos[VZ] = player->mo->floorz + 4;
+            view->pos[VZ] = player->mo->floorZ + 4;
         }
     }
 }
@@ -399,7 +400,7 @@ void R_SetupFrame(ddplayer_t *player)
     viewer_t    sharpView, smoothView;
 
     // Reset the DGL triangle counter.
-    gl.GetInteger(DGL_POLY_COUNT);
+    DGL_GetInteger(DGL_POLY_COUNT);
 
     viewPlayer = player;
     R_GetSharpView(&sharpView, viewPlayer);
@@ -550,12 +551,12 @@ void R_RenderPlayerView(ddplayer_t *player)
     // Hide the viewPlayer's mobj?
     if(!(player->flags & DDPF_CHASECAM))
     {
-        oldFlags = player->mo->ddflags;
-        player->mo->ddflags |= DDMF_DONTDRAW;
+        oldFlags = player->mo->ddFlags;
+        player->mo->ddFlags |= DDMF_DONTDRAW;
     }
     // Go to wireframe mode?
     if(renderWireframe)
-        gl.Enable(DGL_WIREFRAME_MODE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // GL is in 3D transformation state only during the frame.
     GL_SwitchTo3DState(true);
@@ -565,10 +566,10 @@ void R_RenderPlayerView(ddplayer_t *player)
 
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
-        gl.Disable(DGL_WIREFRAME_MODE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     Rend_DrawPlayerSprites();   // If the 2D versions are needed.
     if(renderWireframe)
-        gl.Enable(DGL_WIREFRAME_MODE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Fullscreen viewport.
     GL_Restore2DState(2);
@@ -584,17 +585,17 @@ void R_RenderPlayerView(ddplayer_t *player)
 
     // Back from wireframe mode?
     if(renderWireframe)
-        gl.Disable(DGL_WIREFRAME_MODE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Now we can show the viewPlayer's mobj again.
     if(!(player->flags & DDPF_CHASECAM))
-        player->mo->ddflags = oldFlags;
+        player->mo->ddFlags = oldFlags;
 
     // Should we be counting triangles?
     if(rendInfoTris)
     {
         // This count includes all triangles drawn since R_SetupFrame.
-        i = gl.GetInteger(DGL_POLY_COUNT);
+        i = DGL_GetInteger(DGL_POLY_COUNT);
         Con_Printf("Tris: %-4i (Mdl=%-4i)\n", i, modelTriCount);
         modelTriCount = 0;
     }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,7 +74,7 @@ void R_SetupSkyModels(ded_mapinfo_t *info)
     // The normal sphere is used if no models will be set up.
     skyModelsInited = false;
 
-    for(i = 0, def = info->sky_models, sky = skyModels; i < NUM_SKY_MODELS;
+    for(i = 0, def = info->skyModels, sky = skyModels; i < NUM_SKY_MODELS;
         ++i, def++, sky++)
     {
         // Is the model ID set?
@@ -85,7 +85,7 @@ void R_SetupSkyModels(ded_mapinfo_t *info)
         skyModelsInited = true;
 
         sky->def = def;
-        sky->maxTimer = (int) (TICSPERSEC * def->frame_interval);
+        sky->maxTimer = (int) (TICSPERSEC * def->frameInterval);
         sky->yaw = def->yaw;
         sky->frame = sky->model->sub[0].frame;
     }
@@ -127,7 +127,7 @@ void R_SkyTicker(void)
             continue;
 
         // Turn the model.
-        sky->yaw += sky->def->yaw_speed / TICSPERSEC;
+        sky->yaw += sky->def->yawSpeed / TICSPERSEC;
 
         // Is it time to advance to the next frame?
         if(sky->maxTimer > 0 && ++sky->timer >= sky->maxTimer)

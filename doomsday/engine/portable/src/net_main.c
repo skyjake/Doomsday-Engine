@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #include <stdlib.h>             // for atoi()
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_edit.h"
 #include "de_system.h"
@@ -329,11 +330,11 @@ void Net_ResetTimer(void)
 }
 
 /**
- * @return      @c true, if the specified player is a real, local player.
+ * @return          @c true, if the specified player is a real, local player.
  */
 boolean Net_IsLocalPlayer(int pNum)
 {
-	return players[pNum].ingame && (players[pNum].flags & DDPF_LOCAL);
+	return players[pNum].inGame && (players[pNum].flags & DDPF_LOCAL);
 }
 
 /**
@@ -472,7 +473,7 @@ static void Net_DoUpdate(void)
         Msg_Begin(PKT_COORDS);
         Msg_WriteShort((short) mo->pos[VX]);
         Msg_WriteShort((short) mo->pos[VY]);
-        if(mo->pos[VZ] == mo->floorz)
+        if(mo->pos[VZ] == mo->floorZ)
         {
             // This'll keep us on the floor even in fast moving sectors.
             Msg_WriteShort(DDMININT >> 16);
@@ -599,7 +600,7 @@ void Net_InitGame(void)
     // Netgame is true when we're aware of the network (i.e. other players).
     netgame = false;
 
-    players[0].ingame = true;
+    players[0].inGame = true;
     players[0].flags |= DDPF_LOCAL;
     clients[0].id = clientID;
     clients[0].ready = true;
@@ -644,7 +645,7 @@ void Net_StopGame(void)
     // All remote players are forgotten.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        players[i].ingame = false;
+        players[i].inGame = false;
         clients[i].ready = clients[i].connected = false;
         clients[i].nodeID = 0;
         players[i].flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
@@ -656,10 +657,10 @@ void Net_StopGame(void)
     {
         /* $unifiedangles */
         players[0].mo->angle = players[consoleplayer].mo->angle;
-        players[0].lookdir = players[consoleplayer].lookdir;
+        players[0].lookDir = players[consoleplayer].lookDir;
     }
     consoleplayer = displayplayer = 0;
-    players[0].ingame = true;
+    players[0].inGame = true;
     clients[0].ready = true;
     clients[0].connected = true;
     clients[0].viewConsole = 0;
@@ -837,7 +838,7 @@ void Net_Drawer(void)
     boolean show_blink_r = false;
 
     for(i = 0; i < MAXPLAYERS; ++i)
-        if(players[i].ingame && clients[i].recording)
+        if(players[i].inGame && clients[i].recording)
             show_blink_r = true;
 
     // Draw the Shadow Bias Editor HUD (if it is active).
@@ -856,17 +857,17 @@ void Net_Drawer(void)
         return;
 
     // Go into screen projection mode.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     if(show_blink_r && SECONDS_TO_TICKS(gameTime) & 8)
     {
         strcpy(buf, "[");
         for(i = c = 0; i < MAXPLAYERS; ++i)
         {
-            if(!(!players[i].ingame || !clients[i].recording))
+            if(!(!players[i].inGame || !clients[i].recording))
             {
                 // This is a "real" player (or camera).
                 if(c++)
@@ -879,19 +880,19 @@ void Net_Drawer(void)
 
         strcat(buf, "]");
         i = theWindow->width - FR_TextWidth(buf);
-        //gl.Color3f(0, 0, 0);
+        //DGL_Color3f(0, 0, 0);
         //FR_TextOut(buf, i - 8, 12);
-        gl.Color3f(1, 1, 1);
+        DGL_Color3f(1, 1, 1);
         FR_ShadowTextOut(buf, i - 10, 10);
     }
 
     if(net_dev)
     {
-        /*      gl.Color3f(1, 1, 1);
+        /*      DGL_Color3f(1, 1, 1);
            sprintf(buf, "G%i", gametic);
            FR_TextOut(buf, 10, 10);
            for(i = 0, cl = clients; i<MAXPLAYERS; ++i, cl++)
-           if(players[i].ingame)
+           if(players[i].inGame)
            {
            sprintf(buf, "%02i:%+04i[%+03i](%02d/%03i) pf:%x", i, cl->lag,
            cl->lagStress, cl->numtics, cl->runTime,
@@ -902,8 +903,8 @@ void Net_Drawer(void)
     Rend_ConsoleFPS(theWindow->width - 10, 30);
 
     // Restore original matrix.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }
 
 /**
@@ -1022,7 +1023,7 @@ void Net_Ticker(void /*timespan_t time*/)
                                 Sv_GetMaxFrameSize(i),
                                 Sv_CountUnackedDeltas(i));
                 }
-                /*if(players[i].ingame)
+                /*if(players[i].inGame)
                     Con_Message("%i: cmds=%i\n", i, clients[i].numTics);*/
             }
         }
@@ -1164,7 +1165,7 @@ D_CMD(Chat)
         else
         {
             for(i = 1; i < MAXPLAYERS; ++i)
-                if(players[i].ingame && mask & (1 << i))
+                if(players[i].inGame && mask & (1 << i))
                     Net_SendBuffer(i, SPF_ORDERED);
         }
     }
@@ -1258,7 +1259,7 @@ D_CMD(MakeCamera)
        clients[cp].ready = true;
        clients[cp].updateCount = UPDATECOUNT;
        players[cp].flags |= DDPF_CAMERA;
-       players[cp].ingame = true; // !!!
+       players[cp].inGame = true; // !!!
        Sv_InitPoolForClient(cp);
        mo = Z_Malloc(sizeof(mobj_t), PU_LEVEL, 0);
        memset(mo, 0, sizeof(*mo));
@@ -1296,7 +1297,7 @@ D_CMD(SetConsole)
     int         cp;
 
     cp = atoi(argv[1]);
-    if(players[cp].ingame)
+    if(players[cp].inGame)
         consoleplayer = displayplayer = cp;
     return true;
 }
@@ -1473,7 +1474,7 @@ D_CMD(Net)
                         Con_Printf("%2i: %10s node %2x, entered at %07i (ingame:%i, handshake:%i)\n",
                                    i, clients[i].name,
                                    clients[i].nodeID, clients[i].enterTime,
-                                   players[i].ingame, clients[i].handshake);
+                                   players[i].inGame, clients[i].handshake);
                 }
             }
 

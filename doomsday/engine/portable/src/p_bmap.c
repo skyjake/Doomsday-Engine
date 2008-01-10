@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_system.h"
 #include "de_console.h"
 #include "de_graphics.h"
@@ -63,7 +64,7 @@ typedef struct bmapblock_s {
 } bmapblock_t;
 
 typedef struct bmap_s {
-    vec2_t      bbox[2];
+    vec2_t      bBox[2];
     vec2_t      blockSize;
     uint        dimensions[2]; // In blocks.
     gridmap_t  *gridmap;
@@ -94,15 +95,15 @@ void P_BoxToBlockmapBlocks(blockmap_t *blockmap, uint blockBox[4],
         bmap_t     *bmap = (bmap_t*) blockmap;
         vec2_t      m[2];
 
-        m[0][VX] = MAX_OF(bmap->bbox[0][VX], box[0][VX]);
-        m[1][VX] = MIN_OF(bmap->bbox[1][VX], box[1][VX]);
-        m[0][VY] = MAX_OF(bmap->bbox[0][VY], box[0][VY]);
-        m[1][VY] = MIN_OF(bmap->bbox[1][VY], box[1][VY]);
+        m[0][VX] = MAX_OF(bmap->bBox[0][VX], box[0][VX]);
+        m[1][VX] = MIN_OF(bmap->bBox[1][VX], box[1][VX]);
+        m[0][VY] = MAX_OF(bmap->bBox[0][VY], box[0][VY]);
+        m[1][VY] = MIN_OF(bmap->bBox[1][VY], box[1][VY]);
 
-        blockBox[BOXLEFT]   = (m[0][VX] - bmap->bbox[0][VX]) / bmap->blockSize[VX];
-        blockBox[BOXRIGHT]  = (m[1][VX] - bmap->bbox[0][VX]) / bmap->blockSize[VX];
-        blockBox[BOXBOTTOM] = (m[0][VY] - bmap->bbox[0][VY]) / bmap->blockSize[VY];
-        blockBox[BOXTOP]    = (m[1][VY] - bmap->bbox[0][VY]) / bmap->blockSize[VY];
+        blockBox[BOXLEFT]   = (m[0][VX] - bmap->bBox[0][VX]) / bmap->blockSize[VX];
+        blockBox[BOXRIGHT]  = (m[1][VX] - bmap->bBox[0][VX]) / bmap->blockSize[VX];
+        blockBox[BOXBOTTOM] = (m[0][VY] - bmap->bBox[0][VY]) / bmap->blockSize[VY];
+        blockBox[BOXTOP]    = (m[1][VY] - bmap->bBox[0][VY]) / bmap->blockSize[VY];
     }
 }
 
@@ -117,11 +118,11 @@ boolean P_ToBlockmapBlockIdx(blockmap_t *blockmap, uint dest[2],
     {
         bmap_t     *bmap = (bmap_t*) blockmap;
 
-        if(!(pos[VX] < bmap->bbox[0][VX] || pos[VX] >= bmap->bbox[1][VX] ||
-             pos[VY] < bmap->bbox[0][VY] || pos[VY] >= bmap->bbox[1][VY]))
+        if(!(pos[VX] < bmap->bBox[0][VX] || pos[VX] >= bmap->bBox[1][VX] ||
+             pos[VY] < bmap->bBox[0][VY] || pos[VY] >= bmap->bBox[1][VY]))
         {
-            dest[VX] = (pos[VX] - bmap->bbox[0][VX]) / bmap->blockSize[VX];
-            dest[VY] = (pos[VY] - bmap->bbox[0][VY]) / bmap->blockSize[VY];
+            dest[VX] = (pos[VX] - bmap->bBox[0][VX]) / bmap->blockSize[VX];
+            dest[VY] = (pos[VY] - bmap->bBox[0][VY]) / bmap->blockSize[VY];
 
             return true;
         }
@@ -145,16 +146,16 @@ void P_PointToBlock(float x, float y, uint *bx, uint *by)
 
 static __inline int xToSSecBlockX(bmap_t *bmap, float x)
 {
-    if(x >= bmap->bbox[0][VX] && x < bmap->bbox[1][VX])
-        return (x - bmap->bbox[0][VX]) / bmap->blockSize[VX];
+    if(x >= bmap->bBox[0][VX] && x < bmap->bBox[1][VX])
+        return (x - bmap->bBox[0][VX]) / bmap->blockSize[VX];
 
     return -1;
 }
 
 static __inline int yToSSecBlockY(bmap_t *bmap, float y)
 {
-    if(y >= bmap->bbox[0][VY] && y < bmap->bbox[1][VY])
-        return (y - bmap->bbox[0][VY]) / bmap->blockSize[VY];
+    if(y >= bmap->bBox[0][VY] && y < bmap->bBox[1][VY])
+        return (y - bmap->bBox[0][VY]) / bmap->blockSize[VY];
 
     return -1;
 }
@@ -169,14 +170,14 @@ blockmap_t *P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
 {
     bmap_t     *bmap = allocBmap();
 
-    V2_Copy(bmap->bbox[0], min);
-    V2_Copy(bmap->bbox[1], max);
+    V2_Copy(bmap->bBox[0], min);
+    V2_Copy(bmap->bBox[1], max);
     bmap->dimensions[VX] = width;
     bmap->dimensions[VY] = height;
 
     V2_Set(bmap->blockSize,
-           (bmap->bbox[1][VX] - bmap->bbox[0][VX]) / bmap->dimensions[VX],
-           (bmap->bbox[1][VY] - bmap->bbox[0][VY]) / bmap->dimensions[VY]);
+           (bmap->bBox[1][VX] - bmap->bBox[0][VX]) / bmap->dimensions[VX],
+           (bmap->bBox[1][VY] - bmap->bBox[0][VY]) / bmap->dimensions[VY]);
 
     bmap->gridmap =
         M_GridmapCreate(bmap->dimensions[VX], bmap->dimensions[VY],
@@ -221,7 +222,7 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
     blockmap_t *ssecBlockMap;
 
     // Figure out the dimensions of the blockmap.
-    for(i = 0; i < map->numvertexes; ++i)
+    for(i = 0; i < map->numVertexes; ++i)
     {
         vertex_t   *vtx = &map->vertexes[i];
 
@@ -265,7 +266,7 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
     bmap = M_Calloc(sizeof(ssecmap_t) * subMapWidth * subMapHeight);
 
     // Process all the subsectors in the map.
-    for(i = 0; i < map->numsubsectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
         subsector_t    *ssec = &map->subsectors[i];
 
@@ -273,10 +274,10 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
             continue;
 
         // Blockcoords to link to.
-        xl = xToSSecBlockX((bmap_t*)ssecBlockMap, ssec->bbox[0].pos[VX]);
-        xh = xToSSecBlockX((bmap_t*)ssecBlockMap, ssec->bbox[1].pos[VX]);
-        yl = yToSSecBlockY((bmap_t*)ssecBlockMap, ssec->bbox[0].pos[VY]);
-        yh = yToSSecBlockY((bmap_t*)ssecBlockMap, ssec->bbox[1].pos[VY]);
+        xl = xToSSecBlockX((bmap_t*)ssecBlockMap, ssec->bBox[0].pos[VX]);
+        xh = xToSSecBlockX((bmap_t*)ssecBlockMap, ssec->bBox[1].pos[VX]);
+        yl = yToSSecBlockY((bmap_t*)ssecBlockMap, ssec->bBox[0].pos[VY]);
+        yh = yToSSecBlockY((bmap_t*)ssecBlockMap, ssec->bBox[1].pos[VY]);
 
         for(x = xl; x <= xh; ++x)
             for(y = yl; y <= yh; ++y)
@@ -413,9 +414,9 @@ void P_GetBlockmapBounds(blockmap_t *blockmap, pvec2_t min, pvec2_t max)
         bmap_t     *bmap = (bmap_t*) blockmap;
 
         if(min)
-            V2_Copy(min, bmap->bbox[0]);
+            V2_Copy(min, bmap->bBox[0]);
         if(max)
-            V2_Copy(max, bmap->bbox[1]);
+            V2_Copy(max, bmap->bBox[1]);
     }
 }
 
@@ -439,12 +440,12 @@ void P_InitMapBlockRings(gamemap_t *map)
     P_GetBlockmapDimensions(map->blockMap, bmapSize);
 
     // Clear out mobj rings.
-    size = sizeof(*map->blockrings) * bmapSize[VX] * bmapSize[VY];
-    map->blockrings = Z_Calloc(size, PU_LEVEL, 0);
+    size = sizeof(*map->blockRings) * bmapSize[VX] * bmapSize[VY];
+    map->blockRings = Z_Calloc(size, PU_LEVEL, 0);
 
     for(i = 0; i < bmapSize[VX] * bmapSize[VY]; ++i)
-        map->blockrings[i].next =
-            map->blockrings[i].prev = (mobj_t *) &map->blockrings[i];
+        map->blockRings[i].next =
+            map->blockRings[i].prev = (mobj_t *) &map->blockRings[i];
 }
 
 typedef struct bmapiterparams_s {
@@ -624,10 +625,10 @@ static boolean ssecBlockIterator(ssecmapblock_t *block, void *context)
 
                 // Check the bounds.
                 if(args->box &&
-                   (ssec->bbox[1].pos[VX] < args->box[0][VX] ||
-                   ssec->bbox[0].pos[VX] > args->box[1][VX] ||
-                   ssec->bbox[1].pos[VY] < args->box[0][VY] ||
-                   ssec->bbox[0].pos[VY] > args->box[1][VY]))
+                   (ssec->bBox[1].pos[VX] < args->box[0][VX] ||
+                   ssec->bBox[0].pos[VX] > args->box[1][VX] ||
+                   ssec->bBox[1].pos[VY] < args->box[0][VY] ||
+                   ssec->bBox[0].pos[VY] > args->box[1][VY]))
                    ok = false;
 
                 if(ok)
@@ -890,8 +891,8 @@ static boolean rendBlockLinedef(line_t *line, void *data)
     V2_Set(end,
            line->L_v2pos[VX] - bbox[0][VX], line->L_v2pos[VY] - bbox[0][VY]);
 
-    gl.Vertex2fv(start);
-    gl.Vertex2fv(end);
+    DGL_Vertex2fv(start);
+    DGL_Vertex2fv(end);
     return true; // Continue iteration.
 }
 
@@ -911,10 +912,10 @@ static boolean rendBlockSubsector(subsector_t *ssec, void *data)
         V2_Set(end,
                seg->SG_v2pos[VX] - bbox[0][VX], seg->SG_v2pos[VY] - bbox[0][VY]);
 
-        gl.Begin(DGL_LINES);
-        gl.Vertex2fv(start);
-        gl.Vertex2fv(end);
-        gl.End();
+        DGL_Begin(DGL_LINES);
+        DGL_Vertex2fv(start);
+        DGL_Vertex2fv(end);
+        DGL_End();
 
         {
         float       length, dx, dy;
@@ -932,47 +933,46 @@ static boolean rendBlockSubsector(subsector_t *ssec, void *data)
             normal[VX] = -unit[VY];
             normal[VY] = unit[VX];
 
-            gl.Bind(GL_PrepareLSTexture(LST_DYNAMIC, NULL));
+            DGL_Bind(GL_PrepareLSTexture(LST_DYNAMIC, NULL));
 
-            gl.Enable(DGL_TEXTURING);
-            gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-            gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+            DGL_Enable(DGL_TEXTURING);
+            DGL_BlendOp(DGL_ADD);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-            gl.Begin(DGL_QUADS);
-            gl.TexCoord2f(0.75f, 0.5f);
-            gl.Vertex2fv(start);
-            gl.TexCoord2f(0.75f, 0.5f);
-            gl.Vertex2fv(end);
-            gl.TexCoord2f(0.75f, 1);
-            gl.Vertex2f(end[VX] - normal[VX] * width,
+            DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0.75f, 0.5f);
+            DGL_Vertex2fv(start);
+            DGL_TexCoord2f(0.75f, 0.5f);
+            DGL_Vertex2fv(end);
+            DGL_TexCoord2f(0.75f, 1);
+            DGL_Vertex2f(end[VX] - normal[VX] * width,
                         end[VY] - normal[VY] * width);
-            gl.TexCoord2f(0.75f, 1);
-            gl.Vertex2f(start[VX] - normal[VX] * width,
+            DGL_TexCoord2f(0.75f, 1);
+            DGL_Vertex2f(start[VX] - normal[VX] * width,
                         start[VY] - normal[VY] * width);
-            gl.End();
+            DGL_End();
 
-            gl.Disable(DGL_TEXTURING);
-            gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-            gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+            DGL_Disable(DGL_TEXTURING);
+            GL_BlendMode(BM_NORMAL);
             }
         }
 
         // Draw the bounding box.
-        V2_Set(start, ssec->bbox[0].pos[VX] - bbox[0][VX],
-                      ssec->bbox[0].pos[VY] - bbox[0][VY]);
-        V2_Set(end, ssec->bbox[1].pos[VX] - bbox[0][VX],
-                    ssec->bbox[1].pos[VY] - bbox[0][VY]);
+        V2_Set(start, ssec->bBox[0].pos[VX] - bbox[0][VX],
+                      ssec->bBox[0].pos[VY] - bbox[0][VY]);
+        V2_Set(end, ssec->bBox[1].pos[VX] - bbox[0][VX],
+                    ssec->bBox[1].pos[VY] - bbox[0][VY]);
 
-        gl.Begin(DGL_LINES);
-        gl.Vertex2f(start[VX], start[VY]);
-        gl.Vertex2f(end[VX], start[VY]);
-        gl.Vertex2f(end[VX], start[VY]);
-        gl.Vertex2f(end[VX], end[VY]);
-        gl.Vertex2f(end[VX], end[VY]);
-        gl.Vertex2f(start[VX], end[VY]);
-        gl.Vertex2f(start[VX], end[VY]);
-        gl.Vertex2f(start[VX], start[VY]);
-        gl.End();
+        DGL_Begin(DGL_LINES);
+        DGL_Vertex2f(start[VX], start[VY]);
+        DGL_Vertex2f(end[VX], start[VY]);
+        DGL_Vertex2f(end[VX], start[VY]);
+        DGL_Vertex2f(end[VX], end[VY]);
+        DGL_Vertex2f(end[VX], end[VY]);
+        DGL_Vertex2f(start[VX], end[VY]);
+        DGL_Vertex2f(start[VX], end[VY]);
+        DGL_Vertex2f(start[VX], start[VY]);
+        DGL_End();
         *segs++;
     }
     return true; // Continue iteration.
@@ -992,10 +992,10 @@ void rendBlockLinedefs(void *blockPtr, void *param,
         args.func = rendBlockLinedef;
         args.param = param;
 
-        gl.Color4f(r, g, b, a);
-        gl.Begin(DGL_LINES);
+        DGL_Color4f(r, g, b, a);
+        DGL_Begin(DGL_LINES);
         bmapBlockLinesIterator(block, &args);
-        gl.End();
+        DGL_End();
     }
 
     // Polyobj lines?
@@ -1011,10 +1011,10 @@ void rendBlockLinedefs(void *blockPtr, void *param,
         args.func = PTR_PolyobjLines;
         args.param = &poargs;
 
-        gl.Color4f(r, g, b, a);
-        gl.Begin(DGL_LINES);
+        DGL_Color4f(r, g, b, a);
+        DGL_Begin(DGL_LINES);
         bmapBlockPolyobjsIterator(block, &args);
-        gl.End();
+        DGL_End();
     }
 }
 
@@ -1033,7 +1033,7 @@ void rendBlockSubsectors(void *blockPtr, void *param,
         args.func = rendBlockSubsector;
         args.param = param;
 
-        gl.Color4f(r, g, b, a);
+        DGL_Color4f(r, g, b, a);
         ssecBlockIterator(block, &args);
     }
 }
@@ -1167,41 +1167,41 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
     }
 
     // Go into screen projection mode.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
-    gl.Translatef((theWindow->width / 2), (theWindow->height / 2), 0);
-    gl.Scalef(scale, -scale, 1);
+    DGL_Translatef((theWindow->width / 2), (theWindow->height / 2), 0);
+    DGL_Scalef(scale, -scale, 1);
 
     if(followMobj)
     {   // Offset relatively to center on the location of the mobj.
         V2_Set(start,
                (vBlock[VX] * bmap->blockSize[VX]),
                (vBlock[VY] * bmap->blockSize[VY]));
-        gl.Translatef(-start[VX], -start[VY], 0);
+        DGL_Translatef(-start[VX], -start[VY], 0);
     }
     else
     {   // Offset to center the blockmap on the screen.
-        gl.Translatef(-(bmap->blockSize[VX] * bmap->dimensions[VX] / 2),
+        DGL_Translatef(-(bmap->blockSize[VX] * bmap->dimensions[VX] / 2),
                       -(bmap->blockSize[VY] * bmap->dimensions[VY] / 2), 0);
     }
 
-    gl.Disable(DGL_TEXTURING);
+    DGL_Disable(DGL_TEXTURING);
 
     // Draw a background.
     V2_Set(start, 0, 0);
     V2_Set(end, bmap->blockSize[VX] * bmap->dimensions[VX],
                 bmap->blockSize[VY] * bmap->dimensions[VY]);
 
-    gl.Color4f(.25f, .25f, .25f, .66f);
-    gl.Begin(DGL_QUADS);
-    gl.Vertex2f(start[VX], start[VY]);
-    gl.Vertex2f(end[VX], start[VY]);
-    gl.Vertex2f(end[VX], end[VY]);
-    gl.Vertex2f(start[VX], end[VY]);
-    gl.End();
+    DGL_Color4f(.25f, .25f, .25f, .66f);
+    DGL_Begin(DGL_QUADS);
+    DGL_Vertex2f(start[VX], start[VY]);
+    DGL_Vertex2f(end[VX], start[VY]);
+    DGL_Vertex2f(end[VX], end[VY]);
+    DGL_Vertex2f(start[VX], end[VY]);
+    DGL_End();
 
     /**
      * Draw the blocks.
@@ -1218,20 +1218,20 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
             {
                 if(x == vBlock[VX] && y == vBlock[VY])
                 {   // The block the viewPlayer is in.
-                    gl.Color4f(.66f, .66f, 1, .66f);
+                    DGL_Color4f(.66f, .66f, 1, .66f);
                     draw = true;
                 }
                 else if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
                         y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
                 {   // In the viewPlayer's extended collision range.
-                    gl.Color4f(.33f, .33f, .66f, .33f);
+                    DGL_Color4f(.33f, .33f, .66f, .33f);
                     draw = true;
                 }
             }
 
             if(!draw && !block)
             {   // NULL block.
-                gl.Color4f(0, 0, 0, .95f);
+                DGL_Color4f(0, 0, 0, .95f);
                 draw = true;
             }
 
@@ -1243,12 +1243,12 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
                             bmap->blockSize[VY]);
                 V2_Sum(end, end, start);
 
-                gl.Begin(DGL_QUADS);
-                gl.Vertex2f(start[VX], start[VY]);
-                gl.Vertex2f(end[VX], start[VY]);
-                gl.Vertex2f(end[VX], end[VY]);
-                gl.Vertex2f(start[VX], end[VY]);
-                gl.End();
+                DGL_Begin(DGL_QUADS);
+                DGL_Vertex2f(start[VX], start[VY]);
+                DGL_Vertex2f(end[VX], start[VY]);
+                DGL_Vertex2f(end[VX], end[VY]);
+                DGL_Vertex2f(start[VX], end[VY]);
+                DGL_End();
             }
         }
 
@@ -1256,26 +1256,26 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
      * Draw the grid lines
      */
 
-    gl.Color4f(.5f, .5f, .5f, .125f);
+    DGL_Color4f(.5f, .5f, .5f, .125f);
     // Vertical lines:
-    gl.Begin(DGL_LINES);
+    DGL_Begin(DGL_LINES);
     for(x = 1; x < bmap->dimensions[VX]; ++x)
     {
-        gl.Vertex2f(x * bmap->blockSize[VX],  0);
-        gl.Vertex2f(x * bmap->blockSize[VX],
+        DGL_Vertex2f(x * bmap->blockSize[VX],  0);
+        DGL_Vertex2f(x * bmap->blockSize[VX],
                     bmap->blockSize[VY] * bmap->dimensions[VY]);
     }
-    gl.End();
+    DGL_End();
 
     // Horizontal lines;
-    gl.Begin(DGL_LINES);
+    DGL_Begin(DGL_LINES);
     for(y = 1; y < bmap->dimensions[VY]; ++y)
     {
-        gl.Vertex2f(0, y * bmap->blockSize[VY]);
-        gl.Vertex2f(bmap->blockSize[VX] * bmap->dimensions[VX],
+        DGL_Vertex2f(0, y * bmap->blockSize[VY]);
+        DGL_Vertex2f(bmap->blockSize[VX] * bmap->dimensions[VX],
                     y * bmap->blockSize[VY]);
     }
-    gl.End();
+    DGL_End();
 
     /**
      * Draw the blockmap-linked data.
@@ -1296,7 +1296,7 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
                 block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
                 if(block)
                 {
-                    func(block, bmap->bbox, .33f, 0, 0, .75f);
+                    func(block, bmap->bBox, .33f, 0, 0, .75f);
                 }
             }
 
@@ -1312,7 +1312,7 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
                 block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
                 if(block)
                 {
-                    func(block, bmap->bbox, 1, .5f, 0, 1);
+                    func(block, bmap->bBox, 1, .5f, 0, 1);
                 }
             }
 
@@ -1322,7 +1322,7 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
         block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
         if(block)
         {
-            func(block, bmap->bbox, 1, 1, 0, 1);
+            func(block, bmap->bBox, 1, 1, 0, 1);
         }
 
         /**
@@ -1331,19 +1331,19 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
 
         radius = viewPlayer->mo->radius;
         V2_Set(start,
-               viewPlayer->mo->pos[VX] - bmap->bbox[0][VX] - radius,
-               viewPlayer->mo->pos[VY] - bmap->bbox[0][VY] - radius);
+               viewPlayer->mo->pos[VX] - bmap->bBox[0][VX] - radius,
+               viewPlayer->mo->pos[VY] - bmap->bBox[0][VY] - radius);
         V2_Set(end,
-               viewPlayer->mo->pos[VX] - bmap->bbox[0][VX] + radius,
-               viewPlayer->mo->pos[VY] - bmap->bbox[0][VY] + radius);
+               viewPlayer->mo->pos[VX] - bmap->bBox[0][VX] + radius,
+               viewPlayer->mo->pos[VY] - bmap->bBox[0][VY] + radius);
 
-        gl.Color4f(0, 1, 0, 1);
-        gl.Begin(DGL_QUADS);
-        gl.Vertex2f(start[VX], start[VY]);
-        gl.Vertex2f(end[VX], start[VY]);
-        gl.Vertex2f(end[VX], end[VY]);
-        gl.Vertex2f(start[VX], end[VY]);
-        gl.End();
+        DGL_Color4f(0, 1, 0, 1);
+        DGL_Begin(DGL_QUADS);
+        DGL_Vertex2f(start[VX], start[VY]);
+        DGL_Vertex2f(end[VX], start[VY]);
+        DGL_Vertex2f(end[VX], end[VY]);
+        DGL_Vertex2f(start[VX], end[VY]);
+        DGL_End();
     }
     else
     {   // Just draw the lot.
@@ -1353,7 +1353,7 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
                 block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
                 if(block)
                 {
-                    func(block, bmap->bbox, .33f, 0, 0, .75f);
+                    func(block, bmap->bBox, .33f, 0, 0, .75f);
                 }
             }
     }
@@ -1366,24 +1366,24 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
     V2_Set(end, 1 + bmap->blockSize[VX] * bmap->dimensions[VX],
            1 + bmap->blockSize[VY] * bmap->dimensions[VY]);
 
-    gl.Color4f(1, .5f, .5f, 1);
+    DGL_Color4f(1, .5f, .5f, 1);
 
-    gl.Begin(DGL_LINES);
-    gl.Vertex2f(start[VX], start[VY]);
-    gl.Vertex2f(end[VX], start[VY]);
+    DGL_Begin(DGL_LINES);
+    DGL_Vertex2f(start[VX], start[VY]);
+    DGL_Vertex2f(end[VX], start[VY]);
 
-    gl.Vertex2f(end[VX], start[VY]);
-    gl.Vertex2f(end[VX], end[VY]);
+    DGL_Vertex2f(end[VX], start[VY]);
+    DGL_Vertex2f(end[VX], end[VY]);
 
-    gl.Vertex2f(end[VX], end[VY]);
-    gl.Vertex2f(start[VX], end[VY]);
+    DGL_Vertex2f(end[VX], end[VY]);
+    DGL_Vertex2f(start[VX], end[VY]);
 
-    gl.Vertex2f(start[VX], end[VY]);
-    gl.Vertex2f(start[VX], start[VY]);
-    gl.End();
+    DGL_Vertex2f(start[VX], end[VY]);
+    DGL_Vertex2f(start[VX], start[VY]);
+    DGL_End();
 
-    gl.PopMatrix();
-    gl.Enable(DGL_TEXTURING);
+    DGL_PopMatrix();
+    DGL_Enable(DGL_TEXTURING);
 }
 
 void P_BlockmapDebug(void)
@@ -1419,10 +1419,10 @@ void P_BlockmapDebug(void)
 
     blockmapDebug(blockmap, followMobj, func);
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     if(followMobj && bmapShowDebug == 1)
     {
@@ -1437,11 +1437,11 @@ void P_BlockmapDebug(void)
 
     // Draw info about the blockmap.
     bmap = (bmap_t*) blockmap;
-    drawInfoBox2(bmap->bbox[0][VX], bmap->bbox[0][VY],
-                 bmap->bbox[1][VX], bmap->bbox[1][VY],
+    drawInfoBox2(bmap->bBox[0][VX], bmap->bBox[0][VY],
+                 bmap->bBox[1][VX], bmap->bBox[1][VY],
                  bmap->blockSize[VX], bmap->blockSize[VY],
                  bmap->dimensions[VX], bmap->dimensions[VY]);
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }

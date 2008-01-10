@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -727,7 +727,7 @@ boolean P_ControlExecute(const char *cmd)
 
 	// Which player will be affected?
 	console = P_LocalToConsole(localPlayer);
-	if(console >= 0 && console < DDMAXPLAYERS && ddplayers[console].ingame)
+	if(console >= 0 && console < DDMAXPLAYERS && ddplayers[console].inGame)
 	{
         state = &ctlState[console];
     }
@@ -827,12 +827,12 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 	case CTL_LOOK:
 		// 110 corresponds 85 degrees.
         // $unifiedangles
-        plr->lookdir += delta * 110.0f/85.0f;
+        plr->lookDir += delta * 110.0f/85.0f;
         // Clamp it.
-        if(plr->lookdir > 110)
-            plr->lookdir = 110;
-        if(plr->lookdir < -110)
-            plr->lookdir = -110;
+        if(plr->lookDir > 110)
+            plr->lookDir = 110;
+        if(plr->lookDir < -110)
+            plr->lookDir = -110;
 		break;
 
 	default:
@@ -860,7 +860,7 @@ void P_ControlTicker(timespan_t time)
     mul = time * TICSPERSEC * (640 << 16) * 45.0f/ANGLE_45;
 	for(i = 0; i < DDMAXPLAYERS; ++i)
 	{
-		if(!players[i].ingame || !(players[i].flags & DDPF_LOCAL))
+		if(!players[i].inGame || !(players[i].flags & DDPF_LOCAL))
             continue;
 
 		pos = P_ControlGetAxis(i, "turn");
@@ -884,16 +884,16 @@ void P_ControlDrawer(void)
         return;
 
     // Go into screen projection mode.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     // TODO: Draw control state here.
 
     // Back to the original.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }
 #endif
 

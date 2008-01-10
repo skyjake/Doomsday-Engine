@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -92,16 +92,16 @@ void R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln)
     wpl->num++;
 
     // Only allocate memory when it's needed.
-    if(wpl->num > wpl->maxnum)
+    if(wpl->num > wpl->maxNum)
     {
-        wpl->maxnum *= 2;
+        wpl->maxNum *= 2;
 
         // The first time, allocate 8 watched plane nodes.
-        if(!wpl->maxnum)
-            wpl->maxnum = 8;
+        if(!wpl->maxNum)
+            wpl->maxNum = 8;
 
         wpl->list =
-            Z_Realloc(wpl->list, sizeof(plane_t*) * (wpl->maxnum + 1),
+            Z_Realloc(wpl->list, sizeof(plane_t*) * (wpl->maxNum + 1),
                       PU_LEVEL);
     }
 
@@ -148,15 +148,15 @@ void R_UpdateWatchedPlanes(watchedplanelist_t *wpl)
     {
         plane_t        *pln = wpl->list[i];
 
-        pln->oldheight[0] = pln->oldheight[1];
-        pln->oldheight[1] = pln->height;
+        pln->oldHeight[0] = pln->oldHeight[1];
+        pln->oldHeight[1] = pln->height;
 
-        if(pln->oldheight[0] != pln->oldheight[1])
-            if(fabs(pln->oldheight[0] - pln->oldheight[1]) >=
+        if(pln->oldHeight[0] != pln->oldHeight[1])
+            if(fabs(pln->oldHeight[0] - pln->oldHeight[1]) >=
                MAX_SMOOTH_PLANE_MOVE)
             {
                 // Too fast: make an instantaneous jump.
-                pln->oldheight[0] = pln->oldheight[1];
+                pln->oldHeight[0] = pln->oldHeight[1];
             }
     }
 }
@@ -180,8 +180,8 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
         {
             pln = wpl->list[i];
 
-            pln->visoffset = 0;
-            pln->oldheight[0] = pln->oldheight[1] = pln->height;
+            pln->visOffset = 0;
+            pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
 
             // Has this plane reached its destination?
             if(R_RemoveWatchedPlane(wpl, pln))
@@ -197,15 +197,15 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
         {
             pln = wpl->list[i];
 
-            pln->visoffset = pln->oldheight[0] * (1 - frameTimePos) +
+            pln->visOffset = pln->oldHeight[0] * (1 - frameTimePos) +
                         pln->height * frameTimePos -
                         pln->height;
 
             // Visible plane height.
-            pln->visheight = pln->height + pln->visoffset;
+            pln->visHeight = pln->height + pln->visOffset;
 
             // Has this plane reached its destination?
-            if(pln->visheight == pln->height)
+            if(pln->visHeight == pln->height)
                 if(R_RemoveWatchedPlane(wpl, pln))
                     i = (i > 0? i-1 : 0);
         }
@@ -232,7 +232,7 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
     if(!sec)
         return NULL; // Do wha?
 
-    if(sec->planecount >= 2)
+    if(sec->planeCount >= 2)
         Con_Error("P_NewPlaneForSector: Cannot create plane for sector, "
                   "limit is %i per sector.\n", 2);
 
@@ -242,18 +242,18 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
 
     // Resize this sector's plane list.
     sec->planes =
-        Z_Realloc(sec->planes, sizeof(plane_t*) * (++sec->planecount + 1),
+        Z_Realloc(sec->planes, sizeof(plane_t*) * (++sec->planeCount + 1),
                   PU_LEVEL);
     // Add the new plane to the end of the list.
-    sec->planes[sec->planecount-1] = plane;
-    sec->planes[sec->planecount] = NULL; // Terminate.
+    sec->planes[sec->planeCount-1] = plane;
+    sec->planes[sec->planeCount] = NULL; // Terminate.
 
     // Setup header for DMU.
     plane->header.type = DMU_PLANE;
 
     // Initalize the plane.
     for(i = 0; i < 3; ++i)
-        plane->glowrgb[i] = 1;
+        plane->glowRGB[i] = 1;
 
     // The back pointer (temporary)
     plane->sector = sec;
@@ -266,7 +266,7 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
     suf->flags = 0;
     suf->offset[VX] = suf->offset[VY] = 0;
     suf->decorations = NULL;
-    suf->numdecorations = 0;
+    suf->numDecorations = 0;
 
     // Set normal.
     suf->normal[VX] = 0;
@@ -290,22 +290,22 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     if(!sec)
         return; // Do wha?
 
-    if(id >= sec->planecount)
+    if(id >= sec->planeCount)
         Con_Error("P_DestroyPlaneOfSector: Plane id #%i is not valid for "
                   "sector #%u", id, (uint) GET_SECTOR_IDX(sec));
 
     plane = sec->planes[id];
 
     // Create a new plane list?
-    if(sec->planecount > 1)
+    if(sec->planeCount > 1)
     {
         uint        i, n;
 
-        newList = Z_Malloc(sizeof(plane_t**) * sec->planecount, PU_LEVEL, 0);
+        newList = Z_Malloc(sizeof(plane_t**) * sec->planeCount, PU_LEVEL, 0);
 
         // Copy ptrs to the planes.
         n = 0;
-        for(i = 0; i < sec->planecount; ++i)
+        for(i = 0; i < sec->planeCount; ++i)
         {
             if(i == id)
                 continue;
@@ -319,7 +319,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
 
     // Destroy the specified plane.
     Z_Free(plane);
-    sec->planecount--;
+    sec->planeCount--;
 
     // Link the new list to the sector.
     Z_Free(sec->planes);
@@ -336,12 +336,12 @@ void R_CreateSurfaceDecoration(surface_t *suf, float pos[3],
         return;
 
     decorations =
-        Z_Malloc(sizeof(*decorations) * (++suf->numdecorations),
+        Z_Malloc(sizeof(*decorations) * (++suf->numDecorations),
                  PU_LEVEL, 0);
 
-    if(suf->numdecorations > 1)
+    if(suf->numDecorations > 1)
     {   // Copy the existing decorations.
-        for(i = 0; i < suf->numdecorations - 1; ++i)
+        for(i = 0; i < suf->numDecorations - 1; ++i)
         {
             d = &decorations[i];
             s = &suf->decorations[i];
@@ -356,7 +356,7 @@ void R_CreateSurfaceDecoration(surface_t *suf, float pos[3],
     }
 
     // Add the new decoration.
-    d = &decorations[suf->numdecorations - 1];
+    d = &decorations[suf->numDecorations - 1];
     d->pos[VX] = pos[VX];
     d->pos[VY] = pos[VY];
     d->pos[VZ] = pos[VZ];
@@ -373,7 +373,7 @@ void R_ClearSurfaceDecorations(surface_t *suf)
     if(suf->decorations)
         Z_Free(suf->decorations);
     suf->decorations = NULL;
-    suf->numdecorations = 0;
+    suf->numDecorations = 0;
 }
 
 #ifdef _MSC_VER
@@ -399,7 +399,7 @@ static void R_SetSectorLinks(sector_t *sec)
     sector_t   *floorLinkCandidate = 0, *ceilLinkCandidate = 0;
 
     // Must have a valid sector!
-    if(!sec || !sec->linecount || (sec->flags & SECF_PERMANENTLINK))
+    if(!sec || !sec->lineCount || (sec->flags & SECF_PERMANENTLINK))
         return;                 // Can't touch permanent links.
 
     hackfloor = (!R_IsSkySurface(&sec->SP_floorsurface));
@@ -407,7 +407,7 @@ static void R_SetSectorLinks(sector_t *sec)
     if(!(hackfloor || hackceil))
         return;
 
-    for(i = 0; i < sec->subsgroupcount; ++i)
+    for(i = 0; i < sec->subsGroupCount; ++i)
     {
         subsector_t   **ssecp;
         ssecgroup_t    *ssgrp;
@@ -415,7 +415,7 @@ static void R_SetSectorLinks(sector_t *sec)
         if(!hackfloor && !hackceil)
             break;
 
-        ssgrp = &sec->subsgroups[i];
+        ssgrp = &sec->subsGroups[i];
 
         ssecp = sec->subsectors;
         while(*ssecp)
@@ -438,7 +438,7 @@ static void R_SetSectorLinks(sector_t *sec)
                     if(!hackfloor && !hackceil)
                         break;
 
-                    lin = seg->linedef;
+                    lin = seg->lineDef;
 
                     if(lin && // minisegs don't count.
                        lin->L_frontside && lin->L_backside) // Must be twosided.
@@ -520,13 +520,13 @@ static void R_SetSectorLinks(sector_t *sec)
 
         if(hackfloor)
         {
-            if(floorLinkCandidate == sec->containsector)
+            if(floorLinkCandidate == sec->containSector)
                 ssgrp->linked[PLN_FLOOR] = floorLinkCandidate;
         }
 
         if(hackceil)
         {
-            if(ceilLinkCandidate == sec->containsector)
+            if(ceilLinkCandidate == sec->containSector)
                 ssgrp->linked[PLN_CEILING] = ceilLinkCandidate;
         }
     }
@@ -557,10 +557,10 @@ void R_InitSkyFix(void)
         if(!R_IsSkySurface(&sec->SP_ceilsurface))
             continue;
 
-        fix = &sec->skyfix[PLN_CEILING].offset;
+        fix = &sec->skyFix[PLN_CEILING].offset;
 
         // Check that all the mobjs in the sector fit in.
-        for(it = sec->mobjList; it; it = it->snext)
+        for(it = sec->mobjList; it; it = it->sNext)
         {
             b = it->height;
             f = sec->SP_ceilheight + *fix -
@@ -594,8 +594,8 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
        !R_IsSkySurface(&back->planes[pln]->surface))
         return false;
 
-    f = front->planes[pln]->height + front->skyfix[pln].offset;
-    b = back->planes[pln]->height + back->skyfix[pln].offset;
+    f = front->planes[pln]->height + front->skyFix[pln].offset;
+    b = back->planes[pln]->height + back->skyFix[pln].offset;
 
     if(f == b)
         return false;
@@ -605,13 +605,13 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
         if(f < b)
         {
             height = b - front->planes[pln]->height;
-            fix = &front->skyfix[pln].offset;
+            fix = &front->skyFix[pln].offset;
             adjustSec = front;
         }
         else if(f > b)
         {
             height = f - back->planes[pln]->height;
-            fix = &back->skyfix[pln].offset;
+            fix = &back->skyFix[pln].offset;
             adjustSec = back;
         }
 
@@ -626,13 +626,13 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
         if(f > b)
         {
             height = b - front->planes[pln]->height;
-            fix = &front->skyfix[pln].offset;
+            fix = &front->skyFix[pln].offset;
             adjustSec = front;
         }
         else if(f < b)
         {
             height = f - back->planes[pln]->height;
-            fix = &back->skyfix[pln].offset;
+            fix = &back->skyFix[pln].offset;
             adjustSec = back;
         }
 
@@ -814,7 +814,7 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
                 vtx[1] = line->L_v2;
                 // Walk around each vertex in each direction.
                 for(j = 0; j < 2; ++j)
-                    if(vtx[j]->numlineowners > 1)
+                    if(vtx[j]->numLineOwners > 1)
                         spreadSkyFixForNeighbors(vtx[j], line,
                                                  doFix[PLN_FLOOR],
                                                  doFix[PLN_CEILING],
@@ -877,27 +877,27 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
         return;
     }
 
-    Rend_SkyParams(DD_SKY, DD_HEIGHT, mapinfo->sky_height);
-    Rend_SkyParams(DD_SKY, DD_HORIZON, mapinfo->horizon_offset);
+    Rend_SkyParams(DD_SKY, DD_HEIGHT, mapinfo->skyHeight);
+    Rend_SkyParams(DD_SKY, DD_HORIZON, mapinfo->horizonOffset);
     for(i = 0; i < 2; ++i)
     {
-        k = mapinfo->sky_layers[i].flags;
+        k = mapinfo->skyLayers[i].flags;
         if(k & SLF_ENABLED)
         {
-            skyTex = R_MaterialNumForName(mapinfo->sky_layers[i].texture, MAT_TEXTURE);
+            skyTex = R_MaterialNumForName(mapinfo->skyLayers[i].texture, MAT_TEXTURE);
             if(skyTex == -1)
             {
                 Con_Message("R_SetupSky: Invalid/missing texture \"%s\"\n",
-                            mapinfo->sky_layers[i].texture);
+                            mapinfo->skyLayers[i].texture);
                 skyTex = R_MaterialNumForName("SKY1", MAT_TEXTURE);
             }
 
             Rend_SkyParams(i, DD_ENABLE, 0);
             Rend_SkyParams(i, DD_MATERIAL, skyTex);
             Rend_SkyParams(i, DD_MASK, k & SLF_MASKED ? DD_YES : DD_NO);
-            Rend_SkyParams(i, DD_OFFSET, mapinfo->sky_layers[i].offset);
+            Rend_SkyParams(i, DD_OFFSET, mapinfo->skyLayers[i].offset);
             Rend_SkyParams(i, DD_COLOR_LIMIT,
-                           mapinfo->sky_layers[i].color_limit);
+                           mapinfo->skyLayers[i].colorLimit);
         }
         else
         {
@@ -913,20 +913,20 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
     noSkyColorGiven = true;
     for(i = 0; i < 3; ++i)
     {
-        skyColorRGB[i] = mapinfo->sky_color[i];
-        if(mapinfo->sky_color[i] > 0)
+        skyColorRGB[i] = mapinfo->skyColor[i];
+        if(mapinfo->skyColor[i] > 0)
             noSkyColorGiven = false;
     }
 
     // Calculate a balancing factor, so the light in the non-skylit
     // sectors won't appear too bright.
-    if(mapinfo->sky_color[0] > 0 || mapinfo->sky_color[1] > 0 ||
-        mapinfo->sky_color[2] > 0)
+    if(mapinfo->skyColor[0] > 0 || mapinfo->skyColor[1] > 0 ||
+        mapinfo->skyColor[2] > 0)
     {
         skyColorBalance =
             (0 +
-             (mapinfo->sky_color[0] * 2 + mapinfo->sky_color[1] * 3 +
-              mapinfo->sky_color[2] * 2) / 7) / 1;
+             (mapinfo->skyColor[0] * 2 + mapinfo->skyColor[1] * 3 +
+              mapinfo->skyColor[2] * 2) / 7) / 1;
     }
     else
     {
@@ -1116,15 +1116,15 @@ void R_InitLinks(gamemap_t *map)
     Con_Message("R_InitLinks: Initializing\n");
 
     // Initialize node piles and line rings.
-    NP_Init(&map->mobjnodes, 256);  // Allocate a small pile.
-    NP_Init(&map->linenodes, map->numlines + 1000);
+    NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
+    NP_Init(&map->lineNodes, map->numLines + 1000);
 
     // Allocate the rings.
     starttime = Sys_GetRealTime();
-    map->linelinks =
-        Z_Malloc(sizeof(*map->linelinks) * map->numlines, PU_LEVELSTATIC, 0);
-    for(i = 0; i < map->numlines; ++i)
-        map->linelinks[i] = NP_New(&map->linenodes, NP_ROOT_NODE);
+    map->lineLinks =
+        Z_Malloc(sizeof(*map->lineLinks) * map->numLines, PU_LEVELSTATIC, 0);
+    for(i = 0; i < map->numLines; ++i)
+        map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
     // How much time did we spend?
     VERBOSE(Con_Message
             ("R_InitLinks: Allocating line link rings. Done in %.2f seconds.\n",
@@ -1303,7 +1303,7 @@ static void triangulateSubSector(subsector_t *ssec)
         while(last->next) last = last->next;
 
         newNode = newOwnerNode();
-        newNode->data = &ssec->midpoint;
+        newNode->data = &ssec->midPoint;
         newNode->next = NULL;
 
         last->next = newNode;
@@ -1314,16 +1314,16 @@ static void triangulateSubSector(subsector_t *ssec)
 
     // We can now create the subsector vertex array by hardening the list.
     // NOTE: The same polygon is used for all planes of this subsector.
-    ssec->numvertices = subSecOwnerList.count;
+    ssec->numVertices = subSecOwnerList.count;
     ssec->vertices =
-        Z_Malloc(sizeof(fvertex_t*) * (ssec->numvertices + 1),
+        Z_Malloc(sizeof(fvertex_t*) * (ssec->numVertices + 1),
                  PU_LEVELSTATIC, 0);
 
     {
     ownernode_t *node, *p;
 
     node = subSecOwnerList.head;
-    j = ssec->numvertices - 1;
+    j = ssec->numVertices - 1;
     while(node)
     {
         p = node->next;
@@ -1337,7 +1337,7 @@ static void triangulateSubSector(subsector_t *ssec)
     }
     }
 
-    ssec->vertices[ssec->numvertices] = NULL; // terminate.
+    ssec->vertices[ssec->numVertices] = NULL; // terminate.
 }
 
 /**
@@ -1355,7 +1355,7 @@ void R_PolygonizeMap(gamemap_t *map)
     unusedNodeList = NULL;
 
     // Polygonize each subsector.
-    for(i = 0; i < map->numsubsectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
         subsector_t *sub = &map->subsectors[i];
         triangulateSubSector(sub);
@@ -1386,7 +1386,7 @@ static void initPlaneIllumination(subsector_t *ssec, uint planeID)
     uint        i, j, num;
     subplaneinfo_t *plane = ssec->planes[planeID];
 
-    num = ssec->numvertices;
+    num = ssec->numVertices;
 
     plane->illumination =
         Z_Calloc(num * sizeof(vertexillum_t), PU_LEVELSTATIC, NULL);
@@ -1406,9 +1406,9 @@ static void initSSecPlanes(subsector_t *ssec)
 
     // Allocate the subsector plane info array.
     ssec->planes =
-        Z_Malloc(ssec->sector->planecount * sizeof(subplaneinfo_t*),
+        Z_Malloc(ssec->sector->planeCount * sizeof(subplaneinfo_t*),
                  PU_LEVEL, NULL);
-    for(i = 0; i < ssec->sector->planecount; ++i)
+    for(i = 0; i < ssec->sector->planeCount; ++i)
     {
         ssec->planes[i] =
             Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
@@ -1462,7 +1462,7 @@ void R_PrepareForBias(gamemap_t *map)
 
     Con_Message("prepareForBias: Processing...\n");
 
-    for(i = 0; i < map->numsubsectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
         subsector_t    *ssec = &map->subsectors[i];
         prepareSubsectorForBias(ssec);
@@ -1495,10 +1495,10 @@ void R_PrepareForBias(gamemap_t *map)
    // Only accept outersec's subsectors.
    if(osub->sector != outersec) continue;
    // Test if isub is inside osub.
-   if(isub->bbox[BLEFT] >= osub->bbox[BLEFT]
-   && isub->bbox[BRIGHT] <= osub->bbox[BRIGHT]
-   && isub->bbox[BTOP] >= osub->bbox[BTOP]
-   && isub->bbox[BBOTTOM] <= osub->bbox[BBOTTOM])
+   if(isub->bBox[BLEFT] >= osub->bBox[BLEFT]
+   && isub->bBox[BRIGHT] <= osub->bBox[BRIGHT]
+   && isub->bBox[BTOP] >= osub->bBox[BTOP]
+   && isub->bBox[BBOTTOM] <= osub->bBox[BBOTTOM])
    {
    // This is contained.
    contained = true;
@@ -1520,18 +1520,18 @@ static sector_t *getContainingSectorOf(gamemap_t *map, sector_t *sec)
     float       inner[4], outer[4];
     sector_t   *other, *closest = NULL;
 
-    memcpy(inner, sec->bbox, sizeof(inner));
+    memcpy(inner, sec->bBox, sizeof(inner));
 
     // Try all sectors that fit in the bounding box.
-    for(i = 0, other = map->sectors; i < map->numsectors; other++, ++i)
+    for(i = 0, other = map->sectors; i < map->numSectors; other++, ++i)
     {
-        if(!other->linecount || (other->flags & SECF_UNCLOSED))
+        if(!other->lineCount || (other->flags & SECF_UNCLOSED))
             continue;
 
         if(other == sec)
             continue;           // Don't try on self!
 
-        memcpy(outer, other->bbox, sizeof(outer));
+        memcpy(outer, other->bBox, sizeof(outer));
         if(inner[BOXLEFT]  >= outer[BOXLEFT] &&
            inner[BOXRIGHT] <= outer[BOXRIGHT] &&
            inner[BOXTOP]   <= outer[BOXTOP] &&
@@ -1560,7 +1560,7 @@ void R_BuildSectorLinks(gamemap_t *map)
 
     uint        i;
 
-    for(i = 0; i < map->numsectors; ++i)
+    for(i = 0; i < map->numSectors; ++i)
     {
         uint        k;
         sector_t   *other;
@@ -1568,16 +1568,16 @@ void R_BuildSectorLinks(gamemap_t *map)
         sector_t   *sec = &map->sectors[i];
         boolean     dohack;
 
-        if(!sec->linecount)
+        if(!sec->lineCount)
             continue;
 
         // Is this sector completely contained by another?
-        sec->containsector = getContainingSectorOf(map, sec);
+        sec->containSector = getContainingSectorOf(map, sec);
 
         dohack = true;
-        for(k = 0; k < sec->linecount; ++k)
+        for(k = 0; k < sec->lineCount; ++k)
         {
-            lin = sec->Lines[k];
+            lin = sec->lines[k];
             if(!lin->L_frontside || !lin->L_backside ||
                 lin->L_frontsector != lin->L_backsector)
             {
@@ -1591,30 +1591,30 @@ void R_BuildSectorLinks(gamemap_t *map)
             sec->flags |= SECF_PERMANENTLINK;
 
             // Only floor and ceiling can be linked, not all planes inbetween.
-            for(k = 0; k < sec->subsgroupcount; ++k)
+            for(k = 0; k < sec->subsGroupCount; ++k)
             {
-                ssecgroup_t *ssgrp = &sec->subsgroups[k];
+                ssecgroup_t *ssgrp = &sec->subsGroups[k];
                 uint        p;
 
-                for(p = 0; p < sec->planecount; ++p)
-                    ssgrp->linked[p] = sec->containsector;
+                for(p = 0; p < sec->planeCount; ++p)
+                    ssgrp->linked[p] = sec->containSector;
             }
 
             Con_Printf("Linking S%i planes permanently to S%li\n", i,
-                       (long) (sec->containsector - map->sectors));
+                       (long) (sec->containSector - map->sectors));
         }
 
         // Is this sector large enough to be a dominant light source?
-        if(sec->lightsource == NULL &&
+        if(sec->lightSource == NULL &&
            (R_IsSkySurface(&sec->SP_ceilsurface) ||
             R_IsSkySurface(&sec->SP_floorsurface)) &&
-           sec->bbox[BOXRIGHT] - sec->bbox[BOXLEFT]   > DOMINANT_SIZE &&
-           sec->bbox[BOXTOP]   - sec->bbox[BOXBOTTOM] > DOMINANT_SIZE)
+           sec->bBox[BOXRIGHT] - sec->bBox[BOXLEFT]   > DOMINANT_SIZE &&
+           sec->bBox[BOXTOP]   - sec->bBox[BOXBOTTOM] > DOMINANT_SIZE)
         {
             // All sectors touching this one will be affected.
-            for(k = 0; k < sec->linecount; ++k)
+            for(k = 0; k < sec->lineCount; ++k)
             {
-                lin = sec->Lines[k];
+                lin = sec->lines[k];
                 other = lin->L_frontsector;
                 if(!other || other == sec)
                 {
@@ -1626,7 +1626,7 @@ void R_BuildSectorLinks(gamemap_t *map)
                     }
                 }
 
-                other->lightsource = sec;
+                other->lightSource = sec;
             }
         }
     }
@@ -1674,10 +1674,10 @@ void R_SetupLevel(int mode, int flags)
             sector_t       *sec = SECTOR_PTR(i);
 
             R_UpdateSector(sec, false);
-            for(j = 0; j < sec->planecount; ++j)
+            for(j = 0; j < sec->planeCount; ++j)
             {
-                sec->planes[j]->visheight = sec->planes[j]->oldheight[0] =
-                    sec->planes[j]->oldheight[1] = sec->planes[j]->height;
+                sec->planes[j]->visHeight = sec->planes[j]->oldHeight[0] =
+                    sec->planes[j]->oldHeight[1] = sec->planes[j]->height;
             }
         }
 
@@ -1713,10 +1713,10 @@ void R_SetupLevel(int mode, int flags)
             sector_t       *sec = SECTOR_PTR(i);
 
             R_UpdateSector(sec, true);
-            for(l = 0; l < sec->planecount; ++l)
+            for(l = 0; l < sec->planeCount; ++l)
             {
-                sec->planes[l]->visheight = sec->planes[l]->oldheight[0] =
-                    sec->planes[l]->oldheight[1] = sec->planes[l]->height;
+                sec->planes[l]->visHeight = sec->planes[l]->oldHeight[0] =
+                    sec->planes[l]->oldHeight[1] = sec->planes[l]->height;
             }
         }
 
@@ -1724,7 +1724,7 @@ void R_SetupLevel(int mode, int flags)
         {
             line = LINE_PTR(i);
 
-            if(line->mapflags & 0x0100) // The old ML_MAPPED flag
+            if(line->mapFlags & 0x0100) // The old ML_MAPPED flag
             {
                 // This line wants to be seen in the map from the begining.
                 memset(&line->mapped, 1, sizeof(&line->mapped));
@@ -1741,7 +1741,7 @@ void R_SetupLevel(int mode, int flags)
                                                       i, DMU_LINE, &pid);
                     }
                 }
-                line->mapflags &= ~0x0100; // remove the flag.
+                line->mapFlags &= ~0x0100; // remove the flag.
             }
 
             // Update side surfaces.
@@ -1798,7 +1798,7 @@ void R_SetupLevel(int mode, int flags)
             clients[i].numTics = 0;
 
             // Determine if the player is in the void.
-            plr->invoid = true;
+            plr->inVoid = true;
             if(plr->mo)
             {
                 subsector_t        *ssec =
@@ -1807,7 +1807,7 @@ void R_SetupLevel(int mode, int flags)
                 if(ssec &&
                    plr->mo->pos[VZ] > ssec->sector->SP_floorheight + 4 &&
                    plr->mo->pos[VZ] < ssec->sector->SP_ceilheight - 4)
-                   plr->invoid = false;
+                   plr->inVoid = false;
             }
         }
 
@@ -1834,8 +1834,8 @@ void R_SetupLevel(int mode, int flags)
         if(!mapInfo || !(mapInfo->flags & MIF_FOG))
             R_SetupFogDefaults();
         else
-            R_SetupFog(mapInfo->fog_start, mapInfo->fog_end,
-                       mapInfo->fog_density, mapInfo->fog_color);
+            R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd,
+                       mapInfo->fogDensity, mapInfo->fogColor);
         break;
     }
     default:
@@ -1852,14 +1852,14 @@ void R_ClearSectorFlags(void)
     {
         sec = SECTOR_PTR(i);
         // Clear all flags that can be cleared before each frame.
-        sec->frameflags &= ~SIF_FRAME_CLEAR;
+        sec->frameFlags &= ~SIF_FRAME_CLEAR;
     }
 }
 
 sector_t *R_GetLinkedSector(subsector_t *startssec, uint plane)
 {
     ssecgroup_t        *ssgrp =
-        &startssec->sector->subsgroups[startssec->group];
+        &startssec->sector->subsGroups[startssec->group];
 
     if(!devNoLinkedSurfaces && ssgrp->linked[plane])
         return ssgrp->linked[plane];
@@ -1876,7 +1876,7 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
     {
         sector_t *sec = SECTOR_PTR(i);
 
-        for(j = 0; j < sec->planecount; ++j)
+        for(j = 0; j < sec->planeCount; ++j)
             R_UpdateSurface(&sec->planes[j]->surface, forceUpdate);
     }
 
@@ -1897,11 +1897,11 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
 
     // Any change to the texture or glow properties?
     texFlags = R_GetMaterialFlags(suf->material);
-    oldTexFlags = R_GetMaterialFlags(suf->oldmaterial);
+    oldTexFlags = R_GetMaterialFlags(suf->oldMaterial);
 
     // \fixme Update glowing status?
     // The order of these tests is important.
-    if(forceUpdate || (suf->material != suf->oldmaterial))
+    if(forceUpdate || (suf->material != suf->oldMaterial))
     {
         // Check if the new texture is declared as glowing.
         // NOTE: Currently, we always discard the glow settings of the
@@ -1918,13 +1918,13 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
             // The new texture is glowing.
             suf->flags |= SUF_GLOW;
         }
-        else if(suf->oldmaterial && (oldTexFlags & TXF_GLOW))
+        else if(suf->oldMaterial && (oldTexFlags & TXF_GLOW))
         {
             // The old texture was glowing but the new one is not.
             suf->flags &= ~SUF_GLOW;
         }
 
-        suf->oldmaterial = suf->material;
+        suf->oldMaterial = suf->material;
 
         // No longer a missing texture fix?
         if(suf->material && (oldTexFlags & SUF_TEXFIX))
@@ -1959,37 +1959,37 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
     // < FIXME
 
     if(forceUpdate ||
-       suf->flags != suf->oldflags)
+       suf->flags != suf->oldFlags)
     {
-        suf->oldflags = suf->flags;
+        suf->oldFlags = suf->flags;
         suf->flags |= SUF_UPDATE_DECORATIONS;
     }
 
     if(forceUpdate ||
-       (suf->offset[VX] != suf->oldoffset[VX]))
+       (suf->offset[VX] != suf->oldOffset[VX]))
     {
-        suf->oldoffset[VX] = suf->offset[VX];
+        suf->oldOffset[VX] = suf->offset[VX];
         suf->flags |= SUF_UPDATE_DECORATIONS;
     }
 
     if(forceUpdate ||
-       (suf->offset[VY] != suf->oldoffset[VY]))
+       (suf->offset[VY] != suf->oldOffset[VY]))
     {
-        suf->oldoffset[VY] = suf->offset[VY];
+        suf->oldOffset[VY] = suf->offset[VY];
         suf->flags |= SUF_UPDATE_DECORATIONS;
     }
 
     // Surface color change?
     if(forceUpdate ||
-       (suf->rgba[0] != suf->oldrgba[0] ||
-        suf->rgba[1] != suf->oldrgba[1] ||
-        suf->rgba[2] != suf->oldrgba[2] ||
-        suf->rgba[3] != suf->oldrgba[3]))
+       (suf->rgba[0] != suf->oldRGBA[0] ||
+        suf->rgba[1] != suf->oldRGBA[1] ||
+        suf->rgba[2] != suf->oldRGBA[2] ||
+        suf->rgba[3] != suf->oldRGBA[3]))
     {
         // \todo when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
-        memcpy(suf->oldrgba, suf->rgba, sizeof(suf->oldrgba));
+        memcpy(suf->oldRGBA, suf->rgba, sizeof(suf->oldRGBA));
     }
 }
 
@@ -2002,25 +2002,25 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
-       (sec->lightlevel != sec->oldlightlevel ||
-        sec->rgb[0] != sec->oldrgb[0] ||
-        sec->rgb[1] != sec->oldrgb[1] ||
-        sec->rgb[2] != sec->oldrgb[2]))
+       (sec->lightLevel != sec->oldLightLevel ||
+        sec->rgb[0] != sec->oldRGB[0] ||
+        sec->rgb[1] != sec->oldRGB[1] ||
+        sec->rgb[2] != sec->oldRGB[2]))
     {
-        sec->frameflags |= SIF_LIGHT_CHANGED;
-        sec->oldlightlevel = sec->lightlevel;
-        memcpy(sec->oldrgb, sec->rgb, sizeof(sec->oldrgb));
+        sec->frameFlags |= SIF_LIGHT_CHANGED;
+        sec->oldLightLevel = sec->lightLevel;
+        memcpy(sec->oldRGB, sec->rgb, sizeof(sec->oldRGB));
 
         LG_SectorChanged(sec);
         updateDecorations = true;
     }
     else
     {
-        sec->frameflags &= ~SIF_LIGHT_CHANGED;
+        sec->frameFlags &= ~SIF_LIGHT_CHANGED;
     }
 
     // For each plane.
-    for(i = 0; i < sec->planecount; ++i)
+    for(i = 0; i < sec->planeCount; ++i)
     {
         plane = sec->planes[i];
 
@@ -2033,19 +2033,19 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
             plane->glow = 4; // Default height factor is 4
 
             R_GetMaterialColor(plane->PS_material->ofTypeID,
-                                plane->PS_material->type, plane->glowrgb);
+                                plane->PS_material->type, plane->glowRGB);
         }
         else
         {
             plane->glow = 0;
             for(j = 0; j < 3; ++j)
-                plane->glowrgb[j] = 0;
+                plane->glowRGB[j] = 0;
         }
         // < FIXME
 
         // Geometry change?
         if(forceUpdate ||
-           plane->height != plane->oldheight[1])
+           plane->height != plane->oldHeight[1])
         {
             ddplayer_t *player;
 
@@ -2055,7 +2055,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
             for(j = 0; j < MAXPLAYERS; ++j)
             {
                 player = &players[j];
-                if(!player->ingame || !player->mo || !player->mo->subsector)
+                if(!player->inGame || !player->mo || !player->mo->subsector)
                     continue;
 
                 if((player->flags & DDPF_CAMERA) &&
@@ -2063,7 +2063,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
                    (player->mo->pos[VZ] > sec->SP_ceilheight ||
                     player->mo->pos[VZ] < sec->SP_floorheight))
                 {
-                    player->invoid = true;
+                    player->inVoid = true;
                 }
             }
 
@@ -2084,9 +2084,9 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     if(!(sec->flags & SECF_PERMANENTLINK)) // Assign new links
     {
         // Only floor and ceiling can be linked, not all inbetween
-        for(i = 0; i < sec->subsgroupcount; ++i)
+        for(i = 0; i < sec->subsGroupCount; ++i)
         {
-            ssecgroup_t *ssgrp = &sec->subsgroups[i];
+            ssecgroup_t *ssgrp = &sec->subsGroups[i];
 
             ssgrp->linked[PLN_FLOOR] = NULL;
             ssgrp->linked[PLN_CEILING] = NULL;
@@ -2119,8 +2119,8 @@ const float *R_GetSectorLightColor(sector_t *sector)
        !R_IsSkySurface(&sector->SP_floorsurface))
     {
         // A dominant light source affects this sector?
-        src = sector->lightsource;
-        if(src && src->lightlevel >= sector->lightlevel)
+        src = sector->lightSource;
+        if(src && src->lightLevel >= sector->lightLevel)
         {
             // The color shines here, too.
             return R_GetSectorLightColor(src);
@@ -2283,9 +2283,9 @@ static void setVertexLineOwner(vertex_t *vtx, line_t *lineptr,
         vtx->anchored = true;
 
     // Has this line already been registered with this vertex?
-    if(vtx->numlineowners != 0)
+    if(vtx->numLineOwners != 0)
     {
-        p = vtx->lineowners;
+        p = vtx->lineOwners;
         while(p)
         {
             if(p->line == lineptr)
@@ -2296,7 +2296,7 @@ static void setVertexLineOwner(vertex_t *vtx, line_t *lineptr,
     }
 
     //Add a new owner.
-    vtx->numlineowners++;
+    vtx->numLineOwners++;
 
     newOwner = (*storage)++;
     newOwner->line = lineptr;
@@ -2307,8 +2307,8 @@ static void setVertexLineOwner(vertex_t *vtx, line_t *lineptr,
     // be sorting the lists anyway. After which we'll finish the job by
     // setting the prev and circular links.
     // So, for now this is only linked singlely, forward.
-    newOwner->LO_next = vtx->lineowners;
-    vtx->lineowners = newOwner;
+    newOwner->LO_next = vtx->lineOwners;
+    vtx->lineOwners = newOwner;
 
     // Link the line to its respective owner node.
     if(vtx == lineptr->L_v1)
@@ -2331,10 +2331,10 @@ void R_BuildVertexOwners(gamemap_t *map)
 
     // We know how many vertex line owners we need (numlines * 2).
     lineOwners =
-        Z_Malloc(sizeof(lineowner_t) * map->numlines * 2, PU_LEVELSTATIC, 0);
+        Z_Malloc(sizeof(lineowner_t) * map->numLines * 2, PU_LEVELSTATIC, 0);
     allocator = lineOwners;
 
-    for(i = 0; i < map->numlines; ++i)
+    for(i = 0; i < map->numLines; ++i)
     {
         uint        p;
         line_t     *line = &map->lines[i];
@@ -2348,25 +2348,25 @@ void R_BuildVertexOwners(gamemap_t *map)
     }
 
     // Sort line owners and then finish the rings.
-    for(i = 0; i < map->numvertexes; ++i)
+    for(i = 0; i < map->numVertexes; ++i)
     {
         vertex_t   *v = &map->vertexes[i];
 
         // Line owners:
-        if(v->numlineowners != 0)
+        if(v->numLineOwners != 0)
         {
             lineowner_t *p, *last;
             binangle_t  lastAngle = 0;
 
             // Sort them so that they are ordered clockwise based on angle.
             rootVtx = v;
-            v->lineowners =
-                sortLineOwners(v->lineowners, lineAngleSorter);
+            v->lineOwners =
+                sortLineOwners(v->lineOwners, lineAngleSorter);
 
             // Finish the linking job and convert to relative angles.
             // They are only singly linked atm, we need them to be doubly
             // and circularly linked.
-            last = v->lineowners;
+            last = v->lineOwners;
             p = last->LO_next;
             while(p)
             {
@@ -2379,8 +2379,8 @@ void R_BuildVertexOwners(gamemap_t *map)
                 last = p;
                 p = p->LO_next;
             }
-            last->LO_next = v->lineowners;
-            v->lineowners->LO_prev = last;
+            last->LO_next = v->lineOwners;
+            v->lineOwners->LO_prev = last;
 
             // Set the angle of the last owner.
             last->angle = BANG_360 - lastAngle;
@@ -2392,9 +2392,9 @@ lineowner_t *base;
 uint        idx;
 
 if(verbose >= 2)
-    Con_Message("Vertex #%i: line owners #%i\n", i, v->numlineowners);
+    Con_Message("Vertex #%i: line owners #%i\n", i, v->numLineOwners);
 
-p = base = v->lineowners;
+p = base = v->lineOwners;
 idx = 0;
 do
 {

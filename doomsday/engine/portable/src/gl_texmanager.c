@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@
 #endif
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_render.h"
@@ -356,7 +357,7 @@ static void LoadPalette(void)
         for(c = 0; c < 3; ++c)
             paldata[i * 3 + c] = gammatable[playpal[i * 3 + c]];
     }
-    gl.Palette(DGL_RGB, paldata);
+    DGL_Palette(DGL_RGB, paldata);
 }
 
 byte *GL_GetPalette(void)
@@ -379,10 +380,10 @@ int GL_InitPalettedTexture(void)
     if(!paletted && !ArgCheck("-paltex"))
         return true;
 
-    gl.Enable(DGL_PALETTED_TEXTURES);
+    DGL_Enable(DGL_PALETTED_TEXTURES);
 
     // Check if the operation was a success.
-    if(gl.GetInteger(DGL_PALETTED_TEXTURES) == DGL_FALSE)
+    if(DGL_GetInteger(DGL_PALETTED_TEXTURES) == false)
     {
         Con_Message("\nPaletted textures init failed!\n");
         return false;
@@ -441,7 +442,7 @@ void GL_DeleteLightMap(ded_lightmap_t *map)
 {
     if(map->tex != lightingTextures[LST_DYNAMIC].tex)
     {
-        gl.DeleteTextures(1, &map->tex);
+        DGL_DeleteTextures(1, &map->tex);
     }
     map->tex = 0;
 }
@@ -560,7 +561,7 @@ void GL_DeleteFlareMap(ded_flaremap_t *map)
 {
     if(map->tex != flareTextures[FXT_FLARE].tex)
     {
-        gl.DeleteTextures(1, &map->tex);
+        DGL_DeleteTextures(1, &map->tex);
     }
     map->tex = 0;
 }
@@ -579,39 +580,39 @@ boolean GL_LoadReflectionMap(ded_reflection_t *loading_ref)
     }
 
     // First try the shiny texture map.
-    ref = loading_ref->use_shiny;
+    ref = loading_ref->useShiny;
     if(!ref)
     {
         // Not shiny at all.
         return false;
     }
 
-    if(ref->shiny_tex == 0)
+    if(ref->shinyTex == 0)
     {
         // Need to load the shiny texture.
-        ref->shiny_tex = GL_LoadGraphics2(RC_LIGHTMAP, ref->shiny_map.path,
-                                          LGM_NORMAL, DGL_FALSE, true, 0);
-        if(ref->shiny_tex == 0)
+        ref->shinyTex = GL_LoadGraphics2(RC_LIGHTMAP, ref->shinyMap.path,
+                                          LGM_NORMAL, false, true, 0);
+        if(ref->shinyTex == 0)
         {
             VERBOSE(Con_Printf("GL_LoadReflectionMap: %s not found!\n",
-                               ref->shiny_map.path));
+                               ref->shinyMap.path));
         }
     }
 
     // Also load the mask, if one has been specified.
-    if(loading_ref->use_mask)
+    if(loading_ref->useMask)
     {
-        ref = loading_ref->use_mask;
+        ref = loading_ref->useMask;
 
-        if(ref->mask_tex == 0)
+        if(ref->maskTex == 0)
         {
-            ref->mask_tex = GL_LoadGraphics2(RC_LIGHTMAP,
-                                             ref->mask_map.path,
-                                             LGM_NORMAL, DGL_TRUE, true, 0);
-            if(ref->mask_tex == 0)
+            ref->maskTex = GL_LoadGraphics2(RC_LIGHTMAP,
+                                            ref->maskMap.path,
+                                            LGM_NORMAL, true, true, 0);
+            if(ref->maskTex == 0)
             {
                 VERBOSE(Con_Printf("GL_LoadReflectionMap: %s not found!\n",
-                                   ref->mask_map.path));
+                                   ref->maskMap.path));
             }
         }
     }
@@ -621,16 +622,16 @@ boolean GL_LoadReflectionMap(ded_reflection_t *loading_ref)
 
 void GL_DeleteReflectionMap(ded_reflection_t *ref)
 {
-    if(ref->shiny_tex)
+    if(ref->shinyTex)
     {
-        gl.DeleteTextures(1, &ref->shiny_tex);
-        ref->shiny_tex = 0;
+        DGL_DeleteTextures(1, &ref->shinyTex);
+        ref->shinyTex = 0;
     }
 
-    if(ref->mask_tex)
+    if(ref->maskTex)
     {
-        gl.DeleteTextures(1, &ref->mask_tex);
-        ref->mask_tex = 0;
+        DGL_DeleteTextures(1, &ref->maskTex);
+        ref->maskTex = 0;
     }
 }
 
@@ -650,7 +651,7 @@ void GL_ClearDDTextures(void)
     uint        i;
 
     for(i = 0; i < NUM_DD_TEXTURES; ++i)
-        gl.DeleteTextures(1, &ddTextures[i].tex);
+        DGL_DeleteTextures(1, &ddTextures[i].tex);
     memset(ddTextures, 0, sizeof(ddTextures));
 }
 
@@ -702,7 +703,7 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
             {
                 if(loadFlares)
                     GL_LoadFlareMap(&decor->lights[k].flare,
-                                    decor->lights[k].flare_texture);
+                                    decor->lights[k].flareTexture);
 
                 if(!R_IsValidLightDecoration(&decor->lights[k]))
                     break;
@@ -760,11 +761,11 @@ void GL_ClearSystemTextures(void)
     }
 
     for(i = 0; i < NUM_LIGHTING_TEXTURES; ++i)
-        gl.DeleteTextures(1, &lightingTextures[i].tex);
+        DGL_DeleteTextures(1, &lightingTextures[i].tex);
     memset(lightingTextures, 0, sizeof(lightingTextures));
 
     for(i = 0; i < NUM_FLARE_TEXTURES; ++i)
-        gl.DeleteTextures(1, &flareTextures[i].tex);
+        DGL_DeleteTextures(1, &flareTextures[i].tex);
     memset(flareTextures, 0, sizeof(flareTextures));
 
     GL_ClearDDTextures();
@@ -801,7 +802,7 @@ void GL_ClearRuntimeTextures(void)
     // The translated sprite textures.
     for(i = 0; i < numtranssprites; ++i)
     {
-        gl.DeleteTextures(1, &transsprites[i]->tex);
+        DGL_DeleteTextures(1, &transsprites[i]->tex);
         transsprites[i]->tex = 0;
     }
     numtranssprites = 0;
@@ -809,7 +810,7 @@ void GL_ClearRuntimeTextures(void)
     // Delete skins.
     for(i = 0; i < numskinnames; ++i)
     {
-        gl.DeleteTextures(1, &skinnames[i].tex);
+        DGL_DeleteTextures(1, &skinnames[i].tex);
         skinnames[i].tex = 0;
     }
 
@@ -818,7 +819,7 @@ void GL_ClearRuntimeTextures(void)
     while(dtinstances)
     {
         dtex = dtinstances->next;
-        gl.DeleteTextures(1, &dtinstances->tex);
+        DGL_DeleteTextures(1, &dtinstances->tex);
         M_Free(dtinstances);
         dtinstances = dtex;
         i++;
@@ -826,7 +827,7 @@ void GL_ClearRuntimeTextures(void)
     VERBOSE(Con_Message
             ("GL_ClearRuntimeTextures: %i detail texture " "instances.\n", i));
     for(i = 0; i < defs.count.details.num; ++i)
-        details[i].gltex = 0;
+        details[i].glTex = 0;
 
     // Surface reflection textures and masks.
     for(i = 0; i < defs.count.reflections.num; ++i)
@@ -841,12 +842,12 @@ void GL_ClearRuntimeTextures(void)
     {
         if((*ptr)->tex)
         {
-            gl.DeleteTextures(1, &(*ptr)->tex);
+            DGL_DeleteTextures(1, &(*ptr)->tex);
             (*ptr)->tex = 0;
         }
         if((*ptr)->tex2)
         {
-            gl.DeleteTextures(1, &(*ptr)->tex2);
+            DGL_DeleteTextures(1, &(*ptr)->tex2);
             (*ptr)->tex2 = 0;
         }
     }
@@ -878,7 +879,7 @@ void GL_BindTexture(DGLuint texname)
 
     /*if(curtex != texname)
        { */
-    gl.Bind(texname);
+    DGL_Bind(texname);
     curtex = texname;
     //}
 }
@@ -1041,13 +1042,13 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     rgbaOriginal = NULL;
 
     // Bind the texture so we can upload content.
-    gl.Bind(content->name);
+    DGL_Bind(content->name);
 
     if(load8bit)
     {
         int     canGenMips;
 
-        gl.GetIntegerv(DGL_PALETTED_GENMIPS, &canGenMips);
+        DGL_GetIntegerv(DGL_PALETTED_GENMIPS, &canGenMips);
 
         // Prepare the palette indices buffer, to be handed over to DGL.
         idxBuffer =
@@ -1068,11 +1069,11 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
                              palette, false);
 
             // Upload it.
-            if(gl.TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
-                           DGL_COLOR_INDEX_8, levelWidth, levelHeight,
-                           generateMipmaps &&
-                           canGenMips ? DGL_TRUE : generateMipmaps ? -i :
-                           DGL_FALSE, idxBuffer) != DGL_OK)
+            if(!DGL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
+                             DGL_COLOR_INDEX_8, levelWidth, levelHeight,
+                             generateMipmaps &&
+                             canGenMips ? true : generateMipmaps ? -i :
+                             false, idxBuffer))
             {
                 Con_Error
                     ("GL_UploadTexture: TexImage failed (%i x %i) as 8-bit, alpha:%i\n",
@@ -1096,8 +1097,8 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     else
     {
         // DGL knows how to generate mipmaps for RGB(A) textures.
-        if(gl.TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, levelWidth, levelHeight,
-                       generateMipmaps ? DGL_TRUE : DGL_FALSE, buffer) != DGL_OK)
+        if(!DGL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, levelWidth, levelHeight,
+                         generateMipmaps ? true : false, buffer))
         {
             Con_Error
                 ("GL_UploadTexture: TexImage failed (%i x %i), alpha:%i\n",
@@ -1258,8 +1259,8 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
 DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
                                 ded_detailtexture_t **dtdef)
 {
-    int     i;
-    detailtex_t *dt;
+    int             i;
+    detailtex_t    *dt;
     ded_detailtexture_t *def;
 
     // Search through the assignments.
@@ -1269,11 +1270,11 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
         dt = &details[i];
 
         // Is there a detail texture assigned for this?
-        if(dt->detail_lump < 0 && !def->is_external)
+        if(dt->detailLump < 0 && !def->isExternal)
             continue;
 
-        if((is_wall_texture && index == dt->wall_texture) ||
-           (!is_wall_texture && index == dt->flat_texture))
+        if((is_wall_texture && index == dt->wallTexture) ||
+           (!is_wall_texture && index == dt->flatTexture))
         {
             if(dtdef)
             {
@@ -1281,17 +1282,18 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
             }
 
             // Hey, a match. Load this?
-            if(!dt->gltex)
+            if(!dt->glTex)
             {
-                dt->gltex =
-                    GL_LoadDetailTexture(dt->detail_lump, def->strength,
-                                         (def->is_external?
-                                          def->detail_lump.path : NULL));
+                dt->glTex =
+                    GL_LoadDetailTexture(dt->detailLump, def->strength,
+                                         (def->isExternal?
+                                          def->detailLump.path : NULL));
             }
-            return dt->gltex;
+            return dt->glTex;
         }
     }
-    return 0;                   // There is no detail texture for this.
+
+    return 0; // There is no detail texture for this.
 }
 
 /**
@@ -1356,7 +1358,7 @@ static unsigned int prepareFlat2(int idx, boolean translate,
             flat->info.detail.height = 128;
             flat->info.detail.scale = def->scale;
             flat->info.detail.strength = def->strength;
-            flat->info.detail.maxdist = def->maxdist;
+            flat->info.detail.maxDist = def->maxDist;
         }
 
         // Load the texture.
@@ -1418,7 +1420,7 @@ static DGLuint prepareDDTexture(ddtextureid_t which, texinfo_t **texinfo)
         {
             ddTextures[which].tex =
                 GL_LoadGraphics2(RC_GRAPHICS, ddTexNames[which], LGM_NORMAL,
-                                 DGL_TRUE, false, 0);
+                                 true, false, 0);
 
             if(!ddTextures[which].tex)
                 Con_Error("prepareDDTexture: \"%s\" not found!\n",
@@ -1642,7 +1644,7 @@ byte *GL_LoadHighResPatch(image_t *img, char *name)
 
 DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
 {
-    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, DGL_FALSE, true, 0);
+    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, false, true, 0);
 }
 
 DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
@@ -1659,7 +1661,7 @@ DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
                          int minFilter, int magFilter, int anisoFilter,
                          int wrapS, int wrapT, int otherFlags)
 {
-    return GL_LoadGraphics4(RC_GRAPHICS, name, mode, DGL_FALSE,
+    return GL_LoadGraphics4(RC_GRAPHICS, name, mode, false,
                             minFilter, magFilter, anisoFilter, wrapS, wrapT,
                             otherFlags);
 }
@@ -1707,25 +1709,25 @@ DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
         }
 
         /*
-        texture = gl.NewTexture();
+        texture = DGL_NewTexture();
         if(image.width < 128 && image.height < 128)
         {
             // Small textures will never be compressed.
-            gl.Disable(DGL_TEXTURE_COMPRESSION);
+            DGL_Disable(DGL_TEXTURE_COMPRESSION);
         }
-        gl.TexImage(image.pixelSize ==
+        DGL_TexImage(image.pixelSize ==
                     2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
                     3 ? DGL_RGB : image.pixelSize ==
                     4 ? DGL_RGBA : DGL_LUMINANCE, image.width, image.height,
                     useMipmap, image.pixels);
-        gl.Enable(DGL_TEXTURE_COMPRESSION);
-        gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
-        gl.TexParameter(DGL_MIN_FILTER,
+        DGL_Enable(DGL_TEXTURE_COMPRESSION);
+        DGL_TexFilter(DGL_MAG_FILTER, glmode[texMagMode]);
+        DGL_TexFilter(DGL_MIN_FILTER,
                         useMipmap ? glmode[mipmapping] : DGL_LINEAR);
         if(clamped)
         {
-            gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-            gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+            DGL_TexFilter(DGL_WRAP_S, DGL_CLAMP);
+            DGL_TexFilter(DGL_WRAP_T, DGL_CLAMP);
         }*/
 
         texture = GL_NewTextureWithParams2(( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
@@ -1765,7 +1767,7 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 
     // Draw all the patches. Check for alpha pixels after last patch has
     // been drawn.
-    for(i = 0; i < tex->patchcount; ++i)
+    for(i = 0; i < tex->patchCount; ++i)
     {
         patch = (lumppatch_t*) W_CacheLumpNum(tex->patches[i].patch, PU_CACHE);
 
@@ -1778,8 +1780,8 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
         // Draw the patch in the buffer.
         alphaChannel =
             DrawRealPatch(buffer, /*palette,*/ width, height, patch,
-                          tex->patches[i].originx, tex->patches[i].originy,
-                          false, 0, i == tex->patchcount - 1);
+                          tex->patches[i].originX, tex->patches[i].originY,
+                          false, 0, i == tex->patchCount - 1);
     }
     W_ChangeCacheTag(pallump, PU_CACHE);
     return alphaChannel;
@@ -1859,7 +1861,7 @@ static unsigned int prepareTexture2(int idx, boolean translate, texinfo_t **info
             tex->info.detail.height = 128;
             tex->info.detail.scale = def->scale;
             tex->info.detail.strength = def->strength;
-            tex->info.detail.maxdist = def->maxdist;
+            tex->info.detail.maxDist = def->maxDist;
         }
 
         tex->tex =
@@ -1917,7 +1919,7 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
     *width = tex->info.width;
     *height = tex->info.height;
 
-    if(tex->patchcount > 1)
+    if(tex->patchCount > 1)
     {
         numpels = tex->info.width * tex->info.height;
         imgdata = M_Calloc(2 * numpels);
@@ -1936,11 +1938,11 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
            }
            }
            } */
-        for(i = 0; i < tex->patchcount; ++i)
+        for(i = 0; i < tex->patchCount; ++i)
         {
             DrawRealPatch(imgdata, /*palette,*/ tex->info.width, tex->info.height,
                           W_CacheLumpNum(tex->patches[i].patch, PU_CACHE),
-                          tex->patches[i].originx, tex->patches[i].originy,
+                          tex->patches[i].originX, tex->patches[i].originY,
                           zeroMask, 0, false);
         }
     }
@@ -2100,8 +2102,8 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
 
         if(patch)
         {
-            slump->flarex *= SHORT(patch->width) / (float) image->width;
-            slump->flarey *= SHORT(patch->height) / (float) image->height;
+            slump->flareX *= SHORT(patch->width) / (float) image->width;
+            slump->flareY *= SHORT(patch->height) / (float) image->height;
         }
     }
 
@@ -2116,7 +2118,7 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
                          DGL_CLAMP, DGL_CLAMP, 0);
 
     // Determine coordinates for the texture.
-    GL_SetTexCoords(spritelumps[pnum]->tc[isPsprite], image->width,
+    GL_SetTexCoords(spritelumps[pnum]->texCoord[isPsprite], image->width,
                     image->height);
 
     return texture;
@@ -2194,7 +2196,7 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
     // This way a sprite can be used both in the game and the HUD, and
     // the textures can be different. (Very few sprites are used both
     // in the game and the HUD.)
-    texture = (spriteMode == 0 ? &slump->tex : &slump->hudtex);
+    texture = (spriteMode == 0 ? &slump->tex : &slump->hudTex);
 
     if(!*texture)
     {
@@ -2242,13 +2244,13 @@ void GL_DeleteSprite(int spritelump)
     if(spritelump < 0 || spritelump >= numSpriteLumps)
         return;
 
-    gl.DeleteTextures(1, &spritelumps[spritelump]->tex);
+    DGL_DeleteTextures(1, &spritelumps[spritelump]->tex);
     spritelumps[spritelump]->tex = 0;
 
-    if(spritelumps[spritelump]->hudtex)
+    if(spritelumps[spritelump]->hudTex)
     {
-        gl.DeleteTextures(1, &spritelumps[spritelump]->hudtex);
-        spritelumps[spritelump]->hudtex = 0;
+        DGL_DeleteTextures(1, &spritelumps[spritelump]->hudTex);
+        spritelumps[spritelump]->hudTex = 0;
     }
 }
 
@@ -2260,13 +2262,14 @@ void GL_GetSpriteColorf(int pnum, float *rgb)
     memcpy(rgb, spritelumps[pnum]->color, sizeof(float) * 3);
 }
 
-/**
- * 0 = Normal sprite
- * 1 = Psprite (HUD)
- */
-void GL_SetSprite(int pnum, int spriteType)
+void GL_SetSprite(int pnum)
 {
-    GL_BindTexture(GL_PrepareSprite(pnum, spriteType));
+    GL_BindTexture(GL_PrepareSprite(pnum, 0));
+}
+
+void GL_SetPSprite(int pnum)
+{
+    GL_BindTexture(GL_PrepareSprite(pnum, 1));
 }
 
 void GL_SetTranslatedSprite(int pnum, int tmap, int tclass)
@@ -2464,14 +2467,19 @@ DGLuint GL_PrepareRawTex(uint idx, boolean part2, texinfo_t **info)
     return GL_GetRawTexInfo(idx, part2, info);
 }
 
-unsigned int GL_SetRawImage(unsigned int idx, boolean part2)
+unsigned int GL_SetRawImage(unsigned int idx, boolean part2, int wrapS,
+                            int wrapT)
 {
     unsigned int    tex;
 
     // We don't track the current texture with raw images.
     curtex = 0;
 
-    gl.Bind(tex = GL_PrepareRawTex(idx, part2, NULL));
+    DGL_Bind(tex = GL_PrepareRawTex(idx, part2, NULL));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                    wrapS == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                    wrapT == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
     return tex;
 }
 
@@ -2588,8 +2596,8 @@ DGLuint GL_BindTexPatch(patch_t *p)
     }
 
     patch = (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
-    p->offx = -SHORT(patch->leftoffset);
-    p->offy = -SHORT(patch->topoffset);
+    p->offX = -SHORT(patch->leftOffset);
+    p->offY = -SHORT(patch->topOffset);
 
     // Let's first try the resource locator and see if there is a
     // 'high-resolution' version available.
@@ -2766,9 +2774,14 @@ DGLuint GL_PreparePatch(int idx, texinfo_t **info)
     return GL_GetPatchInfo(idx, false, info);
 }
 
-void GL_SetPatch(int idx)
+void GL_SetPatch(int idx, int wrapS, int wrapT)
 {
-    gl.Bind(curtex = GL_PreparePatch(idx, NULL));
+    DGL_Bind(curtex = GL_PreparePatch(idx, NULL));
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                    wrapS == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                    wrapT == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
 }
 
 /**
@@ -2776,7 +2789,7 @@ void GL_SetPatch(int idx)
  */
 void GL_SetNoTexture(void)
 {
-    gl.Bind(0);
+    DGL_Bind(0);
     curtex = 0;
 }
 
@@ -2895,6 +2908,7 @@ void GL_SetTextureParams(int minMode, int magMode, int anisoLevel,
                          int gameTex, int uiTex)
 {
     int     i;
+    int     aniso = DGL_GetTexAnisoMul(anisoLevel);
 
     if(gameTex)
     {
@@ -2902,39 +2916,39 @@ void GL_SetTextureParams(int minMode, int magMode, int anisoLevel,
         for(i = 0; i < numtextures; ++i)
             if(textures[i]->tex)    // Is the texture loaded?
             {
-                gl.Bind(textures[i]->tex);
-                gl.TexParameter(DGL_MIN_FILTER, minMode);
-                gl.TexParameter(DGL_MAG_FILTER, magMode);
-                gl.TexParameter(DGL_ANISO_FILTER, anisoLevel);
+                DGL_Bind(textures[i]->tex);
+                DGL_TexFilter(DGL_MIN_FILTER, minMode);
+                DGL_TexFilter(DGL_MAG_FILTER, magMode);
+                DGL_TexFilter(DGL_ANISO_FILTER, aniso);
             }
 
         // Flats.
         for(i = 0; i < numflats; ++i)
             if(flats[i]->tex)    // Is the flat loaded?
             {
-                gl.Bind(flats[i]->tex);
-                gl.TexParameter(DGL_MIN_FILTER, minMode);
-                gl.TexParameter(DGL_MAG_FILTER, magMode);
-                gl.TexParameter(DGL_ANISO_FILTER, anisoLevel);
+                DGL_Bind(flats[i]->tex);
+                DGL_TexFilter(DGL_MIN_FILTER, minMode);
+                DGL_TexFilter(DGL_MAG_FILTER, magMode);
+                DGL_TexFilter(DGL_ANISO_FILTER, aniso);
             }
 
         // Sprites.
         for(i = 0; i < numSpriteLumps; ++i)
             if(spritelumps[i]->tex)
             {
-                gl.Bind(spritelumps[i]->tex);
-                gl.TexParameter(DGL_MIN_FILTER, minMode);
-                gl.TexParameter(DGL_MAG_FILTER, magMode);
-                gl.TexParameter(DGL_ANISO_FILTER, anisoLevel);
+                DGL_Bind(spritelumps[i]->tex);
+                DGL_TexFilter(DGL_MIN_FILTER, minMode);
+                DGL_TexFilter(DGL_MAG_FILTER, magMode);
+                DGL_TexFilter(DGL_ANISO_FILTER, aniso);
             }
 
         // Translated sprites.
         for(i = 0; i < numtranssprites; ++i)
         {
-            gl.Bind(transsprites[i]->tex);
-            gl.TexParameter(DGL_MIN_FILTER, minMode);
-            gl.TexParameter(DGL_MAG_FILTER, magMode);
-            gl.TexParameter(DGL_ANISO_FILTER, anisoLevel);
+            DGL_Bind(transsprites[i]->tex);
+            DGL_TexFilter(DGL_MIN_FILTER, minMode);
+            DGL_TexFilter(DGL_MAG_FILTER, magMode);
+            DGL_TexFilter(DGL_ANISO_FILTER, aniso);
         }
     }
 
@@ -2950,15 +2964,15 @@ void GL_SetTextureParams(int minMode, int magMode, int anisoLevel,
         {
             if((*ptr)->tex)    // Is the texture loaded?
             {
-                gl.Bind((*ptr)->tex);
-                gl.TexParameter(DGL_MIN_FILTER, minMode);
-                gl.TexParameter(DGL_MAG_FILTER, magMode);
+                DGL_Bind((*ptr)->tex);
+                DGL_TexFilter(DGL_MIN_FILTER, minMode);
+                DGL_TexFilter(DGL_MAG_FILTER, magMode);
             }
             if((*ptr)->tex2)    // Is the texture loaded?
             {
-                gl.Bind((*ptr)->tex2);
-                gl.TexParameter(DGL_MIN_FILTER, minMode);
-                gl.TexParameter(DGL_MAG_FILTER, magMode);
+                DGL_Bind((*ptr)->tex2);
+                DGL_TexFilter(DGL_MIN_FILTER, minMode);
+                DGL_TexFilter(DGL_MAG_FILTER, magMode);
             }
         }
         Z_Free(patches);
@@ -2969,15 +2983,15 @@ void GL_SetTextureParams(int minMode, int magMode, int anisoLevel,
         {
             if(rawtextures[j].tex)
             {
-                gl.Bind(rawtextures[j].tex);
-                gl.TexParameter(DGL_MIN_FILTER, minMode);
-                gl.TexParameter(DGL_MAG_FILTER, magMode);
+                DGL_Bind(rawtextures[j].tex);
+                DGL_TexFilter(DGL_MIN_FILTER, minMode);
+                DGL_TexFilter(DGL_MAG_FILTER, magMode);
             }
             if(rawtextures[j].tex2)
             {
-                gl.Bind(rawtextures[j].tex2);
-                gl.TexParameter(DGL_MIN_FILTER, minMode);
-                gl.TexParameter(DGL_MAG_FILTER, magMode);
+                DGL_Bind(rawtextures[j].tex2);
+                DGL_TexFilter(DGL_MIN_FILTER, minMode);
+                DGL_TexFilter(DGL_MAG_FILTER, magMode);
             }
         }
     }
@@ -3053,8 +3067,8 @@ void GL_DeleteRawImages(void)
 
     for(i = 0; i < numrawtextures; ++i)
     {
-        gl.DeleteTextures(1, &rawtextures[i].tex);
-        gl.DeleteTextures(1, &rawtextures[i].tex2);
+        DGL_DeleteTextures(1, &rawtextures[i].tex);
+        DGL_DeleteTextures(1, &rawtextures[i].tex2);
         rawtextures[i].tex = rawtextures[i].tex2;
     }
 
@@ -3075,11 +3089,11 @@ void GL_UpdateRawScreenParams(int smoothing)
     for(i = 0; i < numrawtextures; ++i)
     {
         // First part 1.
-        gl.Bind(rawtextures[i].tex);
-        gl.TexParameter(DGL_MAG_FILTER, glmode);
+        DGL_Bind(rawtextures[i].tex);
+        DGL_TexFilter(DGL_MAG_FILTER, glmode);
         // Then part 2.
-        gl.Bind(rawtextures[i].tex2);
-        gl.TexParameter(DGL_MAG_FILTER, glmode);
+        DGL_Bind(rawtextures[i].tex2);
+        DGL_TexFilter(DGL_MAG_FILTER, glmode);
     }
 }
 
@@ -3177,7 +3191,7 @@ unsigned int GL_PrepareSkin(model_t * mdl, int skin)
 unsigned int GL_PrepareShinySkin(modeldef_t * md, int sub)
 {
     //  model_t *mdl = modellist[md->sub[sub].model];
-    skintex_t *stp = GL_GetSkinTexByIndex(md->sub[sub].shinyskin);
+    skintex_t *stp = GL_GetSkinTexByIndex(md->sub[sub].shinySkin);
     image_t image;
 
     if(!stp)
@@ -3421,7 +3435,7 @@ void GL_SetMaterial(int idx, materialtype_t type)
         Con_Error("GL_SetMaterial: Invalid material type %i.", type);
     }
 
-    gl.Bind(texID);
+    DGL_Bind(texID);
 }
 
 /**

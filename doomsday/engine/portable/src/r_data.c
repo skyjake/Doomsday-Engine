@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -219,8 +219,8 @@ static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
     rendPolys[idx]->inUse = true;
     rendPolys[idx]->numVerts = numverts;
 
-    p->numvertices = numverts;
-    p->vertices = Z_Malloc(sizeof(rendpoly_vertex_t) * p->numvertices,
+    p->numVertices = numverts;
+    p->vertices = Z_Malloc(sizeof(rendpoly_vertex_t) * p->numVertices,
                            PU_LEVEL, 0);
     p->isWall = isWall;
 
@@ -251,10 +251,9 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
 
     poly->flags = 0;
     poly->texOffset[VX] = poly->texOffset[VY] = 0;
-    poly->interpos = 0;
+    poly->interPos = 0;
     poly->lightListIdx = 0;
-    poly->decorlightmap = 0;
-    poly->blendmode = BM_NORMAL;
+    poly->blendMode = BM_NORMAL;
     poly->normal[0] = poly->normal[1] = poly->normal[2] = 0;
 
     poly->tex.id = curtex =
@@ -265,7 +264,7 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->tex.width = texinfo->width;
     poly->tex.masked = texinfo->masked;
 
-    memset(&poly->intertex, 0, sizeof(poly->intertex));
+    memset(&poly->interTex, 0, sizeof(poly->interTex));
 
     return poly;
 }
@@ -305,19 +304,18 @@ void R_MemcpyRendPoly(rendpoly_t *dest, const rendpoly_t *src)
         return;
 
     memcpy(&dest->tex, &src->tex, sizeof(gltexture_t));
-    memcpy(&dest->intertex, &src->intertex, sizeof(gltexture_t));
+    memcpy(&dest->interTex, &src->interTex, sizeof(gltexture_t));
     if(dest->wall && src->wall)
         memcpy(&dest->wall, &src->wall, sizeof(rendpoly_wall_t));
     dest->texOffset[VX] = src->texOffset[VX];
     dest->texOffset[VY] = src->texOffset[VY];
     dest->flags = src->flags;
-    dest->interpos = src->interpos;
-    dest->blendmode = src->interpos;
+    dest->interPos = src->interPos;
+    dest->blendMode = src->interPos;
     dest->lightListIdx = src->lightListIdx;
-    dest->decorlightmap = src->decorlightmap;
     dest->type = src->type;
     memcpy(&dest->normal, &src->normal, sizeof(dest->normal));
-    for(i = 0; i < dest->numvertices; ++i)
+    for(i = 0; i < dest->numVertices; ++i)
         memcpy(&dest->vertices[i], &src->vertices[i], sizeof(rendpoly_vertex_t));
 }
 
@@ -565,11 +563,11 @@ void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
     // Mark the texture/flat as belonging to some animgroup.
     if(group->flags & AGF_TEXTURE)
     {
-        textures[number]->ingroup = true;
+        textures[number]->inGroup = true;
     }
     else
     {
-        flats[number]->ingroup = true;
+        flats[number]->inGroup = true;
     }
 }
 
@@ -606,7 +604,7 @@ void R_InitAnimGroup(ded_group_t *def)
     int     groupNumber = -1;
     int     type, number;
 
-    type = (def->is_texture ? MAT_TEXTURE : MAT_FLAT);
+    type = (def->isTexture ? MAT_TEXTURE : MAT_FLAT);
 
     for(i = 0; i < def->count.num; ++i)
     {
@@ -623,7 +621,7 @@ void R_InitAnimGroup(ded_group_t *def)
         }
 
         R_AddToAnimGroup(groupNumber, def->members[i].name,
-                         def->members[i].tics, def->members[i].random_tics);
+                         def->members[i].tics, def->members[i].randomTics);
     }
 }
 
@@ -643,7 +641,7 @@ void R_ResetAnimGroups(void)
             continue;
 
         group->timer = 0;
-        group->maxtimer = 1;
+        group->maxTimer = 1;
 
         // The anim group should start from the first step using the
         // correct timings.
@@ -732,7 +730,7 @@ void R_InitTextures(void)
 
             texture = textures[i] =
                 Z_Calloc(sizeof(texture_t) +
-                        sizeof(texpatch_t) * (SHORT(mtexture->patchcount) - 1),
+                        sizeof(texpatch_t) * (SHORT(mtexture->patchCount) - 1),
                         PU_REFRESHTEX, 0);
             texture->info.width = SHORT(mtexture->width);
             texture->info.height = SHORT(mtexture->height);
@@ -748,18 +746,18 @@ void R_InitTextures(void)
             if(i == 0)
                 texture->flags |= TXF_NO_DRAW;
 
-            texture->patchcount = SHORT(mtexture->patchcount);
+            texture->patchCount = SHORT(mtexture->patchCount);
 
             memcpy(texture->name, mtexture->name, 8);
 
             mpatch = &mtexture->patches[0];
             patch = &texture->patches[0];
 
-            for(j = 0; j < texture->patchcount; ++j, mpatch++, patch++)
+            for(j = 0; j < texture->patchCount; ++j, mpatch++, patch++)
             {
                 strncpy(name, name_p + SHORT(mpatch->patch) * 8, 8);
-                patch->originx = SHORT(mpatch->originx);
-                patch->originy = SHORT(mpatch->originy);
+                patch->originX = SHORT(mpatch->originX);
+                patch->originY = SHORT(mpatch->originY);
                 patch->patch = patchlookup[SHORT(mpatch->patch)];
                 if(patch->patch == -1)
                 {
@@ -775,7 +773,7 @@ void R_InitTextures(void)
 
             texture = textures[i] =
                 Z_Calloc(sizeof(texture_t) +
-                        sizeof(texpatch_t) * (SHORT(smtexture->patchcount) - 1),
+                        sizeof(texpatch_t) * (SHORT(smtexture->patchCount) - 1),
                         PU_REFRESHTEX, 0);
             texture->info.width = SHORT(smtexture->width);
             texture->info.height = SHORT(smtexture->height);
@@ -788,17 +786,17 @@ void R_InitTextures(void)
              */
             if(i == 0)
                 texture->flags |= TXF_NO_DRAW;
-            texture->patchcount = SHORT(smtexture->patchcount);
+            texture->patchCount = SHORT(smtexture->patchCount);
 
             memcpy(texture->name, smtexture->name, 8);
 
             smpatch = &smtexture->patches[0];
             patch = &texture->patches[0];
 
-            for(j = 0; j < texture->patchcount; ++j, smpatch++, patch++)
+            for(j = 0; j < texture->patchCount; ++j, smpatch++, patch++)
             {
-                patch->originx = SHORT(smpatch->originx);
-                patch->originy = SHORT(smpatch->originy);
+                patch->originX = SHORT(smpatch->originX);
+                patch->originY = SHORT(smpatch->originY);
                 patch->patch = patchlookup[SHORT(smpatch->patch)];
                 if(patch->patch == -1)
                 {
@@ -946,8 +944,8 @@ void R_InitSpriteLumps(void)
         patch = (lumppatch_t *) W_CacheLumpNum(sl->lump, PU_CACHE);
         sl->width = SHORT(patch->width);
         sl->height = SHORT(patch->height);
-        sl->offset = SHORT(patch->leftoffset);
-        sl->topoffset = SHORT(patch->topoffset);
+        sl->offset = SHORT(patch->leftOffset);
+        sl->topOffset = SHORT(patch->topOffset);
     }
 }
 
@@ -1071,7 +1069,7 @@ boolean R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal)
     }
 
     // Is it probably an original texture?
-    if(!R_IsCustomMaterial(index, (def->is_texture? MAT_TEXTURE : MAT_FLAT)))
+    if(!R_IsCustomMaterial(index, (def->isTexture? MAT_TEXTURE : MAT_FLAT)))
         return !(def->flags & DCRF_NO_IWAD);
 
     return (def->flags & DCRF_PWAD) != 0;
@@ -1096,7 +1094,7 @@ void R_PrecacheMaterial(int num, materialtype_t type)
     switch(type)
     {
     case MAT_FLAT:
-        if(flats[num]->ingroup)
+        if(flats[num]->inGroup)
         {
             // The flat belongs in one or more animgroups.
             for(i = 0; i < numgroups; ++i)
@@ -1117,7 +1115,7 @@ void R_PrecacheMaterial(int num, materialtype_t type)
         break;
 
     case MAT_TEXTURE:
-        if(textures[num]->ingroup)
+        if(textures[num]->inGroup)
         {
             // The texture belongs in one or more animgroups.
             for(i = 0; i < numgroups; ++i)
@@ -1237,7 +1235,7 @@ void R_PrecacheLevel(void)
     {
         sec = SECTOR_PTR(i);
 
-        for(j = 0; j < sec->planecount; ++j)
+        for(j = 0; j < sec->planeCount; ++j)
         {
             mat = sec->SP_planematerial(j);
             if(mat)
@@ -1284,7 +1282,7 @@ void R_PrecacheLevel(void)
     }
 
     if(precacheSprites || (useModels && precacheSkins))
-        for(th = thinkercap.next, mocount = 0; th != &thinkercap;
+        for(th = thinkerCap.next, mocount = 0; th != &thinkerCap;
             th = th->next)
         {
             if(th->function != gx.MobjThinker)
@@ -1300,7 +1298,7 @@ void R_PrecacheLevel(void)
     // Precache skins?
     if(useModels && precacheSkins)
     {
-        for(k = 0, th = thinkercap.next; th != &thinkercap; th = th->next)
+        for(k = 0, th = thinkerCap.next; th != &thinkerCap; th = th->next)
         {
             if(th->function != gx.MobjThinker)
                 continue;
@@ -1331,9 +1329,9 @@ void R_PrecacheLevel(void)
             if(!spritepresent[s] || !useModels)
                 continue;
 
-            for(f = 0; f < sprites[s].numframes; ++f)
+            for(f = 0; f < sprites[s].numFrames; ++f)
             {
-                sf = &sprites[s].spriteframes[f];
+                sf = &sprites[s].spriteFrames[f];
 
                 for(l = 0; l < 8; ++l)
                 {
@@ -1400,7 +1398,7 @@ void R_AnimateAnimGroups(void)
             {
                 timer += (int) M_Random() % (group->frames[group->index].random + 1);
             }
-            group->timer = group->maxtimer = timer;
+            group->timer = group->maxTimer = timer;
 
             // Update texture/flat translations.
             for(k = 0; k < group->count; ++k)
@@ -1438,7 +1436,7 @@ if(isTexture)
 
                 if(group->flags & AGF_SMOOTH)
                 {
-                    xlat->inter = 1 - group->timer / (float) group->maxtimer;
+                    xlat->inter = 1 - group->timer / (float) group->maxTimer;
                 }
                 else
                 {

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_main.c: Graphics Subsystem
  */
 
@@ -36,6 +36,7 @@
 #endif
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -174,10 +175,10 @@ void GL_DoUpdate(void)
 
     // Blit screen to video.
     if(renderWireframe)
-        gl.Enable(DGL_WIREFRAME_MODE);
-    gl.Show();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    DGL_Show();
     if(renderWireframe)
-        gl.Disable(DGL_WIREFRAME_MODE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Increment frame counter.
     r_framecounter++;
@@ -594,7 +595,7 @@ boolean GL_EarlyInit(void)
     GL_InitDeferred();
 
     // Check the maximum texture size.
-    gl.GetIntegerv(DGL_MAX_TEXTURE_SIZE, &glMaxTexSize);
+    DGL_GetIntegerv(DGL_MAX_TEXTURE_SIZE, &glMaxTexSize);
     if(glMaxTexSize == 256)
     {
         Con_Message("  Using restricted texture w/h ratio (1:8).\n");
@@ -623,8 +624,8 @@ boolean GL_EarlyInit(void)
     }
 
     // Does the graphics library support multitexturing?
-    numTexUnits = gl.GetInteger(DGL_MAX_TEXTURE_UNITS);
-    envModAdd = gl.GetInteger(DGL_MODULATE_ADD_COMBINE);
+    numTexUnits = DGL_GetInteger(DGL_MAX_TEXTURE_UNITS);
+    envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
     if(numTexUnits > 1)
     {
         Con_Printf("  Multitexturing enabled (%s).\n",
@@ -700,7 +701,7 @@ void GL_Shutdown(void)
     GL_ShutdownRefresh();
 
     // Shutdown DGL.
-    gl.Shutdown();
+    DGL_Shutdown();
 
     // Restore original gamma.
     if(!ArgExists("-leaveramp"))
@@ -721,28 +722,25 @@ void GL_Init2DState(void)
     glFarClip = 16500;
 
     // Here we configure the OpenGL state and set the projection matrix.
-    gl.Disable(DGL_CULL_FACE);
-    gl.Disable(DGL_DEPTH_TEST);
-    gl.Enable(DGL_TEXTURING);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    DGL_Enable(DGL_TEXTURING);
 
     // The projection matrix.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, 320, 200, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, 320, 200, -1, 1);
 
     // Default state for the white fog is off.
     usingFog = false;
-    gl.Disable(DGL_FOG);
-    gl.Fog(DGL_FOG_MODE, (fogModeDefault == 0 ? DGL_LINEAR :
-                          fogModeDefault == 1 ? DGL_EXP :
-                          DGL_EXP2));
-    gl.Fog(DGL_FOG_END, 2100);  // This should be tweaked a bit.
-    fogColor[0] = fogColor[1] = fogColor[2] = 138;
-    fogColor[3] = 255;
-    gl.Fogv(DGL_FOG_COLOR, fogColor);
-
-    /*glEnable(GL_POLYGON_SMOOTH);
-       glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); */
+    DGL_Disable(DGL_FOG);
+    glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
+                          fogModeDefault == 1 ? GL_EXP :
+                          GL_EXP2));
+    glFogf(GL_FOG_END, 2100); // This should be tweaked a bit.
+    fogColor[0] = fogColor[1] = fogColor[2] = 138.0f/255;
+    fogColor[3] = 1;
+    glFogfv(GL_FOG_COLOR, fogColor);
 }
 
 void GL_SwitchTo3DState(boolean push_state)
@@ -750,14 +748,14 @@ void GL_SwitchTo3DState(boolean push_state)
     if(push_state)
     {
         // Push the 2D matrices on the stack.
-        gl.MatrixMode(DGL_PROJECTION);
-        gl.PushMatrix();
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PushMatrix();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PushMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
     }
 
-    gl.Enable(DGL_CULL_FACE);
-    gl.Enable(DGL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
 
     viewpx = viewwindowx * theWindow->width / 320, viewpy =
         viewwindowy * theWindow->height / 200;
@@ -766,7 +764,7 @@ void GL_SwitchTo3DState(boolean push_state)
     {
         viewpw = viewwidth * theWindow->width / 320;
         viewph = viewheight * theWindow->height / 200 + 1;
-        gl.Viewport(viewpx, viewpy, viewpw, viewph);
+        DGL_Viewport(viewpx, viewpy, viewpw, viewph);
     }
     else
     {
@@ -783,28 +781,28 @@ void GL_Restore2DState(int step)
     switch (step)
     {
     case 1: // After Restore Step 1 normal player sprites are rendered.
-        gl.MatrixMode(DGL_PROJECTION);
-        gl.LoadIdentity();
-        gl.Ortho(0, 0, 320, (320 * viewheight) / viewwidth, -1, 1);
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.LoadIdentity();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_LoadIdentity();
+        DGL_Ortho(0, 0, 320, (320 * viewheight) / viewwidth, -1, 1);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_LoadIdentity();
 
         // Depth testing must be disabled so that psprite 1 will be drawn
         // on top of psprite 0 (Doom plasma rifle fire).
-        gl.Disable(DGL_DEPTH_TEST);
+        glDisable(GL_DEPTH_TEST);
         break;
 
     case 2: // After Restore Step 2 nothing special happens.
-        gl.Viewport(0, 0, theWindow->width, theWindow->height);
+        DGL_Viewport(0, 0, theWindow->width, theWindow->height);
         break;
 
     case 3: // After Restore Step 3 we're back in 2D rendering mode.
-        gl.MatrixMode(DGL_PROJECTION);
-        gl.PopMatrix();
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PopMatrix();
-        gl.Disable(DGL_CULL_FACE);
-        gl.Disable(DGL_DEPTH_TEST);
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
         break;
     }
 }
@@ -814,12 +812,12 @@ void GL_ProjectionMatrix(void)
     // We're assuming pixels are squares.
     float   aspect = viewpw / (float) viewph;
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.LoadIdentity();
-    gl.Perspective(yfov = fieldOfView / aspect, aspect, glNearClip, glFarClip);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_LoadIdentity();
+    gluPerspective(yfov = fieldOfView / aspect, aspect, glNearClip, glFarClip);
 
     // We'd like to have a left-handed coordinate system.
-    gl.Scalef(1, 1, -1);
+    DGL_Scalef(1, 1, -1);
 }
 
 void GL_UseFog(int yes)
@@ -834,13 +832,13 @@ void GL_UseFog(int yes)
     {
         // Fog is turned on.
         usingFog = true;
-        gl.Enable(DGL_FOG);
+        DGL_Enable(DGL_FOG);
     }
     else if(usingFog && !yes)
     {
         // Fog must be turned off.
         usingFog = false;
-        gl.Disable(DGL_FOG);
+        DGL_Disable(DGL_FOG);
     }
     // Otherwise we won't do a thing.
 }
@@ -896,8 +894,8 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
         if(!mapInfo || !(mapInfo->flags & MIF_FOG))
             R_SetupFogDefaults();
         else
-            R_SetupFog(mapInfo->fog_start, mapInfo->fog_end,
-                       mapInfo->fog_density, mapInfo->fog_color);
+            R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd,
+                       mapInfo->fogDensity, mapInfo->fogColor);
 
         // Make sure the fog is enabled, if necessary.
         if(hadFog)
@@ -919,7 +917,7 @@ unsigned char *GL_GrabScreen(void)
     unsigned char *buffer = 0;
 
     buffer = malloc(theWindow->width * theWindow->height * 3);
-    gl.Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
+    DGL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
     return buffer;
 }
 
@@ -928,51 +926,56 @@ unsigned char *GL_GrabScreen(void)
  */
 void GL_BlendMode(blendmode_t mode)
 {
-    switch (mode)
+    switch(mode)
     {
     case BM_ZEROALPHA:
-        gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-        gl.Func(DGL_BLENDING, DGL_ONE, DGL_ZERO);
+        DGL_BlendOp(DGL_ADD);
+        glBlendFunc(GL_ONE, GL_ZERO);
         break;
 
     case BM_ADD:
-        gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+        DGL_BlendOp(DGL_ADD);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         break;
 
     case BM_DARK:
-        gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-        gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_ONE_MINUS_SRC_ALPHA);
+        DGL_BlendOp(DGL_ADD);
+        glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
         break;
 
     case BM_SUBTRACT:
-        gl.Func(DGL_BLENDING_OP, DGL_SUBTRACT, 0);
-        gl.Func(DGL_BLENDING, DGL_ONE, DGL_SRC_ALPHA);
+        DGL_BlendOp(DGL_SUBTRACT);
+        glBlendFunc(GL_ONE, GL_SRC_ALPHA);
         break;
 
     case BM_ALPHA_SUBTRACT:
-        gl.Func(DGL_BLENDING_OP, DGL_SUBTRACT, 0);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+        DGL_BlendOp(DGL_SUBTRACT);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         break;
 
     case BM_REVERSE_SUBTRACT:
-        gl.Func(DGL_BLENDING_OP, DGL_REVERSE_SUBTRACT, 0);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+        DGL_BlendOp(DGL_REVERSE_SUBTRACT);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         break;
 
     case BM_MUL:
-        gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-        gl.Func(DGL_BLENDING, DGL_ZERO, DGL_SRC_COLOR);
+        DGL_BlendOp(DGL_ADD);
+        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+        break;
+
+    case BM_INVERSE:
+        DGL_BlendOp(DGL_ADD);
+        glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR);
         break;
 
     case BM_INVERSE_MUL:
-        gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-        gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
+        DGL_BlendOp(DGL_ADD);
+        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
         break;
 
     default:
-        gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+        DGL_BlendOp(DGL_ADD);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         break;
     }
 }
@@ -1052,17 +1055,17 @@ D_CMD(Fog)
     {
         if(!stricmp(argv[2], "linear"))
         {
-            gl.Fog(DGL_FOG_MODE, DGL_LINEAR);
+            glFogi(GL_FOG_MODE, GL_LINEAR);
             Con_Printf("Fog mode set to linear.\n");
         }
         else if(!stricmp(argv[2], "exp"))
         {
-            gl.Fog(DGL_FOG_MODE, DGL_EXP);
+            glFogi(GL_FOG_MODE, GL_EXP);
             Con_Printf("Fog mode set to exp.\n");
         }
         else if(!stricmp(argv[2], "exp2"))
         {
-            gl.Fog(DGL_FOG_MODE, DGL_EXP2);
+            glFogi(GL_FOG_MODE, GL_EXP2);
             Con_Printf("Fog mode set to exp2.\n");
         }
         else
@@ -1071,24 +1074,24 @@ D_CMD(Fog)
     else if(!stricmp(argv[1], "color") && argc == 5)
     {
         for(i = 0; i < 3; i++)
-            fogColor[i] = strtol(argv[2 + i], NULL, 0) /*/255.0f */ ;
-        fogColor[3] = 255;
-        gl.Fogv(DGL_FOG_COLOR, fogColor);
+            fogColor[i] = strtol(argv[2 + i], NULL, 0) / 255.0f;
+        fogColor[3] = 1;
+        glFogfv(GL_FOG_COLOR, fogColor);
         Con_Printf("Fog color set.\n");
     }
     else if(!stricmp(argv[1], "start") && argc == 3)
     {
-        gl.Fog(DGL_FOG_START, strtod(argv[2], NULL));
+        glFogf(GL_FOG_START, (GLfloat) strtod(argv[2], NULL));
         Con_Printf("Fog start distance set.\n");
     }
     else if(!stricmp(argv[1], "end") && argc == 3)
     {
-        gl.Fog(DGL_FOG_END, strtod(argv[2], NULL));
+        glFogf(GL_FOG_END, (GLfloat) strtod(argv[2], NULL));
         Con_Printf("Fog end distance set.\n");
     }
     else if(!stricmp(argv[1], "density") && argc == 3)
     {
-        gl.Fog(DGL_FOG_DENSITY, strtod(argv[2], NULL));
+        glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], NULL));
         Con_Printf("Fog density set.\n");
     }
     else

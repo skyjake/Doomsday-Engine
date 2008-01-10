@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 #endif
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -150,7 +151,7 @@ void GL_ReserveNames(void)
     Sys_Lock(deferredMutex);
     for(i = reservedCount; i < NUM_RESERVED_NAMES; ++i)
     {
-        reservedNames[i] = gl.NewTexture();
+        reservedNames[i] = DGL_NewTexture();
     }
     reservedCount = NUM_RESERVED_NAMES;
     Sys_Unlock(deferredMutex);
@@ -195,14 +196,14 @@ void GL_InitTextureContent(texturecontent_t *content)
     content->minFilter = DGL_LINEAR;
     content->magFilter = DGL_LINEAR;
     content->anisoFilter = -1; // Best.
-    content->wrap[0] = DGL_CLAMP;
-    content->wrap[1] = DGL_CLAMP;
+    content->wrap[0] = false;
+    content->wrap[1] = false;
     content->grayMipmap = -1;
 }
 
 void GL_UploadTextureContent(texturecontent_t* content)
 {
-    int         result = 0;
+    boolean         result = false;
 
     if(content->flags & TXCF_EASY_UPLOAD)
     {
@@ -212,26 +213,22 @@ void GL_UploadTextureContent(texturecontent_t* content)
     {
         if(content->grayMipmap >= 0)
         {
-            gl.SetInteger(DGL_GRAY_MIPMAP, content->grayMipmap);
+            DGL_SetInteger(DGL_GRAY_MIPMAP, content->grayMipmap);
         }
 
         // The texture name must already be created.
-        gl.Bind(content->name);
+        DGL_Bind(content->name);
 
         // Upload the texture.
         // No mipmapping or resizing is needed, upload directly.
         if(content->flags & TXCF_NO_COMPRESSION)
         {
-            gl.Disable(DGL_TEXTURE_COMPRESSION);
+            DGL_Disable(DGL_TEXTURE_COMPRESSION);
         }
 
         if((content->flags & TXCF_CONVERT_8BIT_TO_ALPHA) &&
            (content->format == DGL_LUMINANCE ||
             content->format == DGL_COLOR_INDEX_8 ||
-            content->format == DGL_R ||
-            content->format == DGL_G ||
-            content->format == DGL_B ||
-            content->format == DGL_A ||
             content->format == DGL_DEPTH_COMPONENT))
         {
             int         p, total = content->width * content->height;
@@ -247,23 +244,25 @@ void GL_UploadTextureContent(texturecontent_t* content)
             content->format = DGL_LUMINANCE_PLUS_A8;
         }
 
-        result = gl.TexImage(content->format, content->width, content->height,
-                             (content->grayMipmap >= 0? DGL_GRAY_MIPMAP :
+        result = DGL_TexImage(content->format, content->width, content->height,
+                              (content->grayMipmap >= 0? DGL_GRAY_MIPMAP :
                               (content->flags & TXCF_MIPMAP) != 0),
-                             content->buffer);
-        assert(result == DGL_OK);
+                              content->buffer);
+        assert(result == true);
 
         if(content->flags & TXCF_NO_COMPRESSION)
         {
-            gl.Enable(DGL_TEXTURE_COMPRESSION);
+            DGL_Enable(DGL_TEXTURE_COMPRESSION);
         }
     }
 
-    gl.TexParameter(DGL_MIN_FILTER, content->minFilter);
-    gl.TexParameter(DGL_MAG_FILTER, content->magFilter);
-    gl.TexParameter(DGL_WRAP_S, content->wrap[0]);
-    gl.TexParameter(DGL_WRAP_T, content->wrap[1]);
-    gl.TexParameter(DGL_ANISO_FILTER, content->anisoFilter);
+    DGL_TexFilter(DGL_MIN_FILTER, content->minFilter);
+    DGL_TexFilter(DGL_MAG_FILTER, content->magFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+					content->wrap[0] == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+					content->wrap[1] == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    DGL_TexFilter(DGL_ANISO_FILTER, DGL_GetTexAnisoMul(content->anisoFilter));
 }
 
 DGLuint GL_NewTexture(texturecontent_t *content)
@@ -282,10 +281,6 @@ DGLuint GL_NewTexture(texturecontent_t *content)
             break;
 
         case DGL_COLOR_INDEX_8:
-        case DGL_R:
-        case DGL_G:
-        case DGL_B:
-        case DGL_A:
         case DGL_DEPTH_COMPONENT:
             bytesPerPixel = 1;
             break;
@@ -346,7 +341,7 @@ DGLuint GL_NewTexture(texturecontent_t *content)
     return content->name;
 }
 
-DGLuint GL_NewTextureWithParams(int format, int width, int height, void* pixels,
+DGLuint GL_NewTextureWithParams(gltexformat_t format, int width, int height, void* pixels,
                                 int flags)
 {
     texturecontent_t c;
@@ -360,9 +355,9 @@ DGLuint GL_NewTextureWithParams(int format, int width, int height, void* pixels,
     return GL_NewTexture(&c);
 }
 
-DGLuint GL_NewTextureWithParams2(int format, int width, int height, void* pixels,
+DGLuint GL_NewTextureWithParams2(gltexformat_t format, int width, int height, void* pixels,
                                  int flags, int minFilter, int magFilter,
-                                 int anisoFilter, int wrapS, int wrapT)
+                                 int anisoFilter, boolean wrapS, boolean wrapT)
 {
     texturecontent_t c;
 

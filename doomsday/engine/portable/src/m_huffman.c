@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -491,10 +491,10 @@ M_Free(backup);
 /**
  * Decode using the Huffman tree. Returns a pointer to the decoded data.
  */
-byte *Huff_Decode(void *data, uint size, uint *decodedSize)
+byte *Huff_Decode(void *data, size_t size, size_t *decodedSize)
 {
     huffnode_t     *node;
-    uint            outBytes = 0;
+    size_t          outBytes = 0;
     byte           *in = data, bit = 3, lastByteBits;
     byte           *lastIn = in + size - 1;
 

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -517,7 +517,7 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, lumppatch_t *patch,
 
     for(; col < w; ++col, destTop++, destAlphaTop++, ++x)
     {
-        column = (column_t *) ((byte *) patch + LONG(patch->columnofs[col]));
+        column = (column_t *) ((byte *) patch + LONG(patch->columnOfs[col]));
         top = -1;
 
         // Step through the posts in a column
@@ -610,7 +610,7 @@ void TranslatePatch(lumppatch_t *patch, byte *transTable)
 
     for(; col < w; ++col)
     {
-        column = (column_t *) ((byte *) patch + LONG(patch->columnofs[col]));
+        column = (column_t *) ((byte *) patch + LONG(patch->columnOfs[col]));
 
         // Step through the posts in a column
         while(column->topdelta != 0xff)
@@ -997,7 +997,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         src += pixelsize * width * region[2];
         alphasrc += width * region[2];
     }
-    slump->flarex = slump->flarey = 0;
+    slump->flareX = slump->flareY = 0;
 
     for(k = region[2], y = 0; k < region[3] + 1; ++k, ++y)
     {
@@ -1035,8 +1035,8 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
             {
                 // This pixel will participate in calculating the average
                 // center point.
-                slump->flarex += x;
-                slump->flarey += y;
+                slump->flareX += x;
+                slump->flareY += y;
                 poscnt++;
             }
 
@@ -1066,17 +1066,17 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
     }
     if(!poscnt)
     {
-        slump->flarex = region[0] + ((region[1] - region[0]) / 2.0f);
-        slump->flarey = region[2] + ((region[3] - region[2]) / 2.0f);
+        slump->flareX = region[0] + ((region[1] - region[0]) / 2.0f);
+        slump->flareY = region[2] + ((region[3] - region[2]) / 2.0f);
     }
     else
     {
         // Get the average.
-        slump->flarex /= poscnt;
-        slump->flarey /= poscnt;
+        slump->flareX /= poscnt;
+        slump->flareY /= poscnt;
         // Add the origin offset.
-        slump->flarex += region[0];
-        slump->flarey += region[2];
+        slump->flareX += region[0];
+        slump->flareY += region[2];
     }
 
     // The color.
@@ -1111,7 +1111,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
                           W_CacheLumpNum(slump->lump, PU_GETNAME),
                           width, height, pixelsize,
                           region[0], region[1], region[2], region[3],
-                          slump->flarex, slump->flarey,
+                          slump->flareX, slump->flareY,
                           (poscnt? "(average)" : "(center)"),
                           (*sprcol)[0], (*sprcol)[1], (*sprcol)[2],
                           (avcnt? "(hi-intensity avg)" :
@@ -1121,9 +1121,9 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
     // Amplify color.
     amplify(*sprcol);
     // How about the size of the light source?
-    slump->lumsize = (2 * cnt + avcnt) / 3.0f / 70.0f;
-    if(slump->lumsize > 1)
-        slump->lumsize = 1;
+    slump->lumSize = (2 * cnt + avcnt) / 3.0f / 70.0f;
+    if(slump->lumSize > 1)
+        slump->lumSize = 1;
 }
 
 /**

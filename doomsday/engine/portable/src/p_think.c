@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@
 int     idtable[2048];          // 65536 bits telling which IDs are in use
 unsigned short iddealer = 0;
 
-thinker_t thinkercap;           // The head and tail of the thinker list
+thinker_t thinkerCap;           // The head and tail of the thinker list
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -104,8 +104,8 @@ void P_RunThinkers(void)
 {
     thinker_t  *current, *next;
 
-    current = thinkercap.next;
-    while(current != &thinkercap)
+    current = thinkerCap.next;
+    while(current != &thinkerCap)
     {
 #ifdef FAKE_MEMORY_ZONE
         assert(current->next != NULL);
@@ -138,7 +138,7 @@ void P_RunThinkers(void)
 
 void P_InitThinkers(void)
 {
-    thinkercap.prev = thinkercap.next = &thinkercap;
+    thinkerCap.prev = thinkerCap.next = &thinkerCap;
     P_ClearMobjIDs();
 }
 
@@ -148,10 +148,10 @@ void P_InitThinkers(void)
 void P_AddThinker(thinker_t *thinker)
 {
     // Link the thinker to the thinker list.
-    thinkercap.prev->next = thinker;
-    thinker->next = &thinkercap;
-    thinker->prev = thinkercap.prev;
-    thinkercap.prev = thinker;
+    thinkerCap.prev->next = thinker;
+    thinker->next = &thinkerCap;
+    thinker->prev = thinkerCap.prev;
+    thinkerCap.prev = thinker;
 
     // Will it need an ID?
     if(P_IsMobjThinker(thinker->function))

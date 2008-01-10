@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -64,7 +64,7 @@ typedef struct {
     vec2_t      box[2];
     int         flags;
     float       pos[3];
-    float       height, floorz, ceilingz, dropoffz;
+    float       height, floorZ, ceilingZ, dropOffZ;
 } checkpos_data_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -127,7 +127,7 @@ mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
     if(unusedMobjs)
     {
         mo = unusedMobjs;
-        unusedMobjs = unusedMobjs->bnext;
+        unusedMobjs = unusedMobjs->bNext;
         memset(mo, 0, MOBJ_SIZE);
     }
     else
@@ -141,7 +141,7 @@ mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
     mo->angle = angle;
     mo->radius = radius;
     mo->height = height;
-    mo->ddflags = ddflags;
+    mo->ddFlags = ddflags;
     mo->thinker.function = function;
     if(mo->thinker.function)
         P_AddThinker(&mo->thinker);
@@ -172,7 +172,7 @@ void P_MobjDestroy(mobj_t *mo)
 void P_MobjRecycle(mobj_t *mo)
 {
     // The blocknext link is used as the unused mobj list links.
-    mo->bnext = unusedMobjs;
+    mo->bNext = unusedMobjs;
     unusedMobjs = mo;
 }
 
@@ -196,7 +196,7 @@ void P_MobjSetState(mobj_t *mobj, int statenum)
     mobj->frame = st->frame;
 
     // Check for a ptcgen trigger.
-    for(pg = st->ptrigger; statenum && pg; pg = pg->state_next)
+    for(pg = st->pTrigger; statenum && pg; pg = pg->stateNext)
     {
         if(!(pg->flags & PGF_SPAWN_ONLY) || spawning)
         {
@@ -235,14 +235,14 @@ boolean PIT_CheckLine(line_t *ld, void *parm)
         return true;
 
     // A line has been hit.
-    tm->mo->wallhit = true;
+    tm->mo->wallHit = true;
 
     if(!ld->L_backside)
         return false;           // One sided line, can't go through.
 
-    if(!(tm->mo->ddflags & DDMF_MISSILE))
+    if(!(tm->mo->ddFlags & DDMF_MISSILE))
     {
-        if(ld->mapflags & ML_BLOCKING)
+        if(ld->mapFlags & ML_BLOCKING)
             return false;       // explicitly blocking everything
     }
 
@@ -250,14 +250,14 @@ boolean PIT_CheckLine(line_t *ld, void *parm)
     P_LineOpening(ld);
 
     // adjust floor / ceiling heights.
-    if(opentop < tm->ceilingz)
-        tm->ceilingz = opentop;
-    if(openbottom > tm->floorz)
-        tm->floorz = openbottom;
-    if(lowfloor < tm->dropoffz)
-        tm->dropoffz = lowfloor;
+    if(opentop < tm->ceilingZ)
+        tm->ceilingZ = opentop;
+    if(openbottom > tm->floorZ)
+        tm->floorZ = openbottom;
+    if(lowfloor < tm->dropOffZ)
+        tm->dropOffZ = lowfloor;
 
-    tm->mo->wallhit = false;
+    tm->mo->wallHit = false;
     return true;
 }
 
@@ -270,14 +270,14 @@ boolean PIT_CheckMobj(mobj_t *mo, void *parm)
     // Don't clip against self.
     if(mo == tm->mo)
         return true;
-    if(!(mo->ddflags & DDMF_SOLID))
+    if(!(mo->ddFlags & DDMF_SOLID))
         return true;
 
     blockdist = mo->radius + tm->mo->radius;
 
     // Only players can move under or over other mobjs.
     if(tm->pos[VZ] != DDMAXFLOAT &&
-       (tm->mo->dplayer || mo->ddflags & DDMF_NOGRAVITY))
+       (tm->mo->dPlayer || mo->ddFlags & DDMF_NOGRAVITY))
     {
         if(mo->pos[VZ] > tm->pos[VZ] + tm->height)
         {
@@ -305,8 +305,8 @@ boolean PIT_CheckMobj(mobj_t *mo, void *parm)
         if(tm->pos[VZ] >= mo->pos[VZ] + mo->height - 24)
         {
             // Above, allowing stepup.
-            tm->mo->onmobj = mo;
-            tm->floorz = mo->pos[VZ] + mo->height;
+            tm->mo->onMobj = mo;
+            tm->floorZ = mo->pos[VZ] + mo->height;
             return true;
         }
 
@@ -315,7 +315,7 @@ boolean PIT_CheckMobj(mobj_t *mo, void *parm)
         /*
         // To prevent getting stuck, don't block if moving away from
         // the object.
-        if(tm->mo->dplayer &&
+        if(tm->mo->dPlayer &&
            P_ApproxDistance(tm->mo->pos[VX] - mo->pos[VX],
                             tm->mo->pos[VY] - mo->pos[VY]) <
            P_ApproxDistance(tm->pos[VX] - mo->pos[VX], tm->pos[VY] - mo->pos[VY]) &&
@@ -347,12 +347,12 @@ boolean P_CheckPosXYZ(mobj_t *mo, float x, float y, float z)
     boolean     result = true;
 
     blockingMobj = NULL;
-    mo->onmobj = NULL;
-    mo->wallhit = false;
+    mo->onMobj = NULL;
+    mo->wallHit = false;
 
     // Prepare the data struct.
     data.mo = mo;
-    data.flags = mo->ddflags;
+    data.flags = mo->ddFlags;
     data.pos[VX] = x;
     data.pos[VY] = y;
     data.pos[VZ] = z;
@@ -370,8 +370,8 @@ boolean P_CheckPosXYZ(mobj_t *mo, float x, float y, float z)
 
     // The base floor / ceiling is from the subsector that contains the
     // point. Any contacted lines the step closer together will adjust them.
-    data.floorz = data.dropoffz = newsubsec->sector->SP_floorheight;
-    data.ceilingz = newsubsec->sector->SP_ceilheight;
+    data.floorZ = data.dropOffZ = newsubsec->sector->SP_floorheight;
+    data.ceilingZ = newsubsec->sector->SP_ceilheight;
 
     validCount++;
 
@@ -394,9 +394,9 @@ boolean P_CheckPosXYZ(mobj_t *mo, float x, float y, float z)
         }
     }
 
-    tmpCeilingZ = data.ceilingz;
-    tmpFloorZ = data.floorz;
-    tmpDropOffZ = data.dropoffz;
+    tmpCeilingZ = data.ceilingZ;
+    tmpFloorZ = data.floorZ;
+    tmpDropOffZ = data.dropOffZ;
     return result;
 }
 
@@ -432,11 +432,11 @@ boolean P_TryMoveXYZ(mobj_t *mo, float x, float y, float z)
     goodPos = P_CheckPosXYZ(mo, x, y, z);
 
     // Is movement clipping in effect?
-    if(!mo->dplayer || !(mo->dplayer->flags & DDPF_NOCLIP))
+    if(!mo->dPlayer || !(mo->dPlayer->flags & DDPF_NOCLIP))
     {
         if(!goodPos)
         {
-            if(!mo->onmobj || mo->wallhit)
+            if(!mo->onMobj || mo->wallHit)
                 return false; // Solid wall or mo.
         }
 
@@ -447,7 +447,7 @@ boolean P_TryMoveXYZ(mobj_t *mo, float x, float y, float z)
         if(tmpCeilingZ - z < mo->height)
             return false; // mobj must lower itself to fit.
 
-        if(mo->dplayer)
+        if(mo->dPlayer)
         {
             // Players are allowed a stepup.
             if(tmpFloorZ - z > 24)
@@ -468,8 +468,8 @@ boolean P_TryMoveXYZ(mobj_t *mo, float x, float y, float z)
         links |= DDLINK_BLOCKMAP;
     P_MobjUnlink(mo);
 
-    mo->floorz = tmpFloorZ;
-    mo->ceilingz = tmpCeilingZ;
+    mo->floorZ = tmpFloorZ;
+    mo->ceilingZ = tmpCeilingZ;
     mo->pos[VX] = x;
     mo->pos[VY] = y;
     mo->pos[VZ] = z;
@@ -548,7 +548,7 @@ boolean P_StepMove(mobj_t *mo, float dx, float dy, float dz)
 }
 
 /**
- * Takes a valid mobj and adjusts the mobj->floorz, mobj->ceilingz, and
+ * Takes a valid mobj and adjusts the mobj->floorZ, mobj->ceilingZ, and
  * possibly mobj->z. This is called for all nearby mobjs whenever a sector
  * changes height. If the mobj doesn't fit, the z will be set to the lowest
  * value and false will be returned.
@@ -558,36 +558,36 @@ static boolean heightClip(mobj_t *mo)
     boolean onfloor;
 
     // During demo playback the player gets preferential treatment.
-    if(mo->dplayer == &players[consoleplayer] && playback)
+    if(mo->dPlayer == &players[consoleplayer] && playback)
         return true;
 
-    onfloor = (mo->pos[VZ] <= mo->floorz);
+    onfloor = (mo->pos[VZ] <= mo->floorZ);
 
     P_CheckPosXYZ(mo, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
-    mo->floorz = tmpFloorZ;
-    mo->ceilingz = tmpCeilingZ;
+    mo->floorZ = tmpFloorZ;
+    mo->ceilingZ = tmpCeilingZ;
 
     if(onfloor)
     {
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = mo->floorZ;
     }
     else
     {
         // Don't adjust a floating mobj unless forced to.
-        if(mo->pos[VZ] + mo->height > mo->ceilingz)
-            mo->pos[VZ] = mo->ceilingz - mo->height;
+        if(mo->pos[VZ] + mo->height > mo->ceilingZ)
+            mo->pos[VZ] = mo->ceilingZ - mo->height;
     }
 
     // On clientside, players are represented by two mobjs: the real mobj,
     // created by the Game, is the one that is visible and modified in this
     // function. We'll need to sync the hidden client mobj (that receives
     // all the changes from the server) to match the changes.
-    if(isClient && mo->dplayer)
+    if(isClient && mo->dPlayer)
     {
-        Cl_UpdatePlayerPos(mo->dplayer);
+        Cl_UpdatePlayerPos(mo->dPlayer);
     }
 
-    if(mo->ceilingz - mo->floorz < mo->height)
+    if(mo->ceilingZ - mo->floorZ < mo->height)
         return false;
     return true;
 }
@@ -611,9 +611,9 @@ boolean P_IsInVoid(ddplayer_t *player)
     // Cameras are allowed to move completely freely (so check z height
     // above/below ceiling/floor).
     if((player->flags & DDPF_CAMERA) &&
-       (player->invoid ||
-         (player->mo->pos[VZ] > player->mo->ceilingz - 4 ||
-          player->mo->pos[VZ] < player->mo->floorz + 4)))
+       (player->inVoid ||
+         (player->mo->pos[VZ] > player->mo->ceilingZ - 4 ||
+          player->mo->pos[VZ] < player->mo->floorZ + 4)))
         return true;
 
     return false;
@@ -631,19 +631,19 @@ static void wallMomSlide(line_t *ld)
     angle_t     moveangle, lineangle, deltaangle;
 
     // First check the simple cases.
-    if(ld->slopetype == ST_HORIZONTAL)
+    if(ld->slopeType == ST_HORIZONTAL)
     {
         tmpMom[VY] = 0;
         return;
     }
-    if(ld->slopetype == ST_VERTICAL)
+    if(ld->slopeType == ST_VERTICAL)
     {
         tmpMom[VX] = 0;
         return;
     }
 
     side = P_PointOnLineSide(slideMo->pos[VX], slideMo->pos[VY], ld);
-    lineangle = R_PointToAngle2(0, 0, ld->dx, ld->dy);
+    lineangle = R_PointToAngle2(0, 0, ld->dX, ld->dY);
 
     if(side == 1)
         lineangle += ANG180;
@@ -667,12 +667,12 @@ boolean PTR_SlideTraverse(intercept_t *in)
 {
     line_t     *li;
 
-    if(!in->isaline)
+    if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: not a line?");
 
     li = in->d.line;
 
-    if(!(li->mapflags & ML_TWOSIDED))
+    if(!(li->mapFlags & ML_TWOSIDED))
     {
         if(P_PointOnLineSide(slideMo->pos[VX],
                              slideMo->pos[VY], li))
@@ -859,7 +859,7 @@ void P_MobjMovement2(mobj_t *mo, void *pstate)
     if(mo->mom[MX] == 0 && mo->mom[MY] == 0)
         return; // This isn't moving anywhere.
 
-    player = mo->dplayer;
+    player = mo->dPlayer;
 
     // Make sure we're not trying to move too much.
     if(mo->mom[MX] > MAXMOVE)
@@ -929,10 +929,10 @@ void P_MobjMovement2(mobj_t *mo, void *pstate)
     } while(delta[MX] != 0 || delta[MY] != 0);
 
     // Apply friction.
-    if(mo->ddflags & DDMF_MISSILE)
+    if(mo->ddFlags & DDMF_MISSILE)
         return;                 // No friction for missiles, ever.
 
-    if(mo->pos[VZ] > mo->floorz && !mo->onmobj && !(mo->ddflags & DDMF_FLY))
+    if(mo->pos[VZ] > mo->floorZ && !mo->onMobj && !(mo->ddFlags & DDMF_FLY))
         return;                 // No friction when airborne.
 
     if(mo->mom[MX] > -STOPSPEED && mo->mom[MX] < STOPSPEED &&
@@ -960,65 +960,65 @@ void P_MobjZMovement(mobj_t *mo)
     float       gravity = FIX2FLT(mapGravity);
 
     // check for smooth step up
-    if(mo->dplayer && mo->pos[VZ] < mo->floorz)
+    if(mo->dPlayer && mo->pos[VZ] < mo->floorZ)
     {
-        mo->dplayer->viewheight -= mo->floorz - mo->pos[VZ];
-        mo->dplayer->deltaviewheight =
-            (41 - mo->dplayer->viewheight) / 8;
+        mo->dPlayer->viewHeight -= mo->floorZ - mo->pos[VZ];
+        mo->dPlayer->viewHeightDelta =
+            (41 - mo->dPlayer->viewHeight) / 8;
     }
 
     // Adjust height.
     mo->pos[VZ] += mo->mom[MZ];
 
     // Clip movement. Another mobj?
-    if(mo->onmobj && mo->pos[VZ] <= mo->onmobj->pos[VZ] + mo->onmobj->height)
+    if(mo->onMobj && mo->pos[VZ] <= mo->onMobj->pos[VZ] + mo->onMobj->height)
     {
         if(mo->mom[MZ] < 0)
         {
-            if(mo->dplayer && mo->mom[MZ] < -gravity * 8)
+            if(mo->dPlayer && mo->mom[MZ] < -gravity * 8)
             {
                 /**
                  * Decrease viewheight for a moment after hitting the ground
                  * (hard), and utter appropriate sound.
                  */
-                mo->dplayer->deltaviewheight = mo->mom[MZ] / 8;
+                mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
             }
 
             mo->mom[MZ] = 0;
         }
 
         if(mo->mom[MZ] == 0)
-            mo->pos[VZ] = mo->onmobj->pos[VZ] + mo->onmobj->height;
+            mo->pos[VZ] = mo->onMobj->pos[VZ] + mo->onMobj->height;
     }
 
     // The floor.
-    if(mo->pos[VZ] <= mo->floorz)
+    if(mo->pos[VZ] <= mo->floorZ)
     {
         // Hit the floor.
         if(mo->mom[MZ] < 0)
         {
-            if(mo->dplayer && mo->mom[MZ] < -gravity * 8)
+            if(mo->dPlayer && mo->mom[MZ] < -gravity * 8)
             {
                 /**
                  * Decrease viewheight for a moment after hitting the ground
                  * (hard), and utter appropriate sound.
                  */
-                mo->dplayer->deltaviewheight = mo->mom[MZ] / 8;
+                mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
             }
 
             mo->mom[MZ] = 0;
         }
 
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = mo->floorZ;
     }
-    else if(mo->ddflags & DDMF_LOWGRAVITY)
+    else if(mo->ddFlags & DDMF_LOWGRAVITY)
     {
         if(mo->mom[MZ] == 0)
             mo->mom[MZ] = -(gravity / 8) * 2;
         else
             mo->mom[MZ] -= gravity / 8;
     }
-    else if(!(mo->ddflags & DDMF_NOGRAVITY))
+    else if(!(mo->ddFlags & DDMF_NOGRAVITY))
     {
         if(mo->mom[MZ] == 0)
             mo->mom[MZ] = -gravity * 2;
@@ -1026,12 +1026,12 @@ void P_MobjZMovement(mobj_t *mo)
             mo->mom[MZ] -= gravity;
     }
 
-    if(mo->pos[VZ] + mo->height > mo->ceilingz)
+    if(mo->pos[VZ] + mo->height > mo->ceilingZ)
     {
         // hit the ceiling
         if(mo->mom[MZ] > 0)
             mo->mom[MZ] = 0;
 
-        mo->pos[VZ] = mo->ceilingz - mo->height;
+        mo->pos[VZ] = mo->ceilingZ - mo->height;
     }
 }

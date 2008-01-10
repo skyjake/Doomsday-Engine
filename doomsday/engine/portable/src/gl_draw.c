@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_draw.c: Basic (Generic) Drawing Routines
  */
 
@@ -33,6 +33,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_render.h"
@@ -73,22 +74,22 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
     if(lump < 0 || lump >= numlumps)
         return;
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
-    gl.LoadIdentity();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
 
     // Setup offset and scale.
     // Scale the offsets to match the resolution.
-    gl.Translatef(offx * theWindow->width / 320.0f, offy * theWindow->height / 200.0f,
+    DGL_Translatef(offx * theWindow->width / 320.0f, offy * theWindow->height / 200.0f,
                   0);
-    gl.Scalef(scalex, scaley, 1);
+    DGL_Scalef(scalex, scaley, 1);
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
-    GL_SetRawImage(lump, false);
+    GL_SetRawImage(lump, false, DGL_CLAMP, DGL_CLAMP);
     raw = R_GetRawTex(lump);
     isTwoPart = (raw->tex2 != 0);
 
@@ -104,51 +105,51 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
     pixelBorder = raw->info.width * theWindow->width / 320;
 
     // The first part is rendered in any case.
-    gl.Begin(DGL_QUADS);
-    gl.TexCoord2f(0, 0);
-    gl.Vertex2f(0, 0);
-    gl.TexCoord2f(1, 0);
-    gl.Vertex2f(pixelBorder, 0);
-    gl.TexCoord2f(1, tcb);
-    gl.Vertex2f(pixelBorder, theWindow->height);
-    gl.TexCoord2f(0, tcb);
-    gl.Vertex2f(0, theWindow->height);
-    gl.End();
+    DGL_Begin(DGL_QUADS);
+    DGL_TexCoord2f(0, 0);
+    DGL_Vertex2f(0, 0);
+    DGL_TexCoord2f(1, 0);
+    DGL_Vertex2f(pixelBorder, 0);
+    DGL_TexCoord2f(1, tcb);
+    DGL_Vertex2f(pixelBorder, theWindow->height);
+    DGL_TexCoord2f(0, tcb);
+    DGL_Vertex2f(0, theWindow->height);
+    DGL_End();
 
     if(isTwoPart)
     {
         // And the other part.
-        GL_SetRawImage(lump, true);
-        gl.Begin(DGL_QUADS);
-        gl.TexCoord2f(0, 0);
-        gl.Vertex2f(pixelBorder, 0);
-        gl.TexCoord2f(1, 0);
-        gl.Vertex2f(theWindow->width, 0);
-        gl.TexCoord2f(1, tcb);
-        gl.Vertex2f(theWindow->width, theWindow->height);
-        gl.TexCoord2f(0, tcb);
-        gl.Vertex2f(pixelBorder, theWindow->height);
-        gl.End();
+        GL_SetRawImage(lump, true, DGL_CLAMP, DGL_CLAMP);
+        DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, 0);
+        DGL_Vertex2f(pixelBorder, 0);
+        DGL_TexCoord2f(1, 0);
+        DGL_Vertex2f(theWindow->width, 0);
+        DGL_TexCoord2f(1, tcb);
+        DGL_Vertex2f(theWindow->width, theWindow->height);
+        DGL_TexCoord2f(0, tcb);
+        DGL_Vertex2f(pixelBorder, theWindow->height);
+        DGL_End();
     }
 
     // Restore the old projection matrix.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
-/*
+/**
  * Raw screens are 320 x 200.
  */
 void GL_DrawRawScreen(int lump, float offx, float offy)
 {
-    gl.Color3f(1, 1, 1);
+    DGL_Color3f(1, 1, 1);
     GL_DrawRawScreen_CS(lump, offx, offy, 1, 1);
 }
 
-/*
+/**
  * Drawing with the Current State.
  */
 void GL_DrawPatch_CS(int posX, int posY, int lumpnum)
@@ -159,15 +160,15 @@ void GL_DrawPatch_CS(int posX, int posY, int lumpnum)
     texinfo_t      *texinfo;
 
     // Set the texture.
-    gl.Bind(curtex = GL_PreparePatch(lumpnum, &texinfo));
+    DGL_Bind(curtex = GL_PreparePatch(lumpnum, &texinfo));
 
     w = (float) texinfo->width;
     h = (float) texinfo->height;
     if(usePatchOffset)
     {
         patch_t *p = R_GetPatch(lumpnum);
-        x += (int) p->offx;
-        y += (int) p->offy;
+        x += (int) p->offX;
+        y += (int) p->offY;
     }
     if(texinfo->offsetX)
     {
@@ -180,16 +181,16 @@ void GL_DrawPatch_CS(int posX, int posY, int lumpnum)
         h -= fabs(texinfo->offsetY) / 2;
     }
 
-    gl.Begin(DGL_QUADS);
-    gl.TexCoord2f(0, 0);
-    gl.Vertex2f(x, y);
-    gl.TexCoord2f(1, 0);
-    gl.Vertex2f(x + w, y);
-    gl.TexCoord2f(1, 1);
-    gl.Vertex2f(x + w, y + h);
-    gl.TexCoord2f(0, 1);
-    gl.Vertex2f(x, y + h);
-    gl.End();
+    DGL_Begin(DGL_QUADS);
+    DGL_TexCoord2f(0, 0);
+    DGL_Vertex2f(x, y);
+    DGL_TexCoord2f(1, 0);
+    DGL_Vertex2f(x + w, y);
+    DGL_TexCoord2f(1, 1);
+    DGL_Vertex2f(x + w, y + h);
+    DGL_TexCoord2f(0, 1);
+    DGL_Vertex2f(x, y + h);
+    DGL_End();
 
     // Is there a second part?
     if(GL_GetPatchOtherPart(lumpnum, &texinfo))
@@ -199,22 +200,22 @@ void GL_DrawPatch_CS(int posX, int posY, int lumpnum)
         GL_BindTexture(GL_GetPatchOtherPart(lumpnum, &texinfo));
         w = (float) texinfo->width;
 
-        gl.Begin(DGL_QUADS);
-        gl.TexCoord2f(0, 0);
-        gl.Vertex2f(x, y);
-        gl.TexCoord2f(1, 0);
-        gl.Vertex2f(x + w, y);
-        gl.TexCoord2f(1, 1);
-        gl.Vertex2f(x + w, y + h);
-        gl.TexCoord2f(0, 1);
-        gl.Vertex2f(x, y + h);
-        gl.End();
+        DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, 0);
+        DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(1, 0);
+        DGL_Vertex2f(x + w, y);
+        DGL_TexCoord2f(1, 1);
+        DGL_Vertex2f(x + w, y + h);
+        DGL_TexCoord2f(0, 1);
+        DGL_Vertex2f(x, y + h);
+        DGL_End();
     }
 }
 
 void GL_DrawPatchLitAlpha(int x, int y, float light, float alpha, int lumpnum)
 {
-    gl.Color4f(light, light, light, alpha);
+    DGL_Color4f(light, light, light, alpha);
     GL_DrawPatch_CS(x, y, lumpnum);
 }
 
@@ -250,38 +251,38 @@ void GL_DrawShadowedPatch(int x, int y, int lumpnum)
 void GL_DrawRect(float x, float y, float w, float h, float r, float g, float b,
                  float a)
 {
-    gl.Color4f(r, g, b, a);
-    gl.Begin(DGL_QUADS);
-    gl.TexCoord2f(0, 0);
-    gl.Vertex2f(x, y);
-    gl.TexCoord2f(1, 0);
-    gl.Vertex2f(x + w, y);
-    gl.TexCoord2f(1, 1);
-    gl.Vertex2f(x + w, y + h);
-    gl.TexCoord2f(0, 1);
-    gl.Vertex2f(x, y + h);
-    gl.End();
+    DGL_Color4f(r, g, b, a);
+    DGL_Begin(DGL_QUADS);
+    DGL_TexCoord2f(0, 0);
+    DGL_Vertex2f(x, y);
+    DGL_TexCoord2f(1, 0);
+    DGL_Vertex2f(x + w, y);
+    DGL_TexCoord2f(1, 1);
+    DGL_Vertex2f(x + w, y + h);
+    DGL_TexCoord2f(0, 1);
+    DGL_Vertex2f(x, y + h);
+    DGL_End();
 }
 
 void GL_DrawRectTiled(int x, int y, int w, int h, int tw, int th)
 {
     // Make sure the current texture will be tiled.
-    gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-    gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    gl.Begin(DGL_QUADS);
-    gl.TexCoord2f(0, 0);
-    gl.Vertex2f(x, y);
-    gl.TexCoord2f(w / (float) tw, 0);
-    gl.Vertex2f(x + w, y);
-    gl.TexCoord2f(w / (float) tw, h / (float) th);
-    gl.Vertex2f(x + w, y + h);
-    gl.TexCoord2f(0, h / (float) th);
-    gl.Vertex2f(x, y + h);
-    gl.End();
+    DGL_Begin(DGL_QUADS);
+    DGL_TexCoord2f(0, 0);
+    DGL_Vertex2f(x, y);
+    DGL_TexCoord2f(w / (float) tw, 0);
+    DGL_Vertex2f(x + w, y);
+    DGL_TexCoord2f(w / (float) tw, h / (float) th);
+    DGL_Vertex2f(x + w, y + h);
+    DGL_TexCoord2f(0, h / (float) th);
+    DGL_Vertex2f(x, y + h);
+    DGL_End();
 }
 
-/*
+/**
  * The cut rectangle must be inside the other one.
  */
 void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int txoff, int tyoff, int cx,
@@ -295,32 +296,32 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int txoff, 
     int     toph = cy - y, bottomh = y + h - (cy + ch), sideh =
         h - toph - bottomh, lefth = cx - x, righth = x + w - (cx + cw);
 
-    gl.Begin(DGL_QUADS);
+    DGL_Begin(DGL_QUADS);
     if(toph > 0)
     {
         // The top rectangle.
-        gl.TexCoord2f(txo, tyo);
-        gl.Vertex2f(x, y);
-        gl.TexCoord2f(txo + (w / ftw), tyo);
-        gl.Vertex2f(x + w, y );
-        gl.TexCoord2f(txo + (w / ftw), tyo + (toph / fth));
-        gl.Vertex2f(x + w, y + toph);
-        gl.TexCoord2f(txo, tyo + (toph / fth));
-        gl.Vertex2f(x, y + toph);
+        DGL_TexCoord2f(txo, tyo);
+        DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(txo + (w / ftw), tyo);
+        DGL_Vertex2f(x + w, y );
+        DGL_TexCoord2f(txo + (w / ftw), tyo + (toph / fth));
+        DGL_Vertex2f(x + w, y + toph);
+        DGL_TexCoord2f(txo, tyo + (toph / fth));
+        DGL_Vertex2f(x, y + toph);
     }
     if(lefth > 0 && sideh > 0)
     {
         float   yoff = toph / fth;
 
         // The left rectangle.
-        gl.TexCoord2f(txo, yoff + tyo);
-        gl.Vertex2f(x, y + toph);
-        gl.TexCoord2f(txo + (lefth / ftw), yoff + tyo);
-        gl.Vertex2f(x + lefth, y + toph);
-        gl.TexCoord2f(txo + (lefth / ftw), yoff + tyo + sideh / fth);
-        gl.Vertex2f(x + lefth, y + toph + sideh);
-        gl.TexCoord2f(txo, yoff + tyo + sideh / fth);
-        gl.Vertex2f(x, y + toph + sideh);
+        DGL_TexCoord2f(txo, yoff + tyo);
+        DGL_Vertex2f(x, y + toph);
+        DGL_TexCoord2f(txo + (lefth / ftw), yoff + tyo);
+        DGL_Vertex2f(x + lefth, y + toph);
+        DGL_TexCoord2f(txo + (lefth / ftw), yoff + tyo + sideh / fth);
+        DGL_Vertex2f(x + lefth, y + toph + sideh);
+        DGL_TexCoord2f(txo, yoff + tyo + sideh / fth);
+        DGL_Vertex2f(x, y + toph + sideh);
     }
     if(righth > 0 && sideh > 0)
     {
@@ -329,43 +330,43 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int txoff, 
         float   yoff = toph / fth;
 
         // The left rectangle.
-        gl.TexCoord2f(xoff + txo, yoff + tyo);
-        gl.Vertex2f(ox, y + toph);
-        gl.TexCoord2f(xoff + txo + righth / ftw, yoff + tyo);
-        gl.Vertex2f(ox + righth, y + toph);
-        gl.TexCoord2f(xoff + txo + righth / ftw, yoff + tyo + sideh / fth);
-        gl.Vertex2f(ox + righth, y + toph + sideh);
-        gl.TexCoord2f(xoff + txo, yoff + tyo + sideh / fth);
-        gl.Vertex2f(ox, y + toph + sideh);
+        DGL_TexCoord2f(xoff + txo, yoff + tyo);
+        DGL_Vertex2f(ox, y + toph);
+        DGL_TexCoord2f(xoff + txo + righth / ftw, yoff + tyo);
+        DGL_Vertex2f(ox + righth, y + toph);
+        DGL_TexCoord2f(xoff + txo + righth / ftw, yoff + tyo + sideh / fth);
+        DGL_Vertex2f(ox + righth, y + toph + sideh);
+        DGL_TexCoord2f(xoff + txo, yoff + tyo + sideh / fth);
+        DGL_Vertex2f(ox, y + toph + sideh);
     }
     if(bottomh > 0)
     {
         int     oy = y + toph + sideh;
         float   yoff = (toph + sideh) / fth;
 
-        gl.TexCoord2f(txo, yoff + tyo);
-        gl.Vertex2f(x, oy);
-        gl.TexCoord2f(txo + w / ftw, yoff + tyo);
-        gl.Vertex2f(x + w, oy);
-        gl.TexCoord2f(txo + w / ftw, yoff + tyo + bottomh / fth);
-        gl.Vertex2f(x + w, oy + bottomh);
-        gl.TexCoord2f(txo, yoff + tyo + bottomh / fth);
-        gl.Vertex2f(x, oy + bottomh);
+        DGL_TexCoord2f(txo, yoff + tyo);
+        DGL_Vertex2f(x, oy);
+        DGL_TexCoord2f(txo + w / ftw, yoff + tyo);
+        DGL_Vertex2f(x + w, oy);
+        DGL_TexCoord2f(txo + w / ftw, yoff + tyo + bottomh / fth);
+        DGL_Vertex2f(x + w, oy + bottomh);
+        DGL_TexCoord2f(txo, yoff + tyo + bottomh / fth);
+        DGL_Vertex2f(x, oy + bottomh);
     }
-    gl.End();
+    DGL_End();
 }
 
-/*
+/**
  * Totally inefficient for a large number of lines.
  */
 void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
                  float b, float a)
 {
-    gl.Color4f(r, g, b, a);
-    gl.Begin(DGL_LINES);
-    gl.Vertex2f(x1, y1);
-    gl.Vertex2f(x2, y2);
-    gl.End();
+    DGL_Color4f(r, g, b, a);
+    DGL_Begin(DGL_LINES);
+    DGL_Vertex2f(x1, y1);
+    DGL_Vertex2f(x2, y2);
+    DGL_End();
 }
 
 void GL_SetColor(int palidx)
@@ -379,7 +380,7 @@ void GL_SetColor2(int palidx, float alpha)
 
     if(palidx == -1)            // Invisible?
     {
-        gl.Color4f(0, 0, 0, 0);
+        DGL_Color4f(0, 0, 0, 0);
     }
     else
     {
@@ -389,13 +390,13 @@ void GL_SetColor2(int palidx, float alpha)
         if(alpha > 1)
             alpha = 1;
         rgb[3] = alpha * 255;
-        gl.Color4ubv(rgb);
+        DGL_Color4ubv(rgb);
     }
 }
 
 void GL_SetColorAndAlpha(float r, float g, float b, float a)
 {
-    gl.Color4f(r, g, b, a);
+    DGL_Color4f(r, g, b, a);
 }
 
 void GL_SetFilter(int filterRGBA)
@@ -412,19 +413,19 @@ int GL_DrawFilter(void)
         return 0;               // No filter needed.
 
     // No texture, please.
-    gl.Disable(DGL_TEXTURING);
+    DGL_Disable(DGL_TEXTURING);
 
-    gl.Color4ub(curfilter & 0xff, (curfilter >> 8) & 0xff,
+    DGL_Color4ub(curfilter & 0xff, (curfilter >> 8) & 0xff,
                 (curfilter >> 16) & 0xff, (curfilter >> 24) & 0xff);
 
-    gl.Begin(DGL_QUADS);
-    gl.Vertex2f(viewwindowx, viewwindowy);
-    gl.Vertex2f(viewwindowx + viewwidth, viewwindowy);
-    gl.Vertex2f(viewwindowx + viewwidth, viewwindowy + viewheight);
-    gl.Vertex2f(viewwindowx, viewwindowy + viewheight);
-    gl.End();
+    DGL_Begin(DGL_QUADS);
+    DGL_Vertex2f(viewwindowx, viewwindowy);
+    DGL_Vertex2f(viewwindowx + viewwidth, viewwindowy);
+    DGL_Vertex2f(viewwindowx + viewwidth, viewwindowy + viewheight);
+    DGL_Vertex2f(viewwindowx, viewwindowy + viewheight);
+    DGL_End();
 
-    gl.Enable(DGL_TEXTURING);
+    DGL_Enable(DGL_TEXTURING);
     return 1;
 }
 
@@ -433,13 +434,12 @@ void GL_DrawPSprite(float x, float y, float scale, int flip, int lump)
     int     w, h;
     int     w2, h2;
     float   s, t;
-    int     pSprMode = 1;
     spritelump_t *slump = spritelumps[lump];
 
     if(flip)
-        flip = 1;               // Make sure it's zero or one.
+        flip = 1; // Make sure it's zero or one.
 
-    GL_SetSprite(lump, pSprMode);
+    GL_SetPSprite(lump);
     w = slump->width;
     h = slump->height;
     w2 = M_CeilPow2(w);
@@ -447,22 +447,22 @@ void GL_DrawPSprite(float x, float y, float scale, int flip, int lump)
 
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
-    s = slump->tc[pSprMode][VX] - 0.4f / w2;
-    t = slump->tc[pSprMode][VY] - 0.4f / h2;
+    s = slump->texCoord[1][VX] - 0.4f / w2;
+    t = slump->texCoord[1][VY] - 0.4f / h2;
 
-    gl.Begin(DGL_QUADS);
+    DGL_Begin(DGL_QUADS);
 
-    gl.TexCoord2f(flip * s, 0);
-    gl.Vertex2f(x, y);
+    DGL_TexCoord2f(flip * s, 0);
+    DGL_Vertex2f(x, y);
 
-    gl.TexCoord2f(!flip * s, 0);
-    gl.Vertex2f(x + w * scale, y);
+    DGL_TexCoord2f(!flip * s, 0);
+    DGL_Vertex2f(x + w * scale, y);
 
-    gl.TexCoord2f(!flip * s, t);
-    gl.Vertex2f(x + w * scale, y + h * scale);
+    DGL_TexCoord2f(!flip * s, t);
+    DGL_Vertex2f(x + w * scale, y + h * scale);
 
-    gl.TexCoord2f(flip * s, t);
-    gl.Vertex2f(x, y + h * scale);
+    DGL_TexCoord2f(flip * s, t);
+    DGL_Vertex2f(x, y + h * scale);
 
-    gl.End();
+    DGL_End();
 }

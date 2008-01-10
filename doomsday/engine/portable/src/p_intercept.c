@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ void P_ClearIntercepts(void)
  *
  * @return              Ptr to the new intercept.
  */
-intercept_t *P_AddIntercept(float frac, boolean isaline, void *ptr)
+intercept_t *P_AddIntercept(float frac, intercepttype_t type, void *ptr)
 {
     int     count = intercept_p - intercepts;
 
@@ -87,14 +87,14 @@ intercept_t *P_AddIntercept(float frac, boolean isaline, void *ptr)
         intercept_p = intercepts + count;
     }
 
-    if(isaline && P_ToIndex(ptr) >= numlines)
+    if(type == ICPT_LINE && P_ToIndex(ptr) >= numlines)
     {
         count = count;
     }
 
     // Fill in the data that has been provided.
     intercept_p->frac = frac;
-    intercept_p->isaline = isaline;
+    intercept_p->type = type;
     intercept_p->d.mo = ptr;
     return intercept_p++;
 }

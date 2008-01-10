@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
 
@@ -108,10 +109,10 @@ void R_DrawViewBorder(void)
     if(viewwidth == 320 && viewheight == 200)
         return;
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, 320, 200, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, 320, 200, -1, 1);
 
     // View background.
     GL_SetColorAndAlpha(1, 1, 1, 1);
@@ -121,21 +122,21 @@ void R_DrawViewBorder(void)
                         viewheight + 2 * bwidth);
 
     // The border top.
-    gl.Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_TOP]), &texinfo));
+    DGL_Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_TOP]), &texinfo));
     GL_DrawRectTiled(viewwindowx, viewwindowy - bwidth, viewwidth,
                      texinfo->height, 16, texinfo->height);
     // Border bottom.
-    gl.Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_BOTTOM]), &texinfo));
+    DGL_Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_BOTTOM]), &texinfo));
     GL_DrawRectTiled(viewwindowx, viewwindowy + viewheight , viewwidth,
                      texinfo->height, 16, texinfo->height);
 
     // Left view border.
-    gl.Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_LEFT]), &texinfo));
+    DGL_Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_LEFT]), &texinfo));
     GL_DrawRectTiled(viewwindowx - bwidth, viewwindowy,
                      texinfo->width, viewheight,
                      texinfo->width, 16);
     // Right view border.
-    gl.Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_RIGHT]), &texinfo));
+    DGL_Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_RIGHT]), &texinfo));
     GL_DrawRectTiled(viewwindowx + viewwidth , viewwindowy,
                      texinfo->width, viewheight,
                      texinfo->width, 16);
@@ -151,6 +152,6 @@ void R_DrawViewBorder(void)
                  W_GetNumForName(borderGfx[BG_BOTTOMLEFT]));
     GL_UsePatchOffset(true);
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }

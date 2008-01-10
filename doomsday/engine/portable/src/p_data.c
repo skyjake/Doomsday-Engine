@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,9 +100,9 @@ blockmap_t *BlockMap;
 blockmap_t *SSecBlockMap;
 linkmobj_t *blockrings;             // for mobj rings
 
-byte       *rejectmatrix;           // for fast sight rejection
+byte       *rejectMatrix;           // for fast sight rejection
 
-nodepile_t *mobjnodes, *linenodes;  // all kinds of wacky links
+nodepile_t *mobjNodes, *lineNodes;  // all kinds of wacky links
 
 float       mapGravity;
 
@@ -132,16 +132,16 @@ void P_PlaneChanged(sector_t *sector, uint plane)
     side_t     *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
-    sector->planes[plane]->soundorg.pos[VZ] = sector->planes[plane]->height;
+    sector->planes[plane]->soundOrg.pos[VZ] = sector->planes[plane]->height;
 
     if(plane == PLN_FLOOR || plane == PLN_CEILING)
-        sector->soundorg.pos[VZ] =
+        sector->soundOrg.pos[VZ] =
             (sector->SP_ceilheight - sector->SP_floorheight) / 2;
 
-    for(i = 0; i < sector->linecount; ++i)
+    for(i = 0; i < sector->lineCount; ++i)
     {
-        front = sector->Lines[i]->L_frontside;
-        back  = sector->Lines[i]->L_backside;
+        front = sector->lines[i]->L_frontside;
+        back  = sector->lines[i]->L_backside;
 
         if(!front || !front->sector || !back || !back->sector)
             continue;
@@ -285,7 +285,7 @@ void P_PolyobjChanged(polyobj_t *po)
     uint            i;
     seg_t         **segPtr = po->segs;
 
-    for(i = 0; i < po->numsegs; ++i, segPtr++)
+    for(i = 0; i < po->numSegs; ++i, segPtr++)
     {
         seg_t          *seg = *segPtr;
 
@@ -327,44 +327,44 @@ gamemap_t *P_GetCurrentMap(void)
 
 void P_SetCurrentMap(gamemap_t *map)
 {
-    strncpy(levelid, map->levelid, sizeof(levelid));
+    strncpy(levelid, map->levelID, sizeof(levelid));
 
-    numthings = map->numthings;
+    numthings = map->numThings;
 
-    numvertexes = map->numvertexes;
+    numvertexes = map->numVertexes;
     vertexes = map->vertexes;
 
-    numsegs = map->numsegs;
+    numsegs = map->numSegs;
     segs = map->segs;
 
-    numsectors = map->numsectors;
+    numsectors = map->numSectors;
     sectors = map->sectors;
 
-    numsubsectors = map->numsubsectors;
+    numsubsectors = map->numSubsectors;
     subsectors = map->subsectors;
 
-    numnodes = map->numnodes;
+    numnodes = map->numNodes;
     nodes = map->nodes;
 
-    numlines = map->numlines;
+    numlines = map->numLines;
     lines = map->lines;
 
-    numsides = map->numsides;
+    numsides = map->numSides;
     sides = map->sides;
 
     watchedPlaneList = &map->watchedPlaneList;
 
-    numpolyobjs = map->numpolyobjs;
+    numpolyobjs = map->numPolyobjs;
     polyobjs = map->polyobjs;
 
-    rejectmatrix = map->rejectmatrix;
-    mobjnodes = &map->mobjnodes;
-    linenodes = &map->linenodes;
-    linelinks = map->linelinks;
+    rejectMatrix = map->rejectMatrix;
+    mobjNodes = &map->mobjNodes;
+    lineNodes = &map->lineNodes;
+    linelinks = map->lineLinks;
 
     BlockMap = map->blockMap;
     SSecBlockMap = map->ssecBlockMap;
-    blockrings = map->blockrings;
+    blockrings = map->blockRings;
 
     mapGravity = map->globalGravity;
 
@@ -380,7 +380,7 @@ const char *P_GetMapID(gamemap_t *map)
     if(!map)
         return NULL;
 
-    return map->levelid;
+    return map->levelID;
 }
 
 /**
@@ -396,11 +396,11 @@ const char *P_GetUniqueMapID(gamemap_t *map)
 
 void P_GetMapBounds(gamemap_t *map, float *min, float *max)
 {
-    min[VX] = map->bbox[BOXLEFT];
-    min[VY] = map->bbox[BOXBOTTOM];
+    min[VX] = map->bBox[BOXLEFT];
+    min[VY] = map->bBox[BOXBOTTOM];
 
-    max[VX] = map->bbox[BOXRIGHT];
-    max[VY] = map->bbox[BOXTOP];
+    max[VX] = map->bBox[BOXRIGHT];
+    max[VY] = map->bBox[BOXTOP];
 }
 
 /**
@@ -486,7 +486,7 @@ boolean P_LoadMap(const char *mapID)
         {
             ddplayer_t      *plr = &players[i];
 
-            if(isServer && plr->ingame)
+            if(isServer && plr->inGame)
                 clients[i].runTime = SECONDS_TO_TICKS(gameTime);
         }
 

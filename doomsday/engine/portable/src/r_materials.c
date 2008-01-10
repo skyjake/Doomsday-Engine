@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
@@ -124,8 +125,8 @@ material_t *R_MaterialCreate(const char *name, int ofTypeID,
     }
 
     // A new material.
-    mat = Z_Malloc(sizeof(material_t), PU_STATIC, 0);
-    memcpy(mat->name, name, sizeof(mat->name));
+    mat = Z_Malloc(sizeof(*mat), PU_STATIC, 0);
+    strncpy(mat->name, name, sizeof(mat->name));
     mat->name[8] = '\0';
     mat->ofTypeID = ofTypeID;
     mat->type = type;
@@ -179,7 +180,7 @@ void R_DeleteMaterial(int ofTypeID, materialtype_t type)
 
         if(textures[ofTypeID]->tex)
         {
-            gl.DeleteTextures(1, &textures[ofTypeID]->tex);
+            DGL_DeleteTextures(1, &textures[ofTypeID]->tex);
             textures[ofTypeID]->tex = 0;
         }
         break;
@@ -190,7 +191,7 @@ void R_DeleteMaterial(int ofTypeID, materialtype_t type)
 
         if(flats[ofTypeID]->tex)
         {
-            gl.DeleteTextures(1, &flats[ofTypeID]->tex);
+            DGL_DeleteTextures(1, &flats[ofTypeID]->tex);
             flats[ofTypeID]->tex = 0;
         }
         break;
@@ -221,7 +222,7 @@ boolean R_IsCustomMaterial(int ofTypeID, materialtype_t type)
             return true;
 
         // Go through the patches.
-        for(i = 0; i < textures[ofTypeID]->patchcount; ++i)
+        for(i = 0; i < textures[ofTypeID]->patchCount; ++i)
         {
             if(!W_IsFromIWAD(textures[ofTypeID]->patches[i].patch))
                 return true;

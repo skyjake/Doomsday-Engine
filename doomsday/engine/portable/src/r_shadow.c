@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -130,13 +130,13 @@ void R_ShadowDelta(pvec2_t delta, line_t *line, sector_t *frontSector)
 {
     if(line->L_frontsector == frontSector)
     {
-        delta[VX] = line->dx;
-        delta[VY] = line->dy;
+        delta[VX] = line->dX;
+        delta[VY] = line->dY;
     }
     else
     {
-        delta[VX] = -line->dx;
-        delta[VY] = -line->dy;
+        delta[VX] = -line->dX;
+        delta[VY] = -line->dY;
     }
 }
 
@@ -158,18 +158,18 @@ boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
     int         side = !(poly->flags & SHPF_FRONTSIDE);
 
     // The line itself.
-    R_ShadowDelta(leftCorner ? right : left, poly->seg->linedef, sector);
+    R_ShadowDelta(leftCorner ? right : left, poly->seg->lineDef, sector);
 
     // The neighbor.
-    neighbor = R_FindLineNeighbor(poly->ssec->sector, poly->seg->linedef,
-                                  poly->seg->linedef->vo[side^!leftCorner],
+    neighbor = R_FindLineNeighbor(poly->ssec->sector, poly->seg->lineDef,
+                                  poly->seg->lineDef->vo[side^!leftCorner],
                                   !leftCorner, NULL);
     if(!neighbor)
     {
         // Should never happen...
         Con_Message("R_ShadowCornerDeltas: No %s neighbor for line %u!\n",
                     leftCorner? "left":"right",
-                    (uint) GET_LINE_IDX(poly->seg->linedef));
+                    (uint) GET_LINE_IDX(poly->seg->lineDef));
         return false;
     }
 
@@ -212,7 +212,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
     vec2_t      left, right;
     int         edge, side = !(poly->flags & SHPF_FRONTSIDE);
     uint        i, count;
-    line_t     *line = poly->seg->linedef;
+    line_t     *line = poly->seg->lineDef;
     lineowner_t *base, *p, *boundryOwner = NULL;
     boolean     done;
 
@@ -222,13 +222,13 @@ void R_ShadowEdges(shadowpoly_t *poly)
         if(R_ShadowCornerDeltas(left, right, poly, edge == 0))
         {
             R_CornerNormalPoint(left, R_ShadowEdgeWidth(left), right,
-                                R_ShadowEdgeWidth(right), poly->inoffset[edge],
-                                edge == 0 ? poly->extoffset[edge] : NULL,
-                                edge == 1 ? poly->extoffset[edge] : NULL);
+                                R_ShadowEdgeWidth(right), poly->inOffset[edge],
+                                edge == 0 ? poly->extOffset[edge] : NULL,
+                                edge == 1 ? poly->extOffset[edge] : NULL);
         }
         else
         {   // An error in the map. Set the inside corner to the extoffset.
-            V2_Copy(poly->inoffset[edge], poly->extoffset[edge]);
+            V2_Copy(poly->inOffset[edge], poly->extOffset[edge]);
         }
 
         // The back extended offset(s):
@@ -262,8 +262,8 @@ void R_ShadowEdges(shadowpoly_t *poly)
         if(count == 0)
         {
             // No back-extended, just use the plain extended offset.
-            V2_Copy(poly->bextoffset[edge][0].offset,
-                    poly->extoffset[edge]);
+            V2_Copy(poly->bExtOffset[edge][0].offset,
+                    poly->extOffset[edge]);
         }
         else
         {
@@ -308,13 +308,13 @@ void R_ShadowEdges(shadowpoly_t *poly)
                 if(neighbor->L_side(otherside) &&
                    orientSec == neighbor->L_sector(otherside))
                 {
-                    delta[VX] = neighbor->dx;
-                    delta[VY] = neighbor->dy;
+                    delta[VX] = neighbor->dX;
+                    delta[VY] = neighbor->dY;
                 }
                 else
                 {
-                    delta[VX] = -neighbor->dx;
-                    delta[VY] = -neighbor->dy;
+                    delta[VX] = -neighbor->dX;
+                    delta[VY] = -neighbor->dY;
                 }
 
                 // The left side is always flipped.
@@ -323,7 +323,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
 
                 R_CornerNormalPoint(left, R_ShadowEdgeWidth(left),
                                     right, R_ShadowEdgeWidth(right),
-                                    poly->bextoffset[edge][i].offset,
+                                    poly->bExtOffset[edge][i].offset,
                                     NULL, NULL);
 
                 // Update orientSec ready for the next iteration?
@@ -385,8 +385,8 @@ boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
     // Use the extended points, they are wider than inoffsets.
     V2_Set(corners[0], poly->outer[0]->pos[VX], poly->outer[0]->pos[VY]);
     V2_Set(corners[1], poly->outer[1]->pos[VX], poly->outer[1]->pos[VY]);
-    V2_Sum(corners[2], corners[1], poly->extoffset[1]);
-    V2_Sum(corners[3], corners[0], poly->extoffset[0]);
+    V2_Sum(corners[2], corners[1], poly->extOffset[1]);
+    V2_Sum(corners[3], corners[0], poly->extOffset[0]);
 
     V2_Sum(mid, corners[0], corners[2]);
     V2_Scale(mid, .5f);
@@ -517,21 +517,21 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
         {
             V2_Set(bound->left, polys[i].outer[0]->V_pos[VX],
                    polys[i].outer[0]->V_pos[VY]);
-            V2_Sum(bound->a, polys[i].inoffset[0], bound->left);
+            V2_Sum(bound->a, polys[i].inOffset[0], bound->left);
 
             V2_Set(bound->right, polys[i].outer[1]->V_pos[VX],
                    polys[i].outer[1]->V_pos[VY]);
-            V2_Sum(bound->b, polys[i].inoffset[1], bound->right);
+            V2_Sum(bound->b, polys[i].inOffset[1], bound->right);
         }
         memset(overlaps, 0, count);
 
         // Find the overlaps.
         for(i = 0, bound = boundaries; i < count; ++i, bound++)
         {
-            for(k = 0; k < sector->linecount; ++k)
+            for(k = 0; k < sector->lineCount; ++k)
             {
-                line = sector->Lines[k];
-                if(polys[i].seg->linedef == line)
+                line = sector->lines[k];
+                if(polys[i].seg->lineDef == line)
                     continue;
 
                 if(line->flags & LINEF_SELFREF)
@@ -561,14 +561,14 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
             if(overlaps[i] & OVERLAP_LEFT)
             {
                 if(R_ResolveStep(bound->left, bound->a,
-                                 polys[i].inoffset[0]))
+                                 polys[i].inOffset[0]))
                     done = false;
             }
 
             if(overlaps[i] & OVERLAP_RIGHT)
             {
                 if(R_ResolveStep(bound->right, bound->b,
-                                 polys[i].inoffset[1]))
+                                 polys[i].inOffset[1]))
                     done = false;
             }
         }
@@ -619,11 +619,11 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
                 seg_t      *seg = *segp;
 
                 // Minisegs don't get shadows, even then, only one.
-                if(seg->linedef &&
-                   !((seg->linedef->validCount == validCount) ||
-                     (seg->linedef->flags & LINEF_SELFREF)))
+                if(seg->lineDef &&
+                   !((seg->lineDef->validCount == validCount) ||
+                     (seg->lineDef->flags & LINEF_SELFREF)))
                 {
-                    line_t     *line = seg->linedef;
+                    line_t     *line = seg->lineDef;
                     boolean     frontside = (line->L_frontsector == sec);
 
                     // If the line hasn't got two neighbors, it won't get a
@@ -644,7 +644,7 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
                             poly->seg = seg;
                             poly->ssec = ssec;
                             poly->flags = (frontside? SHPF_FRONTSIDE : 0);
-                            poly->visframe = frameCount - 1;
+                            poly->visFrame = frameCount - 1;
 
                             // The outer vertices are just the beginning and end of
                             // the line.
@@ -727,13 +727,13 @@ void R_InitSectorShadows(void)
         V2_InitBox(bounds, point);
 
         // Use the extended points, they are wider than inoffsets.
-        V2_Sum(point, point, poly->extoffset[0]);
+        V2_Sum(point, point, poly->extOffset[0]);
         V2_AddToBox(bounds, point);
 
         V2_Set(point, poly->outer[1]->V_pos[VX], poly->outer[1]->V_pos[VY]);
         V2_AddToBox(bounds, point);
 
-        V2_Sum(point, point, poly->extoffset[1]);
+        V2_Sum(point, point, poly->extOffset[1]);
         V2_AddToBox(bounds, point);
 
         P_SubsectorsBoxIteratorv(bounds, R_GetShadowSector(poly, 0, false),
