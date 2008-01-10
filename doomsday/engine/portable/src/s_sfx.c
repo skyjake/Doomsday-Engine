@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,13 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * s_sfx.c: Sound Effects
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
@@ -496,7 +497,7 @@ void Sfx_ListenerUpdate(void)
         vec[VX] = listener->angle / (float) ANGLE_MAX *360;
 
         vec[VY] =
-            listener->dplayer ? LOOKDIR2DEG(listener->dplayer->lookdir) : 0;
+            listener->dPlayer ? LOOKDIR2DEG(listener->dPlayer->lookDir) : 0;
         driver->Listenerv(SFXLP_ORIENTATION, vec);
 
         // Velocity. The unit is world distance units per second.
@@ -1241,7 +1242,7 @@ void Sfx_DebugInfo(void)
     char    buf[200];
     uint    cachesize, ccnt;
 
-    gl.Color3f(1, 1, 0);
+    DGL_Color3f(1, 1, 0);
     if(!sfx_avail)
     {
         FR_ShadowTextOut("Sfx disabled", 0, 0);
@@ -1254,16 +1255,16 @@ void Sfx_DebugInfo(void)
     // Sample cache information.
     Sfx_GetCacheInfo(&cachesize, &ccnt);
     sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
-    gl.Color3f(1, 1, 1);
+    DGL_Color3f(1, 1, 1);
     FR_ShadowTextOut(buf, 10, 0);
 
     // Print a line of info about each channel.
     for(i = 0, ch = channels; i < num_channels; i++, ch++)
     {
         if(ch->buffer && ch->buffer->flags & SFXBF_PLAYING)
-            gl.Color3f(1, 1, 1);
+            DGL_Color3f(1, 1, 1);
         else
-            gl.Color3f(1, 1, 0);
+            DGL_Color3f(1, 1, 0);
 
         sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u", i,
                 !(ch->flags & SFXCF_NO_ORIGIN) ? 'O' : '.',

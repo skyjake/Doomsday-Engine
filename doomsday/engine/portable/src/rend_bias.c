@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -243,7 +243,7 @@ void SB_Delete(uint which)
         mobj_t *iter;
 
         seciter = SECTOR_PTR(j);
-        for(iter = seciter->mobjList; iter && !done; iter = iter->snext)
+        for(iter = seciter->mobjList; iter && !done; iter = iter->sNext)
         {
             if(iter->usingBias && iter->light == which + 1)
             {
@@ -277,7 +277,7 @@ void SB_Clear(void)
         mobj_t *iter;
 
         seciter = SECTOR_PTR(i);
-        for(iter = seciter->mobjList; iter; iter = iter->snext)
+        for(iter = seciter->mobjList; iter; iter = iter->sNext)
         {
             if(iter->usingBias)
             {
@@ -309,8 +309,8 @@ void SB_InitForMap(const char *uniqueId)
             continue;
 
         if(SB_NewSourceAt(def->offset[VX], def->offset[VY], def->offset[VZ],
-                          def->size, def->lightlevel[0],
-                          def->lightlevel[1], def->color) == 0)
+                          def->size, def->lightLevel[0],
+                          def->lightLevel[1], def->color) == 0)
             break;
     }
 }
@@ -501,7 +501,7 @@ void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
                 distance = len;
         }
 
-        if(M_DotProduct(delta, seg->sidedef->SW_middlenormal) >= 0)
+        if(M_DotProduct(delta, seg->sideDef->SW_middlenormal) >= 0)
             continue;
 
         if(distance < 1)
@@ -552,10 +552,10 @@ void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
         return;
 
     // \fixme NOT optimal.
-    aff = M_Calloc(subsector->sector->planecount * sizeof(affection_t));
+    aff = M_Calloc(subsector->sector->planeCount * sizeof(affection_t));
 
     // For each plane.
-    for(k = 0; k < subsector->sector->planecount; ++k)
+    for(k = 0; k < subsector->sector->planeCount; ++k)
     {
         subsector->planes[k]->updated = lastChangeOnFrame;
         aff[k].affected = subsector->planes[k]->affected;
@@ -570,7 +570,7 @@ void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
 
         // Calculate minimum 2D distance to the subsector.
         // \fixme This is probably too accurate an estimate.
-        for(k = 0; k < poly->numvertices; ++k)
+        for(k = 0; k < poly->numVertices; ++k)
         {
             V2_Set(delta,
                    poly->vertices[k].pos[VX] - src->pos[VX],
@@ -584,11 +584,11 @@ void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
             distance = 1;
 
         // For each plane
-        for(k = 0; k < subsector->sector->planecount; ++k)
+        for(k = 0; k < subsector->sector->planeCount; ++k)
         {
             // Estimate the effect on this plane.
-            point[VX] = subsector->midpoint.pos[VX];
-            point[VY] = subsector->midpoint.pos[VY];
+            point[VX] = subsector->midPoint.pos[VX];
+            point[VY] = subsector->midPoint.pos[VY];
             point[VZ] = subsector->sector->planes[k]->height;
 
             dot = SB_Dot(src, point, subsector->sector->planes[k]->surface.normal);
@@ -692,7 +692,7 @@ void SB_MarkPlaneChanges(subsector_t *ssec, uint plane,
     if(SB_ChangeInAffected(pinfo->affected, allChanges))
     {
         // Mark the illumination unseen to force an update.
-        for(i = 0; i < ssec->numvertices; ++i)
+        for(i = 0; i < ssec->numVertices; ++i)
             pinfo->illumination[i].flags |= VIF_STILL_UNSEEN;
     }
 }
@@ -728,14 +728,14 @@ void SB_BeginFrame(void)
             float oldIntensity = s->intensity;
 
             // The lower intensities are useless for light emission.
-            if(sector->lightlevel >= maxLevel)
+            if(sector->lightLevel >= maxLevel)
             {
                 s->intensity = s->primaryIntensity;
             }
-            if(sector->lightlevel >= minLevel && minLevel != maxLevel)
+            if(sector->lightLevel >= minLevel && minLevel != maxLevel)
             {
                 s->intensity = s->primaryIntensity *
-                    (sector->lightlevel - minLevel) / (maxLevel - minLevel);
+                    (sector->lightLevel - minLevel) / (maxLevel - minLevel);
             }
             else
             {
@@ -783,7 +783,7 @@ void SB_BeginFrame(void)
     {
         sub = SUBSECTOR_PTR(i);
 
-        for(j = 0; j < sub->sector->planecount; ++j)
+        for(j = 0; j < sub->sector->planeCount; ++j)
             SB_MarkPlaneChanges(sub, j, &allChanges);
     }
 }
@@ -907,7 +907,7 @@ void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
     else
         SB_UpdateSubsectorAffected(mapElementIndex, poly);
 
-    for(i = 0; i < poly->numvertices; ++i)
+    for(i = 0; i < poly->numVertices; ++i)
     {
         SB_EvalPoint(&poly->vertices[i].color,
                      &illumination[i], affected,

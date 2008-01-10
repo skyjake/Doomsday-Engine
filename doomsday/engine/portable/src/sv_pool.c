@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -200,9 +200,9 @@ void Sv_InitPools(void)
         sec = SECTOR_PTR(i);
 
         sectorOrigins[i].pos[VX] =
-            (sec->bbox[BOXRIGHT] + sec->bbox[BOXLEFT]) / 2;
+            (sec->bBox[BOXRIGHT] + sec->bBox[BOXLEFT]) / 2;
         sectorOrigins[i].pos[VY] =
-            (sec->bbox[BOXBOTTOM] + sec->bbox[BOXTOP]) / 2;
+            (sec->bBox[BOXBOTTOM] + sec->bBox[BOXTOP]) / 2;
     }
 
     // Origins of sides.
@@ -216,9 +216,9 @@ void Sv_InitPools(void)
 
         vtx = sideOwners[i]->L_v1;
         sideOrigins[i].pos[VX] =
-            vtx->V_pos[VX] + sideOwners[i]->dx / 2;
+            vtx->V_pos[VX] + sideOwners[i]->dX / 2;
         sideOrigins[i].pos[VY] =
-            vtx->V_pos[VY] + sideOwners[i]->dy / 2;
+            vtx->V_pos[VY] + sideOwners[i]->dY / 2;
     }
 
     // Store the current state of the world into both the registers.
@@ -364,11 +364,11 @@ void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
  */
 float Sv_GetMaxedMobjZ(const mobj_t *mo)
 {
-    if(mo->pos[VZ] == mo->floorz)
+    if(mo->pos[VZ] == mo->floorZ)
     {
         return DDMINFLOAT;
     }
-    if(mo->pos[VZ] + mo->height == mo->ceilingz)
+    if(mo->pos[VZ] + mo->height == mo->ceilingZ)
     {
         return DDMAXFLOAT;
     }
@@ -384,13 +384,13 @@ void Sv_RegisterMobj(dt_mobj_t *reg, const mobj_t *mo)
     // (dt_mobj_t <=> mobj_t)
     // Just copy the data we need.
     reg->thinker.id = mo->thinker.id;
-    reg->dplayer = mo->dplayer;
+    reg->dPlayer = mo->dPlayer;
     reg->subsector = mo->subsector;
     reg->pos[VX] = mo->pos[VX];
     reg->pos[VY] = mo->pos[VY];
     reg->pos[VZ] = Sv_GetMaxedMobjZ(mo);
-    reg->floorz = mo->floorz;
-    reg->ceilingz = mo->ceilingz;
+    reg->floorZ = mo->floorZ;
+    reg->ceilingZ = mo->ceilingZ;
     reg->mom[MX] = mo->mom[MX];
     reg->mom[MY] = mo->mom[MY];
     reg->mom[MZ] = mo->mom[MZ];
@@ -399,10 +399,10 @@ void Sv_RegisterMobj(dt_mobj_t *reg, const mobj_t *mo)
     reg->state = mo->state;
     reg->radius = mo->radius;
     reg->height = mo->height;
-    reg->ddflags = mo->ddflags;
-    reg->floorclip = mo->floorclip;
+    reg->ddFlags = mo->ddFlags;
+    reg->floorClip = mo->floorClip;
     reg->translucency = mo->translucency;
-    reg->vistarget = mo->vistarget;
+    reg->visTarget = mo->visTarget;
 }
 
 /**
@@ -419,10 +419,10 @@ void Sv_RegisterResetMobj(dt_mobj_t *reg)
     reg->state = 0;
     reg->radius = 0;
     reg->height = 0;
-    reg->ddflags = 0;
-    reg->floorclip = 0;
+    reg->ddFlags = 0;
+    reg->floorClip = 0;
     reg->translucency = 0;
-    reg->vistarget = 0;
+    reg->visTarget = 0;
 }
 
 /**
@@ -438,15 +438,15 @@ void Sv_RegisterPlayer(dt_player_t *reg, uint number)
     reg->forwardMove = c->lastCmd->forwardMove;
     reg->sideMove = c->lastCmd->sideMove;
     reg->angle = p->mo ? p->mo->angle : 0;
-    reg->turnDelta = p->mo ? p->mo->angle - p->lastangle : 0;
+    reg->turnDelta = p->mo ? p->mo->angle - p->lastAngle : 0;
     reg->friction = p->mo &&
         gx.MobjFriction ? gx.MobjFriction(p->mo) : DEFAULT_FRICTION;
     reg->extraLight = p->extraLight;
-    reg->fixedColorMap = p->fixedcolormap;
+    reg->fixedColorMap = p->fixedColorMap;
     reg->filter = p->filter;
     reg->clYaw = p->mo ? p->mo->angle : 0;
-    reg->clPitch = p->lookdir;
-    memcpy(reg->psp, p->psprites, sizeof(ddpsprite_t) * 2);
+    reg->clPitch = p->lookDir;
+    memcpy(reg->psp, p->pSprites, sizeof(ddpsprite_t) * 2);
 }
 
 /**
@@ -462,7 +462,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
     sector_t   *sec = SECTOR_PTR(number);
     material_t *mat;
 
-    reg->lightlevel = sec->lightlevel;
+    reg->lightLevel = sec->lightLevel;
     memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
     // \fixme $nplanes
     for(i = 0; i < 2; ++i) // number of planes in sector.
@@ -472,8 +472,8 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
         reg->planes[i].target = sec->planes[i]->target;
         reg->planes[i].speed = sec->planes[i]->speed;
         reg->planes[i].glow = sec->planes[i]->glow;
-        memcpy(reg->planes[i].glowrgb, sec->planes[i]->glowrgb,
-               sizeof(reg->planes[i].glowrgb));
+        memcpy(reg->planes[i].glowRGB, sec->planes[i]->glowRGB,
+               sizeof(reg->planes[i].glowRGB));
 
         // Surface properties.
         memcpy(reg->planes[i].surface.rgba, sec->planes[i]->surface.rgba,
@@ -506,12 +506,12 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     reg->top.material.texture = (side->SW_topmaterial? side->SW_topmaterial->ofTypeID : 0);
     reg->middle.material.texture = (side->SW_middlematerial? side->SW_middlematerial->ofTypeID : 0);
     reg->bottom.material.texture = (side->SW_bottommaterial? side->SW_bottommaterial->ofTypeID : 0);
-    reg->lineFlags = (line ? line->mapflags & 0xff : 0);
+    reg->lineFlags = (line ? line->mapFlags & 0xff : 0);
 
     memcpy(reg->top.rgba, side->SW_toprgba, sizeof(reg->top.rgba));
     memcpy(reg->middle.rgba, side->SW_middlergba, sizeof(reg->middle.rgba));
     memcpy(reg->bottom.rgba, side->SW_bottomrgba, sizeof(reg->bottom.rgba));
-    reg->middle.blendmode = side->SW_middleblendmode; // only middle supports blendmode.
+    reg->middle.blendMode = side->SW_middleblendmode; // only middle supports blendmode.
     reg->flags = side->flags & 0xff;
 }
 
@@ -573,11 +573,11 @@ boolean Sv_RegisterCompareMobj(cregister_t *reg, const mobj_t *s,
     if(r->translucency != s->translucency)
         df |= MDFC_TRANSLUCENCY;
 
-    if(r->vistarget != s->vistarget)
+    if(r->visTarget != s->visTarget)
         df |= MDFC_FADETARGET;
 
     // Mobj state sent periodically, if it keeps changing.
-    if((!(s->ddflags & DDMF_MISSILE) && regMo &&
+    if((!(s->ddFlags & DDMF_MISSILE) && regMo &&
         Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35) &&
         r->state != s->state) ||
        !Def_SameStateSequence(r->state, s->state))
@@ -597,11 +597,11 @@ VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinke
         df |= MDF_RADIUS;
     if(r->height != s->height)
         df |= MDF_HEIGHT;
-    if((r->ddflags & DDMF_PACK_MASK) != (s->ddflags & DDMF_PACK_MASK))
+    if((r->ddFlags & DDMF_PACK_MASK) != (s->ddFlags & DDMF_PACK_MASK))
     {
         df |= MDF_FLAGS;
     }
-    if(r->floorclip != s->floorclip)
+    if(r->floorClip != s->floorClip)
         df |= MDF_FLOORCLIP;
 
     if(df)
@@ -662,7 +662,7 @@ boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
         const ddpsprite_t *rps = r->psp + i;
         const ddpsprite_t *sps = s->psp + i;
 
-        if(rps->stateptr != sps->stateptr)
+        if(rps->statePtr != sps->statePtr)
             df |= PSDF_STATEPTR << off;
 
         if(rps->light != sps->light)
@@ -671,7 +671,7 @@ boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
             df |= PSDF_ALPHA << off;
         if(rps->state != sps->state)
             df |= PSDF_STATE << off;
-        if((rps->offx != sps->offx || rps->offy != sps->offy) && !i)
+        if((rps->offX != sps->offX || rps->offY != sps->offY) && !i)
         {
             df |= PSDF_OFFSET << off;
         }
@@ -706,7 +706,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
        (!s->SP_ceilmaterial &&
         r->planes[PLN_CEILING].surface.material.texture != 0))
        df |= SDF_CEILINGPIC;
-    if(r->lightlevel != s->lightlevel)
+    if(r->lightLevel != s->lightLevel)
         df |= SDF_LIGHT;
     if(r->rgb[0] != s->rgb[0])
         df |= SDF_COLOR_RED;
@@ -729,18 +729,18 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     if(r->planes[PLN_CEILING].surface.rgba[2] != s->SP_ceilrgb[2])
         df |= SDF_CEIL_COLOR_BLUE;
 
-    if(r->planes[PLN_FLOOR].glowrgb[0] != s->SP_floorglowrgb[0])
+    if(r->planes[PLN_FLOOR].glowRGB[0] != s->SP_floorglowrgb[0])
         df |= SDF_FLOOR_GLOW_RED;
-    if(r->planes[PLN_FLOOR].glowrgb[1] != s->SP_floorglowrgb[1])
+    if(r->planes[PLN_FLOOR].glowRGB[1] != s->SP_floorglowrgb[1])
         df |= SDF_FLOOR_GLOW_GREEN;
-    if(r->planes[PLN_FLOOR].glowrgb[2] != s->SP_floorglowrgb[2])
+    if(r->planes[PLN_FLOOR].glowRGB[2] != s->SP_floorglowrgb[2])
         df |= SDF_FLOOR_GLOW_BLUE;
 
-    if(r->planes[PLN_CEILING].glowrgb[0] != s->SP_ceilglowrgb[0])
+    if(r->planes[PLN_CEILING].glowRGB[0] != s->SP_ceilglowrgb[0])
         df |= SDF_CEIL_GLOW_RED;
-    if(r->planes[PLN_CEILING].glowrgb[1] != s->SP_ceilglowrgb[1])
+    if(r->planes[PLN_CEILING].glowRGB[1] != s->SP_ceilglowrgb[1])
         df |= SDF_CEIL_GLOW_GREEN;
-    if(r->planes[PLN_CEILING].glowrgb[2] != s->SP_ceilglowrgb[2])
+    if(r->planes[PLN_CEILING].glowRGB[2] != s->SP_ceilglowrgb[2])
         df |= SDF_CEIL_GLOW_BLUE;
 
     if(r->planes[PLN_FLOOR].glow != s->planes[PLN_FLOOR]->glow)
@@ -837,7 +837,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
     const line_t *line = sideOwners[number];
     dt_side_t  *r = &reg->sides[number];
     int         df = 0;
-    byte        lineFlags = (line ? line->mapflags & 0xff : 0);
+    byte        lineFlags = (line ? line->mapFlags & 0xff : 0);
     byte        sideFlags = s->flags & 0xff;
 
     if(s->SW_topmaterial)
@@ -980,11 +980,11 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
             r->bottom.rgba[3] = s->SW_bottomrgba[3];
     }
 
-    if(r->middle.blendmode != s->SW_middleblendmode)
+    if(r->middle.blendMode != s->SW_middleblendmode)
     {
         df |= SIDF_MID_BLENDMODE;
         if(doUpdate)
-            r->middle.blendmode = s->SW_middleblendmode;
+            r->middle.blendMode = s->SW_middleblendmode;
     }
 
     if(r->flags != sideFlags)
@@ -1043,7 +1043,7 @@ boolean Sv_RegisterComparePoly(cregister_t *reg, uint number,
  */
 boolean Sv_IsMobjIgnored(mobj_t *mo)
 {
-    return (mo->ddflags & DDMF_LOCAL) != 0;
+    return (mo->ddFlags & DDMF_LOCAL) != 0;
 }
 
 /**
@@ -1052,7 +1052,7 @@ boolean Sv_IsMobjIgnored(mobj_t *mo)
  */
 boolean Sv_IsPlayerIgnored(uint number)
 {
-    return !players[number].ingame;
+    return !players[number].inGame;
 }
 
 /**
@@ -1299,7 +1299,7 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         dt_mobj_t *d = &((mobjdelta_t *) dest)->mo;
 
         // *Always* set the player pointer.
-        d->dplayer = s->dplayer;
+        d->dPlayer = s->dPlayer;
 
         if(sf & (MDF_POS_X | MDF_POS_Y))
             d->subsector = s->subsector;
@@ -1329,13 +1329,13 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         if(sf & MDF_HEIGHT)
             d->height = s->height;
         if(sf & MDF_FLAGS)
-            d->ddflags = s->ddflags;
+            d->ddFlags = s->ddFlags;
         if(sf & MDF_FLOORCLIP)
-            d->floorclip = s->floorclip;
+            d->floorClip = s->floorClip;
         if(sf & MDFC_TRANSLUCENCY)
             d->translucency = s->translucency;
         if(sf & MDFC_FADETARGET)
-            d->vistarget = s->vistarget;
+            d->visTarget = s->visTarget;
     }
     else if(src->type == DT_PLAYER)
     {
@@ -1375,9 +1375,9 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
 
                 if(sf & (PSDF_STATEPTR << off))
                 {
-                    d->psp[i].stateptr = s->psp[i].stateptr;
+                    d->psp[i].statePtr = s->psp[i].statePtr;
                     d->psp[i].tics =
-                        (s->psp[i].stateptr ? s->psp[i].stateptr->tics : 0);
+                        (s->psp[i].statePtr ? s->psp[i].statePtr->tics : 0);
                 }
                 if(sf & (PSDF_LIGHT << off))
                     d->psp[i].light = s->psp[i].light;
@@ -1405,7 +1405,7 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
             d->planes[PLN_CEILING].surface.material.texture =
                 s->planes[PLN_CEILING].surface.material.texture;
         if(sf & SDF_LIGHT)
-            d->lightlevel = s->lightlevel;
+            d->lightLevel = s->lightLevel;
         if(sf & SDF_FLOOR_TARGET)
             d->planes[PLN_FLOOR].target = s->planes[PLN_FLOOR].target;
         if(sf & SDF_FLOOR_SPEED)
@@ -1446,18 +1446,18 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
                 s->planes[PLN_CEILING].surface.rgba[2];
 
         if(sf & SDF_FLOOR_GLOW_RED)
-            d->planes[PLN_FLOOR].glowrgb[0] = s->planes[PLN_FLOOR].glowrgb[0];
+            d->planes[PLN_FLOOR].glowRGB[0] = s->planes[PLN_FLOOR].glowRGB[0];
         if(sf & SDF_FLOOR_GLOW_GREEN)
-            d->planes[PLN_FLOOR].glowrgb[1] = s->planes[PLN_FLOOR].glowrgb[1];
+            d->planes[PLN_FLOOR].glowRGB[1] = s->planes[PLN_FLOOR].glowRGB[1];
         if(sf & SDF_FLOOR_GLOW_BLUE)
-            d->planes[PLN_FLOOR].glowrgb[2] = s->planes[PLN_FLOOR].glowrgb[2];
+            d->planes[PLN_FLOOR].glowRGB[2] = s->planes[PLN_FLOOR].glowRGB[2];
 
         if(sf & SDF_CEIL_GLOW_RED)
-            d->planes[PLN_CEILING].glowrgb[0] = s->planes[PLN_CEILING].glowrgb[0];
+            d->planes[PLN_CEILING].glowRGB[0] = s->planes[PLN_CEILING].glowRGB[0];
         if(sf & SDF_CEIL_GLOW_GREEN)
-            d->planes[PLN_CEILING].glowrgb[1] = s->planes[PLN_CEILING].glowrgb[1];
+            d->planes[PLN_CEILING].glowRGB[1] = s->planes[PLN_CEILING].glowRGB[1];
         if(sf & SDF_CEIL_GLOW_BLUE)
-            d->planes[PLN_CEILING].glowrgb[2] = s->planes[PLN_CEILING].glowrgb[2];
+            d->planes[PLN_CEILING].glowRGB[2] = s->planes[PLN_CEILING].glowRGB[2];
 
         if(sf & SDF_FLOOR_GLOW)
             d->planes[PLN_FLOOR].glow = s->planes[PLN_FLOOR].glow;
@@ -1502,7 +1502,7 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
             d->bottom.rgba[2] = s->bottom.rgba[2];
 
         if(sf & SIDF_MID_BLENDMODE)
-            d->middle.blendmode = s->middle.blendmode;
+            d->middle.blendMode = s->middle.blendMode;
 
         if(sf & SIDF_FLAGS)
             d->flags = s->flags;
@@ -1641,9 +1641,9 @@ float Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
     if(!isReal)
     {
         if(z == DDMINFLOAT)
-            z = mo->floorz;
+            z = mo->floorZ;
         if(z == DDMAXFLOAT)
-            z = mo->ceilingz - mo->height;
+            z = mo->ceilingZ - mo->height;
     }
 
     return P_ApproxDistance3(info->pos[VX] - mo->pos[VX],
@@ -1877,7 +1877,7 @@ int Sv_ExcludeDelta(pool_t *pool, const void *deltaPtr)
 
         // What about missiles? We might be allowed to exclude some
         // information.
-        if(mobjDelta->mo.ddflags & DDMF_MISSILE)
+        if(mobjDelta->mo.ddFlags & DDMF_MISSILE)
         {
             if(!Sv_IsCreateMobjDelta(delta))
             {
@@ -2227,7 +2227,7 @@ void Sv_NewMobjDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     mobjdelta_t delta;
 
     // All existing mobjs are processed.
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
     {
         if(!P_IsMobjThinker(th->function))
             continue;
@@ -2452,11 +2452,11 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, sector_t *sourceSector,
         // Clients need to know which emitter to use.
         if(emitter)
         {
-            if(emitter == (mobj_t*) &sourceSector->planes[PLN_FLOOR]->soundorg)
+            if(emitter == (mobj_t*) &sourceSector->planes[PLN_FLOOR]->soundOrg)
                 df |= SNDDF_FLOOR;
-            else if(emitter == (mobj_t*) &sourceSector->planes[PLN_CEILING]->soundorg)
+            else if(emitter == (mobj_t*) &sourceSector->planes[PLN_CEILING]->soundOrg)
                 df |= SNDDF_CEILING;
-            // else client assumes sector->soundorg
+            // else client assumes sector->soundOrg
         }
     }
     else if(sourcePoly != NULL)
@@ -2495,7 +2495,7 @@ boolean Sv_IsFrameTarget(uint number)
 {
     // Local players receive frames only when they're recording a demo.
     // Clients must tell us they are ready before we can begin sending.
-    return (players[number].ingame && !(players[number].flags & DDPF_LOCAL) &&
+    return (players[number].inGame && !(players[number].flags & DDPF_LOCAL) &&
             clients[number].ready) || (players[number].flags & DDPF_LOCAL &&
                                        clients[number].recording);
 }
@@ -2899,7 +2899,7 @@ void Sv_AckDelta(pool_t *pool, delta_t *delta)
         mobjdelta_t *mobjDelta = (mobjdelta_t *) delta;
 
         // Created missiles are put on record.
-        if(mobjDelta->mo.ddflags & DDMF_MISSILE)
+        if(mobjDelta->mo.ddFlags & DDMF_MISSILE)
         {
             // Once again, we're assuming the delta is always completely
             // filled with valid information. (There are no 'partial' deltas.)

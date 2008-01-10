@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
@@ -126,7 +127,7 @@ void PG_InitTextures(void)
 
     // Load the zeroth texture (the default: a blurred point).
     ptctexname[0] =
-        GL_LoadGraphics2(RC_GRAPHICS, "Zeroth", LGM_WHITE_ALPHA, DGL_TRUE, true, 0);
+        GL_LoadGraphics2(RC_GRAPHICS, "Zeroth", LGM_WHITE_ALPHA, true, true, 0);
 
     if(ptctexname[0] == 0)
     {
@@ -177,7 +178,7 @@ void PG_InitTextures(void)
 
 void PG_ShutdownTextures(void)
 {
-    gl.DeleteTextures(NUM_TEX_NAMES, ptctexname);
+    DGL_DeleteTextures(NUM_TEX_NAMES, ptctexname);
     memset(ptctexname, 0, sizeof(ptctexname));
 }
 
@@ -339,7 +340,7 @@ static int PG_ListVisibleParticles(void)
             if(pt->stage < 0)
                 continue;
             // Is the particle's sector visible?
-            if(!(pt->sector->frameflags & SIF_VISIBLE))
+            if(!(pt->sector->frameFlags & SIF_VISIBLE))
                 continue;       // No; this particle can't be seen.
 
             order[m].gen = i;
@@ -348,7 +349,7 @@ static int PG_ListVisibleParticles(void)
             // Don't allow zero distance.
             if(order[m].distance == 0)
                 order[m].distance = 1;
-            if(def->maxdist != 0 && order[m].distance > def->maxdist)
+            if(def->maxDist != 0 && order[m].distance > def->maxDist)
                 continue;       // Too far.
             if(order[m].distance < (float) particleNearLimit)
                 continue;       // Too near.
@@ -396,20 +397,20 @@ static int PG_ListVisibleParticles(void)
 
 static void PG_RenderParticles(int rtype, boolean withBlend)
 {
-    float   leftoff[3], rightoff[3], mark, invMark;
-    float   size, color[4], center[3];
-    float   dist, maxdist;
-    float   projected[2];
-    ptcgen_t *gen;
-    ptcstage_t *st;
-    particle_t *pt;
+    uint            i;
+    int             c;
+    int             usingTexture = -1;
+    float           leftoff[3], rightoff[3], mark, invMark;
+    float           size, color[4], center[3];
+    float           dist, maxdist;
+    float           projected[2];
+    ptcgen_t       *gen;
+    ptcstage_t     *st;
+    particle_t     *pt;
     ded_ptcstage_t *dst, *nextDst;
-    unsigned int i;
-    int     c;
-    int     usingTexture = -1;
-    int     primType = DGL_QUADS;
-    blendmode_t mode = BM_NORMAL, newMode;
-    boolean flatOnPlane, flatOnWall, nearPlane, nearWall;
+    glprimtype_t    primType = DGL_QUADS;
+    blendmode_t     mode = BM_NORMAL, newMode;
+    boolean         flatOnPlane, flatOnWall, nearPlane, nearWall;
 
     // viewSideVec points to the left.
     for(c = 0; c < 3; ++c)
@@ -426,21 +427,21 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
 
     if(rtype == PTC_MODEL)
     {
-        gl.Enable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
     }
     else if(usingTexture >= 0)
     {
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Disable(DGL_CULL_FACE);
-        gl.Bind(renderTextures ? ptctexname[usingTexture] : 0);
-        gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-        gl.Begin(primType = DGL_QUADS);
+        glDepthMask(GL_FALSE);
+        glDisable(GL_CULL_FACE);
+        DGL_Bind(renderTextures ? ptctexname[usingTexture] : 0);
+        glDepthFunc(GL_LEQUAL);
+        DGL_Begin(primType = DGL_QUADS);
     }
     else
     {
-        gl.Disable(DGL_TEXTURING);  // Lines don't use textures.
-        gl.Begin(primType = DGL_LINES);
+        DGL_Disable(DGL_TEXTURING);  // Lines don't use textures.
+        DGL_Begin(primType = DGL_LINES);
     }
 
     // How many particles can we render?
@@ -475,14 +476,14 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                  flags & PGF_INVMUL_BLEND ? BM_INVERSE_MUL : BM_NORMAL);
             if(newMode != mode)
             {
-                gl.End();
+                DGL_End();
                 GL_BlendMode(mode = newMode);
-                gl.Begin(primType);
+                DGL_Begin(primType);
             }
         }
 
         // Is there a next stage for this particle?
-        if(pt->stage >= gen->def->stage_count.num - 1 ||
+        if(pt->stage >= gen->def->stageCount.num - 1 ||
            !gen->stages[pt->stage + 1].type)
         {
             // There is no "next stage". Use the current one.
@@ -510,11 +511,11 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 // This is a simplified version of sectorlight (no distance
                 // attenuation or range compression).
                 if(pt->sector)
-                    color[c] *= pt->sector->lightlevel;
+                    color[c] *= pt->sector->lightLevel;
             }
         }
 
-        maxdist = gen->def->maxdist;
+        maxdist = gen->def->maxDist;
         dist = order[i].distance;
 
         // Far diffuse?
@@ -534,7 +535,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         if(color[3] <= 0)
             continue;
 
-        gl.Color4fv(color);
+        DGL_Color4fv(color);
 
         nearPlane = (pt->sector &&
                      (FLT2FIX(pt->sector->SP_floorheight) + 2 * FRACUNIT >= pt->pos[VZ] ||
@@ -579,16 +580,16 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             params.mf = &modefs[dst->model];
             params.alwaysInterpolate = true;
 
-            if(dst->end_frame < 0)
+            if(dst->endFrame < 0)
             {
                 frame = dst->frame;
                 params.inter = 0;
             }
             else
             {
-                frame = dst->frame + (dst->end_frame - dst->frame) * mark;
+                frame = dst->frame + (dst->endFrame - dst->frame) * mark;
                 params.inter =
-                    M_CycleIntoRange(mark * (dst->end_frame - dst->frame), 1);
+                    M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
             }
             R_SetModelFrame(params.mf, frame);
             // Set the correct orientation for the particle.
@@ -614,7 +615,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 params.lightLevel = -1;    // Fullbright.
             else
             {
-                params.lightLevel = pt->sector->lightlevel;
+                params.lightLevel = pt->sector->lightLevel;
                 Rend_ApplyLightAdaptation(&params.lightLevel);
             }
             slc = R_GetSectorLightColor(pt->sector);
@@ -646,17 +647,17 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             // Should the particle be flat against a plane?
             if(flatOnPlane)
             {
-                gl.TexCoord2f(0, 0);
-                gl.Vertex3f(center[VX] - size, center[VY], center[VZ] - size);
+                DGL_TexCoord2f(0, 0);
+                DGL_Vertex3f(center[VX] - size, center[VY], center[VZ] - size);
 
-                gl.TexCoord2f(1, 0);
-                gl.Vertex3f(center[VX] + size, center[VY], center[VZ] - size);
+                DGL_TexCoord2f(1, 0);
+                DGL_Vertex3f(center[VX] + size, center[VY], center[VZ] - size);
 
-                gl.TexCoord2f(1, 1);
-                gl.Vertex3f(center[VX] + size, center[VY], center[VZ] + size);
+                DGL_TexCoord2f(1, 1);
+                DGL_Vertex3f(center[VX] + size, center[VY], center[VZ] + size);
 
-                gl.TexCoord2f(0, 1);
-                gl.Vertex3f(center[VX] - size, center[VY], center[VZ] + size);
+                DGL_TexCoord2f(0, 1);
+                DGL_Vertex3f(center[VX] - size, center[VY], center[VZ] + size);
             }
             // Flat against a wall, then?
             else if(flatOnWall)
@@ -665,8 +666,8 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 float       pos[3];
                 vertex_t   *vtx;
 
-                line[0] = pt->contact->dx;
-                line[1] = pt->contact->dy;
+                line[0] = pt->contact->dX;
+                line[1] = pt->contact->dY;
                 vtx = pt->contact->L_v1;
 
                 // There will be a slight approximation on the XY plane since
@@ -683,49 +684,49 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
 
                 P_LineUnitVector(pt->contact, line);
 
-                gl.TexCoord2f(0, 0);
-                gl.Vertex3f(projected[VX] - size * line[VX], center[VY] - size,
+                DGL_TexCoord2f(0, 0);
+                DGL_Vertex3f(projected[VX] - size * line[VX], center[VY] - size,
                             projected[VY] - size * line[VY]);
 
-                gl.TexCoord2f(1, 0);
-                gl.Vertex3f(projected[VX] - size * line[VX], center[VY] + size,
+                DGL_TexCoord2f(1, 0);
+                DGL_Vertex3f(projected[VX] - size * line[VX], center[VY] + size,
                             projected[VY] - size * line[VY]);
 
-                gl.TexCoord2f(1, 1);
-                gl.Vertex3f(projected[VX] + size * line[VX], center[VY] + size,
+                DGL_TexCoord2f(1, 1);
+                DGL_Vertex3f(projected[VX] + size * line[VX], center[VY] + size,
                             projected[VY] + size * line[VY]);
 
-                gl.TexCoord2f(0, 1);
-                gl.Vertex3f(projected[VX] + size * line[VX], center[VY] - size,
+                DGL_TexCoord2f(0, 1);
+                DGL_Vertex3f(projected[VX] + size * line[VX], center[VY] - size,
                             projected[VY] + size * line[VY]);
             }
             else
             {
-                gl.TexCoord2f(0, 0);
-                gl.Vertex3f(center[VX] + size * leftoff[VX],
+                DGL_TexCoord2f(0, 0);
+                DGL_Vertex3f(center[VX] + size * leftoff[VX],
                             center[VY] + size * leftoff[VY] / 1.2f,
                             center[VZ] + size * leftoff[VZ]);
 
-                gl.TexCoord2f(1, 0);
-                gl.Vertex3f(center[VX] + size * rightoff[VX],
+                DGL_TexCoord2f(1, 0);
+                DGL_Vertex3f(center[VX] + size * rightoff[VX],
                             center[VY] + size * rightoff[VY] / 1.2f,
                             center[VZ] + size * rightoff[VZ]);
 
-                gl.TexCoord2f(1, 1);
-                gl.Vertex3f(center[VX] - size * leftoff[VX],
+                DGL_TexCoord2f(1, 1);
+                DGL_Vertex3f(center[VX] - size * leftoff[VX],
                             center[VY] - size * leftoff[VY] / 1.2f,
                             center[VZ] - size * leftoff[VZ]);
 
-                gl.TexCoord2f(0, 1);
-                gl.Vertex3f(center[VX] - size * rightoff[VX],
+                DGL_TexCoord2f(0, 1);
+                DGL_Vertex3f(center[VX] - size * rightoff[VX],
                             center[VY] - size * rightoff[VY] / 1.2f,
                             center[VZ] - size * rightoff[VZ]);
             }
         }
         else                    // It's a line.
         {
-            gl.Vertex3f(center[VX], center[VY], center[VZ]);
-            gl.Vertex3f(center[VX] - FIX2FLT(pt->mov[VX]),
+            DGL_Vertex3f(center[VX], center[VY], center[VZ]);
+            DGL_Vertex3f(center[VX] - FIX2FLT(pt->mov[VX]),
                         center[VY] - FIX2FLT(pt->mov[VZ]),
                         center[VZ] - FIX2FLT(pt->mov[VY]));
         }
@@ -733,17 +734,17 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
 
     if(rtype != PTC_MODEL)
     {
-        gl.End();
+        DGL_End();
 
         if(usingTexture >= 0)
         {
-            gl.Enable(DGL_DEPTH_WRITE);
-            gl.Enable(DGL_CULL_FACE);
-            gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+            glDepthMask(GL_TRUE);
+            glEnable(GL_CULL_FACE);
+            glDepthFunc(GL_LESS);
         }
         else
         {
-            gl.Enable(DGL_TEXTURING);
+            DGL_Enable(DGL_TEXTURING);
         }
     }
 

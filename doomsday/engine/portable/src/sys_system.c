@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -89,14 +89,16 @@ static void C_DECL handler(int s)
  */
 void Sys_Init(void)
 {
-    Con_Message("Sys_Init: Initializing keyboard, mouse and joystick.\n");
     if(!isDedicated)
     {
+        Con_Message("Sys_Init: Initializing keyboard, mouse and joystick.\n");
+
         if(!I_Init())
-            Con_Error("Sys_Init: failed to initialize DirectInput.\n");
+            Con_Error("Sys_Init: Failed to initialize input.\n");
 
         I_InitInputDevices();
     }
+
     Sys_InitTimer();
     Sys_InitMixer();
     S_Init();
@@ -283,7 +285,7 @@ void Sys_SuspendThread(thread_t handle, boolean dopause)
 }
 
 /**
- * @return                  The return value of the thread.
+ * @return              The return value of the thread.
  */
 int Sys_WaitThread(thread_t thread)
 {
@@ -294,7 +296,7 @@ int Sys_WaitThread(thread_t thread)
 }
 
 /**
- * @return                  The identifier of the current thread.
+ * @return              The identifier of the current thread.
  */
 uint Sys_ThreadID(void)
 {
@@ -331,7 +333,7 @@ void Sys_Unlock(mutex_t handle)
 /**
  * Create a new semaphore.
  *
- * @return                  New handle.
+ * @return              New handle.
  */
 long Sem_Create(uint32_t initialValue)
 {

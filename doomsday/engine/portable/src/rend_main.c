@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_edit.h"
 #include "de_render.h"
@@ -81,7 +82,7 @@ extern int devNoCulling;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean usingFog = false;         // Is the fog in use?
-byte    fogColor[4];
+float   fogColor[4];
 float   fieldOfView = 95.0f;
 float   maxLightDist = 1024;
 byte    smoothTexAnim = true;
@@ -234,15 +235,15 @@ void Rend_ModelViewMatrix(boolean useAngles)
     vang = viewAngle / (float) ANGLE_MAX *360 - 90;
     vpitch = viewPitch * 85.0 / 110.0;
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.LoadIdentity();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_LoadIdentity();
     if(useAngles)
     {
-        gl.Rotatef(vpitch, 1, 0, 0);
-        gl.Rotatef(vang, 0, 1, 0);
+        DGL_Rotatef(vpitch, 1, 0, 0);
+        DGL_Rotatef(vang, 0, 1, 0);
     }
-    gl.Scalef(1, 1.2f, 1);      // This is the aspect correction.
-    gl.Translatef(-vx, -vy, -vz);
+    DGL_Scalef(1, 1.2f, 1);      // This is the aspect correction.
+    DGL_Translatef(-vx, -vy, -vz);
 }
 
 #if 0 // unused atm
@@ -268,12 +269,12 @@ int R_AttenuateLevel(float lightlevel, float distance)
     real += extraLight / 16.0f;
 
     // Check for torch.
-    if(viewPlayer->fixedcolormap)
+    if(viewPlayer->fixedColorMap)
     {
         // Colormap 1 is the brightest. I'm guessing 16 would be the darkest.
         newmin =
             ((1024 - distance) / 512) * (16 -
-                                         viewPlayer->fixedcolormap) / 15.0f;
+                                         viewPlayer->fixedColorMap) / 15.0f;
         if(real < newmin)
         {
             real = newmin;
@@ -351,7 +352,7 @@ static void Rend_ShinySurfaceColor(gl_rgba_t *color, ded_reflection_t *ref)
 
     for(i = 0; i < 3; ++i)
     {
-        DGLubyte minimum = (DGLubyte) (ref->min_color[i] * 255);
+        DGLubyte minimum = (DGLubyte) (ref->minColor[i] * 255);
 
         if(color->rgba[i] < minimum)
         {
@@ -433,31 +434,31 @@ static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
     // Make it a shiny polygon.
     poly->lightListIdx = 0;
     poly->flags |= RPF_SHINY;
-    poly->blendmode = ref->blend_mode;
-    poly->tex.id = ref->use_shiny->shiny_tex;
+    poly->blendMode = ref->blendMode;
+    poly->tex.id = ref->useShiny->shinyTex;
     poly->tex.detail = NULL;
     poly->tex.masked = false;
-    poly->intertex.detail = NULL;
-    poly->intertex.masked = false;
-    poly->interpos = 0;
+    poly->interTex.detail = NULL;
+    poly->interTex.masked = false;
+    poly->interPos = 0;
 
     // Strength of the shine.
-    for(i = 0; i < poly->numvertices; ++i)
+    for(i = 0; i < poly->numVertices; ++i)
     {
         Rend_ShinySurfaceColor(&poly->vertices[i].color, ref);
     }
 
     // The mask texture is stored in the intertex.
-    if(ref->use_mask && ref->use_mask->mask_tex)
+    if(ref->useMask && ref->useMask->maskTex)
     {
-        poly->intertex.id = ref->use_mask->mask_tex;
-        poly->tex.width = poly->intertex.width = width * ref->mask_width;
-        poly->tex.height = poly->intertex.height = height * ref->mask_height;
+        poly->interTex.id = ref->useMask->maskTex;
+        poly->tex.width = poly->interTex.width = width * ref->maskWidth;
+        poly->tex.height = poly->interTex.height = height * ref->maskHeight;
     }
     else
     {
         // No mask.
-        poly->intertex.id = 0;
+        poly->interTex.id = 0;
     }
 
     RL_AddPoly(poly);
@@ -496,14 +497,14 @@ static void polyTexBlend(rendpoly_t *poly, material_t *material)
     }
 
     // Get info of the blend target.
-    poly->intertex.id =
+    poly->interTex.id =
         GL_PrepareMaterial2(xlat->next, material->type, false, &texinfo);
 
-    poly->intertex.width = texinfo->width;
-    poly->intertex.height = texinfo->height;
-    poly->intertex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
-    poly->intertex.masked = texinfo->masked;
-    poly->interpos = xlat->inter;
+    poly->interTex.width = texinfo->width;
+    poly->interTex.height = texinfo->height;
+    poly->interTex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
+    poly->interTex.masked = texinfo->masked;
+    poly->interPos = xlat->inter;
 }
 
 /**
@@ -566,7 +567,7 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
                     if(Rend_MidTexturePos
                        (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
                         NULL, side->SW_middleoffset[VX], texinfo->height,
-                        0 != (line->mapflags & ML_DONTPEGBOTTOM)))
+                        0 != (line->mapFlags & ML_DONTPEGBOTTOM)))
                     {
                         if(openTop[0] >= gapTop[0] &&
                            openTop[1] >= gapTop[1] &&
@@ -588,10 +589,10 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
     side_t     *side;
     line_t     *line;
 
-    if(!seg || !seg->linedef)
+    if(!seg || !seg->lineDef)
         return; // huh?
 
-    line = seg->linedef;
+    line = seg->lineDef;
     for(i = 0; i < 2; ++i)
     {
         // Missing side?
@@ -600,60 +601,60 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
 
         side = line->L_side(i);
         for(j = 0; j < 3; ++j)
-            side->sections[j].frameflags |= SUFINF_PVIS;
+            side->sections[j].frameFlags |= SUFINF_PVIS;
 
         // A two sided line?
         if(line->L_frontside && line->L_backside)
         {
             // Check middle texture
             if((!side->SW_middlematerial || side->SW_middlematerial->ofTypeID <= 0) || side->SW_middlergba[3] <= 0) // Check alpha
-                side->sections[SEG_MIDDLE].frameflags &= ~SUFINF_PVIS;
+                side->sections[SEG_MIDDLE].frameFlags &= ~SUFINF_PVIS;
         }
 
         // Top
         if(!line->L_backside)
         {
-            side->sections[SEG_TOP].frameflags &= ~SUFINF_PVIS;
-            side->sections[SEG_BOTTOM].frameflags &= ~SUFINF_PVIS;
+            side->sections[SEG_TOP].frameFlags &= ~SUFINF_PVIS;
+            side->sections[SEG_BOTTOM].frameFlags &= ~SUFINF_PVIS;
         }
         else
         {
             if(R_IsSkySurface(&line->L_backsector->SP_ceilsurface) &&
                R_IsSkySurface(&line->L_frontsector->SP_ceilsurface))
-               side->sections[SEG_TOP].frameflags &= ~SUFINF_PVIS;
+               side->sections[SEG_TOP].frameFlags &= ~SUFINF_PVIS;
             else
             {
                 if(i != 0)
                 {
                     if(line->L_backsector->SP_ceilvisheight <=
                        line->L_frontsector->SP_ceilvisheight)
-                        side->sections[SEG_TOP].frameflags &= ~SUFINF_PVIS;
+                        side->sections[SEG_TOP].frameFlags &= ~SUFINF_PVIS;
                 }
                 else
                 {
                     if(line->L_frontsector->SP_ceilvisheight <=
                        line->L_backsector->SP_ceilvisheight)
-                        side->sections[SEG_TOP].frameflags &= ~SUFINF_PVIS;
+                        side->sections[SEG_TOP].frameFlags &= ~SUFINF_PVIS;
                 }
             }
 
             // Bottom
             if(R_IsSkySurface(&line->L_backsector->SP_floorsurface) &&
                R_IsSkySurface(&line->L_frontsector->SP_floorsurface))
-               side->sections[SEG_BOTTOM].frameflags &= ~SUFINF_PVIS;
+               side->sections[SEG_BOTTOM].frameFlags &= ~SUFINF_PVIS;
             else
             {
                 if(i != 0)
                 {
                     if(line->L_backsector->SP_floorvisheight >=
                        line->L_frontsector->SP_floorvisheight)
-                        side->sections[SEG_BOTTOM].frameflags &= ~SUFINF_PVIS;
+                        side->sections[SEG_BOTTOM].frameFlags &= ~SUFINF_PVIS;
                 }
                 else
                 {
                     if(line->L_frontsector->SP_floorvisheight >=
                        line->L_backsector->SP_floorvisheight)
-                        side->sections[SEG_BOTTOM].frameflags &= ~SUFINF_PVIS;
+                        side->sections[SEG_BOTTOM].frameFlags &= ~SUFINF_PVIS;
                 }
             }
         }
@@ -808,14 +809,14 @@ static void doCalcSegDivisions(line_t *line, boolean backSide,sector_t *frontSec
                     scanSec = iter->L_backsector;
 
                 if(scanSec)
-                    for(j = 0; j < scanSec->planecount && !stopScan; ++j)
+                    for(j = 0; j < scanSec->planeCount && !stopScan; ++j)
                     {
                         plane_t *pln = scanSec->SP_plane(j);
-                        if(pln->visheight > bottomZ && pln->visheight < topZ)
+                        if(pln->visHeight > bottomZ && pln->visHeight < topZ)
                         {
-                            if(!checkDiv(div, pln->visheight))
+                            if(!checkDiv(div, pln->visHeight))
                             {
-                                div->pos[div->num++] = pln->visheight;
+                                div->pos[div->num++] = pln->visHeight;
 
                                 // Have we reached the div limit?
                                 if(div->num == RL_MAX_DIVS)
@@ -825,10 +826,10 @@ static void doCalcSegDivisions(line_t *line, boolean backSide,sector_t *frontSec
 
                         if(!stopScan)
                         {   // Clip a range bound to this height?
-                            if(j == PLN_FLOOR && pln->visheight > bottomZ)
-                                bottomZ = pln->visheight;
-                            else if(j == PLN_CEILING && pln->visheight < topZ)
-                                topZ = pln->visheight;
+                            if(j == PLN_FLOOR && pln->visHeight > bottomZ)
+                                bottomZ = pln->visHeight;
+                            else if(j == PLN_CEILING && pln->visHeight < topZ)
+                                topZ = pln->visHeight;
 
                             // All clipped away?
                             if(bottomZ >= topZ)
@@ -850,18 +851,18 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
 {
     div->num = 0;
 
-    if(!seg->linedef || !seg->sidedef)
+    if(!seg->lineDef || !seg->sideDef)
         return; // Mini-segs arn't drawn.
 
     if(seg->flags & SEGF_POLYOBJ)
         return; // Polyobj segs are never split.
 
     // Only segs at sidedef ends can/should be split.
-    if(!((seg == seg->sidedef->segs[0] && !doRight) ||
-         (seg == seg->sidedef->segs[seg->sidedef->segcount -1] && doRight)))
+    if(!((seg == seg->sideDef->segs[0] && !doRight) ||
+         (seg == seg->sideDef->segs[seg->sideDef->segCount -1] && doRight)))
         return;
 
-    doCalcSegDivisions(seg->linedef, seg->side, frontSec, div, bottomZ, topZ, doRight);
+    doCalcSegDivisions(seg->lineDef, seg->side, frontSec, div, bottomZ, topZ, doRight);
 }
 
 /**
@@ -1050,7 +1051,7 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
         poly->lightListIdx = DL_ProcessSubSectorPlane(subsector, plane->type);
 
     // Do BIAS lighting for this poly.
-    SB_RendPoly(poly, subsector->sector->lightlevel, plane->illumination,
+    SB_RendPoly(poly, subsector->sector->lightLevel, plane->illumination,
                 &plane->tracker, plane->affected, subIndex);
 
     // Smooth Texture Animation?
@@ -1222,7 +1223,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
             // Init the quad.
             quad = R_AllocRendPoly(RP_QUAD, true, 4);
             quad->tex.detail = NULL;
-            quad->intertex.detail = NULL;
+            quad->interTex.detail = NULL;
             quad->wall->length = seg->length;
             quad->flags = 0;
             memcpy(&quad->normal, &surface->normal, sizeof(quad->normal));
@@ -1236,7 +1237,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                 quad->flags = RPF_SKY_MASK;
                 quad->tex.id = 0;
                 quad->lightListIdx = 0;
-                quad->intertex.id = 0;
+                quad->interTex.id = 0;
             }
             else
             {
@@ -1244,13 +1245,13 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                 if(section == SEG_MIDDLE && softSurface)
                 {
                     // Blendmode.
-                    if(surface->blendmode == BM_NORMAL && noSpriteTrans)
-                        quad->blendmode = BM_ZEROALPHA; // "no translucency" mode
+                    if(surface->blendMode == BM_NORMAL && noSpriteTrans)
+                        quad->blendMode = BM_ZEROALPHA; // "no translucency" mode
                     else
-                        quad->blendmode = surface->blendmode;
+                        quad->blendMode = surface->blendMode;
 
                     // If alpha, masked or blended we'll render as a vissprite.
-                    if(alpha < 1 || texinfo->masked || surface->blendmode > 0)
+                    if(alpha < 1 || texinfo->masked || surface->blendMode > 0)
                     {
                         quad->flags = RPF_MASKED;
                         solidSeg = false;
@@ -1258,7 +1259,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                 }
                 else
                 {
-                    quad->blendmode = BM_NORMAL;
+                    quad->blendMode = BM_NORMAL;
                 }
 
                 if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
@@ -1357,8 +1358,8 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                 // Render Fakeradio polys for this seg?
                 if(tempflags & RPF2_SHADOW)
                 {
-                    Rend_RadioUpdateLinedef(seg->linedef, seg->side);
-                    Rend_RadioSegSection(quad, seg->linedef, seg->side, seg->offset,
+                    Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
+                    Rend_RadioSegSection(quad, seg->lineDef, seg->side, seg->offset,
                                          seg->length);
                 }
 
@@ -1405,10 +1406,10 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     sector_t   *frontsec, *fflinkSec, *fclinkSec;
     int         pid = viewPlayer - players;
 
-    frontsec = seg->sidedef->sector;
-    side = seg->sidedef;
+    frontsec = seg->sideDef->sector;
+    side = seg->sideDef;
     backSide = seg->side;
-    ldef = seg->linedef;
+    ldef = seg->lineDef;
 
     if(!ldef->mapped[pid])
     {
@@ -1431,10 +1432,10 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     // Create the wall sections.
 
     // Middle section.
-    if(side->sections[SEG_MIDDLE].frameflags & SUFINF_PVIS)
+    if(side->sections[SEG_MIDDLE].frameFlags & SUFINF_PVIS)
     {
         float       offsetY =
-            (ldef->mapflags & ML_DONTPEGBOTTOM)? -(fceil - ffloor) : 0;
+            (ldef->mapFlags & ML_DONTPEGBOTTOM)? -(fceil - ffloor) : 0;
 
         renderSegSection(seg, SEG_MIDDLE, &side->SW_middlesurface, ffloor, fceil,
                          offsetY,
@@ -1462,12 +1463,12 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     sector_t   *frontsec, *fflinkSec, *fclinkSec;
     int         pid = viewPlayer - players;
 
-    frontsec = seg->sidedef->sector;
-    backsec = seg->backseg->sidedef->sector;
-    backsid = seg->backseg->sidedef;
-    side = seg->sidedef;
+    frontsec = seg->sideDef->sector;
+    backsec = seg->backSeg->sideDef->sector;
+    backsid = seg->backSeg->sideDef;
+    side = seg->sideDef;
     backSide = seg->side;
-    ldef = seg->linedef;
+    ldef = seg->lineDef;
 
     if(!ldef->mapped[pid])
     {
@@ -1502,14 +1503,14 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     // Determine which parts of the segment are visible.
 
     // Middle section.
-    if(side->sections[SEG_MIDDLE].frameflags & SUFINF_PVIS)
+    if(side->sections[SEG_MIDDLE].frameFlags & SUFINF_PVIS)
     {
         surface_t  *surface = &side->SW_middlesurface;
         texinfo_t  *texinfo = NULL;
         float       texOffsetY = 0;
         float       top, bottom, vL_ZBottom, vR_ZBottom, vL_ZTop, vR_ZTop;
         boolean     softSurface =
-            (!(ldef->mapflags & ML_BLOCKING) || !(viewPlayer->flags & DDPF_NOCLIP));
+            (!(ldef->mapFlags & ML_BLOCKING) || !(viewPlayer->flags & DDPF_NOCLIP));
 
         // We need the properties of the real flat/texture.
         if(surface->material)
@@ -1526,7 +1527,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         if(Rend_MidTexturePos
            (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
             &texOffsetY, surface->offset[VY], texinfo->height,
-            (ldef->mapflags & ML_DONTPEGBOTTOM)? true : false))
+            (ldef->mapFlags & ML_DONTPEGBOTTOM)? true : false))
         {
             // Can we make this a soft surface?
             if(vL_ZTop >= top && vL_ZBottom <= bottom &&
@@ -1543,7 +1544,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     }
 
     // Upper section.
-    if(side->sections[SEG_TOP].frameflags & SUFINF_PVIS)
+    if(side->sections[SEG_TOP].frameFlags & SUFINF_PVIS)
     {
         float       bottom = bceil;
         float       texOffY = 0;
@@ -1553,7 +1554,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             bottom = ffloor;
         }
 
-        if(!(ldef->mapflags & ML_DONTPEGTOP))
+        if(!(ldef->mapFlags & ML_DONTPEGTOP))
             texOffY += -(fceil - bceil);  // Align with normal middle texture.
 
         renderSegSection(seg, SEG_TOP, &side->SW_topsurface, bottom, fceil,
@@ -1562,7 +1563,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     }
 
     // Lower section.
-    if(side->sections[SEG_BOTTOM].frameflags & SUFINF_PVIS)
+    if(side->sections[SEG_BOTTOM].frameFlags & SUFINF_PVIS)
     {
         float       top = bfloor;
         float       texOffY = 0;
@@ -1573,7 +1574,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             top = fceil;
         }
 
-        if(ldef->mapflags & ML_DONTPEGBOTTOM)
+        if(ldef->mapFlags & ML_DONTPEGBOTTOM)
             texOffY += (fceil - bfloor); // Align with normal middle texture.
 
         renderSegSection(seg, SEG_BOTTOM, &side->SW_bottomsurface, ffloor, top,
@@ -1600,7 +1601,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             // A closed gap.
             solidSeg = true;
         }
-        else if((seg->frameflags & SEGINF_BACKSECSKYFIX) ||
+        else if((seg->frameFlags & SEGINF_BACKSECSKYFIX) ||
                 (bsh == 0 && bfloor > ffloor && bceil < fceil &&
                 (side->SW_topmaterial /*&& !(side->flags & SDF_MIDTEXUPPER)*/) &&
                 (side->SW_bottommaterial)))
@@ -1622,7 +1623,7 @@ float Rend_SectorLight(sector_t *sec)
         return 1.0f;
 
     // Apply light adaptation
-    return sec->lightlevel + Rend_GetLightAdaptVal(sec->lightlevel);
+    return sec->lightLevel + Rend_GetLightAdaptVal(sec->lightLevel);
 }
 
 static void Rend_MarkSegsFacingFront(subsector_t *sub)
@@ -1636,15 +1637,15 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
         seg = *ptr;
 
         // Occlusions can only happen where two sectors contact.
-        if(seg->linedef && !(seg->flags & SEGF_POLYOBJ))
+        if(seg->lineDef && !(seg->flags & SEGF_POLYOBJ))
         {
-            seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
+            seg->frameFlags &= ~SEGINF_BACKSECSKYFIX;
 
             // Which way should it be facing?
             if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
-                seg->frameflags |= SEGINF_FACINGFRONT;
+                seg->frameFlags |= SEGINF_FACINGFRONT;
             else
-                seg->frameflags &= ~SEGINF_FACINGFRONT;
+                seg->frameFlags &= ~SEGINF_FACINGFRONT;
 
             Rend_MarkSegSectionsPVisible(seg);
         }
@@ -1653,17 +1654,17 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
 
     if(sub->poly)
     {
-        for(i = 0; i < sub->poly->numsegs; ++i)
+        for(i = 0; i < sub->poly->numSegs; ++i)
         {
             seg = sub->poly->segs[i];
 
-            seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
+            seg->frameFlags &= ~SEGINF_BACKSECSKYFIX;
 
             // Which way should it be facing?
             if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
-                seg->frameflags |= SEGINF_FACINGFRONT;
+                seg->frameFlags |= SEGINF_FACINGFRONT;
             else
-                seg->frameflags &= ~SEGINF_FACINGFRONT;
+                seg->frameFlags &= ~SEGINF_FACINGFRONT;
 
             Rend_MarkSegSectionsPVisible(seg);
         }
@@ -1686,29 +1687,29 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     quad->lightListIdx = 0;
     quad->tex.id = 0;
     quad->tex.detail = NULL;
-    quad->intertex.id = 0;
-    quad->intertex.detail = NULL;
+    quad->interTex.id = 0;
+    quad->interTex.detail = NULL;
 
     vBL = quad->vertices[0].pos;
     vBR = quad->vertices[2].pos;
     vTL = quad->vertices[1].pos;
     vTR = quad->vertices[3].pos;
 
-    num  = ssec->segcount;
+    num  = ssec->segCount;
     list = ssec->segs;
 
     for(j = 0; j < num; ++j)
     {
         seg = list[j];
 
-        if(!seg->linedef)    // "minisegs" have no linedefs.
+        if(!seg->lineDef)    // "minisegs" have no linedefs.
             continue;
 
         // Let's first check which way this seg is facing.
-        if(!(seg->frameflags & SEGINF_FACINGFRONT))
+        if(!(seg->frameFlags & SEGINF_FACINGFRONT))
             continue;
 
-        side = seg->sidedef;
+        side = seg->sideDef;
         if(!side)
             continue;
 
@@ -1745,30 +1746,30 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
         if(!((frontsec->flags & SECF_SELFREFHACK) && backsec))
         {
             // Floor.
-            if(frontsec->skyfix[PLN_FLOOR].offset < 0)
+            if(frontsec->skyFix[PLN_FLOOR].offset < 0)
             {
                 if(!backsec ||
                    (backsec && backsec != seg->SG_frontsector &&
-                    (bfloor + backsec->skyfix[PLN_FLOOR].offset >
-                     ffloor + frontsec->skyfix[PLN_FLOOR].offset)))
+                    (bfloor + backsec->skyFix[PLN_FLOOR].offset >
+                     ffloor + frontsec->skyFix[PLN_FLOOR].offset)))
                 {
                     vTL[VZ] = vTR[VZ] = ffloor;
                     vBL[VZ] = vBR[VZ] =
-                        ffloor + frontsec->skyfix[PLN_FLOOR].offset;
+                        ffloor + frontsec->skyFix[PLN_FLOOR].offset;
                     RL_AddPoly(quad);
                 }
             }
 
             // Ceiling.
-            if(frontsec->skyfix[PLN_CEILING].offset > 0)
+            if(frontsec->skyFix[PLN_CEILING].offset > 0)
             {
                 if(!backsec ||
                    (backsec && backsec != seg->SG_frontsector &&
-                    (bceil + backsec->skyfix[PLN_CEILING].offset <
-                     fceil + frontsec->skyfix[PLN_CEILING].offset)))
+                    (bceil + backsec->skyFix[PLN_CEILING].offset <
+                     fceil + frontsec->skyFix[PLN_CEILING].offset)))
                 {
                     vTL[VZ] = vTR[VZ] =
-                        fceil + frontsec->skyfix[PLN_CEILING].offset;
+                        fceil + frontsec->skyFix[PLN_CEILING].offset;
                     vBL[VZ] = vBR[VZ] = fceil;
 
                     RL_AddPoly(quad);
@@ -1783,30 +1784,30 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                R_IsSkySurface(&backsec->SP_floorsurface))
             {
                 // Floor.
-                if(backsec->skyfix[PLN_FLOOR].offset < 0)
+                if(backsec->skyFix[PLN_FLOOR].offset < 0)
                 {
                     vTL[VZ] = vTR[VZ] = bfloor;
                     vBL[VZ] = vBR[VZ] =
-                        bfloor + backsec->skyfix[PLN_FLOOR].offset;
+                        bfloor + backsec->skyFix[PLN_FLOOR].offset;
                     RL_AddPoly(quad);
                 }
                 // Ensure we add a solid view seg.
-                seg->frameflags |= SEGINF_BACKSECSKYFIX;
+                seg->frameFlags |= SEGINF_BACKSECSKYFIX;
             }
 
                 // Ceiling.
             if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
                R_IsSkySurface(&backsec->SP_ceilsurface))
             {
-                if(backsec->skyfix[PLN_CEILING].offset > 0)
+                if(backsec->skyFix[PLN_CEILING].offset > 0)
                 {
                     vTL[VZ] = vTR[VZ] =
-                        bceil + backsec->skyfix[PLN_CEILING].offset;
+                        bceil + backsec->skyFix[PLN_CEILING].offset;
                     vBL[VZ] = vBR[VZ] = bceil;
                     RL_AddPoly(quad);
                 }
                 // Ensure we add a solid view seg.
-                seg->frameflags |= SEGINF_BACKSECSKYFIX;
+                seg->frameFlags |= SEGINF_BACKSECSKYFIX;
             }
         }
     }
@@ -1839,9 +1840,9 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
         seg = *ptr;
 
         // Occlusions can only happen where two sectors contact.
-        if(seg->linedef && seg->SG_backsector &&
+        if(seg->lineDef && seg->SG_backsector &&
            !(seg->flags & SEGF_POLYOBJ) && // Polyobjects don't occlude.
-           (forward_facing = ((seg->frameflags & SEGINF_FACINGFRONT)? true : false)))
+           (forward_facing = ((seg->frameFlags & SEGINF_FACINGFRONT)? true : false)))
         {
             back = seg->SG_backsector;
             backh[0] = back->SP_floorheight;
@@ -1917,8 +1918,8 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     // Add the skyfix
     height += polySector->S_skyfix(plane->type).offset;
 
-    vec[VX] = vx - subsector->midpoint.pos[VX];
-    vec[VY] = vz - subsector->midpoint.pos[VY];
+    vec[VX] = vx - subsector->midPoint.pos[VX];
+    vec[VY] = vz - subsector->midPoint.pos[VY];
     vec[VZ] = vy - height;
 
     // Don't bother with planes facing away from the camera.
@@ -1926,7 +1927,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     {
         short       tempflags = 0;
         rendpoly_t *poly =
-            R_AllocRendPoly(RP_FLAT, false, subsector->numvertices);
+            R_AllocRendPoly(RP_FLAT, false, subsector->numVertices);
 
         surfaceFlags = Rend_PrepareTextureForPoly(poly, surface, NULL);
 
@@ -1970,7 +1971,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     float       sceil = sect->SP_ceilvisheight;
     float       sfloor = sect->SP_floorvisheight;
 
-    if(sceil - sfloor <= 0 || ssec->segcount < 3)
+    if(sceil - sfloor <= 0 || ssec->segCount < 3)
     {
         // Skip this, it has no volume.
         // Neighbors handle adding the solid clipper segments.
@@ -1988,7 +1989,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     }
 
     // Mark the sector visible for this frame.
-    sect->frameflags |= SIF_VISIBLE;
+    sect->frameFlags |= SIF_VISIBLE;
 
     // Retrieve the sector light color.
     sLightColor = R_GetSectorLightColor(sect);
@@ -2033,8 +2034,8 @@ static void Rend_RenderSubsector(uint ssecidx)
         seg = *ptr;
 
         if(!(seg->flags & SEGF_POLYOBJ)  &&// Not handled here.
-           seg->linedef && // "minisegs" have no linedefs.
-           (seg->frameflags & SEGINF_FACINGFRONT))
+           seg->lineDef && // "minisegs" have no linedefs.
+           (seg->frameFlags & SEGINF_FACINGFRONT))
         {
             boolean     solid;
 
@@ -2056,12 +2057,12 @@ static void Rend_RenderSubsector(uint ssecidx)
     // Is there a polyobj on board?
     if(ssec->poly)
     {
-        for(i = 0; i < ssec->poly->numsegs; ++i)
+        for(i = 0; i < ssec->poly->numSegs; ++i)
         {
             seg = ssec->poly->segs[i];
 
             // Let's first check which way this seg is facing.
-            if(seg->frameflags & SEGINF_FACINGFRONT)
+            if(seg->frameFlags & SEGINF_FACINGFRONT)
             {
                 boolean     solid = Rend_RenderSSWallSeg(seg, ssec);
 
@@ -2075,7 +2076,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     }
 
     // Render all planes of this sector.
-    for(i = 0; i < sect->planecount; ++i)
+    for(i = 0; i < sect->planeCount; ++i)
         Rend_RenderPlane(ssec->planes[i], ssec);
 }
 
@@ -2117,9 +2118,9 @@ void Rend_RenderMap(void)
 
     // This is all the clearing we'll do.
     if(P_IsInVoid(viewPlayer) || freezeRLs)
-        gl.Clear(DGL_COLOR_BUFFER_BIT | DGL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     else
-        gl.Clear(DGL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(true);
@@ -2197,7 +2198,7 @@ void Rend_RenderMap(void)
  * rates in each color range but we'll just use one value applied uniformly
  * to each range (RGB).
  *
- * The offsets in the lightRangeModTables are added to the sector->lightlevel
+ * The offsets in the lightRangeModTables are added to the sector->lightLevel
  * during rendering (both positive and negative).
  */
 void Rend_CalcLightRangeModMatrix(cvar_t *unused)
@@ -2266,7 +2267,7 @@ void Rend_InitPlayerLightRanges(void)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].ingame)
+        if(!players[i].inGame)
             continue;
 
         player = &players[i];
@@ -2277,7 +2278,7 @@ void Rend_InitPlayerLightRanges(void)
 
         playerLightRange[i] = (MOD_RANGE/2) - 1;
         playerLastLightSample[i].value =
-            playerLastLightSample[i].currentlight = sec->lightlevel;
+            playerLastLightSample[i].currentlight = sec->lightLevel;
         playerLastLightSample[i].sector = sec;
     }
 }
@@ -2302,7 +2303,7 @@ void Rend_RetrieveLightSample(void)
     midpoint = MOD_RANGE / 2;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].ingame)
+        if(!players[i].inGame)
             continue;
 
         player = &players[i];
@@ -2340,7 +2341,7 @@ void Rend_RetrieveLightSample(void)
         */
         {
             // use the light level of the sector they are currently in.
-            light = sub->sector->lightlevel;
+            light = sub->sector->lightLevel;
         }
 
         /**
@@ -2403,7 +2404,7 @@ void Rend_RetrieveLightSample(void)
             // update the last sample value;
             if(playerLastLightSample[i].sector)
                 playerLastLightSample[i].value =
-                    playerLastLightSample[i].sector->lightlevel;
+                    playerLastLightSample[i].sector->lightLevel;
             else
                 playerLastLightSample[i].value = light;
 
@@ -2518,12 +2519,12 @@ void R_DrawLightRange(void)
     if(!debugLightModMatrix)
         return;
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
-    gl.Translatef(BORDER, BORDER + BORDER, 0);
+    DGL_Translatef(BORDER, BORDER + BORDER, 0);
 
     color.red = 0.2f;
     color.green = 0;
@@ -2533,11 +2534,11 @@ void R_DrawLightRange(void)
                  bWidth * 255 + BORDER,
                  bHeight * MOD_RANGE + BORDER + BORDER, &color);
 
-    gl.Disable(DGL_TEXTURING);
+    DGL_Disable(DGL_TEXTURING);
 
     for(r = MOD_RANGE, y = 0; r > 0; r--, y++)
     {
-        gl.Begin(DGL_QUADS);
+        DGL_Begin(DGL_QUADS);
         for(i = 0, c = 0; i < 255; ++i, c += (1.0f/255.0f))
         {
             // Get the result of the source light level + offset.
@@ -2547,29 +2548,29 @@ void R_DrawLightRange(void)
             if(r == (int) playerLightRange[viewPlayer - players])
             {
                 if(i == (int) (playerLastLightSample[viewPlayer - players].currentlight * 255))
-                    gl.Color4f(1, 0, 0, 1);
+                    DGL_Color4f(1, 0, 0, 1);
                 else
-                    gl.Color4f(c + off, c + off, c + off, 1);
+                    DGL_Color4f(c + off, c + off, c + off, 1);
             }
             else
-                gl.Color4f(c + off, c + off, c + off, .75);
+                DGL_Color4f(c + off, c + off, c + off, .75);
 
-            gl.Vertex2f(i * bWidth, y * bHeight);
-            gl.Vertex2f(i * bWidth + bWidth, y * bHeight);
-            gl.Vertex2f(i * bWidth + bWidth,
+            DGL_Vertex2f(i * bWidth, y * bHeight);
+            DGL_Vertex2f(i * bWidth + bWidth, y * bHeight);
+            DGL_Vertex2f(i * bWidth + bWidth,
                         y * bHeight + bHeight);
-            gl.Vertex2f(i * bWidth, y * bHeight + bHeight);
+            DGL_Vertex2f(i * bWidth, y * bHeight + bHeight);
         }
-        gl.End();
+        DGL_End();
     }
 
-    gl.Enable(DGL_TEXTURING);
+    DGL_Enable(DGL_TEXTURING);
 
     UI_TextOutEx(title, ((bWidth * 255) / 2),
                  -12, true, true, UI_Color(UIC_TITLE), .7f);
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }
 
 /**
@@ -2591,55 +2592,55 @@ void Rend_DrawBBox(float pos3f[3], float w, float l, float h,
                    float color3f[3], float alpha, float br,
                    boolean alignToBase)
 {
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
     if(alignToBase)
         // The Z coordinate is to the bottom of the object.
-        gl.Translatef(pos3f[VX], pos3f[VZ] + h, pos3f[VY]);
+        DGL_Translatef(pos3f[VX], pos3f[VZ] + h, pos3f[VY]);
     else
-        gl.Translatef(pos3f[VX], pos3f[VZ], pos3f[VY]);
+        DGL_Translatef(pos3f[VX], pos3f[VZ], pos3f[VY]);
 
-    gl.Scalef(w - br - br, h - br - br, l - br - br);
+    DGL_Scalef(w - br - br, h - br - br, l - br - br);
 
-    gl.Begin(DGL_QUADS);
+    DGL_Begin(DGL_QUADS);
     {
-        gl.Color4f(color3f[0], color3f[1], color3f[2], alpha);
+        DGL_Color4f(color3f[0], color3f[1], color3f[2], alpha);
         // Top
-        gl.TexCoord2f(1.0f, 1.0f); gl.Vertex3f( 1.0f+br, 1.0f,-1.0f-br);  // TR
-        gl.TexCoord2f(0.0f, 1.0f); gl.Vertex3f(-1.0f-br, 1.0f,-1.0f-br);  // TL
-        gl.TexCoord2f(0.0f, 0.0f); gl.Vertex3f(-1.0f-br, 1.0f, 1.0f+br);  // BL
-        gl.TexCoord2f(1.0f, 0.0f); gl.Vertex3f( 1.0f+br, 1.0f, 1.0f+br);  // BR
+        DGL_TexCoord2f(1.0f, 1.0f); DGL_Vertex3f( 1.0f+br, 1.0f,-1.0f-br);  // TR
+        DGL_TexCoord2f(0.0f, 1.0f); DGL_Vertex3f(-1.0f-br, 1.0f,-1.0f-br);  // TL
+        DGL_TexCoord2f(0.0f, 0.0f); DGL_Vertex3f(-1.0f-br, 1.0f, 1.0f+br);  // BL
+        DGL_TexCoord2f(1.0f, 0.0f); DGL_Vertex3f( 1.0f+br, 1.0f, 1.0f+br);  // BR
         // Bottom
-        gl.TexCoord2f(1.0f, 1.0f); gl.Vertex3f( 1.0f+br,-1.0f, 1.0f+br);  // TR
-        gl.TexCoord2f(0.0f, 1.0f); gl.Vertex3f(-1.0f-br,-1.0f, 1.0f+br);  // TL
-        gl.TexCoord2f(0.0f, 0.0f); gl.Vertex3f(-1.0f-br,-1.0f,-1.0f-br);  // BL
-        gl.TexCoord2f(1.0f, 0.0f); gl.Vertex3f( 1.0f+br,-1.0f,-1.0f-br);  // BR
+        DGL_TexCoord2f(1.0f, 1.0f); DGL_Vertex3f( 1.0f+br,-1.0f, 1.0f+br);  // TR
+        DGL_TexCoord2f(0.0f, 1.0f); DGL_Vertex3f(-1.0f-br,-1.0f, 1.0f+br);  // TL
+        DGL_TexCoord2f(0.0f, 0.0f); DGL_Vertex3f(-1.0f-br,-1.0f,-1.0f-br);  // BL
+        DGL_TexCoord2f(1.0f, 0.0f); DGL_Vertex3f( 1.0f+br,-1.0f,-1.0f-br);  // BR
         // Front
-        gl.TexCoord2f(1.0f, 1.0f); gl.Vertex3f( 1.0f+br, 1.0f+br, 1.0f);  // TR
-        gl.TexCoord2f(0.0f, 1.0f); gl.Vertex3f(-1.0f-br, 1.0f+br, 1.0f);  // TL
-        gl.TexCoord2f(0.0f, 0.0f); gl.Vertex3f(-1.0f-br,-1.0f-br, 1.0f);  // BL
-        gl.TexCoord2f(1.0f, 0.0f); gl.Vertex3f( 1.0f+br,-1.0f-br, 1.0f);  // BR
+        DGL_TexCoord2f(1.0f, 1.0f); DGL_Vertex3f( 1.0f+br, 1.0f+br, 1.0f);  // TR
+        DGL_TexCoord2f(0.0f, 1.0f); DGL_Vertex3f(-1.0f-br, 1.0f+br, 1.0f);  // TL
+        DGL_TexCoord2f(0.0f, 0.0f); DGL_Vertex3f(-1.0f-br,-1.0f-br, 1.0f);  // BL
+        DGL_TexCoord2f(1.0f, 0.0f); DGL_Vertex3f( 1.0f+br,-1.0f-br, 1.0f);  // BR
         // Back
-        gl.TexCoord2f(1.0f, 1.0f); gl.Vertex3f( 1.0f+br,-1.0f-br,-1.0f);  // TR
-        gl.TexCoord2f(0.0f, 1.0f); gl.Vertex3f(-1.0f-br,-1.0f-br,-1.0f);  // TL
-        gl.TexCoord2f(0.0f, 0.0f); gl.Vertex3f(-1.0f-br, 1.0f+br,-1.0f);  // BL
-        gl.TexCoord2f(1.0f, 0.0f); gl.Vertex3f( 1.0f+br, 1.0f+br,-1.0f);  // BR
+        DGL_TexCoord2f(1.0f, 1.0f); DGL_Vertex3f( 1.0f+br,-1.0f-br,-1.0f);  // TR
+        DGL_TexCoord2f(0.0f, 1.0f); DGL_Vertex3f(-1.0f-br,-1.0f-br,-1.0f);  // TL
+        DGL_TexCoord2f(0.0f, 0.0f); DGL_Vertex3f(-1.0f-br, 1.0f+br,-1.0f);  // BL
+        DGL_TexCoord2f(1.0f, 0.0f); DGL_Vertex3f( 1.0f+br, 1.0f+br,-1.0f);  // BR
         // Left
-        gl.TexCoord2f(1.0f, 1.0f); gl.Vertex3f(-1.0f, 1.0f+br, 1.0f+br);  // TR
-        gl.TexCoord2f(0.0f, 1.0f); gl.Vertex3f(-1.0f, 1.0f+br,-1.0f-br);  // TL
-        gl.TexCoord2f(0.0f, 0.0f); gl.Vertex3f(-1.0f,-1.0f-br,-1.0f-br);  // BL
-        gl.TexCoord2f(1.0f, 0.0f); gl.Vertex3f(-1.0f,-1.0f-br, 1.0f+br);  // BR
+        DGL_TexCoord2f(1.0f, 1.0f); DGL_Vertex3f(-1.0f, 1.0f+br, 1.0f+br);  // TR
+        DGL_TexCoord2f(0.0f, 1.0f); DGL_Vertex3f(-1.0f, 1.0f+br,-1.0f-br);  // TL
+        DGL_TexCoord2f(0.0f, 0.0f); DGL_Vertex3f(-1.0f,-1.0f-br,-1.0f-br);  // BL
+        DGL_TexCoord2f(1.0f, 0.0f); DGL_Vertex3f(-1.0f,-1.0f-br, 1.0f+br);  // BR
         // Right
-        gl.TexCoord2f(1.0f, 1.0f); gl.Vertex3f( 1.0f, 1.0f+br,-1.0f-br);  // TR
-        gl.TexCoord2f(0.0f, 1.0f); gl.Vertex3f( 1.0f, 1.0f+br, 1.0f+br);  // TL
-        gl.TexCoord2f(0.0f, 0.0f); gl.Vertex3f( 1.0f,-1.0f-br, 1.0f+br);  // BL
-        gl.TexCoord2f(1.0f, 0.0f); gl.Vertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
+        DGL_TexCoord2f(1.0f, 1.0f); DGL_Vertex3f( 1.0f, 1.0f+br,-1.0f-br);  // TR
+        DGL_TexCoord2f(0.0f, 1.0f); DGL_Vertex3f( 1.0f, 1.0f+br, 1.0f+br);  // TL
+        DGL_TexCoord2f(0.0f, 0.0f); DGL_Vertex3f( 1.0f,-1.0f-br, 1.0f+br);  // BL
+        DGL_TexCoord2f(1.0f, 0.0f); DGL_Vertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
     }
-    gl.End();
+    DGL_End();
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 /**
@@ -2656,32 +2657,32 @@ void Rend_DrawBBox(float pos3f[3], float w, float l, float h,
 void Rend_DrawArrow(float pos3f[3], angle_t a, float s, float color3f[3],
                     float alpha)
 {
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
-    gl.Translatef(pos3f[VX], pos3f[VZ], pos3f[VY]);
+    DGL_Translatef(pos3f[VX], pos3f[VZ], pos3f[VY]);
 
-    gl.Rotatef(0, 0, 0, 1);
-    gl.Rotatef(0, 1, 0, 0);
-    gl.Rotatef((a / (float) ANGLE_MAX *-360), 0, 1, 0);
+    DGL_Rotatef(0, 0, 0, 1);
+    DGL_Rotatef(0, 1, 0, 0);
+    DGL_Rotatef((a / (float) ANGLE_MAX *-360), 0, 1, 0);
 
-    gl.Scalef(s, 0, s);
+    DGL_Scalef(s, 0, s);
 
-    gl.Begin(DGL_TRIANGLES);
+    DGL_Begin(DGL_TRIANGLES);
     {
-        gl.Color4f(0.0f, 0.0f, 0.0f, 0.5f);
-        gl.TexCoord2f(1.0f, 1.0f); gl.Vertex3f( 1.0f, 1.0f,-1.0f);  // L
+        DGL_Color4f(0.0f, 0.0f, 0.0f, 0.5f);
+        DGL_TexCoord2f(1.0f, 1.0f); DGL_Vertex3f( 1.0f, 1.0f,-1.0f);  // L
 
-        gl.Color4f(color3f[0], color3f[1], color3f[2], alpha);
-        gl.TexCoord2f(0.0f, 1.0f); gl.Vertex3f(-1.0f, 1.0f,-1.0f);  // Point
+        DGL_Color4f(color3f[0], color3f[1], color3f[2], alpha);
+        DGL_TexCoord2f(0.0f, 1.0f); DGL_Vertex3f(-1.0f, 1.0f,-1.0f);  // Point
 
-        gl.Color4f(0.0f, 0.0f, 0.0f, 0.5f);
-        gl.TexCoord2f(0.0f, 0.0f); gl.Vertex3f(-1.0f, 1.0f, 1.0f);  // R
+        DGL_Color4f(0.0f, 0.0f, 0.0f, 0.5f);
+        DGL_TexCoord2f(0.0f, 0.0f); DGL_Vertex3f(-1.0f, 1.0f, 1.0f);  // R
     }
-    gl.End();
+    DGL_End();
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 /**
@@ -2711,13 +2712,13 @@ static void Rend_RenderBoundingBoxes(void)
     eye[VZ] = vy;
 
     if(usingFog)
-        gl.Disable(DGL_FOG);
+        DGL_Disable(DGL_FOG);
 
-    gl.Disable(DGL_DEPTH_TEST);
-    gl.Enable(DGL_TEXTURING);
-    gl.Disable(DGL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    DGL_Enable(DGL_TEXTURING);
+    glDisable(GL_CULL_FACE);
 
-    gl.Bind(GL_PrepareMaterial(DDT_BBOX, MAT_DDTEX, NULL));
+    DGL_Bind(GL_PrepareMaterial(DDT_BBOX, MAT_DDTEX, NULL));
     GL_BlendMode(BM_ADD);
 
     // For every sector
@@ -2726,11 +2727,11 @@ static void Rend_RenderBoundingBoxes(void)
         sec = SECTOR_PTR(i);
 
         // Is it vissible?
-        if(!(sec->frameflags & SIF_VISIBLE))
+        if(!(sec->frameFlags & SIF_VISIBLE))
             continue;
 
         // For every mobj in the sector's mobjList
-        for(mo = sec->mobjList; mo; mo = mo->snext)
+        for(mo = sec->mobjList; mo; mo = mo->sNext)
         {
             if(mo == players[consoleplayer].mo)
                 continue; // We don't want the console player.
@@ -2743,21 +2744,21 @@ static void Rend_RenderBoundingBoxes(void)
             // Draw a bounding box in an appropriate color.
             size = mo->radius;
             Rend_DrawBBox(mo->pos, size, size, mo->height/2,
-                          (mo->ddflags & DDMF_MISSILE)? yellow :
-                          (mo->ddflags & DDMF_SOLID)? green : red,
+                          (mo->ddFlags & DDMF_MISSILE)? yellow :
+                          (mo->ddFlags & DDMF_SOLID)? green : red,
                           alpha, 0.08f, true);
 
             Rend_DrawArrow(mo->pos, mo->angle + ANG45 + ANG90 , size*1.25,
-                           (mo->ddflags & DDMF_MISSILE)? yellow :
-                           (mo->ddflags & DDMF_SOLID)? green : red, alpha);
+                           (mo->ddFlags & DDMF_MISSILE)? yellow :
+                           (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
         }
     }
 
     GL_BlendMode(BM_NORMAL);
 
-    gl.Enable(DGL_CULL_FACE);
-    gl.Enable(DGL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
 
     if(usingFog)
-        gl.Enable(DGL_FOG);
+        DGL_Enable(DGL_FOG);
 }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -167,7 +167,7 @@ void Rend_RadioUpdateLinedef(line_t *line, boolean backSide)
 void Rend_RadioInitForSubsector(subsector_t *ssec)
 {
     sector_t   *linkSec;
-    float       sectorlight = ssec->sector->lightlevel;
+    float       sectorlight = ssec->sector->lightLevel;
 
     Rend_ApplyLightAdaptation(&sectorlight);
 
@@ -223,7 +223,7 @@ static void Rend_RadioSetColor(rendpoly_t *q, float darkness)
     if(darkness > 1)
         darkness = 1;
 
-    for(i = 0; i < q->numvertices; ++i)
+    for(i = 0; i < q->numVertices; ++i)
     {
         // Shadows are black.
         memset(q->vertices[i].color.rgba, 0, 3);
@@ -704,8 +704,8 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, line_t *line, byte side,
     quad->tex.height = shadowSize;
     quad->tex.masked = false;
     quad->lightListIdx = 0;
-    quad->intertex.id = 0;
-    quad->intertex.detail = NULL;
+    quad->interTex.id = 0;
+    quad->interTex.detail = NULL;
 
     // Fade the shadow out if the height is below the min height.
     if(quad->vertices[3].pos[VZ] - quad->vertices[0].pos[VZ] < EDGE_OPEN_THRESHOLD)
@@ -1141,19 +1141,19 @@ static void setRelativeHeights(sector_t *front, sector_t *back,
 {
     if(fz)
     {
-        *fz  = front->planes[isCeiling? PLN_CEILING:PLN_FLOOR]->visheight;
+        *fz  = front->planes[isCeiling? PLN_CEILING:PLN_FLOOR]->visHeight;
         if(isCeiling)
             *fz = -(*fz);
     }
     if(bz)
     {
-        *bz  =  back->planes[isCeiling? PLN_CEILING:PLN_FLOOR]->visheight;
+        *bz  =  back->planes[isCeiling? PLN_CEILING:PLN_FLOOR]->visHeight;
         if(isCeiling)
             *bz = -(*bz);
     }
     if(bhz)
     {
-        *bhz =  back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->visheight;
+        *bhz =  back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->visHeight;
         if(isCeiling)
             *bhz = -(*bhz);
     }
@@ -1219,9 +1219,9 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
         pos = sideOpen[i];
         if(pos < 1)             // Nearly closed.
         {
-            /*V2_Lerp(inner[i], shadow->inoffset[i],
-               shadow->bextoffset[i], pos);*/
-            V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->inoffset[i]);
+            /*V2_Lerp(inner[i], shadow->inOffset[i],
+               shadow->bExtOffset[i], pos);*/
+            V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->inOffset[i]);
         }
         else if(pos == 1)       // Same height on both sides.
         {   // We need to use a back extended offset but which one?
@@ -1241,11 +1241,11 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
             // back neighbor at which plane heights differ.
             lineowner_t *base, *p;
             vertex_t   *vtx =
-                shadow->seg->linedef->L_v(i^!(shadow->flags & SHPF_FRONTSIDE));
+                shadow->seg->lineDef->L_v(i^!(shadow->flags & SHPF_FRONTSIDE));
             uint        id;
             boolean     found;
 
-            base = R_GetVtxLineOwner(vtx, shadow->seg->linedef);
+            base = R_GetVtxLineOwner(vtx, shadow->seg->lineDef);
             p = base->link[!i];
             id = 0;
             found = false;
@@ -1307,19 +1307,19 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
             if(found)
             {
                 // id is now the index + 1 into the side's bextoffset array.
-                V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->bextoffset[i][id-1].offset);
+                V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->bExtOffset[i][id-1].offset);
             }
             else // Its an open edge.
             {
-                V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->extoffset[i]);
+                V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->extOffset[i]);
             }
         }
         else                    // Fully, unquestionably open.
         {
             if(pos > 2) pos = 2;
-            /*V2_Lerp(inner[i], shadow->bextoffset[i],
-               shadow->extoffset[i], pos - 1); */
-            V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->extoffset[i]);
+            /*V2_Lerp(inner[i], shadow->bExtOffset[i],
+               shadow->extOffset[i], pos - 1); */
+            V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->extOffset[i]);
         }
     }
 
@@ -1333,10 +1333,10 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     if(!renderWireframe)
         q->flags = RPF_SHADOW;
     memset(&q->tex, 0, sizeof(q->tex));
-    memset(&q->intertex, 0, sizeof(q->intertex));
-    q->interpos = 0;
+    memset(&q->interTex, 0, sizeof(q->interTex));
+    q->interPos = 0;
     q->lightListIdx = 0;
-    memset(q->vertices, 0, q->numvertices * sizeof(rendpoly_vertex_t));
+    memset(q->vertices, 0, q->numVertices * sizeof(rendpoly_vertex_t));
 
     q->normal[0] = 0;
     q->normal[1] = 0;
@@ -1422,7 +1422,7 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(link->poly->visframe == (ushort) frameCount)
+        if(link->poly->visFrame == (ushort) frameCount)
             continue;
 
         // Now it will be rendered.
@@ -1432,17 +1432,17 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
         if(shadow->seg->flags & SEGF_POLYOBJ)
             continue;
 
-        shadow->visframe = (ushort) frameCount;
+        shadow->visFrame = (ushort) frameCount;
 
         // Determine the openness of the line and its neighbors.  If
         // this edge is open, there won't be a shadow at all.  Open
         // neighbours cause some changes in the polygon corner
         // vertices (placement, colour).
 
-        vec[VX] = vx - subsector->midpoint.pos[VX];
-        vec[VY] = vz - subsector->midpoint.pos[VY];
+        vec[VX] = vx - subsector->midPoint.pos[VX];
+        vec[VY] = vz - subsector->midPoint.pos[VY];
 
-        for(pln = 0; pln < subsector->sector->planecount; ++pln)
+        for(pln = 0; pln < subsector->sector->planeCount; ++pln)
         {
             suf = &subsector->sector->planes[pln]->surface;
 
@@ -1459,12 +1459,12 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             if(M_DotProduct(vec, suf->normal) < 0)
                 continue;
 
-            line = shadow->seg->linedef;
+            line = shadow->seg->lineDef;
             side = (shadow->flags & SHPF_FRONTSIDE) == 0;
 
             if(line->L_backside)
             {
-                if(subsector->sector->subsgroups[subsector->group].linked[pln] &&
+                if(subsector->sector->subsGroups[subsector->group].linked[pln] &&
                    !devNoLinkedSurfaces)
                 {
                     if(side == 0)

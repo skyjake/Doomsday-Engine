@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -113,23 +113,23 @@ static void Rend_ProcessMobjShadow(mobj_t *mo)
     }
 
     // Check the height.
-    moz = mo->pos[VZ] - mo->floorclip;
-    if(mo->ddflags & DDMF_BOB)
+    moz = mo->pos[VZ] - mo->floorClip;
+    if(mo->ddFlags & DDMF_BOB)
         moz -= R_GetBobOffset(mo);
 
-    height = moz - mo->floorz;
+    height = moz - mo->floorZ;
     moh = mo->height;
     if(!moh)
         moh = 1;
     if(height > moh)
         return;                 // Too far.
-    if(moz + mo->height < mo->floorz)
+    if(moz + mo->height < mo->floorZ)
         return;
 
     // Calculate the strength of the shadow.
     // Simplified version, no light diminishing or range compression.
     color =
-        shadowFactor * sec->lightlevel *
+        shadowFactor * sec->lightLevel *
         (1 - mo->translucency * reciprocal255);
 
     halfmoh = moh / 2;
@@ -214,21 +214,21 @@ void Rend_RenderShadows(void)
     for(i = 0; i < numsectors; ++i)
     {
         sec = SECTOR_PTR(i);
-        if(!(sec->frameflags & SIF_VISIBLE))
+        if(!(sec->frameFlags & SIF_VISIBLE))
             continue;
 
         // Don't render mobj shadows on sky floors.
         if(R_IsSkySurface(&sec->SP_floorsurface))
             continue;
 
-        for(mo = sec->mobjList; mo; mo = mo->snext)
+        for(mo = sec->mobjList; mo; mo = mo->sNext)
         {
             if(!mo->state)
                 continue;
 
             // Should this mobj have a shadow?
-            if((mo->state->flags & STF_FULLBRIGHT) || (mo->ddflags & DDMF_DONTDRAW) ||
-               (mo->ddflags & DDMF_ALWAYSLIT))
+            if((mo->state->flags & STF_FULLBRIGHT) || (mo->ddFlags & DDMF_DONTDRAW) ||
+               (mo->ddFlags & DDMF_ALWAYSLIT))
                 continue;
 
             Rend_ProcessMobjShadow(mo);

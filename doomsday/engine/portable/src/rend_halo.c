@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_refresh.h"
@@ -128,18 +129,18 @@ void H_SetupState(boolean dosetup)
     if(dosetup)
     {
         if(usingFog)
-            gl.Disable(DGL_FOG);
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Disable(DGL_DEPTH_TEST);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+            DGL_Disable(DGL_FOG);
+        glDepthMask(GL_FALSE);
+        glDisable(GL_DEPTH_TEST);
+        GL_BlendMode(BM_ADD);
     }
     else
     {
         if(usingFog)
-            gl.Enable(DGL_FOG);
-        gl.Enable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+            DGL_Enable(DGL_FOG);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        GL_BlendMode(BM_NORMAL);
     }
 }
 
@@ -201,7 +202,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
             (haloFadeMax - haloFadeMin);
     }
 
-    occlusionFactor = (LUM_OMNI(lum)->halofactor & 0x7f) / 127.0f;
+    occlusionFactor = (LUM_OMNI(lum)->haloFactor & 0x7f) / 127.0f;
     if(occlusionFactor == 0)
         return false;
     occlusionFactor = (1 + occlusionFactor) / 2;
@@ -279,13 +280,13 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
     // distance to the source.
 
     // Prepare the texture rotation matrix.
-    gl.MatrixMode(DGL_TEXTURE);
-    gl.PushMatrix();
-    gl.LoadIdentity();
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
     // Rotate around the center of the texture.
-    gl.Translatef(0.5f, 0.5f, 0);
-    gl.Rotatef(turnAngle / PI * 180, 0, 0, 1);
-    gl.Translatef(-0.5f, -0.5f, 0);
+    DGL_Translatef(0.5f, 0.5f, 0);
+    DGL_Rotatef(turnAngle / PI * 180, 0, 0, 1);
+    DGL_Translatef(-0.5f, -0.5f, 0);
 
     // The overall brightness of the flare.
     colorAverage = (color[CR] + color[CG] + color[CB] + 1) / 4;
@@ -342,7 +343,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
             color[CA] *= .6f;
         }
 
-        gl.Color4fv(color);
+        DGL_Color4fv(color);
 
         if(haloRealistic)
         {
@@ -382,13 +383,15 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         if(renderTextures)
             GL_BindTexture(tex);
         else
-            gl.Bind(0);
+            DGL_Bind(0);
 
         // Don't wrap the texture. Evidently some drivers can't just
         // take a hint... (or then something's changing the wrapping
         // mode inadvertently)
-        gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-        gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+					    GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                        GL_CLAMP_TO_EDGE);
 
         // In the realistic mode, halos are slightly smaller.
         if(haloRealistic)
@@ -411,28 +414,28 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
                 haloPos[k] += mirror[k] * fl->offset;
         }
 
-        gl.Begin(DGL_QUADS);
-        gl.TexCoord2f(0, 0);
-        gl.Vertex3f(haloPos[VX] + radX * leftOff[VX],
+        DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, 0);
+        DGL_Vertex3f(haloPos[VX] + radX * leftOff[VX],
                     haloPos[VY] + radY * leftOff[VY],
                     haloPos[VZ] + radX * leftOff[VZ]);
-        gl.TexCoord2f(1, 0);
-        gl.Vertex3f(haloPos[VX] + radX * rightOff[VX],
+        DGL_TexCoord2f(1, 0);
+        DGL_Vertex3f(haloPos[VX] + radX * rightOff[VX],
                     haloPos[VY] + radY * rightOff[VY],
                     haloPos[VZ] + radX * rightOff[VZ]);
-        gl.TexCoord2f(1, 1);
-        gl.Vertex3f(haloPos[VX] - radX * leftOff[VX],
+        DGL_TexCoord2f(1, 1);
+        DGL_Vertex3f(haloPos[VX] - radX * leftOff[VX],
                     haloPos[VY] - radY * leftOff[VY],
                     haloPos[VZ] - radX * leftOff[VZ]);
-        gl.TexCoord2f(0, 1);
-        gl.Vertex3f(haloPos[VX] - radX * rightOff[VX],
+        DGL_TexCoord2f(0, 1);
+        DGL_Vertex3f(haloPos[VX] - radX * rightOff[VX],
                     haloPos[VY] - radY * rightOff[VY],
                     haloPos[VZ] - radX * rightOff[VZ]);
-        gl.End();
+        DGL_End();
     }
 
-    gl.MatrixMode(DGL_TEXTURE);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PopMatrix();
 
     // Undo the changes to the DGL state.
     if(primary)

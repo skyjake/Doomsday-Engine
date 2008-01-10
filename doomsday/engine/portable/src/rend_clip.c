@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1276,14 +1276,14 @@ int C_CheckSubsector(subsector_t *ssec)
     uint        i;
     seg_t     **ptr;
 
-    if(!ssec || ssec->segcount < 3)
+    if(!ssec || ssec->segCount < 3)
         return 0;
 
     if(devNoCulling)
         return 1;
 
     // Do we need to resize the angle list buffer?
-    if(ssec->segcount > anglistSize)
+    if(ssec->segCount > anglistSize)
     {
         anglistSize *= 2;
         if(!anglistSize)
@@ -1306,7 +1306,7 @@ int C_CheckSubsector(subsector_t *ssec)
     }
 
     // Check each of the ranges defined by the edges.
-    for(i = 0; i < ssec->segcount - 1; ++i)
+    for(i = 0; i < ssec->segCount - 1; ++i)
     {
         uint        end = i + 1;
         binangle_t  angLen;

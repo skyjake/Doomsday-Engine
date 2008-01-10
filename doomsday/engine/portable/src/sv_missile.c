@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sv_missile.c: Delta Pool Missile Record
  */
 
@@ -90,7 +90,7 @@ void Sv_MRAdd(pool_t *pool, const mobjdelta_t *delta)
     misrecord_t *mis;
 
 #ifdef _DEBUG
-if(!(delta->mo.ddflags & DDMF_MISSILE))
+if(!(delta->mo.ddFlags & DDMF_MISSILE))
 {
     Con_Error("Sv_MRAdd: Not a missile.\n");
 }
@@ -161,7 +161,7 @@ int Sv_MRCheck(pool_t *pool, const mobjdelta_t *mobj)
     int         exclude = 0;
 
 #ifdef _DEBUG
-if(!(mobj->mo.ddflags & DDMF_MISSILE))
+if(!(mobj->mo.ddFlags & DDMF_MISSILE))
 {
     Con_Error("Sv_MRCheck: Not a missile.\n");
 }

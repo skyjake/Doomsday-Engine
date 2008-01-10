@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -553,8 +553,8 @@ sfxsample_t *Sfx_Cache(int id)
         // If the sound has an invalid lumpname, search external anyway.
         // If the original sound is from a PWAD, we won't look for an
         // external resource (probably a custom sound).
-        if((info->lumpnum < 0 || W_IsFromIWAD(info->lumpnum)) &&
-           R_FindResource(RC_SFX, info->lumpname, NULL, buf) &&
+        if((info->lumpNum < 0 || W_IsFromIWAD(info->lumpNum)) &&
+           R_FindResource(RC_SFX, info->lumpName, NULL, buf) &&
            (samp.data =
             WAV_Load(buf, &samp.bytesper, &samp.rate, &samp.numsamples)))
         {
@@ -568,19 +568,19 @@ sfxsample_t *Sfx_Cache(int id)
     if(!samp.data)
     {
         // Try loading from the lump.
-        if(info->lumpnum < 0)
+        if(info->lumpNum < 0)
         {
             if(verbose)
             {
                 Con_Message("Sfx_Cache: Sound %s has a missing lump: '%s'.\n",
-                            info->id, info->lumpname);
+                            info->id, info->lumpName);
                 Con_Message("  Verifying... The lump number is %i.\n",
-                            W_CheckNumForName(info->lumpname));
+                            W_CheckNumForName(info->lumpName));
             }
             return NULL;
         }
 
-        sp = W_CacheLumpNum(info->lumpnum, PU_STATIC);
+        sp = W_CacheLumpNum(info->lumpNum, PU_STATIC);
 
         // Is this perhaps a WAV sound?
         if(WAV_CheckFormat((char *) sp))
@@ -588,13 +588,13 @@ sfxsample_t *Sfx_Cache(int id)
             // Load as WAV, then.
             if(!
                (samp.data =
-                WAV_MemoryLoad((byte *) sp, W_LumpLength(info->lumpnum),
+                WAV_MemoryLoad((byte *) sp, W_LumpLength(info->lumpNum),
                                &samp.bytesper, &samp.rate, &samp.numsamples)))
             {
                 // Abort...
                 Con_Message("Sfx_Cache: WAV data in lump %s is bad.\n",
-                            info->lumpname);
-                W_CacheLumpNum(info->lumpnum, PU_CACHE);
+                            info->lumpName);
+                W_CacheLumpNum(info->lumpNum, PU_CACHE);
                 return NULL;
             }
             needFree = true;
@@ -617,7 +617,7 @@ sfxsample_t *Sfx_Cache(int id)
 
     // We don't need the temporary sample any more, clean up.
     if(sp)
-        W_ChangeCacheTag(info->lumpnum, PU_CACHE);
+        W_ChangeCacheTag(info->lumpNum, PU_CACHE);
     if(needFree)
         Z_Free(samp.data);
 

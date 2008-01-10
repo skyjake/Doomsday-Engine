@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
@@ -187,7 +188,7 @@ static void consoleSetColor(int fl, float alpha)
         g += (1 - g) / 2;
         b += (1 - b) / 2;
     }
-    gl.Color4f(r, g, b, alpha);
+    DGL_Color4f(r, g, b, alpha);
 }
 
 static void drawRuler2(int y, int lineHeight, float alpha, int scrWidth)
@@ -253,12 +254,12 @@ static void drawSideText(const char *text, int line, float alpha)
         if(consoleShadowText)
         {
             // Draw a shadow.
-            gl.Color4f(0, 0, 0, alpha);
+            DGL_Color4f(0, 0, 0, alpha);
             Cfont.TextOut(buf, ssw - Cfont.Width(buf) - 2,
                           y / Cfont.sizeY + 1);
         }
         */
-        gl.Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha);
+        DGL_Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha);
         Cfont.TextOut(buf, ssw - Cfont.Width(buf) - 3, y / Cfont.sizeY);
     }
 }
@@ -392,8 +393,8 @@ static void DrawConsoleTitleBar(float closeFade)
     int oldFont = FR_GetCurrent();
     int border = theWindow->width / 120;
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
 
     //FR_SetFont(glFontVariable[GLFS_BOLD]);
     height = GetConsoleTitleBarHeight(); //FR_TextHeight("W") + border;
@@ -419,8 +420,8 @@ static void DrawConsoleTitleBar(float closeFade)
                      false, true, UI_Color(UIC_TEXT), .75f * closeFade);
     }
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 
     FR_SetFont(oldFont);
 }
@@ -475,10 +476,10 @@ void Rend_Console(void)
     textOffsetY = fontScaledY / 4;
 
     // Go into screen projection mode.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     if(openingOrClosing)
     {
@@ -487,7 +488,7 @@ void Rend_Console(void)
 
     // The console is composed of two parts: the main area background and the
     // border.
-    gl.Color4f(consoleLight / 100.0f, consoleLight / 100.0f,
+    DGL_Color4f(consoleLight / 100.0f, consoleLight / 100.0f,
                consoleLight / 100.0f, closeFade * consoleAlpha / 100);
 
     // The background.
@@ -495,39 +496,39 @@ void Rend_Console(void)
         gx.ConsoleBackground(&bgX, &bgY);
 
     // Let's make it a bit more interesting.
-    gl.MatrixMode(DGL_TEXTURE);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Translatef(2 * sin(funnyAng / 4), 2 * cos(funnyAng / 4), 0);
-    gl.Rotatef(funnyAng * 3, 0, 0, 1);
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Translatef(2 * sin(funnyAng / 4), 2 * cos(funnyAng / 4), 0);
+    DGL_Rotatef(funnyAng * 3, 0, 0, 1);
     GL_DrawRectTiled(0, (int) (ConsoleY * gtosMulY + 4), theWindow->width,
                      -theWindow->height - 4, bgX, bgY);
-    gl.MatrixMode(DGL_TEXTURE);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PopMatrix();
 
     // The border.
     GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 3), theWindow->width, 2, 0, 0, 0,
                 closeFade);
 
     // Subtle shadow.
-    gl.Begin(DGL_QUADS);
-    gl.Color4f(.1f, .1f, .1f, closeFade * consoleAlpha / 150);
-    gl.Vertex2f(0, (int) (ConsoleY * gtosMulY + 5));
-    gl.Vertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 5));
-    gl.Color4f(0, 0, 0, 0);
-    gl.Vertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 13));
-    gl.Vertex2f(0, (int) (ConsoleY * gtosMulY + 13));
-    gl.End();
+    DGL_Begin(DGL_QUADS);
+    DGL_Color4f(.1f, .1f, .1f, closeFade * consoleAlpha / 150);
+    DGL_Vertex2f(0, (int) (ConsoleY * gtosMulY + 5));
+    DGL_Vertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 5));
+    DGL_Color4f(0, 0, 0, 0);
+    DGL_Vertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 13));
+    DGL_Vertex2f(0, (int) (ConsoleY * gtosMulY + 13));
+    DGL_End();
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
-    gl.Scalef(Cfont.sizeX, Cfont.sizeY, 1);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Scalef(Cfont.sizeX, Cfont.sizeY, 1);
 
     // The game & version number.
     //drawSideText(gx.Get(DD_GAME_ID), 2, closeFade);
     //drawSideText(gx.Get(DD_GAME_MODE), 1, closeFade);
 
-    gl.Color4f(1, 1, 1, closeFade);
+    DGL_Color4f(1, 1, 1, closeFade);
 
     // The text in the console buffer will be drawn from the bottom up (!).
     y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
@@ -576,7 +577,7 @@ void Rend_Console(void)
                     /*else if(consoleShadowText)
                     {
                         // Draw a shadow.
-                        gl.Color3f(0, 0, 0);
+                        DGL_Color3f(0, 0, 0);
                         Cfont.TextOut(buff, x + 2, y / Cfont.sizeY + 2);
                     }*/
 
@@ -601,14 +602,14 @@ void Rend_Console(void)
     /*if(consoleShadowText)
     {
         // Draw a shadow.
-        gl.Color3f(0, 0, 0);
+        DGL_Color3f(0, 0, 0);
         Cfont.TextOut(buff, 4,
                       2 + (ConsoleY * gtosMulY - fontScaledY) / Cfont.sizeY);
     }*/
     if(Cfont.flags & DDFONT_WHITE)
-        gl.Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], closeFade);
+        DGL_Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], closeFade);
     else
-        gl.Color4f(1, 1, 1, closeFade);
+        DGL_Color4f(1, 1, 1, closeFade);
     Cfont.TextOut(buff, 2, (ConsoleY * gtosMulY - fontScaledY - textOffsetY) /
                   Cfont.sizeY);
 
@@ -627,23 +628,23 @@ void Rend_Console(void)
     // Draw the cursor in the appropriate place.
     if(!Con_IsLocked())
     {
-        gl.Disable(DGL_TEXTURING);
+        DGL_Disable(DGL_TEXTURING);
         GL_DrawRect(2 + i, (ConsoleY * gtosMulY) / Cfont.sizeY,
                     k, -(Con_InputMode()? fontScaledY : textOffsetY),
                     CcolYellow[0], CcolYellow[1], CcolYellow[2],
                     closeFade * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
-        gl.Enable(DGL_TEXTURING);
+        DGL_Enable(DGL_TEXTURING);
     }
 
     // Restore the original matrices.
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
     // Draw the console title bar.
     DrawConsoleTitleBar(closeFade);
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }
 
 D_CMD(BackgroundTurn)

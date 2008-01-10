@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -223,7 +223,7 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
     }
 
     // Do we need the longer floorclip entry?
-    if(d->floorclip > 64)
+    if(d->floorClip > 64)
         df |= MDF_LONG_FLOORCLIP;
 
     // Flags. What elements are included in the delta?
@@ -318,7 +318,7 @@ if((df & 0xffff) == 0)
     // Pack flags into a word (3 bytes?).
     // \fixme Do the packing!
     if(df & MDF_FLAGS)
-        Msg_WriteLong(d->ddflags & DDMF_PACK_MASK);
+        Msg_WriteLong(d->ddFlags & DDMF_PACK_MASK);
 
     // Radius, height and floorclip are all bytes.
     if(df & MDF_RADIUS)
@@ -328,16 +328,16 @@ if((df & 0xffff) == 0)
     if(df & MDF_FLOORCLIP)
     {
         if(df & MDF_LONG_FLOORCLIP)
-            Msg_WritePackedShort(FLT2FIX(d->floorclip) >> 14);
+            Msg_WritePackedShort(FLT2FIX(d->floorClip) >> 14);
         else
-            Msg_WriteByte(FLT2FIX(d->floorclip) >> 14);
+            Msg_WriteByte(FLT2FIX(d->floorClip) >> 14);
     }
 
     if(df & MDFC_TRANSLUCENCY)
         Msg_WriteByte(d->translucency);
 
     if(df & MDFC_FADETARGET)
-        Msg_WriteByte((byte)(d->vistarget +1));
+        Msg_WriteByte((byte)(d->visTarget +1));
 }
 
 /**
@@ -396,8 +396,8 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
             Msg_WriteByte(psdf);
             if(psdf & PSDF_STATEPTR)
             {
-                if(psp->stateptr)
-                    Msg_WritePackedShort(psp->stateptr - states + 1);
+                if(psp->statePtr)
+                    Msg_WritePackedShort(psp->statePtr - states + 1);
                 else
                     Msg_WritePackedShort(0);
             }
@@ -478,7 +478,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
-        int     lightlevel = (int) (255.0f * d->lightlevel);
+        int     lightlevel = (int) (255.0f * d->lightLevel);
 
         lightlevel = (lightlevel < 0 ? 0 : lightlevel >
                       255 ? 255 : lightlevel);
@@ -528,18 +528,18 @@ VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
         Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].surface.rgba[2]));
 
     if(df & SDF_FLOOR_GLOW_RED)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowrgb[0]));
+        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowRGB[0]));
     if(df & SDF_FLOOR_GLOW_GREEN)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowrgb[1]));
+        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowRGB[1]));
     if(df & SDF_FLOOR_GLOW_BLUE)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowrgb[2]));
+        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowRGB[2]));
 
     if(df & SDF_CEIL_GLOW_RED)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowrgb[0]));
+        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowRGB[0]));
     if(df & SDF_CEIL_GLOW_GREEN)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowrgb[1]));
+        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowRGB[1]));
     if(df & SDF_CEIL_GLOW_BLUE)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowrgb[2]));
+        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowRGB[2]));
 
     if(df & SDF_FLOOR_GLOW)
         Msg_WriteShort(d->planes[PLN_FLOOR].glow < 0 ? 0 :
@@ -600,7 +600,7 @@ void Sv_WriteSideDelta(const void *deltaPtr)
         Msg_WriteByte((byte) (255 * d->bottom.rgba[2]));
 
     if(df & SIDF_MID_BLENDMODE)
-        Msg_WriteShort(d->middle.blendmode >> 16);
+        Msg_WriteShort(d->middle.blendMode >> 16);
 
     if(df & SIDF_FLAGS)
         Msg_WriteByte(d->flags);

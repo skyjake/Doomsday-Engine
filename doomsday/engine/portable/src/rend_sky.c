@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_render.h"
@@ -112,11 +113,11 @@ void Rend_RenderSkyModels(void)
     modelparams_t params;
     float   pos[3];
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
     // Setup basic translation.
-    gl.Translatef(vx, vy, vz);
+    DGL_Translatef(vx, vy, vz);
 
     for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; ++i, sky++)
     {
@@ -132,9 +133,9 @@ void Rend_RenderSkyModels(void)
         }
 
         // Calculate the coordinates for the model.
-        pos[0] = vx * -sky->def->coord_factor[0];
-        pos[1] = vy * -sky->def->coord_factor[1];
-        pos[2] = vz * -sky->def->coord_factor[2];
+        pos[0] = vx * -sky->def->coordFactor[0];
+        pos[1] = vy * -sky->def->coordFactor[1];
+        pos[2] = vz * -sky->def->coordFactor[2];
 
         inter = (sky->maxTimer > 0 ? sky->timer / (float) sky->maxTimer : 0);
 
@@ -164,10 +165,10 @@ void Rend_RenderSkyModels(void)
     }
 
     // We don't want that anything interferes with what was drawn.
-    gl.Clear(DGL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 /*
@@ -181,39 +182,39 @@ static void SkyVertex(int r, int c)
     // And the texture coordinates.
     if(!yflip)                  // Flipped Y is for the lower hemisphere.
     {
-        gl.TexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
+        DGL_TexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
                       skyTexOff / skyTexWidth, r / (float) skyRows);
     }
     else
     {
-        gl.TexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
+        DGL_TexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
                       skyTexOff / skyTexWidth, (skyRows - r) / (float) skyRows);
     }
     // Also the color.
     if(currentFO->use)
     {
         if(r == 0)
-            gl.Color4f(1, 1, 1, 0);
+            DGL_Color4f(1, 1, 1, 0);
         else
-            gl.Color3f(1, 1, 1);
+            DGL_Color3f(1, 1, 1);
     }
     else
     {
         if(r == 0)
-            gl.Color3f(0, 0, 0);
+            DGL_Color3f(0, 0, 0);
         else
-            gl.Color3f(1, 1, 1);
+            DGL_Color3f(1, 1, 1);
     }
 
     // And finally the vertex itself.
-    gl.Vertex3f(svtx->pos[VX], svtx->pos[VY] * (yflip ? -1 : 1), svtx->pos[VZ]);
+    DGL_Vertex3f(svtx->pos[VX], svtx->pos[VY] * (yflip ? -1 : 1), svtx->pos[VZ]);
 }
 
 static void CapSideVertex(int r, int c)
 {   // Look up the precalculated vertex.
     skyvertex_t *svtx = skyVerts + SKYVTX_IDX(c, r);
 
-    gl.Vertex3f(svtx->pos[VX], svtx->pos[VY] * (yflip ? -1 : 1), svtx->pos[VZ]);
+    DGL_Vertex3f(svtx->pos[VX], svtx->pos[VY] * (yflip ? -1 : 1), svtx->pos[VZ]);
 }
 
 /**
@@ -235,25 +236,25 @@ void Rend_SkyRenderer(int hemi)
     // two rows because the first one is always faded.
     if(hemi & SKYHEMI_JUST_CAP)
     {
-        gl.Disable(DGL_TEXTURING);
+        DGL_Disable(DGL_TEXTURING);
         // Use the appropriate color.
         if(currentFO->use)
-            gl.Color3fv(currentFO->rgb);
+            DGL_Color3fv(currentFO->rgb);
         else
-            gl.Color3f(0, 0, 0);
+            DGL_Color3f(0, 0, 0);
 
         // Draw the cap.
-        gl.Begin(DGL_TRIANGLE_FAN);
+        DGL_Begin(DGL_TRIANGLE_FAN);
         for(c = 0; c < skyColumns; ++c)
             CapSideVertex(0, c);
-        gl.End();
+        DGL_End();
 
         // If we are doing a colored fadeout...
         if(hemi & SKYHEMI_FADEOUT_BG)
         {
             // We must fill the background for the top row since it'll
             // be partially translucent.
-            gl.Begin(DGL_TRIANGLE_STRIP);
+            DGL_Begin(DGL_TRIANGLE_STRIP);
             CapSideVertex(0, 0);
             for(c = 0; c < skyColumns; ++c)
             {
@@ -261,9 +262,9 @@ void Rend_SkyRenderer(int hemi)
                 CapSideVertex(0, c + 1);    // And one step right.
             }
             CapSideVertex(1, c);
-            gl.End();
+            DGL_End();
         }
-        gl.Enable(DGL_TEXTURING);
+        DGL_Enable(DGL_TEXTURING);
         return;
     }
 
@@ -273,7 +274,7 @@ void Rend_SkyRenderer(int hemi)
     {
         if(simpleSky)
         {
-            gl.Begin(DGL_QUADS);
+            DGL_Begin(DGL_QUADS);
             for(c = 0; c < skyColumns; ++c)
             {
                 SkyVertex(r, c);
@@ -281,11 +282,11 @@ void Rend_SkyRenderer(int hemi)
                 SkyVertex(r + 1, c + 1);
                 SkyVertex(r, c + 1);
             }
-            gl.End();
+            DGL_End();
         }
         else
         {
-            gl.Begin(DGL_TRIANGLE_STRIP);
+            DGL_Begin(DGL_TRIANGLE_STRIP);
             SkyVertex(r, 0);
             SkyVertex(r + 1, 0);
             for(c = 1; c <= skyColumns; ++c)
@@ -293,7 +294,7 @@ void Rend_SkyRenderer(int hemi)
                 SkyVertex(r, c);
                 SkyVertex(r + 1, c);
             }
-            gl.End();
+            DGL_End();
         }
     }
 }
@@ -346,7 +347,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                 resetup = true;
 
             // The texture is actually loaded when an update is done.
-            gl.Bind(renderTextures ?
+            DGL_Bind(renderTextures ?
                     GL_PrepareSky(slayer->texture,
                                   slayer->flags & SLF_MASKED ? true : false, &texinfo) : 0);
 
@@ -381,17 +382,17 @@ void Rend_RenderSky(int hemis)
             hemis = SKYHEMI_UPPER | SKYHEMI_LOWER;
 
         // We don't want anything written in the depth buffer, not yet.
-        gl.Disable(DGL_DEPTH_TEST);
-        gl.Disable(DGL_DEPTH_WRITE);
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
         // Disable culling, all triangles face the viewer.
-        gl.Disable(DGL_CULL_FACE);
-        gl.DisableArrays(true, true, DGL_ALL_BITS);
+        glDisable(GL_CULL_FACE);
+        DGL_DisableArrays(true, true, DGL_ALL_BITS);
 
         // Setup a proper matrix.
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PushMatrix();
-        gl.Translatef(vx, vy, vz);
-        gl.Scalef(skyDist, skyDist, skyDist);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        DGL_Translatef(vx, vy, vz);
+        DGL_Scalef(skyDist, skyDist, skyDist);
 
         // Draw the possibly visible hemispheres.
         if(hemis & SKYHEMI_LOWER)
@@ -399,13 +400,13 @@ void Rend_RenderSky(int hemis)
         if(hemis & SKYHEMI_UPPER)
             Rend_RenderSkyHemisphere(SKYHEMI_UPPER);
 
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
 
         // Enable the disabled things.
-        gl.Enable(DGL_CULL_FACE);
-        gl.Enable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
     }
 
     // How about some 3D models?

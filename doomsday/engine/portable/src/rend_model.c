@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
@@ -143,7 +144,7 @@ model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
 
     if(mf->flags & MFF_IDFRAME)
     {
-        index += mobjid % mf->sub[subnumber].framerange;
+        index += mobjid % mf->sub[subnumber].frameRange;
     }
     if(index >= mdl->info.numFrames)
     {
@@ -166,24 +167,24 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
     void       *coords[2];
 
     // Disable all vertex arrays.
-    gl.DisableArrays(true, true, DGL_ALL_BITS);
+    DGL_DisableArrays(true, true, DGL_ALL_BITS);
 
     // Load the vertex array.
     switch(mode)
     {
     case RC_OTHER_COORDS:
         coords[0] = texCoords;
-        gl.Arrays(vertices, colors, 1, coords, 0);
+        DGL_Arrays(vertices, colors, 1, coords, 0);
         break;
 
     case RC_BOTH_COORDS:
         coords[0] = NULL;
         coords[1] = texCoords;
-        gl.Arrays(vertices, colors, 2, coords, 0);
+        DGL_Arrays(vertices, colors, 2, coords, 0);
         break;
 
     default:
-        gl.Arrays(vertices, colors, 0, NULL, 0 /* numVertices */ );
+        DGL_Arrays(vertices, colors, 0, NULL, 0 /* numVertices */ );
         break;
     }
 
@@ -193,7 +194,7 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
         pos += 4;
 
         // The type of primitive depends on the sign.
-        gl.Begin(count > 0 ? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
+        DGL_Begin(count > 0 ? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
         if(count < 0)
             count = -count;
 
@@ -207,14 +208,14 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
 
             if(mode != RC_OTHER_COORDS)
             {
-                gl.TexCoord2f(FLOAT(v->s), FLOAT(v->t));
+                DGL_TexCoord2f(FLOAT(v->s), FLOAT(v->t));
             }
 
-            gl.ArrayElement(LONG(v->index));
+            DGL_ArrayElement(LONG(v->index));
         }
 
         // The primitive is complete.
-        gl.End();
+        DGL_End();
     }
 }
 
@@ -416,7 +417,7 @@ void Mod_ShinyCoords(int count, gl_texcoord_t *coords, gl_vertex_t *normals,
  */
 static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 {
-    modeldef_t *mf = params->mf, *mfNext = params->nextmf;
+    modeldef_t *mf = params->mf, *mfNext = params->nextMF;
     submodeldef_t *smf = &mf->sub[number];
     model_t    *mdl = modellist[smf->model];
     model_frame_t *frame = Mod_GetVisibleFrame(mf, number, params->id);
@@ -434,7 +435,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     float       shininess, *shinyColor;
     float       normYaw, normPitch, shinyAng, shinyPnt;
     float       inter = params->inter;
-    blendmode_t blending = mf->def->sub[number].blendmode;
+    blendmode_t blending = mf->def->sub[number].blendMode;
     DGLuint     skinTexture = 0, shinyTexture = 0;
     int         zSign = (params->mirror? -1 : 1);
 
@@ -474,7 +475,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     if(params->alpha >= 0)
         alpha *= params->alpha;
     if(alpha <= 0)
-        return;                 // Fully transparent.
+        return; // Fully transparent.
     if(alpha > 1)
         alpha = 1;
 
@@ -490,36 +491,36 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     if(subFlags & MFF_SELSKIN)
     {
         i = (params->selector >> DDMOBJ_SELECTOR_SHIFT) &
-            mf->def->sub[number].selskinbits[0];    // Selskin mask
-        c = mf->def->sub[number].selskinbits[1];    // Selskin shift
+            mf->def->sub[number].selSkinBits[0]; // Selskin mask
+        c = mf->def->sub[number].selSkinBits[1]; // Selskin shift
         if(c > 0)
             i >>= c;
         else
             i <<= -c;
         if(i > 7)
-            i = 7;              // Maximum number of skins for selskin.
+            i = 7; // Maximum number of skins for selskin.
         if(i < 0)
-            i = 0;              // Improbable (impossible?), but doesn't hurt.
-        useSkin = mf->def->sub[number].selskins[i];
+            i = 0; // Improbable (impossible?), but doesn't hurt.
+        useSkin = mf->def->sub[number].selSkins[i];
     }
 
     // Is there a skin range for this frame?
     // (During model setup skintics and skinrange are set to >0.)
-    if(smf->skinrange > 1)
+    if(smf->skinRange > 1)
     {
         // What rule to use for determining the skin?
         useSkin +=
-            (subFlags & MFF_IDSKIN ? params->id : SECONDS_TO_TICKS(gameTime) / mf->skintics) % smf->skinrange;
+            (subFlags & MFF_IDSKIN ? params->id : SECONDS_TO_TICKS(gameTime) / mf->skinTics) % smf->skinRange;
     }
 
     // Scale interpos. Intermark becomes zero and endmark becomes one.
     // (Full sub-interpolation!) But only do it for the standard
     // interrange. If a custom one is defined, don't touch interpos.
-    if((mf->interrange[0] == 0 && mf->interrange[1] == 1) ||
-       subFlags & MFF_WORLD_TIME_ANIM)
+    if((mf->interRange[0] == 0 && mf->interRange[1] == 1) ||
+       (subFlags & MFF_WORLD_TIME_ANIM))
     {
-        endPos = (mf->internext ? mf->internext->intermark : 1);
-        inter = (params->inter - mf->intermark) / (endPos - mf->intermark);
+        endPos = (mf->interNext ? mf->interNext->interMark : 1);
+        inter = (params->inter - mf->interMark) / (endPos - mf->interMark);
     }
 
     // Do we have a sky/particle model here?
@@ -561,11 +562,11 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     }
 
     // Setup transformation.
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
     // Model space => World space
-    gl.Translatef(params->center[VX] + params->srvo[VX] +
+    DGL_Translatef(params->center[VX] + params->srvo[VX] +
                     Mod_Lerp(mf->offset[VX], mfNext->offset[VX], inter),
                   params->center[VZ] + params->srvo[VZ] +
                     Mod_Lerp(mf->offset[VY], mfNext->offset[VY], inter),
@@ -575,28 +576,28 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     if(params->extraYawAngle || params->extraPitchAngle)
     {
         // Sky models have an extra rotation.
-        gl.Scalef(1, 200 / 240.0f, 1);
-        gl.Rotatef(params->extraYawAngle, 1, 0, 0);
-        gl.Rotatef(params->extraPitchAngle, 0, 0, 1);
-        gl.Scalef(1, 240 / 200.0f, 1);
+        DGL_Scalef(1, 200 / 240.0f, 1);
+        DGL_Rotatef(params->extraYawAngle, 1, 0, 0);
+        DGL_Rotatef(params->extraPitchAngle, 0, 0, 1);
+        DGL_Scalef(1, 240 / 200.0f, 1);
     }
 
     // Model rotation.
-    gl.Rotatef(params->viewAligned ? params->yawAngleOffset : params->yaw,
+    DGL_Rotatef(params->viewAligned ? params->yawAngleOffset : params->yaw,
                0, 1, 0);
-    gl.Rotatef(params->viewAligned ? params->pitchAngleOffset : params->pitch,
+    DGL_Rotatef(params->viewAligned ? params->pitchAngleOffset : params->pitch,
                0, 0, 1);
 
     // Scaling and model space offset.
-    gl.Scalef(Mod_Lerp(mf->scale[VX], mfNext->scale[VX], inter),
+    DGL_Scalef(Mod_Lerp(mf->scale[VX], mfNext->scale[VX], inter),
               Mod_Lerp(mf->scale[VY], mfNext->scale[VY], inter),
               Mod_Lerp(mf->scale[VZ], mfNext->scale[VZ], inter));
     if(params->extraScale)
     {
         // Particle models have an extra scale.
-        gl.Scalef(params->extraScale, params->extraScale, params->extraScale);
+        DGL_Scalef(params->extraScale, params->extraScale, params->extraScale);
     }
-    gl.Translatef(smf->offset[VX], smf->offset[VY], smf->offset[VZ]);
+    DGL_Translatef(smf->offset[VX], smf->offset[VY], smf->offset[VZ]);
 
     // Now we can draw.
     numVerts = mdl->info.numVertices;
@@ -694,7 +695,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 
     if(shininess > 0)
     {
-        shinyColor = mf->def->sub[number].shinycolor;
+        shinyColor = mf->def->sub[number].shinyColor;
 
         // With psprites, add the view angle/pitch.
         offset = params->shineYawOffset;
@@ -738,7 +739,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 
         Mod_ShinyCoords(numVerts, modelTexCoords, modelNormals, normYaw,
                         normPitch, shinyAng, shinyPnt,
-                        mf->def->sub[number].shinyreact);
+                        mf->def->sub[number].shinyReact);
 
         // Shiny color.
         if(subFlags & MFF_SHINY_LIT)
@@ -765,12 +766,12 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     // If we mirror the model, triangles have a different orientation.
     if(zSign < 0)
     {
-        gl.SetInteger(DGL_CULL_FACE, DGL_CW);
+        glFrontFace(GL_CCW);
     }
 
     // Twosided models won't use backface culling.
     if(subFlags & MFF_TWO_SIDED)
-        gl.Disable(DGL_CULL_FACE);
+        glDisable(GL_CULL_FACE);
 
     // Render using multiple passes?
     if(!modelShinyMultitex || shininess <= 0 || alpha < 1 ||
@@ -791,7 +792,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 
         if(shininess > 0)
         {
-            gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+            glDepthFunc(GL_LEQUAL);
 
             // Set blending mode, two choices: reflected and specular.
             if(subFlags & MFF_SHINY_SPECULAR)
@@ -807,7 +808,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
                 // We'll use multitexturing to clear out empty spots in
                 // the primary texture.
                 RL_SelectTexUnits(2);
-                gl.SetInteger(DGL_MODULATE_TEXTURE, 11);
+                DGL_SetInteger(DGL_MODULATE_TEXTURE, 11);
                 RL_BindTo(1, shinyTexture);
                 RL_BindTo(0, skinTexture);
 
@@ -816,7 +817,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
                                    modelVertices, modelColors, modelTexCoords);
 
                 RL_SelectTexUnits(1);
-                gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+                DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
             }
             else
             {
@@ -836,12 +837,12 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
         GL_BlendMode(blending);
         RL_SelectTexUnits(2);
         // Tex1*Color + Tex2RGB*ConstRGB
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 10);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 10);
         RL_BindTo(1, shinyTexture);
         // Multiply by shininess.
         for(c = 0; c < 3; ++c)
             color[c] *= color[3];
-        gl.SetFloatv(DGL_ENV_COLOR, color);
+        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
         RL_BindTo(0, skinTexture);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
@@ -849,22 +850,23 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
                            modelTexCoords);
 
         RL_SelectTexUnits(1);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
     }
 
     // We're done!
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
     // Normally culling is always enabled.
     if(subFlags & MFF_TWO_SIDED)
-        gl.Enable(DGL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
 
     if(zSign < 0)
     {
-        gl.SetInteger(DGL_CULL_FACE, DGL_CCW);
+        glFrontFace(GL_CW);
     }
-    gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+    glDepthFunc(GL_LESS);
+
     GL_BlendMode(BM_NORMAL);
 }
 
@@ -887,13 +889,13 @@ void Rend_RenderModel(const modelparams_t *params)
                                 params->mf->sub[i].flags & MFF_DISABLE_Z_WRITE);
 
             if(disableZ)
-                gl.Disable(DGL_DEPTH_WRITE);
+                glDepthMask(GL_FALSE);
 
             // Render the submodel.
             Mod_RenderSubModel(i, params);
 
             if(disableZ)
-                gl.Enable(DGL_DEPTH_WRITE);
+                glDepthMask(GL_TRUE);
         }
     }
 }

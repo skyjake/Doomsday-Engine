@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
@@ -60,7 +61,6 @@ BEGIN_PROF_TIMERS()
   PROF_RL_RENDER_SKYMASK
 END_PROF_TIMERS()
 
-#define MAX_TEX_UNITS       8   // Only two used, actually.
 #define RL_HASH_SIZE        128
 
 // Number of extra bytes to keep allocated in the end of each rendering list.
@@ -139,43 +139,43 @@ enum {
 typedef struct primhdr_s {
     // RL_AddPoly expects that size is the first thing in the header.
     // Must be an offset since the list is sometimes reallocated.
-    uint    size;               // Size of this primitive (zero = n/a).
+    uint            size; // Size of this primitive (zero = n/a).
 
     // Generic data, common to all polys.
-    primtype_t type;
-    short   flags;              // RPF_*
+    primtype_t      type;
+    short           flags; // RPF_*
 
     // Primitive-specific blending mode.
-    byte    blendMode;          // BM_*
+    byte            blendMode; // BM_*
 
     // Number of vertices in the primitive.
-    uint    primSize;
+    uint            primSize;
 
     // Elements in the vertex array for this primitive.
     // The indices are always contiguous: indices[0] is the base, and
     // indices[1...n] > indices[0].
     // All indices in the range indices[0]...indices[n] are used by this
     // primitive (some are shared).
-    ushort  numIndices;
-    uint   *indices;
+    ushort          numIndices;
+    uint           *indices;
 
     // First index of the other fan in a Double Fan.
-    ushort  beginOther;
+    ushort          beginOther;
 
     // The number of lights affecting the primitive.
-    ushort  numLights;
+    ushort          numLights;
 
     // Some primitives are modulated with an additional texture and color
     // using multitexturing (if available), depending on the list state.
     // Example: first light affecting the primitive.
-    DGLuint modTex;
-    float   modTexTC[2][2];
-    float   modColor[3];
+    DGLuint         modTex;
+    float           modTexTC[2][2];
+    float           modColor[3];
 } primhdr_t;
 
 // Rendering List 'has' flags.
-#define RLF_LIGHTS      0x1     // Primitives are dynamic lights.
-#define RLF_BLENDED     0x2     // List contains only texblended prims.
+#define RLF_LIGHTS          0x1 // Primitives are dynamic lights.
+#define RLF_BLENDED         0x2 // List contains only texblended prims.
 
 /**
  * The rendering list. When the list is resized, pointers in the primitives
@@ -183,25 +183,25 @@ typedef struct primhdr_s {
  */
 typedef struct rendlist_s {
     struct rendlist_s *next;
-    int     flags;
-    gltexture_t tex, intertex;
-    float   interpos;           // 0 = primary, 1 = secondary texture
-    size_t  size;               // Number of bytes allocated for the data.
-    byte   *data;               // Data for a number of polygons (The List).
-    byte   *cursor;             // A pointer to data, for reading/writing.
-    primhdr_t *last;            // Pointer to the last primitive (or NULL).
+    int             flags;
+    gltexture_t     tex, interTex;
+    float           interPos; // 0 = primary, 1 = secondary texture
+    size_t          size; // Number of bytes allocated for the data.
+    byte           *data; // Data for a number of polygons (The List).
+    byte           *cursor; // A pointer to data, for reading/writing.
+    primhdr_t      *last; // Pointer to the last primitive (or NULL).
 } rendlist_t;
 
 typedef struct listhash_s {
-    rendlist_t *first, *last;
+    rendlist_t     *first, *last;
 } listhash_t;
 
 typedef struct {
-    uint        lastIdx;
-    rendpoly_t *poly;
-    primhdr_t  *hdr;
-    DGLuint     lastDynTexture;
-    rendlist_t *lastDynList;
+    uint            lastIdx;
+    rendpoly_t     *poly;
+    primhdr_t      *hdr;
+    DGLuint         lastDynTexture;
+    rendlist_t     *lastDynList;
 } dynlightiterparams_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -331,14 +331,14 @@ static void addMaskedPoly(rendpoly_t *poly)
             }
         }
     }
-    vis->data.wall.texc[0][VX] = poly->texOffset[VX] / (float) poly->tex.width;
-    vis->data.wall.texc[1][VX] =
-        vis->data.wall.texc[0][VX] + poly->wall->length / poly->tex.width;
-    vis->data.wall.texc[0][VY] = poly->texOffset[VY] / (float) poly->tex.height;
-    vis->data.wall.texc[1][VY] =
-        vis->data.wall.texc[0][VY] + (poly->vertices[3].pos[VZ] -
+    vis->data.wall.texCoord[0][VX] = poly->texOffset[VX] / (float) poly->tex.width;
+    vis->data.wall.texCoord[1][VX] =
+        vis->data.wall.texCoord[0][VX] + poly->wall->length / poly->tex.width;
+    vis->data.wall.texCoord[0][VY] = poly->texOffset[VY] / (float) poly->tex.height;
+    vis->data.wall.texCoord[1][VY] =
+        vis->data.wall.texCoord[0][VY] + (poly->vertices[3].pos[VZ] -
                                       poly->vertices[0].pos[VZ]) / poly->tex.height;
-    vis->data.wall.blendmode = poly->blendmode;
+    vis->data.wall.blendMode = poly->blendMode;
 
     // \fixme Semitransparent masked polys arn't lit atm
     if(!(poly->flags & RPF_GLOW) && poly->lightListIdx && numTexUnits > 1 &&
@@ -353,10 +353,10 @@ static void addMaskedPoly(rendpoly_t *poly)
         DL_ListIterator(poly->lightListIdx, &dyn, RLIT_DynGetFirst);
 
         vis->data.wall.modTex = dyn->texture;
-        vis->data.wall.modTexC[0][0] = dyn->s[0];
-        vis->data.wall.modTexC[0][1] = dyn->s[1];
-        vis->data.wall.modTexC[1][0] = dyn->t[0];
-        vis->data.wall.modTexC[1][1] = dyn->t[1];
+        vis->data.wall.modTexCoord[0][0] = dyn->s[0];
+        vis->data.wall.modTexCoord[0][1] = dyn->s[1];
+        vis->data.wall.modTexCoord[1][0] = dyn->t[0];
+        vis->data.wall.modTexCoord[1][1] = dyn->t[1];
         for(c = 0; c < 3; ++c)
             vis->data.wall.modColor[c] = dyn->color[c];
     }
@@ -408,7 +408,7 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel,
     else
         light = lightlevel;
 
-    num = poly->numvertices;
+    num = poly->numVertices;
     for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
     {
         usewhite = false;
@@ -427,11 +427,11 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel,
         real += extraLight / 16.0f;
 
         // Check for torch.
-        if(viewPlayer->fixedcolormap)
+        if(viewPlayer->fixedColorMap)
         {
             // Colormap 1 is the brightest. I'm guessing 16 would be
             // the darkest.
-            int     ll = 16 - viewPlayer->fixedcolormap;
+            int     ll = 16 - viewPlayer->fixedColorMap;
             float   d = (1024 - dist) / 512.0f;
             float   newmin = d * ll / 15.0f;
 
@@ -477,10 +477,10 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
 
     // Copy the vertices in reverse order for ceilings (flip faces).
     if(plane->type == PLN_CEILING)
-        vid = poly->numvertices - 1;
+        vid = poly->numVertices - 1;
     else
         vid = 1;
-    for(i = 1; i < poly->numvertices; ++i)
+    for(i = 1; i < poly->numVertices; ++i)
     {
         poly->vertices[i].pos[VX] = subsector->vertices[vid]->pos[VX];
         poly->vertices[i].pos[VY] = subsector->vertices[vid]->pos[VY];
@@ -515,11 +515,11 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
  */
 void RL_SelectTexUnits(int count)
 {
-    int     i;
+    int             i;
 
     // Disable extra units.
     for(i = numTexUnits - 1; i >= count; i--)
-        gl.Disable(DGL_TEXTURE0 + i);
+        DGL_DisableTexUnit(i);
 
     // Enable the selected units.
     for(i = count - 1; i >= 0; i--)
@@ -527,9 +527,7 @@ void RL_SelectTexUnits(int count)
         if(i >= numTexUnits)
             continue;
 
-        gl.Enable(DGL_TEXTURE0 + i);
-        // Enable the texcoord array for this unit.
-        gl.EnableArrays(0, 0, 0x1 << i);
+        DGL_EnableTexUnit(i);
     }
 }
 
@@ -543,18 +541,18 @@ void RL_SelectTexCoordArray(int unit, int index)
 
     memset(coords, 0, sizeof(coords));
     coords[unit] = texCoords[index];
-    gl.Arrays(NULL, NULL, numTexUnits, coords, 0);
+    DGL_Arrays(NULL, NULL, numTexUnits, coords, 0);
 }
 
 void RL_Bind(DGLuint texture)
 {
-    gl.Bind(renderTextures ? texture : 0);
+    DGL_Bind(renderTextures ? texture : 0);
 }
 
 void RL_BindTo(int unit, DGLuint texture)
 {
-    gl.SetInteger(DGL_ACTIVE_TEXTURE, unit);
-    gl.Bind(renderTextures ? texture : 0);
+    DGL_SetInteger(DGL_ACTIVE_TEXTURE, unit);
+    DGL_Bind(renderTextures ? texture : 0);
 }
 
 static void clearHash(listhash_t *hash)
@@ -641,7 +639,7 @@ static void destroyList(rendlist_t *rl)
 
     rl->cursor = NULL;
     //rl->tex.detail = NULL;
-    rl->intertex.detail = NULL;
+    rl->interTex.detail = NULL;
     rl->last = NULL;
     rl->size = 0;
     rl->flags = 0;
@@ -704,11 +702,11 @@ static void rewindList(rendlist_t *rl)
     rl->last = NULL;
     rl->flags = 0;
     //rl->tex.detail = NULL;
-    rl->intertex.detail = NULL;
+    rl->interTex.detail = NULL;
 
     // The interpolation target must be explicitly set (in RL_AddPoly).
-    memset(&rl->intertex, 0, sizeof(rl->intertex));
-    rl->interpos = 0;
+    memset(&rl->interTex, 0, sizeof(rl->interTex));
+    rl->interPos = 0;
 }
 
 static void rewindHash(listhash_t *hash)
@@ -787,23 +785,23 @@ static rendlist_t *getListFor(rendpoly_t *poly, boolean useLights)
         if(dest->tex.id == poly->tex.id &&
            dest->tex.detail == poly->tex.detail)
         {
-            if(!poly->intertex.id && !dest->intertex.id)
+            if(!poly->interTex.id && !dest->interTex.id)
             {
                 // This will do great.
                 return dest;
             }
 
             // Is this eligible for conversion to a blended list?
-            if(poly->intertex.id && !dest->last && !convertable)
+            if(poly->interTex.id && !dest->last && !convertable)
             {
                 // If necessary, this empty list will be selected.
                 convertable = dest;
             }
 
             // Possibly an exact match?
-            if(poly->intertex.id == dest->intertex.id &&
-               poly->interpos == dest->interpos &&
-               poly->intertex.detail == dest->intertex.detail)
+            if(poly->interTex.id == dest->interTex.id &&
+               poly->interPos == dest->interPos &&
+               poly->interTex.detail == dest->interTex.detail)
             {
                 return dest;
             }
@@ -814,9 +812,9 @@ static rendlist_t *getListFor(rendpoly_t *poly, boolean useLights)
     if(convertable)
     {
         // This list is currently empty.
-        memcpy(&convertable->intertex, &poly->intertex,
-               sizeof(poly->intertex));
-        convertable->interpos = poly->interpos;
+        memcpy(&convertable->interTex, &poly->interTex,
+               sizeof(poly->interTex));
+        convertable->interPos = poly->interPos;
         return convertable;
     }
 
@@ -829,10 +827,10 @@ static rendlist_t *getListFor(rendpoly_t *poly, boolean useLights)
     dest->tex.height = poly->tex.height;
     dest->tex.detail = poly->tex.detail;
 
-    if(poly->intertex.id)
+    if(poly->interTex.id)
     {
-        memcpy(&dest->intertex, &poly->intertex, sizeof(poly->intertex));
-        dest->interpos = poly->interpos;
+        memcpy(&dest->interTex, &poly->interTex, sizeof(poly->interTex));
+        dest->interPos = poly->interPos;
     }
 
     return dest;
@@ -1225,7 +1223,7 @@ static void writeQuad(rendlist_t *list, rendpoly_t *poly)
     hdr->indices[3] = base + 3;
 
     // Primitive-specific blending mode.
-    hdr->blendMode = poly->blendmode;
+    hdr->blendMode = poly->blendMode;
 
     // Primary texture coordinates.
     if(poly->flags & RPF_SHINY)
@@ -1234,7 +1232,7 @@ static void writeQuad(rendlist_t *list, rendpoly_t *poly)
         quadShinyTexCoords(&texCoords[TCA_MAIN][base], poly);
 
         // Mask texture coordinates.
-        if(list->intertex.id)
+        if(list->interTex.id)
         {
             quadTexCoords(&texCoords[TCA_BLEND][base], poly, &poly->tex);
         }
@@ -1245,10 +1243,10 @@ static void writeQuad(rendlist_t *list, rendpoly_t *poly)
         quadTexCoords(&texCoords[TCA_MAIN][base], poly, &list->tex);
 
         // Blend texture coordinates.
-        if(list->intertex.id)
+        if(list->interTex.id)
         {
             quadTexCoords(&texCoords[TCA_BLEND][base], poly,
-                             &list->intertex);
+                             &list->interTex);
         }
 
         // Detail texture coordinates.
@@ -1257,10 +1255,10 @@ static void writeQuad(rendlist_t *list, rendpoly_t *poly)
             quadDetailTexCoords(&texCoords[TCA_DETAIL][base], poly,
                                    &list->tex);
         }
-        if(list->intertex.detail)
+        if(list->interTex.detail)
         {
             quadDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base], poly,
-                                   &list->intertex);
+                                   &list->interTex);
         }
     }
 
@@ -1321,14 +1319,14 @@ static void writeDivQuad(rendlist_t *list, rendpoly_t *poly)
     hdr->indices[0] = base;
 
     // Primitive-specific blending mode.
-    hdr->blendMode = poly->blendmode;
+    hdr->blendMode = poly->blendMode;
 
     // The first four vertices are the normal quad corner points.
     if(poly->flags & RPF_SHINY)
     {
         // Shiny environmental texture coordinates.
         quadShinyTexCoords(&texCoords[TCA_MAIN][base], poly);
-        if(list->intertex.id)
+        if(list->interTex.id)
         {
             quadTexCoords(&texCoords[TCA_BLEND][base], poly, &poly->tex);
         }
@@ -1337,20 +1335,20 @@ static void writeDivQuad(rendlist_t *list, rendpoly_t *poly)
     {
         // Primary texture coordinates.
         quadTexCoords(&texCoords[TCA_MAIN][base], poly, &list->tex);
-        if(list->intertex.id)
+        if(list->interTex.id)
         {
             quadTexCoords(&texCoords[TCA_BLEND][base], poly,
-                             &list->intertex);
+                             &list->interTex);
         }
         if(list->tex.detail)
         {
             quadDetailTexCoords(&texCoords[TCA_DETAIL][base], poly,
                                    &list->tex);
         }
-        if(list->intertex.detail)
+        if(list->interTex.detail)
         {
             quadDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base], poly,
-                                   &list->intertex);
+                                   &list->interTex);
         }
     }
     quadColors(&colors[base], poly);
@@ -1422,7 +1420,7 @@ static void writeDivQuad(rendlist_t *list, rendpoly_t *poly)
                     interpolateTexCoordT(texCoords[TCA_DETAIL], div, top,
                                             bottom, inter);
                 }
-                if(poly->intertex.detail)
+                if(poly->interTex.detail)
                 {
                     interpolateTexCoordT(texCoords[TCA_BLEND_DETAIL], div,
                                             top, bottom, inter);
@@ -1436,7 +1434,7 @@ static void writeDivQuad(rendlist_t *list, rendpoly_t *poly)
                 }
 
                 // Blend texture coordinates.
-                if(list->intertex.id)
+                if(list->interTex.id)
                 {
                     interpolateTexCoordT(texCoords[TCA_BLEND], div, top,
                                          bottom, inter);
@@ -1478,23 +1476,23 @@ static void writeFlat(rendlist_t *list, rendpoly_t *poly)
 
     list->last->type = PT_FAN;
 
-    // A flat is composed of N triangles, where N = poly->numvertices - 2.
-    list->last->primSize = poly->numvertices;
+    // A flat is composed of N triangles, where N = poly->numVertices - 2.
+    list->last->primSize = poly->numVertices;
     base = allocateVertices(list->last->primSize);
 
     // Allocate the indices.
-    allocateIndices(list, poly->numvertices);
+    allocateIndices(list, poly->numVertices);
 
     // Setup indices in a triangle fan.
     hdr = list->last;
-    num = poly->numvertices;
+    num = poly->numVertices;
     for(i = 0; i < num; ++i)
     {
         hdr->indices[i] = base + i;
     }
 
     // Primitive-specific blending mode.
-    hdr->blendMode = poly->blendmode;
+    hdr->blendMode = poly->blendMode;
 
     for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
     {
@@ -1538,10 +1536,10 @@ static void writeFlat(rendlist_t *list, rendpoly_t *poly)
             flatDetailTexCoords(&texCoords[TCA_DETAIL][base + i], vtx->pos,
                                 poly, &list->tex);
         }
-        if(list->intertex.detail)
+        if(list->interTex.detail)
         {
             flatDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base + i],
-                                vtx->pos, poly, &list->intertex);
+                                vtx->pos, poly, &list->interTex);
         }
 
         // Light coordinates.
@@ -1555,16 +1553,16 @@ static void writeFlat(rendlist_t *list, rendpoly_t *poly)
         }
 
         // Blend texture coordinates.
-        if(list->intertex.id)
+        if(list->interTex.id)
         {
             tc = &texCoords[TCA_BLEND][base + i];
             tc->st[0] = (vtx->pos[VX] + poly->texOffset[VX]) /
                 ((poly->flags & RPF_SHINY) ? poly->tex.width :
-                 list->intertex.width);
+                 list->interTex.width);
             tc->st[1] =
                 (-vtx->pos[VY] - poly->texOffset[VY]) /
                 ((poly->flags & RPF_SHINY) ? poly->tex.height :
-                 list->intertex.height);
+                 list->interTex.height);
         }
 
         // Color.
@@ -1735,7 +1733,7 @@ void RL_AddPoly(rendpoly_t *poly)
     boolean         useLights = false;
     dynlightiterparams_t params;
 
-    if(poly->numvertices < 3)
+    if(poly->numVertices < 3)
         return; // huh?
 
     if(poly->flags & RPF_MASKED)
@@ -1783,13 +1781,13 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
 
                 // Determine the average light level of this rend poly,
                 // if too bright; do not bother with lights.
-                for(i = 0; i < poly->numvertices; ++i)
+                for(i = 0; i < poly->numVertices; ++i)
                 {
                     avglightlevel += (long) poly->vertices[i].color.rgba[0];
                     avglightlevel += (long) poly->vertices[i].color.rgba[1];
                     avglightlevel += (long) poly->vertices[i].color.rgba[2];
                 }
-                avglightlevel /= (long) poly->numvertices * 3;
+                avglightlevel /= (long) poly->numVertices * 3;
 
                 if(avglightlevel < 250)
                     useLights = true;
@@ -1889,7 +1887,7 @@ static void drawPrimitives(int conditions, rendlist_t *list)
     if(conditions & DCF_SKIP)
         return;
 
-    if(list->intertex.id)
+    if(list->interTex.id)
     {
         // Is blending allowed?
         if(conditions & DCF_NO_BLEND)
@@ -1932,13 +1930,15 @@ static void drawPrimitives(int conditions, rendlist_t *list)
         {
             if(conditions & DCF_SET_LIGHT_ENV)
             {   // Use the correct texture and color for the light.
-                gl.SetInteger(DGL_ACTIVE_TEXTURE,
+                DGL_SetInteger(DGL_ACTIVE_TEXTURE,
                               conditions & DCF_SET_LIGHT_ENV0 ? 0 : 1);
                 RL_Bind(hdr->modTex);
-                gl.SetFloatv(DGL_ENV_COLOR, hdr->modColor);
+                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
                 // Make sure the light is not repeated.
-                gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-                gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+			                    GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+			                    GL_CLAMP_TO_EDGE);
             }
 
             if(conditions & DCF_SET_BLEND_MODE)
@@ -1948,18 +1948,18 @@ static void drawPrimitives(int conditions, rendlist_t *list)
 
             if(hdr->type == PT_TRIANGLE_STRIP)
             {
-                gl.DrawElements(DGL_TRIANGLE_STRIP, hdr->numIndices, hdr->indices);
+                DGL_DrawElements(DGL_TRIANGLE_STRIP, hdr->numIndices, hdr->indices);
             }
             // Render a primitive (or two) as a triangle fan.
             else if(hdr->type == PT_FAN)
             {
-                gl.DrawElements(DGL_TRIANGLE_FAN, hdr->numIndices, hdr->indices);
+                DGL_DrawElements(DGL_TRIANGLE_FAN, hdr->numIndices, hdr->indices);
             }
             else if(hdr->type == PT_DOUBLE_FAN)
             {
-                gl.DrawElements(DGL_TRIANGLE_FAN, hdr->beginOther, hdr->indices);
+                DGL_DrawElements(DGL_TRIANGLE_FAN, hdr->beginOther, hdr->indices);
 
-                gl.DrawElements(DGL_TRIANGLE_FAN,
+                DGL_DrawElements(DGL_TRIANGLE_FAN,
                                 hdr->numIndices - hdr->beginOther,
                                 hdr->indices + hdr->beginOther);
             }
@@ -1967,6 +1967,16 @@ static void drawPrimitives(int conditions, rendlist_t *list)
 
         hdr = (primhdr_t *) ((byte *) hdr + hdr->size);
     }
+}
+
+static void setEnvAlpha(float alpha)
+{
+    float           color[4];
+
+    color[0] = color[1] = color[2] = 0;
+    color[3] = MINMAX_OF(0, alpha, 1);
+
+    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 }
 
 static void setBlendState(rendlist_t *list, int modMode)
@@ -1979,24 +1989,24 @@ if(numTexUnits < 2)
     RL_SelectTexUnits(2);
 
     RL_BindTo(0, list->tex.id);
-    RL_BindTo(1, list->intertex.id);
+    RL_BindTo(1, list->interTex.id);
 
-    gl.SetInteger(DGL_MODULATE_TEXTURE, modMode);
-    gl.SetInteger(DGL_ENV_ALPHA, list->interpos * 256);
+    DGL_SetInteger(DGL_MODULATE_TEXTURE, modMode);
+    setEnvAlpha(list->interPos);
 }
 
 static void setFogStateForDetails(void)
 {
     // The fog color alpha is probably meaningless?
-    byte    midGray[4];
+    float           midGray[4];
 
-    midGray[0] = 0x80;
-    midGray[1] = 0x80;
-    midGray[2] = 0x80;
+    midGray[0] = .5f;
+    midGray[1] = .5f;
+    midGray[2] = .5f;
     midGray[3] = fogColor[3];
 
-    gl.Enable(DGL_FOG);
-    gl.Fogv(DGL_FOG_COLOR, midGray);
+    DGL_Enable(DGL_FOG);
+    glFogfv(GL_FOG_COLOR, midGray);
 }
 
 /**
@@ -2013,7 +2023,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_ALL:                // All surfaces.
         // Should we do blending?
-        if(list->intertex.id)
+        if(list->interTex.id)
         {
             // Blend between two textures, modulate with primary color.
             setBlendState(list, 2);
@@ -2023,7 +2033,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
             // Normal modulation.
             RL_SelectTexUnits(1);
             RL_Bind(list->tex.id);
-            gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+            DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
         }
         return 0;
 
@@ -2043,14 +2053,14 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_BLENDED:
         // Only render the blended surfaces.
-        if(!list->intertex.id)
+        if(!list->interTex.id)
             return DCF_SKIP;
         setBlendState(list, 2);
         return 0;
 
     case LM_BLENDED_FIRST_LIGHT:
         // Only blended surfaces.
-        if(!list->intertex.id)
+        if(!list->interTex.id)
             return DCF_SKIP;
         return DCF_SET_LIGHT_ENV0;
 
@@ -2062,19 +2072,21 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         // The light lists only contain dynlight primitives.
         RL_Bind(list->tex.id);
         // Make sure the texture is not repeated.
-        gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-        gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+			            GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+			            GL_CLAMP_TO_EDGE);
         return 0;
 
     case LM_BLENDED_MOD_TEXTURE:
         // Blending required.
-        if(!list->intertex.id)
+        if(!list->interTex.id)
             break;
     case LM_MOD_TEXTURE:
     case LM_MOD_TEXTURE_MANY_LIGHTS:
         // Texture for surfaces with (many) dynamic lights.
         // Should we do blending?
-        if(list->intertex.id)
+        if(list->interTex.id)
         {
             // Mode 3 actually just disables the second texture stage,
             // which would modulate with primary color.
@@ -2085,24 +2097,24 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         // No modulation at all.
         RL_SelectTexUnits(1);
         RL_Bind(list->tex.id);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 0);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
         return (mode == LM_MOD_TEXTURE_MANY_LIGHTS ? DCF_MANY_LIGHTS : 0);
 
     case LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
         // Blending is not done now.
-        if(list->intertex.id)
+        if(list->interTex.id)
             break;
         if(list->tex.detail)
         {
             RL_SelectTexUnits(2);
-            gl.SetInteger(DGL_MODULATE_TEXTURE, 9); // Tex+Detail, no color.
+            DGL_SetInteger(DGL_MODULATE_TEXTURE, 9); // Tex+Detail, no color.
             RL_BindTo(0, list->tex.id);
             RL_BindTo(1, list->tex.detail->tex);
         }
         else
         {
             RL_SelectTexUnits(1);
-            gl.SetInteger(DGL_MODULATE_TEXTURE, 0);
+            DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
             RL_Bind(list->tex.id);
         }
         return 0;
@@ -2116,12 +2128,12 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_UNBLENDED_TEXTURE_AND_DETAIL:
         // Only unblended. Details are optional.
-        if(list->intertex.id)
+        if(list->interTex.id)
             break;
         if(list->tex.detail)
         {
             RL_SelectTexUnits(2);
-            gl.SetInteger(DGL_MODULATE_TEXTURE, 8);
+            DGL_SetInteger(DGL_MODULATE_TEXTURE, 8);
             RL_BindTo(0, list->tex.id);
             RL_BindTo(1, list->tex.detail->tex);
         }
@@ -2129,21 +2141,21 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         {
             // Normal modulation.
             RL_SelectTexUnits(1);
-            gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+            DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
             RL_Bind(list->tex.id);
         }
         return 0;
 
     case LM_BLENDED_DETAILS:
         // We'll only render blended primitives.
-        if(!list->intertex.id)
+        if(!list->interTex.id)
             break;
-        if(!list->tex.detail || !list->intertex.detail)
+        if(!list->tex.detail || !list->interTex.detail)
             break;
 
         RL_BindTo(0, list->tex.detail->tex);
-        RL_BindTo(1, list->intertex.detail->tex);
-        gl.SetInteger(DGL_ENV_ALPHA, list->interpos * 256);
+        RL_BindTo(1, list->interTex.detail->tex);
+        setEnvAlpha(list->interPos);
         return 0;
 
     case LM_SHADOW:
@@ -2152,28 +2164,32 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         if(!list->tex.id)
         {
             // Apply a modelview shift.
-            gl.MatrixMode(DGL_MODELVIEW);
-            gl.PushMatrix();
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PushMatrix();
 
             // Scale towards the viewpoint to avoid Z-fighting.
-            gl.Translatef(vx, vy, vz);
-            gl.Scalef(.99f, .99f, .99f);
-            gl.Translatef(-vx, -vy, -vz);
+            DGL_Translatef(vx, vy, vz);
+            DGL_Scalef(.99f, .99f, .99f);
+            DGL_Translatef(-vx, -vy, -vz);
         }
         return 0;
 
     case LM_MASKED_SHINY:
         // The intertex holds the info for the mask texture.
-        RL_BindTo(1, list->intertex.id);
-        gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-        gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
-        gl.SetInteger(DGL_ENV_ALPHA, 255);
+        RL_BindTo(1, list->interTex.id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+			            GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+			            GL_REPEAT);
+        setEnvAlpha(1.0f);
     case LM_ALL_SHINY:
     case LM_SHINY:
         RL_BindTo(mode == LM_MASKED_SHINY ? 0 : 0, list->tex.id);
         // Make sure the texture is not clamped.
-        gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-        gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+			            GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+			            GL_REPEAT);
         // Render all primitives.
         if(mode == LM_ALL_SHINY)
             return DCF_SET_BLEND_MODE;
@@ -2200,8 +2216,8 @@ static void finishListState(listmode_t mode, rendlist_t *list)
         if(!list->tex.id)
         {
             // Restore original modelview matrix.
-            gl.MatrixMode(DGL_MODELVIEW);
-            gl.PopMatrix();
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PopMatrix();
         }
         break;
 
@@ -2222,16 +2238,17 @@ static void setupPassState(listmode_t mode)
     {
     case LM_SKYMASK:
         RL_SelectTexUnits(0);
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Enable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
         // We don't want to write to the color buffer.
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ZERO, GL_ONE);
         // No need for fog.
         if(usingFog)
-            gl.Disable(DGL_FOG);
+            DGL_Disable(DGL_FOG);
         break;
 
     case LM_BLENDED:
@@ -2240,15 +2257,16 @@ static void setupPassState(listmode_t mode)
         // The first texture unit is used for the main texture.
         RL_SelectTexCoordArray(0, TCA_MAIN);
         RL_SelectTexCoordArray(1, TCA_BLEND);
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Enable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
         // Fog is allowed during this pass.
         if(usingFog)
-            gl.Enable(DGL_FOG);
+            DGL_Enable(DGL_FOG);
         // All of the surfaces are opaque.
-        gl.Disable(DGL_BLENDING);
+        glDisable(GL_BLEND);
         break;
 
     case LM_LIGHT_MOD_TEXTURE:
@@ -2259,92 +2277,94 @@ static void setupPassState(listmode_t mode)
         {
             RL_SelectTexCoordArray(0, TCA_LIGHT);
             RL_SelectTexCoordArray(1, TCA_MAIN);
-            gl.SetInteger(DGL_MODULATE_TEXTURE, 4); // Light * texture.
+            DGL_SetInteger(DGL_MODULATE_TEXTURE, 4); // Light * texture.
         }
         else
         {
             RL_SelectTexCoordArray(0, TCA_MAIN);
             RL_SelectTexCoordArray(1, TCA_LIGHT);
-            gl.SetInteger(DGL_MODULATE_TEXTURE, 5); // Texture + light.
+            DGL_SetInteger(DGL_MODULATE_TEXTURE, 5); // Texture + light.
         }
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Enable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
         // Fog is allowed during this pass.
         if(usingFog)
-            gl.Enable(DGL_FOG);
+            DGL_Enable(DGL_FOG);
         // All of the surfaces are opaque.
-        gl.Disable(DGL_BLENDING);
+        glDisable(GL_BLEND);
         break;
 
     case LM_FIRST_LIGHT:
         // One light, no texture.
         RL_SelectTexUnits(1);
         RL_SelectTexCoordArray(0, TCA_LIGHT);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 6);
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Enable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 6);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
         // Fog is allowed during this pass.
         if(usingFog)
-            gl.Disable(DGL_FOG);
+            DGL_Disable(DGL_FOG);
         // All of the surfaces are opaque.
-        gl.Disable(DGL_BLENDING);
+        glDisable(GL_BLEND);
         break;
 
     case LM_BLENDED_FIRST_LIGHT:
         // One additive light, no texture.
         RL_SelectTexUnits(1);
         RL_SelectTexCoordArray(0, TCA_LIGHT);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 7); // Add light, no color.
-        gl.Enable(DGL_ALPHA_TEST);
-        gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 1);
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 7); // Add light, no color.
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, 1 / 255.0f);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
         // Fog is allowed during this pass.
         if(usingFog)
-            gl.Disable(DGL_FOG);
+            DGL_Disable(DGL_FOG);
         // All of the surfaces are opaque.
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);
         break;
 
     case LM_WITHOUT_TEXTURE:
         RL_SelectTexUnits(0);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Enable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
         // Fog must be disabled during this pass.
-        gl.Disable(DGL_FOG);
+        DGL_Disable(DGL_FOG);
         // All of the surfaces are opaque.
-        gl.Disable(DGL_BLENDING);
+        glDisable(GL_BLEND);
         break;
 
     case LM_LIGHTS:
         RL_SelectTexUnits(1);
         RL_SelectTexCoordArray(0, TCA_MAIN);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
-        gl.Enable(DGL_ALPHA_TEST);
-        gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 1);
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, 1 / 255.0f);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
         if(usingFog)
         {
-            gl.Enable(DGL_FOG);
-            gl.Fogv(DGL_FOG_COLOR, blackColor);
+            DGL_Enable(DGL_FOG);
+            glFogfv(GL_FOG_COLOR, blackColor);
         }
         else
-            gl.Disable(DGL_FOG);
+            DGL_Disable(DGL_FOG);
 
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_ADD);
         break;
 
     case LM_MOD_TEXTURE:
@@ -2353,56 +2373,60 @@ static void setupPassState(listmode_t mode)
         // The first texture unit is used for the main texture.
         RL_SelectTexCoordArray(0, TCA_MAIN);
         RL_SelectTexCoordArray(1, TCA_BLEND);
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
         // All of the surfaces are opaque.
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_ZERO);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_COLOR, GL_ZERO);
         // Fog would mess with the color (this is a multiplicative pass).
-        gl.Disable(DGL_FOG);
+        DGL_Disable(DGL_FOG);
         break;
 
     case LM_UNBLENDED_TEXTURE_AND_DETAIL:
         RL_SelectTexCoordArray(0, TCA_MAIN);
         RL_SelectTexCoordArray(1, TCA_DETAIL);
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Enable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
         // All of the surfaces are opaque.
-        gl.Disable(DGL_BLENDING);
+        glDisable(GL_BLEND);
         // Fog is allowed.
         if(usingFog)
-            gl.Enable(DGL_FOG);
+            DGL_Enable(DGL_FOG);
         break;
 
     case LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
         RL_SelectTexCoordArray(0, TCA_MAIN);
         RL_SelectTexCoordArray(1, TCA_DETAIL);
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
         // All of the surfaces are opaque.
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_ZERO);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_COLOR, GL_ZERO);
         // This is a multiplicative pass.
-        gl.Disable(DGL_FOG);
+        DGL_Disable(DGL_FOG);
         break;
 
     case LM_ALL_DETAILS:
         RL_SelectTexUnits(1);
         RL_SelectTexCoordArray(0, TCA_DETAIL);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 0);
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
         // All of the surfaces are opaque.
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_SRC_COLOR);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
         // Use fog to fade the details, if fog is enabled.
         if(usingFog)
             setFogStateForDetails();
@@ -2412,14 +2436,15 @@ static void setupPassState(listmode_t mode)
         RL_SelectTexUnits(2);
         RL_SelectTexCoordArray(0, TCA_DETAIL);
         RL_SelectTexCoordArray(1, TCA_BLEND_DETAIL);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 3);
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 3);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
         // All of the surfaces are opaque.
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_SRC_COLOR);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
         // Use fog to fade the details, if fog is enabled.
         if(usingFog)
             setFogStateForDetails();
@@ -2429,65 +2454,68 @@ static void setupPassState(listmode_t mode)
         // A bit like 'negative lights'.
         RL_SelectTexUnits(1);
         RL_SelectTexCoordArray(0, TCA_MAIN);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
-        gl.Enable(DGL_ALPHA_TEST);
-        gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 1);
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, 1 / 255.0f);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
         // Set normal fog, if it's enabled.
         if(usingFog)
         {
-            gl.Enable(DGL_FOG);
-            gl.Fogv(DGL_FOG_COLOR, fogColor);
+            DGL_Enable(DGL_FOG);
+            glFogfv(GL_FOG_COLOR, fogColor);
         }
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_NORMAL);
         break;
 
     case LM_SHINY:
         RL_SelectTexUnits(1);
         RL_SelectTexCoordArray(0, TCA_MAIN);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 1); // 8 for multitexture
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1); // 8 for multitexture
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
         if(usingFog)
         {
             // Fog makes the shininess diminish in the distance.
-            gl.Enable(DGL_FOG);
-            gl.Fogv(DGL_FOG_COLOR, blackColor);
+            DGL_Enable(DGL_FOG);
+            glFogfv(GL_FOG_COLOR, blackColor);
         }
         else
         {
-            gl.Disable(DGL_FOG);
+            DGL_Disable(DGL_FOG);
         }
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE); // Purely additive.
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_ADD); // Purely additive.
         break;
 
     case LM_MASKED_SHINY:
         RL_SelectTexUnits(2);
         RL_SelectTexCoordArray(0, TCA_MAIN);
         RL_SelectTexCoordArray(1, TCA_BLEND); // the mask
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 8); // same as with details
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Disable(DGL_DEPTH_WRITE);
-        gl.Enable(DGL_DEPTH_TEST);
-        gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 8); // same as with details
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
         if(usingFog)
         {
             // Fog makes the shininess diminish in the distance.
-            gl.Enable(DGL_FOG);
-            gl.Fogv(DGL_FOG_COLOR, blackColor);
+            DGL_Enable(DGL_FOG);
+            glFogfv(GL_FOG_COLOR, blackColor);
         }
         else
         {
-            gl.Disable(DGL_FOG);
+            DGL_Disable(DGL_FOG);
         }
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE); // Purely additive.
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_ADD); // Purely additive.
         break;
 
     default:
@@ -2561,16 +2589,16 @@ static void lockVertices(void)
     // We're only locking the vertex and color arrays, so disable the
     // texcoord arrays for now. Every pass will enable/disable the texcoords
     // that are needed.
-    gl.DisableArrays(0, 0, DGL_ALL_BITS);
+    DGL_DisableArrays(0, 0, DGL_ALL_BITS);
 
     // Actually, don't lock anything. (Massive slowdown?)
-    gl.Arrays(vertices, colors, 0, NULL, 0 /*numVertices */ );
+    DGL_Arrays(vertices, colors, 0, NULL, 0 /*numVertices */ );
 }
 
 static void unlockVertices(void)
 {
     // Nothing was locked.
-    //gl.UnlockArrays();
+    //DGL_UnlockArrays();
 }
 
 /**
@@ -2803,23 +2831,23 @@ END_PROF( PROF_RL_RENDER_SHADOW );
 
     // Return to the normal GL state.
     RL_SelectTexUnits(1);
-    gl.DisableArrays(true, true, DGL_ALL_BITS);
-    gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
-    gl.Enable(DGL_DEPTH_WRITE);
-    gl.Enable(DGL_DEPTH_TEST);
-    gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-    gl.Enable(DGL_ALPHA_TEST);
-    gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 0);
-    gl.Enable(DGL_BLENDING);
-    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+    DGL_DisableArrays(true, true, DGL_ALL_BITS);
+    DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0);
+    glEnable(GL_BLEND);
+    GL_BlendMode(BM_NORMAL);
     if(usingFog)
     {
-        gl.Enable(DGL_FOG);
-        gl.Fogv(DGL_FOG_COLOR, fogColor);
+        DGL_Enable(DGL_FOG);
+        glFogfv(GL_FOG_COLOR, fogColor);
     }
     else
     {
-        gl.Disable(DGL_FOG);
+        DGL_Disable(DGL_FOG);
     }
 
     // Draw masked walls, sprites and models.

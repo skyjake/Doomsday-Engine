@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_render.h"
@@ -93,23 +94,23 @@ void Rend_SpriteRegister(void)
 static __inline void renderQuad(gl_vertex_t *v, gl_color_t *c,
                                 gl_texcoord_t *tc)
 {
-    gl.Begin(DGL_QUADS);
-        gl.Color4ubv(c[0].rgba);
-        gl.TexCoord2fv(tc[0].st);
-        gl.Vertex3fv(v[0].xyz);
+    DGL_Begin(DGL_QUADS);
+        DGL_Color4ubv(c[0].rgba);
+        DGL_TexCoord2fv(tc[0].st);
+        DGL_Vertex3fv(v[0].xyz);
 
-        gl.Color4ubv(c[1].rgba);
-        gl.TexCoord2fv(tc[1].st);
-        gl.Vertex3fv(v[1].xyz);
+        DGL_Color4ubv(c[1].rgba);
+        DGL_TexCoord2fv(tc[1].st);
+        DGL_Vertex3fv(v[1].xyz);
 
-        gl.Color4ubv(c[2].rgba);
-        gl.TexCoord2fv(tc[2].st);
-        gl.Vertex3fv(v[2].xyz);
+        DGL_Color4ubv(c[2].rgba);
+        DGL_TexCoord2fv(tc[2].st);
+        DGL_Vertex3fv(v[2].xyz);
 
-        gl.Color4ubv(c[3].rgba);
-        gl.TexCoord2fv(tc[3].st);
-        gl.Vertex3fv(v[3].xyz);
-    gl.End();
+        DGL_Color4ubv(c[3].rgba);
+        DGL_TexCoord2fv(tc[3].st);
+        DGL_Vertex3fv(v[3].xyz);
+    DGL_End();
 }
 
 /**
@@ -126,24 +127,24 @@ void Rend_Draw3DPlayerSprites(void)
 
     // Clear Z buffer. This will prevent the psprites from being clipped
     // by nearby polygons.
-    gl.Clear(DGL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     // Turn off fog.
     if(usingFog)
-        gl.Disable(DGL_FOG);
+        DGL_Disable(DGL_FOG);
 
     for(i = 0; i < DDMAXPSPRITES; ++i)
     {
-        if(!vispsprites[i].type)
+        if(!visPSprites[i].type)
             continue;           // Not used.
 
-        setupModelParamsForVisSprite(&params, vispsprites + i);
+        setupModelParamsForVisSprite(&params, visPSprites + i);
         Rend_RenderModel(&params);
     }
 
     // Should we turn the fog back on?
     if(usingFog)
-        gl.Enable(DGL_FOG);
+        DGL_Enable(DGL_FOG);
 }
 
 /**
@@ -247,7 +248,7 @@ static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
 
     // Clear sprite info.
     memset(&info, 0, sizeof(info));
-    R_GetSpriteInfo(psp->stateptr->sprite, psp->stateptr->frame,
+    R_GetSpriteInfo(psp->statePtr->sprite, psp->statePtr->frame,
                     &info);
     slump = spritelumps[info.lump];
 
@@ -261,9 +262,9 @@ static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
     params->texOffset[0] =
-        slump->tc[1][VX] - 0.4f / M_CeilPow2(params->width);
+        slump->texCoord[1][VX] - 0.4f / M_CeilPow2(params->width);
     params->texOffset[1] =
-        slump->tc[1][VY] - 0.4f / M_CeilPow2(params->height);
+        slump->texCoord[1][VY] - 0.4f / M_CeilPow2(params->height);
 
     params->texFlip[0] = (boolean) info.flip;
     params->texFlip[1] = false;
@@ -272,7 +273,7 @@ static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
 
     memcpy(params->rgba, spr->data.psprite.rgb, sizeof(float) * 3);
     params->rgba[CA] = spr->data.psprite.alpha;
-    params->lightLevel = spr->data.psprite.lightlevel;
+    params->lightLevel = spr->data.psprite.lightLevel;
 
     lparams.starkLight = true;
     memcpy(lparams.center, spr->center, sizeof(lparams.center));
@@ -285,18 +286,18 @@ static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
 
 void Rend_DrawPSprite(const rendpspriteparams_t *params)
 {
-    int         i, pSprMode = 1;
+    int         i;
     float       v1[2], v2[2], v3[2], v4[2];
     gl_color_t  quadColors[4];
     gl_vertex_t quadNormals[4];
 
     if(renderTextures == 1)
-        GL_SetSprite(params->lump, pSprMode);
+        GL_SetPSprite(params->lump);
     else if(renderTextures == 2)
         // For lighting debug, render all solid surfaces using the gray texture.
         GL_BindTexture(GL_PrepareMaterial(DDT_GRAY, MAT_DDTEX, NULL));
     else
-        gl.Bind(0);
+        DGL_Bind(0);
 
     //  0---1
     //  |   |  Vertex layout.
@@ -353,23 +354,23 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     tc[3].st[0] = params->texOffset[0] *  (params->texFlip[0]? 1:0);
     tc[3].st[1] = params->texOffset[1] * (!params->texFlip[1]? 1:0);
 
-    gl.Begin(DGL_QUADS);
-        gl.Color4ubv(c[0].rgba);
-        gl.TexCoord2fv(tc[0].st);
-        gl.Vertex2fv(v1);
+    DGL_Begin(DGL_QUADS);
+        DGL_Color4ubv(c[0].rgba);
+        DGL_TexCoord2fv(tc[0].st);
+        DGL_Vertex2fv(v1);
 
-        gl.Color4ubv(c[1].rgba);
-        gl.TexCoord2fv(tc[1].st);
-        gl.Vertex2fv(v2);
+        DGL_Color4ubv(c[1].rgba);
+        DGL_TexCoord2fv(tc[1].st);
+        DGL_Vertex2fv(v2);
 
-        gl.Color4ubv(c[2].rgba);
-        gl.TexCoord2fv(tc[2].st);
-        gl.Vertex2fv(v3);
+        DGL_Color4ubv(c[2].rgba);
+        DGL_TexCoord2fv(tc[2].st);
+        DGL_Vertex2fv(v3);
 
-        gl.Color4ubv(c[3].rgba);
-        gl.TexCoord2fv(tc[3].st);
-        gl.Vertex2fv(v4);
-    gl.End();
+        DGL_Color4ubv(c[3].rgba);
+        DGL_TexCoord2fv(tc[3].st);
+        DGL_Vertex2fv(v4);
+    DGL_End();
     }
 }
 
@@ -388,9 +389,9 @@ void Rend_DrawPlayerSprites(void)
         return;
 
     // Check for fullbright.
-    for(i = 0, psp = viewPlayer->psprites; i < DDMAXPSPRITES; ++i, psp++)
+    for(i = 0, psp = viewPlayer->pSprites; i < DDMAXPSPRITES; ++i, psp++)
     {
-        vis = vispsprites + i;
+        vis = visPSprites + i;
 
         // Should this psprite be drawn?
         if(vis->type != VSPR_HUD_SPRITE)
@@ -420,7 +421,7 @@ static void setupMaskedWallParamsForVisSprite(rendmaskedwallparams_t *params,
 void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
 {
     boolean     withDyn = false;
-    int         normal, dyn = DGL_TEXTURE1;
+    int         normal = 0, dyn = 1;
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.
@@ -428,21 +429,21 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     {
         if(IS_MUL)
         {
-            normal = DGL_TEXTURE1;
-            dyn = DGL_TEXTURE0;
+            normal = 1;
+            dyn = 0;
         }
         else
         {
-            normal = DGL_TEXTURE0;
-            dyn = DGL_TEXTURE1;
+            normal = 0;
+            dyn = 1;
         }
 
         RL_SelectTexUnits(2);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, IS_MUL ? 4 : 5);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, IS_MUL ? 4 : 5);
 
         // The dynamic light.
         RL_BindTo(IS_MUL ? 0 : 1, params->modTex);
-        gl.SetFloatv(DGL_ENV_COLOR, params->modColor);
+        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, params->modColor);
 
         // The actual texture.
         RL_BindTo(IS_MUL ? 1 : 0, params->texture);
@@ -452,10 +453,10 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     else
     {
         RL_SelectTexUnits(1);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
 
         RL_Bind(params->texture);
-        normal = DGL_TEXTURE0;
+        normal = 0;
     }
 
     // Masked walls are sometimes used for special effects like arcs,
@@ -468,22 +469,24 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     {
         if(withDyn)
         {
-            gl.SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL ? 1 : 0);
+            DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL ? 1 : 0);
         }
 
-        if(params->texc[0][VX] < 0 || params->texc[0][VX] > 1 ||
-           params->texc[1][VX] < 0 || params->texc[1][VX] > 1)
+        if(params->texCoord[0][VX] < 0 || params->texCoord[0][VX] > 1 ||
+           params->texCoord[1][VX] < 0 || params->texCoord[1][VX] > 1)
         {
             // The texcoords are out of the normal [0,1] range.
-            gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+			                GL_REPEAT);
         }
         else
         {
             // Visible portion is within the actual [0,1] range.
-            gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+			                GL_CLAMP_TO_EDGE);
         }
     }
-    GL_BlendMode(params->blendmode);
+    GL_BlendMode(params->blendMode);
 
     // Draw one quad. This is obviously not a very efficient way to render
     // lots of masked walls, but since 3D models and sprites must be
@@ -491,88 +494,88 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     // done about this.
     if(withDyn)
     {
-        gl.Begin(DGL_QUADS);
-        gl.Color4ubv(params->vertices[0].color);
-        gl.MultiTexCoord2f(normal, params->texc[0][0],
-                           params->texc[1][1]);
+        DGL_Begin(DGL_QUADS);
+        DGL_Color4ubv(params->vertices[0].color);
+        DGL_MultiTexCoord2f(normal, params->texCoord[0][0],
+                            params->texCoord[1][1]);
 
-        gl.MultiTexCoord2f(dyn, params->modTexC[0][0],
-                           params->modTexC[1][1]);
+        DGL_MultiTexCoord2f(dyn, params->modTexCoord[0][0],
+                            params->modTexCoord[1][1]);
 
-        gl.Vertex3f(params->vertices[0].pos[VX],
-                    params->vertices[0].pos[VZ],
-                    params->vertices[0].pos[VY]);
+        DGL_Vertex3f(params->vertices[0].pos[VX],
+                     params->vertices[0].pos[VZ],
+                     params->vertices[0].pos[VY]);
 
-        gl.Color4ubv(params->vertices[1].color);
-        gl.MultiTexCoord2fv(normal, params->texc[0]);
+        DGL_Color4ubv(params->vertices[1].color);
+        DGL_MultiTexCoord2fv(normal, params->texCoord[0]);
 
-        gl.MultiTexCoord2f(dyn, params->modTexC[0][0],
-                           params->modTexC[1][0]);
+        DGL_MultiTexCoord2f(dyn, params->modTexCoord[0][0],
+                            params->modTexCoord[1][0]);
 
-        gl.Vertex3f(params->vertices[1].pos[VX],
-                    params->vertices[1].pos[VZ],
-                    params->vertices[1].pos[VY]);
+        DGL_Vertex3f(params->vertices[1].pos[VX],
+                     params->vertices[1].pos[VZ],
+                     params->vertices[1].pos[VY]);
 
-        gl.Color4ubv(params->vertices[3].color);
-        gl.MultiTexCoord2f(normal, params->texc[1][0],
-                           params->texc[0][1]);
+        DGL_Color4ubv(params->vertices[3].color);
+        DGL_MultiTexCoord2f(normal, params->texCoord[1][0],
+                            params->texCoord[0][1]);
 
-        gl.MultiTexCoord2f(dyn, params->modTexC[0][1],
-                           params->modTexC[1][0]);
+        DGL_MultiTexCoord2f(dyn, params->modTexCoord[0][1],
+                            params->modTexCoord[1][0]);
 
-        gl.Vertex3f(params->vertices[3].pos[VX],
-                    params->vertices[3].pos[VZ],
-                    params->vertices[3].pos[VY]);
+        DGL_Vertex3f(params->vertices[3].pos[VX],
+                     params->vertices[3].pos[VZ],
+                     params->vertices[3].pos[VY]);
 
-        gl.Color4ubv(params->vertices[2].color);
-        gl.MultiTexCoord2fv(normal, params->texc[1]);
+        DGL_Color4ubv(params->vertices[2].color);
+        DGL_MultiTexCoord2fv(normal, params->texCoord[1]);
 
-        gl.MultiTexCoord2f(dyn, params->modTexC[0][1],
-                           params->modTexC[1][1]);
+        DGL_MultiTexCoord2f(dyn, params->modTexCoord[0][1],
+                            params->modTexCoord[1][1]);
 
-        gl.Vertex3f(params->vertices[2].pos[VX],
-                    params->vertices[2].pos[VZ],
-                    params->vertices[2].pos[VY]);
-        gl.End();
+        DGL_Vertex3f(params->vertices[2].pos[VX],
+                     params->vertices[2].pos[VZ],
+                     params->vertices[2].pos[VY]);
+        DGL_End();
 
         // Restore normal GL state.
         RL_SelectTexUnits(1);
-        gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
-        gl.DisableArrays(true, true, 0x1);
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+        DGL_DisableArrays(true, true, 0x1);
     }
     else
     {
-        gl.Begin(DGL_QUADS);
-        gl.Color4ubv(params->vertices[0].color);
-        gl.MultiTexCoord2f(normal, params->texc[0][0],
-                           params->texc[1][1]);
+        DGL_Begin(DGL_QUADS);
+        DGL_Color4ubv(params->vertices[0].color);
+        DGL_MultiTexCoord2f(normal, params->texCoord[0][0],
+                           params->texCoord[1][1]);
 
-        gl.Vertex3f(params->vertices[0].pos[VX],
+        DGL_Vertex3f(params->vertices[0].pos[VX],
                     params->vertices[0].pos[VZ],
                     params->vertices[0].pos[VY]);
 
-        gl.Color4ubv(params->vertices[1].color);
-        gl.MultiTexCoord2fv(normal, params->texc[0]);
+        DGL_Color4ubv(params->vertices[1].color);
+        DGL_MultiTexCoord2fv(normal, params->texCoord[0]);
 
-        gl.Vertex3f(params->vertices[1].pos[VX],
+        DGL_Vertex3f(params->vertices[1].pos[VX],
                     params->vertices[1].pos[VZ],
                     params->vertices[1].pos[VY]);
 
-        gl.Color4ubv(params->vertices[3].color);
-        gl.MultiTexCoord2f(normal, params->texc[1][0],
-                           params->texc[0][1]);
+        DGL_Color4ubv(params->vertices[3].color);
+        DGL_MultiTexCoord2f(normal, params->texCoord[1][0],
+                           params->texCoord[0][1]);
 
-        gl.Vertex3f(params->vertices[3].pos[VX],
+        DGL_Vertex3f(params->vertices[3].pos[VX],
                     params->vertices[3].pos[VZ],
                     params->vertices[3].pos[VY]);
 
-        gl.Color4ubv(params->vertices[2].color);
-        gl.MultiTexCoord2fv(normal, params->texc[1]);
+        DGL_Color4ubv(params->vertices[2].color);
+        DGL_MultiTexCoord2fv(normal, params->texCoord[1]);
 
-        gl.Vertex3f(params->vertices[2].pos[VX],
+        DGL_Vertex3f(params->vertices[2].pos[VX],
                     params->vertices[2].pos[VZ],
                     params->vertices[2].pos[VY]);
-        gl.End();
+        DGL_End();
     }
 
     GL_BlendMode(BM_NORMAL);
@@ -598,12 +601,12 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         float   rgba[4];
         memcpy(rgba, spr->data.mo.rgb, sizeof(float) * 3);
         rgba[CA] = 1;
-        R_SetAmbientColor(rgba, spr->data.mo.lightlevel, spr->distance);
+        R_SetAmbientColor(rgba, spr->data.mo.lightLevel, spr->distance);
         }
         R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
 
         params->mf = spr->data.mo.mf;
-        params->nextmf = spr->data.mo.nextmf;
+        params->nextMF = spr->data.mo.nextMF;
         params->inter = spr->data.mo.inter;
         params->alwaysInterpolate = false;
         params->id = spr->data.mo.id;
@@ -612,9 +615,9 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->center[VX] = spr->center[VX];
         params->center[VY] = spr->center[VY];
         params->center[VZ] = spr->center[VZ];
-        params->srvo[VX] = spr->data.mo.visoff[VX];
-        params->srvo[VY] = spr->data.mo.visoff[VY];
-        params->srvo[VZ] = spr->data.mo.visoff[VZ] - spr->data.mo.floorclip;
+        params->srvo[VX] = spr->data.mo.visOff[VX];
+        params->srvo[VY] = spr->data.mo.visOff[VY];
+        params->srvo[VZ] = spr->data.mo.visOff[VZ] - spr->data.mo.floorClip;
         params->gzt = spr->data.mo.gzt;
         params->distance = spr->distance;
         params->yaw = spr->data.mo.yaw;
@@ -626,13 +629,13 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->extraScale = 0;
         params->subsector = spr->data.mo.subsector;
 
-        params->lightLevel = spr->data.mo.lightlevel;
+        params->lightLevel = spr->data.mo.lightLevel;
 
         memcpy(params->rgb, spr->data.mo.rgb, sizeof(float) * 3);
         params->uniformColor = false;
         params->alpha = spr->data.mo.alpha;
 
-        params->viewAligned = spr->data.mo.viewaligned;
+        params->viewAligned = spr->data.mo.viewAligned;
         params->mirror =
             (spr->type == VSPR_HUD_MODEL && mirrorHudModels != 0);
 
@@ -663,11 +666,11 @@ void Rend_DrawMasked(void)
         return;
 
     R_SortVisSprites();
-    if(vissprite_p > vissprites)
+    if(visSpriteP > visSprites)
     {
         // Draw all vissprites back to front.
         // Sprites look better with Z buffer writes turned off.
-        for(spr = vsprsortedhead.next; spr != &vsprsortedhead; spr = spr->next)
+        for(spr = visSprSortedHead.next; spr != &visSprSortedHead; spr = spr->next)
         {
             if(spr->type == VSPR_MASKED_WALL)
             {
@@ -707,9 +710,9 @@ void Rend_DrawMasked(void)
 
                 if(spr->type == VSPR_MAP_OBJECT)
                 {
-                    center[VX] += spr->data.mo.visoff[VX];
-                    center[VY] += spr->data.mo.visoff[VY];
-                    center[VZ] += spr->data.mo.visoff[VZ];
+                    center[VX] += spr->data.mo.visOff[VX];
+                    center[VY] += spr->data.mo.visOff[VY];
+                    center[VZ] += spr->data.mo.visOff[VZ];
                 }
 
                 if(H_RenderHalo(center[VX], center[VY], center[VZ],
@@ -725,7 +728,7 @@ void Rend_DrawMasked(void)
             // Now we can setup the state only once.
             H_SetupState(true);
 
-            for(spr = vsprsortedhead.next; spr != &vsprsortedhead;
+            for(spr = visSprSortedHead.next; spr != &visSprSortedHead;
                 spr = spr->next)
             {
                 if(spr->light)
@@ -737,9 +740,9 @@ void Rend_DrawMasked(void)
                     if(spr->type == VSPR_MAP_OBJECT ||
                        spr->type == VSPR_HUD_MODEL)
                     {
-                        center[VX] += spr->data.mo.visoff[VX];
-                        center[VY] += spr->data.mo.visoff[VY];
-                        center[VZ] += spr->data.mo.visoff[VZ];
+                        center[VX] += spr->data.mo.visOff[VX];
+                        center[VY] += spr->data.mo.visOff[VY];
+                        center[VZ] += spr->data.mo.visOff[VZ];
                     }
 
                     H_RenderHalo(center[VX], center[VY], center[VZ],
@@ -767,21 +770,21 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
     if(renderTextures == 1)
     {
         // Do we need to translate any of the colors?
-        if(params->tmap)
+        if(params->tMap)
         {   // We need to prepare a translated version of the sprite.
-            GL_SetTranslatedSprite(params->patchNum, params->tmap,
-                                   params->tclass);
+            GL_SetTranslatedSprite(params->patchNum, params->tMap,
+                                   params->tClass);
         }
         else
         {   // Set the texture. No translation required.
-            GL_SetSprite(params->patchNum, 0);
+            GL_SetSprite(params->patchNum);
         }
     }
     else if(renderTextures == 2)
         // For lighting debug, render all solid surfaces using the gray texture.
         GL_BindTexture(GL_PrepareMaterial(DDT_GRAY, MAT_DDTEX, NULL));
     else
-        gl.Bind(0);
+        DGL_Bind(0);
 
     // Coordinates to the center of the sprite (game coords).
     spriteCenter[VX] = params->center[VX] + params->srvo[VX];
@@ -831,11 +834,11 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
     {
         // We must set up a modelview transformation matrix.
         restoreMatrix = true;
-        gl.MatrixMode(DGL_MODELVIEW);
-        gl.PushMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
 
         // Rotate around the center of the sprite.
-        gl.Translatef(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
+        DGL_Translatef(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
         if(!params->viewAligned)
         {
             float   s_dx = v1[VX] - v2[VX];
@@ -860,22 +863,22 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
                         maxSpriteAngle);
 
                     // Rotate along the sprite edge.
-                    gl.Rotatef(turnAngle, s_dx, 0, s_dy);
+                    DGL_Rotatef(turnAngle, s_dx, 0, s_dy);
                 }
             }
             else
             {   // Restricted view plane alignment.
                 // This'll do, for now... Really it should notice both the
                 // sprite angle and vpitch.
-                gl.Rotatef(vpitch * .5f, s_dx, 0, s_dy);
+                DGL_Rotatef(vpitch * .5f, s_dx, 0, s_dy);
             }
         }
         else
         {
             // Normal rotation perpendicular to the view plane.
-            gl.Rotatef(vpitch, viewsidex, 0, viewsidey);
+            DGL_Rotatef(vpitch, viewsidex, 0, viewsidey);
         }
-        gl.Translatef(-spriteCenter[VX], -spriteCenter[VZ], -spriteCenter[VY]);
+        DGL_Translatef(-spriteCenter[VX], -spriteCenter[VZ], -spriteCenter[VY]);
     }
 
     // Need to change blending modes?
@@ -887,7 +890,7 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
        !(params->blendMode == BM_NORMAL || params->blendMode == BM_ZEROALPHA))
     {
         restoreZ = true;
-        gl.Disable(DGL_DEPTH_WRITE);
+        glDepthMask(GL_FALSE);
     }
 
     {
@@ -928,7 +931,7 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
 
     // Need to restore the original modelview matrix?
     if(restoreMatrix)
-        gl.PopMatrix();
+        DGL_PopMatrix();
 
     // Change back to normal blending?
     if(params->blendMode != BM_NORMAL)
@@ -936,7 +939,7 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
 
     // Enable Z-writing again?
     if(restoreZ)
-        gl.Enable(DGL_DEPTH_WRITE);
+        glDepthMask(GL_TRUE);
 }
 
 static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
@@ -954,19 +957,19 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     // heights as an aid.
     top = spr->data.mo.gzt;
     // Sprite fits in, adjustment possible?
-    if(params->height < spr->data.mo.secceil - spr->data.mo.secfloor)
+    if(params->height < spr->data.mo.secCeil - spr->data.mo.secFloor)
     {
         // Check top.
-        if((spr->data.mo.flags & DDMF_FITTOP) && top > spr->data.mo.secceil)
-            top = spr->data.mo.secceil;
+        if((spr->data.mo.flags & DDMF_FITTOP) && top > spr->data.mo.secCeil)
+            top = spr->data.mo.secCeil;
         // Check bottom.
-        if(spr->data.mo.flooradjust &&
+        if(spr->data.mo.floorAdjust &&
            !(spr->data.mo.flags & DDMF_NOFITBOTTOM) &&
-           top - params->height < spr->data.mo.secfloor)
-            top = spr->data.mo.secfloor + params->height;
+           top - params->height < spr->data.mo.secFloor)
+            top = spr->data.mo.secFloor + params->height;
     }
     // Adjust by the floor clip.
-    top -= spr->data.mo.floorclip;
+    top -= spr->data.mo.floorClip;
 
     params->center[VX] = spr->center[VX];
     params->center[VY] = spr->center[VY];
@@ -974,18 +977,18 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->viewOffX = (float) sprite->offset - params->width / 2;
     params->subsector = spr->data.mo.subsector;
     params->distance = spr->distance;
-    params->viewAligned = (spr->data.mo.viewaligned || alwaysAlign == 3);
-    memcpy(params->srvo, spr->data.mo.visoff, sizeof(params->srvo));
+    params->viewAligned = (spr->data.mo.viewAligned || alwaysAlign == 3);
+    memcpy(params->srvo, spr->data.mo.visOff, sizeof(params->srvo));
     params->noZWrite = noSpriteZWrite;
 
     params->patchNum = spr->data.mo.patch;
     if(spr->data.mo.flags & DDMF_TRANSLATION)
-        params->tmap = (spr->data.mo.flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
+        params->tMap = (spr->data.mo.flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
     else
-        params->tmap = 0;
-    params->tclass = spr->data.mo.pclass;
-    params->texOffset[0] = sprite->tc[0][0];
-    params->texOffset[1] = sprite->tc[0][1];
+        params->tMap = 0;
+    params->tClass = spr->data.mo.pClass;
+    params->texOffset[0] = sprite->texCoord[0][0];
+    params->texOffset[1] = sprite->texCoord[0][1];
     params->texFlip[0] = spr->data.mo.texFlip[0];
     params->texFlip[1] = spr->data.mo.texFlip[1];
 
@@ -1022,7 +1025,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
         params->blendMode = BM_NORMAL;
     }
 
-    params->lightLevel = spr->data.mo.lightlevel;
+    params->lightLevel = spr->data.mo.lightLevel;
 
     lparams.starkLight = false;
     memcpy(lparams.center, params->center, sizeof(lparams.center));

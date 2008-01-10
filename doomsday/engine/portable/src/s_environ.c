@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -92,7 +92,7 @@ materialclass_t S_MaterialClassForName(const char *name, int type)
     ded_str_t  *list;
 
     if(type == MAT_TEXTURE || type == MAT_FLAT)
-    for(i = 0, env = defs.tenviron; i < defs.count.tenviron.num; ++i, env++)
+    for(i = 0, env = defs.textureEnv; i < defs.count.textureEnv.num; ++i, env++)
     {
         switch(type)
         {
@@ -170,7 +170,7 @@ static void findSSecsAffectingSector(gamemap_t *map, uint secIDX)
 
     memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
 
-    memcpy(bbox, sec->bbox, sizeof(bbox));
+    memcpy(bbox, sec->bBox, sizeof(bbox));
     bbox[BOXLEFT]   -= 128;
     bbox[BOXRIGHT]  += 128;
     bbox[BOXTOP]    += 128;
@@ -181,16 +181,16 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
             bbox[BOXLEFT], bbox[BOXTOP], bbox[BOXRIGHT], bbox[BOXBOTTOM]);
 #endif
 */
-    for(i = 0; i < map->numsubsectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
         sub = &map->subsectors[i];
 
         // Is this subsector close enough?
         if(sub->sector == sec || // subsector is IN this sector
-           (sub->midpoint.pos[VX] > bbox[BOXLEFT] &&
-            sub->midpoint.pos[VX] < bbox[BOXRIGHT] &&
-            sub->midpoint.pos[VY] < bbox[BOXTOP] &&
-            sub->midpoint.pos[VY] > bbox[BOXBOTTOM]))
+           (sub->midPoint.pos[VX] > bbox[BOXLEFT] &&
+            sub->midPoint.pos[VX] < bbox[BOXRIGHT] &&
+            sub->midPoint.pos[VY] < bbox[BOXTOP] &&
+            sub->midPoint.pos[VY] > bbox[BOXBOTTOM]))
         {
             // It will contribute to the reverb settings of this sector.
             setSubSecSectorOwner(&subSecOwnerList, sub);
@@ -241,7 +241,7 @@ void S_DetermineSubSecsAffectingSectorReverb(gamemap_t *map)
     uint        i;
     ownernode_t *node, *p;
 
-    for(i = 0; i < map->numsectors; ++i)
+    for(i = 0; i < map->numSectors; ++i)
     {
         findSSecsAffectingSector(map, i);
     }
@@ -275,8 +275,8 @@ static boolean calcSSecReverb(subsector_t *ssec)
     // Space is the rough volume of the subsector (bounding box).
     ssec->reverb[SRD_SPACE] =
         (int) (ssec->sector->SP_ceilheight - ssec->sector->SP_floorheight) *
-        (ssec->bbox[1].pos[VX] - ssec->bbox[0].pos[VX]) *
-        (ssec->bbox[1].pos[VY] - ssec->bbox[0].pos[VY]);
+        (ssec->bBox[1].pos[VX] - ssec->bBox[0].pos[VX]) *
+        (ssec->bBox[1].pos[VY] - ssec->bBox[0].pos[VY]);
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the subsector.
@@ -285,10 +285,10 @@ static boolean calcSSecReverb(subsector_t *ssec)
     {
         seg_t      *seg = *ptr;
 
-        if(seg->linedef && seg->sidedef &&
-           seg->sidedef->SW_middlematerial)
+        if(seg->lineDef && seg->sideDef &&
+           seg->sideDef->SW_middlematerial)
         {
-            material_t     *mat = seg->sidedef->SW_middlematerial;
+            material_t     *mat = seg->sideDef->SW_middlematerial;
 
             // The texture of the seg determines its type.
             if(mat->ofTypeID >= 0)
@@ -385,8 +385,8 @@ void S_CalcSectorReverb(sector_t *sec)
         return; // Wha?
 
     sectorSpace = (int) (sec->SP_ceilheight - sec->SP_floorheight) *
-        (sec->bbox[BOXRIGHT] - sec->bbox[BOXLEFT]) *
-        (sec->bbox[BOXTOP] - sec->bbox[BOXBOTTOM]);
+        (sec->bBox[BOXRIGHT] - sec->bBox[BOXLEFT]) *
+        (sec->bBox[BOXTOP] - sec->bBox[BOXBOTTOM]);
 /*
 #if _DEBUG
 Con_Message("sector %i: secsp:%i\n", c, sectorSpace);

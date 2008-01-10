@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -84,8 +84,8 @@ void Sys_InitTimer(void)
 #endif
 }
 
-/*
- * Returns the time in milliseconds.
+/**
+ * @return              The time in milliseconds.
  */
 unsigned int Sys_GetRealTime(void)
 {
@@ -130,7 +130,8 @@ unsigned int Sys_GetRealTime(void)
 }
 
 /**
- * Returns the timer value in seconds. Affected by the ticsPerSecond modifier.
+ * @return              The timer value in seconds. Affected by the
+ *                      ticsPerSecond modifier.
  */
 double Sys_GetSeconds(void)
 {
@@ -138,33 +139,32 @@ double Sys_GetSeconds(void)
         timeOffset;
 }
 
-/*
- * Returns the real timer value in seconds.
+/**
+ * @return              The real timer value in seconds.
  */
 double Sys_GetRealSeconds(void)
 {
     return (double) (Sys_GetRealTime() / 1000.0);
 }
 
-/*
- * Returns time in 35 Hz floating point tics.
+/**
+ * @return              The time in 35 Hz floating point tics.
  */
 double Sys_GetTimef(void)
 {
-    //return ((Sys_GetRealTime() / 1000.0 + timeOffset) * ticsPerSecond);
     return Sys_GetSeconds() * 35;
 }
 
-/*
- * Returns time in 35 Hz tics.
+/**
+ * @return              The time in 35 Hz tics.
  */
 int Sys_GetTime(void)
 {
     return (int) Sys_GetTimef();
 }
 
-/*
- * Set the number of game tics per second.
+/**
+ * @return              Set the number of game tics per second.
  */
 void Sys_TicksPerSecond(float newTics)
 {

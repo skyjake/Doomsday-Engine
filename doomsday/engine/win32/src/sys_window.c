@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_refresh.h"
@@ -358,7 +359,7 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
     }
 
     // Make this the new active window.
-    theWindow = win;
+    Sys_SetActiveWindow(numWindows); // index + 1;
 
     return numWindows; // index + 1.
 }
@@ -515,7 +516,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     {
         if(flags & DDWF_FULLSCREEN)
         {
-            if(!gl.ChangeVideoMode(width, height, bpp))
+            if(!DGL_ChangeVideoMode(width, height, bpp))
             {
                 Sys_CriticalMessage("Sys_SetWindow: Resolution change failed.");
                 return false;
@@ -626,12 +627,12 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
             GL_TotalReset(true, 0, 0);
             gx.UpdateState(DD_RENDER_RESTART_PRE);
 
-            gl.DestroyContext();
+            DGL_DestroyContext();
         }
 
-        gl.CreateContext(window->width, window->height, window->bpp,
-                         (window->flags & DDWF_FULLSCREEN)? DGL_MODE_FULLSCREEN : DGL_MODE_WINDOW,
-                         window->hWnd);
+        DGL_CreateContext(window->width, window->height, window->bpp,
+                          (window->flags & DDWF_FULLSCREEN)? false : true,
+                          window->hWnd);
 
         if(glIsInited)
         {

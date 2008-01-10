@@ -4,8 +4,8 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_uinit.c: Unix Initialization
  *
  * Load libraries and set up APIs.
@@ -42,6 +42,7 @@
 #endif
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
@@ -140,14 +141,14 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 
 	// What is the actual file name?
 	_splitpath(pluginPath, NULL, NULL, name, NULL);
-	
+
 	printf("LP: %s => %s\n", pluginPath, name);
 
 	if(!strncmp(name, "libdp", 5))
 	{
 #if 0
 		filename_t fullPath;
-		
+
 #ifdef DENG_LIBRARY_DIR
 		sprintf(fullPath, DENG_LIBRARY_DIR "/%s", name);
 #else
@@ -182,7 +183,7 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 		printf("LoadPlugin: %s\n", pluginPath);
 		initializer();
 	}
-	
+
 	return 0;
 }
 #endif
@@ -195,7 +196,7 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 #endif
 	lt_dlhandle plugin, *handle;
 	void (*initializer)(void);
-	
+
 #ifndef MACOSX
 	// What is the actual file name?
 	_splitpath(pluginPath, NULL, NULL, name, NULL);
@@ -205,7 +206,7 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 		// Try loading this one as a Doomsday plugin.
 		if(NULL == (plugin = lt_dlopenext(pluginPath)))
 			return 0;
-		
+
 		if(NULL == (initializer = lt_dlsym(plugin, "DP_Initialize")) ||
 		   NULL == (handle = NextPluginHandle()))
 		{
@@ -213,14 +214,14 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 			lt_dlclose(plugin);
 			return 0;
 		}
-		
+
 		// This seems to be a Doomsday plugin.
 		*handle = plugin;
-		
+
 		printf("LoadPlugin: %s\n", pluginPath);
 		initializer();
 	}
-	
+
 	return 0;
 }
 
@@ -253,6 +254,11 @@ static int initPluginSystem(void)
 #endif
 
     return true;
+}
+
+static int initDGL(void)
+{
+    return DGL_Init();
 }
 
 int main(int argc, char **argv)
@@ -296,7 +302,7 @@ int main(int argc, char **argv)
         DD_ErrorBox(true, "Error initializing plugin system.");
     }
     // Load the rendering DLL.
-	else if(!DD_InitDGL())
+	else if(!initDGL())
     {
 		DD_ErrorBox(true, "Error loading rendering library.");
     }

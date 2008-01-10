@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -274,7 +274,7 @@ static void projectDecorLight(const float pos[3],
     l->pos[VZ] = source->pos[VZ];
     l->subsector = R_PointInSubsector(l->pos[VX], l->pos[VY]);
 
-    LUM_OMNI(l)->halofactor = 0xff; // Assumed visible.
+    LUM_OMNI(l)->haloFactor = 0xff; // Assumed visible.
     LUM_OMNI(l)->zOff = 0;
     l->flags = LUMF_CLIPPED;
     LUM_OMNI(l)->tex = def->sides.tex;
@@ -288,9 +288,9 @@ static void projectDecorLight(const float pos[3],
     if(LUM_OMNI(l)->radius > loMaxRadius)
         LUM_OMNI(l)->radius = loMaxRadius;
 
-    if(def->halo_radius > 0)
+    if(def->haloRadius > 0)
     {
-        LUM_OMNI(l)->flareSize = def->halo_radius * 60 * (50 + haloSize) / 100.0f;
+        LUM_OMNI(l)->flareSize = def->haloRadius * 60 * (50 + haloSize) / 100.0f;
         if(LUM_OMNI(l)->flareSize < 1)
             LUM_OMNI(l)->flareSize = 1;
     }
@@ -346,14 +346,14 @@ static float checkSectorLight(float lightlevel,
     float       factor;
 
     // Has a limit been set?
-    if(lightDef->lightlevels[0] == lightDef->lightlevels[1])
+    if(lightDef->lightLevels[0] == lightDef->lightLevels[1])
         return 1;
 
     // Apply adaptation
     Rend_ApplyLightAdaptation(&lightlevel);
 
-    factor = (lightlevel - lightDef->lightlevels[0]) /
-        (float) (lightDef->lightlevels[1] - lightDef->lightlevels[0]);
+    factor = (lightlevel - lightDef->lightLevels[0]) /
+        (float) (lightDef->lightLevels[1] - lightDef->lightLevels[0]);
 
     if(factor < 0)
         return 0;
@@ -368,7 +368,7 @@ static void projectSurfaceDecorations(const surface_t *suf,
 {
     uint            i;
 
-    for(i = 0; i < suf->numdecorations; ++i)
+    for(i = 0; i < suf->numDecorations; ++i)
     {
         float           brightMul;
         const surfacedecor_t *d = &suf->decorations[i];
@@ -393,7 +393,7 @@ static void getDecorationSkipPattern(const ded_decorlight_t *lightDef,
     for(i = 0; i < 2; ++i)
     {
         // Skip must be at least one.
-        skip[i] = lightDef->pattern_skip[i] + 1;
+        skip[i] = lightDef->patternSkip[i] + 1;
 
         if(skip[i] < 1)
             skip[i] = 1;
@@ -470,13 +470,13 @@ static void decorateLineSection(const line_t *line, side_t *side,
 
             // Let's see where the top left light is.
             s = M_CycleIntoRange(lightDef->pos[VX] - suf->offset[VX] -
-                                 surfTexW * lightDef->pattern_offset[VX],
+                                 surfTexW * lightDef->patternOffset[VX],
                                  patternW);
 
             for(; s < line->length; s += patternW)
             {
                 t = M_CycleIntoRange(lightDef->pos[VY] - suf->offset[VY] -
-                                     surfTexH * lightDef->pattern_offset[VY] +
+                                     surfTexH * lightDef->patternOffset[VY] +
                                      texOffY, patternH);
 
                 for(; t < lh; t += patternH)
@@ -493,7 +493,7 @@ static void decorateLineSection(const line_t *line, side_t *side,
         suf->flags &= ~SUF_UPDATE_DECORATIONS;
     }
 
-    projectSurfaceDecorations(suf, side->sector->lightlevel);
+    projectSurfaceDecorations(suf, side->sector->lightLevel);
 }
 
 /**
@@ -521,10 +521,10 @@ static boolean checkLineDecorationBounds(const line_t *line,
     float       bounds[6];
     sector_t   *sector;
 
-    bounds[BOXLEFT]   = line->bbox[BOXLEFT];
-    bounds[BOXRIGHT]  = line->bbox[BOXRIGHT];
-    bounds[BOXTOP]    = line->bbox[BOXTOP];
-    bounds[BOXBOTTOM] = line->bbox[BOXBOTTOM];
+    bounds[BOXLEFT]   = line->bBox[BOXLEFT];
+    bounds[BOXRIGHT]  = line->bBox[BOXRIGHT];
+    bounds[BOXTOP]    = line->bBox[BOXTOP];
+    bounds[BOXBOTTOM] = line->bBox[BOXBOTTOM];
 
     // Figure out the highest and lowest Z height.
     sector = line->L_frontsector;
@@ -558,10 +558,10 @@ static boolean checkSectorDecorationBounds(const sector_t *sector,
 {
     float       bounds[6];
 
-    bounds[BOXLEFT]    = sector->bbox[BOXLEFT];
-    bounds[BOXRIGHT]   = sector->bbox[BOXRIGHT];
-    bounds[BOXBOTTOM]  = sector->bbox[BOXBOTTOM];
-    bounds[BOXTOP]     = sector->bbox[BOXTOP];
+    bounds[BOXLEFT]    = sector->bBox[BOXLEFT];
+    bounds[BOXRIGHT]   = sector->bBox[BOXRIGHT];
+    bounds[BOXBOTTOM]  = sector->bBox[BOXBOTTOM];
+    bounds[BOXTOP]     = sector->bBox[BOXTOP];
 
     bounds[BOXFLOOR]   = sector->SP_floorvisheight;
     bounds[BOXCEILING] = sector->SP_ceilvisheight;
@@ -623,7 +623,7 @@ static void decorateLine(const line_t *line)
                     {
                         float           offsetY;
 
-                        if(line->mapflags & ML_DONTPEGTOP)
+                        if(line->mapFlags & ML_DONTPEGTOP)
                         {
                             offsetY = 0;
                         }
@@ -681,7 +681,7 @@ static void decorateLine(const line_t *line)
                     {
                         float           offsetY;
 
-                        if(line->mapflags & ML_DONTPEGBOTTOM)
+                        if(line->mapFlags & ML_DONTPEGBOTTOM)
                             offsetY = (top - bottom);
                         else
                             offsetY = 0;
@@ -718,7 +718,7 @@ static void decorateLine(const line_t *line)
                 {
                     float           offsetY;
 
-                    if(line->mapflags & ML_DONTPEGBOTTOM)
+                    if(line->mapFlags & ML_DONTPEGBOTTOM)
                     {
                         texinfo_t      *texinfo;
 
@@ -786,28 +786,28 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
             getDecorationSkipPattern(lightDef, skip);
 
             pos[VY] =
-                (int) (sec->bbox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_offset[VY] -
-                lightDef->pos[VY] - lightDef->pattern_offset[VY] * tileSize;
+                (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_offset[VY] -
+                lightDef->pos[VY] - lightDef->patternOffset[VY] * tileSize;
 
-            while(pos[VY] > sec->bbox[BOXBOTTOM])
+            while(pos[VY] > sec->bBox[BOXBOTTOM])
                 pos[VY] -= tileSize * skip[VY];
 
-            for(; pos[VY] < sec->bbox[BOXTOP]; pos[VY] += tileSize * skip[VY])
+            for(; pos[VY] < sec->bBox[BOXTOP]; pos[VY] += tileSize * skip[VY])
             {
-                if(pos[VY] < sec->bbox[BOXBOTTOM])
+                if(pos[VY] < sec->bBox[BOXBOTTOM])
                     continue;
 
                 pos[VX] =
-                    (int) (sec->bbox[BOXLEFT] / tileSize) * tileSize - pln->PS_offset[VX] +
-                    lightDef->pos[VX] - lightDef->pattern_offset[VX] * tileSize;
+                    (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_offset[VX] +
+                    lightDef->pos[VX] - lightDef->patternOffset[VX] * tileSize;
 
-                while(pos[VX] > sec->bbox[BOXLEFT])
+                while(pos[VX] > sec->bBox[BOXLEFT])
                     pos[VX] -= tileSize * skip[VX];
 
-                for(; pos[VX] < sec->bbox[BOXRIGHT];
+                for(; pos[VX] < sec->bBox[BOXRIGHT];
                     pos[VX] += tileSize * skip[VX])
                 {
-                    if(pos[VX] < sec->bbox[BOXLEFT])
+                    if(pos[VX] < sec->bBox[BOXLEFT])
                         continue;
 
                     // The point must be inside the correct sector.
@@ -815,7 +815,7 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
                         continue;
 
                     pos[VZ] =
-                        pln->visheight + lightDef->elevation * surfaceNormal[VZ];
+                        pln->visHeight + lightDef->elevation * surfaceNormal[VZ];
 
                     R_CreateSurfaceDecoration(suf, pos, lightDef);
                 }
@@ -825,7 +825,7 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
         suf->flags &= ~SUF_UPDATE_DECORATIONS;
     }
 
-    projectSurfaceDecorations(suf, sec->lightlevel);
+    projectSurfaceDecorations(suf, sec->lightLevel);
 }
 
 static void decorateSector(const sector_t *sec)
@@ -834,7 +834,7 @@ static void decorateSector(const sector_t *sec)
     plane_t    *pln;
     ded_decor_t *def;
 
-    for(i = 0; i < sec->planecount; ++i)
+    for(i = 0; i < sec->planeCount; ++i)
     {
         pln = sec->SP_plane(i);
         def = getMaterialDecoration(pln->PS_material);

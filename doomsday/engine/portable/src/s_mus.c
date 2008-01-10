@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -315,7 +315,7 @@ int Mus_GetMUS(ded_music_t *def)
     if(!mus_avail || !imus)
         return false;
 
-    lumpnum = W_CheckNumForName(def->lumpname);
+    lumpnum = W_CheckNumForName(def->lumpName);
     if(lumpnum < 0)
         return false;           // No such lump.
 
@@ -380,7 +380,7 @@ int Mus_GetExt(ded_music_t *def, char *path)
     }
 
     // Try the resource locator.
-    if(R_FindResource(RC_MUSIC, def->lumpname, NULL, path))
+    if(R_FindResource(RC_MUSIC, def->lumpName, NULL, path))
     {
         // We must read the song into a buffer, because the path may
         // be a virtual file and the audio driver may not know anything about those.
@@ -395,7 +395,7 @@ int Mus_GetExt(ded_music_t *def, char *path)
         return true; // Got it!
     }
 
-    lumpnum = W_CheckNumForName(def->lumpname);
+    lumpnum = W_CheckNumForName(def->lumpName);
     if(lumpnum < 0)
         return false; // No such lump.
 
@@ -416,8 +416,8 @@ int Mus_GetCD(ded_music_t *def)
 {
     if(!mus_avail || !icd)
         return 0;
-    if(def->cdtrack)
-        return def->cdtrack;
+    if(def->cdTrack)
+        return def->cdTrack;
     if(!strnicmp(def->path.path, "cd:", 3))
         return atoi(def->path.path + 3);
     return 0;

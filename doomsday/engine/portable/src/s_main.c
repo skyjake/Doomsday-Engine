@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_network.h"
 #include "de_system.h"
@@ -200,8 +201,8 @@ sfxinfo_t *S_GetSoundInfo(int sound_id, float *freq, float *volume)
      */
     for(info = sounds + sound_id, i = 0; info->link && i < 10;
         info = info->link, *freq =
-        (info->link_pitch > 0 ? info->link_pitch / 128.0f : *freq), *volume +=
-        (info->link_volume != -1 ? info->link_volume / 127.0f : 0), sound_id =
+        (info->linkPitch > 0 ? info->linkPitch / 128.0f : *freq), *volume +=
+        (info->linkVolume != -1 ? info->linkVolume / 127.0f : 0), sound_id =
         info - sounds, i++);
 
     return info;
@@ -502,16 +503,16 @@ void S_Drawer(void)
         return;
 
     // Go into screen projection mode.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     Sfx_DebugInfo();
 
     // Back to the original.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }
 
 /**

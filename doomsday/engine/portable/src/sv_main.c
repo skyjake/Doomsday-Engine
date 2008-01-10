@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -311,7 +311,7 @@ void Sv_FixLocalAngles(boolean clearFixAnglesFlag)
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         pl = players + i;
-        if(!pl->ingame || !(pl->flags & DDPF_LOCAL))
+        if(!pl->inGame || !(pl->flags & DDPF_LOCAL))
             continue;
 
         // This is not for clients.
@@ -327,7 +327,7 @@ void Sv_FixLocalAngles(boolean clearFixAnglesFlag)
             else
             {
                 pl->clAngle = pl->mo->angle;
-                pl->clLookDir = pl->lookdir;
+                pl->clLookDir = pl->lookDir;
             }
         }
     }
@@ -360,7 +360,7 @@ Con_Message("Sv_HandlePacket: length=%i\n", netBuffer.length);
                    from, id);
 
         // Check for duplicate IDs.
-        if(!pl->ingame && !sender->handshake)
+        if(!pl->inGame && !sender->handshake)
         {
             for(i = 0; i < MAXPLAYERS; ++i)
             {
@@ -394,13 +394,13 @@ Con_Message("Sv_HandlePacket: length=%i\n", netBuffer.length);
         }
 
         // The client requests a handshake.
-        if(!pl->ingame && !sender->handshake)
+        if(!pl->inGame && !sender->handshake)
         {
             // This'll be true until the client says it's ready.
             sender->handshake = true;
 
             // The player is now in the game.
-            players[from].ingame = true;
+            players[from].inGame = true;
 
             // Tell the game about this.
             gx.NetPlayerEvent(from, DDPE_ARRIVAL, 0);
@@ -413,7 +413,7 @@ Con_Message("Sv_HandlePacket: length=%i\n", netBuffer.length);
             sender->runTime = SECONDS_TO_TICKS(gameTime) - 1;
             //sender->lagStress = 0;
         }
-        else if(pl->ingame)
+        else if(pl->inGame)
         {
             // The player is already in the game but requests a new
             // handshake. Perhaps it's starting to record a demo.
@@ -472,7 +472,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
         Msg_WriteShort(mask);
         Msg_Write(msg, strlen(msg) + 1);
         for(i = 1; i < MAXPLAYERS; ++i)
-            if(players[i].ingame && mask & (1 << i) && i != from)
+            if(players[i].inGame && mask & (1 << i) && i != from)
             {
                 Net_SendBuffer(i, SPF_ORDERED);
             }
@@ -674,7 +674,7 @@ void Sv_GetPackets(void)
 
         case PCL_ACK_PLAYER_FIX:
         {
-            fixcounters_t* acked = &players[netBuffer.player].fixacked;
+            fixcounters_t* acked = &players[netBuffer.player].fixAcked;
             acked->angles = Msg_ReadLong();
             acked->pos = Msg_ReadLong();
             acked->mom = Msg_ReadLong();
@@ -682,11 +682,11 @@ void Sv_GetPackets(void)
 Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\n",
             netBuffer.player,
             acked->angles,
-            players[netBuffer.player].fixcounter.angles,
+            players[netBuffer.player].fixCounter.angles,
             acked->pos,
-            players[netBuffer.player].fixcounter.pos,
+            players[netBuffer.player].fixCounter.pos,
             acked->mom,
-            players[netBuffer.player].fixcounter.mom);
+            players[netBuffer.player].fixCounter.mom);
 #endif
             break;
         }
@@ -745,9 +745,9 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
             clients[i].lastTransmit = -1;
             strncpy(clients[i].name, name, PLAYERNAMELEN);
 
-            players[i].fixacked.angles =
-                players[i].fixacked.pos =
-                players[i].fixacked.mom = -1;
+            players[i].fixAcked.angles =
+                players[i].fixAcked.pos =
+                players[i].fixAcked.mom = -1;
 
             Sv_InitPoolForClient(i);
 
@@ -792,8 +792,8 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left.\n",
                 clients[pNumber].name, pNumber);
 
-    wasInGame = players[pNumber].ingame;
-    players[pNumber].ingame = false;
+    wasInGame = players[pNumber].inGame;
+    players[pNumber].inGame = false;
     clients[pNumber].connected = false;
     clients[pNumber].ready = false;
     clients[pNumber].updateCount = 0;
@@ -895,23 +895,27 @@ void Sv_StartNetGame(void)
     // Reset all the counters and other data.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        players[i].ingame = false;
-        clients[i].connected = false;
-        clients[i].ready = false;
-        clients[i].nodeID = 0;
-        clients[i].numTics = 0;
-        clients[i].firstTic = 0;
-        clients[i].enterTime = 0;
-        clients[i].runTime = -1;
-        clients[i].lastTransmit = -1;
-        clients[i].updateCount = UPDATECOUNT;
-        clients[i].fov = 90;
-        clients[i].viewConsole = i;
-        memset(clients[i].name, 0, sizeof(clients[i].name));
-        players[i].flags &= ~DDPF_CAMERA;
-        clients[i].bandwidthRating = BWR_DEFAULT;
-        clients[i].bwrAdjustTime = 0;
-        memset(clients[i].ackTimes, 0, sizeof(clients[i].ackTimes));
+        client_t       *client = &clients[i];
+        ddplayer_t     *ddplr = &players[i];
+
+        ddplr->inGame = false;
+        ddplr->flags &= ~DDPF_CAMERA;
+
+        client->connected = false;
+        client->ready = false;
+        client->nodeID = 0;
+        client->numTics = 0;
+        client->firstTic = 0;
+        client->enterTime = 0;
+        client->runTime = -1;
+        client->lastTransmit = -1;
+        client->updateCount = UPDATECOUNT;
+        client->fov = 90;
+        client->viewConsole = i;
+        memset(client->name, 0, sizeof(client->name));
+        client->bandwidthRating = BWR_DEFAULT;
+        client->bwrAdjustTime = 0;
+        memset(client->ackTimes, 0, sizeof(client->ackTimes));
     }
     gameTime = 0;
     firstNetUpdate = true;
@@ -926,7 +930,7 @@ void Sv_StartNetGame(void)
 
     if(!isDedicated)
     {
-        players[consoleplayer].ingame = true;
+        players[consoleplayer].inGame = true;
         clients[consoleplayer].connected = true;
         clients[consoleplayer].ready = true;
         strcpy(clients[consoleplayer].name, playerName);
@@ -952,7 +956,7 @@ void Sv_Kick(int who)
     Sv_SendText(who, SV_CONSOLE_FLAGS, "You were kicked out!\n");
     Msg_Begin(PSV_SERVER_CLOSE);
     Net_SendBuffer(who, SPF_ORDERED);
-    //players[who].ingame = false;
+    //players[who].inGame = false;
 }
 
 void Sv_SendPlayerFixes(ddplayer_t* player)
@@ -981,41 +985,41 @@ void Sv_SendPlayerFixes(ddplayer_t* player)
     // Increment counters.
     if(player->flags & DDPF_FIXANGLES)
     {
-        Msg_WriteLong(++player->fixcounter.angles);
+        Msg_WriteLong(++player->fixCounter.angles);
         Msg_WriteLong(player->mo->angle);
-        Msg_WriteLong(FLT2FIX(player->lookdir));
+        Msg_WriteLong(FLT2FIX(player->lookDir));
 
 #ifdef _DEBUG
 Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%f lookdir=%f\n",
-            player->fixcounter.angles, FIX2FLT(player->mo->angle),
-            player->lookdir);
+            player->fixCounter.angles, FIX2FLT(player->mo->angle),
+            player->lookDir);
 #endif
     }
 
     if(player->flags & DDPF_FIXPOS)
     {
-        Msg_WriteLong(++player->fixcounter.pos);
+        Msg_WriteLong(++player->fixCounter.pos);
         Msg_WriteLong(FLT2FIX(player->mo->pos[VX]));
         Msg_WriteLong(FLT2FIX(player->mo->pos[VY]));
         Msg_WriteLong(FLT2FIX(player->mo->pos[VZ]));
 
 #ifdef _DEBUG
 Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
-            player->fixcounter.pos,
+            player->fixCounter.pos,
             player->mo->pos[VX], player->mo->pos[VY], player->mo->pos[VZ]);
 #endif
     }
 
     if(player->flags & DDPF_FIXMOM)
     {
-        Msg_WriteLong(++player->fixcounter.mom);
+        Msg_WriteLong(++player->fixCounter.mom);
         Msg_WriteLong(FLT2FIX(player->mo->mom[MX]));
         Msg_WriteLong(FLT2FIX(player->mo->mom[MY]));
         Msg_WriteLong(FLT2FIX(player->mo->mom[MZ]));
 
 #ifdef _DEBUG
 Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
-            player->fixcounter.mom,
+            player->fixCounter.mom,
             player->mo->mom[MX], player->mo->mom[MY], player->mo->mom[MZ]);
 #endif
     }
@@ -1034,10 +1038,10 @@ void Sv_Ticker(void)
     // Note last angles for all players.
     for(i = 0, plr = players; i < MAXPLAYERS; ++i, plr++)
     {
-        if(!plr->ingame || !plr->mo)
+        if(!plr->inGame || !plr->mo)
             continue;
 
-        plr->lastangle = plr->mo->angle;
+        plr->lastAngle = plr->mo->angle;
 
         if(clients[i].bwrAdjustTime > 0)
         {
@@ -1063,7 +1067,7 @@ int Sv_GetNumPlayers(void)
 
     for(i = count = 0; i < MAXPLAYERS; ++i)
     {
-        if(players[i].ingame && players[i].mo)
+        if(players[i].inGame && players[i].mo)
             count++;
     }
     return count;
@@ -1138,12 +1142,12 @@ void Sv_PlaceMobj(mobj_t* mo, float x, float y, float z, boolean onFloor)
     mo->pos[VY] = y;
     mo->pos[VZ] = z;
     P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-    mo->floorz = tmpFloorZ;
-    mo->ceilingz = tmpCeilingZ;
+    mo->floorZ = tmpFloorZ;
+    mo->ceilingZ = tmpCeilingZ;
 
     if(onFloor)
     {
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = mo->floorZ;
     }
 }
 
@@ -1160,7 +1164,7 @@ void Sv_ClientCoords(int playerNum)
     boolean     onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
-    if(!mo || !players[playerNum].ingame ||
+    if(!mo || !players[playerNum].inGame ||
        players[playerNum].flags & DDPF_DEAD)
         return;
 
@@ -1172,13 +1176,13 @@ void Sv_ClientCoords(int playerNum)
 
     if((unsigned) (clz << 16) == (DDMININT & 0xffff0000))
     {
-        clientPos[VZ] = mo->floorz;
+        clientPos[VZ] = mo->floorZ;
         onFloor = true;
     }
 
     // If we aren't about to forcibly change the client's position, update
     // with new pos if it's valid. But it must be a valid pos.
-    if(players[playerNum].fixcounter.pos == players[playerNum].fixacked.pos &&
+    if(players[playerNum].fixCounter.pos == players[playerNum].fixAcked.pos &&
        P_CheckPosXYZ(mo, clientPos[VX], clientPos[VY], clientPos[VZ]))
     {
         // Large differences in the coordinates suggest that player position

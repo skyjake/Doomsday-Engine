@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -118,9 +118,9 @@ void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin, float volume,
     if(toPlr & SVSF_EXCLUDE_ORIGIN)
     {
         // Remove the bit of the player who owns the origin mobj (if any).
-        if(origin && origin->dplayer)
+        if(origin && origin->dPlayer)
         {
-            targetPlayers &= ~(1 << (origin->dplayer - ddplayers));
+            targetPlayers &= ~(1 << (origin->dPlayer - ddplayers));
         }
     }
 
