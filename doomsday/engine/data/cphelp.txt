@@ -666,17 +666,11 @@ desc = 1=Use multitexturing when rendering dynamic lights.
 [rend-light-decor]
 desc = 1=Enable surface light decorations.
 
-[rend-light-decor-plane-far]
-desc = Maximum distance at which plane light decorations are visible.
+[rend-light-decor-far]
+desc = Maximum distance at which light decorations are visible.
 
-[rend-light-decor-wall-far]
-desc = Maximum distance at which wall light decorations are visible.
-
-[rend-light-decor-plane-bright]
-desc = Brightness of plane light decorations.
-
-[rend-light-decor-wall-bright]
-desc = Brightness of wall light decorations.
+[rend-light-decor-bright]
+desc = Brightness of light decorations.
 
 [rend-light-decor-angle]
 desc = Reduce brightness if surface/view angle too steep.

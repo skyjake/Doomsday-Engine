@@ -62,10 +62,8 @@ typedef struct decorsource_s {
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 byte    useDecorations = true;
-float   decorWallMaxDist = 1500;    // No decorations are visible beyond this.
-float   decorPlaneMaxDist = 1500;
-float   decorWallFactor = 1;
-float   decorPlaneFactor = 1;
+float   decorMaxDist = 2048; // No decorations are visible beyond this.
+float   decorFactor = 1;
 float   decorFadeAngle = .1f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -81,13 +79,8 @@ static float surfaceNormal[3];
 void Rend_DecorRegister(void)
 {
     C_VAR_BYTE("rend-light-decor", &useDecorations, 0, 0, 1);
-    C_VAR_FLOAT("rend-light-decor-plane-far", &decorPlaneMaxDist, CVF_NO_MAX,
-                0, 0);
-    C_VAR_FLOAT("rend-light-decor-wall-far", &decorWallMaxDist, CVF_NO_MAX,
-                0, 0);
-    C_VAR_FLOAT("rend-light-decor-plane-bright", &decorPlaneFactor, 0, 0,
-                10);
-    C_VAR_FLOAT("rend-light-decor-wall-bright", &decorWallFactor, 0, 0, 10);
+    C_VAR_FLOAT("rend-light-decor-far", &decorMaxDist, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-light-decor-bright", &decorFactor, 0, 0, 10);
     C_VAR_FLOAT("rend-light-decor-angle", &decorFadeAngle, 0, 0, 1);
 }
 
@@ -212,13 +205,12 @@ static decorsource_t *addDecoration(void)
 static void projectDecorLight(const float pos[3],
                               const ded_decorlight_t *def,
                               const float brightness,
-                              const boolean isWall)
+                              const float maxDist)
 {
     decorsource_t *source;
     lumobj_t   *l;
     float       distance = Rend_PointDist3D(pos);
     float       fadeMul = 1, flareMul = 1;
-    float       maxDist = (isWall ? decorWallMaxDist : decorPlaneMaxDist);
     uint        i;
 
     // Is the point in range?
@@ -232,10 +224,10 @@ static void projectDecorLight(const float pos[3],
     }
 
     // Apply the brightness factor (was calculated using sector lightlevel).
-    fadeMul *= brightness * (isWall ? decorWallFactor : decorPlaneFactor);
+    fadeMul *= brightness * decorFactor;
 
     // Brightness drops as the angle gets too big.
-    if(def->elevation < 2 && decorFadeAngle > 0)    // Close the surface?
+    if(def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
     {
         float       vector[3];
         float       dot;
@@ -261,7 +253,7 @@ static void projectDecorLight(const float pos[3],
         return;
 
     if(!(source = addDecoration()))
-        return;                 // Out of sources!
+        return; // Out of sources!
 
     // Fill in the data for a new luminous object.
     source->light = LO_NewLuminous(LT_OMNI);
@@ -364,7 +356,7 @@ static float checkSectorLight(float lightlevel,
 }
 
 static void projectSurfaceDecorations(const surface_t *suf,
-                                      float lightLevel)
+                                      float lightLevel, float maxDist)
 {
     uint            i;
 
@@ -378,7 +370,7 @@ static void projectSurfaceDecorations(const surface_t *suf,
 
         // Does it pass the sectorlight limitation?
         if((brightMul = checkSectorLight(lightLevel, d->def)) > 0)
-            projectDecorLight(d->pos, d->def, brightMul, false);
+            projectDecorLight(d->pos, d->def, brightMul, maxDist);
     }
 }
 
@@ -406,7 +398,7 @@ static void getDecorationSkipPattern(const ded_decorlight_t *lightDef,
 static void decorateLineSection(const line_t *line, side_t *side,
                                 surface_t *suf, float top,
                                 float bottom, float texOffY,
-                                ded_decor_t *def)
+                                ded_decor_t *def, const float maxDist)
 {
     if(suf->flags & SUF_UPDATE_DECORATIONS)
     {
@@ -493,7 +485,7 @@ static void decorateLineSection(const line_t *line, side_t *side,
         suf->flags &= ~SUF_UPDATE_DECORATIONS;
     }
 
-    projectSurfaceDecorations(suf, side->sector->lightLevel);
+    projectSurfaceDecorations(suf, side->sector->lightLevel, maxDist);
 }
 
 /**
@@ -569,7 +561,7 @@ static boolean checkSectorDecorationBounds(const sector_t *sector,
     return pointInBounds(bounds, viewer, maxDist);
 }
 
-static void decorateLine(const line_t *line)
+static void decorateLine(const line_t *line, const float maxDist)
 {
     side_t         *side;
     sector_t       *highSector, *lowSector;
@@ -636,8 +628,8 @@ static void decorateLine(const line_t *line)
                             offsetY = -texinfo->height + (top - bottom);
                         }
 
-                        decorateLineSection(line, side, suf,
-                                            top, bottom, offsetY, def);
+                        decorateLineSection(line, side, suf, top, bottom,
+                                            offsetY, def, maxDist);
                     }
                 }
             }
@@ -686,8 +678,8 @@ static void decorateLine(const line_t *line)
                         else
                             offsetY = 0;
 
-                        decorateLineSection(line, side, suf,
-                                            top, bottom, offsetY, def);
+                        decorateLineSection(line, side, suf, top, bottom,
+                                            offsetY, def, maxDist);
                     }
                 }
             }
@@ -731,8 +723,8 @@ static void decorateLine(const line_t *line)
                         offsetY = 0;
                     }
 
-                    decorateLineSection(line, side, suf,
-                                        top, bottom, offsetY, def);
+                    decorateLineSection(line, side, suf, top, bottom,
+                                        offsetY, def, maxDist);
                 }
             }
         }
@@ -749,14 +741,14 @@ static void Rend_DecorateLine(const line_t *line, const float viewer[3],
     // Only the lines within the decoration visibility bounding box
     // are processed.
     if(checkLineDecorationBounds(line, viewer, maxDist))
-        decorateLine(line);
+        decorateLine(line, maxDist);
 }
 
 /**
  * Generate decorations for a plane.
  */
 static void decoratePlane(const sector_t *sec, plane_t *pln,
-                          ded_decor_t *def)
+                          ded_decor_t *def, const float maxDist)
 {
     uint                i;
     surface_t          *suf = &pln->surface;
@@ -825,10 +817,10 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
         suf->flags &= ~SUF_UPDATE_DECORATIONS;
     }
 
-    projectSurfaceDecorations(suf, sec->lightLevel);
+    projectSurfaceDecorations(suf, sec->lightLevel, maxDist);
 }
 
-static void decorateSector(const sector_t *sec)
+static void decorateSector(const sector_t *sec, const float maxDist)
 {
     uint        i;
     plane_t    *pln;
@@ -840,7 +832,7 @@ static void decorateSector(const sector_t *sec)
         def = getMaterialDecoration(pln->PS_material);
 
         if(def != NULL) // The surface is decorated.
-            decoratePlane(sec, pln, def);
+            decoratePlane(sec, pln, def, maxDist);
     }
 }
 
@@ -857,7 +849,7 @@ static void Rend_DecorateSector(const sector_t *sec,
 
     // Is this sector close enough for the decorations to be visible?
     if(checkSectorDecorationBounds(sec, viewer, maxDist))
-        decorateSector(sec);
+        decorateSector(sec, maxDist);
 }
 
 /**
@@ -871,7 +863,7 @@ void Rend_InitDecorationsForFrame(void)
     if(useDecorations)
     {
         uint        i;
-        float       viewer[3], maxDist;
+        float       viewer[3];
 
         viewer[VX] = viewX;
         viewer[VY] = viewY;
@@ -880,13 +872,11 @@ void Rend_InitDecorationsForFrame(void)
         // Process all lines. This could also be done during sectors,
         // but validCount would need to be used to prevent duplicate
         // processing.
-        maxDist = decorWallMaxDist;
         for(i = 0; i < numlines; ++i)
-            Rend_DecorateLine(&lines[i], viewer, maxDist);
+            Rend_DecorateLine(&lines[i], viewer, decorMaxDist);
 
         // Process all planes.
-        maxDist = decorPlaneMaxDist;
         for(i = 0; i < numsectors; ++i)
-            Rend_DecorateSector(&sectors[i], viewer, maxDist);
+            Rend_DecorateSector(&sectors[i], viewer, decorMaxDist);
     }
 }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,10 +30,8 @@
 #define __DOOMSDAY_RENDER_DECOR_H__
 
 extern byte     useDecorations;
-extern float    decorWallMaxDist;  // No decorations are visible beyond this.
-extern float    decorPlaneMaxDist;
-extern float    decorWallFactor;
-extern float    decorPlaneFactor;
+extern float    decorMaxDist;  // No decorations are visible beyond this.
+extern float    decorFactor;
 extern float    decorFadeAngle;
 
 void            Rend_DecorRegister(void);
