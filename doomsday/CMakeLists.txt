@@ -73,7 +73,6 @@ OPTION (BUILDJHEXEN "Optionally build the jHexen plugin. Default ON" ON)
 OPTION (BUILDWOLFTC "Optionally build the WolfTC plugin. Default OFF" OFF)
 OPTION (BUILDDOOM64TC "Optionally build the Doom64TC plugin. Default OFF" OFF)
 OPTION (BUILDJSTRIFE "Optionally build the jStrife plugin. Default OFF" OFF)
-OPTION (BUILDOPENGL "Optionally build the OpenGL renderer. Default ON" ON)
 OPTION (BUILDWADMAPCONVERT "Optionally build the WAD Map Converter plugin. Default ON" ON)
 OPTION (BUILDSDLMIXER "Optionally build the SDLMixer plugin. Default ON" ON)
 OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default OFF" OFF)
@@ -247,9 +246,7 @@ ENDIF (APPLE)
 ################################################################################
 ######################## Include Standard Cmake Helpers  #######################
 IF (NOT BUILDDEDICATED)
-    IF (BUILDOPENGL)
-        FIND_PACKAGE(OpenGL REQUIRED)
-    ENDIF (BUILDOPENGL)
+    FIND_PACKAGE(OpenGL REQUIRED)
 ENDIF (NOT BUILDDEDICATED)
 
 FIND_PACKAGE(SDL REQUIRED)
@@ -293,10 +290,6 @@ IF (NOT BUILDDEDICATED)
     ENDIF (BUILDOPENAL)
 ENDIF (NOT BUILDDEDICATED)
 
-IF (NOT BUILDDEDICATED AND NOT BUILDOPENGL)
-    MESSAGE( FATAL_ERROR
-    "If not building a dedicated server, the OPENGL renderer must be built.")
-ENDIF (NOT BUILDDEDICATED AND NOT BUILDOPENGL)
 
 IF (NOT BUILDDEDICATED AND NOT BUILDOPENAL AND NOT BUILDSDLMIXER)
     MESSAGE( FATAL_ERROR
@@ -462,18 +455,17 @@ IF (APPLE)
 ENDIF (APPLE)
 ################################################################################
 ######################## Find Our Build Deps  ##################################
-IF (BUILDOPENGL)
-    ## Confirm we have OpenGL
-    IF (OPENGL_FOUND STREQUAL "NO")
-        MESSAGE (FATAL_ERROR "** libGL not found. On Ubuntu install libgl1-mesa-dev. On Mac OSX install FIXME. On Windows install FIXME.")
-    ENDIF (OPENGL_FOUND STREQUAL "NO")
+## Confirm we have OpenGL
+IF (OPENGL_FOUND STREQUAL "NO")
+    MESSAGE (FATAL_ERROR "** libGL not found. On Ubuntu install libgl1-mesa-dev. On Mac OSX install FIXME. On Windows install FIXME.")
+ENDIF (OPENGL_FOUND STREQUAL "NO")
 
-    ## Confirm we have GLU
-    IF (OPENGL_GLU_FOUND STREQUAL "NO")
-        MESSAGE (FATAL_ERROR "** libGLU not found. On Ubuntu install libglu1-mesa-dev. On Mac OSX install FIXME. On Windows install FIXME.")
-    ENDIF (OPENGL_GLU_FOUND STREQUAL "NO")
-    INCLUDE_DIRECTORIES (${OPENGL_INCLUDE_DIR})
-ENDIF (BUILDOPENGL)
+## Confirm we have GLU
+IF (OPENGL_GLU_FOUND STREQUAL "NO")
+    MESSAGE (FATAL_ERROR "** libGLU not found. On Ubuntu install libglu1-mesa-dev. On Mac OSX install FIXME. On Windows install FIXME.")
+ENDIF (OPENGL_GLU_FOUND STREQUAL "NO")
+INCLUDE_DIRECTORIES (${OPENGL_INCLUDE_DIR})
+
 
 ## Confirm we have SDL
 IF (SDL_FOUND STREQUAL "NO")
@@ -720,11 +712,6 @@ ENDIF (WIN32)
 #ENDIF (WIN32)
 
 ################################################################################
-######################## OpenGL Renderer Plugin ################################
-IF (BUILDOPENGL)
-    ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/opengl )
-ENDIF (BUILDOPENGL)
-################################################################################
 ######################## Dehacked Reader Plugin  ###############################
 ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/dehread )
 ################################################################################
@@ -820,7 +807,6 @@ MESSAGE( STATUS "BUILDWOLFTC:                  " ${BUILDWOLFTC} )
 MESSAGE( STATUS "BUILDDOOM64TC:                " ${BUILDDOOM64TC} )
 MESSAGE( STATUS "BUILDJSTRIFE:                 " ${BUILDJSTRIFE} )
 MESSAGE( STATUS "BUILDWADMAPCONVERT:           " ${BUILDWADMAPCONVERT} )
-MESSAGE( STATUS "BUILDOPENGL:                  " ${BUILDOPENGL} )
 MESSAGE( STATUS "BUILDOPENAL:                  " ${BUILDOPENAL} )
 MESSAGE( STATUS "BUILDSDLMIXER:                " ${BUILDSDLMIXER} )
 MESSAGE( STATUS "BUILDDEDICATED:               " ${BUILDDEDICATED} )
