@@ -53,6 +53,7 @@ Flag { ID = "bm_sub2"; Value = 7; }  # src_alpha multiplied with src_color
 Flag { ID = "bm_revsub"; Value = 4; }
 Flag { ID = "bm_mul"; Value = 5; }
 Flag { ID = "bm_invmul"; Value = 6; }
+Flag { ID = "bm_inv"; Value = 7; }
 
 # Models
 Flag { ID = "df_fullbright"; Value = 0x1; }
@@ -200,18 +201,3 @@ Flag { ID = "ptf_zeroyaw"; Value = 0x200; }
 Flag { ID = "ptf_zeropitch"; Value = 0x400; }
 Flag { ID = "ptf_rndyaw"; Value = 0x800; }
 Flag { ID = "ptf_rndpitch"; Value = 0x1000; }
-
-# DAM - Lump data classes:
-Flag { ID = "damlmpc_thing"; Value = 1; }
-Flag { ID = "damlmpc_vertex"; Value = 2; }
-Flag { ID = "damlmpc_linedef"; Value = 3; }
-Flag { ID = "damlmpc_sidedef"; Value = 4; }
-Flag { ID = "damlmpc_sector"; Value = 5; }
-
-# DAM - Property Flags:
-Flag { ID = "dampf_unsigned"; Value = 0x1; }
-Flag { ID = "dampf_fracbits"; Value = 0x2; }
-Flag { ID = "dampf_flat"; Value = 0x4; }
-Flag { ID = "dampf_texture"; Value = 0x8; }
-Flag { ID = "dampf_noindex"; Value = 0x10; }
-Flag { ID = "dampf_msbconvert"; Value = 0x20; }
