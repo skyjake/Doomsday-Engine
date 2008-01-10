@@ -173,7 +173,7 @@ void            DGL_MatrixMode(int mode);
 void            DGL_PushMatrix(void);
 void            DGL_PopMatrix(void);
 void            DGL_LoadIdentity(void);
-void            DGL_Begin(int mode);
+void            DGL_Begin(glprimtype_t type);
 void            DGL_End(void);
 void            DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
 void            DGL_Color3ubv(const DGLubyte *data);
