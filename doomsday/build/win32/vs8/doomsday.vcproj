@@ -74,7 +74,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="dxguid.lib dxerr.lib dinput8.lib dsound.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="dxguid.lib dxerr.lib dinput8.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
 				OutputFile="./Bin/Release/Doomsday.exe"
 				Version="1.0"
 				LinkIncremental="1"
@@ -174,7 +174,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib dxerr.lib dinput8.lib dsound.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="dxguid.lib dxerr.lib dinput8.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -349,10 +349,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\dd_dgl.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\dd_help.c"
 				>
 			</File>
@@ -406,6 +402,22 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\def_read.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\dgl_common.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\dgl_draw.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\dgl_ext.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\dgl_texture.c"
 				>
 			</File>
 			<File
@@ -828,6 +840,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\engine\win32\src\dgl_main.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\engine\win32\src\sys_cdaudio.c"
 					>
 				</File>
@@ -951,6 +967,26 @@
 				>
 				<File
 					RelativePath="..\..\..\engine\unix\src\dd_uinit.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\src\dgl_main.c"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1288,10 +1324,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\dd_dgl.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\dd_help.h"
 				>
 			</File>
@@ -1368,6 +1400,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\de_dgl.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\de_edit.h"
 				>
 			</File>
@@ -1420,7 +1456,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\dglib.h"
+				RelativePath="..\..\..\engine\portable\include\dgl_atiext.h"
 				>
 			</File>
 			<File
