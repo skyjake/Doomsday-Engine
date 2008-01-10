@@ -5,7 +5,6 @@
  ./../../plugins/common/src/m_multi.c
  ./../../plugins/common/src/hu_menu.c
  ./../../plugins/wolftc/src/g_ctrl.c
- ./../../plugins/common/src/g_dglinit.c
  ./../../plugins/wolftc/src/d_api.c
  ./../../plugins/wolftc/src/d_refresh.c
  ./../../plugins/wolftc/src/d_main.c

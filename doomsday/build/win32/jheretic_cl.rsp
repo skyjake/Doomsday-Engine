@@ -5,7 +5,6 @@
  ./../../plugins/common/src/m_multi.c
  ./../../plugins/common/src/hu_menu.c
  ./../../plugins/jheretic/src/g_ctrl.c
- ./../../plugins/common/src/g_dglinit.c
  ./../../plugins/jheretic/src/h_api.c
  ./../../plugins/jheretic/src/h_refresh.c
  ./../../plugins/jheretic/src/h_main.c

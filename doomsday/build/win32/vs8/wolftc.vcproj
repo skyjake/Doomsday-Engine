@@ -251,10 +251,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\g_dgl.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\common\include\g_update.h"
 				>
 			</File>
@@ -392,10 +388,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\g_controls.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\src\g_dglinit.c"
 				>
 			</File>
 			<File
