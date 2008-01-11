@@ -41,7 +41,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-//#define Z_TEST_BIAS       .00005
 #define NUM_FLARES          5
 
 // TYPES -------------------------------------------------------------------
@@ -50,7 +49,7 @@ typedef struct flare_s {
     float       offset;
     float       size;
     float       alpha;
-    int         texture;    // -1=dlight, 0=flare, 1=brflare, 2=bigflare
+    int         texture; // -1=dlight, 0=flare, 1=brflare, 2=bigflare
 } flare_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -76,14 +75,6 @@ float   haloDimStart = 10, haloDimEnd = 100;
 float   haloFadeMax = 0, haloFadeMin = 0, minHaloSize = 1;
 
 flare_t flares[NUM_FLARES] = {
-#if 0
-    {0, 0.85f, .6f, -1 /*2 */ },    // Primary flare.
-    {1, .35f, .3f, 0},          // Main secondary flare.
-    {1.5f, .25f, .2f, 1},
-    {-.6f, .2f, .2f, 0},
-    {.4f, .25f, .15f, 0}
-#endif
-
     {0, 1, 1, 0},               // Primary flare.
     {1, .41f, .5f, 0},          // Main secondary flare.
     {1.5f, .29f, .333f, 1},
@@ -91,20 +82,13 @@ flare_t flares[NUM_FLARES] = {
     {.4f, .29f, .25f, 0}
 };
 
-/*  { 0, 1 },       // Primary flare.
-   { 1, 2 },        // Main secondary flare.
-   { 1.5f, 4 },
-   { -.6f, 4 },
-   { .4f, 4 }
- */
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
 void H_Register(void)
 {
-    cvar_t  cvars[] = {
+    cvar_t          cvars[] = {
         {"rend-halo", 0, CVT_INT, &haloMode, 0, 5},
         {"rend-halo-realistic", 0, CVT_INT, &haloRealistic, 0, 1},
         {"rend-halo-bright", 0, CVT_INT, &haloBright, 0, 100},
@@ -147,30 +131,30 @@ void H_SetupState(boolean dosetup)
 /**
  * The caller must check that @c sourcevis, really has a ->light!
  *
- * @param x             X coordinate of the center of the halo.
- * @param y             Y coordinate of the center of the halo.
- * @param z             Z coordinate of the center of the halo.
- * @param lumobj        The lumobj casting the halo.
- * @param primary       @c true = we'll draw the primary halo, otherwise the
- *                      secondary ones (which won't be clipped or occluded
- *                      by anything; they're drawn after everything else,
- *                      during a separate pass).
- *                      @c false = the caller must setup the rendering state.
+ * @param x         X coordinate of the center of the halo.
+ * @param y         Y coordinate of the center of the halo.
+ * @param z         Z coordinate of the center of the halo.
+ * @param lumobj    The lumobj casting the halo.
+ * @param primary   @c true = we'll draw the primary halo, otherwise the
+ *                  secondary ones (which won't be clipped or occluded
+ *                  by anything; they're drawn after everything else,
+ *                  during a separate pass).
+ *                  @c false = the caller must setup the rendering state.
  *
- * @return              @c true, if a halo was rendered.
+ * @return          @c true, if a halo was rendered.
  */
 boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
                      boolean primary)
 {
-    float   viewPos[3];
-    float   viewToCenter[3], mirror[3], normalViewToCenter[3];
-    float   leftOff[3], rightOff[3], center[3], radius;
-    float   haloPos[3], occlusionFactor;
-    int     i, k, tex;
-    float   color[4], radX, radY, scale, turnAngle = 0;
-    float   fadeFactor = 1, secBold, secDimFactor;
-    float   colorAverage, f, distanceDim;
-    flare_t *fl;
+    int             i, k, tex;
+    float           viewPos[3];
+    float           viewToCenter[3], mirror[3], normalViewToCenter[3];
+    float           leftOff[3], rightOff[3], center[3], radius;
+    float           haloPos[3], occlusionFactor;
+    float           color[4], radX, radY, scale, turnAngle = 0;
+    float           fadeFactor = 1, secBold, secDimFactor;
+    float           colorAverage, f, distanceDim;
+    flare_t        *fl;
 
     if(lum->type != LT_OMNI)
         return false; // Only omni lights support halos.
@@ -188,7 +172,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         // something else in the scene.
         // \fixme Therefore we need to check using a line-of-sight method
         // that only checks front facing geometry...?
-            return false;
+        return false;
     }
 
     if((lum->flags & LUMF_NOHALO) || lum->distanceToViewer <= 0 ||
@@ -196,7 +180,8 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         return false;
 
     if(haloFadeMax && haloFadeMax != haloFadeMin &&
-       lum->distanceToViewer < haloFadeMax && lum->distanceToViewer >= haloFadeMin)
+       lum->distanceToViewer < haloFadeMax &&
+       lum->distanceToViewer >= haloFadeMin)
     {
         fadeFactor = (lum->distanceToViewer - haloFadeMin) /
             (haloFadeMax - haloFadeMin);
@@ -222,11 +207,11 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
 
     center[VX] = x;
     center[VZ] = y;
-    center[VY] = z + LUM_OMNI(lum)->zOff;
+    center[VY] = z + (LUM_OMNI(lum)->zOff - .5f) * viewUpVec[i];
 
     // Apply the flare's X offset. (Positive is to the right.)
     for(i = 0; i < 3; i++)
-        center[i] -= LUM_OMNI(lum)->xOff * viewSideVec[i];
+        center[i] -= (LUM_OMNI(lum)->xOff + .5f) * viewSideVec[i];
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
@@ -273,7 +258,9 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
                 turnAngle = -turnAngle;
         }
         else
+        {
             turnAngle = 0;
+        }
     }
 
     // Radius is affected by the precalculated 'flaresize' and the
@@ -330,20 +317,17 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         color[CA] *= .8f * haloBright / 100.0f;
         if(i)
         {
-            color[CA] *= secBold;   // Secondary flare boldness.
+            color[CA] *= secBold; // Secondary flare boldness.
         }
+
         if(color[CA] <= 0)
-        {
-            break;              // Not visible.
-        }
+            break; // Not visible.
 
         // In the realistic mode, halos are slightly dimmer.
         if(haloRealistic)
         {
             color[CA] *= .6f;
         }
-
-        DGL_Color4fv(color);
 
         if(haloRealistic)
         {
@@ -380,19 +364,6 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
             }
         }
 
-        if(renderTextures)
-            GL_BindTexture(tex);
-        else
-            DGL_Bind(0);
-
-        // Don't wrap the texture. Evidently some drivers can't just
-        // take a hint... (or then something's changing the wrapping
-        // mode inadvertently)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-					    GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                        GL_CLAMP_TO_EDGE);
-
         // In the realistic mode, halos are slightly smaller.
         if(haloRealistic)
         {
@@ -407,30 +378,45 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         haloPos[VX] = center[VX];
         haloPos[VY] = center[VY];
         haloPos[VZ] = center[VZ];
-        if(i)                   // Secondary halos.
-        {
+        if(i)
+        {   // Secondary halos.
             // Mirror it according to the flare table.
-            for(k = 0; k < 3; k++)
+            for(k = 0; k < 3; ++k)
                 haloPos[k] += mirror[k] * fl->offset;
         }
+
+        if(renderTextures)
+            GL_BindTexture(tex);
+        else
+            DGL_Bind(0);
+
+        // Don't wrap the texture. Evidently some drivers can't just
+        // take a hint... (or then something's changing the wrapping
+        // mode inadvertently)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+					    GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                        GL_CLAMP_TO_EDGE);
+
+        DGL_Color4fv(color);
 
         DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0);
         DGL_Vertex3f(haloPos[VX] + radX * leftOff[VX],
-                    haloPos[VY] + radY * leftOff[VY],
-                    haloPos[VZ] + radX * leftOff[VZ]);
+                     haloPos[VY] + radY * leftOff[VY],
+                     haloPos[VZ] + radX * leftOff[VZ]);
         DGL_TexCoord2f(1, 0);
         DGL_Vertex3f(haloPos[VX] + radX * rightOff[VX],
-                    haloPos[VY] + radY * rightOff[VY],
-                    haloPos[VZ] + radX * rightOff[VZ]);
+                     haloPos[VY] + radY * rightOff[VY],
+                     haloPos[VZ] + radX * rightOff[VZ]);
         DGL_TexCoord2f(1, 1);
         DGL_Vertex3f(haloPos[VX] - radX * leftOff[VX],
-                    haloPos[VY] - radY * leftOff[VY],
-                    haloPos[VZ] - radX * leftOff[VZ]);
+                     haloPos[VY] - radY * leftOff[VY],
+                     haloPos[VZ] - radX * leftOff[VZ]);
         DGL_TexCoord2f(0, 1);
         DGL_Vertex3f(haloPos[VX] - radX * rightOff[VX],
-                    haloPos[VY] - radY * rightOff[VY],
-                    haloPos[VZ] - radX * rightOff[VZ]);
+                     haloPos[VY] - radY * rightOff[VY],
+                     haloPos[VZ] - radX * rightOff[VZ]);
         DGL_End();
     }
 
@@ -450,14 +436,14 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
  */
 D_CMD(FlareConfig)
 {
-    int     i;
-    float   val;
+    int             i;
+    float           val;
 
     if(argc == 2)
     {
         if(!stricmp(argv[1], "list"))
         {
-            for(i = 0; i < NUM_FLARES; i++)
+            for(i = 0; i < NUM_FLARES; ++i)
             {
                 Con_Message("%i: pos:%f s:%.2f a:%.2f tex:%i\n", i,
                             flares[i].offset, flares[i].size, flares[i].alpha,
@@ -471,6 +457,7 @@ D_CMD(FlareConfig)
         val = strtod(argv[3], NULL);
         if(i < 0 || i >= NUM_FLARES)
             return false;
+
         if(!stricmp(argv[2], "pos"))
         {
             flares[i].offset = val;
@@ -494,5 +481,6 @@ D_CMD(FlareConfig)
         Con_Printf("  %s list\n", argv[0]);
         Con_Printf("  %s (num) pos/size/alpha/tex (val)\n", argv[0]);
     }
+
     return true;
 }

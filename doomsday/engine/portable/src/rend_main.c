@@ -75,7 +75,7 @@ static void Rend_RenderBoundingBoxes(void);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int useDynLights, translucentIceCorpse;
-extern int skyhemispheres, haloMode;
+extern int skyhemispheres;
 extern int loMaxRadius;
 extern int devNoCulling;
 
