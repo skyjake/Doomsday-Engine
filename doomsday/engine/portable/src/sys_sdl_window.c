@@ -39,6 +39,7 @@
 #include <SDL_syswm.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_refresh.h"
@@ -452,13 +453,11 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
             // Shut everything down, but remember our settings.
             GL_TotalReset(true, 0, 0);
             gx.UpdateState(DD_RENDER_RESTART_PRE);
-
-            DGL_DestroyContext();
         }
 
-        if(DGL_CreateContext(window->width, window->height, window->bpp,
-                             (window->flags & DDWF_FULLSCREEN)? false : true,
-                             data)
+        if(createContext(window->width, window->height, window->bpp,
+                         (window->flags & DDWF_FULLSCREEN)? false : true,
+                         data))
         {
             // We can get on with initializing the OGL state.
             initState();
