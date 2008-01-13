@@ -90,7 +90,7 @@ static void checkExtensions(void)
     if(DGL_state.maxTexUnits > 2)
         DGL_state.maxTexUnits = 2;
 
-    if(DGL_state_ext.extAniso)
+    if(DGL_state_ext.aniso)
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &DGL_state.maxAniso);
     else
         DGL_state.maxAniso = 1;
@@ -100,20 +100,15 @@ static void checkExtensions(void)
     InitArrays();
 
     DGL_state.useAnisotropic =
-        ((DGL_state_ext.extAniso && !ArgExists("-noanifilter"))? true : false);
+        ((DGL_state_ext.aniso && !ArgExists("-noanifilter"))? true : false);
 
     DGL_state.allowCompression = true;
 }
 
 static void printGLUInfo(void)
 {
-    char           *token, *extbuf;
     GLint           iVal;
     GLfloat         fVals[2];
-
-    token = (char *) glGetString(GL_EXTENSIONS);
-    extbuf = malloc(strlen(token) + 1);
-    strcpy(extbuf, token);
 
     // Print some OpenGL information (console must be initialized by now).
     Con_Message("OpenGL information:\n");
@@ -127,7 +122,7 @@ static void printGLUInfo(void)
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
     Con_Message("  Maximum Texture Size: %i\n", iVal);
-    if(DGL_state_ext.extAniso)
+    if(DGL_state_ext.aniso)
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
         Con_Message("  Maximum Anisotropy: %i\n", iVal);
@@ -137,7 +132,7 @@ static void printGLUInfo(void)
         Con_Message("  Variable Texture Anisotropy Unavailable.\n");
     }
 
-    if(DGL_state_ext.extS3TC)
+    if(DGL_state_ext.s3TC)
     {
         glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
         Con_Message("  Num Texture Formats: %i\n", iVal);
@@ -150,30 +145,7 @@ static void printGLUInfo(void)
     Con_Message("  Line Width Range: %3.1f...%3.1f\n",
                 fVals[0], fVals[1]);
 
-    Con_Message("  Extensions:\n");
-
-    // Show the list of GL extensions.
-    token = strtok(extbuf, " ");
-    while(token)
-    {
-        Con_Message("      "); // Indent.
-        if(verbose)
-        {
-            // Show full names.
-            Con_Message("%s\n", token);
-        }
-        else
-        {
-            // Two on one line, clamp to 30 characters.
-            Con_Message("%-30.30s", token);
-            token = strtok(NULL, " ");
-            if(token)
-                Con_Message(" %-30.30s", token);
-            Con_Message("\n");
-        }
-        token = strtok(NULL, " ");
-    }
-    free(extbuf);
+    DGL_PrintExtensions();
 }
 
 static void printDGLConfiguration(void)
@@ -286,11 +258,22 @@ void initState(void)
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
 
+#if DRMESA
+    glDisable(GL_DITHER);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_POINT_SMOOTH);
+    glDisable(GL_POLYGON_SMOOTH);
+    glShadeModel(GL_FLAT);
+#else
     // Setup for antialiased lines/points.
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     DGL_state.currentLineWidth = 1.5f;
     glLineWidth(DGL_state.currentLineWidth);
+
+    glShadeModel(GL_SMOOTH);
+#endif
 
     // Alpha blending is a go!
     glEnable(GL_BLEND);
@@ -313,12 +296,6 @@ void initState(void)
 #endif
 
 #if DRMESA
-    glDisable(GL_DITHER);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_LINE_SMOOTH);
-    glDisable(GL_POINT_SMOOTH);
-    glDisable(GL_POLYGON_SMOOTH);
-    glShadeModel(GL_FLAT);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 #else
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -341,11 +318,11 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
     if(activate)
     {
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
-                  DGL_state_ext.extNvTexEnvComb ? GL_COMBINE4_NV : GL_COMBINE);
+                  DGL_state_ext.nvTexEnvComb ? GL_COMBINE4_NV : GL_COMBINE);
         glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
 
         // Combine: texAlpha * constRGB + 1 * prevRGB.
-        if(DGL_state_ext.extNvTexEnvComb)
+        if(DGL_state_ext.nvTexEnvComb)
         {
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
@@ -357,7 +334,7 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_RGB_NV, GL_PREVIOUS);
             glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_RGB_NV, GL_SRC_COLOR);
         }
-        else if(DGL_state_ext.extAtiTexEnvComb)
+        else if(DGL_state_ext.atiTexEnvComb)
         {   // MODULATE_ADD_ATI: Arg0 * Arg2 + Arg1.
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE_ADD_ATI);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
@@ -433,7 +410,7 @@ boolean DGL_GetIntegerv(int name, int *v)
         break;
 
     case DGL_MODULATE_ADD_COMBINE:
-        *v = DGL_state_ext.extNvTexEnvComb || DGL_state_ext.extAtiTexEnvComb;
+        *v = DGL_state_ext.nvTexEnvComb || DGL_state_ext.atiTexEnvComb;
         break;
 
     case DGL_PALETTED_TEXTURES:
@@ -494,7 +471,11 @@ boolean DGL_GetIntegerv(int name, int *v)
         break;
 
     case DGL_VSYNC:
-        *v = DGL_state_ext.extVSync? DGL_state.useVSync : -1;
+#if WIN32
+        *v = DGL_state_ext.wglSwapIntervalEXT? DGL_state.useVSync : -1;
+#else
+        *v = 1;
+#endif
         break;
 
     case DGL_GRAY_MIPMAP:
@@ -605,7 +586,7 @@ boolean DGL_SetInteger(int name, int value)
             envAddColoredAlpha(true, value == 5 ? GL_SRC_ALPHA : GL_SRC_COLOR);
 
             // Alpha remains unchanged.
-            if(DGL_state_ext.extNvTexEnvComb)
+            if(DGL_state_ext.nvTexEnvComb)
             {
                 glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
                 glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_ZERO);
@@ -795,13 +776,13 @@ int DGL_Enable(int cap)
         break;
 
     case DGL_VSYNC:
-        if(DGL_state_ext.extVSync)
-        {
 #ifdef WIN32
+        if(DGL_state_ext.wglSwapIntervalEXT)
+        {
             wglSwapIntervalEXT(1);
-#endif
             DGL_state.useVSync = true;
         }
+#endif
         break;
 
     default:
@@ -837,13 +818,13 @@ void DGL_Disable(int cap)
         break;
 
     case DGL_VSYNC:
-        if(DGL_state_ext.extVSync)
-        {
 #ifdef WIN32
+        if(DGL_state_ext.wglSwapIntervalEXT)
+        {
             wglSwapIntervalEXT(0);
-#endif
             DGL_state.useVSync = false;
         }
+#endif
         break;
 
     default:

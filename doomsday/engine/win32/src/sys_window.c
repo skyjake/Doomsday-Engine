@@ -94,10 +94,11 @@ static DWORD screenWidth, screenHeight, screenBPP;
  */
 int Sys_GetDesktopBPP(void)
 {
-    HWND        hDesktop = GetDesktopWindow();
-    HDC         desktop_hdc = GetDC(hDesktop);
-    int         deskbpp = GetDeviceCaps(desktop_hdc, PLANES) *
-                            GetDeviceCaps(desktop_hdc, BITSPIXEL);
+    HWND                hDesktop = GetDesktopWindow();
+    HDC                 desktop_hdc = GetDC(hDesktop);
+    int                 deskbpp = GetDeviceCaps(desktop_hdc, PLANES) *
+        GetDeviceCaps(desktop_hdc, BITSPIXEL);
+
     ReleaseDC(hDesktop, desktop_hdc);
     return deskbpp;
 }
@@ -114,8 +115,8 @@ int Sys_GetDesktopBPP(void)
  */
 int Sys_ChangeVideoMode(int width, int height, int bpp)
 {
-    int         res, i;
-    DEVMODE     current, testMode, newMode;
+    int                 res, i;
+    DEVMODE             current, testMode, newMode;
 
     screenBPP = Sys_GetDesktopBPP();
 
@@ -259,8 +260,8 @@ boolean Sys_ShutdownWindowManager(void)
  */
 static boolean createContext(ddwindow_t *window)
 {
-    HDC         hdc;
-    boolean     ok = true;
+    HDC                 hdc;
+    boolean             ok = true;
 
     Con_Message("createContext: OpenGL.\n");
 
@@ -318,9 +319,9 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
                                   int x, int y, int w, int h, int bpp,
                                   int flags, const char *title)
 {
-    ddwindow_t *win, *pWin = NULL;
-    HWND        phWnd = NULL;
-    boolean     ok = true;
+    ddwindow_t         *win, *pWin = NULL;
+    HWND                phWnd = NULL;
+    boolean             ok = true;
 
     if(!(bpp == 32 || bpp == 16))
     {
@@ -368,8 +369,8 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
 #ifndef DRMESA
         pfd.dwFlags =
             PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-        pfd.cColorBits = 32;
-        pfd.cDepthBits = 32;
+        pfd.cColorBits = (bpp == 32? 24 : 16);
+        pfd.cDepthBits = 16;
 #else /* Double Buffer, no alpha */
         pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
             PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
@@ -474,8 +475,9 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
                       int x, int y, int w, int h, int bpp, int flags,
                       const char *title, void *data)
 {
-    ddwindow_t *win;
-    //int         nCmdShow = (data? *((int*) data) : 0); // Currently ignored.
+    ddwindow_t         *win;
+    /* Currently ignored.
+    int                nCmdShow = (data? *((int*) data) : 0); */
 
     if(!winManagerInited)
         return 0; // Window manager not initialized yet.
@@ -553,7 +555,7 @@ static void destroyDDWindow(ddwindow_t *window)
  */
 boolean Sys_DestroyWindow(uint idx)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(!window)
         return false;
@@ -572,7 +574,7 @@ boolean Sys_DestroyWindow(uint idx)
  */
 boolean Sys_SetActiveWindow(uint idx)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(!window)
         return false;
@@ -585,15 +587,15 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
                            int newWidth, int newHeight, int newBPP,
                            int wFlags, int uFlags)
 {
-    int             x, y, width, height, bpp, flags;
-    HWND            hWnd;
-    boolean         newGLContext = false;
-    boolean         updateStyle = false;
-    boolean         changeVideoMode = false;
-    boolean         changeWindowDimensions = false;
-    boolean         noMove = (uFlags & DDSW_NOMOVE);
-    boolean         noSize = (uFlags & DDSW_NOSIZE);
-    boolean         inControlPanel;
+    int                 x, y, width, height, bpp, flags;
+    HWND                hWnd;
+    boolean             newGLContext = false;
+    boolean             updateStyle = false;
+    boolean             changeVideoMode = false;
+    boolean             changeWindowDimensions = false;
+    boolean             noMove = (uFlags & DDSW_NOMOVE);
+    boolean             noSize = (uFlags & DDSW_NOSIZE);
+    boolean             inControlPanel;
 
     // Window paramaters are not changeable in dedicated mode.
     if(isDedicated)
@@ -864,7 +866,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
 boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
                       int newBPP, uint wFlags, uint uFlags)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(window)
         return setDDWindow(window, newX, newY, newWidth, newHeight, newBPP,
@@ -877,7 +879,7 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
  */
 void Sys_UpdateWindow(uint idx)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(window->glContext)
     {   // Window has a glContext attached, so make the content of the
@@ -906,7 +908,7 @@ void Sys_UpdateWindow(uint idx)
  */
 boolean Sys_SetWindowTitle(uint idx, const char *title)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(window)
         return (SetWindowText(window->hWnd, (title))? true : false);
@@ -929,7 +931,7 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
 boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width,
                                 int *height)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(!window || (!x && !y && !width && !height))
         return false;
@@ -960,7 +962,7 @@ boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width,
  */
 boolean Sys_GetWindowBPP(uint idx, int *bpp)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(!window || !bpp)
         return false;
@@ -984,7 +986,7 @@ boolean Sys_GetWindowBPP(uint idx, int *bpp)
  */
 boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(!window || !fullscreen)
         return false;
@@ -997,8 +999,8 @@ boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
 /**
  * Attempt to get a HWND handle to the given window.
  *
- * \todo: Factor platform specific design patterns out of Doomsday. We should
- * not be passing around HWND handles...
+ * \todo: Factor platform specific design patterns out of Doomsday.
+ * We should not be passing around HWND handles...
  *
  * @param idx           Index identifier (1-based) to the window.
  *
@@ -1006,7 +1008,7 @@ boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
  */
 HWND Sys_GetWindowHandle(uint idx)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(!window)
         return NULL;

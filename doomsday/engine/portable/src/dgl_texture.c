@@ -70,11 +70,11 @@ GLenum ChooseFormat(int comps)
 		return compress ? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE;
 
 	case 3:	// RGB
-		return !compress ? 3 : DGL_state_ext.extS3TC ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT :
+		return !compress ? 3 : DGL_state_ext.s3TC ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT :
 			GL_COMPRESSED_RGB;
 
 	case 4:	// RGBA
-		return !compress ? 4 : DGL_state_ext.extS3TC ? GL_COMPRESSED_RGBA_S3TC_DXT3_EXT // >1-bit alpha
+		return !compress ? 4 : DGL_state_ext.s3TC ? GL_COMPRESSED_RGBA_S3TC_DXT3_EXT // >1-bit alpha
 			: GL_COMPRESSED_RGBA;
 
     default:
@@ -281,7 +281,7 @@ boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
 		w /= 2, h /= 2, numLevels++);
 
 	// We do not want automatical mipmaps.
-	if(DGL_state_ext.extGenMip)
+	if(DGL_state_ext.genMip)
 		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
 
 	// Upload the first level right away.
@@ -358,13 +358,13 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
 	}
 
 	// Automatic mipmap generation?
-	if(DGL_state_ext.extGenMip && genMips)
+	if(DGL_state_ext.genMip && genMips)
 		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
 
 	// Paletted texture?
 	if(DGL_state_texture.usePalTex && format == DGL_COLOR_INDEX_8)
 	{
-		if(genMips && !DGL_state_ext.extGenMip)
+		if(genMips && !DGL_state_ext.genMip)
 		{   // Build mipmap textures.
 			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_COLOR_INDEX8_EXT, width,
 							  height, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, data);
@@ -465,7 +465,7 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
 			}
 		}
 
-        if(genMips && !DGL_state_ext.extGenMip)
+        if(genMips && !DGL_state_ext.genMip)
 		{   // Build all mipmap levels.
 			gluBuild2DMipmaps(GL_TEXTURE_2D, ChooseFormat(colorComps), width,
 							  height, loadFormat, GL_UNSIGNED_BYTE, buffer);

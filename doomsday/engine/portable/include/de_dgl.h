@@ -34,11 +34,9 @@
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  include <GL/gl.h>
-#  undef GL_ARB_multitexture
-#  undef GL_EXT_blend_minmax
+#  include <GL/wglext.h>
 #  include <GL/glext.h>
 #  include <GL/glu.h>
-#  include <GL/wglext.h>
 #endif
 
 #ifdef UNIX
@@ -75,18 +73,18 @@ typedef enum arraytype_e {
 } arraytype_t;
 
 typedef struct dgl_state_s {
-    int      maxTexSize;
-    int      palExtAvailable, sharedPalExtAvailable;
-    boolean  allowCompression;
-    boolean  noArrays;
-    boolean  forceFinishBeforeSwap;
-    int      useAnisotropic;
-    boolean  useVSync;
-    int      maxAniso;
-    int      maxTexUnits;
-    boolean  useFog;
-    float    nearClip, farClip;
-    float    currentLineWidth;
+    int         maxTexSize;
+    int         palExtAvailable, sharedPalExtAvailable;
+    boolean     allowCompression;
+    boolean     noArrays;
+    boolean     forceFinishBeforeSwap;
+    int         useAnisotropic;
+    boolean     useVSync;
+    int         maxAniso;
+    int         maxTexUnits;
+    boolean     useFog;
+    float       nearClip, farClip;
+    float       currentLineWidth;
 } dgl_state_t;
 
 typedef struct rgba_s {
@@ -100,16 +98,18 @@ typedef struct dgl_state_texture_s {
 } dgl_state_texture_t;
 
 typedef struct dgl_state_ext_s {
-    int      extMultiTex;
-    int      extTexEnvComb;
-    int      extNvTexEnvComb;
-    int      extAtiTexEnvComb;
-    int      extAniso;
-    int      extVSync;
-    int      extGenMip;
-    int      extBlendSub;
-    int      extS3TC;
-    int      extLockArray;
+    int         multiTex;
+    int         texEnvComb;
+    int         nvTexEnvComb;
+    int         atiTexEnvComb;
+    int         aniso;
+    int         genMip;
+    int         blendSub;
+    int         s3TC;
+    int         lockArray;
+#if WIN32
+    int         wglSwapIntervalEXT;
+#endif
 } dgl_state_ext_t;
 
 extern int      polyCounter;
@@ -119,6 +119,8 @@ extern dgl_state_texture_t DGL_state_texture;
 extern dgl_state_ext_t DGL_state_ext;
 
 #ifdef WIN32
+extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+
 extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
 extern PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
 extern PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
@@ -127,7 +129,6 @@ extern PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
 extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
-extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
 #endif
 
@@ -142,6 +143,7 @@ boolean         DGL_Init(void);
 void            DGL_Shutdown(void);
 
 void            DGL_InitExtensions(void);
+void            DGL_PrintExtensions(void);
 
 void            DGL_Show(void);
 boolean         DGL_GetIntegerv(int name, int *v);
