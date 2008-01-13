@@ -75,7 +75,6 @@ typedef enum arraytype_e {
 } arraytype_t;
 
 typedef struct dgl_state_s {
-    int      screenWidth, screenHeight, screenBits, windowed;
     int      maxTexSize;
     int      palExtAvailable, sharedPalExtAvailable;
     boolean  allowCompression;
@@ -138,16 +137,11 @@ void            InitArrays(void);
 void            CheckError(void);
 boolean         enablePalTexExt(boolean enable);
 
+boolean         DGL_PreInit(void);
 boolean         DGL_Init(void);
 void            DGL_Shutdown(void);
 
 void            DGL_InitExtensions(void);
-
-boolean         DGL_ChangeVideoMode(int width, int height, int bpp);
-
-boolean         DGL_CreateContext(int width, int height, int bpp,
-                                  boolean windowed, void *data);
-void            DGL_DestroyContext(void);
 
 void            DGL_Show(void);
 boolean         DGL_GetIntegerv(int name, int *v);

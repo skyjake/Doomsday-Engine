@@ -200,7 +200,7 @@ static int initPluginSystem(void)
 
 static int initDGL(void)
 {
-    return DGL_Init();
+    return DGL_PreInit();
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -245,10 +245,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         {
             DD_ErrorBox(true, "Error initializing plugin system.");
         }
-        // Load the rendering DLL.
         else if(!initDGL())
         {
-            DD_ErrorBox(true, "Error loading rendering library.");
+            DD_ErrorBox(true, "Error initializing DGL.");
         }
         // Load the game plugin.
         else if(!loadGamePlugin(&app))
@@ -269,6 +268,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, buf, &lnCmdShow)))
         {
             DD_ErrorBox(true, "Error creating main window.");
+        }
+        else if(!DGL_Init())
+        {
+            DD_ErrorBox(true, "Error initializing DGL.");
         }
         else
         {   // All initialization complete.

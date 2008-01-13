@@ -606,8 +606,7 @@ static void Con_BusyDrawer(void)
         Con_BusyDrawConsoleOutput();
     }
 
-    // Swap buffers.
-    DGL_Show();
+    Sys_UpdateWindow(windowIDX);
 }
 
 #if 0

@@ -176,7 +176,7 @@ void GL_DoUpdate(void)
     // Blit screen to video.
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DGL_Show();
+    Sys_UpdateWindow(windowIDX);
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -692,7 +692,7 @@ void GL_ShutdownRefresh(void)
 void GL_Shutdown(void)
 {
     if(!initGLOk)
-        return;                 // Not yet initialized fully.
+        return; // Not yet initialized fully.
 
     GL_ShutdownDeferred();
     GL_ShutdownFont();

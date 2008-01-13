@@ -32,12 +32,13 @@
 
 #include "de_base.h"
 #include "de_dgl.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
 // A helpful macro that changes the origin of the screen
 // coordinate system.
-#define FLIP(y) (DGL_state.screenHeight - (y+1))
+#define FLIP(y) (theWindow->height - (y+1))
 
 // TYPES -------------------------------------------------------------------
 
@@ -47,14 +48,211 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+dgl_state_t DGL_state;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static boolean initedGL = false;
+static boolean firstTimeInit = true;
+
 // CODE --------------------------------------------------------------------
+
+/**
+ * Set the currently active GL texture by name.
+ *
+ * @param texture       GL texture name to make active.
+ */
+void activeTexture(const GLenum texture)
+{
+#ifdef WIN32
+    if(!glActiveTextureARB)
+        return;
+    glActiveTextureARB(texture);
+#else
+# ifdef USE_MULTITEXTURE
+    glActiveTextureARB(texture);
+# endif
+#endif
+}
+
+static void checkExtensions(void)
+{
+    // Get the maximum texture size.
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &DGL_state.maxTexSize);
+
+    DGL_InitExtensions();
+
+    glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &DGL_state.maxTexUnits);
+#ifndef USE_MULTITEXTURE
+    DGL_state.maxTexUnits = 1;
+#endif
+    // But sir, we are simple people; two units is enough.
+    if(DGL_state.maxTexUnits > 2)
+        DGL_state.maxTexUnits = 2;
+
+    if(DGL_state_ext.extAniso)
+        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &DGL_state.maxAniso);
+    else
+        DGL_state.maxAniso = 1;
+
+    // Decide whether vertex arrays should be done manually or with real
+    // OpenGL calls.
+    InitArrays();
+
+    DGL_state.useAnisotropic =
+        ((DGL_state_ext.extAniso && !ArgExists("-noanifilter"))? true : false);
+
+    DGL_state.allowCompression = true;
+}
+
+static void printGLUInfo(void)
+{
+    char           *token, *extbuf;
+    GLint           iVal;
+    GLfloat         fVals[2];
+
+    token = (char *) glGetString(GL_EXTENSIONS);
+    extbuf = malloc(strlen(token) + 1);
+    strcpy(extbuf, token);
+
+    // Print some OpenGL information (console must be initialized by now).
+    Con_Message("OpenGL information:\n");
+    Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
+    Con_Message("  Renderer: %s\n", glGetString(GL_RENDERER));
+    Con_Message("  Version: %s\n", glGetString(GL_VERSION));
+    Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
+
+    glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
+    Con_Message("  Available Texture units: %i\n", iVal);
+
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
+    Con_Message("  Maximum Texture Size: %i\n", iVal);
+    if(DGL_state_ext.extAniso)
+    {
+        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
+        Con_Message("  Maximum Anisotropy: %i\n", iVal);
+    }
+    else
+    {
+        Con_Message("  Variable Texture Anisotropy Unavailable.\n");
+    }
+
+    if(DGL_state_ext.extS3TC)
+    {
+        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        Con_Message("  Num Texture Formats: %i\n", iVal);
+    }
+
+    glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
+    Con_Message("  Line Width Granularity: %3.1f\n",
+                fVals[0]);
+    glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
+    Con_Message("  Line Width Range: %3.1f...%3.1f\n",
+                fVals[0], fVals[1]);
+
+    Con_Message("  Extensions:\n");
+
+    // Show the list of GL extensions.
+    token = strtok(extbuf, " ");
+    while(token)
+    {
+        Con_Message("      "); // Indent.
+        if(verbose)
+        {
+            // Show full names.
+            Con_Message("%s\n", token);
+        }
+        else
+        {
+            // Two on one line, clamp to 30 characters.
+            Con_Message("%-30.30s", token);
+            token = strtok(NULL, " ");
+            if(token)
+                Con_Message(" %-30.30s", token);
+            Con_Message("\n");
+        }
+        token = strtok(NULL, " ");
+    }
+    free(extbuf);
+}
+
+static void printDGLConfiguration(void)
+{
+    static const char *yesNo[] = {"Disabled", "Enabled"};
+
+    Con_Message("DGL Configuration:\n");
+
+    Con_Message("  Texture Compression: %s\n", yesNo[DGL_state_texture.useCompr? 1:0]);
+    Con_Message("  Variable Texture Anisotropy: %s\n", yesNo[DGL_state.useAnisotropic? 1:0]);
+    Con_Message("  Utilized Texture Units: %i\n", DGL_state.maxTexUnits);
+}
+
+boolean DGL_PreInit(void)
+{
+    if(isDedicated)
+        return true;
+
+    if(initedGL)
+        return true; // Already inited.
+
+    memset(&DGL_state, 0, sizeof(DGL_state));
+    memset(&DGL_state_ext, 0, sizeof(DGL_state_ext));
+    memset(&DGL_state_texture, 0, sizeof(DGL_state_texture));
+
+    DGL_state_texture.dumpTextures =
+        (ArgCheck("-dumptextures")? true : false);
+
+    if(DGL_state_texture.dumpTextures)
+        Con_Message("  Dumping textures (mipmap level zero).\n");
+
+    DGL_state.forceFinishBeforeSwap =
+        (ArgExists("-glfinish")? true : false);
+
+    if(DGL_state.forceFinishBeforeSwap)
+        Con_Message("  glFinish() forced before swapping buffers.\n");
+
+    initedGL = true;
+    return true;
+}
+
+/**
+ * Initializes DGL.
+ */
+boolean DGL_Init(void)
+{
+    if(!initedGL)
+        return false;
+
+    if(isDedicated)
+        return true;
+
+    if(firstTimeInit)
+    {
+        checkExtensions();
+
+        printGLUInfo();
+        printDGLConfiguration();
+
+        firstTimeInit = false;
+    }
+
+    return true;
+}
+
+/**
+ * Shutdown the DGL drawing facilities.
+ */
+void DGL_Shutdown(void)
+{
+    if(!initedGL)
+        return;
+
+    initedGL = false;
+}
 
 void initState(void)
 {
     GLfloat         fogcol[4] = { .54f, .54f, .54f, 1 };
-    GLfloat         values[2];
 
     DGL_state.nearClip = 5;
     DGL_state.farClip = 8000;
@@ -89,13 +287,6 @@ void initState(void)
     glLoadIdentity();
 
     // Setup for antialiased lines/points.
-    glGetFloatv(GL_LINE_WIDTH_GRANULARITY, values);
-    Con_Message("  GL_LINE_WIDTH_GRANULARITY: %3.1f\n",
-                values[0]);
-    glGetFloatv(GL_LINE_WIDTH_RANGE, values);
-    Con_Message("  GL_LINE_WIDTH_RANGE: %3.1f %3.1f\n",
-                values[0], values[1]);
-
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     DGL_state.currentLineWidth = 1.5f;
@@ -135,9 +326,6 @@ void initState(void)
 
     // Prefer good quality in texture compression.
     glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
-
-    // Update viewport to full display.
-    DGL_Viewport(0, 0, DGL_state.screenWidth, DGL_state.screenHeight);
 
     // Clear the buffers.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -793,8 +981,8 @@ int DGL_Project(int num, gl_fc3vertex_t *inVertices,
 
             // Check that it's truly visible.
             if(out->pos[VX] < 0 || out->pos[VY] < 0 ||
-               out->pos[VX] >= DGL_state.screenWidth ||
-               out->pos[VY] >= DGL_state.screenHeight)
+               out->pos[VX] >= theWindow->width ||
+               out->pos[VY] >= theWindow->height)
                 continue;
 
             memcpy(out->color, in->color, sizeof(in->color));

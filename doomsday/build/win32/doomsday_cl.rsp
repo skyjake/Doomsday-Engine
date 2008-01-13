@@ -147,7 +147,6 @@
  ./../../engine/portable/src/dd_loop.c
  ./../../engine/portable/src/dd_input.c
  ./../../engine/portable/src/dd_help.c
- ./../../engine/win32/src/dgl_main.c
  ./../../engine/portable/src/dgl_common.c
  ./../../engine/portable/src/dgl_draw.c
  ./../../engine/portable/src/dgl_ext.c

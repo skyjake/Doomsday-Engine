@@ -72,7 +72,36 @@ static boolean winManagerInited = false;
 static ddwindow_t mainWindow;
 static boolean mainWindowInited = false;
 
+static int screenWidth, screenHeight, screenBPP;
+
 // CODE --------------------------------------------------------------------
+
+boolean Sys_ChangeVideoMode(int width, int height, int bpp)
+{
+    int         flags = SDL_OPENGL;
+    const SDL_VideoInfo *info = NULL;
+
+    if(!DGL_state.windowed)
+        flags |= SDL_FULLSCREEN;
+
+    if(!SDL_SetVideoMode(width, height, bpp, flags))
+    {
+        // This could happen for a variety of reasons, including
+        // DISPLAY not being set, the specified resolution not being
+        // available, etc.
+        Con_Message("SDL Error: %s\n", SDL_GetError());
+        return false;
+    }
+
+    Con_Message("createContext: OpenGL.\n");
+
+    info = SDL_GetVideoInfo();
+    screenWidth = info->current_w;
+    screenHeight = info->current_h;
+    screenBPP = info->vfmt->BitsPerPixel;
+
+    return true;
+}
 
 static __inline ddwindow_t *getWindow(uint idx)
 {
@@ -135,6 +164,51 @@ boolean Sys_ShutdownWindowManager(void)
 
     // Now off-line, no more window management will be possible.
     winManagerInited = false;
+
+    return true;
+}
+
+static boolean initOpenGL(void)
+{
+    // Attempt to set the video mode.
+    if(!Sys_ChangeVideoMode(theWindow->width, theWindow->height,
+                            theWindow->bpp))
+        return false;
+
+    // Setup the GL state like we want it.
+    initState();
+    return true;
+}
+
+/**
+ * Attempt to acquire a device context for OGL rendering and then init.
+ *
+ * @param width         Width of the OGL window.
+ * @param height        Height of the OGL window.
+ * @param bpp           0= the current display color depth is used.
+ * @param windowed      @c true = windowed mode ELSE fullscreen.
+ * @param data          Ptr to system-specific data, e.g a window handle
+ *                      or similar.
+ *
+ * @return              @c true if successful.
+ */
+static boolean createContext(int width, int height, int bpp,
+                             boolean windowed, void *data)
+{
+    Con_Message("createContext: OpenGL.\n");
+
+    // Set GL attributes.  We want at least 5 bits per color and a 16
+    // bit depth buffer.  Plus double buffering, of course.
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+    if(!initOpenGL())
+    {
+        Con_Error("createContext: OpenGL init failed.\n");
+    }
 
     return true;
 }
@@ -340,7 +414,7 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     {
         if(flags & DDWF_FULLSCREEN)
         {
-            if(!DGL_ChangeVideoMode(width, height, bpp))
+            if(!Sys_ChangeVideoMode(width, height, bpp))
             {
                 Sys_CriticalMessage("Sys_SetWindow: Resolution change failed.");
                 return false;
@@ -382,9 +456,13 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
             DGL_DestroyContext();
         }
 
-        DGL_CreateContext(window->width, window->height, window->bpp,
-                          (window->flags & DDWF_FULLSCREEN)? false : true,
-                          data);
+        if(DGL_CreateContext(window->width, window->height, window->bpp,
+                             (window->flags & DDWF_FULLSCREEN)? false : true,
+                             data)
+        {
+            // We can get on with initializing the OGL state.
+            initState();
+        }
 
         if(glIsInited)
         {
@@ -457,6 +535,20 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
                            wFlags, uFlags);
 
     return false;
+}
+
+/**
+ * Make the content of the framebuffer visible.
+ */
+void Sys_UpdateWindow(uint idx)
+{
+    if(DGL_state.forceFinishBeforeSwap)
+    {
+        glFinish();
+    }
+
+    // Swap buffers.
+    SDL_GL_SwapBuffers(); // Includes a call to glFlush()
 }
 
 /**

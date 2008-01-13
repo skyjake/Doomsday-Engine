@@ -840,10 +840,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\engine\win32\src\dgl_main.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\..\engine\win32\src\sys_cdaudio.c"
 					>
 				</File>
@@ -967,26 +963,6 @@
 				>
 				<File
 					RelativePath="..\..\..\engine\unix\src\dd_uinit.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\unix\src\dgl_main.c"
 					>
 					<FileConfiguration
 						Name="Release|Win32"

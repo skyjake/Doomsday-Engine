@@ -83,7 +83,112 @@ static boolean winManagerInited = false;
 static uint numWindows = 0;
 static ddwindow_t **windows = NULL;
 
+static DWORD screenWidth, screenHeight, screenBPP;
+
 // CODE --------------------------------------------------------------------
+
+/**
+ * Determine the desktop BPP.
+ *
+ * @return              BPP in use for the desktop.
+ */
+int Sys_GetDesktopBPP(void)
+{
+    HWND        hDesktop = GetDesktopWindow();
+    HDC         desktop_hdc = GetDC(hDesktop);
+    int         deskbpp = GetDeviceCaps(desktop_hdc, PLANES) *
+                            GetDeviceCaps(desktop_hdc, BITSPIXEL);
+    ReleaseDC(hDesktop, desktop_hdc);
+    return deskbpp;
+}
+
+/**
+ * Change the display mode using the Win32 API, the closest available
+ * refresh rate is selected.
+ *
+ * @param width         Requested horizontal resolution.
+ * @param height        Requested vertical resolution.
+ * @param bpp           Requested bits per pixel.
+ *
+ * @return              Non-zero= success.
+ */
+int Sys_ChangeVideoMode(int width, int height, int bpp)
+{
+    int         res, i;
+    DEVMODE     current, testMode, newMode;
+
+    screenBPP = Sys_GetDesktopBPP();
+
+    // First get the current settings.
+    memset(&current, 0, sizeof(current));
+    current.dmSize = sizeof(DEVMODE);
+    if(EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &current))
+    {
+        if(!bpp)
+            bpp = current.dmBitsPerPel;
+    }
+    else if(!bpp)
+    {   // A safe fallback.
+        bpp = 16;
+    }
+
+    if(width == current.dmPelsWidth && height == current.dmPelsHeight &&
+       bpp == current.dmBitsPerPel)
+       return 1; // No need to change, so success!
+
+    // Override refresh rate?
+    if(ArgCheckWith("-refresh", 1))
+        current.dmDisplayFrequency = strtol(ArgNext(), 0, 0);
+
+    // Clear the structure.
+    memset(&newMode, 0, sizeof(newMode));
+    newMode.dmSize = sizeof(newMode);
+
+    // Let's enumerate all possible modes to find the most suitable one.
+    for(i = 0;; i++)
+    {
+        memset(&testMode, 0, sizeof(testMode));
+        testMode.dmSize = sizeof(DEVMODE);
+        if(!EnumDisplaySettings(NULL, i, &testMode))
+            break;
+
+        if(testMode.dmPelsWidth == (unsigned) width &&
+           testMode.dmPelsHeight == (unsigned) height &&
+           testMode.dmBitsPerPel == (unsigned) bpp)
+        {
+            // This looks promising. We'll take the one that best matches
+            // the current refresh rate.
+            if(abs(current.dmDisplayFrequency - testMode.dmDisplayFrequency) <
+               abs(current.dmDisplayFrequency - newMode.dmDisplayFrequency))
+            {
+                memcpy(&newMode, &testMode, sizeof(DEVMODE));
+            }
+        }
+    }
+
+    if(!newMode.dmPelsWidth)
+    {
+        // A perfect match was not found. Let's try something.
+        newMode.dmPelsWidth = width;
+        newMode.dmPelsHeight = height;
+        newMode.dmBitsPerPel = bpp;
+        newMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL;
+    }
+
+    if((res = ChangeDisplaySettings(&newMode, 0)) != DISP_CHANGE_SUCCESSFUL)
+    {
+        Con_Message("Sys_ChangeVideoMode: Error %x.\n", res);
+        return 0; // Failed, damn you.
+    }
+
+    // Update the screen size variables.
+    screenWidth = width;
+    screenHeight = height;
+    if(bpp)
+        screenBPP = bpp;
+
+    return 1; // Success.
+}
 
 static __inline ddwindow_t *getWindow(uint idx)
 {
@@ -136,10 +241,54 @@ boolean Sys_ShutdownWindowManager(void)
         windows = NULL;
     }
 
+    // Go back to normal display settings.
+    ChangeDisplaySettings(0, 0);
+
     // Now off-line, no more window management will be possible.
     winManagerInited = false;
 
     return true;
+}
+
+/**
+ * Attempt to acquire a device context for OGL rendering and then init.
+ *
+ * @param window        Ptr to the window to attach the context to.
+ *
+ * @return              @c true iff successful.
+ */
+static boolean createContext(ddwindow_t *window)
+{
+    HDC         hdc;
+    boolean     ok = true;
+
+    Con_Message("createContext: OpenGL.\n");
+
+    hdc = GetDC(window->hWnd);
+    if(!hdc)
+    {
+        Sys_CriticalMessage("createContext: Failed acquiring device.");
+        ok = false;
+    }
+
+    // Create the OpenGL rendering context.
+    if(!(window->glContext = wglCreateContext(hdc)))
+    {
+        Sys_CriticalMessage("createContext: Creation of rendering context "
+                            "failed.");
+        ok = false;
+    }
+    else if(!wglMakeCurrent(hdc, window->glContext)) // Make the context current.
+    {
+        Sys_CriticalMessage("createContext: Couldn't make the rendering "
+                            "context current.");
+        ok = false;
+    }
+
+    if(hdc)
+        ReleaseDC(window->hWnd, hdc);
+
+    return ok;
 }
 
 /**
@@ -366,6 +515,13 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
 
 static void destroyDDWindow(ddwindow_t *window)
 {
+    // Delete the window's rendering context if one has been acquired.
+    if(window->glContext)
+    {
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(window->glContext);
+    }
+
     if(window->flags & DDWF_FULLSCREEN)
     {   // Change back to the desktop before doing anything further to try
         // and circumvent crusty old drivers from corrupting the desktop.
@@ -516,7 +672,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     {
         if(flags & DDWF_FULLSCREEN)
         {
-            if(!DGL_ChangeVideoMode(width, height, bpp))
+            if(!Sys_ChangeVideoMode(width, height, bpp))
             {
                 Sys_CriticalMessage("Sys_SetWindow: Resolution change failed.");
                 return false;
@@ -627,12 +783,15 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
             GL_TotalReset(true, 0, 0);
             gx.UpdateState(DD_RENDER_RESTART_PRE);
 
-            DGL_DestroyContext();
+            wglMakeCurrent(NULL, NULL);
+            wglDeleteContext(window->glContext);
         }
 
-        DGL_CreateContext(window->width, window->height, window->bpp,
-                          (window->flags & DDWF_FULLSCREEN)? false : true,
-                          window->hWnd);
+        if(createContext(window))
+        {
+            // We can get on with initializing the OGL state.
+            initState();
+        }
 
         if(glIsInited)
         {
@@ -711,6 +870,30 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
         return setDDWindow(window, newX, newY, newWidth, newHeight, newBPP,
                            wFlags, uFlags);
     return false;
+}
+
+/**
+ * Update the contents of the window.
+ */
+void Sys_UpdateWindow(uint idx)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(window->glContext)
+    {   // Window has a glContext attached, so make the content of the
+        // framebuffer visible.
+        HDC     hdc = GetDC(window->hWnd);
+
+        if(DGL_state.forceFinishBeforeSwap)
+        {
+            glFinish();
+        }
+
+        // Swap buffers.
+        glFlush();
+        SwapBuffers(hdc);
+        ReleaseDC(window->hWnd, hdc);
+    }
 }
 
 /**

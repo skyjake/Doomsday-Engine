@@ -116,7 +116,6 @@ static int query(const char *ext, int *var)
 
     if(ext)
     {
-        Con_Message("Checking OpenGL extension: %s\n", ext);
         result = (queryExtension(ext)? 1 : 0);
         if(var)
             *var = result;
@@ -131,7 +130,7 @@ static int query(const char *ext, int *var)
  */
 void DGL_InitExtensions(void)
 {
-    int         i;
+    GLint           iVal;
 
     if(query("GL_EXT_compiled_vertex_array", &DGL_state_ext.extLockArray))
     {
@@ -177,17 +176,12 @@ void DGL_InitExtensions(void)
     query("GL_EXT_texture_compression_s3tc", &DGL_state_ext.extS3TC);
     // On by default if we have it.
     glGetError();
-    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, (GLint*) &i);
-    if(i && glGetError() == GL_NO_ERROR)
-    {
+    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+    if(iVal && glGetError() == GL_NO_ERROR)
         DGL_state_texture.useCompr = true;
-        Con_Message("OpenGL: Texture compression (%i formats).\n", i);
-    }
 
     if(ArgExists("-notexcomp"))
-    {
         DGL_state_texture.useCompr = false;
-    }
 
 #ifdef USE_MULTITEXTURE
     // ARB_multitexture
