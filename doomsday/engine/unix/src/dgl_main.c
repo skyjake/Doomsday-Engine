@@ -75,7 +75,7 @@ boolean DGL_ChangeVideoMode(int width, int height, int bpp)
 {
     int     flags = SDL_OPENGL;
 
-    if(!windowed)
+    if(!DGL_state.windowed)
         flags |= SDL_FULLSCREEN;
 
     if(!SDL_SetVideoMode(width, height, bpp, flags))
@@ -93,7 +93,8 @@ boolean DGL_ChangeVideoMode(int width, int height, int bpp)
 static boolean initOpenGL(void)
 {
     // Attempt to set the video mode.
-    if(!DGL_ChangeVideoMode(screenWidth, screenHeight, screenBits))
+    if(!DGL_ChangeVideoMode(DGL_state.screenWidth, DGL_state.screenHeight,
+                            DGL_state.screenBits))
         return false;
 
     // Setup the GL state like we want it.
@@ -160,9 +161,9 @@ boolean DG_CreateContext(int width, int height, int bpp, boolean windowed,
     strcpy(extbuf, token);
 
     // Check the maximum texture size.
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &DGL_state.maxTexSize);
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &((GLint) DGL_state.maxTexSize));
 
-    DG_InitExtensions();
+    DGL_InitExtensions();
 
     if(firstTimeInit)
     {

@@ -232,7 +232,7 @@ static void checkExtensions(void)
     }
     Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
 
-    glGetIntegerv(GL_MAX_TEXTURE_UNITS, &DGL_state.maxTexUnits);
+    glGetIntegerv(GL_MAX_TEXTURE_UNITS, &((GLint) DGL_state.maxTexUnits));
     Con_Message("  Found Texture units: %i\n", DGL_state.maxTexUnits);
 #ifndef USE_MULTITEXTURE
     DGL_state.maxTexUnits = 1;
