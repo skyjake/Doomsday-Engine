@@ -80,6 +80,7 @@ typedef struct dgl_state_s {
     int      palExtAvailable, sharedPalExtAvailable;
     boolean  allowCompression;
     boolean  noArrays;
+    boolean  forceFinishBeforeSwap;
     int      useAnisotropic;
     boolean  useVSync;
     int      maxAniso;
