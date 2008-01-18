@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 2006 Cryptoapi developers.
  *\author Copyright © 2002 James Morris <jmorris@intercode.com.au>
  *\author Copyright © 1993 Colin Plumb
