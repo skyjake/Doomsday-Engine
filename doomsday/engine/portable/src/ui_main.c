@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,6 +41,7 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 #include "de_misc.h"
+#include "compare_float.h"
 
 #include "rend_console.h" // \todo Move Con_InitUI somewhere more suitable.
 
@@ -1663,7 +1665,7 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
         return false;
     }
     // Did the value change?
-    if(oldvalue != dat->value && ob->action)
+    if(!Almost_Equal_Float(oldvalue, dat->value, MAX_FLOAT_FUZZ) && ob->action)
         ob->action(ob);
     return used;
 }
@@ -1685,7 +1687,7 @@ void UISlider_Ticker(ui_object_t *ob)
             dat->value = dat->min;
         if(dat->value > dat->max)
             dat->value = dat->max;
-        if(oldval != dat->value && ob->action)
+        if(!Almost_Equal_Float(oldval, dat->value, MAX_FLOAT_FUZZ) && ob->action)
             ob->action(ob);
     }
 }
@@ -1733,7 +1735,7 @@ void UISlider_Drawer(ui_object_t *ob)
         sprintf(buf, "%.2f", dat->value);
     else
         sprintf(buf, "%i", (int) dat->value);
-    if(dat->zerotext && dat->value == dat->min)
+    if(dat->zerotext && Almost_Equal_Float(dat->value, dat->min, MAX_FLOAT_FUZZ))
         strcpy(buf, dat->zerotext);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf,
