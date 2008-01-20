@@ -806,3 +806,7 @@ ENDIF (BUILDWOLFTC)
 IF (BUILDDOOM64TC)
     INSTALL(FILES ${DENG_DOOM64TC_DATA} DESTINATION ${DENG_DOOM64TC_DATA_DIR} )
 ENDIF (BUILDDOOM64TC)
+
+################################################################################
+######################## Unit Testing  #########################################
+ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/tests/compare_float )
