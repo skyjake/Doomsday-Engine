@@ -1,6 +1,6 @@
 ## deng build scripts. 
-## Copyright © 2006 - 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
-## Copyright © 2007 Daniel Swanson <danij@dengine.net>
+## Copyright Â© 2006 - 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
+## Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
 ##
 ## This file is licensed under the GNU GPLv3 or any later versions,
 ##
@@ -600,47 +600,8 @@ ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
 
-#IF (ENABLEMAO)
-#   FILE(GLOB TEMP1_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/cl_*.c)
-#   FILE(GLOB TEMP2_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/net_*.c)
-#   FILE(GLOB TEMP3_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/sv_*.c)
-#   CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_doomsday_net_mao.c ${TEMP1_SOURCES} ${TEMP2_SOURCES} ${TEMP3_SOURCES})
-#
-#   FILE(GLOB TEMP1_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/con_*.c)
-#   CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_doomsday_con_mao.c ${TEMP1_SOURCES})
-#
-#   FILE(GLOB TEMP1_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/dd_*.c)
-#   CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_doomsday_dd_mao.c ${TEMP1_SOURCES} )
-#
-#   FILE(GLOB TEMP1_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/def_*.c)
-#   CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_doomsday_def_mao.c ${TEMP1_SOURCES})
-#
-#   FILE(GLOB TEMP1_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_*.c)
-#   FILE(GLOB TEMP2_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_*.c)
-#   FILE(GLOB TEMP3_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/r_*.c)
-#   FILE(GLOB TEMP4_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/ui_*.c)
-#   CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_doomsday_rend_mao.c ${TEMP1_SOURCES} ${TEMP2_SOURCES} ${TEMP3_SOURCES} ${TEMP4_SOURCES} ${CMAKE_SOURCE_DIR}/engine/portable/src/edit_bias.c)
-#
-#   FILE(GLOB TEMP1_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/m_*.c)
-#   CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_doomsday_m_mao.c ${TEMP1_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c)
-#
-#   FILE(GLOB TEMP1_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/p_*.c)
-#   CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_doomsday_p_mao.c ${TEMP1_SOURCES})
-#
-#   FILE(GLOB TEMP1_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/s_*.c)
-#   CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_doomsday_s_mao.c ${TEMP1_SOURCES})
-#
-#   FILE(GLOB TEMP1_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_*.c)
-#   CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_doomsday_sys_mao.c ${TEMP1_SOURCES})
-#
-#   FILE(GLOB TEMP1_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/tab_*.c)
-#   CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_doomsday_tab_mao.c ${TEMP1_SOURCES})
-#
-#   FILE(GLOB DENG_PORTABLE_SOURCES ${CMAKE_BINARY_DIR}/_doomsday_*.c)
-#ELSE (ENABLEMAO)
-    FILE(GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c)
-    SET (DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c)
-#ENDIF (ENABLEMAO)
+FILE(GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c)
+SET (DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c)
 
 IF (UNIX)
     IF (NOT WIN32)
@@ -653,17 +614,6 @@ ENDIF (UNIX)
 IF (WIN32)
     INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/win32/include )
     FILE(GLOB DENG_WIN32_SOURCES ${CMAKE_SOURCE_DIR}/engine/win32/src/*.c)
-##  SET (DENG_WIN32_SOURCES
-##  ${CMAKE_SOURCE_DIR}/engine/win32/src/dd_winit.c
-##  ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_console.c
-##  ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_findfile.c
-##  ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_mixer.c
-##  ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_musd_win.c
-##  ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
-##  ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_stwin.c
-##  ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c )
-
-
     SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_WIN32_SOURCES}  ${LZSS_SOURCES})
 ENDIF (WIN32)
 
