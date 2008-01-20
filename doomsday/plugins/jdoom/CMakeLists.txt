@@ -1,5 +1,5 @@
 ## deng build scripts. 
-## Copyright © 2006 - 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+## Copyright © 2006 - 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
 ## This file is licensed under the GNU GPLv3 or any later versions,
 ##
 ## the deng build scripts is free software; you can redistribute it and/or
@@ -18,8 +18,8 @@
 ## Boston, MA  02110-1301  USA
 ##
 ################################################################################
-INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/plugins/common/include )
-FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c)
+INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/plugins/common/include ${CMAKE_SOURCE_DIR}/utilities/include )
+FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/* ${CMAKE_SOURCE_DIR}/utilities/src/*)
 
 ################################################################################
 ######################## jDoom Game Plugin  ####################################
