@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *\author Copyright © 2006-2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
+#include "compare_float.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1053,8 +1054,8 @@ void R_UpdateTranslationTables(void)
 boolean R_IsValidLightDecoration(const ded_decorlight_t *lightDef)
 {
     return (lightDef &&
-            (lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
-             lightDef->color[2] != 0));
+            (!Almost_Equal_Float(lightDef->color[0], 0, MAX_FLOAT_FUZZ) || !Almost_Equal_Float(lightDef->color[1], 0, MAX_FLOAT_FUZZ) ||
+             !Almost_Equal_Float(lightDef->color[2], 0, MAX_FLOAT_FUZZ)));
 }
 
 /**
