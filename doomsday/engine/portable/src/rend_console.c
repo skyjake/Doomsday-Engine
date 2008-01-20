@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +37,7 @@
 #include "de_ui.h"
 
 #include "math.h"
+#include "compare_float.h"
 
 #ifdef TextOut
 // Windows has its own TextOut.
@@ -276,9 +278,9 @@ void Rend_ConsoleToggleFullscreen(void)
     float       y;
     int         minHeight = consoleMinHeight();
 
-    if(ConsoleDestY == minHeight)
+    if(Almost_Equal_Float(ConsoleDestY, minHeight, MAX_FLOAT_FUZZ))
         y = 100;
-    else if(ConsoleDestY == 100)
+    else if(Almost_Equal_Float(ConsoleDestY, 100, MAX_FLOAT_FUZZ))
         y = 200;
     else
         y = minHeight;
@@ -327,7 +329,7 @@ void Rend_ConsoleTicker(timespan_t time)
 {
     float   step = time * 35;
 
-    if(ConsoleY == 0)
+    if(Almost_Equal_Float(ConsoleY, 0, MAX_FLOAT_FUZZ))
         openingOrClosing = true;
 
     // Move the console to the destination Y.
@@ -352,7 +354,7 @@ void Rend_ConsoleTicker(timespan_t time)
             ConsoleY = ConsoleDestY;
     }
 
-    if(ConsoleY == ConsoleOpenY)
+    if(Almost_Equal_Float(ConsoleY, ConsoleOpenY, MAX_FLOAT_FUZZ))
         openingOrClosing = false;
 
     funnyAng += step * consoleTurn / 10000;
