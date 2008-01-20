@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +34,7 @@
 #include "de_network.h"
 #include "de_refresh.h"
 #include "de_play.h"
+#include "compare_float.h"
 
 #include "def_main.h"
 
@@ -518,7 +520,7 @@ void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
     mo->mom[MX] = mom[MX];
     mo->mom[MY] = mom[MY];
 
-    if(dx != 0 || dy != 0)
+    if(!Almost_Equal_Float(dx, 0, MAX_FLOAT_FUZZ) || !Almost_Equal_Float(dy, 0, MAX_FLOAT_FUZZ))
     {
         P_MobjUnlink(mo);
         mo->pos[VX] += dx;
