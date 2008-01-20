@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *\author Copyright © 2006-2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,7 @@
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "compare_float.h"
 
 #include "def_main.h"
 
@@ -601,13 +602,12 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
     assert(data != NULL);
 
     if(vis->data.mo.floorAdjust &&
-       projectedMobj->pos[VZ] == sector->SP_floorheight)
+       Almost_Equal_Float(projectedMobj->pos[VZ], sector->SP_floorheight, MAX_FLOAT_FUZZ))
     {
         vis->center[VZ] = sector->SP_floorvisheight;
     }
 
-    if(projectedMobj->pos[VZ] + projectedMobj->height ==
-       sector->SP_ceilheight)
+    if(Almost_Equal_Float((projectedMobj->pos[VZ] + projectedMobj->height), sector->SP_ceilheight, MAX_FLOAT_FUZZ))
     {
         vis->center[VZ] = sector->SP_ceilvisheight - projectedMobj->height;
     }
@@ -926,7 +926,7 @@ void R_ProjectSprite(mobj_t *mo)
                 vis->data.mo.visOff[i] = mo->srvo[i] * mul;
         }
 
-        if(mo->mom[MX] != 0 || mo->mom[MY] != 0 || mo->mom[MZ] != 0)
+        if(!Almost_Equal_Float(mo->mom[MX], 0, MAX_FLOAT_FUZZ) || !Almost_Equal_Float(mo->mom[MY], 0, MAX_FLOAT_FUZZ) || !Almost_Equal_Float(mo->mom[MZ], 0, MAX_FLOAT_FUZZ))
         {
             // Use the object's speed to calculate a short-range
             // offset.
@@ -1285,7 +1285,7 @@ void R_DetermineLightsAffectingVisSprite(const visspritelightparams_t *params,
             if(intensity > 1)
                 intensity = 1;
 
-            if(intensity == 0)
+            if(Almost_Equal_Float(intensity, 0, MAX_FLOAT_FUZZ))
             {   // No point in lighting with this!
                 light->used = false;
                 continue;
