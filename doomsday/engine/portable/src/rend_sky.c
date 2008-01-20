@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +40,7 @@
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
+#include "compare_float.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -512,7 +514,7 @@ static void internalSkyParams(skylayer_t *slayer, int parm, float value)
         break;
 
     case DD_MASK:
-        if(value == DD_YES)
+        if(Almost_Equal_Float(value, DD_YES, MAX_FLOAT_FUZZ))
         {
             // Invalidate the loaded texture, if necessary.
             if(!(slayer->flags & SLF_MASKED))
