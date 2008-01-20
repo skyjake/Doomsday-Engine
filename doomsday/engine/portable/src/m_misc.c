@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,6 +56,7 @@
 #include "de_refresh.h"
 #include "de_misc.h"
 #include "lzss.h"
+#include "compare_float.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -489,7 +491,7 @@ double M_SlopeToAngle(double dx, double dy)
 {
     double      angle;
 
-    if(dx == 0)
+    if(Almost_Equal_Float(dx, 0, MAX_FLOAT_FUZZ))
         return (dy > 0? 90.0 : 270.0);
 
     angle = atan2((double) dy, (double) dx) * 180.0 / PI_D;
@@ -608,7 +610,7 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
     float   Cos, Sin, res[3];
 
     // Yaw.
-    if(radYaw != 0)
+    if(!Almost_Equal_Float(radYaw, 0, MAX_FLOAT_FUZZ))
     {
         Cos = cos(radYaw);
         Sin = sin(radYaw);
@@ -618,7 +620,7 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
         vec[VY] = res[VY];
     }
     // Pitch.
-    if(radPitch != 0)
+    if(!Almost_Equal_Float(radPitch, 0, MAX_FLOAT_FUZZ))
     {
         Cos = cos(radPitch);
         Sin = sin(radPitch);
