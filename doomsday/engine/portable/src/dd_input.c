@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +37,7 @@
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_ui.h"
+#include "compare_float.h"
 
 #include "gl_main.h"
 
@@ -526,7 +528,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
     // The unfiltered position.
     a->realPosition = transformed;
 
-    if(oldRealPos != a->realPosition)
+    if(!Almost_Equal_Float(oldRealPos, a->realPosition, MAX_FLOAT_FUZZ))
     {
         // Mark down the time of the change.
         a->time = Sys_GetRealTime();
@@ -1341,7 +1343,7 @@ void DD_ReadJoystick(void)
     {
         // Check for a POV change.
         // TODO: Some day, it would be nice to support multiple hats here. -jk
-        if(state.hatAngle[0] != oldPOV)
+        if(!Almost_Equal_Float(state.hatAngle[0], oldPOV, MAX_FLOAT_FUZZ))
         {
             ev.type = E_ANGLE;
             ev.angle.id = 0;
