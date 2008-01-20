@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +43,7 @@
 
 #include "s_main.h"
 #include "sys_timer.h"
+#include "compare_float.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -364,11 +366,11 @@ void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
  */
 float Sv_GetMaxedMobjZ(const mobj_t *mo)
 {
-    if(mo->pos[VZ] == mo->floorZ)
+    if(Almost_Equal_Float(mo->pos[VZ], mo->floorZ, MAX_FLOAT_FUZZ))
     {
         return DDMINFLOAT;
     }
-    if(mo->pos[VZ] + mo->height == mo->ceilingZ)
+    if(Almost_Equal_Float((mo->pos[VZ] + mo->height), mo->ceilingZ, MAX_FLOAT_FUZZ))
     {
         return DDMAXFLOAT;
     }
@@ -552,18 +554,18 @@ boolean Sv_RegisterCompareMobj(cregister_t *reg, const mobj_t *s,
         df = MDFC_CREATE;
     }
 
-    if(r->pos[VX] != s->pos[VX])
+    if(!Almost_Equal_Float(r->pos[VX], s->pos[VX], MAX_FLOAT_FUZZ))
         df |= MDF_POS_X;
-    if(r->pos[VY] != s->pos[VY])
+    if(!Almost_Equal_Float(r->pos[VY], s->pos[VY], MAX_FLOAT_FUZZ))
         df |= MDF_POS_Y;
-    if(r->pos[VZ] != Sv_GetMaxedMobjZ(s))
+    if(!Almost_Equal_Float(r->pos[VZ], Sv_GetMaxedMobjZ(s), MAX_FLOAT_FUZZ))
         df |= MDF_POS_Z;
 
-    if(r->mom[MX] != s->mom[MX])
+    if(!Almost_Equal_Float(r->mom[MX], s->mom[MX], MAX_FLOAT_FUZZ))
         df |= MDF_MOM_X;
-    if(r->mom[MY] != s->mom[MY])
+    if(!Almost_Equal_Float(r->mom[MY], s->mom[MY], MAX_FLOAT_FUZZ))
         df |= MDF_MOM_Y;
-    if(r->mom[MZ] != s->mom[MZ])
+    if(!Almost_Equal_Float(r->mom[MZ], s->mom[MZ], MAX_FLOAT_FUZZ))
         df |= MDF_MOM_Z;
 
     if(r->angle != s->angle)
@@ -593,15 +595,15 @@ VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinke
         if(regMo) regMo->lastTimeStateSent = Sys_GetTime();
     }
 
-    if(r->radius != s->radius)
+    if(!Almost_Equal_Float(r->radius, s->radius, MAX_FLOAT_FUZZ))
         df |= MDF_RADIUS;
-    if(r->height != s->height)
+    if(!Almost_Equal_Float(r->height, s->height, MAX_FLOAT_FUZZ))
         df |= MDF_HEIGHT;
     if((r->ddFlags & DDMF_PACK_MASK) != (s->ddFlags & DDMF_PACK_MASK))
     {
         df |= MDF_FLAGS;
     }
-    if(r->floorClip != s->floorClip)
+    if(!Almost_Equal_Float(r->floorClip, s->floorClip, MAX_FLOAT_FUZZ))
         df |= MDF_FLOORCLIP;
 
     if(df)
@@ -641,7 +643,7 @@ boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
         df |= PDF_ANGLE;*/
     if(r->turnDelta != s->turnDelta)
         df |= PDF_TURNDELTA;
-    if(r->friction != s->friction)
+    if(!Almost_Equal_Float(r->friction, s->friction, MAX_FLOAT_FUZZ))
         df |= PDF_FRICTION;
     if(r->extraLight != s->extraLight || r->fixedColorMap != s->fixedColorMap)
     {
@@ -706,46 +708,46 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
        (!s->SP_ceilmaterial &&
         r->planes[PLN_CEILING].surface.material.texture != 0))
        df |= SDF_CEILINGPIC;
-    if(r->lightLevel != s->lightLevel)
+    if(!Almost_Equal_Float(r->lightLevel,  s->lightLevel, MAX_FLOAT_FUZZ))
         df |= SDF_LIGHT;
-    if(r->rgb[0] != s->rgb[0])
+    if(!Almost_Equal_Float(r->rgb[0], s->rgb[0], MAX_FLOAT_FUZZ))
         df |= SDF_COLOR_RED;
-    if(r->rgb[1] != s->rgb[1])
+    if(!Almost_Equal_Float(r->rgb[1], s->rgb[1], MAX_FLOAT_FUZZ))
         df |= SDF_COLOR_GREEN;
-    if(r->rgb[2] != s->rgb[2])
+    if(!Almost_Equal_Float(r->rgb[2], s->rgb[2], MAX_FLOAT_FUZZ))
         df |= SDF_COLOR_BLUE;
 
-    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->SP_floorrgb[0])
+    if(!Almost_Equal_Float(r->planes[PLN_FLOOR].surface.rgba[0], s->SP_floorrgb[0], MAX_FLOAT_FUZZ))
         df |= SDF_FLOOR_COLOR_RED;
-    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->SP_floorrgb[1])
+    if(!Almost_Equal_Float(r->planes[PLN_FLOOR].surface.rgba[1], s->SP_floorrgb[1], MAX_FLOAT_FUZZ))
         df |= SDF_FLOOR_COLOR_GREEN;
-    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->SP_floorrgb[2])
+    if(!Almost_Equal_Float(r->planes[PLN_FLOOR].surface.rgba[2], s->SP_floorrgb[2], MAX_FLOAT_FUZZ))
         df |= SDF_FLOOR_COLOR_BLUE;
 
-    if(r->planes[PLN_CEILING].surface.rgba[0] != s->SP_ceilrgb[0])
+    if(!Almost_Equal_Float(r->planes[PLN_CEILING].surface.rgba[0], s->SP_ceilrgb[0], MAX_FLOAT_FUZZ))
         df |= SDF_CEIL_COLOR_RED;
-    if(r->planes[PLN_CEILING].surface.rgba[1] != s->SP_ceilrgb[1])
+    if(!Almost_Equal_Float(r->planes[PLN_CEILING].surface.rgba[1], s->SP_ceilrgb[1], MAX_FLOAT_FUZZ))
         df |= SDF_CEIL_COLOR_GREEN;
-    if(r->planes[PLN_CEILING].surface.rgba[2] != s->SP_ceilrgb[2])
+    if(!Almost_Equal_Float(r->planes[PLN_CEILING].surface.rgba[2], s->SP_ceilrgb[2], MAX_FLOAT_FUZZ))
         df |= SDF_CEIL_COLOR_BLUE;
 
-    if(r->planes[PLN_FLOOR].glowRGB[0] != s->SP_floorglowrgb[0])
+    if(!Almost_Equal_Float(r->planes[PLN_FLOOR].glowRGB[0], s->SP_floorglowrgb[0], MAX_FLOAT_FUZZ))
         df |= SDF_FLOOR_GLOW_RED;
-    if(r->planes[PLN_FLOOR].glowRGB[1] != s->SP_floorglowrgb[1])
+    if(!Almost_Equal_Float(r->planes[PLN_FLOOR].glowRGB[1], s->SP_floorglowrgb[1], MAX_FLOAT_FUZZ))
         df |= SDF_FLOOR_GLOW_GREEN;
-    if(r->planes[PLN_FLOOR].glowRGB[2] != s->SP_floorglowrgb[2])
+    if(!Almost_Equal_Float(r->planes[PLN_FLOOR].glowRGB[2], s->SP_floorglowrgb[2], MAX_FLOAT_FUZZ))
         df |= SDF_FLOOR_GLOW_BLUE;
 
-    if(r->planes[PLN_CEILING].glowRGB[0] != s->SP_ceilglowrgb[0])
+    if(!Almost_Equal_Float(r->planes[PLN_CEILING].glowRGB[0], s->SP_ceilglowrgb[0], MAX_FLOAT_FUZZ))
         df |= SDF_CEIL_GLOW_RED;
-    if(r->planes[PLN_CEILING].glowRGB[1] != s->SP_ceilglowrgb[1])
+    if(!Almost_Equal_Float(r->planes[PLN_CEILING].glowRGB[1], s->SP_ceilglowrgb[1], MAX_FLOAT_FUZZ))
         df |= SDF_CEIL_GLOW_GREEN;
-    if(r->planes[PLN_CEILING].glowRGB[2] != s->SP_ceilglowrgb[2])
+    if(!Almost_Equal_Float(r->planes[PLN_CEILING].glowRGB[2], s->SP_ceilglowrgb[2], MAX_FLOAT_FUZZ))
         df |= SDF_CEIL_GLOW_BLUE;
 
-    if(r->planes[PLN_FLOOR].glow != s->planes[PLN_FLOOR]->glow)
+    if(!Almost_Equal_Float(r->planes[PLN_FLOOR].glow, s->planes[PLN_FLOOR]->glow, MAX_FLOAT_FUZZ))
         df |= SDF_FLOOR_GLOW;
-    if(r->planes[PLN_CEILING].glow != s->planes[PLN_CEILING]->glow)
+    if(!Almost_Equal_Float(r->planes[PLN_CEILING].glow, s->planes[PLN_CEILING]->glow, MAX_FLOAT_FUZZ))
         df |= SDF_CEIL_GLOW;
 
     // The cases where an immediate change to a plane's height is needed:
@@ -757,7 +759,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     // Should we make an immediate change in floor height?
     if(!r->planes[PLN_FLOOR].speed && !s->planes[PLN_FLOOR]->speed)
     {
-        if(r->planes[PLN_FLOOR].height != s->planes[PLN_FLOOR]->height)
+        if(!Almost_Equal_Float(r->planes[PLN_FLOOR].height, s->planes[PLN_FLOOR]->height, MAX_FLOAT_FUZZ))
             df |= SDF_FLOOR_HEIGHT;
     }
     else
@@ -770,7 +772,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     // How about the ceiling?
     if(!r->planes[PLN_CEILING].speed && !s->planes[PLN_CEILING]->speed)
     {
-        if(r->planes[PLN_CEILING].height != s->planes[PLN_CEILING]->height)
+        if(!Almost_Equal_Float(r->planes[PLN_CEILING].height, s->planes[PLN_CEILING]->height, MAX_FLOAT_FUZZ))
             df |= SDF_CEILING_HEIGHT;
     }
     else
@@ -781,22 +783,22 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     }
 
     // Check planes, too.
-    if(r->planes[PLN_FLOOR].target != s->planes[PLN_FLOOR]->target)
+    if(!Almost_Equal_Float(r->planes[PLN_FLOOR].target, s->planes[PLN_FLOOR]->target, MAX_FLOAT_FUZZ))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
-    if(r->planes[PLN_FLOOR].speed != s->planes[PLN_FLOOR]->speed)
+    if(!Almost_Equal_Float(r->planes[PLN_FLOOR].speed, s->planes[PLN_FLOOR]->speed, MAX_FLOAT_FUZZ))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(r->planes[PLN_CEILING].target != s->planes[PLN_CEILING]->target)
+    if(!Almost_Equal_Float(r->planes[PLN_CEILING].target, s->planes[PLN_CEILING]->target, MAX_FLOAT_FUZZ))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
-    if(r->planes[PLN_CEILING].speed != s->planes[PLN_CEILING]->speed)
+    if(!Almost_Equal_Float(r->planes[PLN_CEILING].speed, s->planes[PLN_CEILING]->speed, MAX_FLOAT_FUZZ))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
@@ -910,70 +912,70 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
             r->lineFlags = lineFlags;
     }
 
-    if(r->top.rgba[0] != s->SW_toprgba[0])
+    if(!Almost_Equal_Float(r->top.rgba[0], s->SW_toprgba[0], MAX_FLOAT_FUZZ))
     {
         df |= SIDF_TOP_COLOR_RED;
         if(doUpdate)
             r->top.rgba[0] = s->SW_toprgba[0];
     }
 
-    if(r->top.rgba[1] != s->SW_toprgba[1])
+    if(!Almost_Equal_Float(r->top.rgba[1], s->SW_toprgba[1], MAX_FLOAT_FUZZ))
     {
         df |= SIDF_TOP_COLOR_GREEN;
         if(doUpdate)
             r->top.rgba[1] = s->SW_toprgba[1];
     }
 
-    if(r->top.rgba[2] != s->SW_toprgba[2])
+    if(!Almost_Equal_Float(r->top.rgba[2], s->SW_toprgba[2], MAX_FLOAT_FUZZ))
     {
         df |= SIDF_TOP_COLOR_BLUE;
         if(doUpdate)
             r->top.rgba[3] = s->SW_toprgba[3];
     }
 
-    if(r->middle.rgba[0] != s->SW_middlergba[0])
+    if(!Almost_Equal_Float(r->middle.rgba[0], s->SW_middlergba[0], MAX_FLOAT_FUZZ))
     {
         df |= SIDF_MID_COLOR_RED;
         if(doUpdate)
             r->middle.rgba[0] = s->SW_middlergba[0];
     }
 
-    if(r->middle.rgba[1] != s->SW_middlergba[1])
+    if(!Almost_Equal_Float(r->middle.rgba[1], s->SW_middlergba[1], MAX_FLOAT_FUZZ))
     {
         df |= SIDF_MID_COLOR_GREEN;
         if(doUpdate)
             r->middle.rgba[1] = s->SW_middlergba[1];
     }
 
-    if(r->middle.rgba[2] != s->SW_middlergba[2])
+    if(!Almost_Equal_Float(r->middle.rgba[2], s->SW_middlergba[2], MAX_FLOAT_FUZZ))
     {
         df |= SIDF_MID_COLOR_BLUE;
         if(doUpdate)
             r->middle.rgba[3] = s->SW_middlergba[3];
     }
 
-    if(r->middle.rgba[3] != s->SW_middlergba[3])
+    if(!Almost_Equal_Float(r->middle.rgba[3], s->SW_middlergba[3], MAX_FLOAT_FUZZ))
     {
         df |= SIDF_MID_COLOR_ALPHA;
         if(doUpdate)
             r->middle.rgba[3] = s->SW_middlergba[3];
     }
 
-    if(r->bottom.rgba[0] != s->SW_bottomrgba[0])
+    if(!Almost_Equal_Float(r->bottom.rgba[0], s->SW_bottomrgba[0], MAX_FLOAT_FUZZ))
     {
         df |= SIDF_BOTTOM_COLOR_RED;
         if(doUpdate)
             r->bottom.rgba[0] = s->SW_bottomrgba[0];
     }
 
-    if(r->bottom.rgba[1] != s->SW_bottomrgba[1])
+    if(!Almost_Equal_Float(r->bottom.rgba[1], s->SW_bottomrgba[1], MAX_FLOAT_FUZZ))
     {
         df |= SIDF_BOTTOM_COLOR_GREEN;
         if(doUpdate)
             r->bottom.rgba[1] = s->SW_bottomrgba[1];
     }
 
-    if(r->bottom.rgba[2] != s->SW_bottomrgba[2])
+    if(!Almost_Equal_Float(r->bottom.rgba[2], s->SW_bottomrgba[2], MAX_FLOAT_FUZZ))
     {
         df |= SIDF_BOTTOM_COLOR_BLUE;
         if(doUpdate)
@@ -1022,11 +1024,11 @@ boolean Sv_RegisterComparePoly(cregister_t *reg, uint number,
     Sv_RegisterPoly(&d->po, number);
 
     // What is different?
-    if(r->dest.pos[VX] != s->dest.pos[VX])
+    if(!Almost_Equal_Float(r->dest.pos[VX], s->dest.pos[VX], MAX_FLOAT_FUZZ))
         df |= PODF_DEST_X;
-    if(r->dest.pos[VY] != s->dest.pos[VY])
+    if(!Almost_Equal_Float(r->dest.pos[VY], s->dest.pos[VY], MAX_FLOAT_FUZZ))
         df |= PODF_DEST_Y;
-    if(r->speed != s->speed)
+    if(!Almost_Equal_Float(r->speed, s->speed, MAX_FLOAT_FUZZ))
         df |= PODF_SPEED;
     if(r->destAngle != s->destAngle)
         df |= PODF_DEST_ANGLE;
@@ -1640,9 +1642,9 @@ float Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
     // Registered mobjs may have a maxed out Z coordinate.
     if(!isReal)
     {
-        if(z == DDMINFLOAT)
+        if(Almost_Equal_Float(z, DDMINFLOAT, MAX_FLOAT_FUZZ))
             z = mo->floorZ;
-        if(z == DDMAXFLOAT)
+        if(Almost_Equal_Float(z, DDMAXFLOAT, MAX_FLOAT_FUZZ))
             z = mo->ceilingZ - mo->height;
     }
 
