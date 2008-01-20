@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +43,7 @@
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"
+#include "compare_float.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -151,7 +153,7 @@ void R_UpdateWatchedPlanes(watchedplanelist_t *wpl)
         pln->oldHeight[0] = pln->oldHeight[1];
         pln->oldHeight[1] = pln->height;
 
-        if(pln->oldHeight[0] != pln->oldHeight[1])
+        if(!Almost_Equal_Float(pln->oldHeight[0], pln->oldHeight[1], MAX_FLOAT_FUZZ))
             if(fabs(pln->oldHeight[0] - pln->oldHeight[1]) >=
                MAX_SMOOTH_PLANE_MOVE)
             {
@@ -205,7 +207,7 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
             pln->visHeight = pln->height + pln->visOffset;
 
             // Has this plane reached its destination?
-            if(pln->visHeight == pln->height)
+            if(Almost_Equal_Float(pln->visHeight, pln->height, MAX_FLOAT_FUZZ))
                 if(R_RemoveWatchedPlane(wpl, pln))
                     i = (i > 0? i-1 : 0);
         }
@@ -470,11 +472,11 @@ static void R_SetSectorLinks(sector_t *sec)
                             return;
 
                         // Check that there is something on the other side.
-                        if(back->SP_ceilheight == back->SP_floorheight)
+                        if(Almost_Equal_Float(back->SP_ceilheight, back->SP_floorheight, MAX_FLOAT_FUZZ))
                             return;
 
                         // Check the conditions that prevent the invis plane.
-                        if(back->SP_floorheight == sec->SP_floorheight)
+                        if(Almost_Equal_Float(back->SP_floorheight, sec->SP_floorheight, MAX_FLOAT_FUZZ))
                         {
                             hackfloor = false;
                         }
@@ -492,7 +494,7 @@ static void R_SetSectorLinks(sector_t *sec)
                                 floorLinkCandidate = back;
                         }
 
-                        if(back->SP_ceilheight == sec->SP_ceilheight)
+                        if(Almost_Equal_Float(back->SP_ceilheight, sec->SP_ceilheight, MAX_FLOAT_FUZZ))
                         {
                             hackceil = false;
                         }
@@ -597,7 +599,7 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
     f = front->planes[pln]->height + front->skyFix[pln].offset;
     b = back->planes[pln]->height + back->skyFix[pln].offset;
 
-    if(f == b)
+    if(Almost_Equal_Float(f, b, MAX_FLOAT_FUZZ))
         return false;
 
     if(pln == PLN_CEILING)
@@ -1966,14 +1968,14 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
     }
 
     if(forceUpdate ||
-       (suf->offset[VX] != suf->oldOffset[VX]))
+       (!Almost_Equal_Float(suf->offset[VX], suf->oldOffset[VX], MAX_FLOAT_FUZZ)))
     {
         suf->oldOffset[VX] = suf->offset[VX];
         suf->flags |= SUF_UPDATE_DECORATIONS;
     }
 
     if(forceUpdate ||
-       (suf->offset[VY] != suf->oldOffset[VY]))
+       (!Almost_Equal_Float(suf->offset[VY], suf->oldOffset[VY], MAX_FLOAT_FUZZ)))
     {
         suf->oldOffset[VY] = suf->offset[VY];
         suf->flags |= SUF_UPDATE_DECORATIONS;
@@ -1981,10 +1983,10 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
 
     // Surface color change?
     if(forceUpdate ||
-       (suf->rgba[0] != suf->oldRGBA[0] ||
-        suf->rgba[1] != suf->oldRGBA[1] ||
-        suf->rgba[2] != suf->oldRGBA[2] ||
-        suf->rgba[3] != suf->oldRGBA[3]))
+       (!Almost_Equal_Float(suf->rgba[0], suf->oldRGBA[0], MAX_FLOAT_FUZZ) ||
+        !Almost_Equal_Float(suf->rgba[1], suf->oldRGBA[1], MAX_FLOAT_FUZZ) ||
+        !Almost_Equal_Float(suf->rgba[2], suf->oldRGBA[2], MAX_FLOAT_FUZZ) ||
+        !Almost_Equal_Float(suf->rgba[3], suf->oldRGBA[3], MAX_FLOAT_FUZZ)))
     {
         // \todo when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
@@ -2002,10 +2004,10 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
-       (sec->lightLevel != sec->oldLightLevel ||
-        sec->rgb[0] != sec->oldRGB[0] ||
-        sec->rgb[1] != sec->oldRGB[1] ||
-        sec->rgb[2] != sec->oldRGB[2]))
+       (!Almost_Equal_Float(sec->lightLevel, sec->oldLightLevel, MAX_FLOAT_FUZZ) ||
+        !Almost_Equal_Float(sec->rgb[0], sec->oldRGB[0], MAX_FLOAT_FUZZ) ||
+        !Almost_Equal_Float(sec->rgb[1], sec->oldRGB[1], MAX_FLOAT_FUZZ) ||
+        !Almost_Equal_Float(sec->rgb[2], sec->oldRGB[2], MAX_FLOAT_FUZZ)))
     {
         sec->frameFlags |= SIF_LIGHT_CHANGED;
         sec->oldLightLevel = sec->lightLevel;
@@ -2045,7 +2047,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
         // Geometry change?
         if(forceUpdate ||
-           plane->height != plane->oldHeight[1])
+           !Almost_Equal_Float(plane->height, plane->oldHeight[1], MAX_FLOAT_FUZZ))
         {
             ddplayer_t *player;
 
