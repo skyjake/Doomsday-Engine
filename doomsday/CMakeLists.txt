@@ -30,6 +30,7 @@ SET(deng_VERSION_REVISION beta5)
 SET(deng_VERSION "${deng_VERSION_MAJOR}.${deng_VERSION_MINOR}.${deng_VERSION_PATCH}.${deng_VERSION_REVISION}")
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build/cmake")
+ENABLE_TESTING()
 
 ################################################################################
 ######################## Additional Win32 Path Setup  ##########################
