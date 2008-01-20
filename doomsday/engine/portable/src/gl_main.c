@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *\author Copyright © 2006-2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 #include "de_defs.h"
+#include "compare_float.h"
 
 #include "r_draw.h"
 
@@ -169,8 +170,8 @@ boolean GL_IsInited(void)
 void GL_DoUpdate(void)
 {
     // Check for color adjustment changes.
-    if(oldgamma != vid_gamma || oldcontrast != vid_contrast ||
-       oldbright != vid_bright)
+    if(!Almost_Equal_Float(oldgamma, vid_gamma, MAX_FLOAT_FUZZ) || !Almost_Equal_Float(oldcontrast, vid_contrast, MAX_FLOAT_FUZZ) ||
+       !Almost_Equal_Float(oldbright, vid_bright, MAX_FLOAT_FUZZ))
         GL_SetGamma();
 
     // Blit screen to video.
@@ -362,7 +363,7 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
         ideal[i] = i * contrast - (contrast - 1) * 127;
 
     // Apply the gamma curve.
-    if(gamma != 1)
+    if(!Almost_Equal_Float(gamma, 1, MAX_FLOAT_FUZZ))
     {
         if(gamma <= 0.1f)
             gamma = 0.1f;
