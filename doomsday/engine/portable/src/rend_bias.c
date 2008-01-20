@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +40,7 @@
 #include "de_defs.h"
 #include "de_misc.h"
 #include "p_sight.h"
+#include "compare_float.h"
 
 #include <math.h>
 
@@ -347,7 +349,7 @@ void HSVtoRGB(float *rgb, float h, float s, float v)
     int         i;
     float       f, p, q, t;
 
-    if(s == 0)
+    if(Almost_Equal_Float(s, 0, MAX_FLOAT_FUZZ))
     {
         // achromatic (grey)
         rgb[0] = rgb[1] = rgb[2] = v;
@@ -732,7 +734,7 @@ void SB_BeginFrame(void)
             {
                 s->intensity = s->primaryIntensity;
             }
-            if(sector->lightLevel >= minLevel && minLevel != maxLevel)
+            if(sector->lightLevel >= minLevel && !Almost_Equal_Float(minLevel, maxLevel, MAX_FLOAT_FUZZ))
             {
                 s->intensity = s->primaryIntensity *
                     (sector->lightLevel - minLevel) / (maxLevel - minLevel);
@@ -742,7 +744,7 @@ void SB_BeginFrame(void)
                 s->intensity = 0;
             }
 
-            if(s->intensity != oldIntensity)
+            if(!Almost_Equal_Float(s->intensity, oldIntensity, MAX_FLOAT_FUZZ))
                 sources[l].flags |= BLF_CHANGED;
         }
 
@@ -814,7 +816,7 @@ void SB_AddLight(gl_rgba_t *dest, const float *color, float howMuch)
                 largest = amplified[i];
         }
 
-        if(largest == 0) // Black!
+        if(Almost_Equal_Float(largest, 0, MAX_FLOAT_FUZZ)) // Black!
         {
             amplified[0] = amplified[1] = amplified[2] = 1;
         }
