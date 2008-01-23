@@ -246,6 +246,7 @@ void Demo_WritePacket(int playerNum)
     // Is this client recording?
     if(!clients[playerNum].recording)
         return;
+
     if(!inf->canwrite)
     {
         if(netBuffer.msg.type != PSV_HANDSHAKE)
@@ -253,6 +254,7 @@ void Demo_WritePacket(int playerNum)
         // The handshake has arrived. Now we can begin writing.
         inf->canwrite = true;
     }
+
     if(clients[playerNum].recordPaused)
     {
         // Some types of packet are not written in record-paused mode.
@@ -266,7 +268,7 @@ void Demo_WritePacket(int playerNum)
 
     file = clients[playerNum].demo;
 
-#ifdef _DEBUG
+#if _DEBUG
     if(!file)
         Con_Error("Demo_WritePacket: No demo file!\n");
 #endif
@@ -286,6 +288,12 @@ void Demo_WritePacket(int playerNum)
     lzWrite(&ptime, 1, file);
 
     // The header.
+
+#if _DEBUG
+    if(netBuffer.length >= sizeof(hdr.length))
+        Con_Error("Demo_WritePacket: Write buffer too large!\n");
+#endif
+
     hdr.length = (ushort) 1 + netBuffer.length;
     lzWrite(&hdr, sizeof(hdr), file);
 
@@ -296,32 +304,35 @@ void Demo_WritePacket(int playerNum)
 
 void Demo_BroadcastPacket(void)
 {
-    int     i;
+    int             i;
 
     // Write packet to all recording demo files.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
         Demo_WritePacket(i);
 }
 
 boolean Demo_BeginPlayback(char *fileName)
 {
-    char    buf[256];
-    int     i;
+    char            buf[256];
+    int             i;
 
     if(playback)
-        return false;           // Already in playback.
+        return false; // Already in playback.
     if(netgame || isClient)
-        return false;           // Can't do it.
+        return false; // Can't do it.
+
     // Check that we aren't recording anything.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
         if(clients[i].recording)
             return false;
+
     // Open the demo file.
     sprintf(buf, "%s%s", Dir_IsAbsolute(fileName) ? "" : demoPath, fileName);
     M_TranslatePath(buf, buf);
     playdemo = lzOpen(buf, "rp");
     if(!playdemo)
-        return false;           // Failed to open the file.
+        return false; // Failed to open the file.
+
     // OK, let's begin the demo.
     playback = true;
     isServer = false;
@@ -337,12 +348,13 @@ boolean Demo_BeginPlayback(char *fileName)
     // Start counting frames from here.
     if(ArgCheck("-timedemo"))
         r_framecounter = 0;
+
     return true;
 }
 
 void Demo_StopPlayback(void)
 {
-    float   diff;
+    float           diff;
 
     if(!playback)
         return;
@@ -376,12 +388,13 @@ void Demo_StopPlayback(void)
 
 boolean Demo_ReadPacket(void)
 {
-    static byte ptime;
-    int     nowtime = DEMOTIC;
+    static byte     ptime;
+    int             nowtime = DEMOTIC;
     demopacket_header_t hdr;
 
     if(!playback)
         return false;
+
     if(lzEOF(playdemo))
     {
         Demo_StopPlayback();
@@ -400,14 +413,14 @@ boolean Demo_ReadPacket(void)
 
     // Check if the packet can be read.
     if(Net_TimeDelta(nowtime - readInfo.begintime, ptime) < 0)
-        return false;           // Can't read yet.
+        return false; // Can't read yet.
 
     // Read the packet.
     lzRead(&hdr, sizeof(hdr), playdemo);
 
     // Get the packet.
-    netBuffer.length = hdr.length - 1 /*netBuffer.headerLength */ ;
-    netBuffer.player = 0;       // From the server.
+    netBuffer.length = hdr.length - 1;
+    netBuffer.player = 0; // From the server.
     netBuffer.msg.id = 0;
     netBuffer.msg.type = lzGetC(playdemo);
     lzRead(netBuffer.msg.data, (long) netBuffer.length, playdemo);
@@ -429,11 +442,10 @@ Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
  */
 void Demo_WriteLocalCamera(int plnum)
 {
-    mobj_t *mo = players[plnum].mo;
-    int     z;
-    fixed_t x, y;
-    byte    flags;
-    boolean incfov = (writeInfo[plnum].fov != fieldOfView);
+    mobj_t         *mo = players[plnum].mo;
+    fixed_t         x, y, z;
+    byte            flags;
+    boolean         incfov = (writeInfo[plnum].fov != fieldOfView);
 
     if(!mo)
         return;
