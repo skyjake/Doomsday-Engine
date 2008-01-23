@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_system.h: OS Specific Services Subsystem
  */
 
@@ -34,6 +34,7 @@
 
 typedef void*   thread_t;
 typedef intptr_t mutex_t;
+typedef intptr_t sem_t;
 typedef int     (C_DECL *systhreadfunc_t) (void* parm);
 
 extern int  novideo;
@@ -53,14 +54,14 @@ void            Sys_SuspendThread(thread_t handle, boolean dopause);
 int             Sys_WaitThread(thread_t handle);
 uint            Sys_ThreadID(void);
 
-mutex_t         Sys_CreateMutex(const char* name);  
+mutex_t         Sys_CreateMutex(const char* name);
 void            Sys_DestroyMutex(mutex_t mutexHandle);
 void            Sys_Lock(mutex_t mutexHandle);
 void            Sys_Unlock(mutex_t mutexHandle);
 
-long            Sem_Create(uint32_t initialValue);  // returns handle
-void            Sem_Destroy(long semaphore);
-void            Sem_P(long semaphore);
-void            Sem_V(long semaphore);
+sem_t           Sem_Create(uint32_t initialValue);  // returns handle
+void            Sem_Destroy(sem_t semaphore);
+void            Sem_P(sem_t semaphore);
+void            Sem_V(sem_t semaphore);
 
 #endif

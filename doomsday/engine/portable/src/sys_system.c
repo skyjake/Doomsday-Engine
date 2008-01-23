@@ -335,12 +335,12 @@ void Sys_Unlock(mutex_t handle)
  *
  * @return              New handle.
  */
-long Sem_Create(uint32_t initialValue)
+sem_t Sem_Create(uint32_t initialValue)
 {
-    return (long) SDL_CreateSemaphore(initialValue);
+    return (sem_t) SDL_CreateSemaphore(initialValue);
 }
 
-void Sem_Destroy(long semaphore)
+void Sem_Destroy(sem_t semaphore)
 {
     if(semaphore)
     {
@@ -351,7 +351,7 @@ void Sem_Destroy(long semaphore)
 /**
  * "Proberen" a semaphore. Blocks until the successful.
  */
-void Sem_P(long semaphore)
+void Sem_P(sem_t semaphore)
 {
     if(semaphore)
     {
@@ -362,7 +362,7 @@ void Sem_P(long semaphore)
 /**
  * "Verhogen" a semaphore. Returns immediately.
  */
-void Sem_V(long semaphore)
+void Sem_V(sem_t semaphore)
 {
     if(semaphore)
     {
