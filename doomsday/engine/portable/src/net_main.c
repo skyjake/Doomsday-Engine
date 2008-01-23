@@ -5,7 +5,6 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +43,6 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_ui.h"
-#include "compare_float.h"
 
 #include "rend_bias.h"
 #include "rend_console.h"
@@ -475,7 +473,7 @@ static void Net_DoUpdate(void)
         Msg_Begin(PKT_COORDS);
         Msg_WriteShort((short) mo->pos[VX]);
         Msg_WriteShort((short) mo->pos[VY]);
-        if(Almost_Equal_Float(mo->pos[VZ], mo->floorZ, MAX_FLOAT_FUZZ))
+        if(mo->pos[VZ] == mo->floorZ)
         {
             // This'll keep us on the floor even in fast moving sectors.
             Msg_WriteShort(DDMININT >> 16);

@@ -5,7 +5,6 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +38,6 @@
 #include "de_graphics.h"
 #include "de_render.h"
 #include "de_misc.h"
-#include "compare_float.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -344,7 +342,7 @@ static dynnode_t *projectOmniLightOnSegSection(const lumobj_t *lum, seg_t *seg,
     radius = LUM_OMNI(lum)->radius / DYN_ASPECT;
     radiusX2 = 2 * radius;
 
-    if(bottom >= top || Almost_Equal_Float(radiusX2, 0, MAX_FLOAT_FUZZ))
+    if(bottom >= top || radiusX2 == 0)
         return NULL;
 
     // Clip to the valid z height range first.
@@ -413,7 +411,7 @@ static dynnode_t *projectOmniLightOnSubSectorPlane(const lumobj_t *lum,
     // Center the Z.
     pos[VZ] += LUM_OMNI(lum)->zOff;
     srcRadius = LUM_OMNI(lum)->radius / 4;
-    if(Almost_Equal_Float(srcRadius, 0, MAX_FLOAT_FUZZ))
+    if(srcRadius == 0)
         srcRadius = 1;
 
     // Determine on which side of the plane the light is.

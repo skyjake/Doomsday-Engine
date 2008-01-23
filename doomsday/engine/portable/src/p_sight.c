@@ -5,7 +5,6 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +37,6 @@
 #include "de_console.h"
 #include "de_play.h"
 #include "de_refresh.h"
-#include "compare_float.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -81,14 +79,14 @@ boolean PTR_SightTraverse(intercept_t *in)
     if(openbottom >= opentop)
         return false; // Stop iteration.
 
-    if(!Almost_Equal_Float(li->L_frontsector->SP_floorheight, li->L_backsector->SP_floorheight, MAX_FLOAT_FUZZ))
+    if(li->L_frontsector->SP_floorheight != li->L_backsector->SP_floorheight)
     {
         slope = (openbottom - sightStartZ) / in->frac;
         if(slope > bottomSlope)
             bottomSlope = slope;
     }
 
-    if(!Almost_Equal_Float(li->L_frontsector->SP_ceilheight, li->L_backsector->SP_ceilheight, MAX_FLOAT_FUZZ))
+    if(li->L_frontsector->SP_ceilheight != li->L_backsector->SP_ceilheight)
     {
         slope = (opentop - sightStartZ) / in->frac;
         if(slope < topSlope)

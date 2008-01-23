@@ -5,7 +5,6 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,7 +43,6 @@
 #include "de_audio.h"
 
 #include "def_main.h"
-#include "compare_float.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -278,7 +276,7 @@ boolean PIT_CheckMobj(mobj_t *mo, void *parm)
     blockdist = mo->radius + tm->mo->radius;
 
     // Only players can move under or over other mobjs.
-    if(!Almost_Equal_Float(tm->pos[VZ], DDMAXFLOAT, MAX_FLOAT_FUZZ) &&
+    if(tm->pos[VZ] != DDMAXFLOAT &&
        (tm->mo->dPlayer || mo->ddFlags & DDMF_NOGRAVITY))
     {
         if(mo->pos[VZ] > tm->pos[VZ] + tm->height)
@@ -426,7 +424,7 @@ boolean P_TryMoveXYZ(mobj_t *mo, float x, float y, float z)
     blockingMobj = NULL;
 
     // Is this a real move?
-    if(Almost_Equal_Float(mo->pos[VX], x, MAX_FLOAT_FUZZ) && Almost_Equal_Float(mo->pos[VY], y, MAX_FLOAT_FUZZ) && Almost_Equal_Float(mo->pos[VZ], z, MAX_FLOAT_FUZZ))
+    if(mo->pos[VX] == x && mo->pos[VY] == y && mo->pos[VZ] == z)
     {   // No move. Of course it's successful.
         return true;
     }
@@ -511,7 +509,7 @@ boolean P_StepMove(mobj_t *mo, float dx, float dy, float dz)
         }
 
         // If there is no step, we're already there!
-        if(!(Almost_Equal_Float(step[VX], 0, MAX_FLOAT_FUZZ) && Almost_Equal_Float(step[VY], 0, MAX_FLOAT_FUZZ) && Almost_Equal_Float(step[VZ], 0, MAX_FLOAT_FUZZ)))
+        if(!(step[VX] == 0 && step[VY] == 0 && step[VZ] == 0))
             return notHit;
 
         // Can we do this step?
@@ -769,7 +767,7 @@ static void mobjSlideMove(mobj_t *mo)
                    PT_ADDLINES, PTR_SlideTraverse);
 
     // Move up to the wall.
-    if(Almost_Equal_Float(bestSlideFrac, FIX2FLT(FRACUNIT + 1), MAX_FLOAT_FUZZ))
+    if(bestSlideFrac == FIX2FLT(FRACUNIT + 1))
     {
         // The move most have hit the middle, so stairstep.
       stairstep:
@@ -858,7 +856,7 @@ void P_MobjMovement2(mobj_t *mo, void *pstate)
     float       delta[3];
     ddplayer_t *player;
 
-    if(Almost_Equal_Float(mo->mom[MX], 0, MAX_FLOAT_FUZZ) && Almost_Equal_Float(mo->mom[MY], 0, MAX_FLOAT_FUZZ))
+    if(mo->mom[MX] == 0 && mo->mom[MY] == 0)
         return; // This isn't moving anywhere.
 
     player = mo->dPlayer;
@@ -928,7 +926,7 @@ void P_MobjMovement2(mobj_t *mo, void *pstate)
                 mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(!Almost_Equal_Float(delta[MX], 0, MAX_FLOAT_FUZZ) || !Almost_Equal_Float(delta[MY], 0, MAX_FLOAT_FUZZ));
+    } while(delta[MX] != 0 || delta[MY] != 0);
 
     // Apply friction.
     if(mo->ddFlags & DDMF_MISSILE)
@@ -989,7 +987,7 @@ void P_MobjZMovement(mobj_t *mo)
             mo->mom[MZ] = 0;
         }
 
-        if(Almost_Equal_Float(mo->mom[MZ], 0, MAX_FLOAT_FUZZ))
+        if(mo->mom[MZ] == 0)
             mo->pos[VZ] = mo->onMobj->pos[VZ] + mo->onMobj->height;
     }
 
@@ -1015,14 +1013,14 @@ void P_MobjZMovement(mobj_t *mo)
     }
     else if(mo->ddFlags & DDMF_LOWGRAVITY)
     {
-        if(Almost_Equal_Float(mo->mom[MZ], 0, MAX_FLOAT_FUZZ))
+        if(mo->mom[MZ] == 0)
             mo->mom[MZ] = -(gravity / 8) * 2;
         else
             mo->mom[MZ] -= gravity / 8;
     }
     else if(!(mo->ddFlags & DDMF_NOGRAVITY))
     {
-        if(Almost_Equal_Float(mo->mom[MZ], 0, MAX_FLOAT_FUZZ))
+        if(mo->mom[MZ] == 0)
             mo->mom[MZ] = -gravity * 2;
         else
             mo->mom[MZ] -= gravity;

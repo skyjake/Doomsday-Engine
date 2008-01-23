@@ -5,7 +5,6 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +38,6 @@
 #include "de_play.h"
 #include "de_graphics.h"
 #include "de_misc.h"
-#include "compare_float.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -181,7 +179,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
        (haloFadeMax && lum->distanceToViewer > haloFadeMax))
         return false;
 
-    if(haloFadeMax && !Almost_Equal_Float(haloFadeMax, haloFadeMin, MAX_FLOAT_FUZZ) &&
+    if(haloFadeMax && haloFadeMax != haloFadeMin &&
        lum->distanceToViewer < haloFadeMax &&
        lum->distanceToViewer >= haloFadeMin)
     {
@@ -190,7 +188,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
     }
 
     occlusionFactor = (LUM_OMNI(lum)->haloFactor & 0x7f) / 127.0f;
-    if(Almost_Equal_Float(occlusionFactor, 0, MAX_FLOAT_FUZZ))
+    if(occlusionFactor == 0)
         return false;
     occlusionFactor = (1 + occlusionFactor) / 2;
 

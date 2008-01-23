@@ -5,7 +5,6 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +35,6 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_audio.h"
-#include "compare_float.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -256,7 +254,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
     mobj_t     *mo = &cmo->mo;
     boolean     onFloor = false, inCeiling = false;
 
-    if(Almost_Equal_Float(mo->pos[VZ], DDMINFLOAT, MAX_FLOAT_FUZZ))
+    if(mo->pos[VZ] == DDMINFLOAT)
     {
         // Make the mobj stick to the floor.
         cmo->flags |= CLMF_STICK_FLOOR;
@@ -266,7 +264,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
         mo->pos[VZ] = mo->floorZ;
     }
 
-    if(Almost_Equal_Float(mo->pos[VZ], DDMAXFLOAT, MAX_FLOAT_FUZZ))
+    if(mo->pos[VZ] == DDMAXFLOAT)
     {
         // Make the mobj stick to the ceiling.
         cmo->flags |= CLMF_STICK_CEILING;
@@ -586,7 +584,7 @@ void Cl_MobjMove(clmobj_t *cmo)
     float       gravity = FIX2FLT(mapGravity);
 
     // First do XY movement.
-    if(!Almost_Equal_Float(mo->mom[MX], 0, MAX_FLOAT_FUZZ) || !Almost_Equal_Float(mo->mom[MY], 0, MAX_FLOAT_FUZZ))
+    if(mo->mom[MX] != 0 || mo->mom[MY] != 0)
     {
         // Missiles don't hit mobjs only after a short delay. This'll
         // allow the missile to move free of the shooter. (Quite a hack!)
@@ -609,7 +607,7 @@ void Cl_MobjMove(clmobj_t *cmo)
         dontHitMobjs = false;
     }
 
-    if(!Almost_Equal_Float(mo->mom[MZ], 0, MAX_FLOAT_FUZZ))
+    if(mo->mom[MZ] != 0)
     {
         mo->pos[VZ] += mo->mom[MZ];
 
@@ -633,14 +631,14 @@ void Cl_MobjMove(clmobj_t *cmo)
         //// \fixme What about sector-specific gravity?
         if(mo->ddFlags & DDMF_LOWGRAVITY)
         {
-            if(Almost_Equal_Float(mo->mom[MZ], 0, MAX_FLOAT_FUZZ))
+            if(mo->mom[MZ] == 0)
                 mo->mom[MZ] = -(gravity / 8) * 2;
             else
                 mo->mom[MZ] -= gravity / 8;
         }
         else if(!(mo->ddFlags & DDMF_NOGRAVITY))
         {
-            if(Almost_Equal_Float(mo->mom[MZ], 0, MAX_FLOAT_FUZZ))
+            if(mo->mom[MZ] == 0)
                 mo->mom[MZ] = -gravity * 2;
             else
                 mo->mom[MZ] -= gravity;

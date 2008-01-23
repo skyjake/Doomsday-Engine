@@ -30,7 +30,6 @@ SET(deng_VERSION_REVISION beta5)
 SET(deng_VERSION "${deng_VERSION_MAJOR}.${deng_VERSION_MINOR}.${deng_VERSION_PATCH}.${deng_VERSION_REVISION}")
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build/cmake")
-ENABLE_TESTING()
 
 ################################################################################
 ######################## Additional Win32 Path Setup  ##########################
@@ -600,10 +599,9 @@ ENDIF (WIN32 AND NOT UNIX)
 ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
-INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/utilities/include )
 
-FILE(GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c ${CMAKE_SOURCE_DIR}/utilities/src/* )
-SET (DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c )
+FILE(GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c)
+SET (DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c)
 
 IF (UNIX)
     IF (NOT WIN32)
@@ -806,7 +804,3 @@ ENDIF (BUILDWOLFTC)
 IF (BUILDDOOM64TC)
     INSTALL(FILES ${DENG_DOOM64TC_DATA} DESTINATION ${DENG_DOOM64TC_DATA_DIR} )
 ENDIF (BUILDDOOM64TC)
-
-################################################################################
-######################## Unit Testing  #########################################
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/tests/compare_float )

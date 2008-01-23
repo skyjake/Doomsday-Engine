@@ -5,7 +5,6 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +36,6 @@
 #include "de_system.h"
 #include "de_refresh.h"
 #include "de_misc.h"
-#include "compare_float.h"
 
 #include "def_main.h"
 
@@ -235,7 +233,7 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
     // Floor/ceiling z?
     if(df & MDF_POS_Z)
     {
-        if(Almost_Equal_Float(d->pos[VZ], DDMINFLOAT, MAX_FLOAT_FUZZ) || Almost_Equal_Float(d->pos[VZ], DDMAXFLOAT, MAX_FLOAT_FUZZ))
+        if(d->pos[VZ] == DDMINFLOAT || d->pos[VZ] == DDMAXFLOAT)
         {
             df &= ~MDF_POS_Z;
             df |= MDF_MORE_FLAGS;

@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@
 #include "de_refresh.h"
 #include "de_audio.h"
 #include "de_misc.h"
-#include "compare_float.h"
 
 #include <math.h>
 
@@ -775,11 +774,11 @@ static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
     yawSign = yawSigns[index % 4];
     pitchSign = pitchSigns[index % 4];
 
-    if(!Almost_Equal_Float(stDef->spin[0], 0, MAX_FLOAT_FUZZ))
+    if(stDef->spin[0] != 0)
     {
         pt->yaw += 65536 * yawSign * stDef->spin[0] / (360 * TICSPERSEC);
     }
-    if(!Almost_Equal_Float(stDef->spin[1], 0, MAX_FLOAT_FUZZ))
+    if(stDef->spin[1] != 0)
     {
         pt->pitch += 65536 * pitchSign * stDef->spin[1] / (360 * TICSPERSEC);
     }
@@ -811,8 +810,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     pt->mov[VZ] -= FixedMul(FLT2FIX(mapGravity), st->gravity);
 
     // Vector force.
-    if(!Almost_Equal_Float(stDef->vectorForce[VX], 0, MAX_FLOAT_FUZZ) || !Almost_Equal_Float(stDef->vectorForce[VY], 0, MAX_FLOAT_FUZZ) ||
-       !Almost_Equal_Float(stDef->vectorForce[VZ], 0, MAX_FLOAT_FUZZ))
+    if(stDef->vectorForce[VX] != 0 || stDef->vectorForce[VY] != 0 ||
+       stDef->vectorForce[VZ] != 0)
     {
         int     i;
 
@@ -851,7 +850,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         dist =
             P_ApproxDistance(P_ApproxDistance(delta[VX], delta[VY]),
                              delta[VZ]);
-        if(!Almost_Equal_Float(dist, 0, MAX_FLOAT_FUZZ))
+        if(dist != 0)
         {
             // Radial force pushes the particles on the surface of a sphere.
             if(gen->def->force)
@@ -1379,7 +1378,7 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
             P_ApproxDistance(P_ApproxDistance
                              (FIX2FLT(gen->vector[VX]), FIX2FLT(gen->vector[VY])),
                              FIX2FLT(gen->vector[VZ]));
-        if(!Almost_Equal_Float(len, 0, MAX_FLOAT_FUZZ))
+        if(len != 0)
         {
             uint        k;
 
