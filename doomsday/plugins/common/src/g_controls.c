@@ -372,9 +372,13 @@ DEFCC( CCmdDefaultGameBinds )
         // Menu events:
         "bindevent key-esc menu",
         "bindevent menu:key-backspace menucancel",
+        "bindevent menu:key-up menuup",
         "bindevent menu:key-up-repeat menuup",
+        "bindevent menu:key-down menudown",
         "bindevent menu:key-down-repeat menudown",
+        "bindevent menu:key-left menuleft",
         "bindevent menu:key-left-repeat menuleft",
+        "bindevent menu:key-right menuright",
         "bindevent menu:key-right-repeat menuright",
         "bindevent menu:key-enter menuselect",
 
