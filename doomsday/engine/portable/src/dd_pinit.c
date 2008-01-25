@@ -273,7 +273,8 @@ void DD_ShutdownAll(void)
     P_ControlShutdown();
     Sv_Shutdown();
     R_Shutdown();
-    Sys_ConShutdown();
+    if(isDedicated)
+        Sys_ConShutdown();
     Def_Destroy();
     F_ShutdownDirec();
     FH_Clear();

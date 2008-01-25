@@ -1243,7 +1243,7 @@ static void updateCmdLine(void)
     cmdCursor = complPos = strlen(cmdLine);
     matchedWordListGood = false;
     if(isDedicated)
-        Sys_ConUpdateCmdLine(cmdLine);
+        Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
 }
 
 void Con_Open(int yes)
@@ -1433,7 +1433,7 @@ boolean Con_Responder(ddevent_t *event)
         matchedWordListGood = false;
         Rend_ConsoleCursorResetBlink();
         if(isDedicated)
-            Sys_ConUpdateCmdLine(cmdLine);
+            Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
         return true;
 
     case DDKEY_INS:
@@ -1442,7 +1442,7 @@ boolean Con_Responder(ddevent_t *event)
 
         cmdInsMode = !cmdInsMode; // Toggle text insert mode.
         if(isDedicated)
-            Sys_ConUpdateCmdLine(cmdLine);
+            Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
         return true;
 
     case DDKEY_DEL:
@@ -1457,7 +1457,7 @@ boolean Con_Responder(ddevent_t *event)
             matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
             if(isDedicated)
-                Sys_ConUpdateCmdLine(cmdLine);
+                Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
         }
         return true;
 
@@ -1474,7 +1474,7 @@ boolean Con_Responder(ddevent_t *event)
             matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
             if(isDedicated)
-                Sys_ConUpdateCmdLine(cmdLine);
+                Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
         }
         return true;
 
@@ -1503,7 +1503,7 @@ boolean Con_Responder(ddevent_t *event)
 
         Rend_ConsoleCursorResetBlink();
         if(isDedicated)
-            Sys_ConUpdateCmdLine(cmdLine);
+            Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
         }
         return true;
 
@@ -1521,7 +1521,7 @@ boolean Con_Responder(ddevent_t *event)
         complPos = cmdCursor;
         Rend_ConsoleCursorResetBlink();
         if(isDedicated)
-            Sys_ConUpdateCmdLine(cmdLine);
+            Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
         break;
 
     case DDKEY_RIGHTARROW:
@@ -1545,7 +1545,7 @@ boolean Con_Responder(ddevent_t *event)
                         cmdCursor++;
                         matchedWordListGood = false;
                         if(isDedicated)
-                            Sys_ConUpdateCmdLine(cmdLine);
+                            Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
                     }
                 }
             }
@@ -1561,7 +1561,7 @@ boolean Con_Responder(ddevent_t *event)
         complPos = cmdCursor;
         Rend_ConsoleCursorResetBlink();
         if(isDedicated)
-            Sys_ConUpdateCmdLine(cmdLine);
+            Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
         break;
 
     case DDKEY_F5:
@@ -1591,7 +1591,7 @@ boolean Con_Responder(ddevent_t *event)
             matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
             if(isDedicated)
-                Sys_ConUpdateCmdLine(cmdLine);
+                Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
             return true;
         }
 
@@ -1625,7 +1625,7 @@ boolean Con_Responder(ddevent_t *event)
         Rend_ConsoleCursorResetBlink();
 
         if(isDedicated)
-            Sys_ConUpdateCmdLine(cmdLine);
+            Sys_ConUpdateCmdLine(cmdLine, cmdCursor+1);
         return true;
     }
     }

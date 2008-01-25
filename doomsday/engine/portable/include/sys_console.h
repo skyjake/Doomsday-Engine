@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_console.h: Win32 Console
  */
 
@@ -31,7 +32,7 @@
 void            Sys_ConInit();
 void            Sys_ConShutdown();
 void            Sys_ConPostEvents();
-void            Sys_ConPrint(int clflags, char *text);
-void            Sys_ConUpdateCmdLine(char *text);
+void            Sys_ConPrint(int clflags, const char *text);
+void            Sys_ConUpdateCmdLine(const char *text, unsigned int cursorPos);
 
 #endif

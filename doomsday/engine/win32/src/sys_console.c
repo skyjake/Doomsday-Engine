@@ -209,40 +209,48 @@ void Sys_ConInit(void)
 {
     char        title[256];
 
-    // We'll be needing the VKey to DDKey translation table.
+    /**
+     * For now, always load the U.S. English layout.
+     *
+     * \todo Is this even necessary with virtualkeys?
+     */
     LoadKeyboardLayout(_TEXT("00000409"), KLF_SUBSTITUTE_OK);
+
+    // We'll be needing the VKey to DDKey translation table.
     initVKeyToDDKeyTlat();
 
-    FreeConsole();
     if(!AllocConsole())
     {
-        Con_Error("couldn't allocate a console! error %i\n", GetLastError());
+        Con_Error("Sys_ConInit: Couldn't allocate a console! error %i\n", GetLastError());
     }
+
     hcInput = GetStdHandle(STD_INPUT_HANDLE);
     if(hcInput == INVALID_HANDLE_VALUE)
-        Con_Error("bad input handle\n");
+        Con_Error("Sys_ConInit: Bad input handle\n");
 
     // Compose the title.
     sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT " (Dedicated) : %s",
             gx.GetVariable(DD_GAME_ID));
 
     if(!SetConsoleTitle(title))
-        Con_Error("setting console title: error %i\n", GetLastError());
+        Con_Error("Sys_ConInit: Setting console title: error %i\n", GetLastError());
 
     hcScreen = GetStdHandle(STD_OUTPUT_HANDLE);
     if(hcScreen == INVALID_HANDLE_VALUE)
-        Con_Error("bad output handle\n");
+        Con_Error("Sys_ConInit: Bad output handle\n");
 
     GetConsoleScreenBufferInfo(hcScreen, &cbInfo);
 
     // This is the location of the print cursor.
     cx = 0;
     cy = cbInfo.dwSize.Y - 2;
-    Sys_ConUpdateCmdLine("");
+    Sys_ConUpdateCmdLine("", 0);
 }
 
 void Sys_ConShutdown(void)
 {
+    // Detach the console for this process.
+    FreeConsole();
 }
 
 void Sys_ConPostEvents(void)
@@ -344,11 +352,12 @@ static void writeText(CHAR_INFO *line, int len)
     WriteConsoleOutput(hcScreen, line, linesize, from, &rect);
 }
 
-void Sys_ConPrint(int clflags, char *text)
+void Sys_ConPrint(int clflags, const char *text)
 {
     unsigned int    i;
     int             linestart, bpos;
-    char           *ptr = text, ch;
+    const char     *ptr = text;
+    char            ch;
     size_t          len = strlen(text);
     CHAR_INFO       line[LINELEN];
 
@@ -409,7 +418,7 @@ void Sys_ConPrint(int clflags, char *text)
     }
 }
 
-void Sys_ConUpdateCmdLine(char *text)
+void Sys_ConUpdateCmdLine(const char *text, unsigned int cursorPos)
 {
     static int  lastInputMode = -1;
 
@@ -451,5 +460,5 @@ void Sys_ConUpdateCmdLine(char *text)
     rect.Top = cbInfo.dwSize.Y - 1;
     rect.Bottom = cbInfo.dwSize.Y - 1;
     WriteConsoleOutput(hcScreen, line, linesize, from, &rect);
-    setCmdLineCursor(Con_CursorPosition() + 1, cbInfo.dwSize.Y - 1);
+    setCmdLineCursor(cursorPos, cbInfo.dwSize.Y - 1);
 }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@ void Sys_ConInit(void)
 
     keypad(winCommand, TRUE);
     nodelay(winCommand, TRUE);
-    Sys_ConUpdateCmdLine("");
+    Sys_ConUpdateCmdLine("", 0);
 }
 
 void Sys_ConShutdown(void)
@@ -231,11 +231,12 @@ int Sys_ConGetScreenSize(int axis)
     return axis == VX ? x : y;
 }
 
-void Sys_ConPrint(int clflags, char *text)
+void Sys_ConPrint(int clflags, const char *text)
 {
     char        line[LINELEN];
     int         count = strlen(text), lineStart, bPos;
-    char       *ptr = text, ch;
+    const char *ptr = text;
+    char        ch;
     int         maxPos[2];
 
     // Determine the size of the text window.
@@ -301,10 +302,10 @@ void Sys_ConPrint(int clflags, char *text)
     wrefresh(winText);
 
     // Move the cursor back onto the command line.
-    Sys_ConUpdateCmdLine(NULL);
+    Sys_ConUpdateCmdLine(NULL, 0);
 }
 
-void Sys_ConUpdateCmdLine(char *text)
+void Sys_ConUpdateCmdLine(const char *text, unsigned int cursorPos)
 {
     unsigned int i;
     char        line[LINELEN], *ch;
