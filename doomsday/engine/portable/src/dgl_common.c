@@ -192,11 +192,11 @@ boolean DGL_PreInit(void)
  */
 boolean DGL_Init(void)
 {
-    if(!initedGL)
-        return false;
-
     if(isDedicated)
         return true;
+
+    if(!initedGL)
+        return false;
 
     if(firstTimeInit)
     {

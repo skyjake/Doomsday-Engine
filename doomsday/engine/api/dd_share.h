@@ -455,6 +455,7 @@ extern          "C" {
         DDKEY_RSHIFT,
         DDKEY_LSHIFT = DDKEY_RSHIFT,
         DDKEY_RCTRL,
+        DDKEY_LCTRL = DDKEY_RCTRL,
         DDKEY_RALT,
         DDKEY_LALT = DDKEY_RALT,
         DDKEY_INS,

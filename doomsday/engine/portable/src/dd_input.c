@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -237,10 +237,13 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
 
 /**
  * Initialize the input device state table.
+ *
+ * \note There need not be actual physical devices available in order to
+ * use these state tables.
  */
-void I_InitInputDevices(void)
+void I_InitVirtualInputDevices(void)
 {
-    int i;
+    int         i;
 	inputdev_t *dev;
     inputdevaxis_t *axis;
 
@@ -557,7 +560,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
 /**
  * Update the input device state table.
  */
-static void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
+void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
 {
 	inputdev_t *dev;
 

@@ -95,10 +95,10 @@ void Sys_Init(void)
 
         if(!I_Init())
             Con_Error("Sys_Init: Failed to initialize input.\n");
-
-        I_InitInputDevices();
     }
 
+    // Virtual devices need to be created even in dedicated mode.
+    I_InitVirtualInputDevices();
     Sys_InitTimer();
     Sys_InitMixer();
     S_Init();

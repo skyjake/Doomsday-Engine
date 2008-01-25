@@ -1441,6 +1441,8 @@ boolean Con_Responder(ddevent_t *event)
             break;
 
         cmdInsMode = !cmdInsMode; // Toggle text insert mode.
+        if(isDedicated)
+            Sys_ConUpdateCmdLine(cmdLine);
         return true;
 
     case DDKEY_DEL:
@@ -1518,6 +1520,8 @@ boolean Con_Responder(ddevent_t *event)
         }
         complPos = cmdCursor;
         Rend_ConsoleCursorResetBlink();
+        if(isDedicated)
+            Sys_ConUpdateCmdLine(cmdLine);
         break;
 
     case DDKEY_RIGHTARROW:
@@ -1556,6 +1560,8 @@ boolean Con_Responder(ddevent_t *event)
 
         complPos = cmdCursor;
         Rend_ConsoleCursorResetBlink();
+        if(isDedicated)
+            Sys_ConUpdateCmdLine(cmdLine);
         break;
 
     case DDKEY_F5:

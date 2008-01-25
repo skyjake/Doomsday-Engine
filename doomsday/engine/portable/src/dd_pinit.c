@@ -204,7 +204,9 @@ boolean DD_EarlyInit(void)
     if(ArgCheck("-dedicated"))
     {
         isDedicated = true;
+#ifdef UNIX
         Sys_ConInit();
+#endif
     }
 
     // We'll redirect stdout to a log file.

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -169,7 +169,7 @@ byte        DD_ScanToKey(byte scan);
 byte        DD_KeyToScan(byte key);
 byte        DD_ModKey(byte key);
 
-void        I_InitInputDevices(void);
+void        I_InitVirtualInputDevices(void);
 void        I_ShutdownInputDevices(void);
 void        I_ClearDeviceClassAssociations(void);
 inputdev_t *I_GetDevice(uint ident, boolean ifactive);
@@ -180,5 +180,6 @@ int         I_GetAxisByName(inputdev_t *device, const char *name);
 int         I_GetKeyByName(inputdev_t* device, const char* name);
 float       I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
 boolean     I_IsDeviceKeyDown(uint ident, uint code);
+void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
 
 #endif

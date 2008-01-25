@@ -264,26 +264,34 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         {
             DD_ErrorBox(true, "Error initializing memory zone.");
         }
-        else if(0 == (windowIDX =
-                Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, buf, &lnCmdShow)))
-        {
-            DD_ErrorBox(true, "Error creating main window.");
-        }
-        else if(!DGL_Init())
-        {
-            DD_ErrorBox(true, "Error initializing DGL.");
-        }
         else
-        {   // All initialization complete.
-            doShutdown = FALSE;
+        {
+            if(isDedicated)
+            {
+                Sys_ConInit();
+            }
 
-            // Append the main window title with the game name and ensure it
-            // is the at the foreground, with focus.
-            DD_ComposeMainWindowTitle(buf);
-            Sys_SetWindowTitle(windowIDX, buf);
+            if(0 == (windowIDX =
+                Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, buf, &lnCmdShow)))
+            {
+                DD_ErrorBox(true, "Error creating main window.");
+            }
+            else if(!DGL_Init())
+            {
+                DD_ErrorBox(true, "Error initializing DGL.");
+            }
+            else
+            {   // All initialization complete.
+                doShutdown = FALSE;
 
-           // SetForegroundWindow(win->hWnd);
-           // SetFocus(win->hWnd);
+                // Append the main window title with the game name and ensure it
+                // is the at the foreground, with focus.
+                DD_ComposeMainWindowTitle(buf);
+                Sys_SetWindowTitle(windowIDX, buf);
+
+               // SetForegroundWindow(win->hWnd);
+               // SetFocus(win->hWnd);
+            }
         }
     }
 
@@ -308,8 +316,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
  */
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    boolean forwardMsg = true;
-    LRESULT result = 0;
+    BOOL        forwardMsg = true;
+    LRESULT     result = 0;
     static PAINTSTRUCT ps;
 
     switch(msg)
@@ -322,7 +330,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             case SIZE_MAXIMIZED:
                 Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0, DDWF_FULLSCREEN,
                              DDSW_NOBPP|DDSW_NOSIZE|DDSW_NOMOVE|DDSW_NOCENTER);
-                forwardMsg = false;
+                forwardMsg = FALSE;
                 break;
 
             default:
@@ -353,21 +361,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_CLOSE:
         PostQuitMessage(0);
-        ignoreInput = true;
-        forwardMsg = false;
+        ignoreInput = TRUE;
+        forwardMsg = FALSE;
         break;
 
     case WM_PAINT:
         if(BeginPaint(hWnd, &ps))
             EndPaint(hWnd, &ps);
-        forwardMsg = false;
-        result = FALSE;
+        forwardMsg = FALSE;
+        break;
+
+    case WM_KEYDOWN:
+        forwardMsg = FALSE;
+        break;
+
+    case WM_KEYUP:
+        forwardMsg = FALSE;
+        break;
+
+    case WM_SYSKEYDOWN:
+        forwardMsg = TRUE;
+        break;
+
+    case WM_SYSKEYUP:
+        forwardMsg = TRUE;
         break;
 
     case WM_HOTKEY: // A hot-key combination we have registered has been used.
         // Used to override alt+enter and other easily misshit combinations,
         // at the user's request.
-        forwardMsg = false;
+        forwardMsg = FALSE;
         break;
 
     case WM_SYSCOMMAND:
@@ -375,7 +398,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
         case SC_SCREENSAVE: // Screensaver about to begin.
         case SC_MONITORPOWER: // Monitor trying to enter power save.
-            forwardMsg = false;
+            forwardMsg = FALSE;
             break;
 
         default:
@@ -391,22 +414,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 		        SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
                 DD_ClearEvents(); // For good measure.
-                ignoreInput = false;
+                ignoreInput = FALSE;
             }
 			else
 			{
 		        SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-                ignoreInput = true;
+                ignoreInput = TRUE;
             }
 		}
-        forwardMsg = false;
+        forwardMsg = FALSE;
         break;
 
     default:
         break;
     }
 
-    return (forwardMsg? DefWindowProc(hWnd, msg, wParam, lParam) : result);
+    if(forwardMsg)
+        return DefWindowProc(hWnd, msg, wParam, lParam);
+
+    return result;
 }
 
 /**

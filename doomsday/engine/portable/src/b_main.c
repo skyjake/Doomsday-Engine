@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * b_main.c: Event/Command Binding
  */
 
@@ -450,7 +450,10 @@ dbinding_t* B_GetControlDeviceBindings(int localNum, int control, bclass_t** bCl
     if(bClass)
         *bClass = bc;
 
-    return &B_GetControlBinding(bc, control)->deviceBinds[localNum];
+    if(bc)
+        return &B_GetControlBinding(bc, control)->deviceBinds[localNum];
+
+    return NULL;
 }
 
 boolean B_Delete(int bid)
