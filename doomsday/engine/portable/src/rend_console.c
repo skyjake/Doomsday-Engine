@@ -550,8 +550,7 @@ static void drawConsole(void)
 
     // The text in the console buffer will be drawn from the bottom up (!).
     y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
-    reqLines = ceil(y / fontScaledY) + 1;
-
+    reqLines = ceil(y / fontScaledY);
     if(reqLines > 0)
     {
         // Need to enlarge the buffer?

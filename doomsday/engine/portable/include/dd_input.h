@@ -31,6 +31,8 @@
 
 #include "con_decl.h"
 
+#define NUMKKEYS            256
+
 // Input devices.
 enum
 {
@@ -166,7 +168,6 @@ void        DD_ProcessEvents(timespan_t ticLength);
 void        DD_ClearEvents(void);
 void        DD_ClearKeyRepeaters(void);
 byte        DD_ScanToKey(byte scan);
-byte        DD_KeyToScan(byte key);
 byte        DD_ModKey(byte key);
 
 void        I_InitVirtualInputDevices(void);

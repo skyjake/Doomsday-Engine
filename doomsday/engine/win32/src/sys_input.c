@@ -47,7 +47,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define KEYBUFSIZE  32
+#define KEYBUFSIZE          32
 
 #define I_SAFE_RELEASE(d) { if(d) { IDirectInputDevice_Release(d); \
                                     (d) = NULL; } }
@@ -82,6 +82,67 @@ static DIDEVICEINSTANCE firstJoystick;
 
 static int counter;
 
+// A customizable mapping of the scantokey array.
+//static char keyMapPath[NUMKKEYS] = "}Data\\KeyMaps\\";
+static byte keyMappings[NUMKKEYS];
+
+/* *INDENT-OFF* */
+static byte scantokey[NUMKKEYS] =
+{
+//  0               1           2               3               4           5                   6               7
+//  8               9           A               B               C           D                   E               F
+// 0
+    0  ,            27,         '1',            '2',            '3',        '4',                '5',            '6',
+    '7',            '8',        '9',            '0',            '-',        '=',                DDKEY_BACKSPACE,9,          // 0
+// 1
+    'q',            'w',        'e',            'r',            't',        'y',                'u',            'i',
+    'o',            'p',        '[',            ']',            13 ,        DDKEY_RCTRL,        'a',            's',        // 1
+// 2
+    'd',            'f',        'g',            'h',            'j',        'k',                'l',            ';',
+    39 ,            '`',        DDKEY_RSHIFT,   92,             'z',        'x',                'c',            'v',        // 2
+// 3
+    'b',            'n',        'm',            ',',            '.',        '/',                DDKEY_RSHIFT,   '*',
+    DDKEY_RALT,     ' ',        0  ,            DDKEY_F1,       DDKEY_F2,   DDKEY_F3,           DDKEY_F4,       DDKEY_F5,   // 3
+// 4
+    DDKEY_F6,       DDKEY_F7,   DDKEY_F8,       DDKEY_F9,       DDKEY_F10,  DDKEY_NUMLOCK,      DDKEY_SCROLL,   DDKEY_NUMPAD7,
+    DDKEY_NUMPAD8,  DDKEY_NUMPAD9, '-',         DDKEY_NUMPAD4,  DDKEY_NUMPAD5, DDKEY_NUMPAD6,   '+',            DDKEY_NUMPAD1, // 4
+// 5
+    DDKEY_NUMPAD2,  DDKEY_NUMPAD3, DDKEY_NUMPAD0, DDKEY_DECIMAL,0,          0,                  0,              DDKEY_F11,
+    DDKEY_F12,      0  ,        0  ,            0  ,            DDKEY_BACKSLASH, 0,             0  ,            0,          // 5
+// 6
+    0  ,            0  ,        0  ,            0  ,            0  ,        0  ,                0  ,            0,
+    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,          // 6
+// 7
+    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
+    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // 7
+// 8
+    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
+    0,              0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // 8
+// 9
+    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
+    0  ,            0  ,        0  ,            0,              DDKEY_ENTER, DDKEY_RCTRL,       0  ,            0,          // 9
+// A
+    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
+    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // A
+// B
+    0  ,            0  ,        0  ,            0  ,            0,          '/',                0  ,            0,
+    DDKEY_RALT,     0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // B
+// C
+    0  ,            0  ,        0  ,            0  ,            0,          DDKEY_PAUSE,        0  ,            DDKEY_HOME,
+    DDKEY_UPARROW,  DDKEY_PGUP, 0  ,            DDKEY_LEFTARROW,0  ,        DDKEY_RIGHTARROW,   0  ,            DDKEY_END,  // C
+// D
+    DDKEY_DOWNARROW,DDKEY_PGDN, DDKEY_INS,      DDKEY_DEL,      0,          0  ,                0  ,            0,
+    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // D
+// E
+    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
+    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // E
+// F
+    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
+    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0           // F
+//  0               1           2               3               4           5                   6               7
+//  8               9           A               B               C           D                   E               F
+};
+
 // CODE --------------------------------------------------------------------
 
 void I_Register(void)
@@ -98,6 +159,190 @@ const char *I_ErrorMsg(HRESULT hr)
         DIERR_NOTINITIALIZED ? "Not initialized" : hr ==
         DIERR_UNSUPPORTED ? "Unsupported" : hr ==
         DIERR_NOTFOUND ? "Not found" : "?";
+}
+
+/**
+ * Sets the key mappings to the default values
+ */
+void DD_DefaultKeyMapping(void)
+{
+    int     i;
+
+    for(i = 0; i < 256; ++i)
+    {
+        keyMappings[i] = scantokey[i];
+    }
+}
+
+#if 0 // Currently unused.
+static DFILE *openKeymapFile(const char *fileName)
+{
+    char        path[512];
+
+    // Try with and without .DKM.
+    strcpy(path, fileName);
+    if(!F_Access(path))
+    {
+        // Try the path.
+        M_TranslatePath(keyMapPath, path);
+        strcat(path, fileName);
+        if(!F_Access(path))
+        {
+            strcpy(path, fileName);
+            strcat(path, ".dkm");
+            if(!F_Access(path))
+            {
+                M_TranslatePath(keyMapPath, path);
+                strcat(path, fileName);
+                strcat(path, ".dkm");
+            }
+        }
+    }
+
+    return F_Open(path, "rt");
+}
+
+static boolean closeKeymapFile(DFILE *file)
+{
+    if(file)
+        F_Close(file);
+
+    return true;
+}
+
+static int parseKeymapFile(DFILE *file, const char *fileName)
+{
+    int         warnCount = 0;
+    char        buf[512], *ptr;
+    boolean     shiftMode = false, altMode = false;
+    int         key, mapTo, lineNumber = 0;
+
+    VERBOSE(Con_Message("parseKeymapFile: Parsing \"%s\"...\n", fileName));
+
+    do
+    {
+        lineNumber++;
+        M_ReadLine(buf, sizeof(buf), file);
+        ptr = M_SkipWhite(buf);
+        if(!*ptr || M_IsComment(ptr))
+            continue;
+
+        // Modifiers?
+        if(!strnicmp(ptr + 1, "shift", 5))
+        {
+            shiftMode = (*ptr == '+');
+            continue;
+        }
+        else if(!strnicmp(ptr + 1, "alt", 3))
+        {
+            altMode = (*ptr == '+');
+            continue;
+        }
+
+        key = DD_KeyOrCode(ptr);
+        if(key < 0 || key > 255)
+        {
+            Con_Message("  #%i: Invalid key %i.\n", lineNumber, key);
+            warnCount++;
+        }
+
+        ptr = M_SkipWhite(M_FindWhite(ptr));
+        mapTo = DD_KeyOrCode(ptr);
+        // Check the mapping.
+        if(mapTo < 0 || mapTo > 255)
+        {
+            Con_Message("  #%i: Invalid mapping %i.\n", lineNumber, mapTo);
+            warnCount++;
+        }
+
+        if(shiftMode)
+            shiftKeyMappings[key] = mapTo;
+        else if(altMode)
+            altKeyMappings[key] = mapTo;
+        else
+            keyMappings[key] = mapTo;
+    } while(!deof(file));
+
+    return warnCount;
+}
+
+boolean DD_LoadKeymap(const char *fileName)
+{
+    DFILE      *file;
+    int         warnCount;
+
+    if(!(file = openKeymapFile(fileName)))
+    {
+        Con_Message("DD_LoadKeymap: A keymap file by the name \"%s\" could "
+                    "not be found.\n", fileName);
+        return false;
+    }
+
+    // Any missing entries are set to the default.
+    DD_DefaultKeyMapping();
+
+    Con_Message("DD_LoadKeymap: Loading \"%s\"...\n", fileName);
+
+    warnCount = parseKeymapFile(file, fileName);
+    if(warnCount > 0)
+        Con_Message("  %i: Warnings.\n", warnCount);
+    closeKeymapFile(file);
+
+    Con_Message("  Loaded keymap \"%s\" successfully.\n", fileName);
+
+    return true;
+}
+
+/**
+ * Dumps the key mapping table to filename.
+ */
+void DD_DumpKeymap(const char *fileName)
+{
+    int             i;
+    FILE           *file;
+
+    file = fopen(fileName, "wt");
+    for(i = 0; i < 256; ++i)
+    {
+        fprintf(file, "%03i\t", i);
+        fprintf(file, !isspace(keyMappings[i]) &&
+                isprint(keyMappings[i]) ? "%c\n" : "%03i\n", keyMappings[i]);
+    }
+
+    fprintf(file, "\n+Shift\n");
+    for(i = 0; i < 256; ++i)
+    {
+        if(shiftKeyMappings[i] == i)
+            continue;
+        fprintf(file, !isspace(i) && isprint(i) ? "%c\t" : "%03i\t", i);
+        fprintf(file, !isspace(shiftKeyMappings[i]) &&
+                isprint(shiftKeyMappings[i]) ? "%c\n" : "%03i\n",
+                shiftKeyMappings[i]);
+    }
+
+    fprintf(file, "-Shift\n\n+Alt\n");
+    for(i = 0; i < 256; ++i)
+    {
+        if(altKeyMappings[i] == i)
+            continue;
+        fprintf(file, !isspace(i) && isprint(i) ? "%c\t" : "%03i\t", i);
+        fprintf(file, !isspace(altKeyMappings[i]) &&
+                isprint(altKeyMappings[i]) ? "%c\n" : "%03i\n",
+                altKeyMappings[i]);
+    }
+    fclose(file);
+
+    Con_Message("DD_DumpKeymap: Current keymap was dumped to \"%s\".\n",
+                fileName);
+}
+#endif
+
+/**
+ * Converts as a scan code to the keymap key id.
+ */
+byte DD_ScanToKey(byte scan)
+{
+    return keyMappings[scan];
 }
 
 HRESULT I_SetProperty(void *dev, REFGUID property, DWORD how, DWORD obj,
@@ -685,3 +930,25 @@ void I_GetJoystickState(joystate_t *state)
             state->hatAngle[i] = pov / 100.0f;
     }
 }
+
+/**
+ * Console command to write the current keymap to a file.
+ */
+#if 0 // Currently unused.
+D_CMD(DumpKeyMap)
+{
+    DD_DumpKeymap(argv[1]);
+    return true;
+}
+#endif
+
+/**
+ * Console command to load a keymap file.
+ */
+#if 0 // Currently unsued.
+D_CMD(KeyMap)
+{
+    DD_LoadKeymap(argv[1]);
+    return true;
+}
+#endif

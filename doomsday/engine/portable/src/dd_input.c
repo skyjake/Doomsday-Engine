@@ -47,12 +47,11 @@
 
 #define KBDQUESIZE      32
 #define MAX_DOWNKEYS    16      // Most keyboards support 6 or 7.
-#define NUMKKEYS        256
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct repeater_s {
-    int     key;                // The H2 key code (0 if not in use).
+    int     key;                // The DDKEY code (0 if not in use).
     timespan_t timer;           // How's the time?
     int     count;              // How many times has been repeated?
 } repeater_t;
@@ -87,10 +86,7 @@ int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;    // milliseconds
 unsigned int  mouseFreq = 0;
 boolean shiftDown = false, altDown = false;
 
-// A customizable mapping of the scantokey array.
-char    keyMapPath[NUMKKEYS] = "}Data\\KeyMaps\\";
-byte    keyMappings[NUMKKEYS];
-byte    shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
+static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -99,63 +95,6 @@ byte    shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
 static ddevent_t events[MAXEVENTS];
 static int eventhead;
 static int eventtail;
-
-/* *INDENT-OFF* */
-static byte scantokey[NUMKKEYS] =
-{
-//  0               1           2               3               4           5                   6               7
-//  8               9           A               B               C           D                   E               F
-// 0
-    0  ,            27,         '1',            '2',            '3',        '4',                '5',            '6',
-    '7',            '8',        '9',            '0',            '-',        '=',                DDKEY_BACKSPACE,9,          // 0
-// 1
-    'q',            'w',        'e',            'r',            't',        'y',                'u',            'i',
-    'o',            'p',        '[',            ']',            13 ,        DDKEY_RCTRL,        'a',            's',        // 1
-// 2
-    'd',            'f',        'g',            'h',            'j',        'k',                'l',            ';',
-    39 ,            '`',        DDKEY_RSHIFT,   92,             'z',        'x',                'c',            'v',        // 2
-// 3
-    'b',            'n',        'm',            ',',            '.',        '/',                DDKEY_RSHIFT,   '*',
-    DDKEY_RALT,     ' ',        0  ,            DDKEY_F1,       DDKEY_F2,   DDKEY_F3,           DDKEY_F4,       DDKEY_F5,   // 3
-// 4
-    DDKEY_F6,       DDKEY_F7,   DDKEY_F8,       DDKEY_F9,       DDKEY_F10,  DDKEY_NUMLOCK,      DDKEY_SCROLL,   DDKEY_NUMPAD7,
-    DDKEY_NUMPAD8,  DDKEY_NUMPAD9, '-',         DDKEY_NUMPAD4,  DDKEY_NUMPAD5, DDKEY_NUMPAD6,   '+',            DDKEY_NUMPAD1, // 4
-// 5
-    DDKEY_NUMPAD2,  DDKEY_NUMPAD3, DDKEY_NUMPAD0, DDKEY_DECIMAL,0,          0,                  0,              DDKEY_F11,
-    DDKEY_F12,      0  ,        0  ,            0  ,            DDKEY_BACKSLASH, 0,             0  ,            0,          // 5
-// 6
-    0  ,            0  ,        0  ,            0  ,            0  ,        0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,          // 6
-// 7
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // 7
-// 8
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0,              0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // 8
-// 9
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              DDKEY_ENTER, DDKEY_RCTRL,       0  ,            0,          // 9
-// A
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // A
-// B
-    0  ,            0  ,        0  ,            0  ,            0,          '/',                0  ,            0,
-    DDKEY_RALT,     0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // B
-// C
-    0  ,            0  ,        0  ,            0  ,            0,          DDKEY_PAUSE,        0  ,            DDKEY_HOME,
-    DDKEY_UPARROW,  DDKEY_PGUP, 0  ,            DDKEY_LEFTARROW,0  ,        DDKEY_RIGHTARROW,   0  ,            DDKEY_END,  // C
-// D
-    DDKEY_DOWNARROW,DDKEY_PGDN, DDKEY_INS,      DDKEY_DEL,      0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // D
-// E
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // E
-// F
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0           // F
-//  0               1           2               3               4           5                   6               7
-//  8               9           A               B               C           D                   E               F
-};
 
 static char defaultShiftTable[96] = // Contains characters 32 to 127.
 {
@@ -188,8 +127,10 @@ void DD_RegisterInput(void)
     C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
 
     // Ccmds
+#if 0
     C_CMD("dumpkeymap", "s", DumpKeyMap);
     C_CMD("keymap", "s", KeyMap);
+#endif
     C_CMD("listinputdevices", "", ListInputDevices);
     C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
@@ -649,14 +590,6 @@ boolean I_IsDeviceKeyDown(uint ident, uint code)
 }
 
 /**
- * Initializes the key mappings to the default values.
- */
-void DD_InitInput(void)
-{
-    DD_DefaultKeyMapping();
-}
-
-/**
  * @return          Either key number or the scan code for the given token.
  */
 int DD_KeyOrCode(char *token)
@@ -673,180 +606,18 @@ int DD_KeyOrCode(char *token)
 }
 
 /**
- * Sets the key mappings to the default values
+ * Initializes the key mappings to the default values.
  */
-void DD_DefaultKeyMapping(void)
+void DD_InitInput(void)
 {
     int     i;
 
     for(i = 0; i < 256; ++i)
     {
-        keyMappings[i] = scantokey[i];
         shiftKeyMappings[i] = i >= 32 && i <= 127 &&
             defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
         altKeyMappings[i] = i;
     }
-}
-
-static DFILE *openKeymapFile(const char *fileName)
-{
-    char        path[512];
-
-    // Try with and without .DKM.
-    strcpy(path, fileName);
-    if(!F_Access(path))
-    {
-        // Try the path.
-        M_TranslatePath(keyMapPath, path);
-        strcat(path, fileName);
-        if(!F_Access(path))
-        {
-            strcpy(path, fileName);
-            strcat(path, ".dkm");
-            if(!F_Access(path))
-            {
-                M_TranslatePath(keyMapPath, path);
-                strcat(path, fileName);
-                strcat(path, ".dkm");
-            }
-        }
-    }
-
-    return F_Open(path, "rt");
-}
-
-static boolean closeKeymapFile(DFILE *file)
-{
-    if(file)
-        F_Close(file);
-
-    return true;
-}
-
-static int parseKeymapFile(DFILE *file, const char *fileName)
-{
-    int         warnCount = 0;
-    char        buf[512], *ptr;
-    boolean     shiftMode = false, altMode = false;
-    int         key, mapTo, lineNumber = 0;
-
-    VERBOSE(Con_Message("parseKeymapFile: Parsing \"%s\"...\n", fileName));
-
-    do
-    {
-        lineNumber++;
-        M_ReadLine(buf, sizeof(buf), file);
-        ptr = M_SkipWhite(buf);
-        if(!*ptr || M_IsComment(ptr))
-            continue;
-
-        // Modifiers?
-        if(!strnicmp(ptr + 1, "shift", 5))
-        {
-            shiftMode = (*ptr == '+');
-            continue;
-        }
-        else if(!strnicmp(ptr + 1, "alt", 3))
-        {
-            altMode = (*ptr == '+');
-            continue;
-        }
-
-        key = DD_KeyOrCode(ptr);
-        if(key < 0 || key > 255)
-        {
-            Con_Message("  #%i: Invalid key %i.\n", lineNumber, key);
-            warnCount++;
-        }
-
-        ptr = M_SkipWhite(M_FindWhite(ptr));
-        mapTo = DD_KeyOrCode(ptr);
-        // Check the mapping.
-        if(mapTo < 0 || mapTo > 255)
-        {
-            Con_Message("  #%i: Invalid mapping %i.\n", lineNumber, mapTo);
-            warnCount++;
-        }
-
-        if(shiftMode)
-            shiftKeyMappings[key] = mapTo;
-        else if(altMode)
-            altKeyMappings[key] = mapTo;
-        else
-            keyMappings[key] = mapTo;
-    } while(!deof(file));
-
-    return warnCount;
-}
-
-boolean DD_LoadKeymap(const char *fileName)
-{
-    DFILE      *file;
-    int         warnCount;
-
-    if(!(file = openKeymapFile(fileName)))
-    {
-        Con_Message("DD_LoadKeymap: A keymap file by the name \"%s\" could "
-                    "not be found.\n", fileName);
-        return false;
-    }
-
-    // Any missing entries are set to the default.
-    DD_DefaultKeyMapping();
-
-    Con_Message("DD_LoadKeymap: Loading \"%s\"...\n", fileName);
-
-    warnCount = parseKeymapFile(file, fileName);
-    if(warnCount > 0)
-        Con_Message("  %i: Warnings.\n", warnCount);
-    closeKeymapFile(file);
-
-    Con_Message("  Loaded keymap \"%s\" successfully.\n", fileName);
-
-    return true;
-}
-
-/**
- * Dumps the key mapping table to filename.
- */
-void DD_DumpKeymap(const char *fileName)
-{
-    int             i;
-    FILE           *file;
-
-    file = fopen(fileName, "wt");
-    for(i = 0; i < 256; ++i)
-    {
-        fprintf(file, "%03i\t", i);
-        fprintf(file, !isspace(keyMappings[i]) &&
-                isprint(keyMappings[i]) ? "%c\n" : "%03i\n", keyMappings[i]);
-    }
-
-    fprintf(file, "\n+Shift\n");
-    for(i = 0; i < 256; ++i)
-    {
-        if(shiftKeyMappings[i] == i)
-            continue;
-        fprintf(file, !isspace(i) && isprint(i) ? "%c\t" : "%03i\t", i);
-        fprintf(file, !isspace(shiftKeyMappings[i]) &&
-                isprint(shiftKeyMappings[i]) ? "%c\n" : "%03i\n",
-                shiftKeyMappings[i]);
-    }
-
-    fprintf(file, "-Shift\n\n+Alt\n");
-    for(i = 0; i < 256; ++i)
-    {
-        if(altKeyMappings[i] == i)
-            continue;
-        fprintf(file, !isspace(i) && isprint(i) ? "%c\t" : "%03i\t", i);
-        fprintf(file, !isspace(altKeyMappings[i]) &&
-                isprint(altKeyMappings[i]) ? "%c\n" : "%03i\n",
-                altKeyMappings[i]);
-    }
-    fclose(file);
-
-    Con_Message("DD_DumpKeymap: Current keymap was dumped to \"%s\".\n",
-                fileName);
 }
 
 /**
@@ -1017,14 +788,6 @@ void DD_ProcessEvents(timespan_t ticLength)
 }
 
 /**
- * Converts as a scan code to the keymap key id.
- */
-byte DD_ScanToKey(byte scan)
-{
-    return keyMappings[scan];
-}
-
-/**
  * Apply all active modifiers to the key.
  */
 byte DD_ModKey(byte key)
@@ -1033,6 +796,7 @@ byte DD_ModKey(byte key)
         key = shiftKeyMappings[key];
     if(altDown)
         key = altKeyMappings[key];
+
     if(key >= DDKEY_NUMPAD7 && key <= DDKEY_NUMPAD0)
     {
         byte numPadKeys[10] = {
@@ -1041,19 +805,6 @@ byte DD_ModKey(byte key)
         return numPadKeys[key - DDKEY_NUMPAD7];
     }
     return key;
-}
-
-/**
- * Converts a keymap key id to a scan code.
- */
-byte DD_KeyToScan(byte key)
-{
-    int     i;
-
-    for(i = 0; i < NUMKKEYS; ++i)
-        if(keyMappings[i] == key)
-            return i;
-    return 0;
 }
 
 /**
@@ -1510,23 +1261,5 @@ D_CMD(ListInputDevices)
         for(j = 0; j < dev->numAxes; ++j)
             Con_Printf("  Axis #%i: %s\n", j, dev->axes[j].name);
     }
-    return true;
-}
-
-/**
- * Console command to write the current keymap to a file.
- */
-D_CMD(DumpKeyMap)
-{
-    DD_DumpKeymap(argv[1]);
-    return true;
-}
-
-/**
- * Console command to load a keymap file.
- */
-D_CMD(KeyMap)
-{
-    DD_LoadKeymap(argv[1]);
     return true;
 }
