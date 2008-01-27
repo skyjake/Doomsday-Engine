@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -511,7 +511,8 @@ size_t I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
     {
         evbuf[i].event =
             (keyData[i].dwData & 0x80? IKE_KEY_DOWN : IKE_KEY_UP);
-        evbuf[i].code = (unsigned char) keyData[i].dwOfs;
+        // Use the table to translate the scancode to a ddkey.
+        evbuf[i].ddkey = DD_ScanToKey((byte) keyData[i].dwOfs);
     }
 
     return (size_t) i;

@@ -24,11 +24,16 @@
  */
 
 /**
- * sys_sdl_window.c: Cross-platform, SDL-based window management.
+ * sys_window.c: X-based window management.
  *
- * This code wraps SDL window management routines in order to provide
+ * This code wraps X window management routines in order to provide
  * common behavior. The availabilty of features and behavioral traits can
  * be queried for.
+ *
+ * \todo Currently this is implemented using SDL for GL-ready windows and
+ * Curses for terminal windows. Ultimately, this should be replaced with
+ * platform-specific code to make best use of the features an UI particulars
+ * of this platform.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -78,7 +83,6 @@ static int screenWidth, screenHeight, screenBPP;
 
 // CODE --------------------------------------------------------------------
 
-#if defined(UNIX)
 static void setAttrib(int flags)
 {
     if(flags & (CBLF_YELLOW | CBLF_LIGHT))
@@ -237,7 +241,6 @@ void Sys_SetConWindowCmdLine(uint idx, const char *text,
     }
     wrefresh(win->console.winCommand);
 }
-#endif
 
 boolean Sys_ChangeVideoMode(int width, int height, int bpp)
 {
@@ -290,7 +293,7 @@ boolean Sys_InitWindowManager(void)
     if(winManagerInited)
         return true; // Already been here.
 
-    Con_Message("Sys_InitWindowManager: Using SDL window management.\n");
+    Con_Message("Sys_InitWindowManager: Using X window management.\n");
 
 	// Initialize the SDL video subsystem, unless we're going to run in
     // dedicated mode.
@@ -417,7 +420,6 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
 
     if(console)
     {
-#if defined(UNIX)
         int         maxPos[2];
 
         // Initialize curses.
@@ -463,7 +465,6 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
 
         // We'll need the input event handler.
         Sys_ConInputInit();
-#endif
     }
     else
     {
@@ -472,18 +473,6 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
             Con_Message("createWindow: Unsupported BPP %i.", bpp);
             return 0;
         }
-
-#if defined(WIN32)
-        // We need to grab a handle from SDL so we can link other subsystems
-        // (e.g. DX-based input).
-        {
-        struct SDL_SysWMinfo wmInfo;
-        if(!SDL_GetWMInfo(&wmInfo))
-            return NULL;
-
-        mainWindow.hWnd = wmInfo.window;
-        }
-#endif
     }
 
     setDDWindow(&mainWindow, w, h, bpp, flags,
@@ -681,11 +670,7 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     if(!novideo && newGLContext)
     {   // Maybe requires a renderer restart.
         boolean         glIsInited = GL_IsInited();
-#if defined(WIN32)
-        void           *data = window->hWnd;
-#else
         void           *data = NULL;
-#endif
 
         if(glIsInited)
         {
@@ -809,7 +794,6 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
         }
         else // Its a terminal window.
         {
-#if defined(UNIX)
             // The background will also be in reverse.
             wbkgdset(window->console.winTitle, ' ' | A_REVERSE);
 
@@ -821,7 +805,6 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
             wmove(window->console.winTitle, 0, getmaxx(window->console.winTitle) / 2 - strlen(title) / 2);
             waddstr(window->console.winTitle, title);
             wrefresh(window->console.winTitle);
-#endif
         }
 
         return true;
@@ -911,25 +894,3 @@ boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
 
     return true;
 }
-
-/**
- * Attempt to get a HWND handle to the given window.
- *
- * \todo: Factor platform specific design patterns out of Doomsday. We should
- * not be passing around HWND handles...
- *
- * @param idx           Index identifier (1-based) to the window.
- *
- * @return              HWND handle if successful, ELSE @c NULL,.
- */
-#if defined(WIN32)
-HWND Sys_GetWindowHandle(uint idx)
-{
-    ddwindow_t *window = getWindow(idx - 1);
-
-    if(!window)
-        return NULL;
-
-    return window->hWnd;
-}
-#endif

@@ -31,11 +31,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <curses.h>
+
 #include "de_base.h"
 #include "de_system.h"
 #include "de_console.h"
-
-#include <curses.h>
 
 // MACROS ------------------------------------------------------------------
 
@@ -55,78 +55,27 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static WINDOW *winTitle, *winText, *winCommand;
-
-static int cx, cy;
-static int needNewLine = false;
+static boolean conInputInited = false;
 
 // CODE --------------------------------------------------------------------
 
-void Sys_ConUpdateTitle(void)
+void Sys_ConInputInit(void)
 {
-    char        title[256];
+    if(conInputInited)
+        return; // Already active.
 
-    DD_ComposeMainWindowTitle(title);
-
-    // The background will also be in reverse.
-    wbkgdset(winTitle, ' ' | A_REVERSE);
-
-    // First clear the whole line.
-    wmove(winTitle, 0, 0);
-    wclrtoeol(winTitle);
-
-    // Center the title.
-    wmove(winTitle, 0, getmaxx(winTitle) / 2 - strlen(title) / 2);
-    waddstr(winTitle, title);
-    wrefresh(winTitle);
+    conInputInited = true;
 }
 
-void Sys_ConInit(void)
+void Sys_ConInputShutdown(void)
 {
-    int         maxPos[2];
+    if(!conInputInited)
+        return;
 
-    // Initialize curses.
-    initscr();
-    cbreak();
-    noecho();
-    nonl();
-
-    // The current size of the screen.
-    getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
-
-    // Create the three windows we will be using.
-    winTitle = newwin(1, maxPos[VX], 0, 0);
-    winText = newwin(maxPos[VY] - 2, maxPos[VX], 1, 0);
-    winCommand = newwin(1, maxPos[VX], maxPos[VY] - 1, 0);
-
-    // Set attributes.
-    wattrset(winTitle, A_REVERSE);
-    wattrset(winText, A_NORMAL);
-    wattrset(winCommand, A_BOLD);
-
-    Sys_ConUpdateTitle();
-
-    scrollok(winText, TRUE);
-    wclear(winText);
-    wrefresh(winText);
-
-    keypad(winCommand, TRUE);
-    nodelay(winCommand, TRUE);
-    Sys_ConUpdateCmdLine("", 0);
+    conInputInited = false;
 }
 
-void Sys_ConShutdown(void)
-{
-    // Delete windows and shut down curses.
-    delwin(winTitle);
-    delwin(winText);
-    delwin(winCommand);
-    endwin();
-
-    winTitle = winText = winCommand = NULL;
-}
-
-int Sys_ConTranslateKey(int key)
+static int translateKey(int key)
 {
     if(key >= 32 && key <= 127)
         return key;
@@ -159,184 +108,38 @@ int Sys_ConTranslateKey(int key)
     }
 }
 
-void Sys_ConPostEvents(void)
+/**
+ * Copy n key events from the console and encode them into given buffer.
+ *
+ * @param evbuf         Ptr to the buffer to encode events to.
+ * @param bufsize       Size of the buffer.
+ *
+ * @return              Number of key events written to the buffer.
+ */
+size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
 {
-    ddevent_t   ev;
-    int         key;
+    int                 key;
+    byte                ddkey;
+    size_t              n;
 
-    // Get all keys that are waiting.
-    for(key = wgetch(winCommand); key != ERR; key = wgetch(winCommand))
+    if(!conInputInited)
+        return 0;
+
+    for(n = 0, key = wgetch(winCommand); key != ERR && n < bufsize;
+        key = wgetch(winCommand))
     {
-        /*      if(key == KEY_RESIZE)
-           {
-           int maxPos[2];
+        // Use the table to translate the vKey to a DDKEY.
+        ddkey = translateKey(key);
 
-           // The current size of the screen.
-           getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
-
-           // Resize the windows.
-           wresize(winTitle, 1, maxPos[VX]);
-           wresize(winText, maxPos[VY] - 2, maxPos[VX]);
-           wresize(winCommand, 1, maxPos[VX]);
-
-           mvwin(winCommand, maxPos[VY] - 1, 0);
-
-           // Let's redraw everything.
-           Sys_ConUpdateTitle();
-           wrefresh(winText);
-           Sys_ConUpdateCmdLine(NULL);
-           continue;
-           } */
-
-        ev.device = IDEV_KEYBOARD;
-        ev.type = E_TOGGLE;
-        ev.toggle.state = ETOG_DOWN;
-        ev.toggle.id = Sys_ConTranslateKey(key);
-        DD_PostEvent(&ev);
+        evbuf[n].ddkey = ddkey;
+        evbuf[n].event = IKE_KEY_DOWN;
+        n++;
 
         // Release immediately.
-        ev.toggle.state = ETOG_UP;
-        DD_PostEvent(&ev);
-    }
-}
-
-void Sys_ConScrollLine(void)
-{
-    scroll(winText);
-}
-
-void Sys_ConSetAttrib(int flags)
-{
-    if(flags & (CBLF_YELLOW | CBLF_LIGHT))
-        wattrset(winText, A_BOLD);
-    else
-        wattrset(winText, A_NORMAL);
-}
-
-/**
- * Writes the text in winText at (cx,cy).
- */
-void Sys_ConWriteText(const char *line, int len)
-{
-    wmove(winText, cy, cx);
-    waddnstr(winText, line, len);
-    wclrtoeol(winText);
-}
-
-int Sys_ConGetScreenSize(int axis)
-{
-    int         x, y;
-
-    getmaxyx(winText, y, x);
-    return axis == VX ? x : y;
-}
-
-void Sys_ConPrint(int clflags, const char *text)
-{
-    char        line[LINELEN];
-    int         count = strlen(text), lineStart, bPos;
-    const char *ptr = text;
-    char        ch;
-    int         maxPos[2];
-
-    // Determine the size of the text window.
-    getmaxyx(winText, maxPos[VY], maxPos[VX]);
-
-    if(needNewLine)
-    {
-        // Need to make some room.
-        cx = 0;
-        cy++;
-        if(cy >= maxPos[VY])
-        {
-            cy--;
-            Sys_ConScrollLine();
-        }
-        needNewLine = false;
-    }
-    bPos = lineStart = cx;
-
-    Sys_ConSetAttrib(clflags);
-
-    for(; count > 0; count--, ptr++)
-    {
-        ch = *ptr;
-        // Ignore carriage returns.
-        if(ch == '\r')
-            continue;
-        if(ch != '\n' && bPos < maxPos[VX])
-        {
-            line[bPos] = ch;
-            bPos++;
-        }
-        // Time for newline?
-        if(ch == '\n' || bPos >= maxPos[VX])
-        {
-            Sys_ConWriteText(line + lineStart, bPos - lineStart);
-            cx += bPos - lineStart;
-            bPos = 0;
-            lineStart = 0;
-            if(count > 1)       // Not the last character?
-            {
-                needNewLine = false;
-                cx = 0;
-                cy++;
-                if(cy == maxPos[VY])
-                {
-                    Sys_ConScrollLine();
-                    cy--;
-                }
-            }
-            else
-                needNewLine = true;
-        }
+        evbuf[n].ddkey = ddkey;
+        evbuf[n].event = IKE_KEY_UP;
+        n++;
     }
 
-    // Something in the buffer?
-    if(bPos - lineStart)
-    {
-        Sys_ConWriteText(line + lineStart, bPos - lineStart);
-        cx += bPos - lineStart;
-    }
-
-    wrefresh(winText);
-
-    // Move the cursor back onto the command line.
-    Sys_ConUpdateCmdLine(NULL, 0);
-}
-
-void Sys_ConUpdateCmdLine(const char *text, unsigned int cursorPos)
-{
-    unsigned int i;
-    char        line[LINELEN], *ch;
-    int         maxX = Sys_ConGetScreenSize(VX);
-    int         length;
-
-    if(text == NULL)
-    {
-        int         y, x;
-
-        // Just move the cursor into the command line window.
-        getyx(winCommand, y, x);
-        wmove(winCommand, y, x);
-    }
-    else
-    {
-        memset(line, 0, sizeof(line));
-        line[0] = '>';
-        for(i = 0, ch = line + 1; i < LINELEN - 1; ++i, ch++)
-        {
-            if(i < strlen(text))
-                *ch = text[i];
-            else
-                *ch = 0;
-        }
-        wmove(winCommand, 0, 0);
-
-        // Can't print longer than the window.
-        length = strlen(text);
-        waddnstr(winCommand, line, MIN_OF(maxX, length + 1));
-        wclrtoeol(winCommand);
-    }
-    wrefresh(winCommand);
+    return n;
 }

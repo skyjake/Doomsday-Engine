@@ -23,27 +23,21 @@
  */
 
 /**
- * sys_console.c: Win32 Console
- *
- * Win32 console window handling. Used in dedicated mode.
+ * sys_console.c: Std input handling - Win32 specific
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
-#include <tchar.h>
 #include <windows.h>
 
-#include "de_base.h"
-#include "de_system.h"
+#include "de_platform.h"
 #include "de_console.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXRECS         128
-#define LINELEN         80
-#define TEXT_ATTRIB     (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
-#define CMDLINE_ATTRIB  (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY)
+#define MAXRECS             128
 
 // TYPES -------------------------------------------------------------------
 
@@ -59,23 +53,23 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static HANDLE hcInput;
-static HANDLE hcScreen;
-static CONSOLE_SCREEN_BUFFER_INFO cbInfo;
-static int cx, cy;
-static WORD attrib;
-static int needNewLine = false;
+static boolean conInputInited = false;
 
-static byte keymap[256];
+static HANDLE hcInput = NULL;
+static byte *keymap = NULL;
+static byte *vKeyDown = NULL; // Used for tracking the state of the vKeys.
+
+static INPUT_RECORD *inputBuf = NULL;
+static DWORD inputBufsize = 0;
 
 // CODE --------------------------------------------------------------------
 
 static void initVKeyToDDKeyTlat(void)
 {
-    unsigned int    i;
+    if(keymap)
+        return; // Already been here.
 
-    for(i = 0; i < 256; ++i)
-        keymap[i] = 0;
+    keymap = M_Calloc(sizeof(byte) * 256);
 
     keymap[VK_BACK] = DDKEY_BACKSPACE; // Backspace
     keymap[VK_TAB ] = DDKEY_TAB;
@@ -205,260 +199,115 @@ static byte vKeyToDDKey(byte vkey)
     return keymap[vkey];
 }
 
-void Sys_ConInit(void)
+void Sys_ConInputInit(void)
 {
-    char        title[256];
+    if(conInputInited)
+        return; // Already active.
 
     /**
      * For now, always load the U.S. English layout.
      *
      * \todo Is this even necessary with virtualkeys?
      */
-    LoadKeyboardLayout(_TEXT("00000409"), KLF_SUBSTITUTE_OK);
+    LoadKeyboardLayout("00000409", KLF_SUBSTITUTE_OK);
 
     // We'll be needing the VKey to DDKey translation table.
     initVKeyToDDKeyTlat();
 
-    if(!AllocConsole())
-    {
-        Con_Error("Sys_ConInit: Couldn't allocate a console! error %i\n", GetLastError());
-    }
+    // And the down key array;
+    vKeyDown = M_Calloc(sizeof(byte) * 256);
 
     hcInput = GetStdHandle(STD_INPUT_HANDLE);
     if(hcInput == INVALID_HANDLE_VALUE)
         Con_Error("Sys_ConInit: Bad input handle\n");
 
-    // Compose the title.
-    sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT " (Dedicated) : %s",
-            gx.GetVariable(DD_GAME_ID));
-
-    if(!SetConsoleTitle(title))
-        Con_Error("Sys_ConInit: Setting console title: error %i\n", GetLastError());
-
-    hcScreen = GetStdHandle(STD_OUTPUT_HANDLE);
-    if(hcScreen == INVALID_HANDLE_VALUE)
-        Con_Error("Sys_ConInit: Bad output handle\n");
-
-    GetConsoleScreenBufferInfo(hcScreen, &cbInfo);
-
-    // This is the location of the print cursor.
-    cx = 0;
-    cy = cbInfo.dwSize.Y - 2;
-    Sys_ConUpdateCmdLine("", 0);
+    conInputInited = true;
 }
 
-void Sys_ConShutdown(void)
+void Sys_ConInputShutdown(void)
 {
-    // Detach the console for this process.
-    FreeConsole();
-}
-
-void Sys_ConPostEvents(void)
-{
-    ddevent_t   ev;
-    DWORD       num, read;
-    INPUT_RECORD rec[MAXRECS], *ptr;
-    KEY_EVENT_RECORD *key;
-
-    if(!GetNumberOfConsoleInputEvents(hcInput, &num))
-        Con_Error("Sys_ConPostEvents: error %i\n", GetLastError());
-    if(!num)
+    if(!conInputInited)
         return;
 
-    ReadConsoleInput(hcInput, rec, MAXRECS, &read);
-    for(ptr = rec; read > 0; read--, ptr++)
+    if(inputBuf)
     {
-        if(ptr->EventType != KEY_EVENT)
-            continue;
-
-        key = &ptr->Event.KeyEvent;
-        ev.device = IDEV_KEYBOARD;
-        ev.type =   E_TOGGLE;
-        ev.toggle.state = (key->bKeyDown ? ETOG_DOWN : ETOG_UP);
-        ev.toggle.id = vKeyToDDKey(key->wVirtualKeyCode);
-
-        // Track modifiers like alt, shift etc.
-        I_TrackInput(&ev, 0);
-
-        DD_PostEvent(&ev);
+        M_Free(inputBuf);
+        inputBuf = NULL;
+        inputBufsize = 0;
     }
-}
 
-static void setCmdLineCursor(int x, int y)
-{
-    COORD       pos;
+    M_Free(keymap);
+    keymap = NULL;
+    M_Free(vKeyDown);
+    vKeyDown = NULL;
 
-    pos.X = x;
-    pos.Y = y;
-    SetConsoleCursorPosition(hcScreen, pos);
-}
-
-static void scrollLine(void)
-{
-    SMALL_RECT  src;
-    COORD       dest;
-    CHAR_INFO   fill;
-
-    src.Left = 0;
-    src.Right = cbInfo.dwSize.X - 1;
-    src.Top = 1;
-    src.Bottom = cbInfo.dwSize.Y - 2;
-    dest.X = 0;
-    dest.Y = 0;
-    fill.Attributes = TEXT_ATTRIB;
-    fill.Char.AsciiChar = ' ';
-    ScrollConsoleScreenBuffer(hcScreen, &src, NULL, dest, &fill);
-}
-
-static void setAttrib(int flags)
-{
-    attrib = 0;
-    if(flags & CBLF_WHITE)
-        attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-    if(flags & CBLF_BLUE)
-        attrib = FOREGROUND_BLUE;
-    if(flags & CBLF_GREEN)
-        attrib = FOREGROUND_GREEN;
-    if(flags & CBLF_CYAN)
-        attrib = FOREGROUND_BLUE | FOREGROUND_GREEN;
-    if(flags & CBLF_RED)
-        attrib = FOREGROUND_RED;
-    if(flags & CBLF_MAGENTA)
-        attrib = FOREGROUND_RED | FOREGROUND_BLUE;
-    if(flags & CBLF_YELLOW)
-        attrib = FOREGROUND_RED | FOREGROUND_GREEN;
-    if(flags & CBLF_LIGHT)
-        attrib |= FOREGROUND_INTENSITY;
-    if((flags & CBLF_WHITE) != CBLF_WHITE)
-        attrib |= FOREGROUND_INTENSITY;
-    SetConsoleTextAttribute(hcScreen, attrib);
+    conInputInited = false;
 }
 
 /**
- * Writes the text at the (cx,cy).
+ * Copy n key events from the console and encode them into given buffer.
+ *
+ * @param evbuf         Ptr to the buffer to encode events to.
+ * @param bufsize       Size of the buffer.
+ *
+ * @return              Number of key events written to the buffer.
  */
-static void writeText(CHAR_INFO *line, int len)
+size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
 {
-    COORD       linesize;
-    COORD       from = {0, 0};
-    SMALL_RECT  rect;
+    DWORD           num;
+    size_t          n = 0;
 
-    linesize.X = len;
-    linesize.Y = 1;
-    rect.Left = cx;
-    rect.Right = cx + len;
-    rect.Top = cy;
-    rect.Bottom = cy;
-    WriteConsoleOutput(hcScreen, line, linesize, from, &rect);
-}
+    if(!conInputInited)
+        return 0;
 
-void Sys_ConPrint(int clflags, const char *text)
-{
-    unsigned int    i;
-    int             linestart, bpos;
-    const char     *ptr = text;
-    char            ch;
-    size_t          len = strlen(text);
-    CHAR_INFO       line[LINELEN];
+    // Check for awaiting unprocessed events.
+    if(!GetNumberOfConsoleInputEvents(hcInput, &num))
+        Con_Error("Sys_ConPostEvents: error %i\n", GetLastError());
 
-    if(needNewLine)
-    {   // Need to make some room.
-        cx = 0;
-        cy++;
-        if(cy == cbInfo.dwSize.Y - 1)
-        {
-            cy--;
-            scrollLine();
-        }
-        needNewLine = false;
-    }
-
-    bpos = linestart = cx;
-    setAttrib(clflags);
-    for(i = 0; i < len; i++, ptr++)
+    if(num > 0)
     {
-        ch = *ptr;
-        if(ch != '\n' && bpos < LINELEN)
+        DWORD           read, min;
+        INPUT_RECORD    *ptr;
+        KEY_EVENT_RECORD *key;
+
+        // Do we need to enlarge the input record buffer?
+        min = MIN_OF((DWORD)bufsize, num);
+        if(min > inputBufsize)
         {
-            line[bpos].Attributes = attrib;
-            line[bpos].Char.AsciiChar = ch;
-            bpos++;
+            inputBuf = M_Malloc(sizeof(INPUT_RECORD) * min);
+            inputBufsize = min;
         }
 
-        // Time for newline?
-        if(ch == '\n' || bpos == LINELEN)
+        // Get the input records.
+        ReadConsoleInput(hcInput, inputBuf, min, &read);
+
+        // Convert to key events and pack into the supplied buffer.
+        for(ptr = inputBuf; read > 0; read--, ptr++)
         {
-            writeText(line + linestart, bpos - linestart);
-            cx += bpos - linestart;
-            bpos = 0;
-            linestart = 0;
-            if(i < len - 1)
-            {   // Not the last character.
-                needNewLine = false;
-                cx = 0;
-                cy++;
-                if(cy == cbInfo.dwSize.Y - 1)
+            if(ptr->EventType != KEY_EVENT)
+                continue;
+
+            key = &ptr->Event.KeyEvent;
+
+            if(key->wVirtualKeyCode >= 0 && key->wVirtualKeyCode < 256)
+            {
+                // Has the state changed?
+                if(!vKeyDown[key->wVirtualKeyCode] && key->bKeyDown ||
+                   vKeyDown[key->wVirtualKeyCode] && !key->bKeyDown)
                 {
-                    scrollLine();
-                    cy--;
+                    // Use the table to translate the vKey to a DDKEY.
+                    evbuf[n].ddkey = vKeyToDDKey(key->wVirtualKeyCode);
+                    evbuf[n].event =
+                        (key->bKeyDown? IKE_KEY_DOWN : IKE_KEY_UP);
+
+                    // Record the new state of this vKey.
+                    vKeyDown[key->wVirtualKeyCode] =
+                        (key->bKeyDown? true : false);
+                    n++;
                 }
             }
-            else
-            {
-                needNewLine = true;
-            }
         }
     }
 
-    // Something left in the buffer?
-    if(bpos - linestart)
-    {
-        writeText(line + linestart, bpos - linestart);
-        cx += bpos - linestart;
-    }
-}
-
-void Sys_ConUpdateCmdLine(const char *text, unsigned int cursorPos)
-{
-    static int  lastInputMode = -1;
-
-    CHAR_INFO   line[LINELEN], *ch;
-    unsigned int i;
-    COORD       linesize = {LINELEN, 1};
-    COORD       from = {0, 0};
-    SMALL_RECT  rect;
-    int         currentInputMode;
-
-    // Do we need to change the look of the cursor?
-    currentInputMode = Con_InputMode();
-    if(currentInputMode != lastInputMode)
-    {
-        CONSOLE_CURSOR_INFO curInfo;
-
-        curInfo.bVisible = TRUE;
-        curInfo.dwSize = (currentInputMode? 100 : 10);
-
-        SetConsoleCursorInfo(hcScreen, &curInfo);
-        lastInputMode = currentInputMode;
-    }
-
-    line[0].Char.AsciiChar = '>';
-    line[0].Attributes = CMDLINE_ATTRIB;
-    for(i = 0, ch = line + 1; i < LINELEN - 1; ++i, ch++)
-    {
-        if(i < strlen(text))
-            ch->Char.AsciiChar = text[i];
-        else
-            ch->Char.AsciiChar = ' ';
-
-        // Gray color.
-        ch->Attributes = CMDLINE_ATTRIB;
-    }
-
-    rect.Left = 0;
-    rect.Right = LINELEN - 1;
-    rect.Top = cbInfo.dwSize.Y - 1;
-    rect.Bottom = cbInfo.dwSize.Y - 1;
-    WriteConsoleOutput(hcScreen, line, linesize, from, &rect);
-    setCmdLineCursor(cursorPos, cbInfo.dwSize.Y - 1);
+    return n;
 }

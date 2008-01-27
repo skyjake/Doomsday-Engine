@@ -206,6 +206,9 @@ static void drawRuler2(int y, int lineHeight, float alpha, int scrWidth)
 
 void Con_DrawRuler(int y, int lineHeight, float alpha)
 {
+    if(isDedicated)
+        return;
+
     drawRuler2(y, lineHeight, alpha, theWindow->width);
 }
 
@@ -274,8 +277,12 @@ static __inline int consoleMinHeight(void)
 void Rend_ConsoleToggleFullscreen(void)
 {
     float       y;
-    int         minHeight = consoleMinHeight();
+    int         minHeight;
 
+    if(isDedicated)
+        return;
+
+    minHeight = consoleMinHeight();
     if(ConsoleDestY == minHeight)
         y = 100;
     else if(ConsoleDestY == 100)
@@ -288,6 +295,9 @@ void Rend_ConsoleToggleFullscreen(void)
 
 void Rend_ConsoleOpen(int yes)
 {
+    if(isDedicated)
+        return;
+
     openingOrClosing = true;
     if(yes)
     {
@@ -302,6 +312,9 @@ void Rend_ConsoleOpen(int yes)
 
 void Rend_ConsoleMove(int numLines)
 {
+    if(isDedicated)
+        return;
+
     if(numLines == 0)
         return;
 
@@ -325,7 +338,12 @@ void Rend_ConsoleMove(int numLines)
 
 void Rend_ConsoleTicker(timespan_t time)
 {
-    float   step = time * 35;
+    float           step;
+
+    if(isDedicated)
+        return;
+
+    step = time * 35;
 
     if(ConsoleY == 0)
         openingOrClosing = true;
@@ -358,15 +376,18 @@ void Rend_ConsoleTicker(timespan_t time)
     funnyAng += step * consoleTurn / 10000;
 
     if(!Con_IsActive())
-        return;                 // We have nothing further to do here.
+        return; // We have nothing further to do here.
 
-    ConsoleBlink += step;       // Cursor blink timer (0 = visible).
+    ConsoleBlink += step; // Cursor blink timer (0 = visible).
 }
 
 void Rend_ConsoleFPS(int x, int y)
 {
-    int         w, h;
-    char        buf[160];
+    int             w, h;
+    char            buf[160];
+
+    if(isDedicated)
+        return;
 
     if(!consoleShowFPS)
         return;
@@ -388,10 +409,10 @@ void Rend_ConsoleFPS(int x, int y)
 
 static void DrawConsoleTitleBar(float closeFade)
 {
-    int width = 0;
-    int height;
-    int oldFont = FR_GetCurrent();
-    int border = theWindow->width / 120;
+    int             width = 0;
+    int             height;
+    int             oldFont = FR_GetCurrent();
+    int             border = theWindow->width / 120;
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
@@ -429,7 +450,7 @@ static void DrawConsoleTitleBar(float closeFade)
 /**
  * NOTE: Slightly messy...
  */
-void Rend_Console(void)
+static void drawConsole(void)
 {
     extern uint bLineOff;
 
@@ -447,9 +468,6 @@ void Rend_Console(void)
     static int bufferSize = 0;
     int         reqLines;
     uint        count;
-
-    if(ConsoleY <= 0)
-        return;                 // We have nothing to do here.
 
     gtosMulY = theWindow->height / 200.0f;
 
@@ -645,6 +663,17 @@ void Rend_Console(void)
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
+}
+
+void Rend_Console(void)
+{
+    if(isDedicated)
+        return;
+
+    if(ConsoleY <= 0)
+        return; // We have nothing to do here.
+
+    drawConsole();
 }
 
 D_CMD(BackgroundTurn)

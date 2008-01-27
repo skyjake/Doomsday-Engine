@@ -206,8 +206,6 @@ static int initDGL(void)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow)
 {
-    char        path[256];
-    char        buf[256];
     BOOL        doShutdown = TRUE;
     int         exitCode = 0;
     int         lnCmdShow = nCmdShow;
@@ -215,7 +213,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     memset(&app, 0, sizeof(app));
     app.hInstance = hInstance;
     app.className = MAINWCLASS;
-    DD_ComposeMainWindowTitle(buf);
 
     if(!InitApplication(&app))
     {
@@ -223,6 +220,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
     else
     {
+        char        path[256];
+        char        buf[256];
+
         // Initialize COM.
         CoInitialize(NULL);
 
@@ -232,6 +232,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
         // Prepare the command line arguments.
         DD_InitCommandLine(GetCommandLine());
+
+        // First order of business: are we running in dedicated mode?
+        if(ArgCheck("-dedicated"))
+        {
+            isDedicated = true;
+        }
+
+        DD_ComposeMainWindowTitle(buf);
 
         if(!DD_EarlyInit())
         {
@@ -266,13 +274,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         }
         else
         {
-            if(isDedicated)
-            {
-                Sys_ConInit();
-            }
-
             if(0 == (windowIDX =
-                Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, buf, &lnCmdShow)))
+                Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, isDedicated,
+                                 buf, &lnCmdShow)))
             {
                 DD_ErrorBox(true, "Error creating main window.");
             }

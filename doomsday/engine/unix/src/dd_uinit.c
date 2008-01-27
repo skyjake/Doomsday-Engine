@@ -289,6 +289,14 @@ int main(int argc, char **argv)
 	M_Free(cmdLine);
 	cmdLine = NULL;
 
+    // First order of business: are we running in dedicated mode?
+    if(ArgCheck("-dedicated"))
+    {
+        isDedicated = true;
+    }
+
+    DD_ComposeMainWindowTitle(buf);
+
     if(!DD_EarlyInit())
     {
         DD_ErrorBox(true, "Error during early init.");
@@ -321,25 +329,29 @@ int main(int argc, char **argv)
     {
         DD_ErrorBox(true, "Error initializing memory zone.");
     }
-    else if(0 == (windowIDX =
-            Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, buf, NULL)))
-    {
-        DD_ErrorBox(true, "Error creating main window.");
-    }
-    else if(!DGL_Init())
-    {
-        DD_ErrorBox(true, "Error initializing DGL.");
-    }
     else
-    {   // All initialization complete.
-        doShutdown = false;
+    {
+        if(0 == (windowIDX =
+            Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, isDedicated,
+                             buf, NULL)))
+        {
+            DD_ErrorBox(true, "Error creating main window.");
+        }
+        else if(!DGL_Init())
+        {
+            DD_ErrorBox(true, "Error initializing DGL.");
+        }
+        else
+        {   // All initialization complete.
+            doShutdown = false;
 
-        // Append the main window title with the game name and ensure it
-        // is the at the foreground, with focus.
-        DD_ComposeMainWindowTitle(buf);
-	    Sys_SetWindowTitle(windowIDX, buf);
+            // Append the main window title with the game name and ensure it
+            // is the at the foreground, with focus.
+            DD_ComposeMainWindowTitle(buf);
+	        Sys_SetWindowTitle(windowIDX, buf);
 
-       // \todo Set foreground window and focus.
+           // \todo Set foreground window and focus.
+        }
     }
 
     if(!doShutdown)

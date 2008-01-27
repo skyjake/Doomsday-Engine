@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -814,13 +814,14 @@ void CP_VideoModeInfo(ui_object_t *ob)
         if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
             return;
 
-        sprintf(buf, "%i x %i x %i (%s)", theWindow->width, theWindow->height, theWindow->bpp,
+        sprintf(buf, "%i x %i x %i (%s)", theWindow->width,
+                theWindow->height, theWindow->normal.bpp,
                 (fullscreen? "fullscreen" : "windowed"));
     }
 
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    UI_TextOutEx(buf, ob->x, ob->y + ob->h / 2, false, true, UI_Color(UIC_TEXT),
-                 1);
+    UI_TextOutEx(buf, ob->x, ob->y + ob->h / 2, false, true,
+                 UI_Color(UIC_TEXT), 1);
 }
 
 void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
@@ -837,7 +838,8 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
     sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
             fullscreen? "fullscreen" : "windowed");
 
-    if(w == theWindow->width && h == theWindow->height && bpp == theWindow->bpp &&
+    if(w == theWindow->width && h == theWindow->height &&
+       bpp == theWindow->normal.bpp &&
        fullscreen == cFullscreen)
         ob->flags |= UIF_DISABLED;
     else
@@ -1183,7 +1185,7 @@ D_CMD(OpenPanel)
             list->selection = UI_ListFindItem(ob, RES(640, 480));
         }
         panel_fullscreen = cFullscreen;
-        panel_bpp = (theWindow->bpp == 32? 1 : 0);
+        panel_bpp = (theWindow->normal.bpp == 32? 1 : 0);
         CP_ResolutionList(ob);
     }
 
