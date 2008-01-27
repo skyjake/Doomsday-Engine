@@ -38,7 +38,7 @@
 #define IS_BLOCK_LINKED(mo)     ((mo)->bNext != NULL)
 
 extern float  opentop, openbottom, openrange, lowfloor;
-extern divline_t trace;
+extern divline_t traceLOS;
 
 float           P_AccurateDistanceFixed(fixed_t dx, fixed_t dy);
 float           P_AccurateDistance(float dx, float dy);

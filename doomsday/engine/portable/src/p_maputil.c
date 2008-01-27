@@ -71,7 +71,7 @@ typedef struct {
 float opentop, openbottom, openrange;
 float lowfloor;
 
-divline_t trace;
+divline_t traceLOS;
 boolean earlyout;
 int     ptflags;
 
@@ -951,19 +951,20 @@ boolean PIT_AddLineIntercepts(line_t *ld, void *data)
     divline_t   dl;
 
     // Avoid precision problems with two routines.
-    if(trace.dX > FRACUNIT * 16 || trace.dY > FRACUNIT * 16 ||
-       trace.dX < -FRACUNIT * 16 || trace.dY < -FRACUNIT * 16)
+    if(traceLOS.dX > FRACUNIT * 16 || traceLOS.dY > FRACUNIT * 16 ||
+       traceLOS.dX < -FRACUNIT * 16 || traceLOS.dY < -FRACUNIT * 16)
     {
         s[0] = P_PointOnDivlineSide(ld->L_v1pos[VX],
-                                    ld->L_v1pos[VY], &trace);
+                                    ld->L_v1pos[VY], &traceLOS);
         s[1] = P_PointOnDivlineSide(ld->L_v2pos[VX],
-                                    ld->L_v2pos[VY], &trace);
+                                    ld->L_v2pos[VY], &traceLOS);
     }
     else
     {
-        s[0] = P_PointOnLineSide(FIX2FLT(trace.pos[VX]), FIX2FLT(trace.pos[VY]), ld);
-        s[1] = P_PointOnLineSide(FIX2FLT(trace.pos[VX] + trace.dX),
-                                 FIX2FLT(trace.pos[VY] + trace.dY), ld);
+        s[0] = P_PointOnLineSide(FIX2FLT(traceLOS.pos[VX]),
+                                 FIX2FLT(traceLOS.pos[VY]), ld);
+        s[1] = P_PointOnLineSide(FIX2FLT(traceLOS.pos[VX] + traceLOS.dX),
+                                 FIX2FLT(traceLOS.pos[VY] + traceLOS.dY), ld);
     }
 
     if(s[0] == s[1])
@@ -973,7 +974,7 @@ boolean PIT_AddLineIntercepts(line_t *ld, void *data)
     // Hit the line.
     //
     P_MakeDivline(ld, &dl);
-    frac = P_InterceptVector(&trace, &dl);
+    frac = P_InterceptVector(&traceLOS, &dl);
     if(frac < 0)
         return true; // Behind source.
 
@@ -997,7 +998,7 @@ boolean PIT_AddMobjIntercepts(mobj_t *mo, void *data)
     if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
         return true; // $democam: ssshh, keep going, we're not here...
 
-    tracepositive = (trace.dX ^ trace.dY) > 0;
+    tracepositive = (traceLOS.dX ^ traceLOS.dY) > 0;
 
     // Check a corner to corner crossection for hit.
     if(tracepositive)
@@ -1017,8 +1018,8 @@ boolean PIT_AddMobjIntercepts(mobj_t *mo, void *data)
         y2 = mo->pos[VY] + mo->radius;
     }
 
-    s[0] = P_PointOnDivlineSide(x1, y1, &trace);
-    s[1] = P_PointOnDivlineSide(x2, y2, &trace);
+    s[0] = P_PointOnDivlineSide(x1, y1, &traceLOS);
+    s[1] = P_PointOnDivlineSide(x2, y2, &traceLOS);
     if(s[0] == s[1])
         return true; // Line isn't crossed.
 
@@ -1027,7 +1028,7 @@ boolean PIT_AddMobjIntercepts(mobj_t *mo, void *data)
     dl.dX = FLT2FIX(x2 - x1);
     dl.dY = FLT2FIX(y2 - y1);
 
-    frac = P_InterceptVector(&trace, &dl);
+    frac = P_InterceptVector(&traceLOS, &dl);
     if(frac < 0)
         return true; // Behind source.
 
@@ -1065,10 +1066,10 @@ boolean P_PathTraverse(float x1, float y1, float x2, float y2,
     if((FLT2FIX(origin[VY] - bmapOrigin[VY]) & (MAPBLOCKSIZE - 1)) == 0)
         origin[VY] += 1;         // don't side exactly on a line
 
-    trace.pos[VX] = FLT2FIX(origin[VX]);
-    trace.pos[VY] = FLT2FIX(origin[VY]);
-    trace.dX = FLT2FIX(dest[VX] - origin[VX]);
-    trace.dY = FLT2FIX(dest[VY] - origin[VY]);
+    traceLOS.pos[VX] = FLT2FIX(origin[VX]);
+    traceLOS.pos[VY] = FLT2FIX(origin[VY]);
+    traceLOS.dX = FLT2FIX(dest[VX] - origin[VX]);
+    traceLOS.dY = FLT2FIX(dest[VY] - origin[VY]);
 
     // \todo Clip path so that both start and end are within the blockmap.
     // If the path is completely outside the blockmap, we can be sure that

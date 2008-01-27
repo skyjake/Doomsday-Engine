@@ -1071,7 +1071,7 @@ void* DD_GetVariable(int ddvalue)
             return &numthings;
 
         case DD_TRACE_ADDRESS:
-            return &trace;
+            return &traceLOS;
 
         case DD_TRANSLATIONTABLES_ADDRESS:
             return translationtables;
