@@ -31,6 +31,10 @@
 
 #include "de_base.h"
 
+#if defined(UNIX)
+#  include <curses.h>
+#endif
+
 #if defined(WIN32)
 #  include <windows.h>
 #endif
