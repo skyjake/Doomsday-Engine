@@ -38,21 +38,52 @@
 // Structure used to describe what features are available in a window
 // manager implementation.
 typedef struct wminfo_s {
-    uint        maxWindows; /* Max number of simultaneous windows.
+    uint        maxWindows; /* Max number of simultaneous windows of all
+                               supported types
                                0 = Unlimited. */
+    uint        maxConsoles;
     boolean     canMoveWindow; // Windows can be moved.
 } wminfo_t;
 
+typedef enum {
+    WT_NORMAL,
+    WT_CONSOLE
+} ddwindowtype_t;
+
+// Console commandline flags:
+#define CLF_CURSOR_LARGE        0x1 // Use the large command line cursor.
+
 typedef struct {
-#if defined(WIN32)
-    HWND            hWnd; // Needed for input (among other things).
-    HGLRC           glContext;
-#endif
+    ddwindowtype_t  type;
     boolean         inited;
-    int             flags;
     int             x, y; // SDL cannot move windows; these are ignored.
     int             width, height;
-    int             bpp;
+    int             flags;
+#if defined(WIN32)
+    HWND            hWnd; // Needed for input (among other things).
+#endif
+    union {
+        struct {
+#if defined(WIN32)
+            HGLRC           glContext;
+#endif
+            int             bpp;
+        } normal;
+        struct {
+#if defined(WIN32)
+            HANDLE      hcScreen;
+            CONSOLE_SCREEN_BUFFER_INFO cbInfo;
+            WORD        attrib;
+#elif defined(UNIX)
+            WINDOW     *winTitle, *winText, *winCommand;
+#endif
+            int         cx, cy;
+            int         needNewLine;
+            struct {
+                int         flags;
+            } cmdline;
+        } console;
+    };
 } ddwindow_t;
 
 // Doomsday window flags.
@@ -83,14 +114,14 @@ boolean         Sys_ShutdownWindowManager(void);
 boolean         Sys_GetWindowManagerInfo(wminfo_t *info);
 
 boolean         Sys_ChangeVideoMode(int width, int height, int bpp);
-int             Sys_GetDesktopBPP(void);
+boolean         Sys_GetDesktopBPP(int *bpp);
 
 /**
  * Window management.
  */
 uint            Sys_CreateWindow(application_t *app, uint parent,
-                                int x, int y, int w, int h, int bpp, int flags,
-                                const char *title, void *data);
+                                 int x, int y, int w, int h, int bpp, int flags,
+                                 boolean console, const char *title, void *data);
 boolean         Sys_DestroyWindow(uint idx);
 
 void            Sys_UpdateWindow(uint idx);
@@ -102,8 +133,13 @@ boolean         Sys_GetWindowVisibility(uint idx, boolean *show);
 
 boolean         Sys_SetActiveWindow(uint idx);
 boolean         Sys_SetWindow(uint idx, int x, int y, int w, int h, int bpp,
-                             uint wflags, uint uflags);
+                              uint wflags, uint uflags);
 boolean         Sys_SetWindowTitle(uint idx, const char *title);
+
+// Console window routines.
+void            Sys_ConPrint(uint idx, const char *text, int flags);
+void            Sys_SetConWindowCmdLine(uint idx, const char *text,
+                                        unsigned int cursorPos, int clflags);
 
 /**
  *\todo This is a compromise to prevent having to refactor half the

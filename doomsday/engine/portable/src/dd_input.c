@@ -885,17 +885,11 @@ static ddevent_t *DD_GetEvent(void)
 
 /**
  * Send all the events of the given timestamp down the responder chain.
- * This gets called at least 35 times per second. Usually more frequently
- * than that.
  */
-void DD_ProcessEvents(timespan_t ticLength)
+static void despatchEvents(timespan_t ticLength)
 {
     ddevent_t *ddev;
     event_t     ev;
-
-    DD_ReadMouse(ticLength);
-    DD_ReadJoystick();
-    DD_ReadKeyboard();
 
     while((ddev = DD_GetEvent()) != NULL)
     {
@@ -994,6 +988,35 @@ Con_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
 }
 
 /**
+ * Poll all event sources (i.e., input devices) and post events.
+ */
+static void postEvents(timespan_t ticLength)
+{
+    DD_ReadKeyboard();
+
+    if(!isDedicated)
+    {   // In dedicated mode, we don't do mice or joysticks.
+        DD_ReadMouse(ticLength);
+        DD_ReadJoystick();
+    }
+}
+
+/**
+ * Process all incoming input for the given timestamp.
+ *
+ * This gets called at least 35 times per second. Usually more frequently
+ * than that.
+ */
+void DD_ProcessEvents(timespan_t ticLength)
+{
+    // Poll all event sources (i.e., input devices) and post events.
+    postEvents(ticLength);
+
+    // Despatch all accumulated events down the responder chain.
+    despatchEvents(ticLength);
+}
+
+/**
  * Converts as a scan code to the keymap key id.
  */
 byte DD_ScanToKey(byte scan)
@@ -1052,13 +1075,6 @@ void DD_ReadKeyboard(void)
     size_t          n, numkeyevs;
     keyevent_t      keyevs[KBDQUESIZE];
 
-    if(isDedicated)
-    {
-        // In dedicated mode, all input events come from the console.
-        Sys_ConPostEvents();
-        return;
-    }
-
     // Check the repeaters.
     ev.device = IDEV_KEYBOARD;
     ev.type = E_TOGGLE;
@@ -1079,6 +1095,7 @@ void DD_ReadKeyboard(void)
             rep->timer += keyRepeatDelay1 / 1000.0;
             DD_PostEvent(&ev);
         }
+
         if(rep->count)
         {
             while(sysTime - rep->timer >= keyRepeatDelay2 / 1000.0)
@@ -1090,10 +1107,13 @@ void DD_ReadKeyboard(void)
         }
     }
 
-    // Read the keyboard events.
-    numkeyevs = I_GetKeyEvents(keyevs, KBDQUESIZE);
+    // Read the new keyboard events.
+    if(isDedicated)
+        numkeyevs = I_GetConsoleKeyEvents(keyevs, KBDQUESIZE);
+    else
+        numkeyevs = I_GetKeyEvents(keyevs, KBDQUESIZE);
 
-    // Translate them to Doomsday keys.
+    // Convert to ddevents and post them.
     for(n = 0; n < numkeyevs; ++n)
     {
         keyevent_t     *ke = &keyevs[n];
@@ -1108,13 +1128,7 @@ void DD_ReadKeyboard(void)
             ev.toggle.state = ETOG_UP;
         }
 
-        // Use the table to translate the scancode to a ddkey.
-#ifdef WIN32
-        ev.toggle.id = DD_ScanToKey(ke->code);
-#endif
-#ifdef UNIX
-        ev.toggle.id = ke->code;
-#endif
+        ev.toggle.id = ke->ddkey;
 
         // Maintain the repeater table.
         if(ev.toggle.state == ETOG_DOWN)
@@ -1184,10 +1198,10 @@ float I_FilterMouse(float pos, float* accumulation, float ticLength)
  */
 void DD_ReadMouse(timespan_t ticLength)
 {
-    ddevent_t   ev;
-    mousestate_t mouse;
-    float       xpos, ypos;
-    int         i;
+    ddevent_t       ev;
+    mousestate_t    mouse;
+    float           xpos, ypos;
+    int             i;
 
     if(!I_MousePresent())
         return;
@@ -1302,16 +1316,16 @@ void DD_ReadMouse(timespan_t ticLength)
     }
 }
 
-/*
+/**
  * Checks the current joystick state (axis, sliders, hat and buttons).
  * Generates events and posts them. Axis clamps and dead zone is done
  * here.
  */
 void DD_ReadJoystick(void)
 {
-    ddevent_t ev;
-    joystate_t state;
-    int     i;
+    int             i;
+    ddevent_t       ev;
+    joystate_t      state;
 
     if(!I_JoystickPresent())
         return;

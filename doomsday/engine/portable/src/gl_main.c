@@ -153,7 +153,7 @@ void GL_Register(void)
     C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("togglefullscreen", "", ToggleFullscreen, CMDF_NO_DEDICATED);
+    C_CMD("togglefullscreen", "", ToggleFullscreen);
 
     GL_TexRegister();
 }
@@ -532,10 +532,6 @@ void GL_ShutdownVarFont(void)
  */
 boolean GL_EarlyInit(void)
 {
-    int         winWidth, winHeight, winBPP, winX, winY;
-    uint        winFlags = DDWF_VISIBLE | DDWF_CENTER;
-    boolean     noCenter = false;
-
     if(initGLOk)
         return true; // Already initialized.
 
@@ -547,60 +543,18 @@ boolean GL_EarlyInit(void)
     // Get the original gamma ramp and check if ramps are supported.
     GL_GetGammaRamp(original_gamma_ramp);
 
-    // By default, use the resolution defined in (default).cfg.
-    winX = 0;
-    winY = 0;
-    winWidth = defResX;
-    winHeight = defResY;
-    winBPP = defBPP;
-    winFlags |= (defFullscreen? DDWF_FULLSCREEN : 0);
-
-    // Check for command line options modifying the defaults.
-    if(ArgCheckWith("-width", 1))
-        winWidth = atoi(ArgNext());
-    if(ArgCheckWith("-height", 1))
-        winHeight = atoi(ArgNext());
-    if(ArgCheckWith("-winsize", 2))
-    {
-        winWidth = atoi(ArgNext());
-        winHeight = atoi(ArgNext());
-    }
-    if(ArgCheckWith("-bpp", 1))
-        winBPP = atoi(ArgNext());
-    // Ensure a valid value.
-    if(winBPP != 16 && winBPP != 32)
-        winBPP = 32;
-    if(ArgCheck("-nocenter"))
-        noCenter = true;
-    if(ArgCheckWith("-xpos", 1))
-    {
-        winX = atoi(ArgNext());
-        noCenter = true;
-    }
-    if(ArgCheckWith("-ypos", 1))
-    {
-        winY = atoi(ArgNext());
-        noCenter = true;
-    }
-    if(noCenter)
-        winFlags &= ~DDWF_CENTER;
-
-    if(ArgExists("-nofullscreen") || ArgExists("-window"))
-        winFlags &= ~DDWF_FULLSCREEN;
-
-    if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP,
-                     winFlags, 0))
-        return false;
-
     GL_InitDeferred();
 
     // Check the maximum texture size.
     DGL_GetIntegerv(DGL_MAX_TEXTURE_SIZE, &glMaxTexSize);
     if(glMaxTexSize == 256)
     {
+        int             bpp;
+
         Con_Message("  Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
-        if(winBPP == 32)
+        Sys_GetWindowBPP(windowIDX, &bpp);
+        if(bpp == 32)
         {
             Con_Message("  Warning: Are you sure your video card accelerates"
                         " a 32 bit mode?\n");

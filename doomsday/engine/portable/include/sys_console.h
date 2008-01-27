@@ -29,10 +29,11 @@
 #ifndef __DOOMSDAY_WINCONSOLE_H__
 #define __DOOMSDAY_WINCONSOLE_H__
 
-void            Sys_ConInit();
-void            Sys_ConShutdown();
-void            Sys_ConPostEvents();
-void            Sys_ConPrint(int clflags, const char *text);
-void            Sys_ConUpdateCmdLine(const char *text, unsigned int cursorPos);
+#include "sys_input.h"
+
+void            Sys_ConInputInit();
+void            Sys_ConInputShutdown();
+
+size_t          I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize);
 
 #endif

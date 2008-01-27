@@ -110,11 +110,13 @@ void DD_ComposeMainWindowTitle(char *title)
     if(__gx.GetVariable)
     {
         char       *gameName = (char *) __gx.GetVariable(DD_GAME_ID);
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT " : %s", gameName);
+        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s : %s",
+                (isDedicated? " (Dedicated)" : ""), gameName);
     }
     else
     {
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "");
+        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s",
+                (isDedicated? " (Dedicated)" : ""));
     }
 }
 
@@ -200,15 +202,6 @@ boolean DD_EarlyInit(void)
 {
     char       *outfilename = "doomsday.out";
 
-    // First order of business: are we running in dedicated mode?
-    if(ArgCheck("-dedicated"))
-    {
-        isDedicated = true;
-#ifdef UNIX
-        Sys_ConInit();
-#endif
-    }
-
     // We'll redirect stdout to a log file.
     DD_CheckArg("-out", &outfilename);
     outFile = fopen(outfilename, "w");
@@ -273,8 +266,6 @@ void DD_ShutdownAll(void)
     P_ControlShutdown();
     Sv_Shutdown();
     R_Shutdown();
-    if(isDedicated)
-        Sys_ConShutdown();
     Def_Destroy();
     F_ShutdownDirec();
     FH_Clear();

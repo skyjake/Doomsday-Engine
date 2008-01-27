@@ -334,6 +334,9 @@ void DD_AutoLoad(void)
  */
 int DD_Main(void)
 {
+    int             winWidth, winHeight, winBPP, winX, winY;
+    uint            winFlags = DDWF_VISIBLE | DDWF_CENTER;
+    boolean         noCenter = false;
     int             exitCode;
 
 #ifdef UNIX
@@ -387,6 +390,51 @@ int DD_Main(void)
 
     Dir_MakeAbsolute(ddBasePath);
     Dir_ValidDir(ddBasePath);
+
+    // By default, use the resolution defined in (default).cfg.
+    winX = 0;
+    winY = 0;
+    winWidth = defResX;
+    winHeight = defResY;
+    winBPP = defBPP;
+    winFlags |= (defFullscreen? DDWF_FULLSCREEN : 0);
+
+    // Check for command line options modifying the defaults.
+    if(ArgCheckWith("-width", 1))
+        winWidth = atoi(ArgNext());
+    if(ArgCheckWith("-height", 1))
+        winHeight = atoi(ArgNext());
+    if(ArgCheckWith("-winsize", 2))
+    {
+        winWidth = atoi(ArgNext());
+        winHeight = atoi(ArgNext());
+    }
+    if(ArgCheckWith("-bpp", 1))
+        winBPP = atoi(ArgNext());
+    // Ensure a valid value.
+    if(winBPP != 16 && winBPP != 32)
+        winBPP = 32;
+    if(ArgCheck("-nocenter"))
+        noCenter = true;
+    if(ArgCheckWith("-xpos", 1))
+    {
+        winX = atoi(ArgNext());
+        noCenter = true;
+    }
+    if(ArgCheckWith("-ypos", 1))
+    {
+        winY = atoi(ArgNext());
+        noCenter = true;
+    }
+    if(noCenter)
+        winFlags &= ~DDWF_CENTER;
+
+    if(ArgExists("-nofullscreen") || ArgExists("-window"))
+        winFlags &= ~DDWF_FULLSCREEN;
+
+    if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP,
+                      winFlags, 0))
+        return -1;
 
     if(!isDedicated)
     {
