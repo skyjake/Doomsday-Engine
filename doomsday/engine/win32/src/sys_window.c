@@ -68,7 +68,7 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void destroyDDWindow(ddwindow_t *win);
+static void destroyWindow(ddwindow_t *win);
 static boolean setDDWindow(ddwindow_t *win, int newX, int newY, int newWidth,
                            int newHeight, int newBPP, int wFlags,
                            int uFlags);
@@ -557,35 +557,163 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
     return true;
 }
 
-static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
+static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
                                   int x, int y, int w, int h, int bpp,
-                                  int flags, boolean console,
-                                  const char *title)
+                                  int flags, const char *title)
 {
     ddwindow_t         *win, *pWin = NULL;
     HWND                phWnd = NULL;
     boolean             ok = true;
 
-    if(console)
-    {   // We only support one dedicated console.
-        uint                i;
+    if(!(bpp == 32 || bpp == 16))
+    {
+        Con_Message("createWindow: Unsupported BPP %i.\n", bpp);
+        return NULL;
+    }
 
-        for(i = 0; i < numWindows; ++i)
+    if(parentIDX)
+    {
+        pWin = getWindow(parentIDX - 1);
+        if(pWin)
+            phWnd = pWin->hWnd;
+    }
+
+    // Allocate a structure to wrap the various handles and state variables
+    // used with this window.
+    if((win = (ddwindow_t*) M_Calloc(sizeof(ddwindow_t))) == NULL)
+        return 0;
+
+    win->type = WT_NORMAL;
+
+    // Create the window.
+    win->hWnd =
+        CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, title,
+                       WINDOWEDSTYLE,
+                       CW_USEDEFAULT, CW_USEDEFAULT,
+                       CW_USEDEFAULT, CW_USEDEFAULT,
+                       phWnd, NULL,
+                       app->hInstance, NULL);
+    if(!win->hWnd)
+    {
+        win->hWnd = NULL;
+        ok = false;
+    }
+    else // Initialize.
+    {
+        PIXELFORMATDESCRIPTOR pfd;
+        int         pixForm = 0;
+        HDC         hDC = NULL;
+
+        // Setup the pixel format descriptor.
+        ZeroMemory(&pfd, sizeof(pfd));
+        pfd.nSize = sizeof(pfd);
+        pfd.nVersion = 1;
+        pfd.iPixelType = PFD_TYPE_RGBA;
+        pfd.iLayerType = PFD_MAIN_PLANE;
+#ifndef DRMESA
+        pfd.dwFlags =
+            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+        pfd.cColorBits = (bpp == 32? 24 : 16);
+        pfd.cDepthBits = 16;
+#else /* Double Buffer, no alpha */
+        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+            PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
+        pfd.cColorBits = 24;
+        pfd.cRedBits = 8;
+        pfd.cGreenBits = 8;
+        pfd.cGreenShift = 8;
+        pfd.cBlueBits = 8;
+        pfd.cBlueShift = 16;
+        pfd.cDepthBits = 16;
+        pfd.cStencilBits = 8;
+#endif
+
+        if(ok)
         {
-            ddwindow_t         *other = windows[i];
-
-            if(other && other->type == WT_CONSOLE)
+            // Acquire a device context handle.
+            hDC = GetDC(win->hWnd);
+            if(!hDC)
             {
-                Con_Message("createWindow: maxConsoles limit reached.\n");
-                return NULL;
+                Sys_CriticalMessage("DD_CreateWindow: Failed acquiring device context handle.");
+                hDC = NULL;
+                ok = false;
+            }
+            else // Initialize.
+            {
+                // Nothing to do.
             }
         }
+
+        if(ok)
+        {   // Request a matching (or similar) pixel format.
+            pixForm = ChoosePixelFormat(hDC, &pfd);
+            if(!pixForm)
+            {
+                Sys_CriticalMessage("DD_CreateWindow: Choosing of pixel format failed.");
+                pixForm = -1;
+                ok = false;
+            }
+        }
+
+        if(ok)
+        {   // Make sure that the driver is hardware-accelerated.
+            DescribePixelFormat(hDC, pixForm, sizeof(pfd), &pfd);
+            if((pfd.dwFlags & PFD_GENERIC_FORMAT) && !ArgCheck("-allowsoftware"))
+            {
+                Sys_CriticalMessage("DD_CreateWindow: GL driver not accelerated!\n"
+                                    "Use the -allowsoftware option to bypass this.");
+                ok = false;
+            }
+        }
+
+        if(ok)
+        {   // Set the pixel format for the device context. Can only be done once
+            // (unless we release the context and acquire another).
+            if(!SetPixelFormat(hDC, pixForm, &pfd))
+            {
+                Sys_CriticalMessage("DD_CreateWindow: Warning, setting of pixel "
+                                    "format failed.");
+            }
+        }
+
+        // We've now finished with the device context.
+        if(hDC)
+            ReleaseDC(win->hWnd, hDC);
     }
-    else
+
+    setDDWindow(win, x, y, w, h, bpp, flags,
+                DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
+
+    // Ensure new windows are hidden on creation.
+    ShowWindow(win->hWnd, SW_HIDE);
+
+    if(!ok)
+    {   // Damn, something went wrong... clean up.
+        destroyWindow(win);
+        return NULL;
+    }
+
+    return win;
+}
+
+static ddwindow_t *createConsoleWindow(application_t *app, uint parentIDX,
+                                       int x, int y, int w, int h, int bpp,
+                                       int flags, const char *title)
+{
+    ddwindow_t         *win, *pWin = NULL;
+    uint                i;
+    HWND                phWnd = NULL;
+    boolean             ok = true;
+    HANDLE              hcScreen;
+
+    // We only support one dedicated console.
+    for(i = 0; i < numWindows; ++i)
     {
-        if(!(bpp == 32 || bpp == 16))
+        ddwindow_t         *other = windows[i];
+
+        if(other && other->type == WT_CONSOLE)
         {
-            Con_Message("createWindow: Unsupported BPP %i.\n", bpp);
+            Con_Message("createWindow: maxConsoles limit reached.\n");
             return NULL;
         }
     }
@@ -602,146 +730,41 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
     if((win = (ddwindow_t*) M_Calloc(sizeof(ddwindow_t))) == NULL)
         return 0;
 
-    if(console)
+    if(!AllocConsole())
     {
-        HANDLE          hcScreen;
-
-        if(!AllocConsole())
-        {
-            Con_Error("createWindow: Couldn't allocate a console! error %i\n",
-                      GetLastError());
-        }
-
-        win->hWnd = GetConsoleWindow();
-        if(!win->hWnd)
-        {
-            win->hWnd = NULL;
-            ok = false;
-        }
-        else  // Initialize.
-        {
-            if(!SetWindowText(win->hWnd, title))
-                Con_Error("createWindow: Setting console title: error %i\n",
-                          GetLastError());
-
-            hcScreen = GetStdHandle(STD_OUTPUT_HANDLE);
-            if(hcScreen == INVALID_HANDLE_VALUE)
-                Con_Error("createWindow: Bad output handle\n");
-
-            win->type = WT_CONSOLE;
-
-            win->console.hcScreen = hcScreen;
-            GetConsoleScreenBufferInfo(hcScreen, &win->console.cbInfo);
-
-            // This is the location of the print cursor.
-            win->console.cx = 0;
-            win->console.cy = win->console.cbInfo.dwSize.Y - 2;
-
-            setConWindowCmdLine(win, "", 1, 0);
-
-            // We'll be needing the console input handler.
-            Sys_ConInputInit();
-        }
+        Con_Error("createWindow: Couldn't allocate a console! error %i\n",
+                  GetLastError());
     }
-    else
+
+    win->hWnd = GetConsoleWindow();
+    if(!win->hWnd)
     {
-        win->type = WT_NORMAL;
+        win->hWnd = NULL;
+        ok = false;
+    }
+    else  // Initialize.
+    {
+        if(!SetWindowText(win->hWnd, title))
+            Con_Error("createWindow: Setting console title: error %i\n",
+                      GetLastError());
 
-        // Create the window.
-        win->hWnd =
-            CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, title,
-                           WINDOWEDSTYLE,
-                           CW_USEDEFAULT, CW_USEDEFAULT,
-                           CW_USEDEFAULT, CW_USEDEFAULT,
-                           phWnd, NULL,
-                           app->hInstance, NULL);
-        if(!win->hWnd)
-        {
-            win->hWnd = NULL;
-            ok = false;
-        }
-        else // Initialize.
-        {
-            PIXELFORMATDESCRIPTOR pfd;
-            int         pixForm = 0;
-            HDC         hDC = NULL;
+        hcScreen = GetStdHandle(STD_OUTPUT_HANDLE);
+        if(hcScreen == INVALID_HANDLE_VALUE)
+            Con_Error("createWindow: Bad output handle\n");
 
-            // Setup the pixel format descriptor.
-            ZeroMemory(&pfd, sizeof(pfd));
-            pfd.nSize = sizeof(pfd);
-            pfd.nVersion = 1;
-            pfd.iPixelType = PFD_TYPE_RGBA;
-            pfd.iLayerType = PFD_MAIN_PLANE;
-    #ifndef DRMESA
-            pfd.dwFlags =
-                PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-            pfd.cColorBits = (bpp == 32? 24 : 16);
-            pfd.cDepthBits = 16;
-    #else /* Double Buffer, no alpha */
-            pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-                PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
-            pfd.cColorBits = 24;
-            pfd.cRedBits = 8;
-            pfd.cGreenBits = 8;
-            pfd.cGreenShift = 8;
-            pfd.cBlueBits = 8;
-            pfd.cBlueShift = 16;
-            pfd.cDepthBits = 16;
-            pfd.cStencilBits = 8;
-    #endif
+        win->type = WT_CONSOLE;
 
-            if(ok)
-            {
-                // Acquire a device context handle.
-                hDC = GetDC(win->hWnd);
-                if(!hDC)
-                {
-                    Sys_CriticalMessage("DD_CreateWindow: Failed acquiring device context handle.");
-                    hDC = NULL;
-                    ok = false;
-                }
-                else // Initialize.
-                {
-                    // Nothing to do.
-                }
-            }
+        win->console.hcScreen = hcScreen;
+        GetConsoleScreenBufferInfo(hcScreen, &win->console.cbInfo);
 
-            if(ok)
-            {   // Request a matching (or similar) pixel format.
-                pixForm = ChoosePixelFormat(hDC, &pfd);
-                if(!pixForm)
-                {
-                    Sys_CriticalMessage("DD_CreateWindow: Choosing of pixel format failed.");
-                    pixForm = -1;
-                    ok = false;
-                }
-            }
+        // This is the location of the print cursor.
+        win->console.cx = 0;
+        win->console.cy = win->console.cbInfo.dwSize.Y - 2;
 
-            if(ok)
-            {   // Make sure that the driver is hardware-accelerated.
-                DescribePixelFormat(hDC, pixForm, sizeof(pfd), &pfd);
-                if((pfd.dwFlags & PFD_GENERIC_FORMAT) && !ArgCheck("-allowsoftware"))
-                {
-                    Sys_CriticalMessage("DD_CreateWindow: GL driver not accelerated!\n"
-                                        "Use the -allowsoftware option to bypass this.");
-                    ok = false;
-                }
-            }
+        setConWindowCmdLine(win, "", 1, 0);
 
-            if(ok)
-            {   // Set the pixel format for the device context. Can only be done once
-                // (unless we release the context and acquire another).
-                if(!SetPixelFormat(hDC, pixForm, &pfd))
-                {
-                    Sys_CriticalMessage("DD_CreateWindow: Warning, setting of pixel "
-                                        "format failed.");
-                }
-            }
-
-            // We've now finished with the device context.
-            if(hDC)
-                ReleaseDC(win->hWnd, hDC);
-        }
+        // We'll be needing the console input handler.
+        Sys_ConInputInit();
     }
 
     setDDWindow(win, x, y, w, h, bpp, flags,
@@ -752,7 +775,7 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
 
     if(!ok)
     {   // Damn, something went wrong... clean up.
-        destroyDDWindow(win);
+        destroyWindow(win);
         return NULL;
     }
 
@@ -760,7 +783,7 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
 }
 
 /**
- * Create a new (OpenGL-ready) system window.
+ * Create a new window.
  *
  * @param app           Ptr to the application structure holding our globals.
  * @param parentIDX     Index number of the window that is to be the parent
@@ -772,6 +795,7 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
  * @param h             Height (client area).
  * @param bpp           BPP (bits-per-pixel)
  * @param flags         DDWF_* flags, control appearance/behavior.
+ * @param type          Type of window to be created (WT_*)
  * @param title         Window title string, ELSE @c NULL,.
  * @param data          Platform specific data.
  *
@@ -780,16 +804,29 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
  */
 uint Sys_CreateWindow(application_t *app, uint parentIDX,
                       int x, int y, int w, int h, int bpp, int flags,
-                      boolean console, const char *title, void *data)
+                      ddwindowtype_t type, const char *title, void *data)
 {
-    ddwindow_t         *win;
+    ddwindow_t         *win = NULL;
     /* Currently ignored.
     int                nCmdShow = (data? *((int*) data) : 0); */
 
     if(!winManagerInited)
         return 0; // Window manager not initialized yet.
 
-    win = createDDWindow(app, parentIDX, x, y, w, h, bpp, flags, console, title);
+    switch(type)
+    {
+    case WT_NORMAL:
+        win = createGLWindow(app, parentIDX, x, y, w, h, bpp, flags, title);
+        break;
+
+    case WT_CONSOLE:
+        win = createConsoleWindow(app, parentIDX, x, y, w, h, bpp, flags, title);
+        break;
+
+    default:
+        Con_Error("Sys_CreateWindow: Unknown window type (%i).", (int) type);
+        break;
+    }
 
     if(win)
     {   // Success, link it in.
@@ -822,7 +859,35 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
     return numWindows; // index + 1.
 }
 
-static void destroyDDWindow(ddwindow_t *window)
+static boolean destroyGLWindow(ddwindow_t *window)
+{
+    // Delete the window's rendering context if one has been acquired.
+    if(window->normal.glContext)
+    {
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(window->normal.glContext);
+    }
+
+    // Destroy the window and release the handle.
+    if(window->hWnd && !DestroyWindow(window->hWnd))
+        return false;
+
+    return true;
+}
+
+static boolean destroyConsoleWindow(ddwindow_t *window)
+{
+    // We no longer need the input handler.
+    Sys_ConInputShutdown();
+
+    // Detach the console for this process.
+    if(!FreeConsole())
+        return false;
+
+    return true;
+}
+
+static void destroyWindow(ddwindow_t *window)
 {
     boolean         ok = true;
 
@@ -832,28 +897,20 @@ static void destroyDDWindow(ddwindow_t *window)
         ChangeDisplaySettings(NULL, 0);
     }
 
-    if(window->type == WT_CONSOLE)
+    switch(window->type)
     {
-        // We no longer need the input handler.
-        Sys_ConInputShutdown();
+    case WT_NORMAL:
+        ok = destroyGLWindow(window);
+        break;
 
-        // Detach the console for this process.
-        if(!FreeConsole())
-            ok = false;
-    }
-    else
-    {   // A normal window.
-        // Delete the window's rendering context if one has been acquired.
-        if(window->normal.glContext)
-        {
-            wglMakeCurrent(NULL, NULL);
-            wglDeleteContext(window->normal.glContext);
-        }
+    case WT_CONSOLE:
+        ok = destroyConsoleWindow(window);
+        break;
 
-        // Destroy the window and release the handle.
-        if(window->hWnd && !DestroyWindow(window->hWnd))
-            ok = false;
-    }
+    default:
+        Con_Error("destroyWindow: Invalid window type %i.", window->type);
+        break;
+    };
 
     // Free any local memory we acquired for managing the window's state, then
     // finally the ddwindow.
@@ -882,7 +939,7 @@ boolean Sys_DestroyWindow(uint idx)
 
         if(window)
         {
-            destroyDDWindow(window);
+            destroyWindow(window);
             windows[idx-1] = NULL;
             return true;
         }

@@ -192,11 +192,11 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     wrefresh(win->console.winText);
 
     // Move the cursor back onto the command line.
-    Sys_SetConWindowCmdLine(1, NULL, 0);
+    sysSetConWindowCmdLine(1, NULL, 0, 0);
 }
 
-void Sys_SetConWindowCmdLine(uint idx, const char *text,
-                             unsigned int cursorPos, int flags)
+static void Sys_SetConWindowCmdLine(uint idx, const char *text,
+                                    unsigned int cursorPos, int flags)
 {
     ddwindow_t  *win;
     unsigned int i;
@@ -504,7 +504,7 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
     if(!winManagerInited)
         return 0; // Window manager not initialized yet.
 
-    win = createDDWindow(app, w, h, bpp, flags, title);
+    win = createDDWindow(app, w, h, bpp, flags, console, title);
 
     if(win)
         return 1; // Success.
@@ -533,12 +533,13 @@ boolean Sys_DestroyWindow(uint idx)
     if(window->type == WT_CONSOLE)
     {
         // Delete windows and shut down curses.
-        delwin(winTitle);
-        delwin(winText);
-        delwin(winCommand);
+        delwin(window.console.winTitle);
+        delwin(window.console.winText);
+        delwin(window.console.winCommand);
         endwin();
 
-        winTitle = winText = winCommand = NULL;
+        window.console.winTitle = window.console.winText =
+            window.console.winCommand = NULL;
 
         Sys_ConInputShutdown();
     }

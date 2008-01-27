@@ -192,11 +192,11 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     wrefresh(win->console.winText);
 
     // Move the cursor back onto the command line.
-    Sys_SetConWindowCmdLine(1, NULL, 0);
+    sysSetConWindowCmdLine(1, NULL, 0, 0);
 }
 
-void Sys_SetConWindowCmdLine(uint idx, const char *text,
-                             unsigned int cursorPos, int flags)
+static void sysSetConWindowCmdLine(uint idx, const char *text,
+                                   unsigned int cursorPos, int flags)
 {
     ddwindow_t  *win;
     unsigned int i;
@@ -434,21 +434,21 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
         getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
 
         // Create the three windows we will be using.
-        mainWindow.winTitle = newwin(1, maxPos[VX], 0, 0);
-        mainWindow.winText = newwin(maxPos[VY] - 2, maxPos[VX], 1, 0);
-        mainWindow.winCommand = newwin(1, maxPos[VX], maxPos[VY] - 1, 0);
+        mainWindow.console.winTitle = newwin(1, maxPos[VX], 0, 0);
+        mainWindow.console.winText = newwin(maxPos[VY] - 2, maxPos[VX], 1, 0);
+        mainWindow.console.winCommand = newwin(1, maxPos[VX], maxPos[VY] - 1, 0);
 
         // Set attributes.
-        wattrset(mainWindow.winTitle, A_REVERSE);
-        wattrset(mainWindow.winText, A_NORMAL);
-        wattrset(mainWindow.winCommand, A_BOLD);
+        wattrset(mainWindow.console.winTitle, A_REVERSE);
+        wattrset(mainWindow.console.winText, A_NORMAL);
+        wattrset(mainWindow.console.winCommand, A_BOLD);
 
-        scrollok(mainWindow.winText, TRUE);
-        wclear(mainWindow.winText);
-        wrefresh(mainWindow.winText);
+        scrollok(mainWindow.console.winText, TRUE);
+        wclear(mainWindow.console.winText);
+        wrefresh(mainWindow.console.winText);
 
-        keypad(mainWindow.winCommand, TRUE);
-        nodelay(mainWindow.winCommand, TRUE);
+        keypad(mainWindow.console.winCommand, TRUE);
+        nodelay(mainWindow.console.winCommand, TRUE);
         setConWindowCmdLine(&mainWindow, "", 1, 0);
 
         // The background will also be in reverse.
@@ -512,7 +512,7 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
     if(!winManagerInited)
         return 0; // Window manager not initialized yet.
 
-    win = createDDWindow(app, w, h, bpp, flags, title);
+    win = createDDWindow(app, w, h, bpp, flags, console, title);
 
     if(win)
         return 1; // Success.
@@ -541,12 +541,13 @@ boolean Sys_DestroyWindow(uint idx)
     if(window->type == WT_CONSOLE)
     {
         // Delete windows and shut down curses.
-        delwin(winTitle);
-        delwin(winText);
-        delwin(winCommand);
+        delwin(window.console.winTitle);
+        delwin(window.console.winText);
+        delwin(window.console.winCommand);
         endwin();
 
-        winTitle = winText = winCommand = NULL;
+        window.console.winTitle = window.console.winText =
+            window.console.winCommand = NULL;
 
         Sys_ConInputShutdown();
     }
