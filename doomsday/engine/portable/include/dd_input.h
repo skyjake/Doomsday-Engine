@@ -167,7 +167,6 @@ void        DD_PostEvent(ddevent_t *ev);
 void        DD_ProcessEvents(timespan_t ticLength);
 void        DD_ClearEvents(void);
 void        DD_ClearKeyRepeaters(void);
-byte        DD_ScanToKey(byte scan);
 byte        DD_ModKey(byte key);
 
 void        I_InitVirtualInputDevices(void);

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2005 Zachary Keene <zjkeene@bellsouth.net>
  *
@@ -247,7 +247,7 @@ int I_TranslateKeyCode(SDLKey sym)
         return '*';
 
     case SDLK_KP_ENTER:
-        return DDKEY_ENTER;
+        return DDKEY_RETURN;
 
     case SDLK_INSERT:
         return DDKEY_INS;

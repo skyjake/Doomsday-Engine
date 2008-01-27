@@ -407,17 +407,11 @@ extern          "C" {
 
     // Most key data is simple ASCII.
 #define DDKEY_ESCAPE            27
-#define DDKEY_ENTER             13
+#define DDKEY_RETURN            13
 #define DDKEY_TAB               9
 #define DDKEY_BACKSPACE         127
 #define DDKEY_EQUALS            0x3d
 #define DDKEY_MINUS             0x2d
-#define DDKEY_FIVE              0x35
-#define DDKEY_SIX               0x36
-#define DDKEY_SEVEN             0x37
-#define DDKEY_EIGHT             0x38
-#define DDKEY_NINE              0x39
-#define DDKEY_ZERO              0x30
 #define DDKEY_BACKSLASH         0x5C
 
     // Extended keys (above 127).

@@ -60,8 +60,6 @@ typedef struct repeater_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void DD_DefaultKeyMapping(void);
-
 D_CMD(AxisPrintConfig);
 D_CMD(AxisChangeOption);
 D_CMD(AxisChangeValue);

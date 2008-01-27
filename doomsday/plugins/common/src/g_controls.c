@@ -298,7 +298,7 @@ DEFCC( CCmdDefaultGameBinds )
 #ifndef __JDOOM__
         "bindevent key-sqbracketleft invleft",
         "bindevent key-sqbracketright invright",
-        "bindevent key-enter {impulse useartifact}",
+        "bindevent key-return {impulse useartifact}",
 #endif
 
         // Player controls: mouse
@@ -320,8 +320,8 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-y {beginchat 1}",
         "bindevent key-r {beginchat 2}",
         "bindevent key-b {beginchat 3}",
-        "bindevent key-enter msgrefresh",
-        "bindevent chat:key-enter chatcomplete",
+        "bindevent key-return msgrefresh",
+        "bindevent chat:key-return chatcomplete",
         "bindevent chat:key-escape chatcancel",
         "bindevent chat:key-f1 {chatsendmacro 0}",
         "bindevent chat:key-f2 {chatsendmacro 1}",
@@ -380,7 +380,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent menu:key-left-repeat menuleft",
         "bindevent menu:key-right menuright",
         "bindevent menu:key-right-repeat menuright",
-        "bindevent menu:key-enter menuselect",
+        "bindevent menu:key-return menuselect",
 
         "bindevent message:key-y messageyes",
         "bindevent message:key-n messageno",

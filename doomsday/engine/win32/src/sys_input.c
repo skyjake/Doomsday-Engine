@@ -84,64 +84,7 @@ static int counter;
 
 // A customizable mapping of the scantokey array.
 //static char keyMapPath[NUMKKEYS] = "}Data\\KeyMaps\\";
-static byte keyMappings[NUMKKEYS];
-
-/* *INDENT-OFF* */
-static byte scantokey[NUMKKEYS] =
-{
-//  0               1           2               3               4           5                   6               7
-//  8               9           A               B               C           D                   E               F
-// 0
-    0  ,            27,         '1',            '2',            '3',        '4',                '5',            '6',
-    '7',            '8',        '9',            '0',            '-',        '=',                DDKEY_BACKSPACE,9,          // 0
-// 1
-    'q',            'w',        'e',            'r',            't',        'y',                'u',            'i',
-    'o',            'p',        '[',            ']',            13 ,        DDKEY_RCTRL,        'a',            's',        // 1
-// 2
-    'd',            'f',        'g',            'h',            'j',        'k',                'l',            ';',
-    39 ,            '`',        DDKEY_RSHIFT,   92,             'z',        'x',                'c',            'v',        // 2
-// 3
-    'b',            'n',        'm',            ',',            '.',        '/',                DDKEY_RSHIFT,   '*',
-    DDKEY_RALT,     ' ',        0  ,            DDKEY_F1,       DDKEY_F2,   DDKEY_F3,           DDKEY_F4,       DDKEY_F5,   // 3
-// 4
-    DDKEY_F6,       DDKEY_F7,   DDKEY_F8,       DDKEY_F9,       DDKEY_F10,  DDKEY_NUMLOCK,      DDKEY_SCROLL,   DDKEY_NUMPAD7,
-    DDKEY_NUMPAD8,  DDKEY_NUMPAD9, '-',         DDKEY_NUMPAD4,  DDKEY_NUMPAD5, DDKEY_NUMPAD6,   '+',            DDKEY_NUMPAD1, // 4
-// 5
-    DDKEY_NUMPAD2,  DDKEY_NUMPAD3, DDKEY_NUMPAD0, DDKEY_DECIMAL,0,          0,                  0,              DDKEY_F11,
-    DDKEY_F12,      0  ,        0  ,            0  ,            DDKEY_BACKSLASH, 0,             0  ,            0,          // 5
-// 6
-    0  ,            0  ,        0  ,            0  ,            0  ,        0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,          // 6
-// 7
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // 7
-// 8
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0,              0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // 8
-// 9
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              DDKEY_ENTER, DDKEY_RCTRL,       0  ,            0,          // 9
-// A
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // A
-// B
-    0  ,            0  ,        0  ,            0  ,            0,          '/',                0  ,            0,
-    DDKEY_RALT,     0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // B
-// C
-    0  ,            0  ,        0  ,            0  ,            0,          DDKEY_PAUSE,        0  ,            DDKEY_HOME,
-    DDKEY_UPARROW,  DDKEY_PGUP, 0  ,            DDKEY_LEFTARROW,0  ,        DDKEY_RIGHTARROW,   0  ,            DDKEY_END,  // C
-// D
-    DDKEY_DOWNARROW,DDKEY_PGDN, DDKEY_INS,      DDKEY_DEL,      0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // D
-// E
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0,          // E
-// F
-    0  ,            0  ,        0  ,            0  ,            0,          0  ,                0  ,            0,
-    0  ,            0  ,        0  ,            0,              0  ,        0  ,                0  ,            0           // F
-//  0               1           2               3               4           5                   6               7
-//  8               9           A               B               C           D                   E               F
-};
+static byte *keymap;
 
 // CODE --------------------------------------------------------------------
 
@@ -161,17 +104,165 @@ const char *I_ErrorMsg(HRESULT hr)
         DIERR_NOTFOUND ? "Not found" : "?";
 }
 
-/**
- * Sets the key mappings to the default values
- */
-void DD_DefaultKeyMapping(void)
+static void initDIKeyToDDKeyTlat(void)
 {
-    int     i;
+    if(keymap)
+        return; // Already been here.
 
-    for(i = 0; i < 256; ++i)
-    {
-        keyMappings[i] = scantokey[i];
-    }
+    keymap = M_Calloc(sizeof(byte) * NUMKKEYS);
+
+    keymap[DIK_0] = '0';
+    keymap[DIK_1] = '1';
+    keymap[DIK_2] = '2';
+    keymap[DIK_3] = '3';
+    keymap[DIK_4] = '4';
+    keymap[DIK_5] = '5';
+    keymap[DIK_6] = '6';
+    keymap[DIK_7] = '7';
+    keymap[DIK_8] = '8';
+    keymap[DIK_9] = '9';
+    keymap[DIK_A] = 'a';
+    //keymap[DIK_ABNT_C1] = ;
+    //keymap[DIK_ABNT_C2] = ;
+    keymap[DIK_ADD] = DDKEY_ADD;
+    keymap[DIK_APOSTROPHE] = '\'';
+    //keymap[DIK_APPS] = ;
+    //keymap[DIK_AT] = ;
+    //keymap[DIK_AX] = ;
+    keymap[DIK_B] = 'b';
+    keymap[DIK_BACK] = DDKEY_BACKSPACE;
+    keymap[DIK_BACKSLASH] = DDKEY_BACKSLASH;
+    keymap[DIK_C] = 'c';
+    //keymap[DIK_CALCULATOR] = ;
+    //keymap[DIK_CAPITAL] = ;
+    //keymap[DIK_COLON] = ; // On Japanese keyboard
+    keymap[DIK_COMMA] = ',';
+    //keymap[DIK_CONVERT] = ;
+    keymap[DIK_D] = 'd';
+    keymap[DIK_DECIMAL] = DDKEY_DECIMAL;
+    keymap[DIK_DELETE] = DDKEY_DEL;
+    keymap[DIK_DIVIDE] = '/';
+    keymap[DIK_DOWN] = DDKEY_DOWNARROW;
+    keymap[DIK_E] = 'e';
+    keymap[DIK_END] = DDKEY_END;
+    keymap[DIK_EQUALS] = DDKEY_EQUALS;
+    keymap[DIK_ESCAPE] = DDKEY_ESCAPE;
+    keymap[DIK_F] = 'f';
+    keymap[DIK_F1] = DDKEY_F1;
+    keymap[DIK_F2] = DDKEY_F2;
+    keymap[DIK_F3] = DDKEY_F3;
+    keymap[DIK_F4] = DDKEY_F4;
+    keymap[DIK_F5] = DDKEY_F5;
+    keymap[DIK_F6] = DDKEY_F6;
+    keymap[DIK_F7] = DDKEY_F7;
+    keymap[DIK_F8] = DDKEY_F8;
+    keymap[DIK_F9] = DDKEY_F9;
+    keymap[DIK_F10] = DDKEY_F10;
+    keymap[DIK_F11] = DDKEY_F11;
+    keymap[DIK_F12] = DDKEY_F12;
+    //keymap[DIK_F13] = ;
+    //keymap[DIK_F14] = ;
+    //keymap[DIK_F15] = ;
+    keymap[DIK_G] = 'g';
+    keymap[DIK_GRAVE] = '`';
+    keymap[DIK_H] = 'h';
+    keymap[DIK_HOME] = DDKEY_HOME;
+    keymap[DIK_I] = 'i';
+    keymap[DIK_INSERT] = DDKEY_INS;
+    keymap[DIK_J] = 'j';
+    keymap[DIK_K] = 'k';
+    //keymap[DIK_KANA] = ;
+    //keymap[DIK_KANJI] = ;
+    keymap[DIK_L] = 'l';
+    keymap[DIK_LBRACKET] = '[';
+    keymap[DIK_LCONTROL] = ']';
+    keymap[DIK_LEFT] = DDKEY_LEFTARROW;
+    keymap[DIK_LMENU] = DDKEY_LALT; // Left Alt
+    keymap[DIK_LSHIFT] = DDKEY_LSHIFT;
+    //keymap[DIK_LWIN] = ; // Left Windows logo key
+    keymap[DIK_M] = 'm';
+    //keymap[DIK_MAIL] = ;
+    //keymap[DIK_MEDIASELECT] = ; Media Select key, which displays a selection of supported media players on the system
+    //keymap[DIK_MEDIASTOP] = ;
+    keymap[DIK_MINUS] = '-'; // On main keyboard.
+    keymap[DIK_MULTIPLY] = '*'; // Asterisk (*) on numeric keypad
+    //keymap[DIK_MUTE] = ;
+    //keymap[DIK_MYCOMPUTER] = ;
+    keymap[DIK_N] = 'n';
+    keymap[DIK_NEXT] = DDKEY_PGDN; // Page down
+    //keymap[DIK_NEXTTRACK] = ;
+    //keymap[DIK_NOCONVERT] = ; // On Japanese keyboard
+    keymap[DIK_NUMLOCK] = DDKEY_NUMLOCK;
+    keymap[DIK_NUMPAD0] = DDKEY_NUMPAD0;
+    keymap[DIK_NUMPAD1] = DDKEY_NUMPAD1;
+    keymap[DIK_NUMPAD2] = DDKEY_NUMPAD2;
+    keymap[DIK_NUMPAD3] = DDKEY_NUMPAD3;
+    keymap[DIK_NUMPAD4] = DDKEY_NUMPAD4;
+    keymap[DIK_NUMPAD5] = DDKEY_NUMPAD5;
+    keymap[DIK_NUMPAD6] = DDKEY_NUMPAD6;
+    keymap[DIK_NUMPAD7] = DDKEY_NUMPAD7;
+    keymap[DIK_NUMPAD8] = DDKEY_NUMPAD8;
+    keymap[DIK_NUMPAD9] = DDKEY_NUMPAD9;
+    //keymap[DIK_NUMPADCOMMA] = ; // On numeric keypad of NEC PC-98 Japanese keyboard
+    //keymap[DIK_NUMPADENTER] = ;
+    //keymap[DIK_NUMPADEQUALS] = ; // On numeric keypad of NEC PC-98 Japanese keyboard
+    keymap[DIK_O] = 'o';
+    //keymap[DIK_OEM_102] = ; // On British and German keyboards
+    keymap[DIK_P] = 'p';
+    keymap[DIK_PAUSE] = DDKEY_PAUSE;
+    keymap[DIK_PERIOD] = '.';
+    //keymap[DIK_PLAYPAUSE] = ;
+    //keymap[DIK_POWER] = ;
+    //keymap[DIK_PREVTRACK] = ; // Previous track; circumflex on Japanese keyboard
+    keymap[DIK_PRIOR] = DDKEY_PGUP; // Page up
+    keymap[DIK_Q] = 'q';
+    keymap[DIK_R] = 'r';
+    keymap[DIK_RBRACKET] = ']';
+    keymap[DIK_RCONTROL] = DDKEY_RCTRL;
+    keymap[DIK_RETURN] = DDKEY_RETURN; // Return on main keyboard
+    keymap[DIK_RIGHT] = DDKEY_RIGHTARROW;
+    keymap[DIK_RMENU] = DDKEY_RALT; // Right alt
+    keymap[DIK_RSHIFT] = DDKEY_RSHIFT;
+    //keymap[DIK_RWIN] = ; // Right Windows logo key
+    keymap[DIK_S] = 's';
+    keymap[DIK_SCROLL] = DDKEY_SCROLL;
+    keymap[DIK_SEMICOLON] = ';';
+    keymap[DIK_SLASH] = '/';
+    //keymap[DIK_SLEEP] = ;
+    keymap[DIK_SPACE] = ' ';
+    //keymap[DIK_STOP] = ; // On NEC PC-98 Japanese keyboard
+    keymap[DIK_SUBTRACT] = DDKEY_SUBTRACT; // On numeric keypad
+    //keymap[DIK_SYSRQ] = ;
+    keymap[DIK_T] = 't';
+    keymap[DIK_TAB] = DDKEY_TAB;
+    keymap[DIK_U] = 'u';
+    //keymap[DIK_UNDERLINE] = ; // On NEC PC-98 Japanese keyboard
+    //keymap[DIK_UNLABELED] = ; // On Japanese keyboard
+    keymap[DIK_UP] = DDKEY_UPARROW;
+    keymap[DIK_V] = 'v';
+    //keymap[DIK_VOLUMEDOWN] = ;
+    //keymap[DIK_VOLUMEUP] = ;
+    keymap[DIK_W] = 'w';
+    //keymap[DIK_WAKE] = ;
+    //keymap[DIK_WEBBACK] = ;
+    //keymap[DIK_WEBFAVORITES] = ;
+    //keymap[DIK_WEBFORWARD] = ;
+    //keymap[DIK_WEBHOME] = ;
+    //keymap[DIK_WEBREFRESH] = ;
+    //keymap[DIK_WEBSEARCH] = ;
+    //keymap[DIK_WEBSTOP] = ;
+    keymap[DIK_X] = 'x';
+    keymap[DIK_Y] = 'y';
+    // keymap[DIK_YEN] = ;
+    keymap[DIK_Z] = 'z';
+}
+
+/**
+ * Convert a DInput Key (DIK_*) to a DDkey (DDKEY_*) constant.
+ */
+static byte dIKeyToDDKey(byte dIKey)
+{
+    return keymap[dIKey];
 }
 
 #if 0 // Currently unused.
@@ -336,14 +427,6 @@ void DD_DumpKeymap(const char *fileName)
                 fileName);
 }
 #endif
-
-/**
- * Converts as a scan code to the keymap key id.
- */
-byte DD_ScanToKey(byte scan)
-{
-    return keyMappings[scan];
-}
 
 HRESULT I_SetProperty(void *dev, REFGUID property, DWORD how, DWORD obj,
                       DWORD data)
@@ -617,6 +700,9 @@ static boolean I_InitKeyboard(void)
         return false;
     }
 
+    // We'll be needing the DIKey to DDKey translation table.
+    initDIKeyToDDKeyTlat();
+
     return true;
 }
 
@@ -695,6 +781,9 @@ void I_Shutdown(void)
     IDirectInput_Release(dInput);
     dInput = 0;
 
+    M_Free(keymap);
+    keymap = NULL;
+
     initIOk = false;
 }
 
@@ -757,7 +846,7 @@ size_t I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
         evbuf[i].event =
             (keyData[i].dwData & 0x80? IKE_KEY_DOWN : IKE_KEY_UP);
         // Use the table to translate the scancode to a ddkey.
-        evbuf[i].ddkey = DD_ScanToKey((byte) keyData[i].dwOfs);
+        evbuf[i].ddkey = dIKeyToDDKey(keyData[i].dwOfs);
     }
 
     return (size_t) i;

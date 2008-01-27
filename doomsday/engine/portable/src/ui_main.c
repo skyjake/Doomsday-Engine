@@ -1130,7 +1130,7 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
                     strlen(ob->text) - dat->cp);
             break;
 
-        case DDKEY_ENTER:
+        case DDKEY_RETURN:
             // Store changes.
             memset(dat->ptr, 0, dat->maxlen + 1);
             strncpy(dat->ptr, ob->text, dat->maxlen);

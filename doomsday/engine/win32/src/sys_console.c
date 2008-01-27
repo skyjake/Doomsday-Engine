@@ -74,7 +74,7 @@ static void initVKeyToDDKeyTlat(void)
     keymap[VK_BACK] = DDKEY_BACKSPACE; // Backspace
     keymap[VK_TAB ] = DDKEY_TAB;
     //keymap[VK_CLEAR] = ;
-    keymap[VK_RETURN] = DDKEY_ENTER;
+    keymap[VK_RETURN] = DDKEY_RETURN;
     keymap[VK_SHIFT] = DDKEY_RSHIFT;
     keymap[VK_CONTROL] = DDKEY_RCTRL;
     keymap[VK_MENU] = DDKEY_RALT;

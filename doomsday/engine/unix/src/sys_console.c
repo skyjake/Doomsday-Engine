@@ -87,7 +87,7 @@ static int translateKey(int key)
     case '\r':
     case '\n':
     case KEY_ENTER:
-        return DDKEY_ENTER;
+        return DDKEY_RETURN;
 
     case KEY_BACKSPACE:
     case KEY_DC:

@@ -1430,7 +1430,7 @@ boolean Con_Responder(ddevent_t *event)
             bLineOff--;
         return true;
 
-    case DDKEY_ENTER:
+    case DDKEY_RETURN:
         if(conInputLock)
             break;
 

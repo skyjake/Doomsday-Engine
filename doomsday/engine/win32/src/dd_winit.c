@@ -392,7 +392,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_HOTKEY: // A hot-key combination we have registered has been used.
-        // Used to override alt+enter and other easily misshit combinations,
+        // Used to override alt+return and other easily misshit combinations,
         // at the user's request.
         forwardMsg = FALSE;
         break;
