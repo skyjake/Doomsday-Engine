@@ -106,6 +106,8 @@ static void addBlockLine(linelist_t **lists, uint *count, uint *done,
  */
 boolean DAM_BuildBlockMap(gamemap_t* map)
 {
+    uint        startTime = Sys_GetRealTime();
+
     uint        i;
     int         j;
     uint        bMapWidth, bMapHeight;  // blockmap dimensions
@@ -399,6 +401,11 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
     M_Free(blocklists);
     M_Free(blockcount);
     M_Free(blockdone);
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("DAM_BuildBlockMap: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 
     map->blockMap = blockmap;
     return true;

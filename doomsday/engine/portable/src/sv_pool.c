@@ -144,12 +144,15 @@ static line_t **sideOwners;
  */
 void Sv_InitPools(void)
 {
-    uint        i;
-    sector_t   *sec;
+    uint            i;
+    sector_t       *sec;
+    uint            startTime;
 
     // Clients don't register anything.
     if(isClient)
         return;
+
+    startTime = Sys_GetRealTime();
 
     // Set base priority scores for all the delta types.
     for(i = 0; i < NUM_DELTA_TYPES; ++i)
@@ -226,7 +229,9 @@ void Sv_InitPools(void)
     Sv_RegisterWorld(&initialRegister, true);
 
 #ifdef _DEBUG
-    Con_Printf("Sv_InitPools: World has been registered.\n");
+    // How much time did we spend?
+    Con_Message("Sv_InitPools: World registered, done in %.2f seconds.\n",
+                (Sys_GetRealTime() - startTime) / 1000.0f);
 #endif
 }
 
