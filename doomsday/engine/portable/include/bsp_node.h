@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -37,7 +37,7 @@
 #include "bsp_intersection.h"
 #include "p_mapdata.h"
 
-int         BoxOnLineSide(struct superblock_s *box, struct hedge_s *part);
+int         BoxOnLineSide(int bbox[4], struct hedge_s *part);
 
 boolean     BuildNodes(struct superblock_s *hEdgeList, node_t **n, subsector_t **s,
                        int depth, cutlist_t *cutList);

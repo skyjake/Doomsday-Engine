@@ -75,6 +75,10 @@
 
 static int numCompleteHEdges;
 
+// Used when sorting subsector hEdges by angle around midpoint.
+static size_t hEdgeSortBufSize;
+static hedge_t **hEdgeSortBuf;
+
 // CODE --------------------------------------------------------------------
 
 /**
@@ -82,7 +86,8 @@ static int numCompleteHEdges;
  */
 static int pointOnHEdgeSide(double x, double y, hedge_t *hEdge)
 {
-    double      perp = PerpDist(hEdge, x, y);
+    double          perp = M_PerpDist(hEdge->pDX, hEdge->pDY, hEdge->pPerp,
+                                      hEdge->pLength, x, y);
 
     if(fabs(perp) <= DIST_EPSILON)
         return 0;
@@ -95,13 +100,13 @@ static int pointOnHEdgeSide(double x, double y, hedge_t *hEdge)
  * @return          @c -1, if box is on left side, @c 1, if box is on right
  *                  else @c 0, if the line intersects the box.
  */
-int BoxOnLineSide(superblock_t *box, hedge_t *part)
+int BoxOnLineSide(int bbox[4], hedge_t *part)
 {
     int         p1, p2;
-    double      x1 = (double)box->x1 - IFFY_LEN * 1.5;
-    double      y1 = (double)box->y1 - IFFY_LEN * 1.5;
-    double      x2 = (double)box->x2 + IFFY_LEN * 1.5;
-    double      y2 = (double)box->y2 + IFFY_LEN * 1.5;
+    double      x1 = (double)bbox[BOXLEFT]   - IFFY_LEN * 1.5;
+    double      y1 = (double)bbox[BOXBOTTOM] - IFFY_LEN * 1.5;
+    double      x2 = (double)bbox[BOXRIGHT]  + IFFY_LEN * 1.5;
+    double      y2 = (double)bbox[BOXTOP]    + IFFY_LEN * 1.5;
 
     if(part->pDX == 0)
     {   // Horizontal.
@@ -154,8 +159,8 @@ void BSP_AddHEdgeToSuperBlock(superblock_t *block, hedge_t *hEdge)
         int         midPoint[2];
         superblock_t *sub;
 
-        midPoint[VX] = (block->x1 + block->x2) / 2;
-        midPoint[VY] = (block->y1 + block->y2) / 2;
+        midPoint[VX] = (block->bbox[BOXLEFT]   + block->bbox[BOXRIGHT]) / 2;
+        midPoint[VY] = (block->bbox[BOXBOTTOM] + block->bbox[BOXTOP])   / 2;
 
         // Update half-edge counts.
         if(hEdge->lineDef)
@@ -169,7 +174,8 @@ void BSP_AddHEdgeToSuperBlock(superblock_t *block, hedge_t *hEdge)
             return;
         }
 
-        if(block->x2 - block->x1 >= block->y2 - block->y1)
+        if(block->bbox[BOXRIGHT] - block->bbox[BOXLEFT] >=
+           block->bbox[BOXTOP]   - block->bbox[BOXBOTTOM])
         {   // Block is wider than it is high, or square.
             p1 = hEdge->v[0]->buildData.pos[VX] >= midPoint[VX];
             p2 = hEdge->v[1]->buildData.pos[VX] >= midPoint[VX];
@@ -197,21 +203,26 @@ void BSP_AddHEdgeToSuperBlock(superblock_t *block, hedge_t *hEdge)
             block->subs[child] = sub = BSP_SuperBlockCreate();
             sub->parent = block;
 
-            if(block->x2 - block->x1 >= block->y2 - block->y1)
+            if(block->bbox[BOXRIGHT] - block->bbox[BOXLEFT] >=
+               block->bbox[BOXTOP]   - block->bbox[BOXBOTTOM])
             {
-                sub->x1 = (child? midPoint[VX] : block->x1);
-                sub->y1 = block->y1;
+                sub->bbox[BOXLEFT] =
+                    (child? midPoint[VX] : block->bbox[BOXLEFT]);
+                sub->bbox[BOXBOTTOM] = block->bbox[BOXBOTTOM];
 
-                sub->x2 = (child? block->x2 : midPoint[VX]);
-                sub->y2 = block->y2;
+                sub->bbox[BOXRIGHT] =
+                    (child? block->bbox[BOXRIGHT] : midPoint[VX]);
+                sub->bbox[BOXTOP] = block->bbox[BOXTOP];
             }
             else
             {
-                sub->x1 = block->x1;
-                sub->y1 = (child? midPoint[VY] : block->y1);
+                sub->bbox[BOXLEFT] = block->bbox[BOXLEFT];
+                sub->bbox[BOXBOTTOM] =
+                    (child? midPoint[VY] : block->bbox[BOXBOTTOM]);
 
-                sub->x2 = block->x2;
-                sub->y2 = (child? block->y2 : midPoint[VY]);
+                sub->bbox[BOXRIGHT] = block->bbox[BOXRIGHT];
+                sub->bbox[BOXTOP] =
+                    (child? block->bbox[BOXTOP] : midPoint[VY]);
             }
         }
 
@@ -287,54 +298,37 @@ static void sortHEdgesByAngleAroundPoint(hedge_t **hEdges, uint total,
  */
 static void clockwiseOrder(subsector_t *sub)
 {
-    int         i;
-    int         total = 0;
-    hedge_t    *cur;
-    hedge_t   **hEdges;
+    int             i;
+    hedge_t        *hEdge;
 
-/*
-#if _DEBUG
-Con_Message("Subsec: Clockwising %d\n", sub->index);
-#endif
-*/
+    // Insert ptrs to the hEdges into the sort buffer.
+    for(hEdge = sub->buildData.hEdges, i = 0; hEdge; hEdge = hEdge->next, ++i)
+        hEdgeSortBuf[i] = hEdge;
+    hEdgeSortBuf[i] = NULL; // Terminate.
 
-    // Count half-edges and create an array to manipulate them.
-    for(cur = sub->buildData.hEdges; cur; cur = cur->next)
-        total++;
-
-    hEdges = M_Malloc((total + 1) * sizeof(hedge_t *));
-
-    for(cur = sub->buildData.hEdges, i = 0; cur; cur = cur->next, ++i)
-        hEdges[i] = cur;
-    hEdges[total] = NULL; // Terminate.
-
-    if(i != total)
+    if(i != sub->buildData.hEdgeCount)
         Con_Error("clockwiseOrder: Miscounted?");
 
-    sortHEdgesByAngleAroundPoint(hEdges, total, sub->buildData.midPoint);
+    sortHEdgesByAngleAroundPoint(hEdgeSortBuf, sub->buildData.hEdgeCount,
+                                 sub->buildData.midPoint);
 
     // Re-link the half-edge list in the order of the sorted array.
     sub->buildData.hEdges = NULL;
-    for(i = total - 1; i >= 0; i--)
+    for(i = 0; i < sub->buildData.hEdgeCount; ++i)
     {
-        int         j = i % total;
+        int             idx = (sub->buildData.hEdgeCount - 1) - i;
+        int             j = idx % sub->buildData.hEdgeCount;
 
-        hEdges[j]->next = sub->buildData.hEdges;
-        sub->buildData.hEdges = hEdges[j];
+        hEdgeSortBuf[j]->next = sub->buildData.hEdges;
+        sub->buildData.hEdges = hEdgeSortBuf[j];
     }
 
-    sub->buildData.hEdgeCount = total;
-
-/*
-#if _DEBUG
+/*#if _DEBUG
 Con_Message("Sorted half-edges around (%1.1f,%1.1f)\n", sub->buildData.midPoint[VX],
             sub->buildData.midPoint[VY]);
 
+for(hEdge = sub->buildData.hEdges; hEdge; hEdge = hEdge->next)
 {
-hedge_t    **ptr = hEdges;
-while(*ptr)
-{
-    hedge_t    *hEdge = *ptr;
     angle_g     angle =
         M_SlopeToAngle(hEdge->v[0]->V_pos[VX] - sub->buildData.midPoint[VX],
                        hEdge->v[0]->V_pos[VY] - sub->buildData.midPoint[VY]);
@@ -342,12 +336,8 @@ while(*ptr)
     Con_Message("  half-edge %p: Angle %1.6f  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
                 hEdge, angle, hEdge->v[0]->V_pos[VX], hEdge->v[0]->V_pos[VY],
                 hEdge->v[1]->V_pos[VX], hEdge->v[1]->V_pos[VY]);
-    *ptr++;
 }
-}
-#endif
-*/
-    M_Free(hEdges);
+#endif*/
 }
 
 static void sanityCheckClosed(subsector_t *sub)
@@ -464,6 +454,84 @@ Con_Message("Subsec: Renumbering %d\n", sub->index);
 Con_Message("Subsec:   %d: half-edge %p  Index %d\n", n, cur, cur->index);
 #endif
 */
+    }
+}
+
+static void prepareHEdgeSortBuffer(uint numHEdges)
+{
+    // Do we need to enlarge our sort buffer?
+    if(numHEdges + 1 > hEdgeSortBufSize)
+    {
+        hEdgeSortBufSize = numHEdges + 1;
+        hEdgeSortBuf =
+            M_Realloc(hEdgeSortBuf, hEdgeSortBufSize * sizeof(hedge_t *));
+    }
+}
+
+static void clockwiseSubsector(subsector_t *ssec)
+{
+    uint            total;
+    hedge_t        *hEdge;
+
+    // Count half-edges.
+    total = 0;
+    for(hEdge = ssec->buildData.hEdges; hEdge; hEdge = hEdge->next)
+        total++;
+
+    ssec->buildData.hEdgeCount = total;
+
+    // Ensure the sort buffer is large enough.
+    prepareHEdgeSortBuffer(total);
+
+    clockwiseOrder(ssec);
+    renumberSubSectorHEdges(ssec);
+
+    // Do some sanity checks.
+    sanityCheckClosed(ssec);
+    sanityCheckSameSector(ssec);
+    sanityCheckHasRealHEdge(ssec);
+}
+
+static void clockwiseNode(node_t *node)
+{
+    child_t    *right = &node->buildData.children[RIGHT];
+    child_t    *left = &node->buildData.children[LEFT];
+
+    if(right->node)
+        clockwiseNode(right->node);
+
+    if(left->node)
+        clockwiseNode(left->node);
+
+    if(right->subSec)
+        clockwiseSubsector(right->subSec);
+
+    if(left->subSec)
+        clockwiseSubsector(left->subSec);
+}
+
+/**
+ * Traverse the BSP tree and put all the half-edges in each subsector into
+ * clockwise order, and renumber their indices.
+ *
+ * \important This cannot be done during BuildNodes() since splitting a
+ * half-edge with a twin may insert another half-edge into that twin's list,
+ * usually in the wrong place order-wise.
+ */
+void ClockwiseBspTree(editmap_t *map)
+{
+    hEdgeSortBufSize = 0;
+    hEdgeSortBuf = NULL;
+
+    numCompleteHEdges = 0;
+
+    clockwiseNode(map->rootNode);
+
+    // Free temporary storage.
+    if(hEdgeSortBuf)
+    {
+        M_Free(hEdgeSortBuf);
+        hEdgeSortBuf = NULL;
     }
 }
 
@@ -597,10 +665,15 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
     lefts  = (superblock_t *) BSP_SuperBlockCreate();
     rights = (superblock_t *) BSP_SuperBlockCreate();
 
-    lefts->x1 = rights->x1 = hEdgeList->x1;
-    lefts->y1 = rights->y1 = hEdgeList->y1;
-    lefts->x2 = rights->x2 = hEdgeList->x2;
-    lefts->y2 = rights->y2 = hEdgeList->y2;
+    lefts->bbox[BOXLEFT] = rights->bbox[BOXLEFT] =
+        hEdgeList->bbox[BOXLEFT];
+    lefts->bbox[BOXBOTTOM] = rights->bbox[BOXBOTTOM] =
+        hEdgeList->bbox[BOXBOTTOM];
+
+    lefts->bbox[BOXRIGHT] = rights->bbox[BOXRIGHT] =
+        hEdgeList->bbox[BOXRIGHT];
+    lefts->bbox[BOXTOP] = rights->bbox[BOXTOP] =
+        hEdgeList->bbox[BOXTOP];
 
     // Divide the half-edges into two lists: left & right.
     BSP_SeparateHEdges(hEdgeList, best, lefts, rights, cutList);
@@ -681,33 +754,6 @@ Con_Message("BuildNodes: Done.\n"));
 #endif
 */
     return builtOK;
-}
-
-/**
- * Traverse the BSP tree and put all the half-edges in each subsector into
- * clockwise order, and renumber their indices.
- *
- * \important This cannot be done during BuildNodes() since splitting a
- * half-edge with a twin may insert another half-edge into that twin's list,
- * usually in the wrong place order-wise.
- */
-void ClockwiseBspTree(editmap_t *map)
-{
-    uint            i;
-
-    numCompleteHEdges = 0;
-    for(i = 0; i < map->numSubsectors; ++i)
-    {
-        subsector_t  *ssec = map->subsectors[i];
-
-        clockwiseOrder(ssec);
-        renumberSubSectorHEdges(ssec);
-
-        // Do some sanity checks.
-        sanityCheckClosed(ssec);
-        sanityCheckSameSector(ssec);
-        sanityCheckHasRealHEdge(ssec);
-    }
 }
 
 //---------------------------------------------------------------------------

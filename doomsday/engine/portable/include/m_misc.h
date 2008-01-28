@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -112,6 +112,10 @@ void            M_ProjectViewRelativeLine2D(const float center[2],
                                             boolean alignToViewPlane,
                                             float width, float offset,
                                             float start[2], float end[2]);
+double          M_ParallelDist(double lineDX, double lineDY, double linePara,
+                               double lineLength, double x, double y);
+double          M_PerpDist(double lineDX, double lineDY, double linePerp,
+                           double lineLength, double x, double y);
 int             M_CeilPow2(int num);
 int             M_FloorPow2(int num);
 int             M_RoundPow2(int num);

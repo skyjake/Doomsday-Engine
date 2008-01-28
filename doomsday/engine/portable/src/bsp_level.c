@@ -201,27 +201,16 @@ static void hardenSSecSegList(gamemap_t *dest, subsector_t *ssec,
     ssec->segs = segs;
 }
 
-static void hardenSubSectors(gamemap_t *dest, editmap_t *src)
+static void hardenSubsector(gamemap_t *map, subsector_t *dest, const subsector_t *src)
 {
-    uint        i;
-
-    dest->numSubsectors = src->numSubsectors;
-    dest->subsectors = Z_Malloc(dest->numSubsectors * sizeof(subsector_t),
-                               PU_LEVELSTATIC, 0);
-    for(i = 0; i < dest->numSubsectors; ++i)
-    {
-        subsector_t *destS = &dest->subsectors[i];
-        subsector_t *srcS = src->subsectors[i];
-
-        memcpy(destS, srcS, sizeof(*destS));
-        destS->segCount = srcS->buildData.hEdgeCount;
-        destS->sector = (srcS->sector? &dest->sectors[srcS->sector->buildData.index-1] : NULL);
-        destS->shadows = NULL;
-        destS->planes = NULL;
-        destS->vertices = NULL;
-        destS->group = 0;
-        hardenSSecSegList(dest, destS, srcS->buildData.hEdges, srcS->buildData.hEdgeCount);
-    }
+    memcpy(dest, src, sizeof(*dest));
+    dest->segCount = src->buildData.hEdgeCount;
+    dest->sector = (src->sector? &map->sectors[src->sector->buildData.index-1] : NULL);
+    dest->shadows = NULL;
+    dest->planes = NULL;
+    dest->vertices = NULL;
+    dest->group = 0;
+    hardenSSecSegList(map, dest, src->buildData.hEdges, src->buildData.hEdgeCount);
 }
 
 static void hardenNode(gamemap_t *dest, node_t *mnode)
@@ -255,17 +244,31 @@ static void hardenNode(gamemap_t *dest, node_t *mnode)
     node->bBox[LEFT][BOXRIGHT]   = mnode->bBox[LEFT][BOXRIGHT];
 
     if(right->node)
+    {
         node->children[RIGHT] = right->node->buildData.index;
+    }
     else if(right->subSec)
-        node->children[RIGHT] = (right->subSec->buildData.index - 1) | NF_SUBSECTOR;
+    {
+        int             idx = (right->subSec->buildData.index - 1);
+
+        node->children[RIGHT] = idx | NF_SUBSECTOR;
+        hardenSubsector(dest, &dest->subsectors[idx], right->subSec);
+    }
 
     if(left->node)
+    {
         node->children[LEFT]  = left->node->buildData.index;
+    }
     else if(left->subSec)
-        node->children[LEFT]  = (left->subSec->buildData.index - 1) | NF_SUBSECTOR;
+    {
+        int             idx = (left->subSec->buildData.index - 1);
+
+        node->children[LEFT] = idx | NF_SUBSECTOR;
+        hardenSubsector(dest, &dest->subsectors[idx], left->subSec);
+    }
 }
 
-static void hardenNodes(gamemap_t *dest, editmap_t *src)
+static void hardenBSP(gamemap_t *dest, editmap_t *src)
 {
     nodeCurIndex = 0;
 
@@ -273,13 +276,17 @@ static void hardenNodes(gamemap_t *dest, editmap_t *src)
     dest->nodes =
         Z_Calloc(dest->numNodes * sizeof(node_t), PU_LEVELSTATIC, 0);
 
+    dest->numSubsectors = src->numSubsectors;
+    dest->subsectors =
+        Z_Calloc(dest->numSubsectors * sizeof(subsector_t), PU_LEVELSTATIC, 0);
+
     if(src->rootNode)
         hardenNode(dest, src->rootNode);
 }
 
 void BSP_InitForNodeBuild(editmap_t *map)
 {
-    uint        i;
+    uint            i;
 
     for(i = 0; i < map->numLines; ++i)
     {
@@ -507,12 +514,18 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
 
 void SaveMap(gamemap_t *dest, editmap_t *src)
 {
+    uint            startTime = Sys_GetRealTime();
+
     hardenVertexes(dest, src);
     hardenSectors(dest, src);
     hardenSidedefs(dest, src);
     hardenLinedefs(dest, src);
     buildSegsFromHEdges(dest);
-    hardenSubSectors(dest, src);
-    hardenNodes(dest, src);
+    hardenBSP(dest, src);
     hardenPolyobjs(dest, src);
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("SaveMap: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 }

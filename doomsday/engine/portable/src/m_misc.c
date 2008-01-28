@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -726,6 +726,24 @@ void M_ProjectViewRelativeLine2D(const float center[2],
     start[VY] -= sinrv * ((width / 2) + offset);
     end[VX] = start[VX] + cosrv * width;
     end[VY] = start[VY] + sinrv * width;
+}
+
+/**
+ * Compute the parallel distance from a partition line to a point.
+ */
+double M_ParallelDist(double lineDX, double lineDY, double linePara,
+                      double lineLength, double x, double y)
+{
+    return (x * lineDX + y * lineDY + linePara) / lineLength;
+}
+
+/**
+ * Compute the perpendicular distance from a partition line to a point.
+ */
+double M_PerpDist(double lineDX, double lineDY, double linePerp,
+                  double lineLength, double x, double y)
+{
+    return (x * lineDY - y * lineDX + linePerp) / lineLength;
 }
 
 float M_BoundingBoxDiff(const float in[4], const float out[4])

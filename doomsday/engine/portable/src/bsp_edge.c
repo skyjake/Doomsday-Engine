@@ -444,19 +444,3 @@ void BSP_SortHEdgesByIndex(void)
     // Sort the half-edges into ascending index order.
     qsort(levHEdges, numHEdges, sizeof(hedge_t *), hEdgeCompare);
 }
-
-/**
- * Compute the parallel distance from a partition line to a point.
- */
-double ParallelDist(hedge_t *part, double x, double y)
-{
-    return (x * part->pDX + y * part->pDY + part->pPara) / part->pLength;
-}
-
-/**
- * Compute the perpendicular distance from a partition line to a point.
- */
-double PerpDist(hedge_t *part, double x, double y)
-{
-    return (x * part->pDY - y * part->pDX + part->pPerp) / part->pLength;
-}

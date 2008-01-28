@@ -43,13 +43,13 @@ typedef struct editmap_s {
     sector_t      **sectors;
     uint            numSegs;
     seg_t         **segs;
-    uint            numSubsectors;
-    subsector_t   **subsectors;
-    uint            numNodes;
-    node_t        **nodes;
+
     uint            numPolyobjs;
     polyobj_t     **polyobjs;
 
+    // BSP data.
+    uint            numSubsectors;
+    uint            numNodes;
     node_t         *rootNode;
 } editmap_t;
 

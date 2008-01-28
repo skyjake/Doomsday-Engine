@@ -134,13 +134,7 @@ static subsector_t *createSubsector(void)
 
     ssec = M_Calloc(sizeof(*ssec));
     ssec->header.type = DMU_SUBSECTOR;
-
-    map->subsectors =
-        M_Realloc(map->subsectors, sizeof(ssec) * (++map->numSubsectors + 1));
-    map->subsectors[map->numSubsectors-1] = ssec;
-    map->subsectors[map->numSubsectors] = NULL;
-
-    ssec->buildData.index = map->numSubsectors; // 1-based index, 0 = NIL.
+    ssec->buildData.index = ++map->numSubsectors; // 1-based index, 0 = NIL.
     return ssec;
 }
 
@@ -150,12 +144,7 @@ static node_t *createNode(void)
 
     node = M_Calloc(sizeof(*node));
     node->header.type = DMU_NODE;
-
-    map->nodes = M_Realloc(map->nodes, sizeof(node) * (++map->numNodes + 1));
-    map->nodes[map->numNodes-1] = node;
-    map->nodes[map->numNodes] = NULL;
-
-    node->buildData.index = map->numNodes; // 1-based index, 0 = NIL.
+    node->buildData.index = ++map->numNodes; // 1-based index, 0 = NIL.
     return node;
 }
 
@@ -220,14 +209,8 @@ static void destroyMap(void)
     map->segs = NULL;
     map->numSegs = 0;
 
-    if(map->subsectors)
-        M_Free(map->subsectors);
-    map->subsectors = NULL;
     map->numSubsectors = 0;
 
-    if(map->nodes)
-        M_Free(map->nodes);
-    map->nodes = NULL;
     map->rootNode = NULL;
     map->numNodes = 0;
 

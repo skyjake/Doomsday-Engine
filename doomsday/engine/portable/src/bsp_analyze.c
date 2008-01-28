@@ -364,11 +364,7 @@ static __inline int lineVertexLowest(const line_t *l)
 
 static editmap_t *globalMap;
 
-static int
-#ifdef WIN32
-__cdecl
-#endif
-lineStartCompare(const void *p1, const void *p2)
+static int C_DECL lineStartCompare(const void *p1, const void *p2)
 {
     uint            line1 = ((const uint *) p1)[0];
     uint            line2 = ((const uint *) p2)[0];
@@ -389,11 +385,7 @@ lineStartCompare(const void *p1, const void *p2)
     return (int) c->buildData.pos[VY] - (int) d->buildData.pos[VY];
 }
 
-static int
-#ifdef WIN32
-__cdecl
-#endif
-lineEndCompare(const void *p1, const void *p2)
+static int C_DECL lineEndCompare(const void *p1, const void *p2)
 {
     uint            line1 = ((const uint *) p1)[0];
     uint            line2 = ((const uint *) p2)[0];

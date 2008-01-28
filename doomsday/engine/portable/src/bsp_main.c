@@ -69,7 +69,6 @@ void BSP_Register(void)
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
-
 /**
  * Initially create all half-edges, one for each side of a linedef.
  *
@@ -79,6 +78,8 @@ void BSP_Register(void)
  */
 static superblock_t *createInitialHEdges(editmap_t *src)
 {
+    uint            startTime = Sys_GetRealTime();
+
     uint            i;
     int             bw, bh;
     hedge_t        *back, *front;
@@ -86,10 +87,11 @@ static superblock_t *createInitialHEdges(editmap_t *src)
 
     block = BSP_SuperBlockCreate();
 
-    BSP_GetBMapBounds(&block->x1, &block->y1, &bw, &bh);
+    BSP_GetBMapBounds(&block->bbox[BOXLEFT], &block->bbox[BOXBOTTOM],
+                      &bw, &bh);
 
-    block->x2 = block->x1 + 128 * M_CeilPow2(bw);
-    block->y2 = block->y1 + 128 * M_CeilPow2(bh);
+    block->bbox[BOXRIGHT] = block->bbox[BOXLEFT]   + 128 * M_CeilPow2(bw);
+    block->bbox[BOXTOP]   = block->bbox[BOXBOTTOM] + 128 * M_CeilPow2(bh);
 
     // Step through linedefs and get side numbers.
     for(i = 0; i < src->numLines; ++i)
@@ -212,6 +214,12 @@ for(i = 0; i < numVertices; ++i)
 }
 #endif
 */
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("createInitialHEdges: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
+
     return block;
 }
 
@@ -251,9 +259,17 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
 
     // Recursively create nodes.
     {
-    cutlist_t  *cutList = BSP_CutListCreate();
+    uint            buildStartTime = Sys_GetRealTime();
+    cutlist_t      *cutList;
+
+    cutList = BSP_CutListCreate();
     builtOK = BuildNodes(hEdgeList, &src->rootNode, &rootSub, 0, cutList);
     BSP_CutListDestroy(cutList);
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("BuildNodes: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - buildStartTime) / 1000.0f));
     }
 
     // The superblock data is no longer needed.

@@ -100,10 +100,6 @@ int         BSP_GetNumHEdges(void);
 void        BSP_CreateVertexEdgeTip(vertex_t *vert, double dx, double dy,
                                     hedge_t *back, hedge_t *front);
 void        BSP_CountEdgeTips(vertex_t *vert, uint *oneSided, uint *twoSided);
-sector_t  *BSP_VertexCheckOpen(vertex_t *vert, double dx, double dy);
+sector_t   *BSP_VertexCheckOpen(vertex_t *vert, double dx, double dy);
 void        BSP_FreeEdgeTips(void);
-
-// Misc util functions:
-double      ParallelDist(hedge_t *part, double x, double y);
-double      PerpDist(hedge_t *part, double x, double y);
 #endif

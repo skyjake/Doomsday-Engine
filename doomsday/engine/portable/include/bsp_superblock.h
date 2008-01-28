@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -37,7 +37,7 @@
 #include "bsp_intersection.h"
 
 #define SUPER_IS_LEAF(s)  \
-    ((s)->x2-(s)->x1 <= 256 && (s)->y2-(s)->y1 <= 256)
+    ((s)->bbox[BOXRIGHT] - (s)->bbox[BOXLEFT] <= 256 && (s)->bbox[BOXTOP] - (s)->bbox[BOXBOTTOM] <= 256)
 
 typedef struct superblock_s {
     // Parent of this block, or NULL for a top-level block.
@@ -45,9 +45,8 @@ typedef struct superblock_s {
 
     // Coordinates on map for this block, from lower-left corner to
     // upper-right corner. Pseudo-inclusive, i.e (x,y) is inside block
-    // if and only if x1 <= x < x2 and y1 <= y < y2.
-    int         x1, y1;
-    int         x2, y2;
+    // if and only if BOXLEFT <= x < BOXRIGHT and BOXBOTTOM <= y < BOXTOP.
+    int         bbox[4];
 
     // Sub-blocks. NULL when empty. [0] has the lower coordinates, and
     // [1] has the higher coordinates. Division of a square always

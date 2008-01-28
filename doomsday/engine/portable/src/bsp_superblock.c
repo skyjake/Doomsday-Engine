@@ -243,8 +243,10 @@ void BSP_DivideOneHEdge(hedge_t *cur, hedge_t *part, superblock_t *leftList,
         (cur->lineDef? (cur->lineDef->buildData.mlFlags & MLF_SELFREF) : false);
 
     // Get state of lines' relation to each other.
-    a = PerpDist(part, cur->pSX, cur->pSY);
-    b = PerpDist(part, cur->pEX, cur->pEY);
+    a = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->pLength,
+                   cur->pSX, cur->pSY);
+    b = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->pLength,
+                   cur->pEX, cur->pEY);
 
     if(cur->sourceLine == part->sourceLine)
         a = b = 0;
@@ -415,7 +417,7 @@ static int evalPartitionWorker(superblock_t *hEdgeList, hedge_t *part,
      * within it at once. Only when the partition line intercepts the box do
      * we need to go deeper into it - AJA.
      */
-    num = BoxOnLineSide(hEdgeList, part);
+    num = BoxOnLineSide(hEdgeList->bbox, part);
     if(num < 0)
     {   // Left.
         info->realLeft += hEdgeList->realNum;
@@ -447,8 +449,10 @@ static int evalPartitionWorker(superblock_t *hEdgeList, hedge_t *part,
         }
         else
         {
-            a = PerpDist(part, check->pSX, check->pSY);
-            b = PerpDist(part, check->pEX, check->pEY);
+            a = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->pLength,
+                           check->pSX, check->pSY);
+            b = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->pLength,
+                           check->pEX, check->pEY);
 
             fa = fabs(a);
             fb = fabs(b);

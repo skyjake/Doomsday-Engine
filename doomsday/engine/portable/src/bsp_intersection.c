@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -227,7 +227,9 @@ intersection_t *BSP_IntersectionCreate(vertex_t *vert, hedge_t *part,
     intersection_t *cut = quickAllocIntersection();
 
     cut->vertex = vert;
-    cut->alongDist = ParallelDist(part, vert->buildData.pos[VX], vert->buildData.pos[VY]);
+    cut->alongDist =
+        M_ParallelDist(part->pDX, part->pDY, part->pPara, part->pLength,
+                       vert->buildData.pos[VX], vert->buildData.pos[VY]);
     cut->selfRef = selfRef;
 
     cut->before = BSP_VertexCheckOpen(vert, -part->pDX, -part->pDY);
