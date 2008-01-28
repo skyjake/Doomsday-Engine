@@ -474,8 +474,12 @@ void P_SpawnThings(void)
     PO_InitForMap();
 #endif
 
-    // We're finished with the temporary thing list
-    Z_Free(things);
+    // We're finished with the temporary thing list.
+    if(things)
+    {
+        Z_Free(things);
+        things = NULL;
+    }
 }
 
 /**
