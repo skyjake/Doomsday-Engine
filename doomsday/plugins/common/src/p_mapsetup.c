@@ -230,6 +230,92 @@ void P_SetupForMapData(int type, uint num)
     }
 }
 
+static void interpretLinedefFlags(void)
+{
+#define ML_BLOCKING             1 // Solid, is an obstacle.
+#define ML_TWOSIDED             4 // Backside will not be present at all if not two sided.
+#define ML_DONTPEGTOP           8 // Upper texture unpegged.
+#define ML_DONTPEGBOTTOM        16 // Lower texture unpegged.
+
+    uint                i;
+
+    // Interpret the archived map linedef flags and update accordingly.
+    for(i = 0; i < numlines; ++i)
+    {
+        int                 flags = 0;
+        xline_t            *xline = &xlines[i];
+
+        /**
+         * Zero unused flags if ML_INVALID is set.
+         *
+         * \attention "This has been found to be necessary because of errors
+         *  in Ultimate DOOM's E2M7, where around 1000 linedefs have
+         *  the value 0xFE00 masked into the flags value.
+         *  There could potentially be many more maps with this problem,
+         *  as it is well-known that Hellmaker wads set all bits in
+         *  mapthings that it does not understand."
+         *  Thanks to Quasar for the heads up.
+         */
+#if !__JHEXEN__
+        /**
+         * \fixme This applies only to DOOM format maps but the game doesn't
+         * know what format the map is in (and shouldn't really) but the
+         * engine doesn't know if the game wants to do this...
+         */
+# if !__DOOM64TC__
+        /**
+         * \attention DJS - Can't do this with Doom64TC as it has used the
+         * ML_INVALID bit for another purpose... doh!
+         */
+
+        if(xline->flags & ML_INVALID)
+            xline->flags &= VALIDMASK;
+# endif
+#endif
+
+        if(xline->flags & ML_BLOCKING)
+        {
+            flags |= DDLF_BLOCKING;
+            xline->flags &= ~ML_BLOCKING;
+        }
+
+        if(xline->flags & ML_TWOSIDED)
+        {
+            flags |= DDLF_TWOSIDED;
+            xline->flags &= ~ML_TWOSIDED;
+        }
+
+        if(xline->flags & ML_DONTPEGTOP)
+        {
+            flags |= DDLF_DONTPEGTOP;
+            xline->flags &= ~ML_DONTPEGTOP;
+        }
+
+        if(xline->flags & ML_DONTPEGBOTTOM)
+        {
+            flags |= DDLF_DONTPEGBOTTOM;
+            xline->flags &= ~ML_DONTPEGBOTTOM;
+        }
+
+        if(xline->flags & ML_MAPPED)
+        {
+            int             p;
+
+            // Update the automap(s) with all immediately visible lines.
+            for(p = 0; p < MAXPLAYERS; ++p)
+                AM_UpdateLinedef(p, i, true);
+            xline->flags &= ~ML_MAPPED;
+        }
+
+        P_SetInt(DMU_LINE, i, DMU_FLAGS, flags);
+    }
+
+#undef ML_BLOCKING
+#undef ML_TWOSIDED
+#undef ML_DONTPEGTOP
+#undef ML_DONTPEGBOTTOM
+}
+
 typedef struct setuplevelparam_s {
     int episode;
     int map;
@@ -239,14 +325,8 @@ typedef struct setuplevelparam_s {
 
 int P_SetupLevelWorker(void *ptr)
 {
-    setuplevelparam_t *param = ptr;
-
-#if !__DOOM64TC__
-# if __JDOOM__ || __JHERETIC__
-    uint        i;
-# endif
-#endif
-    char        levelId[9];
+    setuplevelparam_t  *param = ptr;
+    char                levelId[9];
 
     // It begins...
     levelSetup = true;
@@ -277,40 +357,7 @@ int P_SetupLevelWorker(void *ptr)
 
     P_SpawnThings();
 
-    /**
-     * First job is to zero unused flags if MF_INVALID is set.
-     *
-     * \attention "This has been found to be necessary because of errors
-     *  in Ultimate DOOM's E2M7, where around 1000 linedefs have
-     *  the value 0xFE00 masked into the flags value.
-     *  There could potentially be many more maps with this problem,
-     *  as it is well-known that Hellmaker wads set all bits in
-     *  mapthings that it does not understand."
-     *  Thanks to Quasar for the heads up.
-     */
-#if !__JHEXEN__
-    /**
-     * \fixme This applies only to DOOM format maps but the game doesn't
-     * know what format the map is in (and shouldn't really) but the
-     * engine doesn't know if the game wants to do this...
-     */
-# if !__DOOM64TC__
-    /**
-     * \attention DJS - Can't do this with Doom64TC as it has used the ML_INVALID bit
-     * for another purpose... doh!
-     */
-    for(i = 0; i < numlines; ++i)
-    {
-        int             flags = P_GetInt(DMU_LINE, i, DMU_FLAGS);
-
-        if(flags & ML_INVALID)
-        {
-            flags &= VALIDMASK;
-            P_SetInt(DMU_LINE, i, DMU_FLAGS, flags);
-        }
-    }
-# endif
-#endif
+    interpretLinedefFlags();
 
 #if __JHERETIC__
     P_InitAmbientSound();

@@ -100,12 +100,6 @@ void P_CopyLine(line_t *from, line_t *to)
         return; // no point copying self
 
     // Copy the built-in properties
-#if 0
-    P_Copyp(DMU_FLAGS, from, to);
-#else
-    P_SetIntp(to, DMU_FLAGS, P_GetIntp(from, DMU_FLAGS));
-#endif
-
     for(i = 0; i < 2; ++i) // For each side
     {
         sidx = (i==0? DMU_SIDE0 : DMU_SIDE1);

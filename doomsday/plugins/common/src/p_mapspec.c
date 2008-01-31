@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -180,7 +180,7 @@ iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList)
  */
 sector_t *P_GetNextSector(line_t *line, sector_t *sec)
 {
-    if(!(P_GetIntp(line, DMU_FLAGS) & ML_TWOSIDED))
+    if(!(P_GetIntp(line, DMU_FLAGS) & DDLF_TWOSIDED))
         return NULL;
 
     if(P_GetPtrp(line, DMU_FRONT_SECTOR) == sec)

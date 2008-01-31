@@ -313,8 +313,10 @@ boolean P_TeleportMove(mobj_t *thing, float x, float y, boolean alwaysstomp)
  */
 boolean PIT_CrossLine(line_t *ld, void *data)
 {
-    if(!(P_GetIntp(ld, DMU_FLAGS) & ML_TWOSIDED) ||
-      (P_GetIntp(ld, DMU_FLAGS) & (ML_BLOCKING | ML_BLOCKMONSTERS)))
+    int                 flags = P_GetIntp(ld, DMU_FLAGS);
+
+    if(!(flags & DDLF_TWOSIDED) ||
+       ((flags & DDLF_BLOCKING) || (P_ToXLine(ld)->flags & ML_BLOCKMONSTERS)))
     {
         float       bbox[4];
 
@@ -859,7 +861,8 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
  */
 boolean PIT_CheckLine(line_t *ld, void *data)
 {
-    float       bbox[4];
+    float               bbox[4];
+    xline_t            *xline;
 
     P_GetFloatpv(ld, DMU_BOUNDING_BOX, bbox);
 
@@ -873,11 +876,12 @@ boolean PIT_CheckLine(line_t *ld, void *data)
         return true;
 
     // A line has been hit
+    xline = P_ToXLine(ld);
 #if !__JHEXEN__
     tmthing->wallHit = true;
 
     // A Hit event will be sent to special lines.
-    if(P_ToXLine(ld)->special)
+    if(xline->special)
         tmhitline = ld;
 #endif
 
@@ -916,7 +920,7 @@ boolean PIT_CheckLine(line_t *ld, void *data)
     {   // One sided line
         if(tmthing->flags & MF_MISSILE)
         {   // Missiles can trigger impact specials
-            if(P_ToXLine(ld)->special)
+            if(xline->special)
                 P_AddObjectToIterList(spechit, ld);
         }
         return false;
@@ -926,7 +930,7 @@ boolean PIT_CheckLine(line_t *ld, void *data)
     if(!(tmthing->flags & MF_MISSILE))
     {
         // Explicitly blocking everything?
-        if(P_GetIntp(ld, DMU_FLAGS) & ML_BLOCKING)
+        if(P_GetIntp(ld, DMU_FLAGS) & DDLF_BLOCKING)
         {
 #if __JHEXEN__
             if(tmthing->flags2 & MF2_BLASTED)
@@ -942,13 +946,13 @@ boolean PIT_CheckLine(line_t *ld, void *data)
         // Block monsters only?
 #if __JHEXEN__
         if(!tmthing->player && tmthing->type != MT_CAMERA &&
-           (P_GetIntp(ld, DMU_FLAGS) & ML_BLOCKMONSTERS))
+           (xline->flags & ML_BLOCKMONSTERS))
 #elif __JHERETIC__
         if(!tmthing->player && tmthing->type != MT_POD &&
-           (P_GetIntp(ld, DMU_FLAGS) & ML_BLOCKMONSTERS))
+           (xline->flags & ML_BLOCKMONSTERS))
 #else
         if(!tmthing->player &&
-           (P_GetIntp(ld, DMU_FLAGS) & ML_BLOCKMONSTERS))
+            (xline->flags & ML_BLOCKMONSTERS))
 #endif
         {
 #if __JHEXEN__
@@ -962,7 +966,7 @@ boolean PIT_CheckLine(line_t *ld, void *data)
 #if __DOOM64TC__
     if((tmthing->flags & MF_MISSILE))
     {
-        if(P_GetIntp(ld, DMU_FLAGS) & ML_BLOCKALL)  // explicitly blocking everything
+        if(xline->flags & ML_BLOCKALL)  // explicitly blocking everything
             return tmunstuck && !untouched(ld);  // killough $unstuck: allow escape
     }
 #endif
@@ -1470,11 +1474,11 @@ boolean PTR_ShootTraverse(intercept_t *in)
             P_ActivateLine(li, shootthing, 0, SPAC_IMPACT);
 
 #if __DOOM64TC__
-        if(P_GetIntp(li, DMU_FLAGS) & ML_BLOCKALL) // d64tc
+        if(xline->flags & ML_BLOCKALL) // d64tc
             goto hitline;
 #endif
 
-        if(!(P_GetIntp(li, DMU_FLAGS) & ML_TWOSIDED))
+        if(!(P_GetIntp(li, DMU_FLAGS) & DDLF_TWOSIDED))
             goto hitline;
 
         // Crosses a two sided line.
@@ -1719,7 +1723,7 @@ boolean PTR_AimTraverse(intercept_t *in)
 
         li = in->d.line;
 
-        if(!(P_GetIntp(li, DMU_FLAGS) & ML_TWOSIDED))
+        if(!(P_GetIntp(li, DMU_FLAGS) & DDLF_TWOSIDED))
             return false; // Stop.
 
         // Crosses a two sided line.
@@ -2044,9 +2048,10 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
 
 boolean PTR_UseTraverse(intercept_t *in)
 {
-    int         side;
+    int                 side;
+    xline_t            *xline = P_ToXLine(in->d.line);
 
-    if(!P_ToXLine(in->d.line)->special)
+    if(!xline->special)
     {
         P_LineOpening(in->d.line);
         if(openrange <= 0)
@@ -2085,7 +2090,7 @@ boolean PTR_UseTraverse(intercept_t *in)
 
 #if !__JHEXEN__
     // Can use multiple line specials in a row with the PassThru flag.
-    if(P_GetIntp(in->d.line, DMU_FLAGS) & ML_PASSUSE)
+    if(xline->flags & ML_PASSUSE)
         return true;
 #endif
     // Can't use more than one special line in a row.
@@ -2240,13 +2245,15 @@ static void P_HitSlideLine(line_t *ld)
 
 boolean PTR_SlideTraverse(intercept_t *in)
 {
-    line_t     *li;
+    line_t         *li;
+    xline_t        *xline;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: Not a line?");
 
     li = in->d.line;
-    if(!(P_GetIntp(li, DMU_FLAGS) & ML_TWOSIDED))
+    xline = P_ToXLine(li);
+    if(!(P_GetIntp(li, DMU_FLAGS) & DDLF_TWOSIDED))
     {
         if(P_PointOnLineSide(slidemo->pos[VX], slidemo->pos[VY], li))
             return true; // Don't hit the back side.
@@ -2255,7 +2262,7 @@ boolean PTR_SlideTraverse(intercept_t *in)
     }
 
 #if __DOOM64TC__
-    if(P_GetIntp(li, DMU_FLAGS) & ML_BLOCKALL) // d64tc
+    if(xline->flags & ML_BLOCKALL) // d64tc
         goto isblocking;
 #endif
 
@@ -2838,7 +2845,7 @@ boolean PTR_BounceTraverse(intercept_t *in)
         Con_Error("PTR_BounceTraverse: Not a line?");
 
     li = in->d.line;
-    if(!(P_GetIntp(li, DMU_FLAGS) & ML_TWOSIDED))
+    if(!(P_GetIntp(li, DMU_FLAGS) & DDLF_TWOSIDED))
     {
         if(P_PointOnLineSide(slidemo->pos[VX], slidemo->pos[VY], li))
             return true; // Don't hit the back side.

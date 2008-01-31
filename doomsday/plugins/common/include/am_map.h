@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -356,6 +356,7 @@ void    AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
                                float glowWidth, boolean scaleGlowWithView);
 int     AM_AddMark(int pid, float x, float y);
 void    AM_ClearMarks(int pid);
+void    AM_UpdateLinedef(int pid, uint lineIdx, boolean visible);
 void    AM_SetCheatLevel(int pid, int level);
 void    AM_IncMapCheatLevel(int pid);
 

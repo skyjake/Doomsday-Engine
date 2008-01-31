@@ -2209,29 +2209,30 @@ boolean XL_CheckKeys(mobj_t *mo, int flags2)
 int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
                  void *data)
 {
-    xgline_t   *xg;
-    linetype_t *info;
-    boolean     active;
-    mobj_t     *activator_thing = (mobj_t *) data;
-    player_t   *activator = 0;
-    int         i, flags;
-    boolean     anyTrigger = false;
+    int                     i;
+    xline_t                *xline;
+    xgline_t               *xg;
+    linetype_t             *info;
+    boolean                 active;
+    mobj_t                 *activator_thing = (mobj_t *) data;
+    player_t               *activator = 0;
+    boolean                 anyTrigger = false;
 
     // Clients rely on the server, they don't do XG themselves.
     if(IS_CLIENT)
         return false;
 
-    xg = P_ToXLine(line)->xg;
+    xline = P_ToXLine(line);
+    xg = xline->xg;
     info = &xg->info;
     active = xg->active;
-    flags = P_GetIntp(line, DMU_FLAGS);
 
     if(activator_thing)
         activator = activator_thing->player;
 
 #ifdef __JDOOM__
     // BOOM intergration
-    if((flags & ML_ALLTRIGGER) && !(info->flags2 & LTF2_OVERRIDE_ANY))
+    if((xline->flags & ML_ALLTRIGGER) && !(info->flags2 & LTF2_OVERRIDE_ANY))
         anyTrigger = true;
 #endif
 
@@ -2333,7 +2334,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
     if(info->flags & LTF_NO_OTHER_USE_SECRET)
     {
         // Non-players can't use this line if line is flagged secret.
-        if(evtype == XLE_USE && !activator && (flags & ML_SECRET))
+        if(evtype == XLE_USE && !activator && (xline->flags & ML_SECRET))
         {
             XG_Dev("  Line %i: ABORTING EVENT due to no_other_use_secret", P_ToIndex(line));
             return false;

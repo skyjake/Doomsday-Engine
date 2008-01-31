@@ -1266,6 +1266,27 @@ void AM_SetViewRotateMode(int pid, boolean on)
     setViewRotateMode(map, on);
 }
 
+/**
+ * Update the specified player's automap.
+ *
+ * @param pid           Idx of the player whose map is being updated.
+ * @param lineIdx       Idx of the line being added to the map.
+ * @param visible       @c true= mark the line as visible, else hidden.
+ */
+void AM_UpdateLinedef(int pid, uint lineIdx, boolean visible)
+{
+    xline_t            *xline;
+
+    if(pid < 0 || pid >= MAXPLAYERS)
+        return;
+
+    if(lineIdx >= numlines)
+        return;
+
+    xline = P_GetXLine(lineIdx);
+    xline->mapped[pid] = visible;
+}
+
 static void clearMarks(automap_t *map)
 {
     uint        i;
@@ -2485,7 +2506,6 @@ static void rendLine2(float x1, float y1, float x2, float y2, float width,
 static void renderWallSeg(seg_t *seg, void *data)
 {
     ssecitervars_t *vars = (ssecitervars_t*) data;
-    int         lineFlags;
     float       v1[2], v2[2];
     line_t     *line;
     xline_t    *xLine;
@@ -2502,8 +2522,7 @@ static void renderWallSeg(seg_t *seg, void *data)
     if(xLine->validCount == VALIDCOUNT)
         return; // Already drawn once.
 
-    lineFlags = P_GetIntp(line, DMU_FLAGS);
-    if((lineFlags & ML_DONTDRAW) && !(map->flags & AMF_REND_ALLLINES))
+    if((xLine->flags & ML_DONTDRAW) && !(map->flags & AMF_REND_ALLLINES))
         return;
 
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
@@ -2544,7 +2563,7 @@ static void renderWallSeg(seg_t *seg, void *data)
 
         if(!info)
         {   // Perhaps a default colored line?
-            if(!(frontSector && backSector) || (lineFlags & ML_SECRET))
+            if(!(frontSector && backSector) || (xLine->flags & ML_SECRET))
             {
                 // solid wall (well probably anyway...)
                 info = getMapObjectInfo(map, AMO_SINGLESIDEDLINE);
@@ -2572,7 +2591,7 @@ static void renderWallSeg(seg_t *seg, void *data)
     }
     else if(plr->powers[PT_ALLMAP])
     {
-        if(!(lineFlags & ML_DONTDRAW))
+        if(!(xLine->flags & ML_DONTDRAW))
         {
             // An as yet, unseen line.
             info = getMapObjectInfo(map, AMO_UNSEENLINE);

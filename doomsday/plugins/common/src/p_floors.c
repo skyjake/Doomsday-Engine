@@ -763,7 +763,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             {
                 ln = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
 
-                if(P_GetIntp(ln, DMU_FLAGS) & ML_TWOSIDED)
+                if(P_GetIntp(ln, DMU_FLAGS) & DDLF_TWOSIDED)
                 {
                     side = P_GetPtrp(ln, DMU_SIDE0);
                     bottomtexture = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
@@ -803,7 +803,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                 // Choose the correct texture and special on two sided lines.
                 ln = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
 
-                if(P_GetIntp(ln, DMU_FLAGS) & ML_TWOSIDED)
+                if(P_GetIntp(ln, DMU_FLAGS) & DDLF_TWOSIDED)
                 {
                     if(P_GetPtrp(ln, DMU_FRONT_SECTOR) == sec)
                     {

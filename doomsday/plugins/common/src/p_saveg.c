@@ -72,6 +72,7 @@
 #include "p_mapsetup.h"
 #include "p_player.h"
 #include "p_inventory.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2362,7 +2363,7 @@ static void SV_WriteLine(line_t *li)
     // 3: "Mapped by player" values.
     SV_WriteByte(3); // Write a version byte
 
-    SV_WriteShort(P_GetIntp(li, DMU_FLAGS));
+    SV_WriteShort(xli->flags);
 
     for(i = 0; i < MAXPLAYERS; ++i)
         SV_WriteByte(xli->mapped[i]);
@@ -2467,9 +2468,11 @@ static void SV_ReadLine(line_t *li)
     {
         // Set line as having been seen by all players..
         memset(&xli->mapped, 1, sizeof(&xli->mapped));
+        for(i = 0; i < MAXPLAYERS; ++i)
+            AM_UpdateLinedef(i, P_ToIndex(li), true);
         flags &= ~0x0100; // remove the old flag.
     }
-    P_SetIntp(li, DMU_FLAGS, flags);
+    xli->flags = flags;
 
     if(ver >= 3)
     {
