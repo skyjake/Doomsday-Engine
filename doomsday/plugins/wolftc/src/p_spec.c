@@ -287,17 +287,20 @@ boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
  */
 void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
 {
-    int     ok;
+    int                 ok;
+    xline_t            *xline;
 
     // Extended functionality overrides old.
     if(XL_CrossLine(line, side, thing))
         return;
 
+    xline = P_ToXLine(line);
+
     //  Triggers that other things can activate
     if(!thing->player)
     {
         // Things that should NOT trigger specials...
-        switch (thing->type)
+        switch(thing->type)
         {
         case MT_ROCKET:
         case MT_PLASMA:
@@ -313,13 +316,13 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
         }
 
         ok = 0;
-        switch (P_ToXLine(line)->special)
+        switch(xline->special)
         {
         case 39:                // TELEPORT TRIGGER
         case 97:                // TELEPORT RETRIGGER
         case 125:               // TELEPORT MONSTERONLY TRIGGER
         case 126:               // TELEPORT MONSTERONLY RETRIGGER
-        case 4:             // RAISE DOOR
+        case 4:                 // RAISE DOOR
         case 10:                // PLAT DOWN-WAIT-UP-STAY TRIGGER
         case 88:                // PLAT DOWN-WAIT-UP-STAY RETRIGGER
             ok = 1;
@@ -327,7 +330,7 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
         }
 
         // Anything can trigger this line!
-        if(P_GetIntp(line, DMU_FLAGS) & ML_ALLTRIGGER)
+        if(xline->flags & ML_ALLTRIGGER)
             ok = 1;
 
         if(!ok)
@@ -335,142 +338,142 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
     }
 
     // Note: could use some const's here.
-    switch (P_ToXLine(line)->special)
+    switch(xline->special)
     {
         // TRIGGERS.
         // All from here to RETRIGGERS.
     case 2:
         // Open Door
         EV_DoDoor(line, open);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 3:
         // Close Door
         EV_DoDoor(line, close);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 4:
         // Raise Door
         EV_DoDoor(line, normal);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 5:
         // Raise Floor
         EV_DoFloor(line, raiseFloor);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 6:
         // Fast Ceiling Crush & Raise
         EV_DoCeiling(line, fastCrushAndRaise);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 8:
         // Build Stairs
         EV_BuildStairs(line, build8);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 10:
         // PlatDownWaitUp
         EV_DoPlat(line, downWaitUpStay, 0);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 12:
         // Light Turn On - brightest near
         EV_LightTurnOn(line, 0);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 13:
         // Light Turn On - max
         EV_LightTurnOn(line, 1);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 16:
         // Close Door 30
         EV_DoDoor(line, close30ThenOpen);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 17:
         // Start Light Strobing
         EV_StartLightStrobing(line);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 19:
         // Lower Floor
         EV_DoFloor(line, lowerFloor);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 22:
         // Raise floor to nearest height and change texture
         EV_DoPlat(line, raiseToNearestAndChange, 0);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 25:
         // Ceiling Crush and Raise
         EV_DoCeiling(line, crushAndRaise);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 30:
         // Raise floor to shortest texture height
         //  on either side of lines.
         EV_DoFloor(line, raiseToTexture);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 35:
         // Lights Very Dark
         EV_LightTurnOn(line, 35.0f/255.0f);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 36:
         // Lower Floor (TURBO)
         EV_DoFloor(line, turboLower);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 37:
         // LowerAndChange
         EV_DoFloor(line, lowerAndChange);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 38:
         // Lower Floor To Lowest
         EV_DoFloor(line, lowerFloorToLowest);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 39:
         // TELEPORT!
         EV_Teleport(line, side, thing);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 40:
         // RaiseCeilingLowerFloor
         EV_DoCeiling(line, raiseToHighest);
         EV_DoFloor(line, lowerFloorToLowest);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 44:
         // Ceiling Crush
         EV_DoCeiling(line, lowerAndCrush);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 52:
@@ -481,79 +484,79 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
     case 53:
         // Perpetual Platform Raise
         EV_DoPlat(line, perpetualRaise, 0);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 54:
         // Platform Stop
         EV_StopPlat(line);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 56:
         // Raise Floor Crush
         EV_DoFloor(line, raiseFloorCrush);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 57:
         // Ceiling Crush Stop
         EV_CeilingCrushStop(line);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 58:
         // Raise Floor 24
         EV_DoFloor(line, raiseFloor24);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 59:
         // Raise Floor 24 And Change
         EV_DoFloor(line, raiseFloor24AndChange);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 104:
         // Turn lights off in sector(tag)
         EV_TurnTagLightsOff(line);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 108:
         // Blazing Door Raise (faster than TURBO!)
         EV_DoDoor(line, blazeRaise);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 109:
         // Blazing Door Open (faster than TURBO!)
         EV_DoDoor(line, blazeOpen);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 100:
         // Build Stairs Turbo 16
         EV_BuildStairs(line, turbo16);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 110:
         // Blazing Door Close (faster than TURBO!)
         EV_DoDoor(line, blazeClose);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 119:
         // Raise floor to nearest surr. floor
         EV_DoFloor(line, raiseFloorToNearest);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 121:
         // Blazing PlatDownWaitUpStay
         EV_DoPlat(line, blazeDWUS, 0);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 124:
@@ -566,20 +569,20 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
         if(!thing->player)
         {
             EV_Teleport(line, side, thing);
-            P_ToXLine(line)->special = 0;
+            xline->special = 0;
         }
         break;
 
     case 130:
         // Raise Floor Turbo
         EV_DoFloor(line, raiseFloorTurbo);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
     case 141:
         // Silent Ceiling Crush & Raise
         EV_DoCeiling(line, silentCrushAndRaise);
-        P_ToXLine(line)->special = 0;
+        xline->special = 0;
         break;
 
         // RETRIGGERS.  All from here till end.
