@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,20 +44,8 @@ enum {
 // LineDef attributes.
 //
 
-// Solid, is an obstacle.
-#define ML_BLOCKING             1
-
 // Blocks monsters only.
 #define ML_BLOCKMONSTERS        2
-
-// Backside will not be present at all if not two sided.
-#define ML_TWOSIDED             4
-
-// upper texture unpegged
-#define ML_DONTPEGTOP           8
-
-// lower texture unpegged
-#define ML_DONTPEGBOTTOM        16
 
 // In AutoMap: don't map as two sided: IT'S A SECRET!
 #define ML_SECRET               32
@@ -69,7 +57,7 @@ enum {
 #define ML_DONTDRAW             128
 
 // Set if already seen, thus drawn in automap.
-//#define ML_MAPPED             256
+#define ML_MAPPED               256
 
 // Allows a USE action to pass through a line with a special
 #define ML_PASSUSE              512

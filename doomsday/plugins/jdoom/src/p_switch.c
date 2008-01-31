@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -60,7 +60,7 @@
  */
 boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
 {
-    xline_t *xline = P_ToXLine(line);
+    xline_t            *xline = P_ToXLine(line);
 
     // Extended functionality overrides old.
     if(XL_UseLine(line, side, thing))
@@ -87,7 +87,7 @@ boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
     if(!thing->player)
     {
         // Never open secret doors.
-        if(P_GetIntp(line, DMU_FLAGS) & ML_SECRET)
+        if(xline->flags & ML_SECRET)
             return false;
 
         switch(xline->special)
