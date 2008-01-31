@@ -65,6 +65,7 @@ void            M_ReadLine(char *buffer, int len, DFILE * file);
 
 // Bounding boxes.
 void            M_ClearBox(fixed_t *box);
+void            M_CopyBox(fixed_t dest[4], const fixed_t src[4]);
 void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
 float           M_BoundingBoxDiff(const float in[4], const float out[4]);
 void            M_JoinBoxes(float box[4], const float other[4]);

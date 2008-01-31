@@ -452,27 +452,8 @@ typedef struct polyobj_s {
     mpolyobj_t          buildData;
 } polyobj_t;
 
-typedef struct child_s {
-    // Child node or subsector (one must be NULL).
-    struct node_s *node;
-    subsector_t  *subSec;
-} child_t;
-
 #define RIGHT                   0
 #define LEFT                    1
-
-typedef struct mnode_s {
-    // Node index. Only valid once the NODES or GL_NODES lump has been
-    // created.
-    int         index;
-
-    // The node is too long, and the (dx,dy) values should be halved
-    // when writing into the NODES lump.
-    boolean     tooLong;
-
-// Final data.
-    child_t     children[2]; // Children {RIGHT, LEFT}
-} mnode_t;
 
 typedef struct node_s {
     runtime_mapdata_header_t header;
@@ -482,7 +463,6 @@ typedef struct node_s {
     float               dY;            // Partition line.
     float               bBox[2][4];    // Bounding box for each child.
     unsigned int        children[2];   // If NF_SUBSECTOR it's a subsector.
-    mnode_t             buildData;
 } node_t;
 
 #endif

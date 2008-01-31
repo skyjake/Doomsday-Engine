@@ -36,9 +36,6 @@
 
 #include "bsp_intersection.h"
 
-#define SUPER_IS_LEAF(s)  \
-    ((s)->bbox[BOXRIGHT] - (s)->bbox[BOXLEFT] <= 256 && (s)->bbox[BOXTOP] - (s)->bbox[BOXBOTTOM] <= 256)
-
 typedef struct superblock_s {
     // Parent of this block, or NULL for a top-level block.
     struct superblock_s *parent;
@@ -79,16 +76,16 @@ void        BSP_LinkHEdgeToSuperBlock(superblock_t *superblock,
 void        BSP_IncSuperBlockHEdgeCounts(superblock_t *block,
                                          boolean lineLinked);
 
-hedge_t    *BSP_PickNode(superblock_t *hEdgeList, int depth);
-void        BSP_FindNodeBounds(node_t *node, superblock_t *hEdgeListRight,
+hedge_t    *BSP_PickHEdge(const superblock_t *hEdgeList, size_t depth);
+void        BSP_FindNodeBounds(bspnodedata_t *node, superblock_t *hEdgeListRight,
                                superblock_t *hEdgeListLeft);
-void        BSP_DivideOneHEdge(hedge_t *hEdge, hedge_t *part, superblock_t *leftList,
-                               superblock_t *rightList, cutlist_t *cutList);
+void        BSP_DivideOneHEdge(hedge_t *hEdge, hedge_t *part, superblock_t *rightList,
+                               superblock_t *leftList, cutlist_t *cutList);
 void        BSP_SeparateHEdges(superblock_t *hEdgeList, hedge_t *part,
-                               superblock_t *leftList, superblock_t *rightList,
+                               superblock_t *rightList, superblock_t *leftList,
                                cutlist_t *cutList);
-void        BSP_AddMiniHEdges(hedge_t *part, superblock_t *leftList,
-                              superblock_t *rightList, cutlist_t *cutList);
+void        BSP_AddMiniHEdges(hedge_t *part, superblock_t *rightList,
+                              superblock_t *leftList, cutlist_t *cutList);
 void        BSP_BuildEdgeBetweenIntersections(hedge_t *part, intersection_t *start,
                                               intersection_t *end,
                                               hedge_t **right, hedge_t **left);

@@ -60,8 +60,8 @@ static int nodeCurIndex;
 static void hardenSideSegList(gamemap_t *map, side_t *side, seg_t *seg,
                               hedge_t *hEdge)
 {
-    uint        count;
-    hedge_t     *first, *other;
+    uint                count;
+    hedge_t            *first, *other;
 
     // Have we already processed this side?
     if(side->segs)
@@ -203,7 +203,7 @@ static void hardenSSecSegList(gamemap_t *dest, subsector_t *ssec,
 
 static void hardenSubsector(gamemap_t *map, subsector_t *dest, const subsector_t *src)
 {
-    memcpy(dest, src, sizeof(*dest));
+    memcpy(dest, src, sizeof(subsector_t));
     dest->segCount = src->buildData.hEdgeCount;
     dest->sector = (src->sector? &map->sectors[src->sector->buildData.index-1] : NULL);
     dest->shadows = NULL;
@@ -213,66 +213,93 @@ static void hardenSubsector(gamemap_t *map, subsector_t *dest, const subsector_t
     hardenSSecSegList(map, dest, src->buildData.hEdges, src->buildData.hEdgeCount);
 }
 
-static void hardenNode(gamemap_t *dest, node_t *mnode)
+typedef struct {
+    gamemap_t      *dest;
+    uint            nodeCurIndex;
+} hardenbspparams_t;
+
+static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
 {
-    node_t     *node;
-    child_t    *right = &mnode->buildData.children[RIGHT];
-    child_t    *left = &mnode->buildData.children[LEFT];
+    binarytree_t       *right, *left;
+    bspnodedata_t      *nodeData;
+    hardenbspparams_t  *params;
+    node_t             *node;
 
-    if(right->node)
-        hardenNode(dest, right->node);
+    if(BinaryTree_IsLeaf(tree))
+        return true; // Continue iteration.
 
-    if(left->node)
-        hardenNode(dest, left->node);
+    nodeData = BinaryTree_GetData(tree);
+    params = (hardenbspparams_t*) data;
 
-    node = &dest->nodes[mnode->buildData.index = nodeCurIndex++];
+    node = &params->dest->nodes[nodeData->index = params->nodeCurIndex++];
     node->header.type = DMU_NODE;
 
-    node->x = mnode->x;
-    node->y = mnode->y;
-    node->dX = mnode->dX / (mnode->buildData.tooLong? 2 : 1);
-    node->dY = mnode->dY / (mnode->buildData.tooLong? 2 : 1);
+    node->x = nodeData->x;
+    node->y = nodeData->y;
+    node->dX = nodeData->dX / (nodeData->tooLong? 2 : 1);
+    node->dY = nodeData->dY / (nodeData->tooLong? 2 : 1);
 
-    node->bBox[RIGHT][BOXTOP]    = mnode->bBox[RIGHT][BOXTOP];
-    node->bBox[RIGHT][BOXBOTTOM] = mnode->bBox[RIGHT][BOXBOTTOM];
-    node->bBox[RIGHT][BOXLEFT]   = mnode->bBox[RIGHT][BOXLEFT];
-    node->bBox[RIGHT][BOXRIGHT]  = mnode->bBox[RIGHT][BOXRIGHT];
+    node->bBox[RIGHT][BOXTOP]    = nodeData->bBox[RIGHT][BOXTOP];
+    node->bBox[RIGHT][BOXBOTTOM] = nodeData->bBox[RIGHT][BOXBOTTOM];
+    node->bBox[RIGHT][BOXLEFT]   = nodeData->bBox[RIGHT][BOXLEFT];
+    node->bBox[RIGHT][BOXRIGHT]  = nodeData->bBox[RIGHT][BOXRIGHT];
 
-    node->bBox[LEFT][BOXTOP]     = mnode->bBox[LEFT][BOXTOP];
-    node->bBox[LEFT][BOXBOTTOM]  = mnode->bBox[LEFT][BOXBOTTOM];
-    node->bBox[LEFT][BOXLEFT]    = mnode->bBox[LEFT][BOXLEFT];
-    node->bBox[LEFT][BOXRIGHT]   = mnode->bBox[LEFT][BOXRIGHT];
+    node->bBox[LEFT][BOXTOP]     = nodeData->bBox[LEFT][BOXTOP];
+    node->bBox[LEFT][BOXBOTTOM]  = nodeData->bBox[LEFT][BOXBOTTOM];
+    node->bBox[LEFT][BOXLEFT]    = nodeData->bBox[LEFT][BOXLEFT];
+    node->bBox[LEFT][BOXRIGHT]   = nodeData->bBox[LEFT][BOXRIGHT];
 
-    if(right->node)
+    right = BinaryTree_GetChild(tree, RIGHT);
+    if(right)
     {
-        node->children[RIGHT] = right->node->buildData.index;
-    }
-    else if(right->subSec)
-    {
-        int             idx = (right->subSec->buildData.index - 1);
+        if(BinaryTree_IsLeaf(right))
+        {
+            subsector_t    *ssec = (subsector_t*) BinaryTree_GetData(right);
+            uint            idx = (ssec->buildData.index - 1);
 
-        node->children[RIGHT] = idx | NF_SUBSECTOR;
-        hardenSubsector(dest, &dest->subsectors[idx], right->subSec);
+            node->children[RIGHT] = idx | NF_SUBSECTOR;
+            hardenSubsector(params->dest, &params->dest->subsectors[idx], ssec);
+        }
+        else
+        {
+            bspnodedata_t *data = (bspnodedata_t*) BinaryTree_GetData(right);
+            node->children[RIGHT] = data->index;
+        }
     }
 
-    if(left->node)
+    left = BinaryTree_GetChild(tree, LEFT);
+    if(left)
     {
-        node->children[LEFT]  = left->node->buildData.index;
-    }
-    else if(left->subSec)
-    {
-        int             idx = (left->subSec->buildData.index - 1);
+        if(BinaryTree_IsLeaf(left))
+        {
+            subsector_t    *ssec = (subsector_t*) BinaryTree_GetData(left);
+            uint            idx = (ssec->buildData.index - 1);
 
-        node->children[LEFT] = idx | NF_SUBSECTOR;
-        hardenSubsector(dest, &dest->subsectors[idx], left->subSec);
+            node->children[LEFT] = idx | NF_SUBSECTOR;
+            hardenSubsector(params->dest, &params->dest->subsectors[idx], ssec);
+        }
+        else
+        {
+            bspnodedata_t *data = (bspnodedata_t*) BinaryTree_GetData(left);
+            node->children[LEFT]  = data->index;
+        }
     }
+
+    return true; // Continue iteration.
+}
+
+static boolean C_DECL countNode(binarytree_t *tree, void *data)
+{
+    if(!BinaryTree_IsLeaf(tree))
+        (*((uint*) data))++;
+
+    return true; // Continue iteration.
 }
 
 static void hardenBSP(gamemap_t *dest, editmap_t *src)
 {
-    nodeCurIndex = 0;
+    BinaryTree_PostOrder(src->rootNode, countNode, &dest->numNodes);
 
-    dest->numNodes = src->numNodes;
     dest->nodes =
         Z_Calloc(dest->numNodes * sizeof(node_t), PU_LEVELSTATIC, 0);
 
@@ -281,7 +308,14 @@ static void hardenBSP(gamemap_t *dest, editmap_t *src)
         Z_Calloc(dest->numSubsectors * sizeof(subsector_t), PU_LEVELSTATIC, 0);
 
     if(src->rootNode)
-        hardenNode(dest, src->rootNode);
+    {
+        hardenbspparams_t params;
+
+        params.dest = dest;
+        params.nodeCurIndex = 0;
+
+        BinaryTree_PostOrder(src->rootNode, hardenNode, &params);
+    }
 }
 
 void BSP_InitForNodeBuild(editmap_t *map)

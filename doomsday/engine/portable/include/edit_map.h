@@ -29,6 +29,7 @@
 #define __DOOMSDAY_MAP_EDITOR_H__
 
 #include "p_mapdata.h"
+#include "m_binarytree.h"
 #include "r_materials.h"
 
 typedef struct editmap_s {
@@ -49,8 +50,7 @@ typedef struct editmap_s {
 
     // BSP data.
     uint            numSubsectors;
-    uint            numNodes;
-    node_t         *rootNode;
+    binarytree_t   *rootNode;
 } editmap_t;
 
 boolean         MPE_Begin(const char *name);
@@ -92,5 +92,4 @@ vertex_t       *createVertex(void);
 
 // Non-public (to be moved into the BSP code).
 subsector_t    *BSP_NewSubsector(void);
-node_t         *BSP_NewNode(void);
 #endif

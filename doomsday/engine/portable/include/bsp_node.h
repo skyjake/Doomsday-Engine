@@ -35,16 +35,31 @@
 #define __BSP_NODE_H__
 
 #include "bsp_intersection.h"
+#include "m_binarytree.h"
 #include "p_mapdata.h"
 
-int         BoxOnLineSide(int bbox[4], struct hedge_s *part);
+typedef struct bspnodedata_s {
+    float               x;             // Partition line.
+    float               y;             // Partition line.
+    float               dX;            // Partition line.
+    float               dY;            // Partition line.
+    float               bBox[2][4];    // Bounding box for each child.
+    // Node index. Only valid once the NODES or GL_NODES lump has been
+    // created.
+    int					index;
 
-boolean     BuildNodes(struct superblock_s *hEdgeList, node_t **n, subsector_t **s,
-                       int depth, cutlist_t *cutList);
-void        BSP_AddHEdgeToSuperBlock(struct superblock_s *block, struct hedge_s *hEdge);
+    // The node is too long, and the (dx,dy) values should be halved
+    // when writing into the NODES lump.
+    boolean				tooLong;
+} bspnodedata_t;
 
-int         ComputeBspHeight(node_t *node);
-void        ClockwiseBspTree(editmap_t *src);
+boolean     BuildNodes(struct superblock_s *hEdgeList, binarytree_t **parent,
+                       size_t depth, cutlist_t *cutList);
+void        BSP_AddHEdgeToSuperBlock(struct superblock_s *block,
+                                     struct hedge_s *hEdge);
+
+void        ClockwiseBspTree(binarytree_t *rootNode);
 
 void        SaveMap(gamemap_t *dest, editmap_t *src);
+
 #endif

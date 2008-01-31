@@ -138,16 +138,6 @@ static subsector_t *createSubsector(void)
     return ssec;
 }
 
-static node_t *createNode(void)
-{
-    node_t             *node;
-
-    node = M_Calloc(sizeof(*node));
-    node->header.type = DMU_NODE;
-    node->buildData.index = ++map->numNodes; // 1-based index, 0 = NIL.
-    return node;
-}
-
 static polyobj_t *createPolyobj(void)
 {
     polyobj_t          *po;
@@ -161,6 +151,21 @@ static polyobj_t *createPolyobj(void)
 
     po->buildData.index = map->numPolyobjs; // 1-based index, 0 = NIL.
     return po;
+}
+
+static boolean C_DECL freeBSPNodeData(binarytree_t *tree, void *data)
+{
+    if(BinaryTree_IsLeaf(tree))
+    {
+        void           *bspData = BinaryTree_GetData(tree);
+
+        if(bspData)
+            M_Free(bspData);
+
+        BinaryTree_SetData(tree, NULL);
+    }
+
+    return true; // Continue iteration.
 }
 
 static void destroyMap(void)
@@ -211,8 +216,12 @@ static void destroyMap(void)
 
     map->numSubsectors = 0;
 
-    map->rootNode = NULL;
-    map->numNodes = 0;
+    if(map->rootNode)
+    {
+        BinaryTree_PostOrder(map->rootNode, freeBSPNodeData, NULL);
+        BinaryTree_Destroy(map->rootNode);
+        map->rootNode = NULL;
+    }
 
     if(map->polyobjs)
     {
@@ -507,7 +516,6 @@ static void findSectorSSecGroups(sector_t *sec)
     for(i = 0; i < sec->planeCount; ++i)
         sec->subsGroups[0].linked[i] = NULL;
 }
-
 
 /**
  * \pre Lines in sector must be setup before this is called!
@@ -1247,15 +1255,4 @@ subsector_t *BSP_NewSubsector(void)
 
     s = createSubsector();
     return s;
-}
-
-node_t *BSP_NewNode(void)
-{
-    node_t             *n;
-
-    if(!editMapInited)
-        return NULL;
-
-    n = createNode();
-    return n;
 }

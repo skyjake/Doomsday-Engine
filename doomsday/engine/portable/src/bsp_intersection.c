@@ -4,6 +4,9 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
+ *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
+ *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -398,8 +401,8 @@ boolean BSP_CutListInsertIntersection(cutlist_t *cutList, intersection_t *cut)
  *
  * \todo Does this belong in here?
  */
-void BSP_AddMiniHEdges(hedge_t *part, superblock_t *leftList,
-                       superblock_t *rightList, cutlist_t *cutList)
+void BSP_AddMiniHEdges(hedge_t *part, superblock_t *rightList,
+                       superblock_t *leftList, cutlist_t *cutList)
 {
     clist_t    *list;
     cnode_t    *node, *np;

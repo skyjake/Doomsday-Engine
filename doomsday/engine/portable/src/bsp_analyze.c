@@ -125,21 +125,25 @@ void BSP_InitAnalyzer(editmap_t *map)
 /**
  * Checks if the index is in the bitfield.
  */
+#if 0 // Currently unused.
 static __inline boolean hasIndexBit(uint index, uint *bitfield)
 {
     // Assume 32-bit uint.
     return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
 }
+#endif
 
 /**
  * Sets the index in the bitfield.
  * Count is incremented when a zero bit is changed to one.
  */
+#if 0 // Currently unused.
 static __inline void addIndexBit(uint index, uint *bitfield)
 {
     // Assume 32-bit uint.
     bitfield[index >> 5] |= (1 << (index & 0x1f));
 }
+#endif
 
 static void pruneLinedefs(editmap_t *src)
 {
@@ -554,14 +558,14 @@ static void testForWindowEffect(editmap_t *map, line_t *l)
             }
         }
     }
-/*
-#if _DEBUG
+
+/*#if _DEBUG
 Con_Message("back line: %d  back dist: %1.1f  back_open: %s\n",
             backLine, backDist, (backOpen ? "OPEN" : "CLOSED"));
 Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
             frontLine, frontDist, (frontOpen ? "OPEN" : "CLOSED"));
-#endif
-*/
+#endif*/
+
     if(backOpen && frontOpen && l->sides[FRONT]->sector == frontOpen)
     {
         l->buildData.windowEffect = backOpen;
@@ -593,12 +597,10 @@ void BSP_DetectWindowEffects(editmap_t *map)
 
         if((oneSiders % 2) == 1 && (oneSiders + twoSiders) > 1)
         {
-/*
-#if _DEBUG
+/*#if _DEBUG
 Con_Message("FUNNY LINE %d : start vertex %d has odd number of one-siders\n",
             i, l->buildData.v[0]->index);
-#endif
-*/
+#endif*/
             testForWindowEffect(map, l);
             continue;
         }
@@ -607,12 +609,10 @@ Con_Message("FUNNY LINE %d : start vertex %d has odd number of one-siders\n",
 
         if((oneSiders % 2) == 1 && (oneSiders + twoSiders) > 1)
         {
-/*
-#if _DEBUG
+/*#if _DEBUG
 Con_Message("FUNNY LINE %d : end vertex %d has odd number of one-siders\n",
             i, l->buildData.v[1]->index));
-#endif
-*/
+#endif*/
             testForWindowEffect(map, l);
         }
     }

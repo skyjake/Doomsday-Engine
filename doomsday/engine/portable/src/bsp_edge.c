@@ -52,16 +52,16 @@
 // An edge tip is where an edge meets a vertex.
 typedef struct edgetip_s {
     // Link in list. List is kept in ANTI-clockwise order.
-    struct edgetip_s *next;
-    struct edgetip_s *prev;
+    struct edgetip_s   *next;
+    struct edgetip_s   *prev;
 
     // Angle that line makes at vertex (degrees).
-    angle_g     angle;
+    angle_g             angle;
 
     // Segs on each side of the edge. Left is the side of increasing
     // angles, right is the side of decreasing angles. Either can be
     // NULL for one sided edges.
-    struct hedge_s *hEdges[2];
+    struct hedge_s     *hEdges[2];
 } edgetip_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -88,16 +88,18 @@ static hedge_t *allocHEdge(void)
 {
 #define BLKNUM 1024
 
+    hedge_t            *hEdge;
+
     if((numHEdges % BLKNUM) == 0)
     {
         levHEdges =
             M_Realloc(levHEdges, (numHEdges + BLKNUM) * sizeof(hedge_t*));
     }
 
-    levHEdges[numHEdges] = (hedge_t *) M_Calloc(sizeof(hedge_t));
+    levHEdges[numHEdges] = hEdge = M_Calloc(sizeof(hedge_t));
     numHEdges += 1;
 
-    return levHEdges[numHEdges - 1];
+    return hEdge;
 
 #undef BLKNUM
 }
@@ -111,16 +113,18 @@ static edgetip_t *allocEdgeTip(void)
 {
 #define BLKNUM 1024
 
+    edgetip_t          *edgeTip;
+
     if((numHEdgeTips % BLKNUM) == 0)
     {
         hEdgeTips = M_Realloc(hEdgeTips, (numHEdgeTips + BLKNUM) *
             sizeof(edgetip_t *));
     }
 
-    hEdgeTips[numHEdgeTips] = (edgetip_t *) M_Calloc(sizeof(edgetip_t));
+    hEdgeTips[numHEdgeTips] = edgeTip = M_Calloc(sizeof(edgetip_t));
     numHEdgeTips += 1;
 
-    return hEdgeTips[numHEdgeTips - 1];
+    return edgeTip;
 
 #undef BLKNUM
 }
@@ -141,7 +145,7 @@ static void updateHEdge(hedge_t *hedge)
     hedge->pAngle  = M_SlopeToAngle(hedge->pDX, hedge->pDY);
 
     if(hedge->pLength <= 0)
-        Con_Error("Seg %p has zero p_length.", hedge);
+        Con_Error("Hedge %p has zero p_length.", hedge);
 
     hedge->pPerp =  hedge->pSY * hedge->pDX - hedge->pSX * hedge->pDY;
     hedge->pPara = -hedge->pSX * hedge->pDX - hedge->pSY * hedge->pDY;
@@ -153,7 +157,7 @@ static void updateHEdge(hedge_t *hedge)
  */
 static vertex_t *newVertexFromSplitHEdge(hedge_t *hEdge, double x, double y)
 {
-    vertex_t *vert = createVertex();
+    vertex_t           *vert = createVertex();
 
     vert->buildData.pos[VX] = x;
     vert->buildData.pos[VY] = y;
@@ -172,7 +176,7 @@ hedge_t *BSP_CreateHEdge(line_t *line, line_t *sourceLine,
                          vertex_t *start, vertex_t *end, sector_t *sec,
                          boolean back)
 {
-    hedge_t    *hEdge = allocHEdge();
+    hedge_t            *hEdge = allocHEdge();
 
     hEdge->v[0] = start;
     hEdge->v[1] = end;
@@ -209,17 +213,17 @@ hedge_t *BSP_CreateHEdge(line_t *line, line_t *sourceLine,
  */
 hedge_t *BSP_SplitHEdge(hedge_t *oldHEdge, double x, double y)
 {
-    hedge_t    *newHEdge;
-    vertex_t  *newVert;
-/*
-#if _DEBUG
+    hedge_t            *newHEdge;
+    vertex_t           *newVert;
+
+/*#if _DEBUG
 if(oldHEdge->lineDef)
     Con_Message("Splitting Linedef %d (%p) at (%1.1f,%1.1f)\n",
                 oldHEdge->lineDef->index, oldHEdge, x, y);
 else
     Con_Message("Splitting MiniHEdge %p at (%1.1f,%1.1f)\n", oldHEdge, x, y);
-#endif
-*/
+#endif*/
+
     // Update superblock, if needed.
     if(oldHEdge->block)
         BSP_IncSuperBlockHEdgeCounts(oldHEdge->block,
@@ -229,7 +233,7 @@ else
     newHEdge = allocHEdge();
 
     // Copy seg info.
-    memcpy(newHEdge, oldHEdge, sizeof(*newHEdge));
+    memcpy(newHEdge, oldHEdge, sizeof(hedge_t));
     newHEdge->next = NULL;
 
     newHEdge->prevOnSide = oldHEdge;
@@ -241,20 +245,18 @@ else
     newHEdge->v[0] = newVert;
     updateHEdge(newHEdge);
 
-/*
-#if _DEBUG
+/*#if _DEBUG
 Con_Message("Splitting Vertex is %04X at (%1.1f,%1.1f)\n",
             newVert->index, newVert->V_pos[VX], newVert->V_pos[VY]);
-#endif
-*/
+#endif*/
+
     // Handle the twin.
     if(oldHEdge->twin)
     {
-/*
-#if _DEBUG
+/*#if _DEBUG
 Con_Message("Splitting hEdge->twin %p\n", oldHEdge->twin);
-#endif
-*/
+#endif*/
+
         // Update superblock, if needed.
         if(oldHEdge->twin->block)
             BSP_IncSuperBlockHEdgeCounts(oldHEdge->twin->block,
@@ -263,7 +265,7 @@ Con_Message("Splitting hEdge->twin %p\n", oldHEdge->twin);
         newHEdge->twin = allocHEdge();
 
         // Copy seg info.
-        memcpy(newHEdge->twin, oldHEdge->twin, sizeof(*newHEdge->twin));
+        memcpy(newHEdge->twin, oldHEdge->twin, sizeof(hedge_t));
 
         // It is important to keep the twin relationship valid.
         newHEdge->twin->twin = newHEdge;
@@ -287,8 +289,8 @@ Con_Message("Splitting hEdge->twin %p\n", oldHEdge->twin);
 void BSP_CreateVertexEdgeTip(vertex_t *vert, double dx, double dy,
                              hedge_t *back, hedge_t *front)
 {
-    edgetip_t *tip = allocEdgeTip();
-    edgetip_t *after;
+    edgetip_t          *tip = allocEdgeTip();
+    edgetip_t          *after;
 
     tip->angle = M_SlopeToAngle(dx, dy);
     tip->WT_edge[BACK]  = back;
@@ -325,7 +327,7 @@ void BSP_CreateVertexEdgeTip(vertex_t *vert, double dx, double dy,
 
 void BSP_CountEdgeTips(vertex_t *vert, uint *oneSided, uint *twoSided)
 {
-    edgetip_t *tip;
+    edgetip_t          *tip;
 
     *oneSided = 0;
     *twoSided = 0;
@@ -346,8 +348,8 @@ void BSP_CountEdgeTips(vertex_t *vert, uint *oneSided, uint *twoSided)
  */
 sector_t *BSP_VertexCheckOpen(vertex_t *vert, double dX, double dY)
 {
-    edgetip_t  *tip;
-    angle_g     angle = M_SlopeToAngle(dX, dY);
+    edgetip_t          *tip;
+    angle_g             angle = M_SlopeToAngle(dX, dY);
 
     // First check whether there's a wall_tip that lies in the exact
     // direction of the given direction (which is relative to the
@@ -386,7 +388,7 @@ sector_t *BSP_VertexCheckOpen(vertex_t *vert, double dX, double dY)
 
 void BSP_FreeHEdges(void)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < numHEdges; ++i)
         freeHEdge(levHEdges[i]);
@@ -400,7 +402,7 @@ void BSP_FreeHEdges(void)
 
 void BSP_FreeEdgeTips(void)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < numHEdgeTips; ++i)
         M_Free(hEdgeTips[i]);
@@ -414,8 +416,8 @@ void BSP_FreeEdgeTips(void)
 
 hedge_t *LookupHEdge(int index)
 {
-    if(index >= numHEdges)
-        Con_Error("No such half-edge #%d", index);
+    if(index > numHEdges)
+        Con_Error("No such half-edge #%iu", index);
 
     return levHEdges[index];
 }
@@ -430,13 +432,16 @@ static int C_DECL hEdgeCompare(const void *p1, const void *p2)
     const hedge_t *a = ((const hedge_t **) p1)[0];
     const hedge_t *b = ((const hedge_t **) p2)[0];
 
-    if(a->index < 0)
-        Con_Error("Seg %p never reached a subsector !", a);
+    if(a->index == -1)
+        Con_Error("HEdge %p never reached a subsector!", a);
+    if(b->index == -1)
+        Con_Error("HEdge %p never reached a subsector!", b);
 
-    if(b->index < 0)
-        Con_Error("Seg %p never reached a subsector !", b);
-
-    return (a->index - b->index);
+    if(a->index == b->index)
+        return 0;
+    if(a->index < b->index)
+        return -1;
+    return 1;
 }
 
 void BSP_SortHEdgesByIndex(void)

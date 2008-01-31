@@ -787,6 +787,14 @@ void M_JoinBoxes(float bbox[4], const float other[4])
         bbox[BOXBOTTOM] = other[BOXBOTTOM];
 }
 
+void M_CopyBox(fixed_t dest[4], const fixed_t src[4])
+{
+    dest[BOXLEFT]   = src[BOXLEFT];
+    dest[BOXRIGHT]  = src[BOXRIGHT];
+    dest[BOXBOTTOM] = src[BOXBOTTOM];
+    dest[BOXTOP]    = src[BOXTOP];
+}
+
 #ifndef O_BINARY
 #  define O_BINARY 0
 #endif

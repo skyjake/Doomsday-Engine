@@ -481,6 +481,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\m_binarytree.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\m_filehash.c"
 				>
 			</File>
@@ -892,13 +896,6 @@
 				<File
 					RelativePath="..\..\..\engine\win32\src\sys_window.c"
 					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
 				</File>
 			</Filter>
 			<Filter
@@ -1544,6 +1541,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\m_bams.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\m_binarytree.h"
 				>
 			</File>
 			<File

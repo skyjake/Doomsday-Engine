@@ -231,10 +231,9 @@ for(i = 0; i < numVertices; ++i)
  */
 boolean BSP_Build(gamemap_t *dest, editmap_t *src)
 {
-    subsector_t *rootSub;
-    superblock_t *hEdgeList;
-    boolean     builtOK;
-    uint        startTime;
+    boolean             builtOK;
+    uint                startTime;
+    superblock_t       *hEdgeList;
 
     if(verbose >= 1)
     {
@@ -257,13 +256,18 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
     // Create initial half-edges.
     hEdgeList = createInitialHEdges(src);
 
-    // Recursively create nodes.
+    // Build the BSP.
     {
-    uint            buildStartTime = Sys_GetRealTime();
-    cutlist_t      *cutList;
+    uint                buildStartTime = Sys_GetRealTime();
+    cutlist_t          *cutList;
 
     cutList = BSP_CutListCreate();
-    builtOK = BuildNodes(hEdgeList, &src->rootNode, &rootSub, 0, cutList);
+
+    // Recursively create nodes.
+    src->rootNode = NULL;
+    builtOK = BuildNodes(hEdgeList, &src->rootNode, 0, cutList);
+
+    // The cutlist data is no longer needed.
     BSP_CutListDestroy(cutList);
 
     // How much time did we spend?
@@ -272,23 +276,30 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
              (Sys_GetRealTime() - buildStartTime) / 1000.0f));
     }
 
-    // The superblock data is no longer needed.
     BSP_SuperBlockDestroy(hEdgeList);
 
     if(builtOK)
     {   // Success!
         // Wind the BSP tree and link to the map.
-        ClockwiseBspTree(src);
+        ClockwiseBspTree(src->rootNode);
         SaveMap(dest, src);
 
         Con_Message("BSP_Build: Built %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n",
                     dest->numNodes, dest->numSubsectors, dest->numSegs,
                     dest->numVertexes);
 
-        if(src->rootNode)
-            Con_Message("  Heights of left and right subtrees (%d, %d).\n",
-                        ComputeBspHeight(src->rootNode->buildData.children[RIGHT].node),
-                        ComputeBspHeight(src->rootNode->buildData.children[LEFT].node));
+        if(src->rootNode && !BinaryTree_IsLeaf(src->rootNode))
+        {
+            long            rHeight, lHeight;
+
+            rHeight = (long)
+                BinaryTree_GetHeight(BinaryTree_GetChild(src->rootNode, RIGHT));
+            lHeight = (long)
+                BinaryTree_GetHeight(BinaryTree_GetChild(src->rootNode, LEFT));
+
+            Con_Message("  Balance %+ld (l%ld - r%ld).\n", lHeight - rHeight,
+                        lHeight, rHeight);
+        }
     }
 
     // Free temporary storage.

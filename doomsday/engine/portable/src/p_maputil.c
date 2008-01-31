@@ -231,6 +231,103 @@ int P_PointOnLineSide(float x, float y, line_t *line)
 }
 
 /**
+ * Where is the given point in relation to the line.
+ *
+ * @param pointX        X coordinate of the point.
+ * @param pointY        Y coordinate of the point.
+ * @param lineDX        X delta of the line.
+ * @param lineDY        Y delta of the line.
+ * @param linePerp      Perpendicular d of the line.
+ * @param lineLength    Length of the line.
+ *
+ * @return              @c <0= on left side.
+ *                      @c  0= intersects.
+ *                      @c >0= on right side.
+ */
+int P_PointOnLineSide2(double pointX, double pointY, double lineDX,
+                       double lineDY, double linePerp, double lineLength,
+                       double epsilon)
+{
+    double          perp =
+        M_PerpDist(lineDX, lineDY, linePerp, lineLength, pointX, pointY);
+
+    if(fabs(perp) <= epsilon)
+        return 0;
+
+    return (perp < 0? -1 : +1);
+}
+
+/**
+ * Check the spatial relationship between the given box and a partitioning
+ * line.
+ *
+ * @param bbox          Ptr to the box being tested.
+ * @param lineSX        X coordinate of the start of the line.
+ * @param lineSY        Y coordinate of the end of the line.
+ * @param lineDX        X delta of the line (slope).
+ * @param lineDY        Y delta of the line (slope).
+ * @param linePerp      Perpendicular d of the line.
+ * @param lineLength    Length of the line.
+ * @param epsilon       Points within this distance will be considered equal.
+ *
+ * @return              @c <0= bbox is wholly on the left side.
+ *                      @c  0= line intersects bbox.
+ *                      @c >0= bbox wholly on the right side.
+ */
+int P_BoxOnLineSide3(const int bbox[4], double lineSX, double lineSY,
+                     double lineDX, double lineDY, double linePerp,
+                     double lineLength, double epsilon)
+{
+#define IFFY_LEN        4.0
+
+    int         p1, p2;
+    double      x1 = (double)bbox[BOXLEFT]   - IFFY_LEN * 1.5;
+    double      y1 = (double)bbox[BOXBOTTOM] - IFFY_LEN * 1.5;
+    double      x2 = (double)bbox[BOXRIGHT]  + IFFY_LEN * 1.5;
+    double      y2 = (double)bbox[BOXTOP]    + IFFY_LEN * 1.5;
+
+    if(lineDX == 0)
+    {   // Horizontal.
+        p1 = (x1 > lineSX? +1 : -1);
+        p2 = (x2 > lineSX? +1 : -1);
+
+        if(lineDY < 0)
+        {
+            p1 = -p1;
+            p2 = -p2;
+        }
+    }
+    else if(lineDY == 0)
+    {   // Vertical.
+        p1 = (y1 < lineSY? +1 : -1);
+        p2 = (y2 < lineSY? +1 : -1);
+
+        if(lineDX < 0)
+        {
+            p1 = -p1;
+            p2 = -p2;
+        }
+    }
+    else if(lineDX * lineDY > 0)
+    {   // Positive slope.
+        p1 = P_PointOnLineSide2(x1, y2, lineDX, lineDY, linePerp, lineLength, epsilon);
+        p2 = P_PointOnLineSide2(x2, y1, lineDX, lineDY, linePerp, lineLength, epsilon);
+    }
+    else
+    {   // Negative slope.
+        p1 = P_PointOnLineSide2(x1, y1, lineDX, lineDY, linePerp, lineLength, epsilon);
+        p2 = P_PointOnLineSide2(x2, y2, lineDX, lineDY, linePerp, lineLength, epsilon);
+    }
+
+    if(p1 == p2)
+        return p1;
+
+    return 0;
+
+#undef IFFY_LEN
+}
+
+/**
  * Considers the line to be infinite.
  *
  * Returns side 0 or 1, -1 if box crosses the line
@@ -267,7 +364,7 @@ int P_BoxOnLineSide2(float xl, float xh, float yl, float yh, line_t *ld)
 int P_BoxOnLineSide(float *box, line_t *ld)
 {
     return P_BoxOnLineSide2(box[BOXLEFT], box[BOXRIGHT],
-                           box[BOXBOTTOM], box[BOXTOP], ld);
+                            box[BOXBOTTOM], box[BOXTOP], ld);
 }
 
 /**

@@ -48,8 +48,17 @@ void            P_LineUnitVector(line_t *line, float *unitvec);
 float           P_MobjPointDistancef(mobj_t *start, mobj_t *end,
                                      float *fixpoint);
 int             P_PointOnLineSide(float x, float y, line_t *line);
+int             P_PointOnLineSide2(double pointX, double pointY,
+                                   double lineDX, double lineDY,
+                                   double linePerp, double lineLength,
+                                   double epsilon);
 int             P_BoxOnLineSide(float *tmbox, line_t *ld);
-int             P_BoxOnLineSide2(float xl, float xh, float yl, float yh, line_t *ld);
+int             P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
+                                 line_t *ld);
+int             P_BoxOnLineSide3(const int bbox[4], double lineSX,
+                                 double lineSY, double lineDX, double lineDY,
+                                 double linePerp, double lineLength,
+                                 double epsilon);
 void            P_MakeDivline(line_t *li, divline_t *dl);
 int             P_PointOnDivlineSide(float x, float y, divline_t *line);
 float           P_InterceptVector(divline_t *v2, divline_t *v1);
