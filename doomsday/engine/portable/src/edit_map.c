@@ -155,15 +155,12 @@ static polyobj_t *createPolyobj(void)
 
 static boolean C_DECL freeBSPNodeData(binarytree_t *tree, void *data)
 {
-    if(BinaryTree_IsLeaf(tree))
-    {
-        void           *bspData = BinaryTree_GetData(tree);
+    void           *bspData = BinaryTree_GetData(tree);
 
-        if(bspData)
-            M_Free(bspData);
+    if(bspData)
+        M_Free(bspData);
 
-        BinaryTree_SetData(tree, NULL);
-    }
+    BinaryTree_SetData(tree, NULL);
 
     return true; // Continue iteration.
 }
