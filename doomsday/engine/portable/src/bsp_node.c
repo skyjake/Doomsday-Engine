@@ -212,10 +212,10 @@ static boolean getAveragedCoords(hedge_t *headPtr, double *x, double *y)
  * \note Algorithm:
  * Uses the now famous "double bubble" sorter :).
  */
-static void sortHEdgesByAngleAroundPoint(hedge_t **hEdges, uint total,
+static void sortHEdgesByAngleAroundPoint(hedge_t **hEdges, size_t total,
                                          double x, double y)
 {
-    uint        i;
+    size_t              i;
 
     i = 0;
     while(i + 1 < total)
@@ -257,9 +257,10 @@ static void sortHEdgesByAngleAroundPoint(hedge_t **hEdges, uint total,
  * @param x             X coordinate of the point to order around.
  * @param y             Y coordinate of the point to order around.
  */
-static void clockwiseOrder(hedge_t **headPtr, uint num, double x, double y)
+static void clockwiseOrder(hedge_t **headPtr, size_t num, double x,
+                           double y)
 {
-    uint                i;
+    size_t              i;
     hedge_t            *hEdge;
 
     // Insert ptrs to the hEdges into the sort buffer.
@@ -276,8 +277,8 @@ static void clockwiseOrder(hedge_t **headPtr, uint num, double x, double y)
     *headPtr = NULL;
     for(i = 0; i < num; ++i)
     {
-        uint            idx = (num - 1) - i;
-        uint            j = idx % num;
+        size_t              idx = (num - 1) - i;
+        size_t              j = idx % num;
 
         hEdgeSortBuf[j]->next = *headPtr;
         *headPtr = hEdgeSortBuf[j];
@@ -317,8 +318,8 @@ static void sanityCheckClosed(const subsector_t *sub)
 
     if(gaps > 0)
     {
-        Con_Message("Subsector #%d near (%1.1f,%1.1f) is not closed "
-                    "(%d gaps, %d half-edges)\n", sub->buildData.index,
+        Con_Message("Subsector #%p near (%1.1f,%1.1f) is not closed "
+                    "(%d gaps, %d half-edges)\n", sub,
                     sub->buildData.midPoint[VX], sub->buildData.midPoint[VY],
                     gaps, total);
 
@@ -416,7 +417,7 @@ Con_Message("Subsec:   %d: half-edge %p  Index %d\n", n, cur, cur->index);
     }
 }
 
-static void prepareHEdgeSortBuffer(uint numHEdges)
+static void prepareHEdgeSortBuffer(size_t numHEdges)
 {
     // Do we need to enlarge our sort buffer?
     if(numHEdges + 1 > hEdgeSortBufSize)
@@ -431,7 +432,7 @@ static boolean C_DECL clockwiseSubsector(binarytree_t *tree, void *data)
 {
     if(BinaryTree_IsLeaf(tree))
     {   // obj is a leaf.
-        uint                total;
+        size_t              total;
         hedge_t            *hEdge;
         subsector_t        *ssec = (subsector_t*) BinaryTree_GetData(tree);
 
@@ -455,8 +456,8 @@ static boolean C_DECL clockwiseSubsector(binarytree_t *tree, void *data)
         sanityCheckSameSector(ssec);
         if(!sanityCheckHasRealHEdge(ssec))
         {
-            Con_Error("SSec #%d near (%1.1f,%1.1f) has no linedef-linked half-edge!",
-                      ssec->buildData.index, ssec->buildData.midPoint[VX],
+            Con_Error("SSec #%p near (%1.1f,%1.1f) has no linedef-linked half-edge!",
+                      ssec, ssec->buildData.midPoint[VX],
                       ssec->buildData.midPoint[VY]);
         }
     }
@@ -526,6 +527,23 @@ static void createSubSectorWorker(subsector_t *sub, superblock_t *block)
     }
 
     block->realNum = block->miniNum = 0;
+}
+
+static subsector_t *createSubsector(void)
+{
+    subsector_t        *ssec;
+
+    ssec = M_Calloc(sizeof(*ssec));
+    ssec->header.type = DMU_SUBSECTOR;
+    return ssec;
+}
+
+subsector_t *BSP_NewSubsector(void)
+{
+    subsector_t        *s;
+
+    s = createSubsector();
+    return s;
 }
 
 /**

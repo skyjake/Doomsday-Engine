@@ -42,14 +42,10 @@ typedef struct editmap_s {
     side_t        **sides;
     uint            numSectors;
     sector_t      **sectors;
-    uint            numSegs;
-    seg_t         **segs;
-
     uint            numPolyobjs;
     polyobj_t     **polyobjs;
 
     // BSP data.
-    uint            numSubsectors;
     binarytree_t   *rootNode;
 } editmap_t;
 
@@ -89,7 +85,4 @@ uint            MPE_PolyobjCreate(uint *lines, uint linecount,
 // Non-public (temporary)
 gamemap_t      *MPE_GetLastBuiltMap(void);
 vertex_t       *createVertex(void);
-
-// Non-public (to be moved into the BSP code).
-subsector_t    *BSP_NewSubsector(void);
 #endif

@@ -128,16 +128,6 @@ static sector_t *createSector(void)
     return sec;
 }
 
-static subsector_t *createSubsector(void)
-{
-    subsector_t        *ssec;
-
-    ssec = M_Calloc(sizeof(*ssec));
-    ssec->header.type = DMU_SUBSECTOR;
-    ssec->buildData.index = ++map->numSubsectors; // 1-based index, 0 = NIL.
-    return ssec;
-}
-
 static polyobj_t *createPolyobj(void)
 {
     polyobj_t          *po;
@@ -205,13 +195,6 @@ static void destroyMap(void)
     }
     map->sectors = NULL;
     map->numSectors = 0;
-
-    if(map->segs)
-        M_Free(map->segs);
-    map->segs = NULL;
-    map->numSegs = 0;
-
-    map->numSubsectors = 0;
 
     if(map->rootNode)
     {
@@ -1241,15 +1224,4 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag,
     po->startSpot.pos[VY] = anchorY;
 
     return po->buildData.index;
-}
-
-subsector_t *BSP_NewSubsector(void)
-{
-    subsector_t        *s;
-
-    if(!editMapInited)
-        return NULL;
-
-    s = createSubsector();
-    return s;
 }

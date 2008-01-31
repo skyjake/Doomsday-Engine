@@ -97,11 +97,7 @@ typedef struct msubsec_s {
     // Approximate middle point.
     double      midPoint[2];
 
-    // Subsector index. Always valid, set when the subsector is
-    // initially created.
-    int         index;
-
-    int         hEdgeCount;
+    size_t      hEdgeCount;
     struct hedge_s *hEdges; // Head ptr to a list of half-edges in this subsector.
 } msubsec_t;
 end

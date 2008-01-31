@@ -183,11 +183,11 @@ static void buildSegsFromHEdges(gamemap_t *dest)
 }
 
 static void hardenSSecSegList(gamemap_t *dest, subsector_t *ssec,
-                              hedge_t *list, uint segCount)
+                              hedge_t *list, size_t segCount)
 {
-    uint        i;
-    hedge_t    *cur;
-    seg_t    **segs;
+    size_t              i;
+    hedge_t            *cur;
+    seg_t             **segs;
 
     segs = Z_Malloc(sizeof(seg_t*) * (segCount + 1), PU_LEVELSTATIC, 0);
 
@@ -204,7 +204,7 @@ static void hardenSSecSegList(gamemap_t *dest, subsector_t *ssec,
 static void hardenSubsector(gamemap_t *map, subsector_t *dest, const subsector_t *src)
 {
     memcpy(dest, src, sizeof(subsector_t));
-    dest->segCount = src->buildData.hEdgeCount;
+    dest->segCount = (uint) src->buildData.hEdgeCount;
     dest->sector = (src->sector? &map->sectors[src->sector->buildData.index-1] : NULL);
     dest->shadows = NULL;
     dest->planes = NULL;
@@ -215,6 +215,7 @@ static void hardenSubsector(gamemap_t *map, subsector_t *dest, const subsector_t
 
 typedef struct {
     gamemap_t      *dest;
+    uint            ssecCurIndex;
     uint            nodeCurIndex;
 } hardenbspparams_t;
 
@@ -255,7 +256,7 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
         if(BinaryTree_IsLeaf(right))
         {
             subsector_t    *ssec = (subsector_t*) BinaryTree_GetData(right);
-            uint            idx = (ssec->buildData.index - 1);
+            uint            idx = params->ssecCurIndex++;
 
             node->children[RIGHT] = idx | NF_SUBSECTOR;
             hardenSubsector(params->dest, &params->dest->subsectors[idx], ssec);
@@ -273,7 +274,7 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
         if(BinaryTree_IsLeaf(left))
         {
             subsector_t    *ssec = (subsector_t*) BinaryTree_GetData(left);
-            uint            idx = (ssec->buildData.index - 1);
+            uint            idx = params->ssecCurIndex++;
 
             node->children[LEFT] = idx | NF_SUBSECTOR;
             hardenSubsector(params->dest, &params->dest->subsectors[idx], ssec);
@@ -296,14 +297,23 @@ static boolean C_DECL countNode(binarytree_t *tree, void *data)
     return true; // Continue iteration.
 }
 
+static boolean C_DECL countSSec(binarytree_t *tree, void *data)
+{
+    if(BinaryTree_IsLeaf(tree))
+        (*((uint*) data))++;
+
+    return true; // Continue iteration.
+}
+
 static void hardenBSP(gamemap_t *dest, editmap_t *src)
 {
+    dest->numNodes = 0;
     BinaryTree_PostOrder(src->rootNode, countNode, &dest->numNodes);
-
     dest->nodes =
         Z_Calloc(dest->numNodes * sizeof(node_t), PU_LEVELSTATIC, 0);
 
-    dest->numSubsectors = src->numSubsectors;
+    dest->numSubsectors = 0;
+    BinaryTree_PostOrder(src->rootNode, countSSec, &dest->numSubsectors);
     dest->subsectors =
         Z_Calloc(dest->numSubsectors * sizeof(subsector_t), PU_LEVELSTATIC, 0);
 
@@ -312,6 +322,7 @@ static void hardenBSP(gamemap_t *dest, editmap_t *src)
         hardenbspparams_t params;
 
         params.dest = dest;
+        params.ssecCurIndex = 0;
         params.nodeCurIndex = 0;
 
         BinaryTree_PostOrder(src->rootNode, hardenNode, &params);
