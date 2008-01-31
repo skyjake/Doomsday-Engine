@@ -94,9 +94,9 @@ typedef struct xsector_s {
 } xsector_t;
 
 typedef struct xline_s {
-    // Animation related.
     short           special;
     short           tag;
+    short           flags;
     // Has been rendered at least once and needs to appear in the map,
     // for each player.
     boolean         mapped[MAXPLAYERS];

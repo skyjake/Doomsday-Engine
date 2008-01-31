@@ -115,7 +115,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
             {
                 ln = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
 
-                if(!(P_GetIntp(ln, DMU_FLAGS) & ML_TWOSIDED))
+                if(!(P_GetIntp(ln, DMU_FLAGS) & DDLF_TWOSIDED))
                     continue;
 
                 tsec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
@@ -181,7 +181,7 @@ int EV_DoDonut(line_t *line)
 
             s3 = P_GetPtrp(check, DMU_BACK_SECTOR);
 
-            if((!(P_GetIntp(check, DMU_FLAGS) & ML_TWOSIDED)) ||
+            if((!(P_GetIntp(check, DMU_FLAGS) & DDLF_TWOSIDED)) ||
                s3 == s1)
                 continue;
 

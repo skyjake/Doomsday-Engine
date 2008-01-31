@@ -353,7 +353,7 @@ void P_v13_UnArchiveWorld(void)
         line = P_ToPtr(DMU_LINE, i);
         xline = P_ToXLine(line);
 
-        P_SetIntp(line, DMU_FLAGS, *get++);
+        xline->flags = *get++;
         xline->special = *get++;
         /*xline->tag =*/ *get++;
 
