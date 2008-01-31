@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
@@ -87,7 +87,7 @@ int EV_DestoryLineShield(line_t* line)
             li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
             xline = P_ToXLine(li);
             if(xline->tag != 999 || !xline->special ||
-               !(P_GetIntp(li, DMU_FLAGS) & ML_TWOSIDED))
+               !(P_GetIntp(li, DMU_FLAGS) & DDLF_TWOSIDED))
                 continue;
 
             xline->special = 0;
@@ -96,7 +96,7 @@ int EV_DestoryLineShield(line_t* line)
             P_SetIntp(li, DMU_SIDE1_OF_LINE | DMU_MIDDLE_MATERIAL, 0);
 
             flags = P_GetIntp(li, DMU_FLAGS);
-            flags &= ~ML_BLOCKING;
+            flags &= ~DDLF_BLOCKING;
             P_SetIntp(li, DMU_FLAGS, flags);
         }
     }
@@ -144,7 +144,7 @@ int EV_SwitchTextureFree(line_t* line)
                           xline->tag);
 
             flags = P_GetIntp(li, DMU_FLAGS);
-            flags &= ~ML_BLOCKING;
+            flags &= ~DDLF_BLOCKING;
             P_SetIntp(li, DMU_FLAGS, flags);
         }
     }
@@ -246,11 +246,13 @@ void P_SetSectorColor(line_t *line)
  */
 boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
 {
-    xline_t *xline = P_ToXLine(line);
+    xline_t            *xline;
 
     // Extended functionality overrides old.
     if(XL_UseLine(line, side, thing))
         return true;
+
+    xline = P_ToXLine(line);
 
     // Err...
     // Use the back sides of VERY SPECIAL lines...
@@ -272,13 +274,13 @@ boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
     // Switches that other things can activate.
     if(!thing->player)
     {
-        // never open secret doors
-        if(P_GetIntp(line, DMU_FLAGS) & ML_SECRET)
+        // Never open secret doors.
+        if(xline->flags & ML_SECRET)
             return false;
 
-        switch (xline->special)
+        switch(xline->special)
         {
-        case 1:             // MANUAL DOOR RAISE
+        case 1:                 // MANUAL DOOR RAISE
         case 32:                // MANUAL BLUE
         case 33:                // MANUAL RED
         case 34:                // MANUAL YELLOW
@@ -290,11 +292,11 @@ boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
         }
     }
 
-    // do something
+    // Do something.
     switch(xline->special)
     {
         // MANUALS
-    case 1:                 // Vertical Door
+    case 1:                     // Vertical Door
     case 26:                    // Blue Door/Locked
     case 27:                    // Yellow Door /Locked
     case 28:                    // Red Door /Locked
