@@ -683,9 +683,9 @@ boolean P_ActivateLine(line_t *line, mobj_t *mo, int side, int activationType)
     int             lineActivation;
     boolean         repeat;
     boolean         buttonSuccess;
-    xline_t        *xline;
+    xline_t        *xline = P_ToXLine(line);
 
-    lineActivation = GET_SPAC(P_GetIntp(line, DMU_FLAGS));
+    lineActivation = GET_SPAC(xline->flags);
     if(lineActivation != activationType)
         return false;
 
@@ -696,12 +696,11 @@ boolean P_ActivateLine(line_t *line, mobj_t *mo, int side, int activationType)
             return false;
         }
 
-        if(P_GetIntp(line, DMU_FLAGS) & ML_SECRET)
+        if(xline->flags & ML_SECRET)
             return false; // never open secret doors
     }
 
-    xline = P_ToXLine(line);
-    repeat = P_GetIntp(line, DMU_FLAGS) & ML_REPEAT_SPECIAL;
+    repeat = ((xline->flags & ML_REPEAT_SPECIAL)? true : false);
     buttonSuccess = false;
 
     buttonSuccess =

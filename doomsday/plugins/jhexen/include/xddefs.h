@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,15 +50,11 @@ enum {
     PLN_CEILING
 };
 
-#define ML_BLOCKING         0x0001
 #define ML_BLOCKMONSTERS    0x0002
-#define ML_TWOSIDED         0x0004
-#define ML_DONTPEGTOP       0x0008
-#define ML_DONTPEGBOTTOM    0x0010
 #define ML_SECRET           0x0020 // don't map as two sided: IT'S A SECRET!
 #define ML_SOUNDBLOCK       0x0040 // don't let sound cross two of these
 #define ML_DONTDRAW         0x0080 // don't draw on the automap
-//#define ML_MAPPED           0x0100 // set if already drawn in automap
+#define ML_MAPPED           0x0100 // set if already drawn in automap
 #define ML_REPEAT_SPECIAL   0x0200 // special is repeatable
 #define ML_SPAC_SHIFT       10
 #define ML_SPAC_MASK        0x1c00

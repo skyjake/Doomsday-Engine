@@ -70,6 +70,7 @@ typedef struct xline_s {
     byte            arg3;
     byte            arg4;
     byte            arg5;
+    short           flags;
     // Has been rendered at least once and needs to appear in the map,
     // for each player.
     boolean         mapped[MAXPLAYERS];

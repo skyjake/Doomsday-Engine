@@ -1678,7 +1678,7 @@ static int CmdSetLineBlocking(void)
     boolean     blocking;
     iterlist_t *list;
 
-    blocking = Pop()? ML_BLOCKING : 0;
+    blocking = Pop()? DDLF_BLOCKING : 0;
     lineTag = Pop();
 
     list = P_GetLineIterListForTag(lineTag, false);
@@ -1689,7 +1689,7 @@ static int CmdSetLineBlocking(void)
     while((line = P_IterListIterator(list)) != NULL)
     {
         P_SetIntp(line, DMU_FLAGS,
-            (P_GetIntp(line, DMU_FLAGS) & ~ML_BLOCKING) | blocking);
+            (P_GetIntp(line, DMU_FLAGS) & ~DDLF_BLOCKING) | blocking);
     }
     return SCRIPT_CONTINUE;
 }

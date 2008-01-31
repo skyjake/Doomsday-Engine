@@ -168,10 +168,11 @@ int bodyqueslot;
 
 void P_RecursiveSound(sector_t *sec, int soundblocks)
 {
-    int         i, lineCount, lineFlags;
-    line_t     *check;
-    sector_t   *other;
-    xsector_t  *xsec = P_ToXSector(sec);
+    int                 i, lineCount;
+    line_t             *check;
+    xline_t            *xline;
+    sector_t           *other;
+    xsector_t          *xsec = P_ToXSector(sec);
 
     // Wake up all monsters in this sector.
     if(P_GetIntp(sec, DMU_VALID_COUNT) == VALIDCOUNT &&
@@ -187,9 +188,8 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
     for(i = 0; i < lineCount; ++i)
     {
         check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
-        lineFlags = P_GetIntp(check, DMU_FLAGS);
 
-        if(!(lineFlags & ML_TWOSIDED))
+        if(!(P_GetIntp(check, DMU_FLAGS) & DDLF_TWOSIDED))
             continue;
 
         P_LineOpening(check);
@@ -205,7 +205,8 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
             other = P_GetPtrp(P_GetPtrp(check, DMU_SIDE0), DMU_SECTOR);
         }
 
-        if(lineFlags & ML_SOUNDBLOCK)
+        xline = P_ToXLine(check);
+        if(xline->flags & ML_SOUNDBLOCK)
         {
             if(!soundblocks)
             {
