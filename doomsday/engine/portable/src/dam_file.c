@@ -392,7 +392,7 @@ static void writeLine(const gamemap_t *map, uint idx)
     writeLong((long) ((l->v[0] - map->vertexes) + 1));
     writeLong((long) ((l->v[1] - map->vertexes) + 1));
     writeLong(l->flags);
-    writeShort(l->mapFlags);
+    writeByte(l->inFlags);
     writeFloat(l->dX);
     writeFloat(l->dY);
     writeLong((long) l->slopeType);
@@ -417,7 +417,7 @@ static void readLine(const gamemap_t *map, uint idx)
     l->v[0] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->v[1] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->flags = (int) readLong();
-    l->mapFlags = readShort();
+    l->inFlags = readByte();
     l->dX = readFloat();
     l->dY = readFloat();
     l->slopeType = (slopetype_t) readLong();

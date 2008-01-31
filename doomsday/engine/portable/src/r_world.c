@@ -801,7 +801,7 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
                             adjusted[pln] = true;
                 }
             }
-            else if(line->flags & LINEF_SELFREF)
+            else if(LINE_SELFREF(line))
             {
                 // Its a selfreferencing linedef, these will ALWAYS return
                 // the same height on the front and back so we need to find
@@ -994,7 +994,7 @@ line_t *R_FindSolidLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own
     if(!other->L_frontside || !other->L_backside)
         return other;
 
-    if(!(other->flags & LINEF_SELFREF) &&
+    if(!LINE_SELFREF(other) &&
        (other->L_frontsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
         other->L_frontsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
         other->L_backsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
@@ -1086,7 +1086,7 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
     if(other == line)
         return NULL;
 
-    if(!(other->flags & LINEF_SELFREF))
+    if(!LINE_SELFREF(other))
     {
         diff = line->angle - other->angle;
 
@@ -1696,7 +1696,7 @@ void R_SetupLevel(int mode, int flags)
     }
     case DDSLM_FINALIZE:
     {
-        int         j, k;
+        int         j;
         line_t     *line;
 
         // Init server data.
@@ -1723,26 +1723,6 @@ void R_SetupLevel(int mode, int flags)
         for(i = 0; i < numlines; ++i)
         {
             line = LINE_PTR(i);
-
-            if(line->mapFlags & 0x0100) // The old ML_MAPPED flag
-            {
-                // This line wants to be seen in the map from the begining.
-                memset(&line->mapped, 1, sizeof(&line->mapped));
-
-                // Send a status report.
-                if(gx.HandleMapObjectStatusReport)
-                {
-                    int  pid;
-
-                    for(k = 0; k < DDMAXPLAYERS; ++k)
-                    {
-                        pid = k;
-                        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
-                                                      i, DMU_LINE, &pid);
-                    }
-                }
-                line->mapFlags &= ~0x0100; // remove the flag.
-            }
 
             // Update side surfaces.
             for(j = 0; j < 2; ++j)

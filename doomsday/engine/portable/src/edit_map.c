@@ -301,21 +301,6 @@ static void findMissingFrontSidedefs(gamemap_t *map)
     }
 }
 
-static void markSelfReferencingLinedefs(gamemap_t *map)
-{
-    uint        i;
-
-    for(i = 0; i < map->numLines; ++i)
-    {
-        line_t     *li = &map->lines[i];
-
-        // A self-referencing line?
-        if(li->L_frontside && li->L_backside &&
-           li->L_frontside->sector == li->L_backside->sector)
-            li->flags |= LINEF_SELFREF;
-    }
-}
-
 static void linkSSecsToSectors(gamemap_t *map)
 {
     uint        i;
@@ -832,7 +817,6 @@ boolean MPE_End(void)
     // Build the vertex line owner rings.
     R_BuildVertexOwners(gamemap);
     findMissingFrontSidedefs(gamemap);
-    markSelfReferencingLinedefs(gamemap);
     finalizeMapData(gamemap);
 
     markUnclosedSectors(gamemap);
@@ -1018,8 +1002,20 @@ uint MPE_SidedefCreate(uint sector, short flags,
     return s->buildData.index;
 }
 
+/**
+ * Create a new linedef in the editable map.
+ *
+ * @param v1            Idx of the start vertex.
+ * @param v2            Idx of the end vertex.
+ * @param frontSide     Idx of the front sidedef.
+ * @param backSide      Idx of the back sidedef.
+ * @param flags         Currently unused.
+ *
+ * @return              Idx of the newly created linedef else @c 0 if there
+ *                      was an error.
+ */
 uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
-                       short mapflags, int flags)
+                       int flags)
 {
     line_t             *l;
     side_t             *front = NULL, *back = NULL;
@@ -1072,8 +1068,6 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     }
 
     l = createLine();
-    l->mapFlags = mapflags;
-    l->flags = flags;
     l->L_v1 = (v1 == 0? NULL : map->vertexes[v1-1]);
     l->L_v2 = (v2 == 0? NULL : map->vertexes[v2-1]);
 
@@ -1121,6 +1115,13 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 
     l->L_frontside = front;
     l->L_backside = back;
+
+    // Determine the default linedef flags.
+    l->flags = 0;
+    if(front && back)
+        l->flags |= DDLF_TWOSIDED;
+    else
+        l->flags |= DDLF_BLOCKING;
 
     return l->buildData.index;
 }
@@ -1212,7 +1213,7 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag,
         line_t             *line = map->lines[lines[i]-1];
 
         // This line is part of a polyobj.
-        line->flags |= LINEF_POLYOBJ;
+        line->inFlags |= LF_POLYOBJ;
 
         po->buildData.lines[i] = line;
     }

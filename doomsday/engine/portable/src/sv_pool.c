@@ -511,7 +511,7 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     reg->top.material.texture = (side->SW_topmaterial? side->SW_topmaterial->ofTypeID : 0);
     reg->middle.material.texture = (side->SW_middlematerial? side->SW_middlematerial->ofTypeID : 0);
     reg->bottom.material.texture = (side->SW_bottommaterial? side->SW_bottommaterial->ofTypeID : 0);
-    reg->lineFlags = (line ? line->mapFlags & 0xff : 0);
+    reg->lineFlags = (line ? line->flags & 0xff : 0);
 
     memcpy(reg->top.rgba, side->SW_toprgba, sizeof(reg->top.rgba));
     memcpy(reg->middle.rgba, side->SW_middlergba, sizeof(reg->middle.rgba));
@@ -842,7 +842,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
     const line_t *line = sideOwners[number];
     dt_side_t  *r = &reg->sides[number];
     int         df = 0;
-    byte        lineFlags = (line ? line->mapFlags & 0xff : 0);
+    byte        lineFlags = (line ? line->flags & 0xff : 0);
     byte        sideFlags = s->flags & 0xff;
 
     if(s->SW_topmaterial)

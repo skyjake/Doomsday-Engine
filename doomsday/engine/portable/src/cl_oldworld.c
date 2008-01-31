@@ -208,8 +208,8 @@ int Cl_ReadSideDelta(void)
         if(line)
         {
             // The delta includes the lowest byte.
-            line->mapFlags &= ~0xff;
-            line->mapFlags |= updatedFlags;
+            line->flags &= ~0xff;
+            line->flags |= updatedFlags;
 #if _DEBUG
 Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
            updatedFlags);

@@ -129,13 +129,13 @@ static void buildSegsFromHEdges(gamemap_t *dest)
 
             seg->SG_frontsector = ldef->L_side(seg->side)->sector;
 
-            if((ldef->mapFlags & ML_TWOSIDED) && ldef->L_side(seg->side ^ 1))
+            if((ldef->flags & DDLF_TWOSIDED) && ldef->L_side(seg->side ^ 1))
             {
                 seg->SG_backsector = ldef->L_side(seg->side ^ 1)->sector;
             }
             else
             {
-                ldef->mapFlags &= ~ML_TWOSIDED;
+                ldef->flags &= ~DDLF_TWOSIDED;
                 seg->SG_backsector = 0;
             }
 
@@ -349,7 +349,7 @@ void BSP_InitForNodeBuild(editmap_t *map)
            (fabs(start->buildData.pos[VY] - end->buildData.pos[VY]) < DIST_EPSILON))
             l->buildData.mlFlags |= MLF_ZEROLENGTH;
 
-        if(l->flags & LINEF_POLYOBJ)
+        if(l->inFlags & LF_POLYOBJ)
             l->buildData.mlFlags |= MLF_POLYOBJ;
 
         if(l->sides[BACK] && l->sides[FRONT])
@@ -507,7 +507,7 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
             uint            k;
 
             // This line is part of a polyobj.
-            line->flags |= LINEF_POLYOBJ;
+            line->inFlags |= LF_POLYOBJ;
 
             seg->header.type = DMU_SEG;
             seg->lineDef = line;

@@ -1096,8 +1096,7 @@ boolean TransferMap(void)
                                   back->offset[VX], back->offset[VY], 1, 1, 1);
         }
 
-        MPE_LinedefCreate(l->v[0], l->v[1], frontIdx, backIdx, l->flags,
-                          0);
+        MPE_LinedefCreate(l->v[0], l->v[1], frontIdx, backIdx, 0);
     }
 
     for(i = 0; i < map->numPolyobjs; ++i)

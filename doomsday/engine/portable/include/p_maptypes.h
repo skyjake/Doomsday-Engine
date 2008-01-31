@@ -377,9 +377,12 @@ typedef struct side_s {
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 
-// Line flags
-#define LINEF_SELFREF           0x1 // Front and back sectors of this line are the same.
-#define LINEF_POLYOBJ           0x2 // Line is part of a polyobject.
+// Is this line self-referencing (front sec == back sec)?
+#define LINE_SELFREF(l)			((l)->L_frontside && (l)->L_backside && \
+								 (l)->L_frontsector == (l)->L_backsector)
+
+// Internal flags:
+#define LF_POLYOBJ				0x1 // Line is part of a polyobject.
 
 #define MLF_TWOSIDED            0x1 // Line is marked two-sided.
 #define MLF_ZEROLENGTH          0x2 // Zero length (line should be totally ignored).
@@ -407,10 +410,10 @@ typedef struct line_s {
     struct vertex_s*    v[2];
     struct lineowner_s* vo[2];         // Links to vertex line owner nodes [left, right]
     struct side_s*      sides[2];
-    int                 flags;
+    int                 flags;         // Public DDLF_* flags.
+    byte                inFlags;       // Internal LF_* flags
     slopetype_t         slopeType;
     int                 validCount;
-    short               mapFlags;      // MF_* flags, read from the LINEDEFS, map data lump.
     binangle_t          angle;         // Calculated from front side's normal
     float               dX;
     float               dY;

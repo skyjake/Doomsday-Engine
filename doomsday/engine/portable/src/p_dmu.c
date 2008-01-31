@@ -1175,7 +1175,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_LINE_VALIDCOUNT, &p->validCount, args, 0);
             break;
         case DMU_FLAGS:
-            SetValue(DMT_LINE_MAPFLAGS, &p->mapFlags, args, 0);
+            SetValue(DMT_LINE_FLAGS, &p->flags, args, 0);
             break;
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_LINE.\n",
@@ -2152,7 +2152,7 @@ static int GetProperty(void* ptr, void* context)
             break;
         }
         case DMU_FLAGS:
-            GetValue(DMT_LINE_MAPFLAGS, &p->mapFlags, args, 0);
+            GetValue(DMT_LINE_FLAGS, &p->flags, args, 0);
             break;
         case DMU_SIDE0:
             GetValue(DDVT_PTR, &p->L_frontside, args, 0);

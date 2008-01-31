@@ -534,7 +534,7 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
                 if(polys[i].seg->lineDef == line)
                     continue;
 
-                if(line->flags & LINEF_SELFREF)
+                if(LINE_SELFREF(line))
                     continue;
 
                 if((overlaps[i] & OVERLAP_ALL) == OVERLAP_ALL)
@@ -621,7 +621,7 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
                 // Minisegs don't get shadows, even then, only one.
                 if(seg->lineDef &&
                    !((seg->lineDef->validCount == validCount) ||
-                     (seg->lineDef->flags & LINEF_SELFREF)))
+                     LINE_SELFREF(seg->lineDef)))
                 {
                     line_t     *line = seg->lineDef;
                     boolean     frontside = (line->L_frontsector == sec);

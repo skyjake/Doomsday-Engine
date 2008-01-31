@@ -401,9 +401,12 @@ internal
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 
-// Line flags
-#define LINEF_SELFREF           0x1 // Front and back sectors of this line are the same.
-#define LINEF_POLYOBJ           0x2 // Line is part of a polyobject.
+// Is this line self-referencing (front sec == back sec)? 
+#define LINE_SELFREF(l)			((l)->L_frontside && (l)->L_backside && \
+								 (l)->L_frontsector == (l)->L_backsector)
+
+// Internal flags:
+#define LF_POLYOBJ				0x1 // Line is part of a polyobject.
 end
 
 internal
@@ -433,10 +436,10 @@ struct line
     PTR     vertex_s*[2] v
     -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
     PTR     side_s*[2]  sides
-    -       int         flags
+    INT     int         flags		// Public DDLF_* flags.
+    -		byte		inFlags		// Internal LF_* flags
     INT     slopetype_t slopeType
     INT     int         validCount
-    SHORT   short       mapFlags    // MF_* flags, read from the LINEDEFS, map data lump.
     -       binangle_t  angle       // Calculated from front side's normal
     FLOAT   float       dX
     FLOAT   float       dY

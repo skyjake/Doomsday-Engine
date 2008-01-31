@@ -615,7 +615,7 @@ static void decorateLine(const line_t *line, const float maxDist)
                     {
                         float           offsetY;
 
-                        if(line->mapFlags & ML_DONTPEGTOP)
+                        if(line->flags & DDLF_DONTPEGTOP)
                         {
                             offsetY = 0;
                         }
@@ -673,7 +673,7 @@ static void decorateLine(const line_t *line, const float maxDist)
                     {
                         float           offsetY;
 
-                        if(line->mapFlags & ML_DONTPEGBOTTOM)
+                        if(line->flags & DDLF_DONTPEGBOTTOM)
                             offsetY = (top - bottom);
                         else
                             offsetY = 0;
@@ -710,7 +710,7 @@ static void decorateLine(const line_t *line, const float maxDist)
                 {
                     float           offsetY;
 
-                    if(line->mapFlags & ML_DONTPEGBOTTOM)
+                    if(line->flags & DDLF_DONTPEGBOTTOM)
                     {
                         texinfo_t      *texinfo;
 

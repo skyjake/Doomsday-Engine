@@ -714,6 +714,13 @@ extern          "C" {
         DMU_SPECIAL_DATA
     };
 
+    // Linedef flags:
+    // For use with P_Set/Get(DMU_LINE, n, DMU_FLAGS)
+#define DDLF_BLOCKING           0x0001
+#define DDLF_TWOSIDED           0x0002
+#define DDLF_DONTPEGTOP         0x0004
+#define DDLF_DONTPEGBOTTOM      0x0008
+
     // Map Update status code constants.
     // Sent to the game when various map update events occur.
     enum /* do not change the numerical values of the constants */

@@ -299,7 +299,7 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
         scanSecSide = (iter->L_frontsector == startSector);
 
         // Step over selfreferencing lines?
-        while(iter->flags & LINEF_SELFREF)
+        while(LINE_SELFREF(iter))
         {
             own = own->link[clockwise];
             diff += (clockwise? own->angle : own->LO_prev->angle);
@@ -496,7 +496,7 @@ static void Rend_RadioScanNeighbors(shadowcorner_t top[2],
     edgespan_t *span;
     shadowcorner_t *corner;
 
-    if(line->flags & LINEF_SELFREF)
+    if(LINE_SELFREF(line))
         return;
 
     memset(edges, 0, sizeof(edges));

@@ -181,7 +181,7 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
     {
         line_t *line = &map->lines[i];
 
-        if(line->flags & LINEF_POLYOBJ)
+        if(line->inFlags & LF_POLYOBJ)
             continue; // Polyobj lines don't get into the blockmap.
 
         v1[VX] = (int) line->L_v1pos[VX];

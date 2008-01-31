@@ -59,9 +59,9 @@
 
 #define DMT_LINE_V DDVT_PTR
 #define DMT_LINE_SIDES DDVT_PTR
+#define DMT_LINE_FLAGS DDVT_INT        // Public DDLF_* flags.
 #define DMT_LINE_SLOPETYPE DDVT_INT
 #define DMT_LINE_VALIDCOUNT DDVT_INT
-#define DMT_LINE_MAPFLAGS DDVT_SHORT   // MF_* flags, read from the LINEDEFS, map data lump.
 #define DMT_LINE_DX DDVT_FLOAT
 #define DMT_LINE_DY DDVT_FLOAT
 #define DMT_LINE_BBOX DDVT_FLOAT

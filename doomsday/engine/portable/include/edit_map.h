@@ -69,7 +69,7 @@ uint            MPE_SidedefCreate(uint sector, short flags,
                                   float bottomRed, float bottomGreen,
                                   float bottomBlue);
 uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
-                                  short mapflags, int flags);
+                                  int flags);
 uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue,
                                  float floorHeight, const char *floorMaterial,
                                  materialtype_t floorMaterialType, float floorOffsetX,

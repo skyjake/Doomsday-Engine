@@ -567,7 +567,7 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
                     if(Rend_MidTexturePos
                        (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
                         NULL, side->SW_middleoffset[VX], texinfo->height,
-                        0 != (line->mapFlags & ML_DONTPEGBOTTOM)))
+                        0 != (line->flags & DDLF_DONTPEGBOTTOM)))
                     {
                         if(openTop[0] >= gapTop[0] &&
                            openTop[1] >= gapTop[1] &&
@@ -796,7 +796,7 @@ static void doCalcSegDivisions(line_t *line, boolean backSide,sector_t *frontSec
         {
             iter = own->line;
 
-            if(iter->flags & LINEF_SELFREF)
+            if(LINE_SELFREF(iter))
                 continue;
 
             i = 0;
@@ -1440,7 +1440,7 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     if(side->sections[SEG_MIDDLE].frameFlags & SUFINF_PVIS)
     {
         float       offsetY =
-            (ldef->mapFlags & ML_DONTPEGBOTTOM)? -(fceil - ffloor) : 0;
+            (ldef->flags & DDLF_DONTPEGBOTTOM)? -(fceil - ffloor) : 0;
 
         renderSegSection(seg, SEG_MIDDLE, &side->SW_middlesurface, ffloor, fceil,
                          offsetY,
@@ -1515,7 +1515,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         float       texOffsetY = 0;
         float       top, bottom, vL_ZBottom, vR_ZBottom, vL_ZTop, vR_ZTop;
         boolean     softSurface =
-            (!(ldef->mapFlags & ML_BLOCKING) || !(viewPlayer->flags & DDPF_NOCLIP));
+            (!(ldef->flags & DDLF_BLOCKING) || !(viewPlayer->flags & DDPF_NOCLIP));
 
         // We need the properties of the real flat/texture.
         if(surface->material)
@@ -1532,7 +1532,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         if(Rend_MidTexturePos
            (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
             &texOffsetY, surface->offset[VY], texinfo->height,
-            (ldef->mapFlags & ML_DONTPEGBOTTOM)? true : false))
+            (ldef->flags & DDLF_DONTPEGBOTTOM)? true : false))
         {
             // Can we make this a soft surface?
             if(vL_ZTop >= top && vL_ZBottom <= bottom &&
@@ -1559,7 +1559,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             bottom = ffloor;
         }
 
-        if(!(ldef->mapFlags & ML_DONTPEGTOP))
+        if(!(ldef->flags & DDLF_DONTPEGTOP))
             texOffY += -(fceil - bceil);  // Align with normal middle texture.
 
         renderSegSection(seg, SEG_TOP, &side->SW_topsurface, bottom, fceil,
@@ -1579,7 +1579,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             top = fceil;
         }
 
-        if(ldef->mapFlags & ML_DONTPEGBOTTOM)
+        if(ldef->flags & DDLF_DONTPEGBOTTOM)
             texOffY += (fceil - bfloor); // Align with normal middle texture.
 
         renderSegSection(seg, SEG_BOTTOM, &side->SW_bottomsurface, ffloor, top,

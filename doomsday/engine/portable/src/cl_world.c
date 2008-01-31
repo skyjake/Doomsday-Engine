@@ -746,8 +746,8 @@ if(num >= numsides)
         if(line)
         {
             // The delta includes the entire lowest byte.
-            line->mapFlags &= ~0xff;
-            line->mapFlags |= lineFlags;
+            line->flags &= ~0xff;
+            line->flags |= lineFlags;
 #if _DEBUG
 Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n",
            GET_LINE_IDX(line), lineFlags);

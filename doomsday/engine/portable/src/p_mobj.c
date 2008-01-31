@@ -238,12 +238,12 @@ boolean PIT_CheckLine(line_t *ld, void *parm)
     tm->mo->wallHit = true;
 
     if(!ld->L_backside)
-        return false;           // One sided line, can't go through.
+        return false; // One sided line, can't go through.
 
     if(!(tm->mo->ddFlags & DDMF_MISSILE))
     {
-        if(ld->mapFlags & ML_BLOCKING)
-            return false;       // explicitly blocking everything
+        if(ld->flags & DDLF_BLOCKING)
+            return false; // explicitly blocking everything
     }
 
     // set openrange, opentop, openbottom.
@@ -672,7 +672,7 @@ boolean PTR_SlideTraverse(intercept_t *in)
 
     li = in->d.line;
 
-    if(!(li->mapFlags & ML_TWOSIDED))
+    if(!(li->flags & DDLF_TWOSIDED))
     {
         if(P_PointOnLineSide(slideMo->pos[VX],
                              slideMo->pos[VY], li))
