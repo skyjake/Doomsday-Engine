@@ -1677,6 +1677,21 @@ static int GetProperty(void* ptr, void* context)
         return false; // stop iteration
     }
 
+    if(args->type == DMU_SECTOR &&
+        (args->modifiers & DMU_SUBSECTOR_OF_SECTOR))
+    {
+        sector_t           *p = ptr;
+        subsector_t        *ssecptr;
+        if(args->prop >= p->subsCount)
+        {
+            Con_Error("GetProperty: DMU_SUBSECTOR_OF_SECTOR %i does not exist.\n",
+                      args->prop);
+        }
+        ssecptr = (p->subsectors[args->prop]);
+        GetValue(DDVT_PTR, &ssecptr, args, 0);
+        return false; // stop iteration
+    }
+
     if(args->type == DMU_PLANE ||
        (args->type == DMU_SECTOR &&
           ((args->aliases & DMU_FLOOR_OF_SECTOR) ||

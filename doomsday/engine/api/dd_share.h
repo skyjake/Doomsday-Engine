@@ -565,7 +565,8 @@ extern          "C" {
         DMU_SIDE1_OF_LINE       = 0x10000000,
         DMU_SIDE0_OF_LINE       = 0x08000000,
         DMU_SEG_OF_SUBSECTOR    = 0x04000000,
-        // (2 bits left)
+        DMU_SUBSECTOR_OF_SECTOR = 0x02000000,
+        // (1 bit left)
 
         DMU_NONE = 0,
 
