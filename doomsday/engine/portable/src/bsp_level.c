@@ -111,6 +111,7 @@ static int C_DECL hEdgeCompare(const void *p1, const void *p2)
 typedef struct {
     size_t              curIdx;
     hedge_t          ***indexPtr;
+    boolean             write;
 } hedgecollectorparams_t;
 
 static boolean hEdgeCollector(binarytree_t *tree, void *data)
@@ -123,10 +124,17 @@ static boolean hEdgeCollector(binarytree_t *tree, void *data)
 
         for(hEdge = ssec->buildData.hEdges; hEdge; hEdge = hEdge->next)
         {
-            (*params->indexPtr)[params->curIdx++] = hEdge;
+            if(params->indexPtr)
+            {   // Write mode.
+                (*params->indexPtr)[params->curIdx++] = hEdge;
+            }
+            else
+            {   // Count mode.
+                if(hEdge->index == -1)
+                    Con_Error("HEdge %p never reached a subsector!", hEdge);
 
-            if(hEdge->index == -1)
-                Con_Error("HEdge %p never reached a subsector!", hEdge);
+                params->curIdx++;
+            }
         }
     }
 
@@ -136,27 +144,33 @@ static boolean hEdgeCollector(binarytree_t *tree, void *data)
 static void buildSegsFromHEdges(gamemap_t *dest, const editmap_t *src)
 {
     uint                i;
-    size_t              numHEdges;
     hedge_t           **index;
     hedgecollectorparams_t params;
 
+    //
     // First we need to build a sorted index of the used hedges.
-    numHEdges = BSP_GetNumHEdges();
-    index = M_Malloc(sizeof(hedge_t*) * numHEdges);
+    //
 
-    if(!(numHEdges > 0))
+    // Pass 1: Count the number of used hedges.
+    params.curIdx = 0;
+    params.indexPtr = NULL;
+    BinaryTree_InOrder(src->rootNode, hEdgeCollector, &params);
+
+    if(!(params.curIdx > 0))
         Con_Error("buildSegsFromHEdges: No halfedges?");
 
+    // Allocate the sort buffer.
+    index = M_Malloc(sizeof(hedge_t*) * params.curIdx);
+
+    // Pass 2: Collect ptrs the hedges and insert into the index.
     params.curIdx = 0;
     params.indexPtr = &index;
-
-    // Collect ptrs the hedges and insert into the index.
     BinaryTree_InOrder(src->rootNode, hEdgeCollector, &params);
 
     // Sort the half-edges into ascending index order.
-    qsort(index, numHEdges, sizeof(hedge_t*), hEdgeCompare);
+    qsort(index, params.curIdx, sizeof(hedge_t*), hEdgeCompare);
 
-    dest->numSegs = (uint) numHEdges;
+    dest->numSegs = (uint) params.curIdx;
     dest->segs = Z_Calloc(dest->numSegs * sizeof(seg_t), PU_LEVELSTATIC, 0);
     for(i = 0; i < dest->numSegs; ++i)
     {
@@ -420,7 +434,6 @@ void BSP_InitForNodeBuild(editmap_t *map)
 
 void FreeMap(void)
 {
-    BSP_FreeHEdges();
     BSP_FreeEdgeTips();
 }
 

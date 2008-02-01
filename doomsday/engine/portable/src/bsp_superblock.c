@@ -300,7 +300,7 @@ void BSP_DivideOneHEdge(hedge_t *cur, hedge_t *part, superblock_t *rightList,
     // hence this edge will be split by the partition line.
 
     calcIntersection(cur, part, a, b, &x, &y);
-    newHEdge = BSP_SplitHEdge(cur, x, y);
+    newHEdge = HEdge_Split(cur, x, y);
     makeIntersection(cutList, cur->v[1], part, selfRef);
 
     if(a < 0)
@@ -378,9 +378,9 @@ void BSP_BuildEdgeBetweenIntersections(hedge_t *part, intersection_t *start,
     // Create the half-edge pair.
     // Leave 'linedef' field as NULL as these are not linedef-linked.
     // Leave 'side' as zero too.
-    (*right) = BSP_CreateHEdge(NULL, part->lineDef, start->vertex,
+    (*right) = HEdge_Create(NULL, part->lineDef, start->vertex,
                                end->vertex, start->after, false);
-    (*left)  = BSP_CreateHEdge(NULL, part->lineDef, end->vertex,
+    (*left)  = HEdge_Create(NULL, part->lineDef, end->vertex,
                                start->vertex, start->after, false);
 
     // Twin the half-edges together.

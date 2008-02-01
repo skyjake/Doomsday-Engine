@@ -126,7 +126,7 @@ static superblock_t *createInitialHEdges(editmap_t *src)
                     Con_Message("Bad sidedef on linedef #%d (Z_CheckHeap error)\n",
                                 line->buildData.index);
 
-                front = BSP_CreateHEdge(line, line, line->v[0], line->v[1],
+                front = HEdge_Create(line, line, line->v[0], line->v[1],
                                         side->sector, false);
                 BSP_AddHEdgeToSuperBlock(block, front);
             }
@@ -143,7 +143,7 @@ static superblock_t *createInitialHEdges(editmap_t *src)
                     Con_Message("Bad sidedef on linedef #%d (Z_CheckHeap error)\n",
                                 line->buildData.index);
 
-                back = BSP_CreateHEdge(line, line, line->v[1], line->v[0],
+                back = HEdge_Create(line, line, line->v[1], line->v[0],
                                        side->sector, true);
                 BSP_AddHEdgeToSuperBlock(block, back);
 
@@ -170,7 +170,7 @@ static superblock_t *createInitialHEdges(editmap_t *src)
                 {
                     hedge_t    *other;
 
-                    other = BSP_CreateHEdge(front->lineDef, line,
+                    other = HEdge_Create(front->lineDef, line,
                                             line->v[1], line->v[0],
                                             line->buildData.windowEffect, true);
 

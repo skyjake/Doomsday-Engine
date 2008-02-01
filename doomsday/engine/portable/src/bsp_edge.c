@@ -76,35 +76,17 @@ typedef struct edgetip_s {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static hedge_t **levHEdges = NULL;
-static int numHEdges = 0;
-
 static edgetip_t **hEdgeTips = NULL;
 static int numHEdgeTips = 0;
 
 // CODE --------------------------------------------------------------------
 
-static hedge_t *allocHEdge(void)
+static __inline hedge_t *allocHEdge(void)
 {
-#define BLKNUM 1024
-
-    hedge_t            *hEdge;
-
-    if((numHEdges % BLKNUM) == 0)
-    {
-        levHEdges =
-            M_Realloc(levHEdges, (numHEdges + BLKNUM) * sizeof(hedge_t*));
-    }
-
-    levHEdges[numHEdges] = hEdge = M_Calloc(sizeof(hedge_t));
-    numHEdges += 1;
-
-    return hEdge;
-
-#undef BLKNUM
+    return M_Calloc(sizeof(hedge_t));
 }
 
-static void freeHEdge(hedge_t *hEdge)
+static __inline void freeHEdge(hedge_t *hEdge)
 {
     M_Free(hEdge);
 }
@@ -172,7 +154,7 @@ static vertex_t *newVertexFromSplitHEdge(hedge_t *hEdge, double x, double y)
 /**
  * Create a new half-edge.
  */
-hedge_t *BSP_CreateHEdge(line_t *line, line_t *sourceLine,
+hedge_t *HEdge_Create(line_t *line, line_t *sourceLine,
                          vertex_t *start, vertex_t *end, sector_t *sec,
                          boolean back)
 {
@@ -195,6 +177,19 @@ hedge_t *BSP_CreateHEdge(line_t *line, line_t *sourceLine,
 }
 
 /**
+ * Destroys the given hedge.
+ *
+ * @param hEdge         Ptr to the hedge to be destroyed.
+ */
+void HEdge_Destroy(hedge_t *hEdge)
+{
+    if(hEdge)
+    {
+        freeHEdge(hEdge);
+    }
+}
+
+/**
  * Splits the given half-edge at the point (x,y). The new half-edge is
  * returned. The old half-edge is shortened (the original start vertex is
  * unchanged), the new half-edge becomes the cut-off tail (keeping the
@@ -211,7 +206,7 @@ hedge_t *BSP_CreateHEdge(line_t *line, line_t *sourceLine,
  * half-edge (and/or backseg), so that future processing is not messed up by
  * incorrect counts.
  */
-hedge_t *BSP_SplitHEdge(hedge_t *oldHEdge, double x, double y)
+hedge_t *HEdge_Split(hedge_t *oldHEdge, double x, double y)
 {
     hedge_t            *newHEdge;
     vertex_t           *newVert;
@@ -386,20 +381,6 @@ sector_t *BSP_VertexCheckOpen(vertex_t *vert, double dX, double dY)
     return NULL;
 }
 
-void BSP_FreeHEdges(void)
-{
-    int                 i;
-
-    for(i = 0; i < numHEdges; ++i)
-        freeHEdge(levHEdges[i]);
-
-    if(levHEdges)
-        M_Free(levHEdges);
-
-    levHEdges = NULL;
-    numHEdges = 0;
-}
-
 void BSP_FreeEdgeTips(void)
 {
     int                 i;
@@ -412,9 +393,4 @@ void BSP_FreeEdgeTips(void)
 
     hEdgeTips = NULL;
     numHEdgeTips = 0;
-}
-
-int BSP_GetNumHEdges(void)
-{
-    return numHEdges;
 }

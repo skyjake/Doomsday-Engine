@@ -85,13 +85,12 @@ typedef struct hedge_s {
     byte        side; // 0 for right, 1 for left.
 } hedge_t;
 
-hedge_t    *BSP_CreateHEdge(line_t *line, line_t *sourceLine,
-                            vertex_t *start, vertex_t *end,
-                            sector_t *sec, boolean back);
-hedge_t    *BSP_SplitHEdge(hedge_t *oldHEdge, double x, double y);
+hedge_t    *HEdge_Create(line_t *line, line_t *sourceLine,
+                         vertex_t *start, vertex_t *end,
+                         sector_t *sec, boolean back);
+void        HEdge_Destroy(hedge_t *hEdge);
 
-void        BSP_FreeHEdges(void);
-int         BSP_GetNumHEdges(void);
+hedge_t    *HEdge_Split(hedge_t *oldHEdge, double x, double y);
 
 // Edge tip functions:
 void        BSP_CreateVertexEdgeTip(vertex_t *vert, double dx, double dy,
