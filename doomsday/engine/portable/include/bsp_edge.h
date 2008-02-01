@@ -42,6 +42,21 @@
 // Smallest degrees between two angles before being considered equal.
 #define ANG_EPSILON  (1.0 / 1024.0)
 
+// An edge tip is where an edge meets a vertex.
+typedef struct edgetip_s {
+    // Link in list. List is kept in ANTI-clockwise order.
+    struct edgetip_s   *next;
+    struct edgetip_s   *prev;
+
+    // Angle that line makes at vertex (degrees).
+    angle_g             angle;
+
+    // Segs on each side of the edge. Left is the side of increasing
+    // angles, right is the side of decreasing angles. Either can be
+    // NULL for one sided edges.
+    struct hedge_s     *hEdges[2];
+} edgetip_t;
+
 typedef struct hedge_s {
     vertex_t  *v[2]; // [Start, End] of the half-edge..
 
@@ -95,7 +110,7 @@ hedge_t    *HEdge_Split(hedge_t *oldHEdge, double x, double y);
 // Edge tip functions:
 void        BSP_CreateVertexEdgeTip(vertex_t *vert, double dx, double dy,
                                     hedge_t *back, hedge_t *front);
+void        BSP_DestroyVertexEdgeTip(struct edgetip_s *tip);
 void        BSP_CountEdgeTips(vertex_t *vert, uint *oneSided, uint *twoSided);
 sector_t   *BSP_VertexCheckOpen(vertex_t *vert, double dx, double dy);
-void        BSP_FreeEdgeTips(void);
 #endif

@@ -173,26 +173,61 @@ static boolean C_DECL freeBSPNodeData(binarytree_t *tree, void *data)
 
 static void destroyMap(void)
 {
+    uint                i;
+
     memset(map->name, 0, sizeof(map->name));
 
     if(map->vertexes)
+    {
+        for(i = 0; i < map->numVertexes; ++i)
+        {
+            vertex_t           *vtx = map->vertexes[i];
+            edgetip_t          *tip, *n;
+
+            tip = vtx->buildData.tipSet;
+            while(tip)
+            {
+                n = tip->next;
+                BSP_DestroyVertexEdgeTip(tip);
+                tip = n;
+            }
+
+            M_Free(vtx);
+        }
+
         M_Free(map->vertexes);
+    }
     map->vertexes = NULL;
     map->numVertexes = 0;
 
     if(map->lines)
+    {
+        for(i = 0; i < map->numLines; ++i)
+        {
+            line_t             *line = map->lines[i];
+            M_Free(line);
+        }
+
         M_Free(map->lines);
+    }
     map->lines = NULL;
     map->numLines = 0;
 
     if(map->sides)
+    {
+        for(i = 0; i < map->numSides; ++i)
+        {
+            side_t             *side = map->sides[i];
+            M_Free(side);
+        }
+
         M_Free(map->sides);
+    }
     map->sides = NULL;
     map->numSides = 0;
 
     if(map->sectors)
     {
-        uint                i;
         for(i = 0; i < map->numSectors; ++i)
         {
             uint                j;
@@ -206,7 +241,10 @@ static void destroyMap(void)
                 }
                 M_Free(s->planes);
             }
+
+            M_Free(s);
         }
+
         M_Free(map->sectors);
     }
     map->sectors = NULL;
@@ -216,8 +254,8 @@ static void destroyMap(void)
     {
         BinaryTree_PostOrder(map->rootNode, freeBSPNodeData, NULL);
         BinaryTree_Destroy(map->rootNode);
-        map->rootNode = NULL;
     }
+    map->rootNode = NULL;
 
     if(map->polyobjs)
     {
@@ -226,8 +264,10 @@ static void destroyMap(void)
         {
             polyobj_t          *po = map->polyobjs[i];
             M_Free(po->buildData.lines);
+
             M_Free(po);
         }
+
         M_Free(map->polyobjs);
     }
     map->polyobjs = NULL;

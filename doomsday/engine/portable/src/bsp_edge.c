@@ -49,21 +49,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-// An edge tip is where an edge meets a vertex.
-typedef struct edgetip_s {
-    // Link in list. List is kept in ANTI-clockwise order.
-    struct edgetip_s   *next;
-    struct edgetip_s   *prev;
-
-    // Angle that line makes at vertex (degrees).
-    angle_g             angle;
-
-    // Segs on each side of the edge. Left is the side of increasing
-    // angles, right is the side of decreasing angles. Either can be
-    // NULL for one sided edges.
-    struct hedge_s     *hEdges[2];
-} edgetip_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -75,9 +60,6 @@ typedef struct edgetip_s {
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static edgetip_t **hEdgeTips = NULL;
-static int numHEdgeTips = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -91,24 +73,14 @@ static __inline void freeHEdge(hedge_t *hEdge)
     M_Free(hEdge);
 }
 
-static edgetip_t *allocEdgeTip(void)
+static __inline edgetip_t *allocEdgeTip(void)
 {
-#define BLKNUM 1024
+    return M_Calloc(sizeof(edgetip_t));
+}
 
-    edgetip_t          *edgeTip;
-
-    if((numHEdgeTips % BLKNUM) == 0)
-    {
-        hEdgeTips = M_Realloc(hEdgeTips, (numHEdgeTips + BLKNUM) *
-            sizeof(edgetip_t *));
-    }
-
-    hEdgeTips[numHEdgeTips] = edgeTip = M_Calloc(sizeof(edgetip_t));
-    numHEdgeTips += 1;
-
-    return edgeTip;
-
-#undef BLKNUM
+static __inline void freeEdgeTip(edgetip_t *tip)
+{
+    M_Free(tip);
 }
 
 /**
@@ -177,9 +149,9 @@ hedge_t *HEdge_Create(line_t *line, line_t *sourceLine,
 }
 
 /**
- * Destroys the given hedge.
+ * Destroys the given half-edge.
  *
- * @param hEdge         Ptr to the hedge to be destroyed.
+ * @param hEdge         Ptr to the half-edge to be destroyed.
  */
 void HEdge_Destroy(hedge_t *hEdge)
 {
@@ -320,6 +292,14 @@ void BSP_CreateVertexEdgeTip(vertex_t *vert, double dx, double dy,
     }
 }
 
+void BSP_DestroyVertexEdgeTip(edgetip_t *tip)
+{
+    if(tip)
+    {
+        freeEdgeTip(tip);
+    }
+}
+
 void BSP_CountEdgeTips(vertex_t *vert, uint *oneSided, uint *twoSided)
 {
     edgetip_t          *tip;
@@ -379,18 +359,4 @@ sector_t *BSP_VertexCheckOpen(vertex_t *vert, double dX, double dY)
 
     Con_Error("Vertex %d has no tips !", vert->buildData.index);
     return NULL;
-}
-
-void BSP_FreeEdgeTips(void)
-{
-    int                 i;
-
-    for(i = 0; i < numHEdgeTips; ++i)
-        M_Free(hEdgeTips[i]);
-
-    if(hEdgeTips)
-        M_Free(hEdgeTips);
-
-    hEdgeTips = NULL;
-    numHEdgeTips = 0;
 }

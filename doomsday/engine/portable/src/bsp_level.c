@@ -432,11 +432,6 @@ void BSP_InitForNodeBuild(editmap_t *map)
     }
 }
 
-void FreeMap(void)
-{
-    BSP_FreeEdgeTips();
-}
-
 static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
 {
     uint        i;

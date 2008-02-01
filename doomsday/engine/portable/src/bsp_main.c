@@ -303,7 +303,6 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
     }
 
     // Free temporary storage.
-    FreeMap();
     BSP_ShutdownSuperBlockAllocator();
     BSP_ShutdownIntersectionAllocator();
 
