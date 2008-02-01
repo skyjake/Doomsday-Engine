@@ -414,14 +414,6 @@ void BSP_FreeEdgeTips(void)
     numHEdgeTips = 0;
 }
 
-hedge_t *LookupHEdge(int index)
-{
-    if(index > numHEdges)
-        Con_Error("No such half-edge #%iu", index);
-
-    return levHEdges[index];
-}
-
 int BSP_GetNumHEdges(void)
 {
     return numHEdges;

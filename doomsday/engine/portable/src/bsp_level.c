@@ -108,28 +108,50 @@ static int C_DECL hEdgeCompare(const void *p1, const void *p2)
     return 1;
 }
 
-static void buildSegsFromHEdges(gamemap_t *dest)
+typedef struct {
+    size_t              curIdx;
+    hedge_t          ***indexPtr;
+} hedgecollectorparams_t;
+
+static boolean hEdgeCollector(binarytree_t *tree, void *data)
+{
+    if(BinaryTree_IsLeaf(tree))
+    {
+        hedgecollectorparams_t *params = (hedgecollectorparams_t*) data;
+        subsector_t        *ssec = (subsector_t*) BinaryTree_GetData(tree);
+        hedge_t            *hEdge;
+
+        for(hEdge = ssec->buildData.hEdges; hEdge; hEdge = hEdge->next)
+        {
+            (*params->indexPtr)[params->curIdx++] = hEdge;
+
+            if(hEdge->index == -1)
+                Con_Error("HEdge %p never reached a subsector!", hEdge);
+        }
+    }
+
+    return true; // Continue traversal.
+}
+
+static void buildSegsFromHEdges(gamemap_t *dest, const editmap_t *src)
 {
     uint                i;
-    size_t              n, numHEdges;
-    hedge_t           **index, *hEdge;
+    size_t              numHEdges;
+    hedge_t           **index;
+    hedgecollectorparams_t params;
 
     // First we need to build a sorted index of the used hedges.
     numHEdges = BSP_GetNumHEdges();
+    index = M_Malloc(sizeof(hedge_t*) * numHEdges);
 
     if(!(numHEdges > 0))
         Con_Error("buildSegsFromHEdges: No halfedges?");
 
-    index = M_Malloc(sizeof(hedge_t*) * numHEdges);
-    for(n = 0; n < numHEdges; ++n)
-    {
-        hEdge = LookupHEdge(n);
+    params.curIdx = 0;
+    params.indexPtr = &index;
 
-        if(hEdge->index == -1)
-            Con_Error("HEdge %p never reached a subsector!", hEdge);
-
-        index[n] = hEdge;
-    }
+    // Collect ptrs the hedges and insert into the index.
+    BinaryTree_InOrder(src->rootNode, hEdgeCollector, &params);
 
     // Sort the half-edges into ascending index order.
     qsort(index, numHEdges, sizeof(hedge_t*), hEdgeCompare);
@@ -599,7 +621,7 @@ void SaveMap(gamemap_t *dest, editmap_t *src)
     hardenSectors(dest, src);
     hardenSidedefs(dest, src);
     hardenLinedefs(dest, src);
-    buildSegsFromHEdges(dest);
+    buildSegsFromHEdges(dest, src);
     hardenBSP(dest, src);
     hardenPolyobjs(dest, src);
 
