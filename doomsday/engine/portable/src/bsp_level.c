@@ -96,19 +96,50 @@ static void hardenSideSegList(gamemap_t *map, side_t *side, seg_t *seg,
     side->segs[count] = NULL; // Terminate.
 }
 
+static int C_DECL hEdgeCompare(const void *p1, const void *p2)
+{
+    const hedge_t *a = ((const hedge_t **) p1)[0];
+    const hedge_t *b = ((const hedge_t **) p2)[0];
+
+    if(a->index == b->index)
+        return 0;
+    if(a->index < b->index)
+        return -1;
+    return 1;
+}
+
 static void buildSegsFromHEdges(gamemap_t *dest)
 {
-    uint        i;
+    uint                i;
+    size_t              n, numHEdges;
+    hedge_t           **index, *hEdge;
 
-    BSP_SortHEdgesByIndex();
+    // First we need to build a sorted index of the used hedges.
+    numHEdges = BSP_GetNumHEdges();
 
-    dest->numSegs = BSP_GetNumHEdges();
+    if(!(numHEdges > 0))
+        Con_Error("buildSegsFromHEdges: No halfedges?");
 
+    index = M_Malloc(sizeof(hedge_t*) * numHEdges);
+    for(n = 0; n < numHEdges; ++n)
+    {
+        hEdge = LookupHEdge(n);
+
+        if(hEdge->index == -1)
+            Con_Error("HEdge %p never reached a subsector!", hEdge);
+
+        index[n] = hEdge;
+    }
+
+    // Sort the half-edges into ascending index order.
+    qsort(index, numHEdges, sizeof(hedge_t*), hEdgeCompare);
+
+    dest->numSegs = (uint) numHEdges;
     dest->segs = Z_Calloc(dest->numSegs * sizeof(seg_t), PU_LEVELSTATIC, 0);
     for(i = 0; i < dest->numSegs; ++i)
     {
         seg_t      *seg = &dest->segs[i];
-        hedge_t    *hEdge = LookupHEdge(i);
+        hedge_t    *hEdge = index[i];
 
         seg->header.type = DMU_SEG;
 
@@ -180,6 +211,9 @@ static void buildSegsFromHEdges(gamemap_t *dest)
             memcpy(seg->sideDef->SW_bottomnormal, surface->normal, sizeof(surface->normal));
         }
     }
+
+    // Free temporary storage
+    M_Free(index);
 }
 
 static void hardenSSecSegList(gamemap_t *dest, subsector_t *ssec,

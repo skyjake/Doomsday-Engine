@@ -426,26 +426,3 @@ int BSP_GetNumHEdges(void)
 {
     return numHEdges;
 }
-
-static int C_DECL hEdgeCompare(const void *p1, const void *p2)
-{
-    const hedge_t *a = ((const hedge_t **) p1)[0];
-    const hedge_t *b = ((const hedge_t **) p2)[0];
-
-    if(a->index == -1)
-        Con_Error("HEdge %p never reached a subsector!", a);
-    if(b->index == -1)
-        Con_Error("HEdge %p never reached a subsector!", b);
-
-    if(a->index == b->index)
-        return 0;
-    if(a->index < b->index)
-        return -1;
-    return 1;
-}
-
-void BSP_SortHEdgesByIndex(void)
-{
-    // Sort the half-edges into ascending index order.
-    qsort(levHEdges, numHEdges, sizeof(hedge_t *), hEdgeCompare);
-}

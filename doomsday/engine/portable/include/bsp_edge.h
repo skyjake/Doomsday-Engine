@@ -92,7 +92,6 @@ hedge_t    *BSP_CreateHEdge(line_t *line, line_t *sourceLine,
                             sector_t *sec, boolean back);
 hedge_t    *BSP_SplitHEdge(hedge_t *oldHEdge, double x, double y);
 
-void        BSP_SortHEdgesByIndex(void);
 void        BSP_FreeHEdges(void);
 int         BSP_GetNumHEdges(void);
 
