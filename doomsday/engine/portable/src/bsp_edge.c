@@ -61,15 +61,28 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static zblockset_t *hEdgeBlockSet;
+static boolean hEdgeAllocatorInited = false;
+
 // CODE --------------------------------------------------------------------
 
 static __inline hedge_t *allocHEdge(void)
 {
+    if(hEdgeAllocatorInited)
+    {   // Use the block allocator.
+        return Z_BlockNewElement(hEdgeBlockSet);
+    }
+
     return M_Calloc(sizeof(hedge_t));
 }
 
 static __inline void freeHEdge(hedge_t *hEdge)
 {
+    if(hEdgeAllocatorInited)
+    {   // Ignore, it'll be free'd along with the block allocator.
+        return;
+    }
+
     M_Free(hEdge);
 }
 
@@ -81,6 +94,29 @@ static __inline edgetip_t *allocEdgeTip(void)
 static __inline void freeEdgeTip(edgetip_t *tip)
 {
     M_Free(tip);
+}
+
+/**
+ * Init the half-edge block allocator.
+ */
+void BSP_InitHEdgeAllocator(void)
+{
+    hEdgeBlockSet = Z_BlockCreate(sizeof(hedge_t), 512, PU_STATIC);
+    hEdgeAllocatorInited = true;
+}
+
+/**
+ * Shutdown the half-edge block allocator. All elements will be free'd!
+ */
+void BSP_ShutdownHEdgeAllocator(void)
+{
+    if(hEdgeAllocatorInited)
+    {
+        Z_BlockDestroy(hEdgeBlockSet);
+        hEdgeBlockSet = NULL;
+
+        hEdgeAllocatorInited = false;
+    }
 }
 
 /**

@@ -100,6 +100,9 @@ typedef struct hedge_s {
     byte        side; // 0 for right, 1 for left.
 } hedge_t;
 
+void        BSP_InitHEdgeAllocator(void);
+void        BSP_ShutdownHEdgeAllocator(void);
+
 hedge_t    *HEdge_Create(line_t *line, line_t *sourceLine,
                          vertex_t *start, vertex_t *end,
                          sector_t *sec, boolean back);

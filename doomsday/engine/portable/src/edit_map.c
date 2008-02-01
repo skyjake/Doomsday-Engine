@@ -143,39 +143,9 @@ static polyobj_t *createPolyobj(void)
     return po;
 }
 
-static boolean C_DECL freeBSPNodeData(binarytree_t *tree, void *data)
-{
-    void               *bspData = BinaryTree_GetData(tree);
-
-    if(bspData)
-    {
-        if(BinaryTree_IsLeaf(tree))
-        {
-            subsector_t        *ssec = bspData;
-            hedge_t            *hEdge, *np;
-
-            hEdge = ssec->buildData.hEdges;
-            while(hEdge)
-            {
-                np = hEdge->next;
-                HEdge_Destroy(hEdge);
-                hEdge = np;
-            }
-        }
-
-        M_Free(bspData);
-    }
-
-    BinaryTree_SetData(tree, NULL);
-
-    return true; // Continue iteration.
-}
-
 static void destroyMap(void)
 {
     uint                i;
-
-    memset(map->name, 0, sizeof(map->name));
 
     if(map->vertexes)
     {
@@ -249,13 +219,6 @@ static void destroyMap(void)
     }
     map->sectors = NULL;
     map->numSectors = 0;
-
-    if(map->rootNode)
-    {
-        BinaryTree_PostOrder(map->rootNode, freeBSPNodeData, NULL);
-        BinaryTree_Destroy(map->rootNode);
-    }
-    map->rootNode = NULL;
 
     if(map->polyobjs)
     {
@@ -860,14 +823,18 @@ boolean MPE_End(void)
         return false;
     }
 
+    // Destroy the editable map (we are finished with it).
+    destroyMap();
+    editMapInited = false;
+
     // Call the game's setup routines.
     if(gx.SetupForMapData)
     {
-        // gx.SetupForMapData(DAM_THING, map->numThings);
-        gx.SetupForMapData(DAM_VERTEX, map->numVertexes);
-        gx.SetupForMapData(DAM_LINE, map->numLines);
-        gx.SetupForMapData(DAM_SIDE, map->numSides);
-        gx.SetupForMapData(DAM_SECTOR, map->numSectors);
+        // gx.SetupForMapData(DAM_THING, gamemap->numThings);
+        gx.SetupForMapData(DAM_VERTEX, gamemap->numVertexes);
+        gx.SetupForMapData(DAM_LINE, gamemap->numLines);
+        gx.SetupForMapData(DAM_SIDE, gamemap->numSides);
+        gx.SetupForMapData(DAM_SECTOR, gamemap->numSectors);
     }
 
     // Build the vertex line owner rings.
@@ -885,13 +852,13 @@ boolean MPE_End(void)
     /**
      * Are we caching this map?
      */
-    if(map->name && map->name[0])
+    if(gamemap->levelID && gamemap->levelID[0])
     {   // Yes, write the cached map data file.
         filename_t              cachedMapDir;
         filename_t              cachedMapDataFile;
         int                     markerLumpNum;
 
-        markerLumpNum = W_GetNumForName(map->name);
+        markerLumpNum = W_GetNumForName(gamemap->levelID);
         DAM_GetCachedMapDir(cachedMapDir, markerLumpNum);
 
         // Ensure the destination path exists.
@@ -906,10 +873,6 @@ boolean MPE_End(void)
     }
 
     lastBuiltMap = gamemap;
-
-    // Destroy the editable map (we are finished with it).
-    destroyMap();
-    editMapInited = false;
 
     // Success!
     return true;

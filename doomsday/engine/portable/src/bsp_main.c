@@ -223,6 +223,20 @@ for(i = 0; i < numVertices; ++i)
     return block;
 }
 
+static boolean C_DECL freeBSPNodeData(binarytree_t *tree, void *data)
+{
+    void               *bspData = BinaryTree_GetData(tree);
+
+    if(bspData)
+    {
+        M_Free(bspData);
+    }
+
+    BinaryTree_SetData(tree, NULL);
+
+    return true; // Continue iteration.
+}
+
 /**
  * Build the BSP for the given map.
  *
@@ -246,6 +260,7 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
 
     BSP_InitSuperBlockAllocator();
     BSP_InitIntersectionAllocator();
+    BSP_InitHEdgeAllocator();
 
     BSP_InitForNodeBuild(src);
     BSP_InitAnalyzer(src);
@@ -302,9 +317,18 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
         }
     }
 
+    // We are finished with the BSP.
+    if(src->rootNode)
+    {
+        BinaryTree_PostOrder(src->rootNode, freeBSPNodeData, NULL);
+        BinaryTree_Destroy(src->rootNode);
+    }
+    src->rootNode = NULL;
+
     // Free temporary storage.
-    BSP_ShutdownSuperBlockAllocator();
+    BSP_ShutdownHEdgeAllocator();
     BSP_ShutdownIntersectionAllocator();
+    BSP_ShutdownSuperBlockAllocator();
 
     // How much time did we spend?
     VERBOSE(Con_Message("  Done in %.2f seconds.\n",
