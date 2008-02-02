@@ -70,7 +70,9 @@ static __inline hedge_t *allocHEdge(void)
 {
     if(hEdgeAllocatorInited)
     {   // Use the block allocator.
-        return Z_BlockNewElement(hEdgeBlockSet);
+        hedge_t            *hEdge = Z_BlockNewElement(hEdgeBlockSet);
+        memset(hEdge, 0, sizeof(hedge_t));
+        return hEdge;
     }
 
     return M_Calloc(sizeof(hedge_t));
@@ -101,6 +103,9 @@ static __inline void freeEdgeTip(edgetip_t *tip)
  */
 void BSP_InitHEdgeAllocator(void)
 {
+    if(hEdgeAllocatorInited)
+        return; // Already been here.
+
     hEdgeBlockSet = Z_BlockCreate(sizeof(hedge_t), 512, PU_STATIC);
     hEdgeAllocatorInited = true;
 }

@@ -274,6 +274,7 @@ static void hardenSSecSegList(gamemap_t *dest, subsector_t *ssec,
 static void hardenSubsector(gamemap_t *map, subsector_t *dest, const subsector_t *src)
 {
     memcpy(dest, src, sizeof(subsector_t));
+    dest->header.type = DMU_SUBSECTOR;
     dest->segCount = (uint) src->buildData.hEdgeCount;
     dest->sector = (src->sector? &map->sectors[src->sector->buildData.index-1] : NULL);
     dest->shadows = NULL;

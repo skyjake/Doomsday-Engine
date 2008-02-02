@@ -366,17 +366,13 @@ static __inline int lineVertexLowest(const line_t *l)
               (int) l->v[0]->buildData.pos[VY] <  (int) l->v[1]->buildData.pos[VY]))? 0 : 1);
 }
 
-static editmap_t *globalMap;
-
 static int C_DECL lineStartCompare(const void *p1, const void *p2)
 {
-    uint            line1 = ((const uint *) p1)[0];
-    uint            line2 = ((const uint *) p2)[0];
-    line_t         *a = globalMap->lines[line1];
-    line_t         *b = globalMap->lines[line2];
-    vertex_t       *c, *d;
+    const line_t       *a = *((const void **) p1);
+    const line_t       *b = *((const void **) p2);
+    vertex_t           *c, *d;
 
-    if(line1 == line2)
+    if(a == b)
         return 0;
 
     // Determine left-most vertex of each line.
@@ -391,13 +387,11 @@ static int C_DECL lineStartCompare(const void *p1, const void *p2)
 
 static int C_DECL lineEndCompare(const void *p1, const void *p2)
 {
-    uint            line1 = ((const uint *) p1)[0];
-    uint            line2 = ((const uint *) p2)[0];
-    line_t         *a = globalMap->lines[line1];
-    line_t         *b = globalMap->lines[line2];
-    vertex_t       *c, *d;
+    const line_t       *a = *((const void **) p1);
+    const line_t       *b = *((const void **) p2);
+    vertex_t           *c, *d;
 
-    if(line1 == line2)
+    if(a == b)
         return 0;
 
     // Determine right-most vertex of each line.
@@ -418,21 +412,18 @@ static int C_DECL lineEndCompare(const void *p1, const void *p2)
  */
 void BSP_DetectOverlappingLines(editmap_t *map)
 {
-    uint        i;
-    uint       *hits = M_Malloc(map->numLines * sizeof(uint));
-    uint        count = 0;
+    size_t              i, j, count = 0;
+    line_t            **hits;
 
-    globalMap = map;
+    hits = M_Malloc(map->numLines * sizeof(uint));
 
-    // Sort array of indices.
+    // Sort array of ptrs.
     for(i = 0; i < map->numLines; ++i)
-        hits[i] = i;
-    qsort(hits, map->numLines, sizeof(uint), lineStartCompare);
+        hits[i] = map->lines[i];
+    qsort(hits, map->numLines, sizeof(line_t*), lineStartCompare);
 
     for(i = 0; i < map->numLines - 1; ++i)
     {
-        uint        j;
-
         for(j = i + 1; j < map->numLines; ++j)
         {
             if(lineStartCompare(hits + i, hits + j) != 0)
@@ -440,10 +431,11 @@ void BSP_DetectOverlappingLines(editmap_t *map)
 
             if(lineEndCompare(hits + i, hits + j) == 0)
             {   // Found an overlap!
-                line_t *a = map->lines[hits[i]];
-                line_t *b = map->lines[hits[j]];
+                line_t             *a = hits[i];
+                line_t             *b = hits[j];
 
-                b->buildData.overlap = (a->buildData.overlap ? a->buildData.overlap : a);
+                b->buildData.overlap =
+                    (a->buildData.overlap ? a->buildData.overlap : a);
                 count++;
             }
         }
@@ -452,7 +444,8 @@ void BSP_DetectOverlappingLines(editmap_t *map)
     M_Free(hits);
 
     if(count > 0)
-        VERBOSE(Con_Message("Detected %d overlapped linedefs\n", count));
+        VERBOSE(Con_Message("Detected %lu overlapped linedefs\n",
+                            (unsigned long) count));
 }
 
 /**

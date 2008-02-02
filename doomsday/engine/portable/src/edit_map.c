@@ -239,15 +239,11 @@ static void destroyMap(void)
 
 static int C_DECL vertexCompare(const void *p1, const void *p2)
 {
-    uint        vert1 = ((const uint *) p1)[0];
-    uint        vert2 = ((const uint *) p2)[0];
-    vertex_t   *a, *b;
+    const vertex_t     *a = *((const void **) p1);
+    const vertex_t     *b = *((const void **) p2);
 
-    if(vert1 == vert2)
+    if(a == b)
         return 0;
-
-    a = editMap.vertexes[vert1];
-    b = editMap.vertexes[vert2];
 
     if((int) a->buildData.pos[VX] != (int) b->buildData.pos[VX])
         return (int) a->buildData.pos[VX] - (int) b->buildData.pos[VX];
@@ -257,14 +253,15 @@ static int C_DECL vertexCompare(const void *p1, const void *p2)
 
 void MPE_DetectDuplicateVertices(editmap_t *map)
 {
-    uint        i;
-    uint       *hits = M_Malloc(map->numVertexes * sizeof(uint));
+    size_t              i;
+    vertex_t          **hits;
 
-    // Sort array of indices.
+    hits = M_Malloc(map->numVertexes * sizeof(vertex_t*));
+
+    // Sort array of ptrs.
     for(i = 0; i < map->numVertexes; ++i)
-        hits[i] = i;
-
-    qsort(hits, map->numVertexes, sizeof(uint), vertexCompare);
+        hits[i] = map->vertexes[i];
+    qsort(hits, map->numVertexes, sizeof(vertex_t*), vertexCompare);
 
     // Now mark them off.
     for(i = 0; i < map->numVertexes - 1; ++i)
@@ -272,10 +269,11 @@ void MPE_DetectDuplicateVertices(editmap_t *map)
         // A duplicate?
         if(vertexCompare(hits + i, hits + i + 1) == 0)
         {   // Yes.
-            vertex_t *a = map->vertexes[hits[i]];
-            vertex_t *b = map->vertexes[hits[i + 1]];
+            vertex_t           *a = hits[i];
+            vertex_t           *b = hits[i + 1];
 
-            b->buildData.equiv = (a->buildData.equiv ? a->buildData.equiv : a);
+            b->buildData.equiv =
+                (a->buildData.equiv ? a->buildData.equiv : a);
         }
     }
 
