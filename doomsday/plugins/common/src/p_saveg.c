@@ -2341,7 +2341,7 @@ static void SV_ReadSector(sector_t *sec)
     xsec->soundTarget = 0;
 }
 
-static void SV_WriteLine(line_t *li)
+static void SV_WriteLine(linedef_t *li)
 {
     uint        i, j;
     int         texid;
@@ -2383,7 +2383,7 @@ static void SV_WriteLine(line_t *li)
     // For each side
     for(i = 0; i < 2; ++i)
     {
-        side_t *si = P_GetPtrp(li, (i? DMU_SIDE1:DMU_SIDE0));
+        sidedef_t *si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
         if(!si)
             continue;
 
@@ -2432,7 +2432,7 @@ static void SV_WriteLine(line_t *li)
  * Reads all versions of archived lines.
  * Including the old Ver1.
  */
-static void SV_ReadLine(line_t *li)
+static void SV_ReadLine(linedef_t *li)
 {
     int         i, j;
     lineclass_t type;
@@ -2495,7 +2495,7 @@ static void SV_ReadLine(line_t *li)
     // For each side
     for(i = 0; i < 2; ++i)
     {
-        side_t *si = P_GetPtrp(li, (i? DMU_SIDE1:DMU_SIDE0));
+        sidedef_t *si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
         if(!si)
             continue;
 
@@ -2626,7 +2626,7 @@ static void P_ArchiveWorld(void)
         SV_WriteSector(P_ToPtr(DMU_SECTOR, i));
 
     for(i = 0; i < numlines; ++i)
-        SV_WriteLine(P_ToPtr(DMU_LINE, i));
+        SV_WriteLine(P_ToPtr(DMU_LINEDEF, i));
 
 #if __JHEXEN__
     SV_BeginSegment(ASEG_POLYOBJS);
@@ -2654,7 +2654,7 @@ static void P_UnArchiveWorld(void)
         SV_ReadSector(P_ToPtr(DMU_SECTOR, i));
     // Load lines.
     for(i = 0; i < numlines; ++i)
-        SV_ReadLine(P_ToPtr(DMU_LINE, i));
+        SV_ReadLine(P_ToPtr(DMU_LINEDEF, i));
 
 #if __JHEXEN__
     // Load polyobjects.
@@ -3253,7 +3253,7 @@ static int SV_ReadScript(acs_t *th)
         if(temp == -1)
             th->line = NULL;
         else
-            th->line = P_ToPtr(DMU_LINE, temp);
+            th->line = P_ToPtr(DMU_LINEDEF, temp);
         th->side = SV_ReadLong();
         th->number = SV_ReadLong();
         th->infoIndex = SV_ReadLong();
@@ -3279,7 +3279,7 @@ static int SV_ReadScript(acs_t *th)
         if(temp == -1)
             th->line = NULL;
         else
-            th->line = P_ToPtr(DMU_LINE, temp);
+            th->line = P_ToPtr(DMU_LINEDEF, temp);
         th->side = SV_ReadLong();
         th->number = SV_ReadLong();
         th->infoIndex = SV_ReadLong();
@@ -4198,7 +4198,7 @@ static void P_UnArchiveThinkers(void)
 
         for(i = 0; i < numlines; ++i)
         {
-            xline_t *xline = P_ToXLine(P_ToPtr(DMU_LINE, i));
+            xline_t *xline = P_ToXLine(P_ToPtr(DMU_LINEDEF, i));
             if(xline->xg)
                 xline->xg->activator =
                     SV_GetArchiveThing((int) xline->xg->activator,

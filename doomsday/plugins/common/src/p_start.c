@@ -629,7 +629,7 @@ spawnspot_t *P_GetPlayerStart(int group, int pnum)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-float P_PointLineDistance(line_t *line, float x, float y, float *offset)
+float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
 {
     float   a[2], b[2], c[2], d[2], len;
 
@@ -665,7 +665,7 @@ void P_MoveThingsOutOfWalls(void)
     mobj_t     *iter;
     uint        i, l;
     int         k, t;
-    line_t     *closestline = NULL, *li;
+    linedef_t     *closestline = NULL, *li;
     float       closestdist = 0, dist, off, linelen, minrad;
     mobj_t     *tlist[MAXLIST];
 
@@ -686,14 +686,14 @@ void P_MoveThingsOutOfWalls(void)
         // Move the things out of walls.
         for(t = 0; (iter = tlist[t]) != NULL; ++t)
         {
-            uint sectorLineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+            uint sectorLineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
 
             minrad = iter->radius / 2;
             closestline = NULL;
 
             for(l = 0; l < sectorLineCount; ++l)
             {
-                li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | l);
+                li = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | l);
                 if(P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
                 linelen =
@@ -741,7 +741,7 @@ void P_TurnGizmosAwayFromDoors(void)
     mobj_t     *iter;
     uint        i, l;
     int         k, t;
-    line_t     *closestline = NULL, *li;
+    linedef_t     *closestline = NULL, *li;
     xline_t    *xli;
     float       closestdist = 0, dist, off, linelen;    //, minrad;
     mobj_t     *tlist[MAXLIST];
@@ -767,7 +767,7 @@ void P_TurnGizmosAwayFromDoors(void)
             closestline = NULL;
             for(l = 0; l < numlines; ++l)
             {
-                li = P_ToPtr(DMU_LINE, l);
+                li = P_ToPtr(DMU_LINEDEF, l);
 
                 if(P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
@@ -817,7 +817,7 @@ void P_TurnTorchesToFaceWalls(void)
     mobj_t     *iter;
     uint        i, l;
     int         k, t;
-    line_t     *closestline = NULL, *li;
+    linedef_t     *closestline = NULL, *li;
     float       closestdist = 0, dist, off, linelen, minrad;
     mobj_t     *tlist[MAXLIST];
 
@@ -838,13 +838,13 @@ void P_TurnTorchesToFaceWalls(void)
         // Turn to face away from the nearest wall.
         for(t = 0; (iter = tlist[t]) != NULL; t++)
         {
-            uint sectorLineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+            uint sectorLineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
 
             minrad = iter->radius;
             closestline = NULL;
             for(l = 0; l < sectorLineCount; ++l)
             {
-                li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | l);
+                li = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | l);
                 if(P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
 

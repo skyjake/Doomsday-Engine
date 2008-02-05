@@ -432,13 +432,13 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
 }
 
 #if __JHEXEN__
-int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
+int EV_DoDoor(linedef_t *line, byte *args, vldoor_e type)
 {
     return EV_DoDoor2((int) args[0], (float) args[1] * (1.0 / 8),
                       (int) args[2], type);
 }
 #else
-int EV_DoDoor(line_t *line, vldoor_e type)
+int EV_DoDoor(linedef_t *line, vldoor_e type)
 {
     return EV_DoDoor2(P_ToXLine(line)->tag, VDOORSPEED, VDOORWAIT, type);
 }
@@ -451,7 +451,7 @@ int EV_DoDoor(line_t *line, vldoor_e type)
  * message and play a sound before returning @c false.
  * Else, NOT a locked door and can be opened, return @c true.
  */
-static boolean tryLockedDoor(line_t *line, player_t *p)
+static boolean tryLockedDoor(linedef_t *line, player_t *p)
 {
     xline_t *xline = P_ToXLine(line);
 
@@ -534,7 +534,7 @@ static boolean tryLockedDoor(line_t *line, player_t *p)
  * message and play a sound before returning @c false.
  * Else, NOT a locked door and can be opened, return @c true.
  */
-static boolean tryLockedManualDoor(line_t *line, player_t *p)
+static boolean tryLockedManualDoor(linedef_t *line, player_t *p)
 {
     xline_t *xline = P_ToXLine(line);
 
@@ -626,7 +626,7 @@ static boolean tryLockedManualDoor(line_t *line, player_t *p)
  * Move a locked door up/down.
  */
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
-int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
+int EV_DoLockedDoor(linedef_t *line, vldoor_e type, mobj_t *thing)
 {
     if(!tryLockedDoor(line, thing->player))
         return 0;
@@ -638,7 +638,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
 /**
  * Open a door manually, no tag value.
  */
-boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
+boolean EV_VerticalDoor(linedef_t *line, mobj_t *thing)
 {
     xline_t *xline = P_ToXLine(line);
     xsector_t *xsec;
@@ -858,7 +858,7 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
  * kaiser - Implemented for doom64tc.
  */
 #if __DOOM64TC__
-int EV_DoSplitDoor(line_t *line, int ftype, int ctype)
+int EV_DoSplitDoor(linedef_t *line, int ftype, int ctype)
 {
     boolean     floor, ceiling;
     sector_t   *sec = NULL;

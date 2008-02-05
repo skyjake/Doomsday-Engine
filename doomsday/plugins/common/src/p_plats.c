@@ -247,10 +247,10 @@ void T_PlatRaise(plat_t *plat)
 }
 
 #if __JHEXEN__
-static int EV_DoPlat2(line_t *line, int tag, byte *args, plattype_e type,
+static int EV_DoPlat2(linedef_t *line, int tag, byte *args, plattype_e type,
                       int amount)
 #else
-static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
+static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 #endif
 {
     int         rtn = 0;
@@ -457,9 +457,9 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
  * @param amount: is only used for SOME platforms.
  */
 #if __JHEXEN__
-int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
+int EV_DoPlat(linedef_t *line, byte *args, plattype_e type, int amount)
 #else
-int EV_DoPlat(line_t *line, plattype_e type, int amount)
+int EV_DoPlat(linedef_t *line, plattype_e type, int amount)
 #endif
 {
 #if __JHEXEN__
@@ -557,9 +557,9 @@ static boolean EV_StopPlat2(int tag)
  * @return              @c true, if the plat was put in stasis.
  */
 #if __JHEXEN__
-boolean EV_StopPlat(line_t *line, byte *args)
+boolean EV_StopPlat(linedef_t *line, byte *args)
 #else
-boolean EV_StopPlat(line_t *line)
+boolean EV_StopPlat(linedef_t *line)
 #endif
 {
 #if __JHEXEN__

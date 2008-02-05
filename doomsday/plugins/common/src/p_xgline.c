@@ -147,7 +147,7 @@ boolean         G_ValidateMap(int *episode, int *map);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    XL_ChangeTexture(line_t *line, int sidenum, int section, int texture,
+void    XL_ChangeTexture(linedef_t *line, int sidenum, int section, int texture,
                          blendmode_t blend, byte rgba[4], int flags);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -614,7 +614,7 @@ float XG_RandomPercentFloat(float value, int percent)
 /**
  * Looks for line type definition and sets the line type if one is found.
  */
-void XL_SetLineType(line_t *line, int id)
+void XL_SetLineType(linedef_t *line, int id)
 {
     xline_t *xline = P_ToXLine(line);
 
@@ -653,7 +653,7 @@ void XL_SetLineType(line_t *line, int id)
 void XL_Init(void)
 {
     uint        i;
-    line_t     *line;
+    linedef_t     *line;
 
     memset(&dummything, 0, sizeof(dummything));
 
@@ -663,7 +663,7 @@ void XL_Init(void)
 
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINE, i);
+        line = P_ToPtr(DMU_LINEDEF, i);
         P_ToXLine(line)->xg = 0;
 
         XL_SetLineType(line, P_ToXLine(line)->special);
@@ -676,7 +676,7 @@ void XL_Init(void)
  *
  * @return              @c true, If all callbacks return @c true.
  */
-int XL_TraversePlanes(line_t *line, int reftype, int ref, void *data,
+int XL_TraversePlanes(linedef_t *line, int reftype, int ref, void *data,
                       void *context, boolean travsectors, mobj_t *activator,
                       int (C_DECL *func)())
 {
@@ -861,14 +861,14 @@ int XL_TraversePlanes(line_t *line, int reftype, int ref, void *data,
  * @return              @c false if 'func' returns @c false, otherwise
  *                      @c true. Stops checking when false is returned.
  */
-int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
+int XL_TraverseLines(linedef_t *line, int rtype, int ref, void *data,
                      void *context, mobj_t * activator, int (C_DECL *func)())
 {
     uint        i;
     int         tag;
     int         reftype = rtype;
     char        buff[50];
-    line_t     *iter;
+    linedef_t     *iter;
     boolean     findLineTagged;
 
     // Binary XG data from DD_XGDATA uses the old flag values.
@@ -890,7 +890,7 @@ int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
         return func(line, true, data, context, activator);
 
     if(reftype == LREF_INDEX)
-        return func(P_ToPtr(DMU_LINE, ref), true, data, context, activator);
+        return func(P_ToPtr(DMU_LINEDEF, ref), true, data, context, activator);
 
     // Can we use the tagged line lists?
     findLineTagged = false;
@@ -934,7 +934,7 @@ int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
     {
         for(i = 0; i < numlines; ++i)
         {
-            iter = P_ToPtr(DMU_LINE, i);
+            iter = P_ToPtr(DMU_LINEDEF, i);
             if(reftype == LREF_ALL)
             {
                 if(!func(iter, true, data, context, activator))
@@ -957,11 +957,11 @@ int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
  * Returns the value requested by reftype from the line using data from
  * either line or context (will always be linetype_t).
  */
-int XL_ValidateLineRef(line_t *line, int reftype, void *context,
+int XL_ValidateLineRef(linedef_t *line, int reftype, void *context,
                        char *parmname)
 {
     int         answer = 0;
-    side_t     *side;
+    sidedef_t     *side;
 
     switch(reftype)
     {
@@ -1024,7 +1024,7 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context,
 
     case LDREF_TOP_OFFSETX:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDE0);
+        side = P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1038,7 +1038,7 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context,
 
     case LDREF_TOP_OFFSETY:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDE0);
+        side = P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1052,7 +1052,7 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context,
 
     case LDREF_MIDDLE_OFFSETX:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDE0);
+        side = P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1066,7 +1066,7 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context,
 
     case LDREF_MIDDLE_OFFSETY:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDE0);
+        side = P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1080,7 +1080,7 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context,
 
     case LDREF_BOTTOM_OFFSETX:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDE0);
+        side = P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1094,7 +1094,7 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context,
 
     case LDREF_BOTTOM_OFFSETY:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDE0);
+        side = P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1117,7 +1117,7 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context,
 /**
  * Executes the lines' function as defined by its class.
  */
-void XL_DoFunction(linetype_t * info, line_t *line, int sidenum,
+void XL_DoFunction(linetype_t * info, linedef_t *line, int sidenum,
                    mobj_t *act_thing, int evtype)
 {
     xgclass_t *xgClass = xgClasses + info->lineClass;
@@ -1166,7 +1166,7 @@ void XL_DoFunction(linetype_t * info, line_t *line, int sidenum,
     }
 }
 
-int C_DECL XLTrav_QuickActivate(line_t *line, boolean dummy, void *context,
+int C_DECL XLTrav_QuickActivate(linedef_t *line, boolean dummy, void *context,
                                 void *context2, mobj_t *activator)
 {
     xline_t *xline = P_ToXLine(line);
@@ -1182,7 +1182,7 @@ int C_DECL XLTrav_QuickActivate(line_t *line, boolean dummy, void *context,
 /*
  * Returns true if the line is active.
  */
-int C_DECL XLTrav_CheckLine(line_t *line, boolean dummy, void *context,
+int C_DECL XLTrav_CheckLine(linedef_t *line, boolean dummy, void *context,
                             void *context2, mobj_t *activator)
 {
     xline_t *xline = P_ToXLine(line);
@@ -1196,7 +1196,7 @@ int C_DECL XLTrav_CheckLine(line_t *line, boolean dummy, void *context,
  * &param data  If true, the line will receive a chain event if not activate.
  *      If data=false, then ... if active.
  */
-int C_DECL XLTrav_SmartActivate(line_t *line, boolean dummy, void *context,
+int C_DECL XLTrav_SmartActivate(linedef_t *line, boolean dummy, void *context,
                                 void *context2, mobj_t *activator)
 {
     xline_t *xline = P_ToXLine(line);
@@ -1214,7 +1214,7 @@ int C_DECL XLTrav_SmartActivate(line_t *line, boolean dummy, void *context,
 // XG Line Type Classes which don't require traversal
 //
 
-int C_DECL XL_DoChainSequence(line_t *line, boolean dummy, void *context,
+int C_DECL XL_DoChainSequence(linedef_t *line, boolean dummy, void *context,
                               void *context2, mobj_t *activator)
 {
     xline_t *xline = P_ToXLine(line);
@@ -1229,7 +1229,7 @@ int C_DECL XL_DoChainSequence(line_t *line, boolean dummy, void *context,
     return true;
 }
 
-int C_DECL XL_DoDamage(line_t *line, boolean dummy, void *context,
+int C_DECL XL_DoDamage(linedef_t *line, boolean dummy, void *context,
                        void *context2, mobj_t *activator)
 {
     int i;
@@ -1269,7 +1269,7 @@ int C_DECL XL_DoDamage(line_t *line, boolean dummy, void *context,
     return true;
 }
 
-int C_DECL XL_DoPower(line_t *line, boolean dummy, void *context,
+int C_DECL XL_DoPower(linedef_t *line, boolean dummy, void *context,
                       void *context2, mobj_t *activator)
 {
     player_t *player = 0;
@@ -1296,7 +1296,7 @@ int C_DECL XL_DoPower(line_t *line, boolean dummy, void *context,
     return true;
 }
 
-int C_DECL XL_DoKey(line_t *line, boolean dummy, void *context,
+int C_DECL XL_DoKey(linedef_t *line, boolean dummy, void *context,
                     void *context2, mobj_t *activator)
 {
     int         i;
@@ -1327,7 +1327,7 @@ int C_DECL XL_DoKey(line_t *line, boolean dummy, void *context,
     return true;
 }
 
-int C_DECL XL_DoExplode(line_t *line, boolean dummy, void *context,
+int C_DECL XL_DoExplode(linedef_t *line, boolean dummy, void *context,
                         void *context2, mobj_t *activator)
 {
     if(!activator)
@@ -1342,7 +1342,7 @@ int C_DECL XL_DoExplode(line_t *line, boolean dummy, void *context,
     return true;
 }
 
-int C_DECL XL_DoCommand(line_t *line, boolean dummy, void *context,
+int C_DECL XL_DoCommand(linedef_t *line, boolean dummy, void *context,
                         void *context2, mobj_t *activator)
 {
     linetype_t *info = context2;
@@ -1355,7 +1355,7 @@ int C_DECL XL_DoCommand(line_t *line, boolean dummy, void *context,
 // Following classes require traversal hence "Trav_"
 //
 
-int C_DECL XLTrav_ChangeLineType(line_t *line, boolean dummy, void *context,
+int C_DECL XLTrav_ChangeLineType(linedef_t *line, boolean dummy, void *context,
                           void *context2, mobj_t *activator)
 {
     linetype_t *info = context2;
@@ -1364,11 +1364,11 @@ int C_DECL XLTrav_ChangeLineType(line_t *line, boolean dummy, void *context,
     return true;    // Keep looking.
 }
 
-int C_DECL XLTrav_ChangeWallTexture(line_t *line, boolean dummy, void *context,
+int C_DECL XLTrav_ChangeWallTexture(linedef_t *line, boolean dummy, void *context,
                              void *context2, mobj_t *activator)
 {
     linetype_t *info = context2;
-    side_t     *side;
+    sidedef_t     *side;
     blendmode_t blend = BM_NORMAL;
     byte        rgba[4];
     int         texture = 0;
@@ -1397,14 +1397,14 @@ int C_DECL XLTrav_ChangeWallTexture(line_t *line, boolean dummy, void *context,
         if(P_GetPtrp(line, DMU_BACK_SECTOR) < 0)
             return true;
 
-        side = P_GetPtrp(line, DMU_SIDE1);
+        side = P_GetPtrp(line, DMU_SIDEDEF1);
     }
     else
     {
         if(P_GetPtrp(line, DMU_FRONT_SECTOR) < 0)
             return true;
 
-        side = P_GetPtrp(line, DMU_SIDE0);
+        side = P_GetPtrp(line, DMU_SIDEDEF0);
     }
 
     XG_Dev("XLTrav_ChangeWallTexture: Line %i", P_ToIndex(line));
@@ -1441,14 +1441,14 @@ int C_DECL XLTrav_ChangeWallTexture(line_t *line, boolean dummy, void *context,
     return true;
 }
 
-int C_DECL XLTrav_Activate(line_t *line, boolean dummy, void *context,
+int C_DECL XLTrav_Activate(linedef_t *line, boolean dummy, void *context,
                     void *context2, mobj_t *activator)
 {
     XL_LineEvent(XLE_CHAIN, 0, line, 0, activator);
     return true;    // Keep looking.
 }
 
-int C_DECL XLTrav_LineCount(line_t *line, boolean dummy, void *context, void *context2,
+int C_DECL XLTrav_LineCount(linedef_t *line, boolean dummy, void *context, void *context2,
                      mobj_t *activator)
 {
     xline_t *xline = P_ToXLine(line);
@@ -1463,7 +1463,7 @@ int C_DECL XLTrav_LineCount(line_t *line, boolean dummy, void *context, void *co
     return true;
 }
 
-int C_DECL XLTrav_Music(line_t *line, boolean dummy, void *context, void *context2,
+int C_DECL XLTrav_Music(linedef_t *line, boolean dummy, void *context, void *context2,
                  mobj_t *activator)
 {
     int song = 0;
@@ -1501,7 +1501,7 @@ int C_DECL XLTrav_Music(line_t *line, boolean dummy, void *context, void *contex
     return false;    // only do this once!
 }
 
-int C_DECL XLTrav_LineTeleport(line_t *newline, boolean dummy, void *context, void *context2,
+int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context, void *context2,
                         mobj_t *mobj)
 {
 // maximum units to move object to avoid hiccups
@@ -1511,7 +1511,7 @@ int C_DECL XLTrav_LineTeleport(line_t *newline, boolean dummy, void *context, vo
     int         side = 0, stepdown;
     unsigned    an;
     mobj_t     *flash;
-    line_t     *line = (line_t *) context;
+    linedef_t     *line = (linedef_t *) context;
     linetype_t *info = (linetype_t *) context2;
     vertex_t   *newv1, *newv2;
     vertex_t   *oldv1, *oldv2;
@@ -1720,7 +1720,7 @@ int XL_ValidateMap(int val, int type)
     return level;
 }
 
-int C_DECL XLTrav_EndLevel(line_t *line, boolean dummy, void *context,
+int C_DECL XLTrav_EndLevel(linedef_t *line, boolean dummy, void *context,
                            void *context2, mobj_t *activator)
 {
     int         map = 0;
@@ -1758,10 +1758,10 @@ int C_DECL XLTrav_EndLevel(line_t *line, boolean dummy, void *context,
     return false; // Only do this once!
 }
 
-int C_DECL XLTrav_DisableLine(line_t *line, boolean dummy, void *context,
+int C_DECL XLTrav_DisableLine(linedef_t *line, boolean dummy, void *context,
                               void *context2, mobj_t *activator)
 {
-    xline_t *origline = P_ToXLine((line_t*) context);
+    xline_t *origline = P_ToXLine((linedef_t*) context);
     xline_t *xline = P_ToXLine(line);
 
     if(!xline->xg)
@@ -1770,10 +1770,10 @@ int C_DECL XLTrav_DisableLine(line_t *line, boolean dummy, void *context,
     return true; // Keep looking...
 }
 
-int C_DECL XLTrav_EnableLine(line_t *line, boolean dummy, void *context,
+int C_DECL XLTrav_EnableLine(linedef_t *line, boolean dummy, void *context,
                              void *context2, mobj_t *activator)
 {
-    xline_t *origline = P_ToXLine((line_t*) context);
+    xline_t *origline = P_ToXLine((linedef_t*) context);
     xline_t *xline = P_ToXLine(line);
 
     if(!xline->xg)
@@ -1786,7 +1786,7 @@ int C_DECL XLTrav_EnableLine(line_t *line, boolean dummy, void *context,
  * Checks if the given lines are active or inactive.
  * Returns true if all are in the specified state.
  */
-boolean XL_CheckLineStatus(line_t *line, int reftype, int ref, int active,
+boolean XL_CheckLineStatus(linedef_t *line, int reftype, int ref, int active,
                            mobj_t *activator)
 {
     return XL_TraverseLines(line, reftype, ref, &active, 0, activator,
@@ -1818,7 +1818,7 @@ boolean XL_CheckMobjGone(int thingtype)
     return true;
 }
 
-boolean XL_SwitchSwap(side_t *side, int section)
+boolean XL_SwitchSwap(sidedef_t *side, int section)
 {
     const char   *name;
     char        buf[10];
@@ -1903,14 +1903,14 @@ boolean XL_SwitchSwap(side_t *side, int section)
         return false;
 }
 
-void XL_SwapSwitchTextures(line_t *line, int snum)
+void XL_SwapSwitchTextures(linedef_t *line, int snum)
 {
-    side_t     *side;
+    sidedef_t     *side;
 
     if(snum)
-        side = P_GetPtrp(line, DMU_SIDE1);
+        side = P_GetPtrp(line, DMU_SIDEDEF1);
     else
-        side = P_GetPtrp(line, DMU_SIDE0);
+        side = P_GetPtrp(line, DMU_SIDEDEF0);
 
     if(!side)
         return;
@@ -1925,12 +1925,12 @@ void XL_SwapSwitchTextures(line_t *line, int snum)
 /**
  * Changes texture of the given line.
  */
-void XL_ChangeTexture(line_t *line, int sidenum, int section, int texture,
+void XL_ChangeTexture(linedef_t *line, int sidenum, int section, int texture,
                       blendmode_t blendmode, byte rgba[4], int flags)
 {
     int         i;
     int         currentFlags;
-    side_t     *side = P_GetPtrp(line, sidenum? DMU_SIDE1:DMU_SIDE0);
+    sidedef_t     *side = P_GetPtrp(line, sidenum? DMU_SIDEDEF1:DMU_SIDEDEF0);
 
     if(!side)
         return;
@@ -2026,7 +2026,7 @@ void XL_Message(mobj_t *act, char *msg, boolean global)
 /**
  * XL_ActivateLine
  */
-void XL_ActivateLine(boolean activating, linetype_t *info, line_t *line,
+void XL_ActivateLine(boolean activating, linetype_t *info, linedef_t *line,
                      int sidenum, mobj_t *data, int evtype)
 {
     byte        rgba[4] = { 0, 0, 0, 0 };
@@ -2206,7 +2206,7 @@ boolean XL_CheckKeys(mobj_t *mo, int flags2)
  * Line must be extended.
  * Most conditions use AND (act method, game mode and difficult use OR).
  */
-int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
+int XL_LineEvent(int evtype, int linetype, linedef_t *line, int sidenum,
                  void *data)
 {
     int                     i;
@@ -2483,7 +2483,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_CrossLine(line_t *line, int sidenum, mobj_t *thing)
+int XL_CrossLine(linedef_t *line, int sidenum, mobj_t *thing)
 {
     if(!P_ToXLine(line)->xg)
         return false;
@@ -2494,7 +2494,7 @@ int XL_CrossLine(line_t *line, int sidenum, mobj_t *thing)
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_UseLine(line_t *line, int sidenum, mobj_t *thing)
+int XL_UseLine(linedef_t *line, int sidenum, mobj_t *thing)
 {
     if(!P_ToXLine(line)->xg)
         return false;
@@ -2505,7 +2505,7 @@ int XL_UseLine(line_t *line, int sidenum, mobj_t *thing)
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_ShootLine(line_t *line, int sidenum, mobj_t *thing)
+int XL_ShootLine(linedef_t *line, int sidenum, mobj_t *thing)
 {
     if(!P_ToXLine(line)->xg)
         return false;
@@ -2513,7 +2513,7 @@ int XL_ShootLine(line_t *line, int sidenum, mobj_t *thing)
     return XL_LineEvent(XLE_SHOOT, 0, line, sidenum, thing);
 }
 
-int XL_HitLine(line_t *line, int sidenum, mobj_t *thing)
+int XL_HitLine(linedef_t *line, int sidenum, mobj_t *thing)
 {
     if(!P_ToXLine(line)->xg)
         return false;
@@ -2521,10 +2521,10 @@ int XL_HitLine(line_t *line, int sidenum, mobj_t *thing)
     return XL_LineEvent(XLE_HIT, 0, line, sidenum, thing);
 }
 
-void XL_DoChain(line_t *line, int chain, boolean activating,
+void XL_DoChain(linedef_t *line, int chain, boolean activating,
                 mobj_t *act_thing)
 {
-    line_t      *dummyLine;
+    linedef_t      *dummyLine;
     xline_t     *xdummyLine;
 
     // We'll use a dummy line for the chain.
@@ -2538,8 +2538,8 @@ void XL_DoChain(line_t *line, int chain, boolean activating,
     // Copy all properties to the dummy
     P_CopyLine(line, dummyLine);
 
-    P_SetPtrp(dummyLine, DMU_SIDE0, NULL);
-    P_SetPtrp(dummyLine, DMU_SIDE1, NULL);
+    P_SetPtrp(dummyLine, DMU_SIDEDEF0, NULL);
+    P_SetPtrp(dummyLine, DMU_SIDEDEF1, NULL);
 
     xdummyLine->xg->active = !activating;
 
@@ -2557,7 +2557,7 @@ void XL_DoChain(line_t *line, int chain, boolean activating,
 void XL_Think(uint idx)
 {
     float       levtime;
-    line_t     *line = NULL;
+    linedef_t     *line = NULL;
     xline_t    *xline = P_GetXLine(idx);
     xgline_t   *xg;
     linetype_t *info;
@@ -2577,7 +2577,7 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
     if(xg->disabled)
         return; // Disabled, do nothing.
 
-    line = P_ToPtr(DMU_LINE, idx);
+    line = P_ToPtr(DMU_LINEDEF, idx);
     info = &xg->info;
     levtime = TIC2FLT(leveltime);
 
@@ -2679,7 +2679,7 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
     {
         // The texture should be moved. Calculate the offsets.
         float       current[2]; // The current offset.
-        side_t     *side;
+        sidedef_t     *side;
 
         angle_t ang =
             ((angle_t) (ANGLE_MAX * (info->texMoveAngle / 360))) >>
@@ -2701,7 +2701,7 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
 	     */
 
         // Front side.
-        side = P_GetPtr(DMU_LINE, idx, DMU_SIDE0);
+        side = P_GetPtr(DMU_LINEDEF, idx, DMU_SIDEDEF0);
         if(side)
         {
             P_GetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
@@ -2721,7 +2721,7 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
         }
 
         // Back side.
-        side = P_GetPtr(DMU_LINE, idx, DMU_SIDE1);
+        side = P_GetPtr(DMU_LINEDEF, idx, DMU_SIDEDEF1);
         if(side)
         {
             P_GetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);

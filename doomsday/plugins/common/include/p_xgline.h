@@ -355,36 +355,36 @@ void            XL_Ticker(void);
 // Called when reseting engine state.
 void            XL_Update(void);
 
-void            XL_SetLineType(struct line_s *line, int id);
+void            XL_SetLineType(struct linedef_s *line, int id);
 
 linetype_t     *XL_GetType(int id);
-int             XL_LineEvent(int evtype, int linetype, struct line_s *line,
+int             XL_LineEvent(int evtype, int linetype, struct linedef_s *line,
                              int sidenum, void *data);
 void            XL_ActivateLine(boolean activating, linetype_t * info,
-                                struct line_s *line, int sidenum,
+                                struct linedef_s *line, int sidenum,
                                 struct mobj_s *data, int evtype);
-int             XL_TraverseLines(struct line_s *line, int reftype, int ref,
+int             XL_TraverseLines(struct linedef_s *line, int reftype, int ref,
                                  void *context, void *context2, struct mobj_s *activator,
                                  int (C_DECL *func)());
-int             XL_TraversePlanes(struct line_s *line, int reftype, int ref,
+int             XL_TraversePlanes(struct linedef_s *line, int reftype, int ref,
                                   void *context, void *context2, boolean travsectors,
                                   struct mobj_s *activator,
                                   int (C_DECL *func)());
 
 // Return false if the event was processed.
-int             XL_CrossLine(struct line_s *line, int sidenum,
+int             XL_CrossLine(struct linedef_s *line, int sidenum,
                              struct mobj_s *thing);
-int             XL_UseLine(struct line_s *line, int sidenum,
+int             XL_UseLine(struct linedef_s *line, int sidenum,
                            struct mobj_s *thing);
-int             XL_ShootLine(struct line_s *line, int sidenum,
+int             XL_ShootLine(struct linedef_s *line, int sidenum,
                              struct mobj_s *thing);
-int             XL_HitLine(struct line_s *line, int sidenum,
+int             XL_HitLine(struct linedef_s *line, int sidenum,
                            struct mobj_s *thing);
 
 int             XG_RandomInt(int min, int max);
 
-void            SV_WriteXGLine(struct line_s *li);
-void            SV_ReadXGLine(struct line_s *li);
+void            SV_WriteXGLine(struct linedef_s *li);
+void            SV_ReadXGLine(struct linedef_s *li);
 void            XL_UpdateActivators(void);
 
 #endif

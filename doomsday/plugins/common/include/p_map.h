@@ -36,7 +36,7 @@ extern float tmfloorz;
 extern float tmceilingz;
 extern int tmfloorpic;
 
-extern line_t  *ceilingline;
+extern linedef_t  *ceilingline;
 extern mobj_t  *linetarget; // who got hit (or NULL)
 
 #if __JHEXEN__

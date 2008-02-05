@@ -2507,14 +2507,14 @@ static void renderWallSeg(seg_t *seg, void *data)
 {
     ssecitervars_t *vars = (ssecitervars_t*) data;
     float       v1[2], v2[2];
-    line_t     *line;
+    linedef_t     *line;
     xline_t    *xLine;
     sector_t   *frontSector, *backSector;
     mapobjectinfo_t *info;
     player_t   *plr = vars->plr;
     automap_t  *map = vars->map;
 
-    line = P_GetPtrp(seg, DMU_LINE);
+    line = P_GetPtrp(seg, DMU_LINEDEF);
     if(!line)
         return;
 
@@ -2526,7 +2526,7 @@ static void renderWallSeg(seg_t *seg, void *data)
         return;
 
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    if(frontSector != P_GetPtrp(line, DMU_SIDE0_OF_LINE | DMU_SECTOR))
+    if(frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR))
         return; // We only want to draw twosided lines once.
 
 #if !__JHEXEN__

@@ -73,13 +73,13 @@
 
 // CODE --------------------------------------------------------------------
 
-line_t *P_AllocDummyLine(void)
+linedef_t *P_AllocDummyLine(void)
 {
     xline_t* extra = Z_Calloc(sizeof(xline_t), PU_STATIC, 0);
-    return P_AllocDummy(DMU_LINE, extra);
+    return P_AllocDummy(DMU_LINEDEF, extra);
 }
 
-void P_FreeDummyLine(line_t* line)
+void P_FreeDummyLine(linedef_t* line)
 {
     Z_Free(P_DummyExtraData(line));
     P_FreeDummy(line);
@@ -89,10 +89,10 @@ void P_FreeDummyLine(line_t* line)
  * Copies all (changeable) properties from one line to another including the
  * extended properties.
  */
-void P_CopyLine(line_t *from, line_t *to)
+void P_CopyLine(linedef_t *from, linedef_t *to)
 {
     int         i, sidx;
-    side_t     *sidefrom, *sideto;
+    sidedef_t     *sidefrom, *sideto;
     xline_t    *xfrom = P_ToXLine(from);
     xline_t    *xto = P_ToXLine(to);
 
@@ -102,7 +102,7 @@ void P_CopyLine(line_t *from, line_t *to)
     // Copy the built-in properties
     for(i = 0; i < 2; ++i) // For each side
     {
-        sidx = (i==0? DMU_SIDE0 : DMU_SIDE1);
+        sidx = (i==0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
 
         sidefrom = P_GetPtrp(from, sidx);
         sideto = P_GetPtrp(to, sidx);

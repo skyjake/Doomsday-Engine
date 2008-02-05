@@ -85,7 +85,7 @@ static void CheckMissileImpact(mobj_t *mobj);
 static void  CheckMissileImpact(mobj_t *mobj);
 #elif __JHEXEN__
 static void  P_FakeZMovement(mobj_t *mo);
-static void  CheckForPushSpecial(line_t *line, int side, mobj_t *mobj);
+static void  CheckForPushSpecial(linedef_t *line, int side, mobj_t *mobj);
 #endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -108,14 +108,14 @@ boolean felldown;
 
 // keep track of the line that lowers the ceiling,
 // so missiles don't explode against sky hack walls
-line_t *ceilingline;
+linedef_t *ceilingline;
 
 // Used to prevent player getting stuck in monster
 // Based on solution derived by Lee Killough
 // See also floorline and static int untouched
 
-line_t *floorline; // $unstuck: Highest touched floor
-line_t *blockline; // $unstuck: blocking linedef
+linedef_t *floorline; // $unstuck: Highest touched floor
+linedef_t *blockline; // $unstuck: blocking linedef
 
 mobj_t *linetarget; // who got hit (or NULL)
 
@@ -130,10 +130,10 @@ mobj_t *BlockingMobj;
 
 static float tm[3];
 static float tmheight;
-static line_t *tmhitline;
+static linedef_t *tmhitline;
 static float tmdropoffz;
 static float bestslidefrac, secondslidefrac;
-static line_t *bestslideline, *secondslideline;
+static linedef_t *bestslideline, *secondslideline;
 
 static mobj_t *slidemo;
 
@@ -311,7 +311,7 @@ boolean P_TeleportMove(mobj_t *thing, float x, float y, boolean alwaysstomp)
  *
  * @param data      Unused
  */
-boolean PIT_CrossLine(line_t *ld, void *data)
+boolean PIT_CrossLine(linedef_t *ld, void *data)
 {
     int                 flags = P_GetIntp(ld, DMU_FLAGS);
 
@@ -373,7 +373,7 @@ boolean P_CheckSides(mobj_t *actor, float x, float y)
  * $unstuck: used to test intersection between thing and line assuming NO
  * movement occurs -- used to avoid sticky situations.
  */
-static int untouched(line_t *ld)
+static int untouched(linedef_t *ld)
 {
     float       x, y, box[4];
     float       bbox[4];
@@ -859,7 +859,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 /**
  * Adjusts tmfloorz and tmceilingz as lines are contacted
  */
-boolean PIT_CheckLine(line_t *ld, void *data)
+boolean PIT_CheckLine(linedef_t *ld, void *data)
 {
     float               bbox[4];
     xline_t            *xline;
@@ -1141,7 +1141,7 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
 {
     float       oldpos[3];
     int         side, oldside;
-    line_t     *ld;
+    linedef_t     *ld;
 
     // $dropoff_fix: felldown
     floatok = false;
@@ -1444,7 +1444,7 @@ boolean PTR_ShootTraverse(intercept_t *in)
 {
     float       pos[3];
     float       frac;
-    line_t     *li;
+    linedef_t     *li;
     mobj_t     *th;
     float       slope;
     float       dist;
@@ -1468,7 +1468,7 @@ boolean PTR_ShootTraverse(intercept_t *in)
 
     if(in->type == ICPT_LINE)
     {
-        li = in->d.line;
+        li = in->d.lineDef;
         xline = P_ToXLine(li);
         if(xline->special)
             P_ActivateLine(li, shootthing, 0, SPAC_IMPACT);
@@ -1600,7 +1600,7 @@ boolean PTR_ShootTraverse(intercept_t *in)
         }
 /*
 if(lineWasHit)
-    Con_Message("Hit line [%i,%i]\n", P_GetIntp(li, DMU_SIDE0), P_GetIntp(li, DMU_SIDE1));
+    Con_Message("Hit line [%i,%i]\n", P_GetIntp(li, DMU_SIDEDEF0), P_GetIntp(li, DMU_SIDEDEF1));
 */
 #endif
         // Don't go any farther.
@@ -1710,7 +1710,7 @@ if(lineWasHit)
  */
 boolean PTR_AimTraverse(intercept_t *in)
 {
-    line_t     *li;
+    linedef_t     *li;
     mobj_t     *th;
     float       slope, thingtopslope, thingbottomslope;
     float       dist;
@@ -1721,7 +1721,7 @@ boolean PTR_AimTraverse(intercept_t *in)
         float   ffloor, bfloor;
         float   fceil, bceil;
 
-        li = in->d.line;
+        li = in->d.lineDef;
 
         if(!(P_GetIntp(li, DMU_FLAGS) & DDLF_TWOSIDED))
             return false; // Stop.
@@ -2049,11 +2049,11 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
 boolean PTR_UseTraverse(intercept_t *in)
 {
     int                 side;
-    xline_t            *xline = P_ToXLine(in->d.line);
+    xline_t            *xline = P_ToXLine(in->d.lineDef);
 
     if(!xline->special)
     {
-        P_LineOpening(in->d.line);
+        P_LineOpening(in->d.lineDef);
         if(openrange <= 0)
         {
             if(usething->player)
@@ -2078,7 +2078,8 @@ boolean PTR_UseTraverse(intercept_t *in)
     }
 
     side = 0;
-    if(P_PointOnLineSide(usething->pos[VX], usething->pos[VY], in->d.line) == 1)
+    if(1 == P_PointOnLineSide(usething->pos[VX], usething->pos[VY],
+                              in->d.lineDef))
         side = 1;
 
 #if !__JDOOM__
@@ -2086,7 +2087,7 @@ boolean PTR_UseTraverse(intercept_t *in)
         return false;       // don't use back side
 #endif
 
-    P_ActivateLine(in->d.line, usething, side, SPAC_USE);
+    P_ActivateLine(in->d.lineDef, usething, side, SPAC_USE);
 
 #if !__JHEXEN__
     // Can use multiple line specials in a row with the PassThru flag.
@@ -2202,7 +2203,7 @@ static boolean P_ThingHeightClip(mobj_t *thing)
  *
  * @param ld            The line being slid along.
  */
-static void P_HitSlideLine(line_t *ld)
+static void P_HitSlideLine(linedef_t *ld)
 {
     int         side;
     angle_t     lineangle, moveangle, deltaangle;
@@ -2245,13 +2246,13 @@ static void P_HitSlideLine(line_t *ld)
 
 boolean PTR_SlideTraverse(intercept_t *in)
 {
-    line_t         *li;
+    linedef_t         *li;
     xline_t        *xline;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: Not a line?");
 
-    li = in->d.line;
+    li = in->d.lineDef;
     xline = P_ToXLine(li);
     if(!(P_GetIntp(li, DMU_FLAGS) & DDLF_TWOSIDED))
     {
@@ -2599,7 +2600,7 @@ boolean P_TestMobjLocation(mobj_t *mobj)
 #if __DOOM64TC__ || __JHERETIC__
 static void CheckMissileImpact(mobj_t *mobj)
 {
-    line_t     *ld;
+    linedef_t     *ld;
     int         size = P_IterListSize(spechit);
 
     if(!size || !(mobj->flags & MF_MISSILE) || !mobj->target)
@@ -2822,7 +2823,7 @@ static void P_FakeZMovement(mobj_t *mo)
     }
 }
 
-static void CheckForPushSpecial(line_t *line, int side, mobj_t *mobj)
+static void CheckForPushSpecial(linedef_t *line, int side, mobj_t *mobj)
 {
     if(P_ToXLine(line)->special)
     {
@@ -2839,12 +2840,12 @@ static void CheckForPushSpecial(line_t *line, int side, mobj_t *mobj)
 
 boolean PTR_BounceTraverse(intercept_t *in)
 {
-    line_t     *li;
+    linedef_t     *li;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_BounceTraverse: Not a line?");
 
-    li = in->d.line;
+    li = in->d.lineDef;
     if(!(P_GetIntp(li, DMU_FLAGS) & DDLF_TWOSIDED))
     {
         if(P_PointOnLineSide(slidemo->pos[VX], slidemo->pos[VY], li))
@@ -2934,9 +2935,9 @@ boolean PTR_PuzzleItemTraverse(intercept_t *in)
 
     if(in->type == ICPT_LINE)
     {   // Check line.
-        if(P_ToXLine(in->d.line)->special != USE_PUZZLE_ITEM_SPECIAL)
+        if(P_ToXLine(in->d.lineDef)->special != USE_PUZZLE_ITEM_SPECIAL)
         {
-            P_LineOpening(in->d.line);
+            P_LineOpening(in->d.lineDef);
             if(openrange <= 0)
             {
                 sound = SFX_NONE;
@@ -2970,15 +2971,15 @@ boolean PTR_PuzzleItemTraverse(intercept_t *in)
         }
 
         if(P_PointOnLineSide(PuzzleItemUser->pos[VX],
-                             PuzzleItemUser->pos[VY], in->d.line) == 1)
+                             PuzzleItemUser->pos[VY], in->d.lineDef) == 1)
             return false; // Don't use back sides.
 
-        if(PuzzleItemType != P_ToXLine(in->d.line)->arg1)
+        if(PuzzleItemType != P_ToXLine(in->d.lineDef)->arg1)
             return false; // Item type doesn't match.
 
-        P_StartACS(P_ToXLine(in->d.line)->arg2, 0, &P_ToXLine(in->d.line)->arg3,
-                   PuzzleItemUser, in->d.line, 0);
-        P_ToXLine(in->d.line)->special = 0;
+        P_StartACS(P_ToXLine(in->d.lineDef)->arg2, 0, &P_ToXLine(in->d.lineDef)->arg3,
+                   PuzzleItemUser, in->d.lineDef, 0);
+        P_ToXLine(in->d.lineDef)->special = 0;
         PuzzleActivated = true;
 
         return false; // Stop searching.

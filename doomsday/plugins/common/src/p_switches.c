@@ -280,7 +280,7 @@ void P_InitSwitchList(void)
  * the button, the texture number of the button, and the time the button is
  * to remain active in gametics.
  */
-void P_StartButton(line_t *line, linesection_t section, int texture, int time)
+void P_StartButton(linedef_t *line, linesection_t section, int texture, int time)
 {
     button_t *button;
 
@@ -325,14 +325,14 @@ void P_StartButton(line_t *line, linesection_t section, int texture, int time)
  * Function that changes wall texture.
  * Tell it if switch is ok to use again (1=yes, it's a button).
  */
-void P_ChangeSwitchTexture(line_t *line, int useAgain)
+void P_ChangeSwitchTexture(linedef_t *line, int useAgain)
 {
     int         i;
     int         texTop, texMid, texBot;
 #if !__JHEXEN__
     int         sound;
 #endif
-    side_t     *sdef = P_GetPtrp(line, DMU_SIDE0);
+    sidedef_t     *sdef = P_GetPtrp(line, DMU_SIDEDEF0);
     sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 
 #if !__JHEXEN__

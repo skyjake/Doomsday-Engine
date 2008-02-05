@@ -269,7 +269,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
 }
 
 #if __DOOM64TC__
-static int EV_DoCeiling2(line_t *line, int tag, float basespeed,
+static int EV_DoCeiling2(linedef_t *line, int tag, float basespeed,
                          ceiling_e type)
 #elif __JHEXEN__
 static int EV_DoCeiling2(byte *arg, int tag, float basespeed, ceiling_e type)
@@ -361,8 +361,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
         case customCeiling: // d64tc
             {
             //bitmip? wha?
-            side_t *front = P_GetPtrp(line, DMU_SIDE0);
-            side_t *back = P_GetPtrp(line, DMU_SIDE1);
+            sidedef_t *front = P_GetPtrp(line, DMU_SIDEDEF0);
+            sidedef_t *back = P_GetPtrp(line, DMU_SIDEDEF1);
             float bitmipL = 0, bitmipR = 0;
 
             bitmipL = P_GetFloatp(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
@@ -446,9 +446,9 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
  * Move a ceiling up/down.
  */
 #if __JHEXEN__
-int EV_DoCeiling(line_t *line, byte *args, ceiling_e type)
+int EV_DoCeiling(linedef_t *line, byte *args, ceiling_e type)
 #else
-int EV_DoCeiling(line_t *line, ceiling_e type)
+int EV_DoCeiling(linedef_t *line, ceiling_e type)
 #endif
 {
 #if __JHEXEN__
@@ -540,7 +540,7 @@ void P_RemoveAllActiveCeilings(void)
  * @return              @c true, if a ceiling is reactivated.
  */
 #if !__JHEXEN__
-int P_ActivateInStasisCeiling(line_t *line)
+int P_ActivateInStasisCeiling(linedef_t *line)
 {
     int         rtn = 0;
     xline_t    *xline = P_ToXLine(line);
@@ -600,9 +600,9 @@ static int EV_CeilingCrushStop2(int tag)
  * @return              @c true, if a ceiling put in stasis.
  */
 #if __JHEXEN__
-int EV_CeilingCrushStop(line_t *line, byte *args)
+int EV_CeilingCrushStop(linedef_t *line, byte *args)
 #else
-int EV_CeilingCrushStop(line_t *line)
+int EV_CeilingCrushStop(linedef_t *line)
 #endif
 {
 #if __JHEXEN__

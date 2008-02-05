@@ -44,7 +44,7 @@ iterlist_t     *P_GetLineIterListForTag(int tag, boolean createNewList);
 void            P_DestroySectorTagLists(void);
 iterlist_t     *P_GetSectorIterListForTag(int tag, boolean createNewList);
 
-sector_t       *P_GetNextSector(line_t *line, sector_t *sec);
+sector_t       *P_GetNextSector(linedef_t *line, sector_t *sec);
 
 float           P_FindLowestFloorSurrounding(sector_t *sec);
 float           P_FindHighestFloorSurrounding(sector_t *sec);

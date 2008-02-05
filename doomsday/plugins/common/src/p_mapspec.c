@@ -178,7 +178,7 @@ iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList)
  * Return sector_t * of sector next to current.
  * NULL if not two-sided line
  */
-sector_t *P_GetNextSector(line_t *line, sector_t *sec)
+sector_t *P_GetNextSector(linedef_t *line, sector_t *sec)
 {
     if(!(P_GetIntp(line, DMU_FLAGS) & DDLF_TWOSIDED))
         return NULL;
@@ -197,14 +197,14 @@ float P_FindLowestFloorSurrounding(sector_t *sec)
     int         i;
     int         lineCount;
     float       floor;
-    line_t     *check;
+    linedef_t     *check;
     sector_t   *other;
 
     floor = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
-    lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
         other = P_GetNextSector(check, sec);
 
         if(!other)
@@ -225,13 +225,13 @@ float P_FindHighestFloorSurrounding(sector_t *sec)
     int         i;
     int         lineCount;
     float       floor = -500;
-    line_t     *check;
+    linedef_t     *check;
     sector_t   *other;
 
-    lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
         other = P_GetNextSector(check, sec);
 
         if(!other)
@@ -259,13 +259,13 @@ float P_FindNextHighestFloor(sector_t *sec, float currentheight)
     int         lineCount;
     float       otherHeight;
     float       anotherHeight;
-    line_t     *check;
+    linedef_t     *check;
     sector_t   *other;
 
-    lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
         other = P_GetNextSector(check, sec);
 
         if(!other)
@@ -277,7 +277,7 @@ float P_FindNextHighestFloor(sector_t *sec, float currentheight)
         {
             while(++i < lineCount)
             {
-                check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+                check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
                 other = P_GetNextSector(check, sec);
 
                 if(other)
@@ -305,13 +305,13 @@ float P_FindLowestCeilingSurrounding(sector_t *sec)
     int         i;
     int         lineCount;
     float       height = DDMAXFLOAT;
-    line_t     *check;
+    linedef_t     *check;
     sector_t   *other;
 
-    lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
         other = P_GetNextSector(check, sec);
 
         if(!other)
@@ -331,13 +331,13 @@ float P_FindHighestCeilingSurrounding(sector_t *sec)
     int         i;
     int         lineCount;
     float       height = 0;
-    line_t     *check;
+    linedef_t     *check;
     sector_t   *other;
 
-    lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
         other = P_GetNextSector(check, sec);
 
         if(!other)
@@ -356,13 +356,13 @@ float P_FindMinSurroundingLight(sector_t *sec, float min)
 {
     int         i;
     int         lineCount;
-    line_t     *line;
+    linedef_t     *line;
     sector_t   *check;
 
-    lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
-        line = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        line = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
         check = P_GetNextSector(line, sec);
 
         if(!check)

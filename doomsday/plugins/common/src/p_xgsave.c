@@ -79,7 +79,7 @@
 
 // CODE --------------------------------------------------------------------
 
-void SV_WriteXGLine(line_t *li)
+void SV_WriteXGLine(linedef_t *li)
 {
     xgline_t *xg;
     linetype_t *info;
@@ -111,7 +111,7 @@ void SV_WriteXGLine(line_t *li)
     SV_WriteFloat(xg->chTimer);
 }
 
-void SV_ReadXGLine(line_t *li)
+void SV_ReadXGLine(linedef_t *li)
 {
     xgline_t *xg;
     xline_t *xline = P_ToXLine(li);
@@ -271,7 +271,7 @@ int SV_ReadXGPlaneMover(xgplanemover_t *mov)
 
     i = SV_ReadLong();
     if(i)
-        mov->origin = P_ToPtr(DMU_LINE, i - 1);
+        mov->origin = P_ToPtr(DMU_LINEDEF, i - 1);
 
     mov->destination = FIX2FLT(SV_ReadLong());
     mov->speed = FIX2FLT(SV_ReadLong());
@@ -301,7 +301,7 @@ void XL_UpdateActivators(void)
 
     for(i = 0; i < numlines; ++i)
     {
-        xline = P_ToXLine(P_ToPtr(DMU_LINE, i));
+        xline = P_ToXLine(P_ToPtr(DMU_LINEDEF, i));
         if(xline->xg)
             xline->xg->activator = (activator? activator : &dummything);
     }

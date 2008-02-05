@@ -110,7 +110,7 @@ boolean levelSetup;
 /**
  * Converts a line to an xline.
  */
-xline_t* P_ToXLine(line_t *line)
+xline_t* P_ToXLine(linedef_t *line)
 {
     // Is it a dummy?
     if(P_IsDummy(line))
@@ -307,7 +307,7 @@ static void interpretLinedefFlags(void)
             xline->flags &= ~ML_MAPPED;
         }
 
-        P_SetInt(DMU_LINE, i, DMU_FLAGS, flags);
+        P_SetInt(DMU_LINEDEF, i, DMU_FLAGS, flags);
     }
 
 #undef ML_BLOCKING
@@ -515,17 +515,17 @@ static void P_FinalizeLevel(void)
     int     bottomTex;
     int     midTex;
     float   yoff;
-    side_t* side;
-    line_t* line;
+    sidedef_t* side;
+    linedef_t* line;
 
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINE, i);
+        line = P_ToPtr(DMU_LINEDEF, i);
         for(k = 0; k < 2; k++)
         {
             if(P_GetPtrp(line, k == 0? DMU_FRONT_SECTOR : DMU_BACK_SECTOR))
             {
-                side = P_GetPtrp(line, k == 0? DMU_SIDE0 : DMU_SIDE1);
+                side = P_GetPtrp(line, k == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
                 yoff = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
                 bottomTex = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
                 midTex = P_GetIntp(side, DMU_MIDDLE_MATERIAL);

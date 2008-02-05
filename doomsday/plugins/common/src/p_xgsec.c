@@ -276,7 +276,7 @@ void XF_Init(sector_t *sec, function_t *fn, char *func, int min, int max,
     fn->oldValue = -scale + offset;
 }
 
-int C_DECL XLTrav_LineAngle(line_t *line, boolean dummy, void *context,
+int C_DECL XLTrav_LineAngle(linedef_t *line, boolean dummy, void *context,
                             void *context2, mobj_t *activator)
 {
     sector_t* sec = (sector_t *) context;
@@ -657,16 +657,16 @@ int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, int *heightlist,
 {
     int         i, count = 0;
     int         sectorLineCount;
-    line_t     *lin;
+    linedef_t     *lin;
     sector_t   *other;
 
     if(!sector)
         return 0;
 
-    sectorLineCount = P_GetIntp(sector, DMU_LINE_COUNT);
+    sectorLineCount = P_GetIntp(sector, DMU_LINEDEF_COUNT);
     for(i = 0; i < sectorLineCount; ++i)
     {
-        lin = P_GetPtrp(sector, DMU_LINE_OF_SECTOR | i);
+        lin = P_GetPtrp(sector, DMU_LINEDEF_OF_SECTOR | i);
 
         // Only accept two-sided lines.
         if(!P_GetPtrp(lin, DMU_BACK_SECTOR) ||
@@ -792,9 +792,9 @@ int XS_GetTexH(int tex)
  *
  * @return                  @c MAXINT if not height n/a.
  */
-int XS_TextureHeight(line_t *line, int part)
+int XS_TextureHeight(linedef_t *line, int part)
 {
-    side_t     *side;
+    sidedef_t     *side;
     int         snum = 0;
     int         minfloor = 0, maxfloor = 0, maxceil = 0;
     sector_t   *front = P_GetPtrp(line, DMU_FRONT_SECTOR);
@@ -834,7 +834,7 @@ int XS_TextureHeight(line_t *line, int part)
     }
     else
     {
-        if(P_GetPtrp(line, DMU_SIDE0))
+        if(P_GetPtrp(line, DMU_SIDEDEF0))
             snum = 0;
         else
             snum = 1;
@@ -842,9 +842,9 @@ int XS_TextureHeight(line_t *line, int part)
 
     // Which side are we working with?
     if(snum == 0)
-        side = P_GetPtrp(line, DMU_SIDE0);
+        side = P_GetPtrp(line, DMU_SIDEDEF0);
     else
-        side = P_GetPtrp(line, DMU_SIDE1);
+        side = P_GetPtrp(line, DMU_SIDEDEF1);
 
     // Which section of the wall?
     if(part == LWS_UPPER)
@@ -985,7 +985,7 @@ sector_t *XS_FindActTagged(int tag)
     return NULL;
 }
 
-boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref,
+boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
                     uint *refdata, int *height, int *pic,
                     sector_t **planesector)
 {
@@ -1265,9 +1265,9 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref,
 
         // Get the heights of the sector's textures.
         // The heights are in real world coordinates.
-        for(i = 0, k = 0; i < P_GetIntp(sector, DMU_LINE_COUNT); ++i)
+        for(i = 0, k = 0; i < P_GetIntp(sector, DMU_LINEDEF_COUNT); ++i)
         {
-            k = XS_TextureHeight(P_GetPtrp(sector, DMU_LINE_OF_SECTOR | i), part);
+            k = XS_TextureHeight(P_GetPtrp(sector, DMU_LINEDEF_OF_SECTOR | i), part);
             if(k != DDMAXINT)
                 heights[num++] = k << FRACBITS;
         }
@@ -1357,7 +1357,7 @@ int C_DECL XSTrav_HighestSectorType(sector_t *sec, boolean ceiling,
     return true; // Keep looking...
 }
 
-void XS_InitMovePlane(line_t *line)
+void XS_InitMovePlane(linedef_t *line)
 {
     xline_t *xline = P_ToXLine(line);
 
@@ -1369,7 +1369,7 @@ void XS_InitMovePlane(line_t *line)
 int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
                             void *context2, mobj_t *activator)
 {
-    line_t     *line = (line_t *) context;
+    linedef_t     *line = (linedef_t *) context;
     linetype_t *info = (linetype_t *) context2;
     xgplanemover_t *mover;
     int         flat, st;
@@ -1501,12 +1501,12 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
     return true; // Keep looking...
 }
 
-void XS_InitStairBuilder(line_t *line)
+void XS_InitStairBuilder(linedef_t *line)
 {
     memset(builder, 0, numsectors);
 }
 
-boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
+boolean XS_DoBuild(sector_t *sector, boolean ceiling, linedef_t *origin,
                    linetype_t *info, uint stepcount)
 {
     static float firstheight;
@@ -1579,8 +1579,8 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
     boolean     found = true;
     int         k;
     uint        i, lowest, stepcount = 0;
-    line_t     *line;
-    line_t     *origin = (line_t *) context;
+    linedef_t     *line;
+    linedef_t     *origin = (linedef_t *) context;
     linetype_t *info = context2;
     sector_t   *sec;
     boolean     picstop = info->iparm[2] != 0;
@@ -1627,9 +1627,9 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
             // Any 2-sided lines facing the right way?
             sec = P_ToPtr(DMU_SECTOR, i);
 
-            for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
+            for(k = 0; k < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++k)
             {
-                line = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
+                line = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | k);
 
                 if(!P_GetPtrp(line, DMU_FRONT_SECTOR) ||
                    !P_GetPtrp(line, DMU_BACK_SECTOR))
@@ -1675,7 +1675,7 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
 
         if(!spread && found)
         {
-            XS_DoBuild(P_GetPtr(DMU_LINE, lowest, DMU_BACK_SECTOR), ceiling, origin, info,
+            XS_DoBuild(P_GetPtr(DMU_LINEDEF, lowest, DMU_BACK_SECTOR), ceiling, origin, info,
                        stepcount);
         }
     }
@@ -1703,7 +1703,7 @@ int C_DECL XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling,
                                void *context, void *context2,
                                mobj_t *activator)
 {
-    line_t     *line = (line_t *) context;
+    linedef_t     *line = (linedef_t *) context;
     linetype_t *info = context2;
     int         pic;
     float       rgb[3];
@@ -1751,7 +1751,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling,
                               void *context, void *context2,
                               mobj_t *activator)
 {
-    line_t     *line = (line_t *) context;
+    linedef_t     *line = (linedef_t *) context;
     linetype_t *info = context2;
     int         num, levels[MAX_VALS], i = 0;
     float       uselevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
@@ -1888,7 +1888,7 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling,
                               void *context, void *context2,
                               mobj_t *activator)
 {
-    line_t     *line = (line_t *) context;
+    linedef_t     *line = (linedef_t *) context;
     linetype_t *info = context2;
     sector_t   *from = NULL;
     uint        refdata;
@@ -2415,7 +2415,7 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
     xgsector_t *xg;
     sectortype_t *info;
     float       flevtime = TIC2FLT(leveltime);
-    line_t     *dummyLine;
+    linedef_t     *dummyLine;
     xline_t    *xdummyLine;
     linetype_t *ltype;
 

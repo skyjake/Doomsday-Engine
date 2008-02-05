@@ -419,15 +419,15 @@ void T_MoveFloor(floormove_t *floor)
  * Handle moving floors.
  */
 #if __JHEXEN__
-int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
+int EV_DoFloor(linedef_t *line, byte *args, floor_e floortype)
 #else
-int EV_DoFloor(line_t *line, floor_e floortype)
+int EV_DoFloor(linedef_t *line, floor_e floortype)
 #endif
 {
 #if !__JHEXEN__
     int         i;
     int         bottomtexture;
-    line_t     *ln;
+    linedef_t     *ln;
     sector_t   *frontsector;
 #endif
     int         rtn = 0;
@@ -439,8 +439,8 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 #if __DOOM64TC__
     // d64tc > bitmip? wha?
     float bitmipL = 0, bitmipR = 0;
-    side_t *front = P_GetPtrp(line, DMU_SIDE0);
-    side_t *back  = P_GetPtrp(line, DMU_SIDE1);
+    sidedef_t *front = P_GetPtrp(line, DMU_SIDEDEF0);
+    sidedef_t *back  = P_GetPtrp(line, DMU_SIDEDEF1);
 
     bitmipL = P_GetFloatp(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
     if(back)
@@ -754,18 +754,18 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         case raiseToTexture:
             {
             int     minsize = MAXINT;
-            side_t *side;
+            sidedef_t *side;
 
             floor->direction = 1;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
-            for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
+            for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
             {
-                ln = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+                ln = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
                 if(P_GetIntp(ln, DMU_FLAGS) & DDLF_TWOSIDED)
                 {
-                    side = P_GetPtrp(ln, DMU_SIDE0);
+                    side = P_GetPtrp(ln, DMU_SIDEDEF0);
                     bottomtexture = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
                     if(bottomtexture >= 0)
                     {
@@ -774,7 +774,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                             minsize = Get(DD_QUERY_RESULT);
                     }
 
-                    side = P_GetPtrp(ln, DMU_SIDE1);
+                    side = P_GetPtrp(ln, DMU_SIDEDEF1);
                     bottomtexture = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
                     if(bottomtexture >= 0)
                     {
@@ -798,10 +798,10 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->floorDestHeight = P_FindLowestFloorSurrounding(sec);
             floor->texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
 
-            for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
+            for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
             {
                 // Choose the correct texture and special on two sided lines.
-                ln = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+                ln = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
                 if(P_GetIntp(ln, DMU_FLAGS) & DDLF_TWOSIDED)
                 {
@@ -854,7 +854,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 }
 
 #if __JHEXEN__
-int EV_FloorCrushStop(line_t *line, byte *args)
+int EV_FloorCrushStop(linedef_t *line, byte *args)
 {
     thinker_t  *think;
     floormove_t *floor;
@@ -883,7 +883,7 @@ int EV_FloorCrushStop(line_t *line, byte *args)
 #endif
 
 #if __JHEXEN__
-int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
+int EV_DoFloorAndCeiling(linedef_t *line, byte *args, boolean raise)
 {
     boolean     floor, ceiling;
     sector_t   *sec = NULL;
