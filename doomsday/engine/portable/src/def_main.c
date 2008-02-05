@@ -452,7 +452,7 @@ int Def_GetFlagValue(char *flag)
     int     i;
 
     for(i = defs.count.flags.num - 1; i >= 0; i--)
-        if(!strcmp(defs.flags[i].id, flag))
+        if(!stricmp(defs.flags[i].id, flag))
             return defs.flags[i].value;
     Con_Message("Def_GetFlagValue: Undefined flag '%s'.\n", flag);
     return 0;
@@ -468,7 +468,7 @@ char *Def_GetFlagTextByPrefixVal(char *prefix, int val)
     int     i;
 
     for(i = defs.count.flags.num - 1; i >= 0; i--)
-        if(strncmp(defs.flags[i].id, prefix, sizeof(prefix)) == 0 &&
+        if(strnicmp(defs.flags[i].id, prefix, sizeof(prefix)) == 0 &&
             defs.flags[i].value == val)
             return defs.flags[i].text;
 

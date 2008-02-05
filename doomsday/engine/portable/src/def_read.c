@@ -94,6 +94,7 @@
 #define READFLT(X)  if(!ReadFloat(&X)) { FAILURE }
 #define READNBYTEVEC(X,N) if(!ReadNByteVector(X, N)) { FAILURE }
 #define READFLAGS(X,P) if(!ReadFlags(&X, P)) { FAILURE }
+#define READBLENDMODE(X) if(!ReadBlendmode(&X)) { FAILURE }
 
 #define RV_BYTE(lab, X) if(ISLABEL(lab)) { READBYTE(X); } else
 #define RV_INT(lab, X)  if(ISLABEL(lab)) { READINT(X); } else
@@ -108,6 +109,7 @@
 #define RV_STR_INT(lab, S, I)   if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
                                 I = strtol(token,0,0); } else
 #define RV_FLAGS(lab, X, P) if(ISLABEL(lab)) { READFLAGS(X, P); } else
+#define RV_BLENDMODE(lab, X) if(ISLABEL(lab)) { READBLENDMODE(X); } else
 #define RV_ANYSTR(lab, X)   if(ISLABEL(lab)) { if(!ReadAnyString(&X)) { FAILURE } } else
 #define RV_END          { SetError2("Unknown label.", label); retval = false; goto ded_end_read; }
 
@@ -501,6 +503,42 @@ static int ReadFlags(uint *dest, const char *prefix)
             break;
         }
     }
+    return true;
+}
+
+static int ReadBlendmode(blendmode_t *dest)
+{
+    char                flag[1024];
+    blendmode_t         bm;
+
+    // By default, the blendmode is "normal".
+    *dest = BM_NORMAL;
+
+    ReadToken();
+    UnreadToken(token);
+    if(ISTOKEN("\""))
+    {
+        // The old format.
+        if(!ReadString(flag, sizeof(flag)))
+            return false;
+
+        bm = (blendmode_t) Def_EvalFlags(flag);
+        if(bm != BM_NORMAL)
+            *dest = bm;
+
+        return true;
+    }
+
+    // Read the blendmode.
+    ReadToken();
+
+    strcpy(flag, "bm_");
+    strcat(flag, token);
+
+    bm = (blendmode_t) Def_EvalFlags(flag);
+    if(bm != BM_NORMAL)
+        *dest = bm;
+
     return true;
 }
 
@@ -976,7 +1014,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         RV_STR("File", mdl->sub[sub].filename.path)
                         RV_STR("Frame", mdl->sub[sub].frame)
                         RV_INT("Frame range", mdl->sub[sub].frameRange)
-                        RV_FLAGS("Blending mode", mdl->sub[sub].blendMode, "bm_")
+                        RV_BLENDMODE("Blending mode", mdl->sub[sub].blendMode)
                         RV_INT("Skin", mdl->sub[sub].skin)
                         RV_STR("Skin file", mdl->sub[sub].skinFilename.path)
                         RV_INT("Skin range", mdl->sub[sub].skinRange)
@@ -1366,7 +1404,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 READLABEL;
                 RV_FLT("Shininess", ref->shininess)
                 RV_VEC("Min color", ref->minColor, 3)
-                RV_FLAGS("Blending mode", ref->blendMode, "bm_")
+                RV_BLENDMODE("Blending mode", ref->blendMode)
                 RV_STR("Shiny map", ref->shinyMap.path)
                 RV_STR("Mask map", ref->maskMap.path)
                 RV_FLT("Mask width", ref->maskWidth)
