@@ -20,6 +20,8 @@ NAME            "DOOMSDAY"
 ; 107 formerly GL_DoUpdate
 ; 108 formerly GL_ChangeResolution
 ; 118 formerly GL_SetTexture
+; 143 formerly RNG_RandByte
+; 144 formerly RNG_RandFloat
 ; 206 formerly GL_Update
 ; 232 formerly R_SetAnimGroup
 ; 255 formerly P_PointToBlock
@@ -27,10 +29,6 @@ NAME            "DOOMSDAY"
 ; 332 formerly P_ControlReset
 
 EXPORTS
-; Obsolete. To be deleted!
-    DD_SetBindClass             @342 NONAME
-    DD_AddBindClass             @343 NONAME
-
 ; Plugins.
     Plug_AddHook                @1 NONAME
     Plug_RemoveHook             @2 NONAME
@@ -422,8 +420,6 @@ EXPORTS
     M_SkipWhite                 @141 NONAME
     M_FindWhite                 @142 NONAME
     M_StrCatQuoted              @248 NONAME
-    M_Random                    @143 NONAME
-    M_FRandom                   @144 NONAME
     M_ClearBox                  @208 NONAME
     M_AddToBox                  @209 NONAME
     M_ScreenShot                @210 NONAME

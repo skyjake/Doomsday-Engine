@@ -36,8 +36,6 @@
 #define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
                      (c) == '\r')
 
-extern int      rndindex;
-
 // Memory.
 void           *M_Malloc(size_t size);
 void           *M_Calloc(size_t size);
@@ -86,9 +84,9 @@ char           *M_LimitedStrCat(const char *str, size_t maxWidth,
 char           *M_StrCatQuoted(char *dest, char *src);
 
 // Random numbers.
-byte            M_Random(void);
-float           M_FRandom(void);
-void            M_ClearRandom(void);
+byte            RNG_RandByte(void);
+float           RNG_RandFloat(void);
+void            RNG_Reset(void);
 
 // Math routines.
 float           M_ApproxDistancef(float dx, float dy);

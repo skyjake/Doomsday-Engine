@@ -299,9 +299,9 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
     if(!nopitch)
     {
         if(info->flags & SF_RANDOM_SHIFT)
-            freq += (M_FRandom() - M_FRandom()) * (7.0f / 255);
+            freq += (RNG_RandFloat() - RNG_RandFloat()) * (7.0f / 255);
         if(info->flags & SF_RANDOM_SHIFT2)
-            freq += (M_FRandom() - M_FRandom()) * (15.0f / 255);
+            freq += (RNG_RandFloat() - RNG_RandFloat()) * (15.0f / 255);
     }
 
     // If the sound has an exclusion group, either all or the same emitter's

@@ -287,17 +287,17 @@ static void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high)
     {
         // The simple, cubic algorithm.
         for(i = 0; i < 3; ++i)
-            pos[i] += (high * (M_Random() - M_Random())) * reciprocal255;
+            pos[i] += (high * (RNG_RandByte() - RNG_RandByte())) * reciprocal255;
     }
     else
     {
         // The more complicated, spherical algorithm.
-        off = ((high - low) * (M_Random() - M_Random())) * reciprocal255;
+        off = ((high - low) * (RNG_RandByte() - RNG_RandByte())) * reciprocal255;
         off += off < 0 ? -low : low;
 
-        theta = M_Random() << (24 - ANGLETOFINESHIFT);
+        theta = RNG_RandByte() << (24 - ANGLETOFINESHIFT);
         phi =
-            acos(2 * (M_Random() * reciprocal255) -
+            acos(2 * (RNG_RandByte() * reciprocal255) -
                  1) / PI * (ANGLE_180 >> ANGLETOFINESHIFT);
 
         vec[VZ] = FixedMul(fineCosine[phi], FRACUNIT * 0.8333);
@@ -316,9 +316,9 @@ static void P_SetParticleAngles(particle_t *pt, int flags)
     if(flags & PTCF_ZERO_PITCH)
         pt->pitch = 0;
     if(flags & PTCF_RANDOM_YAW)
-        pt->yaw = M_FRandom() * 65536;
+        pt->yaw = RNG_RandFloat() * 65536;
     if(flags & PTCF_RANDOM_PITCH)
-        pt->pitch = M_FRandom() * 65536;
+        pt->pitch = RNG_RandFloat() * 65536;
 }
 
 static void P_ParticleSound(fixed_t pos[3], ded_embsound_t *sound)
@@ -365,23 +365,23 @@ static void P_NewParticle(ptcgen_t *gen)
     // Set the particle's data.
     pt = gen->ptcs + gen->spawnCP;
     pt->stage = 0;
-    if(M_FRandom() < def->altStartVariance)
+    if(RNG_RandFloat() < def->altStartVariance)
         pt->stage = def->altStart;
     pt->tics =
         def->stages[pt->stage].tics * (1 -
                                        def->stages[pt->stage].variance *
-                                       M_FRandom());
+                                       RNG_RandFloat());
 
     // Launch vector.
     pt->mov[VX] =
         gen->vector[VX] +
-        FRACUNIT * (def->vectorVariance * (M_FRandom() - M_FRandom()));
+        FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
     pt->mov[VY] =
         gen->vector[VY] +
-        FRACUNIT * (def->vectorVariance * (M_FRandom() - M_FRandom()));
+        FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
     pt->mov[VZ] =
         gen->vector[VZ] +
-        FRACUNIT * (def->vectorVariance * (M_FRandom() - M_FRandom()));
+        FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
 
     // Apply some aspect ratio scaling to the momentum vector.
     // This counters the 200/240 difference nearly completely.
@@ -390,7 +390,7 @@ static void P_NewParticle(ptcgen_t *gen)
     pt->mov[VY] = FixedMul(pt->mov[VY], FRACUNIT * 0.95);
 
     // Set proper speed.
-    uncertain = def->speed * (1 - def->speedVariance * M_FRandom()) * FRACUNIT;
+    uncertain = def->speed * (1 - def->speedVariance * RNG_RandFloat()) * FRACUNIT;
     len =
         FLT2FIX(P_ApproxDistance(P_ApproxDistance(FIX2FLT(pt->mov[VX]), FIX2FLT(pt->mov[VY])),
                          FIX2FLT(pt->mov[VZ])));
@@ -483,7 +483,7 @@ static void P_NewParticle(ptcgen_t *gen)
         {
             pt->pos[VZ] =
                 FLT2FIX(gen->sector->SP_floorheight) + i +
-                FixedMul(M_Random() << 8,
+                FixedMul(RNG_RandByte() << 8,
                          FLT2FIX(gen->sector->SP_ceilheight -
                                  gen->sector->SP_floorheight) - 2 * i);
         }
@@ -512,9 +512,9 @@ static void P_NewParticle(ptcgen_t *gen)
         {
             subsec =
                 R_PointInSubsector((box[BOXLEFT] +
-                                        M_FRandom() * (box[BOXRIGHT] - box[BOXLEFT])),
+                                        RNG_RandFloat() * (box[BOXRIGHT] - box[BOXLEFT])),
                                    (box[BOXBOTTOM] +
-                                        M_FRandom() * (box[BOXTOP] - box[BOXBOTTOM])));
+                                        RNG_RandFloat() * (box[BOXTOP] - box[BOXBOTTOM])));
             if(subsec->sector == gen->sector)
                 break;
             else
@@ -528,11 +528,11 @@ static void P_NewParticle(ptcgen_t *gen)
         {
             pt->pos[VX] =
                 FRACUNIT * (subsec->bBox[0].pos[VX] +
-                            M_FRandom() * (subsec->bBox[1].pos[VX] -
+                            RNG_RandFloat() * (subsec->bBox[1].pos[VX] -
                                            subsec->bBox[0].pos[VX]));
             pt->pos[VY] =
                 FRACUNIT * (subsec->bBox[0].pos[VY] +
-                            M_FRandom() * (subsec->bBox[1].pos[VY] -
+                            RNG_RandFloat() * (subsec->bBox[1].pos[VY] -
                                            subsec->bBox[0].pos[VY]));
             if(R_PointInSubsector(FIX2FLT(pt->pos[VX]), FIX2FLT(pt->pos[VY])) == subsec)
                 break;          // This is a good place.
@@ -1108,7 +1108,7 @@ void P_PtcGenThinker(ptcgen_t *gen)
             newparts = def->spawnRate;
         }
         newparts *=
-            particleSpawnRate * (1 - def->spawnRateVariance * M_FRandom());
+            particleSpawnRate * (1 - def->spawnRateVariance * RNG_RandFloat());
         gen->spawnCount += newparts;
         while(gen->spawnCount >= 1)
         {
@@ -1139,7 +1139,7 @@ void P_PtcGenThinker(ptcgen_t *gen)
 
             pt->tics =
                 def->stages[pt->stage].tics * (1 - def->stages[pt->stage].
-                                               variance * M_FRandom());
+                                               variance * RNG_RandFloat());
 
             // Change in particle angles?
             P_SetParticleAngles(pt, def->stages[pt->stage].flags);

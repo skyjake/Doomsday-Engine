@@ -556,8 +556,8 @@ extern          "C" {
     char           *M_SkipWhite(char *str);
     char           *M_FindWhite(char *str);
     char           *M_StrCatQuoted(char *dest, char *src);
-    byte            M_Random(void);
-    float           M_FRandom(void);
+    byte            RNG_RandByte(void);
+    float           RNG_RandFloat(void);
     void            M_ClearBox(fixed_t *box);
     void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
     int             M_ScreenShot(const char *filename, int bits);

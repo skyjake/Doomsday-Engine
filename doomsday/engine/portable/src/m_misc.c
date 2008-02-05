@@ -378,7 +378,7 @@ boolean M_IsStringValidFloat(const char *str)
 }
 
 // This is the new flat distribution table
-unsigned char rndtable[256] = {
+static unsigned char rngTable[256] = {
     201, 1, 243, 19, 18, 42, 183, 203, 101, 123, 154, 137, 34, 118, 10, 216,
     135, 246, 0, 107, 133, 229, 35, 113, 177, 211, 110, 17, 139, 84, 251, 235,
     182, 166, 161, 230, 143, 91, 24, 81, 22, 94, 7, 51, 232, 104, 122, 248,
@@ -397,23 +397,27 @@ unsigned char rndtable[256] = {
     23, 25, 48, 218, 120, 147, 208, 36, 226, 223, 193, 238, 157, 204, 146, 31
 };
 
-int     rndindex = 0, rndindex2 = 0;
+static int rngIndex = 0, rngIndex2 = 0;
 
-byte M_Random(void)
+byte RNG_RandByte(void)
 {
-    if(rndindex > 255)
+    if(rngIndex > 255)
     {
-        rndindex = 0;
-        rndindex2++;
+        rngIndex = 0;
+        rngIndex2++;
     }
-    return rndtable[(++rndindex) & 0xff] ^ rndtable[rndindex2 & 0xff];
+    return rngTable[(++rngIndex) & 0xff] ^ rngTable[rngIndex2 & 0xff];
 }
 
-float M_FRandom(void)
+float RNG_RandFloat(void)
 {
-    return (M_Random() | (M_Random() << 8)) / 65535.0f;
+    return (RNG_RandByte() | (RNG_RandByte() << 8)) / 65535.0f;
 }
 
+void RNG_Reset(void)
+{
+    rngIndex = 0, rngIndex2 = 0;
+}
 
 /**
  * Finds the power of 2 that is equal to or greater than the specified

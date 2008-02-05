@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -544,7 +544,7 @@ void N_SendDataBuffer(void *data, size_t size, nodeid_t destination)
 
 #ifdef TRANSMIT_RANDOMIZER
     // There is a chance that the packet is dropped.
-    if(M_FRandom() < RANDOMIZER_DROP_PERCENT / 100.0)
+    if(RNG_RandFloat() < RANDOMIZER_DROP_PERCENT / 100.0)
     {
         VERBOSE( Con_Message("N_SendDataBuffer: Randomizer dropped packet to %i "
                              "(%i bytes).\n", destination, size) );
@@ -572,7 +572,7 @@ void N_SendDataBuffer(void *data, size_t size, nodeid_t destination)
     memcpy(&p->address, &node->addr, sizeof(p->address));
 
 #ifdef TRANSMIT_RANDOMIZER
-    pack->dueTime = Sys_GetRealTime() + M_FRandom() * RANDOMIZER_MAX_DELAY;
+    pack->dueTime = Sys_GetRealTime() + RNG_RandFloat() * RANDOMIZER_MAX_DELAY;
 #endif
 
     // Add the packet to the send queue.

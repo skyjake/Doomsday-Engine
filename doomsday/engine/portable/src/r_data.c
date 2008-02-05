@@ -1396,7 +1396,7 @@ void R_AnimateAnimGroups(void)
 
             if(group->frames[group->index].random)
             {
-                timer += (int) M_Random() % (group->frames[group->index].random + 1);
+                timer += (int) RNG_RandByte() % (group->frames[group->index].random + 1);
             }
             group->timer = group->maxTimer = timer;
 
