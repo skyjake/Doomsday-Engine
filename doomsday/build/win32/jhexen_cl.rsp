@@ -59,7 +59,7 @@
  ./../../plugins/common/src/hu_lib.c
  ./../../plugins/common/src/st_lib.c
  ./../../plugins/jhexen/src/po_man.c
- ./../../plugins/jhexen/src/m_misc.c
+ ./../../plugins/jhexen/src/m_random.c
  ./../../plugins/jhexen/src/in_lude.c
  ./../../plugins/jhexen/src/st_stuff.c
  ./../../plugins/common/src/am_map.c

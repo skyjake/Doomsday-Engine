@@ -696,7 +696,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jhexen\src\m_misc.c"
+				RelativePath="..\..\..\plugins\jhexen\src\m_random.c"
 				>
 			</File>
 			<File

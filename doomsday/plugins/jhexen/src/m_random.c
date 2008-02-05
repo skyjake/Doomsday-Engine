@@ -41,6 +41,10 @@
  * http://www.ravensoft.com/
  */
 
+/**
+ * m_random.c: Random number LUT.
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "jhexen.h"
