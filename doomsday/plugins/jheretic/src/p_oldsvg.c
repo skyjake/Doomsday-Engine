@@ -325,7 +325,7 @@ void P_v13_UnArchiveWorld(void)
     int         firstflat = W_CheckNumForName("F_START") + 1;
     sector_t   *sec;
     xsector_t  *xsec;
-    line_t     *line;
+    linedef_t     *line;
     xline_t    *xline;
 
     get = (short *) save_p;
@@ -350,7 +350,7 @@ void P_v13_UnArchiveWorld(void)
     // Do lines.
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINE, i);
+        line = P_ToPtr(DMU_LINEDEF, i);
         xline = P_ToXLine(line);
 
         xline->flags = *get++;
@@ -359,12 +359,12 @@ void P_v13_UnArchiveWorld(void)
 
         for(j = 0; j < 2; j++)
         {
-            side_t* sdef;
+            sidedef_t* sdef;
 
             if(j == 0)
-                sdef = P_GetPtrp(line, DMU_SIDE0);
+                sdef = P_GetPtrp(line, DMU_SIDEDEF0);
             else
-                sdef = P_GetPtrp(line, DMU_SIDE1);
+                sdef = P_GetPtrp(line, DMU_SIDEDEF1);
 
             if(!sdef)
                 continue;

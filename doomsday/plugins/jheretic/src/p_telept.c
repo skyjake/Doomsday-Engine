@@ -177,7 +177,7 @@ boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
     return true;
 }
 
-boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
+boolean EV_Teleport(linedef_t *line, int side, mobj_t *thing)
 {
     mobj_t     *m;
     thinker_t  *th;

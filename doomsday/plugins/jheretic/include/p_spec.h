@@ -69,7 +69,7 @@ void            P_AmbientSound(void);
 // when needed
 int             P_GetTerrainType(sector_t* sec, int plane);
 int             P_FlatToTerrainType(int flatid);
-boolean         P_ActivateLine(line_t *ld, mobj_t *mo, int side,
+boolean         P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
                                int activationType);
 
 void            P_PlayerInSpecialSector(player_t *player);
@@ -79,7 +79,7 @@ void            P_PlayerInWindSector(player_t *player);
 //
 //  SPECIAL
 //
-int             EV_DoDonut(line_t *line);
+int             EV_DoDonut(linedef_t *line);
 
 //
 //  P_LIGHTS
@@ -123,10 +123,10 @@ void            P_SpawnLightFlash(sector_t *sector);
 void            T_StrobeFlash(strobe_t *flash);
 void            P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync);
 
-void            EV_StartLightStrobing(line_t *line);
-void            EV_TurnTagLightsOff(line_t *line);
+void            EV_StartLightStrobing(linedef_t *line);
+void            EV_TurnTagLightsOff(linedef_t *line);
 
-void            EV_LightTurnOn(line_t *line, float bright);
+void            EV_LightTurnOn(linedef_t *line, float bright);
 
 void            T_Glow(glow_t *g);
 void            P_SpawnGlowingLight(sector_t *sector);
@@ -152,7 +152,7 @@ typedef enum linesection_e{
 } linesection_t;
 
 typedef struct button_s {
-    line_t         *line;
+    linedef_t         *line;
     linesection_t   section;
     int             texture;
     int             timer;
@@ -167,7 +167,7 @@ typedef struct button_s {
 extern button_t *buttonlist;
 void            P_FreeButtons(void);
 
-void            P_ChangeSwitchTexture(line_t *line, int useAgain);
+void            P_ChangeSwitchTexture(linedef_t *line, int useAgain);
 
 void            P_InitSwitchList(void);
 
@@ -215,8 +215,8 @@ typedef struct platlist_s {
 
 void            T_PlatRaise(plat_t *plat);
 
-int             EV_DoPlat(line_t *line, plattype_e type, int amount);
-boolean         EV_StopPlat(line_t *line);
+int             EV_DoPlat(linedef_t *line, plattype_e type, int amount);
+boolean         EV_StopPlat(linedef_t *line);
 
 void            P_AddActivePlat(plat_t *plat);
 void            P_RemoveActivePlat(plat_t *plat);
@@ -255,8 +255,8 @@ typedef struct {
 #define VDOORSPEED  2
 #define VDOORWAIT   150
 
-boolean         EV_VerticalDoor(line_t *line, mobj_t *thing);
-int             EV_DoDoor(line_t *line, vldoor_e type);
+boolean         EV_VerticalDoor(linedef_t *line, mobj_t *thing);
+int             EV_DoDoor(linedef_t *line, vldoor_e type);
 void            T_VerticalDoor(vldoor_t *door);
 void            P_SpawnDoorCloseIn30(sector_t *sec);
 void            P_SpawnDoorRaiseIn5Mins(sector_t *sec);
@@ -299,14 +299,14 @@ typedef struct ceilinglist_s {
 #define CEILSPEED       1
 #define CEILWAIT        150
 
-int             EV_DoCeiling(line_t *line, ceiling_e type);
+int             EV_DoCeiling(linedef_t *line, ceiling_e type);
 
 void            T_MoveCeiling(ceiling_t *ceiling);
 void            P_AddActiveCeiling(ceiling_t *c);
 void            P_RemoveActiveCeiling(ceiling_t *c);
 void            P_RemoveAllActiveCeilings(void);
-int             EV_CeilingCrushStop(line_t *line);
-int             P_ActivateInStasisCeiling(line_t *line);
+int             EV_CeilingCrushStop(linedef_t *line);
+int             P_ActivateInStasisCeiling(linedef_t *line);
 
 //
 // P_FLOOR
@@ -369,8 +369,8 @@ typedef enum {
 result_e        T_MovePlane(sector_t *sector, float speed, float dest,
                             int crush, int floorOrCeiling, int direction);
 
-int             EV_BuildStairs(line_t *line, stair_e type);
-int             EV_DoFloor(line_t *line, floor_e floortype);
+int             EV_BuildStairs(linedef_t *line, stair_e type);
+int             EV_DoFloor(linedef_t *line, floor_e floortype);
 void            T_MoveFloor(floormove_t *floor);
 
 //
@@ -378,7 +378,7 @@ void            T_MoveFloor(floormove_t *floor);
 //
 #define         TELEFOGHEIGHTF      (32)
 boolean         P_TeleportF(mobj_t *thing, float x, float y, angle_t angle);
-boolean         EV_Teleport(line_t *line, int side, mobj_t *thing);
+boolean         EV_Teleport(linedef_t *line, int side, mobj_t *thing);
 void            P_ArtiTele(player_t *player);
 
 #endif

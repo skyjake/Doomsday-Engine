@@ -70,14 +70,14 @@ typedef struct animdef_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side);
+extern boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing);
-static void P_ShootSpecialLine(mobj_t *thing, line_t *line);
+static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing);
+static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -195,7 +195,7 @@ void P_InitPicAnims(void)
     }
 }
 
-boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
+boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
 {
     switch(actType)
     {
@@ -222,7 +222,7 @@ boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with
  * a non 0 special.
  */
-static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
+static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 {
     int ok;
 
@@ -265,7 +265,7 @@ static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
         }
 /*      // DJS - Not implemented in jHeretic
         // Anything can trigger this line!
-        if(P_GetInt(DMU_LINE, linenum, DMU_FLAGS) & ML_ALLTRIGGER)
+        if(P_GetInt(DMU_LINEDEF, linenum, DMU_FLAGS) & ML_ALLTRIGGER)
             ok = 1;
 */
         if(!ok)
@@ -710,7 +710,7 @@ static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
 /**
  * Called when a thing shoots a special line.
  */
-static void P_ShootSpecialLine(mobj_t *thing, line_t *line)
+static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
 {
     // Impacts that other things can activate.
     if(!thing->player)
@@ -853,8 +853,8 @@ void P_PlayerInSpecialSector(player_t *player)
 void P_UpdateSpecials(void)
 {
     float       x;
-    line_t     *line;
-    side_t     *side;
+    linedef_t     *line;
+    sidedef_t     *side;
     button_t   *button;
 
     // Extended lines and sectors.
@@ -869,7 +869,7 @@ void P_UpdateSpecials(void)
             switch(P_ToXLine(line)->special)
             {
             case 48:
-                side = P_GetPtrp(line, DMU_SIDE0);
+                side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 // EFFECT FIRSTCOL SCROLL +
                 x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
@@ -882,7 +882,7 @@ void P_UpdateSpecials(void)
 
             // DJS - Heretic also has a backwards wall scroller.
             case 99:
-                side = P_GetPtrp(line, DMU_SIDE0);
+                side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 // EFFECT FIRSTCOL SCROLL +
                 x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
@@ -907,7 +907,7 @@ void P_UpdateSpecials(void)
             button->timer--;
             if(!button->timer)
             {
-                side_t     *sdef = P_GetPtrp(button->line, DMU_SIDE0);
+                sidedef_t     *sdef = P_GetPtrp(button->line, DMU_SIDEDEF0);
                 sector_t   *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
 
                 switch(button->section)
@@ -961,7 +961,7 @@ void P_FreeButtons(void)
 void P_SpawnSpecials(void)
 {
     uint        i;
-    line_t     *line;
+    linedef_t     *line;
     xline_t    *xline;
     iterlist_t *list;
     sector_t   *sec;
@@ -1068,7 +1068,7 @@ void P_SpawnSpecials(void)
     P_DestroyLineTagLists();
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINE, i);
+        line = P_ToPtr(DMU_LINEDEF, i);
         xline = P_ToXLine(line);
 
         switch(xline->special)

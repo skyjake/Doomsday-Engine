@@ -67,7 +67,7 @@ extern mobj_t *tmthing;
  * If more than one linedef is contacted, the effects are cumulative, so
  * balancing is possible.
  */
-static boolean PIT_ApplyTorque(line_t *ld, void *data)
+static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
 {
     mobj_t     *mo = tmthing;
     float       dist;

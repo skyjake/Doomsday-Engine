@@ -98,7 +98,7 @@ boolean P_TestMobjLocation(mobj_t *mobj);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean felldown; //$dropoff_fix: used to flag pushed off ledge
-extern line_t *blockline; // $unstuck: blocking linedef
+extern linedef_t *blockline; // $unstuck: blocking linedef
 extern float tmbbox[4]; // for line intersection checks
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -135,7 +135,7 @@ static float dropoffDelta[2], floorz;
 void P_RecursiveSound(sector_t *sec, int soundblocks)
 {
     int             i, lineCount;
-    line_t         *check;
+    linedef_t         *check;
     xline_t        *xline;
     sector_t       *other;
     xsector_t      *xsec = P_ToXSector(sec);
@@ -150,10 +150,10 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
     P_SetIntp(sec, DMU_VALID_COUNT, VALIDCOUNT);
     xsec->soundTraversed = soundblocks + 1;
     xsec->soundTarget = soundtarget;
-    lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
         if(!(P_GetIntp(check, DMU_FLAGS) & DDLF_TWOSIDED))
             continue;
@@ -162,13 +162,13 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
         if(openrange <= 0)
             continue; // Closed door.
 
-        if(P_GetPtrp(P_GetPtrp(check, DMU_SIDE0), DMU_SECTOR) == sec)
+        if(P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF0), DMU_SECTOR) == sec)
         {
-            other = P_GetPtrp(P_GetPtrp(check, DMU_SIDE1), DMU_SECTOR);
+            other = P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF1), DMU_SECTOR);
         }
         else
         {
-            other = P_GetPtrp(P_GetPtrp(check, DMU_SIDE0), DMU_SECTOR);
+            other = P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF0), DMU_SECTOR);
         }
 
         xline = P_ToXLine(check);
@@ -270,7 +270,7 @@ boolean P_CheckMissileRange(mobj_t *actor)
 boolean P_Move(mobj_t *actor, boolean dropoff)
 {
     float       pos[2], step[2];
-    line_t     *ld;
+    linedef_t     *ld;
     boolean     good;
 
     if(actor->moveDir == DI_NODIR)
@@ -440,7 +440,7 @@ static void newChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static boolean PIT_AvoidDropoff(line_t *line, void *data)
+static boolean PIT_AvoidDropoff(linedef_t *line, void *data)
 {
     sector_t   *backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     float      *bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
@@ -2080,7 +2080,7 @@ void C_DECL A_BossDeath(mobj_t *actor)
 {
     mobj_t     *mo;
     thinker_t  *think;
-    line_t     *dummyLine;
+    linedef_t     *dummyLine;
     static mobjtype_t bossType[6] = {
         MT_HEAD,
         MT_MINOTAUR,
