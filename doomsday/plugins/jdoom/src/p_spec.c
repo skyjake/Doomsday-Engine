@@ -68,14 +68,14 @@ typedef struct animdef_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side);
+extern boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing);
-static void P_ShootSpecialLine(mobj_t *thing, line_t *line);
+static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing);
+static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -262,7 +262,7 @@ void P_InitPicAnims(void)
     }
 }
 
-boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
+boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
 {
     switch(actType)
     {
@@ -289,7 +289,7 @@ boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with a non 0
  * special.
  */
-void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
+void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 {
     int                 ok;
     xline_t            *xline;
@@ -754,7 +754,7 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
 /**
  * Called when a thing shoots a special line.
  */
-void P_ShootSpecialLine(mobj_t *thing, line_t *line)
+void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
 {
     // Impacts that other things can activate.
     if(!thing->player)
@@ -870,8 +870,8 @@ void P_PlayerInSpecialSector(player_t *player)
  */
 void P_UpdateSpecials(void)
 {
-    line_t     *line;
-    side_t     *side;
+    linedef_t     *line;
+    sidedef_t     *side;
     button_t   *button;
 
     // Extended lines and sectors.
@@ -891,7 +891,7 @@ void P_UpdateSpecials(void)
             {
             case 48:
             case 85:
-                side = P_GetPtrp(line, DMU_SIDE0);
+                side = P_GetPtrp(line, DMU_SIDEDEF0);
                 if(xline->special == 85)
                     offset = -1;
                 else
@@ -919,7 +919,7 @@ void P_UpdateSpecials(void)
             button->timer--;
             if(!button->timer)
             {
-                side_t     *sdef = P_GetPtrp(button->line, DMU_SIDE0);
+                sidedef_t     *sdef = P_GetPtrp(button->line, DMU_SIDEDEF0);
                 sector_t   *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
 
                 switch(button->section)
@@ -973,7 +973,7 @@ void P_FreeButtons(void)
 void P_SpawnSpecials(void)
 {
     uint        i;
-    line_t     *line;
+    linedef_t     *line;
     xline_t    *xline;
     iterlist_t *list;
     sector_t   *sec;
@@ -1078,7 +1078,7 @@ void P_SpawnSpecials(void)
     P_DestroyLineTagLists();
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINE, i);
+        line = P_ToPtr(DMU_LINEDEF, i);
         xline = P_ToXLine(line);
 
         switch(xline->special)

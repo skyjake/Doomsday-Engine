@@ -320,7 +320,7 @@ void P_v19_UnArchiveWorld(void)
     int         firstflat = W_CheckNumForName("F_START") + 1;
     sector_t   *sec;
     xsector_t  *xsec;
-    line_t     *line;
+    linedef_t     *line;
     xline_t    *xline;
 
     get = (short *) save_p;
@@ -345,7 +345,7 @@ void P_v19_UnArchiveWorld(void)
     // do lines
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINE, i);
+        line = P_ToPtr(DMU_LINEDEF, i);
         xline = P_ToXLine(line);
 
         xline->flags = *get++;
@@ -354,7 +354,7 @@ void P_v19_UnArchiveWorld(void)
 
         for(j = 0; j < 2; ++j)
         {
-            side_t* sdef = P_GetPtrp(line, (j? DMU_SIDE1:DMU_SIDE0));
+            sidedef_t* sdef = P_GetPtrp(line, (j? DMU_SIDEDEF1:DMU_SIDEDEF0));
 
             if(!sdef)
                 continue;

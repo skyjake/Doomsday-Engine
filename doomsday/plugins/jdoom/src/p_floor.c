@@ -55,11 +55,11 @@
 
 // CODE --------------------------------------------------------------------
 
-int EV_BuildStairs(line_t *line, stair_e type)
+int EV_BuildStairs(linedef_t *line, stair_e type)
 {
     int         i, ok, texture;
     int         rtn = 0;
-    line_t     *ln;
+    linedef_t     *ln;
     xsector_t  *xsec;
     sector_t   *sec = NULL, *tsec;
     floormove_t *floor;
@@ -111,9 +111,9 @@ int EV_BuildStairs(line_t *line, stair_e type)
         do
         {
             ok = 0;
-            for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
+            for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
             {
-                ln = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+                ln = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
                 if(!(P_GetIntp(ln, DMU_FLAGS) & DDLF_TWOSIDED))
                     continue;
@@ -150,14 +150,14 @@ int EV_BuildStairs(line_t *line, stair_e type)
     return rtn;
 }
 
-int EV_DoDonut(line_t *line)
+int EV_DoDonut(linedef_t *line)
 {
     int         i;
     int         rtn = 0;
     sector_t   *s1 = NULL;
     sector_t   *s2;
     sector_t   *s3;
-    line_t     *check;
+    linedef_t     *check;
     floormove_t *floor;
     iterlist_t *list;
 
@@ -174,10 +174,10 @@ int EV_DoDonut(line_t *line)
 
         rtn = 1;
 
-        s2 = P_GetNextSector(P_GetPtrp(s1, DMU_LINE_OF_SECTOR | 0), s1);
-        for(i = 0; i < P_GetIntp(s2, DMU_LINE_COUNT); ++i)
+        s2 = P_GetNextSector(P_GetPtrp(s1, DMU_LINEDEF_OF_SECTOR | 0), s1);
+        for(i = 0; i < P_GetIntp(s2, DMU_LINEDEF_COUNT); ++i)
         {
-            check = P_GetPtrp(s2, DMU_LINE_OF_SECTOR | i);
+            check = P_GetPtrp(s2, DMU_LINEDEF_OF_SECTOR | i);
 
             s3 = P_GetPtrp(check, DMU_BACK_SECTOR);
 

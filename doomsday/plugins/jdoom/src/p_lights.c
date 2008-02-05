@@ -201,7 +201,7 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
 /**
  * Start strobing lights (usually from a trigger)
  */
-void EV_StartLightStrobing(line_t *line)
+void EV_StartLightStrobing(linedef_t *line)
 {
     sector_t   *sec = NULL;
     iterlist_t *list;
@@ -220,13 +220,13 @@ void EV_StartLightStrobing(line_t *line)
     }
 }
 
-void EV_TurnTagLightsOff(line_t *line)
+void EV_TurnTagLightsOff(linedef_t *line)
 {
     int         j;
     float       min;
     float       lightlevel;
     sector_t   *sec = NULL, *tsec;
-    line_t     *other;
+    linedef_t     *other;
     iterlist_t *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
@@ -237,9 +237,9 @@ void EV_TurnTagLightsOff(line_t *line)
     while((sec = P_IterListIterator(list)) != NULL)
     {
         min = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
-        for(j = 0; j < P_GetIntp(sec, DMU_LINE_COUNT); ++j)
+        for(j = 0; j < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++j)
         {
-            other = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | j);
+            other = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | j);
             tsec = P_GetNextSector(other, sec);
 
             if(!tsec)
@@ -255,12 +255,12 @@ void EV_TurnTagLightsOff(line_t *line)
     }
 }
 
-void EV_LightTurnOn(line_t *line, float max)
+void EV_LightTurnOn(linedef_t *line, float max)
 {
     int         j;
     float       lightlevel;
     sector_t   *sec = NULL, *tsec;
-    line_t     *tline;
+    linedef_t     *tline;
     iterlist_t *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
@@ -275,9 +275,9 @@ void EV_LightTurnOn(line_t *line, float max)
         // surrounding sector
         if(!max)
         {
-            for(j = 0; j < P_GetIntp(sec, DMU_LINE_COUNT); ++j)
+            for(j = 0; j < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++j)
             {
-                tline = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | j);
+                tline = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | j);
                 tsec = P_GetNextSector(tline, sec);
 
                 if(!tsec)

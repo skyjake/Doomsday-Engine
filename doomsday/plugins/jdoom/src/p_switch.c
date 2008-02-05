@@ -58,7 +58,7 @@
  * Called when a thing uses a special line.
  * \note Only the front sides of lines are usable.
  */
-boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
+boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
 {
     xline_t            *xline = P_ToXLine(line);
 
