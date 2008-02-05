@@ -416,7 +416,7 @@ void            R_SetViewSize(int blocks, int detail);
 extern int      localQuakeHappening[MAXPLAYERS];
 
 byte            P_Random(void);
-void            M_ClearRandom(void);
+void            M_ResetRandom(void);
 
 extern unsigned char rndtable[256];
 

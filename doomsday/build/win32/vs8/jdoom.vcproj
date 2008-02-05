@@ -625,6 +625,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jdoom\include\m_random.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jdoom\include\mn_def.h"
 				>
 			</File>

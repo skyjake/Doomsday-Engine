@@ -625,6 +625,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\doom64tc\include\m_random.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\doom64tc\include\mn_def.h"
 				>
 			</File>

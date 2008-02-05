@@ -410,12 +410,6 @@ boolean         M_ValidEpisodeMap(int episode, int map);
 
 void            M_ForceUppercase(char *text);
 
-// Changes a string to uppercase
-
-//returns a number from 0 to 255
-int             P_Random(void);
-void            M_ClearRandom(void);
-
 int             M_DrawText(int x, int y, boolean direct, char *string);
 
 //----------------------

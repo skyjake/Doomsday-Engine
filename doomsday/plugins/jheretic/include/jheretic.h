@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,7 @@
 #include "../../jheretic/include/h_stat.h"
 #include "../../jheretic/include/h_type.h"
 #include "../../jheretic/include/m_cheat.h"
+#include "../../jheretic/include/m_random.h"
 #include "../../jheretic/include/m_menu.h"
 #include "../../jheretic/include/mn_def.h"
 #include "../../jheretic/include/p_local.h"

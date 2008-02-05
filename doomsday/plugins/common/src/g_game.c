@@ -1978,7 +1978,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
 
-    M_ClearRandom();
+    M_ResetRandom();
 
 #if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
     if(respawnparm)

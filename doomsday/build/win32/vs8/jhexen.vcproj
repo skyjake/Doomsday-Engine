@@ -560,6 +560,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\m_random.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\mn_def.h"
 				>
 			</File>

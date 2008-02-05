@@ -618,6 +618,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jheretic\include\m_random.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jheretic\include\mn_def.h"
 				>
 			</File>

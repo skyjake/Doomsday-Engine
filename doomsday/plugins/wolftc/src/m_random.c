@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,15 +19,17 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Random number LUT.
+/**
+ * m_random.c: Random number LUT.
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include "wolftc.h"
 
 // TYPES -------------------------------------------------------------------
 
@@ -40,11 +43,11 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     rndindex = 0;
-int     prndindex = 0;
+static int rndIndex = 0;
+static int prndIndex = 0;
 
 // Returns a 0-255 number
-unsigned char rndtable[256] = {
+static unsigned char rndTable[256] = {
     0, 8, 109, 220, 222, 241, 149, 107, 75, 248, 254, 140, 16, 66,
     74, 21, 211, 47, 80, 242, 154, 27, 205, 128, 161, 89, 77, 36,
     95, 110, 85, 48, 212, 140, 211, 249, 22, 79, 200, 50, 28, 188,
@@ -70,22 +73,32 @@ unsigned char rndtable[256] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
- * P_Random() is deterministic (can be counted on during demos).
+/**
+ * \note The returned value is calculated deterministically.
+ *
+ * @return                  A pseudo-random number from the table.
  */
-int P_Random(void)
+byte P_Random(void)
 {
-    prndindex = (prndindex + 1) & 0xff;
-    return rndtable[prndindex];
+    prndIndex = (prndIndex + 1) & 0xff;
+    return rndTable[prndIndex];
 }
 
-int M_Random(void)
+/**
+ * \note The returned value is NOT calculated deterministically.
+ *
+ * @return                  A pseudo-random number from the table.
+ */
+byte M_Random(void)
 {
-    rndindex = (rndindex + 1) & 0xff;
-    return rndtable[rndindex];
+    rndIndex = (rndIndex + 1) & 0xff;
+    return rndTable[rndIndex];
 }
 
-void M_ClearRandom(void)
+/**
+ * Resets the seed for the random number generator.
+ */
+void M_ResetRandom(void)
 {
-    rndindex = prndindex = 0;
+    rndIndex = prndIndex = 0;
 }

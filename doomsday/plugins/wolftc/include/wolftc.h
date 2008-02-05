@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * wolftc.h: All WolfTC Headers
  *
  * A convenience header for including all WolfTC headers.
@@ -41,6 +41,7 @@
 #include "../../wolftc/include/doomtype.h"
 #include "../../wolftc/include/info.h"
 #include "../../wolftc/include/m_cheat.h"
+#include "../../wolftc/include/m_random.h"
 #include "../../wolftc/include/m_menu.h"
 #include "../../wolftc/include/mn_def.h"
 #include "../../wolftc/include/p_inter.h"

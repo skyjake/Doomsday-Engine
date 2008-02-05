@@ -5,7 +5,6 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,8 +28,8 @@
  * key definitions, lots of other stuff.
  */
 
-#ifndef __DOOMDEF__
-#define __DOOMDEF__
+#ifndef __M_RANDOM_H__
+#define __M_RANDOM_H__
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -249,9 +248,6 @@ enum { VX, VY, VZ }; // Vertex indices.
 
 #define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
 #define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
-
-int         P_Random(void);
-void        M_ClearRandom(void);
 
 void        G_IdentifyVersion(void);
 int         G_GetInteger(int id);

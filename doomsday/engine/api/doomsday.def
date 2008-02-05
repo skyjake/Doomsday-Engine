@@ -20,8 +20,8 @@ NAME            "DOOMSDAY"
 ; 107 formerly GL_DoUpdate
 ; 108 formerly GL_ChangeResolution
 ; 118 formerly GL_SetTexture
-; 143 formerly RNG_RandByte
-; 144 formerly RNG_RandFloat
+; 143 formerly M_Random
+; 144 formerly M_FRandom
 ; 206 formerly GL_Update
 ; 232 formerly R_SetAnimGroup
 ; 255 formerly P_PointToBlock

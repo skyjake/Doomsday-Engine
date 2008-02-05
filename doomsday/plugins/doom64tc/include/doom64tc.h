@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * doom64tc.h: All Doom64TC Headers
  *
  * A convenience header for including all Doom64TC headers.
@@ -41,6 +41,7 @@
 #include "../../doom64tc/include/doomtype.h"
 #include "../../doom64tc/include/info.h"
 #include "../../doom64tc/include/m_cheat.h"
+#include "../../doom64tc/include/m_random.h"
 #include "../../doom64tc/include/m_menu.h"
 #include "../../doom64tc/include/mn_def.h"
 #include "../../doom64tc/include/p_inter.h"

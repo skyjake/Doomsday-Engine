@@ -621,6 +621,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\wolftc\include\m_random.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\wolftc\include\mn_def.h"
 				>
 			</File>

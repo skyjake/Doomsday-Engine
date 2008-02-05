@@ -274,10 +274,6 @@ enum { VX, VY, VZ };               // Vertex indices.
 #define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
 #define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
 
-//returns a number from 0 to 255
-int         P_Random(void);
-void        M_ClearRandom(void);
-
 void        G_IdentifyVersion(void);
 int         G_GetInteger(int id);
 void       *G_GetVariable(int id);

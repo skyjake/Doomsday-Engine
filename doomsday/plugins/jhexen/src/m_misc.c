@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -61,20 +61,8 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// CODE --------------------------------------------------------------------
-
-/*
-   ===============
-   =
-   = M_Random
-   =
-   = Returns a 0-255 number
-   =
-   ===============
- */
-
 // This is the new flat distribution table
-unsigned char rndtable[256] = {
+static unsigned char rndTable[256] = {
 	201, 1, 243, 19, 18, 42, 183, 203, 101, 123, 154, 137, 34, 118, 10, 216,
 	135, 246, 0, 107, 133, 229, 35, 113, 177, 211, 110, 17, 139, 84, 251, 235,
 	182, 166, 161, 230, 143, 91, 24, 81, 22, 94, 7, 51, 232, 104, 122, 248,
@@ -93,18 +81,35 @@ unsigned char rndtable[256] = {
 	23, 25, 48, 218, 120, 147, 208, 36, 226, 223, 193, 238, 157, 204, 146, 31
 };
 
-int     backup_prndindex;
-int     prndindex = 0;
+static int rndIndex = 0, prndIndex = 0;
+
+// CODE --------------------------------------------------------------------
 
 /**
+ * \note The returned value is calculated deterministically.
+ *
  * @return                  A pseudo-random number from the table.
  */
-byte P_Random()
+byte P_Random(void)
 {
-	return rndtable[(++prndindex) & 0xff];
+	return rndTable[(++prndIndex) & 0xff];
 }
 
-void M_ClearRandom(void)
+/**
+ * \note The returned value is NOT calculated deterministically.
+ *
+ * @return                  A pseudo-random number from the table.
+ */
+byte M_Random (void)
 {
-	prndindex = 0;
+	rndIndex = (rndIndex+1)&0xff;
+	return rndTable[rndIndex];
+}
+
+/**
+ * Resets the seed for the random number generator.
+ */
+void M_ResetRandom(void)
+{
+	rndIndex = prndIndex = 0;
 }
