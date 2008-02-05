@@ -169,7 +169,7 @@ int bodyqueslot;
 void P_RecursiveSound(sector_t *sec, int soundblocks)
 {
     int                 i, lineCount;
-    line_t             *check;
+    linedef_t             *check;
     xline_t            *xline;
     sector_t           *other;
     xsector_t          *xsec = P_ToXSector(sec);
@@ -184,10 +184,10 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
     P_SetIntp(sec, DMU_VALID_COUNT, VALIDCOUNT);
     xsec->soundTraversed = soundblocks + 1;
     xsec->soundTarget = soundtarget;
-    lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
         if(!(P_GetIntp(check, DMU_FLAGS) & DDLF_TWOSIDED))
             continue;
@@ -196,13 +196,13 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
         if(openrange <= 0)
             continue; // Closed door.
 
-        if(P_GetPtrp(P_GetPtrp(check, DMU_SIDE0), DMU_SECTOR) == sec)
+        if(P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF0), DMU_SECTOR) == sec)
         {
-            other = P_GetPtrp(P_GetPtrp(check, DMU_SIDE1), DMU_SECTOR);
+            other = P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF1), DMU_SECTOR);
         }
         else
         {
-            other = P_GetPtrp(P_GetPtrp(check, DMU_SIDE0), DMU_SECTOR);
+            other = P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF0), DMU_SECTOR);
         }
 
         xline = P_ToXLine(check);
@@ -312,7 +312,7 @@ boolean P_CheckMissileRange(mobj_t *mo)
 boolean P_Move(mobj_t *mo)
 {
     float       tryPos[2], step[2];
-    line_t     *ld;
+    linedef_t     *ld;
     boolean     good;
 
     if(mo->flags2 & MF2_BLASTED)

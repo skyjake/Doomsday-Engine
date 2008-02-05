@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -79,7 +79,7 @@ typedef struct acsinfo_s {
 typedef struct acs_s {
     thinker_t       thinker;
     mobj_t         *activator;
-    line_t         *line;
+    linedef_t         *line;
     int             side;
     int             number;
     int             infoIndex;
@@ -105,8 +105,8 @@ extern acsstore_t ACSStore[MAX_ACS_STORE + 1]; // +1 for termination marker.
 
 void            P_LoadACScripts(int lump);
 boolean         P_StartACS(int number, int map, byte *args, mobj_t *activator,
-                           line_t *line, int side);
-boolean         P_StartLockedACS(line_t *line, byte *args, mobj_t *mo,
+                           linedef_t *line, int side);
+boolean         P_StartLockedACS(linedef_t *line, byte *args, mobj_t *mo,
                                  int side);
 boolean         P_TerminateACS(int number, int map);
 boolean         P_SuspendACS(int number, int map);

@@ -66,9 +66,9 @@ void        P_SpawnSpecials(void);
 
 void        P_UpdateSpecials(void);
 
-boolean     P_ExecuteLineSpecial(int special, byte *args, line_t *line,
+boolean     P_ExecuteLineSpecial(int special, byte *args, linedef_t *line,
                                  int side, mobj_t *mo);
-boolean     P_ActivateLine(line_t *ld, mobj_t *mo, int side,
+boolean     P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
                            int activationType);
 
 int         P_GetTerrainType(sector_t* sec, int plane);
@@ -119,7 +119,7 @@ void        T_Phase(phase_t *phase);
 void        T_Light(light_t *light);
 void        P_SpawnPhasedLight(sector_t *sec, float base, int index);
 void        P_SpawnLightSequence(sector_t *sec, int indexStep);
-boolean     EV_SpawnLight(line_t *line, byte *arg, lighttype_t type);
+boolean     EV_SpawnLight(linedef_t *line, byte *arg, lighttype_t type);
 
 typedef struct {
     char            name1[9];
@@ -134,7 +134,7 @@ typedef enum linesection_e{
 } linesection_t;
 
 typedef struct button_s {
-    line_t         *line;
+    linedef_t         *line;
     linesection_t   section;
     int             texture;
     int             timer;
@@ -149,7 +149,7 @@ extern button_t *buttonlist;
 
 void        P_FreeButtons(void);
 
-void        P_ChangeSwitchTexture(line_t *line, int useAgain);
+void        P_ChangeSwitchTexture(linedef_t *line, int useAgain);
 void        P_InitSwitchList(void);
 
 typedef enum {
@@ -193,12 +193,12 @@ typedef struct platlist_s {
 #define PLATSPEED               1
 
 void        T_PlatRaise(plat_t *plat);
-int         EV_DoPlat(line_t *line, byte *args, plattype_e type,
+int         EV_DoPlat(linedef_t *line, byte *args, plattype_e type,
                       int amount);
 void        P_AddActivePlat(plat_t *plat);
 void        P_RemoveActivePlat(plat_t *plat);
 void        P_RemoveAllActivePlats(void);
-boolean     EV_StopPlat(line_t *line, byte *args);
+boolean     EV_StopPlat(linedef_t *line, byte *args);
 
 typedef enum {
     normal,
@@ -222,8 +222,8 @@ typedef struct {
 #define VDOORSPEED              1*2
 #define VDOORWAIT               150
 
-boolean     EV_VerticalDoor(line_t *line, mobj_t *thing);
-int         EV_DoDoor(line_t *line, byte *args, vldoor_e type);
+boolean     EV_VerticalDoor(linedef_t *line, mobj_t *thing);
+int         EV_DoDoor(linedef_t *line, byte *args, vldoor_e type);
 void        T_VerticalDoor(vldoor_t *door);
 
 typedef enum {
@@ -260,12 +260,12 @@ typedef struct ceilinglist_s {
 #define CEILSPEED               1
 #define CEILWAIT                150
 
-int         EV_DoCeiling(line_t *line, byte *args, ceiling_e type);
+int         EV_DoCeiling(linedef_t *line, byte *args, ceiling_e type);
 void        T_MoveCeiling(ceiling_t *ceiling);
 void        P_AddActiveCeiling(ceiling_t *c);
 void        P_RemoveActiveCeiling(ceiling_t *c);
 void        P_RemoveAllActiveCeilings(void);
-int         EV_CeilingCrushStop(line_t *line, byte *args);
+int         EV_CeilingCrushStop(linedef_t *line, byte *args);
 
 typedef enum {
     FLEV_LOWERFLOOR, // lower floor to highest surrounding floor
@@ -344,16 +344,16 @@ typedef enum {
 result_e    T_MovePlane(sector_t *sector, float speed, float dest,
                         int crush, int floorOrCeiling, int direction);
 
-int         EV_BuildStairs(line_t *line, byte *args, int direction,
+int         EV_BuildStairs(linedef_t *line, byte *args, int direction,
                            stairs_e type);
-int         EV_DoFloor(line_t *line, byte *args, floor_e floortype);
+int         EV_DoFloor(linedef_t *line, byte *args, floor_e floortype);
 void        T_MoveFloor(floormove_t *floor);
 void        T_BuildPillar(pillar_t *pillar);
 void        T_FloorWaggle(floorWaggle_t *waggle);
-int         EV_BuildPillar(line_t *line, byte *args, boolean crush);
-int         EV_OpenPillar(line_t *line, byte *args);
-int         EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise);
-int         EV_FloorCrushStop(line_t *line, byte *args);
+int         EV_BuildPillar(linedef_t *line, byte *args, boolean crush);
+int         EV_OpenPillar(linedef_t *line, byte *args);
+int         EV_DoFloorAndCeiling(linedef_t *line, byte *args, boolean raise);
+int         EV_FloorCrushStop(linedef_t *line, byte *args);
 boolean     EV_StartFloorWaggle(int tag, int height, int speed, int offset,
                                 int timer);
 

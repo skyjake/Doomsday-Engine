@@ -348,7 +348,7 @@ void P_CheckACSStore(void)
 }
 
 boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
-                   line_t *line, int side)
+                   linedef_t *line, int side)
 {
     int         i;
     acs_t      *script;
@@ -433,7 +433,7 @@ static boolean AddToACSStore(int map, int number, byte *args)
     return true;
 }
 
-boolean P_StartLockedACS(line_t *line, byte *args, mobj_t *mo, int side)
+boolean P_StartLockedACS(linedef_t *line, byte *args, mobj_t *mo, int side)
 {
     int         i;
     int         lock;
@@ -1634,7 +1634,7 @@ static int CmdSoundSequence(void)
 
 static int CmdSetLineTexture(void)
 {
-    line_t     *line;
+    linedef_t     *line;
     int         lineTag;
     int         side;
     int         position;
@@ -1653,8 +1653,8 @@ static int CmdSetLineTexture(void)
     P_IterListResetIterator(list, true);
     while((line = P_IterListIterator(list)) != NULL)
     {
-        side_t* sdef = P_GetPtrp(line,
-                                 (side == 0? DMU_SIDE0 : DMU_SIDE1));
+        sidedef_t* sdef = P_GetPtrp(line,
+                                 (side == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1));
         if(position == TEXTURE_MIDDLE)
         {
             P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, texture);
@@ -1673,7 +1673,7 @@ static int CmdSetLineTexture(void)
 
 static int CmdSetLineBlocking(void)
 {
-    line_t     *line;
+    linedef_t     *line;
     int         lineTag;
     boolean     blocking;
     iterlist_t *list;
@@ -1696,7 +1696,7 @@ static int CmdSetLineBlocking(void)
 
 static int CmdSetLineSpecial(void)
 {
-    line_t     *line;
+    linedef_t     *line;
     int         lineTag;
     int         special, arg1, arg2, arg3, arg4, arg5;
     iterlist_t *list;

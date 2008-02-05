@@ -159,7 +159,7 @@ void T_Light(light_t *light)
     }
 }
 
-boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
+boolean EV_SpawnLight(linedef_t *line, byte *arg, lighttype_t type)
 {
     int         arg1, arg2, arg3, arg4;
     boolean     think = false;
@@ -318,9 +318,9 @@ void P_SpawnLightSequence(sector_t *sector, int indexStep)
         nextSec = NULL;
         // make sure that the search doesn't back up.
         P_ToXSector(sec)->special = LIGHT_SEQUENCE_START;
-        for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
+        for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
         {
-            tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i), sec);
+            tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i), sec);
             if(!tempSec)
                 continue;
 
@@ -356,9 +356,9 @@ void P_SpawnLightSequence(sector_t *sector, int indexStep)
         P_SpawnPhasedLight(sec, base, index >> FRACBITS);
         index += indexDelta;
 
-        for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
+        for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
         {
-            tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i), sec);
+            tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i), sec);
             if(!tempSec)
                 continue;
 

@@ -3,7 +3,7 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
@@ -184,9 +184,9 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
     // Find next sector to raise
     // Find nearby sector with sector special equal to type
     //
-    for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
+    for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
     {
-        line_t         *line = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        linedef_t         *line = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
         if(!(P_GetIntp(line, DMU_FLAGS) & DDLF_TWOSIDED))
         {
@@ -218,7 +218,7 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
 /**
  * @param direction     Positive = up. Negative = down.
  */
-int EV_BuildStairs(line_t *line, byte *args, int direction,
+int EV_BuildStairs(linedef_t *line, byte *args, int direction,
                    stairs_e stairsType)
 {
     float       height;
@@ -292,7 +292,7 @@ void T_BuildPillar(pillar_t *pillar)
     }
 }
 
-int EV_BuildPillar(line_t *line, byte *args, boolean crush)
+int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
 {
     int         rtn = 0;
     float       newHeight;
@@ -366,7 +366,7 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
     return rtn;
 }
 
-int EV_OpenPillar(line_t *line, byte *args)
+int EV_OpenPillar(linedef_t *line, byte *args)
 {
     int         rtn = 0;
     sector_t   *sec = NULL;

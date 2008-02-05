@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -97,11 +97,11 @@ boolean     PO_FindAndCreatePolyobj(int tag, boolean crush, float startX, float 
 
 void        T_PolyDoor(polydoor_t *pd);
 void        T_RotatePoly(polyevent_t *pe);
-boolean     EV_RotatePoly(line_t *line, byte *args, int direction,
+boolean     EV_RotatePoly(linedef_t *line, byte *args, int direction,
                           boolean overRide);
 void        T_MovePoly(polyevent_t *pe);
-boolean     EV_MovePoly(line_t *line, byte *args, boolean timesEight,
+boolean     EV_MovePoly(linedef_t *line, byte *args, boolean timesEight,
                         boolean overRide);
-boolean     EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type);
+boolean     EV_OpenPolyDoor(linedef_t *line, byte *args, podoortype_t type);
 
 #endif

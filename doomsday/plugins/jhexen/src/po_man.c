@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -139,7 +139,7 @@ void T_RotatePoly(polyevent_t *pe)
     }
 }
 
-boolean EV_RotatePoly(line_t *line, byte *args, int direction,
+boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
                       boolean overRide)
 {
     int         mirror, polyNum;
@@ -280,7 +280,7 @@ void T_MovePoly(polyevent_t *pe)
     }
 }
 
-boolean EV_MovePoly(line_t *line, byte *args, boolean timesEight,
+boolean EV_MovePoly(linedef_t *line, byte *args, boolean timesEight,
                     boolean overRide)
 {
     int         mirror, polyNum;
@@ -487,7 +487,7 @@ void T_PolyDoor(polydoor_t *pd)
     }
 }
 
-boolean EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type)
+boolean EV_OpenPolyDoor(linedef_t *line, byte *args, podoortype_t type)
 {
     int         mirror, polyNum;
     polydoor_t *pd;
@@ -607,7 +607,7 @@ static int GetPolyobjMirror(uint poly)
         if(P_GetInt(DMU_POLYOBJ, i, DMU_TAG) == poly)
         {
             seg_t* seg = P_GetPtrp(P_ToPtr(DMU_POLYOBJ, i), DMU_SEG_OF_POLYOBJ | 0);
-            line_t* linedef = P_GetPtrp(seg, DMU_LINE);
+            linedef_t* linedef = P_GetPtrp(seg, DMU_LINEDEF);
             return P_ToXLine(linedef)->arg2;
         }
     }

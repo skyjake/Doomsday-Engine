@@ -256,7 +256,7 @@ static boolean CheckedLockedDoor(mobj_t *mo, byte lock)
     return true;
 }
 
-boolean EV_LineSearchForPuzzleItem(line_t *line, byte *args, mobj_t *mo)
+boolean EV_LineSearchForPuzzleItem(linedef_t *line, byte *args, mobj_t *mo)
 {
     artitype_e  arti;
 
@@ -272,7 +272,7 @@ boolean EV_LineSearchForPuzzleItem(line_t *line, byte *args, mobj_t *mo)
     return P_InventoryUseArtifact(mo->player, arti);
 }
 
-boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
+boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
                              mobj_t *mo)
 {
     boolean     buttonSuccess;
@@ -678,7 +678,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
     return buttonSuccess;
 }
 
-boolean P_ActivateLine(line_t *line, mobj_t *mo, int side, int activationType)
+boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType)
 {
     int             lineActivation;
     boolean         repeat;
@@ -864,7 +864,7 @@ void P_UpdateSpecials(void)
             button->timer--;
             if(!button->timer)
             {
-                side_t     *sdef = P_GetPtrp(button->line, DMU_SIDE0);
+                sidedef_t     *sdef = P_GetPtrp(button->line, DMU_SIDEDEF0);
                 //sector_t *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
 
                 switch(button->section)
@@ -915,7 +915,7 @@ void P_FreeButtons(void)
 void P_SpawnSpecials(void)
 {
     uint        i;
-    line_t     *line;
+    linedef_t     *line;
     xline_t    *xline;
     iterlist_t *list;
     sector_t   *sec;
@@ -960,7 +960,7 @@ void P_SpawnSpecials(void)
     P_DestroyLineTagLists();
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINE, i);
+        line = P_ToPtr(DMU_LINEDEF, i);
         xline = P_ToXLine(line);
 
         switch(xline->special)
@@ -1076,7 +1076,7 @@ void R_HandleSectorSpecials(void)
 void P_AnimateSurfaces(void)
 {
     int         i;
-    line_t     *line;
+    linedef_t     *line;
 
     // Update scrolling textures
     if(P_IterListSize(linespecials))
@@ -1084,10 +1084,10 @@ void P_AnimateSurfaces(void)
         P_IterListResetIterator(linespecials, false);
         while((line = P_IterListIterator(linespecials)) != NULL)
         {
-            side_t* side = 0;
+            sidedef_t* side = 0;
             fixed_t texOff[2];
 
-            side = P_GetPtrp(line, DMU_SIDE0);
+            side = P_GetPtrp(line, DMU_SIDEDEF0);
             for(i =0; i < 3; ++i)
             {
 
