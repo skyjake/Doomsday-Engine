@@ -695,7 +695,6 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
     int             prev_linetype_idx = -1; // For "Copy".
     ded_sectortype_t *sec;
     int             prev_sectortype_idx = -1; // For "Copy".
-    int             sub;
     int             depth;
     char           *rootstr = 0, *ptr;
     int             bCopyNext = false;
@@ -721,14 +720,15 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         }
         if(ISTOKEN("SkipIf"))
         {
-            sub = 1;
+            boolean             expected = true;
+
             ReadToken();
             if(ISTOKEN("Not"))
             {
-                sub = 0;
+                expected = false;
                 ReadToken();
             }
-            if(DED_CheckCondition(token, sub))
+            if(DED_CheckCondition(token, expected))
             {
                 // Ah, we're done. Get out of here.
                 goto ded_end_read;
@@ -746,14 +746,15 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         }
         if(ISTOKEN("IncludeIf")) // An optional include.
         {
-            sub = 1;
+            boolean             expected = true;
+
             ReadToken();
             if(ISTOKEN("Not"))
             {
-                sub = 0;
+                expected = false;
                 ReadToken();
             }
-            if(DED_CheckCondition(token, sub))
+            if(DED_CheckCondition(token, expected))
             {
                 READSTR(tmp);
                 CHECKSC;
@@ -967,6 +968,8 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         }
         if(ISTOKEN("Model"))
         {
+            uint                sub;
+
             // A new model.
             idx = DED_AddModel(ded, "");
             mdl = ded->models + idx;
@@ -1101,6 +1104,8 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         }
         if(ISTOKEN("Map")) // Info
         {
+            uint                    sub;
+
             // A new map info.
             idx = DED_AddMapInfo(ded, "");
             mi = ded->mapInfo + idx;
@@ -1157,7 +1162,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 }
                 else if(ISLABEL("Sky Model"))
                 {
-                    ded_skymodel_t *sm = mi->skyModels + sub;
+                    ded_skymodel_t *sm = &mi->skyModels[sub];
                     if(sub == NUM_SKY_MODELS)
                     {
                         // Too many!
@@ -1317,14 +1322,16 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 }
                 else if(ISTOKEN("}"))
                 {
+                    size_t                  len;
+
                     // End group.
                     if(!depth)
                         break;   // End root depth.
 
                     // Decrease level and modify rootstr.
                     depth--;
-                    sub = strlen(rootstr);
-                    rootstr[sub-1] = 0; // Remove last |.
+                    len = strlen(rootstr);
+                    rootstr[len-1] = 0; // Remove last |.
                     ptr = strrchr(rootstr, '|');
                     if(ptr)
                     {
@@ -1426,6 +1433,8 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         }
         if(ISTOKEN("Generator")) // Particle Generator
         {
+            int                     sub;
+
             idx = DED_AddPtcGen(ded, "");
             gen = ded->ptcGens + idx;
             sub = 0;
@@ -1572,10 +1581,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         }
         if(ISTOKEN("Decoration"))
         {
-            ded_decor_t *decor;
+            uint                    sub;
+            ded_decor_t            *decor;
 
             idx = DED_AddDecoration(ded);
-            decor = ded->decorations + idx;
+            decor = &ded->decorations[idx];
             sub = 0;
             if(prev_decordef_idx >= 0 && bCopyNext)
             {
@@ -1612,7 +1622,8 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 }
                 else if(ISLABEL("Light"))
                 {
-                    ded_decorlight_t *dl = decor->lights + sub;
+                    ded_decorlight_t *dl = &decor->lights[sub];
+
                     if(sub == DED_DECOR_NUM_LIGHTS)
                     {
                         SetError("Too many lights in decoration.");
@@ -1632,7 +1643,8 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         RV_IVEC("Pattern skip", dl->patternSkip, 2)
                         if(ISLABEL("Levels"))
                         {
-                            int     b;
+                            int                     b;
+
                             FINDBEGIN;
                             for(b = 0; b < 2; ++b)
                             {
@@ -1663,9 +1675,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         }
         if(ISTOKEN("Group"))
         {
-            ded_group_t *grp;
+            int                     sub;
+            ded_group_t            *grp;
+
             idx = DED_AddGroup(ded);
-            grp = ded->groups + idx;
+            grp = &ded->groups[idx];
             sub = 0;
             FINDBEGIN;
             for(;;)
