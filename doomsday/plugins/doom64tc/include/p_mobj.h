@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -102,7 +102,7 @@
  * but only as the instigator (missiles will run into other
  * things, but nothing can run into a missile).
  * Each block in the grid is 128*128 units, and knows about
- * every line_t that it contains a piece of, and every
+ * every linedef_t that it contains a piece of, and every
  * interactable mobj_t that has its origin contained.
  *
  * A valid mobj_t is a mobj_t that has the proper subsector_t

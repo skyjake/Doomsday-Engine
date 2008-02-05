@@ -64,11 +64,11 @@
  *        Now that we have line data references in XG this kind of thing
  *        can be done there much more easily.
  */
-int EV_DestoryLineShield(line_t* line)
+int EV_DestoryLineShield(linedef_t* line)
 {
     int         k, flags;
     sector_t   *sec = NULL;
-    line_t     *li;
+    linedef_t     *li;
     xline_t    *xline;
     iterlist_t *list;
 
@@ -82,9 +82,9 @@ int EV_DestoryLineShield(line_t* line)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
+        for(k = 0; k < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++k)
         {
-            li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
+            li = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | k);
             xline = P_ToXLine(li);
             if(xline->tag != 999 || !xline->special ||
                !(P_GetIntp(li, DMU_FLAGS) & DDLF_TWOSIDED))
@@ -92,8 +92,8 @@ int EV_DestoryLineShield(line_t* line)
 
             xline->special = 0;
 
-            P_SetIntp(li, DMU_SIDE0_OF_LINE | DMU_MIDDLE_MATERIAL, 0);
-            P_SetIntp(li, DMU_SIDE1_OF_LINE | DMU_MIDDLE_MATERIAL, 0);
+            P_SetIntp(li, DMU_SIDEDEF0_OF_LINE | DMU_MIDDLE_MATERIAL, 0);
+            P_SetIntp(li, DMU_SIDEDEF1_OF_LINE | DMU_MIDDLE_MATERIAL, 0);
 
             flags = P_GetIntp(li, DMU_FLAGS);
             flags &= ~DDLF_BLOCKING;
@@ -111,11 +111,11 @@ int EV_DestoryLineShield(line_t* line)
  *        Now that we have line data references in XG this kind of thing
  *        can be done there much more easily.
  */
-int EV_SwitchTextureFree(line_t* line)
+int EV_SwitchTextureFree(linedef_t* line)
 {
     int         k, flags;
     sector_t   *sec = NULL;
-    line_t     *li;
+    linedef_t     *li;
     xline_t    *xline;
     iterlist_t *list;
 
@@ -129,18 +129,18 @@ int EV_SwitchTextureFree(line_t* line)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
+        for(k = 0; k < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++k)
         {
-            li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
+            li = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | k);
             xline = P_ToXLine(li);
             if(xline->special != 418)
                 continue;
 
-            P_SetIntp(li, DMU_SIDE0_OF_LINE | DMU_MIDDLE_MATERIAL, xline->tag);
+            P_SetIntp(li, DMU_SIDEDEF0_OF_LINE | DMU_MIDDLE_MATERIAL, xline->tag);
 
             // If there is a back side, set that too.
-            if(P_GetPtrp(li, DMU_SIDE1) != NULL)
-                P_SetIntp(li, DMU_SIDE1_OF_LINE | DMU_MIDDLE_MATERIAL,
+            if(P_GetPtrp(li, DMU_SIDEDEF1) != NULL)
+                P_SetIntp(li, DMU_SIDEDEF1_OF_LINE | DMU_MIDDLE_MATERIAL,
                           xline->tag);
 
             flags = P_GetIntp(li, DMU_FLAGS);
@@ -159,20 +159,20 @@ int EV_SwitchTextureFree(line_t* line)
  *        Now that we have line data references in XG this kind of thing
  *        can be done there much more easily.
  */
-int EV_ActivateSpecial(line_t *line)
+int EV_ActivateSpecial(linedef_t *line)
 {
     int         k;
     int         bitmip;
     sector_t   *sec = NULL;
-    line_t     *li;
+    linedef_t     *li;
     xline_t    *xline;
-    side_t     *back;
+    sidedef_t     *back;
     iterlist_t *list;
 
     if(!line)
         return false;
 
-    back = P_GetPtrp(line, DMU_SIDE1);
+    back = P_GetPtrp(line, DMU_SIDEDEF1);
     if(!back)
         return false; // We need a twosided line
 
@@ -185,9 +185,9 @@ int EV_ActivateSpecial(line_t *line)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
+        for(k = 0; k < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++k)
         {
-            li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
+            li = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | k);
             xline = P_ToXLine(li);
             if(xline->special != 418)
                 continue;
@@ -208,9 +208,9 @@ int EV_ActivateSpecial(line_t *line)
  *        Now that we have line data references in XG this kind of thing
  *        can be done there much more easily.
  */
-void P_SetSectorColor(line_t *line)
+void P_SetSectorColor(linedef_t *line)
 {
-    side_t     *front, *back;
+    sidedef_t     *front, *back;
     sector_t   *sec = NULL;
     float       rgb[4];
     iterlist_t *list;
@@ -218,8 +218,8 @@ void P_SetSectorColor(line_t *line)
     if(!line)
         return;
 
-    front = P_GetPtrp(line, DMU_SIDE0);
-    back = P_GetPtrp(line, DMU_SIDE0);
+    front = P_GetPtrp(line, DMU_SIDEDEF0);
+    back = P_GetPtrp(line, DMU_SIDEDEF0);
 
     if(!back)
         return; // We need a twosided line.
@@ -244,7 +244,7 @@ void P_SetSectorColor(line_t *line)
  * Called when a thing uses a special line.
  * Only the front sides of lines are usable.
  */
-boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
+boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
 {
     xline_t            *xline;
 

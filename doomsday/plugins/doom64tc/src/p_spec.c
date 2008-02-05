@@ -69,14 +69,14 @@ typedef struct animdef_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side);
+extern boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing);
-static void P_ShootSpecialLine(mobj_t *thing, line_t *line);
+static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing);
+static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -258,7 +258,7 @@ void P_InitPicAnims(void)
     }
 }
 
-boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
+boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
 {
     switch(actType)
     {
@@ -285,7 +285,7 @@ boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with
  * a non 0 special.
  */
-void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
+void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 {
     int                 ok;
     xline_t            *xline;
@@ -845,7 +845,7 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
 /*
  * Called when a thing shoots a special line.
  */
-void P_ShootSpecialLine(mobj_t *thing, line_t *line)
+void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
 {
     int     ok;
 
@@ -972,8 +972,8 @@ void P_PlayerInSpecialSector(player_t *player)
 void P_UpdateSpecials(void)
 {
     int         x, y; // d64tc added @c y,
-    line_t     *line;
-    side_t     *side;
+    linedef_t     *line;
+    sidedef_t     *side;
     button_t   *button;
 
     // Extended lines and sectors.
@@ -988,7 +988,7 @@ void P_UpdateSpecials(void)
             switch(P_ToXLine(line)->special)
             {
             case 48:
-                side = P_GetPtrp(line, DMU_SIDE0);
+                side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 // EFFECT FIRSTCOL SCROLL +
                 x = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_X);
@@ -1000,7 +1000,7 @@ void P_UpdateSpecials(void)
                 break;
 
             case 150: // d64tc
-                side = P_GetPtrp(line, DMU_SIDE0);
+                side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 // EFFECT FIRSTCOL SCROLL -
                 x = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_X);
@@ -1013,7 +1013,7 @@ void P_UpdateSpecials(void)
 
             case 2561: // d64tc
                 // Scroll_Texture_Up
-                side = P_GetPtrp(line, DMU_SIDE0);
+                side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 // EFFECT FIRSTCOL SCROLL +
                 y = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y);
@@ -1026,7 +1026,7 @@ void P_UpdateSpecials(void)
 
             case 2562: // d64tc
                 // Scroll_Texture_Down
-                side = P_GetPtrp(line, DMU_SIDE0);
+                side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 // EFFECT FIRSTCOL SCROLL +
                 y = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y);
@@ -1039,7 +1039,7 @@ void P_UpdateSpecials(void)
 
             case 2080: // d64tc
                 // Scroll Up/Right
-                side = P_GetPtrp(line, DMU_SIDE0);
+                side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 y = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y);
                 P_SetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += FRACUNIT);
@@ -1058,7 +1058,7 @@ void P_UpdateSpecials(void)
 
             case 2614: // d64tc
                 // Scroll Up/Left
-                side = P_GetPtrp(line, DMU_SIDE0);
+                side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 y = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y);
                 P_SetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += FRACUNIT);
@@ -1089,7 +1089,7 @@ void P_UpdateSpecials(void)
             button->timer--;
             if(!button->timer)
             {
-                side_t     *sdef = P_GetPtrp(button->line, DMU_SIDE0);
+                sidedef_t     *sdef = P_GetPtrp(button->line, DMU_SIDEDEF0);
                 sector_t   *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
 
                 switch(button->where)
@@ -1169,7 +1169,7 @@ void P_ThunderSector(void)
 void P_SpawnSpecials(void)
 {
     uint        i;
-    line_t     *line;
+    linedef_t     *line;
     xline_t    *xline;
     iterlist_t *list;
     sector_t   *sec;
@@ -1297,7 +1297,7 @@ void P_SpawnSpecials(void)
     P_DestroyLineTagLists();
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINE, i);
+        line = P_ToPtr(DMU_LINEDEF, i);
         xline = P_ToXLine(line);
 
         switch(xline->special)

@@ -68,7 +68,7 @@ extern mobj_t *tmthing;
  * so balancing is possible.
  * killough $dropoff_fix
  */
-static boolean PIT_ApplyTorque(line_t *ld, void *data)
+static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
 {
     mobj_t *mo = tmthing;
     fixed_t dist;

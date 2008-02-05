@@ -63,7 +63,7 @@ mobj_t *P_SpawnTeleFog(float x, float y)
                          P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT);
 }
 
-int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
+int EV_Teleport(linedef_t *line, int side, mobj_t *thing, boolean spawnFog)
 {
     mobj_t     *m;
     mobj_t     *fog;
@@ -268,7 +268,7 @@ static mobjtype_t IsFadeSpawner(int doomednum)
  * TODO: DJS - This is not a good design. There must be a better way
  *       to do this using a new thing flag (MF_NOTSPAWNONSTART?).
  */
-int EV_FadeSpawn(line_t *line, mobj_t *thing)
+int EV_FadeSpawn(linedef_t *line, mobj_t *thing)
 {
     mobj_t     *mobj, *mo;
     angle_t     an;
@@ -337,7 +337,7 @@ int EV_FadeSpawn(line_t *line, mobj_t *thing)
  *        My initial thoughts are that perhaps P_MobjThinker has been modified
  *        to respond to changes to the MF_TELEPORT flag? This is not good.
  */
-int EV_FadeAway(line_t *line, mobj_t *thing)
+int EV_FadeAway(linedef_t *line, mobj_t *thing)
 {
     mobj_t     *mobj;
     thinker_t  *th;
