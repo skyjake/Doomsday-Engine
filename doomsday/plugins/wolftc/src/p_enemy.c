@@ -82,7 +82,7 @@ void C_DECL A_SpawnFly(mobj_t *mo);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean felldown;        //$dropoff_fix: used to flag pushed off ledge
-extern line_t *blockline;       // $unstuck: blocking linedef
+extern linedef_t *blockline;       // $unstuck: blocking linedef
 extern float tmbbox[4];     // for line intersection checks
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -122,7 +122,7 @@ static fixed_t dropoff_deltax, dropoff_deltay, floorz;
 void P_RecursiveSound(sector_t *sec, int soundblocks)
 {
     int                 i;
-    line_t             *check;
+    linedef_t             *check;
     xline_t            *xline;
     sector_t           *other;
     sector_t           *frontsector, *backsector;
@@ -138,9 +138,9 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
     xsec->soundTraversed = soundblocks + 1;
     xsec->soundTarget = soundtarget;
 
-    for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); i++)
+    for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); i++)
     {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
+        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
         frontsector = P_GetPtrp(check, DMU_FRONT_SECTOR);
         backsector = P_GetPtrp(check, DMU_BACK_SECTOR);
@@ -275,7 +275,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
 {
     fixed_t tryx, stepx;
     fixed_t tryy, stepy;
-    line_t *ld;
+    linedef_t *ld;
     boolean good;
 
     if(actor->moveDir == DI_NODIR)
@@ -438,7 +438,7 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
  * monsters to free themselves without making them tend to
  * hang over dropoffs.
  */
-static boolean PIT_AvoidDropoff(line_t *line, void *data)
+static boolean PIT_AvoidDropoff(linedef_t *line, void *data)
 {
     sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     sector_t   *backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
@@ -622,7 +622,7 @@ void C_DECL A_KeenDie(mobj_t *mo)
 {
     thinker_t *th;
     mobj_t *mo2;
-    line_t* dummyLine;
+    linedef_t* dummyLine;
 
     A_Fall(mo);
 
@@ -1643,7 +1643,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
 {
     thinker_t *th;
     mobj_t *mo2;
-    line_t*  dummyLine;
+    linedef_t*  dummyLine;
     int     i;
 
     // Has the boss already been killed?

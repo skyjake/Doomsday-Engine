@@ -63,7 +63,7 @@ mobj_t *P_SpawnTeleFog(float x, float y)
                          P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT);
 }
 
-int EV_Teleport(line_t *line, int side, mobj_t *thing)
+int EV_Teleport(linedef_t *line, int side, mobj_t *thing)
 {
     float      oldpos[3];
     float      aboveFloor;
