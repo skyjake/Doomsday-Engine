@@ -167,9 +167,9 @@ static vertex_t *newVertexFromSplitHEdge(hedge_t *hEdge, double x, double y)
 /**
  * Create a new half-edge.
  */
-hedge_t *HEdge_Create(line_t *line, line_t *sourceLine,
-                         vertex_t *start, vertex_t *end, sector_t *sec,
-                         boolean back)
+hedge_t *HEdge_Create(linedef_t *line, linedef_t *sourceLine,
+                      vertex_t *start, vertex_t *end, sector_t *sec,
+                      boolean back)
 {
     hedge_t            *hEdge = allocHEdge();
 

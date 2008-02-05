@@ -43,10 +43,10 @@
 #include "m_vector.h"
 
 #define GET_VERTEX_IDX(vtx)     ((vtx) - vertexes)
-#define GET_LINE_IDX(li)        ((li) - lines)
-#define GET_SIDE_IDX(si)        ((si) - sides)
+#define GET_LINE_IDX(li)        ((li) - lineDefs)
+#define GET_SIDE_IDX(si)        ((si) - sideDefs)
 #define GET_SECTOR_IDX(sec)     ((sec) - sectors)
-#define GET_SUBSECTOR_IDX(sub)  ((sub) - subsectors)
+#define GET_SUBSECTOR_IDX(sub)  ((sub) - ssectors)
 #define GET_SEG_IDX(seg)        ((seg) - segs)
 #define GET_NODE_IDX(nd)        ((nd) - nodes)
 
@@ -56,10 +56,10 @@
 #define VERTEX_PTR(i)           (&vertexes[i])
 #define SEG_PTR(i)              (&segs[i])
 #define SECTOR_PTR(i)           (&sectors[i])
-#define SUBSECTOR_PTR(i)        (&subsectors[i])
+#define SUBSECTOR_PTR(i)        (&ssectors[i])
 #define NODE_PTR(i)             (&nodes[i])
-#define LINE_PTR(i)             (&lines[i])
-#define SIDE_PTR(i)             (&sides[i])
+#define LINE_PTR(i)             (&lineDefs[i])
+#define SIDE_PTR(i)             (&sideDefs[i])
 
 // Node flags.
 #define NF_SUBSECTOR        0x80000000
@@ -107,30 +107,30 @@ typedef void* blockmap_t;
  * The map data arrays are accessible globally inside the engine.
  */
 extern char     levelid[9];
-extern uint     numvertexes;
+extern uint     numVertexes;
 extern vertex_t *vertexes;
 
-extern uint     numsegs;
+extern uint     numSegs;
 extern seg_t   *segs;
 
-extern uint     numsectors;
+extern uint     numSectors;
 extern sector_t *sectors;
 
-extern uint     numsubsectors;
-extern subsector_t *subsectors;
+extern uint     numSSectors;
+extern subsector_t *ssectors;
 
-extern uint     numnodes;
+extern uint     numNodes;
 extern node_t  *nodes;
 
-extern uint     numlines;
-extern line_t  *lines;
+extern uint     numLineDefs;
+extern linedef_t *lineDefs;
 
-extern uint     numsides;
-extern side_t  *sides;
+extern uint     numSideDefs;
+extern sidedef_t  *sideDefs;
 
 extern watchedplanelist_t *watchedPlaneList;
 
-extern uint     numthings;
+extern uint     numThings;
 
 extern float    mapGravity;
 
@@ -149,20 +149,20 @@ typedef struct gamemap_s {
     uint        numSectors;
     sector_t   *sectors;
 
-    uint        numSubsectors;
-    subsector_t *subsectors;
+    uint        numSSectors;
+    subsector_t *ssectors;
 
     uint        numNodes;
     node_t     *nodes;
 
-    uint        numLines;
-    line_t     *lines;
+    uint        numLineDefs;
+    linedef_t  *lineDefs;
 
-    uint        numSides;
-    side_t     *sides;
+    uint        numSideDefs;
+    sidedef_t  *sideDefs;
 
-    uint        numPolyobjs;
-    polyobj_t **polyobjs;
+    uint        numPolyObjs;
+    polyobj_t **polyObjs;
 
     linkpolyobj_t **polyBlockMap;
 

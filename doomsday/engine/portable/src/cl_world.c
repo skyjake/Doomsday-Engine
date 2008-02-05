@@ -223,7 +223,7 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
     if(speed == 0)
         return;
 
-    if(sectornum >= numsectors)
+    if(sectornum >= numSectors)
         return;
     sector = SECTOR_PTR(sectornum);
 
@@ -335,7 +335,7 @@ polymover_t *Cl_FindActivePoly(uint number)
 polymover_t *Cl_NewPolyMover(uint number)
 {
     polymover_t        *mover;
-    polyobj_t          *poly = polyobjs[number];
+    polyobj_t          *poly = polyObjs[number];
 
     mover = Z_Malloc(sizeof(polymover_t), PU_LEVEL, 0);
     memset(mover, 0, sizeof(*mover));
@@ -455,7 +455,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     if(!skip)
     {
 #ifdef _DEBUG
-if(num >= numsectors)
+if(num >= numSectors)
 {
     // This is worrisome.
     Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
@@ -631,7 +631,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     byte        lineFlags = 0, sideFlags = 0;
     float       toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
     float       bottomrgb[3] = {0,0,0};
-    side_t     *sid;
+    sidedef_t     *sid;
 
     // First read all the data.
     num = Msg_ReadShort();
@@ -690,7 +690,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         return;
 
 #ifdef _DEBUG
-if(num >= numsides)
+if(num >= numSideDefs)
 {
     // This is worrisome.
     Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
@@ -741,7 +741,7 @@ if(num >= numsides)
 
     if(df & SIDF_LINE_FLAGS)
     {
-        line_t *line = R_GetLineForSide(num);
+        linedef_t *line = R_GetLineForSide(num);
 
         if(line)
         {
@@ -789,14 +789,14 @@ void Cl_ReadPolyDelta2(boolean skip)
         return;
 
 #ifdef _DEBUG
-if(num >= numpolyobjs)
+if(num >= numPolyObjs)
 {
     // This is worrisome.
     Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);
 }
 #endif
 
-    po = polyobjs[num];
+    po = polyObjs[num];
 
     if(df & PODF_DEST_X)
         po->dest.pos[VX] = destX;

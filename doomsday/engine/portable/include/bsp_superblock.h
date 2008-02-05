@@ -81,12 +81,9 @@ void        BSP_FindNodeBounds(bspnodedata_t *node, superblock_t *hEdgeListRight
                                superblock_t *hEdgeListLeft);
 void        BSP_DivideOneHEdge(hedge_t *hEdge, hedge_t *part, superblock_t *rightList,
                                superblock_t *leftList, cutlist_t *cutList);
-void        BSP_SeparateHEdges(superblock_t *hEdgeList, hedge_t *part,
-                               superblock_t *rightList, superblock_t *leftList,
-                               cutlist_t *cutList);
+void        BSP_PartitionHEdges(superblock_t *hEdgeList, hedge_t *part,
+                                superblock_t *rightList, superblock_t *leftList,
+                                cutlist_t *cutList);
 void        BSP_AddMiniHEdges(hedge_t *part, superblock_t *rightList,
                               superblock_t *leftList, cutlist_t *cutList);
-void        BSP_BuildEdgeBetweenIntersections(hedge_t *part, intersection_t *start,
-                                              intersection_t *end,
-                                              hedge_t **right, hedge_t **left);
 #endif

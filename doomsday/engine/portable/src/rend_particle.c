@@ -184,8 +184,8 @@ void PG_ShutdownTextures(void)
 
 void PG_InitForLevel(void)
 {
-    pgLinks = Z_Malloc(sizeof(pglink_t *) * numsectors, PU_LEVEL, 0);
-    memset(pgLinks, 0, sizeof(pglink_t *) * numsectors);
+    pgLinks = Z_Malloc(sizeof(pglink_t *) * numSectors, PU_LEVEL, 0);
+    memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
 
     // We can link 64 generators each into four sectors before
     // running out of pgLinks.
@@ -245,7 +245,7 @@ void PG_InitForNewFrame(void)
     ptcgen_t   *gen;
 
     // Clear the PG links.
-    memset(pgLinks, 0, sizeof(pglink_t *) * numsectors);
+    memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
     pgCursor = 0;
 
     // Clear all visibility flags.

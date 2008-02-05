@@ -92,8 +92,8 @@ mobj_t *blockingMobj;
 // Slide variables.
 static float bestSlideFrac;
 static float secondSlideFrac;
-static line_t *bestSlideLine;
-static line_t *secondSlideLine;
+static linedef_t *bestSlideLine;
+static linedef_t *secondSlideLine;
 
 static mobj_t *slideMo;
 
@@ -212,7 +212,7 @@ void P_MobjSetState(mobj_t *mobj, int statenum)
 /**
  * Adjusts tmpFloorZ and tmpCeilingZ as lines are contacted.
  */
-boolean PIT_CheckLine(line_t *ld, void *parm)
+boolean PIT_CheckLine(linedef_t *ld, void *parm)
 {
     int         pX, pY;
     checkpos_data_t *tm = parm;
@@ -387,7 +387,7 @@ boolean P_CheckPosXYZ(mobj_t *mo, float x, float y, float z)
     // Hit something yet?
     if(result)
     {   // Nope.
-        // Try polyobj->lines and lines.
+        // Try polyobj->lineDefs and lines.
         if(!P_AllLinesBoxIteratorv(data.box, PIT_CheckLine, &data))
         {
             result = false;
@@ -623,7 +623,7 @@ boolean P_IsInVoid(ddplayer_t *player)
  * Allows the player to slide along any angled walls. Adjusts the player's
  * momentum vector so that the next move slides along the linedef.
  */
-static void wallMomSlide(line_t *ld)
+static void wallMomSlide(linedef_t *ld)
 {
     int         side;
     uint        an;
@@ -665,12 +665,12 @@ static void wallMomSlide(line_t *ld)
 
 boolean PTR_SlideTraverse(intercept_t *in)
 {
-    line_t     *li;
+    linedef_t     *li;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: not a line?");
 
-    li = in->d.line;
+    li = in->d.lineDef;
 
     if(!(li->flags & DDLF_TWOSIDED))
     {

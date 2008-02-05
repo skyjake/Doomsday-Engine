@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,12 +30,12 @@
 #define __DOOMSDAY_REFRESH_UTIL_H__
 
 int             R_PointOnSide(const float x, const float y,
-                              const node_t *node);
+                              const partition_t *par);
 angle_t         R_PointToAngle(float x, float y);
 angle_t         R_PointToAngle2(const float x1, const float y1,
                                 const float x2, const float y2);
 float           R_PointToDist(const float x, const float y);
-line_t         *R_GetLineForSide(const uint sideIDX);
+linedef_t         *R_GetLineForSide(const uint sideIDX);
 subsector_t    *R_PointInSubsector(const float x, const float y);
 boolean         R_IsPointInSector(const float x, const float y,
                                   const sector_t *sector);

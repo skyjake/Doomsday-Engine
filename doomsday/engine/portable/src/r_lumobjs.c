@@ -200,7 +200,7 @@ void LO_InitForMap(void)
 
     // First initialize the subsector links (root pointers).
     loSubLinks =
-        Z_Calloc(sizeof(lumlink_t*) * numsubsectors, PU_LEVELSTATIC, 0);
+        Z_Calloc(sizeof(lumlink_t*) * numSSectors, PU_LEVELSTATIC, 0);
 
     // Then the blocklinks.
     P_GetMapBounds(map, &min[0], &max[0]);
@@ -227,7 +227,7 @@ void LO_InitForMap(void)
 
     // Initialize obj -> subsector contacts.
     subContacts =
-        Z_Calloc(numsubsectors * sizeof(objcontact_t*), PU_LEVELSTATIC, 0);
+        Z_Calloc(numSSectors * sizeof(objcontact_t*), PU_LEVELSTATIC, 0);
 }
 
 /**
@@ -266,7 +266,7 @@ void LO_ClearForFrame(void)
 #endif
 
     // Clear all the roots.
-    memset(loSubLinks, 0, sizeof(lumlink_t *) * numsubsectors);
+    memset(loSubLinks, 0, sizeof(lumlink_t *) * numSSectors);
     memset(loBlockLinks, 0, sizeof(lumlink_t *) * loBlockWidth * loBlockHeight);
 
     numLuminous = 0;
@@ -633,7 +633,7 @@ static void contactSector(lumobj_t *lum, const arvec2_t box, sector_t *sector)
  * @return          @c true, because this function is also used as an
  *                  iterator.
  */
-boolean LOIT_ContactFinder(line_t *line, void *data)
+boolean LOIT_ContactFinder(linedef_t *line, void *data)
 {
     contactfinder_data_t *light = data;
     sector_t   *source, *dest;
@@ -997,7 +997,7 @@ BEGIN_PROF( PROF_DYN_INIT_DEL );
 
     // Start reusing nodes from the first one in the list.
     contCursor = contFirst;
-    memset(subContacts, 0, numsubsectors * sizeof(objcontact_t *));
+    memset(subContacts, 0, numSSectors * sizeof(objcontact_t *));
 
 END_PROF( PROF_DYN_INIT_DEL );
 
@@ -1007,7 +1007,7 @@ END_PROF( PROF_DYN_INIT_DEL );
 
 BEGIN_PROF( PROF_DYN_INIT_ADD );
 
-    for(i = 0, seciter = sectors; i < numsectors; seciter++, ++i)
+    for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
     {
         for(iter = seciter->mobjList; iter; iter = iter->sNext)
         {
@@ -1018,7 +1018,7 @@ BEGIN_PROF( PROF_DYN_INIT_ADD );
         // to create dynlights and link them.
         if(useWallGlow)
         {
-            subsector_t **ssec = seciter->subsectors;
+            subsector_t **ssec = seciter->ssectors;
             while(*ssec)
             {
                 createGlowLightPerPlaneForSubSector(*ssec);
@@ -1145,11 +1145,11 @@ void LO_ClipBySight(uint ssecidx)
     lumlink_t  *lumi;
 
     // Only checks the polyobj.
-    if(ssec->poly == NULL) return;
+    if(ssec->polyObj == NULL) return;
 
     V2_Set(eye, vx, vz);
 
-    num = ssec->poly->numSegs;
+    num = ssec->polyObj->numSegs;
     for(lumi = loSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
     {
         lumobj_t   *lobj = &lumi->lum;
@@ -1161,7 +1161,7 @@ void LO_ClipBySight(uint ssecidx)
             // between the viewpoint and the light source.
             for(i = 0; i < num; ++i)
             {
-                seg_t      *seg = ssec->poly->segs[i];
+                seg_t      *seg = ssec->polyObj->segs[i];
 
                 // Ignore segs facing the wrong way.
                 if(seg->frameFlags & SEGINF_FACINGFRONT)

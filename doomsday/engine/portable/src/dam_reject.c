@@ -68,7 +68,7 @@
  *
  * Thus the size of a valid REJECT lump can be calculated as:
  *
- *     ceiling(numsectors^2)
+ *     ceiling(numSectors^2)
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -132,14 +132,14 @@ static void buildReject(gamemap_t *map)
 
     for(i = 0; i < numLinedefs; ++i)
     {
-        line_t  *line = LookupLinedef(i);
+        linedef_t  *line = LookupLinedef(i);
         sector_t   *sec1, *sec2, *p;
 
-        if(!line->sides[FRONT] || !line->sides[BACK])
+        if(!line->sideDefs[FRONT] || !line->sideDefs[BACK])
             continue;
 
-        sec1 = line->sides[FRONT]->sector;
-        sec2 = line->sides[BACK]->sector;
+        sec1 = line->sideDefs[FRONT]->sector;
+        sec2 = line->sideDefs[BACK]->sector;
 
         if(!sec1 || !sec2 || sec1 == sec2)
             continue;

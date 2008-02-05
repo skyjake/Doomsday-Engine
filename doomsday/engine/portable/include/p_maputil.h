@@ -44,42 +44,42 @@ float           P_AccurateDistanceFixed(fixed_t dx, fixed_t dy);
 float           P_AccurateDistance(float dx, float dy);
 float           P_ApproxDistance(float dx, float dy);
 float           P_ApproxDistance3(float dx, float dy, float dz);
-void            P_LineUnitVector(line_t *line, float *unitvec);
+void            P_LineUnitVector(linedef_t *line, float *unitvec);
 float           P_MobjPointDistancef(mobj_t *start, mobj_t *end,
                                      float *fixpoint);
-int             P_PointOnLineSide(float x, float y, line_t *line);
+int             P_PointOnLineSide(float x, float y, linedef_t *line);
 int             P_PointOnLineSide2(double pointX, double pointY,
                                    double lineDX, double lineDY,
                                    double linePerp, double lineLength,
                                    double epsilon);
-int             P_BoxOnLineSide(float *tmbox, line_t *ld);
+int             P_BoxOnLineSide(float *tmbox, linedef_t *ld);
 int             P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
-                                 line_t *ld);
+                                 linedef_t *ld);
 int             P_BoxOnLineSide3(const int bbox[4], double lineSX,
                                  double lineSY, double lineDX, double lineDY,
                                  double linePerp, double lineLength,
                                  double epsilon);
-void            P_MakeDivline(line_t *li, divline_t *dl);
+void            P_MakeDivline(linedef_t *li, divline_t *dl);
 int             P_PointOnDivlineSide(float x, float y, divline_t *line);
 float           P_InterceptVector(divline_t *v2, divline_t *v1);
 int             P_FloatPointOnLineSide(fvertex_t *pnt, fdivline_t *dline);
 float           P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
                                        fdivline_t *fdiv, fvertex_t *inter);
-void            P_LineOpening(line_t *linedef);
+void            P_LineOpening(linedef_t *linedef);
 void            P_MobjLink(mobj_t *mo, byte flags);
 void            P_MobjUnlink(mobj_t *mo);
 void            P_PointToBlock(float x, float y, uint *bx, uint *by);
 
-boolean         PIT_AddLineIntercepts(line_t *ld, void *data);
+boolean         PIT_AddLineIntercepts(linedef_t *ld, void *data);
 boolean         PIT_AddMobjIntercepts(mobj_t *mo, void *data);
 
 boolean         P_MobjLinesIterator(mobj_t *mo,
-                                    boolean (*func) (line_t *, void *),
+                                    boolean (*func) (linedef_t *, void *),
                                     void *);
 boolean         P_MobjSectorsIterator(mobj_t *mo,
                                       boolean (*func) (sector_t *, void *),
                                       void *data);
-boolean         P_LineMobjsIterator(line_t *line,
+boolean         P_LineMobjsIterator(linedef_t *line,
                                     boolean (*func) (mobj_t *, void *),
                                     void *data);
 boolean         P_SectorTouchingMobjsIterator(sector_t *sector,
@@ -98,10 +98,10 @@ boolean         P_MobjsBoxIteratorv(const arvec2_t box,
 
 // Lines in bounding box iterators.
 boolean         P_LinesBoxIterator(const float box[4],
-                                   boolean (*func) (line_t *, void *),
+                                   boolean (*func) (linedef_t *, void *),
                                    void *data);
 boolean         P_LinesBoxIteratorv(const arvec2_t box,
-                                    boolean (*func) (line_t *, void *),
+                                    boolean (*func) (linedef_t *, void *),
                                     void *data);
 
 // Polyobj in bounding box iterators.
@@ -112,21 +112,21 @@ boolean         P_PolyobjsBoxIteratorv(const arvec2_t box,
                                       boolean (*func) (polyobj_t *, void *),
                                       void *data);
 
-// (Polyobj in bounding box)->lines iterators.
+// (Polyobj in bounding box)->lineDefs iterators.
 boolean         P_PolyobjLinesBoxIterator(const float box[4],
-                                          boolean (*func) (line_t *, void *),
+                                          boolean (*func) (linedef_t *, void *),
                                           void *data);
 boolean         P_PolyobjLinesBoxIteratorv(const arvec2_t box,
-                                           boolean (*func) (line_t *, void *),
+                                           boolean (*func) (linedef_t *, void *),
                                            void *data);
 
-// Lines and (Polyobj in bounding box)->lines iterators.
+// Lines and (Polyobj in bounding box)->lineDefs iterators.
 // Polyobj lines are iterated first.
 boolean         P_AllLinesBoxIterator(const float box[4],
-                                      boolean (*func) (line_t *, void *),
+                                      boolean (*func) (linedef_t *, void *),
                                       void *data);
 boolean         P_AllLinesBoxIteratorv(const arvec2_t box,
-                                       boolean (*func) (line_t *, void *),
+                                       boolean (*func) (linedef_t *, void *),
                                        void *data);
 
 // Subsectors in bounding box iterators.

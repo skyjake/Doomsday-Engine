@@ -57,7 +57,7 @@ static int nodeCurIndex;
 
 // CODE --------------------------------------------------------------------
 
-static void hardenSideSegList(gamemap_t *map, side_t *side, seg_t *seg,
+static void hardenSideSegList(gamemap_t *map, sidedef_t *side, seg_t *seg,
                               hedge_t *hEdge)
 {
     uint                count;
@@ -184,14 +184,14 @@ static void buildSegsFromHEdges(gamemap_t *dest, const editmap_t *src)
 
         seg->side  = hEdge->side;
         if(hEdge->lineDef)
-            seg->lineDef = &dest->lines[hEdge->lineDef->buildData.index - 1];
+            seg->lineDef = &dest->lineDefs[hEdge->lineDef->buildData.index - 1];
         if(hEdge->twin)
             seg->backSeg = &dest->segs[hEdge->twin->index];
 
         seg->flags = 0;
         if(seg->lineDef)
         {
-            line_t     *ldef = seg->lineDef;
+            linedef_t     *ldef = seg->lineDef;
             vertex_t   *vtx = seg->lineDef->L_v(seg->side);
 
             seg->SG_frontsector = ldef->L_side(seg->side)->sector;
@@ -306,10 +306,10 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
     node = &params->dest->nodes[nodeData->index = params->nodeCurIndex++];
     node->header.type = DMU_NODE;
 
-    node->x = nodeData->x;
-    node->y = nodeData->y;
-    node->dX = nodeData->dX / (nodeData->tooLong? 2 : 1);
-    node->dY = nodeData->dY / (nodeData->tooLong? 2 : 1);
+    node->partition.x = nodeData->x;
+    node->partition.y = nodeData->y;
+    node->partition.dX = nodeData->dX / (nodeData->tooLong? 2 : 1);
+    node->partition.dY = nodeData->dY / (nodeData->tooLong? 2 : 1);
 
     node->bBox[RIGHT][BOXTOP]    = nodeData->bBox[RIGHT][BOXTOP];
     node->bBox[RIGHT][BOXBOTTOM] = nodeData->bBox[RIGHT][BOXBOTTOM];
@@ -330,7 +330,7 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
             uint            idx = params->ssecCurIndex++;
 
             node->children[RIGHT] = idx | NF_SUBSECTOR;
-            hardenSubsector(params->dest, &params->dest->subsectors[idx], ssec);
+            hardenSubsector(params->dest, &params->dest->ssectors[idx], ssec);
         }
         else
         {
@@ -348,7 +348,7 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
             uint            idx = params->ssecCurIndex++;
 
             node->children[LEFT] = idx | NF_SUBSECTOR;
-            hardenSubsector(params->dest, &params->dest->subsectors[idx], ssec);
+            hardenSubsector(params->dest, &params->dest->ssectors[idx], ssec);
         }
         else
         {
@@ -383,10 +383,10 @@ static void hardenBSP(gamemap_t *dest, editmap_t *src)
     dest->nodes =
         Z_Calloc(dest->numNodes * sizeof(node_t), PU_LEVELSTATIC, 0);
 
-    dest->numSubsectors = 0;
-    BinaryTree_PostOrder(src->rootNode, countSSec, &dest->numSubsectors);
-    dest->subsectors =
-        Z_Calloc(dest->numSubsectors * sizeof(subsector_t), PU_LEVELSTATIC, 0);
+    dest->numSSectors = 0;
+    BinaryTree_PostOrder(src->rootNode, countSSec, &dest->numSSectors);
+    dest->ssectors =
+        Z_Calloc(dest->numSSectors * sizeof(subsector_t), PU_LEVELSTATIC, 0);
 
     if(src->rootNode)
     {
@@ -404,9 +404,9 @@ void BSP_InitForNodeBuild(editmap_t *map)
 {
     uint            i;
 
-    for(i = 0; i < map->numLines; ++i)
+    for(i = 0; i < map->numLineDefs; ++i)
     {
-        line_t     *l = map->lines[i];
+        linedef_t     *l = map->lineDefs[i];
         vertex_t   *start = l->v[0];
         vertex_t   *end   = l->v[1];
 
@@ -423,11 +423,11 @@ void BSP_InitForNodeBuild(editmap_t *map)
         if(l->inFlags & LF_POLYOBJ)
             l->buildData.mlFlags |= MLF_POLYOBJ;
 
-        if(l->sides[BACK] && l->sides[FRONT])
+        if(l->sideDefs[BACK] && l->sideDefs[FRONT])
         {
             l->buildData.mlFlags |= MLF_TWOSIDED;
 
-            if(l->sides[BACK]->sector == l->sides[FRONT]->sector)
+            if(l->sideDefs[BACK]->sector == l->sideDefs[FRONT]->sector)
                 l->buildData.mlFlags |= MLF_SELFREF;
         }
     }
@@ -437,22 +437,22 @@ static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
 {
     uint        i;
 
-    dest->numLines = src->numLines;
-    dest->lines = Z_Calloc(dest->numLines * sizeof(line_t), PU_LEVELSTATIC, 0);
+    dest->numLineDefs = src->numLineDefs;
+    dest->lineDefs = Z_Calloc(dest->numLineDefs * sizeof(linedef_t), PU_LEVELSTATIC, 0);
 
-    for(i = 0; i < dest->numLines; ++i)
+    for(i = 0; i < dest->numLineDefs; ++i)
     {
-        line_t     *destL = &dest->lines[i];
-        line_t     *srcL = src->lines[i];
+        linedef_t     *destL = &dest->lineDefs[i];
+        linedef_t     *srcL = src->lineDefs[i];
 
         memcpy(destL, srcL, sizeof(*destL));
         destL->v[0] = &dest->vertexes[srcL->v[0]->buildData.index - 1];
         destL->v[1] = &dest->vertexes[srcL->v[1]->buildData.index - 1];
         //// \todo We shouldn't still have lines with missing fronts but...
         destL->L_frontside = (srcL->L_frontside?
-            &dest->sides[srcL->L_frontside->buildData.index - 1] : NULL);
+            &dest->sideDefs[srcL->L_frontside->buildData.index - 1] : NULL);
         destL->L_backside = (srcL->L_backside?
-            &dest->sides[srcL->L_backside->buildData.index - 1] : NULL);
+            &dest->sideDefs[srcL->L_backside->buildData.index - 1] : NULL);
     }
 }
 
@@ -484,13 +484,13 @@ static void hardenSidedefs(gamemap_t *dest, editmap_t *src)
 {
     uint            i;
 
-    dest->numSides = src->numSides;
-    dest->sides = Z_Malloc(dest->numSides * sizeof(side_t), PU_LEVELSTATIC, 0);
+    dest->numSideDefs = src->numSideDefs;
+    dest->sideDefs = Z_Malloc(dest->numSideDefs * sizeof(sidedef_t), PU_LEVELSTATIC, 0);
 
-    for(i = 0; i < dest->numSides; ++i)
+    for(i = 0; i < dest->numSideDefs; ++i)
     {
-        side_t         *destS = &dest->sides[i];
-        side_t         *srcS = src->sides[i];
+        sidedef_t         *destS = &dest->sideDefs[i];
+        sidedef_t         *srcS = src->sideDefs[i];
 
         memcpy(destS, srcS, sizeof(*destS));
         destS->sector = &dest->sectors[srcS->sector->buildData.index - 1];
@@ -528,21 +528,21 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
 {
     uint            i;
 
-    if(src->numPolyobjs == 0)
+    if(src->numPolyObjs == 0)
     {
-        dest->numPolyobjs = 0;
-        dest->polyobjs = NULL;
+        dest->numPolyObjs = 0;
+        dest->polyObjs = NULL;
         return;
     }
 
-    dest->numPolyobjs = src->numPolyobjs;
-    dest->polyobjs = Z_Malloc((dest->numPolyobjs+1) * sizeof(polyobj_t*),
+    dest->numPolyObjs = src->numPolyObjs;
+    dest->polyObjs = Z_Malloc((dest->numPolyObjs+1) * sizeof(polyobj_t*),
                               PU_LEVEL, 0);
 
-    for(i = 0; i < dest->numPolyobjs; ++i)
+    for(i = 0; i < dest->numPolyObjs; ++i)
     {
         uint            j;
-        polyobj_t      *destP, *srcP = src->polyobjs[i];
+        polyobj_t      *destP, *srcP = src->polyObjs[i];
         seg_t          *segs;
 
         destP = Z_Calloc(sizeof(*destP), PU_LEVEL, 0);
@@ -566,7 +566,7 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
         destP->segs = Z_Malloc(sizeof(seg_t*) * (srcP->buildData.lineCount+1), PU_LEVEL, 0);
         for(j = 0; j < srcP->buildData.lineCount; ++j)
         {
-            line_t         *line = &dest->lines[srcP->buildData.lines[j]->buildData.index - 1];
+            linedef_t      *line = &dest->lineDefs[srcP->buildData.lineDefs[j]->buildData.index - 1];
             seg_t          *seg = &segs[j];
             float           dx, dy;
             uint            k;
@@ -617,9 +617,9 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
         destP->segs[j] = NULL; // Terminate.
 
         // Add this polyobj to the global list.
-        dest->polyobjs[i] = destP;
+        dest->polyObjs[i] = destP;
     }
-    dest->polyobjs[i] = NULL; // Terminate.
+    dest->polyObjs[i] = NULL; // Terminate.
 }
 
 void SaveMap(gamemap_t *dest, editmap_t *src)

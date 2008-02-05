@@ -89,12 +89,12 @@ typedef struct hedge_s {
     double      pPerp;
 
     // Linedef that this half-edge goes along, or NULL if miniseg.
-    line_t     *lineDef;
+    linedef_t     *lineDef;
 
     // Linedef that this half-edge initially comes from.
     // For "real" half-edges, this is just the same as the 'linedef' field
     // above. For "miniedges", this is the linedef of the partition line.
-    line_t     *sourceLine;
+    linedef_t     *sourceLine;
 
     sector_t   *sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
     byte        side; // 0 for right, 1 for left.
@@ -103,7 +103,7 @@ typedef struct hedge_s {
 void        BSP_InitHEdgeAllocator(void);
 void        BSP_ShutdownHEdgeAllocator(void);
 
-hedge_t    *HEdge_Create(line_t *line, line_t *sourceLine,
+hedge_t    *HEdge_Create(linedef_t *line, linedef_t *sourceLine,
                          vertex_t *start, vertex_t *end,
                          sector_t *sec, boolean back);
 void        HEdge_Destroy(hedge_t *hEdge);

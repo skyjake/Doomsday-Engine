@@ -466,8 +466,8 @@ EXPORTS
     DED_AddValue                @170 NONAME
     DED_AddDetail               @171 NONAME
     DED_AddPtcGen               @172 NONAME
-    DED_AddSector               @173 NONAME
-    DED_AddLine                 @174 NONAME
+    DED_AddSectorType           @173 NONAME
+    DED_AddLineType             @174 NONAME
     DED_RemoveFlag              @176 NONAME
     DED_RemoveMobj              @177 NONAME
     DED_RemoveState             @178 NONAME
@@ -482,8 +482,8 @@ EXPORTS
     DED_RemoveValue             @187 NONAME
     DED_RemoveDetail            @188 NONAME
     DED_RemovePtcGen            @189 NONAME
-    DED_RemoveSector            @190 NONAME
-    DED_RemoveLine              @191 NONAME
+    DED_RemoveSectorType        @190 NONAME
+    DED_RemoveLineType          @191 NONAME
     DED_NewEntries              @192 NONAME
     DED_NewEntry                @193 NONAME
     DED_DelEntry                @194 NONAME

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ blockmap_t     *P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
 
 // Management:
 void            P_BlockmapSetBlock(blockmap_t *bmap, uint x, uint y,
-                                   line_t **lines, linkpolyobj_t *link);
+                                   linedef_t **lines, linkpolyobj_t *link);
 void            P_SSecBlockmapSetBlock(blockmap_t *bmap, uint x, uint y,
                                        subsector_t **ssecs);
 void            P_BuildSubsectorBlockMap(gamemap_t *map);
@@ -60,7 +60,7 @@ boolean         P_BlockmapMobjsIterator(blockmap_t *bmap, const uint block[2],
                                          boolean (*func) (struct mobj_s *, void *),
                                          void *data);
 boolean         P_BlockmapLinesIterator(blockmap_t *bmap, const uint block[2],
-                                        boolean (*func) (line_t *, void *),
+                                        boolean (*func) (linedef_t *, void *),
                                         void *data);
 boolean         P_BlockmapSubsectorsIterator(blockmap_t *bmap, const uint block[2],
                                              sector_t *sector, const arvec2_t box,
@@ -71,7 +71,7 @@ boolean         P_BlockmapPolyobjsIterator(blockmap_t *bmap, const uint block[2]
                                            boolean (*func) (polyobj_t *, void*),
                                            void *data);
 boolean         P_BlockmapPolyobjLinesIterator(blockmap_t *bmap, const uint block[2],
-                                               boolean (*func) (line_t *, void *),
+                                               boolean (*func) (linedef_t *, void *),
                                                void *data);
 
 // Block Box Iterators:
@@ -79,7 +79,7 @@ boolean         P_BlockBoxMobjsIterator(blockmap_t *bmap, const uint blockBox[4]
                                          boolean (*func) (struct mobj_s *, void *),
                                          void *data);
 boolean         P_BlockBoxLinesIterator(blockmap_t *bmap, const uint blockBox[4],
-                                        boolean (*func) (line_t *, void *),
+                                        boolean (*func) (linedef_t *, void *),
                                         void *data);
 boolean         P_BlockBoxSubsectorsIterator(blockmap_t *bmap, const uint blockBox[4],
                                              sector_t *sector, const arvec2_t box,
@@ -90,7 +90,7 @@ boolean         P_BlockBoxPolyobjsIterator(blockmap_t *bmap, const uint blockBox
                                            boolean (*func) (polyobj_t *, void*),
                                            void *data);
 boolean         P_BlockBoxPolyobjLinesIterator(blockmap_t *bmap, const uint blockBox[4],
-                                               boolean (*func) (line_t *, void *),
+                                               boolean (*func) (linedef_t *, void *),
                                                void *data);
 
 // Specialized Traversals:

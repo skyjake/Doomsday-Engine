@@ -59,41 +59,42 @@
 
 typedef struct reg_mobj_s {
     // Links to next and prev mobj in the register hash.
-    struct reg_mobj_s *next, *prev;
+    struct reg_mobj_s  *next, *prev;
 
-    int         lastTimeStateSent; // The tic when the mobj state was last sent.
-    dt_mobj_t   mo; // The state of the mobj.
+    // The tic when the mobj state was last sent.
+    int                 lastTimeStateSent;
+    dt_mobj_t           mo; // The state of the mobj.
 } reg_mobj_t;
 
 typedef struct mobjhash_s {
-    reg_mobj_t *first, *last;
+    reg_mobj_t         *first, *last;
 } mobjhash_t;
 
-/*
+/**
  * One cregister_t holds the state of the entire world.
  */
 typedef struct cregister_s {
     // The time the register was last updated.
-    int         gametic;
+    int                 gametic;
 
     // True if this register contains a read-only copy of the initial state
     // of the world.
-    boolean     isInitial;
+    boolean             isInitial;
 
     // The mobjs are stored in a hash for efficiency (ID is the key).
-    mobjhash_t  mobjs[REG_MOBJ_HASH_SIZE];
+    mobjhash_t          mobjs[REG_MOBJ_HASH_SIZE];
 
-    dt_player_t players[MAXPLAYERS];
-    dt_sector_t *sectors;
-    dt_side_t  *sides;
-    dt_poly_t  *polys;
+    dt_player_t         players[MAXPLAYERS];
+    dt_sector_t        *sectors;
+    dt_side_t          *sideDefs;
+    dt_poly_t          *polyObjs;
 } cregister_t;
 
 /**
  * Each entity (mobj, sector, side, etc.) has an origin the world.
  */
 typedef struct origin_s {
-    float       pos[2];
+    float               pos[2];
 } origin_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -134,7 +135,7 @@ static dt_mobj_t dummyZeroMobj;
 static origin_t *sectorOrigins, *sideOrigins;
 
 // Pointer to the owner line for each side.
-static line_t **sideOwners;
+static linedef_t **sideOwners;
 
 // CODE --------------------------------------------------------------------
 
@@ -190,15 +191,15 @@ void Sv_InitPools(void)
     }
 
     // Find the owners of all sides.
-    sideOwners = Z_Malloc(sizeof(line_t *) * numsides, PU_LEVEL, 0);
-    for(i = 0; i < numsides; ++i)
+    sideOwners = Z_Malloc(sizeof(linedef_t *) * numSideDefs, PU_LEVEL, 0);
+    for(i = 0; i < numSideDefs; ++i)
     {
         sideOwners[i] = R_GetLineForSide(i);
     }
 
     // Origins of sectors.
-    sectorOrigins = Z_Malloc(sizeof(origin_t) * numsectors, PU_LEVEL, 0);
-    for(i = 0; i < numsectors; ++i)
+    sectorOrigins = Z_Malloc(sizeof(origin_t) * numSectors, PU_LEVEL, 0);
+    for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
 
@@ -209,10 +210,11 @@ void Sv_InitPools(void)
     }
 
     // Origins of sides.
-    sideOrigins = Z_Malloc(sizeof(origin_t) * numsides, PU_LEVEL, 0);
-    for(i = 0; i < numsides; ++i)
+    sideOrigins = Z_Malloc(sizeof(origin_t) * numSideDefs, PU_LEVEL, 0);
+    for(i = 0; i < numSideDefs; ++i)
     {
-        vertex_t    *vtx;
+        vertex_t           *vtx;
+
         // The side must be owned by a line.
         if(sideOwners[i] == NULL)
             continue;
@@ -505,8 +507,8 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
  */
 void Sv_RegisterSide(dt_side_t *reg, uint number)
 {
-    side_t *side = SIDE_PTR(number);
-    line_t *line = sideOwners[number];
+    sidedef_t          *side = SIDE_PTR(number);
+    linedef_t          *line = sideOwners[number];
 
     reg->top.material.texture = (side->SW_topmaterial? side->SW_topmaterial->ofTypeID : 0);
     reg->middle.material.texture = (side->SW_middlematerial? side->SW_middlematerial->ofTypeID : 0);
@@ -526,7 +528,7 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
  */
 void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 {
-    polyobj_t *poly = polyobjs[number];
+    polyobj_t          *poly = polyObjs[number];
 
     reg->dest.pos[VX] = poly->dest.pos[VX];
     reg->dest.pos[VY] = poly->dest.pos[VY];
@@ -838,9 +840,9 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
 boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
                                byte doUpdate)
 {
-    const side_t *s = SIDE_PTR(number);
-    const line_t *line = sideOwners[number];
-    dt_side_t  *r = &reg->sides[number];
+    const sidedef_t *s = SIDE_PTR(number);
+    const linedef_t *line = sideOwners[number];
+    dt_side_t  *r = &reg->sideDefs[number];
     int         df = 0;
     byte        lineFlags = (line ? line->flags & 0xff : 0);
     byte        sideFlags = s->flags & 0xff;
@@ -1018,7 +1020,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
 boolean Sv_RegisterComparePoly(cregister_t *reg, uint number,
                                polydelta_t *d)
 {
-    const dt_poly_t *r = &reg->polys[number];
+    const dt_poly_t *r = &reg->polyObjs[number];
     dt_poly_t *s = &d->po;
     int         df = 0;
 
@@ -1080,26 +1082,26 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
     reg->isInitial = isInitial;
 
     // Init sectors.
-    reg->sectors = Z_Calloc(sizeof(dt_sector_t) * numsectors, PU_LEVEL, 0);
-    for(i = 0; i < numsectors; ++i)
+    reg->sectors = Z_Calloc(sizeof(dt_sector_t) * numSectors, PU_LEVEL, 0);
+    for(i = 0; i < numSectors; ++i)
     {
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
     // Init sides.
-    reg->sides = Z_Calloc(sizeof(dt_side_t) * numsides, PU_LEVEL, 0);
-    for(i = 0; i < numsides; ++i)
+    reg->sideDefs = Z_Calloc(sizeof(dt_side_t) * numSideDefs, PU_LEVEL, 0);
+    for(i = 0; i < numSideDefs; ++i)
     {
-        Sv_RegisterSide(&reg->sides[i], i);
+        Sv_RegisterSide(&reg->sideDefs[i], i);
     }
 
     // Init polyobjs.
-    reg->polys =
-        (numpolyobjs ?
-         Z_Calloc(sizeof(dt_poly_t) * numpolyobjs, PU_LEVEL, 0) : NULL);
-    for(i = 0; i < numpolyobjs; ++i)
+    reg->polyObjs =
+        (numPolyObjs ?
+         Z_Calloc(sizeof(dt_poly_t) * numPolyObjs, PU_LEVEL, 0) : NULL);
+    for(i = 0; i < numPolyObjs; ++i)
     {
-        Sv_RegisterPoly(&reg->polys[i], i);
+        Sv_RegisterPoly(&reg->polyObjs[i], i);
     }
 }
 
@@ -1108,8 +1110,8 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
  */
 void Sv_UpdateOwnerInfo(pool_t *pool)
 {
-    ddplayer_t *player = &players[pool->owner];
-    ownerinfo_t *info = &pool->ownerInfo;
+    ddplayer_t             *player = &players[pool->owner];
+    ownerinfo_t            *info = &pool->ownerInfo;
 
     memset(info, 0, sizeof(*info));
 
@@ -1714,7 +1716,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if(delta->type == DT_POLY)
     {
-        polyobj_t *po = polyobjs[delta->id];
+        polyobj_t              *po = polyObjs[delta->id];
 
         return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
                                 info->pos[VY] - po->startSpot.pos[VY]);
@@ -1722,7 +1724,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if(delta->type == DT_MOBJ_SOUND)
     {
-        const sounddelta_t *sound = deltaPtr;
+        const sounddelta_t     *sound = deltaPtr;
 
         return Sv_MobjDistance(sound->mobj, info, true);
     }
@@ -1734,7 +1736,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        polyobj_t *po = polyobjs[delta->id];
+        polyobj_t              *po = polyObjs[delta->id];
 
         return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
                                 info->pos[VY] - po->startSpot.pos[VY]);
@@ -2351,7 +2353,7 @@ void Sv_NewSectorDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     sectordelta_t delta;
     uint        i;
 
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         if(Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2377,15 +2379,15 @@ void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     if(reg->isInitial)
     {
         start = 0;
-        end = numsides;
+        end = numSideDefs;
     }
     else
     {
         // Because there are so many sides in a typical map, the number
         // of compared sides soon accumulates to millions. To reduce the
         // load, we'll check only a portion of all sides for a frame.
-        start = shift * numsides / numShifts;
-        end = ++shift * numsides / numShifts;
+        start = shift * numSideDefs / numShifts;
+        end = ++shift * numSideDefs / numShifts;
         shift %= numShifts;
     }
 
@@ -2407,10 +2409,10 @@ void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
  */
 void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
-    polydelta_t delta;
-    uint        i;
+    uint                i;
+    polydelta_t         delta;
 
-    for(i = 0; i < numpolyobjs; ++i)
+    for(i = 0; i < numPolyObjs; ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
@@ -2422,7 +2424,7 @@ Con_Printf("Sv_NewPolyDeltas: Change in %i\n", i);
 
         if(doUpdate)
         {
-            Sv_RegisterPoly(&reg->polys[i], i);
+            Sv_RegisterPoly(&reg->polyObjs[i], i);
         }
     }
 }

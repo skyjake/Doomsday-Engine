@@ -627,9 +627,8 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
     M_CopyBox(hEdgeSet[RIGHT]->bbox, hEdgeList->bbox);
 
     // Divide the half-edges into two lists: left & right.
-    BSP_SeparateHEdges(hEdgeList, best, hEdgeSet[RIGHT], hEdgeSet[LEFT], cutList);
-
-    BSP_AddMiniHEdges(best, hEdgeSet[RIGHT], hEdgeSet[LEFT], cutList);
+    BSP_PartitionHEdges(hEdgeList, best, hEdgeSet[RIGHT], hEdgeSet[LEFT],
+                        cutList);
     BSP_CutListEmpty(cutList);
 
     node = M_Calloc(sizeof(bspnodedata_t));

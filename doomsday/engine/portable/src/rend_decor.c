@@ -395,7 +395,7 @@ static void getDecorationSkipPattern(const ded_decorlight_t *lightDef,
 /**
  * Generate decorations for the specified section of a line.
  */
-static void decorateLineSection(const line_t *line, side_t *side,
+static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                                 surface_t *suf, float top,
                                 float bottom, float texOffY,
                                 ded_decor_t *def, const float maxDist)
@@ -491,9 +491,9 @@ static void decorateLineSection(const line_t *line, side_t *side,
 /**
  * @return              The side that faces the sector (if any).
  */
-static side_t *getSectorSide(const line_t *line, sector_t *sector)
+static sidedef_t *getSectorSide(const linedef_t *line, sector_t *sector)
 {
-    side_t *side = line->L_frontside;
+    sidedef_t *side = line->L_frontside;
 
     // Swap if that wasn't the right one.
     if(side->sector != sector)
@@ -506,7 +506,7 @@ static side_t *getSectorSide(const line_t *line, sector_t *sector)
  * @return              @c true, if the line is within the visible
  *                      decoration 'box'.
  */
-static boolean checkLineDecorationBounds(const line_t *line,
+static boolean checkLineDecorationBounds(const linedef_t *line,
                                          const float *viewer,
                                          const float maxDist)
 {
@@ -561,9 +561,9 @@ static boolean checkSectorDecorationBounds(const sector_t *sector,
     return pointInBounds(bounds, viewer, maxDist);
 }
 
-static void decorateLine(const line_t *line, const float maxDist)
+static void decorateLine(const linedef_t *line, const float maxDist)
 {
-    side_t         *side;
+    sidedef_t         *side;
     sector_t       *highSector, *lowSector;
     float           frontCeil, frontFloor, backCeil, backFloor;
     surface_t      *suf;
@@ -735,7 +735,7 @@ static void decorateLine(const line_t *line, const float maxDist)
  * Generate decorations for upper, middle and bottom parts of the line,
  * on both sides.
  */
-static void Rend_DecorateLine(const line_t *line, const float viewer[3],
+static void Rend_DecorateLine(const linedef_t *line, const float viewer[3],
                               const float maxDist)
 {
     // Only the lines within the decoration visibility bounding box
@@ -872,11 +872,11 @@ void Rend_InitDecorationsForFrame(void)
         // Process all lines. This could also be done during sectors,
         // but validCount would need to be used to prevent duplicate
         // processing.
-        for(i = 0; i < numlines; ++i)
-            Rend_DecorateLine(&lines[i], viewer, decorMaxDist);
+        for(i = 0; i < numLineDefs; ++i)
+            Rend_DecorateLine(&lineDefs[i], viewer, decorMaxDist);
 
         // Process all planes.
-        for(i = 0; i < numsectors; ++i)
+        for(i = 0; i < numSectors; ++i)
             Rend_DecorateSector(&sectors[i], viewer, decorMaxDist);
     }
 }

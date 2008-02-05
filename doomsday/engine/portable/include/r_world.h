@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ void            R_ClearSectorFlags(void);
 void            R_BuildVertexOwners(gamemap_t *map);
 void            R_InitSkyFix(void);
 void            R_SkyFix(boolean fixFloors, boolean fixCeilings);
-void            R_OrderVertices(const line_t *line, const sector_t *sector,
+void            R_OrderVertices(const linedef_t *line, const sector_t *sector,
                                 vertex_t *verts[2]);
 plane_t        *R_NewPlaneForSector(sector_t *sec);
 void            R_DestroyPlaneOfSector(uint id, sector_t *sec);
@@ -80,15 +80,15 @@ void            R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln);
 boolean         R_RemoveWatchedPlane(watchedplanelist_t *wpl,
                                      const plane_t *pln);
 
-lineowner_t    *R_GetVtxLineOwner(vertex_t *vtx, line_t *line);
-line_t         *R_FindLineNeighbor(sector_t *sector, line_t *line,
+lineowner_t    *R_GetVtxLineOwner(vertex_t *vtx, linedef_t *line);
+linedef_t         *R_FindLineNeighbor(sector_t *sector, linedef_t *line,
                                    lineowner_t *own,
                                    boolean antiClockwise, binangle_t *diff);
-line_t         *R_FindSolidLineNeighbor(sector_t *sector, line_t *line,
+linedef_t         *R_FindSolidLineNeighbor(sector_t *sector, linedef_t *line,
                                         lineowner_t *own,
                                         boolean antiClockwise,
                                         binangle_t *diff);
-line_t         *R_FindLineBackNeighbor(sector_t *sector, line_t *line,
+linedef_t         *R_FindLineBackNeighbor(sector_t *sector, linedef_t *line,
                                        lineowner_t *own,
                                        boolean antiClockwise,
                                        binangle_t *diff);

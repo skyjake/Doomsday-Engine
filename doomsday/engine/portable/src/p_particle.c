@@ -77,7 +77,7 @@ float   particleSpawnRate = 1;  // Unmodified.
 
 static vec2_t mbox[2];
 static int tmpz, tmprad, tmcross, tmpx1, tmpx2, tmpy1, tmpy2;
-static line_t *ptcHitLine;
+static linedef_t *ptcHitLine;
 
 // CODE --------------------------------------------------------------------
 
@@ -623,7 +623,7 @@ static void P_ManyNewParticles(ptcgen_t *gen)
     gen->source = NULL;
 }
 
-boolean PIT_CheckLinePtc(line_t *ld, void *data)
+boolean PIT_CheckLinePtc(linedef_t *ld, void *data)
 {
     int         pX, pY;
     vec2_t      box[2], point;
@@ -1242,7 +1242,7 @@ void P_CheckPtcPlanes(void)
     if(isDedicated || SECONDS_TO_TICKS(gameTime) % 4)
         return;
 
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         sector = SECTOR_PTR(i);
         for(p = 0; p < 2; ++p)

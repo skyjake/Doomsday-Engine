@@ -87,7 +87,7 @@ intercept_t *P_AddIntercept(float frac, intercepttype_t type, void *ptr)
         intercept_p = intercepts + count;
     }
 
-    if(type == ICPT_LINE && P_ToIndex(ptr) >= numlines)
+    if(type == ICPT_LINE && P_ToIndex(ptr) >= numLineDefs)
     {
         count = count;
     }
@@ -145,7 +145,7 @@ boolean P_SightTraverseIntercepts(divline_t *strace,
     // Calculate intercept distance.
     for(scan = intercepts; scan < intercept_p; scan++)
     {
-        P_MakeDivline(scan->d.line, &dl);
+        P_MakeDivline(scan->d.lineDef, &dl);
         scan->frac = P_InterceptVector(strace, &dl);
     }
 

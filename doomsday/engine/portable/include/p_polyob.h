@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,8 +31,8 @@
 
 #include "p_mapdata.h"
 
-extern struct   polyobj_s **polyobjs; // list of all poly-objects on the level
-extern uint     numpolyobjs;
+extern struct   polyobj_s **polyObjs; // list of all poly-objects on the level
+extern uint     numPolyObjs;
 
 // Polyobj system.
 void            PO_InitForMap(void);
@@ -48,6 +48,6 @@ void            P_PolyobjUpdateBBox(polyobj_t *po);
 
 void            P_PolyobjLinkToRing(polyobj_t *po, linkpolyobj_t **link);
 void            P_PolyobjUnlinkFromRing(polyobj_t *po, linkpolyobj_t **link);
-boolean         P_PolyobjLinesIterator(polyobj_t *po, boolean (*func) (line_t *, void *),
+boolean         P_PolyobjLinesIterator(polyobj_t *po, boolean (*func) (linedef_t *, void *),
                                        void *data);
 #endif

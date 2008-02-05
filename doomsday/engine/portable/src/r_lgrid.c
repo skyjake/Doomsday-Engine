@@ -445,7 +445,7 @@ void LG_Init(void)
         M_Free(sampleResults);
 
     // Find the blocks of all sectors.
-    for(s = 0; s < numsectors; ++s)
+    for(s = 0; s < numSectors; ++s)
     {
         sector_t *sector = SECTOR_PTR(s);
 
@@ -627,7 +627,7 @@ void LG_MarkAllForUpdate(cvar_t *unused)
         return;
 
     // Mark all blocks and contributors.
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         LG_SectorChanged(&sectors[i]);
     }

@@ -685,10 +685,10 @@ if(SHORT(blockmapLump[offset]) != 0)
 
                 if(count > 0)
                 {
-                    line_t    **lines, **ptr;
+                    linedef_t    **lines, **ptr;
 
                     // A NULL-terminated array of pointers to lines.
-                    lines = Z_Malloc((count + 1) * sizeof(line_t *),
+                    lines = Z_Malloc((count + 1) * sizeof(linedef_t *),
                                     PU_LEVELSTATIC, NULL);
 
                     // Copy pointers to the array, delete the nodes.

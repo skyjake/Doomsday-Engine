@@ -60,39 +60,39 @@ extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
 // CODE --------------------------------------------------------------------
 
 /**
- * Which side of the node does the point lie?
+ * Which side of the partition does the point lie?
  *
  * @param x         X coordinate to test.
  * @param y         Y coordinate to test.
  * @return int      @c 0 = front, else @c 1 = back.
  */
-int R_PointOnSide(const float x, const float y, const node_t *node)
+int R_PointOnSide(const float x, const float y, const partition_t *par)
 {
     float       dx, dy;
     float       left, right;
 
-    if(!node->dX)
+    if(!par->dX)
     {
-        if(x <= node->x)
-            return (node->dY > 0? 1:0);
+        if(x <= par->x)
+            return (par->dY > 0? 1:0);
         else
-            return (node->dY < 0? 1:0);
+            return (par->dY < 0? 1:0);
     }
-    if(!node->dY)
+    if(!par->dY)
     {
-        if(y <= node->y)
-            return (node->dX < 0? 1:0);
+        if(y <= par->y)
+            return (par->dX < 0? 1:0);
         else
-            return (node->dX > 0? 1:0);
+            return (par->dX > 0? 1:0);
     }
 
-    dx = (x - node->x);
-    dy = (y - node->y);
+    dx = (x - par->x);
+    dy = (y - par->y);
 
     // Try to quickly decide by looking at the signs.
-    if(node->dX < 0)
+    if(par->dX < 0)
     {
-        if(node->dY < 0)
+        if(par->dY < 0)
         {
             if(dx < 0)
             {
@@ -115,7 +115,7 @@ int R_PointOnSide(const float x, const float y, const node_t *node)
     }
     else
     {
-        if(node->dY < 0)
+        if(par->dY < 0)
         {
             if(dx < 0)
             {
@@ -137,8 +137,8 @@ int R_PointOnSide(const float x, const float y, const node_t *node)
         }
     }
 
-    left = node->dY * dx;
-    right = dy * node->dX;
+    left = par->dY * dx;
+    right = dy * par->dX;
 
     if(right < left)
         return 0;               // front side
@@ -257,36 +257,36 @@ subsector_t *R_PointInSubsector(const float x, const float y)
     node_t     *node = 0;
     uint        nodenum = 0;
 
-    if(!numnodes)               // single subsector is a special case
-        return (subsector_t *) subsectors;
+    if(!numNodes)               // single subsector is a special case
+        return (subsector_t *) ssectors;
 
-    nodenum = numnodes - 1;
+    nodenum = numNodes - 1;
 
     while(!(nodenum & NF_SUBSECTOR))
     {
         node = NODE_PTR(nodenum);
         ASSERT_DMU_TYPE(node, DMU_NODE);
-        nodenum = node->children[R_PointOnSide(x, y, node)];
+        nodenum = node->children[R_PointOnSide(x, y, &node->partition)];
     }
 
     return SUBSECTOR_PTR(nodenum & ~NF_SUBSECTOR);
 }
 
-line_t *R_GetLineForSide(const uint sideNumber)
+linedef_t *R_GetLineForSide(const uint sideNumber)
 {
-    uint        i;
-    side_t     *side = SIDE_PTR(sideNumber);
-    sector_t   *sector = side->sector;
+    uint                i;
+    sidedef_t             *side = SIDE_PTR(sideNumber);
+    sector_t           *sector = side->sector;
 
     // All sides may not have a sector.
     if(!sector)
         return NULL;
 
-    for(i = 0; i < sector->lineCount; ++i)
-        if(sector->lines[i]->L_frontside == side ||
-           sector->lines[i]->L_backside == side)
+    for(i = 0; i < sector->lineDefCount; ++i)
+        if(sector->lineDefs[i]->L_frontside == side ||
+           sector->lineDefs[i]->L_backside == side)
         {
-            return sector->lines[i];
+            return sector->lineDefs[i];
         }
 
     return NULL;
@@ -306,13 +306,13 @@ line_t *R_GetLineForSide(const uint sideNumber)
 boolean R_IsPointInSector(const float x, const float y,
                           const sector_t *sector)
 {
-    uint        i;
-    boolean     isOdd = false;
+    uint                i;
+    boolean             isOdd = false;
 
-    for(i = 0; i < sector->lineCount; ++i)
+    for(i = 0; i < sector->lineDefCount; ++i)
     {
-        line_t      *line = sector->lines[i];
-        vertex_t    *vtx[2];
+        linedef_t          *line = sector->lineDefs[i];
+        vertex_t           *vtx[2];
 
         // Skip lines that aren't sector boundaries.
         if(line->L_frontside && line->L_backside &&
@@ -429,7 +429,7 @@ sector_t *R_GetSectorForDegen(const void *degenmobj)
     sector_t   *sec;
 
     // Check all sectors; find where the sound is coming from.
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
 

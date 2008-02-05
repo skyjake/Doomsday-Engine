@@ -211,7 +211,7 @@ void Rend_RenderShadows(void)
         return;
 
     // Check all mobjs in all visible sectors.
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
         if(!(sec->frameFlags & SIF_VISIBLE))

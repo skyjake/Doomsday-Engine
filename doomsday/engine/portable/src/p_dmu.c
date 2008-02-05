@@ -47,7 +47,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct dummyline_s {
-    line_t  line;               // Line data.
+    linedef_t  line;               // Line data.
     void*   extraData;          // Pointer to user data.
     boolean inUse;              // true, if the dummy is being used.
 } dummyline_t;
@@ -109,19 +109,16 @@ const char* DMU_Str(uint prop)
         { DMU_NONE, "(invalid)" },
         { DMU_VERTEX, "DMU_VERTEX" },
         { DMU_SEG, "DMU_SEG" },
-        { DMU_LINE, "DMU_LINE" },
-        { DMU_SIDE, "DMU_SIDE" },
+        { DMU_LINEDEF, "DMU_LINEDEF" },
+        { DMU_SIDEDEF, "DMU_SIDEDEF" },
         { DMU_NODE, "DMU_NODE" },
         { DMU_SUBSECTOR, "DMU_SUBSECTOR" },
         { DMU_SECTOR, "DMU_SECTOR" },
         { DMU_PLANE, "DMU_PLANE" },
-        { DMU_BLOCKMAP, "DMU_BLOCKMAP" },
-        { DMU_REJECT, "DMU_REJECT" },
-        { DMU_POLYBLOCKMAP, "DMU_POLYBLOCKMAP" },
         { DMU_POLYOBJ, "DMU_POLYOBJ" },
-        { DMU_LINE_BY_TAG, "DMU_LINE_BY_TAG" },
+        { DMU_LINEDEF_BY_TAG, "DMU_LINEDEF_BY_TAG" },
         { DMU_SECTOR_BY_TAG, "DMU_SECTOR_BY_TAG" },
-        { DMU_LINE_BY_ACT_TAG, "DMU_LINE_BY_ACT_TAG" },
+        { DMU_LINEDEF_BY_ACT_TAG, "DMU_LINEDEF_BY_ACT_TAG" },
         { DMU_SECTOR_BY_ACT_TAG, "DMU_SECTOR_BY_ACT_TAG" },
         { DMU_X, "DMU_X" },
         { DMU_Y, "DMU_Y" },
@@ -136,8 +133,8 @@ const char* DMU_Str(uint prop)
         { DMU_VERTEX2_XY, "DMU_VERTEX2_XY" },
         { DMU_FRONT_SECTOR, "DMU_FRONT_SECTOR" },
         { DMU_BACK_SECTOR, "DMU_BACK_SECTOR" },
-        { DMU_SIDE0, "DMU_SIDE0" },
-        { DMU_SIDE1, "DMU_SIDE1" },
+        { DMU_SIDEDEF0, "DMU_SIDEDEF0" },
+        { DMU_SIDEDEF1, "DMU_SIDEDEF1" },
         { DMU_FLAGS, "DMU_FLAGS" },
         { DMU_DX, "DMU_DX" },
         { DMU_DY, "DMU_DY" },
@@ -172,7 +169,7 @@ const char* DMU_Str(uint prop)
         { DMU_BOTTOM_COLOR_GREEN, "DMU_BOTTOM_COLOR_GREEN" },
         { DMU_BOTTOM_COLOR_BLUE, "DMU_BOTTOM_COLOR_BLUE" },
         { DMU_VALID_COUNT, "DMU_VALID_COUNT" },
-        { DMU_LINE_COUNT, "DMU_LINE_COUNT" },
+        { DMU_LINEDEF_COUNT, "DMU_LINEDEF_COUNT" },
         { DMU_COLOR, "DMU_COLOR" },
         { DMU_COLOR_RED, "DMU_COLOR_RED" },
         { DMU_COLOR_GREEN, "DMU_COLOR_GREEN" },
@@ -265,8 +262,8 @@ static int DMU_GetType(const void* ptr)
     {
         case DMU_VERTEX:
         case DMU_SEG:
-        case DMU_LINE:
-        case DMU_SIDE:
+        case DMU_LINEDEF:
+        case DMU_SIDEDEF:
         case DMU_SUBSECTOR:
         case DMU_SECTOR:
         case DMU_PLANE:
@@ -352,7 +349,7 @@ static boolean DMU_ConvertAliases(setargs_t* args)
 /**
  * Initializes a setargs struct.
  *
- * @param type  Type of the map data object (e.g., DMU_LINE).
+ * @param type  Type of the map data object (e.g., DMU_LINEDEF).
  * @param prop  Property of the map data object.
  */
 static void InitArgs(setargs_t* args, int type, uint prop)
@@ -405,14 +402,14 @@ void* P_AllocDummy(int type, void* extraData)
 
     switch(type)
     {
-    case DMU_LINE:
+    case DMU_LINEDEF:
         for(i = 0; i < dummyCount; ++i)
         {
             if(!dummyLines[i].inUse)
             {
                 dummyLines[i].inUse = true;
                 dummyLines[i].extraData = extraData;
-                dummyLines[i].line.header.type = DMU_LINE;
+                dummyLines[i].line.header.type = DMU_LINEDEF;
                 dummyLines[i].line.L_frontside =
                     dummyLines[i].line.L_backside = NULL;
                 return &dummyLines[i];
@@ -451,7 +448,7 @@ void P_FreeDummy(void* dummy)
 
     switch(type)
     {
-    case DMU_LINE:
+    case DMU_LINEDEF:
         ((dummyline_t*)dummy)->inUse = false;
         break;
 
@@ -476,7 +473,7 @@ int P_DummyType(void* dummy)
     if(dummy >= (void*) &dummyLines[0] &&
        dummy <= (void*) &dummyLines[dummyCount - 1])
     {
-        return DMU_LINE;
+        return DMU_LINEDEF;
     }
 
     // A sector?
@@ -506,7 +503,7 @@ void* P_DummyExtraData(void* dummy)
 {
     switch(P_DummyType(dummy))
     {
-    case DMU_LINE:
+    case DMU_LINEDEF:
         return ((dummyline_t*)dummy)->extraData;
 
     case DMU_SECTOR:
@@ -536,11 +533,11 @@ uint P_ToIndex(const void* ptr)
     case DMU_SEG:
         return GET_SEG_IDX((seg_t*) ptr);
 
-    case DMU_LINE:
-        return GET_LINE_IDX((line_t*) ptr);
+    case DMU_LINEDEF:
+        return GET_LINE_IDX((linedef_t*) ptr);
 
-    case DMU_SIDE:
-        return GET_SIDE_IDX((side_t*) ptr);
+    case DMU_SIDEDEF:
+        return GET_SIDE_IDX((sidedef_t*) ptr);
 
     case DMU_SUBSECTOR:
         return GET_SUBSECTOR_IDX((subsector_t*) ptr);
@@ -576,10 +573,10 @@ void* P_ToPtr(int type, uint index)
     case DMU_SEG:
         return SEG_PTR(index);
 
-    case DMU_LINE:
+    case DMU_LINEDEF:
         return LINE_PTR(index);
 
-    case DMU_SIDE:
+    case DMU_SIDEDEF:
         return SIDE_PTR(index);
 
     case DMU_SUBSECTOR:
@@ -589,7 +586,7 @@ void* P_ToPtr(int type, uint index)
         return SECTOR_PTR(index);
 
     case DMU_POLYOBJ:
-        return (index < numpolyobjs? polyobjs[index] : NULL);
+        return (index < numPolyObjs? polyObjs[index] : NULL);
 
     case DMU_NODE:
         return NODE_PTR(index);
@@ -618,43 +615,43 @@ int P_Callback(int type, uint index, void* context, int (*callback)(void* p, voi
     switch(type)
     {
     case DMU_VERTEX:
-        if(index < numvertexes)
+        if(index < numVertexes)
             return callback(VERTEX_PTR(index), context);
         break;
 
     case DMU_SEG:
-        if(index < numsegs)
+        if(index < numSegs)
             return callback(SEG_PTR(index), context);
         break;
 
-    case DMU_LINE:
-        if(index < numlines)
+    case DMU_LINEDEF:
+        if(index < numLineDefs)
             return callback(LINE_PTR(index), context);
         break;
 
-    case DMU_SIDE:
-        if(index < numsides)
+    case DMU_SIDEDEF:
+        if(index < numSideDefs)
             return callback(SIDE_PTR(index), context);
         break;
 
     case DMU_NODE:
-        if(index < numnodes)
+        if(index < numNodes)
             return callback(NODE_PTR(index), context);
         break;
 
     case DMU_SUBSECTOR:
-        if(index < numsubsectors)
+        if(index < numSSectors)
             return callback(SUBSECTOR_PTR(index), context);
         break;
 
     case DMU_SECTOR:
-        if(index < numsectors)
+        if(index < numSectors)
             return callback(SECTOR_PTR(index), context);
         break;
 
     case DMU_POLYOBJ:
-        if(index < numpolyobjs)
-            return callback(polyobjs[index], context);
+        if(index < numPolyObjs)
+            return callback(polyObjs[index], context);
         break;
 
     case DMU_PLANE:
@@ -662,13 +659,13 @@ int P_Callback(int type, uint index, void* context, int (*callback)(void* p, voi
                   DMU_Str(type));
         break;
 
-    case DMU_LINE_BY_TAG:
+    case DMU_LINEDEF_BY_TAG:
     case DMU_SECTOR_BY_TAG:
-    case DMU_LINE_BY_ACT_TAG:
+    case DMU_LINEDEF_BY_ACT_TAG:
     case DMU_SECTOR_BY_ACT_TAG:
         Con_Error("P_Callback: Type %s not implemented yet.\n", DMU_Str(type));
         /*
-        for(i = 0; i < numlines; ++i)
+        for(i = 0; i < numLineDefs; ++i)
         {
             if(!callback(LINE_PTR(i), context)) return false;
         }
@@ -702,43 +699,43 @@ int P_CallbackAll(int type, void* context, int (*callback)(void* p, void* ctx))
     switch(type)
     {
     case DMU_VERTEX:
-        for(i = 0; i < numvertexes; ++i)
+        for(i = 0; i < numVertexes; ++i)
             if(!callback(VERTEX_PTR(i), context)) return false;
         break;
 
     case DMU_SEG:
-        for(i = 0; i < numsegs; ++i)
+        for(i = 0; i < numSegs; ++i)
             if(!callback(SEG_PTR(i), context)) return false;
         break;
 
-    case DMU_LINE:
-        for(i = 0; i < numlines; ++i)
+    case DMU_LINEDEF:
+        for(i = 0; i < numLineDefs; ++i)
             if(!callback(LINE_PTR(i), context)) return false;
         break;
 
-    case DMU_SIDE:
-        for(i = 0; i < numsides; ++i)
+    case DMU_SIDEDEF:
+        for(i = 0; i < numSideDefs; ++i)
             if(!callback(SIDE_PTR(i), context)) return false;
         break;
 
     case DMU_NODE:
-        for(i = 0; i < numnodes; ++i)
+        for(i = 0; i < numNodes; ++i)
             if(!callback(NODE_PTR(i), context)) return false;
         break;
 
     case DMU_SUBSECTOR:
-        for(i = 0; i < numsubsectors; ++i)
+        for(i = 0; i < numSSectors; ++i)
             if(!callback(SUBSECTOR_PTR(i), context)) return false;
         break;
 
     case DMU_SECTOR:
-        for(i = 0; i < numsectors; ++i)
+        for(i = 0; i < numSectors; ++i)
             if(!callback(SECTOR_PTR(i), context)) return false;
         break;
 
     case DMU_POLYOBJ:
-        for(i = 0; i < numpolyobjs; i++)
-            if(!callback(polyobjs[i], context)) return false;
+        for(i = 0; i < numPolyObjs; i++)
+            if(!callback(polyObjs[i], context)) return false;
         break;
 
     case DMU_PLANE:
@@ -764,8 +761,8 @@ int P_Callbackp(int type, void* ptr, void* context, int (*callback)(void* p, voi
     {
     case DMU_VERTEX:
     case DMU_SEG:
-    case DMU_LINE:
-    case DMU_SIDE:
+    case DMU_LINEDEF:
+    case DMU_SIDEDEF:
     case DMU_NODE:
     case DMU_SUBSECTOR:
     case DMU_SECTOR:
@@ -1154,44 +1151,44 @@ static int SetProperty(void* ptr, void* context)
         break;
         }
 
-    case DMU_LINE:
+    case DMU_LINEDEF:
         {
-        line_t* p = ptr;
+        linedef_t* p = ptr;
         switch(args->prop)
         {
         case DMU_FRONT_SECTOR:
-            SetValue(DMT_LINE_SEC, &p->L_frontsector, args, 0);
+            SetValue(DMT_LINEDEF_SEC, &p->L_frontsector, args, 0);
             break;
         case DMU_BACK_SECTOR:
-            SetValue(DMT_LINE_SEC, &p->L_backsector, args, 0);
+            SetValue(DMT_LINEDEF_SEC, &p->L_backsector, args, 0);
             break;
-        case DMU_SIDE0:
-            SetValue(DMT_LINE_SIDES, &p->L_frontside, args, 0);
+        case DMU_SIDEDEF0:
+            SetValue(DMT_LINEDEF_SIDEDEFS, &p->L_frontside, args, 0);
             break;
-        case DMU_SIDE1:
-            SetValue(DMT_LINE_SIDES, &p->L_backside, args, 0);
+        case DMU_SIDEDEF1:
+            SetValue(DMT_LINEDEF_SIDEDEFS, &p->L_backside, args, 0);
             break;
         case DMU_VALID_COUNT:
-            SetValue(DMT_LINE_VALIDCOUNT, &p->validCount, args, 0);
+            SetValue(DMT_LINEDEF_VALIDCOUNT, &p->validCount, args, 0);
             break;
         case DMU_FLAGS:
-            SetValue(DMT_LINE_FLAGS, &p->flags, args, 0);
+            SetValue(DMT_LINEDEF_FLAGS, &p->flags, args, 0);
             break;
         default:
-            Con_Error("SetProperty: Property %s is not writable in DMU_LINE.\n",
+            Con_Error("SetProperty: Property %s is not writable in DMU_LINEDEF.\n",
                       DMU_Str(args->prop));
         }
         break;
         }
 
-    case DMU_SIDE:
+    case DMU_SIDEDEF:
         {
-        side_t* p = ptr;
+        sidedef_t* p = ptr;
 
         switch(args->prop)
         {
         case DMU_FLAGS:
-            SetValue(DMT_SIDE_FLAGS, &p->flags, args, 0);
+            SetValue(DMT_SIDEDEF_FLAGS, &p->flags, args, 0);
             break;
         case DMU_TOP_COLOR:
             SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[0], args, 0);
@@ -1298,7 +1295,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VY], args, 1);
             break;
         default:
-            Con_Error("SetProperty: Property %s is not writable in DMU_SIDE.\n",
+            Con_Error("SetProperty: Property %s is not writable in DMU_SIDEDEF.\n",
                       DMU_Str(args->prop));
         }
 
@@ -1314,7 +1311,7 @@ static int SetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_POLYOBJ:
-            SetValue(DMT_SUBSECTOR_POLY, &p->poly, args, 0);
+            SetValue(DMT_SUBSECTOR_POLYOBJ, &p->polyObj, args, 0);
             break;
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_SUBSECTOR.\n",
@@ -1650,15 +1647,15 @@ static int GetProperty(void* ptr, void* context)
 
     // Check modified cases first.
     if(args->type == DMU_SECTOR &&
-       (args->modifiers & DMU_LINE_OF_SECTOR))
+       (args->modifiers & DMU_LINEDEF_OF_SECTOR))
     {
         sector_t* p = ptr;
-        if(args->prop >= p->lineCount)
+        if(args->prop >= p->lineDefCount)
         {
-            Con_Error("GetProperty: DMU_LINE_OF_SECTOR %i does not exist.\n",
+            Con_Error("GetProperty: DMU_LINEDEF_OF_SECTOR %i does not exist.\n",
                       args->prop);
         }
-        GetValue(DDVT_PTR, &p->lines[args->prop], args, 0);
+        GetValue(DDVT_PTR, &p->lineDefs[args->prop], args, 0);
         return false; // stop iteration
     }
 
@@ -1682,12 +1679,12 @@ static int GetProperty(void* ptr, void* context)
     {
         sector_t           *p = ptr;
         subsector_t        *ssecptr;
-        if(args->prop >= p->subsCount)
+        if(args->prop >= p->ssectorCount)
         {
             Con_Error("GetProperty: DMU_SUBSECTOR_OF_SECTOR %i does not exist.\n",
                       args->prop);
         }
-        ssecptr = (p->subsectors[args->prop]);
+        ssecptr = (p->ssectors[args->prop]);
         GetValue(DDVT_PTR, &ssecptr, args, 0);
         return false; // stop iteration
     }
@@ -1824,12 +1821,12 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SECTOR_SOUNDORG, &dmo, args, 0);
             break;
         }
-        case DMU_LINE_COUNT:
+        case DMU_LINEDEF_COUNT:
         {
             // FIXME:
-            //GetValue(DMT_SECTOR_LINECOUNT, &p->lineCount, args, 0);
+            //GetValue(DMT_SECTOR_LINECOUNT, &p->lineDefCount, args, 0);
 
-            int val = (int) p->lineCount;
+            int val = (int) p->lineDefCount;
             GetValue(DDVT_INT, &val, args, 0);
             break;
         }
@@ -1846,18 +1843,18 @@ static int GetProperty(void* ptr, void* context)
         return false; // stop iteration
     }
 
-    if(args->type == DMU_SIDE ||
-       (args->type == DMU_LINE &&
-        ((args->modifiers & DMU_SIDE0_OF_LINE) ||
-         (args->modifiers & DMU_SIDE1_OF_LINE))))
+    if(args->type == DMU_SIDEDEF ||
+       (args->type == DMU_LINEDEF &&
+        ((args->modifiers & DMU_SIDEDEF0_OF_LINE) ||
+         (args->modifiers & DMU_SIDEDEF1_OF_LINE))))
     {
-        side_t* p = NULL;
-        if(args->type == DMU_SIDE)
+        sidedef_t* p = NULL;
+        if(args->type == DMU_SIDEDEF)
             p = ptr;
-        else if(args->type == DMU_LINE)
+        else if(args->type == DMU_LINEDEF)
         {
-            line_t* line = (line_t*)ptr;
-            if(args->modifiers & DMU_SIDE0_OF_LINE)
+            linedef_t* line = (linedef_t*)ptr;
+            if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
                 p = line->L_frontside;
             else
             {
@@ -1872,7 +1869,7 @@ static int GetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_SECTOR:
-            GetValue(DMT_SIDE_SECTOR, &p->sector, args, 0);
+            GetValue(DMT_SIDEDEF_SECTOR, &p->sector, args, 0);
             break;
         case DMU_TOP_MATERIAL:
             {
@@ -1990,10 +1987,10 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 0);
             break;
         case DMU_FLAGS:
-            GetValue(DMT_SIDE_FLAGS, &p->flags, args, 0);
+            GetValue(DMT_SIDEDEF_FLAGS, &p->flags, args, 0);
             break;
         default:
-            Con_Error("GetProperty: DMU_SIDE has no property %s.\n", DMU_Str(args->prop));
+            Con_Error("GetProperty: DMU_SIDEDEF has no property %s.\n", DMU_Str(args->prop));
         }
         return false; // stop iteration
     }
@@ -2059,10 +2056,10 @@ static int GetProperty(void* ptr, void* context)
         case DMU_OFFSET:
             GetValue(DMT_SEG_OFFSET, &p->offset, args, 0);
             break;
-        case DMU_SIDE:
+        case DMU_SIDEDEF:
             GetValue(DMT_SEG_SIDEDEF, &p->sideDef, args, 0);
             break;
-        case DMU_LINE:
+        case DMU_LINEDEF:
             GetValue(DMT_SEG_LINEDEF, &p->lineDef, args, 0);
             break;
         case DMU_FRONT_SECTOR:
@@ -2093,13 +2090,13 @@ static int GetProperty(void* ptr, void* context)
         break;
         }
 
-    case DMU_LINE:
+    case DMU_LINEDEF:
         {
-        line_t* p = ptr;
+        linedef_t* p = ptr;
         switch(args->prop)
         {
         case DMU_VERTEX1:
-            GetValue(DMT_LINE_V, &p->L_v1, args, 0);
+            GetValue(DMT_LINEDEF_V, &p->L_v1, args, 0);
             break;
         case DMU_VERTEX1_X:
             GetValue(DMT_VERTEX_POS, &p->L_v1pos[VX], args, 0);
@@ -2112,7 +2109,7 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_VERTEX_POS, &p->L_v1pos[VY], args, 1);
             break;
         case DMU_VERTEX2:
-            GetValue(DMT_LINE_V, &p->L_v2, args, 0);
+            GetValue(DMT_LINEDEF_V, &p->L_v2, args, 0);
             break;
         case DMU_VERTEX2_X:
             GetValue(DMT_VERTEX_POS, &p->L_v2pos[VX], args, 0);
@@ -2125,10 +2122,10 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_VERTEX_POS, &p->L_v2pos[VY], args, 1);
             break;
         case DMU_DX:
-            GetValue(DMT_LINE_DX, &p->dX, args, 0);
+            GetValue(DMT_LINEDEF_DX, &p->dX, args, 0);
             break;
         case DMU_DY:
-            GetValue(DMT_LINE_DY, &p->dY, args, 0);
+            GetValue(DMT_LINEDEF_DY, &p->dY, args, 0);
             break;
         case DMU_LENGTH:
             GetValue(DDVT_FLOAT, &p->length, args, 0);
@@ -2137,27 +2134,27 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DDVT_ANGLE, &p->angle, args, 0);
             break;
         case DMU_SLOPE_TYPE:
-            GetValue(DMT_LINE_SLOPETYPE, &p->slopeType, args, 0);
+            GetValue(DMT_LINEDEF_SLOPETYPE, &p->slopeType, args, 0);
             break;
         case DMU_FRONT_SECTOR:
         {
             sector_t *sec = (p->L_frontside? p->L_frontsector : NULL);
-            GetValue(DMT_LINE_SEC, &sec, args, 0);
+            GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
             break;
         }
         case DMU_BACK_SECTOR:
         {
             sector_t *sec = (p->L_backside? p->L_backsector : NULL);
-            GetValue(DMT_LINE_SEC, &sec, args, 0);
+            GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
             break;
         }
         case DMU_FLAGS:
-            GetValue(DMT_LINE_FLAGS, &p->flags, args, 0);
+            GetValue(DMT_LINEDEF_FLAGS, &p->flags, args, 0);
             break;
-        case DMU_SIDE0:
+        case DMU_SIDEDEF0:
             GetValue(DDVT_PTR, &p->L_frontside, args, 0);
             break;
-        case DMU_SIDE1:
+        case DMU_SIDEDEF1:
             GetValue(DDVT_PTR, &p->L_backside, args, 0);
             break;
 
@@ -2169,17 +2166,17 @@ static int GetProperty(void* ptr, void* context)
             }
             else
             {
-                GetValue(DMT_LINE_BBOX, &p->bBox[0], args, 0);
-                GetValue(DMT_LINE_BBOX, &p->bBox[1], args, 1);
-                GetValue(DMT_LINE_BBOX, &p->bBox[2], args, 2);
-                GetValue(DMT_LINE_BBOX, &p->bBox[3], args, 3);
+                GetValue(DMT_LINEDEF_BBOX, &p->bBox[0], args, 0);
+                GetValue(DMT_LINEDEF_BBOX, &p->bBox[1], args, 1);
+                GetValue(DMT_LINEDEF_BBOX, &p->bBox[2], args, 2);
+                GetValue(DMT_LINEDEF_BBOX, &p->bBox[3], args, 3);
             }
             break;
         case DMU_VALID_COUNT:
-            GetValue(DMT_LINE_VALIDCOUNT, &p->validCount, args, 0);
+            GetValue(DMT_LINEDEF_VALIDCOUNT, &p->validCount, args, 0);
             break;
         default:
-            Con_Error("GetProperty: DMU_LINE has no property %s.\n", DMU_Str(args->prop));
+            Con_Error("GetProperty: DMU_LINEDEF has no property %s.\n", DMU_Str(args->prop));
         }
         break;
         }
@@ -2199,7 +2196,7 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SECTOR_MOBJLIST, &p->sector->mobjList, args, 0);
             break;
         case DMU_POLYOBJ:
-            GetValue(DMT_SUBSECTOR_POLY, &p->poly, args, 0);
+            GetValue(DMT_SUBSECTOR_POLYOBJ, &p->polyObj, args, 0);
             break;
         case DMU_SEG_COUNT:
         {

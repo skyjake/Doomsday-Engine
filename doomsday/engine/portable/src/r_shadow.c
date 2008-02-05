@@ -126,7 +126,7 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1, const pvec2_t line2,
     }
 }
 
-void R_ShadowDelta(pvec2_t delta, line_t *line, sector_t *frontSector)
+void R_ShadowDelta(pvec2_t delta, linedef_t *line, sector_t *frontSector)
 {
     if(line->L_frontsector == frontSector)
     {
@@ -154,7 +154,7 @@ boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
                              boolean leftCorner)
 {
     sector_t   *sector = R_GetShadowSector(poly, 0, false);
-    line_t     *neighbor;
+    linedef_t     *neighbor;
     int         side = !(poly->flags & SHPF_FRONTSIDE);
 
     // The line itself.
@@ -212,7 +212,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
     vec2_t      left, right;
     int         edge, side = !(poly->flags & SHPF_FRONTSIDE);
     uint        i, count;
-    line_t     *line = poly->seg->lineDef;
+    linedef_t     *line = poly->seg->lineDef;
     lineowner_t *base, *p, *boundryOwner = NULL;
     boolean     done;
 
@@ -239,15 +239,15 @@ void R_ShadowEdges(shadowpoly_t *poly)
         p = base->link[!edge];
         while(p != base && !done)
         {
-            if(!(p->line->L_frontside && p->line->L_backside &&
-                 p->line->L_frontsector == p->line->L_backsector))
+            if(!(p->lineDef->L_frontside && p->lineDef->L_backside &&
+                 p->lineDef->L_frontsector == p->lineDef->L_backsector))
             {
                 if(count == 0)
                 {   // Found the boundry line.
                     boundryOwner = p;
                 }
 
-                if(!p->line->L_frontside || !p->line->L_backside)
+                if(!p->lineDef->L_frontside || !p->lineDef->L_backside)
                     done = true; // Found the last one.
                 else
                     count++;
@@ -269,7 +269,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
         {
             // We need at least one back extended offset.
             sector_t   *sector = R_GetShadowSector(poly, 0, false);
-            line_t     *neighbor;
+            linedef_t     *neighbor;
             boolean     leftCorner = (edge == 0);
             pvec2_t     delta;
             sector_t   *orientSec;
@@ -281,10 +281,10 @@ void R_ShadowEdges(shadowpoly_t *poly)
             if(!leftCorner)
                 V2_Scale(left, -1);
 
-            if(boundryOwner->line->L_frontsector == sector)
-                orientSec = (boundryOwner->line->L_backside? boundryOwner->line->L_backsector : NULL);
+            if(boundryOwner->lineDef->L_frontsector == sector)
+                orientSec = (boundryOwner->lineDef->L_backside? boundryOwner->lineDef->L_backsector : NULL);
             else
-                orientSec = (boundryOwner->line->L_frontside? boundryOwner->line->L_frontsector : NULL);
+                orientSec = (boundryOwner->lineDef->L_frontside? boundryOwner->lineDef->L_frontsector : NULL);
 
             p = boundryOwner;
             for(i = 0; i < count && i < MAX_BEXOFFSETS; ++i)
@@ -295,9 +295,9 @@ void R_ShadowEdges(shadowpoly_t *poly)
                 p = p->link[!edge];
                 do
                 {
-                    if(!(p->line->L_frontside && p->line->L_backside &&
-                         p->line->L_frontsector == p->line->L_backsector))
-                        neighbor = p->line;
+                    if(!(p->lineDef->L_frontside && p->lineDef->L_backside &&
+                         p->lineDef->L_frontsector == p->lineDef->L_backsector))
+                        neighbor = p->lineDef;
                     else
                         p = p->link[!edge];
                 } while(!neighbor);
@@ -490,7 +490,7 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
     boundary_t *bound;
     float       s, t;
     vec2_t      a, b;
-    line_t     *line;
+    linedef_t     *line;
 
     // Were any polygons provided?
     if(!count)
@@ -528,9 +528,9 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
         // Find the overlaps.
         for(i = 0, bound = boundaries; i < count; ++i, bound++)
         {
-            for(k = 0; k < sector->lineCount; ++k)
+            for(k = 0; k < sector->lineDefCount; ++k)
             {
-                line = sector->lines[k];
+                line = sector->lineDefs[k];
                 if(polys[i].seg->lineDef == line)
                     continue;
 
@@ -594,7 +594,7 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
     if(allocator)
         boundaryNum = 0;
 
-    for(i = 0, counter = 0; i < numsectors; ++i)
+    for(i = 0, counter = 0; i < numSectors; ++i)
     {
         sector_t   *sec = SECTOR_PTR(i);
         subsector_t **ssecp;
@@ -606,7 +606,7 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
         ++validCount;
 
         // Iterate all the subsectors of the sector.
-        ssecp = sec->subsectors;
+        ssecp = sec->ssectors;
         while(*ssecp)
         {
             subsector_t *ssec = *ssecp;
@@ -623,13 +623,13 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
                    !((seg->lineDef->validCount == validCount) ||
                      LINE_SELFREF(seg->lineDef)))
                 {
-                    line_t     *line = seg->lineDef;
+                    linedef_t     *line = seg->lineDef;
                     boolean     frontside = (line->L_frontsector == sec);
 
                     // If the line hasn't got two neighbors, it won't get a
                     // shadow.
-                    if(!(line->vo[0]->LO_next->line == line ||
-                         line->vo[1]->LO_next->line == line))
+                    if(!(line->vo[0]->LO_next->lineDef == line ||
+                         line->vo[1]->LO_next->lineDef == line))
                     {
                         // This side will get a shadow.  Increment counter (we'll
                         // return this count).

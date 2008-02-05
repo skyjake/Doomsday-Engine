@@ -1709,13 +1709,13 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         if(ISTOKEN("Line"))     // Line Type
         {
             // A new line type.
-            idx = DED_AddLine(ded, 0);
-            l = ded->lines + idx;
+            idx = DED_AddLineType(ded, 0);
+            l = ded->lineTypes + idx;
 
             if(prev_linetype_idx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(l, ded->lines + prev_linetype_idx, sizeof(*l));
+                memcpy(l, ded->lineTypes + prev_linetype_idx, sizeof(*l));
             }
 
             FINDBEGIN;
@@ -1869,13 +1869,13 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         if(ISTOKEN("Sector"))   // Sector Type
         {
             // A new sector type.
-            idx = DED_AddSector(ded, 0);
-            sec = ded->sectors + idx;
+            idx = DED_AddSectorType(ded, 0);
+            sec = ded->sectorTypes + idx;
 
             if(prev_sectortype_idx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(sec, ded->sectors + prev_sectortype_idx,
+                memcpy(sec, ded->sectorTypes + prev_sectortype_idx,
                        sizeof(*sec));
             }
 

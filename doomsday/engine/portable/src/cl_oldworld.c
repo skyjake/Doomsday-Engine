@@ -178,7 +178,7 @@ int Cl_ReadSectorDelta(void)
 int Cl_ReadSideDelta(void)
 {
     short       num = Msg_ReadPackedShort(); // \fixme we support > 32768 sidedefs!
-    side_t     *sid;
+    sidedef_t     *sid;
     int         df;
 
     // Side number first (0 terminates).
@@ -203,7 +203,7 @@ int Cl_ReadSideDelta(void)
     if(df & SIDF_LINE_FLAGS)
     {
         byte    updatedFlags = Msg_ReadByte();
-        line_t *line = R_GetLineForSide(num);
+        linedef_t *line = R_GetLineForSide(num);
 
         if(line)
         {
@@ -264,15 +264,15 @@ Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
  */
 int Cl_ReadPolyDelta(void)
 {
-    int         df;
-    short       num = Msg_ReadPackedShort();
-    polyobj_t  *po;
+    int                 df;
+    short               num = Msg_ReadPackedShort();
+    polyobj_t          *po;
 
     // Check the number. A zero terminates.
     if(!num)
         return false;
 
-    po = polyobjs[--num];
+    po = polyObjs[--num];
 
     // Flags.
     df = Msg_ReadPackedShort();

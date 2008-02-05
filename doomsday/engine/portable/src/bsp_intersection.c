@@ -392,6 +392,37 @@ boolean BSP_CutListInsertIntersection(cutlist_t *cutList, intersection_t *cut)
     return false;
 }
 
+static void buildEdgeBetweenIntersections(hedge_t *part,
+                                          intersection_t *start,
+                                          intersection_t *end,
+                                          hedge_t **right, hedge_t **left)
+{
+    // Create the half-edge pair.
+    // Leave 'linedef' field as NULL as these are not linedef-linked.
+    // Leave 'side' as zero too.
+    (*right) = HEdge_Create(NULL, part->lineDef, start->vertex,
+                            end->vertex, start->after, false);
+    (*left)  = HEdge_Create(NULL, part->lineDef, end->vertex,
+                            start->vertex, start->after, false);
+
+    // Twin the half-edges together.
+    (*right)->twin = *left;
+    (*left)->twin = *right;
+
+/*#if _DEBUG
+Con_Message("buildEdgeBetweenIntersections: Capped intersection:\n");
+Con_Message("  %p RIGHT sector %d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
+            (*right), ((*right)->sector? (*right)->sector->index : -1),
+            (*right)->v[0]->V_pos[VX], (*right)->v[0]->V_pos[VY],
+            (*right)->v[1]->V_pos[VX], (*right)->v[1]->V_pos[VY]);
+
+Con_Message("  %p LEFT  sector %d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
+            (*left), ((*left)->sector? (*left)->sector->index : -1),
+            (*left)->v[0]->V_pos[VX], (*left)->v[0]->V_pos[VY],
+            (*left)->v[1]->V_pos[VX], (*left)->v[1]->V_pos[VY]);
+#endif*/
+}
+
 /**
  * Analyze the intersection list, and add any needed minihedges to the given
  * half-edge lists (one minihedge on each side).
@@ -550,7 +581,7 @@ BSP_IntersectionPrint(cur);
                 {
                 hedge_t    *right, *left;
 
-                BSP_BuildEdgeBetweenIntersections(part, cur, next, &right, &left);
+                buildEdgeBetweenIntersections(part, cur, next, &right, &left);
 
                 // Add the new half-edges to the appropriate lists.
                 BSP_AddHEdgeToSuperBlock(rightList, right);
@@ -561,8 +592,6 @@ BSP_IntersectionPrint(cur);
 
         node = node->next;
     }
-
-    BSP_CutListEmpty(cutList);
 }
 
 #if _DEBUG

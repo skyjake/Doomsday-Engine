@@ -10,7 +10,7 @@ internal
 #define LO_next     link[1]
 
 typedef struct lineowner_s {
-    struct line_s *line;
+    struct linedef_s *lineDef;
     struct lineowner_s *link[2];    // {prev, next} (i.e. {anticlk, clk}).
     binangle_t      angle;          // between this and next clockwise.
 } lineowner_t;
@@ -73,8 +73,8 @@ end
 
 struct seg
     PTR     vertex_s*[2] v          // [Start, End] of the segment.
-    PTR     side_s*     sideDef
-    PTR     line_s*     lineDef
+    PTR     sidedef_s*  sideDef
+    PTR     linedef_s*  lineDef
     PTR     sector_s*[2] sec
     PTR     subsector_s* subsector
     PTR     seg_s*      backSeg
@@ -105,7 +105,7 @@ end
 struct subsector
     UINT    uint        segCount
     PTR     seg_s**     segs        // [segcount] size.
-    PTR     polyobj_s*  poly        // NULL, if there is no polyobj.
+    PTR     polyobj_s*  polyObj     // NULL, if there is no polyobj.
     PTR     sector_s*   sector
     -       int         flags
     -       int         validCount
@@ -280,10 +280,10 @@ struct sector
     FLOAT   float[3]    rgb
     -       float[3]    oldRGB
     PTR     mobj_s*     mobjList    // List of mobjs in the sector.
-    UINT    uint        lineCount
-    PTR     line_s**    lines       // [lineCount+1] size.
-    UINT    uint        subsCount
-    PTR     subsector_s** subsectors // [subsCount+1] size.
+    UINT    uint        lineDefCount
+    PTR     linedef_s** lineDefs       // [lineDefCount+1] size.
+    UINT    uint        ssectorCount
+    PTR     subsector_s** ssectors // [ssectorCount+1] size.
     -       uint        numReverbSSecAttributors
     -       subsector_s** reverbSSecs // [numReverbSSecAttributors] size.
     -       uint        subsGroupCount
@@ -359,7 +359,7 @@ typedef struct msidedef_s {
 } msidedef_t;
 end
 
-struct side
+struct sidedef
     -       surface_t[3] sections
     UINT    uint        segCount
     PTR     seg_s**     segs        // [segcount] size, segs arranged left>right
@@ -373,10 +373,6 @@ struct side
     -       shadowcorner_t[2] bottomCorners
     -       shadowcorner_t[2] sideCorners
     -       edgespan_t[2] spans // [left, right]
-end
-
-public
-#define DMT_LINE_SEC    DDVT_PTR
 end
 
 internal
@@ -394,10 +390,10 @@ internal
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
 
-#define L_side(n)               sides[(n)]
+#define L_side(n)               sideDefs[(n)]
 #define L_frontside             L_side(FRONT)
 #define L_backside              L_side(BACK)
-#define L_sector(n)             sides[(n)]->sector
+#define L_sector(n)             sideDefs[(n)]->sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 
@@ -428,14 +424,18 @@ typedef struct mlinedef_s {
     // Normally NULL, except when this linedef directly overlaps an earlier
     // one (a rarely-used trick to create higher mid-masked textures).
     // No segs should be created for these overlapping linedefs.
-    struct line_s *overlap;
+    struct linedef_s *overlap;
 } mlinedef_t;
 end
 
-struct line
+public
+#define DMT_LINEDEF_SEC    DDVT_PTR
+end
+
+struct linedef
     PTR     vertex_s*[2] v
     -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
-    PTR     side_s*[2]  sides
+    PTR     sidedef_s*[2] sideDefs
     INT     int         flags		// Public DDLF_* flags.
     -		byte		inFlags		// Internal LF_* flags
     INT     slopetype_t slopeType
@@ -453,7 +453,7 @@ internal
 typedef struct mpolyobj_s {
     int         index;
     uint        lineCount;
-    struct line_s **lines;
+    struct linedef_s **lineDefs;
 } mpolyobj_t;
 end
 
@@ -481,13 +481,18 @@ end
 internal
 #define RIGHT                   0
 #define LEFT                    1
+
+/**
+ * An infinite line of the form point + direction vectors. 
+ */
+typedef struct partition_s {
+	float				x, y;
+	float				dX, dY;
+} partition_t;
 end
 
 struct node
-    FLOAT   float     x             // Partition line.
-    FLOAT   float     y             // Partition line.
-    FLOAT   float     dX            // Partition line.
-    FLOAT   float     dY            // Partition line.
-    FLOAT   float[2][4] bBox        // Bounding box for each child.
-    UINT    uint[2]   children      // If NF_SUBSECTOR it's a subsector.
+    -       partition_t partition
+    FLOAT   float[2][4] bBox // Bounding box for each child.
+    UINT    uint[2]     children // If NF_SUBSECTOR it's a subsector.
 end

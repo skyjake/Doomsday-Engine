@@ -967,8 +967,8 @@ void Def_Read(void)
     Def_CountMsg(defs.count.mapInfo.num, "map infos");
     Def_CountMsg(defs.count.finales.num, "finales");
 
-    Def_CountMsg(defs.count.lines.num, "line types");
-    Def_CountMsg(defs.count.sectors.num, "sector types");
+    Def_CountMsg(defs.count.lineTypes.num, "line types");
+    Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
     // Init the base model search path (prepend).
     Dir_FixSlashes(defs.modelPath);
@@ -1472,21 +1472,21 @@ int Def_Get(int type, char *id, void *out)
         return false;
 
     case DD_DEF_LINE_TYPE:
-        for(i = defs.count.lines.num - 1; i >= 0; i--)
-            if(defs.lines[i].id == strtol(id, (char **)NULL, 10))
+        for(i = defs.count.lineTypes.num - 1; i >= 0; i--)
+            if(defs.lineTypes[i].id == strtol(id, (char **)NULL, 10))
             {
                 if(out)
-                    Def_CopyLineType(out, &defs.lines[i]);
+                    Def_CopyLineType(out, &defs.lineTypes[i]);
                 return true;
             }
         return false;
 
     case DD_DEF_SECTOR_TYPE:
-        for(i = defs.count.sectors.num - 1; i >= 0; i--)
-            if(defs.sectors[i].id == strtol(id, (char **)NULL, 10))
+        for(i = defs.count.sectorTypes.num - 1; i >= 0; i--)
+            if(defs.sectorTypes[i].id == strtol(id, (char **)NULL, 10))
             {
                 if(out)
-                    Def_CopySectorType(out, &defs.sectors[i]);
+                    Def_CopySectorType(out, &defs.sectorTypes[i]);
                 return true;
             }
         return false;

@@ -92,7 +92,7 @@ extern          "C" {
         // by querying the game for the callbacks for the
         // classes by "name";
         int (C_DECL *doFunc)();
-        void (*initFunc)(line_t *line);
+        void (*initFunc)(linedef_t *line);
         int             traverse;
         int             travRef;
         int             travData;
@@ -552,8 +552,8 @@ extern          "C" {
             ded_count_t     decorations;
             ded_count_t     reflections;
             ded_count_t     groups;
-            ded_count_t     lines;
-            ded_count_t     sectors;
+            ded_count_t     lineTypes;
+            ded_count_t     sectorTypes;
             ded_count_t     xgClasses;
         } count;
 
@@ -612,10 +612,10 @@ extern          "C" {
         ded_group_t    *groups;
 
         // XG line types.
-        ded_linetype_t *lines;
+        ded_linetype_t *lineTypes;
 
         // XG sector types.
-        ded_sectortype_t *sectors;
+        ded_sectortype_t *sectorTypes;
 
         // XG Classes
         ded_xgclass_t   *xgClasses;
@@ -647,8 +647,8 @@ extern          "C" {
     int             DED_AddReflection(ded_t *ded);
     int             DED_AddGroup(ded_t *ded);
     int             DED_AddGroupMember(ded_group_t *grp);
-    int             DED_AddSector(ded_t *ded, int id);
-    int             DED_AddLine(ded_t *ded, int id);
+    int             DED_AddSectorType(ded_t *ded, int id);
+    int             DED_AddLineType(ded_t *ded, int id);
     int             DED_AddXGClass(ded_t *ded);
     int             DED_AddXGClassProperty(ded_xgclass_t *xgc);
 
@@ -670,8 +670,8 @@ extern          "C" {
     void            DED_RemoveDecoration(ded_t *ded, int index);
     void            DED_RemoveReflection(ded_t *ded, int index);
     void            DED_RemoveGroup(ded_t *ded, int index);
-    void            DED_RemoveSector(ded_t *ded, int index);
-    void            DED_RemoveLine(ded_t *ded, int index);
+    void            DED_RemoveSectorType(ded_t *ded, int index);
+    void            DED_RemoveLineType(ded_t *ded, int index);
     void            DED_RemoveXGClass(ded_t *ded, int index);
 
     void           *DED_NewEntries(void **ptr, ded_count_t *cnt,

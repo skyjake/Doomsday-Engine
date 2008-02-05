@@ -508,11 +508,11 @@ static void polyTexBlend(rendpoly_t *poly, material_t *material)
 }
 
 /**
- * \fixme No need to do this each frame. Set a flag in side_t->flags to
+ * \fixme No need to do this each frame. Set a flag in sidedef_t->flags to
  * denote this. Is sensitive to plane heights, surface properties
  * (e.g. alpha) and surface texture properties.
  */
-boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
+boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
 {
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
@@ -521,7 +521,7 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
     {
         sector_t *front = line->L_sector(backside);
         sector_t *back  = line->L_sector(backside^1);
-        side_t   *side  = line->L_side(backside);
+        sidedef_t   *side  = line->L_side(backside);
 
         if(side->SW_middlematerial)
         {
@@ -586,8 +586,8 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
 static void Rend_MarkSegSectionsPVisible(seg_t *seg)
 {
     uint        i, j;
-    side_t     *side;
-    line_t     *line;
+    sidedef_t     *side;
+    linedef_t     *line;
 
     if(!seg || !seg->lineDef)
         return; // huh?
@@ -770,12 +770,12 @@ static int checkDiv(walldiv_t *div, float height)
     return false;
 }
 
-static void doCalcSegDivisions(line_t *line, boolean backSide,sector_t *frontSec,
+static void doCalcSegDivisions(linedef_t *line, boolean backSide,sector_t *frontSec,
                                walldiv_t *div, float bottomZ, float topZ,
                                boolean doRight)
 {
     uint        i, j;
-    line_t     *iter;
+    linedef_t     *iter;
     sector_t   *scanSec;
     lineowner_t *base, *own;
     boolean     clockwise = !doRight;
@@ -794,7 +794,7 @@ static void doCalcSegDivisions(line_t *line, boolean backSide,sector_t *frontSec
             stopScan = true;
         else
         {
-            iter = own->line;
+            iter = own->lineDef;
 
             if(LINE_SELFREF(iter))
                 continue;
@@ -1087,7 +1087,7 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
     }
 }
 
-static void setSurfaceColorsForSide(side_t *side)
+static void setSurfaceColorsForSide(sidedef_t *side)
 {
     uint        i;
 
@@ -1404,8 +1404,8 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
 static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 {
     boolean     solidSeg = true;
-    side_t     *side;
-    line_t     *ldef;
+    sidedef_t     *side;
+    linedef_t     *ldef;
     float       ffloor, fceil;
     boolean     backSide;
     sector_t   *frontsec, *fflinkSec, *fclinkSec;
@@ -1424,7 +1424,7 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
         if(gx.HandleMapObjectStatusReport)
             gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
                                            GET_LINE_IDX(ldef),
-                                           DMU_LINE, &pid);
+                                           DMU_LINEDEF, &pid);
     }
 
     fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
@@ -1461,8 +1461,8 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 {
     int         solidSeg = false;
     sector_t   *backsec;
-    side_t     *backsid, *side;
-    line_t     *ldef;
+    sidedef_t     *backsid, *side;
+    linedef_t     *ldef;
     float       ffloor, fceil, bfloor, bceil, bsh;
     boolean     backSide;
     sector_t   *frontsec, *fflinkSec, *fclinkSec;
@@ -1483,7 +1483,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         if(gx.HandleMapObjectStatusReport)
             gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
                                            GET_LINE_IDX(ldef),
-                                           DMU_LINE, &pid);
+                                           DMU_LINEDEF, &pid);
     }
 
     if(backsec == frontsec &&
@@ -1657,11 +1657,11 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
         *ptr++;
      }
 
-    if(sub->poly)
+    if(sub->polyObj)
     {
-        for(i = 0; i < sub->poly->numSegs; ++i)
+        for(i = 0; i < sub->polyObj->numSegs; ++i)
         {
-            seg = sub->poly->segs[i];
+            seg = sub->polyObj->segs[i];
 
             seg->frameFlags &= ~SEGINF_BACKSECSKYFIX;
 
@@ -1684,7 +1684,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     sector_t   *frontsec, *backsec;
     uint        j, num;
     seg_t      *seg, **list;
-    side_t     *side;
+    sidedef_t     *side;
 
     // Init the quad.
     quad = R_AllocRendPoly(RP_QUAD, true, 4);
@@ -2012,7 +2012,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     LO_ClipInSubsector(ssecidx);
     Rend_OccludeSubsector(ssec, true);
 
-    if(ssec->poly)
+    if(ssec->polyObj)
     {
         // Polyobjs don't obstruct, do clip lights with another algorithm.
         LO_ClipBySight(ssecidx);
@@ -2060,11 +2060,11 @@ static void Rend_RenderSubsector(uint ssecidx)
     }
 
     // Is there a polyobj on board?
-    if(ssec->poly)
+    if(ssec->polyObj)
     {
-        for(i = 0; i < ssec->poly->numSegs; ++i)
+        for(i = 0; i < ssec->polyObj->numSegs; ++i)
         {
-            seg = ssec->poly->segs[i];
+            seg = ssec->polyObj->segs[i];
 
             // Let's first check which way this seg is facing.
             if(seg->frameFlags & SEGINF_FACINGFRONT)
@@ -2107,7 +2107,7 @@ static void Rend_RenderNode(uint bspnum)
         bsp = NODE_PTR(bspnum);
 
         // Decide which side the view point is on.
-        side = R_PointOnSide(viewX, viewY, bsp);
+        side = R_PointOnSide(viewX, viewY, &bsp->partition);
 
         Rend_RenderNode(bsp->children[side]);   // Recursively divide front space.
         Rend_RenderNode(bsp->children[side ^ 1]);   // ...and back space.
@@ -2172,7 +2172,7 @@ void Rend_RenderMap(void)
 
         // We don't want subsector clipchecking for the first subsector.
         firstsubsector = true;
-        Rend_RenderNode(numnodes - 1);
+        Rend_RenderNode(numNodes - 1);
 
         // Make vissprites of all the visible decorations.
         Rend_ProjectDecorations();
@@ -2727,7 +2727,7 @@ static void Rend_RenderBoundingBoxes(void)
     GL_BlendMode(BM_ADD);
 
     // For every sector
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
 

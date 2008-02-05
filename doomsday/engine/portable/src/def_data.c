@@ -168,8 +168,11 @@ void DED_Destroy(ded_t *ded)
         M_Free(ded->groups);
     }
 
-    if(ded->sectors)
-        M_Free(ded->sectors);
+    if(ded->sectorTypes)
+        M_Free(ded->sectorTypes);
+
+    if(ded->lineTypes)
+        M_Free(ded->lineTypes);
 
     if(ded->ptcGens)
     {
@@ -568,35 +571,35 @@ int DED_AddGroupMember(ded_group_t *grp)
     return memb - grp->members;
 }
 
-int DED_AddSector(ded_t *ded, int id)
+int DED_AddSectorType(ded_t *ded, int id)
 {
-    ded_sectortype_t *sec = DED_NewEntry((void **) &ded->sectors,
-                                         &ded->count.sectors,
+    ded_sectortype_t *sec = DED_NewEntry((void **) &ded->sectorTypes,
+                                         &ded->count.sectorTypes,
                                          sizeof(ded_sectortype_t));
 
     sec->id = id;
-    return sec - ded->sectors;
+    return sec - ded->sectorTypes;
 }
 
-void DED_RemoveSector(ded_t *ded, int index)
+void DED_RemoveSectorType(ded_t *ded, int index)
 {
-    DED_DelEntry(index, (void **) &ded->sectors, &ded->count.sectors,
+    DED_DelEntry(index, (void **) &ded->sectorTypes, &ded->count.sectorTypes,
                  sizeof(ded_sectortype_t));
 }
 
-int DED_AddLine(ded_t *ded, int id)
+int DED_AddLineType(ded_t *ded, int id)
 {
-    ded_linetype_t *li = DED_NewEntry((void **) &ded->lines,
-                                      &ded->count.lines,
+    ded_linetype_t *li = DED_NewEntry((void **) &ded->lineTypes,
+                                      &ded->count.lineTypes,
                                       sizeof(ded_linetype_t));
 
     li->id = id;
     //li->actCount = -1;
-    return li - ded->lines;
+    return li - ded->lineTypes;
 }
 
-void DED_RemoveLine(ded_t *ded, int index)
+void DED_RemoveLineType(ded_t *ded, int index)
 {
-    DED_DelEntry(index, (void **) &ded->lines, &ded->count.lines,
+    DED_DelEntry(index, (void **) &ded->lineTypes, &ded->count.lineTypes,
                  sizeof(ded_linetype_t));
 }

@@ -90,7 +90,7 @@ typedef struct {
     int             pos[3];        // Coordinates.
     int             mov[3];        // Momentum.
     sector_t       *sector;        // Updated when needed.
-    line_t         *contact;       // Updated when lines hit/avoided.
+    linedef_t         *contact;       // Updated when lines hit/avoided.
     ushort          yaw, pitch;    // Rotation angles (0-65536 => 0-360).
 } particle_t;
 

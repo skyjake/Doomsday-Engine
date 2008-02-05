@@ -36,14 +36,14 @@ typedef struct editmap_s {
     char            name[9];
     uint            numVertexes;
     vertex_t      **vertexes;
-    uint            numLines;
-    line_t        **lines;
-    uint            numSides;
-    side_t        **sides;
+    uint            numLineDefs;
+    linedef_t     **lineDefs;
+    uint            numSideDefs;
+    sidedef_t        **sideDefs;
     uint            numSectors;
     sector_t      **sectors;
-    uint            numPolyobjs;
-    polyobj_t     **polyobjs;
+    uint            numPolyObjs;
+    polyobj_t     **polyObjs;
 
     // BSP data.
     binarytree_t   *rootNode;

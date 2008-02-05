@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_types.h: Type Definitions
  */
 
@@ -165,7 +165,7 @@ typedef unsigned char binangle_t;
 // declared in p_maptypes.h.
 struct node_s;
 struct vertex_s;
-struct line_s;
+struct linedef_s;
 struct side_s;
 struct seg_s;
 struct subsector_s;

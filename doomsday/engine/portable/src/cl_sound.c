@@ -90,18 +90,18 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     }
     else if(type == DT_SECTOR_SOUND)
     {
-        uint     index = (ushort) Msg_ReadShort();
+        uint                index = (ushort) Msg_ReadShort();
 
-        if(index < numsectors)
+        if(index < numSectors)
             sector = SECTOR_PTR(index);
     }
     else                        /* DT_POLY_SOUND */
     {
-        uint     index = (ushort) Msg_ReadShort();
+        uint                index = (ushort) Msg_ReadShort();
 
-        if(index < numpolyobjs)
+        if(index < numPolyObjs)
         {
-            poly = polyobjs[index];
+            poly = polyObjs[index];
             emitter = (mobj_t *) &poly->startSpot;
         }
     }
@@ -286,7 +286,7 @@ Con_Printf("Cl_Sound: %i\n", sound);
     else if(flags & SNDF_SECTOR)
     {
         num = (ushort) Msg_ReadPackedShort();
-        if(num >= numsectors)
+        if(num >= numSectors)
         {
             Con_Message("Cl_Sound: Invalid sector number %i.\n", num);
             return;

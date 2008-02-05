@@ -1153,7 +1153,7 @@ void R_PrecacheLevel(void)
     int             k, lump, mocount;
     thinker_t      *th;
     sector_t       *sec;
-    side_t         *side;
+    sidedef_t         *side;
     float           starttime;
     material_t     *mat;
     char           *texturepresent, *flatpresent;
@@ -1172,7 +1172,7 @@ void R_PrecacheLevel(void)
     texturepresent = M_Calloc(numtextures);
     flatpresent = M_Calloc(numflats);
 
-    for(i = 0; i < numsides; ++i)
+    for(i = 0; i < numSideDefs; ++i)
     {
         side = SIDE_PTR(i);
 
@@ -1231,7 +1231,7 @@ void R_PrecacheLevel(void)
         }
     }
 
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
 

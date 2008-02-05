@@ -238,7 +238,7 @@ void SB_Delete(uint which)
     // Check to see if a mobj had acquired this source for it's own use.
     // You never know what trick the user might be trying pull :-)
     done = false;
-    for(j = 0; j < numsectors && !done; ++j)
+    for(j = 0; j < numSectors && !done; ++j)
     {
         mobj_t *iter;
 
@@ -272,7 +272,7 @@ void SB_Clear(void)
     numSources = 0;
 
     // Zero Bias source indices acquired by mobjs.
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         mobj_t *iter;
 
@@ -760,7 +760,7 @@ void SB_BeginFrame(void)
     }
 
     // Apply to all segs.
-    for(i = 0; i < numsegs; ++i)
+    for(i = 0; i < numSegs; ++i)
     {
         seg_t *seg = SEG_PTR(i);
 
@@ -779,7 +779,7 @@ void SB_BeginFrame(void)
     }
 
     // Apply to all planes.
-    for(i = 0; i < numsubsectors; ++i)
+    for(i = 0; i < numSSectors; ++i)
     {
         sub = SUBSECTOR_PTR(i);
 

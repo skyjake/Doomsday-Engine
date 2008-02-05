@@ -70,31 +70,31 @@ extern boolean levelSetup;
  * These map data arrays are internal to the engine.
  */
 char        levelid[9]; // Name by which the game referred to the current map.
-uint        numvertexes;
+uint        numVertexes;
 vertex_t   *vertexes;
 
-uint        numsegs;
+uint        numSegs;
 seg_t      *segs;
 
-uint        numsectors;
+uint        numSectors;
 sector_t   *sectors;
 
-uint        numsubsectors;
-subsector_t *subsectors;
+uint        numSSectors;
+subsector_t *ssectors;
 
-uint        numnodes;
+uint        numNodes;
 node_t     *nodes;
 
-uint        numlines;
-line_t     *lines;
+uint        numLineDefs;
+linedef_t  *lineDefs;
 
-uint        numsides;
-side_t     *sides;
+uint        numSideDefs;
+sidedef_t  *sideDefs;
 
 watchedplanelist_t *watchedPlaneList;
 
 // mapthings are actually stored & handled game-side
-uint        numthings;
+uint        numThings;
 
 blockmap_t *BlockMap;
 blockmap_t *SSecBlockMap;
@@ -129,7 +129,7 @@ void P_PlaneChanged(sector_t *sector, uint plane)
 {
     uint        i;
     subsector_t **ssecp;
-    side_t     *front = NULL, *back = NULL;
+    sidedef_t     *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
     sector->planes[plane]->soundOrg.pos[VZ] = sector->planes[plane]->height;
@@ -138,10 +138,10 @@ void P_PlaneChanged(sector_t *sector, uint plane)
         sector->soundOrg.pos[VZ] =
             (sector->SP_ceilheight - sector->SP_floorheight) / 2;
 
-    for(i = 0; i < sector->lineCount; ++i)
+    for(i = 0; i < sector->lineDefCount; ++i)
     {
-        front = sector->lines[i]->L_frontside;
-        back  = sector->lines[i]->L_backside;
+        front = sector->lineDefs[i]->L_frontside;
+        back  = sector->lineDefs[i]->L_backside;
 
         if(!front || !front->sector || !back || !back->sector)
             continue;
@@ -248,7 +248,7 @@ void P_PlaneChanged(sector_t *sector, uint plane)
     }
 
     // Inform the shadow bias of changed geometry.
-    ssecp = sector->subsectors;
+    ssecp = sector->ssectors;
     while(*ssecp)
     {
         subsector_t *ssec = *ssecp;
@@ -329,33 +329,33 @@ void P_SetCurrentMap(gamemap_t *map)
 {
     strncpy(levelid, map->levelID, sizeof(levelid));
 
-    numthings = map->numThings;
+    numThings = map->numThings;
 
-    numvertexes = map->numVertexes;
+    numVertexes = map->numVertexes;
     vertexes = map->vertexes;
 
-    numsegs = map->numSegs;
+    numSegs = map->numSegs;
     segs = map->segs;
 
-    numsectors = map->numSectors;
+    numSectors = map->numSectors;
     sectors = map->sectors;
 
-    numsubsectors = map->numSubsectors;
-    subsectors = map->subsectors;
+    numSSectors = map->numSSectors;
+    ssectors = map->ssectors;
 
-    numnodes = map->numNodes;
+    numNodes = map->numNodes;
     nodes = map->nodes;
 
-    numlines = map->numLines;
-    lines = map->lines;
+    numLineDefs = map->numLineDefs;
+    lineDefs = map->lineDefs;
 
-    numsides = map->numSides;
-    sides = map->sides;
+    numSideDefs = map->numSideDefs;
+    sideDefs = map->sideDefs;
 
     watchedPlaneList = &map->watchedPlaneList;
 
-    numpolyobjs = map->numPolyobjs;
-    polyobjs = map->polyobjs;
+    numPolyObjs = map->numPolyObjs;
+    polyObjs = map->polyObjs;
 
     rejectMatrix = map->rejectMatrix;
     mobjNodes = &map->mobjNodes;

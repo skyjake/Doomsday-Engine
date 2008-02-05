@@ -559,11 +559,11 @@ extern          "C" {
         // Flags. OR'ed with a DMU property constant. The most significant byte
         // is used for the flags.
         DMU_FLAG_MASK           = 0xff000000,
-        DMU_LINE_OF_SECTOR      = 0x80000000,
+        DMU_LINEDEF_OF_SECTOR   = 0x80000000,
         DMU_SECTOR_OF_SUBSECTOR = 0x40000000,
         DMU_SEG_OF_POLYOBJ      = 0x20000000,
-        DMU_SIDE1_OF_LINE       = 0x10000000,
-        DMU_SIDE0_OF_LINE       = 0x08000000,
+        DMU_SIDEDEF1_OF_LINE    = 0x10000000,
+        DMU_SIDEDEF0_OF_LINE    = 0x08000000,
         DMU_SEG_OF_SUBSECTOR    = 0x04000000,
         DMU_SUBSECTOR_OF_SECTOR = 0x02000000,
         // (1 bit left)
@@ -572,22 +572,19 @@ extern          "C" {
 
         DMU_VERTEX = 1,
         DMU_SEG,
-        DMU_LINE,
-        DMU_SIDE,
+        DMU_LINEDEF,
+        DMU_SIDEDEF,
         DMU_NODE,
         DMU_SUBSECTOR,
         DMU_SECTOR,
         DMU_PLANE,
         DMU_SURFACE,
-        DMU_BLOCKMAP,
-        DMU_REJECT,
-        DMU_POLYBLOCKMAP,
         DMU_POLYOBJ,
 
-        DMU_LINE_BY_TAG,
+        DMU_LINEDEF_BY_TAG,
         DMU_SECTOR_BY_TAG,
 
-        DMU_LINE_BY_ACT_TAG,
+        DMU_LINEDEF_BY_ACT_TAG,
         DMU_SECTOR_BY_ACT_TAG,
 
         DMU_X,
@@ -605,8 +602,8 @@ extern          "C" {
 
         DMU_FRONT_SECTOR,
         DMU_BACK_SECTOR,
-        DMU_SIDE0,
-        DMU_SIDE1,
+        DMU_SIDEDEF0,
+        DMU_SIDEDEF1,
         DMU_FLAGS,
         DMU_DX,
         DMU_DY,
@@ -642,7 +639,7 @@ extern          "C" {
         DMU_BOTTOM_COLOR_BLUE,
         DMU_VALID_COUNT,
 
-        DMU_LINE_COUNT,
+        DMU_LINEDEF_COUNT,
         DMU_COLOR,                  // RGB
         DMU_COLOR_RED,              // red component
         DMU_COLOR_GREEN,            // green component
@@ -715,7 +712,7 @@ extern          "C" {
     };
 
     // Linedef flags:
-    // For use with P_Set/Get(DMU_LINE, n, DMU_FLAGS)
+    // For use with P_Set/Get(DMU_LINEDEF, n, DMU_FLAGS)
 #define DDLF_BLOCKING           0x0001
 #define DDLF_TWOSIDED           0x0002
 #define DDLF_DONTPEGTOP         0x0004
@@ -804,7 +801,7 @@ extern          "C" {
         intercepttype_t type;
         union {
             struct mobj_s  *mo;
-            struct line_s  *line;
+            struct linedef_s  *lineDef;
         } d;
     } intercept_t;
 

@@ -60,8 +60,8 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po);
 // Called when the polyobj hits a mobj.
 void    (*po_callback) (mobj_t *mobj, void *seg, void *po);
 
-polyobj_t **polyobjs; // List of all poly-objects in the map.
-uint    numpolyobjs;
+polyobj_t **polyObjs; // List of all poly-objects in the map.
+uint    numPolyObjs;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -77,11 +77,11 @@ void PO_SetCallback(void (*func) (mobj_t *, void *, void *))
 
 polyobj_t *P_GetPolyobj(uint polyNum)
 {
-    uint            i;
+    uint                i;
 
-    for(i = 0; i < numpolyobjs; ++i)
+    for(i = 0; i < numPolyObjs; ++i)
     {
-        polyobj_t      *po = polyobjs[i];
+        polyobj_t          *po = polyObjs[i];
 
         if((uint) po->tag == polyNum)
         {
@@ -94,8 +94,8 @@ polyobj_t *P_GetPolyobj(uint polyNum)
 
 static void updateSegBBox(seg_t *seg)
 {
-    line_t         *line = seg->lineDef;
-    byte            edge;
+    linedef_t          *line = seg->lineDef;
+    byte                edge;
 
     edge = (seg->SG_v1pos[VX] < seg->SG_v2pos[VX]);
     line->bBox[BOXLEFT]  = seg->SG_vpos(edge^1)[VX];
@@ -160,9 +160,9 @@ void PO_InitForMap(void)
 {
     uint                i;
 
-    for(i = 0; i < numpolyobjs; ++i)
+    for(i = 0; i < numPolyObjs; ++i)
     {
-        polyobj_t          *po = polyobjs[i];
+        polyobj_t          *po = polyObjs[i];
         seg_t            **segPtr;
         subsector_t        *ssec;
         fvertex_t           avg; // Used to find a polyobj's center, and hence subsector.
@@ -174,7 +174,7 @@ void PO_InitForMap(void)
         while(*segPtr)
         {
             seg_t              *seg = *segPtr;
-            side_t             *side = seg->lineDef->L_frontside;
+            sidedef_t             *side = seg->lineDef->L_frontside;
 
             side->SW_topflags |= SUF_NO_RADIO;
             side->SW_middleflags |= SUF_NO_RADIO;
@@ -192,13 +192,13 @@ void PO_InitForMap(void)
         ssec = R_PointInSubsector(avg.pos[VX], avg.pos[VY]);
         if(ssec)
         {
-            if(ssec->poly)
+            if(ssec->polyObj)
             {
                 Con_Message("PO_InitForMap: Warning: Multiple polyobjs in a single subsector\n"
                             "  (ssec %i, sector %i). Previous polyobj overridden.\n",
                             GET_SUBSECTOR_IDX(ssec), GET_SECTOR_IDX(ssec->sector));
             }
-            ssec->poly = po;
+            ssec->polyObj = po;
         }
 
         P_PolyobjUnLink(po);
@@ -217,7 +217,7 @@ boolean P_PolyobjMove(uint num, float x, float y)
 
     if(num & 0x80000000)
     {
-        po = polyobjs[num & 0x7fffffff];
+        po = polyObjs[num & 0x7fffffff];
     }
     else if(!(po = P_GetPolyobj(num)))
     {
@@ -355,7 +355,7 @@ boolean P_PolyobjRotate(uint num, angle_t angle)
 
     if(num & 0x80000000)
     {
-        po = polyobjs[num & 0x7fffffff];
+        po = polyObjs[num & 0x7fffffff];
     }
     else if(!(po = P_GetPolyobj(num)))
     {
@@ -506,7 +506,7 @@ void P_PolyobjLink(polyobj_t *po)
 
 typedef struct ptrmobjblockingparams_s {
     boolean         blocked;
-    line_t         *line;
+    linedef_t         *line;
     seg_t          *seg;
     polyobj_t      *po;
 } ptrmobjblockingparams_t;
@@ -546,7 +546,7 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po)
 {
     uint        blockBox[4];
     vec2_t      bbox[2];
-    line_t     *ld;
+    linedef_t     *ld;
     ptrmobjblockingparams_t params;
 
     params.blocked = false;
@@ -572,12 +572,12 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po)
  */
 polyobj_t* PO_GetPolyobjForDegen(void *degenMobj)
 {
-    uint        i;
-    polyobj_t  *po;
+    uint                i;
+    polyobj_t          *po;
 
-    for(i = 0; i < numpolyobjs; ++i)
+    for(i = 0; i < numPolyObjs; ++i)
     {
-        po = polyobjs[i];
+        po = polyObjs[i];
 
         if(&po->startSpot == degenMobj)
         {
@@ -596,17 +596,17 @@ polyobj_t* PO_GetPolyobjForDegen(void *degenMobj)
  * @param func          Call back function to call for each line of this po.
  * @return              @c true, if all callbacks are successfull.
  */
-boolean P_PolyobjLinesIterator(polyobj_t *po, boolean (*func) (line_t *, void *),
+boolean P_PolyobjLinesIterator(polyobj_t *po, boolean (*func) (linedef_t *, void *),
                                void *data)
 {
-    uint            i;
-    seg_t         **segList;
+    uint                i;
+    seg_t             **segList;
 
     segList = po->segs;
     for(i = 0; i < po->numSegs; ++i, segList++)
     {
         seg_t          *seg = *segList;
-        line_t         *line = seg->lineDef;
+        linedef_t         *line = seg->lineDef;
 
         if(line->validCount == validCount)
             continue;

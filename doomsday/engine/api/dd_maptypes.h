@@ -20,7 +20,7 @@
 
 #define DMT_SUBSECTOR_SEGCOUNT DDVT_UINT
 #define DMT_SUBSECTOR_SEGS DDVT_PTR    // [segcount] size.
-#define DMT_SUBSECTOR_POLY DDVT_PTR    // NULL, if there is no polyobj.
+#define DMT_SUBSECTOR_POLYOBJ DDVT_PTR // NULL, if there is no polyobj.
 #define DMT_SUBSECTOR_SECTOR DDVT_PTR
 
 #define DMT_MATERIAL DDVT_SHORT
@@ -42,29 +42,29 @@
 #define DMT_SECTOR_LIGHTLEVEL DDVT_FLOAT
 #define DMT_SECTOR_RGB DDVT_FLOAT
 #define DMT_SECTOR_MOBJLIST DDVT_PTR   // List of mobjs in the sector.
-#define DMT_SECTOR_LINECOUNT DDVT_UINT
-#define DMT_SECTOR_LINES DDVT_PTR      // [lineCount+1] size.
-#define DMT_SECTOR_SUBSCOUNT DDVT_UINT
-#define DMT_SECTOR_SUBSECTORS DDVT_PTR // [subsCount+1] size.
+#define DMT_SECTOR_LINEDEFCOUNT DDVT_UINT
+#define DMT_SECTOR_LINEDEFS DDVT_PTR   // [lineDefCount+1] size.
+#define DMT_SECTOR_SSECTORCOUNT DDVT_UINT
+#define DMT_SECTOR_SSECTORS DDVT_PTR   // [ssectorCount+1] size.
 #define DMT_SECTOR_SOUNDORG DDVT_PTR
 #define DMT_SECTOR_PLANECOUNT DDVT_UINT
 #define DMT_SECTOR_REVERB DDVT_FLOAT
 
-#define DMT_SIDE_SEGCOUNT DDVT_UINT
-#define DMT_SIDE_SEGS DDVT_PTR         // [segcount] size, segs arranged left>right
-#define DMT_SIDE_SECTOR DDVT_PTR
-#define DMT_SIDE_FLAGS DDVT_SHORT
+#define DMT_SIDEDEF_SEGCOUNT DDVT_UINT
+#define DMT_SIDEDEF_SEGS DDVT_PTR      // [segcount] size, segs arranged left>right
+#define DMT_SIDEDEF_SECTOR DDVT_PTR
+#define DMT_SIDEDEF_FLAGS DDVT_SHORT
 
-#define DMT_LINE_SEC    DDVT_PTR
+#define DMT_LINEDEF_SEC    DDVT_PTR
 
-#define DMT_LINE_V DDVT_PTR
-#define DMT_LINE_SIDES DDVT_PTR
-#define DMT_LINE_FLAGS DDVT_INT        // Public DDLF_* flags.
-#define DMT_LINE_SLOPETYPE DDVT_INT
-#define DMT_LINE_VALIDCOUNT DDVT_INT
-#define DMT_LINE_DX DDVT_FLOAT
-#define DMT_LINE_DY DDVT_FLOAT
-#define DMT_LINE_BBOX DDVT_FLOAT
+#define DMT_LINEDEF_V DDVT_PTR
+#define DMT_LINEDEF_SIDEDEFS DDVT_PTR
+#define DMT_LINEDEF_FLAGS DDVT_INT     // Public DDLF_* flags.
+#define DMT_LINEDEF_SLOPETYPE DDVT_INT
+#define DMT_LINEDEF_VALIDCOUNT DDVT_INT
+#define DMT_LINEDEF_DX DDVT_FLOAT
+#define DMT_LINEDEF_DY DDVT_FLOAT
+#define DMT_LINEDEF_BBOX DDVT_FLOAT
 
 #define DMT_POLYOBJ_IDX DDVT_UINT      // Idx of polyobject
 #define DMT_POLYOBJ_TAG DDVT_INT       // Reference tag assigned in HereticEd
@@ -81,10 +81,6 @@
 #define DMT_POLYOBJ_SEQTYPE DDVT_INT
 #define DMT_POLYOBJ_SPECIALDATA DDVT_PTR // pointer a thinker, if the poly is moving
 
-#define DMT_NODE_X DDVT_FLOAT          // Partition line.
-#define DMT_NODE_Y DDVT_FLOAT          // Partition line.
-#define DMT_NODE_DX DDVT_FLOAT         // Partition line.
-#define DMT_NODE_DY DDVT_FLOAT         // Partition line.
 #define DMT_NODE_BBOX DDVT_FLOAT       // Bounding box for each child.
 #define DMT_NODE_CHILDREN DDVT_UINT    // If NF_SUBSECTOR it's a subsector.
 

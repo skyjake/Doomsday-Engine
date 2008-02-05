@@ -59,7 +59,7 @@ typedef struct ssecmapblock_s {
 } ssecmapblock_t;
 
 typedef struct bmapblock_s {
-    line_t    **lines;
+    linedef_t    **lineDefs;
     linkpolyobj_t *polyLinks;
 } bmapblock_t;
 
@@ -266,9 +266,9 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
     bmap = M_Calloc(sizeof(ssecmap_t) * subMapWidth * subMapHeight);
 
     // Process all the subsectors in the map.
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t    *ssec = &map->subsectors[i];
+        subsector_t    *ssec = &map->ssectors[i];
 
         if(!ssec->sector)
             continue;
@@ -345,7 +345,7 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
 #undef BLOCK_HEIGHT
 }
 
-void P_BlockmapSetBlock(blockmap_t *blockmap, uint x, uint y, line_t **lines,
+void P_BlockmapSetBlock(blockmap_t *blockmap, uint x, uint y, linedef_t **lines,
                         linkpolyobj_t *link)
 {
     if(blockmap)
@@ -355,7 +355,7 @@ void P_BlockmapSetBlock(blockmap_t *blockmap, uint x, uint y, line_t **lines,
 
         if(block)
         {
-            block->lines = lines;
+            block->lineDefs = lines;
             block->polyLinks = link;
         }
     }
@@ -450,21 +450,21 @@ void P_InitMapBlockRings(gamemap_t *map)
 
 typedef struct bmapiterparams_s {
     int         localValidCount;
-    boolean   (*func) (line_t *, void *);
+    boolean   (*func) (linedef_t *, void *);
     void       *param;
 } bmapiterparams_t;
 
 static boolean bmapBlockLinesIterator(bmapblock_t *block, void *context)
 {
-    if(block->lines)
+    if(block->lineDefs)
     {
-        line_t    **iter;
+        linedef_t    **iter;
         bmapiterparams_t *args = (bmapiterparams_t*) context;
 
-        iter = block->lines;
+        iter = block->lineDefs;
         while(*iter)
         {
-            line_t     *line = *iter;
+            linedef_t     *line = *iter;
 
             if(line->validCount != args->localValidCount)
             {
@@ -482,7 +482,7 @@ static boolean bmapBlockLinesIterator(bmapblock_t *block, void *context)
 }
 
 boolean P_BlockmapLinesIterator(blockmap_t *blockmap, const uint block[2],
-                                boolean (*func) (line_t *, void *),
+                                boolean (*func) (linedef_t *, void *),
                                 void *data)
 {
     if(blockmap)
@@ -507,7 +507,7 @@ boolean P_BlockmapLinesIterator(blockmap_t *blockmap, const uint block[2],
 }
 
 boolean P_BlockBoxLinesIterator(blockmap_t *blockmap, const uint blockBox[4],
-                                boolean (*func) (line_t *, void *),
+                                boolean (*func) (linedef_t *, void *),
                                 void *data)
 {
     bmap_t     *bmap = (bmap_t*) blockmap;
@@ -717,7 +717,7 @@ boolean P_BlockBoxMobjsIterator(blockmap_t *blockmap, const uint blockBox[4],
 }
 
 typedef struct poiterparams_s {
-    boolean   (*func) (line_t *, void *);
+    boolean   (*func) (linedef_t *, void *);
     void       *param;
 } poiterparams_t;
 
@@ -729,7 +729,7 @@ boolean PTR_PolyobjLines(polyobj_t *po, void *data)
 }
 
 boolean P_BlockmapPolyobjLinesIterator(blockmap_t *blockmap, const uint block[2],
-                                       boolean (*func) (line_t *, void *),
+                                       boolean (*func) (linedef_t *, void *),
                                        void *data)
 {
     if(blockmap)
@@ -758,7 +758,7 @@ boolean P_BlockmapPolyobjLinesIterator(blockmap_t *blockmap, const uint block[2]
 }
 
 boolean P_BlockBoxPolyobjLinesIterator(blockmap_t *blockmap, const uint blockBox[4],
-                                       boolean (*func) (line_t *, void *),
+                                       boolean (*func) (linedef_t *, void *),
                                        void *data)
 {
     bmap_t     *bmap = (bmap_t *) blockmap;
@@ -843,7 +843,7 @@ boolean P_BlockPathTraverse(blockmap_t *bmap, const uint originBlock[2],
     {
         if(flags & PT_ADDLINES)
         {
-            if(numpolyobjs > 0)
+            if(numPolyObjs > 0)
             {
                 if(!P_BlockmapPolyobjLinesIterator(BlockMap, block,
                                                    PIT_AddLineIntercepts, 0))
@@ -880,7 +880,7 @@ boolean P_BlockPathTraverse(blockmap_t *bmap, const uint originBlock[2],
     return true;
 }
 
-static boolean rendBlockLinedef(line_t *line, void *data)
+static boolean rendBlockLinedef(linedef_t *line, void *data)
 {
     vec2_t      start, end;
     arvec2_t    bbox = data;
@@ -984,7 +984,7 @@ void rendBlockLinedefs(void *blockPtr, void *param,
     bmapblock_t *block = blockPtr;
 
     // Lines?
-    if(block->lines)
+    if(block->lineDefs)
     {
         bmapiterparams_t args;
 
@@ -1108,9 +1108,9 @@ static void drawBlockInfoBox(uint vBlock[2])
 
         // Count the number of lines linked to this block.
         lineCount = 0;
-        if(block->lines)
+        if(block->lineDefs)
         {
-            line_t    **iter = block->lines;
+            linedef_t    **iter = block->lineDefs;
             while(*iter)
             {
                 lineCount++;
@@ -1267,7 +1267,7 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
     }
     DGL_End();
 
-    // Horizontal lines;
+    // Horizontal lines
     DGL_Begin(DGL_LINES);
     for(y = 1; y < bmap->dimensions[VY]; ++y)
     {

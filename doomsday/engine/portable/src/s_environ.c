@@ -184,9 +184,9 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
             bbox[BOXLEFT], bbox[BOXTOP], bbox[BOXRIGHT], bbox[BOXBOTTOM]);
 #endif
 */
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numSSectors; ++i)
     {
-        sub = &map->subsectors[i];
+        sub = &map->ssectors[i];
 
         // Is this subsector close enough?
         if(sub->sector == sec || // subsector is IN this sector
@@ -216,7 +216,7 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
             p = node->next;
             *ptr = (subsector_t*) node->data;
 
-            if(i < numsectors - 1)
+            if(i < numSectors - 1)
             {   // Move this node to the unused list for re-use.
                 node->next = unusedNodeList;
                 unusedNodeList = node;

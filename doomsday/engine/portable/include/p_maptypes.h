@@ -9,7 +9,7 @@
 #define LO_next     link[1]
 
 typedef struct lineowner_s {
-    struct line_s *line;
+    struct linedef_s *lineDef;
     struct lineowner_s *link[2];    // {prev, next} (i.e. {anticlk, clk}).
     binangle_t      angle;          // between this and next clockwise.
 } lineowner_t;
@@ -71,8 +71,8 @@ typedef struct vertex_s {
 typedef struct seg_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];          // [Start, End] of the segment.
-    struct side_s*      sideDef;
-    struct line_s*      lineDef;
+    struct sidedef_s*   sideDef;
+    struct linedef_s*   lineDef;
     struct sector_s*    sec[2];
     struct subsector_s* subsector;
     struct seg_s*       backSeg;
@@ -102,7 +102,7 @@ typedef struct subsector_s {
     runtime_mapdata_header_t header;
     unsigned int        segCount;
     struct seg_s**      segs;          // [segcount] size.
-    struct polyobj_s*   poly;          // NULL, if there is no polyobj.
+    struct polyobj_s*   polyObj;       // NULL, if there is no polyobj.
     struct sector_s*    sector;
     int                 flags;
     int                 validCount;
@@ -266,10 +266,10 @@ typedef struct sector_s {
     float               rgb[3];
     float               oldRGB[3];
     struct mobj_s*      mobjList;      // List of mobjs in the sector.
-    unsigned int        lineCount;
-    struct line_s**     lines;         // [lineCount+1] size.
-    unsigned int        subsCount;
-    struct subsector_s** subsectors;   // [subsCount+1] size.
+    unsigned int        lineDefCount;
+    struct linedef_s**  lineDefs;      // [lineDefCount+1] size.
+    unsigned int        ssectorCount;
+    struct subsector_s** ssectors;     // [ssectorCount+1] size.
     unsigned int        numReverbSSecAttributors;
     struct subsector_s** reverbSSecs;  // [numReverbSSecAttributors] size.
     unsigned int        subsGroupCount;
@@ -341,7 +341,7 @@ typedef struct msidedef_s {
     int         index;
 } msidedef_t;
 
-typedef struct side_s {
+typedef struct sidedef_s {
     runtime_mapdata_header_t header;
     surface_t           sections[3];
     unsigned int        segCount;
@@ -354,7 +354,7 @@ typedef struct side_s {
     shadowcorner_t      bottomCorners[2];
     shadowcorner_t      sideCorners[2];
     edgespan_t          spans[2];      // [left, right]
-} side_t;
+} sidedef_t;
 
 // Helper macros for accessing linedef data elements.
 #define L_v(n)                  v[(n)]
@@ -370,10 +370,10 @@ typedef struct side_s {
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
 
-#define L_side(n)               sides[(n)]
+#define L_side(n)               sideDefs[(n)]
 #define L_frontside             L_side(FRONT)
 #define L_backside              L_side(BACK)
-#define L_sector(n)             sides[(n)]->sector
+#define L_sector(n)             sideDefs[(n)]->sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 
@@ -402,14 +402,14 @@ typedef struct mlinedef_s {
     // Normally NULL, except when this linedef directly overlaps an earlier
     // one (a rarely-used trick to create higher mid-masked textures).
     // No segs should be created for these overlapping linedefs.
-    struct line_s *overlap;
+    struct linedef_s *overlap;
 } mlinedef_t;
 
-typedef struct line_s {
+typedef struct linedef_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];
     struct lineowner_s* vo[2];         // Links to vertex line owner nodes [left, right]
-    struct side_s*      sides[2];
+    struct sidedef_s*   sideDefs[2];
     int                 flags;         // Public DDLF_* flags.
     byte                inFlags;       // Internal LF_* flags
     slopetype_t         slopeType;
@@ -421,12 +421,12 @@ typedef struct line_s {
     float               bBox[4];
     boolean             mapped[DDMAXPLAYERS]; // Whether the line has been mapped by each player yet.
     mlinedef_t          buildData;
-} line_t;
+} linedef_t;
 
 typedef struct mpolyobj_s {
     int         index;
     uint        lineCount;
-    struct line_s **lines;
+    struct linedef_s **lineDefs;
 } mpolyobj_t;
 
 typedef struct polyobj_s {
@@ -454,12 +454,17 @@ typedef struct polyobj_s {
 #define RIGHT                   0
 #define LEFT                    1
 
+/**
+ * An infinite line of the form point + direction vectors.
+ */
+typedef struct partition_s {
+	float				x, y;
+	float				dX, dY;
+} partition_t;
+
 typedef struct node_s {
     runtime_mapdata_header_t header;
-    float               x;             // Partition line.
-    float               y;             // Partition line.
-    float               dX;            // Partition line.
-    float               dY;            // Partition line.
+    partition_t         partition;
     float               bBox[2][4];    // Bounding box for each child.
     unsigned int        children[2];   // If NF_SUBSECTOR it's a subsector.
 } node_t;

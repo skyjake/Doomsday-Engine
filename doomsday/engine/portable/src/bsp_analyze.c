@@ -81,9 +81,9 @@ static void findMapLimits(editmap_t *src, int *bbox)
 
     M_ClearBox(bbox);
 
-    for(i = 0; i < src->numLines; ++i)
+    for(i = 0; i < src->numLineDefs; ++i)
     {
-        line_t     *L = src->lines[i];
+        linedef_t     *L = src->lineDefs[i];
 
         if(!(L->buildData.mlFlags & MLF_ZEROLENGTH))
         {
@@ -150,9 +150,9 @@ static void pruneLinedefs(editmap_t *src)
     uint            i, newNum;
 
     // Scan all linedefs.
-    for(i = 0, newNum = 0; i < src->numLines; ++i)
+    for(i = 0, newNum = 0; i < src->numLineDefs; ++i)
     {
-        line_t         *l = src->lines[i];
+        linedef_t         *l = src->lineDefs[i];
 
         // Handle duplicated vertices.
         while(l->v[0]->buildData.equiv)
@@ -175,20 +175,20 @@ static void pruneLinedefs(editmap_t *src)
             l->v[0]->buildData.refCount--;
             l->v[1]->buildData.refCount--;
 
-            M_Free(src->lines[i]);
-            src->lines[i] = NULL;
+            M_Free(src->lineDefs[i]);
+            src->lineDefs[i] = NULL;
             continue;
         }
 
         l->buildData.index = newNum;
-        src->lines[newNum++] = src->lines[i];
+        src->lineDefs[newNum++] = src->lineDefs[i];
     }
 
-    if(newNum < src->numLines)
+    if(newNum < src->numLineDefs)
     {
         VERBOSE(Con_Message("  Pruned %d zero-length linedefs\n",
-                            src->numLines - newNum));
-        src->numLines = newNum;
+                            src->numLineDefs - newNum));
+        src->numLineDefs = newNum;
     }
 }
 
@@ -246,19 +246,19 @@ static void pruneUnusedSidedefs(void)
 
     for(i = 0; i < numLinedefs; ++i)
     {
-        line_t         *l = levLinedefs[i];
+        linedef_t         *l = levLinedefs[i];
 
-        if(l->sides[FRONT])
-            addIndexBit(l->sides[FRONT]->buildData.index, indexBitfield);
+        if(l->sideDefs[FRONT])
+            addIndexBit(l->sideDefs[FRONT]->buildData.index, indexBitfield);
 
-        if(l->sides[BACK])
-            addIndexBit(l->sides[BACK]->buildData.index, indexBitfield);
+        if(l->sideDefs[BACK])
+            addIndexBit(l->sideDefs[BACK]->buildData.index, indexBitfield);
     }
 
     // Scan all sidedefs.
     for(i = 0, newNum = 0; i < numSidedefs; ++i)
     {
-        side_t *s = levSidedefs[i];
+        sidedef_t *s = levSidedefs[i];
 
         if(!hasIndexBit(s->buildData.index, indexBitfield))
         {
@@ -304,7 +304,7 @@ static void pruneUnusedSectors(void)
 
     for(i = 0; i < numSidedefs; ++i)
     {
-        side_t *s = levSidedefs[i];
+        sidedef_t *s = levSidedefs[i];
 
         if(s->sector)
             addIndexBit(s->sector->buildData.index, indexBitfield);
@@ -359,7 +359,7 @@ void BSP_PruneRedundantMapData(editmap_t *map, int flags)
  *                  line is vertical, then the bottom-most).
  *                  @c => 0 for start, 1 for end.
  */
-static __inline int lineVertexLowest(const line_t *l)
+static __inline int lineVertexLowest(const linedef_t *l)
 {
     return (((int) l->v[0]->buildData.pos[VX] < (int) l->v[1]->buildData.pos[VX] ||
              ((int) l->v[0]->buildData.pos[VX] == (int) l->v[1]->buildData.pos[VX] &&
@@ -368,8 +368,8 @@ static __inline int lineVertexLowest(const line_t *l)
 
 static int C_DECL lineStartCompare(const void *p1, const void *p2)
 {
-    const line_t       *a = *((const void **) p1);
-    const line_t       *b = *((const void **) p2);
+    const linedef_t       *a = *((const void **) p1);
+    const linedef_t       *b = *((const void **) p2);
     vertex_t           *c, *d;
 
     if(a == b)
@@ -387,8 +387,8 @@ static int C_DECL lineStartCompare(const void *p1, const void *p2)
 
 static int C_DECL lineEndCompare(const void *p1, const void *p2)
 {
-    const line_t       *a = *((const void **) p1);
-    const line_t       *b = *((const void **) p2);
+    const linedef_t       *a = *((const void **) p1);
+    const linedef_t       *b = *((const void **) p2);
     vertex_t           *c, *d;
 
     if(a == b)
@@ -413,26 +413,26 @@ static int C_DECL lineEndCompare(const void *p1, const void *p2)
 void BSP_DetectOverlappingLines(editmap_t *map)
 {
     size_t              i, j, count = 0;
-    line_t            **hits;
+    linedef_t            **hits;
 
-    hits = M_Malloc(map->numLines * sizeof(uint));
+    hits = M_Malloc(map->numLineDefs * sizeof(uint));
 
     // Sort array of ptrs.
-    for(i = 0; i < map->numLines; ++i)
-        hits[i] = map->lines[i];
-    qsort(hits, map->numLines, sizeof(line_t*), lineStartCompare);
+    for(i = 0; i < map->numLineDefs; ++i)
+        hits[i] = map->lineDefs[i];
+    qsort(hits, map->numLineDefs, sizeof(linedef_t*), lineStartCompare);
 
-    for(i = 0; i < map->numLines - 1; ++i)
+    for(i = 0; i < map->numLineDefs - 1; ++i)
     {
-        for(j = i + 1; j < map->numLines; ++j)
+        for(j = i + 1; j < map->numLineDefs; ++j)
         {
             if(lineStartCompare(hits + i, hits + j) != 0)
                 break;
 
             if(lineEndCompare(hits + i, hits + j) == 0)
             {   // Found an overlap!
-                line_t             *a = hits[i];
-                line_t             *b = hits[j];
+                linedef_t             *a = hits[i];
+                linedef_t             *b = hits[j];
 
                 b->buildData.overlap =
                     (a->buildData.overlap ? a->buildData.overlap : a);
@@ -453,7 +453,7 @@ void BSP_DetectOverlappingLines(editmap_t *map)
  * Cast a line horizontally or vertically and see what we hit (OUCH, we
  * have to iterate over all linedefs!).
  */
-static void testForWindowEffect(editmap_t *map, line_t *l)
+static void testForWindowEffect(editmap_t *map, linedef_t *l)
 {
     uint        i;
     double      mX = (l->v[0]->buildData.pos[VX] + l->v[1]->buildData.pos[VX]) / 2.0;
@@ -470,12 +470,12 @@ static void testForWindowEffect(editmap_t *map, line_t *l)
     sector_t  *frontOpen = NULL;
     int         frontLine = -1;
 
-    for(i = 0; i < map->numLines; ++i)
+    for(i = 0; i < map->numLineDefs; ++i)
     {
-        line_t         *n = map->lines[i];
+        linedef_t         *n = map->lineDefs[i];
         double          dist;
         boolean         isFront;
-        side_t         *hitSide;
+        sidedef_t         *hitSide;
         double          dX2, dY2;
 
         if(n == l || (n->buildData.mlFlags & MLF_ZEROLENGTH) || n->buildData.overlap)
@@ -502,7 +502,7 @@ static void testForWindowEffect(editmap_t *map, line_t *l)
             if(dist < DIST_EPSILON)
                 continue; // Too close (overlapping lines ?)
 
-            hitSide = n->sides[(dY > 0) ^ (dY2 > 0) ^ !isFront];
+            hitSide = n->sideDefs[(dY > 0) ^ (dY2 > 0) ^ !isFront];
         }
         else
         {   // Vertical.
@@ -520,7 +520,7 @@ static void testForWindowEffect(editmap_t *map, line_t *l)
 
             dist = fabs(dist);
 
-            hitSide = n->sides[(dX > 0) ^ (dX2 > 0) ^ !isFront];
+            hitSide = n->sideDefs[(dX > 0) ^ (dX2 > 0) ^ !isFront];
         }
 
         if(dist < DIST_EPSILON)  // too close (overlapping lines ?)
@@ -559,7 +559,7 @@ Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
             frontLine, frontDist, (frontOpen ? "OPEN" : "CLOSED"));
 #endif*/
 
-    if(backOpen && frontOpen && l->sides[FRONT]->sector == frontOpen)
+    if(backOpen && frontOpen && l->sideDefs[FRONT]->sector == frontOpen)
     {
         l->buildData.windowEffect = backOpen;
         Con_Message("Linedef #%d seems to be a One-Sided Window "
@@ -578,12 +578,12 @@ void BSP_DetectWindowEffects(editmap_t *map)
 {
     uint            i, oneSiders, twoSiders;
 
-    for(i = 0; i < map->numLines; ++i)
+    for(i = 0; i < map->numLineDefs; ++i)
     {
-        line_t         *l = map->lines[i];
+        linedef_t         *l = map->lineDefs[i];
 
         if((l->buildData.mlFlags & MLF_TWOSIDED) || (l->buildData.mlFlags & MLF_ZEROLENGTH) ||
-            l->buildData.overlap || !l->sides[FRONT])
+            l->buildData.overlap || !l->sideDefs[FRONT])
             continue;
 
         BSP_CountEdgeTips(l->v[0], &oneSiders, &twoSiders);

@@ -399,7 +399,7 @@ static void R_SetSectorLinks(sector_t *sec)
     sector_t   *floorLinkCandidate = 0, *ceilLinkCandidate = 0;
 
     // Must have a valid sector!
-    if(!sec || !sec->lineCount || (sec->flags & SECF_PERMANENTLINK))
+    if(!sec || !sec->lineDefCount || (sec->flags & SECF_PERMANENTLINK))
         return;                 // Can't touch permanent links.
 
     hackfloor = (!R_IsSkySurface(&sec->SP_floorsurface));
@@ -417,7 +417,7 @@ static void R_SetSectorLinks(sector_t *sec)
 
         ssgrp = &sec->subsGroups[i];
 
-        ssecp = sec->subsectors;
+        ssecp = sec->ssectors;
         while(*ssecp)
         {
             subsector_t    *ssec = *ssecp;
@@ -433,7 +433,7 @@ static void R_SetSectorLinks(sector_t *sec)
                 while(*segp)
                 {
                     seg_t          *seg = *segp;
-                    line_t         *lin;
+                    linedef_t         *lin;
 
                     if(!hackfloor && !hackceil)
                         break;
@@ -444,7 +444,7 @@ static void R_SetSectorLinks(sector_t *sec)
                        lin->L_frontside && lin->L_backside) // Must be twosided.
                     {
                         sector_t       *back;
-                        side_t         *sid, *frontsid, *backsid;
+                        sidedef_t         *sid, *frontsid, *backsid;
 
                         // Check the vertex line owners for both verts.
                         // We are only interested in lines that do NOT share either vertex
@@ -549,7 +549,7 @@ void R_InitSkyFix(void)
     mobj_t     *it;
     sector_t   *sec;
 
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
 
@@ -654,15 +654,15 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
     return adjusted;
 }
 
-static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
+static void spreadSkyFixForNeighbors(vertex_t *vtx, linedef_t *refLine,
                                      boolean fixFloors, boolean fixCeilings,
                                      boolean *adjustedFloor,
                                      boolean *adjustedCeil)
 {
-    uint        pln;
-    lineowner_t *base, *lOwner, *rOwner;
-    boolean     doFix[2];
-    boolean    *adjusted[2];
+    uint                pln;
+    lineowner_t        *base, *lOwner, *rOwner;
+    boolean             doFix[2];
+    boolean            *adjusted[2];
 
     doFix[PLN_FLOOR]   = fixFloors;
     doFix[PLN_CEILING] = fixCeilings;
@@ -687,28 +687,28 @@ static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
                 if(!doFix[pln])
                     continue;
 
-                if(doSkyFix(rOwner->line->L_frontsector,
-                            lOwner->line->L_frontsector, pln))
+                if(doSkyFix(rOwner->lineDef->L_frontsector,
+                            lOwner->lineDef->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(lOwner->line->L_backside)
-                if(doSkyFix(rOwner->line->L_frontsector,
-                            lOwner->line->L_backsector, pln))
+                if(lOwner->lineDef->L_backside)
+                if(doSkyFix(rOwner->lineDef->L_frontsector,
+                            lOwner->lineDef->L_backsector, pln))
                     *adjusted[pln] = true;
 
-                if(rOwner->line->L_backside)
-                if(doSkyFix(rOwner->line->L_backsector,
-                            lOwner->line->L_frontsector, pln))
+                if(rOwner->lineDef->L_backside)
+                if(doSkyFix(rOwner->lineDef->L_backsector,
+                            lOwner->lineDef->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(rOwner->line->L_backside && lOwner->line->L_backside)
-                if(doSkyFix(rOwner->line->L_backsector,
-                            lOwner->line->L_frontsector, pln))
+                if(rOwner->lineDef->L_backside && lOwner->lineDef->L_backside)
+                if(doSkyFix(rOwner->lineDef->L_backsector,
+                            lOwner->lineDef->L_frontsector, pln))
                     *adjusted[pln] = true;
             }
         }
 
-        if(!rOwner->line->L_backside)
+        if(!rOwner->lineDef->L_backside)
             break;
 
         rOwner = rOwner->LO_next;
@@ -729,28 +729,28 @@ static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
                 if(!doFix[pln])
                     continue;
 
-                if(doSkyFix(rOwner->line->L_frontsector,
-                            lOwner->line->L_frontsector, pln))
+                if(doSkyFix(rOwner->lineDef->L_frontsector,
+                            lOwner->lineDef->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(lOwner->line->L_backside)
-                if(doSkyFix(rOwner->line->L_frontsector,
-                            lOwner->line->L_backsector, pln))
+                if(lOwner->lineDef->L_backside)
+                if(doSkyFix(rOwner->lineDef->L_frontsector,
+                            lOwner->lineDef->L_backsector, pln))
                     *adjusted[pln] = true;
 
-                if(rOwner->line->L_backside)
-                if(doSkyFix(rOwner->line->L_backsector,
-                            lOwner->line->L_frontsector, pln))
+                if(rOwner->lineDef->L_backside)
+                if(doSkyFix(rOwner->lineDef->L_backsector,
+                            lOwner->lineDef->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(rOwner->line->L_backside && lOwner->line->L_backside)
-                if(doSkyFix(rOwner->line->L_backsector,
-                            lOwner->line->L_frontsector, pln))
+                if(rOwner->lineDef->L_backside && lOwner->lineDef->L_backside)
+                if(doSkyFix(rOwner->lineDef->L_backsector,
+                            lOwner->lineDef->L_frontsector, pln))
                     *adjusted[pln] = true;
             }
         }
 
-        if(!lOwner->line->L_backside)
+        if(!lOwner->lineDef->L_backside)
             break;
 
         lOwner = lOwner->LO_prev;
@@ -780,9 +780,9 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
         adjusted[PLN_FLOOR] = adjusted[PLN_CEILING] = false;
 
         // We need to check all the linedefs.
-        for(i = 0; i < numlines; ++i)
+        for(i = 0; i < numLineDefs; ++i)
         {
-            line_t     *line = LINE_PTR(i);
+            linedef_t     *line = LINE_PTR(i);
             sector_t   *front = (line->L_frontside? line->L_frontsector : NULL);
             sector_t   *back = (line->L_backside? line->L_backsector : NULL);
 
@@ -830,7 +830,7 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
  * @return          Ptr to the lineowner for this line for this vertex else
  *                  @c NULL.
  */
-lineowner_t* R_GetVtxLineOwner(vertex_t *v, line_t *line)
+lineowner_t* R_GetVtxLineOwner(vertex_t *v, linedef_t *line)
 {
     if(v == line->L_v1)
         return line->L_vo1;
@@ -939,7 +939,7 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
  * is the leftmost vertex and verts[1] is the rightmost vertex, when the
  * line lies at the edge of `sector.'
  */
-void R_OrderVertices(const line_t *line, const sector_t *sector, vertex_t *verts[2])
+void R_OrderVertices(const linedef_t *line, const sector_t *sector, vertex_t *verts[2])
 {
     byte        edge;
 
@@ -952,11 +952,12 @@ void R_OrderVertices(const line_t *line, const sector_t *sector, vertex_t *verts
  * A neighbour is a line that shares a vertex with 'line', and faces the
  * specified sector.
  */
-line_t *R_FindLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
-                           boolean antiClockwise, binangle_t *diff)
+linedef_t *R_FindLineNeighbor(sector_t *sector, linedef_t *line,
+                              lineowner_t *own, boolean antiClockwise,
+                              binangle_t *diff)
 {
-    lineowner_t *cown = own->link[!antiClockwise];
-    line_t     *other = cown->line;
+    lineowner_t            *cown = own->link[!antiClockwise];
+    linedef_t              *other = cown->lineDef;
 
     if(other == line)
         return NULL;
@@ -979,12 +980,13 @@ line_t *R_FindLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
     return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-line_t *R_FindSolidLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
-                                boolean antiClockwise, binangle_t *diff)
+linedef_t *R_FindSolidLineNeighbor(sector_t *sector, linedef_t *line,
+                                   lineowner_t *own, boolean antiClockwise,
+                                   binangle_t *diff)
 {
-    lineowner_t *cown = own->link[!antiClockwise];
-    line_t     *other = cown->line;
-    int         side;
+    lineowner_t            *cown = own->link[!antiClockwise];
+    linedef_t              *other = cown->lineDef;
+    int                     side;
 
     if(other == line)
         return NULL;
@@ -1007,7 +1009,7 @@ line_t *R_FindSolidLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own
     // Check for mid texture which fills the gap between floor and ceiling.
     // We should not give away the location of false walls (secrets).
     side = (other->L_frontsector == sector? 0 : 1);
-    if(other->sides[side]->SW_middlematerial)
+    if(other->sideDefs[side]->SW_middlematerial)
     {
         float oFCeil  = other->L_frontsector->SP_ceilvisheight;
         float oFFloor = other->L_frontsector->SP_floorvisheight;
@@ -1044,11 +1046,12 @@ line_t *R_FindSolidLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own
  * They are the neighbouring line in the backsector of the imediate line
  * neighbor.
  */
-line_t *R_FindLineBackNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
-                               boolean antiClockwise, binangle_t *diff)
+linedef_t *R_FindLineBackNeighbor(sector_t *sector, linedef_t *line,
+                                  lineowner_t *own, boolean antiClockwise,
+                                  binangle_t *diff)
 {
-    lineowner_t *cown = own->link[!antiClockwise];
-    line_t *other = cown->line;
+    lineowner_t        *cown = own->link[!antiClockwise];
+    linedef_t          *other = cown->lineDef;
 
     if(other == line)
         return NULL;
@@ -1073,15 +1076,15 @@ line_t *R_FindLineBackNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
  * a shadow between them. In practice, they would be considered a single,
  * long sidedef by the shadow generator).
  */
-line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
-                                lineowner_t *own, boolean antiClockwise,
-                                int alignment)
+linedef_t *R_FindLineAlignNeighbor(sector_t *sec, linedef_t *line,
+                                   lineowner_t *own, boolean antiClockwise,
+                                   int alignment)
 {
 #define SEP 10
 
-    lineowner_t *cown = own->link[!antiClockwise];
-    line_t     *other = cown->line;
-    binangle_t diff;
+    lineowner_t        *cown = own->link[!antiClockwise];
+    linedef_t          *other = cown->lineDef;
+    binangle_t          diff;
 
     if(other == line)
         return NULL;
@@ -1117,13 +1120,13 @@ void R_InitLinks(gamemap_t *map)
 
     // Initialize node piles and line rings.
     NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
-    NP_Init(&map->lineNodes, map->numLines + 1000);
+    NP_Init(&map->lineNodes, map->numLineDefs + 1000);
 
     // Allocate the rings.
     starttime = Sys_GetRealTime();
     map->lineLinks =
-        Z_Malloc(sizeof(*map->lineLinks) * map->numLines, PU_LEVELSTATIC, 0);
-    for(i = 0; i < map->numLines; ++i)
+        Z_Malloc(sizeof(*map->lineLinks) * map->numLineDefs, PU_LEVELSTATIC, 0);
+    for(i = 0; i < map->numLineDefs; ++i)
         map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
     // How much time did we spend?
     VERBOSE(Con_Message
@@ -1345,9 +1348,9 @@ static void triangulateSubSector(subsector_t *ssec)
  */
 void R_PolygonizeMap(gamemap_t *map)
 {
-    uint        i;
-    ownernode_t *node, *p;
-    uint        startTime;
+    uint                i;
+    ownernode_t        *node, *p;
+    uint                startTime;
 
     startTime = Sys_GetRealTime();
 
@@ -1355,9 +1358,9 @@ void R_PolygonizeMap(gamemap_t *map)
     unusedNodeList = NULL;
 
     // Polygonize each subsector.
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t *sub = &map->subsectors[i];
+        subsector_t        *sub = &map->ssectors[i];
         triangulateSubSector(sub);
     }
 
@@ -1462,9 +1465,9 @@ void R_PrepareForBias(gamemap_t *map)
 
     Con_Message("prepareForBias: Processing...\n");
 
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t    *ssec = &map->subsectors[i];
+        subsector_t    *ssec = &map->ssectors[i];
         prepareSubsectorForBias(ssec);
     }
 
@@ -1483,13 +1486,13 @@ void R_PrepareForBias(gamemap_t *map)
    subsector_t *isub, *osub;
 
    // Test each subsector of innersec against all subsectors of outersec.
-   for(i=0; i<numsubsectors; i++)
+   for(i=0; i<numSSectors; i++)
    {
    isub = SUBSECTOR_PTR(i);
    contained = false;
    // Only accept innersec's subsectors.
    if(isub->sector != innersec) continue;
-   for(k=0; k<numsubsectors && !contained; k++)
+   for(k=0; k<numSSectors && !contained; k++)
    {
    osub = SUBSECTOR_PTR(i);
    // Only accept outersec's subsectors.
@@ -1525,7 +1528,7 @@ static sector_t *getContainingSectorOf(gamemap_t *map, sector_t *sec)
     // Try all sectors that fit in the bounding box.
     for(i = 0, other = map->sectors; i < map->numSectors; other++, ++i)
     {
-        if(!other->lineCount || (other->flags & SECF_UNCLOSED))
+        if(!other->lineDefCount || (other->flags & SECF_UNCLOSED))
             continue;
 
         if(other == sec)
@@ -1558,26 +1561,26 @@ void R_BuildSectorLinks(gamemap_t *map)
 {
 #define DOMINANT_SIZE 1000
 
-    uint        i;
+    uint                i;
 
     for(i = 0; i < map->numSectors; ++i)
     {
-        uint        k;
-        sector_t   *other;
-        line_t     *lin;
-        sector_t   *sec = &map->sectors[i];
-        boolean     dohack;
+        uint                k;
+        sector_t           *other;
+        linedef_t          *lin;
+        sector_t           *sec = &map->sectors[i];
+        boolean             dohack;
 
-        if(!sec->lineCount)
+        if(!sec->lineDefCount)
             continue;
 
         // Is this sector completely contained by another?
         sec->containSector = getContainingSectorOf(map, sec);
 
         dohack = true;
-        for(k = 0; k < sec->lineCount; ++k)
+        for(k = 0; k < sec->lineDefCount; ++k)
         {
-            lin = sec->lines[k];
+            lin = sec->lineDefs[k];
             if(!lin->L_frontside || !lin->L_backside ||
                 lin->L_frontsector != lin->L_backsector)
             {
@@ -1612,9 +1615,9 @@ void R_BuildSectorLinks(gamemap_t *map)
            sec->bBox[BOXTOP]   - sec->bBox[BOXBOTTOM] > DOMINANT_SIZE)
         {
             // All sectors touching this one will be affected.
-            for(k = 0; k < sec->lineCount; ++k)
+            for(k = 0; k < sec->lineDefCount; ++k)
             {
-                lin = sec->lines[k];
+                lin = sec->lineDefs[k];
                 other = lin->L_frontsector;
                 if(!other || other == sec)
                 {
@@ -1654,7 +1657,7 @@ void R_SetupLevel(int mode, int flags)
 
     case DDSLM_AFTER_LOADING:
     {
-        side_t *side;
+        sidedef_t *side;
 
         // Loading a game usually destroys all thinkers. Until a proper
         // savegame system handled by the engine is introduced we'll have
@@ -1668,7 +1671,7 @@ void R_SetupLevel(int mode, int flags)
 
         // Update all sectors. Set intial values of various tracked
         // and interpolated properties (lighting, smoothed planes etc).
-        for(i = 0; i < numsectors; ++i)
+        for(i = 0; i < numSectors; ++i)
         {
             uint            j;
             sector_t       *sec = SECTOR_PTR(i);
@@ -1682,7 +1685,7 @@ void R_SetupLevel(int mode, int flags)
         }
 
         // Do the same for side surfaces.
-        for(i = 0; i < numsides; ++i)
+        for(i = 0; i < numSideDefs; ++i)
         {
             side = SIDE_PTR(i);
             R_UpdateSurface(&side->SW_topsurface, false);
@@ -1697,7 +1700,7 @@ void R_SetupLevel(int mode, int flags)
     case DDSLM_FINALIZE:
     {
         int         j;
-        line_t     *line;
+        linedef_t     *line;
 
         // Init server data.
         Sv_InitPools();
@@ -1707,7 +1710,7 @@ void R_SetupLevel(int mode, int flags)
 
         // Update all sectors. Set intial values of various tracked
         // and interpolated properties (lighting, smoothed planes etc).
-        for(i = 0; i < numsectors; ++i)
+        for(i = 0; i < numSectors; ++i)
         {
             uint            l;
             sector_t       *sec = SECTOR_PTR(i);
@@ -1720,19 +1723,19 @@ void R_SetupLevel(int mode, int flags)
             }
         }
 
-        for(i = 0; i < numlines; ++i)
+        for(i = 0; i < numLineDefs; ++i)
         {
             line = LINE_PTR(i);
 
             // Update side surfaces.
             for(j = 0; j < 2; ++j)
             {
-                if(!line->sides[j])
+                if(!line->sideDefs[j])
                     continue;
 
-                R_UpdateSurface(&line->sides[j]->SW_topsurface, true);
-                R_UpdateSurface(&line->sides[j]->SW_middlesurface, true);
-                R_UpdateSurface(&line->sides[j]->SW_bottomsurface, true);
+                R_UpdateSurface(&line->sideDefs[j]->SW_topsurface, true);
+                R_UpdateSurface(&line->sideDefs[j]->SW_middlesurface, true);
+                R_UpdateSurface(&line->sideDefs[j]->SW_bottomsurface, true);
             }
         }
 
@@ -1828,7 +1831,7 @@ void R_ClearSectorFlags(void)
     uint        i;
     sector_t   *sec;
 
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
         // Clear all flags that can be cleared before each frame.
@@ -1852,7 +1855,7 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
     uint        i, j;
 
     // First, all planes of all sectors.
-    for(i = 0; i < numsectors; ++i)
+    for(i = 0; i < numSectors; ++i)
     {
         sector_t *sec = SECTOR_PTR(i);
 
@@ -1861,9 +1864,9 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
     }
 
     // Then all sections of all sides.
-    for(i = 0; i < numsides; ++i)
+    for(i = 0; i < numSideDefs; ++i)
     {
-        side_t *side = SIDE_PTR(i);
+        sidedef_t *side = SIDE_PTR(i);
 
         R_UpdateSurface(&side->SW_topsurface, forceUpdate);
         R_UpdateSurface(&side->SW_middlesurface, forceUpdate);
@@ -2131,11 +2134,11 @@ const float *R_GetSectorLightColor(sector_t *sector)
  */
 static int C_DECL lineAngleSorter(const void *a, const void *b)
 {
-    uint        i;
-    fixed_t     dx, dy;
-    binangle_t  angles[2];
-    lineowner_t *own[2];
-    line_t     *line;
+    uint                i;
+    fixed_t             dx, dy;
+    binangle_t          angles[2];
+    lineowner_t        *own[2];
+    linedef_t          *line;
 
     own[0] = (lineowner_t *)a;
     own[1] = (lineowner_t *)b;
@@ -2149,7 +2152,7 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
         {
             vertex_t    *otherVtx;
 
-            line = own[i]->line;
+            line = own[i]->lineDef;
             otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
 
             dx = otherVtx->V_pos[VX] - rootVtx->V_pos[VX];
@@ -2250,7 +2253,7 @@ static lineowner_t *sortLineOwners(lineowner_t *list,
     return list;
 }
 
-static void setVertexLineOwner(vertex_t *vtx, line_t *lineptr,
+static void setVertexLineOwner(vertex_t *vtx, linedef_t *lineptr,
                                lineowner_t **storage)
 {
     lineowner_t *p, *newOwner;
@@ -2268,7 +2271,7 @@ static void setVertexLineOwner(vertex_t *vtx, line_t *lineptr,
         p = vtx->lineOwners;
         while(p)
         {
-            if(p->line == lineptr)
+            if(p->lineDef == lineptr)
                 return;             // Yes, we can exit.
 
             p = p->LO_next;
@@ -2279,7 +2282,7 @@ static void setVertexLineOwner(vertex_t *vtx, line_t *lineptr,
     vtx->numLineOwners++;
 
     newOwner = (*storage)++;
-    newOwner->line = lineptr;
+    newOwner->lineDef = lineptr;
     newOwner->LO_prev = NULL;
 
     // Link it in.
@@ -2309,15 +2312,15 @@ void R_BuildVertexOwners(gamemap_t *map)
     uint        i;
     lineowner_t *lineOwners, *allocator;
 
-    // We know how many vertex line owners we need (numlines * 2).
+    // We know how many vertex line owners we need (numLineDefs * 2).
     lineOwners =
-        Z_Malloc(sizeof(lineowner_t) * map->numLines * 2, PU_LEVELSTATIC, 0);
+        Z_Malloc(sizeof(lineowner_t) * map->numLineDefs * 2, PU_LEVELSTATIC, 0);
     allocator = lineOwners;
 
-    for(i = 0; i < map->numLines; ++i)
+    for(i = 0; i < map->numLineDefs; ++i)
     {
         uint        p;
-        line_t     *line = &map->lines[i];
+        linedef_t     *line = &map->lineDefs[i];
 
         for(p = 0; p < 2; ++p)
         {
@@ -2380,9 +2383,9 @@ do
 {
     if(verbose >= 2)
         Con_Message("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f\n",
-                    idx, p->LO_prev->line - map->lines,
-                    p->line - map->lines,
-                    p->LO_next->line - map->lines, BANG2DEG(p->angle));
+                    idx, p->LO_prev->line - map->lineDefs,
+                    p->line - map->lineDefs,
+                    p->LO_next->line - map->lineDefs, BANG2DEG(p->angle));
 
     if(p->LO_prev->LO_next != p || p->LO_next->LO_prev != p)
        Con_Error("Invalid line owner link ring!");

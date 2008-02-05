@@ -64,13 +64,13 @@ static divline_t strace;
 
 boolean PTR_SightTraverse(intercept_t *in)
 {
-    line_t     *li;
+    linedef_t     *li;
     float       slope;
 
     if(in == NULL)
         return true; // Something was out of bounds?
 
-    li = in->d.line;
+    li = in->d.lineDef;
 
     // Crosses a two sided line.
     P_LineOpening(li);
@@ -99,7 +99,7 @@ boolean PTR_SightTraverse(intercept_t *in)
     return true; // Continue iteration.
 }
 
-boolean PIT_CheckSightLine(line_t *line, void *data)
+boolean PIT_CheckSightLine(linedef_t *line, void *data)
 {
     int         s[2];
     divline_t   dl;
@@ -239,7 +239,7 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
     step[VY] = FLT2FIX(delta[VY]);
     for(count = 0; count < 64; count++)
     {
-        if(numpolyobjs > 0)
+        if(numPolyObjs > 0)
         {
             if(!P_BlockmapPolyobjLinesIterator(BlockMap, block,
                                                PIT_CheckSightLine, 0))
@@ -295,7 +295,7 @@ boolean P_CheckReject(sector_t *sec1, sector_t *sec2)
         // Determine subsector entries in REJECT table.
         s1 = GET_SECTOR_IDX(sec1);
         s2 = GET_SECTOR_IDX(sec2);
-        pnum = s1 * numsectors + s2;
+        pnum = s1 * numSectors + s2;
         bytenum = pnum >> 3;
         bitnum = 1 << (pnum & 7);
 

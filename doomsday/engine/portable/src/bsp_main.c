@@ -94,9 +94,9 @@ static superblock_t *createInitialHEdges(editmap_t *src)
     block->bbox[BOXTOP]   = block->bbox[BOXBOTTOM] + 128 * M_CeilPow2(bh);
 
     // Step through linedefs and get side numbers.
-    for(i = 0; i < src->numLines; ++i)
+    for(i = 0; i < src->numLineDefs; ++i)
     {
-        line_t         *line = src->lines[i];
+        linedef_t         *line = src->lineDefs[i];
 
         front = back = NULL;
 
@@ -117,9 +117,9 @@ static superblock_t *createInitialHEdges(editmap_t *src)
                 }
             }
 
-            if(line->sides[FRONT])
+            if(line->sideDefs[FRONT])
             {
-                side_t     *side = line->sides[FRONT];
+                sidedef_t     *side = line->sideDefs[FRONT];
 
                 // Check for a bad sidedef.
                 if(!side->sector)
@@ -127,16 +127,16 @@ static superblock_t *createInitialHEdges(editmap_t *src)
                                 line->buildData.index);
 
                 front = HEdge_Create(line, line, line->v[0], line->v[1],
-                                        side->sector, false);
+                                     side->sector, false);
                 BSP_AddHEdgeToSuperBlock(block, front);
             }
             else
                 Con_Message("Linedef #%d has no front sidedef!\n",
                             line->buildData.index);
 
-            if(line->sides[BACK])
+            if(line->sideDefs[BACK])
             {
-                side_t     *side = line->sides[BACK];
+                sidedef_t     *side = line->sideDefs[BACK];
 
                 // Check for a bad sidedef.
                 if(!side->sector)
@@ -144,7 +144,7 @@ static superblock_t *createInitialHEdges(editmap_t *src)
                                 line->buildData.index);
 
                 back = HEdge_Create(line, line, line->v[1], line->v[0],
-                                       side->sector, true);
+                                    side->sector, true);
                 BSP_AddHEdgeToSuperBlock(block, back);
 
                 if(front)
@@ -171,8 +171,8 @@ static superblock_t *createInitialHEdges(editmap_t *src)
                     hedge_t    *other;
 
                     other = HEdge_Create(front->lineDef, line,
-                                            line->v[1], line->v[0],
-                                            line->buildData.windowEffect, true);
+                                         line->v[1], line->v[0],
+                                         line->buildData.windowEffect, true);
 
                     BSP_AddHEdgeToSuperBlock(block, other);
 
@@ -300,7 +300,7 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
         SaveMap(dest, src);
 
         Con_Message("BSP_Build: Built %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n",
-                    dest->numNodes, dest->numSubsectors, dest->numSegs,
+                    dest->numNodes, dest->numSSectors, dest->numSegs,
                     dest->numVertexes);
 
         if(src->rootNode && !BinaryTree_IsLeaf(src->rootNode))

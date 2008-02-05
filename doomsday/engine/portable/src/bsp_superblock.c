@@ -315,7 +315,7 @@ void BSP_DivideOneHEdge(hedge_t *cur, hedge_t *part, superblock_t *rightList,
     }
 }
 
-static void separateHEdges(superblock_t *hEdgeList, hedge_t *part,
+static void partitionHEdges(superblock_t *hEdgeList, hedge_t *part,
                            superblock_t *rights, superblock_t *lefts,
                            cutlist_t *cutList)
 {
@@ -339,7 +339,7 @@ static void separateHEdges(superblock_t *hEdgeList, hedge_t *part,
 
         if(a)
         {
-            separateHEdges(a, part, rights, lefts, cutList);
+            partitionHEdges(a, part, rights, lefts, cutList);
 
             if(a->realNum + a->miniNum > 0)
                 Con_Error("BSP_SeparateHEdges: child %d not empty!", num);
@@ -357,11 +357,11 @@ static void separateHEdges(superblock_t *hEdgeList, hedge_t *part,
  * or right lists based on the given partition line. Adds any intersections
  * onto the intersection list as it goes.
  */
-void BSP_SeparateHEdges(superblock_t *hEdgeList, hedge_t *part,
-                        superblock_t *rights, superblock_t *lefts,
-                        cutlist_t *cutList)
+void BSP_PartitionHEdges(superblock_t *hEdgeList, hedge_t *part,
+                         superblock_t *rights, superblock_t *lefts,
+                         cutlist_t *cutList)
 {
-    separateHEdges(hEdgeList, part, rights, lefts, cutList);
+    partitionHEdges(hEdgeList, part, rights, lefts, cutList);
 
     // Sanity checks...
     if(rights->realNum + rights->miniNum == 0)
@@ -369,36 +369,8 @@ void BSP_SeparateHEdges(superblock_t *hEdgeList, hedge_t *part,
 
     if(lefts->realNum + lefts->miniNum == 0)
         Con_Error("BuildNodes: Separated halfedge-list has no left side.");
-}
 
-void BSP_BuildEdgeBetweenIntersections(hedge_t *part, intersection_t *start,
-                                       intersection_t *end,
-                                       hedge_t **right, hedge_t **left)
-{
-    // Create the half-edge pair.
-    // Leave 'linedef' field as NULL as these are not linedef-linked.
-    // Leave 'side' as zero too.
-    (*right) = HEdge_Create(NULL, part->lineDef, start->vertex,
-                               end->vertex, start->after, false);
-    (*left)  = HEdge_Create(NULL, part->lineDef, end->vertex,
-                               start->vertex, start->after, false);
-
-    // Twin the half-edges together.
-    (*right)->twin = *left;
-    (*left)->twin = *right;
-
-/*#if _DEBUG
-Con_Message("buildEdgeBetweenIntersections: Capped intersection:\n");
-Con_Message("  %p RIGHT sector %d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-            (*right), ((*right)->sector? (*right)->sector->index : -1),
-            (*right)->v[0]->V_pos[VX], (*right)->v[0]->V_pos[VY],
-            (*right)->v[1]->V_pos[VX], (*right)->v[1]->V_pos[VY]);
-
-Con_Message("  %p LEFT  sector %d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-            (*left), ((*left)->sector? (*left)->sector->index : -1),
-            (*left)->v[0]->V_pos[VX], (*left)->v[0]->V_pos[VY],
-            (*left)->v[1]->V_pos[VX], (*left)->v[1]->V_pos[VY]);
-#endif*/
+    BSP_AddMiniHEdges(part, rights, lefts, cutList);
 }
 
 /**

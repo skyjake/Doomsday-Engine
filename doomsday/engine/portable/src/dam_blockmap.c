@@ -55,7 +55,7 @@
 
 // Used to list lines in each block.
 typedef struct linelist_s {
-    line_t         *line;
+    linedef_t         *line;
     struct linelist_s *next;
 } linelist_t;
 
@@ -78,7 +78,7 @@ typedef struct linelist_s {
  * It simply returns if the line is already in the block
  */
 static void addBlockLine(linelist_t **lists, uint *count, uint *done,
-                         uint blockno, line_t *line)
+                         uint blockno, linedef_t *line)
 {
     linelist_t *l;
 
@@ -177,9 +177,9 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
     int         bx, by;
     int         minx, maxx, miny, maxy;
 
-    for(i = 0; i < map->numLines; ++i)
+    for(i = 0; i < map->numLineDefs; ++i)
     {
-        line_t *line = &map->lines[i];
+        linedef_t *line = &map->lineDefs[i];
 
         if(line->inFlags & LF_POLYOBJ)
             continue; // Polyobj lines don't get into the blockmap.
@@ -371,10 +371,10 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
 
             if(count > 0)
             {
-                line_t    **lines, **ptr;
+                linedef_t    **lines, **ptr;
 
                 // A NULL-terminated array of pointers to lines.
-                lines = Z_Malloc((count + 1) * sizeof(line_t *),
+                lines = Z_Malloc((count + 1) * sizeof(linedef_t *),
                                 PU_LEVELSTATIC, NULL);
 
                 // Copy pointers to the array, delete the nodes.
@@ -383,7 +383,7 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
                 {
                     linelist_t *tmp = bl->next;
 
-                    *ptr++ = (line_t *) bl->line;
+                    *ptr++ = (linedef_t *) bl->line;
 
                     M_Free(bl);
                     bl = tmp;

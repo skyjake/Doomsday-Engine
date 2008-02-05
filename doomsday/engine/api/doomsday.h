@@ -56,8 +56,8 @@ extern          "C" {
 #ifndef __INTERNAL_MAP_DATA_ACCESS__
     typedef struct node_s { int type; } node_t;
     typedef struct vertex_s {int type; } vertex_t;
-    typedef struct line_s { int type; } line_t;
-    typedef struct side_s { int type; } side_t;
+    typedef struct linedef_s { int type; } linedef_t;
+    typedef struct sidedef_s { int type; } sidedef_t;
     typedef struct seg_s { int type; } seg_t;
     typedef struct subsector_s { int type; } subsector_t;
     typedef struct sector_s { int type; } sector_t;
@@ -207,23 +207,23 @@ extern          "C" {
     float           P_ApproxDistance(float dx, float dy);
     float           P_ApproxDistance3(float dx, float dy, float dz);
     int             P_PointOnLineSide(float x, float y,
-                                      struct line_s *line);
-    int             P_BoxOnLineSide(float *tmbox, struct line_s *ld);
-    void            P_MakeDivline(struct line_s *li, divline_t *dl);
+                                      struct linedef_s *line);
+    int             P_BoxOnLineSide(float *tmbox, struct linedef_s *ld);
+    void            P_MakeDivline(struct linedef_s *li, divline_t *dl);
     int             P_PointOnDivlineSide(float x, float y,
                                          divline_t *line);
     float           P_InterceptVector(divline_t *v2, divline_t *v1);
-    void            P_LineOpening(struct line_s *linedef);
+    void            P_LineOpening(struct linedef_s *linedef);
 
     // Object in bounding box iterators.
     boolean         P_MobjsBoxIterator(const float box[4],
                                        boolean (*func) (struct mobj_s*, void *),
                                        void *data);
     boolean         P_LinesBoxIterator(const float box[4],
-                                       boolean (*func) (struct line_s*, void *),
+                                       boolean (*func) (struct linedef_s*, void *),
                                        void *data);
     boolean         P_AllLinesBoxIterator(const float box[4],
-                                          boolean (*func) (struct line_s*, void *),
+                                          boolean (*func) (struct linedef_s*, void *),
                                           void *data);
     boolean         P_SubsectorsBoxIterator(const float box[4], sector_t *sector,
                                            boolean (*func) (subsector_t *, void *),
@@ -233,7 +233,7 @@ extern          "C" {
                                           void *data);
 
     // Object type touching mobjs iterators.
-    boolean         P_LineMobjsIterator(struct line_s *line,
+    boolean         P_LineMobjsIterator(struct linedef_s *line,
                                         boolean (*func) (struct mobj_s *,
                                                          void *), void *data);
     boolean         P_SectorTouchingMobjsIterator
@@ -359,7 +359,7 @@ extern          "C" {
     void            P_MobjUnlink(struct mobj_s *mo);
     // Mobj linked object iterators.
     boolean         P_MobjLinesIterator(struct mobj_s *mo,
-                                        boolean (*func) (struct line_s *,
+                                        boolean (*func) (struct linedef_s *,
                                                           void *), void *);
     boolean         P_MobjSectorsIterator(struct mobj_s *mo,
                                           boolean (*func) (sector_t*, void*),

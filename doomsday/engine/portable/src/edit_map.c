@@ -81,35 +81,35 @@ vertex_t *createVertex(void)
     return vtx;
 }
 
-static line_t *createLine(void)
+static linedef_t *createLine(void)
 {
-    line_t             *line;
+    linedef_t             *line;
 
     line = M_Calloc(sizeof(*line));
-    line->header.type = DMU_LINE;
+    line->header.type = DMU_LINEDEF;
 
-    map->lines =
-        M_Realloc(map->lines, sizeof(line) * (++map->numLines + 1));
-    map->lines[map->numLines-1] = line;
-    map->lines[map->numLines] = NULL;
+    map->lineDefs =
+        M_Realloc(map->lineDefs, sizeof(line) * (++map->numLineDefs + 1));
+    map->lineDefs[map->numLineDefs-1] = line;
+    map->lineDefs[map->numLineDefs] = NULL;
 
-    line->buildData.index = map->numLines; // 1-based index, 0 = NIL.
+    line->buildData.index = map->numLineDefs; // 1-based index, 0 = NIL.
     return line;
 }
 
-static side_t *createSide(void)
+static sidedef_t *createSide(void)
 {
-    side_t             *side;
+    sidedef_t             *side;
 
     side = M_Calloc(sizeof(*side));
-    side->header.type = DMU_SIDE;
+    side->header.type = DMU_SIDEDEF;
 
-    map->sides =
-        M_Realloc(map->sides, sizeof(side) * (++map->numSides + 1));
-    map->sides[map->numSides-1] = side;
-    map->sides[map->numSides] = NULL;
+    map->sideDefs =
+        M_Realloc(map->sideDefs, sizeof(side) * (++map->numSideDefs + 1));
+    map->sideDefs[map->numSideDefs-1] = side;
+    map->sideDefs[map->numSideDefs] = NULL;
 
-    side->buildData.index = map->numSides; // 1-based index, 0 = NIL.
+    side->buildData.index = map->numSideDefs; // 1-based index, 0 = NIL.
     return side;
 }
 
@@ -135,11 +135,11 @@ static polyobj_t *createPolyobj(void)
     po = M_Calloc(sizeof(*po));
     po->header.type = DMU_POLYOBJ;
 
-    map->polyobjs = M_Realloc(map->polyobjs, sizeof(po) * (++map->numPolyobjs + 1));
-    map->polyobjs[map->numPolyobjs-1] = po;
-    map->polyobjs[map->numPolyobjs] = NULL;
+    map->polyObjs = M_Realloc(map->polyObjs, sizeof(po) * (++map->numPolyObjs + 1));
+    map->polyObjs[map->numPolyObjs-1] = po;
+    map->polyObjs[map->numPolyObjs] = NULL;
 
-    po->buildData.index = map->numPolyobjs; // 1-based index, 0 = NIL.
+    po->buildData.index = map->numPolyObjs; // 1-based index, 0 = NIL.
     return po;
 }
 
@@ -170,31 +170,31 @@ static void destroyMap(void)
     map->vertexes = NULL;
     map->numVertexes = 0;
 
-    if(map->lines)
+    if(map->lineDefs)
     {
-        for(i = 0; i < map->numLines; ++i)
+        for(i = 0; i < map->numLineDefs; ++i)
         {
-            line_t             *line = map->lines[i];
+            linedef_t             *line = map->lineDefs[i];
             M_Free(line);
         }
 
-        M_Free(map->lines);
+        M_Free(map->lineDefs);
     }
-    map->lines = NULL;
-    map->numLines = 0;
+    map->lineDefs = NULL;
+    map->numLineDefs = 0;
 
-    if(map->sides)
+    if(map->sideDefs)
     {
-        for(i = 0; i < map->numSides; ++i)
+        for(i = 0; i < map->numSideDefs; ++i)
         {
-            side_t             *side = map->sides[i];
+            sidedef_t             *side = map->sideDefs[i];
             M_Free(side);
         }
 
-        M_Free(map->sides);
+        M_Free(map->sideDefs);
     }
-    map->sides = NULL;
-    map->numSides = 0;
+    map->sideDefs = NULL;
+    map->numSideDefs = 0;
 
     if(map->sectors)
     {
@@ -220,21 +220,21 @@ static void destroyMap(void)
     map->sectors = NULL;
     map->numSectors = 0;
 
-    if(map->polyobjs)
+    if(map->polyObjs)
     {
         uint                i;
-        for(i = 0; i < map->numPolyobjs; ++i)
+        for(i = 0; i < map->numPolyObjs; ++i)
         {
-            polyobj_t          *po = map->polyobjs[i];
-            M_Free(po->buildData.lines);
+            polyobj_t          *po = map->polyObjs[i];
+            M_Free(po->buildData.lineDefs);
 
             M_Free(po);
         }
 
-        M_Free(map->polyobjs);
+        M_Free(map->polyObjs);
     }
-    map->polyobjs = NULL;
-    map->numPolyobjs = 0;
+    map->polyObjs = NULL;
+    map->numPolyObjs = 0;
 }
 
 static int C_DECL vertexCompare(const void *p1, const void *p2)
@@ -304,11 +304,11 @@ static void findMissingFrontSidedefs(gamemap_t *map)
     uint        i;
 
     numMissingFronts = 0;
-    missingFronts = M_Calloc(map->numLines * sizeof(uint));
+    missingFronts = M_Calloc(map->numLineDefs * sizeof(uint));
 
-    for(i = 0; i < map->numLines; ++i)
+    for(i = 0; i < map->numLineDefs; ++i)
     {
-        line_t     *li = &map->lines[i];
+        linedef_t     *li = &map->lineDefs[i];
 
         if(!li->L_frontside)
         {   // A missing front sidedef
@@ -322,9 +322,9 @@ static void linkSSecsToSectors(gamemap_t *map)
 {
     uint        i;
 
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t *ssec = &map->subsectors[i];
+        subsector_t *ssec = &map->ssectors[i];
         seg_t      **segp;
         boolean     found;
 
@@ -354,25 +354,25 @@ static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
     sector_t   *sec = &map->sectors[secIDX];
 
     count = 0;
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t *ssec = &map->subsectors[i];
+        subsector_t *ssec = &map->ssectors[i];
         if(ssec->sector == sec)
             count++;
     }
 
-    sec->subsectors =
+    sec->ssectors =
         Z_Malloc((count + 1) * sizeof(subsector_t*), PU_LEVELSTATIC, NULL);
 
     n = 0;
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t *ssec = &map->subsectors[i];
+        subsector_t *ssec = &map->ssectors[i];
         if(ssec->sector == sec)
-            sec->subsectors[n++] = ssec;
+            sec->ssectors[n++] = ssec;
     }
-    sec->subsectors[n] = NULL; // Terminate.
-    sec->subsCount = count;
+    sec->ssectors[n] = NULL; // Terminate.
+    sec->ssectorCount = count;
 }
 
 /**
@@ -391,12 +391,12 @@ static void buildSectorSSecLists(gamemap_t *map)
 static void buildSectorLineLists(gamemap_t *map)
 {
     typedef struct linelink_s {
-        line_t      *line;
+        linedef_t      *line;
         struct linelink_s *next;
     } linelink_t;
 
     uint        i, j;
-    line_t     *li;
+    linedef_t     *li;
     sector_t   *sec;
 
     zblockset_t *lineLinksBlockSet;
@@ -407,7 +407,7 @@ static void buildSectorLineLists(gamemap_t *map)
     lineLinksBlockSet = Z_BlockCreate(sizeof(linelink_t), 512, PU_STATIC);
     sectorLineLinks = M_Calloc(sizeof(linelink_t*) * map->numSectors);
     totallinks = 0;
-    for(i = 0, li = map->lines; i < map->numLines; ++i, li++)
+    for(i = 0, li = map->lineDefs; i < map->numLineDefs; ++i, li++)
     {
         uint        secIDX;
         linelink_t *link;
@@ -421,7 +421,7 @@ static void buildSectorLineLists(gamemap_t *map)
 
             link->next = sectorLineLinks[secIDX];
             sectorLineLinks[secIDX] = link;
-            li->L_frontsector->lineCount++;
+            li->L_frontsector->lineDefCount++;
             totallinks++;
         }
 
@@ -434,17 +434,17 @@ static void buildSectorLineLists(gamemap_t *map)
 
             link->next = sectorLineLinks[secIDX];
             sectorLineLinks[secIDX] = link;
-            li->L_backsector->lineCount++;
+            li->L_backsector->lineDefCount++;
             totallinks++;
         }
     }
 
     // Harden the sector line links into arrays.
     {
-    line_t    **linebuffer;
-    line_t    **linebptr;
+    linedef_t    **linebuffer;
+    linedef_t    **linebptr;
 
-    linebuffer = Z_Malloc((totallinks + map->numSectors) * sizeof(line_t*),
+    linebuffer = Z_Malloc((totallinks + map->numSectors) * sizeof(linedef_t*),
                           PU_LEVELSTATIC, 0);
     linebptr = linebuffer;
 
@@ -453,21 +453,21 @@ static void buildSectorLineLists(gamemap_t *map)
         if(sectorLineLinks[i])
         {
             linelink_t *link = sectorLineLinks[i];
-            sec->lines = linebptr;
+            sec->lineDefs = linebptr;
             j = 0;
             while(link)
             {
-                sec->lines[j++] = link->line;
+                sec->lineDefs[j++] = link->line;
                 link = link->next;
             }
-            sec->lines[j] = NULL; // terminate.
-            sec->lineCount = j;
+            sec->lineDefs[j] = NULL; // terminate.
+            sec->lineDefCount = j;
             linebptr += j + 1;
         }
         else
         {
-            sec->lines = NULL;
-            sec->lineCount = 0;
+            sec->lineDefs = NULL;
+            sec->lineDefCount = 0;
         }
     }
     }
@@ -513,19 +513,19 @@ static void updateSectorBounds(sector_t *sec)
 
     bbox = sec->bBox;
 
-    if(!(sec->lineCount > 0))
+    if(!(sec->lineDefCount > 0))
     {
         memset(sec->bBox, 0, sizeof(sec->bBox));
         return;
     }
 
-    vtx = sec->lines[0]->L_v1;
+    vtx = sec->lineDefs[0]->L_v1;
     bbox[BOXLEFT] = bbox[BOXRIGHT]  = vtx->V_pos[VX];
     bbox[BOXTOP]  = bbox[BOXBOTTOM] = vtx->V_pos[VY];
 
-    for(i = 1; i < sec->lineCount; ++i)
+    for(i = 1; i < sec->lineDefCount; ++i)
     {
-        vtx = sec->lines[i]->L_v1;
+        vtx = sec->lineDefs[i]->L_v1;
 
         if(vtx->V_pos[VX] < bbox[BOXLEFT])
             bbox[BOXLEFT]   = vtx->V_pos[VX];
@@ -567,7 +567,7 @@ static void finishSectors(gamemap_t *map)
 
         findSectorSSecGroups(sec);
 
-        if(!(sec->lineCount > 0))
+        if(!(sec->lineDefCount > 0))
         {   // Its a "benign" sector.
             // Send the game a status report (we don't need to do anything).
             if(gx.HandleMapObjectStatusReport)
@@ -608,21 +608,21 @@ static void finishSectors(gamemap_t *map)
 static void finishLineDefs(gamemap_t* map)
 {
     uint        i;
-    line_t     *ld;
+    linedef_t     *ld;
     vertex_t   *v[2];
     seg_t      *startSeg, *endSeg;
 
     VERBOSE2(Con_Message("Finalizing Linedefs...\n"));
 
-    for(i = 0; i < map->numLines; ++i)
+    for(i = 0; i < map->numLineDefs; ++i)
     {
-        ld = &map->lines[i];
+        ld = &map->lineDefs[i];
 
-        if(!ld->sides[0]->segCount)
+        if(!ld->sideDefs[0]->segCount)
             continue;
 
-        startSeg = ld->sides[0]->segs[0];
-        endSeg = ld->sides[0]->segs[ld->sides[0]->segCount - 1];
+        startSeg = ld->sideDefs[0]->segs[0];
+        endSeg = ld->sideDefs[0]->segs[ld->sideDefs[0]->segCount - 1];
         ld->v[0] = v[0] = startSeg->SG_v1;
         ld->v[1] = v[1] = endSeg->SG_v2;
         ld->dX = v[1]->V_pos[VX] - v[0]->V_pos[VX];
@@ -732,7 +732,7 @@ static void markUnclosedSectors(gamemap_t *map)
         boolean     unclosed = false;
         sector_t   *sec = &map->sectors[i];
 
-        if(sec->lineCount < 3)
+        if(sec->lineDefCount < 3)
         {
             unclosed = true;
         }
@@ -784,9 +784,9 @@ static void prepareSubSectors(gamemap_t *map)
 {
     uint            i;
 
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t *ssec = &map->subsectors[i];
+        subsector_t *ssec = &map->ssectors[i];
 
         updateSSecMidPoint(ssec);
     }
@@ -830,8 +830,8 @@ boolean MPE_End(void)
     {
         // gx.SetupForMapData(DAM_THING, gamemap->numThings);
         gx.SetupForMapData(DAM_VERTEX, gamemap->numVertexes);
-        gx.SetupForMapData(DAM_LINE, gamemap->numLines);
-        gx.SetupForMapData(DAM_SIDE, gamemap->numSides);
+        gx.SetupForMapData(DAM_LINE, gamemap->numLineDefs);
+        gx.SetupForMapData(DAM_SIDE, gamemap->numSideDefs);
         gx.SetupForMapData(DAM_SECTOR, gamemap->numSectors);
     }
 
@@ -904,7 +904,7 @@ boolean MPE_PrintMapErrors(boolean silent)
                     numMissingFronts);
 
         printCount = 0;
-        for(i = 0; i < numlines; ++i)
+        for(i = 0; i < numLineDefs; ++i)
         {
             if(missingFronts[i])
             {
@@ -974,7 +974,7 @@ uint MPE_SidedefCreate(uint sector, short flags,
                        float bottomBlue)
 {
     int                 matIdx;
-    side_t             *s;
+    sidedef_t             *s;
 
     if(!editMapInited)
         return 0;
@@ -1034,15 +1034,15 @@ uint MPE_SidedefCreate(uint sector, short flags,
 uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
                        int flags)
 {
-    line_t             *l;
-    side_t             *front = NULL, *back = NULL;
+    linedef_t             *l;
+    sidedef_t             *front = NULL, *back = NULL;
 
     if(!editMapInited)
         return 0;
 
-    if(frontSide > map->numSides)
+    if(frontSide > map->numSideDefs)
         return 0;
-    if(backSide > map->numSides)
+    if(backSide > map->numSideDefs)
         return 0;
     if(v1 > map->numVertexes)
         return 0;
@@ -1053,16 +1053,16 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 
     // First, ensure that the side indices are unique.
     if(frontSide > 0)
-        front = map->sides[frontSide - 1];
+        front = map->sideDefs[frontSide - 1];
     if(backSide > 0)
-        back = map->sides[backSide - 1];
+        back = map->sideDefs[backSide - 1];
 
     if(front || back)
     {
         uint                i;
-        for(i = 0; i < map->numLines; ++i)
+        for(i = 0; i < map->numLineDefs; ++i)
         {
-            line_t             *other = map->lines[i];
+            linedef_t             *other = map->lineDefs[i];
 
             if(other->L_frontside)
             {
@@ -1224,17 +1224,17 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag,
         return 0;
 
     po = createPolyobj();
-    po->buildData.lines = M_Calloc(sizeof(line_t*) * (lineCount+1));
+    po->buildData.lineDefs = M_Calloc(sizeof(linedef_t*) * (lineCount+1));
     for(i = 0; i < lineCount; ++i)
     {
-        line_t             *line = map->lines[lines[i]-1];
+        linedef_t             *line = map->lineDefs[lines[i]-1];
 
         // This line is part of a polyobj.
         line->inFlags |= LF_POLYOBJ;
 
-        po->buildData.lines[i] = line;
+        po->buildData.lineDefs[i] = line;
     }
-    po->buildData.lines[i] = NULL;
+    po->buildData.lineDefs[i] = NULL;
     po->buildData.lineCount = lineCount;
     po->tag = tag;
     po->seqType = sequenceType;
