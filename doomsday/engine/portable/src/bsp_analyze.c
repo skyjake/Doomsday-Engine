@@ -413,14 +413,14 @@ static int C_DECL lineEndCompare(const void *p1, const void *p2)
 void BSP_DetectOverlappingLines(editmap_t *map)
 {
     size_t              i, j, count = 0;
-    linedef_t            **hits;
+    linedef_t         **hits;
 
-    hits = M_Malloc(map->numLineDefs * sizeof(uint));
+    hits = M_Malloc(map->numLineDefs * sizeof(*hits));
 
     // Sort array of ptrs.
     for(i = 0; i < map->numLineDefs; ++i)
         hits[i] = map->lineDefs[i];
-    qsort(hits, map->numLineDefs, sizeof(linedef_t*), lineStartCompare);
+    qsort(hits, map->numLineDefs, sizeof(*hits), lineStartCompare);
 
     for(i = 0; i < map->numLineDefs - 1; ++i)
     {
