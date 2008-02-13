@@ -56,12 +56,14 @@ boolean     MPE_PrintMapErrors(boolean silent);
 static boolean editMapInited = false;
 static editmap_t editMap, *map = &editMap;
 
+static gamemap_t *lastBuiltMap = NULL;
+
 // The following is used in error fixing/detection/reporting:
 // missing sidedefs
 static uint numMissingFronts;
 static uint *missingFronts;
 
-static gamemap_t *lastBuiltMap = NULL;
+static vertex_t *rootVtx; // Used when sorting vertex line owners.
 
 // CODE --------------------------------------------------------------------
 
@@ -143,35 +145,30 @@ static polyobj_t *createPolyobj(void)
     return po;
 }
 
-static void destroyMap(void)
+static void destroyEditablePolyObjs(editmap_t *map)
 {
-    uint                i;
-
-    if(map->vertexes)
+    if(map->polyObjs)
     {
-        for(i = 0; i < map->numVertexes; ++i)
+        uint                i;
+        for(i = 0; i < map->numPolyObjs; ++i)
         {
-            vertex_t           *vtx = map->vertexes[i];
-            edgetip_t          *tip, *n;
+            polyobj_t          *po = map->polyObjs[i];
+            M_Free(po->buildData.lineDefs);
 
-            tip = vtx->buildData.tipSet;
-            while(tip)
-            {
-                n = tip->next;
-                BSP_DestroyVertexEdgeTip(tip);
-                tip = n;
-            }
-
-            M_Free(vtx);
+            M_Free(po);
         }
 
-        M_Free(map->vertexes);
+        M_Free(map->polyObjs);
     }
-    map->vertexes = NULL;
-    map->numVertexes = 0;
+    map->polyObjs = NULL;
+    map->numPolyObjs = 0;
+}
 
+static void destroyEditableLineDefs(editmap_t *map)
+{
     if(map->lineDefs)
     {
+        uint                i;
         for(i = 0; i < map->numLineDefs; ++i)
         {
             linedef_t             *line = map->lineDefs[i];
@@ -182,9 +179,13 @@ static void destroyMap(void)
     }
     map->lineDefs = NULL;
     map->numLineDefs = 0;
+}
 
+static void destroyEditableSideDefs(editmap_t *map)
+{
     if(map->sideDefs)
     {
+        uint                i;
         for(i = 0; i < map->numSideDefs; ++i)
         {
             sidedef_t             *side = map->sideDefs[i];
@@ -195,9 +196,13 @@ static void destroyMap(void)
     }
     map->sideDefs = NULL;
     map->numSideDefs = 0;
+}
 
+static void destroyEditableSectors(editmap_t *map)
+{
     if(map->sectors)
     {
+        uint                i;
         for(i = 0; i < map->numSectors; ++i)
         {
             uint                j;
@@ -219,22 +224,44 @@ static void destroyMap(void)
     }
     map->sectors = NULL;
     map->numSectors = 0;
+}
 
-    if(map->polyObjs)
+static void destroyEditableVertexes(editmap_t *map)
+{
+    if(map->vertexes)
     {
         uint                i;
-        for(i = 0; i < map->numPolyObjs; ++i)
+        for(i = 0; i < map->numVertexes; ++i)
         {
-            polyobj_t          *po = map->polyObjs[i];
-            M_Free(po->buildData.lineDefs);
+            vertex_t           *vtx = map->vertexes[i];
+            edgetip_t          *tip, *n;
 
-            M_Free(po);
+            tip = vtx->buildData.tipSet;
+            while(tip)
+            {
+                n = tip->next;
+                BSP_DestroyVertexEdgeTip(tip);
+                tip = n;
+            }
+
+            M_Free(vtx);
         }
 
-        M_Free(map->polyObjs);
+        M_Free(map->vertexes);
     }
-    map->polyObjs = NULL;
-    map->numPolyObjs = 0;
+    map->vertexes = NULL;
+    map->numVertexes = 0;
+}
+
+static void destroyMap(void)
+{
+    destroyEditableVertexes(map);
+
+    // These should already be gone:
+    destroyEditableLineDefs(map);
+    destroyEditableSideDefs(map);
+    destroyEditableSectors(map);
+    destroyEditablePolyObjs(map);
 }
 
 static int C_DECL vertexCompare(const void *p1, const void *p2)
@@ -703,7 +730,7 @@ static void finalizeMapData(gamemap_t *map)
 
 static void updateMapBounds(gamemap_t *map)
 {
-    uint        i;
+    uint                i;
 
     memset(map->bBox, 0, sizeof(map->bBox));
     for(i = 0; i < map->numSectors; ++i)
@@ -725,7 +752,7 @@ static void updateMapBounds(gamemap_t *map)
 
 static void markUnclosedSectors(gamemap_t *map)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; i < map->numSectors; ++i)
     {
@@ -749,8 +776,8 @@ static void markUnclosedSectors(gamemap_t *map)
 
 static void updateSSecMidPoint(subsector_t *sub)
 {
-    seg_t     **ptr;
-    fvertex_t  *vtx;
+    seg_t             **ptr;
+    fvertex_t          *vtx;
 
     // Find the center point. First calculate the bounding box.
     ptr = sub->segs;
@@ -782,7 +809,7 @@ static void updateSSecMidPoint(subsector_t *sub)
 
 static void prepareSubSectors(gamemap_t *map)
 {
-    uint            i;
+    uint                i;
 
     for(i = 0; i < map->numSSectors; ++i)
     {
@@ -793,14 +820,463 @@ static void prepareSubSectors(gamemap_t *map)
 }
 
 /**
+ * Compares the angles of two lines that share a common vertex.
+ *
+ * pre: rootVtx must point to the vertex common between a and b
+ *      which are (lineowner_t*) ptrs.
+ */
+static int C_DECL lineAngleSorter(const void *a, const void *b)
+{
+    uint                i;
+    fixed_t             dx, dy;
+    binangle_t          angles[2];
+    lineowner_t        *own[2];
+    linedef_t          *line;
+
+    own[0] = (lineowner_t *)a;
+    own[1] = (lineowner_t *)b;
+    for(i = 0; i < 2; ++i)
+    {
+        if(own[i]->LO_prev) // We have a cached result.
+        {
+            angles[i] = own[i]->angle;
+        }
+        else
+        {
+            vertex_t    *otherVtx;
+
+            line = own[i]->lineDef;
+            otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
+
+            dx = otherVtx->V_pos[VX] - rootVtx->V_pos[VX];
+            dy = otherVtx->V_pos[VY] - rootVtx->V_pos[VY];
+
+            own[i]->angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
+
+            // Mark as having a cached angle.
+            own[i]->LO_prev = (lineowner_t*) 1;
+        }
+    }
+
+    return (angles[1] - angles[0]);
+}
+
+/**
+ * Merge left and right line owner lists into a new list.
+ *
+ * @return              Ptr to the newly merged list.
+ */
+static lineowner_t *mergeLineOwners(lineowner_t *left, lineowner_t *right,
+                                    int (C_DECL *compare) (const void *a,
+                                                           const void *b))
+{
+    lineowner_t         tmp, *np;
+
+    np = &tmp;
+    tmp.LO_next = np;
+    while(left != NULL && right != NULL)
+    {
+        if(compare(left, right) <= 0)
+        {
+            np->LO_next = left;
+            np = left;
+
+            left = left->LO_next;
+        }
+        else
+        {
+            np->LO_next = right;
+            np = right;
+
+            right = right->LO_next;
+        }
+    }
+
+    // At least one of these lists is now empty.
+    if(left)
+        np->LO_next = left;
+    if(right)
+        np->LO_next = right;
+
+    // Is the list empty?
+    if(tmp.LO_next == &tmp)
+        return NULL;
+
+    return tmp.LO_next;
+}
+
+static lineowner_t *splitLineOwners(lineowner_t *list)
+{
+    lineowner_t        *lista, *listb, *listc;
+
+    if(!list)
+        return NULL;
+
+    lista = listb = listc = list;
+    do
+    {
+        listc = listb;
+        listb = listb->LO_next;
+        lista = lista->LO_next;
+        if(lista != NULL)
+            lista = lista->LO_next;
+    } while(lista);
+
+    listc->LO_next = NULL;
+    return listb;
+}
+
+/**
+ * This routine uses a recursive mergesort algorithm; O(NlogN)
+ */
+static lineowner_t *sortLineOwners(lineowner_t *list,
+                                   int (C_DECL *compare) (const void *a,
+                                                          const void *b))
+{
+    lineowner_t        *p;
+
+    if(list && list->LO_next)
+    {
+        p = splitLineOwners(list);
+
+        // Sort both halves and merge them back.
+        list = mergeLineOwners(sortLineOwners(list, compare),
+                               sortLineOwners(p, compare), compare);
+    }
+    return list;
+}
+
+static void setVertexLineOwner(vertex_t *vtx, linedef_t *lineptr,
+                               lineowner_t **storage)
+{
+    lineowner_t        *p, *newOwner;
+
+    if(!lineptr)
+        return;
+
+    // If this is a one-sided line then this is an "anchored" vertex.
+    if(!(lineptr->L_frontside && lineptr->L_backside))
+        vtx->anchored = true;
+
+    // Has this line already been registered with this vertex?
+    if(vtx->numLineOwners != 0)
+    {
+        p = vtx->lineOwners;
+        while(p)
+        {
+            if(p->lineDef == lineptr)
+                return;             // Yes, we can exit.
+
+            p = p->LO_next;
+        }
+    }
+
+    //Add a new owner.
+    vtx->numLineOwners++;
+
+    newOwner = (*storage)++;
+    newOwner->lineDef = lineptr;
+    newOwner->LO_prev = NULL;
+
+    // Link it in.
+    // NOTE: We don't bother linking everything at this stage since we'll
+    // be sorting the lists anyway. After which we'll finish the job by
+    // setting the prev and circular links.
+    // So, for now this is only linked singlely, forward.
+    newOwner->LO_next = vtx->lineOwners;
+    vtx->lineOwners = newOwner;
+
+    // Link the line to its respective owner node.
+    if(vtx == lineptr->L_v1)
+        lineptr->L_vo1 = newOwner;
+    else
+        lineptr->L_vo2 = newOwner;
+}
+
+/**
+ * Generates the line owner rings for each vertex. Each ring includes all
+ * the lines which the vertex belongs to sorted by angle, (the rings is
+ * arranged in clockwise order, east = 0).
+ */
+static void buildVertexOwnerRings(gamemap_t *map, vertex_t ***vertexes,
+                                  uint *numVertexes)
+{
+    uint            startTime = Sys_GetRealTime();
+
+    uint            i;
+    lineowner_t    *lineOwners, *allocator;
+
+    // We know how many vertex line owners we need (numLineDefs * 2).
+    lineOwners =
+        Z_Malloc(sizeof(lineowner_t) * map->numLineDefs * 2, PU_LEVELSTATIC, 0);
+    allocator = lineOwners;
+
+    for(i = 0; i < map->numLineDefs; ++i)
+    {
+        uint            p;
+        linedef_t      *line = &map->lineDefs[i];
+
+        for(p = 0; p < 2; ++p)
+        {
+            vertex_t    *vtx = line->L_v(p);
+
+            setVertexLineOwner(vtx, line, &allocator);
+        }
+    }
+
+    // Sort line owners and then finish the rings.
+    for(i = 0; i < *numVertexes; ++i)
+    {
+        vertex_t       *v = (*vertexes)[i];
+
+        // Line owners:
+        if(v->numLineOwners != 0)
+        {
+            lineowner_t    *p, *last;
+            binangle_t      lastAngle = 0;
+
+            // Sort them so that they are ordered clockwise based on angle.
+            rootVtx = v;
+            v->lineOwners =
+                sortLineOwners(v->lineOwners, lineAngleSorter);
+
+            // Finish the linking job and convert to relative angles.
+            // They are only singly linked atm, we need them to be doubly
+            // and circularly linked.
+            last = v->lineOwners;
+            p = last->LO_next;
+            while(p)
+            {
+                p->LO_prev = last;
+
+                // Convert to a relative angle between last and this.
+                last->angle = last->angle - p->angle;
+                lastAngle += last->angle;
+
+                last = p;
+                p = p->LO_next;
+            }
+            last->LO_next = v->lineOwners;
+            v->lineOwners->LO_prev = last;
+
+            // Set the angle of the last owner.
+            last->angle = BANG_360 - lastAngle;
+/*
+#if _DEBUG
+{
+// For checking the line owner link rings are formed correctly.
+lineowner_t *base;
+uint        idx;
+
+if(verbose >= 2)
+    Con_Message("Vertex #%i: line owners #%i\n", i, v->numLineOwners);
+
+p = base = v->lineOwners;
+idx = 0;
+do
+{
+    if(verbose >= 2)
+        Con_Message("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f\n",
+                    idx, p->LO_prev->line - map->lineDefs,
+                    p->line - map->lineDefs,
+                    p->LO_next->line - map->lineDefs, BANG2DEG(p->angle));
+
+    if(p->LO_prev->LO_next != p || p->LO_next->LO_prev != p)
+       Con_Error("Invalid line owner link ring!");
+
+    p = p->LO_next;
+    idx++;
+} while(p != base);
+}
+#endif
+*/
+        }
+    }
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("buildVertexOwnerRings: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
+}
+
+static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
+{
+    uint                i;
+
+    dest->numLineDefs = src->numLineDefs;
+    dest->lineDefs = Z_Calloc(dest->numLineDefs * sizeof(linedef_t), PU_LEVELSTATIC, 0);
+
+    for(i = 0; i < dest->numLineDefs; ++i)
+    {
+        linedef_t          *destL = &dest->lineDefs[i];
+        linedef_t          *srcL = src->lineDefs[i];
+
+        memcpy(destL, srcL, sizeof(*destL));
+
+        //// \todo We shouldn't still have lines with missing fronts but...
+        destL->L_frontside = (srcL->L_frontside?
+            &dest->sideDefs[srcL->L_frontside->buildData.index - 1] : NULL);
+        destL->L_backside = (srcL->L_backside?
+            &dest->sideDefs[srcL->L_backside->buildData.index - 1] : NULL);
+    }
+}
+
+static void hardenSidedefs(gamemap_t *dest, editmap_t *src)
+{
+    uint                i;
+
+    dest->numSideDefs = src->numSideDefs;
+    dest->sideDefs = Z_Malloc(dest->numSideDefs * sizeof(sidedef_t), PU_LEVELSTATIC, 0);
+
+    for(i = 0; i < dest->numSideDefs; ++i)
+    {
+        sidedef_t         *destS = &dest->sideDefs[i];
+        sidedef_t         *srcS = src->sideDefs[i];
+
+        memcpy(destS, srcS, sizeof(*destS));
+        destS->sector = &dest->sectors[srcS->sector->buildData.index - 1];
+    }
+}
+
+static void hardenSectors(gamemap_t *dest, editmap_t *src)
+{
+    uint            i;
+
+    dest->numSectors = src->numSectors;
+    dest->sectors = Z_Malloc(dest->numSectors * sizeof(sector_t), PU_LEVELSTATIC, 0);
+
+    for(i = 0; i < dest->numSectors; ++i)
+    {
+        sector_t           *destS = &dest->sectors[i];
+        sector_t           *srcS = src->sectors[i];
+        plane_t            *pln;
+
+        memcpy(destS, srcS, sizeof(*destS));
+        destS->planeCount = 0;
+        destS->planes = NULL;
+
+        pln = R_NewPlaneForSector(destS);
+        memcpy(pln, srcS->planes[PLN_FLOOR], sizeof(*pln));
+        pln->sector = destS;
+
+        pln = R_NewPlaneForSector(destS);
+        memcpy(pln, srcS->planes[PLN_CEILING], sizeof(*pln));
+        pln->sector = destS;
+    }
+}
+
+static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
+{
+    uint            i;
+
+    if(src->numPolyObjs == 0)
+    {
+        dest->numPolyObjs = 0;
+        dest->polyObjs = NULL;
+        return;
+    }
+
+    dest->numPolyObjs = src->numPolyObjs;
+    dest->polyObjs = Z_Malloc((dest->numPolyObjs+1) * sizeof(polyobj_t*),
+                              PU_LEVEL, 0);
+
+    for(i = 0; i < dest->numPolyObjs; ++i)
+    {
+        uint            j;
+        polyobj_t      *destP, *srcP = src->polyObjs[i];
+        seg_t          *segs;
+
+        destP = Z_Calloc(sizeof(*destP), PU_LEVEL, 0);
+        destP->header.type = DMU_POLYOBJ;
+        destP->idx = i;
+        destP->crush = srcP->crush;
+        destP->tag = srcP->tag;
+        destP->seqType = srcP->seqType;
+        destP->startSpot.pos[VX] = srcP->startSpot.pos[VX];
+        destP->startSpot.pos[VY] = srcP->startSpot.pos[VY];
+
+        destP->numSegs = srcP->buildData.lineCount;
+
+        destP->originalPts =
+            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_LEVEL, 0);
+        destP->prevPts =
+            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_LEVEL, 0);
+
+        // Create a seg for each line of this polyobj.
+        segs = Z_Calloc(sizeof(seg_t) * srcP->buildData.lineCount, PU_LEVEL, 0);
+        destP->segs = Z_Malloc(sizeof(seg_t*) * (srcP->buildData.lineCount+1), PU_LEVEL, 0);
+        for(j = 0; j < srcP->buildData.lineCount; ++j)
+        {
+            linedef_t      *line = &dest->lineDefs[srcP->buildData.lineDefs[j]->buildData.index - 1];
+            seg_t          *seg = &segs[j];
+            float           dx, dy;
+            uint            k;
+
+            // This line is part of a polyobj.
+            line->inFlags |= LF_POLYOBJ;
+
+            seg->header.type = DMU_SEG;
+            seg->lineDef = line;
+            seg->SG_v1 = line->L_v1;
+            seg->SG_v2 = line->L_v2;
+            dx = line->L_v2pos[VX] - line->L_v1pos[VX];
+            dy = line->L_v2pos[VY] - line->L_v1pos[VY];
+            seg->length = P_AccurateDistance(dx, dy);
+            seg->backSeg = NULL;
+            seg->sideDef = line->L_frontside;
+            seg->subsector = NULL;
+            seg->SG_frontsector = line->L_frontsector;
+            seg->SG_backsector = NULL;
+            seg->flags |= SEGF_POLYOBJ;
+
+            // Initialize the bias illumination data.
+            for(k = 0; k < 4; ++k)
+            {
+                uint        l;
+
+                for(l = 0; l < 3; ++l)
+                {
+                    uint        m;
+                    seg->illum[l][k].flags = VIF_STILL_UNSEEN;
+
+                    for(m = 0; m < MAX_BIAS_AFFECTED; ++m)
+                    {
+                        seg->illum[l][k].casted[m].source = -1;
+                    }
+                }
+            }
+
+            // The original Pts are based off the anchor Pt, and are unique
+            // to each seg, not each linedef.
+            destP->originalPts[j].pos[VX] =
+                seg->SG_v1pos[VX] - destP->startSpot.pos[VX];
+            destP->originalPts[j].pos[VY] =
+                seg->SG_v1pos[VY] - destP->startSpot.pos[VY];
+
+            destP->segs[j] = seg;
+        }
+        destP->segs[j] = NULL; // Terminate.
+
+        // Add this polyobj to the global list.
+        dest->polyObjs[i] = destP;
+    }
+    dest->polyObjs[i] = NULL; // Terminate.
+}
+
+/**
  * Called to complete the map building process.
  */
 boolean MPE_End(void)
 {
-    gamemap_t              *gamemap;
+    gamemap_t          *gamemap;
+    boolean             builtOK;
 
     if(!editMapInited)
         return false;
+
+    editMapInited = false;
+
+    gamemap = Z_Calloc(sizeof(*gamemap), PU_LEVELSTATIC, 0);
 
     /**
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
@@ -809,21 +1285,42 @@ boolean MPE_End(void)
     MPE_DetectDuplicateVertices(map);
     //MPE_PruneRedundantMapData(map, PRUNE_ALL);
 
-    gamemap = Z_Calloc(sizeof(*gamemap), PU_LEVELSTATIC, 0);
+    /**
+     * Harden most of the map data so that we can construct some of the more
+     * intricate data structures early on (and thus make use of them during
+     * the BSP generation).
+     *
+     * \todo I'm sure this can be reworked further so that we destroy as we
+     * go and reduce the current working memory surcharge.
+     */
+    hardenSectors(gamemap, map);
+    hardenSidedefs(gamemap, map);
+    hardenLinedefs(gamemap, map);
+    hardenPolyobjs(gamemap, map);
+
+    destroyEditableSectors(map);
+    destroyEditableSideDefs(map);
+    destroyEditableLineDefs(map);
+    destroyEditablePolyObjs(map);
+
+    // Now we can build the vertex line owner rings.
+    buildVertexOwnerRings(gamemap, &map->vertexes, &map->numVertexes);
 
     /**
      * Build a BSP for this map.
      */
-    if(!BSP_Build(gamemap, map))
+    builtOK = BSP_Build(gamemap, &map->vertexes, &map->numVertexes);
+
+    // Destroy the rest of editable map, we are finished with it.
+    // \note Only the vertexes should be left anyway.
+    destroyMap();
+
+    if(!builtOK)
     {   // Argh, failed.
         // Need to clean up.
         Z_Free(gamemap);
         return false;
     }
-
-    // Destroy the editable map (we are finished with it).
-    destroyMap();
-    editMapInited = false;
 
     // Call the game's setup routines.
     if(gx.SetupForMapData)
@@ -835,8 +1332,6 @@ boolean MPE_End(void)
         gx.SetupForMapData(DAM_SECTOR, gamemap->numSectors);
     }
 
-    // Build the vertex line owner rings.
-    R_BuildVertexOwners(gamemap);
     findMissingFrontSidedefs(gamemap);
     finalizeMapData(gamemap);
 

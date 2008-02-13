@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -41,5 +41,6 @@ typedef double angle_g;  // Degrees, 0 is E, 90 is N
 extern int bspFactor;
 
 void        BSP_Register(void);
-boolean     BSP_Build(gamemap_t *dest, editmap_t *src);
+boolean     BSP_Build(gamemap_t *map, vertex_t ***vertexes,
+                      uint *numVertexes);
 #endif

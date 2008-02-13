@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -34,13 +34,13 @@
 #ifndef __BSP_ANALYZE_H__
 #define __BSP_ANALYZE_H__
 
-void        BSP_InitAnalyzer(editmap_t *map);
+void        BSP_InitAnalyzer(gamemap_t *map);
 
 void        BSP_GetBMapBounds(int *x, int *y, int *w, int *h);
 
 // Detection routines (for finding map errors and editing tricks).
-void        BSP_DetectOverlappingLines(editmap_t *map);
-void        BSP_DetectWindowEffects(editmap_t *map);
+void        BSP_DetectOverlappingLines(gamemap_t *map);
+void        BSP_DetectWindowEffects(gamemap_t *map);
 
 // Flags for BSP_PruneRedundantMapData().
 #define     PRUNE_LINEDEFS      0x1

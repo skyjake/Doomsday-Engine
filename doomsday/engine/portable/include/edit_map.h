@@ -39,14 +39,11 @@ typedef struct editmap_s {
     uint            numLineDefs;
     linedef_t     **lineDefs;
     uint            numSideDefs;
-    sidedef_t        **sideDefs;
+    sidedef_t     **sideDefs;
     uint            numSectors;
     sector_t      **sectors;
     uint            numPolyObjs;
     polyobj_t     **polyObjs;
-
-    // BSP data.
-    binarytree_t   *rootNode;
 } editmap_t;
 
 boolean         MPE_Begin(const char *name);

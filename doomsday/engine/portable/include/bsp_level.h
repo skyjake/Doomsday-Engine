@@ -40,6 +40,6 @@
 struct superblock_s;
 
 // Load all level data for the current level.
-void        BSP_InitForNodeBuild(editmap_t *map);
+void        BSP_InitForNodeBuild(gamemap_t *map);
 
 #endif

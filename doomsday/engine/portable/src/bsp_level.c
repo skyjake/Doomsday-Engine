@@ -141,7 +141,7 @@ static boolean hEdgeCollector(binarytree_t *tree, void *data)
     return true; // Continue traversal.
 }
 
-static void buildSegsFromHEdges(gamemap_t *dest, const editmap_t *src)
+static void buildSegsFromHEdges(gamemap_t *dest, binarytree_t *rootNode)
 {
     uint                i;
     hedge_t           **index;
@@ -154,7 +154,7 @@ static void buildSegsFromHEdges(gamemap_t *dest, const editmap_t *src)
     // Pass 1: Count the number of used hedges.
     params.curIdx = 0;
     params.indexPtr = NULL;
-    BinaryTree_InOrder(src->rootNode, hEdgeCollector, &params);
+    BinaryTree_InOrder(rootNode, hEdgeCollector, &params);
 
     if(!(params.curIdx > 0))
         Con_Error("buildSegsFromHEdges: No halfedges?");
@@ -165,7 +165,7 @@ static void buildSegsFromHEdges(gamemap_t *dest, const editmap_t *src)
     // Pass 2: Collect ptrs the hedges and insert into the index.
     params.curIdx = 0;
     params.indexPtr = &index;
-    BinaryTree_InOrder(src->rootNode, hEdgeCollector, &params);
+    BinaryTree_InOrder(rootNode, hEdgeCollector, &params);
 
     // Sort the half-edges into ascending index order.
     qsort(index, params.curIdx, sizeof(hedge_t*), hEdgeCompare);
@@ -376,19 +376,19 @@ static boolean C_DECL countSSec(binarytree_t *tree, void *data)
     return true; // Continue iteration.
 }
 
-static void hardenBSP(gamemap_t *dest, editmap_t *src)
+static void hardenBSP(gamemap_t *dest, binarytree_t *rootNode)
 {
     dest->numNodes = 0;
-    BinaryTree_PostOrder(src->rootNode, countNode, &dest->numNodes);
+    BinaryTree_PostOrder(rootNode, countNode, &dest->numNodes);
     dest->nodes =
         Z_Calloc(dest->numNodes * sizeof(node_t), PU_LEVELSTATIC, 0);
 
     dest->numSSectors = 0;
-    BinaryTree_PostOrder(src->rootNode, countSSec, &dest->numSSectors);
+    BinaryTree_PostOrder(rootNode, countSSec, &dest->numSSectors);
     dest->ssectors =
         Z_Calloc(dest->numSSectors * sizeof(subsector_t), PU_LEVELSTATIC, 0);
 
-    if(src->rootNode)
+    if(rootNode)
     {
         hardenbspparams_t params;
 
@@ -396,19 +396,19 @@ static void hardenBSP(gamemap_t *dest, editmap_t *src)
         params.ssecCurIndex = 0;
         params.nodeCurIndex = 0;
 
-        BinaryTree_PostOrder(src->rootNode, hardenNode, &params);
+        BinaryTree_PostOrder(rootNode, hardenNode, &params);
     }
 }
 
-void BSP_InitForNodeBuild(editmap_t *map)
+void BSP_InitForNodeBuild(gamemap_t *map)
 {
-    uint            i;
+    uint                i;
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t     *l = map->lineDefs[i];
-        vertex_t   *start = l->v[0];
-        vertex_t   *end   = l->v[1];
+        linedef_t          *l = &map->lineDefs[i];
+        vertex_t           *start = l->v[0];
+        vertex_t           *end   = l->v[1];
 
         start->buildData.refCount++;
         end->buildData.refCount++;
@@ -433,46 +433,24 @@ void BSP_InitForNodeBuild(editmap_t *map)
     }
 }
 
-static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
+static void hardenVertexes(gamemap_t *dest, vertex_t ***vertexes,
+                           uint *numVertexes)
 {
-    uint        i;
+    uint                i;
 
-    dest->numLineDefs = src->numLineDefs;
-    dest->lineDefs = Z_Calloc(dest->numLineDefs * sizeof(linedef_t), PU_LEVELSTATIC, 0);
-
-    for(i = 0; i < dest->numLineDefs; ++i)
-    {
-        linedef_t     *destL = &dest->lineDefs[i];
-        linedef_t     *srcL = src->lineDefs[i];
-
-        memcpy(destL, srcL, sizeof(*destL));
-        destL->v[0] = &dest->vertexes[srcL->v[0]->buildData.index - 1];
-        destL->v[1] = &dest->vertexes[srcL->v[1]->buildData.index - 1];
-        //// \todo We shouldn't still have lines with missing fronts but...
-        destL->L_frontside = (srcL->L_frontside?
-            &dest->sideDefs[srcL->L_frontside->buildData.index - 1] : NULL);
-        destL->L_backside = (srcL->L_backside?
-            &dest->sideDefs[srcL->L_backside->buildData.index - 1] : NULL);
-    }
-}
-
-static void hardenVertexes(gamemap_t *dest, editmap_t *src)
-{
-    uint            i;
-
-    dest->numVertexes = src->numVertexes;
+    dest->numVertexes = *numVertexes;
     dest->vertexes =
         Z_Calloc(dest->numVertexes * sizeof(vertex_t), PU_LEVELSTATIC, 0);
 
     for(i = 0; i < dest->numVertexes; ++i)
     {
-        vertex_t   *destV = &dest->vertexes[i];
-        vertex_t   *srcV = src->vertexes[i];
+        vertex_t           *destV = &dest->vertexes[i];
+        vertex_t           *srcV = (*vertexes)[i];
 
         destV->header.type = DMU_VERTEX;
-        destV->numLineOwners = 0;
-        destV->lineOwners = NULL;
-        destV->anchored = false;
+        destV->numLineOwners = srcV->numLineOwners;
+        destV->lineOwners = srcV->lineOwners;
+        destV->anchored = srcV->anchored;
 
         //// \fixme Add some rounding.
         destV->V_pos[VX] = (float) srcV->buildData.pos[VX];
@@ -480,159 +458,29 @@ static void hardenVertexes(gamemap_t *dest, editmap_t *src)
     }
 }
 
-static void hardenSidedefs(gamemap_t *dest, editmap_t *src)
+static void updateVertexLinks(gamemap_t *dest)
 {
-    uint            i;
+    uint                i;
 
-    dest->numSideDefs = src->numSideDefs;
-    dest->sideDefs = Z_Malloc(dest->numSideDefs * sizeof(sidedef_t), PU_LEVELSTATIC, 0);
-
-    for(i = 0; i < dest->numSideDefs; ++i)
+    for(i = 0; i < dest->numLineDefs; ++i)
     {
-        sidedef_t         *destS = &dest->sideDefs[i];
-        sidedef_t         *srcS = src->sideDefs[i];
+        linedef_t          *line = &dest->lineDefs[i];
 
-        memcpy(destS, srcS, sizeof(*destS));
-        destS->sector = &dest->sectors[srcS->sector->buildData.index - 1];
+        line->L_v1 = &dest->vertexes[line->L_v1->buildData.index - 1];
+        line->L_v2 = &dest->vertexes[line->L_v2->buildData.index - 1];
     }
 }
 
-static void hardenSectors(gamemap_t *dest, editmap_t *src)
+void SaveMap(gamemap_t *dest, void *rootNode, vertex_t ***vertexes,
+             uint *numVertexes)
 {
-    uint            i;
+    uint                startTime = Sys_GetRealTime();
+    binarytree_t       *rn = (binarytree_t*) rootNode;
 
-    dest->numSectors = src->numSectors;
-    dest->sectors = Z_Malloc(dest->numSectors * sizeof(sector_t), PU_LEVELSTATIC, 0);
-
-    for(i = 0; i < dest->numSectors; ++i)
-    {
-        sector_t           *destS = &dest->sectors[i];
-        sector_t           *srcS = src->sectors[i];
-        plane_t            *pln;
-
-        memcpy(destS, srcS, sizeof(*destS));
-        destS->planeCount = 0;
-        destS->planes = NULL;
-
-        pln = R_NewPlaneForSector(destS);
-        memcpy(pln, srcS->planes[PLN_FLOOR], sizeof(*pln));
-        pln->sector = destS;
-
-        pln = R_NewPlaneForSector(destS);
-        memcpy(pln, srcS->planes[PLN_CEILING], sizeof(*pln));
-        pln->sector = destS;
-    }
-}
-
-static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
-{
-    uint            i;
-
-    if(src->numPolyObjs == 0)
-    {
-        dest->numPolyObjs = 0;
-        dest->polyObjs = NULL;
-        return;
-    }
-
-    dest->numPolyObjs = src->numPolyObjs;
-    dest->polyObjs = Z_Malloc((dest->numPolyObjs+1) * sizeof(polyobj_t*),
-                              PU_LEVEL, 0);
-
-    for(i = 0; i < dest->numPolyObjs; ++i)
-    {
-        uint            j;
-        polyobj_t      *destP, *srcP = src->polyObjs[i];
-        seg_t          *segs;
-
-        destP = Z_Calloc(sizeof(*destP), PU_LEVEL, 0);
-        destP->header.type = DMU_POLYOBJ;
-        destP->idx = i;
-        destP->crush = srcP->crush;
-        destP->tag = srcP->tag;
-        destP->seqType = srcP->seqType;
-        destP->startSpot.pos[VX] = srcP->startSpot.pos[VX];
-        destP->startSpot.pos[VY] = srcP->startSpot.pos[VY];
-
-        destP->numSegs = srcP->buildData.lineCount;
-
-        destP->originalPts =
-            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_LEVEL, 0);
-        destP->prevPts =
-            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_LEVEL, 0);
-
-        // Create a seg for each line of this polyobj.
-        segs = Z_Calloc(sizeof(seg_t) * srcP->buildData.lineCount, PU_LEVEL, 0);
-        destP->segs = Z_Malloc(sizeof(seg_t*) * (srcP->buildData.lineCount+1), PU_LEVEL, 0);
-        for(j = 0; j < srcP->buildData.lineCount; ++j)
-        {
-            linedef_t      *line = &dest->lineDefs[srcP->buildData.lineDefs[j]->buildData.index - 1];
-            seg_t          *seg = &segs[j];
-            float           dx, dy;
-            uint            k;
-
-            // This line is part of a polyobj.
-            line->inFlags |= LF_POLYOBJ;
-
-            seg->header.type = DMU_SEG;
-            seg->lineDef = line;
-            seg->SG_v1 = line->L_v1;
-            seg->SG_v2 = line->L_v2;
-            dx = line->L_v2pos[VX] - line->L_v1pos[VX];
-            dy = line->L_v2pos[VY] - line->L_v1pos[VY];
-            seg->length = P_AccurateDistance(dx, dy);
-            seg->backSeg = NULL;
-            seg->sideDef = line->L_frontside;
-            seg->subsector = NULL;
-            seg->SG_frontsector = line->L_frontsector;
-            seg->SG_backsector = NULL;
-            seg->flags |= SEGF_POLYOBJ;
-
-            // Initialize the bias illumination data.
-            for(k = 0; k < 4; ++k)
-            {
-                uint        l;
-
-                for(l = 0; l < 3; ++l)
-                {
-                    uint        m;
-                    seg->illum[l][k].flags = VIF_STILL_UNSEEN;
-
-                    for(m = 0; m < MAX_BIAS_AFFECTED; ++m)
-                    {
-                        seg->illum[l][k].casted[m].source = -1;
-                    }
-                }
-            }
-
-            // The original Pts are based off the anchor Pt, and are unique
-            // to each seg, not each linedef.
-            destP->originalPts[j].pos[VX] =
-                seg->SG_v1pos[VX] - destP->startSpot.pos[VX];
-            destP->originalPts[j].pos[VY] =
-                seg->SG_v1pos[VY] - destP->startSpot.pos[VY];
-
-            destP->segs[j] = seg;
-        }
-        destP->segs[j] = NULL; // Terminate.
-
-        // Add this polyobj to the global list.
-        dest->polyObjs[i] = destP;
-    }
-    dest->polyObjs[i] = NULL; // Terminate.
-}
-
-void SaveMap(gamemap_t *dest, editmap_t *src)
-{
-    uint            startTime = Sys_GetRealTime();
-
-    hardenVertexes(dest, src);
-    hardenSectors(dest, src);
-    hardenSidedefs(dest, src);
-    hardenLinedefs(dest, src);
-    buildSegsFromHEdges(dest, src);
-    hardenBSP(dest, src);
-    hardenPolyobjs(dest, src);
+    hardenVertexes(dest, vertexes, numVertexes);
+    updateVertexLinks(dest);
+    buildSegsFromHEdges(dest, rn);
+    hardenBSP(dest, rn);
 
     // How much time did we spend?
     VERBOSE(Con_Message

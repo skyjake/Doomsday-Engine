@@ -61,7 +61,6 @@ void            R_SetupSky(ded_mapinfo_t *mapInfo);
 sector_t       *R_GetLinkedSector(subsector_t *startssec, uint plane);
 void            R_UpdatePlanes(void);
 void            R_ClearSectorFlags(void);
-void            R_BuildVertexOwners(gamemap_t *map);
 void            R_InitSkyFix(void);
 void            R_SkyFix(boolean fixFloors, boolean fixCeilings);
 void            R_OrderVertices(const linedef_t *line, const sector_t *sector,
@@ -81,14 +80,14 @@ boolean         R_RemoveWatchedPlane(watchedplanelist_t *wpl,
                                      const plane_t *pln);
 
 lineowner_t    *R_GetVtxLineOwner(vertex_t *vtx, linedef_t *line);
-linedef_t         *R_FindLineNeighbor(sector_t *sector, linedef_t *line,
+linedef_t      *R_FindLineNeighbor(sector_t *sector, linedef_t *line,
                                    lineowner_t *own,
                                    boolean antiClockwise, binangle_t *diff);
-linedef_t         *R_FindSolidLineNeighbor(sector_t *sector, linedef_t *line,
+linedef_t      *R_FindSolidLineNeighbor(sector_t *sector, linedef_t *line,
                                         lineowner_t *own,
                                         boolean antiClockwise,
                                         binangle_t *diff);
-linedef_t         *R_FindLineBackNeighbor(sector_t *sector, linedef_t *line,
+linedef_t      *R_FindLineBackNeighbor(sector_t *sector, linedef_t *line,
                                        lineowner_t *own,
                                        boolean antiClockwise,
                                        binangle_t *diff);

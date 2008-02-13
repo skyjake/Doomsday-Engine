@@ -75,22 +75,22 @@ void BSP_GetBMapBounds(int *x, int *y, int *w, int *h)
         *h = blockMapBounds[BOXTOP];
 }
 
-static void findMapLimits(editmap_t *src, int *bbox)
+static void findMapLimits(gamemap_t *src, int *bbox)
 {
-    uint        i;
+    uint                i;
 
     M_ClearBox(bbox);
 
     for(i = 0; i < src->numLineDefs; ++i)
     {
-        linedef_t     *L = src->lineDefs[i];
+        linedef_t          *l = &src->lineDefs[i];
 
-        if(!(L->buildData.mlFlags & MLF_ZEROLENGTH))
+        if(!(l->buildData.mlFlags & MLF_ZEROLENGTH))
         {
-            double      x1 = L->v[0]->buildData.pos[VX];
-            double      y1 = L->v[0]->buildData.pos[VY];
-            double      x2 = L->v[1]->buildData.pos[VX];
-            double      y2 = L->v[1]->buildData.pos[VY];
+            double      x1 = l->v[0]->buildData.pos[VX];
+            double      y1 = l->v[0]->buildData.pos[VY];
+            double      x2 = l->v[1]->buildData.pos[VX];
+            double      y2 = l->v[1]->buildData.pos[VY];
             int         lX = (int) floor(MIN_OF(x1, x2));
             int         lY = (int) floor(MIN_OF(y1, y2));
             int         hX = (int) ceil(MAX_OF(x1, x2));
@@ -102,7 +102,7 @@ static void findMapLimits(editmap_t *src, int *bbox)
     }
 }
 
-void BSP_InitAnalyzer(editmap_t *map)
+void BSP_InitAnalyzer(gamemap_t *map)
 {
     // Find maximal vertexes, and store as map limits.
     findMapLimits(map, mapBounds);
@@ -410,7 +410,7 @@ static int C_DECL lineEndCompare(const void *p1, const void *p2)
  * Overlapping lines will then be near each other in this set but note this
  * does not detect partially overlapping lines!
  */
-void BSP_DetectOverlappingLines(editmap_t *map)
+void BSP_DetectOverlappingLines(gamemap_t *map)
 {
     size_t              i, j, count = 0;
     linedef_t         **hits;
@@ -419,7 +419,7 @@ void BSP_DetectOverlappingLines(editmap_t *map)
 
     // Sort array of ptrs.
     for(i = 0; i < map->numLineDefs; ++i)
-        hits[i] = map->lineDefs[i];
+        hits[i] = &map->lineDefs[i];
     qsort(hits, map->numLineDefs, sizeof(*hits), lineStartCompare);
 
     for(i = 0; i < map->numLineDefs - 1; ++i)
@@ -453,7 +453,7 @@ void BSP_DetectOverlappingLines(editmap_t *map)
  * Cast a line horizontally or vertically and see what we hit (OUCH, we
  * have to iterate over all linedefs!).
  */
-static void testForWindowEffect(editmap_t *map, linedef_t *l)
+static void testForWindowEffect(gamemap_t *map, linedef_t *l)
 {
     uint        i;
     double      mX = (l->v[0]->buildData.pos[VX] + l->v[1]->buildData.pos[VX]) / 2.0;
@@ -472,11 +472,11 @@ static void testForWindowEffect(editmap_t *map, linedef_t *l)
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t         *n = map->lineDefs[i];
-        double          dist;
-        boolean         isFront;
-        sidedef_t         *hitSide;
-        double          dX2, dY2;
+        linedef_t          *n = &map->lineDefs[i];
+        double              dist;
+        boolean             isFront;
+        sidedef_t          *hitSide;
+        double              dX2, dY2;
 
         if(n == l || (n->buildData.mlFlags & MLF_ZEROLENGTH) || n->buildData.overlap)
             continue;
@@ -574,13 +574,13 @@ Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
  * odd number of one-sided linedefs connected to a single vertex.
  * This idea courtesy of Graham Jackson.
  */
-void BSP_DetectWindowEffects(editmap_t *map)
+void BSP_DetectWindowEffects(gamemap_t *map)
 {
-    uint            i, oneSiders, twoSiders;
+    uint                i, oneSiders, twoSiders;
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t         *l = map->lineDefs[i];
+        linedef_t         *l = &map->lineDefs[i];
 
         if((l->buildData.mlFlags & MLF_TWOSIDED) || (l->buildData.mlFlags & MLF_ZEROLENGTH) ||
             l->buildData.overlap || !l->sideDefs[FRONT])

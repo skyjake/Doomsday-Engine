@@ -76,7 +76,7 @@ void BSP_Register(void)
  *
  * @return              The list of created half-edges.
  */
-static superblock_t *createInitialHEdges(editmap_t *src)
+static superblock_t *createInitialHEdges(gamemap_t *map)
 {
     uint            startTime = Sys_GetRealTime();
 
@@ -94,9 +94,9 @@ static superblock_t *createInitialHEdges(editmap_t *src)
     block->bbox[BOXTOP]   = block->bbox[BOXBOTTOM] + 128 * M_CeilPow2(bh);
 
     // Step through linedefs and get side numbers.
-    for(i = 0; i < src->numLineDefs; ++i)
+    for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t         *line = src->lineDefs[i];
+        linedef_t         *line = &map->lineDefs[i];
 
         front = back = NULL;
 
@@ -196,25 +196,6 @@ static superblock_t *createInitialHEdges(editmap_t *src)
         }
     }
 
-/*
-#if _DEBUG
-for(i = 0; i < numVertices; ++i)
-{
-    vertex_t *vert = LookupVertex(i);
-    edgetip_t *tip;
-
-    Con_Message("EdgeTips for vertex %d:\n", i);
-
-    for(tip = vert->tipSet; tip; tip = tip->next)
-    {
-        Con_Message("  Angle=%1.1f left=%d right=%d\n", tip->angle,
-                    (tip->left? tip->left->index : -1),
-                    (tip->right? tip->right->index : -1));
-    }
-}
-#endif
-*/
-
     // How much time did we spend?
     VERBOSE(Con_Message
             ("createInitialHEdges: Done in %.2f seconds.\n",
@@ -241,13 +222,16 @@ static boolean C_DECL freeBSPNodeData(binarytree_t *tree, void *data)
  * Build the BSP for the given map.
  *
  * @param map           The map to build the BSP for.
+ * @param vertexes      Editable vertex (ptr) array.
+ * @param numVertexes   Number of vertexes in the array.
  * @return              @c true, if completed successfully.
  */
-boolean BSP_Build(gamemap_t *dest, editmap_t *src)
+boolean BSP_Build(gamemap_t *map, vertex_t ***vertexes, uint *numVertexes)
 {
     boolean             builtOK;
     uint                startTime;
     superblock_t       *hEdgeList;
+    binarytree_t       *rootNode;
 
     if(verbose >= 1)
     {
@@ -262,14 +246,14 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
     BSP_InitIntersectionAllocator();
     BSP_InitHEdgeAllocator();
 
-    BSP_InitForNodeBuild(src);
-    BSP_InitAnalyzer(src);
+    BSP_InitForNodeBuild(map);
+    BSP_InitAnalyzer(map);
 
-    BSP_DetectOverlappingLines(src);
-    BSP_DetectWindowEffects(src);
+    BSP_DetectOverlappingLines(map);
+    BSP_DetectWindowEffects(map);
 
     // Create initial half-edges.
-    hEdgeList = createInitialHEdges(src);
+    hEdgeList = createInitialHEdges(map);
 
     // Build the BSP.
     {
@@ -279,8 +263,8 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
     cutList = BSP_CutListCreate();
 
     // Recursively create nodes.
-    src->rootNode = NULL;
-    builtOK = BuildNodes(hEdgeList, &src->rootNode, 0, cutList);
+    rootNode = NULL;
+    builtOK = BuildNodes(hEdgeList, &rootNode, 0, cutList);
 
     // The cutlist data is no longer needed.
     BSP_CutListDestroy(cutList);
@@ -296,34 +280,34 @@ boolean BSP_Build(gamemap_t *dest, editmap_t *src)
     if(builtOK)
     {   // Success!
         // Wind the BSP tree and link to the map.
-        ClockwiseBspTree(src->rootNode);
-        SaveMap(dest, src);
+        ClockwiseBspTree(rootNode);
+        SaveMap(map, rootNode, vertexes, numVertexes);
 
         Con_Message("BSP_Build: Built %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n",
-                    dest->numNodes, dest->numSSectors, dest->numSegs,
-                    dest->numVertexes);
+                    map->numNodes, map->numSSectors, map->numSegs,
+                    map->numVertexes);
 
-        if(src->rootNode && !BinaryTree_IsLeaf(src->rootNode))
+        if(rootNode && !BinaryTree_IsLeaf(rootNode))
         {
             long            rHeight, lHeight;
 
             rHeight = (long)
-                BinaryTree_GetHeight(BinaryTree_GetChild(src->rootNode, RIGHT));
+                BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, RIGHT));
             lHeight = (long)
-                BinaryTree_GetHeight(BinaryTree_GetChild(src->rootNode, LEFT));
+                BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, LEFT));
 
             Con_Message("  Balance %+ld (l%ld - r%ld).\n", lHeight - rHeight,
                         lHeight, rHeight);
         }
     }
 
-    // We are finished with the BSP.
-    if(src->rootNode)
+    // We are finished with the BSP build data.
+    if(rootNode)
     {
-        BinaryTree_PostOrder(src->rootNode, freeBSPNodeData, NULL);
-        BinaryTree_Destroy(src->rootNode);
+        BinaryTree_PostOrder(rootNode, freeBSPNodeData, NULL);
+        BinaryTree_Destroy(rootNode);
     }
-    src->rootNode = NULL;
+    rootNode = NULL;
 
     // Free temporary storage.
     BSP_ShutdownHEdgeAllocator();
