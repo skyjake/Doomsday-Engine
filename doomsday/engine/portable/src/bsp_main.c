@@ -204,13 +204,16 @@ static superblock_t *createInitialHEdges(gamemap_t *map)
     return block;
 }
 
-static boolean C_DECL freeBSPNodeData(binarytree_t *tree, void *data)
+static boolean C_DECL freeBSPData(binarytree_t *tree, void *data)
 {
     void               *bspData = BinaryTree_GetData(tree);
 
     if(bspData)
     {
-        M_Free(bspData);
+        if(BinaryTree_IsLeaf(tree))
+            BSPLeaf_Destroy(bspData);
+        else
+            M_Free(bspData);
     }
 
     BinaryTree_SetData(tree, NULL);
@@ -304,7 +307,7 @@ boolean BSP_Build(gamemap_t *map, vertex_t ***vertexes, uint *numVertexes)
     // We are finished with the BSP build data.
     if(rootNode)
     {
-        BinaryTree_PostOrder(rootNode, freeBSPNodeData, NULL);
+        BinaryTree_PostOrder(rootNode, freeBSPData, NULL);
         BinaryTree_Destroy(rootNode);
     }
     rootNode = NULL;

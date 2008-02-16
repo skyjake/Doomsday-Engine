@@ -119,10 +119,10 @@ static boolean hEdgeCollector(binarytree_t *tree, void *data)
     if(BinaryTree_IsLeaf(tree))
     {
         hedgecollectorparams_t *params = (hedgecollectorparams_t*) data;
-        subsector_t        *ssec = (subsector_t*) BinaryTree_GetData(tree);
+        bspleafdata_t      *leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
         hedge_t            *hEdge;
 
-        for(hEdge = ssec->buildData.hEdges; hEdge; hEdge = hEdge->next)
+        for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->next)
         {
             if(params->indexPtr)
             {   // Write mode.
@@ -206,7 +206,6 @@ static void buildSegsFromHEdges(gamemap_t *dest, binarytree_t *rootNode)
                 seg->SG_backsector = 0;
             }
 
-            seg->sideDef = ldef->L_side(seg->side);
             seg->offset = P_AccurateDistance(seg->SG_v1pos[VX] - vtx->V_pos[VX],
                                              seg->SG_v1pos[VY] - vtx->V_pos[VY]);
         }
@@ -217,8 +216,8 @@ static void buildSegsFromHEdges(gamemap_t *dest, binarytree_t *rootNode)
             seg->SG_backsector = NULL;
         }
 
-        if(seg->sideDef)
-            hardenSideSegList(dest, seg->sideDef, seg, hEdge);
+        if(seg->lineDef)
+            hardenSideSegList(dest, SEG_SIDEDEF(seg), seg, hEdge);
 
         seg->angle =
             bamsAtan2((int) (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]),
@@ -234,17 +233,18 @@ static void buildSegsFromHEdges(gamemap_t *dest, binarytree_t *rootNode)
 
         // Calculate the surface normals
         // Front first
-        if(seg->sideDef)
+        if(seg->lineDef)
         {
-            surface_t *surface = &seg->sideDef->SW_topsurface;
+            sidedef_t          *side = SEG_SIDEDEF(seg);
+            surface_t          *surface = &side->SW_topsurface;
 
             surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
             surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
             surface->normal[VZ] = 0;
 
             // All surfaces of a sidedef have the same normal.
-            memcpy(seg->sideDef->SW_middlenormal, surface->normal, sizeof(surface->normal));
-            memcpy(seg->sideDef->SW_bottomnormal, surface->normal, sizeof(surface->normal));
+            memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+            memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
         }
     }
 
@@ -271,17 +271,41 @@ static void hardenSSecSegList(gamemap_t *dest, subsector_t *ssec,
     ssec->segs = segs;
 }
 
-static void hardenSubsector(gamemap_t *map, subsector_t *dest, const subsector_t *src)
+static void hardenLeaf(gamemap_t *map, subsector_t *dest,
+                       const bspleafdata_t *src)
 {
-    memcpy(dest, src, sizeof(subsector_t));
+    seg_t             **segp;
+    boolean             found;
+
     dest->header.type = DMU_SUBSECTOR;
-    dest->segCount = (uint) src->buildData.hEdgeCount;
-    dest->sector = (src->sector? &map->sectors[src->sector->buildData.index-1] : NULL);
+    dest->segCount = (uint) src->hEdgeCount;
     dest->shadows = NULL;
     dest->planes = NULL;
     dest->vertices = NULL;
     dest->group = 0;
-    hardenSSecSegList(map, dest, src->buildData.hEdges, src->buildData.hEdgeCount);
+
+    hardenSSecSegList(map, dest, src->hEdges, src->hEdgeCount);
+
+    // Determine which sector this subsector belongs to.
+    segp = dest->segs;
+    found = false;
+    while(*segp)
+    {
+        seg_t              *seg = *segp;
+
+        if(!found && seg->lineDef)
+        {
+            sidedef_t          *side = SEG_SIDEDEF(seg);
+
+            dest->sector = side->sector;
+            found = true;
+        }
+
+        seg->subsector = dest;
+        *segp++;
+    }
+
+    assert(dest->sector);
 }
 
 typedef struct {
@@ -326,11 +350,11 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
     {
         if(BinaryTree_IsLeaf(right))
         {
-            subsector_t    *ssec = (subsector_t*) BinaryTree_GetData(right);
+            bspleafdata_t  *leaf = (bspleafdata_t*) BinaryTree_GetData(right);
             uint            idx = params->ssecCurIndex++;
 
             node->children[RIGHT] = idx | NF_SUBSECTOR;
-            hardenSubsector(params->dest, &params->dest->ssectors[idx], ssec);
+            hardenLeaf(params->dest, &params->dest->ssectors[idx], leaf);
         }
         else
         {
@@ -344,11 +368,11 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
     {
         if(BinaryTree_IsLeaf(left))
         {
-            subsector_t    *ssec = (subsector_t*) BinaryTree_GetData(left);
+            bspleafdata_t  *leaf = (bspleafdata_t*) BinaryTree_GetData(left);
             uint            idx = params->ssecCurIndex++;
 
             node->children[LEFT] = idx | NF_SUBSECTOR;
-            hardenSubsector(params->dest, &params->dest->ssectors[idx], ssec);
+            hardenLeaf(params->dest, &params->dest->ssectors[idx], leaf);
         }
         else
         {

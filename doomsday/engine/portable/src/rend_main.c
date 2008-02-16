@@ -849,20 +849,25 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
                              walldiv_t *div, float bottomZ, float topZ,
                              boolean doRight)
 {
+    sidedef_t          *side;
+
     div->num = 0;
 
-    if(!seg->lineDef || !seg->sideDef)
+    if(!seg->lineDef)
         return; // Mini-segs arn't drawn.
+
+    side = SEG_SIDEDEF(seg);
 
     if(seg->flags & SEGF_POLYOBJ)
         return; // Polyobj segs are never split.
 
     // Only segs at sidedef ends can/should be split.
-    if(!((seg == seg->sideDef->segs[0] && !doRight) ||
-         (seg == seg->sideDef->segs[seg->sideDef->segCount -1] && doRight)))
+    if(!((seg == side->segs[0] && !doRight) ||
+         (seg == side->segs[side->segCount -1] && doRight)))
         return;
 
-    doCalcSegDivisions(seg->lineDef, seg->side, frontSec, div, bottomZ, topZ, doRight);
+    doCalcSegDivisions(seg->lineDef, seg->side, frontSec, div, bottomZ,
+                       topZ, doRight);
 }
 
 /**
@@ -872,8 +877,8 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
 static void applyWallHeightDivision(rendpoly_t *quad, const seg_t *seg,
                                     sector_t *frontsec, float low, float hi)
 {
-    uint        i;
-    walldiv_t  *div;
+    uint                i;
+    walldiv_t          *div;
 
     for(i = 0; i < 2; ++i)
     {
@@ -1403,16 +1408,16 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
  */
 static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 {
-    boolean     solidSeg = true;
-    sidedef_t     *side;
-    linedef_t     *ldef;
-    float       ffloor, fceil;
-    boolean     backSide;
-    sector_t   *frontsec, *fflinkSec, *fclinkSec;
-    int         pid = viewPlayer - players;
+    boolean             solidSeg = true;
+    sidedef_t          *side;
+    linedef_t          *ldef;
+    float               ffloor, fceil;
+    boolean             backSide;
+    sector_t           *frontsec, *fflinkSec, *fclinkSec;
+    int                 pid = viewPlayer - players;
 
-    frontsec = seg->sideDef->sector;
-    side = seg->sideDef;
+    side = SEG_SIDEDEF(seg);
+    frontsec = side->sector;
     backSide = seg->side;
     ldef = seg->lineDef;
 
@@ -1468,10 +1473,10 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     sector_t   *frontsec, *fflinkSec, *fclinkSec;
     int         pid = viewPlayer - players;
 
-    frontsec = seg->sideDef->sector;
-    backsec = seg->backSeg->sideDef->sector;
-    backsid = seg->backSeg->sideDef;
-    side = seg->sideDef;
+    backsid = SEG_SIDEDEF(seg->backSeg);
+    side = SEG_SIDEDEF(seg);
+    frontsec = side->sector;
+    backsec = backsid->sector;
     backSide = seg->side;
     ldef = seg->lineDef;
 
@@ -1714,7 +1719,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
         if(!(seg->frameFlags & SEGINF_FACINGFRONT))
             continue;
 
-        side = seg->sideDef;
+        side = SEG_SIDEDEF(seg);
         if(!side)
             continue;
 

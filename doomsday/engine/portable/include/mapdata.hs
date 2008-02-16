@@ -63,6 +63,8 @@ internal
 #define SG_frontsector          SG_sector(FRONT)
 #define SG_backsector           SG_sector(BACK)
 
+#define SEG_SIDEDEF(s)          ((s)->lineDef->sideDefs[(s)->side])
+
 // Seg flags
 #define SEGF_POLYOBJ            0x1 // Seg is part of a poly object.
 
@@ -71,9 +73,12 @@ internal
 #define SEGINF_BACKSECSKYFIX    0x0002
 end
 
+public
+#define DMT_SEG_SIDEDEF         DDVT_PTR
+end
+
 struct seg
     PTR     vertex_s*[2] v          // [Start, End] of the segment.
-    PTR     sidedef_s*  sideDef
     PTR     linedef_s*  lineDef
     PTR     sector_s*[2] sec
     PTR     subsector_s* subsector
@@ -92,14 +97,6 @@ end
 
 internal
 #define SUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
-
-typedef struct msubsec_s {
-    // Approximate middle point.
-    double      midPoint[2];
-
-    size_t      hEdgeCount;
-    struct hedge_s *hEdges; // Head ptr to a list of half-edges in this subsector.
-} msubsec_t;
 end
 
 struct subsector
@@ -117,7 +114,6 @@ struct subsector
     -       ushort      numVertices
     -       fvertex_s** vertices    // [numvertices] size
     -       shadowlink_s* shadows
-    -       msubsec_t   buildData
 end
 
 public
@@ -264,7 +260,6 @@ typedef struct msector_s {
 
     // Suppress superfluous mini warnings.
     int         warnedFacing;
-    boolean     warnedUnclosed;
 } msector_t;
 end
 

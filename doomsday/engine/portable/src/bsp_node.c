@@ -300,14 +300,14 @@ for(hEdge = sub->hEdges; hEdge; hEdge = hEdge->next)
 #endif*/
 }
 
-static void sanityCheckClosed(const subsector_t *sub)
+static void sanityCheckClosed(const bspleafdata_t *leaf)
 {
-    int         total = 0, gaps = 0;
-    hedge_t    *cur, *next;
+    int                 total = 0, gaps = 0;
+    hedge_t            *cur, *next;
 
-    for(cur = sub->buildData.hEdges; cur; cur = cur->next)
+    for(cur = leaf->hEdges; cur; cur = cur->next)
     {
-        next = (cur->next? cur->next : sub->buildData.hEdges);
+        next = (cur->next? cur->next : leaf->hEdges);
 
         if(cur->v[1]->buildData.pos[VX] != next->v[0]->buildData.pos[VX] ||
            cur->v[1]->buildData.pos[VY] != next->v[0]->buildData.pos[VY])
@@ -318,13 +318,11 @@ static void sanityCheckClosed(const subsector_t *sub)
 
     if(gaps > 0)
     {
-        Con_Message("Subsector #%p near (%1.1f,%1.1f) is not closed "
-                    "(%d gaps, %d half-edges)\n", sub,
-                    sub->buildData.midPoint[VX], sub->buildData.midPoint[VY],
-                    gaps, total);
+        Con_Message("HEdge list for leaf #%p is not closed "
+                    "(%d gaps, %d half-edges)\n", leaf, gaps, total);
 
 /*#if _DEBUG
-for(cur = sub->hEdges; cur; cur = cur->next)
+for(cur = leaf->hEdges; cur; cur = cur->next)
 {
     Con_Message("  half-edge %p  (%1.1f,%1.1f) --> (%1.1f,%1.1f)\n", cur,
                 cur->v[0]->pos[VX], cur->v[0]->pos[VY],
@@ -334,12 +332,12 @@ for(cur = sub->hEdges; cur; cur = cur->next)
     }
 }
 
-static void sanityCheckSameSector(const subsector_t *sub)
+static void sanityCheckSameSector(const bspleafdata_t *leaf)
 {
-    hedge_t    *cur, *compare;
+    hedge_t            *cur, *compare;
 
     // Find a suitable half-edge for comparison.
-    for(compare = sub->buildData.hEdges; compare; compare = compare->next)
+    for(compare = leaf->hEdges; compare; compare = compare->next)
     {
         if(!compare->sector)
             continue;
@@ -369,24 +367,22 @@ static void sanityCheckSameSector(const subsector_t *sub)
         if(verbose >= 1)
         {
             if(cur->lineDef)
-                Con_Message("Sector #%d has sidedef facing #%d (line #%d) "
-                            "near (%1.0f,%1.0f).\n", compare->sector->buildData.index,
-                            cur->sector->buildData.index, cur->lineDef->buildData.index,
-                            sub->buildData.midPoint[VX], sub->buildData.midPoint[VY]);
+                Con_Message("Sector #%d has sidedef facing #%d (line #%d).\n", compare->sector->buildData.index,
+                            cur->sector->buildData.index,
+                            cur->lineDef->buildData.index);
             else
-                Con_Message("Sector #%d has sidedef facing #%d "
-                            "near (%1.0f,%1.0f).\n", compare->sector->buildData.index,
-                            cur->sector->buildData.index, sub->buildData.midPoint[VX],
-                            sub->buildData.midPoint[VY]);
+                Con_Message("Sector #%d has sidedef facing #%d.\n",
+                            compare->sector->buildData.index,
+                            cur->sector->buildData.index);
         }
     }
 }
 
-static boolean sanityCheckHasRealHEdge(const subsector_t *sub)
+static boolean sanityCheckHasRealHEdge(const bspleafdata_t *leaf)
 {
     hedge_t            *cur;
 
-    for(cur = sub->buildData.hEdges; cur; cur = cur->next)
+    for(cur = leaf->hEdges; cur; cur = cur->next)
     {
         if(cur->lineDef)
             return true;
@@ -395,25 +391,17 @@ static boolean sanityCheckHasRealHEdge(const subsector_t *sub)
     return false;
 }
 
-static void renumberSubSectorHEdges(subsector_t *sub, uint *curIndex)
+static void renumberLeafHEdges(bspleafdata_t *leaf, uint *curIndex)
 {
     uint                n;
     hedge_t            *cur;
 
-/*#if _DEBUG
-Con_Message("Subsec: Renumbering %d\n", sub->index);
-#endif*/
-
     n = 0;
-    for(cur = sub->buildData.hEdges; cur; cur = cur->next)
+    for(cur = leaf->hEdges; cur; cur = cur->next)
     {
         cur->index = *curIndex;
         (*curIndex)++;
         n++;
-
-/*#if _DEBUG
-Con_Message("Subsec:   %d: half-edge %p  Index %d\n", n, cur, cur->index);
-#endif*/
     }
 }
 
@@ -428,37 +416,37 @@ static void prepareHEdgeSortBuffer(size_t numHEdges)
     }
 }
 
-static boolean C_DECL clockwiseSubsector(binarytree_t *tree, void *data)
+static boolean C_DECL clockwiseLeaf(binarytree_t *tree, void *data)
 {
     if(BinaryTree_IsLeaf(tree))
     {   // obj is a leaf.
         size_t              total;
         hedge_t            *hEdge;
-        subsector_t        *ssec = (subsector_t*) BinaryTree_GetData(tree);
+        bspleafdata_t      *leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
+        double              midPoint[2];
+
+        getAveragedCoords(leaf->hEdges, &midPoint[VX], &midPoint[VY]);
 
         // Count half-edges.
         total = 0;
-        for(hEdge = ssec->buildData.hEdges; hEdge; hEdge = hEdge->next)
+        for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->next)
             total++;
 
-        ssec->buildData.hEdgeCount = total;
+        leaf->hEdgeCount = total;
 
         // Ensure the sort buffer is large enough.
         prepareHEdgeSortBuffer(total);
 
-        clockwiseOrder(&ssec->buildData.hEdges, ssec->buildData.hEdgeCount,
-                       ssec->buildData.midPoint[VX],
-                       ssec->buildData.midPoint[VY]);
-        renumberSubSectorHEdges(ssec, data);
+        clockwiseOrder(&leaf->hEdges, leaf->hEdgeCount, midPoint[VX],
+                       midPoint[VY]);
+        renumberLeafHEdges(leaf, data);
 
         // Do some sanity checks.
-        sanityCheckClosed(ssec);
-        sanityCheckSameSector(ssec);
-        if(!sanityCheckHasRealHEdge(ssec))
+        sanityCheckClosed(leaf);
+        sanityCheckSameSector(leaf);
+        if(!sanityCheckHasRealHEdge(leaf))
         {
-            Con_Error("SSec #%p near (%1.1f,%1.1f) has no linedef-linked half-edge!",
-                      ssec, ssec->buildData.midPoint[VX],
-                      ssec->buildData.midPoint[VY]);
+            Con_Error("BSP Leaf #%p has no linedef-linked half-edge!", leaf);
         }
     }
 
@@ -481,7 +469,7 @@ void ClockwiseBspTree(binarytree_t *rootNode)
     hEdgeSortBuf = NULL;
 
     curIndex = 0;
-    BinaryTree_PostOrder(rootNode, clockwiseSubsector, &curIndex);
+    BinaryTree_PostOrder(rootNode, clockwiseLeaf, &curIndex);
 
     // Free temporary storage.
     if(hEdgeSortBuf)
@@ -491,32 +479,32 @@ void ClockwiseBspTree(binarytree_t *rootNode)
     }
 }
 
-static void createSubSectorWorker(subsector_t *sub, superblock_t *block)
+static void createBSPLeafWorker(bspleafdata_t *leaf, superblock_t *block)
 {
-    uint        num;
+    uint                num;
 
     while(block->hEdges)
     {
-        hedge_t *cur = block->hEdges;
+        hedge_t            *cur = block->hEdges;
 
         // Un-link first half-edge from the block.
         block->hEdges = cur->next;
 
         // Link it into head of the subsector's list.
-        cur->next = sub->buildData.hEdges;
+        cur->next = leaf->hEdges;
         cur->block = NULL;
 
-        sub->buildData.hEdges = cur;
+        leaf->hEdges = cur;
     }
 
     // Recursively handle sub-blocks.
     for(num = 0; num < 2; ++num)
     {
-        superblock_t *a = block->subs[num];
+        superblock_t       *a = block->subs[num];
 
         if(a)
         {
-            createSubSectorWorker(sub, a);
+            createBSPLeafWorker(leaf, a);
 
             if(a->realNum + a->miniNum > 0)
                 Con_Error("createSubSectorWorker: child %d not empty!", num);
@@ -529,42 +517,55 @@ static void createSubSectorWorker(subsector_t *sub, superblock_t *block)
     block->realNum = block->miniNum = 0;
 }
 
-static subsector_t *createSubsector(void)
+static __inline bspleafdata_t *allocBSPLeaf(void)
 {
-    subsector_t        *ssec;
-
-    ssec = M_Calloc(sizeof(*ssec));
-    ssec->header.type = DMU_SUBSECTOR;
-    return ssec;
+    return M_Malloc(sizeof(bspleafdata_t));
 }
 
-subsector_t *BSP_NewSubsector(void)
+static __inline void freeBSPLeaf(bspleafdata_t *leaf)
 {
-    subsector_t        *s;
+    M_Free(leaf);
+}
 
-    s = createSubsector();
-    return s;
+bspleafdata_t *BSPLeaf_Create(void)
+{
+    bspleafdata_t       *leaf = allocBSPLeaf();
+
+    leaf->hEdgeCount = 0;
+    leaf->hEdges = NULL;
+
+    return leaf;
+}
+
+void BSPLeaf_Destroy(bspleafdata_t *leaf)
+{
+    hedge_t            *cur, *np;
+
+    if(!leaf)
+        return;
+
+    cur = leaf->hEdges;
+    while(cur)
+    {
+        np = cur->next;
+        HEdge_Destroy(cur);
+        cur = np;
+    }
+
+    freeBSPLeaf(leaf);
 }
 
 /**
- * Create a subsector from a list of half-edges.
+ * Create a new leaf from a list of half-edges.
  */
-static subsector_t *createSubSector(superblock_t *hEdgeList)
+static bspleafdata_t *createBSPLeaf(superblock_t *hEdgeList)
 {
-    subsector_t        *sub = BSP_NewSubsector();
+    bspleafdata_t      *leaf = BSPLeaf_Create();
 
-    // Link the half-edges into the new subsector.
-    createSubSectorWorker(sub, hEdgeList);
+    // Link the half-edges into the new leaf.
+    createBSPLeafWorker(leaf, hEdgeList);
 
-    getAveragedCoords(sub->buildData.hEdges,
-                      &sub->buildData.midPoint[VX],
-                      &sub->buildData.midPoint[VY]);
-
-/*#if _DEBUG
-Con_Message("createSubSector: Index= %d.\n", sub->index);
-#endif*/
-
-    return sub;
+    return leaf;
 }
 
 /**
@@ -587,7 +588,7 @@ boolean BuildNodes(superblock_t *hEdgeList, binarytree_t **parent,
     bspnodedata_t      *node;
     hedge_t            *best;
     superblock_t       *hEdgeSet[2];
-    subsector_t        *ssec;
+    bspleafdata_t      *leaf;
     boolean             builtOK = false;
 
     *parent = NULL;
@@ -605,8 +606,8 @@ BSP_PrintSuperblockHEdges(hEdgeList);
 /*#if _DEBUG
 Con_Message("BuildNodes: Convex.\n");
 #endif*/
-        ssec = createSubSector(hEdgeList);
-        *parent = BinaryTree_Create(ssec);
+        leaf = createBSPLeaf(hEdgeList);
+        *parent = BinaryTree_Create(leaf);
         return true;
     }
 

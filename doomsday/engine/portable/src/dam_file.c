@@ -880,7 +880,6 @@ static void writeSeg(const gamemap_t *map, uint idx)
     writeLong((s->v[1] - map->vertexes) + 1);
     writeFloat(s->length);
     writeFloat(s->offset);
-    writeLong(s->sideDef? ((s->sideDef - map->sideDefs) + 1) : 0);
     writeLong(s->lineDef? ((s->lineDef - map->lineDefs) + 1) : 0);
     writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
     writeLong(s->sec[BACK]? ((s->sec[BACK] - map->sectors) + 1) : 0);
@@ -900,8 +899,6 @@ static void readSeg(const gamemap_t *map, uint idx)
     s->v[1] = &map->vertexes[(unsigned) readLong() - 1];
     s->length = readFloat();
     s->offset = readFloat();
-    obIdx = readLong();
-    s->sideDef = (obIdx == 0? NULL : &map->sideDefs[(unsigned) obIdx - 1]);
     obIdx = readLong();
     s->lineDef = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
     obIdx = readLong();
@@ -1071,7 +1068,6 @@ static void writePolyobj(const gamemap_t *map, uint idx)
         writeLong((s->v[1] - map->vertexes) + 1);
         writeFloat(s->length);
         writeFloat(s->offset);
-        writeLong(s->sideDef? ((s->sideDef - map->sideDefs) + 1) : 0);
         writeLong(s->lineDef? ((s->lineDef - map->lineDefs) + 1) : 0);
         writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
         writeLong((long) s->angle);
@@ -1116,8 +1112,6 @@ static void readPolyobj(const gamemap_t *map, uint idx)
         s->v[1] = &map->vertexes[(unsigned) readLong() - 1];
         s->length = readFloat();
         s->offset = readFloat();
-        obIdx = readLong();
-        s->sideDef = (obIdx == 0? NULL : &map->sideDefs[(unsigned) obIdx - 1]);
         obIdx = readLong();
         s->lineDef = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
         obIdx = readLong();

@@ -63,4 +63,12 @@ void        ClockwiseBspTree(binarytree_t *rootNode);
 void        SaveMap(gamemap_t *dest, void *rootNode, vertex_t ***vertexes,
                     uint *numVertexes);
 
+typedef struct bspleafdata_s {
+    size_t              hEdgeCount;
+    struct hedge_s     *hEdges; // Head ptr to a list of half-edges at this leaf.
+} bspleafdata_t;
+
+bspleafdata_t *BSPLeaf_Create(void);
+void        BSPLeaf_Destroy(bspleafdata_t *leaf);
+
 #endif

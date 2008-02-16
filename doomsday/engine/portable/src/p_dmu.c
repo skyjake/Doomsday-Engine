@@ -2057,7 +2057,7 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SEG_OFFSET, &p->offset, args, 0);
             break;
         case DMU_SIDEDEF:
-            GetValue(DMT_SEG_SIDEDEF, &p->sideDef, args, 0);
+            GetValue(DMT_SEG_SIDEDEF, &SEG_SIDEDEF(p), args, 0);
             break;
         case DMU_LINEDEF:
             GetValue(DMT_SEG_LINEDEF, &p->lineDef, args, 0);

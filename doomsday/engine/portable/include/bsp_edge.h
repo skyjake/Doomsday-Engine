@@ -42,18 +42,21 @@
 // Smallest degrees between two angles before being considered equal.
 #define ANG_EPSILON  (1.0 / 1024.0)
 
+#define ET_prev                 link[0]
+#define ET_next                 link[1]
+#define ET_edge                 hEdges
+
 // An edge tip is where an edge meets a vertex.
 typedef struct edgetip_s {
     // Link in list. List is kept in ANTI-clockwise order.
-    struct edgetip_s   *next;
-    struct edgetip_s   *prev;
+    struct edgetip_s   *link[2]; // {prev, next};
 
     // Angle that line makes at vertex (degrees).
     angle_g             angle;
 
-    // Segs on each side of the edge. Left is the side of increasing
-    // angles, right is the side of decreasing angles. Either can be
-    // NULL for one sided edges.
+    // Half-edge on each side of the edge. Left is the side of increasing
+    // angles, right is the side of decreasing angles. Either can be NULL
+    // for one sided edges.
     struct hedge_s     *hEdges[2];
 } edgetip_t;
 

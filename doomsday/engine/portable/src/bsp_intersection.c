@@ -533,26 +533,37 @@ BSP_IntersectionPrint(cur);
             // Check for some nasty open/closed or close/open cases.
             if(cur->after && !next->before)
             {
-                if(!cur->selfRef && !cur->after->buildData.warnedUnclosed)
+                if(!cur->selfRef)
                 {
-                    VERBOSE(
-                    Con_Message("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
-                                cur->after->buildData.index,
-                                (cur->vertex->buildData.pos[VX] + next->vertex->buildData.pos[VX]) / 2.0,
-                                (cur->vertex->buildData.pos[VY] + next->vertex->buildData.pos[VY]) / 2.0));
-                    cur->after->buildData.warnedUnclosed = true;
+                    double              pos[2];
+
+                    pos[VX] = cur->vertex->buildData.pos[VX] +
+                        next->vertex->buildData.pos[VX];
+                    pos[VY] = cur->vertex->buildData.pos[VY] +
+                        next->vertex->buildData.pos[VY];
+
+                    pos[VX] /= 2;
+                    pos[VY] /= 2;
+
+                    MPE_RegisterUnclosedSectorNear(cur->after,
+                                                   pos[VX], pos[VY]);
                 }
             }
             else if(!cur->after && next->before)
             {
-                if(!next->selfRef && !next->before->buildData.warnedUnclosed)
+                if(!next->selfRef)
                 {
-                    VERBOSE(
-                    Con_Message("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
-                                next->before->buildData.index,
-                                (cur->vertex->buildData.pos[VX] + next->vertex->buildData.pos[VX]) / 2.0,
-                                (cur->vertex->buildData.pos[VY] + next->vertex->buildData.pos[VY]) / 2.0));
-                    next->before->buildData.warnedUnclosed = true;
+                    double              pos[2];
+
+                    pos[VX] = cur->vertex->buildData.pos[VX] +
+                        next->vertex->buildData.pos[VX];
+                    pos[VY] = cur->vertex->buildData.pos[VY] +
+                        next->vertex->buildData.pos[VY];
+                    pos[VX] /= 2;
+                    pos[VY] /= 2;
+
+                    MPE_RegisterUnclosedSectorNear(next->before,
+                                                   pos[VX], pos[VY]);
                 }
             }
             else

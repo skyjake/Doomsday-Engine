@@ -45,8 +45,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define WT_edge                 hEdges
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -147,24 +145,6 @@ static void updateHEdge(hedge_t *hedge)
 }
 
 /**
- * Create a new vertex (with correct wall_tip info) for the split that
- * happens along the given half-edge at the given location.
- */
-static vertex_t *newVertexFromSplitHEdge(hedge_t *hEdge, double x, double y)
-{
-    vertex_t           *vert = createVertex();
-
-    vert->buildData.pos[VX] = x;
-    vert->buildData.pos[VY] = y;
-    vert->buildData.refCount = (hEdge->twin? 4 : 2);
-
-    // Compute wall_tip info.
-    BSP_CreateVertexEdgeTip(vert, -hEdge->pDX, -hEdge->pDY, hEdge, hEdge->twin);
-    BSP_CreateVertexEdgeTip(vert, hEdge->pDX, hEdge->pDY, hEdge->twin, hEdge);
-    return vert;
-}
-
-/**
  * Create a new half-edge.
  */
 hedge_t *HEdge_Create(linedef_t *line, linedef_t *sourceLine,
@@ -236,11 +216,24 @@ else
     if(oldHEdge->block)
         BSP_IncSuperBlockHEdgeCounts(oldHEdge->block,
                                      (oldHEdge->lineDef != NULL));
+    /**
+     * Create a new vertex (with correct wall_tip info) for the split that
+     * happens along the given half-edge at the given location.
+     */
+    newVert = createVertex();
+    newVert->buildData.pos[VX] = x;
+    newVert->buildData.pos[VY] = y;
+    newVert->buildData.refCount = (oldHEdge->twin? 4 : 2);
 
-    newVert = newVertexFromSplitHEdge(oldHEdge, x, y);
+    // Compute wall_tip info.
+    BSP_CreateVertexEdgeTip(newVert, -oldHEdge->pDX, -oldHEdge->pDY,
+                            oldHEdge, oldHEdge->twin);
+    BSP_CreateVertexEdgeTip(newVert, oldHEdge->pDX, oldHEdge->pDY,
+                            oldHEdge->twin, oldHEdge);
+
     newHEdge = allocHEdge();
 
-    // Copy seg info.
+    // Copy the old half-edge info.
     memcpy(newHEdge, oldHEdge, sizeof(hedge_t));
     newHEdge->next = NULL;
 
@@ -301,33 +294,34 @@ void BSP_CreateVertexEdgeTip(vertex_t *vert, double dx, double dy,
     edgetip_t          *after;
 
     tip->angle = M_SlopeToAngle(dx, dy);
-    tip->WT_edge[BACK]  = back;
-    tip->WT_edge[FRONT] = front;
+    tip->ET_edge[BACK]  = back;
+    tip->ET_edge[FRONT] = front;
 
     // Find the correct place (order is increasing angle).
-    for(after = vert->buildData.tipSet; after && after->next; after = after->next);
+    for(after = vert->buildData.tipSet; after && after->ET_next;
+        after = after->ET_next);
 
     while(after && tip->angle + ANG_EPSILON < after->angle)
-        after = after->prev;
+        after = after->ET_prev;
 
     // Link it in.
     if(after)
-        tip->next = after->next;
+        tip->ET_next = after->ET_next;
     else
-        tip->next = vert->buildData.tipSet;
-    tip->prev = after;
+        tip->ET_next = vert->buildData.tipSet;
+    tip->ET_prev = after;
 
     if(after)
     {
-        if(after->next)
-            after->next->prev = tip;
+        if(after->ET_next)
+            after->ET_next->ET_prev = tip;
 
-        after->next = tip;
+        after->ET_next = tip;
     }
     else
     {
         if(vert->buildData.tipSet)
-            vert->buildData.tipSet->prev = tip;
+            vert->buildData.tipSet->ET_prev = tip;
 
         vert->buildData.tipSet = tip;
     }
@@ -348,9 +342,9 @@ void BSP_CountEdgeTips(vertex_t *vert, uint *oneSided, uint *twoSided)
     *oneSided = 0;
     *twoSided = 0;
 
-    for(tip = vert->buildData.tipSet; tip; tip = tip->next)
+    for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
     {
-        if(!tip->WT_edge[BACK] || !tip->WT_edge[FRONT])
+        if(!tip->ET_edge[BACK] || !tip->ET_edge[FRONT])
             (*oneSided) += 1;
         else
             (*twoSided) += 1;
@@ -370,7 +364,7 @@ sector_t *BSP_VertexCheckOpen(vertex_t *vert, double dX, double dY)
     // First check whether there's a wall_tip that lies in the exact
     // direction of the given direction (which is relative to the
     // vertex).
-    for(tip = vert->buildData.tipSet; tip; tip = tip->next)
+    for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
     {
         angle_g     diff = fabs(tip->angle - angle);
 
@@ -383,18 +377,18 @@ sector_t *BSP_VertexCheckOpen(vertex_t *vert, double dX, double dY)
     // OK, now just find the first wall_tip whose angle is greater than
     // the angle we're interested in. Therefore we'll be on the FRONT
     // side of that tip edge.
-    for(tip = vert->buildData.tipSet; tip; tip = tip->next)
+    for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
     {
         if(angle + ANG_EPSILON < tip->angle)
         {   // Found it.
-            return (tip->WT_edge[FRONT]? tip->WT_edge[FRONT]->sector : NULL);
+            return (tip->ET_edge[FRONT]? tip->ET_edge[FRONT]->sector : NULL);
         }
 
-        if(!tip->next)
+        if(!tip->ET_next)
         {
             // No more tips, thus we must be on the BACK side of the tip
             // with the largest angle.
-            return (tip->WT_edge[BACK]? tip->WT_edge[BACK]->sector : NULL);
+            return (tip->ET_edge[BACK]? tip->ET_edge[BACK]->sector : NULL);
         }
     }
 

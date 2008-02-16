@@ -501,7 +501,7 @@ void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
                 distance = len;
         }
 
-        if(M_DotProduct(delta, seg->sideDef->SW_middlenormal) >= 0)
+        if(M_DotProduct(delta, SEG_SIDEDEF(seg)->SW_middlenormal) >= 0)
             continue;
 
         if(distance < 1)

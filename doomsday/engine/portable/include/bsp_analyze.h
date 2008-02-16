@@ -42,12 +42,4 @@ void        BSP_GetBMapBounds(int *x, int *y, int *w, int *h);
 void        BSP_DetectOverlappingLines(gamemap_t *map);
 void        BSP_DetectWindowEffects(gamemap_t *map);
 
-// Flags for BSP_PruneRedundantMapData().
-#define     PRUNE_LINEDEFS      0x1
-#define     PRUNE_VERTEXES      0x2
-#define     PRUNE_SIDEDEFS      0x4
-#define     PRUNE_SECTORS       0x8
-#define     PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
-
-void        BSP_PruneRedundantMapData(editmap_t *map, int flags);
 #endif

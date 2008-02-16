@@ -39,13 +39,18 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct usecrecord_s {
+    sector_t           *sec;
+    double              nearPos[2];
+} usecrecord_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-boolean     MPE_PrintMapErrors(boolean silent);
+void MPE_PrintMapErrors(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -58,10 +63,8 @@ static editmap_t editMap, *map = &editMap;
 
 static gamemap_t *lastBuiltMap = NULL;
 
-// The following is used in error fixing/detection/reporting:
-// missing sidedefs
-static uint numMissingFronts;
-static uint *missingFronts;
+static uint numUnclosedSectors;
+static usecrecord_t *unclosedSectors;
 
 static vertex_t *rootVtx; // Used when sorting vertex line owners.
 
@@ -239,7 +242,7 @@ static void destroyEditableVertexes(editmap_t *map)
             tip = vtx->buildData.tipSet;
             while(tip)
             {
-                n = tip->next;
+                n = tip->ET_next;
                 BSP_DestroyVertexEdgeTip(tip);
                 tip = n;
             }
@@ -308,12 +311,319 @@ void MPE_DetectDuplicateVertices(editmap_t *map)
 }
 
 /**
+ * Checks if the index is in the bitfield.
+ */
+#if 0 // Currently unused.
+static __inline boolean hasIndexBit(uint index, uint *bitfield)
+{
+    // Assume 32-bit uint.
+    return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
+}
+#endif
+
+/**
+ * Sets the index in the bitfield.
+ * Count is incremented when a zero bit is changed to one.
+ */
+#if 0 // Currently unused.
+static __inline void addIndexBit(uint index, uint *bitfield)
+{
+    // Assume 32-bit uint.
+    bitfield[index >> 5] |= (1 << (index & 0x1f));
+}
+#endif
+
+static void pruneLinedefs(editmap_t *src)
+{
+    uint            i, newNum;
+
+    // Scan all linedefs.
+    for(i = 0, newNum = 0; i < src->numLineDefs; ++i)
+    {
+        linedef_t         *l = src->lineDefs[i];
+
+        // Handle duplicated vertices.
+        while(l->v[0]->buildData.equiv)
+        {
+            l->v[0]->buildData.refCount--;
+            l->v[0] = l->v[0]->buildData.equiv;
+            l->v[0]->buildData.refCount++;
+        }
+
+        while(l->v[1]->buildData.equiv)
+        {
+            l->v[1]->buildData.refCount--;
+            l->v[1] = l->v[1]->buildData.equiv;
+            l->v[1]->buildData.refCount++;
+        }
+
+        // Remove zero length lines.
+        if(l->buildData.mlFlags & MLF_ZEROLENGTH)
+        {
+            l->v[0]->buildData.refCount--;
+            l->v[1]->buildData.refCount--;
+
+            M_Free(src->lineDefs[i]);
+            src->lineDefs[i] = NULL;
+            continue;
+        }
+
+        l->buildData.index = newNum;
+        src->lineDefs[newNum++] = src->lineDefs[i];
+    }
+
+    if(newNum < src->numLineDefs)
+    {
+        VERBOSE(Con_Message("  Pruned %d zero-length linedefs\n",
+                            src->numLineDefs - newNum));
+        src->numLineDefs = newNum;
+    }
+}
+
+static void pruneVertices(editmap_t *map)
+{
+    uint            i, newNum, unused = 0;
+
+    // Scan all vertices.
+    for(i = 0, newNum = 0; i < map->numVertexes; ++i)
+    {
+        vertex_t           *v = map->vertexes[i];
+
+        if(v->buildData.refCount < 0)
+            Con_Error("Vertex %d ref_count is %d", i, v->buildData.refCount);
+
+        if(v->buildData.refCount == 0)
+        {
+            if(v->buildData.equiv == NULL)
+                unused++;
+
+            M_Free(v);
+            continue;
+        }
+
+        v->buildData.index = newNum;
+        map->vertexes[newNum++] = v;
+    }
+
+    if(newNum < map->numVertexes)
+    {
+        int         dupNum = map->numVertexes - newNum - unused;
+
+        if(verbose >= 1)
+        {
+            if(unused > 0)
+                Con_Message("  Pruned %d unused vertices.\n", unused);
+
+            if(dupNum > 0)
+                Con_Message("  Pruned %d duplicate vertices\n", dupNum);
+        }
+
+        map->numVertexes = newNum;
+    }
+}
+
+#if 0 // Currently unused.
+static void pruneUnusedSidedefs(void)
+{
+    int         i, newNum, unused = 0;
+    size_t      bitfieldSize;
+    uint       *indexBitfield = 0;
+
+    bitfieldSize = 4 * (numSidedefs + 7) / 8;
+    indexBitfield = M_Calloc(bitfieldSize);
+
+    for(i = 0; i < numLinedefs; ++i)
+    {
+        linedef_t         *l = levLinedefs[i];
+
+        if(l->sideDefs[FRONT])
+            addIndexBit(l->sideDefs[FRONT]->buildData.index, indexBitfield);
+
+        if(l->sideDefs[BACK])
+            addIndexBit(l->sideDefs[BACK]->buildData.index, indexBitfield);
+    }
+
+    // Scan all sidedefs.
+    for(i = 0, newNum = 0; i < numSidedefs; ++i)
+    {
+        sidedef_t *s = levSidedefs[i];
+
+        if(!hasIndexBit(s->buildData.index, indexBitfield))
+        {
+            unused++;
+
+            M_Free(s);
+            continue;
+        }
+
+        s->buildData.index = newNum;
+        levSidedefs[newNum++] = s;
+    }
+
+    M_Free(indexBitfield);
+
+    if(newNum < numSidedefs)
+    {
+        int         dupNum = numSidedefs - newNum - unused;
+
+        if(verbose >= 1)
+        {
+            if(unused > 0)
+                Con_Message("  Pruned %d unused sidedefs\n", unused);
+
+            if(dupNum > 0)
+                Con_Message("  Pruned %d duplicate sidedefs\n", dupNum);
+        }
+
+        numSidedefs = newNum;
+    }
+}
+#endif
+
+#if 0 // Currently unused.
+static void pruneUnusedSectors(void)
+{
+    int         i, newNum;
+    size_t      bitfieldSize;
+    uint       *indexBitfield = 0;
+
+    bitfieldSize = 4 * (numSectors + 7) / 8;
+    indexBitfield = M_Calloc(bitfieldSize);
+
+    for(i = 0; i < numSidedefs; ++i)
+    {
+        sidedef_t *s = levSidedefs[i];
+
+        if(s->sector)
+            addIndexBit(s->sector->buildData.index, indexBitfield);
+    }
+
+    // Scan all sectors.
+    for(i = 0, newNum = 0; i < numSectors; ++i)
+    {
+        sector_t *s = levSectors[i];
+
+        if(!hasIndexBit(s->buildData.index, indexBitfield))
+        {
+            M_Free(s);
+            continue;
+        }
+
+        s->buildData.index = newNum;
+        levSectors[newNum++] = s;
+    }
+
+    M_Free(indexBitfield);
+
+    if(newNum < numSectors)
+    {
+        VERBOSE(Con_Message("  Pruned %d unused sectors\n",
+                            numSectors - newNum));
+        numSectors = newNum;
+    }
+}
+#endif
+
+/**
+ * \note Order here is critical!
+ */
+void MPE_PruneRedundantMapData(editmap_t *map, int flags)
+{
+    if(!editMapInited)
+        return;
+
+    if(flags & PRUNE_LINEDEFS)
+        pruneLinedefs(map);
+
+    if(flags & PRUNE_VERTEXES)
+        pruneVertices(map);
+
+    //if(flags & PRUNE_SIDEDEFS)
+    //    pruneUnusedSidedefs();
+
+    //if(flags & PRUNE_SECTORS)
+    //    pruneUnusedSectors();
+}
+
+/**
+ * Register the specified sector in the list of unclosed sectors.
+ *
+ * @param sec           Ptr to the sector to be registered.
+ * @param x             Approximate X coordinate to the sector's origin.
+ * @param y             Approximate Y coordinate to the sector's origin.
+ *
+ * @return              @c true, if sector was registered.
+ */
+boolean MPE_RegisterUnclosedSectorNear(sector_t *sec, double x, double y)
+{
+    uint                i;
+    usecrecord_t       *usec;
+
+    if(!sec)
+        return false; // Wha?
+
+    // Has this sector already been registered as unclosed?
+    for(i = 0; i < numUnclosedSectors; ++i)
+    {
+        if(unclosedSectors[i].sec == sec)
+            return true;
+    }
+
+    // A new one.
+    unclosedSectors = M_Realloc(unclosedSectors,
+                                ++numUnclosedSectors * sizeof(usecrecord_t));
+    usec = &unclosedSectors[numUnclosedSectors-1];
+    usec->sec = sec;
+    usec->nearPos[VX] = x;
+    usec->nearPos[VY] = y;
+
+    // Flag the sector as unclosed.
+    sec->flags |= SECF_UNCLOSED;
+
+    return true;
+}
+
+/**
+ * Print the list of unclosed sectors.
+ */
+void MPE_PrintUnclosedSectorList(void)
+{
+    uint                i;
+
+    if(!editMapInited)
+        return;
+
+    for(i = 0; i < numUnclosedSectors; ++i)
+    {
+        usecrecord_t       *usec = &unclosedSectors[i];
+
+        VERBOSE(
+        Con_Message("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
+                    usec->sec->buildData.index, usec->nearPos[VX],
+                    usec->nearPos[VY]));
+    }
+}
+
+/**
+ * Free the list of unclosed sectors.
+ */
+void MPE_FreeUnclosedSectorList(void)
+{
+    if(unclosedSectors)
+        M_Free(unclosedSectors);
+    unclosedSectors = NULL;
+    numUnclosedSectors = 0;
+}
+
+/**
  * Called to begin the map building process.
  */
 boolean MPE_Begin(const char *name)
 {
     if(editMapInited)
         return true; // Already been here.
+
+    MPE_FreeUnclosedSectorList();
 
     destroyMap();
 
@@ -326,59 +636,10 @@ boolean MPE_Begin(const char *name)
     return true;
 }
 
-static void findMissingFrontSidedefs(gamemap_t *map)
-{
-    uint        i;
-
-    numMissingFronts = 0;
-    missingFronts = M_Calloc(map->numLineDefs * sizeof(uint));
-
-    for(i = 0; i < map->numLineDefs; ++i)
-    {
-        linedef_t     *li = &map->lineDefs[i];
-
-        if(!li->L_frontside)
-        {   // A missing front sidedef
-            missingFronts[i] = 1;
-            numMissingFronts++;
-        }
-    }
-}
-
-static void linkSSecsToSectors(gamemap_t *map)
-{
-    uint        i;
-
-    for(i = 0; i < map->numSSectors; ++i)
-    {
-        subsector_t *ssec = &map->ssectors[i];
-        seg_t      **segp;
-        boolean     found;
-
-        segp = ssec->segs;
-        found = false;
-        while(*segp)
-        {
-            seg_t      *seg = *segp;
-
-            if(!found && seg->sideDef)
-            {
-                ssec->sector = seg->sideDef->sector;
-                found = true;
-            }
-
-            seg->subsector = ssec;
-            *segp++;
-        }
-
-        assert(ssec->sector);
-    }
-}
-
 static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
 {
-    uint        i, n, count;
-    sector_t   *sec = &map->sectors[secIDX];
+    uint                i, n, count;
+    sector_t           *sec = &map->sectors[secIDX];
 
     count = 0;
     for(i = 0; i < map->numSSectors; ++i)
@@ -394,7 +655,8 @@ static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
     n = 0;
     for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t *ssec = &map->ssectors[i];
+        subsector_t        *ssec = &map->ssectors[i];
+
         if(ssec->sector == sec)
             sec->ssectors[n++] = ssec;
     }
@@ -407,7 +669,9 @@ static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
  */
 static void buildSectorSSecLists(gamemap_t *map)
 {
-    uint        i;
+    uint                i;
+
+    Con_Message(" Build subsector tables...\n");
 
     for(i = 0; i < map->numSectors; ++i)
     {
@@ -422,13 +686,15 @@ static void buildSectorLineLists(gamemap_t *map)
         struct linelink_s *next;
     } linelink_t;
 
-    uint        i, j;
-    linedef_t     *li;
-    sector_t   *sec;
+    uint                i, j;
+    linedef_t          *li;
+    sector_t           *sec;
 
-    zblockset_t *lineLinksBlockSet;
-    linelink_t  **sectorLineLinks;
-    uint        totallinks;
+    zblockset_t        *lineLinksBlockSet;
+    linelink_t        **sectorLineLinks;
+    uint                totallinks;
+
+    Con_Message(" Build line tables...\n");
 
     // build line tables for each sector.
     lineLinksBlockSet = Z_BlockCreate(sizeof(linelink_t), 512, PU_STATIC);
@@ -579,18 +845,18 @@ void P_GetSectorBounds(sector_t *sec, float *min, float *max)
 
 static void finishSectors(gamemap_t *map)
 {
-    uint        i;
-    vec2_t      bmapOrigin;
-    uint        bmapSize[2];
+    uint                i;
+    vec2_t              bmapOrigin;
+    uint                bmapSize[2];
 
     P_GetBlockmapBounds(map->blockMap, bmapOrigin, NULL);
     P_GetBlockmapDimensions(map->blockMap, bmapSize);
 
     for(i = 0; i < map->numSectors; ++i)
     {
-        uint        k;
-        float       min[2], max[2];
-        sector_t   *sec = &map->sectors[i];
+        uint                k;
+        float               min[2], max[2];
+        sector_t           *sec = &map->sectors[i];
 
         findSectorSSecGroups(sec);
 
@@ -634,10 +900,10 @@ static void finishSectors(gamemap_t *map)
  */
 static void finishLineDefs(gamemap_t* map)
 {
-    uint        i;
-    linedef_t     *ld;
-    vertex_t   *v[2];
-    seg_t      *startSeg, *endSeg;
+    uint                i;
+    linedef_t          *ld;
+    vertex_t           *v[2];
+    seg_t              *startSeg, *endSeg;
 
     VERBOSE2(Con_Message("Finalizing Linedefs...\n"));
 
@@ -696,38 +962,6 @@ static void finishLineDefs(gamemap_t* map)
     }
 }
 
-/**
- * Builds sector line lists and subsector sector numbers.
- * Finds block bounding boxes for sectors.
- */
-static void finalizeMapData(gamemap_t *map)
-{
-    uint        startTime = Sys_GetRealTime();
-
-    Con_Message(" Sector look up...\n");
-    linkSSecsToSectors(map);
-
-    Con_Message(" Build subsector tables...\n");
-    buildSectorSSecLists(map);
-
-    Con_Message(" Build line tables...\n");
-    buildSectorLineLists(map);
-
-    finishLineDefs(map);
-
-    if(1)//mustCreateBlockMap)
-    {
-        DAM_BuildBlockMap(map);
-    }
-
-    finishSectors(map);
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("finalizeMapData: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
-}
-
 static void updateMapBounds(gamemap_t *map)
 {
     uint                i;
@@ -747,30 +981,6 @@ static void updateMapBounds(gamemap_t *map)
             // Expand the bounding box.
             M_JoinBoxes(map->bBox, sec->bBox);
         }
-    }
-}
-
-static void markUnclosedSectors(gamemap_t *map)
-{
-    uint                i;
-
-    for(i = 0; i < map->numSectors; ++i)
-    {
-        boolean     unclosed = false;
-        sector_t   *sec = &map->sectors[i];
-
-        if(sec->lineDefCount < 3)
-        {
-            unclosed = true;
-        }
-        else
-        {
-            // \todo Add algorithm to check for unclosed sectors here.
-            // Perhaps have a look at glBSP.
-        }
-
-        if(unclosed)
-            sec->flags |= SECF_UNCLOSED;
     }
 }
 
@@ -995,7 +1205,7 @@ static void setVertexLineOwner(vertex_t *vtx, linedef_t *lineptr,
 
 /**
  * Generates the line owner rings for each vertex. Each ring includes all
- * the lines which the vertex belongs to sorted by angle, (the rings is
+ * the lines which the vertex belongs to sorted by angle, (the rings are
  * arranged in clockwise order, east = 0).
  */
 static void buildVertexOwnerRings(gamemap_t *map, vertex_t ***vertexes,
@@ -1223,7 +1433,6 @@ static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
             dy = line->L_v2pos[VY] - line->L_v1pos[VY];
             seg->length = P_AccurateDistance(dx, dy);
             seg->backSeg = NULL;
-            seg->sideDef = line->L_frontside;
             seg->subsector = NULL;
             seg->SG_frontsector = line->L_frontsector;
             seg->SG_backsector = NULL;
@@ -1273,8 +1482,6 @@ boolean MPE_End(void)
 
     if(!editMapInited)
         return false;
-
-    editMapInited = false;
 
     gamemap = Z_Calloc(sizeof(*gamemap), PU_LEVELSTATIC, 0);
 
@@ -1332,15 +1539,24 @@ boolean MPE_End(void)
         gx.SetupForMapData(DAM_SECTOR, gamemap->numSectors);
     }
 
-    findMissingFrontSidedefs(gamemap);
-    finalizeMapData(gamemap);
+    buildSectorSSecLists(gamemap);
+    buildSectorLineLists(gamemap);
+    finishLineDefs(gamemap);
 
-    markUnclosedSectors(gamemap);
+    DAM_BuildBlockMap(gamemap);
+
+    finishSectors(gamemap);
     updateMapBounds(gamemap);
     S_DetermineSubSecsAffectingSectorReverb(gamemap);
     prepareSubSectors(gamemap);
+
     // Announce any issues detected with the map.
-    MPE_PrintMapErrors(false);
+    MPE_PrintMapErrors();
+
+    P_FreeBadTexList();
+    MPE_FreeUnclosedSectorList();
+
+    editMapInited = false;
 
     /**
      * Are we caching this map?
@@ -1378,62 +1594,14 @@ gamemap_t *MPE_GetLastBuiltMap(void)
 
 /**
  * If we encountered any problems during setup - announce them to the user.
- *
- * \todo latter on this will be expanded to check for various
- * doom.exe renderer hacks and other stuff.
- *
- * @param silent        @c true = don't announce non-critical errors.
- *
- * @return              @c true = we can continue setting up the level.
  */
-boolean MPE_PrintMapErrors(boolean silent)
+void MPE_PrintMapErrors(void)
 {
-    uint        i, printCount;
-    boolean     canContinue = !numMissingFronts;
-
-    // If we are missing any front sidedefs announce them to the user.
-    // Critical
-    if(numMissingFronts)
-    {
-        Con_Message(" ![100] Error: Found %u linedef(s) missing front sidedefs:\n",
-                    numMissingFronts);
-
-        printCount = 0;
-        for(i = 0; i < numLineDefs; ++i)
-        {
-            if(missingFronts[i])
-            {
-                Con_Printf("%s%u,", printCount? " ": "   ", i);
-
-                if((++printCount) > 9)
-                {   // print 10 per line then wrap.
-                    printCount = 0;
-                    Con_Printf("\n ");
-                }
-            }
-        }
-        Con_Printf("\n");
-    }
+    // Announce unclosed sectors.
+    MPE_PrintUnclosedSectorList();
 
     // Announce any bad texture names we came across when loading the map.
-    if(!silent)
-        P_PrintMissingTextureList();
-
-    // Dont need this stuff anymore
-    if(missingFronts != NULL)
-        M_Free(missingFronts);
-
-    P_FreeBadTexList();
-
-    if(!canContinue)
-    {
-        Con_Message("\nP_CheckLevel: Critical errors encountered "
-                    "(marked with '!').\n  You will need to fix these errors in "
-                    "order to play this map.\n");
-        return false;
-    }
-
-    return true;
+    P_PrintMissingTextureList();
 }
 
 uint MPE_VertexCreate(float x, float y)
@@ -1660,7 +1828,6 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue,
     s->rgb[CG] = MINMAX_OF(0, green, 1);
     s->rgb[CB] = MINMAX_OF(0, blue, 1);
     s->lightLevel = MINMAX_OF(0, lightlevel, 1);
-    s->buildData.warnedFacing = -1;
     s->planeCount = 2;
     s->planes = M_Malloc(sizeof(plane_t*) * (s->planeCount+1));
     for(i = 0; i < 2; ++i)

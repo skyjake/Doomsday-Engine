@@ -267,11 +267,11 @@ void S_DetermineSubSecsAffectingSectorReverb(gamemap_t *map)
 
 static boolean calcSSecReverb(subsector_t *ssec)
 {
-    uint        i, v;
-    seg_t     **ptr;
-    float       total = 0;
-    materialclass_t mclass;
-    float       materials[NUM_MATERIAL_CLASSES];
+    uint                i, v;
+    seg_t             **ptr;
+    float               total = 0;
+    materialclass_t     mclass;
+    float               materials[NUM_MATERIAL_CLASSES];
 
     memset(&materials, 0, sizeof(materials));
 
@@ -286,12 +286,11 @@ static boolean calcSSecReverb(subsector_t *ssec)
     ptr = ssec->segs;
     while(*ptr)
     {
-        seg_t      *seg = *ptr;
+        seg_t              *seg = *ptr;
 
-        if(seg->lineDef && seg->sideDef &&
-           seg->sideDef->SW_middlematerial)
+        if(seg->lineDef && SEG_SIDEDEF(seg)->SW_middlematerial)
         {
-            material_t     *mat = seg->sideDef->SW_middlematerial;
+            material_t         *mat = SEG_SIDEDEF(seg)->SW_middlematerial;
 
             // The texture of the seg determines its type.
             if(mat->ofTypeID >= 0)

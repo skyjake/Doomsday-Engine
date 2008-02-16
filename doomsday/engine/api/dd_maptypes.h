@@ -6,8 +6,9 @@
 #define DMT_VERTEX_POS  DDVT_FLOAT
 
 
+#define DMT_SEG_SIDEDEF         DDVT_PTR
+
 #define DMT_SEG_V DDVT_PTR             // [Start, End] of the segment.
-#define DMT_SEG_SIDEDEF DDVT_PTR
 #define DMT_SEG_LINEDEF DDVT_PTR
 #define DMT_SEG_SEC DDVT_PTR
 #define DMT_SEG_SUBSECTOR DDVT_PTR

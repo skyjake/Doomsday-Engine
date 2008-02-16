@@ -80,6 +80,19 @@ uint            MPE_PolyobjCreate(uint *lines, uint linecount,
                                   int tag, int sequenceType, float startX, float startY);
 
 // Non-public (temporary)
+// Flags for MPE_PruneRedundantMapData().
+#define PRUNE_LINEDEFS      0x1
+#define PRUNE_VERTEXES      0x2
+#define PRUNE_SIDEDEFS      0x4
+#define PRUNE_SECTORS       0x8
+#define PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
+
+void            MPE_PruneRedundantMapData(editmap_t *map, int flags);
+
+boolean         MPE_RegisterUnclosedSectorNear(sector_t *sec, double x, double y);
+void            MPE_PrintUnclosedSectorList(void);
+void            MPE_FreeUnclosedSectorList(void);
+
 gamemap_t      *MPE_GetLastBuiltMap(void);
 vertex_t       *createVertex(void);
 #endif
