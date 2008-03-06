@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="JHexen"
+	Name="jHexen"
 	ProjectGUID="{060CA7D4-CEF4-4F36-8950-55A3E5C46C4C}"
 	RootNamespace="JHexen"
 	TargetFrameworkVersion="131072"
@@ -324,6 +324,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_user.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_view.h"
 				>
 			</File>
@@ -532,6 +536,10 @@
 			Name="Header Files"
 			>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\a_action.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\acfnlink.h"
 				>
 			</File>
@@ -544,7 +552,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\g_game.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\h2def.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\in_lude.h"
 				>
 			</File>
 			<File
@@ -560,6 +576,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\m_menu.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\m_random.h"
 				>
 			</File>
@@ -572,11 +592,35 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_anim.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_enemy.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_floor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_inter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_lights.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\p_local.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\include\p_mapinfo.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_maputl.h"
 				>
 			</File>
 			<File
@@ -596,6 +640,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_telept.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_things.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\po_man.h"
 				>
 			</File>
@@ -609,6 +661,18 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\include\s_sequence.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\s_sound.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\sc_man.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\sn_sonix.h"
 				>
 			</File>
 			<File
@@ -632,7 +696,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\x_api.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\x_config.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\x_console.h"
 				>
 			</File>
 			<File
@@ -644,7 +716,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\x_main.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\x_player.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\x_refresh.h"
 				>
 			</File>
 			<File
