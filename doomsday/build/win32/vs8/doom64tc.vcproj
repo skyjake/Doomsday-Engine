@@ -323,6 +323,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_user.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_view.h"
 				>
 			</File>
@@ -553,6 +557,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\doom64tc\include\d_api.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\doom64tc\include\d_config.h"
 				>
 			</File>
@@ -565,15 +573,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\d_event.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\doom64tc\include\d_items.h"
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\doom64tc\include\d_main.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\doom64tc\include\d_player.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\doom64tc\include\d_refresh.h"
 				>
 			</File>
 			<File
@@ -585,15 +597,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\doomdata.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\doom64tc\include\doomdef.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\doomstat.h"
 				>
 			</File>
 			<File
@@ -633,11 +637,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\doom64tc\include\p_enemy.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\doom64tc\include\p_floor.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\doom64tc\include\p_inter.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_local.h"
+				RelativePath="..\..\..\plugins\doom64tc\include\p_lights.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\doom64tc\include\p_maputl.h"
 				>
 			</File>
 			<File
@@ -653,23 +669,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\doom64tc\include\p_sound.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\doom64tc\include\p_spec.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\r_data.h"
+				RelativePath="..\..\..\plugins\doom64tc\include\p_switch.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\doom64tc\include\p_telept.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\doom64tc\include\r_defs.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\r_local.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\s_sound.h"
 				>
 			</File>
 			<File
