@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
  */
 
 /**
- * g_game.h: Top-level (common) game routines.
+ * g_game.h: Top-level (common) game routines jDoom - specific.
  */
 
-#ifndef __G_GAME__
-#define __G_GAME__
+#ifndef __G_GAME_H__
+#define __G_GAME_H__
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -38,7 +38,30 @@
 #include "d_event.h"
 #include "d_player.h"
 
+extern player_t players[MAXPLAYERS];
+extern boolean secretExit;
+extern int nextMap;
+extern skillmode_t gameSkill;
+extern int gameEpisode;
+extern int gameMap;
+extern int nextMap; // If non zero this will be the next map.
+extern int prevMap;
+extern int totalKills, totalItems, totalSecret;
+extern boolean deathmatch;
+extern boolean respawnMonsters;
+extern boolean userGame;
+extern boolean viewActive;
+extern boolean paused;
+extern boolean precache;
+extern wbstartstruct_t wmInfo;
+extern int bodyQueueSlot;
+extern int levelStartTic;
+
+extern int gsvMapMusic;
+
 void            G_Register(void);
+void            G_CommonPreInit(void);
+void            G_CommonPostInit(void);
 
 void            G_DeathMatchSpawnPlayer(int playernum);
 
@@ -63,12 +86,12 @@ void            G_DoLoadGame(void);
 // Called by Hu_MenuResponder.
 void            G_SaveGame(int slot, char *description);
 
-
 void            G_StopDemo(void);
 void            G_DemoEnds(void);
 void            G_DemoAborted(void);
 
 void            G_DoReborn(int playernum);
+void            G_PlayerReborn(int player);
 void            G_LeaveLevel(int map, int position, boolean secret);
 
 void            G_WorldDone(void);

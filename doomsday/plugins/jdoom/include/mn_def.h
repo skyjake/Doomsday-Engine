@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -101,7 +101,7 @@ typedef enum {
 } menutype_t;
 
 // Menu item flags
-#define MIF_NOTALTTXT   0x01  // don't use alt text instead of lump (M_NMARE)
+#define MIF_NOTALTTXT           0x01 // Don't use alt text instead of lump (M_NMARE)
 
 typedef struct {
     menuitemtype_t  type;
@@ -114,8 +114,8 @@ typedef struct {
 } menuitem_t;
 
 // Menu flags
-#define MNF_NOHOTKEYS   0x00000001  // hotkeys are disabled.
-#define MNF_NOSCALE     0x00000002  // menu wont be scaled (e.g. readthis).
+#define MNF_NOHOTKEYS           0x00000001 // Hotkeys are disabled.
+#define MNF_NOSCALE             0x00000002 // Menu wont be scaled (e.g. readthis).
 
 typedef struct {
     int             flags;
@@ -126,7 +126,7 @@ typedef struct {
     const menuitem_t *items;
     int             lastOn;
     menutype_t      prevMenu;
-    dpatch_t       *font;           // Font for menu items.
+    dpatch_t       *font; // Font for menu items.
     float          *color;
     char           *background;     // Background lump name for this menu (if any).
     int             itemHeight;

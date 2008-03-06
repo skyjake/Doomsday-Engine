@@ -27,8 +27,8 @@
  * p_local.h: Play functions, animation, global header.
  */
 
-#ifndef __P_LOCAL__
-#define __P_LOCAL__
+#ifndef __P_LOCAL_H__
+#define __P_LOCAL_H__
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -41,66 +41,52 @@
 
 // Palette indices.
 // For damage/bonus red-/gold-shifts
-#define STARTREDPALS    1
-#define STARTBONUSPALS  9
-#define NUMREDPALS      8
-#define NUMBONUSPALS    4
+#define STARTREDPALS        (1)
+#define STARTBONUSPALS      (9)
+#define NUMREDPALS          (8)
+#define NUMBONUSPALS        (4)
 
-#define FLOATSPEED      4
+#define FLOATSPEED          (4)
 
-#define DELTAMUL        6.324555320 // Used when calculating ticcmd_t.lookdirdelta
+#define DELTAMUL            (6.324555320) // Used when calculating ticcmd_t.lookdirdelta
 
 
-#define MAXHEALTH       maxhealth  //100
-#define VIEWHEIGHT      41
+#define MAXHEALTH           (maxHealth)  //100
+#define VIEWHEIGHT          (41)
 
-#define TOCENTER        -8
+#define TOCENTER            (-8)
 
 // player radius for movement checking
-#define PLAYERRADIUS    16
+#define PLAYERRADIUS        (16)
 
 // MAXRADIUS is for precalculated sector block boxes the spider demon is
 // larger, but we do not have any moving sectors nearby.
-#define MAXRADIUS       32
-#define MAXMOVE         30
+#define MAXRADIUS           (32)
+#define MAXMOVE             (30)
 
-#define USERANGE        64
-#define MELEERANGE      64
-#define MISSILERANGE    (32*64)
+#define USERANGE            (64)
+#define MELEERANGE          (64)
+#define MISSILERANGE        (32*64)
 
-// follow a player exlusively for 3 seconds
-#define BASETHRESHOLD   100
+#define BASETHRESHOLD       (100)
 
-// GMJ 02/02/02
-#define sentient(mobj)  ((mobj)->health > 0 && (mobj)->info->seeState)
+#define sentient(mobj)      ((mobj)->health > 0 && (mobj)->info->seeState)
 
-//
-// P_TICK
-//
+#define thinkerCap          (*gi.thinkerCap)
 
-#define thinkerCap      (*gi.thinkerCap)
+#define FRICTION_NORMAL     (0.90625f)
+#define FRICTION_FLY        (0.91796875f)
+#define FRICTION_HIGH       (0.5f)
 
-extern int TimerGame;         // tic countdown for deathmatch
+#define ONFLOORZ            (DDMINFLOAT)
+#define ONCEILINGZ          (DDMAXFLOAT)
+#define FLOATRANDZ          (DDMAXFLOAT-1)
 
-//
-// P_PSPR
-//
-void        P_SetupPsprites(player_t *plr);
-void        P_MovePsprites(player_t *plr);
-void        P_DropWeapon(player_t *plr);
-void        P_SetPsprite(player_t *plr, int position, statenum_t stnum);
+#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
+#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
+#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
+#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-//
-// P_USER
-//
-extern int maxhealth, healthlimit, godmodehealth;
-extern int soulspherehealth, soulspherelimit, megaspherehealth;
-extern int armorpoints[4];    // Green, blue, IDFA and IDKFA points.
-extern int armorclass[4];     // Green and blue classes.
-
-//
-// P_MOBJ
-//
 // Any floor type >= FLOOR_LIQUID will floorclip sprites
 enum {
     FLOOR_SOLID,
@@ -113,19 +99,18 @@ enum {
     NUM_TERRAINTYPES
 };
 
-#define FRICTION_NORMAL     (0.90625f)
-#define FRICTION_FLY        (0.91796875f)
-#define FRICTION_HIGH       (0.5f)
+extern float turboMul;
+extern int maxHealth, healthLimit, godModeHealth;
+extern int soulSphereHealth, soulSphereLimit, megaSphereHealth;
+extern int armorPoints[4]; // Green, blue, IDFA and IDKFA points.
+extern int armorClass[4]; // Green and blue classes.
+extern int maxAmmo[NUM_AMMO_TYPES];
+extern int clipAmmo[NUM_AMMO_TYPES];
 
-#define ONFLOORZ            DDMINFLOAT
-#define ONCEILINGZ          DDMAXFLOAT
-#define FLOATRANDZ          (DDMAXFLOAT-1)
-
-// Time interval for item respawning.
-#define ITEMQUESIZE         128
-
-extern int iquehead;
-extern int iquetail;
+void        P_SetupPsprites(player_t *plr);
+void        P_MovePsprites(player_t *plr);
+void        P_DropWeapon(player_t *plr);
+void        P_SetPsprite(player_t *plr, int position, statenum_t stnum);
 
 mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z);
 mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3]);
@@ -147,39 +132,6 @@ void        P_HitFloor(mobj_t *mo);
 
 void        P_SpawnMapThing(spawnspot_t *th);
 void        P_SpawnPlayer(spawnspot_t *mthing, int pnum);
-
-//
-// P_ENEMY
-//
-void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
-void        P_SpawnBrainTargets(void);
-
-// Global state of boss brain.
-extern struct brain_s {
-    int         easy;
-    int         targetOn;
-} brain;
-
-extern mobj_t **braintargets;
-extern int numbraintargets;
-extern int numbraintargets_alloc;
-
-//
-// P_MAPUTL
-//
-
-#define openrange           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define opentop             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define openbottom          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define lowfloor            (*(float*) DD_GetVariable(DD_LOWFLOOR))
-
-int         P_Massacre(void);
-
-//
-// P_INTER
-//
-extern int maxammo[NUM_AMMO_TYPES];
-extern int clipammo[NUM_AMMO_TYPES];
 
 void        P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
 

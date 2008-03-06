@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,15 +27,11 @@
  * p_inter.h:
  */
 
-#ifndef __P_INTER__
-#define __P_INTER__
+#ifndef __P_INTER_H__
+#define __P_INTER_H__
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
-#endif
-
-#ifdef __GNUG__
-#pragma interface
 #endif
 
 boolean         P_GivePower(player_t *plr, int);
