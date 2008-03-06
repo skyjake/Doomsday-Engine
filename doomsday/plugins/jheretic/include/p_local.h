@@ -71,13 +71,9 @@
 
 #define FLOATSPEED      4
 
-#define DELTAMUL        6.324555320 // Used when calculating ticcmd_t.lookdirdelta
-
 #define MAXHEALTH       100
 #define MAXCHICKENHEALTH 30
 #define VIEWHEIGHT      41
-
-#define TOCENTER        -8
 
 // player radius for movement checking
 #define PLAYERRADIUS    16
@@ -103,19 +99,7 @@
 
 // ***** P_TICK *****
 
-//extern thinker_t thinkerCap; // both the head and tail of the thinker list
-
 #define thinkerCap      (*gi.thinkerCap)
-
-extern int      TimerGame;         // tic countdown for deathmatch
-
-//void P_InitThinkers(void);
-//void P_AddThinker(thinker_t *thinker);
-//void P_RemoveThinker(thinker_t *thinker);
-
-/*#define P_InitThinkers        gi.InitThinkers
-   #define P_AddThinker     gi.AddThinker
-   #define P_RemoveThinker      gi.RemoveThinker */
 
 // ***** P_PSPR *****
 
@@ -172,14 +156,8 @@ enum {
 #define ONCEILINGZ          DDMAXFLOAT
 #define FLOATRANDZ          (DDMAXFLOAT-1)
 
-// Time interval for item respawning.
-#define ITEMQUESIZE         128
-
-extern int      iquehead;
-extern int      iquetail;
-
-extern mobjtype_t PuffType;
-extern mobj_t  *MissileMobj;
+extern mobjtype_t puffType;
+extern mobj_t  *missileMobj;
 
 mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z);
 mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3]);
@@ -220,32 +198,22 @@ void        P_DSparilTeleport(mobj_t *actor);
 
 // ***** P_MAPUTL *****
 
-#define openrange           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define opentop             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define openbottom          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define lowfloor            (*(float*) DD_GetVariable(DD_LOWFLOOR))
+#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
+#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
+#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
+#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
 // ***** P_SETUP *****
-
-/*extern byte *rejectMatrix;                // for fast sight rejection
-   extern short *blockmaplump;              // offsets in blockmap are from here
-   extern short *blockmap;
-   extern int bmapwidth, bmapheight;        // in mapblocks
-   extern fixed_t bmaporgx, bmaporgy;       // origin of block map
-   extern mobj_t **blocklinks;              // for thing chains */
-
-#define bmapwidth   (*gi.bmapwidth)
-#define bmapheight  (*gi.bmapheight)
-#define bmaporgx    (*gi.bmaporgx)
-#define bmaporgy    (*gi.bmaporgy)
 
 char           *P_GetLevelName(int episode, int map);
 char           *P_GetShortLevelName(int episode, int map);
 
 // ***** P_INTER *****
 
-extern int      maxammo[NUM_AMMO_TYPES];
-extern int      clipammo[NUM_AMMO_TYPES];
+extern float turboMul;
+extern int maxAmmo[NUM_AMMO_TYPES];
+extern int clipAmmo[NUM_AMMO_TYPES];
+extern int maxAmmo[NUM_AMMO_TYPES];
 
 void            P_GiveKey(player_t *player, keytype_t key);
 void            P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);

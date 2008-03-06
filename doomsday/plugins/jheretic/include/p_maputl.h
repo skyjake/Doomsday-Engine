@@ -3,8 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,23 +33,18 @@
  */
 
 /**
- * m_cheat.h: Cheat code checking - jHeretic specific.
+ * p_maputl.h: Movement/collision utility functions jHeretic - specific.
  */
 
-#ifndef __M_CHEAT_H__
-#define __M_CHEAT_H__
+#ifndef __P_MAPUTL_H__
+#define __P_MAPUTL_H__
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "h_stat.h"
+#include "p_mobj.h"
 
-void        Cht_Init(void);
-
-void        Cht_GodFunc(player_t *player);
-void        Cht_NoClipFunc(player_t *player);
-void        Cht_SuicideFunc(player_t *player);
-boolean     Cht_Responder(event_t *ev);
+void            P_ApplyTorque(mobj_t *mo);
 
 #endif
