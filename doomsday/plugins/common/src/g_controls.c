@@ -70,28 +70,30 @@
 #  define ISWPN(x)          (plr->readyWeapon == x)
 #endif
 
-#define SLOWTURNTICS        6
+#define SLOWTURNTICS        (6)
 
-#define JOY(x)              (x) / (100)
+#define JOY(x)              ((x) / 100)
+#define TOCENTER            (-8)
+#define DELTAMUL            (6.324555320) // Used when calculating ticcmd_t.lookdirdelta
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct pcontrolstate_s {
     // Looking around.
-    float   targetLookOffset;
-    float   lookOffset;
-    boolean mlookPressed;
+    float           targetLookOffset;
+    float           lookOffset;
+    boolean         mlookPressed;
 
-    // for accelerative turning
-    float   turnheld;
-    float   lookheld;
+    // For accelerative turning:
+    float           turnheld;
+    float           lookheld;
 
-    int     dclicktime;
-    int     dclickstate;
-    int     dclicks;
-    int     dclicktime2;
-    int     dclickstate2;
-    int     dclicks2;
+    int             dclicktime;
+    int             dclickstate;
+    int             dclicks;
+    int             dclicktime2;
+    int             dclickstate2;
+    int             dclicks2;
 } pcontrolstate_t;
 
 // Joystick axes.
@@ -149,7 +151,7 @@ cvar_t  controlCVars[] = {
     {"ctl-turn-speed", 0, CVT_FLOAT, &cfg.turnSpeed, 1, 5},
     {"ctl-run", 0, CVT_INT, &cfg.alwaysRun, 0, 1},
 
-    {"ctl-use-dclick", 0, CVT_INT, &cfg.dclickuse, 0, 1},
+    {"ctl-use-dclick", 0, CVT_INT, &cfg.dclickUse, 0, 1},
 #if !__JDOOM__
     {"ctl-use-immediate", 0, CVT_INT, &cfg.chooseAndUse, 0, 1},
     {"ctl-use-next", 0, CVT_INT, &cfg.inventoryNextOnUnuse, 0, 1},
@@ -158,11 +160,11 @@ cvar_t  controlCVars[] = {
     {"ctl-look-speed", 0, CVT_FLOAT, &cfg.lookSpeed, 1, 5},
     {"ctl-look-spring", 0, CVT_INT, &cfg.lookSpring, 0, 1},
 
-    {"ctl-look-mouse", 0, CVT_INT, &cfg.usemlook, 0, 1},
+    {"ctl-look-mouse", 0, CVT_INT, &cfg.useMLook, 0, 1},
 
     {"ctl-look-pov", 0, CVT_BYTE, &cfg.povLookAround, 0, 1},
-    {"ctl-look-joy", 0, CVT_INT, &cfg.usejlook, 0, 1},
-    {"ctl-look-joy-delta", 0, CVT_INT, &cfg.jlookDeltaMode, 0, 1},
+    {"ctl-look-joy", 0, CVT_INT, &cfg.useJLook, 0, 1},
+    {"ctl-look-joy-delta", 0, CVT_INT, &cfg.jLookDeltaMode, 0, 1},
     {NULL}
 };
 
@@ -570,7 +572,7 @@ void G_LookAround(int pnum)
  */
 void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 {
-    player_t *cplr = &players[consoleplayer];
+    player_t *cplr = &players[CONSOLEPLAYER];
 
     memset(cmd, 0, sizeof(*cmd));
 
@@ -578,7 +580,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
     if(Get(DD_PLAYBACK))
         return;
 
-    G_UpdateCmdControls(cmd, consoleplayer, elapsedTime);
+    G_UpdateCmdControls(cmd, CONSOLEPLAYER, elapsedTime);
 
     G_SetCmdViewAngles(cmd, cplr);
 
@@ -594,7 +596,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
     if(IS_CLIENT)
     {
         // Clients mirror their local commands.#endif
-        memcpy(&players[consoleplayer].cmd, cmd, sizeof(*cmd));
+        memcpy(&players[CONSOLEPLAYER].cmd, cmd, sizeof(*cmd));
     }
 }
 
@@ -685,8 +687,8 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 
     // Return the max speed for the player's class.
     //// \fixme the Turbo movement multiplier should happen server-side!
-    sideMoveSpeed = pClassInfo->sidemove[speed] * turbomul;
-    fwdMoveSpeed = pClassInfo->forwardmove[speed] * turbomul;
+    sideMoveSpeed = pClassInfo->sidemove[speed] * turboMul;
+    fwdMoveSpeed = pClassInfo->forwardmove[speed] * turboMul;
     turnSpeed = pClassInfo->turnSpeed[(cstate->turnheld < SLOWTURNTICS ? 2 : speed)];
 
     // let movement keys cancel each other out
@@ -769,7 +771,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         flyheight = TOCENTER;
 
 #if __JHERETIC__
-        if(!cfg.usemlook) // only in jHeretic
+        if(!cfg.useMLook) // only in jHeretic
             look = TOCENTER;
 #else
         look = TOCENTER;
@@ -780,7 +782,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     // Use artifact key
     if(PLAYER_ACTION(pnum, A_USEARTIFACT))
     {
-        if(PLAYER_ACTION(pnum, A_SPEED) && artiskip)
+        if(PLAYER_ACTION(pnum, A_SPEED) && artiSkipParm)
         {
             if(plr->inventory[plr->invPtr].type != arti_none)
             {
@@ -938,11 +940,11 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     else if(PLAYER_ACTION(pnum, A_WEAPONCYCLE2)) // Shotgun/super sg.
     {
         if(ISWPN(WT_THIRD) && GOTWPN(WT_NINETH) &&
-           gamemode == commercial)
+           gameMode == commercial)
             i = WT_NINETH;
         else if(ISWPN(WT_NINETH))
             i = WT_THIRD;
-        else if(GOTWPN(WT_NINETH) && gamemode == commercial)
+        else if(GOTWPN(WT_NINETH) && gameMode == commercial)
             i = WT_NINETH;
         else
             i = WT_THIRD;
@@ -987,7 +989,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 
     // forward double click
     if(PLAYER_ACTION(pnum, A_FORWARD) != cstate->dclickstate &&
-        cstate->dclicktime > 1 && cfg.dclickuse)
+        cstate->dclicktime > 1 && cfg.dclickUse)
     {
         cstate->dclickstate = PLAYER_ACTION(pnum, A_FORWARD);
 
@@ -1014,7 +1016,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     // strafe double click
     bstrafe = strafe;
     if(bstrafe != cstate->dclickstate2 &&
-       cstate->dclicktime2 > 1 && cfg.dclickuse)
+       cstate->dclicktime2 > 1 && cfg.dclickUse)
     {
         cstate->dclickstate2 = bstrafe;
         if(cstate->dclickstate2)
@@ -1055,7 +1057,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         // Speed based turning.
         G_AdjustAngle(plr, turn, elapsedTime);
 
-        if(strafe || (!cfg.usemlook && !PLAYER_ACTION(pnum, A_MLOOK)) ||
+        if(strafe || (!cfg.useMLook && !PLAYER_ACTION(pnum, A_MLOOK)) ||
            plr->playerState == PST_DEAD)
         {
             forward += 8 * mousey * elapsedTics;
@@ -1070,9 +1072,9 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
                 adj = -adj;
             plr->plr->lookDir += adj; /* $unifiedangles */
         }
-        if(cfg.usejlook)
+        if(cfg.useJLook)
         {
-            if(cfg.jlookDeltaMode) /* $unifiedangles */
+            if(cfg.jLookDeltaMode) /* $unifiedangles */
                 plr->plr->lookDir +=
                     joylook / 20.0f * cfg.lookSpeed *
                     (cfg.jlookInverseY ? -1 : 1) * elapsedTics;
@@ -1264,12 +1266,13 @@ void G_ResetLookOffset(int pnum)
 int G_PrivilegedResponder(event_t *event)
 {
     // Process the screen shot key right away.
-    if(devparm && event->type == EV_KEY && event->data1 == DDKEY_F1)
+    if(devParm && event->type == EV_KEY && event->data1 == DDKEY_F1)
     {
         if(event->state == EVS_DOWN)
             G_ScreenShot();
-        // All F1 events are eaten.
-        return true;
+
+        return true; // All F1 events are eaten.
     }
+
     return false;
 }

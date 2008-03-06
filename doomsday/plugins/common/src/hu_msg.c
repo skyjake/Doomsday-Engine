@@ -45,6 +45,8 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -71,7 +73,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define HU_INPUTX           HU_MSGX
-#define HU_INPUTY           (HU_MSGY + HU_MSGHEIGHT*(hu_font[0].height +1))
+#define HU_INPUTY           (HU_MSGY + HU_MSGHEIGHT*(huFont[0].height +1))
 
 #define IN_RANGE(x) \
     ((x)>=MAX_MESSAGES? (x)-MAX_MESSAGES : (x)<0? (x)+MAX_MESSAGES : (x))
@@ -142,7 +144,7 @@ static void     closeChat(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int actual_leveltime;
+extern int actualLevelTime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -247,16 +249,16 @@ cvar_t msgCVars[] = {
     {"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[2], 0, 1},
 
     // Chat macros
-    {"chat-macro0", 0, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0},
-    {"chat-macro1", 0, CVT_CHARPTR, &cfg.chat_macros[1], 0, 0},
-    {"chat-macro2", 0, CVT_CHARPTR, &cfg.chat_macros[2], 0, 0},
-    {"chat-macro3", 0, CVT_CHARPTR, &cfg.chat_macros[3], 0, 0},
-    {"chat-macro4", 0, CVT_CHARPTR, &cfg.chat_macros[4], 0, 0},
-    {"chat-macro5", 0, CVT_CHARPTR, &cfg.chat_macros[5], 0, 0},
-    {"chat-macro6", 0, CVT_CHARPTR, &cfg.chat_macros[6], 0, 0},
-    {"chat-macro7", 0, CVT_CHARPTR, &cfg.chat_macros[7], 0, 0},
-    {"chat-macro8", 0, CVT_CHARPTR, &cfg.chat_macros[8], 0, 0},
-    {"chat-macro9", 0, CVT_CHARPTR, &cfg.chat_macros[9], 0, 0},
+    {"chat-macro0", 0, CVT_CHARPTR, &cfg.chatMacros[0], 0, 0},
+    {"chat-macro1", 0, CVT_CHARPTR, &cfg.chatMacros[1], 0, 0},
+    {"chat-macro2", 0, CVT_CHARPTR, &cfg.chatMacros[2], 0, 0},
+    {"chat-macro3", 0, CVT_CHARPTR, &cfg.chatMacros[3], 0, 0},
+    {"chat-macro4", 0, CVT_CHARPTR, &cfg.chatMacros[4], 0, 0},
+    {"chat-macro5", 0, CVT_CHARPTR, &cfg.chatMacros[5], 0, 0},
+    {"chat-macro6", 0, CVT_CHARPTR, &cfg.chatMacros[6], 0, 0},
+    {"chat-macro7", 0, CVT_CHARPTR, &cfg.chatMacros[7], 0, 0},
+    {"chat-macro8", 0, CVT_CHARPTR, &cfg.chatMacros[8], 0, 0},
+    {"chat-macro9", 0, CVT_CHARPTR, &cfg.chatMacros[9], 0, 0},
     {"chat-beep", 0, CVT_BYTE, &cfg.chatBeep, 0, 1},
     {NULL}
 };
@@ -285,7 +287,7 @@ ccmd_t  msgCCmds[] = {
  */
 void HUMsg_Register(void)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; msgCVars[i].name; ++i)
         Con_AddVariable(msgCVars + i);
@@ -299,12 +301,12 @@ void HUMsg_Register(void)
  */
 void HUMsg_Init(void)
 {
-    int         i;
+    int                 i;
 
     // Setup strings.
     for(i = 0; i < 10; ++i)
-        if(!cfg.chat_macros[i]) // Don't overwrite if already set.
-            cfg.chat_macros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
+        if(!cfg.chatMacros[i]) // Don't overwrite if already set.
+            cfg.chatMacros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
 
 #define INIT_STRINGS(x, x_idx) \
     INIT_STRINGS(player_names, player_names_idx);
@@ -315,12 +317,12 @@ void HUMsg_Init(void)
  */
 void HUMsg_Start(void)
 {
-    int         i, j;
+    int                 i, j;
 
     closeChat();
 
     // Create the chat widget
-    HUlib_initIText(&w_chat, HU_INPUTX, HU_INPUTY, hu_font_a, HU_FONTSTART,
+    HUlib_initIText(&w_chat, HU_INPUTX, HU_INPUTY, huFontA, HU_FONTSTART,
                     &chatOn);
 
     // Create the message and input buffers for all local players.
@@ -360,7 +362,7 @@ void HUMsg_Start(void)
  */
 void HUMsg_Ticker(void)
 {
-    int        i;
+    int                 i;
 
     // Don't tick the message buffer if the game is paused.
     if(!P_IsPaused())
@@ -373,19 +375,19 @@ void HUMsg_Ticker(void)
 void HUMsg_Drawer(void)
 {
     // Don't draw the messages when the level title is up.
-    if(cfg.levelTitle && actual_leveltime < 6 * 35)
+    if(cfg.levelTitle && actualLevelTime < 6 * 35)
         return;
 
     if(cfg.msgShow)
-        HU_MsgBufDraw(&msgBuffer[consoleplayer]);
+        HU_MsgBufDraw(&msgBuffer[CONSOLEPLAYER]);
 
     HUlib_drawIText(&w_chat);
 }
 
 boolean HUMsg_Responder(event_t *ev)
 {
-    boolean     eatkey = false;
-    unsigned char c;
+    boolean             eatkey = false;
+    unsigned char       c;
 
     if(G_GetGameState() != GS_LEVEL || !chatOn)
         return false;
@@ -412,7 +414,7 @@ boolean HUMsg_Responder(event_t *ev)
 void HUMsg_PlayerMessage(player_t *plr, char *message, int tics,
                          boolean noHide, boolean yellow)
 {
-    msgbuffer_t *msgBuff = &msgBuffer[plr - players];
+    msgbuffer_t        *msgBuff = &msgBuffer[plr - players];
 
     if(!message || !tics)
         return;
@@ -663,7 +665,7 @@ static void HU_MsgBufDraw(msgbuffer_t *buf)
         // Draw using param text.
         // Messages may use the params to override the way the message is
         // is displayed, e.g. colour (Hexen's important messages).
-        WI_DrawParamText(x, 1 + y, msg->text, hu_font_a,
+        WI_DrawParamText(x, 1 + y, msg->text, huFontA,
                          col[0], col[1], col[2], col[3], false, false,
                          cfg.msgAlign);
     }
@@ -720,12 +722,12 @@ static void sendMessage(char *msg)
     }
 
 #if __WOLFTC__
-    if(gamemode == commercial)
+    if(gameMode == commercial)
         S_LocalSound(sfx_hudms1, 0);
     else
         S_LocalSound(sfx_hudms2, 0);
 #elif __JDOOM__
-    if(gamemode == commercial)
+    if(gameMode == commercial)
         S_LocalSound(sfx_radio, 0);
     else
         S_LocalSound(sfx_tink, 0);
@@ -745,7 +747,7 @@ static boolean sendMacro(int num)
         if(chatOn)
             closeChat();
 
-        sendMessage(cfg.chat_macros[num]);
+        sendMessage(cfg.chatMacros[num]);
         return true;
     }
 

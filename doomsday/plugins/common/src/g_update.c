@@ -71,12 +71,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-#if __JHEXEN__
-void    S_InitScript(void);
-void    M_LoadData(void);
-void    M_UnloadData(void);
-#endif
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -167,7 +161,7 @@ void G_UpdateState(int step)
         G_RestoreState();
         R_InitRefresh();
         P_Init();
-        //// \fixme Detect gamemode changes (GM_DOOM -> GM_DOOM2, for instance).
+        //// \fixme Detect gameMode changes (GM_DOOM -> GM_DOOM2, for instance).
 #if !__JHEXEN__
         XG_Update();
 #endif
@@ -180,7 +174,7 @@ void G_UpdateState(int step)
         Hu_MenuInit();
 
 #if __JHEXEN__
-        S_InitScript();
+        S_ParseSndInfoLump();
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JSTRIFE__

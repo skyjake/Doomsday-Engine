@@ -61,6 +61,7 @@
 #include "d_net.h"
 #include "p_player.h"
 #include "hu_menu.h"
+#include "p_start.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -162,16 +163,16 @@ int D_NetServerStarted(int before)
 
     // Set the game parameters.
     deathmatch = cfg.netDeathmatch;
-    nomonsters = cfg.netNomonsters;
+    noMonstersParm = cfg.netNoMonsters;
 
     cfg.jumpEnabled = cfg.netJumping;
 
-#if __JDOOM__
-    respawnmonsters = cfg.netRespawn;
-#elif __JHERETIC__
-    respawnmonsters = cfg.netRespawn;
-#elif __JHEXEN__
-    randomclass = cfg.netRandomclass;
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+    respawnMonsters = cfg.netRespawn;
+#endif
+
+#if __JHEXEN__
+    randomClassParm = cfg.netRandomClass;
 #endif
 
 #ifdef __JDOOM__
@@ -203,9 +204,9 @@ int D_NetServerClose(int before)
     {
         // Restore normal game state.
         deathmatch = false;
-        nomonsters = false;
+        noMonstersParm = false;
 #if __JHEXEN__
-        randomclass = false;
+        randomClassParm = false;
 #endif
         D_NetMessage("NETGAME ENDS");
     }
@@ -234,9 +235,9 @@ int D_NetDisconnect(int before)
 
     // Restore normal game state.
     deathmatch = false;
-    nomonsters = false;
+    noMonstersParm = false;
 #if __JHEXEN__
-    randomclass = false;
+    randomClassParm = false;
 #endif
 
     // Start demo.
@@ -273,7 +274,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         {
             NetSv_NewPlayerEnters(plrNumber);
         }
-        else if(plrNumber == consoleplayer)
+        else if(plrNumber == CONSOLEPLAYER)
         {
             // We have arrived, the game should be begun.
             Con_Message("PE: (client) arrived in netgame.\n");
@@ -310,7 +311,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     }
     // DDPE_CHAT_MESSAGE occurs when a PKT_CHAT is received.
     // Here we will only display the message (if not a local message).
-    else if(peType == DDPE_CHAT_MESSAGE && plrNumber != consoleplayer)
+    else if(peType == DDPE_CHAT_MESSAGE && plrNumber != CONSOLEPLAYER)
     {
         int     i, num, oldecho = cfg.echoMsg;
 
@@ -420,13 +421,13 @@ int D_NetWorldEvent(int type, int parm, void *data)
 
         // Restore normal game state.
         deathmatch = false;
-        nomonsters = false;
+        noMonstersParm = false;
 #if __JDOOM__ || __JHERETIC__
-        respawnmonsters = false;
+        respawnMonsters = false;
 #endif
 
 #if __JHEXEN__
-        randomclass = false;
+        randomClassParm = false;
 #endif
         break;
 
@@ -478,24 +479,24 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 
     case GPT_MESSAGE:
         snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
-        P_SetMessage(&players[consoleplayer], msgBuff, false);
+        P_SetMessage(&players[CONSOLEPLAYER], msgBuff, false);
         break;
 
 #ifndef __JDOOM__
 #ifndef __JHERETIC__
     case GPT_YELLOW_MESSAGE:
         snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
-        P_SetYellowMessage(&players[consoleplayer], msgBuff, false);
+        P_SetYellowMessage(&players[CONSOLEPLAYER], msgBuff, false);
         break;
 #endif
 #endif
 
     case GPT_CONSOLEPLAYER_STATE:
-        NetCl_UpdatePlayerState(data, consoleplayer);
+        NetCl_UpdatePlayerState(data, CONSOLEPLAYER);
         break;
 
     case GPT_CONSOLEPLAYER_STATE2:
-        NetCl_UpdatePlayerState2(data, consoleplayer);
+        NetCl_UpdatePlayerState2(data, CONSOLEPLAYER);
         break;
 
     case GPT_PLAYER_STATE:
@@ -525,7 +526,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 
 #ifndef __JDOOM__
     case GPT_CLASS:
-        players[consoleplayer].class = bData[0];
+        players[CONSOLEPLAYER].class = bData[0];
         break;
 #endif
 
@@ -563,7 +564,7 @@ void D_ChatSound(void)
 #elif __JHERETIC__
     S_LocalSound(sfx_chat, NULL);
 #else
-    if(gamemode == commercial)
+    if(gameMode == commercial)
         S_LocalSound(sfx_radio, NULL);
     else
         S_LocalSound(sfx_tink, NULL);
@@ -581,7 +582,7 @@ static void D_NetMessageEx(char *msg, boolean playSound)
     // This is intended to be a local message.
     // Let's make sure P_SetMessage doesn't forward it anywhere.
     netSvAllowSendMsg = false;
-    P_SetMessage(players + consoleplayer, msgBuff, false);
+    P_SetMessage(players + CONSOLEPLAYER, msgBuff, false);
 
     if(playSound)
         D_ChatSound();
@@ -635,7 +636,7 @@ Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
         return false;
         //return true;
     }
-    else if(IS_CLIENT && source->player - players == consoleplayer)
+    else if(IS_CLIENT && source->player - players == CONSOLEPLAYER)
     {
 #ifdef _DEBUG
 Con_Message("P_DamageMobj2: Client should request damage on mobj %p.\n", target);
@@ -725,7 +726,7 @@ DEFCC(CCmdSetClass)
     }
     else
     {
-        SB_ChangePlayerClass(players + consoleplayer, cfg.netClass);
+        SB_ChangePlayerClass(players + CONSOLEPLAYER, cfg.netClass);
     }
     return true;
 }
@@ -736,7 +737,7 @@ DEFCC(CCmdSetClass)
  */
 DEFCC(CCmdSetMap)
 {
-    int         ep, map;
+    int                 ep, map;
 
     // Only the server can change the map.
     if(!IS_SERVER)
@@ -757,19 +758,19 @@ DEFCC(CCmdSetMap)
 
     // Update game mode.
     deathmatch = cfg.netDeathmatch;
-    nomonsters = cfg.netNomonsters;
+    noMonstersParm = cfg.netNoMonsters;
 
     cfg.jumpEnabled = cfg.netJumping;
 
 #if __JDOOM__ || __JHERETIC__
-    respawnmonsters = cfg.netRespawn;
+    respawnMonsters = cfg.netRespawn;
     ep = atoi(argv[1]);
     map = atoi(argv[2]);
 #elif __JSTRIFE__
     ep = 1;
     map = atoi(argv[1]);
 #elif __JHEXEN__
-    randomclass = cfg.netRandomclass;
+    randomClassParm = cfg.netRandomClass;
     ep = 1;
     map = P_TranslateMap(atoi(argv[1]));
 #endif

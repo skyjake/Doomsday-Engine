@@ -39,6 +39,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdio.h>
+#include <string.h>
+
 #if  __DOOM64TC__
 # include "doom64tc.h"
 #elif __WOLFTC__
@@ -64,6 +67,7 @@
 #include "p_player.h"
 #include "p_map.h"
 #include "g_common.h"
+#include "p_actor.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -91,18 +95,18 @@ void NetCl_SetReadBuffer(byte *data)
     readbuffer = data;
 }
 
-byte NetCl_ReadByte()
+byte NetCl_ReadByte(void)
 {
     return *readbuffer++;
 }
 
-short NetCl_ReadShort()
+short NetCl_ReadShort(void)
 {
     readbuffer += 2;
     return SHORT( *(short *) (readbuffer - 2) );
 }
 
-int NetCl_ReadLong()
+int NetCl_ReadLong(void)
 {
     readbuffer += 4;
     return LONG( *(int *) (readbuffer - 4) );
@@ -117,7 +121,7 @@ void NetCl_Read(byte *buf, int len)
 #ifdef __JDOOM__
 int NetCl_IsCompatible(int other, int us)
 {
-    char    comp[5][5] =        // [other][us]
+    char                comp[5][5] =        // [other][us]
     {
         {1, 1, 0, 1, 0},
         {0, 1, 0, 1, 0},
@@ -136,16 +140,16 @@ int NetCl_IsCompatible(int other, int us)
 
 void NetCl_UpdateGameState(byte *data)
 {
-    byte        gsGameMode = 0;
-    byte        gsFlags = 0;
-    byte        gsEpisode = 0;
-    byte        gsMap = 0;
-    byte        gsDeathmatch = 0;
-    byte        gsMonsters = 0;
-    byte        gsRespawn = 0;
-    byte        gsJumping = 0;
-    byte        gsSkill = 0;
-    float       gsGravity = 0;
+    byte                gsGameMode = 0;
+    byte                gsFlags = 0;
+    byte                gsEpisode = 0;
+    byte                gsMap = 0;
+    byte                gsDeathmatch = 0;
+    byte                gsMonsters = 0;
+    byte                gsRespawn = 0;
+    byte                gsJumping = 0;
+    byte                gsSkill = 0;
+    float               gsGravity = 0;
 
     gsGameMode = data[0];
     gsFlags = data[1];
@@ -167,7 +171,7 @@ void NetCl_UpdateGameState(byte *data)
         return;
 
 #ifdef __JDOOM__
-    if(!NetCl_IsCompatible(gsGameMode, gamemode))
+    if(!NetCl_IsCompatible(gsGameMode, gameMode))
     {
         // Wrong game mode! This is highly irregular!
         Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
@@ -178,9 +182,9 @@ void NetCl_UpdateGameState(byte *data)
 #endif
 
     deathmatch = gsDeathmatch;
-    nomonsters = !gsMonsters;
+    noMonstersParm = !gsMonsters;
 #if !__JHEXEN__
-    respawnmonsters = gsRespawn;
+    respawnMonsters = gsRespawn;
 #endif
 
     // Some statistics.
@@ -196,16 +200,16 @@ void NetCl_UpdateGameState(byte *data)
 #endif
 #if !__JHEXEN__
     Con_Message("  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f\n",
-                respawnmonsters ? "yes" : "no", !nomonsters ? "yes" : "no",
+                respawnMonsters ? "yes" : "no", !noMonstersParm ? "yes" : "no",
                 gsJumping ? "yes" : "no", gsGravity);
 #else
     Con_Message("  Monsters=%s Jumping=%s Gravity=%.1f\n",
-                !nomonsters ? "yes" : "no",
+                !noMonstersParm ? "yes" : "no",
                 gsJumping ? "yes" : "no", gsGravity);
 #endif
 
 #ifdef __JHERETIC__
-    prevmap = gamemap;
+    prevMap = gameMap;
 #endif
 
     // Start reading after the GS packet.
@@ -222,9 +226,9 @@ void NetCl_UpdateGameState(byte *data)
     }
     else
     {
-        gameskill = gsSkill;
-        gameepisode = gsEpisode;
-        gamemap = gsMap;
+        gameSkill = gsSkill;
+        gameEpisode = gsEpisode;
+        gameMap = gsMap;
     }
 
     // Set gravity.
@@ -233,7 +237,7 @@ void NetCl_UpdateGameState(byte *data)
     // Camera init included?
     if(gsFlags & GSF_CAMERA_INIT)
     {
-        player_t   *pl = &players[consoleplayer];
+        player_t   *pl = &players[CONSOLEPLAYER];
         mobj_t     *mo;
 
         mo = pl->plr->mo;
@@ -252,8 +256,8 @@ void NetCl_UpdateGameState(byte *data)
 #else
             P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]);
 #endif
-            mo->floorZ = tmfloorz;
-            mo->ceilingZ = tmceilingz;
+            mo->floorZ = tmFloorZ;
+            mo->ceilingZ = tmCeilingZ;
         }
         else // mo == NULL
         {
@@ -298,7 +302,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 
             // Maybe unhide the HUD?
             if(val == true && pl->weaponOwned[i] == false &&
-               pl == &players[consoleplayer])
+               pl == &players[CONSOLEPLAYER])
                 ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
             pl->weaponOwned[i] = val;
@@ -377,7 +381,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     {
         int health = NetCl_ReadByte();
 
-        if(health < pl->health && pl == &players[consoleplayer])
+        if(health < pl->health && pl == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_DAMAGE);
 
         pl->health = health;
@@ -394,7 +398,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
             // Maybe unhide the HUD?
             if(ap >= pl->armorPoints[i] &&
-                pl == &players[consoleplayer])
+                pl == &players[CONSOLEPLAYER])
                 ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
 
             pl->armorPoints[i] = ap;
@@ -403,7 +407,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         ap = NetCl_ReadByte();
 
         // Maybe unhide the HUD?
-        if(ap >= pl->armorPoints && pl == &players[consoleplayer])
+        if(ap >= pl->armorPoints && pl == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
 
         pl->armorPoints = ap;
@@ -433,14 +437,14 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
                 pl->artifactCount += pl->inventory[i].count;
 
                 // Maybe unhide the HUD?
-                if(pl == &players[consoleplayer])
+                if(pl == &players[CONSOLEPLAYER])
                     ST_HUDUnHide(HUE_ON_PICKUP_INVITEM);
             }
         }
 
 #  if __JHERETIC__
-        if(plrNum == consoleplayer)
-            P_InventoryCheckReadyArtifact(&players[consoleplayer]);
+        if(plrNum == CONSOLEPLAYER)
+            P_InventoryCheckReadyArtifact(&players[CONSOLEPLAYER]);
 #  endif
     }
 #endif
@@ -456,7 +460,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
             // Maybe unhide the HUD?
             if(val > pl->powers[i] &&
-               pl == &players[consoleplayer])
+               pl == &players[CONSOLEPLAYER])
                 ST_HUDUnHide(HUE_ON_PICKUP_POWER);
 
             pl->powers[i + 1] = val;
@@ -473,7 +477,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
                 // Maybe unhide the HUD?
                 if(val > pl->powers[i] &&
-                   pl == &players[consoleplayer])
+                   pl == &players[CONSOLEPLAYER])
                     ST_HUDUnHide(HUE_ON_PICKUP_POWER);
 
                 pl->powers[i] = val;
@@ -491,7 +495,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             boolean val = (b & (1 << i)) != 0;
 
             // Maybe unhide the HUD?
-            if(val && !pl->keys[i] && pl == &players[consoleplayer])
+            if(val && !pl->keys[i] && pl == &players[CONSOLEPLAYER])
                 ST_HUDUnHide(HUE_ON_PICKUP_KEY);
 
             pl->keys[i] = val;
@@ -527,7 +531,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
             // Maybe unhide the HUD?
             if(val == true && pl->weaponOwned[i] == false &&
-               pl == &players[consoleplayer])
+               pl == &players[CONSOLEPLAYER])
                 ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
             pl->weaponOwned[i] = val;
@@ -544,7 +548,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             int val = NetCl_ReadShort();
 #endif
             // Maybe unhide the HUD?
-            if(val > pl->ammo[i] && pl == &players[consoleplayer])
+            if(val > pl->ammo[i] && pl == &players[CONSOLEPLAYER])
                 ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
 
             pl->ammo[i] = val;
@@ -616,23 +620,14 @@ void NetCl_UpdatePSpriteState(byte *data)
 
     NetCl_SetReadBuffer(data);
     s = NetCl_ReadShort();
-    P_SetPsprite(&players[consoleplayer], ps_weapon, s);
+    P_SetPsprite(&players[CONSOLEPLAYER], ps_weapon, s);
      */
 }
 
 void NetCl_Intermission(byte *data)
 {
-    uint        i;
-    int         flags;
-
-#ifdef __JHERETIC__
-    extern int interstate;
-    extern int intertime;
-#endif
-#if __JHEXEN__ || __JSTRIFE__
-    extern int interstate;
-    extern int LeaveMap, LeavePosition;
-#endif
+    uint                i;
+    int                 flags;
 
     NetCl_SetReadBuffer(data);
     flags = NetCl_ReadByte();
@@ -646,19 +641,19 @@ void NetCl_Intermission(byte *data)
 #ifdef __JDOOM__
     if(flags & IMF_BEGIN)
     {
-        wminfo.maxKills = NetCl_ReadShort();
-        wminfo.maxItems = NetCl_ReadShort();
-        wminfo.maxSecret = NetCl_ReadShort();
-        wminfo.next = NetCl_ReadByte();
-        wminfo.last = NetCl_ReadByte();
-        wminfo.didSecret = NetCl_ReadByte();
+        wmInfo.maxKills = NetCl_ReadShort();
+        wmInfo.maxItems = NetCl_ReadShort();
+        wmInfo.maxSecret = NetCl_ReadShort();
+        wmInfo.next = NetCl_ReadByte();
+        wmInfo.last = NetCl_ReadByte();
+        wmInfo.didSecret = NetCl_ReadByte();
 
         G_PrepareWIData();
 
         G_ChangeGameState(GS_INTERMISSION);
-        viewactive = false;
+        viewActive = false;
 
-        WI_Start(&wminfo);
+        WI_Start(&wmInfo);
     }
 
     if(flags & IMF_END)
@@ -674,9 +669,9 @@ void NetCl_Intermission(byte *data)
 
 #ifdef __JHERETIC__
     if(flags & IMF_STATE)
-        interstate = (int) NetCl_ReadByte();
+        interState = (int) NetCl_ReadByte();
     if(flags & IMF_TIME)
-        intertime = NetCl_ReadShort();
+        interTime = NetCl_ReadShort();
     if(flags & IMF_BEGIN)
     {
         G_ChangeGameState(GS_INTERMISSION);
@@ -691,8 +686,8 @@ void NetCl_Intermission(byte *data)
 #if __JHEXEN__ || __JSTRIFE__
     if(flags & IMF_BEGIN)
     {
-        LeaveMap = NetCl_ReadByte();
-        LeavePosition = NetCl_ReadByte();
+        leaveMap = NetCl_ReadByte();
+        leavePosition = NetCl_ReadByte();
         G_ChangeGameState(GS_INTERMISSION);
         IN_Start();
     }
@@ -701,7 +696,7 @@ void NetCl_Intermission(byte *data)
         IN_Stop();
     }
     if(flags & IMF_STATE)
-        interstate = (int) NetCl_ReadByte();
+        interState = (int) NetCl_ReadByte();
 #endif
 }
 
@@ -767,7 +762,7 @@ void NetCl_UpdatePlayerInfo(byte *data)
 #if __JHEXEN__ || __JHERETIC__
     cfg.playerClass[num] = NetCl_ReadByte();
     players[num].class = cfg.playerClass[num];
-    if(num == consoleplayer)
+    if(num == CONSOLEPLAYER)
         SB_SetClassData();
 #endif
 #if __JDOOM__
@@ -783,7 +778,7 @@ void NetCl_UpdatePlayerInfo(byte *data)
 #endif
 }
 
-// Send consoleplayer's settings to the server.
+// Send CONSOLEPLAYER's settings to the server.
 void NetCl_SendPlayerInfo()
 {
     byte        buffer[10], *ptr = buffer;
@@ -808,7 +803,7 @@ void NetCl_SaveGame(void *data)
 
     SV_SaveClient(*(unsigned int *) data);
 #ifdef __JDOOM__
-    P_SetMessage(&players[consoleplayer], TXT_GAMESAVED, false);
+    P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
 #endif
 }
 
@@ -822,7 +817,7 @@ void NetCl_LoadGame(void *data)
     SV_LoadClient(*(unsigned int *) data);
     //  Net_SendPacket(DDSP_RELIABLE, GPT_LOAD, &con, 1);
 #ifdef __JDOOM__
-    P_SetMessage(&players[consoleplayer], GET_TXT(TXT_CLNETLOAD), false);
+    P_SetMessage(&players[CONSOLEPLAYER], GET_TXT(TXT_CLNETLOAD), false);
 #endif
 }
 
@@ -949,7 +944,7 @@ void NetCl_CheatRequest(const char *command)
     if(IS_CLIENT)
         Net_SendPacket(DDSP_CONFIRM, GPT_CHEAT_REQUEST, msg, strlen(msg) + 1);
     else
-        NetSv_DoCheat(consoleplayer, msg);
+        NetSv_DoCheat(CONSOLEPLAYER, msg);
 }
 
 /**

@@ -41,6 +41,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -61,6 +63,8 @@
 #include "p_player.h"
 #include "p_map.h"
 #include "g_common.h"
+#include "p_tick.h"
+#include "p_start.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -153,7 +157,7 @@ void NetSv_UpdateGameConfig(void)
 
     memset(gameConfigString, 0, sizeof(gameConfigString));
 
-    sprintf(gameConfigString, "skill%i", gameskill + 1);
+    sprintf(gameConfigString, "skill%i", gameSkill + 1);
 
     if(deathmatch > 1)
         sprintf(gameConfigString, " dm%i", deathmatch);
@@ -162,10 +166,10 @@ void NetSv_UpdateGameConfig(void)
     else
         strcat(gameConfigString, " coop");
 
-    if(nomonsters)
+    if(noMonstersParm)
         strcat(gameConfigString, " nomonst");
 #if !__JHEXEN__
-    if(respawnmonsters)
+    if(respawnMonsters)
         strcat(gameConfigString, " respawn");
 #endif
 
@@ -383,7 +387,7 @@ void NetSv_Ticker(void)
     {
         // Don't send on every tic. Also, don't send to all
         // players at the same time.
-        if((gametic + i) % 10)
+        if((GAMETIC + i) % 10)
             continue;
         if(!plr->plr->inGame || !plr->update)
             continue;
@@ -416,7 +420,7 @@ void NetSv_CycleToMapNum(int map)
 
     sprintf(tmp, "%02i", map);
 #if __JDOOM__
-    if(gamemode == commercial)
+    if(gameMode == commercial)
         sprintf(cmd, "setmap 1 %i", map);
     else
         sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
@@ -530,7 +534,7 @@ int NetSv_ScanCycle(int index, maprule_t * rules)
                     // The differences in map numbering make this harder
                     // than it should be.
 #if __JDOOM__
-                    if(gamemode == commercial)
+                    if(gameMode == commercial)
                     {
                         sprintf(lump, "MAP%i%i", episode =
                                 tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
@@ -624,7 +628,7 @@ void NetSv_CheckCycling(void)
             }
 
             if(rules.usetime &&
-               leveltime > (rules.time * 60 - 29) * TICSPERSEC)
+               levelTime > (rules.time * 60 - 29) * TICSPERSEC)
             {
                 // Time runs out!
                 cycleMode = CYCLE_COUNTDOWN;
@@ -726,7 +730,7 @@ void NetSv_CheckCycling(void)
  */
 void NetSv_NewPlayerEnters(int plrnumber)
 {
-    player_t       *plr = &players[plrnumber];
+    player_t           *plr = &players[plrnumber];
 
     Con_Message("NetSv_NewPlayerEnters: spawning player %i.\n", plrnumber);
 
@@ -743,7 +747,7 @@ void NetSv_NewPlayerEnters(int plrnumber)
     else
     {
         //// \fixme Spawn a telefog in front of the player.
-        P_SpawnPlayer(&playerstarts[plr->startSpot], plrnumber);
+        P_SpawnPlayer(&playerStarts[plr->startSpot], plrnumber);
     }
 
     // Get rid of anybody at the starting spot.
@@ -752,7 +756,7 @@ void NetSv_NewPlayerEnters(int plrnumber)
 
 void NetSv_Intermission(int flags, int state, int time)
 {
-    byte        buffer[32], *ptr = buffer;
+    byte                buffer[32], *ptr = buffer;
 
     if(IS_CLIENT)
         return;
@@ -763,12 +767,12 @@ void NetSv_Intermission(int flags, int state, int time)
     if(flags & IMF_BEGIN)
     {
         // Only include the necessary information.
-        WRITE_SHORT(ptr, wminfo.maxKills);
-        WRITE_SHORT(ptr, wminfo.maxItems);
-        WRITE_SHORT(ptr, wminfo.maxSecret);
-        *ptr++ = wminfo.next;
-        *ptr++ = wminfo.last;
-        *ptr++ = wminfo.didSecret;
+        WRITE_SHORT(ptr, wmInfo.maxKills);
+        WRITE_SHORT(ptr, wmInfo.maxItems);
+        WRITE_SHORT(ptr, wmInfo.maxSecret);
+        *ptr++ = wmInfo.next;
+        *ptr++ = wmInfo.last;
+        *ptr++ = wmInfo.didSecret;
     }
 #endif
 
@@ -850,7 +854,7 @@ void NetSv_SendGameState(int flags, int to)
     // Print a short message that describes the game state.
     if(verbose || IS_DEDICATED)
     {
-        Con_Printf("Game setup: ep%i map%i %s\n", gameepisode, gamemap,
+        Con_Printf("Game setup: ep%i map%i %s\n", gameEpisode, gameMap,
                    gameConfigString);
     }
 
@@ -873,23 +877,23 @@ void NetSv_SendGameState(int flags, int to)
         // due to compatibility with older versions.
 
 #ifdef __JDOOM__
-        ptr[0] = gamemode;
+        ptr[0] = gameMode;
 #else
         ptr[0] = 0;
 #endif
         ptr[1] = flags;
-        ptr[2] = gameepisode;
-        ptr[3] = gamemap;
+        ptr[2] = gameEpisode;
+        ptr[3] = gameMap;
         ptr[4] = (deathmatch & 0x3)
-            | (!nomonsters? 0x4 : 0)
+            | (!noMonstersParm? 0x4 : 0)
 #if !__JHEXEN__
-            | (respawnmonsters? 0x8 : 0)
+            | (respawnMonsters? 0x8 : 0)
 #else
             | 0
 #endif
             | (cfg.jumpEnabled? 0x10 : 0)
 #if __JDOOM__ || __JHERETIC__
-            | (gameskill << 5);
+            | (gameSkill << 5);
 #else
         ;
 #endif
@@ -897,7 +901,7 @@ void NetSv_SendGameState(int flags, int to)
         ptr[5] = 0;
 
 #else
-        ptr[5] = gameskill & 0x7;
+        ptr[5] = gameSkill & 0x7;
 #endif
         ptr[6] = (gravity >> 8) & 0xff; // low byte
         ptr[7] = (gravity >> 16) & 0xff; // high byte
@@ -1403,8 +1407,8 @@ void NetSv_DoAction(int player, const char *data)
                 pl->plr->mo->pos[VY] = pos[VY];
                 pl->plr->mo->pos[VZ] = pos[VZ];
                 P_MobjLink(pl->plr->mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-                pl->plr->mo->floorZ = tmfloorz;
-                pl->plr->mo->ceilingZ = tmceilingz;
+                pl->plr->mo->floorZ = tmFloorZ;
+                pl->plr->mo->ceilingZ = tmCeilingZ;
             }
             pl->plr->mo->angle = angle;
             pl->plr->lookDir = lookDir;

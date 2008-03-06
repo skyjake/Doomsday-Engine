@@ -40,6 +40,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -62,17 +64,19 @@
 #include "d_net.h"
 #include "p_player.h"
 #include "am_map.h"
+#include "p_tick.h"
+#include "p_start.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define STACK_SIZE          16 // Size of the InFine state stack.
-#define MAX_TOKEN_LEN       8192
-#define MAX_SEQUENCE        64
-#define MAX_PICS            128
-#define MAX_TEXT            64
-#define MAX_HANDLERS        128
+#define STACK_SIZE          (16) // Size of the InFine state stack.
+#define MAX_TOKEN_LEN       (8192)
+#define MAX_SEQUENCE        (64)
+#define MAX_PICS            (128)
+#define MAX_TEXT            (64)
+#define MAX_HANDLERS        (128)
 
-#define FI_REPEAT           -2
+#define FI_REPEAT           (-2)
 
 // TYPES -------------------------------------------------------------------
 
@@ -144,7 +148,7 @@ typedef struct fistate_s {
     char           *script; // A copy of the script.
     char           *cp; // The command cursor.
     infinemode_t    mode;
-    int             overlayGameState; // Overlay scripts run only in one gamemode.
+    int             overlayGameState; // Overlay scripts run only in one gameMode.
     int             timer;
     boolean         conditions[NUM_FICONDS];
     int             inTime;
@@ -264,28 +268,18 @@ void    FIC_NoShowMenu(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int actual_leveltime;
-extern boolean secretexit;
-
-#if __JHEXEN__ || __JSTRIFE__
-extern int LeaveMap;
-#endif
-
-extern dpatch_t hu_font[HU_FONTSIZE];
-extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean brief_disabled = false;
+boolean briefDisabled = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-boolean fi_active = false;
-boolean fi_cmd_executed = false; // Set to true after first command.
+boolean fiActive = false;
+boolean fiCmdExecuted = false; // Set to true after first command.
 
 // Time is measured in seconds.
 // Colors are floating point and [0,1].
-static ficmd_t fi_commands[] = {
+static ficmd_t fiCommands[] = {
     // Run Control
     {"DO", 0, FIC_Do, true, true},
     {"END", 0, FIC_End},
@@ -394,13 +388,13 @@ static ficmd_t fi_commands[] = {
     {NULL, 0, NULL}
 };
 
-static fistate_t fi_statestack[STACK_SIZE];
+static fistate_t fiStateStack[STACK_SIZE];
 static fistate_t *fi;           // Pointer to the current state in the stack.
-static char fi_token[MAX_TOKEN_LEN];
-static fipic_t fi_dummypic;
-static fitext_t fi_dummytext;
+static char fiToken[MAX_TOKEN_LEN];
+static fipic_t fiDummyPic;
+static fitext_t fiDummyText;
 
-static boolean condition_presets[NUM_FICONDS];
+static boolean conditionPresets[NUM_FICONDS];
 
 // CODE --------------------------------------------------------------------
 
@@ -410,28 +404,28 @@ static boolean condition_presets[NUM_FICONDS];
  */
 void FI_ClearState(void)
 {
-    int     i, c;
+    int                 i, c;
 
-    HUMsg_ClearMessages(&players[consoleplayer]);
+    HUMsg_ClearMessages(&players[CONSOLEPLAYER]);
 
     // General game state.
     G_SetGameAction(GA_NONE);
     if(fi->mode != FIMODE_OVERLAY)
     {
         G_ChangeGameState(GS_INFINE);
-        AM_Stop(consoleplayer);
+        AM_Stop(CONSOLEPLAYER);
     }
 
-    fi_active = true;
-    fi_cmd_executed = false;    // Nothing is drawn until a cmd has been executed.
+    fiActive = true;
+    fiCmdExecuted = false; // Nothing is drawn until a cmd has been executed.
 
     fi->suspended = false;
     fi->timer = 0;
-    fi->canSkip = true;         // By default skipping is enabled.
+    fi->canSkip = true; // By default skipping is enabled.
     fi->skipping = false;
-    fi->wait = 0;               // Not waiting for anything.
-    fi->inTime = 0;             // Interpolation is off.
-    fi->bgFlat = -1;            // No background flat.
+    fi->wait = 0; // Not waiting for anything.
+    fi->inTime = 0; // Interpolation is off.
+    fi->bgFlat = -1; // No background flat.
     fi->paused = false;
     fi->gotoSkip = false;
     fi->skipNext = false;
@@ -439,8 +433,8 @@ void FI_ClearState(void)
     fi->waitingText = NULL;
     fi->waitingPic = NULL;
     memset(fi->gotoTarget, 0, sizeof(fi->gotoTarget));
-    GL_SetFilter(0);            // Clear the current filter.
-    for(i = 0; i < 4; i++)
+    GL_SetFilter(0); // Clear the current filter.
+    for(i = 0; i < 4; ++i)
     {
         FI_InitValue(fi->bgColor + i, 1);
     }
@@ -448,28 +442,28 @@ void FI_ClearState(void)
     memset(fi->imgOffset, 0, sizeof(fi->imgOffset));
     memset(fi->text, 0, sizeof(fi->text));
     memset(fi->filter, 0, sizeof(fi->filter));
-    for(i = 0; i < 9; i++)
+    for(i = 0; i < 9; ++i)
     {
-        for(c = 0; c < 3; c++)
+        for(c = 0; c < 3; ++c)
             FI_InitValue(&fi->textColor[i][c], 1);
     }
 }
 
 void FI_NewState(const char *script)
 {
-    int     size;
+    int                 size;
 
     if(!fi)
     {
         // Start from the bottom of the stack.
-        fi = fi_statestack;
+        fi = fiStateStack;
     }
     else
     {
         // Get the next state from the stack.
         fi++;
 
-        if(fi == fi_statestack + STACK_SIZE)
+        if(fi == fiStateStack + STACK_SIZE)
         {
             Con_Error("FI_NewState: InFine state stack overflow.\n");
         }
@@ -477,7 +471,7 @@ void FI_NewState(const char *script)
 
 #ifdef _DEBUG
     // Is the stack leaking?
-    Con_Printf("FI_NewState: Assigned index %i.\n", fi - fi_statestack);
+    Con_Printf("FI_NewState: Assigned index %i.\n", fi - fiStateStack);
 #endif
 
     memset(fi, 0, sizeof(*fi));
@@ -500,10 +494,10 @@ void FI_DeleteXImage(fipic_t *pic)
 
 void FI_PopState(void)
 {
-    int     i;
+    int                 i;
 
 #ifdef _DEBUG
-    Con_Printf("FI_PopState: fi=%p (%i)\n", fi, fi - fi_statestack);
+    Con_Printf("FI_PopState: fi=%p (%i)\n", fi, fi - fiStateStack);
 #endif
     if(!fi)
     {
@@ -517,7 +511,7 @@ void FI_PopState(void)
     Z_Free(fi->script);
 
     // Free all text strings.
-    for(i = 0; i < MAX_TEXT; i++)
+    for(i = 0; i < MAX_TEXT; ++i)
     {
         if(fi->text[i].text)
         {
@@ -526,7 +520,7 @@ void FI_PopState(void)
     }
 
     // Delete external images.
-    for(i = 0; i < MAX_PICS; i++)
+    for(i = 0; i < MAX_PICS; ++i)
     {
         if(fi->pics[i].flags.is_ximage)
         {
@@ -537,10 +531,10 @@ void FI_PopState(void)
     memset(fi, 0, sizeof(*fi));
 
     // Should we go back to NULL?
-    if(fi == fi_statestack)
+    if(fi == fiStateStack)
     {
         fi = NULL;
-        fi_active = false;
+        fiActive = false;
     }
     else
     {
@@ -573,15 +567,15 @@ void FI_Reset(void)
     while(fi)
         FI_PopState();
 
-    fi_active = false;
+    fiActive = false;
 }
 
-/*
+/**
  * Start playing the given script.
  */
 void FI_Start(char *finalescript, infinemode_t mode)
 {
-    int     i;
+    int                 i;
 
     if(mode == FIMODE_LOCAL && IS_DEDICATED)
     {
@@ -605,12 +599,12 @@ void FI_Start(char *finalescript, infinemode_t mode)
     {
         // We are able to figure out the truth values of all the
         // conditions.
-        fi->conditions[FICOND_SECRET] = (secretexit != 0);
+        fi->conditions[FICOND_SECRET] = (secretExit != 0);
 
 #if __JHEXEN__
         // Current hub has been completed?
         fi->conditions[FICOND_LEAVEHUB] =
-            (P_GetMapCluster(gamemap) != P_GetMapCluster(LeaveMap));
+            (P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap));
 #else
         // Only Hexen has hubs.
         fi->conditions[FICOND_LEAVEHUB] = false;
@@ -620,15 +614,15 @@ void FI_Start(char *finalescript, infinemode_t mode)
     {
         // Clients use the server-provided presets. We may not have
         // enough info to figure out the real values otherwise.
-        for(i = 0; i < NUM_FICONDS; i++)
+        for(i = 0; i < NUM_FICONDS; ++i)
         {
-            fi->conditions[i] = condition_presets[i];
+            fi->conditions[i] = conditionPresets[i];
         }
     }
 
     if(mode == FIMODE_OVERLAY)
     {
-        // Overlay scripts stop when the gamemode changes.
+        // Overlay scripts stop when the gameMode changes.
         fi->overlayGameState = G_GetGameState();
     }
 
@@ -641,17 +635,17 @@ void FI_Start(char *finalescript, infinemode_t mode)
                      fi->conditions, NUM_FICONDS);
     }
 
-    memset(&fi_dummytext, 0, sizeof(fi_dummytext));
+    memset(&fiDummyText, 0, sizeof(fiDummyText));
 }
 
-/*
+/**
  * Stop playing the script and go to next game state.
  */
 void FI_End(void)
 {
-    int     oldMode;
+    int                 oldMode;
 
-    if(!fi_active || !fi->canSkip)
+    if(!fiActive || !fi->canSkip)
         return;
 
     oldMode = fi->mode;
@@ -670,7 +664,7 @@ void FI_End(void)
     }
 
     // If no more scripts are left, go to the next game mode.
-    if(!fi_active)
+    if(!fiActive)
     {
         if(oldMode == FIMODE_AFTER) // A level has been completed.
         {
@@ -687,8 +681,8 @@ void FI_End(void)
         {
             // Enter the level, this was a briefing.
             G_ChangeGameState(GS_LEVEL);
-            levelstarttic = gametic;
-            leveltime = actual_leveltime = 0;
+            levelStartTic = GAMETIC;
+            levelTime = actualLevelTime = 0;
             // Restart the current map's song.
             S_LevelMusic();
         }
@@ -707,7 +701,8 @@ void FI_SetCondition(int index, boolean value)
 {
     if(index < 0 || index >= NUM_FICONDS)
         return;
-    condition_presets[index] = value;
+
+    conditionPresets[index] = value;
 #ifdef _DEBUG
     Con_Printf("FI_SetCondition: %i = %s\n", index, value ? "true" : "false");
 #endif
@@ -715,9 +710,9 @@ void FI_SetCondition(int index, boolean value)
 
 DEFCC(CCmdStartInFine)
 {
-    char   *script;
+    char               *script;
 
-    if(fi_active)
+    if(fiActive)
         return false;
 
     if(!Def_Get(DD_DEF_FINALE, argv[1], &script))
@@ -732,10 +727,12 @@ DEFCC(CCmdStartInFine)
 
 DEFCC(CCmdStopInFine)
 {
-    if(!fi_active)
+    if(!fiActive)
         return false;
+
     fi->canSkip = true;
     FI_End();
+
     return true;
 }
 
@@ -745,11 +742,11 @@ DEFCC(CCmdStopInFine)
  */
 int FI_Briefing(int episode, int map)
 {
-    char    mid[20];
-    ddfinale_t fin;
+    char                mid[20];
+    ddfinale_t          fin;
 
     // If we're already in the INFINE state, don't start a finale.
-    if(brief_disabled || G_GetGameState() == GS_INFINE || IS_CLIENT ||
+    if(briefDisabled || G_GetGameState() == GS_INFINE || IS_CLIENT ||
        Get(DD_PLAYBACK))
         return false;
 
@@ -769,11 +766,11 @@ int FI_Briefing(int episode, int map)
  */
 int FI_Debriefing(int episode, int map)
 {
-    char    mid[20];
-    ddfinale_t fin;
+    char                mid[20];
+    ddfinale_t          fin;
 
     // If we're already in the INFINE state, don't start a finale.
-    if(brief_disabled || G_GetGameState() == GS_INFINE || IS_CLIENT ||
+    if(briefDisabled || G_GetGameState() == GS_INFINE || IS_CLIENT ||
        Get(DD_PLAYBACK))
         return false;
 
@@ -792,16 +789,16 @@ void FI_DemoEnds(void)
     {
         // Restore the InFine state.
         fi->suspended = false;
-        fi_active = true;
+        fiActive = true;
         G_ChangeGameState(GS_INFINE);
         G_SetGameAction(GA_NONE);
-        AM_Stop(consoleplayer);
+        AM_Stop(CONSOLEPLAYER);
     }
 }
 
-char   *FI_GetToken(void)
+char *FI_GetToken(void)
 {
-    char   *out;
+    char               *out;
 
     if(!fi)
         return NULL;
@@ -810,19 +807,22 @@ char   *FI_GetToken(void)
     while(*fi->cp && isspace(*fi->cp))
         fi->cp++;
     if(!*fi->cp)
-        return NULL;            // The end has been reached.
-    out = fi_token;
-    if(*fi->cp == '"')          // A string?
+        return NULL; // The end has been reached.
+
+    out = fiToken;
+    if(*fi->cp == '"') // A string?
     {
         for(fi->cp++; *fi->cp; fi->cp++)
         {
             if(*fi->cp == '"')
             {
                 fi->cp++;
+
                 // Convert double quotes to single ones.
                 if(*fi->cp != '"')
                     break;
             }
+
             *out++ = *fi->cp;
         }
     }
@@ -832,7 +832,8 @@ char   *FI_GetToken(void)
             *out++ = *fi->cp++;
     }
     *out++ = 0;
-    return fi_token;
+
+    return fiToken;
 }
 
 int FI_GetInteger(void)
@@ -859,8 +860,8 @@ int FI_GetTics(void)
  */
 void FI_Execute(char *cmd)
 {
-    int     i, k;
-    char   *oldcp;
+    int                 i, k;
+    char               *oldcp;
 
     // Semicolon terminates DO-blocks.
     if(!strcmp(cmd, ";"))
@@ -878,27 +879,28 @@ void FI_Execute(char *cmd)
     }
 
     // We're now going to execute a command.
-    fi_cmd_executed = true;
+    fiCmdExecuted = true;
 
     // Is this a command we know how to execute?
-    for(i = 0; fi_commands[i].token; i++)
-        if(!stricmp(cmd, fi_commands[i].token))
+    for(i = 0; fiCommands[i].token; i++)
+    {
+        if(!stricmp(cmd, fiCommands[i].token))
         {
             // Check that there are enough operands.
             // k stays at zero if the number of operands is correct.
             oldcp = fi->cp;
-            for(k = fi_commands[i].operands; k > 0; k--)
+            for(k = fiCommands[i].operands; k > 0; k--)
                 if(!FI_GetToken())
                 {
                     fi->cp = oldcp;
                     Con_Message("FI_Execute: \"%s\" has too few operands.\n",
-                                fi_commands[i].token);
+                                fiCommands[i].token);
                     break;
                 }
             // Should we skip this command?
-            if((fi->skipNext && !fi_commands[i].whenCondSkipping) ||
+            if((fi->skipNext && !fiCommands[i].whenCondSkipping) ||
                ((fi->skipping || fi->gotoSkip) &&
-                !fi_commands[i].whenSkipping))
+                !fiCommands[i].whenSkipping))
             {
                 // While not DO-skipping, the condskip has now been done.
                 if(!fi->doLevel)
@@ -914,7 +916,7 @@ void FI_Execute(char *cmd)
             // If there were enough operands, execute the command.
             fi->cp = oldcp;
             if(!k)
-                fi_commands[i].func();
+                fiCommands[i].func();
 
             // The END command may clear the current state.
             if(!fi)
@@ -924,6 +926,7 @@ void FI_Execute(char *cmd)
             fi->lastSkipped = false;
             return;
         }
+    }
 
     // The command was not found!
     Con_Message("FI_Execute: Unknown command \"%s\".\n", cmd);
@@ -973,7 +976,7 @@ void FI_ValueThink(fivalue_t *val)
 
 void FI_ValueArrayThink(fivalue_t *val, int num)
 {
-    int             i;
+    int                 i;
 
     for(i = 0; i < num; ++i)
         FI_ValueThink(val + i);
@@ -981,8 +984,8 @@ void FI_ValueArrayThink(fivalue_t *val, int num)
 
 fihandler_t *FI_GetHandler(int code)
 {
-    int             i;
-    fihandler_t *vacant = NULL;
+    int                 i;
+    fihandler_t        *vacant = NULL;
 
     for(i = 0; i < MAX_HANDLERS; ++i)
     {
@@ -1016,7 +1019,7 @@ void FI_ClearAnimation(fipic_t *pic)
 
 int FI_GetNextSeq(fipic_t *pic)
 {
-    int             i;
+    int                 i;
 
     for(i = 0; i < MAX_SEQUENCE; ++i)
     {
@@ -1029,7 +1032,7 @@ int FI_GetNextSeq(fipic_t *pic)
 
 fipic_t *FI_FindPic(const char *handle)
 {
-    int             i;
+    int                 i;
 
     if(!handle)
         return NULL;
@@ -1048,7 +1051,7 @@ fipic_t *FI_FindPic(const char *handle)
 
 void FI_InitRect(fipic_t *pic)
 {
-    int             i;
+    int                 i;
 
     FI_InitValue(&pic->object.x, 0);
     FI_InitValue(&pic->object.y, 0);
@@ -1068,7 +1071,7 @@ void FI_InitRect(fipic_t *pic)
 
 fitext_t *FI_FindText(const char *handle)
 {
-    int             i;
+    int                 i;
 
     for(i = 0; i < MAX_TEXT; ++i)
     {
@@ -1084,8 +1087,8 @@ fitext_t *FI_FindText(const char *handle)
 
 fiobj_t *FI_FindObject(const char *handle)
 {
-    fipic_t        *pic;
-    fitext_t       *text;
+    fipic_t            *pic;
+    fitext_t           *text;
 
     // First check all pics.
     if((pic = FI_FindPic(handle)) != NULL)
@@ -1104,8 +1107,8 @@ fiobj_t *FI_FindObject(const char *handle)
 
 fipic_t *FI_GetPic(const char *handle)
 {
-    int             i;
-    fipic_t        *unused = NULL;
+    int                 i;
+    fipic_t            *unused = NULL;
 
     for(i = 0; i < MAX_PICS; ++i)
     {
@@ -1125,7 +1128,7 @@ fipic_t *FI_GetPic(const char *handle)
     if(!unused)
     {
         Con_Message("FI_GetPic: No room for \"%s\".", handle);
-        return &fi_dummypic; // No more space.
+        return &fiDummyPic; // No more space.
     }
 
     memset(unused, 0, sizeof(*unused));
@@ -1142,8 +1145,8 @@ fipic_t *FI_GetPic(const char *handle)
 
 fitext_t *FI_GetText(char *handle)
 {
-    int             i;
-    fitext_t       *unused = NULL;
+    int                 i;
+    fitext_t           *unused = NULL;
 
     for(i = 0; i < MAX_TEXT; ++i)
     {
@@ -1163,7 +1166,7 @@ fitext_t *FI_GetText(char *handle)
     if(!unused)
     {
         Con_Message("FI_GetText: No room for \"%s\".", handle);
-        return &fi_dummytext; // No more space.
+        return &fiDummyText; // No more space.
     }
 
     if(unused->text)
@@ -1190,7 +1193,7 @@ fitext_t *FI_GetText(char *handle)
 
 void FI_SetText(fitext_t *tex, char *str)
 {
-    int             len = strlen(str) + 1;
+    size_t              len = strlen(str) + 1;
 
     if(tex->text)
         Z_Free(tex->text); // Free any previous text.
@@ -1209,11 +1212,11 @@ void FI_ObjectThink(fiobj_t *obj)
 
 void FI_Ticker(void)
 {
-    int             i, k, last = 0;
-    fipic_t        *pic;
-    fitext_t       *tex;
+    int                 i, k, last = 0;
+    fipic_t            *pic;
+    fitext_t           *tex;
 
-    if(!fi_active)
+    if(!fiActive)
         return;
 
     if(fi->mode == FIMODE_OVERLAY)
@@ -1334,7 +1337,7 @@ void FI_Ticker(void)
 
     // Execute commands until a wait time is set or we reach the end of
     // the script. If the end is reached, the finale really ends (FI_End).
-    while(fi_active && !fi->wait && !fi->waitingText && !fi->waitingPic &&
+    while(fiActive && !fi->wait && !fi->waitingText && !fi->waitingPic &&
           !last)
         last = !FI_ExecuteNextCommand();
 
@@ -1385,11 +1388,11 @@ int FI_SkipRequest(void)
 }
 
 /**
- * @return          @c true, if the event should open the menu.
+ * @return              @c true, if the event should open the menu.
  */
 boolean FI_IsMenuTrigger(event_t *ev)
 {
-    if(!fi_active)
+    if(!fiActive)
         return false;
     return fi->showMenu;
 }
@@ -1405,9 +1408,9 @@ int FI_AteEvent(event_t *ev)
 
 int FI_Responder(event_t *ev)
 {
-    int             i;
+    int                 i;
 
-    if(!fi_active || IS_CLIENT)
+    if(!fiActive || IS_CLIENT)
         return false;
 
     // During the first ~second disallow all events/skipping.
@@ -1465,13 +1468,13 @@ int FI_CharWidth(int ch, boolean fontb)
     if(ch < 33)
         return 4;
 
-    return fontb ? hu_font_b[ch - HU_FONTSTART].width :
-        hu_font_a[ch - HU_FONTSTART].width;
+    return fontb ? huFontB[ch - HU_FONTSTART].width :
+        huFontA[ch - HU_FONTSTART].width;
 }
 
 int FI_GetLineWidth(char *text, boolean fontb)
 {
-    int             width = 0;
+    int                 width = 0;
 
     for(; *text; text++)
     {
@@ -1494,14 +1497,14 @@ int FI_GetLineWidth(char *text, boolean fontb)
 
 int FI_DrawChar(int x, int y, int ch, boolean fontb)
 {
-    int             lump;
+    int                 lump;
 
     ch = FI_FilterChar(ch);
 
     if(fontb)
-        lump = hu_font_b[ch - HU_FONTSTART].lump;
+        lump = huFontB[ch - HU_FONTSTART].lump;
     else
-        lump = hu_font_a[ch - HU_FONTSTART].lump;
+        lump = huFontA[ch - HU_FONTSTART].lump;
 
     // Draw the character. Don't try to draw spaces.
     if(ch > 32)
@@ -1540,13 +1543,13 @@ void FI_UseTextColor(fitext_t *tex, int idx)
 }
 
 /**
- * @return          The length as a counter.
+ * @return              The length as a counter.
  */
 int FI_TextObjectLength(fitext_t *tex)
 {
-    int             cnt;
-    char           *ptr;
-    float           secondLen = (tex->wait ? 35.0f / tex->wait : 0);
+    int                 cnt;
+    char               *ptr;
+    float               secondLen = (tex->wait ? 35.0f / tex->wait : 0);
 
     for(cnt = 0, ptr = tex->text; *ptr; ptr++)
     {
@@ -1582,10 +1585,10 @@ void FI_Rotate(float angle)
 
 void FI_DrawText(fitext_t *tex)
 {
-    int             cnt, x = 0, y = 0;
-    char           *ptr;
-    int             linew = -1;
-    int             ch;
+    int                 cnt, x = 0, y = 0;
+    char               *ptr;
+    int                 linew = -1;
+    int                 ch;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -1690,13 +1693,13 @@ void FI_GetTurnCenter(fipic_t *pic, float *center)
  */
 void FI_Drawer(void)
 {
-    int             i, sq;
-    float           mid[2];
-    fipic_t        *pic;
-    fitext_t       *tex;
+    int                 i, sq;
+    float               mid[2];
+    fipic_t            *pic;
+    fitext_t           *tex;
 
     // Don't draw anything until we are sure the script has started.
-    if(!fi_active || !fi_cmd_executed)
+    if(!fiActive || !fiCmdExecuted)
         return;
 
     // Draw the background.
@@ -1894,15 +1897,15 @@ void FIC_WaitAnim(void)
 
 void FIC_Color(void)
 {
-    int     i;
+    int                 i;
 
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
         FI_SetValue(fi->bgColor + i, FI_GetFloat());
 }
 
 void FIC_ColorAlpha(void)
 {
-    int     i;
+    int                 i;
 
     for(i = 0; i < 4; i++)
         FI_SetValue(fi->bgColor + i, FI_GetFloat());
@@ -1943,26 +1946,26 @@ void FIC_NoEvents(void)
 
 void FIC_OnKey(void)
 {
-    int     code;
-    fihandler_t *handler;
+    int                 code;
+    fihandler_t        *handler;
 
     // First argument is the key identifier.
     code = DD_GetKeyCode(FI_GetToken());
 
-    // Read the marker name into fi_token.
+    // Read the marker name into fiToken.
     FI_GetToken();
 
     // Find an empty handler.
     if((handler = FI_GetHandler(code)) != NULL)
     {
         handler->code = code;
-        strncpy(handler->marker, fi_token, sizeof(handler->marker) - 1);
+        strncpy(handler->marker, fiToken, sizeof(handler->marker) - 1);
     }
 }
 
 void FIC_UnsetKey(void)
 {
-    fihandler_t *handler = FI_GetHandler(DD_GetKeyCode(FI_GetToken()));
+    fihandler_t        *handler = FI_GetHandler(DD_GetKeyCode(FI_GetToken()));
 
     if(handler)
     {
@@ -1973,27 +1976,27 @@ void FIC_UnsetKey(void)
 
 void FIC_If(void)
 {
-    boolean val = false;
+    boolean             val = false;
 
     FI_GetToken();
     // Let's see if we know this id.
-    if(!stricmp(fi_token, "secret"))
+    if(!stricmp(fiToken, "secret"))
     {
         // Secret exit was used?
         val = fi->conditions[FICOND_SECRET];
     }
-    else if(!stricmp(fi_token, "netgame"))
+    else if(!stricmp(fiToken, "netgame"))
     {
         val = IS_NETGAME;
     }
-    else if(!stricmp(fi_token, "deathmatch"))
+    else if(!stricmp(fiToken, "deathmatch"))
     {
         val = deathmatch != false;
     }
-    else if(!stricmp(fi_token, "shareware"))
+    else if(!stricmp(fiToken, "shareware"))
     {
 #if __JDOOM__
-        val = (gamemode == shareware);
+        val = (gameMode == shareware);
 #elif __JHERETIC__
         val = shareware != false;
 #else
@@ -2001,38 +2004,38 @@ void FIC_If(void)
 #endif
     }
     // Generic game mode string checking.
-    else if(!strnicmp(fi_token, "mode:", 5))
+    else if(!strnicmp(fiToken, "mode:", 5))
     {
-        val = !stricmp(fi_token + 5, (char *) G_GetVariable(DD_GAME_MODE));
+        val = !stricmp(fiToken + 5, (char *) G_GetVariable(DD_GAME_MODE));
     }
 #if __JDOOM__
     // Game modes.
-    else if(!stricmp(fi_token, "ultimate"))
+    else if(!stricmp(fiToken, "ultimate"))
     {
-        val = (gamemode == retail);
+        val = (gameMode == retail);
     }
-    else if(!stricmp(fi_token, "commercial"))
+    else if(!stricmp(fiToken, "commercial"))
     {
-        val = (gamemode == commercial);
+        val = (gameMode == commercial);
     }
 #endif
-    else if(!stricmp(fi_token, "leavehub"))
+    else if(!stricmp(fiToken, "leavehub"))
     {
         // Current hub has been completed?
         val = fi->conditions[FICOND_LEAVEHUB];
     }
 #if __JHEXEN__
     // Player classes.
-    else if(!stricmp(fi_token, "fighter"))
-        val = (cfg.playerClass[consoleplayer] == PCLASS_FIGHTER);
-    else if(!stricmp(fi_token, "cleric"))
-        val = (cfg.playerClass[consoleplayer] == PCLASS_CLERIC);
-    else if(!stricmp(fi_token, "mage"))
-        val = (cfg.playerClass[consoleplayer] == PCLASS_MAGE);
+    else if(!stricmp(fiToken, "fighter"))
+        val = (cfg.playerClass[CONSOLEPLAYER] == PCLASS_FIGHTER);
+    else if(!stricmp(fiToken, "cleric"))
+        val = (cfg.playerClass[CONSOLEPLAYER] == PCLASS_CLERIC);
+    else if(!stricmp(fiToken, "mage"))
+        val = (cfg.playerClass[CONSOLEPLAYER] == PCLASS_MAGE);
 #endif
     else
     {
-        Con_Message("FIC_If: Unknown condition \"%s\".\n", fi_token);
+        Con_Message("FIC_If: Unknown condition \"%s\".\n", fiToken);
     }
     // Skip the next command if the value is false.
     fi->skipNext = !val;
@@ -2061,13 +2064,13 @@ void FIC_Marker(void)
 {
     FI_GetToken();
     // Does it match the goto string?
-    if(!stricmp(fi->gotoTarget, fi_token))
+    if(!stricmp(fi->gotoTarget, fiToken))
         fi->gotoSkip = false;
 }
 
 void FIC_Delete(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
 
     if(obj)
     {
@@ -2077,7 +2080,7 @@ void FIC_Delete(void)
 
 void FIC_Image(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
 
     FI_ClearAnimation(pic);
     pic->lump[0] = W_CheckNumForName(FI_GetToken());
@@ -2088,7 +2091,7 @@ void FIC_Image(void)
 
 void FIC_ImageAt(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
@@ -2101,8 +2104,8 @@ void FIC_ImageAt(void)
 
 void FIC_XImage(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
-    const char *fileName;
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    const char         *fileName;
 
     FI_ClearAnimation(pic);
 
@@ -2117,7 +2120,7 @@ void FIC_XImage(void)
 
 void FIC_Patch(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
@@ -2129,8 +2132,8 @@ void FIC_Patch(void)
 
 void FIC_SetPatch(void)
 {
-    int num;
-    fipic_t *pic = FI_GetPic(FI_GetToken());
+    int                 num;
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
 
     if((num = W_CheckNumForName(FI_GetToken()))!= -1)
     {
@@ -2142,15 +2145,15 @@ void FIC_SetPatch(void)
 
 void FIC_ClearAnim(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
 
     FI_ClearAnimation(pic);
 }
 
 void FIC_Anim(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
-    int     i, lump, time;
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    int                 i, lump, time;
 
     lump = W_CheckNumForName(FI_GetToken());
     time = FI_GetTics();
@@ -2166,8 +2169,8 @@ void FIC_Anim(void)
 
 void FIC_AnimImage(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
-    int     i, lump, time;
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    int                 i, lump, time;
 
     lump = W_CheckNumForName(FI_GetToken());
     time = FI_GetTics();
@@ -2184,8 +2187,8 @@ void FIC_AnimImage(void)
 
 void FIC_Repeat(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
-    int     i = FI_GetNextSeq(pic);
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    int                 i = FI_GetNextSeq(pic);
 
     if(i == MAX_SEQUENCE)
         return;
@@ -2194,11 +2197,11 @@ void FIC_Repeat(void)
 
 void FIC_StateAnim(void)
 {
-    fipic_t        *pic = FI_GetPic(FI_GetToken());
-    int             i;
-    int             s = Def_Get(DD_DEF_STATE, FI_GetToken(), 0);
-    int             count = FI_GetInteger();
-    spriteinfo_t    sinf;
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    int                 i;
+    int                 s = Def_Get(DD_DEF_STATE, FI_GetToken(), 0);
+    int                 count = FI_GetInteger();
+    spriteinfo_t        sinf;
 
     // Animate N states starting from the given one.
     pic->flags.is_patch = true;
@@ -2226,8 +2229,8 @@ void FIC_StateAnim(void)
 
 void FIC_PicSound(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
-    int     i;
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    int                 i;
 
     i = FI_GetNextSeq(pic) - 1;
     if(i < 0)
@@ -2237,8 +2240,8 @@ void FIC_PicSound(void)
 
 void FIC_ObjectOffX(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    float   value = FI_GetFloat();
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    float               value = FI_GetFloat();
 
     if(obj)
     {
@@ -2248,8 +2251,8 @@ void FIC_ObjectOffX(void)
 
 void FIC_ObjectOffY(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    float   value = FI_GetFloat();
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    float               value = FI_GetFloat();
 
     if(obj)
     {
@@ -2259,15 +2262,15 @@ void FIC_ObjectOffY(void)
 
 void FIC_ObjectRGB(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    fipic_t *pic = FI_FindPic(obj ? obj->handle : NULL);
-    int     i;
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    fipic_t            *pic = FI_FindPic(obj ? obj->handle : NULL);
+    int                 i;
 
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
     {
         if(obj)
         {
-            float   value = FI_GetFloat();
+            float               value = FI_GetFloat();
 
             FI_SetValue(obj->color + i, value);
 
@@ -2288,9 +2291,9 @@ void FIC_ObjectRGB(void)
 
 void FIC_ObjectAlpha(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    fipic_t *pic = FI_FindPic(obj ? obj->handle : NULL);
-    float   value = FI_GetFloat();
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    fipic_t            *pic = FI_FindPic(obj ? obj->handle : NULL);
+    float               value = FI_GetFloat();
 
     if(obj)
     {
@@ -2307,8 +2310,8 @@ void FIC_ObjectAlpha(void)
 
 void FIC_ObjectScaleX(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    float   value = FI_GetFloat();
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    float               value = FI_GetFloat();
 
     if(obj)
     {
@@ -2318,8 +2321,8 @@ void FIC_ObjectScaleX(void)
 
 void FIC_ObjectScaleY(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    float   value = FI_GetFloat();
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    float               value = FI_GetFloat();
 
     if(obj)
     {
@@ -2329,8 +2332,8 @@ void FIC_ObjectScaleY(void)
 
 void FIC_ObjectScale(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    float   value = FI_GetFloat();
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    float               value = FI_GetFloat();
 
     if(obj)
     {
@@ -2341,9 +2344,9 @@ void FIC_ObjectScale(void)
 
 void FIC_ObjectScaleXY(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    float   x = FI_GetFloat();
-    float   y = FI_GetFloat();
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    float               x = FI_GetFloat();
+    float               y = FI_GetFloat();
 
     if(obj)
     {
@@ -2354,8 +2357,8 @@ void FIC_ObjectScaleXY(void)
 
 void FIC_ObjectAngle(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    float   value = FI_GetFloat();
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    float               value = FI_GetFloat();
 
     if(obj)
     {
@@ -2365,7 +2368,7 @@ void FIC_ObjectAngle(void)
 
 void FIC_Rect(void)
 {
-    fipic_t *pic = FI_GetPic(FI_GetToken());
+    fipic_t            *pic = FI_GetPic(FI_GetToken());
 
     FI_InitRect(pic);
 
@@ -2383,16 +2386,16 @@ void FIC_Rect(void)
 
 void FIC_FillColor(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    fipic_t *pic;
-    int     which = 0;
-    int     i;
-    float   color;
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    fipic_t            *pic;
+    int                 which = 0;
+    int                 i;
+    float               color;
 
     if(!obj)
     {
         // Skip the parms.
-        for(i = 0; i < 5; i++)
+        for(i = 0; i < 5; ++i)
             FI_GetToken();
         return;
     }
@@ -2401,14 +2404,14 @@ void FIC_FillColor(void)
 
     // Which colors to modify?
     FI_GetToken();
-    if(!stricmp(fi_token, "top"))
+    if(!stricmp(fiToken, "top"))
         which |= 1;
-    else if(!stricmp(fi_token, "bottom"))
+    else if(!stricmp(fiToken, "bottom"))
         which |= 2;
     else
         which = 3;
 
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
     {
         color = FI_GetFloat();
 
@@ -2421,16 +2424,16 @@ void FIC_FillColor(void)
 
 void FIC_EdgeColor(void)
 {
-    fiobj_t *obj = FI_FindObject(FI_GetToken());
-    fipic_t *pic;
-    int     which = 0;
-    int     i;
-    float   color;
+    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    fipic_t            *pic;
+    int                 which = 0;
+    int                 i;
+    float               color;
 
     if(!obj)
     {
         // Skip the parms.
-        for(i = 0; i < 5; i++)
+        for(i = 0; i < 5; ++i)
             FI_GetToken();
         return;
     }
@@ -2439,14 +2442,14 @@ void FIC_EdgeColor(void)
 
     // Which colors to modify?
     FI_GetToken();
-    if(!stricmp(fi_token, "top"))
+    if(!stricmp(fiToken, "top"))
         which |= 1;
-    else if(!stricmp(fi_token, "bottom"))
+    else if(!stricmp(fiToken, "bottom"))
         which |= 2;
     else
         which = 3;
 
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
     {
         color = FI_GetFloat();
 
@@ -2469,7 +2472,7 @@ void FIC_OffsetY(void)
 
 void FIC_Sound(void)
 {
-    int     num = Def_Get(DD_DEF_SOUND, FI_GetToken(), NULL);
+    int                 num = Def_Get(DD_DEF_SOUND, FI_GetToken(), NULL);
 
     if(num > 0)
         S_LocalSound(num, NULL);
@@ -2477,8 +2480,8 @@ void FIC_Sound(void)
 
 void FIC_SoundAt(void)
 {
-    int     num = Def_Get(DD_DEF_SOUND, FI_GetToken(), NULL);
-    float   vol = FI_GetFloat();
+    int                 num = Def_Get(DD_DEF_SOUND, FI_GetToken(), NULL);
+    float               vol = FI_GetFloat();
 
     if(vol > 1)
         vol = 1;
@@ -2488,7 +2491,7 @@ void FIC_SoundAt(void)
 
 void FIC_SeeSound(void)
 {
-    int     num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
+    int                 num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
 
     if(num < 0 || mobjInfo[num].seeSound <= 0)
         return;
@@ -2497,7 +2500,7 @@ void FIC_SeeSound(void)
 
 void FIC_DieSound(void)
 {
-    int     num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
+    int                 num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
 
     if(num < 0 || mobjInfo[num].deathSound <= 0)
         return;
@@ -2516,47 +2519,49 @@ void FIC_MusicOnce(void)
 
 void FIC_Filter(void)
 {
-    int     i;
+    int                 i;
 
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
         FI_SetValue(fi->filter + i, FI_GetFloat());
 }
 
 void FIC_Text(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     FI_InitValue(&tex->object.x, FI_GetFloat());
     FI_InitValue(&tex->object.y, FI_GetFloat());
     FI_SetText(tex, FI_GetToken());
-    tex->pos = 0;               // Restart the text.
+    tex->pos = 0; // Restart the text.
 }
 
 void FIC_TextFromDef(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
-    char   *str;
+    fitext_t           *tex = FI_GetText(FI_GetToken());
+    char               *str;
 
     FI_InitValue(&tex->object.x, FI_GetFloat());
     FI_InitValue(&tex->object.y, FI_GetFloat());
     if(!Def_Get(DD_DEF_TEXT, FI_GetToken(), &str))
-        str = "(undefined)";    // Not found!
+        str = "(undefined)"; // Not found!
     FI_SetText(tex, str);
-    tex->pos = 0;               // Restart the text.
+    tex->pos = 0; // Restart the text.
 }
 
 void FIC_TextFromLump(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
-    int     lnum, buflen;
-    size_t  i, incount;
-    char   *data, *str, *out;
+    fitext_t           *tex = FI_GetText(FI_GetToken());
+    int                 lnum, buflen;
+    size_t              i, incount;
+    char               *data, *str, *out;
 
     FI_InitValue(&tex->object.x, FI_GetFloat());
     FI_InitValue(&tex->object.y, FI_GetFloat());
     lnum = W_CheckNumForName(FI_GetToken());
     if(lnum < 0)
+    {
         FI_SetText(tex, "(not found)");
+    }
     else
     {
         // Load the lump.
@@ -2564,7 +2569,7 @@ void FIC_TextFromLump(void)
         incount = W_LumpLength(lnum);
         str = Z_Malloc(buflen = 2 * incount + 1, PU_STATIC, 0);
         memset(str, 0, buflen);
-        for(i = 0, out = str; i < incount; i++)
+        for(i = 0, out = str; i < incount; ++i)
         {
             if(data[i] == '\n')
             {
@@ -2580,29 +2585,29 @@ void FIC_TextFromLump(void)
         FI_SetText(tex, str);
         Z_Free(str);
     }
-    tex->pos = 0;               // Restart.
+    tex->pos = 0; // Restart.
 }
 
 void FIC_SetText(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     FI_SetText(tex, FI_GetToken());
 }
 
 void FIC_SetTextDef(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
-    char   *str;
+    fitext_t           *tex = FI_GetText(FI_GetToken());
+    char               *str;
 
     if(!Def_Get(DD_DEF_TEXT, FI_GetToken(), &str))
-        str = "(undefined)";    // Not found!
+        str = "(undefined)"; // Not found!
     FI_SetText(tex, str);
 }
 
 void FIC_DeleteText(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     tex->object.used = false;
     if(tex->text)
@@ -2615,63 +2620,64 @@ void FIC_DeleteText(void)
 
 void FIC_TextColor(void)
 {
-    int     idx = FI_GetInteger(), c;
+    int                 idx = FI_GetInteger(), c;
 
     if(idx < 1)
         idx = 1;
     if(idx > 9)
         idx = 9;
-    for(c = 0; c < 3; c++)
+
+    for(c = 0; c < 3; ++c)
         FI_SetValue(&fi->textColor[idx - 1][c], FI_GetFloat());
 }
 
 void FIC_TextRGB(void)
 {
-    int     i;
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    int                 i;
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
         FI_SetValue(&tex->object.color[i], FI_GetFloat());
 }
 
 void FIC_TextAlpha(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     FI_SetValue(&tex->object.color[3], FI_GetFloat());
 }
 
 void FIC_TextOffX(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     FI_SetValue(&tex->object.x, FI_GetFloat());
 }
 
 void FIC_TextOffY(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     FI_SetValue(&tex->object.y, FI_GetFloat());
 }
 
 void FIC_TextCenter(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     tex->flags.centered = true;
 }
 
 void FIC_TextNoCenter(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     tex->flags.centered = false;
 }
 
 void FIC_TextScroll(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     tex->scrollTimer = 0;
     tex->scrollWait = FI_GetInteger();
@@ -2679,28 +2685,28 @@ void FIC_TextScroll(void)
 
 void FIC_TextPos(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     tex->pos = FI_GetInteger();
 }
 
 void FIC_TextRate(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     tex->wait = FI_GetInteger();
 }
 
 void FIC_TextLineHeight(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     tex->lineheight = FI_GetInteger();
 }
 
 void FIC_FontA(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     tex->flags.font_b = false;
     // Set line height to font A.
@@ -2713,7 +2719,7 @@ void FIC_FontA(void)
 
 void FIC_FontB(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     tex->flags.font_b = true;
 #if __JDOOM__
@@ -2731,21 +2737,21 @@ void FIC_NoMusic(void)
 
 void FIC_TextScaleX(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     FI_SetValue(&tex->object.scale[0], FI_GetFloat());
 }
 
 void FIC_TextScaleY(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     FI_SetValue(&tex->object.scale[1], FI_GetFloat());
 }
 
 void FIC_TextScale(void)
 {
-    fitext_t *tex = FI_GetText(FI_GetToken());
+    fitext_t           *tex = FI_GetText(FI_GetToken());
 
     FI_SetValue(&tex->object.scale[0], FI_GetFloat());
     FI_SetValue(&tex->object.scale[1], FI_GetFloat());
@@ -2756,7 +2762,7 @@ void FIC_PlayDemo(void)
     // Mark the current state as suspended, so we know to resume it when
     // the demo ends.
     fi->suspended = true;
-    fi_active = false;
+    fiActive = false;
 
     // The only argument is the demo file name.
     // Start playing the demo.

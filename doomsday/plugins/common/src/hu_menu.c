@@ -45,6 +45,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -433,7 +435,7 @@ menu_t MainDef = {
     M_DrawMainMenu,
     6, MainItems,
     0, MENU_NONE,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B,
@@ -444,7 +446,7 @@ menu_t MainDef = {
     M_DrawMainMenu,
     6, MainItems,
     0, MENU_NONE,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B,
@@ -455,7 +457,7 @@ menu_t MainDef = {
     M_DrawMainMenu,
     7, MainItems,
     0, MENU_NONE,
-    hu_font_a,                    //1, 0, 0,
+    huFontA,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B + 1,
@@ -466,7 +468,7 @@ menu_t MainDef = {
     M_DrawMainMenu,
     6, MainItems,
     0, MENU_NONE,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B + 1,
@@ -477,7 +479,7 @@ menu_t MainDef = {
     M_DrawMainMenu,
     7, MainItems,
     0, MENU_NONE,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B + 1,
@@ -498,7 +500,7 @@ menu_t ClassDef = {
     M_DrawClassMenu,
     3, ClassItems,
     0, MENU_MAIN,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B + 1,
@@ -521,7 +523,7 @@ menu_t EpiDef = {
     M_DrawEpisode,
     3, EpisodeItems,
     0, MENU_MAIN,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT + 1,
@@ -540,7 +542,7 @@ menu_t  EpiDef = {
     M_DrawEpisode,
     2, EpisodeItems,
     0, MENU_MAIN,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT + 1,
@@ -561,7 +563,7 @@ menu_t  EpiDef = {
     M_DrawEpisode,
     4, EpisodeItems,
     0, MENU_MAIN,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT + 1,
@@ -582,7 +584,7 @@ static menu_t FilesMenu = {
     M_DrawFilesMenu,
     2, FilesItems,
     0, MENU_MAIN,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT + 1,
@@ -613,7 +615,7 @@ static menu_t LoadDef = {
     M_DrawLoad,
     NUMSAVESLOTS, LoadItems,
     0, MENU_MAIN,
-    hu_font_a,
+    huFontA,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A + 8,
@@ -643,7 +645,7 @@ static menu_t SaveDef = {
     M_DrawSave,
     NUMSAVESLOTS, SaveItems,
     0, MENU_MAIN,
-    hu_font_a,
+    huFontA,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A + 8,
@@ -665,7 +667,7 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_MAIN,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT,
@@ -687,7 +689,7 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_CLASS,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT,
@@ -708,7 +710,7 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_EPISODE,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT,
@@ -730,7 +732,7 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_EPISODE,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT,
@@ -757,7 +759,7 @@ static menu_t OptionsDef = {
     M_DrawOptions,
     10, OptionsItems,
     0, MENU_MAIN,
-    hu_font_a,                    //1, 0, 0,
+    huFontA,                    //1, 0, 0,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -794,7 +796,7 @@ static menu_t Options2Def = {
     3, Options2Items,
 #endif
     0, MENU_OPTIONS,
-    hu_font_a,
+    huFontA,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -815,7 +817,7 @@ menu_t  ReadDef1 = {
     M_DrawReadThis1,
     1, ReadItems1,
     0, MENU_MAIN,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT,
@@ -836,7 +838,7 @@ menu_t  ReadDef2 = {
     M_DrawReadThis2,
     1, ReadItems2,
     0, MENU_MAIN,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT,
@@ -854,7 +856,7 @@ menu_t  ReadDef3 = {
     M_DrawReadThis3,
     1, ReadItems3,
     0, MENU_MAIN,
-    hu_font_b,                    //1, 0, 0,
+    huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT,
@@ -949,7 +951,7 @@ static menu_t HUDDef = {
     13, HUDItems,
 #endif
     0, MENU_OPTIONS,
-    hu_font_a,
+    huFontA,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -1014,7 +1016,7 @@ static menu_t WeaponDef = {
     14, WeaponItems,
 #endif
     0, MENU_OPTIONS,
-    hu_font_a,
+    huFontA,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -1085,7 +1087,7 @@ static menu_t GameplayDef = {
     M_DrawGameplay,
     3, GameplayItems,
     0, MENU_OPTIONS,
-    hu_font_a,
+    huFontA,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -1108,7 +1110,7 @@ static menu_t GameplayDef = {
     12, GameplayItems,
 #endif
     0, MENU_OPTIONS,
-    hu_font_a,
+    huFontA,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -1177,7 +1179,7 @@ static menu_t ColorWidgetMnu = {
     4, ColorWidgetItems,
 #endif
     0, MENU_OPTIONS,
-    hu_font_a,
+    huFontA,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -1192,10 +1194,10 @@ static menu_t ColorWidgetMnu = {
 cvar_t menuCVars[] =
 {
     {"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1},
-    {"menu-flash-r", 0, CVT_FLOAT, &cfg.flashcolor[0], 0, 1},
-    {"menu-flash-g", 0, CVT_FLOAT, &cfg.flashcolor[1], 0, 1},
-    {"menu-flash-b", 0, CVT_FLOAT, &cfg.flashcolor[2], 0, 1},
-    {"menu-flash-speed", 0, CVT_INT, &cfg.flashspeed, 0, 50},
+    {"menu-flash-r", 0, CVT_FLOAT, &cfg.flashColor[0], 0, 1},
+    {"menu-flash-g", 0, CVT_FLOAT, &cfg.flashColor[1], 0, 1},
+    {"menu-flash-b", 0, CVT_FLOAT, &cfg.flashColor[2], 0, 1},
+    {"menu-flash-speed", 0, CVT_INT, &cfg.flashSpeed, 0, 50},
     {"menu-turningskull", 0, CVT_BYTE, &cfg.turningSkull, 0, 1},
     {"menu-effect", 0, CVT_INT, &cfg.menuEffects, 0, 2},
     {"menu-color-r", 0, CVT_FLOAT, &cfg.menuColor[0], 0, 1},
@@ -1394,7 +1396,7 @@ void Hu_MenuInit(void)
     // Here we could catch other version dependencies,
     //  like HELP1/2, and four episodes.
 
-    switch(gamemode)
+    switch(gameMode)
     {
     case commercial:
         // This is used because DOOM 2 had only one HELP
@@ -1442,7 +1444,7 @@ void Hu_MenuInit(void)
 #endif
 
 #ifdef __JHERETIC__
-    if(gamemode == extended)
+    if(gameMode == extended)
     {                            // Add episodes 4 and 5 to the menu
         EpiDef.itemCount = EpiDef.numVisItems = 5;
         EpiDef.y = 50 - ITEM_HEIGHT;
@@ -1560,7 +1562,7 @@ void Hu_MenuTicker(timespan_t time)
             }
         }
 
-        typein_time++;
+        typeInTime++;
 
         // Fade in/out the widget background filter
         if(widgetEdit)
@@ -1601,7 +1603,7 @@ void Hu_MenuTicker(timespan_t time)
 
         menuTime++;
 
-        menu_color += cfg.flashspeed;
+        menu_color += cfg.flashSpeed;
         if(menu_color >= 100)
             menu_color -= 100;
 
@@ -1664,7 +1666,7 @@ void M_SetupNextMenu(menu_t *menudef)
 
     menu_color = 0;
     skull_angle = 0;
-    typein_time = 0;
+    typeInTime = 0;
 }
 
 /**
@@ -1756,7 +1758,7 @@ static void drawMessage(void)
 
     start = 0;
 
-    y = 100 - M_StringHeight(messageString, hu_font_a) / 2;
+    y = 100 - M_StringHeight(messageString, huFontA) / 2;
     while(*(messageString + start))
     {
         for(i = 0; i < strlen(messageString + start); ++i)
@@ -1776,11 +1778,11 @@ static void drawMessage(void)
             start += i;
         }
 
-        x = 160 - M_StringWidth(string, hu_font_a) / 2;
-        M_WriteText2(x, y, string, hu_font_a, cfg.menuColor2[0],
+        x = 160 - M_StringWidth(string, huFontA) / 2;
+        M_WriteText2(x, y, string, huFontA, cfg.menuColor2[0],
                      cfg.menuColor2[1], cfg.menuColor2[2], 1);
 
-        y += hu_font_a[17].height;
+        y += huFontA[17].height;
     }
 
 #undef BUFSIZE
@@ -1884,9 +1886,9 @@ void Hu_MenuDrawer(void)
                     t = menu_color / 50.0f;
                 else
                     t = (100 - menu_color) / 50.0f;
-                r = currentMenu->color[0] * t + cfg.flashcolor[0] * (1 - t);
-                g = currentMenu->color[1] * t + cfg.flashcolor[1] * (1 - t);
-                b = currentMenu->color[2] * t + cfg.flashcolor[2] * (1 - t);
+                r = currentMenu->color[0] * t + cfg.flashColor[0] * (1 - t);
+                g = currentMenu->color[1] * t + cfg.flashColor[1] * (1 - t);
+                b = currentMenu->color[2] * t + cfg.flashColor[2] * (1 - t);
             }
             else
             {
@@ -2001,7 +2003,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             skull_angle = 0;
             currentMenu = &MainDef;
             itemOn = currentMenu->lastOn;
-            typein_time = 0;
+            typeInTime = 0;
             quitAsk = 0;
 
             // Enable the menu binding class
@@ -2222,7 +2224,7 @@ boolean M_EditResponder(event_t *ev)
                 if(saveStringEnter)
                 {
                     if(saveCharIndex < SAVESTRINGSIZE - 1 &&
-                        M_StringWidth(savegamestrings[saveSlot], hu_font_a)
+                        M_StringWidth(savegamestrings[saveSlot], huFontA)
                         < (SAVESTRINGSIZE - 2) * 8)
                     {
                         savegamestrings[saveSlot][saveCharIndex++] = ch;
@@ -2354,35 +2356,35 @@ void DrawColorWidget(void)
 #ifdef __JDOOM__
         MN_DrawSlider(menu, 0, 11, currentcolor[0] * 10 + .25f);
         M_WriteText2(menu->x, menu->y, ColorWidgetItems[0].text,
-                     hu_font_a, 1, 1, 1, menuAlpha);
+                     huFontA, 1, 1, 1, menuAlpha);
         MN_DrawSlider(menu, 1, 11, currentcolor[1] * 10 + .25f);
         M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A),
-                     ColorWidgetItems[1].text, hu_font_a, 1, 1, 1, menuAlpha);
+                     ColorWidgetItems[1].text, huFontA, 1, 1, 1, menuAlpha);
         MN_DrawSlider(menu, 2, 11, currentcolor[2] * 10 + .25f);
         M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 2),
-                     ColorWidgetItems[2].text, hu_font_a, 1, 1, 1, menuAlpha);
+                     ColorWidgetItems[2].text, huFontA, 1, 1, 1, menuAlpha);
 #else
         MN_DrawSlider(menu, 1, 11, currentcolor[0] * 10 + .25f);
         M_WriteText2(menu->x, menu->y, ColorWidgetItems[0].text,
-                     hu_font_a, 1, 1, 1, menuAlpha);
+                     huFontA, 1, 1, 1, menuAlpha);
         MN_DrawSlider(menu, 4, 11, currentcolor[1] * 10 + .25f);
         M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 3),
-                     ColorWidgetItems[3].text, hu_font_a, 1, 1, 1, menuAlpha);
+                     ColorWidgetItems[3].text, huFontA, 1, 1, 1, menuAlpha);
         MN_DrawSlider(menu, 7, 11, currentcolor[2] * 10 + .25f);
         M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 6),
-                     ColorWidgetItems[6].text, hu_font_a, 1, 1, 1, menuAlpha);
+                     ColorWidgetItems[6].text, huFontA, 1, 1, 1, menuAlpha);
 #endif
         if(rgba)
         {
 #ifdef __JDOOM__
             MN_DrawSlider(menu, 3, 11, currentcolor[3] * 10 + .25f);
             M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 3),
-                         ColorWidgetItems[3].text, hu_font_a, 1, 1, 1,
+                         ColorWidgetItems[3].text, huFontA, 1, 1, 1,
                          menuAlpha);
 #else
             MN_DrawSlider(menu, 10, 11, currentcolor[3] * 10 + .25f);
             M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 9),
-                         ColorWidgetItems[9].text, hu_font_a, 1, 1, 1,
+                         ColorWidgetItems[9].text, huFontA, 1, 1, 1,
                          menuAlpha);
 #endif
         }
@@ -2440,8 +2442,8 @@ void M_ToggleVar(int index, void *data)
 
 void M_DrawTitle(char *text, int y)
 {
-    WI_DrawParamText(160 - M_StringWidth(text, hu_font_b) / 2, y, text,
-                     hu_font_b, cfg.menuColor[0], cfg.menuColor[1],
+    WI_DrawParamText(160 - M_StringWidth(text, huFontB) / 2, y, text,
+                     huFontB, cfg.menuColor[0], cfg.menuColor[1],
                      cfg.menuColor[2], menuAlpha, true, true, ALIGN_LEFT);
 }
 
@@ -2507,7 +2509,7 @@ void M_StartMessage(char *string, void *routine, boolean input)
     messageRoutine = routine;
     messageNeedsInput = input;
     menuActive = true;
-    typein_time = 0;
+    typeInTime = 0;
 
     // Enable the message binding class
     DD_Executef(true, "activatebclass message");
@@ -2584,7 +2586,7 @@ void M_DrawClassMenu(void)
         "m_mwalk1"
     };
 
-    M_WriteText2(34, 24, "CHOOSE CLASS:", hu_font_b, menu->color[0],
+    M_WriteText2(34, 24, "CHOOSE CLASS:", huFontB, menu->color[0],
                  menu->color[1], menu->color[2], menuAlpha);
 
     class = (playerclass_t) currentMenu->items[itemOn].option;
@@ -2716,9 +2718,9 @@ void M_DrawSave(void)
 
     if(saveStringEnter)
     {
-        i = M_StringWidth(savegamestrings[saveSlot], hu_font_a);
+        i = M_StringWidth(savegamestrings[saveSlot], huFontA);
         M_WriteText2(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y +
-                     (menu->itemHeight * saveSlot), "_", hu_font_a, menu->color[0],
+                     (menu->itemHeight * saveSlot), "_", huFontA, menu->color[0],
                      menu->color[1], menu->color[2], menuAlpha);
     }
 
@@ -2783,7 +2785,7 @@ boolean M_QuickSaveResponse(int ch, void *data)
  */
 static void M_QuickSave(void)
 {
-    player_t   *player = &players[consoleplayer];
+    player_t   *player = &players[CONSOLEPLAYER];
 
     if(player->playerState == PST_DEAD || G_GetGameState() != GS_LEVEL ||
        Get(DD_PLAYBACK))
@@ -2889,7 +2891,7 @@ void M_DrawReadThis1(void)
     inhelpscreens = true;
 
 #ifdef __JDOOM__
-    switch(gamemode)
+    switch(gameMode)
     {
     case commercial:
         WI_DrawPatch(0, 0, 1, 1, 1, 1, W_GetNumForName("HELP"), NULL,
@@ -2918,7 +2920,7 @@ void M_DrawReadThis2(void)
         WI_DrawPatch(0, 0, 1, 1, 1, 1, W_GetNumForName("CREDIT"), NULL,
                      false, ALIGN_LEFT);
 #elif __JDOOM__
-    switch(gamemode)
+    switch(gameMode)
     {
     case retail:
     case commercial:
@@ -2977,13 +2979,13 @@ void M_DrawOptions2(void)
 #if __JDOOM__
     M_DrawTitle("SOUND OPTIONS", menu->y - 20);
 
-    MN_DrawSlider(menu, 0, 16, snd_SfxVolume);
-    MN_DrawSlider(menu, 1, 16, snd_MusicVolume);
+    MN_DrawSlider(menu, 0, 16, SFXVOLUME);
+    MN_DrawSlider(menu, 1, 16, MUSICVOLUME);
 #else
     M_DrawTitle("SOUND OPTIONS", 0);
 
-    MN_DrawSlider(menu, 1, 16, snd_SfxVolume);
-    MN_DrawSlider(menu, 4, 16, snd_MusicVolume);
+    MN_DrawSlider(menu, 1, 16, SFXVOLUME);
+    MN_DrawSlider(menu, 4, 16, MUSICVOLUME);
 #endif
 }
 
@@ -3016,12 +3018,12 @@ void M_DrawGameplay(void)
     idx = 6;
 # endif
 # if __JDOOM__
-    M_WriteMenuText(menu, idx++, yesno[cfg.anybossdeath != 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.anyBossDeath != 0]);
 # if !__DOOM64TC__
-    M_WriteMenuText(menu, idx++, yesno[cfg.raiseghosts != 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.raiseGhosts != 0]);
 # endif
-    M_WriteMenuText(menu, idx++, yesno[cfg.maxskulls != 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.allowskullsinwalls != 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.maxSkulls != 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.allowSkullsInWalls != 0]);
 # endif
 # if __JDOOM__ || __JHERETIC__
     M_WriteMenuText(menu, idx++, yesno[cfg.monstersStuckInDoors != 0]);
@@ -3181,8 +3183,8 @@ void M_DrawHUDMenu(void)
         M_WriteMenuText(menu, 0, yesno[cfg.msgShow != 0]);
         M_WriteMenuText(menu, 1, xhairnames[cfg.xhair]);
         MN_DrawSlider(menu, 3, 9, cfg.xhairSize);
-        MN_DrawSlider(menu, 6, 11, cfg.screenblocks - 3);
-        MN_DrawSlider(menu, 9, 20, cfg.sbarscale - 1);
+        MN_DrawSlider(menu, 6, 11, cfg.screenBlocks - 3);
+        MN_DrawSlider(menu, 9, 20, cfg.statusbarScale - 1);
         MN_DrawSlider(menu, 12, 11, cfg.statusbarAlpha * 10 + .25f);
     }
     else
@@ -3200,8 +3202,8 @@ void M_DrawHUDMenu(void)
         M_WriteMenuText(menu, 0, yesno[cfg.msgShow != 0]);
         M_WriteMenuText(menu, 1, xhairnames[cfg.xhair]);
         MN_DrawSlider(menu, 3, 9, cfg.xhairSize);
-        MN_DrawSlider(menu, 6, 11, cfg.screenblocks - 3);
-        MN_DrawSlider(menu, 9, 20, cfg.sbarscale - 1);
+        MN_DrawSlider(menu, 6, 11, cfg.screenBlocks - 3);
+        MN_DrawSlider(menu, 9, 20, cfg.statusbarScale - 1);
         MN_DrawSlider(menu, 12, 11, cfg.statusbarAlpha * 10 + .25f);
     }
     else
@@ -3231,9 +3233,9 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, 7, yesno[cfg.msgShow != 0]);
     M_WriteMenuText(menu, 8, xhairnames[cfg.xhair]);
     MN_DrawSlider(menu, 9, 9, cfg.xhairSize);
-    MN_DrawSlider(menu, 10, 11, cfg.screenblocks - 3 );
+    MN_DrawSlider(menu, 10, 11, cfg.screenBlocks - 3 );
 # if !__DOOM64TC__
-    MN_DrawSlider(menu, 11, 20, cfg.sbarscale - 1);
+    MN_DrawSlider(menu, 11, 20, cfg.statusbarScale - 1);
     MN_DrawSlider(menu, 12, 11, cfg.statusbarAlpha * 10 + .25f);
 # endif
 #endif
@@ -3354,13 +3356,13 @@ void M_SizeStatusBar(int option, void *data)
 {
     if(option == RIGHT_DIR)
     {
-        if(cfg.sbarscale < 20)
-            cfg.sbarscale++;
+        if(cfg.statusbarScale < 20)
+            cfg.statusbarScale++;
     }
-    else if(cfg.sbarscale > 1)
-        cfg.sbarscale--;
+    else if(cfg.statusbarScale > 1)
+        cfg.statusbarScale--;
 
-    R_SetViewSize(cfg.screenblocks, 0);
+    R_SetViewSize(cfg.screenBlocks, 0);
 }
 
 void M_StatusBarAlpha(int option, void *data)
@@ -3383,7 +3385,7 @@ void M_NewGame(int option, void *data)
     }
 
 #ifdef __JDOOM__
-    if(gamemode == commercial)
+    if(gameMode == commercial)
         M_SetupNextMenu(&SkillDef);
     else
 #endif
@@ -3430,10 +3432,10 @@ boolean M_QuitResponse(int option, void *data)
         {
             if(!quitYet)
             {
-                if(gamemode == commercial)
-                    S_LocalSound(quitsounds2[(gametic >> 2) & 7], NULL);
+                if(gameMode == commercial)
+                    S_LocalSound(quitsounds2[(GAMETIC >> 2) & 7], NULL);
                 else
-                    S_LocalSound(quitsounds[(gametic >> 2) & 7], NULL);
+                    S_LocalSound(quitsounds[(GAMETIC >> 2) & 7], NULL);
 
                 // Wait for 1.5 seconds.
                 DD_Executef(true, "after 53 quit!");
@@ -3466,7 +3468,7 @@ void M_QuitDOOM(int option, void *data)
 
 #ifdef __JDOOM__
     sprintf(endstring, "%s\n\n%s",
-            endmsg[(gametic % (NUM_QUITMESSAGES + 1))], DOSY);
+            endmsg[(GAMETIC % (NUM_QUITMESSAGES + 1))], DOSY);
 #else
     sprintf(endstring, "%s\n\n%s", endmsg[0], DOSY);
 #endif
@@ -3503,7 +3505,7 @@ boolean M_EndGameResponse(int option, void *data)
 void M_EndGame(int option, void *data)
 {
     option = 0;
-    if(!usergame)
+    if(!userGame)
     {
         S_LocalSound(menusnds[6], NULL);
         return;
@@ -3521,7 +3523,7 @@ void M_EndGame(int option, void *data)
 void M_ChangeMessages(int option, void *data)
 {
     cfg.msgShow = !cfg.msgShow;
-    P_SetMessage(players + consoleplayer, !cfg.msgShow ? MSGOFF : MSGON, true);
+    P_SetMessage(players + CONSOLEPLAYER, !cfg.msgShow ? MSGOFF : MSGON, true);
 }
 
 void M_HUDScale(int option, void *data)
@@ -3574,7 +3576,7 @@ void M_LoadGame(int option, void *data)
  */
 void M_SaveGame(int option, void *data)
 {
-    player_t *player = &players[consoleplayer];
+    player_t *player = &players[CONSOLEPLAYER];
 
     if(player->playerState == PST_DEAD || G_GetGameState() != GS_LEVEL ||
        Get(DD_PLAYBACK))
@@ -3600,7 +3602,7 @@ void M_ChooseClass(int option, void *data)
 #if __JHEXEN__
     if(IS_NETGAME)
     {
-        P_SetMessage(&players[consoleplayer],
+        P_SetMessage(&players[CONSOLEPLAYER],
                      "YOU CAN'T START A NEW GAME FROM WITHIN A NETGAME!", false);
         return;
     }
@@ -3653,7 +3655,7 @@ void M_Episode(int option, void *data)
         M_SetupNextMenu(&SkillDef);
     }
 #elif __JDOOM__
-    if((gamemode == shareware) && option)
+    if((gameMode == shareware) && option)
     {
         M_StartMessage(SWSTRING, NULL, false);
         M_SetupNextMenu(&ReadDef1);
@@ -3661,7 +3663,7 @@ void M_Episode(int option, void *data)
     }
 
     // Yet another hack...
-    if((gamemode == registered) && (option > 2))
+    if((gameMode == registered) && (option > 2))
     {
         Con_Message("M_Episode: 4th episode requires Ultimate DOOM\n");
         option = 0;
@@ -3705,7 +3707,7 @@ void M_ChooseSkill(int option, void *data)
 #if __JHEXEN__
     extern int SB_state;
 
-    cfg.playerClass[consoleplayer] = MenuPClass;
+    cfg.playerClass[CONSOLEPLAYER] = MenuPClass;
     G_DeferredNewGame(option);
     SB_SetClassData();
     SB_state = -1;
@@ -3741,7 +3743,7 @@ void M_ChooseSkill(int option, void *data)
 
 void M_SfxVol(int option, void *data)
 {
-    int         vol = snd_SfxVolume;
+    int         vol = SFXVOLUME;
 
     if(option == RIGHT_DIR)
     {
@@ -3759,7 +3761,7 @@ void M_SfxVol(int option, void *data)
 
 void M_MusicVol(int option, void *data)
 {
-    int         vol = snd_MusicVolume;
+    int         vol = MUSICVOLUME;
 
     if(option == RIGHT_DIR)
     {
@@ -3780,19 +3782,19 @@ void M_SizeDisplay(int option, void *data)
     if(option == RIGHT_DIR)
     {
 #if __DOOM64TC__
-        if(cfg.screenblocks < 11)
+        if(cfg.screenBlocks < 11)
 #else
-        if(cfg.screenblocks < 13)
+        if(cfg.screenBlocks < 13)
 #endif
         {
-            cfg.screenblocks++;
+            cfg.screenBlocks++;
         }
     }
-    else if(cfg.screenblocks > 3)
+    else if(cfg.screenBlocks > 3)
     {
-        cfg.screenblocks--;
+        cfg.screenBlocks--;
     }
-    R_SetViewSize(cfg.screenblocks, 0);
+    R_SetViewSize(cfg.screenBlocks, 0);
 }
 
 void M_OpenDCP(int option, void *data)
@@ -4092,7 +4094,7 @@ DEFCC(CCmdMenuAction)
         Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
 #ifdef __JDOOM__
-        if(gamemode == retail)
+        if(gameMode == retail)
             currentMenu = &ReadDef2;
         else
 #endif

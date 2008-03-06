@@ -121,7 +121,7 @@ float HU_PSpriteYOffset(player_t *pl)
     // If the status bar is visible, the sprite is moved up a bit.
     if(viewWindowHeight < SCREENHEIGHT)
     {
-        offy -= (((float) ST_HEIGHT * cfg.sbarscale) / (2 * 20) - 1);
+        offy -= (((float) ST_HEIGHT * cfg.statusbarScale) / (2 * 20) - 1);
     }
 #endif
 
@@ -229,7 +229,7 @@ void HU_UpdatePlayerSprite(int pnum)
 void HU_UpdatePsprites(void)
 {
     int         i;
-    float       offsetY = HU_PSpriteYOffset(&players[consoleplayer]);
+    float       offsetY = HU_PSpriteYOffset(&players[CONSOLEPLAYER]);
 
     DD_SetVariable(DD_PSPRITE_OFFSET_Y, &offsetY);
 
@@ -237,7 +237,7 @@ void HU_UpdatePsprites(void)
     {
         if(players[i].plr->inGame)
         {
-            if(!IS_CLIENT || consoleplayer == i)
+            if(!IS_CLIENT || CONSOLEPLAYER == i)
             {
                 HU_UpdatePlayerSprite(i);
             }

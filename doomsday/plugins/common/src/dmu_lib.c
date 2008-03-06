@@ -39,6 +39,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdio.h>
+#include <string.h>
+
 #if  __DOOM64TC__
 #  include "doom64tc.h"
 #elif __WOLFTC__
