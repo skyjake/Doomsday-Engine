@@ -109,12 +109,12 @@ void P_HideSpecialThing(mobj_t *thing)
 }
 
 /**
- * @return                  @c true, if the player accepted the mana,
- *                          @c false, if it was refused (player has MAX_MANA)
+ * @return              @c true, if the player accepted the mana,
+ *                      @c false, if it was refused (player has MAX_MANA)
  */
 boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
 {
-    int     prevMana;
+    int                 prevMana;
 
     if(ammo == AT_NOAMMO)
         return false;
@@ -125,7 +125,7 @@ boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
     if(plr->ammo[ammo] == MAX_MANA)
         return false;
 
-    if(gameskill == SM_BABY || gameskill == SM_NIGHTMARE)
+    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
     {   // Extra mana in baby mode and nightmare mode.
         num += num / 2;
     }
@@ -149,7 +149,7 @@ boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
     } // < FIXME
 
     // Maybe unhide the HUD?
-    if(plr == &players[consoleplayer])
+    if(plr == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
 
     return true;
@@ -207,7 +207,7 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
         remove = false;
 
         // Maybe unhide the HUD?
-        if(plr == &players[consoleplayer])
+        if(plr == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
     }
     else
@@ -236,7 +236,7 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
         }
 
         // Maybe unhide the HUD?
-        if(gaveWeapon && plr == &players[consoleplayer])
+        if(gaveWeapon && plr == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
         if(!(gaveWeapon || gaveMana))
@@ -267,7 +267,7 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
 
     plr->bonusCount += BONUSADD;
     S_ConsoleSound(SFX_PICKUP_WEAPON, NULL, plr - players);
-    if(plr == &players[consoleplayer])
+    if(plr == &players[CONSOLEPLAYER])
     {
         ST_doPaletteStuff(false);
     }
@@ -362,7 +362,7 @@ static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
     }
 
     plr->bonusCount += BONUSADD;
-    if(plr == &players[consoleplayer])
+    if(plr == &players[CONSOLEPLAYER])
     {
         ST_doPaletteStuff(false);
     }
@@ -423,7 +423,7 @@ boolean P_GiveBody(player_t *plr, int num)
     plr->update |= PSF_HEALTH;
 
     // Maybe unhide the HUD?
-    if(plr == &players[consoleplayer])
+    if(plr == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
 
     return true;
@@ -469,7 +469,7 @@ boolean P_GiveArmor(player_t *plr, armortype_t armortype, int amount)
     }
 
     // Maybe unhide the HUD?
-    if(plr == &players[consoleplayer])
+    if(plr == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
 
     return true;
@@ -487,7 +487,7 @@ int P_GiveKey(player_t *plr, keytype_t key)
     plr->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
-    if(plr == &players[consoleplayer])
+    if(plr == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_KEY);
 
     return true;
@@ -566,7 +566,7 @@ boolean P_GivePower(player_t *plr, powertype_t power)
     if(retval)
     {
         // Maybe unhide the HUD?
-        if(plr == &players[consoleplayer])
+        if(plr == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_POWER);
     }
     return retval;
@@ -788,7 +788,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         }
         player->bonusCount += BONUSADD;
         S_ConsoleSound(sound, NULL, player - players);
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
         {
             ST_doPaletteStuff(false);
         }
@@ -1043,7 +1043,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
     player->bonusCount += BONUSADD;
     S_ConsoleSound(sound, NULL, player - players);
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
     {
         ST_doPaletteStuff(false);
     }
@@ -1073,7 +1073,7 @@ mobj_t *ActiveMinotaur(player_t *master)
             continue;
 
         starttime = (unsigned int *) mo->args;
-        if((leveltime - *starttime) >= MAULATORTICS)
+        if((levelTime - *starttime) >= MAULATORTICS)
             continue;
 
         plr = mo->tracer->player;
@@ -1525,7 +1525,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         }
     }
 
-    if((gameskill == SM_BABY) && (normalCount * 25 >= saveHealth))
+    if((gameSkill == SM_BABY) && (normalCount * 25 >= saveHealth))
     {   // Use quartz flasks.
         count = (saveHealth + 24) / 25;
         for(i = 0; i < count; i++)
@@ -1543,7 +1543,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
             P_InventoryRemoveArtifact(player, superSlot);
         }
     }
-    else if((gameskill == SM_BABY) &&
+    else if((gameSkill == SM_BABY) &&
             (superCount * 100 + normalCount * 25 >= saveHealth))
     {   // Use mystic urns and quartz flasks.
         count = (saveHealth + 24) / 25;
@@ -1680,7 +1680,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         return; // Invulnerable, and won't wake up
 
     player = target->player;
-    if(player && gameskill == SM_BABY)
+    if(player && gameSkill == SM_BABY)
     {
         // Take half damage in trainer mode
         damage /= 2;
@@ -1868,8 +1868,8 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             damage -= (int) saved;
         }
 
-        if(damage >= player->health && ((gameskill == SM_BABY) || deathmatch)
-           && !player->morphTics)
+        if(damage >= player->health &&
+           ((gameSkill == SM_BABY) || deathmatch) && !player->morphTics)
         {   // Try to use some inventory health.
             P_AutoUseHealth(player, damage - player->health + 1);
         }
@@ -1888,10 +1888,10 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         temp = (damage < 100 ? damage : 100);
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer]);
+        if(player == &players[CONSOLEPLAYER]);
             ST_HUDUnHide(HUE_ON_DAMAGE);
 
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
         {
             ST_doPaletteStuff(false);
         }
@@ -2077,7 +2077,7 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
     if((target->flags2 & MF2_INVULNERABLE) && damage < 10000)
         return; // mobj is invulnerable.
 
-    if(player && gameskill == SM_BABY)
+    if(player && gameSkill == SM_BABY)
     {   // Take half damage in trainer mode
         damage /= 2;
     }
@@ -2088,14 +2088,14 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
         return;
     }
 
-    if(damage >= player->health && ((gameskill == SM_BABY) || deathmatch) &&
+    if(damage >= player->health && ((gameSkill == SM_BABY) || deathmatch) &&
        !player->morphTics)
     {   // Try to use some inventory health.
         P_AutoUseHealth(player, damage - player->health + 1);
     }
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer]);
+    if(player == &players[CONSOLEPLAYER]);
         ST_HUDUnHide(HUE_ON_DAMAGE);
 
     player->health -= damage;
@@ -2130,7 +2130,7 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
         return;
     }
 
-    if(!(leveltime & 63) && playPainSound)
+    if(!(levelTime & 63) && playPainSound)
     {
         P_MobjChangeState(target, target->info->painState);
     }

@@ -145,14 +145,12 @@ static void DrawAnimatedIcons(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean hu_showallfrags; // in hu_stuff.c currently
+extern boolean huShowAllFrags; // in hu_stuff.c currently
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
 int inventoryTics;
 boolean inventory = false;
-
-int DebugSound;             // Debug flag for displaying sound info
 
 int SB_state = -1;
 
@@ -365,7 +363,7 @@ cvar_t sthudCVars[] =
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
 
-    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20},
+    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.statusbarScale, 1, 20},
 
     // HUD colour + alpha
     {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
@@ -385,7 +383,7 @@ cvar_t sthudCVars[] =
     // HUD displays
     {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30},
 
-    {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1},
+    {"hud-frags-all", 0, CVT_BYTE, &huShowAllFrags, 0, 1},
 
     {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
 
@@ -516,7 +514,7 @@ void ST_initData(void)
 void ST_createWidgets(void)
 {
     int         i, width, temp;
-    player_t   *plyr = &players[consoleplayer];
+    player_t   *plyr = &players[CONSOLEPLAYER];
 
     // health num
     STlib_initNum(&w_health, ST_HEALTHX, ST_HEALTHY, PatchNumINumbers,
@@ -636,7 +634,7 @@ boolean ST_IsInventoryVisible(void)
 
 void ST_InventoryFlashCurrent(player_t *player)
 {
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ArtifactFlash = 4;
 }
 
@@ -645,7 +643,7 @@ void SB_SetClassData(void)
     int         class;
     char        namebuf[9];
 
-    class = cfg.playerClass[consoleplayer]; // original player class (not pig)
+    class = cfg.playerClass[CONSOLEPLAYER]; // original player class (not pig)
 
     sprintf(namebuf, "wpslot%d", 0 + class);
     R_CachePatch(&PatchNumWEAPONSLOT, namebuf);
@@ -687,7 +685,7 @@ void SB_SetClassData(void)
     else
     {
         PatchNumLIFEGEM =
-            W_GetNumForName("lifegem") + MAXPLAYERS * class + consoleplayer;
+            W_GetNumForName("lifegem") + MAXPLAYERS * class + CONSOLEPLAYER;
     }
 
     SB_state = -1;
@@ -696,7 +694,7 @@ void SB_SetClassData(void)
 void ST_updateWidgets(void)
 {
     int         i, x;
-    player_t   *plr = &players[consoleplayer];
+    player_t   *plr = &players[CONSOLEPLAYER];
 
     if(st_blended)
     {
@@ -716,7 +714,7 @@ void ST_updateWidgets(void)
         if(!players[i].plr->inGame)
             continue;
 
-        st_fragscount += plr->frags[i] * (i != consoleplayer ? 1 : -1);
+        st_fragscount += plr->frags[i] * (i != CONSOLEPLAYER ? 1 : -1);
     }
 
     // current artifact
@@ -826,7 +824,7 @@ void ST_Ticker(void)
 {
     int     delta;
     int     curHealth;
-    player_t *plr = &players[consoleplayer];
+    player_t *plr = &players[CONSOLEPLAYER];
 
     if(!plr->plr->mo)
         return;
@@ -1123,7 +1121,7 @@ void ST_refreshBackground(void)
 {
     int         x, y, w, h;
     float       cw, cw2, ch;
-    player_t   *plyr = &players[consoleplayer];
+    player_t   *plyr = &players[CONSOLEPLAYER];
     float       alpha;
 
     if(st_blended)
@@ -1145,7 +1143,7 @@ void ST_refreshBackground(void)
         if(!inventory)
         {
             // Main interface
-            if(!AM_IsMapActive(consoleplayer))
+            if(!AM_IsMapActive(CONSOLEPLAYER))
             {
                 GL_DrawPatch(38, 162, PatchNumSTATBAR.lump);
 
@@ -1255,7 +1253,7 @@ void ST_refreshBackground(void)
         if(!inventory)
         {
             // Main interface
-            if(!AM_IsMapActive(consoleplayer))
+            if(!AM_IsMapActive(CONSOLEPLAYER))
             {
                 if(deathmatch)
                 {
@@ -1361,9 +1359,9 @@ void ST_doRefresh(void)
 {
     st_firsttime = false;
 
-    if(cfg.sbarscale < 20 || (cfg.sbarscale == 20 && showbar < 1.0f))
+    if(cfg.statusbarScale < 20 || (cfg.statusbarScale == 20 && showbar < 1.0f))
     {
-        float fscale = cfg.sbarscale / 20.0f;
+        float fscale = cfg.statusbarScale / 20.0f;
         float h = 200 * (1 - fscale);
 
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1378,7 +1376,7 @@ void ST_doRefresh(void)
     // and refresh all widgets
     ST_drawWidgets(true);
 
-    if(cfg.sbarscale < 20 || (cfg.sbarscale == 20 && showbar < 1.0f))
+    if(cfg.statusbarScale < 20 || (cfg.statusbarScale == 20 && showbar < 1.0f))
     {
         // Restore the normal modelview matrix.
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1390,7 +1388,7 @@ void ST_Drawer(int fullscreenmode, boolean refresh )
 {
     st_firsttime = st_firsttime || refresh;
     st_statusbaron = (fullscreenmode < 2) ||
-                      (AM_IsMapActive(consoleplayer) &&
+                      (AM_IsMapActive(CONSOLEPLAYER) &&
                        (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts
@@ -1457,11 +1455,11 @@ static void DrawAnimatedIcons(void)
     int         leftoff = 0;
     int         frame;
     float       iconalpha = (st_statusbaron? 1: hudalpha) - ( 1 - cfg.hudIconAlpha);
-    player_t   *plyr = &players[consoleplayer];
+    player_t   *plyr = &players[CONSOLEPLAYER];
 
     // If the fullscreen mana is drawn, we need to move the icons on the left
     // a bit to the right.
-    if(cfg.hudShown[HUD_MANA] == 1 && cfg.screenblocks > 10)
+    if(cfg.hudShown[HUD_MANA] == 1 && cfg.screenBlocks > 10)
         leftoff = 42;
 
     Draw_BeginZoom(cfg.hudScale, 2, 2);
@@ -1472,7 +1470,7 @@ static void DrawAnimatedIcons(void)
         if(plyr->powers[PT_FLIGHT] > BLINKTHRESHOLD ||
            !(plyr->powers[PT_FLIGHT] & 16))
         {
-            frame = (leveltime / 3) & 15;
+            frame = (levelTime / 3) & 15;
             if(plyr->plr->mo->flags2 & MF2_FLY)
             {
                 if(hitCenterFrame && (frame != 15 && frame != 0))
@@ -1511,7 +1509,7 @@ static void DrawAnimatedIcons(void)
         if(plyr->powers[PT_SPEED] > BLINKTHRESHOLD ||
            !(plyr->powers[PT_SPEED] & 16))
         {
-            frame = (leveltime / 3) & 15;
+            frame = (levelTime / 3) & 15;
             GL_DrawPatchLitAlpha(60 + leftoff, 19, 1, iconalpha,
                                  SpinSpeedLump.lump + frame);
         }
@@ -1527,7 +1525,7 @@ static void DrawAnimatedIcons(void)
         if(plyr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD ||
            !(plyr->powers[PT_INVULNERABILITY] & 16))
         {
-            frame = (leveltime / 3) & 15;
+            frame = (levelTime / 3) & 15;
             GL_DrawPatchLitAlpha(260, 19, 1, iconalpha,
                                  SpinDefenseLump.lump + frame);
         }
@@ -1539,7 +1537,7 @@ static void DrawAnimatedIcons(void)
         if(plyr->powers[PT_MINOTAUR] > BLINKTHRESHOLD ||
            !(plyr->powers[PT_MINOTAUR] & 16))
         {
-            frame = (leveltime / 3) & 15;
+            frame = (levelTime / 3) & 15;
             GL_DrawPatchLitAlpha(300, 19, 1, iconalpha,
                                  SpinMinotaurLump.lump + frame);
         }
@@ -1550,13 +1548,13 @@ static void DrawAnimatedIcons(void)
 
 /**
  * Sets the new palette based upon the current values of
- * consoleplayer->damageCount and consoleplayer->bonusCount.
+ * CONSOLEPLAYER->damageCount and CONSOLEPLAYER->bonusCount.
  */
 void ST_doPaletteStuff(boolean forceChange)
 {
     static int  sb_palette = 0;
     int         palette;
-    player_t   *plyr = &players[consoleplayer];
+    player_t   *plyr = &players[CONSOLEPLAYER];
 
     if(forceChange)
     {
@@ -1565,7 +1563,7 @@ void ST_doPaletteStuff(boolean forceChange)
 
     if(G_GetGameState() == GS_LEVEL)
     {
-        plyr = &players[consoleplayer];
+        plyr = &players[CONSOLEPLAYER];
         if(plyr->poisonCount)
         {
             palette = 0;
@@ -1726,12 +1724,12 @@ void ST_drawWidgets(boolean refresh)
 {
     int         i;
     int         x;
-    player_t   *plyr = &players[consoleplayer];
+    player_t   *plyr = &players[CONSOLEPLAYER];
 
     oldhealth = -1;
     if(!inventory)
     {
-        if(!AM_IsMapActive(consoleplayer))
+        if(!AM_IsMapActive(CONSOLEPLAYER))
         {
             // Frags
             if(deathmatch)
@@ -1806,12 +1804,12 @@ void ST_drawWidgets(boolean refresh)
         // Draw more left indicator
         if(x != 0)
             GL_DrawPatchLitAlpha(42, 163, 1, statusbarCounterAlpha,
-                                 !(leveltime & 4) ? PatchNumINVLFGEM1.lump : PatchNumINVLFGEM2.lump);
+                                 !(levelTime & 4) ? PatchNumINVLFGEM1.lump : PatchNumINVLFGEM2.lump);
 
         // Draw more right indicator
         if(plyr->inventorySlotNum - x > 7)
             GL_DrawPatchLitAlpha(269, 163, 1, statusbarCounterAlpha,
-                                 !(leveltime & 4) ? PatchNumINVRTGEM1.lump : PatchNumINVRTGEM2.lump);
+                                 !(levelTime & 4) ? PatchNumINVRTGEM1.lump : PatchNumINVRTGEM2.lump);
     }
 }
 
@@ -1820,7 +1818,7 @@ void DrawKeyBar(void)
     int         i;
     int         xPosition;
     int         temp;
-    player_t   *plyr = &players[consoleplayer];
+    player_t   *plyr = &players[CONSOLEPLAYER];
 
     xPosition = 46;
     for(i = 0; i < NUM_KEY_TYPES && xPosition <= 126; ++i)
@@ -1865,7 +1863,7 @@ void DrawKeyBar(void)
 
 static void DrawWeaponPieces(void)
 {
-    player_t   *plyr = &players[consoleplayer];
+    player_t   *plyr = &players[CONSOLEPLAYER];
     float       alpha;
 
     alpha = cfg.statusbarAlpha - hudHideAmount;
@@ -1880,17 +1878,17 @@ static void DrawWeaponPieces(void)
     {
         if(plyr->pieces & WPIECE1)
         {
-            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->pieceX[0], 162,
+            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[CONSOLEPLAYER])->pieceX[0], 162,
                             1, statusbarCounterAlpha, PatchNumPIECE1.lump);
         }
         if(plyr->pieces & WPIECE2)
         {
-            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->pieceX[1], 162,
+            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[CONSOLEPLAYER])->pieceX[1], 162,
                             1, statusbarCounterAlpha, PatchNumPIECE2.lump);
         }
         if(plyr->pieces & WPIECE3)
         {
-            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->pieceX[2], 162,
+            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[CONSOLEPLAYER])->pieceX[2], 162,
                             1, statusbarCounterAlpha, PatchNumPIECE3.lump);
         }
     }
@@ -1903,7 +1901,7 @@ void ST_doFullscreenStuff(void)
     int         temp;
     float       textalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudColor[3]);
     float       iconalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudIconAlpha);
-    player_t   *plyr = &players[consoleplayer];
+    player_t   *plyr = &players[CONSOLEPLAYER];
 
 #ifdef DEMOCAM
     if(demoplayback && democam.mode)
@@ -2029,13 +2027,13 @@ void ST_doFullscreenStuff(void)
         if(x != 0)
         {
             GL_DrawPatchLitAlpha(40, 167, 1, iconalpha,
-                         !(leveltime & 4) ? PatchNumINVLFGEM1.lump :
+                         !(levelTime & 4) ? PatchNumINVLFGEM1.lump :
                          PatchNumINVLFGEM2.lump);
         }
         if(plyr->inventorySlotNum - x > 7)
         {
             GL_DrawPatchLitAlpha(268, 167, 1, iconalpha,
-                         !(leveltime & 4) ? PatchNumINVRTGEM1.lump :
+                         !(levelTime & 4) ? PatchNumINVRTGEM1.lump :
                          PatchNumINVRTGEM2.lump);
         }
         Draw_EndZoom();
@@ -2069,7 +2067,7 @@ DEFCC(CCmdHUDShow)
  */
 DEFCC(CCmdStatusBarSize)
 {
-    int     min = 1, max = 20, *val = &cfg.sbarscale;
+    int     min = 1, max = 20, *val = &cfg.statusbarScale;
 
     if(!stricmp(argv[1], "+"))
         (*val)++;
@@ -2084,7 +2082,7 @@ DEFCC(CCmdStatusBarSize)
         *val = max;
 
     // Update the view size if necessary.
-    R_SetViewSize(cfg.screenblocks, 0);
+    R_SetViewSize(cfg.screenBlocks, 0);
     ST_HUDUnHide(HUE_FORCE); // so the user can see the change.
     return true;
 }
@@ -2111,7 +2109,7 @@ void SB_ChangePlayerClass(player_t *player, int newclass)
         player->armorPoints[i] = 0;
     cfg.playerClass[player - players] = newclass;
     P_PostMorphWeapon(player, WT_FIRST);
-    if(player == players + consoleplayer)
+    if(player == players + CONSOLEPLAYER)
         SB_SetClassData();
     player->update |= PSF_ARMOR_POINTS;
 

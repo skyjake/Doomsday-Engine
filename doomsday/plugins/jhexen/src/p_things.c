@@ -49,13 +49,13 @@
 
 #include "jhexen.h"
 
+#include "p_map.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-boolean     P_TestMobjLocation(mobj_t *mobj);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -198,7 +198,7 @@ boolean EV_ThingProjectile(byte *args, boolean gravity)
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
-    if(nomonsters && (mobjInfo[moType].flags & MF_COUNTKILL))
+    if(noMonstersParm && (mobjInfo[moType].flags & MF_COUNTKILL))
     {   // Don't spawn monsters if -nomonsters
         return false;
     }
@@ -247,7 +247,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
-    if(nomonsters && (mobjInfo[moType].flags & MF_COUNTKILL))
+    if(noMonstersParm && (mobjInfo[moType].flags & MF_COUNTKILL))
     {   // Don't spawn monsters if -nomonsters
         return false;
     }

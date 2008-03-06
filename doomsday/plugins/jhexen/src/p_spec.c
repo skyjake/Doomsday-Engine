@@ -840,7 +840,7 @@ void P_PlayerOnSpecialFlat(player_t *player, int floorType)
     switch(floorType)
     {
     case FLOOR_LAVA:
-        if(!(leveltime & 31))
+        if(!(levelTime & 31))
         {
             P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 10);
             S_StartSound(SFX_LAVA_SIZZLE, player->plr->mo);
@@ -993,7 +993,7 @@ void P_SpawnSpecials(void)
 void R_HandleSectorSpecials(void)
 {
     uint        i;
-    int         scrollOffset = leveltime >> 1 & 63;
+    int         scrollOffset = levelTime >> 1 & 63;
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -1156,7 +1156,7 @@ static void P_LightningFlash(void)
             for(i = 0; i < numsectors; ++i)
             {
                 tempSec = P_ToPtr(DMU_SECTOR, i);
-                if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == skyMaskMaterial ||
+                if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL ||
                    P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL ||
                    P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
                 {
@@ -1175,7 +1175,7 @@ static void P_LightningFlash(void)
             for(i = 0; i < numsectors; ++i)
             {
                 tempSec = P_ToPtr(DMU_SECTOR, i);
-                if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == skyMaskMaterial ||
+                if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL ||
                    P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL ||
                    P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
                 {
@@ -1197,7 +1197,7 @@ static void P_LightningFlash(void)
     for(i = 0; i < numsectors; ++i)
     {
         tempSec = P_ToPtr(DMU_SECTOR, i);
-        if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == skyMaskMaterial ||
+        if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL ||
            P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL ||
            P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
         {
@@ -1236,7 +1236,7 @@ static void P_LightningFlash(void)
 
     if(foundSec)
     {
-        mobj_t *plrmo = players[displayplayer].plr->mo;
+        mobj_t *plrmo = players[DISPLAYPLAYER].plr->mo;
         mobj_t *crashorigin = NULL;
 
         // Set the alternate (lightning) sky.
@@ -1245,7 +1245,7 @@ static void P_LightningFlash(void)
 
         // If 3D sounds are active, position the clap somewhere above
         // the player.
-        if(cfg.snd_3D && plrmo)
+        if(cfg.snd3D && plrmo)
         {
             // SpawnMobj calls P_Random, and we don't want that the
             // random number generator gets out of sync.
@@ -1270,7 +1270,7 @@ static void P_LightningFlash(void)
         }
         else
         {
-            if(P_Random() < 128 && !(leveltime & 32))
+            if(P_Random() < 128 && !(levelTime & 32))
             {
                 NextLightningFlash = ((P_Random() & 7) + 2) * TICSPERSEC;
             }
@@ -1289,11 +1289,11 @@ void P_ForceLightning(void)
 
 void P_InitLightning(void)
 {
-    uint        i, secCount;
-    sector_t   *sec;
-    xsector_t  *xsec;
+    uint                i, secCount;
+    sector_t           *sec;
+    xsector_t          *xsec;
 
-    if(!P_GetMapLightning(gamemap))
+    if(!P_GetMapLightning(gameMap))
     {
         LevelHasLightning = false;
         LightningFlash = 0;
@@ -1306,7 +1306,7 @@ void P_InitLightning(void)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
         xsec = P_ToXSector(sec);
-        if(P_GetIntp(sec, DMU_CEILING_MATERIAL) == skyMaskMaterial ||
+        if(P_GetIntp(sec, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL ||
            xsec->special == LIGHTNING_SPECIAL ||
            xsec->special == LIGHTNING_SPECIAL2)
         {

@@ -463,7 +463,7 @@ void P_MobjMoveXY(mobj_t *mo)
         {   // Blocked move.
             if(mo->flags2 & MF2_SLIDE)
             {   // Try to slide along it.
-                if(BlockingMobj == NULL)
+                if(blockingMobj == NULL)
                 {   // Slide against wall.
                     P_SlideMove(mo);
                 }
@@ -487,17 +487,17 @@ void P_MobjMoveXY(mobj_t *mo)
             {
                 if(mo->flags2 & MF2_FLOORBOUNCE)
                 {
-                    if(BlockingMobj)
+                    if(blockingMobj)
                     {
-                        if((BlockingMobj->flags2 & MF2_REFLECTIVE) ||
-                           ((!BlockingMobj->player) &&
-                            (!(BlockingMobj->flags & MF_COUNTKILL))))
+                        if((blockingMobj->flags2 & MF2_REFLECTIVE) ||
+                           ((!blockingMobj->player) &&
+                            (!(blockingMobj->flags & MF_COUNTKILL))))
                         {
                             float       speed;
 
                             angle =
-                                R_PointToAngle2(BlockingMobj->pos[VX],
-                                                BlockingMobj->pos[VY],
+                                R_PointToAngle2(blockingMobj->pos[VX],
+                                                blockingMobj->pos[VY],
                                                 mo->pos[VX], mo->pos[VY]) +
                                 ANGLE_1 * ((P_Random() % 16) - 8);
 
@@ -539,20 +539,20 @@ void P_MobjMoveXY(mobj_t *mo)
                     }
                 }
 
-                if(BlockingMobj && (BlockingMobj->flags2 & MF2_REFLECTIVE))
+                if(blockingMobj && (blockingMobj->flags2 & MF2_REFLECTIVE))
                 {
                     angle =
-                        R_PointToAngle2(BlockingMobj->pos[VX],
-                                        BlockingMobj->pos[VY],
+                        R_PointToAngle2(blockingMobj->pos[VX],
+                                        blockingMobj->pos[VY],
                                         mo->pos[VX],
                                         mo->pos[VY]);
 
                     // Change angle for delflection/reflection
-                    switch(BlockingMobj->type)
+                    switch(blockingMobj->type)
                     {
                     case MT_CENTAUR:
                     case MT_CENTAURLEADER:
-                        if(abs(angle - BlockingMobj->angle) >> 24 > 45)
+                        if(abs(angle - blockingMobj->angle) >> 24 > 45)
                             goto explode;
                         if(mo->type == MT_HOLY_FX)
                             goto explode;
@@ -584,16 +584,16 @@ void P_MobjMoveXY(mobj_t *mo)
                     {
                         mo->tracer = mo->target;
                     }
-                    mo->target = BlockingMobj;
+                    mo->target = blockingMobj;
 
                     return;
                 }
 
 explode:
                 // Explode a missile
-                if(ceilingline && P_GetPtrp(ceilingline, DMU_BACK_SECTOR) &&
-                   P_GetIntp(P_GetPtrp(ceilingline, DMU_BACK_SECTOR),
-                             DMU_CEILING_MATERIAL) == skyMaskMaterial)
+                if(ceilingLine && P_GetPtrp(ceilingLine, DMU_BACK_SECTOR) &&
+                   P_GetIntp(P_GetPtrp(ceilingLine, DMU_BACK_SECTOR),
+                             DMU_CEILING_MATERIAL) == SKYMASKMATERIAL)
                 {   // Hack to prevent missiles exploding against the sky
                     if(mo->type == MT_BLOODYSKULL)
                     {
@@ -739,10 +739,10 @@ void P_MobjMoveZ(mobj_t *mo)
     }
 
     if(mo->player && (mo->flags2 & MF2_FLY) &&
-       !(mo->pos[VZ] <= mo->floorZ) && (leveltime & 2))
+       !(mo->pos[VZ] <= mo->floorZ) && (levelTime & 2))
     {
         mo->pos[VZ] +=
-            FIX2FLT(finesine[(FINEANGLES / 20 * leveltime >> 2) & FINEMASK]);
+            FIX2FLT(finesine[(FINEANGLES / 20 * levelTime >> 2) & FINEMASK]);
     }
 
     // Clip movement.
@@ -840,7 +840,7 @@ void P_MobjMoveZ(mobj_t *mo)
                         S_StartSound(SFX_PLAYER_LAND, mo);
                     }
 
-                    if(!cfg.usemlook && cfg.lookSpring)
+                    if(!cfg.useMLook && cfg.lookSpring)
                         mo->player->centering = true;
                 }
             }
@@ -912,7 +912,7 @@ void P_MobjMoveZ(mobj_t *mo)
             if(mo->type == MT_LIGHTNING_CEILING)
                 return;
 
-            if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == skyMaskMaterial)
+            if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL)
             {
                 if(mo->type == MT_BLOODYSKULL)
                 {
@@ -1058,7 +1058,7 @@ static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
     }
 
     // Lookspring is stupid when mouselook is on (and not in demo).
-    if(!cfg.usemlook && cfg.lookSpring) // || demorecording || demoplayback)
+    if(!cfg.useMLook && cfg.lookSpring) // || demorecording || demoplayback)
         mo->player->centering = true;
 }
 
@@ -1074,7 +1074,7 @@ void P_MobjThinker(mobj_t *mobj)
     P_UpdateHealthBits(mobj);
 
     // Handle X and Y momentums
-    BlockingMobj = NULL;
+    blockingMobj = NULL;
     if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 ||
        (mobj->flags & MF_SKULLFLY))
     {
@@ -1106,7 +1106,7 @@ void P_MobjThinker(mobj_t *mobj)
         // as before (in case somebody wants to use it).
         mobj->health++;
     }
-    else if(mobj->pos[VZ] != mobj->floorZ || mobj->mom[MZ] != 0 || BlockingMobj)
+    else if(mobj->pos[VZ] != mobj->floorZ || mobj->mom[MZ] != 0 || blockingMobj)
     {   // Handle Z momentum and gravity
         if(mobj->flags2 & MF2_PASSMOBJ)
         {
@@ -1220,7 +1220,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     mo->health = info->spawnHealth *
         (IS_NETGAME ? cfg.netMobHealthModifier : 1);
 
-    if(gameskill != SM_NIGHTMARE)
+    if(gameSkill != SM_NIGHTMARE)
     {
         mo->reactionTime = info->reactionTime;
     }
@@ -1309,7 +1309,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int playernum)
         pos[VX] = pos[VY] = pos[VZ] = 0;
     }
 
-    if(randomclass && deathmatch)
+    if(randomClassParm && deathmatch)
     {
         p->class = P_Random() % 3;
         if(p->class == cfg.playerClass[playernum])
@@ -1328,7 +1328,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int playernum)
 
     mobj = P_SpawnMobj3fv(PCLASS_INFO(p->class)->mobjType, pos);
 
-    // With clients all player mobjs are remote, even the consoleplayer.
+    // With clients all player mobjs are remote, even the CONSOLEPLAYER.
     if(IS_CLIENT)
     {
         mobj->flags &= ~MF_SOLID;
@@ -1387,7 +1387,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int playernum)
         p->keys = 2047;
     }
 
-    if(playernum == consoleplayer)
+    if(playernum == CONSOLEPLAYER)
     {
         // Wake up the status bar.
         ST_Start();
@@ -1425,10 +1425,10 @@ void P_SpawnMapThing(spawnspot_t *spot)
     // Count deathmatch start positions.
     if(spot->type == 11)
     {
-        if(deathmatch_p < &deathmatchstarts[MAX_DM_STARTS])
+        if(deathmatchP < &deathmatchStarts[MAX_DM_STARTS])
         {
-            memcpy(deathmatch_p, spot, sizeof(*spot));
-            deathmatch_p++;
+            memcpy(deathmatchP, spot, sizeof(*spot));
+            deathmatchP++;
         }
         return;
     }
@@ -1475,11 +1475,11 @@ void P_SpawnMapThing(spawnspot_t *spot)
         return;
 
     // Check current skill with spawn flags.
-    if(gameskill == SM_BABY || gameskill == SM_EASY)
+    if(gameSkill == SM_BABY || gameSkill == SM_EASY)
     {
         spawnMask = MTF_EASY;
     }
-    else if(gameskill == SM_HARD || gameskill == SM_NIGHTMARE)
+    else if(gameSkill == SM_HARD || gameSkill == SM_NIGHTMARE)
     {
         spawnMask = MTF_HARD;
     }
@@ -1553,7 +1553,7 @@ void P_SpawnMapThing(spawnspot_t *spot)
     }
 
     // Don't spawn monsters if -nomonsters.
-    if(nomonsters && (mobjInfo[i].flags & MF_COUNTKILL))
+    if(noMonstersParm && (mobjInfo[i].flags & MF_COUNTKILL))
     {
         return;
     }
@@ -1737,7 +1737,7 @@ void P_SpawnPuff(float x, float y, float z)
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
     puff = P_SpawnMobj3f(PuffType, x, y, z);
-    if(linetarget && puff->info->seeSound)
+    if(lineTarget && puff->info->seeSound)
     {   // Hit thing sound.
         S_StartSound(puff->info->seeSound, puff);
     }
@@ -1760,7 +1760,7 @@ void P_SpawnPuff(float x, float y, float z)
         break;
     }
 
-    PuffSpawned = puff;
+    puffSpawned = puff;
 }
 
 void P_SpawnBloodSplatter(float x, float y, float z, mobj_t *originator)
@@ -1890,7 +1890,7 @@ int P_HitFloor(mobj_t *thing)
         }
 
         S_StartSound(SFX_LAVA_SIZZLE, mo);
-        if(thing->player && leveltime & 31)
+        if(thing->player && levelTime & 31)
         {
             P_DamageMobj(thing, &LavaInflictor, NULL, 5);
         }
@@ -2397,17 +2397,17 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     // Try to find a target
     angle = source->angle;
     slope = P_AimLineAttack(source, angle, 16 * 64);
-    if(!linetarget || dontAim)
+    if(!lineTarget || dontAim)
     {
         angle += 1 << 26;
         slope = P_AimLineAttack(source, angle, 16 * 64);
-        if(!linetarget)
+        if(!lineTarget)
         {
             angle -= 2 << 26;
             slope = P_AimLineAttack(source, angle, 16 * 64);
         }
 
-        if(!linetarget || dontAim)
+        if(!lineTarget || dontAim)
         {
             angle = source->angle;
 
@@ -2482,17 +2482,17 @@ mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t origAngle)
     // See which target is to be aimed at.
     angle = origAngle;
     slope = P_AimLineAttack(source, angle, 16 * 64);
-    if(!linetarget || dontAim)
+    if(!lineTarget || dontAim)
     {
         angle += 1 << 26;
         slope = P_AimLineAttack(source, angle, 16 * 64);
-        if(!linetarget)
+        if(!lineTarget)
         {
             angle -= 2 << 26;
             slope = P_AimLineAttack(source, angle, 16 * 64);
         }
 
-        if(!linetarget || dontAim)
+        if(!lineTarget || dontAim)
         {
             angle = origAngle;
 
@@ -2533,17 +2533,17 @@ mobj_t *P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
     // See which target is to be aimed at.
     angle = origAngle;
     slope = P_AimLineAttack(source, angle, 16 * 64);
-    if(!linetarget || dontAim)
+    if(!lineTarget || dontAim)
     {
         angle += 1 << 26;
         slope = P_AimLineAttack(source, angle, 16 * 64);
-        if(!linetarget)
+        if(!lineTarget)
         {
             angle -= 2 << 26;
             slope = P_AimLineAttack(source, angle, 16 * 64);
         }
 
-        if(!linetarget || dontAim)
+        if(!lineTarget || dontAim)
         {
             angle = origAngle;
             slope = sin(fangle) / 1.2;

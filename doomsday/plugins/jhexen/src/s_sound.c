@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,8 @@
  * version of the file, but you are not obligated to do so. If you
  * do not wish to do so, delete this exception statement from your version.
  *
- * \bug Not 64bit clean: In function 'S_InitScript': cast to pointer from integer of different size
+ * \bug Not 64bit clean:
+ * In function 'S_ParseSndInfoLump': cast to pointer from integer of different size
  */
 
 /**
@@ -56,13 +57,9 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    S_StopSoundID(int sound_id);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern int gsvMapMusic;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -82,12 +79,12 @@ int S_GetSoundID(char *name)
  */
 void S_LevelMusic(void)
 {
-    int         idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-    int         cdTrack;
+    int                 idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
+    int                 cdTrack;
 
     // Update the 'currentmap' music definition.
-    Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gamemap));
-    cdTrack = P_GetMapCDTrack(gamemap);
+    Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gameMap));
+    cdTrack = P_GetMapCDTrack(gameMap);
     Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);
     S_StartMusic("currentmap", true);
 
@@ -95,10 +92,10 @@ void S_LevelMusic(void)
     gsvMapMusic = idx;
 }
 
-void S_InitScript(void)
+void S_ParseSndInfoLump(void)
 {
-    int         i;
-    char        buf[80];
+    int                 i;
+    char                buf[80];
 
     strcpy(ArchivePath, DEFAULT_ARCHIVEPATH);
     SC_OpenLump("SNDINFO");

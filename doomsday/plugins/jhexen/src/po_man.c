@@ -689,7 +689,8 @@ void PO_InitForMap(void)
 
     for(i = 0; i < numpolyobjs; ++i)
     {
-        int                 j, tag;
+        uint                j;
+        int                 tag;
         spawnspot_t        *mt;
 
         tag = P_GetInt(DMU_POLYOBJ, i, DMU_TAG);

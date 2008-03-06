@@ -98,7 +98,7 @@ void P_TeleportToPlayerStarts(mobj_t *victim)
 
     destPos[VX] = start->pos[VX];
     destPos[VY] = start->pos[VY];
-    destAngle = playerstarts[i].angle;
+    destAngle = playerStarts[i].angle;
 
     P_Teleport(victim, destPos[VX], destPos[VY], destAngle, true);
 }
@@ -109,13 +109,13 @@ void P_TeleportToDeathmatchStarts(mobj_t *victim)
     float           destPos[3];
     angle_t         destAngle;
 
-    selections = deathmatch_p - deathmatchstarts;
+    selections = deathmatchP - deathmatchStarts;
     if(selections)
     {
         i = P_Random() % selections;
-        destPos[VX] = deathmatchstarts[i].pos[VX];
-        destPos[VY] = deathmatchstarts[i].pos[VY];
-        destAngle = deathmatchstarts[i].angle;
+        destPos[VX] = deathmatchStarts[i].pos[VX];
+        destPos[VY] = deathmatchStarts[i].pos[VY];
+        destAngle = deathmatchStarts[i].angle;
 
         P_Teleport(victim, destPos[VX], destPos[VY], destAngle, true);
     }
@@ -261,7 +261,7 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
     P_MobjClearSRVO(mo);
 
     // Update the floor pic.
-    mo->floorPic = tmfloorpic;
+    mo->floorPic = tmFloorPic;
     return true;
 }
 
@@ -306,19 +306,19 @@ void P_ArtiTele(player_t *player)
 
     if(deathmatch)
     {
-        selections = deathmatch_p - deathmatchstarts;
+        selections = deathmatchP - deathmatchStarts;
         i = P_Random() % selections;
 
-        destPos[VX] = deathmatchstarts[i].pos[VX];
-        destPos[VY] = deathmatchstarts[i].pos[VY];
-        destAngle = deathmatchstarts[i].angle;
+        destPos[VX] = deathmatchStarts[i].pos[VX];
+        destPos[VY] = deathmatchStarts[i].pos[VY];
+        destAngle = deathmatchStarts[i].angle;
     }
     else
     {
         //// \fixme DJS - this doesn't seem right... why always player 0?
-        destPos[VX] = playerstarts[0].pos[VX];
-        destPos[VY] = playerstarts[0].pos[VY];
-        destAngle = playerstarts[0].angle;
+        destPos[VX] = playerStarts[0].pos[VX];
+        destPos[VY] = playerStarts[0].pos[VY];
+        destAngle = playerStarts[0].angle;
     }
 
 # if __JHEXEN__
