@@ -38,6 +38,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdio.h>
+#include <string.h>
+
 #include "doom64tc.h"
 
 #include "m_argv.h"
@@ -45,6 +48,7 @@
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 #include "p_player.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -69,8 +73,6 @@ typedef struct animdef_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -82,7 +84,7 @@ static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-//// \bug From jHeretic, replace!
+//// \todo From jHeretic, replace!
 int    *TerrainTypes;
 struct terraindef_s {
     char   *name;
@@ -106,14 +108,13 @@ struct terraindef_s {
  */
 void P_InitTerrainTypes(void)
 {
-    int     i;
-    int     lump;
-    int     size;
+    int                 i, lump, size;
 
     size = Get(DD_NUMLUMPS) * sizeof(int);
     TerrainTypes = Z_Malloc(size, PU_STATIC, 0);
     memset(TerrainTypes, 0, size);
-    for(i = 0; TerrainTypeDefs[i].type != -1; i++)
+
+    for(i = 0; TerrainTypeDefs[i].type != -1; ++i)
     {
         lump = W_CheckNumForName(TerrainTypeDefs[i].name);
         if(lump != -1)
@@ -123,7 +124,7 @@ void P_InitTerrainTypes(void)
     }
 }
 
-/*
+/**
  * Return the terrain type of the specified flat.
  *
  * @param flatlumpnum   The flat lump number to check.
@@ -136,15 +137,16 @@ int P_FlatToTerrainType(int flatlumpnum)
         return FLOOR_SOLID;
 }
 
-/*
+/**
  * Returns the terrain type of the specified sector, plane.
  *
- * @param sec       The sector to check.
- * @param plane     The plane id to check.
+ * @param sec           The sector to check.
+ * @param plane         The plane id to check.
  */
 int P_GetTerrainType(sector_t* sec, int plane)
 {
-    int flatnum = P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
+    int                 flatnum =
+        P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
 
     if(flatnum != -1)
         return TerrainTypes[flatnum];
@@ -152,7 +154,8 @@ int P_GetTerrainType(sector_t* sec, int plane)
         return FLOOR_SOLID;
 }
 
-/* From PrBoom:
+/**
+ * From PrBoom:
  * Load the table of animation definitions, checking for existence of
  * the start and end of each frame. If the start doesn't exist the sequence
  * is skipped, if the last doesn't exist, BOOM exits.
@@ -172,7 +175,7 @@ int P_GetTerrainType(sector_t* sec, int plane)
  * source text file DEFSWANI.DAT also in the BOOM util distribution.
  */
 
-/*
+/**
  * DJS - We'll support this BOOM extension by reading the data and then
  *       registering the new animations into Doomsday using the animation
  *       groups feature.
@@ -182,13 +185,13 @@ int P_GetTerrainType(sector_t* sec, int plane)
  */
 void P_InitPicAnims(void)
 {
-    int         i, j;
-    int         groupNum;
-    int         startFrame, endFrame, ticsPerFrame;
-    int         numFrames;
-    int         lump = W_CheckNumForName("ANIMATED");
-    const char *name;
-    animdef_t  *animdefs;
+    int                 i, j;
+    int                 groupNum;
+    int                 startFrame, endFrame, ticsPerFrame;
+    int                 numFrames;
+    int                 lump = W_CheckNumForName("ANIMATED");
+    const char         *name;
+    animdef_t          *animdefs;
 
     // Has a custom ANIMATED lump been loaded?
     if(lump > 0)
@@ -197,7 +200,7 @@ void P_InitPicAnims(void)
 
         animdefs = (animdef_t *)W_CacheLumpNum(lump, PU_STATIC);
 
-        // Read structures until -1 is found
+        // Read structures until -1 is found.
         for(i = 0; animdefs[i].istexture != -1 ; ++i)
         {
             materialtype_t type =
@@ -223,8 +226,8 @@ void P_InitPicAnims(void)
                 groupNum = R_CreateAnimGroup(type, AGF_SMOOTH);
 
                 // Doomsday's group animation needs to know the texture/flat
-                // numbers of ALL frames in the animation group so we'll have
-                // to step through the directory adding frames as we go.
+                // numbers of ALL frames in the animation group so we'll
+                // have to step through the directory adding frames as we go.
                 // (DOOM only required the start/end texture/flat numbers and
                 // would animate all textures/flats inbetween).
 
@@ -543,7 +546,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
         break;
 
     case 53:
@@ -626,7 +629,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 124:
         // Secret EXIT
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, true);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
         break;
 
     case 125:
@@ -842,12 +845,12 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
     }
 }
 
-/*
+/**
  * Called when a thing shoots a special line.
  */
 void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
 {
-    int     ok;
+    int                 ok;
 
     //  Impacts that other things can activate.
     if(!thing->player)
@@ -892,12 +895,12 @@ void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
     }
 }
 
-/*
+/**
  * Called every tic frame that the player origin is in a special sector
  */
 void P_PlayerInSpecialSector(player_t *player)
 {
-    sector_t *sector =
+    sector_t           *sector =
         P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
 
     // Falling, not all the way down yet?
@@ -910,14 +913,14 @@ void P_PlayerInSpecialSector(player_t *player)
     case 5:
         // HELLSLIME DAMAGE
         if(!player->powers[PT_IRONFEET])
-            if(!(leveltime & 0x1f))
+            if(!(levelTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 10);
         break;
 
     case 7:
         // NUKAGE DAMAGE
         if(!player->powers[PT_IRONFEET])
-            if(!(leveltime & 0x1f))
+            if(!(levelTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 5);
         break;
 
@@ -927,7 +930,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // STROBE HURT
         if(!player->powers[PT_IRONFEET] || (P_Random() < 5))
         {
-            if(!(leveltime & 0x1f))
+            if(!(levelTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 20);
         }
         break;
@@ -947,18 +950,18 @@ void P_PlayerInSpecialSector(player_t *player)
         // EXIT SUPER DAMAGE! (for E1M8 finale)
         player->cheats &= ~CF_GODMODE;
 
-        if(!(leveltime & 0x1f))
+        if(!(levelTime & 0x1f))
             P_DamageMobj(player->plr->mo, NULL, NULL, 20);
 
         if(player->health <= 10)
-            G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+            G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
         break;
 */
     case 11: // d64tc
         // SUPER CHEAT REMOVER!!        //kaiser 9/8/03
         player->cheats &= ~CF_GODMODE;
         player->cheats &= ~CF_NOCLIP;
-        player->laserpw = 0;
+        player->laserPower = 0;
         break;
 
     default:
@@ -971,15 +974,15 @@ void P_PlayerInSpecialSector(player_t *player)
  */
 void P_UpdateSpecials(void)
 {
-    int         x, y; // d64tc added @c y,
-    linedef_t     *line;
-    sidedef_t     *side;
-    button_t   *button;
+    float               x, y; // d64tc added @c y,
+    linedef_t          *line;
+    sidedef_t          *side;
+    button_t           *button;
 
     // Extended lines and sectors.
     XG_Ticker();
 
-    //  ANIMATE LINE SPECIALS
+    // Animate line specials.
     if(P_IterListSize(linespecials))
     {
         P_IterListResetIterator(linespecials, false);
@@ -991,24 +994,24 @@ void P_UpdateSpecials(void)
                 side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 // EFFECT FIRSTCOL SCROLL +
-                x = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_TOP_MATERIAL_OFFSET_X, x += FRACUNIT);
-                x = P_GetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x += FRACUNIT);
-                x = P_GetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x += FRACUNIT);
+                x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x += 1);
+                x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x += 1);
+                x = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x += 1);
                 break;
 
             case 150: // d64tc
                 side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 // EFFECT FIRSTCOL SCROLL -
-                x = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_TOP_MATERIAL_OFFSET_X, x -= FRACUNIT);
-                x = P_GetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x -= FRACUNIT);
-                x = P_GetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x -= FRACUNIT);
+                x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x -= 1);
+                x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x -= 1);
+                x = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x -= 1);
                 break;
 
             case 2561: // d64tc
@@ -1016,12 +1019,12 @@ void P_UpdateSpecials(void)
                 side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 // EFFECT FIRSTCOL SCROLL +
-                y = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += FRACUNIT);
-                y = P_GetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y += FRACUNIT);
-                y = P_GetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y += FRACUNIT);
+                y = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += 1);
+                y = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y += 1);
+                y = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y += 1);
                 break;
 
             case 2562: // d64tc
@@ -1029,50 +1032,50 @@ void P_UpdateSpecials(void)
                 side = P_GetPtrp(line, DMU_SIDEDEF0);
 
                 // EFFECT FIRSTCOL SCROLL +
-                y = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y, y -= FRACUNIT);
-                y = P_GetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y -= FRACUNIT);
-                y = P_GetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y -= FRACUNIT);
+                y = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y, y -= 1);
+                y = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y -= 1);
+                y = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y -= 1);
                 break;
 
             case 2080: // d64tc
                 // Scroll Up/Right
                 side = P_GetPtrp(line, DMU_SIDEDEF0);
 
-                y = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += FRACUNIT);
-                y = P_GetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y += FRACUNIT);
-                y = P_GetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y += FRACUNIT);
+                y = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += 1);
+                y = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y += 1);
+                y = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y += 1);
 
-                x = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_TOP_MATERIAL_OFFSET_X, x -= FRACUNIT);
-                x = P_GetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x -= FRACUNIT);
-                x = P_GetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x -= FRACUNIT);
+                x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x -= 1);
+                x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x -= 1);
+                x = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x -= 1);
                 break;
 
             case 2614: // d64tc
                 // Scroll Up/Left
                 side = P_GetPtrp(line, DMU_SIDEDEF0);
 
-                y = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += FRACUNIT);
-                y = P_GetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y += FRACUNIT);
-                y = P_GetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                P_SetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y += FRACUNIT);
+                y = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += 1);
+                y = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y += 1);
+                y = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y += 1);
 
-                x = P_GetFixedp(side, DMU_TOP_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_TOP_MATERIAL_OFFSET_X, x += FRACUNIT);
-                x = P_GetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x += FRACUNIT);
-                x = P_GetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
-                P_SetFixedp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x += FRACUNIT);
+                x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x += 1);
+                x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x += 1);
+                x = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
+                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x += 1);
                 break;
 
             default:
@@ -1081,7 +1084,7 @@ void P_UpdateSpecials(void)
         }
     }
 
-    //  DO BUTTONS
+    // Handle buttons.
     for(button = buttonlist; button; button = button->next)
     {
         if(button->timer)
@@ -1089,33 +1092,33 @@ void P_UpdateSpecials(void)
             button->timer--;
             if(!button->timer)
             {
-                sidedef_t     *sdef = P_GetPtrp(button->line, DMU_SIDEDEF0);
-                sector_t   *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
+                sidedef_t      *sdef = P_GetPtrp(button->line, DMU_SIDEDEF0);
+                sector_t       *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
 
-                switch(button->where)
+                switch(button->section)
                 {
-                case top:
+                case LS_TOP:
                     P_SetIntp(sdef, DMU_TOP_MATERIAL, button->texture);
                     break;
 
-                case middle:
+                case LS_MIDDLE:
                     P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->texture);
                     break;
 
-                case bottom:
+                case LS_BOTTOM:
                     P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->texture);
                     break;
 
                 default:
                     Con_Error("P_UpdateSpecials: Unknown sidedef section \"%d\".",
-                              button->where);
+                              (int) button->section);
                 }
 
                 S_StartSound(sfx_swtchn,
                              P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
 
                 button->line = NULL;
-                button->where = 0;
+                button->section = 0;
                 button->texture = 0;
                 button->soundOrg = NULL;
             }
@@ -1125,7 +1128,7 @@ void P_UpdateSpecials(void)
 
 void P_FreeButtons(void)
 {
-    button_t *button, *np;
+    button_t           *button, *np;
 
     button = buttonlist;
     while(button != NULL)
@@ -1142,8 +1145,8 @@ void P_FreeButtons(void)
  */
 void P_ThunderSector(void)
 {
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+    sector_t           *sec = NULL;
+    iterlist_t         *list;
 
     if(!(P_Random() < 10))
         return;
@@ -1155,7 +1158,7 @@ void P_ThunderSector(void)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        if(!(leveltime & 32))
+        if(!(levelTime & 32))
         {
             P_SetFloatp(sec, DMU_LIGHT_LEVEL, 1);
             S_StartSound(sfx_sssit, P_GetPtrp(sec, DMU_SOUND_ORIGIN));
@@ -1168,12 +1171,12 @@ void P_ThunderSector(void)
  */
 void P_SpawnSpecials(void)
 {
-    uint        i;
-    linedef_t     *line;
-    xline_t    *xline;
-    iterlist_t *list;
-    sector_t   *sec;
-    xsector_t  *xsec;
+    uint                i;
+    linedef_t          *line;
+    xline_t            *xline;
+    iterlist_t         *list;
+    sector_t           *sec;
+    xsector_t          *xsec;
 
     // Init special SECTORs.
     P_DestroySectorTagLists();
@@ -1197,7 +1200,7 @@ void P_SpawnSpecials(void)
             {
             case 9:
                 // SECRET SECTOR
-                totalsecret++;
+                totalSecret++;
                 break;
             }
             continue;
@@ -1263,7 +1266,7 @@ void P_SpawnSpecials(void)
 
         case 9:
             // SECRET SECTOR
-            totalsecret++;
+            totalSecret++;
             break;
 
         case 10:
@@ -1314,7 +1317,7 @@ void P_SpawnSpecials(void)
         case 994: // d64tc
             // kaiser - be sure to have that linedef count the secrets.
             // FIXME: DJS - secret lines??
-            totalsecret++;
+            totalSecret++;
             break;
         }
 
@@ -1325,8 +1328,8 @@ void P_SpawnSpecials(void)
         }
     }
 
-    P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
-    P_RemoveAllActivePlats();     // killough
+    P_RemoveAllActiveCeilings();
+    P_RemoveAllActivePlats();
 
     P_FreeButtons();
 

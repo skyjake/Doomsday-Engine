@@ -30,6 +30,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdio.h>
+#include <string.h>
+
 #include "doom64tc.h"
 
 #include "dmu_lib.h"
@@ -57,7 +60,7 @@
 
 mobj_t *P_SpawnTeleFog(float x, float y)
 {
-    subsector_t *ss = R_PointInSubsector(x, y);
+    subsector_t        *ss = R_PointInSubsector(x, y);
 
     return P_SpawnMobj3f(MT_TFOG, x, y,
                          P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT);
@@ -65,20 +68,19 @@ mobj_t *P_SpawnTeleFog(float x, float y)
 
 int EV_Teleport(linedef_t *line, int side, mobj_t *thing, boolean spawnFog)
 {
-    mobj_t     *m;
-    mobj_t     *fog;
-    unsigned    an;
-    thinker_t  *th;
-    sector_t   *sec = NULL;
-    float       oldpos[3];
-    float       aboveFloor;
-    iterlist_t *list;
+    mobj_t             *m;
+    mobj_t             *fog;
+    unsigned            an;
+    thinker_t          *th;
+    sector_t           *sec = NULL;
+    float               oldPos[3];
+    float               aboveFloor;
+    iterlist_t         *list;
 
     if(thing->flags2 & MF2_NOTELEPORT)
         return false;
 
-    // Don't teleport if hit back of line,
-    //  so you can get out of teleporter.
+    // Don't teleport if hit back of line, so you can get out of teleporter.
     if(side == 1)
         return 0;
 
@@ -91,51 +93,50 @@ int EV_Teleport(linedef_t *line, int side, mobj_t *thing, boolean spawnFog)
     {
         for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
         {
-            // not a mobj
             if(th->function != P_MobjThinker)
-                continue;
+                continue; // Not a mobj.
 
             m = (mobj_t *) th;
 
-            // not a teleportman
             if(m->type != MT_TELEPORTMAN)
-                continue;
+                continue; // Not a teleportman.
 
-            // wrong sector
             if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
-                continue;
+                continue; // Wrong sector.
 
-            memcpy(oldpos, thing->pos, sizeof(thing->pos));
+            memcpy(oldPos, thing->pos, sizeof(thing->pos));
             aboveFloor = thing->pos[VZ] - thing->floorZ;
 
             if(!P_TeleportMove(thing, m->pos[VX], m->pos[VY], false))
                 return 0;
 
-            // In Final Doom things teleported to their destination
-            // but the height wasn't set to the floor.
-            if(gamemission != GM_TNT && gamemission != GM_PLUT)
+            // In Final Doom things teleported to their destination but the
+            // height wasn't set to the floor.
+            if(gameMission != GM_TNT && gameMission != GM_PLUT)
                 thing->pos[VZ] = thing->floorZ;
 
             if(spawnFog)
             {
-                // spawn teleport fog at source and destination
-                fog = P_SpawnMobj3f(FLT2FIX(oldpos[VX]), FLT2FIX(oldpos[VY]), FLT2FIX(oldpos[VZ]), MT_TFOG);
+                // Spawn teleport fog at source and destination.
+                fog = P_SpawnMobj3fv(MT_TFOG, oldPos);
                 S_StartSound(sfx_telept, fog);
                 an = m->angle >> ANGLETOFINESHIFT;
                 fog =
-                    P_SpawnMobj3f(FLT2FIX(m->pos[VX]) + 20 * finecosine[an],
-                                FLT2FIX(m->pos[VY]) + 20 * finesine[an], FLT2FIX(thing->pos[VZ]),
-                                MT_TFOG);
+                    P_SpawnMobj3f(MT_TFOG,
+                                  m->pos[VX] + 20 * FIX2FLT(finecosine[an]),
+                                  m->pos[VY] + 20 * FIX2FLT(finesine[an]),
+                                  thing->pos[VZ]);
 
-                // emit sound, where?
+                // Emit sound, where?
                 S_StartSound(sfx_telept, fog);
             }
 
             thing->angle = m->angle;
             if(thing->flags2 & MF2_FLOORCLIP)
             {
-                if(thing->pos[VZ] == P_GetFloatp(thing->subsector,
-                                           DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
+                if(thing->pos[VZ] ==
+                    P_GetFloatp(thing->subsector,
+                                DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
                    P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
                 {
                     thing->floorClip = 10;
@@ -147,7 +148,7 @@ int EV_Teleport(linedef_t *line, int side, mobj_t *thing, boolean spawnFog)
             }
             thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;
 
-            // don't move for a bit
+            // Don't move for a bit.
             if(thing->player)
             {
                 thing->reactionTime = 18;
@@ -183,13 +184,16 @@ int EV_Teleport(linedef_t *line, int side, mobj_t *thing, boolean spawnFog)
  * the corresponding mobjtype. Else -1.
  *
  * DJS - Added in order to cleanup EV_FadeSpawn() somewhat.
+ * \todo This is still far from ideal. An MF*_* flag would be better.
  */
 static mobjtype_t IsFadeSpawner(int doomednum)
 {
-    struct {
+    typedef struct fadespawner_s {
         int doomednum;
         mobjtype_t type;
-    } spawners[] =
+    } fadespawner_t;
+
+    static const fadespawner_t  spawners[] =
     {
         {7575, MT_SHOTGUN},
         {7576, MT_CHAINGUN},
@@ -250,9 +254,9 @@ static mobjtype_t IsFadeSpawner(int doomednum)
         {7631, MT_CHAINGUNGUY},
         {7632, MT_NIGHTCRAWLER},
         {7633, MT_ACID},
-        {-1, -1} // terminator
+        {-1, -1} // Terminator.
     };
-    int i;
+    int                 i;
 
     for(i = 0; spawners[i].doomednum; ++i)
         if(spawners[i].doomednum == doomednum)
@@ -265,18 +269,18 @@ static mobjtype_t IsFadeSpawner(int doomednum)
  * d64tc
  * kaiser - This sets a thing spawn depending on thing type placed in
  *       tagged sector.
- * TODO: DJS - This is not a good design. There must be a better way
+ * \todo DJS - This is not a good design. There must be a better way
  *       to do this using a new thing flag (MF_NOTSPAWNONSTART?).
  */
 int EV_FadeSpawn(linedef_t *line, mobj_t *thing)
 {
-    mobj_t     *mobj, *mo;
-    angle_t     an;
-    thinker_t  *th;
-    sector_t   *sector, *tagsec = NULL;
-    fixed_t     pos[3];
-    mobjtype_t  spawntype;
-    iterlist_t *list;
+    mobj_t             *mobj, *mo;
+    angle_t             an;
+    thinker_t          *th;
+    sector_t           *sector, *tagsec = NULL;
+    float               pos[3];
+    mobjtype_t          spawntype;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -288,27 +292,27 @@ int EV_FadeSpawn(linedef_t *line, mobj_t *thing)
         for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
         {
             if(th->function != P_MobjThinker)
-                continue; // not a mobj
+                continue; // Not a mobj.
 
             mobj = (mobj_t *) th;
 
             sector = P_GetPtrp(mobj->subsector, DMU_SECTOR);
 
             if(sector != tagsec)
-                continue; // wrong sector
+                continue; // Wrong sector.
 
             // Only fade spawn mobjs of a certain type.
-            spawntype = IsFadeSpawner(mobj->info->doomednum);
+            spawntype = IsFadeSpawner(mobj->info->doomedNum);
             if(spawntype != -1)
             {
                 an = mobj->angle >> ANGLETOFINESHIFT;
 
                 memcpy(pos, mobj->pos, sizeof(pos));
-                pos[VX] += 20 * finecosine[an];
-                pos[VY] += 20 * finesine[an];
+                pos[VX] += 20 * FIX2FLT(finecosine[an]);
+                pos[VY] += 20 * FIX2FLT(finesine[an]);
                 pos[VZ] = thing->pos[VZ];
 
-                mo = P_SpawnMobj3f(pos[VX], pos[VY], pos[VZ], spawntype);
+                mo = P_SpawnMobj3fv(spawntype, pos);
                 if(mo)
                 {
                     mo->translucency = 255;
@@ -318,8 +322,8 @@ int EV_FadeSpawn(linedef_t *line, mobj_t *thing)
                     // Emit sound, where?
                     S_StartSound(sfx_itmbk, mo);
 
-                    if(mobjinfo[spawntype].flags & MF_COUNTKILL)
-                        totalkills++;
+                    if(mobjInfo[spawntype].flags & MF_COUNTKILL)
+                        totalKills++;
                 }
             }
         }
@@ -332,17 +336,14 @@ int EV_FadeSpawn(linedef_t *line, mobj_t *thing)
  * kaiser - removes things in tagged sector!
  * DJS - actually, no it doesn't at least not directly.
  *
- * FIXME: Find out exactly what the consequences of suddenly changing the
- *        MF_TELEPORT flag on a mobj are and implement this in a better way.
- *        My initial thoughts are that perhaps P_MobjThinker has been modified
- *        to respond to changes to the MF_TELEPORT flag? This is not good.
+ * \fixme: It appears the MF_TELEPORT flag has been hijacked.
  */
 int EV_FadeAway(linedef_t *line, mobj_t *thing)
 {
-    mobj_t     *mobj;
-    thinker_t  *th;
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+    mobj_t             *mobj;
+    thinker_t          *th;
+    sector_t           *sec = NULL;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -354,16 +355,17 @@ int EV_FadeAway(linedef_t *line, mobj_t *thing)
         for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
         {
             if(th->function != P_MobjThinker)
-                continue; // not a mobj
+                continue; // Not a mobj.
 
             mobj = (mobj_t *) th;
 
             if(sec != P_GetPtrp(mobj->subsector, DMU_SECTOR))
-                continue; // wrong sector
+                continue; // Wrong sector
 
             if(!mobj->player)
-                mobj->flags = MF_TELEPORT; // why do it like this??
+                mobj->flags = MF_TELEPORT; // Why do it like this??
         }
     }
+
     return 0;
 }

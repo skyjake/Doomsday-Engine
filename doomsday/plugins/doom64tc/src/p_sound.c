@@ -4,9 +4,8 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
- *
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -40,8 +39,6 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int gsvMapMusic;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -50,19 +47,19 @@ extern int gsvMapMusic;
 
 int S_GetMusicNum(int episode, int map)
 {
-    int     mnum;
+    int                 mnum;
 
     mnum = mus_runnin + map - 1;
 
     return mnum;
 }
 
-/*
+/**
  * Starts playing the music for this level
  */
 void S_LevelMusic(void)
 {
-    int songid;
+    int                 songid;
 
     if(G_GetGameState() != GS_LEVEL)
         return;
@@ -70,7 +67,7 @@ void S_LevelMusic(void)
     // Start new music for the level.
     if(Get(DD_MAP_MUSIC) == -1)
     {
-        songid = S_GetMusicNum(gameepisode, gamemap);
+        songid = S_GetMusicNum(gameEpisode, gameMap);
         S_StartMusicNum(songid, true);
     }
     else
@@ -79,11 +76,11 @@ void S_LevelMusic(void)
         S_StartMusicNum(songid, true);
     }
 
-    // set the game status cvar for the map music
+    // Set the game status cvar for the map music.
     gsvMapMusic = songid;
 }
 
-/*
+/**
  * Doom-like sector sounds: when a new sound starts, stop any old ones
  * from the same origin.
  *
@@ -93,27 +90,29 @@ void S_LevelMusic(void)
  */
 void S_SectorSound(sector_t *sec, int origin, int id)
 {
-    mobj_t *centerorigin = (mobj_t *) P_GetPtrp(sec, DMU_SOUND_ORIGIN);
-    mobj_t *floororigin = (mobj_t *) P_GetPtrp(sec, DMU_FLOOR_SOUND_ORIGIN);
-    mobj_t *ceilingorigin = (mobj_t *) P_GetPtrp(sec, DMU_CEILING_SOUND_ORIGIN);
+    mobj_t             *centerOrigin, *floorOrigin, *ceilingOrigin;
 
-    S_StopSound(0, centerorigin);
-    S_StopSound(0, floororigin);
-    S_StopSound(0, ceilingorigin);
+    centerOrigin = (mobj_t *) P_GetPtrp(sec, DMU_SOUND_ORIGIN);
+    floorOrigin = (mobj_t *) P_GetPtrp(sec, DMU_FLOOR_SOUND_ORIGIN);
+    ceilingOrigin = (mobj_t *) P_GetPtrp(sec, DMU_CEILING_SOUND_ORIGIN);
+
+    S_StopSound(0, centerOrigin);
+    S_StopSound(0, floorOrigin);
+    S_StopSound(0, ceilingOrigin);
 
     switch(origin)
     {
     case SORG_FLOOR:
-        S_StartSound(id, floororigin);
+        S_StartSound(id, floorOrigin);
         break;
 
     case SORG_CEILING:
-        S_StartSound(id, ceilingorigin);
+        S_StartSound(id, ceilingOrigin);
         break;
 
     case SORG_CENTER:
     default:
-        S_StartSound(id, centerorigin);
+        S_StartSound(id, centerOrigin);
         break;
     }
 }
