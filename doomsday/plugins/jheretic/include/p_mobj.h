@@ -34,9 +34,11 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-// We need the thinker_t stuff.
 #include "h_think.h"
 
+/**
+ * (Re)Spawn flags:
+ */
 #define MTF_EASY            1 // Appears in Easy skill modes
 #define MTF_MEDIUM          2 // Appears in Medium skill modes
 #define MTF_HARD            4 // Appears in Hard skill modes
@@ -208,6 +210,10 @@ typedef struct mobj_s {
 
 extern spawnspot_t* things;
 
-void        P_RespawnEnqueue(spawnspot_t *spot);
+void            P_RespawnEnqueue(spawnspot_t *spot);
+void            P_CheckRespawnQueue(void);
+void            P_EmptyRespawnQueue(void);
+
+float           P_MobjGetFriction(mobj_t *mo);
 
 #endif

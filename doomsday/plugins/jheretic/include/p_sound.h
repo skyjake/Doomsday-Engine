@@ -3,8 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,23 +33,19 @@
  */
 
 /**
- * p_oldsvg.h:
+ * p_sound.h:
  */
 
-#ifndef __P_OLDSVG_H__
-#define __P_OLDSVG_H__
+#ifndef __P_SOUND_H__
+#define __P_SOUND_H__
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-void            SV_v13_LoadGame(char *filename);
+#include "doomsday.h"
 
-// Persistent storage/archiving.
-// These are the load / save game routines.
-void            P_v13_UnArchivePlayers(void);
-void            P_v13_UnArchiveWorld(void);
-void            P_v13_UnArchiveThinkers(void);
-void            P_v13_UnArchiveSpecials(void);
+void            S_LevelMusic(void);
+void            S_SectorSound(sector_t *sec, int origin, int id);
 
 #endif

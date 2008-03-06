@@ -37,8 +37,8 @@
  *  2006/01/17 DJS - Recreated using jDoom's p_spec.h as a base.
  */
 
-#ifndef __P_SPEC__
-#define __P_SPEC__
+#ifndef __P_SPEC_H__
+#define __P_SPEC_H__
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"

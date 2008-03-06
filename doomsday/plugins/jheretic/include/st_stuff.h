@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,10 @@
  */
 
 /**
- * st_stuff.h:
+ * st_stuff.h: Statusbar code jHeretic - specific.
+ *
+ * Does the face/direction indicator animatin.
+ * Does palette indicators as well (red pain/berserk, bright pickup)
  */
 
 #ifndef __ST_STUFF_H__
@@ -44,12 +47,12 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "h_player.h"
-
 // Size of statusbar, now sensitive for scaling.
-#define ST_HEIGHT           (42*SCREEN_MUL)
+#define ST_HEIGHT           (42 * SCREEN_MUL)
 #define ST_WIDTH            (SCREENWIDTH)
 #define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
+
+extern int playerKeys;
 
 // Called by main loop.
 void    ST_Ticker(void);
@@ -76,18 +79,5 @@ void    ST_updateGraphics(void);
 
 // Called when it might be neccessary for the hud to unhide.
 void    ST_HUDUnHide(hueevent_t event);
-
-// States for status bar code.
-typedef enum {
-    AutomapState,
-    FirstPersonState
-} st_stateenum_t;
-
-// States for the chat code.
-typedef enum {
-    StartChatState,
-    WaitDestState,
-    GetChatState
-} st_chatstateenum_t;
 
 #endif
