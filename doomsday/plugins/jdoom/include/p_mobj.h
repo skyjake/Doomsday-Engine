@@ -34,24 +34,10 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-// Basics.
-#include "tables.h"
-
-// We need the thinker_t stuff.
 #include "d_think.h"
-
-// We need the WAD data structure for Map things,
-// from the THINGS lump.
 #include "doomdata.h"
-
-// States are tied to finite states are
-//  tied to animation frames.
-// Needs precompiled tables/data structures.
 #include "info.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
+#include "tables.h"
 
 /**
  * (Re)Spawn flags:
@@ -61,8 +47,8 @@
 #define MTF_HARD            4 // Can be spawned in Hard skill modes.
 #define MTF_DEAF            8 // Mobj will be deaf spawned deaf.
 #define MTF_NOTSINGLE       16 // Can not be spawned in single player gamemodes.
-#define MTF_NOTDM           32 // Can not be spawned in the Deathmatch gamemode.
-#define MTF_NOTCOOP         64 // Can not be spawned in the Co-op gamemode.
+#define MTF_NOTDM           32 // Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         64 // Can not be spawned in the Co-op gameMode.
 #define MTF_DORMANT         512 // Mobj will be spawned invulnerble and inert.
 
 typedef struct spawnspot_s {
@@ -226,7 +212,10 @@ typedef struct mobj_s {
 
 extern spawnspot_t* things;
 
-void        P_RespawnEnqueue(spawnspot_t *spot);
-void        P_CheckRespawnQueue(void);
+void            P_RespawnEnqueue(spawnspot_t *spot);
+void            P_CheckRespawnQueue(void);
+void            P_EmptyRespawnQueue(void);
+
+float           P_MobjGetFriction(mobj_t *mo);
 
 #endif

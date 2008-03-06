@@ -148,8 +148,8 @@ typedef enum linesection_e{
     LS_TOP
 } linesection_t;
 
-typedef struct button_s{
-    linedef_t         *line;
+typedef struct button_s {
+    linedef_t      *line;
     linesection_t   section;
     int             texture;
     int             timer;
@@ -199,7 +199,7 @@ typedef struct plat_s {
 
 typedef struct platlist_s {
   plat_t           *plat;
-  struct platlist_s  *next,**prev;
+  struct platlist_s *next, **prev;
 } platlist_t;
 
 #define PLATWAIT        3
@@ -284,7 +284,7 @@ typedef struct {
 
 typedef struct ceilinglist_s {
     ceiling_t      *ceiling;
-    struct ceilinglist_s *next,**prev;
+    struct ceilinglist_s *next, **prev;
 } ceilinglist_t;
 
 #define CEILSPEED           1

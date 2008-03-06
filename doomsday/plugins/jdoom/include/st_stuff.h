@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,37 +24,22 @@
  */
 
 /**
- * st_stuff.h: Status bar code.
+ * st_stuff.h: Statusbar code jDoom - specific.
  *
  * Does the face/direction indicator animatin.
  * Does palette indicators as well (red pain/berserk, bright pickup)
  */
 
-#ifndef __STSTUFF_H__
-#define __STSTUFF_H__
+#ifndef __ST_STUFF_H__
+#define __ST_STUFF_H__
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "d_config.h"
-
 #define ST_HEIGHT           (32 * SCREEN_MUL)
 #define ST_WIDTH            (SCREENWIDTH)
 #define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
-
-// States for status bar code.
-typedef enum {
-    AutomapState,
-    FirstPersonState
-} st_stateenum_t;
-
-// States for the chat code.
-typedef enum {
-    StartChatState,
-    WaitDestState,
-    GetChatState
-} st_chatstateenum_t;
 
 // Called by startup code.
 void        ST_Register(void);

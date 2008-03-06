@@ -3,9 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,35 +22,27 @@
  */
 
 /**
- * version.h: Version numbering, naming etc.
+ * p_sound.h:
  */
 
-#ifndef __JDOOM_VERSION_H__
-#define __JDOOM_VERSION_H__
+#ifndef __P_SOUND_H__
+#define __P_SOUND_H__
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-// DOOM version
+#include "doomsday.h"
 
-#ifndef JDOOM_VER_ID
-#  ifdef _DEBUG
-#    define JDOOM_VER_ID "+D Doomsday"
-#  else
-#    define JDOOM_VER_ID "Doomsday"
-#  endif
-#endif
+typedef enum {
+    SORG_CENTER,
+    SORG_FLOOR,
+    SORG_CEILING
+} sectorsoundorigin_t;
 
-#define GAMENAMETEXT        "jdoom"
-
-// My my, the names of these #defines are really well chosen...
-#define VERSION_TEXT        "1.15."DOOMSDAY_RELEASE_NAME
-#define VERSIONTEXT         "Version "VERSION_TEXT" "__DATE__" ("JDOOM_VER_ID")"
-
-// All the versions of Doom have different savegame IDs, but 500 will be
-// the savegame base from now on.
-#define SAVE_VERSION_BASE   500
-#define SAVE_VERSION        (SAVE_VERSION_BASE + gameMode)
+int             S_GetMusicNum(int episode, int map);
+void            S_LevelMusic(void);
+void            S_SectorSound(sector_t *sec, sectorsoundorigin_t origin,
+                              int id);
 
 #endif

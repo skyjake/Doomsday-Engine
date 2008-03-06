@@ -33,18 +33,10 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-// Screenwidth.
-#include "doomdef.h"
-
 #include "p_xg.h"
 
 // SECTORS do store MObjs anyway.
 #include "p_mobj.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 
 #define SP_floororigheight      planes[PLN_FLOOR].origHeight
 #define SP_ceilorigheight       planes[PLN_CEILING].origHeight
@@ -56,13 +48,13 @@ typedef struct xsector_s {
     // 0 = untraversed, 1,2 = sndlines -1
     int             soundTraversed;
 
-    // thing that made a sound (or null)
+    // Thing that made a sound (or null)
     struct mobj_s  *soundTarget;
 
-    // thinker_t for reversable actions
+    // thinker_t for reversable actions.
     void           *specialData;
 
-    // stone, metal, heavy, etc...
+    // Stone, metal, heavy, etc...
     byte            seqType;       // NOT USED ATM
 
     struct {
@@ -86,6 +78,9 @@ typedef struct xline_s {
     // Extended generalized lines.
     xgline_t       *xg;
 } xline_t;
+
+extern xsector_t *xsectors;
+extern xline_t *xlines;
 
 xline_t*        P_ToXLine(linedef_t* line);
 xsector_t*      P_ToXSector(sector_t* sector);
