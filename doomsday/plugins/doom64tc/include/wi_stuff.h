@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,30 +19,54 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Intermission screens
+/**
+ * wi_stuff.h: Intermission screens
  */
 
-#ifndef __WI_STUFF__
-#define __WI_STUFF__
+#ifndef __WI_STUFF_H__
+#define __WI_STUFF_H__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
-#include "d_player.h"
+// Structure passed e.g. to WI_Start(wb)
+typedef struct {
+    boolean         inGame; // Whether the player is in game.
+
+    // Player stats, kills, collected items etc.
+    int             kills;
+    int             items;
+    int             secret;
+    int             time;
+    int             frags[MAXPLAYERS];
+    int             score; // Current score on entry, modified on return.
+} wbplayerstruct_t;
+
+typedef struct {
+    int             epsd; // Episode # (0-2)
+    boolean         didSecret; // If true, splash the secret level.
+    int             last, next; // Previous and next levels, origin 0.
+    int             maxKills;
+    int             maxItems;
+    int             maxSecret;
+    int             maxFrags;
+    int             parTime;
+    int             pNum; // Index of this player in game.
+    wbplayerstruct_t plyr[MAXPLAYERS];
+} wbstartstruct_t;
 
 // States for the intermission
 
 typedef enum {
-    NoState = -1,
-    StatCount,
-    ShowNextLoc
-} stateenum_t;
+    ILS_NONE = -1,
+    ILS_SHOW_STATS,
+    ILS_SHOW_NEXTMAP
+} interludestate_t;
 
 // Called by main loop, animate the intermission.
 void            WI_Ticker(void);
@@ -52,9 +76,9 @@ void            WI_Ticker(void);
 void            WI_Drawer(void);
 
 // Setup for an intermission screen.
-void            WI_Start(wbstartstruct_t * wbstartstruct);
+void            WI_Start(wbstartstruct_t *wbstartstruct);
 
-void            WI_SetState(stateenum_t st);
+void            WI_SetState(interludestate_t st);
 void            WI_End(void);
 
 #endif

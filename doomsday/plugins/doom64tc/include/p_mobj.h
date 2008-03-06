@@ -25,14 +25,14 @@
  */
 
 /**
- * p_mobj.h: Map Objects, MObj, definition and handling.
+ * p_mobj.h: Map Objects, Mobj, definition and handling Doom64TC - specific.
  */
 
 #ifndef __P_MOBJ__
 #define __P_MOBJ__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
 // Basics.
@@ -40,19 +40,81 @@
 
 // We need the thinker_t stuff.
 #include "d_think.h"
-
-// We need the WAD data structure for Map things,
-// from the THINGS lump.
-#include "doomdata.h"
-
-// States are tied to finite states are
-//  tied to animation frames.
-// Needs precompiled tables/data structures.
 #include "info.h"
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+#define FRICTION_NORMAL     (0.90625f)
+#define FRICTION_FLY        (0.91796875f)
+#define FRICTION_HIGH       (0.5f)
+
+#define ONFLOORZ            (DDMINFLOAT)
+#define ONCEILINGZ          (DDMAXFLOAT)
+#define FLOATRANDZ          (DDMAXFLOAT - 1)
+
+// Player radius for movement checking.
+#define PLAYERRADIUS        (25)
+
+// MAXRADIUS is for precalculated sector block boxes the spider demon is
+// larger, but we do not have any moving sectors nearby.
+#define MAXRADIUS           (32)
+#define MAXMOVE             (30)
+
+#define USERANGE            (64)
+#define MELEERANGE          (64)
+#define PLRMELEERANGE       (80) // d64tc wide player radius.
+#define MISSILERANGE        (32 * 64)
+#define ACIDRANGE           (296) // d64tc
+
+#define FLOATSPEED          (4)
+#define MAXHEALTH           (maxHealth) //100
+#define VIEWHEIGHT          (54)
+
+// GMJ 02/02/02
+#define sentient(mobj) ((mobj)->health > 0 && (mobj)->info->seeState)
+
+// Any floor type >= FLOOR_LIQUID will floorclip mobjs.
+enum {
+    FLOOR_SOLID,
+    FLOOR_LIQUID,
+    FLOOR_WATER,
+    FLOOR_LAVA,
+    FLOOR_SLUDGE,
+    FLOOR_BLOOD,
+    FLOOR_SLIME,
+    NUM_TERRAINTYPES
+};
+
+/**
+ * (Re)Spawn flags:
+ */
+#define MTF_EASY            1 // Appears in easy skill modes.
+#define MTF_MEDIUM          2 // Appears in medium skill modes.
+#define MTF_HARD            4 // Appears in hard skill modes.
+#define MTF_DEAF            8 // Thing is deaf.
+#define MTF_NOTSINGLE       16 // Appears in multiplayer game modes only.
+
+// d64tc FIXME:
+// DJS - Unfortunetly Doom64TC has already used the thing bits for
+// other purposes so we should update the IWAD! No doubt that some
+// of these can be pruned anyway...
+
+//#define MTF_NOTDM           32 // Doesn't appear in Deathmatch
+//#define MTF_NOTCOOP         64 // Doesn't appear in Coop
+//#define MTF_DORMANT         512 // THING is invulnerble and inert
+
+// Forces a MF_SPAWNCEILING enemies (d64 custom) to spawn on floor
+#define MTF_FORCECEILING    32
+#define MTF_WALKOFF         64
+#define MTF_TRANSLUCENT     128
+#define MTF_RESPAWN         256
+#define MTF_SPAWNPLAYERZ    512
+#define MTF_FLOAT           1024
+
+typedef struct spawnspot_s {
+    float           pos[3];
+    angle_t         angle;
+    int             type;
+    int             flags;
+} spawnspot_t;
 
 /**
  * NOTES: mobj_t
@@ -248,8 +310,8 @@ typedef struct mobj_s {
     int             health;
 
     // Movement direction, movement generation (zig-zagging).
-    int             movedir;       // 0-7
-    int             movecount;     // when 0, select a new dir
+    int             moveDir;       // 0-7
+    int             moveCount;     // when 0, select a new dir
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
@@ -259,37 +321,62 @@ typedef struct mobj_s {
     // no matter what (even if shot)
     int             threshold;
 
-    int             intflags;      // internal flags
-    float           dropoffz;      // killough $dropoff_fix
+    int             intFlags;      // internal flags
+    float           dropOffZ;      // killough $dropoff_fix
     short           gear;          // killough 11/98: used in torque simulation
-    boolean         wallrun;       // true = last move was the result of a wallrun
+    boolean         wallRun;       // true = last move was the result of a wallrun
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
     struct player_s *player;
 
     // Player number last looked for.
-    int             lastlook;
+    int             lastLook;
 
     // For nightmare/multiplayer respawn.
-    struct {
-        float           fpos[3];   // Note DOOM didn't include VZ
-        angle_t         angle;
-        int             type;
-        int             options;
-    } spawninfo;
+    spawnspot_t     spawnSpot;
 
     // Thing being chased/attacked for tracers.
     struct mobj_s  *tracer;
 
-    int             turntime;      // $visangle-facetarget
-    int             corpsetics;    // $vanish: how long has this been dead?
+    int             turnTime;      // $visangle-facetarget
+    int             corpseTics;    // $vanish: how long has this been dead?
 
-    int             floattics; // d64tc
-    int             floatswitch; // d64tc
+    int             floatTics; // d64tc
+    int             floatSwitch; // d64tc
 } mobj_t;
 
+extern spawnspot_t* things;
+
+void        P_EmptyRespawnQueue(void);
 void        P_RespawnEnqueue(spawnspot_t *spot);
 void        P_CheckRespawnQueue(void);
+
+void        P_ExplodeMissile(mobj_t *mo);
+float       P_MobjGetFriction(mobj_t *mo);
+mobj_t     *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t angle);
+
+mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z);
+mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3]);
+
+void        P_SpawnPuff(float x, float y, float z);
+mobj_t     *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z);
+void        P_SpawnBlood(float x, float y, float z, int damage);
+mobj_t     *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
+void        P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source);
+mobj_t     *P_SpawnTeleFog(float x, float y);
+mobj_t     *P_SpawnMotherMissile(mobjtype_t type, float x, float y, float z,
+                                 mobj_t *source, mobj_t *dest); // d64tc
+
+void        P_MobjRemove(mobj_t *th);
+boolean     P_MobjChangeState(mobj_t *mobj, statenum_t state);
+void        P_MobjThinker(mobj_t *mobj);
+int         P_MobjGetFloorType(mobj_t *thing);
+void        P_RipperBlood(mobj_t *mo);
+void        P_SetDoomsdayFlags(mobj_t *mo);
+void        P_HitFloor(mobj_t *mo);
+
+void        P_SpawnMapThing(spawnspot_t *th);
+void        P_SpawnPlayer(spawnspot_t *mthing, int pnum);
 
 #endif

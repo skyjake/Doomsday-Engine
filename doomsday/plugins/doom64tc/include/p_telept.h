@@ -4,6 +4,9 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,21 +20,34 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Refresh module, data I/O, caching, retrieval of graphics by name.
+/**
+ * p_telept.h:
  */
 
-#ifndef __R_DATA__
-#define __R_DATA__
+#ifndef __P_TELEPT_H__
+#define __P_TELEPT_H__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
-#include "r_defs.h"
+#include "doomsday.h"
+
+#include "p_mobj.h"
+
+// Define values for map objects
+#define MO_TELEPORTMAN          (14)
+#define TELEFOGHEIGHT           (0)
+
+mobj_t         *P_SpawnTeleFog(float x, float y);
+
+int             EV_Teleport(linedef_t *line, int side, mobj_t *thing,
+                            boolean spawnFog);
+int             EV_FadeSpawn(linedef_t *line, mobj_t *thing);
+int             EV_FadeAway(linedef_t *line, mobj_t *thing);
 
 #endif

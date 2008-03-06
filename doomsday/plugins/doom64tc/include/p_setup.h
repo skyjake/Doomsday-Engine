@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,11 +26,11 @@
  * p_setup.h: Map setup routines
  */
 
-#ifndef __D_SETUP_H__
-#define __D_SETUP_H__
+#ifndef __P_SETUP_H__
+#define __P_SETUP_H__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
 /** Game specific map format properties for ALL games.
@@ -89,6 +89,8 @@ int         P_HandleMapDataProperty(uint id, int dtype, int prop,
                                     int type, void *data);
 int         P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
                                          int type, void *data);
+int         P_HandleMapObjectStatusReport(int code, uint id, int dtype,
+                                          void *data);
 void        P_Init(void);
 boolean     P_MapExists(int episode, int map);
 

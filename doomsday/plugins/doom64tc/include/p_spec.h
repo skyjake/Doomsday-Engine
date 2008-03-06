@@ -25,34 +25,34 @@
  */
 
 /**
- * Implements special effects:
- * Texture animation, height or lighting changes according to adjacent
- * sectors, respective utility functions, etc.
+ * p_spec.h: World texture animation, height or lighting changes
+ * according to adjacent sectors, respective utility functions, etc.
  *
  * Line Tag handling. Line and Sector triggers.
  *
- * Events are operations triggered by using, crossing,
- * or shooting special lines, or by timed thinkers.
+ * Events are operations triggered by using, crossing, or shooting special
+ * lines, or by timed thinkers.
  */
 
 #ifndef __P_SPEC__
 #define __P_SPEC__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
 #include "d_player.h"
-#include "r_data.h"
 
-//
-// End-level timer (-TIMER option)
-//
-extern boolean  levelTimer;
-extern int      levelTimeCount;
+// Base plane ids.
+enum {
+    PLN_FLOOR,
+    PLN_CEILING
+};
 
-//      Define values for map objects
-#define MO_TELEPORTMAN          14
+// Special activation types:
+#define SPAC_CROSS              0 // Player crosses linedef.
+#define SPAC_USE                1 // Player uses linedef.
+#define SPAC_IMPACT             3 // Projectile hits linedef.
 
 // at game start
 void            P_InitPicAnims(void);
@@ -66,136 +66,13 @@ void            P_UpdateSpecials(void);
 void            P_ThunderSector(void); // d64tc
 
 // when needed
-int             P_GetTerrainType(sector_t *sec, int plane);
-int             P_FlatToTerrainType(int flatlumpnum);
+int             P_GetTerrainType(sector_t* sec, int plane);
+int             P_FlatToTerrainType(int flatid);
 boolean         P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
                                int activationType);
 
 void            P_PlayerInSpecialSector(player_t *player);
 
-//
-// SPECIAL
-//
-int             EV_DoDonut(linedef_t *line);
-
-//
-// P_LIGHTS
-//
-typedef struct {
-    thinker_t       thinker;
-    sector_t       *sector;
-    int             count;
-    float           maxlight;
-    float           minlight;
-} fireflicker_t;
-
-typedef struct {
-    thinker_t       thinker;
-    sector_t       *sector;
-    int             count;
-    float           maxlight;
-    float           minlight;
-    int             maxtime;
-    int             mintime;
-} lightflash_t;
-
-typedef struct {
-    thinker_t       thinker;
-    sector_t       *sector;
-    int             count;
-    float           maxlight;
-    float           minlight;
-    int             maxtime;
-    int             mintime;
-} lightblink_t;
-
-typedef struct {
-    thinker_t       thinker;
-    sector_t       *sector;
-    int             count;
-    float           minlight;
-    float           maxlight;
-    int             darktime;
-    int             brighttime;
-} strobe_t;
-
-typedef struct {
-    thinker_t       thinker;
-    sector_t       *sector;
-    float           minlight;
-    float           maxlight;
-    int             direction;
-} glow_t;
-
-#define GLOWSPEED           8
-#define STROBEBRIGHT        5
-#define FASTDARK            15
-#define SLOWDARK            35
-
-void T_FireFlicker(fireflicker_t *flick);
-void P_SpawnFireFlicker(sector_t *sector);
-
-void T_LightFlash(lightflash_t *flash);
-void P_SpawnLightFlash(sector_t *sector);
-
-void T_LightBlink(lightblink_t *flash); // d64tc
-void P_SpawnLightBlink(sector_t *sector); // d64tc
-
-void T_StrobeFlash(strobe_t *flash);
-void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync);
-
-void EV_StartLightStrobing(linedef_t *line);
-void EV_TurnTagLightsOff(linedef_t *line);
-
-void EV_LightTurnOn(linedef_t *line, float bright);
-
-void T_Glow(glow_t *g);
-void P_SpawnGlowingLight(sector_t *sector);
-
-//
-// P_SWITCH
-//
-// This struct is used to provide byte offsets when reading a custom
-// SWITCHES lump thus it must be packed and cannot be altered.
-
-#pragma pack(1)
-typedef struct {
-    /* Do NOT change these members in any way */
-    char            name1[9];
-    char            name2[9];
-    short           episode;
-} switchlist_t;
-#pragma pack()
-
-typedef enum {
-    top,
-    middle,
-    bottom
-} bwhere_e;
-
-typedef struct button_s {
-    linedef_t         *line;
-    bwhere_e        where;
-    int             btexture;
-    int             btimer;
-    mobj_t         *soundorg;
-
-    struct button_s *next;
-} button_t;
-
- // 1 second, in ticks.
-#define BUTTONTIME      35
-
-extern button_t *buttonlist;
-void            P_FreeButtons(void);
-
-void            P_ChangeSwitchTexture(linedef_t *line, int useAgain);
-
-void            P_InitSwitchList(void);
-
-//
-// P_PLATS
-//
 typedef enum {
     up,
     down,
@@ -223,36 +100,32 @@ typedef struct {
     int             wait;
     int             count;
     plat_e          status;
-    plat_e          oldstatus;
+    plat_e          oldStatus;
     boolean         crush;
     int             tag;
     plattype_e      type;
 
-    struct platlist *list;   // killough
+    struct platlist_s *list;
 } plat_t;
 
-// New limit-free plat structure -- killough
-typedef struct platlist {
-  plat_t *plat;
-  struct platlist *next,**prev;
+typedef struct platlist_s {
+  plat_t           *plat;
+  struct platlist_s *next, **prev;
 } platlist_t;
 
 #define PLATWAIT        3
 #define PLATSPEED       1
 
-void            T_PlatRaise(plat_t *plat);
+void        T_PlatRaise(plat_t *plat);
 
-int             EV_DoPlat(linedef_t *line, plattype_e type, int amount);
-boolean         EV_StopPlat(linedef_t *line);
+int         EV_DoPlat(linedef_t *line, plattype_e type, int amount);
+boolean     EV_StopPlat(linedef_t *line);
 
-void            P_AddActivePlat(plat_t *plat);
-void            P_RemoveActivePlat(plat_t *plat);
-void            P_RemoveAllActivePlats(void);    // killough
-int             P_ActivateInStasisPlat(int tag);
+void        P_AddActivePlat(plat_t *plat);
+void        P_RemoveActivePlat(plat_t *plat);
+void        P_RemoveAllActivePlats(void);
+int         P_ActivateInStasisPlat(int tag);
 
-//
-// P_DOORS
-//
 typedef enum {
     normal,
     close30ThenOpen,
@@ -261,7 +134,7 @@ typedef enum {
     raiseIn5Mins,
     blazeRaise,
     blazeOpen,
-    instantOpen,    //d64tc kaiser
+    instantOpen, //d64tc kaiser
     instantClose, //d64tc kaiser
     instantRaise, //d64tc kaiser
     blazeClose
@@ -271,42 +144,39 @@ typedef struct {
     thinker_t       thinker;
     vldoor_e        type;
     sector_t       *sector;
-    float           topheight;
+    float           topHeight;
     float           speed;
 
     // 1 = up, 0 = waiting at top, -1 = down
     int             direction;
 
     // tics to wait at the top
-    int             topwait;
+    int             topWait;
     // (keep in case a door going down is reset)
     // when it reaches 0, start going down
-    int             topcountdown;
+    int             topCountDown;
 } vldoor_t;
 
-#define VDOORSPEED      2
-#define VDOORWAIT       150
+#define VDOORSPEED          2
+#define VDOORWAIT           150
 
-boolean         EV_VerticalDoor(linedef_t *line, mobj_t *thing);
-int             EV_DoDoor(linedef_t *line, vldoor_e type);
-int             EV_DoLockedDoor(linedef_t *line, vldoor_e type, mobj_t *thing);
+boolean     EV_VerticalDoor(linedef_t *line, mobj_t *thing);
+int         EV_DoDoor(linedef_t *line, vldoor_e type);
+int         EV_DoLockedDoor(linedef_t *line, vldoor_e type, mobj_t *thing);
 
-void            T_VerticalDoor(vldoor_t *door);
-void            P_SpawnDoorCloseIn30(sector_t *sec);
-void            P_SpawnDoorRaiseIn5Mins(sector_t *sec);
+void        T_VerticalDoor(vldoor_t *door);
+void        P_SpawnDoorCloseIn30(sector_t *sec);
+void        P_SpawnDoorRaiseIn5Mins(sector_t *sec);
 
 // d64tc >
-int             EV_DoSplitDoor(linedef_t *line, int ftype, int ctype);
-int             EV_DestoryLineShield(linedef_t *line);
-int             EV_SwitchTextureFree(linedef_t *line);
-int             EV_ActivateSpecial(linedef_t *line);
-void            P_SetSectorColor(linedef_t *line);
-int             EV_AnimateDoor(linedef_t *line, mobj_t *thing);
+int         EV_DoSplitDoor(linedef_t *line, int ftype, int ctype);
+int         EV_DestoryLineShield(linedef_t *line);
+int         EV_SwitchTextureFree(linedef_t *line);
+int         EV_ActivateSpecial(linedef_t *line);
+void        P_SetSectorColor(linedef_t *line);
+int         EV_AnimateDoor(linedef_t *line, mobj_t *thing);
 // < d64tc
 
-//
-// P_CEILNG
-//
 typedef enum {
     lowerToFloor,
     raiseToHighest,
@@ -321,8 +191,8 @@ typedef struct {
     thinker_t       thinker;
     ceiling_e       type;
     sector_t       *sector;
-    float           bottomheight;
-    float           topheight;
+    float           bottomHeight;
+    float           topHeight;
     float           speed;
     boolean         crush;
 
@@ -331,87 +201,27 @@ typedef struct {
 
     // ID
     int             tag;
-    int             olddirection;
+    int             oldDirection;
 
-    struct ceilinglist *list;   // jff 2/22/98 copied from killough's plats
+    struct ceilinglist_s *list;
 } ceiling_t;
 
-typedef struct ceilinglist {
-    ceiling_t *ceiling;
-    struct ceilinglist *next,**prev;
+typedef struct ceilinglist_s {
+    ceiling_t      *ceiling;
+    struct ceilinglist_s *next, **prev;
 } ceilinglist_t;
 
-#define CEILSPEED       1
-#define CEILWAIT        150
+#define CEILSPEED           1
+#define CEILWAIT            150
 
-int             EV_DoCeiling(linedef_t *line, ceiling_e type);
+int         EV_DoCeiling(linedef_t *line, ceiling_e type);
 
-void            T_MoveCeiling(ceiling_t *ceiling);
-void            P_AddActiveCeiling(ceiling_t *c);
-void            P_RemoveActiveCeiling(ceiling_t *c);
-void            P_RemoveAllActiveCeilings(void);
-int             EV_CeilingCrushStop(linedef_t *line);
-int             P_ActivateInStasisCeiling(linedef_t *line);
-
-//
-// P_FLOOR
-//
-typedef enum {
-    // lower floor to highest surrounding floor
-    lowerFloor,
-
-    // lower floor to lowest surrounding floor
-    lowerFloorToLowest,
-
-    // lower floor to highest surrounding floor VERY FAST
-    turboLower,
-
-    lowerToEight, // d64tc
-    customFloor, // d64tc
-    customChangeSec, // d64tc
-
-    // raise floor to lowest surrounding CEILING
-    raiseFloor,
-
-    // raise floor to next highest surrounding floor
-    raiseFloorToNearest,
-
-    // raise floor to shortest height texture around it
-    raiseToTexture,
-
-    // lower floor to lowest surrounding floor
-    //  and change floorpic
-    lowerAndChange,
-
-    raiseFloor24,
-    raiseFloor24AndChange,
-    raiseFloorCrush,
-
-    // raise to next highest floor, turbo-speed
-    raiseFloorTurbo,
-    donutRaise,
-    raiseFloor512,
-    raiseFloor32 // d64tc
-} floor_e;
-
-typedef enum {
-    build8,                        // slowly build by 8
-    turbo16                        // quickly build by 16
-} stair_e;
-
-typedef struct {
-    thinker_t       thinker;
-    floor_e         type;
-    boolean         crush;
-    sector_t       *sector;
-    int             direction;
-    int             newspecial;
-    short           texture;
-    float           floordestheight;
-    float           speed;
-} floormove_t;
-
-#define FLOORSPEED      1
+void        T_MoveCeiling(ceiling_t *ceiling);
+void        P_AddActiveCeiling(ceiling_t *c);
+void        P_RemoveActiveCeiling(ceiling_t *c);
+void        P_RemoveAllActiveCeilings(void);
+int         EV_CeilingCrushStop(linedef_t *line);
+int         P_ActivateInStasisCeiling(linedef_t *line);
 
 typedef enum {
     ok,
@@ -419,20 +229,10 @@ typedef enum {
     pastdest
 } result_e;
 
-result_e        T_MovePlane(sector_t *sector, float speed, float dest,
-                            int crush, int floorOrCeiling, int direction);
+result_e    T_MovePlane(sector_t *sector, float speed, float dest,
+                        int crush, int floorOrCeiling, int direction);
 
-int             EV_BuildStairs(linedef_t *line, stair_e type);
-int             EV_DoFloor(linedef_t *line, floor_e floortype);
-void            T_MoveFloor(floormove_t *floor);
-
-//
-// P_TELEPT
-//
-#define         TELEFOGHEIGHT 0
-int             EV_Teleport(linedef_t *line, int side, mobj_t *thing, boolean spawnFog);
-
-int             EV_FadeSpawn(linedef_t *line, mobj_t *thing); // d64tc
-int             EV_FadeAway(linedef_t *line, mobj_t *thing); // d64tc
+int         EV_DoFloor(linedef_t *line, floor_e floortype);
+void        T_MoveFloor(floormove_t *floor);
 
 #endif

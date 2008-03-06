@@ -39,37 +39,59 @@
 // SECTORS do store MObjs anyway.
 #include "p_mobj.h"
 
-#define SP_floororigheight      planes[PLN_FLOOR].origheight
-#define SP_ceilorigheight       planes[PLN_CEILING].origheight
+#define SP_floororigheight      planes[PLN_FLOOR].origHeight
+#define SP_ceilorigheight       planes[PLN_CEILING].origHeight
 
-//
-// The SECTORS record, at runtime.
-// Stores things/mobjs.
-//
 typedef struct xsector_s {
     short           special;
     short           tag;
 
     // 0 = untraversed, 1,2 = sndlines -1
-    int             soundtraversed;
+    int             soundTraversed;
 
     // thing that made a sound (or null)
-    struct mobj_s  *soundtarget;
+    struct mobj_s  *soundTarget;
 
     // thinker_t for reversable actions
-    void           *specialdata;
+    void           *specialData;
 
     // stone, metal, heavy, etc...
     byte            seqType;       // NOT USED ATM
 
     struct {
-        float       origheight;
+        float       origHeight;
     } planes[2];    // {floor, ceiling}
 
-    float           origlight;
-    float           origrgb[3];
+    float           origLight;
+    float           origRGB[3];
     xgsector_t     *xg;
 } xsector_t;
+
+/**
+ * xline_t flags:
+ */
+
+#define ML_BLOCKMONSTERS        2 // Blocks monsters only.
+#define ML_SECRET               32 // In AutoMap: don't map as two sided: IT'S A SECRET!
+#define ML_SOUNDBLOCK           64 // Sound rendering: don't let sound cross two of these.
+#define ML_DONTDRAW             128 // Don't draw on the automap at all.
+#define ML_MAPPED               256 // Set if already seen, thus drawn in automap.
+
+// FIXME! DJS - This is important!
+// Doom64tc unfortunetly used non standard values for the linedef flags
+// it implemented from BOOM. It will make life simpler if we simply
+// update the Doom64TC IWAD rather than carry this on much further as
+// once Doom64TC is released with 1.9.0 I imagine we'll see a bunch
+// PWADs start cropping up.
+
+//#define ML_PASSUSE            512 // Allows a USE action to pass through a linedef with a special
+//#define ML_ALLTRIGGER         1024 // If set allows any mobj to trigger the linedef's special
+//#define ML_INVALID            2048 // If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load. ML_BLOCKING -> ML_MAPPED inc will persist.
+//#define VALIDMASK             0x000001ff
+
+#define ML_ALLTRIGGER           512 // Anything can use linedef if this is set - kaiser
+#define ML_PASSUSE              1024
+#define ML_BLOCKALL             2048
 
 typedef struct xline_s {
     short           special;
@@ -78,17 +100,26 @@ typedef struct xline_s {
     // Has been rendered at least once and needs to appear in the map,
     // for each player.
     boolean         mapped[MAXPLAYERS];
-    int             validcount;
+    int             validCount;
 
     // Extended generalized lines.
     xgline_t       *xg;
 
-    short           useon;    // d64tc
+    // Doom64TC specific:
+    short           useOn;
 } xline_t;
 
-xline_t*    P_ToXLine(linedef_t* line);
-xline_t*    P_GetXLine(uint index);
-xsector_t*  P_ToXSector(sector_t* sector);
-xsector_t*  P_GetXSector(uint index);
-xsector_t*  P_ToXSectorOfSubsector(subsector_t* sub);
+// Our private map data structures.
+extern xsector_t *xsectors;
+extern xline_t *xlines;
+
+// If true we are in the process of setting up a level.
+extern boolean levelSetup;
+
+xline_t*        P_ToXLine(linedef_t* line);
+xsector_t*      P_ToXSector(sector_t* sector);
+xsector_t*      P_ToXSectorOfSubsector(subsector_t* sub);
+
+xline_t*        P_GetXLine(uint index);
+xsector_t*      P_GetXSector(uint index);
 #endif

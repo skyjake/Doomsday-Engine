@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,24 +17,33 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Refresh (R_*) module, global header.
- * All the rendering/drawing stuff is here.
+/**
+ * p_sound.h:
  */
-#ifndef __R_LOCAL__
-#define __R_LOCAL__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __P_SOUND_H__
+#define __P_SOUND_H__
+
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
-// Screen size related parameters.
+#include "doomsday.h"
 
-// Include the refresh/render data structs.
-//#include "r_data.h"
+#include "sndidx.h"
+
+enum {
+    SORG_CENTER,
+    SORG_FLOOR,
+    SORG_CEILING
+};
+
+int             S_GetMusicNum(int episode, int map);
+void            S_LevelMusic(void);
+void            S_SectorSound(sector_t *sec, int origin, int id);
 
 #endif
