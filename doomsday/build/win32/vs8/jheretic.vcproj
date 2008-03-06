@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="JHeretic"
+	Name="jHeretic"
 	ProjectGUID="{7D03FB13-8674-4473-BD32-83C43188B2D2}"
 	RootNamespace="JHeretic"
 	TargetFrameworkVersion="131072"
@@ -324,6 +324,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_user.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_view.h"
 				>
 			</File>
@@ -574,7 +578,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jheretic\include\h_api.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jheretic\include\h_config.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jheretic\include\h_console.h"
 				>
 			</File>
 			<File
@@ -586,7 +598,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jheretic\include\h_main.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jheretic\include\h_player.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jheretic\include\h_refresh.h"
 				>
 			</File>
 			<File
@@ -599,6 +619,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jheretic\include\h_type.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jheretic\include\in_lude.h"
 				>
 			</File>
 			<File
@@ -626,7 +650,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jheretic\include\p_enemy.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jheretic\include\p_floor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jheretic\include\p_inter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jheretic\include\p_lights.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jheretic\include\p_local.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jheretic\include\p_maputl.h"
 				>
 			</File>
 			<File
@@ -646,7 +690,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jheretic\include\p_sound.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jheretic\include\p_spec.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jheretic\include\p_switch.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jheretic\include\p_telept.h"
 				>
 			</File>
 			<File
