@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,16 +22,28 @@
  */
 
 /**
- * g_ctrl.h: Player control setup.
+ * d_refresh.h:
  */
 
-#ifndef __G_CTRL_H__
-#define __G_CTRL_H__
+#ifndef __D_REFRESH_H__
+#define __D_REFRESH_H__
 
 #ifndef __DOOM64TC__
 #  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
-void        G_RegisterPlayerControls(void);
+#include "p_mobj.h"
+
+void            R_InitRefresh(void);
+
+void            D_Display(void);
+void            D_Display2(void);
+void            R_SetViewSize(int blocks, int detail);
+
+void            R_DrawSpecialFilter(void);
+void            R_DrawLevelTitle(void);
+
+void            P_SetDoomsdayFlags(mobj_t *mo);
+void            R_SetAllDoomsdayFlags();
 
 #endif

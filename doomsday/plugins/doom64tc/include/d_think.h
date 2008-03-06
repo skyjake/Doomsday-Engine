@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,37 +23,43 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * MapObj data. Map Objects or mobjs are actors, entities,
- * thinker, take-your-pick... anything that moves, acts, or
- * suffers state changes of more or less violent nature.
+/**
+ * d_think.h: MapObj data.
+ *
+ * Map Objects or mobjs are actors, entities, thinker, take-your-pick...
+ * anything that moves, acts, or suffers state changes of more or less
+ * violent nature.
  */
 
 #ifndef __D_THINK__
 #define __D_THINK__
 
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
+#endif
+
 #ifdef __GNUG__
 #pragma interface
 #endif
 
-//
-// Experimental stuff.
-// To compile this as "ANSI C with classes"
-//  we will need to handle the various
-//  action functions cleanly.
-//
-typedef void    (*actionf_v) ();
+/**
+ * Experimental stuff.
+ * To compile this as "ANSI C with classes" we will need to handle the
+ * various action functions cleanly.
+ */
+typedef void    (*actionf_v)  ();
 typedef void    (*actionf_p1) (void *);
 typedef void    (*actionf_p2) (void *, void *);
 
-#define INSTASIS ((actionf_v) (-2))
-#define NOPFUNC ((actionf_v) (-1))
+#define INSTASIS            ((actionf_v) (-2))
+#define NOPFUNC             ((actionf_v) (-1))
 
 typedef union {
     actionf_p1      acp1;
     actionf_v       acv;
     actionf_p2      acp2;
-
 } actionf_t;
+
+#define thinkerCap          (*gi.thinkerCap)
 
 #endif

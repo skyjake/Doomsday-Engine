@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,22 +23,25 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __D_PLAYER__
-#define __D_PLAYER__
+/**
+ * d_player.h: Player data structures.
+ */
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __D_PLAYER_H__
+#define __D_PLAYER_H__
+
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
-// The player data structure depends on a number
-// of other structs: items (internal inventory),
-// animation states (closely tied to the sprites
-// used to represent them, unfortunately).
+// The player data structure depends on a number of other structs: items
+// (internal inventory), animation states (closely tied to the sprites used
+// to represent them, unfortunately).
 #include "d_items.h"
 #include "p_pspr.h"
 
-// In addition, the player is just a special
-// case of the generic moving object/actor.
+// In addition, the player is just a special case of the generic moving
+// object/actor.
 #include "p_mobj.h"
 
 #include "g_controls.h"
@@ -47,45 +50,37 @@
 #pragma interface
 #endif
 
-//
-// Player states.
-//
+/**
+ * Player states.
+ */
 typedef enum {
-    // Playing or camping.
-    PST_LIVE,
-    // Dead on the ground, view follows killer.
-    PST_DEAD,
-    // Ready to restart/respawn???
-    PST_REBORN
+    PST_LIVE, // Playing or camping.
+    PST_DEAD, // Dead on the ground, view follows killer.
+    PST_REBORN // Ready to restart/respawn???
 } playerstate_t;
 
-//
-// Player internal flags, for cheats and debug.
-//
-typedef enum {
-    // No clipping, walk through barriers.
-    CF_NOCLIP = 1,
-    // No damage, no health loss.
-    CF_GODMODE = 2,
-    // Not really a cheat, just a debug aid.
-    CF_NOMOMENTUM = 4
-} cheat_t;
+/**
+ * Flags for cheats currently activated by player:
+ */
+#define CF_NOCLIP           (1) // No clipping, walk through barriers.
+#define CF_GODMODE          (2) // No damage, no health loss.
+#define CF_NOMOMENTUM       (4) // Not really a cheat, just a debug aid.
 
 typedef struct player_s {
     ddplayer_t     *plr;           // Pointer to the engine's player data.
-    playerstate_t   playerstate;
+    playerstate_t   playerState;
     playerclass_t   class;         // player class type
     playerbrain_t   brain;
 
-    // bounded/scaled total momentum.
-    fixed_t         bob;
+    // Bounded/scaled total momentum.
+    float           bob;
 
     // This is only used between levels,
     // mo->health is used during levels.
     int             health;
-    int             armorpoints;
+    int             armorPoints;
     // Armor type is 0-2.
-    int             armortype;
+    int             armorType;
 
     // Power ups. invinc and invis are tic counters.
     int             powers[NUM_POWER_TYPES];
@@ -93,18 +88,18 @@ typedef struct player_s {
     boolean         backpack;
 
     int             frags[MAXPLAYERS];
-    weapontype_t    readyweapon;
+    weapontype_t    readyWeapon;
 
     // Is wp_nochange if not changing.
-    weapontype_t    pendingweapon;
+    weapontype_t    pendingWeapon;
 
-    boolean         weaponowned[NUM_WEAPON_TYPES];
+    boolean         weaponOwned[NUM_WEAPON_TYPES];
     int             ammo[NUM_AMMO_TYPES];
-    int             maxammo[NUM_AMMO_TYPES];
+    int             maxAmmo[NUM_AMMO_TYPES];
 
     // True if button down last tic.
-    int             attackdown;
-    int             usedown;
+    int             attackDown;
+    int             useDown;
 
     // Bit flags, for cheats and debug.
     // See cheat_t, above.
@@ -114,95 +109,53 @@ typedef struct player_s {
     int             refire;
 
     // For intermission stats.
-    int             killcount;
-    int             itemcount;
-    int             secretcount;
+    int             killCount;
+    int             itemCount;
+    int             secretCount;
 
     // For screen flashing (red or bright).
-    int             damagecount;
-    int             bonuscount;
+    int             damageCount;
+    int             bonusCount;
 
     // Who did damage (NULL for floors/ceilings).
     mobj_t         *attacker;
 
     // Player skin colorshift,
     //  0-3 for which color to draw player.
-    int             colormap;
+    int             colorMap;
 
     // Overlay view sprites (gun, etc).
-    pspdef_t        psprites[NUMPSPRITES];
+    pspdef_t        pSprites[NUMPSPRITES];
 
     // True if secret level has been done.
-    boolean         didsecret;
+    boolean         didSecret;
 
     // The player's view pitch is centering back to zero.
     boolean         centering;
 
     // The player can jump if this counter is zero.
-    int             jumptics;
+    int             jumpTics;
 
-    int             update, startspot;
+    int             update, startSpot;
 
     // Target view to a mobj (NULL=disabled).
-    mobj_t*         viewlock;      // $democam
+    mobj_t*         viewLock; // $democam
     int             lockFull;
 
-    int             flyheight;
+    int             flyHeight;
 
     // d64tc >
-    int             laserpw;
-    int             lasericon1;
-    int             lasericon2;
-    int             lasericon3;
+    int             laserPower;
+    int             laserIcon1;
+    int             laserIcon2;
+    int             laserIcon3;
     int             artifacts[NUMARTIFACTS];
 
-    int             helltime;
-    int             devicetime;
+    int             hellTime;
+    int             deviceTime;
 
-    int             outcastcycle;   // for the two powerups - kaiser
+    int             outcastCycle;   // for the two powerups - kaiser
     // < d64tc
 } player_t;
-
-//
-// INTERMISSION
-// Structure passed e.g. to WI_Start(wb)
-//
-typedef struct {
-    boolean         in;            // whether the player is in game
-
-    // Player stats, kills, collected items etc.
-    int             skills;
-    int             sitems;
-    int             ssecret;
-    int             stime;
-    int             frags[MAXPLAYERS];
-    int             score;         // current score on entry, modified on return
-
-} wbplayerstruct_t;
-
-typedef struct {
-    int             epsd;          // episode # (0-2)
-
-    // if true, splash the secret level
-    boolean         didsecret;
-
-    // previous and next levels, origin 0
-    int             last;
-    int             next;
-
-    int             maxkills;
-    int             maxitems;
-    int             maxsecret;
-    int             maxfrags;
-
-    // the par time
-    int             partime;
-
-    // index of this player in game
-    int             pnum;
-
-    wbplayerstruct_t plyr[MAXPLAYERS];
-
-} wbstartstruct_t;
 
 #endif

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -65,12 +65,12 @@ typedef enum {
 
 typedef struct d64tc_config_s {
     float           playerMoveSpeed;
-    int             dclickuse;
-    int             usemlook;      // Mouse look (mouse Y => viewpitch)
-    int             usejlook;      // Joy look (joy Y => viewpitch)
-    int             alwaysRun;     // Always run.
-    int             noAutoAim;     // No auto-aiming?
-    int             jlookDeltaMode;
+    int             dclickUse;
+    int             useMLook; // Mouse look (mouse Y => viewpitch).
+    int             useJLook; // Joy look (joy Y => viewpitch).
+    int             alwaysRun; // Always run.
+    int             noAutoAim; // No auto-aiming?
+    int             jLookDeltaMode;
     int             lookSpring;
     float           lookSpeed;
     float           turnSpeed;
@@ -78,11 +78,12 @@ typedef struct d64tc_config_s {
     int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;
-    byte            setsizeneeded;
-    int             setblocks;
-    int             screenblocks;
-    byte            deathLookUp; // look up when killed
-    int             slidingCorpses;
+    byte            setSizeNeeded;
+    int             setBlocks;
+    int             screenBlocks;
+    byte            deathLookUp; // Look up when killed.
+    byte            slidingCorpses;
+    byte            fastMonsters;
     byte            echoMsg;
     float           menuScale;
     int             menuEffects;
@@ -92,17 +93,17 @@ typedef struct d64tc_config_s {
     int             menuQuitSound;
     byte            menuSlam;
     byte            askQuickSaveLoad;
-    float           flashcolor[3];
-    int             flashspeed;
+    float           flashColor[3];
+    int             flashSpeed;
     byte            turningSkull;
-    byte            hudShown[NUMHUDDISPLAYS];   // HUD data visibility.
-    float           hudScale;      // How to scale HUD data?
+    byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
+    float           hudScale; // How to scale HUD data?
     float           hudColor[4];
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud auto-hides.
-    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud unhides.
+    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // When the hud unhides.
     byte            usePatchReplacement;
-    byte            moveCheckZ;    // if true, mobjs can move over/under each other.
+    byte            moveCheckZ; // If true, mobjs can move over/under each other.
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
@@ -123,13 +124,14 @@ typedef struct d64tc_config_s {
     byte            coopRespawnItems;
     byte            respawnMonstersNightmare;
 
-    /** Compatibility options.
-    * \todo Put these into an array so we can use a bit array to change
-    * multiple options based on a compatibility mode (ala PrBoom).
-    */
-    byte            maxskulls;
-    byte            allowskullsinwalls;
-    byte            anybossdeath;
+    /**
+     * Compatibility options.
+     * \todo Put these into an array so we can use a bit array to change
+     * multiple options based on a compatibility mode (ala PrBoom).
+     */
+    byte            maxSkulls;
+    byte            allowSkullsInWalls;
+    byte            anyBossDeath;
     byte            monstersStuckInDoors;
     byte            avoidDropoffs;
     byte            moveBlock; // Dont handle large negative movement in P_TryMove.
@@ -167,7 +169,7 @@ typedef struct d64tc_config_s {
     byte            msgShow;
     float           msgColor[3];
 
-    char           *chat_macros[10];
+    char           *chatMacros[10];
     byte            chatBeep;
 
     int             corpseTime;
@@ -182,13 +184,13 @@ typedef struct d64tc_config_s {
 
     // Network.
     byte            netDeathmatch;
-    byte            netBFGFreeLook;    // allow free-aim with BFG
-    byte            netMobDamageModifier;    // multiplier for non-player mobj damage
-    byte            netMobHealthModifier;    // health modifier for non-player mobjs
-    int             netGravity;              // multiplayer custom gravity
-    byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
-    byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
-    byte            netNomonsters;
+    byte            netBFGFreeLook; // Allow free-aim with BFG.
+    byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
+    byte            netMobHealthModifier; // Health modifier for non-player mobjs.
+    int             netGravity; // Multiplayer custom gravity.
+    byte            netNoMaxZRadiusAttack; // Radius attacks are infinitely tall.
+    byte            netNoMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
+    byte            netNoMonsters;
     byte            netRespawn;
     byte            netJumping;
     byte            netEpisode;
@@ -201,10 +203,5 @@ typedef struct d64tc_config_s {
 } game_config_t;
 
 extern game_config_t cfg;
-
-// Other variables.
-extern int      screenblocks;
-
-int             GetDefInt(char *def, int *returned_value);
 
 #endif
