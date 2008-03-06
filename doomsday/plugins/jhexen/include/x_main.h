@@ -3,8 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,19 +32,39 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-#ifndef __SOUNDSTH__
-#define __SOUNDSTH__
+/**
+ * x_main.h:
+ */
+
+#ifndef __X_MAIN_H__
+#define __X_MAIN_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#define MAX_SND_DIST        (2025)
-#define MAX_CHANNELS        (16)
+extern boolean noMonstersParm; // checkparm of -nomonsters
+extern boolean respawnParm; // checkparm of -respawn
+extern boolean turboParm; // checkparm of -turbo
+extern boolean randomClassParm; // checkparm of -randclass
+extern boolean devParm; // checkparm of -devparm
+extern boolean artiSkipParm; // Whether shift-enter skips an artifact.
+extern float turboMul; // Multiplier for turbo.
 
-int             S_GetSoundID(char *name);
-void            S_LevelMusic(void);
+extern int gameModeBits;
+extern char gameModeString[];
 
-void            S_ParseSndInfoLump(void);
+extern char *borderLumps[];
+
+// Default font colours.
+extern const float defFontRGB[];
+extern const float defFontRGB2[];
+
+void            G_DetectIWADs(void);
+void            G_PreInit(void);
+void            G_PostInit(void);
+void            G_Shutdown(void);
+
+void            G_EndFrame(void);
 
 #endif

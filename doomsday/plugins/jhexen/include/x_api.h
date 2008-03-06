@@ -1,11 +1,9 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,38 +19,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
- * x_think.h: MapObj data.
- *
- * Map Objects or mobjs are actors, entities, thinker, take-your-pick...
- * anything that moves, acts, or suffers state changes of more or less
- * violent nature.
+ * x_api.h: Doomsday API setup and interaction - jHexen specific
  */
 
-#ifndef __X_THINK_H__
-#define __X_THINK_H__
+#ifndef __X_API_H__
+#define __X_API_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-/**
- * Experimental stuff.
- * To compile this as "ANSI C with classes" we will need to handle the
- * various action functions cleanly.
- */
-typedef void    (*actionf_v) ();
-typedef void    (*actionf_p1) (void *);
-typedef void    (*actionf_p2) (void *, void *);
+#include "doomsday.h"
 
-#define NOPFUNC ((actionf_v) (-1))
-
-typedef union {
-    actionf_p1      acp1;
-    actionf_v       acv;
-    actionf_p2      acp2;
-} actionf_t;
+int             G_GetInteger(int id);
+void           *G_GetVariable(int id);
+game_export_t  *GetGameAPI(game_import_t *imports);
 
 #endif

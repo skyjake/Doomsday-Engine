@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,12 +33,16 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-/*
- * Global settings. Most of these are console variables.
- * Could use a thorough clean-up.
+/**
+ * x_config.h:
  */
+
 #ifndef __JHEXEN_SETTINGS_H__
 #define __JHEXEN_SETTINGS_H__
+
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
 
 enum {
     HUD_MANA,
@@ -74,10 +78,10 @@ typedef struct {
     float           turnSpeed;
     int             quakeFly;
     byte            fastMonsters;
-    int             usemlook, usejlook;
-    int             screenblocks;
-    int             setblocks;
-    byte            hudShown[4];   // HUD data visibility.
+    int             useMLook, useJLook;
+    int             screenBlocks;
+    int             setBlocks;
+    byte            hudShown[4]; // HUD data visibility.
     float           hudScale;
     float           hudColor[4];
     float           hudIconAlpha;
@@ -96,14 +100,14 @@ typedef struct {
     int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;
-    int             usemouse, noAutoAim, alwaysRun;
+    int             useMouse, noAutoAim, alwaysRun;
     byte            povLookAround;
-    int             jlookDeltaMode;
+    int             jLookDeltaMode;
 
     int             xhair, xhairSize;
     byte            xhairColor[4];
 
-    int             sbarscale;
+    int             statusbarScale;
     float           statusbarAlpha;
     float           statusbarCounterAlpha;
 
@@ -143,13 +147,14 @@ typedef struct {
     float           automapPanSpeed;
     byte            automapPanResetOnOpen;
 
-    int             snd_3D, messageson;
-    char           *chat_macros[10];
+    int             messagesOn;
+    char           *chatMacros[10];
     byte            chatBeep;
-    float           snd_ReverbFactor;
+    int             snd3D;
+    float           sndReverbFactor;
     byte            reverbDebug;
 
-    int             dclickuse;
+    int             dclickUse;
     int             plrViewHeight;
     int             levelTitle;
     float           menuScale;
@@ -157,22 +162,22 @@ typedef struct {
     int             menuFog;
     float           menuGlitter;
     float           menuShadow;
-    float           flashcolor[3];
-    int             flashspeed;
+    float           flashColor[3];
+    int             flashSpeed;
     byte            turningSkull;
     float           menuColor[3];
     float           menuColor2[3];
     byte            menuSlam;
 
     byte            netMap, netClass, netColor, netSkill;
-    byte            netEpisode;    // unused in Hexen
-    byte            netDeathmatch, netNomonsters, netRandomclass;
+    byte            netEpisode; // Unused in Hexen.
+    byte            netDeathmatch, netNoMonsters, netRandomClass;
     byte            netJumping;
-    byte            netMobDamageModifier;   // multiplier for non-player mobj damage
-    byte            netMobHealthModifier;   // health modifier for non-player mobjs
-    int             netGravity;              // multiplayer custom gravity
-    byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
-    byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
+    byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
+    byte            netMobHealthModifier; // Health modifier for non-player mobjs.
+    int             netGravity; // Multiplayer custom gravity.
+    byte            netNoMaxZRadiusAttack; // Radius attacks are infinitely tall.
+    byte            netNoMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
 
     playerclass_t   playerClass[MAXPLAYERS];
     byte            playerColor[MAXPLAYERS];
@@ -180,4 +185,4 @@ typedef struct {
 
 extern game_config_t cfg;
 
-#endif                          //__JHEXEN_SETTINGS_H__
+#endif

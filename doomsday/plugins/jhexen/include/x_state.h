@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -64,49 +64,6 @@
 //
 extern int     verbose;
 
-extern boolean  nomonsters;        // checkparm of -nomonsters
-
-extern boolean  respawnparm;       // checkparm of -respawn
-
-extern boolean  randomclass;       // checkparm of -randclass
-
-extern boolean  debugmode;         // checkparm of -debug
-
-extern boolean  nofullscreen;      // checkparm of -nofullscreen
-
-extern boolean  usergame;          // ok to save / end game
-
-extern boolean  devparm;           // checkparm of -devparm
-
-extern boolean  altpal;            // checkparm to use an alternate palette routine
-
-extern boolean  cdrom;             // true if cd-rom mode active ("-cdrom")
-
-extern boolean  deathmatch;        // only if started as net death
-
-extern boolean  netcheat;          // allow cheating during netgames
-
-// -----------------------------------------------------
-// Game Mode - identify IWAD as shareware, retail etc.
-//
-extern gamemode_t gamemode;
-extern int      gamemodebits;
-
-// -------------------------------------------
-// Selected skill type, map etc.
-//
-
-// Defaults for menu, methinks.
-extern skillmode_t  startskill;
-extern int      startepisode;
-extern int      startmap;
-
-extern boolean  autostart;
-
-// Selected by user.
-extern skillmode_t  gameskill;
-extern int      gameepisode;
-extern int      gamemap;
 
 // -------------------------
 // Status flags for refresh.
@@ -114,25 +71,19 @@ extern int      gamemap;
 
 extern boolean  paused;            // Game Pause?
 
-extern boolean  viewactive;
-
-extern boolean  nodrawers;
-extern boolean  noblit;
+extern boolean  viewActive;
 
 // This one is related to the 3-screen display mode.
 // ANG90 = left side, ANG270 = right
 extern int      viewangleoffset;
 
-// Player taking events, and displaying.
-#define consoleplayer   Get(DD_CONSOLEPLAYER)
-#define displayplayer   Get(DD_DISPLAYPLAYER)
-
 // Timer, for scores.
-extern int      levelstarttic;     // gametic at level start
-extern int      leveltime;         // tics in game play for par
+extern int levelStartTic; // Game tic at level start.
+extern int levelTime; // Tics in game play for par.
+extern int actualLevelTime;
 
 // Quit after playing a demo from cmdline.
-extern boolean  singledemo;
+extern boolean singledemo;
 
 //-----------------------------
 // Internal parameters, fixed.
@@ -145,40 +96,19 @@ extern boolean  singledemo;
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
 
-// Player spawn spots for deathmatch.
-#define MAX_DM_STARTS   16
-extern spawnspot_t deathmatchstarts[MAX_DM_STARTS];
-extern spawnspot_t *deathmatch_p;
-
-// LUT of ammunition limits for each kind.
-// This doubles with BackPack powerup item.
-extern int      maxammo[NUM_AMMO_TYPES];
-
 //-----------------------------------------
 // Internal parameters, used for engine.
 //
 
-// File handling stuff.
-extern FILE    *debugfile;
 
 // if true, load all graphics at level load
 extern boolean  precache;
-
-//?
-// debug flag to cancel adaptiveness
-extern boolean  singletics;
 
 extern int      bodyqueslot;
 
 // Needed to store the number of the dummy sky flat.
 // Used for rendering, as well as tracking projectiles etc.
-#define skyMaskMaterial  Get(DD_SKYFLATNUM)
+#define SKYMASKMATERIAL  Get(DD_SKYFLATNUM)
 #define SKYFLATNAME  "F_SKY"
-
-extern unsigned char rndtable[256];
-extern int      prndindex;
-
-#define maketic     Get(DD_MAKETIC)
-#define ticdup      1
 
 #endif

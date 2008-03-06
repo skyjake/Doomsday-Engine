@@ -37,8 +37,8 @@
  * xddefs.h:
  */
 
-#ifndef __XDDEFS__
-#define __XDDEFS__
+#ifndef __XDDEFS_H__
+#define __XDDEFS_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"

@@ -3,8 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,19 +32,18 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-#ifndef __SOUNDSTH__
-#define __SOUNDSTH__
+/**
+ * x_console.h:
+ */
+
+#ifndef __X_CONSOLE_H__
+#define __X_CONSOLE_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#define MAX_SND_DIST        (2025)
-#define MAX_CHANNELS        (16)
-
-int             S_GetSoundID(char *name);
-void            S_LevelMusic(void);
-
-void            S_ParseSndInfoLump(void);
+void            G_ConsoleRegistration(void);
+void            G_ConsoleBg(int *width, int *height);
 
 #endif
