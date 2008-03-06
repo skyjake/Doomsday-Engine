@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,20 +19,20 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * Simple basic typedefs, isolated here to make it easier
+/**
+ * doomtype_.h: Simple basic typedefs, isolated here to make it easier
  * separating modules.
  */
 
-#ifndef __DOOMTYPE__
-#define __DOOMTYPE__
+#ifndef __DOOMTYPE_H__
+#define __DOOMTYPE_H__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
 // Predefined with some OS.

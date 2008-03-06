@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -28,14 +28,12 @@
  * m_cheat.h: Cheat code checking.
  */
 
-#ifndef __M_CHEAT__
-#define __M_CHEAT__
+#ifndef __M_CHEAT_H__
+#define __M_CHEAT_H__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
-
-#include "doomstat.h"
 
 //
 // CHEAT SEQUENCE PACKAGE
@@ -53,14 +51,14 @@ typedef struct {
 
 void        Cht_Init(void);
 
-int         Cht_CheckCheat(cheatseq_t * cht, char key);
+int         Cht_CheckCheat(cheatseq_t *cht, char key);
 
-void        Cht_GetParam(cheatseq_t * cht, char *buffer);
+void        Cht_GetParam(cheatseq_t *cht, char *buffer);
 
 void        Cht_GodFunc(player_t *plyr);
 void        Cht_SuicideFunc(player_t *plyr);
 void        Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
-                         boolean armor, boolean cards, cheatseq_t *cheat);
+                         boolean armor, boolean cards, cheatseq_t *cht);
 void        Cht_MusicFunc(player_t *plyr, char *buf);
 void        Cht_NoClipFunc(player_t *plyr);
 boolean     Cht_WarpFunc(player_t *plyr, char *buf);

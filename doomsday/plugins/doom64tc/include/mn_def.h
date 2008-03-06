@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * mn_def.h Menu defines and types.
+ * mn_def.h: Menu defines and types.
  */
 
 #ifndef __MENU_DEFS_H_
@@ -101,7 +101,7 @@ typedef enum {
 } menutype_t;
 
 // Menu item flags
-#define MIF_NOTALTTXT   0x01  // don't use alt text instead of lump (M_NMARE)
+#define MIF_NOTALTTXT           0x01 // Don't use alt text instead of lump (M_NMARE)
 
 typedef struct {
     menuitemtype_t  type;
@@ -114,8 +114,8 @@ typedef struct {
 } menuitem_t;
 
 // Menu flags
-#define MNF_NOHOTKEYS   0x00000001  // hotkeys are disabled.
-#define MNF_NOSCALE     0x00000002  // menu wont be scaled (e.g. readthis).
+#define MNF_NOHOTKEYS           0x00000001 // Hotkeys are disabled.
+#define MNF_NOSCALE             0x00000002 // Menu wont be scaled (e.g. readthis).
 
 typedef struct {
     int             flags;
@@ -126,7 +126,7 @@ typedef struct {
     const menuitem_t *items;
     int             lastOn;
     menutype_t      prevMenu;
-    dpatch_t       *font;           // Font for menu items.
+    dpatch_t       *font; // Font for menu items.
     float          *color;
     char           *background;     // Background lump name for this menu (if any).
     int             itemHeight;
@@ -147,7 +147,7 @@ extern menu_t   GameSetupMenu;
 extern menu_t   PlayerSetupMenu;
 
 void    M_DrawTitle(char *text, int y);
-void    M_WriteMenuText(const menu_t * menu, int index, const char *text);
+void    M_WriteMenuText(const menu_t *menu, int index, const char *text);
 
 // Color widget.
 void    DrawColorWidget();
@@ -155,10 +155,10 @@ void    SCColorWidget(int index, void *data);
 void    M_WGCurrentColor(int option, void *data);
 
 void    M_DrawSaveLoadBorder(int x, int y);
-void    M_SetupNextMenu(menu_t * menudef);
+void    M_SetupNextMenu(menu_t *menu);
 void    M_DrawThermo(int x, int y, int thermWidth, int thermDot);
-void    MN_DrawSlider(const menu_t * menu, int item, int width, int slot);
-void    MN_DrawColorBox(const menu_t * menu, int index, float r, float g,
+void    MN_DrawSlider(const menu_t *menu, int item, int width, int slot);
+void    MN_DrawColorBox(const menu_t *menu, int index, float r, float g,
                         float b, float a);
 void    M_StartControlPanel(void);
 void    M_StartMessage(char *string, void *routine, boolean input);

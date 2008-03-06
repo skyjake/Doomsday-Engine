@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -24,23 +24,31 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __P_INTER__
-#define __P_INTER__
+/**
+ * p_inter.h: Handling mobj vs mobj interactions (i.e., collisions).
+ */
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __P_INTER_H__
+#define __P_INTER_H__
+
+#ifndef __DOOM64TC__
+#  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+extern int maxAmmo[];
+extern int clipAmmo[];
 
-boolean         P_GivePower(player_t *, int);
-boolean         P_TakePower(player_t *player, int power);
-void            P_GiveKey(player_t *player, keytype_t card);
-boolean         P_GiveBody(player_t *player, int num);
-void            P_GiveBackpack(player_t *player);
-boolean         P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped);
+boolean         P_GivePower(player_t *plr, int);
+boolean         P_TakePower(player_t *plr, int power);
+void            P_GiveKey(player_t *plr, keytype_t keyType);
+boolean         P_GiveBody(player_t *plr, int num);
+void            P_GiveBackpack(player_t *plr);
+boolean         P_GiveWeapon(player_t *plr, weapontype_t weapon, boolean dropped);
+boolean         P_GiveArtifact(player_t *plr, laserpw_t artifact); // d64tc
 
-boolean         P_GiveArtifact(player_t *player, laserpw_t artifact); // d64tc
+void            P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
+void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+                             int damage);
+void            P_DamageMobj2(mobj_t *target, mobj_t *inflictor,
+                              mobj_t *source, int damage, boolean stomping);
 #endif

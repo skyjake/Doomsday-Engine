@@ -1,11 +1,9 @@
 /**\file
  *\section License
- * License: GPL
+ * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,33 +17,28 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
 /**
- * dstrings.h:
+ * p_maputl.h: Movement/collision utility functions Doom64TC - specific.
  */
 
-#ifndef __DSTRINGS_H__
-#define __DSTRINGS_H__
+#ifndef __P_MAPUTL_H__
+#define __P_MAPUTL_H__
 
 #ifndef __DOOM64TC__
 #  error "Using Doom64TC headers without __DOOM64TC__"
 #endif
 
-// All important printed strings.
-#include "d_englsh.h"
+#include "p_mobj.h"
 
-/**
- * File locations, relative to the base directory.
- */
-#define DEVMAPS             "devmaps"
-#define DEVDATA             "devdata"
+#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
+#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
+#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
+#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-// QuitDOOM messages:
-#define NUM_QUITMESSAGES    22
-
-extern char *endmsg[NUM_QUITMESSAGES + 1];
+void            P_ApplyTorque(mobj_t *mo);
 
 #endif
