@@ -154,7 +154,7 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
         }
 
         P_ChangeSwitchTexture(line, 0);
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
         break;
 
     case 14:
@@ -236,7 +236,7 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
         }
 
         P_ChangeSwitchTexture(line, 0);
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, true);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
         break;
 
     case 55:

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
@@ -35,6 +35,8 @@
 
 #include "jdoom.h"
 
+#include "p_map.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -51,8 +53,6 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-extern mobj_t *tmthing;
-
 // CODE --------------------------------------------------------------------
 
 /**
@@ -68,15 +68,14 @@ extern mobj_t *tmthing;
  */
 static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
 {
-    mobj_t     *mo = tmthing;
-    float       dist;
-    sector_t   *frontsec, *backsec;
-    float       ffloor;
-    float       bfloor;
-    float       dx, dy;
+    mobj_t             *mo = tmThing;
+    float               dist;
+    sector_t           *frontsec, *backsec;
+    float               ffloor, bfloor;
+    float               dx, dy;
 
-    if(tmthing->player)
-        return true; // skip players!
+    if(tmThing->player)
+        return true; // Skip players!
 
     dx = P_GetFloatp(ld, DMU_DX);
     dy = P_GetFloatp(ld, DMU_DY);
@@ -98,7 +97,7 @@ static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
     {
         // At this point, we know that the object straddles a two-sided
         // linedef, and that the object's center of mass is above-ground.
-        float       x = fabs(dx), y = fabs(dy);
+        float               x = fabs(dx), y = fabs(dy);
 
         if(y > x)
         {
@@ -151,13 +150,13 @@ static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
  */
 void P_ApplyTorque(mobj_t *mo)
 {
-    // Remember the current state, for gear-change.
-    int         flags = mo->intFlags;
+    int                 flags = mo->intFlags;
 
+    // Corpse sliding anomalies, made configurable.
     if(!cfg.slidingCorpses)
         return;
 
-    tmthing = mo;
+    tmThing = mo;
 
     // Use VALIDCOUNT to prevent checking the same line twice.
     VALIDCOUNT++;
@@ -169,6 +168,7 @@ void P_ApplyTorque(mobj_t *mo)
     if(mo->mom[MX] != 0 || mo->mom[MY] != 0)
         mo->intFlags |= MIF_FALLING;
     else
+        // Clear the engine-internal flag indicating falling object.
         mo->intFlags &= ~MIF_FALLING;
 
     /**

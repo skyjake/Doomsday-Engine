@@ -44,6 +44,7 @@
 #include "p_mapsetup.h"
 #include "p_player.h"
 #include "p_mapspec.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -68,14 +69,12 @@ typedef struct animdef_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing);
-static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
+static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing);
+static void shootSpecialLine(mobj_t *thing, linedef_t *line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -105,14 +104,12 @@ struct terraindef_s {
  */
 void P_InitTerrainTypes(void)
 {
-    int     i;
-    int     id;
-    int     size;
+    int                 i, id, size;
 
     size = Get(DD_NUMLUMPS) * sizeof(int);
     TerrainTypes = Z_Malloc(size, PU_STATIC, 0);
     memset(TerrainTypes, 0, size);
-    for(i = 0; TerrainTypeDefs[i].type != -1; i++)
+    for(i = 0; TerrainTypeDefs[i].type != -1; ++i)
     {
         id = R_CheckMaterialNumForName(TerrainTypeDefs[i].name, MAT_FLAT);
         if(id != -1)
@@ -141,12 +138,12 @@ int P_FlatToTerrainType(int flatid)
 /**
  * Returns the terrain type of the specified sector, plane.
  *
- * @param sec       The sector to check.
- * @param plane     The plane id to check.
+ * @param sec           The sector to check.
+ * @param plane         The plane id to check.
  */
 int P_GetTerrainType(sector_t* sec, int plane)
 {
-    int         materialID =
+    int                 materialID =
         P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
 
     if(materialID != -1)
@@ -155,7 +152,8 @@ int P_GetTerrainType(sector_t* sec, int plane)
         return FLOOR_SOLID;
 }
 
-/* From PrBoom:
+/**
+ * From PrBoom:
  * Load the table of animation definitions, checking for existence of
  * the start and end of each frame. If the start doesn't exist the sequence
  * is skipped, if the last doesn't exist, BOOM exits.
@@ -185,55 +183,56 @@ int P_GetTerrainType(sector_t* sec, int plane)
  */
 void P_InitPicAnims(void)
 {
-    int         i, j;
-    int         groupNum;
-    int         startFrame, endFrame, ticsPerFrame;
-    int         numFrames;
-    int         lump = W_CheckNumForName("ANIMATED");
-    const char *name;
-    animdef_t  *animdefs;
+    int                 i, j;
+    int                 groupNum;
+    int                 startFrame, endFrame, ticsPerFrame;
+    int                 numFrames;
+    int                 lump = W_CheckNumForName("ANIMATED");
+    const char         *name;
+    animdef_t          *animDefs;
 
     // Has a custom ANIMATED lump been loaded?
     if(lump > 0)
     {
         Con_Message("P_InitPicAnims: \"ANIMATED\" lump found. Reading animations...\n");
 
-        animdefs = (animdef_t *)W_CacheLumpNum(lump, PU_STATIC);
+        animDefs = (animdef_t *)W_CacheLumpNum(lump, PU_STATIC);
 
         // Read structures until -1 is found
-        for(i = 0; animdefs[i].istexture != -1 ; ++i)
+        for(i = 0; animDefs[i].istexture != -1 ; ++i)
         {
-            materialtype_t type =
-                (animdefs[i].istexture? MAT_TEXTURE : MAT_FLAT);
+            materialtype_t      type =
+                (animDefs[i].istexture? MAT_TEXTURE : MAT_FLAT);
 
-            if(R_CheckMaterialNumForName(animdefs[i].startname, type) == -1)
+            if(R_CheckMaterialNumForName(animDefs[i].startname, type) == -1)
                 continue;
 
-            endFrame = R_MaterialNumForName(animdefs[i].endname, type);
-            startFrame = R_MaterialNumForName(animdefs[i].startname, type);
+            endFrame = R_MaterialNumForName(animDefs[i].endname, type);
+            startFrame = R_MaterialNumForName(animDefs[i].startname, type);
 
             numFrames = endFrame - startFrame + 1;
 
-            ticsPerFrame = LONG(animdefs[i].speed);
+            ticsPerFrame = LONG(animDefs[i].speed);
 
             if(numFrames < 2)
                 Con_Error("P_InitPicAnims: bad cycle from %s to %s",
-                         animdefs[i].startname, animdefs[i].endname);
+                          animDefs[i].startname, animDefs[i].endname);
 
             if(startFrame != -1 && endFrame != -1)
-            {
-                // We have a valid animation.
+            {   // We have a valid animation.
                 // Create a new animation group for it.
                 groupNum = R_CreateAnimGroup(type, AGF_SMOOTH);
 
-                // Doomsday's group animation needs to know the texture/flat
-                // numbers of ALL frames in the animation group so we'll have
-                // to step through the directory adding frames as we go.
-                // (DOOM only required the start/end texture/flat numbers and
-                // would animate all textures/flats inbetween).
+                /**
+                 * Doomsday's group animation needs to know the texture/flat
+                 * numbers of ALL frames in the animation group so we'll
+                 * have to step through the directory adding frames as we
+                 * go. (DOOM only required the start/end texture/flat
+                 * numbers and would animate all textures/flats inbetween).
+                 */
 
                 VERBOSE(Con_Message("P_InitPicAnims: ADD (\"%s\" > \"%s\" %d)\n",
-                                    animdefs[i].startname, animdefs[i].endname,
+                                    animDefs[i].startname, animDefs[i].endname,
                                     ticsPerFrame));
 
                 // Add all frames from start to end to the group.
@@ -257,7 +256,8 @@ void P_InitPicAnims(void)
                 }
             }
         }
-        Z_Free(animdefs);
+
+        Z_Free(animDefs);
         VERBOSE(Con_Message("P_InitPicAnims: Done.\n"));
     }
 }
@@ -267,14 +267,14 @@ boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
     switch(actType)
     {
     case SPAC_CROSS:
-        P_CrossSpecialLine(ld, side, mo);
+        crossSpecialLine(ld, side, mo);
         return true;
 
     case SPAC_USE:
         return P_UseSpecialLine(mo, ld, side);
 
     case SPAC_IMPACT:
-        P_ShootSpecialLine(mo, ld);
+        shootSpecialLine(mo, ld);
         return true;
 
     default:
@@ -289,7 +289,7 @@ boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with a non 0
  * special.
  */
-void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
+static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 {
     int                 ok;
     xline_t            *xline;
@@ -480,7 +480,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
         break;
 
     case 53:
@@ -563,7 +563,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 124:
         // Secret EXIT.
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, true);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
         break;
 
     case 125:
@@ -754,7 +754,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 /**
  * Called when a thing shoots a special line.
  */
-void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
+static void shootSpecialLine(mobj_t *thing, linedef_t *line)
 {
     // Impacts that other things can activate.
     if(!thing->player)
@@ -799,7 +799,7 @@ void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
  */
 void P_PlayerInSpecialSector(player_t *player)
 {
-    sector_t *sector =
+    sector_t           *sector =
         P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
 
     // Falling, not all the way down yet?
@@ -813,7 +813,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // HELLSLIME DAMAGE.
         if(!player->powers[PT_IRONFEET])
         {
-            if(!(leveltime & 0x1f))
+            if(!(levelTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 10);
         }
         break;
@@ -822,7 +822,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // NUKAGE DAMAGE.
         if(!player->powers[PT_IRONFEET])
         {
-            if(!(leveltime & 0x1f))
+            if(!(levelTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 5);
         }
         break;
@@ -833,7 +833,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // STROBE HURT
         if(!player->powers[PT_IRONFEET] || (P_Random() < 5))
         {
-            if(!(leveltime & 0x1f))
+            if(!(levelTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 20);
         }
         break;
@@ -853,11 +853,11 @@ void P_PlayerInSpecialSector(player_t *player)
         // EXIT SUPER DAMAGE! (for E1M8 finale)
         player->cheats &= ~CF_GODMODE;
 
-        if(!(leveltime & 0x1f))
+        if(!(levelTime & 0x1f))
             P_DamageMobj(player->plr->mo, NULL, NULL, 20);
 
         if(player->health <= 10)
-            G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+            G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
         break;
 
     default:
@@ -870,22 +870,22 @@ void P_PlayerInSpecialSector(player_t *player)
  */
 void P_UpdateSpecials(void)
 {
-    linedef_t     *line;
-    sidedef_t     *side;
-    button_t   *button;
+    linedef_t          *line;
+    sidedef_t          *side;
+    button_t           *button;
 
     // Extended lines and sectors.
     XG_Ticker();
 
-    //  ANIMATE LINE SPECIALS
+    // Animate line specials.
     if(P_IterListSize(linespecials))
     {
-        float       x, offset;
+        float               x, offset;
 
         P_IterListResetIterator(linespecials, false);
         while((line = P_IterListIterator(linespecials)) != NULL)
         {
-            xline_t    *xline = P_ToXLine(line);
+            xline_t            *xline = P_ToXLine(line);
 
             switch(xline->special)
             {
@@ -897,7 +897,6 @@ void P_UpdateSpecials(void)
                 else
                     offset = 1;
 
-                // EFFECT FIRSTCOL SCROLL +
                 x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
                 P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x += offset);
                 x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
@@ -919,8 +918,10 @@ void P_UpdateSpecials(void)
             button->timer--;
             if(!button->timer)
             {
-                sidedef_t     *sdef = P_GetPtrp(button->line, DMU_SIDEDEF0);
-                sector_t   *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
+                sidedef_t          *sdef =
+                    P_GetPtrp(button->line, DMU_SIDEDEF0);
+                sector_t           *frontsector =
+                    P_GetPtrp(button->line, DMU_FRONT_SECTOR);
 
                 switch(button->section)
                 {
@@ -955,7 +956,7 @@ void P_UpdateSpecials(void)
 
 void P_FreeButtons(void)
 {
-    button_t   *button, *np;
+    button_t           *button, *np;
 
     button = buttonlist;
     while(button != NULL)
@@ -972,14 +973,14 @@ void P_FreeButtons(void)
  */
 void P_SpawnSpecials(void)
 {
-    uint        i;
-    linedef_t     *line;
-    xline_t    *xline;
-    iterlist_t *list;
-    sector_t   *sec;
-    xsector_t  *xsec;
+    uint                i;
+    linedef_t          *line;
+    xline_t            *xline;
+    iterlist_t         *list;
+    sector_t           *sec;
+    xsector_t          *xsec;
 
-    // Init special SECTORs.
+    // Init special sectors.
     P_DestroySectorTagLists();
     for(i = 0; i < numsectors; ++i)
     {
@@ -999,9 +1000,8 @@ void P_SpawnSpecials(void)
         {
             switch(xsec->special)
             {
-            case 9:
-                // SECRET SECTOR
-                totalsecret++;
+            case 9: // A secret sector.
+                totalSecret++;
                 break;
 
             default:
@@ -1041,7 +1041,7 @@ void P_SpawnSpecials(void)
 
         case 9:
             // SECRET SECTOR
-            totalsecret++;
+            totalSecret++;
             break;
 
         case 10:

@@ -57,12 +57,6 @@ enum {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// We require direct access to the extra data arrays because DMU is not
-// online during map setup, thus we can't convert indices to hardened ptrs.
-extern xsector_t *xsectors;
-extern xline_t   *xlines;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -73,7 +67,7 @@ static int customPropIds[NUM_CUSTOM_MAP_PROPERTIES];
 
 static int DDPropIDToID(int ddid)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < NUM_CUSTOM_MAP_PROPERTIES; ++i)
         if(customPropIds[i] == ddid) // a match!
@@ -110,7 +104,7 @@ void P_RegisterCustomMapProperties(void)
         {DAM_THING,     DDVT_SHORT,     "Options",      CMP_THING_FLAGS},
         {0,             0,              NULL,           0} // Terminate.
     };
-    uint        i, idx;
+    uint                i, idx;
 
     i = 0;
     while(properties[i].name)
@@ -127,25 +121,26 @@ void P_RegisterCustomMapProperties(void)
 
 /**
  * Doomsday will call this while loading in map data when a value is read
- * that is not part of the internal data structure for the particular element.
- * This is where game specific data is added to game-side map data structures
- * (eg sector->tag, line->args etc).
+ * that is not part of the internal data structure for the particular
+ * element. This is where game specific data is added to game-side map data
+ * structures (eg sector->tag, line->args etc).
  *
- * @param id        Index of the current element being read.
- * @param dtype     Lump type class id this value is for.
- * @param prop      Property id of the game-specific variable (as declared via DED).
- * @param type      Data type id of the value pointed to by *data.
- * @param *data     Ptr to the data value (has already been expanded, size
- *                  converted and endian converted where necessary).
+ * @param id            Index of the current element being read.
+ * @param dtype         Lump type class id this value is for.
+ * @param prop          Property id of the game-specific variable (as
+ *                      declared via DED).
+ * @param type          Data type id of the value pointed to by *data.
+ * @param *data         Ptr to the data value (has already been expanded,
+ *                      size converted and endian converted where necessary).
  *
- * @return          @c true, unless there is a critical problem with
- *                  the data supplied.
+ * @return              @c true, unless there is a critical problem with
+ *                      the data supplied.
  */
 int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
 {
     // Make sure the property id Doomsday passed makes sense.
-    int         pid = DDPropIDToID(prop);
-    void       *dest = NULL;
+    int                 pid = DDPropIDToID(prop);
+    void               *dest = NULL;
 
     if(pid == -1)
         Con_Error("P_HandleMapDataProperty: Invalid property ID %i", prop);
@@ -201,12 +196,12 @@ int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
  * Doomsday thinks we might know what to do with it...
  * If we don't know what to do we'll return -1.
  *
- * @param id        Index of the current element being read.
- * @param dtype     Lump type class id this value is for.
- * @param prop      Propertyid of the map structure.
- * @param type      Data type id of the value pointed to by *data.
- * @param *data     Ptr to the data value (has already been expanded, size
- *                  converted and endian converted where necessary).
+ * @param id            Index of the current element being read.
+ * @param dtype         Lump type class id this value is for.
+ * @param prop          Propertyid of the map structure.
+ * @param type          Data type id of the value pointed to by *data.
+ * @param *data         Ptr to the data value (has already been expanded,
+ *                      size converted and endian converted where necessary).
  */
 int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
                                  int type, void *data)
@@ -251,10 +246,10 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
  * If we arn't interested in the report - we should simply return true and
  * take no further action.
  *
- * @param code      ID code of the status report (enum in dd_share.h)
- * @param id        Map data object id.
- * @param type      Map data object type eg DMU_SECTOR.
- * @param data      Any relevant data for this report (currently unused).
+ * @param code          ID code of the status report (enum in dd_share.h)
+ * @param id            Map data object id.
+ * @param type          Map data object type eg DMU_SECTOR.
+ * @param data          Any relevant data for this report (currently unused).
  */
 int P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data)
 {

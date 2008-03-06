@@ -56,7 +56,7 @@
 
 mobj_t *P_SpawnTeleFog(float x, float y)
 {
-    subsector_t *ss = R_PointInSubsector(x, y);
+    subsector_t        *ss = R_PointInSubsector(x, y);
 
     return P_SpawnMobj3f(MT_TFOG, x, y,
                          P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT);
@@ -64,20 +64,18 @@ mobj_t *P_SpawnTeleFog(float x, float y)
 
 int EV_Teleport(linedef_t *line, int side, mobj_t *thing)
 {
-    unsigned    an;
-    float       oldpos[3];
-    float       aboveFloor;
-    mobj_t     *m;
-    mobj_t     *fog;
-    thinker_t  *th;
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+    uint                an;
+    float               oldPos[3];
+    float               aboveFloor;
+    mobj_t             *m, *fog;
+    thinker_t          *th;
+    sector_t           *sec = NULL;
+    iterlist_t         *list;
 
     if(thing->flags2 & MF2_NOTELEPORT)
         return false;
 
-    // Don't teleport if hit back of line,
-    //  so you can get out of teleporter.
+    // Don't teleport if hit back of line, so you can get out of teleporter.
     if(side == 1)
         return 0;
 
@@ -90,7 +88,6 @@ int EV_Teleport(linedef_t *line, int side, mobj_t *thing)
     {
         for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
         {
-
             if(th->function != P_MobjThinker)
                 continue; // Not a mobj.
 
@@ -102,7 +99,7 @@ int EV_Teleport(linedef_t *line, int side, mobj_t *thing)
             if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
                 continue; // Wrong sector.
 
-            memcpy(oldpos, thing->pos, sizeof(thing->pos));
+            memcpy(oldPos, thing->pos, sizeof(thing->pos));
             aboveFloor = thing->pos[VZ] - thing->floorZ;
 
             if(!P_TeleportMove(thing, m->pos[VX], m->pos[VY], false))
@@ -110,11 +107,11 @@ int EV_Teleport(linedef_t *line, int side, mobj_t *thing)
 
             // In Final Doom things teleported to their destination but the
             // height wasn't set to the floor.
-            if(gamemission != GM_TNT && gamemission != GM_PLUT)
+            if(gameMission != GM_TNT && gameMission != GM_PLUT)
                 thing->pos[VZ] = thing->floorZ;
 
             // Spawn teleport fog at source and destination.
-            fog = P_SpawnMobj3fv(MT_TFOG, oldpos);
+            fog = P_SpawnMobj3fv(MT_TFOG, oldPos);
             S_StartSound(sfx_telept, fog);
             an = m->angle >> ANGLETOFINESHIFT;
             fog = P_SpawnMobj3f(MT_TFOG,

@@ -37,15 +37,16 @@
 
 #include "p_map.h"
 #include "p_mapsetup.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define PADSAVEP()          save_p += (4 - ((save_p - savebuffer) & 3)) & 3
-#define SAVESTRINGSIZE      24
-#define VERSIONSIZE         16
+#define PADSAVEP()          savePtr += (4 - ((savePtr - saveBuffer) & 3)) & 3
+#define SAVESTRINGSIZE      (24)
+#define VERSIONSIZE         (16)
 
-#define FF_FULLBRIGHT       0x8000 // used to be flag in thing->frame
-#define FF_FRAMEMASK        0x7fff
+#define FF_FULLBRIGHT       (0x8000) // Used to be a flag in thing->frame.
+#define FF_FRAMEMASK        (0x7fff)
 
 #define SIZEOF_V19_THINKER_T 12
 #define V19_THINKER_T_FUNC_OFFSET 8
@@ -64,35 +65,35 @@ extern void SV_UpdateReadMobjFlags(mobj_t *mo, int ver);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte   *save_p;
-byte   *savebuffer;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static byte   *savePtr;
+static byte   *saveBuffer;
 
 // CODE --------------------------------------------------------------------
 
 static void SV_Read(void *data, int len)
 {
     if(data)
-        memcpy(data, save_p, len);
-    save_p += len;
+        memcpy(data, savePtr, len);
+    savePtr += len;
 }
 
 static short SV_ReadShort(void)
 {
-    save_p += 2;
-    return *(short *) (save_p - 2);
+    savePtr += 2;
+    return *(short *) (savePtr - 2);
 }
 
 static int SV_ReadLong(void)
 {
-    save_p += 4;
-    return *(int *) (save_p - 4);
+    savePtr += 4;
+    return *(int *) (savePtr - 4);
 }
 
 static void SV_ReadPlayer(player_t *pl)
 {
-    int     temp[3];
+    int                 temp[3];
 
     SV_ReadLong();
     pl->playerState = SV_ReadLong();
@@ -281,27 +282,22 @@ static void SV_ReadMobj(void)
 
 void P_v19_UnArchivePlayers(void)
 {
-    int     i;
-    int     j;
+    int                 i, j;
 
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
     {
         if(!players[i].plr->inGame)
             continue;
 
         PADSAVEP();
 
-        //memcpy (&players[i],save_p, sizeof(player_t));
-
-        //P_PlayerConverter(&players[i], (saveplayer_t*) save_p, false);
         SV_ReadPlayer(players + i);
-        //save_p += sizeof(saveplayer_t);
 
         // will be set when unarc thinker
         players[i].plr->mo = NULL;
         players[i].attacker = NULL;
 
-        for(j = 0; j < NUMPSPRITES; j++)
+        for(j = 0; j < NUMPSPRITES; ++j)
         {
             if(players[i].pSprites[j].state)
             {
@@ -314,35 +310,35 @@ void P_v19_UnArchivePlayers(void)
 
 void P_v19_UnArchiveWorld(void)
 {
-    uint        i, j;
-    fixed_t     offx, offy;
-    short      *get;
-    int         firstflat = W_CheckNumForName("F_START") + 1;
-    sector_t   *sec;
-    xsector_t  *xsec;
-    linedef_t     *line;
-    xline_t    *xline;
+    uint                i, j;
+    float               matOffset[2];
+    short              *get;
+    int                 firstflat = W_CheckNumForName("F_START") + 1;
+    sector_t           *sec;
+    xsector_t          *xsec;
+    linedef_t          *line;
+    xline_t            *xline;
 
-    get = (short *) save_p;
+    get = (short *) savePtr;
 
-    // do sectors
+    // Do sectors.
     for(i = 0; i < numsectors; ++i)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
         xsec = P_ToXSector(sec);
 
-        P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
-        P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
+        P_SetFloatp(sec, DMU_FLOOR_HEIGHT, (float) (*get++));
+        P_SetFloatp(sec, DMU_CEILING_HEIGHT, (float) (*get++));
         P_SetIntp(sec, DMU_FLOOR_MATERIAL, *get++ + firstflat);
         P_SetIntp(sec, DMU_CEILING_MATERIAL, *get++ + firstflat);
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
-        xsec->special = *get++;  // needed?
-        /*xsec->tag =*/ *get++;      // needed?
+        xsec->special = *get++; // needed?
+        /*xsec->tag =*/ *get++; // needed?
         xsec->specialData = 0;
         xsec->soundTarget = 0;
     }
 
-    // do lines
+    // Do lines.
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINEDEF, i);
@@ -359,20 +355,19 @@ void P_v19_UnArchiveWorld(void)
             if(!sdef)
                 continue;
 
-            offx = *get++ << FRACBITS;
-            offy = *get++ << FRACBITS;
-            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_Y, offy);
-            P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
-            P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
+            matOffset[VX] = (float) (*get++);
+            matOffset[VY] = (float) (*get++);
+            P_SetFloatpv(sdef, DMU_TOP_MATERIAL_OFFSET_XY, matOffset);
+            P_SetFloatpv(sdef, DMU_MIDDLE_MATERIAL_OFFSET_XY, matOffset);
+            P_SetFloatpv(sdef, DMU_BOTTOM_MATERIAL_OFFSET_XY, matOffset);
+
             P_SetIntp(sdef, DMU_TOP_MATERIAL, *get++);
             P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, *get++);
             P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, *get++);
         }
     }
-    save_p = (byte *) get;
+
+    savePtr = (byte *) get;
 }
 
 void P_v19_UnArchiveThinkers(void)
@@ -382,33 +377,33 @@ enum thinkerclass_e {
     TC_MOBJ
 };
 
-    byte    tclass;
-    thinker_t *currentthinker;
-    thinker_t *next;
+    byte                tClass;
+    thinker_t          *currentThinker;
+    thinker_t          *next;
 
-    // remove all the current thinkers
-    currentthinker = thinkerCap.next;
-    while(currentthinker != &thinkerCap)
+    // Remove all the current thinkers.
+    currentThinker = thinkerCap.next;
+    while(currentThinker != &thinkerCap)
     {
-        next = currentthinker->next;
+        next = currentThinker->next;
 
-        if(currentthinker->function == P_MobjThinker)
-            P_MobjRemove((mobj_t *) currentthinker);
+        if(currentThinker->function == P_MobjThinker)
+            P_MobjRemove((mobj_t *) currentThinker);
         else
-            Z_Free(currentthinker);
+            Z_Free(currentThinker);
 
-        currentthinker = next;
+        currentThinker = next;
     }
     P_InitThinkers();
 
-    // read in saved thinkers
+    // Read in saved thinkers.
     for(;;)
     {
-        tclass = *save_p++;
-        switch(tclass)
+        tClass = *savePtr++;
+        switch(tClass)
         {
         case TC_END:
-            return;             // end of list
+            return; // End of list.
 
         case TC_MOBJ:
             PADSAVEP();
@@ -416,7 +411,7 @@ enum thinkerclass_e {
             break;
 
         default:
-            Con_Error("Unknown tclass %i in savegame", tclass);
+            Con_Error("Unknown tclass %i in savegame", tClass);
         }
     }
 }
@@ -437,9 +432,9 @@ typedef struct {
     int     olddirection;
 } v19_ceiling_t;
 */
-    byte temp[SIZEOF_V19_THINKER_T];
+    byte                temp[SIZEOF_V19_THINKER_T];
 
-    // Padding at the start (an old thinker_t struct)
+    // Padding at the start (an old thinker_t struct).
     SV_Read(&temp, SIZEOF_V19_THINKER_T);
 
     // Start of used data members.
@@ -559,7 +554,7 @@ typedef struct {
     plattype_e type; // was 32bit int
 } v19_plat_t;
 */
-    byte temp[SIZEOF_V19_THINKER_T];
+    byte                temp[SIZEOF_V19_THINKER_T];
 
     // Padding at the start (an old thinker_t struct)
     SV_Read(temp, SIZEOF_V19_THINKER_T);
@@ -704,23 +699,23 @@ void P_v19_UnArchiveSpecials(void)
         tc_endspecials
     };
 
-    byte    tclass;
-    ceiling_t *ceiling;
-    vldoor_t *door;
-    floormove_t *floor;
-    plat_t *plat;
-    lightflash_t *flash;
-    strobe_t *strobe;
-    glow_t *glow;
+    byte                tClass;
+    ceiling_t          *ceiling;
+    vldoor_t           *door;
+    floormove_t        *floor;
+    plat_t             *plat;
+    lightflash_t       *flash;
+    strobe_t           *strobe;
+    glow_t             *glow;
 
-    // read in saved thinkers
+    // Read in saved thinkers.
     for(;;)
     {
-        tclass = *save_p++;
-        switch(tclass)
+        tClass = *savePtr++;
+        switch(tClass)
         {
         case tc_endspecials:
-            return;             // end of list
+            return; // End of list.
 
         case tc_ceiling:
             PADSAVEP();
@@ -789,68 +784,70 @@ void P_v19_UnArchiveSpecials(void)
 
         default:
             Con_Error("P_UnarchiveSpecials:Unknown tclass %i in savegame",
-                      tclass);
+                      tClass);
         }
     }
 }
 
 void SV_v19_LoadGame(char *savename)
 {
-    size_t  length;
-    int     i;
-    int     a, b, c;
-    char    vcheck[VERSIONSIZE];
+    int                 i;
+    int                 a, b, c;
+    size_t              length;
+    char                vcheck[VERSIONSIZE];
 
-    length = M_ReadFile(savename, &savebuffer);
+    length = M_ReadFile(savename, &saveBuffer);
     // Skip the description field.
-    save_p = savebuffer + SAVESTRINGSIZE;
+    savePtr = saveBuffer + SAVESTRINGSIZE;
+
     // Check version.
     memset(vcheck, 0, sizeof(vcheck));
     sprintf(vcheck, "version %i", SAVE_VERSION);
-    if(strcmp(save_p, vcheck))
+    if(strcmp(savePtr, vcheck))
     {
-        int     saveVer;
+        int                 saveVer;
 
-        sscanf(save_p, "version %i", &saveVer);
+        sscanf(savePtr, "version %i", &saveVer);
         if(saveVer >= SAVE_VERSION_BASE)
         {
             // Must be from the wrong game.
             Con_Message("Bad savegame version.\n");
             return;
         }
-        // Just give a warning.
-        Con_Message("Savegame ID '%s': incompatible?\n", save_p);
-    }
-    save_p += VERSIONSIZE;
 
-    gameskill = *save_p++;
-    gameepisode = *save_p++;
-    gamemap = *save_p++;
-    for(i = 0; i < 4; i++)
-        players[i].plr->inGame = *save_p++;
+        // Just give a warning.
+        Con_Message("Savegame ID '%s': incompatible?\n", savePtr);
+    }
+    savePtr += VERSIONSIZE;
+
+    gameSkill = *savePtr++;
+    gameEpisode = *savePtr++;
+    gameMap = *savePtr++;
+    for(i = 0; i < 4; ++i)
+        players[i].plr->inGame = *savePtr++;
 
     // Load a base level.
-    G_InitNew(gameskill, gameepisode, gamemap);
+    G_InitNew(gameSkill, gameEpisode, gameMap);
 
-    // get the times
-    a = *save_p++;
-    b = *save_p++;
-    c = *save_p++;
-    leveltime = (a << 16) + (b << 8) + c;
+    // Get the level time.
+    a = *savePtr++;
+    b = *savePtr++;
+    c = *savePtr++;
+    levelTime = (a << 16) + (b << 8) + c;
 
-    // dearchive all the modifications
+    // Dearchive all the modifications.
     P_v19_UnArchivePlayers();
     P_v19_UnArchiveWorld();
     P_v19_UnArchiveThinkers();
     P_v19_UnArchiveSpecials();
 
-    if(*save_p != 0x1d)
+    if(*savePtr != 0x1d)
         Con_Error
             ("SV_v19_LoadGame: Bad savegame (consistency test failed!)\n");
 
-    // done
-    Z_Free(savebuffer);
-    savebuffer = NULL;
+    // Success!
+    Z_Free(saveBuffer);
+    saveBuffer = NULL;
 
     // Spawn particle generators.
     R_SetupLevel(DDSLM_AFTER_LOADING, 0);
