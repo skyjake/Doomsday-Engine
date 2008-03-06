@@ -42,7 +42,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BONUSADD    6
+#define BONUSADD            (6)
 
 // TYPES -------------------------------------------------------------------
 
@@ -57,17 +57,17 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // A weapon is found with two clip loads, a big item has five clip loads.
-int  maxammo[NUM_AMMO_TYPES] = { 200, 50, 300, 50 };
-int  clipammo[NUM_AMMO_TYPES] = { 10, 4, 20, 1 };
+int maxAmmo[NUM_AMMO_TYPES] = {200, 50, 300, 50};
+int clipAmmo[NUM_AMMO_TYPES] = {10, 4, 20, 1};
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
 /**
- * @param num       Number of clip loads, not the individual count.
+ * @param num           Number of clip loads, not the individual count.
  *
- * @return          @c false, if the ammo can't be picked up at all.
+ * @return              @c false, if the ammo can't be picked up at all.
  */
 boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 {
@@ -81,11 +81,11 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
         return false;
 
     if(num)
-        num *= clipammo[ammo];
+        num *= clipAmmo[ammo];
     else
-        num = clipammo[ammo] / 2;
+        num = clipAmmo[ammo] / 2;
 
-    if(gameskill == SM_BABY || gameskill == SM_NIGHTMARE)
+    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
     {
         // Give double ammo in trainer mode (you'll need it in nightmare!).
         num *= 2;
@@ -102,7 +102,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
         player->ammo[ammo] = player->maxAmmo[ammo];
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
 
     return true;
@@ -113,10 +113,9 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
  */
 boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 {
-    ammotype_t  i;
-    boolean     gaveammo = false;
-    boolean     gaveweapon;
-    int         numClips;
+    int                 numClips;
+    ammotype_t          i;
+    boolean             gaveAmmo = false, gaveWeapon = false;
 
     if(IS_NETGAME && (deathmatch != 2) && !dropped)
     {
@@ -131,7 +130,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Give some of each of the ammo types used by this weapon.
         for(i=0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponinfo[weapon][player->class].mode[0].ammotype[i])
+            if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
                 continue; // Weapon does not take this type of ammo.
 
             if(deathmatch)
@@ -140,14 +139,14 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
                 numClips = 2;
 
             if(P_GiveAmmo(player, i, numClips))
-                gaveammo = true; // At least ONE type of ammo was given.
+                gaveAmmo = true; // At least ONE type of ammo was given.
         }
 
         // Should we change weapon automatically?
         P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, deathmatch == 1);
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
         S_ConsoleSound(sfx_wpnup, NULL, player - players);
@@ -158,7 +157,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Give some of each of the ammo types used by this weapon.
         for(i=0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponinfo[weapon][player->class].mode[0].ammotype[i])
+            if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
                 continue;  // Weapon does not take this type of ammo.
 
             // Give one clip with a dropped weapon, two clips if found.
@@ -168,14 +167,16 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
                 numClips = 2;
 
             if(P_GiveAmmo(player, i, numClips))
-                gaveammo = true; // At least ONE type of ammo was given.
+                gaveAmmo = true; // At least ONE type of ammo was given.
         }
 
         if(player->weaponOwned[weapon])
-            gaveweapon = false;
+        {
+            gaveWeapon = false;
+        }
         else
         {
-            gaveweapon = true;
+            gaveWeapon = true;
             player->weaponOwned[weapon] = true;
             player->update |= PSF_OWNED_WEAPONS;
 
@@ -184,41 +185,42 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         }
 
         // Maybe unhide the HUD?
-        if(gaveweapon && player == &players[consoleplayer])
+        if(gaveWeapon && player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
-        return (gaveweapon || gaveammo);
+        return (gaveWeapon || gaveAmmo);
     }
 }
 
 /**
- * @return          @c false, if the body isn't needed at all.
+ * @return              @c false, if the body isn't needed at all.
  */
 boolean P_GiveBody(player_t *player, int num)
 {
-    if(player->health >= maxhealth)
+    if(player->health >= maxHealth)
         return false;
 
     player->health += num;
-    if(player->health > maxhealth)
-        player->health = maxhealth;
+    if(player->health > maxHealth)
+        player->health = maxHealth;
 
     player->plr->mo->health = player->health;
     player->update |= PSF_HEALTH;
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
 
     return true;
 }
 
 /**
- * @return          @c false, if the armor is worse than the current armor.
+ * @return              @c false, if the armor is worse than the current
+ *                      armor.
  */
 boolean P_GiveArmor(player_t *player, int armortype)
 {
-    int         hits, i;
+    int                 hits, i;
 
     i = armortype - 1;
     if(i < 0)
@@ -227,7 +229,7 @@ boolean P_GiveArmor(player_t *player, int armortype)
         i = 1;
 
     //hits = armortype*100;
-    hits = armorpoints[i];
+    hits = armorPoints[i];
     if(player->armorPoints >= hits)
         return false; // Don't pick up.
 
@@ -236,7 +238,7 @@ boolean P_GiveArmor(player_t *player, int armortype)
     player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
 
     return true;
@@ -252,13 +254,13 @@ void P_GiveKey(player_t *player, keytype_t card)
     player->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_KEY);
 }
 
 void P_GiveBackpack(player_t *player)
 {
-    int         i;
+    int                 i;
 
     if(!player->backpack)
     {
@@ -314,7 +316,7 @@ boolean P_GivePower(player_t *player, int power)
         break;
 
     case PT_STRENGTH:
-        P_GiveBody(player, maxhealth);
+        P_GiveBody(player, maxHealth);
         player->powers[power] = 1;
         break;
 
@@ -327,14 +329,14 @@ boolean P_GivePower(player_t *player, int power)
     }
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_POWER);
     return true;
 }
 
 boolean P_TakePower(player_t *player, int power)
 {
-    mobj_t     *plrmo = player->plr->mo;
+    mobj_t             *plrmo = player->plr->mo;
 
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
@@ -359,9 +361,9 @@ boolean P_TakePower(player_t *player, int power)
 
 void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 {
-    player_t   *player;
-    float       delta;
-    int         sound;
+    player_t           *player;
+    float               delta;
+    int                 sound;
 
     delta = special->pos[VZ] - toucher->pos[VZ];
 
@@ -382,13 +384,13 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     {
     // Armor
     case SPR_ARM1:
-        if(!P_GiveArmor(player, armorclass[0]))
+        if(!P_GiveArmor(player, armorClass[0]))
             return;
         P_SetMessage(player, GOTARMOR, false);
         break;
 
     case SPR_ARM2:
-        if(!P_GiveArmor(player, armorclass[1]))
+        if(!P_GiveArmor(player, armorClass[1]))
             return;
         P_SetMessage(player, GOTMEGA, false);
         break;
@@ -396,57 +398,57 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     // Bonus items
     case SPR_BON1:
         player->health++; // Can go over 100%.
-        if(player->health > healthlimit)
-            player->health = healthlimit;
+        if(player->health > healthLimit)
+            player->health = healthLimit;
         player->plr->mo->health = player->health;
         player->update |= PSF_HEALTH;
         P_SetMessage(player, GOTHTHBONUS, false);
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
     case SPR_BON2:
         player->armorPoints++; // Can go over 100%.
-        if(player->armorPoints > armorpoints[1]) // 200
-            player->armorPoints = armorpoints[1];
+        if(player->armorPoints > armorPoints[1]) // 200
+            player->armorPoints = armorPoints[1];
         if(!player->armorType)
-            player->armorType = armorclass[0];
+            player->armorType = armorClass[0];
         player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
         P_SetMessage(player, GOTARMBONUS, false);
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
         break;
 
     case SPR_SOUL:
-        player->health += soulspherehealth;
-        if(player->health > soulspherelimit)
-            player->health = soulspherelimit;
+        player->health += soulSphereHealth;
+        if(player->health > soulSphereLimit)
+            player->health = soulSphereLimit;
         player->plr->mo->health = player->health;
         player->update |= PSF_HEALTH;
         P_SetMessage(player, GOTSUPER, false);
         sound = sfx_getpow;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
     case SPR_MEGA:
-        if(gamemode != commercial)
+        if(gameMode != commercial)
             return;
-        player->health = megaspherehealth;
+        player->health = megaSphereHealth;
         player->plr->mo->health = player->health;
         player->update |= PSF_HEALTH;
-        P_GiveArmor(player, armorclass[1]);
+        P_GiveArmor(player, armorClass[1]);
         P_SetMessage(player, GOTMSPHERE, false);
         sound = sfx_getpow;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
@@ -508,13 +510,15 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
     case SPR_MEDI:
     {
-        int         msg;
-        // DOOM bug
-        // The following test was originaly placed AFTER the call to
-        // P_GiveBody thereby making the first outcome impossible as
-        // the medikit gives 25 points of health. This resulted that
-        // the GOTMEDINEED "Picked up a medikit that you REALLY need"
-        // was never used.
+        int                 msg;
+        /**
+         * DOOM bug
+         * The following test was originaly placed AFTER the call to
+         * P_GiveBody thereby making the first outcome impossible as
+         * the medikit gives 25 points of health. This resulted that
+         * the GOTMEDINEED "Picked up a medikit that you REALLY need"
+         * was never used.
+         */
         if(player->health < 25)
             msg = TXT_GOTMEDINEED;
         else
@@ -530,6 +534,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_PINV:
         if(!P_GivePower(player, PT_INVULNERABILITY))
             return;
+
         P_SetMessage(player, GOTINVUL, false);
         sound = sfx_getpow;
         break;
@@ -537,6 +542,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_PSTR:
         if(!P_GivePower(player, PT_STRENGTH))
             return;
+
         P_SetMessage(player, GOTBERSERK, false);
         if(player->readyWeapon != WT_FIRST && cfg.berserkAutoSwitch)
         {
@@ -549,6 +555,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_PINS:
         if(!P_GivePower(player, PT_INVISIBILITY))
             return;
+
         P_SetMessage(player, GOTINVIS, false);
         sound = sfx_getpow;
         break;
@@ -556,6 +563,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_SUIT:
         if(!P_GivePower(player, PT_IRONFEET))
             return;
+
         P_SetMessage(player, GOTSUIT, false);
         sound = sfx_getpow;
         break;
@@ -563,6 +571,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_PMAP:
         if(!P_GivePower(player, PT_ALLMAP))
             return;
+
         P_SetMessage(player, GOTMAP, false);
         sound = sfx_getpow;
         break;
@@ -570,6 +579,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_PVIS:
         if(!P_GivePower(player, PT_INFRARED))
             return;
+
         P_SetMessage(player, GOTVISOR, false);
         sound = sfx_getpow;
         break;
@@ -592,42 +602,49 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_AMMO:
         if(!P_GiveAmmo(player, AT_CLIP, 5))
             return;
+
         P_SetMessage(player, GOTCLIPBOX, false);
         break;
 
     case SPR_ROCK:
         if(!P_GiveAmmo(player, AT_MISSILE, 1))
             return;
+
         P_SetMessage(player, GOTROCKET, false);
         break;
 
     case SPR_BROK:
         if(!P_GiveAmmo(player, AT_MISSILE, 5))
             return;
+
         P_SetMessage(player, GOTROCKBOX, false);
         break;
 
     case SPR_CELL:
         if(!P_GiveAmmo(player, AT_CELL, 1))
             return;
+
         P_SetMessage(player, GOTCELL, false);
         break;
 
     case SPR_CELP:
         if(!P_GiveAmmo(player, AT_CELL, 5))
             return;
+
         P_SetMessage(player, GOTCELLBOX, false);
         break;
 
     case SPR_SHEL:
         if(!P_GiveAmmo(player, AT_SHELL, 1))
             return;
+
         P_SetMessage(player, GOTSHELLS, false);
         break;
 
     case SPR_SBOX:
         if(!P_GiveAmmo(player, AT_SHELL, 5))
             return;
+
         P_SetMessage(player, GOTSHELLBOX, false);
         break;
 
@@ -639,6 +656,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_BFUG:
         if(!P_GiveWeapon(player, WT_SEVENTH, false))
             return;
+
         P_SetMessage(player, GOTBFG9000, false);
         sound = sfx_wpnup;
         break;
@@ -646,6 +664,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_MGUN:
         if(!P_GiveWeapon(player, WT_FOURTH, special->flags & MF_DROPPED))
             return;
+
         P_SetMessage(player, GOTCHAINGUN, false);
         sound = sfx_wpnup;
         break;
@@ -653,6 +672,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_CSAW:
         if(!P_GiveWeapon(player, WT_EIGHTH, false))
             return;
+
         P_SetMessage(player, GOTCHAINSAW, false);
         sound = sfx_wpnup;
         break;
@@ -660,6 +680,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_LAUN:
         if(!P_GiveWeapon(player, WT_FIFTH, false))
             return;
+
         P_SetMessage(player, GOTLAUNCHER, false);
         sound = sfx_wpnup;
         break;
@@ -667,6 +688,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_PLAS:
         if(!P_GiveWeapon(player, WT_SIXTH, false))
             return;
+
         P_SetMessage(player, GOTPLASMA, false);
         sound = sfx_wpnup;
         break;
@@ -674,6 +696,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_SHOT:
         if(!P_GiveWeapon(player, WT_THIRD, special->flags & MF_DROPPED))
             return;
+
         P_SetMessage(player, GOTSHOTGUN, false);
         sound = sfx_wpnup;
         break;
@@ -681,6 +704,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_SGN2:
         if(!P_GiveWeapon(player, WT_NINETH, special->flags & MF_DROPPED))
             return;
+
         P_SetMessage(player, GOTSHOTGUN2, false);
         sound = sfx_wpnup;
         break;
@@ -700,9 +724,9 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
 void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 {
-    mobjtype_t item;
-    mobj_t     *mo;
-    angle_t     angle;
+    mobjtype_t          item;
+    mobj_t             *mo;
+    angle_t             angle;
 
     if(!target)
         return; // Nothing to kill...
@@ -825,12 +849,13 @@ void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                    int damageP, boolean stomping)
 {
-    uint        ang;
-    int         saved;
-    player_t   *player;
-    fixed_t     thrust;
-    int         temp;
-    int         damage;
+    uint                an;
+    angle_t             angle;
+    int                 saved;
+    player_t           *player;
+    float               thrust;
+    int                 temp;
+    int                 damage;
 
     // The actual damage (== damageP * netMobDamageModifier for any
     // non-player mobj).
@@ -858,7 +883,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     }
 
     player = target->player;
-    if(player && gameskill == SM_BABY)
+    if(player && gameSkill == SM_BABY)
         damage /= 2; // Take half damage in trainer mode.
 
     // Use the cvar damage multiplier netMobDamageModifier only if the
@@ -878,23 +903,23 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         source->player->readyWeapon != WT_EIGHTH) &&
        !(inflictor->flags2 & MF2_NODMGTHRUST))
     {
-        ang =
+        angle =
             R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
                             target->pos[VX], target->pos[VY]);
 
-        thrust = damage * (1.0f/8) * 100 / target->info->mass;
+        thrust = FIX2FLT(damage * (1.0f/8) * 100 / target->info->mass);
 
         // Make fall forwards sometimes.
         if(damage < 40 && damage > target->health &&
            target->pos[VZ] - inflictor->pos[VZ] > 64 && (P_Random() & 1))
         {
-            ang += ANG180;
+            angle += ANG180;
             thrust *= 4;
         }
 
-        ang >>= ANGLETOFINESHIFT;
-        target->mom[MX] += FIX2FLT(FixedMul(thrust, finecosine[ang]));
-        target->mom[MY] += FIX2FLT(FixedMul(thrust, finesine[ang]));
+        an = angle >> ANGLETOFINESHIFT;
+        target->mom[MX] += thrust * FIX2FLT(finecosine[an]);
+        target->mom[MY] += thrust * FIX2FLT(finesine[an]);
         if(target->dPlayer)
         {
             // Only fix momentum. Otherwise clients will find it difficult
@@ -902,7 +927,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             target->dPlayer->flags |= DDPF_FIXMOM;
         }
 
-        // killough $dropoff_fix: thrust objects hanging off ledges
+        // $dropoff_fix: thrust objects hanging off ledges.
         if(target->intFlags & MIF_FALLING && target->gear >= MAXGEAR)
             target->gear = 0;
     }
@@ -923,7 +948,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                 return;
         }
 
-        // End of game hell hack
+        // End of game hell hack.
         if(P_ToXSectorOfSubsector(target->subsector)->special == 11 &&
            damage >= target->health)
         {
@@ -971,7 +996,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         temp = damage < 100 ? damage : 100;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer]);
+        if(player == &players[CONSOLEPLAYER]);
             ST_HUDUnHide(HUE_ON_DAMAGE);
     }
 
@@ -979,7 +1004,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     // Only works when both target and inflictor are real mobjs.
     P_SpawnDamageParticleGen(target, inflictor, damage);
 
-    // do the damage
+    // Do the damage.
     target->health -= damage;
     if(target->health <= 0)
     {

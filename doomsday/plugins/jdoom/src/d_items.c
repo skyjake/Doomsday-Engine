@@ -28,7 +28,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-// We are referring to sprite numbers.
 #include "jdoom.h"
 
 // MACROS ------------------------------------------------------------------
@@ -49,7 +48,7 @@
  * Default weapon definitions.
  * These are used if other (external) definitions are not found.
  */
-weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
+weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    {
     { // fist
      GM_ANY,
@@ -196,8 +195,8 @@ weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
  */
 int GetDefInt(char *def, int *returnVal)
 {
-    char       *data;
-    int         val;
+    char               *data;
+    int                 val;
 
     // Get the value.
     if(!Def_Get(DD_DEF_VALUE, def, &data))
@@ -213,7 +212,7 @@ int GetDefInt(char *def, int *returnVal)
 
 void GetDefState(char *def, int *val)
 {
-    char       *data;
+    char               *data;
 
     // Get the value.
     if(!Def_Get(DD_DEF_VALUE, def, &data))
@@ -234,25 +233,25 @@ void P_InitWeaponInfo(void)
 #define PLCLP               "Player|Clip ammo|"
 #define WPINF               "Weapon Info|"
 
-    int         i;
-    int         pclass = PCLASS_PLAYER;
-    ammotype_t  k;
-    char        buf[80];
-    char       *data;
-    char       *ammotypes[NUM_AMMO_TYPES] =
+    int                 i;
+    int                 pclass = PCLASS_PLAYER;
+    ammotype_t          k;
+    char                buf[80];
+    char               *data;
+    char               *ammoTypes[NUM_AMMO_TYPES] =
         {"clip", "shell", "cell", "misl"};
 
     // Max ammo.
-    GetDefInt(PLMAX "Clip", &maxammo[AT_CLIP]);
-    GetDefInt(PLMAX "Shell", &maxammo[AT_SHELL]);
-    GetDefInt(PLMAX "Cell", &maxammo[AT_CELL]);
-    GetDefInt(PLMAX "Misl", &maxammo[AT_MISSILE]);
+    GetDefInt(PLMAX "Clip", &maxAmmo[AT_CLIP]);
+    GetDefInt(PLMAX "Shell", &maxAmmo[AT_SHELL]);
+    GetDefInt(PLMAX "Cell", &maxAmmo[AT_CELL]);
+    GetDefInt(PLMAX "Misl", &maxAmmo[AT_MISSILE]);
 
     // Clip ammo.
-    GetDefInt(PLCLP "Clip", &clipammo[AT_CLIP]);
-    GetDefInt(PLCLP "Shell", &clipammo[AT_SHELL]);
-    GetDefInt(PLCLP "Cell", &clipammo[AT_CELL]);
-    GetDefInt(PLCLP "Misl", &clipammo[AT_MISSILE]);
+    GetDefInt(PLCLP "Clip", &clipAmmo[AT_CLIP]);
+    GetDefInt(PLCLP "Shell", &clipAmmo[AT_SHELL]);
+    GetDefInt(PLCLP "Cell", &clipAmmo[AT_CELL]);
+    GetDefInt(PLCLP "Misl", &clipAmmo[AT_MISSILE]);
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
@@ -265,20 +264,20 @@ void P_InitWeaponInfo(void)
             {
                 for(k = 0; k < NUM_AMMO_TYPES; ++k)
                 {
-                    weaponinfo[i][pclass].mode[0].ammotype[k] = false;
-                    weaponinfo[i][pclass].mode[0].pershot[k] = 0;
+                    weaponInfo[i][pclass].mode[0].ammoType[k] = false;
+                    weaponInfo[i][pclass].mode[0].perShot[k] = 0;
                 }
             }
             else
             {
                 for(k = 0; k < NUM_AMMO_TYPES; ++k)
                 {
-                    if(!stricmp(data, ammotypes[k]))
+                    if(!stricmp(data, ammoTypes[k]))
                     {
-                        weaponinfo[i][pclass].mode[0].ammotype[k] = true;
+                        weaponInfo[i][pclass].mode[0].ammoType[k] = true;
 
                         sprintf(buf, WPINF "%i|Per shot", i);
-                        GetDefInt(buf, &weaponinfo[i][pclass].mode[0].pershot[k]);
+                        GetDefInt(buf, &weaponInfo[i][pclass].mode[0].perShot[k]);
                         break;
                     }
                 }
@@ -287,17 +286,17 @@ void P_InitWeaponInfo(void)
         // end todo
 
         sprintf(buf, WPINF "%i|Up", i);
-        GetDefState(buf, &weaponinfo[i][pclass].mode[0].upstate);
+        GetDefState(buf, &weaponInfo[i][pclass].mode[0].upState);
         sprintf(buf, WPINF "%i|Down", i);
-        GetDefState(buf, &weaponinfo[i][pclass].mode[0].downstate);
+        GetDefState(buf, &weaponInfo[i][pclass].mode[0].downState);
         sprintf(buf, WPINF "%i|Ready", i);
-        GetDefState(buf, &weaponinfo[i][pclass].mode[0].readystate);
+        GetDefState(buf, &weaponInfo[i][pclass].mode[0].readyState);
         sprintf(buf, WPINF "%i|Atk", i);
-        GetDefState(buf, &weaponinfo[i][pclass].mode[0].atkstate);
+        GetDefState(buf, &weaponInfo[i][pclass].mode[0].attackState);
         sprintf(buf, WPINF "%i|Flash", i);
-        GetDefState(buf, &weaponinfo[i][pclass].mode[0].flashstate);
+        GetDefState(buf, &weaponInfo[i][pclass].mode[0].flashState);
         sprintf(buf, WPINF "%i|Static", i);
-        weaponinfo[i][pclass].mode[0].static_switch = GetDefInt(buf, 0);
+        weaponInfo[i][pclass].mode[0].staticSwitch = GetDefInt(buf, 0);
     }
 
 #undef PLMAX
@@ -309,8 +308,8 @@ void P_InitPlayerValues(player_t *p)
 {
 #define PLINA               "Player|Init ammo|"
 
-    int         i;
-    char        buf[20];
+    int                 i;
+    char                buf[20];
 
     GetDefInt("Player|Health", &p->health);
     GetDefInt("Player|Weapon", (int *) &p->readyWeapon);

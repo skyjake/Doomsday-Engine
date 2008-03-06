@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -42,8 +42,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BGCOLOR                 7
-#define FGCOLOR                 8
+#define BGCOLOR                 (7)
+#define FGCOLOR                 (8)
 
 // TYPES -------------------------------------------------------------------
 
@@ -57,39 +57,25 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     verbose;
+int verbose;
 
-boolean devparm;                // started game with -devparm
-boolean nomonsters;             // checkparm of -nomonsters
-boolean respawnparm;            // checkparm of -respawn
-boolean fastparm;               // checkparm of -fast
-boolean turboparm;              // checkparm of -turbo
-float   turbomul;               // multiplier for turbo
+boolean devParm; // checkparm of -devparm
+boolean noMonstersParm; // checkparm of -noMonstersParm
+boolean respawnParm; // checkparm of -respawn
+boolean fastParm; // checkparm of -fast
+boolean turboParm; // checkparm of -turbo
 
-skillmode_t startskill;
-int     startepisode;
-int     startmap;
-boolean autostart;
-FILE   *debugfile;
+float turboMul; // multiplier for turbo
+boolean monsterInfight;
 
-gamemode_t gamemode;
-int     gamemodebits;
-gamemission_t gamemission = GM_DOOM;
+gamemode_t gameMode;
+int gameModeBits;
+gamemission_t gameMission = GM_DOOM;
 
 // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-char    gameModeString[17];
+char gameModeString[17];
 
-boolean monsterinfight;
-
-// print title for every printed line
-char    title[128];
-
-// Demo loop.
-int     demosequence;
-int     pagetic;
-char   *pagename;
-
-// The patches used in drawing the view border
+// The patches used in drawing the view border.
 char *borderLumps[] = {
     "FLOOR7_2",
     "brdr_t",
@@ -104,6 +90,11 @@ char *borderLumps[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static skillmode_t startSkill;
+static int startEpisode;
+static int startMap;
+static boolean autoStart;
+
 // CODE --------------------------------------------------------------------
 
 /**
@@ -117,9 +108,9 @@ char *borderLumps[] = {
  *
  * @return              @true, if we changed game modes successfully.
  */
-boolean D_SetGameMode(gamemode_t mode)
+boolean G_SetGameMode(gamemode_t mode)
 {
-    gamemode = mode;
+    gameMode = mode;
 
     if(G_GetGameState() == GS_LEVEL)
         return false;
@@ -127,40 +118,32 @@ boolean D_SetGameMode(gamemode_t mode)
     switch(mode)
     {
     case shareware: // DOOM 1 shareware, E1, M9
-        gamemodebits = GM_SHAREWARE;
+        gameModeBits = GM_SHAREWARE;
         break;
 
     case registered: // DOOM 1 registered, E3, M27
-        gamemodebits = GM_REGISTERED;
+        gameModeBits = GM_REGISTERED;
         break;
 
     case commercial: // DOOM 2 retail, E1 M34
-        gamemodebits = GM_COMMERCIAL;
+        gameModeBits = GM_COMMERCIAL;
         break;
 
     // DOOM 2 german edition not handled
 
     case retail: // DOOM 1 retail, E4, M36
-        gamemodebits = GM_RETAIL;
+        gameModeBits = GM_RETAIL;
         break;
 
     case indetermined: // Well, no IWAD found.
-        gamemodebits = GM_INDETERMINED;
+        gameModeBits = GM_INDETERMINED;
         break;
 
     default:
-        Con_Error("D_SetGameMode: Unknown gamemode %i", mode);
+        Con_Error("G_SetGameMode: Unknown gameMode %i", mode);
     }
 
     return true;
-}
-
-void D_GetDemoLump(int num, char *out)
-{
-    sprintf(out, "%cDEMO%i",
-            gamemode == shareware ? 'S' : gamemode ==
-            registered ? 'R' : gamemode == retail ? 'U' : gamemission ==
-            GM_PLUT ? 'P' : gamemission == GM_TNT ? 'T' : '2', num);
 }
 
 /**
@@ -170,7 +153,7 @@ void D_GetDemoLump(int num, char *out)
  *
  * The default location for IWADs is Data\GAMENAMETEXT\.
  */
-void DetectIWADs(void)
+void G_DetectIWADs(void)
 {
     typedef struct {
         char   *file;
@@ -197,9 +180,9 @@ void DetectIWADs(void)
 	{"freedoom.wad", "-freedoom"},
         {0, 0}
     };
-    int         i, k;
-    boolean     overridden = false;
-    char        fn[256];
+    int                 i, k;
+    boolean             overridden = false;
+    char                fn[256];
 
     // First check if an overriding command line option is being used.
     for(i = 0; iwads[i].file; ++i)
@@ -221,7 +204,7 @@ void DetectIWADs(void)
         }
 }
 
-boolean LumpsFound(char **list)
+static boolean lumpsFound(char **list)
 {
     for(; *list; list++)
         if(W_CheckNumForName(*list) == -1)
@@ -234,7 +217,7 @@ boolean LumpsFound(char **list)
  * registered/commercial features  should be executed (notably loading
  * PWAD's).
  */
-void D_IdentifyFromData(void)
+static void identifyFromData(void)
 {
     typedef struct {
         char  **lumps;
@@ -285,33 +268,33 @@ void D_IdentifyFromData(void)
     if(ArgCheck("-sdoom"))
     {
         // Shareware DOOM.
-        D_SetGameMode(shareware);
+        G_SetGameMode(shareware);
         return;
     }
 
     if(ArgCheck("-doom"))
     {
         // Registered DOOM.
-        D_SetGameMode(registered);
+        G_SetGameMode(registered);
         return;
     }
 
     if(ArgCheck("-doom2") || ArgCheck("-plutonia") || ArgCheck("-tnt") || ArgCheck("-freedoom"))
     {
         // DOOM 2.
-        D_SetGameMode(commercial);
-        gamemission = GM_DOOM2;
+        G_SetGameMode(commercial);
+        gameMission = GM_DOOM2;
         if(ArgCheck("-plutonia"))
-            gamemission = GM_PLUT;
+            gameMission = GM_PLUT;
         if(ArgCheck("-tnt"))
-            gamemission = GM_TNT;
+            gameMission = GM_TNT;
         return;
     }
 
     if(ArgCheck("-ultimate") || ArgCheck("-udoom"))
     {
         // Retail DOOM 1: Ultimate DOOM.
-        D_SetGameMode(retail);
+        G_SetGameMode(retail);
         return;
     }
 
@@ -320,34 +303,34 @@ void D_IdentifyFromData(void)
     {
         // If all the listed lumps are found, selection is made.
         // All found?
-        if(LumpsFound(list[i].lumps))
+        if(lumpsFound(list[i].lumps))
         {
-            D_SetGameMode(list[i].mode);
+            G_SetGameMode(list[i].mode);
             // Check the mission packs.
-            if(LumpsFound(plutonia_lumps))
-                gamemission = GM_PLUT;
-            else if(LumpsFound(tnt_lumps))
-                gamemission = GM_TNT;
-            else if(gamemode == commercial)
-                gamemission = GM_DOOM2;
+            if(lumpsFound(plutonia_lumps))
+                gameMission = GM_PLUT;
+            else if(lumpsFound(tnt_lumps))
+                gameMission = GM_TNT;
+            else if(gameMode == commercial)
+                gameMission = GM_DOOM2;
             else
-                gamemission = GM_DOOM;
+                gameMission = GM_DOOM;
             return;
         }
     }
 
     // A detection couldn't be made.
-    D_SetGameMode(shareware);       // Assume the minimum.
+    G_SetGameMode(shareware);       // Assume the minimum.
     Con_Message("\nIdentifyVersion: DOOM version unknown.\n"
                 "** Important data might be missing! **\n\n");
 }
 
 /**
- * gamemode, gamemission and the gameModeString are set.
+ * gameMode, gameMission and the gameModeString are set.
  */
 void G_IdentifyVersion(void)
 {
-    D_IdentifyFromData();
+    identifyFromData();
 
     // The game mode string is returned in DD_Get(DD_GAME_MODE).
     // It is sent out in netgames, and the PCL_HELLO2 packet contains it.
@@ -355,12 +338,12 @@ void G_IdentifyVersion(void)
     memset(gameModeString, 0, sizeof(gameModeString));
 
     strcpy(gameModeString,
-           gamemode == shareware ? "doom1-share" :
-           gamemode == registered ? "doom1" :
-           gamemode == retail ? "doom1-ultimate" :
-           gamemode == commercial ?
-                (gamemission == GM_PLUT ? "doom2-plut" :
-                 gamemission == GM_TNT ? "doom2-tnt" : "doom2") :
+           gameMode == shareware ? "doom1-share" :
+           gameMode == registered ? "doom1" :
+           gameMode == retail ? "doom1-ultimate" :
+           gameMode == commercial ?
+                (gameMission == GM_PLUT ? "doom2-plut" :
+                 gameMission == GM_TNT ? "doom2-tnt" : "doom2") :
            "-");
 }
 
@@ -368,20 +351,19 @@ void G_IdentifyVersion(void)
  * Pre Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void D_PreInit(void)
+void G_PreInit(void)
 {
-    int         i;
+    int                 i;
 
-    D_SetGameMode(indetermined);
+    G_SetGameMode(indetermined);
 
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
-    cfg.dclickuse = false;
+    cfg.dclickUse = false;
     cfg.povLookAround = true;
-    cfg.sbarscale = 20;         // Full size.
-    cfg.screenblocks = cfg.setblocks = 10;
+    cfg.screenBlocks = cfg.setBlocks = 10;
     cfg.echoMsg = true;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
@@ -390,10 +372,10 @@ void D_PreInit(void)
     cfg.menuGlitter = .5f;
     cfg.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
-    cfg.flashcolor[0] = .7f;
-    cfg.flashcolor[1] = .9f;
-    cfg.flashcolor[2] = 1;
-    cfg.flashspeed = 4;
+    cfg.flashColor[0] = .7f;
+    cfg.flashColor[1] = .9f;
+    cfg.flashColor[2] = 1;
+    cfg.flashSpeed = 4;
     cfg.turningSkull = true;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;
@@ -418,6 +400,8 @@ void D_PreInit(void)
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
     cfg.secretMsg = true;
+    cfg.slidingCorpses = false;
+    cfg.fastMonsters = false;
     cfg.netJumping = true;
     cfg.netEpisode = 1;
     cfg.netMap = 1;
@@ -435,15 +419,16 @@ void D_PreInit(void)
     cfg.menuSlam = false;
     cfg.askQuickSaveLoad = true;
 
-    cfg.maxskulls = true;
-    cfg.allowskullsinwalls = false;
-    cfg.anybossdeath = false;
+    cfg.maxSkulls = true;
+    cfg.allowSkullsInWalls = false;
+    cfg.anyBossDeath = false;
     cfg.monstersStuckInDoors = false;
     cfg.avoidDropoffs = true;
     cfg.moveBlock = false;
     cfg.fallOff = true;
     cfg.fixOuchFace = true;
 
+    cfg.statusbarScale = 20;         // Full size.
     cfg.statusbarAlpha = 1;
     cfg.statusbarCounterAlpha = 1;
 
@@ -518,64 +503,64 @@ void D_PreInit(void)
     cfg.berserkAutoSwitch = true;
 
     // Doom2 has a different border background.
-    if(gamemode == commercial)
+    if(gameMode == commercial)
         borderLumps[0] = "GRNROCK";
 
     // Do the common pre init routine;
-    G_PreInit();
+    G_CommonPreInit();
 }
 
 /**
  * Post Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void D_PostInit(void)
+void G_PostInit(void)
 {
-    int         p;
-    char        file[256];
-    char        mapstr[6];
+    int                 p;
+    char                file[256];
+    char                mapStr[6];
 
     // Common post init routine
-    G_PostInit();
+    G_CommonPostInit();
 
     // Initialize weapon info using definitions.
     P_InitWeaponInfo();
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gamemode == retail ? "The Ultimate DOOM Startup\n" :
-                gamemode == shareware ? "DOOM Shareware Startup\n" :
-                gamemode == registered ? "DOOM Registered Startup\n" :
-                gamemode == commercial ?
-                    (gamemission == GM_PLUT ? "Final DOOM: The Plutonia Experiment\n" :
-                     gamemission == GM_TNT ? "Final DOOM: TNT: Evilution\n" :
+                gameMode == retail ? "The Ultimate DOOM Startup\n" :
+                gameMode == shareware ? "DOOM Shareware Startup\n" :
+                gameMode == registered ? "DOOM Registered Startup\n" :
+                gameMode == commercial ?
+                    (gameMission == GM_PLUT ? "Final DOOM: The Plutonia Experiment\n" :
+                     gameMission == GM_TNT ? "Final DOOM: TNT: Evilution\n" :
                      "DOOM 2: Hell on Earth\n") :
                 "Public DOOM\n");
 
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
-    monsterinfight = GetDefInt("AI|Infight", 0);
+    monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    gameskill = startskill = SM_NOITEMS;
-    startepisode = 1;
-    startmap = 1;
-    autostart = false;
+    gameSkill = startSkill = SM_NOITEMS;
+    startEpisode = 1;
+    startMap = 1;
+    autoStart = false;
 
     // Game mode specific settings.
     // Plutonia and TNT automatically turn on the full sky.
-    if(gamemode == commercial &&
-       (gamemission == GM_PLUT || gamemission == GM_TNT))
+    if(gameMode == commercial &&
+       (gameMission == GM_PLUT || gameMission == GM_TNT))
     {
         Con_SetInteger("rend-sky-full", 1, true);
     }
 
     // Command line options.
-    nomonsters = ArgCheck("-nomonsters");
-    respawnparm = ArgCheck("-respawn");
-    fastparm = ArgCheck("-fast");
-    devparm = ArgCheck("-devparm");
+    noMonstersParm = ArgCheck("-nomonsters");
+    respawnParm = ArgCheck("-respawn");
+    fastParm = ArgCheck("-fast");
+    devParm = ArgCheck("-devparm");
 
     if(ArgCheck("-altdeath"))
         cfg.netDeathmatch = 2;
@@ -585,22 +570,22 @@ void D_PostInit(void)
     p = ArgCheck("-skill");
     if(p && p < myargc - 1)
     {
-        startskill = Argv(p + 1)[0] - '1';
-        autostart = true;
+        startSkill = Argv(p + 1)[0] - '1';
+        autoStart = true;
     }
 
     p = ArgCheck("-episode");
     if(p && p < myargc - 1)
     {
-        startepisode = Argv(p + 1)[0] - '0';
-        startmap = 1;
-        autostart = true;
+        startEpisode = Argv(p + 1)[0] - '0';
+        startMap = 1;
+        autoStart = true;
     }
 
     p = ArgCheck("-timer");
     if(p && p < myargc - 1 && deathmatch)
     {
-        int     time;
+        int                 time;
 
         time = atoi(Argv(p + 1));
         Con_Message("Levels will end after %d minute", time);
@@ -612,27 +597,27 @@ void D_PostInit(void)
     p = ArgCheck("-warp");
     if(p && p < myargc - 1)
     {
-        if(gamemode == commercial)
+        if(gameMode == commercial)
         {
-            startmap = atoi(Argv(p + 1));
-            autostart = true;
+            startMap = atoi(Argv(p + 1));
+            autoStart = true;
         }
         else if(p < myargc - 2)
         {
-            startepisode = Argv(p + 1)[0] - '0';
-            startmap = Argv(p + 2)[0] - '0';
-            autostart = true;
+            startEpisode = Argv(p + 1)[0] - '0';
+            startMap = Argv(p + 2)[0] - '0';
+            autoStart = true;
         }
     }
 
     // Turbo option.
     p = ArgCheck("-turbo");
-    turbomul = 1.0f;
+    turboMul = 1.0f;
     if(p)
     {
-        int     scale = 200;
+        int                 scale = 200;
 
-        turboparm = true;
+        turboParm = true;
         if(p < myargc - 1)
             scale = atoi(Argv(p + 1));
         if(scale < 10)
@@ -641,17 +626,18 @@ void D_PostInit(void)
             scale = 400;
 
         Con_Message("turbo scale: %i%%\n", scale);
-        turbomul = scale / 100.f;
+        turboMul = scale / 100.f;
     }
 
     // Are we autostarting?
-    if(autostart)
+    if(autoStart)
     {
-        if(gamemode == commercial)
-            Con_Message("Warp to Map %d, Skill %d\n", startmap, startskill + 1);
+        if(gameMode == commercial)
+            Con_Message("Warp to Map %d, Skill %d\n", startMap,
+                        startSkill + 1);
         else
-            Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startepisode,
-                        startmap, startskill + 1);
+            Con_Message("Warp to Episode %d, Map %d, Skill %d\n",
+                        startEpisode, startMap, startSkill + 1);
     }
 
     // Load a saved game?
@@ -663,45 +649,45 @@ void D_PostInit(void)
     }
 
     // Check valid episode and map
-    if((autostart || IS_NETGAME))
+    if(autoStart || IS_NETGAME)
     {
-        if(gamemode == commercial)
-            sprintf(mapstr,"MAP%2.2d", startmap);
+        if(gameMode == commercial)
+            sprintf(mapStr, "MAP%2.2d", startMap);
         else
-            sprintf(mapstr,"E%d%d",startepisode, startmap);
+            sprintf(mapStr, "E%d%d", startEpisode, startMap);
 
-        if(!W_CheckNumForName(mapstr))
+        if(!W_CheckNumForName(mapStr))
         {
-            startepisode = 1;
-            startmap = 1;
+            startEpisode = 1;
+            startMap = 1;
         }
     }
 
     // Print a string showing the state of the game parameters
     Con_Message("Game state parameters:%s%s%s%s%s\n",
-                 nomonsters? " nomonsters" : "",
-                 respawnparm? " respawn" : "",
-                 fastparm? " fast" : "",
-                 turboparm? " turbo" : "",
-                 (cfg.netDeathmatch ==1)? " deathmatch" :
+                noMonstersParm? " nomonsters" : "",
+                respawnParm? " respawn" : "",
+                fastParm? " fast" : "",
+                turboParm? " turbo" : "",
+                (cfg.netDeathmatch ==1)? " deathmatch" :
                     (cfg.netDeathmatch ==2)? " altdeath" : "");
 
     if(G_GetGameAction() != GA_LOADGAME)
     {
-        if(autostart || IS_NETGAME)
+        if(autoStart || IS_NETGAME)
         {
-            G_DeferedInitNew(startskill, startepisode, startmap);
+            G_DeferedInitNew(startSkill, startEpisode, startMap);
         }
         else
         {
-            G_StartTitle();     // start up intro loop
+            G_StartTitle(); // Start up intro loop.
         }
     }
 }
 
-void D_Shutdown(void)
+void G_Shutdown(void)
 {
-    uint        i;
+    uint                i;
 
     HU_UnloadData();
 
@@ -716,12 +702,7 @@ void D_Shutdown(void)
     AM_Shutdown();
 }
 
-void D_Ticker(timespan_t ticLength)
+void G_EndFrame(void)
 {
-    Hu_MenuTicker(ticLength);
-    G_Ticker(ticLength);
-}
-
-void D_EndFrame(void)
-{
+    // Nothing to do.
 }
