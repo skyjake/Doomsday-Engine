@@ -43,12 +43,13 @@
 #include "x_hair.h"
 #include "g_controls.h"
 #include "p_mapsetup.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define viewheight          Get(DD_VIEWWINDOW_HEIGHT)
-#define SIZEFACT            4
-#define SIZEFACT2           16
+#define SIZEFACT            (4)
+#define SIZEFACT2           (16)
 
 // TYPES -------------------------------------------------------------------
 
@@ -66,8 +67,8 @@ extern boolean finalestage;
 
 extern float lookOffset;
 
-extern const float deffontRGB[];
-extern const float deffontRGB2[];
+extern const float defFontRGB[];
+extern const float defFontRGB2[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -120,7 +121,7 @@ void R_InitRefresh(void)
 void R_DrawSpecialFilter(void)
 {
     float       x, y, w, h;
-    player_t   *player = &players[displayplayer];
+    player_t   *player = &players[DISPLAYPLAYER];
 
     if(player->powers[PT_INVULNERABILITY] <= BLINKTHRESHOLD &&
        !(player->powers[PT_INVULNERABILITY] & 8))
@@ -158,7 +159,7 @@ void R_DrawLevelTitle(int x, int y, float alpha, dpatch_t *font,
             strX -= M_StringWidth(lname, font) / 2;
 
         M_WriteText3(strX, y, lname, font,
-                     deffontRGB[0], deffontRGB[1], deffontRGB[2], alpha,
+                     defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha,
                      false, 0);
         y += 20;
     }
@@ -168,9 +169,9 @@ void R_DrawLevelTitle(int x, int y, float alpha, dpatch_t *font,
     {
         strX = x;
         if(center)
-            strX -= M_StringWidth(lauthor, hu_font_a) / 2;
+            strX -= M_StringWidth(lauthor, huFontA) / 2;
 
-        M_WriteText3(strX, y, lauthor, hu_font_a, .5f, .5f, .5f, alpha,
+        M_WriteText3(strX, y, lauthor, huFontA, .5f, .5f, .5f, alpha,
                      false, 0);
     }
 }
@@ -181,36 +182,36 @@ void R_DrawLevelTitle(int x, int y, float alpha, dpatch_t *font,
  */
 void R_SetViewSize(int blocks, int detail)
 {
-    cfg.setsizeneeded = true;
-    if(cfg.setblocks != blocks && blocks > 10 && blocks < 13)
+    cfg.setSizeNeeded = true;
+    if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
     {   // When going fullscreen, force a hud show event (to reset the timer).
         ST_HUDUnHide(HUE_FORCE);
     }
-    cfg.setblocks = blocks;
+    cfg.setBlocks = blocks;
 }
 
-void D_Display(void)
+void H_Display(void)
 {
     static boolean viewactivestate = false;
     static boolean menuactivestate = false;
     static gamestate_t oldgamestate = -1;
-    player_t   *vplayer = &players[displayplayer];
+    player_t   *vplayer = &players[DISPLAYPLAYER];
     boolean     iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
     float       x, y, w, h;
     boolean     mapHidesView;
 
     // $democam: can be set on every frame
-    if(cfg.setblocks > 10 || iscam)
+    if(cfg.setBlocks > 10 || iscam)
     {
         // Full screen.
         R_SetViewWindowTarget(0, 0, 320, 200);
     }
     else
     {
-        int w = cfg.setblocks * 32;
-        int h = cfg.setblocks * (200 - SBARHEIGHT * cfg.sbarscale / 20) / 10;
+        int w = cfg.setBlocks * 32;
+        int h = cfg.setBlocks * (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
         R_SetViewWindowTarget(160 - (w / 2),
-                              (200 - SBARHEIGHT * cfg.sbarscale / 20 - h) / 2,
+                              (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) / 2,
                               w, h);
     }
 
@@ -223,7 +224,7 @@ void D_Display(void)
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
 
-        if(!IS_CLIENT && leveltime < 2)
+        if(!IS_CLIENT && levelTime < 2)
         {
             // Don't render too early; the first couple of frames
             // might be a bit unstable -- this should be considered
@@ -232,13 +233,13 @@ void D_Display(void)
         }
 
         mapHidesView =
-            R_MapObscures(displayplayer, (int) x, (int) y, (int) w, (int) h);
+            R_MapObscures(DISPLAYPLAYER, (int) x, (int) y, (int) w, (int) h);
 
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
            !mapHidesView)
         {   // Draw the player view.
             int         viewAngleOffset =
-                ANGLE_MAX * -G_GetLookOffset(displayplayer);
+                ANGLE_MAX * -G_GetLookOffset(DISPLAYPLAYER);
             boolean     isFullbright =
                 (vplayer->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
                                (vplayer->powers[PT_INVULNERABILITY] & 8);
@@ -267,7 +268,7 @@ void D_Display(void)
         }
 
         // Draw the automap?
-        AM_Drawer(displayplayer);
+        AM_Drawer(DISPLAYPLAYER);
         break;
 
     default:
@@ -275,11 +276,11 @@ void D_Display(void)
     }
 
     menuactivestate = Hu_MenuIsActive();
-    viewactivestate = viewactive;
+    viewactivestate = viewActive;
     oldgamestate = wipegamestate = G_GetGameState();
 }
 
-void D_Display2(void)
+void H_Display2(void)
 {
     switch(G_GetGameState())
     {
@@ -287,7 +288,7 @@ void D_Display2(void)
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
 
-        if(!IS_CLIENT && leveltime < 2)
+        if(!IS_CLIENT && levelTime < 2)
         {
             // Don't render too early; the first couple of frames
             // might be a bit unstable -- this should be considered
@@ -301,25 +302,25 @@ void D_Display2(void)
             boolean     redrawsbar = false;
 
             // Draw HUD displays only visible when the automap is open.
-            if(AM_IsMapActive(displayplayer))
+            if(AM_IsMapActive(DISPLAYPLAYER))
                 HU_DrawMapCounters();
 
             // Level information is shown for a few seconds in the
             // beginning of a level.
-            if(cfg.levelTitle || actual_leveltime <= 6 * TICSPERSEC)
+            if(cfg.levelTitle || actualLevelTime <= 6 * TICSPERSEC)
             {
                 int         x, y;
                 float       alpha = 1;
 
-                if(actual_leveltime < 35)
-                    alpha = actual_leveltime / 35.0f;
-                if(actual_leveltime > 5 * 35)
-                    alpha = 1 - (actual_leveltime - 5 * 35) / 35.0f;
+                if(actualLevelTime < 35)
+                    alpha = actualLevelTime / 35.0f;
+                if(actualLevelTime > 5 * 35)
+                    alpha = 1 - (actualLevelTime - 5 * 35) / 35.0f;
 
                 x = SCREENWIDTH / 2;
                 y = 13;
                 Draw_BeginZoom((1 + cfg.hudScale)/2, x, y);
-                R_DrawLevelTitle(x, y, alpha, hu_font_b, true);
+                R_DrawLevelTitle(x, y, alpha, huFontB, true);
                 Draw_EndZoom();
             }
 
@@ -327,15 +328,15 @@ void D_Display2(void)
                 redrawsbar = true;
 
             // Do we need to render a full status bar at this point?
-            if(!(AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0))
+            if(!(AM_IsMapActive(DISPLAYPLAYER) && cfg.automapHudDisplay == 0))
             {
-                player_t   *player = &players[displayplayer];
+                player_t   *player = &players[DISPLAYPLAYER];
                 boolean     iscam = (player->plr->flags & DDPF_CAMERA) != 0; // $democam
 
                 if(!iscam)
                 {
                     int         viewmode =
-                        ((viewheight == 200)? (cfg.setblocks - 10) : 0);
+                        ((viewheight == 200)? (cfg.setBlocks - 10) : 0);
 
                     ST_Drawer(viewmode, redrawsbar); // $democam
                 }
@@ -359,7 +360,7 @@ void D_Display2(void)
     }
 
     // Draw pause pic (but not if InFine active).
-    if(paused && !fi_active)
+    if(paused && !fiActive)
     {
         GL_DrawPatch(160, 4, W_GetNumForName("PAUSED"));
     }

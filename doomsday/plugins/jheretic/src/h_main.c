@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -63,43 +63,35 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean automapactive;
-extern boolean amap_fullyopen;
-extern float lookOffset;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int verbose;
 
-boolean devparm; // checkparm of -devparm
-boolean nomonsters; // checkparm of -nomonsters
-boolean respawnparm; // checkparm of -respawn
-boolean turboparm; // checkparm of -turbo
-float turbomul; // multiplier for turbo
+boolean devParm; // checkparm of -devparm
+boolean noMonstersParm; // checkparm of -nomonsters
+boolean respawnParm; // checkparm of -respawn
+boolean turboParm; // checkparm of -turbo
+boolean fastParm; // checkparm of -fast
+boolean artiSkipParm; // whether shift-enter skips an artifact
 
-boolean cdrom; // true if cd-rom mode active
-boolean singletics; // debug flag to cancel adaptiveness
-boolean artiskip; // whether shift-enter skips an artifact
+float turboMul; // multiplier for turbo
 
-skillmode_t startskill;
-int startepisode;
-int startmap;
-boolean autostart;
+skillmode_t startSkill;
+int startEpisode;
+int startMap;
+boolean autoStart;
 
-FILE *debugfile;
-boolean debugmode; // checkparm of -debug
-
-gamemode_t gamemode;
-int gamemodebits;
+gamemode_t gameMode;
+int gameModeBits;
 
 // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
 char gameModeString[17];
 
-boolean monsterinfight;
+boolean monsterInfight;
 
-// default font colours
-const float deffontRGB[] = { .425f, 0.986f, 0.378f};
-const float deffontRGB2[] = { 1.0f, 1.0f, 1.0f};
+// Default font colours.
+const float defFontRGB[] = { .425f, 0.986f, 0.378f};
+const float defFontRGB2[] = { 1.0f, 1.0f, 1.0f};
 
 char *borderLumps[] = {
     "FLAT513", // background
@@ -113,17 +105,17 @@ char *borderLumps[] = {
     "bordbl" // bottom left
 };
 
-char *wadfiles[MAXWADFILES] = {
+char *wadFiles[MAXWADFILES] = {
     "heretic.wad",
     "texture1.lmp",
     "texture2.lmp",
     "pnames.lmp"
 };
 
-char *basedefault = "heretic.cfg";
+char *baseDefault = "heretic.cfg";
 
-char exrnwads[80];
-char exrnwads2[80];
+char exrnWADs[80];
+char exrnWADs2[80];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -142,9 +134,9 @@ static boolean devMap;
  *
  * @return              @c true, if we changed game modes successfully.
  */
-boolean D_SetGameMode(gamemode_t mode)
+boolean G_SetGameMode(gamemode_t mode)
 {
-    gamemode = mode;
+    gameMode = mode;
 
     if(G_GetGameState() == GS_LEVEL)
         return false;
@@ -152,71 +144,64 @@ boolean D_SetGameMode(gamemode_t mode)
     switch(mode)
     {
     case shareware: // shareware, E1, M9
-        gamemodebits = GM_SHAREWARE;
+        gameModeBits = GM_SHAREWARE;
         break;
 
     case registered: // registered episodes
-        gamemodebits = GM_REGISTERED;
+        gameModeBits = GM_REGISTERED;
         break;
 
     case extended: // episodes 4 and 5 present
-        gamemodebits = GM_EXTENDED;
+        gameModeBits = GM_EXTENDED;
         break;
 
     case indetermined: // Well, no IWAD found.
-        gamemodebits = GM_INDETERMINED;
+        gameModeBits = GM_INDETERMINED;
         break;
 
     default:
-        Con_Error("D_SetGameMode: Unknown gamemode %i", mode);
+        Con_Error("G_SetGameMode: Unknown gamemode %i", mode);
     }
 
     return true;
 }
 
-void wadprintf(void)
+static void addFile(char *file)
 {
-    if(debugmode)
-    {
-        return;
-    }
-}
+    int             numWADFiles;
+    char           *new;
 
-void D_AddFile(char *file)
-{
-    int         numwadfiles;
-    char       *new;
-
-    for(numwadfiles = 0; wadfiles[numwadfiles]; numwadfiles++);
+    for(numWADFiles = 0; wadFiles[numWADFiles]; numWADFiles++);
 
     new = malloc(strlen(file) + 1);
     strcpy(new, file);
-    if(strlen(exrnwads) + strlen(file) < 78)
+    if(strlen(exrnWADs) + strlen(file) < 78)
     {
-        if(strlen(exrnwads))
+        if(strlen(exrnWADs))
         {
-            strcat(exrnwads, ", ");
+            strcat(exrnWADs, ", ");
         }
         else
         {
-            strcpy(exrnwads, "External Wadfiles: ");
+            strcpy(exrnWADs, "External Wadfiles: ");
         }
-        strcat(exrnwads, file);
+        strcat(exrnWADs, file);
     }
-    else if(strlen(exrnwads2) + strlen(file) < 79)
+    else if(strlen(exrnWADs2) + strlen(file) < 79)
     {
-        if(strlen(exrnwads2))
+        if(strlen(exrnWADs2))
         {
-            strcat(exrnwads2, ", ");
+            strcat(exrnWADs2, ", ");
         }
         else
         {
-            strcpy(exrnwads2, "     ");
-            strcat(exrnwads, ",");
+            strcpy(exrnWADs2, "     ");
+            strcat(exrnWADs, ",");
         }
-        strcat(exrnwads2, file);
+        strcat(exrnWADs2, file);
     }
-    wadfiles[numwadfiles] = new;
+
+    wadFiles[numWADFiles] = new;
 }
 
 /**
@@ -225,7 +210,7 @@ void D_AddFile(char *file)
  * decide which one gets loaded or even see if the WADs are actually
  * there. The default location for IWADs is Data\GAMENAMETEXT\.
  */
-void DetectIWADs(void)
+void G_DetectIWADs(void)
 {
     // Add a couple of probable locations for Heretic.wad.
     DD_AddIWAD("}data\\"GAMENAMETEXT"\\heretic.wad");
@@ -258,21 +243,21 @@ void G_IdentifyVersion(void)
  * Pre Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void H_PreInit(void)
+void G_PreInit(void)
 {
-    int         i;
+    int                 i;
 
-    D_SetGameMode(indetermined);
+    G_SetGameMode(indetermined);
 
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
-    cfg.dclickuse = false;
+    cfg.dclickUse = false;
     cfg.inventoryNextOnUnuse = true;
     cfg.povLookAround = true;
-    cfg.sbarscale = 20;         // Full size.
-    cfg.screenblocks = cfg.setblocks = 10;
+    cfg.statusbarScale = 20;         // Full size.
+    cfg.screenBlocks = cfg.setBlocks = 10;
     cfg.echoMsg = true;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
@@ -281,10 +266,10 @@ void H_PreInit(void)
     cfg.menuGlitter = 0;
     cfg.menuShadow = 0;
   //cfg.menuQuitSound = true;
-    cfg.flashcolor[0] = .7f;
-    cfg.flashcolor[1] = .9f;
-    cfg.flashcolor[2] = 1;
-    cfg.flashspeed = 4;
+    cfg.flashColor[0] = .7f;
+    cfg.flashColor[1] = .9f;
+    cfg.flashColor[2] = 1;
+    cfg.flashSpeed = 4;
     cfg.turningSkull = false;
     cfg.hudShown[HUD_AMMO] = true;
     cfg.hudShown[HUD_ARMOR] = true;
@@ -310,6 +295,8 @@ void H_PreInit(void)
     cfg.weaponAutoSwitch = 1; // IF BETTER
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
+    cfg.slidingCorpses = false;
+    cfg.fastMonsters = false;
     cfg.secretMsg = true;
     cfg.netJumping = true;
     cfg.netEpisode = 1;
@@ -322,12 +309,12 @@ void H_PreInit(void)
     cfg.plrViewHeight = 41;
     cfg.levelTitle = true;
   //cfg.hideAuthorIdSoft = true;
-    cfg.menuColor[0] = deffontRGB[0];   // use the default colour by default.
-    cfg.menuColor[1] = deffontRGB[1];
-    cfg.menuColor[2] = deffontRGB[2];
-    cfg.menuColor2[0] = deffontRGB2[0]; // use the default colour by default.
-    cfg.menuColor2[1] = deffontRGB2[1];
-    cfg.menuColor2[2] = deffontRGB2[2];
+    cfg.menuColor[0] = defFontRGB[0];   // use the default colour by default.
+    cfg.menuColor[1] = defFontRGB[1];
+    cfg.menuColor[2] = defFontRGB[2];
+    cfg.menuColor2[0] = defFontRGB2[0]; // use the default colour by default.
+    cfg.menuColor2[1] = defFontRGB2[1];
+    cfg.menuColor2[2] = defFontRGB2[2];
     cfg.menuSlam = true;
     cfg.askQuickSaveLoad = true;
 
@@ -382,9 +369,9 @@ void H_PreInit(void)
     cfg.msgAlign = ALIGN_CENTER;
     cfg.msgBlink = 5;
 
-    cfg.msgColor[0] = deffontRGB2[0];
-    cfg.msgColor[1] = deffontRGB2[1];
-    cfg.msgColor[2] = deffontRGB2[2];
+    cfg.msgColor[0] = defFontRGB2[0];
+    cfg.msgColor[1] = defFontRGB2[1];
+    cfg.msgColor[2] = defFontRGB2[2];
 
     cfg.chatBeep = 1;
 
@@ -416,30 +403,30 @@ void H_PreInit(void)
         borderLumps[0] = "FLOOR04";
 
     // Do the common pre init routine;
-    G_PreInit();
+    G_CommonPreInit();
 }
 
 /**
  * Post Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void H_PostInit(void)
+void G_PostInit(void)
 {
-    int         e, m, p;
-    char        file[256];
-    char        mapstr[6];
+    int                 e, m, p;
+    char                file[256];
+    char                mapStr[6];
 
     if(W_CheckNumForName("E2M1") == -1)
         // Can't find episode 2 maps, must be the shareware WAD.
-        D_SetGameMode(shareware);
+        G_SetGameMode(shareware);
     else if(W_CheckNumForName("EXTENDED") != -1)
         // Found extended lump, must be the extended WAD.
-        D_SetGameMode(extended);
+        G_SetGameMode(extended);
     else
-        D_SetGameMode(registered);
+        G_SetGameMode(registered);
 
     // Common post init routine.
-    G_PostInit();
+    G_CommonPostInit();
 
     // Initialize weapon info using definitions.
     P_InitWeaponInfo();
@@ -450,24 +437,22 @@ void H_PostInit(void)
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
-    monsterinfight = GetDefInt("AI|Infight", 0);
+    monsterInfight = GetDefInt("AI|Infight", 0);
 
-    // get skill / episode / map from parms.
-    startskill = SM_MEDIUM;
-    startepisode = 1;
-    startmap = 1;
-    autostart = false;
-    cdrom = false;
+    // Defaults for skill, episode and map.
+    startSkill = SM_MEDIUM;
+    startEpisode = 1;
+    startMap = 1;
+    autoStart = false;
 
     // Game mode specific settings.
     /* None */
 
     // Command line options.
-    nomonsters = ArgCheck("-nomonsters");
-    respawnparm = ArgCheck("-respawn");
-    devparm = ArgCheck("-devparm");
-    artiskip = !(ArgCheck("-noartiskip"));
-    debugmode = ArgCheck("-debug");
+    noMonstersParm = ArgCheck("-nomonsters");
+    respawnParm = ArgCheck("-respawn");
+    devParm = ArgCheck("-devparm");
+    artiSkipParm = !(ArgCheck("-noartiskip"));
 
     if(ArgCheck("-deathmatch"))
     {
@@ -477,34 +462,34 @@ void H_PostInit(void)
     p = ArgCheck("-skill");
     if(p && p < myargc - 1)
     {
-        startskill = Argv(p + 1)[0] - '1';
-        autostart = true;
+        startSkill = Argv(p + 1)[0] - '1';
+        autoStart = true;
     }
 
     p = ArgCheck("-episode");
     if(p && p < myargc - 1)
     {
-        startepisode = Argv(p + 1)[0] - '0';
-        startmap = 1;
-        autostart = true;
+        startEpisode = Argv(p + 1)[0] - '0';
+        startMap = 1;
+        autoStart = true;
     }
 
     p = ArgCheck("-warp");
     if(p && p < myargc - 2)
     {
-        startepisode = Argv(p + 1)[0] - '0';
-        startmap = Argv(p + 2)[0] - '0';
-        autostart = true;
+        startEpisode = Argv(p + 1)[0] - '0';
+        startMap = Argv(p + 2)[0] - '0';
+        autoStart = true;
     }
 
     // turbo option.
     p = ArgCheck("-turbo");
-    turbomul = 1.0f;
+    turboMul = 1.0f;
     if(p)
     {
-        int     scale = 200;
+        int             scale = 200;
 
-        turboparm = true;
+        turboParm = true;
         if(p < myargc - 1)
             scale = atoi(Argv(p + 1));
         if(scale < 10)
@@ -513,7 +498,7 @@ void H_PostInit(void)
             scale = 400;
 
         Con_Message("turbo scale: %i%%\n", scale);
-        turbomul = scale / 100.f;
+        turboMul = scale / 100.f;
     }
 
     // -DEVMAP <episode> <map>
@@ -526,19 +511,19 @@ void H_PostInit(void)
         e = Argv(p + 1)[0];
         m = Argv(p + 2)[0];
         sprintf(file, MAPDIR "E%cM%c.wad", e, m);
-        D_AddFile(file);
+        addFile(file);
         printf("DEVMAP: Episode %c, Map %c.\n", e, m);
-        startepisode = e - '0';
-        startmap = m - '0';
-        autostart = true;
+        startEpisode = e - '0';
+        startMap = m - '0';
+        autoStart = true;
         devMap = true;
     }
 
     // Are we autostarting?
-    if(autostart)
+    if(autoStart)
     {
-        Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startepisode,
-                    startmap, startskill + 1);
+        Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode,
+                    startMap, startSkill + 1);
     }
 
     // Load a saved game?
@@ -550,21 +535,21 @@ void H_PostInit(void)
     }
 
     // Check valid episode and map
-    if((autostart || IS_NETGAME) && (devMap == false))
+    if((autoStart || IS_NETGAME) && (devMap == false))
     {
-        sprintf(mapstr,"E%d%d",startepisode, startmap);
-        if(!W_CheckNumForName(mapstr))
+        sprintf(mapStr, "E%d%d", startEpisode, startMap);
+        if(!W_CheckNumForName(mapStr))
         {
-            startepisode = 1;
-            startmap = 1;
+            startEpisode = 1;
+            startMap = 1;
         }
     }
 
     if(G_GetGameAction() != GA_LOADGAME)
     {
-        if(autostart || IS_NETGAME)
+        if(autoStart || IS_NETGAME)
         {
-            G_InitNew(startskill, startepisode, startmap);
+            G_InitNew(startSkill, startEpisode, startMap);
         }
         else
         {
@@ -573,9 +558,9 @@ void H_PostInit(void)
     }
 }
 
-void H_Shutdown(void)
+void G_Shutdown(void)
 {
-    uint        i;
+    uint                i;
 
     HU_UnloadData();
 
@@ -590,12 +575,7 @@ void H_Shutdown(void)
     AM_Shutdown();
 }
 
-void H_Ticker(timespan_t ticLength)
+void G_EndFrame(void)
 {
-    Hu_MenuTicker(ticLength);
-    G_Ticker(ticLength);
-}
-
-void H_EndFrame(void)
-{
+    // Nothing to do.
 }

@@ -97,9 +97,9 @@ boolean P_TestMobjLocation(mobj_t *mobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean felldown; //$dropoff_fix: used to flag pushed off ledge
-extern linedef_t *blockline; // $unstuck: blocking linedef
-extern float tmbbox[4]; // for line intersection checks
+extern boolean fellDown; //$dropoff_fix: used to flag pushed off ledge
+extern linedef_t *blockLine; // $unstuck: blocking linedef
+extern float tmBBox[4]; // for line intersection checks
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -159,7 +159,7 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
             continue;
 
         P_LineOpening(check);
-        if(openrange <= 0)
+        if(OPENRANGE <= 0)
             continue; // Closed door.
 
         if(P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF0), DMU_SECTOR) == sec)
@@ -288,10 +288,10 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     if(!P_TryMove(actor, pos[VX], pos[VY], dropoff, false))
     {
         // Open any specials.
-        if((actor->flags & MF_FLOAT) && floatok)
+        if((actor->flags & MF_FLOAT) && floatOk)
         {
             // Must adjust height.
-            if(actor->pos[VZ] < tmfloorz)
+            if(actor->pos[VZ] < tmFloorZ)
                 actor->pos[VZ] += FLOATSPEED;
             else
                 actor->pos[VZ] -= FLOATSPEED;
@@ -327,7 +327,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
              */
 
             if(P_ActivateLine(ld, actor, 0, SPAC_USE))
-                good |= ld == blockline ? 1 : 2;
+                good |= ld == blockLine ? 1 : 2;
         }
 
         if(!good || cfg.monstersStuckInDoors)
@@ -343,8 +343,8 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
         actor->flags &= ~MF_INFLOAT;
     }
 
-    // $dropoff_fix: fall more slowly, under gravity, if felldown==true
-    if(!(actor->flags & MF_FLOAT) && !felldown)
+    // $dropoff_fix: fall more slowly, under gravity, if fellDown==true
+    if(!(actor->flags & MF_FLOAT) && !fellDown)
     {
         if(actor->pos[VZ] > actor->floorZ)
             P_HitFloor(actor);
@@ -446,11 +446,11 @@ static boolean PIT_AvoidDropoff(linedef_t *line, void *data)
     float      *bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
-       tmbbox[BOXRIGHT]  > bbox[BOXLEFT] &&
-       tmbbox[BOXLEFT]   < bbox[BOXRIGHT]  &&
-       tmbbox[BOXTOP]    > bbox[BOXBOTTOM] && // Linedef must be contacted
-       tmbbox[BOXBOTTOM] < bbox[BOXTOP]    &&
-       P_BoxOnLineSide(tmbbox, line) == -1)
+       tmBBox[BOXRIGHT]  > bbox[BOXLEFT] &&
+       tmBBox[BOXLEFT]   < bbox[BOXRIGHT]  &&
+       tmBBox[BOXTOP]    > bbox[BOXBOTTOM] && // Linedef must be contacted
+       tmBBox[BOXBOTTOM] < bbox[BOXTOP]    &&
+       P_BoxOnLineSide(tmBBox, line) == -1)
     {
         sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float       front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
@@ -716,7 +716,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->threshold)
         actor->threshold--;
 
-    if(gameskill == SM_NIGHTMARE || cfg.fastMonsters)
+    if(gameSkill == SM_NIGHTMARE || cfg.fastMonsters)
     {
         // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
@@ -752,7 +752,7 @@ void C_DECL A_Chase(mobj_t *actor)
     {
         actor->flags &= ~MF_JUSTATTACKED;
 
-        if(gameskill != SM_NIGHTMARE)
+        if(gameSkill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -770,7 +770,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if(actor->info->missileState)
     {
-        if(!(gameskill < SM_NIGHTMARE && actor->moveCount))
+        if(!(gameSkill < SM_NIGHTMARE && actor->moveCount))
         {
             if(P_CheckMissileRange(actor))
             {
@@ -2078,10 +2078,7 @@ void P_Massacre(void)
  */
 void C_DECL A_BossDeath(mobj_t *actor)
 {
-    mobj_t     *mo;
-    thinker_t  *think;
-    linedef_t     *dummyLine;
-    static mobjtype_t bossType[6] = {
+    static mobjtype_t   bossType[6] = {
         MT_HEAD,
         MT_MINOTAUR,
         MT_SORCERER2,
@@ -2090,12 +2087,16 @@ void C_DECL A_BossDeath(mobj_t *actor)
         -1
     };
 
+    mobj_t             *mo;
+    thinker_t          *think;
+    linedef_t          *dummyLine;
+
     // Not a boss level?
-    if(gamemap != 8)
+    if(gameMap != 8)
         return;
 
     // Not considered a boss in this episode?
-    if(actor->type != bossType[gameepisode - 1])
+    if(actor->type != bossType[gameEpisode - 1])
         return;
 
     // Make sure all bosses are dead
@@ -2112,7 +2113,7 @@ void C_DECL A_BossDeath(mobj_t *actor)
     }
 
     // Kill any remaining monsters.
-    if(gameepisode > 1)
+    if(gameEpisode > 1)
         P_Massacre();
 
     dummyLine = P_AllocDummyLine();

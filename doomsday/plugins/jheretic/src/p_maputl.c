@@ -52,7 +52,7 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-extern mobj_t *tmthing;
+extern mobj_t *tmThing;
 
 // CODE --------------------------------------------------------------------
 
@@ -69,14 +69,14 @@ extern mobj_t *tmthing;
  */
 static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
 {
-    mobj_t     *mo = tmthing;
+    mobj_t     *mo = tmThing;
     float       dist;
     sector_t   *frontsec, *backsec;
     float       ffloor;
     float       bfloor;
     float       dx, dy;
 
-    if(tmthing->player)
+    if(tmThing->player)
         return true; // skip players!
 
     dx = P_GetFloatp(ld, DMU_DX);
@@ -160,7 +160,7 @@ void P_ApplyTorque(mobj_t *mo)
     if(!cfg.slidingCorpses)
         return;
 
-    tmthing = mo;
+    tmThing = mo;
 
     // Use VALIDCOUNT to prevent checking the same line twice.
     VALIDCOUNT++;
