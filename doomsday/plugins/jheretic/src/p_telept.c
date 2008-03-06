@@ -230,17 +230,17 @@ void P_ArtiTele(player_t *player)
     //// \todo Spawn spot selection does not belong in this file.
     if(deathmatch)
     {
-        selections = deathmatch_p - deathmatchstarts;
+        selections = deathmatchP - deathmatchStarts;
         i = P_Random() % selections;
-        destPos[VX] = deathmatchstarts[i].pos[VX];
-        destPos[VY] = deathmatchstarts[i].pos[VY];
-        destAngle = deathmatchstarts[i].angle;
+        destPos[VX] = deathmatchStarts[i].pos[VX];
+        destPos[VY] = deathmatchStarts[i].pos[VY];
+        destAngle = deathmatchStarts[i].angle;
     }
     else
     {
-        destPos[VX] = playerstarts[0].pos[VX];
-        destPos[VY] = playerstarts[0].pos[VY];
-        destAngle = playerstarts[0].angle;
+        destPos[VX] = playerStarts[0].pos[VX];
+        destPos[VY] = playerStarts[0].pos[VY];
+        destAngle = playerStarts[0].angle;
     }
 
 # if __JHEXEN__

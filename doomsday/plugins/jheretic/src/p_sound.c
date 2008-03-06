@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,8 +53,6 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int gsvMapMusic;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -66,27 +64,27 @@ extern int gsvMapMusic;
  */
 void S_LevelMusic(void)
 {
-    ddmapinfo_t info;
-    char        id[10];
-    int         songid = 0;
+    ddmapinfo_t         info;
+    char                id[10];
+    int                 songID = 0;
 
     if(G_GetGameState() != GS_LEVEL)
         return;
 
-    sprintf(id, "E%iM%i", gameepisode, gamemap);
+    sprintf(id, "E%iM%i", gameEpisode, gameMap);
     if(Def_Get(DD_DEF_MAP_INFO, id, &info) && info.music >= 0)
     {
-        songid = info.music;
-        S_StartMusicNum(songid, true);
+        songID = info.music;
+        S_StartMusicNum(songID, true);
     }
     else
     {
-        songid = (gameepisode - 1) * 9 + gamemap - 1;
-        S_StartMusicNum(songid, true);
+        songID = (gameEpisode - 1) * 9 + gameMap - 1;
+        S_StartMusicNum(songID, true);
     }
 
     // Set the map music game status cvar.
-    gsvMapMusic = songid;
+    gsvMapMusic = songID;
 }
 
 /**
@@ -99,9 +97,11 @@ void S_LevelMusic(void)
  */
 void S_SectorSound(sector_t *sec, int origin, int id)
 {
-    mobj_t *centerorigin = (mobj_t *) P_GetPtrp(sec, DMU_SOUND_ORIGIN);
-    mobj_t *floororigin = (mobj_t *) P_GetPtrp(sec, DMU_FLOOR_SOUND_ORIGIN);
-    mobj_t *ceilingorigin = (mobj_t *) P_GetPtrp(sec, DMU_CEILING_SOUND_ORIGIN);
+    mobj_t             *centerorigin, *floororigin, *ceilingorigin;
+
+    centerorigin = (mobj_t *) P_GetPtrp(sec, DMU_SOUND_ORIGIN);
+    floororigin = (mobj_t *) P_GetPtrp(sec, DMU_FLOOR_SOUND_ORIGIN);
+    ceilingorigin = (mobj_t *) P_GetPtrp(sec, DMU_CEILING_SOUND_ORIGIN);
 
     S_StopSound(0, centerorigin);
     S_StopSound(0, floororigin);

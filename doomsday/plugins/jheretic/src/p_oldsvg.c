@@ -55,6 +55,7 @@
 #include "p_saveg.h"
 #include "p_map.h"
 #include "p_mapsetup.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -795,9 +796,9 @@ enum {
 
 void SV_v13_LoadGame(char *savename)
 {
-    size_t      length;
-    int         i, a, b, c;
-    char        vcheck[VERSIONSIZE];
+    size_t              length;
+    int                 i, a, b, c;
+    char                vcheck[VERSIONSIZE];
 
     length = M_ReadFile(savename, &savebuffer);
     save_p = savebuffer + SAVESTRINGSIZE;
@@ -810,32 +811,32 @@ void SV_v13_LoadGame(char *savename)
         Con_Message("Savegame ID '%s': incompatible?\n", save_p);
     }
     save_p += VERSIONSIZE;
-    gameskill = *save_p++;
-    gameepisode = *save_p++;
-    gamemap = *save_p++;
+    gameSkill = *save_p++;
+    gameEpisode = *save_p++;
+    gameMap = *save_p++;
 
     for(i = 0; i < 4; ++i)
     {
         players[i].plr->inGame = *save_p++;
     }
 
-    // Load a base level
-    G_InitNew(gameskill, gameepisode, gamemap);
+    // Load a base level.
+    G_InitNew(gameSkill, gameEpisode, gameMap);
 
-    // Create leveltime
+    // Create leveltime.
     a = *save_p++;
     b = *save_p++;
     c = *save_p++;
-    leveltime = (a << 16) + (b << 8) + c;
+    levelTime = (a << 16) + (b << 8) + c;
 
-    // De-archive all the modifications
+    // De-archive all the modifications.
     P_v13_UnArchivePlayers();
     P_v13_UnArchiveWorld();
     P_v13_UnArchiveThinkers();
     P_v13_UnArchiveSpecials();
 
     if(*save_p != SAVE_GAME_TERMINATOR)
-        Con_Error("Bad savegame"); // Missing savegame termination marker
+        Con_Error("Bad savegame"); // Missing savegame termination marker.
 
     Z_Free(savebuffer);
 

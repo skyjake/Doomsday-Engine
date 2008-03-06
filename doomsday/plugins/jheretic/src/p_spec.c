@@ -46,6 +46,7 @@
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 #include "p_player.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -69,8 +70,6 @@ typedef struct animdef_s {
 #pragma pack()
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-extern boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -413,7 +412,7 @@ static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
         break;
 
     case 53:
@@ -499,7 +498,7 @@ static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
   //case 124: // DJS - In Heretic, the secret exit is 105
     case 105:
         // Secret EXIT
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, true);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
         break;
 
     // DJS - Heretic has an additional stair build special
@@ -768,7 +767,7 @@ void P_PlayerInSpecialSector(player_t *player)
     {
     case 5:
         // LAVA DAMAGE WEAK
-        if(!(leveltime & 15))
+        if(!(levelTime & 15))
         {
             P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 5);
             P_HitFloor(player->plr->mo);
@@ -777,13 +776,13 @@ void P_PlayerInSpecialSector(player_t *player)
 
     case 7:
         // SLUDGE DAMAGE
-        if(!(leveltime & 31))
+        if(!(levelTime & 31))
             P_DamageMobj(player->plr->mo, NULL, NULL, 4);
         break;
 
     case 16:
         // LAVA DAMAGE HEAVY
-        if(!(leveltime & 15))
+        if(!(levelTime & 15))
         {
             P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 8);
             P_HitFloor(player->plr->mo);
@@ -793,7 +792,7 @@ void P_PlayerInSpecialSector(player_t *player)
     case 4:
         // LAVA DAMAGE WEAK PLUS SCROLL EAST
         P_Thrust(player, 0, FIX2FLT(2048 * 28));
-        if(!(leveltime & 15))
+        if(!(levelTime & 15))
         {
             P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 5);
             P_HitFloor(player->plr->mo);
@@ -989,7 +988,7 @@ void P_SpawnSpecials(void)
             {
             case 9:
                 // SECRET SECTOR
-                totalsecret++;
+                totalSecret++;
                 break;
 
             default:
@@ -1029,7 +1028,7 @@ void P_SpawnSpecials(void)
 
         case 9:
             // SECRET SECTOR
-            totalsecret++;
+            totalSecret++;
             break;
 
         case 10:

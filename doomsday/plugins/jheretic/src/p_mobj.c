@@ -55,24 +55,22 @@
 #include "g_common.h"
 #include "p_map.h"
 #include "p_player.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define CLAMP(v, min, max) (v < min? v=min : v > max? v=max : v)
-
 #define VANISHTICS          (2*TICSPERSEC)
 
-#define MAX_BOB_OFFSET      8
+#define MAX_BOB_OFFSET      (8)
 
 #define STOPSPEED           (1.0f/1.6/10)
 #define STANDSPEED          (1.0f/2)
 
+#define ITEMQUEUESIZE       (128)
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-void            G_PlayerReborn(int player);
-void            P_ApplyTorque(mobj_t *mo);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -80,18 +78,16 @@ void            P_ApplyTorque(mobj_t *mo);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern float attackrange;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-mobjtype_t PuffType;
-mobj_t *MissileMobj;
-
-spawnspot_t itemrespawnque[ITEMQUESIZE];
-int itemrespawntime[ITEMQUESIZE];
-int iquehead, iquetail;
+mobjtype_t puffType;
+mobj_t *missileMobj;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static spawnspot_t itemRespawnQueue[ITEMQUEUESIZE];
+static int itemRespawnTime[ITEMQUEUESIZE];
+static int itemRespawnQueueHead, itemRespawnQueueTail;
 
 // CODE --------------------------------------------------------------------
 
@@ -100,7 +96,7 @@ int iquehead, iquetail;
  */
 boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
 {
-    state_t *st;
+    state_t            *st;
 
     if(state == S_NULL)
     {   // Remove mobj.
@@ -192,14 +188,14 @@ void P_ThrustMobj(mobj_t *mo, angle_t angle, float move)
 }
 
 /**
- * @param delta             The amount 'source' needs to turn.
+ * @param delta         The amount 'source' needs to turn.
  *
- * @return                  @c 1, = 'source' needs to turn clockwise, or
- *                          @c 0, = 'source' needs to turn counter clockwise.
+ * @return              @c 1, = 'source' needs to turn clockwise, or
+ *                      @c 0, = 'source' needs to turn counter clockwise.
  */
 int P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta)
 {
-    angle_t     diff, angle1, angle2;
+    angle_t             diff, angle1, angle2;
 
     angle1 = source->angle;
     angle2 = R_PointToAngle2(source->pos[VX], source->pos[VY],
@@ -237,15 +233,15 @@ int P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta)
 /**
  * The missile tracer field must be the target.
  *
- * @return                  @c true, if target was tracked else @c false.
+ * @return              @c true, if target was tracked else @c false.
  */
 boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
 {
-    int         dir;
-    uint        an;
-    float       dist;
-    angle_t     delta;
-    mobj_t     *target;
+    int                 dir;
+    uint                an;
+    float               dist;
+    angle_t             delta;
+    mobj_t             *target;
 
     target = actor->tracer;
     if(target == NULL)
@@ -300,10 +296,10 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
  */
 void P_WindThrust(mobj_t *mo)
 {
-    static int windTab[3] = { 2048 * 5, 2048 * 10, 2048 * 25 };
+    static int          windTab[3] = { 2048 * 5, 2048 * 10, 2048 * 25 };
 
-    sector_t   *sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
-    int         special = P_ToXSector(sec)->special;
+    sector_t           *sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
+    int                 special = P_ToXSector(sec)->special;
 
     switch(special)
     {
@@ -344,7 +340,7 @@ float P_MobjGetFriction(mobj_t *mo)
     }
     else
     {
-        sector_t       *sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
+        sector_t           *sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
 
         if(P_ToXSector(sec)->special == 15)
         {
@@ -357,9 +353,9 @@ float P_MobjGetFriction(mobj_t *mo)
 
 void P_MobjMoveXY(mobj_t *mo)
 {
-    float       pos[2], mom[2];
-    player_t   *player;
-    boolean     largeNegative;
+    float               pos[2], mom[2];
+    player_t           *player;
+    boolean             largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
@@ -426,13 +422,13 @@ void P_MobjMoveXY(mobj_t *mo)
             }
             else if(mo->flags & MF_MISSILE)
             {   // Explode a missile
-                if(ceilingline)
+                if(ceilingLine)
                 {
                     sector_t* backsector =
-                        P_GetPtrp(ceilingline, DMU_BACK_SECTOR);
+                        P_GetPtrp(ceilingLine, DMU_BACK_SECTOR);
 
                     if(backsector &&
-                       P_GetIntp(backsector, DMU_CEILING_MATERIAL) == skyMaskMaterial)
+                       P_GetIntp(backsector, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL)
                     {
                         // Hack to prevent missiles exploding against the sky
                         if(mo->type == MT_BLOODYSKULL)
@@ -545,9 +541,9 @@ void P_MobjMoveXY(mobj_t *mo)
 
 void P_MobjMoveZ(mobj_t *mo)
 {
-    float       gravity;
-    float       dist;
-    float       delta;
+    float               gravity;
+    float               dist;
+    float               delta;
 
     // $democam: cameramen get special z movement
     if(P_CameraZMovement(mo))
@@ -602,9 +598,9 @@ void P_MobjMoveZ(mobj_t *mo)
 
     // Do some fly-bobbing.
     if(mo->player && (mo->flags2 & MF2_FLY) && mo->pos[VZ] > mo->floorZ &&
-       !mo->onMobj && (leveltime & 2))
+       !mo->onMobj && (levelTime & 2))
     {
-        mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * leveltime >> 2) & FINEMASK]);
+        mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * levelTime >> 2) & FINEMASK]);
     }
 
     // Clip movement. Another thing?
@@ -756,7 +752,7 @@ void P_MobjMoveZ(mobj_t *mo)
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
         {
-            if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == skyMaskMaterial)
+            if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL)
             {
 #if __JHERETIC__
                 if(mo->type == MT_BLOODYSKULL)
@@ -781,9 +777,9 @@ void P_MobjMoveZ(mobj_t *mo)
 
 void P_NightmareRespawn(mobj_t *mobj)
 {
-    float       pos[3];
-    subsector_t *ss;
-    mobj_t     *mo;
+    float               pos[3];
+    subsector_t        *ss;
+    mobj_t             *mo;
 
     pos[VX] = mobj->spawnSpot.pos[VX];
     pos[VY] = mobj->spawnSpot.pos[VY];
@@ -828,10 +824,10 @@ void P_NightmareRespawn(mobj_t *mobj)
  */
 void P_BlasterMobjThinker(mobj_t *mobj)
 {
-    int         i;
-    float       frac[3];
-    float       z;
-    boolean     changexy;
+    int                 i;
+    float               frac[3];
+    float               z;
+    boolean             changexy;
 
     // Handle movement
     if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || mobj->mom[MZ] != 0 ||
@@ -1025,7 +1021,7 @@ void P_MobjThinker(mobj_t *mobj)
         if(!(mobj->flags & MF_COUNTKILL))
             return;
 
-        if(!respawnmonsters)
+        if(!respawnMonsters)
             return;
 
         mobj->moveCount++;
@@ -1033,7 +1029,7 @@ void P_MobjThinker(mobj_t *mobj)
         if(mobj->moveCount < 12 * 35)
             return;
 
-        if(leveltime & 31)
+        if(levelTime & 31)
             return;
 
         if(P_Random() > 4)
@@ -1048,10 +1044,10 @@ void P_MobjThinker(mobj_t *mobj)
  */
 mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
 {
-    mobj_t     *mo;
-    mobjinfo_t *info = &mobjInfo[type];
-    float       space;
-    int         ddflags = 0;
+    mobj_t             *mo;
+    mobjinfo_t         *info = &mobjInfo[type];
+    float               space;
+    int                 ddflags = 0;
 
 #ifdef _DEBUG
     if(type < 0 || type >= Get(DD_NUMMOBJTYPES))
@@ -1076,7 +1072,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     mo->health =
         info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
 
-    if(gameskill != SM_NIGHTMARE)
+    if(gameSkill != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;
 
     mo->lastLook = P_Random() % MAXPLAYERS;
@@ -1137,16 +1133,21 @@ mobj_t *P_SpawnMobj3fv(mobjtype_t type, float pos[3])
  */
 void P_RespawnEnqueue(spawnspot_t *spot)
 {
-    spawnspot_t *spawnobj = &itemrespawnque[iquehead];
+    spawnspot_t        *spawnObj = &itemRespawnQueue[itemRespawnQueueHead];
 
-    memcpy(spawnobj, spot, sizeof(*spawnobj));
+    memcpy(spawnObj, spot, sizeof(*spawnObj));
 
-    itemrespawntime[iquehead] = leveltime;
-    iquehead = (iquehead + 1) & (ITEMQUESIZE - 1);
+    itemRespawnTime[itemRespawnQueueHead] = levelTime;
+    itemRespawnQueueHead = (itemRespawnQueueHead + 1) & (ITEMQUEUESIZE - 1);
 
-    // lose one off the end?
-    if(iquehead == iquetail)
-        iquetail = (iquetail + 1) & (ITEMQUESIZE - 1);
+    // Lose one off the end?
+    if(itemRespawnQueueHead == itemRespawnQueueTail)
+        itemRespawnQueueTail = (itemRespawnQueueTail + 1) & (ITEMQUEUESIZE - 1);
+}
+
+void P_EmptyRespawnQueue(void)
+{
+    itemRespawnQueueHead = itemRespawnQueueTail = 0;
 }
 
 /**
@@ -1155,11 +1156,10 @@ void P_RespawnEnqueue(spawnspot_t *spot)
  */
 void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
 {
-    player_t   *p;
-    float       pos[3];
-    mobj_t     *mobj;
-    int         i;
-    extern int playerkeys;
+    player_t           *p;
+    float               pos[3];
+    mobj_t             *mobj;
+    int                 i;
 
     if(!players[plrnum].plr->inGame)
         return; // Not playing.
@@ -1185,7 +1185,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
 
     mobj = P_SpawnMobj3fv(MT_PLAYER, pos);
 
-    // On clients all player mobjs are remote, even the consoleplayer.
+    // On clients all player mobjs are remote, even the CONSOLEPLAYER.
     if(IS_CLIENT)
     {
         mobj->flags &= ~MF_SOLID;
@@ -1235,18 +1235,18 @@ void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
         for(i = 0; i < NUM_KEY_TYPES; ++i)
         {
             p->keys[i] = true;
-            if(p == &players[consoleplayer])
+            if(p == &players[CONSOLEPLAYER])
             {
-                playerkeys = 7;
+                playerKeys = 7;
             }
         }
     }
-    else if(p == &players[consoleplayer])
+    else if(p == &players[CONSOLEPLAYER])
     {
-        playerkeys = 0;
+        playerKeys = 0;
     }
 
-    if(plrnum == consoleplayer)
+    if(plrnum == CONSOLEPLAYER)
     {
         // Wake up the status bar.
         ST_Start();
@@ -1258,20 +1258,21 @@ void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
 
 void P_SpawnMapThing(spawnspot_t *th)
 {
-    int         i, bit;
-    mobj_t     *mobj;
-    float       pos[3];
+    int                 i, bit;
+    mobj_t             *mobj;
+    float               pos[3];
 
-    /*Con_Message("x = %i, y = %i, height = %i, angle = %i, type = %i, options = %i\n",
-                  mthing->x, mthing->y, mthing->height, mthing->angle, mthing->type, mthing->options);*/
+    /*Con_Message("x = %g, y = %g, height = %g, angle = %i, type = %i, options = %i\n",
+                  mthing->pos[VX], mthing->pos[VY], mthing->height, mthing->angle, mthing->type,
+                  mthing->flags);*/
 
     // Count deathmatch start positions.
     if(th->type == 11)
     {
-        if(deathmatch_p < &deathmatchstarts[MAX_DM_STARTS])
+        if(deathmatchP < &deathmatchStarts[MAX_DM_STARTS])
         {
-            memcpy(deathmatch_p, th, sizeof(*th));
-            deathmatch_p++;
+            memcpy(deathmatchP, th, sizeof(*th));
+            deathmatchP++;
         }
         return;
     }
@@ -1302,12 +1303,12 @@ void P_SpawnMapThing(spawnspot_t *th)
     if(!IS_NETGAME && (th->flags & 16))
         return;
 
-    if(gameskill == SM_BABY)
+    if(gameSkill == SM_BABY)
         bit = 1;
-    else if(gameskill == SM_NIGHTMARE)
+    else if(gameSkill == SM_NIGHTMARE)
         bit = 4;
     else
-        bit = 1 << (gameskill - 1);
+        bit = 1 << (gameSkill - 1);
     if(!(th->flags & bit))
         return;
 
@@ -1336,7 +1337,7 @@ void P_SpawnMapThing(spawnspot_t *th)
         return;
 
     // Don't spawn any monsters if -nomonsters.
-    if(nomonsters && (mobjInfo[i].flags & MF_COUNTKILL))
+    if(noMonstersParm && (mobjInfo[i].flags & MF_COUNTKILL))
         return;
 
     switch(i)
@@ -1352,14 +1353,14 @@ void P_SpawnMapThing(spawnspot_t *th)
     case MT_ARTISUPERHEAL:
     case MT_ARTITELEPORT:
     case MT_ITEMSHIELD2:
-        if(gamemode == shareware)
+        if(gameMode == shareware)
         {   // Don't place on map in shareware version.
             return;
         }
         break;
 
     case MT_WMACE:
-        if(gamemode != shareware)
+        if(gameMode != shareware)
         {   // Put in the mace spot list.
             P_AddMaceSpot(th);
             return;
@@ -1396,9 +1397,9 @@ void P_SpawnMapThing(spawnspot_t *th)
     if(mobj->tics > 0)
         mobj->tics = 1 + (P_Random() % mobj->tics);
     if(mobj->flags & MF_COUNTKILL)
-        totalkills++;
+        totalKills++;
     if(mobj->flags & MF_COUNTITEM)
-        totalitems++;
+        totalItems++;
 
     mobj->visAngle = mobj->angle >> 16; // "angle-servo"; smooth actor turning
     if(th->flags & MTF_AMBUSH)
@@ -1416,8 +1417,8 @@ void P_SpawnMapThing(spawnspot_t *th)
  */
 void P_RepositionMace(mobj_t *mo)
 {
-    int         spot;
-    subsector_t *ss;
+    int                 spot;
+    subsector_t        *ss;
 
     P_MobjUnsetPosition(mo);
     spot = P_Random() % maceSpotCount;
@@ -1434,20 +1435,20 @@ void P_RepositionMace(mobj_t *mo)
 
 void P_SpawnPuff(float x, float y, float z)
 {
-    mobj_t     *puff;
+    mobj_t             *puff;
 
     // Clients do not spawn puffs.
     if(IS_CLIENT)
         return;
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
-    puff = P_SpawnMobj3f(PuffType, x, y, z);
+    puff = P_SpawnMobj3f(puffType, x, y, z);
     if(puff->info->attackSound)
     {
         S_StartSound(puff->info->attackSound, puff);
     }
 
-    switch(PuffType)
+    switch(puffType)
     {
     case MT_BEAKPUFF:
     case MT_STAFFPUFF:
@@ -1465,7 +1466,7 @@ void P_SpawnPuff(float x, float y, float z)
 
 void P_SpawnBloodSplatter(float x, float y, float z, mobj_t *originator)
 {
-    mobj_t     *mo;
+    mobj_t             *mo;
 
     mo = P_SpawnMobj3f(MT_BLOODSPLATTER, x, y, z);
 
@@ -1477,8 +1478,8 @@ void P_SpawnBloodSplatter(float x, float y, float z, mobj_t *originator)
 
 void P_RipperBlood(mobj_t *mo)
 {
-    mobj_t     *th;
-    float       pos[3];
+    mobj_t             *th;
+    float               pos[3];
 
     memcpy(pos, mo->pos, sizeof(pos));
 
@@ -1503,7 +1504,7 @@ int P_MobjGetFloorType(mobj_t *thing)
 
 int P_HitFloor(mobj_t *thing)
 {
-    mobj_t     *mo;
+    mobj_t             *mo;
 
     if(thing->floorZ != P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
     {
@@ -1617,12 +1618,12 @@ boolean P_CheckMissileSpawn(mobj_t *missile)
  */
 mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
 {
-    float       pos[3];
-    mobj_t     *th = 0;
-    angle_t     an = 0;
-    float       dist = 0;
-    float       slope = 0;
-    float       spawnZOff = 0;
+    float               pos[3];
+    mobj_t             *th = 0;
+    angle_t             an = 0;
+    float               dist = 0;
+    float               slope = 0;
+    float               spawnZOff = 0;
 
     memcpy(pos, source->pos, sizeof(pos));
 
@@ -1632,17 +1633,17 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
         an = source->angle;
         slope = P_AimLineAttack(source, an, 16 * 64);
         if(!cfg.noAutoAim)
-            if(!linetarget)
+            if(!lineTarget)
             {
                 an += 1 << 26;
                 slope = P_AimLineAttack(source, an, 16 * 64);
-                if(!linetarget)
+                if(!lineTarget)
                 {
                     an -= 2 << 26;
                     slope = P_AimLineAttack(source, an, 16 * 64);
                 }
 
-                if(!linetarget)
+                if(!lineTarget)
                 {
                     an = source->angle;
                     slope =
@@ -1737,7 +1738,7 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
     //// \kludge Set this global ptr as we need access to the mobj even if it
     //// explodes instantly in order to assign values to it.
     //// This is a bit of a kludge really...
-    MissileMobj = th;
+    missileMobj = th;
 #endif
 
     if(P_CheckMissileSpawn(th))
@@ -1760,12 +1761,12 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
 mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t angle,
                             float momZ)
 {
-    float       pos[3];
-    mobj_t     *th = 0;
-    angle_t     an = 0;
-    float       dist = 0;
-    float       slope = 0;
-    float       spawnZOff = 0;
+    float               pos[3];
+    mobj_t             *th = 0;
+    angle_t             an = 0;
+    float               dist = 0;
+    float               slope = 0;
+    float               spawnZOff = 0;
 
     memcpy(pos, source->pos, sizeof(pos));
 
@@ -1775,17 +1776,17 @@ mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t angle,
         // Try to find a target.
         slope = P_AimLineAttack(source, an, 16 * 64);
         if(!cfg.noAutoAim)
-            if(!linetarget)
+            if(!lineTarget)
             {
                 an += 1 << 26;
                 slope = P_AimLineAttack(source, an, 16 * 64);
-                if(!linetarget)
+                if(!lineTarget)
                 {
                     an -= 2 << 26;
                     slope = P_AimLineAttack(source, an, 16 * 64);
                 }
 
-                if(!linetarget)
+                if(!lineTarget)
                     an = angle;
             }
 
@@ -1862,7 +1863,7 @@ mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t angle,
     //// \kludge Set this global ptr as we need access to the mobj even if it
     //// explodes instantly in order to assign values to it.
     //// This is a bit of a kludge really...
-    MissileMobj = th;
+    missileMobj = th;
 #endif
 
     if(P_CheckMissileSpawn(th))

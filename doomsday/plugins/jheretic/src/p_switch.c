@@ -129,7 +129,7 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
         P_ChangeSwitchTexture(line, 0);
         break;
 
@@ -192,7 +192,7 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, true);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
         P_ChangeSwitchTexture(line, 0);
         break;
 
