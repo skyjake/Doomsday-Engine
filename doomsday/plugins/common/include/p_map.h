@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,20 +29,27 @@
 #ifndef __COMMON_P_LOCAL__
 #define __COMMON_P_LOCAL__
 
-// If "floatok" true, move would be ok
-// if within "tmfloorz - tmceilingz".
-extern boolean  floatok;
-extern float tmfloorz;
-extern float tmceilingz;
-extern int tmfloorpic;
+extern float attackRange;
 
-extern linedef_t  *ceilingline;
-extern mobj_t  *linetarget; // who got hit (or NULL)
+// If "floatOk" true, move would be ok
+// if within "tmFloorZ - tmCeilingZ".
+extern boolean  floatOk;
+extern float tmFloorZ;
+extern float tmCeilingZ;
+extern int tmFloorPic;
+
+extern linedef_t *ceilingLine;
+extern linedef_t *blockLine;
+extern mobj_t *lineTarget; // who got hit (or NULL)
+extern mobj_t *tmThing;
 
 #if __JHEXEN__
-extern mobj_t *PuffSpawned;
-extern mobj_t *BlockingMobj;
+extern mobj_t *puffSpawned;
+extern mobj_t *blockingMobj;
 #endif
+
+extern float tmBBox[];
+extern boolean fellDown;
 
 boolean         P_CheckPosition2f(mobj_t *thing, float x, float y);
 boolean         P_CheckPosition3f(mobj_t *thing, float x, float y, float z);
@@ -75,4 +82,10 @@ void            P_LineAttack(mobj_t *t1, angle_t angle, float distance,
 float           P_GetGravity(void);
 
 boolean         P_CheckSides(mobj_t* actor, float x, float y);
+
+#if __JHEXEN__
+boolean         P_TestMobjLocation(mobj_t *mobj);
+void            PIT_ThrustSpike(mobj_t *actor);
+#endif
+
 #endif

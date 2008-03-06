@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,12 +44,12 @@ enum {
 #define HU_FONTEND          '_' // the last font characters
 
 // Calculate # of glyphs in font.
-#define HU_FONTSIZE (HU_FONTEND - HU_FONTSTART + 1)
+#define HU_FONTSIZE         (HU_FONTEND - HU_FONTSTART + 1)
 
 #define HU_BROADCAST        (5)
 
 #define HU_TITLEX           (0)
-#define HU_TITLEY           (167 - hu_font[0].height)
+#define HU_TITLEY           (167 - huFont[0].height)
 
 typedef enum border_e {
     BORDERUP = 1,
@@ -57,19 +57,21 @@ typedef enum border_e {
 } border_t;
 
 // The fonts.
-extern dpatch_t hu_font[HU_FONTSIZE];
-extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
+extern dpatch_t huFont[HU_FONTSIZE];
+extern dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 
 // Name graphics of each level (centered)
-extern dpatch_t *lnames;
+extern dpatch_t *levelNamePatches;
 
-extern boolean  message_noecho;
-extern int typein_time;
+extern boolean messageNoEcho;
+extern int typeInTime;
 extern boolean chatOn;
+
+extern boolean huShowAllFrags;
 
 #ifdef __JDOOM__
 // Plutonia and TNT map names.
-extern char *mapnamesp[32], *mapnamest[32];
+extern char *mapNamesPlut[32], *mapNamesTNT[32];
 #endif
 
 void            Hu_LoadData(void);

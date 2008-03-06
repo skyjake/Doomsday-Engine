@@ -4,8 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,12 +22,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * p_tick.c: Top-level tick stuff.
+/**
+ * p_tick.h: (Common) Top-level tick stuff.
  */
 
-#ifndef __COMMON_TICK_H__
-#define __COMMON_TICK_H__
+#ifndef __P_TICK_H__
+#define __P_TICK_H__
+
+extern int levelTime;
+extern int actualLevelTime;
+extern int timerGame;
 
 void    P_RunPlayers(timespan_t ticLength);
 boolean P_IsPaused(void);

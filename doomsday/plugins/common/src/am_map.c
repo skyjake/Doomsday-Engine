@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -67,6 +68,7 @@
 #include "p_player.h"
 #include "g_controls.h"
 #include "am_rendlist.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -384,7 +386,7 @@ static void rotate2D(float *x, float *y, angle_t a);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean viewactive;
+extern boolean viewActive;
 
 extern int numTexUnits;
 extern boolean envModAdd;
@@ -503,8 +505,8 @@ Con_Error("mapForPlayerId: Invalid player id %i.", id);
 
 static vectorgrap_t *getVectorGraphic(uint idx)
 {
-    vectorgrap_t *vg;
-    vgline_t    *lines;
+    vectorgrap_t       *vg;
+    vgline_t           *lines;
 
     if(idx > NUM_VECTOR_GRAPHS - 1)
         return NULL;
@@ -514,7 +516,7 @@ static vectorgrap_t *getVectorGraphic(uint idx)
 
     // Not loaded yet.
     {
-    uint        i, linecount;
+    uint                i, linecount;
 
     vg = vectorGraphs[idx] = malloc(sizeof(*vg));
 
@@ -589,8 +591,8 @@ static mapobjectinfo_t *getInfoForSpecialLine(automap_t *map, int special,
                                               sector_t *frontsector,
                                               sector_t *backsector)
 {
-    uint        i;
-    mapobjectinfo_t *info = NULL;
+    uint                i;
+    mapobjectinfo_t    *info = NULL;
 
     if(special > 0)
     {
@@ -632,7 +634,7 @@ static mapobjectinfo_t *getInfoForSpecialLine(automap_t *map, int special,
  */
 void AM_Register(void)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; mapCVars[i].name; ++i)
         Con_AddVariable(&mapCVars[i]);
@@ -648,7 +650,7 @@ void AM_Register(void)
  */
 void AM_Init(void)
 {
-    uint        i;
+    uint                i;
 
     if(IS_DEDICATED)
         return;
@@ -810,7 +812,7 @@ void AM_Init(void)
  */
 void AM_Shutdown(void)
 {
-    uint        i;
+    uint                i;
 
     if(IS_DEDICATED)
         return; // nothing to do.
@@ -833,26 +835,26 @@ void AM_Shutdown(void)
 
 static void calcViewScaleFactors(automap_t *map)
 {
-    float       a, b;
-    float       max_w;
-    float       max_h;
-    float       min_w;
-    float       min_h;
+    float               a, b;
+    float               maxWidth;
+    float               maxHeight;
+    float               minWidth;
+    float               minHeight;
 
     if(!map)
         return; // hmm...
 
     // Calculate the min/max scaling factors.
-    max_w = bounds[1][0] - bounds[0][0];
-    max_h = bounds[1][1] - bounds[0][1];
+    maxWidth  = bounds[1][0] - bounds[0][0];
+    maxHeight = bounds[1][1] - bounds[0][1];
 
-    min_w = 2 * PLAYERRADIUS;    // const? never changed?
-    min_h = 2 * PLAYERRADIUS;
+    minWidth  = 2 * PLAYERRADIUS; // const? never changed?
+    minHeight = 2 * PLAYERRADIUS;
 
     // Calculate world to screen space scale based on window width/height
     // divided by the min/max scale factors derived from map boundaries.
-    a = (float) map->window.width / max_w;
-    b = (float) map->window.height / max_h;
+    a = (float) map->window.width / maxWidth;
+    b = (float) map->window.height / maxHeight;
 
     map->minScaleMTOF = (a < b ? a : b);
     map->maxScaleMTOF =
@@ -864,8 +866,8 @@ static void calcViewScaleFactors(automap_t *map)
  */
 void AM_InitForLevel(void)
 {
-    uint        i;
-    automap_t  *map;
+    uint                i;
+    automap_t          *map;
 
     if(IS_DEDICATED)
         return; // nothing to do.
@@ -893,7 +895,7 @@ void AM_InitForLevel(void)
         clearMarks(map);
 
 #if !__JHEXEN__
-        if(gameskill == SM_BABY && cfg.automapBabyKeys)
+        if(gameSkill == SM_BABY && cfg.automapBabyKeys)
             map->flags |= AMF_REND_KEYS;
 
         if(!IS_NETGAME && map->cheating)
@@ -916,7 +918,7 @@ void AM_InitForLevel(void)
  */
 void AM_Start(int pnum)
 {
-    automap_t  *map;
+    automap_t          *map;
 
     if(IS_DEDICATED)
         return; // nothing to do.
@@ -966,7 +968,7 @@ void AM_Start(int pnum)
  */
 void AM_Stop(int pnum)
 {
-    automap_t *map;
+    automap_t          *map;
 
     if(IS_DEDICATED)
         return; // nothing to do.
@@ -985,7 +987,7 @@ void AM_Stop(int pnum)
  */
 float AM_MapToFrame(int pid, float val)
 {
-    automap_t *map;
+    automap_t          *map;
 
     if(IS_DEDICATED)
         Con_Error("AM_MapToFrame: Not available in dedicated mode.");
@@ -1002,7 +1004,7 @@ float AM_MapToFrame(int pid, float val)
  */
 float AM_FrameToMap(int pid, float val)
 {
-    automap_t *map;
+    automap_t          *map;
 
     if(IS_DEDICATED)
         Con_Error("AM_MapToFrame: Not available in dedicated mode.");
@@ -1016,7 +1018,7 @@ float AM_FrameToMap(int pid, float val)
 
 static void setWindowTarget(automap_t *map, int x, int y, int w, int h)
 {
-    automapwindow_t *win;
+    automapwindow_t    *win;
 
     // Are we in fullscreen mode?
     // If so, setting the window size is not allowed.
@@ -1045,7 +1047,7 @@ static void setWindowTarget(automap_t *map, int x, int y, int w, int h)
 
 void AM_SetWindowTarget(int pid, int x, int y, int w, int h)
 {
-    automap_t *map;
+    automap_t          *map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1058,7 +1060,7 @@ void AM_SetWindowTarget(int pid, int x, int y, int w, int h)
 
 void AM_GetWindow(int pid, float *x, float *y, float *w, float *h)
 {
-    automap_t *map;
+    automap_t          *map;
 
     if(IS_DEDICATED)
         Con_Error("AM_GetWindow: Not available in dedicated mode.");
@@ -1083,7 +1085,7 @@ static void setWindowFullScreenMode(automap_t *map, int value)
 
 void AM_SetWindowFullScreenMode(int pid, int value)
 {
-    automap_t *map;
+    automap_t          *map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1104,7 +1106,7 @@ Con_Error("AM_SetFullScreenMode: Unknown value %i.", value);
 
 boolean AM_IsMapWindowInFullScreenMode(int pid)
 {
-    automap_t *map;
+    automap_t          *map;
 
     if(IS_DEDICATED)
         Con_Error("AM_IsMapWindowInFullScreenMode: Not available in dedicated mode.");
@@ -2534,7 +2536,7 @@ static void renderWallSeg(seg_t *seg, void *data)
     if(map->flags & AMF_REND_XGLINES) // Debug cheat.
     {
         // Show active XG lines.
-        if(xLine->xg && xLine->xg->active && (leveltime & 4))
+        if(xLine->xg && xLine->xg->active && (levelTime & 4))
         {
             P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
             P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
@@ -3154,13 +3156,13 @@ static void restoreGLStateFromMap(void)
  */
 static void drawLevelName(void)
 {
-    float       x, y, otherY;
-    char       *lname;
-    automap_t  *map = &automaps[mapviewplayer];
-    automapwindow_t *win = &map->window;
-    int         lumpNum = -1;
+    float               x, y, otherY;
+    char               *lname;
+    automap_t          *map = &automaps[mapviewplayer];
+    automapwindow_t    *win = &map->window;
+    int                 lumpNum = -1;
 #if __JDOOM__
-    int         mapnum;
+    int                 mapNum;
 #endif
 
     lname = P_GetMapNiceName();
@@ -3169,12 +3171,12 @@ static void drawLevelName(void)
     {
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM__
-        if(gamemode == commercial)
-            mapnum = gamemap -1;
+        if(gameMode == commercial)
+            mapNum = gameMap -1;
         else
-            mapnum = ((gameepisode -1) * 9) + gamemap -1;
+            mapNum = ((gameEpisode -1) * 9) + gameMap -1;
 
-        lumpNum = lnames[mapnum].lump;
+        lumpNum = levelNamePatches[mapNum].lump;
 #endif
 
         DGL_MatrixMode(DGL_PROJECTION);
@@ -3184,10 +3186,10 @@ static void drawLevelName(void)
 
         x = SCREENXTOFIXX(win->x + (win->width * .5f));
         y = SCREENYTOFIXY(win->y + win->height);
-        if(cfg.setblocks < 13)
+        if(cfg.setBlocks < 13)
         {
 #if !__DOOM64TC__
-            if(cfg.setblocks == 12)
+            if(cfg.setBlocks == 12)
 #endif
             {   // We may need to adjust for the height of the HUD icons.
                 otherY = y;
@@ -3197,10 +3199,10 @@ static void drawLevelName(void)
                     y = otherY;
             }
 #if !__DOOM64TC__
-            else if(cfg.setblocks <= 11 || cfg.automapHudDisplay == 2)
+            else if(cfg.setBlocks <= 11 || cfg.automapHudDisplay == 2)
             {   // We may need to adjust for the height of the statusbar
                 otherY = ST_Y;
-                otherY += ST_HEIGHT * (1 - (cfg.sbarscale / 20.0f));
+                otherY += ST_HEIGHT * (1 - (cfg.statusbarScale / 20.0f));
 
                 if(y > otherY)
                     y = otherY;
@@ -3353,7 +3355,7 @@ menu_t MapDef = {
     14, MAPItems,
 #endif
     0, MENU_OPTIONS,
-    hu_font_a,
+    huFontA,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -3493,7 +3495,7 @@ void M_MapRotate(int option, void *data)
 {
     cfg.automapRotate = !cfg.automapRotate;
 
-    setViewRotateMode(&automaps[consoleplayer], cfg.automapRotate);
+    setViewRotateMode(&automaps[CONSOLEPLAYER], cfg.automapRotate);
 }
 
 /**
@@ -3575,11 +3577,11 @@ DEFCC(CCmdMapAction)
 
     if(!stricmp(argv[0], "automap")) // open/close the map.
     {
-        automap_t   *map = &automaps[consoleplayer];
+        automap_t   *map = &automaps[CONSOLEPLAYER];
 
         if(map->active) // Is open, now close it.
         {
-            viewactive = true;
+            viewActive = true;
 
             // Disable the automap binding classes
             //DD_SetBindClass(GBC_CLASS1, false);
@@ -3589,11 +3591,11 @@ DEFCC(CCmdMapAction)
             DD_Execute(true, "deactivatebclass map");
             DD_Execute(true, "deactivatebclass map-freepan");
 
-            AM_Stop(consoleplayer);
+            AM_Stop(CONSOLEPLAYER);
         }
         else // Is closed, now open it.
         {
-            AM_Start(consoleplayer);
+            AM_Start(CONSOLEPLAYER);
             // Enable/disable the automap binding classes
             //DD_SetBindClass(GBC_CLASS1, true);
             //if(map->panMode)
@@ -3603,15 +3605,15 @@ DEFCC(CCmdMapAction)
             if(map->panMode)
                 DD_Execute(true, "activatebclass map-freepan");
 
-            viewactive = false;
+            viewActive = false;
         }
 
         return true;
     }
     else if(!stricmp(argv[0], "follow"))  // follow mode toggle
     {
-        player_t    *plr = &players[consoleplayer];
-        automap_t   *map = &automaps[consoleplayer];
+        player_t    *plr = &players[CONSOLEPLAYER];
+        automap_t   *map = &automaps[CONSOLEPLAYER];
 
         if(map->active)
         {
@@ -3628,8 +3630,8 @@ DEFCC(CCmdMapAction)
     }
     else if(!stricmp(argv[0], "rotate"))  // rotate mode toggle
     {
-        player_t    *plr = &players[consoleplayer];
-        automap_t   *map = &automaps[consoleplayer];
+        player_t    *plr = &players[CONSOLEPLAYER];
+        automap_t   *map = &automaps[CONSOLEPLAYER];
 
         if(map->active)
         {
@@ -3644,8 +3646,8 @@ DEFCC(CCmdMapAction)
     }
     else if(!stricmp(argv[0], "zoommax"))  // max zoom
     {
-        player_t    *plr = &players[consoleplayer];
-        automap_t   *map = &automaps[consoleplayer];
+        player_t    *plr = &players[CONSOLEPLAYER];
+        automap_t   *map = &automaps[CONSOLEPLAYER];
 
         if(map->active)
         {
@@ -3662,8 +3664,8 @@ DEFCC(CCmdMapAction)
     }
     else if(!stricmp(argv[0], "addmark"))  // add a mark
     {
-        player_t   *plr = &players[consoleplayer];
-        automap_t  *map = &automaps[consoleplayer];
+        player_t   *plr = &players[CONSOLEPLAYER];
+        automap_t  *map = &automaps[CONSOLEPLAYER];
         uint        num;
 
         if(map->active)
@@ -3680,8 +3682,8 @@ DEFCC(CCmdMapAction)
     }
     else if(!stricmp(argv[0], "clearmarks"))  // clear all marked points
     {
-        player_t    *plr = &players[consoleplayer];
-        automap_t   *map = &automaps[consoleplayer];
+        player_t    *plr = &players[CONSOLEPLAYER];
+        automap_t   *map = &automaps[CONSOLEPLAYER];
 
         if(map->active)
         {
