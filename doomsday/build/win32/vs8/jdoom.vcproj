@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="JDoom"
+	Name="jDoom"
 	ProjectGUID="{A36C0FB9-8186-4747-A5D9-D7B659B9F39F}"
-	RootNamespace="JDoom"
+	RootNamespace="jDoom"
 	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
@@ -17,8 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\./Bin/Release"
-			IntermediateDirectory=".\./Obj/Release/JDoom"
+			OutputDirectory=".\./bin/$(ConfigurationName)"
+			IntermediateDirectory=".\./$(ConfigurationName)/$(ProjectName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
@@ -43,7 +43,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Release/JDoom.tlb"
+				TypeLibraryName=".\./bin/$(ConfigurationName)/jDoom.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -54,10 +54,10 @@
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\./Obj/Release/JDoom/JDoom.pch"
-				AssemblerListingLocation=".\./Obj/Release/JDoom/"
-				ObjectFile=".\./Obj/Release/JDoom/"
-				ProgramDataBaseFileName=".\./Obj/Release/JDoom/"
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ObjectFile=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ProgramDataBaseFileName=".\./obj/$(ConfigurationName)/$(ProjectName)/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -76,16 +76,16 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib odbc32.lib odbccp32.lib"
-				OutputFile="./Bin/Release/JDoom.dll"
+				AdditionalDependencies="./bin/$(ConfigurationName)/doomsday.lib lzss.lib odbc32.lib odbccp32.lib"
+				OutputFile="./bin/$(ConfigurationName)/$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jdoom\api\jdoom.def"
-				ProgramDatabaseFile=".\./Bin/Release/JDoom.pdb"
+				ProgramDatabaseFile=".\./bin/$(ConfigurationName)/$(ProjectName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Release/JDoom.lib"
+				ImportLibrary=".\./bin/$(ConfigurationName)/$(ProjectName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -112,8 +112,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\./Bin/Debug"
-			IntermediateDirectory=".\./Obj/Debug/JDoom"
+			OutputDirectory=".\./bin/$(ConfigurationName)"
+			IntermediateDirectory=".\./$(ConfigurationName)/$(ProjectName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
@@ -138,7 +138,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Debug/JDoom.tlb"
+				TypeLibraryName=".\./bin/$(ConfigurationName)/$(ProjectName).tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -148,10 +148,10 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\./Obj/Debug/JDoom/JDoom.pch"
-				AssemblerListingLocation=".\./Obj/Debug/JDoom/"
-				ObjectFile=".\./Obj/Debug/JDoom/"
-				ProgramDataBaseFileName=".\./Obj/Debug/JDoom/"
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ObjectFile=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ProgramDataBaseFileName=".\./obj/$(ConfigurationName)/$(ProjectName)/"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -173,16 +173,16 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib"
-				OutputFile="./Bin/Debug/JDoom.dll"
+				OutputFile="./bin/$(ConfigurationName)/$(ProjectName).dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jdoom\api\jdoom.def"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\./Bin/Debug/JDoom.pdb"
+				ProgramDatabaseFile=".\./bin/$(ConfigurationName)/$(ProjectName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Debug/JDoom.lib"
+				ImportLibrary=".\./bin/$(ConfigurationName)/$(ProjectName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -323,6 +323,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_user.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_view.h"
 				>
 			</File>
@@ -437,24 +441,6 @@
 			<File
 				RelativePath="..\..\..\plugins\common\src\p_doors.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\p_floors.c"
@@ -553,6 +539,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jdoom\include\d_api.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jdoom\include\d_config.h"
 				>
 			</File>
@@ -573,7 +563,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jdoom\include\d_main.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jdoom\include\d_player.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jdoom\include\d_refresh.h"
 				>
 			</File>
 			<File
@@ -586,10 +584,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jdoom\include\doomdef.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jdoom\include\doomstat.h"
 				>
 			</File>
 			<File
@@ -636,6 +630,14 @@
 				RelativePath="..\..\..\plugins\jdoom\include\oldinfo.h"
 				>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
@@ -645,11 +647,27 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jdoom\include\p_enemy.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jdoom\include\p_floor.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jdoom\include\p_inter.h"
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jdoom\include\p_lights.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jdoom\include\p_local.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jdoom\include\p_maputl.h"
 				>
 			</File>
 			<File
@@ -669,7 +687,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jdoom\include\p_sound.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jdoom\include\p_spec.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jdoom\include\p_switch.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jdoom\include\p_telept.h"
 				>
 			</File>
 			<File
