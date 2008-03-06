@@ -71,8 +71,6 @@ typedef struct {
     byte            arg5;
 } spawnspot_t;
 
-extern spawnspot_t* things;
-
 /**
  * Mobj flags
  *
@@ -221,5 +219,9 @@ typedef struct mobj_s {
     // Used by lightning zap
     struct mobj_s  *lastEnemy;
 } mobj_t;
+
+extern spawnspot_t* things;
+
+void            P_ExplodeMissile(mobj_t *mo);
 
 #endif

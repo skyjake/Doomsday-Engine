@@ -373,6 +373,6 @@ boolean     EV_ThingDeactivate(int tid);
 boolean     EV_ThingRemove(int tid);
 boolean     EV_ThingDestroy(int tid);
 
-//#pragma pack()
+void            P_InitSky(int map);
 
 #endif

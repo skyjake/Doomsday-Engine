@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,12 +95,14 @@ enum {
     NUM_DAM_PROPERTIES
 };
 
-void        P_RegisterCustomMapProperties(void);
-int         P_HandleMapDataProperty(uint id, int dtype, int prop,
-                                    int type, void *data);
-int         P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
-                                         int type, void *data);
-void        P_Init(void);
-boolean     P_MapExists(int episode, int map);
+void            P_RegisterCustomMapProperties(void);
+int             P_HandleMapDataProperty(uint id, int dtype, int prop,
+                                        int type, void *data);
+int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
+                                             int type, void *data);
+int             P_HandleMapObjectStatusReport(int code, uint id, int dtype,
+                                              void *data);
+void            P_Init(void);
+boolean         P_MapExists(int episode, int map);
 
 #endif

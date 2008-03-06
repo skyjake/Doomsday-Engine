@@ -60,8 +60,6 @@
 #include "p_actor.h"
 #include "d_net.h"
 
-#define DELTAMUL            6.324555320
-
 #define STARTREDPALS        1
 #define STARTBONUSPALS      9
 #define STARTPOISONPALS     13
@@ -72,7 +70,6 @@
 #define NUMBONUSPALS        4
 #define NUMPOISONPALS       8
 
-#define TOCENTER            -8
 #define FLOATSPEED          4
 
 #define MAXHEALTH           100
@@ -213,10 +210,10 @@ mobj_t     *P_RoughMonsterSearch(mobj_t *mo, int distance);
 
 void        P_Validate();
 
-#define openrange           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define opentop             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define openbottom          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define lowfloor            (*(float*) DD_GetVariable(DD_LOWFLOOR))
+#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
+#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
+#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
+#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
 extern int clipmana[NUM_AMMO_TYPES];
 
