@@ -3,6 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,23 +34,14 @@
  */
 
 /**
- * m_cheat.h: Cheat code checking.
+ * a_action.h:
  */
 
-#ifndef __M_CHEAT__
-#define __M_CHEAT__
+#ifndef __A_ACTION_H__
+#define __A_ACTION_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
-
-#include "x_player.h"
-
-void            Cht_Init(void);
-boolean         Cht_Responder(event_t *ev);
-
-void            Cht_GodFunc(player_t *plr);
-void            Cht_SuicideFunc(player_t *plr);
-void            Cht_NoClipFunc(player_t *plr);
 
 #endif

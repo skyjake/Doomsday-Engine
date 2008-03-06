@@ -3,7 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,23 +33,22 @@
  */
 
 /**
- * m_cheat.h: Cheat code checking.
+ * in_lude.h:
  */
 
-#ifndef __M_CHEAT__
-#define __M_CHEAT__
+#ifndef __IN_LUDE_H__
+#define __IN_LUDE_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "x_player.h"
+extern boolean  intermission;
+extern int interState;
 
-void            Cht_Init(void);
-boolean         Cht_Responder(event_t *ev);
-
-void            Cht_GodFunc(player_t *plr);
-void            Cht_SuicideFunc(player_t *plr);
-void            Cht_NoClipFunc(player_t *plr);
+void            IN_Start(void);
+void            IN_Stop(void);
+void            IN_Ticker(void);
+void            IN_Drawer(void);
 
 #endif

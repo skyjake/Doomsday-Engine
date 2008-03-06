@@ -319,30 +319,32 @@ typedef enum {
 
 enum { VX, VY, VZ }; // Vertex indices.
 
-#define IS_SERVER           Get(DD_SERVER)
-#define IS_CLIENT           Get(DD_CLIENT)
-#define IS_NETGAME          Get(DD_NETGAME)
-#define IS_DEDICATED        Get(DD_DEDICATED)
+#define IS_SERVER           (Get(DD_SERVER))
+#define IS_CLIENT           (Get(DD_CLIENT))
+#define IS_NETGAME          (Get(DD_NETGAME))
+#define IS_DEDICATED        (Get(DD_DEDICATED))
 
 #define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
 
-#define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
-#define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
+#define SFXVOLUME           (Get(DD_SFX_VOLUME)/17)
+#define MUSICVOLUME         (Get(DD_MUSIC_VOLUME)/17)
 
-#define consoleplayer       Get(DD_CONSOLEPLAYER)
-#define displayplayer       Get(DD_DISPLAYPLAYER)
+#define CONSOLEPLAYER       (Get(DD_CONSOLEPLAYER))
+#define DISPLAYPLAYER       (Get(DD_DISPLAYPLAYER))
+
+#define GAMETIC             (Get(DD_GAMETIC))
 
 // Uncomment, to enable all timebomb stuff.
 #define TIMEBOMB_YEAR       (95) // years since 1900
 #define TIMEBOMB_STARTDATE  (268) // initial date (9/26)
 #define TIMEBOMB_ENDDATE    (301) // end date (10/29)
 
-extern int MaulatorSeconds;
+extern int maulatorSeconds;
 
-#define MAULATORTICS    ( (unsigned int) /*((netgame || demorecording || demoplayback)? 25*35 :*/ MaulatorSeconds*35 )
+#define MAULATORTICS        ((unsigned int) maulatorSeconds * TICSPERSEC)
 
 // Most damage defined using HITDICE
-#define HITDICE(a)          ((1+(P_Random()&7))*a)
+#define HITDICE(a)          ((1 + (P_Random() & 7)) * (a))
 
 #define SBARHEIGHT          (39) // status bar height at bottom of screen
 
@@ -350,16 +352,6 @@ extern int MaulatorSeconds;
 
 extern fixed_t finesine[5 * FINEANGLES / 4];
 extern fixed_t *finecosine;
-
-extern boolean  DevMaps; // true = map development mode
-extern char *DevMapsDir; // development maps directory
-extern int DebugSound; // debug flag for displaying sound info
-
-extern boolean cmdfrag; // true if a CMD_FRAG packet should be sent out every
-
-extern int Sky1Texture;
-extern int Sky2Texture;
-extern int prevmap;
 
 // Set if homebrew PWAD stuff has been added.
 extern boolean  modifiedgame;
@@ -369,6 +361,8 @@ extern boolean  modifiedgame;
 void            H2_Main(void);
 
 void            G_IdentifyVersion(void);
+void            G_CommonPreInit(void);
+void            G_CommonPostInit(void);
 void            R_SetFilter(int filter);
 int             R_GetFilterColor(int filter);
 void            R_InitRefresh(void);
@@ -444,20 +438,6 @@ extern boolean sc_End;
 extern boolean sc_Crossed;
 extern boolean sc_FileScripts;
 extern char *sc_ScriptsDir;
-
-//----------------------
-// Interlude (IN_lude.c)
-//----------------------
-
-#define MAX_INTRMSN_MESSAGE_SIZE 1024
-
-extern boolean  intermission;
-extern char     ClusterMessage[MAX_INTRMSN_MESSAGE_SIZE];
-
-void            IN_Start(void);
-void            IN_Stop(void);
-void            IN_Ticker(void);
-void            IN_Drawer(void);
 
 //----------------------
 // Chat mode (CT_chat.c)
