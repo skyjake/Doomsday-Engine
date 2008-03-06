@@ -30,6 +30,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdio.h>
+#include <string.h>
+
 #include "doom64tc.h"
 
 #include "f_infine.h"
@@ -37,10 +40,11 @@
 #include "g_common.h"
 #include "p_player.h"
 #include "am_map.h"
+#include "hu_menu.h"
+#include "p_user.h"
+#include "p_start.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define ST_MSGWIDTH         52 // Dimensions given in characters.
 
 // TYPES -------------------------------------------------------------------
 
@@ -52,77 +56,72 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int messageResponse;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-// Massive bunches of cheat shit
-//  to keep it from being easy to figure them out.
-// Yeah, right...
 unsigned char cheat_mus_seq[] = {
     0xb2, 0x26, 0xb6, 0xae, 0xea, 1, 0, 0, 0xff
 };
 
 unsigned char cheat_choppers_seq[] = {
-    0xb2, 0x26, 0xe2, 0x32, 0xf6, 0x2a, 0x2a, 0xa6, 0x6a, 0xea, 0xff    // id...
+    0xb2, 0x26, 0xe2, 0x32, 0xf6, 0x2a, 0x2a, 0xa6, 0x6a, 0xea, 0xff // id...
 };
 
 unsigned char cheat_god_seq[] = {
-    0xb2, 0x26, 0x26, 0xaa, 0x26, 0xff  // iddqd
+    0xb2, 0x26, 0x26, 0xaa, 0x26, 0xff // iddqd
 };
 
 unsigned char cheat_ammo_seq[] = {
-    0xb2, 0x26, 0xf2, 0x66, 0xa2, 0xff  // idkfa
+    0xb2, 0x26, 0xf2, 0x66, 0xa2, 0xff // idkfa
 };
 
 unsigned char cheat_ammonokey_seq[] = {
-    0xb2, 0x26, 0x66, 0xa2, 0xff    // idfa
+    0xb2, 0x26, 0x66, 0xa2, 0xff // idfa
 };
 
 // Smashing Pumpkins Into Small Piles Of Putried Debris.
 unsigned char cheat_noclip_seq[] = {
-    0xb2, 0x26, 0xea, 0x2a, 0xb2,   // idspispopd
+    0xb2, 0x26, 0xea, 0x2a, 0xb2, // idspispopd
     0xea, 0x2a, 0xf6, 0x2a, 0x26, 0xff
 };
 
 //
 unsigned char cheat_commercial_noclip_seq[] = {
-    0xb2, 0x26, 0xe2, 0x36, 0xb2, 0x2a, 0xff    // idclip
+    0xb2, 0x26, 0xe2, 0x36, 0xb2, 0x2a, 0xff // idclip
 };
 
 unsigned char cheat_powerup_seq[7][10] = {
-    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0x6e, 0xff},   // beholdv
-    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xea, 0xff},   // beholds
-    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xb2, 0xff},   // beholdi
-    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0x6a, 0xff},   // beholdr
-    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xa2, 0xff},   // beholda
-    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0x36, 0xff},   // beholdl
-    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xff}  // behold
+    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0x6e, 0xff}, // beholdv
+    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xea, 0xff}, // beholds
+    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xb2, 0xff}, // beholdi
+    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0x6a, 0xff}, // beholdr
+    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xa2, 0xff}, // beholda
+    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0x36, 0xff}, // beholdl
+    {0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xff} // behold
 };
 
 unsigned char cheat_clev_seq[] = {
-    0xb2, 0x26, 0xe2, 0x36, 0xa6, 0x6e, 1, 0, 0, 0xff   // idclev
+    0xb2, 0x26, 0xe2, 0x36, 0xa6, 0x6e, 1, 0, 0, 0xff // idclev
 };
 
-// my position cheat
 unsigned char cheat_mypos_seq[] = {
-    0xb2, 0x26, 0xb6, 0xba, 0x2a, 0xf6, 0xea, 0xff  // idmypos
+    0xb2, 0x26, 0xb6, 0xba, 0x2a, 0xf6, 0xea, 0xff // idmypos
 };
 
 // d64tc
 unsigned char cheat_laser_seq[] = {
-    0x26, 0x26, 0xea, 0x36, 0xb2, 0xa2, 0xff    // ddslia
+    0x26, 0x26, 0xea, 0x36, 0xb2, 0xa2, 0xff // ddslia
 };
 
-unsigned char cheat_amap_seq[] = { 0xb2, 0x26, 0x26, 0x2e, 0xff };  // iddt
+unsigned char cheat_amap_seq[] = {
+    0xb2, 0x26, 0x26, 0x2e, 0xff // iddt
+};
 
-// Now what?
-cheatseq_t cheat_mus = { cheat_mus_seq, 0 };
-cheatseq_t cheat_god = { cheat_god_seq, 0 };
-cheatseq_t cheat_ammo = { cheat_ammo_seq, 0 };
-cheatseq_t cheat_ammonokey = { cheat_ammonokey_seq, 0 };
-cheatseq_t cheat_noclip = { cheat_noclip_seq, 0 };
-cheatseq_t cheat_commercial_noclip = { cheat_commercial_noclip_seq, 0 };
+cheatseq_t cheat_mus = {cheat_mus_seq, 0};
+cheatseq_t cheat_god = {cheat_god_seq, 0};
+cheatseq_t cheat_ammo = {cheat_ammo_seq, 0};
+cheatseq_t cheat_ammonokey = {cheat_ammonokey_seq, 0};
+cheatseq_t cheat_noclip = {cheat_noclip_seq, 0};
+cheatseq_t cheat_commercial_noclip = {cheat_commercial_noclip_seq, 0};
 
 cheatseq_t cheat_powerup[7] = {
     {cheat_powerup_seq[0], 0},
@@ -134,12 +133,11 @@ cheatseq_t cheat_powerup[7] = {
     {cheat_powerup_seq[6], 0}
 };
 
-cheatseq_t cheat_choppers = { cheat_choppers_seq, 0 };
-cheatseq_t cheat_clev = { cheat_clev_seq, 0 };
-cheatseq_t cheat_mypos = { cheat_mypos_seq, 0 };
-cheatseq_t cheat_laser = { cheat_laser_seq, 0 }; // d64tc
-
-cheatseq_t cheat_amap = { cheat_amap_seq, 0 };
+cheatseq_t cheat_choppers = {cheat_choppers_seq, 0};
+cheatseq_t cheat_clev = {cheat_clev_seq, 0};
+cheatseq_t cheat_mypos = {cheat_mypos_seq, 0};
+cheatseq_t cheat_laser = {cheat_laser_seq, 0}; // d64tc
+cheatseq_t cheat_amap = {cheat_amap_seq, 0};
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -155,64 +153,64 @@ void Cht_Init(void)
     // Nothing to do
 }
 
-/*
- * Responds to user input to see if a cheat sequence
- * has been entered. Events are never eaten.
+/**
+ * Responds to user input to see if a cheat sequence has been entered.
  *
- * @parm ev: ptr to the event to be checked
+ * @param ev            Ptr to the event to be checked.
+ *
+ * @return              @c true if the event was eaten else @c false.
  */
 boolean Cht_Responder(event_t *ev)
 {
-    int i;
+    int                 i;
 
     if(G_GetGameState() != GS_LEVEL)
         return false;
 
-    plyr = &players[consoleplayer];
+    plyr = &players[CONSOLEPLAYER];
 
-    if(gameskill != SM_NIGHTMARE &&
+    if(gameSkill != SM_NIGHTMARE &&
        ev->type == EV_KEY && ev->state == EVS_DOWN)
     {
         if(!IS_NETGAME)
         {
-            // b. - enabled for more debug fun.
-            // if (gameskill != SM_NIGHTMARE) {
+            // if (gameSkill != SM_NIGHTMARE) {
 
-            // 'dqd' cheat for toggleable god mode
+            // 'dqd' cheat for toggleable god mode.
             if(Cht_CheckCheat(&cheat_god, ev->data1))
             {
                 Cht_GodFunc(plyr);
             }
-            // 'fa' cheat for killer fucking arsenal
+            // 'fa' cheat for killer fucking arsenal.
             else if(Cht_CheckCheat(&cheat_ammonokey, ev->data1))
             {
                 Cht_GiveFunc(plyr, true, true, true, false, &cheat_ammonokey);
                 P_SetMessage(plyr, STSTR_FAADDED, false);
             }
-            // 'kfa' cheat for key full ammo
+            // 'kfa' cheat for key full ammo.
             else if(Cht_CheckCheat(&cheat_ammo, ev->data1))
             {
                 Cht_GiveFunc(plyr, true, true, true, true, &cheat_ammo);
                 P_SetMessage(plyr, STSTR_KFAADDED, false);
             }
-            // 'mus' cheat for changing music
+            // 'mus' cheat for changing music.
             else if(Cht_CheckCheat(&cheat_mus, ev->data1))
             {
-                char    buf[3];
+                char                buf[3];
 
                 P_SetMessage(plyr, STSTR_MUS, false);
                 Cht_GetParam(&cheat_mus, buf);
-                Cht_MusicFunc(plyr, buf);   // Might set plyr->message.
+                Cht_MusicFunc(plyr, buf); // Might set plyr->message.
             }
             // Simplified, accepting both "noclip" and "idspispopd".
-            // no clipping mode cheat
+            // no clipping mode cheat.
             else if(Cht_CheckCheat(&cheat_noclip, ev->data1) ||
                     Cht_CheckCheat(&cheat_commercial_noclip, ev->data1))
             {
                 Cht_NoClipFunc(plyr);
             }
-            // 'behold?' power-up cheats
-            for(i = 0; i < 6; i++)
+            // 'behold?' power-up cheats.
+            for(i = 0; i < 6; ++i)
             {
                 if(Cht_CheckCheat(&cheat_powerup[i], ev->data1))
                 {
@@ -221,23 +219,23 @@ boolean Cht_Responder(event_t *ev)
                 }
             }
 
-            // 'behold' power-up menu
+            // 'behold' power-up menu.
             if(Cht_CheckCheat(&cheat_powerup[6], ev->data1))
             {
                 P_SetMessage(plyr, STSTR_BEHOLD, false);
             }
-            // 'choppers' invulnerability & chainsaw
+            // 'choppers' invulnerability & chainsaw.
             else if(Cht_CheckCheat(&cheat_choppers, ev->data1))
             {
                 Cht_ChoppersFunc(plyr);
                 P_SetMessage(plyr, STSTR_CHOPPERS, false);
             }
-            // 'mypos' for player position
+            // 'mypos' for player position.
             else if(Cht_CheckCheat(&cheat_mypos, ev->data1))
             {
                 Cht_MyPosFunc(plyr);
             }
-            // 'ddslia' for laser powerups // d64tc
+            // 'ddslia' for laser powerups. // d64tc
             else if(Cht_CheckCheat(&cheat_laser, ev->data1))
             {
                 cht_LaserFunc(plyr);
@@ -245,21 +243,21 @@ boolean Cht_Responder(event_t *ev)
         }
 
         if(Cht_CheckCheat(&cheat_clev, ev->data1))
-        {   // 'clev' change-level cheat
-            char    buf[3];
+        {   // 'clev' change-level cheat.
+            char                buf[3];
 
             Cht_GetParam(&cheat_clev, buf);
             Cht_WarpFunc(plyr, buf);
         }
     }
 
-    if(AM_IsMapActive(consoleplayer) && ev->type == EV_KEY)
+    if(AM_IsMapActive(CONSOLEPLAYER) && ev->type == EV_KEY)
     {
         if(ev->state == EVS_DOWN)
         {
             if(!deathmatch && Cht_CheckCheat(&cheat_amap, (char) ev->data1))
             {
-                AM_IncMapCheatLevel(consoleplayer);
+                AM_IncMapCheatLevel(CONSOLEPLAYER);
                 return false;
             }
         }
@@ -268,7 +266,9 @@ boolean Cht_Responder(event_t *ev)
             return false;
         }
         else if(ev->state == EVS_REPEAT)
+        {
             return true;
+        }
     }
 
     return false;
@@ -279,23 +279,25 @@ boolean can_cheat(void)
     return !IS_NETGAME;
 }
 
-/*
- * Returns a 1 if the cheat was successful, 0 if failed.
+/**
+ * @return              Non-zero iff the cheat was successful.
  */
-int Cht_CheckCheat(cheatseq_t * cht, char key)
+int Cht_CheckCheat(cheatseq_t *cht, char key)
 {
-    int     i;
-    int     rc = 0;
+    int                 i, rc = 0;
 
     if(firsttime)
     {
         firsttime = 0;
-        for(i = 0; i < 256; i++)
+
+        for(i = 0; i < 256; ++i)
+        {
             cheat_xlate_table[i] = SCRAMBLE(i);
+        }
     }
 
     if(!cht->p)
-        cht->p = cht->sequence; // initialize if first time
+        cht->p = cht->sequence; // Initialize if first time.
 
     if(*cht->p == 0)
         *(cht->p++) = key;
@@ -305,19 +307,22 @@ int Cht_CheckCheat(cheatseq_t * cht, char key)
         cht->p = cht->sequence;
 
     if(*cht->p == 1)
+    {
         cht->p++;
-    else if(*cht->p == 0xff)    // end of sequence character
+    }
+    else if(*cht->p == 0xff) // End of sequence character.
     {
         cht->p = cht->sequence;
         rc = 1;
     }
+
     return rc;
 }
 
-void Cht_GetParam(cheatseq_t * cht, char *buffer)
+void Cht_GetParam(cheatseq_t *cht, char *buffer)
 {
 
-    unsigned char *p, c;
+    unsigned char          *p, c;
 
     p = cht->sequence;
     while(*(p++) != 1);
@@ -332,20 +337,22 @@ void Cht_GetParam(cheatseq_t * cht, char *buffer)
 
     if(*p == 0xff)
         *buffer = 0;
-
 }
 
 void Cht_GodFunc(player_t *plyr)
 {
     plyr->cheats ^= CF_GODMODE;
     plyr->update |= PSF_STATE;
+
     if(P_GetPlayerCheats(plyr) & CF_GODMODE)
     {
         if(plyr->plr->mo)
-            plyr->plr->mo->health = maxhealth;
-        plyr->health = godmodehealth;
+            plyr->plr->mo->health = maxHealth;
+
+        plyr->health = godModeHealth;
         plyr->update |= PSF_HEALTH;
     }
+
     P_SetMessage(plyr,
                  ((P_GetPlayerCheats(plyr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), false);
 }
@@ -357,11 +364,11 @@ void Cht_SuicideFunc(player_t *plyr)
 
 boolean SuicideResponse(int option, void *data)
 {
-    if(messageResponse == 1) // Yes
+    if(messageResponse == 1) // Yes.
     {
         M_StopMessage();
         Hu_MenuCommand(MCMD_CLOSE);
-        Cht_SuicideFunc(&players[consoleplayer]);
+        Cht_SuicideFunc(&players[CONSOLEPLAYER]);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
@@ -370,57 +377,61 @@ boolean SuicideResponse(int option, void *data)
         Hu_MenuCommand(MCMD_CLOSE);
         return true;
     }
+
     return false;
 }
 
-void Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo, boolean armor,
-                  boolean cards, cheatseq_t *cheat)
+void Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
+                  boolean armor, boolean cards, cheatseq_t *cheat)
 {
-    int     i;
+    int                 i;
 
     if(armor)
     {
-        // Support idfa/idkfa DEH Misc values
+        // Support idfa/idkfa DEH Misc values.
         if(cheat == &cheat_ammonokey)
         {
-            plyr->armorPoints = armorpoints[2]; //200;
-            plyr->armorType = armorclass[2];    //2;
+            plyr->armorPoints = armorPoints[2]; //200;
+            plyr->armorType = armorClass[2]; //2;
         }
         else if(cheat == &cheat_ammo)
         {
-            plyr->armorPoints = armorpoints[3];
-            plyr->armorType = armorclass[3];
+            plyr->armorPoints = armorPoints[3];
+            plyr->armorType = armorClass[3];
         }
         else
         {
-            plyr->armorPoints = armorpoints[1];
-            plyr->armorType = armorclass[1];
+            plyr->armorPoints = armorPoints[1];
+            plyr->armorType = armorClass[1];
         }
         plyr->update |= PSF_STATE | PSF_ARMOR_POINTS;
     }
+
     if(weapons)
     {
         plyr->update |= PSF_OWNED_WEAPONS;
-        for(i = 0; i < NUM_WEAPON_TYPES; i++)
+        for(i = 0; i < NUM_WEAPON_TYPES; ++i)
             plyr->weaponOwned[i] = true;
     }
+
     if(ammo)
     {
         plyr->update |= PSF_AMMO;
-        for(i = 0; i < NUM_AMMO_TYPES; i++)
+        for(i = 0; i < NUM_AMMO_TYPES; ++i)
             plyr->ammo[i] = plyr->maxAmmo[i];
     }
+
     if(cards)
     {
         plyr->update |= PSF_KEYS;
-        for(i = 0; i < NUM_KEY_TYPES; i++)
+        for(i = 0; i < NUM_KEY_TYPES; ++i)
             plyr->keys[i] = true;
     }
 }
 
 void Cht_MusicFunc(player_t *plyr, char *buf)
 {
-    int     off, musnum;
+    int                 off, musnum;
 
     off = (buf[0] - '0') * 10 + buf[1] - '0';
     musnum = mus_runnin + off - 1;
@@ -440,7 +451,7 @@ void Cht_NoClipFunc(player_t *plyr)
 
 boolean Cht_WarpFunc(player_t *plyr, char *buf)
 {
-    int     epsd, map;
+    int                 epsd, map;
 
     epsd = buf[0] - '0';
     map = buf[1] - '0';
@@ -451,11 +462,11 @@ boolean Cht_WarpFunc(player_t *plyr, char *buf)
 
     // So be it.
     P_SetMessage(plyr, STSTR_CLEV, false);
-    G_DeferedInitNew(gameskill, epsd, map);
+    G_DeferedInitNew(gameSkill, epsd, map);
 
-    // Clear the menu if open
+    // Clear the menu if open.
     Hu_MenuCommand(MCMD_CLOSE);
-    brief_disabled = true;
+    briefDisabled = true;
     return true;
 }
 
@@ -485,14 +496,18 @@ void Cht_ChoppersFunc(player_t *plyr)
 
 void Cht_MyPosFunc(player_t *plyr)
 {
-    static char buf[ST_MSGWIDTH];
+#define BUFSIZE         (52) // Dimensions given in characters.
 
-    sprintf(buf, "ang=0x%x;x,y,z=(0x%x,0x%x,0x%x)",
-            players[consoleplayer].plr->mo->angle,
-            players[consoleplayer].plr->mo->pos[VX],
-            players[consoleplayer].plr->mo->pos[VY],
-            players[consoleplayer].plr->mo->pos[VZ]);
+    char                buf[BUFSIZE];
+
+    sprintf(buf, "ang=0x%x;x,y,z=(0x%g,0x%g,0x%g)",
+            players[CONSOLEPLAYER].plr->mo->angle,
+            players[CONSOLEPLAYER].plr->mo->pos[VX],
+            players[CONSOLEPLAYER].plr->mo->pos[VY],
+            players[CONSOLEPLAYER].plr->mo->pos[VZ]);
     P_SetMessage(plyr, buf, false);
+
+#undef BUFSIZE
 }
 
 /**
@@ -503,76 +518,74 @@ void Cht_MyPosFunc(player_t *plyr)
  */
 void cht_LaserFunc(player_t *plyr)
 {
-    if(plyr->laserpw == 0)
+    if(plyr->laserPower == 0)
     {
         P_SetMessage(plyr, STSTR_BEHOLDX, false);
-        plyr->laserpw += 1;
-        plyr->lasericon1 = 1;
+        plyr->laserPower += 1;
+        plyr->laserIcon1 = 1;
 
         P_GiveArtifact(plyr, it_laserpw1);
     }
-    else if(plyr->laserpw == 1)
+    else if(plyr->laserPower == 1)
     {
         P_SetMessage(plyr, STSTR_BEHOLDX, false);
-        plyr->laserpw += 1;
-        plyr->lasericon2 = 1;
+        plyr->laserPower += 1;
+        plyr->laserIcon2 = 1;
 
         P_GiveArtifact(plyr, it_laserpw2);
     }
-    else if(plyr->laserpw == 2)
+    else if(plyr->laserPower == 2)
     {
         P_SetMessage(plyr, STSTR_BEHOLDX, false);
-        plyr->laserpw += 1;
-        plyr->lasericon3 = 1;
+        plyr->laserPower += 1;
+        plyr->laserIcon3 = 1;
 
         P_GiveArtifact(plyr, it_laserpw3);
     }
 
-    if(plyr->laserpw == 3)
+    if(plyr->laserPower == 3)
     {
-        plyr->laserpw = 3;
+        plyr->laserPower = 3;
         P_SetMessage(plyr, STSTR_BEHOLDX, false); // no more!
     }
 }
 
-static void CheatDebugFunc(player_t *player, cheat_t * cheat)
+static void CheatDebugFunc(player_t *player, cheatseq_t *cheat)
 {
-    char    lumpName[9];
-    char    textBuffer[256];
-    subsector_t *sub;
+    char                lumpName[9];
+    char                textBuffer[256];
+    subsector_t        *sub;
 
-    if(!player->plr->mo || !usergame)
+    if(!player->plr->mo || !userGame)
         return;
 
-    P_GetMapLumpName(gameepisode, gamemap, lumpName);
-    sprintf(textBuffer, "MAP [%s]  X:%5d  Y:%5d  Z:%5d",
-            lumpName,
-            player->plr->mo->pos[VX] >> FRACBITS,
-            player->plr->mo->pos[VY] >> FRACBITS,
-            player->plr->mo->pos[VZ] >> FRACBITS);
+    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
+    sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
+            lumpName, player->plr->mo->pos[VX], player->plr->mo->pos[VY],
+            player->plr->mo->pos[VZ]);
     P_SetMessage(player, textBuffer, false);
 
     // Also print some information to the console.
     Con_Message(textBuffer);
     sub = player->plr->mo->subsector;
     Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
-    Con_Message("  Floorz:%d pic:%d\n", P_GetIntp(sub, DMU_FLOOR_HEIGHT),
+    Con_Message("  Floorz:%g pic:%d\n", P_GetFloatp(sub, DMU_FLOOR_HEIGHT),
                 P_GetIntp(sub, DMU_FLOOR_MATERIAL));
-    Con_Message("  Ceilingz:%d pic:%d\n", P_GetIntp(sub, DMU_CEILING_HEIGHT),
+    Con_Message("  Ceilingz:%g pic:%d\n", P_GetFloatp(sub, DMU_CEILING_HEIGHT),
                 P_GetIntp(sub, DMU_CEILING_MATERIAL));
-    Con_Message("Player height:%g   Player radius:%x\n",
+    Con_Message("Player height:%g   Player radius:%g\n",
                 player->plr->mo->height, player->plr->mo->radius);
 }
 
-/*
+/**
  * This is the multipurpose cheat ccmd.
  */
 DEFCC(CCmdCheat)
 {
-    unsigned int i;
+    uint                i;
 
     // Give each of the characters in argument two to the ST event handler.
-    for(i = 0; i < strlen(argv[1]); i++)
+    for(i = 0; i < strlen(argv[1]); ++i)
     {
         event_t ev;
 
@@ -582,6 +595,7 @@ DEFCC(CCmdCheat)
         ev.data2 = ev.data3 = 0;
         Cht_Responder(&ev);
     }
+
     return true;
 }
 
@@ -593,7 +607,7 @@ DEFCC(CCmdCheatGod)
     }
     else
     {
-        Cht_GodFunc(&players[consoleplayer]);
+        Cht_GodFunc(&players[CONSOLEPLAYER]);
     }
     return true;
 }
@@ -606,7 +620,7 @@ DEFCC(CCmdCheatNoClip)
     }
     else
     {
-        Cht_NoClipFunc(&players[consoleplayer]);
+        Cht_NoClipFunc(&players[CONSOLEPLAYER]);
     }
     return true;
 }
@@ -637,16 +651,18 @@ DEFCC(CCmdCheatSuicide)
 
 DEFCC(CCmdCheatWarp)
 {
-    char    buf[10];
+    char                buf[10];
 
     if(!can_cheat())
         return false;
+
     memset(buf, 0, sizeof(buf));
 
     if(argc == 2)
     {
         if(strlen(argv[1]) < 2)
             return false;
+
         strncpy(buf, argv[1], 2);
     }
     else if(argc == 3)
@@ -655,40 +671,41 @@ DEFCC(CCmdCheatWarp)
         buf[1] = argv[2][0];
     }
     else
+    {
         return false;
+    }
 
-    Cht_WarpFunc(&players[consoleplayer], buf);
+    Cht_WarpFunc(&players[CONSOLEPLAYER], buf);
     return true;
 }
 
 DEFCC(CCmdCheatReveal)
 {
-    int     option;
+    int                 option;
 
     if(!can_cheat())
-        return false;           // Can't cheat!
+        return false; // Can't cheat!
 
     // Reset them (for 'nothing'). :-)
-    AM_SetCheatLevel(consoleplayer, 0);
-    players[consoleplayer].powers[PT_ALLMAP] = false;
+    AM_SetCheatLevel(CONSOLEPLAYER, 0);
+    players[CONSOLEPLAYER].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
     if(option < 0 || option > 3)
         return false;
 
     if(option == 1)
-        players[consoleplayer].powers[PT_ALLMAP] = true;
+        players[CONSOLEPLAYER].powers[PT_ALLMAP] = true;
     else if(option != 0)
-        AM_SetCheatLevel(consoleplayer, option -1);
+        AM_SetCheatLevel(CONSOLEPLAYER, option -1);
 
     return true;
 }
 
 DEFCC(CCmdCheatGive)
 {
-    char    buf[100];
-    int     i;
-    int     weapNum;
-    player_t *plyr = &players[consoleplayer];
+    char                buf[100];
+    int                 i, weapNum;
+    player_t           *plyr = &players[CONSOLEPLAYER];
 
     if(IS_CLIENT)
     {
@@ -698,8 +715,10 @@ DEFCC(CCmdCheatGive)
         NetCl_CheatRequest(buf);
         return true;
     }
+
     if(IS_NETGAME && !netSvAllowCheats)
         return false;
+
     if(argc != 2 && argc != 3)
     {
         Con_Printf("Usage:\n  give (stuff)\n");
@@ -727,6 +746,7 @@ DEFCC(CCmdCheatGive)
         i = atoi(argv[2]);
         if(i < 0 || i >= MAXPLAYERS)
             return false;
+
         plyr = &players[i];
     }
 
@@ -737,13 +757,13 @@ DEFCC(CCmdCheatGive)
     }
 
     if(!plyr->plr->inGame)
-        return true; // Can't give to a player who's not playing
+        return true; // Can't give to a player who's not playing.
 
-    strcpy(buf, argv[1]);       // Stuff is the 2nd arg.
+    strcpy(buf, argv[1]); // Stuff is the 2nd arg.
     strlwr(buf);
-    for(i = 0; buf[i]; i++)
+    for(i = 0; buf[i]; ++i)
     {
-        switch (buf[i])
+        switch(buf[i])
         {
         case 'a':
             Con_Printf("Ammo given.\n");
@@ -806,14 +826,16 @@ DEFCC(CCmdCheatGive)
             break;
 
         default:
-            // Individual Weapon
+            // Individual Weapon.
             weapNum = ((int) buf[i]) - 48;
             if(weapNum >= 0 && weapNum < NUM_WEAPON_TYPES)
             {
                P_GiveWeapon(plyr, weapNum, false);
             }
-            else // Unrecognized
+            else // Unrecognized.
+            {
                 Con_Printf("What do you mean, '%c'?\n", buf[i]);
+            }
         }
     }
     return true;
@@ -828,18 +850,20 @@ DEFCC(CCmdCheatMassacre)
 DEFCC(CCmdCheatWhere)
 {
     if(!can_cheat())
-        return false;           // Can't cheat!
-    CheatDebugFunc(players + consoleplayer, NULL);
+        return false; // Can't cheat!
+
+    CheatDebugFunc(players + CONSOLEPLAYER, NULL);
     return true;
 }
 
-/*
+/**
  * Exit the current level and goto the intermission.
  */
 DEFCC(CCmdCheatExitLevel)
 {
     if(!can_cheat())
-        return false;           // Can't cheat!
+        return false; // Can't cheat!
+
     if(G_GetGameState() != GS_LEVEL)
     {
         S_LocalSound(sfx_oof, NULL);
@@ -848,7 +872,7 @@ DEFCC(CCmdCheatExitLevel)
     }
 
     // Exit the level.
-    G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+    G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
 
     return true;
 }

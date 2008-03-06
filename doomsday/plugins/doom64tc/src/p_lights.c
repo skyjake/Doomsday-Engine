@@ -58,8 +58,8 @@
 
 void T_FireFlicker(fireflicker_t *flick)
 {
-    float       lightlevel = P_GetFloatp(flick->sector, DMU_LIGHT_LEVEL);
-    float       amount;
+    float           lightlevel = P_GetFloatp(flick->sector, DMU_LIGHT_LEVEL);
+    float           amount;
 
     if(--flick->count)
         return;
@@ -77,8 +77,8 @@ void T_FireFlicker(fireflicker_t *flick)
 
 void P_SpawnFireFlicker(sector_t *sector)
 {
-    float     lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
-    fireflicker_t *flick;
+    float           lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    fireflicker_t  *flick;
 
     // Note that we are resetting sector attributes.
     // Nothing special about it during gameplay.
@@ -99,9 +99,9 @@ void P_SpawnFireFlicker(sector_t *sector)
 /**
  * Broken light flashing.
  */
-void T_LightFlash(lightflash_t * flash)
+void T_LightFlash(lightflash_t *flash)
 {
-    float       lightlevel = P_GetIntp(flash->sector, DMU_LIGHT_LEVEL);
+    float           lightlevel = P_GetFloatp(flash->sector, DMU_LIGHT_LEVEL);
 
     if(--flash->count)
         return;
@@ -116,19 +116,19 @@ void T_LightFlash(lightflash_t * flash)
         P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->maxLight);
         flash->count = (P_Random() & flash->maxTime) + 1;
     }
-
 }
 
 /**
- * After the map has been loaded, scan each sector
- * for specials that spawn thinkers
+ * After the map has been loaded, scan each sector for specials that spawn
+ * thinkers.
  */
 void P_SpawnLightFlash(sector_t *sector)
 {
-    float       lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
-    lightflash_t *flash;
+    float           lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    lightflash_t   *flash;
 
-    // nothing special about it during gameplay
+    // Note that we are resetting sector attributes.
+    // Nothing special about it during gameplay.
     //P_ToXSector(sector)->special = 0; // d64tc
 
     flash = Z_Malloc(sizeof(*flash), PU_LEVSPEC, 0);
@@ -150,7 +150,7 @@ void P_SpawnLightFlash(sector_t *sector)
  */
 void T_LightBlink(lightblink_t *flash)
 {
-    float       lightlevel = P_GetFloatp(flash->sector, DMU_LIGHT_LEVEL);
+    float           lightlevel = P_GetFloatp(flash->sector, DMU_LIGHT_LEVEL);
 
     if(--flash->count)
         return;
@@ -169,11 +169,10 @@ void T_LightBlink(lightblink_t *flash)
 
 /**
  * d64tc
- * DJS - FIXME?: make new thinker lightblink_t
  */
 void P_SpawnLightBlink(sector_t *sector)
 {
-    lightblink_t *blink;
+    lightblink_t       *blink;
 
     blink = Z_Malloc(sizeof(*blink), PU_LEVSPEC, 0);
 
@@ -192,7 +191,7 @@ void P_SpawnLightBlink(sector_t *sector)
  */
 void T_StrobeFlash(strobe_t *flash)
 {
-    float       lightlevel = P_GetFloatp(flash->sector, DMU_LIGHT_LEVEL);
+    float               lightlevel = P_GetFloatp(flash->sector, DMU_LIGHT_LEVEL);
 
     if(--flash->count)
         return;
@@ -215,8 +214,8 @@ void T_StrobeFlash(strobe_t *flash)
  */
 void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
 {
-    strobe_t   *flash;
-    float       lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    strobe_t           *flash;
+    float               lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
 
     flash = Z_Malloc(sizeof(*flash), PU_LEVSPEC, 0);
 
@@ -246,8 +245,8 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
  */
 void EV_StartLightStrobing(linedef_t *line)
 {
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+    sector_t           *sec = NULL;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -265,12 +264,12 @@ void EV_StartLightStrobing(linedef_t *line)
 
 void EV_TurnTagLightsOff(linedef_t *line)
 {
-    int         j;
-    float       min;
-    float       lightlevel;
-    sector_t   *sec = NULL, *tsec;
-    linedef_t     *other;
-    iterlist_t *list;
+    int                 j;
+    float               min;
+    float               lightlevel;
+    sector_t           *sec = NULL, *tsec;
+    linedef_t          *other;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -300,11 +299,11 @@ void EV_TurnTagLightsOff(linedef_t *line)
 
 void EV_LightTurnOn(linedef_t *line, float max)
 {
-    int         j;
-    float       lightlevel;
-    sector_t   *sec = NULL, *tsec;
-    linedef_t     *tline;
-    iterlist_t *list;
+    int                 j;
+    float               lightlevel;
+    sector_t           *sec = NULL, *tsec;
+    linedef_t          *tline;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -313,9 +312,8 @@ void EV_LightTurnOn(linedef_t *line, float max)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        // bright = 0 means to search
-        // for highest light level
-        // surrounding sector
+        // Bright = 0 means to search for highest light level in all
+        // surrounding sectors.
         if(!max)
         {
             for(j = 0; j < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++j)
@@ -332,19 +330,19 @@ void EV_LightTurnOn(linedef_t *line, float max)
                     max = lightlevel;
             }
         }
+
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, max);
     }
 }
 
 void T_Glow(glow_t *g)
 {
-    float       lightlevel = P_GetFloatp(g->sector, DMU_LIGHT_LEVEL);
-    float       glowdelta = (1.0f / 255.0f) * (float) GLOWSPEED;
+    float               lightlevel = P_GetFloatp(g->sector, DMU_LIGHT_LEVEL);
+    float               glowdelta = (1.0f / 255.0f) * (float) GLOWSPEED;
 
     switch(g->direction)
     {
-    case -1:
-        // DOWN
+    case -1: // Down.
         lightlevel -= glowdelta;
         if(lightlevel <= g->minLight)
         {
@@ -353,8 +351,7 @@ void T_Glow(glow_t *g)
         }
         break;
 
-    case 1:
-        // UP
+    case 1: // Up.
         lightlevel += glowdelta;
         if(lightlevel >= g->maxLight)
         {
@@ -369,8 +366,8 @@ void T_Glow(glow_t *g)
 
 void P_SpawnGlowingLight(sector_t *sector)
 {
-    float       lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
-    glow_t     *g;
+    float               lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    glow_t             *g;
 
     g = Z_Malloc(sizeof(*g), PU_LEVSPEC, 0);
 

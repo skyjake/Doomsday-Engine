@@ -58,16 +58,16 @@
 
 int EV_BuildStairs(linedef_t *line, stair_e type)
 {
-    int         i, ok, texture;
-    int         rtn = 0;
-    float       height = 0, stairsize = 0;
-    float       speed = 0;
-    linedef_t     *ln;
-    xsector_t  *xsec;
-    sector_t   *sec = NULL;
-    sector_t   *tsec;
-    floormove_t *floor;
-    iterlist_t *list;
+    int             i, ok, texture;
+    int             rtn = 0;
+    float           height = 0, stairsize = 0;
+    float           speed = 0;
+    linedef_t      *ln;
+    xsector_t      *xsec;
+    sector_t       *sec = NULL;
+    sector_t       *tsec;
+    floormove_t    *floor;
+    iterlist_t     *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -77,11 +77,11 @@ int EV_BuildStairs(linedef_t *line, stair_e type)
     while((sec = P_IterListIterator(list)) != NULL)
     {
         xsec = P_ToXSector(sec);
-        // ALREADY MOVING?  IF SO, KEEP GOING...
+        // Already moving? If so, keep going..
         if(xsec->specialData)
             continue;
 
-        // new floor thinker
+        // New floor thinker.
         rtn = 1;
         floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
         P_AddThinker(&floor->thinker);
@@ -107,8 +107,8 @@ int EV_BuildStairs(linedef_t *line, stair_e type)
         texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
 
         // Find next sector to raise
-        // 1.   Find 2-sided line with same sector side[0]
-        // 2.   Other side is the next sector to raise
+        // 1. Find 2-sided line with same sector side.
+        // 2. Other side is the next sector to raise.
         do
         {
             ok = 0;
@@ -148,18 +148,19 @@ int EV_BuildStairs(linedef_t *line, stair_e type)
             }
         } while(ok);
     }
+
     return rtn;
 }
 
 int EV_DoDonut(linedef_t *line)
 {
-    int         i, rtn = 0;
-    sector_t   *s1 = NULL;
-    sector_t   *s2;
-    sector_t   *s3;
-    linedef_t     *check;
-    floormove_t *floor;
-    iterlist_t *list;
+    int             i, rtn = 0;
+    sector_t       *s1 = NULL;
+    sector_t       *s2;
+    sector_t       *s3;
+    linedef_t      *check;
+    floormove_t    *floor;
+    iterlist_t     *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -168,7 +169,7 @@ int EV_DoDonut(linedef_t *line)
     P_IterListResetIterator(list, true);
     while((s1 = P_IterListIterator(list)) != NULL)
     {
-        // ALREADY MOVING?  IF SO, KEEP GOING...
+        // Already moving? If so, keep going...
         if(P_ToXSector(s1)->specialData)
             continue;
 
@@ -185,7 +186,7 @@ int EV_DoDonut(linedef_t *line)
                s3 == s1)
                 continue;
 
-            //  Spawn rising slime
+            //  Spawn rising slime.
             floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
             P_AddThinker(&floor->thinker);
 
@@ -201,7 +202,7 @@ int EV_DoDonut(linedef_t *line)
             floor->newSpecial = 0;
             floor->floorDestHeight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
 
-            //  Spawn lowering donut-hole
+            //  Spawn lowering donut-hole.
             floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
             P_AddThinker(&floor->thinker);
 
@@ -217,5 +218,6 @@ int EV_DoDonut(linedef_t *line)
             break;
         }
     }
+
     return rtn;
 }
