@@ -51,16 +51,15 @@
 
 #include "jhexen.h"
 
+#include "p_map.h"
+
 // MACROS ------------------------------------------------------------------
 
-#define TELEPORT_LIFE           1
+#define TELEPORT_LIFE           (1)
 
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-boolean     P_TestMobjLocation(mobj_t *mobj);
-void        PIT_ThrustSpike(mobj_t *actor);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -85,7 +84,7 @@ void X_CreateLUTs(void)
 {
 #define ORBITRES            256
 
-    uint            i;
+    uint                i;
 
     orbitTableX = Z_Malloc(sizeof(float) * ORBITRES, PU_STATIC, 0);
     for(i = 0; i < ORBITRES; ++i)
@@ -111,8 +110,8 @@ void X_DestroyLUTs(void)
 
 void C_DECL A_PotteryExplode(mobj_t *actor)
 {
-    mobj_t     *mo = NULL;
-    int         i;
+    mobj_t             *mo = NULL;
+    int                 i;
 
     for(i = (P_Random() & 3) + 3; i; i--)
     {
@@ -128,11 +127,11 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
 
     S_StartSound(SFX_POTTERY_EXPLODE, mo);
     if(actor->args[0])
-    {   // Spawn an item
-        if(!nomonsters ||
+    {   // Spawn an item.
+        if(!noMonstersParm ||
            !(mobjInfo[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
-        {   // Only spawn monsters if not -nomonsters
+        {   // Only spawn monsters if not -nomonsters.
             P_SpawnMobj3fv(TranslateThingType[actor->args[0]], actor->pos);
         }
     }
@@ -147,18 +146,18 @@ void C_DECL A_PotteryChooseBit(mobj_t *actor)
 
 void C_DECL A_PotteryCheck(mobj_t *actor)
 {
-    int         i;
-    mobj_t     *pmo;
+    int                 i;
+    mobj_t             *pmo;
 
     if(!IS_NETGAME)
     {
-        pmo = players[consoleplayer].plr->mo;
+        pmo = players[CONSOLEPLAYER].plr->mo;
         if(P_CheckSight(actor, pmo) &&
            (abs
             (R_PointToAngle2(pmo->pos[VX], pmo->pos[VY],
                              actor->pos[VX], actor->pos[VY]) -
              pmo->angle) <= ANGLE_45))
-        {   // Previous state (pottery bit waiting state)
+        {   // Previous state (pottery bit waiting state).
             P_MobjChangeState(actor, actor->state - &states[0] - 1);
         }
         else
@@ -179,7 +178,7 @@ void C_DECL A_PotteryCheck(mobj_t *actor)
                 (R_PointToAngle2(pmo->pos[VX], pmo->pos[VY],
                                  actor->pos[VX], actor->pos[VY]) -
                  pmo->angle) <= ANGLE_45))
-            {   // Previous state (pottery bit waiting state)
+            {   // Previous state (pottery bit waiting state).
                 P_MobjChangeState(actor, actor->state - &states[0] - 1);
                 return;
             }
@@ -200,8 +199,8 @@ void C_DECL A_CorpseBloodDrip(mobj_t *actor)
 
 void C_DECL A_CorpseExplode(mobj_t *actor)
 {
-    int         i, n;
-    mobj_t     *mo;
+    int                 i, n;
+    mobj_t             *mo;
 
     for(i = (P_Random() & 3) + 3; i; i--)
     {
@@ -215,7 +214,7 @@ void C_DECL A_CorpseExplode(mobj_t *actor)
         }
     }
 
-    // Spawn a skull
+    // Spawn a skull.
     mo = P_SpawnMobj3fv(MT_CORPSEBIT, actor->pos);
     P_MobjChangeState(mo, S_CORPSEBIT_4);
     if(mo)
@@ -236,9 +235,9 @@ void C_DECL A_CorpseExplode(mobj_t *actor)
 
 void C_DECL A_LeafSpawn(mobj_t *actor)
 {
-    int         i;
-    mobj_t     *mo;
-    float       pos[3];
+    int                 i;
+    mobj_t             *mo;
+    float               pos[3];
 
     for(i = (P_Random() & 3) + 1; i; i--)
     {
@@ -278,7 +277,7 @@ void C_DECL A_LeafThrust(mobj_t *actor)
 
 void C_DECL A_LeafCheck(mobj_t *actor)
 {
-    int         n;
+    int                 n;
 
     actor->special1++;
     if(actor->special1 >= 20)
@@ -331,13 +330,13 @@ void C_DECL A_BridgeOrbit(mobj_t *actor)
 
 void C_DECL A_BridgeInit(mobj_t *actor)
 {
-    byte            startangle;
-    mobj_t         *ball1, *ball2, *ball3;
+    byte                startangle;
+    mobj_t             *ball1, *ball2, *ball3;
 
     startangle = P_Random();
     actor->special1 = 0;
 
-    // Spawn triad into world
+    // Spawn triad into world.
     ball1 = P_SpawnMobj3fv(MT_BRIDGEBALL, actor->pos);
     ball1->args[0] = startangle;
     ball1->target = actor;
@@ -357,7 +356,7 @@ void C_DECL A_BridgeInit(mobj_t *actor)
 
 void C_DECL A_BridgeRemove(mobj_t *actor)
 {
-    actor->special1 = true;     // Removing the bridge
+    actor->special1 = true; // Removing the bridge.
     actor->flags &= ~MF_SOLID;
     P_MobjChangeState(actor, S_FREE_BRIDGE1);
 }
@@ -413,7 +412,7 @@ void C_DECL A_ContMobjSound(mobj_t *actor)
 
 void C_DECL A_ESound(mobj_t *mo)
 {
-    int         sound;
+    int                 sound;
 
     switch(mo->type)
     {
@@ -433,7 +432,7 @@ void C_DECL A_ESound(mobj_t *mo)
  */
 void C_DECL A_Summon(mobj_t *actor)
 {
-    mobj_t     *mo, *master;
+    mobj_t             *mo, *master;
 
     mo = P_SpawnMobj3fv(MT_MINOTAUR, actor->pos);
     if(mo)
@@ -449,7 +448,7 @@ void C_DECL A_Summon(mobj_t *actor)
             return;
         }
 
-        memcpy((void *) mo->args, &leveltime, sizeof(leveltime));
+        memcpy((void *) mo->args, &levelTime, sizeof(levelTime));
         master = actor->tracer;
         if(master->flags & MF_CORPSE)
         {   // Master dead.
@@ -481,9 +480,9 @@ void C_DECL A_Summon(mobj_t *actor)
 
 void C_DECL A_FogSpawn(mobj_t *actor)
 {
-    mobj_t     *mo = NULL;
-    mobjtype_t  type;
-    angle_t     delta, angle;
+    mobj_t             *mo = NULL;
+    mobjtype_t          type;
+    angle_t             delta, angle;
 
     if(actor->special1-- > 0)
         return;
@@ -520,8 +519,8 @@ void C_DECL A_FogSpawn(mobj_t *actor)
 
 void C_DECL A_FogMove(mobj_t *actor)
 {
-    float           speed = (float) actor->args[0];
-    uint            an, weaveindex;
+    float               speed = (float) actor->args[0];
+    uint                an, weaveindex;
 
     if(!(actor->args[4]))
         return;
@@ -546,7 +545,7 @@ void C_DECL A_FogMove(mobj_t *actor)
 
 void C_DECL A_PoisonBagInit(mobj_t *actor)
 {
-    mobj_t         *mo;
+    mobj_t             *mo;
 
     mo = P_SpawnMobj3f(MT_POISONCLOUD,
                        actor->pos[VX], actor->pos[VY], actor->pos[VZ] + 28);
@@ -576,8 +575,8 @@ void C_DECL A_PoisonBagCheck(mobj_t *actor)
 
 void C_DECL A_PoisonBagDamage(mobj_t *actor)
 {
-    int         bobIndex;
-    float       z;
+    int                 bobIndex;
+    float               z;
 
     A_Explode(actor);
 
@@ -623,9 +622,9 @@ void C_DECL A_CheckThrowBomb(mobj_t *actor)
 
 boolean A_LocalQuake(byte *args, mobj_t *actor)
 {
-    mobj_t         *focus, *target;
-    int             lastfound = 0;
-    int             success = false;
+    mobj_t             *focus, *target;
+    int                 lastfound = 0;
+    int                 success = false;
 
     actor = actor; // Shutup compiler warning.
 
@@ -653,12 +652,12 @@ boolean A_LocalQuake(byte *args, mobj_t *actor)
 
 void C_DECL A_Quake(mobj_t *actor)
 {
-    angle_t         angle;
-    player_t       *player;
-    mobj_t         *victim;
-    int             richters = actor->args[0];
-    int             playnum;
-    float           dist;
+    angle_t             angle;
+    player_t           *player;
+    mobj_t             *victim;
+    int                 richters = actor->args[0];
+    int                 playnum;
+    float               dist;
 
     if(actor->args[1]-- > 0)
     {
@@ -675,14 +674,14 @@ void C_DECL A_Quake(mobj_t *actor)
 
             dist = FIX2FLT(FLT2FIX(dist) >> (FRACBITS + 6));
 
-            // Tested in tile units (64 pixels)
+            // Tested in tile units (64 pixels).
             if(dist < FIX2FLT(actor->args[3])) // In tremor radius.
             {
                 localQuakeHappening[playnum] = richters;
                 players[playnum].update |= PSF_LOCAL_QUAKE;
             }
 
-            // Check if in damage radius
+            // Check if in damage radius.
             if(dist < FIX2FLT(actor->args[2]) &&
                victim->pos[VZ] <= victim->floorZ)
             {
@@ -691,7 +690,7 @@ void C_DECL A_Quake(mobj_t *actor)
                     P_DamageMobj(victim, NULL, NULL, HITDICE(1));
                 }
 
-                // Thrust player around
+                // Thrust player around.
                 angle = victim->angle + ANGLE_1 * P_Random();
                 P_ThrustMobj(victim, angle, FIX2FLT(richters << (FRACBITS - 1)));
             }
@@ -710,7 +709,7 @@ void C_DECL A_Quake(mobj_t *actor)
 
 static void telospawn(mobjtype_t type, mobj_t *mo)
 {
-    mobj_t         *pmo;
+    mobj_t             *pmo;
 
     pmo = P_SpawnMobj3fv(MT_TELOTHER_FX2, mo->pos);
     if(pmo)
@@ -754,10 +753,10 @@ void C_DECL A_CheckTeleRing(mobj_t *actor)
 
 void P_SpawnDirt(mobj_t *mo, float radius)
 {
-    float           pos[3];
-    int             dtype = 0;
-    mobj_t         *pmo;
-    uint            an;
+    float               pos[3];
+    int                 dtype = 0;
+    mobj_t             *pmo;
+    uint                an;
 
     an = P_Random() << 5;
 
@@ -806,7 +805,7 @@ void C_DECL A_ThrustInitUp(mobj_t *actor)
 
 void C_DECL A_ThrustInitDn(mobj_t *actor)
 {
-    mobj_t     *mo;
+    mobj_t             *mo;
 
     actor->special2 = 5;
     actor->args[0] = 0;
@@ -820,7 +819,7 @@ void C_DECL A_ThrustInitDn(mobj_t *actor)
 void C_DECL A_ThrustRaise(mobj_t *actor)
 {
     if(A_RaiseMobj(actor))
-    {   // Reached it's target height
+    {   // Reached it's target height.
         actor->args[0] = 1;
         if(actor->args[1])
             P_SetMobjStateNF(actor, S_BTHRUSTINIT2_1);
@@ -828,17 +827,17 @@ void C_DECL A_ThrustRaise(mobj_t *actor)
             P_SetMobjStateNF(actor, S_THRUSTINIT2_1);
     }
 
-    // Lose the dirt clump
+    // Lose the dirt clump.
     if(actor->floorClip < actor->height && actor->tracer)
     {
         P_MobjRemove(actor->tracer);
         actor->tracer = NULL;
     }
 
-    // Spawn some dirt
+    // Spawn some dirt.
     if(P_Random() < 40)
         P_SpawnDirt(actor, actor->radius);
-    actor->special2++; // Increase raise speed
+    actor->special2++; // Increase raise speed.
 }
 
 void C_DECL A_ThrustLower(mobj_t *actor)
@@ -860,7 +859,7 @@ void C_DECL A_ThrustBlock(mobj_t *actor)
 
 void C_DECL A_ThrustImpale(mobj_t *actor)
 {
-    // Impale all shootables in radius
+    // Impale all shootables in radius.
     PIT_ThrustSpike(actor);
 }
 
@@ -894,11 +893,11 @@ void C_DECL A_SoAExplode(mobj_t *actor)
     }
 
     if(actor->args[0])
-    {                           // Spawn an item
-        if(!nomonsters ||
+    {   // Spawn an item.
+        if(!noMonstersParm ||
            !(mobjInfo[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
-        {   // Only spawn monsters if not -nomonsters
+        {   // Only spawn monsters if not -nomonsters.
             P_SpawnMobj3fv(TranslateThingType[actor->args[0]], actor->pos);
         }
     }
@@ -925,7 +924,7 @@ void C_DECL A_BellReset2(mobj_t *actor)
 
 void C_DECL A_FlameCheck(mobj_t *actor)
 {
-    if(!actor->args[0]--)       // Called every 8 tics
+    if(!actor->args[0]--) // Called every 8 tics.
     {
         P_MobjChangeState(actor, S_NULL);
     }
@@ -948,7 +947,7 @@ void C_DECL A_FlameCheck(mobj_t *actor)
 
 void C_DECL A_BatSpawnInit(mobj_t *actor)
 {
-    actor->special1 = 0;        // Frequency count
+    actor->special1 = 0; // Frequency count.
 }
 
 void C_DECL A_BatSpawn(mobj_t *actor)
@@ -961,7 +960,7 @@ void C_DECL A_BatSpawn(mobj_t *actor)
     if(actor->special1-- > 0)
         return;
 
-    actor->special1 = actor->args[0]; // Reset frequency count
+    actor->special1 = actor->args[0]; // Reset frequency count.
 
     delta = actor->args[1];
     if(delta == 0)

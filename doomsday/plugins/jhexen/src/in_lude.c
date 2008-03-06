@@ -54,24 +54,27 @@
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "g_common.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define TEXTSPEED 3
-#define TEXTWAIT 140
+#define TEXTSPEED               (3)
+#define TEXTWAIT                (140)
 
-#define TALLY_EFFECT_TICKS 20
-#define TALLY_FINAL_X_DELTA (23*FRACUNIT)
-#define TALLY_FINAL_Y_DELTA (13*FRACUNIT)
-#define TALLY_START_XPOS (178*FRACUNIT)
-#define TALLY_STOP_XPOS (90*FRACUNIT)
-#define TALLY_START_YPOS (132*FRACUNIT)
-#define TALLY_STOP_YPOS (83*FRACUNIT)
-#define TALLY_TOP_X 85
-#define TALLY_TOP_Y 9
-#define TALLY_LEFT_X 7
-#define TALLY_LEFT_Y 71
-#define TALLY_TOTALS_X 291
+#define TALLY_EFFECT_TICKS      (20)
+#define TALLY_FINAL_X_DELTA     (23 * FRACUNIT)
+#define TALLY_FINAL_Y_DELTA     (13 * FRACUNIT)
+#define TALLY_START_XPOS        (178 * FRACUNIT)
+#define TALLY_STOP_XPOS         (90 * FRACUNIT)
+#define TALLY_START_YPOS        (132 * FRACUNIT)
+#define TALLY_STOP_YPOS         (83 * FRACUNIT)
+#define TALLY_TOP_X             (85)
+#define TALLY_TOP_Y             (9)
+#define TALLY_LEFT_X            (7)
+#define TALLY_LEFT_Y            (71)
+#define TALLY_TOTALS_X          (291)
+
+#define MAX_INTRMSN_MESSAGE_SIZE (1024)
 
 // TYPES -------------------------------------------------------------------
 
@@ -83,71 +86,57 @@ typedef enum gametype_e {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern void AM_Stop(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void    IN_Start(void);
-void    IN_Ticker(void);
-void    IN_Drawer(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void WaitStop(void);
-static void LoadPics(void);
-static void UnloadPics(void);
+static void loadPics(void);
+static void unloadPics(void);
 static void CheckForSkip(void);
-static void InitStats(void);
-static void DrDeathTally(void);
-static void DrNumber(int val, int x, int y, int wrapThresh);
-static void DrNumberBold(int val, int x, int y, int wrapThresh);
+static void initStats(void);
+static void drawDeathTally(void);
+static void drawNumber(int val, int x, int y, int wrapThresh);
+static void drawNumberBold(int val, int x, int y, int wrapThresh);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-int     overrideHubMsg = 0;     // override the hub transition message when 1
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
 boolean intermission;
-char    ClusterMessage[MAX_INTRMSN_MESSAGE_SIZE];
-int     interstate = 0;
+int interState = 0;
+int overrideHubMsg = 0; // Override the hub transition message when 1.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean skipintermission;
-static int intertime = -1;
-static gametype_t gametype;
+static boolean skipIntermission;
+static int interTime = -1;
+static gametype_t gameType;
 static int cnt;
-static int slaughterboy;        // in DM, the player with the most kills
-static int patchINTERPICLumpRS; // A raw screen.
-static int FontBNumbersLump[10];
-static int FontBNegativeLump;
-static int FontBSlashLump;
-static int FontBPercentLump;
-
-static int FontABaseLump;
-static int FontBLump;
-static int FontBLumpBase;
-
+static int slaughterBoy; // In DM, the player with the most kills.
 static signed int totalFrags[MAXPLAYERS];
 
-static int HubCount;
+static int hubCount;
+static char clusterMessage[MAX_INTRMSN_MESSAGE_SIZE];
 
-#if 0
-static char *ClusMsgLumpNames[] = {
-    "clus1msg",
-    "clus2msg",
-    "clus3msg",
-    "clus4msg",
-    "clus5msg"
-};
-#endif
+static int patchInterpicLumpRS; // A raw screen.
+static int fontBNumbersLump[10];
+static int fontBNegativeLump;
+static int fontBSlashLump;
+static int fontBPercentLump;
+static int fontABaseLump;
+static int fontBLump;
+static int fontBLumpBase;
 
 // CODE --------------------------------------------------------------------
 
 void IN_Start(void)
 {
-    AM_Stop();
+    int                 i;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+        AM_Stop(i);
+
     SN_StopAllSequences();
 
     // InFine handles the text.
@@ -158,12 +147,12 @@ void IN_Start(void)
     }
 
     GL_SetFilter(0);
-    InitStats();
-    LoadPics();
+    initStats();
+    loadPics();
     intermission = true;
-    interstate = 0;
-    skipintermission = false;
-    intertime = 0;
+    interState = 0;
+    skipIntermission = false;
+    interTime = 0;
 }
 
 void WaitStop(void)
@@ -171,10 +160,7 @@ void WaitStop(void)
     if(!--cnt)
     {
         IN_Stop();
-        //      gamestate = GS_LEVEL;
-        //      G_DoLoadLevel();
         G_SetGameAction(GA_LEAVEMAP);
-        //      G_WorldDone();
     }
 }
 
@@ -182,32 +168,31 @@ void IN_Stop(void)
 {
     NetSv_Intermission(IMF_END, 0, 0);
     intermission = false;
-    UnloadPics();
+    unloadPics();
     SB_state = -1;
 }
 
 /**
- * Initializes the stats for single player mode
+ * Initializes the stats for single player mode.
  */
-static void InitStats(void)
+static void initStats(void)
 {
-    int         i, j;
-    signed int  slaughterfrags;
-    int         posnum;
-    int         slaughtercount;
-    int         playercount;
+    int                 i, j;
+    int                 slaughterFrags;
+    int                 posNum;
+    int                 slaughterCount;
+    int                 playerCount;
 
     if(!deathmatch)
     {
 #if 0
-        int     oldCluster;
-        char   *msgLumpName;
-        size_t  msgSize;
-        int     msgLump;
-        extern int LeaveMap;
+        int                 oldCluster;
+        char               *msgLumpName;
+        size_t              msgSize;
+        int                 msgLump;
 
-        gametype = SINGLE;
-        HubCount = 0;
+        gameType = SINGLE;
+        hubCount = 0;
         oldCluster = P_GetMapCluster(gamemap);
         if(oldCluster != P_GetMapCluster(LeaveMap))
         {
@@ -238,7 +223,7 @@ static void InitStats(void)
                 {
                     HubText = "null hub message";
                 }
-                HubCount = strlen(HubText) * TEXTSPEED + TEXTWAIT;
+                hubCount = strlen(HubText) * TEXTSPEED + TEXTWAIT;
                 S_StartSongName("hub", true);
             }
         }
@@ -246,69 +231,73 @@ static void InitStats(void)
     }
     else
     {
-        gametype = DEATHMATCH;
-        slaughterboy = 0;
-        slaughterfrags = -9999;
-        posnum = 0;
-        playercount = 0;
-        slaughtercount = 0;
-        for(i = 0; i < MAXPLAYERS; i++)
+        gameType = DEATHMATCH;
+        slaughterBoy = 0;
+        slaughterFrags = -9999;
+        posNum = 0;
+        playerCount = 0;
+        slaughterCount = 0;
+        for(i = 0; i < MAXPLAYERS; ++i)
         {
             totalFrags[i] = 0;
             if(players[i].plr->inGame)
             {
-                playercount++;
-                for(j = 0; j < MAXPLAYERS; j++)
+                playerCount++;
+                for(j = 0; j < MAXPLAYERS; ++j)
                 {
                     if(players[i].plr->inGame)
                     {
                         totalFrags[i] += players[i].frags[j];
                     }
                 }
-                posnum++;
+                posNum++;
             }
-            if(totalFrags[i] > slaughterfrags)
+
+            if(totalFrags[i] > slaughterFrags)
             {
-                slaughterboy = 1 << i;
-                slaughterfrags = totalFrags[i];
-                slaughtercount = 1;
+                slaughterBoy = 1 << i;
+                slaughterFrags = totalFrags[i];
+                slaughterCount = 1;
             }
-            else if(totalFrags[i] == slaughterfrags)
+            else if(totalFrags[i] == slaughterFrags)
             {
-                slaughterboy |= 1 << i;
-                slaughtercount++;
+                slaughterBoy |= 1 << i;
+                slaughterCount++;
             }
         }
-        if(playercount == slaughtercount)
+
+        if(playerCount == slaughterCount)
         {   // don't do the slaughter stuff if everyone is equal
-            slaughterboy = 0;
+            slaughterBoy = 0;
         }
+
         S_StartMusic("hub", true);
     }
 }
 
-static void LoadPics(void)
+static void loadPics(void)
 {
-    int         i;
+    int                 i;
 
-    if(HubCount || gametype == DEATHMATCH)
+    if(hubCount || gameType == DEATHMATCH)
     {
-        patchINTERPICLumpRS = W_GetNumForName("INTERPIC");
-        FontBLumpBase = W_GetNumForName("FONTB16");
+        patchInterpicLumpRS = W_GetNumForName("INTERPIC");
+        fontBLumpBase = W_GetNumForName("FONTB16");
         for(i = 0; i < 10; ++i)
         {
-            FontBNumbersLump[i] = FontBLumpBase + i;
+            fontBNumbersLump[i] = fontBLumpBase + i;
         }
-        FontBLump = W_GetNumForName("FONTB_S") + 1;
-        FontBNegativeLump = W_GetNumForName("FONTB13");
-        FontABaseLump = W_GetNumForName("FONTA_S") + 1;
 
-        FontBSlashLump = W_GetNumForName("FONTB15");
-        FontBPercentLump = W_GetNumForName("FONTB05");
+        fontBLump = W_GetNumForName("FONTB_S") + 1;
+        fontBNegativeLump = W_GetNumForName("FONTB13");
+        fontABaseLump = W_GetNumForName("FONTA_S") + 1;
+
+        fontBSlashLump = W_GetNumForName("FONTB15");
+        fontBPercentLump = W_GetNumForName("FONTB05");
     }
 }
 
-static void UnloadPics(void)
+static void unloadPics(void)
 {
     // Nothing to do.
 }
@@ -319,31 +308,35 @@ void IN_Ticker(void)
     {
         return;
     }
-    if(interstate)
+
+    if(interState)
     {
         WaitStop();
         return;
     }
-    skipintermission = false;
+
+    skipIntermission = false;
     CheckForSkip();
-    intertime++;
-    if(skipintermission || (gametype == SINGLE && !HubCount))
+    interTime++;
+
+    if(skipIntermission || (gameType == SINGLE && !hubCount))
     {
-        interstate = 1;
-        NetSv_Intermission(IMF_STATE, interstate, 0);
+        interState = 1;
+        NetSv_Intermission(IMF_STATE, interState, 0);
         cnt = 10;
-        skipintermission = false;
+        skipIntermission = false;
     }
 }
 
 /**
- * Check to see if any player hit a key
+ * Check to see if any player hit a key.
  */
 static void CheckForSkip(void)
 {
-    int         i;
-    player_t   *player;
-    static boolean triedToSkip;
+    static boolean      triedToSkip;
+
+    int                 i;
+    player_t           *player;
 
     for(i = 0, player = players; i < MAXPLAYERS; ++i, player++)
     {
@@ -353,7 +346,7 @@ static void CheckForSkip(void)
             {
                 if(!player->attackDown)
                 {
-                    skipintermission = 1;
+                    skipIntermission = 1;
                 }
                 player->attackDown = true;
             }
@@ -361,11 +354,12 @@ static void CheckForSkip(void)
             {
                 player->attackDown = false;
             }
+
             if(player->brain.use)
             {
                 if(!player->useDown)
                 {
-                    skipintermission = 1;
+                    skipIntermission = 1;
                 }
                 player->useDown = true;
             }
@@ -375,19 +369,20 @@ static void CheckForSkip(void)
             }
         }
     }
-    if(deathmatch && intertime < 140)
-    {   // wait for 4 seconds before allowing a skip
-        if(skipintermission == 1)
+
+    if(deathmatch && interTime < 140)
+    {   // Wait for 4 seconds before allowing a skip.
+        if(skipIntermission == 1)
         {
             triedToSkip = true;
-            skipintermission = 0;
+            skipIntermission = 0;
         }
     }
     else
     {
         if(triedToSkip)
         {
-            skipintermission = 1;
+            skipIntermission = 1;
             triedToSkip = false;
         }
     }
@@ -396,39 +391,38 @@ static void CheckForSkip(void)
 void IN_Drawer(void)
 {
     if(!intermission)
-    {
         return;
-    }
-    if(interstate)
-    {
-        return;
-    }
-    GL_DrawRawScreen(patchINTERPICLumpRS, 0, 0);
 
-    if(gametype != SINGLE)
+    if(interState)
+        return;
+
+    GL_DrawRawScreen(patchInterpicLumpRS, 0, 0);
+
+    if(gameType != SINGLE)
     {
-        DrDeathTally();
+        drawDeathTally();
     }
 }
 
-static void DrDeathTally(void)
+static void drawDeathTally(void)
 {
-    int         i, j;
-    fixed_t     xPos, yPos;
-    fixed_t     xDelta, yDelta;
-    fixed_t     xStart, scale;
-    int         x, y;
-    boolean     bold;
-    static boolean showTotals;
-    int         temp;
+    static boolean      showTotals;
+
+    int                 i, j;
+    fixed_t             xPos, yPos;
+    fixed_t             xDelta, yDelta;
+    fixed_t             xStart, scale;
+    int                 x, y;
+    boolean             bold;
+    int                 temp;
 
     GL_DrawPatch(TALLY_TOP_X, TALLY_TOP_Y, W_GetNumForName("tallytop"));
     GL_DrawPatch(TALLY_LEFT_X, TALLY_LEFT_Y, W_GetNumForName("tallylft"));
 
-    if(intertime < TALLY_EFFECT_TICKS)
+    if(interTime < TALLY_EFFECT_TICKS)
     {
         showTotals = false;
-        scale = (intertime * FRACUNIT) / TALLY_EFFECT_TICKS;
+        scale = (interTime * FRACUNIT) / TALLY_EFFECT_TICKS;
         xDelta = FixedMul(scale, TALLY_FINAL_X_DELTA);
         yDelta = FixedMul(scale, TALLY_FINAL_Y_DELTA);
         xStart =
@@ -445,7 +439,8 @@ static void DrDeathTally(void)
         xStart = TALLY_STOP_XPOS;
         yPos = TALLY_STOP_YPOS;
     }
-    if(intertime >= TALLY_EFFECT_TICKS && showTotals == false)
+
+    if(interTime >= TALLY_EFFECT_TICKS && showTotals == false)
     {
         showTotals = true;
         S_StartSound(SFX_PLATFORM_STOP, NULL);
@@ -458,63 +453,65 @@ static void DrDeathTally(void)
         for(j = 0; j < MAXPLAYERS; ++j, xPos += xDelta)
         {
             x = xPos >> FRACBITS;
-            bold = (i == consoleplayer || j == consoleplayer);
+            bold = (i == CONSOLEPLAYER || j == CONSOLEPLAYER);
             if(players[i].plr->inGame && players[j].plr->inGame)
             {
                 if(bold)
                 {
-                    DrNumberBold(players[i].frags[j], x, y, 100);
+                    drawNumberBold(players[i].frags[j], x, y, 100);
                 }
                 else
                 {
-                    DrNumber(players[i].frags[j], x, y, 100);
+                    drawNumber(players[i].frags[j], x, y, 100);
                 }
             }
             else
             {
-                temp = M_StringWidth("--", hu_font_a) / 2;
+                temp = M_StringWidth("--", huFontA) / 2;
                 if(bold)
                 {
-                    M_WriteText2(x - temp, y, "--", hu_font_a, 1, 0.7f, 0.3f, 1);
+                    M_WriteText2(x - temp, y, "--", huFontA, 1, 0.7f, 0.3f, 1);
                 }
                 else
                 {
-                    M_WriteText2(x - temp, y, "--", hu_font_a, 1, 1, 1, 1);
+                    M_WriteText2(x - temp, y, "--", huFontA, 1, 1, 1, 1);
                 }
             }
         }
+
         if(showTotals && players[i].plr->inGame &&
-           !((slaughterboy & (1 << i)) && !(intertime & 16)))
+           !((slaughterBoy & (1 << i)) && !(interTime & 16)))
         {
-            DrNumber(totalFrags[i], TALLY_TOTALS_X, y, 1000);
+            drawNumber(totalFrags[i], TALLY_TOTALS_X, y, 1000);
         }
+
         yPos += yDelta;
         y = yPos >> FRACBITS;
     }
 }
 
-static void DrNumber(int val, int x, int y, int wrapThresh)
+static void drawNumber(int val, int x, int y, int wrapThresh)
 {
-    char    buff[8] = "XX";
+    char                buff[8] = "XX";
 
     if(!(val < -9 && wrapThresh < 1000))
     {
         sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(x - M_StringWidth(buff, hu_font_a) / 2, y, buff,
-                 hu_font_a, 1, 1, 1, 1);
+    M_WriteText2(x - M_StringWidth(buff, huFontA) / 2, y, buff,
+                 huFontA, 1, 1, 1, 1);
 }
 
-static void DrNumberBold(int val, int x, int y, int wrapThresh)
+static void drawNumberBold(int val, int x, int y, int wrapThresh)
 {
-    char    buff[8] = "XX";
+    char                buff[8] = "XX";
 
     if(!(val < -9 && wrapThresh < 1000))
     {
         sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(x - M_StringWidth(buff, hu_font_a) / 2, y, buff,
-                 hu_font_a, 1, 0.7f, 0.3f, 1);
+    M_WriteText2(x - M_StringWidth(buff, huFontA) / 2, y, buff,
+                 huFontA, 1, 0.7f, 0.3f, 1);
 }

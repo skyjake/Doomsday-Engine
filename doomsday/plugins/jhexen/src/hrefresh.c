@@ -60,30 +60,17 @@
 #include "am_map.h"
 #include "g_common.h"
 #include "hu_menu.h"
+#include "x_hair.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8) + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
 
-#define viewheight              Get(DD_VIEWWINDOW_HEIGHT)
-
-#define SIZEFACT                4
-#define SIZEFACT2               16
+#define WINDOWHEIGHT            (Get(DD_VIEWWINDOW_HEIGHT))
 
 // TYPES -------------------------------------------------------------------
 
-// This could hold much more detailed information...
-typedef struct textype_s {
-    char    name[9];            // Name of the texture.
-    int     type;               // Which type?
-} textype_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-void    X_Drawer(void);
-void    R_SetAllDoomsdayFlags(void);
-void    H2_AdvanceDemo(void);
-void    MN_DrCenterTextA_CS(char *text, int center_x, int y);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -91,19 +78,9 @@ void    MN_DrCenterTextA_CS(char *text, int center_x, int y);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern float lookOffset;
-extern int actual_leveltime;
-
-extern float deffontRGB[];
-
-extern boolean dontrender;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean setsizeneeded;
-
-// wipegamestate can be set to -1 to force a wipe on the next draw
-gamestate_t wipegamestate = GS_DEMOSCREEN;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -121,20 +98,20 @@ void R_InitRefresh(void)
 void R_SetViewSize(int blocks, int detail)
 {
     setsizeneeded = true;
-    if(cfg.setblocks != blocks && blocks > 10 && blocks < 13)
+    if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
     {   // When going fullscreen, force a hud show event (to reset the timer).
         ST_HUDUnHide(HUE_FORCE);
     }
-    cfg.setblocks = blocks;
+    cfg.setBlocks = blocks;
 }
 
 void R_DrawMapTitle(void)
 {
-    float       alpha = 1;
-    int         y = 12;
-    char       *lname, *lauthor;
+    float               alpha = 1;
+    int                 y = 12;
+    char               *lname, *lauthor;
 
-    if(!cfg.levelTitle || actual_leveltime > 6 * 35)
+    if(!cfg.levelTitle || actualLevelTime > 6 * 35)
         return;
 
     // Make the text a bit smaller.
@@ -144,32 +121,32 @@ void R_DrawMapTitle(void)
     DGL_Scalef(.75f, .75f, 1);   // Scale to 3/4
     DGL_Translatef(-160, -y, 0);
 
-    if(actual_leveltime < 35)
-        alpha = actual_leveltime / 35.0f;
-    if(actual_leveltime > 5 * 35)
-        alpha = 1 - (actual_leveltime - 5 * 35) / 35.0f;
+    if(actualLevelTime < 35)
+        alpha = actualLevelTime / 35.0f;
+    if(actualLevelTime > 5 * 35)
+        alpha = 1 - (actualLevelTime - 5 * 35) / 35.0f;
 
     lname = P_GetMapNiceName();
     lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
 
     // Use stardard map name if DED didn't define it.
     if(!lname)
-        lname = P_GetMapName(gamemap);
+        lname = P_GetMapName(gameMap);
 
     Draw_BeginZoom((1 + cfg.hudScale)/2, 160, y);
 
     if(lname)
     {
-        M_WriteText3(160 - M_StringWidth(lname, hu_font_b) / 2, y, lname,
-                    hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2],
+        M_WriteText3(160 - M_StringWidth(lname, huFontB) / 2, y, lname,
+                    huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2],
                     alpha, false, 0);
         y += 20;
     }
 
     if(lauthor)
     {
-        M_WriteText3(160 - M_StringWidth(lauthor, hu_font_a) / 2, y, lauthor,
-                    hu_font_a, .5f, .5f, .5f, alpha, false, 0);
+        M_WriteText3(160 - M_StringWidth(lauthor, huFontA) / 2, y, lauthor,
+                    huFontA, .5f, .5f, .5f, alpha, false, 0);
     }
 
     Draw_EndZoom();
@@ -178,37 +155,40 @@ void R_DrawMapTitle(void)
     DGL_PopMatrix();
 }
 
-void G_Drawer(void)
+void G_Display(void)
 {
-    static boolean viewactivestate = false;
-    static boolean menuactivestate = false;
-    static int  fullscreenmode = 0;
-    static gamestate_t oldgamestate = -1;
-    int         py;
-    player_t   *vplayer = &players[displayplayer];
-    boolean     iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0;   // $democam
-    float       x, y, w, h;
-    boolean     mapHidesView;
+    static boolean      viewactivestate = false;
+    static boolean      menuactivestate = false;
+    static int          fullscreenmode = 0;
+    static gamestate_t  oldgamestate = -1;
 
-    // $democam: can be set on every frame
-    if(cfg.setblocks > 10 || iscam)
+    int                 py;
+    player_t           *vplayer = &players[DISPLAYPLAYER];
+    boolean             iscam =
+        (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
+    float               x, y, w, h;
+    boolean             mapHidesView;
+
+    // $democam: can be set on every frame.
+    if(cfg.setBlocks > 10 || iscam)
     {
         // Full screen.
         R_SetViewWindowTarget(0, 0, 320, 200);
     }
     else
     {
-        int w = cfg.setblocks * 32;
-        int h = cfg.setblocks * (200 - SBARHEIGHT * cfg.sbarscale / 20) / 10;
+        int                 w, h;
+
+        w = cfg.setBlocks * 32;
+        h = cfg.setBlocks * (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
         R_SetViewWindowTarget(160 - (w >> 1),
-                              (200 - SBARHEIGHT * cfg.sbarscale / 20 - h) >> 1,
+                              (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) >> 1,
                               w, h);
     }
 
     R_GetViewWindow(&x, &y, &w, &h);
     R_ViewWindow((int) x, (int) y, (int) w, (int) h);
 
-    // Do buffered drawing
     switch(G_GetGameState())
     {
     case GS_LEVEL:
@@ -220,7 +200,7 @@ void G_Drawer(void)
         if(!vplayer->plr->mo)
             break;
 
-        if(!IS_CLIENT && leveltime < 2)
+        if(!IS_CLIENT && levelTime < 2)
         {
             // Don't render too early; the first couple of frames
             // might be a bit unstable -- this should be considered
@@ -229,14 +209,15 @@ void G_Drawer(void)
         }
 
         mapHidesView =
-            R_MapObscures(displayplayer, (int) x, (int) y, (int) w, (int) h);
+            R_MapObscures(DISPLAYPLAYER, (int) x, (int) y, (int) w, (int) h);
 
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
            !mapHidesView)
         {
-            boolean special200 = false;
-            float viewOffset[2] = {0, 0};
-            int viewAngleOffset = ANGLE_MAX * -G_GetLookOffset(displayplayer);
+            boolean             special200 = false;
+            float               viewOffset[2] = {0, 0};
+            int                 viewAngleOffset =
+                ANGLE_MAX * -G_GetLookOffset(DISPLAYPLAYER);
 
             R_HandleSectorSpecials();
             // Set flags for the renderer.
@@ -246,6 +227,7 @@ void G_Drawer(void)
                 R_SetAllDoomsdayFlags();
             }
             GL_SetFilter(vplayer->plr->filter); // $democam
+
             // Check for the sector special 200: use sky2.
             // I wonder where this is used?
             if(P_ToXSectorOfSubsector(vplayer->plr->mo->subsector)->special == 200)
@@ -254,10 +236,11 @@ void G_Drawer(void)
                 Rend_SkyParams(0, DD_DISABLE, 0);
                 Rend_SkyParams(1, DD_ENABLE, 0);
             }
+
             // How about a bit of quake?
-            if(localQuakeHappening[displayplayer] && !paused)
+            if(localQuakeHappening[DISPLAYPLAYER] && !paused)
             {
-                int     intensity = localQuakeHappening[displayplayer];
+                int     intensity = localQuakeHappening[DISPLAYPLAYER];
 
                 viewOffset[0] = (float) ((M_Random() % (intensity << 2)) -
                                     (intensity << 1));
@@ -269,11 +252,7 @@ void G_Drawer(void)
 
             // The view angle offset.
             DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
-            // Render the view.
-            if(!dontrender)
-            {
-                R_RenderPlayerView(vplayer->plr);
-            }
+            R_RenderPlayerView(vplayer->plr);
 
             if(special200)
             {
@@ -286,7 +265,7 @@ void G_Drawer(void)
         }
 
         // Draw the automap.
-        AM_Drawer(displayplayer);
+        AM_Drawer(DISPLAYPLAYER);
         break;
 
     default:
@@ -294,12 +273,12 @@ void G_Drawer(void)
     }
 
     menuactivestate = Hu_MenuIsActive();
-    viewactivestate = viewactive;
-    oldgamestate = wipegamestate = G_GetGameState();
+    viewactivestate = viewActive;
+    oldgamestate = G_GetGameState();
 
-    if(paused && !fi_active)
+    if(paused && !fiActive)
     {
-        //if(AM_IsMapActive(displayplayer))
+        //if(AM_IsMapActive(DISPLAYPLAYER))
             py = 4;
         //else
         //    py = 4; // in jDOOM this is viewwindowy + 4
@@ -308,16 +287,15 @@ void G_Drawer(void)
     }
 }
 
-void G_Drawer2(void)
+void G_Display2(void)
 {
-    // Do buffered drawing
     switch(G_GetGameState())
     {
     case GS_LEVEL:
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
 
-        if(!IS_CLIENT && leveltime < 2)
+        if(!IS_CLIENT && levelTime < 2)
         {
             // Don't render too early; the first couple of frames
             // might be a bit unstable -- this should be considered
@@ -325,33 +303,33 @@ void G_Drawer2(void)
             break;
         }
 
-        // These various HUD's will be drawn unless Doomsday advises not to
+        // These various HUD's will be drawn unless Doomsday advises not to.
         if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
         {
             // Draw HUD displays only visible when the automap is open.
-            if(AM_IsMapActive(displayplayer))
+            if(AM_IsMapActive(DISPLAYPLAYER))
                 HU_DrawMapCounters();
 
             // Level information is shown for a few seconds in the
             // beginning of a level.
             R_DrawMapTitle();
 
-            // DJS - Do we need to render a full status bar at this point?
-            if (!(AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 ))
+            // Do we need to render a full status bar at this point?
+            if(!(AM_IsMapActive(DISPLAYPLAYER) && cfg.automapHudDisplay == 0 ))
             {
-                player_t   *vplayer = &players[displayplayer];
+                player_t   *vplayer = &players[DISPLAYPLAYER];
                 boolean     iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
 
                 if(!iscam)
                 {
-                    if(true == (viewheight == 200))
+                    if(true == (WINDOWHEIGHT == 200))
                     {
                         // Fullscreen. Which mode?
-                        ST_Drawer(cfg.setblocks - 10, true);    // $democam
+                        ST_Drawer(cfg.setBlocks - 10, true); // $democam
                     }
                     else
                     {
-                        ST_Drawer(0 , true);    // $democam
+                        ST_Drawer(0 , true); // $democam
                     }
                 }
             }
@@ -386,7 +364,7 @@ int R_GetFilterColor(int filter)
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
         // Red?
-        return FMAKERGBA(1, 0, 0, filter / 8.0);    // Full red with filter 8.
+        return FMAKERGBA(1, 0, 0, filter / 8.0); // Full red with filter 8.
     else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
         // Light Yellow?
         return FMAKERGBA(1, 1, .5, (filter - STARTBONUSPALS + 1) / 16.0);
@@ -427,9 +405,9 @@ void H2_EndFrame(void)
  */
 void R_SetAllDoomsdayFlags(void)
 {
-    uint        i;
-    int         Class;
-    mobj_t     *mo;
+    uint                    i;
+    int                     Class;
+    mobj_t                 *mo;
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
@@ -456,7 +434,7 @@ void R_SetAllDoomsdayFlags(void)
             if(mo->flags & MF_NOGRAVITY /* || mo->flags2 & MF2_FLY */ )
                 mo->ddFlags |= DDMF_NOGRAVITY;
 
-            // $democam: cameramen are invisible
+            // $democam: cameramen are invisible.
             if(P_IsCamera(mo))
                 mo->ddFlags |= DDMF_DONTDRAW;
 
@@ -464,7 +442,7 @@ void R_SetAllDoomsdayFlags(void)
             if(mo->flags2 & MF2_DONTDRAW)
             {
                 mo->ddFlags |= DDMF_DONTDRAW;
-                continue;       // No point in checking the other flags.
+                continue; // No point in checking the other flags.
             }
 
             if((mo->flags & MF_BRIGHTSHADOW) == MF_BRIGHTSHADOW)

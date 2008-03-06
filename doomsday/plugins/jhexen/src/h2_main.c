@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1999 Activision
  *
@@ -69,121 +69,90 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct execopt_s {
-    char   *name;
-    void    (*func) (char **args, int tag);
-    int     requiredArgs;
-    int     tag;
+    char           *name;
+    void          (*func) (char **args, int tag);
+    int             requiredArgs;
+    int             tag;
 } execopt_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    R_ExecuteSetViewSize(void);
-void    F_Drawer(void);
-void    I_HideMouse(void);
-void    S_InitScript(void);
-void    G_Drawer(void);
-void    H2_ConsoleBg(int *width, int *height);
-void    H2_EndFrame(void);
-int     D_PrivilegedResponder(event_t *event);
-void    R_DrawPlayerSprites(ddplayer_t *viewplr);
-void    G_ConsoleRegistration();
-void    SB_HandleCheatNotification(int fromplayer, void *data, int length);
-float   HU_PSpriteYOffset(player_t *pl);
-
-// Map Data
-void    P_SetupForThings(int num);
-void    P_SetupForLines(int num);
-void    P_SetupForSides(int num);
-void    P_SetupForSectors(int num);
-
-void    X_CreateLUTs(void);
-void    X_DestroyLUTs(void);
+extern void X_CreateLUTs(void);
+extern void X_DestroyLUTs(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void HandleArgs();
-static void ExecOptionSCRIPTS(char **args, int tag);
-static void ExecOptionDEVMAPS(char **args, int tag);
-static void ExecOptionSKILL(char **args, int tag);
-static void ExecOptionPLAYDEMO(char **args, int tag);
-static void WarpCheck(void);
-
-#ifdef TIMEBOMB
-static void DoTimeBomb(void);
-#endif
+static void handleArgs();
+static void execOptionScripts(char **args, int tag);
+static void execOptionDevMaps(char **args, int tag);
+static void execOptionSkill(char **args, int tag);
+static void execOptionPlayDemo(char **args, int tag);
+static void warpCheck(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean startupScreen;
-extern int demosequence;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     verbose;
+int verbose;
 
-boolean DevMaps;                // true = Map development mode
-char   *DevMapsDir = "";        // development maps directory
-boolean nomonsters;             // checkparm of -nomonsters
-boolean respawnparm;            // checkparm of -respawn
-boolean turboparm;              // checkparm of -turbo
-float   turbomul;               // multiplier for turbo
+boolean DevMaps; // true = map development mode.
+char *DevMapsDir = ""; // Development maps directory.
 
-boolean randomclass;            // checkparm of -randclass
-boolean debugmode;              // checkparm of -debug
-boolean devparm;                // checkparm of -devparm
-boolean nofullscreen;           // checkparm of -nofullscreen
-boolean cdrom;                  // true if cd-rom mode active
-boolean cmdfrag;                // true if a CMD_FRAG packet should be sent out
-boolean singletics;             // debug flag to cancel adaptiveness
-boolean artiskip;               // whether shift-enter skips an artifact
-boolean netcheat;               // allow cheating in netgames (-netcheat)
-boolean dontrender;             // don't render the player view (debug)
-skillmode_t startskill;
-int     startepisode;
-int     startmap;
+boolean noMonstersParm; // checkparm of -nomonsters
+boolean respawnParm; // checkparm of -respawn
+boolean turboParm; // checkparm of -turbo
+boolean randomClassParm; // checkparm of -randclass
+boolean devParm; // checkparm of -devparm
+boolean artiSkipParm; // Whether shift-enter skips an artifact.
 
-gamemode_t gamemode;
-int     gamemodebits;
+float turboMul; // Multiplier for turbo.
+boolean netCheatParm; // Allow cheating in netgames (-netcheat)
+
+skillmode_t startSkill;
+int startEpisode;
+int startMap;
+
+gamemode_t gameMode;
+int gameModeBits;
 
 // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
 char gameModeString[17];
 
-// default font colours
-const float deffontRGB[] = { .9f, 0.0f, 0.0f};
-const float deffontRGB2[] = { .9f, .9f, .9f};
+// Default font colours.
+const float defFontRGB[] = { .9f, 0.0f, 0.0f};
+const float defFontRGB2[] = { .9f, .9f, .9f};
 
 // Network games parameters.
 
-boolean autostart;
+boolean autoStart;
 
-//boolean advancedemo;
-FILE   *debugfile;
+FILE   *debugFile;
 
 char   *borderLumps[] = {
-    "F_022",                    // background
-    "bordt",                    // top
-    "bordr",                    // right
-    "bordb",                    // bottom
-    "bordl",                    // left
-    "bordtl",                   // top left
-    "bordtr",                   // top right
-    "bordbr",                   // bottom right
-    "bordbl"                    // bottom left
+    "F_022", // Background.
+    "bordt", // Top.
+    "bordr", // Right.
+    "bordb", // Bottom.
+    "bordl", // Left.
+    "bordtl", // Top left.
+    "bordtr", // Top right.
+    "bordbr", // Bottom right.
+    "bordbl" // Bottom left.
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int WarpMap;
+static int warpMap;
 
-static execopt_t ExecOptions[] = {
-    {"-scripts", ExecOptionSCRIPTS, 1, 0},
-    {"-devmaps", ExecOptionDEVMAPS, 1, 0},
-    {"-skill", ExecOptionSKILL, 1, 0},
-    {"-playdemo", ExecOptionPLAYDEMO, 1, 0},
-    {"-timedemo", ExecOptionPLAYDEMO, 1, 0},
-    {NULL, NULL, 0, 0}          // Terminator
+static execopt_t execOptions[] = {
+    {"-scripts", execOptionScripts, 1, 0},
+    {"-devmaps", execOptionDevMaps, 1, 0},
+    {"-skill", execOptionSkill, 1, 0},
+    {"-playdemo", execOptionPlayDemo, 1, 0},
+    {"-timedemo", execOptionPlayDemo, 1, 0},
+    {NULL, NULL, 0, 0} // Terminator.
 };
 
 // CODE --------------------------------------------------------------------
@@ -196,11 +165,12 @@ static execopt_t ExecOptions[] = {
  *  global vars.
  *
  * @param mode          The game mode to change to.
+ *
  * @return              @c true, if we changed game modes successfully.
  */
-boolean D_SetGameMode(gamemode_t mode)
+boolean G_SetGameMode(gamemode_t mode)
 {
-    gamemode = mode;
+    gameMode = mode;
 
     if(G_GetGameState() == GS_LEVEL)
         return false;
@@ -208,23 +178,23 @@ boolean D_SetGameMode(gamemode_t mode)
     switch(mode)
     {
     case shareware: // Shareware (4-level demo)
-        gamemodebits = GM_SHAREWARE;
+        gameModeBits = GM_SHAREWARE;
         break;
 
     case registered: // HEXEN registered
-        gamemodebits = GM_REGISTERED;
+        gameModeBits = GM_REGISTERED;
         break;
 
     case extended: // Deathkings
-        gamemodebits = GM_REGISTERED|GM_EXTENDED;
+        gameModeBits = GM_REGISTERED|GM_EXTENDED;
         break;
 
     case indetermined: // Well, no IWAD found.
-        gamemodebits = GM_INDETERMINED;
+        gameModeBits = GM_INDETERMINED;
         break;
 
     default:
-        Con_Error("D_SetGameMode: Unknown gamemode %i", mode);
+        Con_Error("G_SetGameMode: Unknown gamemode %i", mode);
     }
 
     return true;
@@ -237,13 +207,13 @@ void G_IdentifyVersion(void)
 {
     // Determine the game mode. Assume demo mode.
     strcpy(gameModeString, "hexen-demo");
-    D_SetGameMode(shareware);
+    G_SetGameMode(shareware);
 
     if(W_CheckNumForName("MAP05") >= 0)
     {
         // Normal Hexen.
         strcpy(gameModeString, "hexen");
-        D_SetGameMode(registered);
+        G_SetGameMode(registered);
     }
 
     // This is not a very accurate test...
@@ -251,7 +221,7 @@ void G_IdentifyVersion(void)
     {
         // It must be Deathkings!
         strcpy(gameModeString, "hexen-dk");
-        D_SetGameMode(extended);
+        G_SetGameMode(extended);
     }
 }
 
@@ -261,7 +231,7 @@ void G_IdentifyVersion(void)
  * decide which one gets loaded or even see if the WADs are actually
  * there. The default location for IWADs is Data\GAMENAMETEXT\.
  */
-void DetectIWADs(void)
+void G_DetectIWADs(void)
 {
     // The startup WADs.
     DD_AddIWAD("}data\\jhexen\\hexen.wad");
@@ -274,23 +244,23 @@ void DetectIWADs(void)
  * Pre Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void H2_PreInit(void)
+void G_PreInit(void)
 {
-    int         i;
+    int                     i;
 
     // Calculate the various LUTs used by the playsim.
     X_CreateLUTs();
 
-    D_SetGameMode(indetermined);
+    G_SetGameMode(indetermined);
 
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
-    cfg.sbarscale = 20;
-    cfg.dclickuse = false;
+    cfg.statusbarScale = 20;
+    cfg.dclickUse = false;
     cfg.inventoryNextOnUnuse = true;
-    cfg.screenblocks = cfg.setblocks = 10;
+    cfg.screenBlocks = cfg.setBlocks = 10;
     cfg.hudShown[HUD_MANA] = true;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARTI] = true;
@@ -307,6 +277,7 @@ void H2_PreInit(void)
     cfg.weaponAutoSwitch = 1; // IF BETTER
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
+    cfg.fastMonsters = false;
     cfg.netMap = 1;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 8;           // Use the default color by default.
@@ -316,24 +287,24 @@ void H2_PreInit(void)
     cfg.plrViewHeight = 48;
     cfg.levelTitle = true;
     cfg.menuScale = .75f;
-    cfg.menuColor[0] = deffontRGB[0];   // use the default colour by default.
-    cfg.menuColor[1] = deffontRGB[1];
-    cfg.menuColor[2] = deffontRGB[2];
-    cfg.menuColor2[0] = deffontRGB2[0]; // use the default colour by default.
-    cfg.menuColor2[1] = deffontRGB2[1];
-    cfg.menuColor2[2] = deffontRGB2[2];
+    cfg.menuColor[0] = defFontRGB[0];   // use the default colour by default.
+    cfg.menuColor[1] = defFontRGB[1];
+    cfg.menuColor[2] = defFontRGB[2];
+    cfg.menuColor2[0] = defFontRGB2[0]; // use the default colour by default.
+    cfg.menuColor2[1] = defFontRGB2[1];
+    cfg.menuColor2[2] = defFontRGB2[2];
     cfg.menuEffects = 1;
     cfg.menuFog = 4;
     cfg.menuSlam = true;
-    cfg.flashcolor[0] = 1.0f;
-    cfg.flashcolor[1] = .5f;
-    cfg.flashcolor[2] = .5f;
-    cfg.flashspeed = 4;
+    cfg.flashColor[0] = 1.0f;
+    cfg.flashColor[1] = .5f;
+    cfg.flashColor[2] = .5f;
+    cfg.flashSpeed = 4;
     cfg.turningSkull = false;
     cfg.hudScale = .7f;
-    cfg.hudColor[0] = deffontRGB[0];    // use the default colour by default.
-    cfg.hudColor[1] = deffontRGB[1];
-    cfg.hudColor[2] = deffontRGB[2];
+    cfg.hudColor[0] = defFontRGB[0];    // use the default colour by default.
+    cfg.hudColor[1] = defFontRGB[1];
+    cfg.hudColor[2] = defFontRGB[2];
     cfg.hudColor[3] = 1;
     cfg.hudIconAlpha = 1;
     cfg.usePatchReplacement = 2; // Use built-in replacements if available.
@@ -385,9 +356,9 @@ void H2_PreInit(void)
     cfg.msgUptime = 5 * TICSPERSEC;
     cfg.msgAlign = ALIGN_CENTER;
     cfg.msgBlink = 5;
-    cfg.msgColor[0] = deffontRGB2[0];
-    cfg.msgColor[1] = deffontRGB2[1];
-    cfg.msgColor[2] = deffontRGB2[2];
+    cfg.msgColor[0] = defFontRGB2[0];
+    cfg.msgColor[1] = defFontRGB2[1];
+    cfg.msgColor[2] = defFontRGB2[2];
 
     cfg.chatBeep = 1;
 
@@ -400,42 +371,42 @@ void H2_PreInit(void)
     // console during map setup.
     Con_SetInteger("con-show-during-setup", 0, true);
 
-    // Do the common pre init routine;
-    G_PreInit();
+    // Do the common pre init routine.
+    G_CommonPreInit();
 }
 
 /**
  * Post Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void H2_PostInit(void)
+void G_PostInit(void)
 {
-    int         p;
-    int         pClass;
-    char        mapstr[6];
+    int                     p;
+    int                     pClass;
+    char                    mapStr[6];
 
-    // Common post init routine
-    G_PostInit();
+    // Common post init routine.
+    G_CommonPostInit();
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gamemode == shareware? "*** Hexen 4-level Beta Demo ***\n"
+                gameMode == shareware? "*** Hexen 4-level Beta Demo ***\n"
                     : "Hexen\n");
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
     /* None */
 
-    // get skill / episode / map from parms
-    startepisode = 1;
-    startskill = SM_MEDIUM;
-    startmap = 1;
+    // Get skill / episode / map from parms.
+    startEpisode = 1;
+    startSkill = SM_MEDIUM;
+    startMap = 1;
 
-    // Game mode specific settings
+    // Game mode specific settings.
     /* None */
 
-    // Command line options
-    HandleArgs();
+    // Command line options.
+    handleArgs();
 
     // Check the -class argument.
     pClass = PCLASS_FIGHTER;
@@ -448,25 +419,25 @@ void H2_PostInit(void)
         }
         Con_Message("\nPlayer Class: %d\n", pClass);
     }
-    cfg.playerClass[consoleplayer] = pClass;
+    cfg.playerClass[CONSOLEPLAYER] = pClass;
 
-    P_InitMapMusicInfo();         // Init music fields in mapinfo
+    P_InitMapMusicInfo(); // Init music fields in mapinfo.
 
-    Con_Message("S_InitScript\n");
-    S_InitScript();
+    Con_Message("Parsing SNDINFO...\n");
+    S_ParseSndInfoLump();
 
     Con_Message("SN_InitSequenceScript: Registering sound sequences.\n");
     SN_InitSequenceScript();
 
     // Check for command line warping. Follows P_Init() because the
     // MAPINFO.TXT script must be already processed.
-    WarpCheck();
+    warpCheck();
 
     // Are we autostarting?
-    if(autostart)
+    if(autoStart)
     {
-        Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", WarpMap,
-                    P_GetMapName(startmap), startmap, startskill + 1);
+        Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", warpMap,
+                    P_GetMapName(startMap), startMap, startSkill + 1);
     }
 
     // Load a saved game?
@@ -475,58 +446,54 @@ void H2_PostInit(void)
         G_LoadGame(atoi(Argv(p + 1)));
     }
 
-    // Check valid episode and map
-    if((autostart || IS_NETGAME))
+    // Check valid episode and map.
+    if((autoStart || IS_NETGAME))
     {
-        sprintf(mapstr,"MAP%2.2d", startmap);
-        if(!W_CheckNumForName(mapstr))
+        sprintf(mapStr,"MAP%2.2d", startMap);
+        if(!W_CheckNumForName(mapStr))
         {
-            startepisode = 1;
-            startmap = 1;
+            startEpisode = 1;
+            startMap = 1;
         }
     }
 
     if(G_GetGameAction() != GA_LOADGAME)
     {
-        if(autostart || IS_NETGAME)
+        if(autoStart || IS_NETGAME)
         {
             G_StartNewInit();
-            G_InitNew(startskill, startepisode, startmap);
+            G_InitNew(startSkill, startEpisode, startMap);
         }
         else
         {
-            G_StartTitle();     // start up intro loop
+            // Start up intro loop.
+            G_StartTitle();
         }
     }
-
 }
 
-static void HandleArgs(void)
+static void handleArgs(void)
 {
-    int         p;
-    execopt_t  *opt;
+    int                     p;
+    execopt_t              *opt;
 
-    nomonsters = ArgExists("-nomonsters");
-    respawnparm = ArgExists("-respawn");
-    randomclass = ArgExists("-randclass");
-    devparm = ArgExists("-devparm");
-    artiskip = ArgExists("-artiskip");
-    debugmode = ArgExists("-debug");
+    noMonstersParm = ArgExists("-nomonsters");
+    respawnParm = ArgExists("-respawn");
+    randomClassParm = ArgExists("-randclass");
+    devParm = ArgExists("-devparm");
+    artiSkipParm = ArgExists("-artiskip");
+    netCheatParm = ArgExists("-netcheat");
+
     cfg.netDeathmatch = ArgExists("-deathmatch");
-    cdrom = ArgExists("-cdrom");
-    cmdfrag = ArgExists("-cmdfrag");
-    nofullscreen = ArgExists("-nofullscreen");
-    netcheat = ArgExists("-netcheat");
-    dontrender = ArgExists("-noview");
 
-    // turbo option
+    // Turbo movement option.
     p = ArgCheck("-turbo");
-    turbomul = 1.0f;
+    turboMul = 1.0f;
     if(p)
     {
-        int     scale = 200;
+        int                     scale = 200;
 
-        turboparm = true;
+        turboParm = true;
         if(p < Argc() - 1)
             scale = atoi(Argv(p + 1));
         if(scale < 10)
@@ -535,11 +502,11 @@ static void HandleArgs(void)
             scale = 400;
 
         Con_Message("turbo scale: %i%%\n", scale);
-        turbomul = scale / 100.f;
+        turboMul = scale / 100.f;
     }
 
-    // Process command line options
-    for(opt = ExecOptions; opt->name != NULL; opt++)
+    // Process command line options.
+    for(opt = execOptions; opt->name != NULL; opt++)
     {
         p = ArgCheck(opt->name);
         if(p && p < Argc() - opt->requiredArgs)
@@ -549,59 +516,59 @@ static void HandleArgs(void)
     }
 }
 
-static void WarpCheck(void)
+static void warpCheck(void)
 {
-    int         p, map;
+    int                     p, map;
 
     p = ArgCheck("-warp");
     if(p && p < Argc() - 1)
     {
-        WarpMap = atoi(Argv(p + 1));
-        map = P_TranslateMap(WarpMap);
+        warpMap = atoi(Argv(p + 1));
+        map = P_TranslateMap(warpMap);
         if(map == -1)
-        {                       // Couldn't find real map number
-            startmap = 1;
+        {   // Couldn't find real map number.
+            startMap = 1;
             Con_Message("-WARP: Invalid map number.\n");
         }
         else
-        {                       // Found a valid startmap
-            startmap = map;
-            autostart = true;
+        {   // Found a valid startmap.
+            startMap = map;
+            autoStart = true;
         }
     }
     else
     {
-        WarpMap = 1;
-        startmap = P_TranslateMap(1);
-        if(startmap == -1)
+        warpMap = 1;
+        startMap = P_TranslateMap(1);
+        if(startMap == -1)
         {
-            startmap = 1;
+            startMap = 1;
         }
     }
 }
 
-static void ExecOptionSKILL(char **args, int tag)
+static void execOptionSkill(char **args, int tag)
 {
-    startskill = args[1][0] - '1';
-    autostart = true;
+    startSkill = args[1][0] - '1';
+    autoStart = true;
 }
 
-static void ExecOptionPLAYDEMO(char **args, int tag)
+static void execOptionPlayDemo(char **args, int tag)
 {
-    char        file[256];
+    char                    file[256];
 
     sprintf(file, "%s.lmp", args[1]);
     DD_AddStartupWAD(file);
     Con_Message("Playing demo %s.lmp.\n", args[1]);
 }
 
-static void ExecOptionSCRIPTS(char **args, int tag)
+static void execOptionScripts(char **args, int tag)
 {
     sc_FileScripts = true;
     sc_ScriptsDir = args[1];
 }
 
-static void ExecOptionDEVMAPS(char **args, int tag)
+static void execOptionDevMaps(char **args, int tag)
 {
     DevMaps = true;
     Con_Message("Map development mode enabled:\n");
@@ -634,9 +601,9 @@ static void ExecOptionDEVMAPS(char **args, int tag)
     SC_Close();
 }
 
-void H2_Shutdown(void)
+void G_Shutdown(void)
 {
-    uint        i;
+    uint                    i;
 
     for(i = 0; i < MAXPLAYERS; ++i)
         HUMsg_ClearMessages(&players[i]);
@@ -650,8 +617,7 @@ void H2_Shutdown(void)
     X_DestroyLUTs();
 }
 
-void H2_Ticker(timespan_t ticLength)
+void G_EndFrame(void)
 {
-    Hu_MenuTicker(ticLength);
-    G_Ticker(ticLength);
+    // Nothing to do.
 }

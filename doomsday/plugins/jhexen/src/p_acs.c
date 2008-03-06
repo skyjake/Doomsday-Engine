@@ -335,7 +335,7 @@ void P_CheckACSStore(void)
 
     for(store = ACSStore; store->map != 0; store++)
     {
-        if(store->map == gamemap)
+        if(store->map == gameMap)
         {
             P_StartACS(store->script, 0, store->args, NULL, NULL, 0);
             if(NewScript)
@@ -356,8 +356,8 @@ boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
     aste_t     *statePtr;
 
     NewScript = NULL;
-    if(map && map != gamemap)
-    {                           // Add to the script store
+    if(map && map != gameMap)
+    {   // Add to the script store.
         return AddToACSStore(map, number, args);
     }
 
@@ -366,7 +366,7 @@ boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
     {                           // Script not found
         //Con_Error("P_StartACS: Unknown script number %d", number);
         sprintf(ErrorMsg, "P_STARTACS ERROR: UNKNOWN SCRIPT %d", number);
-        P_SetMessage(&players[consoleplayer], ErrorMsg, false);
+        P_SetMessage(&players[CONSOLEPLAYER], ErrorMsg, false);
     }
 
     statePtr = &ACSInfo[infoIndex].state;
@@ -1541,13 +1541,13 @@ static int CmdGameType(void)
 
 static int CmdGameSkill(void)
 {
-    Push(gameskill);
+    Push(gameSkill);
     return SCRIPT_CONTINUE;
 }
 
 static int CmdTimer(void)
 {
-    Push(leveltime);
+    Push(levelTime);
     return SCRIPT_CONTINUE;
 }
 
@@ -1596,12 +1596,12 @@ static int CmdAmbientSound(void)
 {
     int         volume, sound;
     mobj_t     *mobj = NULL;        // For 3D positioning.
-    mobj_t     *plrmo = players[displayplayer].plr->mo;
+    mobj_t     *plrmo = players[DISPLAYPLAYER].plr->mo;
 
     volume = Pop();
     // If we are playing 3D sounds, create a temporary source mobj
     // for the sound.
-    if(cfg.snd_3D && plrmo)
+    if(cfg.snd3D && plrmo)
     {
         // SpawnMobj calls P_Random. We don't want that
         // the random generator gets out of sync.
@@ -1609,7 +1609,7 @@ static int CmdAmbientSound(void)
                            plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
                            plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
                            MT_CAMERA); // A camera's a good temporary source.
-        mobj->tics = 5 * 35;    // Five seconds should be enough.
+        mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.
     }
 
     sound = S_GetSoundID(GetACString(Pop()));

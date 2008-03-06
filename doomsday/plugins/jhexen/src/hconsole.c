@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,9 +54,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    S_InitScript();
-void    SN_InitSequenceScript(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 DEFCC(CCmdCheat);
@@ -97,8 +94,6 @@ DEFCC(CCmdHexenFont);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern ccmd_t netCCmds[];
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     consoleFlat = 0;
@@ -111,7 +106,7 @@ cvar_t  gameCVars[] = {
     {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
 
 // View/Refresh
-    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 13},
+    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenBlocks, 3, 13},
     {"hud-title", 0, CVT_BYTE, &cfg.levelTitle, 0, 1},
 
     {"view-bob-height", 0, CVT_FLOAT, &cfg.bobView, 0, 1},
@@ -131,8 +126,8 @@ cvar_t  gameCVars[] = {
 
     // Gameplay options
     {"server-game-jump", 0, CVT_BYTE, &cfg.netJumping, 0, 1},
-    {"server-game-nomonsters", 0, CVT_BYTE, &cfg.netNomonsters, 0, 1},
-    {"server-game-randclass", 0, CVT_BYTE, &cfg.netRandomclass, 0, 1},
+    {"server-game-nomonsters", 0, CVT_BYTE, &cfg.netNoMonsters, 0, 1},
+    {"server-game-randclass", 0, CVT_BYTE, &cfg.netRandomClass, 0, 1},
     {"server-game-radiusattack-nomaxz", 0, CVT_BYTE,
         &cfg.netNoMaxZRadiusAttack, 0, 1},
     {"server-game-monster-meleeattack-nomaxz", 0, CVT_BYTE,
@@ -167,14 +162,14 @@ cvar_t  gameCVars[] = {
     // Misc
     {"player-camera-noclip", 0, CVT_INT, &cfg.cameraNoClip, 0, 1},
 
+// Compatibility options
+    {"game-icecorpse", 0, CVT_INT, &cfg.translucentIceCorpse, 0, 1},
+
 // Game state
     {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
 
 // Gameplay
-    {"game-maulator-time", CVF_NO_MAX, CVT_INT, &MaulatorSeconds, 1, 0},
-
-// Game options (non-gameplay affecting)
-    {"game-icecorpse", 0, CVT_INT, &cfg.translucentIceCorpse, 0, 1},
+    {"game-maulator-time", CVF_NO_MAX, CVT_INT, &maulatorSeconds, 1, 0},
 
     {NULL}
 };
@@ -232,7 +227,7 @@ ccmd_t  gameCCmds[] = {
  */
 void G_ConsoleRegistration(void)
 {
-    uint        i;
+    uint                    i;
 
     for(i = 0; gameCVars[i].name; ++i)
         Con_AddVariable(&gameCVars[i]);
@@ -244,11 +239,8 @@ void G_ConsoleRegistration(void)
  * Settings for console background drawing.
  * Called EVERY FRAME by the console drawer.
  */
-void H2_ConsoleBg(int *width, int *height)
+void G_ConsoleBg(int *width, int *height)
 {
-    extern int consoleFlat;
-    extern float consoleZoom;
-
     if(consoleFlat)
     {
         GL_SetMaterial(consoleFlat, MAT_FLAT);
@@ -268,12 +260,11 @@ void H2_ConsoleBg(int *width, int *height)
  */
 int ConTextOut(const char *text, int x, int y)
 {
-    extern int typein_time;
-    int         old = typein_time;
+    int                     old = typeInTime;
 
-    typein_time = 0xffffff;
-    M_WriteText2(x, y, text, hu_font_a, -1, -1, -1, -1);
-    typein_time = old;
+    typeInTime = 0xffffff;
+    M_WriteText2(x, y, text, huFontA, -1, -1, -1, -1);
+    typeInTime = old;
     return 0;
 }
 
@@ -282,7 +273,7 @@ int ConTextOut(const char *text, int x, int y)
  */
 int ConTextWidth(const char *text)
 {
-    return M_StringWidth(text, hu_font_a);
+    return M_StringWidth(text, huFontA);
 }
 
 /**
@@ -307,7 +298,7 @@ DEFCC(CCmdScreenShot)
  */
 DEFCC(CCmdViewSize)
 {
-    int     min = 3, max = 13, *val = &cfg.screenblocks;
+    int                 min = 3, max = 13, *val = &cfg.screenBlocks;
 
     if(argc != 2)
     {
@@ -331,7 +322,7 @@ DEFCC(CCmdViewSize)
         *val = max;
 
     // Update the view size if necessary.
-    R_SetViewSize(cfg.screenblocks, 0);
+    R_SetViewSize(cfg.screenBlocks, 0);
     return true;
 }
 
@@ -340,7 +331,7 @@ DEFCC(CCmdViewSize)
  */
 DEFCC(CCmdHexenFont)
 {
-    ddfont_t cfont;
+    ddfont_t            cfont;
 
     cfont.flags = DDFONT_WHITE;
     cfont.height = 9;

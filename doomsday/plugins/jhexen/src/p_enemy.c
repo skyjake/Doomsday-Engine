@@ -125,8 +125,6 @@ typedef enum {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-boolean P_TestMobjLocation(mobj_t *mobj);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -137,7 +135,7 @@ void KSpiritInit(mobj_t *spirit, mobj_t *korax);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int MaulatorSeconds = 25;
+int maulatorSeconds = 25;
 boolean fastMonsters = false;
 
 mobj_t *soundtarget;
@@ -193,7 +191,7 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
             continue;
 
         P_LineOpening(check);
-        if(openrange <= 0)
+        if(OPENRANGE <= 0)
             continue; // Closed door.
 
         if(P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF0), DMU_SECTOR) == sec)
@@ -330,9 +328,9 @@ boolean P_Move(mobj_t *mo)
 
     if(!P_TryMove(mo, tryPos[VX], tryPos[VY]))
     {   // Open any specials.
-        if((mo->flags & MF_FLOAT) && floatok)
+        if((mo->flags & MF_FLOAT) && floatOk)
         {   // Must adjust height.
-            if(mo->pos[VZ] < tmfloorz)
+            if(mo->pos[VZ] < tmFloorZ)
             {
                 mo->pos[VZ] += FLOATSPEED;
             }
@@ -674,7 +672,7 @@ void C_DECL A_Chase(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(gameskill == SM_NIGHTMARE || (fastMonsters /*&& INCOMPAT_OK */ ))
+    if(gameSkill == SM_NIGHTMARE || (fastMonsters /*&& INCOMPAT_OK */ ))
     {   // Monsters move faster in nightmare mode
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
@@ -713,7 +711,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameskill != SM_NIGHTMARE)
+        if(gameSkill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -732,7 +730,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if(actor->info->missileState)
     {
-        if(!(gameskill < SM_NIGHTMARE && actor->moveCount))
+        if(!(gameSkill < SM_NIGHTMARE && actor->moveCount))
         {
             if(P_CheckMissileRange(actor))
             {
@@ -1020,12 +1018,12 @@ void C_DECL A_MinotaurFade2(mobj_t *actor)
 
 void C_DECL A_MinotaurRoam(mobj_t *actor)
 {
-    unsigned int *starttime = (unsigned int *) actor->args;
+    unsigned int *startTime = (unsigned int *) actor->args;
 
     actor->flags &= ~MF_SHADOW; // In case pain caused him to
     actor->flags &= ~MF_ALTSHADOW; // Skip his fade in.
 
-    if((leveltime - *starttime) >= MAULATORTICS)
+    if((levelTime - *startTime) >= MAULATORTICS)
     {
         P_DamageMobj(actor, NULL, NULL, 10000);
         return;
@@ -1144,12 +1142,12 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
 
 void C_DECL A_MinotaurChase(mobj_t *actor)
 {
-    unsigned int *starttime = (unsigned int *) actor->args;
+    unsigned int *startTime = (unsigned int *) actor->args;
 
     actor->flags &= ~MF_SHADOW; // In case pain caused him to.
     actor->flags &= ~MF_ALTSHADOW;  // Skip his fade in.
 
-    if((leveltime - *starttime) >= MAULATORTICS)
+    if((levelTime - *startTime) >= MAULATORTICS)
     {
         P_DamageMobj(actor, NULL, NULL, 10000);
         return;
@@ -1810,7 +1808,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(gameskill == SM_NIGHTMARE || (fastMonsters))
+    if(gameSkill == SM_NIGHTMARE || (fastMonsters))
     {   // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
@@ -1848,7 +1846,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameskill != SM_NIGHTMARE)
+        if(gameSkill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -1979,7 +1977,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(gameskill == SM_NIGHTMARE || (fastMonsters))
+    if(gameSkill == SM_NIGHTMARE || (fastMonsters))
     {   // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
@@ -2017,7 +2015,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameskill != SM_NIGHTMARE)
+        if(gameSkill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -4005,7 +4003,7 @@ void C_DECL A_FastChase(mobj_t *mo)
         mo->threshold--;
     }
 
-    if(gameskill == SM_NIGHTMARE || (fastMonsters))
+    if(gameSkill == SM_NIGHTMARE || (fastMonsters))
     {   // Monsters move faster in nightmare mode.
         mo->tics -= mo->tics / 2;
         if(mo->tics < 3)
@@ -4042,7 +4040,7 @@ void C_DECL A_FastChase(mobj_t *mo)
     if(mo->flags & MF_JUSTATTACKED)
     {
         mo->flags &= ~MF_JUSTATTACKED;
-        if(gameskill != SM_NIGHTMARE)
+        if(gameSkill != SM_NIGHTMARE)
             P_NewChaseDir(mo);
         return;
     }
@@ -4082,7 +4080,7 @@ void C_DECL A_FastChase(mobj_t *mo)
     // Check for missile attack.
     if(mo->info->missileState)
     {
-        if(gameskill < SM_NIGHTMARE && mo->moveCount)
+        if(gameSkill < SM_NIGHTMARE && mo->moveCount)
             goto nomissile;
         if(!P_CheckMissileRange(mo))
             goto nomissile;
@@ -4175,7 +4173,7 @@ void C_DECL A_FreezeDeath(mobj_t *mo)
         mo->player->damageCount = 0;
         mo->player->poisonCount = 0;
         mo->player->bonusCount = 0;
-        if(mo->player == &players[consoleplayer])
+        if(mo->player == &players[CONSOLEPLAYER])
         {
             ST_doPaletteStuff(false);
         }
@@ -4686,7 +4684,7 @@ void C_DECL A_KSpiritSeeker(mobj_t *mo, angle_t thresh, angle_t turnMax)
     mo->mom[MX] = mo->info->speed * FIX2FLT(finecosine[an]);
     mo->mom[MY] = mo->info->speed * FIX2FLT(finesine[an]);
 
-    if(!(leveltime & 15) ||
+    if(!(levelTime & 15) ||
        (mo->pos[VZ] > target->pos[VZ] + target->info->height) ||
        (mo->pos[VZ] + mo->height < target->pos[VZ]))
     {
