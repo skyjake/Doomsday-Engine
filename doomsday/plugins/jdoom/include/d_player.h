@@ -158,7 +158,7 @@ typedef struct player_s {
 // Structure passed e.g. to WI_Start(wb)
 //
 typedef struct {
-    boolean         inGame; // whether the player is in game
+    boolean         inGame; // Whether the player is in game.
 
     // Player stats, kills, collected items etc.
     int             kills;
@@ -166,19 +166,19 @@ typedef struct {
     int             secret;
     int             time;
     int             frags[MAXPLAYERS];
-    int             score; // current score on entry, modified on return
+    int             score; // Current score on entry, modified on return.
 } wbplayerstruct_t;
 
 typedef struct {
-    int             epsd; // episode # (0-2)
-    boolean         didSecret; // if true, splash the secret level
-    int             last, next; // previous and next levels, origin 0
+    int             epsd; // Episode # (0-2)
+    boolean         didSecret; // If true, splash the secret level.
+    int             last, next; // Previous and next levels, origin 0.
     int             maxKills;
     int             maxItems;
     int             maxSecret;
     int             maxFrags;
     int             parTime;
-    int             pNum; // index of this player in game
+    int             pNum; // Index of this player in game.
     wbplayerstruct_t plyr[MAXPLAYERS];
 } wbstartstruct_t;
 

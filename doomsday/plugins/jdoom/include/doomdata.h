@@ -59,10 +59,10 @@ enum {
 // Set if already seen, thus drawn in automap.
 #define ML_MAPPED               256
 
-// Allows a USE action to pass through a line with a special
+// Allows a USE action to pass through a linedef with a special
 #define ML_PASSUSE              512
 
-// If set allows any mobj to trigger the line's special
+// If set allows any mobj to trigger the linedef's special
 #define ML_ALLTRIGGER           1024
 
 // If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
@@ -70,13 +70,9 @@ enum {
 #define ML_INVALID              2048
 #define VALIDMASK               0x000001ff
 
-//
-// Thing attributes.
-//
-
-// Special activation types
-#define SPAC_CROSS              0 // player crosses line
-#define SPAC_USE                1 // player uses line
-#define SPAC_IMPACT             3 // projectile hits line
+// Special activation types:
+#define SPAC_CROSS              0 // Player crosses linedef.
+#define SPAC_USE                1 // Player uses linedef.
+#define SPAC_IMPACT             3 // Projectile hits linedef.
 
 #endif

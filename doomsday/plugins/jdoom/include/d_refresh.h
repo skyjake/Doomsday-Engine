@@ -3,9 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,28 +22,28 @@
  */
 
 /**
- * dstrings.h:
+ * d_refresh.h:
  */
 
-#ifndef __DSTRINGS_H__
-#define __DSTRINGS_H__
+#ifndef __D_REFRESH_H__
+#define __D_REFRESH_H__
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-// All important printed strings.
-#include "d_englsh.h"
+#include "p_mobj.h"
 
-/**
- * File locations, relative to the base directory.
- */
-#define DEVMAPS             "devmaps"
-#define DEVDATA             "devdata"
+void            R_InitRefresh(void);
+void            D_Display(void);
+void            D_Display2(void);
 
-// QuitDOOM messages:
-#define NUM_QUITMESSAGES    22
+void            R_SetViewSize(int blocks, int detail);
 
-extern char *endmsg[NUM_QUITMESSAGES + 1];
+void            R_DrawSpecialFilter(void);
+void            R_DrawLevelTitle(void);
+
+void            P_SetDoomsdayFlags(mobj_t *mo);
+void            R_SetAllDoomsdayFlags(void);
 
 #endif

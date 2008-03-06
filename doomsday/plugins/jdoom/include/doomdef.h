@@ -28,8 +28,8 @@
  * key definitions, lots of other stuff.
  */
 
-#ifndef __M_RANDOM_H__
-#define __M_RANDOM_H__
+#ifndef __DOOMDEF_H__
+#define __DOOMDEF_H__
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -71,7 +71,7 @@ extern game_export_t gx;
 #define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
 // Misc macros.
-#define CLAMP(v, min, max) (v < min? v=min : v > max? v=max : v)
+#define CLAMP(v, min, max)  (v < min? v=min : v > max? v=max : v)
 
 /**
  * Game mode handling - identify IWAD version to handle IWAD dependant
@@ -97,7 +97,6 @@ typedef enum {
 
 #define GM_ANY              (GM_SHAREWARE|GM_REGISTERED|GM_COMMERCIAL|GM_RETAIL)
 #define GM_NOTSHAREWARE     (GM_REGISTERED|GM_COMMERCIAL|GM_RETAIL)
-
 
 // Mission packs - might be useful for TC stuff?
 typedef enum {
@@ -150,19 +149,19 @@ typedef struct classinfo_s{
     int         attackEndState;
     int         maxArmor;
     fixed_t     maxMove;
-    fixed_t     forwardMove[2]; // walk, run
-    fixed_t     sideMove[2]; // walk, run
-    int         moveMul; // multiplier for above
+    fixed_t     forwardMove[2]; // [walk, run].
+    fixed_t     sideMove[2]; // [walk, run].
+    int         moveMul; // Multiplier for above.
     fixed_t     turnSpeed[3]; // [normal, speed, initial]
-    int         jumpTics; // wait in between jumps
-    int         failUseSound; // sound played when a use fails.
+    int         jumpTics; // Wait in between jumps.
+    int         failUseSound; // Sound played when a use fails.
 } classinfo_t;
 
 extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
 typedef enum {
-    SM_NOITEMS              = -1, // skill mode 0
-    SM_BABY                 = 0,
+    SM_NOITEMS = -1, // skill mode 0
+    SM_BABY = 0,
     SM_EASY,
     SM_MEDIUM,
     SM_HARD,
@@ -194,7 +193,7 @@ typedef enum {
     WT_FIFTH, // missile launcher
     WT_SIXTH, // plasma rifle
     WT_SEVENTH, // bfg
-    WT_EIGHTH, //chainsaw
+    WT_EIGHTH, // chainsaw
     WT_NINETH, // supershotgun
     NUM_WEAPON_TYPES,
 
@@ -231,29 +230,34 @@ typedef enum {
  * is 35 ticks/second.
  */
 typedef enum {
-    INVULNTICS              = (30 * TICRATE),
-    INVISTICS               = (60 * TICRATE),
-    INFRATICS               = (120 * TICRATE),
-    IRONTICS                = (60 * TICRATE)
+    INVULNTICS = (30 * TICRATE),
+    INVISTICS = (60 * TICRATE),
+    INFRATICS = (120 * TICRATE),
+    IRONTICS = (60 * TICRATE)
 } powerduration_t;
 
 enum { VX, VY, VZ }; // Vertex indices.
 
-#define IS_SERVER           Get(DD_SERVER)
-#define IS_CLIENT           Get(DD_CLIENT)
-#define IS_NETGAME          Get(DD_NETGAME)
-#define IS_DEDICATED        Get(DD_DEDICATED)
+#define IS_SERVER           (Get(DD_SERVER))
+#define IS_CLIENT           (Get(DD_CLIENT))
+#define IS_NETGAME          (Get(DD_NETGAME))
+#define IS_DEDICATED        (Get(DD_DEDICATED))
 
-#define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
+#define CVAR(typ, x)        (*((typ) *) Con_GetVariable(x)->ptr)
 
-#define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
-#define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
+#define SFXVOLUME           (Get(DD_SFX_VOLUME) / 17)
+#define MUSICVOLUME         (Get(DD_MUSIC_VOLUME) / 17)
 
-void        G_IdentifyVersion(void);
-int         G_GetInteger(int id);
-void       *G_GetVariable(int id);
+#define VIEWWINDOWX         (Get(DD_VIEWWINDOW_X))
+#define VIEWWINDOWY         (Get(DD_VIEWWINDOW_Y))
 
-void        R_InitRefresh(void);
-void        R_SetViewSize(int blocks, int detail);
+// Player taking events, and displaying.
+#define CONSOLEPLAYER       (Get(DD_CONSOLEPLAYER))
+#define DISPLAYPLAYER       (Get(DD_DISPLAYPLAYER))
+
+#define GAMETIC             (Get(DD_GAMETIC))
+
+#define SKYMASKMATERIAL     (Get(DD_SKYFLATNUM))
+#define SKYFLATNAME         ("F_SKY1")
 
 #endif

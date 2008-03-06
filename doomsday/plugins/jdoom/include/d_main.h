@@ -3,9 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,28 +23,40 @@
  */
 
 /**
- * dstrings.h:
+ * d_main.h:
  */
 
-#ifndef __DSTRINGS_H__
-#define __DSTRINGS_H__
+#ifndef __D_MAIN_H__
+#define __D_MAIN_H__
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-// All important printed strings.
-#include "d_englsh.h"
+#include "doomdef.h"
 
-/**
- * File locations, relative to the base directory.
- */
-#define DEVMAPS             "devmaps"
-#define DEVDATA             "devdata"
+extern int verbose;
+extern boolean devParm;
+extern boolean noMonstersParm;
+extern boolean respawnParm;
+extern boolean fastParm;
+extern boolean turboParm;
+extern float turboMul;
+extern gamemode_t gameMode;
+extern int gameModeBits;
+extern gamemission_t gameMission;
+extern char gameModeString[];
+extern boolean monsterInfight;
+extern char *borderLumps[];
 
-// QuitDOOM messages:
-#define NUM_QUITMESSAGES    22
+void            G_PostInit(void);
+void            G_PreInit(void);
+void            G_DetectIWADs(void);
+void            G_IdentifyVersion(void);
+void            G_Shutdown(void);
+void            G_EndFrame(void);
+void            G_Ticker(timespan_t ticLength);
 
-extern char *endmsg[NUM_QUITMESSAGES + 1];
+boolean         G_SetGameMode(gamemode_t mode);
 
 #endif

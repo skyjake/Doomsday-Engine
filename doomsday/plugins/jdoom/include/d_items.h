@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,25 +35,21 @@
 
 #include "doomdef.h"
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
-#define WEAPON_INFO(weaponnum, pclass, fmode) (&weaponinfo[weaponnum][pclass].mode[fmode])
+#define WEAPON_INFO(weaponnum, pclass, fmode) (&weaponInfo[weaponnum][pclass].mode[fmode])
 
 typedef struct {
-    int             gamemodebits;       // Game modes, weapon is available in.
-    int             ammotype[NUM_AMMO_TYPES];  // required ammo types.
-    int             pershot[NUM_AMMO_TYPES];   // Ammo used per shot of each type.
-    boolean         autofire;           // (True)= fire when raised if fire held.
-    int             upstate;
-    int             raisesound;         // Sound played when weapon is raised.
-    int             downstate;
-    int             readystate;
-    int             readysound;         // Sound played WHILE weapon is readyied
-    int             atkstate;
-    int             flashstate;
-    int             static_switch;      // Weapon is not lowered during switch.
+    int             gameModeBits;       // Game modes, weapon is available in.
+    int             ammoType[NUM_AMMO_TYPES];  // required ammo types.
+    int             perShot[NUM_AMMO_TYPES];   // Ammo used per shot of each type.
+    boolean         autoFire;           // (True)= fire when raised if fire held.
+    int             upState;
+    int             raiseSound;         // Sound played when weapon is raised.
+    int             downState;
+    int             readyState;
+    int             readySound;         // Sound played WHILE weapon is readyied
+    int             attackState;
+    int             flashState;
+    int             staticSwitch;      // Weapon is not lowered during switch.
 } weaponmodeinfo_t;
 
 // Weapon info: sprite frames, ammunition use.
@@ -61,8 +57,9 @@ typedef struct {
     weaponmodeinfo_t mode[NUMWEAPLEVELS];
 } weaponinfo_t;
 
-extern weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
+extern weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
 
 void            P_InitWeaponInfo(void);
+void            P_InitPlayerValues(struct player_s *p);
 
 #endif

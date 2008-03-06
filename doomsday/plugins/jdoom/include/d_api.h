@@ -3,9 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,28 +23,23 @@
  */
 
 /**
- * dstrings.h:
+ * d_api.h: Doomsday API setup and interaction - jDoom specific.
  */
 
-#ifndef __DSTRINGS_H__
-#define __DSTRINGS_H__
+#ifndef __D_API_H__
+#define __D_API_H__
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-// All important printed strings.
-#include "d_englsh.h"
+#include "dd_api.h"
 
-/**
- * File locations, relative to the base directory.
- */
-#define DEVMAPS             "devmaps"
-#define DEVDATA             "devdata"
+extern game_import_t gi;
+extern game_export_t gx;
 
-// QuitDOOM messages:
-#define NUM_QUITMESSAGES    22
-
-extern char *endmsg[NUM_QUITMESSAGES + 1];
+int             G_GetInteger(int id);
+void           *G_GetVariable(int id);
+game_export_t  *GetGameAPI(game_import_t *imports);
 
 #endif

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,12 +64,12 @@ typedef enum {
 
 typedef struct jdoom_config_s {
     float           playerMoveSpeed;
-    int             dclickuse;
-    int             usemlook;      // Mouse look (mouse Y => viewpitch)
-    int             usejlook;      // Joy look (joy Y => viewpitch)
+    int             dclickUse;
+    int             useMLook;      // Mouse look (mouse Y => viewpitch)
+    int             useJLook;      // Joy look (joy Y => viewpitch)
     int             alwaysRun;     // Always run.
     int             noAutoAim;     // No auto-aiming?
-    int             jlookDeltaMode;
+    int             jLookDeltaMode;
     int             lookSpring;
     float           lookSpeed;
     float           turnSpeed;
@@ -77,12 +77,12 @@ typedef struct jdoom_config_s {
     int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;
-    byte            setsizeneeded;
-    int             setblocks;
-    int             screenblocks;
+    byte            setSizeNeeded;
+    int             setBlocks;
+    int             screenBlocks;
     byte            deathLookUp; // look up when killed
-    int             slidingCorpses;
-    int             sbarscale;
+    byte            slidingCorpses;
+    byte            fastMonsters;
     byte            echoMsg;
     float           menuScale;
     int             menuEffects;
@@ -92,8 +92,8 @@ typedef struct jdoom_config_s {
     int             menuQuitSound;
     byte            menuSlam;
     byte            askQuickSaveLoad;
-    float           flashcolor[3];
-    int             flashspeed;
+    float           flashColor[3];
+    int             flashSpeed;
     byte            turningSkull;
     byte            hudShown[NUMHUDDISPLAYS];   // HUD data visibility.
     float           hudScale;      // How to scale HUD data?
@@ -122,6 +122,7 @@ typedef struct jdoom_config_s {
     byte            coopRespawnItems;
     byte            respawnMonstersNightmare;
 
+    int             statusbarScale;
     float           statusbarAlpha;
     float           statusbarCounterAlpha;
 
@@ -129,10 +130,10 @@ typedef struct jdoom_config_s {
     * \todo Put these into an array so we can use a bit array to change
     * multiple options based on a compatibility mode (ala PrBoom).
     */
-    byte            raiseghosts;
-    byte            maxskulls;
-    byte            allowskullsinwalls;
-    byte            anybossdeath;
+    byte            raiseGhosts;
+    byte            maxSkulls;
+    byte            allowSkullsInWalls;
+    byte            anyBossDeath;
     byte            monstersStuckInDoors;
     byte            avoidDropoffs;
     byte            moveBlock; // Dont handle large negative movement in P_TryMove.
@@ -171,7 +172,7 @@ typedef struct jdoom_config_s {
     byte            msgShow;
     float           msgColor[3];
 
-    char           *chat_macros[10];
+    char           *chatMacros[10];
     byte            chatBeep;
 
     int             corpseTime;
@@ -186,13 +187,13 @@ typedef struct jdoom_config_s {
 
     // Network.
     byte            netDeathmatch;
-    byte            netBFGFreeLook;    // allow free-aim with BFG
-    byte            netMobDamageModifier;    // multiplier for non-player mobj damage
-    byte            netMobHealthModifier;    // health modifier for non-player mobjs
-    int             netGravity;              // multiplayer custom gravity
-    byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
-    byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
-    byte            netNomonsters;
+    byte            netBFGFreeLook; // Allow free-aim with BFG.
+    byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
+    byte            netMobHealthModifier; // Health modifier for non-player mobjs.
+    int             netGravity; // Multiplayer custom gravity.
+    byte            netNoMaxZRadiusAttack; // Radius attacks are infinitely tall.
+    byte            netNoMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
+    byte            netNoMonsters;
     byte            netRespawn;
     byte            netJumping;
     byte            netEpisode;
@@ -205,9 +206,6 @@ typedef struct jdoom_config_s {
 } game_config_t;
 
 extern game_config_t cfg;
-
-// Other variables.
-extern int      screenblocks;
 
 int             GetDefInt(char *def, int *returned_value);
 
