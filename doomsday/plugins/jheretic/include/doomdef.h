@@ -292,8 +292,8 @@ enum { VX, VY, VZ }; // Vertex indices.
 
 #define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
 
-#define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
-#define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
+#define SFXVOLUME       (Get(DD_SFX_VOLUME)/17)
+#define MUSICVOLUME     (Get(DD_MUSIC_VOLUME)/17)
 
 void        G_IdentifyVersion(void);
 int         G_GetInteger(int id);
@@ -314,22 +314,6 @@ void        R_SetViewSize(int blocks, int detail);
 extern fixed_t finesine[5 * FINEANGLES / 4];
 extern fixed_t *finecosine;
 
-extern gamemode_t gamemode; // current game mode (shareware, registered etc)
-extern int gamemodebits; // current game modebits
-extern boolean cdrom; // true if cd-rom mode active ("-cdrom")
-extern boolean DebugSound; // debug flag for displaying sound info
-extern int skytexture;
-extern int viewwidth;
-extern int scaledviewwidth;
-
-/*
-   ===============================================================================
-
-   GLOBAL FUNCTIONS
-
-   ===============================================================================
- */
-
 //----------
 //BASE LEVEL
 //----------
@@ -347,35 +331,6 @@ void            NetUpdate(void);
 
 void            D_QuitNetGame(void);
 
-//---------
-//SYSTEM IO
-//---------
-
-void            I_StartFrame(void);
-
-// called by D_DoomLoop
-// called before processing any tics in a frame (just after displaying a frame)
-// time consuming syncronous operations are performed here (joystick reading)
-// can call D_PostEvent
-
-void            I_StartTic(void);
-
-// called by D_DoomLoop
-// called before processing each tic in a frame
-// quick syncronous operations are performed here
-// can call D_PostEvent
-
-// asyncronous interrupt functions should maintain private ques that are
-// read by the syncronous functions to be converted into events
-
-void            I_Init(void);
-
-// called by D_DoomMain
-// determines the hardware configuration and sets up the video mode
-
-void            I_BeginRead(void);
-void            I_EndRead(void);
-
 //-----
 //PLAY
 //-----
@@ -387,16 +342,10 @@ void            I_EndRead(void);
 void            P_SetupLevel(int episode, int map, int playermask,
                              skillmode_t skill);
 // called by W_Ticker
-
 void            P_Init(void);
 
 // called by startup code
-
 void            R_InitTranslationTables(void);
-
-// called by startup code
-
-// called by Hu_MenuResponder
 
 //----
 //MISC
@@ -411,29 +360,6 @@ boolean         M_ValidEpisodeMap(int episode, int map);
 void            M_ForceUppercase(char *text);
 
 int             M_DrawText(int x, int y, boolean direct, char *string);
-
-//----------------------
-// Interlude (IN_lude.c)
-//----------------------
-
-extern boolean  intermission;
-
-void            IN_Start(void);
-void            IN_Stop(void);
-void            IN_Ticker(void);
-void            IN_Drawer(void);
-
-extern boolean  chatmodeon;
-extern boolean  ultimatemsg;
-
-//----------------------
-// STATUS BAR (SB_bar.c)
-//----------------------
-
-void            ST_Init(void);
-void            ST_Ticker(void);
-void            ST_Drawer(int fullscreenmode, boolean refresh);
-
 
 //-----------------
 // MENU (MN_menu.c)

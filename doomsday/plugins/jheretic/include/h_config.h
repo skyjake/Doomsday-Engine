@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,8 +39,8 @@
  * Global settings. Most of these are console variables.
  */
 
-#ifndef __HERETIC_SETTINGS_H__
-#define __HERETIC_SETTINGS_H__
+#ifndef __JHERETIC_SETTINGS_H__
+#define __JHERETIC_SETTINGS_H__
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -75,12 +75,12 @@ typedef enum {
 
 typedef struct jheretic_config_s {
     float           playerMoveSpeed;
-    int             dclickuse;
-    int             usemlook;      // Mouse look (mouse Y => viewpitch)
-    int             usejlook;      // Joy look (joy Y => viewpitch)
+    int             dclickUse;
+    int             useMLook;      // Mouse look (mouse Y => viewpitch)
+    int             useJLook;      // Joy look (joy Y => viewpitch)
     int             alwaysRun;     // Always run.
     int             noAutoAim;     // No auto-aiming?
-    int             jlookDeltaMode;
+    int             jLookDeltaMode;
     int             lookSpring;
     float           lookSpeed;
     float           turnSpeed;
@@ -88,12 +88,11 @@ typedef struct jheretic_config_s {
     int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;
-    byte            setsizeneeded;
-    int             setblocks;
-    int             screenblocks;
+    byte            setSizeNeeded;
+    int             setBlocks;
+    int             screenBlocks;
 
-    int             slidingCorpses;
-    int             sbarscale;
+    byte            slidingCorpses;
     int             echoMsg;
     float           menuScale;
     int             menuEffects;
@@ -103,8 +102,8 @@ typedef struct jheretic_config_s {
 
     byte            menuSlam;
     byte            askQuickSaveLoad;
-    float           flashcolor[3];
-    int             flashspeed;
+    float           flashColor[3];
+    int             flashSpeed;
     byte            turningSkull;
     byte            hudShown[6];   // HUD data visibility.
     float           hudScale;      // How to scale HUD data?
@@ -131,6 +130,7 @@ typedef struct jheretic_config_s {
 
 
 
+    int             statusbarScale;
     float           statusbarAlpha;
     float           statusbarCounterAlpha;
 
@@ -177,7 +177,7 @@ typedef struct jheretic_config_s {
     byte            msgShow;
     float           msgColor[3];
 
-    char           *chat_macros[10];
+    char           *chatMacros[10];
     byte            chatBeep;
 
     int             corpseTime;
@@ -198,7 +198,7 @@ typedef struct jheretic_config_s {
     int             netGravity;              // multiplayer custom gravity
     byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
     byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
-    byte            netNomonsters;
+    byte            netNoMonsters;
     byte            netRespawn;
     byte            netJumping;
     byte            netEpisode;

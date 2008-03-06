@@ -34,11 +34,11 @@
  */
 
 /**
- * h_items.h: Items, key cards/artifacts/weapons/ammunition...
+ * h_main.h:
  */
 
-#ifndef __H_ITEMS_H__
-#define __H_ITEMS_H__
+#ifndef __H_MAIN_H__
+#define __H_MAIN_H__
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -46,39 +46,35 @@
 
 #include "doomdef.h"
 
-#define NUMINVENTORYSLOTS   14
+extern int verbose;
 
-#define WEAPON_INFO(weaponnum, pclass, fmode) ( \
-    &weaponInfo[(weaponnum)][(pclass)].mode[(fmode)])
+extern boolean devParm;
+extern boolean noMonstersParm;
+extern boolean respawnParm;
+extern boolean turboParm;
+extern boolean fastParm;
+extern boolean artiSkipParm;
 
-typedef struct {
-    int             gameModeBits;  // Game modes, weapon is available in.
-    int             ammoType[NUM_AMMO_TYPES]; // required ammo types.
-    int             perShot[NUM_AMMO_TYPES]; // Ammo used per shot of each type.
-    boolean         autoFire; // @c true = fire when raised if fire held.
-    int             upState;
-    int             raiseSound; // Sound played when weapon is raised.
-    int             downState;
-    int             readyState;
-    int             readySound; // Sound played WHILE weapon is readyied.
-    int             attackState;
-    int             holdAttackState;
-    int             flashState;
-    int             staticSwitch; // Weapon is not lowered during switch.
-} weaponmodeinfo_t;
+extern float turboMul;
+extern skillmode_t startSkill;
+extern int startEpisode;
+extern int startMap;
+extern boolean autoStart;
+extern gamemode_t gameMode;
+extern int gameModeBits;
+extern char gameModeString[];
+extern boolean monsterInfight;
+extern const float defFontRGB[];
+extern const float defFontRGB2[];
+extern char *borderLumps[];
+extern char *wadFiles[];
+extern char *baseDefault;
+extern char exrnWADs[];
+extern char exrnWADs2[];
 
-// Weapon info: sprite frames, ammunition use.
-typedef struct {
-    weaponmodeinfo_t mode[NUMWEAPLEVELS];
-} weaponinfo_t;
-
-typedef struct {
-    artitype_e      type;
-    int             count;
-} inventory_t;
-
-extern weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
-
-void            P_InitWeaponInfo(void);
+void            G_Shutdown(void);
+void            G_EndFrame(void);
+boolean         G_SetGameMode(gamemode_t mode);
+void            G_DetectIWADs(void);
 
 #endif
