@@ -59,27 +59,51 @@ Header { Version = 5; }
 Values {
   Player {
     Health = "100";       # Initial health.
-    Max health = "100";   # Maximum health.
-    Health limit = "200"; # Absolute health limit.
-    Green armor = "100";
-    Blue armor = "200";
-    Max ammo {
+    Max Health = "100";   # Maximum health.
+    Health Limit = "200"; # Absolute health limit.
+    God Health = "100";   # Health when god mode is activated.
+    Green Armor = "100";
+    Blue Armor = "200";
+    IDFA Armor = "200";   # Armor given when the IDFA cheat is activated.
+    IDKFA Armor = "200";  # Armor given when the IDKFA cheat is activated.
+    Max Ammo {
       Clip = "200";
       Shell = "50";
       Cell = "300";
       Misl = "50";
     };
-    Clip ammo {
+    Clip Ammo {
       Clip = "10";
       Shell = "4";
       Cell = "20";
       Misl = "1";
     };
+    Init Ammo {
+      Clip = "50";
+      Shell = "0";
+      Cell = "0";
+      Misl = "0";
+    };
   };
-  
-  # Weapon Info|*|Static defaults to "0".
-  # "1" will prevent the lowering of the HUD weapon when doing a switch.
-  
+
+  MegaSphere {
+    Give {
+      Health = "100";
+    };
+  };
+
+  SoulSphere {
+    Give {
+      Health = "200";
+      Health Limit = "200";
+    };
+  };
+
+  # Weapon Info|*|Static
+  *     Defaults to "0". "1" = prevent the lowering of the HUD weapon when doing a switch.
+  # Weapon Info|*|Owned
+  *     Defaults to "0". "1" = this weapon will be given to the player when spawned.
+
   Weapon Info {
     0 {
       Type = "noammo";
@@ -88,6 +112,8 @@ Values {
       Ready = "PUNCH";
       Atk = "PUNCH1";
       Flash = "NULL";
+      Owned = "1";
+      Static = "0";
     };
     1 {
       Type = "clip";
@@ -97,6 +123,8 @@ Values {
       Ready = "PISTOL";
       Atk = "PISTOL1";
       Flash = "PISTOLFLASH";
+      Owned = "1";
+      Static = "0";
     };
     2 {
       Type = "shell";
@@ -106,6 +134,8 @@ Values {
       Ready = "SGUN";
       Atk = "SGUN1";
       Flash = "SGUNFLASH1";
+      Owned = "0";
+      Static = "0";
     };
     3 {
       Type = "clip";
@@ -115,6 +145,8 @@ Values {
       Ready = "CHAIN";
       Atk = "CHAIN1";
       Flash = "CHAINFLASH1";
+      Owned = "0";
+      Static = "0";
     };
     4 {
       Type = "misl";
@@ -124,6 +156,8 @@ Values {
       Ready = "MISSILE";
       Atk = "MISSILE1";
       Flash = "MISSILEFLASH1";
+      Owned = "0";
+      Static = "0";
     };
     5 {
       Type = "cell";
@@ -133,6 +167,8 @@ Values {
       Ready = "PLASMA";
       Atk = "PLASMA1";
       Flash = "PLASMAFLASH1";
+      Owned = "0";
+      Static = "0";
     };
     6 {
       Type = "cell";
@@ -142,6 +178,8 @@ Values {
       Ready = "BFG";
       Atk = "BFG1";
       Flash = "BFGFLASH1";
+      Owned = "0";
+      Static = "0";
     };
     7 {
       Type = "noammo";
@@ -150,6 +188,8 @@ Values {
       Ready = "SAW";
       Atk = "SAW1";
       Flash = "NULL";
+      Owned = "0";
+      Static = "0";
     };
     8 {
       Type = "shell";
@@ -159,6 +199,8 @@ Values {
       Ready = "DSGUN";
       Atk = "DSGUN1";
       Flash = "DSGUNFLASH1";
+      Owned = "0";
+      Static = "0";
     };
   };
 }
