@@ -35,10 +35,6 @@
 
 #include "doomdef.h"
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 #define WEAPON_INFO(weaponnum, pclass, fmode) (&weaponInfo[weaponnum][pclass].mode[fmode])
 
 typedef struct {
@@ -64,6 +60,7 @@ typedef struct {
 extern weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
 
 void            P_InitWeaponInfo(void);
+void            P_InitPlayerValues(struct player_s *p);
 int             GetDefInt(char *def, int *returnVal);
 
 #endif
