@@ -99,7 +99,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dssdlmixer dscompat jdoom jheretic jhexen wolftc doom64tc
+CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dssdlmixer dscompat jdoom jheretic jhexen wolftc jdoom64
 GOTO Done
 
 
@@ -262,11 +262,11 @@ IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
 
-:: *** Doom64TC.dll
-:Doom64TC
-ECHO Compiling Doom64TC.dll (Doom64TC Game Library)...
-md %OBJ_DIR%\Doom64TC
-cl /O2 /Ob1 %INCS_PLUGIN_COMMON% %INCS_ENGINE_API% %INCS_LZSS_PORTABLE% /I "./../../plugins/doom64tc/include" /D "__DOOM64TC__" /D "__JDOOM__" %DLLDEFINES% /D "DOOM64TC_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/Doom64TC/" /Fd"./%OBJ_DIR%/Doom64TC/" /W3 /Gd  @doom64tc_cl.rsp  /link  /OUT:"./%BIN_DIR%/Doom64TC.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:"./../../plugins/doom64tc/api/doom64tc.def" /IMPLIB:"./%BIN_DIR%/Doom64TC.lib" ./%BIN_DIR%/doomsday.lib %EXTERNAL%/lzss/win32/lzss.lib
+:: *** jDoom64.dll
+:jDoom64
+ECHO Compiling jDoom64.dll (jDoom64 Game Library)...
+md %OBJ_DIR%\jDoom64
+cl /O2 /Ob1 %INCS_PLUGIN_COMMON% %INCS_ENGINE_API% %INCS_LZSS_PORTABLE% /I "./../../plugins/jdoom64/include" /D "__JDOOM64__" %DLLDEFINES% /D "JDOOM64_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/jDoom64/" /Fd"./%OBJ_DIR%/jDoom64/" /W3 /Gd  @jdoom64_cl.rsp  /link  /OUT:"./%BIN_DIR%/jDoom64.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:"./../../plugins/jdoom64/api/jdoom64.def" /IMPLIB:"./%BIN_DIR%/jDoom64.lib" ./%BIN_DIR%/doomsday.lib %EXTERNAL%/lzss/win32/lzss.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
