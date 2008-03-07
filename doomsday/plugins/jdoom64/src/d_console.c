@@ -207,7 +207,7 @@ ccmd_t  gameCCmds[] = {
     {"cheat",       "s",    CCmdCheat},
     {"god",         "",     CCmdCheatGod},
     {"noclip",      "",     CCmdCheatNoClip},
-    {"warp",        "ii",   CCmdCheatWarp},
+    {"warp",        "i",    CCmdCheatWarp},
     {"reveal",      "i",    CCmdCheatReveal},
     {"give",        NULL,   CCmdCheatGive},
     {"kill",        "",     CCmdCheatMassacre},
