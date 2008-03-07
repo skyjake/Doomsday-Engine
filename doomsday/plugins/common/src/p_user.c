@@ -1086,7 +1086,7 @@ void P_PlayerThinkMorph(player_t *player)
  */
 void P_PlayerThinkMove(player_t *player)
 {
-    mobj_t     *plrmo = player->plr->mo;
+    mobj_t             *plrmo = player->plr->mo;
 
     // Move around.
     // Reactiontime is used to prevent movement for a bit after a teleport.
@@ -1147,7 +1147,7 @@ void P_PlayerThinkMove(player_t *player)
 
 void P_PlayerThinkFly(player_t *player)
 {
-    mobj_t     *plrmo = player->plr->mo;
+    mobj_t             *plrmo = player->plr->mo;
 
     // Reactiontime is used to prevent movement for a bit after a teleport.
     if(plrmo->reactionTime)
@@ -1209,7 +1209,7 @@ void P_PlayerThinkView(player_t *player)
 void P_PlayerThinkSpecial(player_t *player)
 {
 #if __JHEXEN__
-    int     floorType;
+    int                 floorType;
 #endif
 
     if(P_ToXSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
@@ -1228,8 +1228,8 @@ void P_PlayerThinkSpecial(player_t *player)
  */
 void P_PlayerThinkSounds(player_t *player)
 {
-#ifdef __JHEXEN__
-    mobj_t *plrmo = player->plr->mo;
+#if __JHEXEN__
+    mobj_t             *plrmo = player->plr->mo;
 
     switch(player->class)
     {
@@ -1269,8 +1269,8 @@ void P_PlayerThinkSounds(player_t *player)
 void P_PlayerThinkItems(player_t *player)
 {
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    int     arti = 0; // What to use?
-    int     pnum = player - players;
+    int                 arti = 0; // What to use?
+    int                 pnum = player - players;
 
     // Moving in the inventory is handled by "invleft" and "invright" commands.
     // \fixme Switch to using impulses for consistency.
@@ -1724,21 +1724,21 @@ void P_PlayerThinkPowers(player_t *player)
  * that this is done as often as possible (i.e., on every frame) so that
  * changes will be smooth and lag-free.
  *
- * @param player  Player doing the thinking.
- * @param ticLength  Time to think, in seconds. Use as a multiplier.
+ * @param player        Player doing the thinking.
+ * @param ticLength     Time to think, in seconds. Use as a multiplier.
  *                      Note that original game logic was always using a
  *                      tick duration of 1/35 seconds.
  */
 void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
 {
-    int playerNum = player - players;
-    ddplayer_t* plr = player->plr;
-    int turn = 0;
-    boolean strafe = false;
-    float vel, off;
-    int turnSpeed;
-    float offsetSensitivity = 100; // FIXME: Should be done engine-side, mouse sensitivity!
-    classinfo_t *pClassInfo = PCLASS_INFO(player->class);
+    int                 playerNum = player - players;
+    ddplayer_t         *plr = player->plr;
+    int                 turn = 0;
+    boolean             strafe = false;
+    float               vel, off;
+    int                 turnSpeed;
+    float               offsetSensitivity = 100; // \fixme Should be done engine-side, mouse sensitivity!
+    classinfo_t        *pClassInfo = PCLASS_INFO(player->class);
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
@@ -1803,12 +1803,12 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
 
 void P_PlayerThinkUpdateControls(player_t* player)
 {
-    int playerNum = player - players;
-    classinfo_t *pClassInfo = PCLASS_INFO(player->class);
-    float vel, off;
-    int i;
-    boolean strafe = false;
-    playerbrain_t *brain = &player->brain;
+    int                 playerNum = player - players;
+    classinfo_t        *pClassInfo = PCLASS_INFO(player->class);
+    float               vel, off;
+    int                 i;
+    boolean             strafe = false;
+    playerbrain_t      *brain = &player->brain;
 
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);

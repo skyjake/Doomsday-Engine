@@ -24,12 +24,7 @@
  */
 
 /**
- * wi_stuff.c: Intermission/stat screens
- *
- * Different between registered DOOM (1994) and
- * Ultimate DOOM - Final edition (retail, 1995?).
- * This is supposedly ignored for commercial release (aka DOOM II),
- * which had 34 maps in one episode. So there.
+ * wi_stuff.c: Intermission/stat screens - jDoom64 specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
