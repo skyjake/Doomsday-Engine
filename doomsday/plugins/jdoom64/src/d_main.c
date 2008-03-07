@@ -229,7 +229,7 @@ void G_IdentifyVersion(void)
     // A client can't connect unless the same game mode is used.
     memset(gameModeString, 0, sizeof(gameModeString));
 
-    strcpy(gameModeString, "jdoom64"); // What gamemode??
+    strcpy(gameModeString, "doom64");
 }
 
 /**
@@ -400,7 +400,7 @@ void G_PostInit(void)
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                "Doom64 Startup");
+                "Doom64 Startup\n");
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
