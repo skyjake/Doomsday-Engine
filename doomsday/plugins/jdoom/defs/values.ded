@@ -100,9 +100,9 @@ Values {
   };
 
   # Weapon Info|*|Static
-  *     Defaults to "0". "1" = prevent the lowering of the HUD weapon when doing a switch.
+  #     Defaults to "0". "1" = prevent the lowering of the HUD weapon when doing a switch.
   # Weapon Info|*|Owned
-  *     Defaults to "0". "1" = this weapon will be given to the player when spawned.
+  #     Defaults to "0". "1" = this weapon will be given to the player when spawned.
 
   Weapon Info {
     0 {
