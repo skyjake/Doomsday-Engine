@@ -46,7 +46,7 @@
 #  pragma optimize("g", off)
 #endif
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "dmu_lib.h"
 #include "p_mapspec.h"

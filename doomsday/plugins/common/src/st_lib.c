@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,7 +38,7 @@
 #  include "jdoom.h"
 #  include "hu_stuff.h"
 #elif __JDOOM64__
-#  include "doom64tc.h"
+#  include "jdoom64.h"
 #  include "hu_stuff.h"
 #elif __JHERETIC__
 #  include "jheretic.h"

@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "m_argv.h"
 #include "dmu_lib.h"

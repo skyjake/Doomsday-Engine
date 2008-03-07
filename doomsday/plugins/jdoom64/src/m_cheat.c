@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "f_infine.h"
 #include "d_net.h"

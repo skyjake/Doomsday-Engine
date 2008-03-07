@@ -38,7 +38,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "hu_stuff.h"
 #include "d_net.h"

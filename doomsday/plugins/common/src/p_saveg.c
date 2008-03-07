@@ -58,7 +58,7 @@
 #elif __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
-#  include "doom64tc.h"
+#  include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -1398,7 +1398,7 @@ static void SV_WriteMobj(mobj_t *original)
     // 4: Added long 'lastenemy'
     // 5: Added flags3
     //
-    // JDOOM || JHERETIC || WOLFTC || DOOM64TC
+    // JDOOM || JHERETIC || WOLFTC || JDOOM64
     // 4: Added byte 'translucency'
     // 5: Added byte 'vistarget'
     // 5: Added tracer in jDoom

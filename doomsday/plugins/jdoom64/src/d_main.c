@@ -26,7 +26,7 @@
  */
 
 /**
- * d_main.c: DOOM64TC specifc Initialization.
+ * d_main.c: Initialization - jDoom64 specifc.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "m_argv.h"
 #include "hu_stuff.h"
@@ -229,7 +229,7 @@ void G_IdentifyVersion(void)
     // A client can't connect unless the same game mode is used.
     memset(gameModeString, 0, sizeof(gameModeString));
 
-    strcpy(gameModeString, "doom64tc");
+    strcpy(gameModeString, "jdoom64"); // What gamemode??
 }
 
 /**
@@ -400,7 +400,7 @@ void G_PostInit(void)
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                "DOOM64TC: Absolution");
+                "Doom64 Startup");
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.

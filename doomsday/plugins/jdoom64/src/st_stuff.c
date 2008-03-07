@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "d_net.h"
 #include "st_lib.h"

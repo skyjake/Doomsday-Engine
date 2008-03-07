@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "hu_stuff.h"
 #include "g_common.h"

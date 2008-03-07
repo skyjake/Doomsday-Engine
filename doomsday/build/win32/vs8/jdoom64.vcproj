@@ -4,7 +4,7 @@
 	Version="9.00"
 	Name="jDoom64"
 	ProjectGUID="{CA7A0565-5F80-4E69-A3C2-12B81FC35768}"
-	RootNamespace="Doom64TC"
+	RootNamespace="jDoom64"
 	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
@@ -18,7 +18,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\./Bin/Release"
-			IntermediateDirectory=".\./Obj/Release/Doom64TC"
+			IntermediateDirectory=".\./Obj/Release/jDoom64"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
@@ -43,7 +43,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Release/Doom64TC.tlb"
+				TypeLibraryName=".\./Bin/Release/jDoom64.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -113,7 +113,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory=".\./Bin/Debug"
-			IntermediateDirectory=".\./Obj/Debug/Doom64TC"
+			IntermediateDirectory=".\./Obj/Debug/jDoom64"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
@@ -138,7 +138,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Debug/Doom64TC.tlb"
+				TypeLibraryName=".\./Bin/Debug/jDoom64.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -553,159 +553,159 @@
 			Name="Header Files"
 			>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\acfnlink.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\acfnlink.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\d_api.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\d_api.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\d_config.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\d_config.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\d_console.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\d_console.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\d_englsh.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\d_englsh.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\d_items.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\d_items.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\d_main.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\d_main.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\d_player.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\d_player.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\d_refresh.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\d_refresh.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\d_think.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\d_think.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\doom64tc.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\jdoom64.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\doomdef.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\doomdef.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\doomtype.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\doomtype.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\dstrings.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\dstrings.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\g_ctrl.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\g_ctrl.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\g_game.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\g_game.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\info.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\info.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\m_cheat.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\m_cheat.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\m_menu.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\m_menu.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\m_random.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\m_random.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\mn_def.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\mn_def.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_enemy.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_enemy.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_floor.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_floor.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_inter.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_inter.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_lights.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_lights.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_maputl.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_maputl.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_mobj.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_mobj.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_pspr.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_pspr.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_setup.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_setup.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_sound.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_sound.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_spec.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_spec.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_switch.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_switch.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\p_telept.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\p_telept.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\r_defs.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\r_defs.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\sndidx.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\sndidx.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\st_stuff.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\st_stuff.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\tables.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\tables.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\version.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\version.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\include\wi_stuff.h"
+				RelativePath="..\..\..\plugins\jdoom64\include\wi_stuff.h"
 				>
 			</File>
 		</Filter>
@@ -713,99 +713,99 @@
 			Name="Source Files"
 			>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\acfnlink.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\acfnlink.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\d_api.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\d_api.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\d_console.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\d_console.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\d_items.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\d_items.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\d_main.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\d_main.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\d_refresh.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\d_refresh.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\g_ctrl.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\g_ctrl.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\m_cheat.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\m_cheat.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\m_random.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\m_random.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_enemy.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_enemy.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_floor.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_floor.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_inter.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_inter.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_lights.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_lights.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_maputl.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_maputl.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_mobj.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_mobj.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_pspr.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_pspr.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_setup.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_setup.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_sound.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_sound.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_spec.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_spec.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_switch.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_switch.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_telept.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\p_telept.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\st_stuff.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\st_stuff.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\tables.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\tables.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\wi_stuff.c"
+				RelativePath="..\..\..\plugins\jdoom64\src\wi_stuff.c"
 				>
 			</File>
 		</Filter>
@@ -813,7 +813,7 @@
 			Name="Resource Files"
 			>
 			<File
-				RelativePath="..\..\..\plugins\doom64tc\res\jdoom64.ico"
+				RelativePath="..\..\..\plugins\jdoom64\res\jdoom64.ico"
 				>
 			</File>
 		</Filter>

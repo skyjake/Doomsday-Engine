@@ -46,7 +46,7 @@
 #  include "jdoom.h"
 #  include "g_common.h"
 #elif __JDOOM64__
-#  include "doom64tc.h"
+#  include "jdoom64.h"
 #  include "g_common.h"
 #elif __JHERETIC__
 #  include "jheretic.h"

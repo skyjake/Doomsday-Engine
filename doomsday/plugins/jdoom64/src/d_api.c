@@ -23,7 +23,7 @@
  */
 
 /**
- * d_api.c: Doomsday API setup and interaction - Doom64TC specific
+ * d_api.c: Doomsday API setup and interaction - jDoom64 specific
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "xgclass.h"
 #include "p_tick.h"

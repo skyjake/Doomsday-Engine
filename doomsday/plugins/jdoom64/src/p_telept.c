@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "dmu_lib.h"
 #include "p_mapsetup.h"

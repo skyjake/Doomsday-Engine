@@ -40,7 +40,7 @@
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include <stdlib.h>
-#  include "doom64tc.h"
+#  include "jdoom64.h"
 #elif __JHERETIC__
 #  include <stdio.h>
 #  include "jheretic.h"

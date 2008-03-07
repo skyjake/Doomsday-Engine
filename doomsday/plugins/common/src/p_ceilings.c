@@ -49,7 +49,7 @@
 #elif __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
-#  include "doom64tc.h"
+#  include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -143,7 +143,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
             {
 #if !__JHEXEN__
             case raiseToHighest:
-# if __DOOM64TC__
+# if __JDOOM64__
             case customCeiling: //jd64
 # endif
                 P_RemoveActiveCeiling(ceiling);
@@ -227,7 +227,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
 
             case lowerAndCrush:
             case lowerToFloor:
-# if __DOOM64TC__
+# if __JDOOM64__
             case customCeiling: //jd64
 # endif
                 P_RemoveActiveCeiling(ceiling);

@@ -49,7 +49,7 @@
 #elif __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
-#  include "doom64tc.h"
+#  include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -854,9 +854,6 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
 }
 #endif
 
-/**
- * kaiser - Implemented for doom64tc.
- */
 #if __JDOOM64__
 int EV_DoSplitDoor(linedef_t *line, int ftype, int ctype)
 {

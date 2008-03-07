@@ -31,7 +31,7 @@
 
 #include <string.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 // MACROS ------------------------------------------------------------------
 

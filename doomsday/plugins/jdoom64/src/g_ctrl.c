@@ -23,12 +23,12 @@
  */
 
 /**
- * g_ctrl.c: Control bindings - DOOM64TC specifc
+ * g_ctrl.c: Control bindings - jDoom64 specifc
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "g_controls.h"
 

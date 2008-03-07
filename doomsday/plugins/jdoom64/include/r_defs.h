@@ -81,7 +81,7 @@ typedef struct xsector_s {
 // Doom64tc unfortunetly used non standard values for the linedef flags
 // it implemented from BOOM. It will make life simpler if we simply
 // update the Doom64TC IWAD rather than carry this on much further as
-// once Doom64TC is released with 1.9.0 I imagine we'll see a bunch
+// once jDoom64 is released with 1.9.0 I imagine we'll see a bunch
 // PWADs start cropping up.
 
 //#define ML_PASSUSE            512 // Allows a USE action to pass through a linedef with a special
@@ -105,7 +105,7 @@ typedef struct xline_s {
     // Extended generalized lines.
     xgline_t       *xg;
 
-    // Doom64TC specific:
+    // jDoom64 specific:
     short           useOn;
 } xline_t;
 

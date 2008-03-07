@@ -34,7 +34,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "am_map.h"
 #include "d_net.h"

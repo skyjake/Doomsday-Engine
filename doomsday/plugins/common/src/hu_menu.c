@@ -53,7 +53,7 @@
 #elif __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
-#  include "doom64tc.h"
+#  include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -462,7 +462,7 @@ menu_t MainDef = {
     NULL,
     LINEHEIGHT_B + 1,
     0, 7
-#elif __DOOM64TC__
+#elif __JDOOM64__
     0,
     97, 64,
     M_DrawMainMenu,
@@ -1289,9 +1289,7 @@ void M_UnloadData(void)
  */
 void Hu_MenuInit(void)
 {
-#if !__DOOM64TC__
     menuitem_t *item;
-#endif
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     int   i, w, maxw;
 #endif

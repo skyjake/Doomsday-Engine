@@ -23,12 +23,12 @@
  */
 
 /**
- * p_setup.c: Handle Doom64TC specific map data properties.
+ * p_setup.c: Handle jDoom64 specific map data properties.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "am_map.h"
 

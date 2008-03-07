@@ -39,7 +39,7 @@
 #  include "r_common.h"
 #  include "hu_stuff.h"
 #elif __JDOOM64__
-#  include "doom64tc.h"
+#  include "jdoom64.h"
 #  include "r_common.h"
 #  include "hu_stuff.h"
 #elif __JHERETIC__

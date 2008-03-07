@@ -172,7 +172,7 @@ typedef enum {
     NUM_KEY_TYPES
 } keytype_t;
 
-// doom64tc >
+// jd64 >
 //
 // Laser Powerups
 //
@@ -183,7 +183,7 @@ typedef enum
     it_laserpw3,
     NUMARTIFACTS
 } laserpw_t;
-// < doom64tc
+// < jd64
 
 // The defined weapons,
 //  including a marker indicating

@@ -24,14 +24,14 @@
  */
 
 /**
- * d_console.c: Doom64TC specific console stuff
+ * d_console.c: jDoom64 specific console stuff
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "hu_stuff.h"
 #include "f_infine.h"

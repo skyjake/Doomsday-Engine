@@ -49,7 +49,7 @@
 #elif __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
-#  include "doom64tc.h"
+#  include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -359,7 +359,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 # else
             plat->wait = PLATWAIT * TICSPERSEC;
 # endif
-# if __DOOM64TC__
+# if __JDOOM64__
             plat->speed = PLATSPEED * 8;
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
 # endif

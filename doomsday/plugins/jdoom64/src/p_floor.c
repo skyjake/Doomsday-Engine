@@ -32,7 +32,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "dmu_lib.h"
 #include "p_map.h"

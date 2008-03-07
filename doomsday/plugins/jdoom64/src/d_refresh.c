@@ -25,14 +25,14 @@
  */
 
 /**
- * d_refresh.c: - Doom64TC specific
+ * d_refresh.c: - jDoom64 specific
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
 
-#include "doom64tc.h"
+#include "jdoom64.h"
 
 #include "hu_stuff.h"
 #include "hu_menu.h"
