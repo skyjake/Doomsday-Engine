@@ -714,7 +714,7 @@
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B0AE6E190C58BAC3002A452C;
-			remoteInfo = Doom64TC;
+			remoteInfo = jDoom64;
 		};
 		B0E0CF1509BAF7CD002BE2BF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -1290,8 +1290,8 @@
 		B0AE6D940C58B5F9002A452C /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
 		B0AE6D950C58B5F9002A452C /* wi_stuff.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wi_stuff.h; sourceTree = "<group>"; };
 		B0AE6D960C58B5F9002A452C /* wolftc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wolftc.h; sourceTree = "<group>"; };
-		B0AE6E750C58BAC3002A452C /* Doom64TC.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Doom64TC.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		B0AE6E760C58BAC4002A452C /* Doom64TC-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "Doom64TC-Info.plist"; sourceTree = "<group>"; };
+		B0AE6E750C58BAC3002A452C /* jDoom64.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = jDoom64.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		B0AE6E760C58BAC4002A452C /* jDoom64-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "jDoom64-Info.plist"; sourceTree = "<group>"; };
 		B0AE6E800C58BB43002A452C /* acfnlink.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = acfnlink.c; sourceTree = "<group>"; };
 		B0AE6E810C58BB43002A452C /* d_api.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = d_api.c; sourceTree = "<group>"; };
 		B0AE6E820C58BB43002A452C /* d_console.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = d_console.c; sourceTree = "<group>"; };
@@ -1316,7 +1316,7 @@
 		B0AE6E950C58BB43002A452C /* st_stuff.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = st_stuff.c; sourceTree = "<group>"; };
 		B0AE6E960C58BB43002A452C /* tables.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tables.c; sourceTree = "<group>"; };
 		B0AE6E970C58BB43002A452C /* wi_stuff.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wi_stuff.c; sourceTree = "<group>"; };
-		B0AE6EB10C58BB6E002A452C /* doom64tc.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = doom64tc.def; sourceTree = "<group>"; };
+		B0AE6EB10C58BB6E002A452C /* jdoom64.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = jdoom64.def; sourceTree = "<group>"; };
 		B0AE6EEC0C58BB6F002A452C /* acfnlink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = acfnlink.h; sourceTree = "<group>"; };
 		B0AE6EED0C58BB6F002A452C /* d_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = d_config.h; sourceTree = "<group>"; };
 		B0AE6EEE0C58BB6F002A452C /* d_console.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = d_console.h; sourceTree = "<group>"; };
@@ -1325,7 +1325,7 @@
 		B0AE6EF10C58BB6F002A452C /* d_items.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = d_items.h; sourceTree = "<group>"; };
 		B0AE6EF20C58BB6F002A452C /* d_player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = d_player.h; sourceTree = "<group>"; };
 		B0AE6EF30C58BB6F002A452C /* d_think.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = d_think.h; sourceTree = "<group>"; };
-		B0AE6EF40C58BB6F002A452C /* doom64tc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = doom64tc.h; sourceTree = "<group>"; };
+		B0AE6EF40C58BB6F002A452C /* jdoom64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = jdoom64.h; sourceTree = "<group>"; };
 		B0AE6EF50C58BB6F002A452C /* doomdata.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = doomdata.h; sourceTree = "<group>"; };
 		B0AE6EF60C58BB6F002A452C /* doomdef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = doomdef.h; sourceTree = "<group>"; };
 		B0AE6EF70C58BB6F002A452C /* doomstat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = doomstat.h; sourceTree = "<group>"; };
@@ -1638,7 +1638,7 @@
 				B0237AEF06F3721E0059676A /* jHeretic.bundle */,
 				B083A6AE085CCCEE000D4BAB /* jHexen.bundle */,
 				B0AE6D240C58B503002A452C /* WolfTC.bundle */,
-				B0AE6E750C58BAC3002A452C /* Doom64TC.bundle */,
+				B0AE6E750C58BAC3002A452C /* jDoom64.bundle */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1654,7 +1654,7 @@
 				B0237AF206F373090059676A /* jHeretic */,
 				B0237C2006F442B10059676A /* jHexen */,
 				B0AE6CC50C58B416002A452C /* WolfTC */,
-				B0AE6CC60C58B439002A452C /* Doom64TC */,
+				B0AE6CC60C58B439002A452C /* jDoom64 */,
 				B0D5B7E306EF6DE400B98CC8 /* Plugin Sources */,
 				B0101EEC0C5DD36A00B72392 /* External */,
 				B0111A8609E9891800475FB2 /* Scripts */,
@@ -1670,7 +1670,7 @@
 				B0237AF006F3721E0059676A /* jHeretic-Info.plist */,
 				B0237C1E06F4421A0059676A /* jHexen-Info.plist */,
 				B0AE6D250C58B503002A452C /* WolfTC-Info.plist */,
-				B0AE6E760C58BAC4002A452C /* Doom64TC-Info.plist */,
+				B0AE6E760C58BAC4002A452C /* jDoom64-Info.plist */,
 				B0D73660087ACFE8000EEA69 /* Startup.nib */,
 			);
 			name = Doomsday;
@@ -2250,14 +2250,14 @@
 			name = WolfTC;
 			sourceTree = "<group>";
 		};
-		B0AE6CC60C58B439002A452C /* Doom64TC */ = {
+		B0AE6CC60C58B439002A452C /* jDoom64 */ = {
 			isa = PBXGroup;
 			children = (
 				B0AE6EB00C58BB6E002A452C /* api */,
 				B0AE6EEB0C58BB6F002A452C /* include */,
 				B0AE6E7F0C58BB43002A452C /* src */,
 			);
-			name = Doom64TC;
+			name = jDoom64;
 			sourceTree = "<group>";
 		};
 		B0AE6D2F0C58B5DF002A452C /* src */ = {
@@ -2374,16 +2374,16 @@
 				B0AE6E970C58BB43002A452C /* wi_stuff.c */,
 			);
 			name = src;
-			path = ../../plugins/doom64tc/src;
+			path = ../../plugins/jdoom64/src;
 			sourceTree = SOURCE_ROOT;
 		};
 		B0AE6EB00C58BB6E002A452C /* api */ = {
 			isa = PBXGroup;
 			children = (
-				B0AE6EB10C58BB6E002A452C /* doom64tc.def */,
+				B0AE6EB10C58BB6E002A452C /* jdoom64.def */,
 			);
 			name = api;
-			path = ../../plugins/doom64tc/api;
+			path = ../../plugins/jdoom64/api;
 			sourceTree = SOURCE_ROOT;
 		};
 		B0AE6EEB0C58BB6F002A452C /* include */ = {
@@ -2397,7 +2397,7 @@
 				B0AE6EF10C58BB6F002A452C /* d_items.h */,
 				B0AE6EF20C58BB6F002A452C /* d_player.h */,
 				B0AE6EF30C58BB6F002A452C /* d_think.h */,
-				B0AE6EF40C58BB6F002A452C /* doom64tc.h */,
+				B0AE6EF40C58BB6F002A452C /* jdoom64.h */,
 				B0AE6EF50C58BB6F002A452C /* doomdata.h */,
 				B0AE6EF60C58BB6F002A452C /* doomdef.h */,
 				B0AE6EF70C58BB6F002A452C /* doomstat.h */,
@@ -2426,7 +2426,7 @@
 				B0AE6F0E0C58BB6F002A452C /* wi_stuff.h */,
 			);
 			name = include;
-			path = ../../plugins/doom64tc/include;
+			path = ../../plugins/jdoom64/include;
 			sourceTree = SOURCE_ROOT;
 		};
 		B0D5B5C106EE333600B98CC8 /* dsSDLMixer Sources */ = {
@@ -2707,9 +2707,9 @@
 			productReference = B0AE6D240C58B503002A452C /* WolfTC.bundle */;
 			productType = "com.apple.product-type.bundle";
 		};
-		B0AE6E190C58BAC3002A452C /* Doom64TC */ = {
+		B0AE6E190C58BAC3002A452C /* jDoom64 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B0AE6E710C58BAC3002A452C /* Build configuration list for PBXNativeTarget "Doom64TC" */;
+			buildConfigurationList = B0AE6E710C58BAC3002A452C /* Build configuration list for PBXNativeTarget "jDoom64" */;
 			buildPhases = (
 				B0AE6E1A0C58BAC3002A452C /* Resources */,
 				B0AE6E2D0C58BAC3002A452C /* Sources */,
@@ -2719,9 +2719,9 @@
 			);
 			dependencies = (
 			);
-			name = Doom64TC;
-			productName = jDoom.bundle;
-			productReference = B0AE6E750C58BAC3002A452C /* Doom64TC.bundle */;
+			name = jDoom64;
+			productName = jDoom64.bundle;
+			productReference = B0AE6E750C58BAC3002A452C /* jDoom64.bundle */;
 			productType = "com.apple.product-type.bundle";
 		};
 		B0D5B5B906EE323600B98CC8 /* dsSDLMixer */ = {
@@ -2857,7 +2857,7 @@
 				B0237AAB06F3721E0059676A /* jHeretic */,
 				B083A65B085CCCEE000D4BAB /* jHexen */,
 				B0AE6CC70C58B503002A452C /* WolfTC */,
-				B0AE6E190C58BAC3002A452C /* Doom64TC */,
+				B0AE6E190C58BAC3002A452C /* jDoom64 */,
 			);
 		};
 /* End PBXProject section */
@@ -3660,7 +3660,7 @@
 		};
 		B0AE6F280C58BC3C002A452C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B0AE6E190C58BAC3002A452C /* Doom64TC */;
+			target = B0AE6E190C58BAC3002A452C /* jDoom64 */;
 			targetProxy = B0AE6F270C58BC3C002A452C /* PBXContainerItemProxy */;
 		};
 		B0E0CF1609BAF7CD002BE2BF /* PBXTargetDependency */ = {
@@ -4715,16 +4715,15 @@
 					UNIX,
 					MACOSX,
 					NO_FIXED_ASM,
-					__JDOOM__,
-					__DOOM64TC__,
+					__JDOOM64__,
 					_DEBUG,
 				);
 				HEADER_SEARCH_PATHS = (
-					../../plugins/doom64tc/include,
+					../../plugins/jdoom64/include,
 					../../plugins/common/include,
 					../../engine/portable/include,
 				);
-				INFOPLIST_FILE = "Doom64TC-Info.plist";
+				INFOPLIST_FILE = "jDoom64-Info.plist";
 				INSTALL_PATH = /Doomsday.app/Contents/Bundles;
 				LIBRARY_STYLE = BUNDLE;
 				OPTIMIZATION_CFLAGS = "-O0";
@@ -4736,7 +4735,7 @@
 				);
 				OTHER_REZFLAGS = "";
 				PREBINDING = NO;
-				PRODUCT_NAME = Doom64TC;
+				PRODUCT_NAME = jDoom64;
 				SECTORDER_FLAGS = "";
 				USER_HEADER_SEARCH_PATHS = "";
 				ZERO_LINK = YES;
@@ -4764,7 +4763,7 @@
 					../../plugins/common/include,
 					../../engine/portable/include,
 				);
-				INFOPLIST_FILE = "Doom64TC-Info.plist";
+				INFOPLIST_FILE = "jDoom64-Info.plist";
 				INSTALL_PATH = /Doomsday.app/Contents/Bundles;
 				LIBRARY_STYLE = STATIC;
 				OTHER_CFLAGS = "";
@@ -4802,7 +4801,7 @@
 					../../plugins/common/include,
 					../../engine/portable/include,
 				);
-				INFOPLIST_FILE = "Doom64TC-Info.plist";
+				INFOPLIST_FILE = "jDoom64-Info.plist";
 				INSTALL_PATH = /Doomsday.app/Contents/Bundles;
 				LIBRARY_STYLE = BUNDLE;
 				OTHER_CFLAGS = "";
@@ -5090,7 +5089,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Default;
 		};
-		B0AE6E710C58BAC3002A452C /* Build configuration list for PBXNativeTarget "Doom64TC" */ = {
+		B0AE6E710C58BAC3002A452C /* Build configuration list for PBXNativeTarget "jDoom64" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B0AE6E720C58BAC3002A452C /* Development */,
