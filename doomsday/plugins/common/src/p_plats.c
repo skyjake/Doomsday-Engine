@@ -58,6 +58,7 @@
 
 #include "dmu_lib.h"
 #include "p_mapspec.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -120,14 +121,14 @@ void T_PlatRaise(plat_t *plat)
 
         // Play a "while-moving" sound?
 #if __JHERETIC__
-        if(!(leveltime & 31))
+        if(!(levelTime & 31))
             S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
 #endif
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
         if(plat->type == raiseAndChange ||
            plat->type == raiseToNearestAndChange)
         {
-            if(!(leveltime & 7))
+            if(!(levelTime & 7))
                 S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
         }
 #endif
@@ -215,7 +216,7 @@ void T_PlatRaise(plat_t *plat)
         {
             // Play a "while-moving" sound?
 #if __JHERETIC__
-            if(!(leveltime & 31))
+            if(!(levelTime & 31))
                 S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
 #endif
         }

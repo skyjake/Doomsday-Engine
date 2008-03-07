@@ -50,6 +50,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <lzss.h>
+#include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -73,6 +75,8 @@
 #include "p_player.h"
 #include "p_inventory.h"
 #include "am_map.h"
+#include "p_tick.h"
+#include "p_actor.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -140,35 +144,35 @@
 
 #if !__JHEXEN__
 typedef struct saveheader_s {
-    int     magic;
-    int     version;
-    int     gamemode;
-    char    description[SAVESTRINGSIZE];
-    byte    skill;
-    byte    episode;
-    byte    map;
-    byte    deathmatch;
-    byte    nomonsters;
-    byte    respawn;
-    int     leveltime;
-    byte    players[MAXPLAYERS];
-    unsigned int gameid;
+    int             magic;
+    int             version;
+    int             gameMode;
+    char            description[SAVESTRINGSIZE];
+    byte            skill;
+    byte            episode;
+    byte            map;
+    byte            deathmatch;
+    byte            noMonsters;
+    byte            respawnMonsters;
+    int             levelTime;
+    byte            players[MAXPLAYERS];
+    unsigned int    gameID;
 } saveheader_t;
 #endif
 
 typedef struct playerheader_s {
-    int     numpowers;
-    int     numkeys;
-    int     numfrags;
-    int     numweapons;
-    int     numammotypes;
-    int     numpsprites;
+    int             numPowers;
+    int             numKeys;
+    int             numFrags;
+    int             numWeapons;
+    int             numAmmoTypes;
+    int             numPSprites;
 #if __JHEXEN__
-    int     numinvslots;
-    int     numarmortypes;
+    int             numInvSlots;
+    int             numArmorTypes;
 #endif
 #if __DOOM64TC__
-    int     numartifacts;
+    int             numArtifacts;
 #endif
 } playerheader_t;
 
@@ -780,7 +784,7 @@ static playerheader_t *GetPlayerHeader(void)
 
 unsigned int SV_GameID(void)
 {
-    return Sys_GetRealTime() + (leveltime << 24);
+    return Sys_GetRealTime() + (levelTime << 24);
 }
 
 void SV_Write(void *data, int len)
@@ -1011,9 +1015,9 @@ void SV_HxInitBaseSlot(void)
  */
 static void SV_WritePlayer(int playernum)
 {
-    int         i, numPSprites = GetPlayerHeader()->numpsprites;
-    player_t    temp, *p = &temp;
-    ddplayer_t  ddtemp, *dp = &ddtemp;
+    int                 i, numPSprites = GetPlayerHeader()->numPSprites;
+    player_t            temp, *p = &temp;
+    ddplayer_t          ddtemp, *dp = &ddtemp;
 
     // Make a copy of the player.
     memcpy(p, &players[playernum], sizeof(temp));
@@ -1063,14 +1067,14 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->health);
 
 #if __JHEXEN__
-    SV_Write(p->armorPoints, GetPlayerHeader()->numarmortypes * 4);
+    SV_Write(p->armorPoints, GetPlayerHeader()->numArmorTypes * 4);
 #else
     SV_WriteLong(p->armorPoints);
     SV_WriteLong(p->armorType);
 #endif
 
 #if __JHEXEN__
-    for(i = 0; i < GetPlayerHeader()->numinvslots; ++i)
+    for(i = 0; i < GetPlayerHeader()->numInvSlots; ++i)
     {
         SV_WriteLong(p->inventory[i].type);
         SV_WriteLong(p->inventory[i].count);
@@ -1080,17 +1084,17 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->inventorySlotNum);
 # else
 # if __DOOM64TC__
-    SV_WriteLong(p->laserpw); // d64tc
-    SV_WriteLong(p->lasericon1); // added in outcast
-    SV_WriteLong(p->lasericon2); // added in outcast
-    SV_WriteLong(p->lasericon3); // added in outcast
-    SV_WriteLong(p->outcastcycle); // added in outcast
-    SV_WriteLong(p->helltime); // added in outcast
-    SV_WriteLong(p->devicetime); // added in outcast
+    SV_WriteLong(p->laserPower); // d64tc
+    SV_WriteLong(p->laserIcon1); // added in outcast
+    SV_WriteLong(p->laserIcon2); // added in outcast
+    SV_WriteLong(p->laserIcon3); // added in outcast
+    SV_WriteLong(p->outcastCycle); // added in outcast
+    SV_WriteLong(p->hellTime); // added in outcast
+    SV_WriteLong(p->deviceTime); // added in outcast
 # endif
 #endif
 
-    SV_Write(p->powers, GetPlayerHeader()->numpowers * 4);
+    SV_Write(p->powers, GetPlayerHeader()->numPowers * 4);
 
 #if __DOOM64TC__
     //SV_WriteLong(cheatenable); // added in outcast
@@ -1099,29 +1103,29 @@ static void SV_WritePlayer(int playernum)
 #if __JHEXEN__
     SV_WriteLong(p->keys);
 #else
-    SV_Write(p->keys, GetPlayerHeader()->numkeys * 4);
+    SV_Write(p->keys, GetPlayerHeader()->numKeys * 4);
 #endif
 
 #if __JHEXEN__
     SV_WriteLong(p->pieces);
 #else
 # if __DOOM64TC__
-    SV_Write(p->artifacts, GetPlayerHeader()->numartifacts * 4);
+    SV_Write(p->artifacts, GetPlayerHeader()->numArtifacts * 4);
 # endif
 
     SV_WriteLong(p->backpack);
 #endif
 
-    SV_Write(p->frags, GetPlayerHeader()->numfrags * 4);
+    SV_Write(p->frags, GetPlayerHeader()->numFrags * 4);
 
     SV_WriteLong(p->readyWeapon);
 #if !__JHEXEN__
     SV_WriteLong(p->pendingWeapon);
 #endif
-    SV_Write(p->weaponOwned, GetPlayerHeader()->numweapons * 4);
-    SV_Write(p->ammo, GetPlayerHeader()->numammotypes * 4);
+    SV_Write(p->weaponOwned, GetPlayerHeader()->numWeapons * 4);
+    SV_Write(p->ammo, GetPlayerHeader()->numAmmoTypes * 4);
 #if !__JHEXEN__
-    SV_Write(p->maxAmmo, GetPlayerHeader()->numammotypes * 4);
+    SV_Write(p->maxAmmo, GetPlayerHeader()->numAmmoTypes * 4);
 #endif
 
     SV_WriteLong(p->attackDown);
@@ -1190,9 +1194,9 @@ static void SV_WritePlayer(int playernum)
  */
 static void SV_ReadPlayer(player_t *p)
 {
-    int         i, numPSprites = GetPlayerHeader()->numpsprites;
-    byte        ver;
-    ddplayer_t *dp = p->plr;
+    int                 i, numPSprites = GetPlayerHeader()->numPSprites;
+    byte                ver;
+    ddplayer_t         *dp = p->plr;
 
     ver = SV_ReadByte();
 
@@ -1223,14 +1227,14 @@ static void SV_ReadPlayer(player_t *p)
     p->health = SV_ReadLong();
 
 #if __JHEXEN__
-    SV_Read(p->armorPoints, GetPlayerHeader()->numarmortypes * 4);
+    SV_Read(p->armorPoints, GetPlayerHeader()->numArmorTypes * 4);
 #else
     p->armorPoints = SV_ReadLong();
     p->armorType = SV_ReadLong();
 #endif
 
 #if __JHEXEN__
-    for(i = 0; i < GetPlayerHeader()->numinvslots; ++i)
+    for(i = 0; i < GetPlayerHeader()->numInvSlots; ++i)
     {
         p->inventory[i].type  = SV_ReadLong();
         p->inventory[i].count = SV_ReadLong();
@@ -1240,17 +1244,17 @@ static void SV_ReadPlayer(player_t *p)
     p->inventorySlotNum = SV_ReadLong();
 #else
 # if __DOOM64TC__
-    p->laserpw = SV_ReadLong(); // d64tc
-    p->lasericon1 = SV_ReadLong(); // added in outcast
-    p->lasericon2 = SV_ReadLong(); // added in outcast
-    p->lasericon3 = SV_ReadLong(); // added in outcast
-    p->outcastcycle = SV_ReadLong(); // added in outcast
-    p->helltime = SV_ReadLong(); // added in outcast
-    p->devicetime = SV_ReadLong(); // added in outcast
+    p->laserPower = SV_ReadLong(); // d64tc
+    p->laserIcon1 = SV_ReadLong(); // added in outcast
+    p->laserIcon2 = SV_ReadLong(); // added in outcast
+    p->laserIcon3 = SV_ReadLong(); // added in outcast
+    p->outcastCycle = SV_ReadLong(); // added in outcast
+    p->hellTime = SV_ReadLong(); // added in outcast
+    p->deviceTime = SV_ReadLong(); // added in outcast
 # endif
 #endif
 
-    SV_Read(p->powers, GetPlayerHeader()->numpowers * 4);
+    SV_Read(p->powers, GetPlayerHeader()->numPowers * 4);
 
 #if __DOOM64TC__
     //cheatenable = SV_ReadLong(); // added in outcast
@@ -1259,19 +1263,19 @@ static void SV_ReadPlayer(player_t *p)
 #if __JHEXEN__
     p->keys = SV_ReadLong();
 #else
-    SV_Read(p->keys, GetPlayerHeader()->numkeys * 4);
+    SV_Read(p->keys, GetPlayerHeader()->numKeys * 4);
 #endif
 
 #if __JHEXEN__
     p->pieces = SV_ReadLong();
 #else
 # if __DOOM64TC__
-    SV_Read(p->artifacts, GetPlayerHeader()->numartifacts * 4);
+    SV_Read(p->artifacts, GetPlayerHeader()->numArtifacts * 4);
 # endif
     p->backpack = SV_ReadLong();
 #endif
 
-    SV_Read(p->frags, GetPlayerHeader()->numfrags * 4);
+    SV_Read(p->frags, GetPlayerHeader()->numFrags * 4);
 
 #if __JHEXEN__
     p->pendingWeapon = p->readyWeapon = SV_ReadLong();
@@ -1280,11 +1284,11 @@ static void SV_ReadPlayer(player_t *p)
     p->pendingWeapon = SV_ReadLong();
 #endif
 
-    SV_Read(p->weaponOwned, GetPlayerHeader()->numweapons * 4);
-    SV_Read(p->ammo, GetPlayerHeader()->numammotypes * 4);
+    SV_Read(p->weaponOwned, GetPlayerHeader()->numWeapons * 4);
+    SV_Read(p->ammo, GetPlayerHeader()->numAmmoTypes * 4);
 
 #if !__JHEXEN__
-    SV_Read(p->maxAmmo, GetPlayerHeader()->numammotypes * 4);
+    SV_Read(p->maxAmmo, GetPlayerHeader()->numAmmoTypes * 4);
 #endif
 
     p->attackDown = SV_ReadLong();
@@ -1390,7 +1394,7 @@ static void SV_ReadPlayer(player_t *p)
 
 static void SV_WriteMobj(mobj_t *original)
 {
-    mobj_t  temp, *mo = &temp;
+    mobj_t              temp, *mo = &temp;
 
     SV_WriteByte(TC_MOBJ); // Write thinker type byte.
 
@@ -1440,8 +1444,8 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(FLT2FIX(mo->pos[VZ]));
 
     //More drawing info: to determine current sprite.
-    SV_WriteLong(mo->angle);     // orientation
-    SV_WriteLong(mo->sprite);    // used to find patch_t and flip value
+    SV_WriteLong(mo->angle); // Orientation.
+    SV_WriteLong(mo->sprite); // Used to find patch_t and flip value.
     SV_WriteLong(mo->frame);
 
 # if __JHEXEN__
@@ -1469,7 +1473,7 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong((int) mo->info);
 #endif
 
-    SV_WriteLong(mo->tics);      // state tic counter
+    SV_WriteLong(mo->tics); // State tic counter.
     SV_WriteLong((int) mo->state);
 
 #if __JHEXEN__
@@ -1482,7 +1486,7 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(mo->flags3);
 
     if(mo->type == MT_KORAX)
-        SV_WriteLong(0);     // Searching index
+        SV_WriteLong(0); // Searching index.
     else
         SV_WriteLong(mo->special1);
 
@@ -1506,8 +1510,8 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(mo->health);
 
     // Movement direction, movement generation (zig-zagging).
-    SV_WriteLong(mo->moveDir);   // 0-7
-    SV_WriteLong(mo->moveCount); // when 0, select a new dir
+    SV_WriteLong(mo->moveDir); // 0-7
+    SV_WriteLong(mo->moveCount); // When 0, select a new dir.
 
 #if __JHEXEN__
     if(mo->flags & MF_CORPSE)
@@ -1521,16 +1525,15 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(mo->reactionTime);
 
 #if __DOOM64TC__
-    SV_WriteLong(mo->floatswitch); // added in outcast
-    SV_WriteLong(mo->floattics); // added in outcast
+    SV_WriteLong(mo->floatSwitch); // added in outcast
+    SV_WriteLong(mo->floatTics); // added in outcast
 #endif
 
-    // If >0, the target will be chased
-    // no matter what (even if shot)
+    // If >0, the target will be chased no matter what (even if shot).
     SV_WriteLong(mo->threshold);
 
-    // Additional info record for player avatars only.
-    // Only valid if type == MT_PLAYER
+    // Additional info record for player avatars only (only valid if type
+    // == MT_PLAYER).
     SV_WriteLong((int) mo->player);
 
     // Player number last looked for.
@@ -1545,9 +1548,9 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(mo->spawnSpot.type);
     SV_WriteLong(mo->spawnSpot.flags);
 
-    SV_WriteLong(mo->intFlags);  // killough $dropoff_fix: internal flags
-    SV_WriteLong(FLT2FIX(mo->dropOffZ));  // killough $dropoff_fix
-    SV_WriteLong(mo->gear);      // killough used in torque simulation
+    SV_WriteLong(mo->intFlags); // $dropoff_fix: internal flags.
+    SV_WriteLong(FLT2FIX(mo->dropOffZ)); // $dropoff_fix
+    SV_WriteLong(mo->gear); // Used in torque simulation.
 
     SV_WriteLong(mo->damage);
     SV_WriteLong(mo->flags2);
@@ -1610,8 +1613,8 @@ Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
  * Called after loading a save game where the mobj format is older than
  * the current version.
  *
- * @param   mo          Ptr to the mobj whoose flags are to be updated.
- * @param   ver         The MOBJ save version to update from.
+ * @param mo            Ptr to the mobj whoose flags are to be updated.
+ * @param ver           The MOBJ save version to update from.
  */
 void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
 {
@@ -1833,8 +1836,8 @@ static int SV_ReadMobj(thinker_t *th)
     mo->reactionTime = SV_ReadLong();
 
 #if __DOOM64TC__
-    mo->floatswitch = SV_ReadLong(); // added in outcast
-    mo->floattics = SV_ReadLong(); // added in outcast
+    mo->floatSwitch = SV_ReadLong(); // added in outcast
+    mo->floatTics = SV_ReadLong(); // added in outcast
 #endif
 
     // If >0, the target will be chased
@@ -1957,32 +1960,32 @@ static void P_ArchivePlayerHeader(void)
     SV_BeginSegment(ASEG_PLAYER_HEADER);
     SV_WriteByte(1); // version byte
 
-    ph->numpowers = NUM_POWER_TYPES;
-    ph->numkeys = NUM_KEY_TYPES;
-    ph->numfrags = MAXPLAYERS;
-    ph->numweapons = NUM_WEAPON_TYPES;
-    ph->numammotypes = NUM_AMMO_TYPES;
-    ph->numpsprites = NUMPSPRITES;
+    ph->numPowers = NUM_POWER_TYPES;
+    ph->numKeys = NUM_KEY_TYPES;
+    ph->numFrags = MAXPLAYERS;
+    ph->numWeapons = NUM_WEAPON_TYPES;
+    ph->numAmmoTypes = NUM_AMMO_TYPES;
+    ph->numPSprites = NUMPSPRITES;
 #if __JHEXEN__
-    ph->numinvslots = NUMINVENTORYSLOTS;
-    ph->numarmortypes = NUMARMOR;
+    ph->numInvSlots = NUMINVENTORYSLOTS;
+    ph->numArmorTypes = NUMARMOR;
 #endif
 #if __DOOM64TC__
-    ph->numartifacts = NUMARTIFACTS;
+    ph->numArtifacts = NUMARTIFACTS;
 #endif
 
-    SV_WriteLong(ph->numpowers);
-    SV_WriteLong(ph->numkeys);
-    SV_WriteLong(ph->numfrags);
-    SV_WriteLong(ph->numweapons);
-    SV_WriteLong(ph->numammotypes);
-    SV_WriteLong(ph->numpsprites);
+    SV_WriteLong(ph->numPowers);
+    SV_WriteLong(ph->numKeys);
+    SV_WriteLong(ph->numFrags);
+    SV_WriteLong(ph->numWeapons);
+    SV_WriteLong(ph->numAmmoTypes);
+    SV_WriteLong(ph->numPSprites);
 #if __JHEXEN__
-    SV_WriteLong(ph->numinvslots);
-    SV_WriteLong(ph->numarmortypes);
+    SV_WriteLong(ph->numInvSlots);
+    SV_WriteLong(ph->numArmorTypes);
 #endif
 #if __DOOM64TC__
-    SV_WriteLong(ph->numartifacts);
+    SV_WriteLong(ph->numArtifacts);
 #endif
     playerHeaderOK = true;
 }
@@ -2003,45 +2006,45 @@ static void P_UnArchivePlayerHeader(void)
         AssertSegment(ASEG_PLAYER_HEADER);
         ver = SV_ReadByte(); // Unused atm
 
-        playerHeader.numpowers = SV_ReadLong();
-        playerHeader.numkeys = SV_ReadLong();
-        playerHeader.numfrags = SV_ReadLong();
-        playerHeader.numweapons = SV_ReadLong();
-        playerHeader.numammotypes = SV_ReadLong();
-        playerHeader.numpsprites = SV_ReadLong();
+        playerHeader.numPowers = SV_ReadLong();
+        playerHeader.numKeys = SV_ReadLong();
+        playerHeader.numFrags = SV_ReadLong();
+        playerHeader.numWeapons = SV_ReadLong();
+        playerHeader.numAmmoTypes = SV_ReadLong();
+        playerHeader.numPSprites = SV_ReadLong();
 #if __JHEXEN__
-        playerHeader.numinvslots = SV_ReadLong();
-        playerHeader.numarmortypes = SV_ReadLong();
+        playerHeader.numInvSlots = SV_ReadLong();
+        playerHeader.numArmorTypes = SV_ReadLong();
 #endif
 #if __DOOM64TC__
-        playerHeader.numartifacts = SV_ReadLong();
+        playerHeader.numArtifacts = SV_ReadLong();
 #endif
     }
     else // The old format didn't save the counts.
     {
 #if __JHEXEN__
-        playerHeader.numpowers = 9;
-        playerHeader.numkeys = 11;
-        playerHeader.numfrags = 8;
-        playerHeader.numweapons = 4;
-        playerHeader.numammotypes = 2;
-        playerHeader.numpsprites = 2;
-        playerHeader.numinvslots = 33;
-        playerHeader.numarmortypes = 4;
+        playerHeader.numPowers = 9;
+        playerHeader.numKeys = 11;
+        playerHeader.numFrags = 8;
+        playerHeader.numWeapons = 4;
+        playerHeader.numAmmoTypes = 2;
+        playerHeader.numPSprites = 2;
+        playerHeader.numInvSlots = 33;
+        playerHeader.numArmorTypes = 4;
 #elif __JDOOM__
-        playerHeader.numpowers = 6;
-        playerHeader.numkeys = 6;
-        playerHeader.numfrags = 4; // why was this only 4?
-        playerHeader.numweapons = 9;
-        playerHeader.numammotypes = 4;
-        playerHeader.numpsprites = 2;
+        playerHeader.numPowers = 6;
+        playerHeader.numKeys = 6;
+        playerHeader.numFrags = 4; // Why was this only 4?
+        playerHeader.numWeapons = 9;
+        playerHeader.numAmmoTypes = 4;
+        playerHeader.numPSprites = 2;
 #elif __JHERETIC__
-        playerHeader.numpowers = 9;
-        playerHeader.numkeys = 3;
-        playerHeader.numfrags = 4; // ?
-        playerHeader.numweapons = 8;
-        playerHeader.numammotypes = 6;
-        playerHeader.numpsprites = 2;
+        playerHeader.numPowers = 9;
+        playerHeader.numKeys = 3;
+        playerHeader.numFrags = 4; // ?
+        playerHeader.numWeapons = 8;
+        playerHeader.numAmmoTypes = 6;
+        playerHeader.numPSprites = 2;
 #endif
     }
     playerHeaderOK = true;
@@ -2049,7 +2052,7 @@ static void P_UnArchivePlayerHeader(void)
 
 static void P_ArchivePlayers(void)
 {
-    int         i;
+    int                 i;
 
     SV_BeginSegment(ASEG_PLAYERS);
 #if __JHEXEN__
@@ -2063,6 +2066,7 @@ static void P_ArchivePlayers(void)
     {
         if(!players[i].plr->inGame)
             continue;
+
         SV_WriteLong(Net_GetPlayerID(i));
         SV_WritePlayer(i);
     }
@@ -2070,14 +2074,14 @@ static void P_ArchivePlayers(void)
 
 static void P_UnArchivePlayers(boolean *infile, boolean *loaded)
 {
-    int         i, j;
-    unsigned int pid;
-    player_t    dummy_player;
-    ddplayer_t  dummy_ddplayer;
-    player_t   *player;
+    int                 i, j;
+    unsigned int        pid;
+    player_t            dummyPlayer;
+    ddplayer_t          dummyDDPlayer;
+    player_t           *player;
 
     // Setup the dummy.
-    dummy_player.plr = &dummy_ddplayer;
+    dummyPlayer.plr = &dummyDDPlayer;
 
     // Load the players.
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -2105,10 +2109,11 @@ Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
 #endif
                 break;
             }
+
         if(!player)
         {
             // We have a missing player. Use a dummy to load the data.
-            player = &dummy_player;
+            player = &dummyPlayer;
         }
 
         // Read the data.
@@ -4218,11 +4223,11 @@ static void P_ArchiveBrain(void)
 {
     int     i;
 
-    SV_WriteByte(numbraintargets);
+    SV_WriteByte(numBrainTargets);
     SV_WriteByte(brain.targetOn);
     // Write the mobj references using the mobj archive.
-    for(i = 0; i < numbraintargets; ++i)
-        SV_WriteShort(SV_ThingArchiveNum(braintargets[i]));
+    for(i = 0; i < numBrainTargets; ++i)
+        SV_WriteShort(SV_ThingArchiveNum(brainTargets[i]));
 }
 
 static void P_UnArchiveBrain(void)
@@ -4232,15 +4237,15 @@ static void P_UnArchiveBrain(void)
     if(hdr.version < 3)
         return;    // No brain data before version 3.
 
-    numbraintargets = SV_ReadByte();
+    numBrainTargets = SV_ReadByte();
     brain.targetOn = SV_ReadByte();
-    for(i = 0; i < numbraintargets; ++i)
+    for(i = 0; i < numBrainTargets; ++i)
     {
-        braintargets[i] = (mobj_t*) (int) SV_ReadShort();
-        braintargets[i] = SV_GetArchiveThing((int) braintargets[i], NULL);
+        brainTargets[i] = (mobj_t*) (int) SV_ReadShort();
+        brainTargets[i] = SV_GetArchiveThing((int) brainTargets[i], NULL);
     }
 
-    if(gamemode == commercial)
+    if(gameMode == commercial)
         P_SpawnBrainTargets();
 }
 #endif
@@ -4447,7 +4452,7 @@ static void P_ArchiveMap(boolean savePlayers)
     SV_WriteByte(MY_SAVE_VERSION);
 
     // Write the level timer
-    SV_WriteLong(leveltime);
+    SV_WriteLong(levelTime);
 #else
     // Clear the sound target count (determined while saving sectors).
     numSoundTargets = 0;
@@ -4500,7 +4505,7 @@ static void P_UnArchiveMap(void)
     }
 
     // Read the level timer
-    leveltime = SV_ReadLong();
+    levelTime = SV_ReadLong();
 #endif
 
     P_UnArchiveWorld();
@@ -4674,11 +4679,11 @@ int SV_SaveGameWorker(void *ptr)
     SV_BeginSegment(ASEG_GAME_HEADER);
 
     // Write current map and difficulty
-    SV_WriteByte(gamemap);
-    SV_WriteByte(gameskill);
+    SV_WriteByte(gameMap);
+    SV_WriteByte(gameSkill);
     SV_WriteByte(deathmatch);
-    SV_WriteByte(nomonsters);
-    SV_WriteByte(randomclass);
+    SV_WriteByte(noMonstersParm);
+    SV_WriteByte(randomClassParm);
 
     // Write global script info
     SV_Write(WorldVars, sizeof(WorldVars));
@@ -4688,31 +4693,29 @@ int SV_SaveGameWorker(void *ptr)
     hdr.magic = MY_SAVE_MAGIC;
     hdr.version = MY_SAVE_VERSION;
 # if __JDOOM__
-    hdr.gamemode = gamemode;
+    hdr.gameMode = gameMode;
 # elif __JHERETIC__
-    hdr.gamemode = 0;
+    hdr.gameMode = 0;
 # endif
 
     strncpy(hdr.description, param->description, SAVESTRINGSIZE);
     hdr.description[SAVESTRINGSIZE - 1] = 0;
-    hdr.skill = gameskill;
-# if __JDOOM__
-    if(fastparm)
+    hdr.skill = gameSkill;
+    if(fastParm)
         hdr.skill |= 0x80;      // Set high byte.
-# endif
-    hdr.episode = gameepisode;
-    hdr.map = gamemap;
+    hdr.episode = gameEpisode;
+    hdr.map = gameMap;
     hdr.deathmatch = deathmatch;
-    hdr.nomonsters = nomonsters;
-    hdr.respawn = respawnmonsters;
-    hdr.leveltime = leveltime;
-    hdr.gameid = SV_GameID();
+    hdr.noMonsters = noMonstersParm;
+    hdr.respawnMonsters = respawnMonsters;
+    hdr.levelTime = levelTime;
+    hdr.gameID = SV_GameID();
     for(i = 0; i < MAXPLAYERS; i++)
         hdr.players[i] = players[i].plr->inGame;
     lzWrite(&hdr, sizeof(hdr), savefile);
 
     // In netgames the server tells the clients to save their games.
-    NetSv_SaveGame(hdr.gameid);
+    NetSv_SaveGame(hdr.gameID);
 #endif
 
     // Set the mobj archive numbers
@@ -4738,7 +4741,7 @@ int SV_SaveGameWorker(void *ptr)
         char        fileName[100];
 
         // Open the output file
-        sprintf(fileName, "%shex6%02d.hxs", savePath, gamemap);
+        sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
         M_TranslatePath(fileName, fileName);
         OpenStreamOut(fileName);
 
@@ -4839,12 +4842,12 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
 
     AssertSegment(ASEG_GAME_HEADER);
 
-    gameepisode = 1;
-    gamemap = SV_ReadByte();
-    gameskill = SV_ReadByte();
+    gameEpisode = 1;
+    gameMap = SV_ReadByte();
+    gameSkill = SV_ReadByte();
     deathmatch = SV_ReadByte();
-    nomonsters = SV_ReadByte();
-    randomclass = SV_ReadByte();
+    noMonstersParm = SV_ReadByte();
+    randomClassParm = SV_ReadByte();
 
 #else
     lzRead(hdr, sizeof(*hdr), savefile);
@@ -4862,23 +4865,21 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
     }
 
 # ifdef __JDOOM__
-    if(hdr->gamemode != gamemode && !ArgExists("-nosavecheck"))
+    if(hdr->gameMode != gameMode && !ArgExists("-nosavecheck"))
     {
-        Con_Message("SV_LoadGame: savegame not from gamemode %i.\n",
-                    gamemode);
+        Con_Message("SV_LoadGame: savegame not from gameMode %i.\n",
+                    gameMode);
         return false;
     }
 # endif
 
-    gameskill = hdr->skill & 0x7f;
-# ifdef __JDOOM__
-    fastparm = (hdr->skill & 0x80) != 0;
-# endif
-    gameepisode = hdr->episode;
-    gamemap = hdr->map;
+    gameSkill = hdr->skill & 0x7f;
+    fastParm = (hdr->skill & 0x80) != 0;
+    gameEpisode = hdr->episode;
+    gameMap = hdr->map;
     deathmatch = hdr->deathmatch;
-    nomonsters = hdr->nomonsters;
-    respawnmonsters = hdr->respawn;
+    noMonstersParm = hdr->noMonsters;
+    respawnMonsters = hdr->respawnMonsters;
 #endif
 
     return true; // Read was OK.
@@ -4917,10 +4918,10 @@ static boolean SV_LoadGame2(void)
 
 #if !__JHEXEN__
     // Load the level.
-    G_InitNew(gameskill, gameepisode, gamemap);
+    G_InitNew(gameSkill, gameEpisode, gameMap);
 
     // Set the time.
-    leveltime = hdr.leveltime;
+    levelTime = hdr.levelTime;
 
     SV_InitThingArchive(true, true);
 #endif
@@ -5012,7 +5013,7 @@ static boolean SV_LoadGame2(void)
 
             if(!i)
             {
-                // If the consoleplayer isn't in the save, it must be some
+                // If the CONSOLEPLAYER isn't in the save, it must be some
                 // other player's file?
                 P_SetMessage(players, GET_TXT(TXT_LOADMISSING), false);
             }
@@ -5047,7 +5048,7 @@ static boolean SV_LoadGame2(void)
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(hdr.gameid);
+    NetSv_LoadGame(hdr.gameID);
 #endif
 
     return true; // Success!
@@ -5078,7 +5079,7 @@ boolean SV_LoadGame(char *filename)
 #else
     // Make sure an opening briefing is not shown.
     // (G_InitNew --> G_DoLoadLevel)
-    brief_disabled = true;
+    briefDisabled = true;
 
     savefile = lzOpen(filename, "rp");
     if(!savefile)
@@ -5107,19 +5108,19 @@ boolean SV_LoadGame(char *filename)
  * Saves a snapshot of the world, a still image.
  * No data of movement is included (server sends it).
  */
-void SV_SaveClient(unsigned int gameid)
+void SV_SaveClient(unsigned int gameID)
 {
 #if !__JHEXEN__ // unsupported in jHexen
-    char    name[200];
-    player_t *pl = players + consoleplayer;
-    mobj_t *mo = players[consoleplayer].plr->mo;
+    char                name[200];
+    player_t           *pl = &players[CONSOLEPLAYER];
+    mobj_t             *mo = pl->plr->mo;
 
     if(!IS_CLIENT || !mo)
         return;
 
     playerHeaderOK = false; // Uninitialized.
 
-    SV_GetClientSaveGameFileName(gameid, name);
+    SV_GetClientSaveGameFileName(gameID, name);
     // Open the file.
     savefile = lzOpen(name, "wp");
     if(!savefile)
@@ -5132,14 +5133,14 @@ void SV_SaveClient(unsigned int gameid)
     memset(&hdr, 0, sizeof(hdr));
     hdr.magic = MY_CLIENT_SAVE_MAGIC;
     hdr.version = MY_SAVE_VERSION;
-    hdr.skill = gameskill;
-    hdr.episode = gameepisode;
-    hdr.map = gamemap;
+    hdr.skill = gameSkill;
+    hdr.episode = gameEpisode;
+    hdr.map = gameMap;
     hdr.deathmatch = deathmatch;
-    hdr.nomonsters = nomonsters;
-    hdr.respawn = respawnmonsters;
-    hdr.leveltime = leveltime;
-    hdr.gameid = gameid;
+    hdr.noMonsters = noMonstersParm;
+    hdr.respawnMonsters = respawnMonsters;
+    hdr.levelTime = levelTime;
+    hdr.gameID = gameID;
     SV_Write(&hdr, sizeof(hdr));
 
     // Some important information.
@@ -5152,7 +5153,7 @@ void SV_SaveClient(unsigned int gameid)
     SV_WriteLong(mo->angle); /* $unifiedangles */
     SV_WriteFloat(pl->plr->lookDir); /* $unifiedangles */
     P_ArchivePlayerHeader();
-    SV_WritePlayer(consoleplayer);
+    SV_WritePlayer(CONSOLEPLAYER);
 
     P_ArchiveMap(true);
 
@@ -5165,7 +5166,7 @@ void SV_LoadClient(unsigned int gameid)
 {
 #if !__JHEXEN__ // unsupported in jHexen
     char    name[200];
-    player_t *cpl = players + consoleplayer;
+    player_t *cpl = players + CONSOLEPLAYER;
     mobj_t *mo = cpl->plr->mo;
 
     if(!IS_CLIENT || !mo)
@@ -5191,18 +5192,18 @@ void SV_LoadClient(unsigned int gameid)
     // (Data from old save versions is read into here)
     junkbuffer = malloc(sizeof(byte) * 64);
 
-    gameskill = hdr.skill;
+    gameSkill = hdr.skill;
     deathmatch = hdr.deathmatch;
-    nomonsters = hdr.nomonsters;
-    respawnmonsters = hdr.respawn;
+    noMonstersParm = hdr.noMonsters;
+    respawnMonsters = hdr.respawnMonsters;
     // Do we need to change the map?
-    if(gamemap != hdr.map || gameepisode != hdr.episode)
+    if(gameMap != hdr.map || gameEpisode != hdr.episode)
     {
-        gamemap = hdr.map;
-        gameepisode = hdr.episode;
-        G_InitNew(gameskill, gameepisode, gamemap);
+        gameMap = hdr.map;
+        gameEpisode = hdr.episode;
+        G_InitNew(gameSkill, gameEpisode, gameMap);
     }
-    leveltime = hdr.leveltime;
+    levelTime = hdr.levelTime;
 
     P_MobjUnsetPosition(mo);
     mo->pos[VX] = FIX2FLT(SV_ReadLong());
@@ -5246,13 +5247,13 @@ static void SV_HxLoadMap(void)
 #endif
 
     // We don't want to see a briefing if we're loading a save game.
-    brief_disabled = true;
+    briefDisabled = true;
 
     // Load a base level
-    G_InitNew(gameskill, gameepisode, gamemap);
+    G_InitNew(gameSkill, gameEpisode, gameMap);
 
     // Create the name
-    sprintf(fileName, "%shex6%02d.hxs", savePath, gamemap);
+    sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
     M_TranslatePath(fileName, fileName);
 
 #ifdef _DEBUG
@@ -5291,7 +5292,7 @@ void SV_MapTeleport(int map, int position)
 
     if(!deathmatch)
     {
-        if(P_GetMapCluster(gamemap) == P_GetMapCluster(map))
+        if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
         {   // Same cluster - save map without saving player mobjs
             char        fileName[100];
 
@@ -5299,7 +5300,7 @@ void SV_MapTeleport(int map, int position)
             SV_InitThingArchive(false, false);
 
             // Open the output file
-            sprintf(fileName, "%shex6%02d.hxs", savePath, gamemap);
+            sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
             M_TranslatePath(fileName, fileName);
             OpenStreamOut(fileName);
 
@@ -5315,8 +5316,8 @@ void SV_MapTeleport(int map, int position)
     }
 
     // Store player structs for later
-    rClass = randomclass;
-    randomclass = false;
+    rClass = randomClassParm;
+    randomClassParm = false;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         memcpy(&playerBackup[i], &players[i], sizeof(player_t));
@@ -5326,17 +5327,17 @@ void SV_MapTeleport(int map, int position)
     // for the following check (player mobj redirection)
     targetPlayerAddrs = NULL;
 
-    gamemap = map;
-    sprintf(fileName, "%shex6%02d.hxs", savePath, gamemap);
+    gameMap = map;
+    sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
     M_TranslatePath(fileName, fileName);
     if(!deathmatch && ExistingFile(fileName))
     {                           // Unarchive map
         SV_HxLoadMap();
-        brief_disabled = true;
+        briefDisabled = true;
     }
     else
     {                           // New map
-        G_InitNew(gameskill, gameepisode, gamemap);
+        G_InitNew(gameSkill, gameEpisode, gameMap);
 
         // Destroy all freshly spawned players
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -5414,7 +5415,7 @@ void SV_MapTeleport(int map, int position)
             targetPlayerMobj = players[i].plr->mo;
         }
     }
-    randomclass = rClass;
+    randomClassParm = rClass;
 
     //// \fixme Redirect anything targeting a player mobj
     //// FIXME! This only supports single player games!!

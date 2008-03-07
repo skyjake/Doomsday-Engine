@@ -46,6 +46,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -66,10 +68,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define SLOT_WIDTH          200
-
-#define IS_SERVER           Get(DD_SERVER)
-#define IS_NETGAME          Get(DD_NETGAME)
+#define SLOT_WIDTH          (200)
 
 // TYPES -------------------------------------------------------------------
 
@@ -141,7 +140,7 @@ menu_t  MultiplayerMenu = {
     DrawMultiplayerMenu,
     3, MultiplayerItems,
     0, MENU_MAIN,
-    hu_font_a,cfg.menuColor2,
+    huFontA,cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
     0, 3
@@ -156,8 +155,8 @@ menuitem_t GameSetupItems1[] = {
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_LRFUNC, 0, "SKILL:", SCGameSetupSkill, 0},
     {ITT_EFUNC, 0, "DEATHMATCH:", SCGameSetupFunc, 0, NULL, &cfg.netDeathmatch },
-    {ITT_EFUNC, 0, "MONSTERS:", SCGameSetupFunc, 0, NULL, &cfg.netNomonsters },
-    {ITT_EFUNC, 0, "RANDOM CLASSES:", SCGameSetupFunc, 0, NULL, &cfg.netRandomclass },
+    {ITT_EFUNC, 0, "MONSTERS:", SCGameSetupFunc, 0, NULL, &cfg.netNoMonsters },
+    {ITT_EFUNC, 0, "RANDOM CLASSES:", SCGameSetupFunc, 0, NULL, &cfg.netRandomClass },
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
     {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
     {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
@@ -177,7 +176,7 @@ menuitem_t GameSetupItems1[] =  // for Heretic
     {ITT_LRFUNC, 0, "MISSION :", SCGameSetupMission, 0},
     {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
     {ITT_LRFUNC, 0, "DEATHMATCH :", SCGameSetupDeathmatch, 0},
-    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNomonsters },
+    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNoMonsters },
     {ITT_EFUNC, 0, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
     {ITT_EFUNC, 0, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
@@ -197,7 +196,7 @@ menuitem_t GameSetupItems1[] =  // for Doom 1
     {ITT_LRFUNC, 0, "MISSION :", SCGameSetupMission, 0},
     {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
     {ITT_LRFUNC, 0, "MODE :", SCGameSetupDeathmatch, 0},
-    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNomonsters },
+    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNoMonsters },
     {ITT_EFUNC, 0, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
     {ITT_EFUNC, 0, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
     {ITT_EFUNC, 0, "ALLOW BFG AIMING :", SCGameSetupFunc, 0, NULL, &cfg.netBFGFreeLook},
@@ -219,7 +218,7 @@ menuitem_t GameSetupItems2[] =  // for Doom 2
     {ITT_LRFUNC, 0, "LEVEL :", SCGameSetupMission, 0},
     {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
     {ITT_LRFUNC, 0, "MODE :", SCGameSetupDeathmatch, 0},
-    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL,  &cfg.netNomonsters },
+    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL,  &cfg.netNoMonsters },
     {ITT_EFUNC, 0, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
     {ITT_EFUNC, 0, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
     {ITT_EFUNC, 0, "ALLOW BFG AIMING :", SCGameSetupFunc, 0, NULL, &cfg.netBFGFreeLook},
@@ -252,7 +251,7 @@ menu_t  GameSetupMenu = {
     DrawGameSetupMenu,
     NUM_GAMESETUP_ITEMS, GameSetupItems1,
     0, MENU_MULTIPLAYER,
-    hu_font_a,                  //1, 0, 0,
+    huFontA,                  //1, 0, 0,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -286,7 +285,7 @@ menu_t  PlayerSetupMenu = {
     DrawPlayerSetupMenu,
     NUM_PLAYERSETUP_ITEMS, PlayerSetupItems,
     0, MENU_MULTIPLAYER,
-    hu_font_b, cfg.menuColor, NULL, LINEHEIGHT_B,
+    huFontB, cfg.menuColor, NULL, LINEHEIGHT_B,
     0, NUM_PLAYERSETUP_ITEMS
 };
 
@@ -317,19 +316,19 @@ void DrANumber(int number, int x, int y)
 
     sprintf(buff, "%i", number);
 
-    M_WriteText2(x, y, buff, hu_font_a, 1, 1, 1, Hu_MenuAlpha());
+    M_WriteText2(x, y, buff, huFontA, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void MN_DrCenterTextA_CS(char *text, int center_x, int y)
 {
-    M_WriteText2(center_x - M_StringWidth(text, hu_font_a) / 2, y, text,
-                 hu_font_a, 1, 0, 0, Hu_MenuAlpha());
+    M_WriteText2(center_x - M_StringWidth(text, huFontA) / 2, y, text,
+                 huFontA, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void MN_DrCenterTextB_CS(char *text, int center_x, int y)
 {
-    M_WriteText2(center_x - M_StringWidth(text, hu_font_b) / 2, y, text,
-                 hu_font_b, 1, 0, 0, Hu_MenuAlpha());
+    M_WriteText2(center_x - M_StringWidth(text, huFontB) / 2, y, text,
+                 huFontB, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void DrawMultiplayerMenu(void)
@@ -364,7 +363,7 @@ void DrawGameSetupMenu(void)
 
 # if __JDOOM__
 #  if !__DOOM64TC__
-    if(gamemode != commercial)
+    if(gameMode != commercial)
 #  endif
 # endif
     {
@@ -375,7 +374,7 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, buf);
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
     M_WriteMenuText(menu, idx++, dmText[cfg.netDeathmatch]);
-    M_WriteMenuText(menu, idx++, boolText[!cfg.netNomonsters]);
+    M_WriteMenuText(menu, idx++, boolText[!cfg.netNoMonsters]);
     M_WriteMenuText(menu, idx++, boolText[cfg.netRespawn]);
     M_WriteMenuText(menu, idx++, boolText[cfg.netJumping]);
 
@@ -392,15 +391,15 @@ void DrawGameSetupMenu(void)
 
     sprintf(buf, "%i", cfg.netMap);
     M_WriteMenuText(menu, idx++, buf);
-    M_WriteText2(160 - M_StringWidth(mapName, hu_font_a) / 2,
+    M_WriteText2(160 - M_StringWidth(mapName, huFontA) / 2,
                  menu->y + menu->itemHeight, mapName,
-                 hu_font_a, 1, 0.7f, 0.3f, Hu_MenuAlpha());
+                 huFontA, 1, 0.7f, 0.3f, Hu_MenuAlpha());
 
     idx++;
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
     M_WriteMenuText(menu, idx++, dmText[cfg.netDeathmatch]);
-    M_WriteMenuText(menu, idx++, boolText[!cfg.netNomonsters]);
-    M_WriteMenuText(menu, idx++, boolText[cfg.netRandomclass]);
+    M_WriteMenuText(menu, idx++, boolText[!cfg.netNoMonsters]);
+    M_WriteMenuText(menu, idx++, boolText[cfg.netRandomClass]);
 #endif                          // __JHEXEN__
 
     M_WriteMenuText(menu, idx++, boolText[cfg.netNoMaxZRadiusAttack]);
@@ -489,7 +488,7 @@ void DrawPlayerSetupMenu(void)
 #else
                       menu->y + 64,
 #endif
-                      "AUTOMATIC", hu_font_a, 1, 1, 1, menuAlpha);
+                      "AUTOMATIC", huFontA, 1, 1, 1, menuAlpha);
     }
 
 }
@@ -501,7 +500,7 @@ void SCEnterMultiplayerMenu(int option, void *data)
     // Choose the correct items for the Game Setup menu.
 #ifdef __JDOOM__
 # if !__DOOM64TC__
-    if(gamemode == commercial)
+    if(gameMode == commercial)
     {
         GameSetupMenu.items = GameSetupItems2;
         GameSetupMenu.itemCount = GameSetupMenu.numVisItems =
@@ -568,25 +567,25 @@ void SCEnterGameSetup(int option, void *data)
             cfg.netMap = 7;
     }
 #elif __JDOOM__
-    if(gamemode == commercial)
+    if(gameMode == commercial)
     {
         cfg.netEpisode = 1;
     }
-    else if(gamemode == retail)
+    else if(gameMode == retail)
     {
         if(cfg.netEpisode > 4)
             cfg.netEpisode = 4;
         if(cfg.netMap > 9)
             cfg.netMap = 9;
     }
-    else if(gamemode == registered)
+    else if(gameMode == registered)
     {
         if(cfg.netEpisode > 3)
             cfg.netEpisode = 3;
         if(cfg.netMap > 9)
             cfg.netMap = 9;
     }
-    else if(gamemode == shareware)
+    else if(gameMode == shareware)
     {
         cfg.netEpisode = 1;
         if(cfg.netMap > 9)
@@ -645,14 +644,14 @@ void SCGameSetupEpisode(int option, void *data)
         cfg.netEpisode--;
     }
 #elif __JDOOM__
-    if(gamemode == shareware)
+    if(gameMode == shareware)
     {
         cfg.netEpisode = 1;
         return;
     }
     if(option == RIGHT_DIR)
     {
-        if(cfg.netEpisode < (gamemode == retail ? 4 : 3))
+        if(cfg.netEpisode < (gameMode == retail ? 4 : 3))
             cfg.netEpisode++;
     }
     else if(cfg.netEpisode > 1)
@@ -686,7 +685,7 @@ void SCGameSetupMission(int option, void *data)
         if(cfg.netMap < (cfg.netEpisode == 1? 39 : 7))
             cfg.netMap++;
 #elif __JDOOM__
-        if(cfg.netMap < (gamemode == commercial ? 32 : 9))
+        if(cfg.netMap < (gameMode == commercial ? 32 : 9))
             cfg.netMap++;
 #elif __JHERETIC__
         if(cfg.netMap < 9)
@@ -783,7 +782,7 @@ void SCPlayerColor(int option, void *data)
 
 void SCAcceptPlayer(int option, void *data)
 {
-    char    buf[300];
+    char                buf[300];
 
     cfg.netColor = plrColor;
 #if __JHEXEN__
@@ -847,13 +846,13 @@ void SCGameSetupGravity(int option, void *data)
 
 void MN_TickerEx(void)          // The extended ticker.
 {
-    static int FrameTimer = 0;
+    static int          frameTimer = 0;
 
     if(currentMenu == &PlayerSetupMenu)
     {
-        if(FrameTimer++ >= 14)
+        if(frameTimer++ >= 14)
         {
-            FrameTimer = 0;
+            frameTimer = 0;
             CurrentPlrFrame = M_Random() % 8;
         }
     }
@@ -861,13 +860,13 @@ void MN_TickerEx(void)          // The extended ticker.
 
 int Ed_VisibleSlotChars(char *text, int (*widthFunc) (const char *text, dpatch_t *font))
 {
-    char    cbuf[2] = { 0, 0 };
-    int     i, w;
+    char                cbuf[2] = { 0, 0 };
+    int                 i, w;
 
-    for(i = 0, w = 0; text[i]; i++)
+    for(i = 0, w = 0; text[i]; ++i)
     {
         cbuf[0] = text[i];
-        w += widthFunc(cbuf, hu_font_a);
+        w += widthFunc(cbuf, huFontA);
         if(w > SLOT_WIDTH)
             break;
     }
@@ -876,8 +875,8 @@ int Ed_VisibleSlotChars(char *text, int (*widthFunc) (const char *text, dpatch_t
 
 void Ed_MakeCursorVisible(void)
 {
-    char    buf[MAX_EDIT_LEN + 1];
-    int     i, len, vis;
+    char                buf[MAX_EDIT_LEN + 1];
+    int                 i, len, vis;
 
     strcpy(buf, ActiveEdit->text);
     strupr(buf);
@@ -897,8 +896,10 @@ void Ed_MakeCursorVisible(void)
 
 void DrawEditField(menu_t *menu, int index, editfield_t *ef)
 {
-    int     x = menu->x, y = menu->y + menu->itemHeight * index, vis;
-    char    buf[MAX_EDIT_LEN + 1], *text;
+    int                 x = menu->x;
+    int                 y = menu->y + menu->itemHeight * index;
+    int                 vis;
+    char                buf[MAX_EDIT_LEN + 1], *text;
 
     M_DrawSaveLoadBorder(x + 11, y + 5);
     strcpy(buf, ef->text);
@@ -908,13 +909,13 @@ void DrawEditField(menu_t *menu, int index, editfield_t *ef)
     text = buf + ef->firstVisible;
     vis = Ed_VisibleSlotChars(text, M_StringWidth);
     text[vis] = 0;
-    M_WriteText2(x + 8, y + 5, text, hu_font_a, 1, 1, 1, Hu_MenuAlpha());
+    M_WriteText2(x + 8, y + 5, text, huFontA, 1, 1, 1, Hu_MenuAlpha());
 
 }
 
 void SCEditField(int efptr, void *data)
 {
-    editfield_t *ef = data;
+    editfield_t        *ef = data;
 
     // Activate this edit field.
     ActiveEdit = ef;

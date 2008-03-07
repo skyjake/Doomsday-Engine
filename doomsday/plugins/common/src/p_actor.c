@@ -41,6 +41,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdio.h>
+#include <string.h>
+
 #if  __DOOM64TC__
 #  include "doom64tc.h"
 #elif __WOLFTC__
@@ -106,7 +109,7 @@ void P_MobjRemove(mobj_t *mo)
  */
 void P_MobjSetPosition(mobj_t *mo)
 {
-    int         flags = 0;
+    int                 flags = 0;
 
     if(!(mo->flags & MF_NOSECTOR))
         flags |= DDLINK_SECTOR;
@@ -152,8 +155,8 @@ void P_MobjSetSRVOZ(mobj_t *mo, float stepz)
  */
 void P_MobjAngleSRVOTicker(mobj_t *mo)
 {
-    short       target, step, diff;
-    int         lstep, hgt;
+    short               target, step, diff;
+    int                 lstep, hgt;
 
     // Check requirements.
     if(mo->flags & MF_MISSILE || !(mo->flags & MF_COUNTKILL))
@@ -216,7 +219,7 @@ void P_MobjClearSRVO(mobj_t *mo)
  */
 void P_UpdateHealthBits(mobj_t *mobj)
 {
-    int         i;
+    int                 i;
 
     if(mobj->info && mobj->info->spawnHealth > 0)
     {

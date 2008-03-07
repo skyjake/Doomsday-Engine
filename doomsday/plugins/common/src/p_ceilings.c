@@ -59,6 +59,7 @@
 #include "dmu_lib.h"
 #include "p_mapspec.h"
 #include "p_start.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -116,7 +117,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
 
         // Play a "while-moving" sound?
 #if !__JHEXEN__
-        if(!(leveltime & 7))
+        if(!(levelTime & 7))
         {
 # if __JHERETIC__
             S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGMOVE);
@@ -177,7 +178,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
 
         // Play a "while-moving" sound?
 #if !__JHEXEN__
-        if(!(leveltime & 7))
+        if(!(levelTime & 7))
         {
 # if __JHERETIC__
             S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGMOVE);

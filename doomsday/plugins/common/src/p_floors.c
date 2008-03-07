@@ -59,6 +59,7 @@
 #include "dmu_lib.h"
 #include "p_map.h"
 #include "p_mapspec.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -328,7 +329,7 @@ void T_MoveFloor(floormove_t *floor)
 #endif
 
 #if !__JHEXEN__
-    if(!(leveltime & 7))
+    if(!(levelTime & 7))
 # if __WOLFTC__
         S_SectorSound(floor->sector, SORG_FLOOR, sfx_pltstr);
 # elif __JHERETIC__

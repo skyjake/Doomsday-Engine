@@ -169,7 +169,7 @@ boolean P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo)
     player->artifactCount++;
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_INVITEM);
     return true;
 }
@@ -665,12 +665,12 @@ static boolean P_InventoryMove(player_t *plr, int dir)
  */
 DEFCC(CCmdInventory)
 {
-    int         player = consoleplayer;
+    int         player = CONSOLEPLAYER;
 
     if(argc > 2)
     {
         Con_Printf("Usage: %s (player)\n", argv[0]);
-        Con_Printf("If player is not specified, will default to consoleplayer.\n");
+        Con_Printf("If player is not specified, will default to CONSOLEPLAYER.\n");
         return true;
     }
 

@@ -47,6 +47,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -87,22 +89,19 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern char *borderLumps[];
-extern boolean automapactive;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-dpatch_t hu_font[HU_FONTSIZE];
-dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
+dpatch_t huFont[HU_FONTSIZE];
+dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 
-int typein_time = 0;
+int typeInTime = 0;
 
 #ifdef __JDOOM__
  // Name graphics of each level (centered)
-dpatch_t *lnames;
+dpatch_t *levelNamePatches;
 #endif
 
-boolean hu_showallfrags = false;
+boolean huShowAllFrags = false;
 
 cvar_t hudCVars[] = {
 #if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
@@ -114,8 +113,8 @@ cvar_t hudCVars[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static dpatch_t borderpatches[8];
-static boolean headsupactive = false;
+static dpatch_t borderPatches[8];
+static boolean hudActive = false;
 
 // Code -------------------------------------------------------------------
 
@@ -124,7 +123,7 @@ static boolean headsupactive = false;
  */
 void HU_Register(void)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; hudCVars[i].name; ++i)
         Con_AddVariable(&hudCVars[i]);
@@ -136,24 +135,24 @@ void HU_Register(void)
  */
 void Hu_LoadData(void)
 {
-    int         i, j;
-    char        buffer[9];
+    int                 i, j;
+    char                buffer[9];
 #ifndef __JDOOM__
-    dpatch_t    tmp;
+    dpatch_t            tmp;
 #endif
 
 #ifdef __JDOOM__
-    char        name[9];
+    char                name[9];
 #endif
 
     // Load the border patches
     for(i = 1; i < 9; ++i)
-        R_CachePatch(&borderpatches[i-1], borderLumps[i]);
+        R_CachePatch(&borderPatches[i-1], borderLumps[i]);
 
     // Setup strings.
 #define INIT_STRINGS(x, x_idx) \
-    for(i=0; i<sizeof(x_idx)/sizeof(int); ++i) \
-        x[i] = x_idx[i]==-1? "NEWLEVEL" : GET_TXT(x_idx[i]);
+    for(i = 0; i < sizeof(x_idx) / sizeof(int); ++i) \
+        x[i] = x_idx[i] == -1? "NEWLEVEL" : GET_TXT(x_idx[i]);
 
 #ifdef __JDOOM__
     // load the heads-up fonts
@@ -163,57 +162,57 @@ void Hu_LoadData(void)
     {
         // The original small red font.
         sprintf(buffer, "STCFN%.3d", j);
-        R_CachePatch(&hu_font[i], buffer);
+        R_CachePatch(&huFont[i], buffer);
 
         // Small white font.
         sprintf(buffer, "FONTA%.3d", j);
-        R_CachePatch(&hu_font_a[i], buffer);
+        R_CachePatch(&huFontA[i], buffer);
 
         // Large (12) white font.
         sprintf(buffer, "FONTB%.3d", j);
-        R_CachePatch(&hu_font_b[i], buffer);
-        if(hu_font_b[i].lump == -1)
+        R_CachePatch(&huFontB[i], buffer);
+        if(huFontB[i].lump == -1)
         {
             // This character is missing! (the first character
             // is supposedly always found)
-            memcpy(&hu_font_b[0 + i], &hu_font_b[4], sizeof(dpatch_t));
+            memcpy(&huFontB[0 + i], &huFontB[4], sizeof(dpatch_t));
         }
     }
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
 
     // load the map name patches
 # if __DOOM64TC__
-    lnames = Z_Malloc(sizeof(dpatch_t) * (39+7), PU_STATIC, 0);
+    levelNamePatches = Z_Malloc(sizeof(dpatch_t) * (39+7), PU_STATIC, 0);
     for(i = 0; i < 2; ++i) // number of episodes
     {
-        for(j=0; j < (i==0? 39 : 7); ++j) // number of maps per episode
+        for(j = 0; j < (i == 0? 39 : 7); ++j) // number of maps per episode
         {
             sprintf(name, "WILV%2.2d", (i * 39) + j);
-            R_CachePatch(&lnames[(i * 39)+j], name);
+            R_CachePatch(&levelNamePatches[(i * 39)+j], name);
         }
     }
 # else
-    if(gamemode == commercial)
+    if(gameMode == commercial)
     {
         int NUMCMAPS = 32;
-        lnames = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
+        levelNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "CWILV%2.2d", i);
-            R_CachePatch(&lnames[i], name);
+            R_CachePatch(&levelNamePatches[i], name);
         }
     }
     else
     {
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
-        lnames = Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
+        levelNamePatches = Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
         for(j = 0; j < 4; ++j) // Number of episodes.
         {
             for(i = 0; i < 9; ++i) // Number of maps per episode.
             {
                 sprintf(name, "WILV%2.2d", (j * 10) + i);
-                R_CachePatch(&lnames[(j* 9)+i], name);
+                R_CachePatch(&levelNamePatches[(j* 9)+i], name);
             }
         }
     }
@@ -230,20 +229,20 @@ void Hu_LoadData(void)
     {
         // The original small red font.
         sprintf(buffer, "STCFN%.3d", j);
-        R_CachePatch(&hu_font[i], buffer);
+        R_CachePatch(&huFont[i], buffer);
 
         // Small white font.
         sprintf(buffer, "STCFN%.3d", j);
-        R_CachePatch(&hu_font_a[i], buffer);
+        R_CachePatch(&huFontA[i], buffer);
 
         // Large (12) white font.
         sprintf(buffer, "STBFN.3d", j);
-        R_CachePatch(&hu_font_b[i], buffer);
-        if(hu_font_b[i].lump == -1)
+        R_CachePatch(&huFontB[i], buffer);
+        if(huFontB[i].lump == -1)
         {
             // This character is missing! (the first character
             // is supposedly always found)
-            memcpy(&hu_font_b[0 + i], &hu_font_b[4], sizeof(dpatch_t));
+            memcpy(&huFontB[0 + i], &huFontB[4], sizeof(dpatch_t));
         }
     }
 
@@ -262,16 +261,16 @@ void Hu_LoadData(void)
     {
         // Small font.
         sprintf(buffer, "FONTA%.2d", j);
-        R_CachePatch(&hu_font_a[i], buffer);
+        R_CachePatch(&huFontA[i], buffer);
 
         // Large (12) font.
         sprintf(buffer, "FONTB%.2d", j);
-        R_CachePatch(&hu_font_b[i], buffer);
-        if(hu_font_b[i].lump == -1)
+        R_CachePatch(&huFontB[i], buffer);
+        if(huFontB[i].lump == -1)
         {
             // This character is missing! (the first character
             // is supposedly always found)
-            memcpy(&hu_font_b[0 + i], &hu_font_b[4], sizeof(dpatch_t));
+            memcpy(&huFontB[0 + i], &huFontB[4], sizeof(dpatch_t));
         }
     }
 
@@ -282,13 +281,13 @@ void Hu_LoadData(void)
     // Heretic and Hexen don't use ASCII numbering for all font patches.
     // As such we need to switch some patches.
 
-    tmp = hu_font_a[58];
-    memcpy(&hu_font_a[58], &hu_font_a[62], sizeof(dpatch_t));
-    memcpy(&hu_font_a[62], &tmp, sizeof(dpatch_t));
+    tmp = huFontA[58];
+    memcpy(&huFontA[58], &huFontA[62], sizeof(dpatch_t));
+    memcpy(&huFontA[62], &tmp, sizeof(dpatch_t));
 
-    tmp = hu_font_b[58];
-    memcpy(&hu_font_b[58], &hu_font_b[62], sizeof(dpatch_t));
-    memcpy(&hu_font_b[62], &tmp, sizeof(dpatch_t));
+    tmp = huFontB[58];
+    memcpy(&huFontB[58], &huFontB[62], sizeof(dpatch_t));
+    memcpy(&huFontB[62], &tmp, sizeof(dpatch_t));
 
 #endif
 
@@ -298,24 +297,24 @@ void Hu_LoadData(void)
 void HU_UnloadData(void)
 {
 #if __JDOOM__
-    if(lnames)
-        Z_Free(lnames);
+    if(levelNamePatches)
+        Z_Free(levelNamePatches);
 #endif
 }
 
 void HU_Stop(void)
 {
-    headsupactive = false;
+    hudActive = false;
 }
 
 void HU_Start(void)
 {
-    if(headsupactive)
+    if(hudActive)
         HU_Stop();
 
     HUMsg_Start();
 
-    headsupactive = true;
+    hudActive = true;
 }
 
 void HU_Drawer(void)
@@ -326,7 +325,7 @@ void HU_Drawer(void)
 
     HUMsg_Drawer();
 
-    if(hu_showallfrags)
+    if(huShowAllFrags)
     {
         for(y = 8, i = 0; i < MAXPLAYERS; ++i)
         {
@@ -334,7 +333,7 @@ void HU_Drawer(void)
             if(!plr->plr || !plr->plr->inGame)
                 continue;
 
-            sprintf(buf, "%i%s", i, (i == consoleplayer ? "=" : ":"));
+            sprintf(buf, "%i%s", i, (i == CONSOLEPLAYER ? "=" : ":"));
 
             M_WriteText(0, y, buf);
 
@@ -381,7 +380,7 @@ static void drawFragsTable(void)
 # if __DOOM64TC__
     y = HU_TITLEY + 32 * (inCount - 1) * LINEHEIGHT_A;
 # else
-    y = HU_TITLEY + 32 * (20 - cfg.sbarscale) / 20 - (inCount - 1) * LINEHEIGHT_A;
+    y = HU_TITLEY + 32 * (20 - cfg.statusbarScale) / 20 - (inCount - 1) * LINEHEIGHT_A;
 #endif
     for(i = 0; i < inCount; ++i, y += LINEHEIGHT_A)
     {
@@ -419,13 +418,13 @@ static void drawFragsTable(void)
             break;
         }
 
-        M_WriteText2(320 - w - M_StringWidth(name, hu_font_a) - 6, y, name,
-                     hu_font_a, -1, -1, -1, -1);
+        M_WriteText2(320 - w - M_StringWidth(name, huFontA) - 6, y, name,
+                     huFontA, -1, -1, -1, -1);
         // A colon.
-        M_WriteText2(320 - w - 5, y, ":", hu_font_a, -1, -1, -1, -1);
+        M_WriteText2(320 - w - 5, y, ":", huFontA, -1, -1, -1, -1);
         // The frags count.
         sprintf(tmp, "%i", totalFrags[choose]);
-        M_WriteText2(320 - w, y, tmp, hu_font_a, -1, -1, -1, -1);
+        M_WriteText2(320 - w, y, tmp, huFontA, -1, -1, -1, -1);
         // Mark to ignore in the future.
         totalFrags[choose] = FRAGS_DRAWN;
     }
@@ -510,11 +509,11 @@ static const int their_colors[] = {
             strcat(textBuffer, ":");
             MN_TextFilter(textBuffer);
 
-            M_WriteText2(4, yPosition, textBuffer, hu_font_a, -1, -1, -1, -1);
-            j = M_StringWidth(textBuffer, hu_font_a);
+            M_WriteText2(4, yPosition, textBuffer, huFontA, -1, -1, -1, -1);
+            j = M_StringWidth(textBuffer, huFontA);
 
             sprintf(textBuffer, "%d", fragCount[order[i]]);
-            M_WriteText2(j + 8, yPosition, textBuffer, hu_font_a, -1, -1, -1, -1);
+            M_WriteText2(j + 8, yPosition, textBuffer, huFontA, -1, -1, -1, -1);
             yPosition += 10;
         }
     }
@@ -533,7 +532,7 @@ static void drawWorldTimer(void)
     char    timeBuffer[15];
     char    dayBuffer[20];
 
-    worldTimer = players[displayplayer].worldTimer;
+    worldTimer = players[DISPLAYPLAYER].worldTimer;
 
     worldTimer /= 35;
     days = worldTimer / 86400;
@@ -545,7 +544,7 @@ static void drawWorldTimer(void)
     seconds = worldTimer;
 
     sprintf(timeBuffer, "%.2d : %.2d : %.2d", hours, minutes, seconds);
-    M_WriteText2(240, 8, timeBuffer, hu_font_a, 1, 1, 1, 1);
+    M_WriteText2(240, 8, timeBuffer, huFontA, 1, 1, 1, 1);
 
     if(days)
     {
@@ -558,10 +557,10 @@ static void drawWorldTimer(void)
             sprintf(dayBuffer, "%.2d DAYS", days);
         }
 
-        M_WriteText2(240, 20, dayBuffer, hu_font_a, 1, 1, 1, 1);
+        M_WriteText2(240, 20, dayBuffer, huFontA, 1, 1, 1, 1);
         if(days >= 5)
         {
-            M_WriteText2(230, 35, "YOU FREAK!!!", hu_font_a, 1, 1, 1, 1);
+            M_WriteText2(230, 35, "YOU FREAK!!!", huFontA, 1, 1, 1, 1);
         }
     }
 #endif
@@ -579,7 +578,7 @@ void HU_DrawMapCounters(void)
     int         x = 5, y = LINEHEIGHT_A * 3;
 #endif
 
-    plr = &players[displayplayer];
+    plr = &players[DISPLAYPLAYER];
 
 #if __JDOOM__ || __JHERETIC__
     DGL_Color3f(1, 1, 1);
@@ -603,18 +602,18 @@ void HU_DrawMapCounters(void)
             strcpy(buf, "Kills: ");
             if(cfg.counterCheat & CCH_KILLS)
             {
-                sprintf(tmp, "%i/%i ", plr->killCount, totalkills);
+                sprintf(tmp, "%i/%i ", plr->killCount, totalKills);
                 strcat(buf, tmp);
             }
             if(cfg.counterCheat & CCH_KILLS_PRCNT)
             {
                 sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_KILLS ? "(" : ""),
-                        totalkills ? plr->killCount * 100 / totalkills : 100,
+                        totalKills ? plr->killCount * 100 / totalKills : 100,
                         (cfg.counterCheat & CCH_KILLS ? ")" : ""));
                 strcat(buf, tmp);
             }
 
-            M_WriteText2(x, y, buf, hu_font_a, 1, 1, 1, 1);
+            M_WriteText2(x, y, buf, huFontA, 1, 1, 1, 1);
 
             y += LINEHEIGHT_A;
         }
@@ -625,18 +624,18 @@ void HU_DrawMapCounters(void)
             strcpy(buf, "Items: ");
             if(cfg.counterCheat & CCH_ITEMS)
             {
-                sprintf(tmp, "%i/%i ", plr->itemCount, totalitems);
+                sprintf(tmp, "%i/%i ", plr->itemCount, totalItems);
                 strcat(buf, tmp);
             }
             if(cfg.counterCheat & CCH_ITEMS_PRCNT)
             {
                 sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_ITEMS ? "(" : ""),
-                        totalitems ? plr->itemCount * 100 / totalitems : 100,
+                        totalItems ? plr->itemCount * 100 / totalItems : 100,
                         (cfg.counterCheat & CCH_ITEMS ? ")" : ""));
                 strcat(buf, tmp);
             }
 
-            M_WriteText2(x, y, buf, hu_font_a, 1, 1, 1, 1);
+            M_WriteText2(x, y, buf, huFontA, 1, 1, 1, 1);
 
             y += LINEHEIGHT_A;
         }
@@ -647,18 +646,18 @@ void HU_DrawMapCounters(void)
             strcpy(buf, "Secret: ");
             if(cfg.counterCheat & CCH_SECRET)
             {
-                sprintf(tmp, "%i/%i ", plr->secretCount, totalsecret);
+                sprintf(tmp, "%i/%i ", plr->secretCount, totalSecret);
                 strcat(buf, tmp);
             }
             if(cfg.counterCheat & CCH_SECRET_PRCNT)
             {
                 sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_SECRET ? "(" : ""),
-                        totalsecret ? plr->secretCount * 100 / totalsecret : 100,
+                        totalSecret ? plr->secretCount * 100 / totalSecret : 100,
                         (cfg.counterCheat & CCH_SECRET ? ")" : ""));
                 strcat(buf, tmp);
             }
 
-            M_WriteText2(x, y, buf, hu_font_a, 1, 1, 1, 1);
+            M_WriteText2(x, y, buf, huFontA, 1, 1, 1, 1);
 
             y += LINEHEIGHT_A;
         }
@@ -777,12 +776,12 @@ void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
                     // at this stage.
                     if(!strnicmp(string, "fonta", 5))
                     {
-                        font = hu_font_a;
+                        font = huFontA;
                         string += 5;
                     }
                     else if(!strnicmp(string, "fontb", 5))
                     {
-                        font = hu_font_b;
+                        font = huFontB;
                         string += 5;
                     }
                     else
@@ -828,12 +827,12 @@ void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
                 // What do we have here?
                 if(!strnicmp(string, "fonta", 5))
                 {
-                    font = hu_font_a;
+                    font = huFontA;
                     string += 5;
                 }
                 else if(!strnicmp(string, "fontb", 5))
                 {
-                    font = hu_font_b;
+                    font = huFontB;
                     string += 5;
                 }
                 else if(!strnicmp(string, "flash", 5))
@@ -1015,7 +1014,7 @@ void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
 }
 
 /**
- * Find string width from hu_font chars
+ * Find string width from huFont chars
  * Skips parameter blocks eg "{param}Text" = 4 chars
  */
 int M_StringWidth(const char *string, dpatch_t * font)
@@ -1047,7 +1046,7 @@ int M_StringWidth(const char *string, dpatch_t * font)
 }
 
 /**
- * Find string height from hu_font chars
+ * Find string height from huFont chars
  */
 int M_StringHeight(const char *string, dpatch_t *font)
 {
@@ -1103,11 +1102,11 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float red,
 }
 
 /*
- * Write a string using the hu_font
+ * Write a string using the huFont
  */
 void M_WriteText(int x, int y, const char *string)
 {
-    M_WriteText2(x, y, string, hu_font_a, 1, 1, 1, 1);
+    M_WriteText2(x, y, string, huFontA, 1, 1, 1, 1);
 }
 
 void M_WriteText2(int x, int y, const char *string, dpatch_t *font, float red,
@@ -1124,24 +1123,23 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
                   float red, float green, float blue, float alpha,
                   boolean doTypeIn, int initialCount)
 {
-    int     pass;
-    int     w, h;
-    const char *ch;
-    int     c;
-    int     cx;
-    int     cy;
-    int     count, maxCount, yoff;
-    float   flash;
-
-    float   fr = (1 + 2 * red) / 3;
-    float   fb = (1 + 2 * blue) / 3;
-    float   fg = (1 + 2 * green) / 3;
-    float   fa = cfg.menuGlitter * alpha;
+    int                 pass;
+    int                 w, h;
+    const char         *ch;
+    int                 c;
+    int                 cx;
+    int                 cy;
+    int                 count, maxCount, yoff;
+    float               flash;
+    float               fr = (1 + 2 * red) / 3;
+    float               fb = (1 + 2 * blue) / 3;
+    float               fg = (1 + 2 * green) / 3;
+    float               fa = cfg.menuGlitter * alpha;
 
     for(pass = 0; pass < 2; ++pass)
     {
         count = initialCount;
-        maxCount = typein_time * 2;
+        maxCount = typeInTime * 2;
 
         // Disable type-in?
         if(!doTypeIn || cfg.menuEffects > 0)
@@ -1266,7 +1264,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     {   // We have already determined a string to replace this with.
         if(W_IsFromIWAD(lump))
         {
-            WI_DrawParamText(x, y, altstring, hu_font_b, r, g, b, a, false,
+            WI_DrawParamText(x, y, altstring, huFontB, r, g, b, a, false,
                              true, halign);
             return;
         }
@@ -1286,7 +1284,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
             // A user replacement?
             if(patchString)
             {
-                WI_DrawParamText(x, y, string, hu_font_b, r, g, b, a, false,
+                WI_DrawParamText(x, y, string, huFontB, r, g, b, a, false,
                                  true, halign);
                 return;
             }
@@ -1294,7 +1292,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring)
             {
-                WI_DrawParamText(x, y, altstring, hu_font_b, r, g, b, a, false,
+                WI_DrawParamText(x, y, altstring, huFontB, r, g, b, a, false,
                                  true, halign);
                 return;
             }
@@ -1341,27 +1339,27 @@ void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
     switch(border)
     {
     case BORDERUP:
-        t = &borderpatches[2];
-        b = &borderpatches[0];
-        l = &borderpatches[1];
-        r = &borderpatches[3];
-        tl = &borderpatches[6];
-        tr = &borderpatches[7];
-        br = &borderpatches[4];
-        bl = &borderpatches[5];
+        t = &borderPatches[2];
+        b = &borderPatches[0];
+        l = &borderPatches[1];
+        r = &borderPatches[3];
+        tl = &borderPatches[6];
+        tr = &borderPatches[7];
+        br = &borderPatches[4];
+        bl = &borderPatches[5];
 
         up = -1;
         break;
 
     case BORDERDOWN:
-        t = &borderpatches[0];
-        b = &borderpatches[2];
-        l = &borderpatches[3];
-        r = &borderpatches[1];
-        tl = &borderpatches[4];
-        tr = &borderpatches[5];
-        br = &borderpatches[6];
-        bl = &borderpatches[7];
+        t = &borderPatches[0];
+        b = &borderPatches[2];
+        l = &borderPatches[3];
+        r = &borderPatches[1];
+        tl = &borderPatches[4];
+        tr = &borderPatches[5];
+        br = &borderPatches[6];
+        bl = &borderPatches[7];
 
         up = 1;
         break;

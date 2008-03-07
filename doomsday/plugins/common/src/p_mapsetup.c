@@ -43,6 +43,7 @@
 
 #include <math.h>
 #include <ctype.h>  // has isspace
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -64,6 +65,8 @@
 #include "r_common.h"
 #include "p_mapsetup.h"
 #include "am_map.h"
+#include "p_tick.h"
+#include "p_start.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -88,17 +91,11 @@ static void P_PrintMapBanner(int episode, int map);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-#if __JDOOM__
-extern boolean bossKilled;
-#endif
-
-extern int actual_leveltime;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Our private map data structures
 xsector_t *xsectors;
-xline_t   *xlines;
+xline_t *xlines;
 
 // If true we are in the process of setting up a level
 boolean levelSetup;
@@ -197,8 +194,8 @@ xsector_t* P_GetXSector(uint index)
  * any initialization we need. For example if we maintain our own data for lines
  * (the xlines) we'll do all allocation and init here.
  *
- * @param   type        (DAM object type) The id of the data type being setup.
- * @param   num         The number of elements of "type" Doomsday is creating.
+ * @param type          (DAM object type) The id of the data type being setup.
+ * @param num           The number of elements of "type" Doomsday is creating.
  */
 void P_SetupForMapData(int type, uint num)
 {
@@ -403,7 +400,7 @@ int P_SetupLevelWorker(void *ptr)
  */
 void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
 {
-    setuplevelparam_t param;
+    setuplevelparam_t  param;
 
     param.episode = episode;
     param.map = map;
@@ -422,7 +419,7 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
     {
     int i;
     // Load colormap and set the fullbright flag
-    i = P_GetMapFadeTable(gamemap);
+    i = P_GetMapFadeTable(gameMap);
     if(i == W_GetNumForName("COLORMAP"))
     {
         // We don't want fog in this case.
@@ -446,43 +443,43 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
  */
 static void P_ResetWorldState(void)
 {
-    int             i, parm;
+    int                 i, parm;
 
-#if __JDOOM__
-    wminfo.maxFrags = 0;
-    wminfo.parTime = -1;
+#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+    wmInfo.maxFrags = 0;
+    wmInfo.parTime = -1;
 
     // Only used with 666/7 specials
     bossKilled = false;
 
     // Brain info
-    numbraintargets = 0;
-    numbraintargets_alloc = -1;
+    numBrainTargets = 0;
+    numBrainTargetsAlloc = -1;
     brain.targetOn = 0;
-    brain.easy = 0;           // killough 3/26/98: always init easy to 0
+    brain.easy = 0; // Always init easy to 0.
 #endif
 
-    // clear special respawning que
-#if __JDOOM__ || __JHERETIC__
-    iquehead = iquetail = 0;
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+    // Clear special respawning que.
+    P_EmptyRespawnQueue();
 #endif
 
 #if !__JHEXEN__
-    totalkills = totalitems = totalsecret = 0;
+    totalKills = totalItems = totalSecret = 0;
 #endif
 
-    TimerGame = 0;
+    timerGame = 0;
     if(deathmatch)
     {
         parm = ArgCheck("-timer");
         if(parm && parm < Argc() - 1)
         {
-            TimerGame = atoi(Argv(parm + 1)) * 35 * 60;
+            timerGame = atoi(Argv(parm + 1)) * 35 * 60;
         }
     }
 
     // Initial height of PointOfView; will be set by player think.
-    players[consoleplayer].plr->viewZ = 1;
+    players[CONSOLEPLAYER].plr->viewZ = 1;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -491,11 +488,13 @@ static void P_ResetWorldState(void)
         plr->killCount = plr->secretCount = plr->itemCount = 0;
     }
 
-    bodyqueslot = 0;
+#if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
+    bodyQueueSlot = 0;
+#endif
 
     P_FreePlayerStarts();
 
-    leveltime = actual_leveltime = 0;
+    levelTime = actualLevelTime = 0;
 }
 
 /**
@@ -510,18 +509,19 @@ static void P_FinalizeLevel(void)
     // This will hide the ugly green bright line that would otherwise be
     // visible due to texture repeating and interpolation.
     {
-    uint    i, k;
-    int     materialID = R_MaterialNumForName("NUKE24", MAT_TEXTURE);
-    int     bottomTex;
-    int     midTex;
-    float   yoff;
-    sidedef_t* side;
-    linedef_t* line;
+    uint                i, k;
+    int                 materialID = R_MaterialNumForName("NUKE24", MAT_TEXTURE);
+    int                 bottomTex;
+    int                 midTex;
+    float               yoff;
+    sidedef_t          *side;
+    linedef_t          *line;
 
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINEDEF, i);
-        for(k = 0; k < 2; k++)
+
+        for(k = 0; k < 2; ++k)
         {
             if(P_GetPtrp(line, k == 0? DMU_FRONT_SECTOR : DMU_BACK_SECTOR))
             {
@@ -579,7 +579,7 @@ static void P_FinalizeLevel(void)
 
 char *P_GetMapNiceName(void)
 {
-    char       *lname, *ptr;
+    char               *lname, *ptr;
 
     lname = (char *) DD_GetVariable(DD_MAP_NAME);
 
@@ -597,7 +597,7 @@ char *P_GetMapNiceName(void)
 #if __JHEXEN__
     // In jHexen we can look in the MAPINFO for the map name.
     if(!lname)
-        lname = P_GetMapName(gamemap);
+        lname = P_GetMapName(gameMap);
 #endif
 
     return lname;
@@ -610,14 +610,14 @@ char *P_GetMapNiceName(void)
 static void P_PrintMapBanner(int episode, int map)
 {
 #if !__JHEXEN__
-    char       *lname, *lauthor;
+    char               *lname, *lauthor;
 
     // Retrieve the name and author strings from the engine.
     lname = (char *) DD_GetVariable(DD_MAP_NAME);
     lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
 #else
-    char lname[64];
-    boolean lauthor = false;
+    char                lname[64];
+    boolean             lauthor = false;
 
     sprintf(lname, "Map %d (%d): %s", P_GetMapWarpTrans(map), map,
             P_GetMapName(map));
