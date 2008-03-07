@@ -809,12 +809,8 @@ void P_MobjThinker(mobj_t *mobj)
     {   // Floating item bobbing motion.
         // Keep it on the floor.
         mobj->pos[VZ] = mobj->floorZ;
-#if __JHERETIC__
-        // Negative floorclip raises the mobj off the floor.
-        mobj->floorClip = -mobj->special1;
-#elif __JDOOM__
         mobj->floorClip = 0;
-#endif
+
         if(mobj->floorClip < -MAX_BOB_OFFSET)
         {
             // We don't want it going through the floor.
