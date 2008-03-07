@@ -93,10 +93,10 @@ p.add_files(
       ('plugins/wolftc/data/lumps', '#.basedata') ] )
 p.create('wolftc.pk3')
 
-# Doom64tc.pk3
+# jdoom64.pk3
 p = Pack()
 p.add_files(
-    [ ('plugins/doom64tc/defs', 'defs/doom64tc'),
-      ('plugins/doom64tc/data/conhelp.txt', 'data/doom64tc/conhelp.txt'),
-      ('plugins/doom64tc/data/lumps', '#.basedata') ] )
-p.create('doom64tc.pk3')
+    [ ('plugins/jdoom64/defs', 'defs/jdoom64'),
+      ('plugins/jdoom64/data/conhelp.txt', 'data/jdoom64/conhelp.txt'),
+      ('plugins/jdoom64/data/lumps', '#.basedata') ] )
+p.create('jdoom64.pk3')
