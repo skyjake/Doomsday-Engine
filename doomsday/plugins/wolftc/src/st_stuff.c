@@ -222,7 +222,7 @@ DEFCC(CCmdStatusBarSize);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean hu_showallfrags; // in hu_stuff.c currently
+extern boolean huShowAllFrags; // in hu_stuff.c currently
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -256,12 +256,6 @@ static unsigned int st_clock;
 
 // used for making messages go away
 static int st_msgcounter = 0;
-
-// used when in chat
-static st_chatstateenum_t st_chatstate;
-
-// whether in automap or first-person
-static st_stateenum_t st_gamestate;
 
 // whether left-side main status bar is active
 static boolean st_statusbaron;
@@ -368,7 +362,7 @@ cvar_t sthudCVars[] =
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
 
-    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20},
+    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.statusbarScale, 1, 20},
 
     // HUD colour + alpha
     {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
@@ -390,7 +384,7 @@ cvar_t sthudCVars[] =
     // HUD displays
     {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
 
-    {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1},
+    {"hud-frags-all", 0, CVT_BYTE, &huShowAllFrags, 0, 1},
 
     {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
 
@@ -561,7 +555,7 @@ int ST_calcPainOffset(void)
     int     health;
     static int lastcalc;
     static int oldhealth = -1;
-    player_t *plyr = &players[consoleplayer];
+    player_t *plyr = &players[CONSOLEPLAYER];
 
     health = plyr->health > 100 ? 100 : plyr->health;
 
@@ -587,7 +581,7 @@ void ST_updateFaceWidget(void)
     static int lastattackdown = -1;
     static int priority = 0;
     boolean doevilgrin;
-    player_t *plyr = &players[consoleplayer];
+    player_t *plyr = &players[CONSOLEPLAYER];
 
     if(priority < 10)
     {
@@ -761,7 +755,7 @@ void ST_updateWidgets(void)
     int     i;
     ammotype_t ammotype;
     boolean found;
-    player_t *plr = &players[consoleplayer];
+    player_t *plr = &players[CONSOLEPLAYER];
 
     if(st_blended)
     {
@@ -816,7 +810,7 @@ void ST_updateWidgets(void)
         if(!players[i].plr->inGame)
             continue;
 
-        st_fragscount += plr->frags[i] * (i != consoleplayer ? 1 : -1);
+        st_fragscount += plr->frags[i] * (i != CONSOLEPLAYER ? 1 : -1);
     }
 
     // get rid of chat window if up because of message
@@ -827,7 +821,7 @@ void ST_updateWidgets(void)
 
 void ST_Ticker(void)
 {
-    player_t *plyr = &players[consoleplayer];
+    player_t *plyr = &players[CONSOLEPLAYER];
 
     if(!P_IsPaused())
     {
@@ -874,7 +868,7 @@ void ST_doPaletteStuff(void)
     int     palette;
     int     cnt;
     int     bzc;
-    player_t *plyr = &players[consoleplayer];
+    player_t *plyr = &players[CONSOLEPLAYER];
 
     cnt = plyr->damageCount;
 
@@ -957,9 +951,9 @@ void ST_doRefresh(void)
 {
     st_firsttime = false;
 
-    if(cfg.sbarscale < 20 || (cfg.sbarscale == 20 && showbar < 1.0f))
+    if(cfg.statusbarScale < 20 || (cfg.statusbarScale == 20 && showbar < 1.0f))
     {
-        float fscale = cfg.sbarscale / 20.0f;
+        float fscale = cfg.statusbarScale / 20.0f;
         float h = 200 * (1 - fscale);
 
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -974,7 +968,7 @@ void ST_doRefresh(void)
     // and refresh all widgets
     ST_drawWidgets(true);
 
-    if(cfg.sbarscale < 20 || (cfg.sbarscale == 20 && showbar < 1.0f))
+    if(cfg.statusbarScale < 20 || (cfg.statusbarScale == 20 && showbar < 1.0f))
     {
         // Restore the normal modelview matrix.
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1031,7 +1025,7 @@ void ST_drawHUDSprite(int sprite, int x, int y, int hotspot, float alpha)
 
 void ST_doFullscreenStuff(void)
 {
-    player_t *plr = &players[displayplayer];
+    player_t *plr = &players[DISPLAYPLAYER];
     char    buf[20];
     int     w, h, pos = 0, spr, i;
     int     h_width = 320 / cfg.hudScale, h_height = 200 / cfg.hudScale;
@@ -1053,7 +1047,7 @@ void ST_doFullscreenStuff(void)
             i -= 18 * cfg.hudScale;
         }
         sprintf(buf, "FRAGS:%i", st_fragscount);
-        M_WriteText2(2, i, buf, hu_font_a, cfg.hudColor[0], cfg.hudColor[1],
+        M_WriteText2(2, i, buf, huFontA, cfg.hudColor[0], cfg.hudColor[1],
                      cfg.hudColor[2], textalpha);
     }
 
@@ -1069,7 +1063,7 @@ void ST_doFullscreenStuff(void)
         ST_drawHUDSprite(SPR_HHTH, 2, h_height - 2, HOT_BLEFT, iconalpha);
         ST_HUDSpriteSize(SPR_HHTH, &w, &h);
         sprintf(buf, "%i%%", plr->health);
-        M_WriteText2(w + 4, h_height - 14, buf, hu_font_b, cfg.hudColor[0],
+        M_WriteText2(w + 4, h_height - 14, buf, huFontB, cfg.hudColor[0],
                      cfg.hudColor[1], cfg.hudColor[2], textalpha);
         pos = 60;
     }
@@ -1089,7 +1083,7 @@ void ST_doFullscreenStuff(void)
             ST_drawHUDSprite(spr, pos + 2, h_height - 2, HOT_BLEFT, iconalpha);
             ST_HUDSpriteSize(spr, &w, &h);
             sprintf(buf, "%i", plr->ammo[ammotype]);
-            M_WriteText2(pos + w + 4, h_height - 14, buf, hu_font_b,
+            M_WriteText2(pos + w + 4, h_height - 14, buf, huFontB,
                          cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
             break;
         }
@@ -1117,7 +1111,7 @@ Draw_EndZoom();
         ST_drawHUDSprite(spr, h_width - 49, h_height - 2, HOT_BRIGHT, iconalpha);
         ST_HUDSpriteSize(spr, &w, &h);
 
-        M_WriteText2(h_width - M_StringWidth(buf, hu_font_b) - 2, h_height - 14, buf, hu_font_b,
+        M_WriteText2(h_width - M_StringWidth(buf, huFontB) - 2, h_height - 14, buf, huFontB,
                      cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
         pos = h_width - w - 52;
     }
@@ -1154,7 +1148,7 @@ Draw_EndZoom();
 void ST_Drawer(int fullscreenmode, boolean refresh)
 {
     st_firsttime = st_firsttime || refresh;
-    st_statusbaron = (fullscreenmode < 2) || (AM_IsMapActive(consoleplayer) &&
+    st_statusbaron = (fullscreenmode < 2) || (AM_IsMapActive(CONSOLEPLAYER) &&
                      (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts
@@ -1251,7 +1245,7 @@ void ST_loadGraphics(void)
     }
 
     // face backgrounds for different color players
-    sprintf(namebuf, "STFB%d", consoleplayer);
+    sprintf(namebuf, "STFB%d", CONSOLEPLAYER);
     R_CachePatch(&faceback, namebuf);
 
     // status bar background bits
@@ -1286,7 +1280,7 @@ void ST_updateGraphics(void)
     char    namebuf[9];
 
     // face backgrounds for different color players
-    sprintf(namebuf, "STFB%d", cfg.playerColor[consoleplayer]);
+    sprintf(namebuf, "STFB%d", cfg.playerColor[CONSOLEPLAYER]);
     R_CachePatch(&faceback, namebuf);
 }
 
@@ -1299,7 +1293,7 @@ void ST_loadData(void)
 void ST_initData(void)
 {
     int     i;
-    player_t *plyr = &players[consoleplayer];
+    player_t *plyr = &players[CONSOLEPLAYER];
 
     st_firsttime = true;
 
@@ -1336,7 +1330,7 @@ void ST_createWidgets(void)
     static int largeammo = 1994;    // means "n/a"
     ammotype_t ammotype;
     boolean    found;
-    player_t *plyr = &players[consoleplayer];
+    player_t *plyr = &players[CONSOLEPLAYER];
 
     //// ready weapon ammo
     //// \todo Only supports one type of ammo per weapon.
@@ -1476,7 +1470,7 @@ DEFCC(CCmdHUDShow)
  */
 DEFCC(CCmdStatusBarSize)
 {
-    int     min = 1, max = 20, *val = &cfg.sbarscale;
+    int     min = 1, max = 20, *val = &cfg.statusbarScale;
 
     if(!stricmp(argv[1], "+"))
         (*val)++;
@@ -1491,7 +1485,7 @@ DEFCC(CCmdStatusBarSize)
         *val = max;
 
     // Update the view size if necessary.
-    R_SetViewSize(cfg.screenblocks, 0);
+    R_SetViewSize(cfg.screenBlocks, 0);
     ST_HUDUnHide(HUE_FORCE); // so the user can see the change.
     return true;
 }

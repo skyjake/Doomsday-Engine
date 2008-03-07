@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,24 +24,28 @@
  */
 
 /**
- * g_game.h:
+ * g_game.h: Top-level (common) game routines WolfTC - specific.
  */
 
-#ifndef __G_GAME__
-#define __G_GAME__
+#ifndef __G_GAME_H__
+#define __G_GAME_H__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __WOLFTC__
+#  error "Using WolfTC headers without __WOLFTC__"
 #endif
 
 #include "doomdef.h"
 #include "d_event.h"
 #include "d_player.h"
 
-//
-// GAME
-//
+extern player_t players[MAXPLAYERS];
+extern boolean secretExit;
+extern int nextMap;
+extern int totalKills, totalItems, totalSecret;
+
 void            G_Register(void);
+void            G_CommonPreInit(void);
+void            G_CommonPostInit(void);
 
 void            G_DeathMatchSpawnPlayer(int playernum);
 

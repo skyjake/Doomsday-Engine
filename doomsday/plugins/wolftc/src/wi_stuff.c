@@ -158,11 +158,11 @@ typedef struct {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern dpatch_t hu_font[HU_FONTSIZE];
-extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
+extern dpatch_t huFont[HU_FONTSIZE];
+extern dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 
  // Name graphics of each level (centered)
-extern dpatch_t *lnames;
+extern dpatch_t *levelNamePatches;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -282,7 +282,7 @@ static int me;
 static int myteam;
 
  // specifies current state
-static stateenum_t state;
+static interludestate_t state;
 
 // contains information passed into intermission
 static wbstartstruct_t *wbs;
@@ -374,15 +374,6 @@ void WI_slamBackground(void)
 }
 
 /*
- * The ticker is used to detect keys
- *  because of timing issues in netgames.
- */
-boolean WI_Responder(event_t *ev)
-{
-    return false;
-}
-
-/*
  * Draws "<Levelname> Finished!"
  */
 void WI_drawLF(void)
@@ -408,10 +399,10 @@ void WI_drawLF(void)
 
     // draw <LevelName>
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 lnames[mapnum].lump, lname, false, ALIGN_CENTER);
+                 levelNamePatches[mapnum].lump, lname, false, ALIGN_CENTER);
 
     // draw "Finished!"
-    y += (5 * lnames[mapnum].height) / 4;
+    y += (5 * levelNamePatches[mapnum].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
                  finished.lump, NULL, false, ALIGN_CENTER);
@@ -456,10 +447,10 @@ void WI_drawEL(void)
                  NULL, false, ALIGN_CENTER);
 
     // draw level
-    y += (5 * lnames[wbs->next].height) / 4;
+    y += (5 * levelNamePatches[wbs->next].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 lnames[((gameepisode -1) * 9) + wbs->next].lump,
+                 levelNamePatches[((gameepisode -1) * 9) + wbs->next].lump,
                  lname, false, ALIGN_CENTER);
 }
 
@@ -562,7 +553,7 @@ void WI_updateAnimatedBack(void)
 
             case ANIM_LEVEL:
                 // gawd-awful hack for level anims
-                if(!(state == StatCount && i == 7) && wbs->next == a->data1)
+                if(!(state == ILS_SHOW_STATS && i == 7) && wbs->next == a->data1)
                 {
                     a->ctr++;
                     if(a->ctr == a->nanims)
@@ -703,7 +694,7 @@ void WI_End(void)
 
 void WI_initNoState(void)
 {
-    state = NoState;
+    state = ILS_NONE;
     acceleratestage = 0;
     cnt = 10;
 
@@ -727,7 +718,7 @@ void WI_updateNoState(void)
 
 void WI_initShowNextLoc(void)
 {
-    state = ShowNextLoc;
+    state = ILS_SHOW_NEXTMAP;
     acceleratestage = 0;
     cnt = SHOWNEXTLOCDELAY * TICRATE;
 
@@ -817,7 +808,7 @@ void WI_initDeathmatchStats(void)
 {
     int     i;
 
-    state = StatCount;
+    state = ILS_SHOW_STATS;
     acceleratestage = 0;
     dm_state = 1;
 
@@ -836,7 +827,7 @@ void WI_updateDeathmatchStats(void)
 
     int     i;
     int     j;
-    boolean stillticking;
+    boolean stillTicking;
 
     WI_updateAnimatedBack();
 
@@ -863,7 +854,7 @@ void WI_updateDeathmatchStats(void)
     {
         if(!(bcnt & 3))
             S_LocalSound(sfx_intcnt, 0);
-        stillticking = false;
+        stillTicking = false;
         for(i = 0; i < NUM_TEAMS; i++)
         {
             //          if (players[i].plr->inGame)
@@ -884,7 +875,7 @@ void WI_updateDeathmatchStats(void)
                         if(dm_frags[i][j] < -99)
                             dm_frags[i][j] = -99;
 
-                        stillticking = true;
+                        stillTicking = true;
                     }
                 }
                 dm_totals[i] = WI_fragSum(i);
@@ -896,7 +887,7 @@ void WI_updateDeathmatchStats(void)
                     dm_totals[i] = -99;
             }
         }
-        if(!stillticking)
+        if(!stillTicking)
         {
             S_LocalSound(sfx_intcmp, 0);
             dm_state++;
@@ -983,9 +974,9 @@ void WI_drawDeathmatchStats(void)
                 sprintf(tmp, "%i", teaminfo[i].members);
                 M_WriteText2(x - p[i].width / 2 + 1,
                              DM_MATRIXY - WI_SPACINGY + p[i].height - 8, tmp,
-                             hu_font_a, 1, 1, 1, 1);
+                             huFontA, 1, 1, 1, 1);
                 M_WriteText2(DM_MATRIXX - p[i].width / 2 + 1,
-                             y + p[i].height - 8, tmp, hu_font_a, 1, 1, 1, 1);
+                             y + p[i].height - 8, tmp, huFontA, 1, 1, 1, 1);
             }
         }
         else
@@ -1025,7 +1016,7 @@ void WI_initNetgameStats(void)
 {
     int     i;
 
-    state = StatCount;
+    state = ILS_SHOW_STATS;
     acceleratestage = 0;
     ng_state = 1;
     cnt_pause = TICRATE;
@@ -1053,7 +1044,7 @@ void WI_updateNetgameStats(void)
 {
     int     i;
     int     fsum;
-    boolean stillticking;
+    boolean stillTicking;
 
     WI_updateAnimatedBack();
 
@@ -1078,7 +1069,7 @@ void WI_updateNetgameStats(void)
     {
         if(!(bcnt & 3))
             S_LocalSound(sfx_intcnt, 0);
-        stillticking = false;
+        stillTicking = false;
 
         for(i = 0; i < NUM_TEAMS; i++)
         {
@@ -1089,9 +1080,9 @@ void WI_updateNetgameStats(void)
             if(cnt_kills[i] >= (teaminfo[i].kills * 100) / wbs->maxKills)
                 cnt_kills[i] = (teaminfo[i].kills * 100) / wbs->maxKills;
             else
-                stillticking = true;
+                stillTicking = true;
         }
-        if(!stillticking)
+        if(!stillTicking)
         {
             S_LocalSound(sfx_intcmp, 0);
             ng_state++;
@@ -1101,7 +1092,7 @@ void WI_updateNetgameStats(void)
     {
         if(!(bcnt & 3))
             S_LocalSound(sfx_intcnt, 0);
-        stillticking = false;
+        stillTicking = false;
 
         for(i = 0; i < NUM_TEAMS; i++)
         {
@@ -1111,9 +1102,9 @@ void WI_updateNetgameStats(void)
             if(cnt_items[i] >= (teaminfo[i].items * 100) / wbs->maxItems)
                 cnt_items[i] = (teaminfo[i].items * 100) / wbs->maxItems;
             else
-                stillticking = true;
+                stillTicking = true;
         }
-        if(!stillticking)
+        if(!stillTicking)
         {
             S_LocalSound(sfx_intcmp, 0);
             ng_state++;
@@ -1124,7 +1115,7 @@ void WI_updateNetgameStats(void)
         if(!(bcnt & 3))
             S_LocalSound(sfx_intcnt, 0);
 
-        stillticking = false;
+        stillTicking = false;
 
         for(i = 0; i < NUM_TEAMS; i++)
         {
@@ -1135,9 +1126,9 @@ void WI_updateNetgameStats(void)
             if(cnt_secret[i] >= (teaminfo[i].secret * 100) / wbs->maxSecret)
                 cnt_secret[i] = (teaminfo[i].secret * 100) / wbs->maxSecret;
             else
-                stillticking = true;
+                stillTicking = true;
         }
-        if(!stillticking)
+        if(!stillTicking)
         {
             S_LocalSound(sfx_intcmp, 0);
             ng_state += 1 + 2 * !dofrags;
@@ -1148,7 +1139,7 @@ void WI_updateNetgameStats(void)
         if(!(bcnt & 3))
             S_LocalSound(sfx_intcnt, 0);
 
-        stillticking = false;
+        stillTicking = false;
 
         for(i = 0; i < NUM_TEAMS; i++)
         {
@@ -1159,9 +1150,9 @@ void WI_updateNetgameStats(void)
             if(cnt_frags[i] >= (fsum = WI_fragSum(i)))
                 cnt_frags[i] = fsum;
             else
-                stillticking = true;
+                stillTicking = true;
         }
-        if(!stillticking)
+        if(!stillTicking)
         {
             S_LocalSound(sfx_plydth, 0);
             ng_state++;
@@ -1234,7 +1225,7 @@ void WI_drawNetgameStats(void)
 
             sprintf(tmp, "%i", teaminfo[i].members);
             M_WriteText2(x - p[i].width + 1, y + p[i].height - 8, tmp,
-                         hu_font_a, 1, 1, 1, 1);
+                         huFontA, 1, 1, 1, 1);
         }
 
         if(i == myteam)
@@ -1258,7 +1249,7 @@ void WI_drawNetgameStats(void)
 
 void WI_initStats(void)
 {
-    state = StatCount;
+    state = ILS_SHOW_STATS;
     acceleratestage = 0;
     sp_state = 1;
     cnt_kills[0] = cnt_items[0] = cnt_secret[0] = -1;
@@ -1467,7 +1458,7 @@ void WI_Ticker(void)
 
     switch (state)
     {
-    case StatCount:
+    case ILS_SHOW_STATS:
         if(deathmatch)
             WI_updateDeathmatchStats();
         else if(IS_NETGAME)
@@ -1476,11 +1467,12 @@ void WI_Ticker(void)
             WI_updateStats();
         break;
 
-    case ShowNextLoc:
+    case ILS_SHOW_NEXTMAP:
         WI_updateShowNextLoc();
         break;
 
-    case NoState:
+    case ILS_NONE:
+    default:
         WI_updateNoState();
         break;
     }
@@ -1636,7 +1628,7 @@ void WI_unloadData(void)
     if(gamemode == commercial)
     {
         for(i = 0; i < NUMCMAPS; i++)
-            Z_ChangeTag(lnames[i].patch, PU_CACHE);
+            Z_ChangeTag(levelNamePatches[i].patch, PU_CACHE);
     }
     else
     {
@@ -1646,7 +1638,7 @@ void WI_unloadData(void)
         Z_ChangeTag(splat.patch, PU_CACHE);
 
         for(i = 0; i < NUMMAPS; i++)
-            Z_ChangeTag(lnames[i].patch, PU_CACHE);
+            Z_ChangeTag(levelNamePatches[i].patch, PU_CACHE);
 
         if(wbs->epsd < 3)
         {
@@ -1692,7 +1684,7 @@ void WI_Drawer(void)
 {
     switch (state)
     {
-    case StatCount:
+    case ILS_SHOW_STATS:
         if(deathmatch)
             WI_drawDeathmatchStats();
         else if(IS_NETGAME)
@@ -1701,11 +1693,12 @@ void WI_Drawer(void)
             WI_drawStats();
         break;
 
-    case ShowNextLoc:
+    case ILS_SHOW_NEXTMAP:
         WI_drawShowNextLoc();
         break;
 
-    case NoState:
+    case ILS_NONE:
+    default:
         WI_drawNoState();
         break;
     }
@@ -1799,12 +1792,12 @@ void WI_Start(wbstartstruct_t * wbstartstruct)
         WI_initStats();
 }
 
-void WI_SetState(stateenum_t st)
+void WI_SetState(interludestate_t st)
 {
-    if(st == StatCount)
+    if(st == ILS_SHOW_STATS)
         WI_initStats();
-    if(st == ShowNextLoc)
+    if(st == ILS_SHOW_NEXTMAP)
         WI_initShowNextLoc();
-    if(st == NoState)
+    if(st == ILS_NONE)
         WI_initNoState();
 }

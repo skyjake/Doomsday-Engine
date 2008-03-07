@@ -105,7 +105,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
         player->ammo[ammo] = player->maxAmmo[ammo];
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
 
     return true;
@@ -150,7 +150,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, deathmatch == 1);
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
         S_ConsoleSound(sfx_wpnup, NULL, player - players);
@@ -188,7 +188,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         }
 
         // Maybe unhide the HUD?
-        if(gaveweapon && player == &players[consoleplayer])
+        if(gaveweapon && player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
         return (gaveweapon || gaveammo);
@@ -211,7 +211,7 @@ boolean P_GiveBody(player_t *player, int num)
     player->update |= PSF_HEALTH;
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
 
     return true;
@@ -240,7 +240,7 @@ boolean P_GiveArmor(player_t *player, int armortype)
     player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
 
     return true;
@@ -256,7 +256,7 @@ void P_GiveKey(player_t *player, keytype_t card)
     player->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_KEY);
 }
 
@@ -324,7 +324,7 @@ boolean P_GivePower(player_t *player, int power)
     }
 
     // Maybe unhide the HUD?
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_POWER);
     return true;
 }
@@ -402,7 +402,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         P_SetMessage(player, GOTHTHBONUS, false);
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
@@ -416,21 +416,21 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         P_SetMessage(player, GOTARMBONUS, false);
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
         break;
 
     case SPR_SOUL:
-        player->health += soulspherehealth;
-        if(player->health > soulspherelimit)
-            player->health = soulspherelimit;
+        player->health += soulSphereHealth;
+        if(player->health > soulSphereLimit)
+            player->health = soulSphereLimit;
         player->plr->mo->health = player->health;
         player->update |= PSF_HEALTH;
         P_SetMessage(player, GOTSUPER, false);
         sound = sfx_getpow;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
@@ -445,7 +445,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = sfx_getpow;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer])
+        if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
@@ -718,7 +718,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = sfx_getmeg;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer]);
+        if(player == &players[CONSOLEPLAYER]);
             ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
@@ -881,7 +881,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = sfx_treas1;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer]);
+        if(player == &players[CONSOLEPLAYER]);
             ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
         break;
 
@@ -896,7 +896,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = sfx_treas2;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer]);
+        if(player == &players[CONSOLEPLAYER]);
             ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
         break;
 
@@ -911,7 +911,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = sfx_treas3;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer]);
+        if(player == &players[CONSOLEPLAYER]);
             ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
         break;
 
@@ -926,7 +926,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = sfx_atreas;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer]);
+        if(player == &players[CONSOLEPLAYER]);
             ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
         break;
 
@@ -940,7 +940,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = sfx_getpow;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer]);
+        if(player == &players[CONSOLEPLAYER]);
             ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
@@ -1045,7 +1045,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         player->itemCount++;
     P_MobjRemove(special);
     player->bonusCount += BONUSADD;
-    /*if (player == &players[consoleplayer])
+    /*if (player == &players[CONSOLEPLAYER])
        S_StartSound (NULL, sound); */
     S_ConsoleSound(sound, NULL, player - players);
 }
@@ -1117,7 +1117,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         P_MobjChangeState(target, target->info->xDeathState);
     }
     else
-        P_MobjChangeState(target, target->info->deathstate);
+        P_MobjChangeState(target, target->info->deathState);
     target->tics -= P_Random() & 3;
 
     if(target->tics < 1)
@@ -1313,7 +1313,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         temp = damage < 100 ? damage : 100;
 
         // Maybe unhide the HUD?
-        if(player == &players[consoleplayer]);
+        if(player == &players[CONSOLEPLAYER]);
             ST_HUDUnHide(HUE_ON_DAMAGE);
     }
 

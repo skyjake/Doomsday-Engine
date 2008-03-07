@@ -160,7 +160,7 @@ boolean Cht_Responder(event_t *ev)
     if(G_GetGameState() != GS_LEVEL)
         return false;
 
-    plyr = &players[consoleplayer];
+    plyr = &players[CONSOLEPLAYER];
 
     if(gameskill != SM_NIGHTMARE && (ev->type == EV_KEY && ev->state == EVS_DOWN))
     {
@@ -239,13 +239,13 @@ boolean Cht_Responder(event_t *ev)
         }
     }
 
-    if(AM_IsMapActive(consoleplayer) && ev->type == EV_KEY)
+    if(AM_IsMapActive(CONSOLEPLAYER) && ev->type == EV_KEY)
     {
         if(ev->state == EVS_DOWN)
         {
             if(!deathmatch && Cht_CheckCheat(&cheat_amap, (char) ev->data1))
             {
-                AM_IncMapCheatLevel(consoleplayer);
+                AM_IncMapCheatLevel(CONSOLEPLAYER);
                 return false;
             }
         }
@@ -342,7 +342,7 @@ boolean SuicideResponse(int option, void *data)
     {
         M_StopMessage();
         Hu_MenuCommand(MCMD_CLOSE);
-        Cht_SuicideFunc(&players[consoleplayer]);
+        Cht_SuicideFunc(&players[CONSOLEPLAYER]);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
@@ -455,7 +455,7 @@ boolean Cht_WarpFunc(player_t *plyr, char *buf)
 
     // Clear the menu if open
     Hu_MenuCommand(MCMD_CLOSE);
-    brief_disabled = true;
+    briefDisabled = true;
     return true;
 }
 
@@ -488,10 +488,10 @@ void Cht_MyPosFunc(player_t *plyr)
     static char buf[ST_MSGWIDTH];
 
     sprintf(buf, "ang=0x%x;x,y,z=(0x%x,0x%x,0x%x)",
-            players[consoleplayer].plr->mo->angle,
-            players[consoleplayer].plr->mo->pos[VX],
-            players[consoleplayer].plr->mo->pos[VY],
-            players[consoleplayer].plr->mo->pos[VZ]);
+            players[CONSOLEPLAYER].plr->mo->angle,
+            players[CONSOLEPLAYER].plr->mo->pos[VX],
+            players[CONSOLEPLAYER].plr->mo->pos[VY],
+            players[CONSOLEPLAYER].plr->mo->pos[VZ]);
     P_SetMessage(plyr, buf, false);
 }
 
@@ -558,7 +558,7 @@ DEFCC(CCmdCheatGod)
     }
     else
     {
-        Cht_GodFunc(&players[consoleplayer]);
+        Cht_GodFunc(&players[CONSOLEPLAYER]);
     }
     return true;
 }
@@ -571,7 +571,7 @@ DEFCC(CCmdCheatNoClip)
     }
     else
     {
-        Cht_NoClipFunc(&players[consoleplayer]);
+        Cht_NoClipFunc(&players[CONSOLEPLAYER]);
     }
     return true;
 }
@@ -629,7 +629,7 @@ DEFCC(CCmdCheatWarp)
         else
             return false;
     }
-    Cht_WarpFunc(&players[consoleplayer], buf);
+    Cht_WarpFunc(&players[CONSOLEPLAYER], buf);
     return true;
 }
 
@@ -641,16 +641,16 @@ DEFCC(CCmdCheatReveal)
         return false;           // Can't cheat!
 
     // Reset them (for 'nothing'). :-)
-    AM_SetCheatLevel(consoleplayer, 0);
-    players[consoleplayer].powers[PT_ALLMAP] = false;
+    AM_SetCheatLevel(CONSOLEPLAYER, 0);
+    players[CONSOLEPLAYER].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
     if(option < 0 || option > 3)
         return false;
 
     if(option == 1)
-        players[consoleplayer].powers[PT_ALLMAP] = true;
+        players[CONSOLEPLAYER].powers[PT_ALLMAP] = true;
     else if(option != 0)
-        AM_SetCheatLevel(consoleplayer, option -1);
+        AM_SetCheatLevel(CONSOLEPLAYER, option -1);
 
     return true;
 }
@@ -660,7 +660,7 @@ DEFCC(CCmdCheatGive)
     char    buf[100];
     int     i;
     int     weapNum;
-    player_t *plyr = &players[consoleplayer];
+    player_t *plyr = &players[CONSOLEPLAYER];
 
     if(IS_CLIENT)
     {
@@ -803,7 +803,7 @@ DEFCC(CCmdCheatWhere)
 {
     if(!can_cheat())
         return false;           // Can't cheat!
-    CheatDebugFunc(players + consoleplayer, NULL);
+    CheatDebugFunc(players + CONSOLEPLAYER, NULL);
     return true;
 }
 

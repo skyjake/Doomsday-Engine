@@ -76,7 +76,7 @@ void    P_SpawnMapThing(spawnspot_t *mthing);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern float attackrange;
+extern float attackRange;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -245,13 +245,13 @@ void P_MobjMoveXY(mobj_t *mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
-                if(ceilingline)
+                if(ceilingLine)
                 {
-                    backsector = P_GetPtrp(ceilingline, DMU_BACK_SECTOR);
+                    backsector = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR);
                     if(backsector)
                     {
                         // explode a missile?
-                        if(ceilingline &&
+                        if(ceilingLine &&
                            P_GetIntp(backsector,
                                      DMU_CEILING_MATERIAL) == skyMaskMaterial)
                         {
@@ -1025,7 +1025,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 
     mobj = P_SpawnMobj3fv(pos, MT_PLAYER);
 
-    // With clients all player mobjs are remote, even the consoleplayer.
+    // With clients all player mobjs are remote, even the CONSOLEPLAYER.
     if(IS_CLIENT)
     {
         mobj->flags &= ~MF_SOLID;
@@ -1075,7 +1075,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
         for(i = 0; i < NUM_KEY_TYPES; i++)
             p->keys[i] = true;
 
-    if(pnum == consoleplayer)
+    if(pnum == CONSOLEPLAYER)
     {
         // Wake up the status bar.
         ST_Start();
@@ -1242,7 +1242,7 @@ void P_SpawnPuff(float x, float y, float z)
     mobj_t     *th = P_SpawnCustomPuff(MT_PUFF, x, y, z);
 
     // Don't make punches spark on the wall.
-    if(th && attackrange == MELEERANGE)
+    if(th && attackRange == MELEERANGE)
         P_MobjChangeState(th, S_PUFF3);
 }
 
@@ -1318,18 +1318,18 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
         an = source->angle;
         slope = P_AimLineAttack(source, an, 16 * 64);
         if(!cfg.noAutoAim)
-            if(!linetarget)
+            if(!lineTarget)
             {
                 an += 1 << 26;
                 slope = P_AimLineAttack(source, an, 16 * 64);
 
-                if(!linetarget)
+                if(!lineTarget)
                 {
                     an -= 2 << 26;
                     slope = P_AimLineAttack(source, an, 16 * 64);
                 }
 
-                if(!linetarget)
+                if(!lineTarget)
                 {
                     an = source->angle;
                     slope =

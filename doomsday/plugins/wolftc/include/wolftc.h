@@ -46,6 +46,7 @@
 #include "../../wolftc/include/mn_def.h"
 #include "../../wolftc/include/p_inter.h"
 #include "../../wolftc/include/p_local.h"
+#include "../../wolftc/include/p_maputl.h"
 #include "../../wolftc/include/p_pspr.h"
 #include "../../wolftc/include/p_setup.h"
 #include "../../wolftc/include/p_spec.h"

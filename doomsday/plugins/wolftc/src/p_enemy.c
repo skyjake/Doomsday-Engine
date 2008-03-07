@@ -81,9 +81,9 @@ void C_DECL A_SpawnFly(mobj_t *mo);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean felldown;        //$dropoff_fix: used to flag pushed off ledge
-extern linedef_t *blockline;       // $unstuck: blocking linedef
-extern float tmbbox[4];     // for line intersection checks
+extern boolean fellDown;        //$dropoff_fix: used to flag pushed off ledge
+extern linedef_t *blockLine;       // $unstuck: blocking linedef
+extern float tmBBox[4];     // for line intersection checks
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -95,9 +95,9 @@ mobj_t *vileobj;
 fixed_t viletryx;
 fixed_t viletryy;
 
-mobj_t **braintargets;
-int     numbraintargets;
-int     numbraintargets_alloc;
+mobj_t **brainTargets;
+int     numBrainTargets;
+int     numBrainTargetsAlloc;
 
 struct brain_s brain;   // killough 3/26/98: global state of boss brain
 
@@ -150,7 +150,7 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
 
         P_LineOpening(check);
 
-        if(openrange <= 0)
+        if(OPENRANGE <= 0)
             continue;           // closed door
 
         if(frontsector == sec)
@@ -293,10 +293,10 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     if(!P_TryMove(actor, tryx, tryy, dropoff, false))
     {
         // Open any specials.
-        if((actor->flags & MF_FLOAT) && floatok)
+        if((actor->flags & MF_FLOAT) && floatOk)
         {
             // Must adjust height.
-            if(actor->pos[VZ] < tmfloorz)
+            if(actor->pos[VZ] < tmFloorZ)
                 actor->pos[VZ] += FLOATSPEED;
             else
                 actor->pos[VZ] -= FLOATSPEED;
@@ -329,7 +329,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
             // back out when they shouldn't, and creates secondary stickiness).
 
             if(P_ActivateLine(ld, actor, 0, SPAC_USE))
-                good |= ld == blockline ? 1 : 2;
+                good |= ld == blockLine ? 1 : 2;
         }
 
         if(!good || cfg.monstersStuckInDoors)
@@ -343,8 +343,8 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
         actor->flags &= ~MF_INFLOAT;
     }
 
-    // $dropoff_fix: fall more slowly, under gravity, if felldown==true
-    if(!(actor->flags & MF_FLOAT) && !felldown)
+    // $dropoff_fix: fall more slowly, under gravity, if fellDown==true
+    if(!(actor->flags & MF_FLOAT) && !fellDown)
     {
         if(actor->pos[VZ] > actor->floorZ)
             P_HitFloor(actor);
@@ -445,11 +445,11 @@ static boolean PIT_AvoidDropoff(linedef_t *line, void *data)
     float      *bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
-       tmbbox[BOXRIGHT]  > bbox[BOXLEFT] &&
-       tmbbox[BOXLEFT]   < bbox[BOXRIGHT]  &&
-       tmbbox[BOXTOP]    > bbox[BOXBOTTOM] && // Linedef must be contacted
-       tmbbox[BOXBOTTOM] < bbox[BOXTOP]    &&
-       P_BoxOnLineSide(tmbbox, line) == -1)
+       tmBBox[BOXRIGHT]  > bbox[BOXLEFT] &&
+       tmBBox[BOXLEFT]   < bbox[BOXRIGHT]  &&
+       tmBBox[BOXTOP]    > bbox[BOXBOTTOM] && // Linedef must be contacted
+       tmBBox[BOXBOTTOM] < bbox[BOXTOP]    &&
+       P_BoxOnLineSide(tmBBox, line) == -1)
     {
         fixed_t     front = P_GetFixedp(frontsector, DMU_FLOOR_HEIGHT);
         fixed_t     back = P_GetFixedp(backsector, DMU_FLOOR_HEIGHT);
@@ -1143,7 +1143,7 @@ boolean PIT_VileCheck(mobj_t *thing, void *data)
 // DJS - Used the PRBoom method to fix archvile raising ghosts
 //  If !raiseghosts then ressurect a "normal" MF_SOLID one.
 
-    if(cfg.raiseghosts)
+    if(cfg.raiseGhosts)
     {
         corpsehit->height *= 2*2;
         check = P_CheckPosition2f(corpsehit, corpsehit->pos[VX], corpsehit->pos[VY]);
@@ -1213,7 +1213,7 @@ void C_DECL A_VileChase(mobj_t *actor)
 
             P_MobjChangeState(corpsehit, info->raiseState);
 
-            if(cfg.raiseghosts)
+            if(cfg.raiseGhosts)
             {
                 corpsehit->height *= 2*2;
             }
@@ -1451,7 +1451,7 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
     thinker_t  *currentthinker;
 
     // DJS - Compat option for unlimited lost soul spawns
-    if(cfg.maxskulls)
+    if(cfg.maxSkulls)
     {
         // count total number of skull currently on the level
         count = 0;
@@ -1483,7 +1483,7 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
     pos[VZ] += 8;
 
     // DJS - Compat option to prevent spawning lost souls inside walls /from prBoom
-    if(cfg.allowskullsinwalls)
+    if(cfg.allowSkullsInWalls)
     {
         newmobj = P_SpawnMobj3fv(MT_SKULL, pos);
     }
@@ -1673,7 +1673,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
             // relied on the old behaviour and cannot be completed.
 
             // Added compatibility option.
-            if(!cfg.anybossdeath)
+            if(!cfg.anyBossDeath)
                 if(mo->type != MT_BRUISER)
                     return;
             break;
@@ -1873,27 +1873,27 @@ void P_SpawnBrainTargets(void)
 
         if(m->type == MT_SPAWNERTARGET)
         {   // killough 2/7/98: remove limit on icon landings:
-            if(numbraintargets >= numbraintargets_alloc)
+            if(numBrainTargets >= numBrainTargetsAlloc)
             {
                 // Do we need to alloc more targets?
-                if(numbraintargets == numbraintargets_alloc)
+                if(numBrainTargets == numBrainTargetsAlloc)
                 {
-                    numbraintargets_alloc *= 2;
-                    braintargets =
-                        Z_Realloc(braintargets,
-                                  numbraintargets_alloc * sizeof(*braintargets),
+                    numBrainTargetsAlloc *= 2;
+                    brainTargets =
+                        Z_Realloc(brainTargets,
+                                  numBrainTargetsAlloc * sizeof(*brainTargets),
                                   PU_LEVEL);
                 }
                 else
                 {
-                    numbraintargets_alloc = 32;
-                    braintargets =
-                        Z_Malloc(numbraintargets_alloc * sizeof(*braintargets),
+                    numBrainTargetsAlloc = 32;
+                    brainTargets =
+                        Z_Malloc(numBrainTargetsAlloc * sizeof(*brainTargets),
                                  PU_LEVEL, NULL);
                 }
             }
 
-            braintargets[numbraintargets++] = m;
+            brainTargets[numBrainTargets++] = m;
         }
     }
 }
@@ -1963,7 +1963,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
     mobj_t *targ;
     mobj_t *newmobj;
 
-    if(!numbraintargets)     // killough 4/1/98: ignore if no targets
+    if(!numBrainTargets)     // killough 4/1/98: ignore if no targets
         return;
 
     brain.easy ^= 1;
@@ -1971,8 +1971,8 @@ void C_DECL A_BrainSpit(mobj_t *mo)
         return;
 
     // shoot a cube at current target
-    targ = braintargets[brain.targeton++];
-    brain.targeton %= numbraintargets;
+    targ = brainTargets[brain.targeton++];
+    brain.targeton %= numBrainTargets;
 
     // spawn brain missile
     newmobj = P_SpawnMissile(MT_SPAWNSHOT, mo, targ);
@@ -4578,8 +4578,8 @@ void C_DECL A_PacmanSwastika(mobj_t *mo)
         return;
 
     // shoot a cube at current target
-    targ = braintargets[brain.targeton++];
-    brain.targeton %= numbraintargets;
+    targ = brainTargets[brain.targeton++];
+    brain.targeton %= numBrainTargets;
 
     // spawn brain missile
     newmobj = P_SpawnMissile(MT_PACMANSWASTIKA, mo, targ);
@@ -4602,8 +4602,8 @@ void C_DECL A_PacmanBJHead(mobj_t *mo)
         return;
 
     // Shoot a cube at current target.
-    targ = braintargets[brain.targeton++];
-    brain.targeton %= numbraintargets;
+    targ = brainTargets[brain.targeton++];
+    brain.targeton %= numBrainTargets;
 
     // Spawn brain missile.
     newmobj = P_SpawnMissile(MT_PACMANBJHEAD, mo, targ);

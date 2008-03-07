@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -106,7 +106,7 @@ extern boolean  statusbaractive;
 
 extern boolean  paused;            // Game Pause?
 
-extern boolean  viewactive;
+extern boolean  viewActive;
 
 extern boolean  nodrawers;
 extern boolean  noblit;
@@ -119,33 +119,30 @@ extern boolean  noblit;
 extern int      viewangleoffset;
 
 // Player taking events, and displaying.
-#define consoleplayer   Get(DD_CONSOLEPLAYER)
-#define displayplayer   Get(DD_DISPLAYPLAYER)
+#define CONSOLEPLAYER   Get(DD_CONSOLEPLAYER)
+#define DISPLAYPLAYER   Get(DD_DISPLAYPLAYER)
 
 // -------------------------------------
 // Scores, rating.
 // Statistics on a given map, for intermission.
 //
-extern int      totalkills;
-extern int      totalitems;
-extern int      totalsecret;
+extern int totalKills;
+extern int totalItems;
+extern int totalSecret;
 
 // Timer, for scores.
-extern int      levelstarttic;     // gametic at level start
-extern int      leveltime;         // tics in game play for par
+extern int levelStartTic; // Game tic at level start.
+extern int levelTime; // Tics in game play for par.
+extern int actualLevelTime;
 
 // --------------------------------------
 // DEMO playback/recording related stuff.
 // No demo, there is a human player in charge?
 // Disable save/end game?
-extern boolean  usergame;
-
-//?
-//extern  boolean   demoplayback;
-//extern  boolean   demorecording;
+extern boolean  userGame;
 
 // Quit after playing a demo from cmdline.
-extern boolean  singledemo;
+extern boolean  singleDemo;
 
 //-----------------------------
 // Internal parameters, fixed.
@@ -153,42 +150,38 @@ extern boolean  singledemo;
 //  according to user inputs. Partly load from
 //  WAD, partly set at startup time.
 
-#define gametic     Get(DD_GAMETIC)
+#define GAMETIC     Get(DD_GAMETIC)
 
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
 
 // Player spawn spots for deathmatch.
 #define MAX_DM_STARTS   16
-extern spawnspot_t deathmatchstarts[MAX_DM_STARTS];
-extern spawnspot_t *deathmatch_p;
+extern spawnspot_t deathmatchStarts[MAX_DM_STARTS];
+extern spawnspot_t *deathmatchP;
 
 // Intermission stats.
 // Parameters for world map / intermission.
-extern wbstartstruct_t wminfo;
+extern wbstartstruct_t wmInfo;
 
 // LUT of ammunition limits for each kind.
 // This doubles with BackPack powerup item.
-extern int      maxammo[NUM_AMMO_TYPES];
+extern int      maxAmmo[NUM_AMMO_TYPES];
 
 //-----------------------------------------
 // Internal parameters, used for engine.
 //
 
 // File handling stuff.
-extern char     basedefault[1024];
-extern FILE    *debugfile;
+extern char     baseDefault[1024];
+extern FILE    *debugFile;
 
 // if true, load all graphics at level load
 extern boolean  precache;
 
 // wipegamestate can be set to -1
 //  to force a wipe on the next draw
-extern gamestate_t wipegamestate;
-
-//?
-// debug flag to cancel adaptiveness
-extern boolean  singletics;
+extern gamestate_t wipeGameState;
 
 extern int      bodyqueslot;
 

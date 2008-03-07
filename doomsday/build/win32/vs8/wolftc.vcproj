@@ -323,6 +323,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_user.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_view.h"
 				>
 			</File>
@@ -638,6 +642,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\wolftc\include\p_local.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\wolftc\include\p_maputl.h"
 				>
 			</File>
 			<File

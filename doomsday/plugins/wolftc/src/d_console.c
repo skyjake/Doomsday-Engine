@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * d_console.c: WolfTC specific console stuff
  */
 
@@ -88,7 +88,7 @@ cvar_t  gameCVars[] = {
     {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
 
 // View/Refresh
-    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 13},
+    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenBlocks, 3, 13},
     {"hud-title", 0, CVT_BYTE, &cfg.levelTitle, 0, 1},
     {"hud-title-noidsoft", 0, CVT_BYTE, &cfg.hideAuthorIdSoft, 0, 1},
 
@@ -174,10 +174,10 @@ cvar_t  gameCVars[] = {
     {"player-death-lookup", 0, CVT_BYTE, &cfg.deathLookUp, 0, 1},
 
 // Compatibility options
-    {"game-raiseghosts", 0, CVT_BYTE, &cfg.raiseghosts, 0, 1},
-    {"game-maxskulls", 0, CVT_BYTE, &cfg.maxskulls, 0, 1},
-    {"game-skullsinwalls", 0, CVT_BYTE, &cfg.allowskullsinwalls, 0, 1},
-    {"game-anybossdeath666", 0, CVT_BYTE, &cfg.anybossdeath, 0, 1},
+    {"game-raiseghosts", 0, CVT_BYTE, &cfg.raiseGhosts, 0, 1},
+    {"game-maxskulls", 0, CVT_BYTE, &cfg.maxSkulls, 0, 1},
+    {"game-skullsinwalls", 0, CVT_BYTE, &cfg.allowSkullsInWalls, 0, 1},
+    {"game-anybossdeath666", 0, CVT_BYTE, &cfg.anyBossDeath, 0, 1},
     {"game-monsters-stuckindoors", 0, CVT_BYTE, &cfg.monstersStuckInDoors, 0, 1},
     {"game-objects-neverhangoverledges", 0, CVT_BYTE, &cfg.avoidDropoffs, 0, 1},
     {"game-objects-clipping", 0, CVT_BYTE, &cfg.moveBlock, 0, 1},
@@ -188,7 +188,7 @@ cvar_t  gameCVars[] = {
     {"game-corpse-sliding", 0, CVT_BYTE, &cfg.slidingCorpses, 0, 1},
 
 // Game state
-    {"game-fastmonsters", 0, CVT_BYTE, &fastparm, 0, 1},
+    {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
 
 // Gameplay
     {"game-corpse-time", CVF_NO_MAX, CVT_INT, &cfg.corpseTime, 0, 0},
@@ -279,13 +279,13 @@ void D_ConsoleBg(int *width, int *height)
  */
 int ConTextOut(const char *text, int x, int y)
 {
-    extern int  typein_time;
-    int         old = typein_time;
+    extern int  typeInTime;
+    int         old = typeInTime;
 
-    typein_time = 0xffffff;
+    typeInTime = 0xffffff;
 
-    M_WriteText2(x, y, text, hu_font_a, -1, -1, -1, -1);
-    typein_time = old;
+    M_WriteText2(x, y, text, huFontA, -1, -1, -1, -1);
+    typeInTime = old;
     return 0;
 }
 
@@ -294,7 +294,7 @@ int ConTextOut(const char *text, int x, int y)
  */
 int ConTextWidth(const char *text)
 {
-    return M_StringWidth(text, hu_font_a);
+    return M_StringWidth(text, huFontA);
 }
 
 /**
@@ -319,7 +319,7 @@ DEFCC(CCmdScreenShot)
  */
 DEFCC(CCmdViewSize)
 {
-    int         min = 3, max = 13, *val = &cfg.screenblocks;
+    int         min = 3, max = 13, *val = &cfg.screenBlocks;
 
     if(argc != 2)
     {
@@ -349,7 +349,7 @@ DEFCC(CCmdViewSize)
         *val = max;
 
     // Update the view size if necessary.
-    R_SetViewSize(cfg.screenblocks, 0);
+    R_SetViewSize(cfg.screenBlocks, 0);
     return true;
 }
 

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -33,7 +33,6 @@
 #include "wolftc.h"
 
 #include "m_argv.h"
-#include "g_game.h"
 #include "hu_stuff.h"
 #include "hu_msg.h"
 #include "p_saveg.h"
@@ -41,9 +40,6 @@
 #include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define BGCOLOR     7
-#define FGCOLOR     8
 
 // TYPES -------------------------------------------------------------------
 
@@ -57,39 +53,39 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     verbose;
+int verbose;
 
-boolean devparm;                // started game with -devparm
-boolean nomonsters;             // checkparm of -nomonsters
-boolean respawnparm;            // checkparm of -respawn
-boolean fastparm;               // checkparm of -fast
-boolean turboparm;              // checkparm of -turbo
-float   turbomul;               // multiplier for turbo
+boolean devParm; // checkparm of -devparm
+boolean noMonstersParm; // checkparm of -nomonsters
+boolean respawnParm; // checkparm of -respawn
+boolean fastParm; // checkparm of -fast
+boolean turboParm; // checkparm of -turbo
 
-skillmode_t startskill;
-int     startepisode;
-int     startmap;
-boolean autostart;
-FILE   *debugfile;
+float turboMul; // Multiplier for turbo.
+boolean monsterInfight;
 
-gamemode_t gamemode;
-int     gamemodebits;
-gamemission_t gamemission = GM_DOOM;
+skillmode_t startSkill;
+int startEpisode;
+int startMap;
+boolean autoStart;
+FILE *debugFile;
+
+gamemode_t gameMode;
+int gameModeBits;
+gamemission_t gameMission = GM_DOOM;
 
 // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
 char gameModeString[17];
 
-boolean monsterinfight;
-
-// print title for every printed line
-char    title[128];
+// Print title for every printed line.
+char title[128];
 
 // Demo loop.
-int     demosequence;
-int     pagetic;
-char   *pagename;
+int     demoSequence;
+int     pageTic;
+char   *pageName;
 
-// The patches used in drawing the view border
+// The patches used in drawing the view border.
 char *borderLumps[] = {
     "FLOOR7_2",
     "brdr_t",
@@ -114,9 +110,10 @@ char *borderLumps[] = {
  * global vars.
  *
  * @param mode          The game mode to change to.
- * @return boolean      (TRUE) if we changed game modes successfully.
+ *
+ * @return              @c true, if we changed game modes successfully.
  */
-boolean D_SetGameMode(gamemode_t mode)
+boolean G_SetGameMode(gamemode_t mode)
 {
     gamemode = mode;
 
@@ -148,18 +145,10 @@ boolean D_SetGameMode(gamemode_t mode)
         break;
 
     default:
-        Con_Error("D_SetGameMode: Unknown gamemode %i", mode);
+        Con_Error("G_SetGameMode: Unknown gamemode %i", mode);
     }
 
     return true;
-}
-
-void D_GetDemoLump(int num, char *out)
-{
-    sprintf(out, "%cDEMO%i",
-            gamemode == shareware ? 'S' : gamemode ==
-            registered ? 'R' : gamemode == retail ? 'U' : gamemission ==
-            GM_PLUT ? 'P' : gamemission == GM_TNT ? 'T' : '2', num);
 }
 
 /**
@@ -168,15 +157,15 @@ void D_GetDemoLump(int num, char *out)
  * decide which one gets loaded or even see if the WADs are actually
  * there. The default location for IWADs is data\GAMENAMETEXT\.
  */
-void DetectIWADs(void)
+void G_DetectIWADs(void)
 {
     typedef struct {
-        char   *file;
-        char   *override;
+        char           *file;
+        char           *override;
     } fspec_t;
 
     // The '>' means the paths are affected by the base path.
-    char   *paths[] = {
+    char               *paths[] = {
         "}data\\"GAMENAMETEXT"\\",
         "}data\\",
         "}",
@@ -184,7 +173,7 @@ void DetectIWADs(void)
         "",
         0
     };
-    fspec_t iwads[] = {
+    fspec_t             iwads[] = {
         {"tnt.wad", "-tnt"},
         {"plutonia.wad", "-plutonia"},
         {"doom2.wad", "-doom2"},
@@ -193,35 +182,41 @@ void DetectIWADs(void)
         {"doomu.wad", "-ultimate"},
         {0, 0}
     };
-    int     i, k;
-    boolean overridden = false;
-    char    fn[256];
+    int                 i, k;
+    boolean             overridden = false;
+    char                fn[256];
 
     // First check if an overriding command line option is being used.
-    for(i = 0; iwads[i].file; i++)
+    for(i = 0; iwads[i].file; ++i)
+    {
         if(ArgExists(iwads[i].override))
         {
             overridden = true;
             break;
         }
+    }
 
     // Tell the engine about all the possible IWADs.
-    for(k = 0; paths[k]; k++)
-        for(i = 0; iwads[i].file; i++)
+    for(k = 0; paths[k]; ++k)
+    {
+        for(i = 0; iwads[i].file; ++i)
         {
             // Are we allowed to use this?
             if(overridden && !ArgExists(iwads[i].override))
                 continue;
+
             sprintf(fn, "%s%s", paths[k], iwads[i].file);
             DD_AddIWAD(fn);
         }
+    }
 }
 
-boolean LumpsFound(char **list)
+static boolean lumpsFound(char **list)
 {
     for(; *list; list++)
         if(W_CheckNumForName(*list) == -1)
             return false;
+
     return true;
 }
 
@@ -230,20 +225,20 @@ boolean LumpsFound(char **list)
  * registered/commercial features  should be executed (notably loading
  * PWAD's).
  */
-void D_IdentifyFromData(void)
+static void identifyFromData(void)
 {
     typedef struct {
-        char  **lumps;
-        gamemode_t mode;
+        char          **lumps;
+        gamemode_t      mode;
     } identify_t;
 
-    char   *shareware_lumps[] = {
+    char               *shareware_lumps[] = {
         // List of lumps to detect shareware with.
         "e1m1", "e1m2", "e1m3", "e1m4", "e1m5", "e1m6",
         "e1m7", "e1m8", "e1m9",
         "d_e1m1", "floor4_8", "floor7_2", NULL
     };
-    char   *registered_lumps[] = {
+    char               *registered_lumps[] = {
         // List of lumps to detect registered with.
         "e2m1", "e2m2", "e2m3", "e2m4", "e2m5", "e2m6",
         "e2m7", "e2m8", "e2m9",
@@ -251,49 +246,51 @@ void D_IdentifyFromData(void)
         "e3m7", "e3m8", "e3m9",
         "cybre1", "cybrd8", "floor7_2", NULL
     };
-    char   *retail_lumps[] = {
+    char               *retail_lumps[] = {
         // List of lumps to detect Ultimate Doom with.
         "e4m1", "e4m2", "e4m3", "e4m4", "e4m5", "e4m6",
         "e4m7", "e4m8", "e4m9",
         "m_epi4", NULL
     };
-    char   *commercial_lumps[] = {
+    char               *commercial_lumps[] = {
         // List of lumps to detect Doom II with.
         "map01", "map02", "map03", "map04", "map10", "map20",
         "map25", "map30",
         "vilen1", "vileo1", "vileq1", "grnrock", NULL
     };
-    char   *plutonia_lumps[] = {
+    char               *plutonia_lumps[] = {
         "_deutex_", "mc5", "mc11", "mc16", "mc20", NULL
     };
-    char   *tnt_lumps[] = {
+    char               *tnt_lumps[] = {
         "cavern5", "cavern7", "stonew1", NULL
     };
-    identify_t list[] = {
+    identify_t          list[] = {
         {commercial_lumps, commercial}, // Doom2 is easiest to detect.
         {retail_lumps, retail}, // Ultimate Doom is obvious.
         {registered_lumps, registered},
         {shareware_lumps, shareware}
     };
-    int     i, num = sizeof(list) / sizeof(identify_t);
+    int                 i, num = sizeof(list) / sizeof(identify_t);
 
     // First check the command line.
     if(ArgCheck("-sdoom"))
     {
         // Shareware DOOM.
-        D_SetGameMode(shareware);
+        G_SetGameMode(shareware);
         return;
     }
+
     if(ArgCheck("-doom"))
     {
         // Registered DOOM.
-        D_SetGameMode(registered);
+        G_SetGameMode(registered);
         return;
     }
+
     if(ArgCheck("-doom2") || ArgCheck("-plutonia") || ArgCheck("-tnt"))
     {
         // DOOM 2.
-        D_SetGameMode(commercial);
+        G_SetGameMode(commercial);
         gamemission = GM_DOOM2;
         if(ArgCheck("-plutonia"))
             gamemission = GM_PLUT;
@@ -301,21 +298,22 @@ void D_IdentifyFromData(void)
             gamemission = GM_TNT;
         return;
     }
+
     if(ArgCheck("-ultimate"))
     {
         // Retail DOOM 1: Ultimate DOOM.
-        D_SetGameMode(retail);
+        G_SetGameMode(retail);
         return;
     }
 
     // Now we must look at the lumps.
-    for(i = 0; i < num; i++)
+    for(i = 0; i < num; ++i)
     {
         // If all the listed lumps are found, selection is made.
         // All found?
-        if(LumpsFound(list[i].lumps))
+        if(lumpsFound(list[i].lumps))
         {
-            D_SetGameMode(list[i].mode);
+            G_SetGameMode(list[i].mode);
             // Check the mission packs.
             if(LumpsFound(plutonia_lumps))
                 gamemission = GM_PLUT;
@@ -330,17 +328,17 @@ void D_IdentifyFromData(void)
     }
 
     // A detection couldn't be made.
-    D_SetGameMode(shareware);       // Assume the minimum.
+    G_SetGameMode(shareware);       // Assume the minimum.
     Con_Message("\nIdentifyVersion: DOOM version unknown.\n"
                 "** Important data might be missing! **\n\n");
 }
 
-/*
+/**
  * gamemode, gamemission and the gameModeString are set.
  */
 void G_IdentifyVersion(void)
 {
-    D_IdentifyFromData();
+    identifyFromData();
 
     // The game mode string is returned in DD_Get(DD_GAME_MODE).
     // It is sent out in netgames, and the pcl_hello2 packet contains it.
@@ -360,24 +358,24 @@ void G_IdentifyVersion(void)
            "-");
 }
 
-/*
- *  Pre Engine Initialization routine.
- *    All game-specific actions that should take place at this time go here.
+/**
+ * Pre Engine Initialization routine.
+ * All game-specific actions that should take place at this time go here.
  */
-void D_PreInit(void)
+void G_PreInit(void)
 {
-    int     i;
+    int                 i;
 
-    D_SetGameMode(indetermined);
+    G_SetGameMode(indetermined);
 
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
-    cfg.dclickuse = false;
+    cfg.dclickUse = false;
     cfg.povLookAround = true;
-    cfg.sbarscale = 20;         // Full size.
-    cfg.screenblocks = cfg.setblocks = 10;
+    cfg.statusbarScale = 20;         // Full size.
+    cfg.screenBlocks = cfg.setBlocks = 10;
     cfg.echoMsg = true;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
@@ -386,10 +384,10 @@ void D_PreInit(void)
     cfg.menuGlitter = .5f;
     cfg.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
-    cfg.flashcolor[0] = .7f;
-    cfg.flashcolor[1] = .9f;
-    cfg.flashcolor[2] = 1;
-    cfg.flashspeed = 4;
+    cfg.flashColor[0] = .7f;
+    cfg.flashColor[1] = .9f;
+    cfg.flashColor[2] = 1;
+    cfg.flashSpeed = 4;
     cfg.turningSkull = true;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;
@@ -414,6 +412,8 @@ void D_PreInit(void)
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
     cfg.secretMsg = true;
+    cfg.slidingCorpses = false;
+    cfg.fastMonsters = false;
     cfg.netJumping = true;
     cfg.netEpisode = 1;
     cfg.netMap = 1;
@@ -431,9 +431,9 @@ void D_PreInit(void)
     cfg.menuSlam = false;
     cfg.askQuickSaveLoad = true;
 
-    cfg.maxskulls = true;
-    cfg.allowskullsinwalls = false;
-    cfg.anybossdeath = false;
+    cfg.maxSkulls = true;
+    cfg.allowSkullsInWalls = false;
+    cfg.anyBossDeath = false;
     cfg.monstersStuckInDoors = false;
     cfg.avoidDropoffs = true;
     cfg.moveBlock = false;
@@ -513,21 +513,21 @@ void D_PreInit(void)
         borderLumps[0] = "SCRNBORD";
 
     // Do the common pre init routine;
-    G_PreInit();
+    G_CommonPreInit();
 }
 
 /**
  * Post Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void D_PostInit(void)
+void G_PostInit(void)
 {
-    int     p;
-    char    file[256];
-    char    mapstr[6];
+    int                 p;
+    char                file[256];
+    char                mapStr[6];
 
     // Common post init routine
-    G_PostInit();
+    G_CommonPostInit();
 
     // Initialize weapon info using definitions.
     P_InitWeaponInfo();
@@ -619,7 +619,7 @@ void D_PostInit(void)
 
     // turbo option
     p = ArgCheck("-turbo");
-    turbomul = 1.0f;
+    turboMul = 1.0f;
     if(p)
     {
         int     scale = 200;
@@ -633,7 +633,7 @@ void D_PostInit(void)
             scale = 400;
 
         Con_Message("turbo scale: %i%%\n", scale);
-        turbomul = scale / 100.f;
+        turboMul = scale / 100.f;
     }
 
     // Are we autostarting?
@@ -658,11 +658,11 @@ void D_PostInit(void)
     if((autostart || IS_NETGAME))
     {
         if(gamemode == commercial)
-            sprintf(mapstr,"MAP%2.2d", startmap);
+            sprintf(mapStr,"MAP%2.2d", startmap);
         else
-            sprintf(mapstr,"E%d%d",startepisode, startmap);
+            sprintf(mapStr,"E%d%d",startepisode, startmap);
 
-        if(!W_CheckNumForName(mapstr))
+        if(!W_CheckNumForName(mapStr))
         {
             startepisode = 1;
             startmap = 1;
@@ -691,9 +691,9 @@ void D_PostInit(void)
     }
 }
 
-void D_Shutdown(void)
+void G_Shutdown(void)
 {
-    uint        i;
+    uint                i;
 
     HU_UnloadData();
 
@@ -708,12 +708,7 @@ void D_Shutdown(void)
     AM_Shutdown();
 }
 
-void D_Ticker(timespan_t ticLength)
+void G_EndFrame(void)
 {
-    Hu_MenuTicker(ticLength);
-    G_Ticker(ticLength);
-}
-
-void D_EndFrame(void)
-{
+    // Nothing to do.
 }

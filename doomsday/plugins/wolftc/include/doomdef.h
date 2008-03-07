@@ -259,8 +259,8 @@ enum { VX, VY, VZ };               // Vertex indices.
 
 #define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
 
-#define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
-#define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
+#define SFXVOLUME       (Get(DD_SFX_VOLUME)/17)
+#define MUSICVOLUME     (Get(DD_MUSIC_VOLUME)/17)
 
 void        G_IdentifyVersion(void);
 int         G_GetInteger(int id);

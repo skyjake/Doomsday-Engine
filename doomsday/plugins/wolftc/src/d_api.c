@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,69 +38,11 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-/**
- * WolfTC's entry points
- */
-
-// Initialization
-void    D_PreInit(void);
-void    D_PostInit(void);
-
-// Timeing loop
-void    D_Ticker(timespan_t ticLength);
-
-// Drawing
-void    D_Display(void);
-void    D_Display2(void);
-void    D_EndFrame(void);
-
-// Input responders
-boolean Hu_MenuResponder(event_t *ev);
-boolean G_Responder(event_t *ev);
-int     G_PrivilegedResponder(event_t *event);
-
-// Map Data
-void    P_SetupForMapData(int type, uint num);
-
-// Map Objects
-float   P_MobjGetFriction(struct mobj_s *mo);
-void    P_MobjThinker(mobj_t *mobj);
-
-// Misc
-void    D_ConsoleBg(int *width, int *height);
-
-// Game state changes
-void    G_UpdateState(int step);
-
-// Network
-int     D_NetServerStarted(int before);
-int     D_NetServerClose(int before);
-int     D_NetConnect(int before);
-int     D_NetDisconnect(int before);
-
-long int D_NetPlayerEvent(int plrNumber, int peType, void *data);
-int     D_NetWorldEvent(int type, int parm, void *data);
-
-// Handlers
-void    D_HandlePacket(int fromplayer, int type, void *data, size_t length);
-int     P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data);
-int     P_HandleMapDataPropertyValue(uint id, int dtype, int prop, int type, void *data);
-int     P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data);
-
-// Shutdown
-void    D_Shutdown(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// Strings returned by G_Get()
-extern char gameModeString[];
-extern char gameConfigString[];
-
-extern struct xgclass_s xgClasses[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -163,13 +105,13 @@ void *G_GetVariable(int id)
         return xgClasses;
 
     case DD_PSPRITE_BOB_X:
-        bob[VX] = 1 + (cfg.bobWeapon * players[consoleplayer].bob) *
+        bob[VX] = 1 + (cfg.bobWeapon * players[CONSOLEPLAYER].bob) *
             FIX2FLT(finecosine[(128 * leveltime) & FINEMASK]);
 
         return &bob[VX];
 
     case DD_PSPRITE_BOB_Y:
-        bob[VY] = 32 + (cfg.bobWeapon * players[consoleplayer].bob) *
+        bob[VY] = 32 + (cfg.bobWeapon * players[CONSOLEPLAYER].bob) *
             FIX2FLT(finesine[(128 * leveltime) & FINEMASK & (FINEANGLES / 2 - 1)]);
 
         return &bob[VY];

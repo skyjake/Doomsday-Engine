@@ -100,7 +100,7 @@ void            P_SetPsprite(player_t *player, int position, statenum_t stnum);
 // P_USER
 //
 extern int      maxhealth, healthlimit, godmodehealth;
-extern int      soulspherehealth, soulspherelimit, megaspherehealth;
+extern int      soulSphereHealth, soulSphereLimit, megaspherehealth;
 extern int      armorpoints[4];    // Green, blue, IDFA and IDKFA points.
 extern int      armorclass[4];     // Green and blue classes.
 
@@ -168,18 +168,18 @@ extern struct brain_s {
 } brain;
 
 /* Removed fixed limit on number of brain targets */
-extern mobj_t  **braintargets;
-extern int      numbraintargets;
-extern int      numbraintargets_alloc;
+extern mobj_t  **brainTargets;
+extern int      numBrainTargets;
+extern int      numBrainTargetsAlloc;
 
 //
 // P_MAPUTL
 //
 
-#define openrange           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define opentop             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define openbottom          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define lowfloor            (*(float*) DD_GetVariable(DD_LOWFLOOR))
+#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
+#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
+#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
+#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
 int             P_Massacre(void);
 
