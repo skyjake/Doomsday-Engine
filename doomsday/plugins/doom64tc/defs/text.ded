@@ -246,11 +246,6 @@ Text {
 }
 
 Text {
-  ID = "GOTRADAR";
-  Text = "Radar";
-}
-
-Text {
   ID = "GOTVISOR";
   Text = "Light Amplification Visor";
 }

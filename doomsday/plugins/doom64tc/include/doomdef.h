@@ -247,7 +247,6 @@ typedef enum {
     PT_ALLMAP,
     PT_INFRARED,
     PT_FLIGHT,
-    PT_RADAR, // d64tc
     NUM_POWER_TYPES
 } powertype_t;
 

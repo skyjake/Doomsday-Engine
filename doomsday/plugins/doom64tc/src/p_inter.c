@@ -608,14 +608,6 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = sfx_getpow;
         break;
 
-    case SPR_RMAP: // d64tc
-        if(!P_GivePower(player, PT_RADAR))
-            return;
-
-        P_SetMessage(player, GOTRADAR, false);
-        sound = sfx_getpow;
-        break;
-
     case SPR_DETH: // d64tc
         P_Massacre();
         P_SetMessage(player, ALLALONE, false);
