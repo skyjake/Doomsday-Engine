@@ -248,7 +248,6 @@ typedef enum {
     PT_INFRARED,
     PT_FLIGHT,
     PT_RADAR, // d64tc
-    PT_UNSEE, // d64tc
     NUM_POWER_TYPES
 } powertype_t;
 
@@ -260,8 +259,7 @@ typedef enum {
     INVULNTICS = (30 * TICRATE),
     INVISTICS = (60 * TICRATE),
     INFRATICS = (120 * TICRATE),
-    IRONTICS = (60 * TICRATE),
-    UNSEETICS = (30*TICRATE) // d64tc
+    IRONTICS = (60 * TICRATE)
 } powerduration_t;
 
 enum { VX, VY, VZ }; // Vertex indices.

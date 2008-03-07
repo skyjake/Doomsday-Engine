@@ -475,12 +475,6 @@ void ST_doFullscreenStuff(void)
                 }
             }
         }
-
-        if(plr->powers[PT_UNSEE])
-        {
-            ST_drawHUDSprite(SPR_SEEA, HUDBORDERX, h_height - 300, HOT_BLEFT, iconalpha);
-            ST_HUDSpriteSize(SPR_SEEA, &w, &h);
-        }
     }
     // < d64tc
 

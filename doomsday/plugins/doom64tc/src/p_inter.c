@@ -334,10 +334,6 @@ boolean P_GivePower(player_t *player, int power)
         player->powers[power] = 1;
         break;
 
-    case PT_UNSEE: // d64tc
-        player->powers[power] = UNSEETICS;
-        break;
-
     default:
         if(player->powers[power])
             return false; // Already got it.
@@ -623,14 +619,6 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_DETH: // d64tc
         P_Massacre();
         P_SetMessage(player, ALLALONE, false);
-        sound = sfx_getpow;
-        break;
-
-    case SPR_SEEA: // d64tc
-        if(!P_GivePower(player, PT_UNSEE))
-            return;
-
-        P_SetMessage(player, GOTUNSEE, false);
         sound = sfx_getpow;
         break;
 

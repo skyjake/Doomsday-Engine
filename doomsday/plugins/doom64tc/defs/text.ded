@@ -251,16 +251,6 @@ Text {
 }
 
 Text {
-  ID = "GOTUNSEE";
-  Text = "You've gone totally invisible!";
-}
-
-Text {
-  ID = "UNSEEOFF";
-  Text = "The Unseer has worn off";
-}
-
-Text {
   ID = "GOTVISOR";
   Text = "Light Amplification Visor";
 }

@@ -89,8 +89,6 @@
 #define GOTSUIT             GET_TXT(TXT_GOTSUIT)
 #define GOTMAP              GET_TXT(TXT_GOTMAP)
 #define GOTRADAR            GET_TXT(TXT_GOTRADAR) // d64tc
-#define GOTUNSEE            GET_TXT(TXT_GOTUNSEE) // d64tc
-#define UNSEEOFF            GET_TXT(TXT_UNSEEOFF) // d64tc
 #define GOTVISOR            GET_TXT(TXT_GOTVISOR)
 #define GOTMSPHERE          GET_TXT(TXT_GOTMSPHERE)
 #define GOTCLIP             GET_TXT(TXT_GOTCLIP)

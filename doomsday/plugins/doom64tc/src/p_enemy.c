@@ -564,9 +564,6 @@ static boolean lookForPlayers(mobj_t *actor, boolean allAround)
 
         player = &players[actor->lastLook];
 
-        if(player->powers[PT_UNSEE]) // d64tc
-            continue;
-
         if(player->health <= 0)
             continue; // Player is already dead.
 
