@@ -39,14 +39,14 @@
 
 #include <math.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#  include "g_common.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #  include "g_common.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#  include "g_common.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #  include "g_common.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
@@ -89,7 +89,7 @@ boolean     P_TestMobjLocation(mobj_t *mobj);
 
 boolean onground;
 
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
 int maxHealth; // 100
 int healthLimit; // 200
 int godModeHealth; // 100
@@ -100,7 +100,7 @@ int armorPoints[4]; // Green, blue, IDFA and IDKFA points.
 int armorClass[4]; // Green, blue, IDFA and IDKFA armor classes.
 #endif
 
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
         S_PLAY,
@@ -245,7 +245,7 @@ void P_Thrust(player_t *player, angle_t angle, float move)
 {
     mobj_t     *plrmo = player->plr->mo;
     uint        an = angle >> ANGLETOFINESHIFT;
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     sector_t   *sector = P_GetPtrp(plrmo->subsector, DMU_SECTOR);
 #endif
 
@@ -279,7 +279,7 @@ void P_Thrust(player_t *player, angle_t angle, float move)
 #endif
     else
     {
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
         float       mul = XS_ThrustMul(sector);
 
         if(mul != 1)
@@ -469,7 +469,7 @@ void P_MovePlayer(player_t *player)
  */
 void P_DeathThink(player_t *player)
 {
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     angle_t angle;
 #endif
     angle_t delta;
@@ -478,7 +478,7 @@ void P_DeathThink(player_t *player)
     P_MovePsprites(player);
 
     onground = (player->plr->mo->pos[VZ] <= player->plr->mo->floorZ);
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     if(cfg.deathLookUp)
 #elif __JHERETIC__
     if(player->plr->mo->type == MT_BLOODYSKULL)
@@ -522,7 +522,7 @@ void P_DeathThink(player_t *player)
 
         player->plr->viewHeightDelta = 0;
 
-#if  __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__
         if(player->plr->lookDir > 0)
             player->plr->lookDir -= 6;
         else if(player->plr->lookDir < 0)
@@ -866,7 +866,7 @@ void P_ClientSideThink(void)
     {
         switch (i)
         {
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         case PT_INVULNERABILITY:
         case PT_INVISIBILITY:
         case PT_IRONFEET:
@@ -1328,7 +1328,7 @@ void P_PlayerThinkItems(player_t *player)
     }
 #endif
 
-#ifndef __JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     {
         // Check for other artifact keys.
         struct {
@@ -1427,7 +1427,7 @@ void P_PlayerThinkWeapons(player_t *player)
     if(brain->changeWeapon != WT_NOCHANGE)
 #endif
     {
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 #  define HAS_WEAPON(x) (player->weaponOwned[x])
 #  define CUR_WEAPON(x)  (palyer->readyWeapon == x)
 #endif
@@ -1435,7 +1435,7 @@ void P_PlayerThinkWeapons(player_t *player)
         // The actual changing of the weapon is done when the weapon psprite
         // can do it (read: not in the middle of an attack).
         newweapon = brain->changeWeapon;
-#if __JDOOM__ || __DOOM64TC__
+#if __JDOOM__ || __JDOOM64__
         if(newweapon == player->readyWeapon)
         {
             // Swapping between fists and chainaw.
@@ -1454,14 +1454,14 @@ void P_PlayerThinkWeapons(player_t *player)
             }
         }
 
-# if !__DOOM64TC__
+# if !__JDOOM64__
         if(gameMode != commercial && newweapon == WT_NINETH)
         {
             // In non-Doom II, supershotgun is the same as normal shotgun.
             newweapon = WT_THIRD;
         }
 # endif
-#endif // __JDOOM__
+#endif // __JDOOM__ || __JDOOM64__
 
 #if __JHERETIC__
         // Swapping between staff and gauntlets.
@@ -1486,7 +1486,7 @@ void P_PlayerThinkWeapons(player_t *player)
 
     if(player->pendingWeapon != oldweapon)
     {
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
 #elif __JHEXEN__
         player->update |= PSF_PENDING_WEAPON;
@@ -1502,9 +1502,8 @@ void P_PlayerThinkUse(player_t *player)
         return;
     }
 
-    // check for use
+    // Check for use.
     if(player->brain.use)
-// REWRITE ME - I MATCH HEXEN FROM HERE
     {
         if(!player->useDown)
         {
@@ -1513,12 +1512,14 @@ void P_PlayerThinkUse(player_t *player)
         }
     }
     else
+    {
         player->useDown = false;
+    }
 }
 
 void P_PlayerThinkPsprites(player_t *player)
 {
-    // cycle psprites
+    // Cycle psprites.
     P_MovePsprites(player);
 }
 
@@ -1526,7 +1527,7 @@ void P_PlayerThinkPowers(player_t *player)
 {
     // Counters, time dependend power ups.
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     // Strength counts up to diminish fade.
     if(player->powers[PT_STRENGTH])
         player->powers[PT_STRENGTH]++;
@@ -1535,7 +1536,7 @@ void P_PlayerThinkPowers(player_t *player)
         player->powers[PT_IRONFEET]--;
 #endif
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(player->powers[PT_INVULNERABILITY])
         player->powers[PT_INVULNERABILITY]--;
 
@@ -1546,7 +1547,7 @@ void P_PlayerThinkPowers(player_t *player)
     }
 #endif
 
-#if __JDOOM__ || __JHEXEN__
+#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
     if(player->powers[PT_INFRARED])
         player->powers[PT_INFRARED]--;
 #endif
@@ -1650,7 +1651,7 @@ void P_PlayerThinkPowers(player_t *player)
     }
 #endif
 
-#ifdef __JHEXEN__
+#if __JHEXEN__
     if(player->powers[PT_INVULNERABILITY])
     {
         if(player->class == PCLASS_CLERIC)
@@ -1714,7 +1715,6 @@ void P_PlayerThinkPowers(player_t *player)
         }
         P_PoisonDamage(player, player->poisoner, 1, true);
     }
-// REWRITE ME - I MATCH HEXEN UNTIL HERE
 #endif // __JHEXEN__
 }
 

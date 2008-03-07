@@ -44,12 +44,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -68,11 +68,11 @@
 # define SFX_PLATFORMSTART      (sfx_pltstr)
 # define SFX_PLATFORMMOVE       (sfx_pltmov)
 # define SFX_PLATFORMSTOP       (sfx_pltstp)
-#elif __DOOM64TC__
+#elif __JDOOM__
 # define SFX_PLATFORMSTART      (sfx_pstart)
 # define SFX_PLATFORMMOVE       (sfx_stnmov)
 # define SFX_PLATFORMSTOP       (sfx_pstop)
-#elif __JDOOM__
+#elif __JDOOM64__
 # define SFX_PLATFORMSTART      (sfx_pstart)
 # define SFX_PLATFORMMOVE       (sfx_stnmov)
 # define SFX_PLATFORMSTOP       (sfx_pstop)
@@ -124,7 +124,7 @@ void T_PlatRaise(plat_t *plat)
         if(!(levelTime & 31))
             S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
 #endif
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
         if(plat->type == raiseAndChange ||
            plat->type == raiseToNearestAndChange)
         {
@@ -139,8 +139,8 @@ void T_PlatRaise(plat_t *plat)
 #if __JHEXEN__
             SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
 #else
-# if __DOOM64TC__
-            if(plat->type != downWaitUpDoor) // d64tc added test
+# if __JDOOM64__
+            if(plat->type != downWaitUpDoor) // jd64 added test
 # endif
                 S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMSTART);
 #endif
@@ -166,9 +166,9 @@ void T_PlatRaise(plat_t *plat)
                 case blazeDWUS:
                 case raiseToNearestAndChange:
 # endif
-# if __DOOM64TC__
-                case blazeDWUSplus16: // d64tc
-                case downWaitUpDoor: // d64tc
+# if __JDOOM64__
+                case blazeDWUSplus16: // jd64
+                case downWaitUpDoor: // jd64
 # endif
                 case raiseAndChange:
 #endif
@@ -191,7 +191,7 @@ void T_PlatRaise(plat_t *plat)
             plat->count = plat->wait;
             plat->status = waiting;
 
-#if __JHEXEN__ || __DOOM64TC__
+#if __JHEXEN__ || __JDOOM64__
             switch(plat->type)
             {
 # if __JHEXEN__
@@ -345,7 +345,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 #endif
             break;
 
-#if __DOOM64TC__ || __JHEXEN__
+#if __JDOOM64__ || __JHEXEN__
         case upWaitDownStay:
             plat->high = P_FindHighestFloorSurrounding(sec);
 
@@ -365,8 +365,8 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 # endif
             break;
 #endif
-#if __DOOM64TC__
-        case downWaitUpDoor: // d64tc
+#if __JDOOM64__
+        case downWaitUpDoor: // jd64
             plat->speed = PLATSPEED * 8;
             plat->low = P_FindLowestFloorSurrounding(sec);
 
@@ -399,7 +399,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             plat->status = up;
             break;
 #endif
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         case blazeDWUS:
             plat->speed = PLATSPEED * 8;
             plat->low = P_FindLowestFloorSurrounding(sec);

@@ -44,12 +44,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -68,10 +68,10 @@
 #if __WOLFTC__
 # define SFX_CEILINGMOVE        (sfx_pltmov)
 # define SFX_CEILINGSTOP        (sfx_pltstp)
-#elif __DOOM64TC__
+#elif __JDOOM__
 # define SFX_CEILINGMOVE        (sfx_stnmov)
 # define SFX_CEILINGSTOP        (sfx_pstop)
-#elif __JDOOM__
+#elif __JDOOM64__
 # define SFX_CEILINGMOVE        (sfx_stnmov)
 # define SFX_CEILINGSTOP        (sfx_pstop)
 #elif __JHERETIC__
@@ -144,7 +144,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
 #if !__JHEXEN__
             case raiseToHighest:
 # if __DOOM64TC__
-            case customCeiling: //d64tc
+            case customCeiling: //jd64
 # endif
                 P_RemoveActiveCeiling(ceiling);
                 break;
@@ -201,7 +201,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
 #endif
             switch(ceiling->type)
             {
-#if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
             case silentCrushAndRaise:
                 S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGSTOP);
                 ceiling->speed = CEILSPEED;
@@ -228,7 +228,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
             case lowerAndCrush:
             case lowerToFloor:
 # if __DOOM64TC__
-            case customCeiling: //d64tc
+            case customCeiling: //jd64
 # endif
                 P_RemoveActiveCeiling(ceiling);
                 break;
@@ -247,7 +247,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
             {
                 switch(ceiling->type)
                 {
-#if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
                 case silentCrushAndRaise:
 #endif
                 case crushAndRaise:
@@ -269,7 +269,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
     }
 }
 
-#if __DOOM64TC__
+#if __JDOOM64__
 static int EV_DoCeiling2(linedef_t *line, int tag, float basespeed,
                          ceiling_e type)
 #elif __JHEXEN__
@@ -308,7 +308,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 
         switch(type)
         {
-#if __JDOOM__ || __JHERETIC__ || __WOLFTC__ || __DOOM64TC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
         case fastCrushAndRaise:
             ceiling->crush = true;
             ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
@@ -327,7 +327,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             ceiling->direction = -1;
             break;
 #endif
-#if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
         case silentCrushAndRaise:
 #endif
         case crushAndRaise:
@@ -346,20 +346,20 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             if(type != lowerToFloor)
                 ceiling->bottomHeight += 8;
             ceiling->direction = -1;
-#if __DOOM64TC__
-            ceiling->speed *= 8; // d64tc
+#if __JDOOM64__
+            ceiling->speed *= 8; // jd64
 #endif
             break;
 
         case raiseToHighest:
             ceiling->topHeight = P_FindHighestCeilingSurrounding(sec);
-#if __DOOM64TC__
-            ceiling->topHeight -= 8;   // d64tc
+#if __JDOOM64__
+            ceiling->topHeight -= 8;   // jd64
 #endif
             ceiling->direction = 1;
             break;
-#if __DOOM64TC__
-        case customCeiling: // d64tc
+#if __JDOOM64__
+        case customCeiling: // jd64
             {
             //bitmip? wha?
             sidedef_t *front = P_GetPtrp(line, DMU_SIDEDEF0);
@@ -461,7 +461,7 @@ int EV_DoCeiling(linedef_t *line, ceiling_e type)
     switch(type)
     {
     case fastCrushAndRaise:
-# if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
+# if __JDOOM__ || __JDOOM64__ || __WOLFTC__
     case silentCrushAndRaise:
 # endif
     case crushAndRaise:
@@ -471,7 +471,7 @@ int EV_DoCeiling(linedef_t *line, ceiling_e type)
     default:
         break;
     }
-# if __DOOM64TC__
+# if __JDOOM64__
     return EV_DoCeiling2(line, P_ToXLine(line)->tag, CEILSPEED, type) || rtn;
 # else
     return EV_DoCeiling2(P_ToXLine(line)->tag, CEILSPEED, type) || rtn;

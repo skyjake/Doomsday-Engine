@@ -50,10 +50,10 @@ typedef enum thinkclass_e {
 #else
     TC_FLASH,
     TC_STROBE,
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
     TC_GLOW,
     TC_FLICKER,
-#  if __DOOM64TC__
+#  if __JDOOM64__
     TC_BLINK,
 #  endif
 # else

@@ -31,7 +31,7 @@
 
 #include "doomsday.h"
 
-linedef_t     *P_AllocDummyLine(void);
+linedef_t  *P_AllocDummyLine(void);
 void        P_FreeDummyLine(linedef_t* line);
 
 void        P_CopyLine(linedef_t* from, linedef_t* to);

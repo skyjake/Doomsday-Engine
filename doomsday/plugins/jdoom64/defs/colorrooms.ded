@@ -1,0 +1,1172 @@
+# jDoom64 XG data info: color rooms
+# Note: some types may have the same color
+
+Sector Type {
+Comment = "Pure Blue";
+ID = 9999;
+Red fn = "\"a\"";
+Green fn = "\"a\"";
+}
+
+Sector Type {
+Comment = "Pure Red";
+ID = 9998;
+Blue fn = "\"a\"";
+Green fn = "\"a\"";
+}
+
+Sector Type {
+Comment = "Pure Yellow";
+ID = 9997;
+Blue fn = "\a\"";
+}
+
+Sector Type {
+Comment = "Pure Green";
+ID = 9996;
+Red fn = "\"a\"";
+Blue fn = "\a\"";
+}
+
+Sector Type {
+Comment = "Pure Purple";
+ID = 9995;
+Red fn = "\"m\"";
+Blue fn = "\m\"";
+Green fn = "\a\"";
+}
+
+Sector Type {
+Comment = "Pure Black";
+ID = 9000;
+Red fn = "\"a\"";
+Blue fn = "\a\"";
+Green fn = "\a\"";
+}
+
+Sector Type {
+Comment = "Pure Yellow(map01 script)";
+ID = 8999;
+Light fn = "\z\"";
+Blue fn = "\a\"";
+}
+
+Sector Type {
+Comment = "Tech Brown";
+ID = 10000;
+Red fn = "\"t\"";
+Green fn = "\"n\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "Space Blue";
+ID = 10001;
+Red fn = "\"k\"";
+Green fn = "\"n\"";
+Blue fn = "\"q\"";
+}
+
+Sector Type {
+ID = 10002;
+Red fn = "\"eg\"";
+Green fn = "\"ef\"";
+Blue fn = "\"jg\"";
+}
+
+Sector Type {
+Comment = "Orange Light";
+ID = 10003;
+Red fn = "\"t\"";
+Green fn = "\"i\"";
+Blue fn = "\"f\"";
+}
+
+Sector Type {
+Comment = "Tech Blue";
+ID = 1000;
+Red fn = "\"l\"";
+Green fn = "\"p\"";
+Blue fn = "\"t\"";
+}
+
+Sector Type {
+Comment = "Tech Red";
+ID = 10004;
+Red fn = "\"t\"";
+Green fn = "\"n\"";
+Blue fn = "\"n\"";
+}
+
+Sector Type {
+ID = 10005;
+Comment = "Tech Green";
+Red fn = "\"q\"";
+Green fn = "\"m\"";
+Blue fn = "\"d\"";
+}
+
+Sector Type {
+ID = 10006;
+Comment = "yellow light";
+Red fn = "\"z\"";
+Green fn = "\"z\"";
+Blue fn = "\"h\"";
+}
+
+Sector Type {
+ID = 10007;
+Comment = "stagearea special";
+Red fn = "\"l\"";
+Green fn = "\"i\"";
+Blue fn = "\"h\"";
+}
+
+Sector Type {
+ID = 10008;
+Comment = "Tech Orange";
+Red fn = "\"x\"";
+Green fn = "\"o\"";
+Blue fn = "\"h\"";
+}
+
+Sector Type {
+Comment = "Tech light blue";
+ID = 10009;
+Red fn = "\"i\"";
+Green fn = "\"l\"";
+Blue fn = "\"t\"";
+}
+
+Sector Type {
+Comment = "Industrial green";
+ID = 10010;
+Red fn = "\"h\"";
+Green fn = "\"h\"";
+Blue fn = "\f\"";
+}
+
+Sector Type {
+Comment = "Evil Dark Red";
+ID = 10011;
+Red fn = "\"e\"";
+Green fn = "\"b\"";
+Blue fn = "\a\"";
+}
+
+Sector Type {
+Comment = "Evil BlueGreen";
+ID = 10012;
+Red fn = "\"j\"";
+Green fn = "\"q\"";
+Blue fn = "\m\"";
+}
+
+Sector Type {
+Comment = "Hell BrightGreen";
+ID = 10013;
+Red fn = "\"k\"";
+Green fn = "\"x\"";
+Blue fn = "\l\"";
+}
+
+Sector Type {
+Comment = "Evil BrightRed";
+ID = 10016;
+Red fn = "\"v\"";
+Green fn = "\"q\"";
+Blue fn = "\o\"";
+}
+
+Sector Type {
+Comment = "Evil DarkRed";
+ID = 10015;
+Red fn = "\"n\"";
+Green fn = "\"g\"";
+Blue fn = "\e\"";
+}
+
+Sector Type {
+Comment = "Evil Outside Yellow";
+ID = 10017;
+Red fn = "\"y\"";
+Green fn = "\"y\"";
+Blue fn = "\o\"";
+}
+
+Sector Type {
+Comment = "Evil Bright Bluegreen";
+ID = 10018;
+Red fn = "\"l\"";
+Green fn = "\"y\"";
+Blue fn = "\q\"";
+}
+
+Sector Type {
+Comment = "Evil Bright Bluegreen2";
+ID = 10019;
+Red fn = "\"e\"";
+Green fn = "\"y\"";
+Blue fn = "\y\"";
+}
+
+Sector Type {
+Comment = "Evil Bright Bluegreen3";
+ID = 10020;
+Red fn = "\"e\"";
+Green fn = "\"w\"";
+Blue fn = "\s\"";
+}
+
+Sector Type {
+Comment = "Castle DarkBlue";
+ID = 10021;
+Red fn = "\"n\"";
+Green fn = "\"t\"";
+Blue fn = "\q\"";
+}
+
+Sector Type {
+Comment = "Tech Purple";
+ID = 10022;
+Red fn = "\"i\"";
+Green fn = "\"j\"";
+Blue fn = "\n\"";
+}
+
+Sector Type {
+Comment = "Tech Bright Blue";
+ID = 10023;
+Red fn = "\"q\"";
+Green fn = "\"y\"";
+Blue fn = "\y\"";
+}
+
+Sector Type {
+Comment = "Tech Bright Green";
+ID = 10024;
+Red fn = "\"l\"";
+Green fn = "\"w\"";
+Blue fn = "\l\"";
+}
+
+Sector Type {
+Comment = "Tech Bright Greenyellow";
+ID = 10025;
+Red fn = "\"u\"";
+Green fn = "\"x\"";
+Blue fn = "\m\"";
+}
+
+Sector Type {
+Comment = "Tech Evil Orange";
+ID = 10026;
+Red fn = "\"o\"";
+Green fn = "\"e\"";
+Blue fn = "\c\"";
+}
+
+Sector Type {
+Comment = "Terraformer Only";
+ID = 10027;
+Red fn = "\"t\"";
+Green fn = "\"k\"";
+Blue fn = "\e\"";
+}
+
+Sector Type {
+Comment = "Evil Brown";
+ID = 10028;
+Red fn = "\"k\"";
+Green fn = "\"h\"";
+Blue fn = "\g\"";
+}
+
+Sector Type {
+Comment = "Evil Brown2";
+ID = 10029;
+Red fn = "\"q\"";
+Green fn = "\"k\"";
+Blue fn = "\f\"";
+}
+
+Sector Type {
+Comment = "Evil Brown3";
+ID = 10030;
+Red fn = "\"t\"";
+Green fn = "\"n\"";
+Blue fn = "\j\"";
+}
+
+Sector Type {
+Comment = "Bright Industrial Green";
+ID = 10031;
+Red fn = "\"t\"";
+Green fn = "\"t\"";
+Blue fn = "\k\"";
+}
+
+Sector Type {
+Comment = "Tech Center1";
+ID = 10032;
+Red fn = "\"z\"";
+Green fn = "\"t\"";
+Blue fn = "\k\"";
+}
+
+Sector Type {
+Comment = "Tech Center2";
+ID = 10033;
+Red fn = "\"w\"";
+Green fn = "\"n\"";
+Blue fn = "\k\"";
+}
+
+Sector Type {
+Comment = "Tech Center3";
+ID = 10034;
+Red fn = "\"u\"";
+Green fn = "\"t\"";
+Blue fn = "\l\"";
+}
+
+Sector Type {
+Comment = "Outside Red";
+ID = 10035;
+Red fn = "\"z\"";
+Green fn = "\"q\"";
+Blue fn = "\n\"";
+}
+
+Sector Type {
+Comment = "Lab Blue";
+ID = 10036;
+Red fn = "\"m\"";
+Green fn = "\"z\"";
+Blue fn = "\o\"";
+}
+
+Sector Type {
+Comment = "Lab Yellow";
+ID = 10037;
+Red fn = "\"q\"";
+Green fn = "\"z\"";
+Blue fn = "\k\"";
+}
+
+Sector Type {
+Comment = "Lab Green";
+ID = 10038;
+Red fn = "\"r\"";
+Green fn = "\"z\"";
+Blue fn = "\q\"";
+}
+
+Sector Type {
+Comment = "Lab Nuke Green";
+ID = 10039;
+Red fn = "\"p\"";
+Green fn = "\"u\"";
+Blue fn = "\a\"";
+}
+
+Sector Type {
+Comment = "Castle Green";
+ID = 10040;
+Red fn = "\"m\"";
+Green fn = "\"l\"";
+Blue fn = "\h\"";
+}
+
+Sector Type {
+Comment = "Castle Outdoor Red";
+ID = 10041;
+Red fn = "\"o\"";
+Green fn = "\"l\"";
+Blue fn = "\g\"";
+}
+
+Sector Type {
+Comment = "Castle Indoor Yellow";
+ID = 10042;
+Red fn = "\"p\"";
+Green fn = "\"o\"";
+Blue fn = "\e\"";
+}
+
+Sector Type {
+Comment = "Castle Indoor Red";
+ID = 10043;
+Red fn = "\"k\"";
+Green fn = "\"i\"";
+Blue fn = "\i\"";
+}
+
+Sector Type {
+Comment = "Dark Tech Brown";
+ID = 10044;
+Red fn = "\"di\"";
+Green fn = "\"bh\"";
+Blue fn = "\"af\"";
+}
+
+Sector Type {
+Comment = "Skull Blue";
+ID = 10045;
+Red fn = "\"p\"";
+Green fn = "\"x\"";
+Blue fn = "\"u\"";
+}
+
+Sector Type {
+Comment = "Skull Green";
+ID = 10046;
+Red fn = "\"u\"";
+Green fn = "\"y\"";
+Blue fn = "\"l\"";
+}
+
+Sector Type {
+Comment = "Dark Castle Blue";
+ID = 10047;
+Red fn = "\"h\"";
+Green fn = "\"l\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "Dark Castle Blue2";
+ID = 10048;
+Red fn = "\"q\"";
+Green fn = "\"s\"";
+Blue fn = "\"y\"";
+}
+
+Sector Type {
+Comment = "Dark Castle Red";
+ID = 10049;
+Red fn = "\"x\"";
+Green fn = "\"m\"";
+Blue fn = "\"f\"";
+}
+
+Sector Type {
+Comment = "Dark Castle Yellow";
+ID = 10050;
+Red fn = "\"s\"";
+Green fn = "\"m\"";
+Blue fn = "\"b\"";
+}
+
+Sector Type {
+Comment = "Dark Castle Green";
+ID = 10051;
+Red fn = "\"l\"";
+Green fn = "\"m\"";
+Blue fn = "\"e\"";
+}
+
+Sector Type {
+Comment = "Dark Castle Orange";
+ID = 10052;
+Red fn = "\"x\"";
+Green fn = "\"n\"";
+Blue fn = "\"b\"";
+}
+
+Sector Type {
+Comment = "Skull Red";
+ID = 10053;
+Red fn = "\"v\"";
+Green fn = "\"m\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "Hell3 Red";
+ID = 10055;
+Red fn = "\"s\"";
+Green fn = "\"j\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "Hell3 Red2";
+ID = 10054;
+Red fn = "\"z\"";
+Green fn = "\"n\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "Omega Blue";
+ID = 10055;
+Red fn = "\"e\"";
+Green fn = "\"x\"";
+Blue fn = "\"r\"";
+}
+
+Sector Type {
+Comment = "Omega Green";
+ID = 10056;
+Red fn = "\"g\"";
+Green fn = "\"w\"";
+Blue fn = "\"m\"";
+}
+
+Sector Type {
+Comment = "Omega Yellow";
+ID = 10057;
+Red fn = "\"t\"";
+Green fn = "\"u\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "Omega Bluegreen";
+ID = 10058;
+Red fn = "\"o\"";
+Green fn = "\"w\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "Dirty Yellow";
+ID = 10059;
+Red fn = "\"r\"";
+Green fn = "\"q\"";
+Blue fn = "\"a\"";
+}
+
+Sector Type {
+Comment = "Omega Yellowgreen";
+ID = 10060;
+Red fn = "\"n\"";
+Green fn = "\"x\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "Altar Blue";
+ID = 10061;
+Red fn = "\"j\"";
+Green fn = "\"k\"";
+Blue fn = "\"s\"";
+}
+
+Sector Type {
+Comment = "Altar Brown";
+ID = 10062;
+Red fn = "\"t\"";
+Green fn = "\"n\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "Altar FireBrown";
+ID = 10063;
+Red fn = "\"z\"";
+Green fn = "\"q\"";
+Blue fn = "\"a\"";
+}
+
+Sector Type {
+Comment = "Cold Blue";
+ID = 10064;
+Red fn = "\"l\"";
+Green fn = "\"m\"";
+Blue fn = "\"p\"";
+}
+
+Sector Type {
+Comment = "Altar Green";
+ID = 10065;
+Red fn = "\"s\"";
+Green fn = "\"q\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "Altar Red";
+ID = 10066;
+Red fn = "\"s\"";
+Green fn = "\"e\"";
+Blue fn = "\"f\"";
+}
+
+Sector Type {
+Comment = "WYS1";
+ID = 10067;
+Red fn = "\"x\"";
+Green fn = "\"w\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "WYS2";
+ID = 10068;
+Red fn = "\"r\"";
+Green fn = "\"w\"";
+Blue fn = "\"p\"";
+}
+
+Sector Type {
+Comment = "WYS3";
+ID = 10069;
+Red fn = "\"o\"";
+Green fn = "\"m\"";
+Blue fn = "\"h\"";
+}
+
+Sector Type {
+Comment = "WYS4";
+ID = 10070;
+Red fn = "\"y\"";
+Green fn = "\"q\"";
+Blue fn = "\"i\"";
+}
+
+Sector Type {
+Comment = "EscapeRed";
+ID = 10071;
+Red fn = "\"w\"";
+Green fn = "\"o\"";
+Blue fn = "\"m\"";
+}
+
+Sector Type {
+Comment = "EscapeRed2";
+ID = 10072;
+Red fn = "\"u\"";
+Green fn = "\"p\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "EscapeRed3";
+ID = 10073;
+Red fn = "\"w\"";
+Green fn = "\"r\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "skinblue";
+ID = 10074;
+Red fn = "\"s\"";
+Green fn = "\"s\"";
+Blue fn = "\"v\"";
+}
+
+Sector Type {
+Comment = "skinred";
+ID = 10075;
+Red fn = "\"n\"";
+Green fn = "\"h\"";
+Blue fn = "\"d\"";
+}
+
+Sector Type {
+Comment = "skinred2";
+ID = 10076;
+Red fn = "\"t\"";
+Green fn = "\"h\"";
+Blue fn = "\"d\"";
+}
+
+Sector Type {
+Comment = "fearred1";
+ID = 10077;
+Red fn = "\"x\"";
+Green fn = "\"o\"";
+Blue fn = "\"m\"";
+}
+
+Sector Type {
+Comment = "fearorange1";
+ID = 10078;
+Red fn = "\"z\"";
+Green fn = "\"q\"";
+Blue fn = "\"g\"";
+}
+
+Sector Type {
+Comment = "fearblue1";
+ID = 10079;
+Red fn = "\"i\"";
+Green fn = "\"g\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "fearyellow1";
+ID = 10080;
+Red fn = "\"v\"";
+Green fn = "\"u\"";
+Blue fn = "\"n\"";
+}
+
+Sector Type {
+Comment = "fearpurple1";
+ID = 10081;
+Red fn = "\"w\"";
+Green fn = "\"n\"";
+Blue fn = "\"r\"";
+}
+
+Sector Type {
+Comment = "fearred2";
+ID = 10082;
+Red fn = "\"v\"";
+Green fn = "\"m\"";
+Blue fn = "\"i\"";
+}
+
+Sector Type {
+Comment = "fearred3";
+ID = 10083;
+Red fn = "\"w\"";
+Green fn = "\"p\"";
+Blue fn = "\"l\"";
+}
+
+Sector Type {
+Comment = "burningoutside";
+ID = 10084;
+Red fn = "\"w\"";
+Green fn = "\"m\"";
+Blue fn = "\"g\"";
+}
+
+Sector Type {
+Comment = "burninggreen";
+ID = 10085;
+Red fn = "\"w\"";
+Green fn = "\"v\"";
+Blue fn = "\"c\"";
+}
+
+Sector Type {
+Comment = "darknessred";
+ID = 10086;
+Red fn = "\"l\"";
+Green fn = "\"h\"";
+Blue fn = "\"e\"";
+}
+
+Sector Type {
+Comment = "darknessred2";
+ID = 10087;
+Red fn = "\"l\"";
+Green fn = "\"h\"";
+Blue fn = "\"e\"";
+}
+
+Sector Type {
+Comment = "darknessgreen";
+ID = 10088;
+Red fn = "\"q\"";
+Green fn = "\"p\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "darknessred3";
+ID = 10089;
+Red fn = "\"r\"";
+Green fn = "\"m\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "darknessred4";
+ID = 10090;
+Red fn = "\"m\"";
+Green fn = "\"f\"";
+Blue fn = "\"c\"";
+}
+
+Sector Type {
+Comment = "entry yellow";
+ID = 10091;
+Red fn = "\"k\"";
+Green fn = "\"l\"";
+Blue fn = "\"a\"";
+}
+
+Sector Type {
+Comment = "entry red";
+ID = 10092;
+Red fn = "\"y\"";
+Green fn = "\"q\"";
+Blue fn = "\"p\"";
+}
+
+Sector Type {
+Comment = "entry green";
+ID = 10093;
+Red fn = "\"m\"";
+Green fn = "\"p\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "dead base 1";
+ID = 10094;
+Red fn = "\"k\"";
+Green fn = "\"i\"";
+Blue fn = "\"c\"";
+}
+
+Sector Type {
+Comment = "dead base 2";
+ID = 10095;
+Red fn = "\"t\"";
+Green fn = "\"t\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "dead base green";
+ID = 10096;
+Red fn = "\"f\"";
+Green fn = "\"h\"";
+Blue fn = "\"c\"";
+}
+
+Sector Type {
+Comment = "dead base blue";
+ID = 10097;
+Red fn = "\"m\"";
+Green fn = "\"m\"";
+Blue fn = "\"p\"";
+}
+
+Sector Type {
+Comment = "dead base blue2";
+ID = 10098;
+Red fn = "\"i\"";
+Green fn = "\"i\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "unholy green1";
+ID = 10099;
+Red fn = "\"r\"";
+Green fn = "\"v\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "unholy yellow1";
+ID = 10100;
+Red fn = "\"s\"";
+Green fn = "\"s\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "unholy green2";
+ID = 10101;
+Red fn = "\"t\"";
+Green fn = "\"y\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "newtech1";
+ID = 10104;
+Red fn = "\"k\"";
+Green fn = "\"e\"";
+Blue fn = "\"e\"";
+}
+
+Sector Type {
+Comment = "newtech2";
+ID = 10108;
+Red fn = "\"n\"";
+Green fn = "\"o\"";
+Blue fn = "\"h\"";
+}
+
+Sector Type {
+Comment = "newtech3";
+ID = 10102;
+Red fn = "\"p\"";
+Green fn = "\"n\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "newtech4";
+ID = 10103;
+Red fn = "\"q\"";
+Green fn = "\"o\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "newtech5";
+ID = 10105;
+Red fn = "\"t\"";
+Green fn = "\"o\"";
+Blue fn = "\"m\"";
+}
+
+Sector Type {
+Comment = "newtech6";
+ID = 10106;
+Red fn = "\"x\"";
+Green fn = "\"u\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "newtech7";
+ID = 10107;
+Red fn = "\"n\"";
+Green fn = "\"m\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "newtech8";
+ID = 10108;
+Red fn = "\"w\"";
+Green fn = "\"x\"";
+Blue fn = "\"n\"";
+}
+
+Sector Type {
+Comment = "newtech9";
+ID = 10109;
+Red fn = "\"k\"";
+Green fn = "\"l\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "newtech10";
+ID = 10110;
+Red fn = "\"s\"";
+Green fn = "\"t\"";
+Blue fn = "\"l\"";
+}
+
+Sector Type {
+Comment = "newtech11";
+ID = 10111;
+Red fn = "\"i\"";
+Green fn = "\"j\"";
+Blue fn = "\"l\"";
+}
+
+Sector Type {
+Comment = "techlab1";
+ID = 10112;
+Red fn = "\"j\"";
+Green fn = "\"k\"";
+Blue fn = "\"n\"";
+}
+
+Sector Type {
+Comment = "techlab2";
+ID = 10113;
+Red fn = "\"x\"";
+Green fn = "\"t\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "techlab3purple";
+ID = 10114;
+Red fn = "\"m\"";
+Green fn = "\"j\"";
+Blue fn = "\"l\"";
+}
+
+Sector Type {
+Comment = "techlab4nukage";
+ID = 10115;
+Red fn = "\"q\"";
+Green fn = "\"x\"";
+Blue fn = "\"m\"";
+}
+
+Sector Type {
+Comment = "techlab5";
+ID = 10116;
+Red fn = "\"w\"";
+Green fn = "\"w\"";
+Blue fn = "\"e\"";
+}
+
+Sector Type {
+Comment = "lairgreen";
+ID = 10117;
+Red fn = "\"h\"";
+Green fn = "\"l\"";
+Blue fn = "\"g\"";
+}
+
+Sector Type {
+Comment = "lairblue";
+ID = 10118;
+Red fn = "\"h\"";
+Green fn = "\"l\"";
+Blue fn = "\"m\"";
+}
+
+Sector Type {
+Comment = "lairblue2";
+ID = 10119;
+Red fn = "\"f\"";
+Green fn = "\"m\"";
+Blue fn = "\"i\"";
+}
+
+Sector Type {
+Comment = "pitfallyellow";
+ID = 10120;
+Red fn = "\"x\"";
+Green fn = "\"q\"";
+Blue fn = "\"f\"";
+}
+
+Sector Type {
+Comment = "pitfallgreen";
+ID = 10121;
+Red fn = "\"j\"";
+Green fn = "\"m\"";
+Blue fn = "\"i\"";
+}
+
+Sector Type {
+Comment = "pitfallorange";
+ID = 10122;
+Red fn = "\"x\"";
+Green fn = "\"o\"";
+Blue fn = "\"f\"";
+}
+
+Sector Type {
+Comment = "pitfallgreenyellow";
+ID = 10123;
+Red fn = "\"t\"";
+Green fn = "\"r\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "pitfallfireyellow";
+ID = 10124;
+Red fn = "\"x\"";
+Green fn = "\"r\"";
+Blue fn = "\"a\"";
+}
+
+Sector Type {
+Comment = "pitfallyellow2";
+ID = 10125;
+Red fn = "\"x\"";
+Green fn = "\"t\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "pitfallred";
+ID = 10126;
+Red fn = "\"x\"";
+Green fn = "\"n\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "hellishbrown";
+ID = 10127;
+Red fn = "\"o\"";
+Green fn = "\"m\"";
+Blue fn = "\"h\"";
+}
+
+Sector Type {
+Comment = "funblue1";
+ID = 10128;
+Red fn = "\"l\"";
+Green fn = "\"k\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "eyeblue1";
+ID = 10129;
+Red fn = "\"g\"";
+Green fn = "\"g\"";
+Blue fn = "\"i\"";
+}
+
+Sector Type {
+Comment = "eyeblue2";
+ID = 10130;
+Red fn = "\"h\"";
+Green fn = "\"i\"";
+Blue fn = "\"l\"";
+}
+
+Sector Type {
+Comment = "eyeblue3";
+ID = 10131;
+Red fn = "\"l\"";
+Green fn = "\"o\"";
+Blue fn = "\"o\"";
+}
+
+Sector Type {
+Comment = "eyegreen1";
+ID = 10132;
+Red fn = "\"i\"";
+Green fn = "\"l\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "bloodfix1";
+ID = 10133;
+Red fn = "\"n\"";
+Green fn = "\"l\"";
+Blue fn = "\"j\"";
+}
+
+Sector Type {
+Comment = "bloodfix2";
+ID = 10134;
+Red fn = "\"l\"";
+Green fn = "\"f\"";
+Blue fn = "\"f\"";
+}
+
+Sector Type {
+Comment = "bloodfix3";
+ID = 10135;
+Red fn = "\"n\"";
+Green fn = "\"o\"";
+Blue fn = "\"k\"";
+}
+
+Sector Type {
+Comment = "bloodfix4";
+ID = 10136;
+Red fn = "\"k\"";
+Green fn = "\"h\"";
+Blue fn = "\"e\"";
+}
+
+Sector Type {
+Comment = "Tech Brown";
+ID = 10137;
+Red fn = "\"t\"";
+Green fn = "\"n\"";
+Blue fn = "\"j\"";
+Light fn = "\"q\"";
+}

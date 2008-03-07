@@ -42,12 +42,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -153,7 +153,7 @@ void P_CopyLine(linedef_t *from, linedef_t *to)
     }
 
     // Copy the extended properties too
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     xto->special = xfrom->special;
     if(xfrom->xg && xto->xg)
         memcpy(xto->xg, xfrom->xg, sizeof(*xto->xg));
@@ -229,7 +229,7 @@ void P_CopySector(sector_t *from, sector_t *to)
 #endif
 
     // Copy the extended properties too
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     xto->special = xfrom->special;
     xto->soundTraversed = xfrom->soundTraversed;
     xto->soundTarget = xfrom->soundTarget;

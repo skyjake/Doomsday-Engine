@@ -41,16 +41,16 @@
  * \bug Not 64bit clean: In function 'SV_ReadXGLine': cast to pointer from integer of different size
  */
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 
 // HEADER FILES ------------------------------------------------------------
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+# include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JSTRIFE__

@@ -43,12 +43,12 @@
 
 #include <ctype.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -166,7 +166,7 @@ void G_UpdateState(int step)
         XG_Update();
 #endif
 
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
         ST_Init();
 #endif
 
@@ -177,7 +177,7 @@ void G_UpdateState(int step)
         S_ParseSndInfoLump();
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
         S_LevelMusic();
 #endif
         break;
@@ -197,7 +197,6 @@ void G_UpdateState(int step)
         break;
     }
 }
-
 
 static char *ScanWord(char *ptr, char *buf)
 {

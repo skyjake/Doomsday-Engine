@@ -131,7 +131,7 @@ enum {
 #define PSF2_OWNED_WEAPONS  0x00000001
 #define PSF2_STATE          0x00000002  // Includes cheatflags.
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
 #define PSF_REBORN          0x37f7
 #endif
 

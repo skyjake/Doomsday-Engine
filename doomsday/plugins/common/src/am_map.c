@@ -45,12 +45,12 @@
 #include <ctype.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -109,7 +109,7 @@ vgline_t         thintriangle_guy[] = {
     {{-R / 2, -R + R / 2}, {-R / 2, R - R / 2}} // |>
 };
 
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
 vgline_t         player_arrow[] = {
     {{-R + R / 8, 0}, {R, 0}},    // -----
     {{R, 0}, {R - R / 2, R / 4}},    // ----->
@@ -376,7 +376,7 @@ static void clearMarks(automap_t *map);
 static void findMinMaxBoundaries(void);
 static void drawLevelName(void);
 static void drawWorldTimer(void);
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
 static void drawFragsTable(void);
 #elif __JHEXEN__ || __JSTRIFE__
 static void drawDeathmatchStats(void);
@@ -398,7 +398,7 @@ int mapviewplayer;
 
 cvar_t  mapCVars[] = {
     {"map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1},
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
     {"map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1},
 #endif
     {"map-background-r", 0, CVT_FLOAT, &cfg.automapBack[0], 0, 1},
@@ -443,7 +443,7 @@ static automap_t automaps[MAXPLAYERS];
 
 static vectorgrap_t *vectorGraphs[NUM_VECTOR_GRAPHS];
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
 static int maplumpnum = 0; // if 0 no background image will be drawn
 #elif __JHERETIC__
 static int maplumpnum = 1; // if 0 no background image will be drawn
@@ -451,7 +451,7 @@ static int maplumpnum = 1; // if 0 no background image will be drawn
 static int maplumpnum = 1; // if 0 no background image will be drawn
 #endif
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
 static int their_colors[] = {
     GREENS,
     GRAYS,
@@ -723,7 +723,7 @@ void AM_Init(void)
         map->cfg.ceilingChangeLine.rgba[3] = 1;
 
         // Register lines we want to display in a special way.
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
         // Blue locked door, open.
         AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Blue locked door, locked.
@@ -1911,7 +1911,7 @@ static void findMinMaxBoundaries(void)
  */
 void AM_LoadData(void)
 {
-#if !__DOOM64TC__
+#if !__JDOOM64__
     int         i;
     char        namebuf[9];
 #endif
@@ -1919,7 +1919,7 @@ void AM_LoadData(void)
     if(IS_DEDICATED)
         return; // Nothing to do.
 
-#if !__DOOM64TC__
+#if !__JDOOM64__
     // Load the marker patches.
     for(i = 0; i < 10; ++i)
     {
@@ -2798,7 +2798,7 @@ static void renderPlayers(void)
         if(!p->plr->inGame)
             continue;
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         if(deathmatch && p != &players[mapviewplayer])
             continue;
 #endif
@@ -2862,7 +2862,7 @@ static void renderKeys(void)
             continue;
 
         mo = (mobj_t *) th;
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         if(mo->type == MT_MISC4)
             keyColor = KEY1;
         else if(mo->type == MT_MISC5)
@@ -2901,7 +2901,7 @@ static void renderKeys(void)
  */
 static void drawMarks(void)
 {
-#if !__DOOM64TC__
+#if !__JDOOM64__
     int         i;
     float       x, y, w, h;
     angle_t     angle;
@@ -3161,7 +3161,7 @@ static void drawLevelName(void)
     automap_t          *map = &automaps[mapviewplayer];
     automapwindow_t    *win = &map->window;
     int                 lumpNum = -1;
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     int                 mapNum;
 #endif
 
@@ -3170,7 +3170,10 @@ static void drawLevelName(void)
     if(lname)
     {
         // Compose the mapnumber used to check the map name patches array.
-#if __JDOOM__
+#if __JDOOM64__
+        mapNum = gameMap -1;
+        lumpNum = levelNamePatches[mapNum].lump;
+#elif __JDOOM__
         if(gameMode == commercial)
             mapNum = gameMap -1;
         else
@@ -3188,7 +3191,7 @@ static void drawLevelName(void)
         y = SCREENYTOFIXY(win->y + win->height);
         if(cfg.setBlocks < 13)
         {
-#if !__DOOM64TC__
+#if !__JDOOM64__
             if(cfg.setBlocks == 12)
 #endif
             {   // We may need to adjust for the height of the HUD icons.
@@ -3198,7 +3201,7 @@ static void drawLevelName(void)
                 if(y > otherY)
                     y = otherY;
             }
-#if !__DOOM64TC__
+#if !__JDOOM64__
             else if(cfg.setBlocks <= 11 || cfg.automapHudDisplay == 2)
             {   // We may need to adjust for the height of the statusbar
                 otherY = ST_Y;
@@ -3303,12 +3306,12 @@ menuitem_t MAPItems[] = {
 /*
     {ITT_LRFUNC, 0, "window position : ",       M_MapPosition, 0 },
     {ITT_LRFUNC, 0, "window width :       ",    M_MapWidth, 0 },
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     {ITT_EMPTY, 0, NULL,                        NULL, 0 },
     {ITT_EMPTY, 0, NULL,                        NULL, 0 },
 #endif
     {ITT_LRFUNC, 0, "window height :     ",     M_MapHeight, 0 },
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     {ITT_EMPTY, 0, NULL,                        NULL, 0 },
     {ITT_EMPTY, 0, NULL,                        NULL, 0 },
 #endif
@@ -3325,17 +3328,17 @@ menuitem_t MAPItems[] = {
     {ITT_EFUNC, 0, "   ceiling height changes", SCColorWidget, 3 },
     {ITT_EFUNC, 0, "   unseen areas",           SCColorWidget, 0 },
     {ITT_EFUNC, 0, "   background",             SCColorWidget, 4 },
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     {ITT_EMPTY, 0, NULL,                        NULL, 0 },
 #endif
     {ITT_EFUNC, 0, "door colors :        ",     M_MapDoorColors, 0 },
     {ITT_LRFUNC, 0, "door glow : ",             M_MapDoorGlow, 0 },
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     {ITT_EMPTY, 0, NULL,                        NULL, 0 },
     {ITT_EMPTY, 0, NULL,                        NULL, 0 },
 #endif
     {ITT_LRFUNC, 0, "line alpha :          ",   M_MapLineAlpha, 0 },
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     {ITT_EMPTY, 0, NULL,                        NULL, 0 },
     {ITT_EMPTY, 0, NULL,                        NULL, 0 },
 #endif
@@ -3343,7 +3346,7 @@ menuitem_t MAPItems[] = {
 
 menu_t MapDef = {
     0,
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     70, 40,
 #else
     64, 28,
@@ -3375,14 +3378,14 @@ void M_DrawMapMenu(void)
     const menu_t *menu = &MapDef;
     static char *hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
     static char *yesno[2] = { "NO", "YES" };
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
     static char *countnames[4] = { "NO", "YES", "PERCENT", "COUNT+PCNT" };
 #endif
 
     menuAlpha = Hu_MenuAlpha();
     M_DrawTitle("Automap OPTIONS", menu->y - 26);
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     M_WriteMenuText(menu, 0, hudviewnames[cfg.automapHudDisplay]);
     M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
     M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);

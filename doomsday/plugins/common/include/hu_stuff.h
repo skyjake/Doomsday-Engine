@@ -69,7 +69,7 @@ extern boolean chatOn;
 
 extern boolean huShowAllFrags;
 
-#ifdef __JDOOM__
+#if __JDOOM__
 // Plutonia and TNT map names.
 extern char *mapNamesPlut[32], *mapNamesTNT[32];
 #endif
@@ -103,7 +103,7 @@ void        M_DrawColorBox(int x, int y, float r, float g, float b, float a);
 void        M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
                                 float blue, float alpha, boolean background,
                                 int border);
-#ifndef __JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 void        M_DrawSlider(int x, int y, int width, int slot, float alpha);
 #else
 void        M_DrawSlider(int x, int y, int width, int height, int slot, float alpha);

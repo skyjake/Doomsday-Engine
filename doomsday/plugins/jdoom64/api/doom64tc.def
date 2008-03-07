@@ -1,0 +1,4 @@
+LIBRARY			JDOOM64
+
+EXPORTS
+	GetGameAPI		@1

@@ -31,14 +31,14 @@
 
 #include <ctype.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#  include "hu_stuff.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #  include "hu_stuff.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#  include "hu_stuff.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #  include "hu_stuff.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
@@ -62,8 +62,6 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern boolean automapactive; // in AM_map.c
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

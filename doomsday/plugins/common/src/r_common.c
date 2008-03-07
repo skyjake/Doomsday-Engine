@@ -42,12 +42,12 @@
 #include <math.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+# include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -269,7 +269,7 @@ void R_CycleGammaLevel(void)
     if(gammaLevel > 4)
         gammaLevel = 0;
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     P_SetMessage(players + CONSOLEPLAYER, gammamsg[gammaLevel], true);
 #endif
 

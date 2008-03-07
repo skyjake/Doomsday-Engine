@@ -44,12 +44,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -347,15 +347,13 @@ void T_MoveFloor(floormove_t *floor)
 #if __JHEXEN__
         SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
 #else
-# if !__DOOM64TC__
-#  if __WOLFTC__
+# if __WOLFTC__
         S_SectorSound(floor->sector, SORG_FLOOR, sfx_pltstp);
-#  else
+# else
 #   if __JHERETIC__
         if(floor->type == raiseBuildStep)
 #   endif
             S_SectorSound(floor->sector, SORG_FLOOR, sfx_pstop);
-#  endif
 # endif
 #endif
 #if __JHEXEN__
@@ -437,8 +435,8 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
     floormove_t *floor;
     iterlist_t *list;
 
-#if __DOOM64TC__
-    // d64tc > bitmip? wha?
+#if __JDOOM64__
+    // jd64 > bitmip? wha?
     float bitmipL = 0, bitmipR = 0;
     sidedef_t *front = P_GetPtrp(line, DMU_SIDEDEF0);
     sidedef_t *back  = P_GetPtrp(line, DMU_SIDEDEF1);
@@ -495,7 +493,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->sector = sec;
 #if !__JHEXEN__
             floor->speed = FLOORSPEED;
-# if __DOOM64TC__
+# if __JDOOM64__
             floor->speed *= 4;
 # endif
 #endif
@@ -510,7 +508,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->sector = sec;
 #if !__JHEXEN__
             floor->speed = FLOORSPEED;
-# if __DOOM64TC__
+# if __JDOOM64__
             floor->speed *= 4;
 # endif
 #endif
@@ -547,8 +545,8 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
 # endif
             break;
 #endif
-#if __DOOM64TC__
-        case lowerToEight: // d64tc
+#if __JDOOM64__
+        case lowerToEight: // jd64
             floor->direction = -1;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
@@ -558,7 +556,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
                 floor->floorDestHeight += 8;
             break;
 
-        case customFloor: // d64tc
+        case customFloor: // jd64
             if(bitmipR > 0)
             {
                 floor->direction = -1;
@@ -580,7 +578,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             }
             break;
 
-        case customChangeSec: // d64tc
+        case customChangeSec: // jd64
             floor->direction = 1;
             floor->sector = sec;
             floor->speed = FLOORSPEED * 16;
@@ -605,7 +603,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->sector = sec;
 #if !__JHEXEN__
             floor->speed = FLOORSPEED;
-# if __DOOM64TC__
+# if __JDOOM64__
             floor->speed *= 4;
 # endif
 #endif
@@ -630,7 +628,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->sector = sec;
 #if !__JHEXEN__
             floor->speed = FLOORSPEED;
-# if __DOOM64TC__
+# if __JDOOM64__
             floor->speed *= 4;
 # endif
 #endif
@@ -643,12 +641,12 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->floorDestHeight -= 8 * (floortype == raiseFloorCrush);
 #endif
             break;
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
         case raiseFloorTurbo:
             floor->direction = 1;
             floor->sector = sec;
             floor->speed = FLOORSPEED * 4;
-# if __DOOM64TC__
+# if __JDOOM64__
             floor->speed *= 2;
 # endif
             floor->floorDestHeight =
@@ -665,7 +663,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->sector = sec;
 #if !__JHEXEN__
             floor->speed = FLOORSPEED;
-# if __DOOM64TC__
+# if __JDOOM64__
             floor->speed *= 8;
 # endif
 #endif
@@ -709,14 +707,14 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->direction = 1;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
-# if __DOOM64TC__
+# if __JDOOM64__
             floor->speed *= 8;
 # endif
             floor->floorDestHeight =
                 P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT) + 24;
             break;
 #endif
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
         case raiseFloor512:
             floor->direction = 1;
             floor->sector = sec;
@@ -730,7 +728,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->direction = 1;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
-# if __DOOM64TC__
+# if __JDOOM64__
             floor->speed *= 8;
 # endif
             floor->floorDestHeight =
@@ -743,8 +741,8 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
 
             xsec->special = P_ToXSector(frontsector)->special;
             break;
-# if __DOOM64TC__
-        case raiseFloor32: // d64tc
+# if __JDOOM64__
+        case raiseFloor32: // jd64
             floor->direction = 1;
             floor->sector = sec;
             floor->speed = FLOORSPEED * 8;

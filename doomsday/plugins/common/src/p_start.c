@@ -30,16 +30,16 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#  include "r_common.h"
-#  include "hu_stuff.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #  include "r_common.h"
 #  include "hu_stuff.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#  include "r_common.h"
+#  include "hu_stuff.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #  include "r_common.h"
 #  include "hu_stuff.h"
 #elif __JHERETIC__
@@ -61,7 +61,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 #  define TELEPORTSOUND     sfx_telept
 #  define MAX_START_SPOTS   4 // Maximum number of different player starts.
 #else
@@ -123,7 +123,7 @@ void P_Init(void)
     P_InitLava();
 #endif
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     // Maximum health and armor points.
     maxHealth = 100;
     healthLimit = 200;
@@ -293,7 +293,7 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
         ddplyr->mo = NULL;
     }
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     G_QueueBody(ddplyr->mo);
 #endif
 
@@ -488,7 +488,7 @@ void P_SpawnThings(void)
  */
 void P_SpawnPlayers(void)
 {
-    int             i;
+    int                 i;
 
     // If deathmatch, randomly spawn the active players.
     if(deathmatch)
@@ -502,7 +502,7 @@ void P_SpawnPlayers(void)
     }
     else
     {
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         if(!IS_NETGAME)
         {
             /**
@@ -593,7 +593,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
     P_SpawnPlayer(&deathmatchStarts[i], playerNum);
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Gib anything at the spot.
     P_Telefrag(players[playerNum].plr->mo);
 #endif
@@ -607,7 +607,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
  */
 spawnspot_t *P_GetPlayerStart(int group, int pnum)
 {
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     return &playerStarts[players[pnum].startSpot];
 #else
     int         i;

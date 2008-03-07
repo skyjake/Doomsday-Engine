@@ -42,12 +42,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -95,7 +95,20 @@ switchlist_t switchInfo[] = {
 # if __JHERETIC__
     {"SW1OFF", "SW1ON", MACRO_SHORT(1)},
     {"SW2OFF", "SW2ON", MACRO_SHORT(1)},
-# else
+# elif __JDOOM64__
+    //// \fixme these are most likely wrong.
+    {"SW1PANEL", "SW2PANEL", MACRO_SHORT(3)},
+    {"SW1ROCK", "SW2ROCK", MACRO_SHORT(3)},
+    {"SW1MET2", "SW2MET2", MACRO_SHORT(3)},
+    {"SW1WDMET", "SW2WDMET", MACRO_SHORT(3)},
+    {"SW1BRIK", "SW2BRIK", MACRO_SHORT(3)},
+    {"SW1MOD1", "SW2MOD1", MACRO_SHORT(3)},
+    {"SW1ZIM", "SW2ZIM", MACRO_SHORT(3)},
+    {"SW1STON6", "SW2STON6", MACRO_SHORT(3)},
+    {"SW1TEK", "SW2TEK", MACRO_SHORT(3)},
+    {"SW1MARB", "SW2MARB", MACRO_SHORT(3)},
+    {"SW1SKULL", "SW2SKULL", MACRO_SHORT(3)},
+# elif __JDOOM__
     // Doom shareware episode 1 switches
     {"SW1BRCOM", "SW2BRCOM", MACRO_SHORT(1)},
     {"SW1BRN1", "SW2BRN1", MACRO_SHORT(1)},
@@ -230,11 +243,13 @@ void P_InitSwitchList(void)
     else
         episode = 2;
 # else
+#  if __JDOOM__ || __WOLFTC__
     if(gameMode == registered || gameMode == retail)
         episode = 2;
     else if(gameMode == commercial)
         episode = 3;
     else
+#  endif
         episode = 1;
 # endif
 

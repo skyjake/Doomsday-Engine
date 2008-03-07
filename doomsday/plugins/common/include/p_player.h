@@ -22,16 +22,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_player.h: Common playsim routines relating to players.
  */
 
-#if  __DOOM64TC__
-# include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+# include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__

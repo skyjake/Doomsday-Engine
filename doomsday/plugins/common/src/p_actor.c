@@ -44,12 +44,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -81,7 +81,7 @@
 
 void P_MobjRemove(mobj_t *mo)
 {
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
     if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED) &&
        (mo->type != MT_INV) && (mo->type != MT_INS))
     {

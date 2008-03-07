@@ -45,12 +45,12 @@
 #include <ctype.h>  // has isspace
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #  include "hu_stuff.h"
@@ -259,7 +259,7 @@ static void interpretLinedefFlags(void)
          * know what format the map is in (and shouldn't really) but the
          * engine doesn't know if the game wants to do this...
          */
-# if !__DOOM64TC__
+# if !__JDOOM64__
         /**
          * \attention DJS - Can't do this with Doom64TC as it has used the
          * ML_INVALID bit for another purpose... doh!
@@ -445,7 +445,7 @@ static void P_ResetWorldState(void)
 {
     int                 i, parm;
 
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
     wmInfo.maxFrags = 0;
     wmInfo.parTime = -1;
 
@@ -459,7 +459,7 @@ static void P_ResetWorldState(void)
     brain.easy = 0; // Always init easy to 0.
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
     // Clear special respawning que.
     P_EmptyRespawnQueue();
 #endif
@@ -488,7 +488,7 @@ static void P_ResetWorldState(void)
         plr->killCount = plr->secretCount = plr->itemCount = 0;
     }
 
-#if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
     bodyQueueSlot = 0;
 #endif
 
@@ -504,7 +504,7 @@ static void P_FinalizeLevel(void)
 {
     AM_InitForLevel();
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     // Adjust slime lower wall textures (a hack!).
     // This will hide the ugly green bright line that would otherwise be
     // visible due to texture repeating and interpolation.
@@ -534,7 +534,7 @@ static void P_FinalizeLevel(void)
                     P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
             }
         }
-#if __DOOM64TC__
+#if __JDOOM64__
         // kaiser - convert the unused xg linetypes to the new line type.
         // DJS - Mega kludge. Update the wad instead!
         switch(P_ToXLine(line)->special)

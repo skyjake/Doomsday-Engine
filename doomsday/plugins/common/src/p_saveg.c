@@ -53,12 +53,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -80,16 +80,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __DOOM64TC__
-# define MY_SAVE_MAGIC         0x1D6420F4
-# define MY_CLIENT_SAVE_MAGIC  0x2D6420F4
-# define MY_SAVE_VERSION       5
-# define SAVESTRINGSIZE        24
-# define CONSISTENCY           0x2c
-# define SAVEGAMENAME          "D64Sav"
-# define CLIENTSAVEGAMENAME    "D64Cl"
-# define SAVEGAMEEXTENSION     "6sg"
-#elif __WOLFTC__
+#if __WOLFTC__
 # define MY_SAVE_MAGIC         0x1A8AFF08
 # define MY_CLIENT_SAVE_MAGIC  0x2A8AFF08
 # define MY_SAVE_VERSION       5
@@ -107,6 +98,15 @@
 # define SAVEGAMENAME          "DoomSav"
 # define CLIENTSAVEGAMENAME    "DoomCl"
 # define SAVEGAMEEXTENSION     "dsg"
+#elif __JDOOM64__
+# define MY_SAVE_MAGIC         0x1D6420F4
+# define MY_CLIENT_SAVE_MAGIC  0x2D6420F4
+# define MY_SAVE_VERSION       5
+# define SAVESTRINGSIZE        24
+# define CONSISTENCY           0x2c
+# define SAVEGAMENAME          "D64Sav"
+# define CLIENTSAVEGAMENAME    "D64Cl"
+# define SAVEGAMEEXTENSION     "6sg"
 #elif __JHERETIC__
 # define MY_SAVE_MAGIC         0x7D9A12C5
 # define MY_CLIENT_SAVE_MAGIC  0x1062AF43
@@ -171,7 +171,7 @@ typedef struct playerheader_s {
     int             numInvSlots;
     int             numArmorTypes;
 #endif
-#if __DOOM64TC__
+#if __JDOOM64__
     int             numArtifacts;
 #endif
 } playerheader_t;
@@ -276,12 +276,12 @@ static void SV_WriteStrobe(strobe_t* strobe);
 static int  SV_ReadStrobe(strobe_t* strobe);
 static void SV_WriteGlow(glow_t* glow);
 static int  SV_ReadGlow(glow_t* glow);
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
 static void SV_WriteFlicker(fireflicker_t* flicker);
 static int  SV_ReadFlicker(fireflicker_t* flicker);
 # endif
 
-# if __DOOM64TC__
+# if __JDOOM64__
 static void SV_WriteBlink(lightblink_t* flicker);
 static int  SV_ReadBlink(lightblink_t* flicker);
 # endif
@@ -483,7 +483,7 @@ static thinkerinfo_t thinkerInfo[] = {
       SV_ReadGlow,
       sizeof(glow_t)
     },
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
     {
       TC_FLICKER,
       T_FireFlicker,
@@ -493,7 +493,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(fireflicker_t)
     },
 # endif
-# if __DOOM64TC__
+# if __JDOOM64__
     {
       TC_BLINK,
       T_LightBlink,
@@ -1083,8 +1083,8 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->artifactCount);
     SV_WriteLong(p->inventorySlotNum);
 # else
-# if __DOOM64TC__
-    SV_WriteLong(p->laserPower); // d64tc
+# if __JDOOM64__
+    SV_WriteLong(p->laserPower); // jd64
     SV_WriteLong(p->laserIcon1); // added in outcast
     SV_WriteLong(p->laserIcon2); // added in outcast
     SV_WriteLong(p->laserIcon3); // added in outcast
@@ -1102,7 +1102,7 @@ static void SV_WritePlayer(int playernum)
 #if __JHEXEN__
     SV_WriteLong(p->pieces);
 #else
-# if __DOOM64TC__
+# if __JDOOM64__
     SV_Write(p->artifacts, GetPlayerHeader()->numArtifacts * 4);
 # endif
 
@@ -1236,8 +1236,8 @@ static void SV_ReadPlayer(player_t *p)
     p->artifactCount = SV_ReadLong();
     p->inventorySlotNum = SV_ReadLong();
 #else
-# if __DOOM64TC__
-    p->laserPower = SV_ReadLong(); // d64tc
+# if __JDOOM64__
+    p->laserPower = SV_ReadLong(); // jd64
     p->laserIcon1 = SV_ReadLong(); // added in outcast
     p->laserIcon2 = SV_ReadLong(); // added in outcast
     p->laserIcon3 = SV_ReadLong(); // added in outcast
@@ -1255,7 +1255,7 @@ static void SV_ReadPlayer(player_t *p)
 #if __JHEXEN__
     p->pieces = SV_ReadLong();
 #else
-# if __DOOM64TC__
+# if __JDOOM64__
     SV_Read(p->artifacts, GetPlayerHeader()->numArtifacts * 4);
 # endif
     p->backpack = SV_ReadLong();
@@ -1320,7 +1320,7 @@ static void SV_ReadPlayer(player_t *p)
 #if !__JHEXEN__
     p->didSecret = SV_ReadLong();
 
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
     if(ver == 2) // nolonger used in >= ver 3
         /*p->messageTics =*/ SV_ReadLong();
 
@@ -1416,7 +1416,7 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteShort(SV_ThingArchiveNum(original));
     SV_WriteShort(SV_ThingArchiveNum(mo->target));
 
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
     // Ver 5 features: Save tracer (fixes Archvile, Revenant bug)
     SV_WriteShort(SV_ThingArchiveNum(mo->tracer));
 # endif
@@ -1510,7 +1510,7 @@ static void SV_WriteMobj(mobj_t *original)
     // Used by player to freeze a bit after teleporting.
     SV_WriteLong(mo->reactionTime);
 
-#if __DOOM64TC__
+#if __JDOOM64__
     SV_WriteLong(mo->floatSwitch); // added in outcast
     SV_WriteLong(mo->floatTics); // added in outcast
 #endif
@@ -1602,6 +1602,7 @@ Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
  * @param mo            Ptr to the mobj whoose flags are to be updated.
  * @param ver           The MOBJ save version to update from.
  */
+#if !__JDOOM64__
 void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
 {
 #if __JHEXEN__
@@ -1657,6 +1658,7 @@ void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
         mo->flags3 = mo->info->flags3;
     }
 }
+#endif
 
 static boolean RestoreMobj(mobj_t *mo, int ver)
 {
@@ -1700,9 +1702,11 @@ static boolean RestoreMobj(mobj_t *mo, int ver)
     }
 #endif
 
+#if !__JDOOM64__
     // Do we need to update this mobj's flag values?
     if(ver < MOBJ_SAVEVERSION)
         SV_UpdateReadMobjFlags(mo, ver);
+#endif
 
     mo->thinker.function = P_MobjThinker;
 
@@ -1736,7 +1740,7 @@ static int SV_ReadMobj(thinker_t *th)
     // Ver 5 features:
     if(ver >= 5)
     {
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
         // Tracer for enemy attacks (updated after all mobjs are loaded).
         mo->tracer = (mobj_t *) (int) SV_ReadShort();
 # endif
@@ -1745,7 +1749,7 @@ static int SV_ReadMobj(thinker_t *th)
     }
     else
     {
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
         mo->tracer = NULL;
 # endif
         mo->onMobj = NULL;
@@ -1821,7 +1825,7 @@ static int SV_ReadMobj(thinker_t *th)
     // Used by player to freeze a bit after teleporting.
     mo->reactionTime = SV_ReadLong();
 
-#if __DOOM64TC__
+#if __JDOOM64__
     mo->floatSwitch = SV_ReadLong(); // added in outcast
     mo->floatTics = SV_ReadLong(); // added in outcast
 #endif
@@ -1862,7 +1866,7 @@ static int SV_ReadMobj(thinker_t *th)
         mo->spawnSpot.flags = (int) SV_ReadShort();
     }
 
-# if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
+# if __JDOOM__ || __WOLFTC__ || __JDOOM64__
     if(ver >= 3)
 # elif __JHERETIC__
     if(ver >= 5)
@@ -1873,7 +1877,7 @@ static int SV_ReadMobj(thinker_t *th)
         mo->gear = SV_ReadLong();   // killough used in torque simulation
     }
 
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
     if(ver >= 6)
     {
         mo->damage = SV_ReadLong();
@@ -1956,7 +1960,7 @@ static void P_ArchivePlayerHeader(void)
     ph->numInvSlots = NUMINVENTORYSLOTS;
     ph->numArmorTypes = NUMARMOR;
 #endif
-#if __DOOM64TC__
+#if __JDOOM64__
     ph->numArtifacts = NUMARTIFACTS;
 #endif
 
@@ -1970,7 +1974,7 @@ static void P_ArchivePlayerHeader(void)
     SV_WriteLong(ph->numInvSlots);
     SV_WriteLong(ph->numArmorTypes);
 #endif
-#if __DOOM64TC__
+#if __JDOOM64__
     SV_WriteLong(ph->numArtifacts);
 #endif
     playerHeaderOK = true;
@@ -2002,7 +2006,7 @@ static void P_UnArchivePlayerHeader(void)
         playerHeader.numInvSlots = SV_ReadLong();
         playerHeader.numArmorTypes = SV_ReadLong();
 #endif
-#if __DOOM64TC__
+#if __JDOOM64__
         playerHeader.numArtifacts = SV_ReadLong();
 #endif
     }
@@ -2017,7 +2021,7 @@ static void P_UnArchivePlayerHeader(void)
         playerHeader.numPSprites = 2;
         playerHeader.numInvSlots = 33;
         playerHeader.numArmorTypes = 4;
-#elif __JDOOM__
+#elif __JDOOM__ || __JDOOM64__
         playerHeader.numPowers = 6;
         playerHeader.numKeys = 6;
         playerHeader.numFrags = 4; // Why was this only 4?
@@ -3784,7 +3788,7 @@ static int SV_ReadGlow(glow_t *glow)
     return true; // Add this thinker.
 }
 
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
 static void SV_WriteFlicker(fireflicker_t *flicker)
 {
     SV_WriteByte(TC_FLICKER);
@@ -3823,7 +3827,7 @@ static int SV_ReadFlicker(fireflicker_t *flicker)
 }
 # endif
 
-# if __DOOM64TC__
+# if __JDOOM64__
 static void SV_WriteBlink(lightblink_t *blink)
 {
     SV_WriteByte(TC_BLINK);
@@ -4179,7 +4183,7 @@ static void P_UnArchiveThinkers(void)
 
             mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
             mo->onMobj = SV_GetArchiveThing((int) mo->onMobj, &mo->onMobj);
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
             mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
 # endif
 # if __JHERETIC__
@@ -4204,7 +4208,7 @@ static void P_UnArchiveThinkers(void)
 #endif
 }
 
-#ifdef __JDOOM__
+#if __JDOOM__
 static void P_ArchiveBrain(void)
 {
     int     i;
@@ -4456,7 +4460,7 @@ static void P_ArchiveMap(boolean savePlayers)
 #else
     if(IS_SERVER)
     {
-# ifdef __JDOOM__
+# if __JDOOM__
         // Doom saves the brain data, too. (It's a part of the world.)
         P_ArchiveBrain();
 # endif
@@ -4504,7 +4508,7 @@ static void P_UnArchiveMap(void)
 #else
     if(IS_SERVER)
     {
-#ifdef __JDOOM__
+#if __JDOOM__
         // Doom saves the brain data, too. (It's a part of the world.)
         P_UnArchiveBrain();
 #endif
@@ -4546,8 +4550,9 @@ int SV_GetSaveDescription(char *filename, char *str)
     savefile = lzOpen(filename, "rp");
     if(!savefile)
     {
-# if __DOOM64TC__ || __WOLFTC__
-        // we don't support the original game's save format (for obvious reasons).
+# if __JDOOM64__ || __WOLFTC__
+        // We don't support the original game's save format (for obvious
+        // reasons).
         return false;
 # else
         // It might still be a v19 savegame.
@@ -4678,7 +4683,7 @@ int SV_SaveGameWorker(void *ptr)
     // Write the header.
     hdr.magic = MY_SAVE_MAGIC;
     hdr.version = MY_SAVE_VERSION;
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
     hdr.gameMode = gameMode;
 # elif __JHERETIC__
     hdr.gameMode = 0;
@@ -4850,7 +4855,7 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
         return false; // A future version.
     }
 
-# ifdef __JDOOM__
+# if __JDOOM__ || __JDOOM64__
     if(hdr->gameMode != gameMode && !ArgExists("-nosavecheck"))
     {
         Con_Message("SV_LoadGame: savegame not from gameMode %i.\n",
@@ -5070,8 +5075,9 @@ boolean SV_LoadGame(char *filename)
     savefile = lzOpen(filename, "rp");
     if(!savefile)
     {
-# if __DOOM64TC__ || __WOLFTC__
-        // we don't support the original game's save format (for obvious reasons).
+# if __JDOOM64__ || __WOLFTC__
+        // We don't support the original game's save format (for obvious
+        // reasons).
         return false;
 # else
 #  if __JDOOM__

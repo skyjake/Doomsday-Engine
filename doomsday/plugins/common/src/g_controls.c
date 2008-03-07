@@ -42,12 +42,12 @@
 
 #include <math.h> // required for sqrt, fabs
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #  include "p_inventory.h"
@@ -65,7 +65,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 #  define GOTWPN(x)         (plr->weaponOwned[x])
 #  define ISWPN(x)          (plr->readyWeapon == x)
 #endif
@@ -152,7 +152,7 @@ cvar_t  controlCVars[] = {
     {"ctl-run", 0, CVT_INT, &cfg.alwaysRun, 0, 1},
 
     {"ctl-use-dclick", 0, CVT_INT, &cfg.dclickUse, 0, 1},
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     {"ctl-use-immediate", 0, CVT_INT, &cfg.chooseAndUse, 0, 1},
     {"ctl-use-next", 0, CVT_INT, &cfg.inventoryNextOnUnuse, 0, 1},
 #endif
@@ -297,7 +297,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-6 {impulse egg}",
 #endif
 
-#ifndef __JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
         "bindevent key-sqbracketleft invleft",
         "bindevent key-sqbracketright invright",
         "bindevent key-return {impulse useartifact}",
@@ -922,7 +922,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     if(PLAYER_ACTION(pnum, A_JUMP))
         cmd->jump = true;
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     // Determine whether a weapon change should be done.
     if(PLAYER_ACTION(pnum, A_WEAPONCYCLE1))  // Fist/chainsaw.
     {

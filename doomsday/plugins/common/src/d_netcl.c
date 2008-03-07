@@ -42,12 +42,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-# include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #  include "p_inventory.h"
@@ -118,7 +118,7 @@ void NetCl_Read(byte *buf, int len)
     readbuffer += len;
 }
 
-#ifdef __JDOOM__
+#if __JDOOM__
 int NetCl_IsCompatible(int other, int us)
 {
     char                comp[5][5] =        // [other][us]
@@ -159,7 +159,7 @@ void NetCl_UpdateGameState(byte *data)
     gsMonsters = (data[4] & 0x4? true : false);
     gsRespawn = (data[4] & 0x8? true : false);
     gsJumping = (data[4] & 0x10? true : false);
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     gsSkill = (data[4] >> 5);
 #else
     gsSkill = data[5] & 0x7;
@@ -170,7 +170,7 @@ void NetCl_UpdateGameState(byte *data)
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
         return;
 
-#ifdef __JDOOM__
+#if __JDOOM__
     if(!NetCl_IsCompatible(gsGameMode, gameMode))
     {
         // Wrong game mode! This is highly irregular!
@@ -251,7 +251,7 @@ void NetCl_UpdateGameState(byte *data)
             mo->angle = NetCl_ReadShort() << 16; /* $unifiedangles */
             pl->plr->viewZ = mo->pos[VZ];
             // Update floorz and ceilingz.
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
             P_CheckPosition3fv(mo, mo->pos);
 #else
             P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]);
@@ -313,7 +313,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
     {
         b = NetCl_ReadByte();
         pl->playerState = b & 0xf;
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         pl->armorType = b >> 4;
 #endif
 
@@ -362,7 +362,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     {
         b = NetCl_ReadByte();
         pl->playerState = b & 0xf;
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         pl->armorType = b >> 4;
 #endif
         // Set or clear the DEAD flag for this player.
@@ -468,7 +468,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 #else
         for(i = 0; i < NUM_POWER_TYPES; ++i)
         {
-#  if __JDOOM__
+#  if __JDOOM__ || __JDOOM64__
             if(i == PT_IRONFEET || i == PT_STRENGTH)
                 continue;
 #  endif
@@ -489,7 +489,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     if(flags & PSF_KEYS)
     {
         b = NetCl_ReadByte();
-#if __JDOOM__ | __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         for(i = 0; i < NUM_KEY_TYPES; ++i)
         {
             boolean val = (b & (1 << i)) != 0;
@@ -558,7 +558,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
     if(flags & PSF_MAX_AMMO)
     {
-#if __JDOOM__ || __JHERETIC__                   // Hexen has no use for max ammo.
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen has no use for max ammo.
         for(i = 0; i < NUM_AMMO_TYPES; i++)
             pl->maxAmmo[i] = NetCl_ReadShort();
 #endif
@@ -638,7 +638,7 @@ void NetCl_Intermission(byte *data)
     for(i = 0; i < MAXPLAYERS; ++i)
         AM_Stop(i);
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     if(flags & IMF_BEGIN)
     {
         wmInfo.maxKills = NetCl_ReadShort();
@@ -667,7 +667,7 @@ void NetCl_Intermission(byte *data)
     }
 #endif
 
-#ifdef __JHERETIC__
+#if __JHERETIC__
     if(flags & IMF_STATE)
         interState = (int) NetCl_ReadByte();
     if(flags & IMF_TIME)
@@ -733,7 +733,7 @@ void NetCl_Finale(int packetType, byte *data)
     {
         // Start the script.
         FI_Start((char*)script,
-                 flags & FINF_AFTER ? FIMODE_AFTER : flags & FINF_OVERLAY ?
+                 (flags & FINF_AFTER) ? FIMODE_AFTER : (flags & FINF_OVERLAY) ?
                  FIMODE_OVERLAY : FIMODE_BEFORE);
     }
 
@@ -754,7 +754,7 @@ void NetCl_Finale(int packetType, byte *data)
  */
 void NetCl_UpdatePlayerInfo(byte *data)
 {
-    int         num;
+    int                 num;
 
     NetCl_SetReadBuffer(data);
     num = NetCl_ReadByte();
@@ -765,11 +765,11 @@ void NetCl_UpdatePlayerInfo(byte *data)
     if(num == CONSOLEPLAYER)
         SB_SetClassData();
 #endif
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     ST_updateGraphics();
 #endif
 
-#if __JDOOM__ || __JSTRIFE__
+#if __JDOOM__ || __JSTRIFE__ || __JDOOM64__
     Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
                cfg.playerColor[num]);
 #else
@@ -778,10 +778,12 @@ void NetCl_UpdatePlayerInfo(byte *data)
 #endif
 }
 
-// Send CONSOLEPLAYER's settings to the server.
+/**
+ * Send CONSOLEPLAYER's settings to the server.
+ */
 void NetCl_SendPlayerInfo()
 {
-    byte        buffer[10], *ptr = buffer;
+    byte                buffer[10], *ptr = buffer;
 
     if(!IS_CLIENT)
         return;
@@ -802,7 +804,7 @@ void NetCl_SaveGame(void *data)
         return;
 
     SV_SaveClient(*(unsigned int *) data);
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
 #endif
 }
@@ -816,7 +818,7 @@ void NetCl_LoadGame(void *data)
 
     SV_LoadClient(*(unsigned int *) data);
     //  Net_SendPacket(DDSP_RELIABLE, GPT_LOAD, &con, 1);
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], GET_TXT(TXT_CLNETLOAD), false);
 #endif
 }
@@ -837,11 +839,12 @@ void NetCl_Paused(boolean setPause)
  */
 void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 {
-    static byte msg[1024]; // A shared buffer.
-    ushort     *size = (ushort *) msg;
-    byte       *out = msg + 2, *flags, *start = out;
-    ticcmd_t    prev;
-    int         i;
+    static byte         msg[1024]; // A shared buffer.
+
+    int                 i;
+    ushort             *size = (ushort *) msg;
+    byte               *out = msg + 2, *flags, *start = out;
+    ticcmd_t            prev;
 
     // Always compare against the previous command.
     memset(&prev, 0, sizeof(prev));
@@ -857,23 +860,27 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
             *flags |= CMDF_FORWARDMOVE;
             *out++ = cmd->forwardMove;
         }
+
         if(cmd->sideMove != prev.sideMove)
         {
             *flags |= CMDF_SIDEMOVE;
             *out++ = cmd->sideMove;
         }
+
         if(cmd->angle != prev.angle)
         {
             *flags |= CMDF_ANGLE;
             *(unsigned short *) out = SHORT(cmd->angle);
             out += 2;
         }
+
         if(cmd->pitch != prev.pitch)
         {
             *flags |= CMDF_LOOKDIR;
             *(short *) out = SHORT(cmd->pitch);
             out += 2;
         }
+
         if(cmd->actions != prev.actions)
         {
             *flags |= CMDF_BUTTONS;
@@ -935,7 +942,7 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
  */
 void NetCl_CheatRequest(const char *command)
 {
-    char        msg[40];
+    char                msg[40];
 
     // Copy the cheat command into a NULL-terminated buffer.
     memset(msg, 0, sizeof(msg));
@@ -967,9 +974,10 @@ void NetCl_UpdateJumpPower(void *data)
  */
 void NetCl_PlayerActionRequest(player_t *player, int actionType)
 {
-#define MSG_SIZE 28
-    char        msg[MSG_SIZE];
-    int        *ptr = (int*) msg;
+#define MSG_SIZE        (28)
+
+    char                msg[MSG_SIZE];
+    int                *ptr = (int*) msg;
 
     if(!IS_CLIENT)
         return;
@@ -995,4 +1003,6 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType)
     *ptr++ = LONG(player->readyWeapon);
 
     Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, msg, MSG_SIZE);
+
+#undef MSG_SIZE
 }

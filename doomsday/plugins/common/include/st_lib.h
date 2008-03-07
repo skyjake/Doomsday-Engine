@@ -22,9 +22,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * The status bar widget code.
- * Compiles for jDoom/jHeretic/jHexen
+/**
+ * st_lib.h: The status bar widget code.
+ *
+ * Compiles for jDoom/jHeretic/jHexen/jDoom64
  */
 
 #ifndef __COMMON_STLIB__
@@ -39,10 +40,10 @@
 #define FG 0
 
 // Patch used for '-' in the status bar
-#if __DOOM64TC__
-# define MINUSPATCH "FONTB046"
-#elif __JDOOM__
+#if __JDOOM__
 # define MINUSPATCH "STTMINUS"
+#elif __JDOOM64__
+# define MINUSPATCH "FONTB046"
 #else
 # define MINUSPATCH "FONTB13"
 #endif

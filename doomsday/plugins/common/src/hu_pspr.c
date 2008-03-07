@@ -40,12 +40,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -111,13 +111,13 @@ static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
 float HU_PSpriteYOffset(player_t *pl)
 {
     int         viewWindowHeight = Get(DD_VIEWWINDOW_HEIGHT);
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     float       offy = (cfg.plrViewHeight - 41) * 2;
 #else
     float       offy = PSpriteSY[pl->class][pl->readyWeapon];
 #endif
 
-#if !__DOOM64TC__
+#if !__JDOOM64__
     // If the status bar is visible, the sprite is moved up a bit.
     if(viewWindowHeight < SCREENHEIGHT)
     {
@@ -159,7 +159,7 @@ void HU_UpdatePlayerSprite(int pnum)
         ddpsp->light = 1;
         ddpsp->alpha = 1;
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         if((pl->powers[PT_INVISIBILITY] > 4 * 32) ||
            (pl->powers[PT_INVISIBILITY] & 8))
         {
@@ -200,7 +200,7 @@ void HU_UpdatePlayerSprite(int pnum)
 #if !__JSTRIFE__
         // Needs fullbright?
         if((pl->powers[PT_INFRARED] > 4 * 32) || (pl->powers[PT_INFRARED] & 8)
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
            || (pl->powers[PT_INVULNERABILITY] > 30)
 # endif
            )

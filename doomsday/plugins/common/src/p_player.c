@@ -44,12 +44,12 @@
 
 #include "dd_share.h"
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -374,18 +374,17 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
 {
     weapontype_t       *list, w = 0;
     int                 lvl, i;
-#if __DOOM64TC__
-    static weapontype_t wp_list[] = {
-        WT_FIRST, WT_SECOND, WT_THIRD, WT_NINETH, WT_FOURTH,
-        WT_FIFTH, WT_SIXTH, WT_SEVENTH, WT_EIGHTH, WT_TENTH
-    };
-
-#elif __JDOOM__
+#if __JDOOM__
     static weapontype_t wp_list[] = {
         WT_FIRST, WT_SECOND, WT_THIRD, WT_NINETH, WT_FOURTH,
         WT_FIFTH, WT_SIXTH, WT_SEVENTH, WT_EIGHTH
     };
 
+#elif __JDOOM64__
+    static weapontype_t wp_list[] = {
+        WT_FIRST, WT_SECOND, WT_THIRD, WT_NINETH, WT_FOURTH,
+        WT_FIFTH, WT_SIXTH, WT_SEVENTH, WT_EIGHTH, WT_TENTH
+    };
 #elif __JHERETIC__
     static weapontype_t wp_list[] = {
         WT_FIRST, WT_SECOND, WT_THIRD, WT_FOURTH, WT_FIFTH,
@@ -531,7 +530,7 @@ int P_CameraXYMovement(mobj_t *mo)
 {
     if(!P_IsCamera(mo))
         return false;
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     if(mo->flags & MF_NOCLIP ||
        // This is a very rough check! Sometimes you get stuck in things.
        P_CheckPosition3f(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY] + mo->mom[MY], mo->pos[VZ]))
@@ -546,7 +545,7 @@ int P_CameraXYMovement(mobj_t *mo)
         mo->floorZ = tmFloorZ;
         mo->ceilingZ = tmCeilingZ;
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     }
 #endif
 
@@ -863,8 +862,8 @@ DEFCC(CCmdSpawnMobj)
         mo->angle = ((int) (strtod(argv[5], 0) / 360 * FRACUNIT)) << 16;
     }
 
-#if __DOOM64TC__
-    // d64tc > kaiser - another cheesy hack!!!
+#if __JDOOM64__
+    // jd64 > kaiser - another cheesy hack!!!
     if(mo->type == MT_DART || mo->type == MT_RDART)
     {
         S_StartSound(sfx_skeswg, mo); // We got darts! spawn skeswg sound!

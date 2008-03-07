@@ -32,15 +32,15 @@
 #include <string.h>
 #include <math.h>
 
-#if  __DOOM64TC__
-#  include <stdlib.h>
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include <stdlib.h>
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include <stdlib.h>
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include <stdlib.h>
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include <stdio.h>
 #  include "jheretic.h"
@@ -82,18 +82,18 @@
 
 // TYPES -------------------------------------------------------------------
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 struct missileinfo_s {
     mobjtype_t  type;
     float       speed[2];
 }
 MonsterMissileInfo[] =
 {
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     {MT_BRUISERSHOT, {15, 20}},
     {MT_HEADSHOT, {10, 20}},
     {MT_TROOPSHOT, {10, 20}},
-# if __DOOM64TC__
+# if __JDOOM64__
     {MT_BRUISERSHOTRED, {15, 20}},
     {MT_NTROSHOT, {20, 40}},
 # endif
@@ -161,12 +161,8 @@ int gameMap;
 int nextMap; // If non zero this will be the next map.
 int prevMap;
 
-#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
 boolean respawnMonsters;
-#endif
-
-#ifndef __JDOOM__
-int     prevMap;
 #endif
 
 boolean paused;
@@ -185,14 +181,14 @@ boolean singledemo; // Quit after playing a demo from cmdline.
 
 boolean precache = true; // If @c true, load all graphics at start.
 
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
 wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
 int saveGameSlot;
 char saveDescription[32];
 
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
 mobj_t *bodyQueue[BODYQUEUESIZE];
 int bodyQueueSlot;
 #endif
@@ -270,7 +266,7 @@ cvar_t gamestatusCVars[] =
    {"player-armor", READONLYCVAR, CVT_INT, &gsvArmor, 0, 0},
    {"player-weapon-current", READONLYCVAR, CVT_INT, &gsvCurrentWeapon, 0, 0},
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
    // Ammo
    {"player-ammo-bullets", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CLIP], 0, 0},
    {"player-ammo-shells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_SHELL], 0, 0},
@@ -922,7 +918,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
             break;
 
         case GS_INTERMISSION:
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
             WI_Ticker();
 #else
             IN_Ticker();
@@ -983,7 +979,7 @@ void G_InitPlayer(int player)
  */
 void G_PlayerExitMap(int player)
 {
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     int         i;
 #endif
 #if __JHEXEN__ || __JSTRIFE__
@@ -1012,7 +1008,7 @@ void G_PlayerExitMap(int player)
     flightPower = p->powers[PT_FLIGHT];
 #endif
 
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     // Strip flight artifacts?
     if(!deathmatch && newCluster) // Entering new cluster
     {
@@ -1033,7 +1029,7 @@ void G_PlayerExitMap(int player)
 #endif
 
     // Remove their keys.
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     p->update |= PSF_KEYS;
     memset(p->keys, 0, sizeof(p->keys));
 #else
@@ -1133,7 +1129,7 @@ void G_PlayerReborn(int player)
     int             frags[MAXPLAYERS];
     int             killcount, itemcount, secretcount;
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     int             i;
 #endif
 #if __JHERETIC__
@@ -1184,7 +1180,7 @@ void G_PlayerReborn(int player)
     p->playerState = PST_LIVE;
     p->health = MAXHEALTH;
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     p->readyWeapon = p->pendingWeapon = WT_SECOND;
     p->weaponOwned[WT_FIRST] = true;
     p->weaponOwned[WT_SECOND] = true;
@@ -1213,13 +1209,13 @@ void G_PlayerReborn(int player)
     localQuakeHappening[player] = false;
 #endif
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Reset maxammo.
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
         p->maxAmmo[i] = maxAmmo[i];
 #endif
 
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     P_InventoryResetCursor(p);
     if(p == &players[CONSOLEPLAYER])
     {
@@ -1242,7 +1238,7 @@ void G_PlayerReborn(int player)
     p->plr->flags &= ~DDPF_DEAD;
 }
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
 void G_QueueBody(mobj_t *body)
 {
     // Flush an old corpse if needed.
@@ -1344,7 +1340,7 @@ void G_DoReborn(int playernum)
             P_SpawnPlayer(assigned, playernum);
             foundSpot = true;
         }
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         else
         {
             Con_Printf("- force spawning at %i.\n", p->startSpot);
@@ -1494,12 +1490,10 @@ void G_LeaveLevel(int map, int position, boolean secret)
 #else
     secretExit = secret;
   #if __JDOOM__
-  # if !__DOOM64TC__
       // IF NO WOLF3D LEVELS, NO SECRET EXIT!
       if(secret && (gameMode == commercial) &&
          W_CheckNumForName("map31") < 0)
           secretExit = false;
-  # endif
   #endif
 #endif
 
@@ -1511,9 +1505,8 @@ void G_LeaveLevel(int map, int position, boolean secret)
  */
 boolean G_IfVictory(void)
 {
-#if __DOOM64TC__
-    if((gameEpisode == 1 && gameMap == 30) ||
-       (gameEpisode == 2 && gameMap == 7))
+#if __JDOOM64__
+    if(gameMap == 30)
     {
         G_SetGameAction(GA_VICTORY);
         return true;
@@ -1598,8 +1591,8 @@ void G_DoCompleted(void)
     }
 #endif
 
-#if __JDOOM__
-# if !__DOOM64TC__
+#if __JDOOM__ || __JDOOM64__
+# if !__JDOOM64__
     if(gameMode != commercial && gameMap == 9)
     {
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -1610,49 +1603,31 @@ void G_DoCompleted(void)
     wmInfo.didSecret = players[CONSOLEPLAYER].didSecret;
     wmInfo.last = gameMap - 1;
 
-# if __DOOM64TC__
+# if __JDOOM64__
     if(secretExit)
     {
-        if(gameEpisode = 1)
+        switch(gameMap)
         {
-            switch(gameMap)
-            {
-            case 15: wmInfo.next = 30; break;
-            case 31: wmInfo.next = 34; break;
-            case 9:  wmInfo.next = 33; break;
-            case 1:  wmInfo.next = 31; break;
-            case 20: wmInfo.next = 32; break;
-            case 38: wmInfo.next = 0; break;
-            }
-        }
-        else // episode 2
-        {
-            if(gameMap == 3)
-                wmInfo.next = 7;
+        case 15: wmInfo.next = 30; break;
+        case 31: wmInfo.next = 34; break;
+        case 9:  wmInfo.next = 33; break;
+        case 1:  wmInfo.next = 31; break;
+        case 20: wmInfo.next = 32; break;
+        case 38: wmInfo.next = 0; break;
         }
     }
     else
     {
-        if(gameEpisode == 1)
+        switch(gameMap)
         {
-            switch(gameMap)
-            {
-            case 31: wmInfo.next = 15; break;
-            case 35: wmInfo.next = 15; break;
-            case 33: wmInfo.next = 20; break;
-            case 34: wmInfo.next = 9; break;
-            case 32: wmInfo.next = 37; break;
-            case 37: wmInfo.next = 35; break;
-            case 38: wmInfo.next = 0; break;
-            default: wmInfo.next = gameMap;
-            }
-        }
-        else
-        {
-            if(gameMap == 8)
-                wmInfo.next = 3;
-            else
-                wmInfo.next = gameMap;
+        case 31: wmInfo.next = 15; break;
+        case 35: wmInfo.next = 15; break;
+        case 33: wmInfo.next = 20; break;
+        case 34: wmInfo.next = 9; break;
+        case 32: wmInfo.next = 37; break;
+        case 37: wmInfo.next = 35; break;
+        case 38: wmInfo.next = 0; break;
+        default: wmInfo.next = gameMap;
         }
     }
 # else
@@ -1737,14 +1712,14 @@ void G_DoCompleted(void)
 #endif
     G_ChangeGameState(GS_INTERMISSION);
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     WI_Start(&wmInfo);
 #else
     IN_Start();
 #endif
 }
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
 void G_PrepareWIData(void)
 {
     int             i;
@@ -1752,7 +1727,9 @@ void G_PrepareWIData(void)
     char            levid[8];
     wbstartstruct_t *info = &wmInfo;
 
+#if !__JDOOM64__
     info->epsd = gameEpisode - 1;
+#endif
     info->maxFrags = 0;
 
     P_GetMapLumpName(gameEpisode, gameMap, levid);
@@ -1783,7 +1760,7 @@ void G_WorldDone(void)
 {
     G_SetGameAction(GA_WORLDDONE);
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     if(secretExit)
         players[CONSOLEPLAYER].didSecret = true;
 #endif
@@ -1792,7 +1769,7 @@ void G_WorldDone(void)
 void G_DoWorldDone(void)
 {
     G_ChangeGameState(GS_LEVEL);
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     gameMap = wmInfo.next + 1;
 #endif
     G_DoLoadLevel();
@@ -1922,7 +1899,7 @@ void G_DeferedInitNew(skillmode_t skill, int episode, int map)
 void G_DoNewGame(void)
 {
     G_StopDemo();
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(!IS_NETGAME)
     {
         deathmatch = false;
@@ -1942,7 +1919,7 @@ void G_DoNewGame(void)
 void G_InitNew(skillmode_t skill, int episode, int map)
 {
     int                 i;
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     int                 speed;
 #endif
 
@@ -1964,18 +1941,18 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 
     M_ResetRandom();
 
-#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
     respawnMonsters = respawnParm;
 #endif
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Is respawning enabled at all in nightmare skill?
     if(skill == SM_NIGHTMARE)
         respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
 //// \kludge Doom/Heretic Fast Monters/Missiles
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     // Fast monsters?
     if(fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE))
     {
@@ -1998,8 +1975,8 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 #endif
 
     // Fast missiles?
-#if __JDOOM__ || __JHERETIC__
-#   if __JDOOM__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+#   if __JDOOM__ || __JDOOM64__
     speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
 #   else
     speed = skill == SM_NIGHTMARE;
@@ -2057,8 +2034,8 @@ int G_GetLevelNumber(int episode, int map)
 {
 #if __JHEXEN__ || __JSTRIFE__
     return P_TranslateMap(map);
-#elif __DOOM64TC__
-    return (episode == 2? 39 + map : map); //episode1 has 40 maps
+#elif __JDOOM64__
+    return map;
 #else
   #if __JDOOM__
     if(gameMode == commercial)
@@ -2076,8 +2053,8 @@ int G_GetLevelNumber(int episode, int map)
  */
 void P_GetMapLumpName(int episode, int map, char *lumpName)
 {
-#if __DOOM64TC__
-    sprintf(lumpName, "E%iM%02i", episode, map);
+#if __JDOOM64__
+    sprintf(lumpName, "MAP%02i", map);
 #elif __JDOOM__
     if(gameMode == commercial)
         sprintf(lumpName, "MAP%02i", map);
@@ -2121,27 +2098,11 @@ boolean G_ValidateMap(int *episode, int *map)
         ok = false;
     }
 
-#if __DOOM64TC__
-    if(*episode > 2)
+#if __JDOOM64__
+    if(*map > 99)
     {
-        *episode = 2;
+        *map = 99;
         ok = false;
-    }
-    if(*episode == 2)
-    {
-        if(*map > 7)
-        {
-            *map = 7;
-            ok = false;
-        }
-    }
-    else
-    {
-        if(*map > 40)
-        {
-            *map = 40;
-            ok = false;
-        }
     }
 #elif __JDOOM__
     if(gameMode == shareware)

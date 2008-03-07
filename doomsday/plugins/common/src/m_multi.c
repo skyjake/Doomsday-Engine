@@ -49,12 +49,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -235,13 +235,39 @@ menuitem_t GameSetupItems2[] =  // for Doom 2
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
 };
 
+#  elif __JDOOM64__
+
+#    define NUM_GAMESETUP_ITEMS     19
+
+menuitem_t GameSetupItems1[] =
+{
+    {ITT_LRFUNC, 0, "LEVEL :", SCGameSetupMission, 0},
+    {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
+    {ITT_LRFUNC, 0, "MODE :", SCGameSetupDeathmatch, 0},
+    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL,  &cfg.netNoMonsters },
+    {ITT_EFUNC, 0, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
+    {ITT_EFUNC, 0, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
+    {ITT_EFUNC, 0, "ALLOW BFG AIMING :", SCGameSetupFunc, 0, NULL, &cfg.netBFGFreeLook},
+    {ITT_EFUNC, 0, "NO COOP DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noCoopDamage },
+    {ITT_EFUNC, 0, "NO COOP WEAPONS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopWeapons },
+    {ITT_EFUNC, 0, "NO COOP OBJECTS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopAnything },
+    {ITT_EFUNC, 0, "COOP ITEMS RESPAWN :", SCGameSetupFunc, 0, NULL, &cfg.coopRespawnItems },
+    {ITT_EFUNC, 0, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
+    {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
+    {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
+    {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
+    {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
+    {ITT_LRFUNC, 0, "GRAVITY MOD:", SCGameSetupGravity, 0},
+    {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
+};
+
 #  endif
 
 #endif
 
 menu_t  GameSetupMenu = {
     0,
-#  if __JDOOM__
+#  if __JDOOM__ || __JDOOM64__
     90, 54,
 #  elif __JHERETIC__
     74, 64,
@@ -340,7 +366,7 @@ void DrawGameSetupMenu(void)
 {
     char   *boolText[2] = { "NO", "YES" }, buf[50];
     char   *skillText[5] = { "BABY", "EASY", "MEDIUM", "HARD", "NIGHTMARE" };
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     //char   *freeLookText[3] = { "NO", "NOT BFG", "ALL" };
     char   *dmText[3] = { "COOPERATIVE", "DEATHMATCH 1", "DEATHMATCH 2" };
 #else
@@ -359,12 +385,10 @@ void DrawGameSetupMenu(void)
 
     idx = 0;
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 
 # if __JDOOM__
-#  if !__DOOM64TC__
     if(gameMode != commercial)
-#  endif
 # endif
     {
         sprintf(buf, "%i", cfg.netEpisode);
@@ -378,7 +402,7 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, boolText[cfg.netRespawn]);
     M_WriteMenuText(menu, idx++, boolText[cfg.netJumping]);
 
-# if __JDOOM__
+# if __JDOOM__ || __JDOOM64__
     M_WriteMenuText(menu, idx++, boolText[cfg.netBFGFreeLook]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopDamage]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopWeapons]);
@@ -386,7 +410,7 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, boolText[cfg.coopRespawnItems]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noNetBFG]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noTeamDamage]);
-# endif                        // __JDOOM__
+# endif                        // __JDOOM__ || __JDOOM64__
 #elif __JHEXEN__ || __JSTRIFE__
 
     sprintf(buf, "%i", cfg.netMap);
@@ -468,9 +492,9 @@ void DrawPlayerSetupMenu(void)
         GL_SetSprite(sprInfo.lump);
 
     GL_DrawRect(162 - sprInfo.offset,
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
                 menu->y + 70 - sprInfo.topOffset,
-#elif defined __JHERETIC__
+#elif __JHERETIC__
                 menu->y + 80 - sprInfo.topOffset,
 #else
                 menu->y + 90 - sprInfo.topOffset,
@@ -481,9 +505,9 @@ void DrawPlayerSetupMenu(void)
     if(plrColor == numColors)
     {
         M_WriteText2(184,
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
                       menu->y + 49,
-#elif defined __JHERETIC__
+#elif __JHERETIC__
                       menu->y + 65,
 #else
                       menu->y + 64,
@@ -498,8 +522,7 @@ void SCEnterMultiplayerMenu(int option, void *data)
     int     count;
 
     // Choose the correct items for the Game Setup menu.
-#ifdef __JDOOM__
-# if !__DOOM64TC__
+#if __JDOOM__
     if(gameMode == commercial)
     {
         GameSetupMenu.items = GameSetupItems2;
@@ -507,7 +530,6 @@ void SCEnterMultiplayerMenu(int option, void *data)
             NUM_GAMESETUP_ITEMS - 1;
     }
     else
-# endif
 #endif
     {
         GameSetupMenu.items = GameSetupItems1;
@@ -553,7 +575,7 @@ void SCEnterJoinMenu(int option, void *data)
 void SCEnterGameSetup(int option, void *data)
 {
     // See to it that the episode and mission numbers are correct.
-#if __DOOM64TC__
+#if __JDOOM64__
     if(cfg.netEpisode > 2)
         cfg.netEpisode = 2;
     if(cfg.netEpisode == 1)
@@ -618,7 +640,7 @@ void SCGameSetupDeathmatch(int option, void *data)
 {
     if(option == RIGHT_DIR)
     {
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         if(cfg.netDeathmatch < 2)
 #else
         if(cfg.netDeathmatch < 1)
@@ -633,7 +655,7 @@ void SCGameSetupDeathmatch(int option, void *data)
 
 void SCGameSetupEpisode(int option, void *data)
 {
-#if __DOOM64TC__
+#if __JDOOM64__
     if(option == RIGHT_DIR)
     {
         if(cfg.netEpisode < 2)
@@ -681,8 +703,8 @@ void SCGameSetupMission(int option, void *data)
 {
     if(option == RIGHT_DIR)
     {
-#if __DOOM64TC__
-        if(cfg.netMap < (cfg.netEpisode == 1? 39 : 7))
+#if __JDOOM64__
+        if(cfg.netMap < 39)
             cfg.netMap++;
 #elif __JDOOM__
         if(cfg.netMap < (gameMode == commercial ? 32 : 9))

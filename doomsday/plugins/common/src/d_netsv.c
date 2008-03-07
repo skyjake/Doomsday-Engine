@@ -44,12 +44,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -70,7 +70,7 @@
 
 #if __JHEXEN__ || __JSTRIFE__
 #  define SOUND_COUNTDOWN       SFX_PICKUP_KEY
-#elif __JDOOM__
+#elif __JDOOM__ || __JDOOM64__
 #  define SOUND_COUNTDOWN       sfx_getpow
 #elif __JHERETIC__
 #  define SOUND_COUNTDOWN       sfx_keyup
@@ -105,7 +105,7 @@ typedef enum cyclemode_s {
 
 void    R_SetAllDoomsdayFlags();
 
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 void    SB_ChangePlayerClass(player_t *player, int newclass);
 #endif
 
@@ -139,7 +139,7 @@ static int cycleIndex;
 static int cycleCounter = -1, cycleMode = CYCLE_IDLE;
 static int oldPals[MAXPLAYERS];
 
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 static int oldClasses[MAXPLAYERS];
 #endif
 
@@ -291,7 +291,7 @@ void NetSv_Ticker(void)
         plr = &players[i];
 
         red = plr->damageCount;
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         if(plr->powers[PT_STRENGTH])
         {
             int         bz;
@@ -319,7 +319,7 @@ void NetSv_Ticker(void)
             }
             palette += STARTBONUSPALS;
         }
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
                 plr->powers[PT_IRONFEET] & 8)
             palette = 13;       //RADIATIONPAL;
@@ -353,7 +353,7 @@ void NetSv_Ticker(void)
         plr->plr->filter = R_GetFilterColor(palette);
     }
 
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     // Keep track of player class changes (fighter, cleric, mage, pig).
     // Notify clients accordingly. This is mostly just FYI (it'll update
     // pl->class on the clientside).
@@ -419,7 +419,9 @@ void NetSv_CycleToMapNum(int map)
     char        tmp[3], cmd[80];
 
     sprintf(tmp, "%02i", map);
-#if __JDOOM__
+#if __JDOOM64__
+    sprintf(cmd, "setmap 1 %i", map);
+#elif __JDOOM__
     if(gameMode == commercial)
         sprintf(cmd, "setmap 1 %i", map);
     else
@@ -533,7 +535,13 @@ int NetSv_ScanCycle(int index, maprule_t * rules)
                 {
                     // The differences in map numbering make this harder
                     // than it should be.
-#if __JDOOM__
+#if __JDOOM64__
+                    sprintf(lump, "MAP%i%i", episode =
+                            tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
+                            mission =
+                            tmp[1] ==
+                            '*' ? M_Random() % 10 : tmp[1] - '0');
+#elif __JDOOM__
                     if(gameMode == commercial)
                     {
                         sprintf(lump, "MAP%i%i", episode =
@@ -763,7 +771,7 @@ void NetSv_Intermission(int flags, int state, int time)
 
     *ptr++ = flags;
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     if(flags & IMF_BEGIN)
     {
         // Only include the necessary information.
@@ -876,7 +884,7 @@ void NetSv_SendGameState(int flags, int to)
         // The contents of the game state package are a bit messy
         // due to compatibility with older versions.
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         ptr[0] = gameMode;
 #else
         ptr[0] = 0;
@@ -892,12 +900,12 @@ void NetSv_SendGameState(int flags, int to)
             | 0
 #endif
             | (cfg.jumpEnabled? 0x10 : 0)
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
             | (gameSkill << 5);
 #else
         ;
 #endif
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         ptr[5] = 0;
 
 #else
@@ -961,7 +969,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
     if(flags & PSF2_STATE)
     {
         *ptr++ = pl->playerState |
-#if __JDOOM__ || __JHERETIC__               // Hexen doesn't have armortype.
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen doesn't have armortype.
             (pl->armorType << 4);
 #else
             0;
@@ -997,7 +1005,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     if(flags & PSF_STATE)
     {
         *ptr++ = pl->playerState |
-#if __JDOOM__ || __JHERETIC__                   // Hexen doesn't have armortype.
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen doesn't have armortype.
             (pl->armorType << 4);
 #else
             0;
@@ -1039,7 +1047,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 #else
         for(i = 0, *ptr = 0; i < NUM_POWER_TYPES; ++i)
         {
-#  ifdef __JDOOM__
+#  if __JDOOM__ || __JDOOM64__
             if(i == PT_IRONFEET || i == PT_STRENGTH)
                 continue;
 #  endif
@@ -1057,7 +1065,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 #else
         for(i = 0; i < NUM_POWER_TYPES; ++i)
         {
-#  if __JDOOM__
+#  if __JDOOM__ || __JDOOM64__
             if(i == PT_IRONFEET || i == PT_STRENGTH)
                 continue;
 #  endif
@@ -1071,7 +1079,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     {
         *ptr = 0;
 
-#if __JDOOM__ | __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         for(i = 0; i < NUM_KEY_TYPES; ++i)
             if(pl->keys[i])
                 *ptr |= 1 << i;
@@ -1114,7 +1122,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 
     if(flags & PSF_MAX_AMMO)
     {
-#if __JDOOM__ || __JHERETIC__               // Hexen has no use for max ammo.
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen has no use for max ammo.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
             WRITE_SHORT(ptr, pl->maxAmmo[i]);
 #endif
@@ -1127,7 +1135,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
         *ptr++ = pl->secretCount;
     }
 
-    if(flags & PSF_PENDING_WEAPON || flags & PSF_READY_WEAPON)
+    if((flags & PSF_PENDING_WEAPON) || (flags & PSF_READY_WEAPON))
     {
         // These two will be in the same byte.
         fl = 0;
@@ -1249,7 +1257,7 @@ int NetSv_GetFrags(int pl)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         frags += players[pl].frags[i] * (i == pl ? -1 : 1);
 #else
         frags += players[pl].frags[i];
@@ -1264,7 +1272,7 @@ int NetSv_GetFrags(int pl)
  */
 void NetSv_KillMessage(player_t *killer, player_t *fragged, boolean stomping)
 {
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     char        buf[160], *in, tmp[2];
 
     if(!cfg.killMessages || !deathmatch)

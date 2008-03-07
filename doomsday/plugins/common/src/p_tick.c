@@ -39,12 +39,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -177,11 +177,11 @@ void P_DoTick(void)
     P_RunThinkers();
     P_UpdateSpecials();
 
-#if __DOOM64TC__
+#if __JDOOM64__
     P_ThunderSector();
 #endif
 
-#if __JDOOM__ || __JSTRIFE__
+#if __JDOOM__ || __JDOOM64__ || __JSTRIFE__
     P_CheckRespawnQueue();
 #elif __JHERETIC__
     P_AmbientSound();

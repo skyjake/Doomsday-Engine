@@ -46,12 +46,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -81,7 +81,7 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-#if __DOOM64TC__
+#if __JDOOM64__
 static void CheckMissileImpact(mobj_t *mobj);
 #endif
 
@@ -213,7 +213,7 @@ boolean PIT_StompThing(mobj_t *mo, void *data)
         return true;
     }
 
-#if __DOOM64TC__ || __WOLFTC__
+#if __JDOOM64__ || __WOLFTC__
     // monsters don't stomp things
     if(!tmThing->player)
         return false;
@@ -719,7 +719,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 #endif
 
         // Don't hit same species as originator.
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         if(tmThing->target &&
            (tmThing->target->type == thing->type ||
            (tmThing->target->type == MT_KNIGHT && thing->type == MT_BRUISER) ||
@@ -795,7 +795,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
             damage = tmThing->damage;
 
         damage *= (P_Random() % 8) + 1;
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         P_DamageMobj(thing, tmThing, tmThing->target, damage);
 #else
         if(damage)
@@ -966,11 +966,11 @@ boolean PIT_CheckLine(linedef_t *ld, void *data)
         }
     }
 
-#if __DOOM64TC__
+#if __JDOOM64__
     if((tmThing->flags & MF_MISSILE))
     {
-        if(xline->flags & ML_BLOCKALL)  // explicitly blocking everything
-            return tmUnstuck && !untouched(ld);  // killough $unstuck: allow escape
+        if(xline->flags & ML_BLOCKALL) // Explicitly blocking everything.
+            return tmUnstuck && !untouched(ld);  // $unstuck: allow escape.
     }
 #endif
 
@@ -1295,7 +1295,7 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
         }
 #endif
 
-#if __DOOM64TC__
+#if __JDOOM64__
         //// \fixme DJS - FIXME! Mother demon fire attack.
         if(!(thing->flags & MF_TELEPORT) /*&& thing->type != MT_SPAWNFIRE*/
             && tmFloorZ - thing->pos[VZ] > 24)
@@ -1476,8 +1476,8 @@ boolean PTR_ShootTraverse(intercept_t *in)
         if(xline->special)
             P_ActivateLine(li, shootThing, 0, SPAC_IMPACT);
 
-#if __DOOM64TC__
-        if(xline->flags & ML_BLOCKALL) // d64tc
+#if __JDOOM64__
+        if(xline->flags & ML_BLOCKALL) // jd64
             goto hitline;
 #endif
 
@@ -1674,7 +1674,7 @@ if(lineWasHit)
         {
             if(!(in->d.mo->flags & MF_NOBLOOD))
             {
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
                 P_SpawnBlood(pos[VX], pos[VY], pos[VZ], lineAttackDamage);
 #elif __JHEXEN__
                 if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
@@ -1686,7 +1686,7 @@ if(lineWasHit)
                     P_SpawnBloodSplatter(pos[VX], pos[VY], pos[VZ], in->d.mo);
 #endif
             }
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
             else
                 P_SpawnPuff(pos[VX], pos[VY], pos[VZ]);
 #endif
@@ -1779,7 +1779,7 @@ boolean PTR_AimTraverse(intercept_t *in)
         return true; // Can't auto-aim at pods.
 #endif
 
-#if __JDOOM__ || __JHEXEN__
+#if __JDOOM__ || __JHEXEN__ || __JDOOM64__
     if(th->player && IS_NETGAME && !deathmatch)
         return true; // Don't aim at fellow co-op players.
 #endif
@@ -1857,7 +1857,7 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
     else
         shootZ += (t1->height / 2) + 8;
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     topSlope = 60;
     bottomSlope = -topSlope;
 #else
@@ -1965,7 +1965,7 @@ boolean PIT_RadiusAttack(mobj_t *thing, void *data)
     if(thing->type == MT_MINOTAUR || thing->type == MT_SORCERER1 ||
        thing->type == MT_SORCERER2)
         return true;
-#elif __JDOOM__
+#elif __JDOOM__ || __JDOOM64__
     if(thing->type == MT_CYBORG || thing->type == MT_SPIDER)
         return true;
 #else
@@ -2085,14 +2085,14 @@ boolean PTR_UseTraverse(intercept_t *in)
                               in->d.lineDef))
         side = 1;
 
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     if(side == 1)
         return false;       // don't use back side
 #endif
 
     P_ActivateLine(in->d.lineDef, useThing, side, SPAC_USE);
 
-#if !__JHEXEN__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
     // Can use multiple line specials in a row with the PassThru flag.
     if(xline->flags & ML_PASSUSE)
         return true;
@@ -2265,8 +2265,8 @@ boolean PTR_SlideTraverse(intercept_t *in)
         goto isblocking;
     }
 
-#if __DOOM64TC__
-    if(xline->flags & ML_BLOCKALL) // d64tc
+#if __JDOOM64__
+    if(xline->flags & ML_BLOCKALL) // jd64
         goto isblocking;
 #endif
 
@@ -2410,7 +2410,7 @@ void P_SlideMove(mobj_t *mo)
         newPos[VY] = mo->mom[MY] * bestSlideFrac;
         newPos[VZ] = DDMAXFLOAT; // Just initialize with *something*.
 
-        // killough $dropoff_fix
+        // $dropoff_fix
 #if __JHEXEN__
         if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY]))
             goto stairstep;
@@ -2437,7 +2437,7 @@ void P_SlideMove(mobj_t *mo)
     mo->mom[MX] = tmMove[MX];
     mo->mom[MY] = tmMove[MY];
 
-    // killough $dropoff_fix
+    // $dropoff_fix
 #if __JHEXEN__
     if(!P_TryMove(mo, mo->pos[VX] + tmMove[MX], mo->pos[VY] + tmMove[MY]))
 #else
@@ -2475,7 +2475,7 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
         return true; // Keep checking...
 
     // Crunch bodies to giblets.
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     if(thing->health <= 0 && !(thing->flags & MF_NOBLOOD))
 #elif __JHEXEN__
     if(thing->health <= 0 && (thing->flags & MF_CORPSE))
@@ -2499,7 +2499,7 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
             }
         }
 #else
-# if __DOOM64TC__
+# if __JDOOM64__
         //// \fixme kaiser - the def file is too fucked up..
         //// DJS - FIXME!
         P_MobjChangeState(thing, S_HEADCANDLES + 3);
@@ -2532,7 +2532,7 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
     if(crushChange && !(levelTime & 3))
     {
         P_DamageMobj(thing, NULL, NULL, 10);
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         if(!(thing->flags & MF_NOBLOOD))
 #elif __JHEXEN__
         if(!(thing->flags & MF_NOBLOOD) &&
@@ -2600,7 +2600,7 @@ boolean P_TestMobjLocation(mobj_t *mobj)
 }
 #endif
 
-#if __DOOM64TC__ || __JHERETIC__
+#if __JDOOM64__ || __JHERETIC__
 static void CheckMissileImpact(mobj_t *mobj)
 {
     linedef_t     *ld;

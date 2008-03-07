@@ -48,12 +48,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -151,7 +151,7 @@ extern int actualLevelTime;
 boolean shiftdown = false;
 boolean chatOn;
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 
 char   *player_names[4];
 int     player_names_idx[] = {
@@ -731,6 +731,8 @@ static void sendMessage(char *msg)
         S_LocalSound(sfx_radio, 0);
     else
         S_LocalSound(sfx_tink, 0);
+#elif __JDOOM64__
+    S_LocalSound(sfx_radio, 0);
 #endif
 }
 

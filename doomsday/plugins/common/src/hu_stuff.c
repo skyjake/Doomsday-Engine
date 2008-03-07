@@ -50,12 +50,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -69,7 +69,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
 // Counter Cheat flags.
 #define CCH_KILLS               0x1
 #define CCH_ITEMS               0x2
@@ -96,7 +96,7 @@ dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 
 int typeInTime = 0;
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
  // Name graphics of each level (centered)
 dpatch_t *levelNamePatches;
 #endif
@@ -104,7 +104,7 @@ dpatch_t *levelNamePatches;
 boolean huShowAllFrags = false;
 
 cvar_t hudCVars[] = {
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
     {"map-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63},
     {"map-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1},
 #endif
@@ -137,11 +137,11 @@ void Hu_LoadData(void)
 {
     int                 i, j;
     char                buffer[9];
-#ifndef __JDOOM__
+#if __JHERETIC__ || __JHEXEN__
     dpatch_t            tmp;
 #endif
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     char                name[9];
 #endif
 
@@ -154,7 +154,7 @@ void Hu_LoadData(void)
     for(i = 0; i < sizeof(x_idx) / sizeof(int); ++i) \
         x[i] = x_idx[i] == -1? "NEWLEVEL" : GET_TXT(x_idx[i]);
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     // load the heads-up fonts
     j = HU_FONTSTART;
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
@@ -181,14 +181,14 @@ void Hu_LoadData(void)
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
 
     // load the map name patches
-# if __DOOM64TC__
-    levelNamePatches = Z_Malloc(sizeof(dpatch_t) * (39+7), PU_STATIC, 0);
-    for(i = 0; i < 2; ++i) // number of episodes
+# if __JDOOM64__
     {
-        for(j = 0; j < (i == 0? 39 : 7); ++j) // number of maps per episode
+        int NUMCMAPS = 39;
+        levelNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
+        for(i = 0; i < NUMCMAPS; ++i)
         {
-            sprintf(name, "WILV%2.2d", (i * 39) + j);
-            R_CachePatch(&levelNamePatches[(i * 39)+j], name);
+            sprintf(name, "WILV%2.2d", i);
+            R_CachePatch(&levelNamePatches[i], name);
         }
     }
 # else
@@ -296,7 +296,7 @@ void Hu_LoadData(void)
 
 void HU_UnloadData(void)
 {
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     if(levelNamePatches)
         Z_Free(levelNamePatches);
 #endif
@@ -352,7 +352,7 @@ void HU_Drawer(void)
     }
 }
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
 /**
  * Draws a sorted frags list in the lower right corner of the screen.
  */
@@ -377,7 +377,7 @@ static void drawFragsTable(void)
     }
 
     // Start drawing from the top.
-# if __DOOM64TC__
+# if __JDOOM64__
     y = HU_TITLEY + 32 * (inCount - 1) * LINEHEIGHT_A;
 # else
     y = HU_TITLEY + 32 * (20 - cfg.statusbarScale) / 20 - (inCount - 1) * LINEHEIGHT_A;
@@ -525,8 +525,7 @@ static const int their_colors[] = {
  */
 static void drawWorldTimer(void)
 {
-#ifndef __JDOOM__
-#ifndef __JHERETIC__
+#if __JHEXEN__
     int     days, hours, minutes, seconds;
     int     worldTimer;
     char    timeBuffer[15];
@@ -564,7 +563,6 @@ static void drawWorldTimer(void)
         }
     }
 #endif
-#endif
 }
 
 /**
@@ -573,14 +571,14 @@ static void drawWorldTimer(void)
 void HU_DrawMapCounters(void)
 {
     player_t   *plr;
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     char        buf[40], tmp[20];
     int         x = 5, y = LINEHEIGHT_A * 3;
 #endif
 
     plr = &players[DISPLAYPLAYER];
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     DGL_Color3f(1, 1, 1);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -591,7 +589,7 @@ void HU_DrawMapCounters(void)
 
     drawWorldTimer();
 
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
     Draw_BeginZoom(cfg.counterCheatScale, x, y);
 
     if(cfg.counterCheat)
@@ -665,7 +663,7 @@ void HU_DrawMapCounters(void)
 
     Draw_EndZoom();
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     if(deathmatch)
         drawFragsTable();
 #endif
@@ -1101,8 +1099,8 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float red,
     DGL_Color4ub(origColor[0], origColor[1], origColor[2], origColor[3]);
 }
 
-/*
- * Write a string using the huFont
+/**
+ * Write a string using the huFont.
  */
 void M_WriteText(int x, int y, const char *string)
 {
@@ -1115,7 +1113,7 @@ void M_WriteText2(int x, int y, const char *string, dpatch_t *font, float red,
     M_WriteText3(x, y, string, font, red, green, blue, alpha, false, 0);
 }
 
-/*
+/**
  * Write a string using a colored, custom font.
  * Also do a type-in effect.
  */
@@ -1237,7 +1235,7 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
     }
 }
 
-/*
+/**
  * This routine tests for a string-replacement for the patch.
  * If one is found, it's used instead of the original graphic.
  *
@@ -1328,7 +1326,7 @@ void M_DrawColorBox(int x, int y, float r, float g, float b, float a)
 }
 
 /**
- *  Draws a box using the border patches, a border is drawn outside.
+ * Draws a box using the border patches, a border is drawn outside.
  */
 void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
                          float blue, float alpha, boolean background, int border)
@@ -1418,13 +1416,13 @@ void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
 /**
  * Draws a menu slider control
  */
-#ifndef __JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 void M_DrawSlider(int x, int y, int width, int slot, float alpha)
 #else
 void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
 #endif
 {
-#ifndef __JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     DGL_Color4f( 1, 1, 1, alpha);
 
     GL_DrawPatch_CS(x - 32, y, W_GetNumForName("M_SLDLT"));

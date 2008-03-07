@@ -29,11 +29,6 @@
 #ifndef __AMMAP_H__
 #define __AMMAP_H__
 
-#ifndef __JDOOM__
-// DJS - defined in Include\jDoom\Mn_def.h in all games but jDoom
-#define LINEHEIGHT_A 10
-#endif
-
 // Used by ST StatusBar stuff.
 #define AM_MSGHEADER (('a'<<24)+('m'<<16))
 #define AM_MSGENTERED (AM_MSGHEADER | ('e'<<8))
@@ -41,7 +36,7 @@
 
 #define NUMMARKPOINTS 10
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
 // For use if I do walls with outsides/insides
 #define BLUES       (256-4*16+8)
 #define YELLOWRANGE 1
@@ -60,7 +55,7 @@
 #define YOURCOLORS      WHITE
 #define YOURRANGE       0
 
-# ifdef __WOLFTC__
+# if __WOLFTC__
 #  define WALLCOLORS      GRAYS
 #  define WALLRANGE       GRAYSRANGE
 #  define TSWALLCOLORS    BROWNS
@@ -78,7 +73,7 @@
 #  define CDWALLRANGE     YELLOWRANGE
 #  define THINGCOLORS     GREENS
 #  define THINGRANGE      GREENRANGE
-#endif
+# endif
 
 #define SECRETWALLCOLORS WALLCOLORS
 #define SECRETWALLRANGE WALLRANGE

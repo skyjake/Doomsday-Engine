@@ -43,12 +43,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if  __DOOM64TC__
-# include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -98,7 +98,7 @@ float   netJumpPower = 9;
 // Net code related console commands
 ccmd_t netCCmds[] = {
     {"setcolor", "i", CCmdSetColor},
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {"setmap", "ii", CCmdSetMap},
 #else
     {"setmap", "i", CCmdSetMap},
@@ -167,7 +167,7 @@ int D_NetServerStarted(int before)
 
     cfg.jumpEnabled = cfg.netJumping;
 
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
     respawnMonsters = cfg.netRespawn;
 #endif
 
@@ -175,12 +175,12 @@ int D_NetServerStarted(int before)
     randomClassParm = cfg.netRandomClass;
 #endif
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     ST_updateGraphics();
 #endif
 
     // Hexen has translated map numbers.
-#ifdef __JHEXEN__
+#if __JHEXEN__
     netMap = P_TranslateMap(cfg.netMap);
 #else
     netMap = cfg.netMap;
@@ -422,7 +422,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
         // Restore normal game state.
         deathmatch = false;
         noMonstersParm = false;
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         respawnMonsters = false;
 #endif
 
@@ -482,13 +482,11 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         P_SetMessage(&players[CONSOLEPLAYER], msgBuff, false);
         break;
 
-#ifndef __JDOOM__
-#ifndef __JHERETIC__
+#if __JHEXEN__ || __JSTRIFE__
     case GPT_YELLOW_MESSAGE:
         snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
         P_SetYellowMessage(&players[CONSOLEPLAYER], msgBuff, false);
         break;
-#endif
 #endif
 
     case GPT_CONSOLEPLAYER_STATE:
@@ -524,7 +522,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         NetCl_UpdatePlayerInfo(data);
         break;
 
-#ifndef __JDOOM__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     case GPT_CLASS:
         players[CONSOLEPLAYER].class = bData[0];
         break;
@@ -557,16 +555,18 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
  */
 void D_ChatSound(void)
 {
-#ifdef __JHEXEN__
+#if __JHEXEN__
     S_LocalSound(SFX_CHAT, NULL);
 #elif __JSTRIFE__
     S_LocalSound(SFX_CHAT, NULL);
 #elif __JHERETIC__
     S_LocalSound(sfx_chat, NULL);
 #else
+# if __JDOOM__
     if(gameMode == commercial)
         S_LocalSound(sfx_radio, NULL);
     else
+# endif
         S_LocalSound(sfx_tink, NULL);
 #endif
 }
@@ -629,7 +629,7 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     if(IS_SERVER && source->player - players > 0)
     {
         // A client is trying to do damage.
-#ifdef _DEBUG
+#if _DEBUG
 Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
 #endif
         //// \todo Damage requests have not been fully implemented yet.
@@ -638,13 +638,13 @@ Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
     }
     else if(IS_CLIENT && source->player - players == CONSOLEPLAYER)
     {
-#ifdef _DEBUG
+#if _DEBUG
 Con_Message("P_DamageMobj2: Client should request damage on mobj %p.\n", target);
 #endif
         return true;
     }
 
-#ifdef _DEBUG
+#if _DEBUG
 Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
 #endif
     // Process as normal damage.
@@ -675,7 +675,7 @@ DEFCC(CCmdSetColor)
         // the color translation bits directly.
 
         cfg.playerColor[0] = PLR_COLOR(0, cfg.netColor);
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
         ST_updateGraphics();
 #endif
         // Change the color of the mobj (translation flags).
@@ -766,6 +766,10 @@ DEFCC(CCmdSetMap)
     respawnMonsters = cfg.netRespawn;
     ep = atoi(argv[1]);
     map = atoi(argv[2]);
+#elif __JDOOM64__
+    respawnMonsters = cfg.netRespawn;
+    ep = 1;
+    map = atoi(argv[1]);
 #elif __JSTRIFE__
     ep = 1;
     map = atoi(argv[1]);

@@ -40,7 +40,7 @@
  * Implements all XG line interactions on a map
  */
 
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -50,12 +50,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+# include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JSTRIFE__
@@ -125,8 +125,6 @@
         : reftype == LSREF_BACK? "BACK SECTOR" \
         : reftype == LSREF_THING_EXIST? "SECTORS WITH THING" \
         : reftype == LSREF_THING_NOEXIST? "SECTORS WITHOUT THING" : "???")
-
-#define GET_TXT(x)    ((*gi.text)[x].text)
 
 #define TO_DMU_TOP_COLOR(x) (x == 0? DMU_TOP_COLOR_RED \
         : x == 1? DMU_TOP_COLOR_GREEN \
@@ -549,7 +547,7 @@ int XL_AutoGenType(int id, linetype_t *outptr)
         XL_AddAutoGenType(l);
         outptr = l;
     }
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     else // BOOM format
     {
         // Generate the new line type
@@ -1175,7 +1173,7 @@ int C_DECL XLTrav_QuickActivate(linedef_t *line, boolean dummy, void *context,
     return true;
 }
 
-/*
+/**
  * Returns true if the line is active.
  */
 int C_DECL XLTrav_CheckLine(linedef_t *line, boolean dummy, void *context,
@@ -1188,7 +1186,7 @@ int C_DECL XLTrav_CheckLine(linedef_t *line, boolean dummy, void *context,
     return (xline->xg->active == true) == (context? true : false);
 }
 
-/*
+/**
  * &param data  If true, the line will receive a chain event if not activate.
  *      If data=false, then ... if active.
  */
@@ -1701,11 +1699,13 @@ int XL_ValidateMap(int val, int type)
 {
     int         episode, level = val;
 
-#ifdef __JDOOM__
+#if __JDOOM__
     if(gameMode == commercial)
         episode = gameEpisode;
     else
         episode = 0;
+#elif __JDOOM64__
+    episode = 0;
 #elif __JHERETIC__
     episode = gameEpisode;
 #endif
@@ -1839,7 +1839,7 @@ boolean XL_SwitchSwap(sidedef_t *side, int section)
 
     //// \fixmeDoes this texture have another switch texture?
     //// Use the switch texture list in p_switches for this.
-#ifdef __JHERETIC__
+#if __JHERETIC__
     //// \kludge A kludge for Heretic.  Since it has some switch texture names
     //// that don't follow the SW1/SW2 pattern, we'll do some special
     //// checking.
@@ -2159,7 +2159,7 @@ boolean XL_CheckKeys(mobj_t *mo, int flags2)
 {
     player_t *act = mo->player;
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     int     num = 6;
     char   *keystr[] = {
         "BLUE KEYCARD", "YELLOW KEYCARD", "RED KEYCARD",
@@ -2167,12 +2167,12 @@ boolean XL_CheckKeys(mobj_t *mo, int flags2)
     };
     int    *keys = (int *) act->keys;
     int     badsound = sfx_oof;
-#elif defined __JHERETIC__
+#elif __JHERETIC__
     int     num = 3;
     char   *keystr[] = { "YELLOW KEY", "GREEN KEY", "BLUE KEY" };
     boolean *keys = act->keys;
     int     badsound = sfx_plroof;
-#elif defined __JSTRIFE__
+#elif __JSTRIFE__
 //// \fixme FIXME!!!
     int     num = 3;
     char   *keystr[] = { "YELLOW KEY", "GREEN KEY", "BLUE KEY" };
@@ -2226,7 +2226,7 @@ int XL_LineEvent(int evtype, int linetype, linedef_t *line, int sidenum,
     if(activator_thing)
         activator = activator_thing->player;
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     // BOOM intergration
     if((xline->flags & ML_ALLTRIGGER) && !(info->flags2 & LTF2_OVERRIDE_ANY))
         anyTrigger = true;

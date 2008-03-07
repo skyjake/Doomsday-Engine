@@ -39,19 +39,19 @@
  * Writes XG data to file. Parses DD_XGDATA lumps.
  */
 
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
 
-#if  __DOOM64TC__
-# include "doom64tc.h"
-#elif __WOLFTC__
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+# include "doom64tc.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JSTRIFE__
