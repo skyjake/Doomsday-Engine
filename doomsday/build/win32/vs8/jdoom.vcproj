@@ -172,7 +172,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib"
+				AdditionalDependencies="./bin/$(ConfigurationName)/doomsday.lib lzss.lib odbc32.lib odbccp32.lib"
 				OutputFile="./bin/$(ConfigurationName)/$(ProjectName).dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
