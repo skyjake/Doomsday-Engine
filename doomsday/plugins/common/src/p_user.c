@@ -75,7 +75,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-#if !__JDOOM__
+#if __JHERETIC__ || __JHEXEN__
 boolean     P_TestMobjLocation(mobj_t *mobj);
 #endif
 
@@ -85,22 +85,22 @@ boolean     P_TestMobjLocation(mobj_t *mobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern float turbomul; // turbo multiplier (player speed).
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean onground;
 
-#if __JDOOM__
-int     maxhealth;              // 100
-int     healthlimit;            // 200
-int     godmodehealth;          // 100
-int     soulspherelimit;        // 200
-int     megaspherehealth;       // 200
-int     soulspherehealth;       // 100
-int     armorpoints[4];         // Green, blue, IDFA and IDKFA points.
-int     armorclass[4];          // Green, blue, IDFA and IDKFA armor classes.
+#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+int maxHealth; // 100
+int healthLimit; // 200
+int godModeHealth; // 100
+int soulSphereLimit; // 200
+int megaSphereHealth; // 200
+int soulSphereHealth; // 100
+int armorPoints[4]; // Green, blue, IDFA and IDKFA points.
+int armorClass[4]; // Green, blue, IDFA and IDKFA armor classes.
+#endif
 
+#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
         S_PLAY,
@@ -122,9 +122,6 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     }
 };
 #elif __JHERETIC__
-int     newtorch[MAXPLAYERS];   // used in the torch flicker effect.
-int     newtorchdelta[MAXPLAYERS];
-
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
         S_PLAY,
@@ -156,9 +153,6 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     },
 };
 #elif __JHEXEN__
-int     newtorch[MAXPLAYERS];   // used in the torch flicker effect.
-int     newtorchdelta[MAXPLAYERS];
-
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Fighter
         MT_PLAYER_FIGHTER,
@@ -236,6 +230,11 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+#if __JHERETIC__ || __JHEXEN__
+static int newTorch[MAXPLAYERS]; // Used in the torch flicker effect.
+static int newTorchDelta[MAXPLAYERS];
+#endif
 
 // CODE --------------------------------------------------------------------
 
@@ -404,8 +403,8 @@ void P_MovePlayer(player_t *player)
             FIX2FLT(pClassInfo->forwardMove[speed]) * brain->forwardMove;
         sideMove = FIX2FLT(pClassInfo->sideMove[speed]) * brain->sideMove;
 
-        forwardMove *= turbomul;
-        sideMove    *= turbomul;
+        forwardMove *= turboMul;
+        sideMove    *= turboMul;
 
 #if __JHEXEN__
         if(player->powers[PT_SPEED] && !player->morphTics)
@@ -496,7 +495,7 @@ void P_DeathThink(player_t *player)
             if(player->plr->lookDir < 60)
             {
                 lookDelta = (60 - player->plr->lookDir) / 8;
-                if(lookDelta < 1 && (leveltime & 1))
+                if(lookDelta < 1 && (levelTime & 1))
                 {
                     lookDelta = 1;
                 }
@@ -627,13 +626,13 @@ void P_RaiseDeadPlayer(player_t *player)
 #if __JHERETIC__ || __JHEXEN__
     P_InventoryResetCursor(player);
 
-    if(player == &players[consoleplayer])
+    if(player == &players[CONSOLEPLAYER])
     {
         R_SetFilter(0);
     }
 
-    newtorch[player - players] = 0;
-    newtorchdelta[player - players] = 0;
+    newTorch[player - players] = 0;
+    newTorchDelta[player - players] = 0;
 # if __JHEXEN__
     player->plr->mo->special1 = player->class;
     if(player->plr->mo->special1 > 2)
@@ -700,8 +699,10 @@ void P_MorphThink(player_t *player)
 # endif
 }
 
+/**
+ * \todo Need to replace this as it comes straight from Hexen.
+ */
 boolean P_UndoPlayerMorph(player_t *player)
-// REWRITE ME - I MATCH HEXEN FROM HERE
 {
     mobj_t     *fog = 0, *mo = 0, *pmo = 0;
     float       pos[3];
@@ -835,7 +836,7 @@ void P_ClientSideThink(void)
     if(!IS_CLIENT || !Get(DD_GAME_READY))
         return;
 
-    pl = &players[consoleplayer];
+    pl = &players[CONSOLEPLAYER];
     dpl = pl->plr;
     mo = dpl->mo;
 
@@ -931,8 +932,8 @@ void P_ClientSideThink(void)
             pl->flyHeight /= 2;
         // Do some fly-bobbing.
         if(mo->pos[VZ] > mo->floorZ && (mo->flags2 & MF2_FLY) &&
-           !mo->onMobj && (leveltime & 2))
-            mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * leveltime >> 2) & FINEMASK]);
+           !mo->onMobj && (levelTime & 2))
+            mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * levelTime >> 2) & FINEMASK]);
     }
 #if __JHEXEN__
     else
@@ -947,7 +948,7 @@ void P_ClientSideThink(void)
 /*    if(P_ToXSector(P_GetPtrp(mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(pl);
 */
-    // Set consoleplayer thrust multiplier.
+    // Set CONSOLEPLAYER thrust multiplier.
     if(mo->pos[VZ] > mo->floorZ)      // Airborne?
     {
         float       mul = (mo->ddFlags & DDMF_FLY) ? 1 : 0;
@@ -1080,6 +1081,9 @@ void P_PlayerThinkMorph(player_t *player)
 #endif
 }
 
+/**
+ * \todo Need to replace this as it comes straight from Hexen.
+ */
 void P_PlayerThinkMove(player_t *player)
 {
     mobj_t     *plrmo = player->plr->mo;
@@ -1091,9 +1095,8 @@ void P_PlayerThinkMove(player_t *player)
         P_MovePlayer(player);
 
 #if __JHEXEN__
-// REWRITE ME - I MATCH HEXEN FROM HERE
         plrmo = player->plr->mo;
-        if(player->powers[PT_SPEED] && !(leveltime & 1) &&
+        if(player->powers[PT_SPEED] && !(levelTime & 1) &&
            P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) > 12)
         {
             mobj_t     *speedMo;
@@ -1132,14 +1135,13 @@ void P_PlayerThinkMove(player_t *player)
 
                 speedMo->sprite = plrmo->sprite;
                 speedMo->floorClip = plrmo->floorClip;
-                if(player == &players[consoleplayer])
+                if(player == &players[CONSOLEPLAYER])
                 {
                     speedMo->flags2 |= MF2_DONTDRAW;
                 }
             }
         }
 #endif
-// REWRITE ME - I MATCH HEXEN UNTIL HERE
     }
 }
 
@@ -1221,12 +1223,14 @@ void P_PlayerThinkSpecial(player_t *player)
 #endif
 }
 
+/**
+ * \todo Need to replace this as it comes straight from Hexen.
+ */
 void P_PlayerThinkSounds(player_t *player)
 {
 #ifdef __JHEXEN__
     mobj_t *plrmo = player->plr->mo;
 
-// REWRITE ME - I MATCH HEXEN FROM HERE
     switch(player->class)
     {
         case PCLASS_FIGHTER:
@@ -1259,7 +1263,6 @@ void P_PlayerThinkSounds(player_t *player)
         default:
             break;
     }
-// REWRITE ME - I MATCH HEXEN UNTIL HERE
 #endif
 }
 
@@ -1275,7 +1278,7 @@ void P_PlayerThinkItems(player_t *player)
     // Check the "Use Artifact" impulse.
     if(P_GetImpulseControlState(pnum, CTL_USE_ARTIFACT))
     {
-        if(player->brain.speed && artiskip)
+        if(player->brain.speed && artiSkipParm)
         {
             if(player->inventory[player->invPtr].type != arti_none)
             {
@@ -1442,7 +1445,7 @@ void P_PlayerThinkWeapons(player_t *player)
                 newweapon = WT_FIRST;
 
             // Swapping between shotgun and super-shotgun.
-            if(gamemode == commercial)
+            if(gameMode == commercial)
             {
                 if(newweapon == WT_THIRD)
                     newweapon = WT_NINETH;
@@ -1452,7 +1455,7 @@ void P_PlayerThinkWeapons(player_t *player)
         }
 
 # if !__DOOM64TC__
-        if(gamemode != commercial && newweapon == WT_NINETH)
+        if(gameMode != commercial && newweapon == WT_NINETH)
         {
             // In non-Doom II, supershotgun is the same as normal shotgun.
             newweapon = WT_THIRD;
@@ -1473,8 +1476,8 @@ void P_PlayerThinkWeapons(player_t *player)
 
         if(player->weaponOwned[newweapon] && newweapon != player->readyWeapon)
         {
-            if(weaponinfo[newweapon][player->class].mode[0].gamemodebits
-               & gamemodebits)
+            if(weaponInfo[newweapon][player->class].mode[0].gameModeBits
+               & gameModeBits)
             {
                 player->pendingWeapon = newweapon;
             }
@@ -1493,7 +1496,7 @@ void P_PlayerThinkWeapons(player_t *player)
 
 void P_PlayerThinkUse(player_t *player)
 {
-    if(IS_NETGAME && IS_SERVER && player != &players[consoleplayer])
+    if(IS_NETGAME && IS_SERVER && player != &players[CONSOLEPLAYER])
     {
         // Clients send use requests instead.
         return;
@@ -1613,30 +1616,30 @@ void P_PlayerThinkPowers(player_t *player)
                 player->plr->fixedColorMap = 1;
             }
         }
-        else if(!(leveltime & 16))  /* && player == &players[consoleplayer]) */
+        else if(!(levelTime & 16))  /* && player == &players[CONSOLEPLAYER]) */
         {
             ddplayer_t *dp = player->plr;
             int     playerNumber = player - players;
 
-            if(newtorch[playerNumber])
+            if(newTorch[playerNumber])
             {
-                if(dp->fixedColorMap + newtorchdelta[playerNumber] > 7 ||
-                   dp->fixedColorMap + newtorchdelta[playerNumber] < 1 ||
-                   newtorch[playerNumber] == dp->fixedColorMap)
+                if(dp->fixedColorMap + newTorchDelta[playerNumber] > 7 ||
+                   dp->fixedColorMap + newTorchDelta[playerNumber] < 1 ||
+                   newTorch[playerNumber] == dp->fixedColorMap)
                 {
-                    newtorch[playerNumber] = 0;
+                    newTorch[playerNumber] = 0;
                 }
                 else
                 {
-                    dp->fixedColorMap += newtorchdelta[playerNumber];
+                    dp->fixedColorMap += newTorchDelta[playerNumber];
                 }
             }
             else
             {
-                newtorch[playerNumber] = (M_Random() & 7) + 1;
-                newtorchdelta[playerNumber] =
-                    (newtorch[playerNumber] ==
-                     dp->fixedColorMap) ? 0 : ((newtorch[playerNumber] >
+                newTorch[playerNumber] = (M_Random() & 7) + 1;
+                newTorchDelta[playerNumber] =
+                    (newTorch[playerNumber] ==
+                     dp->fixedColorMap) ? 0 : ((newTorch[playerNumber] >
                                                 dp->fixedColorMap) ? 1 : -1);
             }
         }
@@ -1652,7 +1655,7 @@ void P_PlayerThinkPowers(player_t *player)
     {
         if(player->class == PCLASS_CLERIC)
         {
-            if(!(leveltime & 7) && (player->plr->mo->flags & MF_SHADOW) &&
+            if(!(levelTime & 7) && (player->plr->mo->flags & MF_SHADOW) &&
                !(player->plr->mo->flags2 & MF2_DONTDRAW))
             {
                 player->plr->mo->flags &= ~MF_SHADOW;
@@ -1661,7 +1664,7 @@ void P_PlayerThinkPowers(player_t *player)
                     player->plr->mo->flags2 |= MF2_DONTDRAW | MF2_NONSHOOTABLE;
                 }
             }
-            if(!(leveltime & 31))
+            if(!(levelTime & 31))
             {
                 if(player->plr->mo->flags2 & MF2_DONTDRAW)
                 {
@@ -1702,7 +1705,7 @@ void P_PlayerThinkPowers(player_t *player)
         player->powers[PT_SPEED]--;
     }
 
-    if(player->poisonCount && !(leveltime & 15))
+    if(player->poisonCount && !(levelTime & 15))
     {
         player->poisonCount -= 5;
         if(player->poisonCount < 0)
@@ -1725,11 +1728,11 @@ void P_PlayerThinkPowers(player_t *player)
 
     //// \kludge Hacks and kludges illustrated.
     //// DJS - There MUST be a better way to do this...
-    if(player->helltime)
+    if(player->hellTime)
     {
         int i;
 
-        if(player->helltime == 450)
+        if(player->hellTime == 450)
         {
             // imp
             for(i = S_TROO_RUN1; i <= S_TROO_DIE4; ++i)
@@ -1816,7 +1819,7 @@ void P_PlayerThinkPowers(player_t *player)
             mobjInfo[MT_ACIDMISSILE].speed -= 7;
             mobjInfo[MT_CYBERROCKET].speed -= 15;
         }
-        else if(player->helltime == 1)
+        else if(player->hellTime == 1)
         {
             // imp
             for(i = S_TROO_RUN1; i <= S_TROO_DIE4; ++i)
@@ -1903,11 +1906,11 @@ void P_PlayerThinkPowers(player_t *player)
             mobjInfo[MT_ACIDMISSILE].speed += 7;
             mobjInfo[MT_CYBERROCKET].speed += 15;
         }
-        player->helltime--;
+        player->hellTime--;
     }
-    if(player->devicetime < 450)
+    if(player->deviceTime < 450)
     {
-        player->devicetime++;
+        player->deviceTime++;
     }
 #endif
 }

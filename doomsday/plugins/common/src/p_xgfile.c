@@ -39,11 +39,12 @@
  * Writes XG data to file. Parses DD_XGDATA lumps.
  */
 
-#if __JDOOM__ || __WOLFTC__ || __DOOM64TC || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 # include "doom64tc.h"
@@ -79,7 +80,7 @@ typedef enum xgsegenum_e {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean xgdatalumps = false;
+boolean xgDataLumps = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -125,7 +126,7 @@ static void WriteFloat(float f)
 
 static void WriteString(char *str)
 {
-    int     len;
+    int                 len;
 
     if(!str)
     {
@@ -143,9 +144,9 @@ static byte ReadByte()
     return *readptr++;
 }
 
-static short ReadShort()
+static short ReadShort(void)
 {
-    short   s = *(short *) readptr;
+    short               s = *(short *) readptr;
 
     readptr += 2;
     // Swap the bytes.
@@ -153,9 +154,9 @@ static short ReadShort()
     return SHORT(s);
 }
 
-static long ReadLong()
+static long ReadLong(void)
 {
-    long    l = *(long *) readptr;
+    long                l = *(long *) readptr;
 
     readptr += 4;
     // Swap the bytes.
@@ -163,10 +164,10 @@ static long ReadLong()
     return LONG(l);
 }
 
-static float ReadFloat()
+static float ReadFloat(void)
 {
-    long    f = ReadLong();
-    float   returnValue = 0;
+    long                f = ReadLong();
+    float               returnValue = 0;
 
     memcpy(&returnValue, &f, 4);
     return returnValue;
@@ -186,7 +187,7 @@ void Read(void *data, int len)
  */
 static void ReadString(char **str)
 {
-    int         len = ReadShort();
+    int                 len = ReadShort();
 
     if(!len) // Null string?
     {
@@ -206,11 +207,11 @@ static void ReadString(char **str)
 
 void XG_WriteTypes(FILE *f)
 {
-    int         i, k;
-    int         linecount = 0, sectorcount = 0;
-    char        buff[6];
-    linetype_t  line;
-    sectortype_t sec;
+    int                 i, k;
+    int                 linecount = 0, sectorcount = 0;
+    char                buff[6];
+    linetype_t          line;
+    sectortype_t        sec;
 
     file = f;
 
@@ -341,17 +342,17 @@ void XG_WriteTypes(FILE *f)
 
 void XG_ReadXGLump(char *name)
 {
-    int         lump = W_CheckNumForName(name);
-    void       *buffer;
-    int         lc = 0, sc = 0, i;
-    linetype_t *li;
-    sectortype_t *sec;
-    boolean     done = false;
+    int                 lump = W_CheckNumForName(name);
+    void               *buffer;
+    int                 lc = 0, sc = 0, i;
+    linetype_t         *li;
+    sectortype_t       *sec;
+    boolean             done = false;
 
     if(lump < 0)
         return; // No such lump.
 
-    xgdatalumps = true;
+    xgDataLumps = true;
 
     Con_Message("XG_ReadTypes: Reading XG types from DDXGDATA.\n");
 
@@ -367,7 +368,7 @@ void XG_ReadXGLump(char *name)
     while(!done)
     {
         // Get next segment.
-        switch (ReadByte())
+        switch(ReadByte())
         {
         case XGSEG_END:
             done = true;
@@ -493,7 +494,7 @@ void XG_ReadTypes(void)
 
 linetype_t *XG_GetLumpLine(int id)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < num_linetypes; ++i)
         if(linetypes[i].id == id)
@@ -504,7 +505,7 @@ linetype_t *XG_GetLumpLine(int id)
 
 sectortype_t *XG_GetLumpSector(int id)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < num_sectypes; ++i)
         if(sectypes[i].id == id)

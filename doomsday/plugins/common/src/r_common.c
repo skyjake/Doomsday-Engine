@@ -40,6 +40,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -92,21 +93,22 @@ char    gammamsg[5][81];
 
 void R_PrecachePSprites(void)
 {
-    int     i, k;
-    int     pclass = players[consoleplayer].class;
+    int                 i, k;
+    int                 pclass = players[CONSOLEPLAYER].class;
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         for(k = 0; k < NUMWEAPLEVELS; ++k)
         {
-            pclass = players[consoleplayer].class;
-            R_PrecacheSkinsForState(weaponinfo[i][pclass].mode[k].upstate);
-            R_PrecacheSkinsForState(weaponinfo[i][pclass].mode[k].downstate);
-            R_PrecacheSkinsForState(weaponinfo[i][pclass].mode[k].readystate);
-            R_PrecacheSkinsForState(weaponinfo[i][pclass].mode[k].atkstate);
-            R_PrecacheSkinsForState(weaponinfo[i][pclass].mode[k].flashstate);
+            pclass = players[CONSOLEPLAYER].class;
+
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].upState);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].downState);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].readyState);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].attackState);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].flashState);
 #if __JHERETIC__ || __JHEXEN__
-            R_PrecacheSkinsForState(weaponinfo[i][pclass].mode[k].holdatkstate);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].holdAttackState);
 #endif
         }
     }
@@ -191,15 +193,15 @@ boolean R_MapObscures(int playerid, int x, int y, int w, int h)
 
     boolean     retVal = false;
 
-    if(AM_IsMapActive(displayplayer))
+    if(AM_IsMapActive(DISPLAYPLAYER))
     {
         float   alpha;
 
-        AM_GetColorAndAlpha(displayplayer, AMO_BACKGROUND,
+        AM_GetColorAndAlpha(DISPLAYPLAYER, AMO_BACKGROUND,
                                     NULL, NULL, NULL, &alpha);
-        if(!(alpha < 1) && !(AM_GlobalAlpha(displayplayer) < 1))
+        if(!(alpha < 1) && !(AM_GlobalAlpha(DISPLAYPLAYER) < 1))
         {
-            if(AM_IsMapWindowInFullScreenMode(displayplayer))
+            if(AM_IsMapWindowInFullScreenMode(DISPLAYPLAYER))
             {
                 retVal = true;
             }
@@ -214,7 +216,7 @@ boolean R_MapObscures(int playerid, int x, int y, int w, int h)
                 float       fh = FIXYTOSCREENY(h);
                 float       mx, my, mw, mh;
 
-                AM_GetWindow(displayplayer, &mx, &my, &mw, &mh);
+                AM_GetWindow(DISPLAYPLAYER, &mx, &my, &mw, &mh);
                 if(mx >= fx && my >= fy && mw >= fw && mh >= fh)
                     retVal = true;
             }
@@ -251,7 +253,7 @@ void R_CachePatch(dpatch_t *dp, char *name)
 #ifndef __JHEXEN__
 void R_GetGammaMessageStrings(void)
 {
-    int             i;
+    int                 i;
 
     // Init some strings.
     for(i = 0; i < 5; ++i)
@@ -261,14 +263,14 @@ void R_GetGammaMessageStrings(void)
 
 void R_CycleGammaLevel(void)
 {
-    char            buf[50];
+    char                buf[50];
 
     gammaLevel++;
     if(gammaLevel > 4)
         gammaLevel = 0;
 
 #ifdef __JDOOM__
-    P_SetMessage(players + consoleplayer, gammamsg[gammaLevel], true);
+    P_SetMessage(players + CONSOLEPLAYER, gammamsg[gammaLevel], true);
 #endif
 
     sprintf(buf, "rend-tex-gamma %f", ((float) gammaLevel / 8.0f) * 1.5f);

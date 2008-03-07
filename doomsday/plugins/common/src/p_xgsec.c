@@ -37,12 +37,13 @@
  * p_xgsec.c: Extended Generalized Sector Types.
  */
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -63,6 +64,7 @@
 #include "g_common.h"
 #include "p_map.h"
 #include "p_mapspec.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -139,11 +141,6 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *actThing);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern mobj_t dummything;
-extern boolean xgdatalumps;
-
-extern int xgDev;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -349,7 +346,7 @@ void XS_SetSectorType(struct sector_s *sec, int special)
             angle_t angle = 0;
 
             // -1 to support binary XG data with old flag values.
-            XL_TraverseLines(0, (xgdatalumps? LREF_TAGGED -1: LREF_TAGGED),
+            XL_TraverseLines(0, (xgDataLumps? LREF_TAGGED -1: LREF_TAGGED),
                              info->actTag, sec, &angle,
                              NULL, XLTrav_LineAngle);
 
@@ -2372,10 +2369,10 @@ void XS_UpdatePlanes(sector_t *sec)
 
 void XS_UpdateLight(sector_t *sec)
 {
-    int         i;
-    float       c, lightlevel;
-    xgsector_t *xg;
-    function_t *fn;
+    int                 i;
+    float               c, lightlevel;
+    xgsector_t         *xg;
+    function_t         *fn;
 
     xg = P_ToXSector(sec)->xg;
 
@@ -2412,12 +2409,12 @@ void XS_UpdateLight(sector_t *sec)
 
 void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
 {
-    xgsector_t *xg;
-    sectortype_t *info;
-    float       flevtime = TIC2FLT(leveltime);
-    linedef_t     *dummyLine;
-    xline_t    *xdummyLine;
-    linetype_t *ltype;
+    xgsector_t         *xg;
+    sectortype_t       *info;
+    float               flevtime = TIC2FLT(levelTime);
+    linedef_t          *dummyLine;
+    xline_t            *xdummyLine;
+    linetype_t         *ltype;
 
     xg = P_ToXSector(sec)->xg;
     info = &xg->info;
@@ -2582,7 +2579,7 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
     if(IS_CLIENT)
     {
         // Clientside wind only affects the local player.
-        if(!mo->player || mo->player != &players[consoleplayer])
+        if(!mo->player || mo->player != &players[CONSOLEPLAYER])
             return true;
     }
 
@@ -2929,10 +2926,10 @@ DEFCC(CCmdMovePlane)
     if(!stricmp(argv[1], "here"))
     {
         p = 2;
-        if(!players[consoleplayer].plr->mo)
+        if(!players[CONSOLEPLAYER].plr->mo)
             return false;
         sector =
-            P_GetPtrp(players[consoleplayer].plr->mo->subsector, DMU_SECTOR);
+            P_GetPtrp(players[CONSOLEPLAYER].plr->mo->subsector, DMU_SECTOR);
     }
     else if(!stricmp(argv[1], "at") && argc >= 4)
     {

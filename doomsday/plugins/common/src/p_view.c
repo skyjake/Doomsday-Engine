@@ -58,6 +58,7 @@
 #endif
 
 #include "p_player.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -86,7 +87,7 @@
  */
 void P_CalcHeight(player_t *player)
 {
-    boolean     setz = (player == &players[consoleplayer]);
+    boolean     setz = (player == &players[CONSOLEPLAYER]);
     boolean     airborne;
     boolean     morphed = false;
     ddplayer_t *dplay = player->plr;
@@ -132,7 +133,7 @@ void P_CalcHeight(player_t *player)
         }
         else
         {
-            angle_t angle = (FINEANGLES / 20 * leveltime) & FINEMASK;
+            angle_t angle = (FINEANGLES / 20 * levelTime) & FINEMASK;
             target = cfg.bobView * ((player->bob / 2) * FIX2FLT(finesine[angle]));
         }
 

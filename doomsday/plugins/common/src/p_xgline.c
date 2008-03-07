@@ -40,7 +40,7 @@
  * Implements all XG line interactions on a map
  */
 
-#if __JDOOM__ || __WOLFTC__|| __DOOM64TC__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -48,6 +48,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -62,7 +63,6 @@
 #endif
 
 #include "dmu_lib.h"
-
 #include "p_mapsetup.h"
 #include "d_net.h"
 #include "p_xgline.h"
@@ -70,6 +70,7 @@
 #include "p_player.h"
 #include "p_map.h"
 #include "p_mapspec.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -171,20 +172,15 @@ int C_DECL XLTrav_LineTeleport();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int nextmap;
-extern boolean xgdatalumps;
-
-extern int PlayerColors[];
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-struct mobj_s dummything;
-int     xgDev = 0;    // Print dev messages.
+int xgDev = 0;    // Print dev messages.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static linetype_t typebuffer;
 static char msgbuf[80];
+struct mobj_s dummything;
 
 /* ADD NEW XG CLASSES TO THE END - ORIGINAL INDICES MUST STAY THE SAME!!! */
 xgclass_t xgClasses[NUMXGCLASSES] =
@@ -419,7 +415,7 @@ ccmd_t  xgCCmds[] =
  */
 void XG_Register(void)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; xgCVars[i].name; ++i)
         Con_AddVariable(xgCVars + i);
@@ -432,8 +428,8 @@ void XG_Register(void)
  */
 void XG_Dev(const char *format, ...)
 {
-    static char buffer[2000];
-    va_list args;
+    static char         buffer[2000];
+    va_list             args;
 
     if(!xgDev)
         return;
@@ -864,16 +860,16 @@ int XL_TraversePlanes(linedef_t *line, int reftype, int ref, void *data,
 int XL_TraverseLines(linedef_t *line, int rtype, int ref, void *data,
                      void *context, mobj_t * activator, int (C_DECL *func)())
 {
-    uint        i;
-    int         tag;
-    int         reftype = rtype;
-    char        buff[50];
-    linedef_t     *iter;
-    boolean     findLineTagged;
+    uint                i;
+    int                 tag;
+    int                 reftype = rtype;
+    char                buff[50];
+    linedef_t          *iter;
+    boolean             findLineTagged;
 
     // Binary XG data from DD_XGDATA uses the old flag values.
     // Add one to the ref type.
-    if(xgdatalumps)
+    if(xgDataLumps)
         reftype+= 1;
 
     if(ref)
@@ -1706,12 +1702,12 @@ int XL_ValidateMap(int val, int type)
     int         episode, level = val;
 
 #ifdef __JDOOM__
-    if(gamemode == commercial)
-        episode = gameepisode;
+    if(gameMode == commercial)
+        episode = gameEpisode;
     else
         episode = 0;
 #elif __JHERETIC__
-    episode = gameepisode;
+    episode = gameEpisode;
 #endif
 
     if(!G_ValidateMap(&episode, &level))
@@ -1730,7 +1726,7 @@ int C_DECL XLTrav_EndLevel(linedef_t *line, boolean dummy, void *context,
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, true);
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
         return false;
     }
 
@@ -1750,11 +1746,11 @@ int C_DECL XLTrav_EndLevel(linedef_t *line, boolean dummy, void *context,
 
     if(map)
     {
-        XG_Dev("XLTrav_EndLevel: Next level set to %i",map);
-        nextmap = map;
+        XG_Dev("XLTrav_EndLevel: Next level set to %i", map);
+        nextMap = map;
     }
 
-    G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+    G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
     return false; // Only do this once!
 }
 
@@ -2418,17 +2414,17 @@ int XL_LineEvent(int evtype, int linetype, linedef_t *line, int sidenum,
     }
 
     // Check skill level.
-    if(gameskill < 1)
+    if(gameSkill < 1)
         i = 1;
-    else if(gameskill > 3)
+    else if(gameSkill > 3)
         i = 4;
     else
-        i = 1 << (gameskill - 1);
+        i = 1 << (gameSkill - 1);
     i <<= LTF2_SKILL_SHIFT;
     if(!(info->flags2 & i))
     {
         XG_Dev("  Line %i: ABORTING EVENT due to skill level (%i)",
-               P_ToIndex(line), gameskill);
+               P_ToIndex(line), gameSkill);
         return false;
     }
 
@@ -2579,7 +2575,7 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
 
     line = P_ToPtr(DMU_LINEDEF, idx);
     info = &xg->info;
-    levtime = TIC2FLT(leveltime);
+    levtime = TIC2FLT(levelTime);
 
     // Increment time.
     if(xg->timer >= 0)

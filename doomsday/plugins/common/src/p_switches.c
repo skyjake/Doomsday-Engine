@@ -225,14 +225,14 @@ void P_InitSwitchList(void)
     switchlist_t *sList = switchInfo;
 
 # if __JHERETIC__
-    if(gamemode == shareware)
+    if(gameMode == shareware)
         episode = 1;
     else
         episode = 2;
 # else
-    if(gamemode == registered || gamemode == retail)
+    if(gameMode == registered || gameMode == retail)
         episode = 2;
-    else if(gamemode == commercial)
+    else if(gameMode == commercial)
         episode = 3;
     else
         episode = 1;

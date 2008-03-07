@@ -27,6 +27,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -51,9 +53,11 @@
 #endif
 
 #include "p_mapsetup.h"
+#include "p_user.h"
 #include "d_net.h"
 #include "p_map.h"
 #include "g_common.h"
+#include "p_start.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -81,11 +85,11 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Maintain single and multi player starting spots.
-spawnspot_t  deathmatchstarts[MAX_DM_STARTS];
-spawnspot_t *deathmatch_p;
+spawnspot_t  deathmatchStarts[MAX_DM_STARTS];
+spawnspot_t *deathmatchP;
 
-spawnspot_t *playerstarts;
-int      numPlayerStarts = 0;
+spawnspot_t *playerStarts;
+int numPlayerStarts = 0;
 
 spawnspot_t *things;
 
@@ -121,40 +125,36 @@ void P_Init(void)
 
 #if __JDOOM__
     // Maximum health and armor points.
-    maxhealth = 100;
-    healthlimit = 200;
+    maxHealth = 100;
+    healthLimit = 200;
+    godModeHealth = 100;
+    megaSphereHealth = 200;
+    soulSphereHealth = 100;
+    soulSphereLimit = 200;
 
-    godmodehealth = 100;
+    armorPoints[0] = 100;
+    armorPoints[1] = armorPoints[2] = armorPoints[3] = 200;
+    armorClass[0] = 1;
+    armorClass[1] = armorClass[2] = armorClass[3] = 2;
 
-    megaspherehealth = 200;
+    GetDefInt("Player|Max Health", &maxHealth);
+    GetDefInt("Player|Health Limit", &healthLimit);
+    GetDefInt("Player|God Health", &godModeHealth);
 
-    //soulspherehealth = 100; // d64tc
-    soulspherehealth = 50;
-    soulspherelimit = 200;
+    GetDefInt("Player|Green Armor", &armorPoints[0]);
+    GetDefInt("Player|Blue Armor", &armorPoints[1]);
+    GetDefInt("Player|IDFA Armor", &armorPoints[2]);
+    GetDefInt("Player|IDKFA Armor", &armorPoints[3]);
 
-    armorpoints[0] = 100;
-    armorpoints[1] = armorpoints[2] = armorpoints[3] = 200;
-    armorclass[0] = 1;
-    armorclass[1] = armorclass[2] = armorclass[3] = 2;
+    GetDefInt("Player|Green Armor Class", &armorClass[0]);
+    GetDefInt("Player|Blue Armor Class", &armorClass[1]);
+    GetDefInt("Player|IDFA Armor Class", &armorClass[2]);
+    GetDefInt("Player|IDKFA Armor Class", &armorClass[3]);
 
-    GetDefInt("Player|Max Health", &maxhealth);
-    GetDefInt("Player|Health Limit", &healthlimit);
-    GetDefInt("Player|God Health", &godmodehealth);
+    GetDefInt("MegaSphere|Give|Health", &megaSphereHealth);
 
-    GetDefInt("Player|Green Armor", &armorpoints[0]);
-    GetDefInt("Player|Blue Armor", &armorpoints[1]);
-    GetDefInt("Player|IDFA Armor", &armorpoints[2]);
-    GetDefInt("Player|IDKFA Armor", &armorpoints[3]);
-
-    GetDefInt("Player|Green Armor Class", &armorclass[0]);
-    GetDefInt("Player|Blue Armor Class", &armorclass[1]);
-    GetDefInt("Player|IDFA Armor Class", &armorclass[2]);
-    GetDefInt("Player|IDKFA Armor Class", &armorclass[3]);
-
-    GetDefInt("MegaSphere|Give|Health", &megaspherehealth);
-
-    GetDefInt("SoulSphere|Give|Health", &soulspherehealth);
-    GetDefInt("SoulSphere|Give|Health Limit", &soulspherelimit);
+    GetDefInt("SoulSphere|Give|Health", &soulSphereHealth);
+    GetDefInt("SoulSphere|Give|Health Limit", &soulSphereLimit);
 #endif
 }
 
@@ -168,22 +168,22 @@ int P_RegisterPlayerStart(spawnspot_t *mthing)
         if(numPlayerStartsMax < numPlayerStarts)
             numPlayerStartsMax = numPlayerStarts;
 
-        playerstarts =
-            Z_Realloc(playerstarts, sizeof(spawnspot_t) * numPlayerStartsMax, PU_LEVEL);
+        playerStarts =
+            Z_Realloc(playerStarts, sizeof(spawnspot_t) * numPlayerStartsMax, PU_LEVEL);
     }
 
     // Copy the properties of this thing
-    memcpy(&playerstarts[numPlayerStarts -1], mthing, sizeof(spawnspot_t));
+    memcpy(&playerStarts[numPlayerStarts -1], mthing, sizeof(spawnspot_t));
     return numPlayerStarts; // == index + 1
 }
 
 void P_FreePlayerStarts(void)
 {
-    deathmatch_p = deathmatchstarts;
+    deathmatchP = deathmatchStarts;
 
-    if(playerstarts)
-        Z_Free(playerstarts);
-    playerstarts = NULL;
+    if(playerStarts)
+        Z_Free(playerStarts);
+    playerStarts = NULL;
 
     numPlayerStarts = numPlayerStartsMax = 0;
 }
@@ -215,7 +215,7 @@ void P_DealPlayerStarts(int group)
         spotNumber = i % MAX_START_SPOTS;
         pl->startSpot = -1;
 
-        for(k = 0, mt = playerstarts; k < numPlayerStarts; ++k, mt++)
+        for(k = 0, mt = playerStarts; k < numPlayerStarts; ++k, mt++)
         {
             if(spotNumber == mt->type - 1)
             {
@@ -306,7 +306,7 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
                             pos[VY] + 20 * FIX2FLT(finesine[an]));
 
         // Don't start sound on first frame.
-        if(players[consoleplayer].plr->viewZ != 1)
+        if(players[CONSOLEPLAYER].plr->viewZ != 1)
             S_StartSound(TELEPORTSOUND, mo);
     }
 
@@ -403,7 +403,7 @@ void P_SpawnThings(void)
 #if __JDOOM__
         // Do not spawn cool, new stuff if !commercial
         spawn = true;
-        if(gamemode != commercial)
+        if(gameMode != commercial)
         {
             switch(th->type)
             {
@@ -429,7 +429,7 @@ void P_SpawnThings(void)
     }
 
 #if __JDOOM__
-    if(gamemode == commercial)
+    if(gameMode == commercial)
         P_SpawnBrainTargets();
 #endif
 
@@ -462,7 +462,7 @@ void P_SpawnThings(void)
                 playerCount++;
         }
 
-        deathSpotsCount = deathmatch_p - deathmatchstarts;
+        deathSpotsCount = deathmatchP - deathmatchStarts;
         if(deathSpotsCount < playerCount)
         {
             Con_Error("P_LoadThings: Player count (%d) exceeds deathmatch "
@@ -511,9 +511,9 @@ void P_SpawnPlayers(void)
 	         */
             for(i = 0; i < numPlayerStarts; ++i)
             {
-                if(players[0].startSpot != i && playerstarts[i].type == 1)
+                if(players[0].startSpot != i && playerStarts[i].type == 1)
                 {
-                    P_SpawnPlayer(&playerstarts[i], 0);
+                    P_SpawnPlayer(&playerStarts[i], 0);
                 }
             }
         }
@@ -527,7 +527,7 @@ void P_SpawnPlayers(void)
                 ddplayer_t     *ddpl = players[i].plr;
 
                 if(players[i].startSpot < numPlayerStarts)
-                    spot = &playerstarts[players[i].startSpot];
+                    spot = &playerStarts[players[i].startSpot];
 
                 if(!P_FuzzySpawn(spot, i, false))
                 {
@@ -553,49 +553,49 @@ void G_DummySpawnPlayer(int playernum)
 /**
  * Spawns a player at one of the random death match spots.
  */
-void G_DeathMatchSpawnPlayer(int playernum)
+void G_DeathMatchSpawnPlayer(int playerNum)
 {
-    int         i = 0, j;
-    int         selections;
-    boolean     using_dummy = false;
-    ddplayer_t *pl = players[playernum].plr;
+    int                 i = 0, j;
+    int                 selections;
+    boolean             usingDummy = false;
+    ddplayer_t         *pl = players[playerNum].plr;
 
     // Spawn player initially at a distant location.
     if(!pl->mo)
     {
-        G_DummySpawnPlayer(playernum);
-        using_dummy = true;
+        G_DummySpawnPlayer(playerNum);
+        usingDummy = true;
     }
 
     // Now let's find an available deathmatch start.
-    selections = deathmatch_p - deathmatchstarts;
+    selections = deathmatchP - deathmatchStarts;
     if(selections < 2)
         Con_Error("Only %i deathmatch spots, 2 required", selections);
 
     for(j = 0; j < 20; ++j)
     {
         i = P_Random() % selections;
-        if(P_CheckSpot(playernum, &deathmatchstarts[i], true))
+        if(P_CheckSpot(playerNum, &deathmatchStarts[i], true))
         {
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-            deathmatchstarts[i].type = playernum + 1;
+            deathmatchStarts[i].type = playerNum + 1;
 #endif
             break;
         }
     }
 
-    if(using_dummy)
+    if(usingDummy)
     {
         // Destroy the dummy.
         P_MobjRemove(pl->mo);
         pl->mo = NULL;
     }
 
-    P_SpawnPlayer(&deathmatchstarts[i], playernum);
+    P_SpawnPlayer(&deathmatchStarts[i], playerNum);
 
 #if __JDOOM__ || __JHERETIC__
     // Gib anything at the spot.
-    P_Telefrag(players[playernum].plr->mo);
+    P_Telefrag(players[playerNum].plr->mo);
 #endif
 }
 
@@ -608,14 +608,14 @@ void G_DeathMatchSpawnPlayer(int playernum)
 spawnspot_t *P_GetPlayerStart(int group, int pnum)
 {
 #if __JDOOM__ || __JHERETIC__
-    return &playerstarts[players[pnum].startSpot];
+    return &playerStarts[players[pnum].startSpot];
 #else
     int         i;
     spawnspot_t    *mt, *g0choice = NULL;
 
     for(i = 0; i < numPlayerStarts; ++i)
     {
-        mt = &playerstarts[i];
+        mt = &playerStarts[i];
 
         if(mt->arg1 == group && mt->type - 1 == pnum)
             return mt;

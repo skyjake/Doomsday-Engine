@@ -74,9 +74,9 @@ void    P_ClientSideThink(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     leveltime;
-int     actual_leveltime;
-int     TimerGame;
+int levelTime;
+int actualLevelTime;
+int timerGame;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -95,10 +95,10 @@ boolean P_IsPaused(void)
  */
 void P_RunPlayers(timespan_t ticLength)
 {
-    boolean     isPaused = P_IsPaused();
-    uint        i;
-    //ticcmd_t    command;
-    //boolean     gotCommands;
+    uint                i;
+    boolean             isPaused = P_IsPaused();
+    //ticcmd_t            command;
+    //boolean             gotCommands;
 
     // This is not for clients.
     if(IS_CLIENT)
@@ -154,24 +154,24 @@ void P_DoTick(void)
     if(paused)
         return;
 
-    actual_leveltime++;
+    actualLevelTime++;
 
-    if(!IS_CLIENT && TimerGame && !paused)
+    if(!IS_CLIENT && timerGame && !paused)
     {
-        if(!--TimerGame)
+        if(!--timerGame)
         {
 #if __JHEXEN__ || __JSTRIFE__
-            G_LeaveLevel(G_GetLevelNumber(gameepisode, P_GetMapNextMap(gamemap)),
+            G_LeaveLevel(G_GetLevelNumber(gameEpisode, P_GetMapNextMap(gameMap)),
                          0, false);
 #else
-            G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+            G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
 #endif
         }
     }
 
     // Pause if in menu and at least one tic has been run.
     if(!IS_NETGAME && Hu_MenuIsActive() && !Get(DD_PLAYBACK) &&
-       players[consoleplayer].plr->viewZ != 1)
+       players[CONSOLEPLAYER].plr->viewZ != 1)
         return;
 
     P_RunThinkers();
@@ -192,5 +192,5 @@ void P_DoTick(void)
     P_ClientSideThink();
 
     // For par times, among other things.
-    leveltime++;
+    levelTime++;
 }
