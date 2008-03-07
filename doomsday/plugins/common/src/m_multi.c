@@ -237,7 +237,7 @@ menuitem_t GameSetupItems2[] =  // for Doom 2
 
 #  elif __JDOOM64__
 
-#    define NUM_GAMESETUP_ITEMS     19
+#    define NUM_GAMESETUP_ITEMS     18
 
 menuitem_t GameSetupItems1[] =
 {
@@ -387,13 +387,15 @@ void DrawGameSetupMenu(void)
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 
-# if __JDOOM__
+# if __JDOOM__ || __JHERETIC__
+#  if __JDOOM__
     if(gameMode != commercial)
-# endif
+#  endif
     {
         sprintf(buf, "%i", cfg.netEpisode);
         M_WriteMenuText(menu, idx++, buf);
     }
+# endif
     sprintf(buf, "%i", cfg.netMap);
     M_WriteMenuText(menu, idx++, buf);
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
@@ -519,7 +521,7 @@ void DrawPlayerSetupMenu(void)
 
 void SCEnterMultiplayerMenu(int option, void *data)
 {
-    int     count;
+    int                 count;
 
     // Choose the correct items for the Game Setup menu.
 #if __JDOOM__
@@ -576,18 +578,10 @@ void SCEnterGameSetup(int option, void *data)
 {
     // See to it that the episode and mission numbers are correct.
 #if __JDOOM64__
-    if(cfg.netEpisode > 2)
-        cfg.netEpisode = 2;
-    if(cfg.netEpisode == 1)
-    {
-        if(cfg.netMap > 39)
-            cfg.netMap = 39;
-    }
-    else
-    {
-        if(cfg.netMap > 7)
-            cfg.netMap = 7;
-    }
+    if(cfg.netMap < 1)
+        cfg.netMap = 1;
+    if(cfg.netMap > 39)
+        cfg.netMap = 39;
 #elif __JDOOM__
     if(gameMode == commercial)
     {
@@ -613,14 +607,14 @@ void SCEnterGameSetup(int option, void *data)
         if(cfg.netMap > 9)
             cfg.netMap = 9;
     }
-#elif defined __JHERETIC__
+#elif __JHERETIC__
     if(cfg.netMap > 9)
         cfg.netMap = 9;
     if(cfg.netEpisode > 6)
         cfg.netEpisode = 6;
     if(cfg.netEpisode == 6 && cfg.netMap > 3)
         cfg.netMap = 3;
-#elif defined __JHEXEN__ || __JSTRIFE__
+#elif __JHEXEN__ || __JSTRIFE__
     if(cfg.netMap < 1)
         cfg.netMap = 1;
     if(cfg.netMap > 31)
@@ -653,19 +647,10 @@ void SCGameSetupDeathmatch(int option, void *data)
     }
 }
 
+#if __JDOOM__ || __JHERETIC__
 void SCGameSetupEpisode(int option, void *data)
 {
-#if __JDOOM64__
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.netEpisode < 2)
-            cfg.netEpisode++;
-    }
-    else if(cfg.netEpisode > 1)
-    {
-        cfg.netEpisode--;
-    }
-#elif __JDOOM__
+# if __JDOOM__
     if(gameMode == shareware)
     {
         cfg.netEpisode = 1;
@@ -680,7 +665,7 @@ void SCGameSetupEpisode(int option, void *data)
     {
         cfg.netEpisode--;
     }
-#elif __JHERETIC__
+# elif __JHERETIC__
     if(shareware)
     {
         cfg.netEpisode = 1;
@@ -695,9 +680,10 @@ void SCGameSetupEpisode(int option, void *data)
     {
         cfg.netEpisode--;
     }
-#endif
+# endif
     return;
 }
+#endif
 
 void SCGameSetupMission(int option, void *data)
 {
@@ -745,6 +731,8 @@ void SCOpenServer(int option, void *data)
         // Game already running, just change level.
 #if __JHEXEN__ || __JSTRIFE__
         Executef(false, "setmap %i", cfg.netMap);
+#elif __JDOOM64__
+        Executef(false, "setmap 1 %i", cfg.netMap);
 #else
         Executef(false, "setmap %i %i", cfg.netEpisode, cfg.netMap);
 #endif

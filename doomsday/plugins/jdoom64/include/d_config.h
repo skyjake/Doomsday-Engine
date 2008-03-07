@@ -193,7 +193,6 @@ typedef struct jdoom64_config_s {
     byte            netNoMonsters;
     byte            netRespawn;
     byte            netJumping;
-    byte            netEpisode;
     byte            netMap;
     byte            netSkill;
     byte            netSlot;

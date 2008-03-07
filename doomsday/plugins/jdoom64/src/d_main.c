@@ -288,7 +288,6 @@ void G_PreInit(void)
     cfg.slidingCorpses = false;
     cfg.fastMonsters = false;
     cfg.netJumping = true;
-    cfg.netEpisode = 1;
     cfg.netMap = 1;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 4;

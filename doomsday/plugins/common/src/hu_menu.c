@@ -405,6 +405,7 @@ menuitem_t MainItems[] = {
     {ITT_EFUNC, 0, "{case}Quit Game", M_QuitDOOM, 0, "M_QUITG"}
 #elif __JDOOM64__
     {ITT_EFUNC, 0, "{case}New Game", M_NewGame, 0},
+    {ITT_EFUNC, 0, "{case}Multiplayer", SCEnterMultiplayerMenu, 0},
     {ITT_SETMENU, 0, "{case}Options", NULL, MENU_OPTIONS},
     {ITT_EFUNC, 0, "{case}Load Game", M_LoadGame, 0},
     {ITT_EFUNC, 0, "{case}Save Game", M_SaveGame, 0},
@@ -466,13 +467,13 @@ menu_t MainDef = {
     0,
     97, 64,
     M_DrawMainMenu,
-    6, MainItems,
+    7, MainItems,
     0, MENU_NONE,
     huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B + 1,
-    0, 6
+    0, 7
 #else
     0,
     97, 64,

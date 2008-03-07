@@ -145,7 +145,7 @@ void D_NetConsoleRegistration(void)
  */
 int D_NetServerStarted(int before)
 {
-    int         netMap;
+    int             netMap, netEpisode;
 
     if(before)
         return true;
@@ -185,7 +185,14 @@ int D_NetServerStarted(int before)
 #else
     netMap = cfg.netMap;
 #endif
-    G_InitNew(cfg.netSkill, cfg.netEpisode, netMap);
+
+#if __JDOOM64__
+    netEpisode = 1;
+#else
+    netEpisode = cfg.netEpisode;
+#endif
+
+    G_InitNew(cfg.netSkill, netEpisode, netMap);
 
     // Close the menu, the game begins!!
     Hu_MenuCommand(MCMD_CLOSE);
