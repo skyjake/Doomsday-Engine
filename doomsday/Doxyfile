@@ -211,7 +211,7 @@ PREDEFINED             = __JDOOM__:=1 \
 			 __JHEXEN__:=1 \
 			 __JSTRIFE__:=1 \
 			 __WOLFTC__:=1 \
-			 __DOOM64TC__:=1 \
+			 __JDOOM64__:=1 \
 			 UNIX:=1 \
 			 WIN32:=1 \
 			 MACOSX:=1 \
