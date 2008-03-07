@@ -43,4 +43,10 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#include "doomsday.h"
+
+#include "p_mobj.h"
+
+boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side);
+
 #endif
