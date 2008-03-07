@@ -278,7 +278,6 @@ static void interpretLinedefFlags(void)
 
         if(xline->flags & ML_TWOSIDED)
         {
-            flags |= DDLF_TWOSIDED;
             xline->flags &= ~ML_TWOSIDED;
         }
 

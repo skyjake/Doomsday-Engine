@@ -672,7 +672,7 @@ boolean PTR_SlideTraverse(intercept_t *in)
 
     li = in->d.lineDef;
 
-    if(!(li->flags & DDLF_TWOSIDED))
+    if(!(li->inFlags & LF_TWOSIDED))
     {
         if(P_PointOnLineSide(slideMo->pos[VX],
                              slideMo->pos[VY], li))

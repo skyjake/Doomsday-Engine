@@ -760,9 +760,14 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->speed = FLOORSPEED;
             for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
             {
+                sector_t          *frontSec, *backSec;
+
                 ln = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
-                if(P_GetIntp(ln, DMU_FLAGS) & DDLF_TWOSIDED)
+                frontSec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
+                backSec = P_GetPtrp(ln, DMU_BACK_SECTOR);
+
+                if(frontSec && backSec)
                 {
                     side = P_GetPtrp(ln, DMU_SIDEDEF0);
                     bottomtexture = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
@@ -799,14 +804,18 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
 
             for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
             {
+                sector_t           *frontSec, *backSec;
+
                 // Choose the correct texture and special on two sided lines.
                 ln = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
+                frontSec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
+                backSec = P_GetPtrp(ln, DMU_BACK_SECTOR);
 
-                if(P_GetIntp(ln, DMU_FLAGS) & DDLF_TWOSIDED)
+                if(frontSec && backSec)
                 {
-                    if(P_GetPtrp(ln, DMU_FRONT_SECTOR) == sec)
+                    if(frontSec == sec)
                     {
-                        sec = P_GetPtrp(ln, DMU_BACK_SECTOR);
+                        sec = backSec;
                         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
                            floor->floorDestHeight)
                         {
@@ -819,7 +828,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
                     }
                     else
                     {
-                        sec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
+                        sec = frontSec;
                         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
                            floor->floorDestHeight)
                         {

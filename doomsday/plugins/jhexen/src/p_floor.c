@@ -180,20 +180,20 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
 
     SN_StartSequence(P_GetPtrp(sec, DMU_SOUND_ORIGIN),
                      SEQ_PLATFORM + P_ToXSector(sec)->seqType);
-    //
+
     // Find next sector to raise
     // Find nearby sector with sector special equal to type
-    //
     for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
     {
         linedef_t         *line = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
+        sector_t          *frontSec, *backSec;
 
-        if(!(P_GetIntp(line, DMU_FLAGS) & DDLF_TWOSIDED))
-        {
+        frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        backSec = P_GetPtrp(line, DMU_BACK_SECTOR);
+        if(!frontSec || !backSec)
             continue;
-        }
 
-        tsec = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        tsec = frontSec;
         xtsec = P_ToXSector(tsec);
         if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialData &&
            P_GetIntp(tsec, DMU_FLOOR_MATERIAL) == stairData.texture &&
@@ -203,7 +203,7 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
             P_SetIntp(tsec, DMU_VALID_COUNT, VALIDCOUNT);
         }
 
-        tsec = P_GetPtrp(line, DMU_BACK_SECTOR);
+        tsec = backSec;
         xtsec = P_ToXSector(tsec);
         if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialData &&
            P_GetIntp(tsec, DMU_FLOOR_MATERIAL) == stairData.texture &&

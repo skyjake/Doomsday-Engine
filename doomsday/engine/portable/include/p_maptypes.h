@@ -373,7 +373,8 @@ typedef struct sidedef_s {
 								 (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_POLYOBJ				0x1 // Line is part of a polyobject.
+#define LF_TWOSIDED				0x1 // Line has valid front and back sectors.
+#define LF_POLYOBJ				0x2 // Line is part of a polyobject.
 
 #define MLF_TWOSIDED            0x1 // Line is marked two-sided.
 #define MLF_ZEROLENGTH          0x2 // Zero length (line should be totally ignored).

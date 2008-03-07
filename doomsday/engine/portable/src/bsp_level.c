@@ -196,13 +196,13 @@ static void buildSegsFromHEdges(gamemap_t *dest, binarytree_t *rootNode)
 
             seg->SG_frontsector = ldef->L_side(seg->side)->sector;
 
-            if((ldef->flags & DDLF_TWOSIDED) && ldef->L_side(seg->side ^ 1))
+            if((ldef->inFlags & LF_TWOSIDED) && ldef->L_side(seg->side ^ 1))
             {
                 seg->SG_backsector = ldef->L_side(seg->side ^ 1)->sector;
             }
             else
             {
-                ldef->flags &= ~DDLF_TWOSIDED;
+                ldef->inFlags &= ~LF_TWOSIDED;
                 seg->SG_backsector = 0;
             }
 

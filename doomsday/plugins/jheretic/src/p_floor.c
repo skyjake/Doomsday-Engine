@@ -113,16 +113,21 @@ int EV_BuildStairs(linedef_t *line, stair_e type)
             ok = 0;
             for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
             {
+                sector_t           *frontSec, *backSec;
+
                 ln = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
-                if(!(P_GetIntp(ln, DMU_FLAGS) & DDLF_TWOSIDED))
+                frontSec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
+                backSec = P_GetPtrp(ln, DMU_BACK_SECTOR);
+
+                if(!frontSec || !backSec)
                     continue;
 
-                tsec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
+                tsec = frontSec;
                 if(sec != tsec)
                     continue;
 
-                tsec = P_GetPtrp(ln, DMU_BACK_SECTOR);
+                tsec = backSec;
                 if(P_GetIntp(tsec, DMU_FLOOR_MATERIAL) != texture)
                     continue;
 
@@ -153,14 +158,13 @@ int EV_BuildStairs(linedef_t *line, stair_e type)
 
 int EV_DoDonut(linedef_t *line)
 {
-    int         i;
-    int         rtn = 0;
-    sector_t   *s1 = NULL;
-    sector_t   *s2;
-    sector_t   *s3;
-    linedef_t     *check;
-    floormove_t *floor;
-    iterlist_t *list;
+    int                 i;
+    int                 rtn = 0;
+    sector_t           *s1 = NULL, *s2;
+    sector_t           *frontSec, *backSec;
+    linedef_t          *check;
+    floormove_t        *floor;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -179,10 +183,13 @@ int EV_DoDonut(linedef_t *line)
         {
             check = P_GetPtrp(s2, DMU_LINEDEF_OF_SECTOR | i);
 
-            s3 = P_GetPtrp(check, DMU_BACK_SECTOR);
+            frontSec = P_GetPtrp(check, DMU_FRONT_SECTOR);
+            backSec = P_GetPtrp(check, DMU_BACK_SECTOR);
 
-            if((!(P_GetIntp(check, DMU_FLAGS) & DDLF_TWOSIDED)) ||
-               s3 == s1)
+            if(!frontSec || !backSec)
+                continue;
+
+            if(backSec == s1)
                 continue;
 
             //  Spawn rising slime
@@ -197,9 +204,9 @@ int EV_DoDonut(linedef_t *line)
             floor->direction = 1;
             floor->sector = s2;
             floor->speed = FLOORSPEED * .5;
-            floor->texture = P_GetIntp(s3, DMU_FLOOR_MATERIAL);
+            floor->texture = P_GetIntp(backSec, DMU_FLOOR_MATERIAL);
             floor->newSpecial = 0;
-            floor->floorDestHeight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
+            floor->floorDestHeight = P_GetFloatp(backSec, DMU_FLOOR_HEIGHT);
 
             //  Spawn lowering donut-hole
             floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
@@ -213,7 +220,7 @@ int EV_DoDonut(linedef_t *line)
             floor->direction = -1;
             floor->sector = s1;
             floor->speed = FLOORSPEED * .5;
-            floor->floorDestHeight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
+            floor->floorDestHeight = P_GetFloatp(backSec, DMU_FLOOR_HEIGHT);
             break;
         }
     }

@@ -1796,11 +1796,13 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     l->L_frontside = front;
     l->L_backside = back;
 
+    l->inFlags = 0;
+    if(front && back)
+        l->inFlags |= LF_TWOSIDED;
+
     // Determine the default linedef flags.
     l->flags = 0;
-    if(front && back)
-        l->flags |= DDLF_TWOSIDED;
-    else
+    if(!front || !back)
         l->flags |= DDLF_BLOCKING;
 
     return l->buildData.index;

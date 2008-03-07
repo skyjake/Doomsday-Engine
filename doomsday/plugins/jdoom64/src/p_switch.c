@@ -71,6 +71,7 @@ int EV_DestoryLineShield(linedef_t* line)
     linedef_t          *li;
     xline_t            *xline;
     iterlist_t         *list;
+    sidedef_t          *frontSide, *backSide;
 
     if(!line)
         return false;
@@ -86,14 +87,20 @@ int EV_DestoryLineShield(linedef_t* line)
         {
             li = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | k);
             xline = P_ToXLine(li);
-            if(xline->tag != 999 || !xline->special ||
-               !(P_GetIntp(li, DMU_FLAGS) & DDLF_TWOSIDED))
+
+            if(xline->tag != 999 || !xline->special)
+                continue;
+
+            frontSide = P_GetPtrp(li, DMU_SIDEDEF0);
+            backSide = P_GetPtrp(li, DMU_SIDEDEF1);
+
+            if(!frontSide || !backSide)
                 continue;
 
             xline->special = 0;
 
-            P_SetIntp(li, DMU_SIDEDEF0_OF_LINE | DMU_MIDDLE_MATERIAL, 0);
-            P_SetIntp(li, DMU_SIDEDEF1_OF_LINE | DMU_MIDDLE_MATERIAL, 0);
+            P_SetIntp(frontSide, DMU_MIDDLE_MATERIAL, 0);
+            P_SetIntp(backSide, DMU_MIDDLE_MATERIAL, 0);
 
             flags = P_GetIntp(li, DMU_FLAGS);
             flags &= ~DDLF_BLOCKING;

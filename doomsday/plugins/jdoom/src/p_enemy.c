@@ -118,7 +118,7 @@ static void recursiveSound(sector_t *sec, int soundBlocks)
     int                 i;
     linedef_t          *check;
     xline_t            *xline;
-    sector_t           *frontsector, *backsector, *other;
+    sector_t           *frontSec, *backSec, *other;
     xsector_t          *xsec = P_ToXSector(sec);
 
     // Wake up all monsters in this sector.
@@ -135,10 +135,10 @@ static void recursiveSound(sector_t *sec, int soundBlocks)
     {
         check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
-        frontsector = P_GetPtrp(check, DMU_FRONT_SECTOR);
-        backsector = P_GetPtrp(check, DMU_BACK_SECTOR);
+        frontSec = P_GetPtrp(check, DMU_FRONT_SECTOR);
+        backSec = P_GetPtrp(check, DMU_BACK_SECTOR);
 
-        if(!(P_GetIntp(check, DMU_FLAGS) & DDLF_TWOSIDED))
+        if(!frontSec || !backSec)
             continue;
 
         P_LineOpening(check);
@@ -146,10 +146,10 @@ static void recursiveSound(sector_t *sec, int soundBlocks)
         if(OPENRANGE <= 0)
             continue; // Closed door?
 
-        if(frontsector == sec)
-            other = backsector;
+        if(frontSec == sec)
+            other = backSec;
         else
-            other = frontsector;
+            other = frontSec;
 
         xline = P_ToXLine(check);
         if(xline->flags & ML_SOUNDBLOCK)
@@ -158,7 +158,9 @@ static void recursiveSound(sector_t *sec, int soundBlocks)
                 recursiveSound(other, 1);
         }
         else
+        {
             recursiveSound(other, soundBlocks);
+        }
     }
 }
 

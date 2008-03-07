@@ -134,11 +134,10 @@ static float dropoffDelta[2], floorz;
  */
 void P_RecursiveSound(sector_t *sec, int soundblocks)
 {
-    int             i, lineCount;
-    linedef_t         *check;
-    xline_t        *xline;
-    sector_t       *other;
-    xsector_t      *xsec = P_ToXSector(sec);
+    int                 i, lineCount;
+    xline_t            *xline;
+    sector_t           *frontSec, *backSec, *other;
+    xsector_t          *xsec = P_ToXSector(sec);
 
     // Wake up all monsters in this sector.
     if(P_GetIntp(sec, DMU_VALID_COUNT) == VALIDCOUNT &&
@@ -153,23 +152,22 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
     lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
-        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
+        linedef_t          *check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
 
-        if(!(P_GetIntp(check, DMU_FLAGS) & DDLF_TWOSIDED))
+        frontSec = P_GetPtrp(check, DMU_FRONT_SECTOR);
+        backSec = P_GetPtrp(check, DMU_BACK_SECTOR);
+
+        if(!frontSec || !backSec)
             continue;
 
         P_LineOpening(check);
         if(OPENRANGE <= 0)
             continue; // Closed door.
 
-        if(P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF0), DMU_SECTOR) == sec)
-        {
-            other = P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF1), DMU_SECTOR);
-        }
+        if(frontSec == sec)
+            other = backSec;
         else
-        {
-            other = P_GetPtrp(P_GetPtrp(check, DMU_SIDEDEF0), DMU_SECTOR);
-        }
+            other = frontSec;
 
         xline = P_ToXLine(check);
         if(xline->flags & ML_SOUNDBLOCK)

@@ -87,7 +87,7 @@ static int numSectorTagLists = 0;
  */
 void P_DestroyLineTagLists(void)
 {
-    int         i;
+    int                 i;
 
     if(numLineTagLists == 0)
         return;
@@ -108,8 +108,8 @@ void P_DestroyLineTagLists(void)
  */
 iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
 {
-    int         i;
-    taglist_t  *tagList;
+    int                 i;
+    taglist_t          *tagList;
 
     // Do we have an existing list for this tag?
     for(i = 0; i < numLineTagLists; ++i)
@@ -133,7 +133,7 @@ iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
  */
 void P_DestroySectorTagLists(void)
 {
-    int         i;
+    int                 i;
 
     if(numSectorTagLists == 0)
         return;
@@ -154,8 +154,8 @@ void P_DestroySectorTagLists(void)
  */
 iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList)
 {
-    int         i;
-    taglist_t *tagList;
+    int                 i;
+    taglist_t          *tagList;
 
     // Do we have an existing list for this tag?
     for(i = 0; i < numSectorTagLists; ++i)
@@ -175,18 +175,32 @@ iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList)
 }
 
 /**
- * Return sector_t * of sector next to current.
- * NULL if not two-sided line
+ * Get the sector on the other side of the line that is NOT the given sector.
+ *
+ * @param line          Ptr to the line to test.
+ * @param sec           Reference sector to compare against.
+ *
+ * @return              Ptr to the other sector or @c NULL if the specified
+ *                      line is NOT twosided.
  */
 sector_t *P_GetNextSector(linedef_t *line, sector_t *sec)
 {
-    if(!(P_GetIntp(line, DMU_FLAGS) & DDLF_TWOSIDED))
+    sector_t           *frontSec, *backSec;
+
+    if(!sec || !line)
         return NULL;
 
-    if(P_GetPtrp(line, DMU_FRONT_SECTOR) == sec)
-        return P_GetPtrp(line, DMU_BACK_SECTOR);
+    frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    backSec= P_GetPtrp(line, DMU_BACK_SECTOR);
 
-    return P_GetPtrp(line, DMU_FRONT_SECTOR);
+
+    if(!frontSec || !backSec)
+        return NULL;
+
+    if(frontSec == sec)
+        return backSec;
+
+    return frontSec;
 }
 
 /**
@@ -194,11 +208,11 @@ sector_t *P_GetNextSector(linedef_t *line, sector_t *sec)
  */
 float P_FindLowestFloorSurrounding(sector_t *sec)
 {
-    int         i;
-    int         lineCount;
-    float       floor;
-    linedef_t     *check;
-    sector_t   *other;
+    int                 i;
+    int                 lineCount;
+    float               floor;
+    linedef_t          *check;
+    sector_t           *other;
 
     floor = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
     lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
@@ -222,11 +236,11 @@ float P_FindLowestFloorSurrounding(sector_t *sec)
  */
 float P_FindHighestFloorSurrounding(sector_t *sec)
 {
-    int         i;
-    int         lineCount;
-    float       floor = -500;
-    linedef_t     *check;
-    sector_t   *other;
+    int                 i;
+    int                 lineCount;
+    float               floor = -500;
+    linedef_t          *check;
+    sector_t           *other;
 
     lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
@@ -255,12 +269,12 @@ float P_FindHighestFloorSurrounding(sector_t *sec)
  */
 float P_FindNextHighestFloor(sector_t *sec, float currentheight)
 {
-    int         i;
-    int         lineCount;
-    float       otherHeight;
-    float       anotherHeight;
-    linedef_t     *check;
-    sector_t   *other;
+    int                 i;
+    int                 lineCount;
+    float               otherHeight;
+    float               anotherHeight;
+    linedef_t          *check;
+    sector_t           *other;
 
     lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
@@ -302,11 +316,11 @@ float P_FindNextHighestFloor(sector_t *sec, float currentheight)
  */
 float P_FindLowestCeilingSurrounding(sector_t *sec)
 {
-    int         i;
-    int         lineCount;
-    float       height = DDMAXFLOAT;
-    linedef_t     *check;
-    sector_t   *other;
+    int                 i;
+    int                 lineCount;
+    float               height = DDMAXFLOAT;
+    linedef_t          *check;
+    sector_t           *other;
 
     lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
@@ -328,11 +342,11 @@ float P_FindLowestCeilingSurrounding(sector_t *sec)
  */
 float P_FindHighestCeilingSurrounding(sector_t *sec)
 {
-    int         i;
-    int         lineCount;
-    float       height = 0;
-    linedef_t     *check;
-    sector_t   *other;
+    int                 i;
+    int                 lineCount;
+    float               height = 0;
+    linedef_t          *check;
+    sector_t           *other;
 
     lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)
@@ -354,10 +368,10 @@ float P_FindHighestCeilingSurrounding(sector_t *sec)
  */
 float P_FindMinSurroundingLight(sector_t *sec, float min)
 {
-    int         i;
-    int         lineCount;
-    linedef_t     *line;
-    sector_t   *check;
+    int                 i;
+    int                 lineCount;
+    linedef_t          *line;
+    sector_t           *check;
 
     lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
     for(i = 0; i < lineCount; ++i)

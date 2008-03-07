@@ -134,8 +134,7 @@ void P_RecursiveSound(sector_t *sec, int soundBlocks)
     int                 i;
     linedef_t          *check;
     xline_t            *xline;
-    sector_t           *other;
-    sector_t           *frontSec, *backSec;
+    sector_t           *frontSec, *backSec, *other;
     xsector_t          *xsec = P_ToXSector(sec);
 
     // Wake up all monsters in this sector.
@@ -155,7 +154,7 @@ void P_RecursiveSound(sector_t *sec, int soundBlocks)
         frontSec = P_GetPtrp(check, DMU_FRONT_SECTOR);
         backSec = P_GetPtrp(check, DMU_BACK_SECTOR);
 
-        if(!(P_GetIntp(check, DMU_FLAGS) & DDLF_TWOSIDED))
+        if(!frontSec || !backSec)
             continue;
 
         P_LineOpening(check);
