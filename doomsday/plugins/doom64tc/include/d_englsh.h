@@ -128,7 +128,6 @@
 #define PD_REDK             GET_TXT(TXT_PD_REDK)
 #define PD_YELLOWK          GET_TXT(TXT_PD_YELLOWK)
 
-#define ALLALONE            GET_TXT(TXT_ALLALONE) // d64tc
 #define TXT_GAMESAVED       GET_TXT(TXT_GGSAVED)
 
 #define HUSTR_MSGU          GET_TXT(TXT_HUSTR_MSGU)

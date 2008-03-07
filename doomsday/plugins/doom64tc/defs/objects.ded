@@ -5655,30 +5655,6 @@ Thing {
 }
 
 Thing {
-  ID = "DOOMSDAY";
-  DoomEd number = 555;
-  Spawn state = "DETH_1";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Reaction time = 8;
-  Spawn health = 1000;
-  Radius = 20;
-  Height = 16;
-  Mass = 100;
-  Flags = "mf_special mf_countitem";
-}
-
-Thing {
   ID = "MISC12";
   DoomEd number = 2013;
   Spawn state = "SOUL";
@@ -17955,22 +17931,6 @@ State {
   Frame = 32769;
   Tics = 6;
   Next state = "BON3";
-}
-
-State {
-  ID = "DETH_1";
-  Sprite = "DETH";
-  Frame = 32768;
-  Tics = 6;
-  Next state = "DETH_2";
-}
-
-State {
-  ID = "DETH_2";
-  Sprite = "DETH";
-  Frame = 32769;
-  Tics = 6;
-  Next state = "DETH_1";
 }
 
 State {

@@ -608,12 +608,6 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = sfx_getpow;
         break;
 
-    case SPR_DETH: // d64tc
-        P_Massacre();
-        P_SetMessage(player, ALLALONE, false);
-        sound = sfx_getpow;
-        break;
-
     case SPR_POW4: // d64tc
         if(player->weaponOwned[WT_TENTH])
         {

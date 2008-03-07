@@ -83,7 +83,6 @@ Sprite { ID = "PINS"; }
 Sprite { ID = "MEGA"; }
 Sprite { ID = "SUIT"; }
 Sprite { ID = "PMAP"; }
-Sprite { ID = "DETH"; }
 Sprite { ID = "PVIS"; }
 Sprite { ID = "CLIP"; }
 Sprite { ID = "AMMO"; }
