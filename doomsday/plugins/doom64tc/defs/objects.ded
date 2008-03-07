@@ -1185,33 +1185,6 @@ Thing {
 }
 
 Thing {
-  ID = "FLOATER";
-  DoomEd number = 7878;
-  Spawn state = "FLOATDEVICE";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "plpain";
-  Death sound = "pldeth";
-  Active sound = "None";
-  Reaction time = 100;
-  Pain chance = 1;
-  Spawn health = 1000;
-  Speed = 0;
-  Radius = 40;
-  Height = 8;
-  Mass = 100;
-  Flags = "mf_solid mf_float mf_nogravity";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
-}
-
-Thing {
   ID = "EXTRABFG";
   DoomEd number = -1;
   Spawn state = "BFGEXP";
@@ -6993,38 +6966,6 @@ State {
   Frame = 32772;
   Tics = 6;
   Next state = "NULL";
-}
-
-State {
-  ID = "HTIMEBLINK1";
-  Sprite = "HTUF";
-  Frame = 32768;
-  Tics = 3;
-  Next state = "HTIMEBLINK2";
-}
-
-State {
-  ID = "HTIMEBLINK2";
-  Sprite = "HTUF";
-  Frame = 32769;
-  Tics = 3;
-  Next state = "HTIMEBLINK3";
-}
-
-State {
-  ID = "HTIMEBLINK3";
-  Sprite = "HTUF";
-  Frame = 32770;
-  Tics = 3;
-  Next state = "HTIMEBLINK4";
-}
-
-State {
-  ID = "HTIMEBLINK4";
-  Sprite = "HTUF";
-  Frame = 32769;
-  Tics = 3;
-  Next state = "HTIMEBLINK1";
 }
 
 State {
@@ -15809,15 +15750,6 @@ State {
  Frame = 0;
  Tics = 1;
  Next state = "NULL";
-}
-
-State {
-  ID = "FLOATDEVICE";
-  Sprite = "BLNK";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_RevealFloater";
-  Next state = "FLOATDEVICE";
 }
 
 State {

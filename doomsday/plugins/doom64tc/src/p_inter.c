@@ -608,42 +608,6 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = sfx_getpow;
         break;
 
-    case SPR_POW4: // d64tc
-        if(player->weaponOwned[WT_TENTH])
-        {
-            if(!P_GiveArtifact(player, it_float))
-                return;
-
-            P_SetMessage(player, GOTFLOATER, false);
-            sound = sfx_getpow;
-        }
-        else
-        {
-            if(!(levelTime & 0x1f))
-                P_SetMessage(player, NGOTUNMAKER, false);
-
-            return; //Don't destroy item, can be collected later by other players
-        }
-        break;
-
-    case SPR_POW5: // d64tc
-        if(player->weaponOwned[WT_TENTH])
-        {
-            if(!P_GiveArtifact(player, it_helltime))
-                return;
-
-            P_SetMessage(player, GOTHELLTIME, false);
-            sound = sfx_getpow;
-        }
-        else
-        {
-            if(!(levelTime & 0x1f))
-                P_SetMessage(player, NGOTUNMAKER, false);
-
-            return; //Don't destroy item, can be collected later by other players
-        }
-        break;
-
     case SPR_PVIS:
         if(!P_GivePower(player, PT_INFRARED))
             return;

@@ -442,39 +442,6 @@ void ST_doFullscreenStuff(void)
             ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 124,
                              HOT_BLEFT, iconalpha);
         }
-
-        if(plr->artifacts[it_helltime])
-        {
-            ST_drawHUDSprite(SPR_POW5, HUDBORDERX + pos, h_height - 164,
-                             HOT_BLEFT, iconalpha);
-            ST_HUDSpriteSize(SPR_POW5, &w, &h);
-            if(plr->hellTime)
-            {
-                for(i = 0; i < plr->hellTime; ++i)
-                {
-                    ST_drawHUDSprite(SPR_STHT, HUDBORDERX + 48 + i,
-                                     h_height - 44, HOT_BLEFT, iconalpha);
-                }
-            }
-        }
-
-        if(plr->artifacts[it_float])
-        {
-            ST_drawHUDSprite(SPR_POW4, HUDBORDERX, h_height - 184, HOT_BLEFT, iconalpha);
-            ST_HUDSpriteSize(SPR_POW4, &w, &h);
-
-            if(plr->deviceTime &&
-               ((plr->outcastCycle == 2 && plr->artifacts[it_float]) ||
-                (plr->outcastCycle == 1 && plr->artifacts[it_float] &&
-                 !(plr->artifacts[it_helltime]))))
-            {
-                for(i = 0; i < plr->deviceTime; ++i)
-                {
-                    ST_drawHUDSprite(SPR_STDT, HUDBORDERX + 48 + i, h_height - 32,
-                                     HOT_BLEFT, iconalpha);
-                }
-            }
-        }
     }
     // < d64tc
 

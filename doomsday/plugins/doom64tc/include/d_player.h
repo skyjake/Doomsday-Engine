@@ -150,11 +150,6 @@ typedef struct player_s {
     int             laserIcon2;
     int             laserIcon3;
     int             artifacts[NUMARTIFACTS];
-
-    int             hellTime;
-    int             deviceTime;
-
-    int             outcastCycle;   // for the two powerups - kaiser
     // < d64tc
 } player_t;
 

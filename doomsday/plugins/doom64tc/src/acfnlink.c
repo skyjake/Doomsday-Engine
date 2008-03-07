@@ -79,7 +79,6 @@ actionlink_t actionlinks[] = {
     {"A_DrawPlasmaTube",    A_DrawPlasmaTube}, //d64tc
     {"A_PlasmaBuzz",        A_PlasmaBuzz}, //d64tc
     {"A_Lasersmoke",        A_Lasersmoke}, //d64tc
-    {"A_RevealFloater",     A_RevealFloater}, //d64tc
     {"A_FireSingleLaser",   A_FireSingleLaser}, //d64tc
     {"A_FireDoubleLaser",   A_FireDoubleLaser}, //d64tc
     {"A_FireDoubleLaser1",  A_FireDoubleLaser1}, //d64tc

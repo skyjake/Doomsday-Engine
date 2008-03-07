@@ -129,7 +129,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    },
    {
     { // plasma rifle
-     GM_NOTSHAREWARE,
+     GM_ANY,
      {0, 0, 1, 0}, // type: clip | shell | cell | misl
      {0, 0, 1, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
@@ -144,7 +144,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    },
    {
     { // bfg 9000
-     GM_NOTSHAREWARE,
+     GM_ANY,
      {0, 0, 1, 0},  // type: clip | shell | cell | misl
      {0, 0, 40, 0}, // pershot: clip | shell | cell | misl
      false,         // autofire when raised if fire held
@@ -174,7 +174,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    },
    {
     { // super shotgun
-     GM_COMMERCIAL,
+     GM_ANY,
      {0, 1, 0, 0}, // type: clip | shell | cell | misl
      {0, 2, 0, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
@@ -189,7 +189,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    },
    {
     { // UNMAKER
-     GM_COMMERCIAL,
+     GM_ANY,
      {0, 0, 1, 0}, // type: clip | shell | cell | misl
      {0, 0, 1, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held

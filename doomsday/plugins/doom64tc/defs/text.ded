@@ -381,26 +381,6 @@ Text {
 }
 
 Text {
-  ID = "GOTFLOATER";
-  Text = "Levitation Device!";
-}
-
-Text {
-  ID = "GOTHELLTIME";
-  Text = "Hell Time!";
-}
-
-Text {
-  ID = "HELLTIMEON";
-  Text = "Hell Time actived!";
-}
-
-Text {
-  ID = "HELLTIMEWEAK";
-  Text = "You are too weak to activate Hell Time.";
-}
-
-Text {
   ID = "PD_OPNPOWERUP";
   Text = "You lack the ability to activate it...";
 }
@@ -1397,9 +1377,4 @@ Text {
 Text {
   ID = "SKILL5";
   Text = "Hell fears me!";
-}
-
-Text {
- ID = "NOCHEAT";
- Text = "CHEATING IS DISABLED";
 }

@@ -200,8 +200,6 @@ typedef enum
     it_laserpw1,
     it_laserpw2,
     it_laserpw3,
-    it_helltime,
-    it_float,
     NUMARTIFACTS
 } laserpw_t;
 // < doom64tc

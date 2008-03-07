@@ -372,7 +372,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
  */
 weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
 {
-    weapontype_t       *list;
+    weapontype_t       *list, w = 0;
     int                 lvl, i;
 #if __DOOM64TC__
     static weapontype_t wp_list[] = {
@@ -415,8 +415,11 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
 
     // Find the current position in the weapon list.
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-        if(list[i] == player->readyWeapon)
+    {
+        w = list[i];
+        if(w == player->readyWeapon)
             break;
+    }
 
     // Locate the next or previous weapon owned by the player.
     for(;;)
@@ -426,23 +429,25 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
             i++;
         else
             i--;
+
         if(i < 0)
             i = NUM_WEAPON_TYPES - 1;
         else if(i > NUM_WEAPON_TYPES - 1)
             i = 0;
 
+        w = list[i];
+
         // Have we circled around?
-        if(list[i] == player->readyWeapon)
+        if(w == player->readyWeapon)
             break;
 
         // Available in this game mode? And a valid weapon?
-        if((weaponInfo[list[i]][player->class].mode[lvl].
-            gameModeBits & gameModeBits) &&
-           player->weaponOwned[list[i]])
+        if((weaponInfo[w][player->class].mode[lvl].
+            gameModeBits & gameModeBits) && player->weaponOwned[w])
             break;
     }
 
-    return list[i];
+    return w;
 }
 
 /**

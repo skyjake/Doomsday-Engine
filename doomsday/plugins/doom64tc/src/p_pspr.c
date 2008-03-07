@@ -147,7 +147,7 @@ void P_BringUpWeapon(player_t *player)
         player->pendingWeapon = player->readyWeapon;
 
     if(wminfo->raiseSound)
-        S_StartSound(wminfo->raiseSound, player->plr->mo);
+        S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
 
     player->pendingWeapon = WT_NOCHANGE;
     player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
@@ -332,7 +332,8 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
     player->plr->pSprites[0].state = DDPSP_DOWN;
 
     // Should we disable the lowering?
-    if(!cfg.bobWeaponLower || weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch)
+    if(!cfg.bobWeaponLower ||
+       weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch)
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
@@ -391,39 +392,6 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
     if(player->readyWeapon == WT_SIXTH)
     {
         P_SetPsprite(player, ps_flash, S_PLASMASHOCK1);
-    }
-    else if(player->readyWeapon == WT_TENTH)
-    {
-        if(player->artifacts[it_helltime] ||
-            (player->artifacts[it_helltime] && player->artifacts[it_float]))
-        {
-            if(player->outcastCycle == 1 && player->artifacts[it_helltime])
-            {
-                P_SetPsprite(player, ps_flash, S_HTIMEBLINK1);
-            }
-            else if(player->outcastCycle == 2 && player->artifacts[it_float])
-            {
-                P_SetPsprite(player, ps_flash, S_LDBLINK1);
-            }
-            else
-            {
-                player->outcastCycle = 0;
-                P_SetPsprite(player, ps_flash, S_NULL);
-            }
-        }
-
-        if(player->artifacts[it_float] && !player->artifacts[it_helltime])
-        {
-            if(player->outcastCycle == 1 && player->artifacts[it_float])
-            {
-                P_SetPsprite(player, ps_flash, S_LDBLINK1);
-            }
-            else
-            {
-                player->outcastCycle = 0;
-                P_SetPsprite(player, ps_flash, S_NULL);
-            }
-        }
     }
     else
     {
@@ -599,132 +567,44 @@ void C_DECL A_PlasmaBuzz(player_t *player)
 /**
  * d64tc
  */
-void A_SpawnFloater(player_t *player)
-{
-    uint                an;
-    mobj_t             *mo, *floater;
-    float               pos[3];
-
-    if(!player || !player->plr->mo)
-        return;
-
-    mo = player->plr->mo;
-    an = mo->angle >> ANGLETOFINESHIFT;
-
-    memcpy(pos, mo->pos, sizeof(pos));
-    pos[VX] += mo->radius * 4 * FIX2FLT(finecosine[an]);
-    pos[VY] += mo->radius * 4 * FIX2FLT(finesine[an]);
-
-    floater = P_SpawnMobj3fv(MT_FLOATER, pos);
-
-    if(floater)
-    {
-        floater->angle = mo->angle;
-        floater->mom[MZ] += 1;
-    }
-}
-
-/**
- * d64tc
- * kaiser - thanks to jow for giving me a jumpstart :)
- * DJS - TODO: Split into multiple firing modes.
- */
 void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
 {
     mobj_t             *pmo;
 
-    if(player->outcastCycle == 1 && player->artifacts[it_helltime])
-    {
-        P_SetPsprite(player, ps_flash, S_HTIMEBLINK3);
-    }
-    else if((player->outcastCycle == 2 && player->artifacts[it_float]) ||
-            (player->outcastCycle == 1 &&
-             (player->artifacts[it_float] && !(player->artifacts[it_helltime]))
-            ))
-    {
-        P_SetPsprite(player, ps_flash, S_LDBLINK3);
-    }
-    else
-    {
-        P_SetPsprite(player, ps_flash,
-                     weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
-    }
+    P_SetPsprite(player, ps_flash,
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     if(IS_CLIENT)
         return;
 
-    if(player->outcastCycle == 1 && player->artifacts[it_helltime] &&
-       !player->hellTime)
+    P_ShotAmmo(player);
+
+    pmo = player->plr->mo;
+    player->update |= PSF_AMMO;
+
+    if(player->laserPower == 0)
     {
-        if(player->health >= 20)
-        {
-            if(!(P_GetPlayerCheats(player) & CF_GODMODE))
-            {
-                player->health -= 20;
-            }
-
-            player->hellTime = 450;
-
-            P_SetMessage(player, HELLTIMEON, false);
-            S_StartSound(sfx_htime, player->plr->mo);
-        }
-        else
-        {
-            P_SetMessage(player, HELLTIMEWEAK, false);
-        }
-
+        P_SpawnPlayerMissile(MT_LASERSHOTWEAK, player->plr->mo);
     }
-    else if((player->outcastCycle == 2 && player->artifacts[it_float]) ||
-            (player->outcastCycle == 1 &&
-             (player->artifacts[it_float] && !(player->artifacts[it_helltime]))
-            ))
+    else if(player->laserPower == 1)
     {
-        if(player->deviceTime < 80)
-        {
-            P_SetMessage(player, UNMAKERCHARGE, false);
-            return;
-        }
-
-        if(player->deviceTime >= 81)
-            player->deviceTime -= 80;
-
-        if(player->deviceTime)
-        {
-            A_SpawnFloater(player);
-            S_StartSound(sfx_itmbk, player->plr->mo);
-        }
+        P_SpawnPlayerMissile(MT_LASERSHOT, player->plr->mo);
     }
-    else
+    else if(player->laserPower == 2)
     {
+        P_ShotAmmo(player); // adds an extra ammo subtractor
+
+        P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle - (ANG45 / 8));
+        P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle + (ANG45 / 8));
+    }
+    else if(player->laserPower == 3)
+    {
+        P_ShotAmmo(player); //adds another subtractor, now consumes 3 cells!
         P_ShotAmmo(player);
 
-        pmo = player->plr->mo;
-        player->update |= PSF_AMMO;
-
-        if(player->laserPower == 0)
-        {
-            P_SpawnPlayerMissile(MT_LASERSHOTWEAK, player->plr->mo);
-        }
-        else if(player->laserPower == 1)
-        {
-            P_SpawnPlayerMissile(MT_LASERSHOT, player->plr->mo);
-        }
-        else if(player->laserPower == 2)
-        {
-            P_ShotAmmo(player); // adds an extra ammo subtractor
-
-            P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle - (ANG45 / 8));
-            P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle + (ANG45 / 8));
-        }
-        else if(player->laserPower == 3)
-        {
-            P_ShotAmmo(player); //adds another subtractor, now consumes 3 cells!
-            P_ShotAmmo(player);
-
-            P_SpawnPlayerMissile(MT_LASERSHOT, pmo);
-            P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle - (ANG45 / 6));
-            P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle + (ANG45 / 6));
-        }
+        P_SpawnPlayerMissile(MT_LASERSHOT, pmo);
+        P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle - (ANG45 / 6));
+        P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle + (ANG45 / 6));
     }
 }
 

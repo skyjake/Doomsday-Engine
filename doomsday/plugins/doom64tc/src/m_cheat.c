@@ -736,7 +736,7 @@ DEFCC(CCmdCheatGive)
         Con_Printf(" s - radiation shielding suit\n");
         Con_Printf(" v - invisibility\n");
         Con_Printf(" w - weapons\n");
-        Con_Printf(" 0-8 - weapon\n");
+        Con_Printf(" 0-9 - weapon\n");
         Con_Printf("Example: 'give arw' corresponds the cheat IDFA.\n");
         return true;
     }

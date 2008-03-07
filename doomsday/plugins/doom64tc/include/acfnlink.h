@@ -115,7 +115,6 @@ void C_DECL A_CposPanRight();
 void C_DECL A_DrawPlasmaTube();
 void C_DECL A_PlasmaBuzz();
 void C_DECL A_Lasersmoke();
-void C_DECL A_RevealFloater();
 void C_DECL A_FireSingleLaser();
 void C_DECL A_FireDoubleLaser();
 void C_DECL A_FireDoubleLaser1();

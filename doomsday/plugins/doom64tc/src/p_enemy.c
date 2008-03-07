@@ -2319,30 +2319,6 @@ void C_DECL A_Lasersmoke(mobj_t *mo)
     P_SpawnMobj3fv(MT_LASERDUST, mo->pos);
 }
 
-/**
- * d64tc
- */
-void C_DECL A_RevealFloater(mobj_t *mo)
-{
-    mobj_t             *mo2;
-    float               pos[3];
-
-    memcpy(pos, mo->pos, sizeof(pos));
-    pos[VX] += (float) ((P_Random() % 63) - 32);
-    pos[VY] += (float) ((P_Random() % 63) - 32);
-
-    mo2 = P_SpawnMobj3fv(MT_LASERDUST, pos);
-
-    mo2->flags &= ~MF_NOGRAVITY;
-    mo->reactionTime--;
-    // DJS - Is this ever true? We've just spawned it so it will be -1...
-    // FIXME?
-    if(mo->reactionTime == 0)
-    {
-        P_MobjChangeState(mo, S_TBALLX1);
-    }
-}
-
 void C_DECL A_XScream(mobj_t *actor)
 {
     S_StartSound(sfx_slop, actor);

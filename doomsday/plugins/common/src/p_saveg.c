@@ -1088,17 +1088,10 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->laserIcon1); // added in outcast
     SV_WriteLong(p->laserIcon2); // added in outcast
     SV_WriteLong(p->laserIcon3); // added in outcast
-    SV_WriteLong(p->outcastCycle); // added in outcast
-    SV_WriteLong(p->hellTime); // added in outcast
-    SV_WriteLong(p->deviceTime); // added in outcast
 # endif
 #endif
 
     SV_Write(p->powers, GetPlayerHeader()->numPowers * 4);
-
-#if __DOOM64TC__
-    //SV_WriteLong(cheatenable); // added in outcast
-#endif
 
 #if __JHEXEN__
     SV_WriteLong(p->keys);
@@ -1248,17 +1241,10 @@ static void SV_ReadPlayer(player_t *p)
     p->laserIcon1 = SV_ReadLong(); // added in outcast
     p->laserIcon2 = SV_ReadLong(); // added in outcast
     p->laserIcon3 = SV_ReadLong(); // added in outcast
-    p->outcastCycle = SV_ReadLong(); // added in outcast
-    p->hellTime = SV_ReadLong(); // added in outcast
-    p->deviceTime = SV_ReadLong(); // added in outcast
 # endif
 #endif
 
     SV_Read(p->powers, GetPlayerHeader()->numPowers * 4);
-
-#if __DOOM64TC__
-    //cheatenable = SV_ReadLong(); // added in outcast
-#endif
 
 #if __JHEXEN__
     p->keys = SV_ReadLong();
