@@ -593,10 +593,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jdoom64\include\jdoom64.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jdoom64\include\doomdef.h"
 				>
 			</File>
@@ -618,6 +614,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jdoom64\include\info.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jdoom64\include\jdoom64.h"
 				>
 			</File>
 			<File
