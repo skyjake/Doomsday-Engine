@@ -112,8 +112,6 @@ extern int ratioLimit;
 extern boolean palettedTextureExtAvailable;
 extern boolean s3tcAvailable;
 
-extern material_t skyMaskMaterial;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The current texture.

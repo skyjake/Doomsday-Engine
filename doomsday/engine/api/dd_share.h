@@ -277,7 +277,7 @@ extern          "C" {
 
         // Non-integer/special values for Set/Get
         DD_SKYMASKMATERIAL_NAME = 0x4000,
-        DD_SKYFLATNUM,
+        DD_SKYMASKMATERIAL_NUM,
         DD_TRANSLATIONTABLES_ADDRESS,
         DD_TRACE_ADDRESS,          // divline 'trace' used by PathTraverse.
         DD_SPRITE_REPLACEMENT,     // Sprite <-> model replacement.

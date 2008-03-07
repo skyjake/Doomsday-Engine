@@ -90,7 +90,6 @@ fixed_t *fineCosine = &finesine[FINEANGLES / 4];
 int     extraLight;             // bumped light from gun blasts
 
 material_t *skyMaskMaterial = NULL;
-char    skyFlatName[9] = "F_SKY";
 
 float   frameTimePos;           // 0...1: fractional part for sharp game tics
 
@@ -131,13 +130,9 @@ void R_Register(void)
 //    C_VAR_INT("rend-vsync", &useVSync, 0, 0, 1);
 }
 
-/**
- * The skyflat is the special flat used for surfaces that should show
- * a view of the sky.
- */
 void R_InitSkyMap(void)
 {
-    skyMaskMaterial = R_GetMaterial(R_MaterialNumForName(skyFlatName, MAT_FLAT), MAT_FLAT);
+    // Nothing to do.
 }
 
 /**

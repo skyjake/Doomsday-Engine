@@ -2163,7 +2163,7 @@ static boolean P_ThingHeightClip(mobj_t *thing)
 #if __JHEXEN__
     thing->floorPic = tmFloorPic;
 #else
-    // killough $dropoff_fix: remember dropoffs.
+    // $dropoff_fix: remember dropoffs.
     thing->dropOffZ = tmDropoffZ;
 #endif
 

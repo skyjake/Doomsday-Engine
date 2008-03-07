@@ -257,7 +257,7 @@ enum { VX, VY, VZ }; // Vertex indices.
 
 #define GAMETIC             (Get(DD_GAMETIC))
 
-#define SKYMASKMATERIAL     (Get(DD_SKYFLATNUM))
+#define SKYMASKMATERIAL     (Get(DD_SKYMASKMATERIAL_NUM))
 #define SKYFLATNAME         ("F_SKY1")
 
 #endif

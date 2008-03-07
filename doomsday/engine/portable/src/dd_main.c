@@ -111,6 +111,8 @@ extern int monochrome;
 extern int gamedataformat;
 extern int gamedrawhud;
 
+extern material_t *skyMaskMaterial;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 directory_t ddRuntimeDir, ddBinDir;
@@ -940,8 +942,6 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 };
 /* *INDENT-ON* */
 
-int skyFlatNum;
-
 /**
  * Get a 32-bit signed integer value.
  */
@@ -970,8 +970,10 @@ int DD_GetInteger(int ddvalue)
         case DD_WINDOW_HEIGHT:
             return theWindow->height;
 
-        case DD_SKYFLATNUM:
-            return skyFlatNum;
+        case DD_SKYMASKMATERIAL_NUM:
+            if(skyMaskMaterial)
+                return skyMaskMaterial->ofTypeID;
+            return 0;
 
         default:
             break;
@@ -998,10 +1000,6 @@ void DD_SetInteger(int ddvalue, int parm)
     {
         DD_CheckQuery(ddvalue, parm);
         // How about some special values?
-        if(ddvalue == DD_SKYFLATNUM)
-        {
-            skyFlatNum = parm;
-        }
         return;
     }
     if(ddValues[ddvalue].writePtr)
@@ -1019,6 +1017,11 @@ void* DD_GetVariable(int ddvalue)
         // How about some specials?
         switch(ddvalue)
         {
+        case DD_SKYMASKMATERIAL_NUM:
+            if(skyMaskMaterial)
+                return &skyMaskMaterial->ofTypeID;
+            return 0;
+
         case DD_VIEWX:
             return &viewX;
 
@@ -1214,8 +1217,20 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;
 
         case DD_SKYMASKMATERIAL_NAME:
-            memset(skyFlatName, 0, 9);
-            strncpy(skyFlatName, parm, 9);
+            {
+            int             mat;
+            char            name[9];
+            size_t          len;
+
+            len = strlen(parm);
+            if(len > 8)
+                len = 8;
+            strncpy(name, parm, len);
+            name[len] = '\0';
+
+            if((mat = R_MaterialNumForName(name, MAT_FLAT)) != -1)
+                skyMaskMaterial = R_GetMaterial(mat, MAT_FLAT);
+            }
             return;
 
         case DD_PSPRITE_OFFSET_X:

@@ -447,8 +447,6 @@ void G_CommonPreInit(void)
     R_SetDataPath( DATAPATH );
 
     R_SetBorderGfx(borderLumps);
-
-    DD_SetVariable(DD_SKYMASKMATERIAL_NAME, SKYFLATNAME);
     Con_SetString("map-name", NOTAMAPNAME, 1);
 
     G_RegisterBindClasses();
@@ -489,6 +487,7 @@ void G_CommonPostInit(void)
     XG_Register(); // Register XG classnames.
 #endif
 
+    DD_SetVariable(DD_SKYMASKMATERIAL_NAME, SKYFLATNAME);
     R_SetViewSize(cfg.screenBlocks, 0);
 
     Con_Message("P_Init: Init Playloop state.\n");
