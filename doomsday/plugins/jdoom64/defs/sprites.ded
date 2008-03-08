@@ -151,7 +151,6 @@ Sprite { ID = "TLP2"; }
 Sprite { ID = "NTRO"; }
 Sprite { ID = "DART"; }
 Sprite { ID = "FIRE"; }
-Sprite { ID = "SAR2"; }
 Sprite { ID = "BRNR"; }
 Sprite { ID = "NMBL"; }
 Sprite { ID = "SMOK"; }

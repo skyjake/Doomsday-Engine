@@ -213,11 +213,8 @@
 #define CC_PAIN             GET_TXT(TXT_CC_PAIN)
 #define CC_REVEN            GET_TXT(TXT_CC_REVEN)
 #define CC_MANCU            GET_TXT(TXT_CC_MANCU)
-#define CC_ARCH             GET_TXT(TXT_CC_ARCH)
-#define CC_SPIDER           GET_TXT(TXT_CC_SPIDER)
 #define CC_CYBER            GET_TXT(TXT_CC_CYBER)
 #define CC_NTROOP           GET_TXT(TXT_CC_NTROOP) // jd64
-#define CC_NDEMON           GET_TXT(TXT_CC_NDEMON) // jd64
 #define CC_BITCH            GET_TXT(TXT_CC_BITCH) // jd64
 #define CC_HERO             GET_TXT(TXT_CC_HERO)
 

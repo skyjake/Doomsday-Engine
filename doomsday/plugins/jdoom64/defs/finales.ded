@@ -178,22 +178,6 @@ Finale
     states mo SARG_DIE1 6
     waitanim mo; wait 0.43
 
-    # --- Nightmare Demon ---
-    clranim mo
-    states mo SAR2_RUN1 12
-    states mo SAR2_ATK1 2; picsound mo "sgtatk"
-    states mo SAR2_ATK3 1
-    states mo SAR2_ATK1 2; picsound mo "sgtatk"
-    states mo SAR2_ATK3 1
-    states mo SAR2_ATK1 2; picsound mo "sgtatk"
-    states mo SAR2_ATK3 1
-    repeat mo
-    settextdef name CC_NDEMON
-    seesound SERGEANT; pause; diesound SERGEANT
-    clranim mo
-    states mo SAR2_DIE1 6
-    waitanim mo; wait 0.43
-
     # --- Lost Soul ---
     clranim mo
     states mo SKULL_RUN1 12

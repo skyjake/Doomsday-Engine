@@ -229,7 +229,6 @@ static mobjtype_t isFadeSpawner(int doomednum)
         {7611, MT_NTROOP},
         {7612, MT_SERGEANT},
         {7613, MT_SHADOWS},
-        {7614, MT_DNIGHTMARE},
         {7615, MT_HEAD},
         {7617, MT_SKULL},
         {7618, MT_PAIN},

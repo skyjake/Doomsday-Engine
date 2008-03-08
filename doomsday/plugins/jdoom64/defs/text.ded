@@ -939,11 +939,6 @@ Text {
 }
 
 Text {
-  ID = "CC_NDEMON";
-  Text = "Nightmare Demon";
-}
-
-Text {
   ID = "CC_BITCH";
   Text = "Motherdemon";
 }
