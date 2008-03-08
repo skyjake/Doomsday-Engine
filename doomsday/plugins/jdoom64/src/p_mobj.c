@@ -150,12 +150,6 @@ void P_ExplodeMissile(mobj_t *mo)
             mo->flags |= MF_BRIGHTSHADOW;
     }
 
-    if(mo->type == MT_ACIDMISSILE) // jd64
-    {
-        mo->flags = MF_NOGRAVITY;
-        mo->mom[MZ] = (P_Random() % 50) / 16; // DJS - odd...
-    }
-
     if(mo->info->deathSound)
         S_StartSound(mo->info->deathSound, mo);
 }

@@ -2131,28 +2131,6 @@ void C_DECL A_Scream(mobj_t *actor)
     }
     else
         S_StartSound(sound, actor);
-
-    // jd64 >
-    // \todo This absolutely does not belong here. Seperate this out into a
-    // new action.
-    if(actor->type == MT_ACID)
-    {
-        int                 i;
-        mobj_t             *mo = NULL;
-
-        for(i = 0; i < 16; ++i)
-        {
-            mo = P_SpawnMissile(MT_ACIDMISSILE, actor, actor);
-            if(mo)
-            {
-                mo->mom[MX] = FIX2FLT((P_Random() - 128) << 11);
-                mo->mom[MY] = FIX2FLT((P_Random() - 128) << 11);
-                mo->mom[MZ] = FIX2FLT(10 + (P_Random() << 10));
-                mo->target = actor;
-            }
-        }
-    }
-    // < d64tc
 }
 
 /**
@@ -2181,106 +2159,6 @@ void C_DECL A_BossExplode(mobj_t *actor)
     if(actor->reactionTime <= 0)
     {
         P_MobjChangeState(actor, actor->info->deathState + 2);
-    }
-}
-
-/**
- * d64tc
- */
-boolean P_CheckAcidRange(mobj_t *actor)
-{
-    float               dist;
-
-    if(!actor->target)
-        return false;
-
-    dist = P_ApproxDistance(actor->target->pos[VX] - actor->pos[VX],
-                            actor->target->pos[VY] - actor->pos[VY]);
-
-    dist = P_ApproxDistance(dist, (actor->target->pos[VZ] + actor->target->height /2) -
-                                  (actor->pos[VZ] + actor->height /2));
-
-    if(dist >= ACIDRANGE - 14 + actor->target->info->radius)
-        return false;
-
-    if(!P_CheckSight(actor, actor->target))
-        return false;
-
-    return true;
-}
-
-/**
- * d64tc
- */
-void C_DECL A_SpitAcid(mobj_t *actor)
-{
-    if(!actor->target)
-        return;
-
-    if(P_CheckAcidRange(actor))
-    {
-        int                 i;
-        angle_t             an;
-        mobj_t             *mo;
-
-        A_FaceTarget(actor);
-        S_StartSound(sfx_sgtatk, actor);
-
-        for(i = 0; i < 16; ++i)
-        {
-            mo = P_SpawnMissile(MT_ACIDMISSILE, actor, actor->target);
-
-            if(mo)
-            {
-                mo->angle = actor->angle;
-                an = mo->angle >> ANGLETOFINESHIFT;
-
-                mo->mom[MX] = mo->info->speed *
-                    FIX2FLT(finecosine[an] + P_Random() % 3);
-                mo->mom[MY] = mo->info->speed *
-                    FIX2FLT(finesine[an] + P_Random() % 3);
-                mo->mom[MZ] = FIX2FLT(4 + (P_Random() << 10));
-
-                mo->target = actor;
-            }
-        }
-
-        // kludge >
-        actor->info->speed = 7;
-        for(i= S_ACID_RUN1; i <= S_ACID_RUN8; ++i)
-            states[i].tics = 3;
-        // < kludge
-    }
-    else
-    {
-        P_MobjChangeState(actor, actor->info->seeState);
-    }
-}
-
-/**
- * d64tc
- */
-void C_DECL A_AcidCharge(mobj_t *actor)
-{
-    int                 i;
-
-    if(!actor->target)
-        return;
-
-    if(!(P_CheckAcidRange(actor)))
-    {
-        A_FaceTarget(actor);
-        A_Chase(actor);
-
-        // kludge >
-        for(i = S_ACID_RUN1; i <= S_ACID_RUN8; ++i)
-            states[i].tics = 1;
-        actor->info->speed = 15;
-        // < kludge
-    }
-    else
-    {
-        P_MobjChangeState(actor, actor->info->missileState + 1);
     }
 }
 

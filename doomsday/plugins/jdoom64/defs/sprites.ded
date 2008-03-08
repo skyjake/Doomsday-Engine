@@ -168,7 +168,5 @@ Sprite { ID = "BLNK"; }
 Sprite { ID = "POSC"; }
 Sprite { ID = "BSGI"; }
 Sprite { ID = "GREN"; }
-Sprite { ID = "ACID"; }
-Sprite { ID = "ACIP"; }
 Sprite { ID = "STLK"; }
 Sprite { ID = "HFOG"; }

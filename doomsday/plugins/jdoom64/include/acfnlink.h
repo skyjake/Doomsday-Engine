@@ -141,8 +141,6 @@ void C_DECL A_CybrSpecial();
 void C_DECL A_BitchSpecial();
 void C_DECL A_Rocketpuff();
 void C_DECL A_BossExplode();
-void C_DECL A_SpitAcid();
-void C_DECL A_AcidCharge();
 void C_DECL A_TroopClaw();
 void C_DECL A_NtroopAttack();
 void C_DECL A_MotherFloorFire();

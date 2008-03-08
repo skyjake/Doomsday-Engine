@@ -62,7 +62,6 @@
 #define MELEERANGE          (64)
 #define PLRMELEERANGE       (80) // jd64 wide player radius.
 #define MISSILERANGE        (32 * 64)
-#define ACIDRANGE           (296) // jd64
 
 #define FLOATSPEED          (4)
 #define MAXHEALTH           (maxHealth) //100

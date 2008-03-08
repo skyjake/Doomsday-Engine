@@ -199,8 +199,6 @@ typedef enum {
     SPR_POSC,
     SPR_BSGI,
     SPR_GREN,
-    SPR_ACID,
-    SPR_ACIP,
     SPR_STLK,
     SPR_HFOG,
     NUMSPRITES
@@ -1416,13 +1414,6 @@ typedef enum {
     S_TRACEEXP6,
     S_SMALL_WHITE_LIGHT,
     S_TEMPSOUNDORIGIN1,
-    S_ACID_RUN1,
-    S_ACID_RUN2,
-    S_ACID_RUN3,
-    S_ACID_RUN4,
-    S_ACID_RUN5,
-    S_ACID_RUN7,
-    S_ACID_RUN8,
     NUMSTATES
 } statenum_t;
 
@@ -1648,11 +1639,8 @@ typedef enum {
     MT_STALKER,
     MT_NIGHTCRAWLER,
     MT_GRENADE,
-    MT_ACID,
-    MT_ACIDMISSILE,
     MT_TELEPORTCHAINGUY,
     MT_TELEPORTCRAWLER,
-    MT_TELEPORTACID,
     MT_SUPERBONUS,
     MT_LIGHTSOURCE,
 
