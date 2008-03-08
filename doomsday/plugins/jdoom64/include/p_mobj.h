@@ -341,9 +341,6 @@ typedef struct mobj_s {
 
     int             turnTime;      // $visangle-facetarget
     int             corpseTics;    // $vanish: how long has this been dead?
-
-    int             floatTics; // jd64
-    int             floatSwitch; // jd64
 } mobj_t;
 
 extern spawnspot_t* things;

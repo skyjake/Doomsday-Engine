@@ -783,18 +783,6 @@ void P_MobjThinker(mobj_t *mobj)
     }
 #endif
 
-    // jd64 >
-    // DJS: FIXME?
-    if(mobj->floatTics)
-        mobj->floatTics--;
-
-    if(!mobj->player && (mobj->flags & MF_FLOATER) && !mobj->floatTics)
-    {
-        P_FloatThingy(mobj);
-        mobj->floatTics = 40;
-    }
-    // < d64tc
-
     // Handle X and Y momentums.
     if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || (mobj->flags & MF_SKULLFLY))
     {
