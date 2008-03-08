@@ -267,7 +267,7 @@ void G_PreInit(void)
     cfg.hudShown[HUD_AMMO] = true;
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_FRAGS] = true;
-    cfg.hudShown[HUD_POWER] = true;
+    cfg.hudShown[HUD_POWER] = false; // They will be visible when the automap is.
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
     cfg.hudScale = .6f;

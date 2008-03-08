@@ -43,6 +43,16 @@
 #define NUMREDPALS          (8)
 #define NUMBONUSPALS        (4)
 
+#define HUDBORDERX          (14)
+#define HUDBORDERY          (18)
+
+typedef enum hotloc_e {
+    HOT_TLEFT,
+    HOT_TRIGHT,
+    HOT_BRIGHT,
+    HOT_BLEFT
+} hotloc_t;
+
 // Called by main loop.
 void    ST_Ticker(void);
 
@@ -62,5 +72,9 @@ void    ST_updateGraphics(void);
 void    ST_HUDUnHide(hueevent_t event);
 
 int     R_GetFilterColor(int filter);
+
+void    ST_HUDSpriteSize(int sprite, int *w, int *h);
+void    ST_drawHUDSprite(int sprite, int x, int y, hotloc_t hotspot,
+                         float alpha);
 
 #endif

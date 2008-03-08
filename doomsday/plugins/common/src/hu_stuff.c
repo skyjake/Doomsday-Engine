@@ -570,10 +570,10 @@ static void drawWorldTimer(void)
  */
 void HU_DrawMapCounters(void)
 {
-    player_t   *plr;
+    player_t           *plr;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    char        buf[40], tmp[20];
-    int         x = 5, y = LINEHEIGHT_A * 3;
+    char                buf[40], tmp[20];
+    int                 x = 5, y = LINEHEIGHT_A * 3;
 #endif
 
     plr = &players[DISPLAYPLAYER];

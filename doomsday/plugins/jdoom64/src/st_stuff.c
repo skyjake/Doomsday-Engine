@@ -56,17 +56,7 @@
 #define ST_FRAGSY           171
 #define ST_FRAGSWIDTH       2
 
-#define HUDBORDERX          20
-#define HUDBORDERY          24
-
 // TYPES -------------------------------------------------------------------
-
-typedef enum hotloc_e {
-    HOT_TLEFT,
-    HOT_TRIGHT,
-    HOT_BRIGHT,
-    HOT_BLEFT
-} hotloc_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -183,7 +173,6 @@ void ST_HUDUnHide(hueevent_t event)
         hudHideAmount = 0;
     }
 }
-
 
 void ST_updateWidgets(void)
 {
@@ -319,16 +308,10 @@ void ST_HUDSpriteSize(int sprite, int *w, int *h)
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     *w = sprInfo.width;
     *h = sprInfo.height;
-
-    if(sprite == SPR_ROCK)
-    {
-        // Must scale it a bit.
-        *w /= 1.5;
-        *h /= 1.5;
-    }
 }
 
-void ST_drawHUDSprite(int sprite, int x, int y, int hotspot, float alpha)
+void ST_drawHUDSprite(int sprite, int x, int y, hotloc_t hotspot,
+                      float alpha)
 {
     int                 w, h;
     spriteinfo_t        sprInfo;
@@ -340,12 +323,8 @@ void ST_drawHUDSprite(int sprite, int x, int y, int hotspot, float alpha)
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     w = sprInfo.width;
     h = sprInfo.height;
-    if(sprite == SPR_ROCK)
-    {
-        w /= 1.5;
-        h /= 1.5;
-    }
-    switch (hotspot)
+
+    switch(hotspot)
     {
     case HOT_BRIGHT:
         y -= h;
@@ -358,9 +337,9 @@ void ST_drawHUDSprite(int sprite, int x, int y, int hotspot, float alpha)
         y -= h;
         break;
     }
+
     DGL_Color4f(1, 1, 1, alpha );
-    GL_DrawPSprite(x, y, sprite == SPR_ROCK ? 1 / 1.5 : 1, false,
-                   sprInfo.lump);
+    GL_DrawPSprite(x, y, 1, false, sprInfo.lump);
 }
 
 void ST_doFullscreenStuff(void)
@@ -374,7 +353,7 @@ void ST_doFullscreenStuff(void)
 
     player_t           *plr = &players[DISPLAYPLAYER];
     char                buf[20];
-    int                 w, h, pos = 0, spr, i;
+    int                 w, h, pos = 0, spr,i;
     int                 h_width = 320 / cfg.hudScale;
     int                 h_height = 200 / cfg.hudScale;
     float               textalpha =

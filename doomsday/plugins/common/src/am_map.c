@@ -3090,7 +3090,7 @@ static void setupGLStateForMap(void)
     }
     else
     {
-        // nope just a solid color
+        // Nope just a solid color.
         GL_SetNoTexture();
         GL_DrawRect(win->x, win->y, win->width, win->height,
                     map->cfg.backgroundRGBA[0],
@@ -3123,6 +3123,52 @@ static void setupGLStateForMap(void)
         }
         DGL_End();
     }*/
+
+#if __JDOOM64__
+    // jd64 > Laser artifacts
+    // If drawn in HUD we don't need them visible in the map too.
+    if(!cfg.hudShown[HUD_POWER])
+    {
+        int                 i, num;
+
+        num = 0;
+        for(i = 0; i < NUMARTIFACTS; ++i)
+            if(plr->artifacts[i])
+                num++;
+
+        if(num > 0)
+        {
+            float               x, y, spacing, scale, iconAlpha;
+            spriteinfo_t        sprInfo;
+            int                 artifactSprites[NUMARTIFACTS] = {
+                SPR_POW1, SPR_POW2, SPR_POW3
+            };
+
+            iconAlpha = map->alpha;
+            CLAMP(iconAlpha, 0.0f, 0.5f);
+
+            spacing = win->height / num;
+
+            x = win->width;
+            y = 0;
+
+            for(i = 0; i < NUMARTIFACTS; ++i)
+            {
+                if(plr->artifacts[i])
+                {
+                    R_GetSpriteInfo(artifactSprites[i], 0, &sprInfo);
+
+                    scale = win->height / (sprInfo.height * num);
+                    DGL_Color4f(1, 1, 1, iconAlpha);
+                    GL_DrawPSprite(x - sprInfo.width * scale, y, scale, false,
+                                   sprInfo.lump);
+                    y += spacing;
+                }
+            }
+        }
+    }
+    // < d64tc
+#endif
 
     // Setup the scissor clipper.
     DGL_Scissor(win->x, win->y, win->width, win->height);
