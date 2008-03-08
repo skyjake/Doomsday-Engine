@@ -1510,11 +1510,6 @@ static void SV_WriteMobj(mobj_t *original)
     // Used by player to freeze a bit after teleporting.
     SV_WriteLong(mo->reactionTime);
 
-#if __JDOOM64__
-    SV_WriteLong(mo->floatSwitch); // added in outcast
-    SV_WriteLong(mo->floatTics); // added in outcast
-#endif
-
     // If >0, the target will be chased no matter what (even if shot).
     SV_WriteLong(mo->threshold);
 
@@ -1824,11 +1819,6 @@ static int SV_ReadMobj(thinker_t *th)
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
     mo->reactionTime = SV_ReadLong();
-
-#if __JDOOM64__
-    mo->floatSwitch = SV_ReadLong(); // added in outcast
-    mo->floatTics = SV_ReadLong(); // added in outcast
-#endif
 
     // If >0, the target will be chased
     // no matter what (even if shot)
