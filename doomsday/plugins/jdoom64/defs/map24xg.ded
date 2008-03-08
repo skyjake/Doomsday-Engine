@@ -1,939 +1,373 @@
 #===================================================================
-#==Map24 Specials==
+#==Map26 Specials==
 #===================================================================
 
 Line Type {
-ID = 2599;
-Flags = "ltf_player_cross";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_command";
-Count = 1;
-Time = -1;
-Act tag = 5;
-Act sound = "itmbk";
-Sp0 = "spawnmobj BABY 1320 2256 0 270; spawnmobj BABY 888 2256 0 270";
-}
-
-Line Type {
-ID = 2600;
-Flags = "ltf_player_cross";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_command";
-Count = 1;
-Time = -1;
-Act tag = 5;
-Act sound = "itmbk";
-Sp0 = "spawnmobj BABY 1272 1256 0 0; spawnmobj BABY 912 1408 0 0; spawnmobj BABY 600 1728 0 0";
-}
-
-Line Type {
-ID = 2601;
+ID = 2487;
+Comment = "shotgun check";
 Flags = "ltf_mobj_gone ltf_ticker";
-Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_activate";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = -1;
-Thing type = "MISC24";
+Time = 1;
+Thing type = "SUPERSHOTGUN";
 Act sound = "itmbk";
 Ip0 = "lref_act_tagged";
 Ip1 = 1;
 }
 
 Line Type {
-ID = 2602;
+ID = 2488;
+Comment = "shotguy trap";
 Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Act tag = 1;
-Ip0 = "lpref_tagged_ceilings";
-Ip1 = 5;
-Ip2 = "spref_none";
-Ip3 = "pmf_crush";
-Fp0 = 2;
-Fp2 = 16;
-}
-
-Line Type {
-ID = 2603;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Act tag = 1;
-Ip0 = "lpref_tagged_ceilings";
-Ip1 = 6;
-Ip2 = "spref_none";
-Ip3 = "pmf_crush";
-Fp0 = 2;
-Fp2 = 16;
-}
-
-Line Type {
-ID = 2604;
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_command";
+Type = "lat_flip_timed_off";
 Count = 1;
+Time = 1;
 Act tag = 1;
 Act sound = "itmbk";
-Sp0 = "spawnmobj KNIGHT 320 1280 0 0";
+Sp0 = "spawnmobj FSHOTGUY -384 96 0 0; spawnmobj FSHOTGUY -192 0 0 0; spawnmobj FSHOTGUY -288 192 0 0";
 }
 
 Line Type {
-ID = 2605;
-Flags = "ltf_player_use_a";
-Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
-Class = "ltc_chain_sequence";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Act sound = "swtchn";
-Ip0 = chsf_done_d;
-Ip1 = 2606;
-Ip2 = 2607;
-Ip3 = 2608;
-Ip4 = 2609;
-Ip5 = 2610;
-Ip6 = 2611;
-Ip7 = 2612;
-Fp1 = 0;
-Fp2 = 3;
-Fp3 = 3;
-Fp4 = 0;
-Fp5 = 1;
-Fp6 = 1;
-Fp7 = 1;
-}
-
-Line Type {
-ID = 2606;
+ID = 2489;
+Comment = "shotguy trap";
 Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
+Class = "ltc_command";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_ceilings";
-Ip1 = 16;
-Ip2 = "spref_none";
-Ip3 = "pmf_crush";
-Ip6 = "stnmov";
-Fp0 = 2;
-Fp2 = -128;
-Fp3 = 0.2;
-Fp4 = 0.4;
-}
-
-Line Type {
-ID = 2607;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
+Time = 1;
 Act tag = 1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 16;
-Ip2 = "spref_none";
-Ip6 = "stnmov";
-Fp0 = 4;
-Fp2 = -208;
-Fp3 = 0.2;
-Fp4 = 0.4;
+Act sound = "itmbk";
+Sp0 = "spawnmobj FSHOTGUY -192 -384 0 90; spawnmobj FSHOTGUY -384 -576 0 90; spawnmobj FSHOTGUY 192 192 0 180";
 }
 
 Line Type {
-ID = 2608;
-Flags = "ltf_player_cross";
+ID = 2490;
+Comment = "shotguy trap";
+Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_command";
+Type = "lat_flip_timed_off";
 Count = 1;
+Time = 1;
+Act tag = 1;
 Act sound = "itmbk";
-Sp0 = "spawnmobj KNIGHT 672 480 0 0; spawnmobj KNIGHT 800 480 0 0; spawnmobj KNIGHT 672 352 0 0";
+Sp0 = "spawnmobj FSHOTGUY 384 0 0 180; spawnmobj FSHOTGUY 192 -192 0 180; spawnmobj FSHOTGUY 384 -384 0 90";
 }
 
 Line Type {
-ID = 2609;
-Flags = "ltf_player_cross";
+ID = 2490;
+Comment = "shotguy trap";
+Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_command";
+Type = "lat_flip_timed_off";
 Count = 1;
+Time = 1;
+Act tag = 1;
 Act sound = "itmbk";
-Sp0 = "spawnmobj KNIGHT 800 352 0 0";
+Sp0 = "spawnmobj FSHOTGUY 192 -480 0 90";
 }
 
 Line Type {
-ID = 2610;
+ID = 2491;
+Comment = "Trap1";
 Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_plane_move";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = -1;
+Time = 1;
+Act tag = 1;
 Ip0 = "lpref_tagged_ceilings";
-Ip1 = 16;
+Ip1 = 9;
 Ip2 = "spref_none";
-Ip3 = "pmf_crush";
+Ip4 = "bdcls";
 Fp0 = 8;
-Fp2 = 160;
+FP2 = 64;
 }
 
 Line Type {
-ID = 2611;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 16;
-Ip2 = "spref_next_highest_floor";
-Fp0 = 8;
-}
-
-Line Type {
-ID = 2612;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_ceilings";
-Ip1 = 13;
-Ip2 = "spref_next_highest_ceiling";
-Fp0 = 8;
-}
-
-Line Type {
-ID = 2613;
+ID = 2492;
+Comment = "null1";
 Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_command";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
 Count = 1;
-Act sound = "itmbk";
-Sp0 = "spawnmobj NIGHTMARECACO 1136 1440 128 270; spawnmobj HEAD 752 1648 128 270; spawnmobj NIGHTMARECACO 1472 1504 128 270";
+Time = 1;
+Act tag = 1;
+Ip0 = "lref_tagged";
+Ip1 = 7777;
+Ip2 = 2493;
 }
 
 Line Type {
-ID = 2615;
-Flags = "ltf_player_cross";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_command";
-Count = 1;
-Act sound = "itmbk";
-Sp0 = "spawnmobj BABY -704 2080 0 180; spawnmobj BABY -688 1856 0 180; spawnmobj BABY -704 1632 0 180";
-}
-
-Line Type {
-ID = 2616;
+ID = 2493;
+Comment = "finish";
 Flags = "ltf_mobj_gone ltf_ticker";
-Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Thing type = "FSHOTGUY";
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 9;
+Ip2 = "spref_none";
+Ip4 = "bdopn";
+Fp0 = 8;
+FP2 = 208;
+}
+
+Line Type {
+ID = 2494;
+Comment = "ssphere check";
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Thing type = "MISC12";
+Act sound = "itmbk";
+Sp0 = "spawnmobj FATSO -2256 496 0 180; spawnmobj FATSO -2112 400 0 180; spawnmobj FATSO -2064 160 0 180";
+}
+
+Line Type {
+ID = 2495;
+Comment = "fatso check";
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_activate";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = 80;
-Thing type = "MISC8";
+Time = 1;
+Thing type = "FATSO";
 Act sound = "itmbk";
 Ip0 = "lref_act_tagged";
 Ip1 = 2;
 }
 
 Line Type {
-ID = 2617;
-Flags = "ltf_player_use_a";
-Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
-Class = "ltc_chain_sequence";
+ID = 2496;
+Comment = "imp rage";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = -1;
+Time = 1;
 Act tag = 2;
-Act sound = "swtchn";
-Ip0 = chsf_done_d;
-Ip1 = 2618;
-Ip2 = 2619;
-Ip3 = 2620;
-Ip4 = 2621;
-Ip5 = 2622;
-Ip6 = 2623;
-Ip7 = 2624;
-Ip8 = 2625;
-Ip9 = 2626;
-Ip10 = 2627;
-Ip11 = 2628;
-Fp1 = 0;
-Fp2 = 0;
-Fp3 = 0;
-Fp4 = 0;
-Fp5 = 0;
-Fp6 = 0;
-Fp7 = 0;
-Fp8 = 0;
-Fp9 = 0;
-Fp10 = 0;
-Fp11 = 0;
+Act sound = "itmbk";
+Sp0 = "spawnmobj NTROOP -1312 800 128 270; spawnmobj NTROOP -1184 832 128 270; spawnmobj NTROOP -1264 912 128 270";
 }
 
 Line Type {
-ID = 2618;
+ID = 2497;
+Comment = "imp rage";
 Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
+Class = "ltc_command";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 18;
-Ip2 = "spref_none";
-Fp0 = 500;
-Fp2 = 208;
-}
-
-Line Type {
-ID = 2619;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 19;
-Ip2 = "spref_none";
-Fp0 = 500;
-fp2 = 208;
-}
-
-Line Type {
-ID = 2620;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 20;
-Ip2 = "spref_none";
-Fp0 = 500;
-fp2 = 208;
-}
-
-Line Type {
-ID = 2621;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 21;
-Ip2 = "spref_none";
-Fp0 = 500;
-fp2 = 208;
-}
-
-Line Type {
-ID = 2622;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 22;
-Ip2 = "spref_none";
-Fp0 = 500;
-fp2 = 208;
-}
-
-Line Type {
-ID = 2623;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 23;
-Ip2 = "spref_none";
-Fp0 = 500;
-fp2 = 208;
-}
-
-Line Type {
-ID = 2624;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 24;
-Ip2 = "spref_none";
-Fp0 = 500;
-fp2 = 208;
-}
-
-Line Type {
-ID = 2625;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 25;
-Ip2 = "spref_none";
-Fp0 = 500;
-fp2 = 208;
-}
-
-Line Type {
-ID = 2626;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 26;
-Ip2 = "spref_none";
-Fp0 = 500;
-fp2 = 208;
-}
-
-Line Type {
-ID = 2627;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 27;
-Ip2 = "spref_none";
-Fp0 = 500;
-fp2 = 208;
-}
-
-Line Type {
-ID = 2628;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 28;
-Ip2 = "spref_none";
-Fp0 = 500;
-fp2 = 208;
-}
-
-Line Type {
-ID = 2629;
-Flags = "ltf_player_use_a";
-Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
-Class = "ltc_chain_sequence";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
+Time = 1;
 Act tag = 2;
-Act sound = "swtchn";
-Ip0 = chsf_done_d;
-Ip1 = 2630;
-Ip2 = 2631;
-Ip3 = 2632;
-Ip4 = 2633;
-Ip5 = 2634;
-Ip6 = 2635;
-Ip7 = 2636;
-Ip8 = 2637;
-Ip9 = 2638;
-Ip10 = 2639;
-Ip11 = 2640;
-Ip12 = 2642;
-Ip13 = 2644;
-Ip14 = 2645;
-Ip15 = 2641;
-Fp1 = 0.1;
-Fp2 = 0;
-Fp3 = 0;
-Fp4 = 0;
-Fp5 = 0;
-Fp6 = 0;
-Fp7 = 0;
-Fp8 = 0;
-Fp9 = 0;
-Fp10 = 0;
-Fp11 = 0;
-Fp12 = 1;
-Fp13 = 0.1;
-Fp14 = 0;
-Fp15 = 6;
+Act sound = "itmbk";
+Sp0 = "spawnmobj NTROOP -1136 960 128 270; spawnmobj NTROOP -1024 976 128 270; spawnmobj NTROOP -1104 1104 128 270";
 }
 
 Line Type {
-ID = 2630;
+ID = 2498;
+Comment = "imp rage";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 2;
+Act sound = "itmbk";
+Sp0 = "spawnmobj NTROOP -912 976 128 270; spawnmobj NTROOP -960 1088 128 270; spawnmobj NTROOP -944 1200 128 270";
+}
+
+Line Type {
+ID = 2499;
+Comment = "imp rage";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 2;
+Act sound = "itmbk";
+Sp0 = "spawnmobj NTROOP -800 976 128 270; spawnmobj NTROOP -800 1088 128 270; spawnmobj NTROOP -800 1200 128 270";
+}
+
+Line Type {
+ID = 2500;
+Comment = "imp rage";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 2;
+Act sound = "itmbk";
+Sp0 = "spawnmobj NTROOP -768 1312 128 270; spawnmobj FATSO -624 848 128 270; spawnmobj FATSO -1712 2352 128 270";
+}
+
+Line Type {
+ID = 2501;
+Comment = "Trap1";
 Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_plane_move";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 18;
-Ip2 = "spref_lowest_floor";
-Fp0 = 500;
-}
-
-Line Type {
-ID = 2631;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
+Time = 1;
+Act tag = 2;
 Ip0 = "lpref_tagged_floors";
 Ip1 = 19;
 Ip2 = "spref_lowest_floor";
-Fp0 = 500;
+Fp0 = 8;
 }
 
 Line Type {
-ID = 2632;
-Flags = "ltf_no_other_use_secret";
+ID = 2502;
+Comment = "armorcheck";
+Flags = "ltf_mobj_gone ltf_ticker";
 Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 20;
-Ip2 = "spref_lowest_floor";
-Fp0 = 500;
-}
-
-Line Type {
-ID = 2633;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 21;
-Ip2 = "spref_lowest_floor";
-Fp0 = 500;
-}
-
-Line Type {
-ID = 2634;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 22;
-Ip2 = "spref_lowest_floor";
-Fp0 = 500;
-}
-
-Line Type {
-ID = 2635;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 23;
-Ip2 = "spref_lowest_floor";
-Fp0 = 500;
-}
-
-Line Type {
-ID = 2636;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 24;
-Ip2 = "spref_lowest_floor";
-Fp0 = 500;
-}
-
-Line Type {
-ID = 2637;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 25;
-Ip2 = "spref_lowest_floor";
-Fp0 = 500;
-}
-
-Line Type {
-ID = 2638;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 26;
-Ip2 = "spref_lowest_floor";
-Fp0 = 500;
-}
-
-Line Type {
-ID = 2639;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 27;
-Ip2 = "spref_lowest_floor";
-Fp0 = 500;
-}
-
-Line Type {
-ID = 2640;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_ceilings";
-Ip1 = 29;
-Ip2 = "spref_none";
-Ip6 = "stnmov";
-Fp0 = 1;
-Fp2 = 392;
-Fp3 = 0.2;
-Fp4 = 0.4;
-}
-
-Line Type {
-ID = 2641;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_ceilings";
-Ip1 = 29;
-Ip2 = "spref_none";
-Ip3 = "pmf_crush";
-Ip6 = "stnmov";
-Fp0 = 3;
-Fp2 = 80;
-Fp3 = 0.2;
-Fp4 = 0.4;
-}
-
-Line Type {
-ID = 2642;
-Comment = "null1";
-Flags = "ltf_player_use_a";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_line_type";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Act sound = "swtchn";
-Ip0 = "lref_tagged";
-Ip1 = 9999;
-Ip2 = 2643;
-}
-
-Line Type {
-ID = 2643;
-Flags = "ltf_player_use_a";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_index_floor";
-Ip1 = 255;
-Ip2 = "spref_none";
-Fp0 = 4;
-Fp2 = 80;
-}
-
-Line Type {
-ID = 2644;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 30;
-Ip2 = "spref_none";
-Fp0 = 4;
-Fp2 = 144;
-}
-
-Line Type {
-ID = 2645;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
 Class = "ltc_activate";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = 80;
+Time = 1;
+Thing type = "MISC1";
 Act sound = "itmbk";
 Ip0 = "lref_act_tagged";
 Ip1 = 3;
 }
 
 Line Type {
-ID = 2646;
-Flags = "ltf_player_cross";
+ID = 2503;
+Comment = "shotgunguy rage";
+Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_command";
+Type = "lat_flip_timed_off";
 Count = 1;
+Time = 1;
 Act tag = 3;
 Act sound = "itmbk";
-Sp0 = "spawnmobj KNIGHT 2848 448 0 0; spawnmobj KNIGHT 2960 270 0 0; spawnmobj KNIGHT 3232 816 0 270";
+Sp0 = "spawnmobj SHOTGUY -528 1632 128 90; spawnmobj SHOTGUY -512 1520 128 90; spawnmobj SHOTGUY -624 1472 128 90";
 }
 
 Line Type {
-ID = 2647;
-Flags = "ltf_player_cross";
+ID = 2504;
+Comment = "shotgunguy rage";
+Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_command";
+Type = "lat_flip_timed_off";
 Count = 1;
+Time = 1;
 Act tag = 3;
 Act sound = "itmbk";
-Sp0 = "spawnmobj KNIGHT 3504 720 0 180; spawnmobj KNIGHT 3632 448 0 180; spawnmobj KNIGHT 3520 176 0 180";
+Sp0 = "spawnmobj SHOTGUY -752 1520 128 90; spawnmobj SHOTGUY -848 1600 128 90; spawnmobj SHOTGUY -960 1696 128 90";
 }
 
 Line Type {
-ID = 2648;
-Flags = "ltf_player_cross";
+ID = 2505;
+Comment = "shotgunguy rage";
+Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_command";
+Type = "lat_flip_timed_off";
 Count = 1;
+Time = 1;
 Act tag = 3;
 Act sound = "itmbk";
-Sp0 = "spawnmobj KNIGHT 3232 80 0 90; spawnmobj KNIGHT 2944 176 0 90";
+Sp0 = "spawnmobj SHOTGUY -1040 1792 128 90; spawnmobj SHOTGUY -1104 1872 128 90";
 }
 
 Line Type {
-ID = 2649;
+ID = 2506;
+Comment = "finish";
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Thing type = "CYBORG";
+Act sound = "itmbk";
+Ip0 = "lref_act_tagged";
+Ip1 = 4;
+}
+
+Line Type {
+ID = 2507;
 Comment = "null1";
-Flags = "ltf_player_use_a";
+Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_line_type";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = -1;
-Act tag = 3;
-Act sound = "swtchn";
+Time = 1;
+Act tag = 4;
 Ip0 = "lref_tagged";
-Ip1 = 6565;
-Ip2 = 2650;
+Ip1 = 1111;
+Ip2 = 1204;
 }
 
 Line Type {
-ID = 2650;
-Flags = "ltf_player_cross";
-Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
-Class = "ltc_activate";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = 80;
-Act sound = "itmbk";
-Ip0 = "lref_act_tagged";
-Ip1 = 5;
-}
-
-Line Type {
-ID = 2651;
-Flags = "ltf_mobj_gone ltf_ticker";
-Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
-Class = "ltc_activate";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Thing type = "MISC27";
-Act sound = "itmbk";
-Ip0 = "lref_act_tagged";
-Ip1 = 10;
-}
-
-Line Type {
-ID = 2652;
+ID = 2508;
 Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_plane_move";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = -1;
-Act tag = 10;
+Time = 1;
+Act tag = 4;
 Ip0 = "lpref_tagged_floors";
-Ip1 = 15;
+Ip1 = 20;
 Ip2 = "spref_none";
-Fp0 = 500;
-Fp2 = 0;
+Fp0 = 8;
+Fp2 = 64;
 }
 
 Line Type {
-ID = 2653;
+ID = 2509;
 Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_plane_move";
 Type = "lat_flip_timed_off";
 Count = 1;
-Time = -1;
-Act tag = 10;
+Time = 1;
+Act tag = 4;
 Ip0 = "lpref_tagged_floors";
-Ip1 = 32;
+Ip1 = 21;
 Ip2 = "spref_none";
-Fp0 = 24;
-Fp2 = 96;
+Fp0 = 8;
+Fp2 = 80;
 }
 
 Line Type {
-ID = 2654;
-Flags = "ltf_player_use_a";
-Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
-Class = "ltc_chain_sequence";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Act tag = 10;
-Act sound = "swtchn";
-Ip0 = chsf_done_d;
-Ip1 = 2655;
-Ip2 = 2656;
-Ip3 = 2657;
-Ip4 = 2660;
-Ip5 = 2658;
-Ip6 = 2659;
-Fp1 = 0;
-Fp2 = 0;
-Fp3 = 6;
-Fp4 = 0.5;
-Fp4 = 0.5;
-Fp5 = 0.5;
-}
-
-Line Type {
-ID = 2655;
-Flags = "ltf_player_cross";
+ID = 2510;
+Comment = "imp rage";
+Flags = "ltf_no_other_use_secret";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_command";
+Type = "lat_flip_timed_off";
 Count = 1;
+Time = 1;
+Act tag = 2;
 Act sound = "itmbk";
-Sp0 = "spawnmobj TRACER6 -264 96 0 0; spawnmobj TRACER6 -96 264 0 270; spawnmobj TRACER6 72 96 0 180";
-}
-
-Line Type {
-ID = 2656;
-Flags = "ltf_player_cross";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_command";
-Count = 1;
-Act sound = "itmbk";
-Sp0 = "spawnmobj TRACER6 -96 -72 0 90";
-}
-
-Line Type {
-ID = 2657;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 32;
-Ip2 = "spref_none";
-Fp0 = 4;
-Fp2 = 32;
-}
-
-Line Type {
-ID = 2658;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 15;
-Ip2 = "spref_none";
-Fp0 = 4;
-Fp2 = 32;
-}
-
-Line Type {
-ID = 2659;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_ceilings";
-Ip1 = 33;
-Ip2 = "spref_none";
-Fp0 = 1;
-Fp2 = 144;
-}
-
-Line Type {
-ID = 2660;
-Flags = "ltf_no_other_use_secret";
-Flags2 = "ltf2_when_act ltf2_any";
-Class = "ltc_plane_move";
-Type = "lat_flip_timed_off";
-Count = 1;
-Time = -1;
-Ip0 = "lpref_tagged_floors";
-Ip1 = 31;
-Ip2 = "spref_none";
-Fp0 = 4;
-Fp2 = 32;
+Sp0 = "spawnmobj SKULL -1584 -16 0 90; spawnmobj SKULL -1440 -16 0 90; spawnmobj SKULL -1280 -16 0 90";
 }

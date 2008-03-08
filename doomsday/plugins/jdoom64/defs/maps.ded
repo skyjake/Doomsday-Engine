@@ -98,21 +98,7 @@ Map Info {
 
 Map Info {
   ID = "MAP07";
-  Name = "Level 7: Nukage Facility";
-  Author = "Samuel Villarreal";
-  Par time = 200;
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
-}
-
-Map Info {
-  ID = "MAP08";
-  Name = "Level 8: Research Lab";
+  Name = "Level 7: Research Lab";
   Author = "Heydelaar/The_Doomer_/Villarreal";
   Par time = 240;
   Gravity = 1;
@@ -124,24 +110,10 @@ Map Info {
   };
 }
 
-Map Info {
-  ID = "MAP09";
-  Name = "Level 9: Outpost Omega";
-  Author = "Danny Lewis/Samuel Villarreal";
-  Music = "messag";
-  Par time = 190;
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
-}
 
 Map Info {
-  ID = "MAP10";
-  Name = "Level 10: Final Outpost";
+  ID = "MAP08";
+  Name = "Level 8: Final Outpost";
   Author = "Randy Estrella/Samuel Villarreal";
   Par time = 120;
   Gravity = 1;
@@ -154,8 +126,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP11";
-  Name = "Level 11: Even Simpler";
+  ID = "MAP09";
+  Name = "Level 9: Even Simpler";
   Author = "Randy Estrella/Samuel Villarreal";
   Par time = 240;
   Gravity = 1;
@@ -168,8 +140,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP12";
-  Name = "Level 12: The Bleeding";
+  ID = "MAP10";
+  Name = "Level 10: The Bleeding";
   Author = "Danny Lewis/Samuel Villarreal";
   Par time = 120;
   Gravity = 1;
@@ -182,8 +154,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP13";
-  Name = "Level 13: Terror Core";
+  ID = "MAP11";
+  Name = "Level 11: Terror Core";
   Author = "Danny Lewis/Samuel Villarreal";
   Par time = 190;
   Gravity = 1;
@@ -196,22 +168,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP14";
-  Name = "Level 14: Dark Citadel";
-  Author = "Tim Heydelaar/Samuel Villarreal/Melfice";
-  Par time = 160;
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
-}
-
-Map Info {
-  ID = "MAP15";
-  Name = "Level 15: Altar of Pain";
+  ID = "MAP12";
+  Name = "Level 12: Altar of Pain";
   Author = "Tim Heydelaar/Samuel Villarreal";
   Par time = 180;
   Gravity = 1;
@@ -224,8 +182,22 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP16";
-  Name = "Level 16: Eye of the Storm";
+  ID = "MAP13";
+  Name = "Level 13: Dark Citadel";
+  Author = "Tim Heydelaar/Samuel Villarreal/Melfice";
+  Par time = 160;
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP14";
+  Name = "Level 14: Eye of the Storm";
   Author = "Lewis/Doomer/Villarreal";
   Par time = 120;
   Gravity = 1;
@@ -238,8 +210,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP17";
-  Name = "Level 17: Dark Entires";
+  ID = "MAP15";
+  Name = "Level 15: Dark Entries";
   Author = "Randy Estrella/Samuel Villarreal";
   Par time = 190;
   Gravity = 1;
@@ -252,8 +224,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP18";
-  Name = "Level 18: Blood Keep";
+  ID = "MAP16";
+  Name = "Level 16: Blood Keep";
   Author = "Randy Estrella/Samuel Villarreal";
   Music = "stalks";
   Par time = 120;
@@ -267,8 +239,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP19";
-  Name = "Level 19: Watch Your Step";
+  ID = "MAP17";
+  Name = "Level 17: Watch Your Step";
   Author = "Danny Lewis/Samuel Villarreal";
   Par time = 240;
   Gravity = 1;
@@ -287,8 +259,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP20";
-  Name = "Level 20: Spawned Fear";
+  ID = "MAP18";
+  Name = "Level 18: Spawned Fear";
   Author = "Tim Heydelaar/Samuel Villarreal";
   Par time = 160;
   Gravity = 1;
@@ -301,8 +273,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP21";
-  Name = "Level 21: The Spiral";
+  ID = "MAP19";
+  Name = "Level 19: The Spiral";
   Author = "Tim Heydelaar/Samuel Villarreal";
   Par time = 90;
   Gravity = 1;
@@ -315,8 +287,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP22";
-  Name = "Level 22: Breakdown";
+  ID = "MAP20";
+  Name = "Level 20: Breakdown";
   Author = "Randy Estrella/Samuel Villarreal";
   Par time = 180;
   Gravity = 1;
@@ -329,8 +301,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP23";
-  Name = "Level 23: Pitfalls";
+  ID = "MAP21";
+  Name = "Level 21: Pitfalls";
   Author = "Tim Heydelaar/Samuel Villarreal";
   Par time = 180;
   Gravity = 1;
@@ -343,8 +315,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP24";
-  Name = "Level 24: Burnt Offerings";
+  ID = "MAP22";
+  Name = "Level 22: Burnt Offerings";
   Author = "Randy Estrella/Samuel Villarreal";
   Music = "doom";
   Par time = 120;
@@ -358,8 +330,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP25";
-  Name = "Level 25: Unholy Temple";
+  ID = "MAP23";
+  Name = "Level 23: Unholy Temple";
   Author = "Tim Heydelaar/Samuel Villarreal";
   Music = "ddtblu";
   Par time = 240;
@@ -373,8 +345,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP26";
-  Name = "Level 26: No Escape";
+  ID = "MAP24";
+  Name = "Level 24: No Escape";
   Author = "Randy Estrella/Samuel Villarreal/Melfice";
   Music = "theda2";
   Par time = 180;
@@ -388,20 +360,41 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP27";
-  Name = "Level 27: Forbidden Deeper";
-  Author = "Samuel Villarreal";
-  Music = "dead";
-  Par time = 240;
+  ID = "MAP25";
+  Name = "Level 25: Cat And Mouse";
+  Author = "Tim Heydelaar/Samuel Villarreal";
+  Music = "betwee";
+  Par time = 90;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
   Flags = "mif_fog";
-  Fog color R = 0.5;
-  Fog color G = 0;
-  Fog color B = 0;
+  Fog color R = 0;
+  Fog color G = 1.0;
+  Fog color B = 1.0;
   Fog start = 400;
   Fog end = 3000;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP26";
+  Name = "Level 26: Hardcore";
+  Author = "Danny Lewis/Samuel Villarreal";
+  Music = "theda2";
+  Par time = 30;
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Flags = "mif_fog";
+  Fog color R = 0;
+  Fog color G = 1;
+  Fog color B = 1;
+  Fog start = 100;
+  Fog end = 2000;
   Sky Layer 1 {
     Flags = "slf_enable";
     Texture = "BLOODMAP";
@@ -409,38 +402,29 @@ Map Info {
 }
 
 Map Info {
+  ID = "MAP27";
+  Name = "Level 27: Playground";
+  Author = "Randy Estrella/Samuel Villarreal";
+  Gravity = 1;
+  Music = "messag";
+  Par time = 30;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Flags = "mif_fog";
+  Fog color R = 1.0;
+  Fog color G = 0.5;
+  Fog color B = 0;
+  Fog start = 100;
+  Fog end = 2000;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
   ID = "MAP28";
-  Name = "Level 28: Shadows Watching";
-  Author = "Samuel Villarreal/Elbryan42";
-  Music = "stlks2";
-  Par time = 300;
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY-B052";
-  };
-}
-
-Map Info {
-  ID = "MAP29";
-  Name = "Level 29: The Lair";
-  Author = "Danny Lewis/Samuel Villarreal";
-  Music = "runni2";
-  Par time = 160;
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY-B052";
-  };
-}
-
-Map Info {
-  ID = "MAP30";
-  Name = "Level 30: The Absolution";
+  Name = "Level 28: The Absolution";
   Author = "Randy Estrella/Samuel Villarreal";
   Music = "doom2";
   Par time = 400;
@@ -450,6 +434,36 @@ Map Info {
   Sky Layer 1 {
     Flags = "slf_enable";
     Texture = "SKY-0052";
+  };
+}
+
+Map Info {
+  ID = "MAP29";
+  Name = "Level 29: Outpost Omega";
+  Author = "Danny Lewis/Samuel Villarreal";
+  Music = "messag";
+  Par time = 190;
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP30";
+  Name = "Level 30: The Lair";
+  Author = "Danny Lewis/Samuel Villarreal";
+  Music = "runni2";
+  Par time = 160;
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY-B052";
   };
 }
 
@@ -476,115 +490,7 @@ Map Info {
 
 Map Info {
   ID = "MAP32";
-  Name = "Level 32: Cat And Mouse";
-  Author = "Tim Heydelaar/Samuel Villarreal";
-  Music = "betwee";
-  Par time = 90;
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Flags = "mif_fog";
-  Fog color R = 0;
-  Fog color G = 1.0;
-  Fog color B = 1.0;
-  Fog start = 400;
-  Fog end = 3000;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
-}
-
-Map Info {
-  ID = "MAP33";
-  Name = "Level 33: Playground";
-  Author = "Randy Estrella/Samuel Villarreal";
-  Gravity = 1;
-  Music = "messag";
-  Par time = 30;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Flags = "mif_fog";
-  Fog color R = 1.0;
-  Fog color G = 0.5;
-  Fog color B = 0;
-  Fog start = 100;
-  Fog end = 2000;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY2";
-  };
-}
-
-Map Info {
-  ID = "MAP34";
-  Name = "Level 34: Crisis";
-  Music = "the_da";
-  Author = "Samuel Villarreal";
-  Par time = 180;
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
-}
-
-Map Info {
-  ID = "MAP35";
-  Name = "Level 35: Hardcore";
-  Author = "Danny Lewis/Samuel Villarreal";
-  Music = "theda2";
-  Par time = 30;
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Flags = "mif_fog";
-  Fog color R = 0;
-  Fog color G = 1;
-  Fog color B = 1;
-  Fog start = 100;
-  Fog end = 2000;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "BLOODMAP";
-  };
-}
-
-Map Info {
-  ID = "MAP36";
-  Name = "Level 36: Doom64 Museum";
-  Author = "Samuel Villarreal";
-  Music = "messag";
-  Par time = 30;
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY-G052";
-  };
-}
-
-Map Info {
-  ID = "MAP37";
-  Name = "Level 37: Death Labs";
-  Author = "Matt McGee";
-  Music = "ddtblu";
-  Par time = 30;
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY-G052";
-  };
-}
-
-Map Info {
-  ID = "MAP38";
-  Name = "Level 38: Hectic";
+  Name = "Level 32: Hectic";
   Music = "betwee";
   Author = "Estrella/Lewis/Heydelaar/Kaiser";
   Par time = 90;
@@ -598,8 +504,8 @@ Map Info {
 }
 
 Map Info {
-  ID = "MAP39";
-  Name = "Level 39: The Unknown";
+  ID = "MAP33";
+  Name = "Level 33: The Unknown";
   Music = "evil";
   Par time = 30;
   Gravity = 1;

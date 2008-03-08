@@ -1505,7 +1505,7 @@ void G_LeaveLevel(int map, int position, boolean secret)
 boolean G_IfVictory(void)
 {
 #if __JDOOM64__
-    if(gameMap == 30)
+    if(gameMap == 28)
     {
         G_SetGameAction(GA_VICTORY);
         return true;
@@ -1607,25 +1607,25 @@ void G_DoCompleted(void)
     {
         switch(gameMap)
         {
-        case 15: wmInfo.next = 30; break;
-        case 31: wmInfo.next = 34; break;
-        case 9:  wmInfo.next = 33; break;
-        case 1:  wmInfo.next = 31; break;
-        case 20: wmInfo.next = 32; break;
-        case 38: wmInfo.next = 0; break;
+        case 1: wmInfo.next = 31; break;
+        case 4: wmInfo.next = 28; break;
+        case 12: wmInfo.next = 29; break;
+        case 18: wmInfo.next = 30; break;
+        case 32: wmInfo.next = 0; break;
         }
     }
     else
     {
         switch(gameMap)
         {
-        case 31: wmInfo.next = 15; break;
-        case 35: wmInfo.next = 15; break;
-        case 33: wmInfo.next = 20; break;
-        case 34: wmInfo.next = 9; break;
-        case 32: wmInfo.next = 37; break;
-        case 37: wmInfo.next = 35; break;
-        case 38: wmInfo.next = 0; break;
+        case 24: wmInfo.next = 27; break;
+        case 32: wmInfo.next = 0; break;
+        case 29: wmInfo.next = 4; break;
+        case 30: wmInfo.next = 12; break;
+        case 31: wmInfo.next = 18; break;
+        case 25: wmInfo.next = 0; break;
+        case 26: wmInfo.next = 0; break;
+        case 27: wmInfo.next = 0; break;
         default: wmInfo.next = gameMap;
         }
     }

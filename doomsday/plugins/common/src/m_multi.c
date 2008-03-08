@@ -580,8 +580,8 @@ void SCEnterGameSetup(int option, void *data)
 #if __JDOOM64__
     if(cfg.netMap < 1)
         cfg.netMap = 1;
-    if(cfg.netMap > 39)
-        cfg.netMap = 39;
+    if(cfg.netMap > 32)
+        cfg.netMap = 32;
 #elif __JDOOM__
     if(gameMode == commercial)
     {
@@ -690,7 +690,7 @@ void SCGameSetupMission(int option, void *data)
     if(option == RIGHT_DIR)
     {
 #if __JDOOM64__
-        if(cfg.netMap < 39)
+        if(cfg.netMap < 32)
             cfg.netMap++;
 #elif __JDOOM__
         if(cfg.netMap < (gameMode == commercial ? 32 : 9))

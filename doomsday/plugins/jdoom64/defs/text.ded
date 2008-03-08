@@ -430,122 +430,122 @@ Text {
 
 Text {
   ID = "HUSTR_MAP07";
-  Text = "Level 7: Nukage Facility";
+  Text = "Level 7: Research Lab";
 }
 
 Text {
   ID = "HUSTR_MAP08";
-  Text = "Level 8: Research Lab";
+  Text = "Level 8: Final Outpost";
 }
 
 Text {
   ID = "HUSTR_MAP09";
-  Text = "Level 9: Outpost Omega";
+  Text = "Level 9: Even Simpler";
 }
 
 Text {
   ID = "HUSTR_MAP10";
-  Text = "Level 10: Final Outpost";
+  Text = "Level 10: The Bleeding";
 }
 
 Text {
   ID = "HUSTR_MAP11";
-  Text = "Level 11: Even Simpler";
+  Text = "Level 11: Terror Core";
 }
 
 Text {
   ID = "HUSTR_MAP12";
-  Text = "Danny Lewis/Samuel Villarreal";
+  Text = "Level 12: Altar of Pain";
 }
 
 Text {
   ID = "HUSTR_MAP13";
-  Text = "Danny Lewis/Samuel Villarreal";
+  Text = "Level 13: Dark Citadel";
 }
 
 Text {
   ID = "HUSTR_MAP14";
-  Text = "Level 14: Dark Citadel";
+  Text = "Level 14: Eye of the Storm";
 }
 
 Text {
   ID = "HUSTR_MAP15";
-  Text = "Level 15: Altar of Pain";
+  Text = "Level 15: Dark Entires";
 }
 
 Text {
   ID = "HUSTR_MAP16";
-  Text = "Level 16: Eye of the Storm";
+  Text = "Level 16: Blood Keep";
 }
 
 Text {
   ID = "HUSTR_MAP17";
-  Text = "Level 17: Dark Entires";
+  Text = "Level 17: Watch Your Step";
 }
 
 Text {
   ID = "HUSTR_MAP18";
-  Text = "Level 18: Blood Keep";
+  Text = "Level 18: Spawned Fear";
 }
 
 Text {
   ID = "HUSTR_MAP19";
-  Text = "Level 19: Watch Your Step";
+  Text = "Level 19: The Spiral";
 }
 
 Text {
   ID = "HUSTR_MAP20";
-  Text = "Level 20: Spawned Fear";
+  Text = "Level 20: Breakdown";
 }
 
 Text {
   ID = "HUSTR_MAP21";
-  Text = "Level 21: The Spiral";
+  Text = "Level 21: Pitfalls";
 }
 
 Text {
   ID = "HUSTR_MAP22";
-  Text = "Level 22: Breakdown";
+  Text = "Level 22: Burnt Offerings";
 }
 
 Text {
   ID = "HUSTR_MAP23";
-  Text = "Level 23: Pitfalls";
+  Text = "Level 23: Unholy Temple";
 }
 
 Text {
   ID = "HUSTR_MAP24";
-  Text = "Level 24: Burnt Offerings";
+  Text = "Level 24: No Escape";
 }
 
 Text {
   ID = "HUSTR_MAP25";
-  Text = "Level 25: Unholy Temple";
+  Text = "Level 25: Cat And Mouse";
 }
 
 Text {
   ID = "HUSTR_MAP26";
-  Text = "Level 26: No Escape";
+  Text = "Level 26: Hardcore";
 }
 
 Text {
   ID = "HUSTR_MAP27";
-  Text = "Level 27: Forbidden Deeper";
+  Text = "Level 27: Playground";
 }
 
 Text {
   ID = "HUSTR_MAP28";
-  Text = "Level 28: Shadows Watching";
+  Text = "Level 28: The Absolution";
 }
 
 Text {
   ID = "HUSTR_MAP29";
-  Text = "Level 29: The Lair";
+  Text = "Level 29: Outpost Omega";
 }
 
 Text {
   ID = "HUSTR_MAP30";
-  Text = "Level 30: The Absolution";
+  Text = "Level 30: The Lair";
 }
 
 Text {
@@ -555,42 +555,12 @@ Text {
 
 Text {
   ID = "HUSTR_MAP32";
-  Text = "Level 32: Cat And Mouse";
+  Text = "Level 32: Hectic";
 }
 
 Text {
   ID = "HUSTR_MAP33";
-  Text = "Level 33: Playground";
-}
-
-Text {
-  ID = "HUSTR_MAP34";
-  Text = "Level 34: Crisis";
-}
-
-Text {
-  ID = "HUSTR_MAP35";
-  Text = "Level 35: Hardcore";
-}
-
-Text {
-  ID = "HUSTR_MAP36";
-  Text = "Level 36: Doom64 Museum";
-}
-
-Text {
-  ID = "HUSTR_MAP37";
-  Text = "Level 37: Death Labs";
-}
-
-Text {
-  ID = "HUSTR_MAP38";
-  Text = "Level 38: Hectic";
-}
-
-Text {
-  ID = "HUSTR_MAP39";
-  Text = "Level 39: The Unknown";
+  Text = "Level 33: The Unknown";
 }
 
 Text {
@@ -785,88 +755,43 @@ Text {
 
 Text {
   ID = "C1TEXT";
-  Text = "YOU CACKLE AS THE FAMILIARITY OF\n
-    THE SITUATION OCCURS TO YOU. THE GATWAY TO\n
-    THE DEMONS DOMAIN WAS TOO ACCESSIBLE...\n
-    YOU REALIZE THE DEMONS MOCK YOU WITH THIER\n
-    INVITATION. IT DOES NOT MATTER...\n
-    THE DEMONS SPAWN LIKE RATS AND YOU HAVE THE\n
-    GRADE AAA POISON THEY CRAVE. YOUR BLOODTHIRSTY\n
-    SCREAM SHATTERS THE TELEPORT HAZE. ONCE AGAIN\n
-    YOU FIND YOURSELF AMIDST...";
+  Text = "You cackle as the familiarity of the situation\n
+          occurs to you. The gateway to the Demon's Domain\n
+          was too accessible. You realize the Demons mock\n
+          you with their invitation. It does not matter...\n
+          The Demons spawn like rats and you have the\n
+          Grade AAA UAC poison they crave.\n\n
+          Your blood thirsty scream shatters the teleport\n
+          haze. Once again you find yourself amidst...";
 }
 
 Text {
   ID = "C2TEXT";
-  Text = "YOU SMILE. WHAT STRANGE PLACE HAVE\n
-    YOU STUMBLED UPON? THE DEMONS DID NOT\n
-    EXPECT YOU TO SURVIVE THIS FAR. YOU FEEL\n
-    THEIR DEMONIC PRESENCE WAITING FOR YOU...\n
-    LET THEM TASTE THEIR GUTS!";
+  Text = "You smile.\n
+          What strange place have you stumbled upon?\n
+          The Demons did not expect you to survive this far.\n
+          You feel their Demonic presence waiting for you...\n\n
+          Let them taste their guts!";
 }
 
 Text {
   ID = "C3TEXT";
-  Text = "THE PORTAL SHATTERS YOU INTO A NEW\n
-    ENTRY IN THE COMPLEX. A AREA THAT YOU HAVE\n
-    NOT SEEN BEFORE...\n
-    BEFORE YOU STANDS THE BIGGEST CREATURE YOU\n
-    HAVE EVER SEEN...";
+  Text = "You wretch as a strange acrid odor assaults you.\n
+          Death and Demon carcass!\n
+          No nightmare could have prepared you for this.\n
+          You realize this place was not meant for living\n
+          Humans.";
 }
 
 Text {
   ID = "C4TEXT";
-  Text = "YOU DID IT! THE LOATHSOME\n
-    MOTHERDEMON THAT MASTERMINDED THE\n
-    INVASION HAS BEEN STOPPED COLD. NOTHING\n
-    IN HELL CAN WITHSTAND YOUR FURY.\n
-    NOW SEEMS THE ENTIRE UNIVERSE OWES\n
-    YOU GRATITUDE..\n
-    BUT AS LONG LIFE EXISTS, THE DEMONS WILL\n
-    BE THERE TO CAUSE LIVING HELL...\n
-    YOU REMAIN IN HELL TO INSURE THAT NO\n
-    DEMON WILL EVER RISE AGAIN...";
+  Text = "Finally...\nThe mother of all Demons is dead!\n
+          The blood purs from your eyes as you stand in\n
+          difiance.\n
+          As the only marine to endure the slaughter-\n
+          you decide to remain in Hell and ensure no Demon\n
+          ever rises again. The end.";
 }
-
-Text {
-  ID = "C5TEXT";
-  Text = "YOU WRETCH AS A STRANGE ACRID ODOR\n
-    ASSAULTS YOU. DEATH AND DEMON CARCASS!\n
-    NO NIGHTMARE COULD HAVE PREPARED YOU FOR\n
-    THIS. YOU REALIZED THAT THIS PLACE WAS NOT\n
-    MEANT FOR LIVING HUMANS.";
-}
-
-Text {
-  ID = "C6TEXT";
-  Text = "WHATS THIS? LOOKS EMPTY... WHERE HAVE YOU\n
-  ENDED UP NOW?! PILLARS SURROUND YOU AS EIGHT\n
-  ARACHNOTRONS APPEARS BEFORE YOU...";
-}
-
-Text {
-  ID = "C7TEXT";
-  Text = "Everything is silent as you step through the\n
-    portal. What place have I stumbled into as you\n
-    think to yourself, the Military officials had\n
-    a good reason to hide this place......\n
-    What could it be?.....";
-}
-
-Text {
-  ID = "C8TEXT";
-  Text = "THIS ISN'T EVEN A WORLD. LOOKS\n
-  LOKE SOME SICK JOKE ONLY A LEVEL\n
-  DESIGNER WOULD COME UP WITH...";
-}
-
-Text {
-  ID = "C9TEXT";
-  Text = "CONGRADULATIONS!! YOU'VE\n
-  FOUND HECTIC!! ONLY THE BEST WILL\n
-  REAP ITS REWARDS...";
-}
-
 
 Text {
   ID = "CC_ZOMBIE";

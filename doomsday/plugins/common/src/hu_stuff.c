@@ -183,7 +183,7 @@ void Hu_LoadData(void)
     // load the map name patches
 # if __JDOOM64__
     {
-        int NUMCMAPS = 39;
+        int NUMCMAPS = 32;
         levelNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
