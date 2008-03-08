@@ -145,10 +145,7 @@ typedef struct player_s {
     int             flyHeight;
 
     // jd64 >
-    int             laserPower;
-    int             laserIcon1;
-    int             laserIcon2;
-    int             laserIcon3;
+    //int             laserPower;
     int             artifacts[NUMARTIFACTS];
     // < d64tc
 } player_t;

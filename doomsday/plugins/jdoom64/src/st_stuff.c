@@ -420,7 +420,7 @@ void ST_doFullscreenStuff(void)
     // jd64 > Laser artifacts
     if(cfg.hudShown[HUD_POWER])
     {
-        if(plr->laserIcon1 == 1)
+        if(plr->artifacts[it_laserpw1])
         {
             spr = SPR_POW1;
             ST_HUDSpriteSize(spr, &w, &h);
@@ -428,14 +428,16 @@ void ST_doFullscreenStuff(void)
             ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 44,
                              HOT_BLEFT, iconalpha);
         }
-        if(plr->laserIcon2 == 1)
+
+        if(plr->artifacts[it_laserpw2])
         {
             spr = SPR_POW2;
             ST_HUDSpriteSize(spr, &w, &h);
             ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 84,
                              HOT_BLEFT, iconalpha);
         }
-        if(plr->laserIcon3 == 1)
+
+        if(plr->artifacts[it_laserpw3])
         {
             spr = SPR_POW3;
             ST_HUDSpriteSize(spr, &w, &h);

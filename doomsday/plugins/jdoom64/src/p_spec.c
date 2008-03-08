@@ -957,12 +957,6 @@ void P_PlayerInSpecialSector(player_t *player)
             G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
         break;
 */
-    case 11: // jd64
-        // SUPER CHEAT REMOVER!!        //kaiser 9/8/03
-        player->cheats &= ~CF_GODMODE;
-        player->cheats &= ~CF_NOCLIP;
-        player->laserPower = 0;
-        break;
 
     default:
         break;

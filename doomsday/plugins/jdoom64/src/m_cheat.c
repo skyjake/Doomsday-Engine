@@ -518,36 +518,24 @@ void Cht_MyPosFunc(player_t *plyr)
  */
 void cht_LaserFunc(player_t *plyr)
 {
-    if(plyr->laserPower == 0)
-    {
-        P_SetMessage(plyr, STSTR_BEHOLDX, false);
-        plyr->laserPower += 1;
-        plyr->laserIcon1 = 1;
+    laserpw_t           arti;
 
-        P_GiveArtifact(plyr, it_laserpw1);
-    }
-    else if(plyr->laserPower == 1)
+    if(plyr->artifacts[it_laserpw1] && plyr->artifacts[it_laserpw2] &&
+       plyr->artifacts[it_laserpw3])
     {
-        P_SetMessage(plyr, STSTR_BEHOLDX, false);
-        plyr->laserPower += 1;
-        plyr->laserIcon2 = 1;
-
-        P_GiveArtifact(plyr, it_laserpw2);
-    }
-    else if(plyr->laserPower == 2)
-    {
-        P_SetMessage(plyr, STSTR_BEHOLDX, false);
-        plyr->laserPower += 1;
-        plyr->laserIcon3 = 1;
-
-        P_GiveArtifact(plyr, it_laserpw3);
+        P_SetMessage(plyr, STSTR_BEHOLDX, false); // No more!
+        return;
     }
 
-    if(plyr->laserPower == 3)
-    {
-        plyr->laserPower = 3;
-        P_SetMessage(plyr, STSTR_BEHOLDX, false); // no more!
-    }
+    if(!plyr->artifacts[it_laserpw1])
+        arti = it_laserpw1;
+    else if(!plyr->artifacts[it_laserpw2])
+        arti = it_laserpw2;
+    else
+        arti = it_laserpw3;
+
+    plyr->artifacts[arti] = 1;
+    P_SetMessage(plyr, STSTR_BEHOLDX, false);
 }
 
 static void CheatDebugFunc(player_t *player, cheatseq_t *cheat)

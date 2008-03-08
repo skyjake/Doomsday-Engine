@@ -570,6 +570,7 @@ void C_DECL A_PlasmaBuzz(player_t *player)
 void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
 {
     mobj_t             *pmo;
+    short               laserPower;
 
     P_SetPsprite(player, ps_flash,
                  weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
@@ -582,29 +583,34 @@ void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
     pmo = player->plr->mo;
     player->update |= PSF_AMMO;
 
-    if(player->laserPower == 0)
-    {
-        P_SpawnPlayerMissile(MT_LASERSHOTWEAK, player->plr->mo);
-    }
-    else if(player->laserPower == 1)
-    {
-        P_SpawnPlayerMissile(MT_LASERSHOT, player->plr->mo);
-    }
-    else if(player->laserPower == 2)
-    {
-        P_ShotAmmo(player); // adds an extra ammo subtractor
+    laserPower = 0;
+    if(player->artifacts[it_laserpw1])
+        laserPower++;
+    if(player->artifacts[it_laserpw2])
+        laserPower++;
+    if(player->artifacts[it_laserpw3])
+        laserPower++;
 
+    switch(laserPower)
+    {
+    case 0:
+        P_SpawnPlayerMissile(MT_LASERSHOTWEAK, player->plr->mo);
+        break;
+
+    case 1:
+        P_SpawnPlayerMissile(MT_LASERSHOT, player->plr->mo);
+        break;
+
+    case 2:
         P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle - (ANG45 / 8));
         P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle + (ANG45 / 8));
-    }
-    else if(player->laserPower == 3)
-    {
-        P_ShotAmmo(player); //adds another subtractor, now consumes 3 cells!
-        P_ShotAmmo(player);
+        break;
 
+    case 3:
         P_SpawnPlayerMissile(MT_LASERSHOT, pmo);
         P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle - (ANG45 / 6));
         P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle + (ANG45 / 6));
+        break;
     }
 }
 

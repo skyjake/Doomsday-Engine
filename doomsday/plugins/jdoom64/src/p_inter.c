@@ -278,7 +278,7 @@ boolean P_GiveArtifact(player_t *player, laserpw_t artifact)
 
 void P_GiveBackpack(player_t *player)
 {
-    int             i;
+    int                 i;
 
     if(!player->backpack)
     {
@@ -735,56 +735,47 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         break;
 
     case SPR_POW1: // jd64
-        if(player->laserIcon1 == 0)
-        {
-            P_GiveArtifact(player, it_laserpw1);
-
-            player->laserPower += 1;
-            player->laserIcon1 = 1;
-            P_SetMessage(player, GOTPOWERUP1, false);
-        }
-        else
+        if(player->artifacts[it_laserpw1])
         {
             if(!(levelTime & 0x1f))
                 P_SetMessage(player, NGOTPOWERUP1, false);
 
-            return; //Don't destroy item, can be collected later by other players
+            return; //Don't destroy item, can be collected later by other players.
+        }
+        else
+        {
+            P_GiveArtifact(player, it_laserpw1);
+            P_SetMessage(player, GOTPOWERUP1, false);
         }
         break;
 
     case SPR_POW2: // jd64
-        if(player->laserIcon2 == 0)
-        {
-            P_GiveArtifact(player, it_laserpw2);
-
-            player->laserPower += 1;
-            player->laserIcon2 = 1;
-            P_SetMessage(player, GOTPOWERUP2, false);
-        }
-        else
+        if(player->artifacts[it_laserpw2])
         {
             if(!(levelTime & 0x1f))
                 P_SetMessage(player, NGOTPOWERUP2, false);
 
-            return; //Don't destroy item, can be collected later by other players
+            return; //Don't destroy item, can be collected later by other players.
+        }
+        else
+        {
+            P_GiveArtifact(player, it_laserpw2);
+            P_SetMessage(player, GOTPOWERUP2, false);
         }
         break;
 
     case SPR_POW3: // jd64
-        if(player->laserIcon3 == 0)
-        {
-            P_GiveArtifact(player, it_laserpw3);
-
-            player->laserPower += 1;
-            player->laserIcon3 = 1;
-            P_SetMessage(player, GOTPOWERUP3, false);
-        }
-        else
+        if(player->artifacts[it_laserpw3])
         {
             if(!(levelTime & 0x1f))
                 P_SetMessage(player, NGOTPOWERUP3, false);
 
-            return; //Don't destroy item, can be collected later by other players
+            return; //Don't destroy item, can be collected later by other players.
+        }
+        else
+        {
+            P_GiveArtifact(player, it_laserpw3);
+            P_SetMessage(player, GOTPOWERUP3, false);
         }
         break;
 

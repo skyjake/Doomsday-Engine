@@ -1082,13 +1082,6 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->readyArtifact);
     SV_WriteLong(p->artifactCount);
     SV_WriteLong(p->inventorySlotNum);
-# else
-# if __JDOOM64__
-    SV_WriteLong(p->laserPower); // jd64
-    SV_WriteLong(p->laserIcon1); // added in outcast
-    SV_WriteLong(p->laserIcon2); // added in outcast
-    SV_WriteLong(p->laserIcon3); // added in outcast
-# endif
 #endif
 
     SV_Write(p->powers, GetPlayerHeader()->numPowers * 4);
@@ -1235,13 +1228,6 @@ static void SV_ReadPlayer(player_t *p)
     p->readyArtifact = SV_ReadLong();
     p->artifactCount = SV_ReadLong();
     p->inventorySlotNum = SV_ReadLong();
-#else
-# if __JDOOM64__
-    p->laserPower = SV_ReadLong(); // jd64
-    p->laserIcon1 = SV_ReadLong(); // added in outcast
-    p->laserIcon2 = SV_ReadLong(); // added in outcast
-    p->laserIcon3 = SV_ReadLong(); // added in outcast
-# endif
 #endif
 
     SV_Read(p->powers, GetPlayerHeader()->numPowers * 4);
