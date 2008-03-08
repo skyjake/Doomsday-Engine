@@ -96,7 +96,6 @@ actionlink_t actionlinks[] = {
     {"A_SargSpecial",       A_SargSpecial}, //jd64
     {"A_Sar2Special",       A_Sar2Special}, //jd64
     {"A_HeadSpecial",       A_HeadSpecial}, //jd64
-    {"A_Hed2Special",       A_Hed2Special}, //jd64
     {"A_SkulSpecial",       A_SkulSpecial}, //jd64
     {"A_Bos2Special",       A_Bos2Special}, //jd64
     {"A_BossSpecial",       A_BossSpecial}, //jd64

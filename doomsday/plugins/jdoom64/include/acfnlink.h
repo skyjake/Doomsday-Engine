@@ -130,7 +130,6 @@ void C_DECL A_NtroSpecial();
 void C_DECL A_SargSpecial();
 void C_DECL A_Sar2Special();
 void C_DECL A_HeadSpecial();
-void C_DECL A_Hed2Special();
 void C_DECL A_SkulSpecial();
 void C_DECL A_Bos2Special();
 void C_DECL A_BossSpecial();

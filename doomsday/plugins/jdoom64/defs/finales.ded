@@ -218,22 +218,6 @@ Finale
     states mo HEAD_DIE1 6
     waitanim mo; wait 0.43
 
-    # --- Nightmare Cacodemon ---
-    clranim mo
-    states mo HED2_RUN1 12
-    states mo HED2_ATK1 2; picsound mo "firsht"
-    states mo HED2_ATK3 1
-    states mo HED2_ATK1 2; picsound mo "firsht"
-    states mo HED2_ATK3 1
-    states mo HED2_ATK1 2; picsound mo "firsht"
-    states mo HED2_ATK3 1
-    repeat mo
-    settextdef name CC_NHEAD
-    seesound HEAD; pause; diesound HEAD
-    clranim mo
-    states mo HED2_DIE1 6
-    waitanim mo; wait 0.43
-
     # --- Hell Knight ---
     clranim mo
     states mo BOS2_RUN1 12

@@ -860,26 +860,6 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
 /**
  * kaiser - used for special stuff. works only per monster!!!
  */
-void C_DECL A_Hed2Special(mobj_t* mo)
-{
-    linedef_t          *dummyLine;
-
-    A_Fall(mo);
-
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
-    {   // There are others like us still alive.
-        return;
-    }
-
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4451;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
-}
-
-/**
- * kaiser - used for special stuff. works only per monster!!!
- */
 void C_DECL A_SkulSpecial(mobj_t* mo)
 {
     linedef_t          *dummyLine;
@@ -2614,8 +2594,6 @@ void C_DECL A_SpawnFly(mobj_t *mo)
         type = MT_PAIN;
     else if(r < 160)
         type = MT_HEAD;
-    else if(r < 172)
-        type = MT_NIGHTMARECACO; // jd64 was "MT_UNDEAD"
     else if(r < 192)
         type = MT_BABY;
     else if(r < 222)
