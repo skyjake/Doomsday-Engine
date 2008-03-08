@@ -352,7 +352,9 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol mappanx key-left-inverse",
 
         // UI events:
+#if !__JDOOM64__
         "bindevent key-f1 helpscreen",
+#endif
         "bindevent key-f2 savegame",
         "bindevent key-f3 loadgame",
         "bindevent key-f4 soundmenu",

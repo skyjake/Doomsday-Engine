@@ -119,11 +119,13 @@ void M_LoadGame(int option, void *data);
 void M_SaveGame(int option, void *data);
 void M_GameFiles(int option, void *data);        // Does nothing in jDOOM
 void M_EndGame(int option, void *data);
+#if !__JDOOM64__
 void M_ReadThis(int option, void *data);
 void M_ReadThis2(int option, void *data);
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+# if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 void M_ReadThis3(int option, void *data);
+# endif
 #endif
 
 void M_QuitDOOM(int option, void *data);
@@ -227,7 +229,10 @@ const char* QuitEndMsg[] =
     NULL
 };
 
+#if !__JDOOM64__
 boolean inhelpscreens;
+#endif
+
 menu_t *currentMenu;
 
 #if __JHERETIC__
@@ -388,7 +393,7 @@ static float menu_calpha = 0;
 static int quicksave;
 static int quickload;
 
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__
 #define READTHISID          (5)
 #else
 #define READTHISID          (3)
@@ -409,7 +414,6 @@ menuitem_t MainItems[] = {
     {ITT_SETMENU, 0, "{case}Options", NULL, MENU_OPTIONS},
     {ITT_EFUNC, 0, "{case}Load Game", M_LoadGame, 0},
     {ITT_EFUNC, 0, "{case}Save Game", M_SaveGame, 0},
-    {ITT_EFUNC, 0, "{case}Read This!", M_ReadThis, 0},
     {ITT_EFUNC, 0, "{case}Quit Game", M_QuitDOOM, 0}
 #elif __JSTRIFE__
     {ITT_EFUNC, 0, "N", M_NewGame, 0, ""},
@@ -467,13 +471,13 @@ menu_t MainDef = {
     0,
     97, 64,
     M_DrawMainMenu,
-    7, MainItems,
+    6, MainItems,
     0, MENU_NONE,
     huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B + 1,
-    0, 7
+    0, 6
 #else
     0,
     97, 64,
@@ -793,6 +797,7 @@ static menu_t Options2Def = {
 #endif
 };
 
+#if !__JDOOM64__
 menuitem_t ReadItems1[] = {
     {ITT_EFUNC, 0, "", M_ReadThis2, 0}
 };
@@ -811,11 +816,11 @@ menu_t  ReadDef1 = {
 };
 
 menuitem_t ReadItems2[] = {
-#if __JDOOM__ || __JDOOM64__
+# if __JDOOM__
     {ITT_EFUNC, 0, "", M_FinishReadThis, 0}
-#else
+# else
     {ITT_EFUNC, 0, "", M_ReadThis3, 0} // heretic and hexen have 3 readthis screens.
-#endif
+# endif
 };
 
 menu_t  ReadDef2 = {
@@ -831,7 +836,7 @@ menu_t  ReadDef2 = {
     0, 1
 };
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+# if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 menuitem_t ReadItems3[] = {
     {ITT_EFUNC, 0, "", M_FinishReadThis, 0}
 };
@@ -848,6 +853,7 @@ menu_t  ReadDef3 = {
     LINEHEIGHT,
     0, 1
 };
+# endif
 #endif
 
 static menuitem_t HUDItems[] = {
@@ -1290,7 +1296,9 @@ void M_UnloadData(void)
  */
 void Hu_MenuInit(void)
 {
+#if !__JDOOM64__
     menuitem_t *item;
+#endif
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     int   i, w, maxw;
 #endif
@@ -1414,8 +1422,10 @@ void Hu_MenuInit(void)
         break;
     }
 #else
-        item = &MainItems[READTHISID];
-        item->func = M_ReadThis;
+# if !__JDOOM64__
+    item = &MainItems[READTHISID];
+    item->func = M_ReadThis;
+# endif
 #endif
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
@@ -1784,7 +1794,9 @@ void Hu_MenuDrawer(void)
 
     effTime = (menuTime > menuDarkTicks? menuDarkTicks : menuTime);
     temp = .5 * effTime / (float) menuDarkTicks;
+#if !__JDOOM64__
     inhelpscreens = false;
+#endif
 
     if(!menuActive && menuAlpha > 0.0125f)  // fading out
     {
@@ -2834,6 +2846,7 @@ static void M_QuickLoad(void)
     M_StartMessage(tempstring, M_QuickLoadResponse, true);
 }
 
+#if !__JDOOM64__
 void M_ReadThis(int option, void *data)
 {
     option = 0;
@@ -2846,13 +2859,13 @@ void M_ReadThis2(int option, void *data)
     M_SetupNextMenu(&ReadDef2);
 }
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+# if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 void M_ReadThis3(int option, void *data)
 {
     option = 0;
     M_SetupNextMenu(&ReadDef3);
 }
-#endif
+# endif
 
 void M_FinishReadThis(int option, void *data)
 {
@@ -2864,7 +2877,7 @@ void M_DrawReadThis1(void)
 {
     inhelpscreens = true;
 
-#if __JDOOM__
+# if __JDOOM__
     switch(gameMode)
     {
     case commercial:
@@ -2882,18 +2895,15 @@ void M_DrawReadThis1(void)
     default:
         break;
     }
-#else
+# else
     GL_DrawRawScreen(W_GetNumForName("HELP1"), 0, 0);
-#endif
+# endif
 }
 
 void M_DrawReadThis2(void)
 {
     inhelpscreens = true;
-#if __JDOOM64__
-        WI_DrawPatch(0, 0, 1, 1, 1, 1, W_GetNumForName("CREDIT"), NULL,
-                     false, ALIGN_LEFT);
-#elif __JDOOM__
+# if __JDOOM__
     switch(gameMode)
     {
     case retail:
@@ -2910,17 +2920,18 @@ void M_DrawReadThis2(void)
     default:
         break;
     }
-#else
+# else
     GL_DrawRawScreen(W_GetNumForName("HELP2"), 0, 0);
-#endif
+# endif
 }
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+# if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 void M_DrawReadThis3(void)
 {
     inhelpscreens = true;
     GL_DrawRawScreen(W_GetNumForName("CREDIT"), 0, 0);
 }
+# endif
 #endif
 
 void M_DrawOptions(void)
@@ -3859,8 +3870,10 @@ DEFCC(CCmdMenuAction)
             mode = 2;
         else if(saveStringEnter)
             mode = 3;
+#if !__JDOOM64__
         else if(inhelpscreens)
             mode = 4;
+#endif
 
         if(!stricmp(argv[0], "menuup"))
         {
@@ -4070,21 +4083,24 @@ DEFCC(CCmdMenuAction)
         return true;
 
     // Hotkey menu shortcuts
+#if !__JDOOM64__
     if(!stricmp(argv[0], "helpscreen"))    // F1
     {
         Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
-#if __JDOOM__
+# if __JDOOM__
         if(gameMode == retail)
             currentMenu = &ReadDef2;
         else
-#endif
+# endif
             currentMenu = &ReadDef1;
 
         itemOn = 0;
         //S_LocalSound(menusnds[2], NULL);
     }
-    else if(!stricmp(argv[0], "SaveGame"))    // F2
+    else
+#endif
+        if(!stricmp(argv[0], "SaveGame"))    // F2
     {
         Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
