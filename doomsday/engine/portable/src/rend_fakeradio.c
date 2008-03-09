@@ -1215,8 +1215,8 @@ static void radioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
 
     // What vertex winding order?
     // (for best results, the cross edge should always be the shortest).
-    wind = (V2_Distance(inner[1], shadow->outer[1]->V_pos) >
-                V2_Distance(inner[0], shadow->outer[0]->V_pos)? 1 : 0);
+    wind = (V2_Distance(inner[1], shadow->verts[1]->V_pos) >
+                V2_Distance(inner[0], shadow->verts[0]->V_pos)? 1 : 0);
 
     // Initialize the rendpoly.
     q = R_AllocRendPoly(RP_FLAT, false, 4);
@@ -1236,8 +1236,8 @@ static void radioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     idx = (isCeiling ? ceilIndices[wind] : floorIndices[wind]);
 
     // Left outer corner.
-    vtx[idx[0]].pos[VX] = shadow->outer[0]->V_pos[VX];
-    vtx[idx[0]].pos[VY] = shadow->outer[0]->V_pos[VY];
+    vtx[idx[0]].pos[VX] = shadow->verts[0]->V_pos[VX];
+    vtx[idx[0]].pos[VY] = shadow->verts[0]->V_pos[VY];
     vtx[idx[0]].pos[VZ] = z;
     vtx[idx[0]].color.rgba[CA] = (DGLubyte) (255 * shadowAlpha);
 
@@ -1249,8 +1249,8 @@ static void radioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
         vtx[idx[0]].color.rgba[CA] *= 1 - sideOpen[0];
 
     // Right outer corner.
-    vtx[idx[1]].pos[VX] = shadow->outer[1]->V_pos[VX];
-    vtx[idx[1]].pos[VY] = shadow->outer[1]->V_pos[VY];
+    vtx[idx[1]].pos[VX] = shadow->verts[1]->V_pos[VX];
+    vtx[idx[1]].pos[VY] = shadow->verts[1]->V_pos[VY];
     vtx[idx[1]].pos[VZ] = z;
     vtx[idx[1]].color.rgba[CA] = (DGLubyte) (255 * shadowAlpha);
 
@@ -1422,7 +1422,8 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
                 {
                     /*V2_Lerp(inner[i], shadow->inOffset[i],
                        shadow->bExtOffset[i], pos);*/
-                    V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->inOffset[i]);
+                    V2_Sum(inner[i], shadow->verts[i]->V_pos,
+                           shadow->vertOffsets[i].inOffset);
                 }
                 else if(pos == 1)       // Same height on both sides.
                 {   // We need to use a back extended offset but which one?
@@ -1508,19 +1509,22 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
                     if(found)
                     {
                         // id is now the index + 1 into the side's bextoffset array.
-                        V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->bExtOffset[i][id-1].offset);
+                        V2_Sum(inner[i], shadow->verts[i]->V_pos,
+                               shadow->vertOffsets[i].bExtOffset[id-1].offset);
                     }
                     else // Its an open edge.
                     {
-                        V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->extOffset[i]);
+                        V2_Sum(inner[i], shadow->verts[i]->V_pos,
+                               shadow->vertOffsets[i].extOffset);
                     }
                 }
-                else                    // Fully, unquestionably open.
+                else // Fully, unquestionably open.
                 {
-                    if(pos > 2) pos = 2;
-                    /*V2_Lerp(inner[i], shadow->bExtOffset[i],
-                       shadow->extOffset[i], pos - 1); */
-                    V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->extOffset[i]);
+                    if(pos > 2)
+                        pos = 2;
+
+                    V2_Sum(inner[i], shadow->verts[i]->V_pos,
+                           shadow->vertOffsets[i].extOffset);
                 }
             }
 

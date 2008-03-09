@@ -222,13 +222,14 @@ void R_ShadowEdges(shadowpoly_t *poly)
         if(R_ShadowCornerDeltas(left, right, poly, edge == 0))
         {
             R_CornerNormalPoint(left, R_ShadowEdgeWidth(left), right,
-                                R_ShadowEdgeWidth(right), poly->inOffset[edge],
-                                edge == 0 ? poly->extOffset[edge] : NULL,
-                                edge == 1 ? poly->extOffset[edge] : NULL);
+                                R_ShadowEdgeWidth(right), poly->vertOffsets[edge].inOffset,
+                                edge == 0 ? poly->vertOffsets[edge].extOffset : NULL,
+                                edge == 1 ? poly->vertOffsets[edge].extOffset : NULL);
         }
         else
         {   // An error in the map. Set the inside corner to the extoffset.
-            V2_Copy(poly->inOffset[edge], poly->extOffset[edge]);
+            V2_Copy(poly->vertOffsets[edge].inOffset,
+                    poly->vertOffsets[edge].extOffset);
         }
 
         // The back extended offset(s):
@@ -262,17 +263,17 @@ void R_ShadowEdges(shadowpoly_t *poly)
         if(count == 0)
         {
             // No back-extended, just use the plain extended offset.
-            V2_Copy(poly->bExtOffset[edge][0].offset,
-                    poly->extOffset[edge]);
+            V2_Copy(poly->vertOffsets[edge].bExtOffset[0].offset,
+                    poly->vertOffsets[edge].extOffset);
         }
         else
         {
             // We need at least one back extended offset.
-            sector_t   *sector = R_GetShadowSector(poly, 0, false);
-            linedef_t     *neighbor;
-            boolean     leftCorner = (edge == 0);
-            pvec2_t     delta;
-            sector_t   *orientSec;
+            sector_t       *sector = R_GetShadowSector(poly, 0, false);
+            linedef_t      *neighbor;
+            boolean         leftCorner = (edge == 0);
+            pvec2_t         delta;
+            sector_t       *orientSec;
 
             // The line itself.
             R_ShadowDelta(leftCorner ? right : left, line, sector);
@@ -323,7 +324,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
 
                 R_CornerNormalPoint(left, R_ShadowEdgeWidth(left),
                                     right, R_ShadowEdgeWidth(right),
-                                    poly->bExtOffset[edge][i].offset,
+                                    poly->vertOffsets[edge].bExtOffset[i].offset,
                                     NULL, NULL);
 
                 // Update orientSec ready for the next iteration?
@@ -383,8 +384,8 @@ boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
 
 #if 0 // currently unused
     // Use the extended points, they are wider than inoffsets.
-    V2_Set(corners[0], poly->outer[0]->pos[VX], poly->outer[0]->pos[VY]);
-    V2_Set(corners[1], poly->outer[1]->pos[VX], poly->outer[1]->pos[VY]);
+    V2_Set(corners[0], poly->verts[0]->pos[VX], poly->verts[0]->pos[VY]);
+    V2_Set(corners[1], poly->verts[1]->pos[VX], poly->verts[1]->pos[VY]);
     V2_Sum(corners[2], corners[1], poly->extOffset[1]);
     V2_Sum(corners[3], corners[0], poly->extOffset[0]);
 
@@ -515,13 +516,13 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
         // Calculate the boundaries.
         for(i = 0, bound = boundaries; i < count; ++i, bound++)
         {
-            V2_Set(bound->left, polys[i].outer[0]->V_pos[VX],
-                   polys[i].outer[0]->V_pos[VY]);
-            V2_Sum(bound->a, polys[i].inOffset[0], bound->left);
+            V2_Set(bound->left, polys[i].verts[0]->V_pos[VX],
+                   polys[i].verts[0]->V_pos[VY]);
+            V2_Sum(bound->a, polys[i].vertOffsets[0].inOffset, bound->left);
 
-            V2_Set(bound->right, polys[i].outer[1]->V_pos[VX],
-                   polys[i].outer[1]->V_pos[VY]);
-            V2_Sum(bound->b, polys[i].inOffset[1], bound->right);
+            V2_Set(bound->right, polys[i].verts[1]->V_pos[VX],
+                   polys[i].verts[1]->V_pos[VY]);
+            V2_Sum(bound->b, polys[i].vertOffsets[1].inOffset, bound->right);
         }
         memset(overlaps, 0, count);
 
@@ -561,14 +562,14 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
             if(overlaps[i] & OVERLAP_LEFT)
             {
                 if(R_ResolveStep(bound->left, bound->a,
-                                 polys[i].inOffset[0]))
+                                 polys[i].vertOffsets[0].inOffset))
                     done = false;
             }
 
             if(overlaps[i] & OVERLAP_RIGHT)
             {
                 if(R_ResolveStep(bound->right, bound->b,
-                                 polys[i].inOffset[1]))
+                                 polys[i].vertOffsets[1].inOffset))
                     done = false;
             }
         }
@@ -648,7 +649,7 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
 
                             // The outer vertices are just the beginning and end of
                             // the line.
-                            R_OrderVertices(line, sec, poly->outer);
+                            R_OrderVertices(line, sec, poly->verts);
                             R_ShadowEdges(poly);
                         }
                     }
@@ -723,17 +724,17 @@ void R_InitSectorShadows(void)
 
     for(i = 0, poly = shadows; i < maxCount; ++i, poly++)
     {
-        V2_Set(point, poly->outer[0]->V_pos[VX], poly->outer[0]->V_pos[VY]);
+        V2_Set(point, poly->verts[0]->V_pos[VX], poly->verts[0]->V_pos[VY]);
         V2_InitBox(bounds, point);
 
         // Use the extended points, they are wider than inoffsets.
-        V2_Sum(point, point, poly->extOffset[0]);
+        V2_Sum(point, point, poly->vertOffsets[0].extOffset);
         V2_AddToBox(bounds, point);
 
-        V2_Set(point, poly->outer[1]->V_pos[VX], poly->outer[1]->V_pos[VY]);
+        V2_Set(point, poly->verts[1]->V_pos[VX], poly->verts[1]->V_pos[VY]);
         V2_AddToBox(bounds, point);
 
-        V2_Sum(point, point, poly->extOffset[1]);
+        V2_Sum(point, point, poly->vertOffsets[1].extOffset);
         V2_AddToBox(bounds, point);
 
         P_SubsectorsBoxIteratorv(bounds, R_GetShadowSector(poly, 0, false),

@@ -180,18 +180,21 @@ typedef struct shadowpolyoffset_s {
     float           offset[2];
 } shadowpolyoffset_t;
 
-#define MAX_EXOFFSETS   8
 #define MAX_BEXOFFSETS  8
+
+typedef struct shadowvert_s {
+    float           inOffset[2]; // Inner offset from 'outer.'
+    float           extOffset[2]; // Extended: offset from 'outer.'
+    shadowpolyoffset_t bExtOffset[MAX_BEXOFFSETS]; // Back-extended: offset frmo 'outer.'
+} shadowvert_t;
 
 typedef struct shadowpoly_s {
     struct seg_s   *seg;
     struct subsector_s *ssec;
     short           flags;
-    ushort          visFrame;      // Last visible frame (for rendering).
-    struct vertex_s *outer[2];      // Left and right.
-    float           inOffset[2][2]; // Inner offset from 'outer.'
-    float           extOffset[2][2];    // Extended: offset from 'outer.'
-    shadowpolyoffset_t bExtOffset[2][MAX_BEXOFFSETS];   // Back-extended: offset frmo 'outer.'
+    ushort          visFrame; // Last visible frame (for rendering).
+    struct vertex_s *verts[2]; // Left and right.
+    shadowvert_t    vertOffsets[2];
 } shadowpoly_t;
 
 typedef struct shadowlink_s {
