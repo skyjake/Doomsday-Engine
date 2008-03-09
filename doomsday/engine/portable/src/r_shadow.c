@@ -209,27 +209,30 @@ float R_ShadowEdgeWidth(const pvec2_t edge)
  */
 void R_ShadowEdges(shadowpoly_t *poly)
 {
-    vec2_t      left, right;
-    int         edge, side = !(poly->flags & SHPF_FRONTSIDE);
-    uint        i, count;
-    linedef_t     *line = poly->seg->lineDef;
-    lineowner_t *base, *p, *boundryOwner = NULL;
-    boolean     done;
+    vec2_t          left, right;
+    int             edge, side = !(poly->flags & SHPF_FRONTSIDE);
+    uint            i, count;
+    linedef_t      *line = poly->seg->lineDef;
+    lineowner_t    *base, *p, *boundryOwner = NULL;
+    boolean         done;
+    lineowner_t    *vo;
 
     for(edge = 0; edge < 2; ++edge) // left and right
     {
+        vo = poly->seg->lineDef->L_vo(edge^side);
+
         // The inside corner:
         if(R_ShadowCornerDeltas(left, right, poly, edge == 0))
         {
             R_CornerNormalPoint(left, R_ShadowEdgeWidth(left), right,
-                                R_ShadowEdgeWidth(right), poly->vertOffsets[edge].inOffset,
-                                edge == 0 ? poly->vertOffsets[edge].extOffset : NULL,
-                                edge == 1 ? poly->vertOffsets[edge].extOffset : NULL);
+                                R_ShadowEdgeWidth(right), vo->shadowOffsets.inner,
+                                edge == 0 ? vo->shadowOffsets.extended : NULL,
+                                edge == 1 ? vo->shadowOffsets.extended : NULL);
         }
         else
         {   // An error in the map. Set the inside corner to the extoffset.
-            V2_Copy(poly->vertOffsets[edge].inOffset,
-                    poly->vertOffsets[edge].extOffset);
+            V2_Copy(vo->shadowOffsets.inner,
+                    vo->shadowOffsets.extended);
         }
 
         // The back extended offset(s):
@@ -263,8 +266,8 @@ void R_ShadowEdges(shadowpoly_t *poly)
         if(count == 0)
         {
             // No back-extended, just use the plain extended offset.
-            V2_Copy(poly->vertOffsets[edge].bExtOffset[0].offset,
-                    poly->vertOffsets[edge].extOffset);
+            V2_Copy(vo->shadowOffsets.backExtended[0].offset,
+                    vo->shadowOffsets.extended);
         }
         else
         {
@@ -324,7 +327,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
 
                 R_CornerNormalPoint(left, R_ShadowEdgeWidth(left),
                                     right, R_ShadowEdgeWidth(right),
-                                    poly->vertOffsets[edge].bExtOffset[i].offset,
+                                    vo->shadowOffsets.backExtended[i].offset,
                                     NULL, NULL);
 
                 // Update orientSec ready for the next iteration?
@@ -516,13 +519,15 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
         // Calculate the boundaries.
         for(i = 0, bound = boundaries; i < count; ++i, bound++)
         {
-            V2_Set(bound->left, polys[i].verts[0]->V_pos[VX],
-                   polys[i].verts[0]->V_pos[VY]);
-            V2_Sum(bound->a, polys[i].vertOffsets[0].inOffset, bound->left);
+            shadowpoly_t       *poly = &polys[i];
 
-            V2_Set(bound->right, polys[i].verts[1]->V_pos[VX],
-                   polys[i].verts[1]->V_pos[VY]);
-            V2_Sum(bound->b, polys[i].vertOffsets[1].inOffset, bound->right);
+            V2_Set(bound->left, poly->verts[0]->V_pos[VX],
+                   poly->verts[0]->V_pos[VY]);
+            V2_Sum(bound->a, poly->seg->lineDef->L_vo(!(poly->flags & SHPF_FRONTSIDE))->shadowOffsets.inner, bound->left);
+
+            V2_Set(bound->right, poly->verts[1]->V_pos[VX],
+                   poly->verts[1]->V_pos[VY]);
+            V2_Sum(bound->b, poly->seg->lineDef->L_vo(poly->flags & SHPF_FRONTSIDE)->shadowOffsets.inner, bound->right);
         }
         memset(overlaps, 0, count);
 
@@ -559,17 +564,19 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
         // Adjust the overlapping inner points.
         for(i = 0, bound = boundaries; i < count; ++i, bound++)
         {
+            shadowpoly_t       *poly = &polys[i];
+
             if(overlaps[i] & OVERLAP_LEFT)
             {
                 if(R_ResolveStep(bound->left, bound->a,
-                                 polys[i].vertOffsets[0].inOffset))
+                                 poly->seg->lineDef->L_vo(!(poly->flags & SHPF_FRONTSIDE))->shadowOffsets.inner))
                     done = false;
             }
 
             if(overlaps[i] & OVERLAP_RIGHT)
             {
                 if(R_ResolveStep(bound->right, bound->b,
-                                 polys[i].vertOffsets[1].inOffset))
+                                 poly->seg->lineDef->L_vo(poly->flags & SHPF_FRONTSIDE)->shadowOffsets.inner))
                     done = false;
             }
         }
@@ -620,7 +627,7 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
                 seg_t      *seg = *segp;
 
                 // Minisegs don't get shadows, even then, only one.
-                if(seg->lineDef &&
+                if(seg->lineDef && seg->side == 0 &&
                    !((seg->lineDef->validCount == validCount) ||
                      LINE_SELFREF(seg->lineDef)))
                 {
@@ -692,11 +699,12 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
  */
 void R_InitSectorShadows(void)
 {
-    uint        startTime = Sys_GetRealTime();
+    uint            startTime = Sys_GetRealTime();
 
-    uint        i, maxCount;
-    shadowpoly_t *shadows, *poly;
-    vec2_t      bounds[2], point;
+    uint            i, maxCount;
+    shadowpoly_t   *shadows, *poly;
+    vec2_t          bounds[2], point;
+    byte            side;
 
     // Find out the number of shadowpolys we'll require.
     maxCount = R_MakeShadowEdges(NULL);
@@ -724,17 +732,19 @@ void R_InitSectorShadows(void)
 
     for(i = 0, poly = shadows; i < maxCount; ++i, poly++)
     {
+        side = (poly->flags & SHPF_FRONTSIDE)? 0 : 1;
+
         V2_Set(point, poly->verts[0]->V_pos[VX], poly->verts[0]->V_pos[VY]);
         V2_InitBox(bounds, point);
 
         // Use the extended points, they are wider than inoffsets.
-        V2_Sum(point, point, poly->vertOffsets[0].extOffset);
+        V2_Sum(point, point, poly->seg->lineDef->L_vo(side)->shadowOffsets.extended);
         V2_AddToBox(bounds, point);
 
         V2_Set(point, poly->verts[1]->V_pos[VX], poly->verts[1]->V_pos[VY]);
         V2_AddToBox(bounds, point);
 
-        V2_Sum(point, point, poly->vertOffsets[1].extOffset);
+        V2_Sum(point, point, poly->seg->lineDef->L_vo(side^1)->shadowOffsets.extended);
         V2_AddToBox(bounds, point);
 
         P_SubsectorsBoxIteratorv(bounds, R_GetShadowSector(poly, 0, false),

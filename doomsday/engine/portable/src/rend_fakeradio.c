@@ -1418,14 +1418,12 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             {
                 float           pos = sideOpen[i];
 
-                if(pos < 1)             // Nearly closed.
+                if(pos < 1) // Nearly closed.
                 {
-                    /*V2_Lerp(inner[i], shadow->inOffset[i],
-                       shadow->bExtOffset[i], pos);*/
                     V2_Sum(inner[i], shadow->verts[i]->V_pos,
-                           shadow->vertOffsets[i].inOffset);
+                           shadow->seg->lineDef->L_vo(i^side)->shadowOffsets.inner);
                 }
-                else if(pos == 1)       // Same height on both sides.
+                else if(pos == 1) // Same height on both sides.
                 {   // We need to use a back extended offset but which one?
 
                     /**
@@ -1443,7 +1441,7 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
                     // back neighbor at which plane heights differ.
                     lineowner_t *base, *p;
                     vertex_t   *vtx =
-                        shadow->seg->lineDef->L_v(i^!(shadow->flags & SHPF_FRONTSIDE));
+                        shadow->seg->lineDef->L_v(i^side);
                     uint        id;
                     boolean     found;
 
@@ -1510,12 +1508,12 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
                     {
                         // id is now the index + 1 into the side's bextoffset array.
                         V2_Sum(inner[i], shadow->verts[i]->V_pos,
-                               shadow->vertOffsets[i].bExtOffset[id-1].offset);
+                               shadow->seg->lineDef->L_vo(i^side)->shadowOffsets.backExtended[id-1].offset);
                     }
                     else // Its an open edge.
                     {
                         V2_Sum(inner[i], shadow->verts[i]->V_pos,
-                               shadow->vertOffsets[i].extOffset);
+                               shadow->seg->lineDef->L_vo(i^side)->shadowOffsets.extended);
                     }
                 }
                 else // Fully, unquestionably open.
@@ -1524,7 +1522,7 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
                         pos = 2;
 
                     V2_Sum(inner[i], shadow->verts[i]->V_pos,
-                           shadow->vertOffsets[i].extOffset);
+                           shadow->seg->lineDef->L_vo(i^side)->shadowOffsets.extended);
                 }
             }
 

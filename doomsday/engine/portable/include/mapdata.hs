@@ -9,10 +9,23 @@ internal
 #define LO_prev     link[0]
 #define LO_next     link[1]
 
+typedef struct shadowpolyoffset_s {
+    float           offset[2];
+} shadowpolyoffset_t;
+
+#define MAX_BEXOFFSETS  8
+
+typedef struct shadowvert_s {
+    float           inner[2];
+    float           extended[2];
+    shadowpolyoffset_t backExtended[MAX_BEXOFFSETS];
+} shadowvert_t;
+
 typedef struct lineowner_s {
     struct linedef_s *lineDef;
     struct lineowner_s *link[2];    // {prev, next} (i.e. {anticlk, clk}).
     binangle_t      angle;          // between this and next clockwise.
+    shadowvert_t    shadowOffsets;
 } lineowner_t;
 
 #define V_pos                   v.pos
