@@ -173,20 +173,9 @@ typedef struct linkmobj_s {
     struct mobj_s  *next, *prev;
 } linkmobj_t;
 
-// Shadowpoly flags.
-#define SHPF_FRONTSIDE  0x1
-
-typedef struct shadowpoly_s {
-    struct seg_s   *seg;
-    struct subsector_s *ssec;
-    short           flags;
-    ushort          visFrame; // Last visible frame (for rendering).
-    struct vertex_s *verts[2]; // Left and right.
-} shadowpoly_t;
-
 typedef struct shadowlink_s {
     struct shadowlink_s *next;
-    shadowpoly_t   *poly;
+    seg_t          *seg;
 } shadowlink_t;
 
 typedef struct subplaneinfo_s {

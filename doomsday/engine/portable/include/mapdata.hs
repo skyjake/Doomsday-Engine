@@ -80,6 +80,7 @@ internal
 
 // Seg flags
 #define SEGF_POLYOBJ            0x1 // Seg is part of a poly object.
+#define SEGF_SHADOW				0x2 // Seg casts edge shadows.
 
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
@@ -106,6 +107,7 @@ struct seg
     -       biastracker_s[3] tracker // 0=middle, 1=top, 2=bottom
     -       vertexillum_s[3][4] illum
     -       short       frameFlags
+    -       ushort      shadowVisFrame
 end
 
 internal

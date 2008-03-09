@@ -78,6 +78,7 @@ typedef struct vertex_s {
 
 // Seg flags
 #define SEGF_POLYOBJ            0x1 // Seg is part of a poly object.
+#define SEGF_SHADOW				0x2 // Seg casts edge shadows.
 
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
@@ -100,6 +101,7 @@ typedef struct seg_s {
     struct biastracker_s tracker[3];   // 0=middle, 1=top, 2=bottom
     struct vertexillum_s illum[3][4];
     short               frameFlags;
+    unsigned short      shadowVisFrame;
 } seg_t;
 
 #define SUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
