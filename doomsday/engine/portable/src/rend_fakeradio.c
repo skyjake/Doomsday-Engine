@@ -1295,22 +1295,60 @@ static void radioAddShadowEdge(seg_t *seg, boolean isCeiling,
  * Don't use the global radio state in here, the subsector can be part of
  * any sector, not the one chosen for wall rendering.
  */
-void Rend_RadioSubsectorEdges(subsector_t *subsector)
+static void radioSubsectorEdges(const subsector_t *subsector)
 {
+    static size_t       doPlaneSize = 0;
+    static byte        *doPlane = NULL;
+
     uint                i, pln, hack, side;
     float               open, sideOpen[2], vec[3];
     float               fz, bz, bhz, plnHeight;
     sector_t           *shadowSec, *front, *back;
-    linedef_t          *line;
+    linedef_t          *line, *neighbors[2];
     surface_t          *suf;
     shadowlink_t       *link;
     vec2_t              inner[2], outer[2];
     seg_t              *seg;
-
-    if(!rendFakeRadio || levelFullBright)
-        return;
+    boolean             workToDo = false;
 
 BEGIN_PROF( PROF_RADIO_SUBSECTOR );
+
+    vec[VX] = vx - subsector->midPoint.pos[VX];
+    vec[VY] = vz - subsector->midPoint.pos[VY];
+
+    // Do we need to enlarge the size of the doPlane array?
+    if(subsector->sector->planeCount > doPlaneSize)
+    {
+        if(!doPlaneSize)
+            doPlaneSize = 2;
+        else
+            doPlaneSize *= 2;
+
+        doPlane = Z_Realloc(doPlane, doPlaneSize, PU_STATIC);
+    }
+
+    memset(doPlane, 0, doPlaneSize);
+
+    // See if any of this subsector's planes will get shadows.
+    for(pln = 0; pln < subsector->sector->planeCount; ++pln)
+    {
+        plane_t            *plane = subsector->sector->planes[pln];
+
+        if(!Rend_RadioNonGlowingFlat(subsector->sector, pln))
+            continue;
+
+        vec[VZ] = vy - plane->visHeight;
+
+        // Don't bother with planes facing away from the camera.
+        if(M_DotProduct(vec, plane->PS_normal) < 0)
+            continue;
+
+        doPlane[pln] = true;
+        workToDo = true;
+    }
+
+    if(!workToDo)
+        return;
 
     // We need to check all the segs linked to this subsector for the
     // purpose of fakeradio shadow polys.
@@ -1323,40 +1361,37 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
 
         seg = link->seg;
 
-        // Polyobject segs don't get edge shadows.
-        if(seg->flags & SEGF_POLYOBJ)
-            continue;
-
         // Now it will be rendered.
         seg->shadowVisFrame = (ushort) frameCount;
+        line = seg->lineDef;
+        side = seg->side;
 
-        // Determine the openness of the line and its neighbors.  If
-        // this edge is open, there won't be a shadow at all.  Open
-        // neighbours cause some changes in the polygon corner
-        // vertices (placement, colour).
-
-        vec[VX] = vx - subsector->midPoint.pos[VX];
-        vec[VY] = vz - subsector->midPoint.pos[VY];
+        // Find the neighbors of this edge.
+        for(i = 0; i < 2; ++i)
+        {
+            neighbors[i] =
+                R_FindLineNeighbor(seg->subsector->sector, line,
+                                   line->L_vo(side^i), i, NULL);
+        }
 
         for(pln = 0; pln < subsector->sector->planeCount; ++pln)
         {
-            suf = &subsector->sector->planes[pln]->surface;
+            if(!doPlane[pln])
+                continue;
+
+            // Determine the openness of the line. If this edge is open,
+            // there won't be a shadow at all. Open neighbours cause some
+            // changes in the polygon corner
+            // vertices (placement, colour).
 
             shadowSec = R_GetShadowSector(seg, pln, true);
+            suf = &subsector->sector->planes[pln]->surface;
             plnHeight = shadowSec->SP_planevisheight(pln);
             vec[VZ] = vy - plnHeight;
 
             // Glowing surfaces or missing textures shouldn't have shadows.
-            if((suf->flags & SUF_NO_RADIO) ||
-               !Rend_RadioNonGlowingFlat(subsector->sector, pln))
+            if((suf->flags & SUF_NO_RADIO))
                 continue;
-
-            // Don't bother with planes facing away from the camera.
-            if(M_DotProduct(vec, suf->normal) < 0)
-                continue;
-
-            line = seg->lineDef;
-            side = seg->side;
 
             if(line->L_backside)
             {
@@ -1394,12 +1429,12 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             if(open >= 1)
                 continue;
 
-            // What about the neighbours?
+            // Determine the inner shadow corners.
             for(i = 0; i < 2; ++i)
             {
-                linedef_t *neighbor =
-                    R_FindLineNeighbor(seg->subsector->sector, line,
-                                       line->L_vo(side^i), i, NULL);
+                float           pos;
+                linedef_t      *neighbor = neighbors[i];
+
                 if(neighbor && neighbor->L_backside)
                 {
                     uint side2 = (neighbor->L_frontsector != shadowSec);
@@ -1416,12 +1451,8 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
                 }
                 else
                     sideOpen[i] = 0;
-            }
 
-            // Determine the inner shadow corners.
-            for(i = 0; i < 2; ++i)
-            {
-                float           pos = sideOpen[i];
+                pos = sideOpen[i];
 
                 if(pos < 1) // Nearly closed.
                 {
@@ -1529,4 +1560,12 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
     }
 
 END_PROF( PROF_RADIO_SUBSECTOR );
+}
+
+void Rend_RadioSubsectorEdges(subsector_t *subsector)
+{
+    if(!rendFakeRadio || levelFullBright)
+        return;
+
+    radioSubsectorEdges(subsector);
 }
