@@ -88,9 +88,13 @@ for input_line in sys.stdin.readlines():
                 verbatim = internal_file
             elif tokens[0] == 'public':
                 verbatim = public_file
-        elif count == 2:
+        elif count == 2 or count == 3:
             if tokens[0] == 'struct':
                 current = tokens[1]
+                if count == 3:
+                    publicName = tokens[2]
+                else:
+                    publicName = tokens[1]
                 println(internal_file, "typedef struct %s_s {" % current, line_comment)
                 println(internal_file, "    runtime_mapdata_header_t header;", '')
         else:
@@ -100,7 +104,7 @@ for input_line in sys.stdin.readlines():
             # Use "-" to omit the DDVT type declaration (internal usage only).
             if tokens[0] != '-':
                 println(public_file, 
-                    "#define DMT_%s_%s DDVT_%s" % (current.upper(),
+                    "#define DMT_%s_%s DDVT_%s" % (publicName.upper(),
                                                    tokens[2].upper(),
                                                    tokens[0].upper()), line_comment)
             # Determine the C type.
