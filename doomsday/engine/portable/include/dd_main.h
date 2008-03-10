@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_main.h: Engine Core
  */
 
@@ -52,7 +52,7 @@ extern filename_t bindingsConfigFileName;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-int             DD_Main();
+int             DD_Main(void);
 void            DD_UpdateEngineState(void);
 void            DD_GameUpdate(int flags);
 void            DD_AddStartupWAD(const char *file);

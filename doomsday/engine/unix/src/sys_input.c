@@ -291,8 +291,8 @@ void I_PollEvents(void)
         case SDL_KEYUP:
             e = I_NewKeyEvent();
             e->event = (event.type == SDL_KEYDOWN ? IKE_KEY_DOWN : IKE_KEY_UP);
-            e->code = I_TranslateKeyCode(event.key.keysym.sym);
-            /*printf("sdl:%i code:%i\n", event.key.keysym.scancode, e->code);*/
+            e->ddkey = I_TranslateKeyCode(event.key.keysym.sym);
+            /*printf("sdl:%i ddkey:%i\n", event.key.keysym.scancode, e->ddkey);*/
             break;
 
         case SDL_MOUSEBUTTONDOWN:

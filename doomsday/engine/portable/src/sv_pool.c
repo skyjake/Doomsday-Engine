@@ -2855,7 +2855,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
 
     // This is the final score. Only positive scores are accepted in
     // the frame (deltas with nonpositive scores as ignored).
-    return (delta->score = score) > 0;
+    return (delta->score = score? true : false);
 }
 
 /**

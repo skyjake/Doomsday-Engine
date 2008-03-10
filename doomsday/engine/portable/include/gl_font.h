@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_font.h: Font Renderer
  */
 
@@ -67,8 +67,8 @@ typedef struct {
 	jfrchar_t       chars[MAX_CHARS];
 } jfrfont_t;
 
-int             FR_Init();
-void            FR_Shutdown();
+int             FR_Init(void);
+void            FR_Shutdown(void);
 jfrfont_t      *FR_GetFont(int id);
 
 #ifdef WIN32
@@ -81,7 +81,7 @@ int             FR_PrepareFont(const char *name);
 
 // Change the current font.
 void            FR_SetFont(int id);
-int             FR_GetCurrent();
+int             FR_GetCurrent(void);
 void            FR_DestroyFont(int id);
 int             FR_CharWidth(int ch);
 int             FR_TextWidth(const char *text);
@@ -92,7 +92,7 @@ int             FR_GlyphTopToAscent(const char *text);
 // (x,y) is the upper left corner. Returns the length.
 int             FR_TextOut(const char *text, int x, int y);
 int             FR_ShadowTextOut(const char *text, int x, int y);
-int             FR_CustomShadowTextOut(const char *text, int x, int y, 
+int             FR_CustomShadowTextOut(const char *text, int x, int y,
                                        int shadowX, int shadowY,
                                        float shadowAlpha);
 

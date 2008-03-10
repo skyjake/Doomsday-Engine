@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -684,11 +684,11 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
 
 boolean W_RemoveFile(char *filename)
 {
-    int         idx = W_RecordGetIdx(filename);
-    filerecord_t *rec;
+    int                 idx = W_RecordGetIdx(filename);
+    filerecord_t       *rec;
 
     if(idx == -1)
-        return false;           // No such file loaded.
+        return false; // No such file loaded.
     rec = records + idx;
 
     // We must remove all the data of this file from the lump storage
@@ -717,7 +717,7 @@ boolean W_RemoveFile(char *filename)
  */
 void W_Reset(void)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < numrecords; ++i)
         if(records[i].flags & FRF_RUNTIME)
@@ -730,8 +730,8 @@ void W_Reset(void)
  */
 int W_IsIWAD(char *fn)
 {
-    FILE       *file;
-    char        id[5];
+    FILE               *file;
+    char                id[5];
 
     if(!M_FileExists(fn))
         return false;

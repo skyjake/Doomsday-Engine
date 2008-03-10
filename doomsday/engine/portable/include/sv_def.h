@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ extern int      net_remoteuser;	   // The client who is currently logged in.
 extern char    *net_password;	   // Remote login password.
 
 void            Sv_Shutdown(void);
-void            Sv_StartNetGame();
+void            Sv_StartNetGame(void);
 boolean         Sv_PlayerArrives(unsigned int nodeID, char *name);
 void            Sv_PlayerLeaves(unsigned int nodeID);
 void            Sv_Handshake(int playernum, boolean newplayer);
