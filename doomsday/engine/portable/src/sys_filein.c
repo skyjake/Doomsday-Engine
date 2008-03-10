@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -166,8 +166,8 @@ char *F_FindNewline(char *ptr)
 
 int F_GetDirecIdx(char *exact_path)
 {
-    int         i;
-    boolean     found;
+    int                 i;
+    boolean             found;
 
     for(i = 0, found = false; direc[i].path && !found; ++i)
         if(!stricmp(direc[i].path, exact_path))
@@ -184,9 +184,9 @@ int F_GetDirecIdx(char *exact_path)
  */
 void F_AddDirec(char *lumpname, char *symbolic_path)
 {
-    int             i;
-    char            path[256], *full;
-    lumpdirec_t    *ld;
+    int                 i;
+    char                path[256], *full;
+    lumpdirec_t        *ld;
 
     if(!lumpname[0] || !symbolic_path[0])
         return;
@@ -237,9 +237,9 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
  */
 void F_AddMapping(const char* source, const char* destination)
 {
-    filename_t      src;
-    filename_t      dst;
-    vdmapping_t    *vd;
+    filename_t          src;
+    filename_t          dst;
+    vdmapping_t        *vd;
 
     // Convert to absolute path names.
     M_TranslatePath(source, src);
@@ -276,9 +276,9 @@ void F_AddMapping(const char* source, const char* destination)
  */
 void F_ParseDirecData(char *buffer)
 {
-    char           *ptr = buffer, *end;
-    char            name[9], path[256];
-    size_t          len;
+    char               *ptr = buffer, *end;
+    char                name[9], path[256];
+    size_t              len;
 
     for(; *ptr;)
     {
@@ -327,8 +327,7 @@ void F_ParseDirecData(char *buffer)
 
 void F_InitMapping(void)
 {
-    int             i;
-    int             argC = Argc();
+    int                 i, argC = Argc();
 
     F_ResetMapping();
 
@@ -352,10 +351,10 @@ void F_InitMapping(void)
  */
 void F_InitDirec(void)
 {
-    static boolean alreadyInited = false;
-    int         i;
-    size_t      len;
-    char       *buf;
+    static boolean      alreadyInited = false;
+    int                 i;
+    size_t              len;
+    char               *buf;
 
     if(alreadyInited)
     {
@@ -382,41 +381,45 @@ void F_InitDirec(void)
 
 void F_ResetMapping(void)
 {
-    unsigned int     i;
+    uint                i;
 
-    // Free the allocated memory.
-    for(i = 0; i < vdMappingsCount; ++i)
+    if(vdMappings)
     {
-        M_Free(vdMappings[i].source);
-        M_Free(vdMappings[i].target);
+        // Free the allocated memory.
+        for(i = 0; i < vdMappingsCount; ++i)
+        {
+            M_Free(vdMappings[i].source);
+            M_Free(vdMappings[i].target);
+        }
+        M_Free(vdMappings);
     }
-
-    M_Free(vdMappings);
     vdMappings = NULL;
     vdMappingsCount = vdMappingsMax = 0;
 }
 
 void F_ResetDirec(void)
 {
-    int     i;
+    size_t              i;
 
     for(i = 0; direc[i].path; ++i)
         if(direc[i].path)
-            M_Free(direc[i].path);    // Allocated by _fullpath.
+            M_Free(direc[i].path); // Allocated by _fullpath.
 }
 
 void F_CloseAll(void)
 {
-    unsigned int     i;
+    uint                i;
 
-    for(i = 0; i < filesCount; ++i)
-        //if(files[i].file->flags.open)
-        if(files[i].file != NULL)
-        {
-            F_Close(files[i].file);
-        }
+    if(files)
+    {
+        for(i = 0; i < filesCount; ++i)
+            if(files[i].file != NULL)
+            {
+                F_Close(files[i].file);
+            }
 
-    M_Free(files);
+        M_Free(files);
+    }
     files = NULL;
     filesCount = 0;
 }
@@ -434,7 +437,7 @@ void F_ShutdownDirec(void)
 int F_Access(const char *path)
 {
     // Open for reading, but don't buffer anything.
-    DFILE  *file = F_Open(path, "rx");
+    DFILE              *file = F_Open(path, "rx");
 
     if(!file)
         return false;
@@ -444,14 +447,16 @@ int F_Access(const char *path)
 
 DFILE *F_GetFreeFile(void)
 {
-    unsigned int     i, oldCount;
-    boolean     found;
-    filehandle_t *fhdl;
+    uint                i, oldCount;
+    boolean             found;
+    filehandle_t       *fhdl;
 
     for(i = 0, found = false, fhdl = files; i < filesCount && !found;
         fhdl++, ++i)
+    {
         if(fhdl->file == NULL)
             found = true;
+    }
 
     if(found)
     {
@@ -483,12 +488,18 @@ DFILE *F_GetFreeFile(void)
  */
 void F_Release(DFILE *file)
 {
-    unsigned int     i;
+    uint                i;
 
-    // Clear references to the handle.
-    for(i = 0; i < filesCount; ++i)
-        if(files[i].file == file)
-            files[i].file = NULL;
+    if(!file)
+        return;
+
+    if(files)
+    {
+        // Clear references to the handle.
+        for(i = 0; i < filesCount; ++i)
+            if(files[i].file == file)
+                files[i].file = NULL;
+    }
 
     // File was allocated in F_GetFreeFile.
     M_Free(file);
@@ -496,8 +507,8 @@ void F_Release(DFILE *file)
 
 DFILE *F_OpenLump(const char *name, boolean dontBuffer)
 {
-    int     num = W_CheckNumForName((char *) name);
-    DFILE  *file;
+    int                 num = W_CheckNumForName((char *) name);
+    DFILE              *file;
 
     if(num < 0)
         return NULL;
@@ -515,6 +526,7 @@ DFILE *F_OpenLump(const char *name, boolean dontBuffer)
         file->pos = file->data = M_Malloc(file->size);
         memcpy(file->data, W_CacheLumpNum(num, PU_CACHE), file->size);
     }
+
     return file;
 }
 
@@ -541,7 +553,7 @@ static unsigned int F_GetLastModified(const char *path)
  */
 boolean F_MapPath(const char *path, vdmapping_t *vd, char *mapped)
 {
-    size_t          targetLen = strlen(vd->target);
+    size_t              targetLen = strlen(vd->target);
 
     if(!strnicmp(path, vd->target, targetLen))
     {
@@ -556,15 +568,15 @@ boolean F_MapPath(const char *path, vdmapping_t *vd, char *mapped)
 
 DFILE *F_OpenFile(const char *path, const char *mymode)
 {
-    DFILE  *file = F_GetFreeFile();
-    char    mode[8];
-    unsigned int     i;
-    filename_t mapped;
+    DFILE              *file = F_GetFreeFile();
+    char                mode[8];
+    uint                i;
+    filename_t          mapped;
 
     if(!file)
         return NULL;
 
-    strcpy(mode, "r");          // Open for reading.
+    strcpy(mode, "r"); // Open for reading.
     if(strchr(mymode, 't'))
         strcat(mode, "t");
     if(strchr(mymode, 'b'))
@@ -589,13 +601,15 @@ DFILE *F_OpenFile(const char *path, const char *mymode)
                 }
             }
         }
+
         if(!file->data)
         {
             // Still can't find it.
             F_Release(file);
-            return NULL;        // Can't find the file.
+            return NULL; // Can't find the file.
         }
     }
+
     file->flags.open = true;
     file->flags.file = true;
     file->lastModified = F_GetLastModified(path);
@@ -613,7 +627,7 @@ void F_TranslateZipFileName(const char *zipFileName, char *translated)
  */
 DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
 {
-    DFILE  *file = F_GetFreeFile();
+    DFILE              *file = F_GetFreeFile();
 
     if(!file)
         return NULL;
@@ -628,6 +642,7 @@ DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
         file->pos = file->data = M_Malloc(file->size);
         Zip_Read(zipIndex, file->data);
     }
+
     return file;
 }
 
@@ -641,9 +656,9 @@ DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
  */
 DFILE *F_Open(const char *path, const char *mode)
 {
-    int         i;
-    char        trans[256], full[256];
-    boolean     dontBuffer;
+    int                 i;
+    char                trans[256], full[256];
+    boolean             dontBuffer;
 
     if(!mode)
         mode = "";
@@ -654,7 +669,7 @@ DFILE *F_Open(const char *path, const char *mode)
     _fullpath(full, trans, 255);
 
     // Lumpdirecs take precedence.
-    if(!strchr(mode, 'f'))      // Doesn't need to be a real file?
+    if(!strchr(mode, 'f')) // Doesn't need to be a real file?
     {
         // First check the Zip directory.
         zipindex_t foundZip = Zip_Find(full);
@@ -666,8 +681,9 @@ DFILE *F_Open(const char *path, const char *mode)
             if(!stricmp(full, direc[i].path))
                 return F_OpenLump(direc[i].lump, dontBuffer);
     }
+
     if(strchr(mode, 'w'))
-        return NULL;            // Must be in a WAD...
+        return NULL; // Must be in a WAD...
 
     // Try to open as a real file, then.
     return F_OpenFile(full, mode);
@@ -675,8 +691,12 @@ DFILE *F_Open(const char *path, const char *mode)
 
 void F_Close(DFILE *file)
 {
+    if(!file)
+        return; // Wha?
+
     if(!file->flags.open)
         return;
+
     if(file->flags.file)
     {
         fclose(file->data);
@@ -697,7 +717,7 @@ void F_Close(DFILE *file)
  */
 size_t F_Read(void *dest, size_t count, DFILE *file)
 {
-    size_t          bytesleft;
+    size_t              bytesleft;
 
     if(!file->flags.open)
         return 0;
@@ -729,7 +749,7 @@ size_t F_Read(void *dest, size_t count, DFILE *file)
 
 unsigned char F_GetC(DFILE *file)
 {
-    unsigned char ch = 0;
+    unsigned char       ch = 0;
 
     if(!file->flags.open)
         return 0;
@@ -752,7 +772,7 @@ size_t F_Tell(DFILE *file)
  */
 size_t F_Seek(DFILE *file, size_t offset, int whence)
 {
-    size_t          oldpos = F_Tell(file);
+    size_t              oldpos = F_Tell(file);
 
     if(!file->flags.open)
         return 0;
@@ -787,7 +807,7 @@ void F_Rewind(DFILE *file)
  */
 size_t F_Length(DFILE *file)
 {
-    size_t          length, currentPosition;
+    size_t              length, currentPosition;
 
     if(!file)
         return 0;
@@ -805,8 +825,8 @@ size_t F_Length(DFILE *file)
 unsigned int F_LastModified(const char *fileName)
 {
     // Try to open the file, but don't buffer any contents.
-    DFILE          *file = F_Open(fileName, "rx");
-    unsigned int    modified = 0;
+    DFILE              *file = F_Open(fileName, "rx");
+    unsigned int        modified = 0;
 
     if(!file)
         return 0;
@@ -836,7 +856,7 @@ size_t F_CountPathChars(const char *path, char ch)
  */
 int F_ZipFinderForAll(const char *zipFileName, void *parm)
 {
-    zipforall_t    *info = parm;
+    zipforall_t        *info = parm;
 
     if(F_MatchName(zipFileName, info->pattern))
         if(!info->func(zipFileName, FT_NORMAL, info->parm))
@@ -858,11 +878,11 @@ static int C_DECL F_EntrySorter(const void* a, const void* b)
 int F_ForAllDescend(const char *pattern, const char *path, void *parm,
                     f_forall_func_t func)
 {
-    int             i, count, max;
-    finddata_t      fd;
-    foundentry_t   *found;
-    char            fn[256], spec[256];
-    char            localPattern[256];
+    int                 i, count, max;
+    finddata_t          fd;
+    foundentry_t       *found;
+    char                fn[256], spec[256];
+    char                localPattern[256];
 
     sprintf(localPattern, "%s%s", path, pattern);
 
@@ -962,10 +982,10 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
  */
 int F_ForAll(const char *filespec, void *parm, f_forall_func_t func)
 {
-    int             i;
-    char            fn[256];
-    directory_t     specdir;
-    zipforall_t     zipFindInfo;
+    int                 i;
+    char                fn[256];
+    directory_t         specdir;
+    zipforall_t         zipFindInfo;
 
     Dir_FileDir(filespec, &specdir);
 
