@@ -1194,9 +1194,10 @@ static uint radioEdgeHackType(linedef_t *line, sector_t *front, sector_t *back,
  * Calculate the corner coordinates and add a new shadow polygon to the
  * rendering lists.
  */
-static void radioAddShadowEdge(seg_t *seg, boolean isCeiling,
+static void radioAddShadowEdge(const linedef_t *line, byte side,
                                vec2_t inner[2], vec2_t outer[2], float z,
-                               float darkness, float sideOpen[2])
+                               float darkness, float sideOpen[2],
+                               boolean isCeiling)
 {
     static const uint   floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static const uint   ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
@@ -1206,7 +1207,6 @@ static void radioAddShadowEdge(seg_t *seg, boolean isCeiling,
     rendpoly_t         *q;
     rendpoly_vertex_t  *vtx;
     float               shadowAlpha;
-    byte                side = seg->side;
     vertex_t           *vtx0, *vtx1;
 
     // Sector lightlevel affects the darkness of the shadows.
@@ -1214,8 +1214,8 @@ static void radioAddShadowEdge(seg_t *seg, boolean isCeiling,
         darkness = 1;
 
     shadowAlpha = shadowDark * darkness;
-    vtx0 = seg->lineDef->L_v(side^0);
-    vtx1 = seg->lineDef->L_v(side^1);
+    vtx0 = line->L_v(side^0);
+    vtx1 = line->L_v(side^1);
 
     // What vertex winding order?
     // (for best results, the cross edge should always be the shortest).
@@ -1303,12 +1303,11 @@ static void radioSubsectorEdges(const subsector_t *subsector)
     uint                i, pln, hack, side;
     float               open, sideOpen[2], vec[3];
     float               fz, bz, bhz, plnHeight;
-    sector_t           *shadowSec, *front, *back;
+    sector_t           *front, *back;
     linedef_t          *line, *neighbors[2];
     surface_t          *suf;
     shadowlink_t       *link;
     vec2_t              inner[2], outer[2];
-    seg_t              *seg;
     boolean             workToDo = false;
 
 BEGIN_PROF( PROF_RADIO_SUBSECTOR );
@@ -1350,27 +1349,26 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
     if(!workToDo)
         return;
 
-    // We need to check all the segs linked to this subsector for the
-    // purpose of fakeradio shadow polys.
+    // We need to check all the shadow lines linked to this subsector for
+    // the purpose of fakeradio shadowing.
     for(link = subsector->shadows; link != NULL; link = link->next)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(link->seg->shadowVisFrame == (ushort) frameCount)
+        if(link->lineDef->shadowVisFrame[link->side] == (ushort) frameCount)
             continue;
 
-        seg = link->seg;
-
         // Now it will be rendered.
-        seg->shadowVisFrame = (ushort) frameCount;
-        line = seg->lineDef;
-        side = seg->side;
+        link->lineDef->shadowVisFrame[link->side] = (ushort) frameCount;
+
+        line = link->lineDef;
+        side = link->side;
 
         // Find the neighbors of this edge.
         for(i = 0; i < 2; ++i)
         {
             neighbors[i] =
-                R_FindLineNeighbor(seg->subsector->sector, line,
+                R_FindLineNeighbor(line->L_sector(side), line,
                                    line->L_vo(side^i), i, NULL);
         }
 
@@ -1381,12 +1379,10 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
 
             // Determine the openness of the line. If this edge is open,
             // there won't be a shadow at all. Open neighbours cause some
-            // changes in the polygon corner
-            // vertices (placement, colour).
+            // changes in the polygon corner vertices (placement, colour).
 
-            shadowSec = R_GetShadowSector(seg, pln, true);
             suf = &subsector->sector->planes[pln]->surface;
-            plnHeight = shadowSec->SP_planevisheight(pln);
+            plnHeight = line->L_sector(side)->SP_planevisheight(pln);
             vec[VZ] = vy - plnHeight;
 
             // Glowing surfaces or missing textures shouldn't have shadows.
@@ -1400,13 +1396,13 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
                 {
                     if(side == 0)
                     {
-                        front = shadowSec;
+                        front = line->L_sector(side);
                         back  = line->L_backsector;
                     }
                     else
                     {
                         front = line->L_frontsector;
-                        back  = shadowSec;
+                        back  = line->L_sector(side);
                     }
                 }
                 else
@@ -1434,10 +1430,12 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             {
                 float           pos;
                 linedef_t      *neighbor = neighbors[i];
+                lineowner_t    *vo;
 
                 if(neighbor && neighbor->L_backside)
                 {
-                    uint side2 = (neighbor->L_frontsector != shadowSec);
+                    uint            side2 =
+                        (neighbor->L_frontsector != line->L_sector(side));
 
                     front = neighbor->L_sector(side2);
                     back  = neighbor->L_sector(side2 ^ 1);
@@ -1454,108 +1452,22 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
 
                 pos = sideOpen[i];
 
-                if(pos < 1) // Nearly closed.
+                vo = line->L_vo(i^side);
+                if(i)
+                    vo = vo->LO_prev;
+
+                if(pos <= 1) // Nearly closed.
                 {
-                    V2_Sum(inner[i], seg->lineDef->L_vpos(i^side),
-                           seg->lineDef->L_vo(i^side)->shadowOffsets.inner);
-                }
-                else if(pos == 1) // Same height on both sides.
-                {   // We need to use a back extended offset but which one?
-
-                    /**
-                     * \todo This determination logic is called for each shadow
-                     * edge connected on the XY plane twice (once for each side).
-                     * Instead, we should reuse the same offset by pre-determining
-                     * before we get here.
-                     */
-
-                    // Walk around the vertex and choose the bextoffset for the
-                    // back neighbor at which plane heights differ.
-                    lineowner_t *base, *p;
-                    vertex_t   *vtx = seg->lineDef->L_v(i^side);
-                    uint        id;
-                    boolean     found;
-
-                    base = R_GetVtxLineOwner(vtx, seg->lineDef);
-                    p = base->link[!i];
-                    id = 0;
-                    found = false;
-                    while(p != base && !found)
-                    {
-                        if(!(p->lineDef->L_frontside && p->lineDef->L_backside &&
-                             p->lineDef->L_frontsector == p->lineDef->L_backsector))
-                        {
-                            if(!p->lineDef->L_backside)
-                            {
-                                if((pln &&
-                                    p->lineDef->L_frontsector->SP_ceilvisheight == plnHeight) ||
-                                   (!pln &&
-                                    p->lineDef->L_frontsector->SP_floorvisheight == plnHeight))
-                                    found = true;
-                            }
-                            else
-                            {
-                                vertex_t    *pvtx[2];
-
-                                pvtx[0] = p->lineDef->L_v1;
-                                pvtx[1] = p->lineDef->L_v2;
-
-                                if((pln &&
-                                    ((p->lineDef->L_frontsector->SP_ceilvisheight < plnHeight ||
-                                      p->lineDef->L_backsector->SP_ceilvisheight < plnHeight) ||
-                                     ((pvtx[i^1] == vtx &&
-                                       p->lineDef->L_backsector->SP_floorvisheight >=
-                                       seg->subsector->sector->SP_ceilvisheight) ||
-                                      (pvtx[i] == vtx &&
-                                       p->lineDef->L_frontsector->SP_floorvisheight >=
-                                       seg->subsector->sector->SP_ceilvisheight)))) ||
-                                   (!pln &&
-                                    ((p->lineDef->L_frontsector->SP_floorvisheight > plnHeight ||
-                                      p->lineDef->L_backsector->SP_floorvisheight > plnHeight) ||
-                                     ((pvtx[i^1] == vtx &&
-                                       p->lineDef->L_backsector->SP_ceilvisheight <=
-                                       seg->subsector->sector->SP_floorvisheight) ||
-                                      (pvtx[i] == vtx &&
-                                       p->lineDef->L_frontsector->SP_ceilvisheight <=
-                                       seg->subsector->sector->SP_floorvisheight)))) ||
-                                   Rend_DoesMidTextureFillGap(p->lineDef, pvtx[i] == vtx))
-                                {
-                                    found = true;
-                                }
-                            }
-
-                            if(!found)
-                                id++;
-                        }
-
-                        if(!p->lineDef->L_backside)
-                            break;
-
-                        if(!found)
-                            p = p->link[!i];
-                    }
-
-                    if(found)
-                    {
-                        // id is now the index + 1 into the side's bextoffset array.
-                        V2_Sum(inner[i], seg->lineDef->L_vpos(i^side),
-                               seg->lineDef->L_vo(i^side)->shadowOffsets.backExtended[id-1].offset);
-                    }
-                    else // Its an open edge.
-                    {
-                        V2_Sum(inner[i], seg->lineDef->L_vpos(i^side),
-                               seg->lineDef->L_vo(i^side)->shadowOffsets.extended);
-                    }
+                    V2_Sum(inner[i], line->L_vpos(i^side), vo->shadowOffsets.inner);
                 }
                 else // Fully, unquestionably open.
                 {
-                    V2_Sum(inner[i], seg->lineDef->L_vpos(i^side),
-                           seg->lineDef->L_vo(i^side)->shadowOffsets.extended);
+                    V2_Sum(inner[i], line->L_vpos(i^side), vo->shadowOffsets.extended);
                 }
             }
 
-            radioAddShadowEdge(seg, pln, inner, outer, plnHeight,
-                               1 - open, sideOpen);
+            radioAddShadowEdge(line, side, inner, outer, plnHeight,
+                               1 - open, sideOpen, pln);
         }
     }
 

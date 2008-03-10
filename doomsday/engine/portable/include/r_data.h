@@ -175,7 +175,8 @@ typedef struct linkmobj_s {
 
 typedef struct shadowlink_s {
     struct shadowlink_s *next;
-    seg_t          *seg;
+    linedef_t      *lineDef;
+    byte            side;
 } shadowlink_t;
 
 typedef struct subplaneinfo_s {

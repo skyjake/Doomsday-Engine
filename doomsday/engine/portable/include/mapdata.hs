@@ -9,16 +9,9 @@ internal
 #define LO_prev     link[0]
 #define LO_next     link[1]
 
-typedef struct shadowpolyoffset_s {
-    float           offset[2];
-} shadowpolyoffset_t;
-
-#define MAX_BEXOFFSETS  8
-
 typedef struct shadowvert_s {
     float           inner[2];
     float           extended[2];
-    shadowpolyoffset_t backExtended[MAX_BEXOFFSETS];
 } shadowvert_t;
 
 typedef struct lineowner_s {
@@ -80,7 +73,6 @@ internal
 
 // Seg flags
 #define SEGF_POLYOBJ            0x1 // Seg is part of a poly object.
-#define SEGF_SHADOW				0x2 // Seg casts edge shadows.
 
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
@@ -107,7 +99,6 @@ struct seg
     -       biastracker_s[3] tracker // 0=middle, 1=top, 2=bottom
     -       vertexillum_s[3][4] illum
     -       short       frameFlags
-    -       ushort      shadowVisFrame
 end
 
 internal
@@ -458,6 +449,7 @@ struct linedef
     FLOAT   float[4]    bBox
     -       boolean[DDMAXPLAYERS] mapped // Whether the line has been mapped by each player yet.
     -       mlinedef_t  buildData
+    -       ushort[2]   shadowVisFrame // Framecount of last time shadows were drawn for this line, for each side [right, left].
 end
 
 internal

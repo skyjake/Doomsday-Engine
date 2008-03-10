@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * r_shadow.h: Runtime Map Shadowing (FakeRadio)
  */
 
@@ -30,7 +30,7 @@
 #define __DOOMSDAY_REFRESH_SHADOW_H__
 
 void            R_InitSectorShadows(void);
-sector_t       *R_GetShadowSector(seg_t *seg, uint plane,
-                                  boolean getLinked);
+
+boolean         R_IsShadowingLinedef(linedef_t *line);
 
 #endif
