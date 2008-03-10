@@ -65,14 +65,17 @@ static bclass_t** bindClasses;
  */
 void B_DestroyAllClasses(void)
 {
-    int     i;
+    int                 i;
 
-    for(i = 0; i < bindClassCount; ++i)
+    if(bindClasses)
     {
-        B_DestroyClass(bindClasses[i]);
+        for(i = 0; i < bindClassCount; ++i)
+        {
+            B_DestroyClass(bindClasses[i]);
+        }
+        M_Free(bindClasses);
     }
-    M_Free(bindClasses);
-    bindClasses = 0;
+    bindClasses = NULL;
     bindClassCount = 0;
 }
 
