@@ -49,6 +49,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define LINELEN                 (80)
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -59,6 +61,8 @@
 
 static boolean setDDWindow(ddwindow_t *win, int newWidth, int newHeight,
                            int newBPP, uint wFlags, uint uFlags);
+static void setConWindowCmdLine(uint idx, const char *text,
+                                unsigned int cursorPos, int flags);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -92,14 +96,15 @@ static void setAttrib(int flags)
  */
 static void writeText(const char *line, int len)
 {
-    wmove(mainWindow.console.winText, cy, cx);
+    wmove(mainWindow.console.winText,
+          mainWindow.console.cy, mainWindow.console.cx);
     waddnstr(mainWindow.console.winText, line, len);
     wclrtoeol(mainWindow.console.winText);
 }
 
 static int getScreenSize(int axis)
 {
-    int         x, y;
+    int                 x, y;
 
     getmaxyx(mainWindow.console.winText, y, x);
     return axis == VX ? x : y;
@@ -107,12 +112,12 @@ static int getScreenSize(int axis)
 
 void Sys_ConPrint(uint idx, const char *text, int clflags)
 {
-    ddwindow_t *win;
-    char        line[LINELEN];
-    int         count = strlen(text), lineStart, bPos;
-    const char *ptr = text;
-    char        ch;
-    int         maxPos[2];
+    ddwindow_t         *win;
+    char                line[LINELEN];
+    int                 count = strlen(text), lineStart, bPos;
+    const char         *ptr = text;
+    char                ch;
+    int                 maxPos[2];
 
     if(!winManagerInited)
         return;
@@ -140,7 +145,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
         }
         win->console.needNewLine = false;
     }
-    bPos = lineStart = cx;
+    bPos = lineStart = win->console.cx;
 
     setAttrib(clflags);
 
@@ -209,7 +214,7 @@ static void setConWindowCmdLine(uint idx, const char *text,
 
     maxX = getScreenSize(VX);
 
-    if(text == NULL)
+    if(!text)
     {
         int         y, x;
 
@@ -333,8 +338,8 @@ boolean Sys_ShutdownWindowManager(void)
     // Now off-line, no more window management will be possible.
     winManagerInited = false;
 
-    if(isDedicated)
-        Sys_ConShutdown();
+    //if(isDedicated)
+    //    Sys_ConShutdown();
 
     return true;
 }
@@ -544,7 +549,7 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
  */
 boolean Sys_DestroyWindow(uint idx)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(!window)
         return false;
@@ -552,13 +557,13 @@ boolean Sys_DestroyWindow(uint idx)
     if(window->type == WT_CONSOLE)
     {
         // Delete windows and shut down curses.
-        delwin(window.console.winTitle);
-        delwin(window.console.winText);
-        delwin(window.console.winCommand);
+        delwin(window->console.winTitle);
+        delwin(window->console.winText);
+        delwin(window->console.winCommand);
         endwin();
 
-        window.console.winTitle = window.console.winText =
-            window.console.winCommand = NULL;
+        window->console.winTitle = window->console.winText =
+            window->console.winCommand = NULL;
 
         Sys_ConInputShutdown();
     }
