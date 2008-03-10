@@ -34,6 +34,7 @@
 #ifndef __BSP_NODE_H__
 #define __BSP_NODE_H__
 
+#include "bsp_edge.h"
 #include "bsp_intersection.h"
 #include "m_binarytree.h"
 #include "p_mapdata.h"
@@ -56,7 +57,7 @@ typedef struct bspnodedata_s {
 boolean     BuildNodes(struct superblock_s *hEdgeList, binarytree_t **parent,
                        size_t depth, cutlist_t *cutList);
 void        BSP_AddHEdgeToSuperBlock(struct superblock_s *block,
-                                     struct hedge_s *hEdge);
+                                     hedge_t *hEdge);
 
 void        ClockwiseBspTree(binarytree_t *rootNode);
 

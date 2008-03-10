@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -34,6 +34,8 @@
 #ifndef __BSP_INTERSECTION_H__
 #define __BSP_INTERSECTION_H__
 
+#include "bsp_edge.h"
+
 typedef void* cutlist_t;
 
 /**
@@ -62,7 +64,7 @@ typedef struct intersection_s {
 void        BSP_InitIntersectionAllocator(void);
 void        BSP_ShutdownIntersectionAllocator(void);
 
-intersection_t *BSP_IntersectionCreate(vertex_t *vert, struct hedge_s *part,
+intersection_t *BSP_IntersectionCreate(vertex_t *vert, hedge_t *part,
                                        boolean selfRef);
 void        BSP_IntersectionDestroy(intersection_t *cut);
 #if _DEBUG
