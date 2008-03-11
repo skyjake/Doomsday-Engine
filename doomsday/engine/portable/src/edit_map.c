@@ -1243,7 +1243,7 @@ static void buildVertexOwnerRings(gamemap_t *map, vertex_t ***vertexes,
         if(v->numLineOwners != 0)
         {
             lineowner_t    *p, *last;
-            binangle_t      lastAngle = 0;
+            binangle_t      firstAngle;
 
             // Sort them so that they are ordered clockwise based on angle.
             rootVtx = v;
@@ -1253,6 +1253,7 @@ static void buildVertexOwnerRings(gamemap_t *map, vertex_t ***vertexes,
             // Finish the linking job and convert to relative angles.
             // They are only singly linked atm, we need them to be doubly
             // and circularly linked.
+            firstAngle = v->lineOwners->angle;
             last = v->lineOwners;
             p = last->LO_next;
             while(p)
@@ -1261,7 +1262,6 @@ static void buildVertexOwnerRings(gamemap_t *map, vertex_t ***vertexes,
 
                 // Convert to a relative angle between last and this.
                 last->angle = last->angle - p->angle;
-                lastAngle += last->angle;
 
                 last = p;
                 p = p->LO_next;
@@ -1270,7 +1270,7 @@ static void buildVertexOwnerRings(gamemap_t *map, vertex_t ***vertexes,
             v->lineOwners->LO_prev = last;
 
             // Set the angle of the last owner.
-            last->angle = BANG_360 - lastAngle;
+            last->angle = last->angle - firstAngle;
 /*
 #if _DEBUG
 {
