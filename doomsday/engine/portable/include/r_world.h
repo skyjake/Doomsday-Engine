@@ -79,16 +79,19 @@ void            R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln);
 boolean         R_RemoveWatchedPlane(watchedplanelist_t *wpl,
                                      const plane_t *pln);
 
-lineowner_t    *R_GetVtxLineOwner(vertex_t *vtx, linedef_t *line);
-linedef_t      *R_FindLineNeighbor(sector_t *sector, linedef_t *line,
-                                   lineowner_t *own,
+lineowner_t    *R_GetVtxLineOwner(const vertex_t *vtx, const linedef_t *line);
+linedef_t      *R_FindLineNeighbor(const sector_t *sector,
+                                   const linedef_t *line,
+                                   const lineowner_t *own,
                                    boolean antiClockwise, binangle_t *diff);
-linedef_t      *R_FindSolidLineNeighbor(sector_t *sector, linedef_t *line,
-                                        lineowner_t *own,
+linedef_t      *R_FindSolidLineNeighbor(const sector_t *sector,
+                                        const linedef_t *line,
+                                        const lineowner_t *own,
                                         boolean antiClockwise,
                                         binangle_t *diff);
-linedef_t      *R_FindLineBackNeighbor(sector_t *sector, linedef_t *line,
-                                       lineowner_t *own,
+linedef_t      *R_FindLineBackNeighbor(const sector_t *sector,
+                                       const linedef_t *line,
+                                       const lineowner_t *own,
                                        boolean antiClockwise,
                                        binangle_t *diff);
 #endif

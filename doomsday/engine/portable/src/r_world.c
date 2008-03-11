@@ -828,7 +828,7 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
  * @return          Ptr to the lineowner for this line for this vertex else
  *                  @c NULL.
  */
-lineowner_t* R_GetVtxLineOwner(vertex_t *v, linedef_t *line)
+lineowner_t* R_GetVtxLineOwner(const vertex_t *v, const linedef_t *line)
 {
     if(v == line->L_v1)
         return line->L_vo1;
@@ -950,8 +950,8 @@ void R_OrderVertices(const linedef_t *line, const sector_t *sector, vertex_t *ve
  * A neighbour is a line that shares a vertex with 'line', and faces the
  * specified sector.
  */
-linedef_t *R_FindLineNeighbor(sector_t *sector, linedef_t *line,
-                              lineowner_t *own, boolean antiClockwise,
+linedef_t *R_FindLineNeighbor(const sector_t *sector, const linedef_t *line,
+                              const lineowner_t *own, boolean antiClockwise,
                               binangle_t *diff)
 {
     lineowner_t            *cown = own->link[!antiClockwise];
@@ -960,7 +960,7 @@ linedef_t *R_FindLineNeighbor(sector_t *sector, linedef_t *line,
     if(other == line)
         return NULL;
 
-    if(diff) *diff += (antiClockwise? own->LO_prev->angle : own->angle);
+    if(diff) *diff += (antiClockwise? cown->angle : own->angle);
 
     if(!other->L_backside || other->L_frontsector != other->L_backsector)
     {
@@ -978,9 +978,10 @@ linedef_t *R_FindLineNeighbor(sector_t *sector, linedef_t *line,
     return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-linedef_t *R_FindSolidLineNeighbor(sector_t *sector, linedef_t *line,
-                                   lineowner_t *own, boolean antiClockwise,
-                                   binangle_t *diff)
+linedef_t *R_FindSolidLineNeighbor(const sector_t *sector,
+                                   const linedef_t *line,
+                                   const lineowner_t *own,
+                                   boolean antiClockwise, binangle_t *diff)
 {
     lineowner_t            *cown = own->link[!antiClockwise];
     linedef_t              *other = cown->lineDef;
@@ -989,7 +990,7 @@ linedef_t *R_FindSolidLineNeighbor(sector_t *sector, linedef_t *line,
     if(other == line)
         return NULL;
 
-    if(diff) *diff += (antiClockwise? own->LO_prev->angle : own->angle);
+    if(diff) *diff += (antiClockwise? cown->angle : own->angle);
 
     if(!other->L_frontside || !other->L_backside)
         return other;
@@ -1044,8 +1045,10 @@ linedef_t *R_FindSolidLineNeighbor(sector_t *sector, linedef_t *line,
  * They are the neighbouring line in the backsector of the imediate line
  * neighbor.
  */
-linedef_t *R_FindLineBackNeighbor(sector_t *sector, linedef_t *line,
-                                  lineowner_t *own, boolean antiClockwise,
+linedef_t *R_FindLineBackNeighbor(const sector_t *sector,
+                                  const linedef_t *line,
+                                  const lineowner_t *own,
+                                  boolean antiClockwise,
                                   binangle_t *diff)
 {
     lineowner_t        *cown = own->link[!antiClockwise];
@@ -1054,7 +1057,7 @@ linedef_t *R_FindLineBackNeighbor(sector_t *sector, linedef_t *line,
     if(other == line)
         return NULL;
 
-    if(diff) *diff += (antiClockwise? own->LO_prev->angle : own->angle);
+    if(diff) *diff += (antiClockwise? cown->angle : own->angle);
 
     if(!other->L_backside || other->L_frontsector != other->L_backsector)
     {
@@ -1074,8 +1077,10 @@ linedef_t *R_FindLineBackNeighbor(sector_t *sector, linedef_t *line,
  * a shadow between them. In practice, they would be considered a single,
  * long sidedef by the shadow generator).
  */
-linedef_t *R_FindLineAlignNeighbor(sector_t *sec, linedef_t *line,
-                                   lineowner_t *own, boolean antiClockwise,
+linedef_t *R_FindLineAlignNeighbor(const sector_t *sec,
+                                   const linedef_t *line,
+                                   const lineowner_t *own,
+                                   boolean antiClockwise,
                                    int alignment)
 {
 #define SEP 10
@@ -1111,8 +1116,8 @@ linedef_t *R_FindLineAlignNeighbor(sector_t *sec, linedef_t *line,
 
 void R_InitLinks(gamemap_t *map)
 {
-    uint        i;
-    uint        starttime;
+    uint                i;
+    uint                starttime;
 
     Con_Message("R_InitLinks: Initializing\n");
 
