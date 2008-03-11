@@ -79,6 +79,8 @@ void            R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln);
 boolean         R_RemoveWatchedPlane(watchedplanelist_t *wpl,
                                      const plane_t *pln);
 
+boolean         R_IsNonGlowingPlane(const sector_t* sector, int plane);
+
 lineowner_t    *R_GetVtxLineOwner(const vertex_t *vtx, const linedef_t *line);
 linedef_t      *R_FindLineNeighbor(const sector_t *sector,
                                    const linedef_t *line,

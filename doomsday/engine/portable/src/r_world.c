@@ -1855,7 +1855,7 @@ sector_t *R_GetLinkedSector(subsector_t *startssec, uint plane)
 
 void R_UpdateAllSurfaces(boolean forceUpdate)
 {
-    uint        i, j;
+    uint                i, j;
 
     // First, all planes of all sectors.
     for(i = 0; i < numSectors; ++i)
@@ -1879,7 +1879,7 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
 
 void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
 {
-    int         texFlags, oldTexFlags;
+    int                 texFlags, oldTexFlags;
 
     // Any change to the texture or glow properties?
     texFlags = R_GetMaterialFlags(suf->material);
@@ -1979,12 +1979,27 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
     }
 }
 
+/**
+ * Is the specified plane non-glowing?
+ *
+ * @return              @c true, if the specified plane is non-glowing,
+ *                      i.e. not glowing or a sky.
+ */
+boolean R_IsNonGlowingPlane(const sector_t* sector, int plane)
+{
+    material_t         *mat = sector->SP_planematerial(plane);
+
+    return !(!(mat && mat->ofTypeID > 0) ||
+              sector->SP_planeglow(plane) ||
+             R_IsSkySurface(&sector->SP_planesurface(plane)));
+}
+
 void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 {
-    uint        i, j;
-    plane_t    *plane;
-    boolean     updateReverb = false;
-    boolean     updateDecorations = false;
+    uint                i, j;
+    plane_t            *plane;
+    boolean             updateReverb = false;
+    boolean             updateDecorations = false;
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
