@@ -106,7 +106,7 @@ extern HINSTANCE hInstDGL;
 
 extern int renderTextures;
 extern char skyFlatName[9];
-extern int gotframe;
+extern int gotFrame;
 extern int monochrome;
 extern int gamedataformat;
 extern int gamedrawhud;
@@ -927,12 +927,11 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&isDedicated, 0},
     {&novideo, 0},
     {&defs.count.mobjs.num, 0},
-    {&gotframe, 0},
+    {&gotFrame, 0},
     {&playback, 0},
     {&defs.count.sounds.num, 0},
     {&defs.count.music.num, 0},
     {&numlumps, 0},
-    {&send_all_players, &send_all_players},
     {&clientPaused, &clientPaused},
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
     {&monochrome, &monochrome},
@@ -1139,7 +1138,7 @@ void* DD_GetVariable(int ddvalue)
             return &sharedFixedTrigger;
 
         case DD_CPLAYER_THRUST_MUL:
-            return &cplr_thrust_mul;
+            return &cplrThrustMul;
 
         case DD_GRAVITY:
             return &mapGravity;
@@ -1209,7 +1208,7 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;
 
         case DD_CPLAYER_THRUST_MUL:
-            cplr_thrust_mul = *(float*) parm;
+            cplrThrustMul = *(float*) parm;
             return;
 
         case DD_GRAVITY:

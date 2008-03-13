@@ -727,14 +727,7 @@ static boolean LG_BlockNeedsUpdate(int x, int y)
  */
 void LG_Update(void)
 {
-    gridblock_t *block, *lastBlock, *other;
-    int         x, y, a, b;
-    sector_t   *sector;
-    const float *color;
-    int         bias;
-    int         height;
-
-    static float factors[5 * 5] =
+    static const float  factors[5 * 5] =
     {
         .1f, .2f, .25f, .2f, .1f,
         .2f, .4f, .5f, .4f, .2f,
@@ -742,6 +735,13 @@ void LG_Update(void)
         .2f, .4f, .5f, .4f, .2f,
         .1f, .2f, .25f, .2f, .1f
     };
+
+    gridblock_t        *block, *lastBlock, *other;
+    int                 x, y, a, b;
+    sector_t           *sector;
+    const float        *color;
+    int                 bias;
+    int                 height;
 
     if(!lgInited || !needsUpdate)
         return;
@@ -785,7 +785,7 @@ void LG_Update(void)
     {
         for(x = 0; x < lgBlockWidth; ++x, ++block)
         {
-            boolean     isSkyFloor, isSkyCeil;
+            boolean             isSkyFloor, isSkyCeil;
 
             // Unused blocks can't contribute.
             if(!(block->flags & GBF_CONTRIBUTOR) || !block->sector)
@@ -849,14 +849,14 @@ void LG_Update(void)
 /**
  * Calculate the light level for a 3D point in the world.
  *
- * @param point     3D point.
- * @param color     Evaluated color of the point (return value).
+ * @param point         3D point.
+ * @param color         Evaluated color of the point (return value).
  */
 void LG_Evaluate(const float *point, float *color)
 {
-    int         x, y, i;
-    float       dz = 0, dimming;
-    gridblock_t *block;
+    int                 x, y, i;
+    float               dz = 0, dimming;
+    gridblock_t        *block;
 
     if(!lgInited)
     {

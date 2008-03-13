@@ -661,6 +661,7 @@ boolean PIT_CheckLinePtc(linedef_t *ld, void *data)
         ceil = FLT2FIX(front->SP_ceilheight);
     else
         ceil = FLT2FIX(back->SP_ceilheight);
+
     if(front->SP_floorheight > back->SP_floorheight)
         floor = FLT2FIX(front->SP_floorheight);
     else
@@ -668,10 +669,10 @@ boolean PIT_CheckLinePtc(linedef_t *ld, void *data)
 
     // There is a backsector. We possibly might hit something.
     if(tmpz - tmprad < floor || tmpz + tmprad > ceil)
-        return false;           // Boing!
+        return false; // Boing!
 
     // There is a possibility that the new position is in a new sector.
-    tmcross = true;             // Afterwards, update the sector pointer.
+    tmcross = true; // Afterwards, update the sector pointer.
 
     // False alarm, continue checking.
     return true;
@@ -738,7 +739,7 @@ fixed_t P_FixedDotProduct(fixed_t *a, fixed_t *b)
  */
 float P_GetParticleRadius(ded_ptcstage_t *stage_def, int ptcIDX)
 {
-    static float rnd[16] = { .875f, .125f, .3125f, .75f, .5f, .375f,
+    static const float  rnd[16] = { .875f, .125f, .3125f, .75f, .5f, .375f,
         .5625f, .0625f, 1, .6875f, .625f, .4375f, .8125f, .1875f,
         .9375f, .25f
     };
@@ -765,11 +766,12 @@ float P_GetParticleZ(particle_t *pt)
 
 static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
 {
-    ded_ptcstage_t *stDef = gen->def->stages + pt->stage;
-    uint        index = pt - gen->ptcs + GENERATOR_TO_ID(gen) / 8; // DJS - skyjake, what does this do?
-    static int  yawSigns[4] = { 1, 1, -1, -1 };
-    static int  pitchSigns[4] = { 1, -1, 1, -1 };
-    int         yawSign, pitchSign;
+    static const int    yawSigns[4] = { 1, 1, -1, -1 };
+    static const int    pitchSigns[4] = { 1, -1, 1, -1 };
+
+    ded_ptcstage_t     *stDef = gen->def->stages + pt->stage;
+    uint                index = pt - gen->ptcs + GENERATOR_TO_ID(gen) / 8; // DJS - skyjake, what does this do?
+    int                 yawSign, pitchSign;
 
     yawSign = yawSigns[index % 4];
     pitchSign = pitchSigns[index % 4];
@@ -954,7 +956,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     x = pt->pos[VX] + pt->mov[VX];
     y = pt->pos[VY] + pt->mov[VY];
 
-    tmcross = false;            // Has crossed potential sector boundary?
+    tmcross = false; // Has crossed potential sector boundary?
 
     // XY movement can be skipped if the particle is not moving on the
     // XY plane.
@@ -964,14 +966,17 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // particle should be killed (if it's moving slowly at max).
         if(pt->contact)
         {
-            sector_t *front = (pt->contact->L_frontside? pt->contact->L_frontsector : NULL);
-            sector_t *back = (pt->contact->L_backside? pt->contact->L_backsector : NULL);
+            sector_t           *front, *back;
+
+            front = (pt->contact->L_frontside? pt->contact->L_frontsector : NULL);
+            back = (pt->contact->L_backside? pt->contact->L_backsector : NULL);
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {
-                float       pz = P_GetParticleZ(pt);
-                float       fz, cz;
+                float               pz = P_GetParticleZ(pt);
+                float               fz, cz;
 
+                //// \fixme $nplanes
                 if(front->SP_floorheight > back->SP_floorheight)
                     fz = front->SP_floorheight;
                 else

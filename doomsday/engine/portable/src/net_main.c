@@ -111,7 +111,7 @@ int     consoleplayer;
 int     displayplayer;
 
 // Gotframe is true if a frame packet has been received.
-int     gotframe = false;
+int     gotFrame = false;
 
 boolean firstNetUpdate = true;
 
@@ -154,7 +154,7 @@ void Net_Register(void)
     C_VAR_CHARPTR("server-name", &serverName, 0, 0, 0);
     C_VAR_CHARPTR("server-info", &serverInfo, 0, 0, 0);
     C_VAR_INT("server-public", &masterAware, 0, 0, 1);
-    C_VAR_CHARPTR("server-password", &net_password, 0, 0, 0);
+    C_VAR_CHARPTR("server-password", &netPassword, 0, 0, 0);
     C_VAR_BYTE("server-latencies", &net_showlatencies, 0, 0, 1);
     C_VAR_INT("server-frame-interval", &frameInterval, CVF_NO_MAX, 0, 0);
     C_VAR_INT("server-player-limit", &sv_maxPlayers, 0, 0, MAXPLAYERS);
@@ -639,7 +639,7 @@ void Net_StopGame(void)
     allowSending = false;
 
     // No more remote users.
-    net_remoteuser = 0;
+    netRemoteUser = 0;
     netLoggedIn = false;
 
     // All remote players are forgotten.
@@ -1209,7 +1209,7 @@ D_CMD(Kick)
         return false;
     }
 
-    if(net_remoteuser == num)
+    if(netRemoteUser == num)
     {
         Con_Printf("Can't kick the client who's logged in.\n");
         return false;

@@ -200,7 +200,6 @@ extern          "C" {
         DD_NUMSOUNDS,
         DD_NUMMUSIC,
         DD_NUMLUMPS,
-        DD_SEND_ALL_PLAYERS,
         DD_CLIENT_PAUSED,
         DD_WEAPON_OFFSET_SCALE_Y,  // 1000x
         DD_MONOCHROME_PATCHES,      // DJS - convert patch image data to monochrome. 1= linear 2= weighted

@@ -1022,7 +1022,7 @@ static void stramb(char *amb, const char *str)
  */
 static int completeWord(int mode)
 {
-    int             cp = strlen(cmdLine) - 1;
+    int             cp = (int) strlen(cmdLine) - 1;
     char            word[100], *wordBegin;
     char            unambiguous[256];
     char           *completion = 0; // Pointer to the completed word.
@@ -1145,7 +1145,7 @@ static int completeWord(int mode)
         if(wordBegin - cmdLine + strlen(completion) < CMDLINE_SIZE)
         {
             strcpy(wordBegin, completion);
-            cmdCursor = strlen(cmdLine);
+            cmdCursor = (uint) strlen(cmdLine);
         }
     }
     else if(matchedWordCount > 1)
@@ -1154,7 +1154,7 @@ static int completeWord(int mode)
         if(wordBegin - cmdLine + strlen(unambiguous) < CMDLINE_SIZE)
         {
             strcpy(wordBegin, unambiguous);
-            cmdCursor = strlen(cmdLine);
+            cmdCursor = (uint) strlen(cmdLine);
         }
     }
 
@@ -1242,7 +1242,7 @@ static void updateCmdLine(void)
     else
         strncpy(cmdLine, Con_BufferGetLine(oldCmds, ocPos)->text, sizeof(cmdLine));
 
-    cmdCursor = complPos = strlen(cmdLine);
+    cmdCursor = complPos = (uint) strlen(cmdLine);
     matchedWordListGood = false;
 }
 
@@ -1560,7 +1560,7 @@ boolean Con_Responder(ddevent_t *event)
             else
             {
                 if(shiftDown)
-                    cmdCursor = strlen(cmdLine);
+                    cmdCursor = (uint) strlen(cmdLine);
                 else
                     cmdCursor++;
             }
@@ -1685,8 +1685,8 @@ void conPrintf(int flags, const char *format, va_list args)
     {
         if(flags & CBLF_TRANSMIT)
             Sv_SendText(NSP_BROADCAST, flags, prbuff);
-        else if(net_remoteuser) // Is somebody logged in?
-            Sv_SendText(net_remoteuser, flags | SV_CONSOLE_FLAGS, prbuff);
+        else if(netRemoteUser) // Is somebody logged in?
+            Sv_SendText(netRemoteUser, flags | SV_CONSOLE_FLAGS, prbuff);
     }
 
     if(isDedicated)
