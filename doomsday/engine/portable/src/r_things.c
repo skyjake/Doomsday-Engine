@@ -590,12 +590,12 @@ float R_MovementPitch(float momx, float momy, float momz)
 
 /**
  * Determine the correct Z coordinate for the mobj. The visible Z coordinate
- * may be slightly different than the actual Z coordinate due to smoothed plane
- * movement.
+ * may be slightly different than the actual Z coordinate due to smoothed
+ * plane movement.
  */
 boolean RIT_VisMobjZ(sector_t *sector, void *data)
 {
-    vissprite_t *vis = data;
+    vissprite_t        *vis = data;
 
     assert(sector != NULL);
     assert(data != NULL);
@@ -619,19 +619,19 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
  */
 void R_ProjectSprite(mobj_t *mo)
 {
-    sector_t   *sect = mo->subsector->sector;
-    float       thangle = 0;
-    float       pos[2];
-    spritedef_t *sprdef;
-    spriteframe_t *sprframe = NULL;
-    int         i, lump;
-    unsigned    rot;
-    boolean     flip;
-    vissprite_t *vis;
-    angle_t     ang;
-    boolean     align;
-    modeldef_t *mf = NULL, *nextmf = NULL;
-    float       interp = 0, distance;
+    sector_t           *sect = mo->subsector->sector;
+    float               thangle = 0;
+    float               pos[2];
+    spritedef_t        *sprdef;
+    spriteframe_t      *sprframe = NULL;
+    int                 i, lump;
+    unsigned            rot;
+    boolean             flip;
+    vissprite_t        *vis;
+    angle_t             ang;
+    boolean             align;
+    modeldef_t         *mf = NULL, *nextmf = NULL;
+    float               interp = 0, distance;
 
     if(mo->ddFlags & DDMF_DONTDRAW || mo->translucency == 0xff ||
        mo->state == NULL || mo->state == states)
@@ -939,10 +939,10 @@ void R_ProjectSprite(mobj_t *mo)
 
 void R_AddSprites(sector_t *sec)
 {
-    float       visibleTop;
-    mobj_t      *mo;
-    spriteinfo_t spriteInfo;
-    boolean     raised = false;
+    float               visibleTop;
+    mobj_t             *mo;
+    spriteinfo_t        spriteInfo;
+    boolean             raised = false;
 
     // Don't use validCount, because other parts of the renderer may
     // change it.
@@ -988,10 +988,10 @@ void R_AddSprites(sector_t *sec)
 
 void R_SortVisSprites(void)
 {
-    int         i, count;
-    vissprite_t *ds, *best = 0;
-    vissprite_t unsorted;
-    float       bestdist;
+    int                 i, count;
+    vissprite_t        *ds, *best = 0;
+    vissprite_t         unsorted;
+    float               bestdist;
 
     count = visSpriteP - visSprites;
 
@@ -1022,7 +1022,7 @@ void R_SortVisSprites(void)
      * pathological test case).
      *
      * Rather than try to speed up the sort, it would make more sense to
-     * actually construct the vissprite in z order if it can be done in
+     * actually construct the vissprites in z order if it can be done in
      * linear time.
      */
 
