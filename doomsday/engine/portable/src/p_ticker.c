@@ -57,11 +57,8 @@
 
 void P_MobjTicker(mobj_t *mo)
 {
-    lumobj_t   *lum = NULL;
-    int         i;
-
-    if(!mo->usingBias)
-        lum = LO_GetLuminous(mo->light);
+    int                 i;
+    lumobj_t           *lum = LO_GetLuminous(mo->light);
 
     // Set the high bit of halofactor if the light is clipped. This will
     // make P_Ticker diminish the factor to zero. Take the first step here
@@ -103,6 +100,7 @@ void P_MobjTicker(mobj_t *mo)
         if(i < 0)
             i = 0;
     }
+
     mo->haloFactor &= ~0x7f;
     mo->haloFactor |= i;
 }
@@ -119,11 +117,12 @@ boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
  */
 void P_Ticker(timespan_t time)
 {
-    thinker_t *th;
-    static trigger_t fixed = { 1.0 / 35, 0 };
+    static trigger_t    fixed = { 1.0 / 35, 0 };
+
+    thinker_t          *th;
 
     if(!thinkerCap.next)
-        return;                 // Not initialized yet.
+        return; // Not initialized yet.
 
     if(!M_RunTrigger(&fixed, time))
         return;

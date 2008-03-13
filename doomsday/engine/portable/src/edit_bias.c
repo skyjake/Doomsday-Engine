@@ -61,7 +61,7 @@ void SBE_MenuSave(ui_object_t *ob);
 
 extern int gamedrawhud;
 extern int numSources;
-extern boolean freezeRLs;
+extern byte freezeRLs;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -153,8 +153,8 @@ static void SBE_GetHand(float pos[3])
 
 static source_t *SBE_GrabSource(int index)
 {
-    source_t *s;
-    int i;
+    source_t           *s;
+    int                 i;
 
     editGrabbed = index;
     s = SB_GetSource(index);
@@ -178,10 +178,10 @@ static source_t *SBE_GetGrabbed(void)
 
 static source_t *SBE_GetNearest(void)
 {
-    float hand[3];
-    source_t *nearest = NULL, *s;
-    float minDist = 0, len;
-    int i;
+    float               hand[3];
+    source_t           *nearest = NULL, *s;
+    float               minDist = 0, len;
+    int                 i;
 
     SBE_GetHand(hand);
 
@@ -195,16 +195,17 @@ static source_t *SBE_GetNearest(void)
             nearest = s;
         }
     }
+
     return nearest;
 }
 
 static void SBE_GetHueColor(float *color, float *angle, float *sat)
 {
-    int i;
-    float dot;
-    float saturation, hue, scale;
-    float minAngle = 0.1f, range = 0.19f;
-    vec3_t h, proj;
+    int                 i;
+    float               dot;
+    float               saturation, hue, scale;
+    float               minAngle = 0.1f, range = 0.19f;
+    vec3_t              h, proj;
 
     dot = M_DotProduct(viewFrontVec, hueOrigin);
     saturation = (acos(dot) - minAngle) / range;
@@ -258,12 +259,12 @@ static void SBE_GetHueColor(float *color, float *angle, float *sat)
 
 void SBE_EndFrame(void)
 {
-    source_t *src;
+    source_t           *src;
 
     // Update the grabbed light.
     if(editActive && (src = SBE_GetGrabbed()) != NULL)
     {
-        source_t old;
+        source_t            old;
 
         memcpy(&old, src, sizeof(old));
 
@@ -312,7 +313,7 @@ static void SBE_End(void)
 
 static boolean SBE_New(void)
 {
-    source_t *s;
+    source_t           *s;
 
     if(numSources == MAX_BIAS_LIGHTS)
         return false;
@@ -365,9 +366,9 @@ static void SBE_Grab(int which)
 
 static void SBE_Dupe(int which)
 {
-    source_t *orig = SB_GetSource(which);
-    source_t *s;
-    int i;
+    source_t           *orig = SB_GetSource(which);
+    source_t           *s;
+    int                 i;
 
     if(SBE_New())
     {
@@ -383,12 +384,12 @@ static void SBE_Dupe(int which)
 
 static boolean SBE_Save(const char *name)
 {
-    int         i;
-    source_t   *s;
-    FILE       *file;
-    filename_t  fileName;
-    gamemap_t  *map = P_GetCurrentMap();
-    const char *uid = P_GetUniqueMapID(map);
+    int                 i;
+    source_t           *s;
+    FILE               *file;
+    filename_t          fileName;
+    gamemap_t          *map = P_GetCurrentMap();
+    const char         *uid = P_GetUniqueMapID(map);
 
     if(!name)
     {
@@ -441,7 +442,7 @@ void SBE_MenuSave(ui_object_t *ob)
 
 void SBE_SetHueCircle(boolean activate)
 {
-    int i;
+    int                 i;
 
     if((signed) activate == editHueCircle)
         return; // No change in state.
@@ -476,8 +477,8 @@ boolean SBE_UsingHueCircle(void)
  */
 D_CMD(BLEditor)
 {
-    char *cmd = argv[0] + 2;
-    int which;
+    char               *cmd = argv[0] + 2;
+    int                 which;
 
     if(!stricmp(cmd, "edit"))
     {
@@ -544,12 +545,12 @@ D_CMD(BLEditor)
     if(editGrabbed >= 0)
         which = editGrabbed;
     else
-        which = SB_ToIndex(SBE_GetNearest() - 1);
+        which = SB_ToIndex(SBE_GetNearest());
 
     if(!stricmp(cmd, "c") && numSources > 0)
     {
-        source_t *src = SB_GetSource(which);
-        float r = 1, g = 1, b = 1;
+        source_t           *src = SB_GetSource(which);
+        float               r = 1, g = 1, b = 1;
 
         if(argc >= 4)
         {
@@ -568,7 +569,7 @@ D_CMD(BLEditor)
 
     if(!stricmp(cmd, "i") && numSources > 0)
     {
-        source_t *src = SB_GetSource(which);
+        source_t           *src = SB_GetSource(which);
 
         if(argc >= 3)
         {
@@ -650,12 +651,12 @@ static void SBE_DrawBox(int x, int y, int w, int h, ui_color_t *c)
 
 static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
 {
-    float       eye[3];
-    int         w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
-    int         th = FR_TextHeight("a"), h = th * 6 + 16;
-    int         x, y;
-    char        buf[80];
-    ui_color_t color;
+    float               eye[3];
+    int                 w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
+    int                 th = FR_TextHeight("a"), h = th * 6 + 16;
+    int                 x, y;
+    char                buf[80];
+    ui_color_t          color;
 
     x = theWindow->width - 10 - w - rightX;
     y = theWindow->height - 10 - h;
@@ -682,7 +683,7 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     UI_TextOutEx(title, x, y, false, true, UI_Color(UIC_TITLE), alpha);
     y += th;
 
-    sprintf(buf, "# %03i %s", SB_ToIndex(s) - 1,
+    sprintf(buf, "# %03i %s", SB_ToIndex(s),
             s->flags & BLF_LOCKED ? "(lock)" : "");
     UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
     y += th;
@@ -716,13 +717,14 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
 
 static void SBE_DrawLevelGauge(int x, int y, int height)
 {
-    static sector_t *lastSector = NULL;
-    static float minLevel = 0, maxLevel = 0;
-    sector_t   *sector;
-    int         off = FR_TextWidth("000");
-    int         secY, maxY = 0, minY = 0, p;
-    char        buf[80];
-    source_t   *src;
+    static sector_t    *lastSector = NULL;
+    static float        minLevel = 0, maxLevel = 0;
+
+    sector_t           *sector;
+    int                 off = FR_TextWidth("000");
+    int                 secY, maxY = 0, minY = 0, p;
+    char                buf[80];
+    source_t           *src;
 
     if(SBE_GetGrabbed())
         src = SBE_GetGrabbed();
@@ -794,11 +796,11 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
 
 void SBE_DrawHUD(void)
 {
-    int         w, h, y;
-    char        buf[80];
-    float       alpha = .8f;
-    gamemap_t  *map = P_GetCurrentMap();
-    source_t   *s;
+    int                 w, h, y;
+    char                buf[80];
+    float               alpha = .8f;
+    gamemap_t          *map = P_GetCurrentMap();
+    source_t           *s;
 
     if(!editActive || editHidden)
         return;
@@ -846,7 +848,7 @@ void SBE_DrawHUD(void)
 
 void SBE_DrawStar(float pos[3], float size, float color[4])
 {
-    float black[4] = { 0, 0, 0, 0 };
+    float               black[4] = { 0, 0, 0, 0 };
 
     DGL_Begin(DGL_LINES);
     {
@@ -877,8 +879,8 @@ void SBE_DrawStar(float pos[3], float size, float color[4])
 
 static void SBE_DrawIndex(source_t *src)
 {
-    char        buf[80];
-    float       eye[3], scale;
+    char                buf[80];
+    float               eye[3], scale;
 
     if(!editShowIndices)
         return;
@@ -899,7 +901,7 @@ static void SBE_DrawIndex(source_t *src)
     DGL_Scalef(-scale, -scale, 1);
 
     // Show the index number of the source.
-    sprintf(buf, "%i", SB_ToIndex(src) - 1);
+    sprintf(buf, "%i", SB_ToIndex(src));
     UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE),
                  1 - M_Distance(src->pos, eye)/2000);
 
@@ -912,8 +914,8 @@ static void SBE_DrawIndex(source_t *src)
 
 static void SBE_DrawSource(source_t *src)
 {
-    float       col[4], d;
-    float       eye[3];
+    float               col[4], d;
+    float               eye[3];
 
     eye[0] = vx;
     eye[1] = vz;
@@ -940,12 +942,12 @@ static void SBE_HueOffset(double angle, float *offset)
 
 static void SBE_DrawHue(void)
 {
-    vec3_t      eye;
-    vec3_t      center, off, off2;
-    float       steps = 32, inner = 10, outer = 30, s;
-    double      angle;
-    float       color[4], sel[4], hue, saturation;
-    int         i;
+    vec3_t              eye;
+    vec3_t              center, off, off2;
+    float               steps = 32, inner = 10, outer = 30, s;
+    double              angle;
+    float               color[4], sel[4], hue, saturation;
+    int                 i;
 
     eye[0] = vx;
     eye[1] = vy;
@@ -1055,11 +1057,11 @@ void SBE_DrawCursor(void)
 {
 #define SET_COL(x, r, g, b, a) {x[0]=(r); x[1]=(g); x[2]=(b); x[3]=(a);}
 
-    double      t = Sys_GetRealTime()/100.0f;
-    source_t   *s;
-    float       hand[3];
-    float       size = 10000, distance;
-    float       col[4], eye[3];
+    double              t = Sys_GetRealTime()/100.0f;
+    source_t           *s;
+    float               hand[3];
+    float               size = 10000, distance;
+    float               col[4], eye[3];
 
     if(!editActive || !numSources || editHidden || freezeRLs)
         return;

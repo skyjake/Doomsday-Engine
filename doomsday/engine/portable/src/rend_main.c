@@ -92,7 +92,7 @@ float   vx, vy, vz, vang, vpitch;
 float   viewsidex, viewsidey;
 
 boolean willRenderSprites = true;
-boolean freezeRLs = false;
+byte    freezeRLs = false;
 
 int     missileBlend = 1;
 // Ambient lighting, r_ambient is used within the renderer, ambientLight is
@@ -148,7 +148,7 @@ byte devNoLinkedSurfaces = 0;
 
 void Rend_Register(void)
 {
-    C_VAR_INT("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling,CVF_NO_ARCHIVE,0,1);
     C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, 0, 0, 1);
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);

@@ -336,24 +336,6 @@ lumobj_t *LO_GetLuminous(uint idx)
     return NULL;
 }
 
-
-/**
- * Must we use a dynlight to represent the given light?
- *
- * @param def           Ptr to the ded_light to examine.
- *
- * @return              @c true, if we HAVE to use a dynamic light for this
- *                      light defintion (as opposed to a bias light source).
- */
-static boolean mustUseDynamic(ded_light_t *def)
-{
-    // Are any of the light directions disabled or use a custom lightmap?
-    if(def && (def->sides.tex != 0 || def->up.tex != 0 || def->down.tex != 0))
-        return true;
-
-    return false;
-}
-
 /**
  * Registers the given mobj as a luminous, light-emitting object.
  * NOTE: This is called each frame for each luminous object!
@@ -376,20 +358,7 @@ void LO_AddLuminous(mobj_t *mo)
     spritedef_t        *sprdef;
     spriteframe_t      *sprframe;
 
-    // Has BIAS lighting been disabled?
-    // If this mobj has aquired a BIAS source we need to delete it.
-    if(mo->usingBias)
-    {
-        if(!useBias)
-        {
-            SB_Delete(mo->light - 1);
-
-            mo->light = 0;
-            mo->usingBias = false;
-        }
-    }
-    else
-        mo->light = 0;
+    mo->light = 0;
 
     if(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
@@ -461,9 +430,6 @@ void LO_AddLuminous(mobj_t *mo)
             center -= mul;
         }
 
-        // Sets the dynlight and flare radii.
-        //DL_MobjRadius(lum, &cf);
-
         radius = cf.size * 40 * loRadiusFactor;
 
         // Don't make a too small light.
@@ -500,102 +466,58 @@ void LO_AddLuminous(mobj_t *mo)
             GL_GetSpriteColorf(lump, rgb);
         }
 
-        if(useBias && mo->usingBias)
-        {   // We have previously acquired a BIAS source for this mobj.
-            if(radius < loMinRadForBias || mustUseDynamic(def))
-            {   // We can nolonger use a BIAS source for this light.
-                // Delete the bias source (it will be replaced with a
-                // dynlight shortly).
-                SB_Delete(mo->light - 1);
+        // This'll allow a halo to be rendered. If the light is hidden from
+        // view by world geometry, the light pointer will be set to NULL.
+        mo->light = LO_NewLuminous(LT_OMNI);
 
-                mo->light = 0;
-                mo->usingBias = false;
-            }
-            else
-            {   // Update BIAS source properties.
-                SB_UpdateSource(mo->light - 1,
-                                mo->pos[VX], mo->pos[VY], mo->pos[VZ] + center,
-                                radius * 0.3f, 0, 1, rgb);
-                return;
-            }
-        }
+        l = LO_GetLuminous(mo->light);
+        l->flags = flags;
+        l->flags |= LUMF_CLIPPED;
+        l->pos[VX] = mo->pos[VX];
+        l->pos[VY] = mo->pos[VY];
+        l->pos[VZ] = mo->pos[VZ];
+        // Approximate the distance in 3D.
+        l->distanceToViewer =
+            P_ApproxDistance3(mo->pos[VX] - viewX,
+                              mo->pos[VY] - viewY,
+                              mo->pos[VZ] - viewZ);
 
-        // Should we attempt to acquire a BIAS light source for this?
-        if(useBias && radius >= loMinRadForBias &&
-           !mustUseDynamic(def))
+        l->subsector = mo->subsector;
+        LUM_OMNI(l)->haloFactor = mo->haloFactor;
+        LUM_OMNI(l)->zOff = center;
+        LUM_OMNI(l)->xOff = xOff;
+
+        // Don't make too large a light.
+        if(radius > loMaxRadius)
+            radius = loMaxRadius;
+
+        LUM_OMNI(l)->radius = radius;
+        LUM_OMNI(l)->flareMul = 1;
+        LUM_OMNI(l)->flareSize = flareSize;
+        for(i = 0; i < 3; ++i)
+            l->color[i] = rgb[i];
+
+        if(def)
         {
-            if((mo->light =
-                    SB_NewSourceAt(mo->pos[VX], mo->pos[VY], mo->pos[VZ] + center,
-                                   radius * 0.3f, 0, 1, rgb)) != 0)
-            {
-                // We've acquired a BIAS source for this light.
-                mo->usingBias = true;
-            }
-        }
+            LUM_OMNI(l)->tex = def->sides.tex;
+            LUM_OMNI(l)->ceilTex = def->up.tex;
+            LUM_OMNI(l)->floorTex = def->down.tex;
 
-        if(!mo->usingBias) // Nope, a dynlight then.
-        {
-            // This'll allow a halo to be rendered. If the light is hidden from
-            // view by world geometry, the light pointer will be set to NULL.
-            mo->light = LO_NewLuminous(LT_OMNI);
-
-            l = LO_GetLuminous(mo->light);
-            l->flags = flags;
-            l->flags |= LUMF_CLIPPED;
-            l->pos[VX] = mo->pos[VX];
-            l->pos[VY] = mo->pos[VY];
-            l->pos[VZ] = mo->pos[VZ];
-            // Approximate the distance in 3D.
-            l->distanceToViewer =
-                P_ApproxDistance3(mo->pos[VX] - viewX,
-                                  mo->pos[VY] - viewY,
-                                  mo->pos[VZ] - viewZ);
-
-            l->subsector = mo->subsector;
-            LUM_OMNI(l)->haloFactor = mo->haloFactor;
-            LUM_OMNI(l)->zOff = center;
-            LUM_OMNI(l)->xOff = xOff;
-
-            // Don't make too large a light.
-            if(radius > loMaxRadius)
-                radius = loMaxRadius;
-
-            LUM_OMNI(l)->radius = radius;
-            LUM_OMNI(l)->flareMul = 1;
-            LUM_OMNI(l)->flareSize = flareSize;
-            for(i = 0; i < 3; ++i)
-                l->color[i] = rgb[i];
-
-            if(def)
-            {
-                LUM_OMNI(l)->tex = def->sides.tex;
-                LUM_OMNI(l)->ceilTex = def->up.tex;
-                LUM_OMNI(l)->floorTex = def->down.tex;
-
-                if(def->flare.disabled)
-                    l->flags |= LUMF_NOHALO;
-                else
-                {
-                    LUM_OMNI(l)->flareCustom = def->flare.custom;
-                    LUM_OMNI(l)->flareTex = def->flare.tex;
-                }
-            }
+            if(def->flare.disabled)
+                l->flags |= LUMF_NOHALO;
             else
             {
-                // Use the same default light texture for all directions.
-                LUM_OMNI(l)->tex = LUM_OMNI(l)->ceilTex =
-                    LUM_OMNI(l)->floorTex =
-                    GL_PrepareLSTexture(LST_DYNAMIC, NULL);
+                LUM_OMNI(l)->flareCustom = def->flare.custom;
+                LUM_OMNI(l)->flareTex = def->flare.tex;
             }
         }
-    }
-    else if(mo->usingBias)
-    {   // light is nolonger needed & there is a previously aquired BIAS source.
-        // Delete the existing Bias source.
-        SB_Delete(mo->light - 1);
-
-        mo->light = 0;
-        mo->usingBias = false;
+        else
+        {
+            // Use the same default light texture for all directions.
+            LUM_OMNI(l)->tex = LUM_OMNI(l)->ceilTex =
+                LUM_OMNI(l)->floorTex =
+                GL_PrepareLSTexture(LST_DYNAMIC, NULL);
+        }
     }
 }
 

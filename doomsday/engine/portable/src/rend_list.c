@@ -219,7 +219,7 @@ extern int useDynLights, dlBlend, simpleSky;
 extern boolean usingFog;
 extern float maxLightDist;
 
-extern boolean freezeRLs;
+extern byte freezeRLs;
 extern material_t *skyMaskMaterial;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------

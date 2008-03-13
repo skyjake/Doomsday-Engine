@@ -1442,7 +1442,7 @@ static void prepareSubsectorForBias(subsector_t *ssec)
         uint                i;
         seg_t              *seg = *segPtr;
 
-        for(i = 0; i < i; ++i)
+        for(i = 0; i < 4; ++i)
         {
             uint            j;
 

@@ -80,7 +80,7 @@ extern unsigned int currentTimeSB;
 void            SB_Register(void);
 void            SB_InitForMap(const char *uniqueId);
 void            SB_SegHasMoved(struct seg_s *seg);
-void            SB_PlaneHasMoved(struct subsector_s *subsector, uint plane);
+void            SB_PlaneHasMoved(const struct subsector_s *subsector, uint plane);
 void            SB_BeginFrame(void);
 void            SB_RendPoly(struct rendpoly_s *poly,
                             float sectorLightLevel,
@@ -90,15 +90,15 @@ void            SB_RendPoly(struct rendpoly_s *poly,
                             uint mapElementIndex);
 void            SB_EndFrame(void);
 
-uint            SB_NewSourceAt(float x, float y, float z, float size, float minLight,
+int             SB_NewSourceAt(float x, float y, float z, float size, float minLight,
                                float maxLight, float *rgb);
-void            SB_UpdateSource(uint which, float x, float y, float z, float size,
+void            SB_UpdateSource(int which, float x, float y, float z, float size,
                                 float minLight, float maxLight, float *rgb);
-void            SB_Delete(uint which);
+void            SB_Delete(int which);
 void            SB_Clear(void);
 
 source_t*       SB_GetSource(int which);
-uint            SB_ToIndex(source_t* source);
+int             SB_ToIndex(source_t* source);
 
 void            SB_SetColor(float *dest, float *src);
 void            HSVtoRGB(float *rgb, float h, float s, float v);

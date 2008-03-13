@@ -762,10 +762,7 @@ void R_ProjectSprite(mobj_t *mo)
     vis->type = VSPR_MAP_OBJECT;
     vis->distance = distance;
     vis->data.mo.subsector = mo->subsector;
-    if(mo->usingBias && useBias)
-        vis->light = NULL;
-    else
-        vis->light = LO_GetLuminous(mo->light);
+    vis->light = LO_GetLuminous(mo->light);
 
     vis->data.mo.mf = mf;
     vis->data.mo.nextMF = nextmf;

@@ -68,7 +68,7 @@ void         SB_EvalPoint(gl_rgba_t *light,
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int useBias = false;
-uint numSources = 0;
+int numSources = 0;
 unsigned int currentTimeSB;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -129,15 +129,15 @@ void SB_Register(void)
  * @param   maxLight    Upper sector light level limit.
  * @param   rgb         Ptr to float[3], the color for the new light.
  *
- * @return int          The id of the newly created bias light source else 0.
+ * @return              The id of the newly created bias light source else -1.
  */
-uint SB_NewSourceAt(float x, float y, float z, float size, float minLight,
-                    float maxLight, float *rgb)
+int SB_NewSourceAt(float x, float y, float z, float size, float minLight,
+                   float maxLight, float *rgb)
 {
-    source_t *src;
+    source_t           *src;
 
     if(numSources == MAX_BIAS_LIGHTS)
-        return 0;
+        return -1;
 
     src = &sources[numSources++];
 
@@ -165,12 +165,12 @@ uint SB_NewSourceAt(float x, float y, float z, float size, float minLight,
 /**
  * Same as above really but for updating an existing source.
  */
-void SB_UpdateSource(uint which, float x, float y, float z, float size,
+void SB_UpdateSource(int which, float x, float y, float z, float size,
                      float minLight, float maxLight, float *rgb)
 {
-    source_t *src;
+    source_t           *src;
 
-    if(which >= numSources)
+    if(which < 0 || which >= numSources)
         return;
 
     src = &sources[which];
@@ -199,12 +199,12 @@ source_t *SB_GetSource(int which)
 /**
  * Convert bias light source ptr to index.
  */
-uint SB_ToIndex(source_t* source)
+int SB_ToIndex(source_t* source)
 {
     if(!source)
-        return 0;
+        return -1;
     else
-        return (source - sources) + 1;
+        return (source - sources);
 }
 
 /**
@@ -212,14 +212,11 @@ uint SB_ToIndex(source_t* source)
  *
  * @param which         The id of the bias light source to be deleted.
  */
-void SB_Delete(uint which)
+void SB_Delete(int which)
 {
-    uint        i;
-    uint        j;
-    sector_t   *seciter;
-    boolean     done;
+    int                 i;
 
-    if(which > numSources)
+    if(which < 0 || which >= numSources)
         return; // Very odd...
 
     // Do a memory move.
@@ -234,26 +231,6 @@ void SB_Delete(uint which)
 
     // Will be one fewer very soon.
     numSourceDelta--;
-
-    // Check to see if a mobj had acquired this source for it's own use.
-    // You never know what trick the user might be trying pull :-)
-    done = false;
-    for(j = 0; j < numSectors && !done; ++j)
-    {
-        mobj_t *iter;
-
-        seciter = SECTOR_PTR(j);
-        for(iter = seciter->mobjList; iter && !done; iter = iter->sNext)
-        {
-            if(iter->usingBias && iter->light == which + 1)
-            {
-                iter->light = 0;
-                iter->usingBias = false;
-
-                done = true;
-            }
-        }
-    }
 }
 
 /**
@@ -261,31 +238,9 @@ void SB_Delete(uint which)
  */
 void SB_Clear(void)
 {
-    uint        i;
-    sector_t   *seciter;
-
-    if(!numSources)
-        return;
-
     while(numSources-- > 0)
         sources[numSources].flags |= BLF_CHANGED;
     numSources = 0;
-
-    // Zero Bias source indices acquired by mobjs.
-    for(i = 0; i < numSectors; ++i)
-    {
-        mobj_t *iter;
-
-        seciter = SECTOR_PTR(i);
-        for(iter = seciter->mobjList; iter; iter = iter->sNext)
-        {
-            if(iter->usingBias)
-            {
-                iter->light = 0;
-                iter->usingBias = false;
-            }
-        }
-    }
 }
 
 /**
@@ -294,8 +249,8 @@ void SB_Clear(void)
  */
 void SB_InitForMap(const char *uniqueId)
 {
-    ded_light_t *def;
-    int         i;
+    int                 i;
+    ded_light_t        *def;
 
     // Start with no sources whatsoever.
     numSources = 0;
@@ -310,15 +265,15 @@ void SB_InitForMap(const char *uniqueId)
 
         if(SB_NewSourceAt(def->offset[VX], def->offset[VY], def->offset[VZ],
                           def->size, def->lightLevel[0],
-                          def->lightLevel[1], def->color) == 0)
+                          def->lightLevel[1], def->color) == -1)
             break;
     }
 }
 
 void SB_SetColor(float *dest, float *src)
 {
-    float       largest = 0;
-    int         i;
+    int                 i;
+    float               largest = 0;
 
     // Amplify the color.
     for(i = 0; i < 3; ++i)
@@ -327,6 +282,7 @@ void SB_SetColor(float *dest, float *src)
         if(largest < dest[i])
             largest = dest[i];
     }
+
     if(largest > 0)
     {
         for(i = 0; i < 3; ++i)
@@ -344,8 +300,8 @@ void SB_SetColor(float *dest, float *src)
  */
 void HSVtoRGB(float *rgb, float h, float s, float v)
 {
-    int         i;
-    float       f, p, q, t;
+    int                 i;
+    float               f, p, q, t;
 
     if(s == 0)
     {
@@ -357,9 +313,9 @@ void HSVtoRGB(float *rgb, float h, float s, float v)
     if(h >= 1)
         h -= 1;
 
-    h *= 6;                        // sector 0 to 5
+    h *= 6; // sector 0 to 5
     i = floor(h);
-    f = h - i;                     // factorial part of h
+    f = h - i; // factorial part of h
     p = v * (1 - s);
     q = v * (1 - s * f);
     t = v * (1 - s * (1 - f));
@@ -406,7 +362,7 @@ void HSVtoRGB(float *rgb, float h, float s, float v)
 
 static void SB_AddAffected(affection_t *aff, uint k, float intensity)
 {
-    uint        i, worst;
+    uint                i, worst;
 
     if(aff->numFound < MAX_BIAS_AFFECTED)
     {
@@ -435,7 +391,7 @@ static void SB_AddAffected(affection_t *aff, uint k, float intensity)
  */
 void SB_SegHasMoved(struct seg_s *seg)
 {
-    int         i;
+    int                 i;
 
     // Mark the affected lights changed.
     for(i = 0; i < MAX_BIAS_AFFECTED && seg->affected[i].source >= 0; ++i)
@@ -448,10 +404,10 @@ void SB_SegHasMoved(struct seg_s *seg)
  * This must be called when a plane has moved.  Set 'theCeiling' to
  * true if the plane is a ceiling plane.
  */
-void SB_PlaneHasMoved(subsector_t *subsector, uint plane)
+void SB_PlaneHasMoved(const struct subsector_s *subsector, uint plane)
 {
-    int         i;
-    subplaneinfo_t *info = subsector->planes[plane];
+    int                 i;
+    subplaneinfo_t     *info = subsector->planes[plane];
 
     // Mark the affected lights changed.
     for(i = 0; i < MAX_BIAS_AFFECTED && info->affected[i].source >= 0; ++i)
@@ -464,16 +420,17 @@ void SB_PlaneHasMoved(subsector_t *subsector, uint plane)
  * This could be enhanced so that only the lights on the right side of
  * the seg are taken into consideration.
  */
-void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
+void SB_UpdateSegAffected(struct seg_s *seg, rendpoly_t *poly)
 {
-    seg_t      *seg = SEG_PTR(segId);
-    int         i;
-    uint        k;
-    vec2_t      delta;
-    source_t   *src;
-    float       distance = 0, len;
-    float       intensity;
-    affection_t aff;
+    int                 i, k;
+    vec2_t              delta;
+    source_t           *src;
+    float               distance = 0, len;
+    float               intensity;
+    affection_t         aff;
+
+    if(!seg)
+        return;
 
     // If the data is already up to date, nothing needs to be done.
     if(seg->updated == lastChangeOnFrame || !updateAffected)
@@ -519,8 +476,8 @@ void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
 
 static float SB_Dot(source_t *src, float point[3], float normal[3])
 {
-    float       delta[3];
-    int         i;
+    float               delta[3];
+    int                 i;
 
     // Delta vector between source and given point.
     for(i = 0; i < 3; ++i)
@@ -536,10 +493,11 @@ static float SB_Dot(source_t *src, float point[3], float normal[3])
  * This could be enhanced so that only the lights on the right side of
  * the plane are taken into consideration.
  */
-void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
+void SB_UpdateSubsectorAffected(struct subsector_s *subsector,
+                                rendpoly_t *poly)
 {
-    subsector_t        *subsector = SUBSECTOR_PTR(sub);
-    uint                i, k;
+    int                 i;
+    uint                k;
     vec2_t              delta;
     float               point[3];
     source_t           *src;
@@ -637,7 +595,7 @@ int SB_TrackerCheck(biastracker_t *tracker, int index)
  */
 void SB_TrackerApply(biastracker_t *dest, const biastracker_t *src)
 {
-    unsigned int i;
+    unsigned int        i;
 
     for(i = 0; i < sizeof(dest->changes)/sizeof(dest->changes[0]); ++i)
     {
@@ -650,7 +608,7 @@ void SB_TrackerApply(biastracker_t *dest, const biastracker_t *src)
  */
 void SB_TrackerClear(biastracker_t *dest, const biastracker_t *src)
 {
-    unsigned int i;
+    unsigned int        i;
 
     for(i = 0; i < sizeof(dest->changes)/sizeof(dest->changes[0]); ++i)
     {
@@ -664,7 +622,7 @@ void SB_TrackerClear(biastracker_t *dest, const biastracker_t *src)
 static boolean SB_ChangeInAffected(biasaffection_t *affected,
                                    biastracker_t *changed)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
     {
@@ -682,11 +640,11 @@ static boolean SB_ChangeInAffected(biasaffection_t *affected,
  * changed.  The planes that the change affects will need to be
  * re-evaluated.
  */
-void SB_MarkPlaneChanges(subsector_t *ssec, uint plane,
+void SB_MarkPlaneChanges(const struct subsector_s *ssec, uint plane,
                          biastracker_t *allChanges)
 {
-    uint        i;
-    subplaneinfo_t *pinfo = ssec->planes[plane];
+    uint                i;
+    subplaneinfo_t     *pinfo = ssec->planes[plane];
 
     SB_TrackerApply(&pinfo->tracker, allChanges);
 
@@ -705,10 +663,10 @@ void SB_MarkPlaneChanges(subsector_t *ssec, uint plane,
  */
 void SB_BeginFrame(void)
 {
-    biastracker_t allChanges;
-    uint        i, j, k, l;
-    subsector_t *sub;
-    source_t   *s;
+    int                 l;
+    uint                i, j, k;
+    source_t           *s;
+    biastracker_t       allChanges;
 
     if(!useBias)
         return;
@@ -722,17 +680,20 @@ void SB_BeginFrame(void)
     {
         if(s->sectorLevel[1] > 0 || s->sectorLevel[0] > 0)
         {
-            float   minLevel = s->sectorLevel[0];
-            float   maxLevel = s->sectorLevel[1];
-            sector_t *sector =
+            float               minLevel = s->sectorLevel[0];
+            float               maxLevel = s->sectorLevel[1];
+            sector_t           *sector;
+            float               oldIntensity = s->intensity;
+
+            sector =
                 R_PointInSubsector(s->pos[VX], s->pos[VY])->sector;
-            float oldIntensity = s->intensity;
 
             // The lower intensities are useless for light emission.
             if(sector->lightLevel >= maxLevel)
             {
                 s->intensity = s->primaryIntensity;
             }
+
             if(sector->lightLevel >= minLevel && minLevel != maxLevel)
             {
                 s->intensity = s->primaryIntensity *
@@ -763,7 +724,7 @@ void SB_BeginFrame(void)
     // Apply to all segs.
     for(i = 0; i < numSegs; ++i)
     {
-        seg_t *seg = SEG_PTR(i);
+        seg_t              *seg = SEG_PTR(i);
 
         for(j = 0; j < 3; ++j)
             SB_TrackerApply(&seg->tracker[j], &allChanges);
@@ -782,7 +743,7 @@ void SB_BeginFrame(void)
     // Apply to all planes.
     for(i = 0; i < numSSectors; ++i)
     {
-        sub = SUBSECTOR_PTR(i);
+        subsector_t        *sub = SUBSECTOR_PTR(i);
 
         for(j = 0; j < sub->sector->planeCount; ++j)
             SB_MarkPlaneChanges(sub, j, &allChanges);
@@ -803,8 +764,8 @@ void SB_EndFrame(void)
 
 void SB_AddLight(gl_rgba_t *dest, const float *color, float howMuch)
 {
-    int         i, newval;
-    float       amplified[3], largest = 0;
+    int                 i, newval;
+    float               amplified[3], largest = 0;
 
     if(color == NULL)
     {
@@ -847,7 +808,7 @@ void SB_AddLight(gl_rgba_t *dest, const float *color, float howMuch)
  */
 static boolean SB_CheckColorOverride(biasaffection_t *affected)
 {
-/*    int i;
+    int                 i;
 
     for(i = 0; affected[i].source >= 0 && i < MAX_BIAS_AFFECTED; ++i)
     {
@@ -858,7 +819,8 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
 
         if(sources[affected[i].source].flags & BLF_COLOR_OVERRIDE)
             return true;
-            }*/
+    }
+
     return false;
 }
 #endif
@@ -902,9 +864,9 @@ void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
     forced = false;
 
     if(poly->isWall)
-        SB_UpdateSegAffected(mapElementIndex, poly);
+        SB_UpdateSegAffected(SEG_PTR(mapElementIndex), poly);
     else
-        SB_UpdateSubsectorAffected(mapElementIndex, poly);
+        SB_UpdateSubsectorAffected(SUBSECTOR_PTR(mapElementIndex), poly);
 
     for(i = 0; i < poly->numVertices; ++i)
     {
@@ -923,7 +885,7 @@ void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
  */
 void SB_LerpIllumination(vertexillum_t *illum, gl_rgba_t *result)
 {
-    uint        i;
+    uint                i;
 
     if(!(illum->flags & VIF_LERP))
     {
@@ -954,13 +916,13 @@ void SB_LerpIllumination(vertexillum_t *illum, gl_rgba_t *result)
 }
 
 /**
- * @return          Light contributed by the specified source.
+ * @return              Light contributed by the specified source.
  */
 byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
                    biasaffection_t *affectedSources)
 {
-    int         i, k;
-    boolean     inUse;
+    int                 i, k;
+    boolean             inUse;
 
     for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
         if(illum->casted[i].source == sourceIndex)
@@ -1000,7 +962,7 @@ byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
 void SB_AmbientLight(const float *point, gl_rgba_t *light)
 {
     // Add grid light (represents ambient lighting).
-    float       color[3];
+    float               color[3];
 
     LG_Evaluate(point, color);
     SB_AddLight(light, color, 1.0f);
@@ -1019,21 +981,22 @@ void SB_EvalPoint(gl_rgba_t *light,
                   vertexillum_t *illum, biasaffection_t *affectedSources,
                   const float *point, float *normal)
 {
-    gl_rgba_t new;
-    float       dot;
-    float       delta[3], surfacePoint[3];
-    float       distance;
-    float       level;
-    uint        i, idx;
-    boolean     illuminationChanged = false;
-    unsigned int latestSourceUpdate = 0;
-    source_t   *s;
-    byte       *casted;
+    gl_rgba_t           new;
+    float               dot;
+    float               delta[3], surfacePoint[3];
+    float               distance;
+    float               level;
+    uint                i;
+    int                 idx;
+    boolean             illuminationChanged = false;
+    unsigned int        latestSourceUpdate = 0;
+    source_t           *s;
+    byte               *casted;
 
   //  gl_rgba_t Srgba;
 
     struct {
-        uint             index;
+        int              index;
         //uint           affNum; // Index in affectedSources.
         source_t        *source;
         biasaffection_t *affection;
@@ -1062,7 +1025,7 @@ void SB_EvalPoint(gl_rgba_t *light,
             idx = affectedSources[i].source;
 
             // Is this a valid index?
-            if(idx >= numSources)
+            if(idx < 0 || idx >= numSources)
                 continue;
 
             aff->index = idx;
@@ -1195,13 +1158,13 @@ void SB_EvalPoint(gl_rgba_t *light,
     {
         //Con_Message("\n");
 
-        boolean willOverride = false;
+        boolean             willOverride = false;
 
         // Combine the casted light from each source.
         for(aff = affecting; aff->source; aff++)
         {
-            byte *casted = SB_GetCasted(illum, aff->index,
-                                        affectedSources);
+            byte               *casted =
+                SB_GetCasted(illum, aff->index, affectedSources);
 
             if(aff->overrider && (casted[0] | casted[1] | casted[2]) != 0)
                 willOverride = true;
@@ -1235,8 +1198,11 @@ void SB_EvalPoint(gl_rgba_t *light,
 
             for(i = 0; i < 3; ++i)
             {
-                int v = new.rgba[i] + casted[i];
-                if(v > 255) v = 255;
+                int             v = new.rgba[i] + casted[i];
+
+                if(v > 255)
+                    v = 255;
+
                 new.rgba[i] = v;
             }
         }

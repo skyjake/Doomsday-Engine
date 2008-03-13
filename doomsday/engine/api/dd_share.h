@@ -906,7 +906,6 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     int             selector;           /* multipurpose info */ \
     int             validCount;         /* used in iterating */ \
     unsigned int    light;              /* index+1 of the lumobj/bias source, or 0 */ \
-    boolean         usingBias;          /* if true, "light" is the bias source index+1 */ \
     byte            haloFactor;         /* strength of halo */ \
     byte            translucency;       /* default = 0 = opaque */ \
     short           visTarget;          /* -1 = mobj is becoming less visible, */ \
