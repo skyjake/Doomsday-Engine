@@ -1136,46 +1136,6 @@ void R_InitLinks(gamemap_t *map)
              (Sys_GetRealTime() - starttime) / 1000.0f));
 }
 
-
-static ownernode_t *unusedNodeList = NULL;
-
-static ownernode_t *newOwnerNode(void)
-{
-    ownernode_t *node;
-
-    if(unusedNodeList)
-    {   // An existing node is available for re-use.
-        node = unusedNodeList;
-        unusedNodeList = unusedNodeList->next;
-
-        node->next = NULL;
-        node->data = NULL;
-    }
-    else
-    {   // Need to allocate another.
-        node = M_Malloc(sizeof(ownernode_t));
-    }
-
-    return node;
-}
-
-static void addVertexToSSecOwnerList(ownerlist_t *ownerList, fvertex_t *v)
-{
-    ownernode_t *node;
-
-    if(!v)
-        return; // Wha?
-
-    // Add a new owner.
-    // NOTE: No need to check for duplicates.
-    ownerList->count++;
-
-    node = newOwnerNode();
-    node->data = v;
-    node->next = ownerList->head;
-    ownerList->head = node;
-}
-
 /**
  * Create a list of vertices for the subsector which are suitable for
  * use as the points of single a trifan.
@@ -1193,156 +1153,85 @@ static void addVertexToSSecOwnerList(ownerlist_t *ownerList, fvertex_t *v)
  */
 static void triangulateSubSector(subsector_t *ssec)
 {
-    uint        j;
-    seg_t     **ptr;
-    ownerlist_t subSecOwnerList;
-    boolean     found = false;
-
-    memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
-
-    // Create one node for each vertex of the subsector.
-    ptr = ssec->segs;
-    while(*ptr)
-    {
-        fvertex_t *other = &((*ptr)->SG_v1->v);
-        addVertexToSSecOwnerList(&subSecOwnerList, other);
-        *ptr++;
-    }
+    uint                baseIDX = 0, i, n;
+    boolean             found = false;
 
     // We need to find a good tri-fan base vertex, (one that doesn't
     // generate zero-area triangles).
-    if(subSecOwnerList.count <= 3)
+    if(ssec->segCount <= 3)
     {   // Always valid.
         found = true;
     }
     else
-    {   // Higher vertex counts need checking, we'll test each one
-        // and pick the first good one.
-        ownernode_t *base = subSecOwnerList.head;
-
-        while(base && !found)
-        {
-            ownernode_t *current;
-            boolean     ok;
-
-            current = base;
-            ok = true;
-            j = 0;
-            while(j < subSecOwnerList.count - 2 && ok)
-            {
+    {   // Higher vertex counts need checking, we'll test each one and pick
+        // the first good one.
 #define TRIFAN_LIMIT    0.1
 
-                ownernode_t *a, *b;
+        fvertex_t          *base, *a, *b;
 
-                if(current->next)
-                    a = current->next;
-                else
-                    a = subSecOwnerList.head;
-                if(a->next)
-                    b = a->next;
-                else
-                    b = subSecOwnerList.head;
+        baseIDX = 0;
+        do
+        {
+            seg_t              *seg = ssec->segs[baseIDX];
 
-                if(TRIFAN_LIMIT >=
-                   M_TriangleArea(((fvertex_t*) base->data)->pos,
-                                  ((fvertex_t*) a->data)->pos,
-                                  ((fvertex_t*) b->data)->pos))
-                {
-                    ok = false;
-                }
-                else
-                {   // Keep checking...
-                    if(current->next)
-                        current = current->next;
-                    else
-                        current = subSecOwnerList.head;
-
-                    j++;
-                }
-
-#undef TRIFAN_LIMIT
-            }
-
-            if(ok)
-            {   // This will do nicely.
-                // Must ensure that the vertices are ordered such that
-                // base comes last (this is because when adding vertices
-                // to the ownerlist; it is done backwards).
-                ownernode_t *last;
-
-                // Find the last.
-                last = base;
-                while(last->next) last = last->next;
-
-                if(base != last)
-                {   // Need to change the order.
-                    last->next = subSecOwnerList.head;
-                    subSecOwnerList.head = base->next;
-                    base->next = NULL;
-                }
-
-                found = true;
-            }
-            else
+            base = &seg->SG_v1->v;
+            i = 0;
+            do
             {
-                base = base->next;
-            }
-        }
+                seg_t              *seg2 = ssec->segs[i];
+
+                if(!(baseIDX > 0 && (i == baseIDX || i == baseIDX - 1)))
+                {
+                    a = &seg2->SG_v1->v;
+                    b = &seg2->SG_v2->v;
+
+                    if(TRIFAN_LIMIT >=
+                       M_TriangleArea(base->pos, a->pos, b->pos))
+                    {
+                        base = NULL;
+                    }
+                }
+
+                i++;
+            } while(base && i < ssec->segCount);
+
+            if(!base)
+                baseIDX++;
+        } while(!base && baseIDX < ssec->segCount);
+
+        if(base)
+            found = true;
+#undef TRIFAN_LIMIT
     }
+
+    ssec->numVertices = ssec->segCount;
+    if(!found)
+        ssec->numVertices += 2;
+    ssec->vertices =
+        Z_Malloc(sizeof(fvertex_t*) * (ssec->numVertices + 1),PU_LEVEL, 0);
+
+    // We can now create the subsector fvertex array.
+    // NOTE: The same polygon is used for all planes of this subsector.
+    n = 0;
+    if(!found)
+        ssec->vertices[n++] = &ssec->midPoint;
+    for(i = 0; i < ssec->segCount; ++i)
+    {
+        uint                idx;
+        seg_t              *seg;
+
+        idx = baseIDX + i;
+        if(idx >= ssec->segCount)
+            idx = idx - ssec->segCount;
+        seg = ssec->segs[idx];
+        ssec->vertices[n++] = &seg->SG_v1->v;
+    }
+    if(!found)
+        ssec->vertices[n++] = &ssec->segs[0]->SG_v1->v;
+    ssec->vertices[n] = NULL; // terminate.
 
     if(!found)
-    {   // No suitable triangle fan base vertex found.
-        ownernode_t *newNode, *last;
-
-        // Use the subsector midpoint as the base since it will always
-        // be valid.
         ssec->flags |= SUBF_MIDPOINT;
-
-        // This entails adding the midpoint as a vertex at the start
-        // and duplicating the first vertex at the end (so the fan
-        // wraps around).
-
-        // We'll have to add the end vertex manually...
-        // Find the end.
-        last = subSecOwnerList.head;
-        while(last->next) last = last->next;
-
-        newNode = newOwnerNode();
-        newNode->data = &ssec->midPoint;
-        newNode->next = NULL;
-
-        last->next = newNode;
-        subSecOwnerList.count++;
-
-        addVertexToSSecOwnerList(&subSecOwnerList, last->data);
-    }
-
-    // We can now create the subsector vertex array by hardening the list.
-    // NOTE: The same polygon is used for all planes of this subsector.
-    ssec->numVertices = subSecOwnerList.count;
-    ssec->vertices =
-        Z_Malloc(sizeof(fvertex_t*) * (ssec->numVertices + 1),
-                 PU_LEVELSTATIC, 0);
-
-    {
-    ownernode_t *node, *p;
-
-    node = subSecOwnerList.head;
-    j = ssec->numVertices - 1;
-    while(node)
-    {
-        p = node->next;
-        ssec->vertices[j--] = (fvertex_t*) node->data;
-
-        // Move this node to the unused list for re-use.
-        node->next = unusedNodeList;
-        unusedNodeList = node;
-
-        node = p;
-    }
-    }
-
-    ssec->vertices[ssec->numVertices] = NULL; // terminate.
 }
 
 /**
@@ -1351,13 +1240,9 @@ static void triangulateSubSector(subsector_t *ssec)
 void R_PolygonizeMap(gamemap_t *map)
 {
     uint                i;
-    ownernode_t        *node, *p;
     uint                startTime;
 
     startTime = Sys_GetRealTime();
-
-    // Init the unused ownernode list.
-    unusedNodeList = NULL;
 
     // Polygonize each subsector.
     for(i = 0; i < map->numSSectors; ++i)
@@ -1365,16 +1250,6 @@ void R_PolygonizeMap(gamemap_t *map)
         subsector_t        *sub = &map->ssectors[i];
         triangulateSubSector(sub);
     }
-
-    // Free any nodes left in the unused list.
-    node = unusedNodeList;
-    while(node)
-    {
-        p = node->next;
-        M_Free(node);
-        node = p;
-    }
-    unusedNodeList = NULL;
 
     // How much time did we spend?
     VERBOSE(Con_Message
