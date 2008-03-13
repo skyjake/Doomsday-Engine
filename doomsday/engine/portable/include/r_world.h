@@ -48,8 +48,9 @@ extern int      rendSkyLight;      // cvar
 #define MIF_FOG             0x1    // Fog is used in the level.
 #define MIF_DRAW_SPHERE     0x2    // Always draw the sky sphere.
 
-const float    *R_GetSectorLightColor(sector_t *sector);
+const float    *R_GetSectorLightColor(const sector_t *sector);
 boolean         R_IsSkySurface(surface_t *surface);
+boolean         R_SectorContainsSkySurfaces(const sector_t *sec);
 void            R_SetupMap(int mode, int flags);
 void            R_InitLinks(gamemap_t *map);
 void            R_PolygonizeMap(gamemap_t *map);

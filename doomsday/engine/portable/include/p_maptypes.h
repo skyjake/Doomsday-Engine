@@ -154,6 +154,7 @@ typedef struct surface_s {
 typedef enum {
     PLN_FLOOR,
     PLN_CEILING,
+    PLN_MID,
     NUM_PLANE_TYPES
 } planetype_t;
 
@@ -179,6 +180,7 @@ typedef struct plane_s {
     float               speed;         // Move speed
     float               visHeight;     // Visible plane height (smoothed)
     float               visOffset;
+    planetype_t         type;          // PLN_* type.
 } plane_t;
 
 // Helper macros for accessing sector floor/ceiling plane data elements.

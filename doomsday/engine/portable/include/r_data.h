@@ -181,6 +181,7 @@ typedef struct shadowlink_s {
 
 typedef struct subplaneinfo_s {
     int             type;           // Plane type (ie PLN_FLOOR or PLN_CEILING)
+    int             planeID;
     vertexillum_t  *illumination;
     biastracker_t   tracker;
     uint            updated;

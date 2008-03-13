@@ -196,8 +196,6 @@ int         P_GetMapAmbientLightLevel(gamemap_t *map);
 const char *P_GenerateUniqueMapID(const char *mapID);
 
 void        P_PolyobjChanged(polyobj_t *po);
-void        P_FloorChanged(sector_t *sector);
-void        P_CeilingChanged(sector_t *sector);
 void        P_PlaneChanged(sector_t *sector, uint plane);
 int         P_CheckTexture(char *name, boolean planeTex, int dataType,
                            unsigned int element, int property);

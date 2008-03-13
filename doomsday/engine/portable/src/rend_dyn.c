@@ -114,7 +114,7 @@ void DL_InitForNewFrame(void)
 
 static dynnode_t *newDynNode(void)
 {
-	dynnode_t	*node;
+	dynnode_t	       *node;
 
     // Have we run out of nodes?
     if(dynCursor == NULL)
@@ -141,8 +141,8 @@ static dynnode_t *newDynNode(void)
  */
 static dynnode_t *newDynLight(float *s, float *t)
 {
-	dynnode_t	*node = newDynNode();
-    dynlight_t	*dyn = &node->dyn;
+	dynnode_t	       *node = newDynNode();
+    dynlight_t	       *dyn = &node->dyn;
 
     if(s)
     {
@@ -170,7 +170,7 @@ static void __inline linkDynNode(dynnode_t *node, dynnode_t **list, uint index)
 static void linkToSurfaceLightList(dynnode_t *node, uint listIndex,
                                    boolean sortBrightestFirst)
 {
-    dynnode_t     **list = &dynlightLinkLists[listIndex];
+    dynnode_t         **list = &dynlightLinkLists[listIndex];
 
     if(sortBrightestFirst && *list)
     {
@@ -205,13 +205,13 @@ static void linkToSurfaceLightList(dynnode_t *node, uint listIndex,
  * Blend the given light value with the lumobj's color, apply any global
  * modifiers and output the result.
  *
- * @param outRGB    The location the calculated result will be written to.
- * @param lum       Ptr to the lumobj from which the color will be used.
- * @param light     The light value to be used in the calculation.
+ * @param outRGB        The location the calculated result will be written to.
+ * @param lum           Ptr to the lumobj from which the color will be used.
+ * @param light         The light value to be used in the calculation.
  */
 static void calcDynLightColor(float *outRGB, const lumobj_t *lum, float light)
 {
-    uint        i;
+    uint                i;
 
     if(light < 0)
         light = 0;
@@ -222,7 +222,7 @@ static void calcDynLightColor(float *outRGB, const lumobj_t *lum, float light)
     // If fog is enabled, make the light dimmer.
     // \fixme This should be a cvar.
     if(usingFog)
-        light *= .5f;           // Would be too much.
+        light *= .5f; // Would be too much.
 
     // Multiply with the light color.
     for(i = 0; i < 3; ++i)
@@ -245,20 +245,20 @@ void DL_InitForMap(void)
  * Project the given planelight onto the specified seg. If it would be lit,
  * a new dynlight node will be created and returned.
  *
- * @param lum       Ptr to the lumobj lighting the seg.
- * @param bottom    Z height (bottom) of the section being lit.
- * @param top       Z height (top) of the section being lit.
+ * @param lum           Ptr to the lumobj lighting the seg.
+ * @param bottom        Z height (bottom) of the section being lit.
+ * @param top           Z height (top) of the section being lit.
  *
- * @return          Ptr to the projected light, ELSE @c NULL.
+ * @return              Ptr to the projected light, ELSE @c NULL.
  */
 static dynnode_t *projectPlaneGlowOnSegSection(const lumobj_t *lum, float bottom,
                                                float top)
 {
-    uint        i;
-    float       glowHeight;
-    dynlight_t *dyn;
-    dynnode_t  *node;
-    float       s[2], t[2];
+    uint                i;
+    float               glowHeight;
+    dynlight_t         *dyn;
+    dynnode_t          *node;
+    float               s[2], t[2];
 
     if(bottom >= top)
         return NULL; // No height.
@@ -319,22 +319,22 @@ static dynnode_t *projectPlaneGlowOnSegSection(const lumobj_t *lum, float bottom
  * Project the given omnilight onto the specified seg. If it would be lit, a new
  * dynlight node will be created and returned.
  *
- * @param lum       Ptr to the lumobj lighting the seg.
- * @param seg       Ptr to the seg being lit.
- * @param bottom    Z height (bottom) of the section being lit.
- * @param top       Z height (top) of the section being lit.
+ * @param lum           Ptr to the lumobj lighting the seg.
+ * @param seg           Ptr to the seg being lit.
+ * @param bottom        Z height (bottom) of the section being lit.
+ * @param top           Z height (top) of the section being lit.
  *
- * @return          Ptr to the projected light, ELSE @c NULL.
+ * @return              Ptr to the projected light, ELSE @c NULL.
  */
 static dynnode_t *projectOmniLightOnSegSection(const lumobj_t *lum, seg_t *seg,
                                                float bottom, float top)
 {
-    float       s[2], t[2];
-    float       dist, pntLight[2];
-    dynlight_t *dyn;
-    dynnode_t  *node;
-    float       lumRGB[3], lightVal;
-    float       radius, radiusX2;
+    float               s[2], t[2];
+    float               dist, pntLight[2];
+    dynlight_t         *dyn;
+    dynnode_t          *node;
+    float               lumRGB[3], lightVal;
+    float               radius, radiusX2;
 
     if(!LUM_OMNI(lum)->tex)
         return NULL;
@@ -394,15 +394,16 @@ static dynnode_t *projectOmniLightOnSegSection(const lumobj_t *lum, seg_t *seg,
 /**
  * Process the given lumobj to maybe add a dynamic light for the plane.
  *
- * @param lum       Ptr to the lumobj on which the dynlight will be based.
+ * @param lum           Ptr to the lumobj on which the dynlight will be based.
  */
 static dynnode_t *projectOmniLightOnSubSectorPlane(const lumobj_t *lum,
-                    uint planeType, float height)
+                                                   float normal[3],
+                                                   float height)
 {
-    DGLuint     lightTex;
-    float       diff, lightStrength, srcRadius;
-    float       s[2], t[2];
-    float       pos[3];
+    DGLuint             lightTex;
+    float               diff, lightStrength, srcRadius;
+    float               s[2], t[2];
+    float               pos[3];
 
     pos[VX] = lum->pos[VX];
     pos[VY] = lum->pos[VY];
@@ -418,7 +419,7 @@ static dynnode_t *projectOmniLightOnSubSectorPlane(const lumobj_t *lum,
     lightTex = 0;
     lightStrength = 0;
 
-    if(planeType == PLN_FLOOR)
+    if(normal[VZ] > 0)
     {
         if((lightTex = LUM_OMNI(lum)->floorTex) != 0)
         {
@@ -444,10 +445,10 @@ static dynnode_t *projectOmniLightOnSubSectorPlane(const lumobj_t *lum,
         return NULL;
 
     // Check that the height difference is tolerable.
-    if(planeType == PLN_CEILING)
-        diff = height - pos[VZ];
-    else
+    if(normal[VZ] > 0)
         diff = pos[VZ] - height;
+    else
+        diff = height - pos[VZ];
 
     // Clamp it.
     if(diff < 0)
@@ -455,12 +456,13 @@ static dynnode_t *projectOmniLightOnSubSectorPlane(const lumobj_t *lum,
 
     if(diff < LUM_OMNI(lum)->radius)
     {
-        float       lightVal = LUM_FACTOR(diff, LUM_OMNI(lum)->radius);
+        float               lightVal =
+            LUM_FACTOR(diff, LUM_OMNI(lum)->radius);
 
         if(lightVal >= .05f)
         {
-            dynlight_t *dyn;
-            dynnode_t  *node;
+            dynlight_t         *dyn;
+            dynnode_t          *node;
 
             // Calculate dynlight position. It may still be outside
             // the bounding box the subsector.
@@ -486,9 +488,9 @@ static uint newDynlightList(void)
     // Ran out of light link lists?
     if(++dynlightLinkListCursor >= numDynlightLinkLists)
     {
-        uint        i;
-        uint        newNum = numDynlightLinkLists * 2;
-        dynnode_t **newList;
+        uint                i;
+        uint                newNum = numDynlightLinkLists * 2;
+        dynnode_t         **newList;
 
         if(!newNum)
             newNum = 2;
@@ -520,7 +522,7 @@ typedef struct seglumobjiterparams_s {
 
 boolean DLIT_SegLumobjContacts(lumobj_t *lum, void *data)
 {
-    dynnode_t      *node = NULL;
+    dynnode_t          *node = NULL;
     seglumobjiterparams_t *params = data;
 
     switch(lum->type)
@@ -587,7 +589,7 @@ uint DL_ProcessSegSection(seg_t *seg, float bottom, float top,
 }
 
 typedef struct planelumobjiterparams_s {
-    uint            plane;
+    float           normal[3];
     float           height;
     boolean         sortBrightestFirst;
     boolean         haveList;
@@ -597,12 +599,12 @@ typedef struct planelumobjiterparams_s {
 boolean DLIT_PlaneLumobjContacts(lumobj_t *lum, void *data)
 {
     planelumobjiterparams_t *params = data;
-    dynnode_t *node = NULL;
+    dynnode_t          *node = NULL;
 
     switch(lum->type)
     {
     case LT_OMNI:
-        node = projectOmniLightOnSubSectorPlane(lum, params->plane,
+        node = projectOmniLightOnSubSectorPlane(lum, params->normal,
                                                 params->height);
         break;
 
@@ -634,9 +636,9 @@ boolean DLIT_PlaneLumobjContacts(lumobj_t *lum, void *data)
 
 uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
 {
-    sector_t       *linkSec;
-    float           height;
-    boolean         isLit;
+    sector_t           *linkSec;
+    float               height;
+    boolean             isLit;
 
     if(!useDynLights)
         return 0; // Disabled.
@@ -654,7 +656,7 @@ uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
     // View height might prevent us from seeing the light.
     isLit = true;
     height = linkSec->SP_planevisheight(plane);
-    if(ssec->SP_plane(plane)->type == PLN_FLOOR)
+    if(linkSec->SP_plane(plane)->PS_normal[VZ] > 0)
     {
         if(vy < height)
             isLit = false;
@@ -669,7 +671,9 @@ uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
     {
         planelumobjiterparams_t params;
 
-        params.plane = plane;
+        params.normal[VX] = linkSec->SP_plane(plane)->PS_normal[VX];
+        params.normal[VY] = linkSec->SP_plane(plane)->PS_normal[VY];
+        params.normal[VZ] = linkSec->SP_plane(plane)->PS_normal[VZ];
         params.height = height;
         params.sortBrightestFirst = false;
         params.haveList = false;
@@ -690,17 +694,17 @@ uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
 /**
  * Calls func for all projected dynlights in the given list.
  *
- * @param listIdx   Identifier of the list to process.
- * @param data      Ptr to pass to the callback.
- * @param func      Callback to make for each object.
+ * @param listIdx       Identifier of the list to process.
+ * @param data          Ptr to pass to the callback.
+ * @param func          Callback to make for each object.
  *
- * @return          @c true, iff every callback returns @c true, else @c false.
+ * @return              @c true, iff every callback returns @c true.
  */
 boolean DL_ListIterator(uint listIdx, void *data,
                         boolean (*func) (const dynlight_t *, void *data))
 {
-    dynnode_t  *node;
-    boolean     retVal, isDone;
+    dynnode_t          *node;
+    boolean             retVal, isDone;
 
     if(listIdx == 0 || listIdx > numDynlightLinkLists)
         return true;

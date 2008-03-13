@@ -585,9 +585,9 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
 
 static void Rend_MarkSegSectionsPVisible(seg_t *seg)
 {
-    uint        i, j;
-    sidedef_t     *side;
-    linedef_t     *line;
+    uint                i, j;
+    sidedef_t          *side;
+    linedef_t          *line;
 
     if(!seg || !seg->lineDef)
         return; // huh?
@@ -811,7 +811,8 @@ static void doCalcSegDivisions(linedef_t *line, boolean backSide,sector_t *front
                 if(scanSec)
                     for(j = 0; j < scanSec->planeCount && !stopScan; ++j)
                     {
-                        plane_t *pln = scanSec->SP_plane(j);
+                        plane_t            *pln = scanSec->SP_plane(j);
+
                         if(pln->visHeight > bottomZ && pln->visHeight < topZ)
                         {
                             if(!checkDiv(div, pln->visHeight))
@@ -826,9 +827,9 @@ static void doCalcSegDivisions(linedef_t *line, boolean backSide,sector_t *front
 
                         if(!stopScan)
                         {   // Clip a range bound to this height?
-                            if(j == PLN_FLOOR && pln->visHeight > bottomZ)
+                            if(pln->type == PLN_FLOOR && pln->visHeight > bottomZ)
                                 bottomZ = pln->visHeight;
-                            else if(j == PLN_CEILING && pln->visHeight < topZ)
+                            else if(pln->type == PLN_CEILING && pln->visHeight < topZ)
                                 topZ = pln->visHeight;
 
                             // All clipped away?
@@ -1041,14 +1042,14 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
                           subplaneinfo_t* plane, surface_t *surface,
                           float height, short flags)
 {
-    uint        subIndex = GET_SUBSECTOR_IDX(subsector);
+    uint                subIndex = GET_SUBSECTOR_IDX(subsector);
 
-    if((flags & RPF2_GLOW) && glowingTextures)        // Make it fullbright?
+    if((flags & RPF2_GLOW) && glowingTextures) // Make it fullbright?
         poly->flags |= RPF_GLOW;
 
     // Surface color/light.
-    RL_PreparePlane(plane, poly, height, subsector,
-                    Rend_SectorLight(polySector),
+    RL_PreparePlane(poly, height, subsector, Rend_SectorLight(polySector),
+                    !(surface->normal[VZ] > 0),
                     R_GetSectorLightColor(polySector), surface->rgba);
 
     // Dynamic lights. Check for sky.
@@ -1058,7 +1059,7 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
         skyhemispheres |= (plane->type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
     }
     else
-        poly->lightListIdx = DL_ProcessSubSectorPlane(subsector, plane->type);
+        poly->lightListIdx = DL_ProcessSubSectorPlane(subsector, plane->planeID);
 
     // Do BIAS lighting for this poly.
     SB_RendPoly(poly, subsector->sector->lightLevel, plane->illumination,
@@ -1790,10 +1791,10 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
         // Upper/lower zero height backsec skyfixes.
         if(backsec && bsh <= 0)
         {
+            // Floor.
             if(R_IsSkySurface(&frontsec->SP_floorsurface) &&
                R_IsSkySurface(&backsec->SP_floorsurface))
             {
-                // Floor.
                 if(backsec->skyFix[PLN_FLOOR].offset < 0)
                 {
                     vTL[VZ] = vTR[VZ] = bfloor;
@@ -1805,7 +1806,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 seg->frameFlags |= SEGINF_BACKSECSKYFIX;
             }
 
-                // Ceiling.
+            // Ceiling.
             if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
                R_IsSkySurface(&backsec->SP_ceilsurface))
             {
@@ -1911,8 +1912,8 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     sector_t   *polySector;
     float       vec[3];
 
-    polySector = R_GetLinkedSector(subsector, plane->type);
-    surface = &polySector->planes[plane->type]->surface;
+    polySector = R_GetLinkedSector(subsector, plane->planeID);
+    surface = &polySector->planes[plane->planeID]->surface;
 
     // Must have a visible surface.
     if(!surface->material)
@@ -1924,9 +1925,10 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
         return;
 
     // Determine plane height.
-    height = polySector->SP_planevisheight(plane->type);
-    // Add the skyfix
-    height += polySector->S_skyfix(plane->type).offset;
+    height = polySector->SP_planevisheight(plane->planeID);
+    // Add the skyfix.
+    if(plane->type != PLN_MID)
+        height += polySector->S_skyfix(plane->type).offset;
 
     vec[VX] = vx - subsector->midPoint.pos[VX];
     vec[VY] = vz - subsector->midPoint.pos[VY];
@@ -1953,9 +1955,9 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
         else
         {
             poly->texOffset[VX] =
-                sector->planes[plane->type]->surface.offset[VX];
+                sector->planes[plane->planeID]->surface.offset[VX];
             poly->texOffset[VY] =
-                sector->planes[plane->type]->surface.offset[VY];
+                sector->planes[plane->planeID]->surface.offset[VY];
         }
 
         if(surface->material->type == MAT_TEXTURE || surface->material->type == MAT_FLAT)
@@ -1966,7 +1968,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
             tempflags |= RPF2_BLEND;
 
         doRenderPlane(poly, polySector, subsector, plane, surface,
-                           height, tempflags);
+                      height, tempflags);
 
         R_FreeRendPoly(poly);
     }
@@ -1974,12 +1976,12 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
 
 static void Rend_RenderSubsector(uint ssecidx)
 {
-    uint        i;
-    subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
-    seg_t      *seg, **ptr;
-    sector_t   *sect = ssec->sector;
-    float       sceil = sect->SP_ceilvisheight;
-    float       sfloor = sect->SP_floorvisheight;
+    uint                i;
+    subsector_t        *ssec = SUBSECTOR_PTR(ssecidx);
+    seg_t              *seg, **ptr;
+    sector_t           *sect = ssec->sector;
+    float               sceil = sect->SP_ceilvisheight;
+    float               sfloor = sect->SP_floorvisheight;
 
     if(sceil - sfloor <= 0 || ssec->segCount < 3)
     {
@@ -1991,7 +1993,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     if(!firstsubsector)
     {
         if(!C_CheckSubsector(ssec))
-            return;             // This isn't visible.
+            return; // This isn't visible.
     }
     else
     {
@@ -2033,9 +2035,23 @@ static void Rend_RenderSubsector(uint ssecidx)
 
     // Draw the various skyfixes for all front facing segs in this ssec
     // (includes polyobject segs).
-    if(R_IsSkySurface(&ssec->sector->SP_floorsurface) ||
-       R_IsSkySurface(&ssec->sector->SP_ceilsurface))
-        Rend_SSectSkyFixes(ssec);
+    if(ssec->sector->planeCount > 0)
+    {
+        boolean             doSkyFixes;
+
+        doSkyFixes = false;
+        i = 0;
+        do
+        {
+            if(R_IsSkySurface(&ssec->sector->SP_planesurface(i)))
+                doSkyFixes = true;
+            else
+                i++;
+        } while(!doSkyFixes && i < ssec->sector->planeCount);
+
+        if(doSkyFixes)
+            Rend_SSectSkyFixes(ssec);
+    }
 
     // Draw the walls.
     ptr = ssec->segs;
@@ -2047,7 +2063,7 @@ static void Rend_RenderSubsector(uint ssecidx)
            seg->lineDef && // "minisegs" have no linedefs.
            (seg->frameFlags & SEGINF_FACINGFRONT))
         {
-            boolean     solid;
+            boolean             solid;
 
             if(!seg->SG_backsector || !seg->SG_frontsector)
                 solid = Rend_RenderSSWallSeg(seg, ssec);
@@ -2074,7 +2090,7 @@ static void Rend_RenderSubsector(uint ssecidx)
             // Let's first check which way this seg is facing.
             if(seg->frameFlags & SEGINF_FACINGFRONT)
             {
-                boolean     solid = Rend_RenderSSWallSeg(seg, ssec);
+                boolean             solid = Rend_RenderSSWallSeg(seg, ssec);
 
                 if(solid)
                 {

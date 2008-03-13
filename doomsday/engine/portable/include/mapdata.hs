@@ -167,6 +167,7 @@ internal
 typedef enum {
     PLN_FLOOR,
     PLN_CEILING,
+    PLN_MID,
     NUM_PLANE_TYPES
 } planetype_t;
 
@@ -194,6 +195,7 @@ struct plane
     FLOAT   float       speed       // Move speed
     -       float       visHeight   // Visible plane height (smoothed)
     -       float       visOffset
+    -       planetype_t type        // PLN_* type.
 end
 
 internal

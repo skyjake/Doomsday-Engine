@@ -230,9 +230,9 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
     if(!sec)
         return NULL; // Do wha?
 
-    if(sec->planeCount >= 2)
-        Con_Error("P_NewPlaneForSector: Cannot create plane for sector, "
-                  "limit is %i per sector.\n", 2);
+    //if(sec->planeCount >= 2)
+    //    Con_Error("P_NewPlaneForSector: Cannot create plane for sector, "
+    //              "limit is %i per sector.\n", 2);
 
     // Allocate the new plane.
     plane = Z_Calloc(sizeof(plane_t), PU_LEVEL, 0);
@@ -392,23 +392,23 @@ void R_ClearSurfaceDecorations(surface_t *suf)
  */
 static void R_SetSectorLinks(sector_t *sec)
 {
-    uint        i;
-    boolean     hackfloor, hackceil;
-    sector_t   *floorLinkCandidate = 0, *ceilLinkCandidate = 0;
+    uint                i;
+    boolean             hackfloor, hackceil;
+    sector_t           *floorLinkCandidate = 0, *ceilLinkCandidate = 0;
 
     // Must have a valid sector!
     if(!sec || !sec->lineDefCount || (sec->flags & SECF_PERMANENTLINK))
-        return;                 // Can't touch permanent links.
+        return; // Can't touch permanent links.
 
     hackfloor = (!R_IsSkySurface(&sec->SP_floorsurface));
-    hackceil = (!R_IsSkySurface(&sec->SP_ceilsurface));
+    hackceil  = (!R_IsSkySurface(&sec->SP_ceilsurface));
     if(!(hackfloor || hackceil))
         return;
 
     for(i = 0; i < sec->subsGroupCount; ++i)
     {
-        subsector_t   **ssecp;
-        ssecgroup_t    *ssgrp;
+        subsector_t       **ssecp;
+        ssecgroup_t        *ssgrp;
 
         if(!hackfloor && !hackceil)
             break;
@@ -418,7 +418,7 @@ static void R_SetSectorLinks(sector_t *sec)
         ssecp = sec->ssectors;
         while(*ssecp)
         {
-            subsector_t    *ssec = *ssecp;
+            subsector_t        *ssec = *ssecp;
 
             if(!hackfloor && !hackceil)
                 break;
@@ -426,12 +426,12 @@ static void R_SetSectorLinks(sector_t *sec)
             // Must be in the same group.
             if(ssec->group == i)
             {
-                seg_t         **segp = ssec->segs;
+                seg_t             **segp = ssec->segs;
 
                 while(*segp)
                 {
-                    seg_t          *seg = *segp;
-                    linedef_t         *lin;
+                    seg_t              *seg = *segp;
+                    linedef_t          *lin;
 
                     if(!hackfloor && !hackceil)
                         break;
@@ -441,8 +441,8 @@ static void R_SetSectorLinks(sector_t *sec)
                     if(lin && // minisegs don't count.
                        lin->L_frontside && lin->L_backside) // Must be twosided.
                     {
-                        sector_t       *back;
-                        sidedef_t         *sid, *frontsid, *backsid;
+                        sector_t           *back;
+                        sidedef_t          *sid, *frontsid, *backsid;
 
                         // Check the vertex line owners for both verts.
                         // We are only interested in lines that do NOT share either vertex
@@ -541,11 +541,11 @@ static void R_SetSectorLinks(sector_t *sec)
  */
 void R_InitSkyFix(void)
 {
-    float       f, b;
-    float      *fix;
-    uint        i;
-    mobj_t     *it;
-    sector_t   *sec;
+    float               f, b;
+    float              *fix;
+    uint                i;
+    mobj_t             *it;
+    sector_t           *sec;
 
     for(i = 0; i < numSectors; ++i)
     {
@@ -581,11 +581,11 @@ void R_InitSkyFix(void)
 
 static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
 {
-    float       f, b;
-    float       height = 0;
-    boolean     adjusted = false;
-    float      *fix = NULL;
-    sector_t   *adjustSec = NULL;
+    float               f, b;
+    float               height = 0;
+    boolean             adjusted = false;
+    float              *fix = NULL;
+    sector_t           *adjustSec = NULL;
 
     // Both the front and back surfaces must be sky on this plane.
     if(!R_IsSkySurface(&front->planes[pln]->surface) ||
@@ -619,7 +619,7 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
             adjusted = true;
         }
     }
-    else // its the floor.
+    else // Its the floor.
     {
         if(f > b)
         {
@@ -780,22 +780,21 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
         // We need to check all the linedefs.
         for(i = 0; i < numLineDefs; ++i)
         {
-            linedef_t     *line = LINE_PTR(i);
-            sector_t   *front = (line->L_frontside? line->L_frontsector : NULL);
-            sector_t   *back = (line->L_backside? line->L_backsector : NULL);
+            linedef_t          *line = LINE_PTR(i);
 
             // The conditions: must have two sides.
-            if(!front || !back)
+            if(!line->L_frontside || !line->L_backside)
                 continue;
 
-            if(front != back) // its a normal two sided line
+            if(line->L_frontsector != line->L_backsector)
             {
-                // Perform the skyfix as usual using the front and back sectors
-                // of THIS line for comparing.
+                // Perform the skyfix as usual using the front and back
+                // sectors of THIS line for comparing.
                 for(pln = 0; pln < 2; ++pln)
                 {
                     if(doFix[pln])
-                        if(doSkyFix(front, back, pln))
+                        if(doSkyFix(line->L_frontsector, line->L_backsector,
+                                    pln))
                             adjusted[pln] = true;
                 }
             }
@@ -805,8 +804,8 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
                 // the same height on the front and back so we need to find
                 // the neighbouring lines either side of this and compare
                 // the front and back sectors of those instead.
-                uint        j;
-                vertex_t   *vtx[2];
+                uint                j;
+                vertex_t           *vtx[2];
 
                 vtx[0] = line->L_v1;
                 vtx[1] = line->L_v2;
@@ -825,8 +824,8 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
 }
 
 /**
- * @return          Ptr to the lineowner for this line for this vertex else
- *                  @c NULL.
+ * @return              Ptr to the lineowner for this line for this vertex
+ *                      else @c NULL.
  */
 lineowner_t* R_GetVtxLineOwner(const vertex_t *v, const linedef_t *line)
 {
@@ -1408,7 +1407,7 @@ static void initPlaneIllumination(subsector_t *ssec, uint planeID)
 
 static void initSSecPlanes(subsector_t *ssec)
 {
-    uint        i;
+    uint                i;
 
     // Allocate the subsector plane info array.
     ssec->planes =
@@ -1418,6 +1417,8 @@ static void initSSecPlanes(subsector_t *ssec)
     {
         ssec->planes[i] =
             Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
+        ssec->planes[i]->planeID = i;
+        ssec->planes[i]->type = PLN_MID;
 
         // Initialize the illumination for the subsector.
         initPlaneIllumination(ssec, i);
@@ -1431,25 +1432,25 @@ static void initSSecPlanes(subsector_t *ssec)
 
 static void prepareSubsectorForBias(subsector_t *ssec)
 {
-    seg_t         **segPtr;
+    seg_t             **segPtr;
 
     initSSecPlanes(ssec);
 
     segPtr = ssec->segs;
     while(*segPtr)
     {
-        uint            i;
-        seg_t          *seg = *segPtr;
+        uint                i;
+        seg_t              *seg = *segPtr;
 
         for(i = 0; i < i; ++i)
         {
-            uint        j;
+            uint            j;
 
             for(j = 0; j < 3; ++j)
             {
-                uint        n;
-                seg->illum[j][i].flags = VIF_STILL_UNSEEN;
+                uint            n;
 
+                seg->illum[j][i].flags = VIF_STILL_UNSEEN;
                 for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
                 {
                     seg->illum[j][i].casted[n].source = -1;
@@ -1463,8 +1464,8 @@ static void prepareSubsectorForBias(subsector_t *ssec)
 
 void R_PrepareForBias(gamemap_t *map)
 {
-    uint            i;
-    uint            starttime = Sys_GetRealTime();
+    uint                i;
+    uint                starttime = Sys_GetRealTime();
 
     Con_Message("prepareForBias: Processing...\n");
 
@@ -1480,51 +1481,15 @@ void R_PrepareForBias(gamemap_t *map)
              (Sys_GetRealTime() - starttime) / 1000.0f));
 }
 
-
-/*boolean DD_SubContainTest(sector_t *innersec, sector_t *outersec)
-   {
-   uint i, k;
-   boolean contained;
-   float in[4], out[4];
-   subsector_t *isub, *osub;
-
-   // Test each subsector of innersec against all subsectors of outersec.
-   for(i=0; i<numSSectors; i++)
-   {
-   isub = SUBSECTOR_PTR(i);
-   contained = false;
-   // Only accept innersec's subsectors.
-   if(isub->sector != innersec) continue;
-   for(k=0; k<numSSectors && !contained; k++)
-   {
-   osub = SUBSECTOR_PTR(i);
-   // Only accept outersec's subsectors.
-   if(osub->sector != outersec) continue;
-   // Test if isub is inside osub.
-   if(isub->bBox[BLEFT] >= osub->bBox[BLEFT]
-   && isub->bBox[BRIGHT] <= osub->bBox[BRIGHT]
-   && isub->bBox[BTOP] >= osub->bBox[BTOP]
-   && isub->bBox[BBOTTOM] <= osub->bBox[BBOTTOM])
-   {
-   // This is contained.
-   contained = true;
-   }
-   }
-   if(!contained) return false;
-   }
-   // All tested subsectors were contained!
-   return true;
-   } */
-
 /**
  * The test is done on subsectors.
  */
 static sector_t *getContainingSectorOf(gamemap_t *map, sector_t *sec)
 {
-    uint        i;
-    float       cdiff = -1, diff;
-    float       inner[4], outer[4];
-    sector_t   *other, *closest = NULL;
+    uint                i;
+    float               cdiff = -1, diff;
+    float               inner[4], outer[4];
+    sector_t           *other, *closest = NULL;
 
     memcpy(inner, sec->bBox, sizeof(inner));
 
@@ -1535,7 +1500,7 @@ static sector_t *getContainingSectorOf(gamemap_t *map, sector_t *sec)
             continue;
 
         if(other == sec)
-            continue;           // Don't try on self!
+            continue; // Don't try on self!
 
         memcpy(outer, other->bBox, sizeof(outer));
         if(inner[BOXLEFT]  >= outer[BOXLEFT] &&
@@ -1543,10 +1508,6 @@ static sector_t *getContainingSectorOf(gamemap_t *map, sector_t *sec)
            inner[BOXTOP]   <= outer[BOXTOP] &&
            inner[BOXBOTTOM]>= outer[BOXBOTTOM])
         {
-            // Inside! Now we must test each of the subsectors. Otherwise
-            // we can't be sure...
-            /*if(DD_SubContainTest(sec, other))
-               { */
             // Sec is totally and completely inside other!
             diff = M_BoundingBoxDiff(inner, outer);
             if(cdiff < 0 || diff <= cdiff)
@@ -1554,7 +1515,6 @@ static sector_t *getContainingSectorOf(gamemap_t *map, sector_t *sec)
                 closest = other;
                 cdiff = diff;
             }
-            //}
         }
     }
     return closest;
@@ -1562,7 +1522,7 @@ static sector_t *getContainingSectorOf(gamemap_t *map, sector_t *sec)
 
 void R_BuildSectorLinks(gamemap_t *map)
 {
-#define DOMINANT_SIZE 1000
+#define DOMINANT_SIZE   1000
 
     uint                i;
 
@@ -1611,28 +1571,29 @@ void R_BuildSectorLinks(gamemap_t *map)
         }
 
         // Is this sector large enough to be a dominant light source?
-        if(sec->lightSource == NULL &&
-           (R_IsSkySurface(&sec->SP_ceilsurface) ||
-            R_IsSkySurface(&sec->SP_floorsurface)) &&
+        if(sec->lightSource == NULL && sec->planeCount > 0 &&
            sec->bBox[BOXRIGHT] - sec->bBox[BOXLEFT]   > DOMINANT_SIZE &&
            sec->bBox[BOXTOP]   - sec->bBox[BOXBOTTOM] > DOMINANT_SIZE)
         {
-            // All sectors touching this one will be affected.
-            for(k = 0; k < sec->lineDefCount; ++k)
+            if(R_SectorContainsSkySurfaces(sec))
             {
-                lin = sec->lineDefs[k];
-                other = lin->L_frontsector;
-                if(!other || other == sec)
+                // All sectors touching this one will be affected.
+                for(k = 0; k < sec->lineDefCount; ++k)
                 {
-                    if(lin->L_backside)
+                    lin = sec->lineDefs[k];
+                    other = lin->L_frontsector;
+                    if(!other || other == sec)
                     {
-                        other = lin->L_backsector;
-                        if(!other || other == sec)
-                            continue;
+                        if(lin->L_backside)
+                        {
+                            other = lin->L_backsector;
+                            if(!other || other == sec)
+                                continue;
+                        }
                     }
-                }
 
-                other->lightSource = sec;
+                    other->lightSource = sec;
+                }
             }
         }
     }
@@ -1790,6 +1751,7 @@ void R_SetupLevel(int mode, int flags)
                 subsector_t        *ssec =
                     R_PointInSubsector(plr->mo->pos[VX], plr->mo->pos[VY]);
 
+                //// \fixme $nplanes
                 if(ssec &&
                    plr->mo->pos[VZ] > ssec->sector->SP_floorheight + 4 &&
                    plr->mo->pos[VZ] < ssec->sector->SP_ceilheight - 4)
@@ -1994,6 +1956,31 @@ boolean R_IsNonGlowingPlane(const sector_t* sector, int plane)
              R_IsSkySurface(&sector->SP_planesurface(plane)));
 }
 
+/**
+ * Does the specified sector contain any sky surfaces?
+ *
+ * @return              @c true, if one or more surfaces in the given sector
+ *                      use the special sky mask material.
+ */
+boolean R_SectorContainsSkySurfaces(const sector_t *sec)
+{
+    uint                i;
+    boolean             sectorContainsSkySurfaces;
+
+    // Does this sector feature any sky surfaces?
+    sectorContainsSkySurfaces = false;
+    i = 0;
+    do
+    {
+        if(R_IsSkySurface(&sec->SP_planesurface(i)))
+            sectorContainsSkySurfaces = true;
+        else
+            i++;
+    } while(!sectorContainsSkySurfaces && i < sec->planeCount);
+
+    return sectorContainsSkySurfaces;
+}
+
 void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 {
     uint                i, j;
@@ -2059,6 +2046,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
                 if(!player->inGame || !player->mo || !player->mo->subsector)
                     continue;
 
+                //// \fixme $nplanes
                 if((player->flags & DDPF_CAMERA) &&
                    player->mo->subsector->sector == sec &&
                    (player->mo->pos[VZ] > sec->SP_ceilheight ||
@@ -2084,7 +2072,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
     if(!(sec->flags & SECF_PERMANENTLINK)) // Assign new links
     {
-        // Only floor and ceiling can be linked, not all inbetween
+        // Only floor and ceiling can be linked, not all in between.
         for(i = 0; i < sec->subsGroupCount; ++i)
         {
             ssecgroup_t *ssgrp = &sec->subsGroups[i];
@@ -2108,17 +2096,16 @@ void R_UpdatePlanes(void)
 /**
  * Sector light color may be affected by the sky light color.
  */
-const float *R_GetSectorLightColor(sector_t *sector)
+const float *R_GetSectorLightColor(const sector_t *sector)
 {
-    sector_t   *src;
-    uint        i;
-
     if(!rendSkyLight || noSkyColorGiven)
-        return sector->rgb;     // The sector's real color.
+        return sector->rgb; // The sector's real color.
 
-    if(!R_IsSkySurface(&sector->SP_ceilsurface) &&
-       !R_IsSkySurface(&sector->SP_floorsurface))
+    if(R_SectorContainsSkySurfaces(sector))
     {
+        uint                c;
+        sector_t           *src;
+
         // A dominant light source affects this sector?
         src = sector->lightSource;
         if(src && src->lightLevel >= sector->lightLevel)
@@ -2134,11 +2121,12 @@ const float *R_GetSectorLightColor(sector_t *sector)
         }
         else
         {
-            for(i = 0; i < 3; ++i)
-                balancedRGB[i] = sector->rgb[i] * skyColorBalance;
+            for(c = 0; c < 3; ++c)
+                balancedRGB[c] = sector->rgb[c] * skyColorBalance;
             return balancedRGB;
         }
     }
+
     // Return the sky color.
     return skyColorRGB;
 }

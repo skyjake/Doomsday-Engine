@@ -464,11 +464,12 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel,
     }
 }
 
-void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
+void RL_PreparePlane(rendpoly_t *poly, float height,
                      subsector_t *subsector, float sectorLight,
+                     boolean antiClockwise,
                      const float *sectorLightColor, float *surfaceColor)
 {
-    uint        i, vid;
+    uint                i, vid;
 
     // First vertex is always #0.
     poly->vertices[0].pos[VX] = subsector->vertices[0]->pos[VX];
@@ -476,22 +477,23 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
     poly->vertices[0].pos[VZ] = height;
 
     // Copy the vertices in reverse order for ceilings (flip faces).
-    if(plane->type == PLN_CEILING)
+    if(antiClockwise)
         vid = poly->numVertices - 1;
     else
         vid = 1;
+
     for(i = 1; i < poly->numVertices; ++i)
     {
         poly->vertices[i].pos[VX] = subsector->vertices[vid]->pos[VX];
         poly->vertices[i].pos[VY] = subsector->vertices[vid]->pos[VY];
         poly->vertices[i].pos[VZ] = height;
 
-        (plane->type == PLN_CEILING? vid-- : vid++);
+        (antiClockwise? vid-- : vid++);
     }
 
     if(!(poly->flags & RPF_SKY_MASK))
     {
-        float       vColor[] = { 0, 0, 0, 0};
+        float               vColor[] = { 0, 0, 0, 0};
 
         // Calculate the color for each vertex, blended with plane color?
         if(surfaceColor[0] < 1 || surfaceColor[1] < 1 || surfaceColor[2] < 1)
@@ -505,7 +507,8 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
         else
         {
             // Use sector light+color only
-            RL_VertexColors(poly, sectorLight, -1, sectorLightColor, surfaceColor[3]);
+            RL_VertexColors(poly, sectorLight, -1, sectorLightColor,
+                            surfaceColor[3]);
         }
     }
 }

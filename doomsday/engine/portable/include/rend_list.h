@@ -51,9 +51,9 @@ void            RL_Init(void);
 void            RL_ClearLists(void);
 void            RL_DeleteLists(void);
 void            RL_AddPoly(rendpoly_t *poly);
-void            RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly,
-                                float height, subsector_t *subsector,
-                                float sectorLight,
+void            RL_PreparePlane(rendpoly_t *poly, float height,
+                                subsector_t *subsector, float sectorLight,
+                                boolean antiClockwise,
                                 const float *sectorLightColor,
                                 float *surfaceColor);
 void            RL_VertexColors(rendpoly_t *poly, float lightlevel,

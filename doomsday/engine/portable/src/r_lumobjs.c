@@ -157,13 +157,13 @@ static void linkObjToSubSector(objcontact_t *node, uint index)
  * Create a new objcontact for the given. If there are free nodes in the
  * list of unused nodes, the new contact is taken from there.
  *
- * @param data      Ptr to the object the contact is required for.
+ * @param data          Ptr to the object the contact is required for.
  *
- * @return          Ptr to the new objcontact.
+ * @return              Ptr to the new objcontact.
  */
 static objcontact_t *newContact(void *data)
 {
-    objcontact_t *con;
+    objcontact_t       *con;
 
     if(contCursor == NULL)
     {
@@ -186,7 +186,7 @@ static objcontact_t *newContact(void *data)
 /**
  * \note: No bounds checking, it is assumed callers know what they are doing.
  *
- * @return          Ptr to the lumnode at the given index.
+ * @return              Ptr to the lumnode at the given index.
  */
 static __inline lumlink_t *getLumNode(uint idx)
 {
@@ -195,8 +195,8 @@ static __inline lumlink_t *getLumNode(uint idx)
 
 void LO_InitForMap(void)
 {
-    gamemap_t  *map = P_GetCurrentMap();
-    float       min[3], max[3];
+    gamemap_t          *map = P_GetCurrentMap();
+    float               min[3], max[3];
 
     // First initialize the subsector links (root pointers).
     loSubLinks =
@@ -273,7 +273,7 @@ void LO_ClearForFrame(void)
 }
 
 /**
- * @return          The number of active lumobjs for this frame.
+ * @return              The number of active lumobjs for this frame.
  */
 uint LO_GetNumLuminous(void)
 {
@@ -283,11 +283,11 @@ uint LO_GetNumLuminous(void)
 /**
  * Allocate a new lumobj.
  *
- * @return          Index (name) by which the lumobj should be referred.
+ * @return              Index (name) by which the lumobj should be referred.
  */
 uint LO_NewLuminous(lumtype_t type)
 {
-    lumlink_t  *node, *newList;
+    lumlink_t          *node, *newList;
 
     numLuminous++;
 
@@ -326,7 +326,7 @@ uint LO_NewLuminous(lumtype_t type)
  * Retrieve a ptr to the lumobj with the given index. A public interface to
  * the lumobj list.
  *
- * @return          Ptr to the lumobj with the given 1-based index.
+ * @return              Ptr to the lumobj with the given 1-based index.
  */
 lumobj_t *LO_GetLuminous(uint idx)
 {
@@ -340,10 +340,10 @@ lumobj_t *LO_GetLuminous(uint idx)
 /**
  * Must we use a dynlight to represent the given light?
  *
- * @param def       Ptr to the ded_light to examine.
+ * @param def           Ptr to the ded_light to examine.
  *
- * @return          @c true, if we HAVE to use a dynamic light for this
- *                  light defintion (as opposed to a bias light source).
+ * @return              @c true, if we HAVE to use a dynamic light for this
+ *                      light defintion (as opposed to a bias light source).
  */
 static boolean mustUseDynamic(ded_light_t *def)
 {
@@ -358,23 +358,23 @@ static boolean mustUseDynamic(ded_light_t *def)
  * Registers the given mobj as a luminous, light-emitting object.
  * NOTE: This is called each frame for each luminous object!
  *
- * @param mo        Ptr to the mobj to register.
+ * @param mo            Ptr to the mobj to register.
  */
 void LO_AddLuminous(mobj_t *mo)
 {
-    int         lump;
-    uint        i;
-    float       mul;
-    float       xOff;
-    float       center;
-    int         flags = 0;
-    int         radius, flareSize;
-    float       rgb[3];
-    lumobj_t   *l;
-    lightconfig_t cf;
-    ded_light_t *def = 0;
-    spritedef_t *sprdef;
-    spriteframe_t *sprframe;
+    int                 lump;
+    uint                i;
+    float               mul;
+    float               xOff;
+    float               center;
+    int                 flags = 0;
+    int                 radius, flareSize;
+    float               rgb[3];
+    lumobj_t           *l;
+    lightconfig_t       cf;
+    ded_light_t        *def = 0;
+    spritedef_t        *sprdef;
+    spriteframe_t      *sprframe;
 
     // Has BIAS lighting been disabled?
     // If this mobj has aquired a BIAS source we need to delete it.
@@ -601,7 +601,7 @@ void LO_AddLuminous(mobj_t *mo)
 
 boolean LOIT_LinkObjToSubSector(subsector_t *subsector, void *data)
 {
-    objcontact_t *con = newContact(data);
+    objcontact_t       *con = newContact(data);
 
     // Link it to the contact list for this subsector.
     linkObjToSubSector(con, GET_SUBSECTOR_IDX(subsector));
@@ -614,9 +614,9 @@ boolean LOIT_LinkObjToSubSector(subsector_t *subsector, void *data)
  * bounding box, looking for those which are close enough to be lit by the
  * given lumobj. For each, register a subsector > lumobj "contact".
  *
- * @param lum       Ptr to the lumobj hoping to contact the sector.
- * @param box       Subsectors within this bounding box will be processed.
- * @param sector    Ptr to the sector to check for contacts.
+ * @param lum           Ptr to the lumobj hoping to contact the sector.
+ * @param box           Subsectors within this bounding box will be processed.
+ * @param sector        Ptr to the sector to check for contacts.
  */
 static void contactSector(lumobj_t *lum, const arvec2_t box, sector_t *sector)
 {
@@ -627,19 +627,19 @@ static void contactSector(lumobj_t *lum, const arvec2_t box, sector_t *sector)
  * Attempt to spread the light from the given contact over a twosided
  * linedef, into the (relative) back sector.
  *
- * @param line      Ptr to linedef to attempt to spread over.
- * @param data      Ptr to contactfinder_data structure.
+ * @param line          Ptr to linedef to attempt to spread over.
+ * @param data          Ptr to contactfinder_data structure.
  *
- * @return          @c true, because this function is also used as an
- *                  iterator.
+ * @return              @c true, because this function is also used as an
+ *                      iterator.
  */
 boolean LOIT_ContactFinder(linedef_t *line, void *data)
 {
     contactfinder_data_t *light = data;
-    sector_t   *source, *dest;
-    float       distance;
-    vertex_t   *vtx;
-    lumobj_t   *l;
+    sector_t           *source, *dest;
+    float               distance;
+    vertex_t           *vtx;
+    lumobj_t           *l;
 
     if(light->lum->type != LT_OMNI)
         return true; // Only interested in omni lights.
@@ -740,15 +740,15 @@ boolean LOIT_ContactFinder(linedef_t *line, void *data)
  * source is contacting (tests done on bounding boxes and the sector
  * spread test).
  *
- * @param lum       Ptr to lumobj to find subsector contacts for.
+ * @param lum           Ptr to lumobj to find subsector contacts for.
  */
 static void findContacts(lumobj_t *lum)
 {
-    int         firstValid;
+    int                 firstValid;
     contactfinder_data_t light;
-    vec2_t      point;
-    float       radius;
-    static uint numSpreads = 0, numFinds = 0;
+    vec2_t              point;
+    float               radius;
+    static uint         numSpreads = 0, numFinds = 0;
 
     if(lum->type != LT_OMNI)
         return; // Only omni lights spread.
@@ -805,9 +805,9 @@ if(!((numFinds + 1) % 1000))
  */
 static void spreadLumobjsInSubSector(subsector_t *subsector)
 {
-    int         xl, xh, yl, yh, x, y;
-    int        *count;
-    lumlink_t  *iter;
+    int                 xl, xh, yl, yh, x, y;
+    int                *count;
+    lumlink_t          *iter;
 
     xl = X_TO_DLBX(FLT2FIX(subsector->bBox[0].pos[VX] - loMaxRadius));
     xh = X_TO_DLBX(FLT2FIX(subsector->bBox[1].pos[VX] + loMaxRadius));
@@ -848,8 +848,8 @@ static void spreadLumobjsInSubSector(subsector_t *subsector)
  */
 static int C_DECL lumobjSorter(const void *e1, const void *e2)
 {
-    lumobj_t *lum1 = &getLumNode(*(const ushort *) e1)->lum;
-    lumobj_t *lum2 = &getLumNode(*(const ushort *) e2)->lum;
+    lumobj_t           *lum1 = &getLumNode(*(const ushort *) e1)->lum;
+    lumobj_t           *lum2 = &getLumNode(*(const ushort *) e2)->lum;
 
     if(lum1->distanceToViewer > lum2->distanceToViewer)
         return 1;
@@ -868,10 +868,10 @@ static void linkLuminous(void)
 {
 #define MAX_LUMS 8192           // Normally 100-200, heavy: 1000
 
-    int         bx, by;
-    uint        i,  num = numLuminous;
-    lumlink_t **root, *node;
-    ushort      order[MAX_LUMS];
+    int                 bx, by;
+    uint                i,  num = numLuminous;
+    lumlink_t         **root, *node;
+    ushort              order[MAX_LUMS];
 
     // Should the proper order be determined?
     if(loMaxLumobjs)
@@ -915,7 +915,7 @@ static void linkLuminous(void)
  * Perform any processing needed before we can draw surfaces within the
  * specified subsector with dynamic lights.
  *
- * @param ssec      Ptr to the subsector to process.
+ * @param ssec          Ptr to the subsector to process.
  */
 void LO_InitForSubsector(subsector_t *ssec)
 {
@@ -934,17 +934,17 @@ void LO_InitForSubsector(subsector_t *ssec)
  */
 static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
 {
-    uint        g;
-    plane_t    *glowPlanes[2], *pln;
+    uint                g;
+    plane_t            *glowPlanes[2], *pln;
 
     glowPlanes[PLN_FLOOR] = R_GetLinkedSector(ssec, PLN_FLOOR)->planes[PLN_FLOOR];
     glowPlanes[PLN_CEILING] = R_GetLinkedSector(ssec, PLN_CEILING)->planes[PLN_CEILING];
 
-    // \fixme $nplanes
+    //// \fixme $nplanes
     for(g = 0; g < 2; ++g)
     {
-        uint        light;
-        lumobj_t   *l;
+        uint                light;
+        lumobj_t           *l;
 
         pln = glowPlanes[g];
 
@@ -989,9 +989,9 @@ static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
  */
 void LO_InitForNewFrame(void)
 {
-    uint        i;
-    sector_t   *seciter;
-    mobj_t     *iter;
+    uint                i;
+    sector_t           *seciter;
+    mobj_t             *iter;
 
 BEGIN_PROF( PROF_DYN_INIT_DEL );
 
@@ -1040,7 +1040,7 @@ boolean LO_IterateSubsectorContacts(subsector_t *ssec,
                                     boolean (*func) (void *, void *),
                                     void *data)
 {
-    objcontact_t   *con;
+    objcontact_t       *con;
 
     for(con = subContacts[GET_SUBSECTOR_IDX(ssec)]; con; con = con->next)
     {
@@ -1074,20 +1074,20 @@ boolean LOIT_RadiusLumobjs(lumobj_t *lum, void *data)
 /**
  * Calls func for all luminous objects within the specified origin range.
  *
- * @param subsector The subsector in which the origin resides.
- * @param x         X coordinate of the origin (must be within subsector).
- * @param y         Y coordinate of the origin (must be within subsector).
- * @param radius    Radius of the range around the origin point.
- * @param data      Ptr to pass to the callback.
- * @param func      Callback to make for each object.
+ * @param subsector     The subsector in which the origin resides.
+ * @param x             X coordinate of the origin (must be within subsector).
+ * @param y             Y coordinate of the origin (must be within subsector).
+ * @param radius        Radius of the range around the origin point.
+ * @param data          Ptr to pass to the callback.
+ * @param func          Callback to make for each object.
  *
- * @return          @c true, iff every callback returns @c true, else @c false.
+ * @return              @c true, iff every callback returns @c true, else @c false.
  */
 boolean LO_LumobjsRadiusIterator(subsector_t *ssec, float x, float y,
                                  float radius, void *data,
                                  boolean (*func) (lumobj_t *, float, void *data))
 {
-    lumobjiterparams_t params;
+    lumobjiterparams_t  params;
 
     if(!ssec)
         return true;
@@ -1109,12 +1109,12 @@ boolean LO_LumobjsRadiusIterator(subsector_t *ssec, float x, float y,
  */
 void LO_ClipInSubsector(uint ssecidx)
 {
-    lumlink_t   *lumi; // Lum Iterator, or 'snow' in Finnish. :-)
+    lumlink_t          *lumi; // Lum Iterator, or 'snow' in Finnish. :-)
 
     // Determine which dynamic light sources in the subsector get clipped.
     for(lumi = loSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
     {
-        lumobj_t *lobj = &lumi->lum;
+        lumobj_t           *lobj = &lumi->lum;
 
         if(lobj->type != LT_OMNI)
             continue; // Only interested in omnilights.
@@ -1139,10 +1139,10 @@ void LO_ClipInSubsector(uint ssecidx)
  */
 void LO_ClipBySight(uint ssecidx)
 {
-    uint        num;
-    vec2_t      eye;
-    subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
-    lumlink_t  *lumi;
+    uint                num;
+    vec2_t              eye;
+    subsector_t        *ssec = SUBSECTOR_PTR(ssecidx);
+    lumlink_t          *lumi;
 
     // Only checks the polyobj.
     if(ssec->polyObj == NULL) return;
@@ -1152,21 +1152,21 @@ void LO_ClipBySight(uint ssecidx)
     num = ssec->polyObj->numSegs;
     for(lumi = loSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
     {
-        lumobj_t   *lobj = &lumi->lum;
+        lumobj_t           *lobj = &lumi->lum;
 
         if(!(lobj->flags & LUMF_CLIPPED))
         {
-            uint        i;
+            uint                i;
             // We need to figure out if any of the polyobj's segments lies
             // between the viewpoint and the light source.
             for(i = 0; i < num; ++i)
             {
-                seg_t      *seg = ssec->polyObj->segs[i];
+                seg_t              *seg = ssec->polyObj->segs[i];
 
                 // Ignore segs facing the wrong way.
                 if(seg->frameFlags & SEGINF_FACINGFRONT)
                 {
-                    vec2_t      source;
+                    vec2_t              source;
 
                     V2_Set(source, lobj->pos[VX], lobj->pos[VY]);
 

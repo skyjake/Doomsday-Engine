@@ -1047,15 +1047,19 @@ boolean TransferMap(void)
     for(i = 0; i < map->numSectors; ++i)
     {
         msector_t          *sec = &map->sectors[i];
-        MPE_SectorCreate((float) sec->lightLevel / 255.0f, 1, 1, 1,
-                         sec->floorHeight,
-                         map->materials[sec->floorMaterial]->name,
-                         (map->materials[sec->floorMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
-                         0, 0, 1, 1, 1,
-                         sec->ceilHeight,
-                         map->materials[sec->ceilMaterial]->name,
-                         (map->materials[sec->ceilMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
-                         0, 0, 1, 1, 1);
+        uint                sectorIDX;
+
+        sectorIDX =
+            MPE_SectorCreate((float) sec->lightLevel / 255.0f, 1, 1, 1);
+
+        MPE_PlaneCreate(sectorIDX, sec->floorHeight,
+                        map->materials[sec->floorMaterial]->name,
+                        (map->materials[sec->floorMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
+                        0, 0, 1, 1, 1, 1, 0, 0, 1);
+        MPE_PlaneCreate(sectorIDX, sec->ceilHeight,
+                        map->materials[sec->ceilMaterial]->name,
+                        (map->materials[sec->ceilMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
+                        0, 0, 1, 1, 1, 1, 0, 0, -1);
     }
 
     for(i = 0; i < map->numLines; ++i)

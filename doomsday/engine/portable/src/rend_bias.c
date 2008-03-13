@@ -538,17 +538,18 @@ static float SB_Dot(source_t *src, float point[3], float normal[3])
  */
 void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
 {
-    subsector_t *subsector = SUBSECTOR_PTR(sub);
-    uint        i, k;
-    vec2_t      delta;
-    float       point[3];
-    source_t   *src;
-    float       distance = 0, len, dot;
-    float       intensity;
-    affection_t *aff;
+    subsector_t        *subsector = SUBSECTOR_PTR(sub);
+    uint                i, k;
+    vec2_t              delta;
+    float               point[3];
+    source_t           *src;
+    float               distance = 0, len, dot;
+    float               intensity;
+    affection_t        *aff;
 
     // If the data is already up to date, nothing needs to be done.
-    if(subsector->planes[PLN_FLOOR]->updated == lastChangeOnFrame || !updateAffected)
+    if(subsector->planes[PLN_FLOOR]->updated == lastChangeOnFrame ||
+       !updateAffected)
         return;
 
     // \fixme NOT optimal.
@@ -865,19 +866,17 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
 /**
  * Poly can be a either a wall or a plane (ceiling or a floor).
  *
- * Parameters:
- *
- * poly             Rendering polygon (wall or plane).
- * illumination     Illumination for each corner of the polygon.
- * tracker          Tracker of all the changed lights for this polygon.
- * mapElementIndex  Index of the seg or subsector in the global arrays.
+ * @param poly          Rendering polygon (wall or plane).
+ * @param illumination  Illumination for each corner of the polygon.
+ * @param tracker       Tracker of all the changed lights for this polygon.
+ * @param mapElementIndex  Index of the seg or subsector in the global arrays.
  */
 void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
                  vertexillum_t *illumination, biastracker_t *tracker,
                  biasaffection_t *affected, uint mapElementIndex)
 {
-    uint        i;
-    boolean     forced;
+    uint                i;
+    boolean             forced;
 
     if(!useBias)
         return;

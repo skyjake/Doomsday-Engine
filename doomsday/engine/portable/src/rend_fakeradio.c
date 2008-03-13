@@ -1184,7 +1184,7 @@ static uint radioEdgeHackType(linedef_t *line, sector_t *front,
 static void radioAddShadowEdge(const linedef_t *line, byte side,
                                vec2_t inner[2], vec2_t outer[2], float z,
                                float darkness, float sideOpen[2],
-                               boolean isCeiling)
+                               float normal[3])
 {
     static const uint   floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static const uint   ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
@@ -1219,12 +1219,12 @@ static void radioAddShadowEdge(const linedef_t *line, byte side,
     q->lightListIdx = 0;
     memset(q->vertices, 0, q->numVertices * sizeof(rendpoly_vertex_t));
 
-    q->normal[0] = 0;
-    q->normal[1] = 0;
-    q->normal[2] = (isCeiling? -1 : 1);
+    q->normal[0] = normal[VX];
+    q->normal[1] = normal[VY];
+    q->normal[2] = normal[VZ];
 
     vtx = q->vertices;
-    idx = (isCeiling ? ceilIndices[wind] : floorIndices[wind]);
+    idx = (normal[VZ] > 0 ? floorIndices[wind] : ceilIndices[wind]);
 
     // Left outer corner.
     vtx[idx[0]].pos[VX] = vtx0->V_pos[VX];
@@ -1454,7 +1454,7 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             }
 
             radioAddShadowEdge(line, side, inner, outer, plnHeight,
-                               1 - open, sideOpen, pln);
+                               1 - open, sideOpen, suf->normal);
         }
     }
 

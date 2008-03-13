@@ -67,15 +67,12 @@ uint            MPE_SidedefCreate(uint sector, short flags,
                                   float bottomBlue);
 uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
                                   int flags);
-uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue,
-                                 float floorHeight, const char *floorMaterial,
-                                 materialtype_t floorMaterialType, float floorOffsetX,
-                                 float floorOffsetY, float floorRed, float floorGreen,
-                                 float floorBlue, float ceilHeight,
-                                 const char *ceilMaterial,
-                                 materialtype_t ceilMaterialType, float ceilOffsetX,
-                                 float ceilOffsetY, float ceilRed, float ceilGreen,
-                                 float ceilBlue);
+uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
+uint            MPE_PlaneCreate(uint sector, float height,
+                                const char *material, materialtype_t materialType,
+                                float matOffsetX, float matOffsetY,
+                                float r, float g, float b, float a,
+                                float normalX, float normalY, float normalZ);
 uint            MPE_PolyobjCreate(uint *lines, uint linecount,
                                   int tag, int sequenceType, float startX, float startY);
 

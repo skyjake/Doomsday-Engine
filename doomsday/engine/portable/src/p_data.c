@@ -127,9 +127,9 @@ void P_InitData(void)
  */
 void P_PlaneChanged(sector_t *sector, uint plane)
 {
-    uint        i;
-    subsector_t **ssecp;
-    sidedef_t     *front = NULL, *back = NULL;
+    uint                i;
+    subsector_t       **ssecp;
+    sidedef_t          *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
     sector->planes[plane]->soundOrg.pos[VZ] = sector->planes[plane]->height;
@@ -148,8 +148,10 @@ void P_PlaneChanged(sector_t *sector, uint plane)
 
         /**
          * Do as in the original Doom if the texture has not been defined -
-         * extend the floor/ceiling to fill the space (unless its the skyflat),
-         * or if there is a midtexture use that instead.
+         * extend the floor/ceiling to fill the space (unless its the
+         * skyflat), or if there is a midtexture use that instead.
+         *
+         * \fixme $nplanes.
          */
         if(plane == PLN_FLOOR)
         {
@@ -266,28 +268,14 @@ void P_PlaneChanged(sector_t *sector, uint plane)
     }
 }
 
-/**
- * When a change is made, this must be called to inform the engine of
- * it.  Repercussions include notifications to the renderer, network...
- */
-void P_FloorChanged(sector_t *sector)
-{
-    P_PlaneChanged(sector, PLN_FLOOR);
-}
-
-void P_CeilingChanged(sector_t *sector)
-{
-    P_PlaneChanged(sector, PLN_CEILING);
-}
-
 void P_PolyobjChanged(polyobj_t *po)
 {
-    uint            i;
-    seg_t         **segPtr = po->segs;
+    uint                i;
+    seg_t             **segPtr = po->segs;
 
     for(i = 0; i < po->numSegs; ++i, segPtr++)
     {
-        seg_t          *seg = *segPtr;
+        seg_t              *seg = *segPtr;
 
         // Shadow bias must be told.
         SB_SegHasMoved(seg);
@@ -303,9 +291,9 @@ void P_PolyobjChanged(polyobj_t *po)
  */
 const char *P_GenerateUniqueMapID(const char *mapID)
 {
-    static char uid[256];
-    filename_t  base;
-    int         lump = W_GetNumForName(mapID);
+    static char         uid[256];
+    filename_t          base;
+    int                 lump = W_GetNumForName(mapID);
 
     M_ExtractFileBase(W_LumpSourceFile(lump), base);
 
@@ -318,7 +306,7 @@ const char *P_GenerateUniqueMapID(const char *mapID)
 }
 
 /**
- * @return          Ptr to the current map.
+ * @return              Ptr to the current map.
  */
 gamemap_t *P_GetCurrentMap(void)
 {

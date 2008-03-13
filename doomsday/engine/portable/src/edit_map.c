@@ -873,12 +873,13 @@ static void finishSectors(gamemap_t *map)
 
         P_GetSectorBounds(sec, min, max);
 
-        // Set the degenmobj_t to the middle of the bounding box
+        // Set the degenmobj_t to the middle of the bounding box.
         sec->soundOrg.pos[VX] = (min[VX] + max[VX]) / 2;
         sec->soundOrg.pos[VY] = (min[VY] + max[VY]) / 2;
 
-        // Set the z height of the sector sound origin
-        sec->soundOrg.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
+        // Set the z height of the sector sound origin.
+        sec->soundOrg.pos[VZ] =
+            (sec->SP_ceilheight - sec->SP_floorheight) / 2;
 
         // Set the position of the sound origin for all plane sound origins.
         // Set target heights for all planes.
@@ -1350,7 +1351,7 @@ static void hardenSidedefs(gamemap_t *dest, editmap_t *src)
 
 static void hardenSectors(gamemap_t *dest, editmap_t *src)
 {
-    uint            i;
+    uint                i, j;
 
     dest->numSectors = src->numSectors;
     dest->sectors = Z_Malloc(dest->numSectors * sizeof(sector_t), PU_LEVELSTATIC, 0);
@@ -1365,19 +1366,18 @@ static void hardenSectors(gamemap_t *dest, editmap_t *src)
         destS->planeCount = 0;
         destS->planes = NULL;
 
-        pln = R_NewPlaneForSector(destS);
-        memcpy(pln, srcS->planes[PLN_FLOOR], sizeof(*pln));
-        pln->sector = destS;
-
-        pln = R_NewPlaneForSector(destS);
-        memcpy(pln, srcS->planes[PLN_CEILING], sizeof(*pln));
-        pln->sector = destS;
+        for(j = 0; j < srcS->planeCount; ++j)
+        {
+            pln = R_NewPlaneForSector(destS);
+            memcpy(pln, srcS->planes[j], sizeof(*pln));
+            pln->sector = destS;
+        }
     }
 }
 
 static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
 {
-    uint            i;
+    uint                i;
 
     if(src->numPolyObjs == 0)
     {
@@ -1808,17 +1808,58 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     return l->buildData.index;
 }
 
-uint MPE_SectorCreate(float lightlevel, float red, float green, float blue,
-                      float floorHeight, const char *floorMaterial,
-                      materialtype_t floorMaterialType, float floorOffsetX,
-                      float floorOffsetY, float floorRed, float floorGreen,
-                      float floorBlue, float ceilHeight,
-                      const char *ceilMaterial,
-                      materialtype_t ceilMaterialType, float ceilOffsetX,
-                      float ceilOffsetY, float ceilRed, float ceilGreen,
-                      float ceilBlue)
+uint MPE_PlaneCreate(uint sector, float height, const char *material,
+                     materialtype_t materialType, float matOffsetX,
+                     float matOffsetY, float r, float g, float b, float a,
+                     float normalX, float normalY, float normalZ)
 {
-    int                 i, matIdx;
+    uint                i;
+    int                 matIdx;
+    sector_t           *s;
+    plane_t           **newList, *pln;
+
+    if(!editMapInited)
+        return 0;
+
+    if(sector > map->numSectors)
+        return 0;
+
+    s = map->sectors[sector - 1];
+
+    pln = M_Calloc(sizeof(plane_t));
+    matIdx = R_CheckMaterialNumForName(material, materialType);
+    pln->height = height;
+    pln->PS_material =
+        (matIdx == -1? NULL : R_GetMaterial(matIdx, materialType));
+    pln->PS_rgba[CR] = MINMAX_OF(0, r, 1);
+    pln->PS_rgba[CG] = MINMAX_OF(0, g, 1);
+    pln->PS_rgba[CB] = MINMAX_OF(0, b, 1);
+    pln->PS_rgba[CA] = MINMAX_OF(0, a, 1);
+    pln->PS_offset[VX] = matOffsetX;
+    pln->PS_offset[VY] = matOffsetY;
+    pln->PS_normal[VX] = normalX;
+    pln->PS_normal[VY] = normalY;
+    pln->PS_normal[VZ] = normalZ;
+    M_Normalize(pln->PS_normal);
+    pln->sector = s;
+
+    newList = M_Malloc(sizeof(plane_t*) * (++s->planeCount + 1));
+    for(i = 0; i < s->planeCount - 1; ++i)
+    {
+        newList[i] = s->planes[i];
+    }
+    newList[i++] = pln;
+    newList[i] = NULL; // Terminate.
+
+    if(s->planes)
+        M_Free(s->planes);
+    s->planes = newList;
+
+    return s->planeCount; // 1-based index.
+}
+
+uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
+{
     sector_t           *s;
 
     if(!editMapInited)
@@ -1830,50 +1871,8 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue,
     s->rgb[CG] = MINMAX_OF(0, green, 1);
     s->rgb[CB] = MINMAX_OF(0, blue, 1);
     s->lightLevel = MINMAX_OF(0, lightlevel, 1);
-    s->planeCount = 2;
-    s->planes = M_Malloc(sizeof(plane_t*) * (s->planeCount+1));
-    for(i = 0; i < 2; ++i)
-    {
-        plane_t            *pln = M_Calloc(sizeof(plane_t));
-
-        if(i == 0)
-        {
-            matIdx = R_CheckMaterialNumForName(floorMaterial, floorMaterialType);
-            pln->height = floorHeight;
-            pln->PS_material =
-                (matIdx == -1? NULL : R_GetMaterial(matIdx, floorMaterialType));
-            pln->PS_rgba[CR] = MINMAX_OF(0, ceilRed, 1);
-            pln->PS_rgba[CG] = MINMAX_OF(0, ceilGreen, 1);
-            pln->PS_rgba[CB] = MINMAX_OF(0, ceilBlue, 1);
-            pln->PS_rgba[CA] = 1;
-            pln->PS_offset[VX] = floorOffsetX;
-            pln->PS_offset[VY] = floorOffsetY;
-            pln->PS_normal[VX] = 0;
-            pln->PS_normal[VY] = 0;
-            pln->PS_normal[VZ] = 1;
-            pln->sector = s;
-        }
-        else
-        {
-            matIdx = R_CheckMaterialNumForName(ceilMaterial, ceilMaterialType);
-            pln->height = ceilHeight;
-            pln->PS_material =
-                (matIdx == -1? NULL : R_GetMaterial(matIdx, ceilMaterialType));
-            pln->PS_rgba[CR] = MINMAX_OF(0, floorRed, 1);
-            pln->PS_rgba[CG] = MINMAX_OF(0, floorGreen, 1);
-            pln->PS_rgba[CB] = MINMAX_OF(0, floorBlue, 1);
-            pln->PS_rgba[CA] = 1;
-            pln->PS_offset[VX] = ceilOffsetX;
-            pln->PS_offset[VY] = ceilOffsetY;
-            pln->PS_normal[VX] = 0;
-            pln->PS_normal[VY] = 0;
-            pln->PS_normal[VZ] = -1;
-            pln->sector = s;
-        }
-
-        s->planes[i] = pln;
-    }
-    s->planes[i] = NULL; // Terminate.
+    s->planeCount = 0;
+    s->planes = NULL;
 
     return s->buildData.index;
 }

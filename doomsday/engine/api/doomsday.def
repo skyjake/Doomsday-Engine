@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 407 <--
+; --> 408 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -124,6 +124,7 @@ EXPORTS
     MPE_SidedefCreate           @353 NONAME
     MPE_LinedefCreate           @354 NONAME
     MPE_SectorCreate            @355 NONAME
+	MPE_PlaneCreate				@408 NONAME
     MPE_PolyobjCreate           @356 NONAME
 
 ; Network.

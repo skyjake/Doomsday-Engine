@@ -414,12 +414,12 @@ float P_InterceptVector(divline_t *v2, divline_t *v1)
 }
 
 /**
- * Sets opentop and openbottom to the window through a two sided line
- * OPTIMIZE: keep this precalculated
+ * Sets opentop and openbottom to the window through a two sided line.
+ * \fixme $nplanes.
  */
 void P_LineOpening(linedef_t *linedef)
 {
-    sector_t *front, *back;
+    sector_t           *front, *back;
 
     if(!linedef->L_backside)
     {   // Single sided line.
