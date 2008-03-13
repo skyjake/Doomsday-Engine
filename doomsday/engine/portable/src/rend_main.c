@@ -78,6 +78,7 @@ extern int useDynLights, translucentIceCorpse;
 extern int skyhemispheres;
 extern int loMaxRadius;
 extern int devNoCulling;
+extern boolean firstFrameAfterLoad;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -2121,8 +2122,8 @@ static void Rend_RenderNode(uint bspnum)
     }
     else
     {
-        node_t     *bsp;
-        int         side;
+        node_t             *bsp;
+        byte                side;
 
         // Descend deeper into the nodes.
         bsp = NODE_PTR(bspnum);
@@ -2137,13 +2138,13 @@ static void Rend_RenderNode(uint bspnum)
 
 void Rend_RenderMap(void)
 {
-    binangle_t viewside;
+    binangle_t          viewside;
 
     // Set to true if dynlights are inited for this frame.
     loInited = false;
 
     // This is all the clearing we'll do.
-    if(P_IsInVoid(viewPlayer) || freezeRLs)
+    if(firstFrameAfterLoad || freezeRLs || P_IsInVoid(viewPlayer))
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     else
         glClear(GL_DEPTH_BUFFER_BIT);
