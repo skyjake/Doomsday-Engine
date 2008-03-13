@@ -121,7 +121,7 @@ enum {
 // acknowledgement times.
 #define NUM_ACK_TIMES       8
 
-// The consoleplayer's camera position is written to the demo file
+// The consolePlayer's camera position is written to the demo file
 // every 3rd tic.
 #define LOCALCAM_WRITE_TICS 3
 
@@ -245,19 +245,19 @@ typedef struct {
 // Variables
 //---------------------------------------------------------------------------
 extern boolean  firstNetUpdate;
-extern int      resend_start;      // set when server needs our tics
-extern int      resend_count;
-extern int      gametime, oldentertics;
-extern int      num_clmobjs;
+extern int      resendStart;      // set when server needs our tics
+extern int      resendCount;
+extern int      oldEnterTics;
+extern int      numClMobjs;
 extern boolean  masterAware;
-extern int      netgame;
-extern int      consoleplayer;
-extern int      displayplayer;
-extern int      realtics, availabletics;
+extern int      netGame;
+extern int      consolePlayer;
+extern int      displayPlayer;
+extern int      realTics, availableTics;
 extern int      isServer, isClient;
-extern boolean  allow_net_traffic; // Should net traffic be allowed?
-extern byte     net_dontsleep, net_ticsync;
-extern ddplayer_t ddplayers[MAXPLAYERS];
+extern boolean  allowNetTraffic; // Should net traffic be allowed?
+extern byte     netDontSleep, netTicSync;
+extern ddplayer_t ddPlayers[MAXPLAYERS];
 extern client_t clients[MAXPLAYERS];
 
 //---------------------------------------------------------------------------

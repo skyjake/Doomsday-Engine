@@ -2730,7 +2730,7 @@ static void Rend_RenderBoundingBoxes(void)
     float       alpha;
     float       eye[3];
 
-    if(!devMobjBBox || netgame)
+    if(!devMobjBBox || netGame)
         return;
 
     eye[VX] = vx;
@@ -2759,7 +2759,7 @@ static void Rend_RenderBoundingBoxes(void)
         // For every mobj in the sector's mobjList
         for(mo = sec->mobjList; mo; mo = mo->sNext)
         {
-            if(mo == players[consoleplayer].mo)
+            if(mo == players[consolePlayer].mo)
                 continue; // We don't want the console player.
 
             alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->width/2))/4);

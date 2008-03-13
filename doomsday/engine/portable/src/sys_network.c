@@ -934,9 +934,9 @@ void N_ShutdownService(void)
     if(!N_IsAvailable())
         return;                 // Nothing to do.
 
-    if(netgame)
+    if(netGame)
     {
-        // We seem to be shutting down while a netgame is running.
+        // We seem to be shutting down while a netGame is running.
         Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
                     true, false);
     }
@@ -1111,7 +1111,7 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
     IPaddress *ip;
 
     // If the server is full, attempts to connect are canceled.
-    if(Sv_GetNumConnected() >= sv_maxPlayers)
+    if(Sv_GetNumConnected() >= svMaxPlayers)
         return false;
 
     node = &netNodes[id];
@@ -1383,7 +1383,7 @@ boolean N_Connect(int index)
 
     allowSending = true;
     handshakeReceived = false;
-    netgame = true;             // Allow sending/receiving of packets.
+    netGame = true;             // Allow sending/receiving of packets.
     isServer = false;
     isClient = true;
 

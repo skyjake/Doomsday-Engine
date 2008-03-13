@@ -100,9 +100,9 @@ void Sv_TransmitFrame(void)
         return;
     }
 
-    if(!netgame)
+    if(!netGame)
     {
-        // When not running a netgame, only generate deltas when somebody
+        // When not running a netGame, only generate deltas when somebody
         // is recording a demo.
         for(i = 0; i < MAXPLAYERS; ++i)
             if(Sv_IsFrameTarget(i))

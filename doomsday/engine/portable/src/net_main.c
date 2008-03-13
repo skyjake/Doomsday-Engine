@@ -101,14 +101,14 @@ int     serverData[3];          // Some parameters passed to master server.
 //byte   *localticcmds;
 //int     numlocal;             // Number of cmds in the buffer.
 
-ddplayer_t ddplayers[MAXPLAYERS];
+ddplayer_t ddPlayers[MAXPLAYERS];
 client_t clients[MAXPLAYERS];   // All network data for the players.
 
-int     netgame;                // true if a netgame is in progress
+int     netGame;                // true if a netGame is in progress
 int     isServer;               // true if this computer is an open server.
 int     isClient;               // true if this computer is a client
-int     consoleplayer;
-int     displayplayer;
+int     consolePlayer;
+int     displayPlayer;
 
 // Gotframe is true if a frame packet has been received.
 int     gotFrame = false;
@@ -116,17 +116,17 @@ int     gotFrame = false;
 boolean firstNetUpdate = true;
 
 byte    monitorMsgQueue = false;
-byte    net_showlatencies = false;
-byte    net_dev = false;
-byte    net_dontsleep = false;
-byte    net_ticsync = true;
-float   net_connecttime;
-int     net_coordtime = 17;
-float   net_connecttimeout = 10;
+byte    netShowLatencies = false;
+byte    netDev = false;
+byte    netDontSleep = false;
+byte    netTicSync = true;
+float   netConnectTime;
+int     netCoordTime = 17;
+float   netConnectTimeout = 10;
 
 // Local packets are stored into this buffer.
-boolean reboundpacket;
-netbuffer_t reboundstore;
+boolean reboundPacket;
+netbuffer_t reboundStore;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -138,16 +138,16 @@ void Net_Register(void)
 {
     // Cvars
     C_VAR_BYTE("net-queue-show", &monitorMsgQueue, 0, 0, 1);
-    C_VAR_BYTE("net-dev", &net_dev, 0, 0, 1);
-    C_VAR_BYTE("net-nosleep", &net_dontsleep, 0, 0, 1);
+    C_VAR_BYTE("net-dev", &netDev, 0, 0, 1);
+    C_VAR_BYTE("net-nosleep", &netDontSleep, 0, 0, 1);
     C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
     C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535);
     C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0);
     C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0);
 
     // Cvars (client)
-    C_VAR_INT("client-pos-interval", &net_coordtime, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("client-connect-timeout", &net_connecttimeout, CVF_NO_MAX,
+    C_VAR_INT("client-pos-interval", &netCoordTime, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("client-connect-timeout", &netConnectTimeout, CVF_NO_MAX,
                 0, 0);
 
     // Cvars (server)
@@ -155,9 +155,9 @@ void Net_Register(void)
     C_VAR_CHARPTR("server-info", &serverInfo, 0, 0, 0);
     C_VAR_INT("server-public", &masterAware, 0, 0, 1);
     C_VAR_CHARPTR("server-password", &netPassword, 0, 0, 0);
-    C_VAR_BYTE("server-latencies", &net_showlatencies, 0, 0, 1);
+    C_VAR_BYTE("server-latencies", &netShowLatencies, 0, 0, 1);
     C_VAR_INT("server-frame-interval", &frameInterval, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("server-player-limit", &sv_maxPlayers, 0, 0, MAXPLAYERS);
+    C_VAR_INT("server-player-limit", &svMaxPlayers, 0, 0, MAXPLAYERS);
 
     // Ccmds
     C_CMD("chat", NULL, Chat);
@@ -187,12 +187,12 @@ void Net_Init(void)
     memset(&netBuffer, 0, sizeof(netBuffer));
     netBuffer.headerLength = netBuffer.msg.data - (byte *) &netBuffer.msg;
     // The game is always started in single-player mode.
-    netgame = false;
+    netGame = false;
 }
 
 void Net_Shutdown(void)
 {
-    netgame = false;
+    netGame = false;
     N_Shutdown();
     Net_DestroyArrays();
 }
@@ -228,8 +228,8 @@ void Net_SendBuffer(int toPlayer, int spFlags)
     // A rebound packet?
     if(spFlags & SPF_REBOUND)
     {
-        reboundstore = netBuffer;
-        reboundpacket = true;
+        reboundStore = netBuffer;
+        reboundPacket = true;
         return;
     }
 
@@ -248,12 +248,12 @@ void Net_SendBuffer(int toPlayer, int spFlags)
  */
 boolean Net_GetPacket(void)
 {
-    if(reboundpacket) // Local packets rebound.
+    if(reboundPacket) // Local packets rebound.
     {
-        netBuffer = reboundstore;
-        netBuffer.player = consoleplayer;
+        netBuffer = reboundStore;
+        netBuffer.player = consolePlayer;
         netBuffer.cursor = netBuffer.msg.data;
-        reboundpacket = false;
+        reboundPacket = false;
         return true;
     }
 
@@ -262,7 +262,7 @@ boolean Net_GetPacket(void)
         return Demo_ReadPacket();
     }
 
-    if(!netgame)
+    if(!netGame)
     {   // Packets cannot be received.
         return false;
     }
@@ -271,8 +271,8 @@ boolean Net_GetPacket(void)
         return false;
 
     // Are we recording a demo?
-    if(isClient && clients[consoleplayer].recording)
-        Demo_WritePacket(consoleplayer);
+    if(isClient && clients[consolePlayer].recording)
+        Demo_WritePacket(consolePlayer);
 
     // Reset the cursor for Msg_* routines.
     netBuffer.cursor = netBuffer.msg.data;
@@ -427,8 +427,8 @@ static void Net_DoUpdate(void)
         if(playback)
         {
             numlocal = 0;
-            if(availabletics < LOCALTICS)
-                availabletics++;
+            if(availableTics < LOCALTICS)
+                availableTics++;
         }
         else if(!isDedicated && !ui_active)
         {
@@ -440,15 +440,15 @@ static void Net_DoUpdate(void)
                 gx.BuildTicCmd(cmd);
 
                 // Set the time stamp. Only the lowest byte is stored.
-                //cmd->time = gametic + availabletics;
+                //cmd->time = gametic + availableTics;
 
                 // Availabletics counts the tics that have cmds.
-                availabletics++;
+                availableTics++;
                 if(isClient)
                 {
                     // When not playing a demo, this is the last command.
                     // It is used in local movement prediction.
-                    memcpy(clients[consoleplayer].lastCmd, cmd, sizeof(*cmd));
+                    memcpy(clients[consolePlayer].lastCmd, cmd, sizeof(*cmd));
                 }
             }
         }
@@ -465,11 +465,11 @@ static void Net_DoUpdate(void)
      * entirely local.
      */
     coordTimer -= newTics;
-    if(isClient && allowFrames && coordTimer < 0 && players[consoleplayer].mo)
+    if(isClient && allowFrames && coordTimer < 0 && players[consolePlayer].mo)
     {
-        mobj_t *mo = players[consoleplayer].mo;
+        mobj_t *mo = players[consolePlayer].mo;
 
-        coordTimer = net_coordtime; // 35/2
+        coordTimer = netCoordTime; // 35/2
         Msg_Begin(PKT_COORDS);
         Msg_WriteShort((short) mo->pos[VX]);
         Msg_WriteShort((short) mo->pos[VY]);
@@ -592,13 +592,13 @@ void Net_InitGame(void)
     Cl_InitID();
 
     // In single-player mode there is only player number zero.
-    consoleplayer = displayplayer = 0;
+    consolePlayer = displayPlayer = 0;
 
     // We're in server mode if we aren't a client.
     isServer = true;
 
     // Netgame is true when we're aware of the network (i.e. other players).
-    netgame = false;
+    netGame = false;
 
     players[0].inGame = true;
     players[0].flags |= DDPF_LOCAL;
@@ -610,7 +610,7 @@ void Net_InitGame(void)
 
     // Are we timing a demo here?
     if(ArgCheck("-timedemo"))
-        net_ticsync = false;
+        netTicSync = false;
 }
 
 void Net_StopGame(void)
@@ -628,13 +628,13 @@ void Net_StopGame(void)
     else
     {   // We are a connected client.
         // Must stop recording, we're disconnecting.
-        Demo_StopRecording(consoleplayer);
+        Demo_StopRecording(consolePlayer);
         Cl_CleanUp();
         isClient = false;
     }
 
     // Netgame has ended.
-    netgame = false;
+    netGame = false;
     isServer = true;
     allowSending = false;
 
@@ -656,10 +656,10 @@ void Net_StopGame(void)
     if(players[0].mo)
     {
         /* $unifiedangles */
-        players[0].mo->angle = players[consoleplayer].mo->angle;
-        players[0].lookDir = players[consoleplayer].lookDir;
+        players[0].mo->angle = players[consolePlayer].mo->angle;
+        players[0].lookDir = players[consolePlayer].lookDir;
     }
-    consoleplayer = displayplayer = 0;
+    consolePlayer = displayPlayer = 0;
     players[0].inGame = true;
     clients[0].ready = true;
     clients[0].connected = true;
@@ -853,7 +853,7 @@ void Net_Drawer(void)
     // Draw the light range debug display.
     R_DrawLightRange();
 
-    if(!net_dev && !show_blink_r && !consoleShowFPS)
+    if(!netDev && !show_blink_r && !consoleShowFPS)
         return;
 
     // Go into screen projection mode.
@@ -886,7 +886,7 @@ void Net_Drawer(void)
         FR_ShadowTextOut(buf, i - 10, 10);
     }
 
-    if(net_dev)
+    if(netDev)
     {
         /*      DGL_Color3f(1, 1, 1);
            sprintf(buf, "G%i", gametic);
@@ -1003,7 +1003,7 @@ void Net_Ticker(void /*timespan_t time*/)
     // Network event ticker.
     N_NETicker();
 
-    if(net_dev)
+    if(netDev)
     {
         static int printTimer = 0;
 
@@ -1030,14 +1030,14 @@ void Net_Ticker(void /*timespan_t time*/)
     }
 
     // The following stuff is only for netgames.
-    if(!netgame)
+    if(!netGame)
         return;
 
     // Check the pingers.
     for(i = 0, cl = clients; i < MAXPLAYERS; ++i, cl++)
     {
         // Clients can only ping the server.
-        if(!(isClient && i) && i != consoleplayer)
+        if(!(isClient && i) && i != consolePlayer)
         {
             if(cl->ping.sent)
             {
@@ -1112,7 +1112,7 @@ D_CMD(Chat)
     }
 
     // Chatting is only possible when connected.
-    if(!netgame)
+    if(!netGame)
         return false;
 
     // Too few arguments?
@@ -1156,7 +1156,7 @@ D_CMD(Chat)
         break;
     }
     Msg_Begin(PKT_CHAT);
-    Msg_WriteByte(consoleplayer);
+    Msg_WriteByte(consolePlayer);
     Msg_WriteShort(mask);
     Msg_Write(buffer, strlen(buffer) + 1);
 
@@ -1182,7 +1182,7 @@ D_CMD(Chat)
     Net_ShowChatMessage();
 
     // Inform the game, too.
-    gx.NetPlayerEvent(consoleplayer, DDPE_CHAT_MESSAGE, buffer);
+    gx.NetPlayerEvent(consolePlayer, DDPE_CHAT_MESSAGE, buffer);
     return true;
 }
 
@@ -1190,9 +1190,9 @@ D_CMD(Kick)
 {
     int     num;
 
-    if(!netgame)
+    if(!netGame)
     {
-        Con_Printf("This is not a netgame.\n");
+        Con_Printf("This is not a netGame.\n");
         return false;
     }
 
@@ -1224,12 +1224,12 @@ D_CMD(SetName)
     playerinfo_packet_t info;
 
     Con_SetString("net-name", argv[1], false);
-    if(!netgame)
+    if(!netGame)
         return true;
 
     // In netgames, a notification is sent to other players.
     memset(&info, 0, sizeof(info));
-    info.console = consoleplayer;
+    info.console = consolePlayer;
     strncpy(info.name, argv[1], PLAYERNAMELEN - 1);
 
     // Serverplayers can update their name right away.
@@ -1255,7 +1255,7 @@ D_CMD(MakeCamera)
 {
     /*  int cp;
        mobj_t *mo;
-       ddplayer_t *conp = players + consoleplayer;
+       ddplayer_t *conp = players + consolePlayer;
 
        if(argc < 2) return true;
        cp = atoi(argv[1]);
@@ -1272,7 +1272,7 @@ D_CMD(MakeCamera)
        mo->pos[VZ] = conp->mo->pos[VZ];
        mo->subsector = conp->mo->subsector;
        players[cp].mo = mo;
-       displayplayer = cp; */
+       displayPlayer = cp; */
 
     // Create a new local player.
     int         cp;
@@ -1302,7 +1302,7 @@ D_CMD(SetConsole)
 
     cp = atoi(argv[1]);
     if(players[cp].inGame)
-        consoleplayer = displayplayer = cp;
+        consolePlayer = displayPlayer = cp;
     return true;
 }
 
@@ -1336,7 +1336,7 @@ int Net_ConnectWorker(void *ptr)
             }
             else
             {   // Nothing yet, should we wait a while longer?
-                if(Sys_GetSeconds() - startTime >= net_connecttimeout)
+                if(Sys_GetSeconds() - startTime >= netConnectTimeout)
                     isDone = true;
                 else
                     Sys_Sleep(250); // Wait a while.
@@ -1372,7 +1372,7 @@ D_CMD(Connect)
         return true;
     }
 
-    if(netgame)
+    if(netGame)
     {
         Con_Printf("Already connected.\n");
         return false;
@@ -1482,16 +1482,16 @@ D_CMD(Net)
                 }
             }
 
-            Con_Printf("Network game: %s\n", netgame ? "yes" : "no");
+            Con_Printf("Network game: %s\n", netGame ? "yes" : "no");
             Con_Printf("Server: %s\n", isServer ? "yes" : "no");
             Con_Printf("Client: %s\n", isClient ? "yes" : "no");
-            Con_Printf("Console number: %i\n", consoleplayer);
+            Con_Printf("Console number: %i\n", consolePlayer);
 
             N_PrintInfo();
         }
         else if(!stricmp(argv[1], "disconnect"))
         {
-            if(!netgame)
+            if(!netGame)
             {
                 Con_Printf("This client is not connected to a server.\n");
                 return false;
@@ -1520,9 +1520,9 @@ D_CMD(Net)
         {
             if(!stricmp(argv[2], "go") || !stricmp(argv[2], "start"))
             {
-                if(netgame)
+                if(netGame)
                 {
-                    Con_Printf("Already in a netgame.\n");
+                    Con_Printf("Already in a netGame.\n");
                     return false;
                 }
 
@@ -1561,7 +1561,7 @@ D_CMD(Net)
         {
             int     idx;
 
-            if(netgame)
+            if(netGame)
             {
                 Con_Printf("Already connected.\n");
                 return false;

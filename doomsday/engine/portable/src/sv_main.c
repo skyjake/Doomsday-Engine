@@ -69,11 +69,11 @@ void    Sv_ClientCoords(int playerNum);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     net_remoteuser = 0;     // The client who is currently logged in.
-char   *net_password = "";      // Remote login password.
+int     netRemoteUser = 0; // The client who is currently logged in.
+char   *netPassword = ""; // Remote login password.
 
 // This is the limit when accepting new clients.
-int     sv_maxPlayers = MAXPLAYERS;
+int     svMaxPlayers = MAXPLAYERS;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -84,8 +84,8 @@ int     sv_maxPlayers = MAXPLAYERS;
  */
 void Sv_GetInfo(serverinfo_t *info)
 {
-    int         i;
-    gamemap_t  *currentMap = P_GetCurrentMap();
+    int                 i;
+    gamemap_t          *currentMap = P_GetCurrentMap();
 
     memset(info, 0, sizeof(*info));
 
@@ -103,10 +103,10 @@ void Sv_GetInfo(serverinfo_t *info)
     info->maxPlayers = MAXPLAYERS - (isDedicated ? 1 : 0);
 
     // Don't go over the limit.
-    if(info->maxPlayers > sv_maxPlayers)
-        info->maxPlayers = sv_maxPlayers;
+    if(info->maxPlayers > svMaxPlayers)
+        info->maxPlayers = svMaxPlayers;
 
-    info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < sv_maxPlayers);
+    info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
 
     // Identifier of the current map.
     strncpy(info->map, P_GetMapID(currentMap), sizeof(info->map) - 1);
@@ -501,27 +501,27 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
  */
 void Sv_Login(void)
 {
-    if(net_remoteuser)
+    if(netRemoteUser)
     {
         Sv_SendText(netBuffer.player, SV_CONSOLE_FLAGS,
                     "Sv_Login: A client is already logged in.\n");
         return;
     }
     // Check the password.
-    if(strcmp((char *) netBuffer.cursor, net_password))
+    if(strcmp((char *) netBuffer.cursor, netPassword))
     {
         Sv_SendText(netBuffer.player, SV_CONSOLE_FLAGS,
                     "Sv_Login: Invalid password.\n");
         return;
     }
     // OK!
-    net_remoteuser = netBuffer.player;
+    netRemoteUser = netBuffer.player;
     Con_Printf("Sv_Login: %s (client %i) logged in.\n",
-               clients[net_remoteuser].name, net_remoteuser);
+               clients[netRemoteUser].name, netRemoteUser);
     // Send a confirmation packet to the client.
     Msg_Begin(PKT_LOGIN);
     Msg_WriteByte(true);        // Yes, you're logged in.
-    Net_SendBuffer(net_remoteuser, SPF_ORDERED);
+    Net_SendBuffer(netRemoteUser, SPF_ORDERED);
 }
 
 /**
@@ -535,7 +535,7 @@ void Sv_ExecuteCommand(void)
     unsigned short len;
     boolean     silent;
 
-    if(!net_remoteuser)
+    if(!netRemoteUser)
     {
         Con_Printf
             ("Sv_ExecuteCommand: Cmd received but no one's logged in!\n");
@@ -790,8 +790,8 @@ void Sv_PlayerLeaves(unsigned int nodeID)
         return;                 // Bogus?
 
     // Log off automatically.
-    if(net_remoteuser == pNumber)
-        net_remoteuser = 0;
+    if(netRemoteUser == pNumber)
+        netRemoteUser = 0;
 
     // Print a little something in the console.
     Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left.\n",
@@ -924,21 +924,21 @@ void Sv_StartNetGame(void)
     }
     gameTime = 0;
     firstNetUpdate = true;
-    net_remoteuser = 0;
+    netRemoteUser = 0;
 
     // The server is always player number zero.
-    consoleplayer = displayplayer = 0;
+    consolePlayer = displayPlayer = 0;
 
-    netgame = true;
+    netGame = true;
     isServer = true;
     allowSending = true;
 
     if(!isDedicated)
     {
-        players[consoleplayer].inGame = true;
-        clients[consoleplayer].connected = true;
-        clients[consoleplayer].ready = true;
-        strcpy(clients[consoleplayer].name, playerName);
+        players[consolePlayer].inGame = true;
+        clients[consolePlayer].connected = true;
+        clients[consolePlayer].ready = true;
+        strcpy(clients[consolePlayer].name, playerName);
     }
 }
 
@@ -1211,15 +1211,15 @@ void Sv_ClientCoords(int playerNum)
 D_CMD(Logout)
 {
     // Only servers can execute this command.
-    if(!net_remoteuser || !isServer)
+    if(!netRemoteUser || !isServer)
         return false;
     // Notice that the server WILL execute this command when a client
     // is logged in and types "logout".
-    Sv_SendText(net_remoteuser, SV_CONSOLE_FLAGS, "Goodbye...\n");
+    Sv_SendText(netRemoteUser, SV_CONSOLE_FLAGS, "Goodbye...\n");
     // Send a logout packet.
     Msg_Begin(PKT_LOGIN);
     Msg_WriteByte(false);       // You're outta here.
-    Net_SendBuffer(net_remoteuser, SPF_ORDERED);
-    net_remoteuser = 0;
+    Net_SendBuffer(netRemoteUser, SPF_ORDERED);
+    netRemoteUser = 0;
     return true;
 }

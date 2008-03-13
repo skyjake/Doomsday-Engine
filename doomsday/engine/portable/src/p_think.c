@@ -183,7 +183,7 @@ void P_RemoveThinker(thinker_t *thinker)
 
         // If the state of the mobj is the NULL state, this is a
         // predictable mobj removal (result of animation reaching its
-        // end) and shouldn't be included in netgame deltas.
+        // end) and shouldn't be included in netGame deltas.
         if(!isClient)
         {
             if(!mo->state || mo->state == states)

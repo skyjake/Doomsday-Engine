@@ -526,7 +526,7 @@ D_CMD(BLEditor)
 
     if(!stricmp(cmd, "menu"))
     {
-        //extern int consoleplayer;
+        //extern int consolePlayer;
 
         //P_ControlReset(-1); // clear the actions array
         Con_Open(false); // close the console if open

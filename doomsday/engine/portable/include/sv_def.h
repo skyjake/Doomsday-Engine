@@ -42,12 +42,12 @@
 // Anything farther than this will never be taken into consideration.
 #define FAR_MOBJ_DIST		1500
 
-extern int      sv_maxPlayers;
+extern int      svMaxPlayers;
 extern int      allowFrames;	   // Allow sending of frames.
 extern int      send_all_players;
 extern int      frameInterval;	   // In tics.
-extern int      net_remoteuser;	   // The client who is currently logged in.
-extern char    *net_password;	   // Remote login password.
+extern int      netRemoteUser;	   // The client who is currently logged in.
+extern char    *netPassword;	   // Remote login password.
 
 void            Sv_Shutdown(void);
 void            Sv_StartNetGame(void);

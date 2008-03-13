@@ -182,12 +182,12 @@ Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n",
 
         // Sounds originating from the viewmobj should really originate
         // from the real player mobj.
-        if(cmo && cmo == playerstate[consoleplayer].cmo)
+        if(cmo && cmo == playerState[consolePlayer].cmo)
         {
             /*#ifdef _DEBUG
                Con_Printf("Cl_ReadSoundDelta2(%i): ViewMobj sound...\n", type);
                #endif */
-            emitter = players[consoleplayer].mo;
+            emitter = players[consolePlayer].mo;
         }
 
         // First stop any sounds originating from the same emitter.

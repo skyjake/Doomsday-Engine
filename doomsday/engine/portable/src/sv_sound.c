@@ -120,7 +120,7 @@ void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin, float volume,
         // Remove the bit of the player who owns the origin mobj (if any).
         if(origin && origin->dPlayer)
         {
-            targetPlayers &= ~(1 << (origin->dPlayer - ddplayers));
+            targetPlayers &= ~(1 << (origin->dPlayer - ddPlayers));
         }
     }
 

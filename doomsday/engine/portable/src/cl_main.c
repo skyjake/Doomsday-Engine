@@ -56,7 +56,7 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int gotframe;
+extern int gotFrame;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -177,9 +177,9 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
     {
         players[i].inGame = (shake.playerMask & (1 << i)) != 0;
     }
-    consoleplayer = displayplayer = shake.yourConsole;
-    clients[consoleplayer].numTics = 0;
-    clients[consoleplayer].firstTic = 0;
+    consolePlayer = displayPlayer = shake.yourConsole;
+    clients[consolePlayer].numTics = 0;
+    clients[consolePlayer].firstTic = 0;
 
     isClient = true;
     isServer = false;
@@ -202,7 +202,7 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
     // Tell the game that we have arrived. The level will
     // be changed when the game's handshake arrives (handled
     // in the dll).
-    gx.NetPlayerEvent(consoleplayer, DDPE_ARRIVAL, 0);
+    gx.NetPlayerEvent(consolePlayer, DDPE_ARRIVAL, 0);
 
     // Prepare the client-side data.
     Cl_InitClientMobjs();
@@ -278,7 +278,7 @@ void Cl_GetPackets(void)
                 break;
 
             case PSV_FILTER:
-                players[consoleplayer].filter = Msg_ReadLong();
+                players[consolePlayer].filter = Msg_ReadLong();
                 break;
 
             default:

@@ -558,7 +558,7 @@ static boolean heightClip(mobj_t *mo)
     boolean onfloor;
 
     // During demo playback the player gets preferential treatment.
-    if(mo->dPlayer == &players[consoleplayer] && playback)
+    if(mo->dPlayer == &players[consolePlayer] && playback)
         return true;
 
     onfloor = (mo->pos[VZ] <= mo->floorZ);

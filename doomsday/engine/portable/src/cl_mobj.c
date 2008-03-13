@@ -69,10 +69,10 @@ typedef struct cmhash_s {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int /*latest_frame_size, */ gotframe;
+extern int /*latest_frame_size, */ gotFrame;
 extern int predicted_tics;
 
-extern playerstate_t playerstate[MAXPLAYERS];
+extern playerstate_t playerState[MAXPLAYERS];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -421,7 +421,7 @@ if(justCreated)         //Con_Error("justCreated!\n");
         // A Null Delta. We should delete this mobj.
         if(cmo->mo.dPlayer)
         {
-            playerstate[cmo->mo.dPlayer - players].cmo = NULL;
+            playerState[cmo->mo.dPlayer - players].cmo = NULL;
         }
         Cl_DestroyMobj(cmo);
         return true;            // Continue.
@@ -721,7 +721,7 @@ void Cl_PredictMovement(void)
             next = cmo->next;
             moCount++;
 
-            if(cmo->mo.dPlayer != &ddplayers[consoleplayer] &&
+            if(cmo->mo.dPlayer != &ddPlayers[consolePlayer] &&
                cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN) /*||
                cmo->mo.ddFlags & DDMF_MISSILE*/)
             {
@@ -822,7 +822,7 @@ void Cl_DestroyMobj(clmobj_t *cmo)
 boolean Cl_RevealMobj(clmobj_t *cmo)
 {
     // Check that we know enough about the clmobj.
-    if(cmo->mo.dPlayer != &ddplayers[consoleplayer] &&
+    if(cmo->mo.dPlayer != &ddPlayers[consolePlayer] &&
        (!(cmo->flags & CLMF_KNOWN_X) ||
         !(cmo->flags & CLMF_KNOWN_Y) ||
         !(cmo->flags & CLMF_KNOWN_Z) ||
@@ -914,7 +914,7 @@ void Cl_ReadMobjDelta2(boolean skip)
 
         d = &cmo->mo;
 
-        /*if(d->dPlayer && d->dPlayer == &ddplayers[consoleplayer])
+        /*if(d->dPlayer && d->dPlayer == &ddPlayers[consolePlayer])
         {
             // Mark the local player known.
             cmo->flags |= CLMF_KNOWN;
@@ -1117,7 +1117,7 @@ Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
     else
     {
         // The clmobjs of players aren't linked.
-        playerstate[cmo->mo.dPlayer - players].cmo = NULL;
+        playerState[cmo->mo.dPlayer - players].cmo = NULL;
     }
 
     // This'll allow playing sounds from the mobj for a little while.

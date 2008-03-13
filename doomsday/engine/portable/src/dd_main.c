@@ -492,8 +492,8 @@ int DD_Main(void)
 
     // Time to shutdown.
 
-    if(netgame)
-    {   // Quit netgame if one is in progress.
+    if(netGame)
+    {   // Quit netGame if one is in progress.
         Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
                     true, false);
     }
@@ -896,7 +896,7 @@ void DD_CheckQuery(int query, int parm)
 
 /* *INDENT-OFF* */
 ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
-    {&netgame, 0},
+    {&netGame, 0},
     {&isServer, 0},                         // An *open* server?
     {&isClient, 0},
     {&allowFrames, &allowFrames},
@@ -905,8 +905,8 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&viewwindowy, &viewwindowy},
     {&viewwidth, &viewwidth},
     {&viewheight, &viewheight},
-    {&consoleplayer, &consoleplayer},
-    {&displayplayer, &displayplayer},
+    {&consolePlayer, &consolePlayer},
+    {&displayPlayer, &displayPlayer},
     {0, 0},
     {&mipmapping, 0},
     {&linearRaw, 0},

@@ -90,7 +90,7 @@ timespan_t frameStartTime;
 
 boolean stopTime = false;  // If true the time counters won't be incremented
 boolean tickUI = false; // If true the UI will be tick'd
-boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netgame)
+boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netGame)
 
 boolean drawGame = true; // If false the game viewport won't be rendered
 
@@ -308,7 +308,7 @@ void DD_Ticker(timespan_t time)
     Demo_Ticker(time);
     P_Ticker(time);
 
-    if(tickFrame || netgame)
+    if(tickFrame || netGame)
     {   // Advance frametime
         /**
          * It will be reduced when new sharp world positions are calculated,
@@ -377,7 +377,7 @@ void DD_AdvanceTime(timespan_t time)
 {
     sysTime += time;
 
-    if(!stopTime || netgame)
+    if(!stopTime || netGame)
     {
         // The difference between gametic and demotic is that demotic
         // is not altered at any point. Gametic changes at handshakes.

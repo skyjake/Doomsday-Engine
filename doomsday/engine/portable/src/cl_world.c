@@ -177,8 +177,8 @@ void Cl_MoverThinker(mover_t *mover)
     if(!Cl_GameReady())
         return;                 // Can we think yet?
 
-    // The move is cancelled if the consoleplayer becomes obstructed.
-    freeMove = Cl_IsFreeToMove(consoleplayer);
+    // The move is cancelled if the consolePlayer becomes obstructed.
+    freeMove = Cl_IsFreeToMove(consolePlayer);
     fspeed = mover->speed;
     // How's the gap?
     if(fabs(mover->destination - *current) > fabs(fspeed))
@@ -198,7 +198,7 @@ void Cl_MoverThinker(mover_t *mover)
     P_SectorPlanesChanged(mover->sector);
 
     // Make sure the client didn't get stuck as a result of this move.
-    if(freeMove != Cl_IsFreeToMove(consoleplayer))
+    if(freeMove != Cl_IsFreeToMove(consolePlayer))
     {
         // Something was blocking the way!
         *current = original;

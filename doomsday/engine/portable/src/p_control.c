@@ -727,7 +727,7 @@ boolean P_ControlExecute(const char *cmd)
 
 	// Which player will be affected?
 	console = P_LocalToConsole(localPlayer);
-	if(console >= 0 && console < DDMAXPLAYERS && ddplayers[console].inGame)
+	if(console >= 0 && console < DDMAXPLAYERS && ddPlayers[console].inGame)
 	{
         state = &ctlState[console];
     }
@@ -929,7 +929,7 @@ D_CMD(ListPlayerControls)
 
 D_CMD(Impulse)
 {
-    int playerNum = consoleplayer;
+    int playerNum = consolePlayer;
 
     if(argc < 2 || argc > 3)
     {

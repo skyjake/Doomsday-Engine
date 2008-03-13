@@ -2014,10 +2014,6 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 
     NetSv_UpdateGameConfig();
 
-    // Tell the engine if we want that all players know where everybody
-    // else is.
-    Set(DD_SEND_ALL_PLAYERS, !deathmatch);
-
     G_DoLoadLevel();
 
 #if __JHEXEN__

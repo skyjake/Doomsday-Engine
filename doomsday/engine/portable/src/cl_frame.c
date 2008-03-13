@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int gotframe;
+extern int gotFrame;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -88,7 +88,7 @@ static int      resendHistoryIdx;
  */
 void Cl_InitFrame(void)
 {
-    gotframe = false;           // Nothing yet...
+    gotFrame = false;           // Nothing yet...
 
     // -1 denotes an invalid entry.
     memset(setHistory, -1, sizeof(setHistory));
@@ -109,7 +109,7 @@ void Cl_InitFrame(void)
  */
 void Cl_ResetFrame(void)
 {
-    gotframe = false;
+    gotFrame = false;
 
     // All frames received before the PSV_FIRST_FRAME2 are ignored.
     // They must be from the wrong map.
@@ -388,7 +388,7 @@ if(Msg_Offset() - startOffset != deltaLength)
         }
 
         // We have now received a frame.
-        gotframe = true;
+        gotFrame = true;
 
         // Reset the predict counter.
         predicted_tics = 0;

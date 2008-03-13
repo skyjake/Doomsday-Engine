@@ -38,8 +38,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define TOP_PSPY        32
-#define BOTTOM_PSPY     128
+#define TOP_PSPY            (32)
+#define BOTTOM_PSPY         (128)
 
 // TYPES -------------------------------------------------------------------
 
@@ -53,16 +53,16 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-playerstate_t playerstate[MAXPLAYERS];
-float psp_move_speed = 6;
-float cplr_thrust_mul = 1;
+playerstate_t playerState[MAXPLAYERS];
+float pspMoveSpeed = 6;
+float cplrThrustMul = 1;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int fixspeed = 15;
-static float fixpos[3];
-static int fixtics;
-static float pspy;
+static int fixSpeed = 15;
+static float fixPos[3];
+static int fixTics;
+static float pspY;
 
 // Console player demo momentum (used to smooth out abrupt momentum changes).
 static float cpMom[3][LOCALCAM_WRITE_TICS];
@@ -74,12 +74,12 @@ static float cpMom[3][LOCALCAM_WRITE_TICS];
  */
 void Cl_InitPlayers(void)
 {
-    int         i;
+    int                 i;
 
-    memset(playerstate, 0, sizeof(playerstate));
-    memset(fixpos, 0, sizeof(fixpos));
-    fixtics = 0;
-    pspy = 0;
+    memset(playerState, 0, sizeof(playerState));
+    memset(fixPos, 0, sizeof(fixPos));
+    fixTics = 0;
+    pspY = 0;
     memset(cpMom, 0, sizeof(cpMom));
 
     // Clear psprites. The server will send them.
@@ -94,9 +94,9 @@ void Cl_InitPlayers(void)
  */
 void Cl_LocalCommand(void)
 {
-    ddplayer_t *pl = &players[consoleplayer];
-    client_t   *cl = &clients[consoleplayer];
-    playerstate_t *s = &playerstate[consoleplayer];
+    ddplayer_t         *pl = &players[consolePlayer];
+    client_t           *cl = &clients[consolePlayer];
+    playerstate_t      *s = &playerState[consolePlayer];
 
     if(levelTime < 0.333)
     {
@@ -124,12 +124,12 @@ void Cl_LocalCommand(void)
  */
 int Cl_ReadPlayerDelta(void)
 {
-    int         df, psdf, i, idx;
-    int         num = Msg_ReadByte();
-    short       junk;
-    playerstate_t *s;
-    ddplayer_t *pl;
-    ddpsprite_t *psp;
+    int                 df, psdf, i, idx;
+    int                 num = Msg_ReadByte();
+    short               junk;
+    playerstate_t      *s;
+    ddplayer_t         *pl;
+    ddpsprite_t        *psp;
 
     if(num == 0xff)
         return false;           // End of list.
@@ -139,13 +139,13 @@ int Cl_ReadPlayerDelta(void)
     df |= Msg_ReadByte();       // Second byte is just flags.
     num &= 0xf;                 // Clear the upper bits of the number.
 
-    s = playerstate + num;
-    pl = players + num;
+    s = &playerState[num];
+    pl = &players[num];
 
     if(df & PDF_MOBJ)
     {
-        clmobj_t *old = s->cmo;
-        int     newid = Msg_ReadShort();
+        clmobj_t           *old = s->cmo;
+        int                 newid = Msg_ReadShort();
 
         /**
          * Make sure the 'new' mobj is different than the old one; there
@@ -284,15 +284,15 @@ void Cl_Thrust(mobj_t *mo, angle_t angle, float move)
  */
 void Cl_MovePlayer(ddplayer_t *pl)
 {
-    int         num = pl - players;
-    playerstate_t *st = playerstate + num;
-    mobj_t     *mo = pl->mo;
+    int                 num = pl - players;
+    playerstate_t      *st = &playerState[num];
+    mobj_t             *mo = pl->mo;
 
     if(!mo)
         return;
 
     // If we are playing a demo, we shouldn't be here...
-    if(playback && num == consoleplayer)
+    if(playback && num == consolePlayer)
         return;
 
     // Move.
@@ -305,7 +305,7 @@ void Cl_MovePlayer(ddplayer_t *pl)
      * (Other players are never handled because clients only receive mobj
      * information about non-local player movement).
      */
-    if(num == consoleplayer)
+    if(num == consolePlayer)
     {
         float       airThrust = 1.0f / 32;
         boolean     airborne =
@@ -313,7 +313,7 @@ void Cl_MovePlayer(ddplayer_t *pl)
 
         if(!(pl->flags & DDPF_DEAD) && !mo->reactionTime) // Dead players do not move willfully.
         {
-            float       mul = (airborne? airThrust : cplr_thrust_mul);
+            float       mul = (airborne? airThrust : cplrThrustMul);
 
             if(st->forwardMove)
                 Cl_ThrustMul(mo, st->angle, FIX2FLT(st->forwardMove), mul);
@@ -338,10 +338,10 @@ void Cl_UpdatePlayerPos(ddplayer_t *pl)
     int         num = pl - players;
     mobj_t     *clmo, *mo;
 
-    if(!playerstate[num].cmo || !pl->mo)
+    if(!playerState[num].cmo || !pl->mo)
         return;                 // Must have a mobj!
 
-    clmo = &playerstate[num].cmo->mo;
+    clmo = &playerState[num].cmo->mo;
     mo = pl->mo;
     clmo->angle = mo->angle;
     // The player's client mobj is not linked to any lists, so position
@@ -364,21 +364,21 @@ void Cl_CoordsReceived(void)
 Con_Printf("Cl_CoordsReceived\n");
 #endif
 
-    fixpos[VX] = (float) Msg_ReadShort();
-    fixpos[VY] = (float) Msg_ReadShort();
-    fixtics = fixspeed;
-    fixpos[VX] /= fixspeed;
-    fixpos[VY] /= fixspeed;
+    fixPos[VX] = (float) Msg_ReadShort();
+    fixPos[VY] = (float) Msg_ReadShort();
+    fixTics = fixSpeed;
+    fixPos[VX] /= fixSpeed;
+    fixPos[VY] /= fixSpeed;
 }
 
 void Cl_HandlePlayerFix(void)
 {
-    ddplayer_t *plr = &players[consoleplayer];
+    ddplayer_t *plr = &players[consolePlayer];
     int         fixes = Msg_ReadLong();
     angle_t     angle;
     float       lookdir;
     mobj_t     *mo = plr->mo;
-    clmobj_t   *clmo = playerstate[consoleplayer].cmo;
+    clmobj_t   *clmo = playerState[consolePlayer].cmo;
 
     if(fixes & 1) // fix angles?
     {
@@ -492,7 +492,7 @@ Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
  */
 void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
 {
-    ddplayer_t *pl = players + consoleplayer;
+    ddplayer_t *pl = players + consolePlayer;
     mobj_t     *mo;
     int         i;
     float       mom[3];
@@ -541,7 +541,7 @@ void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
         pl->viewHeight = 0;
     }
 
-    Cl_UpdatePlayerPos(players + consoleplayer);
+    Cl_UpdatePlayerPos(players + consolePlayer);
 }
 
 /**
@@ -550,7 +550,7 @@ void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
 #if 0 // Currently unused.
 void Cl_MovePsprites(void)
 {
-    ddplayer_t *pl = players + consoleplayer;
+    ddplayer_t *pl = players + consolePlayer;
     ddpsprite_t *psp = pl->pSprites;
     int         i;
 
@@ -561,30 +561,30 @@ void Cl_MovePsprites(void)
     switch(psp->state)
     {
     case DDPSP_UP:
-        pspy -= psp_move_speed;
-        if(pspy <= TOP_PSPY)
+        pspY -= pspMoveSpeed;
+        if(pspY <= TOP_PSPY)
         {
-            pspy = TOP_PSPY;
+            pspY = TOP_PSPY;
             psp->state = DDPSP_BOBBING;
         }
-        psp->y = pspy;
+        psp->y = pspY;
         break;
 
     case DDPSP_DOWN:
-        pspy += psp_move_speed;
-        if(pspy > BOTTOM_PSPY)
-            pspy = BOTTOM_PSPY;
-        psp->y = pspy;
+        pspY += pspMoveSpeed;
+        if(pspY > BOTTOM_PSPY)
+            pspY = BOTTOM_PSPY;
+        psp->y = pspY;
         break;
 
     case DDPSP_FIRE:
-        pspy = TOP_PSPY;
+        pspY = TOP_PSPY;
         //psp->x = 0;
-        psp->y = pspy;
+        psp->y = pspY;
         break;
 
     case DDPSP_BOBBING:
-        pspy = TOP_PSPY;
+        pspY = TOP_PSPY;
         // Get bobbing from the Game DLL.
         psp->x = *((float*) gx.GetVariable(DD_PSPRITE_BOB_X));
         psp->y = *((float*) gx.GetVariable(DD_PSPRITE_BOB_Y));
@@ -628,8 +628,8 @@ void Cl_ReadPlayerDelta2(boolean skip)
 
     if(!skip)
     {
-        s = playerstate + num;
-        pl = players + num;
+        s = &playerState[num];
+        pl = &players[num];
     }
     else
     {
@@ -659,7 +659,7 @@ void Cl_ReadPlayerDelta2(boolean skip)
                 // This mobj hasn't yet been sent to us.
                 // We should be receiving the rest of the info very shortly.
                 s->cmo = Cl_CreateMobj(s->mobjId);
-                if(num == consoleplayer)
+                if(num == consolePlayer)
                 {
                     // Mark everything known about our local player.
                     s->cmo->flags |= CLMF_KNOWN;

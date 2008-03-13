@@ -171,7 +171,7 @@ void S_EndFrame(void)
  */
 mobj_t *S_GetListenerMobj(void)
 {
-    return players[displayplayer].mo;
+    return players[displayPlayer].mo;
 }
 
 /**
@@ -413,7 +413,7 @@ int S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
     Sv_Sound(sound_id, origin, target_console);
 
     // If it's for us, we can hear it.
-    if(target_console == consoleplayer)
+    if(target_console == consolePlayer)
     {
         S_LocalSound(sound_id, origin);
     }

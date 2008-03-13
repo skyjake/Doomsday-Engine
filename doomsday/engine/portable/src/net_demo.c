@@ -89,7 +89,7 @@ void Demo_WriteLocalCamera(int plnum);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern float net_connecttime;
+extern float netConnectTime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -318,7 +318,7 @@ boolean Demo_BeginPlayback(char *fileName)
 
     if(playback)
         return false; // Already in playback.
-    if(netgame || isClient)
+    if(netGame || isClient)
         return false; // Can't do it.
 
     // Check that we aren't recording anything.
@@ -371,7 +371,7 @@ void Demo_StopPlayback(void)
 
     if(ArgCheck("-timedemo"))
     {
-        diff = Sys_GetSeconds() - net_connecttime;
+        diff = Sys_GetSeconds() - netConnectTime;
         if(!diff)
             diff = 1;
         // Print summary and exit.
@@ -491,8 +491,8 @@ void Demo_WriteLocalCamera(int plnum)
  */
 void Demo_ReadLocalCamera(void)
 {
-    ddplayer_t *pl = players + consoleplayer;
-    mobj_t     *mo = players[consoleplayer].mo;
+    ddplayer_t *pl = players + consolePlayer;
+    mobj_t     *mo = players[consolePlayer].mo;
     int         flags;
     float       z;
     int         intertics = LOCALCAM_WRITE_TICS;
@@ -583,7 +583,7 @@ void Demo_ReadLocalCamera(void)
 void Demo_Ticker(timespan_t time)
 {
     static trigger_t fixed = { 1 / 35.0, 0 };
-    ddplayer_t *pl = players + consoleplayer;
+    ddplayer_t *pl = players + consolePlayer;
     int         i;
 
     if(!M_RunTrigger(&fixed, time))
@@ -623,11 +623,11 @@ D_CMD(PlayDemo)
 
 D_CMD(RecordDemo)
 {
-    int         plnum = consoleplayer;
+    int         plnum = consolePlayer;
 
     if(argc == 3 && isClient)
     {
-        Con_Printf("Clients can only record the consoleplayer.\n");
+        Con_Printf("Clients can only record the consolePlayer.\n");
         return true;
     }
     if(isClient && argc != 2)
@@ -649,7 +649,7 @@ D_CMD(RecordDemo)
 
 D_CMD(PauseDemo)
 {
-    int         plnum = consoleplayer;
+    int         plnum = consolePlayer;
 
     if(argc >= 2)
         plnum = atoi(argv[1]);
@@ -674,7 +674,7 @@ D_CMD(PauseDemo)
 
 D_CMD(StopDemo)
 {
-    int         plnum = consoleplayer;
+    int         plnum = consolePlayer;
 
     if(argc > 2)
     {

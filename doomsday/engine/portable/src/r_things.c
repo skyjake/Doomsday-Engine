@@ -840,7 +840,7 @@ void R_ProjectSprite(mobj_t *mo)
         }
         else
         {
-            if(useSRVOAngle && !netgame && !playback)
+            if(useSRVOAngle && !netGame && !playback)
                 vis->data.mo.yaw = (float) (mo->visAngle << 16);
             else
                 vis->data.mo.yaw = (float) mo->angle;

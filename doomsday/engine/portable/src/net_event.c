@@ -160,7 +160,7 @@ void N_NETicker(void)
 	masteraction_t act;
 	int         i, num;
 
-	if(netgame)
+	if(netGame)
 	{
 		// Update master every 2 minutes.
 		if(masterAware && N_UsingInternet() &&
@@ -250,9 +250,9 @@ void N_Update(void)
 		case NE_END_CONNECTION:
 			// A client receives this event when the connection is
 			// terminated.
-			if(netgame)
+			if(netGame)
 			{
-				// We're still in a netgame, which means we didn't disconnect
+				// We're still in a netGame, which means we didn't disconnect
 				// voluntarily.
 				Con_Message("N_Update: Connection was terminated.\n");
 				N_Disconnect();

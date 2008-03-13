@@ -81,7 +81,7 @@ void Net_SendPing(int player, int count)
     client_t *cl = clients + player;
 
     // Valid destination?
-    if((player == consoleplayer) || (isClient && player))
+    if((player == consolePlayer) || (isClient && player))
         return;
 
     if(count)
@@ -147,7 +147,7 @@ D_CMD(Ping)
 {
     int     dest, count = 4;
 
-    if(!netgame)
+    if(!netGame)
     {
         Con_Printf("Ping is only for netgames.\n");
         return true;
@@ -172,7 +172,7 @@ D_CMD(Ping)
     }
     // Check that the given parameters are valid.
     if(count <= 0 || count > MAX_PINGS || dest < 0 || dest >= MAXPLAYERS ||
-       dest == consoleplayer || (dest && !players[dest].inGame))
+       dest == consolePlayer || (dest && !players[dest].inGame))
         return false;
 
     Net_SendPing(dest, count);

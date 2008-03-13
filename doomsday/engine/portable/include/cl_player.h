@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,9 +41,9 @@ typedef struct playerstate_s {
 	int             friction;
 } playerstate_t;
 
-extern float psp_move_speed;
-extern float cplr_thrust_mul;
-extern playerstate_t playerstate[MAXPLAYERS];
+extern float pspMoveSpeed;
+extern float cplrThrustMul;
+extern playerstate_t playerState[MAXPLAYERS];
 
 void            Cl_InitPlayers(void);
 void            Cl_LocalCommand(void);
