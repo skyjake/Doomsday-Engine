@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #define __DOOMSDAY_REFRESH_MATERIALS_H__
 
 // Material flags:
-#define MATF_CHANGED            0x1 // Needs update. 
+#define MATF_CHANGED            0x1 // Needs update.
 
 typedef struct material_s {
     char            name[9];
@@ -49,7 +49,7 @@ material_t     *R_GetMaterial(int ofTypeID, materialtype_t type);
 boolean         R_IsCustomMaterial(int ofTypeID, materialtype_t type);
 
 int             R_GetMaterialFlags(material_t *material);
-void            R_GetMaterialColor(int ofTypeID, materialtype_t type, float *rgb);
+boolean         R_GetMaterialColor(const material_t *material, float *rgb);
 
 // Returns the real DGL texture, if such exists
 unsigned int    R_GetMaterialName(int ofTypeID, materialtype_t type);

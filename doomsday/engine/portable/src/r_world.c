@@ -1862,6 +1862,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     plane_t            *plane;
     boolean             updateReverb = false;
     boolean             updateDecorations = false;
+    boolean             hasGlow;
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
@@ -1891,18 +1892,24 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         R_UpdateSurface(&plane->surface, forceUpdate);
 
         // \fixme Now update the glow properties.
+        hasGlow = false;
         if(plane->surface.flags & SUF_GLOW)
         {
-            plane->glow = 4; // Default height factor is 4
+            if(R_GetMaterialColor(plane->PS_material, plane->glowRGB))
+            {
+                hasGlow = true;
+            }
+        }
 
-            R_GetMaterialColor(plane->PS_material->ofTypeID,
-                                plane->PS_material->type, plane->glowRGB);
+        if(hasGlow)
+        {
+            plane->glow = 4; // Default height factor is 4
         }
         else
         {
+            plane->glowRGB[CR] = plane->glowRGB[CG] =
+                plane->glowRGB[CB] = 0;
             plane->glow = 0;
-            for(j = 0; j < 3; ++j)
-                plane->glowRGB[j] = 0;
         }
         // < FIXME
 

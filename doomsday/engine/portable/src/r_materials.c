@@ -78,7 +78,7 @@ void R_ShutdownMaterials(void)
 {
     if(materials)
     {
-        uint            i;
+        uint                i;
 
         for(i = 0; i < numMaterials; ++i)
             Z_Free(materials[i]);
@@ -95,7 +95,7 @@ void R_ShutdownMaterials(void)
  */
 void R_MarkMaterialsForUpdating(void)
 {
-    uint            i;
+    uint                i;
 
     // Mark all existing textures as in need of update.
     for(i = 0; i < numMaterials; ++i)
@@ -105,8 +105,8 @@ void R_MarkMaterialsForUpdating(void)
 material_t *R_MaterialCreate(const char *name, int ofTypeID,
                              materialtype_t type)
 {
-    uint            i;
-    material_t     *mat;
+    uint                i;
+    material_t         *mat;
 
     if(!name)
         return NULL;
@@ -147,8 +147,8 @@ material_t *R_MaterialCreate(const char *name, int ofTypeID,
 
 material_t *R_GetMaterial(int ofTypeID, materialtype_t type)
 {
-    uint            i;
-    material_t     *mat;
+    uint                i;
+    material_t         *mat;
 
     for(i = 0; i < numMaterials; ++i)
     {
@@ -207,7 +207,7 @@ void R_DeleteMaterial(int ofTypeID, materialtype_t type)
  */
 boolean R_IsCustomMaterial(int ofTypeID, materialtype_t type)
 {
-    int             i, lump;
+    int                 i, lump;
 
     switch(type)
     {
@@ -248,7 +248,7 @@ boolean R_IsCustomMaterial(int ofTypeID, materialtype_t type)
 int R_SetMaterialTranslation(int ofTypeID, materialtype_t type,
                              int translateTo)
 {
-    int             old = ofTypeID;
+    int                 old = ofTypeID;
 
     switch(type)
     {
@@ -279,34 +279,43 @@ int R_SetMaterialTranslation(int ofTypeID, materialtype_t type,
 /**
  * Copy the averaged texture color into the dest buffer 'rgb'.
  *
- * @param texid         The id of the texture.
- * @param type          Type of material.
+ * @param mat           Ptr to the material.
  * @param rgb           The dest buffer.
+ *
+ * @return              @c true, if the material has an average color.
  */
-void R_GetMaterialColor(int ofTypeID, materialtype_t type, float *rgb)
+boolean R_GetMaterialColor(const material_t *mat, float *rgb)
 {
-    switch(type)
+    if(!mat)
+        return false;
+
+    switch(mat->type)
     {
     case MAT_TEXTURE:
     {
-        texture_t *tex = textures[ofTypeID];
+        texture_t          *tex = textures[mat->ofTypeID];
         memcpy(rgb, tex->color, sizeof(float) * 3);
         break;
     }
     case MAT_FLAT:
     {
-        flat_t *flat = flats[ofTypeID];
+        flat_t             *flat = flats[mat->ofTypeID];
         memcpy(rgb, flat->color, sizeof(float) * 3);
         break;
     }
     default:
-        Con_Error("R_GetMaterialColor: Unknown material type %i.", type);
+#ifdef _DEBUG
+        Con_Message("R_GetMaterialColor: No avg color for material.\n");
+#endif
+        return false;
     }
+
+    return true;
 }
 
 int R_GetMaterialFlags(material_t *mat)
 {
-    int             ofTypeID;
+    int                 ofTypeID;
     if(!mat)
         return 0;
 
@@ -343,7 +352,7 @@ int R_GetMaterialFlags(material_t *mat)
 
 int R_CheckMaterialNumForName(const char *name, materialtype_t type)
 {
-    int             i;
+    int                 i;
 
     switch(type)
     {
@@ -400,7 +409,7 @@ const char *R_MaterialNameForNum(int ofTypeID, materialtype_t type)
 
 int R_MaterialNumForName(const char *name, materialtype_t type)
 {
-    int             i;
+    int                 i;
 
     i = R_CheckMaterialNumForName(name, type);
 
