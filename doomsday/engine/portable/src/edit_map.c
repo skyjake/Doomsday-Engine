@@ -1750,9 +1750,9 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
         return 0;
     if(backSide > map->numSideDefs)
         return 0;
-    if(v1 > map->numVertexes)
+    if(v1 == 0 || v1 > map->numVertexes)
         return 0;
-    if(v2 > map->numVertexes)
+    if(v2 == 0 || v2 > map->numVertexes)
         return 0;
     if(v1 == v2)
         return 0;
@@ -1791,8 +1791,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     }
 
     l = createLine();
-    l->L_v1 = (v1 == 0? NULL : map->vertexes[v1-1]);
-    l->L_v2 = (v2 == 0? NULL : map->vertexes[v2-1]);
+    l->L_v1 = map->vertexes[v1 - 1];
+    l->L_v2 = map->vertexes[v2 - 1];
 
     l->dX = l->L_v2pos[VX] - l->L_v1pos[VX];
     l->dY = l->L_v2pos[VY] - l->L_v1pos[VY];
@@ -1864,7 +1864,7 @@ uint MPE_PlaneCreate(uint sector, float height, const char *material,
     if(!editMapInited)
         return 0;
 
-    if(sector > map->numSectors)
+    if(sector == 0 || sector > map->numSectors)
         return 0;
 
     s = map->sectors[sector - 1];
@@ -1929,11 +1929,18 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag,
     if(!editMapInited)
         return 0;
 
+    // First check that all the line indices are valid.
+    for(i = 0; i < lineCount; ++i)
+    {
+        if(lines[i] == 0 || lines[i] > map->numLineDefs)
+            return 0;
+    }
+
     po = createPolyobj();
     po->buildData.lineDefs = M_Calloc(sizeof(linedef_t*) * (lineCount+1));
     for(i = 0; i < lineCount; ++i)
     {
-        linedef_t             *line = map->lineDefs[lines[i]-1];
+        linedef_t             *line = map->lineDefs[lines[i] - 1];
 
         // This line is part of a polyobj.
         line->inFlags |= LF_POLYOBJ;
