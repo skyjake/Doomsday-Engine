@@ -45,10 +45,6 @@ typedef struct materialref_s {
     boolean         isFlat;
 } materialref_t;
 
-typedef struct mvertex_s {
-    int16_t         pos[2];
-} mvertex_t;
-
 typedef struct mside_s {
     int16_t         offset[2];
     uint            topMaterial;
@@ -120,7 +116,7 @@ typedef struct map_s {
     uint            numThings;
     uint            numMaterials;
 
-    mvertex_t      *vertexes;
+    float          *vertexes; // Array of vertex coords [v0 X, vo Y, v1 X, v1 Y...]
     msector_t      *sectors;
     mline_t        *lines;
     mside_t        *sides;

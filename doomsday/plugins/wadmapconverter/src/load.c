@@ -246,10 +246,9 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
  * @param lineList      @c NULL, will cause IterFindPolyLines to count
  *                      the number of lines in the polyobj.
  */
-static boolean iterFindPolyLines(int16_t x, int16_t y,
-                                 mline_t **lineList)
+static boolean iterFindPolyLines(int16_t x, int16_t y, mline_t **lineList)
 {
-    uint        i;
+    uint                i;
 
     if(x == PolyStart[VX] && y == PolyStart[VY])
     {
@@ -259,17 +258,21 @@ static boolean iterFindPolyLines(int16_t x, int16_t y,
     for(i = 0; i < map->numLines; ++i)
     {
         mline_t        *line = &map->lines[i];
-        mvertex_t      *v1 = &map->vertexes[line->v[0]-1];
-        mvertex_t      *v2 = &map->vertexes[line->v[1]-1];
+        int16_t        v1[2], v2[2];
 
-        if(v1->pos[VX] == x && v1->pos[VY] == y)
+        v1[VX] = (int16_t) map->vertexes[(line->v[0] - 1) * 2];
+        v1[VY] = (int16_t) map->vertexes[(line->v[0] - 1) * 2 + 1];
+        v2[VX] = (int16_t) map->vertexes[(line->v[1] - 1) * 2];
+        v2[VY] = (int16_t) map->vertexes[(line->v[1] - 1) * 2 + 1];
+
+        if(v1[VX] == x && v1[VY] == y)
         {
             if(!lineList)
                 PolyLineCount++;
             else
                 *lineList++ = line;
 
-            iterFindPolyLines(v2->pos[VX], v2->pos[VY], lineList);
+            iterFindPolyLines(v2[VX], v2[VY], lineList);
             return true;
         }
     }
@@ -281,37 +284,39 @@ static boolean iterFindPolyLines(int16_t x, int16_t y,
  * Find all linedefs marked as belonging to a polyobject with the given tag
  * and attempt to create a polyobject from them.
  *
- * @param tag               Line tag of linedefs to search for.
+ * @param tag           Line tag of linedefs to search for.
  *
- * @return                  @c true = successfully created polyobj.
+ * @return              @c true = successfully created polyobj.
  */
 static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
                                     int16_t anchorY)
 {
 #define PO_MAXPOLYLINES         32
 
-    uint            i;
+    uint                i;
 
     for(i = 0; i < map->numLines; ++i)
     {
-        mline_t        *line = &map->lines[i];
+        mline_t            *line = &map->lines[i];
 
         if(line->xSpecial == PO_LINE_START && line->xArgs[0] == tag)
         {
-            byte            seqType;
-            mline_t       **lineList;
-            mvertex_t      *v1, *v2;
-            uint            poIdx;
+            byte                seqType;
+            mline_t           **lineList;
+            int16_t             v1[2], v2[2];
+            uint                poIdx;
 
             line->xSpecial = 0;
             line->xArgs[0] = 0;
             PolyLineCount = 1;
 
-            v1 = &map->vertexes[line->v[0]-1];
-            v2 = &map->vertexes[line->v[1]-1];
-            PolyStart[VX] = v1->pos[VX];
-            PolyStart[VY] = v1->pos[VY];
-            if(!iterFindPolyLines(v2->pos[VX], v2->pos[VY], NULL))
+            v1[VX] = (int16_t) map->vertexes[(line->v[0]-1) * 2];
+            v1[VY] = (int16_t) map->vertexes[(line->v[0]-1) * 2 + 1];
+            v2[VX] = (int16_t) map->vertexes[(line->v[1]-1) * 2];
+            v2[VY] = (int16_t) map->vertexes[(line->v[1]-1) * 2 + 1];
+            PolyStart[VX] = v1[VX];
+            PolyStart[VY] = v1[VY];
+            if(!iterFindPolyLines(v2[VX], v2[VY], NULL))
             {
                 Con_Error("mapConverter::spawnPolyobj: Found unclosed polyobj.\n");
             }
@@ -319,7 +324,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
             lineList = malloc((PolyLineCount+1) * sizeof(mline_t*));
 
             lineList[0] = line; // Insert the first line.
-            iterFindPolyLines(v2->pos[VX], v2->pos[VY], lineList + 1);
+            iterFindPolyLines(v2[VX], v2[VY], lineList + 1);
             lineList[PolyLineCount] = 0; // Terminate.
 
             seqType = line->xArgs[2];
@@ -429,17 +434,17 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
 
 static void findPolyobjs(void)
 {
-    uint            i;
+    uint                i;
 
     Con_Message("WadMapConverter::findPolyobjs: Processing...\n");
 
     for(i = 0; i < map->numThings; ++i)
     {
-        mthing_t       *thing = &map->things[i];
+        mthing_t           *thing = &map->things[i];
 
         if(thing->type == PO_ANCHOR_TYPE)
         {   // A polyobj anchor.
-            int             tag = thing->angle;
+            int                 tag = thing->angle;
 
             findAndCreatePolyobj(tag, thing->pos[VX], thing->pos[VY]);
         }
@@ -744,10 +749,8 @@ static boolean loadVertexes(const byte *buf, size_t len)
     num = len / elmSize;
     for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
     {
-        mvertex_t          *v = &map->vertexes[n];
-
-        v->pos[VX] = SHORT(*((const int16_t*) (ptr)));
-        v->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
+        map->vertexes[n * 2] = (float) SHORT(*((const int16_t*) (ptr)));
+        map->vertexes[n * 2 + 1] = (float) SHORT(*((const int16_t*) (ptr+2)));
     }
 
     return true;
@@ -979,7 +982,7 @@ boolean LoadMap(const int *lumpList, int numLumps)
     size_t              oldLen = 0;
 
     // Allocate the data structure arrays.
-    map->vertexes = malloc(map->numVertexes * sizeof(mvertex_t));
+    map->vertexes = malloc(map->numVertexes * 2 * sizeof(float));
     map->lines = malloc(map->numLines * sizeof(mline_t));
     map->sides = malloc(map->numSides * sizeof(mside_t));
     map->sectors = malloc(map->numSectors * sizeof(msector_t));
@@ -1038,11 +1041,7 @@ boolean TransferMap(void)
     MPE_Begin(map->name);
 
     // Create all the data structures.
-    for(i = 0; i < map->numVertexes; ++i)
-    {
-        mvertex_t          *v = &map->vertexes[i];
-        MPE_VertexCreate(v->pos[VX], v->pos[VY]);
-    }
+    MPE_VertexCreatev(map->numVertexes, map->vertexes, NULL);
 
     for(i = 0; i < map->numSectors; ++i)
     {

@@ -166,6 +166,7 @@ extern          "C" {
     boolean         MPE_End(void);
 
     uint            MPE_VertexCreate(float x, float y);
+    boolean         MPE_VertexCreatev(size_t num, float *values, uint *indices);
     uint            MPE_SidedefCreate(uint sector, short flags,
                                       const char *topMaterial,
                                       materialtype_t topMaterialType,
