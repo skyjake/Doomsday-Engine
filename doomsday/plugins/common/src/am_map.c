@@ -2604,7 +2604,7 @@ static void renderWallSeg(seg_t *seg, void *data)
     if(info)
     {
         P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v1);
-        P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v2);
+        P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, v2);
 
         rendLine2(v1[VX], v1[VY], v2[VX], v2[VY], AM_LINE_WIDTH,
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
