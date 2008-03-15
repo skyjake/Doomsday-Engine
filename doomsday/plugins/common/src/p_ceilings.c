@@ -352,7 +352,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             break;
 
         case raiseToHighest:
-            ceiling->topHeight = P_FindHighestCeilingSurrounding(sec);
+            P_FindSectorSurroundingHighestCeiling(sec, &ceiling->topHeight);
 #if __JDOOM64__
             ceiling->topHeight -= 8;   // jd64
 #endif
@@ -372,7 +372,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 
             if(bitmipR > 0)
             {
-                ceiling->topHeight = P_FindHighestCeilingSurrounding(sec);
+                P_FindSectorSurroundingHighestCeiling(sec, &ceiling->topHeight);
                 ceiling->direction = 1;
                 ceiling->speed *= bitmipL;
                 ceiling->topHeight -= bitmipR;

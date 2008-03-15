@@ -734,14 +734,6 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
             EV_DoPlat(line, upWaitDownStay, 0);
         break;
 
-    case 422: // jd64
-        EV_ActivateSpecial(line);
-        break;
-
-//  case 430: // jd64
-    //  EV_DestoryLineShield(line);
-    //  break;
-
     case 89:
         // Platform Stop
         EV_StopPlat(line);

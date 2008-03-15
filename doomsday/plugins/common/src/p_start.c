@@ -653,6 +653,40 @@ float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
 #endif
 
 #if __JHERETIC__
+typedef struct findclosestlinedefparams_s {
+    float           pos[2];
+    float           minRad;
+    float           closestDist;
+    linedef_t      *closestLine;
+} findclosestlinedefparams_t;
+
+int findClosestLinedef(void *ptr, void *context)
+{
+    linedef_t          *li = (linedef_t*) ptr;
+    findclosestlinedefparams_t *params =
+        (findclosestlinedefparams_t*) context;
+
+    if(!P_GetPtrp(li, DMU_BACK_SECTOR))
+    {
+        float               dist, off;
+        float               lineLen =
+            P_ApproxDistance(P_GetFloatp(li, DMU_DX),
+                             P_GetFloatp(li, DMU_DY));
+
+        dist = P_PointLineDistance(li, params->pos[VX], params->pos[VY],
+                                   &off);
+        if(dist >= 0 &&
+           off > -params->minRad && off < lineLen + params->minRad &&
+           (!params->closestLine || dist < params->closestDist))
+        {
+            params->closestDist = dist;
+            params->closestLine = li;
+        }
+    }
+
+    return true; // Continue iteration.
+}
+
 /**
  * Only affects torches, which are often placed inside walls in the
  * original maps. The DOOM engine allowed these kinds of things but
@@ -660,14 +694,14 @@ float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
  */
 void P_MoveThingsOutOfWalls(void)
 {
-#define MAXLIST 200
-    sector_t   *sec;
-    mobj_t     *iter;
-    uint        i, l;
-    int         k, t;
-    linedef_t     *closestline = NULL, *li;
-    float       closestdist = 0, dist, off, linelen, minrad;
-    mobj_t     *tlist[MAXLIST];
+#define MAXLIST         200
+
+    sector_t           *sec;
+    mobj_t             *iter;
+    uint                i;
+    int                 k, t;
+    mobj_t             *tlist[MAXLIST];
+    findclosestlinedefparams_t params;
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -686,36 +720,21 @@ void P_MoveThingsOutOfWalls(void)
         // Move the things out of walls.
         for(t = 0; (iter = tlist[t]) != NULL; ++t)
         {
-            uint sectorLineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
+            params.pos[VX] = iter->pos[VX];
+            params.pos[VY] = iter->pos[VY];
+            params.minRad = iter->radius / 2;
+            params.closestDist = DDMAXFLOAT;
+            params.closestLine = NULL;
 
-            minrad = iter->radius / 2;
-            closestline = NULL;
+            P_Iteratep(sec, DMU_LINEDEF, &params, findClosestLinedef);
 
-            for(l = 0; l < sectorLineCount; ++l)
+            if(params.closestLine && params.closestDist < params.minRad)
             {
-                li = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | l);
-                if(P_GetPtrp(li, DMU_BACK_SECTOR))
-                    continue;
-                linelen =
-                    P_ApproxDistance(P_GetFloatp(li, DMU_DX),
-                                     P_GetFloatp(li, DMU_DY));
-                dist = P_PointLineDistance(li, iter->pos[VX], iter->pos[VY], &off);
-                if(off > -minrad && off < linelen + minrad &&
-                   (!closestline || dist < closestdist) && dist >= 0)
-                {
-                    closestdist = dist;
-                    closestline = li;
-                }
-            }
+                float               dx, dy, offlen, len;
 
-            if(closestline && closestdist < minrad)
-            {
-                float   dx, dy, offlen = minrad - closestdist;
-                float   len;
-
-                li = closestline;
-                dy = -P_GetFloatp(li, DMU_DX);
-                dx = P_GetFloatp(li, DMU_DY);
+                offlen = params.minRad - params.closestDist;
+                dy = -P_GetFloatp(params.closestLine, DMU_DX);
+                dx = P_GetFloatp(params.closestLine, DMU_DY);
 
                 len = sqrt(dx * dx + dy * dy);
                 dx *= offlen / len;
@@ -728,6 +747,8 @@ void P_MoveThingsOutOfWalls(void)
             }
         }
     }
+
+#undef MAXLIST
 }
 
 /**

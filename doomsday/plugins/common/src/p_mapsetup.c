@@ -533,31 +533,6 @@ static void P_FinalizeLevel(void)
                     P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
             }
         }
-#if __JDOOM64__
-        // kaiser - convert the unused xg linetypes to the new line type.
-        // DJS - Mega kludge. Update the wad instead!
-        switch(P_ToXLine(line)->special)
-        {
-        case 2011:
-            P_ToXLine(line)->special = 415;
-            break;
-
-        case 2012:
-            P_ToXLine(line)->special = 0;
-            break;
-
-        case 2013:
-            P_ToXLine(line)->special = 0;
-            break;
-
-        case 432:
-            P_SetSectorColor(line);
-            break;
-
-        default:
-            break;
-        }
-#endif
     }
     }
 

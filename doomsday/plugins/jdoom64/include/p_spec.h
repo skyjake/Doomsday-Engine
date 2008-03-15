@@ -170,10 +170,6 @@ void        P_SpawnDoorRaiseIn5Mins(sector_t *sec);
 
 // jd64 >
 int         EV_DoSplitDoor(linedef_t *line, int ftype, int ctype);
-int         EV_DestoryLineShield(linedef_t *line);
-int         EV_SwitchTextureFree(linedef_t *line);
-int         EV_ActivateSpecial(linedef_t *line);
-void        P_SetSectorColor(linedef_t *line);
 int         EV_AnimateDoor(linedef_t *line, mobj_t *thing);
 // < d64tc
 

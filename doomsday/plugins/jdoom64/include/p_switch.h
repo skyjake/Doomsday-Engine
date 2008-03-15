@@ -78,12 +78,6 @@ void            P_InitSwitchList(void);
 
 void            P_FreeButtons(void);
 void            P_ChangeSwitchTexture(linedef_t *line, int useAgain);
-
-void            P_SetSectorColor(linedef_t *line);
 boolean         P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side);
-
-int             EV_DestoryLineShield(linedef_t* line);
-int             EV_SwitchTextureFree(linedef_t* line);
-int             EV_ActivateSpecial(linedef_t *line);
 
 #endif

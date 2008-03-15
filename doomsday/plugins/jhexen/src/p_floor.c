@@ -396,7 +396,7 @@ int EV_OpenPillar(linedef_t *line, byte *args)
         pillar->sector = sec;
         if(!args[2])
         {
-            pillar->floorDest = P_FindLowestFloorSurrounding(sec);
+            P_FindSectorSurroundingLowestFloor(sec, &pillar->floorDest);
         }
         else
         {
@@ -406,7 +406,7 @@ int EV_OpenPillar(linedef_t *line, byte *args)
 
         if(!args[3])
         {
-            pillar->ceilingDest = P_FindHighestCeilingSurrounding(sec);
+            P_FindSectorSurroundingHighestCeiling(sec, &pillar->ceilingDest);
         }
         else
         {

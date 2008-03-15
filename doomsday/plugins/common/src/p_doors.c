@@ -362,7 +362,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
         {
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
         case blazeClose:
-            door->topHeight = P_FindLowestCeilingSurrounding(sec);
+            P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
             door->topHeight -= 4;
             door->direction = -1;
             door->speed *= 4;
@@ -370,7 +370,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
             break;
 #endif
         case close:
-            door->topHeight = P_FindLowestCeilingSurrounding(sec);
+            P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
             door->topHeight -= 4;
             door->direction = -1;
 #if !__JHEXEN__
@@ -392,7 +392,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
 #if !__JHEXEN__
         case blazeOpen:
             door->direction = 1;
-            door->topHeight = P_FindLowestCeilingSurrounding(sec);
+            P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
             door->topHeight -= 4;
 # if __JHERETIC__
             door->speed *= 3;
@@ -407,7 +407,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
         case normal:
         case open:
             door->direction = 1;
-            door->topHeight = P_FindLowestCeilingSurrounding(sec);
+            P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
             door->topHeight -= 4;
 
 #if !__JHEXEN__
@@ -806,7 +806,7 @@ boolean EV_VerticalDoor(linedef_t *line, mobj_t *thing)
     }
 
     // find the top and bottom of the movement range
-    door->topHeight = P_FindLowestCeilingSurrounding(sec);
+    P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
     door->topHeight -= 4;
     return true;
 }
@@ -833,7 +833,7 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
 
 void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
 {
-    vldoor_t *door;
+    vldoor_t           *door;
 
     door = Z_Malloc(sizeof(*door), PU_LEVSPEC, 0);
 
@@ -847,7 +847,7 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
     door->direction = 2;
     door->type = raiseIn5Mins;
     door->speed = VDOORSPEED;
-    door->topHeight = P_FindLowestCeilingSurrounding(sec);
+    P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
     door->topHeight -= 4;
     door->topWait = VDOORWAIT;
     door->topCountDown = 5 * 60 * TICSPERSEC;

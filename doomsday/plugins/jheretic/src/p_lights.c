@@ -80,13 +80,14 @@ void T_LightFlash(lightflash_t *flash)
 }
 
 /**
- * After the map has been loaded, scan each sector
- * for specials that spawn thinkers
+ * After the map has been loaded, scan each sector for specials that spawn
+ * thinkers.
  */
 void P_SpawnLightFlash(sector_t *sector)
 {
-    float       lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
-    lightflash_t *flash;
+    float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    float               otherLevel = DDMAXFLOAT;
+    lightflash_t       *flash;
 
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
@@ -97,9 +98,13 @@ void P_SpawnLightFlash(sector_t *sector)
 
     flash->thinker.function = T_LightFlash;
     flash->sector = sector;
-    flash->maxLight = lightlevel;
+    flash->maxLight = lightLevel;
 
-    flash->minLight = P_FindMinSurroundingLight(sector, lightlevel);
+    P_FindSectorSurroundingLowestLight(sector, &otherLevel);
+    if(otherLevel < lightLevel)
+        flash->minLight = otherLevel;
+    else
+        flash->minLight = lightLevel;
     flash->maxTime = 64;
     flash->minTime = 7;
     flash->count = (P_Random() & flash->maxTime) + 1;
@@ -110,12 +115,13 @@ void P_SpawnLightFlash(sector_t *sector)
  */
 void T_StrobeFlash(strobe_t *flash)
 {
-    float       lightlevel = P_GetFloatp(flash->sector, DMU_LIGHT_LEVEL);
+    float               lightLevel;
 
     if(--flash->count)
         return;
 
-    if(lightlevel == flash->minLight)
+    lightLevel = P_GetFloatp(flash->sector, DMU_LIGHT_LEVEL);
+    if(lightLevel == flash->minLight)
     {
         P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->maxLight);
         flash->count = flash->brightTime;
@@ -128,13 +134,14 @@ void T_StrobeFlash(strobe_t *flash)
 }
 
 /**
- * After the map has been loaded, scan each sector
- * for specials that spawn thinkers
+ * After the map has been loaded, scan each sector for specials that spawn
+ * thinkers.
  */
 void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
 {
-    strobe_t   *flash;
-    float       lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    float               otherLevel = DDMAXFLOAT;
+    strobe_t           *flash;
 
     flash = Z_Malloc(sizeof(*flash), PU_LEVSPEC, 0);
 
@@ -144,8 +151,12 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
     flash->darkTime = fastOrSlow;
     flash->brightTime = STROBEBRIGHT;
     flash->thinker.function = T_StrobeFlash;
-    flash->maxLight = lightlevel;
-    flash->minLight = P_FindMinSurroundingLight(sector, lightlevel);
+    flash->maxLight = lightLevel;
+    P_FindSectorSurroundingLowestLight(sector, &otherLevel);
+    if(otherLevel < lightLevel)
+        flash->minLight = otherLevel;
+    else
+        flash->minLight = lightLevel;
 
     if(flash->minLight == flash->maxLight)
         flash->minLight = 0;
@@ -164,8 +175,8 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
  */
 void EV_StartLightStrobing(linedef_t *line)
 {
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+    sector_t           *sec = NULL;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -183,12 +194,10 @@ void EV_StartLightStrobing(linedef_t *line)
 
 void EV_TurnTagLightsOff(linedef_t *line)
 {
-    int         j;
-    float       min;
-    float       lightlevel;
-    sector_t   *sec = NULL, *tsec;
-    linedef_t     *other;
-    iterlist_t *list;
+    sector_t           *sec = NULL;
+    iterlist_t         *list;
+    float               lightLevel;
+    float               otherLevel;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -197,61 +206,44 @@ void EV_TurnTagLightsOff(linedef_t *line)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        min = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
-        for(j = 0; j < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++j)
-        {
-            other = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | j);
-            tsec = P_GetNextSector(other, sec);
+        lightLevel = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
+        otherLevel = DDMAXFLOAT;
+        P_FindSectorSurroundingLowestLight(sec, &otherLevel);
+        if(otherLevel < lightLevel)
+            lightLevel = otherLevel;
 
-            if(!tsec)
-                continue;
-
-            lightlevel = P_GetFloatp(tsec, DMU_LIGHT_LEVEL);
-
-            if(lightlevel < min)
-                min = lightlevel;
-        }
-
-        P_SetFloatp(sec, DMU_LIGHT_LEVEL, min);
+        P_SetFloatp(sec, DMU_LIGHT_LEVEL, lightLevel);
     }
 }
 
 void EV_LightTurnOn(linedef_t *line, float max)
 {
-    int         j;
-    float       lightlevel;
-    sector_t   *sec = NULL, *tsec;
-    linedef_t     *tline;
-    iterlist_t *list;
+    sector_t           *sec = NULL;
+    iterlist_t         *list;
+    float               lightLevel, otherLevel;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
         return;
 
+    if(max != 0)
+        lightLevel = max;
+
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        // max = 0 means to search
-        // for highest light level
-        // surrounding sector
-        if(!max)
+        // If Max = 0 means to search for the highest light level in the
+        // surrounding sector.
+        if(max == 0)
         {
-            for(j = 0; j < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++j)
-            {
-                tline = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | j);
-                tsec = P_GetNextSector(tline, sec);
-
-                if(!tsec)
-                    continue;
-
-                lightlevel = P_GetFloatp(tsec, DMU_LIGHT_LEVEL);
-
-                if(lightlevel > max)
-                    max = lightlevel;
-            }
+            lightLevel = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
+            otherLevel = DDMINFLOAT;
+            P_FindSectorSurroundingHighestLight(sec, &otherLevel);
+            if(otherLevel > lightLevel)
+                lightLevel = otherLevel;
         }
 
-        P_SetFloatp(sec, DMU_LIGHT_LEVEL, max);
+        P_SetFloatp(sec, DMU_LIGHT_LEVEL, lightLevel);
     }
 }
 
@@ -286,16 +278,21 @@ void T_Glow(glow_t * g)
 
 void P_SpawnGlowingLight(sector_t *sector)
 {
-    float      lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
-    glow_t     *g;
+    float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    float               otherLevel = DDMAXFLOAT;
+    glow_t             *g;
 
     g = Z_Malloc(sizeof(*g), PU_LEVSPEC, 0);
 
     P_AddThinker(&g->thinker);
 
     g->sector = sector;
-    g->minLight = P_FindMinSurroundingLight(sector, lightlevel);
-    g->maxLight = lightlevel;
+    P_FindSectorSurroundingLowestLight(sector, &otherLevel);
+    if(otherLevel < lightLevel)
+        g->minLight = otherLevel;
+    else
+        g->minLight = lightLevel;
+    g->maxLight = lightLevel;
     g->thinker.function = T_Glow;
     g->direction = -1;
 

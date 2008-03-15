@@ -324,7 +324,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             break;
 #endif
         case downWaitUpStay:
-            plat->low = P_FindLowestFloorSurrounding(sec);
+            P_FindSectorSurroundingLowestFloor(sec, &plat->low);
 #if __JHEXEN__
             plat->low += 8;
 #else
@@ -347,7 +347,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 
 #if __JDOOM64__ || __JHEXEN__
         case upWaitDownStay:
-            plat->high = P_FindHighestFloorSurrounding(sec);
+            P_FindSectorSurroundingHighestFloor(sec, &plat->high);
 
             if(plat->high < floorheight)
                 plat->high = floorheight;
@@ -368,7 +368,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 #if __JDOOM64__
         case downWaitUpDoor: // jd64
             plat->speed = PLATSPEED * 8;
-            plat->low = P_FindLowestFloorSurrounding(sec);
+            P_FindSectorSurroundingLowestFloor(sec, &plat->low);
 
             if(plat->low > floorheight)
                 plat->low = floorheight;
@@ -402,7 +402,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 #if __JDOOM__ || __JDOOM64__
         case blazeDWUS:
             plat->speed = PLATSPEED * 8;
-            plat->low = P_FindLowestFloorSurrounding(sec);
+            P_FindSectorSurroundingLowestFloor(sec, &plat->low);
 
             if(plat->low > floorheight)
                 plat->low = floorheight;
@@ -414,7 +414,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             break;
 #endif
         case perpetualRaise:
-            plat->low = P_FindLowestFloorSurrounding(sec);
+            P_FindSectorSurroundingLowestFloor(sec, &plat->low);
 #if __JHEXEN__
             plat->low += 8;
 #else
@@ -423,7 +423,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             if(plat->low > floorheight)
                 plat->low = floorheight;
 
-            plat->high = P_FindHighestFloorSurrounding(sec);
+            P_FindSectorSurroundingHighestFloor(sec, &plat->high);
 
             if(plat->high < floorheight)
                 plat->high = floorheight;

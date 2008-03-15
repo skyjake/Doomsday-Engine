@@ -497,7 +497,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->speed *= 4;
 # endif
 #endif
-            floor->floorDestHeight = P_FindHighestFloorSurrounding(sec);
+            P_FindSectorSurroundingHighestFloor(sec, &floor->floorDestHeight);
             break;
 #if __JHEXEN__
         case FLEV_LOWERFLOORTOLOWEST:
@@ -512,7 +512,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->speed *= 4;
 # endif
 #endif
-            floor->floorDestHeight = P_FindLowestFloorSurrounding(sec);
+            P_FindSectorSurroundingLowestFloor(sec, &floor->floorDestHeight);
             break;
 #if __JHEXEN__
         case FLEV_LOWERFLOORBYVALUE:
@@ -535,7 +535,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->direction = -1;
             floor->sector = sec;
             floor->speed = FLOORSPEED * 4;
-            floor->floorDestHeight = P_FindHighestFloorSurrounding(sec);
+            P_FindSectorSurroundingHighestFloor(sec, &floor->floorDestHeight);
 # if __JHERETIC__
             floor->floorDestHeight += 8;
 # else
@@ -550,7 +550,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->direction = -1;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
-            floor->floorDestHeight = P_FindHighestFloorSurrounding(sec);
+            P_FindSectorSurroundingHighestFloor(sec, &floor->floorDestHeight);
             if(floor->floorDestHeight != P_GetFloatp(sec,
                                                      DMU_FLOOR_HEIGHT))
                 floor->floorDestHeight += 8;
@@ -562,7 +562,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
                 floor->direction = -1;
                 floor->sector = sec;
                 floor->speed = FLOORSPEED * bitmipL;
-                floor->floorDestHeight = P_FindHighestFloorSurrounding(sec);
+                P_FindSectorSurroundingHighestFloor(sec, &floor->floorDestHeight);
 
                 if(floor->floorDestHeight != P_GetFloatp(sec,
                                                          DMU_FLOOR_HEIGHT))
@@ -610,7 +610,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
 #if __JHEXEN__
             floor->floorDestHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT)-8;
 #else
-            floor->floorDestHeight = P_FindLowestCeilingSurrounding(sec);
+            P_FindSectorSurroundingLowestCeiling(sec, &floor->floorDestHeight);
 
             if(floor->floorDestHeight > P_GetFloatp(sec, DMU_CEILING_HEIGHT))
                 floor->floorDestHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
@@ -632,7 +632,7 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->speed *= 4;
 # endif
 #endif
-            floor->floorDestHeight = P_FindLowestCeilingSurrounding(sec);
+            P_FindSectorSurroundingLowestCeiling(sec, &floor->floorDestHeight);
 
             if(floor->floorDestHeight > P_GetFloatp(sec, DMU_CEILING_HEIGHT))
                 floor->floorDestHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
@@ -799,47 +799,12 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->direction = -1;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
-            floor->floorDestHeight = P_FindLowestFloorSurrounding(sec);
-            floor->texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
-
-            for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
             {
-                sector_t           *frontSec, *backSec;
+            sector_t               *otherSec =
+                P_FindSectorSurroundingLowestFloor(sec, &floor->floorDestHeight);
 
-                // Choose the correct texture and special on two sided lines.
-                ln = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-                frontSec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
-                backSec = P_GetPtrp(ln, DMU_BACK_SECTOR);
-
-                if(frontSec && backSec)
-                {
-                    if(frontSec == sec)
-                    {
-                        sec = backSec;
-                        if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
-                           floor->floorDestHeight)
-                        {
-                            floor->texture =
-                                P_GetIntp(sec,DMU_FLOOR_MATERIAL);
-                            floor->newSpecial =
-                                P_ToXSector(sec)->special;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        sec = frontSec;
-                        if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
-                           floor->floorDestHeight)
-                        {
-                            floor->texture =
-                                P_GetIntp(sec, DMU_FLOOR_MATERIAL);
-                            floor->newSpecial =
-                                P_ToXSector(sec)->special;
-                            break;
-                        }
-                    }
-                }
+            floor->texture = P_GetIntp(otherSec, DMU_FLOOR_MATERIAL);
+            floor->newSpecial = P_ToXSector(otherSec)->special;
             }
             break;
 #endif

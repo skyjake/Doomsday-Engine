@@ -5,8 +5,6 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -204,59 +202,205 @@ sector_t *P_GetNextSector(linedef_t *line, sector_t *sec)
     return frontSec;
 }
 
-/**
- * Find lowest floor height in surrounding sectors.
- */
-float P_FindLowestFloorSurrounding(sector_t *sec)
+#define FELLF_MIN           0x1 // Get minimum. If not set, get maximum.
+
+typedef struct findlightlevelparams_s {
+    sector_t           *baseSec;
+    byte                flags;
+    float               val;
+    sector_t           *foundSec;
+} findlightlevelparams_t;
+
+int findExtremalLightLevelInAdjacentSectors(void *ptr, void *context)
 {
-    int                 i;
-    int                 lineCount;
-    float               floor;
-    linedef_t          *check;
+    linedef_t          *line = (linedef_t*) ptr;
+    findlightlevelparams_t *params = (findlightlevelparams_t*) context;
     sector_t           *other;
 
-    floor = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
-    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
-    for(i = 0; i < lineCount; ++i)
+    other = P_GetNextSector(line, params->baseSec);
+    if(other)
     {
-        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-        other = P_GetNextSector(check, sec);
+        float               lightLevel =
+            P_GetFloatp(other, DMU_LIGHT_LEVEL);
 
-        if(!other)
-            continue;
-
-        if(P_GetFloatp(other, DMU_FLOOR_HEIGHT) < floor)
-            floor = P_GetFloatp(other, DMU_FLOOR_HEIGHT);
+        if(params->flags & FELLF_MIN)
+        {
+            if(lightLevel < params->val)
+            {
+                params->val = lightLevel;
+                params->foundSec = other;
+                if(params->val <= 0)
+                    return 0; // Stop iteration. Can't get any darker.
+            }
+        }
+        else
+        {
+            if(lightLevel > params->val)
+            {
+                params->val = lightLevel;
+                params->foundSec = other;
+                if(params->val >= 1)
+                    return 0; // Stop iteration. Can't get any brighter.
+            }
+        }
     }
 
-    return floor;
+    return 1; // Continue iteration.
 }
 
 /**
- * Find highest floor height in surrounding sectors.
+ * Find the sector with the lowest light level in surrounding sectors.
  */
-float P_FindHighestFloorSurrounding(sector_t *sec)
+sector_t* P_FindSectorSurroundingLowestLight(sector_t *sec, float *val)
 {
-    int                 i;
-    int                 lineCount;
-    float               floor = -500;
-    linedef_t          *check;
+    findlightlevelparams_t params;
+
+    params.val = DDMAXFLOAT;
+    params.baseSec = sec;
+    params.flags = FELLF_MIN;
+    params.foundSec = NULL;
+    P_Iteratep(sec, DMU_LINEDEF, &params,
+               findExtremalLightLevelInAdjacentSectors);
+
+    if(*val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+/**
+ * Find the sector with the highest light level in surrounding sectors.
+ */
+sector_t* P_FindSectorSurroundingHighestLight(sector_t *sec, float *val)
+{
+    findlightlevelparams_t params;
+
+    params.val = DDMINFLOAT;
+    params.baseSec = sec;
+    params.flags = 0;
+    params.foundSec = NULL;
+    P_Iteratep(sec, DMU_LINEDEF, &params,
+               findExtremalLightLevelInAdjacentSectors);
+
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+#define FEPHF_MIN           0x1 // Get minium. If not set, get maximum.
+#define FEPHF_FLOOR         0x2 // Get floors. If not set, get ceilings.
+
+typedef struct findextremalplaneheightparams_s {
+    sector_t           *baseSec;
+    byte                flags;
+    float               val;
+    sector_t           *foundSec;
+} findextremalplaneheightparams_t;
+
+int findExtremalPlaneHeight(void *ptr, void *context)
+{
+    linedef_t          *ln = (linedef_t*) ptr;
+    findextremalplaneheightparams_t *params =
+        (findextremalplaneheightparams_t*) context;
     sector_t           *other;
 
-    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
-    for(i = 0; i < lineCount; ++i)
+    other = P_GetNextSector(ln, params->baseSec);
+    if(other)
     {
-        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-        other = P_GetNextSector(check, sec);
+        float               height =
+            P_GetFloatp(other, ((params->flags & FEPHF_FLOOR)?
+                                   DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
 
-        if(!other)
-            continue;
-
-        if(P_GetFloatp(other, DMU_FLOOR_HEIGHT) > floor)
-            floor = P_GetFloatp(other, DMU_FLOOR_HEIGHT);
+        if(params->flags & FEPHF_MIN)
+        {
+            if(height < params->val)
+            {
+                params->val = height;
+                params->foundSec = other;
+            }
+        }
+        else
+        {
+            if(height > params->val)
+            {
+                params->val = height;
+                params->foundSec = other;
+            }
+        }
     }
 
-    return floor;
+    return 1; // Continue iteration.
+}
+
+/**
+ * Find the sector with the lowest floor height in surrounding sectors.
+ */
+sector_t* P_FindSectorSurroundingLowestFloor(sector_t* sec, float* val)
+{
+    findextremalplaneheightparams_t params;
+
+    params.baseSec = sec;
+    params.flags = FEPHF_MIN | FEPHF_FLOOR;
+    params.val = DDMAXFLOAT;
+    params.foundSec = NULL;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+/**
+ * Find the sector with the highest floor height in surrounding sectors.
+ */
+sector_t* P_FindSectorSurroundingHighestFloor(sector_t* sec, float* val)
+{
+    findextremalplaneheightparams_t params;
+
+    params.baseSec = sec;
+    params.flags = FEPHF_FLOOR;
+    params.val = DDMINFLOAT;
+    params.foundSec = NULL;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+/**
+ * Find lowest ceiling in the surrounding sector.
+ */
+sector_t* P_FindSectorSurroundingLowestCeiling(sector_t *sec, float *val)
+{
+    findextremalplaneheightparams_t params;
+
+    params.baseSec = sec;
+    params.flags = FEPHF_MIN;
+    params.val = DDMAXFLOAT;
+    params.foundSec = NULL;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+/**
+ * Find highest ceiling in the surrounding sectors.
+ */
+sector_t* P_FindSectorSurroundingHighestCeiling(sector_t *sec, float *val)
+{
+    findextremalplaneheightparams_t params;
+
+    params.baseSec = sec;
+    params.flags = 0;
+    params.val = DDMINFLOAT;
+    params.foundSec = NULL;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+
+    if(val)
+        *val = params.val;
+    return params.foundSec;
 }
 
 /**
@@ -310,82 +454,4 @@ float P_FindNextHighestFloor(sector_t *sec, float currentheight)
     }
 
     return currentheight;
-}
-
-/**
- * Find lowest ceiling in the surrounding sector.
- */
-float P_FindLowestCeilingSurrounding(sector_t *sec)
-{
-    int                 i;
-    int                 lineCount;
-    float               height = DDMAXFLOAT;
-    linedef_t          *check;
-    sector_t           *other;
-
-    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
-    for(i = 0; i < lineCount; ++i)
-    {
-        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-        other = P_GetNextSector(check, sec);
-
-        if(!other)
-            continue;
-
-        if(P_GetFloatp(other, DMU_CEILING_HEIGHT) < height)
-            height = P_GetFloatp(other, DMU_CEILING_HEIGHT);
-    }
-    return height;
-}
-
-/**
- * Find highest ceiling in the surrounding sectors.
- */
-float P_FindHighestCeilingSurrounding(sector_t *sec)
-{
-    int                 i;
-    int                 lineCount;
-    float               height = 0;
-    linedef_t          *check;
-    sector_t           *other;
-
-    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
-    for(i = 0; i < lineCount; ++i)
-    {
-        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-        other = P_GetNextSector(check, sec);
-
-        if(!other)
-            continue;
-
-        if(P_GetFloatp(other, DMU_CEILING_HEIGHT) > height)
-            height = P_GetFloatp(other, DMU_CEILING_HEIGHT);
-    }
-    return height;
-}
-
-/**
- * Find minimum light from an adjacent sector.
- */
-float P_FindMinSurroundingLight(sector_t *sec, float min)
-{
-    int                 i;
-    int                 lineCount;
-    linedef_t          *line;
-    sector_t           *check;
-
-    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
-    for(i = 0; i < lineCount; ++i)
-    {
-        line = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-        check = P_GetNextSector(line, sec);
-
-        if(!check)
-            continue;
-
-        if(P_GetFloatp(check, DMU_LIGHT_LEVEL) < min)
-            min = P_GetFloatp(check, DMU_LIGHT_LEVEL);
-    }
-
-    return min;
 }

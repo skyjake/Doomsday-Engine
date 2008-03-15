@@ -56,18 +56,50 @@
 
 // CODE --------------------------------------------------------------------
 
+typedef struct spreadsectorparams_s {
+    sector_t           *baseSec;
+    int                 material;
+    sector_t           *foundSec;
+} spreadsectorparams_t;
+
+int findAdjacentSectorForSpread(void *ptr, void *context)
+{
+    linedef_t          *ln = (linedef_t*) ptr;
+    spreadsectorparams_t *params = (spreadsectorparams_t*) context;
+    sector_t           *frontSec, *backSec;
+
+    frontSec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
+    if(!frontSec)
+        return 1; // Continue iteration.
+
+    if(params->baseSec != frontSec)
+        return 1; // Continue iteration.
+
+    backSec = P_GetPtrp(ln, DMU_BACK_SECTOR);
+    if(!backSec)
+        return 1; // Continue iteration.
+
+    if(P_GetIntp(backSec, DMU_FLOOR_MATERIAL) != params->material)
+        return 1; // Continue iteration.
+
+    if(P_ToXSector(backSec)->specialData)
+        return 1; // Continue iteration.
+
+    // This looks good.
+    params->foundSec = backSec;
+    return 0; // Stop iteration.
+}
+
 int EV_BuildStairs(linedef_t *line, stair_e type)
 {
-    int             i, ok, texture;
-    int             rtn = 0;
-    float           height = 0, stairsize = 0;
-    float           speed = 0;
-    linedef_t      *ln;
-    xsector_t      *xsec;
-    sector_t       *sec = NULL;
-    sector_t       *tsec;
-    floormove_t    *floor;
-    iterlist_t     *list;
+    int                 rtn = 0;
+    xsector_t          *xsec;
+    sector_t           *sec = NULL;
+    floormove_t        *floor;
+    float               height = 0, stairsize = 0;
+    float               speed = 0;
+    iterlist_t         *list;
+    spreadsectorparams_t params;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -77,7 +109,8 @@ int EV_BuildStairs(linedef_t *line, stair_e type)
     while((sec = P_IterListIterator(list)) != NULL)
     {
         xsec = P_ToXSector(sec);
-        // Already moving? If so, keep going..
+
+        // Already moving? If so, keep going...
         if(xsec->specialData)
             continue;
 
@@ -104,54 +137,33 @@ int EV_BuildStairs(linedef_t *line, stair_e type)
         height = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + stairsize;
         floor->floorDestHeight = height;
 
-        texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
-
-        // Find next sector to raise
-        // 1. Find 2-sided line with same sector side.
+        // Find next sector to raise.
+        // 1. Find 2-sided line with a front side in the same sector.
         // 2. Other side is the next sector to raise.
-        do
-        {
-            ok = 0;
-            for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
-            {
-                sector_t           *frontSec, *backSec;
+        params.baseSec = sec;
+        params.material = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
+        params.foundSec = NULL;
 
-                ln = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
+        while(!P_Iteratep(sec, DMU_LINEDEF, &params,
+                          findAdjacentSectorForSpread))
+        {   // We found another sector to spread to.
+            height += stairsize;
 
-                frontSec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
-                backSec = P_GetPtrp(ln, DMU_BACK_SECTOR);
+            floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
 
-                if(!frontSec || !backSec)
-                    continue;
+            P_AddThinker(&floor->thinker);
 
-                tsec = frontSec;
-                if(sec != tsec)
-                    continue;
+            P_ToXSector(params.foundSec)->specialData = floor;
+            floor->thinker.function = T_MoveFloor;
+            floor->direction = 1;
+            floor->sector = params.foundSec;
+            floor->speed = speed;
+            floor->floorDestHeight = height;
 
-                tsec = backSec;
-                if(P_GetIntp(tsec, DMU_FLOOR_MATERIAL) != texture)
-                    continue;
-
-                height += stairsize;
-
-                if(P_ToXSector(tsec)->specialData)
-                    continue;
-
-                sec = tsec;
-                floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
-
-                P_AddThinker(&floor->thinker);
-
-                P_ToXSector(tsec)->specialData = floor;
-                floor->thinker.function = T_MoveFloor;
-                floor->direction = 1;
-                floor->sector = sec;
-                floor->speed = speed;
-                floor->floorDestHeight = height;
-                ok = 1;
-                break;
-            }
-        } while(ok);
+            // Prepare for the next pass.
+            params.baseSec = params.foundSec;
+            params.foundSec = NULL;
+        }
     }
 
     return rtn;
