@@ -2506,7 +2506,7 @@ static void rendLine2(float x1, float y1, float x2, float y2, float width,
     }
 }
 
-static void renderWallSeg(seg_t *seg, void *data)
+int renderWallSeg(seg_t *seg, void *data)
 {
     ssecitervars_t *vars = (ssecitervars_t*) data;
     float       v1[2], v2[2];
@@ -2519,18 +2519,18 @@ static void renderWallSeg(seg_t *seg, void *data)
 
     line = P_GetPtrp(seg, DMU_LINEDEF);
     if(!line)
-        return;
+        return 1;
 
     xLine = P_ToXLine(line);
     if(xLine->validCount == VALIDCOUNT)
-        return; // Already drawn once.
+        return 1; // Already drawn once.
 
     if((xLine->flags & ML_DONTDRAW) && !(map->flags & AMF_REND_ALLLINES))
-        return;
+        return 1;
 
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR))
-        return; // We only want to draw twosided lines once.
+        return 1; // We only want to draw twosided lines once.
 
 #if !__JHEXEN__
 #if !__JSTRIFE__
@@ -2548,7 +2548,7 @@ static void renderWallSeg(seg_t *seg, void *data)
                       (map->flags & AMF_REND_LINE_NORMALS));
 
             xLine->validCount = VALIDCOUNT;  // Mark as drawn this frame.
-            return;
+            return 1; // Continue iteration.
         }
     }
 #endif
@@ -2619,6 +2619,8 @@ static void renderWallSeg(seg_t *seg, void *data)
 
         xLine->validCount = VALIDCOUNT; // Mark as drawn this frame.
     }
+
+    return 1; // Continue iteration.
 }
 
 /**
@@ -2626,17 +2628,7 @@ static void renderWallSeg(seg_t *seg, void *data)
  */
 boolean drawSegsOfSubsector(subsector_t *s, void *data)
 {
-    uint        i, segCount;
-    seg_t      *seg;
-
-    segCount = P_GetIntp(s, DMU_SEG_COUNT);
-    for(i = 0; i < segCount; ++i)
-    {
-        seg = P_GetPtrp(s, DMU_SEG_OF_SUBSECTOR | i);
-        renderWallSeg(seg, data);
-    }
-
-    return true; // Continue iteration.
+    return P_Iteratep(s, DMU_SEG, data, renderWallSeg);
 }
 
 /**
@@ -2644,17 +2636,7 @@ boolean drawSegsOfSubsector(subsector_t *s, void *data)
  */
 boolean drawSegsOfPolyobject(polyobj_t *po, void *data)
 {
-    uint        i, segCount;
-    seg_t      *seg;
-
-    segCount = P_GetIntp(po, DMU_SEG_COUNT);
-    for(i = 0; i < segCount; ++i)
-    {
-        seg = P_GetPtrp(po, DMU_SEG_OF_POLYOBJ | i);
-        renderWallSeg(seg, data);
-    }
-
-    return true; // Continue iteration.
+    return P_Iteratep(po, DMU_SEG, data, renderWallSeg);
 }
 
 /**
