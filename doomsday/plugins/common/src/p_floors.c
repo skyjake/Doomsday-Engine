@@ -649,9 +649,15 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
 # if __JDOOM64__
             floor->speed *= 2;
 # endif
-            floor->floorDestHeight =
-                P_FindNextHighestFloor(sec, P_GetFloatp(sec,
-                                                        DMU_FLOOR_HEIGHT));
+            {
+            float               floorHeight, nextFloor;
+
+            floorHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+            if(P_FindSectorSurroundingNextHighestFloor(sec, floorHeight, &nextFloor))
+                floor->floorDestHeight = nextFloor;
+            else
+                floor->floorDestHeight = floorHeight;
+            }
             break;
 #endif
 #if __JHEXEN__
@@ -667,9 +673,15 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
             floor->speed *= 8;
 # endif
 #endif
-            floor->floorDestHeight =
-                P_FindNextHighestFloor(sec, P_GetFloatp(sec,
-                                                        DMU_FLOOR_HEIGHT));
+            {
+            float               floorHeight, nextFloor;
+
+            floorHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+            if(P_FindSectorSurroundingNextHighestFloor(sec, floorHeight, &nextFloor))
+                floor->floorDestHeight = nextFloor;
+            else
+                floor->floorDestHeight = floorHeight;
+            }
             break;
 #if __JHEXEN__
         case FLEV_RAISEFLOORBYVALUE:

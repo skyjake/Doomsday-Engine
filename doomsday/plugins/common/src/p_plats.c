@@ -254,15 +254,15 @@ static int EV_DoPlat2(linedef_t *line, int tag, byte *args, plattype_e type,
 static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 #endif
 {
-    int         rtn = 0;
-    float       floorheight;
-    plat_t     *plat;
-    sector_t   *sec = NULL;
+    int                 rtn = 0;
+    float               floorHeight;
+    plat_t             *plat;
+    sector_t           *sec = NULL;
 #if !__JHEXEN__
-    sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    sector_t           *frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 #endif
-    xsector_t  *xsec;
-    iterlist_t *list;
+    xsector_t          *xsec;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag(tag, false);
     if(!list)
@@ -292,7 +292,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 #if __JHEXEN__
         plat->speed = (float) args[1] * (1.0 / 8);
 #endif
-        floorheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+        floorHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         switch(type)
         {
 #if !__JHEXEN__
@@ -300,9 +300,15 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             plat->speed = PLATSPEED * .5;
 
             P_SetIntp(sec, DMU_FLOOR_MATERIAL,
-                      P_GetIntp(frontsector, DMU_FLOOR_MATERIAL));
+                      P_GetIntp(frontSector, DMU_FLOOR_MATERIAL));
 
-            plat->high = P_FindNextHighestFloor(sec, floorheight);
+            {
+            float               nextFloor;
+            if(P_FindSectorSurroundingNextHighestFloor(sec, floorHeight, &nextFloor))
+                plat->high = nextFloor;
+            else
+                plat->high = floorHeight;
+            }
 
             plat->wait = 0;
             plat->status = up;
@@ -315,9 +321,9 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             plat->speed = PLATSPEED * .5;
 
             P_SetIntp(sec, DMU_FLOOR_MATERIAL,
-                      P_GetIntp(frontsector, DMU_FLOOR_MATERIAL));
+                      P_GetIntp(frontSector, DMU_FLOOR_MATERIAL));
 
-            plat->high = floorheight + amount;
+            plat->high = floorHeight + amount;
             plat->wait = 0;
             plat->status = up;
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMMOVE);
@@ -330,10 +336,10 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 #else
             plat->speed = PLATSPEED * 4;
 #endif
-            if(plat->low > floorheight)
-                plat->low = floorheight;
+            if(plat->low > floorHeight)
+                plat->low = floorHeight;
 
-            plat->high = floorheight;
+            plat->high = floorHeight;
             plat->status = down;
 #if __JHEXEN__
             plat->wait = (int) args[2];
@@ -349,10 +355,10 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
         case upWaitDownStay:
             P_FindSectorSurroundingHighestFloor(sec, &plat->high);
 
-            if(plat->high < floorheight)
-                plat->high = floorheight;
+            if(plat->high < floorHeight)
+                plat->high = floorHeight;
 
-            plat->low = floorheight;
+            plat->low = floorHeight;
             plat->status = up;
 # if __JHEXEN__
             plat->wait = (int) args[2];
@@ -370,31 +376,31 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             plat->speed = PLATSPEED * 8;
             P_FindSectorSurroundingLowestFloor(sec, &plat->low);
 
-            if(plat->low > floorheight)
-                plat->low = floorheight;
-            if(plat->low != floorheight)
+            if(plat->low > floorHeight)
+                plat->low = floorHeight;
+            if(plat->low != floorHeight)
                 plat->low += 6;
 
-            plat->high = floorheight;
+            plat->high = floorHeight;
             plat->wait = 50 * PLATWAIT;
             plat->status = down;
             break;
 #endif
 #if __JHEXEN__
        case downByValueWaitUpStay:
-            plat->low = floorheight - (float) args[3] * 8;
-            if(plat->low > floorheight)
-                plat->low = floorheight;
-            plat->high = floorheight;
+            plat->low = floorHeight - (float) args[3] * 8;
+            if(plat->low > floorHeight)
+                plat->low = floorHeight;
+            plat->high = floorHeight;
             plat->wait = (int) args[2];
             plat->status = down;
             break;
 
         case upByValueWaitDownStay:
-            plat->high = floorheight + (float) args[3] * 8;
-            if(plat->high < floorheight)
-                plat->high = floorheight;
-            plat->low = floorheight;
+            plat->high = floorHeight + (float) args[3] * 8;
+            if(plat->high < floorHeight)
+                plat->high = floorHeight;
+            plat->low = floorHeight;
             plat->wait = (int) args[2];
             plat->status = up;
             break;
@@ -404,10 +410,10 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             plat->speed = PLATSPEED * 8;
             P_FindSectorSurroundingLowestFloor(sec, &plat->low);
 
-            if(plat->low > floorheight)
-                plat->low = floorheight;
+            if(plat->low > floorHeight)
+                plat->low = floorHeight;
 
-            plat->high = floorheight;
+            plat->high = floorHeight;
             plat->wait = PLATWAIT * TICSPERSEC;
             plat->status = down;
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
@@ -420,13 +426,13 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 #else
             plat->speed = PLATSPEED;
 #endif
-            if(plat->low > floorheight)
-                plat->low = floorheight;
+            if(plat->low > floorHeight)
+                plat->low = floorHeight;
 
             P_FindSectorSurroundingHighestFloor(sec, &plat->high);
 
-            if(plat->high < floorheight)
-                plat->high = floorheight;
+            if(plat->high < floorHeight)
+                plat->high = floorHeight;
 
             plat->status = P_Random() & 1;
 #if __JHEXEN__

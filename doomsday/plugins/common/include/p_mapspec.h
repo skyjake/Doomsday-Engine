@@ -51,6 +51,6 @@ sector_t*       P_FindSectorSurroundingHighestCeiling(sector_t *sec, float *val)
 sector_t*       P_FindSectorSurroundingLowestLight(sector_t *sector, float *val);
 sector_t*       P_FindSectorSurroundingHighestLight(sector_t *sector, float *val);
 
-float           P_FindNextHighestFloor(sector_t *sec, float currentheight);
+sector_t*       P_FindSectorSurroundingNextHighestFloor(sector_t *sec, float baseHeight, float *val);
 
 #endif

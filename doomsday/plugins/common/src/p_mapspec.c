@@ -403,55 +403,66 @@ sector_t* P_FindSectorSurroundingHighestCeiling(sector_t *sec, float *val)
     return params.foundSec;
 }
 
-/**
- * Passed a sector and a floor height, returns the fixed point value of the
- * smallest floor height in a surrounding sector larger than the floor
- * height passed. If no such height exists the floor height passed is
- * returned.
- *
- * DJS - Rewritten using Lee Killough's algorithm for avoiding the
- *       the fixed array.
- */
-float P_FindNextHighestFloor(sector_t *sec, float currentheight)
+#define FNPHF_FLOOR             0x1 // Get floors, if not set get ceilings.
+#define FNPHF_ABOVE             0x2 // Get next above, if not set get next below.
+
+typedef struct findnextplaneheightparams_s {
+    sector_t           *baseSec;
+    float               baseHeight;
+    byte                flags;
+    float               val;
+    sector_t           *foundSec;
+} findnextplaneheightparams_t;
+
+int findNextPlaneHeight(void *ptr, void *context)
 {
-    int                 i;
-    int                 lineCount;
-    float               otherHeight;
-    float               anotherHeight;
-    linedef_t          *check;
+    linedef_t          *li = (linedef_t*) ptr;
+    findnextplaneheightparams_t *params =
+        (findnextplaneheightparams_t*) context;
     sector_t           *other;
 
-    lineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
-    for(i = 0; i < lineCount; ++i)
+    other = P_GetNextSector(li, params->baseSec);
+    if(other)
     {
-        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-        other = P_GetNextSector(check, sec);
+        float               otherHeight =
+            P_GetFloatp(other, ((params->flags & FNPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
 
-        if(!other)
-            continue;
-
-        otherHeight = P_GetFloatp(other, DMU_FLOOR_HEIGHT);
-
-        if(otherHeight > currentheight)
+        if(params->flags & FNPHF_ABOVE)
         {
-            while(++i < lineCount)
+            if(otherHeight < params->val && otherHeight > params->baseHeight)
             {
-                check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-                other = P_GetNextSector(check, sec);
-
-                if(other)
-                {
-                    anotherHeight = P_GetFloatp(other, DMU_FLOOR_HEIGHT);
-
-                    if(anotherHeight < otherHeight &&
-                       anotherHeight > currentheight)
-                        otherHeight = anotherHeight;
-                }
+                params->val = otherHeight;
+                params->foundSec = other;
             }
-
-            return otherHeight;
+        }
+        else
+        {
+            if(otherHeight > params->val && otherHeight < params->baseHeight)
+            {
+                params->val = otherHeight;
+                params->foundSec = other;
+            }
         }
     }
 
-    return currentheight;
+    return 1; // Continue iteration.
+}
+
+/**
+ * Find the sector with the next highest floor in surrounding sectors.
+ */
+sector_t* P_FindSectorSurroundingNextHighestFloor(sector_t *sec,
+                                                  float baseHeight,
+                                                  float *val)
+{
+    findnextplaneheightparams_t params;
+
+    params.baseSec = sec;
+    params.baseHeight = baseHeight;
+    params.flags = FNPHF_FLOOR | FNPHF_ABOVE;
+    params.foundSec = NULL;
+    params.val = DDMINFLOAT;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+
+    return params.foundSec;
 }

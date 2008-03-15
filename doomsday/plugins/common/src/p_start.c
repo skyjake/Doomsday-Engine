@@ -652,7 +652,7 @@ float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
 }
 #endif
 
-#if __JHERETIC__
+#if __JHERETIC__ || __JHEXEN__
 typedef struct findclosestlinedefparams_s {
     float           pos[2];
     float           minRad;
@@ -686,7 +686,9 @@ int findClosestLinedef(void *ptr, void *context)
 
     return true; // Continue iteration.
 }
+#endif
 
+#if __JHERETIC__
 /**
  * Only affects torches, which are often placed inside walls in the
  * original maps. The DOOM engine allowed these kinds of things but
@@ -839,14 +841,14 @@ void P_TurnGizmosAwayFromDoors(void)
  */
 void P_TurnTorchesToFaceWalls(void)
 {
-#define MAXLIST 200
-    sector_t   *sec;
-    mobj_t     *iter;
-    uint        i, l;
-    int         k, t;
-    linedef_t     *closestline = NULL, *li;
-    float       closestdist = 0, dist, off, linelen, minrad;
-    mobj_t     *tlist[MAXLIST];
+#define MAXLIST         200
+
+    sector_t           *sec;
+    mobj_t             *iter;
+    uint                i;
+    int                 k, t;
+    mobj_t             *tlist[MAXLIST];
+    findclosestlinedefparams_t params;
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -865,34 +867,19 @@ void P_TurnTorchesToFaceWalls(void)
         // Turn to face away from the nearest wall.
         for(t = 0; (iter = tlist[t]) != NULL; t++)
         {
-            uint sectorLineCount = P_GetIntp(sec, DMU_LINEDEF_COUNT);
+            params.pos[VX] = iter->pos[VX];
+            params.pos[VY] = iter->pos[VY];
+            params.minRad = iter->radius;
+            params.closestLine = NULL;
+            params.closestDist = DDMAXFLOAT;
 
-            minrad = iter->radius;
-            closestline = NULL;
-            for(l = 0; l < sectorLineCount; ++l)
-            {
-                li = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | l);
-                if(P_GetPtrp(li, DMU_BACK_SECTOR))
-                    continue;
-
-                linelen =
-                    P_ApproxDistance(P_GetFloatp(li, DMU_DX),
-                                     P_GetFloatp(li, DMU_DY));
-                dist = P_PointLineDistance(li, iter->pos[VX], iter->pos[VY], &off);
-                if(off > -minrad && off < linelen + minrad &&
-                   (!closestline || dist < closestdist) && dist >= 0)
-                {
-                    closestdist = dist;
-                    closestline = li;
-                }
-            }
-            if(closestline && closestdist < minrad)
+            if(params.closestLine && params.closestDist < params.minRad)
             {
                 vertex_t       *v0, *v1;
                 float           v0p[2], v1p[2];
 
-                v0 = P_GetPtrp(closestline, DMU_VERTEX0);
-                v1 = P_GetPtrp(closestline, DMU_VERTEX1);
+                v0 = P_GetPtrp(params.closestLine, DMU_VERTEX0);
+                v1 = P_GetPtrp(params.closestLine, DMU_VERTEX1);
 
                 P_GetFloatpv(v0, DMU_XY, v0p);
                 P_GetFloatpv(v1, DMU_XY, v1p);
@@ -902,5 +889,7 @@ void P_TurnTorchesToFaceWalls(void)
             }
         }
     }
+
+#undef MAXLIST
 }
 #endif
