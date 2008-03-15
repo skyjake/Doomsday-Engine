@@ -652,10 +652,10 @@ void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex,
 int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, int *heightlist,
                        int *piclist, int *lightlist, sector_t **sectorlist)
 {
-    int         i, count = 0;
-    int         sectorLineCount;
-    linedef_t     *lin;
-    sector_t   *other;
+    int                 i, count = 0;
+    int                 sectorLineCount;
+    linedef_t          *lin;
+    sector_t           *other;
 
     if(!sector)
         return 0;
@@ -982,18 +982,51 @@ sector_t *XS_FindActTagged(int tag)
     return NULL;
 }
 
+#define FSETHF_MIN          0x1 // Get min. If not set, get max.
+
+typedef struct findsectorextremaltextureheightparams_s {
+    sector_t           *baseSec;
+    byte                flags;
+    int                 part;
+    float               val;
+} findsectorextremaltextureheightparams_t;
+
+int findSectorExtremalTextureHeight(void *ptr, void *context)
+{
+    linedef_t          *li = (linedef_t*) ptr;
+    findsectorextremaltextureheightparams_t *params =
+        (findsectorextremaltextureheightparams_t*) context;
+    float               height;
+
+    // The heights are in real world coordinates.
+    height = XS_TextureHeight(li, params->part);
+    if(params->flags & FSETHF_MIN)
+    {
+        if(height < params->val)
+            params->val = height;
+    }
+    else
+    {
+        if(height > params->val)
+            params->val = height;
+    }
+
+    return 1; // Continue iteration.
+}
+
 boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
-                    uint *refdata, int *height, int *pic,
+                    uint *refdata, float *height, int *pic,
                     sector_t **planesector)
 {
-    int         idx = 0;
-    uint        num;
-    int         heights[MAX_VALS], pics[MAX_VALS];
-    sector_t   *sectorlist[MAX_VALS];
-    boolean     ceiling;
-    sector_t   *iter;
-    xline_t    *xline;
-    char        buff[50];
+    int             idx = 0;
+    uint            num;
+    int             heights[MAX_VALS];
+    int             pics[MAX_VALS];
+    sector_t       *sectorlist[MAX_VALS];
+    boolean         ceiling;
+    sector_t       *iter;
+    xline_t        *xline;
+    char            buff[50];
 
     if(refdata)
         sprintf(buff, " : %i", *refdata);
@@ -1010,7 +1043,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
 
     // Init the values to the current sector's floor.
     if(height)
-        *height = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
+        *height = P_GetFloatp(sector, DMU_FLOOR_HEIGHT);
     if(pic)
         *pic = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
     if(planesector)
@@ -1107,14 +1140,14 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
             ref == SPREF_LINE_ACT_TAGGED_FLOOR)
         {
             if(height)
-                *height = P_GetFixedp(iter, DMU_FLOOR_HEIGHT);
+                *height = P_GetFloatp(iter, DMU_FLOOR_HEIGHT);
             if(pic)
                 *pic = P_GetIntp(iter, DMU_FLOOR_MATERIAL);
         }
         else
         {
             if(height)
-                *height = P_GetFixedp(iter, DMU_CEILING_HEIGHT);
+                *height = P_GetFloatp(iter, DMU_CEILING_HEIGHT);
             if(pic)
                 *pic = P_GetIntp(iter, DMU_CEILING_MATERIAL);
         }
@@ -1135,7 +1168,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
 
         // Actline's front floor.
         if(height)
-            *height = P_GetFixedp(frontsector, DMU_FLOOR_HEIGHT);
+            *height = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
         if(pic)
             *pic = P_GetIntp(frontsector, DMU_FLOOR_MATERIAL);
         if(planesector)
@@ -1157,7 +1190,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
 
         // Actline's back floor.
         if(height)
-            *height = P_GetFixedp(backsector, DMU_FLOOR_HEIGHT);
+            *height = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
         if(pic)
             *pic = P_GetIntp(backsector, DMU_FLOOR_MATERIAL);
         if(planesector)
@@ -1179,7 +1212,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
 
         // Actline's front ceiling.
         if(height)
-            *height = P_GetFixedp(frontsector, DMU_CEILING_HEIGHT);
+            *height = P_GetFloatp(frontsector, DMU_CEILING_HEIGHT);
         if(pic)
             *pic = P_GetIntp(frontsector, DMU_CEILING_MATERIAL);
         if(planesector)
@@ -1201,7 +1234,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
 
         // Actline's back ceiling.
         if(height)
-            *height = P_GetFixedp(backsector, DMU_CEILING_HEIGHT);
+            *height = P_GetFloatp(backsector, DMU_CEILING_HEIGHT);
         if(pic)
             *pic = P_GetIntp(backsector, DMU_CEILING_MATERIAL);
         if(planesector)
@@ -1212,7 +1245,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     if(ref == SPREF_ORIGINAL_FLOOR)
     {
         if(height)
-            *height = FLT2FIX(P_ToXSector(sector)->SP_floororigheight);
+            *height = P_ToXSector(sector)->SP_floororigheight;
         if(pic)
             *pic = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
         return true;
@@ -1221,7 +1254,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     if(ref == SPREF_ORIGINAL_CEILING)
     {
         if(height)
-            *height = FLT2FIX(P_ToXSector(sector)->SP_ceilorigheight);
+            *height = P_ToXSector(sector)->SP_ceilorigheight;
         if(pic)
             *pic = P_GetIntp(sector, DMU_CEILING_MATERIAL);
         return true;
@@ -1230,7 +1263,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     if(ref == SPREF_CURRENT_FLOOR)
     {
         if(height)
-            *height = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
+            *height = P_GetFloatp(sector, DMU_FLOOR_HEIGHT);
         if(pic)
             *pic = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
         return true;
@@ -1239,19 +1272,19 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     if(ref == SPREF_CURRENT_CEILING)
     {
         if(height)
-            *height = P_GetFixedp(sector, DMU_CEILING_HEIGHT);
+            *height = P_GetFloatp(sector, DMU_CEILING_HEIGHT);
         if(pic)
             *pic = P_GetIntp(sector, DMU_CEILING_MATERIAL);
         return true;
     }
 
-    // Texture targets?
+    // Texture height targets?
     if(ref >= SPREF_MIN_BOTTOM_TEXTURE && ref <= SPREF_MAX_TOP_TEXTURE)
     {
-        int     i, k;
-        int     part;
+        int                 part;
+        boolean             findMin;
+        findsectorextremaltextureheightparams_t params;
 
-        num = 0;
         // Which part of the wall are we looking at?
         if(ref == SPREF_MIN_MID_TEXTURE || ref == SPREF_MAX_MID_TEXTURE)
             part = LWS_MID;
@@ -1260,30 +1293,19 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
         else // Then it's the bottom.
             part = LWS_LOWER;
 
-        // Get the heights of the sector's textures.
-        // The heights are in real world coordinates.
-        for(i = 0, k = 0; i < P_GetIntp(sector, DMU_LINEDEF_COUNT); ++i)
-        {
-            k = XS_TextureHeight(P_GetPtrp(sector, DMU_LINEDEF_OF_SECTOR | i), part);
-            if(k != DDMAXINT)
-                heights[num++] = k << FRACBITS;
-        }
-
-        if(!num)
-            return true;
-
-        // Are we looking at the min or max heights?
         if(ref >= SPREF_MIN_BOTTOM_TEXTURE && ref <= SPREF_MIN_TOP_TEXTURE)
-        {
-            idx = FindMinOf(heights, num);
-            if(height)
-                *height = heights[idx];
-            return true;
-        }
+            findMin = true;
+        else
+            findMin = false;
 
-        idx = FindMaxOf(heights, num);
+        params.baseSec = sector;
+        params.part = part;
+        params.flags = (findMin? FSETHF_MIN : 0);
+        params.val = (findMin? DDMAXFLOAT : DDMINFLOAT);
+        P_Iteratep(sector, DMU_LINEDEF, &params,
+                   findSectorExtremalTextureHeight);
         if(height)
-            *height = heights[idx];
+            *height = params.val;
 
         return true;
     }
@@ -1403,9 +1425,9 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
 
     // Setup the thinker and add it to the list.
     {
-    int temp = FLT2FIX(mover->destination);
+    float               temp = mover->destination;
     XS_GetPlane(line, sector, info->iparm[2], NULL, &temp, 0, 0);
-    mover->destination = FIX2FLT(temp) + info->fparm[2];
+    mover->destination = temp + info->fparm[2];
     }
     mover->speed = info->fparm[0];
     mover->crushSpeed = info->fparm[1];
