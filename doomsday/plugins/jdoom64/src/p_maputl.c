@@ -35,6 +35,7 @@
 
 #include "jdoom64.h"
 
+#include "dmu_lib.h"
 #include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
@@ -90,8 +91,8 @@ static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
     dist =
         +dx * mo->pos[VY] -
         dy * mo->pos[VX] -
-        dx * (P_GetFloatp(P_GetPtrp(ld, DMU_VERTEX1), DMU_Y)) +
-        dy * (P_GetFloatp(P_GetPtrp(ld, DMU_VERTEX1), DMU_X));
+        dx * (P_GetFloatp(P_GetPtrp(ld, DMU_VERTEX0), DMU_Y)) +
+        dy * (P_GetFloatp(P_GetPtrp(ld, DMU_VERTEX0), DMU_X));
 
     if((dist < 0  && ffloor < mo->pos[VZ] && bfloor >= mo->pos[VZ]) ||
        (dist >= 0 && bfloor < mo->pos[VZ] && ffloor >= mo->pos[VZ]))

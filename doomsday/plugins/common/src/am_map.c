@@ -59,6 +59,7 @@
 #  include "jstrife.h"
 #endif
 
+#include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "hu_stuff.h"
 #include "hu_menu.h"
@@ -2538,8 +2539,8 @@ static void renderWallSeg(seg_t *seg, void *data)
         // Show active XG lines.
         if(xLine->xg && xLine->xg->active && (levelTime & 4))
         {
-            P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
-            P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
+            P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v1);
+            P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, v2);
 
             rendLine2(v1[VX], v1[VY], v2[VX], v2[VY], AM_LINE_WIDTH,
                       .8f, 0, .8f, 1,
@@ -2602,8 +2603,8 @@ static void renderWallSeg(seg_t *seg, void *data)
 
     if(info)
     {
-        P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
-        P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
+        P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v1);
+        P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v2);
 
         rendLine2(v1[VX], v1[VY], v2[VX], v2[VY], AM_LINE_WIDTH,
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],

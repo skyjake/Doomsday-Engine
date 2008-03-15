@@ -49,6 +49,7 @@
 
 #include "jhexen.h"
 
+#include "dmu_lib.h"
 #include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
@@ -154,8 +155,7 @@ mobj_t *P_SpawnTeleFog(float x, float y)
 {
     float       fheight;
 
-    fheight = P_GetFloatp(R_PointInSubsector(x, y),
-                          DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
+    fheight = P_GetFloatp(R_PointInSubsector(x, y), DMU_FLOOR_HEIGHT);
 
     return P_SpawnMobj3f(MT_TFOG, x, y, fheight + TELEFOGHEIGHT);
 }
@@ -235,8 +235,7 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
     if(mo->flags2 & MF2_FLOORCLIP)
     {
         if(mo->pos[VZ] ==
-           P_GetFloatp(mo->subsector,
-                       DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
+           P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT) &&
            P_MobjGetFloorType(mo) >= FLOOR_LIQUID)
         {
             mo->floorClip = 10;

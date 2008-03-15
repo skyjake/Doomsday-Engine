@@ -56,6 +56,7 @@
 #  include "jhexen.h"
 #endif
 
+#include "dmu_lib.h"
 #include "d_netsv.h"
 #include "d_net.h"
 #include "hu_msg.h"
@@ -853,7 +854,7 @@ DEFCC(CCmdSpawnMobj)
     {
         pos[VZ] = strtod(argv[4], 0) +
             P_GetFloatp(R_PointInSubsector(pos[VX], pos[VY]),
-                        DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
+                        DMU_FLOOR_HEIGHT);
     }
 
     mo = P_SpawnMobj3fv(type, pos);

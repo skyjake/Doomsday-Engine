@@ -1693,9 +1693,9 @@ static boolean RestoreMobj(mobj_t *mo, int ver)
 
     P_MobjSetPosition(mo);
     mo->floorZ =
-        P_GetFloatp(mo->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
+        P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
     mo->ceilingZ =
-        P_GetFloatp(mo->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_CEILING_HEIGHT);
+        P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 
     return true; // Add this thinker.
 }

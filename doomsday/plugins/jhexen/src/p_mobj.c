@@ -56,6 +56,7 @@
 
 #include "../../../engine/portable/include/m_bams.h" // for BANG2RAD
 
+#include "dmu_lib.h"
 #include "p_map.h"
 #include "p_player.h"
 #include "g_common.h"

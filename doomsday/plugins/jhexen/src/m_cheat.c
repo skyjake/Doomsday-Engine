@@ -49,6 +49,7 @@
 
 #include "jhexen.h"
 
+#include "dmu_lib.h"
 #include "p_inventory.h"
 #include "p_player.h"
 #include "p_map.h"

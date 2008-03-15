@@ -49,6 +49,7 @@
 
 #include "jhexen.h"
 
+#include "dmu_lib.h"
 #include "p_inventory.h"
 #include "p_player.h"
 #include "p_map.h"
@@ -832,7 +833,7 @@ void P_PlayerInSpecialSector(player_t *player)
 void P_PlayerOnSpecialFlat(player_t *player, int floorType)
 {
     if(player->plr->mo->pos[VZ]
-       > P_GetFloatp(player->plr->mo->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT))
+       > P_GetFloatp(player->plr->mo->subsector, DMU_FLOOR_HEIGHT))
     {
         return; // Player is not touching the floor
     }

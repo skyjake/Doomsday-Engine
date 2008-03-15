@@ -633,8 +633,8 @@ float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
 {
     float   a[2], b[2], c[2], d[2], len;
 
-    P_GetFloatpv(line, DMU_VERTEX1_XY, a);
-    P_GetFloatpv(line, DMU_VERTEX2_XY, b);
+    P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, a);
+    P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, b);
 
     c[VX] = x;
     c[VY] = y;
@@ -794,11 +794,17 @@ void P_TurnGizmosAwayFromDoors(void)
 
             if(closestline)
             {
-                iter->angle =
-                    R_PointToAngle2(P_GetFloatp(closestline, DMU_VERTEX1_X),
-                                    P_GetFloatp(closestline, DMU_VERTEX1_Y),
-                                    P_GetFloatp(closestline, DMU_VERTEX2_X),
-                                    P_GetFloatp(closestline, DMU_VERTEX2_Y)) - ANG90;
+                vertex_t       *v0, *v1;
+                float           v0p[2], v1p[2];
+
+                v0 = P_GetPtrp(closestline, DMU_VERTEX0);
+                v1 = P_GetPtrp(closestline, DMU_VERTEX1);
+
+                P_GetFloatpv(v0, DMU_XY, v0p);
+                P_GetFloatpv(v1, DMU_XY, v1p);
+
+                iter->angle = R_PointToAngle2(v0p[VX], v0p[VY],
+                                              v1p[VX], v1p[VY]) - ANG90;
             }
         }
     }
@@ -861,11 +867,17 @@ void P_TurnTorchesToFaceWalls(void)
             }
             if(closestline && closestdist < minrad)
             {
-                iter->angle =
-                    R_PointToAngle2(P_GetFloatp(closestline, DMU_VERTEX1_X),
-                                    P_GetFloatp(closestline, DMU_VERTEX1_Y),
-                                    P_GetFloatp(closestline, DMU_VERTEX2_X),
-                                    P_GetFloatp(closestline, DMU_VERTEX2_Y)) - ANG90;
+                vertex_t       *v0, *v1;
+                float           v0p[2], v1p[2];
+
+                v0 = P_GetPtrp(closestline, DMU_VERTEX0);
+                v1 = P_GetPtrp(closestline, DMU_VERTEX1);
+
+                P_GetFloatpv(v0, DMU_XY, v0p);
+                P_GetFloatpv(v1, DMU_XY, v1p);
+
+                iter->angle = R_PointToAngle2(v0p[VX], v0p[VY],
+                                              v1p[VX], v1p[VY]) - ANG90;
             }
         }
     }

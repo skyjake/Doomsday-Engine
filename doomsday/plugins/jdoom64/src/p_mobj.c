@@ -42,6 +42,7 @@
 
 #include "jdoom64.h"
 
+#include "dmu_lib.h"
 #include "hu_stuff.h"
 #include "g_common.h"
 #include "p_map.h"

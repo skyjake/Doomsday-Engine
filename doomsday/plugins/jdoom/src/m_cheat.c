@@ -37,6 +37,7 @@
 #include "p_player.h"
 #include "am_map.h"
 #include "hu_menu.h"
+#include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------
 

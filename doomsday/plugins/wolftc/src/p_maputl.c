@@ -88,9 +88,9 @@ static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
     dist =                      // lever arm
         +(dx >> FRACBITS) * (mo->pos[VY] >> FRACBITS) -
         (dy >> FRACBITS) * (mo->pos[VX] >> FRACBITS) -
-        (dx >> FRACBITS) * (P_GetFixedp(P_GetPtrp(ld, DMU_VERTEX1),
+        (dx >> FRACBITS) * (P_GetFixedp(P_GetPtrp(ld, DMU_VERTEX0),
                                         DMU_Y) >> FRACBITS) +
-        (dy >> FRACBITS) * (P_GetFixedp(P_GetPtrp(ld, DMU_VERTEX1),
+        (dy >> FRACBITS) * (P_GetFixedp(P_GetPtrp(ld, DMU_VERTEX0),
                                         DMU_X) >> FRACBITS);
 
     if((dist < 0 && ffloor < mo->pos[VZ] && bfloor >= mo->pos[VZ]) ||

@@ -45,6 +45,7 @@
 #  include "jstrife.h"
 #endif
 
+#include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_svtexarc.h"
 #include "p_saveg.h"

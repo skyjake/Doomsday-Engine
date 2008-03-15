@@ -49,6 +49,7 @@
 
 #include "jhexen.h"
 
+#include "dmu_lib.h"
 #include "p_map.h"
 #include "p_mapspec.h"
 

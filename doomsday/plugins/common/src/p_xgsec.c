@@ -2079,8 +2079,7 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         if(thing->flags2 & MF2_FLOORCLIP)
         {
             if(thing->pos[VZ] ==
-               P_GetFloatp(thing->subsector,
-                           DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
+               P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT) &&
                P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
             {
                 thing->floorClip = 10;

@@ -35,6 +35,7 @@
 
 #include "jdoom64.h"
 
+#include "dmu_lib.h"
 #include "f_infine.h"
 #include "d_net.h"
 #include "g_common.h"

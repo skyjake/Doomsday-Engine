@@ -38,6 +38,7 @@
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
+#include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------
 

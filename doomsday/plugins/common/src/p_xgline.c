@@ -133,7 +133,7 @@
 #define TO_DMU_MIDDLE_COLOR(x) (x == 0? DMU_MIDDLE_COLOR_RED \
         : x == 1? DMU_MIDDLE_COLOR_GREEN \
         : x == 2? DMU_MIDDLE_COLOR_BLUE \
-        : DMU_MIDDLE_COLOR_ALPHA)
+        : DMU_MIDDLE_ALPHA)
 
 #define TO_DMU_BOTTOM_COLOR(x) (x == 0? DMU_BOTTOM_COLOR_RED \
         : x == 1? DMU_BOTTOM_COLOR_GREEN \
@@ -1515,13 +1515,13 @@ int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context,
     angle_t     angle;
 
     // retrieve a few properties to make this look neater.
-    oldv1 = P_GetPtrp(line, DMU_VERTEX1);
-    oldv2 = P_GetPtrp(line, DMU_VERTEX2);
+    oldv1 = P_GetPtrp(line, DMU_VERTEX0);
+    oldv2 = P_GetPtrp(line, DMU_VERTEX1);
     oldldx = P_GetFloatp(line, DMU_DX);
     oldldy = P_GetFloatp(line, DMU_DY);
 
-    newv1 = P_GetPtrp(newline, DMU_VERTEX1);
-    newv2 = P_GetPtrp(newline, DMU_VERTEX2);
+    newv1 = P_GetPtrp(newline, DMU_VERTEX0);
+    newv2 = P_GetPtrp(newline, DMU_VERTEX1);
     newldx = P_GetFloatp(newline, DMU_DX);
     newldy = P_GetFloatp(newline, DMU_DY);
     newfrontsector = P_GetPtrp(newline, DMU_FRONT_SECTOR);
@@ -1657,8 +1657,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context,
     {
         if(P_MobjGetFloorType(mobj) >= FLOOR_LIQUID &&
            mobj->pos[VZ] ==
-           P_GetFloatp(mobj->subsector,
-                       DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT))
+           P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT))
         {
             mobj->floorClip = 10;
         }

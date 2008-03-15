@@ -54,6 +54,7 @@
 
 #include "jhexen.h"
 
+#include "dmu_lib.h"
 #include "p_mapspec.h"
 #include "p_map.h"
 #include "g_common.h"
@@ -1872,13 +1873,13 @@ void C_DECL A_SerpentChase(mobj_t *actor)
     // Chase towards player.
     memcpy(oldpos, actor->pos, sizeof(oldpos));
 
-    oldFloor = P_GetFloatp(actor->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_MATERIAL);
+    oldFloor = P_GetFloatp(actor->subsector, DMU_FLOOR_MATERIAL);
     if(--actor->moveCount < 0 || !P_Move(actor))
     {
         P_NewChaseDir(actor);
     }
 
-    if(P_GetFloatp(actor->subsector, DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_MATERIAL) != oldFloor)
+    if(P_GetFloatp(actor->subsector, DMU_FLOOR_MATERIAL) != oldFloor)
     {
         P_TryMove(actor, oldpos[VX], oldpos[VY]);
         P_NewChaseDir(actor);
