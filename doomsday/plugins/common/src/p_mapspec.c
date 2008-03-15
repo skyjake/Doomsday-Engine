@@ -464,5 +464,8 @@ sector_t* P_FindSectorSurroundingNextHighestFloor(sector_t *sec,
     params.val = DDMINFLOAT;
     P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
 
+    if(val)
+        *val = params.val;
+
     return params.foundSec;
 }
