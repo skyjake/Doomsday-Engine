@@ -586,7 +586,7 @@ boolean EV_OpenPolyDoor(linedef_t *line, byte *args, podoortype_t type)
 
 static polyobj_t *GetPolyobj(uint polyNum)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; i < numpolyobjs; ++i)
     {
@@ -600,8 +600,10 @@ static polyobj_t *GetPolyobj(uint polyNum)
 
 static int GetPolyobjMirror(uint poly)
 {
-    uint        i;
-
+    /**
+     * \fixme Polyobjs are now handled completely differently and so we can
+     * no longer use this method to determine the mirror.
+    uint                i;
     for(i = 0; i < numpolyobjs; ++i)
     {
         if(P_GetInt(DMU_POLYOBJ, i, DMU_TAG) == poly)
@@ -611,15 +613,20 @@ static int GetPolyobjMirror(uint poly)
             return P_ToXLine(linedef)->arg2;
         }
     }
+    */
+
+#if _DEBUG
+Con_Message("GetPolyobjMirror: Not currently implemented.\n");
+#endif
 
     return 0;
 }
 
 static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
 {
-    uint        thrustAn;
-    float       thrustX, thrustY, force;
-    polyevent_t *pe;
+    uint                thrustAn;
+    float               thrustX, thrustY, force;
+    polyevent_t        *pe;
 
     // Clients do no polyobj <-> mobj interaction.
     if(IS_CLIENT)
