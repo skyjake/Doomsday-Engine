@@ -88,7 +88,6 @@ extern float tmBBox[4];     // for line intersection checks
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean bossKilled;
-mobj_t *soundtarget;
 
 mobj_t *corpsehit;
 mobj_t *vileobj;
@@ -114,71 +113,14 @@ static fixed_t dropoff_deltax, dropoff_deltay, floorz;
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Recursively traverse adjacent sectors,
- * sound blocking lines cut off traversal.
- * Called by P_NoiseAlert.
- */
-void P_RecursiveSound(sector_t *sec, int soundblocks)
-{
-    int                 i;
-    linedef_t          *check;
-    xline_t            *xline;
-    sector_t           *frontSec, *backSec, *other;
-    xsector_t          *xsec = P_ToXSector(sec);
-
-    // wake up all monsters in this sector
-    if(P_GetIntp(sec, DMU_VALID_COUNT) == VALIDCOUNT &&
-       xsec->soundTraversed <= soundblocks + 1)
-        return;                 // already flooded
-
-    P_SetIntp(sec, DMU_VALID_COUNT, VALIDCOUNT);
-
-    xsec->soundTraversed = soundblocks + 1;
-    xsec->soundTarget = soundtarget;
-
-    for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
-    {
-        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-
-        frontSec = P_GetPtrp(check, DMU_FRONT_SECTOR);
-        backSec = P_GetPtrp(check, DMU_BACK_SECTOR);
-
-        if(!frontSec || !backSec)
-            continue;
-
-        P_LineOpening(check);
-
-        if(OPENRANGE <= 0)
-            continue; // Closed door.
-
-        if(frontSec == sec)
-            other = backSec;
-        else
-            other = frontSec;
-
-        xline = P_ToXLine(check);
-        if(xline->flags & ML_SOUNDBLOCK)
-        {
-            if(!soundblocks)
-                P_RecursiveSound(other, 1);
-        }
-        else
-        {
-            P_RecursiveSound(other, soundblocks);
-        }
-    }
-}
-
-/*
- * If a monster yells at a player,
- * it will alert other monsters to the player.
+/**
+ * If a monster yells at a player, it will alert other monsters to the
+ * player's whereabouts.
  */
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
-    soundtarget = target;
     VALIDCOUNT++;
-    P_RecursiveSound(P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
+    P_RecursiveSound(target, P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
 }
 
 boolean P_CheckMeleeRange(mobj_t *actor)

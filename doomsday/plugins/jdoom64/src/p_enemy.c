@@ -103,7 +103,6 @@ braindata_t brain; // Global state of boss brain.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static mobj_t *soundTarget;
 static mobj_t *corpseHit;
 
 static float dropoffDelta[2], floorZ;
@@ -126,69 +125,13 @@ static const float dirSpeed[8][2] =
 // CODE --------------------------------------------------------------------
 
 /**
- * Recursively traverse adjacent sectors, sound blocking lines cut off
- * traversal. Called by P_NoiseAlert.
- */
-void P_RecursiveSound(sector_t *sec, int soundBlocks)
-{
-    int                 i;
-    linedef_t          *check;
-    xline_t            *xline;
-    sector_t           *frontSec, *backSec, *other;
-    xsector_t          *xsec = P_ToXSector(sec);
-
-    // Wake up all monsters in this sector.
-    if(P_GetIntp(sec, DMU_VALID_COUNT) == VALIDCOUNT &&
-       xsec->soundTraversed <= soundBlocks + 1)
-        return; // Already flooded.
-
-    P_SetIntp(sec, DMU_VALID_COUNT, VALIDCOUNT);
-
-    xsec->soundTraversed = soundBlocks + 1;
-    xsec->soundTarget = soundTarget;
-
-    for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
-    {
-        check = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-
-        frontSec = P_GetPtrp(check, DMU_FRONT_SECTOR);
-        backSec = P_GetPtrp(check, DMU_BACK_SECTOR);
-
-        if(!frontSec || !backSec)
-            continue;
-
-        P_LineOpening(check);
-
-        if(OPENRANGE <= 0)
-            continue; // Closed door.
-
-        if(frontSec == sec)
-            other = backSec;
-        else
-            other = frontSec;
-
-        xline = P_ToXLine(check);
-        if(xline->flags & ML_SOUNDBLOCK)
-        {
-            if(!soundBlocks)
-                P_RecursiveSound(other, 1);
-        }
-        else
-        {
-            P_RecursiveSound(other, soundBlocks);
-        }
-    }
-}
-
-/**
  * If a monster yells at a player, it will alert other monsters to the
- * player.
+ * player's whereabouts.
  */
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
-    soundTarget = target;
     VALIDCOUNT++;
-    P_RecursiveSound(P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
+    P_RecursiveSound(target, P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
 }
 
 static boolean checkMeleeRange(mobj_t *actor)

@@ -469,3 +469,76 @@ sector_t* P_FindSectorSurroundingNextHighestFloor(sector_t *sec,
 
     return params.foundSec;
 }
+
+
+typedef struct spreadsoundtoneighborsparams_s {
+    sector_t           *baseSec;
+    int                 soundBlocks;
+    mobj_t             *soundTarget;
+} spreadsoundtoneighborsparams_t;
+
+int spreadSoundToNeighbors(void *ptr, void *context)
+{
+    linedef_t          *li = (linedef_t*) ptr;
+    spreadsoundtoneighborsparams_t *params =
+        (spreadsoundtoneighborsparams_t*) context;
+    sector_t           *frontSec, *backSec;
+
+    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    backSec  = P_GetPtrp(li, DMU_BACK_SECTOR);
+
+    if(frontSec && backSec)
+    {
+        P_LineOpening(li);
+
+        if(OPENRANGE > 0)
+        {
+            sector_t           *other;
+            xline_t            *xline;
+
+            if(frontSec == params->baseSec)
+                other = backSec;
+            else
+                other = frontSec;
+
+            xline = P_ToXLine(li);
+            if(xline->flags & ML_SOUNDBLOCK)
+            {
+                if(!params->soundBlocks)
+                    P_RecursiveSound(params->soundTarget, other, 1);
+            }
+            else
+            {
+                P_RecursiveSound(params->soundTarget, other,
+                                 params->soundBlocks);
+            }
+        }
+    }
+
+    return 1; // Continue iteration.
+}
+
+/**
+ * Recursively traverse adjacent sectors, sound blocking lines cut off
+ * traversal. Called by P_NoiseAlert.
+ */
+void P_RecursiveSound(struct mobj_s *soundTarget, sector_t *sec,
+                      int soundBlocks)
+{
+    spreadsoundtoneighborsparams_t params;
+    xsector_t          *xsec = P_ToXSector(sec);
+
+    // Wake up all monsters in this sector.
+    if(P_GetIntp(sec, DMU_VALID_COUNT) == VALIDCOUNT &&
+       xsec->soundTraversed <= soundBlocks + 1)
+        return; // Already flooded.
+
+    P_SetIntp(sec, DMU_VALID_COUNT, VALIDCOUNT);
+    xsec->soundTraversed = soundBlocks + 1;
+    xsec->soundTarget = soundTarget;
+
+    params.baseSec = sec;
+    params.soundBlocks = soundBlocks;
+    params.soundTarget = soundTarget;
+    P_Iteratep(sec, DMU_LINEDEF, &params, spreadSoundToNeighbors);
+}

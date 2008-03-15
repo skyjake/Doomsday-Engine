@@ -414,6 +414,72 @@ void T_MoveFloor(floormove_t *floor)
     }
 }
 
+typedef struct findlineinsectorsmallestbottommaterialparams_s {
+    sector_t           *baseSec;
+    int                 minSize;
+    linedef_t          *foundLine;
+} findlineinsectorsmallestbottommaterialparams_t;
+
+int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
+{
+    linedef_t          *li = (linedef_t*) ptr;
+    findlineinsectorsmallestbottommaterialparams_t *params =
+        (findlineinsectorsmallestbottommaterialparams_t*) context;
+    sector_t          *frontSec, *backSec;
+
+    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+
+    if(frontSec && backSec)
+    {
+        sidedef_t          *side;
+        int                 mat;
+
+        side = P_GetPtrp(li, DMU_SIDEDEF0);
+        mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
+        if(mat >= 0)
+        {
+            Set(DD_TEXTURE_HEIGHT_QUERY, mat);
+            if(Get(DD_QUERY_RESULT) < params->minSize)
+            {
+                params->minSize = Get(DD_QUERY_RESULT);
+                params->foundLine = li;
+            }
+        }
+
+        side = P_GetPtrp(li, DMU_SIDEDEF1);
+        mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
+        if(mat >= 0)
+        {
+            Set(DD_TEXTURE_HEIGHT_QUERY, mat);
+
+            if(Get(DD_QUERY_RESULT) < params->minSize)
+            {
+                params->minSize = Get(DD_QUERY_RESULT);
+                params->foundLine = li;
+            }
+        }
+    }
+
+    return 1; // Continue iteration.
+}
+
+linedef_t* P_FindLineInSectorSmallestBottomMaterial(sector_t *sec, int *val)
+{
+    findlineinsectorsmallestbottommaterialparams_t params;
+
+    params.baseSec = sec;
+    params.minSize = DDMAXINT;
+    params.foundLine = NULL;
+    P_Iteratep(sec, DMU_LINEDEF, &params,
+               findLineInSectorSmallestBottomMaterial);
+
+    if(val)
+        *val = params.minSize;
+
+    return params.foundLine;
+}
+
 /**
  * Handle moving floors.
  */
@@ -424,9 +490,6 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
 #endif
 {
 #if !__JHEXEN__
-    int         i;
-    int         bottomtexture;
-    linedef_t     *ln;
     sector_t   *frontsector;
 #endif
     int         rtn = 0;
@@ -764,46 +827,15 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
 # endif
         case raiseToTexture:
             {
-            int     minsize = MAXINT;
-            sidedef_t *side;
+            int             minSize = DDMAXINT;
 
             floor->direction = 1;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
-            for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
-            {
-                sector_t          *frontSec, *backSec;
-
-                ln = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-
-                frontSec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
-                backSec = P_GetPtrp(ln, DMU_BACK_SECTOR);
-
-                if(frontSec && backSec)
-                {
-                    side = P_GetPtrp(ln, DMU_SIDEDEF0);
-                    bottomtexture = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
-                    if(bottomtexture >= 0)
-                    {
-                        Set(DD_TEXTURE_HEIGHT_QUERY, bottomtexture);
-                        if(Get(DD_QUERY_RESULT) < minsize)
-                            minsize = Get(DD_QUERY_RESULT);
-                    }
-
-                    side = P_GetPtrp(ln, DMU_SIDEDEF1);
-                    bottomtexture = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
-                    if(bottomtexture >= 0)
-                    {
-                        Set(DD_TEXTURE_HEIGHT_QUERY, bottomtexture);
-
-                        if(Get(DD_QUERY_RESULT) < minsize)
-                            minsize = Get(DD_QUERY_RESULT);
-                    }
-                }
-            }
+            P_FindLineInSectorSmallestBottomMaterial(sec, &minSize);
             floor->floorDestHeight =
                 P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT) +
-                    (float) minsize;
+                    (float) minSize;
             }
             break;
 
