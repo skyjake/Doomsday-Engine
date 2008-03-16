@@ -646,64 +646,6 @@ void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex,
     }
 }
 
-/**
- * \note One plane can get listed multiple times.
- */
-int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, int *heightlist,
-                       int *piclist, int *lightlist, sector_t **sectorlist)
-{
-    int                 i, count = 0;
-    int                 sectorLineCount;
-    linedef_t          *lin;
-    sector_t           *other;
-
-    if(!sector)
-        return 0;
-
-    sectorLineCount = P_GetIntp(sector, DMU_LINEDEF_COUNT);
-    for(i = 0; i < sectorLineCount; ++i)
-    {
-        lin = P_GetPtrp(sector, DMU_LINEDEF_OF_SECTOR | i);
-
-        // Only accept two-sided lines.
-        if(!P_GetPtrp(lin, DMU_BACK_SECTOR) ||
-           !P_GetPtrp(lin, DMU_FRONT_SECTOR))
-            continue;
-
-        if(P_GetPtrp(lin, DMU_FRONT_SECTOR) == sector)
-            other = P_GetPtrp(lin, DMU_BACK_SECTOR);
-        else
-            other = P_GetPtrp(lin, DMU_FRONT_SECTOR);
-
-        if(heightlist)
-        {
-            if(ceiling)
-                heightlist[count] = P_GetFixedp(other, DMU_CEILING_HEIGHT);
-            else
-                heightlist[count] = P_GetFixedp(other, DMU_FLOOR_HEIGHT);
-        }
-
-        if(piclist)
-        {
-            if(ceiling)
-                piclist[count] = P_GetIntp(other, DMU_CEILING_MATERIAL);
-            else
-                piclist[count] = P_GetIntp(other, DMU_FLOOR_MATERIAL);
-        }
-
-        if(lightlist)
-            lightlist[count] = 255.0f * P_GetFloatp(other, DMU_LIGHT_LEVEL);
-
-        if(sectorlist)
-            sectorlist[count] = other;
-
-        // Increment counter.
-        count++;
-    }
-
-    return count;
-}
-
 uint FindMaxOf(int *list, uint num)
 {
     uint        i, idx = 0;
@@ -1016,17 +958,14 @@ int findSectorExtremalTextureHeight(void *ptr, void *context)
 
 boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
                     uint *refdata, float *height, int *pic,
-                    sector_t **planesector)
+                    sector_t **planeSector)
 {
-    int             idx = 0;
-    uint            num;
-    int             heights[MAX_VALS];
-    int             pics[MAX_VALS];
-    sector_t       *sectorlist[MAX_VALS];
-    boolean         ceiling;
-    sector_t       *iter;
-    xline_t        *xline;
-    char            buff[50];
+    int                 otherMat;
+    float               otherHeight;
+    sector_t           *otherSec;
+    sector_t           *iter;
+    xline_t            *xline;
+    char                buff[50];
 
     if(refdata)
         sprintf(buff, " : %i", *refdata);
@@ -1046,12 +985,12 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
         *height = P_GetFloatp(sector, DMU_FLOOR_HEIGHT);
     if(pic)
         *pic = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
-    if(planesector)
-        *planesector = sector;
+    if(planeSector)
+        *planeSector = sector;
 
     // First try the non-comparative, iterative sprefs.
     iter = NULL;
-    switch (ref)
+    switch(ref)
     {
     case SPREF_SECTOR_TAGGED_FLOOR:
     case SPREF_SECTOR_TAGGED_CEILING:
@@ -1134,8 +1073,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     // Did we find the plane through iteration?
     if(iter)
     {
-        if(planesector)
-            *planesector = iter;
+        if(planeSector)
+            *planeSector = iter;
         if((ref >= SPREF_SECTOR_TAGGED_FLOOR && ref <= SPREF_INDEX_FLOOR) ||
             ref == SPREF_LINE_ACT_TAGGED_FLOOR)
         {
@@ -1171,8 +1110,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
             *height = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
         if(pic)
             *pic = P_GetIntp(frontsector, DMU_FLOOR_MATERIAL);
-        if(planesector)
-            *planesector = frontsector;
+        if(planeSector)
+            *planeSector = frontsector;
         return true;
     }
 
@@ -1193,8 +1132,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
             *height = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
         if(pic)
             *pic = P_GetIntp(backsector, DMU_FLOOR_MATERIAL);
-        if(planesector)
-            *planesector = backsector;
+        if(planeSector)
+            *planeSector = backsector;
         return true;
     }
 
@@ -1215,8 +1154,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
             *height = P_GetFloatp(frontsector, DMU_CEILING_HEIGHT);
         if(pic)
             *pic = P_GetIntp(frontsector, DMU_CEILING_MATERIAL);
-        if(planesector)
-            *planesector = frontsector;
+        if(planeSector)
+            *planeSector = frontsector;
         return true;
     }
 
@@ -1237,8 +1176,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
             *height = P_GetFloatp(backsector, DMU_CEILING_HEIGHT);
         if(pic)
             *pic = P_GetIntp(backsector, DMU_CEILING_MATERIAL);
-        if(planesector)
-            *planesector = backsector;
+        if(planeSector)
+            *planeSector = backsector;
         return true;
     }
 
@@ -1310,50 +1249,80 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
         return true;
     }
 
-    // We need to figure out the heights of the adjoining sectors.
-    // The results will be stored in the heights array.
-    ceiling = (ref == SPREF_HIGHEST_CEILING || ref == SPREF_LOWEST_CEILING ||
-               ref == SPREF_NEXT_HIGHEST_CEILING ||
-               ref == SPREF_NEXT_LOWEST_CEILING);
-    num = XS_AdjoiningPlanes(sector, ceiling, heights, pics, NULL, sectorlist);
-
-    if(!num)
+    // Get the right height and pic.
+    if(ref == SPREF_HIGHEST_CEILING)
     {
-        // Add self.
-        heights[0] = ceiling ? P_GetFixedp(sector, DMU_CEILING_HEIGHT) :
-                               P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
-
-        pics[0] = ceiling ? P_GetIntp(sector, DMU_CEILING_MATERIAL) :
-                            P_GetIntp(sector, DMU_FLOOR_MATERIAL);
-        sectorlist[0] = sector;
-        num = 1;
+        otherSec =
+            P_FindSectorSurroundingHighestCeiling(sector, &otherHeight);
+        if(otherSec)
+            otherMat = P_GetIntp(otherSec, DMU_CEILING_MATERIAL);
+    }
+    else if(ref == SPREF_HIGHEST_FLOOR)
+    {
+        otherSec =
+            P_FindSectorSurroundingHighestFloor(sector, &otherHeight);
+        if(otherSec)
+            otherMat = P_GetIntp(otherSec, DMU_CEILING_MATERIAL);
+    }
+    else if(ref == SPREF_LOWEST_CEILING)
+    {
+        otherSec =
+            P_FindSectorSurroundingLowestCeiling(sector, &otherHeight);
+        if(otherSec)
+            otherMat = P_GetIntp(otherSec, DMU_CEILING_MATERIAL);
+    }
+    else if(ref == SPREF_LOWEST_FLOOR)
+    {
+        otherSec =
+            P_FindSectorSurroundingLowestFloor(sector, &otherHeight);
+        if(otherSec)
+            otherMat = P_GetIntp(otherSec, DMU_FLOOR_MATERIAL);
+    }
+    else if(ref == SPREF_NEXT_HIGHEST_CEILING)
+    {
+        otherSec =
+            P_FindSectorSurroundingNextHighestCeiling(sector,
+                P_GetFloatp(sector, DMU_CEILING_HEIGHT), &otherHeight);
+        if(otherSec)
+            otherMat = P_GetIntp(otherSec, DMU_CEILING_MATERIAL);
+    }
+    else if(ref == SPREF_NEXT_HIGHEST_FLOOR)
+    {
+        otherSec =
+            P_FindSectorSurroundingNextHighestFloor(sector,
+                P_GetFloatp(sector, DMU_FLOOR_HEIGHT), &otherHeight);
+        if(otherSec)
+            otherMat = P_GetIntp(otherSec, DMU_FLOOR_MATERIAL);
+    }
+    else if(ref == SPREF_NEXT_LOWEST_CEILING)
+    {
+        otherSec =
+            P_FindSectorSurroundingNextLowestCeiling(sector,
+                P_GetFloatp(sector, DMU_CEILING_HEIGHT), &otherHeight);
+        if(otherSec)
+            otherMat = P_GetIntp(otherSec, DMU_CEILING_MATERIAL);
+    }
+    else if(ref == SPREF_NEXT_LOWEST_FLOOR)
+    {
+        otherSec =
+            P_FindSectorSurroundingNextLowestFloor(sector,
+                P_GetFloatp(sector, DMU_FLOOR_HEIGHT), &otherHeight);
+        if(otherSec)
+            otherMat = P_GetIntp(otherSec, DMU_FLOOR_MATERIAL);
     }
 
-    // Get the right height and pic.
-    if(ref == SPREF_HIGHEST_CEILING || ref == SPREF_HIGHEST_FLOOR)
-        idx = FindMaxOf(heights, num);
-    else if(ref == SPREF_LOWEST_CEILING || ref == SPREF_LOWEST_FLOOR)
-        idx = FindMinOf(heights, num);
-    else if(ref == SPREF_NEXT_HIGHEST_CEILING)
-        idx = FindNextOf(heights, num, P_GetFixedp(sector, DMU_CEILING_HEIGHT));
-    else if(ref == SPREF_NEXT_HIGHEST_FLOOR)
-        idx = FindNextOf(heights, num, P_GetFixedp(sector, DMU_FLOOR_HEIGHT));
-    else if(ref == SPREF_NEXT_LOWEST_CEILING)
-        idx = FindPrevOf(heights, num, P_GetFixedp(sector, DMU_CEILING_HEIGHT));
-    else if(ref == SPREF_NEXT_LOWEST_FLOOR)
-        idx = FindPrevOf(heights, num, P_GetFixedp(sector, DMU_FLOOR_HEIGHT));
-
     // The requested plane was not found.
-    if(idx == -1)
+    if(!otherSec)
         return false;
 
     // Set the values.
     if(height)
-        *height = heights[idx];
+        *height = otherHeight;
     if(pic)
-        *pic = pics[idx];
-    if(planesector)
-        *planesector = sectorlist[idx];
+        *pic = otherMat;
+    if(planeSector)
+        *planeSector = otherSec;
+
     return true;
 }
 
@@ -1528,10 +1497,11 @@ void XS_InitStairBuilder(linedef_t *line)
 boolean XS_DoBuild(sector_t *sector, boolean ceiling, linedef_t *origin,
                    linetype_t *info, uint stepcount)
 {
-    static float firstheight;
-    uint        secnum = P_ToIndex(sector);
-    float       waittime;
-    xgplanemover_t *mover;
+    static float        firstheight;
+
+    uint                secnum = P_ToIndex(sector);
+    float               waittime;
+    xgplanemover_t     *mover;
 
     // Make sure each sector is only processed once.
     if(builder[secnum] & BL_BUILT)
@@ -1595,16 +1565,16 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
                               void *context, void *context2,
                               mobj_t *activator)
 {
-    boolean     found = true;
-    int         k;
-    uint        i, lowest, stepcount = 0;
-    linedef_t     *line;
-    linedef_t     *origin = (linedef_t *) context;
-    linetype_t *info = context2;
-    sector_t   *sec;
-    boolean     picstop = info->iparm[2] != 0;
-    boolean     spread = info->iparm[3] != 0;
-    int         mypic;
+    boolean             found = true;
+    int                 k;
+    uint                i, lowest, stepcount = 0;
+    linedef_t          *line;
+    linedef_t          *origin = (linedef_t *) context;
+    linetype_t         *info = context2;
+    sector_t           *sec;
+    boolean             picstop = info->iparm[2] != 0;
+    boolean             spread = info->iparm[3] != 0;
+    int                 mypic;
 
     XG_Dev("XSTrav_BuildStairs: Sector %i, %s", P_ToIndex(sector),
            ceiling ? "ceiling" : "floor");
@@ -1770,15 +1740,11 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling,
                               void *context, void *context2,
                               mobj_t *activator)
 {
-    linedef_t     *line = (linedef_t *) context;
-    linetype_t *info = context2;
-    int         num, levels[MAX_VALS], i = 0;
-    float       uselevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
-    sector_t   *frontsector, *backsector;
-    float       usergb[3];
-
-    frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    linedef_t          *line = (linedef_t *) context;
+    linetype_t         *info = context2;
+    int                 num, levels[MAX_VALS], i = 0;
+    float               usergb[3];
+    float               lightLevel;
 
     // i2: (true/false) set level
     // i3: (true/false) set RGB
@@ -1794,54 +1760,55 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling,
         switch(info->iparm[4])
         {
         case LIGHTREF_NONE:
-            uselevel = 0;
+            lightLevel = 0;
             break;
 
         case LIGHTREF_MY:
-            uselevel = P_GetFloatp(frontsector, DMU_LIGHT_LEVEL);
+            {
+            sector_t           *frontSec =
+                P_GetPtrp(line, DMU_FRONT_SECTOR);
+            lightLevel = P_GetFloatp(frontSec, DMU_LIGHT_LEVEL);
+            }
             break;
 
         case LIGHTREF_BACK:
-            if(backsector)
-                uselevel = P_GetFloatp(backsector, DMU_LIGHT_LEVEL);
+            {
+            sector_t           *backSec = P_GetPtrp(line, DMU_BACK_SECTOR);
+            if(backSec)
+                lightLevel = P_GetFloatp(backSec, DMU_LIGHT_LEVEL);
+            }
             break;
 
         case LIGHTREF_ORIGINAL:
-            uselevel = P_ToXSector(sector)->origLight;
+            lightLevel = P_ToXSector(sector)->origLight;
             break;
 
         case LIGHTREF_HIGHEST:
+            P_FindSectorSurroundingHighestLight(sector, &lightLevel);
+            break;
+
         case LIGHTREF_LOWEST:
+            P_FindSectorSurroundingLowestLight(sector, &lightLevel);
+            break;
+
         case LIGHTREF_NEXT_HIGHEST:
-        case LIGHTREF_NEXT_LOWEST:
-            num =
-                XS_AdjoiningPlanes(sector, ceiling, NULL, NULL, levels, NULL);
-
-            // Were there adjoining sectors?
-            if(!num)
-                break;
-
-            switch(info->iparm[4])
             {
-            case LIGHTREF_HIGHEST:
-                i = FindMaxOf(levels, num);
-                break;
-
-            case LIGHTREF_LOWEST:
-                i = FindMinOf(levels, num);
-                break;
-
-            case LIGHTREF_NEXT_HIGHEST:
-                i = FindNextOf(levels, num, 255.f * uselevel);
-                break;
-
-            case LIGHTREF_NEXT_LOWEST:
-                i = FindPrevOf(levels, num, 255.f * uselevel);
-                break;
+            float               currentLevel =
+                P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+            P_FindSectorSurroundingNextHighestLight(sector, currentLevel, &lightLevel);
+            if(lightLevel < currentLevel)
+                lightLevel = currentLevel;
             }
+            break;
 
-            if(i >= 0)
-                uselevel = (float) levels[i] / 255.f;
+        case LIGHTREF_NEXT_LOWEST:
+            {
+            float               currentLevel =
+                P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+            P_FindSectorSurroundingNextLowestLight(sector, currentLevel, &lightLevel);
+            if(lightLevel > currentLevel)
+                lightLevel = currentLevel;
+            }
             break;
 
         default:
@@ -1849,16 +1816,16 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling,
         }
 
         // Add the offset.
-        uselevel += (float) info->iparm[5] / 255.f;
+        lightLevel += (float) info->iparm[5] / 255.f;
 
         // Clamp the result.
-        if(uselevel < 0)
-            uselevel = 0;
-        if(uselevel > 1)
-            uselevel = 1;
+        if(lightLevel < 0)
+            lightLevel = 0;
+        if(lightLevel > 1)
+            lightLevel = 1;
 
         // Set the value.
-        P_SetFloatp(sector, DMU_LIGHT_LEVEL, uselevel);
+        P_SetFloatp(sector, DMU_LIGHT_LEVEL, lightLevel);
     }
 
     if(info->iparm[3])

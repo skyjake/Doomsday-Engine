@@ -52,6 +52,11 @@ sector_t*       P_FindSectorSurroundingLowestLight(sector_t *sector, float *val)
 sector_t*       P_FindSectorSurroundingHighestLight(sector_t *sector, float *val);
 
 sector_t*       P_FindSectorSurroundingNextHighestFloor(sector_t *sec, float baseHeight, float *val);
+sector_t*       P_FindSectorSurroundingNextLowestFloor(sector_t *sec, float baseHeight, float *val);
+sector_t*       P_FindSectorSurroundingNextHighestCeiling(sector_t *sec, float baseHeight, float *val);
+sector_t*       P_FindSectorSurroundingNextLowestCeiling(sector_t *sec, float baseHeight, float *val);
+sector_t*       P_FindSectorSurroundingNextLowestLight(sector_t *sector, float baseLight, float *val);
+sector_t*       P_FindSectorSurroundingNextHighestLight(sector_t *sector, float baseLight, float *val);
 
 void            P_RecursiveSound(struct mobj_s *soundTarget, sector_t *sec, int soundBlocks);
 
