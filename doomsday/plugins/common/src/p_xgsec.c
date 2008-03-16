@@ -1561,17 +1561,234 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, linedef_t *origin,
     return true; // Building has begun!
 }
 
+#define F_MATERIALSTOP          0x1
+#define F_CEILING               0x2
+
+typedef struct spreadbuildparams_s {
+    sector_t           *baseSec;
+    int                 baseMat;
+    byte                flags;
+    linedef_t          *origin;
+    linetype_t         *info;
+    int                 stepCount;
+    size_t              spreaded;
+} spreadbuildparams_t;
+
+int spreadBuild(void *ptr, void *context)
+{
+    linedef_t          *li = (linedef_t*) ptr;
+    spreadbuildparams_t *params = (spreadbuildparams_t*) context;
+    sector_t           *frontSec, *backSec;
+
+    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    if(!frontSec || frontSec != params->baseSec)
+        return 1;
+
+    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    if(!backSec)
+        return 1;
+
+    if(params->flags & F_MATERIALSTOP)
+    {   // Planepic must match.
+        if(params->flags & F_CEILING)
+        {
+            if(P_GetIntp(params->baseSec, DMU_CEILING_MATERIAL) !=
+               params->baseMat)
+                return 1;
+        }
+        else
+        {
+            if(P_GetIntp(params->baseSec, DMU_FLOOR_MATERIAL) !=
+               params->baseMat)
+                return 1;
+        }
+    }
+
+    // Don't spread to sectors which have already spreaded.
+    if(P_ToXSector(backSec)->blFlags & BL_SPREADED)
+        return 1;
+
+    // Build backsector.
+    XS_DoBuild(backSec, ((params->flags & F_CEILING)? true : false),
+               params->origin, params->info, params->stepCount);
+    params->spreaded++;
+
+    return 1; // Continue iteration.
+}
+
+static void markBuiltSectors(void)
+{
+    uint                i;
+
+    // Mark the sectors of the last step as processed.
+    for(i = 0; i < numsectors; ++i)
+    {
+        xsector_t          *xsec = P_GetXSector(i);
+
+        if(xsec->blFlags & BL_WAS_BUILT)
+        {
+            xsec->blFlags &= ~BL_WAS_BUILT;
+            xsec->blFlags |= BL_BUILT;
+        }
+    }
+}
+
+static boolean spreadBuildToNeighborAll(linedef_t *origin, linetype_t *info,
+                                        boolean picstop, boolean ceiling,
+                                        int mypic, int stepCount)
+{
+    uint                i;
+    boolean             result = false;
+    spreadbuildparams_t params;
+
+    params.baseMat = mypic;
+    params.info = info;
+    params.origin = origin;
+    params.stepCount = stepCount;
+    params.flags = 0;
+    if(picstop)
+        params.flags |= F_MATERIALSTOP;
+    if(ceiling)
+        params.flags |= F_CEILING;
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        sector_t           *sec;
+        xsector_t          *xsec = P_GetXSector(i);
+
+        // Only spread from built sectors (spread only once!).
+        if(!(xsec->blFlags & BL_BUILT) || xsec->blFlags & BL_SPREADED)
+            continue;
+
+        xsec->blFlags |= BL_SPREADED;
+
+        // Any 2-sided lines facing the right way?
+        sec = P_ToPtr(DMU_SECTOR, i);
+
+        params.baseSec = sec;
+        params.spreaded = 0;
+
+        P_Iteratep(sec, DMU_LINEDEF, &params, spreadBuild);
+        if(params.spreaded > 0)
+            result = true;
+    }
+
+    return result;
+}
+
+#define F_MATERIALSTOP          0x1
+#define F_CEILING               0x2
+
+typedef struct findbuildneighborparams_s {
+    sector_t           *baseSec;
+    int                 baseMat;
+    byte                flags;
+    linedef_t          *origin;
+    linetype_t         *info;
+    int                 stepCount;
+    uint                foundIDX;
+    sector_t           *foundSec;
+} findbuildneighborparams_t;
+
+int findBuildNeighbor(void *ptr, void *context)
+{
+    linedef_t          *li = (linedef_t*) ptr;
+    findbuildneighborparams_t *params =
+        (findbuildneighborparams_t*) context;
+    sector_t           *frontSec, *backSec;
+
+    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    if(!frontSec || frontSec != params->baseSec)
+        return 1;
+
+    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    if(!backSec)
+        return 1;
+
+    if(params->flags & F_MATERIALSTOP)
+    {   // Planepic must match.
+        if(params->flags & F_CEILING)
+        {
+            if(P_GetIntp(params->baseSec, DMU_CEILING_MATERIAL) !=
+               params->baseMat)
+                return 1;
+        }
+        else
+        {
+            if(P_GetIntp(params->baseSec, DMU_FLOOR_MATERIAL) !=
+               params->baseMat)
+                return 1;
+        }
+    }
+
+    // Don't spread to sectors which have already spreaded.
+    if(P_ToXSector(backSec)->blFlags & BL_SPREADED)
+        return 1;
+
+    // We need the lowest line number.
+    if(P_ToIndex(li) < params->foundIDX)
+        params->foundSec = backSec;
+
+    return 1; // Continue iteration.
+}
+
+boolean spreadBuildToNeighborLowestIDX(linedef_t *origin, linetype_t *info,
+                                       boolean picstop, boolean ceiling,
+                                       int mypic, int stepcount,
+                                       sector_t *foundSec)
+{
+    uint                i;
+    boolean             result = false;
+    findbuildneighborparams_t params;
+
+    params.baseMat = mypic;
+    params.info = info;
+    params.origin = origin;
+    params.stepCount = stepcount;
+    params.flags = 0;
+    if(picstop)
+        params.flags |= F_MATERIALSTOP;
+    if(ceiling)
+        params.flags |= F_CEILING;
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        sector_t           *sec;
+        xsector_t          *xsec = P_GetXSector(i);
+
+        // Only spread from built sectors (spread only once!).
+        if(!(xsec->blFlags & BL_BUILT) || xsec->blFlags & BL_SPREADED)
+            continue;
+
+        xsec->blFlags |= BL_SPREADED;
+
+        // Any 2-sided lines facing the right way?
+        sec = P_ToPtr(DMU_SECTOR, i);
+
+        params.baseSec = sec;
+        params.foundIDX = numlines;
+        params.foundSec = NULL;
+
+        P_Iteratep(sec, DMU_LINEDEF, &params, findBuildNeighbor);
+
+        if(params.foundSec)
+        {
+            result = true;
+            foundSec = params.foundSec;
+        }
+    }
+
+    return result;
+}
+
 int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
                               void *context, void *context2,
                               mobj_t *activator)
 {
-    boolean             found = true;
-    int                 k;
-    uint                i, lowest, stepcount = 0;
-    linedef_t          *line;
+    uint                stepCount = 0;
     linedef_t          *origin = (linedef_t *) context;
     linetype_t         *info = context2;
-    sector_t           *sec;
+    sector_t           *foundSec = NULL;
     boolean             picstop = info->iparm[2] != 0;
     boolean             spread = info->iparm[3] != 0;
     int                 mypic;
@@ -1586,91 +1803,43 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
                       P_GetIntp(sector, DMU_FLOOR_MATERIAL);
 
     // Apply to first step.
-    XS_DoBuild(sector, ceiling, origin, info, stepcount);
+    XS_DoBuild(sector, ceiling, origin, info, 0);
+    stepCount++;
 
-    while(found)
+    if(spread)
     {
-        stepcount++;
+        boolean             found;
 
-        // Mark the sectors of the last step as processed.
-        for(i = 0; i < numsectors; ++i)
+        do
         {
-            xsector_t          *xsec = P_GetXSector(i);
+            markBuiltSectors();
 
-            if(xsec->blFlags & BL_WAS_BUILT)
-            {
-                xsec->blFlags &= ~BL_WAS_BUILT;
-                xsec->blFlags |= BL_BUILT;
-            }
-        }
+            // Scan the sectors for the next ones to spread to.
+            found = spreadBuildToNeighborAll(origin, info, picstop, ceiling,
+                                             mypic, stepCount);
+            stepCount++;
+        } while(found);
+    }
+    else
+    {
+        boolean             found;
 
-        // Scan the sectors for the next ones to spread to.
-        found = false;
-        lowest = numlines;
-        for(i = 0; i < numsectors; ++i)
+        do
         {
-            xsector_t          *xsec = P_GetXSector(i);
+            found = false;
+            markBuiltSectors();
 
-            // Only spread from built sectors (spread only once!).
-            if(!(xsec->blFlags & BL_BUILT) || xsec->blFlags & BL_SPREADED)
-                continue;
-
-            xsec->blFlags |= BL_SPREADED;
-
-            // Any 2-sided lines facing the right way?
-            sec = P_ToPtr(DMU_SECTOR, i);
-
-            for(k = 0; k < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++k)
+            // Scan the sectors for the next ones to spread to.
+            if(spreadBuildToNeighborLowestIDX(origin, info, picstop,
+                                              ceiling, mypic, stepCount,
+                                              foundSec))
             {
-                line = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | k);
-
-                if(!P_GetPtrp(line, DMU_FRONT_SECTOR) ||
-                   !P_GetPtrp(line, DMU_BACK_SECTOR))
-                    continue;
-
-                if(P_GetPtrp(line, DMU_FRONT_SECTOR) !=
-                   P_ToPtr(DMU_SECTOR, i))
-                    continue;
-
-                if(picstop)
-                {   // Planepic must match.
-                    if(ceiling)
-                    {
-                        if(P_GetIntp(sec, DMU_CEILING_MATERIAL) != mypic)
-                            continue;
-                    }
-                    else
-                    {
-                        if(P_GetIntp(sec, DMU_FLOOR_MATERIAL) != mypic)
-                            continue;
-                    }
-                }
-
-                // Don't spread to sectors which have already spreaded.
-                if(P_GetXSector(P_GetIntp(line, DMU_BACK_SECTOR))->blFlags & BL_SPREADED)
-                    continue;
-
-                // Build backsector.
+                XS_DoBuild(foundSec, ceiling, origin, info, stepCount);
                 found = true;
-                if(spread)
-                {
-                    XS_DoBuild(P_GetPtrp(line, DMU_BACK_SECTOR), ceiling,
-                               origin, info, stepcount);
-                }
-                else
-                {
-                    // We need the lowest line number.
-                    if(P_ToIndex(line) < lowest)
-                        lowest = P_ToIndex(line);
-                }
             }
-        }
 
-        if(!spread && found)
-        {
-            XS_DoBuild(P_GetPtr(DMU_LINEDEF, lowest, DMU_BACK_SECTOR), ceiling, origin, info,
-                       stepcount);
-        }
+            stepCount++;
+        } while(found);
     }
 
     return true; // Continue searching for planes...
@@ -1746,7 +1915,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling,
 {
     linedef_t          *line = (linedef_t *) context;
     linetype_t         *info = context2;
-    int                 num, levels[MAX_VALS], i = 0;
+    int                 num, i = 0;
     float               usergb[3];
     float               lightLevel;
 
