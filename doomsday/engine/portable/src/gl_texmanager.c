@@ -638,15 +638,15 @@ void GL_DeleteReflectionMap(ded_reflection_t *ref)
  */
 void GL_LoadDDTextures(void)
 {
-    GL_PrepareMaterial(DDT_UNKNOWN, MAT_DDTEX, NULL);
-    GL_PrepareMaterial(DDT_MISSING, MAT_DDTEX, NULL);
-    GL_PrepareMaterial(DDT_BBOX, MAT_DDTEX, NULL);
-    GL_PrepareMaterial(DDT_GRAY, MAT_DDTEX, NULL);
+    GL_PrepareMaterial(R_MaterialCreate("DDT_UNKNOWN", DDT_UNKNOWN, MAT_DDTEX), NULL);
+    GL_PrepareMaterial(R_MaterialCreate("DDT_MISSING", DDT_MISSING, MAT_DDTEX), NULL);
+    GL_PrepareMaterial(R_MaterialCreate("DDT_BBOX", DDT_BBOX, MAT_DDTEX), NULL);
+    GL_PrepareMaterial(R_MaterialCreate("DDT_GRAY", DDT_GRAY, MAT_DDTEX), NULL);
 }
 
 void GL_ClearDDTextures(void)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; i < NUM_DD_TEXTURES; ++i)
         DGL_DeleteTextures(1, &ddTextures[i].tex);
@@ -658,8 +658,8 @@ void GL_ClearDDTextures(void)
  */
 void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
 {
-    int     i, k;
-    ded_decor_t *decor;
+    int                 i, k;
+    ded_decor_t        *decor;
 
     if(!texInited)
         return;
@@ -3383,32 +3383,27 @@ DGLuint GL_GetMaterialInfo(int idx, materialtype_t type,
     return GL_GetMaterialInfo2(idx, type, true, info);
 }
 
-DGLuint GL_PrepareMaterial2(int idx, materialtype_t type,
+DGLuint GL_PrepareMaterial2(const struct material_s *mat,
                             boolean translate, texinfo_t **info)
 {
-    switch(type)
+    switch(mat->type)
     {
     case MAT_FLAT:
-        return prepareFlat2(idx, translate, info);
+        return prepareFlat2(mat->ofTypeID, translate, info);
 
     case MAT_TEXTURE:
-        return prepareTexture2(idx, translate, info);
+        return prepareTexture2(mat->ofTypeID, translate, info);
 
     case MAT_DDTEX:
-        return prepareDDTexture(idx, info);
-
-    default:
-        Con_Error("GL_PrepareMaterial2: Unknown material type %i.",
-                  type);
+        return prepareDDTexture(mat->ofTypeID, info);
     }
 
     return 0;
 }
 
-DGLuint GL_PrepareMaterial(int idx, materialtype_t type,
-                           texinfo_t **info)
+DGLuint GL_PrepareMaterial(const struct material_s *mat, texinfo_t **info)
 {
-    return GL_PrepareMaterial2(idx, type, true, info);
+    return GL_PrepareMaterial2(mat, true, info);
 }
 
 void GL_SetMaterial(int idx, materialtype_t type)

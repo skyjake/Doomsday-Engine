@@ -1754,10 +1754,10 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
     // regular world polys (with a few obvious properties).
     if((poly->flags & RPF_SKY_MASK) && debugSky)
     {
-        texinfo_t *texinfo;
+        texinfo_t          *texinfo;
 
         poly->tex.id = curtex =
-            GL_PrepareMaterial(skyMaskMaterial->ofTypeID, skyMaskMaterial->type, &texinfo);
+            GL_PrepareMaterial(skyMaskMaterial, &texinfo);
 
         poly->tex.width = texinfo->width;
         poly->tex.height = texinfo->height;
@@ -1779,8 +1779,8 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
             // differently than non-lit surfaces.
             if(poly->lightListIdx)
             {
-                uint        i;
-                long        avglightlevel = 0;
+                uint                i;
+                long                avglightlevel = 0;
 
                 // Determine the average light level of this rend poly,
                 // if too bright; do not bother with lights.

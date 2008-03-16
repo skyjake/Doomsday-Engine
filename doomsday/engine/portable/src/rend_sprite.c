@@ -295,7 +295,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         GL_SetPSprite(params->lump);
     else if(renderTextures == 2)
         // For lighting debug, render all solid surfaces using the gray texture.
-        GL_BindTexture(GL_PrepareMaterial(DDT_GRAY, MAT_DDTEX, NULL));
+        GL_BindTexture(GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), NULL));
     else
         DGL_Bind(0);
 
@@ -782,7 +782,7 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
     }
     else if(renderTextures == 2)
         // For lighting debug, render all solid surfaces using the gray texture.
-        GL_BindTexture(GL_PrepareMaterial(DDT_GRAY, MAT_DDTEX, NULL));
+        GL_BindTexture(GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), NULL));
     else
         DGL_Bind(0);
 

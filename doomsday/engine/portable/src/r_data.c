@@ -235,17 +235,17 @@ static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
 /**
  * Retrieves a suitable rendpoly. Possibly allocates a new one if necessary.
  *
- * @param type      The type of the poly to create.
- * @param isWall    @c true = wall data is required for this poly.
- * @param numverts  The number of verts required.
+ * @param type          The type of the poly to create.
+ * @param isWall        @c true = wall data is required for this poly.
+ * @param numverts      The number of verts required.
  *
- * @return          Ptr to a suitable rendpoly.
+ * @return              Ptr to a suitable rendpoly.
  */
 rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
                             unsigned int numverts)
 {
-    texinfo_t      *texinfo;
-    rendpoly_t     *poly = R_NewRendPoly(numverts, isWall);
+    texinfo_t          *texinfo;
+    rendpoly_t         *poly = R_NewRendPoly(numverts, isWall);
 
     poly->type = type;
 
@@ -257,7 +257,7 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->normal[0] = poly->normal[1] = poly->normal[2] = 0;
 
     poly->tex.id = curtex =
-        GL_PrepareMaterial(DDT_UNKNOWN, MAT_DDTEX, &texinfo);
+        GL_PrepareMaterial(R_GetMaterial(DDT_UNKNOWN, MAT_DDTEX), &texinfo);
 
     poly->tex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
     poly->tex.height = texinfo->height;
@@ -1087,57 +1087,68 @@ void R_PrecachePatch(int num)
  * Prepares all graphic resources associated with the specified material
  * including any in the same animation group.
  */
-void R_PrecacheMaterial(int num, materialtype_t type)
+void R_PrecacheMaterial(const material_t *mat)
 {
-    int         i, k;
+    int                 i, k;
 
-    switch(type)
+    switch(mat->type)
     {
     case MAT_FLAT:
-        if(flats[num]->inGroup)
+        if(flats[mat->ofTypeID]->inGroup)
         {
             // The flat belongs in one or more animgroups.
             for(i = 0; i < numgroups; ++i)
             {
-                if(R_IsInAnimGroup(groups[i].id, MAT_FLAT, num))
+                if(R_IsInAnimGroup(groups[i].id, MAT_FLAT, mat->ofTypeID))
                 {
                     // Precache this group.
                     for(k = 0; k < groups[i].count; ++k)
-                        GL_PrepareMaterial(groups[i].frames[k].number, MAT_FLAT, NULL);
+                        GL_PrepareMaterial(R_GetMaterial(groups[i].frames[k].number, MAT_FLAT), NULL);
                 }
             }
-        }
-        else
-        {
-            // Just this one flat.
-            GL_PrepareMaterial(num, MAT_FLAT, NULL);
+
+            return;
         }
         break;
 
     case MAT_TEXTURE:
-        if(textures[num]->inGroup)
+        if(textures[mat->ofTypeID]->inGroup)
         {
             // The texture belongs in one or more animgroups.
             for(i = 0; i < numgroups; ++i)
             {
-                if(R_IsInAnimGroup(groups[i].id, MAT_TEXTURE, num))
+                if(R_IsInAnimGroup(groups[i].id, MAT_TEXTURE, mat->ofTypeID))
                 {
                     // Precache this group.
                     for(k = 0; k < groups[i].count; ++k)
-                        GL_PrepareMaterial(groups[i].frames[k].number, MAT_TEXTURE, NULL);
+                        GL_PrepareMaterial(R_GetMaterial(groups[i].frames[k].number, MAT_TEXTURE), NULL);
                 }
             }
-        }
-        else
-        {
-            // Just this one texture.
-            GL_PrepareMaterial(num, MAT_TEXTURE, NULL);
+
+            return;
         }
         break;
 
     default:
-        Con_Error("R_PrecacheMaterial: Unknown material type %i.", type);
+        break;
     }
+
+    // Just this one material.
+    GL_PrepareMaterial(mat, NULL);
+}
+
+static boolean isInList(void **list, size_t len, void *elm)
+{
+    size_t              n;
+
+    if(!list || !elm || len == 0)
+        return false;
+
+    for(n = 0; n < len; ++n)
+        if(list[n] = elm)
+            return true;
+
+    return false;
 }
 
 /**
@@ -1149,14 +1160,14 @@ void R_PrecacheMaterial(int num, materialtype_t type)
  */
 void R_PrecacheLevel(void)
 {
-    uint            i, j;
+    uint            i, j, n;
     int             k, lump, mocount;
     thinker_t      *th;
     sector_t       *sec;
-    sidedef_t         *side;
-    float           starttime;
+    sidedef_t      *side;
     material_t     *mat;
-    char           *texturepresent, *flatpresent;
+    float           starttime;
+    material_t    **matPresent;
     char           *spritepresent = NULL;
 
     // Don't precache when playing demo.
@@ -1168,67 +1179,25 @@ void R_PrecacheLevel(void)
 
     starttime = Sys_GetSeconds();
 
-    // Precache textures and flats.
-    texturepresent = M_Calloc(numtextures);
-    flatpresent = M_Calloc(numflats);
+    // Precache all materials used on world surfaces.
+    matPresent = M_Calloc(numMaterials);
+    n = 0;
 
     for(i = 0; i < numSideDefs; ++i)
     {
         side = SIDE_PTR(i);
 
         mat = side->SW_topmaterial;
-        if(mat)
-        {
-            switch(mat->type)
-            {
-            case MAT_FLAT:
-                flatpresent[mat->ofTypeID] = 1;
-                break;
-
-            case MAT_TEXTURE:
-                texturepresent[mat->ofTypeID] = 1;
-                break;
-
-            default:
-                break;
-            }
-        }
+        if(mat && !isInList(matPresent, n, mat))
+            matPresent[n++] = mat;
 
         mat = side->SW_middlematerial;
-        if(mat)
-        {
-            switch(mat->type)
-            {
-            case MAT_FLAT:
-                flatpresent[mat->ofTypeID] = 1;
-                break;
-
-            case MAT_TEXTURE:
-                texturepresent[mat->ofTypeID] = 1;
-                break;
-
-            default:
-                break;
-            }
-        }
+        if(mat && !isInList(matPresent, n, mat))
+            matPresent[n++] = mat;
 
         mat = side->SW_bottommaterial;
-        if(mat)
-        {
-            switch(mat->type)
-            {
-            case MAT_FLAT:
-                flatpresent[mat->ofTypeID] = 1;
-                break;
-
-            case MAT_TEXTURE:
-                texturepresent[mat->ofTypeID] = 1;
-                break;
-
-            default:
-                break;
-            }
-        }
+        if(mat && !isInList(matPresent, n, mat))
+            matPresent[n++] = mat;
     }
 
     for(i = 0; i < numSectors; ++i)
@@ -1238,22 +1207,8 @@ void R_PrecacheLevel(void)
         for(j = 0; j < sec->planeCount; ++j)
         {
             mat = sec->SP_planematerial(j);
-            if(mat)
-            {
-            switch(mat->type)
-            {
-                case MAT_FLAT:
-                    flatpresent[mat->ofTypeID] = 1;
-                    break;
-
-                case MAT_TEXTURE:
-                    texturepresent[mat->ofTypeID] = 1;
-                    break;
-
-                default:
-                    break;
-                }
-            }
+            if(mat && !isInList(matPresent, n, mat))
+                matPresent[n++] = mat;
         }
     }
 
@@ -1261,16 +1216,9 @@ void R_PrecacheLevel(void)
 
     // \fixme Precache sky textures!
 
-    for(k = 0; k < numtextures; ++k)
-        if(texturepresent[k])
-        {
-            R_PrecacheMaterial(k, MAT_TEXTURE);
-        }
-    for(k = 0; k < numflats; ++k)
-        if(flatpresent[k])
-        {
-            R_PrecacheMaterial(k, MAT_FLAT);
-        }
+    i = 0;
+    while(i < numMaterials && matPresent[i])
+        R_PrecacheMaterial(matPresent[i++]);
 
     // Update progress.
 
@@ -1317,8 +1265,8 @@ void R_PrecacheLevel(void)
 
     if(precacheSprites)
     {
-        int     s, f, l;
-        spriteframe_t *sf;
+        int             s, f, l;
+        spriteframe_t  *sf;
 
         for(s = 0; s < numSprites; ++s)
         {
@@ -1344,8 +1292,7 @@ void R_PrecacheLevel(void)
         M_Free(spritepresent);
     }
 
-    M_Free(texturepresent);
-    M_Free(flatpresent);
+    M_Free(matPresent);
 
     if(verbose)
     {

@@ -62,11 +62,11 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void Rend_DrawBBox(float pos3f[3], float w, float l, float h,
-                   float color3f[3], float alpha, float br,
+void Rend_DrawBBox(const float pos3f[3], float w, float l, float h,
+                   const float color3f[3], float alpha, float br,
                    boolean alignToBase);
-void Rend_DrawArrow(float pos3f[3], angle_t a, float s, float color3f[3],
-                    float alpha);
+void Rend_DrawArrow(const float pos3f[3], angle_t a, float s,
+                    const float color3f[3], float alpha);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -499,7 +499,7 @@ static void polyTexBlend(rendpoly_t *poly, material_t *material)
 
     // Get info of the blend target.
     poly->interTex.id =
-        GL_PrepareMaterial2(xlat->next, material->type, false, &texinfo);
+        GL_PrepareMaterial2(R_GetMaterial(xlat->next, material->type), false, &texinfo);
 
     poly->interTex.width = texinfo->width;
     poly->interTex.height = texinfo->height;
@@ -665,16 +665,16 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
 /**
  * Prepares the correct flat/texture for the passed poly.
  *
- * @param poly:     Ptr to the poly to apply the texture to.
- * @param surface:  Ptr to the surface properties this rendpoly is using.
- * @return int      (-1) If the texture reference is invalid.
- *                  Else return the surface flags for this poly.
+ * @param poly          Ptr to the poly to apply the texture to.
+ * @param surface       Ptr to the surface properties this rendpoly is using.
+ * @return int          @c -1, if the texture reference is invalid,
+ *                      else return the surface flags for this poly.
  */
-static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
-                                      texinfo_t **texinfo)
+static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
+                                  texinfo_t **texinfo)
 {
-    texinfo_t   *info;
-    int         flags = 0;
+    texinfo_t          *info;
+    int                 flags = 0;
 
     if(R_IsSkySurface(surface))
         return 0;
@@ -683,7 +683,7 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
     if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
         poly->tex.id = curtex =
-            GL_PrepareMaterial(DDT_GRAY, MAT_DDTEX, NULL);
+            GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), NULL);
 
         flags = surface->flags & ~(SUF_TEXFIX);
 
@@ -706,34 +706,19 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
     {   // For debug, render the "missing" texture instead of the texture
         // chosen for surfaces to fix the HOMs.
         poly->tex.id = curtex =
-            GL_PrepareMaterial(DDT_MISSING, MAT_DDTEX, &info);
+            GL_PrepareMaterial(R_GetMaterial(DDT_MISSING, MAT_DDTEX), &info);
         flags = SUF_GLOW; // Make it stand out
     }
     else if(surface->material)
     {
-        switch(surface->material->type)
-        {
-        case MAT_DDTEX: // An unknown texture.
-            poly->tex.id = curtex =
-                GL_PrepareMaterial(DDT_UNKNOWN, MAT_DDTEX, &info);
+        poly->tex.id = curtex =
+            GL_PrepareMaterial2(surface->material, true, &info);
+        flags = surface->flags;
+
+        //// \kludge >
+        if(surface->material->type == MAT_DDTEX)
             flags = SUF_GLOW; // Make it stand out.
-            break;
-
-        case MAT_FLAT:
-            poly->tex.id = curtex =
-                GL_PrepareMaterial2(surface->material->ofTypeID, surface->material->type, true, &info);
-            flags = surface->flags;
-            break;
-        case MAT_TEXTURE:
-            poly->tex.id = curtex =
-                GL_PrepareMaterial2(surface->material->ofTypeID, surface->material->type, true, &info);
-            flags = surface->flags;
-            break;
-
-        default:
-            Con_Error("Rend_PrepareTextureForPoly: Unknown material type %i.",
-                      surface->material->type);
-        }
+         ///// <kludge
 
         poly->tex.width = info->width;
         poly->tex.height = info->height;
@@ -746,7 +731,7 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
     else
     {   // Shouldn't ever get here!
 #if _DEBUG
-        Con_Error("Rend_PrepareTextureForPoly: Surface with no material?");
+        Con_Error("prepareMaterialForPoly: Surface with no material?");
 #endif
     }
 
@@ -1253,7 +1238,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
             }
             else
             {
-                surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
+                surfaceFlags = prepareMaterialForPoly(quad, surface, &texinfo);
                 if(section == SEG_MIDDLE && softSurface)
                 {
                     // Blendmode.
@@ -1942,7 +1927,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
         rendpoly_t *poly =
             R_AllocRendPoly(RP_FLAT, false, subsector->numVertices);
 
-        surfaceFlags = Rend_PrepareTextureForPoly(poly, surface, NULL);
+        surfaceFlags = prepareMaterialForPoly(poly, surface, NULL);
 
         // Fill in the remaining quad data.
         poly->flags = 0;
@@ -2604,19 +2589,19 @@ void R_DrawLightRange(void)
  * Draws a textured cube using the currently bound gl texture.
  * Used to draw mobj bounding boxes.
  *
- * @param   pos3f       Coordinates of the center of the box.
- *                      (in "world" coordinates [VX, VY, VZ])
- * @param   w           Width of the box.
- * @param   l           Length of the box.
- * @param   h           Height of the box.
- * @param   color3f     Color to make the box (uniform vertex color).
- * @param   alpha       Alpha to make the box (uniform vertex color).
- * @param   br          Border amount to overlap box faces.
- * @param   alignToBase If @c true, align the base of the box
+ * @param pos3f         Coordinates of the center of the box (in "world"
+ *                      coordinates [VX, VY, VZ]).
+ * @param w             Width of the box.
+ * @param l             Length of the box.
+ * @param h             Height of the box.
+ * @param color3f       Color to make the box (uniform vertex color).
+ * @param alpha         Alpha to make the box (uniform vertex color).
+ * @param br            Border amount to overlap box faces.
+ * @param alignToBase   If @c true, align the base of the box
  *                      to the Z coordinate.
  */
-void Rend_DrawBBox(float pos3f[3], float w, float l, float h,
-                   float color3f[3], float alpha, float br,
+void Rend_DrawBBox(const float pos3f[3], float w, float l, float h,
+                   const float color3f[3], float alpha, float br,
                    boolean alignToBase)
 {
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2674,15 +2659,15 @@ void Rend_DrawBBox(float pos3f[3], float w, float l, float h,
  * Draws a textured triangle using the currently bound gl texture.
  * Used to draw mobj angle direction arrow.
  *
- * @param   pos3f       Coordinates of the center of the base of the triangle.
- *                      (in "world" coordinates [VX, VY, VZ])
- * @param   a           Angle to point the triangle in.
- * @param   s           Scale of the triangle.
- * @param   color3f     Color to make the box (uniform vertex color).
- * @param   alpha       Alpha to make the box (uniform vertex color).
+ * @param pos3f         Coordinates of the center of the base of the
+ *                      triangle (in "world" coordinates [VX, VY, VZ]).
+ * @param a             Angle to point the triangle in.
+ * @param s             Scale of the triangle.
+ * @param color3f       Color to make the box (uniform vertex color).
+ * @param alpha         Alpha to make the box (uniform vertex color).
  */
-void Rend_DrawArrow(float pos3f[3], angle_t a, float s, float color3f[3],
-                    float alpha)
+void Rend_DrawArrow(const float pos3f[3], angle_t a, float s,
+                    const float color3f[3], float alpha)
 {
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -2721,15 +2706,16 @@ void Rend_DrawArrow(float pos3f[3], angle_t a, float s, float color3f[3],
  */
 static void Rend_RenderBoundingBoxes(void)
 {
-    mobj_t     *mo;
-    uint        i;
-    sector_t   *sec;
-    float       size;
-    static float red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
-    static float green[3] = { 0.2f, 1, 0.2f}; // solid objects
-    static float yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
-    float       alpha;
-    float       eye[3];
+    static const float  red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
+    static const float  green[3] = { 0.2f, 1, 0.2f}; // solid objects
+    static const float  yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
+
+    mobj_t             *mo;
+    uint                i;
+    sector_t           *sec;
+    float               size;
+    float               alpha;
+    float               eye[3];
 
     if(!devMobjBBox || netGame)
         return;
@@ -2745,7 +2731,7 @@ static void Rend_RenderBoundingBoxes(void)
     DGL_Enable(DGL_TEXTURING);
     glDisable(GL_CULL_FACE);
 
-    DGL_Bind(GL_PrepareMaterial(DDT_BBOX, MAT_DDTEX, NULL));
+    DGL_Bind(GL_PrepareMaterial(R_GetMaterial(DDT_BBOX, MAT_DDTEX), NULL));
     GL_BlendMode(BM_ADD);
 
     // For every sector
