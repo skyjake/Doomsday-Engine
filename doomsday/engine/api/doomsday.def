@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 409 <--
+; --> 410 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -27,6 +27,10 @@ NAME            "DOOMSDAY"
 ; 255 formerly P_PointToBlock
 ; 326 formerly PO_Alloc
 ; 332 formerly P_ControlReset
+; 317 formerly P_Copy
+; 318 formerly P_Copyp
+; 319 formerly P_Swap
+; 320 formerly P_Swapp
 
 EXPORTS
 ; Plugins.
@@ -168,6 +172,7 @@ EXPORTS
     P_ToPtr                     @257 NONAME
     P_Callback                  @258 NONAME
     P_Callbackp                 @259 NONAME
+	P_Iteratep					@410 NONAME
 
     ; dummy objects
     P_AllocDummy                @321 NONAME
@@ -243,12 +248,6 @@ EXPORTS
     P_GetAnglepv                @314 NONAME
     P_GetFloatpv                @315 NONAME
     P_GetPtrpv                  @316 NONAME
-
-    ; manipulation functions
-    P_Copy                      @317 NONAME
-    P_Copyp                     @318 NONAME
-    P_Swap                      @319 NONAME
-    P_Swapp                     @320 NONAME
 
 ; Play: Misc.
     P_RegisterCustomMapProperty @328 NONAME

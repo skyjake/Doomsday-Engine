@@ -258,6 +258,8 @@ extern          "C" {
                                int (*callback)(void* p, void* ctx));
     int             P_Callbackp(int type, void* ptr, void* context,
                                 int (*callback)(void* p, void* ctx));
+    int             P_Iteratep(void *ptr, uint prop, void* context,
+                               int (*callback) (void* p, void* ctx));
 
     /* dummy functions */
     void           *P_AllocDummy(int type, void* extraData);
@@ -265,12 +267,6 @@ extern          "C" {
     int             P_DummyType(void* dummy);
     boolean         P_IsDummy(void* dummy);
     void           *P_DummyExtraData(void* dummy);
-
-    /* property manipulation functions */
-    void            P_Copy(int type, uint prop, uint fromIndex, uint toIndex);
-    void            P_Swap(int type, uint prop, uint fromIndex, uint toIndex);
-    void            P_Copyp(uint prop, void* from, void* to);
-    void            P_Swapp(uint prop, void* from, void* to);
 
     /* index-based write functions */
     void            P_SetBool(int type, uint index, uint prop, boolean param);
