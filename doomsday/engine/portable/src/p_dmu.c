@@ -40,39 +40,19 @@
 
 // MACROS ------------------------------------------------------------------
 
-// Engine internal aliases for public DMU constants.
-#define DMU_FLOOR_OF_SECTOR     0x01
-#define DMU_CEILING_OF_SECTOR   0x02
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct dummyline_s {
-    linedef_t  line;               // Line data.
-    void*   extraData;          // Pointer to user data.
-    boolean inUse;              // true, if the dummy is being used.
+    linedef_t       line; // Line data.
+    void*           extraData; // Pointer to user data.
+    boolean         inUse; // true, if the dummy is being used.
 } dummyline_t;
 
 typedef struct dummysector_s {
-    sector_t  sector;           // Sector data.
-    void*   extraData;          // Pointer to user data.
-    boolean inUse;              // true, if the dummy is being used.
+    sector_t        sector; // Sector data.
+    void           *extraData; // Pointer to user data.
+    boolean         inUse; // true, if the dummy is being used.
 } dummysector_t;
-
-typedef struct setargs_s {
-    int type;
-    uint prop;
-    int modifiers;              // Property modifiers (e.g., line of sector)
-    int aliases;                // Property aliases (non-public modifiers)
-                                // (eg., floor of sector)
-    valuetype_t valueType;
-    boolean* booleanValues;
-    byte* byteValues;
-    int* intValues;
-    fixed_t* fixedValues;
-    float* floatValues;
-    angle_t* angleValues;
-    void** ptrValues;
-} setargs_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -84,14 +64,14 @@ typedef struct setargs_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint    dummyCount = 8;         // Number of dummies to allocate (per type).
+uint dummyCount = 8; // Number of dummies to allocate (per type).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static dummyline_t* dummyLines;
 static dummysector_t* dummySectors;
 
-static int  usingDMUAPIver;     // Version of the DMU API the game expects.
+static int usingDMUAPIver; // Version of the DMU API the game expects.
 
 // CODE --------------------------------------------------------------------
 
@@ -100,7 +80,8 @@ static int  usingDMUAPIver;     // Version of the DMU API the game expects.
  */
 const char* DMU_Str(uint prop)
 {
-    static char propStr[40];
+    static char         propStr[40];
+
     struct prop_s {
         uint prop;
         const char* str;
@@ -123,14 +104,8 @@ const char* DMU_Str(uint prop)
         { DMU_X, "DMU_X" },
         { DMU_Y, "DMU_Y" },
         { DMU_XY, "DMU_XY" },
+        { DMU_VERTEX0, "DMU_VERTEX0" },
         { DMU_VERTEX1, "DMU_VERTEX1" },
-        { DMU_VERTEX2, "DMU_VERTEX2" },
-        { DMU_VERTEX1_X, "DMU_VERTEX1_X" },
-        { DMU_VERTEX1_Y, "DMU_VERTEX1_Y" },
-        { DMU_VERTEX1_XY, "DMU_VERTEX1_XY" },
-        { DMU_VERTEX2_X, "DMU_VERTEX2_X" },
-        { DMU_VERTEX2_Y, "DMU_VERTEX2_Y" },
-        { DMU_VERTEX2_XY, "DMU_VERTEX2_XY" },
         { DMU_FRONT_SECTOR, "DMU_FRONT_SECTOR" },
         { DMU_BACK_SECTOR, "DMU_BACK_SECTOR" },
         { DMU_SIDEDEF0, "DMU_SIDEDEF0" },
@@ -142,79 +117,24 @@ const char* DMU_Str(uint prop)
         { DMU_SLOPE_TYPE, "DMU_SLOPE_TYPE" },
         { DMU_ANGLE, "DMU_ANGLE" },
         { DMU_OFFSET, "DMU_OFFSET" },
-        { DMU_TOP_MATERIAL, "DMU_TOP_MATERIAL" },
-        { DMU_TOP_MATERIAL_OFFSET_X, "DMU_TOP_MATERIAL_OFFSET_X" },
-        { DMU_TOP_MATERIAL_OFFSET_Y, "DMU_TOP_MATERIAL_OFFSET_Y" },
-        { DMU_TOP_MATERIAL_OFFSET_XY, "DMU_TOP_MATERIAL_OFFSET_XY" },
-        { DMU_TOP_COLOR, "DMU_TOP_COLOR" },
-        { DMU_TOP_COLOR_RED, "DMU_TOP_COLOR_RED" },
-        { DMU_TOP_COLOR_GREEN, "DMU_TOP_COLOR_GREEN" },
-        { DMU_TOP_COLOR_BLUE, "DMU_TOP_COLOR_BLUE" },
-        { DMU_MIDDLE_MATERIAL, "DMU_MIDDLE_MATERIAL" },
-        { DMU_MIDDLE_MATERIAL_OFFSET_X, "DMU_MIDDLE_MATERIAL_OFFSET_X" },
-        { DMU_MIDDLE_MATERIAL_OFFSET_Y, "DMU_MIDDLE_MATERIAL_OFFSET_Y" },
-        { DMU_MIDDLE_MATERIAL_OFFSET_XY, "DMU_MIDDLE_MATERIAL_OFFSET_XY" },
-        { DMU_MIDDLE_COLOR, "DMU_MIDDLE_COLOR" },
-        { DMU_MIDDLE_COLOR_RED, "DMU_MIDDLE_COLOR_RED" },
-        { DMU_MIDDLE_COLOR_GREEN, "DMU_MIDDLE_COLOR_GREEN" },
-        { DMU_MIDDLE_COLOR_BLUE, "DMU_MIDDLE_COLOR_BLUE" },
-        { DMU_MIDDLE_COLOR_ALPHA, "DMU_MIDDLE_COLOR_ALPHA" },
-        { DMU_MIDDLE_BLENDMODE, "DMU_MIDDLE_BLENDMODE" },
-        { DMU_BOTTOM_MATERIAL, "DMU_BOTTOM_MATERIAL" },
-        { DMU_BOTTOM_MATERIAL_OFFSET_X, "DMU_BOTTOM_MATERIAL_OFFSET_X" },
-        { DMU_BOTTOM_MATERIAL_OFFSET_Y, "DMU_BOTTOM_MATERIAL_OFFSET_Y" },
-        { DMU_BOTTOM_MATERIAL_OFFSET_XY, "DMU_BOTTOM_MATERIAL_OFFSET_XY" },
-        { DMU_BOTTOM_COLOR, "DMU_BOTTOM_COLOR" },
-        { DMU_BOTTOM_COLOR_RED, "DMU_BOTTOM_COLOR_RED" },
-        { DMU_BOTTOM_COLOR_GREEN, "DMU_BOTTOM_COLOR_GREEN" },
-        { DMU_BOTTOM_COLOR_BLUE, "DMU_BOTTOM_COLOR_BLUE" },
+        { DMU_MATERIAL, "DMU_MATERIAL" },
+        { DMU_MATERIAL_OFFSET_X, "DMU_MATERIAL_OFFSET_X" },
+        { DMU_MATERIAL_OFFSET_Y, "DMU_MATERIAL_OFFSET_Y" },
+        { DMU_MATERIAL_OFFSET_XY, "DMU_MATERIAL_OFFSET_XY" },
+        { DMU_BLENDMODE, "DMU_BLENDMODE" },
         { DMU_VALID_COUNT, "DMU_VALID_COUNT" },
         { DMU_LINEDEF_COUNT, "DMU_LINEDEF_COUNT" },
         { DMU_COLOR, "DMU_COLOR" },
         { DMU_COLOR_RED, "DMU_COLOR_RED" },
         { DMU_COLOR_GREEN, "DMU_COLOR_GREEN" },
         { DMU_COLOR_BLUE, "DMU_COLOR_BLUE" },
+        { DMU_ALPHA, "DMU_ALPHA" },
         { DMU_LIGHT_LEVEL, "DMU_LIGHT_LEVEL" },
         { DMT_MOBJS, "DMT_MOBJS" },
         { DMU_BOUNDING_BOX, "DMU_BOUNDING_BOX" },
         { DMU_SOUND_ORIGIN, "DMU_SOUND_ORIGIN" },
-        { DMU_PLANE_HEIGHT, "DMU_PLANE_HEIGHT" },
-        { DMU_PLANE_MATERIAL, "DMU_PLANE_MATERIAL" },
-        { DMU_PLANE_MATERIAL_OFFSET_X, "DMU_PLANE_MATERIAL_OFFSET_X" },
-        { DMU_PLANE_MATERIAL_OFFSET_Y, "DMU_PLANE_MATERIAL_OFFSET_Y" },
-        { DMU_PLANE_MATERIAL_OFFSET_XY, "DMU_PLANE_MATERIAL_OFFSET_XY" },
-        { DMU_PLANE_TARGET_HEIGHT, "DMU_PLANE_TARGET_HEIGHT" },
-        { DMU_PLANE_SPEED, "DMU_PLANE_SPEED" },
-        { DMU_PLANE_COLOR, "DMU_PLANE_COLOR" },
-        { DMU_PLANE_COLOR_RED, "DMU_PLANE_COLOR_RED" },
-        { DMU_PLANE_COLOR_GREEN, "DMU_PLANE_COLOR_GREEN" },
-        { DMU_PLANE_COLOR_BLUE, "DMU_PLANE_COLOR_BLUE" },
-        { DMU_PLANE_SOUND_ORIGIN, "DMU_PLANE_SOUND_ORIGIN" },
-        { DMU_FLOOR_HEIGHT, "DMU_FLOOR_HEIGHT" },
-        { DMU_FLOOR_MATERIAL, "DMU_FLOOR_MATERIAL" },
-        { DMU_FLOOR_MATERIAL_OFFSET_X, "DMU_FLOOR_MATERIAL_OFFSET_X" },
-        { DMU_FLOOR_MATERIAL_OFFSET_Y, "DMU_FLOOR_MATERIAL_OFFSET_Y" },
-        { DMU_FLOOR_MATERIAL_OFFSET_XY, "DMU_FLOOR_MATERIAL_OFFSET_XY" },
-        { DMU_FLOOR_TARGET_HEIGHT, "DMU_FLOOR_TARGET_HEIGHT" },
-        { DMU_FLOOR_SPEED, "DMU_FLOOR_SPEED" },
-        { DMU_FLOOR_COLOR, "DMU_FLOOR_COLOR" },
-        { DMU_FLOOR_COLOR_RED, "DMU_FLOOR_COLOR_RED" },
-        { DMU_FLOOR_COLOR_GREEN, "DMU_FLOOR_COLOR_GREEN" },
-        { DMU_FLOOR_COLOR_BLUE, "DMU_FLOOR_COLOR_BLUE" },
-        { DMU_FLOOR_SOUND_ORIGIN, "DMU_FLOOR_SOUND_ORIGIN" },
-        { DMU_CEILING_HEIGHT, "DMU_CEILING_HEIGHT" },
-        { DMU_CEILING_MATERIAL, "DMU_CEILING_MATERIAL" },
-        { DMU_CEILING_MATERIAL_OFFSET_X, "DMU_CEILING_MATERIAL_OFFSET_X" },
-        { DMU_CEILING_MATERIAL_OFFSET_Y, "DMU_CEILING_MATERIAL_OFFSET_Y" },
-        { DMU_CEILING_MATERIAL_OFFSET_XY, "DMU_CEILING_MATERIAL_OFFSET_XY" },
-        { DMU_CEILING_TARGET_HEIGHT, "DMU_CEILING_TARGET_HEIGHT" },
-        { DMU_CEILING_SPEED, "DMU_CEILING_SPEED" },
-        { DMU_CEILING_COLOR, "DMU_CEILING_COLOR" },
-        { DMU_CEILING_COLOR_RED, "DMU_CEILING_COLOR_RED" },
-        { DMU_CEILING_COLOR_GREEN, "DMU_CEILING_COLOR_GREEN" },
-        { DMU_CEILING_COLOR_BLUE, "DMU_CEILING_COLOR_BLUE" },
-        { DMU_CEILING_SOUND_ORIGIN, "DMU_CEILING_SOUND_ORIGIN" },
-        { DMU_SEG_LIST, "DMU_SEG_LIST" },
+        { DMU_HEIGHT, "DMU_HEIGHT" },
+        { DMU_TARGET_HEIGHT, "DMU_TARGET_HEIGHT" },
         { DMU_SEG_COUNT, "DMU_SEG_COUNT" },
         { DMU_TAG, "DMU_TAG" },
         { DMU_START_SPOT, "DMU_START_SPOT" },
@@ -232,7 +152,7 @@ const char* DMU_Str(uint prop)
         { DMU_SPECIAL_DATA, "DMU_SPECIAL_DATA" },
         { 0, NULL }
     };
-    uint        i;
+    uint                i;
 
     for(i = 0; props[i].str; ++i)
         if(props[i].prop == prop)
@@ -249,7 +169,7 @@ const char* DMU_Str(uint prop)
  */
 static int DMU_GetType(const void* ptr)
 {
-    int type;
+    int                 type;
 
     type = P_DummyType((void*)ptr);
     if(type != DMU_NONE)
@@ -279,88 +199,18 @@ static int DMU_GetType(const void* ptr)
 }
 
 /**
- * Automatically detect and convert property constants that act as aliases.
- * Property constant aliases are "alternative names" for other constants
- * that relate to properties easily reached through indirection of the base
- * object but arn't actually properties of the base object itself.
- *
- * In otherwords - not modifiers:
- * Aliases are implicit, non-public and refer to one or more properties
- * of multiple objects.
- *
- * Side Effect: This routine may modify the content of "args".
- *
- * @param args      The setargs struct to work with.
- *
- * @return boolean  True if conversion took place.
- */
-static boolean DMU_ConvertAliases(setargs_t* args)
-{
-    switch(args->type)
-    {
-    case DMU_SECTOR:
-    case DMU_SUBSECTOR:
-        switch(args->prop)
-        {
-        case DMU_FLOOR_HEIGHT:
-        case DMU_FLOOR_TARGET_HEIGHT:
-        case DMU_FLOOR_MATERIAL:
-        case DMU_FLOOR_MATERIAL_OFFSET_X:
-        case DMU_FLOOR_MATERIAL_OFFSET_Y:
-        case DMU_FLOOR_MATERIAL_OFFSET_XY:
-        case DMU_FLOOR_SPEED:
-        case DMU_FLOOR_COLOR:
-        case DMU_FLOOR_COLOR_RED:
-        case DMU_FLOOR_COLOR_GREEN:
-        case DMU_FLOOR_COLOR_BLUE:
-        case DMU_FLOOR_SOUND_ORIGIN:
-            args->prop = DMU_PLANE_HEIGHT + (args->prop - DMU_FLOOR_HEIGHT);
-            args->aliases |= DMU_FLOOR_OF_SECTOR;
-            return true;
-
-        case DMU_CEILING_HEIGHT:
-        case DMU_CEILING_TARGET_HEIGHT:
-        case DMU_CEILING_MATERIAL:
-        case DMU_CEILING_MATERIAL_OFFSET_X:
-        case DMU_CEILING_MATERIAL_OFFSET_Y:
-        case DMU_CEILING_MATERIAL_OFFSET_XY:
-        case DMU_CEILING_SPEED:
-        case DMU_CEILING_COLOR:
-        case DMU_CEILING_COLOR_RED:
-        case DMU_CEILING_COLOR_GREEN:
-        case DMU_CEILING_COLOR_BLUE:
-        case DMU_CEILING_SOUND_ORIGIN:
-            args->prop = DMU_PLANE_HEIGHT + (args->prop - DMU_CEILING_HEIGHT);
-            args->aliases |= DMU_CEILING_OF_SECTOR;
-            return true;
-
-        default:
-            break;
-        }
-        break;
-
-    default:
-        break;
-    }
-
-    return false;
-}
-
-/**
  * Initializes a setargs struct.
  *
- * @param type  Type of the map data object (e.g., DMU_LINEDEF).
- * @param prop  Property of the map data object.
+ * @param type          Type of the map data object.
+ * @param args          Ptr to setargs struct to be initialized.
+ * @param prop          Property of the map data object.
  */
-static void InitArgs(setargs_t* args, int type, uint prop)
+static void initArgs(setargs_t* args, int type, uint prop)
 {
     memset(args, 0, sizeof(*args));
     args->type = type;
     args->prop = prop & ~DMU_FLAG_MASK;
     args->modifiers = prop & DMU_FLAG_MASK;
-    args->aliases = 0;
-
-    DMU_ConvertAliases(args);
 }
 
 /**
@@ -392,13 +242,14 @@ void P_InitMapUpdate(void)
 /**
  * Allocates a new dummy object.
  *
- * @param type  DMU type of the dummy object.
- * @param extraData  Extra data pointer of the dummy. Points to caller-allocated
- *                   memory area of extra data for the dummy.
+ * @param type          DMU type of the dummy object.
+ * @param extraData     Extra data pointer of the dummy. Points to
+ *                      caller-allocated memory area of extra data for the
+ *                      dummy.
  */
 void* P_AllocDummy(int type, void* extraData)
 {
-    uint        i;
+    uint                i;
 
     switch(type)
     {
@@ -444,7 +295,7 @@ void* P_AllocDummy(int type, void* extraData)
  */
 void P_FreeDummy(void* dummy)
 {
-    int type = P_DummyType(dummy);
+    int                 type = P_DummyType(dummy);
 
     switch(type)
     {
@@ -602,15 +453,128 @@ void* P_ToPtr(int type, uint index)
     return NULL;
 }
 
+int P_Iteratep(void *ptr, uint prop, void* context,
+               int (*callback) (void* p, void* ctx))
+{
+    int                 type = DMU_GetType(ptr);
+
+    switch(type)
+    {
+    case DMU_SECTOR:
+        switch(prop)
+        {
+        case DMU_LINEDEF:
+            {
+            sector_t           *sec = (sector_t*) ptr;
+            linedef_t         **linePtr;
+            int                 result;
+
+            linePtr = sec->lineDefs;
+            while(*linePtr && (result = callback(*linePtr, context)) != 0)
+                *linePtr++;
+
+            return result;
+            }
+
+        case DMU_PLANE:
+            {
+            sector_t           *sec = (sector_t*) ptr;
+            plane_t           **planePtr;
+            int                 result;
+
+            planePtr = sec->planes;
+            while(*planePtr && (result = callback(*planePtr, context)) != 0)
+                *planePtr++;
+
+            return result;
+            }
+
+        case DMU_SUBSECTOR:
+            {
+            sector_t           *sec = (sector_t*) ptr;
+            subsector_t       **ssecPtr;
+            int                 result;
+
+            ssecPtr = sec->ssectors;
+            while(*ssecPtr && (result = callback(*ssecPtr, context)) != 0)
+                *ssecPtr++;
+
+            return result;
+            }
+
+        default:
+            Con_Error("P_Iteratep: Property %s unknown/not vector.\n",
+                      DMU_Str(prop));
+        }
+        break;
+
+    case DMU_POLYOBJ:
+        switch(prop)
+        {
+        case DMU_SEG:
+            {
+            polyobj_t          *po = (polyobj_t*) ptr;
+            seg_t             **segPtr;
+            int                 result;
+
+            segPtr = po->segs;
+            while(*segPtr && (result = callback(*segPtr, context)) != 0)
+                *segPtr++;
+
+            return result;
+            }
+
+        default:
+            Con_Error("P_Iteratep: Property %s unknown/not vector.\n",
+                      DMU_Str(prop));
+        }
+        break;
+
+    case DMU_SUBSECTOR:
+        switch(prop)
+        {
+        case DMU_SEG:
+            {
+            subsector_t        *ssec = (subsector_t*) ptr;
+            seg_t             **segPtr;
+            int                 result;
+
+            segPtr = ssec->segs;
+            while(*segPtr && (result = callback(*segPtr, context)) != 0)
+                *segPtr++;
+
+            return result;
+            }
+
+        default:
+            Con_Error("P_Iteratep: Property %s unknown/not vector.\n",
+                      DMU_Str(prop));
+        }
+        break;
+
+    default:
+        Con_Error("P_Iteratep: Type %s unknown.\n", DMU_Str(type));
+        break;
+    }
+
+    return true; // Successfully completed.
+}
+
 /**
- * Call a callback function on a selection of map data objects. The selected
- * objects will be specified by 'type' and 'index'. 'context' is passed to the
- * callback function along with a pointer to the data object. P_Callback
- * returns true if all the calls to the callback function return true. False
- * is returned when the callback function returns false; in this case, the
- * iteration is aborted immediately when the callback function returns false.
+ * Call a callback function on a selection of map data objects. The
+ * selected objects will be specified by 'type' and 'index'.
+
+ * @param context       Is passed to the callback function.
+ *
+ * @return              @c true if all the calls to the callback function
+ *                      return @c true.
+ *                      @c false is returned when the callback function
+ *                      returns @c false; in this case, the iteration is
+ *                      aborted immediately when the callback function
+ *                      returns @c false.
  */
-int P_Callback(int type, uint index, void* context, int (*callback)(void* p, void* ctx))
+int P_Callback(int type, uint index, void* context,
+               int (*callback)(void* p, void* ctx))
 {
     switch(type)
     {
@@ -681,81 +645,11 @@ int P_Callback(int type, uint index, void* context, int (*callback)(void* p, voi
 }
 
 /**
- * Call a callback function on all map data objects of a given type.
- * 'context' is passed to the callback function along with a pointer to the
- * data object.
- *
- * @return          @c true, if all the calls to the callback function
- *                  return @c true,.
- *                  @c false, is returned when the callback function
- *                  returns @c false</code?; in this case, the iteration is
- *                  aborted immediately when the callback function returns
- *                  @c false,.
- */
-int P_CallbackAll(int type, void* context, int (*callback)(void* p, void* ctx))
-{
-    uint        i;
-
-    switch(type)
-    {
-    case DMU_VERTEX:
-        for(i = 0; i < numVertexes; ++i)
-            if(!callback(VERTEX_PTR(i), context)) return false;
-        break;
-
-    case DMU_SEG:
-        for(i = 0; i < numSegs; ++i)
-            if(!callback(SEG_PTR(i), context)) return false;
-        break;
-
-    case DMU_LINEDEF:
-        for(i = 0; i < numLineDefs; ++i)
-            if(!callback(LINE_PTR(i), context)) return false;
-        break;
-
-    case DMU_SIDEDEF:
-        for(i = 0; i < numSideDefs; ++i)
-            if(!callback(SIDE_PTR(i), context)) return false;
-        break;
-
-    case DMU_NODE:
-        for(i = 0; i < numNodes; ++i)
-            if(!callback(NODE_PTR(i), context)) return false;
-        break;
-
-    case DMU_SUBSECTOR:
-        for(i = 0; i < numSSectors; ++i)
-            if(!callback(SUBSECTOR_PTR(i), context)) return false;
-        break;
-
-    case DMU_SECTOR:
-        for(i = 0; i < numSectors; ++i)
-            if(!callback(SECTOR_PTR(i), context)) return false;
-        break;
-
-    case DMU_POLYOBJ:
-        for(i = 0; i < numPolyObjs; i++)
-            if(!callback(polyObjs[i], context)) return false;
-        break;
-
-    case DMU_PLANE:
-        Con_Error("P_CallbackAll: %s not implemented yet.\n",
-                  DMU_Str(type));
-        break;
-
-    default:
-        Con_Error("P_CallbackAll: Type %s unknown.\n", DMU_Str(type));
-    }
-
-    // Successfully completed.
-    return true;
-}
-
-/**
  * Another version of callback iteration. The set of selected objects is
  * determined by 'type' and 'ptr'. Otherwise works like P_Callback.
  */
-int P_Callbackp(int type, void* ptr, void* context, int (*callback)(void* p, void* ctx))
+int P_Callbackp(int type, void* ptr, void* context,
+                int (*callback)(void* p, void* ctx))
 {
     switch(type)
     {
@@ -794,7 +688,8 @@ int P_Callbackp(int type, void* ptr, void* context, int (*callback)(void* p, voi
  * Sets a value. Does some basic type checking so that incompatible types are
  * not assigned. Simple conversions are also done, e.g., float to fixed.
  */
-static void SetValue(valuetype_t valueType, void* dst, setargs_t* args, uint index)
+void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
+                  uint index)
 {
     if(valueType == DDVT_FIXED)
     {
@@ -983,6 +878,105 @@ static void SetValue(valuetype_t valueType, void* dst, setargs_t* args, uint ind
     }
 }
 
+static void *resolveReferences(void *obj, setargs_t *args)
+{
+    void               *ptr = obj;
+
+    // Dereference where necessary. Note the order, these cascade.
+    if(args->type == DMU_SUBSECTOR)
+    {
+        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
+        {
+            ptr = ((subsector_t*) ptr)->sector;
+            args->type = DMU_SECTOR;
+        }
+        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
+        {
+            ptr = ((subsector_t*) ptr)->sector;
+            args->type = DMU_SECTOR;
+        }
+    }
+
+    if(args->type == DMU_SECTOR)
+    {
+        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
+        {
+            sector_t           *sec = (sector_t*) ptr;
+            ptr = sec->SP_plane(PLN_FLOOR);
+            args->type = DMU_PLANE;
+        }
+        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
+        {
+            sector_t           *sec = (sector_t*) ptr;
+            ptr = sec->SP_plane(PLN_CEILING);
+            args->type = DMU_PLANE;
+        }
+    }
+
+    if(args->type == DMU_LINEDEF)
+    {
+        if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
+        {
+            ptr = ((linedef_t*) ptr)->L_frontside;
+            args->type = DMU_SIDEDEF;
+        }
+        else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
+        {
+            linedef_t          *li = ((linedef_t*) ptr);
+            if(!li->L_backside)
+                Con_Error("DMU_ResolveReferences: Linedef %i has no back side.\n",
+                          P_ToIndex(li));
+
+            ptr = li->L_backside;
+            args->type = DMU_SIDEDEF;
+        }
+    }
+
+    if(args->type == DMU_SIDEDEF)
+    {
+        if(args->modifiers & DMU_TOP_OF_SIDEDEF)
+        {
+            ptr = &((sidedef_t*) ptr)->SW_topsurface;
+            args->type = DMU_SURFACE;
+        }
+        else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
+        {
+            ptr = &((sidedef_t*) ptr)->SW_middlesurface;
+            args->type = DMU_SURFACE;
+        }
+        else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
+        {
+            ptr = &((sidedef_t*) ptr)->SW_bottomsurface;
+            args->type = DMU_SURFACE;
+        }
+    }
+
+    if(args->type == DMU_PLANE)
+    {
+        switch(args->prop)
+        {
+        case DMU_MATERIAL:
+        case DMU_MATERIAL_OFFSET_X:
+        case DMU_MATERIAL_OFFSET_Y:
+        case DMU_MATERIAL_OFFSET_XY:
+        case DMU_COLOR:
+        case DMU_COLOR_RED:
+        case DMU_COLOR_GREEN:
+        case DMU_COLOR_BLUE:
+        case DMU_ALPHA:
+        case DMU_BLENDMODE:
+            ptr = &((plane_t*) ptr)->surface;
+            args->type = DMU_SURFACE;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    return ptr;
+}
+
 /**
  * Only those properties that are writable by outside parties (such as games)
  * are included here. Attempting to set a non-writable property causes a
@@ -991,447 +985,58 @@ static void SetValue(valuetype_t valueType, void* dst, setargs_t* args, uint ind
  * When a property changes, the relevant subsystems are notified of the change
  * so that they can update their state accordingly.
  */
-static int SetProperty(void* ptr, void* context)
+static int setProperty(void* obj, void* context)
 {
-    setargs_t* args = (setargs_t*) context;
-
-    // Check modified cases first.
-    // Then aliases.
-    if(args->type == DMU_PLANE ||
-       (args->type == DMU_SECTOR &&
-          ((args->aliases & DMU_FLOOR_OF_SECTOR) ||
-           (args->aliases & DMU_CEILING_OF_SECTOR))) ||
-       (args->type == DMU_SUBSECTOR &&
-          ((args->aliases & DMU_FLOOR_OF_SECTOR) ||
-           (args->aliases & DMU_CEILING_OF_SECTOR))))
-    {
-        plane_t* p = NULL;
-        if(args->type == DMU_PLANE)
-            p = ptr;
-        else if(args->type == DMU_SECTOR)
-        {
-            sector_t* sec = (sector_t*)ptr;
-
-            if(args->aliases & DMU_FLOOR_OF_SECTOR)
-            {
-                if(!sec->planes[PLN_FLOOR])
-                    Con_Error("SetProperty: Sector %i does not have a "
-                              "floor plane!", P_ToIndex(sec));
-
-                p = sec->planes[PLN_FLOOR];
-            }
-            else
-            {
-                if(!sec->planes[PLN_FLOOR])
-                    Con_Error("SetProperty: Sector %i does not have a "
-                              "ceiling plane!", P_ToIndex(sec));
-
-                p = sec->planes[PLN_CEILING];
-            }
-        }
-        else if(args->type == DMU_SUBSECTOR)
-        {
-            sector_t* sec = ((subsector_t*)ptr)->sector;
-            if(args->aliases & DMU_FLOOR_OF_SECTOR)
-            {
-                if(!sec->planes[PLN_FLOOR])
-                    Con_Error("SetProperty: Sector %i does not have a "
-                              "floor plane!", P_ToIndex(sec));
-
-                p = sec->planes[PLN_FLOOR];
-            }
-            else
-            {
-                if(!sec->planes[PLN_FLOOR])
-                    Con_Error("SetProperty: Sector %i does not have a "
-                              "ceiling plane!", P_ToIndex(sec));
-
-                p = sec->planes[PLN_CEILING];
-            }
-        }
-
-        switch(args->prop)
-        {
-        case DMU_PLANE_COLOR:
-            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[0], args, 0);
-            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[1], args, 1);
-            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[2], args, 2);
-            break;
-        case DMU_PLANE_COLOR_RED:
-            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[0], args, 0);
-            break;
-        case DMU_PLANE_COLOR_GREEN:
-            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[1], args, 0);
-            break;
-        case DMU_PLANE_COLOR_BLUE:
-            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[2], args, 0);
-            break;
-        case DMU_PLANE_HEIGHT:
-            SetValue(DMT_PLANE_HEIGHT, &p->height, args, 0);
-            R_AddWatchedPlane(watchedPlaneList, p);
-            break;
-        case DMU_PLANE_MATERIAL:
-            {
-            short           texture;
-            SetValue(DMT_MATERIAL, &texture, args, 0);
-
-            p->PS_material = R_GetMaterial(texture, MAT_FLAT);
-            }
-            break;
-
-        case DMU_PLANE_MATERIAL_OFFSET_X:
-            SetValue(DMT_SURFACE_OFFSET, &p->surface.offset[VX], args, 0);
-            break;
-        case DMU_PLANE_MATERIAL_OFFSET_Y:
-            SetValue(DMT_SURFACE_OFFSET, &p->surface.offset[VY], args, 0);
-            break;
-        case DMU_PLANE_MATERIAL_OFFSET_XY:
-            SetValue(DMT_SURFACE_OFFSET, &p->surface.offset[VX], args, 0);
-            SetValue(DMT_SURFACE_OFFSET, &p->surface.offset[VY], args, 1);
-            break;
-        case DMU_PLANE_TARGET_HEIGHT:
-            SetValue(DMT_PLANE_TARGET, &p->target, args, 0);
-            break;
-        case DMU_PLANE_SPEED:
-            SetValue(DMT_PLANE_SPEED, &p->speed, args, 0);
-            break;
-        default:
-            Con_Error("SetProperty: Property %s is not writable in DMU_PLANE.\n",
-                      DMU_Str(args->prop));
-        }
-
-        // \todo Notify relevant subsystems of any changes.
-        R_UpdateSector(p->sector, false);
-
-        // Continue iteration.
-        return true;
-    }
+    setargs_t          *args = (setargs_t*) context;
+    void               *ptr = resolveReferences(obj, args);
 
     switch(args->type)
     {
-    case DMU_VERTEX:
+    case DMU_SURFACE:
+        Surface_SetProperty(ptr, args);
+        break;
+
+    case DMU_PLANE:
         {
-        // Vertices are not writable through DMU.
-        Con_Error("SetProperty: DMU_VERTEX is not writable.\n");
+        plane_t* p = (plane_t*) ptr;
+        Plane_SetProperty(p, args);
+        // \todo Notify relevant subsystems of any changes.
+        R_UpdateSector(p->sector, false);
         break;
         }
+
+    case DMU_VERTEX:
+        Vertex_SetProperty(ptr, args);
+        break;
 
     case DMU_SEG:
-        {
-        seg_t* p = ptr;
-        switch(args->prop)
-        {
-        case DMU_VERTEX1_X:
-            SetValue(DMT_VERTEX_POS, &p->SG_v1pos[VX], args, 0);
-            break;
-        case DMU_VERTEX1_Y:
-            SetValue(DMT_VERTEX_POS, &p->SG_v1pos[VY], args, 0);
-            break;
-        case DMU_VERTEX1_XY:
-            SetValue(DMT_VERTEX_POS, &p->SG_v1pos[VX], args, 0);
-            SetValue(DMT_VERTEX_POS, &p->SG_v1pos[VY], args, 1);
-            break;
-        case DMU_VERTEX2_X:
-            SetValue(DMT_VERTEX_POS, &p->SG_v2pos[VX], args, 0);
-            break;
-        case DMU_VERTEX2_Y:
-            SetValue(DMT_VERTEX_POS, &p->SG_v2pos[VY], args, 0);
-            break;
-        case DMU_VERTEX2_XY:
-            SetValue(DMT_VERTEX_POS, &p->SG_v2pos[VX], args, 0);
-            SetValue(DMT_VERTEX_POS, &p->SG_v2pos[VY], args, 1);
-            break;
-        case DMU_FLAGS:
-            SetValue(DMT_SEG_FLAGS, &p->flags, args, 0);
-            break;
-        default:
-            Con_Error("SetProperty: Property %s is not writable in DMU_SEG.\n",
-                      DMU_Str(args->prop));
-        }
+        Seg_SetProperty(ptr, args);
         break;
-        }
 
     case DMU_LINEDEF:
-        {
-        linedef_t* p = ptr;
-        switch(args->prop)
-        {
-        case DMU_FRONT_SECTOR:
-            SetValue(DMT_LINEDEF_SEC, &p->L_frontsector, args, 0);
-            break;
-        case DMU_BACK_SECTOR:
-            SetValue(DMT_LINEDEF_SEC, &p->L_backsector, args, 0);
-            break;
-        case DMU_SIDEDEF0:
-            SetValue(DMT_LINEDEF_SIDEDEFS, &p->L_frontside, args, 0);
-            break;
-        case DMU_SIDEDEF1:
-            SetValue(DMT_LINEDEF_SIDEDEFS, &p->L_backside, args, 0);
-            break;
-        case DMU_VALID_COUNT:
-            SetValue(DMT_LINEDEF_VALIDCOUNT, &p->validCount, args, 0);
-            break;
-        case DMU_FLAGS:
-            SetValue(DMT_LINEDEF_FLAGS, &p->flags, args, 0);
-            break;
-        default:
-            Con_Error("SetProperty: Property %s is not writable in DMU_LINEDEF.\n",
-                      DMU_Str(args->prop));
-        }
+        Linedef_SetProperty(ptr, args);
         break;
-        }
 
     case DMU_SIDEDEF:
-        {
-        sidedef_t* p = ptr;
-
-        switch(args->prop)
-        {
-        case DMU_FLAGS:
-            SetValue(DMT_SIDEDEF_FLAGS, &p->flags, args, 0);
-            break;
-        case DMU_TOP_COLOR:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[0], args, 0);
-            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[1], args, 1);
-            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 2);
-            break;
-        case DMU_TOP_COLOR_RED:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[0], args, 0);
-            break;
-        case DMU_TOP_COLOR_GREEN:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[1], args, 0);
-            break;
-        case DMU_TOP_COLOR_BLUE:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 0);
-            break;
-        case DMU_TOP_MATERIAL:
-            {
-            short           texture;
-            SetValue(DMT_MATERIAL, &texture, args, 0);
-
-            p->SW_topmaterial = R_GetMaterial(texture, MAT_TEXTURE);
-            }
-            break;
-        case DMU_TOP_MATERIAL_OFFSET_X:
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VX], args, 0);
-            break;
-        case DMU_TOP_MATERIAL_OFFSET_Y:
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VY], args, 0);
-            break;
-        case DMU_TOP_MATERIAL_OFFSET_XY:
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VX], args, 0);
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VY], args, 1);
-            break;
-        case DMU_MIDDLE_COLOR:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[0], args, 0);
-            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[1], args, 1);
-            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[2], args, 2);
-            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[3], args, 3);
-            break;
-        case DMU_MIDDLE_COLOR_RED:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[0], args, 0);
-            break;
-        case DMU_MIDDLE_COLOR_GREEN:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[1], args, 0);
-            break;
-        case DMU_MIDDLE_COLOR_BLUE:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[2], args, 0);
-            break;
-        case DMU_MIDDLE_COLOR_ALPHA:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[3], args, 0);
-            break;
-        case DMU_MIDDLE_BLENDMODE:
-            SetValue(DMT_SURFACE_BLENDMODE, &p->SW_middleblendmode, args, 0);
-            break;
-        case DMU_MIDDLE_MATERIAL:
-            {
-            short           texture;
-            SetValue(DMT_MATERIAL, &texture, args, 0);
-
-            p->SW_middlematerial = R_GetMaterial(texture, MAT_TEXTURE);
-            }
-            S_CalcSectorReverb(p->sector);
-            break;
-        case DMU_MIDDLE_MATERIAL_OFFSET_X:
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_middleoffset[VX], args, 0);
-            break;
-        case DMU_MIDDLE_MATERIAL_OFFSET_Y:
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_middleoffset[VY], args, 0);
-            break;
-        case DMU_MIDDLE_MATERIAL_OFFSET_XY:
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_middleoffset[VX], args, 0);
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_middleoffset[VY], args, 1);
-            break;
-        case DMU_BOTTOM_COLOR:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[0], args, 0);
-            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[1], args, 1);
-            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 2);
-            break;
-        case DMU_BOTTOM_COLOR_RED:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[0], args, 0);
-            break;
-        case DMU_BOTTOM_COLOR_GREEN:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[1], args, 0);
-            break;
-        case DMU_BOTTOM_COLOR_BLUE:
-            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 0);
-            break;
-        case DMU_BOTTOM_MATERIAL:
-            {
-            short           texture;
-            SetValue(DMT_MATERIAL, &texture, args, 0);
-
-            p->SW_bottommaterial = R_GetMaterial(texture, MAT_TEXTURE);
-            }
-            break;
-        case DMU_BOTTOM_MATERIAL_OFFSET_X:
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VX], args, 0);
-            break;
-        case DMU_BOTTOM_MATERIAL_OFFSET_Y:
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VY], args, 0);
-            break;
-        case DMU_BOTTOM_MATERIAL_OFFSET_XY:
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VX], args, 0);
-            SetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VY], args, 1);
-            break;
-        default:
-            Con_Error("SetProperty: Property %s is not writable in DMU_SIDEDEF.\n",
-                      DMU_Str(args->prop));
-        }
-
-        R_UpdateSurface(&p->SW_topsurface, false);
-        R_UpdateSurface(&p->SW_middlesurface, false);
-        R_UpdateSurface(&p->SW_bottomsurface, false);
+        Sidedef_SetProperty(ptr, args);
         break;
-        }
 
     case DMU_SUBSECTOR:
-        {
-        subsector_t* p = ptr;
-        switch(args->prop)
-        {
-        case DMU_POLYOBJ:
-            SetValue(DMT_SUBSECTOR_POLYOBJ, &p->polyObj, args, 0);
-            break;
-        default:
-            Con_Error("SetProperty: Property %s is not writable in DMU_SUBSECTOR.\n",
-                      DMU_Str(args->prop));
-        }
+        Subsector_SetProperty(ptr, args);
         break;
-        }
 
     case DMU_SECTOR:
         {
-        sector_t* p = ptr;
-        switch(args->prop)
-        {
-        case DMU_COLOR:
-            SetValue(DMT_SECTOR_RGB, &p->rgb[0], args, 0);
-            SetValue(DMT_SECTOR_RGB, &p->rgb[1], args, 1);
-            SetValue(DMT_SECTOR_RGB, &p->rgb[2], args, 2);
-            break;
-        case DMU_COLOR_RED:
-            SetValue(DMT_SECTOR_RGB, &p->rgb[0], args, 0);
-            break;
-        case DMU_COLOR_GREEN:
-            SetValue(DMT_SECTOR_RGB, &p->rgb[1], args, 0);
-            break;
-        case DMU_COLOR_BLUE:
-            SetValue(DMT_SECTOR_RGB, &p->rgb[2], args, 0);
-            break;
-        case DMU_LIGHT_LEVEL:
-            SetValue(DMT_SECTOR_LIGHTLEVEL, &p->lightLevel, args, 0);
-            break;
-        case DMU_VALID_COUNT:
-            SetValue(DMT_SECTOR_VALIDCOUNT, &p->validCount, args, 0);
-            break;
-        default:
-            Con_Error("SetProperty: Property %s is not writable in DMU_SECTOR.\n",
-                      DMU_Str(args->prop));
-        }
-
+        sector_t* p = (sector_t*) ptr;
+        Sector_SetProperty(p, args);
         // \todo Notify relevant subsystems of any changes.
         R_UpdateSector(p, false);
-
         break;
         }
 
     case DMU_POLYOBJ:
-        {
-        polyobj_t* p = ptr;
-        if(args->modifiers & DMU_SEG_OF_POLYOBJ)
-        {
-            if(args->prop < p->numSegs)
-            {
-                SetValue(DDVT_PTR, &p->segs[args->prop], args, 0);
-                break;
-            }
-            else
-            {
-                Con_Error("SetProperty: Polyobj seg out of range (%i out of %i).\n",
-                          args->prop, p->numSegs);
-            }
-        }
-
-        switch(args->prop)
-        {
-        case DMU_START_SPOT_X:
-            SetValue(DDVT_FLOAT, &p->startSpot.pos[VX], args, 0);
-            break;
-        case DMU_START_SPOT_Y:
-            SetValue(DDVT_FLOAT, &p->startSpot.pos[VY], args, 0);
-            break;
-        case DMU_START_SPOT_XY:
-            SetValue(DDVT_FLOAT, &p->startSpot.pos[VX], args, 0);
-            SetValue(DDVT_FLOAT, &p->startSpot.pos[VY], args, 1);
-            break;
-        case DMU_DESTINATION_X:
-            SetValue(DDVT_FLOAT, &p->dest.pos[VX], args, 0);
-            break;
-        case DMU_DESTINATION_Y:
-            SetValue(DDVT_FLOAT, &p->dest.pos[VY], args, 0);
-            break;
-        case DMU_DESTINATION_XY:
-            SetValue(DDVT_FLOAT, &p->dest.pos[VX], args, 0);
-            SetValue(DDVT_FLOAT, &p->dest.pos[VY], args, 1);
-            break;
-        case DMU_ANGLE:
-            SetValue(DDVT_ANGLE, &p->angle, args, 0);
-            break;
-        case DMU_DESTINATION_ANGLE:
-            SetValue(DDVT_ANGLE, &p->destAngle, args, 0);
-            break;
-        case DMU_SPEED:
-            SetValue(DDVT_FLOAT, &p->speed, args, 0);
-            break;
-        case DMU_ANGLE_SPEED:
-            SetValue(DDVT_ANGLE, &p->angleSpeed, args, 0);
-            break;
-        case DMU_TAG:
-            SetValue(DDVT_INT, &p->tag, args, 0);
-            break;
-        case DMU_CRUSH:
-            SetValue(DDVT_BOOL, &p->crush, args, 0);
-            break;
-        case DMU_SEQUENCE_TYPE:
-            SetValue(DDVT_INT, &p->seqType, args, 0);
-            break;
-        case DMU_SEG_COUNT:
-            SetValue(DDVT_INT, &p->numSegs, args, 0);
-            break;
-        case DMU_SEG_LIST:
-            SetValue(DDVT_PTR, &p->segs, args, 0);
-            break;
-        case DMU_SPECIAL_DATA:
-            SetValue(DDVT_PTR, &p->specialData, args, 0);
-            break;
-        default:
-            Con_Error("SetProperty: Property %s is not writable in DMU_POLYOBJ.\n",
-                      DMU_Str(args->prop));
-            break;
-        }
+        Polyobj_SetProperty(ptr, args);
         break;
-        }
 
     case DMU_NODE:
         Con_Error("SetProperty: Property %s is not writable in DMU_NODE.\n",
@@ -1441,16 +1046,17 @@ static int SetProperty(void* ptr, void* context)
     default:
         Con_Error("SetProperty: Type %s not writable.\n", DMU_Str(args->type));
     }
-    // Continue iteration.
-    return true;
+
+    return true; // Continue iteration.
 }
 
 /**
- * Gets a value. Does some basic type checking so that incompatible types are
- * not assigned. Simple conversions are also done, e.g., float to fixed.
+ * Gets a value. Does some basic type checking so that incompatible types
+ * are not assigned. Simple conversions are also done, e.g., float to
+ * fixed.
  */
-static void GetValue(valuetype_t valueType, const void* src, setargs_t* args,
-                     uint index)
+void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
+                  uint index)
 {
     if(valueType == DDVT_FIXED)
     {
@@ -1641,646 +1247,48 @@ static void GetValue(valuetype_t valueType, const void* src, setargs_t* args,
     }
 }
 
-static int GetProperty(void* ptr, void* context)
+static int getProperty(void* obj, void* context)
 {
-    setargs_t* args = (setargs_t*) context;
-
-    // Check modified cases first.
-    if(args->type == DMU_SECTOR &&
-       (args->modifiers & DMU_LINEDEF_OF_SECTOR))
-    {
-        sector_t* p = ptr;
-        if(args->prop >= p->lineDefCount)
-        {
-            Con_Error("GetProperty: DMU_LINEDEF_OF_SECTOR %i does not exist.\n",
-                      args->prop);
-        }
-        GetValue(DDVT_PTR, &p->lineDefs[args->prop], args, 0);
-        return false; // stop iteration
-    }
-
-    if(args->type == DMU_SUBSECTOR &&
-       (args->modifiers & DMU_SEG_OF_SUBSECTOR))
-    {
-        subsector_t* p = ptr;
-        seg_t* segptr;
-        if(args->prop >= p->segCount)
-        {
-            Con_Error("GetProperty: DMU_SEG_OF_SECTOR %i does not exist.\n",
-                      args->prop);
-        }
-        segptr = (p->segs[args->prop]);
-        GetValue(DDVT_PTR, &segptr, args, 0);
-        return false; // stop iteration
-    }
-
-    if(args->type == DMU_SECTOR &&
-        (args->modifiers & DMU_SUBSECTOR_OF_SECTOR))
-    {
-        sector_t           *p = ptr;
-        subsector_t        *ssecptr;
-        if(args->prop >= p->ssectorCount)
-        {
-            Con_Error("GetProperty: DMU_SUBSECTOR_OF_SECTOR %i does not exist.\n",
-                      args->prop);
-        }
-        ssecptr = (p->ssectors[args->prop]);
-        GetValue(DDVT_PTR, &ssecptr, args, 0);
-        return false; // stop iteration
-    }
-
-    if(args->type == DMU_PLANE ||
-       (args->type == DMU_SECTOR &&
-          ((args->aliases & DMU_FLOOR_OF_SECTOR) ||
-           (args->aliases & DMU_CEILING_OF_SECTOR))) ||
-       (args->type == DMU_SUBSECTOR &&
-          ((args->aliases & DMU_FLOOR_OF_SECTOR) ||
-           (args->aliases & DMU_CEILING_OF_SECTOR))))
-    {
-        plane_t* p = NULL;
-        if(args->type == DMU_PLANE)
-            p = ptr;
-        else if(args->type == DMU_SECTOR)
-        {
-            sector_t* sec = (sector_t*)ptr;
-            if(args->aliases & DMU_FLOOR_OF_SECTOR)
-            {
-                if(!sec->planes[PLN_FLOOR])
-                    Con_Error("SetProperty: Sector %i does not have a "
-                              "floor plane!", P_ToIndex(sec));
-
-                p = sec->planes[PLN_FLOOR];
-            }
-            else
-            {
-                if(!sec->planes[PLN_FLOOR])
-                    Con_Error("SetProperty: Sector %i does not have a "
-                              "ceiling plane!", P_ToIndex(sec));
-
-                p = sec->planes[PLN_CEILING];
-            }
-        }
-        else if(args->type == DMU_SUBSECTOR)
-        {
-            sector_t* sec = ((subsector_t*)ptr)->sector;
-            if(args->aliases & DMU_FLOOR_OF_SECTOR)
-                p = sec->planes[PLN_FLOOR];
-            else
-                p = sec->planes[PLN_CEILING];
-        }
-
-        switch(args->prop)
-        {
-        case DMU_SECTOR:
-            GetValue(DMT_PLANE_SECTOR, &p->sector, args, 0);
-            break;
-        case DMU_PLANE_COLOR:
-            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[0], args, 0);
-            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[1], args, 1);
-            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[2], args, 2);
-            break;
-        case DMU_PLANE_COLOR_RED:
-            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[0], args, 0);
-            break;
-        case DMU_PLANE_COLOR_GREEN:
-            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[1], args, 0);
-            break;
-        case DMU_PLANE_COLOR_BLUE:
-            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[2], args, 0);
-            break;
-        case DMU_PLANE_HEIGHT:
-            GetValue(DMT_PLANE_HEIGHT, &p->height, args, 0);
-            break;
-        case DMU_PLANE_MATERIAL:
-        {
-            short       ofTypeID = (p->PS_material? p->PS_material->ofTypeID : 0);
-            GetValue(DMT_MATERIAL, &ofTypeID, args, 0);
-            break;
-        }
-        case DMU_PLANE_SOUND_ORIGIN:
-        {
-            degenmobj_t *dmo = &p->soundOrg;
-            GetValue(DMT_PLANE_SOUNDORG, &dmo, args, 0);
-            break;
-        }
-        case DMU_PLANE_MATERIAL_OFFSET_X:
-            GetValue(DMT_SURFACE_OFFSET, &p->surface.offset[VX], args, 0);
-            break;
-        case DMU_PLANE_MATERIAL_OFFSET_Y:
-            GetValue(DMT_SURFACE_OFFSET, &p->surface.offset[VY], args, 0);
-            break;
-        case DMU_PLANE_MATERIAL_OFFSET_XY:
-            GetValue(DMT_SURFACE_OFFSET, &p->surface.offset[VX], args, 0);
-            GetValue(DMT_SURFACE_OFFSET, &p->surface.offset[VY], args, 1);
-            break;
-        case DMU_PLANE_TARGET_HEIGHT:
-            GetValue(DMT_PLANE_TARGET, &p->target, args, 0);
-            break;
-        case DMU_PLANE_SPEED:
-            GetValue(DMT_PLANE_SPEED, &p->speed, args, 0);
-            break;
-        default:
-            Con_Error("GetProperty: DMU_PLANE has no property %s.\n",
-                      DMU_Str(args->prop));
-        }
-        return false; // stop iteration
-    }
-
-    if(args->type == DMU_SECTOR ||
-       (args->type == DMU_SUBSECTOR &&
-        (args->modifiers & DMU_SECTOR_OF_SUBSECTOR)))
-    {
-        sector_t* p = NULL;
-        if(args->type == DMU_SECTOR)
-            p = ptr;
-        else if(args->type == DMU_SUBSECTOR)
-            p = ((subsector_t*)ptr)->sector;
-
-        switch(args->prop)
-        {
-        case DMU_LIGHT_LEVEL:
-            GetValue(DMT_SECTOR_LIGHTLEVEL, &p->lightLevel, args, 0);
-            break;
-        case DMU_COLOR:
-            GetValue(DMT_SECTOR_RGB, &p->rgb[0], args, 0);
-            GetValue(DMT_SECTOR_RGB, &p->rgb[1], args, 1);
-            GetValue(DMT_SECTOR_RGB, &p->rgb[2], args, 2);
-            break;
-        case DMU_COLOR_RED:
-            GetValue(DMT_SECTOR_RGB, &p->rgb[0], args, 0);
-            break;
-        case DMU_COLOR_GREEN:
-            GetValue(DMT_SECTOR_RGB, &p->rgb[1], args, 0);
-            break;
-        case DMU_COLOR_BLUE:
-            GetValue(DMT_SECTOR_RGB, &p->rgb[2], args, 0);
-            break;
-        case DMU_SOUND_ORIGIN:
-        {
-            degenmobj_t *dmo = &p->soundOrg;
-            GetValue(DMT_SECTOR_SOUNDORG, &dmo, args, 0);
-            break;
-        }
-        case DMU_LINEDEF_COUNT:
-        {
-            // FIXME:
-            //GetValue(DMT_SECTOR_LINECOUNT, &p->lineDefCount, args, 0);
-
-            int val = (int) p->lineDefCount;
-            GetValue(DDVT_INT, &val, args, 0);
-            break;
-        }
-        case DMT_MOBJS:
-            GetValue(DMT_SECTOR_MOBJLIST, &p->mobjList, args, 0);
-            break;
-        case DMU_VALID_COUNT:
-            GetValue(DMT_SECTOR_VALIDCOUNT, &p->validCount, args, 0);
-            break;
-        default:
-            Con_Error("GetProperty: DMU_SECTOR has no property %s.\n",
-                      DMU_Str(args->prop));
-        }
-        return false; // stop iteration
-    }
-
-    if(args->type == DMU_SIDEDEF ||
-       (args->type == DMU_LINEDEF &&
-        ((args->modifiers & DMU_SIDEDEF0_OF_LINE) ||
-         (args->modifiers & DMU_SIDEDEF1_OF_LINE))))
-    {
-        sidedef_t* p = NULL;
-        if(args->type == DMU_SIDEDEF)
-            p = ptr;
-        else if(args->type == DMU_LINEDEF)
-        {
-            linedef_t* line = (linedef_t*)ptr;
-            if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
-                p = line->L_frontside;
-            else
-            {
-                if(!line->L_backside)
-                    Con_Error("GetProperty: Line %ld does not have a back side.\n",
-                              (long) GET_LINE_IDX(line));
-
-                p = line->L_backside;
-            }
-        }
-
-        switch(args->prop)
-        {
-        case DMU_SECTOR:
-            GetValue(DMT_SIDEDEF_SECTOR, &p->sector, args, 0);
-            break;
-        case DMU_TOP_MATERIAL:
-            {
-                short ofTypeID = (p->SW_topmaterial? p->SW_topmaterial->ofTypeID : 0);
-
-            if(p->SW_topflags & SUF_TEXFIX)
-                ofTypeID = 0;
-
-           /*if(p->flags & SDF_MIDTEXUPPER)
-                ofTypeID = 0;*/
-
-            GetValue(DMT_MATERIAL, &ofTypeID, args, 0);
-            break;
-            }
-        case DMU_TOP_MATERIAL_OFFSET_X:
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VX], args, 0);
-            break;
-        case DMU_TOP_MATERIAL_OFFSET_Y:
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VY], args, 0);
-            break;
-        case DMU_TOP_MATERIAL_OFFSET_XY:
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VX], args, 0);
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_topoffset[VY], args, 1);
-            break;
-        case DMU_TOP_COLOR:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[0], args, 0);
-            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[1], args, 1);
-            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 2);
-            break;
-        case DMU_TOP_COLOR_RED:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[0], args, 0);
-            break;
-        case DMU_TOP_COLOR_GREEN:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[1], args, 0);
-            break;
-        case DMU_TOP_COLOR_BLUE:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 0);
-            break;
-        case DMU_MIDDLE_MATERIAL:
-            {
-                short ofTypeID = (p->SW_middlematerial? p->SW_middlematerial->ofTypeID : 0);
-
-            if(p->SW_middleflags & SUF_TEXFIX)
-                ofTypeID = 0;
-
-            /*if(p->flags & SDF_MIDTEXUPPER)
-                ofTypeID = p->SW_topmaterial->texture;*/
-
-            GetValue(DMT_MATERIAL, &ofTypeID, args, 0);
-            break;
-            }
-        case DMU_MIDDLE_MATERIAL_OFFSET_X:
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_middleoffset[VX], args, 0);
-            break;
-        case DMU_MIDDLE_MATERIAL_OFFSET_Y:
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_middleoffset[VY], args, 0);
-            break;
-        case DMU_MIDDLE_MATERIAL_OFFSET_XY:
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_middleoffset[VX], args, 0);
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_middleoffset[VY], args, 1);
-            break;
-        case DMU_MIDDLE_COLOR:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[0], args, 0);
-            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[1], args, 1);
-            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[2], args, 2);
-            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[3], args, 3);
-            break;
-        case DMU_MIDDLE_COLOR_RED:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[0], args, 0);
-            break;
-        case DMU_MIDDLE_COLOR_GREEN:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[1], args, 0);
-            break;
-        case DMU_MIDDLE_COLOR_BLUE:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[2], args, 0);
-            break;
-        case DMU_MIDDLE_COLOR_ALPHA:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[3], args, 0);
-            break;
-        case DMU_MIDDLE_BLENDMODE:
-            GetValue(DMT_SURFACE_BLENDMODE, &p->SW_middleblendmode, args, 0);
-            break;
-        case DMU_BOTTOM_MATERIAL:
-            {
-                short ofTypeID = (p->SW_bottommaterial? p->SW_bottommaterial->ofTypeID : 0);
-
-            if(p->SW_bottomflags & SUF_TEXFIX)
-                ofTypeID = 0;
-
-            GetValue(DMT_MATERIAL, &ofTypeID, args, 0);
-            break;
-            }
-        case DMU_BOTTOM_MATERIAL_OFFSET_X:
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VX], args, 0);
-            break;
-        case DMU_BOTTOM_MATERIAL_OFFSET_Y:
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VY], args, 0);
-            break;
-        case DMU_BOTTOM_MATERIAL_OFFSET_XY:
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VX], args, 0);
-            GetValue(DMT_SURFACE_OFFSET, &p->SW_bottomoffset[VY], args, 1);
-            break;
-        case DMU_BOTTOM_COLOR:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[0], args, 0);
-            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[1], args, 1);
-            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 2);
-            break;
-        case DMU_BOTTOM_COLOR_RED:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[0], args, 0);
-            break;
-        case DMU_BOTTOM_COLOR_GREEN:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[1], args, 0);
-            break;
-        case DMU_BOTTOM_COLOR_BLUE:
-            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 0);
-            break;
-        case DMU_FLAGS:
-            GetValue(DMT_SIDEDEF_FLAGS, &p->flags, args, 0);
-            break;
-        default:
-            Con_Error("GetProperty: DMU_SIDEDEF has no property %s.\n", DMU_Str(args->prop));
-        }
-        return false; // stop iteration
-    }
+    setargs_t          *args = (setargs_t*) context;
+    void               *ptr = resolveReferences(obj, args);
 
     switch(args->type)
     {
     case DMU_VERTEX:
-        {
-        vertex_t* p = ptr;
-        switch(args->prop)
-        {
-        case DMU_X:
-            GetValue(DMT_VERTEX_POS, &p->V_pos[VX], args, 0);
-            break;
-        case DMU_Y:
-            GetValue(DMT_VERTEX_POS, &p->V_pos[VY], args, 0);
-            break;
-        case DMU_XY:
-            GetValue(DMT_VERTEX_POS, &p->V_pos[VX], args, 0);
-            GetValue(DMT_VERTEX_POS, &p->V_pos[VY], args, 1);
-            break;
-        default:
-            Con_Error("GetProperty: DMU_VERTEX has no property %s.\n",
-                      DMU_Str(args->prop));
-        }
+        Vertex_GetProperty(ptr, args);
         break;
-        }
 
     case DMU_SEG:
-        {
-        seg_t* p = ptr;
-        switch(args->prop)
-        {
-        case DMU_VERTEX1:
-            GetValue(DMT_SEG_V, &p->SG_v1, args, 0);
-            break;
-        case DMU_VERTEX1_X:
-            GetValue(DMT_VERTEX_POS, &p->SG_v1pos[VX], args, 0);
-            break;
-        case DMU_VERTEX1_Y:
-            GetValue(DMT_VERTEX_POS, &p->SG_v1pos[VY], args, 0);
-            break;
-        case DMU_VERTEX1_XY:
-            GetValue(DMT_VERTEX_POS, &p->SG_v1pos[VX], args, 0);
-            GetValue(DMT_VERTEX_POS, &p->SG_v1pos[VY], args, 1);
-            break;
-        case DMU_VERTEX2:
-            GetValue(DMT_SEG_V, &p->SG_v2, args, 0);
-            break;
-        case DMU_VERTEX2_X:
-            GetValue(DMT_VERTEX_POS, &p->SG_v2pos[VX], args, 0);
-            break;
-        case DMU_VERTEX2_Y:
-            GetValue(DMT_VERTEX_POS, &p->SG_v2pos[VY], args, 0);
-            break;
-        case DMU_VERTEX2_XY:
-            GetValue(DMT_VERTEX_POS, &p->SG_v2pos[VX], args, 0);
-            GetValue(DMT_VERTEX_POS, &p->SG_v2pos[VY], args, 1);
-            break;
-        case DMU_LENGTH:
-            GetValue(DMT_SEG_LENGTH, &p->length, args, 0);
-            break;
-        case DMU_OFFSET:
-            GetValue(DMT_SEG_OFFSET, &p->offset, args, 0);
-            break;
-        case DMU_SIDEDEF:
-            GetValue(DMT_SEG_SIDEDEF, &SEG_SIDEDEF(p), args, 0);
-            break;
-        case DMU_LINEDEF:
-            GetValue(DMT_SEG_LINEDEF, &p->lineDef, args, 0);
-            break;
-        case DMU_FRONT_SECTOR:
-        {
-            sector_t *sec = NULL;
-            if(p->SG_frontsector && p->lineDef)
-                sec = p->SG_frontsector;
-            GetValue(DMT_SEG_SEC, &sec, args, 0);
-            break;
-        }
-        case DMU_BACK_SECTOR:
-        {
-            sector_t *sec = NULL;
-            if(p->SG_backsector && p->lineDef)
-                sec = p->SG_backsector;
-            GetValue(DMT_SEG_SEC, &p->SG_backsector, args, 0);
-            break;
-        }
-        case DMU_FLAGS:
-            GetValue(DMT_SEG_FLAGS, &p->flags, args, 0);
-            break;
-        case DMU_ANGLE:
-            GetValue(DMT_SEG_ANGLE, &p->angle, args, 0);
-            break;
-        default:
-            Con_Error("GetProperty: DMU_SEG has no property %s.\n", DMU_Str(args->prop));
-        }
+        Seg_GetProperty(ptr, args);
         break;
-        }
 
     case DMU_LINEDEF:
-        {
-        linedef_t* p = ptr;
-        switch(args->prop)
-        {
-        case DMU_VERTEX1:
-            GetValue(DMT_LINEDEF_V, &p->L_v1, args, 0);
-            break;
-        case DMU_VERTEX1_X:
-            GetValue(DMT_VERTEX_POS, &p->L_v1pos[VX], args, 0);
-            break;
-        case DMU_VERTEX1_Y:
-            GetValue(DMT_VERTEX_POS, &p->L_v1pos[VY], args, 0);
-            break;
-        case DMU_VERTEX1_XY:
-            GetValue(DMT_VERTEX_POS, &p->L_v1pos[VX], args, 0);
-            GetValue(DMT_VERTEX_POS, &p->L_v1pos[VY], args, 1);
-            break;
-        case DMU_VERTEX2:
-            GetValue(DMT_LINEDEF_V, &p->L_v2, args, 0);
-            break;
-        case DMU_VERTEX2_X:
-            GetValue(DMT_VERTEX_POS, &p->L_v2pos[VX], args, 0);
-            break;
-        case DMU_VERTEX2_Y:
-            GetValue(DMT_VERTEX_POS, &p->L_v2pos[VY], args, 0);
-            break;
-        case DMU_VERTEX2_XY:
-            GetValue(DMT_VERTEX_POS, &p->L_v2pos[VX], args, 0);
-            GetValue(DMT_VERTEX_POS, &p->L_v2pos[VY], args, 1);
-            break;
-        case DMU_DX:
-            GetValue(DMT_LINEDEF_DX, &p->dX, args, 0);
-            break;
-        case DMU_DY:
-            GetValue(DMT_LINEDEF_DY, &p->dY, args, 0);
-            break;
-        case DMU_LENGTH:
-            GetValue(DDVT_FLOAT, &p->length, args, 0);
-            break;
-        case DMU_ANGLE:
-            GetValue(DDVT_ANGLE, &p->angle, args, 0);
-            break;
-        case DMU_SLOPE_TYPE:
-            GetValue(DMT_LINEDEF_SLOPETYPE, &p->slopeType, args, 0);
-            break;
-        case DMU_FRONT_SECTOR:
-        {
-            sector_t *sec = (p->L_frontside? p->L_frontsector : NULL);
-            GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
-            break;
-        }
-        case DMU_BACK_SECTOR:
-        {
-            sector_t *sec = (p->L_backside? p->L_backsector : NULL);
-            GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
-            break;
-        }
-        case DMU_FLAGS:
-            GetValue(DMT_LINEDEF_FLAGS, &p->flags, args, 0);
-            break;
-        case DMU_SIDEDEF0:
-            GetValue(DDVT_PTR, &p->L_frontside, args, 0);
-            break;
-        case DMU_SIDEDEF1:
-            GetValue(DDVT_PTR, &p->L_backside, args, 0);
-            break;
-
-        case DMU_BOUNDING_BOX:
-            if(args->valueType == DDVT_PTR)
-            {
-                float* bbox = p->bBox;
-                GetValue(DDVT_PTR, &bbox, args, 0);
-            }
-            else
-            {
-                GetValue(DMT_LINEDEF_BBOX, &p->bBox[0], args, 0);
-                GetValue(DMT_LINEDEF_BBOX, &p->bBox[1], args, 1);
-                GetValue(DMT_LINEDEF_BBOX, &p->bBox[2], args, 2);
-                GetValue(DMT_LINEDEF_BBOX, &p->bBox[3], args, 3);
-            }
-            break;
-        case DMU_VALID_COUNT:
-            GetValue(DMT_LINEDEF_VALIDCOUNT, &p->validCount, args, 0);
-            break;
-        default:
-            Con_Error("GetProperty: DMU_LINEDEF has no property %s.\n", DMU_Str(args->prop));
-        }
+        Linedef_GetProperty(ptr, args);
         break;
-        }
+
+    case DMU_SURFACE:
+        Surface_GetProperty(ptr, args);
+        break;
+
+    case DMU_PLANE:
+        Plane_GetProperty(ptr, args);
+        break;
+
+    case DMU_SECTOR:
+        Sector_GetProperty(ptr, args);
+        break;
+
+    case DMU_SIDEDEF:
+        Sidedef_GetProperty(ptr, args);
+        break;
 
     case DMU_SUBSECTOR:
-    {
-        subsector_t* p = ptr;
-        switch(args->prop)
-        {
-        case DMU_SECTOR:
-            GetValue(DMT_SUBSECTOR_SECTOR, &p->sector, args, 0);
-            break;
-        case DMU_LIGHT_LEVEL:
-            GetValue(DMT_SECTOR_LIGHTLEVEL, &p->sector->lightLevel, args, 0);
-            break;
-        case DMT_MOBJS:
-            GetValue(DMT_SECTOR_MOBJLIST, &p->sector->mobjList, args, 0);
-            break;
-        case DMU_POLYOBJ:
-            GetValue(DMT_SUBSECTOR_POLYOBJ, &p->polyObj, args, 0);
-            break;
-        case DMU_SEG_COUNT:
-        {
-            // FIXME:
-            //GetValue(DMT_SUBSECTOR_SEGCOUNT, &p->segCount, args, 0);
-            int val = (int) p->segCount;
-            GetValue(DDVT_INT, &val, args, 0);
-            break;
-        }
-        default:
-            Con_Error("GetProperty: DMU_SUBSECTOR has no property %s.\n",
-                      DMU_Str(args->prop));
-        }
+        Subsector_GetProperty(ptr, args);
         break;
-    }
 
     case DMU_POLYOBJ:
-    {
-        polyobj_t* p = ptr;
-        if(args->modifiers & DMU_SEG_OF_POLYOBJ)
-        {
-            if(args->prop < p->numSegs)
-            {
-                GetValue(DDVT_PTR, &p->segs[args->prop], args, 0);
-                break;
-            }
-            else
-            {
-                Con_Error("GetProperty: Polyobj seg out of range (%i out of %i).\n",
-                          args->prop, p->numSegs);
-            }
-        }
-
-        switch(args->prop)
-        {
-        case DMU_START_SPOT:
-        {
-            void* spot = &p->startSpot;
-            GetValue(DDVT_PTR, &spot, args, 0);
-            break;
-        }
-        case DMU_START_SPOT_X:
-            GetValue(DDVT_FLOAT, &p->startSpot.pos[VX], args, 0);
-            break;
-        case DMU_START_SPOT_Y:
-            GetValue(DDVT_FLOAT, &p->startSpot.pos[VY], args, 0);
-            break;
-        case DMU_START_SPOT_XY:
-            GetValue(DDVT_FLOAT, &p->startSpot.pos[VX], args, 0);
-            GetValue(DDVT_FLOAT, &p->startSpot.pos[VY], args, 1);
-            break;
-        case DMU_ANGLE:
-            GetValue(DDVT_ANGLE, &p->angle, args, 0);
-            break;
-        case DMU_DESTINATION_ANGLE:
-            GetValue(DDVT_ANGLE, &p->destAngle, args, 0);
-            break;
-        case DMU_ANGLE_SPEED:
-            GetValue(DDVT_ANGLE, &p->angleSpeed, args, 0);
-            break;
-        case DMU_TAG:
-            GetValue(DDVT_INT, &p->tag, args, 0);
-            break;
-        case DMU_SEG_LIST:
-            GetValue(DDVT_PTR, &p->segs, args, 0);
-            break;
-        case DMU_SEG_COUNT:
-            GetValue(DDVT_INT, &p->numSegs, args, 0);
-            break;
-        case DMU_CRUSH:
-            GetValue(DDVT_BOOL, &p->crush, args, 0);
-            break;
-        case DMU_SEQUENCE_TYPE:
-            GetValue(DDVT_INT, &p->seqType, args, 0);
-            break;
-        case DMU_SPECIAL_DATA:
-            GetValue(DDVT_PTR, &p->specialData, args, 0);
-            break;
-        default:
-            Con_Error("GetProperty: DMU_POLYOBJ has no property %s.\n",
-                      DMU_Str(args->prop));
-        }
+        Polyobj_GetProperty(ptr, args);
         break;
-    }
 
     default:
         Con_Error("GetProperty: Type %s not readable.\n", DMU_Str(args->type));
@@ -2290,1121 +1298,600 @@ static int GetProperty(void* ptr, void* context)
     return false;
 }
 
-#if 0 // unused atm
-/**
- * Swaps two values. Does NOT do any type checking. Both values are
- * assumed to be of the correct (and same) type.
- */
-static void SwapValue(valuetype_t valueType, void* src, void* dst)
-{
-    if(valueType == DDVT_FIXED)
-    {
-        fixed_t tmp = *(fixed_t*) dst;
-
-        *(fixed_t*) dst = *(fixed_t*) src;
-        *(fixed_t*) src = tmp;
-    }
-    else if(valueType == DDVT_FLOAT)
-    {
-        float tmp = *(float*) dst;
-
-        *(float*) dst = *(float*) src;
-        *(float*) src = tmp;
-    }
-    else if(valueType == DDVT_BOOL)
-    {
-        boolean tmp = *(boolean*) dst;
-
-        *(boolean*) dst = *(boolean*) src;
-        *(boolean*) src = tmp;
-    }
-    else if(valueType == DDVT_BYTE)
-    {
-        byte tmp = *(byte*) dst;
-
-        *(byte*) dst = *(byte*) src;
-        *(byte*) src = tmp;
-    }
-    else if(valueType == DDVT_INT)
-    {
-        int tmp = *(int*) dst;
-
-        *(int*) dst = *(int*) src;
-        *(int*) src = tmp;
-    }
-    else if(valueType == DDVT_SHORT || valueType == DDVT_FLAT_INDEX)
-    {
-        short tmp = *(short*) dst;
-
-        *(short*) dst = *(short*) src;
-        *(short*) src = tmp;
-    }
-    else if(valueType == DDVT_ANGLE)
-    {
-        angle_t tmp = *(angle_t*) dst;
-
-        *(angle_t*) dst = *(angle_t*) src;
-        *(angle_t*) src = tmp;
-    }
-    else if(valueType == DDVT_BLENDMODE)
-    {
-        blendmode_t tmp = *(blendmode_t*) dst;
-
-        *(blendmode_t*) dst = *(blendmode_t*) src;
-        *(blendmode_t*) src = tmp;
-    }
-    else if(valueType == DDVT_PTR)
-    {
-        void* tmp = &dst;
-
-        dst = &src;
-        src = &tmp;
-    }
-    else
-    {
-        Con_Error("SwapValue: unknown value type %s.\n", DMU_Str(valueType));
-    }
-}
-#endif
-
 void P_SetBool(int type, uint index, uint prop, boolean param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
     // Make sure invalid values are not allowed.
     param = (param? true : false);
     args.booleanValues = &param;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetByte(int type, uint index, uint prop, byte param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = &param;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetInt(int type, uint index, uint prop, int param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
     args.intValues = &param;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetFixed(int type, uint index, uint prop, fixed_t param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = &param;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetAngle(int type, uint index, uint prop, angle_t param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = &param;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetFloat(int type, uint index, uint prop, float param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = &param;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetPtr(int type, uint index, uint prop, void* param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = &param;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetBoolv(int type, uint index, uint prop, boolean* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = params;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetBytev(int type, uint index, uint prop, byte* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = params;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetIntv(int type, uint index, uint prop, int* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
     args.intValues = params;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetFixedv(int type, uint index, uint prop, fixed_t* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = params;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetAnglev(int type, uint index, uint prop, angle_t* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = params;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetFloatv(int type, uint index, uint prop, float* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 void P_SetPtrv(int type, uint index, uint prop, void* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = params;
-    P_Callback(type, index, &args, SetProperty);
+    P_Callback(type, index, &args, setProperty);
 }
 
 /* pointer-based write functions */
 
 void P_SetBoolp(void* ptr, uint prop, boolean param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
     // Make sure invalid values are not allowed.
     param = (param? true : false);
     args.booleanValues = &param;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetBytep(void* ptr, uint prop, byte param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = &param;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetIntp(void* ptr, uint prop, int param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_INT;
     args.intValues = &param;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetFixedp(void* ptr, uint prop, fixed_t param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = &param;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetAnglep(void* ptr, uint prop, angle_t param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = &param;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetFloatp(void* ptr, uint prop, float param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = &param;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetPtrp(void* ptr, uint prop, void* param)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = &param;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetBoolpv(void* ptr, uint prop, boolean* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = params;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetBytepv(void* ptr, uint prop, byte* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = params;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetIntpv(void* ptr, uint prop, int* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_INT;
     args.intValues = params;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetFixedpv(void* ptr, uint prop, fixed_t* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = params;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetAnglepv(void* ptr, uint prop, angle_t* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = params;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetFloatpv(void* ptr, uint prop, float* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 void P_SetPtrpv(void* ptr, uint prop, void* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = params;
-    P_Callbackp(args.type, ptr, &args, SetProperty);
+    P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
 /* index-based read functions */
 
 boolean P_GetBool(int type, uint index, uint prop)
 {
-    setargs_t args;
-    boolean returnValue = false;
+    setargs_t           args;
+    boolean             returnValue = false;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = &returnValue;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
     return returnValue;
 }
 
 byte P_GetByte(int type, uint index, uint prop)
 {
-    setargs_t args;
-    byte returnValue = 0;
+    setargs_t           args;
+    byte                returnValue = 0;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = &returnValue;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
     return returnValue;
 }
 
 int P_GetInt(int type, uint index, uint prop)
 {
-    setargs_t args;
-    int returnValue = 0;
+    setargs_t           args;
+    int                 returnValue = 0;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
     args.intValues = &returnValue;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
     return returnValue;
 }
 
 fixed_t P_GetFixed(int type, uint index, uint prop)
 {
-    setargs_t args;
-    fixed_t returnValue = 0;
+    setargs_t           args;
+    fixed_t             returnValue = 0;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = &returnValue;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
     return returnValue;
 }
 
 angle_t P_GetAngle(int type, uint index, uint prop)
 {
-    setargs_t args;
-    angle_t returnValue = 0;
+    setargs_t           args;
+    angle_t             returnValue = 0;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = &returnValue;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
     return returnValue;
 }
 
 float P_GetFloat(int type, uint index, uint prop)
 {
-    setargs_t args;
-    float returnValue = 0;
+    setargs_t           args;
+    float               returnValue = 0;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = &returnValue;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
     return returnValue;
 }
 
 void* P_GetPtr(int type, uint index, uint prop)
 {
-    setargs_t args;
-    void* returnValue = NULL;
+    setargs_t           args;
+    void               *returnValue = NULL;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = &returnValue;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
     return returnValue;
 }
 
 void P_GetBoolv(int type, uint index, uint prop, boolean* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = params;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
 }
 
 void P_GetBytev(int type, uint index, uint prop, byte* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = params;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
 }
 
 void P_GetIntv(int type, uint index, uint prop, int* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
     args.intValues = params;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
 }
 
 void P_GetFixedv(int type, uint index, uint prop, fixed_t* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = params;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
 }
 
 void P_GetAnglev(int type, uint index, uint prop, angle_t* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = params;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
 }
 
 void P_GetFloatv(int type, uint index, uint prop, float* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
 }
 
 void P_GetPtrv(int type, uint index, uint prop, void* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, type, prop);
+    initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = params;
-    P_Callback(type, index, &args, GetProperty);
+    P_Callback(type, index, &args, getProperty);
 }
 
 /* pointer-based read functions */
 
 boolean P_GetBoolp(void* ptr, uint prop)
 {
-    setargs_t args;
-    boolean returnValue = false;
+    setargs_t           args;
+    boolean             returnValue = false;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
     return returnValue;
 }
 
 byte P_GetBytep(void* ptr, uint prop)
 {
-    setargs_t args;
-    byte returnValue = 0;
+    setargs_t           args;
+    byte                returnValue = 0;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
     return returnValue;
 }
 
 int P_GetIntp(void* ptr, uint prop)
 {
-    setargs_t args;
-    int returnValue = 0;
+    setargs_t           args;
+    int                 returnValue = 0;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_INT;
     args.intValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
     return returnValue;
 }
 
 fixed_t P_GetFixedp(void* ptr, uint prop)
 {
-    setargs_t args;
-    fixed_t returnValue = 0;
+    setargs_t           args;
+    fixed_t             returnValue = 0;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
     return returnValue;
 }
 
 angle_t P_GetAnglep(void* ptr, uint prop)
 {
-    setargs_t args;
-    angle_t returnValue = 0;
+    setargs_t           args;
+    angle_t             returnValue = 0;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
     return returnValue;
 }
 
 float P_GetFloatp(void* ptr, uint prop)
 {
-    setargs_t args;
-    float returnValue = 0;
+    setargs_t           args;
+    float               returnValue = 0;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
     return returnValue;
 }
 
 void* P_GetPtrp(void* ptr, uint prop)
 {
-    setargs_t args;
-    void* returnValue = NULL;
+    setargs_t           args;
+    void               *returnValue = NULL;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
     return returnValue;
 }
 
 void P_GetBoolpv(void* ptr, uint prop, boolean* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = params;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
 }
 
 void P_GetBytepv(void* ptr, uint prop, byte* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = params;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
 }
 
 void P_GetIntpv(void* ptr, uint prop, int* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_INT;
     args.intValues = params;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
 }
 
 void P_GetFixedpv(void* ptr, uint prop, fixed_t* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = params;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
 }
 
 void P_GetAnglepv(void* ptr, uint prop, angle_t* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = params;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
 }
 
 void P_GetFloatpv(void* ptr, uint prop, float* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
+    P_Callbackp(args.type, ptr, &args, getProperty);
 }
 
 void P_GetPtrpv(void* ptr, uint prop, void* params)
 {
-    setargs_t args;
+    setargs_t           args;
 
-    InitArgs(&args, DMU_GetType(ptr), prop);
+    initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = params;
-    P_Callbackp(args.type, ptr, &args, GetProperty);
-}
-
-void P_Copy(int type, uint prop, uint fromIndex, uint toIndex)
-{
-//    setargs_t args;
-//    int ptype = propertyTypes[prop];
-
-    Con_Error("P_Copy: Not implemented yet.");
-#if 0
-    InitArgs(&args, type, prop);
-
-    switch(ptype)
-    {
-    case DDVT_BOOL:
-        {
-        boolean b = false;
-
-        args.booleanValues = &b;
-        P_Callback(type, fromIndex, &args, GetProperty);
-        P_Callback(type, toIndex, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_BYTE:
-        {
-        byte b = 0;
-
-        args.byteValues = &b;
-        P_Callback(type, fromIndex, &args, GetProperty);
-        P_Callback(type, toIndex, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_INT:
-        {
-        int i = 0;
-
-        args.intValues = &i;
-        P_Callback(type, fromIndex, &args, GetProperty);
-        P_Callback(type, toIndex, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_FIXED:
-        {
-        fixed_t f = 0;
-
-        args.fixedValues = &f;
-        P_Callback(type, fromIndex, &args, GetProperty);
-        P_Callback(type, toIndex, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_ANGLE:
-        {
-        angle_t a = 0;
-
-        args.angleValues = &a;
-        P_Callback(type, fromIndex, &args, GetProperty);
-        P_Callback(type, toIndex, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_FLOAT:
-        {
-        float f = 0;
-
-        args.floatValues = &f;
-        P_Callback(type, fromIndex, &args, GetProperty);
-        P_Callback(type, toIndex, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_PTR:
-        {
-        void *ptr = NULL;
-
-        args.ptrValues = &ptr;
-        P_Callback(type, fromIndex, &args, GetProperty);
-        P_Callback(type, toIndex, &args, SetProperty);
-        break;
-        }
-
-    default:
-        Con_Error("P_Copy: properties of type %s cannot be copied\n",
-                  DMU_Str(prop));
-    }
-#endif
-}
-
-void P_Copyp(uint prop, void* from, void* to)
-{
-#if 0
-    int type = DMU_GetType(from);
-    setargs_t args;
-//    int ptype = propertyTypes[prop];
-#endif
-
-    Con_Error("P_Copyp: Not implemented yet.");
-#if 0
-    if(DMU_GetType(to) != type)
-    {
-        Con_Error("P_Copyp: Type mismatch.\n");
-    }
-
-    InitArgs(&args, type, prop);
-
-    switch(ptype)
-    {
-    case DDVT_BOOL:
-        {
-        boolean b = false;
-
-        args.booleanValues = &b;
-        P_Callbackp(args.type, from, &args, GetProperty);
-        P_Callbackp(args.type, to, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_BYTE:
-        {
-        byte b = 0;
-
-        args.byteValues = &b;
-        P_Callbackp(args.type, from, &args, GetProperty);
-        P_Callbackp(args.type, to, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_INT:
-        {
-        int i = 0;
-
-        args.intValues = &i;
-        P_Callbackp(args.type, from, &args, GetProperty);
-        P_Callbackp(args.type, to, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_FIXED:
-        {
-        fixed_t f = 0;
-
-        args.fixedValues = &f;
-        P_Callbackp(args.type, from, &args, GetProperty);
-        P_Callbackp(args.type, to, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_ANGLE:
-        {
-        angle_t a = 0;
-
-        args.angleValues = &a;
-        P_Callbackp(args.type, from, &args, GetProperty);
-        P_Callbackp(args.type, to, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_FLOAT:
-        {
-        float f = 0;
-
-        args.floatValues = &f;
-        P_Callbackp(args.type, from, &args, GetProperty);
-        P_Callbackp(args.type, to, &args, SetProperty);
-        break;
-        }
-
-    case DDVT_PTR:
-        {
-        void *ptr = NULL;
-
-        args.ptrValues = &ptr;
-        P_Callbackp(args.type, from, &args, GetProperty);
-        P_Callbackp(args.type, to, &args, SetProperty);
-        break;
-        }
-
-    default:
-        Con_Error("P_Copyp: properties of type %s cannot be copied\n",
-                  DMU_Str(prop));
-    }
-#endif
-}
-
-void P_Swap(int type, uint prop, uint fromIndex, uint toIndex)
-{
-//    setargs_t argsA, argsB;
-//    int ptype = propertyTypes[prop];
-
-    Con_Error("P_Swap: Not implemented yet.");
-#if 0
-    InitArgs(&argsA, type, prop);
-    InitArgs(&argsB, type, prop);
-
-    argsA.valueType = argsB.valueType = ptype;
-
-    switch(ptype)
-    {
-    case DDVT_BOOL:
-        {
-        boolean a = false;
-        boolean b = false;
-
-        argsA.booleanValues = &a;
-        argsB.booleanValues = &b;
-
-        P_Callback(type, fromIndex, &argsA, GetProperty);
-        P_Callback(type, toIndex, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_BYTE:
-        {
-        byte a = 0;
-        byte b = 0;
-
-        argsA.byteValues = &a;
-        argsB.byteValues = &b;
-
-        P_Callback(type, fromIndex, &argsA, GetProperty);
-        P_Callback(type, toIndex, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_INT:
-        {
-        int a = 0;
-        int b = 0;
-
-        argsA.intValues = &a;
-        argsB.intValues = &b;
-
-        P_Callback(type, fromIndex, &argsA, GetProperty);
-        P_Callback(type, toIndex, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_FIXED:
-        {
-        fixed_t a = 0;
-        fixed_t b = 0;
-
-        argsA.fixedValues = &a;
-        argsB.fixedValues = &b;
-
-        P_Callback(type, fromIndex, &argsA, GetProperty);
-        P_Callback(type, toIndex, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_ANGLE:
-        {
-        angle_t a = 0;
-        angle_t b = 0;
-
-        argsA.angleValues = &a;
-        argsB.angleValues = &b;
-
-        P_Callback(type, fromIndex, &argsA, GetProperty);
-        P_Callback(type, toIndex, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_FLOAT:
-        {
-        float a = 0;
-        float b = 0;
-
-        argsA.floatValues = &a;
-        argsB.floatValues = &b;
-
-        P_Callback(type, fromIndex, &argsA, GetProperty);
-        P_Callback(type, toIndex, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_PTR:
-        {
-        void *a = NULL;
-        void *b = NULL;
-
-        argsA.ptrValues = &a;
-        argsB.ptrValues = &b;
-
-        P_Callback(type, fromIndex, &argsA, GetProperty);
-        P_Callback(type, toIndex, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    default:
-        Con_Error("P_Swap: properties of type %s cannot be swapped\n",
-                  DMU_Str(prop));
-    }
-#endif
-}
-
-void P_Swapp(uint prop, void* from, void* to)
-{
-#if 0
-    int type = DMU_GetType(from);
-    setargs_t argsA, argsB;
-//    int ptype = propertyTypes[prop];
-#endif
-
-    Con_Error("P_Swapp: Not implemented yet.");
-#if 0
-    if(DMU_GetType(to) != type)
-    {
-        Con_Error("P_Swapp: Type mismatch.\n");
-    }
-
-    InitArgs(&argsA, type, prop);
-    InitArgs(&argsB, type, prop);
-
-    argsA.valueType = argsB.valueType = ptype;
-
-    switch(ptype)
-    {
-    case DDVT_BOOL:
-        {
-        boolean a = false;
-        boolean b = false;
-
-        argsA.booleanValues = &a;
-        argsB.booleanValues = &b;
-
-        P_Callbackp(argsA.type, from, &argsA, GetProperty);
-        P_Callbackp(argsB.type, to, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_BYTE:
-        {
-        byte a = 0;
-        byte b = 0;
-
-        argsA.byteValues = &a;
-        argsB.byteValues = &b;
-
-        P_Callbackp(argsA.type, from, &argsA, GetProperty);
-        P_Callbackp(argsB.type, to, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_INT:
-        {
-        int a = 0;
-        int b = 0;
-
-        argsA.intValues = &a;
-        argsB.intValues = &b;
-
-        P_Callbackp(argsA.type, from, &argsA, GetProperty);
-        P_Callbackp(argsB.type, to, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_FIXED:
-        {
-        fixed_t a = 0;
-        fixed_t b = 0;
-
-        argsA.fixedValues = &a;
-        argsB.fixedValues = &b;
-
-        P_Callbackp(argsA.type, from, &argsA, GetProperty);
-        P_Callbackp(argsA.type, to, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_ANGLE:
-        {
-        angle_t a = 0;
-        angle_t b = 0;
-
-        argsA.angleValues = &a;
-        argsB.angleValues = &b;
-
-        P_Callbackp(argsA.type, from, &argsA, GetProperty);
-        P_Callbackp(argsB.type, to, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_FLOAT:
-        {
-        float a = 0;
-        float b = 0;
-
-        argsA.floatValues = &a;
-        argsB.floatValues = &b;
-
-        P_Callbackp(argsA.type, from, &argsA, GetProperty);
-        P_Callbackp(argsB.type, to, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    case DDVT_PTR:
-        {
-        void *a = NULL;
-        void *b = NULL;
-
-        argsA.ptrValues = &a;
-        argsB.ptrValues = &b;
-
-        P_Callbackp(argsA.type, from, &argsA, GetProperty);
-        P_Callbackp(argsB.type, to, &argsB, GetProperty);
-
-        SwapValue(type, &a, &b);
-        break;
-        }
-
-    default:
-        Con_Error("P_Swapp: properties of type %s cannot be swapped\n",
-                  DMU_Str(prop));
-    }
-#endif
+    P_Callbackp(args.type, ptr, &args, getProperty);
 }

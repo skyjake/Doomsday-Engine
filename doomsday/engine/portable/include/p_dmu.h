@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_dmu.h: Map Update API
  *
  * Engine-internal header for DMU.
@@ -30,6 +30,20 @@
 
 #ifndef __DOOMSDAY_MAP_UPDATE_H__
 #define __DOOMSDAY_MAP_UPDATE_H__
+
+typedef struct setargs_s {
+    int             type;
+    uint            prop;
+    int             modifiers; // Property modifiers (e.g., line of sector)
+    valuetype_t     valueType;
+    boolean        *booleanValues;
+    byte           *byteValues;
+    int            *intValues;
+    fixed_t        *fixedValues;
+    float          *floatValues;
+    angle_t        *angleValues;
+    void         **ptrValues;
+} setargs_t;
 
 void        P_InitMapUpdate(void);
 void       *P_AllocDummy(int type, void* extraData);
@@ -41,6 +55,10 @@ void       *P_DummyExtraData(void* dummy);
 uint        P_ToIndex(const void* ptr);
 
 const char *DMU_Str(uint prop);
+void        DMU_SetValue(valuetype_t valueType, void* dst,
+                         const setargs_t* args, uint index);
+void        DMU_GetValue(valuetype_t valueType, const void* src,
+                         setargs_t* args, uint index);
 
 #ifndef NDEBUG
 # define ASSERT_DMU_TYPE(ptr, dmuType) \

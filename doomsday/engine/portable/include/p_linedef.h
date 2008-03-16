@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,34 +23,16 @@
  */
 
 /**
- * de_play.h: Game World Events (Playsim)
+ * r_lindef.h: World linedefs.
  */
 
-#ifndef __DOOMSDAY_PLAYSIM__
-#define __DOOMSDAY_PLAYSIM__
+#ifndef __DOOMSDAY_WORLD_LINEDEF_H__
+#define __DOOMSDAY_WORLD_LINEDEF_H__
 
-#include "p_mapdata.h"
-#include "p_vertex.h"
-#include "p_surface.h"
-#include "p_sidedef.h"
-#include "p_linedef.h"
-#include "p_plane.h"
-#include "p_seg.h"
-#include "p_subsector.h"
-#include "p_sector.h"
-#include "p_polyobj.h"
-#include "p_dmu.h"
-#include "p_think.h"
-#include "p_object.h"
-#include "p_intercept.h"
-#include "p_maputil.h"
-#include "p_bmap.h"
-#include "p_particle.h"
-#include "p_polyob.h"
-#include "p_sight.h"
-#include "p_ticker.h"
-#include "p_players.h"
-#include "p_control.h"
-#include "p_cmd.h"
+#include "r_data.h"
+
+boolean         Linedef_GetProperty(const linedef_t *lin,
+                                    struct setargs_s *args);
+boolean         Linedef_SetProperty(linedef_t *lin, const struct setargs_s *args);
 
 #endif
