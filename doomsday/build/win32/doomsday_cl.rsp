@@ -67,7 +67,6 @@
  ./../../engine/portable/src/p_ticker.c
  ./../../engine/portable/src/p_think.c
  ./../../engine/portable/src/p_sight.c
- ./../../engine/portable/src/p_polyob.c
  ./../../engine/portable/src/p_particle.c
  ./../../engine/portable/src/p_control.c
  ./../../engine/portable/src/p_cmd.c
@@ -77,6 +76,15 @@
  ./../../engine/portable/src/p_intercept.c
  ./../../engine/portable/src/p_data.c
  ./../../engine/portable/src/p_dmu.c
+ ./../../engine/portable/src/p_linedef.c
+ ./../../engine/portable/src/p_plane.c
+ ./../../engine/portable/src/p_polyobj.c
+ ./../../engine/portable/src/p_sector.c
+ ./../../engine/portable/src/p_seg.c
+ ./../../engine/portable/src/p_sidedef.c
+ ./../../engine/portable/src/p_subsector.c
+ ./../../engine/portable/src/p_surface.c
+ ./../../engine/portable/src/p_vertex.c
  ./../../engine/portable/src/dam_main.c
  ./../../engine/portable/src/dam_file.c
  ./../../engine/portable/src/dam_read.c
