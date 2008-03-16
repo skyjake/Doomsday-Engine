@@ -1680,7 +1680,7 @@ uint MPE_SidedefCreate(uint sector, short flags,
                        float bottomBlue)
 {
     int                 matIdx;
-    sidedef_t             *s;
+    sidedef_t          *s;
 
     if(!editMapInited)
         return 0;
@@ -1693,34 +1693,22 @@ uint MPE_SidedefCreate(uint sector, short flags,
     s->sector = (sector == 0? NULL: map->sectors[sector-1]);
 
     matIdx = R_CheckMaterialNumForName(topMaterial, topMaterialType);
-    s->SW_topmaterial =
-        (matIdx == -1? NULL : R_GetMaterial(matIdx, topMaterialType));
-    s->SW_topoffset[VX] = topOffsetX;
-    s->SW_topoffset[VY] = topOffsetY;
-    s->SW_toprgba[CR] = MINMAX_OF(0, topRed, 1);
-    s->SW_toprgba[CG] = MINMAX_OF(0, topGreen, 1);
-    s->SW_toprgba[CB] = MINMAX_OF(0, topBlue, 1);
-    s->SW_toprgba[CA] = 1;
+    Surface_SetMaterial(&s->SW_topsurface,
+        (matIdx == -1? NULL : R_GetMaterial(matIdx, topMaterialType)));
+    Surface_SetMaterialOffsetXY(&s->SW_topsurface, topOffsetX, topOffsetY);
+    Surface_SetColorRGBA(&s->SW_topsurface, topRed, topGreen, topBlue, 1);
 
     matIdx = R_CheckMaterialNumForName(middleMaterial, middleMaterialType);
-    s->SW_middlematerial =
-        (matIdx == -1? NULL : R_GetMaterial(matIdx, middleMaterialType));
-    s->SW_middleoffset[VX] = middleOffsetX;
-    s->SW_middleoffset[VY] = middleOffsetY;
-    s->SW_middlergba[CR] = MINMAX_OF(0, middleRed, 1);
-    s->SW_middlergba[CG] = MINMAX_OF(0, middleGreen, 1);
-    s->SW_middlergba[CB] = MINMAX_OF(0, middleBlue, 1);
-    s->SW_middlergba[CA] = MINMAX_OF(0, middleAlpha, 1);
+    Surface_SetMaterial(&s->SW_middlesurface,
+        (matIdx == -1? NULL : R_GetMaterial(matIdx, middleMaterialType)));
+    Surface_SetMaterialOffsetXY(&s->SW_middlesurface, middleOffsetX, middleOffsetY);
+    Surface_SetColorRGBA(&s->SW_middlesurface, middleRed, middleGreen, middleBlue, middleAlpha);
 
     matIdx = R_CheckMaterialNumForName(bottomMaterial, bottomMaterialType);
-    s->SW_bottommaterial =
-        (matIdx == -1? NULL : R_GetMaterial(matIdx, bottomMaterialType));
-    s->SW_bottomoffset[VX] = bottomOffsetX;
-    s->SW_bottomoffset[VY] = bottomOffsetY;
-    s->SW_bottomrgba[CR] = MINMAX_OF(0, bottomRed, 1);
-    s->SW_bottomrgba[CG] = MINMAX_OF(0, bottomGreen, 1);
-    s->SW_bottomrgba[CB] = MINMAX_OF(0, bottomBlue, 1);
-    s->SW_bottomrgba[CA] = 1;
+    Surface_SetMaterial(&s->SW_bottomsurface,
+        (matIdx == -1? NULL : R_GetMaterial(matIdx, bottomMaterialType)));
+    Surface_SetMaterialOffsetXY(&s->SW_bottomsurface, bottomOffsetX, bottomOffsetY);
+    Surface_SetColorRGBA(&s->SW_bottomsurface, bottomRed, bottomGreen, bottomBlue, 1);
 
     return s->buildData.index;
 }
@@ -1872,14 +1860,10 @@ uint MPE_PlaneCreate(uint sector, float height, const char *material,
     pln = M_Calloc(sizeof(plane_t));
     matIdx = R_CheckMaterialNumForName(material, materialType);
     pln->height = height;
-    pln->PS_material =
-        (matIdx == -1? NULL : R_GetMaterial(matIdx, materialType));
-    pln->PS_rgba[CR] = MINMAX_OF(0, r, 1);
-    pln->PS_rgba[CG] = MINMAX_OF(0, g, 1);
-    pln->PS_rgba[CB] = MINMAX_OF(0, b, 1);
-    pln->PS_rgba[CA] = MINMAX_OF(0, a, 1);
-    pln->PS_offset[VX] = matOffsetX;
-    pln->PS_offset[VY] = matOffsetY;
+    Surface_SetMaterial(&pln->surface,
+        (matIdx == -1? NULL : R_GetMaterial(matIdx, materialType)));
+    Surface_SetColorRGBA(&pln->surface, r, g, b, a);
+    Surface_SetMaterialOffsetXY(&pln->surface, matOffsetX, matOffsetY);
     pln->PS_normal[VX] = normalX;
     pln->PS_normal[VY] = normalY;
     pln->PS_normal[VZ] = normalZ;

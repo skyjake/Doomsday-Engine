@@ -223,7 +223,6 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
  */
 plane_t *R_NewPlaneForSector(sector_t *sec)
 {
-    uint            i;
     surface_t      *suf;
     plane_t        *plane;
 
@@ -235,8 +234,7 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
     //              "limit is %i per sector.\n", 2);
 
     // Allocate the new plane.
-    plane = Z_Calloc(sizeof(plane_t), PU_LEVEL, 0);
-    suf = &plane->surface;
+    plane = Z_Malloc(sizeof(plane_t), PU_LEVEL, 0);
 
     // Resize this sector's plane list.
     sec->planes =
@@ -250,28 +248,39 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
     plane->header.type = DMU_PLANE;
 
     // Initalize the plane.
-    for(i = 0; i < 3; ++i)
-        plane->glowRGB[i] = 1;
-
-    // The back pointer (temporary)
+    plane->glowRGB[CR] = plane->glowRGB[CG] = plane->glowRGB[CB] = 1;
+    plane->glow = 0;
     plane->sector = sec;
+    plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
+    plane->visHeight = plane->visOffset = 0;
+    plane->soundOrg.pos[VX] = sec->soundOrg.pos[VX];
+    plane->soundOrg.pos[VY] = sec->soundOrg.pos[VY];
+    plane->soundOrg.pos[VZ] = sec->soundOrg.pos[VZ];
+    memset(&plane->soundOrg.thinker, 0, sizeof(plane->soundOrg.thinker));
+    plane->speed = 0;
+    plane->target = 0;
+    plane->type = PLN_FLOOR;
+
+    suf = &plane->surface;
+
+    // Setup header for DMU.
+    suf->header.type = DMU_SURFACE;
 
     // Initialize the surface.
-    // \todo The initial material should be the "unknown" material.
-	suf->material = NULL;
-    for(i = 0; i < 4; ++i)
-        suf->rgba[i] = 1;
-    suf->flags = 0;
-    suf->offset[VX] = suf->offset[VY] = 0;
+    suf->flags = suf->oldFlags = 0;
     suf->decorations = NULL;
     suf->numDecorations = 0;
+    suf->frameFlags = 0;
+    suf->normal[VX] = suf->oldNormal[VX] = 0;
+    suf->normal[VY] = suf->oldNormal[VY] = 0;
+    suf->normal[VZ] = suf->oldNormal[VZ] = 1;
+    // \todo The initial material should be the "unknown" material.
+    Surface_SetMaterial(suf, NULL);
+    Surface_SetMaterialOffsetXY(suf, 0, 0);
+    Surface_SetColorRGBA(suf, 1, 1, 1, 1);
+    Surface_SetBlendMode(suf, BM_NORMAL);
 
-    // Set normal.
-    suf->normal[VX] = 0;
-    suf->normal[VY] = 0;
-    suf->normal[VZ] = 1;
-
-	return plane;
+    return plane;
 }
 
 /**
@@ -1496,8 +1505,6 @@ void R_SetupLevel(int mode, int flags)
 
     case DDSLM_AFTER_LOADING:
     {
-        sidedef_t *side;
-
         // Loading a game usually destroys all thinkers. Until a proper
         // savegame system handled by the engine is introduced we'll have
         // to resort to re-initializing the most important stuff.
@@ -1523,24 +1530,12 @@ void R_SetupLevel(int mode, int flags)
             }
         }
 
-        // Do the same for side surfaces.
-        for(i = 0; i < numSideDefs; ++i)
-        {
-            side = SIDE_PTR(i);
-            R_UpdateSurface(&side->SW_topsurface, false);
-            R_UpdateSurface(&side->SW_middlesurface, false);
-            R_UpdateSurface(&side->SW_bottomsurface, false);
-        }
-
         // We don't render fakeradio on polyobjects...
         PO_InitForMap();
         return;
     }
     case DDSLM_FINALIZE:
     {
-        int         j;
-        linedef_t     *line;
-
         // Init server data.
         Sv_InitPools();
 
@@ -1559,22 +1554,6 @@ void R_SetupLevel(int mode, int flags)
             {
                 sec->planes[l]->visHeight = sec->planes[l]->oldHeight[0] =
                     sec->planes[l]->oldHeight[1] = sec->planes[l]->height;
-            }
-        }
-
-        for(i = 0; i < numLineDefs; ++i)
-        {
-            line = LINE_PTR(i);
-
-            // Update side surfaces.
-            for(j = 0; j < 2; ++j)
-            {
-                if(!line->sideDefs[j])
-                    continue;
-
-                R_UpdateSurface(&line->sideDefs[j]->SW_topsurface, true);
-                R_UpdateSurface(&line->sideDefs[j]->SW_middlesurface, true);
-                R_UpdateSurface(&line->sideDefs[j]->SW_bottomsurface, true);
             }
         }
 
@@ -1690,132 +1669,6 @@ sector_t *R_GetLinkedSector(subsector_t *startssec, uint plane)
         return startssec->sector;
 }
 
-void R_UpdateAllSurfaces(boolean forceUpdate)
-{
-    uint                i, j;
-
-    // First, all planes of all sectors.
-    for(i = 0; i < numSectors; ++i)
-    {
-        sector_t *sec = SECTOR_PTR(i);
-
-        for(j = 0; j < sec->planeCount; ++j)
-            R_UpdateSurface(&sec->planes[j]->surface, forceUpdate);
-    }
-
-    // Then all sections of all sides.
-    for(i = 0; i < numSideDefs; ++i)
-    {
-        sidedef_t *side = SIDE_PTR(i);
-
-        R_UpdateSurface(&side->SW_topsurface, forceUpdate);
-        R_UpdateSurface(&side->SW_middlesurface, forceUpdate);
-        R_UpdateSurface(&side->SW_bottomsurface, forceUpdate);
-    }
-}
-
-void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
-{
-    int                 texFlags, oldTexFlags;
-
-    // Any change to the texture or glow properties?
-    texFlags = R_GetMaterialFlags(suf->material);
-    oldTexFlags = R_GetMaterialFlags(suf->oldMaterial);
-
-    // \fixme Update glowing status?
-    // The order of these tests is important.
-    if(forceUpdate || (suf->material != suf->oldMaterial))
-    {
-        // Check if the new texture is declared as glowing.
-        // NOTE: Currently, we always discard the glow settings of the
-        //       previous flat after a texture change.
-
-        // Now that glows are properties of the sector this does not
-        // need to be the case. If we expose these properties via DMU
-        // they could be changed at any time. However in order to support
-        // flats that are declared as glowing we would need some method
-        // of telling Doomsday IF we want to inherit these properties when
-        // the plane flat changes...
-        if(texFlags & TXF_GLOW)
-        {
-            // The new texture is glowing.
-            suf->flags |= SUF_GLOW;
-        }
-        else if(suf->oldMaterial && (oldTexFlags & TXF_GLOW))
-        {
-            // The old texture was glowing but the new one is not.
-            suf->flags &= ~SUF_GLOW;
-        }
-
-        suf->oldMaterial = suf->material;
-
-        // No longer a missing texture fix?
-        if(suf->material && (oldTexFlags & SUF_TEXFIX))
-            suf->flags &= ~SUF_TEXFIX;
-
-        suf->flags |= SUF_UPDATE_DECORATIONS;
-    }
-    else if((texFlags & TXF_GLOW) != (oldTexFlags & TXF_GLOW))
-    {
-        // The glow property of the current flat has been changed
-        // since last update.
-
-        // NOTE:
-        // This approach is hardly optimal but since flats will
-        // rarely/if ever have this property changed during normal
-        // gameplay (the RENDER_GLOWFLATS text string is depreciated and
-        // the only time this property might change is after a console
-        // RESET) so it doesn't matter.
-        if(!(texFlags & TXF_GLOW) && (oldTexFlags & TXF_GLOW))
-        {
-            // The current flat is no longer glowing
-            suf->flags &= ~SUF_GLOW;
-        }
-        else if((texFlags & TXF_GLOW) && !(oldTexFlags & TXF_GLOW))
-        {
-            // The current flat is now glowing
-            suf->flags |= SUF_GLOW;
-        }
-
-        suf->flags |= SUF_UPDATE_DECORATIONS;
-    }
-    // < FIXME
-
-    if(forceUpdate ||
-       suf->flags != suf->oldFlags)
-    {
-        suf->oldFlags = suf->flags;
-        suf->flags |= SUF_UPDATE_DECORATIONS;
-    }
-
-    if(forceUpdate ||
-       (suf->offset[VX] != suf->oldOffset[VX]))
-    {
-        suf->oldOffset[VX] = suf->offset[VX];
-        suf->flags |= SUF_UPDATE_DECORATIONS;
-    }
-
-    if(forceUpdate ||
-       (suf->offset[VY] != suf->oldOffset[VY]))
-    {
-        suf->oldOffset[VY] = suf->offset[VY];
-        suf->flags |= SUF_UPDATE_DECORATIONS;
-    }
-
-    // Surface color change?
-    if(forceUpdate ||
-       (suf->rgba[0] != suf->oldRGBA[0] ||
-        suf->rgba[1] != suf->oldRGBA[1] ||
-        suf->rgba[2] != suf->oldRGBA[2] ||
-        suf->rgba[3] != suf->oldRGBA[3]))
-    {
-        // \todo when surface colours are intergrated with the
-        // bias lighting model we will need to recalculate the
-        // vertex colours when they are changed.
-        memcpy(suf->oldRGBA, suf->rgba, sizeof(suf->oldRGBA));
-    }
-}
-
 /**
  * Is the specified plane non-glowing?
  *
@@ -1887,9 +1740,6 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     for(i = 0; i < sec->planeCount; ++i)
     {
         plane = sec->planes[i];
-
-        // Surface changes?
-        R_UpdateSurface(&plane->surface, forceUpdate);
 
         // \fixme Now update the glow properties.
         hasGlow = false;

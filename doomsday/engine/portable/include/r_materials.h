@@ -39,6 +39,8 @@ typedef struct material_s {
     short           flags;
 } material_t;
 
+extern uint numMaterials;
+
 void            R_InitMaterials(void);
 void            R_ShutdownMaterials(void);
 void            R_MarkMaterialsForUpdating(void);

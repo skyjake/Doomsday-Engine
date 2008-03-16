@@ -136,14 +136,17 @@ void R_InitSkyMap(void)
 }
 
 /**
- * Is the specified flat id the same as that used for the sky?
+ * Will the specified surface be added to the sky mask?
  *
- * @param   flat        Flat id to test.
- * @return  boolean     @c true, if flat num is that used for the sky.
+ * @param suf           Ptr to the surface to test.
+ * @return boolean      @c true, iff the surface will be masked.
  */
-boolean R_IsSkySurface(surface_t *surface)
+boolean R_IsSkySurface(const surface_t *suf)
 {
-    return surface->material == skyMaskMaterial;
+    if(!suf)
+        return false;
+
+    return (suf->material == skyMaskMaterial? true : false);
 }
 
 /**

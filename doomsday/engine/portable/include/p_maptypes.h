@@ -138,14 +138,11 @@ typedef struct surface_s {
     int                 flags;         // SUF_ flags
     int                 oldFlags;
     struct material_s   *material;
-    struct material_s   *oldMaterial;
     blendmode_t         blendMode;
     float               normal[3];     // Surface normal
     float               oldNormal[3];
     float               offset[2];     // [X, Y] Planar offset to surface material origin.
-    float               oldOffset[2];
     float               rgba[4];       // Surface color tint
-    float               oldRGBA[4];
     short               frameFlags;
     unsigned int        numDecorations;
     surfacedecor_t      *decorations;

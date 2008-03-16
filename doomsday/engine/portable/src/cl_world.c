@@ -425,13 +425,14 @@ int Cl_ReadLumpDelta(void)
  */
 void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 {
+    static sector_t dummy;      // Used when skipping.
+    static plane_t* dummyPlaneArray[2];
+    static plane_t dummyPlanes[2];
+
     unsigned short num;
     sector_t   *sec;
     int         df;
     boolean     wasChanged = false;
-    static sector_t dummy;      // Used when skipping.
-    static plane_t* dummyPlaneArray[2];
-    static plane_t dummyPlanes[2];
 
     // Set up the dummy.
     dummyPlaneArray[0] = &dummyPlanes[0];
@@ -470,11 +471,11 @@ if(num >= numSectors)
     }
 
     if(df & SDF_FLOORPIC)
-        sec->SP_floormaterial =
-            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT);
+        Surface_SetMaterial(&sec->SP_floorsurface,
+            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT));
     if(df & SDF_CEILINGPIC)
-        sec->SP_ceilmaterial =
-            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT);
+        Surface_SetMaterial(&sec->SP_ceilsurface,
+            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT));
     if(df & SDF_LIGHT)
         sec->lightLevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_HEIGHT)
@@ -564,18 +565,18 @@ if(num >= numSectors)
         sec->rgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        sec->SP_floorrgb[0] = Msg_ReadByte() / 255.f;
+        Surface_SetColorR(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        sec->SP_floorrgb[1] = Msg_ReadByte() / 255.f;
+        Surface_SetColorG(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        sec->SP_floorrgb[2] = Msg_ReadByte() / 255.f;
+        Surface_SetColorB(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        sec->SP_ceilrgb[0] = Msg_ReadByte() / 255.f;
+        Surface_SetColorR(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        sec->SP_ceilrgb[1] = Msg_ReadByte() / 255.f;
+        Surface_SetColorG(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        sec->SP_ceilrgb[2] = Msg_ReadByte() / 255.f;
+        Surface_SetColorB(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
 
     if(df & SDF_FLOOR_GLOW_RED)
         sec->planes[PLN_FLOOR]->glowRGB[0] = Msg_ReadByte() / 255.f;
@@ -657,27 +658,27 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         lineFlags = Msg_ReadByte();
 
     if(df & SIDF_TOP_COLOR_RED)
-        toprgb[0] = Msg_ReadByte();
+        toprgb[CR] = Msg_ReadByte() / 255.f;
     if(df & SIDF_TOP_COLOR_GREEN)
-        toprgb[1] = Msg_ReadByte();
+        toprgb[CG] = Msg_ReadByte() / 255.f;
     if(df & SIDF_TOP_COLOR_BLUE)
-        toprgb[2] = Msg_ReadByte();
+        toprgb[CB] = Msg_ReadByte() / 255.f;
 
     if(df & SIDF_MID_COLOR_RED)
-        midrgba[0] = Msg_ReadByte();
+        midrgba[CR] = Msg_ReadByte() / 255.f;
     if(df & SIDF_MID_COLOR_GREEN)
-        midrgba[1] = Msg_ReadByte();
+        midrgba[CG] = Msg_ReadByte() / 255.f;
     if(df & SIDF_MID_COLOR_BLUE)
-        midrgba[2] = Msg_ReadByte();
+        midrgba[CB] = Msg_ReadByte() / 255.f;
     if(df & SIDF_MID_COLOR_ALPHA)
-        midrgba[3] = Msg_ReadByte();
+        midrgba[CA] = Msg_ReadByte() / 255.f;
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        bottomrgb[0] = Msg_ReadByte();
+        bottomrgb[CR] = Msg_ReadByte() / 255.f;
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        bottomrgb[1] = Msg_ReadByte();
+        bottomrgb[CG] = Msg_ReadByte() / 255.f;
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        bottomrgb[2] = Msg_ReadByte();
+        bottomrgb[CB] = Msg_ReadByte() / 255.f;
 
     if(df & SIDF_MID_BLENDMODE)
         blendmode = Msg_ReadShort() << 16;
@@ -700,37 +701,40 @@ if(num >= numSideDefs)
     sid = SIDE_PTR(num);
 
     if(df & SIDF_TOPTEX)
-        sid->SW_topmaterial = R_GetMaterial(toptexture, MAT_TEXTURE);
+        Surface_SetMaterial(&sid->SW_topsurface,
+                             R_GetMaterial(toptexture, MAT_TEXTURE));
     if(df & SIDF_MIDTEX)
-        sid->SW_middlematerial = R_GetMaterial(midtexture, MAT_TEXTURE);
+        Surface_SetMaterial(&sid->SW_middlesurface,
+                             R_GetMaterial(midtexture, MAT_TEXTURE));
     if(df & SIDF_BOTTOMTEX)
-        sid->SW_bottommaterial = R_GetMaterial(bottomtexture, MAT_TEXTURE);
+        Surface_SetMaterial(&sid->SW_bottomsurface,
+                             R_GetMaterial(bottomtexture, MAT_TEXTURE));
 
     if(df & SIDF_TOP_COLOR_RED)
-        sid->SW_toprgba[0] = toprgb[0];
+        Surface_SetColorR(&sid->SW_topsurface, toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        sid->SW_toprgba[1] = toprgb[1];
+        Surface_SetColorG(&sid->SW_topsurface, toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        sid->SW_toprgba[2] = toprgb[2];
+        Surface_SetColorB(&sid->SW_topsurface, toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        sid->SW_middlergba[0] = midrgba[0];
+        Surface_SetColorR(&sid->SW_middlesurface, midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        sid->SW_middlergba[1] = midrgba[1];
+        Surface_SetColorG(&sid->SW_middlesurface, midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        sid->SW_middlergba[2] = midrgba[2];
+        Surface_SetColorB(&sid->SW_middlesurface, midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        sid->SW_middlergba[3] = midrgba[3];
+        Surface_SetColorA(&sid->SW_middlesurface, midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        sid->SW_bottomrgba[0] = bottomrgb[0];
+        Surface_SetColorR(&sid->SW_bottomsurface, bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        sid->SW_bottomrgba[1] = bottomrgb[1];
+        Surface_SetColorG(&sid->SW_bottomsurface, bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        sid->SW_bottomrgba[2] = bottomrgb[2];
+        Surface_SetColorB(&sid->SW_bottomsurface, bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
-        sid->SW_middleblendmode = blendmode;
+        Surface_SetBlendMode(&sid->SW_middlesurface, blendmode);
 
     if(df & SIDF_FLAGS)
     {

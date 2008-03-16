@@ -496,24 +496,27 @@ static void readSide(const gamemap_t *map, uint idx)
 {
     uint                i;
     long                secIdx;
-    sidedef_t             *s = &map->sideDefs[idx];
+    float               offset[2], rgba[4];
+    sidedef_t          *s = &map->sideDefs[idx];
 
     for(i = 0; i < 3; ++i)
     {
         surface_t          *suf = &s->sections[3];
 
         suf->flags = (int) readLong();
-        suf->material = lookupMaterialFromDict(materialDict, readLong());
-        suf->blendMode = (blendmode_t) readLong();
+        Surface_SetMaterial(suf, lookupMaterialFromDict(materialDict, readLong()));
+        Surface_SetBlendMode(suf, (blendmode_t) readLong());
         suf->normal[VX] = readFloat();
         suf->normal[VY] = readFloat();
         suf->normal[VZ] = readFloat();
-        suf->offset[VX] = readFloat();
-        suf->offset[VY] = readFloat();
-        suf->rgba[CR] = readFloat();
-        suf->rgba[CG] = readFloat();
-        suf->rgba[CB] = readFloat();
-        suf->rgba[CA] = readFloat();
+        offset[VX] = readFloat();
+        offset[VY] = readFloat();
+        Surface_SetMaterialOffsetXY(suf, offset[VX], offset[VY]);
+        rgba[CR] = readFloat();
+        rgba[CG] = readFloat();
+        rgba[CB] = readFloat();
+        rgba[CA] = readFloat();
+        Surface_SetColorRGBA(suf, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
         suf->decorations = NULL;
         suf->numDecorations = 0;
     }
@@ -648,6 +651,7 @@ static void readSector(const gamemap_t *map, uint idx)
 {
     uint                i, j, numPlanes;
     long                secIdx;
+    float               offset[2], rgba[4];
     sector_t           *s = &map->sectors[idx];
 
     s->lightLevel = readFloat();
@@ -670,17 +674,19 @@ static void readSector(const gamemap_t *map, uint idx)
         p->visOffset = readFloat();
 
         p->surface.flags = (int) readLong();
-        p->surface.material = lookupMaterialFromDict(materialDict, readLong());
-        p->surface.blendMode = (blendmode_t) readLong();
+        Surface_SetMaterial(&p->surface, lookupMaterialFromDict(materialDict, readLong()));
+        Surface_SetBlendMode(&p->surface, (blendmode_t) readLong());
         p->surface.normal[VX] = readFloat();
         p->surface.normal[VY] = readFloat();
         p->surface.normal[VZ] = readFloat();
-        p->surface.offset[VX] = readFloat();
-        p->surface.offset[VY] = readFloat();
-        p->surface.rgba[CR] = readFloat();
-        p->surface.rgba[CG] = readFloat();
-        p->surface.rgba[CB] = readFloat();
-        p->surface.rgba[CA] = readFloat();
+        offset[VX] = readFloat();
+        offset[VY] = readFloat();
+        Surface_SetMaterialOffsetXY(&p->surface, offset[VX], offset[VY]);
+        rgba[CR] = readFloat();
+        rgba[CG] = readFloat();
+        rgba[CB] = readFloat();
+        rgba[CA] = readFloat();
+        Surface_SetColorRGBA(&p->surface, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
         p->soundOrg.pos[VX] = readFloat();
         p->soundOrg.pos[VY] = readFloat();

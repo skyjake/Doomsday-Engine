@@ -161,16 +161,15 @@ void P_PlaneChanged(sector_t *sector, uint plane)
             {
                 if(!R_IsSkySurface(&front->sector->SP_floorsurface))
                 {
+                    Surface_SetMaterial(&front->SW_bottomsurface,
+                        front->sector->SP_floormaterial);
                     front->SW_bottomflags |= SUF_TEXFIX;
-
-                    front->SW_bottommaterial =
-                        front->sector->SP_floormaterial;
                 }
 
                 if(back->SW_bottomflags & SUF_TEXFIX)
                 {
+                    Surface_SetMaterial(&back->SW_bottomsurface, NULL);
                     back->SW_bottomflags &= ~SUF_TEXFIX;
-                    back->SW_bottommaterial = NULL;
                 }
             }
             else if(front->sector->SP_floorheight > back->sector->SP_floorheight &&
@@ -178,16 +177,15 @@ void P_PlaneChanged(sector_t *sector, uint plane)
             {
                 if(!R_IsSkySurface(&back->sector->SP_floorsurface))
                 {
+                    Surface_SetMaterial(&back->SW_bottomsurface,
+                        back->sector->SP_floormaterial);
                     back->SW_bottomflags |= SUF_TEXFIX;
-
-                    back->SW_bottommaterial =
-                        back->sector->SP_floormaterial;
                 }
 
                 if(front->SW_bottomflags & SUF_TEXFIX)
                 {
+                    Surface_SetMaterial(&front->SW_bottomsurface, NULL);
                     front->SW_bottomflags &= ~SUF_TEXFIX;
-                    front->SW_bottommaterial = NULL;
                 }
             }
         }
@@ -199,25 +197,26 @@ void P_PlaneChanged(sector_t *sector, uint plane)
             {
                 if(!R_IsSkySurface(&front->sector->SP_ceilsurface))
                 {
-                    front->SW_topflags |= SUF_TEXFIX;
                     // Preference a middle texture when doing replacements as
                     // this could be a mid tex door hack.
                    /* if(front->SW_middlematerial->texture)
                     {
                         front->flags |= SDF_MIDTEXUPPER;
-                        front->SW_topmaterial = front->SW_middlematerial;
+                        Surface_SetMaterial(front->SW_topsurface,
+                            front->SW_middlematerial);
                     }
                     else*/
                     {
-                        front->SW_topmaterial =
-                            front->sector->SP_ceilmaterial;
+                        Surface_SetMaterial(&front->SW_topsurface,
+                            front->sector->SP_ceilmaterial);
                     }
+                    front->SW_topflags |= SUF_TEXFIX;
                 }
 
                 if(back->SW_topflags & SUF_TEXFIX)
                 {
+                    Surface_SetMaterial(&back->SW_topsurface, NULL);
                     back->SW_topflags &= ~SUF_TEXFIX;
-                    back->SW_topmaterial = NULL;
                 }
             }
             else if(front->sector->SP_ceilheight < back->sector->SP_ceilheight &&
@@ -225,25 +224,26 @@ void P_PlaneChanged(sector_t *sector, uint plane)
             {
                 if(!R_IsSkySurface(&back->sector->SP_ceilsurface))
                 {
-                    back->SW_topflags |= SUF_TEXFIX;
                     // Preference a middle texture when doing replacements as
                     // this could be a mid tex door hack.
                    /* if(front->SW_middlematerial->texture)
                     {
                         back->flags |= SDF_MIDTEXUPPER;
-                        back->SW_topmaterial = back->SW_middlematerial;
+                        Surface_SetMaterial(back->SW_topsurface,
+                            back->SW_middlematerial);
                     }
                     else*/
                     {
-                        back->SW_topmaterial =
-                            back->sector->SP_ceilmaterial;
+                        Surface_SetMaterial(&back->SW_topsurface,
+                            back->sector->SP_ceilmaterial);
                     }
+                    back->SW_topflags |= SUF_TEXFIX;
                 }
 
                 if(front->SW_topflags & SUF_TEXFIX)
                 {
+                    Surface_SetMaterial(&front->SW_topsurface, NULL);
                     front->SW_topflags &= ~SUF_TEXFIX;
-                    front->SW_topmaterial = NULL;
                 }
             }
         }

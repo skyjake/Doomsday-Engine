@@ -150,14 +150,11 @@ struct surface
     INT     int         flags       // SUF_ flags
     -       int         oldFlags
     -       material_s *material
-    -       material_s *oldMaterial
     BLENDMODE blendmode_t blendMode
     -       float[3]    normal      // Surface normal
     -       float[3]    oldNormal
     FLOAT   float[2]    offset      // [X, Y] Planar offset to surface material origin.
-    -       float[2]    oldOffset
     FLOAT   float[4]    rgba        // Surface color tint
-    -       float[4]    oldRGBA
     -       short       frameFlags
     -       uint        numDecorations
     -       surfacedecor_t *decorations

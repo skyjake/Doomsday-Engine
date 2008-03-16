@@ -398,8 +398,6 @@ void            R_UpdateData(void);
 void            R_ShutdownData(void);
 
 void            R_UpdateSector(struct sector_s *sec, boolean forceUpdate);
-void            R_UpdateSurface(surface_t *current, boolean forceUpdate);
-void            R_UpdateAllSurfaces(boolean forceUpdate);
 
 void            R_PrecacheLevel(void);
 void            R_PrecachePatch(int lumpnum);

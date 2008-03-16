@@ -82,11 +82,11 @@ int Cl_ReadSectorDelta(void)
     df = Msg_ReadPackedShort();
 
     if(df & SDF_FLOORPIC)
-        sec->SP_floormaterial =
-            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT);
+        Surface_SetMaterial(&sec->SP_floorsurface,
+                             R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT));
     if(df & SDF_CEILINGPIC)
-        sec->SP_ceilmaterial =
-            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT);
+        Surface_SetMaterial(&sec->SP_ceilsurface,
+                             R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT));
     if(df & SDF_LIGHT)
         sec->lightLevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_TARGET)
@@ -121,18 +121,18 @@ int Cl_ReadSectorDelta(void)
         sec->rgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        sec->SP_floorrgb[0] = Msg_ReadByte() / 255.f;
+        Surface_SetColorR(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        sec->SP_floorrgb[1] = Msg_ReadByte() / 255.f;
+        Surface_SetColorG(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        sec->SP_floorrgb[2] = Msg_ReadByte() / 255.f;
+        Surface_SetColorB(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        sec->SP_ceilrgb[0] = Msg_ReadByte() / 255.f;
+        Surface_SetColorR(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        sec->SP_ceilrgb[1] = Msg_ReadByte() / 255.f;
+        Surface_SetColorG(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        sec->SP_ceilrgb[2] = Msg_ReadByte() / 255.f;
+        Surface_SetColorB(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
 
     if(df & SDF_FLOOR_GLOW_RED)
         sec->SP_floorglowrgb[0] = Msg_ReadByte() / 255.f;
@@ -191,14 +191,14 @@ int Cl_ReadSideDelta(void)
     df = Msg_ReadByte();
 
     if(df & SIDF_TOPTEX)
-        sid->SW_topmaterial =
-            R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
+        Surface_SetMaterial(&sid->SW_topsurface,
+                             R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE));
     if(df & SIDF_MIDTEX)
-        sid->SW_middlematerial =
-            R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
+        Surface_SetMaterial(&sid->SW_middlesurface,
+                             R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE));
     if(df & SIDF_BOTTOMTEX)
-        sid->SW_bottommaterial =
-            R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
+        Surface_SetMaterial(&sid->SW_bottomsurface,
+                             R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE));
 
     if(df & SIDF_LINE_FLAGS)
     {
@@ -218,30 +218,30 @@ Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        sid->SW_toprgba[0] = Msg_ReadByte() / 255.f;
+        Surface_SetColorR(&sid->SW_topsurface, Msg_ReadByte() / 255.f);
     if(df & SIDF_TOP_COLOR_GREEN)
-        sid->SW_toprgba[1] = Msg_ReadByte() / 255.f;
+        Surface_SetColorG(&sid->SW_topsurface, Msg_ReadByte() / 255.f);
     if(df & SIDF_TOP_COLOR_BLUE)
-        sid->SW_toprgba[2] = Msg_ReadByte() / 255.f;
+        Surface_SetColorB(&sid->SW_topsurface, Msg_ReadByte() / 255.f);
 
     if(df & SIDF_MID_COLOR_RED)
-        sid->SW_middlergba[0] = Msg_ReadByte() / 255.f;
+        Surface_SetColorR(&sid->SW_middlesurface, Msg_ReadByte() / 255.f);
     if(df & SIDF_MID_COLOR_GREEN)
-        sid->SW_middlergba[1] = Msg_ReadByte() / 255.f;
+        Surface_SetColorG(&sid->SW_middlesurface, Msg_ReadByte() / 255.f);
     if(df & SIDF_MID_COLOR_BLUE)
-        sid->SW_middlergba[2] = Msg_ReadByte() / 255.f;
+        Surface_SetColorB(&sid->SW_middlesurface, Msg_ReadByte() / 255.f);
     if(df & SIDF_MID_COLOR_ALPHA)
-        sid->SW_middlergba[3] = Msg_ReadByte() / 255.f;
+        Surface_SetColorA(&sid->SW_middlesurface, Msg_ReadByte() / 255.f);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        sid->SW_bottomrgba[0] = Msg_ReadByte() / 255.f;
+        Surface_SetColorR(&sid->SW_bottomsurface, Msg_ReadByte() / 255.f);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        sid->SW_bottomrgba[1] = Msg_ReadByte() / 255.f;
+        Surface_SetColorG(&sid->SW_bottomsurface, Msg_ReadByte() / 255.f);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        sid->SW_bottomrgba[2] = Msg_ReadByte() / 255.f;
+        Surface_SetColorB(&sid->SW_bottomsurface, Msg_ReadByte() / 255.f);
 
     if(df & SIDF_MID_BLENDMODE)
-        sid->SW_middleblendmode = Msg_ReadShort() << 16;
+        Surface_SetBlendMode(&sid->SW_middlesurface, (blendmode_t) Msg_ReadShort());
 
     if(df & SIDF_FLAGS)
     {
