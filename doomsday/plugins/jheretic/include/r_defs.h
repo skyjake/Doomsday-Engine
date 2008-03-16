@@ -49,25 +49,18 @@
 
 #include "p_xg.h"
 
-// SECTORS do store MObjs anyway.
-#include "p_mobj.h"
-
 #ifdef __GNUG__
 #pragma interface
 #endif
 
-//
-// INTERNAL MAP TYPES
-//  used by play and refresh
-//
-
 #define SP_floororigheight      planes[PLN_FLOOR].origHeight
 #define SP_ceilorigheight       planes[PLN_CEILING].origHeight
 
-//
-// The SECTORS record, at runtime.
-// Stores things/mobjs.
-//
+// Stair build flags.
+#define BL_BUILT        0x1
+#define BL_WAS_BUILT    0x2
+#define BL_SPREADED     0x4
+
 typedef struct xsector_s {
     short           special;
     short           tag;
@@ -80,6 +73,8 @@ typedef struct xsector_s {
 
     // thinker_t for reversable actions
     void           *specialData;
+
+    byte            blFlags; // Used during stair building.
 
     // stone, metal, heavy, etc...
     byte            seqType;       // NOT USED ATM

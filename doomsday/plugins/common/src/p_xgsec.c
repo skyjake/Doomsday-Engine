@@ -72,10 +72,6 @@
 
 #define MAX_VALS        128
 
-#define BL_BUILT        0x1
-#define BL_WAS_BUILT    0x2
-#define BL_SPREADED     0x4
-
 #define SIGN(x)         ((x)>0? 1 : (x)<0? -1 : 0)
 
 #define ISFUNC(fn)      (fn->func && fn->func[fn->pos])
@@ -146,15 +142,14 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *actThing);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static byte *builder;
 static sectortype_t sectypebuffer;
 
 // CODE --------------------------------------------------------------------
 
 sectortype_t *XS_GetType(int id)
 {
-    sectortype_t *ptr;
-    char        buff[5];
+    sectortype_t       *ptr;
+    char                buff[5];
 
     // Try finding it from the DDXGDATA lump.
     ptr = XG_GetLumpSector(id);
@@ -174,7 +169,7 @@ sectortype_t *XS_GetType(int id)
 void XF_Init(sector_t *sec, function_t *fn, char *func, int min, int max,
              float scale, float offset)
 {
-    xsector_t *xsec = P_ToXSector(sec);
+    xsector_t          *xsec = P_ToXSector(sec);
 
     memset(fn, 0, sizeof(*fn));
 
@@ -384,12 +379,9 @@ void XS_Init(void)
 {
     if(numsectors > 0)
     {   // Allocate stair builder data.
-        uint        i;
-        sector_t   *sec;
-        xsector_t  *xsec;
-
-        builder = Z_Malloc(numsectors, PU_LEVEL, 0);
-        memset(builder, 0, numsectors);
+        uint                i;
+        sector_t           *sec;
+        xsector_t          *xsec;
 
         /*  // Clients rely on the server, they don't do XG themselves.
            if(IS_CLIENT) return; */
@@ -1491,7 +1483,10 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
 
 void XS_InitStairBuilder(linedef_t *line)
 {
-    memset(builder, 0, numsectors);
+    uint                i;
+
+    for(i = 0; i < numsectors; ++i)
+        P_GetXSector(i)->blFlags = 0;
 }
 
 boolean XS_DoBuild(sector_t *sector, boolean ceiling, linedef_t *origin,
@@ -1499,14 +1494,19 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, linedef_t *origin,
 {
     static float        firstheight;
 
-    uint                secnum = P_ToIndex(sector);
     float               waittime;
+    xsector_t          *xsec;
     xgplanemover_t     *mover;
 
+    if(!sector)
+        return false;
+
+    xsec = P_ToXSector(sector);
+
     // Make sure each sector is only processed once.
-    if(builder[secnum] & BL_BUILT)
+    if(xsec->blFlags & BL_BUILT)
         return false; // Already built this one!
-    builder[secnum] |= BL_WAS_BUILT;
+    xsec->blFlags |= BL_WAS_BUILT;
 
     // Create a new mover for the plane.
     mover = XS_GetPlaneMover(sector, ceiling);
@@ -1595,10 +1595,12 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
         // Mark the sectors of the last step as processed.
         for(i = 0; i < numsectors; ++i)
         {
-            if(builder[i] & BL_WAS_BUILT)
+            xsector_t          *xsec = P_GetXSector(i);
+
+            if(xsec->blFlags & BL_WAS_BUILT)
             {
-                builder[i] &= ~BL_WAS_BUILT;
-                builder[i] |= BL_BUILT;
+                xsec->blFlags &= ~BL_WAS_BUILT;
+                xsec->blFlags |= BL_BUILT;
             }
         }
 
@@ -1607,11 +1609,13 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
         lowest = numlines;
         for(i = 0; i < numsectors; ++i)
         {
+            xsector_t          *xsec = P_GetXSector(i);
+
             // Only spread from built sectors (spread only once!).
-            if(!(builder[i] & BL_BUILT) || builder[i] & BL_SPREADED)
+            if(!(xsec->blFlags & BL_BUILT) || xsec->blFlags & BL_SPREADED)
                 continue;
 
-            builder[i] |= BL_SPREADED;
+            xsec->blFlags |= BL_SPREADED;
 
             // Any 2-sided lines facing the right way?
             sec = P_ToPtr(DMU_SECTOR, i);
@@ -1643,7 +1647,7 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
                 }
 
                 // Don't spread to sectors which have already spreaded.
-                if(builder[P_GetIntp(line, DMU_BACK_SECTOR)] & BL_SPREADED)
+                if(P_GetXSector(P_GetIntp(line, DMU_BACK_SECTOR))->blFlags & BL_SPREADED)
                     continue;
 
                 // Build backsector.
