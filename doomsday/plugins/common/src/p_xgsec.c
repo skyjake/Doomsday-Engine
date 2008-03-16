@@ -1696,6 +1696,7 @@ int findBuildNeighbor(void *ptr, void *context)
     findbuildneighborparams_t *params =
         (findbuildneighborparams_t*) context;
     sector_t           *frontSec, *backSec;
+    uint                idx;
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
     if(!frontSec || frontSec != params->baseSec)
@@ -1726,8 +1727,12 @@ int findBuildNeighbor(void *ptr, void *context)
         return 1;
 
     // We need the lowest line number.
-    if(P_ToIndex(li) < params->foundIDX)
+    idx = P_ToIndex(li);
+    if(idx < params->foundIDX)
+    {
         params->foundSec = backSec;
+        params->foundIDX = idx;
+    }
 
     return 1; // Continue iteration.
 }
