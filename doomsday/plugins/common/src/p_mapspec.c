@@ -286,6 +286,98 @@ sector_t* P_FindSectorSurroundingHighestLight(sector_t *sec, float *val)
     return params.foundSec;
 }
 
+#define FNLLF_ABOVE             0x1 // Get next above, if not set get next below.
+
+typedef struct findnextlightlevelparams_s {
+    sector_t           *baseSec;
+    float               baseLight;
+    byte                flags;
+    float               val;
+    sector_t           *foundSec;
+} findnextlightlevelparams_t;
+
+int findNextLightLevel(void *ptr, void *context)
+{
+    linedef_t          *li = (linedef_t*) ptr;
+    findnextlightlevelparams_t *params =
+        (findnextlightlevelparams_t*) context;
+    sector_t           *other;
+
+    other = P_GetNextSector(li, params->baseSec);
+    if(other)
+    {
+        float               otherLight =
+            P_GetFloatp(other, DMU_LIGHT_LEVEL);
+
+        if(params->flags & FNLLF_ABOVE)
+        {
+            if(otherLight < params->val && otherLight > params->baseLight)
+            {
+                params->val = otherLight;
+                params->foundSec = other;
+
+                if(!(params->val > 0))
+                    return 0; // Stop iteration. Can't get any darker.
+            }
+        }
+        else
+        {
+            if(otherLight > params->val && otherLight < params->baseLight)
+            {
+                params->val = otherLight;
+                params->foundSec = other;
+
+                if(!(params->val < 1))
+                    return 0; // Stop iteration. Can't get any brighter.
+            }
+        }
+    }
+
+    return 1; // Continue iteration.
+}
+
+/**
+ * Find the sector with the lowest light level in surrounding sectors.
+ */
+sector_t* P_FindSectorSurroundingNextLowestLight(sector_t *sec,
+                                                 float baseLight,
+                                                 float *val)
+{
+    findnextlightlevelparams_t params;
+
+    params.baseSec = sec;
+    params.baseLight = baseLight;
+    params.flags = 0;
+    params.foundSec = NULL;
+    params.val = DDMAXFLOAT;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextLightLevel);
+
+    if(*val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+/**
+ * Find the sector with the next highest light level in surrounding sectors.
+ */
+sector_t* P_FindSectorSurroundingNextHighestLight(sector_t *sec,
+                                                  float baseLight,
+                                                  float *val)
+{
+    findnextlightlevelparams_t params;
+
+    params.baseSec = sec;
+    params.baseLight = baseLight;
+    params.flags = FNLLF_ABOVE;
+    params.foundSec = NULL;
+    params.val = DDMINFLOAT;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextLightLevel);
+
+    if(*val)
+        *val = params.val;
+    return params.foundSec;
+}
+
 #define FEPHF_MIN           0x1 // Get minium. If not set, get maximum.
 #define FEPHF_FLOOR         0x2 // Get floors. If not set, get ceilings.
 
@@ -470,6 +562,71 @@ sector_t* P_FindSectorSurroundingNextHighestFloor(sector_t *sec,
     return params.foundSec;
 }
 
+/**
+ * Find the sector with the next highest ceiling in surrounding sectors.
+ */
+sector_t* P_FindSectorSurroundingNextHighestCeiling(sector_t *sec,
+                                                    float baseHeight,
+                                                    float *val)
+{
+    findnextplaneheightparams_t params;
+
+    params.baseSec = sec;
+    params.baseHeight = baseHeight;
+    params.flags = FNPHF_ABOVE;
+    params.foundSec = NULL;
+    params.val = DDMINFLOAT;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+
+    if(val)
+        *val = params.val;
+
+    return params.foundSec;
+}
+
+/**
+ * Find the sector with the next lowest floor in surrounding sectors.
+ */
+sector_t* P_FindSectorSurroundingNextLowestFloor(sector_t *sec,
+                                                 float baseHeight,
+                                                 float *val)
+{
+    findnextplaneheightparams_t params;
+
+    params.baseSec = sec;
+    params.baseHeight = baseHeight;
+    params.flags = FNPHF_FLOOR;
+    params.foundSec = NULL;
+    params.val = DDMAXFLOAT;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+
+    if(val)
+        *val = params.val;
+
+    return params.foundSec;
+}
+
+/**
+ * Find the sector with the next lowest ceiling in surrounding sectors.
+ */
+sector_t* P_FindSectorSurroundingNextLowestCeiling(sector_t *sec,
+                                                   float baseHeight,
+                                                   float *val)
+{
+    findnextplaneheightparams_t params;
+
+    params.baseSec = sec;
+    params.baseHeight = baseHeight;
+    params.flags = 0;
+    params.foundSec = NULL;
+    params.val = DDMAXFLOAT;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+
+    if(val)
+        *val = params.val;
+
+    return params.foundSec;
+}
 
 typedef struct spreadsoundtoneighborsparams_s {
     sector_t           *baseSec;
