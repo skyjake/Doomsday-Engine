@@ -74,7 +74,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="dxguid.lib dxerr.lib dinput8.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libcmt.lib dxguid.lib dxerr.lib dinput8.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
 				OutputFile="./Bin/Release/Doomsday.exe"
 				Version="1.0"
 				LinkIncremental="1"
@@ -573,6 +573,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\p_linedef.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\p_maputil.c"
 				>
 			</File>
@@ -585,6 +589,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\p_plane.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\p_players.c"
 				>
 			</File>
@@ -593,7 +601,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\p_polyobj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\p_sector.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\p_seg.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\p_sidedef.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\p_sight.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\p_subsector.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\p_surface.c"
 				>
 			</File>
 			<File
@@ -602,6 +634,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\p_ticker.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\p_vertex.c"
 				>
 			</File>
 			<File
@@ -1632,6 +1668,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\p_linedef.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\p_mapdata.h"
 				>
 			</File>
@@ -1652,6 +1692,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\p_plane.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\p_players.h"
 				>
 			</File>
@@ -1660,7 +1704,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\p_polyobj.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\p_sector.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\p_seg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\p_sidedef.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\p_sight.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\p_subsector.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\p_surface.h"
 				>
 			</File>
 			<File
@@ -1669,6 +1737,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\p_ticker.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\p_vertex.h"
 				>
 			</File>
 			<File
