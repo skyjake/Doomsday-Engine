@@ -553,19 +553,19 @@ extern          "C" {
                                     // Requested by the engine during init.
 
     // Map Update constants.
-    enum /* do not change the numerical values of the constants */
+    enum /* Do not change the numerical values of the constants! */
     {
-        // Flags. OR'ed with a DMU property constant. The most significant byte
-        // is used for the flags.
+        // Flags. OR'ed with a DMU property constant. The most significant
+        // byte is used for the flags.
         DMU_FLAG_MASK           = 0xff000000,
-        DMU_LINEDEF_OF_SECTOR   = 0x80000000,
-        DMU_SECTOR_OF_SUBSECTOR = 0x40000000,
-        DMU_SEG_OF_POLYOBJ      = 0x20000000,
-        DMU_SIDEDEF1_OF_LINE    = 0x10000000,
-        DMU_SIDEDEF0_OF_LINE    = 0x08000000,
-        DMU_SEG_OF_SUBSECTOR    = 0x04000000,
-        DMU_SUBSECTOR_OF_SECTOR = 0x02000000,
-        // (1 bit left)
+        DMU_SIDEDEF1_OF_LINE    = 0x80000000,
+        DMU_SIDEDEF0_OF_LINE    = 0x40000000,
+        DMU_TOP_OF_SIDEDEF      = 0x20000000,
+        DMU_MIDDLE_OF_SIDEDEF   = 0x10000000,
+        DMU_BOTTOM_OF_SIDEDEF   = 0x08000000,
+        DMU_FLOOR_OF_SECTOR     = 0x04000000,
+        DMU_CEILING_OF_SECTOR   = 0x02000000,
+        // (1 bits left)
 
         DMU_NONE = 0,
 
@@ -590,14 +590,8 @@ extern          "C" {
         DMU_Y,
         DMU_XY,
 
+        DMU_VERTEX0,
         DMU_VERTEX1,
-        DMU_VERTEX2,
-        DMU_VERTEX1_X,
-        DMU_VERTEX1_Y,
-        DMU_VERTEX1_XY,
-        DMU_VERTEX2_X,
-        DMU_VERTEX2_Y,
-        DMU_VERTEX2_XY,
 
         DMU_FRONT_SECTOR,
         DMU_BACK_SECTOR,
@@ -610,92 +604,31 @@ extern          "C" {
         DMU_SLOPE_TYPE,
         DMU_ANGLE,
         DMU_OFFSET,
-        DMU_TOP_MATERIAL,
-        DMU_TOP_MATERIAL_OFFSET_X,
-        DMU_TOP_MATERIAL_OFFSET_Y,
-        DMU_TOP_MATERIAL_OFFSET_XY,
-        DMU_TOP_COLOR,
-        DMU_TOP_COLOR_RED,
-        DMU_TOP_COLOR_GREEN,
-        DMU_TOP_COLOR_BLUE,
-        DMU_MIDDLE_MATERIAL,
-        DMU_MIDDLE_MATERIAL_OFFSET_X,
-        DMU_MIDDLE_MATERIAL_OFFSET_Y,
-        DMU_MIDDLE_MATERIAL_OFFSET_XY,
-        DMU_MIDDLE_COLOR,
-        DMU_MIDDLE_COLOR_RED,
-        DMU_MIDDLE_COLOR_GREEN,
-        DMU_MIDDLE_COLOR_BLUE,
-        DMU_MIDDLE_COLOR_ALPHA,
-        DMU_MIDDLE_BLENDMODE,
-        DMU_BOTTOM_MATERIAL,
-        DMU_BOTTOM_MATERIAL_OFFSET_X,
-        DMU_BOTTOM_MATERIAL_OFFSET_Y,
-        DMU_BOTTOM_MATERIAL_OFFSET_XY,
-        DMU_BOTTOM_COLOR,
-        DMU_BOTTOM_COLOR_RED,
-        DMU_BOTTOM_COLOR_GREEN,
-        DMU_BOTTOM_COLOR_BLUE,
-        DMU_VALID_COUNT,
 
+        DMU_MATERIAL,
+        DMU_MATERIAL_OFFSET_X,
+        DMU_MATERIAL_OFFSET_Y,
+        DMU_MATERIAL_OFFSET_XY,
+
+        DMU_VALID_COUNT,
         DMU_LINEDEF_COUNT,
         DMU_COLOR,                  // RGB
         DMU_COLOR_RED,              // red component
         DMU_COLOR_GREEN,            // green component
         DMU_COLOR_BLUE,             // blue component
+        DMU_ALPHA,
+        DMU_BLENDMODE,
         DMU_LIGHT_LEVEL,
-        DMT_MOBJS,                 // pointer to start of sector mobjList
+        DMT_MOBJS,                  // pointer to start of sector mobjList
         DMU_BOUNDING_BOX,           // float[4]
         DMU_SOUND_ORIGIN,
 
-        DMU_PLANE_HEIGHT,
-        DMU_PLANE_TARGET_HEIGHT,
-        DMU_PLANE_MATERIAL,
-        DMU_PLANE_MATERIAL_OFFSET_X,
-        DMU_PLANE_MATERIAL_OFFSET_Y,
-        DMU_PLANE_MATERIAL_OFFSET_XY,
-        DMU_PLANE_SPEED,
-        DMU_PLANE_COLOR,
-        DMU_PLANE_COLOR_RED,
-        DMU_PLANE_COLOR_GREEN,
-        DMU_PLANE_COLOR_BLUE,
-        DMU_PLANE_SOUND_ORIGIN,
+        DMU_HEIGHT,
+        DMU_TARGET_HEIGHT,
 
-        // DMU_FLOOR_*/DMU_CEILING constants are aliases which can be
-        // used to access the floor/ceiling plane of a sector directly,
-        // via a sector ptr/indice.
-        // They MUST be in the same order as and match the DMU_PLANE_*
-        // constants above.
-        DMU_FLOOR_HEIGHT,
-        DMU_FLOOR_TARGET_HEIGHT,
-        DMU_FLOOR_MATERIAL,
-        DMU_FLOOR_MATERIAL_OFFSET_X,
-        DMU_FLOOR_MATERIAL_OFFSET_Y,
-        DMU_FLOOR_MATERIAL_OFFSET_XY,
-        DMU_FLOOR_SPEED,
-        DMU_FLOOR_COLOR,
-        DMU_FLOOR_COLOR_RED,
-        DMU_FLOOR_COLOR_GREEN,
-        DMU_FLOOR_COLOR_BLUE,
-        DMU_FLOOR_SOUND_ORIGIN,
-
-        DMU_CEILING_HEIGHT,
-        DMU_CEILING_TARGET_HEIGHT,
-        DMU_CEILING_MATERIAL,
-        DMU_CEILING_MATERIAL_OFFSET_X,
-        DMU_CEILING_MATERIAL_OFFSET_Y,
-        DMU_CEILING_MATERIAL_OFFSET_XY,
-        DMU_CEILING_SPEED,
-        DMU_CEILING_COLOR,
-        DMU_CEILING_COLOR_RED,
-        DMU_CEILING_COLOR_GREEN,
-        DMU_CEILING_COLOR_BLUE,
-        DMU_CEILING_SOUND_ORIGIN,
-
-        DMU_SEG_LIST,               // array of seg_t*'s
         DMU_SEG_COUNT,
         DMU_TAG,
-        DMU_START_SPOT,              // degenmobj_t
+        DMU_START_SPOT,             // degenmobj_t
         DMU_START_SPOT_X,
         DMU_START_SPOT_Y,
         DMU_START_SPOT_XY,
