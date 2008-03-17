@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_workspace_file>
+	<Workspace title="deng project">
+		<Project filename="doomsday.cbp" />
+		<Project filename="jdoom.cbp" active="1" />
+		<Project filename="jdoom64.cbp" />
+		<Project filename="jheretic.cbp" />
+		<Project filename="jhexen.cbp" />
+		<Project filename="dpexample.cbp" />
+		<Project filename="dpdehread.cbp" />
+		<Project filename="dpwadmapconverter.cbp" />
+		<Project filename="dsa3d.cbp" />
+		<Project filename="dscompat.cbp" />
+		<Project filename="dsopenal.cbp" />
+		<Project filename="dssdlmixer.cbp" />
+		<Project filename="wolftc.cbp" />
+	</Workspace>
+</CodeBlocks_workspace_file>

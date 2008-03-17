@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<ActiveTarget name="Debug Win32" />
+	<File name="..\..\..\plugins\common\src\am_map.c" open="1" top="0" tabpos="3">
+		<Cursor position="107107" topLine="3618" />
+	</File>
+	<File name="..\..\..\plugins\jdoom\src\p_oldsvg.c" open="1" top="0" tabpos="2">
+		<Cursor position="6635" topLine="196" />
+	</File>
+	<File name="..\..\..\plugins\jdoom\src\st_stuff.c" open="1" top="0" tabpos="1">
+		<Cursor position="41465" topLine="1405" />
+	</File>
+</CodeBlocks_layout_file>
