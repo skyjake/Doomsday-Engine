@@ -2,17 +2,41 @@
 <CodeBlocks_workspace_file>
 	<Workspace title="deng project">
 		<Project filename="doomsday.cbp" active="1" />
-		<Project filename="jdoom.cbp" />
-		<Project filename="jdoom64.cbp" />
-		<Project filename="jheretic.cbp" />
-		<Project filename="jhexen.cbp" />
-		<Project filename="dpexample.cbp" />
-		<Project filename="dpdehread.cbp" />
-		<Project filename="dpwadmapconverter.cbp" />
-		<Project filename="dsa3d.cbp" />
-		<Project filename="dscompat.cbp" />
-		<Project filename="dsopenal.cbp" />
-		<Project filename="dssdlmixer.cbp" />
-		<Project filename="wolftc.cbp" />
+		<Project filename="jdoom.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="jdoom64.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="jheretic.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="jhexen.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="dpexample.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="dpdehread.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="dpwadmapconverter.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="dsa3d.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="dscompat.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="dsopenal.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="dssdlmixer.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
+		<Project filename="wolftc.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
 	</Workspace>
 </CodeBlocks_workspace_file>
