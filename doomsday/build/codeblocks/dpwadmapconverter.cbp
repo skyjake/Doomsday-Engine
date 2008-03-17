@@ -70,6 +70,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="Debug Win32;Release Win32;" />
+		</VirtualTargets>
 		<Unit filename="..\..\plugins\wadmapconverter\include\wadmapconverter.h" />
 		<Unit filename="..\..\plugins\wadmapconverter\src\load.c">
 			<Option compilerVar="CC" />

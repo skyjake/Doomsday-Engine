@@ -85,6 +85,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="Debug Win32;Release Win32;" />
+		</VirtualTargets>
 		<Unit filename="..\..\plugins\common\include\am_map.h" />
 		<Unit filename="..\..\plugins\common\include\am_rendlist.h" />
 		<Unit filename="..\..\plugins\common\include\d_net.h" />

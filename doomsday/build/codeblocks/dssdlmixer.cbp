@@ -76,6 +76,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="Release Win32;Debug Win32;" />
+		</VirtualTargets>
 		<Unit filename="..\..\plugins\sdlmixer\api\dssdlmixer.def" />
 		<Unit filename="..\..\plugins\sdlmixer\portable\include\driver.h" />
 		<Unit filename="..\..\plugins\sdlmixer\portable\include\mus2midi.h" />

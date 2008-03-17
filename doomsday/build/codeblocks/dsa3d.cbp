@@ -69,6 +69,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="Debug Win32;Release Win32;" />
+		</VirtualTargets>
 		<Unit filename="..\..\plugins\a3d\api\dsa3d.def" />
 		<Unit filename="..\..\plugins\a3d\src\driver_a3d.cpp" />
 		<Extensions>

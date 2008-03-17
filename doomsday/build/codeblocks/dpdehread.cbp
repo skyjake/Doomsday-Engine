@@ -64,6 +64,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="Release Win32;Debug Win32;" />
+		</VirtualTargets>
 		<Unit filename="..\..\plugins\dehread\src\dehmain.c">
 			<Option compilerVar="CC" />
 		</Unit>

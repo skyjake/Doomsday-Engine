@@ -73,6 +73,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="Debug Win32;Release Win32;" />
+		</VirtualTargets>
 		<Unit filename="..\..\plugins\ds6\api\dscompat.def" />
 		<Unit filename="..\..\plugins\ds6\src\driver_sndcmp.cpp" />
 		<Extensions>

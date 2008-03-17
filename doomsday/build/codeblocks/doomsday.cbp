@@ -135,6 +135,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="Release Win32;Debug Win32;" />
+		</VirtualTargets>
 		<Unit filename="..\..\engine\api\Doomsday.def" />
 		<Unit filename="..\..\engine\api\dd_api.h" />
 		<Unit filename="..\..\engine\api\dd_maptypes.h" />

@@ -84,6 +84,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="Release Win32;Debug Win32;" />
+		</VirtualTargets>
 		<Unit filename="..\..\plugins\common\include\am_map.h" />
 		<Unit filename="..\..\plugins\common\include\am_rendlist.h" />
 		<Unit filename="..\..\plugins\common\include\d_net.h" />
@@ -120,132 +123,48 @@
 		<Unit filename="..\..\plugins\common\include\st_lib.h" />
 		<Unit filename="..\..\plugins\common\include\x_hair.h" />
 		<Unit filename="..\..\plugins\common\include\xgclass.h" />
-		<Unit filename="..\..\plugins\common\src\am_map.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\am_rendlist.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\d_net.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\d_netcl.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\d_netsv.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\dmu_lib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\f_infine.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\g_controls.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\g_game.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\g_update.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\hu_lib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\hu_menu.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\hu_msg.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\hu_pspr.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\hu_stuff.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\m_fixed.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\m_multi.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_actor.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_ceilings.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_doors.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_floors.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_inventory.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_iterlist.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_map.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_mapsetup.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_mapspec.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_plats.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_player.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_saveg.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_start.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_svtexarc.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_switches.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_tick.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_user.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_view.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_xgfile.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_xgline.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_xgsave.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_xgsec.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\r_common.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\st_lib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\x_hair.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\plugins\common\src\am_map.c" />
+		<Unit filename="..\..\plugins\common\src\am_rendlist.c" />
+		<Unit filename="..\..\plugins\common\src\d_net.c" />
+		<Unit filename="..\..\plugins\common\src\d_netcl.c" />
+		<Unit filename="..\..\plugins\common\src\d_netsv.c" />
+		<Unit filename="..\..\plugins\common\src\dmu_lib.c" />
+		<Unit filename="..\..\plugins\common\src\f_infine.c" />
+		<Unit filename="..\..\plugins\common\src\g_controls.c" />
+		<Unit filename="..\..\plugins\common\src\g_game.c" />
+		<Unit filename="..\..\plugins\common\src\g_update.c" />
+		<Unit filename="..\..\plugins\common\src\hu_lib.c" />
+		<Unit filename="..\..\plugins\common\src\hu_menu.c" />
+		<Unit filename="..\..\plugins\common\src\hu_msg.c" />
+		<Unit filename="..\..\plugins\common\src\hu_pspr.c" />
+		<Unit filename="..\..\plugins\common\src\hu_stuff.c" />
+		<Unit filename="..\..\plugins\common\src\m_fixed.c" />
+		<Unit filename="..\..\plugins\common\src\m_multi.c" />
+		<Unit filename="..\..\plugins\common\src\p_actor.c" />
+		<Unit filename="..\..\plugins\common\src\p_ceilings.c" />
+		<Unit filename="..\..\plugins\common\src\p_doors.c" />
+		<Unit filename="..\..\plugins\common\src\p_floors.c" />
+		<Unit filename="..\..\plugins\common\src\p_inventory.c" />
+		<Unit filename="..\..\plugins\common\src\p_iterlist.c" />
+		<Unit filename="..\..\plugins\common\src\p_map.c" />
+		<Unit filename="..\..\plugins\common\src\p_mapsetup.c" />
+		<Unit filename="..\..\plugins\common\src\p_mapspec.c" />
+		<Unit filename="..\..\plugins\common\src\p_plats.c" />
+		<Unit filename="..\..\plugins\common\src\p_player.c" />
+		<Unit filename="..\..\plugins\common\src\p_saveg.c" />
+		<Unit filename="..\..\plugins\common\src\p_start.c" />
+		<Unit filename="..\..\plugins\common\src\p_svtexarc.c" />
+		<Unit filename="..\..\plugins\common\src\p_switches.c" />
+		<Unit filename="..\..\plugins\common\src\p_tick.c" />
+		<Unit filename="..\..\plugins\common\src\p_user.c" />
+		<Unit filename="..\..\plugins\common\src\p_view.c" />
+		<Unit filename="..\..\plugins\common\src\p_xgfile.c" />
+		<Unit filename="..\..\plugins\common\src\p_xgline.c" />
+		<Unit filename="..\..\plugins\common\src\p_xgsave.c" />
+		<Unit filename="..\..\plugins\common\src\p_xgsec.c" />
+		<Unit filename="..\..\plugins\common\src\r_common.c" />
+		<Unit filename="..\..\plugins\common\src\st_lib.c" />
+		<Unit filename="..\..\plugins\common\src\x_hair.c" />
 		<Unit filename="..\..\plugins\jheretic\include\acfnlink.h" />
 		<Unit filename="..\..\plugins\jheretic\include\doomdata.h" />
 		<Unit filename="..\..\plugins\jheretic\include\doomdef.h" />
@@ -293,78 +212,30 @@
 		<Unit filename="..\..\plugins\jheretic\include\st_stuff.h" />
 		<Unit filename="..\..\plugins\jheretic\include\tables.h" />
 		<Unit filename="..\..\plugins\jheretic\include\version.h" />
-		<Unit filename="..\..\plugins\jheretic\src\acfnlink.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\g_ctrl.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\h_api.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\h_console.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\h_main.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\h_refresh.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\in_lude.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\m_cheat.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\m_random.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_enemy.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_floor.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_inter.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_lights.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_maputl.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_mobj.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_oldsvg.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_pspr.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_setup.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_sound.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_spec.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_switch.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\p_telept.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\st_stuff.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jheretic\src\tables.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\plugins\jheretic\src\acfnlink.c" />
+		<Unit filename="..\..\plugins\jheretic\src\g_ctrl.c" />
+		<Unit filename="..\..\plugins\jheretic\src\h_api.c" />
+		<Unit filename="..\..\plugins\jheretic\src\h_console.c" />
+		<Unit filename="..\..\plugins\jheretic\src\h_main.c" />
+		<Unit filename="..\..\plugins\jheretic\src\h_refresh.c" />
+		<Unit filename="..\..\plugins\jheretic\src\in_lude.c" />
+		<Unit filename="..\..\plugins\jheretic\src\m_cheat.c" />
+		<Unit filename="..\..\plugins\jheretic\src\m_random.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_enemy.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_floor.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_inter.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_lights.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_maputl.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_mobj.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_oldsvg.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_pspr.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_setup.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_sound.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_spec.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_switch.c" />
+		<Unit filename="..\..\plugins\jheretic\src\p_telept.c" />
+		<Unit filename="..\..\plugins\jheretic\src\st_stuff.c" />
+		<Unit filename="..\..\plugins\jheretic\src\tables.c" />
 		<Extensions>
 			<code_completion />
 			<debugger />

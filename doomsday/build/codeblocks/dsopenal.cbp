@@ -71,6 +71,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="Release Win32;Debug Win32;" />
+		</VirtualTargets>
 		<Unit filename="..\..\plugins\openal\api\dsopenal.def" />
 		<Unit filename="..\..\plugins\openal\src\driver_openal.c">
 			<Option compilerVar="CC" />
