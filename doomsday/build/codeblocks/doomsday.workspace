@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
 	<Workspace title="deng project">
-		<Project filename="doomsday.cbp" />
-		<Project filename="jdoom.cbp" active="1" />
+		<Project filename="doomsday.cbp" active="1" />
+		<Project filename="jdoom.cbp" />
 		<Project filename="jdoom64.cbp" />
 		<Project filename="jheretic.cbp" />
 		<Project filename="jhexen.cbp" />

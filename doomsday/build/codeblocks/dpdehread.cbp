@@ -8,7 +8,7 @@
 		<Build>
 			<Target title="Release Win32">
 				<Option platforms="Windows;" />
-				<Option output="dpDehRead" prefix_auto="1" extension_auto="1" />
+				<Option output="bin\Release Win32\dpDehRead" prefix_auto="1" extension_auto="1" />
 				<Option object_output=".\Obj\Release Win32\dpDehRead" />
 				<Option type="3" />
 				<Option compiler="msvc8" />
@@ -23,19 +23,19 @@
 					<Add option="/D_WINDOWS" />
 					<Add option="/D_USRDLL" />
 					<Add option="/DDPDEHREAD_EXPORTS" />
-					<Add directory="..\..\..\engine\api" />
+					<Add directory="..\..\engine\api" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="..\..\..\engine\api" />
+					<Add directory="..\..\engine\api" />
 				</ResourceCompiler>
 				<Linker>
 					<Add option="/INCREMENTAL:NO" />
-					<Add library="doomsday" />
+					<Add library="bin\Release Win32\Doomsday.lib" />
 				</Linker>
 			</Target>
 			<Target title="Debug Win32">
 				<Option platforms="Windows;" />
-				<Option output="dpDehRead" prefix_auto="1" extension_auto="1" />
+				<Option output="bin\Debug Win32\dpDehRead" prefix_auto="1" extension_auto="1" />
 				<Option object_output=".\Obj\Debug Win32\dpDehRead" />
 				<Option type="3" />
 				<Option compiler="msvc8" />
@@ -52,19 +52,19 @@
 					<Add option="/D_WINDOWS" />
 					<Add option="/D_USRDLL" />
 					<Add option="/DDPDEHREAD_EXPORTS" />
-					<Add directory="..\..\..\engine\api" />
+					<Add directory="..\..\engine\api" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="..\..\..\engine\api" />
+					<Add directory="..\..\engine\api" />
 				</ResourceCompiler>
 				<Linker>
 					<Add option="/opt:noicf" />
 					<Add option="/opt:noref" />
-					<Add library="doomsday" />
+					<Add library="bin\Debug Win32\Doomsday.lib" />
 				</Linker>
 			</Target>
 		</Build>
-		<Unit filename="..\..\..\plugins\dehread\src\dehmain.c">
+		<Unit filename="..\..\plugins\dehread\src\dehmain.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>
