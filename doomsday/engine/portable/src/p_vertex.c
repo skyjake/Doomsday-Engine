@@ -53,7 +53,7 @@
 /**
  * Update the vertex, property is selected by DMU_* name.
  */
-boolean Vertex_SetProperty(vertex_t *vtx, const struct setargs_s *args)
+boolean Vertex_SetProperty(vertex_t *vtx, const setargs_t *args)
 {
     // Vertices are not writable through DMU.
     Con_Error("Vertex_SetProperty: Is not writable.\n");
@@ -64,7 +64,7 @@ boolean Vertex_SetProperty(vertex_t *vtx, const struct setargs_s *args)
 /**
  * Get the value of a vertex property, selected by DMU_* name.
  */
-boolean Vertex_GetProperty(const vertex_t *vtx, struct setargs_s *args)
+boolean Vertex_GetProperty(const vertex_t *vtx, setargs_t *args)
 {
     switch(args->prop)
     {

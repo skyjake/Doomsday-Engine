@@ -53,7 +53,7 @@
 /**
  * Update the plane, property is selected by DMU_* name.
  */
-boolean Plane_SetProperty(plane_t *pln, const struct setargs_s *args)
+boolean Plane_SetProperty(plane_t *pln, const setargs_t *args)
 {
     switch(args->prop)
     {
@@ -78,7 +78,7 @@ boolean Plane_SetProperty(plane_t *pln, const struct setargs_s *args)
 /**
  * Get the value of a plane property, selected by DMU_* name.
  */
-boolean Plane_GetProperty(const plane_t *pln, struct setargs_s *args)
+boolean Plane_GetProperty(const plane_t *pln, setargs_t *args)
 {
     switch(args->prop)
     {

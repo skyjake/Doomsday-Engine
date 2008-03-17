@@ -53,7 +53,7 @@
 /**
  * Update the sector, property is selected by DMU_* name.
  */
-boolean Sector_SetProperty(sector_t *sec, const struct setargs_s *args)
+boolean Sector_SetProperty(sector_t *sec, const setargs_t *args)
 {
     switch(args->prop)
     {
@@ -88,7 +88,7 @@ boolean Sector_SetProperty(sector_t *sec, const struct setargs_s *args)
 /**
  * Get the value of a sector property, selected by DMU_* name.
  */
-boolean Sector_GetProperty(const sector_t *sec, struct setargs_s *args)
+boolean Sector_GetProperty(const sector_t *sec, setargs_t *args)
 {
     switch(args->prop)
     {

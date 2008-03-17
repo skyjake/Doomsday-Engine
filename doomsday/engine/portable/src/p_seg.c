@@ -53,7 +53,7 @@
 /**
  * Update the seg, property is selected by DMU_* name.
  */
-boolean Seg_SetProperty(seg_t *seg, const struct setargs_s *args)
+boolean Seg_SetProperty(seg_t *seg, const setargs_t *args)
 {
     switch(args->prop)
     {
@@ -71,7 +71,7 @@ boolean Seg_SetProperty(seg_t *seg, const struct setargs_s *args)
 /**
  * Get the value of a seg property, selected by DMU_* name.
  */
-boolean Seg_GetProperty(const seg_t *seg, struct setargs_s *args)
+boolean Seg_GetProperty(const seg_t *seg, setargs_t *args)
 {
     switch(args->prop)
     {

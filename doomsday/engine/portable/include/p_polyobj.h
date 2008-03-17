@@ -30,9 +30,9 @@
 #define __DOOMSDAY_WORLD_POLYOBJ_H__
 
 #include "r_data.h"
+#include "p_dmu.h"
 
-boolean         Polyobj_GetProperty(const polyobj_t *po,
-                                    struct setargs_s *args);
-boolean         Polyobj_SetProperty(polyobj_t *po, const struct setargs_s *args);
+boolean         Polyobj_GetProperty(const polyobj_t *po, setargs_t *args);
+boolean         Polyobj_SetProperty(polyobj_t *po, const setargs_t *args);
 
 #endif

@@ -30,9 +30,9 @@
 #define __DOOMSDAY_WORLD_PLANE_H__
 
 #include "r_data.h"
+#include "p_dmu.h"
 
-boolean         Plane_GetProperty(const plane_t *pln,
-                                  struct setargs_s *args);
-boolean         Plane_SetProperty(plane_t *pln, const struct setargs_s *args);
+boolean         Plane_GetProperty(const plane_t *pln, setargs_t *args);
+boolean         Plane_SetProperty(plane_t *pln, const setargs_t *args);
 
 #endif

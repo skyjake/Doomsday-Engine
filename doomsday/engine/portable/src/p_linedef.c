@@ -53,7 +53,7 @@
 /**
  * Update the linedef, property is selected by DMU_* name.
  */
-boolean Linedef_SetProperty(linedef_t *lin, const struct setargs_s *args)
+boolean Linedef_SetProperty(linedef_t *lin, const setargs_t *args)
 {
     switch(args->prop)
     {
@@ -86,7 +86,7 @@ boolean Linedef_SetProperty(linedef_t *lin, const struct setargs_s *args)
 /**
  * Get the value of a linedef property, selected by DMU_* name.
  */
-boolean Linedef_GetProperty(const linedef_t *lin, struct setargs_s *args)
+boolean Linedef_GetProperty(const linedef_t *lin, setargs_t *args)
 {
    switch(args->prop)
     {

@@ -30,10 +30,9 @@
 #define __DOOMSDAY_WORLD_VERTEX_H__
 
 #include "r_data.h"
+#include "p_dmu.h"
 
-boolean         Vertex_GetProperty(const vertex_t *vtx,
-                                   struct setargs_s *args);
-boolean         Vertex_SetProperty(vertex_t *vtx,
-                                   const struct setargs_s *args);
+boolean         Vertex_GetProperty(const vertex_t *vtx, setargs_t *args);
+boolean         Vertex_SetProperty(vertex_t *vtx, const setargs_t *args);
 
 #endif

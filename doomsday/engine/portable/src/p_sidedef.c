@@ -53,7 +53,7 @@
 /**
  * Update the sidedef, property is selected by DMU_* name.
  */
-boolean Sidedef_SetProperty(sidedef_t *sid, const struct setargs_s *args)
+boolean Sidedef_SetProperty(sidedef_t *sid, const setargs_t *args)
 {
     switch(args->prop)
     {
@@ -71,7 +71,7 @@ boolean Sidedef_SetProperty(sidedef_t *sid, const struct setargs_s *args)
 /**
  * Get the value of a sidedef property, selected by DMU_* name.
  */
-boolean Sidedef_GetProperty(const sidedef_t *sid, struct setargs_s *args)
+boolean Sidedef_GetProperty(const sidedef_t *sid, setargs_t *args)
 {
     switch(args->prop)
     {

@@ -30,11 +30,10 @@
 #define __DOOMSDAY_REFRESH_SURFACE_H__
 
 #include "r_data.h"
+#include "p_dmu.h"
 
-boolean         Surface_GetProperty(const surface_t *suf,
-                                    struct setargs_s *args);
-boolean         Surface_SetProperty(surface_t *suf,
-                                    const struct setargs_s *args);
+boolean         Surface_GetProperty(const surface_t *suf, setargs_t *args);
+boolean         Surface_SetProperty(surface_t *suf, const setargs_t *args);
 
 boolean         Surface_SetMaterial(surface_t *suf, struct material_s *mat);
 boolean         Surface_SetMaterialOffsetX(surface_t *suf, float x);

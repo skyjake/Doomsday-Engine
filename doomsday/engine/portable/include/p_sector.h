@@ -30,9 +30,9 @@
 #define __DOOMSDAY_WORLD_SECTOR_H__
 
 #include "r_data.h"
+#include "p_dmu.h"
 
-boolean         Sector_GetProperty(const sector_t *sec,
-                                   struct setargs_s *args);
-boolean         Sector_SetProperty(sector_t *sec, const struct setargs_s *args);
+boolean         Sector_GetProperty(const sector_t *sec, setargs_t *args);
+boolean         Sector_SetProperty(sector_t *sec, const setargs_t *args);
 
 #endif

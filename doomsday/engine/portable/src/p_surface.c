@@ -291,7 +291,7 @@ boolean Surface_SetBlendMode(surface_t *suf, blendmode_t blendMode)
 /**
  * Update the surface, property is selected by DMU_* name.
  */
-boolean Surface_SetProperty(surface_t *suf, const struct setargs_s *args)
+boolean Surface_SetProperty(surface_t *suf, const setargs_t *args)
 {
     switch(args->prop)
     {
@@ -382,7 +382,7 @@ boolean Surface_SetProperty(surface_t *suf, const struct setargs_s *args)
 /**
  * Get the value of a surface property, selected by DMU_* name.
  */
-boolean Surface_GetProperty(const surface_t *suf, struct setargs_s *args)
+boolean Surface_GetProperty(const surface_t *suf, setargs_t *args)
 {
     switch(args->prop)
     {

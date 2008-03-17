@@ -30,9 +30,9 @@
 #define __DOOMSDAY_WORLD_LINEDEF_H__
 
 #include "r_data.h"
+#include "p_dmu.h"
 
-boolean         Linedef_GetProperty(const linedef_t *lin,
-                                    struct setargs_s *args);
-boolean         Linedef_SetProperty(linedef_t *lin, const struct setargs_s *args);
+boolean         Linedef_GetProperty(const linedef_t *lin, setargs_t *args);
+boolean         Linedef_SetProperty(linedef_t *lin, const setargs_t *args);
 
 #endif

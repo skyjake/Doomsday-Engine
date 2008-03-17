@@ -30,9 +30,9 @@
 #define __DOOMSDAY_WORLD_SIDEDEF_H__
 
 #include "r_data.h"
+#include "p_dmu.h"
 
-boolean         Sidedef_GetProperty(const sidedef_t *sid,
-                                    struct setargs_s *args);
-boolean         Sidedef_SetProperty(sidedef_t *sid, const struct setargs_s *args);
+boolean         Sidedef_GetProperty(const sidedef_t *sid, setargs_t *args);
+boolean         Sidedef_SetProperty(sidedef_t *sid, const setargs_t *args);
 
 #endif

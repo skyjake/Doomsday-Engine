@@ -53,8 +53,7 @@
 /**
  * Update the subsector, property is selected by DMU_* name.
  */
-boolean Subsector_SetProperty(subsector_t *sub,
-                              const struct setargs_s *args)
+boolean Subsector_SetProperty(subsector_t *sub, const setargs_t *args)
 {
     switch(args->prop)
     {
@@ -72,8 +71,7 @@ boolean Subsector_SetProperty(subsector_t *sub,
 /**
  * Get the value of a subsector property, selected by DMU_* name.
  */
-boolean Subsector_GetProperty(const subsector_t *sub,
-                              struct setargs_s *args)
+boolean Subsector_GetProperty(const subsector_t *sub, setargs_t *args)
 {
     switch(args->prop)
     {

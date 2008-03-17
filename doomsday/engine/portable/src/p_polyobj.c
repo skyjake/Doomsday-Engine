@@ -53,7 +53,7 @@
 /**
  * Update the polyobj, property is selected by DMU_* name.
  */
-boolean Polyobj_SetProperty(polyobj_t *po, const struct setargs_s *args)
+boolean Polyobj_SetProperty(polyobj_t *po, const setargs_t *args)
 {
     switch(args->prop)
     {
@@ -116,7 +116,7 @@ boolean Polyobj_SetProperty(polyobj_t *po, const struct setargs_s *args)
 /**
  * Get the value of a polyobj property, selected by DMU_* name.
  */
-boolean Polyobj_GetProperty(const polyobj_t *po, struct setargs_s *args)
+boolean Polyobj_GetProperty(const polyobj_t *po, setargs_t *args)
 {
     switch(args->prop)
     {

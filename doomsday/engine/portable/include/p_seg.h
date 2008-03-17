@@ -30,8 +30,9 @@
 #define __DOOMSDAY_WORLD_SEG_H__
 
 #include "r_data.h"
+#include "p_dmu.h"
 
-boolean         Seg_GetProperty(const seg_t *seg, struct setargs_s *args);
-boolean         Seg_SetProperty(seg_t *seg, const struct setargs_s *args);
+boolean         Seg_GetProperty(const seg_t *seg, setargs_t *args);
+boolean         Seg_SetProperty(seg_t *seg, const setargs_t *args);
 
 #endif
