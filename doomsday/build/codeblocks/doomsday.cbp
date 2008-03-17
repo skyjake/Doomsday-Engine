@@ -145,7 +145,6 @@
 		<Unit filename="..\..\engine\api\dd_share.h" />
 		<Unit filename="..\..\engine\api\dd_types.h" />
 		<Unit filename="..\..\engine\api\doomsday.h" />
-		<Unit filename="..\..\engine\api\smart_header.h" />
 		<Unit filename="..\..\engine\api\sys_musd.h" />
 		<Unit filename="..\..\engine\api\sys_sfxd.h" />
 		<Unit filename="..\..\engine\mac\include\DoomsdayRunner.h">
@@ -191,7 +190,6 @@
 		<Unit filename="..\..\engine\portable\include\con_buffer.h" />
 		<Unit filename="..\..\engine\portable\include\con_busy.h" />
 		<Unit filename="..\..\engine\portable\include\con_config.h" />
-		<Unit filename="..\..\engine\portable\include\con_console.h" />
 		<Unit filename="..\..\engine\portable\include\con_decl.h" />
 		<Unit filename="..\..\engine\portable\include\con_main.h" />
 		<Unit filename="..\..\engine\portable\include\dam_blockmap.h" />
@@ -342,7 +340,6 @@
 		<Unit filename="..\..\engine\portable\include\sys_timer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_window.h" />
 		<Unit filename="..\..\engine\portable\include\tab_anorms.h" />
-		<Unit filename="..\..\engine\portable\include\template.h" />
 		<Unit filename="..\..\engine\portable\include\ui_main.h" />
 		<Unit filename="..\..\engine\portable\include\ui_mpi.h" />
 		<Unit filename="..\..\engine\portable\include\ui_panel.h" />
@@ -847,10 +844,6 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="..\..\engine\unix\src\sys_sfxd_loader.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="..\..\engine\unix\src\sys_stwin.c">
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
