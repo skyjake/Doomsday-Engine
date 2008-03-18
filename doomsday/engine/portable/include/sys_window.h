@@ -123,9 +123,9 @@ boolean         Sys_GetDesktopBPP(int *bpp);
 /**
  * Window management.
  */
-uint            Sys_CreateWindow(application_t *app, uint parent,
+uint            Sys_CreateWindow(application_t *app, uint parentIDX,
                                  int x, int y, int w, int h, int bpp, int flags,
-                                 boolean console, const char *title, void *data);
+                                 ddwindowtype_t type, const char *title, void *data);
 boolean         Sys_DestroyWindow(uint idx);
 
 void            Sys_UpdateWindow(uint idx);
