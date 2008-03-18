@@ -1114,7 +1114,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\..\engine\unix\src\sys_input.c"
+					RelativePath="..\..\..\engine\unix\src\sys_inputd_loader.c"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1122,8 +1122,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1132,8 +1130,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
 					</FileConfiguration>
 				</File>

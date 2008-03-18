@@ -5,8 +5,6 @@
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 2005 Zachary Keene <zjkeene@bellsouth.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,21 +22,18 @@
  * Boston, MA  02110-1301  USA
  */
 
-
 /**
- * sys_input.c: Keyboard, mouse and joystick input using SDL
- * \todo - Unify this with Win32.
+ * driver_disdlinput.cpp: Doomsday user input plugin. Uses SDL_Input.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <assert.h>
 #include <stdlib.h>
 #include <SDL.h>
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_misc.h"
+#include "doomsday.h"
+#include "sys_inputd.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -59,18 +54,18 @@ typedef struct clicker_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+extern "C" {
+int             DI_Init(void);
+void            DI_Shutdown(void);
+void            DI_Event(int type);
+boolean         DI_MousePresent(void);
+boolean         DI_JoystickPresent(void);
+size_t          DI_GetKeyEvents(keyevent_t *evbuf, size_t bufsize);
+void            DI_GetMouseState(mousestate_t *state);
+void            DI_GetJoystickState(joystate_t *state);
+}
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern int novideo;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-int     joydevice = 0;          // Joystick index to use.
-byte    usejoystick = false;    // Joystick input enabled?
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initIOk;
 static byte useMouse, useJoystick;
@@ -84,20 +79,27 @@ static boolean gotFirstMouseMove = false;
 
 static SDL_Joystick *joy;
 
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+int     joydevice = 0;          // Joystick index to use.
+byte    usejoystick = false;    // Joystick input enabled?
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static int verbose = 0;
+
 // CODE --------------------------------------------------------------------
 
-void I_Register(void)
-{
-    C_VAR_INT("input-joy-device", &joydevice, CVF_NO_MAX | CVF_PROTECTED, 0, 0);
-    C_VAR_BYTE("input-joy", &usejoystick, 0, 0, 1);
-}
-
 /**
- * @return          A new key event struct from the buffer.
+ * @return              A new key event struct from the buffer.
  */
 keyevent_t *I_NewKeyEvent(void)
 {
-    keyevent_t *ev = keyEvents + evHead;
+    keyevent_t         *ev = keyEvents + evHead;
 
     evHead = (evHead + 1) % EVBUFSIZE;
     memset(ev, 0, sizeof(*ev));
@@ -105,14 +107,15 @@ keyevent_t *I_NewKeyEvent(void)
 }
 
 /**
- * @return          The oldest event from the buffer.
+ * @return              The oldest event from the buffer.
  */
 keyevent_t *I_GetKeyEvent(void)
 {
-    keyevent_t *ev;
+    keyevent_t         *ev;
 
     if(evHead == evTail)
-        return NULL;            // No more...
+        return NULL; // No more...
+
     ev = keyEvents + evTail;
     evTail = (evTail + 1) % EVBUFSIZE;
     return ev;
@@ -280,8 +283,8 @@ int I_TranslateKeyCode(SDLKey sym)
  */
 void I_PollEvents(void)
 {
-    SDL_Event   event;
-    keyevent_t *e;
+    SDL_Event           event;
+    keyevent_t         *e;
 
     while(SDL_PollEvent(&event))
     {
@@ -323,9 +326,9 @@ void I_PollEvents(void)
     }
 }
 
-void I_InitMouse(void)
+static void initMouse(void)
 {
-    if(ArgCheck("-nomouse") || novideo)
+    if(ArgCheck("-nomouse"))
         return;
 
     // Init was successful.
@@ -336,9 +339,9 @@ void I_InitMouse(void)
     SDL_WM_GrabInput(SDL_GRAB_ON);
 }
 
-void I_InitJoystick(void)
+static void initJoystick(void)
 {
-    int         joycount;
+    int                 joycount;
 
     if(ArgCheck("-nojoy"))
         return;
@@ -382,44 +385,28 @@ void I_InitJoystick(void)
     }
 }
 
-/**
- * Initialize input.
- *
- * @return              @c true, if successful.
- */
-boolean I_Init(void)
-{
-    if(initIOk)
-        return true; // Already initialized.
-
-    I_InitMouse();
-    I_InitJoystick();
-    initIOk = true;
-    return true;
-}
-
-void I_Shutdown(void)
-{
-    if(!initIOk)
-        return; // Not initialized.
-    if (joy) SDL_JoystickClose(joy);
-    initIOk = false;
-}
-
-boolean I_MousePresent(void)
+boolean DI_MousePresent(void)
 {
     return useMouse;
 }
 
-boolean I_JoystickPresent(void)
+boolean DI_JoystickPresent(void)
 {
     return useJoystick;
 }
 
-size_t I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
+/**
+ * Copy n key events from the device and encode them into given buffer.
+ *
+ * @param evbuf         Ptr to the buffer to encode events to.
+ * @param bufsize       Size of the buffer.
+ *
+ * @return              Number of key events written to the buffer.
+ */
+size_t DI_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
 {
-    keyevent_t *e;
-    size_t      i = 0;
+    keyevent_t         *e;
+    size_t              i = 0;
 
     if(!initIOk)
         return 0;
@@ -439,15 +426,15 @@ size_t I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
     return i;
 }
 
-void I_GetMouseState(mousestate_t *state)
+void DI_GetMouseState(mousestate_t *state)
 {
-    Uint8       buttons;
-    int         i;
+    Uint8               buttons;
+    int                 i;
 
     memset(state, 0, sizeof(*state));
 
     // Has the mouse been initialized?
-    if(!I_MousePresent() || !initIOk)
+    if(!initIOk)
         return;
 
     buttons = SDL_GetRelativeMouseState(&state->x, &state->y);
@@ -469,14 +456,14 @@ void I_GetMouseState(mousestate_t *state)
     }
 }
 
-void I_GetJoystickState(joystate_t *state)
+void DI_GetJoystickState(joystate_t *state)
 {
-    int         i, pov;
+    int                 i, pov;
 
     memset(state, 0, sizeof(*state));
 
     // Initialization has not been done.
-    if(!I_JoystickPresent() || !usejoystick || !initIOk)
+    if(!initIOk || !useJoystick)
         return;
 
     // Update joysticks
@@ -495,6 +482,7 @@ void I_GetJoystickState(joystate_t *state)
         value = ((value + 32768) * CONVCONST) + IJOY_AXISMIN;
         state->axis[i] = value;
     }
+
     for(i = 0; i < state->numButtons; ++i)
     {
         state->buttonDowns[i] = joyClickers[i].down;
@@ -503,6 +491,7 @@ void I_GetJoystickState(joystate_t *state)
         // Reset counters.
         joyClickers[i].down = joyClickers[i].up = 0;
     }
+
     for(i = 0; i < state->numHats; ++i)
     {
         pov = SDL_JoystickGetHat(joy, i);
@@ -574,4 +563,40 @@ void I_GetJoystickState(joystate_t *state)
                 state->hatAngle[i] = IJOY_POV_CENTER;
         }
     }
+}
+
+int DI_Init(void)
+{
+    if(initIOk)
+        return true; // Already initialized.
+
+    // Are we in verbose mode?
+    if((verbose = ArgExists("-verbose")))
+        Con_Message("DI_Init(SDL_Input): Initializing input driver...\n");
+
+    SDL_Init(SDL_INIT_VIDEO);
+    atexit(SDL_Quit);
+
+    initMouse();
+    initJoystick();
+
+    // Success!
+    initIOk = true;
+    return true;
+}
+
+void DI_Shutdown(void)
+{
+    if(!initIOk)
+        return;
+
+    if(joy)
+        SDL_JoystickClose(joy);
+
+    initIOk = false;
+}
+
+void DI_Event(int type)
+{
+    // Not supported.
 }

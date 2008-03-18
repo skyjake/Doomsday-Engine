@@ -1,0 +1,15 @@
+LIBRARY			DISDLINPUT
+
+; All exports should be prefixed DI_.
+
+EXPORTS
+
+DI_Init
+DI_Shutdown
+DI_Event
+DI_MousePresent
+DI_JoystickPresent
+DI_GetKeyEvents
+DI_GetMouseState
+DI_GetJoystickState
+
