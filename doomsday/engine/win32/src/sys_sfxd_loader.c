@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_sfxd_loader.c: Sound Driver DLL Loader (Win32)
  *
  * Loader for ds*.dll
@@ -77,7 +77,7 @@ void DS_UnloadExternal(void)
 
 sfxdriver_t *DS_ImportExternal(void)
 {
-    sfxdriver_t *d = &sfxd_external;
+    sfxdriver_t         *d = &sfxd_external;
 
     // Clear everything.
     memset(d, 0, sizeof(*d));
@@ -142,7 +142,7 @@ sfxdriver_t *DS_ImportExternal(void)
  */
 sfxdriver_t *DS_Load(const char *name)
 {
-    char        fn[256];
+    char                fn[256];
 
     // Compose the name, use the prefix "ds".
     sprintf(fn, "ds%s.dll", name);

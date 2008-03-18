@@ -23,16 +23,14 @@
  */
 
 /**
- * sys_sfxd_dummy.h: Dummy Music Driver
- *
- * Used in dedicated server mode.
+ * sys_inputd_loader.h: Input Driver DLL Loader
  */
 
-#ifndef __DOOMSDAY_SYSTEM_SFX_DUMMY_H__
-#define __DOOMSDAY_SYSTEM_SFX_DUMMY_H__
+#ifndef __DOOMSDAY_SYSTEM_INPUT_LOADER_H__
+#define __DOOMSDAY_SYSTEM_INPUT_LOADER_H__
 
-#include "sys_sfxd.h"
+#include "sys_inputd.h"
 
-extern sfxdriver_t sfxd_dummy;
+inputdriver_t    *DI_Load(const char *name);
 
 #endif

@@ -89,13 +89,7 @@ static void C_DECL handler(int s)
  */
 void Sys_Init(void)
 {
-    if(!isDedicated)
-    {
-        Con_Message("Sys_Init: Initializing keyboard, mouse and joystick.\n");
-
-        if(!I_Init())
-            Con_Error("Sys_Init: Failed to initialize input.\n");
-    }
+    DD_InitInput();
 
     // Virtual devices need to be created even in dedicated mode.
     I_InitVirtualInputDevices();
@@ -139,8 +133,7 @@ void Sys_Shutdown(void)
     S_Shutdown();
     Sys_ShutdownMixer();
     GL_Shutdown();
-    I_ShutdownInputDevices();
-    I_Shutdown();
+    DD_ShutdownInput();
 }
 
 int Sys_CriticalMessage(char *msg)

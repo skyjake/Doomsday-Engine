@@ -407,7 +407,6 @@ boolean Con_Init(void)
     Rend_Register();
     GL_Register();
     Net_Register();
-    I_Register();
     H_Register();
     DAM_Register();
     BSP_Register();

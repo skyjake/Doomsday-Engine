@@ -33,6 +33,12 @@
 
 #define NUMKKEYS            256
 
+typedef enum {
+	INPUTD_DINPUT8,
+	INPUTD_SDL,
+	INPUTD_DUMMY
+} inputdriver_e;
+
 // Input devices.
 enum
 {
@@ -154,10 +160,8 @@ extern int      keyRepeatDelay1, keyRepeatDelay2;   // milliseconds
 extern boolean  shiftDown, altDown;
 
 void        DD_RegisterInput(void);
-void        DD_InitInput(void);
+boolean     DD_InitInput(void);
 void        DD_ShutdownInput(void);
-void        DD_StartInput(void);
-void        DD_StopInput(void);
 
 void        DD_ReadKeyboard(void);
 void        DD_ReadMouse(timespan_t ticLength);
@@ -170,7 +174,7 @@ void        DD_ClearKeyRepeaters(void);
 byte        DD_ModKey(byte key);
 
 void        I_InitVirtualInputDevices(void);
-void        I_ShutdownInputDevices(void);
+void        I_ShutdownVirtualInputDevices(void);
 void        I_ClearDeviceClassAssociations(void);
 inputdev_t *I_GetDevice(uint ident, boolean ifactive);
 inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive);
@@ -181,5 +185,23 @@ int         I_GetKeyByName(inputdev_t* device, const char* name);
 float       I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
 boolean     I_IsDeviceKeyDown(uint ident, uint code);
 void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
+
+#define KEYBUFSIZE          32
+
+// Key event types.
+#define IKE_NONE		    0
+#define IKE_KEY_DOWN	    0x1
+#define IKE_KEY_UP		    0x2
+
+// Mouse buttons. (1=left, 2=middle, 3=right, 4=wheel up, 5=wheel down)
+#define IMB_MAXBUTTONS      16
+
+// Joystick.
+#define IJOY_AXISMIN	    -10000
+#define IJOY_AXISMAX	    10000
+#define IJOY_MAXAXES        32
+#define IJOY_MAXBUTTONS	    32
+#define IJOY_MAXHATS	    4
+#define IJOY_POV_CENTER	    -1
 
 #endif

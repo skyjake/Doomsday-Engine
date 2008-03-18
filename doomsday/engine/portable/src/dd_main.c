@@ -517,9 +517,6 @@ static int DD_StartupWorker(void *parm)
 
     F_InitMapping();
 
-    // Initialize the key mappings.
-    DD_InitInput();
-
     Con_SetProgress(10);
 
     // Any startup hooks?
