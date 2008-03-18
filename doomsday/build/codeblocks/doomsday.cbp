@@ -330,6 +330,8 @@
 		<Unit filename="..\..\engine\portable\include\sys_file.h" />
 		<Unit filename="..\..\engine\portable\include\sys_findfile.h" />
 		<Unit filename="..\..\engine\portable\include\sys_input.h" />
+		<Unit filename="..\..\engine\portable\include\sys_inputd_dummy.h" />
+		<Unit filename="..\..\engine\portable\include\sys_inputd_loader.h" />
 		<Unit filename="..\..\engine\portable\include\sys_master.h" />
 		<Unit filename="..\..\engine\portable\include\sys_mixer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_network.h" />
@@ -769,6 +771,9 @@
 		<Unit filename="..\..\engine\portable\src\sys_filein.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\sys_inputd_dummy.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\engine\portable\src\sys_master.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -872,7 +877,7 @@
 		<Unit filename="..\..\engine\win32\src\sys_findfile.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\win32\src\sys_input.c">
+		<Unit filename="..\..\engine\win32\src\sys_inputd_loader.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\win32\src\sys_mixer.c">
