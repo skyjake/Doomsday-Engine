@@ -81,7 +81,7 @@ application_t app;
 
 BOOL InitApplication(application_t *app)
 {
-    WNDCLASSEX  wcex;
+    WNDCLASSEX          wcex;
 
     if(GetClassInfoEx(app->hInstance, app->className, &wcex))
         return TRUE; // Already registered a window class.
@@ -101,6 +101,7 @@ BOOL InitApplication(application_t *app)
     wcex.hCursor = LoadCursor(app->hInstance, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
     wcex.lpszClassName = app->className;
+    wcex.lpszMenuName = NULL;
 
     // Register our window class.
     return RegisterClassEx(&wcex);
@@ -108,7 +109,7 @@ BOOL InitApplication(application_t *app)
 
 static BOOL loadGamePlugin(application_t *app)
 {
-    char       *dllName = NULL; // Pointer to the filename of the game DLL.
+    char               *dllName = NULL; // Filename of the game DLL.
 
     // First we need to locate the dll name among the command line arguments.
     DD_CheckArg("-game", &dllName);
@@ -212,7 +213,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     memset(&app, 0, sizeof(app));
     app.hInstance = hInstance;
-    app.className = MAINWCLASS;
+    app.className = TEXT(MAINWCLASS);
 
     if(!InitApplication(&app))
     {
@@ -275,7 +276,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         else
         {
             if(0 == (windowIDX =
-                Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, isDedicated,
+                Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0,
+                                 (isDedicated ? WT_CONSOLE : WT_NORMAL),
                                  buf, &lnCmdShow)))
             {
                 DD_ErrorBox(true, "Error creating main window.");
