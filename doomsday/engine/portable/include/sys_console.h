@@ -34,4 +34,6 @@
 void            Sys_ConInputInit(void);
 void            Sys_ConInputShutdown(void);
 
+size_t          I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize);
+
 #endif

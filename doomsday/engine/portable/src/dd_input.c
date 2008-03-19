@@ -36,7 +36,7 @@
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_ui.h"
-#include "sys_input.h"
+
 #include "gl_main.h"
 
 // MACROS ------------------------------------------------------------------
@@ -113,9 +113,6 @@ static repeater_t keyReps[MAX_DOWNKEYS];
 //static int oldJoyBState = 0;
 static float oldPOV = IJOY_POV_CENTER;
 
-static boolean input_avail = false;
-static inputdriver_t *driver = NULL;
-
 // CODE --------------------------------------------------------------------
 
 void DD_RegisterInput(void)
@@ -159,7 +156,7 @@ static void I_DeviceAllocHats(inputdev_t *dev, uint count)
  */
 static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint type)
 {
-	inputdevaxis_t     *axis;
+	inputdevaxis_t *axis;
 
 	dev->axes = M_Realloc(dev->axes, sizeof(inputdevaxis_t) * ++dev->numAxes);
 
@@ -185,9 +182,9 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
  */
 void I_InitVirtualInputDevices(void)
 {
-    int                 i;
-	inputdev_t         *dev;
-    inputdevaxis_t     *axis;
+    int         i;
+	inputdev_t *dev;
+    inputdevaxis_t *axis;
 
 	memset(inputDevices, 0, sizeof(inputDevices));
 
@@ -219,7 +216,7 @@ void I_InitVirtualInputDevices(void)
     axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
 
-	if(input_avail && driver->MousePresent())
+	if(I_MousePresent())
 		dev->flags = ID_ACTIVE;
 
     // TODO: Add support for several joysticks.
@@ -249,17 +246,17 @@ void I_InitVirtualInputDevices(void)
     }
 
 	// The joystick may not be active.
-	if(input_avail && driver->JoystickPresent())
+	if(I_JoystickPresent())
 		dev->flags = ID_ACTIVE;
 }
 
 /**
  * Free the memory allocated for the input devices.
  */
-void I_ShutdownVirtualInputDevices(void)
+void I_ShutdownInputDevices(void)
 {
-	uint                i;
-	inputdev_t         *dev;
+	uint        i;
+	inputdev_t *dev;
 
 	for(i = 0; i < NUM_INPUT_DEVICES; ++i)
 	{
@@ -274,7 +271,7 @@ void I_ShutdownVirtualInputDevices(void)
 }
 
 /**
- * Retrieve a pointer to the (virtual) input device state by identifier.
+ * Retrieve a pointer to the input device state by identifier.
  *
  * @param ident         Intput device identifier (index).
  * @param ifactive      Only return if the device is active.
@@ -283,7 +280,7 @@ void I_ShutdownVirtualInputDevices(void)
  */
 inputdev_t *I_GetDevice(uint ident, boolean ifactive)
 {
-    inputdev_t         *dev = &inputDevices[ident];
+    inputdev_t *dev = &inputDevices[ident];
 
     if(ifactive)
     {
@@ -297,7 +294,7 @@ inputdev_t *I_GetDevice(uint ident, boolean ifactive)
 }
 
 /**
- * Retrieve a pointer to the (virtual) input device state by name.
+ * Retrieve a pointer to the input device state by name.
  *
  * @param name          Input device name.
  * @param ifactive      Only return if the device is active.
@@ -306,9 +303,9 @@ inputdev_t *I_GetDevice(uint ident, boolean ifactive)
  */
 inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive)
 {
-	uint                i;
-    inputdev_t         *dev = NULL;
-    boolean             found;
+	uint        i;
+    inputdev_t *dev = NULL;
+    boolean     found;
 
 	i = 0;
     found = false;
@@ -364,7 +361,7 @@ inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id)
  */
 int I_GetAxisByName(inputdev_t *device, const char *name)
 {
-	uint                i;
+	uint         i;
 
 	for(i = 0; i < device->numAxes; ++i)
 	{
@@ -376,7 +373,7 @@ int I_GetAxisByName(inputdev_t *device, const char *name)
 
 int I_GetKeyByName(inputdev_t* device, const char* name)
 {
-    int                 i;
+    int         i;
 
     for(i = 0; i < device->numKeys; ++i)
     {
@@ -394,8 +391,8 @@ int I_GetKeyByName(inputdev_t* device, const char* name)
  */
 boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
 {
-	char                name[30], *ptr;
-    inputdev_t         *device;
+	char        name[30], *ptr;
+    inputdev_t *device;
 
 	ptr = strchr(str, '-');
 	if(!ptr)
@@ -425,8 +422,8 @@ boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
 
 float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
 {
-    float               pos = rawPos;
-	inputdevaxis_t     *a = &dev->axes[axis];
+    float pos = rawPos;
+	inputdevaxis_t *a = &dev->axes[axis];
 
 	// Disabled axes are always zero.
 	if(a->flags & IDA_DISABLED)
@@ -464,9 +461,9 @@ float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
  */
 static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLength)
 {
-	inputdevaxis_t     *a = &dev->axes[axis];
-    float               oldRealPos = a->realPosition;
-    float               transformed = I_TransformAxis(dev, axis, pos);
+	inputdevaxis_t *a = &dev->axes[axis];
+    float oldRealPos = a->realPosition;
+    float transformed = I_TransformAxis(dev, axis, pos);
 
     // The unfiltered position.
     a->realPosition = transformed;
@@ -504,7 +501,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
  */
 void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
 {
-	inputdev_t         *dev;
+	inputdev_t *dev;
 
     if((dev = I_GetDevice(ev->device, true)) == NULL)
         return;
@@ -553,8 +550,8 @@ void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
 
 void I_ClearDeviceClassAssociations(void)
 {
-    uint                i, j;
-    inputdev_t         *dev;
+    uint            i, j;
+    inputdev_t     *dev;
 
     for(i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
@@ -573,11 +570,11 @@ void I_ClearDeviceClassAssociations(void)
 }
 
 /**
- * @return              The key state from the downKeys array.
+ * @return          The key state from the downKeys array.
  */
 boolean I_IsDeviceKeyDown(uint ident, uint code)
 {
-    inputdev_t         *dev;
+    inputdev_t     *dev;
 
     if((dev = I_GetDevice(ident, true)) != NULL)
     {
@@ -591,11 +588,11 @@ boolean I_IsDeviceKeyDown(uint ident, uint code)
 }
 
 /**
- * @return              Either key number or the scan code for the given token.
+ * @return          Either key number or the scan code for the given token.
  */
 int DD_KeyOrCode(char *token)
 {
-    char               *end = M_FindWhite(token);
+    char   *end = M_FindWhite(token);
 
     if(end - token > 1)
     {
@@ -607,97 +604,11 @@ int DD_KeyOrCode(char *token)
 }
 
 /**
- * Initializes the input driver interface.
- * Returns true if successful.
+ * Initializes the key mappings to the default values.
  */
-boolean I_InitDriver(inputdriver_e drvid)
+void DD_InitInput(void)
 {
-    switch(drvid)
-    {
-    case INPUTD_DUMMY:
-        driver = &inputd_dummy;
-        break;
-
-    case INPUTD_SDL:
-        if(!(driver = DI_Load("sdlinput")))
-            return false;
-        break;
-
-#ifdef WIN32
-    case INPUTD_DINPUT8:
-        if(!(driver = DI_Load("dinput8")))
-            return false;
-        break;
-#endif
-
-    default:
-        Con_Error("I_InitDriver: Unknown driver type %i.\n", drvid);
-    }
-
-    // Initialize the driver.
-    return driver->Init();
-}
-
-/**
- * Initialize the input module. This includes setting up the available Input
- * drivers.
- *
- * @returns             @c true, if the module is operational after the init.
- */
-static boolean I_Init(void)
-{
-    boolean             ok;
-
-    if(input_avail)
-        return true; // Already initialized.
-
-    Con_Message("I_Init: Initializing ");
-
-    // First let's set up the drivers. First we much choose which one we
-    // want to use.
-    if(isDedicated || ArgExists("-dummy"))
-    {
-        Con_Message("Dummy...\n");
-        ok = I_InitDriver(INPUTD_DUMMY);
-    }
-#ifdef WIN32
-    else if(ArgExists("-sdlinput"))
-    {
-        Con_Message("SDL_Input...\n");
-        ok = I_InitDriver(INPUTD_SDL);
-    }
-    else // The default driver.
-    {
-        Con_Message("DirectInput...\n");
-        ok = I_InitDriver(INPUTD_DINPUT8);
-    }
-#else
-    else // The default driver.
-    {
-        Con_Message("SDL_Input...\n");
-        ok = I_InitDriver(INPUTD_SDL);
-    }
-#endif
-
-    // Did we succeed?
-    if(!ok)
-    {
-        Con_Message("I_Init: Driver init failed. User input is disabled.\n");
-        return false;
-    }
-
-    input_avail = true;
-    return true;
-}
-
-/**
- * Main input system initialization.
- *
- * @return              @c true, if there were no errors.
- */
-boolean DD_InitInput(void)
-{
-    int                 i;
+    int     i;
 
     for(i = 0; i < 256; ++i)
     {
@@ -705,33 +616,6 @@ boolean DD_InitInput(void)
             defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
         altKeyMappings[i] = i;
     }
-
-    return I_Init();
-}
-
-/**
- * Shut down the whole Input module.
- */
-void I_Shutdown(void)
-{
-    if(!input_avail)
-        return; // Not initialized.
-
-    I_ShutdownVirtualInputDevices();
-
-    // Finally, close the driver.
-    driver->Shutdown();
-    driver = NULL;
-
-    input_avail = false;
-}
-
-/**
- * Shutdown the whole of the user input system.
- */
-void DD_ShutdownInput(void)
-{
-    I_Shutdown();
 }
 
 /**
@@ -757,7 +641,7 @@ void DD_PostEvent(ddevent_t *ev)
  */
 static ddevent_t *DD_GetEvent(void)
 {
-    ddevent_t              *ev;
+    ddevent_t *ev;
 
     if(eventhead == eventtail)
         return NULL;
@@ -773,8 +657,8 @@ static ddevent_t *DD_GetEvent(void)
  */
 static void despatchEvents(timespan_t ticLength)
 {
-    ddevent_t              *ddev;
-    event_t                 ev;
+    ddevent_t *ddev;
+    event_t     ev;
 
     while((ddev = DD_GetEvent()) != NULL)
     {
@@ -935,10 +819,10 @@ void DD_ClearKeyRepeaters(void)
  */
 void DD_ReadKeyboard(void)
 {
-    uint                i, k;
-    ddevent_t           ev;
-    size_t              n, numkeyevs;
-    keyevent_t          keyevs[KBDQUESIZE];
+    uint            i, k;
+    ddevent_t       ev;
+    size_t          n, numkeyevs;
+    keyevent_t      keyevs[KBDQUESIZE];
 
     // Check the repeaters.
     ev.device = IDEV_KEYBOARD;
@@ -974,9 +858,9 @@ void DD_ReadKeyboard(void)
 
     // Read the new keyboard events.
     if(isDedicated)
-        numkeyevs = 0;//I_GetConsoleKeyEvents(keyevs, KBDQUESIZE);
+        numkeyevs = I_GetConsoleKeyEvents(keyevs, KBDQUESIZE);
     else
-        numkeyevs = driver->GetKeyEvents(keyevs, KBDQUESIZE);
+        numkeyevs = I_GetKeyEvents(keyevs, KBDQUESIZE);
 
     // Convert to ddevents and post them.
     for(n = 0; n < numkeyevs; ++n)
@@ -1023,10 +907,10 @@ void DD_ReadKeyboard(void)
 
 float I_FilterMouse(float pos, float* accumulation, float ticLength)
 {
-    float               target;
-    int                 dir;
-    float               avail;
-    int                 used;
+    float   target;
+    int     dir;
+    float   avail;
+    int     used;
 
     *accumulation += pos;
     dir = SIGN_OF(*accumulation);
@@ -1068,7 +952,7 @@ void DD_ReadMouse(timespan_t ticLength)
     float           xpos, ypos;
     int             i;
 
-    if(!input_avail || !driver->MousePresent())
+    if(!I_MousePresent())
         return;
 
     // Should we test the mouse input frequency?
@@ -1085,13 +969,13 @@ void DD_ReadMouse(timespan_t ticLength)
         else
         {
             lastTime = nowTime;
-            driver->GetMouseState(&mouse);
+            I_GetMouseState(&mouse);
         }
     }
     else
     {
         // Get the mouse state.
-        driver->GetMouseState(&mouse);
+        I_GetMouseState(&mouse);
     }
 
     ev.device = IDEV_MOUSE;
@@ -1192,10 +1076,10 @@ void DD_ReadJoystick(void)
     ddevent_t       ev;
     joystate_t      state;
 
-    if(!input_avail || !driver->JoystickPresent())
+    if(!I_JoystickPresent())
         return;
 
-    driver->GetJoystickState(&state);
+    I_GetJoystickState(&state);
 
     // Joystick buttons.
     ev.device = IDEV_JOY1;

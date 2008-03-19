@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,14 +18,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, 
  * Boston, MA  02110-1301  USA
  */
 
-/**
+/*
  * sys_sfxd_dummy.c: Dummy Sfx Driver
  *
- * Used in dedicated server mode, when it's necessary to simulate
+ * Used in dedicated server mode, when it's necessary to simulate 
  * sound playing but not actually play anything.
  */
 
@@ -140,7 +140,7 @@ void DS_DummyDestroyBuffer(sfxbuffer_t *buf)
 }
 
 /**
- * Prepare the buffer for playing a sample by filling the buffer with
+ * Prepare the buffer for playing a sample by filling the buffer with 
  * as much sample data as fits. The pointer to sample is saved, so
  * the caller mustn't free it while the sample is loaded.
  */
@@ -201,7 +201,7 @@ void DS_DummyStop(sfxbuffer_t *buf)
 }
 
 /**
- * Buffer streamer. Called by the Sfx refresh thread.
+ * Buffer streamer. Called by the Sfx refresh thread. 
  */
 void DS_DummyRefresh(sfxbuffer_t *buf)
 {
@@ -239,7 +239,7 @@ void DS_DummySet(sfxbuffer_t *buf, int property, float value)
 }
 
 /**
- * Coordinates specified in world coordinate system, converted to DSound's:
+ * Coordinates specified in world coordinate system, converted to DSound's: 
  * +X to the right, +Y up and +Z away (Y and Z swapped, i.e.).
  *
  * @param property      SFXBP_POSITION

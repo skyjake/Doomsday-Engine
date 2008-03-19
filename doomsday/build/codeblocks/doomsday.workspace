@@ -14,9 +14,6 @@
 		<Project filename="jhexen.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
-		<Project filename="didinput8.cbp">
-			<Depends filename="doomsday.cbp" />
-		</Project>
 		<Project filename="dpexample.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>

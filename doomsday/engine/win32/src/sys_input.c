@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,9 @@
  */
 
 /**
- * driver_didinput8.cpp: Doomsday user input plugin. Uses DirectInput8.
+ * sys_input.c: Game Controllers
+ *
+ * Keyboard, mouse and joystick input using DirectInput.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -36,15 +38,21 @@
 #include <assert.h>
 #include <strsafe.h>
 
-#include "doomsday.h"
-#include "sys_inputd.h"
+#include "de_base.h"
+#include "de_console.h"
+#include "de_system.h"
+#include "de_misc.h"
+
+#include "dd_winit.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define NUMKKEYS            256
 #define KEYBUFSIZE          32
 
-#define I_SAFE_RELEASE(d) { if(d) { (d)->Release(); (d) = NULL; } }
+#define I_SAFE_RELEASE(d) { if(d) { IDirectInputDevice_Release(d); \
+                                    (d) = NULL; } }
+#define I_SAFE_RELEASE2(d) { if(d) { IDirectInputDevice2_Release(d); \
+                                     (d) = NULL; } }
 
 // TYPES -------------------------------------------------------------------
 
@@ -52,22 +60,11 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-extern "C" {
-int             DI_Init(void);
-void            DI_Shutdown(void);
-void            DI_Event(int type);
-boolean         DI_MousePresent(void);
-boolean         DI_JoystickPresent(void);
-size_t          DI_GetKeyEvents(keyevent_t *evbuf, size_t bufsize);
-void            DI_GetMouseState(mousestate_t *state);
-void            DI_GetJoystickState(joystate_t *state);
-}
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+extern int novideo;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -77,12 +74,10 @@ byte    usejoystick = false;    // Joystick input enabled?
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initIOk = false;
-static int verbose;
 
-static HRESULT hr;
-static LPDIRECTINPUT8 dInput = NULL;
-static LPDIRECTINPUTDEVICE8 didKeyb = NULL, didMouse = NULL;
-static LPDIRECTINPUTDEVICE8 didJoy = NULL;
+static LPDIRECTINPUT8 dInput;
+static LPDIRECTINPUTDEVICE8 didKeyb, didMouse;
+static LPDIRECTINPUTDEVICE8 didJoy;
 static DIDEVICEINSTANCE firstJoystick;
 
 static int counter;
@@ -93,9 +88,10 @@ static byte *keymap;
 
 // CODE --------------------------------------------------------------------
 
-static void error(const char *where, const char *msg)
+void I_Register(void)
 {
-    Con_Message("%s(DInput8): %s [Result = 0x%x]\n", where, msg, hr);
+    C_VAR_INT("input-joy-device", &joydevice, CVF_NO_MAX | CVF_PROTECTED, 0, 0);
+    C_VAR_BYTE("input-joy", &usejoystick, 0, 0, 1);
 }
 
 const char *I_ErrorMsg(HRESULT hr)
@@ -113,7 +109,7 @@ static void initDIKeyToDDKeyTlat(void)
     if(keymap)
         return; // Already been here.
 
-    keymap = new byte[NUMKKEYS];
+    keymap = M_Calloc(sizeof(byte) * NUMKKEYS);
 
     keymap[DIK_0] = '0';
     keymap[DIK_1] = '1';
@@ -264,7 +260,7 @@ static void initDIKeyToDDKeyTlat(void)
 /**
  * Convert a DInput Key (DIK_*) to a DDkey (DDKEY_*) constant.
  */
-static byte dIKeyToDDKey(DWORD dIKey)
+static byte dIKeyToDDKey(byte dIKey)
 {
     return keymap[dIKey];
 }
@@ -461,14 +457,22 @@ HRESULT I_SetRangeProperty(void *dev, REFGUID property, DWORD how, DWORD obj,
                                            property, &dipr.diph);
 }
 
-static boolean initMouse(HWND hWnd)
+boolean I_InitMouse(void)
 {
+    HWND            hWnd;
     HRESULT         hr;
 
-    if(ArgCheck("-nomouse"))
+    if(ArgCheck("-nomouse") || novideo)
         return false;
 
-    hr = dInput->CreateDevice(GUID_SysMouse, &didMouse, NULL);
+    hWnd = Sys_GetWindowHandle(windowIDX);
+    if(!hWnd)
+    {
+        Con_Error("I_InitMouse: Main window not available, cannot init mouse.");
+        return false;
+    }
+
+    hr = IDirectInput_CreateDevice(dInput, &GUID_SysMouse, &didMouse, 0);
     if(FAILED(hr))
     {
         Con_Message("I_InitMouse: Failed to create device (0x%x).\n", hr);
@@ -476,7 +480,7 @@ static boolean initMouse(HWND hWnd)
     }
 
     // Set data format.
-    hr = didMouse->SetDataFormat(&c_dfDIMouse2);
+    hr = IDirectInputDevice_SetDataFormat(didMouse, &c_dfDIMouse2);
     if(FAILED(hr))
     {
         Con_Message("I_InitMouse: Failed to set data format (0x%x).\n", hr);
@@ -484,8 +488,9 @@ static boolean initMouse(HWND hWnd)
     }
 
     // Set behaviour.
-    hr = didMouse->SetCooperativeLevel(hWnd, DISCL_FOREGROUND |
-                                             DISCL_EXCLUSIVE);
+    hr = IDirectInputDevice_SetCooperativeLevel(didMouse, hWnd,
+                                                DISCL_FOREGROUND |
+                                                DISCL_EXCLUSIVE);
     if(FAILED(hr))
     {
         Con_Message("I_InitMouse: Failed to set co-op level (0x%x).\n", hr);
@@ -493,7 +498,7 @@ static boolean initMouse(HWND hWnd)
     }
 
     // Acquire the device.
-    didMouse->Acquire();
+    IDirectInputDevice_Acquire(didMouse);
 
     // Init was successful.
     return true;
@@ -519,7 +524,7 @@ BOOL CALLBACK I_JoyEnum(LPCDIDEVICEINSTANCE lpddi, void *ref)
     return DIENUM_CONTINUE;
 }
 
-static boolean initJoystick(HWND hWnd)
+boolean I_InitJoystick(void)
 {
     DIDEVICEINSTANCE ddi;
     int             i, joyProp[] = {
@@ -530,10 +535,18 @@ static boolean initJoystick(HWND hWnd)
     const char *axisName[] = {
         "X", "Y", "Z", "RX", "RY", "RZ", "Slider 1", "Slider 2"
     };
+    HWND            hWnd;
     HRESULT         hr;
 
     if(ArgCheck("-nojoy"))
         return false;
+
+    hWnd = Sys_GetWindowHandle(windowIDX);
+    if(!hWnd)
+    {
+        Con_Error("I_InitJoystick: Main window not available, cannot init joystick.");
+        return false;
+    }
 
     // ddi will contain info for the joystick device.
     memset(&firstJoystick, 0, sizeof(firstJoystick));
@@ -541,7 +554,7 @@ static boolean initJoystick(HWND hWnd)
     counter = 0;
 
     // Find the joystick we want by doing an enumeration.
-    dInput->EnumDevices(DI8DEVCLASS_GAMECTRL, I_JoyEnum, &ddi,
+    IDirectInput_EnumDevices(dInput, DI8DEVCLASS_GAMECTRL, I_JoyEnum, &ddi,
                              DIEDFL_ALLDEVICES);
 
     // Was the joystick we want found?
@@ -560,7 +573,7 @@ static boolean initJoystick(HWND hWnd)
     Con_Message("I_InitJoystick: %s\n", ddi.tszProductName);
 
     // Create the joystick device.
-    hr = dInput->CreateDevice(ddi.guidInstance, &didJoy, 0);
+    hr = IDirectInput8_CreateDevice(dInput, &ddi.guidInstance, &didJoy, 0);
     if(FAILED(hr))
     {
         Con_Message("I_InitJoystick: Failed to create device (0x%x).\n", hr);
@@ -568,7 +581,7 @@ static boolean initJoystick(HWND hWnd)
     }
 
     // Set data format.
-    if(FAILED(hr = didJoy->SetDataFormat(&c_dfDIJoystick)))
+    if(FAILED(hr = IDirectInputDevice_SetDataFormat(didJoy, &c_dfDIJoystick)))
     {
         Con_Message("I_InitJoystick: Failed to set data format (0x%x).\n", hr);
         goto kill_joy;
@@ -576,7 +589,9 @@ static boolean initJoystick(HWND hWnd)
 
     // Set behaviour.
     if(FAILED
-       (hr = didJoy->SetCooperativeLevel(hWnd, DISCL_NONEXCLUSIVE |
+       (hr =
+        IDirectInputDevice_SetCooperativeLevel(didJoy, hWnd,
+                                               DISCL_NONEXCLUSIVE |
                                                DISCL_FOREGROUND)))
     {
         Con_Message("I_InitJoystick: Failed to set co-op level (0x%x: %s).\n",
@@ -618,7 +633,7 @@ static boolean initJoystick(HWND hWnd)
     }
 
     // Acquire it.
-    didJoy->Acquire();
+    IDirectInputDevice_Acquire(didJoy);
 
     // Initialization was successful.
     return true;
@@ -628,20 +643,28 @@ static boolean initJoystick(HWND hWnd)
     return false;
 }
 
-static void killDevice(LPDIRECTINPUTDEVICE8 *dev)
+void I_KillDevice(LPDIRECTINPUTDEVICE8 *dev)
 {
     if(*dev)
-        (*dev)->Unacquire();
+        IDirectInputDevice8_Unacquire(*dev);
 
     I_SAFE_RELEASE(*dev);
 }
 
-static boolean initKeyboard(HWND hWnd)
+static boolean I_InitKeyboard(void)
 {
+    HWND            hWnd;
     HRESULT         hr;
 
+    hWnd = Sys_GetWindowHandle(windowIDX);
+    if(!hWnd)
+    {
+        Con_Error("I_Init: Main window not available, cannot init keyboard.");
+        return false;
+    }
+
     // Create the keyboard device.
-    hr = dInput->CreateDevice(GUID_SysKeyboard, &didKeyb, 0);
+    hr = IDirectInput_CreateDevice(dInput, &GUID_SysKeyboard, &didKeyb, 0);
     if(FAILED(hr))
     {
         Con_Message("I_Init: Failed to create keyboard device (0x%x).\n", hr);
@@ -649,7 +672,7 @@ static boolean initKeyboard(HWND hWnd)
     }
 
     // Setup the keyboard input device.
-    hr = didKeyb->SetDataFormat(&c_dfDIKeyboard);
+    hr = IDirectInputDevice_SetDataFormat(didKeyb, &c_dfDIKeyboard);
     if(FAILED(hr))
     {
         Con_Message("I_Init: Failed to set keyboard data format (0x%x).\n",
@@ -658,8 +681,9 @@ static boolean initKeyboard(HWND hWnd)
     }
 
     // Set behaviour.
-    hr = didKeyb->SetCooperativeLevel(hWnd, DISCL_FOREGROUND |
-                                            DISCL_NONEXCLUSIVE);
+    hr = IDirectInputDevice_SetCooperativeLevel(didKeyb, hWnd,
+                                                DISCL_FOREGROUND |
+                                                DISCL_NONEXCLUSIVE);
     if(FAILED(hr))
     {
         Con_Message("I_Init: Failed to set keyboard co-op level (0x%x).\n",
@@ -682,12 +706,93 @@ static boolean initKeyboard(HWND hWnd)
     return true;
 }
 
-boolean DI_MousePresent(void)
+/**
+ * Initialize input.
+ *
+ * @return              @c true, if successful.
+ */
+boolean I_Init(void)
+{
+    HRESULT         hr;
+
+    if(initIOk)
+        return true; // Already initialized.
+
+    // We'll create the DirectInput object. The only required input device
+    // is the keyboard. The others are optional.
+    dInput = NULL;
+    if(FAILED
+       (hr =
+        CoCreateInstance(&CLSID_DirectInput8, NULL, CLSCTX_INPROC_SERVER,
+                         &IID_IDirectInput8, &dInput)) ||
+       FAILED(hr =
+              IDirectInput8_Initialize(dInput, app.hInstance, DIRECTINPUT_VERSION)))
+    {
+        Con_Message("I_Init: DirectInput 8 init failed (0x%x).\n", hr);
+        // Try DInput3 instead.
+        // I'm not sure if this works correctly.
+        if(FAILED
+           (hr =
+            CoCreateInstance(&CLSID_DirectInput, NULL, CLSCTX_INPROC_SERVER,
+                             &IID_IDirectInput2W, &dInput)) ||
+           FAILED(hr = IDirectInput2_Initialize(dInput, app.hInstance, 0x0300)))
+        {
+            Con_Message
+                ("I_Init: Failed to create DirectInput 3 object (0x%x).\n",
+                 hr);
+            return false;
+        }
+        Con_Message("I_Init: Using DirectInput 3.\n");
+    }
+
+    if(!dInput)
+    {
+        Con_Message("I_Init: DirectInput init failed.\n");
+        return false;
+    }
+
+    if(!I_InitKeyboard())
+        return false; // We must have a keyboard!
+
+    // Acquire the keyboard.
+    IDirectInputDevice_Acquire(didKeyb);
+
+    // Create the mouse and joystick devices. It doesn't matter if the init
+    // fails for them.
+    I_InitMouse();
+    I_InitJoystick();
+
+    initIOk = true;
+
+    return true;
+}
+
+void I_Shutdown(void)
+{
+    if(!initIOk)
+        return; // Not initialized.
+
+    // Release all the input devices.
+    I_KillDevice(&didKeyb);
+    I_KillDevice(&didMouse);
+    I_KillDevice(&didJoy);
+
+    // Release DirectInput.
+    IDirectInput_Release(dInput);
+    dInput = 0;
+
+    M_Free(keymap);
+    keymap = NULL;
+
+    initIOk = false;
+}
+
+boolean I_MousePresent(void)
 {
     return (didMouse != 0);
 }
 
-boolean DI_JoystickPresent(void)
+boolean I_JoystickPresent(void)
 {
     return (didJoy != 0);
 }
@@ -700,13 +805,13 @@ boolean DI_JoystickPresent(void)
  *
  * @return              Number of key events written to the buffer.
  */
-size_t DI_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
+size_t I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
 {
     DIDEVICEOBJECTDATA keyData[KEYBUFSIZE];
-    DWORD               i, num = 0;
-    BYTE                tries;
-    BOOL                acquired;
-    HRESULT             hr;
+    DWORD           i, num = 0;
+    BYTE            tries;
+    BOOL            acquired;
+    HRESULT         hr;
 
     if(!initIOk)
         return 0;
@@ -717,8 +822,9 @@ size_t DI_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
     while(!acquired && tries > 0)
     {
         num = KEYBUFSIZE;
-        hr = didKeyb->GetDeviceData(sizeof(DIDEVICEOBJECTDATA), keyData,
-                                    &num, 0);
+        hr = IDirectInputDevice_GetDeviceData(didKeyb,
+                                              sizeof(DIDEVICEOBJECTDATA),
+                                              keyData, &num, 0);
         if(SUCCEEDED(hr))
         {
             acquired = TRUE;
@@ -726,7 +832,7 @@ size_t DI_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
         else if(tries > 0)
         {
             // Try to reacquire.
-            didKeyb->Acquire();
+            IDirectInputDevice_Acquire(didKeyb);
             tries--;
         }
     }
@@ -737,19 +843,16 @@ size_t DI_GetKeyEvents(keyevent_t *evbuf, size_t bufsize)
     // Get the events.
     for(i = 0; i < num && i < bufsize; ++i)
     {
-        if(keyData[i].dwOfs >= 0 && keyData[i].dwOfs < 256)
-        {
-            evbuf[i].event =
-                (keyData[i].dwData & 0x80? IKE_KEY_DOWN : IKE_KEY_UP);
-            // Use the table to translate the scancode to a ddkey.
-            evbuf[i].ddkey = dIKeyToDDKey(keyData[i].dwOfs);
-        }
+        evbuf[i].event =
+            (keyData[i].dwData & 0x80? IKE_KEY_DOWN : IKE_KEY_UP);
+        // Use the table to translate the scancode to a ddkey.
+        evbuf[i].ddkey = dIKeyToDDKey(keyData[i].dwOfs);
     }
 
     return (size_t) i;
 }
 
-void DI_GetMouseState(mousestate_t *state)
+void I_GetMouseState(mousestate_t *state)
 {
     static BOOL     oldButtons[8];
     static int      oldZ;
@@ -771,7 +874,8 @@ void DI_GetMouseState(mousestate_t *state)
     acquired = false;
     while(!acquired && tries > 0)
     {
-        hr = didMouse->GetDeviceState(sizeof(mstate), &mstate);
+        hr = IDirectInputDevice_GetDeviceState(didMouse, sizeof(mstate),
+                                               &mstate);
         if(SUCCEEDED(hr))
         {
             acquired = true;
@@ -779,7 +883,7 @@ void DI_GetMouseState(mousestate_t *state)
         else if(tries > 0)
         {
             // Try to reacquire.
-            didMouse->Acquire();
+            IDirectInputDevice_Acquire(didMouse);
             tries--;
         }
     }
@@ -840,7 +944,7 @@ void DI_GetMouseState(mousestate_t *state)
     }
 }
 
-void DI_GetJoystickState(joystate_t *state)
+void I_GetJoystickState(joystate_t *state)
 {
     static BOOL     oldButtons[IJOY_MAXBUTTONS]; // Thats a lot of buttons.
 
@@ -856,13 +960,13 @@ void DI_GetJoystickState(joystate_t *state)
         return;
 
     // Some joysticks need to be polled.
-    didJoy->Poll();
+    IDirectInputDevice8_Poll(didJoy);
 
     tries = 1;
     acquired = FALSE;
     while(!acquired && tries > 0)
     {
-        hr = didJoy->GetDeviceState(sizeof(dijoy), &dijoy);
+        hr = IDirectInputDevice8_GetDeviceState(didJoy, sizeof(dijoy), &dijoy);
 
         if(SUCCEEDED(hr))
         {
@@ -871,7 +975,7 @@ void DI_GetJoystickState(joystate_t *state)
         else if(tries > 0)
         {
             // Try to reacquire.
-            didJoy->Acquire();
+            IDirectInputDevice8_Acquire(didJoy);
             tries--;
         }
     }
@@ -914,80 +1018,6 @@ void DI_GetJoystickState(joystate_t *state)
         else
             state->hatAngle[i] = pov / 100.0f;
     }
-}
-
-int DI_Init(void)
-{
-    HRESULT             hr;
-    HWND                hWnd;
-    HINSTANCE           hInstance;
-
-    if(initIOk)
-        return true; // Already initialized.
-
-    // Are we in verbose mode?
-    if((verbose = ArgExists("-verbose")))
-        Con_Message("DI_Init(DInput8): Initializing input driver...\n");
-
-    // Get Doomsday's window handle.
-    hWnd = (HWND) DD_GetVariable(DD_WINDOW_HANDLE);
-    hInstance = (HINSTANCE) GetWindowLong(hWnd, GWL_HINSTANCE);
-
-    // We'll create the DirectInput object. The only required input device
-    // is the keyboard. The others are optional.
-    hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION,
-                            IID_IDirectInput8, (void**)&dInput, NULL);
-    if FAILED(hr)
-    {
-        Con_Message("I_Init: DirectInput 8 init failed (0x%x).\n", hr);
-        return false;
-    }
-
-    if(!dInput)
-    {
-        Con_Message("I_Init: DirectInput init failed.\n");
-        return false;
-    }
-
-    if(!initKeyboard(hWnd))
-        return false; // We must have a keyboard!
-
-    // Acquire the keyboard.
-    IDirectInputDevice_Acquire(didKeyb);
-
-    // Create the mouse and joystick devices. It doesn't matter if the init
-    // fails for them.
-    initMouse(hWnd);
-    initJoystick(hWnd);
-
-    // Success!
-    initIOk = true;
-    return true;
-}
-
-void DI_Shutdown(void)
-{
-    if(!initIOk)
-        return;
-
-    // Release all the input devices.
-    killDevice(&didKeyb);
-    killDevice(&didMouse);
-    killDevice(&didJoy);
-
-    // Release DirectInput.
-    dInput->Release();
-    dInput = 0;
-
-    delete keymap;
-    keymap = NULL;
-
-    initIOk = false;
-}
-
-void DI_Event(int type)
-{
-    // Not supported.
 }
 
 /**

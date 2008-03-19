@@ -94,11 +94,11 @@ void S_Register(void)
 /**
  * Main sound system initialization. Inits both the Sfx and Mus modules.
  *
- * @return              @c true, if there were no errors.
+ * @return                  @c true, if there were no errors.
  */
 boolean S_Init(void)
 {
-    boolean             sfx_ok, mus_ok;
+    boolean sfx_ok, mus_ok;
 
     if(ArgExists("-nosound"))
         return true;
@@ -145,7 +145,7 @@ void S_Reset(void)
 
 void S_StartFrame(void)
 {
-    static int          old_mus_volume = -1;
+    static int old_mus_volume = -1;
 
     if(mus_volume != old_mus_volume)
     {
@@ -177,14 +177,14 @@ mobj_t *S_GetListenerMobj(void)
 /**
  * \note freq and volume may be NULL(they will be modified by sound links).
  *
- * @param freq          May be @c NULL.
- * @param volume        May be @c NULL.
+ * @param freq              May be @c NULL.
+ * @param volume            May be @c NULL.
  */
 sfxinfo_t *S_GetSoundInfo(int sound_id, float *freq, float *volume)
 {
-    float               dummy = 0;
-    sfxinfo_t          *info;
-    int                 i;
+    float   dummy = 0;
+    sfxinfo_t *info;
+    int     i;
 
     if(sound_id <= 0)
         return NULL;
@@ -210,11 +210,11 @@ sfxinfo_t *S_GetSoundInfo(int sound_id, float *freq, float *volume)
 }
 
 /**
- * @return              @c true, if the specified ID is a repeating sound.
+ * @return                  @c true, if the specified ID is a repeating sound.
  */
 boolean S_IsRepeating(int idFlags)
 {
-    sfxinfo_t          *info;
+    sfxinfo_t *info;
 
     if(idFlags & DDSF_REPEAT)
         return true;
@@ -232,20 +232,20 @@ boolean S_IsRepeating(int idFlags)
  * Origin and fixedpos can be both NULL, in which case the sound is played
  * in 2D and centered.
  *
- * @param origin        May be @c NULL.
- * @param fixedPos      May be @c NULL.
+ * @param origin            May be @c NULL.
+ * @param fixedPos          May be @c NULL.
  *
- * @return              Non-zero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
                              float *fixedPos, float volume)
 {
-    int                 soundId = soundIdAndFlags & ~DDSF_FLAG_MASK;
-    sfxsample_t        *sample;
-    sfxinfo_t          *info;
-    float               freq = 1;
-    int                 result;
-    boolean             isRepeating = false;
+    int     soundId = soundIdAndFlags & ~DDSF_FLAG_MASK;
+    sfxsample_t *sample;
+    sfxinfo_t *info;
+    float   freq = 1;
+    int     result;
+    boolean isRepeating = false;
 
     // A dedicated server never starts any local sounds
     // (only logical sounds in the LSM).
@@ -327,7 +327,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
  * Plays a sound on the local system at the given volume.
  * This is a public sound interface.
  *
- * @return              Non-zero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 {
@@ -338,7 +338,7 @@ int S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume)
  * Plays a sound on the local system from the given origin.
  * This is a public sound interface.
  *
- * @return              Non-zero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_LocalSound(int sound_id, mobj_t *origin)
 {
@@ -350,7 +350,7 @@ int S_LocalSound(int sound_id, mobj_t *origin)
  * Plays a sound on the local system at a give distance from listener.
  * This is a public sound interface.
  *
- * @return              Non-zero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_LocalSoundFrom(int sound_id, float *fixedpos)
 {
@@ -360,7 +360,7 @@ int S_LocalSoundFrom(int sound_id, float *fixedpos)
 /**
  * Play a world sound. All players in the game will hear it.
  *
- * @return              Non-zero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_StartSound(int soundId, mobj_t *origin)
 {
@@ -376,10 +376,10 @@ int S_StartSound(int soundId, mobj_t *origin)
  * owns the origin mobj. The server assumes that the owner of the origin plays
  * the sound locally, which is done here, in the end of S_StartSoundEx().
  *
- * @param soundId       Id of the sound.
- * @param origin        Origin mobj for the sound.
+ * @param soundId           Id of the sound.
+ * @param origin            Origin mobj for the sound.
  *
- * @return              Non-zero if a sound was successfully started.
+ * @return                  Non-zero if a sound was successfully started.
  */
 int S_StartSoundEx(int soundId, mobj_t *origin)
 {
@@ -392,7 +392,7 @@ int S_StartSoundEx(int soundId, mobj_t *origin)
 /**
  * Play a world sound. All players in the game will hear it.
  *
- * @return              Non-zero if a sound was started.
+ * @return                  Non-zero if a sound was started.
  */
 int S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 {
@@ -406,7 +406,7 @@ int S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 /**
  * Play a player sound. Only the specified player will hear it.
  *
- * @return              Non-zero if a sound was started (always).
+ * @return                  Non-zero if a sound was started (always).
  */
 int S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
 {
@@ -421,9 +421,9 @@ int S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
 }
 
 /**
- * @param sound_id      @c 0 = stops all sounds of the origin.
- * @param origin        @c NULL = stops all sounds with the ID.
- *                      Otherwise both ID and origin must match.
+ * @param sound_id          @c 0 = stops all sounds of the origin.
+ * @param origin            @c NULL = stops all sounds with the ID.
+ *                          Otherwise both ID and origin must match.
  */
 void S_StopSound(int sound_id, mobj_t *emitter)
 {
@@ -445,7 +445,7 @@ void S_StopSound(int sound_id, mobj_t *emitter)
  * If sound_id is zero, returns true if the source is emitting any sounds.
  * An exported function.
  *
- * @return              Non-zero if a sound is playing.
+ * @return                  Non-zero if a sound is playing.
  */
 int S_IsPlaying(int sound_id, mobj_t *emitter)
 {
@@ -456,11 +456,11 @@ int S_IsPlaying(int sound_id, mobj_t *emitter)
 /**
  * Start a song based on its number.
  *
- * @return              @c NULL, if the ID exists.
+ * @return                  @c NULL, if the ID exists.
  */
 int S_StartMusicNum(int id, boolean looped)
 {
-    ded_music_t        *def = defs.music + id;
+    ded_music_t *def = defs.music + id;
 
     if(id < 0 || id >= defs.count.music.num)
         return false;
@@ -477,7 +477,7 @@ int S_StartMusicNum(int id, boolean looped)
  */
 int S_StartMusic(char *musicid, boolean looped)
 {
-    int                 idx = Def_GetMusicNum(musicid);
+    int     idx = Def_GetMusicNum(musicid);
 
     if(idx < 0)
     {
@@ -521,11 +521,11 @@ void S_Drawer(void)
  */
 D_CMD(PlaySound)
 {
-    int                 id = 0;
-    float               volume = 1;
-    float               fixedPos[3];
-    int                 p;
-    boolean             useFixedPos = false;
+    int     id = 0;
+    float   volume = 1;
+    float   fixedPos[3];
+    int     p;
+    boolean useFixedPos = false;
 
     if(argc < 2)
     {

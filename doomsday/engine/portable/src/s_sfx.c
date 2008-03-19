@@ -890,7 +890,7 @@ void Sfx_EndFrame(void)
  */
 boolean Sfx_InitDriver(sfxdriver_e drvid)
 {
-    switch(drvid)
+    switch (drvid)
     {
     case SFXD_DUMMY:
         driver = &sfxd_dummy;
@@ -1042,7 +1042,7 @@ void Sfx_StartRefresh(void)
  */
 boolean Sfx_Init(void)
 {
-    boolean             ok;
+    boolean ok;
 
     // Check if sound has been disabled with a command line option.
     if(ArgExists("-nosfx"))

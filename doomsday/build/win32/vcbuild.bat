@@ -99,7 +99,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dssdlmixer dscompat didinput8 jdoom jheretic jhexen wolftc jdoom64
+CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dssdlmixer dscompat jdoom jheretic jhexen wolftc jdoom64
 GOTO Done
 
 
@@ -218,15 +218,6 @@ IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
 
-:: *** diDInput8.dll
-:diDInput8
-ECHO Compiling diDInput8.dll (DirectInput Input driver)...
-md %OBJ_DIR%\diDInput8
-cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DIDINPUT8_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/diDInput8" /Fd"./%OBJ_DIR%/diDInput8" /W3 /Gd  @didinput8_cl.rsp  /link /OUT:"./%BIN_DIR%/diDInput8.dll" %LFLAGS% /DLL /DEF:"./../../plugins/didinput8/api/diDInput8.def" /IMPLIB:"./%BIN_DIR%/diDInput8.lib" %LIBS% dinput8.lib dxguid.lib ./%BIN_DIR%/doomsday.lib
-IF %ERRORLEVEL% == 0 GOTO Done
-GOTO Failure
-
-
 :: *** dpWadMapConverter.dll
 :wadMapConverter
 ECHO Compiling dpWadMapConverter.dll (WAD Map converter plugin)...
@@ -234,7 +225,6 @@ md %OBJ_DIR%\dpwadmapconverter
 cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DPWADMAPCONVERTER_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dpwadmapconverter" /Fd"./%OBJ_DIR%/dpwadmapconverter" /W3 /Gd  @dpwadmapconverter.rsp  /link /OUT:"./%BIN_DIR%/dpWadMapConverter.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dpwadmapconverter.lib" %LIBS% ./%BIN_DIR%/doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
-
 
 :: *** jDoom.dll
 :jDoom

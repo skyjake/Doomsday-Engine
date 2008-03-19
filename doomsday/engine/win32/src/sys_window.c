@@ -1286,8 +1286,8 @@ void Sys_UpdateWindow(uint idx)
         if(window->type == WT_NORMAL)
         {
             if(window->normal.glContext)
-            {   // Window has a glContext attached, so make the content of
-                // the framebuffer visible.
+            {   // Window has a glContext attached, so make the content of the
+                // framebuffer visible.
                 HDC     hdc = GetDC(window->hWnd);
 
                 if(DGL_state.forceFinishBeforeSwap)

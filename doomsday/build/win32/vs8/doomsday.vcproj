@@ -74,7 +74,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libcmt.lib dxguid.lib dxerr.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libcmt.lib dxguid.lib dxerr.lib dinput8.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
 				OutputFile="./Bin/Release/Doomsday.exe"
 				Version="1.0"
 				LinkIncremental="1"
@@ -174,7 +174,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib dxerr.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="dxguid.lib dxerr.lib dinput8.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -805,10 +805,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\sys_inputd_dummy.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\sys_master.c"
 				>
 				<FileConfiguration
@@ -896,7 +892,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\engine\win32\src\sys_inputd_loader.c"
+					RelativePath="..\..\..\engine\win32\src\sys_input.c"
 					>
 				</File>
 				<File
@@ -1929,18 +1925,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_input.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\sys_inputd.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\sys_inputd_dummy.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\sys_inputd_loader.h"
 				>
 			</File>
 			<File
