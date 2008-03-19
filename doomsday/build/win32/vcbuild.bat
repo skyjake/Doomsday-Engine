@@ -99,7 +99,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dssdlmixer dscompat didinput8 disdlinput jdoom jheretic jhexen wolftc jdoom64
+CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dssdlmixer dscompat didinput8 jdoom jheretic jhexen wolftc jdoom64
 GOTO Done
 
 
@@ -168,7 +168,7 @@ GOTO DONE
 :Doomsday
 CALL vcbuild.bat checkdmt
 ECHO Compiling Doomsday.exe (Engine)...
-cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% /I "%GL_INC%" %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_LIBCURL% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% %DEBUGDEFINES% %PROFILEDEFINES% /D "__DOOMSDAY__"  ./%OBJ_DIR%/doomsday_res.obj  @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" /IMPLIB:"./%BIN_DIR%/Doomsday.lib" %LFLAGS% %LIBS% %EXTERNAL%/libpng/win32/libpng13.lib %EXTERNAL%/zlib/win32/zlib1.lib %EXTERNAL%/lzss/win32/lzss.lib %EXTERNAL%/libcurl/win32/curllib.lib sdl_net.lib sdl.lib wsock32.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib opengl32.lib glu32.lib kernel32.lib gdi32.lib ole32.lib user32.lib
+cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% /I "%GL_INC%" %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_LIBCURL% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% %DEBUGDEFINES% %PROFILEDEFINES% /D "__DOOMSDAY__"  ./%OBJ_DIR%/doomsday_res.obj  @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" /IMPLIB:"./%BIN_DIR%/Doomsday.lib" %LFLAGS% %LIBS% %EXTERNAL%/libpng/win32/libpng13.lib %EXTERNAL%/zlib/win32/zlib1.lib %EXTERNAL%/lzss/win32/lzss.lib %EXTERNAL%/libcurl/win32/curllib.lib sdl_net.lib sdl.lib wsock32.lib dinput8.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib opengl32.lib glu32.lib kernel32.lib gdi32.lib ole32.lib user32.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -223,15 +223,6 @@ GOTO Failure
 ECHO Compiling diDInput8.dll (DirectInput Input driver)...
 md %OBJ_DIR%\diDInput8
 cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DIDINPUT8_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/diDInput8" /Fd"./%OBJ_DIR%/diDInput8" /W3 /Gd  @didinput8_cl.rsp  /link /OUT:"./%BIN_DIR%/diDInput8.dll" %LFLAGS% /DLL /DEF:"./../../plugins/didinput8/api/diDInput8.def" /IMPLIB:"./%BIN_DIR%/diDInput8.lib" %LIBS% dinput8.lib dxguid.lib ./%BIN_DIR%/doomsday.lib
-IF %ERRORLEVEL% == 0 GOTO Done
-GOTO Failure
-
-
-:: *** diSDLInput.dll
-:diSDLInput
-ECHO Compiling diSDLInput.dll (SDL_Input Input driver)...
-md %OBJ_DIR%\diSDLInput
-cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DISDLINPUT_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/diSDLInput" /Fd"./%OBJ_DIR%/diSDLInput" /W3 /Gd  @disdlinput_cl.rsp  /link /OUT:"./%BIN_DIR%/diSDLInput.dll" %LFLAGS% /DLL /DEF:"./../../plugins/disdlinput/api/diSDLInput.def" /IMPLIB:"./%BIN_DIR%/diSDLInput.lib" %LIBS% sdl.lib ./%BIN_DIR%/doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 

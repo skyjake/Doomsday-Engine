@@ -64,8 +64,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpWadMapConverter", "dpwadm
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "diDInput8", "didinput8.vcproj", "{175ADED7-8B57-44C5-98F4-B6BEBFA5E2F5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "diSDLInput", "disdlinput.vcproj", "{A80D4CA6-89BE-4933-B443-7AA5F4A5C316}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -156,12 +154,6 @@ Global
 		{175ADED7-8B57-44C5-98F4-B6BEBFA5E2F5}.Mesa Release|Win32.Build.0 = Release|Win32
 		{175ADED7-8B57-44C5-98F4-B6BEBFA5E2F5}.Release|Win32.ActiveCfg = Release|Win32
 		{175ADED7-8B57-44C5-98F4-B6BEBFA5E2F5}.Release|Win32.Build.0 = Release|Win32
-		{A80D4CA6-89BE-4933-B443-7AA5F4A5C316}.Debug|Win32.ActiveCfg = Debug|Win32
-		{A80D4CA6-89BE-4933-B443-7AA5F4A5C316}.Debug|Win32.Build.0 = Debug|Win32
-		{A80D4CA6-89BE-4933-B443-7AA5F4A5C316}.Mesa Release|Win32.ActiveCfg = Release|Win32
-		{A80D4CA6-89BE-4933-B443-7AA5F4A5C316}.Mesa Release|Win32.Build.0 = Release|Win32
-		{A80D4CA6-89BE-4933-B443-7AA5F4A5C316}.Release|Win32.ActiveCfg = Release|Win32
-		{A80D4CA6-89BE-4933-B443-7AA5F4A5C316}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
