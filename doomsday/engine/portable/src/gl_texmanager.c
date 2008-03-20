@@ -729,8 +729,8 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
  */
 void GL_ClearSystemTextures(void)
 {
-    int     i, k;
-    ded_decor_t *decor;
+    int                 i, k;
+    ded_decor_t        *decor;
 
     if(!texInited)
         return;
@@ -779,8 +779,8 @@ void GL_ClearSystemTextures(void)
  */
 void GL_ClearRuntimeTextures(void)
 {
-    dtexinst_t *dtex;
-    int     i;
+    dtexinst_t         *dtex;
+    int                 i;
 
     if(!texInited)
         return;
@@ -791,11 +791,14 @@ void GL_ClearRuntimeTextures(void)
 
     // Textures, flats and sprite lumps.
     for(i = 0; i < numTextures; ++i)
-        R_DeleteMaterial(i, MAT_TEXTURE);
+        R_DeleteMaterialTex(i, MAT_TEXTURE);
     for(i = 0; i < numFlats; ++i)
-        R_DeleteMaterial(i, MAT_FLAT);
+        R_DeleteMaterialTex(i, MAT_FLAT);
     for(i = 0; i < numSpriteTextures; ++i)
-        GL_DeleteSprite(i);
+    {
+        R_DeleteMaterialTex(i, MAT_SPRITE);
+        GL_DeleteHUDSprite(i);
+    }
 
     // The translated sprite textures.
     for(i = 0; i < numtranssprites; ++i)
@@ -2253,13 +2256,10 @@ unsigned int GL_PreparePSprite(int pnum, texinfo_t **info)
     return prepareSprite(pnum, 1, info);
 }
 
-void GL_DeleteSprite(int spritelump)
+void GL_DeleteHUDSprite(int spritelump)
 {
     if(spritelump < 0 || spritelump >= numSpriteTextures)
         return;
-
-    DGL_DeleteTextures(1, &spriteTextures[spritelump]->tex);
-    spriteTextures[spritelump]->tex = 0;
 
     if(spriteTextures[spritelump]->hudTex)
     {

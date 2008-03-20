@@ -516,14 +516,14 @@ static void internalSkyParams(skylayer_t *slayer, int parm, float value)
         {
             // Invalidate the loaded texture, if necessary.
             if(!(slayer->flags & SLF_MASKED))
-                R_DeleteMaterial(slayer->texture, MAT_TEXTURE);
+                R_DeleteMaterialTex(slayer->texture, MAT_TEXTURE);
             slayer->flags |= SLF_MASKED;
         }
         else
         {
             // Invalidate the loaded texture, if necessary.
             if(slayer->flags & SLF_MASKED)
-                R_DeleteMaterial(slayer->texture, MAT_TEXTURE);
+                R_DeleteMaterialTex(slayer->texture, MAT_TEXTURE);
             slayer->flags &= ~SLF_MASKED;
         }
         break;

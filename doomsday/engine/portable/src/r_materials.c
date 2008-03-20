@@ -170,7 +170,7 @@ material_t *R_GetMaterial(int ofTypeID, materialtype_t type)
 /**
  * Deletes a texture (not for rawlumptexs' etc.).
  */
-void R_DeleteMaterial(int ofTypeID, materialtype_t type)
+void R_DeleteMaterialTex(int ofTypeID, materialtype_t type)
 {
     switch(type)
     {

@@ -157,7 +157,7 @@ void            GL_SetNoTexture(void);
 void            GL_UpdateTexParams(int mipmode);
 void            GL_UpdateRawScreenParams(int smoothing);
 void            GL_DeleteRawImages(void);
-void            GL_DeleteSprite(int spritelump);
+void            GL_DeleteHUDSprite(int spritelump);
 int             GL_GetSkinTexIndex(const char *skin);
 
 boolean         GL_IsColorKeyed(const char *path);

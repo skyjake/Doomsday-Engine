@@ -57,7 +57,7 @@ boolean         R_GetMaterialColor(const material_t *material, float *rgb);
 unsigned int    R_GetMaterialName(int ofTypeID, materialtype_t type);
 
 // Not for sprites, etc.
-void            R_DeleteMaterial(int ofTypeID, materialtype_t type);
+void            R_DeleteMaterialTex(int ofTypeID, materialtype_t type);
 
 // Return values are the original IDs.
 int             R_CheckMaterialNumForName(const char *name, materialtype_t type);

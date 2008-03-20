@@ -1174,14 +1174,12 @@ void R_PrecacheLevel(void)
 {
     uint            i, j;
     size_t          n;
-    int             k, mocount;
     thinker_t      *th;
     sector_t       *sec;
     sidedef_t      *side;
     material_t     *mat;
     float           starttime;
     material_t    **matPresent;
-    char           *spritepresent = NULL;
 
     // Don't precache when playing demo.
     if(isDedicated || playback)
@@ -1225,42 +1223,49 @@ void R_PrecacheLevel(void)
         }
     }
 
+    if(precacheSprites)
+    {
+        int                 i;
+
+        for(i = 0; i < numSprites; ++i)
+        {
+            int                 j;
+            spritedef_t        *sprDef = &sprites[i];
+
+            for(j = 0; j < sprDef->numFrames; ++j)
+            {
+                int                 k;
+                spriteframe_t      *sprFrame = &sprDef->spriteFrames[j];
+
+                for(k = 0; k < 8; ++k)
+                {
+                    mat = sprFrame->mats[k];
+                    if(mat && !isInList((void**) matPresent, n, mat))
+                        matPresent[n++] = mat;
+                }
+            }
+        }
+    }
+
     i = 0;
     while(i < numMaterials && matPresent[i])
         R_PrecacheMaterial(matPresent[i++]);
 
+    // We are done with list of used materials.
+    M_Free(matPresent);
+    matPresent = NULL;
+
     // \fixme Precache sky textures!
-
-    // Precache sprites.
-    if(precacheSprites)
-    {
-        spritepresent = M_Malloc(numSprites);
-        memset(spritepresent, 0, numSprites);
-    }
-
-    if(precacheSprites || (useModels && precacheSkins))
-        for(th = thinkerCap.next, mocount = 0; th != &thinkerCap;
-            th = th->next)
-        {
-            if(th->function != gx.MobjThinker)
-                continue;
-
-            if(precacheSprites)
-                spritepresent[((mobj_t *) th)->sprite] = 1;
-
-            mocount++;
-        }
-
 
     // Precache skins?
     if(useModels && precacheSkins)
     {
-        for(k = 0, th = thinkerCap.next; th != &thinkerCap; th = th->next)
+        for(i = 0, th = thinkerCap.next; th != &thinkerCap; th = th->next)
         {
             if(th->function != gx.MobjThinker)
                 continue;
             // Advance progress bar.
-            /*if(++k % SAFEDIV(mocount, 10) == 0)
+            /*if(++i % SAFEDIV(mocount, 10) == 0)
                 Con_Progress(2, PBARF_DONTSHOW);*/
             // Precache all the skins for the mobj.
             R_PrecacheSkinsForMobj((mobj_t *) th);
@@ -1271,35 +1276,6 @@ void R_PrecacheLevel(void)
 
     // Sky models usually have big skins.
     R_PrecacheSky();
-
-    if(precacheSprites)
-    {
-        int                 i;
-
-        for(i = 0; i < numSprites; ++i)
-        {
-            int                 j;
-            spritedef_t        *sprDef = &sprites[i];
-
-            if(!spritepresent[i] || !useModels)
-                continue;
-
-            for(j = 0; j < sprDef->numFrames; ++j)
-            {
-                int                 k;
-                spriteframe_t      *sprFrame = &sprDef->spriteFrames[j];
-
-                for(k = 0; k < 8; ++k)
-                {
-                    GL_BindTexture(GL_PrepareMaterial(sprFrame->mats[k], NULL));
-                }
-            }
-        }
-
-        M_Free(spritepresent);
-    }
-
-    M_Free(matPresent);
 
     if(verbose)
     {
