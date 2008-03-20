@@ -112,6 +112,27 @@ static void determineGlobalPaths(application_t *app)
     if(!app)
         return;
 
+    // Where are we?
+#if defined(DENG_LIBRARY_DIR)
+# if !defined(_DEBUG)
+#pragma message("!!!WARNING: DENG_LIBRARY_DIR defined in non-debug build!!!")
+# endif
+#endif
+
+#if defined(DENG_LIBRARY_DIR)
+    _snprintf(ddBinDir.path, 254, "%s", DENG_LIBRARY_DIR);
+    if(ddBinDir.path[strlen(ddBinDir.path)] != '\\')
+        sprintf(ddBinDir.path, "%s\\", ddBinDir.path);
+    Dir_MakeAbsolute(ddBinDir.path);
+    ddBinDir.drive = toupper(ddBinDir.path[0]) - 'A' + 1;
+#else
+    {
+    char                path[256];
+    GetModuleFileName(app->hInstance, path, 255);
+    Dir_FileDir(path, &ddBinDir);
+    }
+#endif
+
     // The -userdir option sets the working directory.
     if(ArgCheckWith("-userdir", 1))
     {
@@ -243,16 +264,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
     else
     {
-        char                path[256];
         char                buf[256];
         char               *libName = NULL;
 
         // Initialize COM.
         CoInitialize(NULL);
-
-        // Where are we?
-        GetModuleFileName(hInstance, path, 255);
-        Dir_FileDir(path, &ddBinDir);
 
         // Prepare the command line arguments.
         DD_InitCommandLine(GetCommandLine());
@@ -280,17 +296,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             determineGlobalPaths(&app);
 
             // Compose the full path to the game library.
-#if defined(DENG_LIBRARY_DIR)
-# if !defined(_DEBUG)
-#pragma message("!!!WARNING: DENG_LIBRARY_DIR defined in non-debug build!!!")
-# endif
-#endif
-
-#if defined(DENG_LIBRARY_DIR)
-            sprintf(libPath, "%s" DENG_LIBRARY_DIR "\\%s", ddBasePath, libName);
-#else
-            sprintf(libPath, "%sbin\\%s", ddBasePath, libName);
-#endif
+            _snprintf(libPath, 255, "%s%s", ddBinDir.path, libName);
 
             if(!DD_EarlyInit())
             {

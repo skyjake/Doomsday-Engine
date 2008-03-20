@@ -145,7 +145,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\..\engine\win32\include;..\..\..\engine\portable\include;..\..\..\engine\api\;..\..\..\external\lzss\portable\include;..\..\..\external\zlib\portable\include;..\..\..\external\libpng\portable\include;..\..\..\external\libcurl\portable\include"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;DENG_LIBRARY_DIR=&quot;\&quot;bin\\debug\&quot;&quot;;__DOOMSDAY__;ZLIB_DLL;WIN32_GAMMA;WIN32;_DEBUG;_WINDOWS"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;__DOOMSDAY__;ZLIB_DLL;WIN32_GAMMA;WIN32;_DEBUG;_WINDOWS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
