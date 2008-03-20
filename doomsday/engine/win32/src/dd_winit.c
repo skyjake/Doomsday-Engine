@@ -107,44 +107,65 @@ BOOL InitApplication(application_t *app)
     return RegisterClassEx(&wcex);
 }
 
-static BOOL loadGamePlugin(application_t *app)
+static void determineGlobalPaths(application_t *app)
 {
-    char               *dllName = NULL; // Filename of the game DLL.
+    if(!app)
+        return;
 
-    // First we need to locate the dll name among the command line arguments.
-    DD_CheckArg("-game", &dllName);
-
-    // Was a game dll specified?
-    if(!dllName)
+    // The -userdir option sets the working directory.
+    if(ArgCheckWith("-userdir", 1))
     {
-        DD_ErrorBox(true, "InitGameDLL: No game DLL was specified.\n");
-        return FALSE;
+        Dir_MakeDir(ArgNext(), &ddRuntimeDir);
+        app->userDirOk = Dir_ChDir(&ddRuntimeDir);
     }
 
-    // Now, load the DLL and get the API/exports.
-    app->hInstGame = LoadLibrary(dllName);
+    // The current working directory is the runtime dir.
+    Dir_GetDir(&ddRuntimeDir);
+
+    // The standard base directory is two levels upwards.
+    if(ArgCheck("-stdbasedir"))
+    {
+        strcpy(ddBasePath, "..\\..\\");
+    }
+
+    if(ArgCheckWith("-basedir", 1))
+    {
+        strcpy(ddBasePath, ArgNext());
+        Dir_ValidDir(ddBasePath);
+    }
+
+    Dir_MakeAbsolute(ddBasePath);
+    Dir_ValidDir(ddBasePath);
+}
+
+static boolean loadGamePlugin(application_t *app, const char *libPath)
+{
+    if(!libPath || !app)
+        return false;
+
+    // Now, load the library and get the API/exports.
+    app->hInstGame = LoadLibrary(libPath);
     if(!app->hInstGame)
     {
-        DD_ErrorBox(true, "InitGameDLL: Loading of %s failed (error %d).\n",
-                    dllName, GetLastError());
-        return FALSE;
+        DD_ErrorBox(true, "loadGamePlugin: Loading of %s failed (error %d).\n",
+                    libPath, GetLastError());
+        return false;
     }
 
     // Get the function.
     app->GetGameAPI = (GETGAMEAPI) GetProcAddress(app->hInstGame, "GetGameAPI");
     if(!app->GetGameAPI)
     {
-        DD_ErrorBox(true,
-                    "InitGameDLL: Failed to get proc address of "
-                    "GetGameAPI (error %d).\n", GetLastError());
-        return FALSE;
+        DD_ErrorBox(true, "loadGamePlugin: Failed to get address of "
+                          "GetGameAPI (error %d).\n", GetLastError());
+        return false;
     }
 
     // Do the API transfer.
     DD_InitAPI();
 
     // Everything seems to be working...
-    return TRUE;
+    return true;
 }
 
 /**
@@ -154,7 +175,7 @@ static BOOL loadGamePlugin(application_t *app)
  */
 static int loadPlugin(application_t *app, const char *filename)
 {
-    int         i;
+    int                 i;
 
     // Find the first empty plugin instance.
     for(i = 0; app->hInstPlug[i]; ++i);
@@ -172,9 +193,9 @@ static int loadPlugin(application_t *app, const char *filename)
  */
 static int loadAllPlugins(application_t *app)
 {
-    long        hFile;
-    struct _finddata_t fd;
-    char        plugfn[256];
+    long                hFile;
+    struct _finddata_t  fd;
+    char                plugfn[256];
 
     sprintf(plugfn, "%sdp*.dll", ddBinDir.path);
     if((hFile = _findfirst(plugfn, &fd)) == -1L)
@@ -207,13 +228,14 @@ static int initDGL(void)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow)
 {
-    BOOL        doShutdown = TRUE;
-    int         exitCode = 0;
-    int         lnCmdShow = nCmdShow;
+    BOOL                doShutdown = TRUE;
+    int                 exitCode = 0;
+    int                 lnCmdShow = nCmdShow;
 
     memset(&app, 0, sizeof(app));
     app.hInstance = hInstance;
     app.className = TEXT(MAINWCLASS);
+    app.userDirOk = true;
 
     if(!InitApplication(&app))
     {
@@ -221,8 +243,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
     else
     {
-        char        path[256];
-        char        buf[256];
+        char                path[256];
+        char                buf[256];
+        char               *libName = NULL;
 
         // Initialize COM.
         CoInitialize(NULL);
@@ -236,67 +259,95 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
         // First order of business: are we running in dedicated mode?
         if(ArgCheck("-dedicated"))
-        {
             isDedicated = true;
-        }
 
         DD_ComposeMainWindowTitle(buf);
 
-        if(!DD_EarlyInit())
+        // First we need to locate the game lib name among the command line
+        // arguments.
+        DD_CheckArg("-game", &libName);
+
+        // Was a game library specified?
+        if(!libName)
         {
-            DD_ErrorBox(true, "Error during early init.");
-        }
-        else if(!initTimingSystem())
-        {
-            DD_ErrorBox(true, "Error initalizing timing system.");
-        }
-        else if(!initPluginSystem())
-        {
-            DD_ErrorBox(true, "Error initializing plugin system.");
-        }
-        else if(!initDGL())
-        {
-            DD_ErrorBox(true, "Error initializing DGL.");
-        }
-        // Load the game plugin.
-        else if(!loadGamePlugin(&app))
-        {
-            DD_ErrorBox(true, "Error loading game library.");
-        }
-        // Load all other plugins that are found.
-        else if(!loadAllPlugins(&app))
-        {
-            DD_ErrorBox(true, "Error loading plugins.");
-        }
-        // Initialize the memory zone.
-        else if(!Z_Init())
-        {
-            DD_ErrorBox(true, "Error initializing memory zone.");
+		    DD_ErrorBox(true, "loadGamePlugin: No game library was specified.\n");
         }
         else
         {
-            if(0 == (windowIDX =
-                Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0,
-                                 (isDedicated ? WT_CONSOLE : WT_NORMAL),
-                                 buf, &lnCmdShow)))
+            char                libPath[256];
+
+            // Determine our basedir and other global paths.
+            determineGlobalPaths(&app);
+
+            // Compose the full path to the game library.
+#if defined(DENG_LIBRARY_DIR)
+# if !defined(_DEBUG)
+#pragma message("!!!WARNING: DENG_LIBRARY_DIR defined in non-debug build!!!")
+# endif
+#endif
+
+#if defined(DENG_LIBRARY_DIR)
+            sprintf(libPath, "%s" DENG_LIBRARY_DIR "\\%s", ddBasePath, libName);
+#else
+            sprintf(libPath, "%sbin\\%s", ddBasePath, libName);
+#endif
+
+            if(!DD_EarlyInit())
             {
-                DD_ErrorBox(true, "Error creating main window.");
+                DD_ErrorBox(true, "Error during early init.");
             }
-            else if(!DGL_Init())
+            else if(!initTimingSystem())
+            {
+                DD_ErrorBox(true, "Error initalizing timing system.");
+            }
+            else if(!initPluginSystem())
+            {
+                DD_ErrorBox(true, "Error initializing plugin system.");
+            }
+            else if(!initDGL())
             {
                 DD_ErrorBox(true, "Error initializing DGL.");
             }
+            // Load the game plugin.
+            else if(!loadGamePlugin(&app, libPath))
+            {
+                DD_ErrorBox(true, "Error loading game library.");
+            }
+            // Load all other plugins that are found.
+            else if(!loadAllPlugins(&app))
+            {
+                DD_ErrorBox(true, "Error loading plugins.");
+            }
+            // Initialize the memory zone.
+            else if(!Z_Init())
+            {
+                DD_ErrorBox(true, "Error initializing memory zone.");
+            }
             else
-            {   // All initialization complete.
-                doShutdown = FALSE;
+            {
+                if(0 == (windowIDX =
+                    Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0,
+                                     (isDedicated ? WT_CONSOLE : WT_NORMAL),
+                                     buf, &lnCmdShow)))
+                {
+                    DD_ErrorBox(true, "Error creating main window.");
+                }
+                else if(!DGL_Init())
+                {
+                    DD_ErrorBox(true, "Error initializing DGL.");
+                }
+                else
+                {   // All initialization complete.
+                    doShutdown = FALSE;
 
-                // Append the main window title with the game name and ensure it
-                // is the at the foreground, with focus.
-                DD_ComposeMainWindowTitle(buf);
-                Sys_SetWindowTitle(windowIDX, buf);
+                    // Append the main window title with the game name and ensure it
+                    // is the at the foreground, with focus.
+                    DD_ComposeMainWindowTitle(buf);
+                    Sys_SetWindowTitle(windowIDX, buf);
 
-               // SetForegroundWindow(win->hWnd);
-               // SetFocus(win->hWnd);
+                   // SetForegroundWindow(win->hWnd);
+                   // SetFocus(win->hWnd);
+                }
             }
         }
     }

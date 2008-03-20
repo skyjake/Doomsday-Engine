@@ -74,41 +74,72 @@ application_t app;
 
 // CODE --------------------------------------------------------------------
 
-static boolean loadGamePlugin(void)
+static void determineGlobalPaths(application_t *app)
 {
-	char       *gameName = NULL;
-	char        libName[PATH_MAX];
+    if(!app)
+        return;
 
-	// First we need to locate the game library name among the command
-	// line arguments.
-	DD_CheckArg("-game", &gameName);
-
-	// Was a game dll specified?
-	if(!gameName)
-	{
-		DD_ErrorBox(true, "InitGame: No game library was specified.\n");
-		return false;
-	}
-
-	// Now, load the library and get the API/exports.
-#ifdef MACOSX
-	strcpy(libName, gameName);
-#else
-	sprintf(libName, "lib%s", gameName);
-	strcat(libName, ".so");
+#ifndef MACOSX
+    if(getenv("HOME"))
+    {
+        filename_t homeDir;
+        sprintf(homeDir, "%s/.deng", getenv("HOME"));
+        M_CheckPath(homeDir);
+        Dir_MakeDir(homeDir, &ddRuntimeDir);
+        app->userDirOk = Dir_ChDir(&ddRuntimeDir);
+    }
 #endif
-	if(!(app.hGame = lt_dlopenext(libName)))
+
+    // The -userdir option sets the working directory.
+    if(ArgCheckWith("-userdir", 1))
+    {
+        Dir_MakeDir(ArgNext(), &ddRuntimeDir);
+        userDirOk = Dir_ChDir(&ddRuntimeDir);
+    }
+
+    // The current working directory is the runtime dir.
+    Dir_GetDir(&ddRuntimeDir);
+
+    /**
+     * The base path is always the same and depends on the build
+     * configuration.  Usually this is something like
+     * "/usr/share/deng/".
+     */
+#ifdef MACOSX
+    strcpy(ddBasePath, "./");
+#else
+    strcpy(ddBasePath, DENG_BASE_DIR);
+#endif
+
+    if(ArgCheckWith("-basedir", 1))
+    {
+        strcpy(ddBasePath, ArgNext());
+        Dir_ValidDir(ddBasePath);
+    }
+
+    Dir_MakeAbsolute(ddBasePath);
+    Dir_ValidDir(ddBasePath);
+}
+
+static boolean loadGamePlugin(application_t *app, const char *libPath)
+{
+    if(!libPath || !app)
+        return false;
+
+    // Load the library and get the API/exports.
+    app->hInstGame = lt_dlopenext(libPath);
+    if(!app->hInstGame)
 	{
-		DD_ErrorBox(true, "InitGame: Loading of %s failed (%s).\n", libName,
-					lt_dlerror());
+		DD_ErrorBox(true, "loadGamePlugin: Loading of %s failed (%s).\n",
+                    libPath, lt_dlerror());
 		return false;
 	}
 
-    if(!(app.GetGameAPI = (GETGAMEAPI) lt_dlsym(app.hGame, "GetGameAPI")))
+    app->GetGameAPI = (GETGAMEAPI) lt_dlsym(app->hInstGame, "GetGameAPI");
+    if(!app->GetGameAPI)
 	{
-		DD_ErrorBox(true,
-					"InitGame: Failed to get address of " "GetGameAPI (%s).\n",
-					lt_dlerror());
+		DD_ErrorBox(true, "loadGamePlugin: Failed to get address of "
+                          "GetGameAPI (%s).\n", lt_dlerror());
 		return false;
 	}
 
@@ -121,14 +152,15 @@ static boolean loadGamePlugin(void)
 
 static lt_dlhandle *NextPluginHandle(void)
 {
-	int         i;
+	int                 i;
 
 	for(i = 0; i < MAX_PLUGS; ++i)
 	{
 		if(!app.hPlugins[i])
             return &app.hPlugins[i];
 	}
-	return NULL;
+
+    return NULL;
 }
 
 /*
@@ -263,13 +295,16 @@ static int initDGL(void)
 
 int main(int argc, char **argv)
 {
-	char       *cmdLine;
-	int         i, length;
-    int         exitCode = 0;
-    boolean     doShutdown = true;
-	char        buf[256];
+	char               *cmdLine;
+	int                 i, length;
+    int                 exitCode = 0;
+    boolean             doShutdown = true;
+	char                buf[256];
+    char               *libName = NULL;
 
-	// Assemble a command line string.
+    app.userDirOk = true;
+
+    // Assemble a command line string.
 	for(i = 0, length = 0; i < argc; ++i)
 		length += strlen(argv[i]) + 1;
 
@@ -291,66 +326,89 @@ int main(int argc, char **argv)
 
     // First order of business: are we running in dedicated mode?
     if(ArgCheck("-dedicated"))
-    {
         isDedicated = true;
-    }
 
     DD_ComposeMainWindowTitle(buf);
 
-    if(!DD_EarlyInit())
-    {
-        DD_ErrorBox(true, "Error during early init.");
-    }
-    else if(!initTimingSystem())
-    {
-        DD_ErrorBox(true, "Error initalizing timing system.");
-    }
-    else if(!initPluginSystem())
-    {
-        DD_ErrorBox(true, "Error initializing plugin system.");
-    }
-    // Load the rendering DLL.
-	else if(!initDGL())
-    {
-		DD_ErrorBox(true, "Error initializing DGL.");
-    }
-	// Load the game plugin.
-	else if(!loadGamePlugin())
-    {
-		DD_ErrorBox(true, "Error loading game library.");
-    }
-	// Load all other plugins that are found.
-	else if(!loadAllPlugins())
-    {
-        DD_ErrorBox(true, "Error loading plugins.");
-    }
-    // Init memory zone.
-	else if(!Z_Init())
-    {
-        DD_ErrorBox(true, "Error initializing memory zone.");
-    }
+    // First we need to locate the game lib name among the command line
+    // arguments.
+	DD_CheckArg("-game", &libName);
+
+	// Was a game library specified?
+	if(!libName)
+	{
+		DD_ErrorBox(true, "loadGamePlugin: No game library was specified.\n");
+	}
     else
     {
-        if(0 == (windowIDX =
-            Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, isDedicated,
-                             buf, NULL)))
+	    char                libPath[PATH_MAX];
+
+        // Determine our basedir, and other global paths.
+        determineGlobalPaths(&app);
+
+        // Compose the full path to the game library.
+        // Under *nix this is handled a bit differently.
+#ifdef MACOSX
+	    strcpy(libPath, libName);
+#else
+	    sprintf(libPath, "lib%s.so", libName);
+#endif
+
+        if(!DD_EarlyInit())
         {
-            DD_ErrorBox(true, "Error creating main window.");
+            DD_ErrorBox(true, "Error during early init.");
         }
-        else if(!DGL_Init())
+        else if(!initTimingSystem())
         {
-            DD_ErrorBox(true, "Error initializing DGL.");
+            DD_ErrorBox(true, "Error initalizing timing system.");
+        }
+        else if(!initPluginSystem())
+        {
+            DD_ErrorBox(true, "Error initializing plugin system.");
+        }
+        // Load the rendering DLL.
+	    else if(!initDGL())
+        {
+		    DD_ErrorBox(true, "Error initializing DGL.");
+        }
+	    // Load the game plugin.
+	    else if(!loadGamePlugin(&app, libPath))
+        {
+		    DD_ErrorBox(true, "Error loading game library.");
+        }
+	    // Load all other plugins that are found.
+	    else if(!loadAllPlugins())
+        {
+            DD_ErrorBox(true, "Error loading plugins.");
+        }
+        // Init memory zone.
+	    else if(!Z_Init())
+        {
+            DD_ErrorBox(true, "Error initializing memory zone.");
         }
         else
-        {   // All initialization complete.
-            doShutdown = false;
+        {
+            if(0 == (windowIDX =
+                Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, isDedicated,
+                                 buf, NULL)))
+            {
+                DD_ErrorBox(true, "Error creating main window.");
+            }
+            else if(!DGL_Init())
+            {
+                DD_ErrorBox(true, "Error initializing DGL.");
+            }
+            else
+            {   // All initialization complete.
+                doShutdown = false;
 
-            // Append the main window title with the game name and ensure it
-            // is the at the foreground, with focus.
-            DD_ComposeMainWindowTitle(buf);
-	        Sys_SetWindowTitle(windowIDX, buf);
+                // Append the main window title with the game name and ensure it
+                // is the at the foreground, with focus.
+                DD_ComposeMainWindowTitle(buf);
+	            Sys_SetWindowTitle(windowIDX, buf);
 
-           // \todo Set foreground window and focus.
+               // \todo Set foreground window and focus.
+            }
         }
     }
 

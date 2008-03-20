@@ -142,7 +142,6 @@ int     queryResult = 0;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static char *wadfiles[MAXWADFILES];
-static boolean userDirOk = true;
 
 // CODE --------------------------------------------------------------------
 
@@ -341,58 +340,6 @@ int DD_Main(void)
     boolean         noCenter = false;
     int             exitCode;
 
-#ifdef UNIX
-#   ifndef MACOSX
-        if(getenv("HOME"))
-        {
-            filename_t homeDir;
-            sprintf(homeDir, "%s/.deng", getenv("HOME"));
-            M_CheckPath(homeDir);
-            Dir_MakeDir(homeDir, &ddRuntimeDir);
-            userDirOk = Dir_ChDir(&ddRuntimeDir);
-        }
-#   endif
-#endif
-
-    // The -userdir option sets the working directory.
-    if(ArgCheckWith("-userdir", 1))
-    {
-        Dir_MakeDir(ArgNext(), &ddRuntimeDir);
-        userDirOk = Dir_ChDir(&ddRuntimeDir);
-    }
-
-    // The current working directory is the runtime dir.
-    Dir_GetDir(&ddRuntimeDir);
-
-#ifdef UNIX
-    /** The base path is always the same and depends on the build
-     * configuration.  Usually this is something like
-     * "/usr/share/deng/".
-     */
-#   ifdef MACOSX
-    strcpy(ddBasePath, "./");
-#   else
-    strcpy(ddBasePath, DENG_BASE_DIR);
-#   endif
-#endif
-
-#ifdef WIN32
-    // The standard base directory is two levels upwards.
-    if(ArgCheck("-stdbasedir"))
-    {
-        strcpy(ddBasePath, "..\\..\\");
-    }
-#endif
-
-    if(ArgCheckWith("-basedir", 1))
-    {
-        strcpy(ddBasePath, ArgNext());
-        Dir_ValidDir(ddBasePath);
-    }
-
-    Dir_MakeAbsolute(ddBasePath);
-    Dir_ValidDir(ddBasePath);
-
     // By default, use the resolution defined in (default).cfg.
     winX = 0;
     winY = 0;
@@ -508,7 +455,7 @@ int DD_Main(void)
 
 static int DD_StartupWorker(void *parm)
 {
-    int             p = 0;
+    int                 p = 0;
 
 #ifdef WIN32
     // Initialize COM for this thread (needed for DirectInput).
@@ -535,7 +482,7 @@ static int DD_StartupWorker(void *parm)
     sprintf(defsFileName, "%sdefs\\doomsday.ded", ddBasePath);
 
     // Was the change to userdir OK?
-    if(!userDirOk)
+    if(!app.userDirOk)
         Con_Message("--(!)-- User directory not found " "(check -userdir).\n");
 
     bamsInit();                 // Binary angle calculations.

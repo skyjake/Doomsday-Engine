@@ -200,7 +200,7 @@ void DD_Verbosity(void)
  */
 boolean DD_EarlyInit(void)
 {
-    char       *outfilename = "doomsday.out";
+    char               *outfilename = "doomsday.out";
 
     // We'll redirect stdout to a log file.
     DD_CheckArg("-out", &outfilename);
