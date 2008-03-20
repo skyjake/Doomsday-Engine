@@ -304,27 +304,27 @@ boolean Mus_IsMUSLump(int lump)
 /**
  * The lump may contain non-MUS data.
  *
- * @return:         Non-zero if successful.
+ * @return              Non-zero if successful.
  */
 int Mus_GetMUS(ded_music_t *def)
 {
-    int         lumpnum;
-    size_t      len;
-    void       *ptr;
+    lumpnum_t           lump;
+    size_t              len;
+    void               *ptr;
 
     if(!mus_avail || !imus)
         return false;
 
-    lumpnum = W_CheckNumForName(def->lumpName);
-    if(lumpnum < 0)
+    lump = W_CheckNumForName(def->lumpName);
+    if(lump < 0)
         return false;           // No such lump.
 
     // Is this MUS data or what?
-    if(!Mus_IsMUSLump(lumpnum))
+    if(!Mus_IsMUSLump(lump))
         return false;
 
-    ptr = imus->SongBuffer(len = W_LumpLength(lumpnum));
-    W_ReadLump(lumpnum, ptr);
+    ptr = imus->SongBuffer(len = W_LumpLength(lump));
+    W_ReadLump(lump, ptr);
     return true;
 }
 
@@ -332,14 +332,14 @@ int Mus_GetMUS(ded_music_t *def)
  * Load a song file.
  * Songs can be either in external files or non-MUS lumps.
  *
- * @return:         Non-zero if an external file of that name exists.
+ * @return              Non-zero if an external file of that name exists.
  */
 int Mus_GetExt(ded_music_t *def, char *path)
 {
-    char        buf[300];
-    int         lumpnum;
-    size_t      len;
-    void       *ptr;
+    char                buf[300];
+    lumpnum_t           lump;
+    size_t              len;
+    void               *ptr;
 
     if(!mus_avail || !iext)
         return false;
@@ -395,17 +395,17 @@ int Mus_GetExt(ded_music_t *def, char *path)
         return true; // Got it!
     }
 
-    lumpnum = W_CheckNumForName(def->lumpName);
-    if(lumpnum < 0)
+    lump = W_CheckNumForName(def->lumpName);
+    if(lump < 0)
         return false; // No such lump.
 
-    if(Mus_IsMUSLump(lumpnum))
+    if(Mus_IsMUSLump(lump))
         return false; // It's MUS!
 
     // Take a copy. Might be a big one (since it could be an MP3), so
     // use the standard memory allocation routines.
-    ptr = iext->SongBuffer(len = W_LumpLength(lumpnum));
-    W_ReadLump(lumpnum, ptr);
+    ptr = iext->SongBuffer(len = W_LumpLength(lump));
+    W_ReadLump(lump, ptr);
     return true;
 }
 

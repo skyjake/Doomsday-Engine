@@ -63,15 +63,15 @@ void GL_UsePatchOffset(boolean enable)
     usePatchOffset = enable;
 }
 
-void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
-                         float scaley)
+void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
+                         float scalex, float scaley)
 {
-    boolean     isTwoPart;
-    float       pixelBorder = 0;
-    float       tcb = 0;
-    rawtex_t   *raw;
+    boolean             isTwoPart;
+    float               pixelBorder = 0;
+    float               tcb = 0;
+    rawtex_t           *raw;
 
-    if(lump < 0 || lump >= numlumps)
+    if(lump < 0 || lump >= numLumps)
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -143,7 +143,7 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
 /**
  * Raw screens are 320 x 200.
  */
-void GL_DrawRawScreen(int lump, float offx, float offy)
+void GL_DrawRawScreen(lumpnum_t lump, float offx, float offy)
 {
     DGL_Color3f(1, 1, 1);
     GL_DrawRawScreen_CS(lump, offx, offy, 1, 1);
@@ -152,33 +152,34 @@ void GL_DrawRawScreen(int lump, float offx, float offy)
 /**
  * Drawing with the Current State.
  */
-void GL_DrawPatch_CS(int posX, int posY, int lumpnum)
+void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
 {
-    float           x = posX;
-    float           y = posY;
-    float           w, h;
-    texinfo_t      *texinfo;
+    float               x = posX;
+    float               y = posY;
+    float               w, h;
+    texinfo_t          *texInfo;
 
     // Set the texture.
-    DGL_Bind(curtex = GL_PreparePatch(lumpnum, &texinfo));
+    DGL_Bind(curtex = GL_PreparePatch(lump, &texInfo));
 
-    w = (float) texinfo->width;
-    h = (float) texinfo->height;
+    w = (float) texInfo->width;
+    h = (float) texInfo->height;
     if(usePatchOffset)
     {
-        patch_t *p = R_GetPatch(lumpnum);
+        patch_t *p = R_GetPatch(lump);
         x += (int) p->offX;
         y += (int) p->offY;
     }
-    if(texinfo->offsetX)
+
+    if(texInfo->offsetX)
     {
         // This offset is used only for the extra borders in the
         // "upscaled and sharpened" patches, so we can tweak the values
         // to our liking a bit more.
-        x += texinfo->offsetX * .75f;
-        y += texinfo->offsetY * .75f;
-        w -= fabs(texinfo->offsetX) / 2;
-        h -= fabs(texinfo->offsetY) / 2;
+        x += texInfo->offsetX * .75f;
+        y += texInfo->offsetY * .75f;
+        w -= fabs(texInfo->offsetX) / 2;
+        h -= fabs(texInfo->offsetY) / 2;
     }
 
     DGL_Begin(DGL_QUADS);
@@ -193,12 +194,12 @@ void GL_DrawPatch_CS(int posX, int posY, int lumpnum)
     DGL_End();
 
     // Is there a second part?
-    if(GL_GetPatchOtherPart(lumpnum, &texinfo))
+    if(GL_GetPatchOtherPart(lump, &texInfo))
     {
-        x += (int) texinfo->width;
+        x += (int) texInfo->width;
 
-        GL_BindTexture(GL_GetPatchOtherPart(lumpnum, &texinfo));
-        w = (float) texinfo->width;
+        GL_BindTexture(GL_GetPatchOtherPart(lump, &texInfo));
+        w = (float) texInfo->width;
 
         DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0);
@@ -213,43 +214,44 @@ void GL_DrawPatch_CS(int posX, int posY, int lumpnum)
     }
 }
 
-void GL_DrawPatchLitAlpha(int x, int y, float light, float alpha, int lumpnum)
+void GL_DrawPatchLitAlpha(int x, int y, float light, float alpha,
+                          lumpnum_t lump)
 {
     DGL_Color4f(light, light, light, alpha);
-    GL_DrawPatch_CS(x, y, lumpnum);
+    GL_DrawPatch_CS(x, y, lump);
 }
 
-void GL_DrawPatch(int x, int y, int lumpnum)
+void GL_DrawPatch(int x, int y, lumpnum_t lump)
 {
-    if(lumpnum < 0)
+    if(lump < 0)
         return;
-    GL_DrawPatchLitAlpha(x, y, 1, 1, lumpnum);
+    GL_DrawPatchLitAlpha(x, y, 1, 1, lump);
 }
 
-void GL_DrawFuzzPatch(int x, int y, int lumpnum)
+void GL_DrawFuzzPatch(int x, int y, lumpnum_t lump)
 {
-    if(lumpnum < 0)
+    if(lump < 0)
         return;
-    GL_DrawPatchLitAlpha(x, y, 1, .333f, lumpnum);
+    GL_DrawPatchLitAlpha(x, y, 1, .333f, lump);
 }
 
-void GL_DrawAltFuzzPatch(int x, int y, int lumpnum)
+void GL_DrawAltFuzzPatch(int x, int y, lumpnum_t lump)
 {
-    if(lumpnum < 0)
+    if(lump < 0)
         return;
-    GL_DrawPatchLitAlpha(x, y, 1, .666f, lumpnum);
+    GL_DrawPatchLitAlpha(x, y, 1, .666f, lump);
 }
 
-void GL_DrawShadowedPatch(int x, int y, int lumpnum)
+void GL_DrawShadowedPatch(int x, int y, lumpnum_t lump)
 {
-    if(lumpnum < 0)
+    if(lump < 0)
         return;
-    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, .4f, lumpnum);
-    GL_DrawPatchLitAlpha(x, y, 1, 1, lumpnum);
+    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, .4f, lump);
+    GL_DrawPatchLitAlpha(x, y, 1, 1, lump);
 }
 
-void GL_DrawRect(float x, float y, float w, float h, float r, float g, float b,
-                 float a)
+void GL_DrawRect(float x, float y, float w, float h, float r, float g,
+                 float b, float a)
 {
     DGL_Color4f(r, g, b, a);
     DGL_Begin(DGL_QUADS);
@@ -285,12 +287,13 @@ void GL_DrawRectTiled(int x, int y, int w, int h, int tw, int th)
 /**
  * The cut rectangle must be inside the other one.
  */
-void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int txoff, int tyoff, int cx,
-                         int cy, int cw, int ch)
+void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th,
+                         int txoff, int tyoff, int cx, int cy, int cw,
+                         int ch)
 {
-    float   ftw = tw, fth = th;
-    float   txo = (1.0f / (float)tw) * (float)txoff;
-    float   tyo = (1.0f / (float)th) * (float)tyoff;
+    float               ftw = tw, fth = th;
+    float               txo = (1.0f / (float)tw) * (float)txoff;
+    float               tyo = (1.0f / (float)th) * (float)tyoff;
 
     // We'll draw at max four rectangles.
     int     toph = cy - y, bottomh = y + h - (cy + ch), sideh =
@@ -309,9 +312,10 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int txoff, 
         DGL_TexCoord2f(txo, tyo + (toph / fth));
         DGL_Vertex2f(x, y + toph);
     }
+
     if(lefth > 0 && sideh > 0)
     {
-        float   yoff = toph / fth;
+        float               yoff = toph / fth;
 
         // The left rectangle.
         DGL_TexCoord2f(txo, yoff + tyo);
@@ -323,11 +327,12 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int txoff, 
         DGL_TexCoord2f(txo, yoff + tyo + sideh / fth);
         DGL_Vertex2f(x, y + toph + sideh);
     }
+
     if(righth > 0 && sideh > 0)
     {
-        int     ox = x + lefth + cw;
-        float   xoff = (lefth + cw) / ftw;
-        float   yoff = toph / fth;
+        int                 ox = x + lefth + cw;
+        float               xoff = (lefth + cw) / ftw;
+        float               yoff = toph / fth;
 
         // The left rectangle.
         DGL_TexCoord2f(xoff + txo, yoff + tyo);
@@ -339,10 +344,11 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int txoff, 
         DGL_TexCoord2f(xoff + txo, yoff + tyo + sideh / fth);
         DGL_Vertex2f(ox, y + toph + sideh);
     }
+
     if(bottomh > 0)
     {
-        int     oy = y + toph + sideh;
-        float   yoff = (toph + sideh) / fth;
+        int                 oy = y + toph + sideh;
+        float               yoff = (toph + sideh) / fth;
 
         DGL_TexCoord2f(txo, yoff + tyo);
         DGL_Vertex2f(x, oy);
@@ -376,19 +382,21 @@ void GL_SetColor(int palidx)
 
 void GL_SetColor2(int palidx, float alpha)
 {
-    byte    rgb[4];
+    byte                rgb[4];
 
-    if(palidx == -1)            // Invisible?
+    if(palidx == -1) // Invisible?
     {
         DGL_Color4f(0, 0, 0, 0);
     }
     else
     {
         PalIdxToRGB(GL_GetPalette(), palidx, rgb);
+
         if(alpha < 0)
             alpha = 0;
         if(alpha > 1)
             alpha = 1;
+
         rgb[3] = alpha * 255;
         DGL_Color4ubv(rgb);
     }
@@ -405,12 +413,12 @@ void GL_SetFilter(int filterRGBA)
 }
 
 /**
- * @return          Non-zero if the filter was drawn.
+ * @return              Non-zero if the filter was drawn.
  */
 int GL_DrawFilter(void)
 {
     if(!curfilter)
-        return 0;               // No filter needed.
+        return 0; // No filter needed.
 
     // No texture, please.
     DGL_Disable(DGL_TEXTURING);
@@ -429,12 +437,12 @@ int GL_DrawFilter(void)
     return 1;
 }
 
-void GL_DrawPSprite(float x, float y, float scale, int flip, int lump)
+void GL_DrawPSprite(float x, float y, float scale, int flip, lumpnum_t lump)
 {
-    int     w, h;
-    int     w2, h2;
-    float   s, t;
-    spritelump_t *slump = spritelumps[lump];
+    int                 w, h;
+    int                 w2, h2;
+    float               s, t;
+    spritelump_t       *slump = spritelumps[lump];
 
     if(flip)
         flip = 1; // Make sure it's zero or one.

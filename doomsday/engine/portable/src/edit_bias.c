@@ -59,7 +59,7 @@ void SBE_MenuSave(ui_object_t *ob);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int gamedrawhud;
+extern int gameDrawHUD;
 extern int numSources;
 extern byte freezeRLs;
 
@@ -293,7 +293,7 @@ void SBE_EndFrame(void)
 static void SBE_Begin(void)
 {
     // Advise the game not to draw any HUD displays
-    gamedrawhud = false;
+    gameDrawHUD = false;
     editActive = true;
     editGrabbed = -1;
     // Enable the biaseditor binding class
@@ -304,7 +304,7 @@ static void SBE_Begin(void)
 static void SBE_End(void)
 {
     // Advise the game it can safely draw any HUD displays again
-    gamedrawhud = true;
+    gameDrawHUD = true;
     editActive = false;
     // Disable the biaseditor binding class
     B_SetBindClass(DDBC_BIASEDITOR, 0);

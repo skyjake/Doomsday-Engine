@@ -89,28 +89,28 @@ extern          "C" {
     int             DD_GetKeyCode(const char *name);
 
     // Base: WAD.
-    int             W_CheckNumForName(const char *name);
-    int             W_GetNumForName(const char *name);
-    size_t          W_LumpLength(int lump);
-    const char     *W_LumpName(int lump);
-    void            W_ReadLump(int lump, void *dest);
-    void            W_ReadLumpSection(int lump, void *dest, int startoffset,
-                                      size_t length);
-    void           *W_CacheLumpNum(int lump, int tag);
+    lumpnum_t       W_CheckNumForName(const char *name);
+    lumpnum_t       W_GetNumForName(const char *name);
+    size_t          W_LumpLength(lumpnum_t lump);
+    const char     *W_LumpName(lumpnum_t lump);
+    void            W_ReadLump(lumpnum_t lump, void *dest);
+    void            W_ReadLumpSection(lumpnum_t lump, void *dest,
+                                      size_t startOffset, size_t length);
+    void           *W_CacheLumpNum(lumpnum_t lump, int tag);
     void           *W_CacheLumpName(char *name, int tag);
-    void            W_ChangeCacheTag(int lump, int tag);
-    const char     *W_LumpSourceFile(int lump);
+    void            W_ChangeCacheTag(lumpnum_t lump, int tag);
+    const char     *W_LumpSourceFile(lumpnum_t lump);
     uint            W_CRCNumber(void);
-    boolean         W_IsFromIWAD(int lump);
-    int             W_OpenAuxiliary(const char *filename);
+    boolean         W_IsFromIWAD(lumpnum_t lump);
+    lumpnum_t       W_OpenAuxiliary(const char *fileName);
 
     // Base: Zone.
     void           *_DECALL Z_Malloc(size_t size, int tag, void *ptr);
     void           *Z_Calloc(size_t size, int tag, void *user);
-    void           *Z_Realloc(void *ptr, size_t n, int malloctag);
-    void           *Z_Recalloc(void *ptr, size_t n, int calloctag);
+    void           *Z_Realloc(void *ptr, size_t n, int mallocTag);
+    void           *Z_Recalloc(void *ptr, size_t n, int callocTag);
     void _DECALL    Z_Free(void *ptr);
-    void            Z_FreeTags(int lowtag, int hightag);
+    void            Z_FreeTags(int lowTag, int highTag);
     void            Z_ChangeTag2(void *ptr, int tag);
     void            Z_CheckHeap(void);
 
@@ -378,14 +378,14 @@ extern          "C" {
     void            R_SetDataPath(const char *path);
     void            R_SetupLevel(int mode, int flags);
     void            R_PrecacheLevel(void);
-    void            R_PrecachePatch(int lumpnum);
+    void            R_PrecachePatch(lumpnum_t lump);
     void            R_PrecacheSkinsForState(int stateIndex);
     void            R_RenderPlayerView(ddplayer_t *player);
     void            R_ViewWindow(int x, int y, int w, int h);
     void            R_SetBorderGfx(char *lumps[9]);
     void            R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t *sprinfo);
-    void            R_GetPatchInfo(int lump, spriteinfo_t *info);
+    void            R_GetPatchInfo(lumpnum_t lump, spriteinfo_t *info);
 
     int             R_CheckMaterialNumForName(const char *name, materialtype_t type);
     const char     *R_MaterialNameForNum(int num, materialtype_t type);
@@ -463,24 +463,24 @@ extern          "C" {
     void            GL_SetColorAndAlpha(float r, float g, float b, float a);
     void            GL_BlendMode(blendmode_t mode);
     void            GL_SetNoTexture(void);
-    void            GL_SetPatch(int lump, int wrapS, int wrapT);
+    void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT);
     void            GL_SetSprite(int pnum);
     void            GL_SetPSprite(int pnum);
     void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
     void            GL_SetMaterial(int idx, materialtype_t type);
-    unsigned int    GL_SetRawImage(unsigned int lump, boolean part2, int wrapS, int wrapT);
+    unsigned int    GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
     unsigned int    GL_LoadGraphics(const char *name, int mode);
 
     // Graphics: 2D drawing.
-    void            GL_DrawPatch(int x, int y, int lumpnum);
-    void            GL_DrawPatch_CS(int x, int y, int lumpnum);
+    void            GL_DrawPatch(int x, int y, lumpnum_t lump);
+    void            GL_DrawPatch_CS(int x, int y, lumpnum_t lump);
     void            GL_DrawPatchLitAlpha(int x, int y, float light,
-                                         float alpha, int lumpnum);
-    void            GL_DrawFuzzPatch(int x, int y, int lumpnum);
-    void            GL_DrawAltFuzzPatch(int x, int y, int lumpnum);
-    void            GL_DrawShadowedPatch(int x, int y, int lumpnum);
-    void            GL_DrawRawScreen(int lump, float offx, float offy);
-    void            GL_DrawRawScreen_CS(int lump, float offx, float offy,
+                                         float alpha, lumpnum_t lump);
+    void            GL_DrawFuzzPatch(int x, int y, lumpnum_t lump);
+    void            GL_DrawAltFuzzPatch(int x, int y, lumpnum_t lump);
+    void            GL_DrawShadowedPatch(int x, int y, lumpnum_t lump);
+    void            GL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
+    void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
                                         float scalex, float scaley);
     void            GL_DrawLine(float x1, float y1, float x2, float y2,
                                 float r, float g, float b, float a);
@@ -492,7 +492,7 @@ extern          "C" {
                                         int th, int txoff, int tyoff, int cx,
                                         int cy, int cw, int ch);
     void            GL_DrawPSprite(float x, float y, float scale, int flip,
-                                   int lump);
+                                   lumpnum_t lump);
     void            GL_SetFilter(int filter_rgba);
 
     // Graphics: PCX.

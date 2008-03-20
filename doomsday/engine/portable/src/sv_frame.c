@@ -244,7 +244,7 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
 #ifdef _DEBUG
 if(df & MDFC_NULL)
 {
-    Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n", df);
+    Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n");
 }
 if((df & 0xffff) == 0)
 {

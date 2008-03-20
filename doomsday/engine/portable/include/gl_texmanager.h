@@ -92,11 +92,11 @@ void            GL_ResetLumpTexData(void);
 void            GL_BindTexture(DGLuint texname);
 void            GL_TextureFilterMode(int target, int parm);
 DGLuint         GL_BindTexPatch(struct patch_s *p);
-DGLuint         GL_GetPatchOtherPart(int lump, texinfo_t **info);
-void            GL_SetPatch(int lump, int wrapS, int wrapT); // No mipmaps are generated.
+DGLuint         GL_GetPatchOtherPart(lumpnum_t lump, texinfo_t **info);
+void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT); // No mipmaps are generated.
 DGLuint         GL_BindTexRaw(struct rawtex_s *r);
-DGLuint         GL_GetRawOtherPart(int lump, texinfo_t **info);
-void            GL_SetRawTex(int lump, int part);
+DGLuint         GL_GetRawOtherPart(lumpnum_t lump, texinfo_t **info);
+void            GL_SetRawTex(lumpnum_t lump, int part);
 
 void            GL_LowRes(void);
 void            TranslatePatch(lumppatch_t *patch, byte *transTable);
@@ -136,9 +136,9 @@ DGLuint         GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
                                texinfo_t **info);
 
 DGLuint         GL_GetPatchInfo(int idx, boolean part2, texinfo_t **info);
-DGLuint         GL_GetRawTexInfo(uint idx, boolean part2, texinfo_t **texinfo);
-DGLuint         GL_PreparePatch(int idx, texinfo_t **info);
-DGLuint         GL_PrepareRawTex(uint idx, boolean part2, texinfo_t **info);
+DGLuint         GL_GetRawTexInfo(lumpnum_t lump, boolean part2, texinfo_t **texinfo);
+DGLuint         GL_PreparePatch(lumpnum_t lump, texinfo_t **info);
+DGLuint         GL_PrepareRawTex(lumpnum_t lump, boolean part2, texinfo_t **info);
 DGLuint         GL_PrepareLSTexture(lightingtexid_t which, texinfo_t **info);
 DGLuint         GL_PrepareFlareTexture(flaretexid_t flare, texinfo_t **info);
 void            GL_BufferSkyTexture(int idx, byte **outbuffer, int *width,
@@ -149,11 +149,11 @@ byte           *GL_GetPal18to8(void);
 
 void            GL_SetMaterial(int idx, materialtype_t type);
 
-unsigned int    GL_SetRawImage(unsigned int lump, boolean part2, int wrapS, int wrapT);
+unsigned int    GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
 void            GL_SetSprite(int pnum);
 void            GL_SetPSprite(int pnum);
 void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
-void            GL_NewSplitTex(int lump, DGLuint part2name);
+void            GL_NewSplitTex(lumpnum_t lump, DGLuint part2name);
 void            GL_SetNoTexture(void);
 void            GL_UpdateTexParams(int mipmode);
 void            GL_UpdateRawScreenParams(int smoothing);

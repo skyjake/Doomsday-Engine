@@ -63,7 +63,7 @@ typedef struct {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-int gamedataformat; // use a game-specifc data format where applicable
+int gameDataFormat; // use a game-specifc data format where applicable
 
 extern boolean levelSetup; // we are currently setting up a level
 
@@ -359,13 +359,13 @@ patch_t **R_CollectPatches(int *count)
 /**
  * Returns a patch_t* for the given lump, if one already exists.
  */
-patch_t *R_FindPatch(int lumpnum)
+patch_t *R_FindPatch(lumpnum_t lump)
 {
-    patch_t *i;
-    patchhash_t *hash = PATCH_HASH(lumpnum);
+    patch_t            *i;
+    patchhash_t        *hash = PATCH_HASH(lump);
 
     for(i = hash->first; i; i = i->next)
-        if(i->lump == lumpnum)
+        if(i->lump == lump)
         {
             return i;
         }
@@ -376,12 +376,12 @@ patch_t *R_FindPatch(int lumpnum)
 /**
  * Returns a rawtex_t* for the given lump, if one already exists.
  */
-rawtex_t *R_FindRawTex(int lumpnum)
+rawtex_t *R_FindRawTex(lumpnum_t lump)
 {
-    uint            i;
+    uint                i;
 
     for(i = 0; i < numrawtextures; ++i)
-        if(rawtextures[i].lump == lumpnum)
+        if(rawtextures[i].lump == lump)
         {
             return &rawtextures[i];
         }
@@ -393,17 +393,17 @@ rawtex_t *R_FindRawTex(int lumpnum)
  * Get a rawtex_t data structure for a raw texture specified with a WAD lump
  * number.  Allocates a new rawtex_t if it hasn't been loaded yet.
  */
-rawtex_t *R_GetRawTex(int lumpnum)
+rawtex_t *R_GetRawTex(lumpnum_t lump)
 {
-    rawtex_t       *r;
+    rawtex_t           *r;
 
-    if(lumpnum >= numlumps)
+    if(lump >= numLumps)
     {
-        Con_Error("R_GetPatch: lumpnum = %i out of bounds (%i).\n",
-                  lumpnum, numlumps);
+        Con_Error("R_GetPatch: lump = %i out of bounds (%i).\n",
+                  lump, numLumps);
     }
 
-    r = R_FindRawTex(lumpnum);
+    r = R_FindRawTex(lump);
     // Check if this lump has already been loaded as a rawtex.
     if(r)
         return r;
@@ -412,7 +412,7 @@ rawtex_t *R_GetRawTex(int lumpnum)
     rawtextures = M_Realloc(rawtextures, sizeof(rawtex_t) * ++numrawtextures);
     r = &rawtextures[numrawtextures - 1];
 
-    r->lump = lumpnum;
+    r->lump = lump;
     r->tex = r->tex2 = 0;
     r->info.width = r->info2.width = 0;
     r->info.height = r->info2.height = 0;
@@ -425,20 +425,20 @@ rawtex_t *R_GetRawTex(int lumpnum)
  * Get a patch_t data structure for a patch specified with a WAD lump
  * number.  Allocates a new patch_t if it hasn't been loaded yet.
  */
-patch_t *R_GetPatch(int lumpnum)
+patch_t *R_GetPatch(lumpnum_t lump)
 {
-    patch_t    *p = 0;
-    patchhash_t *hash = 0;
+    patch_t            *p = 0;
+    patchhash_t        *hash = 0;
 
-    if(lumpnum >= numlumps)
+    if(lump >= numLumps)
     {
-        Con_Error("R_GetPatch: lumpnum = %i out of bounds (%i).\n",
-                  lumpnum, numlumps);
+        Con_Error("R_GetPatch: lump = %i out of bounds (%i).\n",
+                  lump, numLumps);
     }
 
-    p = R_FindPatch(lumpnum);
+    p = R_FindPatch(lump);
 
-    if(!lumpnum)
+    if(!lump)
         return NULL;
 
     // Check if this lump has already been loaded as a patch.
@@ -447,14 +447,14 @@ patch_t *R_GetPatch(int lumpnum)
 
     // Hmm, this is an entirely new patch.
     p = Z_Calloc(sizeof(patch_t), PU_PATCH, NULL);
-    hash = PATCH_HASH(lumpnum);
+    hash = PATCH_HASH(lump);
 
     // Link to the hash.
     p->next = hash->first;
     hash->first = p;
 
     // Init the new one.
-    p->lump = lumpnum;
+    p->lump = lump;
     return p;
 }
 
@@ -464,7 +464,7 @@ patch_t *R_GetPatch(int lumpnum)
  */
 int R_CreateAnimGroup(materialtype_t type, int flags)
 {
-    animgroup_t *group;
+    animgroup_t        *group;
 
     // Allocating one by one is inefficient, but it doesn't really matter.
     groups =
@@ -501,7 +501,7 @@ int R_CreateAnimGroup(materialtype_t type, int flags)
  */
 void R_DestroyAnimGroups(void)
 {
-    int             i;
+    int                 i;
 
     if(numgroups > 0)
     {
@@ -529,9 +529,9 @@ animgroup_t *R_GetAnimGroup(int number)
  */
 void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
 {
-    animgroup_t *group;
-    animframe_t *frame;
-    int         number;
+    animgroup_t        *group;
+    animframe_t        *frame;
+    int                 number;
 
     if(!name || !name[0])
         return;
@@ -573,8 +573,8 @@ void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
 
 boolean R_IsInAnimGroup(int groupNum, materialtype_t type, int number)
 {
-    animgroup_t *group = R_GetAnimGroup(groupNum);
-    int     i;
+    animgroup_t        *group = R_GetAnimGroup(groupNum);
+    int                 i;
 
     if(!group)
         return false;
@@ -600,9 +600,9 @@ boolean R_IsInAnimGroup(int groupNum, materialtype_t type, int number)
  */
 void R_InitAnimGroup(ded_group_t *def)
 {
-    int     i;
-    int     groupNumber = -1;
-    int     type, number;
+    int                 i;
+    int                 groupNumber = -1;
+    int                 type, number;
 
     type = (def->isTexture ? MAT_TEXTURE : MAT_FLAT);
 
@@ -631,8 +631,8 @@ void R_InitAnimGroup(ded_group_t *def)
  */
 void R_ResetAnimGroups(void)
 {
-    int     i;
-    animgroup_t *group;
+    int                 i;
+    animgroup_t        *group;
 
     for(i = 0, group = groups; i < numgroups; ++i, group++)
     {
@@ -724,7 +724,7 @@ void R_InitTextures(void)
         if(offset > maxoff)
             Con_Error("R_InitTextures: bad texture directory");
 
-        if(gamedataformat == 0)
+        if(gameDataFormat == 0)
         {
             mtexture = (maptexture_t *) ((byte *) maptex + offset);
 
@@ -767,7 +767,7 @@ void R_InitTextures(void)
             }
 
         }
-        else if(gamedataformat == 3)
+        else if(gameDataFormat == 3)
         {   // strife format
             smtexture = (strifemaptexture_t *) ((byte *) maptex + offset);
 
@@ -832,12 +832,12 @@ void R_InitTextures(void)
 }
 
 /**
- * Returns the new flat lump number.
+ * Returns the new flat index.
  */
-static int R_NewFlat(int lump)
+static int R_NewFlat(lumpnum_t lump)
 {
-    int             i;
-    flat_t        **newlist, *ptr;
+    int                 i;
+    flat_t            **newlist, *ptr;
 
     for(i = 0; i < numflats; i++)
     {
@@ -846,7 +846,7 @@ static int R_NewFlat(int lump)
             return i;
 
         // Is this a known identifer? Newer idents overide old.
-        if(!strnicmp(lumpinfo[flats[i]->lump].name, lumpinfo[lump].name, 8))
+        if(!strnicmp(lumpInfo[flats[i]->lump].name, lumpInfo[lump].name, 8))
         {
             flats[i]->lump = lump;
             return i;
@@ -864,21 +864,21 @@ static int R_NewFlat(int lump)
     flats = newlist;
     ptr = flats[numflats - 1] = Z_Calloc(sizeof(flat_t), PU_REFRESHTEX, 0);
     ptr->lump = lump;
-    memcpy(ptr->name, lumpinfo[lump].name, 8);
+    memcpy(ptr->name, lumpInfo[lump].name, 8);
     return numflats - 1;
 }
 
 void R_InitFlats(void)
 {
-    int         i;
-    boolean     inFlatBlock;
+    int                 i;
+    boolean             inFlatBlock;
 
     numflats = 0;
 
     inFlatBlock = false;
-    for(i = 0; i < numlumps; ++i)
+    for(i = 0; i < numLumps; ++i)
     {
-        char   *name = lumpinfo[i].name;
+        char               *name = lumpInfo[i].name;
 
         if(!strnicmp(name, "F_START", 7))
         {
@@ -892,6 +892,7 @@ void R_InitFlats(void)
             inFlatBlock = false;
             continue;
         }
+
         if(!inFlatBlock)
             continue;
 
@@ -1078,7 +1079,7 @@ boolean R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal)
 /**
  * Prepares the specified patch.
  */
-void R_PrecachePatch(int num)
+void R_PrecachePatch(lumpnum_t num)
 {
     GL_PreparePatch(num, NULL);
 }
@@ -1145,7 +1146,7 @@ static boolean isInList(void **list, size_t len, void *elm)
         return false;
 
     for(n = 0; n < len; ++n)
-        if(list[n] = elm)
+        if(list[n] == elm)
             return true;
 
     return false;
@@ -1160,7 +1161,8 @@ static boolean isInList(void **list, size_t len, void *elm)
  */
 void R_PrecacheLevel(void)
 {
-    uint            i, j, n;
+    uint            i, j;
+    size_t          n;
     int             k, lump, mocount;
     thinker_t      *th;
     sector_t       *sec;
@@ -1188,15 +1190,15 @@ void R_PrecacheLevel(void)
         side = SIDE_PTR(i);
 
         mat = side->SW_topmaterial;
-        if(mat && !isInList(matPresent, n, mat))
+        if(mat && !isInList((void**) matPresent, n, mat))
             matPresent[n++] = mat;
 
         mat = side->SW_middlematerial;
-        if(mat && !isInList(matPresent, n, mat))
+        if(mat && !isInList((void**) matPresent, n, mat))
             matPresent[n++] = mat;
 
         mat = side->SW_bottommaterial;
-        if(mat && !isInList(matPresent, n, mat))
+        if(mat && !isInList((void**) matPresent, n, mat))
             matPresent[n++] = mat;
     }
 
@@ -1207,7 +1209,7 @@ void R_PrecacheLevel(void)
         for(j = 0; j < sec->planeCount; ++j)
         {
             mat = sec->SP_planematerial(j);
-            if(mat && !isInList(matPresent, n, mat))
+            if(mat && !isInList((void**) matPresent, n, mat))
                 matPresent[n++] = mat;
         }
     }

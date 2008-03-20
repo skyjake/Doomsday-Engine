@@ -211,9 +211,9 @@ void R_InitSpriteDefs(void)
         // scan the lumps, filling in the frames for whatever is found
         //
         in_sprite_block = false;
-        for(l = 0; l < numlumps; l++)
+        for(l = 0; l < numLumps; l++)
         {
-            char   *name = lumpinfo[l].name;
+            char               *name = lumpInfo[l].name;
 
             if(!strnicmp(name, "S_START", 7))
             {

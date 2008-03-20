@@ -520,8 +520,9 @@ typedef struct seglumobjiterparams_s {
     uint            listIdx;
 } seglumobjiterparams_t;
 
-boolean DLIT_SegLumobjContacts(lumobj_t *lum, void *data)
+boolean DLIT_SegLumobjContacts(void *ptr, void *data)
 {
+    lumobj_t           *lum = (lumobj_t*) ptr;
     dynnode_t          *node = NULL;
     seglumobjiterparams_t *params = data;
 
@@ -596,8 +597,9 @@ typedef struct planelumobjiterparams_s {
     uint            listIdx;
 } planelumobjiterparams_t;
 
-boolean DLIT_PlaneLumobjContacts(lumobj_t *lum, void *data)
+boolean DLIT_PlaneLumobjContacts(void *ptr, void *data)
 {
+    lumobj_t           *lum = (lumobj_t*) ptr;
     planelumobjiterparams_t *params = data;
     dynnode_t          *node = NULL;
 

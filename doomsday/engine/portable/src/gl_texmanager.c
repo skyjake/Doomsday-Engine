@@ -1207,11 +1207,11 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
         else // It must be a raw image.
         {
             // How big is it?
-            if(lumpinfo[num].size != 256 * 256)
+            if(lumpInfo[num].size != 256 * 256)
             {
-                if(lumpinfo[num].size != 128 * 128)
+                if(lumpInfo[num].size != 128 * 128)
                 {
-                    if(lumpinfo[num].size != 64 * 64)
+                    if(lumpInfo[num].size != 64 * 64)
                     {
                         Con_Message
                             ("GL_LoadDetailTexture: Must be 256x256, "
@@ -1226,6 +1226,7 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
                     content.width = content.height = 128;
                 }
             }
+
             image = M_Malloc(content.width * content.height);
             memcpy(image, W_CacheLumpNum(num, PU_CACHE), content.width * content.height);
             content.format = DGL_LUMINANCE;
@@ -1327,7 +1328,7 @@ static unsigned int prepareFlat2(int idx, boolean translate,
         // Try to load a high resolution version of this flat.
         if((loadExtAlways || highResWithPWAD ||
             !R_IsCustomMaterial(idx, MAT_FLAT)) &&
-           (flatptr = GL_LoadHighResFlat(&image, lumpinfo[flat->lump].name)) != NULL)
+           (flatptr = GL_LoadHighResFlat(&image, lumpInfo[flat->lump].name)) != NULL)
         {
             RGBData = true;
             freeptr = true;
@@ -1339,12 +1340,14 @@ static unsigned int prepareFlat2(int idx, boolean translate,
         }
         else
         {
-            if(lumpinfo[flat->lump].size < 4096)
-                return 0;           // Too small.
+            if(lumpInfo[flat->lump].size < 4096)
+                return 0; // Too small.
+
             // Get a pointer to the texture data.
             flatptr = W_CacheLumpNum(flat->lump, PU_CACHE);
             width = height = 64;
         }
+
         flat->info.width = flat->info.height = 64;
         flat->info.masked = false;
 
@@ -1910,9 +1913,9 @@ static unsigned int prepareTexture2(int idx, boolean translate, texinfo_t **info
 void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
                          boolean zeroMask)
 {
-    texture_t *tex = textures[idx];
-    byte   *imgdata;
-    int     i, numpels;
+    texture_t          *tex = textures[idx];
+    byte               *imgdata;
+    int                 i, numpels;
 
     *width = tex->info.width;
     *height = tex->info.height;
@@ -2139,12 +2142,12 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
         if(tclass || tmap)
         {
             sprintf(resource, "%s-table%i%i",
-                    lumpinfo[spritelumps[pnum]->lump].name, tclass, tmap);
+                    lumpInfo[spritelumps[pnum]->lump].name, tclass, tmap);
         }
         else
         {
             // Not actually translated? Use the normal resource.
-            strcpy(resource, lumpinfo[spritelumps[pnum]->lump].name);
+            strcpy(resource, lumpInfo[spritelumps[pnum]->lump].name);
         }
 
         if(!noHighResPatches &&
@@ -2205,14 +2208,14 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 
         // Compose a resource for the psprite.
         if(spriteMode == 1)
-            sprintf(hudResource, "%s-hud", lumpinfo[lumpNum].name);
+            sprintf(hudResource, "%s-hud", lumpInfo[lumpNum].name);
 
         // Is there an external resource for this image? For HUD sprites,
         // first try the HUD version of the resource.
         if(!noHighResPatches &&
            ((spriteMode == 1 &&
              R_FindResource(RC_PATCH, hudResource, "-ck", fileName)) ||
-            R_FindResource(RC_PATCH, lumpinfo[lumpNum].name, "-ck", fileName))
+            R_FindResource(RC_PATCH, lumpInfo[lumpNum].name, "-ck", fileName))
            && GL_LoadImage(&image, fileName, false) != NULL)
         {
             // A high-resolution version of this sprite has been found.
@@ -2309,10 +2312,10 @@ DGLuint GL_GetRawOtherPart(int idx, texinfo_t **info)
  */
 DGLuint GL_BindTexRaw(rawtex_t *raw)
 {
-    image_t image;
-    int     lump = raw->lump;
+    image_t             image;
+    int                 lump = raw->lump;
 
-    if(lump < 0 || lump >= numlumps)
+    if(lump < 0 || lump >= numLumps)
     {
         GL_BindTexture(0);
         return 0;
@@ -2321,9 +2324,9 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
     if(!raw->tex)
     {
         // First try to find an external resource.
-        filename_t fileName;
+        filename_t          fileName;
 
-        if(R_FindResource(RC_PATCH, lumpinfo[lump].name, NULL, fileName) &&
+        if(R_FindResource(RC_PATCH, lumpInfo[lump].name, NULL, fileName) &&
            GL_LoadImage(&image, fileName, false) != NULL)
         {
             // We have the image in the buffer. We'll upload it as one
@@ -2358,7 +2361,7 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
 
             // Try to load it as a PCX image first.
             image = M_Malloc(3 * 320 * 200);
-            if(PCX_MemoryLoad(lumpdata, lumpinfo[lump].size, 320, 200, image))
+            if(PCX_MemoryLoad(lumpdata, lumpInfo[lump].size, 320, 200, image))
             {
                 rgbdata = true;
                 comps = 3;
@@ -2368,7 +2371,7 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                 // PCX load failed. It must be an old-fashioned raw image.
                 need_free_image = false;
                 M_Free(image);
-                height = (int) (lumpinfo[lump].size / 320);
+                height = (int) (lumpInfo[lump].size / 320);
                 rgbdata = false;
                 comps = 1;
                 image = lumpdata;
@@ -2451,34 +2454,34 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
 
 /**
  * Returns the OpenGL name of the texture.
- * (idx is really a lumpnum)
  */
-DGLuint GL_PrepareRawTex(uint idx, boolean part2, texinfo_t **info)
+DGLuint GL_PrepareRawTex(lumpnum_t lump, boolean part2, texinfo_t **info)
 {
-    rawtex_t *raw = R_GetRawTex(idx);
+    rawtex_t           *raw = R_GetRawTex(lump);
 
     if(!raw->tex)
     {
         // The rawtex isn't yet bound with OpenGL.
         raw->tex = GL_BindTexRaw(raw);
     }
-    return GL_GetRawTexInfo(idx, part2, info);
+
+    return GL_GetRawTexInfo(lump, part2, info);
 }
 
-unsigned int GL_SetRawImage(unsigned int idx, boolean part2, int wrapS,
+unsigned int GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
                             int wrapT)
 {
-    unsigned int    tex;
+    DGLuint             tex;
 
     // We don't track the current texture with raw images.
     curtex = 0;
 
-    DGL_Bind(tex = GL_PrepareRawTex(idx, part2, NULL));
+    DGL_Bind(tex = GL_PrepareRawTex(lump, part2, NULL));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
                     wrapS == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
                     wrapT == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    return tex;
+    return (unsigned int) tex;
 }
 
 /**
@@ -2582,12 +2585,12 @@ static void SharpenPixels(byte* pixels, int width, int height)
  */
 DGLuint GL_BindTexPatch(patch_t *p)
 {
-    lumppatch_t *patch;
-    byte   *patchptr;
-    int     lump = p->lump;
-    image_t image;
+    lumppatch_t        *patch;
+    byte               *patchptr;
+    lumpnum_t           lump = p->lump;
+    image_t             image;
 
-    if(lump < 0 || lump >= numlumps)
+    if(lump < 0 || lump >= numLumps)
     {
         GL_BindTexture(0);
         return 0;
@@ -2600,7 +2603,7 @@ DGLuint GL_BindTexPatch(patch_t *p)
     // Let's first try the resource locator and see if there is a
     // 'high-resolution' version available.
     if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump)) &&
-       (patchptr = GL_LoadHighResPatch(&image, lumpinfo[lump].name)) != NULL)
+       (patchptr = GL_LoadHighResPatch(&image, lumpInfo[lump].name)) != NULL)
     {
         // This is our texture! No mipmaps are generated.
         p->tex =
@@ -2755,26 +2758,25 @@ DGLuint GL_BindTexPatch(patch_t *p)
 
 /**
  * Returns the OpenGL name of the texture.
- * (idx is really a lumpnum)
  */
-DGLuint GL_PreparePatch(int idx, texinfo_t **info)
+DGLuint GL_PreparePatch(lumpnum_t lump, texinfo_t **info)
 {
-    patch_t *patch = R_GetPatch(idx);
+    patch_t *patch = R_GetPatch(lump);
 
     if(!patch)
         return 0;
 
     if(!patch->tex)
-    {
-        // The patch isn't yet bound with OpenGL.
+    {   // The patch isn't yet bound with OpenGL.
         patch->tex = GL_BindTexPatch(patch);
     }
-    return GL_GetPatchInfo(idx, false, info);
+
+    return GL_GetPatchInfo(lump, false, info);
 }
 
-void GL_SetPatch(int idx, int wrapS, int wrapT)
+void GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT)
 {
-    DGL_Bind(curtex = GL_PreparePatch(idx, NULL));
+    DGL_Bind(curtex = GL_PreparePatch(lump, NULL));
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
                     wrapS == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
@@ -3308,11 +3310,11 @@ static DGLuint getDDTextureInfo(ddtextureid_t which,
 }
 
 /**
- * @return          The rawtex name, if it has been prepared.
+ * @return              The rawtex name, if it has been prepared.
  */
-DGLuint GL_GetRawTexInfo(uint idx, boolean part2, texinfo_t **texinfo)
+DGLuint GL_GetRawTexInfo(lumpnum_t lump, boolean part2, texinfo_t **texinfo)
 {
-    rawtex_t *rawtex = R_GetRawTex(idx);
+    rawtex_t           *rawtex = R_GetRawTex(lump);
 
     if(!rawtex)
         return 0;
@@ -3330,7 +3332,7 @@ DGLuint GL_GetRawTexInfo(uint idx, boolean part2, texinfo_t **texinfo)
  */
 static void GL_SetTexCoords(float *tc, int wid, int hgt)
 {
-    int     pw = M_CeilPow2(wid), ph = M_CeilPow2(hgt);
+    int                 pw = M_CeilPow2(wid), ph = M_CeilPow2(hgt);
 
     if(pw > glMaxTexSize || ph > glMaxTexSize)
         tc[VX] = tc[VY] = 1;
@@ -3348,7 +3350,7 @@ static void GL_SetTexCoords(float *tc, int wid, int hgt)
  */
 boolean GL_IsColorKeyed(const char *path)
 {
-    char    buf[256];
+    char                buf[256];
 
     strcpy(buf, path);
     strlwr(buf);

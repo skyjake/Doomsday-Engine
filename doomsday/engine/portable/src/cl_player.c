@@ -159,7 +159,7 @@ int Cl_ReadPlayerDelta(void)
             // Find the new mobj.
             s->cmo = Cl_FindMobj(s->mobjId);
 #ifdef _DEBUG
-Con_Message("Pl%i: mobj=%i old=%x\n", num, s->mobjId, old);
+Con_Message("Pl%i: mobj=%i old=%ul\n", num, s->mobjId, (uint) old);
 Con_Message("  x=%f y=%f z=%f\n", s->cmo->mo.pos[VX],
             s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ]);
 #endif
@@ -701,8 +701,8 @@ void Cl_ReadPlayerDelta2(boolean skip)
             }
 
 #if _DEBUG
-Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%x\n", num, s->mobjId,
-            old);
+Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%ul\n", num, s->mobjId,
+            (unsigned int) old);
 Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", s->cmo->mo.pos[VX],
             s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ],
             s->cmo->mo.floorZ, s->cmo->mo.ceilingZ);

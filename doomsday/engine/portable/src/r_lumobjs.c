@@ -980,8 +980,9 @@ typedef struct lumobjiterparams_s {
     boolean       (*func) (lumobj_t *, float, void *data);
 } lumobjiterparams_t;
 
-boolean LOIT_RadiusLumobjs(lumobj_t *lum, void *data)
+boolean LOIT_RadiusLumobjs(void *ptr, void *data)
 {
+    lumobj_t       *lum = (lumobj_t*) ptr;
     lumobjiterparams_t *params = data;
     float           dist =
         P_ApproxDistance(lum->pos[VX] - params->origin[VX],

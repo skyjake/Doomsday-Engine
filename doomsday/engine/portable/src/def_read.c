@@ -2063,7 +2063,7 @@ int DED_ReadLump(ded_t * ded, int lump)
 {
     int     result;
 
-    if(lump < 0 || lump >= numlumps)
+    if(lump < 0 || lump >= numLumps)
     {
         SetError("Bad lump number.");
         return false;

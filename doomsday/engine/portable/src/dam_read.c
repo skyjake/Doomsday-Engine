@@ -358,7 +358,7 @@ selectprop_t* DAM_CollectProps(int type, boolean builtIn,
 
 #if _DEBUG
 if(custom && !DAM_TypeSupportsCustomProperty(type))
-    Con_Error("collectCustomProps: type does not support custom properties.",
+    Con_Error("collectCustomProps: type \"%s\" does not support custom properties.",
               DAM_Str(type));
 #endif
 

@@ -262,7 +262,7 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
 
     // Check for awaiting unprocessed events.
     if(!GetNumberOfConsoleInputEvents(hcInput, &num))
-        Con_Error("Sys_ConPostEvents: error %i\n", GetLastError());
+        Con_Error("Sys_ConPostEvents: error %i\n", (int) GetLastError());
 
     if(num > 0)
     {
@@ -289,22 +289,19 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
 
             key = &ptr->Event.KeyEvent;
 
-            if(key->wVirtualKeyCode >= 0 && key->wVirtualKeyCode < 256)
+            // Has the state changed?
+            if((!vKeyDown[key->wVirtualKeyCode] && key->bKeyDown) ||
+               (vKeyDown[key->wVirtualKeyCode] && !key->bKeyDown))
             {
-                // Has the state changed?
-                if(!vKeyDown[key->wVirtualKeyCode] && key->bKeyDown ||
-                   vKeyDown[key->wVirtualKeyCode] && !key->bKeyDown)
-                {
-                    // Use the table to translate the vKey to a DDKEY.
-                    evbuf[n].ddkey = vKeyToDDKey(key->wVirtualKeyCode);
-                    evbuf[n].event =
-                        (key->bKeyDown? IKE_KEY_DOWN : IKE_KEY_UP);
+                // Use the table to translate the vKey to a DDKEY.
+                evbuf[n].ddkey = vKeyToDDKey(key->wVirtualKeyCode);
+                evbuf[n].event =
+                    (key->bKeyDown? IKE_KEY_DOWN : IKE_KEY_UP);
 
-                    // Record the new state of this vKey.
-                    vKeyDown[key->wVirtualKeyCode] =
-                        (key->bKeyDown? true : false);
-                    n++;
-                }
+                // Record the new state of this vKey.
+                vKeyDown[key->wVirtualKeyCode] =
+                    (key->bKeyDown? true : false);
+                n++;
             }
         }
     }

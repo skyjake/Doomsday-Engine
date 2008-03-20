@@ -580,7 +580,6 @@ void Cl_MobjMove(clmobj_t *cmo)
 {
     mobj_t     *mo = &cmo->mo;
     boolean     collided = false;
-    gamemap_t  *map = P_GetCurrentMap();
     float       gravity = FIX2FLT(mapGravity);
 
     // First do XY movement.

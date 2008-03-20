@@ -604,14 +604,14 @@ void Def_CountMsg(int count, const char *label)
 }
 
 /**
- * Reads all DD_DEFNS lumps found in the lumpinfo.
+ * Reads all DD_DEFNS lumps found in the lumpInfo.
  */
 void Def_ReadLumpDefs(void)
 {
     int     i, c;
 
-    for(i = 0, c = 0; i < numlumps; ++i)
-        if(!strnicmp(lumpinfo[i].name, "DD_DEFNS", 8))
+    for(i = 0, c = 0; i < numLumps; ++i)
+        if(!strnicmp(lumpInfo[i].name, "DD_DEFNS", 8))
         {
             c++;
             if(!DED_ReadLump(&defs, i))

@@ -361,17 +361,19 @@ void P_BlockmapSetBlock(blockmap_t *blockmap, uint x, uint y, linedef_t **lines,
     }
 }
 
-boolean unlinkPolyobjInBlock(bmapblock_t *block, void *context)
+boolean unlinkPolyobjInBlock(void *ptr, void *context)
 {
-    polyobj_t  *po = (polyobj_t *) context;
+    bmapblock_t    *block = (bmapblock_t*) ptr;
+    polyobj_t      *po = (polyobj_t *) context;
 
     P_PolyobjUnlinkFromRing(po, &block->polyLinks);
     return true;
 }
 
-boolean linkPolyobjInBlock(bmapblock_t *block, void *context)
+boolean linkPolyobjInBlock(void *ptr, void *context)
 {
-    polyobj_t  *po = (polyobj_t *) context;
+    bmapblock_t    *block = (bmapblock_t*) ptr;
+    polyobj_t      *po = (polyobj_t *) context;
 
     P_PolyobjLinkToRing(po, &block->polyLinks);
     return true;
@@ -433,9 +435,9 @@ void P_GetBlockmapDimensions(blockmap_t *blockmap, uint v[2])
 
 void P_InitMapBlockRings(gamemap_t *map)
 {
-    uint        i;
-    size_t      size;
-    uint        bmapSize[2];
+    uint            i;
+    size_t          size;
+    uint            bmapSize[2];
 
     P_GetBlockmapDimensions(map->blockMap, bmapSize);
 
@@ -454,11 +456,13 @@ typedef struct bmapiterparams_s {
     void       *param;
 } bmapiterparams_t;
 
-static boolean bmapBlockLinesIterator(bmapblock_t *block, void *context)
+static boolean bmapBlockLinesIterator(void *ptr, void *context)
 {
+    bmapblock_t    *block = (bmapblock_t*) ptr;
+
     if(block->lineDefs)
     {
-        linedef_t    **iter;
+        linedef_t       **iter;
         bmapiterparams_t *args = (bmapiterparams_t*) context;
 
         iter = block->lineDefs;
@@ -527,10 +531,11 @@ typedef struct bmappoiterparams_s {
     void       *param;
 } bmappoiterparams_t;
 
-static boolean bmapBlockPolyobjsIterator(bmapblock_t *block, void *context)
+static boolean bmapBlockPolyobjsIterator(void *ptr, void *context)
 {
+    bmapblock_t    *block = (bmapblock_t*) ptr;
     bmappoiterparams_t *args = (bmappoiterparams_t*) context;
-    linkpolyobj_t *link;
+    linkpolyobj_t  *link;
 
     link = block->polyLinks;
     while(link)
@@ -581,7 +586,7 @@ boolean P_BlockBoxPolyobjsIterator(blockmap_t *blockmap, const uint blockBox[4],
                                    boolean (*func) (polyobj_t *, void*),
                                    void *data)
 {
-    bmap_t     *bmap = (bmap_t*) blockmap;
+    bmap_t         *bmap = (bmap_t*) blockmap;
     bmappoiterparams_t args;
 
     args.localValidCount = validCount;
@@ -600,8 +605,10 @@ typedef struct sseciterparams_s {
     void       *param;
 } sseciterparams_t;
 
-static boolean ssecBlockIterator(ssecmapblock_t *block, void *context)
+static boolean ssecBlockIterator(void *ptr, void *context)
 {
+    ssecmapblock_t *block = (ssecmapblock_t*) ptr;
+
     if(block->ssecs)
     {
         subsector_t **iter;

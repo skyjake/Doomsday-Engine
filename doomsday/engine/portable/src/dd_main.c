@@ -108,8 +108,8 @@ extern int renderTextures;
 extern char skyFlatName[9];
 extern int gotFrame;
 extern int monochrome;
-extern int gamedataformat;
-extern int gamedrawhud;
+extern int gameDataFormat;
+extern int gameDrawHUD;
 
 extern material_t *skyMaskMaterial;
 
@@ -117,19 +117,13 @@ extern material_t *skyMaskMaterial;
 
 directory_t ddRuntimeDir, ddBinDir;
 int     verbose = 0;            // For debug messages (-verbose).
-boolean DevMaps;                // true = Map development mode
-char   *DevMapsDir = "";        // development maps directory
-int     shareware;              // true if only episode 1 present
-boolean debugmode;              // checkparm of -debug
-boolean cdrom;                  // true if cd-rom mode active
 boolean cmdfrag;                // true if a CMD_FRAG packet should be sent out
-boolean singletics;             // debug flag to cancel adaptiveness
 int     isDedicated = false;
-int     maxzone = 0x2000000;    // Default zone heap. (32meg)
-boolean autostart;
+int     maxZone = 0x2000000;    // Default zone heap. (32meg)
+boolean autoStart;
 FILE   *outFile;                // Output file for console messages.
 
-char   *iwadlist[64];
+char   *iwadList[64];
 char   *defaultWads = "";       /* A list of wad names, whitespace in between
                                    (in .cfg). */
 filename_t configFileName;
@@ -141,7 +135,7 @@ int     queryResult = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char *wadfiles[MAXWADFILES];
+static char *wadFiles[MAXWADFILES];
 
 // CODE --------------------------------------------------------------------
 
@@ -194,12 +188,12 @@ void DD_AddIWAD(const char *path)
     int             i = 0;
     char            buf[256];
 
-    while(iwadlist[i])
+    while(iwadList[i])
         i++;
 
     M_TranslatePath(path, buf);
-    iwadlist[i] = M_Calloc(strlen(buf) + 1);   // This mem is not freed?
-    strcpy(iwadlist[i], buf);
+    iwadList[i] = M_Calloc(strlen(buf) + 1);   // This mem is not freed?
+    strcpy(iwadList[i], buf);
 }
 
 #define ATWSEPS ",; \t"
@@ -245,7 +239,7 @@ static int autoDataAdder(const char *fileName, filetype_t type, void *ptr)
 
 /**
  * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data
- * directory are added to the wadfiles list.  Returns the number of new
+ * directory are added to the wadFiles list.  Returns the number of new
  * files that were loaded.
  */
 int DD_AddAutoData(boolean loadFiles)
@@ -492,8 +486,7 @@ static int DD_StartupWorker(void *parm)
 
     Def_Init();
 
-    autostart = false;
-    shareware = false;          // Always false for Hexen
+    autoStart = false;
 
     HandleArgs(0);              // Everything but WADs.
 
@@ -554,10 +547,10 @@ static int DD_StartupWorker(void *parm)
 
     Con_Message("W_Init: Init WADfiles.\n");
 
-    // Add real files from the Auto directory to the wadfiles list.
+    // Add real files from the Auto directory to the wadFiles list.
     DD_AddAutoData(false);
 
-    W_InitMultipleFiles(wadfiles);
+    W_InitMultipleFiles(wadFiles);
     F_InitDirec();
 
     Con_SetProgress(75);
@@ -610,7 +603,7 @@ static int DD_StartupWorker(void *parm)
             Con_Error("Couldn't open %s for writing. %s\n", fname,
                       strerror(errno));
         }
-        fwrite(lumpPtr, 1, lumpinfo[lump].size, file);
+        fwrite(lumpPtr, 1, lumpInfo[lump].size, file);
         fclose(file);
         Con_Error("%s dumped to %s.\n", arg, fname);
     }
@@ -619,14 +612,14 @@ static int DD_StartupWorker(void *parm)
     {
         char            buff[10];
 
-        printf("Lumps (%d total):\n", numlumps);
-        for(p = 0; p < numlumps; p++)
+        printf("Lumps (%d total):\n", numLumps);
+        for(p = 0; p < numLumps; p++)
         {
-            strncpy(buff, lumpinfo[p].name, 8);
+            strncpy(buff, lumpInfo[p].name, 8);
             buff[8] = 0;
             printf("%04i - %-8s (hndl: %p, pos: %i, size: %lu)\n", p, buff,
-                   lumpinfo[p].handle, lumpinfo[p].position,
-                   (unsigned long) lumpinfo[p].size);
+                   lumpInfo[p].handle, lumpInfo[p].position,
+                   (unsigned long) lumpInfo[p].size);
         }
         Con_Error("---End of lumps---\n");
     }
@@ -732,7 +725,6 @@ static void HandleArgs(int state)
 
     if(state == 0)
     {
-        debugmode = ArgExists("-debug");
         renderTextures = !ArgExists("-notex");
     }
 
@@ -788,12 +780,12 @@ void DD_AddStartupWAD(const char *file)
     char           *new, temp[300];
 
     i = 0;
-    while(wadfiles[i])
+    while(wadFiles[i])
         i++;
     M_TranslatePath(file, temp);
     new = M_Calloc(strlen(temp) + 1);  // This is never freed?
     strcat(new, temp);
-    wadfiles[i] = new;
+    wadFiles[i] = new;
 }
 
 void DD_UpdateEngineState(void)
@@ -878,12 +870,12 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&playback, 0},
     {&defs.count.sounds.num, 0},
     {&defs.count.music.num, 0},
-    {&numlumps, 0},
+    {&numLumps, 0},
     {&clientPaused, &clientPaused},
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
     {&monochrome, &monochrome},
-    {&gamedataformat, &gamedataformat},
-    {&gamedrawhud, 0},
+    {&gameDataFormat, &gameDataFormat},
+    {&gameDrawHUD, 0},
     {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches}
 };
 /* *INDENT-ON* */

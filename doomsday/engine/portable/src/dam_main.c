@@ -363,10 +363,10 @@ static uint collectMapLumps(listnode_t **headPtr, int startLump)
 
     VERBOSE(Con_Message("collectMapLumps: Locating lumps...\n"));
 
-    if(startLump > 0 && startLump < numlumps)
+    if(startLump > 0 && startLump < numLumps)
     {
         // Keep checking lumps to see if its a map data lump.
-        for(i = startLump; i < numlumps; ++i)
+        for(i = startLump; i < numLumps; ++i)
         {
             int         lumpType;
             char       *lumpName;

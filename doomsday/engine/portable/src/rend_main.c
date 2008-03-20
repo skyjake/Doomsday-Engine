@@ -107,7 +107,7 @@ int     viewpx, viewpy;         // Viewpoint top left corner, in pixels.
 
 float   yfov;
 
-int     gamedrawhud = 1;    // Set to zero when we advise that the HUD
+int     gameDrawHUD = 1;    // Set to zero when we advise that the HUD
                             // should not be drawn
 
 uint    playerLightRange[MAXPLAYERS];

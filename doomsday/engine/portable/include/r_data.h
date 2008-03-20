@@ -253,12 +253,12 @@ typedef struct flat_s {
                                     // if any.
     struct ded_reflection_s *reflection; // Surface reflection definition.
 
-    int             lump;
+    lumpnum_t       lump;
     struct ded_ptcgen_s *ptcGen;    // Particle generator for the flat.
 } flat_t;
 
 typedef struct {
-    int             lump;          // Real lump number.
+    lumpnum_t       lump;          // Real lump number.
     short           width;
     short           height;
     short           offset;
@@ -274,7 +274,7 @@ typedef struct {
 
 // a patch is a lumppatch that has been prepared for render.
 typedef struct patch_s {
-    int             lump;
+    lumpnum_t       lump;
     short           offX, offY;
 
     // Part 1
@@ -290,7 +290,7 @@ typedef struct patch_s {
 
 // A rawtex is a lump raw graphic that has been prepared for render.
 typedef struct rawtex_s {
-    int             lump;
+    lumpnum_t       lump;
     // Part 1
     DGLuint         tex;          // Name of the associated DGL texture.
     texinfo_t       info;
@@ -400,7 +400,7 @@ void            R_ShutdownData(void);
 void            R_UpdateSector(struct sector_s *sec, boolean forceUpdate);
 
 void            R_PrecacheLevel(void);
-void            R_PrecachePatch(int lumpnum);
+void            R_PrecachePatch(lumpnum_t lump);
 
 void            R_DestroyAnimGroups(void);
 void            R_InitAnimGroup(ded_group_t *def);
@@ -411,11 +411,11 @@ void            R_AnimateAnimGroups(void);
 void R_InitSpriteLumps(void);
 int R_NewSpriteLump(int lump);
 
-patch_t        *R_FindPatch(int lumpnum);    // May return NULL.
-patch_t        *R_GetPatch(int lumpnum); // Creates new entries.
+patch_t        *R_FindPatch(lumpnum_t lump); // May return NULL.
+patch_t        *R_GetPatch(lumpnum_t lump); // Creates new entries.
 patch_t       **R_CollectPatches(int *count);
-rawtex_t       *R_FindRawTex(int lumpnum);    // May return NULL.
-rawtex_t       *R_GetRawTex(int lumpnum); // Creates new entries.
+rawtex_t       *R_FindRawTex(lumpnum_t lump); // May return NULL.
+rawtex_t       *R_GetRawTex(lumpnum_t lump); // Creates new entries.
 
 boolean         R_IsAllowedDecoration(ded_decor_t *def, int index,
                                       boolean hasExternal);

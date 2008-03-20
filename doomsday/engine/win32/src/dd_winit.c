@@ -168,8 +168,8 @@ static boolean loadGamePlugin(application_t *app, const char *libPath)
     app->hInstGame = LoadLibrary(libPath);
     if(!app->hInstGame)
     {
-        DD_ErrorBox(true, "loadGamePlugin: Loading of %s failed (error %d).\n",
-                    libPath, GetLastError());
+        DD_ErrorBox(true, "loadGamePlugin: Loading of %s failed (error %i).\n",
+                    libPath, (int) GetLastError());
         return false;
     }
 
@@ -178,7 +178,7 @@ static boolean loadGamePlugin(application_t *app, const char *libPath)
     if(!app->GetGameAPI)
     {
         DD_ErrorBox(true, "loadGamePlugin: Failed to get address of "
-                          "GetGameAPI (error %d).\n", GetLastError());
+                          "GetGameAPI (error %i).\n", (int) GetLastError());
         return false;
     }
 

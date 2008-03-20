@@ -53,8 +53,6 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int nodeCurIndex;
-
 // CODE --------------------------------------------------------------------
 
 static void hardenSideSegList(gamemap_t *map, sidedef_t *side, seg_t *seg,

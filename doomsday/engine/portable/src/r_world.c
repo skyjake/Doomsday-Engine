@@ -652,10 +652,10 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
 
     if(verbose && adjusted)
     {
-        Con_Printf("S%li: skyfix to %g (%s=%g)\n",
-                   GET_SECTOR_IDX(adjustSec), *fix,
+        Con_Printf("S%ui: skyfix to %g (%s=%g)\n",
+                   (uint) GET_SECTOR_IDX(adjustSec), *fix,
                    (pln == PLN_CEILING? "ceil" : "floor"),
-                   adjustSec->planes[pln]->height + *fix);
+                   adjustSec->planes[pln]->height + (*fix));
     }
 
     return adjusted;

@@ -95,31 +95,31 @@ short *xlat_lump;
  */
 void Cl_InitTranslations(void)
 {
-    int         i;
+    int                 i;
 
     xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_REFRESHTEX, 0);
     memset(xlat_lump, 0, sizeof(short) * MAX_TRANSLATIONS);
-    for(i = 0; i < numlumps; ++i)
+    for(i = 0; i < numLumps; ++i)
         xlat_lump[i] = i; // Identity translation.
 }
 
-void Cl_SetLumpTranslation(short lumpnum, char *name)
+void Cl_SetLumpTranslation(lumpnum_t lump, char *name)
 {
-    if(lumpnum < 0 || lumpnum >= MAX_TRANSLATIONS)
+    if(lump < 0 || lump >= MAX_TRANSLATIONS)
         return; // Can't do it, sir! We just don't the power!!
 
-    xlat_lump[lumpnum] = W_CheckNumForName(name);
-    if(xlat_lump[lumpnum] < 0)
+    xlat_lump[lump] = W_CheckNumForName(name);
+    if(xlat_lump[lump] < 0)
     {
         VERBOSE(Con_Message("Cl_SetLumpTranslation: %s not found.\n", name));
-        xlat_lump[lumpnum] = 0;
+        xlat_lump[lump] = 0;
     }
 }
 
 /**
  * This is a fail-safe operation.
  */
-short Cl_TranslateLump(short lump)
+lumpnum_t Cl_TranslateLump(lumpnum_t lump)
 {
     if(lump < 0 || lump >= MAX_TRANSLATIONS)
         return 0;
@@ -137,7 +137,7 @@ void Cl_InitMovers(void)
 
 void Cl_RemoveActiveMover(mover_t *mover)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] == mover)
@@ -153,7 +153,7 @@ void Cl_RemoveActiveMover(mover_t *mover)
  */
 void Cl_RemoveActivePoly(polymover_t *mover)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activepolys[i] == mover)
@@ -169,13 +169,13 @@ void Cl_RemoveActivePoly(polymover_t *mover)
  */
 void Cl_MoverThinker(mover_t *mover)
 {
-    float      *current = mover->current, original = *current;
-    boolean     remove = false;
-    boolean     freeMove;
-    float       fspeed;
+    float              *current = mover->current, original = *current;
+    boolean             remove = false;
+    boolean             freeMove;
+    float               fspeed;
 
     if(!Cl_GameReady())
-        return;                 // Can we think yet?
+        return; // Can we think yet?
 
     // The move is cancelled if the consolePlayer becomes obstructed.
     freeMove = Cl_IsFreeToMove(consolePlayer);
@@ -212,9 +212,9 @@ void Cl_MoverThinker(mover_t *mover)
 
 void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
 {
-    sector_t   *sector;
-    int         i;
-    mover_t    *mov;
+    sector_t           *sector;
+    int                 i;
+    mover_t            *mov;
 
     VERBOSE( Con_Printf("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
                         sectornum, type==MVT_FLOOR? "floor" : "ceiling",
@@ -273,9 +273,9 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
 
 void Cl_PolyMoverThinker(polymover_t *mover)
 {
-    polyobj_t  *poly = mover->poly;
-    float       dx, dy;
-    float       dist;
+    polyobj_t          *poly = mover->poly;
+    float               dx, dy;
+    float               dist;
 
     if(mover->move)
     {
@@ -348,7 +348,7 @@ polymover_t *Cl_NewPolyMover(uint number)
 
 void Cl_SetPolyMover(uint number, int move, int rotate)
 {
-    polymover_t *mover;
+    polymover_t        *mover;
 
     // Try to find an existing mover.
     mover = Cl_FindActivePoly(number);
@@ -366,7 +366,7 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
  */
 void Cl_RemoveMovers(void)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
     {
@@ -385,7 +385,7 @@ void Cl_RemoveMovers(void)
 
 mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] && activemovers[i]->sectornum == sectornum &&
@@ -402,11 +402,11 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
  */
 int Cl_ReadLumpDelta(void)
 {
-    int         num = Msg_ReadPackedShort();
-    char        name[9];
+    lumpnum_t           num = (lumpnum_t) Msg_ReadPackedShort();
+    char                name[9];
 
     if(!num)
-        return false;           // No more.
+        return false; // No more.
 
     // Read the name of the lump.
     memset(name, 0, sizeof(name));
@@ -425,14 +425,14 @@ int Cl_ReadLumpDelta(void)
  */
 void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 {
-    static sector_t dummy;      // Used when skipping.
-    static plane_t* dummyPlaneArray[2];
-    static plane_t dummyPlanes[2];
+    static sector_t     dummy; // Used when skipping.
+    static plane_t*     dummyPlaneArray[2];
+    static plane_t  dummyPlanes[2];
 
-    unsigned short num;
-    sector_t   *sec;
-    int         df;
-    boolean     wasChanged = false;
+    unsigned short      num;
+    sector_t           *sec;
+    int                 df;
+    boolean             wasChanged = false;
 
     // Set up the dummy.
     dummyPlaneArray[0] = &dummyPlanes[0];
@@ -626,13 +626,14 @@ if(num >= numSectors)
  */
 void Cl_ReadSideDelta2(int deltaType, boolean skip)
 {
-    unsigned short num;
-    int         df, toptexture = 0, midtexture = 0, bottomtexture = 0;
-    int         blendmode = 0;
-    byte        lineFlags = 0, sideFlags = 0;
-    float       toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
-    float       bottomrgb[3] = {0,0,0};
-    sidedef_t     *sid;
+    unsigned short      num;
+
+    int                 df, toptexture = 0, midtexture = 0, bottomtexture = 0;
+    int                 blendmode = 0;
+    byte                lineFlags = 0, sideFlags = 0;
+    float               toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
+    float               bottomrgb[3] = {0,0,0};
+    sidedef_t          *sid;
 
     // First read all the data.
     num = Msg_ReadShort();
@@ -766,12 +767,12 @@ Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n",
  */
 void Cl_ReadPolyDelta2(boolean skip)
 {
-    int         df;
-    unsigned short num;
-    polyobj_t  *po;
-    float       destX = 0, destY = 0;
-    float       speed = 0;
-    int         destAngle = 0, angleSpeed = 0;
+    int                 df;
+    unsigned short      num;
+    polyobj_t          *po;
+    float               destX = 0, destY = 0;
+    float               speed = 0;
+    int                 destAngle = 0, angleSpeed = 0;
 
     num = Msg_ReadPackedShort();
 

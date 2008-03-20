@@ -169,7 +169,7 @@ void DD_InitCommandLine(const char *cmdLine)
     ArgAbbreviate("-nocenter", "-noc");
     ArgAbbreviate("-paltex", "-ptx");
     ArgAbbreviate("-file", "-f");
-    ArgAbbreviate("-maxzone", "-mem");
+    ArgAbbreviate("-maxZone", "-mem");
     ArgAbbreviate("-config", "-cfg");
     ArgAbbreviate("-parse", "-p");
     ArgAbbreviate("-cparse", "-cp");
