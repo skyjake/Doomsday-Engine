@@ -520,39 +520,21 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
     // the location of any secret areas (false walls)).
     if(line->L_backside)
     {
-        sector_t *front = line->L_sector(backside);
-        sector_t *back  = line->L_sector(backside^1);
-        sidedef_t   *side  = line->L_side(backside);
+        sector_t           *front = line->L_sector(backside);
+        sector_t           *back  = line->L_sector(backside^1);
+        sidedef_t          *side  = line->L_side(backside);
 
         if(side->SW_middlematerial)
         {
-            texinfo_t      *texinfo = NULL;
+            texinfo_t          *texinfo = NULL;
 
-            switch(side->SW_middlematerial->type)
-            {
-            case MAT_FLAT:
-                GL_GetMaterialInfo(side->SW_middlematerial->ofTypeID,
-                                   side->SW_middlematerial->type, &texinfo);
-                break;
-
-            case MAT_TEXTURE:
-                GL_GetMaterialInfo(side->SW_middlematerial->ofTypeID,
-                                   side->SW_middlematerial->type, &texinfo);
-                break;
-
-            case MAT_DDTEX:
-                GL_GetMaterialInfo(DDT_UNKNOWN, MAT_DDTEX, &texinfo);
-                break;
-
-            default:
-                Con_Error("Rend_DoesMidTextureFillGap: Unknown material type %i.",
-                          side->SW_middlematerial->type);
-            }
+            GL_GetMaterialInfo(side->SW_middlematerial->ofTypeID,
+                               side->SW_middlematerial->type, &texinfo);
 
             if(!side->SW_middleblendmode && side->SW_middlergba[3] >= 1 && !texinfo->masked)
             {
-                float openTop[2], gapTop[2];
-                float openBottom[2], gapBottom[2];
+                float               openTop[2], gapTop[2];
+                float               openBottom[2], gapBottom[2];
 
                 openTop[0] = openTop[1] = gapTop[0] = gapTop[1] =
                     MIN_OF(back->SP_ceilvisheight, front->SP_ceilvisheight);
@@ -683,7 +665,7 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
     if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
         poly->tex.id = curtex =
-            GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), NULL);
+            GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), &info);
 
         flags = surface->flags & ~(SUF_TEXFIX);
 
@@ -1189,7 +1171,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
 
         if(section == SEG_MIDDLE && softSurface)
         {
-            mobj_t         *mo = viewPlayer->mo;
+            mobj_t             *mo = viewPlayer->mo;
 
             /**
              * Can the player walk through this surface?
@@ -1201,7 +1183,8 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
 
             if(mo->subsector->sector == frontsec)
             {
-                float       c[2];
+                float               c[2];
+
                 c[VX] = mo->pos[VX];
                 c[VY] = mo->pos[VY];
 
@@ -1214,8 +1197,8 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
 
         if(inView && alpha > 0)
         {
-            rendpoly_t *quad;
-            int         surfaceFlags;
+            rendpoly_t         *quad;
+            int                 surfaceFlags;
 
             // Init the quad.
             quad = R_AllocRendPoly(RP_QUAD, true, 4);
@@ -1229,7 +1212,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
             quad->texOffset[VY] = texOffset[VY];
 
             // Fill in the remaining quad data.
-            if(skyMask)
+            if(skyMask || !surface->material)
             {   // We'll mask this.
                 quad->flags = RPF_SKY_MASK;
                 quad->tex.id = 0;
@@ -1239,6 +1222,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
             else
             {
                 surfaceFlags = prepareMaterialForPoly(quad, surface, &texinfo);
+
                 if(section == SEG_MIDDLE && softSurface)
                 {
                     // Blendmode.
@@ -1261,10 +1245,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
 
                 if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
                     tempflags |= RPF2_SHADOW;
-                if(solidSeg &&
-                   (surface->material &&
-                    (surface->material->type == MAT_TEXTURE ||
-                     surface->material->type == MAT_FLAT)) && !texinfo->masked)
+                if(solidSeg && surface->material && !texinfo->masked)
                     tempflags |= RPF2_SHINY;
                 if(surfaceFlags & SUF_GLOW)
                     tempflags |= RPF2_GLOW;
@@ -1923,11 +1904,12 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     // Don't bother with planes facing away from the camera.
     if(!(M_DotProduct(vec, surface->normal) < 0))
     {
-        short       tempflags = 0;
-        rendpoly_t *poly =
+        short               tempflags = 0;
+        texinfo_t          *texInfo;
+        rendpoly_t         *poly =
             R_AllocRendPoly(RP_FLAT, false, subsector->numVertices);
 
-        surfaceFlags = prepareMaterialForPoly(poly, surface, NULL);
+        surfaceFlags = prepareMaterialForPoly(poly, surface, &texInfo);
 
         // Fill in the remaining quad data.
         poly->flags = 0;
@@ -1944,14 +1926,14 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
                 sector->planes[plane->planeID]->surface.offset[VX];
             poly->texOffset[VY] =
                 sector->planes[plane->planeID]->surface.offset[VY];
-        }
 
-        if(surface->material->type == MAT_TEXTURE || surface->material->type == MAT_FLAT)
-            tempflags |= RPF2_SHINY;
-        if(surfaceFlags & SUF_GLOW)
-            tempflags |= RPF2_GLOW;
-        if(!(surface->flags & SUF_TEXFIX))
-            tempflags |= RPF2_BLEND;
+            if(surface->material && !texInfo->masked)
+                tempflags |= RPF2_SHINY;
+            if(surfaceFlags & SUF_GLOW)
+                tempflags |= RPF2_GLOW;
+            if(!(surface->flags & SUF_TEXFIX))
+                tempflags |= RPF2_BLEND;
+        }
 
         doRenderPlane(poly, polySector, subsector, plane, surface,
                       height, tempflags);

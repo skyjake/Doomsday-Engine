@@ -339,7 +339,7 @@ void ST_drawHUDSprite(int sprite, int x, int y, hotloc_t hotspot,
     }
 
     DGL_Color4f(1, 1, 1, alpha );
-    GL_DrawPSprite(x, y, 1, false, sprInfo.lump);
+    GL_DrawPSprite(x, y, 1, false, sprInfo.idx);
 }
 
 void ST_doFullscreenStuff(void)

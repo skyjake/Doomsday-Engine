@@ -41,10 +41,11 @@ typedef struct rendspriteparams_s {
 // Appearance
     boolean         noZWrite;
 
-    // Texture:
-    int             patchNum, tMap, tClass;
-    float           texOffset[2];
-    boolean         texFlip[2]; // {X, Y} Flip along the specified axis.
+    // Material:
+    material_t     *mat;
+    int             tMap, tClass;
+    float           matOffset[2];
+    boolean         matFlip[2]; // {X, Y} Flip along the specified axis.
 
     // Lighting/color:
     float           rgba[4];

@@ -439,24 +439,23 @@ int GL_DrawFilter(void)
 
 void GL_DrawPSprite(float x, float y, float scale, int flip, lumpnum_t lump)
 {
-    int                 w, h;
-    int                 w2, h2;
+    int                 w, h, w2, h2;
     float               s, t;
-    spritelump_t       *slump = spritelumps[lump];
+    spritetex_t        *sprTex = spriteTextures[lump];
 
     if(flip)
         flip = 1; // Make sure it's zero or one.
 
     GL_SetPSprite(lump);
-    w = slump->width;
-    h = slump->height;
+    w = sprTex->info.width;
+    h = sprTex->info.height;
     w2 = M_CeilPow2(w);
     h2 = M_CeilPow2(h);
 
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
-    s = slump->texCoord[1][VX] - 0.4f / w2;
-    t = slump->texCoord[1][VY] - 0.4f / h2;
+    s = sprTex->texCoord[1][VX] - 0.4f / w2;
+    t = sprTex->texCoord[1][VY] - 0.4f / h2;
 
     DGL_Begin(DGL_QUADS);
 

@@ -992,7 +992,7 @@ void ST_drawHUDSprite(int sprite, int x, int y, int hotSpot, float alpha)
 
     DGL_Color4f(1, 1, 1, alpha );
     GL_DrawPSprite(x, y, sprite == SPR_ROCK ? 1 / 1.5 : 1, false,
-                   sprInfo.lump);
+                   sprInfo.idx);
 }
 
 void ST_doFullscreenStuff(void)

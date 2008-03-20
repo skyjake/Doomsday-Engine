@@ -3144,7 +3144,7 @@ static void setupGLStateForMap(void)
                     scale = win->height / (sprInfo.height * num);
                     DGL_Color4f(1, 1, 1, iconAlpha);
                     GL_DrawPSprite(x - sprInfo.width * scale, y, scale, false,
-                                   sprInfo.lump);
+                                   sprInfo.idx);
                     y += spacing;
                 }
             }

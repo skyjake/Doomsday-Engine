@@ -143,14 +143,13 @@ DGLuint         GL_PrepareLSTexture(lightingtexid_t which, texinfo_t **info);
 DGLuint         GL_PrepareFlareTexture(flaretexid_t flare, texinfo_t **info);
 void            GL_BufferSkyTexture(int idx, byte **outbuffer, int *width,
                                     int *height, boolean zeroMask);
-unsigned int    GL_PrepareSprite(int pnum, int spriteMode);
+unsigned int    GL_PreparePSprite(int pnum, texinfo_t **info);
 byte           *GL_GetPalette(void);
 byte           *GL_GetPal18to8(void);
 
 void            GL_SetMaterial(int idx, materialtype_t type);
 
 unsigned int    GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
-void            GL_SetSprite(int pnum);
 void            GL_SetPSprite(int pnum);
 void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
 void            GL_NewSplitTex(lumpnum_t lump, DGLuint part2name);

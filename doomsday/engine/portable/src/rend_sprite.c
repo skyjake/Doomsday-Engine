@@ -240,36 +240,36 @@ void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
 static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
                                            vissprite_t *spr)
 {
-    float       offScaleY = weaponOffsetScaleY / 1000.0f;
-    spritelump_t *slump;
-    spriteinfo_t info;
-    ddpsprite_t *psp = spr->data.psprite.psp;
+    float               offScaleY = weaponOffsetScaleY / 1000.0f;
+    spritetex_t        *sprTex;
+    spriteinfo_t        info;
+    ddpsprite_t        *psp = spr->data.psprite.psp;
     visspritelightparams_t lparams;
 
     // Clear sprite info.
     memset(&info, 0, sizeof(info));
     R_GetSpriteInfo(psp->statePtr->sprite, psp->statePtr->frame,
                     &info);
-    slump = spritelumps[info.lump];
+    sprTex = spriteTextures[info.idx];
 
     params->pos[VX] = psp->pos[VX] - info.offset + pspOffset[VX];
     params->pos[VY] =
         offScaleY * psp->pos[VY] + (1 - offScaleY) * 32 - info.topOffset + pspOffset[VY];
-    params->width = slump->width;
-    params->height = slump->height;
+    params->width = sprTex->info.width;
+    params->height = sprTex->info.height;
     params->subsector = spr->data.psprite.subsector;
 
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
     params->texOffset[0] =
-        slump->texCoord[1][VX] - 0.4f / M_CeilPow2(params->width);
+        sprTex->texCoord[1][VX] - 0.4f / M_CeilPow2(params->width);
     params->texOffset[1] =
-        slump->texCoord[1][VY] - 0.4f / M_CeilPow2(params->height);
+        sprTex->texCoord[1][VY] - 0.4f / M_CeilPow2(params->height);
 
     params->texFlip[0] = (boolean) info.flip;
     params->texFlip[1] = false;
 
-    params->lump = info.lump;
+    params->lump = info.idx;
 
     memcpy(params->rgba, spr->data.psprite.rgb, sizeof(float) * 3);
     params->rgba[CA] = spr->data.psprite.alpha;
@@ -682,19 +682,16 @@ void Rend_DrawMasked(void)
             else if(spr->type == VSPR_MAP_OBJECT)
             {
                 // There might be a model for this sprite, let's see.
-                if(!spr->data.mo.mf)
+                if(!spr->data.mo.mf && spr->data.mo.mat)
                 {   // Render an old fashioned sprite, ah the nostalgia...
-                    if(spr->data.mo.patch >= 0)
-                    {
-                        rendspriteparams_t params;
+                    rendspriteparams_t  params;
 
-                        setupSpriteParamsForVisSprite(&params, spr);
-                        Rend_RenderSprite(&params);
-                    }
+                    setupSpriteParamsForVisSprite(&params, spr);
+                    Rend_RenderSprite(&params);
                 }
                 else
                 {   // It's a sprite and it has a modelframe (it's a 3D model).
-                    modelparams_t params;
+                    modelparams_t       params;
 
                     setupModelParamsForVisSprite(&params, spr);
                     Rend_RenderModel(&params);
@@ -758,26 +755,26 @@ void Rend_DrawMasked(void)
 
 void Rend_RenderSprite(const rendspriteparams_t *params)
 {
-    int         i;
-    gl_color_t  quadColors[4];
-    gl_vertex_t quadNormals[4];
-    boolean     restoreMatrix = false;
-    boolean     restoreZ = false;
-    float       spriteCenter[3];
-    float       surfaceNormal[3];
-    float       v1[3], v2[3], v3[3], v4[3];
+    int                 i;
+    gl_color_t          quadColors[4];
+    gl_vertex_t         quadNormals[4];
+    boolean             restoreMatrix = false;
+    boolean             restoreZ = false;
+    float               spriteCenter[3];
+    float               surfaceNormal[3];
+    float               v1[3], v2[3], v3[3], v4[3];
 
     if(renderTextures == 1)
     {
         // Do we need to translate any of the colors?
         if(params->tMap)
         {   // We need to prepare a translated version of the sprite.
-            GL_SetTranslatedSprite(params->patchNum, params->tMap,
+            GL_SetTranslatedSprite(params->mat->ofTypeID, params->tMap,
                                    params->tClass);
         }
         else
         {   // Set the texture. No translation required.
-            GL_SetSprite(params->patchNum);
+            GL_BindTexture(GL_PrepareMaterial(params->mat, NULL));
         }
     }
     else if(renderTextures == 2)
@@ -917,14 +914,14 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
     v[3].xyz[1] = v4[VZ];
     v[3].xyz[2] = v4[VY];
 
-    tc[0].st[0] = params->texOffset[0] *  (params->texFlip[0]? 1:0);
-    tc[0].st[1] = params->texOffset[1] * (!params->texFlip[1]? 1:0);
-    tc[1].st[0] = params->texOffset[0] *  (params->texFlip[0]? 1:0);
-    tc[1].st[1] = params->texOffset[1] *  (params->texFlip[1]? 1:0);
-    tc[2].st[0] = params->texOffset[0] * (!params->texFlip[0]? 1:0);
-    tc[2].st[1] = params->texOffset[1] *  (params->texFlip[1]? 1:0);
-    tc[3].st[0] = params->texOffset[0] * (!params->texFlip[0]? 1:0);
-    tc[3].st[1] = params->texOffset[1] * (!params->texFlip[1]? 1:0);
+    tc[0].st[0] = params->matOffset[0] *  (params->matFlip[0]? 1:0);
+    tc[0].st[1] = params->matOffset[1] * (!params->matFlip[1]? 1:0);
+    tc[1].st[0] = params->matOffset[0] *  (params->matFlip[0]? 1:0);
+    tc[1].st[1] = params->matOffset[1] *  (params->matFlip[1]? 1:0);
+    tc[2].st[0] = params->matOffset[0] * (!params->matFlip[0]? 1:0);
+    tc[2].st[1] = params->matOffset[1] *  (params->matFlip[1]? 1:0);
+    tc[3].st[0] = params->matOffset[0] * (!params->matFlip[0]? 1:0);
+    tc[3].st[1] = params->matOffset[1] * (!params->matFlip[1]? 1:0);
 
     renderQuad(v, quadColors, tc);
     }
@@ -945,13 +942,13 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
 static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           vissprite_t *spr)
 {
-    float       top;
+    float               top;
     visspritelightparams_t lparams;
-    spritelump_t *sprite = spritelumps[spr->data.mo.patch];
+    spritetex_t        *sprTex = spriteTextures[spr->data.mo.mat->ofTypeID];
 
     // Setup params:
-    params->width = (float) sprite->width;
-    params->height = sprite->height;
+    params->width = (float) sprTex->info.width;
+    params->height = sprTex->info.height;
 
     // We must find the correct positioning using the sector floor and ceiling
     // heights as an aid.
@@ -974,23 +971,23 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->center[VX] = spr->center[VX];
     params->center[VY] = spr->center[VY];
     params->center[VZ] = top - params->height / 2;
-    params->viewOffX = (float) sprite->offset - params->width / 2;
+    params->viewOffX = (float) sprTex->info.offsetX - params->width / 2;
     params->subsector = spr->data.mo.subsector;
     params->distance = spr->distance;
     params->viewAligned = (spr->data.mo.viewAligned || alwaysAlign == 3);
     memcpy(params->srvo, spr->data.mo.visOff, sizeof(params->srvo));
     params->noZWrite = noSpriteZWrite;
 
-    params->patchNum = spr->data.mo.patch;
+    params->mat = spr->data.mo.mat;
     if(spr->data.mo.flags & DDMF_TRANSLATION)
         params->tMap = (spr->data.mo.flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
     else
         params->tMap = 0;
     params->tClass = spr->data.mo.pClass;
-    params->texOffset[0] = sprite->texCoord[0][0];
-    params->texOffset[1] = sprite->texCoord[0][1];
-    params->texFlip[0] = spr->data.mo.texFlip[0];
-    params->texFlip[1] = spr->data.mo.texFlip[1];
+    params->matOffset[0] = sprTex->texCoord[0][0];
+    params->matOffset[1] = sprTex->texCoord[0][1];
+    params->matFlip[0] = spr->data.mo.matFlip[0];
+    params->matFlip[1] = spr->data.mo.matFlip[1];
 
     // Set the lighting and alpha.
     memcpy(params->rgba, spr->data.mo.rgb, sizeof(params->rgba));

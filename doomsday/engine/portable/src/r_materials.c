@@ -168,14 +168,14 @@ material_t *R_GetMaterial(int ofTypeID, materialtype_t type)
 }
 
 /**
- * Deletes a texture (not for sprites, rawlumptexs' etc.).
+ * Deletes a texture (not for rawlumptexs' etc.).
  */
 void R_DeleteMaterial(int ofTypeID, materialtype_t type)
 {
     switch(type)
     {
     case MAT_TEXTURE:
-        if(ofTypeID < 0 || ofTypeID >= numtextures)
+        if(ofTypeID < 0 || ofTypeID >= numTextures)
             return;
 
         if(textures[ofTypeID]->tex)
@@ -186,13 +186,24 @@ void R_DeleteMaterial(int ofTypeID, materialtype_t type)
         break;
 
     case MAT_FLAT:
-        if(ofTypeID < 0 || ofTypeID >= numflats)
+        if(ofTypeID < 0 || ofTypeID >= numFlats)
             return;
 
         if(flats[ofTypeID]->tex)
         {
             DGL_DeleteTextures(1, &flats[ofTypeID]->tex);
             flats[ofTypeID]->tex = 0;
+        }
+        break;
+
+    case MAT_SPRITE:
+        if(ofTypeID < 0 || ofTypeID >= numSpriteTextures)
+            return;
+
+        if(spriteTextures[ofTypeID]->tex)
+        {
+            DGL_DeleteTextures(1, &spriteTextures[ofTypeID]->tex);
+            spriteTextures[ofTypeID]->tex = 0;
         }
         break;
 
@@ -236,6 +247,11 @@ boolean R_IsCustomMaterial(int ofTypeID, materialtype_t type)
 
     case MAT_DDTEX:
         return true; // Its definetely not.
+
+    case MAT_SPRITE:
+        if(!W_IsFromIWAD(spriteTextures[ofTypeID]->lump))
+            return true;
+        break;
 
     default:
         Con_Error("R_IsCustomMaterial: Unknown material type %i.", type);
@@ -305,7 +321,8 @@ boolean R_GetMaterialColor(const material_t *mat, float *rgb)
     }
     default:
 #ifdef _DEBUG
-        Con_Message("R_GetMaterialColor: No avg color for material.\n");
+        Con_Message("R_GetMaterialColor: No avg color for material (type=%i id=%i).\n",
+                    mat->type, mat->ofTypeID);
 #endif
         return false;
     }
@@ -321,29 +338,22 @@ int R_GetMaterialFlags(material_t *mat)
 
     switch(mat->type)
     {
-    case MAT_TEXTURE:  // mat->texture is a texture id
-        if(mat->ofTypeID < 0 || mat->ofTypeID >= numtextures)
-        {
-            Con_Error("R_GetMaterialFlags: RC_TEXTURE, mat->texture %i out of bounds.\n",
-                      mat->ofTypeID);
-        }
+    case MAT_TEXTURE:
         ofTypeID = texturetranslation[mat->ofTypeID].current;
         if(ofTypeID < 0)
             return 0;
 
         return textures[ofTypeID]->flags;
 
-    case MAT_FLAT:  // mat->texture is a flat id
-        if(mat->ofTypeID < 0 || mat->ofTypeID >= numflats)
-        {
-            Con_Error("R_GetMaterialFlags: RC_FLAT, mat->texture %i out of bounds.\n",
-                      mat->ofTypeID);
-        }
+    case MAT_FLAT:
         ofTypeID = flattranslation[mat->ofTypeID].current;
         if(ofTypeID < 0)
             return 0;
 
         return flats[ofTypeID]->flags;
+
+    case MAT_SPRITE:
+        return spriteTextures[mat->ofTypeID]->flags;
 
     default:
         return 0;
@@ -360,7 +370,7 @@ int R_CheckMaterialNumForName(const char *name, materialtype_t type)
         if(name[0] == '-') // No flat marker.
             return 0;
 
-        for(i = 0; i < numflats; ++i)
+        for(i = 0; i < numFlats; ++i)
             if(!strncasecmp(flats[i]->name, name, 8))
             {
                 return i;
@@ -371,7 +381,7 @@ int R_CheckMaterialNumForName(const char *name, materialtype_t type)
         if(name[0] == '-') // No texture marker.
             return 0;
 
-        for(i = 0; i < numtextures; ++i)
+        for(i = 0; i < numTextures; ++i)
             if(!strncasecmp(textures[i]->name, name, 8))
             {
                 return i;
@@ -391,12 +401,12 @@ const char *R_MaterialNameForNum(int ofTypeID, materialtype_t type)
     switch(type)
     {
     case MAT_FLAT:
-        if(ofTypeID < 0 || ofTypeID > numflats - 1)
+        if(ofTypeID < 0 || ofTypeID > numFlats - 1)
             return NULL;
         return flats[ofTypeID]->name;
 
     case MAT_TEXTURE:
-        if(ofTypeID < 0 || ofTypeID > numtextures - 1)
+        if(ofTypeID < 0 || ofTypeID > numTextures - 1)
             return NULL;
         return textures[ofTypeID]->name;
 
@@ -424,12 +434,12 @@ unsigned int R_GetMaterialName(int ofTypeID, materialtype_t type)
     switch(type)
     {
     case MAT_TEXTURE:
-        if(ofTypeID < 0 || ofTypeID >= numtextures)
+        if(ofTypeID < 0 || ofTypeID >= numTextures)
             break;
         return textures[ofTypeID]->tex;
 
     case MAT_FLAT:
-        if(ofTypeID < 0 || ofTypeID >= numflats)
+        if(ofTypeID < 0 || ofTypeID >= numFlats)
             break;
         return flats[ofTypeID]->tex;
 
@@ -437,6 +447,11 @@ unsigned int R_GetMaterialName(int ofTypeID, materialtype_t type)
         if(ofTypeID >= NUM_DD_TEXTURES)
             break;
         return ddTextures[ofTypeID].tex;
+
+    case MAT_SPRITE:
+        if(ofTypeID < 0 || ofTypeID >= numSpriteTextures)
+            break;
+        return spriteTextures[ofTypeID]->tex;
 
     default:
         Con_Error("R_GetMaterialName: Unknown material type %i.", type);

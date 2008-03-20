@@ -927,22 +927,22 @@ static void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
 
 static void R_ScaleModelToSprite(modeldef_t *mf, int sprite, int frame)
 {
-    spritedef_t *spr = sprites + sprite;
-    int         lump, off;
+    spritedef_t        *spr = sprites + sprite;
+    int                 idx, off;
 
     if(!spr->numFrames || spr->spriteFrames == NULL)
         return;
 
-    lump = spr->spriteFrames[frame].lump[0];
-    off = spritelumps[lump]->topOffset - spritelumps[lump]->height;
+    idx = spr->spriteFrames[frame].mats[0]->ofTypeID;
+    off = spriteTextures[idx]->info.offsetY - spriteTextures[idx]->info.height;
     if(off < 0)
         off = 0;
-    R_ScaleModel(mf, spritelumps[lump]->height, off);
+    R_ScaleModel(mf, spriteTextures[idx]->info.height, off);
 }
 
 static float R_GetModelVisualRadius(modeldef_t *mf)
 {
-    float       min[3], max[3];
+    float               min[3], max[3];
 
     if(!mf->sub[0].model)
         return 0;

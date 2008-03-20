@@ -597,9 +597,7 @@ static void decorateLine(const linedef_t *line, const float maxDist)
             side = getSectorSide(line, highSector);
             suf = &side->SW_topsurface;
 
-            if(suf->material &&
-               (suf->material->type == MAT_TEXTURE ||
-                suf->material->type == MAT_FLAT))
+            if(suf->material)
             {
                 float           bottom = lowSector->SP_ceilvisheight;
                 float           top = highSector->SP_ceilvisheight;
@@ -655,9 +653,7 @@ static void decorateLine(const linedef_t *line, const float maxDist)
             side = getSectorSide(line, lowSector);
             suf = &side->SW_bottomsurface;
 
-            if(suf->material &&
-               (suf->material->type == MAT_TEXTURE ||
-                suf->material->type == MAT_FLAT))
+            if(suf->material)
             {
                 float           bottom = lowSector->SP_ceilvisheight;
                 float           top = highSector->SP_floorvisheight;
@@ -692,9 +688,7 @@ static void decorateLine(const linedef_t *line, const float maxDist)
         side = line->L_side(line->L_frontside? FRONT:BACK);
         suf = &side->SW_middlesurface;
 
-        if(suf->material &&
-           (suf->material->type == MAT_TEXTURE ||
-            suf->material->type == MAT_FLAT))
+        if(suf->material)
         {
             float           bottom = frontFloor;
             float           top = frontCeil;

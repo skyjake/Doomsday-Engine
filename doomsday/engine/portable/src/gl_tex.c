@@ -959,85 +959,84 @@ void GL_GetNonAlphaRegion(byte *buffer, int width, int height, int pixelsize,
 
 /**
  * Calculates the properties of a dynamic light that the given sprite frame
- * casts.
- * 2005-02-22 (danij): Modified to handle sprites with large areas of alpha
- *                     by only working on the region of the buffer that contains
- *                     non-alpha pixels (crop).
- * 2003-05-30 (skyjake): Modified to handle pixel sizes 1 (==2), 3 and 4.
+ * casts. Crop a boundary around the image to remove excess alpha'd pixels
+ * from adversely affecting the calculation.
+ * Handles pixel sizes; 1 (==2), 3 and 4.
  */
 void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
-                      int pixelsize)
+                      int pixelSize)
 {
-    byte   *palette = pixelsize == 1 ? GL_GetPalette() : NULL;
-    spritelump_t *slump = spritelumps[pnum];
-    int     i, k, x, y, c, cnt = 0, poscnt = 0;
-    byte    rgb[3], *src, *alphasrc = NULL;
-    int     limit = 0xc0, poslimit = 0xe0, collimit = 0xc0;
-    int     avcnt = 0, lowcnt = 0;
-    rgbcol_t *sprcol = &slump->color;
-    float   average[3], lowavg[3];
-    int     region[4];
+    byte               *palette = (pixelSize == 1? GL_GetPalette() : NULL);
+    spritetex_t        *sprTex = spriteTextures[pnum];
+    int                 i, k, x, y, c, cnt = 0, posCnt = 0;
+    byte                rgb[3], *src, *alphaSrc = NULL;
+    int                 limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
+    int                 avgCnt = 0, lowCnt = 0;
+    rgbcol_t           *sprCol = &sprTex->color;
+    float               average[3], lowAvg[3];
+    int                 region[4];
 
     for(i = 0; i < 3; ++i)
     {
         average[i] = 0;
-        lowavg[i] = 0;
+        lowAvg[i] = 0;
     }
     src = buffer;
 
-    if(pixelsize == 1)
+    if(pixelSize == 1)
     {
         // In paletted mode, the alpha channel follows the actual image.
-        alphasrc = buffer + width * height;
+        alphaSrc = buffer + width * height;
     }
 
-    GL_GetNonAlphaRegion(buffer, width, height, pixelsize, &region[0]);
+    GL_GetNonAlphaRegion(buffer, width, height, pixelSize, &region[0]);
     if(region[2] > 0)
     {
-        src += pixelsize * width * region[2];
-        alphasrc += width * region[2];
+        src += pixelSize * width * region[2];
+        alphaSrc += width * region[2];
     }
-    slump->flareX = slump->flareY = 0;
+    sprTex->flareX = sprTex->flareY = 0;
 
     for(k = region[2], y = 0; k < region[3] + 1; ++k, ++y)
     {
         if(region[0] > 0)
         {
-            src += pixelsize * region[0];
-            alphasrc += region[0];
+            src += pixelSize * region[0];
+            alphaSrc += region[0];
         }
 
-        for(i = region[0], x = 0; i < region[1] + 1; ++i, ++x, src += pixelsize, alphasrc++)
+        for(i = region[0], x = 0; i < region[1] + 1;
+            ++i, ++x, src += pixelSize, alphaSrc++)
         {
             // Alpha pixels don't count.
-            if(pixelsize == 1)
+            if(pixelSize == 1)
             {
-                if(*alphasrc < 255)
+                if(*alphaSrc < 255)
                     continue;
             }
-            else if(pixelsize == 4)
+            else if(pixelSize == 4)
             {
                 if(src[3] < 255)
                     continue;
             }
 
             // Bright enough?
-            if(pixelsize == 1)
+            if(pixelSize == 1)
             {
                 memcpy(rgb, palette + (*src * 3), 3);
             }
-            else if(pixelsize >= 3)
+            else if(pixelSize >= 3)
             {
                 memcpy(rgb, src, 3);
             }
 
-            if(rgb[0] > poslimit || rgb[1] > poslimit || rgb[2] > poslimit)
+            if(rgb[0] > posLimit || rgb[1] > posLimit || rgb[2] > posLimit)
             {
                 // This pixel will participate in calculating the average
                 // center point.
-                slump->flareX += x;
-                slump->flareY += y;
-                poscnt++;
+                sprTex->flareX += x;
+                sprTex->flareY += y;
+                posCnt++;
             }
 
             // Bright enough to affect size?
@@ -1045,61 +1044,63 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
                 cnt++;
 
             // How about the color of the light?
-            if(rgb[0] > collimit || rgb[1] > collimit || rgb[2] > collimit)
+            if(rgb[0] > colLimit || rgb[1] > colLimit || rgb[2] > colLimit)
             {
-                avcnt++;
+                avgCnt++;
                 for(c = 0; c < 3; ++c)
                     average[c] += rgb[c] / 255.f;
             }
             else
             {
-                lowcnt++;
+                lowCnt++;
                 for(c = 0; c < 3; ++c)
-                    lowavg[c] += rgb[c] / 255.f;
+                    lowAvg[c] += rgb[c] / 255.f;
             }
         }
+
         if(region[1] < width - 1)
         {
-            src += pixelsize * (width - 1 - region[1]);
-            alphasrc += (width - 1 - region[1]);
+            src += pixelSize * (width - 1 - region[1]);
+            alphaSrc += (width - 1 - region[1]);
         }
     }
-    if(!poscnt)
+
+    if(!posCnt)
     {
-        slump->flareX = region[0] + ((region[1] - region[0]) / 2.0f);
-        slump->flareY = region[2] + ((region[3] - region[2]) / 2.0f);
+        sprTex->flareX = region[0] + ((region[1] - region[0]) / 2.0f);
+        sprTex->flareY = region[2] + ((region[3] - region[2]) / 2.0f);
     }
     else
     {
         // Get the average.
-        slump->flareX /= poscnt;
-        slump->flareY /= poscnt;
+        sprTex->flareX /= posCnt;
+        sprTex->flareY /= posCnt;
         // Add the origin offset.
-        slump->flareX += region[0];
-        slump->flareY += region[2];
+        sprTex->flareX += region[0];
+        sprTex->flareY += region[2];
     }
 
     // The color.
-    if(!avcnt)
+    if(!avgCnt)
     {
-        if(!lowcnt)
+        if(!lowCnt)
         {
             // Doesn't the thing have any pixels??? Use white light.
             for(c = 0; c < 3; ++c)
-                (*sprcol)[c] = 1;
+                (*sprCol)[c] = 1;
         }
         else
         {
             // Low-intensity color average.
             for(c = 0; c < 3; ++c)
-                (*sprcol)[c] = lowavg[c] / lowcnt;
+                (*sprCol)[c] = lowAvg[c] / lowCnt;
         }
     }
     else
     {
         // High-intensity color average.
         for(c = 0; c < 3; ++c)
-            (*sprcol)[c] = average[c] / avcnt;
+            (*sprCol)[c] = average[c] / avgCnt;
     }
 
 #ifdef _DEBUG
@@ -1108,27 +1109,27 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
                           "  cell region X[%d, %d] Y[%d, %d]\n"
                           "  flare X= %g Y=%g %s\n"
                           "  flare RGB[%g, %g, %g] %s\n",
-                          W_CacheLumpNum(slump->lump, PU_GETNAME),
-                          width, height, pixelsize,
+                          W_CacheLumpNum(sprTex->lump, PU_GETNAME),
+                          width, height, pixelSize,
                           region[0], region[1], region[2], region[3],
-                          slump->flareX, slump->flareY,
-                          (poscnt? "(average)" : "(center)"),
-                          (*sprcol)[0], (*sprcol)[1], (*sprcol)[2],
-                          (avcnt? "(hi-intensity avg)" :
-                           lowcnt? "(low-intensity avg)" : "(white light)"));
+                          sprTex->flareX, sprTex->flareY,
+                          (posCnt? "(average)" : "(center)"),
+                          (*sprCol)[0], (*sprCol)[1], (*sprCol)[2],
+                          (avgCnt? "(hi-intensity avg)" :
+                           lowCnt? "(low-intensity avg)" : "(white light)"));
 #endif
 
     // Amplify color.
-    amplify(*sprcol);
+    amplify(*sprCol);
     // How about the size of the light source?
-    slump->lumSize = (2 * cnt + avcnt) / 3.0f / 70.0f;
-    if(slump->lumSize > 1)
-        slump->lumSize = 1;
+    sprTex->lumSize = (2 * cnt + avgCnt) / 3.0f / 70.0f;
+    if(sprTex->lumSize > 1)
+        sprTex->lumSize = 1;
 }
 
 /**
- * @return          @c true, if the given color is either
- *                  (0,255,255) or (255,0,255).
+ * @return              @c true, if the given color is either
+ *                      (0,255,255) or (255,0,255).
  */
 static boolean ColorKey(byte *color)
 {
@@ -1141,7 +1142,7 @@ static boolean ColorKey(byte *color)
  */
 static void DoColorKeying(byte *rgbaBuf, unsigned int width)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; i < width; ++i, rgbaBuf += 4)
         if(ColorKey(rgbaBuf))
@@ -1149,19 +1150,19 @@ static void DoColorKeying(byte *rgbaBuf, unsigned int width)
 }
 
 /**
- * Take the input buffer and convert to color keyed. A new buffer may
- * be needed if the input buffer has three color components.
+ * Take the input buffer and convert to color keyed. A new buffer may be
+ * needed if the input buffer has three color components.
  *
- * @return          If the in buffer wasn't large enough will return a ptr
- *                  to the newly allocated buffer which must be freed with
- *                  M_Free().
+ * @return              If the in buffer wasn't large enough will return a
+ *                      ptr to the newly allocated buffer which must be
+ *                      freed with M_Free().
  */
 byte *GL_ApplyColorKeying(byte *buf, uint pixelSize, uint width,
                           uint height)
 {
-    uint        i;
-    byte       *ckdest, *in, *out;
-    const uint  numpels = width * height;
+    uint                i;
+    byte               *ckdest, *in, *out;
+    const uint          numpels = width * height;
 
     // We must allocate a new buffer if the loaded image has three
     // color components.

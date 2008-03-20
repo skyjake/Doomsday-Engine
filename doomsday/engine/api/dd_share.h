@@ -1047,6 +1047,7 @@ typedef enum blendmode_e {
 typedef enum materialtype_e {
     MAT_TEXTURE,
     MAT_FLAT,
+    MAT_SPRITE,
     MAT_DDTEX
 } materialtype_t;
 
@@ -1060,7 +1061,18 @@ typedef enum materialtype_e {
     } lumppatch_t;
 
     typedef struct {
-        int             lump; // Sprite lump number.
+        int             lump; // Lump number.
+        int             realLump; // Real lump number.
+        int             flip;
+        int             offset;
+        int             topOffset;
+        int             width;
+        int             height;
+        int             numFrames; // Number of frames the sprite has.
+    } patchinfo_t;
+
+    typedef struct {
+        int             idx; // Sprite index number.
         int             realLump; // Real lump number.
         int             flip;
         int             offset;

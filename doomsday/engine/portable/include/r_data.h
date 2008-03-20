@@ -36,6 +36,7 @@
 #include "def_data.h"
 #include "r_extres.h"
 #include "s_environ.h"
+#include "r_materials.h"
 
 // Flags for decorations.
 #define DCRF_NO_IWAD    0x1         // Don't use if from IWAD.
@@ -259,10 +260,8 @@ typedef struct flat_s {
 
 typedef struct {
     lumpnum_t       lump;          // Real lump number.
-    short           width;
-    short           height;
-    short           offset;
-    short           topOffset;
+    texinfo_t       info;
+    int             flags;
     float           flareX;        // Offset to flare.
     float           flareY;
     float           lumSize;
@@ -270,7 +269,7 @@ typedef struct {
     DGLuint         tex;           // Name of the associated DGL texture.
     DGLuint         hudTex;        // Name of the HUD sprite texture.
     rgbcol_t        color;         // Average color, for lighting.
-} spritelump_t;
+} spritetex_t;
 
 // a patch is a lumppatch that has been prepared for render.
 typedef struct patch_s {
@@ -367,14 +366,14 @@ extern byte    *rejectMatrix;      // for fast sight rejection
 extern nodepile_t *mobjNodes, *lineNodes;
 
 extern int      viewwidth, viewheight;
-extern int      numtextures;
+extern int      numTextures;
 extern texture_t **textures;
 extern translation_t *texturetranslation;   // for global animation
-extern int      numflats;
+extern int      numFlats;
 extern flat_t **flats;
 
-extern spritelump_t **spritelumps;
-extern int      numSpriteLumps;
+extern spritetex_t **spriteTextures;
+extern int      numSpriteTextures;
 extern int      numDDTextures;
 extern ddtexture_t ddTextures[NUM_DD_TEXTURES];
 extern translation_t *flattranslation;   // for global animation
@@ -408,8 +407,8 @@ void            R_ResetAnimGroups(void);
 boolean         R_IsInAnimGroup(int groupNum, materialtype_t type, int number);
 void            R_AnimateAnimGroups(void);
 
-void R_InitSpriteLumps(void);
-int R_NewSpriteLump(int lump);
+void            R_InitSpriteTextures(void);
+int             R_NewSpriteTexture(lumpnum_t lump, material_t **mat);
 
 patch_t        *R_FindPatch(lumpnum_t lump); // May return NULL.
 patch_t        *R_GetPatch(lumpnum_t lump); // Creates new entries.

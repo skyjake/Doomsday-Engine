@@ -74,16 +74,16 @@ byte    precacheSprites = false;
 
 patchhash_t patchhash[PATCH_HASH_SIZE];
 
-int     numtextures;
+int     numTextures;
 texture_t **textures;
 translation_t *texturetranslation;  // for global animation
 
-int     numflats;
+int     numFlats;
 flat_t **flats;
 translation_t *flattranslation;  // for global animation
 
-int     numSpriteLumps;
-spritelump_t **spritelumps;
+int     numSpriteTextures;
+spritetex_t **spriteTextures;
 
 // Raw screens.
 rawtex_t *rawtextures;
@@ -106,7 +106,7 @@ static rendpolydata_t **rendPolys;
 
 void R_InfoRendPolys(void)
 {
-    unsigned int i;
+    unsigned int            i;
 
     if(!rendInfoRPolys)
         return;
@@ -127,8 +127,8 @@ void R_InfoRendPolys(void)
  */
 void R_InitRendPolyPool(void)
 {
-    int         i;
-    rendpoly_t *p;
+    int                     i;
+    rendpoly_t             *p;
 
     numrendpolys = maxrendpolys = 0;
     rendPolys = NULL;
@@ -153,16 +153,16 @@ void R_InitRendPolyPool(void)
  * a) has enough vertices.
  * b) matches the "isWall" specification.
  *
- * @param numverts  The number of verts required.
- * @param isWall    @c true = wall data is required.
+ * @param numverts      The number of verts required.
+ * @param isWall        @c true = wall data is required.
  *
- * @return          Ptr to a suitable rendpoly.
+ * @return              Ptr to a suitable rendpoly.
  */
 static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
 {
-    unsigned int    idx;
-    rendpoly_t     *p;
-    boolean         found = false;
+    unsigned int        idx;
+    rendpoly_t         *p;
+    boolean             found = false;
 
     for(idx = 0; idx < maxrendpolys; ++idx)
     {
@@ -190,8 +190,8 @@ static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
         // We may need to allocate more.
         if(++numrendpolys > maxrendpolys)
         {
-            unsigned int i, newCount;
-            rendpolydata_t *newPolyData, *ptr;
+            unsigned int        i, newCount;
+            rendpolydata_t     *newPolyData, *ptr;
 
             maxrendpolys = (maxrendpolys > 0? maxrendpolys * 2 : 8);
 
@@ -244,7 +244,6 @@ static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
 rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
                             unsigned int numverts)
 {
-    texinfo_t          *texinfo;
     rendpoly_t         *poly = R_NewRendPoly(numverts, isWall);
 
     poly->type = type;
@@ -256,13 +255,11 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->blendMode = BM_NORMAL;
     poly->normal[0] = poly->normal[1] = poly->normal[2] = 0;
 
-    poly->tex.id = curtex =
-        GL_PrepareMaterial(R_GetMaterial(DDT_UNKNOWN, MAT_DDTEX), &texinfo);
+    poly->tex.id = curtex = 0;
 
-    poly->tex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
-    poly->tex.height = texinfo->height;
-    poly->tex.width = texinfo->width;
-    poly->tex.masked = texinfo->masked;
+    poly->tex.detail = 0;
+    poly->tex.height = poly->tex.width = 0;
+    poly->tex.masked = 0;;
 
     memset(&poly->interTex, 0, sizeof(poly->interTex));
 
@@ -273,11 +270,11 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
  * Doesn't actually free anything. Instead, mark it as unused ready for the
  * next time a rendpoly with this number of verts is needed.
  *
- * @param poly      Ptr to the poly to mark unused.
+ * @param poly          Ptr to the poly to mark unused.
  */
 void R_FreeRendPoly(rendpoly_t *poly)
 {
-    unsigned int i;
+    unsigned int        i;
 
     if(!poly)
         return;
@@ -298,7 +295,7 @@ void R_FreeRendPoly(rendpoly_t *poly)
 
 void R_MemcpyRendPoly(rendpoly_t *dest, const rendpoly_t *src)
 {
-    unsigned int i;
+    unsigned int        i;
 
     if(!dest || !src)
         return;
@@ -330,8 +327,8 @@ void R_ShutdownData(void)
  */
 patch_t **R_CollectPatches(int *count)
 {
-    int     i, num;
-    patch_t *p, **array;
+    int                 i, num;
+    patch_t            *p, **array;
 
     // First count the number of patches.
     for(num = 0, i = 0; i < PATCH_HASH_SIZE; ++i)
@@ -704,14 +701,14 @@ void R_InitTextures(void)
         numtextures2 = 0;
         maxoff2 = 0;
     }
-    numtextures = numtextures1 + numtextures2;
+    numTextures = numtextures1 + numtextures2;
 
     // \fixme Surely not all of these are still needed?
-    textures = Z_Malloc(numtextures * sizeof(texture_t*), PU_REFRESHTEX, 0);
+    textures = Z_Malloc(numTextures * sizeof(texture_t*), PU_REFRESHTEX, 0);
 
-    sprintf(buf, "R_Init: Initializing %i textures...", numtextures);
+    sprintf(buf, "R_Init: Initializing %i textures...", numTextures);
 
-    for(i = 0; i < numtextures; ++i, directory++)
+    for(i = 0; i < numTextures; ++i, directory++)
     {
         if(i == numtextures1)
         {                       // Start looking in second texture file.
@@ -812,13 +809,13 @@ void R_InitTextures(void)
         Z_Free(maptex2);
 
     // Create a material for every texture.
-    for(i = 0; i < numtextures; ++i)
+    for(i = 0; i < numTextures; ++i)
         R_MaterialCreate(textures[i]->name, i, MAT_TEXTURE);
 
     // Translation table for global animation.
     texturetranslation =
-        Z_Malloc(sizeof(translation_t) * (numtextures + 1), PU_REFRESHTEX, 0);
-    for(i = 0; i < numtextures; ++i)
+        Z_Malloc(sizeof(translation_t) * (numTextures + 1), PU_REFRESHTEX, 0);
+    for(i = 0; i < numTextures; ++i)
     {
         texturetranslation[i].current = texturetranslation[i].next = i;
         texturetranslation[i].inter = 0;
@@ -839,7 +836,7 @@ static int R_NewFlat(lumpnum_t lump)
     int                 i;
     flat_t            **newlist, *ptr;
 
-    for(i = 0; i < numflats; i++)
+    for(i = 0; i < numFlats; i++)
     {
         // Is this lump already entered?
         if(flats[i]->lump == lump)
@@ -853,19 +850,19 @@ static int R_NewFlat(lumpnum_t lump)
         }
     }
 
-    newlist = Z_Malloc(sizeof(flat_t*) * ++numflats, PU_REFRESHTEX, 0);
-    if(numflats > 1)
+    newlist = Z_Malloc(sizeof(flat_t*) * ++numFlats, PU_REFRESHTEX, 0);
+    if(numFlats > 1)
     {
-        for(i = 0; i < numflats -1; ++i)
+        for(i = 0; i < numFlats -1; ++i)
             newlist[i] = flats[i];
 
         Z_Free(flats);
     }
     flats = newlist;
-    ptr = flats[numflats - 1] = Z_Calloc(sizeof(flat_t), PU_REFRESHTEX, 0);
+    ptr = flats[numFlats - 1] = Z_Calloc(sizeof(flat_t), PU_REFRESHTEX, 0);
     ptr->lump = lump;
     memcpy(ptr->name, lumpInfo[lump].name, 8);
-    return numflats - 1;
+    return numFlats - 1;
 }
 
 void R_InitFlats(void)
@@ -873,7 +870,7 @@ void R_InitFlats(void)
     int                 i;
     boolean             inFlatBlock;
 
-    numflats = 0;
+    numFlats = 0;
 
     inFlatBlock = false;
     for(i = 0; i < numLumps; ++i)
@@ -903,17 +900,17 @@ void R_InitFlats(void)
      * DOOM.exe had a bug in the way textures were managed resulting
      * in the first flat being used dually as a "NULL" texture.
      */
-    if(numflats > 0)
+    if(numFlats > 0)
         flats[0]->flags |= TXF_NO_DRAW;
 
     // Create a material for every flat.
-    for(i = 0; i < numflats; ++i)
+    for(i = 0; i < numFlats; ++i)
         R_MaterialCreate(flats[i]->name, i, MAT_FLAT);
 
     // Translation table for global animation.
     flattranslation =
-        Z_Malloc(sizeof(translation_t) * (numflats + 1), PU_REFRESHTEX, 0);
-    for(i = 0; i < numflats; ++i)
+        Z_Malloc(sizeof(translation_t) * (numFlats + 1), PU_REFRESHTEX, 0);
+    for(i = 0; i < numFlats; ++i)
     {
         flattranslation[i].current = flattranslation[i].next = i;
         flattranslation[i].inter = 0;
@@ -924,57 +921,71 @@ void R_InitFlats(void)
     }
 }
 
-void R_InitSpriteLumps(void)
+void R_InitSpriteTextures(void)
 {
-    lumppatch_t *patch;
-    spritelump_t *sl;
-    int         i;
-    char        buf[64];
+    lumppatch_t        *patch;
+    spritetex_t        *sprTex;
+    int                 i;
+    char                buf[64];
 
-    sprintf(buf, "R_Init: Initializing %i sprites...", numSpriteLumps);
-    //Con_InitProgress(buf, numSpriteLumps);
+    sprintf(buf, "R_InitSpriteTextures: Initializing %i sprites...",
+            numSpriteTextures);
 
-    for(i = 0; i < numSpriteLumps; ++i)
+    for(i = 0; i < numSpriteTextures; ++i)
     {
-        sl = spritelumps[i];
+        sprTex = spriteTextures[i];
 
-        /*
-        if(!(i % 50))
-            Con_Progress(i, PBARF_SET | PBARF_DONTSHOW);*/
-
-        patch = (lumppatch_t *) W_CacheLumpNum(sl->lump, PU_CACHE);
-        sl->width = SHORT(patch->width);
-        sl->height = SHORT(patch->height);
-        sl->offset = SHORT(patch->leftOffset);
-        sl->topOffset = SHORT(patch->topOffset);
+        patch = (lumppatch_t *) W_CacheLumpNum(sprTex->lump, PU_CACHE);
+        sprTex->info.width = SHORT(patch->width);
+        sprTex->info.height = SHORT(patch->height);
+        sprTex->info.offsetX = SHORT(patch->leftOffset);
+        sprTex->info.offsetY = SHORT(patch->topOffset);
+        memset(&sprTex->info.detail, 0, sizeof(sprTex->info.detail));
+        sprTex->info.masked = 1;
+        sprTex->info.modFlags = 0;
     }
 }
 
 /**
- * @return              The new sprite lump number.
+ * @return              The new sprite index number.
  */
-int R_NewSpriteLump(int lump)
+int R_NewSpriteTexture(lumpnum_t lump, material_t **matP)
 {
-    spritelump_t **newlist, *ptr;
-    int         i;
+    spritetex_t       **newList, *ptr;
+    int                 i;
+    material_t         *mat;
 
     // Is this lump already entered?
-    for(i = 0; i < numSpriteLumps; i++)
-        if(spritelumps[i]->lump == lump)
+    for(i = 0; i < numSpriteTextures; ++i)
+        if(spriteTextures[i]->lump == lump)
+        {
+            mat = R_GetMaterial(i, MAT_SPRITE);
+            if(matP)
+                *matP = mat;
             return i;
+        }
 
-    newlist = Z_Malloc(sizeof(spritelump_t*) * ++numSpriteLumps, PU_SPRITE, 0);
-    if(numSpriteLumps > 1)
+    newList = Z_Malloc(sizeof(spritetex_t*) * ++numSpriteTextures, PU_SPRITE, 0);
+    if(numSpriteTextures > 1)
     {
-        for(i = 0; i < numSpriteLumps -1; ++i)
-            newlist[i] = spritelumps[i];
+        for(i = 0; i < numSpriteTextures -1; ++i)
+            newList[i] = spriteTextures[i];
 
-        Z_Free(spritelumps);
+        Z_Free(spriteTextures);
     }
-    spritelumps = newlist;
-    ptr = spritelumps[numSpriteLumps - 1] = Z_Calloc(sizeof(spritelump_t), PU_SPRITE, 0);
+
+    spriteTextures = newList;
+    ptr = spriteTextures[numSpriteTextures - 1] =
+        Z_Calloc(sizeof(spritetex_t), PU_SPRITE, 0);
     ptr->lump = lump;
-    return numSpriteLumps - 1;
+
+    // Create a new material for this sprite.
+    mat = R_MaterialCreate(W_LumpName(lump), numSpriteTextures - 1,
+                           MAT_SPRITE);
+    if(matP)
+        *matP = mat;
+
+    return numSpriteTextures - 1;
 }
 
 void R_UpdateTexturesAndFlats(void)
@@ -1163,7 +1174,7 @@ void R_PrecacheLevel(void)
 {
     uint            i, j;
     size_t          n;
-    int             k, lump, mocount;
+    int             k, mocount;
     thinker_t      *th;
     sector_t       *sec;
     sidedef_t      *side;
@@ -1214,15 +1225,11 @@ void R_PrecacheLevel(void)
         }
     }
 
-    // Update progress.
-
-    // \fixme Precache sky textures!
-
     i = 0;
     while(i < numMaterials && matPresent[i])
         R_PrecacheMaterial(matPresent[i++]);
 
-    // Update progress.
+    // \fixme Precache sky textures!
 
     // Precache sprites.
     if(precacheSprites)
@@ -1267,26 +1274,24 @@ void R_PrecacheLevel(void)
 
     if(precacheSprites)
     {
-        int             s, f, l;
-        spriteframe_t  *sf;
+        int                 i;
 
-        for(s = 0; s < numSprites; ++s)
+        for(i = 0; i < numSprites; ++i)
         {
-            /*
-            if(s % SAFEDIV(numSprites, 10) == 0)
-                Con_Progress(1, PBARF_DONTSHOW);*/
+            int                 j;
+            spritedef_t        *sprDef = &sprites[i];
 
-            if(!spritepresent[s] || !useModels)
+            if(!spritepresent[i] || !useModels)
                 continue;
 
-            for(f = 0; f < sprites[s].numFrames; ++f)
+            for(j = 0; j < sprDef->numFrames; ++j)
             {
-                sf = &sprites[s].spriteFrames[f];
+                int                 k;
+                spriteframe_t      *sprFrame = &sprDef->spriteFrames[j];
 
-                for(l = 0; l < 8; ++l)
+                for(k = 0; k < 8; ++k)
                 {
-                    lump = spritelumps[sf->lump[l]]->lump;
-                    GL_BindTexture(GL_PrepareSprite(sf->lump[l], 0));
+                    GL_BindTexture(GL_PrepareMaterial(sprFrame->mats[k], NULL));
                 }
             }
         }

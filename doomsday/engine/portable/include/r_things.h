@@ -31,6 +31,7 @@
 
 #include "p_mapdata.h"
 #include "r_data.h"
+#include "r_materials.h"
 
 #define MAXVISSPRITES   8192
 
@@ -71,10 +72,10 @@ typedef struct vissprite_s {
     // An anonymous union for the data.
     union vissprite_data_u {
         struct vissprite_mobj_s {
-            int             patch;
+            material_t     *mat;
+            boolean         matFlip[2]; // {X, Y} Flip material?
             subsector_t    *subsector;
             float           gzt; // global top for silhouette clipping
-            boolean         texFlip[2]; // {X, Y} Flip texture?
             int             flags; // for color translation and shadow draw
             uint            id;
             int             selector;
@@ -124,9 +125,9 @@ typedef struct visspritelightparams_s {
 // for all views.
 
 typedef struct {
-    boolean         rotate;        // if false use 0 for any position
-    int             lump[8];       // sprite lump to use for view angles 0-7
-    byte            flip[8];       // flip (1 = flip) to use for view angles 0-7
+    boolean         rotate; // If false use 0 for any position
+    material_t     *mats[8]; // Material to use for view angles 0-7
+    byte            flip[8]; // Flip (1 = flip) to use for view angles 0-7
 } spriteframe_t;
 
 typedef struct {
@@ -148,7 +149,7 @@ extern vissprite_t visPSprites[DDMAXPSPRITES];
 extern vissprite_t visSprSortedHead;
 
 void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
-void            R_GetPatchInfo(int lump, spriteinfo_t *info);
+void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info);
 float           R_VisualRadius(struct mobj_s *mo);
 float           R_GetBobOffset(struct mobj_s *mo);
 float           R_MovementYaw(float momx, float momy);

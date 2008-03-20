@@ -344,19 +344,18 @@ lumobj_t *LO_GetLuminous(uint idx)
  */
 void LO_AddLuminous(mobj_t *mo)
 {
-    int                 lump;
     uint                i;
-    float               mul;
-    float               xOff;
-    float               center;
+    float               mul, xOff, center;
     int                 flags = 0;
     int                 radius, flareSize;
     float               rgb[3];
     lumobj_t           *l;
     lightconfig_t       cf;
     ded_light_t        *def = 0;
-    spritedef_t        *sprdef;
-    spriteframe_t      *sprframe;
+    spritedef_t        *sprDef;
+    spriteframe_t      *sprFrame;
+    spritetex_t        *sprTex;
+    material_t         *mat;
 
     mo->light = 0;
 
@@ -372,30 +371,36 @@ void LO_AddLuminous(mobj_t *mo)
            return;
 
         // Determine the sprite frame lump of the source.
-        sprdef = &sprites[mo->sprite];
-        sprframe = &sprdef->spriteFrames[mo->frame];
-        if(sprframe->rotate)
+        sprDef = &sprites[mo->sprite];
+        sprFrame = &sprDef->spriteFrames[mo->frame];
+        if(sprFrame->rotate)
         {
-            lump =
-                sprframe->
-                lump[(R_PointToAngle(mo->pos[VX], mo->pos[VY]) - mo->angle +
+            mat =
+                sprFrame->
+                mats[(R_PointToAngle(mo->pos[VX], mo->pos[VY]) - mo->angle +
                       (unsigned) (ANG45 / 2) * 9) >> 29];
         }
         else
         {
-            lump = sprframe->lump[0];
+            mat = sprFrame->mats[0];
+        }
+
+        if(mat->type != MAT_SPRITE)
+        {
+            return; // Very strange...
         }
 
         // This'll ensure we have up-to-date information about the texture.
-        GL_PrepareSprite(lump, 0);
+        GL_PrepareMaterial(mat, NULL);
+        sprTex = spriteTextures[mat->ofTypeID];
 
         // Let's see what our light should look like.
-        cf.size = cf.flareSize = spritelumps[lump]->lumSize;
-        cf.xOffset = spritelumps[lump]->flareX;
-        cf.yOffset = spritelumps[lump]->flareY;
+        cf.size = cf.flareSize = sprTex->lumSize;
+        cf.xOffset = sprTex->flareX;
+        cf.yOffset = sprTex->flareY;
 
         // X offset to the flare position.
-        xOff = cf.xOffset - (float) spritelumps[lump]->width / 2.0f;
+        xOff = cf.xOffset - (float) sprTex->info.width / 2.0f;
 
         // Does the mobj have an active light definition?
         if(mo->state && mo->state->light)
@@ -415,15 +420,13 @@ void LO_AddLuminous(mobj_t *mo)
             flags |= def->flags;
         }
 
-        center =
-            spritelumps[lump]->topOffset -
-            mo->floorClip - R_GetBobOffset(mo) -
-            cf.yOffset;
+        center = sprTex->info.offsetY - mo->floorClip -
+            R_GetBobOffset(mo) - cf.yOffset;
 
         // Will the sprite be allowed to go inside the floor?
-        mul =
-            mo->pos[VZ] + spritelumps[lump]->topOffset -
-            (float) spritelumps[lump]->height - mo->subsector->sector->SP_floorheight;
+        mul = mo->pos[VZ] + sprTex->info.offsetY -
+            (float) sprTex->info.height -
+                mo->subsector->sector->SP_floorheight;
         if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
         {
             // Must adjust.
@@ -463,7 +466,7 @@ void LO_AddLuminous(mobj_t *mo)
         else
         {
             // Use the sprite's (amplified) color.
-            GL_GetSpriteColorf(lump, rgb);
+            GL_GetSpriteColorf(mat->ofTypeID, rgb);
         }
 
         // This'll allow a halo to be rendered. If the light is hidden from

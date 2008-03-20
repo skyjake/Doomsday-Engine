@@ -489,9 +489,9 @@ void DrawPlayerSetupMenu(void)
     }
 #endif
     if(useColor)
-        GL_SetTranslatedSprite(sprInfo.lump, useColor, plrClass);
+        GL_SetTranslatedSprite(sprInfo.idx, useColor, plrClass);
     else
-        GL_SetSprite(sprInfo.lump);
+        GL_SetSprite(sprInfo.idx);
 
     GL_DrawRect(162 - sprInfo.offset,
 #if __JDOOM__ || __JDOOM64__

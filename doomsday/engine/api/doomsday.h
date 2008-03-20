@@ -385,7 +385,7 @@ extern          "C" {
     void            R_SetBorderGfx(char *lumps[9]);
     void            R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t *sprinfo);
-    void            R_GetPatchInfo(lumpnum_t lump, spriteinfo_t *info);
+    void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info);
 
     int             R_CheckMaterialNumForName(const char *name, materialtype_t type);
     const char     *R_MaterialNameForNum(int num, materialtype_t type);

@@ -790,11 +790,11 @@ void GL_ClearRuntimeTextures(void)
     RL_DeleteLists();
 
     // Textures, flats and sprite lumps.
-    for(i = 0; i < numtextures; ++i)
+    for(i = 0; i < numTextures; ++i)
         R_DeleteMaterial(i, MAT_TEXTURE);
-    for(i = 0; i < numflats; ++i)
+    for(i = 0; i < numFlats; ++i)
         R_DeleteMaterial(i, MAT_FLAT);
-    for(i = 0; i < numSpriteLumps; ++i)
+    for(i = 0; i < numSpriteTextures; ++i)
         GL_DeleteSprite(i);
 
     // The translated sprite textures.
@@ -1311,7 +1311,7 @@ static unsigned int prepareFlat2(int idx, boolean translate,
     boolean hasExternal = false;
     flat_t *flat;
 
-    if(idx < 0 || idx >= numflats) // No texture?
+    if(idx < 0 || idx >= numFlats) // No texture?
         return 0;
 
     if(translate)
@@ -1319,7 +1319,7 @@ static unsigned int prepareFlat2(int idx, boolean translate,
         idx = flattranslation[idx].current;
     }
 
-    if(idx < 0 || idx >= numflats) // No texture?
+    if(idx < 0 || idx >= numFlats) // No texture?
         return 0;
 
     flat = flats[idx];
@@ -1802,7 +1802,7 @@ static unsigned int prepareTexture2(int idx, boolean translate, texinfo_t **info
     image_t image;
     boolean hasExternal = false;
 
-    if(idx < 0 || idx >= numtextures) // No texture?
+    if(idx < 0 || idx >= numTextures) // No texture?
         return 0;
 
     if(translate)
@@ -1810,7 +1810,7 @@ static unsigned int prepareTexture2(int idx, boolean translate, texinfo_t **info
         idx = texturetranslation[idx].current;
     }
 
-    if(idx < 0 || idx >= numtextures) // No texture?
+    if(idx < 0 || idx >= numTextures) // No texture?
         return 0;
 
     tex = textures[idx];
@@ -1993,7 +1993,7 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
     boolean RGBData, alphaChannel;
     image_t image;
 
-    if(idx >= numtextures)
+    if(idx >= numTextures)
         return 0;
     /*
        #if _DEBUG
@@ -2093,19 +2093,19 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
 
     if(!isPsprite)
     {
-        spritelump_t *slump = spritelumps[pnum];
-        lumppatch_t *patch =
-            (lumppatch_t*) W_CacheLumpNum(slump->lump, PU_CACHE);
+        spritetex_t        *sprTex = spriteTextures[pnum];
+        lumppatch_t        *patch =
+            (lumppatch_t*) W_CacheLumpNum(sprTex->lump, PU_CACHE);
 
         // Calculate light source properties.
         GL_CalcLuminance(pnum, image->pixels, image->width,
                          image->height, image->pixelSize);
 
-        if(patch)
+        /*if(patch)
         {
-            slump->flareX *= SHORT(patch->width) / (float) image->width;
-            slump->flareY *= SHORT(patch->height) / (float) image->height;
-        }
+            sprTex->flareX *= SHORT(patch->width) / (float) image->width;
+            sprTex->flareY *= SHORT(patch->height) / (float) image->height;
+        }*/
     }
 
     if(image->pixelSize == 1 && filloutlines)
@@ -2119,7 +2119,7 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
                          DGL_CLAMP, DGL_CLAMP, 0);
 
     // Determine coordinates for the texture.
-    GL_SetTexCoords(spritelumps[pnum]->texCoord[isPsprite], image->width,
+    GL_SetTexCoords(spriteTextures[pnum]->texCoord[isPsprite], image->width,
                     image->height);
 
     return texture;
@@ -2136,18 +2136,18 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
     {
         filename_t resource, fileName;
         lumppatch_t *patch =
-            (lumppatch_t*) W_CacheLumpNum(spritelumps[pnum]->lump, PU_CACHE);
+            (lumppatch_t*) W_CacheLumpNum(spriteTextures[pnum]->lump, PU_CACHE);
 
         // Compose a resource name.
         if(tclass || tmap)
         {
             sprintf(resource, "%s-table%i%i",
-                    lumpInfo[spritelumps[pnum]->lump].name, tclass, tmap);
+                    lumpInfo[spriteTextures[pnum]->lump].name, tclass, tmap);
         }
         else
         {
             // Not actually translated? Use the normal resource.
-            strcpy(resource, lumpInfo[spritelumps[pnum]->lump].name);
+            strcpy(resource, lumpInfo[spriteTextures[pnum]->lump].name);
         }
 
         if(!noHighResPatches &&
@@ -2181,30 +2181,30 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
  * 0 = Normal sprite
  * 1 = Psprite (HUD)
  */
-unsigned int GL_PrepareSprite(int pnum, int spriteMode)
+static DGLuint prepareSprite(int pnum, int spriteMode, texinfo_t **info)
 {
-    DGLuint *texture;
-    int     lumpNum;
-    spritelump_t *slump;
+    DGLuint            *texture;
+    int                 lumpNum;
+    spritetex_t        *sprTex;
 
     if(pnum < 0)
         return 0;
 
-    slump = spritelumps[pnum];
-    lumpNum = slump->lump;
+    sprTex = spriteTextures[pnum];
+    lumpNum = sprTex->lump;
 
     // Normal sprites and HUD sprites are stored separately.
     // This way a sprite can be used both in the game and the HUD, and
     // the textures can be different. (Very few sprites are used both
     // in the game and the HUD.)
-    texture = (spriteMode == 0 ? &slump->tex : &slump->hudTex);
+    texture = (spriteMode == 0 ? &sprTex->tex : &sprTex->hudTex);
 
     if(!*texture)
     {
-        image_t image;
-        filename_t hudResource, fileName;
-        lumppatch_t *patch =
-                        (lumppatch_t*) W_CacheLumpNum(lumpNum, PU_CACHE);
+        image_t             image;
+        filename_t          hudResource, fileName;
+        lumppatch_t        *patch =
+            (lumppatch_t*) W_CacheLumpNum(lumpNum, PU_CACHE);
 
         // Compose a resource for the psprite.
         if(spriteMode == 1)
@@ -2237,40 +2237,53 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
         GL_DestroyImage(&image);
     }
 
+    if(info)
+        *info = &sprTex->info;
+
     return *texture;
+}
+
+unsigned int GL_PrepareSprite(int pnum, texinfo_t **info)
+{
+    return prepareSprite(pnum, 0, info);
+}
+
+unsigned int GL_PreparePSprite(int pnum, texinfo_t **info)
+{
+    return prepareSprite(pnum, 1, info);
 }
 
 void GL_DeleteSprite(int spritelump)
 {
-    if(spritelump < 0 || spritelump >= numSpriteLumps)
+    if(spritelump < 0 || spritelump >= numSpriteTextures)
         return;
 
-    DGL_DeleteTextures(1, &spritelumps[spritelump]->tex);
-    spritelumps[spritelump]->tex = 0;
+    DGL_DeleteTextures(1, &spriteTextures[spritelump]->tex);
+    spriteTextures[spritelump]->tex = 0;
 
-    if(spritelumps[spritelump]->hudTex)
+    if(spriteTextures[spritelump]->hudTex)
     {
-        DGL_DeleteTextures(1, &spritelumps[spritelump]->hudTex);
-        spritelumps[spritelump]->hudTex = 0;
+        DGL_DeleteTextures(1, &spriteTextures[spritelump]->hudTex);
+        spriteTextures[spritelump]->hudTex = 0;
     }
 }
 
 void GL_GetSpriteColorf(int pnum, float *rgb)
 {
-    if(pnum > numSpriteLumps - 1)
+    if(pnum > numSpriteTextures - 1)
         return;
 
-    memcpy(rgb, spritelumps[pnum]->color, sizeof(float) * 3);
+    memcpy(rgb, spriteTextures[pnum]->color, sizeof(float) * 3);
 }
 
 void GL_SetSprite(int pnum)
 {
-    GL_BindTexture(GL_PrepareSprite(pnum, 0));
+    GL_BindTexture(GL_PrepareSprite(pnum, NULL));
 }
 
 void GL_SetPSprite(int pnum)
 {
-    GL_BindTexture(GL_PrepareSprite(pnum, 1));
+    GL_BindTexture(GL_PreparePSprite(pnum, NULL));
 }
 
 void GL_SetTranslatedSprite(int pnum, int tmap, int tclass)
@@ -2280,7 +2293,7 @@ void GL_SetTranslatedSprite(int pnum, int tmap, int tclass)
 
 DGLuint GL_GetPatchOtherPart(int idx, texinfo_t **info)
 {
-    patch_t *patch = R_GetPatch(idx);
+    patch_t            *patch = R_GetPatch(idx);
 
     if(!patch->tex)
     {
@@ -2913,7 +2926,7 @@ void GL_SetTextureParams(int minMode, int magMode, int anisoLevel,
     if(gameTex)
     {
         // Textures.
-        for(i = 0; i < numtextures; ++i)
+        for(i = 0; i < numTextures; ++i)
             if(textures[i]->tex)    // Is the texture loaded?
             {
                 DGL_Bind(textures[i]->tex);
@@ -2923,7 +2936,7 @@ void GL_SetTextureParams(int minMode, int magMode, int anisoLevel,
             }
 
         // Flats.
-        for(i = 0; i < numflats; ++i)
+        for(i = 0; i < numFlats; ++i)
             if(flats[i]->tex)    // Is the flat loaded?
             {
                 DGL_Bind(flats[i]->tex);
@@ -2933,10 +2946,10 @@ void GL_SetTextureParams(int minMode, int magMode, int anisoLevel,
             }
 
         // Sprites.
-        for(i = 0; i < numSpriteLumps; ++i)
-            if(spritelumps[i]->tex)
+        for(i = 0; i < numSpriteTextures; ++i)
+            if(spriteTextures[i]->tex)
             {
-                DGL_Bind(spritelumps[i]->tex);
+                DGL_Bind(spriteTextures[i]->tex);
                 DGL_TexFilter(DGL_MIN_FILTER, minMode);
                 DGL_TexFilter(DGL_MAG_FILTER, magMode);
                 DGL_TexFilter(DGL_ANISO_FILTER, aniso);
@@ -3225,7 +3238,7 @@ static DGLuint getTextureInfo2(int index, boolean translate,
 {
     texture_t *tex;
 
-    if(index < 0 || index >= numtextures)
+    if(index < 0 || index >= numTextures)
         return 0;
 
     // Translate the texture.
@@ -3234,7 +3247,7 @@ static DGLuint getTextureInfo2(int index, boolean translate,
         index = texturetranslation[index].current;
     }
 
-    if(index < 0 || index >= numtextures)
+    if(index < 0 || index >= numTextures)
         return 0;
 
     tex = textures[index];
@@ -3251,9 +3264,9 @@ static DGLuint getTextureInfo2(int index, boolean translate,
 static DGLuint getFlatInfo2(int index, boolean translate,
                             texinfo_t **texinfo)
 {
-    flat_t         *flat;
+    flat_t             *flat;
 
-    if(index < 0 || index >= numflats)
+    if(index < 0 || index >= numFlats)
         return 0;
 
     // Translate the flat.
@@ -3262,7 +3275,7 @@ static DGLuint getFlatInfo2(int index, boolean translate,
         index = flattranslation[index].current;
     }
 
-    if(index < 0 || index >= numflats)
+    if(index < 0 || index >= numFlats)
         return 0;
 
     flat = flats[index];
@@ -3307,6 +3320,24 @@ static DGLuint getDDTextureInfo(ddtextureid_t which,
     }
 
     return 0;
+}
+
+/**
+ * @return              The sprite name, if it has been prepared.
+ */
+static DGLuint getSpriteInfo(int index, texinfo_t **texInfo)
+{
+    spritetex_t        *sprTex;
+
+    if(index < 0 || index >= numSpriteTextures)
+        return 0;
+
+    sprTex = spriteTextures[index];
+
+    if(texInfo)
+        *texInfo = &sprTex->info;
+
+    return sprTex->tex;
 }
 
 /**
@@ -3371,6 +3402,9 @@ DGLuint GL_GetMaterialInfo2(int idx, materialtype_t type,
     case MAT_DDTEX:
         return getDDTextureInfo(idx, info);
 
+    case MAT_SPRITE:
+        return getSpriteInfo(idx, info);
+
     default:
         Con_Error("GL_GetMaterialInfo2: Unknown material type %i.",
                   type);
@@ -3395,6 +3429,9 @@ DGLuint GL_PrepareMaterial2(const struct material_s *mat,
 
     case MAT_TEXTURE:
         return prepareTexture2(mat->ofTypeID, translate, info);
+
+    case MAT_SPRITE:
+        return prepareSprite(mat->ofTypeID, 0, info);
 
     case MAT_DDTEX:
         return prepareDDTexture(mat->ofTypeID, info);
@@ -3426,6 +3463,10 @@ void GL_SetMaterial(int idx, materialtype_t type)
         texID = prepareDDTexture(idx, NULL);
         break;
 
+    case MAT_SPRITE:
+        texID = prepareSprite(idx, 0, NULL);
+        break;
+
     default:
         Con_Error("GL_SetMaterial: Invalid material type %i.", type);
     }
@@ -3438,11 +3479,11 @@ void GL_SetMaterial(int idx, materialtype_t type)
  */
 skycol_t *GL_GetSkyColor(int texidx)
 {
-    int     i, width, height;
-    skycol_t *skycol;
-    byte   *imgdata, *pald, rgb[3];
+    int                 i, width, height;
+    skycol_t           *skycol;
+    byte               *imgdata, *pald, rgb[3];
 
-    if(texidx < 0 || texidx >= numtextures)
+    if(texidx < 0 || texidx >= numTextures)
         return NULL;
 
     // Try to find a skytop color for this.

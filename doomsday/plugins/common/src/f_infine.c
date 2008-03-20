@@ -1672,7 +1672,7 @@ void FI_GetTurnCenter(fipic_t *pic, float *center)
     }
     else if(pic->flags.is_patch)
     {
-        spriteinfo_t info;
+        patchinfo_t         info;
 
         R_GetPatchInfo(pic->lump[pic->seq], &info);
         center[VX] = info.width / 2 - info.offset;
