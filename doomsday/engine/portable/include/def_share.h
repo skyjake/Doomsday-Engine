@@ -49,9 +49,6 @@ typedef struct state_s {
 	acfnptr_t       action;
 	int             nextState;
 	int             misc[NUM_STATE_MISC];
-	void           *model;
-	void           *light;
-	void           *pTrigger;
 } state_t;
 
 typedef struct {

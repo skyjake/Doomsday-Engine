@@ -160,7 +160,7 @@ void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
     texinfo_t          *texInfo;
 
     // Set the texture.
-    DGL_Bind(curtex = GL_PreparePatch(lump, &texInfo));
+    DGL_Bind(curTex = GL_PreparePatch(lump, &texInfo));
 
     w = (float) texInfo->width;
     h = (float) texInfo->height;

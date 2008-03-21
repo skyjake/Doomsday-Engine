@@ -664,7 +664,7 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
     // Prepare the flat/texture
     if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
-        poly->tex.id = curtex =
+        poly->tex.id = curTex =
             GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), &info);
 
         flags = surface->flags & ~(SUF_TEXFIX);
@@ -687,13 +687,13 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
     else if((surface->flags & SUF_TEXFIX) && devNoTexFix)
     {   // For debug, render the "missing" texture instead of the texture
         // chosen for surfaces to fix the HOMs.
-        poly->tex.id = curtex =
+        poly->tex.id = curTex =
             GL_PrepareMaterial(R_GetMaterial(DDT_MISSING, MAT_DDTEX), &info);
         flags = SUF_GLOW; // Make it stand out
     }
     else if(surface->material)
     {
-        poly->tex.id = curtex =
+        poly->tex.id = curTex =
             GL_PrepareMaterial2(surface->material, true, &info);
         flags = surface->flags;
 

@@ -71,8 +71,8 @@ extern byte     loadExtAlways;
 extern int      texMagMode;
 extern int      upscaleAndSharpenPatches;
 
-extern unsigned int curtex;
-extern int      pallump;
+extern unsigned int curTex;
+extern int      palLump;
 
 void            GL_TexRegister(void);
 void            GL_EarlyInitTextureManager(void);
@@ -86,7 +86,6 @@ void            GL_DoTexReset(cvar_t *unused);
 void            GL_DoUpdateTexGamma(cvar_t *unused);
 void            GL_DoUpdateTexParams(cvar_t *unused);
 int             GL_InitPalettedTexture(void);
-void            GL_DestroySkinNames(void);
 void            GL_ResetLumpTexData(void);
 
 void            GL_BindTexture(DGLuint texname);
@@ -158,15 +157,14 @@ void            GL_UpdateTexParams(int mipmode);
 void            GL_UpdateRawScreenParams(int smoothing);
 void            GL_DeleteRawImages(void);
 void            GL_DeleteHUDSprite(int spritelump);
-int             GL_GetSkinTexIndex(const char *skin);
 
 boolean         GL_IsColorKeyed(const char *path);
 void            GL_GetSkyTopColor(int texidx, float *rgb);
 void            GL_GetSpriteColorf(int pnum, float *rgb);
 
 // Load the skin texture and prepare it for rendering.
-unsigned int    GL_PrepareSkin(model_t *mdl, int skin);
-unsigned int    GL_PrepareShinySkin(modeldef_t *md, int sub);
+unsigned int    GL_PrepareSkin(skintex_t *stp, boolean allowTexComp);
+unsigned int    GL_PrepareShinySkin(skintex_t *stp);
 
 // Loads the shiny texture and the mask texture, if they aren't yet loaded.
 boolean         GL_LoadReflectionMap(ded_reflection_t *ref);

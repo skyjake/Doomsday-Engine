@@ -34,22 +34,22 @@
 #define MAX_FRAME_MODELS        DED_MAX_SUB_MODELS
 
 // Model frame flags.
-#define MFF_FULLBRIGHT          0x0001
-#define MFF_SHADOW1             0x0002
-#define MFF_SHADOW2             0x0004
-#define MFF_BRIGHTSHADOW        0x0008
-#define MFF_MOVEMENT_PITCH      0x0010  // Pitch aligned to movement.
-#define MFF_SPIN                0x0020  // Spin around (for bonus items).
-#define MFF_SKINTRANS           0x0040  // Color translation -> skins.
-#define MFF_AUTOSCALE           0x0080  // Scale to match sprite height.
-#define MFF_MOVEMENT_YAW        0x0100
-#define MFF_DONT_INTERPOLATE    0x0200  // Don't interpolate from the frame.
-#define MFF_BRIGHTSHADOW2       0x0400
-#define MFF_ALIGN_YAW           0x0800
-#define MFF_ALIGN_PITCH         0x1000
-#define MFF_DARKSHADOW          0x2000
-#define MFF_IDSKIN              0x4000  // Mobj id -> skin in skin range
-#define MFF_DISABLE_Z_WRITE     0x8000
+#define MFF_FULLBRIGHT          0x00000001
+#define MFF_SHADOW1             0x00000002
+#define MFF_SHADOW2             0x00000004
+#define MFF_BRIGHTSHADOW        0x00000008
+#define MFF_MOVEMENT_PITCH      0x00000010  // Pitch aligned to movement.
+#define MFF_SPIN                0x00000020  // Spin around (for bonus items).
+#define MFF_SKINTRANS           0x00000040  // Color translation -> skins.
+#define MFF_AUTOSCALE           0x00000080  // Scale to match sprite height.
+#define MFF_MOVEMENT_YAW        0x00000100
+#define MFF_DONT_INTERPOLATE    0x00000200  // Don't interpolate from the frame.
+#define MFF_BRIGHTSHADOW2       0x00000400
+#define MFF_ALIGN_YAW           0x00000800
+#define MFF_ALIGN_PITCH         0x00001000
+#define MFF_DARKSHADOW          0x00002000
+#define MFF_IDSKIN              0x00004000  // Mobj id -> skin in skin range
+#define MFF_DISABLE_Z_WRITE     0x00008000
 #define MFF_NO_DISTANCE_CHECK   0x00010000
 #define MFF_SELSKIN             0x00020000
 #define MFF_PARTICLE_SUB1       0x00040000  // Sub1 center is particle origin.
@@ -100,7 +100,7 @@ typedef struct modeldef_s {
     struct modeldef_s *selectNext;
 
     // Submodels.
-    submodeldef_t   sub[MAX_FRAME_MODELS];  // 8
+    submodeldef_t   sub[MAX_FRAME_MODELS];
 } modeldef_t;
 
 extern modeldef_t *modefs;
@@ -119,8 +119,6 @@ int             R_ModelFrameNumForName(int modelnum, char *fname);
 void            R_SetModelFrame(modeldef_t *modef, int frame);
 void            R_SetSpriteReplacement(int sprite, char *modelname);
 int             R_FindModelFile(const char *filename, char *outfn);
-byte           *R_LoadSkin(model_t *mdl, int skin, int *width, int *height,
-                           int *pxsize);
 void            R_PrecacheSkinsForMobj(struct mobj_s *mo);
 void            R_PrecacheModelSkins(modeldef_t *modef);
 

@@ -95,7 +95,7 @@ extern game_import_t __gi;
 #define gx __gx
 #define gi __gi
 
-extern byte     gammatable[256];
+extern byte     gammaTable[256];
 extern float    texGamma;
 
 // tab_tables.c

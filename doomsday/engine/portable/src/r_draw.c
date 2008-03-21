@@ -68,7 +68,7 @@ int     bwidth;
 // The view border graphics.
 char    borderGfx[9][9];
 
-byte   *translationtables;
+byte   *translationTables;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -122,21 +122,21 @@ void R_DrawViewBorder(void)
                         viewheight + 2 * bwidth);
 
     // The border top.
-    DGL_Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_TOP]), &texinfo));
+    DGL_Bind(curTex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_TOP]), &texinfo));
     GL_DrawRectTiled(viewwindowx, viewwindowy - bwidth, viewwidth,
                      texinfo->height, 16, texinfo->height);
     // Border bottom.
-    DGL_Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_BOTTOM]), &texinfo));
+    DGL_Bind(curTex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_BOTTOM]), &texinfo));
     GL_DrawRectTiled(viewwindowx, viewwindowy + viewheight , viewwidth,
                      texinfo->height, 16, texinfo->height);
 
     // Left view border.
-    DGL_Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_LEFT]), &texinfo));
+    DGL_Bind(curTex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_LEFT]), &texinfo));
     GL_DrawRectTiled(viewwindowx - bwidth, viewwindowy,
                      texinfo->width, viewheight,
                      texinfo->width, 16);
     // Right view border.
-    DGL_Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_RIGHT]), &texinfo));
+    DGL_Bind(curTex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_RIGHT]), &texinfo));
     GL_DrawRectTiled(viewwindowx + viewwidth , viewwindowy,
                      texinfo->width, viewheight,
                      texinfo->width, 16);

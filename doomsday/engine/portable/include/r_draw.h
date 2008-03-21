@@ -29,7 +29,7 @@
 #ifndef __DOOMSDAY_REFRESH_DRAW_H__
 #define __DOOMSDAY_REFRESH_DRAW_H__
 
-extern byte    *translationtables;
+extern byte    *translationTables;
 
 void            R_InitTranslationTables(void);
 void            R_UpdateTranslationTables(void);

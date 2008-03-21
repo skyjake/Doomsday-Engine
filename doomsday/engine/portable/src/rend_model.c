@@ -754,14 +754,24 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
         }
         color[3] = shininess;
 
-        shinyTexture = GL_PrepareShinySkin(mf, number);
+        shinyTexture = GL_PrepareShinySkin(R_GetSkinTexByIndex(mf->sub[number].shinySkin));
     }
 
     if(renderTextures == 2)
+    {
         // For lighting debug, render all surfaces using the gray texture.
         skinTexture = GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), NULL);
+    }
     else
-        skinTexture = GL_PrepareSkin(mdl, useSkin);
+    {
+        skintex_t          *st;
+
+        if(useSkin < 0 || useSkin >= mdl->info.numSkins)
+            useSkin = 0;
+
+        st = R_GetSkinTexByIndex(mdl->skins[useSkin].id);
+        skinTexture = GL_PrepareSkin(st, mdl->allowTexComp);
+    }
 
     // If we mirror the model, triangles have a different orientation.
     if(zSign < 0)

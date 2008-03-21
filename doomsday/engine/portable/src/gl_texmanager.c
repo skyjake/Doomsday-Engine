@@ -58,30 +58,24 @@
 
 // A translated sprite.
 typedef struct {
-    int     patch;
-    DGLuint tex;
-    unsigned char *table;
+    int             patch;
+    DGLuint         tex;
+    unsigned char  *table;
 } transspr_t;
-
-// Model skin.
-typedef struct {
-    char    path[256];
-    DGLuint tex;
-} skintex_t;
 
 // Detail texture instance.
 typedef struct dtexinst_s {
     struct dtexinst_s *next;
-    int     lump;
-    float   contrast;
-    DGLuint tex;
-    const char *external;
+    int             lump;
+    float           contrast;
+    DGLuint         tex;
+    const char     *external;
 } dtexinst_t;
 
 // Sky texture topline colors.
 typedef struct {
-    int     texidx;
-    float   rgb[3];
+    int             texIdx;
+    float           rgb[3];
 } skycol_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -93,9 +87,9 @@ D_CMD(ResetTextures);
 D_CMD(MipMap);
 D_CMD(SmoothRaw);
 
-byte   *GL_LoadHighResFlat(image_t *img, char *name);
-byte   *GL_LoadHighResPatch(image_t *img, char *name);
-void    GL_DeleteDetailTexture(detailtex_t *dtex);
+byte *GL_LoadHighResFlat(image_t *img, char *name);
+byte *GL_LoadHighResPatch(image_t *img, char *name);
+void GL_DeleteDetailTexture(detailtex_t *dtex);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -115,29 +109,29 @@ extern boolean s3tcAvailable;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The current texture.
-DGLuint curtex = 0;
+DGLuint curTex = 0;
 
-int     glMaxTexSize;           // Maximum supported texture size.
-int     ratioLimit = 0;         // Zero if none.
-boolean filloutlines = true;
-byte    loadExtAlways = false;  // Always check for extres (cvar)
-byte    paletted = false;       // Use GL_EXT_paletted_texture (cvar)
-boolean load8bit = false;       // Load textures as 8 bit? (w/paltex)
-int     monochrome = 0;         // desaturate a patch (average colours)
-int     upscaleAndSharpenPatches = 0;
-int     useSmartFilter = 0;     // Smart filter mode (cvar: 1=hq2x)
-int     mipmapping = 3, linearRaw = 1, texQuality = TEXQ_BEST;
-int     filterSprites = true;
-int     texMagMode = 1;         // Linear.
-int     texAniso = -1;          // Use best.
+int glMaxTexSize; // Maximum supported texture size.
+int ratioLimit = 0; // Zero if none.
+boolean fillOutlines = true;
+byte loadExtAlways = false; // Always check for extres (cvar)
+byte paletted = false; // Use GL_EXT_paletted_texture (cvar)
+boolean load8bit = false; // Load textures as 8 bit? (w/paltex)
+int monochrome = 0; // desaturate a patch (average colours)
+int upscaleAndSharpenPatches = 0;
+int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
+int mipmapping = 3, linearRaw = 1, texQuality = TEXQ_BEST;
+int filterSprites = true;
+int texMagMode = 1; // Linear.
+int texAniso = -1; // Use best.
 
-float   texGamma = 0;
-byte    gammatable[256];
+float texGamma = 0;
+byte gammaTable[256];
 
 // Convert a 18-bit RGB (666) value to a playpal index.
 // \fixme 256kb - Too big?
-byte    pal18to8[262144];
-int     pallump;
+byte pal18To8[262144];
+int palLump;
 
 // Names of the dynamic light textures.
 ddtexture_t lightingTextures[NUM_LIGHTING_TEXTURES];
@@ -148,36 +142,26 @@ ddtexture_t ddTextures[NUM_DD_TEXTURES];
 // Names of the flare textures (halos).
 ddtexture_t flareTextures[NUM_FLARE_TEXTURES];
 
-skycol_t *skytop_colors = NULL;
-int     num_skytop_colors = 0;
+skycol_t *skyTopColors = NULL;
+int numSkyTopColors = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean texInited = false;   // Init done.
+static boolean texInited = false; // Init done.
 static boolean allowMaskedTexEnlarge = false;
 static boolean noHighResTex = false;
 static boolean noHighResPatches = false;
 static boolean highResWithPWAD = false;
 
-// Skinnames will only *grow*. It will never be destroyed, not even
-// at resets. The skin textures themselves will be deleted, though.
-// This is because we want to have permanent ID numbers for skins,
-// and the ID numbers are the same as indices to the skinnames array.
-// Created in r_model.c, when registering the skins.
-static int numskinnames;
-static skintex_t *skinnames;
-
 // Linked list of detail texture instances. A unique texture is generated
 // for each (rounded) contrast level.
-static dtexinst_t *dtinstances;
+static dtexinst_t *dtInstances;
 
 // The translated sprites.
-static transspr_t **transsprites;
-static int numtranssprites;
+static transspr_t **transSprites;
+static int numTransSprites;
 
-//static boolean    gammaSupport = false;
-
-static int glmode[6] =          // Indexed by 'mipmapping'.
+static int glmode[6] = // Indexed by 'mipmapping'.
 {
     DGL_NEAREST,
     DGL_LINEAR,
@@ -194,7 +178,7 @@ void GL_TexRegister(void)
     // Cvars
     C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 2);
     C_VAR_FLOAT2("rend-tex-gamma", &texGamma, 0, 0, 1,
-               GL_DoUpdateTexGamma);
+                 GL_DoUpdateTexGamma);
     C_VAR_INT2("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5,
                GL_DoUpdateTexParams);
     C_VAR_BYTE2("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1,
@@ -230,20 +214,20 @@ void GL_TexRegister(void)
  */
 void GL_EarlyInitTextureManager(void)
 {
-    int     i;
+    int                 i;
 
     // Initialize the smart texture filtering routines.
     GL_InitSmartFilter();
 
     // The palette lump, for color information (really??!!?!?!).
-    pallump = W_GetNumForName(PALLUMPNAME);
+    palLump = W_GetNumForName(PALLUMPNAME);
 
-    // Load the pal18to8 table from the lump PAL18TO8. We need it
+    // Load the pal18To8 table from the lump PAL18TO8. We need it
     // when resizing textures.
     if((i = W_CheckNumForName("PAL18TO8")) == -1)
-        CalculatePal18to8(pal18to8, GL_GetPalette());
+        CalculatePal18to8(pal18To8, GL_GetPalette());
     else
-        memcpy(pal18to8, W_CacheLumpNum(i, PU_CACHE), sizeof(pal18to8));
+        memcpy(pal18To8, W_CacheLumpNum(i, PU_CACHE), sizeof(pal18To8));
 }
 
 /**
@@ -268,21 +252,21 @@ void GL_InitTextureManager(void)
     // Should we allow using external resources with PWAD textures?
     highResWithPWAD = ArgExists("-pwadtex");
 
-    numtranssprites = 0;
+    numTransSprites = 0;
 
     // Raw screen lump book-keeping.
     rawtextures = 0;
     numrawtextures = 0;
 
-    // Do we need to generate a pal18to8 table?
+    // Do we need to generate a pal18To8 table?
     if(ArgCheck("-dump_pal18to8"))
     {
-        CalculatePal18to8(pal18to8, GL_GetPalette());
+        CalculatePal18to8(pal18To8, GL_GetPalette());
 
         {
-            FILE   *file = fopen("pal18to8.lmp", "wb");
+            FILE   *file = fopen("pal18To8.lmp", "wb");
 
-            fwrite(pal18to8, sizeof(pal18to8), 1, file);
+            fwrite(pal18To8, sizeof(pal18To8), 1, file);
             fclose(file);
         }
     }
@@ -294,7 +278,7 @@ void GL_InitTextureManager(void)
     LoadPalette();
 
     // Detail textures.
-    dtinstances = NULL;
+    dtInstances = NULL;
 
     // System textures loaded in GL_LoadSystemTextures.
     memset(flareTextures, 0, sizeof(flareTextures));
@@ -316,56 +300,48 @@ void GL_ShutdownTextureManager(void)
     GL_ClearTextureMemory();
 
     // Destroy all bookkeeping -- into the shredder, I say!!
-    M_Free(skytop_colors);
-    skytop_colors = 0;
-    num_skytop_colors = 0;
+    if(skyTopColors)
+        M_Free(skyTopColors);
+    skyTopColors = 0;
+    numSkyTopColors = 0;
 
     texInited = false;
 }
 
-/**
- * This is called at final shutdown.
- */
-void GL_DestroySkinNames(void)
-{
-    M_Free(skinnames);
-    skinnames = 0;
-    numskinnames = 0;
-}
-
 static void LoadPalette(void)
 {
-    int     i, c;
-    byte   *playpal;
-    byte    paldata[256 * 3];
-	double	invgamma;
+    int                 i, c;
+    byte               *playPal;
+    byte                palData[256 * 3];
+	double	            invGamma;
 
-    pallump = W_GetNumForName(PALLUMPNAME);
-    playpal = GL_GetPalette();
+    palLump = W_GetNumForName(PALLUMPNAME);
+    playPal = GL_GetPalette();
 
     // Clamp to a sane range.
-	invgamma = 1.0f - MINMAX_OF(0, texGamma, 1);
+	invGamma = 1.0f - MINMAX_OF(0, texGamma, 1);
 	for(i = 0; i < 256; ++i)
-		gammatable[i] = (byte)(255.0f * pow(i / 255.0f, invgamma));
+		gammaTable[i] = (byte)(255.0f * pow(i / 255.0f, invGamma));
 
     // Prepare the color table.
     for(i = 0; i < 256; ++i)
     {
         // Adjust the values for the appropriate gamma level.
         for(c = 0; c < 3; ++c)
-            paldata[i * 3 + c] = gammatable[playpal[i * 3 + c]];
+            palData[i * 3 + c] = gammaTable[playPal[i * 3 + c]];
     }
-    DGL_Palette(DGL_RGB, paldata);
+
+    DGL_Palette(DGL_RGB, palData);
 }
 
 byte *GL_GetPalette(void)
 {
-    return W_CacheLumpNum(pallump, PU_CACHE);
+    return W_CacheLumpNum(palLump, PU_CACHE);
 }
 
 byte *GL_GetPal18to8(void)
 {
-    return pal18to8;
+    return pal18To8;
 }
 
 /**
@@ -386,6 +362,7 @@ int GL_InitPalettedTexture(void)
         Con_Message("\nPaletted textures init failed!\n");
         return false;
     }
+
     // Textures must be uploaded as 8-bit, now.
     load8bit = true;
     return true;
@@ -396,11 +373,11 @@ int GL_InitPalettedTexture(void)
  */
 void GL_LoadLightMap(ded_lightmap_t *map)
 {
-    image_t image;
-    filename_t resource;
+    image_t             image;
+    filename_t          resource;
 
     if(map->tex)
-        return;                 // Already loaded.
+        return; // Already loaded.
 
     // Default texture name.
     map->tex = lightingTextures[LST_DYNAMIC].tex;
@@ -410,7 +387,7 @@ void GL_LoadLightMap(ded_lightmap_t *map)
         // No lightmap, if we don't know where to find the map.
         map->tex = 0;
     }
-    else if(map->id[0])         // Not an empty string.
+    else if(map->id[0]) // Not an empty string.
     {
         // Search an external resource.
         if(R_FindResource(RC_LIGHTMAP, map->id, "-ck", resource) &&
@@ -450,12 +427,12 @@ void GL_DeleteLightMap(ded_lightmap_t *map)
  */
 void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
 {
-    image_t image;
-    filename_t resource;
-    boolean loaded = false;
+    image_t             image;
+    filename_t          resource;
+    boolean             loaded = false;
 
     if(map->tex)
-        return;                 // Already loaded.
+        return; // Already loaded.
 
     // Default texture (automatic).
     map->tex = 0;
@@ -468,7 +445,7 @@ void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
         map->custom = false;
         loaded = true;
     }
-    else if(map->id[0])         // Not an empty string.
+    else if(map->id[0]) // Not an empty string.
     {
         // Search an external resource.
         if(R_FindResource(RC_FLAREMAP, map->id, "-ck", resource) &&
@@ -506,9 +483,9 @@ void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
     if(!loaded)
     {   // External resource not found.
         // Perhaps a "built-in" flare texture id?
-        char   *end;
-        int     id = 0, pass;
-        boolean ok;
+        char               *end;
+        int                 id = 0, pass;
+        boolean             ok;
 
         // First pass:
         // Try to convert str "map->tex" to a flare tex constant idx
@@ -801,28 +778,23 @@ void GL_ClearRuntimeTextures(void)
     }
 
     // The translated sprite textures.
-    for(i = 0; i < numtranssprites; ++i)
+    for(i = 0; i < numTransSprites; ++i)
     {
-        DGL_DeleteTextures(1, &transsprites[i]->tex);
-        transsprites[i]->tex = 0;
+        DGL_DeleteTextures(1, &transSprites[i]->tex);
+        transSprites[i]->tex = 0;
     }
-    numtranssprites = 0;
+    numTransSprites = 0;
 
-    // Delete skins.
-    for(i = 0; i < numskinnames; ++i)
-    {
-        DGL_DeleteTextures(1, &skinnames[i].tex);
-        skinnames[i].tex = 0;
-    }
+    R_DeleteSkinTextures();
 
     // Delete detail textures.
     i = 0;
-    while(dtinstances)
+    while(dtInstances)
     {
-        dtex = dtinstances->next;
-        DGL_DeleteTextures(1, &dtinstances->tex);
-        M_Free(dtinstances);
-        dtinstances = dtex;
+        dtex = dtInstances->next;
+        DGL_DeleteTextures(1, &dtInstances->tex);
+        M_Free(dtInstances);
+        dtInstances = dtex;
         i++;
     }
     VERBOSE(Con_Message
@@ -878,10 +850,10 @@ void GL_BindTexture(DGLuint texname)
     if(Con_IsBusy())
         return;
 
-    /*if(curtex != texname)
+    /*if(curTex != texname)
        { */
     DGL_Bind(texname);
-    curtex = texname;
+    curTex = texname;
     //}
 }
 
@@ -1124,7 +1096,7 @@ dtexinst_t *GL_GetDetailInstance(int lump, float contrast,
     // Round off the contrast to nearest 0.1.
     contrast = (int) ((contrast + .05) * 10) / 10.0;
 
-    for(i = dtinstances; i; i = i->next)
+    for(i = dtInstances; i; i = i->next)
     {
         if(i->lump == lump && i->contrast == contrast &&
            ( (i->external == NULL && external == NULL) ||
@@ -1136,8 +1108,8 @@ dtexinst_t *GL_GetDetailInstance(int lump, float contrast,
 
     // Create a new instance.
     i = M_Malloc(sizeof(dtexinst_t));
-    i->next = dtinstances;
-    dtinstances = i;
+    i->next = dtInstances;
+    dtInstances = i;
     i->lump = lump;
     i->external = external;
     i->contrast = contrast;
@@ -1451,9 +1423,9 @@ static DGLuint prepareDDTexture(ddtextureid_t which, texinfo_t **texinfo)
  */
 byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 {
-    DFILE  *file;
-    char    ext[40];
-    int     format;
+    DFILE              *file;
+    char                ext[40];
+    int                 format;
 
     // Clear any old values.
     memset(img, 0, sizeof(*img));
@@ -1461,7 +1433,7 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
     if(useModelPath)
     {
         if(!R_FindModelFile(imagefn, img->fileName))
-            return NULL;        // Not found.
+            return NULL; // Not found.
     }
     else
     {
@@ -1520,7 +1492,7 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
     // How about some color-keying?
     if(GL_IsColorKeyed(img->fileName))
     {
-        byte *out;
+        byte               *out;
 
         out = GL_ApplyColorKeying(img->pixels, img->pixelSize, img->width,
                                   img->height);
@@ -1548,9 +1520,9 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
  */
 byte *GL_LoadImageCK(image_t * img, const char *name, boolean useModelPath)
 {
-    char    keyFileName[256];
-    byte   *pixels;
-    char   *ptr;
+    char                keyFileName[256];
+    byte               *pixels;
+    char               *ptr;
 
     strcpy(keyFileName, name);
 
@@ -1565,6 +1537,7 @@ byte *GL_LoadImageCK(image_t * img, const char *name, boolean useModelPath)
         if((pixels = GL_LoadImage(img, keyFileName, useModelPath)) != NULL)
             return pixels;
     }
+
     return GL_LoadImage(img, name, useModelPath);
 }
 
@@ -1583,7 +1556,7 @@ void GL_DestroyImage(image_t * img)
 byte *GL_LoadHighRes(image_t *img, char *name, char *prefix,
                      boolean allowColorKey, resourceclass_t resClass)
 {
-    filename_t resource, fileName;
+    filename_t          resource, fileName;
 
     // Form the resource name.
     sprintf(resource, "%s%s", prefix, name);
@@ -1787,7 +1760,7 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
                           tex->patches[i].originX, tex->patches[i].originY,
                           false, 0, i == tex->patchCount - 1);
     }
-    W_ChangeCacheTag(pallump, PU_CACHE);
+    W_ChangeCacheTag(palLump, PU_CACHE);
     return alphaChannel;
 }
 
@@ -1974,7 +1947,7 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
         DrawRealPatch(imgdata, /*palette,*/ tex->info.width, bufHeight, patch, 0, 0,
                       zeroMask, 0, false);
     }
-    if(zeroMask && filloutlines)
+    if(zeroMask && fillOutlines)
         ColorOutlines(imgdata, *width, *height);
     *outbuffer = imgdata;
 }
@@ -2058,17 +2031,17 @@ transspr_t *GL_NewTranslatedSprite(int pnum, unsigned char *table)
     transspr_t **newlist, *ptr;
     int i;
 
-    newlist = Z_Malloc(sizeof(transspr_t*) * ++numtranssprites, PU_SPRITE, 0);
-    if(numtranssprites > 1)
+    newlist = Z_Malloc(sizeof(transspr_t*) * ++numTransSprites, PU_SPRITE, 0);
+    if(numTransSprites > 1)
     {
-        for(i = 0; i < numtranssprites -1; ++i)
-            newlist[i] = transsprites[i];
+        for(i = 0; i < numTransSprites -1; ++i)
+            newlist[i] = transSprites[i];
 
-        Z_Free(transsprites);
+        Z_Free(transSprites);
     }
 
-    transsprites = newlist;
-    ptr = transsprites[numtranssprites - 1] = Z_Calloc(sizeof(transspr_t), PU_SPRITE, 0);
+    transSprites = newlist;
+    ptr = transSprites[numTransSprites - 1] = Z_Calloc(sizeof(transspr_t), PU_SPRITE, 0);
     ptr->patch = pnum;
     ptr->tex = 0;
     ptr->table = table;
@@ -2079,9 +2052,9 @@ transspr_t *GL_GetTranslatedSprite(int pnum, unsigned char *table)
 {
     int     i;
 
-    for(i = 0; i < numtranssprites; ++i)
-        if(transsprites[i]->patch == pnum && transsprites[i]->table == table)
-            return transsprites[i];
+    for(i = 0; i < numTransSprites; ++i)
+        if(transSprites[i]->patch == pnum && transSprites[i]->table == table)
+            return transSprites[i];
     return 0;
 }
 
@@ -2111,7 +2084,7 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
         }*/
     }
 
-    if(image->pixelSize == 1 && filloutlines)
+    if(image->pixelSize == 1 && fillOutlines)
         ColorOutlines(image->pixels, image->width, image->height);
 
     texture =
@@ -2131,7 +2104,7 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
 unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 {
     unsigned char *table =
-        translationtables - 256 + tclass * ((8 - 1) * 256) + tmap * 256;
+        translationTables - 256 + tclass * ((8 - 1) * 256) + tmap * 256;
     transspr_t *tspr = GL_GetTranslatedSprite(pnum, table);
     image_t image;
 
@@ -2487,7 +2460,7 @@ unsigned int GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
     DGLuint             tex;
 
     // We don't track the current texture with raw images.
-    curtex = 0;
+    curTex = 0;
 
     DGL_Bind(tex = GL_PrepareRawTex(lump, part2, NULL));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
@@ -2652,7 +2625,7 @@ DGLuint GL_BindTexPatch(patch_t *p)
             DrawRealPatch(buffer, patchWidth, patchHeight,
                           patch, addBorder, addBorder, false, 0, true);
 
-        if(filloutlines && !scaleSharp)
+        if(fillOutlines && !scaleSharp)
             ColorOutlines(buffer, patchWidth, patchHeight);
 
         if(monochrome || (p->info.modFlags & TXIF_MONOCHROME))
@@ -2789,7 +2762,7 @@ DGLuint GL_PreparePatch(lumpnum_t lump, texinfo_t **info)
 
 void GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT)
 {
-    DGL_Bind(curtex = GL_PreparePatch(lump, NULL));
+    DGL_Bind(curTex = GL_PreparePatch(lump, NULL));
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
                     wrapS == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
@@ -2803,7 +2776,7 @@ void GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT)
 void GL_SetNoTexture(void)
 {
     DGL_Bind(0);
-    curtex = 0;
+    curTex = 0;
 }
 
 /**
@@ -2956,9 +2929,9 @@ void GL_SetTextureParams(int minMode, int magMode, int anisoLevel,
             }
 
         // Translated sprites.
-        for(i = 0; i < numtranssprites; ++i)
+        for(i = 0; i < numTransSprites; ++i)
         {
-            DGL_Bind(transsprites[i]->tex);
+            DGL_Bind(transSprites[i]->tex);
             DGL_TexFilter(DGL_MIN_FILTER, minMode);
             DGL_TexFilter(DGL_MAG_FILTER, magMode);
             DGL_TexFilter(DGL_ANISO_FILTER, aniso);
@@ -3118,97 +3091,42 @@ void GL_TextureFilterMode(int target, int parm)
         GL_UpdateRawScreenParams(parm);
 }
 
-skintex_t *GL_GetSkinTex(const char *skin)
+unsigned int GL_PrepareSkin(skintex_t *st, boolean allowTexComp)
 {
-    int     i;
-    skintex_t *st;
-    char    realpath[256];
-
-    if(!skin[0])
-        return NULL;
-
-    // Convert the given skin file to a full pathname.
-    // \fixme Why is this done here and not during init??
-    _fullpath(realpath, skin, 255);
-
-    for(i = 0; i < numskinnames; ++i)
-        if(!stricmp(skinnames[i].path, realpath))
-            return skinnames + i;
-
-    // We must allocate a new skintex_t.
-    skinnames = M_Realloc(skinnames, sizeof(*skinnames) * ++numskinnames);
-    st = skinnames + (numskinnames - 1);
-    strcpy(st->path, realpath);
-    st->tex = 0;                // Not yet prepared.
-
-    if(verbose)
-    {
-        Con_Message("SkinTex: %s => %li\n", M_Pretty(skin),
-                    (long) (st - skinnames));
-    }
-    return st;
-}
-
-skintex_t *GL_GetSkinTexByIndex(int id)
-{
-    if(id < 0 || id >= numskinnames)
-        return NULL;            // No such thing, pal.
-    return skinnames + id;
-}
-
-int GL_GetSkinTexIndex(const char *skin)
-{
-    skintex_t *sk = GL_GetSkinTex(skin);
-
-    if(!sk)
-        return -1;              // 'S no good, fellah!
-    return sk - skinnames;
-}
-
-unsigned int GL_PrepareSkin(model_t * mdl, int skin)
-{
-    int     width, height, size;
-    byte   *image;
-    skintex_t *st;
-
-    if(skin < 0 || skin >= mdl->info.numSkins)
-        skin = 0;
-    st = GL_GetSkinTexByIndex(mdl->skins[skin].id);
     if(!st)
-        return 0;               // Urgh.
+        return 0;
 
     // If the texture has already been loaded, we don't need to
     // do anything.
     if(!st->tex)
     {
-        // Load the texture. R_LoadSkin allocates enough memory with M_Malloc.
-        image = R_LoadSkin(mdl, skin, &width, &height, &size);
-        if(!image)
-        {
-            Con_Error("GL_PrepareSkin: %s not found.\n",
-                      mdl->skins[skin].name);
-        }
+        image_t             image;
+
+        // Load the texture.
+        if(!GL_LoadImage(&image, st->path, true))
+            Con_Error("GL_PrepareSkin: %s not found.\n", st->path);
 
         st->tex =
-            GL_UploadTexture(image, width, height, size == 4, true, true, false, false,
+            GL_UploadTexture(image.pixels, image.width, image.height,
+                             image.pixelSize == 4, true, true, false, false,
                              glmode[mipmapping], DGL_LINEAR, texAniso,
                              DGL_REPEAT, DGL_REPEAT,
-                             (!mdl->allowTexComp? TXCF_NO_COMPRESSION : 0));
+                             (!allowTexComp? TXCF_NO_COMPRESSION : 0));
 
         // We don't need the image data any more.
-        M_Free(image);
+        M_Free(image.pixels);
     }
+
     return st->tex;
 }
 
-unsigned int GL_PrepareShinySkin(modeldef_t * md, int sub)
+unsigned int GL_PrepareShinySkin(skintex_t *stp)
 {
-    //  model_t *mdl = modellist[md->sub[sub].model];
-    skintex_t *stp = GL_GetSkinTexByIndex(md->sub[sub].shinySkin);
-    image_t image;
+    image_t             image;
 
     if(!stp)
-        return 0;               // Does not have a shiny skin.
+        return 0; // Does not have a shiny skin.
+
     if(!stp->tex)
     {
         // Load in the texture.
@@ -3227,6 +3145,7 @@ unsigned int GL_PrepareShinySkin(modeldef_t * md, int sub)
         // We don't need the image data any more.
         GL_DestroyImage(&image);
     }
+
     return stp->tex;
 }
 
@@ -3236,7 +3155,7 @@ unsigned int GL_PrepareShinySkin(modeldef_t * md, int sub)
 static DGLuint getTextureInfo2(int index, boolean translate,
                                texinfo_t **texinfo)
 {
-    texture_t *tex;
+    texture_t          *tex;
 
     if(index < 0 || index >= numTextures)
         return 0;
@@ -3287,11 +3206,11 @@ static DGLuint getFlatInfo2(int index, boolean translate,
 }
 
 /**
- * @return          The patch name, if it has been prepared.
+ * @return              The patch name, if it has been prepared.
  */
 DGLuint GL_GetPatchInfo(int idx, boolean part2, texinfo_t **texinfo)
 {
-    patch_t *patch = R_GetPatch(idx);
+    patch_t            *patch = R_GetPatch(idx);
 
     if(!patch)
         return 0;
@@ -3303,10 +3222,9 @@ DGLuint GL_GetPatchInfo(int idx, boolean part2, texinfo_t **texinfo)
 }
 
 /**
- * @return          The ddtexture name, if it has been prepared.
+ * @return              The ddtexture name, if it has been prepared.
  */
-static DGLuint getDDTextureInfo(ddtextureid_t which,
-                                texinfo_t **texinfo)
+static DGLuint getDDTextureInfo(ddtextureid_t which, texinfo_t **texinfo)
 {
     if(which < NUM_DD_TEXTURES)
     {
@@ -3447,7 +3365,7 @@ DGLuint GL_PrepareMaterial(const struct material_s *mat, texinfo_t **info)
 
 void GL_SetMaterial(int idx, materialtype_t type)
 {
-    DGLuint         texID;
+    DGLuint             texID;
 
     switch(type)
     {
@@ -3477,34 +3395,37 @@ void GL_SetMaterial(int idx, materialtype_t type)
 /**
  * @return              A skycol_t for texidx.
  */
-skycol_t *GL_GetSkyColor(int texidx)
+skycol_t *GL_GetSkyColor(int texIdx)
 {
     int                 i, width, height;
     skycol_t           *skycol;
     byte               *imgdata, *pald, rgb[3];
 
-    if(texidx < 0 || texidx >= numTextures)
+    if(texIdx < 0 || texIdx >= numTextures)
         return NULL;
 
     // Try to find a skytop color for this.
-    for(i = 0; i < num_skytop_colors; ++i)
-        if(skytop_colors[i].texidx == texidx)
-            return skytop_colors + i;
+    for(i = 0; i < numSkyTopColors; ++i)
+        if(skyTopColors[i].texIdx == texIdx)
+            return skyTopColors + i;
 
-    // There was no skycol for the specified texidx!
-    skytop_colors =
-        M_Realloc(skytop_colors, sizeof(skycol_t) * ++num_skytop_colors);
-    skycol = skytop_colors + num_skytop_colors - 1;
-    skycol->texidx = texidx;
+    // There was no skycol for the specified texIdx!
+    skyTopColors =
+        M_Realloc(skyTopColors, sizeof(skycol_t) * ++numSkyTopColors);
+    skycol = skyTopColors + numSkyTopColors - 1;
+    skycol->texIdx = texIdx;
 
     // Calculate the color.
-    pald = W_CacheLumpNum(pallump, PU_STATIC);
-    GL_BufferSkyTexture(texidx, &imgdata, &width, &height, false);
+    pald = W_CacheLumpNum(palLump, PU_STATIC);
+    GL_BufferSkyTexture(texIdx, &imgdata, &width, &height, false);
     LineAverageRGB(imgdata, width, height, 0, rgb, pald, false);
+
     for(i = 0; i < 3; ++i)
         skycol->rgb[i] = rgb[i] / 255.f;
-    M_Free(imgdata);            // Free the temp buffer created by GL_BufferSkyTexture.
-    W_ChangeCacheTag(pallump, PU_CACHE);
+
+    M_Free(imgdata); // Free the temp buffer created by GL_BufferSkyTexture.
+    W_ChangeCacheTag(palLump, PU_CACHE);
+
     return skycol;
 }
 
@@ -3513,7 +3434,7 @@ skycol_t *GL_GetSkyColor(int texidx)
  */
 void GL_GetSkyTopColor(int texidx, float *rgb)
 {
-    skycol_t *skycol = GL_GetSkyColor(texidx);
+    skycol_t           *skycol = GL_GetSkyColor(texidx);
 
     if(!skycol)
     {
@@ -3533,11 +3454,11 @@ D_CMD(LowRes)
 #ifdef _DEBUG
 D_CMD(TranslateFont)
 {
-    char    name[32];
-    int     i, lump;
-    size_t  size;
-    lumppatch_t *patch;
-    byte    redToWhite[256];
+    char                name[32];
+    int                 i, lump;
+    size_t              size;
+    lumppatch_t        *patch;
+    byte                redToWhite[256];
 
     if(argc < 3)
         return false;
@@ -3546,7 +3467,7 @@ D_CMD(TranslateFont)
     for(i = 0; i < 256; ++i)
     {
         if(i == 176)
-            redToWhite[i] = 168;    // Full red -> white.
+            redToWhite[i] = 168; // Full red -> white.
         else if(i == 45)
             redToWhite[i] = 106;
         else if(i == 46)
@@ -3558,7 +3479,7 @@ D_CMD(TranslateFont)
             redToWhite[i] = 80 + (i - 177) * 2;
         }
         else
-            redToWhite[i] = i;  // No translation for this.
+            redToWhite[i] = i; // No translation for this.
     }
 
     // Translate everything.

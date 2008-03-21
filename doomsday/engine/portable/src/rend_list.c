@@ -1756,7 +1756,7 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
     {
         texinfo_t          *texinfo;
 
-        poly->tex.id = curtex =
+        poly->tex.id = curTex =
             GL_PrepareMaterial(skyMaskMaterial, &texinfo);
 
         poly->tex.width = texinfo->width;

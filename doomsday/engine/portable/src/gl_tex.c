@@ -117,7 +117,7 @@ void pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest, int destWidth,
 }
 
 /**
- * Prepare the pal18to8 table.
+ * Prepare the pal18To8 table.
  * A time-consuming operation (64 * 64 * 64 * 256!).
  */
 void CalculatePal18to8(byte *dest, byte *palette)
@@ -155,7 +155,7 @@ void PalIdxToRGB(byte *pal, int idx, byte *rgb)
     int         c;
 
     for(c = 0; c < 3; ++c)      // Red, green and blue.
-        rgb[c] = gammatable[pal[idx * 3 + c]];
+        rgb[c] = gammaTable[pal[idx * 3 + c]];
 }
 
 /**
@@ -188,7 +188,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
             if(gamma)
             {
                 for(a = 0; a < 3; ++a)
-                    out[a] = gammatable[*(palette + 3 * (*in) + a)];
+                    out[a] = gammaTable[*(palette + 3 * (*in) + a)];
             }
             else
             {
@@ -202,15 +202,15 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
                 out[3] = (byte) a;
         }
     }
-    // Conversion from RGB(A) to pal8(a), using pal18to8.
+    // Conversion from RGB(A) to pal8(a), using pal18To8.
     else if(informat >= 3 && outformat <= 2)
     {
-        byte *pal18to8 = GL_GetPal18to8();
+        byte *pal18To8 = GL_GetPal18to8();
 
         for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
             // Convert the color value.
-            *out = pal18to8[RGB18(in[0] >> 2, in[1] >> 2, in[2] >> 2)];
+            *out = pal18To8[RGB18(in[0] >> 2, in[1] >> 2, in[2] >> 2)];
             // Alpha channel?
             a = 0;
             if(informat == 4)
@@ -781,7 +781,7 @@ void ColorOutlines(byte *buffer, int width, int height)
 void DeSaturate(byte *buffer, byte *palette, int width, int height)
 {
     int         i, max, temp = 0, paletteIndex = 0;
-    byte       *rgb, *pal18to8 = GL_GetPal18to8();
+    byte       *rgb, *pal18To8 = GL_GetPal18to8();
     const int   numpels = width * height;
 
     // What is the maximum color value?
@@ -807,7 +807,7 @@ void DeSaturate(byte *buffer, byte *palette, int width, int height)
             temp *= 255.f / max;
         }
 
-        paletteIndex = pal18to8[ RGB18(temp >> 2, temp >> 2, temp >> 2) ];
+        paletteIndex = pal18To8[ RGB18(temp >> 2, temp >> 2, temp >> 2) ];
         buffer[i] = paletteIndex;
     }
 }

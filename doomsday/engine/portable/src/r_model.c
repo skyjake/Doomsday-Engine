@@ -84,6 +84,7 @@ float   avertexnormals[NUMVERTEXNORMALS][3] = {
 static ddstring_t modelPath;
 
 static int maxModelDefs;
+static modeldef_t **stateModefs;
 
 // CODE --------------------------------------------------------------------
 
@@ -236,7 +237,7 @@ void R_AddModelPath(char *addPath, boolean append)
  */
 int R_FindModelFile(const char *filename, char *outfn)
 {
-    char        buf[256], ext[50];
+    char                buf[256], ext[50];
 
     if(!filename || !filename[0])
         return false;
@@ -305,70 +306,15 @@ static void R_MissingModel(const char *fn)
         Con_Printf("  %s not found.\n", fn);
 }
 
-static void R_ExpandSkinName(char *skin, char *expanded, const char *modelfn)
-{
-    directory_t mydir;
-
-    // The "first choice" directory.
-    Dir_FileDir(modelfn, &mydir);
-
-    // Try the "first choice" directory first.
-    strcpy(expanded, mydir.path);
-    strcat(expanded, skin);
-    if(!F_Access(expanded))
-    {
-        // Try the whole model path.
-        if(!R_FindModelFile(skin, expanded))
-        {
-            expanded[0] = 0;
-            return;
-        }
-    }
-}
-
-/**
- * Registers a new skin name.
- */
-static int R_RegisterSkin(char *skin, const char *modelfn, char *fullpath)
-{
-    const char *formats[3] = { ".png", ".tga", ".pcx" };
-    char        buf[256];
-    char        fn[256];
-    char       *ext;
-    int         i, idx = -1;
-
-    // Has a skin name been provided?
-    if(!skin[0])
-        return -1;
-
-    // Find the extension, or if there isn't one, add it.
-    strcpy(fn, skin);
-    ext = strrchr(fn, '.');
-    if(!ext)
-    {
-        strcat(fn, ".png");
-        ext = strrchr(fn, '.');
-    }
-
-    // Try PNG, TGA, PCX.
-    for(i = 0; i < 3 && idx < 0; ++i)
-    {
-        strcpy(ext, formats[i]);
-        R_ExpandSkinName(fn, fullpath ? fullpath : buf, modelfn);
-        idx = GL_GetSkinTexIndex(fullpath ? fullpath : buf);
-    }
-    return idx;
-}
-
 static void R_LoadModelMD2(DFILE *file, model_t *mdl)
 {
-    md2_header_t oldhd;
-    dmd_header_t *hd = &mdl->header;
-    dmd_info_t *inf = &mdl->info;
-    model_frame_t *frame;
-    byte       *frames;
-    int         i, k, c;
-    const int   axis[3] = { 0, 2, 1 };
+    md2_header_t        oldhd;
+    dmd_header_t       *hd = &mdl->header;
+    dmd_info_t         *inf = &mdl->info;
+    model_frame_t      *frame;
+    byte               *frames;
+    int                 i, k, c;
+    const int           axis[3] = { 0, 2, 1 };
 
     // Read the header.
     F_Read(&oldhd, sizeof(oldhd), file);
@@ -444,13 +390,13 @@ static void R_LoadModelMD2(DFILE *file, model_t *mdl)
 
 static void R_LoadModelDMD(DFILE *file, model_t *mo)
 {
-    dmd_chunk_t chunk;
-    char       *temp;
-    dmd_info_t *inf = &mo->info;
-    model_frame_t *frame;
-    int         i, k, c;
-    dmd_triangle_t *triangles[MAX_LODS];
-    const int   axis[3] = { 0, 2, 1 };
+    dmd_chunk_t         chunk;
+    char               *temp;
+    dmd_info_t         *inf = &mo->info;
+    model_frame_t      *frame;
+    int                 i, k, c;
+    dmd_triangle_t     *triangles[MAX_LODS];
+    const int           axis[3] = { 0, 2, 1 };
 
     // Read the chunks.
     F_Read(&chunk, sizeof(chunk), file);
@@ -555,7 +501,7 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
 
 static void R_RegisterModelSkin(model_t *mdl, int index)
 {
-    filename_t buf;
+    filename_t          buf;
 
     memset(buf, 0, sizeof(buf));
     memcpy(buf, mdl->skins[index].name, 64);
@@ -575,13 +521,13 @@ static void R_RegisterModelSkin(model_t *mdl, int index)
  */
 static int R_LoadModel(char *origfn)
 {
-    int         i, index;
-    model_t    *mdl;
-    DFILE      *file = NULL;
-    char        filename[256];
+    int                 i, index;
+    model_t            *mdl;
+    DFILE              *file = NULL;
+    char                filename[256];
 
     if(!origfn[0])
-        return 0;               // No model specified.
+        return 0; // No model specified.
 
     VERBOSE2(Con_Message("R_LoadModel: %s\n", origfn));
 
@@ -600,35 +546,37 @@ static int R_LoadModel(char *origfn)
             R_MissingModel(filename);
             return 0;
         }
+
         // Allocate a new model_t.
         if((index = R_NewModelFor(/*filename*/)) < 0)
         {
             F_Close(file);
-            return 0;           // Bugger.
+            return 0;
         }
     }
+
     mdl = modellist[index];
     if(mdl->loaded)
     {
         if(file)
             F_Close(file);
-        return index;           // Already loaded.
+        return index; // Already loaded.
     }
 
     // Now we can load in the data.
     F_Read(&mdl->header, sizeof(mdl->header), file);
-    if(LONG(mdl->header.magic) == MD2_MAGIC)    // Load as MD2?
-    {
+    if(LONG(mdl->header.magic) == MD2_MAGIC)
+    {   // Load as MD2.
         F_Rewind(file);
         R_LoadModelMD2(file, mdl);
     }
-    else if(LONG(mdl->header.magic) == DMD_MAGIC)   // Load as DMD?
-    {
+    else if(LONG(mdl->header.magic) == DMD_MAGIC)
+    {   // Load as DMD.
         R_LoadModelDMD(file, mdl);
     }
     else
-    {
-        // Bad magic! Cancel the loading.
+    {   // Bad magic!
+        // Cancel the loading.
         M_Free(mdl);
         modellist[index] = 0;
         F_Close(file);
@@ -652,8 +600,8 @@ static int R_LoadModel(char *origfn)
 
 int R_ModelFrameNumForName(int modelnum, char *fname)
 {
-    int         i;
-    model_t    *mdl;
+    int                 i;
+    model_t            *mdl;
 
     if(!modelnum)
         return 0;
@@ -672,18 +620,18 @@ int R_ModelFrameNumForName(int modelnum, char *fname)
  */
 static modeldef_t *GetStateModel(state_t *st, int select)
 {
-    modeldef_t *modef, *iter;
-    int         mosel;
+    modeldef_t         *modef, *iter;
+    int                 mosel;
 
-    if(!st || !st->model)
+    if(!st || !stateModefs[st - states])
         return 0;
 
-    modef = (modeldef_t *) st->model;
+    modef = stateModefs[st - states];
     mosel = select & DDMOBJ_SELECTOR_MASK;
 
     if(select)
     {
-        boolean     found;
+        boolean             found;
 
         // Choose the correct selector, or selector zero if the given
         // one not available.
@@ -701,7 +649,7 @@ static modeldef_t *GetStateModel(state_t *st, int select)
 
 modeldef_t *R_CheckIDModelFor(const char *id)
 {
-    int         i;
+    int                 i;
 
     if(!id[0])
         return NULL;
@@ -719,22 +667,22 @@ modeldef_t *R_CheckIDModelFor(const char *id)
  */
 float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
 {
-    float       interp = -1;
-    state_t    *st = mo->state;
-    modeldef_t *mdit;
-    boolean     worldTime = false;
+    float               interp = -1;
+    state_t            *st = mo->state;
+    modeldef_t         *mdit;
+    boolean             worldTime = false;
 
     // By default there are no models.
     *nextmodef = NULL;
     *modef = GetStateModel(st, mo->selector);
     if(!*modef)
-        return -1;              // No model available.
+        return -1; // No model available.
 
     // World time animation?
     if((*modef)->flags & MFF_WORLD_TIME_ANIM)
     {
-        float   duration = (*modef)->interRange[0];
-        float   offset = (*modef)->interRange[1];
+        float               duration = (*modef)->interRange[0];
+        float               offset = (*modef)->interRange[1];
 
         // Validate/modify the values.
         if(duration == 0)
@@ -782,18 +730,18 @@ if(mo->dPlayer)
     {
         *nextmodef = GetStateModel(st, mo->selector);
     }
-    else if(st->nextState > 0)  // Check next state.
+    else if(st->nextState > 0) // Check next state.
     {
-        int         max;
-        boolean     foundNext;
-        state_t    *it;
+        int                 max;
+        boolean             foundNext;
+        state_t            *it;
 
         // Find the appropriate state based on interrange.
         it = states + st->nextState;
         foundNext = false;
         if((*modef)->interRange[1] < 1)
         {
-            boolean     stopScan;
+            boolean             stopScan;
 
             // Current modef doesn't interpolate to the end, find the
             // proper destination modef (it isn't just the next one).
@@ -802,7 +750,8 @@ if(mo->dPlayer)
             max = 20; // Let's not be here forever...
             while(!stopScan)
             {
-                if(!((!it->model || GetStateModel(it, mo->selector)->interRange[0] > 0) &&
+                if(!((!stateModefs[it - states] ||
+                      GetStateModel(it, mo->selector)->interRange[0] > 0) &&
                      it->nextState > 0))
                 {
                     stopScan = true;
@@ -812,13 +761,13 @@ if(mo->dPlayer)
                     // Scan interlinks, then go to the next state.
                     if((mdit = GetStateModel(it, mo->selector)) && mdit->interNext)
                     {
-                        boolean isDone = false;
+                        boolean                 isDone = false;
                         while(!isDone)
                         {
                             mdit = mdit->interNext;
                             if(mdit)
                             {
-                                if(mdit->interRange[0] <= 0)    // A new beginning?
+                                if(mdit->interRange[0] <= 0) // A new beginning?
                                 {
                                     *nextmodef = mdit;
                                     foundNext = true;
@@ -847,6 +796,7 @@ if(mo->dPlayer)
             }
             // \fixme What about max == -1? What should 'it' be then?
         }
+
         if(!foundNext)
             *nextmodef = GetStateModel(it, mo->selector);
     }
@@ -857,6 +807,7 @@ if(mo->dPlayer)
         *modef = *nextmodef = NULL;
         return -1;
     }
+
     return interp;
 }
 
@@ -867,10 +818,10 @@ static model_frame_t *R_GetModelFrame(int model, int frame)
 
 static void R_GetModelBounds(int model, int frame, float min[3], float max[3])
 {
-    int         i, k;
-    model_frame_t *mframe = R_GetModelFrame(model, frame);
-    model_t    *mo = modellist[model];
-    model_vertex_t *v;
+    int                 i, k;
+    model_frame_t      *mframe = R_GetModelFrame(model, frame);
+    model_t            *mo = modellist[model];
+    model_vertex_t     *v;
 
     if(!mframe)
         Con_Error("R_GetModelBounds: bad model/frame.\n");
@@ -890,7 +841,7 @@ static void R_GetModelBounds(int model, int frame, float min[3], float max[3])
  */
 static float R_GetModelHRange(int model, int frame, float *top, float *bottom)
 {
-    float       min[3], max[3];
+    float               min[3], max[3];
 
     R_GetModelBounds(model, frame, min, max);
     *top = max[VY];
@@ -905,10 +856,10 @@ static float R_GetModelHRange(int model, int frame, float *top, float *bottom)
  */
 static void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
 {
-    submodeldef_t *smf = &mf->sub[0];
-    int         i;
-    float       top, bottom, height;
-    float       scale;
+    submodeldef_t      *smf = &mf->sub[0];
+    int                 i;
+    float               top, bottom, height;
+    float               scale;
 
     if(!smf->model)
         return;                 // No model to scale!
@@ -960,7 +911,7 @@ static float R_GetModelVisualRadius(modeldef_t *mf)
  */
 static short R_NewModelSkin(model_t *mdl, const char *fileName)
 {
-    int         added = mdl->info.numSkins, i;
+    int                 added = mdl->info.numSkins, i;
 
     mdl->skins =
         M_Realloc(mdl->skins, sizeof(dmd_skin_t) * ++mdl->info.numSkins);
@@ -990,7 +941,7 @@ static short R_NewModelSkin(model_t *mdl, const char *fileName)
  */
 static modeldef_t *R_GetIDModelDef(const char *id)
 {
-    modeldef_t *md;
+    modeldef_t         *md;
 
     // ID defined?
     if(!id[0])
@@ -1013,8 +964,8 @@ static modeldef_t *R_GetIDModelDef(const char *id)
  */
 static modeldef_t *R_GetModelDef(int state, float interMark, int select)
 {
-    int             i;
-    modeldef_t     *md;
+    int                 i;
+    modeldef_t         *md;
 
     if(state < 0 || state >= countStates.num)
         return NULL; // Not a valid state.
@@ -1051,14 +1002,14 @@ static modeldef_t *R_GetModelDef(int state, float interMark, int select)
  * State that has a model will have a pointer to the one with the
  * smallest intermark (start of a chain).
  */
-static void R_SetupModel(ded_model_t *def)
+static void setupModel(ded_model_t *def)
 {
-    modeldef_t *modef;
-    int         model_scope_flags = def->flags | defs.modelFlags;
-    ded_submodel_t *subdef;
-    submodeldef_t *sub;
-    int         i, k, statenum = Def_GetStateNum(def->state);
-    float       min[3], max[3];
+    modeldef_t         *modef;
+    int                 modelScopeFlags = def->flags | defs.modelFlags;
+    ded_submodel_t     *subdef;
+    submodeldef_t      *sub;
+    int                 i, k, statenum = Def_GetStateNum(def->state);
+    float               min[3], max[3];
 
     // Is this an ID'd model?
     if((modef = R_GetIDModelDef(def->id)) == NULL)
@@ -1074,13 +1025,13 @@ static void R_SetupModel(ded_model_t *def)
             R_GetModelDef(statenum + def->off, def->interMark, def->selector);
 
         if(!modef)
-            return;             // Can't get a modef, quit!
+            return; // Can't get a modef, quit!
     }
 
     // Init modef info (state & intermark already set).
     modef->def = def;
     modef->group = def->group;
-    modef->flags = model_scope_flags;
+    modef->flags = modelScopeFlags;
     for(i = 0; i < 3; ++i)
     {
         modef->offset[i] = def->offset[i];
@@ -1113,7 +1064,7 @@ static void R_SetupModel(ded_model_t *def)
             sub->frameRange = 1;
 
         // Submodel-specific flags cancel out model-scope flags!
-        sub->flags = model_scope_flags ^ subdef->flags;
+        sub->flags = modelScopeFlags ^ subdef->flags;
         if(subdef->skinFilename.path[0])
         {
             // A specific file name has been given for the skin.
@@ -1154,32 +1105,35 @@ static void R_SetupModel(ded_model_t *def)
     }
     else if(modef->state && modef->sub[0].flags & MFF_AUTOSCALE)
     {
-        int     sprNum = Def_GetSpriteNum(def->sprite.id);
-        int     sprFrame = def->spriteFrame;
+        int                 sprNum = Def_GetSpriteNum(def->sprite.id);
+        int                 sprFrame = def->spriteFrame;
 
-        if(sprNum < 0)          // No sprite ID given?
-        {
+        if(sprNum < 0)
+        {   // No sprite ID given.
             sprNum = modef->state->sprite;
             sprFrame = modef->state->frame;
         }
+
         R_ScaleModelToSprite(modef, sprNum, sprFrame);
     }
 
     if(modef->state)
     {
+        int                 stateNum = modef->state - states;
+
         // Associate this modeldef with its state.
-        if(!modef->state->model)
+        if(!stateModefs[stateNum])
         {
             // No modef; use this.
-            modef->state->model = modef;
+            stateModefs[stateNum] = modef;
         }
-        else                    // Must check intermark; smallest wins!
-        {
-            modeldef_t *other = (modeldef_t *) modef->state->model;
+        else
+        {   // Must check intermark; smallest wins!
+            modeldef_t         *other = stateModefs[stateNum];
 
-            if((modef->interMark <= other->interMark // Should never be ==
-                && modef->select == other->select) || modef->select < other->select)    // Smallest selector?
-                modef->state->model = modef;
+            if((modef->interMark <= other->interMark && // Should never be ==
+                modef->select == other->select) || modef->select < other->select) // Smallest selector?
+                stateModefs[stateNum] = modef;
         }
     }
 
@@ -1220,10 +1174,10 @@ static void R_SetupModel(ded_model_t *def)
  */
 void R_InitModels(void)
 {
-    int         i, k, minsel;
-    float       minmark;
-    modeldef_t *me, *other, *closest;
-    uint        usedTime;
+    int                 i, k, minsel;
+    float               minmark;
+    modeldef_t         *me, *other, *closest;
+    uint                usedTime;
 
     // Dedicated servers do nothing with models.
     if(isDedicated || ArgCheck("-nomd2"))
@@ -1243,7 +1197,9 @@ void R_InitModels(void)
 
     usedTime = Sys_GetRealTime();
 
-    M_Free(modefs);
+    if(modefs)
+        M_Free(modefs);
+
     // There can't be more modeldefs than there are DED Models.
     // There can be fewer, though.
     maxModelDefs = defs.count.models.num;
@@ -1251,15 +1207,15 @@ void R_InitModels(void)
     numModelDefs = 0;
 
     // Clear the modef pointers of all States.
-    for(i = 0; i < countStates.num; ++i)
-        states[i].model = NULL;
+    stateModefs = M_Realloc(stateModefs, countStates.num * sizeof(*stateModefs));
+    memset(stateModefs, 0, countStates.num * sizeof(*stateModefs));
 
-    // Read in the model files and their data, 'n stuff.
+    // Read in the model files and their data.
     // Use the latest definition available for each sprite ID.
     for(i = defs.count.models.num - 1; i >= 0; --i)
     {
         //Con_Progress(1, PBARF_DONTSHOW);
-        R_SetupModel(defs.models + i);
+        setupModel(defs.models + i);
     }
 
     // Create interlinks. Note that the order in which the defs were loaded
@@ -1268,19 +1224,20 @@ void R_InitModels(void)
     // For each modeldef we will find the "next" def.
     for(i = numModelDefs - 1, me = modefs + i; i >= 0; --i, --me)
     {
-        minmark = 2;            // max = 1, so this is "out of bounds".
+        minmark = 2; // max = 1, so this is "out of bounds".
         closest = NULL;
         for(k = numModelDefs - 1, other = modefs + k; k >= 0; --k, --other)
         {
             // Same state and a bigger order are the requirements.
-            if(other->state == me->state && other->def > me->def    // Defined after me.
-               && other->interMark > me->interMark &&
+            if(other->state == me->state && other->def > me->def && // Defined after me.
+               other->interMark > me->interMark &&
                other->interMark < minmark)
             {
                 minmark = other->interMark;
                 closest = other;
             }
         }
+
         me->interNext = closest;
     }
 
@@ -1289,26 +1246,27 @@ void R_InitModels(void)
     {
         minsel = DDMAXINT;
         closest = NULL;
+
         // Start scanning from the next definition.
         for(k = numModelDefs - 1, other = modefs + k; k >= 0; --k, --other)
         {
             // Same state and a bigger order are the requirements.
-            if(other->state == me->state && other->def > me->def    // Defined after me.
-               && other->select > me->select && other->select < minsel &&
+            if(other->state == me->state && other->def > me->def && // Defined after me.
+               other->select > me->select && other->select < minsel &&
                other->interMark >= me->interMark)
             {
                 minsel = other->select;
                 closest = other;
             }
         }
+
         me->selectNext = closest;
-/*
-#if _DEBUG
+
+/*#if _DEBUG
 if(closest)
    Con_Message("%s -> %s\n", defs.states[me->state - states].id,
                defs.states[closest->state - states].id);
-#endif
-*/
+#endif*/
     }
 
     Con_Message("R_InitModels: Done in %.2f seconds.\n",
@@ -1321,11 +1279,16 @@ if(closest)
  */
 void R_ShutdownModels(void)
 {
-    int         i, k;
-    model_t    *m;
+    int                 i, k;
+    model_t            *m;
 
-    M_Free(modefs);
+    if(modefs)
+        M_Free(modefs);
     modefs = NULL;
+    if(stateModefs)
+        M_Free(stateModefs);
+    stateModefs = NULL;
+
     for(i = 1; i < MAX_MODELS; ++i)
     {
         if(!(m = modellist[i]))
@@ -1351,25 +1314,10 @@ void R_ShutdownModels(void)
     }
 }
 
-/**
- * Loads a model skin. The caller must free the returned buffer with Z_Free!
- */
-byte *R_LoadSkin(model_t *mdl, int skin, int *width, int *height, int *pxsize)
-{
-    image_t     image;
-
-    GL_LoadImage(&image, mdl->skins[skin].name, false);
-
-    *width = image.width;
-    *height = image.height;
-    *pxsize = image.pixelSize;
-    return image.pixels;
-}
-
 void R_SetModelFrame(modeldef_t *modef, int frame)
 {
-    int         k;
-    model_t    *mdl;
+    int                 k;
+    model_t            *mdl;
 
     for(k = 0; k < DED_MAX_SUB_MODELS; ++k)
     {
@@ -1384,8 +1332,8 @@ void R_SetModelFrame(modeldef_t *modef, int frame)
 
 void R_PrecacheModelSkins(modeldef_t *modef)
 {
-    int         k, sub;
-    model_t    *mdl;
+    int                 k, sub;
+    model_t            *mdl;
 
     // Precache this.
     for(sub = 0; sub < MAX_FRAME_MODELS; ++sub)
@@ -1396,19 +1344,29 @@ void R_PrecacheModelSkins(modeldef_t *modef)
         mdl = modellist[modef->sub[sub].model];
         // Load all skins.
         for(k = 0; k < mdl->info.numSkins; ++k)
-            GL_BindTexture(GL_PrepareSkin(mdl, k));
-        GL_BindTexture(GL_PrepareShinySkin(modef, sub));
+        {
+            skintex_t          *st;
+
+            st = R_GetSkinTexByIndex(mdl->skins[k].id);
+            if(st)
+            {
+                GL_BindTexture(GL_PrepareSkin(st, mdl->allowTexComp));
+            }
+        }
+
+        GL_BindTexture(GL_PrepareShinySkin(R_GetSkinTexByIndex(modef->sub[sub].shinySkin)));
     }
 }
 
 void R_PrecacheSkinsForState(int stateIndex)
 {
-    state_t    *st = states + stateIndex;
+    state_t            *st = states + stateIndex;
 
-    if(stateIndex <= 0 || stateIndex >= defs.count.states.num || !st->model)
+    if(stateIndex <= 0 || stateIndex >= defs.count.states.num ||
+       !stateModefs[stateIndex])
         return;
 
-    R_PrecacheModelSkins(st->model);
+    R_PrecacheModelSkins(stateModefs[stateIndex]);
 }
 
 /**
@@ -1417,8 +1375,8 @@ void R_PrecacheSkinsForState(int stateIndex)
  */
 void R_PrecacheSkinsForMobj(mobj_t *mo)
 {
-    int         i;
-    modeldef_t *modef;
+    int                 i;
+    modeldef_t         *modef;
 
     // Check through all the model definitions.
     for(i = 0, modef = modefs; i < numModelDefs; ++i, modef++)
@@ -1426,7 +1384,7 @@ void R_PrecacheSkinsForMobj(mobj_t *mo)
         if(!modef->state)
             continue;
         if(mo->type < 0 || mo->type >= defs.count.mobjs.num)
-            continue;           // Hmm?
+            continue; // Hmm?
         if(stateOwners[modef->state - states] != &mobjInfo[mo->type])
             continue;
 

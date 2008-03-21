@@ -36,6 +36,7 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_play.h"
+#include "de_defs.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -367,7 +368,7 @@ void LO_AddLuminous(mobj_t *mo)
         // sprite frames in use?
         if(mo->state &&
            (!useMobjAutoLights || (mo->state->flags & STF_NOAUTOLIGHT)) &&
-           !mo->state->light)
+           !stateLights[mo->state - states])
            return;
 
         // Determine the sprite frame lump of the source.
@@ -403,21 +404,28 @@ void LO_AddLuminous(mobj_t *mo)
         xOff = cf.xOffset - (float) sprTex->info.width / 2.0f;
 
         // Does the mobj have an active light definition?
-        if(mo->state && mo->state->light)
+        if(mo->state)
         {
-            def = (ded_light_t *) mo->state->light;
-            if(def->size)
-                cf.size = def->size;
-            if(def->offset[VX])
+            def = stateLights[mo->state - states];
+
+            if(def)
             {
-                // Set the x offset here.
-                xOff = cf.xOffset = def->offset[VX];
+                if(def->size)
+                    cf.size = def->size;
+
+                if(def->offset[VX])
+                {
+                    // Set the x offset here.
+                    xOff = cf.xOffset = def->offset[VX];
+                }
+
+                if(def->offset[VY])
+                    cf.yOffset = def->offset[VY];
+                if(def->haloRadius)
+                    cf.flareSize = def->haloRadius;
+
+                flags |= def->flags;
             }
-            if(def->offset[VY])
-                cf.yOffset = def->offset[VY];
-            if(def->haloRadius)
-                cf.flareSize = def->haloRadius;
-            flags |= def->flags;
         }
 
         center = sprTex->info.offsetY - mo->floorClip -

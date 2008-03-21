@@ -215,7 +215,7 @@ static void P_PresimParticleGen(ptcgen_t *gen, int tics)
  */
 void P_SpawnParticleGen(ded_ptcgen_t *def, mobj_t *source)
 {
-    ptcgen_t   *gen;
+    ptcgen_t           *gen;
 
     if(isDedicated || !useParticles || !(gen = P_NewPtcGen()))
         return;

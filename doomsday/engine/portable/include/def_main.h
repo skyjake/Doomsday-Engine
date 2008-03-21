@@ -58,6 +58,8 @@ typedef struct sfxinfo_s {
 extern ded_t defs;                 // The main definitions database.
 extern sprname_t *sprNames;        // Sprite name list.
 extern state_t *states;            // State list.
+extern ded_light_t **stateLights;
+extern ded_ptcgen_t **statePtcGens;
 extern mobjinfo_t *mobjInfo;       // Map object info database.
 extern sfxinfo_t *sounds;          // Sound effect list.
 extern ddtext_t *texts;            // Text list.

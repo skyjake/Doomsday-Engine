@@ -1015,7 +1015,7 @@ void* DD_GetVariable(int ddvalue)
             return &traceLOS;
 
         case DD_TRANSLATIONTABLES_ADDRESS:
-            return translationtables;
+            return translationTables;
 
         case DD_MAP_NAME:
         {

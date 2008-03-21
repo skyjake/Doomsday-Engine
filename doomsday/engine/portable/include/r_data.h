@@ -271,6 +271,12 @@ typedef struct {
     rgbcol_t        color;         // Average color, for lighting.
 } spritetex_t;
 
+// Model skin.
+typedef struct {
+    char            path[256];
+    DGLuint         tex;
+} skintex_t;
+
 // a patch is a lumppatch that has been prepared for render.
 typedef struct patch_s {
     lumpnum_t       lump;
@@ -409,6 +415,12 @@ void            R_AnimateAnimGroups(void);
 
 void            R_InitSpriteTextures(void);
 int             R_NewSpriteTexture(lumpnum_t lump, material_t **mat);
+
+int             R_GetSkinTexIndex(const char *skin);
+skintex_t      *R_GetSkinTexByIndex(int id);
+int             R_RegisterSkin(char *skin, const char *modelfn, char *fullpath);
+void            R_DeleteSkinTextures(void);
+void            R_DestroySkins(void); // Called at shutdown.
 
 patch_t        *R_FindPatch(lumpnum_t lump); // May return NULL.
 patch_t        *R_GetPatch(lumpnum_t lump); // Creates new entries.

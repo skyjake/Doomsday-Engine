@@ -96,6 +96,14 @@ int     glowingTextures = true;
 
 byte rendInfoRPolys = 0;
 
+// Skinnames will only *grow*. It will never be destroyed, not even
+// at resets. The skin textures themselves will be deleted, though.
+// This is because we want to have permanent ID numbers for skins,
+// and the ID numbers are the same as indices to the skinNames array.
+// Created in r_model.c, when registering the skins.
+int numSkinNames;
+skintex_t *skinNames;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static unsigned int numrendpolys = 0;
@@ -255,7 +263,7 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->blendMode = BM_NORMAL;
     poly->normal[0] = poly->normal[1] = poly->normal[2] = 0;
 
-    poly->tex.id = curtex = 0;
+    poly->tex.id = curTex = 0;
 
     poly->tex.detail = 0;
     poly->tex.height = poly->tex.width = 0;
@@ -988,6 +996,134 @@ int R_NewSpriteTexture(lumpnum_t lump, material_t **matP)
     return numSpriteTextures - 1;
 }
 
+void R_ExpandSkinName(char *skin, char *expanded, const char *modelfn)
+{
+    directory_t         mydir;
+
+    // The "first choice" directory.
+    Dir_FileDir(modelfn, &mydir);
+
+    // Try the "first choice" directory first.
+    strcpy(expanded, mydir.path);
+    strcat(expanded, skin);
+    if(!F_Access(expanded))
+    {
+        // Try the whole model path.
+        if(!R_FindModelFile(skin, expanded))
+        {
+            expanded[0] = 0;
+            return;
+        }
+    }
+}
+
+/**
+ * Registers a new skin name.
+ */
+int R_RegisterSkin(char *skin, const char *modelfn, char *fullpath)
+{
+    const char         *formats[3] = { ".png", ".tga", ".pcx" };
+    char                buf[256];
+    char                fn[256];
+    char               *ext;
+    int                 i, idx = -1;
+
+    // Has a skin name been provided?
+    if(!skin[0])
+        return -1;
+
+    // Find the extension, or if there isn't one, add it.
+    strcpy(fn, skin);
+    ext = strrchr(fn, '.');
+    if(!ext)
+    {
+        strcat(fn, ".png");
+        ext = strrchr(fn, '.');
+    }
+
+    // Try PNG, TGA, PCX.
+    for(i = 0; i < 3 && idx < 0; ++i)
+    {
+        strcpy(ext, formats[i]);
+        R_ExpandSkinName(fn, fullpath ? fullpath : buf, modelfn);
+        idx = R_GetSkinTexIndex(fullpath ? fullpath : buf);
+    }
+
+    return idx;
+}
+
+skintex_t *R_GetSkinTex(const char *skin)
+{
+    int                 i;
+    skintex_t          *st;
+    char                realPath[256];
+
+    if(!skin[0])
+        return NULL;
+
+    // Convert the given skin file to a full pathname.
+    // \fixme Why is this done here and not during init??
+    _fullpath(realPath, skin, 255);
+
+    for(i = 0; i < numSkinNames; ++i)
+        if(!stricmp(skinNames[i].path, realPath))
+            return skinNames + i;
+
+    // We must allocate a new skintex_t.
+    skinNames = M_Realloc(skinNames, sizeof(*skinNames) * ++numSkinNames);
+    st = skinNames + (numSkinNames - 1);
+    strcpy(st->path, realPath);
+    st->tex = 0; // Not yet prepared.
+
+    if(verbose)
+    {
+        Con_Message("SkinTex: %s => %li\n", M_Pretty(skin),
+                    (long) (st - skinNames));
+    }
+    return st;
+}
+
+skintex_t *R_GetSkinTexByIndex(int id)
+{
+    if(id < 0 || id >= numSkinNames)
+        return NULL;
+
+    return &skinNames[id];
+}
+
+int R_GetSkinTexIndex(const char *skin)
+{
+    skintex_t          *sk = R_GetSkinTex(skin);
+
+    if(!sk)
+        return -1;
+
+    return sk - skinNames;
+}
+
+void R_DeleteSkinTextures(void)
+{
+extern void DGL_DeleteTextures(int num, const DGLuint *names);
+
+    int                 i;
+
+    for(i = 0; i < numSkinNames; ++i)
+    {
+        DGL_DeleteTextures(1, &skinNames[i].tex);
+        skinNames[i].tex = 0;
+    }
+}
+
+/**
+ * This is called at final shutdown.
+ */
+void R_DestroySkins(void)
+{
+    M_Free(skinNames);
+    skinNames = 0;
+    numSkinNames = 0;
+}
+
 void R_UpdateTexturesAndFlats(void)
 {
     Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
@@ -1031,13 +1167,13 @@ void R_UpdateData(void)
 
 void R_InitTranslationTables(void)
 {
-    int     i;
-    byte   *transLump;
+    int                 i;
+    byte               *transLump;
 
     // Allocate translation tables
-    translationtables = Z_Malloc(256 * 3 * ( /*MAXPLAYERS*/ 8 - 1) + 255, PU_REFRESHTRANS, 0);
+    translationTables = Z_Malloc(256 * 3 * ( /*MAXPLAYERS*/ 8 - 1) + 255, PU_REFRESHTRANS, 0);
 
-    translationtables = (byte *) (((long) translationtables + 255) & ~255);
+    translationTables = (byte *) (((long) translationTables + 255) & ~255);
 
     for(i = 0; i < 3 * ( /*MAXPLAYERS*/ 8 - 1); ++i)
     {
@@ -1047,7 +1183,7 @@ void R_InitTranslationTables(void)
             break;
 
         transLump = W_CacheLumpNum(W_GetNumForName("trantbl0") + i, PU_STATIC);
-        memcpy(translationtables + i * 256, transLump, 256);
+        memcpy(translationTables + i * 256, transLump, 256);
         Z_Free(transLump);
     }
 }

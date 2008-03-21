@@ -94,7 +94,7 @@ void    GL_SetGamma(void);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int maxnumnodes;
-extern boolean filloutlines;
+extern boolean fillOutlines;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -573,7 +573,7 @@ boolean GL_EarlyInit(void)
     }
     if(ArgCheck("-outlines"))
     {
-        filloutlines = false;
+        fillOutlines = false;
         Con_Message("  Textures have outlines.\n");
     }
 
@@ -637,7 +637,7 @@ void GL_InitRefresh(boolean loadLightMaps, boolean loadFlares)
 void GL_ShutdownRefresh(void)
 {
     GL_ShutdownTextureManager();
-    GL_DestroySkinNames();
+    R_DestroySkins();
 }
 
 /**
