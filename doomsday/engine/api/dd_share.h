@@ -299,7 +299,6 @@ extern          "C" {
         DD_SEG_COUNT,
         DD_SUBSECTOR_COUNT,
         DD_NODE_COUNT,
-        DD_THING_COUNT,
         DD_POLYOBJ_COUNT,
         DD_XGFUNC_LINK,            // XG line classes
         DD_SHARED_FIXED_TRIGGER,

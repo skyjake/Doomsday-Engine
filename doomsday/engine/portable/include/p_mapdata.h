@@ -103,6 +103,52 @@ typedef void* blockmap_t;
 
 #include "p_maptypes.h"
 
+// Game-specific, map object type definitions.
+typedef struct {
+    int                 identifier;
+    char               *name;
+    valuetype_t         type;
+} mapobjprop_t;
+
+typedef struct {
+    int                 identifier;
+    char               *name;
+    uint                numProps;
+    mapobjprop_t       *props;
+} gamemapobjdef_t;
+
+// Map objects.
+typedef struct {
+    uint                idx;
+    valuetype_t         type;
+    uint                valueIdx;
+} customproperty_t;
+
+typedef struct {
+    gamemapobjdef_t    *def;
+    uint                elmIdx;
+    uint                numProps;
+    customproperty_t   *props;
+} gamemapobj_t;
+
+// Map value databases.
+typedef struct {
+    valuetype_t         type;
+    uint                numElms;
+    void               *data;
+} valuetable_t;
+
+typedef struct {
+    uint                numTables;
+    valuetable_t      **tables;
+} valuedb_t;
+
+typedef struct {
+    uint                numObjs;
+    gamemapobj_t      **objs;
+    valuedb_t           db;
+} gameobjdata_t;
+
 /*
  * The map data arrays are accessible globally inside the engine.
  */
@@ -129,8 +175,6 @@ extern uint     numSideDefs;
 extern sidedef_t  *sideDefs;
 
 extern watchedplanelist_t *watchedPlaneList;
-
-extern uint     numThings;
 
 extern float    mapGravity;
 
@@ -164,9 +208,9 @@ typedef struct gamemap_s {
     uint        numPolyObjs;
     polyobj_t **polyObjs;
 
-    linkpolyobj_t **polyBlockMap;
+    gameobjdata_t gameObjData;
 
-    uint        numThings;
+    linkpolyobj_t **polyBlockMap;
 
     watchedplanelist_t watchedPlaneList;
 
@@ -183,23 +227,47 @@ typedef struct gamemap_s {
     int         ambientLightLevel;      // Ambient lightlevel for the current map.
 } gamemap_t;
 
-void        P_InitData(void);
+void            P_InitData(void);
 
-gamemap_t  *P_GetCurrentMap(void);
-void        P_SetCurrentMap(gamemap_t *map);
+gamemap_t      *P_GetCurrentMap(void);
+void            P_SetCurrentMap(gamemap_t *map);
 
-const char *P_GetMapID(gamemap_t *map);
-const char *P_GetUniqueMapID(gamemap_t *map);
-void        P_GetMapBounds(gamemap_t *map, float *min, float *max);
-int         P_GetMapAmbientLightLevel(gamemap_t *map);
+const char     *P_GetMapID(gamemap_t *map);
+const char     *P_GetUniqueMapID(gamemap_t *map);
+void            P_GetMapBounds(gamemap_t *map, float *min, float *max);
+int             P_GetMapAmbientLightLevel(gamemap_t *map);
 
-const char *P_GenerateUniqueMapID(const char *mapID);
+const char     *P_GenerateUniqueMapID(const char *mapID);
 
-void        P_PolyobjChanged(polyobj_t *po);
-void        P_PlaneChanged(sector_t *sector, uint plane);
-int         P_CheckTexture(char *name, boolean planeTex, int dataType,
-                           unsigned int element, int property);
-void        P_RegisterUnknownTexture(const char *name, boolean planeTex);
-void        P_PrintMissingTextureList(void);
-void        P_FreeBadTexList(void);
+void            P_PolyobjChanged(polyobj_t *po);
+void            P_PlaneChanged(sector_t *sector, uint plane);
+int             P_CheckTexture(char *name, boolean planeTex, int dataType,
+                               unsigned int element, int property);
+void            P_RegisterUnknownTexture(const char *name, boolean planeTex);
+void            P_PrintMissingTextureList(void);
+void            P_FreeBadTexList(void);
+
+void            P_InitGameMapObjDefs(void);
+void            P_ShutdownGameMapObjDefs(void);
+
+boolean         P_RegisterMapObj(int identifier, const char *name);
+boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier,
+                                         const char *propName, valuetype_t type);
+gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char *objName,
+                                    boolean canCreate);
+
+void            P_DestroyGameMapObjDB(gameobjdata_t *moData);
+void            P_AddGameMapObjValue(gameobjdata_t *moData, gamemapobjdef_t *gmoDef,
+                                uint propIdx, uint elmIdx, valuetype_t type,
+                                void *data);
+gamemapobj_t*   P_GetGameMapObj(gameobjdata_t *moData, gamemapobjdef_t *def,
+                                uint elmIdx, boolean canCreate);
+
+uint            P_CountGameMapObjs(int identifier);
+byte            P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier);
+short           P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier);
+int             P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
+fixed_t         P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
+angle_t         P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
+float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
 #endif

@@ -32,6 +32,7 @@
 #include "m_binarytree.h"
 #include "r_materials.h"
 
+// Editable map.
 typedef struct editmap_s {
     char            name[9];
     uint            numVertexes;
@@ -44,6 +45,9 @@ typedef struct editmap_s {
     sector_t      **sectors;
     uint            numPolyObjs;
     polyobj_t     **polyObjs;
+
+    // The following is for game-specific map object data.
+    gameobjdata_t   gameObjData;
 } editmap_t;
 
 boolean         MPE_Begin(const char *name);
@@ -76,6 +80,10 @@ uint            MPE_PlaneCreate(uint sector, float height,
                                 float normalX, float normalY, float normalZ);
 uint            MPE_PolyobjCreate(uint *lines, uint linecount,
                                   int tag, int sequenceType, float startX, float startY);
+
+boolean         MPE_GameObjProperty(const char *objName, uint idx,
+                                    const char *propName, valuetype_t type,
+                                    void *data);
 
 // Non-public (temporary)
 // Flags for MPE_PruneRedundantMapData().

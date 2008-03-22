@@ -1536,6 +1536,11 @@ void R_SetupLevel(int mode, int flags)
     }
     case DDSLM_FINALIZE:
     {
+        gamemap_t          *map = P_GetCurrentMap();
+
+        // We are now finished with the game data, map object db.
+        P_DestroyGameMapObjDB(&map->gameObjData);
+
         // Init server data.
         Sv_InitPools();
 
@@ -1562,7 +1567,6 @@ void R_SetupLevel(int mode, int flags)
 
         // Run any commands specified in Map Info.
         {
-        gamemap_t  *map = P_GetCurrentMap();
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
 
         if(mapInfo && mapInfo->execute)

@@ -97,6 +97,8 @@ static void P_PrintMapBanner(int episode, int map);
 xsector_t *xsectors;
 xline_t *xlines;
 
+uint numthings;
+
 // If true we are in the process of setting up a level
 boolean levelSetup;
 
@@ -141,7 +143,7 @@ xsector_t* P_ToXSector(sector_t *sector)
  */
 xsector_t* P_ToXSectorOfSubsector(subsector_t *sub)
 {
-    sector_t* sec = P_GetPtrp(sub, DMU_SECTOR);
+    sector_t           *sec = P_GetPtrp(sub, DMU_SECTOR);
 
     // Is it a dummy?
     if(P_IsDummy(sec))
@@ -190,40 +192,95 @@ xsector_t* P_GetXSector(uint index)
 
 /**
  * Doomsday calls this (before any data is read) for each type of map object
- * at the start of the level load process. This is to allow us (the game) to do
- * any initialization we need. For example if we maintain our own data for lines
- * (the xlines) we'll do all allocation and init here.
+ * at the start of the level load process. This is to allow us (the game) to
+ * do any initialization we need. For example if we maintain our own data
+ * for lines (the xlines) we'll do all allocation and init here.
  *
- * @param type          (DAM object type) The id of the data type being setup.
+ * @param type          (DMU object type) The id of the data type being setup.
  * @param num           The number of elements of "type" Doomsday is creating.
  */
 void P_SetupForMapData(int type, uint num)
 {
     switch(type)
     {
-    case DAM_SECTOR:
+    case DMU_SECTOR:
         if(num > 0)
             xsectors = Z_Calloc(num * sizeof(xsector_t), PU_LEVEL, 0);
         else
             xsectors = NULL;
         break;
 
-    case DAM_LINE:
+    case DMU_LINEDEF:
         if(num > 0)
             xlines = Z_Calloc(num * sizeof(xline_t), PU_LEVEL, 0);
         else
             xlines = NULL;
         break;
 
-    case DAM_THING:
-        if(num > 0)
-            things = Z_Calloc(num * sizeof(spawnspot_t), PU_LEVEL, 0);
-        else
-            things = NULL;
-        break;
-
     default:
         break;
+    }
+}
+
+static void P_LoadMapObjs(void)
+{
+    uint                i;
+
+    numthings = P_CountGameMapObjs(MO_THING);
+
+    if(numthings > 0)
+        things = Z_Calloc(numthings * sizeof(spawnspot_t), PU_LEVEL, 0);
+    else
+        things = NULL;
+
+    for(i = 0; i < numthings; ++i)
+    {
+        spawnspot_t        *th = &things[i];
+
+        th->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
+        th->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
+        th->angle = ANG45 * (P_GetGMOShort(MO_THING, i, MO_ANGLE) / 45);
+        th->type = P_GetGMOInt(MO_THING, i, MO_TYPE);
+        th->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
+
+#if __JHEXEN__ || __JSTRIFE__
+        th->tid = P_GetGMOShort(MO_THING, i, MO_TID);
+        th->tid = P_GetGMOShort(MO_THING, i, MO_TID);
+        th->height = P_GetGMOFloat(MO_THING, i, MO_Z);
+        th->tid = P_GetGMOShort(MO_THING, i, MO_TID);
+        th->special = P_GetGMOByte(MO_THING, i, MO_SPECIAL);
+        th->arg1 = P_GetGMOByte(MO_THING, i, MO_ARG0);
+        th->arg2 = P_GetGMOByte(MO_THING, i, MO_ARG1);
+        th->arg3 = P_GetGMOByte(MO_THING, i, MO_ARG2);
+        th->arg4 = P_GetGMOByte(MO_THING, i, MO_ARG3);
+        th->arg5 = P_GetGMOByte(MO_THING, i, MO_ARG4);
+#endif
+    }
+
+    for(i = 0; i < numlines; ++i)
+    {
+        xline_t            *xl = &xlines[i];
+
+        xl->flags = P_GetGMOShort(MO_XLINEDEF, i, MO_FLAGS);
+#if __JHEXEN__ || __JSTRIFE__
+        xl->special = P_GetGMOByte(MO_XLINEDEF, i, MO_SPECIAL);
+        xl->arg1 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG0);
+        xl->arg2 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG1);
+        xl->arg3 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG2);
+        xl->arg4 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG3);
+        xl->arg5 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG4);
+#else
+        xl->special = P_GetGMOShort(MO_XLINEDEF, i, MO_TYPE);
+        xl->tag = P_GetGMOShort(MO_XLINEDEF, i, MO_TAG);
+#endif
+    }
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        xsector_t          *xsec = &xsectors[i];
+
+        xsec->special = P_GetGMOShort(MO_XSECTOR, i, MO_TYPE);
+        xsec->tag = P_GetGMOShort(MO_XSECTOR, i, MO_TAG);
     }
 }
 
@@ -295,7 +352,7 @@ static void interpretLinedefFlags(void)
 
         if(xline->flags & ML_MAPPED)
         {
-            int             p;
+            int                 p;
 
             // Update the automap(s) with all immediately visible lines.
             for(p = 0; p < MAXPLAYERS; ++p)
@@ -351,6 +408,7 @@ int P_SetupLevelWorker(void *ptr)
         Con_Error("P_SetupLevel: Failed loading map \"%s\".\n", levelId);
     }
 
+    P_LoadMapObjs();
     P_SpawnThings();
 
     interpretLinedefFlags();

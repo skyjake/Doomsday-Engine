@@ -125,6 +125,164 @@ static uint registerMaterial(const char *name, boolean isFlat)
     return map->numMaterials-1; // 0-based index.
 }
 
+/**
+ * Attempts to load the BLOCKMAP data resource.
+ *
+ * If the level is too large (would overflow the size limit of
+ * the BLOCKMAP lump in a WAD therefore it will have been truncated),
+ * it's zero length or we are forcing a rebuild - we'll have to
+ * generate the blockmap data ourselves.
+ */
+#if 0 // Needs updating.
+static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
+{
+#define MAPBLOCKUNITS       128
+
+    boolean     generateBMap = (createBMap == 2)? true : false;
+
+    Con_Message("WadMapConverter::loadBlockmap: Processing...\n");
+
+    // Do we have a lump to process?
+    if(maplump->lumpNum == -1 || maplump->length == 0)
+        generateBMap = true; // We'll HAVE to generate it.
+
+    // Are we generating new blockmap data?
+    if(generateBMap)
+    {
+        // Only announce if the user has choosen to always generate
+        // new data (we will have already announced it if the lump
+        // was missing).
+        if(maplump->lumpNum != -1)
+            VERBOSE(
+            Con_Message("loadBlockMap: Generating NEW blockmap...\n"));
+    }
+    else
+    {   // No, the existing data is valid - so load it in.
+        uint        startTime;
+        blockmap_t *blockmap;
+        uint        x, y, width, height;
+        float       v[2];
+        vec2_t      bounds[2];
+        long       *lineListOffsets, i, n, numBlocks, blockIdx;
+        short      *blockmapLump;
+
+        VERBOSE(
+        Con_Message("loadBlockMap: Converting existing blockmap...\n"));
+
+        startTime = Sys_GetRealTime();
+
+        blockmapLump =
+            (short *) W_CacheLumpNum(maplump->lumpNum, PU_STATIC);
+
+        v[VX] = (float) SHORT(blockmapLump[0]);
+        v[VY] = (float) SHORT(blockmapLump[1]);
+        width  = ((SHORT(blockmapLump[2])) & 0xffff);
+        height = ((SHORT(blockmapLump[3])) & 0xffff);
+
+        numBlocks = (long) width * (long) height;
+
+        /**
+         * Expand WAD blockmap into a larger one, by treating all
+         * offsets except -1 as unsigned and zero-extending them.
+         * This potentially doubles the size of blockmaps allowed
+         * because DOOM originally considered the offsets as always
+         * signed.
+	     */
+
+        lineListOffsets = M_Malloc(sizeof(long) * numBlocks);
+        n = 4;
+        for(i = 0; i < numBlocks; ++i)
+        {
+            short t = SHORT(blockmapLump[n++]);
+            lineListOffsets[i] = (t == -1? -1 : (long) t & 0xffff);
+        }
+
+        /**
+         * Finally, convert the blockmap into our internal representation.
+         * We'll ensure the blockmap is formed correctly as we go.
+         *
+         * \todo We could gracefully handle malformed blockmaps by
+         * by cleaning up and then generating our own.
+         */
+
+        V2_Set(bounds[0], v[VX], v[VY]);
+        v[VX] += (float) (width * MAPBLOCKUNITS);
+        v[VY] += (float) (height * MAPBLOCKUNITS);
+        V2_Set(bounds[1], v[VX], v[VY]);
+
+        blockmap = P_BlockmapCreate(bounds[0], bounds[1],
+                                    width, height);
+        blockIdx = 0;
+        for(y = 0; y < height; ++y)
+            for(x = 0; x < width; ++x)
+            {
+                long        offset = lineListOffsets[blockIdx];
+                long        idx;
+                uint        count;
+
+#if _DEBUG
+if(SHORT(blockmapLump[offset]) != 0)
+{
+    Con_Error("loadBlockMap: Offset (%li) for block %u [%u, %u] "
+              "does not index the beginning of a line list!\n",
+              offset, blockIdx, x, y);
+}
+#endif
+
+                // Count the number of lines in this block.
+                count = 0;
+                while((idx = SHORT(blockmapLump[offset + 1 + count])) != -1)
+                    count++;
+
+                if(count > 0)
+                {
+                    linedef_t    **lines, **ptr;
+
+                    // A NULL-terminated array of pointers to lines.
+                    lines = Z_Malloc((count + 1) * sizeof(linedef_t *),
+                                    PU_LEVELSTATIC, NULL);
+
+                    // Copy pointers to the array, delete the nodes.
+                    ptr = lines;
+                    count = 0;
+                    while((idx = SHORT(blockmapLump[offset + 1 + count])) != -1)
+                    {
+#if _DEBUG
+if(idx < 0 || idx >= (long) map->numLines)
+{
+    Con_Error("loadBlockMap: Invalid linedef id %li\n!", idx);
+}
+#endif
+                        *ptr++ = &map->lines[idx];
+                        count++;
+                    }
+                    // Terminate.
+                    *ptr = NULL;
+
+                    // Link it into the BlockMap.
+                    P_BlockmapSetBlock(blockmap, x, y, lines, NULL);
+                }
+
+                blockIdx++;
+            }
+
+        // Don't need this anymore.
+        M_Free(lineListOffsets);
+
+        map->blockMap = blockmap;
+
+        // How much time did we spend?
+        VERBOSE(Con_Message
+                ("loadBlockMap: Done in %.2f seconds.\n",
+                 (Sys_GetRealTime() - startTime) / 1000.0f));
+    }
+
+    return true;
+
+#undef MAPBLOCKUNITS
+}
+#endif
+
 int DataTypeForLumpName(const char *name)
 {
     struct lumptype_s {
@@ -299,14 +457,14 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
     {
         mline_t            *line = &map->lines[i];
 
-        if(line->xSpecial == PO_LINE_START && line->xArgs[0] == tag)
+        if(line->xType == PO_LINE_START && line->xArgs[0] == tag)
         {
             byte                seqType;
             mline_t           **lineList;
             int16_t             v1[2], v2[2];
             uint                poIdx;
 
-            line->xSpecial = 0;
+            line->xType = 0;
             line->xArgs[0] = 0;
             PolyLineCount = 1;
 
@@ -359,7 +517,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
         {
             mline_t         *line = &map->lines[i];
 
-            if(line->xSpecial == PO_LINE_EXPLICIT &&
+            if(line->xType == PO_LINE_EXPLICIT &&
                line->xArgs[0] == tag)
             {
                 if(!line->xArgs[1])
@@ -383,7 +541,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
                     }
 
                     // Clear out any special.
-                    line->xSpecial = 0;
+                    line->xType = 0;
                     line->xArgs[0] = 0;
                 }
             }
@@ -397,7 +555,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
             {
                 mline_t         *line = &map->lines[i];
 
-                if(line->xSpecial == PO_LINE_EXPLICIT &&
+                if(line->xType == PO_LINE_EXPLICIT &&
                    line->xArgs[0] == tag)
                 {
                     Con_Error
@@ -579,164 +737,6 @@ static void freeMapData(void)
     map->materials = NULL;
 }
 
-/**
- * Attempts to load the BLOCKMAP data resource.
- *
- * If the level is too large (would overflow the size limit of
- * the BLOCKMAP lump in a WAD therefore it will have been truncated),
- * it's zero length or we are forcing a rebuild - we'll have to
- * generate the blockmap data ourselves.
- */
-#if 0 // Needs updating.
-static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
-{
-#define MAPBLOCKUNITS       128
-
-    boolean     generateBMap = (createBMap == 2)? true : false;
-
-    Con_Message("WadMapConverter::loadBlockmap: Processing...\n");
-
-    // Do we have a lump to process?
-    if(maplump->lumpNum == -1 || maplump->length == 0)
-        generateBMap = true; // We'll HAVE to generate it.
-
-    // Are we generating new blockmap data?
-    if(generateBMap)
-    {
-        // Only announce if the user has choosen to always generate
-        // new data (we will have already announced it if the lump
-        // was missing).
-        if(maplump->lumpNum != -1)
-            VERBOSE(
-            Con_Message("loadBlockMap: Generating NEW blockmap...\n"));
-    }
-    else
-    {   // No, the existing data is valid - so load it in.
-        uint        startTime;
-        blockmap_t *blockmap;
-        uint        x, y, width, height;
-        float       v[2];
-        vec2_t      bounds[2];
-        long       *lineListOffsets, i, n, numBlocks, blockIdx;
-        short      *blockmapLump;
-
-        VERBOSE(
-        Con_Message("loadBlockMap: Converting existing blockmap...\n"));
-
-        startTime = Sys_GetRealTime();
-
-        blockmapLump =
-            (short *) W_CacheLumpNum(maplump->lumpNum, PU_STATIC);
-
-        v[VX] = (float) SHORT(blockmapLump[0]);
-        v[VY] = (float) SHORT(blockmapLump[1]);
-        width  = ((SHORT(blockmapLump[2])) & 0xffff);
-        height = ((SHORT(blockmapLump[3])) & 0xffff);
-
-        numBlocks = (long) width * (long) height;
-
-        /**
-         * Expand WAD blockmap into a larger one, by treating all
-         * offsets except -1 as unsigned and zero-extending them.
-         * This potentially doubles the size of blockmaps allowed
-         * because DOOM originally considered the offsets as always
-         * signed.
-	     */
-
-        lineListOffsets = M_Malloc(sizeof(long) * numBlocks);
-        n = 4;
-        for(i = 0; i < numBlocks; ++i)
-        {
-            short t = SHORT(blockmapLump[n++]);
-            lineListOffsets[i] = (t == -1? -1 : (long) t & 0xffff);
-        }
-
-        /**
-         * Finally, convert the blockmap into our internal representation.
-         * We'll ensure the blockmap is formed correctly as we go.
-         *
-         * \todo We could gracefully handle malformed blockmaps by
-         * by cleaning up and then generating our own.
-         */
-
-        V2_Set(bounds[0], v[VX], v[VY]);
-        v[VX] += (float) (width * MAPBLOCKUNITS);
-        v[VY] += (float) (height * MAPBLOCKUNITS);
-        V2_Set(bounds[1], v[VX], v[VY]);
-
-        blockmap = P_BlockmapCreate(bounds[0], bounds[1],
-                                    width, height);
-        blockIdx = 0;
-        for(y = 0; y < height; ++y)
-            for(x = 0; x < width; ++x)
-            {
-                long        offset = lineListOffsets[blockIdx];
-                long        idx;
-                uint        count;
-
-#if _DEBUG
-if(SHORT(blockmapLump[offset]) != 0)
-{
-    Con_Error("loadBlockMap: Offset (%li) for block %u [%u, %u] "
-              "does not index the beginning of a line list!\n",
-              offset, blockIdx, x, y);
-}
-#endif
-
-                // Count the number of lines in this block.
-                count = 0;
-                while((idx = SHORT(blockmapLump[offset + 1 + count])) != -1)
-                    count++;
-
-                if(count > 0)
-                {
-                    linedef_t    **lines, **ptr;
-
-                    // A NULL-terminated array of pointers to lines.
-                    lines = Z_Malloc((count + 1) * sizeof(linedef_t *),
-                                    PU_LEVELSTATIC, NULL);
-
-                    // Copy pointers to the array, delete the nodes.
-                    ptr = lines;
-                    count = 0;
-                    while((idx = SHORT(blockmapLump[offset + 1 + count])) != -1)
-                    {
-#if _DEBUG
-if(idx < 0 || idx >= (long) map->numLines)
-{
-    Con_Error("loadBlockMap: Invalid linedef id %li\n!", idx);
-}
-#endif
-                        *ptr++ = &map->lines[idx];
-                        count++;
-                    }
-                    // Terminate.
-                    *ptr = NULL;
-
-                    // Link it into the BlockMap.
-                    P_BlockmapSetBlock(blockmap, x, y, lines, NULL);
-                }
-
-                blockIdx++;
-            }
-
-        // Don't need this anymore.
-        M_Free(lineListOffsets);
-
-        map->blockMap = blockmap;
-
-        // How much time did we spend?
-        VERBOSE(Con_Message
-                ("loadBlockMap: Done in %.2f seconds.\n",
-                 (Sys_GetRealTime() - startTime) / 1000.0f));
-    }
-
-    return true;
-
-#undef MAPBLOCKUNITS
-}
-#endif
-
 static boolean loadVertexes(const byte *buf, size_t len)
 {
     uint                num, n;
@@ -786,7 +786,7 @@ static boolean loadLinedefs(const byte *buf, size_t len)
             else
                 l->v[1] = idx + 1;
             l->flags = SHORT(*((const int16_t*) (ptr+4)));
-            l->xSpecial = *((const byte*) (ptr+6));
+            l->xType = *((const byte*) (ptr+6));
             l->xArgs[0] = *((const byte*) (ptr+7));
             l->xArgs[1] = *((const byte*) (ptr+8));
             l->xArgs[2] = *((const byte*) (ptr+9));
@@ -822,7 +822,7 @@ static boolean loadLinedefs(const byte *buf, size_t len)
             else
                 l->v[1] = idx + 1;
             l->flags = SHORT(*((const int16_t*) (ptr+4)));
-            l->dSpecial = SHORT(*((const int16_t*) (ptr+6)));
+            l->dType = SHORT(*((const int16_t*) (ptr+6)));
             l->dTag = SHORT(*((const int16_t*) (ptr+8)));
             idx = USHORT(*((const uint16_t*) (ptr+10)));
             if(idx == 0xFFFF)
@@ -1059,6 +1059,9 @@ boolean TransferMap(void)
                         map->materials[sec->ceilMaterial]->name,
                         (map->materials[sec->ceilMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
                         0, 0, 1, 1, 1, 1, 0, 0, -1);
+
+        MPE_GameObjProperty("XSector", i, "Tag", DDVT_SHORT, &sec->tag);
+        MPE_GameObjProperty("XSector", i, "Type", DDVT_SHORT, &sec->type);
     }
 
     for(i = 0; i < map->numLines; ++i)
@@ -1100,6 +1103,23 @@ boolean TransferMap(void)
         }
 
         MPE_LinedefCreate(l->v[0], l->v[1], frontIdx, backIdx, 0);
+
+        MPE_GameObjProperty("XLinedef", i, "Flags", DDVT_SHORT, &l->flags);
+
+        if(map->hexenFormat)
+        {
+            MPE_GameObjProperty("XLinedef", i, "Type", DDVT_BYTE, &l->xType);
+            MPE_GameObjProperty("XLinedef", i, "Arg0", DDVT_BYTE, &l->xArgs[0]);
+            MPE_GameObjProperty("XLinedef", i, "Arg1", DDVT_BYTE, &l->xArgs[1]);
+            MPE_GameObjProperty("XLinedef", i, "Arg2", DDVT_BYTE, &l->xArgs[2]);
+            MPE_GameObjProperty("XLinedef", i, "Arg3", DDVT_BYTE, &l->xArgs[3]);
+            MPE_GameObjProperty("XLinedef", i, "Arg4", DDVT_BYTE, &l->xArgs[4]);
+        }
+        else
+        {
+            MPE_GameObjProperty("XLinedef", i, "Type", DDVT_SHORT, &l->dType);
+            MPE_GameObjProperty("XLinedef", i, "Tag", DDVT_SHORT, &l->dTag);
+        }
     }
 
     for(i = 0; i < map->numPolyobjs; ++i)
@@ -1114,6 +1134,29 @@ boolean TransferMap(void)
                           po->seqType, (float) po->anchor[VX],
                           (float) po->anchor[VY]);
         free(lineList);
+    }
+
+    for(i = 0; i < map->numThings; ++i)
+    {
+        mthing_t           *th = &map->things[i];
+
+        MPE_GameObjProperty("Thing", i, "X", DDVT_SHORT, &th->pos[VX]);
+        MPE_GameObjProperty("Thing", i, "Y", DDVT_SHORT, &th->pos[VY]);
+        MPE_GameObjProperty("Thing", i, "Angle", DDVT_SHORT, &th->angle);
+        MPE_GameObjProperty("Thing", i, "Type", DDVT_SHORT, &th->type);
+        MPE_GameObjProperty("Thing", i, "Flags", DDVT_SHORT, &th->flags);
+
+        if(map->hexenFormat)
+        {
+            MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->xSpawnZ);
+            MPE_GameObjProperty("Thing", i, "Special", DDVT_BYTE, &th->xSpecial);
+            MPE_GameObjProperty("Thing", i, "ID", DDVT_SHORT, &th->xTID);
+            MPE_GameObjProperty("Thing", i, "Arg0", DDVT_BYTE, &th->xArgs[0]);
+            MPE_GameObjProperty("Thing", i, "Arg1", DDVT_BYTE, &th->xArgs[1]);
+            MPE_GameObjProperty("Thing", i, "Arg2", DDVT_BYTE, &th->xArgs[2]);
+            MPE_GameObjProperty("Thing", i, "Arg3", DDVT_BYTE, &th->xArgs[3]);
+            MPE_GameObjProperty("Thing", i, "Arg4", DDVT_BYTE, &th->xArgs[4]);
+        }
     }
 
     // We've now finished with the original map data.

@@ -500,13 +500,13 @@ static int DD_StartupWorker(void *parm)
     Con_SetProgress(30);
 
     // We now accept no more custom properties.
-    DAM_LockCustomPropertys();
+    //DAM_LockCustomPropertys();
 
     // Automatically create an Auto mapping in the runtime directory.
     DD_DefineBuiltinVDM();
 
     // Initialize subsystems
-    Net_Init();                 // Network before anything else.
+    Net_Init(); // Network before anything else.
 
     // Now we can hide the mouse cursor for good.
     Sys_HideMouse();
@@ -1007,9 +1007,6 @@ void* DD_GetVariable(int ddvalue)
 
         case DD_NODE_COUNT:
             return &numNodes;
-
-        case DD_THING_COUNT:
-            return &numThings;
 
         case DD_TRACE_ADDRESS:
             return &traceLOS;

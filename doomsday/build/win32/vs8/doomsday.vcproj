@@ -333,15 +333,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\dam_loader.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\dam_main.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\dam_read.c"
 				>
 			</File>
 			<File
@@ -1356,15 +1348,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\dam_loader.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\dam_main.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\dam_read.h"
 				>
 			</File>
 			<File

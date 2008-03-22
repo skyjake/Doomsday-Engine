@@ -258,6 +258,11 @@ static void destroyEditableVertexes(editmap_t *map)
 
 static void destroyMap(void)
 {
+    map->gameObjData.numObjs = 0;
+    map->gameObjData.objs = NULL;
+    map->gameObjData.db.numTables = 0;
+    map->gameObjData.db.tables = NULL;
+
     destroyEditableVertexes(map);
 
     // These should already be gone:
@@ -1485,6 +1490,11 @@ boolean MPE_End(void)
 
     gamemap = Z_Calloc(sizeof(*gamemap), PU_LEVELSTATIC, 0);
 
+    // Pass on the game map obj database. The game will want to query it
+    // once we have finished constructing the map.
+    memcpy(&gamemap->gameObjData, &map->gameObjData,
+           sizeof(gamemap->gameObjData));
+
     /**
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
      * pruning unused sectors etc, etc...
@@ -1525,6 +1535,7 @@ boolean MPE_End(void)
     if(!builtOK)
     {   // Argh, failed.
         // Need to clean up.
+        P_DestroyGameMapObjDB(&gamemap->gameObjData);
         Z_Free(gamemap);
         return false;
     }
@@ -1532,11 +1543,10 @@ boolean MPE_End(void)
     // Call the game's setup routines.
     if(gx.SetupForMapData)
     {
-        // gx.SetupForMapData(DAM_THING, gamemap->numThings);
-        gx.SetupForMapData(DAM_VERTEX, gamemap->numVertexes);
-        gx.SetupForMapData(DAM_LINE, gamemap->numLineDefs);
-        gx.SetupForMapData(DAM_SIDE, gamemap->numSideDefs);
-        gx.SetupForMapData(DAM_SECTOR, gamemap->numSectors);
+        gx.SetupForMapData(DMU_VERTEX, gamemap->numVertexes);
+        gx.SetupForMapData(DMU_LINEDEF, gamemap->numLineDefs);
+        gx.SetupForMapData(DMU_SIDEDEF, gamemap->numSideDefs);
+        gx.SetupForMapData(DMU_SECTOR, gamemap->numSectors);
     }
 
     buildSectorSSecLists(gamemap);
@@ -1939,4 +1949,38 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag,
     po->startSpot.pos[VY] = anchorY;
 
     return po->buildData.index;
+}
+
+boolean MPE_GameObjProperty(const char *objName, uint idx,
+                            const char *propName, valuetype_t type,
+                            void *data)
+{
+    uint                i;
+    size_t              len;
+    gamemapobjdef_t    *def;
+
+    if(!objName || !propName || !data)
+        return false; // Hmm...
+
+    // Is this a known object?
+    if((def = P_GetGameMapObjDef(0, objName, false)) == NULL)
+        return false; // Nope.
+
+    // Is this a known property?
+    len = strlen(propName);
+    for(i = 0; i < def->numProps; ++i)
+    {
+        if(!strnicmp(propName, def->props[i].name, len))
+        {   // Found a match!
+            // Create a record of this so that the game can query it later.
+            P_AddGameMapObjValue(&map->gameObjData, def, i, idx, type, data);
+            return true; // We're done.
+        }
+    }
+
+    // An unknown property.
+    Con_Message("MPE_GameObjProperty: %s has no property \"%s\".\n",
+                def->name, propName);
+
+    return false;
 }

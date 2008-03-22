@@ -65,11 +65,11 @@ typedef struct mline_s {
     int16_t         aFlags;
 
     // DOOM format members:
-    int16_t         dSpecial;
+    int16_t         dType;
     int16_t         dTag;
 
     // Hexen format members:
-    byte            xSpecial;
+    byte            xType;
     byte            xArgs[5];
 } mline_t;
 

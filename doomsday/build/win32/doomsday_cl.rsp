@@ -87,8 +87,6 @@
  ./../../engine/portable/src/p_vertex.c
  ./../../engine/portable/src/dam_main.c
  ./../../engine/portable/src/dam_file.c
- ./../../engine/portable/src/dam_read.c
- ./../../engine/portable/src/dam_loader.c
  ./../../engine/portable/src/dam_reject.c
  ./../../engine/portable/src/dam_blockmap.c
  ./../../engine/portable/src/bsp_analyze.c

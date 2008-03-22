@@ -58,7 +58,6 @@ typedef enum damsegment_e {
     DAMSEG_SYMBOLTABLES,            // Global symbol tables.
 
     DAMSEG_MAP = 200,               // Start of the map data.
-    DAMSEG_THINGS,
     DAMSEG_POLYOBJS,
     DAMSEG_VERTEXES,
     DAMSEG_LINES,
@@ -1169,34 +1168,6 @@ static void readThing(const gamemap_t *map, uint idx)
 
 }
 
-static void archiveThings(gamemap_t *map, boolean write)
-{
-    uint                i;
-
-    if(write)
-        beginSegment(DAMSEG_THINGS);
-    else
-        assertSegment(DAMSEG_THINGS);
-
-    if(write)
-    {
-        writeLong(map->numThings);
-        for(i = 0; i < map->numThings; ++i)
-            writeThing(map, i);
-    }
-    else
-    {
-        map->numThings = readLong();
-        for(i = 0; i < map->numThings; ++i)
-            readThing(map, i);
-    }
-
-    if(write)
-        endSegment();
-    else
-        assertSegment(DAMSEG_END);
-}
-
 static void archiveMap(gamemap_t *map, boolean write)
 {
     if(write)
@@ -1208,15 +1179,13 @@ static void archiveMap(gamemap_t *map, boolean write)
         // Call the game's setup routines.
         if(gx.SetupForMapData)
         {
-            gx.SetupForMapData(DAM_VERTEX, map->numVertexes);
-            gx.SetupForMapData(DAM_THING, map->numThings);
-            gx.SetupForMapData(DAM_LINE, map->numLineDefs);
-            gx.SetupForMapData(DAM_SIDE, map->numSideDefs);
-            gx.SetupForMapData(DAM_SECTOR, map->numSectors);
+            gx.SetupForMapData(DMU_VERTEX, map->numVertexes);
+            gx.SetupForMapData(DMU_LINEDEF, map->numLineDefs);
+            gx.SetupForMapData(DMU_SIDEDEF, map->numSideDefs);
+            gx.SetupForMapData(DMU_SECTOR, map->numSectors);
         }
     }
 
-    archiveThings(map, write);
     archivePolyobjs(map, write);
     archiveVertexes(map, write);
     archiveLines(map, write); // Must follow vertexes (lineowner nodes).

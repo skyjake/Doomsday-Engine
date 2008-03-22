@@ -55,18 +55,6 @@ static void freeArchivedMap(archivedmap_t *dam);
 // Should we be caching successfully loaded maps?
 byte mapCache = true;
 
-// Should we generate new blockmap data if its invalid?
-// 0: error out
-// 1: generate new
-// 2: Always generate new
-byte createBMap = 1;
-
-// Should we generate new reject data if its invalid?
-// 0: error out
-// 1: generate new
-// 2: Always generate new
-byte createReject = 1;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static const char *mapCacheDir = "mapcache\\";
@@ -81,9 +69,7 @@ static uint numArchivedMaps;
  */
 void DAM_Register(void)
 {
-    C_VAR_BYTE("blockmap-build", &createBMap, 0, 0, 2);
     C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
-    C_VAR_BYTE("reject-build", &createReject, 0, 0, 2);
 }
 
 /**
@@ -91,10 +77,10 @@ void DAM_Register(void)
  */
 void DAM_Init(void)
 {
-    DAM_InitReader();
-
     archivedMaps = NULL;
     numArchivedMaps = 0;
+
+    P_InitGameMapObjDefs();
 }
 
 /**
@@ -102,7 +88,7 @@ void DAM_Init(void)
  */
 void DAM_Shutdown(void)
 {
-    archivedmap_t *dam;
+    archivedmap_t      *dam;
 
     // Free all the archived map records.
     dam = *archivedMaps;
@@ -114,6 +100,8 @@ void DAM_Shutdown(void)
     Z_Free(archivedMaps);
     archivedMaps = NULL;
     numArchivedMaps = 0;
+
+    P_ShutdownGameMapObjDefs();
 }
 
 static int mapLumpTypeForName(const char *name)
@@ -157,7 +145,7 @@ static int mapLumpTypeForName(const char *name)
  */
 static listnode_t* allocListNode(void)
 {
-    listnode_t *node = Z_Calloc(sizeof(listnode_t), PU_STATIC, 0);
+    listnode_t         *node = Z_Calloc(sizeof(listnode_t), PU_STATIC, 0);
     return node;
 }
 
@@ -188,13 +176,12 @@ static void freeMapLumpInfo(maplumpinfo_t *info)
         Z_Free(info);
 }
 
-
 /**
  * Free a list of maplumpinfo records.
  */
 static void freeMapLumpInfoList(listnode_t *headPtr)
 {
-    listnode_t *node, *np;
+    listnode_t         *node, *np;
 
     node = headPtr;
     while(node)
@@ -214,7 +201,7 @@ static void freeMapLumpInfoList(listnode_t *headPtr)
  */
 static maplumpinfo_t* createMapLumpInfo(int lumpNum, int lumpClass)
 {
-    maplumpinfo_t *info = allocMapLumpInfo();
+    maplumpinfo_t      *info = allocMapLumpInfo();
 
     info->lumpNum = lumpNum;
     info->lumpClass = lumpClass;
@@ -230,7 +217,7 @@ static maplumpinfo_t* createMapLumpInfo(int lumpNum, int lumpClass)
  */
 static void addLumpInfoToList(listnode_t **headPtr, maplumpinfo_t *info)
 {
-    listnode_t *node = allocListNode();
+    listnode_t         *node = allocListNode();
 
     node->data = info;
 
@@ -265,9 +252,9 @@ static archivedmap_t* createArchivedMap(const char *mapID,
                                         listnode_t *headPtr,
                                         filename_t cachedMapDataFile)
 {
-    uint            i;
-    listnode_t     *ln;
-    archivedmap_t  *dam = allocArchivedMap();
+    uint                i;
+    listnode_t         *ln;
+    archivedmap_t      *dam = allocArchivedMap();
 
     VERBOSE(
     Con_Message("createArchivedMap: Add record for map \"%s\".\n", mapID));
@@ -358,8 +345,8 @@ static void addArchivedMap(archivedmap_t *dam)
  */
 static uint collectMapLumps(listnode_t **headPtr, int startLump)
 {
-    int         i;
-    uint        numCollectedLumps = 0;
+    int                 i;
+    uint                numCollectedLumps = 0;
 
     VERBOSE(Con_Message("collectMapLumps: Locating lumps...\n"));
 
@@ -368,8 +355,8 @@ static uint collectMapLumps(listnode_t **headPtr, int startLump)
         // Keep checking lumps to see if its a map data lump.
         for(i = startLump; i < numLumps; ++i)
         {
-            int         lumpType;
-            char       *lumpName;
+            int                 lumpType;
+            char               *lumpName;
 
             // Lookup the lump name in our list of known map lump names.
             lumpName = W_CacheLumpNum(i, PU_GETNAME);
@@ -455,7 +442,7 @@ static boolean convertMap(gamemap_t **map, archivedmap_t *dam)
 boolean DAM_AttemptMapLoad(const char *mapID)
 {
     archivedmap_t      *dam;
-    boolean         loadedOK = false;
+    boolean             loadedOK = false;
 
     VERBOSE2(
     Con_Message("DAM_AttemptMapLoad: Loading \"%s\"...\n", mapID));

@@ -111,8 +111,7 @@
 static void buildReject(gamemap_t *map)
 {
 /**
- * \fixme Needs updating since the rejNext and rejPrev pointers are
- * nolonger internal to sector_t.
+ * \todo We can do something much better now that we are building the BSP.
  */
 #if 0
     int         i;

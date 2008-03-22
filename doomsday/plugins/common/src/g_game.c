@@ -451,7 +451,7 @@ void G_CommonPreInit(void)
 
     G_RegisterBindClasses();
     G_RegisterPlayerControls();
-    P_RegisterCustomMapProperties();
+    P_RegisterMapObjs();
 
     // Add the cvars and ccmds to the console databases.
     G_ConsoleRegistration();    // Main command list.

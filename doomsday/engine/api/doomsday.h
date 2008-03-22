@@ -192,6 +192,14 @@ extern          "C" {
                                     float normalX, float normalY, float normalZ);
     uint            MPE_PolyobjCreate(uint *lines, uint linecount,
                                       int tag, int sequenceType, float anchorX, float anchorY);
+    boolean         MPE_GameObjProperty(const char *objName, uint idx,
+                                        const char *propName, valuetype_t type,
+                                        void *data);
+
+    // Custom map object data types.
+    boolean         P_RegisterMapObj(int identifier, const char *name);
+    boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier,
+                                             const char *propName, valuetype_t type);
 
     // Network.
     void            Net_SendPacket(int to_player, int type, void *data,
@@ -336,9 +344,15 @@ extern          "C" {
     void            P_GetFloatpv(void* ptr, uint prop, float* params);
     void            P_GetPtrpv(void* ptr, uint prop, void* params);
 
+    uint            P_CountGameMapObjs(int identifier);
+    byte            P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier);
+    short           P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier);
+    int             P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
+    fixed_t         P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
+    angle_t         P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
+    float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
+
     // Play: Misc.
-    uint            P_RegisterCustomMapProperty(int type, valuetype_t dataType,
-                                                char *name);
     void            P_MergeCommand(ticcmd_t *dest, ticcmd_t *src); // temporary.
     void            P_SpawnDamageParticleGen(struct mobj_s *mo,
                                              struct mobj_s *inflictor,
