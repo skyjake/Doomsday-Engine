@@ -113,7 +113,10 @@ void P_RunThinkers(void)
 #endif
         next = current->next;
 
-        if(current->function == (think_t) -1)
+        if(current->function == (think_t) -2)
+        {   // In stasis, ignore.
+        }
+        else if(current->function == (think_t) -1)
         {
             // Time to remove it.
             current->next->prev = current->prev;
