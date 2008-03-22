@@ -207,11 +207,11 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
 
     center[VX] = x;
     center[VZ] = y;
-    center[VY] = z + (LUM_OMNI(lum)->zOff - .5f) * viewUpVec[i];
+    center[VY] = z + LUM_OMNI(lum)->zOff;
 
     // Apply the flare's X offset. (Positive is to the right.)
     for(i = 0; i < 3; i++)
-        center[i] -= (LUM_OMNI(lum)->xOff + .5f) * viewSideVec[i];
+        center[i] -= LUM_OMNI(lum)->xOff * viewSideVec[i];
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
