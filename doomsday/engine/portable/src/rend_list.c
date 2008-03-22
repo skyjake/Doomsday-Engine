@@ -442,6 +442,10 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel,
             }
         }
 
+        // If this is a glowing surface, boost the light up.
+        if(poly->flags & RPF_GLOW)
+            real = 1;
+
         // Clamp the final light.
         if(real < 0)
             real = 0;
@@ -1080,28 +1084,11 @@ static void quadColors(gl_color_t *color, rendpoly_t *poly)
         // Sky mask doesn't need a color.
         return;
     }
-    if(poly->flags & RPF_GLOW)
-    {
-        memset(color, 255, 4 * 4);
-        return;
-    }
-    if(poly->flags & (RPF_SHADOW | RPF_SHINY))
-    {
-        memcpy(color[0].rgba, poly->vertices[0].color.rgba, 4);
-        memcpy(color[1].rgba, poly->vertices[1].color.rgba, 4);
-        memcpy(color[2].rgba, poly->vertices[2].color.rgba, 4);
-        memcpy(color[3].rgba, poly->vertices[3].color.rgba, 4);
-        return;
-    }
 
-    // Just copy RGB, set A to 255.
-    memcpy(color[0].rgba, poly->vertices[0].color.rgba, 3);
-    memcpy(color[1].rgba, poly->vertices[1].color.rgba, 3);
-    memcpy(color[2].rgba, poly->vertices[2].color.rgba, 3);
-    memcpy(color[3].rgba, poly->vertices[3].color.rgba, 3);
-
-    color[0].rgba[3] = color[1].rgba[3] = color[2].rgba[3] = color[3].rgba[3] =
-        255;
+    memcpy(color[0].rgba, poly->vertices[0].color.rgba, 4);
+    memcpy(color[1].rgba, poly->vertices[1].color.rgba, 4);
+    memcpy(color[2].rgba, poly->vertices[2].color.rgba, 4);
+    memcpy(color[3].rgba, poly->vertices[3].color.rgba, 4);
 }
 
 static void quadVertices(gl_vertex_t *v, rendpoly_t *poly)
@@ -1444,7 +1431,6 @@ static void writeDivQuad(rendlist_t *list, rendpoly_t *poly)
                 }
 
                 // Color.
-                //memcpy(&colors[div], &colors[top], sizeof(gl_color_t));
                 for(c = 0; c < 4; ++c)
                 {
                     colors[div].rgba[c] = colors[bottom].rgba[c] +
@@ -1570,19 +1556,7 @@ static void writeFlat(rendlist_t *list, rendpoly_t *poly)
 
         // Color.
         col = &colors[base + i];
-        if(poly->flags & RPF_GLOW)
-        {
-            memset(col->rgba, 255, 4);
-        }
-        else if(poly->flags & (RPF_SHADOW | RPF_SHINY))
-        {
-            memcpy(col->rgba, vtx->color.rgba, 4);
-        }
-        else
-        {
-            memcpy(col->rgba, vtx->color.rgba, 3);
-            col->rgba[3] = 255;
-        }
+        memcpy(col->rgba, vtx->color.rgba, 4);
     }
 
     // The flat has been written.
