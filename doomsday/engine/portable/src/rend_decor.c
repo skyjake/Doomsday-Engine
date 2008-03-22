@@ -46,8 +46,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct decorsource_s {
-    uint        light;
-    float       pos[3];
+    uint            light;
+    float           pos[3];
     struct decorsource_s *next;
 } decorsource_t;
 
@@ -61,10 +61,10 @@ typedef struct decorsource_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte    useDecorations = true;
-float   decorMaxDist = 2048; // No decorations are visible beyond this.
-float   decorFactor = 1;
-float   decorFadeAngle = .1f;
+byte useDecorations = true;
+float decorMaxDist = 2048; // No decorations are visible beyond this.
+float decorFactor = 1;
+float decorFadeAngle = .1f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -116,8 +116,8 @@ static void clearDecorations(void)
 
 static void projectDecoration(lumobj_t *lum, float x, float y, float z)
 {
-    float       v1[2];
-    vissprite_t *vis;
+    float               v1[2];
+    vissprite_t        *vis;
 
     // Calculate edges of the shape.
     v1[VX] = x;
@@ -139,7 +139,7 @@ static void projectDecoration(lumobj_t *lum, float x, float y, float z)
  */
 void Rend_ProjectDecorations(void)
 {
-    decorsource_t *src;
+    decorsource_t      *src;
 
     // No need for this if no halos are rendered.
     if(!haloMode)
@@ -147,7 +147,7 @@ void Rend_ProjectDecorations(void)
 
     for(src = sourceFirst; src != sourceCursor; src = src->next)
     {
-        lumobj_t *l = LO_GetLuminous(src->light);
+        lumobj_t           *l = LO_GetLuminous(src->light);
 
         // Only omni lights get halos.
         if(l->type != LT_OMNI)
@@ -166,7 +166,7 @@ void Rend_ProjectDecorations(void)
  */
 static decorsource_t *addDecoration(void)
 {
-    decorsource_t *src;
+    decorsource_t      *src;
 
     if(numDecorLightSources > MAX_SOURCES)
         return NULL;
@@ -207,11 +207,11 @@ static void projectDecorLight(const float pos[3],
                               const float brightness,
                               const float maxDist)
 {
-    decorsource_t *source;
-    lumobj_t   *l;
-    float       distance = Rend_PointDist3D(pos);
-    float       fadeMul = 1, flareMul = 1;
-    uint        i;
+    decorsource_t      *source;
+    lumobj_t           *l;
+    float               distance = Rend_PointDist3D(pos);
+    float               fadeMul = 1, flareMul = 1;
+    uint                i;
 
     // Is the point in range?
     if(distance > maxDist)
@@ -229,12 +229,12 @@ static void projectDecorLight(const float pos[3],
     // Brightness drops as the angle gets too big.
     if(def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
     {
-        float       vector[3];
-        float       dot;
+        float               vector[3];
+        float               dot;
 
-        vector[0] = pos[VX] - vx;
-        vector[1] = pos[VZ] - vy;
-        vector[2] = pos[VY] - vz;
+        vector[VX] = pos[VX] - vx;
+        vector[VY] = pos[VZ] - vy;
+        vector[VZ] = pos[VY] - vz;
         M_Normalize(vector);
         dot =
             -(surfaceNormal[VX] * vector[VX] + surfaceNormal[VY] * vector[VY] +
@@ -292,7 +292,9 @@ static void projectDecorLight(const float pos[3],
     }
 
     if(def->flare.disabled)
+    {
         l->flags |= LUMF_NOHALO;
+    }
     else
     {
         LUM_OMNI(l)->flareCustom = def->flare.custom;
@@ -312,9 +314,9 @@ static void projectDecorLight(const float pos[3],
 }
 
 /**
- * @return                  @c true, if the view point is close enough to
- *                          the bounding box so that there could be visible
- *                          decorations inside.
+ * @return              @c true, if the view point is close enough to
+ *                      the bounding box so that there could be visible
+ *                      decorations inside.
  */
 static __inline
 boolean pointInBounds(const float bounds[6], const float viewer[3],
@@ -329,13 +331,13 @@ boolean pointInBounds(const float bounds[6], const float viewer[3],
 }
 
 /**
- * @return                  @c > 0, if the sector lightlevel passes the
- *                          limit condition.
+ * @return              @c > 0, if the sector lightlevel passes the
+ *                      limit condition.
  */
 static float checkSectorLight(float lightlevel,
                               const ded_decorlight_t *lightDef)
 {
-    float       factor;
+    float               factor;
 
     // Has a limit been set?
     if(lightDef->lightLevels[0] == lightDef->lightLevels[1])
@@ -358,11 +360,11 @@ static float checkSectorLight(float lightlevel,
 static void projectSurfaceDecorations(const surface_t *suf,
                                       float lightLevel, float maxDist)
 {
-    uint            i;
+    uint                i;
 
     for(i = 0; i < suf->numDecorations; ++i)
     {
-        float           brightMul;
+        float               brightMul;
         const surfacedecor_t *d = &suf->decorations[i];
 
         if(!R_IsValidLightDecoration(d->def))
@@ -380,7 +382,7 @@ static void projectSurfaceDecorations(const surface_t *suf,
 static void getDecorationSkipPattern(const ded_decorlight_t *lightDef,
                                      int *skip)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; i < 2; ++i)
     {
@@ -400,35 +402,37 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                                 float bottom, float texOffY,
                                 ded_decor_t *def, const float maxDist)
 {
+    vertex_t           *v[2];
+    float               delta[2];
+
+    // Let's see which sidedef is present.
+    if(line->L_backside && line->L_backside == side)
+    {
+        // Flip vertices, this is the backside.
+        v[0] = line->L_v2;
+        v[1] = line->L_v1;
+    }
+    else
+    {
+        v[0] = line->L_v1;
+        v[1] = line->L_v2;
+    }
+
+    delta[VX] = v[1]->V_pos[VX] - v[0]->V_pos[VX];
+    delta[VY] = v[1]->V_pos[VY] - v[0]->V_pos[VY];
+    surfaceNormal[VX] = delta[VY] / line->length;
+    surfaceNormal[VZ] = -delta[VX] / line->length;
+    surfaceNormal[VY] = 0;
+
     if(suf->flags & SUF_UPDATE_DECORATIONS)
     {
-        ded_decorlight_t *lightDef;
-        vertex_t   *v[2];
-        float       lh, s, t;           // Horizontal and vertical offset.
-        float       posBase[2], delta[2], pos[3];
-        float       surfTexW, surfTexH, patternW, patternH;
-        int         skip[2];
-        uint        i;
-        texinfo_t  *texinfo;
-
-        // Let's see which sidedef is present.
-        if(line->L_backside && line->L_backside == side)
-        {
-            // Flip vertices, this is the backside.
-            v[0] = line->L_v2;
-            v[1] = line->L_v1;
-        }
-        else
-        {
-            v[0] = line->L_v1;
-            v[1] = line->L_v2;
-        }
-
-        delta[VX] = v[1]->V_pos[VX] - v[0]->V_pos[VX];
-        delta[VY] = v[1]->V_pos[VY] - v[0]->V_pos[VY];
-        surfaceNormal[VX] = delta[VY] / line->length;
-        surfaceNormal[VZ] = -delta[VX] / line->length;
-        surfaceNormal[VY] = 0;
+        ded_decorlight_t   *lightDef;
+        float               lh, s, t; // Horizontal and vertical offset.
+        float               posBase[2], pos[3];
+        float               surfTexW, surfTexH, patternW, patternH;
+        int                 skip[2];
+        uint                i;
+        texinfo_t          *texinfo;
 
         R_ClearSurfaceDecorations(suf);
 
@@ -455,7 +459,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
             getDecorationSkipPattern(lightDef, skip);
 
             posBase[VX] = v[0]->V_pos[VX] + lightDef->elevation * surfaceNormal[VX];
-            posBase[VY] = v[0]->V_pos[VY] + lightDef->elevation * surfaceNormal[VZ];
+            posBase[VY] = v[0]->V_pos[VY] + lightDef->elevation * surfaceNormal[VY];
 
             patternW = surfTexW * skip[VX];
             patternH = surfTexH * skip[VY];
@@ -493,7 +497,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
  */
 static sidedef_t *getSectorSide(const linedef_t *line, sector_t *sector)
 {
-    sidedef_t *side = line->L_frontside;
+    sidedef_t          *side = line->L_frontside;
 
     // Swap if that wasn't the right one.
     if(side->sector != sector)
@@ -510,8 +514,8 @@ static boolean checkLineDecorationBounds(const linedef_t *line,
                                          const float *viewer,
                                          const float maxDist)
 {
-    float       bounds[6];
-    sector_t   *sector;
+    float               bounds[6];
+    sector_t           *sector;
 
     bounds[BOXLEFT]   = line->bBox[BOXLEFT];
     bounds[BOXRIGHT]  = line->bBox[BOXRIGHT];
@@ -527,8 +531,8 @@ static boolean checkLineDecorationBounds(const linedef_t *line,
     sector = (line->L_backside? line->L_backsector : NULL);
     if(sector)
     {
-        float       bfloor = sector->SP_floorheight;
-        float       bceil  = sector->SP_ceilheight;
+        float               bfloor = sector->SP_floorheight;
+        float               bceil  = sector->SP_ceilheight;
 
         if(bfloor < bounds[BOXFLOOR])
             bounds[BOXFLOOR] = bfloor;
@@ -548,7 +552,7 @@ static boolean checkSectorDecorationBounds(const sector_t *sector,
                                            const float *viewer,
                                            const float maxDist)
 {
-    float       bounds[6];
+    float               bounds[6];
 
     bounds[BOXLEFT]    = sector->bBox[BOXLEFT];
     bounds[BOXRIGHT]   = sector->bBox[BOXRIGHT];
@@ -563,10 +567,10 @@ static boolean checkSectorDecorationBounds(const sector_t *sector,
 
 static void decorateLine(const linedef_t *line, const float maxDist)
 {
-    sidedef_t         *side;
-    sector_t       *highSector, *lowSector;
-    float           frontCeil, frontFloor, backCeil, backFloor;
-    surface_t      *suf;
+    sidedef_t          *side;
+    sector_t           *highSector, *lowSector;
+    float               frontCeil, frontFloor, backCeil, backFloor;
+    surface_t          *suf;
 
     frontCeil  = line->L_frontsector->SP_ceilvisheight;
     frontFloor = line->L_frontsector->SP_floorvisheight;
@@ -599,19 +603,19 @@ static void decorateLine(const linedef_t *line, const float maxDist)
 
             if(suf->material)
             {
-                float           bottom = lowSector->SP_ceilvisheight;
-                float           top = highSector->SP_ceilvisheight;
+                float               bottom = lowSector->SP_ceilvisheight;
+                float               top = highSector->SP_ceilvisheight;
 
                 // Is this a valid section?
                 if(bottom < top && line->length > 0)
                 {
-                    ded_decor_t    *def;
+                    ded_decor_t        *def;
 
                     // Should this be decorated at all?
                     def = getMaterialDecoration(suf->material);
                     if(def)
                     {
-                        float           offsetY;
+                        float               offsetY;
 
                         if(line->flags & DDLF_DONTPEGTOP)
                         {
@@ -619,7 +623,7 @@ static void decorateLine(const linedef_t *line, const float maxDist)
                         }
                         else
                         {
-                            texinfo_t      *texinfo;
+                            texinfo_t          *texinfo;
 
                             GL_GetMaterialInfo(suf->material->ofTypeID,
                                                suf->material->type, &texinfo);
@@ -655,19 +659,19 @@ static void decorateLine(const linedef_t *line, const float maxDist)
 
             if(suf->material)
             {
-                float           bottom = lowSector->SP_ceilvisheight;
-                float           top = highSector->SP_floorvisheight;
+                float               bottom = lowSector->SP_ceilvisheight;
+                float               top = highSector->SP_floorvisheight;
 
                 // Is this a valid section?
                 if(bottom < top && line->length > 0)
                 {
-                    ded_decor_t    *def;
+                    ded_decor_t        *def;
 
                     // Should this be decorated at all?
                     def = getMaterialDecoration(suf->material);
                     if(def)
                     {
-                        float           offsetY;
+                        float               offsetY;
 
                         if(line->flags & DDLF_DONTPEGBOTTOM)
                             offsetY = (top - bottom);
@@ -690,23 +694,23 @@ static void decorateLine(const linedef_t *line, const float maxDist)
 
         if(suf->material)
         {
-            float           bottom = frontFloor;
-            float           top = frontCeil;
+            float               bottom = frontFloor;
+            float               top = frontCeil;
 
             // Is this a valid section?
             if(bottom < top && line->length > 0)
             {
-                ded_decor_t    *def;
+                ded_decor_t        *def;
 
                 // Should this be decorated at all?
                 def = getMaterialDecoration(suf->material);
                 if(def)
                 {
-                    float           offsetY;
+                    float               offsetY;
 
                     if(line->flags & DDLF_DONTPEGBOTTOM)
                     {
-                        texinfo_t      *texinfo;
+                        texinfo_t          *texinfo;
 
                         GL_GetMaterialInfo(suf->material->ofTypeID,
                                            suf->material->type, &texinfo);
@@ -747,15 +751,15 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
     uint                i;
     surface_t          *suf = &pln->surface;
 
+    surfaceNormal[VX] = suf->normal[VX];
+    surfaceNormal[VZ] = suf->normal[VY];
+    surfaceNormal[VY] = suf->normal[VZ];
+
     if(suf->flags & SUF_UPDATE_DECORATIONS)
     {
         float               pos[3], tileSize = 64;
         int                 skip[2];
         ded_decorlight_t   *lightDef;
-
-        surfaceNormal[VX] = suf->normal[VX];
-        surfaceNormal[VY] = suf->normal[VY];
-        surfaceNormal[VZ] = suf->normal[VZ];
 
         R_ClearSurfaceDecorations(suf);
 
@@ -816,9 +820,9 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
 
 static void decorateSector(const sector_t *sec, const float maxDist)
 {
-    uint        i;
-    plane_t    *pln;
-    ded_decor_t *def;
+    uint                i;
+    plane_t            *pln;
+    ded_decor_t        *def;
 
     for(i = 0; i < sec->planeCount; ++i)
     {
@@ -856,8 +860,8 @@ void Rend_InitDecorationsForFrame(void)
     // This only needs to be done if decorations have been enabled.
     if(useDecorations)
     {
-        uint        i;
-        float       viewer[3];
+        uint                i;
+        float               viewer[3];
 
         viewer[VX] = viewX;
         viewer[VY] = viewY;
