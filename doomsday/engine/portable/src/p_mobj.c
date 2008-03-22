@@ -610,11 +610,22 @@ boolean P_IsInVoid(ddplayer_t *player)
 
     // Cameras are allowed to move completely freely (so check z height
     // above/below ceiling/floor).
-    if((player->flags & DDPF_CAMERA) &&
-       (player->inVoid ||
-         (player->mo->pos[VZ] > player->mo->ceilingZ - 4 ||
-          player->mo->pos[VZ] < player->mo->floorZ + 4)))
-        return true;
+    if(player->flags & DDPF_CAMERA)
+    {
+        if(player->inVoid)
+            return true;
+
+        if(player->mo->subsector)
+        {
+            sector_t           *sec = player->mo->subsector->sector;
+
+            if(player->mo->pos[VZ] >
+                sec->SP_ceilheight + sec->skyFix[PLN_CEILING].offset - 4 ||
+               player->mo->pos[VZ] <
+                sec->SP_floorheight + sec->skyFix[PLN_FLOOR].offset + 4)
+                return true;
+        }
+    }
 
     return false;
 }
