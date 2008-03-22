@@ -551,7 +551,7 @@ void LG_Init(void)
 static void LG_ApplySector(gridblock_t *block, const float *color, float level,
                            float factor, int bias)
 {
-    int         i;
+    int                 i;
 
     // Apply a bias to the light level.
     level -= (0.95f - level);
@@ -565,7 +565,8 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
 
     for(i = 0; i < 3; ++i)
     {
-        float    c = color[i] * level;
+        float           c = color[i] * level;
+
         c = MINMAX_OF(0, c, 1);
 
         if(block->rgb[i] + c > 1)
@@ -589,8 +590,8 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
  */
 void LG_SectorChanged(sector_t *sector)
 {
-    uint            i, j;
-    unsigned short n;
+    uint                i, j;
+    unsigned short      n;
 
     if(!lgInited)
         return;
@@ -608,6 +609,7 @@ void LG_SectorChanged(sector_t *sector)
 
         grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
     }
+
     for(; i < sector->blockCount; ++i)
     {
         grid[sector->blocks[i]].flags |= GBF_CONTRIBUTOR;
@@ -621,7 +623,7 @@ void LG_SectorChanged(sector_t *sector)
  */
 void LG_MarkAllForUpdate(cvar_t *unused)
 {
-    uint            i;
+    uint                i;
 
     if(!lgInited)
         return;
@@ -925,11 +927,11 @@ void LG_Evaluate(const float *point, float *color)
 
         for(i = 0; i < 3; ++i)
         {
-            // Add the light range compression factor
-            color[i] += Rend_GetLightAdaptVal(color[i]);
-
             // Apply the dimming
             color[i] *= dimming;
+
+            // Add the light range compression factor
+            color[i] += Rend_GetLightAdaptVal(color[i]);
         }
     }
     else
