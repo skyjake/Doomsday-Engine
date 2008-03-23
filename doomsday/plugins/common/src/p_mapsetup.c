@@ -254,7 +254,7 @@ static void P_LoadMapObjs(void)
 #endif
 
 #if __JHEXEN__ || __JSTRIFE__
-        th->tid = P_GetGMOShort(MO_THING, i, MO_TID);
+        th->tid = P_GetGMOShort(MO_THING, i, MO_ID);
         th->height = P_GetGMOShort(MO_THING, i, MO_Z);
         th->special = P_GetGMOByte(MO_THING, i, MO_SPECIAL);
         th->arg1 = P_GetGMOByte(MO_THING, i, MO_ARG0);
