@@ -39,14 +39,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #include "jheretic.h"
 
-#include "hu_menu.h"
-#include "p_tick.h"
-#include "d_net.h"
 #include "d_netsv.h"
+#include "d_net.h"
+#include "hu_menu.h"
+#include "xgclass.h"
 #include "g_update.h"
 #include "p_mapsetup.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -186,13 +189,13 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.NetWorldEvent = D_NetWorldEvent;
     gx.HandlePacket = D_HandlePacket;
 
-    // The structure sizes.
+    // Data structure sizes.
     gx.ticcmdSize = sizeof(ticcmd_t);
     gx.mobjSize = sizeof(mobj_t);
 
     gx.SetupForMapData = P_SetupForMapData;
 
-    gx.HandleMapDataProperty = P_HandleMapDataProperty;
+    // These really need better names. Ideas?
     gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
     gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
     return &gx;

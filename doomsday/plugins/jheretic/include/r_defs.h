@@ -101,6 +101,9 @@ typedef struct xline_s {
     xgline_t       *xg;
 } xline_t;
 
+extern xline_t *xlines;
+extern xsector_t *xsectors;
+
 xline_t*    P_ToXLine(linedef_t* line);
 xline_t*    P_GetXLine(uint index);
 xsector_t*  P_ToXSector(sector_t* sector);
