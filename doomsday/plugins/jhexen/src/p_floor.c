@@ -58,28 +58,28 @@
 #define STAIR_SECTOR_TYPE       26
 #define STAIR_QUEUE_SIZE        32
 
-#define WGLSTATE_EXPAND 1
-#define WGLSTATE_STABLE 2
-#define WGLSTATE_REDUCE 3
+#define WGLSTATE_EXPAND         1
+#define WGLSTATE_STABLE         2
+#define WGLSTATE_REDUCE         3
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct stairqueue_s {
-    sector_t *sector;
-    int     type;
-    float   height;
+    sector_t       *sector;
+    int             type;
+    float           height;
 } stairqueue_t;
 
-// Global vars for stair building. DJS - In a struct for neatness.
+// Global vars for stair building, in a struct for neatness.
 typedef struct stairdata_s {
-    float   stepDelta;
-    int     direction;
-    float   speed;
-    int     texture;
-    int     startDelay;
-    int     startDelayDelta;
-    int     textureChange;
-    float   startHeight;
+    float           stepDelta;
+    int             direction;
+    float           speed;
+    int             texture;
+    int             startDelay;
+    int             startDelayDelta;
+    int             textureChange;
+    float           startHeight;
 } stairdata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -116,7 +116,7 @@ static void enqueueStairSector(sector_t *sec, int type, float height)
 
 static sector_t *dequeueStairSector(int *type, float *height)
 {
-    sector_t   *sec;
+    sector_t           *sec;
 
     if(stairQueueHead == stairQueueTail)
     {   // Queue is empty.
@@ -131,18 +131,54 @@ static sector_t *dequeueStairSector(int *type, float *height)
     return sec;
 }
 
-static void ProcessStairSector(sector_t *sec, int type, float height,
+typedef struct {
+    int             type;
+    float           height;
+} findsectorneighborsforstairbuildparams_t;
+
+int findSectorNeighborsForStairBuild(void *ptr, void *context)
+{
+    linedef_t          *li = (linedef_t*) ptr;
+    findsectorneighborsforstairbuildparams_t *params =
+        (findsectorneighborsforstairbuildparams_t*) context;
+    sector_t           *frontSec, *backSec;
+    xsector_t          *xsec;
+
+    // Line must be two sided.
+    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    if(!(frontSec && backSec))
+    {
+        xsec = P_ToXSector(frontSec);
+        if(xsec->special == params->type + STAIR_SECTOR_TYPE && !xsec->specialData &&
+           P_GetIntp(frontSec, DMU_FLOOR_MATERIAL) == stairData.texture &&
+           P_GetIntp(frontSec, DMU_VALID_COUNT) != VALIDCOUNT)
+        {
+            enqueueStairSector(frontSec, params->type ^ 1, params->height);
+            P_SetIntp(frontSec, DMU_VALID_COUNT, VALIDCOUNT);
+        }
+
+        xsec = P_ToXSector(backSec);
+        if(xsec->special == params->type + STAIR_SECTOR_TYPE && !xsec->specialData &&
+           P_GetIntp(backSec, DMU_FLOOR_MATERIAL) == stairData.texture &&
+           P_GetIntp(backSec, DMU_VALID_COUNT) != VALIDCOUNT)
+        {
+            enqueueStairSector(backSec, params->type ^ 1, params->height);
+            P_SetIntp(backSec, DMU_VALID_COUNT, VALIDCOUNT);
+        }
+    }
+
+    return 1; // Continue iteration.
+}
+
+static void processStairSector(sector_t *sec, int type, float height,
                                stairs_e stairsType, int delay, int resetDelay)
 {
-    int         i;
-    sector_t   *tsec;
-    xsector_t  *xtsec;
-    floormove_t *floor;
+    floormove_t        *floor;
+    findsectorneighborsforstairbuildparams_t params;
 
-    //
-    // new floor thinker
-    //
     height += stairData.stepDelta;
+
     floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
     memset(floor, 0, sizeof(*floor));
     P_AddThinker(&floor->thinker);
@@ -170,7 +206,7 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
     case STAIRS_SYNC:
         floor->speed =
             stairData.speed * ((height - stairData.startHeight) / stairData.stepDelta);
-        floor->resetDelay = delay;  //arg4
+        floor->resetDelay = delay; //arg4
         floor->resetDelayCount = delay;
         floor->resetHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         break;
@@ -182,38 +218,12 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
     SN_StartSequence(P_GetPtrp(sec, DMU_SOUND_ORIGIN),
                      SEQ_PLATFORM + P_ToXSector(sec)->seqType);
 
-    // Find next sector to raise
-    // Find nearby sector with sector special equal to type
-    for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
-    {
-        linedef_t         *line = P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i);
-        sector_t          *frontSec, *backSec;
+    params.type = type;
+    params.height = height;
 
-        frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
-        backSec = P_GetPtrp(line, DMU_BACK_SECTOR);
-        if(!frontSec || !backSec)
-            continue;
-
-        tsec = frontSec;
-        xtsec = P_ToXSector(tsec);
-        if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialData &&
-           P_GetIntp(tsec, DMU_FLOOR_MATERIAL) == stairData.texture &&
-           P_GetIntp(tsec, DMU_VALID_COUNT) != VALIDCOUNT)
-        {
-            enqueueStairSector(tsec, type ^ 1, height);
-            P_SetIntp(tsec, DMU_VALID_COUNT, VALIDCOUNT);
-        }
-
-        tsec = backSec;
-        xtsec = P_ToXSector(tsec);
-        if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialData &&
-           P_GetIntp(tsec, DMU_FLOOR_MATERIAL) == stairData.texture &&
-           P_GetIntp(tsec, DMU_VALID_COUNT) != VALIDCOUNT)
-        {
-            enqueueStairSector(tsec, type ^ 1, height);
-            P_SetIntp(tsec, DMU_VALID_COUNT, VALIDCOUNT);
-        }
-    }
+    // Find all neigboring sectors with sector special equal to type and add
+    // them to the stairbuild queue.
+    P_Iteratep(sec, DMU_LINEDEF, &params, findSectorNeighborsForStairBuild);
 }
 
 /**
@@ -222,12 +232,12 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
 int EV_BuildStairs(linedef_t *line, byte *args, int direction,
                    stairs_e stairsType)
 {
-    float       height;
-    int         delay;
-    int         type;
-    int         resetDelay;
-    sector_t   *sec = NULL, *qSec;
-    iterlist_t *list;
+    float               height;
+    int                 delay;
+    int                 type;
+    int                 resetDelay;
+    sector_t           *sec = NULL, *qSec;
+    iterlist_t         *list;
 
     // Set global stairs variables
     stairData.textureChange = 0;
@@ -267,7 +277,7 @@ int EV_BuildStairs(linedef_t *line, byte *args, int direction,
 
     while((qSec = dequeueStairSector(&type, &height)) != NULL)
     {
-        ProcessStairSector(qSec, type, height, stairsType, delay, resetDelay);
+        processStairSector(qSec, type, height, stairsType, delay, resetDelay);
     }
 
     return 1;
@@ -275,8 +285,8 @@ int EV_BuildStairs(linedef_t *line, byte *args, int direction,
 
 void T_BuildPillar(pillar_t *pillar)
 {
-    result_e res1;
-    result_e res2;
+    result_e            res1;
+    result_e            res2;
 
     // First, raise the floor
     res1 = T_MovePlane(pillar->sector, pillar->floorSpeed, pillar->floorDest, pillar->crush, 0, pillar->direction); // floorOrCeiling, direction
@@ -295,11 +305,11 @@ void T_BuildPillar(pillar_t *pillar)
 
 int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
 {
-    int         rtn = 0;
-    float       newHeight;
-    sector_t   *sec = NULL;
-    pillar_t   *pillar;
-    iterlist_t *list;
+    int                 rtn = 0;
+    float               newHeight;
+    sector_t           *sec = NULL;
+    pillar_t           *pillar;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag((int) args[0], false);
     if(!list)
@@ -369,10 +379,10 @@ int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
 
 int EV_OpenPillar(linedef_t *line, byte *args)
 {
-    int         rtn = 0;
-    sector_t   *sec = NULL;
-    pillar_t   *pillar;
-    iterlist_t *list;
+    int                 rtn = 0;
+    sector_t           *sec = NULL;
+    pillar_t           *pillar;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag((int) args[0], false);
     if(!list)
@@ -442,7 +452,7 @@ int EV_OpenPillar(linedef_t *line, byte *args)
 
 void T_FloorWaggle(floorWaggle_t *waggle)
 {
-    float       fh;
+    float               fh;
 
     switch(waggle->state)
     {
@@ -491,10 +501,10 @@ void T_FloorWaggle(floorWaggle_t *waggle)
 boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
                             int timer)
 {
-    boolean         retCode = false;
-    sector_t       *sec = NULL;
-    floorWaggle_t  *waggle;
-    iterlist_t     *list;
+    boolean             retCode = false;
+    sector_t           *sec = NULL;
+    floorWaggle_t      *waggle;
+    iterlist_t         *list;
 
     list = P_GetSectorIterListForTag(tag, false);
     if(!list)
