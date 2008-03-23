@@ -39,6 +39,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #include "jhexen.h"
 
 #include "hu_menu.h"
@@ -192,6 +194,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
 #undef Get
     gx.GetInteger = G_GetInteger;
     gx.GetVariable = G_GetVariable;
+
     gx.NetServerStart = D_NetServerStarted;
     gx.NetServerStop = D_NetServerClose;
     gx.NetConnect = D_NetConnect;
@@ -200,14 +203,13 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.NetWorldEvent = D_NetWorldEvent;
     gx.HandlePacket = D_HandlePacket;
 
-    // The structure sizes.
+    // Data structure sizes.
     gx.ticcmdSize = sizeof(ticcmd_t);
     gx.mobjSize = sizeof(mobj_t);
 
     gx.SetupForMapData = P_SetupForMapData;
 
     // These really need better names. Ideas?
-    gx.HandleMapDataProperty = P_HandleMapDataProperty;
     gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
     gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
     return &gx;

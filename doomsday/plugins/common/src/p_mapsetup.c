@@ -239,15 +239,23 @@ static void P_LoadMapObjs(void)
 
         th->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
         th->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
-        th->angle = ANG45 * (P_GetGMOShort(MO_THING, i, MO_ANGLE) / 45);
         th->type = P_GetGMOInt(MO_THING, i, MO_TYPE);
         th->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
 
+        /**
+         * For some stupid reason, the Hexen format stores polyobject tags
+         * in the angle field in THINGS. Thus, we cannot translate the angle
+         * until we know whether it is a polyobject type or not.
+         */
+#if __JHEXEN__ || __JSTRIFE__
+        th->angle = P_GetGMOShort(MO_THING, i, MO_ANGLE);
+#else
+        th->angle = ANG45 * (P_GetGMOShort(MO_THING, i, MO_ANGLE) / 45);
+#endif
+
 #if __JHEXEN__ || __JSTRIFE__
         th->tid = P_GetGMOShort(MO_THING, i, MO_TID);
-        th->tid = P_GetGMOShort(MO_THING, i, MO_TID);
-        th->height = P_GetGMOFloat(MO_THING, i, MO_Z);
-        th->tid = P_GetGMOShort(MO_THING, i, MO_TID);
+        th->height = P_GetGMOShort(MO_THING, i, MO_Z);
         th->special = P_GetGMOByte(MO_THING, i, MO_SPECIAL);
         th->arg1 = P_GetGMOByte(MO_THING, i, MO_ARG0);
         th->arg2 = P_GetGMOByte(MO_THING, i, MO_ARG1);
@@ -263,7 +271,7 @@ static void P_LoadMapObjs(void)
 
         xl->flags = P_GetGMOShort(MO_XLINEDEF, i, MO_FLAGS);
 #if __JHEXEN__ || __JSTRIFE__
-        xl->special = P_GetGMOByte(MO_XLINEDEF, i, MO_SPECIAL);
+        xl->special = P_GetGMOByte(MO_XLINEDEF, i, MO_TYPE);
         xl->arg1 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG0);
         xl->arg2 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG1);
         xl->arg3 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG2);

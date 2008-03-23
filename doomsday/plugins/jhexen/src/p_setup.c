@@ -47,32 +47,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-enum {
-    CMP_SECTOR_SPECIAL,
-    CMP_SECTOR_TAG,
-    CMP_LINE_SPECIAL,
-    CMP_LINE_ARG1,
-    CMP_LINE_ARG2,
-    CMP_LINE_ARG3,
-    CMP_LINE_ARG4,
-    CMP_LINE_ARG5,
-    CMP_LINE_FLAGS,
-    CMP_THING_TID,
-    CMP_THING_POS_X,
-    CMP_THING_POS_Y,
-    CMP_THING_HEIGHT,
-    CMP_THING_ANGLE,
-    CMP_THING_TYPE,
-    CMP_THING_FLAGS,
-    CMP_THING_SPECIAL,
-    CMP_THING_ARG1,
-    CMP_THING_ARG2,
-    CMP_THING_ARG3,
-    CMP_THING_ARG4,
-    CMP_THING_ARG5,
-    NUM_CUSTOM_MAP_PROPERTIES
-} mappropid_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -81,225 +55,82 @@ enum {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-// We require direct access to the extra data arrays because DMU is not
-// online during map setup, thus we can't convert indices to hardened ptrs.
-extern xsector_t *xsectors;
-extern xline_t   *xlines;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int customPropIds[NUM_CUSTOM_MAP_PROPERTIES];
-
 // CODE --------------------------------------------------------------------
-
-static int DDPropIDToID(int ddid)
-{
-    int         i;
-
-    for(i = 0; i < NUM_CUSTOM_MAP_PROPERTIES; ++i)
-        if(customPropIds[i] == ddid) // a match!
-            return i;
-
-    return -1;
-}
 
 /**
  * Called during pre-init.
- * Registers the custom properties we need Doomsday to read from a map format.
+ * Register the map object data types we want to Doomsday to make public via
+ * it's MPE interface.
  */
-void P_RegisterCustomMapProperties(void)
+void P_RegisterMapObjs(void)
 {
-    struct prop_s {
-        int         type;       // DAM object type e.g. DAM_LINE.
-        valuetype_t datatype;   // Internal type used to store the value.
-        char       *name;       // Name by which this property is referred.
-        int         ourid;      // The id we've assigned to it.
-    } properties[] =
-    {
-        // Line properties:
-        {DAM_LINE,      DDVT_BYTE,      "Special",      CMP_LINE_SPECIAL},
-        {DAM_LINE,      DDVT_BYTE,      "Arg1",         CMP_LINE_ARG1},
-        {DAM_LINE,      DDVT_BYTE,      "Arg2",         CMP_LINE_ARG2},
-        {DAM_LINE,      DDVT_BYTE,      "Arg3",         CMP_LINE_ARG3},
-        {DAM_LINE,      DDVT_BYTE,      "Arg4",         CMP_LINE_ARG4},
-        {DAM_LINE,      DDVT_BYTE,      "Arg5",         CMP_LINE_ARG5},
-        {DAM_LINE,      DDVT_SHORT,     "Flags",        CMP_LINE_FLAGS},
-        // Sector properties:
-        {DAM_SECTOR,    DDVT_SHORT,     "Tag",          CMP_SECTOR_TAG},
-        {DAM_SECTOR,    DDVT_SHORT,     "Special",      CMP_SECTOR_SPECIAL},
-        // Thing properties:
-        {DAM_THING,     DDVT_SHORT,     "TID",          CMP_THING_TID},
-        {DAM_THING,     DDVT_SHORT,     "X",            CMP_THING_POS_X},
-        {DAM_THING,     DDVT_SHORT,     "Y",            CMP_THING_POS_Y},
-        {DAM_THING,     DDVT_SHORT,     "Height",       CMP_THING_HEIGHT},
-        {DAM_THING,     DDVT_SHORT,     "Angle",        CMP_THING_ANGLE},
-        {DAM_THING,     DDVT_SHORT,     "Type",         CMP_THING_TYPE},
-        {DAM_THING,     DDVT_SHORT,     "Options",      CMP_THING_FLAGS},
-        {DAM_THING,     DDVT_BYTE,      "Special",      CMP_THING_SPECIAL},
-        {DAM_THING,     DDVT_BYTE,      "Arg1",         CMP_THING_ARG1},
-        {DAM_THING,     DDVT_BYTE,      "Arg2",         CMP_THING_ARG2},
-        {DAM_THING,     DDVT_BYTE,      "Arg3",         CMP_THING_ARG3},
-        {DAM_THING,     DDVT_BYTE,      "Arg4",         CMP_THING_ARG4},
-        {DAM_THING,     DDVT_BYTE,      "Arg5",         CMP_THING_ARG5},
-        {0,             0,              NULL,           0} // Terminate.
-    };
-    uint        i, idx;
+    P_RegisterMapObj(MO_THING, "Thing");
+    P_RegisterMapObjProperty(MO_THING, MO_ID, "ID", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_THING, MO_X, "X", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_THING, MO_Y, "Y", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_THING, MO_Y, "Z", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_THING, MO_ANGLE, "Angle", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_THING, MO_TYPE, "Type", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_THING, MO_FLAGS, "Flags", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_THING, MO_SPECIAL, "Special", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_THING, MO_ARG0, "Arg0", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_THING, MO_ARG1, "Arg1", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_THING, MO_ARG2, "Arg2", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_THING, MO_ARG3, "Arg3", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_THING, MO_ARG4, "Arg4", DDVT_BYTE);
 
-    i = 0;
-    while(properties[i].name)
-    {
-        // Will return the id by which Doomsday will refer to this property.
-        idx = P_RegisterCustomMapProperty(properties[i].type, properties[i].datatype,
-                                          properties[i].name);
-        // Store the id returned to us by Doosmday into the conversion LUT,
-        // using our id as the index.
-        customPropIds[properties[i].ourid] = idx;
-        i++;
-    }
+    P_RegisterMapObj(MO_XLINEDEF, "XLinedef");
+    P_RegisterMapObjProperty(MO_XLINEDEF, MO_TYPE, "Type", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_XLINEDEF, MO_ARG0, "Arg0", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_XLINEDEF, MO_ARG1, "Arg1", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_XLINEDEF, MO_ARG2, "Arg2", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_XLINEDEF, MO_ARG3, "Arg3", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_XLINEDEF, MO_ARG4, "Arg4", DDVT_BYTE);
+    P_RegisterMapObjProperty(MO_XLINEDEF, MO_FLAGS, "Flags", DDVT_SHORT);
+
+    P_RegisterMapObj(MO_XSECTOR, "XSector");
+    P_RegisterMapObjProperty(MO_XSECTOR, MO_TAG, "Tag", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_XSECTOR, MO_TYPE, "Type", DDVT_SHORT);
 }
 
 /**
- * Doomsday will call this while loading in map data when a value is read
- * that is not part of the internal data structure for the particular element.
- * This is where game specific data is added to game-side map data structures
- * (eg sector->tag, line->args etc).
+ * \todo This is actually unnecessary. If we say that in the case of BOOM
+ * overloaded texture names, rather than setting the surface material as
+ * normal, the map converter should instead write to a property in XLinedef
+ * which the game can then look up later.
  *
- * @param id        Index of the current element being read.
- * @param dtype     Lump type class id this value is for.
- * @param prop      Property id of the game-specific variable (as declared via DED).
- * @param type      Data type id of the value pointed to by *data.
- * @param *data     Ptr to the data value (has already been expanded, size
- *                  converted and endian converted where necessary).
- *
- * @return          @c true unless there is a critical problem with the data
- *                  supplied.
- */
-int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
-{
-    // Make sure the property id Doomsday passed makes sense.
-    int         pid = DDPropIDToID(prop);
-    void       *dest = NULL;
-
-    if(pid == -1)
-        Con_Error("P_HandleMapDataProperty: Invalid property ID %i", prop);
-
-    // Assign the value for this property to it's correct place.
-    switch(pid)
-    {
-    // Sector properties
-    case CMP_SECTOR_SPECIAL:
-        xsectors[id].special = *(short *)data;
-        break;
-    case CMP_SECTOR_TAG:
-        xsectors[id].tag = *(short *)data;
-        break;
-    // Line properties
-    case CMP_LINE_SPECIAL:
-        xlines[id].special = *(byte *)data;
-        break;
-    case CMP_LINE_ARG1:
-        xlines[id].arg1 = *(byte *)data;
-        break;
-    case CMP_LINE_ARG2:
-        xlines[id].arg2 = *(byte *)data;
-        break;
-    case CMP_LINE_ARG3:
-        xlines[id].arg3 = *(byte *)data;
-        break;
-    case CMP_LINE_ARG4:
-        xlines[id].arg4 = *(byte *)data;
-        break;
-    case CMP_LINE_ARG5:
-        xlines[id].arg5 = *(byte *)data;
-        break;
-    case CMP_LINE_FLAGS:
-        xlines[id].flags = *(short *)data;
-        break;
-    // Thing properties
-    case CMP_THING_TID:
-        things[id].tid = *(short *)data;
-        break;
-    case CMP_THING_POS_X:
-        things[id].pos[VX] = (float) (*(short *)data);
-        break;
-    case CMP_THING_POS_Y:
-        things[id].pos[VY] = (float) (*(short *)data);
-        break;
-    case CMP_THING_HEIGHT:
-        things[id].height = *(short *)data;
-        break;
-    case CMP_THING_ANGLE:
-        /**
-         * For some stupid reason, Hexen stores polyobject tags in the
-         * angle field in THINGS. Thus, we cannot translate the angle until
-         * we know whether it is a polyobject type or not.
-         */
-        things[id].angle = *(short *)data;
-        break;
-    case CMP_THING_TYPE:
-        things[id].type = *(short *)data;
-        break;
-    case CMP_THING_FLAGS:
-        things[id].flags = (int) (*(short *)data);
-        break;
-    case CMP_THING_SPECIAL:
-        things[id].special = *(byte *)data;
-        break;
-    case CMP_THING_ARG1:
-        things[id].arg1 = *(byte *)data;
-        break;
-    case CMP_THING_ARG2:
-        things[id].arg2 = *(byte *)data;
-        break;
-    case CMP_THING_ARG3:
-        things[id].arg3 = *(byte *)data;
-        break;
-    case CMP_THING_ARG4:
-        things[id].arg4 = *(byte *)data;
-        break;
-    case CMP_THING_ARG5:
-        things[id].arg5 = *(byte *)data;
-        break;
-
-    default:
-        break;
-    }
-
-    return 1;
-}
-
-/*
  * Doomsday will call this when loading the map data if it encounters a
  * value that it doesn't understand for a property IT handles.
  *
  * Doomsday thinks we might know what to do with it...
  * If we don't know what to do we'll return -1.
  *
- * @param id:       index of the current element being read.
- * @param dtype:    lump type class id this value is for.
- * @param prop:     propertyid of the map structure.
- * @param type:     data type id of the value pointed to by *data.
- * @param *data:    ptr to the data value (has already been expanded, size
- *                  converted and endian converted where necessary).
+ * @param id            Index of the current element being read.
+ * @param dtype         DMU type identifier.
+ * @param prop          DMU property identifier.
+ * @param type          Data type id of the value pointed to by *data.
+ * @param *data         Ptr to the data value (has already been expanded,
+ *                      size converted and endian converted where necessary).
  */
 int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
-                                 int type, void *data)
+                                 valuetype_t type, void *data)
 {
     switch(dtype)
     {
-    case DAM_SIDE:
+    case DMU_SURFACE:
         switch(prop)
         {
-        case DAM_TOP_MATERIAL:
-        case DAM_MIDDLE_MATERIAL:
-        case DAM_BOTTOM_MATERIAL:
-            // It could be a BOOM overloaded texture name?
-            // In this context Doomsday expects either -1 (a bad texture name)
-            // Or the id of a wall texture it should set to this section.
-
-            //// \todo Add code to determine what to do.
+        case DMU_MATERIAL:
+            /**
+             * It could be a BOOM overloaded texture name?
+             * In this context Doomsday expects either -1 (a bad texture name)
+             * Or the id of a wall texture it should set to this section.
+             * \todo Add code to determine what to do.
+	         */
             break;
 
         default:
@@ -326,28 +157,30 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
  * If we arn't interested in the report - we should simply return true and
  * take no further action.
  *
- * @param code      ID code of the status report (enum in dd_share.h)
- * @param id        Map data object id.
- * @param type      Map data object type eg DMU_SECTOR.
- * @param data      Any relevant data for this report (currently unused).
+ * @param code          ID code of the status report (enum in dd_share.h)
+ * @param id            Map data object id.
+ * @param type          Map data object type eg DMU_SECTOR.
+ * @param data          Any relevant data for this report (currently unused).
  */
 int P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data)
 {
     switch(code)
     {
-    /*
     case DMUSC_SECTOR_ISBENIGN:
-        // A benign sector is one which has zero lines.
-        // Zero it's tag to prevent it from being selected while searching for
-        // sectors to act on (eg XG and the "built-in" line specials).
-        xsectors[id].tag = 0;
+        /**
+         * A benign sector is one which has zero lines.
+         * Zero it's tag to prevent it from being selected while searching
+         * for sectors to act on (eg XG and the "built-in" line specials).
+         */
+        //xsectors[id].tag = 0;
         break;
-    */
 
     case DMUSC_LINE_FIRSTRENDERED:
-        // Called the first time the given line is rendered.
-        // *data is a pointer to int, giving the player id which has seen it.
-        // We'll utilize this to mark it as being visible in the automap.
+        /**
+         * Called the first time the given line is rendered.
+         * *data is a pointer to int, giving the player id which has seen it.
+         * We'll utilize this to mark it as being visible in the automap.
+         */
         AM_UpdateLinedef(*(int *) data, id, true);
         break;
 

@@ -1,44 +1,36 @@
 /**\file
  *\section License
- * License: Raven
- * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ * License: GPL + jHeretic/jHexen Exception
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
- * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
- * code license; you can redistribute it and/or modify it under the terms
- * of the HERETIC / HEXEN source code license as published by Activision.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * THIS MATERIAL IS NOT MADE OR SUPPORTED BY ACTIVISION.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * WARRANTY INFORMATION.
- * This program is provided as is. Activision and it's affiliates make no
- * warranties of any kind, whether oral or written , express or implied,
- * including any warranty of merchantability, fitness for a particular
- * purpose or non-infringement, and no other representations or claims of
- * any kind shall be binding on or obligate Activision or it's affiliates.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  *
- * LICENSE CONDITIONS.
- * You shall not:
- *
- * 1) Exploit this Program or any of its parts commercially.
- * 2) Use this Program, or permit use of this Program, on more than one
- *    computer, computer terminal, or workstation at the same time.
- * 3) Make copies of this Program or any part thereof, or make copies of
- *    the materials accompanying this Program.
- * 4) Use the program, or permit use of this Program, in a network,
- *    multi-user arrangement or remote access arrangement, including any
- *    online use, except as otherwise explicitly provided by this Program.
- * 5) Sell, rent, lease or license any copies of this Program, without
- *    the express prior written consent of Activision.
- * 6) Remove, disable or circumvent any proprietary notices or labels
- *    contained on or within the Program.
- *
- * You should have received a copy of the HERETIC / HEXEN source code
- * license along with this program (Ravenlic.txt); if not:
- * http://www.ravensoft.com/
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -76,6 +68,9 @@ typedef struct xline_s {
     boolean         mapped[MAXPLAYERS];
     int             validCount;
 } xline_t;
+
+extern xline_t *xlines;
+extern xsector_t *xsectors;
 
 xline_t*    P_ToXLine(linedef_t* line);
 xline_t*    P_GetXLine(uint index);
