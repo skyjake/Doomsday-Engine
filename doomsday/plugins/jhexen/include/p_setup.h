@@ -50,6 +50,7 @@ enum {
     MO_THING,
     MO_XLINEDEF,
     MO_XSECTOR,
+    MO_ID,
     MO_X,
     MO_Y,
     MO_Z,
