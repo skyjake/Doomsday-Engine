@@ -193,7 +193,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     wrefresh(win->console.winText);
 
     // Move the cursor back onto the command line.
-    sysSetConWindowCmdLine(1, NULL, 0, 0);
+    setConWindowCmdLine(1, NULL, 0, 0);
 }
 
 static void setConWindowCmdLine(uint idx, const char *text,
@@ -414,13 +414,14 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
 }
 
 static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
-                                  int flags, boolean console, const char *title)
+                                  int flags, ddwindowtype_t type,
+                                  const char *title)
 {
     // SDL only supports one window.
     if(mainWindowInited)
         return NULL;
 
-    if(console)
+    if(type == WT_CONSOLE)
     {
 #if defined(UNIX)
         int         maxPos[2];
@@ -452,7 +453,7 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
 
         keypad(mainWindow.console.winCommand, TRUE);
         nodelay(mainWindow.console.winCommand, TRUE);
-        setConWindowCmdLine(&mainWindow, "", 1, 0);
+        setConWindowCmdLine(1, "", 1, 0);
 
         // The background will also be in reverse.
         wbkgdset(mainWindow.console.winTitle, ' ' | A_REVERSE);
@@ -509,7 +510,7 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
  * @param h             Height (client area).
  * @param bpp           BPP (bits-per-pixel)
  * @param flags         DDWF_* flags, control appearance/behavior.
- * @param console       @c true = this is to be a terminal window.
+ * @param type          Type of window to be created.
  * @param title         Window title string, ELSE @c NULL,.
  * @param data          Platform specific data.
  *
@@ -518,7 +519,7 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
  */
 uint Sys_CreateWindow(application_t *app, uint parentIDX,
                       int x, int y, int w, int h, int bpp, int flags,
-                      boolean console, const char *title, void *data)
+                      ddwindowtype_t type, const char *title, void *data)
 {
     ddwindow_t *win;
 
@@ -528,7 +529,7 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
     if(!winManagerInited)
         return 0; // Window manager not initialized yet.
 
-    win = createDDWindow(app, w, h, bpp, flags, console, title);
+    win = createDDWindow(app, w, h, bpp, flags, type, title);
 
     if(win)
         return 1; // Success.
