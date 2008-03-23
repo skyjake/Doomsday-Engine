@@ -28,18 +28,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <stdio.h>
 #include <string.h>
 
 #include "jdoom64.h"
 
-#include "xgclass.h"
-#include "p_tick.h"
 #include "d_netsv.h"
-#include "hu_menu.h"
-#include "g_update.h"
 #include "d_net.h"
+#include "hu_menu.h"
+#include "xgclass.h"
+#include "g_update.h"
 #include "p_mapsetup.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -173,8 +172,8 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.NetConnect = D_NetConnect;
     gx.NetDisconnect = D_NetDisconnect;
     gx.NetPlayerEvent = D_NetPlayerEvent;
-    gx.HandlePacket = D_HandlePacket;
     gx.NetWorldEvent = D_NetWorldEvent;
+    gx.HandlePacket = D_HandlePacket;
 
     // Data structure sizes.
     gx.ticcmdSize = sizeof(ticcmd_t);
@@ -183,7 +182,6 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.SetupForMapData = P_SetupForMapData;
 
     // These really need better names. Ideas?
-    gx.HandleMapDataProperty = P_HandleMapDataProperty;
     gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
     gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
     return &gx;
