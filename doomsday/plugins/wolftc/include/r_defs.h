@@ -29,18 +29,14 @@
 #ifndef __R_DEFS__
 #define __R_DEFS__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __WOLFTC__
+#  error "Using WolfTC headers without __WOLFTC__"
 #endif
 
 // Screenwidth.
 #include "doomdef.h"
 
 #include "p_xg.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
 
 #define SP_floororigheight      planes[PLN_FLOOR].origheight
 #define SP_ceilorigheight       planes[PLN_CEILING].origheight
@@ -90,6 +86,9 @@ typedef struct xline_s {
     // Extended generalized lines.
     xgline_t       *xg;
 } xline_t;
+
+extern xline_t *xlines;
+extern xsector_t *xsectors;
 
 xline_t*    P_ToXLine(linedef_t* line);
 xline_t*    P_GetXLine(uint index);

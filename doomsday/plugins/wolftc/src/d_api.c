@@ -28,9 +28,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #include "wolftc.h"
 
+#include "d_netsv.h"
+#include "d_net.h"
+#include "hu_menu.h"
 #include "xgclass.h"
+#include "g_update.h"
+#include "p_mapsetup.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -139,10 +147,10 @@ game_export_t *GetGameAPI(game_import_t *imports)
 
     // Fill in the data for the exports.
     gx.apiSize = sizeof(gx);
-    gx.PreInit = D_PreInit;
-    gx.PostInit = D_PostInit;
-    gx.Shutdown = D_Shutdown;
-    gx.Ticker = D_Ticker;
+    gx.PreInit = G_PreInit;
+    gx.PostInit = G_PostInit;
+    gx.Shutdown = G_Shutdown;
+    gx.Ticker = G_Ticker;
     gx.G_Drawer = D_Display;
     gx.G_Drawer2 = D_Display2;
     gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
@@ -150,7 +158,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
-    gx.EndFrame = D_EndFrame;
+    gx.EndFrame = G_EndFrame;
     gx.ConsoleBackground = D_ConsoleBg;
     gx.UpdateState = G_UpdateState;
 #undef Get
@@ -162,8 +170,8 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.NetConnect = D_NetConnect;
     gx.NetDisconnect = D_NetDisconnect;
     gx.NetPlayerEvent = D_NetPlayerEvent;
-    gx.HandlePacket = D_HandlePacket;
     gx.NetWorldEvent = D_NetWorldEvent;
+    gx.HandlePacket = D_HandlePacket;
 
     // Data structure sizes.
     gx.ticcmdSize = sizeof(ticcmd_t);
@@ -172,7 +180,6 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.SetupForMapData = P_SetupForMapData;
 
     // These really need better names. Ideas?
-    gx.HandleMapDataProperty = P_HandleMapDataProperty;
     gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
     gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
     return &gx;
