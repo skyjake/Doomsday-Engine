@@ -28,6 +28,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #include "jdoom.h"
 
 #include "d_netsv.h"
@@ -133,7 +135,7 @@ void *G_GetVariable(int id)
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-game_export_t *GetGameAPI(game_import_t * imports)
+game_export_t *GetGameAPI(game_import_t *imports)
 {
     // Take a copy of the imports, but only copy as much data as is
     // allowed and legal.
