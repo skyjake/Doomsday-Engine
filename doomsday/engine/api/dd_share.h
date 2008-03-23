@@ -314,6 +314,10 @@ extern          "C" {
         DD_GRAVITY,
         DD_PSPRITE_OFFSET_X,       // 10x
         DD_PSPRITE_OFFSET_Y,       // 10x
+        DD_TORCH_RED,
+        DD_TORCH_GREEN,
+        DD_TORCH_BLUE,
+        DD_TORCH_ADDITIVE
     };
 
     // Bounding box coordinates.

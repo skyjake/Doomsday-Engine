@@ -168,7 +168,7 @@ void Rend_Register(void)
                Rend_CalcLightRangeModMatrix);
     C_VAR_INT2("rend-light-sky", &rendSkyLight, 0, 0, 1,
                LG_MarkAllForUpdate);
-    C_VAR_FLOAT("rend-light-wall-angle", &rend_light_wall_angle, CVF_NO_MAX,
+    C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX,
                 0, 0);
     C_VAR_INT("rend-dev-light-modmatrix", &debugLightModMatrix,
               CVF_NO_ARCHIVE, 0, 1);
@@ -1029,9 +1029,12 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
     else
         poly->lightListIdx = DL_ProcessSubSectorPlane(subsector, plane->planeID);
 
-    // Do BIAS lighting for this poly.
-    SB_RendPoly(poly, subsector->sector->lightLevel, plane->illumination,
-                &plane->tracker, plane->affected, subIndex);
+    if(useBias)
+    {
+        // Do BIAS lighting for this poly.
+        SB_RendPoly(poly, subsector->sector->lightLevel, plane->illumination,
+                    &plane->tracker, plane->affected, subIndex);
+    }
 
     // Smooth Texture Animation?
     if(flags & RPF2_BLEND)
@@ -1285,7 +1288,6 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
             {
                 const float    *topColor = NULL;
                 const float    *bottomColor = NULL;
-                uint            lightListIdx;
                 float           sectorLightLevel = Rend_SectorLight(frontsec);
 
                 // Check for neighborhood division?
@@ -1294,7 +1296,8 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
 
                 getColorsForSegSection(sideFlags, section, &bottomColor, &topColor);
 
-                lightListIdx =
+                // Dynamic lights.
+                quad->lightListIdx =
                     DL_ProcessSegSection(seg, vL_ZBottom, vL_ZTop,
                                          (quad->flags & RPF_MASKED)? true:false);
 
@@ -1303,28 +1306,30 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                     quad->flags |= RPF_GLOW;
 
                 // Surface color/light.
-                RL_VertexColors(quad, sectorLightLevel, -1, topColor, alpha);
-
-                // Bottom color (if different from top)?
-                if(bottomColor != NULL)
+                if(useBias)
                 {
-                    uint        i;
+                    // Do BIAS lighting for this poly.
+                    SB_RendPoly(quad, sectorLightLevel, seg->illum[section],
+                                &seg->tracker[section], seg->affected,
+                                GET_SEG_IDX(seg));
+                }
+                else
+                {
+                    RL_VertexColors(quad, sectorLightLevel, -1, topColor, alpha);
 
-                    for(i = 0; i < 4; i += 2)
+                    // Bottom color (if different from top)?
+                    if(bottomColor != NULL)
                     {
-                        quad->vertices[i].color.rgba[0] = (DGLubyte) (255 * bottomColor[0]);
-                        quad->vertices[i].color.rgba[1] = (DGLubyte) (255 * bottomColor[1]);
-                        quad->vertices[i].color.rgba[2] = (DGLubyte) (255 * bottomColor[2]);
+                        uint        i;
+
+                        for(i = 0; i < 4; i += 2)
+                        {
+                            quad->vertices[i].color.rgba[0] = (DGLubyte) (255 * bottomColor[0]);
+                            quad->vertices[i].color.rgba[1] = (DGLubyte) (255 * bottomColor[1]);
+                            quad->vertices[i].color.rgba[2] = (DGLubyte) (255 * bottomColor[2]);
+                        }
                     }
                 }
-
-                // Dynamic lights.
-                quad->lightListIdx = lightListIdx;
-
-                // Do BIAS lighting for this poly.
-                SB_RendPoly(quad, sectorLightLevel, seg->illum[section],
-                            &seg->tracker[section], seg->affected,
-                            GET_SEG_IDX(seg));
 
                 // Smooth Texture Animation?
                 if(tempflags & RPF2_BLEND)

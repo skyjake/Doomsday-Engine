@@ -1079,6 +1079,17 @@ void* DD_GetVariable(int ddvalue)
         case DD_GRAVITY:
             return &mapGravity;
 
+        case DD_TORCH_RED:
+            return &torchColor[CR];
+
+        case DD_TORCH_GREEN:
+            return &torchColor[CG];
+
+        case DD_TORCH_BLUE:
+            return &torchColor[CB];
+
+        case DD_TORCH_ADDITIVE:
+            return &torchAdditive;
 #ifdef WIN32
         case DD_WINDOW_HANDLE:
             return Sys_GetWindowHandle(windowIDX);
@@ -1175,6 +1186,22 @@ void DD_SetVariable(int ddvalue, void *parm)
         case DD_PSPRITE_OFFSET_Y:
             pspOffset[VY] = *(float*) parm;
             return;
+
+        case DD_TORCH_RED:
+            torchColor[CR] = MINMAX_OF(0, *((float*) parm), 1);
+            return;
+
+        case DD_TORCH_GREEN:
+            torchColor[CG] = MINMAX_OF(0, *((float*) parm), 1);
+            return;
+
+        case DD_TORCH_BLUE:
+            torchColor[CB] = MINMAX_OF(0, *((float*) parm), 1);
+            return;
+
+        case DD_TORCH_ADDITIVE:
+            torchAdditive = (*(int*) parm)? true : false;
+            break;
 
         default:
             break;

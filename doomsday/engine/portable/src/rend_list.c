@@ -230,13 +230,16 @@ int     useMultiTexLights = true;
 int     useMultiTexDetails = true;
 
 // Intensity of angle-based wall lighting.
-float   rend_light_wall_angle = 1;
+float   rendLightWallAngle = 1;
 
 // Rendering parameters for detail textures.
 float   detailFactor = .5f;
 
 //float             detailMaxDist = 256;
 float   detailScale = 4;
+
+float   torchColor[3] = {1, 1, 1};
+int     torchAdditive = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -366,6 +369,30 @@ static void addMaskedPoly(rendpoly_t *poly)
     }
 }
 
+static float wallAngleLightlevelOffset(const rendpoly_t *poly)
+{
+    if(!poly->isWall || !(rendLightWallAngle > 0))
+        return 0;
+
+    // Do a lighting adjustment based on orientation.
+    return (1.0f / 255.0f) *
+        ((poly->vertices[2].pos[VY] -
+         poly->vertices[0].pos[VY]) / poly->wall->length * 18 *
+        rendLightWallAngle);
+}
+
+static float distAttenuateLightLevel(float distToViewer, float lightLevel)
+{
+    float               real, minimum;
+
+    real = lightLevel - (distToViewer - 32) / maxLightDist * (1 - lightLevel);
+    minimum = lightLevel * lightLevel + (lightLevel - .63f) / 2;
+    if(real < minimum)
+        real = minimum; // Clamp it.
+
+    return real;
+}
+
 /**
  * Color distance attenuation, extraLight, fixedcolormap.
  * "Torchlight" is white, regardless of the original RGB.
@@ -375,14 +402,14 @@ static void addMaskedPoly(rendpoly_t *poly)
  *                      calculated if needed, depending on the properties of
  *                      the rendpoly to be lit, for each vertex seperately.
  */
-void RL_VertexColors(rendpoly_t *poly, float lightlevel,
-                     float distanceOverride, const float *rgb, float alpha)
+void RL_VertexColors(rendpoly_t *poly, float lightLevel,
+                     float distanceOverride, const float sufColor[3],
+                     float alpha)
 {
-    int         i, num;
-    float       light, real, minimum;
-    float       dist;
-    rendpoly_vertex_t *vtx;
-    boolean     usewhite;
+    int                 i, num;
+    float               lightVal, dist = distanceOverride;
+    float               rgb[3];
+    rendpoly_vertex_t  *vtx;
 
     // Check for special case exceptions.
     if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW))
@@ -390,81 +417,64 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel,
         return; // Don't need per-vertex lighting.
     }
 
-    if(poly->isWall && rend_light_wall_angle && !useBias)  // A quad?
-    {
-        // Do a lighting adjustment based on orientation.
-        lightlevel += (1.0f / 255.0f) *
-            ((poly->vertices[2].pos[VY] -
-             poly->vertices[0].pos[VY]) / poly->wall->length * 18 *
-            rend_light_wall_angle);
-        if(lightlevel < 0)
-            lightlevel = 0;
-        if(lightlevel > 1)
-            lightlevel = 1;
-    }
-
-    if(lightlevel < 0)
-        light = 1; // Full bright.
-    else
-        light = lightlevel;
+    lightLevel += wallAngleLightlevelOffset(poly);
+    lightLevel = MINMAX_OF(0, lightLevel, 1);
 
     num = poly->numVertices;
     for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
     {
-        usewhite = false;
-
-        if(distanceOverride > 0)
-            dist = distanceOverride;
-        else
-            dist = Rend_PointDist2D(vtx->pos);
-
-        real = light - (dist - 32) / maxLightDist * (1 - light);
-        minimum = light * light + (light - .63f) / 2;
-        if(real < minimum)
-            real = minimum;     // Clamp it.
-
-        // Add extra light.
-        real += extraLight / 16.0f;
-
-        // Check for torch.
-        if(viewPlayer->fixedColorMap)
-        {
-            // Colormap 1 is the brightest. I'm guessing 16 would be
-            // the darkest.
-            int     ll = 16 - viewPlayer->fixedColorMap;
-            float   d = (1024 - dist) / 512.0f;
-            float   newmin = d * ll / 15.0f;
-
-            if(real < newmin)
-            {
-                real = newmin;
-                usewhite = true;    // \fixme Do some linear blending.
-            }
-        }
-
-        // If this is a glowing surface, boost the light up.
+        // If this is a glowing surface, boost the light level up.
         if(poly->flags & RPF_GLOW)
-            real = 1;
-
-        // Clamp the final light.
-        if(real < 0)
-            real = 0;
-        if(real > 1)
-            real = 1;
-
-        if(usewhite)
         {
-            vtx->color.rgba[0] = vtx->color.rgba[1] = vtx->color.rgba[2] =
-                (DGLubyte) (0xff * real);
+            vtx->color.rgba[CR] = vtx->color.rgba[CG] =
+                vtx->color.rgba[CB] = 255;
         }
         else
         {
-            vtx->color.rgba[0] = (DGLubyte) (255 * rgb[0] * real);
-            vtx->color.rgba[1] = (DGLubyte) (255 * rgb[1] * real);
-            vtx->color.rgba[2] = (DGLubyte) (255 * rgb[2] * real);
+            if(!(distanceOverride > 0))
+                dist = Rend_PointDist2D(vtx->pos);
+
+            // Apply distance attenuation.
+            lightVal = distAttenuateLightLevel(dist, lightLevel);
+
+            // Add extra light.
+            lightVal += extraLight / 16.0f;
+
+            // Mix with the surface color.
+            rgb[CR] = lightVal * sufColor[CR];
+            rgb[CG] = lightVal * sufColor[CG];
+            rgb[CB] = lightVal * sufColor[CB];
+
+            // Check for torch.
+            if(viewPlayer->fixedColorMap && dist < 1024)
+            {
+                // Colormap 1 is the brightest. I'm guessing 16 would be
+                // the darkest.
+                int                 ll = 16 - viewPlayer->fixedColorMap;
+                float               d = (1024 - dist) / 1024.0f * ll / 15.0f;
+
+                if(torchAdditive)
+                {
+                    rgb[CR] += d * torchColor[CR];
+                    rgb[CG] += d * torchColor[CG];
+                    rgb[CB] += d * torchColor[CB];
+                }
+                else
+                {
+                    rgb[CR] += d * ((rgb[CR] * torchColor[CR]) - rgb[CR]);
+                    rgb[CG] += d * ((rgb[CG] * torchColor[CG]) - rgb[CG]);
+                    rgb[CB] += d * ((rgb[CB] * torchColor[CB]) - rgb[CB]);
+                }
+            }
+
+            // Set final color.
+            vtx->color.rgba[CR] = (DGLubyte) (255 * MINMAX_OF(0, rgb[CR], 1));
+            vtx->color.rgba[CG] = (DGLubyte) (255 * MINMAX_OF(0, rgb[CG], 1));
+            vtx->color.rgba[CB] = (DGLubyte) (255 * MINMAX_OF(0, rgb[CB], 1));
         }
 
-        vtx->color.rgba[3] = (DGLubyte) (255 * alpha);
+        // Set final alpha.
+        vtx->color.rgba[CA] = (DGLubyte) (255 * MINMAX_OF(0, alpha, 1));
     }
 }
 

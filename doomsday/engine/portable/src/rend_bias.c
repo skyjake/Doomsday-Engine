@@ -840,9 +840,6 @@ void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
     uint                i;
     boolean             forced;
 
-    if(!useBias)
-        return;
-
     // Apply sectorlight bias.  Note: Distance darkening is not used
     // with bias lights.
     if(sectorLightLevel > biasMin && biasMax > biasMin)
