@@ -125,8 +125,8 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
     if(!conInputInited)
         return 0;
 
-    for(n = 0, key = wgetch(winCommand); key != ERR && n < bufsize;
-        key = wgetch(winCommand))
+    for(n = 0, key = wgetch(theWindow->console.winCommand); key != ERR && n < bufsize;
+        key = wgetch(theWindow->console.winCommand))
     {
         // Use the table to translate the vKey to a DDKEY.
         ddkey = translateKey(key);
