@@ -66,6 +66,8 @@
 
 static boolean setDDWindow(ddwindow_t *win, int newWidth, int newHeight,
                            int newBPP, uint wFlags, uint uFlags);
+static void setConWindowCmdLine(uint idx, const char *text,
+                                unsigned int cursorPos, int flags);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -453,7 +455,7 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
 
         keypad(mainWindow.console.winCommand, TRUE);
         nodelay(mainWindow.console.winCommand, TRUE);
-        setConWindowCmdLine(&mainWindow, "", 1, 0);
+        setConWindowCmdLine(1, "", 1, 0);
 
         // The background will also be in reverse.
         wbkgdset(mainWindow.console.winTitle, ' ' | A_REVERSE);
