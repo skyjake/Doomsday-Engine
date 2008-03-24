@@ -143,31 +143,41 @@ boolean PIT_CheckSightLine(linedef_t *line, void *data)
  */
 boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
 {
-    float       origin[2], dest[2];
-    uint        originBlock[2], destBlock[2];
-    float       delta[2];
-    float       partial;
-    fixed_t     intercept[2], step[2];
-    uint        block[2];
-    int         stepDir[2];
-    int         count;
-    gamemap_t  *map = P_GetCurrentMap();
-    vec2_t      bmapOrigin;
 
-    P_GetBlockmapBounds(map->blockMap, bmapOrigin, NULL);
+    uint                originBlock[2], destBlock[2];
+    float               delta[2];
+    float               partial;
+    fixed_t             intercept[2], step[2];
+    uint                block[2];
+    int                 stepDir[2];
+    int                 count;
+    gamemap_t          *map = P_GetCurrentMap();
+    vec2_t              origin, dest, min, max;
 
-    validCount++;
-    P_ClearIntercepts();
+    V2_Set(origin, x1, y1);
+    V2_Set(dest, x2, y2);
 
-    origin[VX] = x1;
-    origin[VY] = y1;
-    dest[VX] = x2;
-    dest[VY] = y2;
+    P_GetBlockmapBounds(map->blockMap, min, max);
+
+    if(!(origin[VX] >= min[VX] && origin[VX] <= max[VX] &&
+         origin[VY] >= min[VY] && origin[VY] <= max[VY]))
+    {   // Origin is outside the blockmap (really? very unusual...)
+        return false;
+    }
+
+    // Check the easy case of a path that lies completely outside the bmap.
+    if((origin[VX] < min[VX] && dest[VX] < min[VX]) ||
+       (origin[VX] > max[VX] && dest[VX] > max[VX]) ||
+       (origin[VY] < min[VY] && dest[VY] < min[VY]) ||
+       (origin[VY] > max[VY] && dest[VY] > max[VY]))
+    {   // Nothing intercepts outside the blockmap!
+        return false;
+    }
 
     // Don't side exactly on blockmap lines.
-    if((FLT2FIX(origin[VX] - bmapOrigin[VX]) & (MAPBLOCKSIZE - 1)) == 0)
+    if((FLT2FIX(origin[VX] - min[VX]) & (MAPBLOCKSIZE - 1)) == 0)
         origin[VX] += 1;
-    if((FLT2FIX(origin[VY] - bmapOrigin[VY]) & (MAPBLOCKSIZE - 1)) == 0)
+    if((FLT2FIX(origin[VY] - min[VY]) & (MAPBLOCKSIZE - 1)) == 0)
         origin[VY] += 1;
 
     strace.pos[VX] = FLT2FIX(origin[VX]);
@@ -175,15 +185,53 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
     strace.dX = FLT2FIX(dest[VX] - origin[VX]);
     strace.dY = FLT2FIX(dest[VY] - origin[VY]);
 
-    // Points should never be out of bounds but check anyway.
+    /**
+     * It is possible that one or both points are outside the blockmap.
+     * Clip path so that dest is within the AABB of the blockmap (note we
+     * would have already abandoned if origin lay outside. Also, to avoid
+     * potential rounding errors which might occur when determining the
+     * blocks later, we will shrink the bbox slightly first.
+     */
+
+    if(!(dest[VX] >= min[VX] && dest[VX] <= max[VX] &&
+         dest[VY] >= min[VY] && dest[VY] <= max[VY]))
+    {   // Dest is outside the blockmap.
+        float               ab;
+        vec2_t              bbox[4], point;
+
+        V2_Set(bbox[0], min[VX] + 1, min[VY] + 1);
+        V2_Set(bbox[1], min[VX] + 1, max[VY] - 1);
+        V2_Set(bbox[2], max[VX] - 1, max[VY] - 1);
+        V2_Set(bbox[3], max[VX] - 1, min[VY] + 1);
+
+        ab = V2_Intercept(origin, dest, bbox[0], bbox[1], point);
+        if(ab >= 0 && ab <= 1)
+            V2_Copy(dest, point);
+
+        ab = V2_Intercept(origin, dest, bbox[1], bbox[2], point);
+        if(ab >= 0 && ab <= 1)
+            V2_Copy(dest, point);
+
+        ab = V2_Intercept(origin, dest, bbox[2], bbox[3], point);
+        if(ab >= 0 && ab <= 1)
+            V2_Copy(dest, point);
+
+        ab = V2_Intercept(origin, dest, bbox[3], bbox[0], point);
+        if(ab >= 0 && ab <= 1)
+            V2_Copy(dest, point);
+    }
+
     if(!(P_ToBlockmapBlockIdx(map->blockMap, originBlock, origin) &&
          P_ToBlockmapBlockIdx(map->blockMap, destBlock, dest)))
+    {   // Should never get here due to the clipping above.
         return false;
+    }
 
-    origin[VX] -= bmapOrigin[VX];
-    origin[VY] -= bmapOrigin[VY];
-    dest[VX] -= bmapOrigin[VX];
-    dest[VY] -= bmapOrigin[VY];
+    validCount++;
+    P_ClearIntercepts();
+
+    V2_Subtract(origin, origin, min);
+    V2_Subtract(dest, dest, min);
 
     if(destBlock[VX] > originBlock[VX])
     {
