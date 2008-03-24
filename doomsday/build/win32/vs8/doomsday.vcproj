@@ -1864,10 +1864,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\smart_header.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\sv_def.h"
 				>
 			</File>
