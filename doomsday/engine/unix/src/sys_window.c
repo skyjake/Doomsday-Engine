@@ -54,6 +54,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define LINELEN             80
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -96,7 +98,8 @@ static void setAttrib(int flags)
  */
 static void writeText(const char *line, int len)
 {
-    wmove(mainWindow.console.winText, cy, cx);
+    wmove(mainWindow.console.winText,
+          mainWindow.console.cy, mainWindow.console.cx);
     waddnstr(mainWindow.console.winText, line, len);
     wclrtoeol(mainWindow.console.winText);
 }
@@ -111,12 +114,12 @@ static int getScreenSize(int axis)
 
 void Sys_ConPrint(uint idx, const char *text, int clflags)
 {
-    ddwindow_t *win;
-    char        line[LINELEN];
-    int         count = strlen(text), lineStart, bPos;
-    const char *ptr = text;
-    char        ch;
-    int         maxPos[2];
+    ddwindow_t     *win;
+    char            line[LINELEN];
+    int             count = strlen(text), lineStart, bPos;
+    const char     *ptr = text;
+    char            ch;
+    int             maxPos[2];
 
     if(!winManagerInited)
         return;
@@ -144,7 +147,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
         }
         win->console.needNewLine = false;
     }
-    bPos = lineStart = cx;
+    bPos = lineStart = win->console.cx;
 
     setAttrib(clflags);
 
@@ -192,11 +195,11 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     wrefresh(win->console.winText);
 
     // Move the cursor back onto the command line.
-    sysSetConWindowCmdLine(1, NULL, 0, 0);
+    setConWindowCmdLine(1, NULL, 0, 0);
 }
 
-static void sysSetConWindowCmdLine(uint idx, const char *text,
-                                   unsigned int cursorPos, int flags)
+static void setConWindowCmdLine(uint idx, const char *text,
+                                unsigned int cursorPos, int flags)
 {
     ddwindow_t  *win;
     unsigned int i;
@@ -412,15 +415,16 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
 }
 
 static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
-                                  int flags, boolean console, const char *title)
+                                  int flags, ddwindowtype_t type,
+                                  const char *title)
 {
     // SDL only supports one window.
     if(mainWindowInited)
         return NULL;
 
-    if(console)
+    if(type == WT_CONSOLE)
     {
-        int         maxPos[2];
+        int                 maxPos[2];
 
         // Initialize curses.
         if(!initscr())
@@ -502,7 +506,7 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
  */
 uint Sys_CreateWindow(application_t *app, uint parentIDX,
                       int x, int y, int w, int h, int bpp, int flags,
-                      boolean console, const char *title, void *data)
+                      ddwindowtype_t type, const char *title, void *data)
 {
     ddwindow_t *win;
 
@@ -512,7 +516,7 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
     if(!winManagerInited)
         return 0; // Window manager not initialized yet.
 
-    win = createDDWindow(app, w, h, bpp, flags, console, title);
+    win = createDDWindow(app, w, h, bpp, flags, type, title);
 
     if(win)
         return 1; // Success.
@@ -533,7 +537,7 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
  */
 boolean Sys_DestroyWindow(uint idx)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t         *window = getWindow(idx - 1);
 
     if(!window)
         return false;
@@ -541,13 +545,13 @@ boolean Sys_DestroyWindow(uint idx)
     if(window->type == WT_CONSOLE)
     {
         // Delete windows and shut down curses.
-        delwin(window.console.winTitle);
-        delwin(window.console.winText);
-        delwin(window.console.winCommand);
+        delwin(window->console.winTitle);
+        delwin(window->console.winText);
+        delwin(window->console.winCommand);
         endwin();
 
-        window.console.winTitle = window.console.winText =
-            window.console.winCommand = NULL;
+        window->console.winTitle = window->console.winText =
+            window->console.winCommand = NULL;
 
         Sys_ConInputShutdown();
     }
@@ -571,10 +575,10 @@ boolean Sys_SetActiveWindow(uint idx)
 static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
                            int newBPP, uint wFlags, uint uFlags)
 {
-    int             width, height, bpp, flags;
-    boolean         newGLContext = false;
-    boolean         changeWindowDimensions = false;
-    boolean         inControlPanel;
+    int                 width, height, bpp, flags;
+    boolean             newGLContext = false;
+    boolean             changeWindowDimensions = false;
+    boolean             inControlPanel;
 
     if(uFlags & DDSW_NOCHANGES)
         return true; // Nothing to do.
