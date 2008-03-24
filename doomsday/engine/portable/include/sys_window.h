@@ -102,8 +102,8 @@ typedef struct {
 #define DDSW_NOVISIBLE          0x08
 #define DDSW_NOFULLSCREEN       0x10
 #define DDSW_NOCENTER           0x20
-#define DDSW_NOCHANGES          (DDSW_NOSIZE | DDSW_NOMOVE | DDSW_NOBPP | \
-                                 DDSW_NOFULLSCREEN | DDSW_NOVISIBLE | \
+#define DDSW_NOCHANGES          (DDSW_NOSIZE & DDSW_NOMOVE & DDSW_NOBPP & \
+                                 DDSW_NOFULLSCREEN & DDSW_NOVISIBLE & \
                                  DDSW_NOCENTER)
 
 /**
