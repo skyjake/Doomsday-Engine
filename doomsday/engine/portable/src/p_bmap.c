@@ -1160,10 +1160,13 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
     scale = bmapDebugSize / MAX_OF(theWindow->height / 100, 1);
 
     if(followMobj)
-    {
-        // Determine the mobj's block.
-        P_ToBlockmapBlockIdx(blockmap, vBlock, followMobj->pos);
+    {   // Determine the mobj's block.
+        if(!P_ToBlockmapBlockIdx(blockmap, vBlock, followMobj->pos))
+            followMobj = NULL; // The target is outside the blockmap.
+    }
 
+    if(followMobj)
+    {
         // Determine the mobj's collision blockbox.
         radius = followMobj->radius + 64; // MAXRADIUS
         V2_Set(start, followMobj->pos[VX] - radius, followMobj->pos[VY] - radius);
