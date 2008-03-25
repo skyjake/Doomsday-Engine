@@ -94,7 +94,7 @@ static void determineGlobalPaths(application_t *app)
     if(ArgCheckWith("-userdir", 1))
     {
         Dir_MakeDir(ArgNext(), &ddRuntimeDir);
-        userDirOk = Dir_ChDir(&ddRuntimeDir);
+        app->userDirOk = Dir_ChDir(&ddRuntimeDir);
     }
 
     // The current working directory is the runtime dir.
