@@ -649,7 +649,7 @@ void C_DECL A_BitchSpecial(mobj_t *mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -669,7 +669,7 @@ void C_DECL A_PossSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -689,7 +689,7 @@ void C_DECL A_SposSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -709,7 +709,7 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -729,7 +729,7 @@ void C_DECL A_NtroSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -749,7 +749,7 @@ void C_DECL A_SargSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -769,7 +769,7 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -789,7 +789,7 @@ void C_DECL A_SkulSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -809,7 +809,7 @@ void C_DECL A_Bos2Special(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -829,7 +829,7 @@ void C_DECL A_BossSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -849,7 +849,7 @@ void C_DECL A_PainSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -869,7 +869,7 @@ void C_DECL A_FattSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -889,7 +889,7 @@ void C_DECL A_BabySpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -909,7 +909,7 @@ void C_DECL A_CybrSpecial(mobj_t* mo)
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is included.
+    if(countMobjsOfType(mo->type))
     {   // There are others like us still alive.
         return;
     }
@@ -2241,7 +2241,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         return; // No one left alive, so do not end game.
 
     // Scan the remaining thinkers to see if all bosses are dead.
-    if(countMobjsOfType(mo->type) > 1) // +1 as this mobj is counted.
+    if(countMobjsOfType(mo->type))
     {   // Other boss not dead.
         return;
     }
