@@ -1837,7 +1837,7 @@ const float *R_GetSectorLightColor(const sector_t *sector)
     if(!rendSkyLight || noSkyColorGiven)
         return sector->rgb; // The sector's real color.
 
-    if(R_SectorContainsSkySurfaces(sector))
+    if(!R_SectorContainsSkySurfaces(sector))
     {
         uint                c;
         sector_t           *src;
