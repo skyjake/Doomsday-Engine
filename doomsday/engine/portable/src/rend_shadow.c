@@ -51,10 +51,10 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int     useShadows = true;
-static int     shadowMaxRad = 80;
-static int     shadowMaxDist = 1000;
-static float   shadowFactor = 0.5f;
+static int useShadows = true;
+static int shadowMaxRad = 80;
+static int shadowMaxDist = 1000;
+static float shadowFactor = 0.5f;
 
 // CODE --------------------------------------------------------------------
 
@@ -72,30 +72,33 @@ void Rend_ShadowRegister(void)
  * The highest floor height will be searched and if larger than the
  * value of 'data' it will be written back.
  *
- * @param sector    The sector to search the floor height of.
- * @param data      Ptr to a float containing the height to compare.
+ * @param sector        The sector to search the floor height of.
+ * @param data          Ptr to plane_t for comparison.
  *
- * @return          @c true, if iteration should continue.
+ * @return              @c true, if iteration should continue.
  */
 static boolean Rend_ShadowIterator(sector_t *sector, void *data)
 {
-    float  *height = data;
-    float   floor = sector->SP_floorvisheight;
+    plane_t           **highest = (plane_t**) data;
+    plane_t            *compare = sector->SP_plane(PLN_FLOOR);
 
-    if(floor > *height)
-        *height = floor;
-    return true;                // Continue iteration.
+    if(compare->visHeight > (*highest)->visHeight)
+        *highest = compare;
+    return true; // Continue iteration.
 }
 
-static void Rend_ProcessMobjShadow(mobj_t *mo)
+static void processMobjShadow(mobj_t *mo)
 {
-    float       moz;
-    float       height, moh, halfmoh, color, pos[2], floor;
-    sector_t   *sec = mo->subsector->sector;
-    float       radius;
-    uint        i;
-    rendpoly_t *poly;
-    float       distance;
+#define SHADOWZOFFSET       (0.2f)
+
+    float               moz;
+    float               height, moh, halfmoh, color, pos[2];
+    sector_t           *sec = mo->subsector->sector;
+    float               radius;
+    uint                i;
+    rendpoly_t         *poly;
+    plane_t            *plane;
+    float               distance;
 
     // Is this too far?
     pos[VX] = mo->pos[VX];
@@ -106,7 +109,7 @@ static void Rend_ProcessMobjShadow(mobj_t *mo)
     // Apply a Short Range Visual Offset?
     if(useSRVO && mo->state && mo->tics >= 0)
     {
-        float   mul = mo->tics / (float) mo->state->tics;
+        float               mul = mo->tics / (float) mo->state->tics;
 
         pos[VX] += mo->srvo[VX] * mul;
         pos[VY] += mo->srvo[VY] * mul;
@@ -122,7 +125,7 @@ static void Rend_ProcessMobjShadow(mobj_t *mo)
     if(!moh)
         moh = 1;
     if(height > moh)
-        return;                 // Too far.
+        return; // Too far.
     if(moz + mo->height < mo->floorZ)
         return;
 
@@ -143,7 +146,7 @@ static void Rend_ProcessMobjShadow(mobj_t *mo)
         color *= (shadowMaxDist - distance) / (shadowMaxDist / 4);
     }
     if(color <= 0)
-        return;                 // Can't be seen.
+        return; // Can't be seen.
     if(color > 1)
         color = 1;
 
@@ -155,14 +158,18 @@ static void Rend_ProcessMobjShadow(mobj_t *mo)
         radius = (float) shadowMaxRad;
 
     // Figure out the visible floor height.
-    floor = mo->subsector->sector->SP_floorvisheight;
-    P_MobjSectorsIterator(mo, Rend_ShadowIterator, &floor);
+    plane = mo->subsector->sector->SP_plane(PLN_FLOOR);
+    P_MobjSectorsIterator(mo, Rend_ShadowIterator, &plane);
 
-    if(floor >= moz + mo->height)
+    if(plane->visHeight >= moz + mo->height)
         return; // Can't have a shadow above the object!
 
     // View height might prevent us from seeing the shadow.
-    if(vy < floor)
+    if(vy < plane->visHeight)
+        return;
+
+    // Don't render mobj shadows on sky floors or glowing surfaces.
+    if(R_IsGlowingPlane(plane))
         return;
 
     // Prepare the poly.
@@ -172,20 +179,19 @@ static void Rend_ProcessMobjShadow(mobj_t *mo)
     poly->tex.width = poly->tex.height = radius * 2;
     poly->texOffset[VX] = -pos[VX] + radius;
     poly->texOffset[VY] = -pos[VY] - radius;
-    floor += 0.2f;    // A bit above the floor.
 
     poly->vertices[0].pos[VX] = pos[VX] - radius;
     poly->vertices[0].pos[VY] = pos[VY] + radius;
-    poly->vertices[0].pos[VZ] = floor;
+    poly->vertices[0].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
     poly->vertices[1].pos[VX] = pos[VX] + radius;
     poly->vertices[1].pos[VY] = pos[VY] + radius;
-    poly->vertices[1].pos[VZ] = floor;
+    poly->vertices[1].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
     poly->vertices[2].pos[VX] = pos[VX] + radius;
     poly->vertices[2].pos[VY] = pos[VY] - radius;
-    poly->vertices[2].pos[VZ] = floor;
+    poly->vertices[2].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
     poly->vertices[3].pos[VX] = pos[VX] - radius;
     poly->vertices[3].pos[VY] = pos[VY] - radius;
-    poly->vertices[3].pos[VZ] = floor;
+    poly->vertices[3].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
 
     poly->normal[0] = poly->normal[1] = 0;
     poly->normal[2] = 1;
@@ -199,15 +205,17 @@ static void Rend_ProcessMobjShadow(mobj_t *mo)
 
     RL_AddPoly(poly);
     R_FreeRendPoly(poly);
+
+#undef SHADOWZOFFSET
 }
 
 void Rend_RenderShadows(void)
 {
-    sector_t   *sec;
-    mobj_t     *mo;
-    uint        i;
+    sector_t               *sec;
+    mobj_t                 *mo;
+    uint                    i;
 
-    if(!useShadows)
+    if(!useShadows || levelFullBright)
         return;
 
     // Check all mobjs in all visible sectors.
@@ -215,10 +223,6 @@ void Rend_RenderShadows(void)
     {
         sec = SECTOR_PTR(i);
         if(!(sec->frameFlags & SIF_VISIBLE))
-            continue;
-
-        // Don't render mobj shadows on sky floors.
-        if(R_IsSkySurface(&sec->SP_floorsurface))
             continue;
 
         for(mo = sec->mobjList; mo; mo = mo->sNext)
@@ -231,7 +235,7 @@ void Rend_RenderShadows(void)
                (mo->ddFlags & DDMF_ALWAYSLIT))
                 continue;
 
-            Rend_ProcessMobjShadow(mo);
+            processMobjShadow(mo);
         }
     }
 }

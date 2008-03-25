@@ -708,7 +708,7 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, linedef_t *line,
     size = shadowSize + calcLongWallBonus(spans[TOP].length);
     limit = fCeil - size;
     if((quad->vertices[3].pos[VZ] > limit && quad->vertices[0].pos[VZ] < fCeil) &&
-       R_IsNonGlowingPlane(frontSector, PLN_CEILING))
+       !R_IsGlowingPlane(frontSector->SP_plane(PLN_CEILING)))
     {
         setRendpolyTexCoordY(quad, size);
         texture = LST_RADIO_OO;
@@ -835,7 +835,7 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, linedef_t *line,
     size = shadowSize + calcLongWallBonus(spans[BOTTOM].length) / 2;
     limit = fFloor + size;
     if((quad->vertices[0].pos[VZ] < limit && quad->vertices[3].pos[VZ] > fFloor) &&
-       R_IsNonGlowingPlane(frontSector, PLN_FLOOR))
+       !R_IsGlowingPlane(frontSector->SP_plane(PLN_FLOOR)))
     {
         setRendpolyTexCoordY(quad, -size);
         texture = LST_RADIO_OO;
@@ -959,8 +959,8 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, linedef_t *line,
 
     // Walls with glowing floor & ceiling get no side shadows.
     // Is there anything better we can do?
-    if(!(R_IsNonGlowingPlane(frontSector, PLN_FLOOR)) &&
-       !(R_IsNonGlowingPlane(frontSector, PLN_CEILING)))
+    if(R_IsGlowingPlane(frontSector->SP_plane(PLN_FLOOR)) &&
+       R_IsGlowingPlane(frontSector->SP_plane(PLN_CEILING)))
     {
         R_FreeRendPoly(quad);
         return;
@@ -1022,12 +1022,12 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, linedef_t *line,
         {
             if(bFloor > fFloor && bCeil < fCeil)
             {
-                if(R_IsNonGlowingPlane(frontSector, PLN_FLOOR) &&
-                   R_IsNonGlowingPlane(frontSector, PLN_CEILING))
+                if(!R_IsGlowingPlane(frontSector->SP_plane(PLN_FLOOR)) &&
+                   !R_IsGlowingPlane(frontSector->SP_plane(PLN_CEILING)))
                 {
                     texture = LST_RADIO_CC;
                 }
-                else if(!(R_IsNonGlowingPlane(frontSector, PLN_FLOOR)))
+                else if(R_IsGlowingPlane(frontSector->SP_plane(PLN_FLOOR)))
                 {
                     quad->texOffset[VY] = quad->vertices[0].pos[VZ] - fCeil;
                     quad->tex.height = -(fCeil - fFloor);
@@ -1038,12 +1038,12 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, linedef_t *line,
             }
             else if(bFloor > fFloor)
             {
-                if(R_IsNonGlowingPlane(frontSector, PLN_FLOOR) &&
-                   R_IsNonGlowingPlane(frontSector, PLN_CEILING))
+                if(!R_IsGlowingPlane(frontSector->SP_plane(PLN_FLOOR)) &&
+                   !R_IsGlowingPlane(frontSector->SP_plane(PLN_CEILING)))
                 {
                     texture = LST_RADIO_CC;
                 }
-                else if(!(R_IsNonGlowingPlane(frontSector, PLN_FLOOR)))
+                else if(R_IsGlowingPlane(frontSector->SP_plane(PLN_FLOOR)))
                 {
                     quad->texOffset[VY] = quad->vertices[0].pos[VZ] - fCeil;
                     quad->tex.height = -(fCeil - fFloor);
@@ -1054,12 +1054,12 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, linedef_t *line,
             }
             else if(bCeil < fCeil)
             {
-                if(R_IsNonGlowingPlane(frontSector, PLN_FLOOR) &&
-                   R_IsNonGlowingPlane(frontSector, PLN_CEILING))
+                if(!R_IsGlowingPlane(frontSector->SP_plane(PLN_FLOOR)) &&
+                   !R_IsGlowingPlane(frontSector->SP_plane(PLN_CEILING)))
                 {
                     texture = LST_RADIO_CC;
                 }
-                else if(!(R_IsNonGlowingPlane(frontSector, PLN_FLOOR)))
+                else if(R_IsGlowingPlane(frontSector->SP_plane(PLN_FLOOR)))
                 {
                     quad->texOffset[VY] = quad->vertices[0].pos[VZ] - fCeil;
                     quad->tex.height = -(fCeil - fFloor);
@@ -1071,12 +1071,12 @@ void Rend_RadioSegSection(const rendpoly_t *origQuad, linedef_t *line,
         }
         else
         {
-            if(!(R_IsNonGlowingPlane(frontSector, PLN_FLOOR)))
+            if(R_IsGlowingPlane(frontSector->SP_plane(PLN_FLOOR)))
             {
                 setRendpolyTexCoordY(quad, -(fCeil - fFloor));
                 texture = LST_RADIO_CO;
             }
-            else if(!(R_IsNonGlowingPlane(frontSector, PLN_CEILING)))
+            else if(R_IsGlowingPlane(frontSector->SP_plane(PLN_CEILING)))
                 texture = LST_RADIO_CO;
             else
                 texture = LST_RADIO_CC;
@@ -1320,7 +1320,7 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
     {
         plane_t            *plane = subsector->sector->planes[pln];
 
-        if(!R_IsNonGlowingPlane(subsector->sector, pln))
+        if(R_IsGlowingPlane(plane))
             continue;
 
         vec[VZ] = vy - plane->visHeight;

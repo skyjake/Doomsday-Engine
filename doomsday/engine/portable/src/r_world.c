@@ -1674,18 +1674,17 @@ sector_t *R_GetLinkedSector(subsector_t *startssec, uint plane)
 }
 
 /**
- * Is the specified plane non-glowing?
+ * Is the specified plane glowing (it glows or is a sky mask surface)?
  *
  * @return              @c true, if the specified plane is non-glowing,
  *                      i.e. not glowing or a sky.
  */
-boolean R_IsNonGlowingPlane(const sector_t* sector, int plane)
+boolean R_IsGlowingPlane(const plane_t *pln)
 {
-    material_t         *mat = sector->SP_planematerial(plane);
+    material_t         *mat = pln->surface.material;
 
-    return !(!(mat && mat->ofTypeID > 0) ||
-              sector->SP_planeglow(plane) ||
-             R_IsSkySurface(&sector->SP_planesurface(plane)));
+    return (!(mat && mat->ofTypeID > 0) || pln->glow > 0 ||
+            R_IsSkySurface(&pln->surface));
 }
 
 /**
