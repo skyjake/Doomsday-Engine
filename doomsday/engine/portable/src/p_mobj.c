@@ -121,7 +121,7 @@ void P_InitUnusedMobjList(void)
 mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
                      angle_t angle, float radius, float height, int ddflags)
 {
-    mobj_t         *mo;
+    mobj_t             *mo;
 
     // Do we have any unused mobjs we can reuse?
     if(unusedMobjs)
@@ -212,11 +212,11 @@ void P_MobjSetState(mobj_t *mobj, int statenum)
 /**
  * Adjusts tmpFloorZ and tmpCeilingZ as lines are contacted.
  */
-boolean PIT_CheckLine(linedef_t *ld, void *parm)
+boolean PIT_LineCollide(linedef_t *ld, void *parm)
 {
-    int         pX, pY;
-    checkpos_data_t *tm = parm;
-    vec2_t      box[2], point;
+    int                 pX, pY;
+    checkpos_data_t    *tm = parm;
+    vec2_t              box[2], point;
 
     // Setup the bounding box for the line.
     pX = (ld->L_v1pos[VX] < ld->L_v2pos[VX]);
@@ -261,11 +261,11 @@ boolean PIT_CheckLine(linedef_t *ld, void *parm)
     return true;
 }
 
-boolean PIT_CheckMobj(mobj_t *mo, void *parm)
+boolean PIT_MobjCollide(mobj_t *mo, void *parm)
 {
-    checkpos_data_t *tm = parm;
-    float       blockdist;
-    boolean     overlap = false;
+    checkpos_data_t    *tm = parm;
+    float               blockdist;
+    boolean             overlap = false;
 
     // Don't clip against self.
     if(mo == tm->mo)
@@ -336,15 +336,15 @@ boolean PIT_CheckMobj(mobj_t *mo, void *parm)
 }
 
 /**
- * @return                  @c true, if the mobj can be positioned at the
- *                          specified coordinates.
+ * @return              @c true, if the mobj can be positioned at the
+ *                      specified coordinates.
  */
 boolean P_CheckPosXYZ(mobj_t *mo, float x, float y, float z)
 {
-    subsector_t *newsubsec;
-    checkpos_data_t data;
-    vec2_t      point;
-    boolean     result = true;
+    subsector_t        *newsubsec;
+    checkpos_data_t     data;
+    vec2_t              point;
+    boolean             result = true;
 
     blockingMobj = NULL;
     mo->onMobj = NULL;
@@ -378,7 +378,7 @@ boolean P_CheckPosXYZ(mobj_t *mo, float x, float y, float z)
     // Check mobjs first, possibly picking stuff up.
     if(!dontHitMobjs)
     {
-        if(!P_MobjsBoxIteratorv(data.box, PIT_CheckMobj, &data))
+        if(!P_MobjsBoxIteratorv(data.box, PIT_MobjCollide, &data))
         {
             result = false;
         }
@@ -388,7 +388,7 @@ boolean P_CheckPosXYZ(mobj_t *mo, float x, float y, float z)
     if(result)
     {   // Nope.
         // Try polyobj->lineDefs and lines.
-        if(!P_AllLinesBoxIteratorv(data.box, PIT_CheckLine, &data))
+        if(!P_AllLinesBoxIteratorv(data.box, PIT_LineCollide, &data))
         {
             result = false;
         }
@@ -418,8 +418,8 @@ boolean P_CheckPosXY(mobj_t *mo, float x, float y)
  */
 boolean P_TryMoveXYZ(mobj_t *mo, float x, float y, float z)
 {
-    int     links = 0;
-    boolean goodPos;
+    int                 links = 0;
+    boolean             goodPos;
 
     blockingMobj = NULL;
 
@@ -484,9 +484,9 @@ boolean P_TryMoveXYZ(mobj_t *mo, float x, float y, float z)
  */
 boolean P_StepMove(mobj_t *mo, float dx, float dy, float dz)
 {
-    float       delta[3];
-    float       step[3];
-    boolean     notHit = true;
+    float               delta[3];
+    float               step[3];
+    boolean             notHit = true;
 
     delta[VX] = dx;
     delta[VY] = dy;
@@ -555,7 +555,7 @@ boolean P_StepMove(mobj_t *mo, float dx, float dy, float dz)
  */
 static boolean heightClip(mobj_t *mo)
 {
-    boolean onfloor;
+    boolean             onfloor;
 
     // During demo playback the player gets preferential treatment.
     if(mo->dPlayer == &players[consolePlayer] && playback)
@@ -636,10 +636,10 @@ boolean P_IsInVoid(ddplayer_t *player)
  */
 static void wallMomSlide(linedef_t *ld)
 {
-    int         side;
-    uint        an;
-    float       movelen, newlen;
-    angle_t     moveangle, lineangle, deltaangle;
+    int                 side;
+    uint                an;
+    float               movelen, newlen;
+    angle_t             moveangle, lineangle, deltaangle;
 
     // First check the simple cases.
     if(ld->slopeType == ST_HORIZONTAL)
@@ -676,7 +676,7 @@ static void wallMomSlide(linedef_t *ld)
 
 boolean PTR_SlideTraverse(intercept_t *in)
 {
-    linedef_t     *li;
+    linedef_t          *li;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: not a line?");
@@ -730,10 +730,10 @@ boolean PTR_SlideTraverse(intercept_t *in)
  */
 static void mobjSlideMove(mobj_t *mo)
 {
-    float       leadPos[2];
-    float       trailPos[2];
-    float       delta[2];
-    int         hitcount;
+    float               leadPos[2];
+    float               trailPos[2];
+    float               delta[2];
+    int                 hitcount;
 
     slideMo = mo;
     hitcount = 0;
@@ -862,10 +862,10 @@ void P_MobjMovement(mobj_t *mo)
  */
 void P_MobjMovement2(mobj_t *mo, void *pstate)
 {
-    playerstate_t *playstate = pstate;
-    float       tryPos[3];
-    float       delta[3];
-    ddplayer_t *player;
+    playerstate_t      *playstate = pstate;
+    float               tryPos[3];
+    float               delta[3];
+    ddplayer_t         *player;
 
     if(mo->mom[MX] == 0 && mo->mom[MY] == 0)
         return; // This isn't moving anywhere.
@@ -968,7 +968,7 @@ void P_MobjMovement2(mobj_t *mo, void *pstate)
 
 void P_MobjZMovement(mobj_t *mo)
 {
-    float       gravity = FIX2FLT(mapGravity);
+    float               gravity = FIX2FLT(mapGravity);
 
     // check for smooth step up
     if(mo->dPlayer && mo->pos[VZ] < mo->floorZ)
