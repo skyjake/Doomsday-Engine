@@ -674,7 +674,7 @@ static void wallMomSlide(linedef_t *ld)
     tmpMom[VY] = newlen * FIX2FLT(finesine[an]);
 }
 
-boolean PTR_SlideTraverse(intercept_t *in)
+static boolean slideTraverse(intercept_t *in)
 {
     linedef_t          *li;
 
@@ -769,13 +769,13 @@ static void mobjSlideMove(mobj_t *mo)
 
     P_PathTraverse(leadPos[VX], leadPos[VY],
                    leadPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],
-                   PT_ADDLINES, PTR_SlideTraverse);
+                   PT_ADDLINES, slideTraverse);
     P_PathTraverse(trailPos[VX], leadPos[VY],
                    trailPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],
-                   PT_ADDLINES, PTR_SlideTraverse);
+                   PT_ADDLINES, slideTraverse);
     P_PathTraverse(leadPos[VX], trailPos[VY],
                    leadPos[VX] + mo->mom[MX], trailPos[VY] + mo->mom[MY],
-                   PT_ADDLINES, PTR_SlideTraverse);
+                   PT_ADDLINES, slideTraverse);
 
     // Move up to the wall.
     if(bestSlideFrac == FIX2FLT(FRACUNIT + 1))
