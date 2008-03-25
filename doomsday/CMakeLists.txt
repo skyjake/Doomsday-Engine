@@ -600,28 +600,199 @@ ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
 
-FILE(GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c)
-SET (DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c)
+SET (DENG_PORTABLE_SOURCES
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/b_class.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/b_command.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/b_device.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/b_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/b_util.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/bsp_analyze.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/bsp_edge.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/bsp_intersection.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/bsp_level.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/bsp_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/bsp_node.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/bsp_superblock.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/cl_frame.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/cl_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/cl_mobj.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/cl_oldframe.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/cl_oldworld.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/cl_player.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/cl_sound.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/cl_world.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/con_bar.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/con_buffer.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/con_busy.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/con_config.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/con_data.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/con_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dam_blockmap.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dam_file.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dam_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dam_reject.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dd_help.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dd_input.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dd_loop.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dd_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dd_pinit.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dd_plugin.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dd_wad.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dd_zip.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dd_zone.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/def_data.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/def_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/def_read.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dgl_common.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dgl_draw.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dgl_ext.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/dgl_texture.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/edit_bias.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/edit_map.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_defer.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_draw.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_font.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_hq2x.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_pcx.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_png.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_tex.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_texmanager.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/gl_tga.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_args.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_bams.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_binarytree.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_filehash.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_gridmap.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_huffman.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_linkedlist.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_md5.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_misc.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_nodepile.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_string.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/m_vector.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/net_buf.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/net_demo.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/net_event.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/net_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/net_msg.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/net_ping.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_bmap.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_cmd.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_control.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_data.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_dmu.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_intercept.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_linedef.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_maputil.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_mobj.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_particle.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_plane.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_players.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_polyob.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_polyobj.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_sector.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_seg.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_sidedef.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_sight.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_subsector.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_surface.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_think.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_ticker.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_vertex.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_data.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_draw.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_extres.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_lgrid.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_lumobjs.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_materials.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_model.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_shadow.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_sky.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_things.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_util.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/r_world.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_bias.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_clip.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_console.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_decor.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_dyn.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_fakeradio.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_halo.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_list.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_model.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_particle.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_shadow.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_sky.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/rend_sprite.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/s_cache.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/s_environ.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/s_logic.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/s_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/s_mus.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/s_sfx.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/s_wav.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sv_frame.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sv_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sv_missile.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sv_pool.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sv_sound.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_direc.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_filein.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_master.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_network.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_sdl_window.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_sfxd_dummy.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_sock.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_system.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_timer.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/tab_tables.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/ui_main.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/ui_mpi.c
+     ${CMAKE_SOURCE_DIR}/engine/portable/src/ui_panel.c
+     ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c)
 
 IF (UNIX)
     IF (NOT WIN32)
         INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/unix/include )
-        FILE(GLOB DENG_UNIX_SOURCES ${CMAKE_SOURCE_DIR}/engine/unix/src/*.c)
-        SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_UNIX_SOURCES} ${LZSS_SOURCES})
+        SET (DENG_ARCH_SPECIFIC_SOURCES
+             ${CMAKE_SOURCE_DIR}/engine/unix/src/dd_uinit.c
+             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_console.c
+             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_dylib.c
+             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_findfile.c
+             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_input.c
+             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_mixer.c
+             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_path.c
+             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_sfxd_loader.c
+             ${LZSS_SOURCES})
     ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (WIN32)
     INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/win32/include )
-    FILE(GLOB DENG_WIN32_SOURCES ${CMAKE_SOURCE_DIR}/engine/win32/src/*.c)
-    SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_WIN32_SOURCES}  ${LZSS_SOURCES})
+    SET (DENG_ARCH_SPECIFIC_SOURCES
+         ${CMAKE_SOURCE_DIR}/engine/win32/src/dd_winit.c
+         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_cdaudio.c
+         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_console.c
+         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_findfile.c
+         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c
+         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_mixer.c
+         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_musd_win.c
+         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_ds.c
+         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
+         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_window.c
+         ${LZSS_SOURCES})
 ENDIF (WIN32)
 
 ## .m is Obj-C
 IF (APPLE)
     INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/mac/include )
-    FILE(GLOB DENG_OSX_SOURCES ${CMAKE_SOURCE_DIR}/engine/mac/src/*.m)
-    SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_OSX_SOURCES})
+    SET (DENG_ARCH_SPECIFIC_SOURCES
+    	 ${CMAKE_SOURCE_DIR}/engine/mac/src/DoomsdayRunner.m
+    	 ${CMAKE_SOURCE_DIR}/engine/mac/src/SDLMain.m
+         ${CMAKE_SOURCE_DIR}/engine/mac/src/StartupWindowController.m)
 ENDIF (APPLE)
 
 IF (APPLE)
@@ -633,7 +804,7 @@ IF (APPLE)
     SET (MACOSX_BUNDLE_SHORT_VERSION_STRING "1.9.0-beta5" )
     SET (MACOSX_BUNDLE_BUNDLE_VERSION "1.0.0" )
     ## Aplhabetical order ok ?
-    SET (MACOSX_BUNDLE_COPYRIGHT "2006, DaniJ, Skyjake, Yagisan" )
+    SET (MACOSX_BUNDLE_COPYRIGHT "2008, DaniJ, Skyjake, Yagisan" )
 ENDIF (APPLE)
 
 
