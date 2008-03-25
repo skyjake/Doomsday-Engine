@@ -1738,6 +1738,7 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
     // regular world polys (with a few obvious properties).
     if((poly->flags & RPF_SKY_MASK) && debugSky)
     {
+        int                 i;
         texinfo_t          *texinfo;
 
         poly->tex.id = curTex =
@@ -1750,6 +1751,11 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
         poly->lightListIdx = 0;
         poly->flags &= ~RPF_SKY_MASK;
         poly->flags |= RPF_GLOW;
+
+        for(i = 0; i < poly->numVertices; ++i)
+            poly->vertices[i].color.rgba[CR] =
+                poly->vertices[i].color.rgba[CG] =
+                    poly->vertices[i].color.rgba[CB] = 255;
     }
 
     // Are lights allowed?
