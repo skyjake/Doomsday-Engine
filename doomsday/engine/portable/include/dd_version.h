@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,18 +19,18 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * dd_version.h: Version Information
  */
 
 #ifndef __DOOMSDAY_VERSION_INFO_H__
 #define __DOOMSDAY_VERSION_INFO_H__
 
-/*
+/**
  * Version number rules: (major).(minor).(revision)-(release)
  *
  * Major version will be 1 for now (few things short of a complete
@@ -42,7 +43,7 @@
  * Revision number increases with each small (maintenance) release.
  */
 
-/*
+/**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
  * verify that the engine is new enough.  Don't change
  * DOOMSDAY_VERSION unless you wish to break compatibility.

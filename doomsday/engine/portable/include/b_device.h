@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * b_device.h: Control-Device Bindings
  */
 
@@ -43,14 +44,14 @@ typedef enum cbdevtype_e {
 typedef struct dbinding_s {
     struct dbinding_s* next;
     struct dbinding_s* prev;
-    
+
     int         bid;
     uint        device;
     cbdevtype_t type;
     int         id;
     float       angle;
     uint        flags;
-    
+
     // Additional conditions.
     int         numConds;
     statecondition_t* conds;
@@ -61,7 +62,7 @@ void        B_DestroyDeviceBindingList(dbinding_t* listRoot);
 dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc);
 void        B_DestroyDeviceBinding(dbinding_t* cb);
 void        B_DeviceBindingToString(const dbinding_t* b, ddstring_t* str);
-void        B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relativeOffset, 
+void        B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relativeOffset,
                                         struct bclass_s* controlClass);
 
 #endif // __DOOMSDAY_BIND_DEVICE_H__
