@@ -160,7 +160,7 @@ typedef unsigned char binangle_t;
 #define DDMINSHORT	((short)0x8000)
 #define DDMININT 	((int)0x80000000)	// max negative 32-bit integer
 #define DDMINLONG	((long)0x80000000)
-#define DDMINFLOAT  ((float)1E-37)
+#define DDMINFLOAT  ((float)-(1E+37))
 
 // Predeclarations for map data types. The contents of these structs is
 // declared in p_maptypes.h.
