@@ -50,7 +50,7 @@
 #include "de_network.h"
 #include "de_misc.h"
 
-#include "dd_pinit.h"
+#include "dd_uinit.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -156,8 +156,8 @@ static lt_dlhandle *NextPluginHandle(void)
 
 	for(i = 0; i < MAX_PLUGS; ++i)
 	{
-		if(!app.hPlugins[i])
-            return &app.hPlugins[i];
+		if(!app.hInstPlug[i])
+            return &app.hInstPlug[i];
 	}
 
     return NULL;
@@ -427,7 +427,7 @@ int main(int argc, char **argv)
  */
 void DD_Shutdown(void)
 {
-	int         i;
+	int                 i;
 
 	// Shutdown all subsystems.
 	DD_ShutdownAll();
@@ -435,11 +435,11 @@ void DD_Shutdown(void)
 	SDL_Quit();
 
 	// Close the dynamic libraries.
-	lt_dlclose(app.hGame);
-	app.hGame = NULL;
-	for(i = 0; app.hPlugins[i]; ++i)
-		lt_dlclose(app.hPlugins[i]);
-	memset(app.hPlugins, 0, sizeof(app.hPlugins));
+	lt_dlclose(app.hInstGame);
+	app.hInstGame = NULL;
+	for(i = 0; app.hInstPlug[i]; ++i)
+		lt_dlclose(app.hInstPlug[i]);
+	memset(app.hInstPlug, 0, sizeof(app.hInstPlug));
 
 	lt_dlexit();
 }
