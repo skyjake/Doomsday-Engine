@@ -743,7 +743,6 @@ SET (DENG_PORTABLE_SOURCES
      ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_filein.c
      ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_master.c
      ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_network.c
-     ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_sdl_window.c
      ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_sfxd_dummy.c
      ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_sock.c
      ${CMAKE_SOURCE_DIR}/engine/portable/src/sys_system.c
@@ -766,6 +765,7 @@ IF (UNIX)
              ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_mixer.c
              ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_path.c
              ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_sfxd_loader.c
+             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_window.c
              ${LZSS_SOURCES})
     ENDIF (NOT WIN32)
 ENDIF (UNIX)
@@ -792,7 +792,8 @@ IF (APPLE)
     SET (DENG_ARCH_SPECIFIC_SOURCES
     	 ${CMAKE_SOURCE_DIR}/engine/mac/src/DoomsdayRunner.m
     	 ${CMAKE_SOURCE_DIR}/engine/mac/src/SDLMain.m
-         ${CMAKE_SOURCE_DIR}/engine/mac/src/StartupWindowController.m)
+         ${CMAKE_SOURCE_DIR}/engine/mac/src/StartupWindowController.m
+         ${CMAKE_SOURCE_DIR}/engine/mac/src/sys_window.c)
 ENDIF (APPLE)
 
 IF (APPLE)
