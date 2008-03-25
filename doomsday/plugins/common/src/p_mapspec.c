@@ -349,7 +349,7 @@ sector_t* P_FindSectorSurroundingNextLowestLight(sector_t *sec,
     params.baseLight = baseLight;
     params.flags = 0;
     params.foundSec = NULL;
-    params.val = DDMAXFLOAT;
+    params.val = DDMINFLOAT;
     P_Iteratep(sec, DMU_LINEDEF, &params, findNextLightLevel);
 
     if(*val)
@@ -370,7 +370,7 @@ sector_t* P_FindSectorSurroundingNextHighestLight(sector_t *sec,
     params.baseLight = baseLight;
     params.flags = FNLLF_ABOVE;
     params.foundSec = NULL;
-    params.val = DDMINFLOAT;
+    params.val = DDMAXFLOAT;
     P_Iteratep(sec, DMU_LINEDEF, &params, findNextLightLevel);
 
     if(*val)
@@ -553,7 +553,7 @@ sector_t* P_FindSectorSurroundingNextHighestFloor(sector_t *sec,
     params.baseHeight = baseHeight;
     params.flags = FNPHF_FLOOR | FNPHF_ABOVE;
     params.foundSec = NULL;
-    params.val = DDMINFLOAT;
+    params.val = DDMAXFLOAT;
     P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
 
     if(val)
@@ -575,7 +575,7 @@ sector_t* P_FindSectorSurroundingNextHighestCeiling(sector_t *sec,
     params.baseHeight = baseHeight;
     params.flags = FNPHF_ABOVE;
     params.foundSec = NULL;
-    params.val = DDMINFLOAT;
+    params.val = DDMAXFLOAT;
     P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
 
     if(val)
@@ -597,7 +597,7 @@ sector_t* P_FindSectorSurroundingNextLowestFloor(sector_t *sec,
     params.baseHeight = baseHeight;
     params.flags = FNPHF_FLOOR;
     params.foundSec = NULL;
-    params.val = DDMAXFLOAT;
+    params.val = DDMINFLOAT;
     P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
 
     if(val)
@@ -619,7 +619,7 @@ sector_t* P_FindSectorSurroundingNextLowestCeiling(sector_t *sec,
     params.baseHeight = baseHeight;
     params.flags = 0;
     params.foundSec = NULL;
-    params.val = DDMAXFLOAT;
+    params.val = DDMINFLOAT;
     P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
 
     if(val)
