@@ -144,7 +144,7 @@ int EV_BuildStairs(linedef_t *line, stair_e type)
         params.material = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
         params.foundSec = NULL;
 
-        while(!P_Iteratep(sec, DMU_LINEDEF, &params,
+        while(!P_Iteratep(params.baseSec, DMU_LINEDEF, &params,
                           findAdjacentSectorForSpread))
         {   // We found another sector to spread to.
             height += stairsize;
