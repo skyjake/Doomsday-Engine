@@ -1042,8 +1042,8 @@ void R_SortVisSprites(void)
 
 void R_SetAmbientColor(float *rgba, float lightLevel, float distance)
 {
-    uint        i;
-    rendpoly_t *poly;
+    uint                i;
+    rendpoly_t         *poly;
 
     // This way the distance darkening has an effect.
     poly = R_AllocRendPoly(RP_NONE, false, 1);
@@ -1053,7 +1053,7 @@ void R_SetAmbientColor(float *rgba, float lightLevel, float distance)
 
     // Determine the ambient light affecting the vissprite.
     for(i = 0; i < 3; ++i)
-        ambientColor[i] = poly->vertices[0].color.rgba[i] * reciprocal255;
+        ambientColor[i] = poly->vertices[0].color[i];
 
     R_FreeRendPoly(poly);
 }

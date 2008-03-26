@@ -347,26 +347,22 @@ static int C_DECL DivSortDescend(const void *e1, const void *e2)
     return 0;
 }
 
-static void Rend_ShinySurfaceColor(gl_rgba_t *color, ded_reflection_t *ref)
+static void Rend_ShinySurfaceColor(float color[4], ded_reflection_t *ref)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; i < 3; ++i)
     {
-        DGLubyte minimum = (DGLubyte) (ref->minColor[i] * 255);
+        float               min = ref->minColor[i];
 
-        if(color->rgba[i] < minimum)
-        {
-            color->rgba[i] = minimum;
-        }
+        if(color[i] < min)
+            color[i] = min;
     }
 
-    color->rgba[3] = (DGLubyte) (ref->shininess * 255);
-/*
-Con_Printf("shiny = %i %i %i %i\n",
-           (int) color->rgba[0], (int) color->rgba[1], (int) color->rgba[2],
-           (int) color->rgba[3]);
-*/
+    color[CA] = ref->shininess;
+
+    /*Con_Printf("shiny = %g %g %g %g\n", color[CR], color[CG], color[CB],
+           color[CA]);*/
 }
 
 static ded_reflection_t *getReflectionDef(material_t *material, short *width,
@@ -446,7 +442,7 @@ static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
     // Strength of the shine.
     for(i = 0; i < poly->numVertices; ++i)
     {
-        Rend_ShinySurfaceColor(&poly->vertices[i].color, ref);
+        Rend_ShinySurfaceColor(poly->vertices[i].color, ref);
     }
 
     // The mask texture is stored in the intertex.
@@ -1320,13 +1316,13 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                     // Bottom color (if different from top)?
                     if(bottomColor != NULL)
                     {
-                        uint        i;
+                        uint                i;
 
                         for(i = 0; i < 4; i += 2)
                         {
-                            quad->vertices[i].color.rgba[0] = (DGLubyte) (255 * bottomColor[0]);
-                            quad->vertices[i].color.rgba[1] = (DGLubyte) (255 * bottomColor[1]);
-                            quad->vertices[i].color.rgba[2] = (DGLubyte) (255 * bottomColor[2]);
+                            quad->vertices[i].color[CR] = bottomColor[0];
+                            quad->vertices[i].color[CG] = bottomColor[1];
+                            quad->vertices[i].color[CB] = bottomColor[2];
                         }
                     }
                 }

@@ -199,8 +199,10 @@ static void processMobjShadow(mobj_t *mo)
     for(i = 0; i < 4; ++i)
     {
         // Shadows are black.
-        memset(poly->vertices[i].color.rgba, 0, 3);
-        poly->vertices[i].color.rgba[3] = color * 255;
+        poly->vertices[i].color[CR] =
+            poly->vertices[i].color[CG] =
+                poly->vertices[i].color[CB] = 0;
+        poly->vertices[i].color[CA] = color;
     }
 
     RL_AddPoly(poly);

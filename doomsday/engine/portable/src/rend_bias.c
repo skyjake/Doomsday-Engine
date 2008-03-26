@@ -58,7 +58,7 @@ typedef struct affection_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void         SB_EvalPoint(gl_rgba_t *light,
+void         SB_EvalPoint(float light[4],
                           vertexillum_t *illum,
                           biasaffection_t *affectedSources,
                           const float *point, float *normal);
@@ -762,16 +762,16 @@ void SB_EndFrame(void)
     SBE_EndFrame();
 }
 
-void SB_AddLight(gl_rgba_t *dest, const float *color, float howMuch)
+void SB_AddLight(float dest[4], const float *color, float howMuch)
 {
-    int                 i, newval;
-    float               amplified[3], largest = 0;
+    int                 i;
+    float               newval, amplified[3], largest = 0;
 
     if(color == NULL)
     {
         for(i = 0; i < 3; ++i)
         {
-            amplified[i] = dest->rgba[i] * reciprocal255;
+            amplified[i] = dest[i];
             if(i == 0 || amplified[i] > largest)
                 largest = amplified[i];
         }
@@ -791,13 +791,12 @@ void SB_AddLight(gl_rgba_t *dest, const float *color, float howMuch)
 
     for(i = 0; i < 3; ++i)
     {
-        newval = dest->rgba[i] + (byte)
-            (255 * (color ? color : amplified)[i] * howMuch);
+        newval = dest[i] + ((color ? color : amplified)[i] * howMuch);
 
-        if(newval > 255)
-            newval = 255;
+        if(newval > 1)
+            newval = 1;
 
-        dest->rgba[i] = newval;
+        dest[i] = newval;
     }
 }
 
@@ -867,7 +866,7 @@ void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
 
     for(i = 0; i < poly->numVertices; ++i)
     {
-        SB_EvalPoint(&poly->vertices[i].color,
+        SB_EvalPoint(poly->vertices[i].color,
                      &illumination[i], affected,
                      poly->vertices[i].pos, poly->normal);
     }
@@ -880,7 +879,7 @@ void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
 /**
  * Interpolate between current and destination.
  */
-void SB_LerpIllumination(vertexillum_t *illum, gl_rgba_t *result)
+void SB_LerpIllumination(vertexillum_t *illum, float *result)
 {
     uint                i;
 
@@ -888,25 +887,33 @@ void SB_LerpIllumination(vertexillum_t *illum, gl_rgba_t *result)
     {
         // We're done with the interpolation, just use the
         // destination color.
-        memcpy(result->rgba, illum->color.rgba, 3);
+        result[CR] = illum->color[CR];
+        result[CG] = illum->color[CG];
+        result[CB] = illum->color[CB];
     }
     else
     {
-        float inter = (currentTimeSB - illum->updatetime) / (float)lightSpeed;
+        float               inter =
+            (currentTimeSB - illum->updatetime) / (float)lightSpeed;
 
         if(inter > 1)
         {
             illum->flags &= ~VIF_LERP;
-            memcpy(illum->color.rgba, illum->dest.rgba, 3);
-            memcpy(result->rgba, illum->color.rgba, 3);
+
+            illum->color[CR] = illum->dest[CR];
+            illum->color[CG] = illum->dest[CG];
+            illum->color[CB] = illum->dest[CB];
+
+            result[CR] = illum->color[CR];
+            result[CG] = illum->color[CG];
+            result[CB] = illum->color[CB];
         }
         else
         {
             for(i = 0; i < 3; ++i)
             {
-                result->rgba[i] = (DGLuint)
-                    (illum->color.rgba[i] +
-                     (illum->dest.rgba[i] - illum->color.rgba[i]) * inter);
+                result[i] = (illum->color[i] +
+                     (illum->dest[i] - illum->color[i]) * inter);
             }
         }
     }
@@ -915,7 +922,7 @@ void SB_LerpIllumination(vertexillum_t *illum, gl_rgba_t *result)
 /**
  * @return              Light contributed by the specified source.
  */
-byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
+float *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
                    biasaffection_t *affectedSources)
 {
     int                 i, k;
@@ -923,7 +930,7 @@ byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
 
     for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
         if(illum->casted[i].source == sourceIndex)
-            return illum->casted[i].rgb;
+            return illum->casted[i].color;
 
     // Choose an array element not used by the affectedSources.
     for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
@@ -944,8 +951,11 @@ byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
         if(!inUse)
         {
             illum->casted[i].source = sourceIndex;
-            memset(illum->casted[i].rgb, 0, 3);
-            return illum->casted[i].rgb;
+            illum->casted[i].color[CR] =
+                illum->casted[i].color[CG] =
+                    illum->casted[i].color[CB] = 0;
+
+            return illum->casted[i].color;
         }
     }
 
@@ -956,7 +966,7 @@ byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
 /**
  * Add ambient light.
  */
-void SB_AmbientLight(const float *point, gl_rgba_t *light)
+void SB_AmbientLight(const float *point, float *light)
 {
     // Add grid light (represents ambient lighting).
     float               color[3];
@@ -974,11 +984,13 @@ void SB_AmbientLight(const float *point, gl_rgba_t *light)
  * \fixme Only recalculate the changed lights.  The colors contributed
  * by the others can be saved with the 'affected' array.
  */
-void SB_EvalPoint(gl_rgba_t *light,
+void SB_EvalPoint(float light[4],
                   vertexillum_t *illum, biasaffection_t *affectedSources,
                   const float *point, float *normal)
 {
-    gl_rgba_t           new;
+#define COLOR_CHANGE_THRESHOLD  0.1f
+
+    float               newColor[3];
     float               dot;
     float               delta[3], surfacePoint[3];
     float               distance;
@@ -988,10 +1000,7 @@ void SB_EvalPoint(gl_rgba_t *light,
     boolean             illuminationChanged = false;
     unsigned int        latestSourceUpdate = 0;
     source_t           *s;
-    byte               *casted;
-
-  //  gl_rgba_t Srgba;
-
+    float              *casted;
     struct {
         int              index;
         //uint           affNum; // Index in affectedSources.
@@ -1000,8 +1009,6 @@ void SB_EvalPoint(gl_rgba_t *light,
         boolean          changed;
         boolean          overrider;
     } affecting[MAX_BIAS_AFFECTED + 1], *aff;
-
-  //  memcpy(Srgba.rgba, light->rgba, 4);
 
     // Vertices that are rendered for the first time need to be fully
     // evaluated.
@@ -1060,17 +1067,11 @@ void SB_EvalPoint(gl_rgba_t *light,
         // Reuse the previous value.
         SB_LerpIllumination(illum, light);
         SB_AmbientLight(point, light);
-/*
-    for(i=0; i < 3; i++)
-    light->rgba[i] = (byte)(((Srgba.rgba[i] * reciprocal255)) * light->rgba[i]);
-
-    light->rgba[3] = Srgba.rgba[3];
-*/
         return;
     }
 
     // Init to black.
-    new.rgba[0] = new.rgba[1] = new.rgba[2] = 0;
+    newColor[CR] = newColor[CG] = newColor[CB] = 0;
 
     // Calculate the contribution from each light.
     for(aff = affecting; aff->source; aff++)
@@ -1101,9 +1102,9 @@ void SB_EvalPoint(gl_rgba_t *light,
             if(casted)
             {
                 // This affecting source does not contribute any light.
-                memset(casted, 0, 3);
-                casted[3] = 1;
+                casted[CR] = casted[CG] = casted[CB] = 0;
             }
+
             continue;
         }
         else
@@ -1116,9 +1117,9 @@ void SB_EvalPoint(gl_rgba_t *light,
             {
                 if(casted)
                 {
-                    memset(casted, 0, 3);
-                    casted[3] = 1;
+                    casted[CR] = casted[CG] = casted[CB] = 0;
                 }
+
                 continue;
             }
 
@@ -1129,26 +1130,13 @@ void SB_EvalPoint(gl_rgba_t *light,
             level = 1;
 
         for(i = 0; i < 3; ++i)
-        {
-            //int v;
-
-            // The light casted from this source.
-            casted[i] = (byte) (255.0f * s->color[i] * level);
-
-            //v = new.rgba[i] + 255.0f * s->color[i] * level;
-
-
-            //if(v > 255) v = 255;
-            //new.rgba[i] = (DGLubyte) v;
+        {   // The light casted from this source.
+            casted[i] =  s->color[i] * level;
         }
-        casted[3] = 1;
 
         // Are we already fully lit?
-        /*if(new.rgba[0] == 255 &&
-           new.rgba[1] == 255 &&
-           new.rgba[2] == 255) break;*/
-
-
+        /*if(!(newColor[CR] < 1 && newColor[CG] < 1 && new.rgba[2] < 1))
+            break;*/
     }
 
     if(illum)
@@ -1160,13 +1148,14 @@ void SB_EvalPoint(gl_rgba_t *light,
         // Combine the casted light from each source.
         for(aff = affecting; aff->source; aff++)
         {
-            byte               *casted =
+            float              *casted =
                 SB_GetCasted(illum, aff->index, affectedSources);
 
-            if(aff->overrider && (casted[0] | casted[1] | casted[2]) != 0)
+            if(aff->overrider &&
+               (casted[CR] > 0 || casted[CG] > 0 || casted[CB] > 0))
                 willOverride = true;
 
-/*            if(!casted[3])
+/*          if(!(casted[3] > 0))
             {
                 int n;
                 Con_Message("affected: ");
@@ -1188,19 +1177,14 @@ void SB_EvalPoint(gl_rgba_t *light,
                 printf("casted: ");
                 for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
                     printf("%i ", illum->casted[n].source);
-                printf("%i:(%i %i %i) ",
-                            aff->index, casted[0], casted[1], casted[2]);
+                printf("%i:(%g %g %g) ",
+                            aff->index, casted[CR], casted[CG], casted[CB]);
                 printf("\n");
                 }*/
 
             for(i = 0; i < 3; ++i)
             {
-                int             v = new.rgba[i] + casted[i];
-
-                if(v > 255)
-                    v = 255;
-
-                new.rgba[i] = v;
+                newColor[i] = MINMAX_OF(0, newColor[i] + casted[i], 1);
             }
         }
 
@@ -1210,20 +1194,30 @@ void SB_EvalPoint(gl_rgba_t *light,
             }*/
 
         // Is there a new destination?
-        if(memcmp(illum->dest.rgba, new.rgba, 3))
+        if(!(illum->dest[CR] < newColor[CR] + COLOR_CHANGE_THRESHOLD &&
+             illum->dest[CR] > newColor[CR] - COLOR_CHANGE_THRESHOLD) ||
+           !(illum->dest[CG] < newColor[CG] + COLOR_CHANGE_THRESHOLD &&
+             illum->dest[CG] > newColor[CG] - COLOR_CHANGE_THRESHOLD) ||
+           !(illum->dest[CB] < newColor[CB] + COLOR_CHANGE_THRESHOLD &&
+             illum->dest[CB] > newColor[CB] - COLOR_CHANGE_THRESHOLD))
         {
             if(illum->flags & VIF_LERP)
             {
                 // Must not lose the half-way interpolation.
-                gl_rgba_t mid;
-                SB_LerpIllumination(illum, &mid);
+                float           mid[3];
+
+                SB_LerpIllumination(illum, mid);
 
                 // This is current color at this very moment.
-                memcpy(&illum->color.rgba, &mid, 4);
+                illum->color[CR] = mid[CR];
+                illum->color[CG] = mid[CG];
+                illum->color[CB] = mid[CB];
             }
 
             // This is what we will be interpolating to.
-            memcpy(illum->dest.rgba, new.rgba, 4);
+            illum->dest[CR] = newColor[CR];
+            illum->dest[CG] = newColor[CG];
+            illum->dest[CB] = newColor[CB];
 
             illum->flags |= VIF_LERP;
             illum->updatetime = latestSourceUpdate;
@@ -1233,14 +1227,12 @@ void SB_EvalPoint(gl_rgba_t *light,
     }
     else
     {
-        memcpy(light->rgba, new.rgba, 4);
+        light[CR] = newColor[CR];
+        light[CG] = newColor[CG];
+        light[CB] = newColor[CB];
     }
 
     SB_AmbientLight(point, light);
-/*
-    for(i=0; i < 3; i++)
-    light->rgba[i] = (byte)(((Srgba.rgba[i] * reciprocal255)) * light->rgba[i]);
 
-    light->rgba[3] = Srgba.rgba[3];
-*/
+#undef COLOR_CHANGE_THRESHOLD
 }

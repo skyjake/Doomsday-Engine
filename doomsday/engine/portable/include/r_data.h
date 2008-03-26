@@ -129,7 +129,7 @@ typedef enum {
 
 typedef struct {
     float           pos[3];        // X, Y and Z coordinates.
-    gl_rgba_t       color;         // Color of the vertex.
+    float           color[4];      // Color of the vertex.
 } rendpoly_vertex_t;
 
 typedef struct walldiv_s {

@@ -495,7 +495,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     if(withDyn)
     {
         DGL_Begin(DGL_QUADS);
-        DGL_Color4ubv(params->vertices[0].color);
+        DGL_Color4fv(params->vertices[0].color);
         DGL_MultiTexCoord2f(normal, params->texCoord[0][0],
                             params->texCoord[1][1]);
 
@@ -506,7 +506,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                      params->vertices[0].pos[VZ],
                      params->vertices[0].pos[VY]);
 
-        DGL_Color4ubv(params->vertices[1].color);
+        DGL_Color4fv(params->vertices[1].color);
         DGL_MultiTexCoord2fv(normal, params->texCoord[0]);
 
         DGL_MultiTexCoord2f(dyn, params->modTexCoord[0][0],
@@ -516,7 +516,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                      params->vertices[1].pos[VZ],
                      params->vertices[1].pos[VY]);
 
-        DGL_Color4ubv(params->vertices[3].color);
+        DGL_Color4fv(params->vertices[3].color);
         DGL_MultiTexCoord2f(normal, params->texCoord[1][0],
                             params->texCoord[0][1]);
 
@@ -527,7 +527,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                      params->vertices[3].pos[VZ],
                      params->vertices[3].pos[VY]);
 
-        DGL_Color4ubv(params->vertices[2].color);
+        DGL_Color4fv(params->vertices[2].color);
         DGL_MultiTexCoord2fv(normal, params->texCoord[1]);
 
         DGL_MultiTexCoord2f(dyn, params->modTexCoord[0][1],
@@ -546,7 +546,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     else
     {
         DGL_Begin(DGL_QUADS);
-        DGL_Color4ubv(params->vertices[0].color);
+        DGL_Color4fv(params->vertices[0].color);
         DGL_MultiTexCoord2f(normal, params->texCoord[0][0],
                            params->texCoord[1][1]);
 
@@ -554,14 +554,14 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                     params->vertices[0].pos[VZ],
                     params->vertices[0].pos[VY]);
 
-        DGL_Color4ubv(params->vertices[1].color);
+        DGL_Color4fv(params->vertices[1].color);
         DGL_MultiTexCoord2fv(normal, params->texCoord[0]);
 
         DGL_Vertex3f(params->vertices[1].pos[VX],
                     params->vertices[1].pos[VZ],
                     params->vertices[1].pos[VY]);
 
-        DGL_Color4ubv(params->vertices[3].color);
+        DGL_Color4fv(params->vertices[3].color);
         DGL_MultiTexCoord2f(normal, params->texCoord[1][0],
                            params->texCoord[0][1]);
 
@@ -569,7 +569,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                     params->vertices[3].pos[VZ],
                     params->vertices[3].pos[VY]);
 
-        DGL_Color4ubv(params->vertices[2].color);
+        DGL_Color4fv(params->vertices[2].color);
         DGL_MultiTexCoord2fv(normal, params->texCoord[1]);
 
         DGL_Vertex3f(params->vertices[2].pos[VX],

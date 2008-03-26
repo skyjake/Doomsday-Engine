@@ -34,7 +34,7 @@
 
 typedef struct vilight_s {
     short           source;
-    byte            rgb[4];       // Light from an affecting source.
+    float           color[3];     // Light from an affecting source.
 } vilight_t;
 
 // Vertex illumination flags.
@@ -42,8 +42,8 @@ typedef struct vilight_s {
 #define VIF_STILL_UNSEEN 0x2      // The color of the vertex is still unknown.
 
 typedef struct vertexillum_s {
-    gl_rgba_t       color;        // Current color of the vertex.
-    gl_rgba_t       dest;         // Destination color of the vertex.
+    float           color[3];     // Current color of the vertex.
+    float           dest[3];      // Destination color of the vertex.
     unsigned int    updatetime;   // When the value was calculated.
     short           flags;
     vilight_t       casted[MAX_BIAS_AFFECTED];

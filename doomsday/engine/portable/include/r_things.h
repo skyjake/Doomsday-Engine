@@ -51,7 +51,7 @@ typedef struct rendmaskedwallparams_s {
                                // (two sided mid textures only)
     struct wall_vertex_s {
         float           pos[3]; // x y and z coordinates.
-        unsigned char   color[4];
+        float           color[4];
     } vertices[4];
     float           texCoord[2][2]; // u and v coordinates.
 

@@ -213,8 +213,10 @@ static void setRendpolyColor(rendpoly_t *q, float darkness)
     for(i = 0; i < q->numVertices; ++i)
     {
         // Shadows are black.
-        memset(q->vertices[i].color.rgba, 0, 3);
-        q->vertices[i].color.rgba[CA] = (DGLubyte) (255 * darkness);
+        q->vertices[i].color[CR] =
+            q->vertices[i].color[CG] =
+                q->vertices[i].color[CB] = 0;
+        q->vertices[i].color[CA] = darkness;
     }
 }
 
@@ -1230,27 +1232,27 @@ static void radioAddShadowEdge(const linedef_t *line, byte side,
     vtx[idx[0]].pos[VX] = vtx0->V_pos[VX];
     vtx[idx[0]].pos[VY] = vtx0->V_pos[VY];
     vtx[idx[0]].pos[VZ] = z;
-    vtx[idx[0]].color.rgba[CA] = (DGLubyte) (255 * shadowAlpha);
+    vtx[idx[0]].color[CA] = shadowAlpha;
 
     if(renderWireframe)
-        vtx[idx[0]].color.rgba[CR] = vtx[idx[0]].color.rgba[CG] =
-            vtx[idx[0]].color.rgba[CB] = 255;
+        vtx[idx[0]].color[CR] = vtx[idx[0]].color[CG] =
+            vtx[idx[0]].color[CB] = 1;
 
     if(sideOpen[0] < 1)
-        vtx[idx[0]].color.rgba[CA] *= 1 - sideOpen[0];
+        vtx[idx[0]].color[CA] *= 1 - sideOpen[0];
 
     // Right outer corner.
     vtx[idx[1]].pos[VX] = vtx1->V_pos[VX];
     vtx[idx[1]].pos[VY] = vtx1->V_pos[VY];
     vtx[idx[1]].pos[VZ] = z;
-    vtx[idx[1]].color.rgba[CA] = (DGLubyte) (255 * shadowAlpha);
+    vtx[idx[1]].color[CA] = shadowAlpha;
 
     if(renderWireframe)
-        vtx[idx[1]].color.rgba[CR] = vtx[idx[1]].color.rgba[CG] =
-            vtx[idx[1]].color.rgba[CB] = 255;
+        vtx[idx[1]].color[CR] = vtx[idx[1]].color[CG] =
+            vtx[idx[1]].color[CB] = 1;
 
     if(sideOpen[1] < 1)
-        vtx[idx[1]].color.rgba[CA] *= 1 - sideOpen[1];
+        vtx[idx[1]].color[CA] *= 1 - sideOpen[1];
 
     // Right inner corner.
     vtx[idx[2]].pos[VX] = inner[1][VX];
@@ -1258,8 +1260,8 @@ static void radioAddShadowEdge(const linedef_t *line, byte side,
     vtx[idx[2]].pos[VZ] = z;
 
     if(renderWireframe)
-        vtx[idx[2]].color.rgba[CR] = vtx[idx[2]].color.rgba[CG] =
-            vtx[idx[2]].color.rgba[CB] = 255;
+        vtx[idx[2]].color[CR] = vtx[idx[2]].color[CG] =
+            vtx[idx[2]].color[CB] = 1;
 
     // Left inner corner.
     vtx[idx[3]].pos[VX] = inner[0][VX];
@@ -1267,8 +1269,8 @@ static void radioAddShadowEdge(const linedef_t *line, byte side,
     vtx[idx[3]].pos[VZ] = z;
 
     if(renderWireframe)
-        vtx[idx[3]].color.rgba[CR] = vtx[idx[3]].color.rgba[CG] =
-            vtx[idx[3]].color.rgba[CB] = 255;
+        vtx[idx[3]].color[CR] = vtx[idx[3]].color[CG] =
+            vtx[idx[3]].color[CB] = 1;
 
     if(rendFakeRadio != 2)
         RL_AddPoly(q);

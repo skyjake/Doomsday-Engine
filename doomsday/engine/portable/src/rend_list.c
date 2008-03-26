@@ -323,15 +323,10 @@ static void addMaskedPoly(rendpoly_t *poly)
         vis->data.wall.vertices[i].pos[VY] = poly->vertices[i].pos[VY];
         vis->data.wall.vertices[i].pos[VZ] = poly->vertices[i].pos[VZ];
 
-        if(poly->flags & RPF_GLOW)
-            memset(&vis->data.wall.vertices[i].color, 255, 4 * 4);
-        else
+        for(c = 0; c < 4; ++c)
         {
-            for(c = 0; c < 4; ++c)
-            {
-                vis->data.wall.vertices[i].color[c] =
-                    poly->vertices[i].color.rgba[c];
-            }
+            vis->data.wall.vertices[i].color[c] =
+                MINMAX_OF(0, poly->vertices[i].color[c], 1);
         }
     }
     vis->data.wall.texCoord[0][VX] = poly->texOffset[VX] / (float) poly->tex.width;
@@ -345,9 +340,9 @@ static void addMaskedPoly(rendpoly_t *poly)
 
     // \fixme Semitransparent masked polys arn't lit atm
     if(!(poly->flags & RPF_GLOW) && poly->lightListIdx && numTexUnits > 1 &&
-       envModAdd && poly->vertices[0].color.rgba[3] == 255)
+       envModAdd && !(poly->vertices[0].color[CA] < 1))
     {
-        dynlight_t    *dyn = NULL;
+        dynlight_t         *dyn = NULL;
 
         /**
          * The dynlights will have already been sorted so that the brightest
@@ -426,8 +421,7 @@ void RL_VertexColors(rendpoly_t *poly, float lightLevel,
         // If this is a glowing surface, boost the light level up.
         if(poly->flags & RPF_GLOW)
         {
-            vtx->color.rgba[CR] = vtx->color.rgba[CG] =
-                vtx->color.rgba[CB] = 255;
+            vtx->color[CR] = vtx->color[CG] = vtx->color[CB] = 1;
         }
         else
         {
@@ -468,13 +462,13 @@ void RL_VertexColors(rendpoly_t *poly, float lightLevel,
             }
 
             // Set final color.
-            vtx->color.rgba[CR] = (DGLubyte) (255 * MINMAX_OF(0, rgb[CR], 1));
-            vtx->color.rgba[CG] = (DGLubyte) (255 * MINMAX_OF(0, rgb[CG], 1));
-            vtx->color.rgba[CB] = (DGLubyte) (255 * MINMAX_OF(0, rgb[CB], 1));
+            vtx->color[CR] = rgb[CR];
+            vtx->color[CG] = rgb[CG];
+            vtx->color[CB] = rgb[CB];
         }
 
         // Set final alpha.
-        vtx->color.rgba[CA] = (DGLubyte) (255 * MINMAX_OF(0, alpha, 1));
+        vtx->color[CA] = alpha;
     }
 }
 
@@ -1089,16 +1083,24 @@ static void quadDetailTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
 
 static void quadColors(gl_color_t *color, rendpoly_t *poly)
 {
+    uint                i;
+    rendpoly_vertex_t  *vtx;
+
     if(poly->flags & RPF_SKY_MASK)
     {
         // Sky mask doesn't need a color.
         return;
     }
 
-    memcpy(color[0].rgba, poly->vertices[0].color.rgba, 4);
-    memcpy(color[1].rgba, poly->vertices[1].color.rgba, 4);
-    memcpy(color[2].rgba, poly->vertices[2].color.rgba, 4);
-    memcpy(color[3].rgba, poly->vertices[3].color.rgba, 4);
+    for(i = 0; i < 4; ++i)
+    {
+        vtx = &poly->vertices[i];
+
+        color[i].rgba[CR] = (DGLubyte) (255 * MINMAX_OF(0, vtx->color[CR], 1));
+        color[i].rgba[CG] = (DGLubyte) (255 * MINMAX_OF(0, vtx->color[CG], 1));
+        color[i].rgba[CB] = (DGLubyte) (255 * MINMAX_OF(0, vtx->color[CB], 1));
+        color[i].rgba[CA] = (DGLubyte) (255 * MINMAX_OF(0, vtx->color[CA], 1));
+    }
 }
 
 static void quadVertices(gl_vertex_t *v, rendpoly_t *poly)
@@ -1566,7 +1568,10 @@ static void writeFlat(rendlist_t *list, rendpoly_t *poly)
 
         // Color.
         col = &colors[base + i];
-        memcpy(col->rgba, vtx->color.rgba, 4);
+        col->rgba[CR] = (DGLubyte) (255 * MINMAX_OF(0, vtx->color[CR], 1));
+        col->rgba[CG] = (DGLubyte) (255 * MINMAX_OF(0, vtx->color[CG], 1));
+        col->rgba[CB] = (DGLubyte) (255 * MINMAX_OF(0, vtx->color[CB], 1));
+        col->rgba[CA] = (DGLubyte) (255 * MINMAX_OF(0, vtx->color[CA], 1));
     }
 
     // The flat has been written.
@@ -1753,9 +1758,10 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
         poly->flags |= RPF_GLOW;
 
         for(i = 0; i < poly->numVertices; ++i)
-            poly->vertices[i].color.rgba[CR] =
-                poly->vertices[i].color.rgba[CG] =
-                    poly->vertices[i].color.rgba[CB] = 255;
+            poly->vertices[i].color[CR] =
+                poly->vertices[i].color[CG] =
+                    poly->vertices[i].color[CB] =
+                        poly->vertices[i].color[CA] = 1;
     }
 
     // Are lights allowed?
@@ -1770,19 +1776,19 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
             if(poly->lightListIdx)
             {
                 uint                i;
-                long                avglightlevel = 0;
+                float               avglightlevel = 0;
 
                 // Determine the average light level of this rend poly,
                 // if too bright; do not bother with lights.
                 for(i = 0; i < poly->numVertices; ++i)
                 {
-                    avglightlevel += (long) poly->vertices[i].color.rgba[0];
-                    avglightlevel += (long) poly->vertices[i].color.rgba[1];
-                    avglightlevel += (long) poly->vertices[i].color.rgba[2];
+                    avglightlevel += poly->vertices[i].color[CR];
+                    avglightlevel += poly->vertices[i].color[CG];
+                    avglightlevel += poly->vertices[i].color[CB];
                 }
-                avglightlevel /= (long) poly->numVertices * 3;
+                avglightlevel /= (float) poly->numVertices * 3;
 
-                if(avglightlevel < 250)
+                if(avglightlevel < 0.98f)
                     useLights = true;
             }
         }
