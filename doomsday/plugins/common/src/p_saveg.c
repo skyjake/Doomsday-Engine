@@ -1641,10 +1641,11 @@ void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
 }
 #endif
 
-static boolean RestoreMobj(mobj_t *mo, int ver)
+static void RestoreMobj(mobj_t *mo, int ver)
 {
-    mo->state = &states[(int) mo->state];
     mo->info = &mobjInfo[mo->type];
+
+    P_MobjSetState(mo, (int) mo->state);
 
     if(mo->player)
     {
@@ -1677,9 +1678,9 @@ static boolean RestoreMobj(mobj_t *mo, int ver)
     {
         if(mo->dPlayer)
             mo->dPlayer->mo = NULL;
-        Z_Free(mo);
+        P_MobjDestroy(mo);
 
-        return false; // Don't add this thinker.
+        return;
     }
 #endif
 
@@ -1689,17 +1690,19 @@ static boolean RestoreMobj(mobj_t *mo, int ver)
         SV_UpdateReadMobjFlags(mo, ver);
 #endif
 
-    mo->thinker.function = P_MobjThinker;
-
     P_MobjSetPosition(mo);
     mo->floorZ =
         P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
     mo->ceilingZ =
         P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 
-    return true; // Add this thinker.
+    return;
 }
 
+/**
+ * Always returns @c false as a thinker will have already been allocated in
+ * the mobj creation process.
+ */
 static int SV_ReadMobj(thinker_t *th)
 {
     int         ver;
@@ -1913,7 +1916,8 @@ static int SV_ReadMobj(thinker_t *th)
 #endif
 
     // Restore! (unmangle)
-    return RestoreMobj(mo, ver); // Add this thinker?
+    RestoreMobj(mo, ver);
+    return false;
 }
 
 /**
