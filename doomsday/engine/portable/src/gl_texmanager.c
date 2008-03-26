@@ -1629,7 +1629,7 @@ DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
                          int otherFlags)
 {
     return GL_LoadGraphics4(resClass, name, mode, useMipmap,
-                            DGL_LINEAR, glmode[texMagMode], 0 /*no anisotropy*/,
+                            DGL_LINEAR, DGL_LINEAR, 0 /*no anisotropy*/,
                             clamped? DGL_CLAMP : DGL_REPEAT,
                             clamped? DGL_CLAMP : DGL_REPEAT, otherFlags);
 }
@@ -1715,7 +1715,7 @@ DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
                                              (useMipmap == DGL_GRAY_MIPMAP? TXCF_GRAY_MIPMAP : 0) |
                                              (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0) ),
                                            (useMipmap ? glmode[mipmapping] : DGL_LINEAR),
-                                           glmode[texMagMode], texAniso,
+                                           magFilter, texAniso,
                                            wrapS, wrapT);
 
         GL_DestroyImage(&image);
