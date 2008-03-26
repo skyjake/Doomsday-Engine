@@ -53,7 +53,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-playerstate_t playerState[MAXPLAYERS];
+playerstate_t playerState[DDMAXPLAYERS];
 float pspMoveSpeed = 6;
 float cplrThrustMul = 1;
 
@@ -83,7 +83,7 @@ void Cl_InitPlayers(void)
     memset(cpMom, 0, sizeof(cpMom));
 
     // Clear psprites. The server will send them.
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         memset(clients[i].lastCmd, 0, sizeof(*clients[i].lastCmd));
     }
@@ -94,7 +94,7 @@ void Cl_InitPlayers(void)
  */
 void Cl_LocalCommand(void)
 {
-    ddplayer_t         *pl = &players[consolePlayer];
+    ddplayer_t         *pl = &ddPlayers[consolePlayer];
     client_t           *cl = &clients[consolePlayer];
     playerstate_t      *s = &playerState[consolePlayer];
 
@@ -140,7 +140,7 @@ int Cl_ReadPlayerDelta(void)
     num &= 0xf;                 // Clear the upper bits of the number.
 
     s = &playerState[num];
-    pl = &players[num];
+    pl = &ddPlayers[num];
 
     if(df & PDF_MOBJ)
     {
@@ -167,7 +167,7 @@ Con_Message("  x=%f y=%f z=%f\n", s->cmo->mo.pos[VX],
 
 #ifdef _DEBUG
 Con_Message("Cl_RPlD: pl=%i => moid=%i\n",
-            s->cmo->mo.dPlayer - players, s->mobjId);
+            s->cmo->mo.dPlayer - ddPlayers, s->mobjId);
 #endif
 
             // Unlink this cmo (not interactive or visible).
@@ -284,7 +284,7 @@ void Cl_Thrust(mobj_t *mo, angle_t angle, float move)
  */
 void Cl_MovePlayer(ddplayer_t *pl)
 {
-    int                 num = pl - players;
+    int                 num = pl - ddPlayers;
     playerstate_t      *st = &playerState[num];
     mobj_t             *mo = pl->mo;
 
@@ -335,8 +335,8 @@ void Cl_MovePlayer(ddplayer_t *pl)
  */
 void Cl_UpdatePlayerPos(ddplayer_t *pl)
 {
-    int         num = pl - players;
-    mobj_t     *clmo, *mo;
+    int                 num = pl - ddPlayers;
+    mobj_t             *clmo, *mo;
 
     if(!playerState[num].cmo || !pl->mo)
         return;                 // Must have a mobj!
@@ -373,7 +373,7 @@ Con_Printf("Cl_CoordsReceived\n");
 
 void Cl_HandlePlayerFix(void)
 {
-    ddplayer_t *plr = &players[consolePlayer];
+    ddplayer_t *plr = &ddPlayers[consolePlayer];
     int         fixes = Msg_ReadLong();
     angle_t     angle;
     float       lookdir;
@@ -492,10 +492,10 @@ Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
  */
 void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
 {
-    ddplayer_t *pl = players + consolePlayer;
-    mobj_t     *mo;
-    int         i;
-    float       mom[3];
+    ddplayer_t         *pl = &ddPlayers[consolePlayer];
+    mobj_t             *mo;
+    int                 i;
+    float               mom[3];
 
     mo = pl->mo;
     if(!mo)
@@ -541,7 +541,7 @@ void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
         pl->viewHeight = 0;
     }
 
-    Cl_UpdatePlayerPos(players + consolePlayer);
+    Cl_UpdatePlayerPos(&ddPlayers[consolePlayer]);
 }
 
 /**
@@ -629,7 +629,7 @@ void Cl_ReadPlayerDelta2(boolean skip)
     if(!skip)
     {
         s = &playerState[num];
-        pl = &players[num];
+        pl = &ddPlayers[num];
     }
     else
     {
@@ -707,7 +707,7 @@ Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", s->cmo->mo.pos[VX],
             s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ],
             s->cmo->mo.floorZ, s->cmo->mo.ceilingZ);
 Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
-            s->cmo->mo.dPlayer - players, s->mobjId);
+            s->cmo->mo.dPlayer - ddPlayers, s->mobjId);
 #endif
         }
     }
@@ -780,7 +780,7 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
  */
 boolean Cl_IsFreeToMove(int player)
 {
-    mobj_t     *mo = players[player].mo;
+    mobj_t     *mo = ddPlayers[player].mo;
 
     if(!mo)
         return false;

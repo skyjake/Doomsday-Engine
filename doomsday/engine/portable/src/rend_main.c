@@ -110,9 +110,9 @@ float   yfov;
 int     gameDrawHUD = 1;    // Set to zero when we advise that the HUD
                             // should not be drawn
 
-uint    playerLightRange[MAXPLAYERS];
+uint    playerLightRange[DDMAXPLAYERS];
 
-lightsample_t playerLastLightSample[MAXPLAYERS];
+lightsample_t playerLastLightSample[DDMAXPLAYERS];
 
 float   r_lightAdapt = 0.8f; // Amount of light adaption
 int     r_lightAdaptDarkTime = 80;
@@ -1383,7 +1383,7 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     float               ffloor, fceil;
     boolean             backSide;
     sector_t           *frontsec, *fflinkSec, *fclinkSec;
-    int                 pid = viewPlayer - players;
+    int                 pid = viewPlayer - ddPlayers;
 
     side = SEG_SIDEDEF(seg);
     frontsec = side->sector;
@@ -1433,14 +1433,14 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
  */
 static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 {
-    int         solidSeg = false;
-    sector_t   *backsec;
-    sidedef_t     *backsid, *side;
-    linedef_t     *ldef;
-    float       ffloor, fceil, bfloor, bceil, bsh;
-    boolean     backSide;
-    sector_t   *frontsec, *fflinkSec, *fclinkSec;
-    int         pid = viewPlayer - players;
+    int                 solidSeg = false;
+    sector_t           *backsec;
+    sidedef_t          *backsid, *side;
+    linedef_t          *ldef;
+    float               ffloor, fceil, bfloor, bceil, bsh;
+    boolean             backSide;
+    sector_t           *frontsec, *fflinkSec, *fclinkSec;
+    int                 pid = viewPlayer - ddPlayers;
 
     backsid = SEG_SIDEDEF(seg->backSeg);
     side = SEG_SIDEDEF(seg);
@@ -2260,12 +2260,12 @@ void Rend_InitPlayerLightRanges(void)
     sector_t   *sec;
     ddplayer_t *player;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(!players[i].inGame)
+        if(!ddPlayers[i].inGame)
             continue;
 
-        player = &players[i];
+        player = &ddPlayers[i];
         if(!player->mo || !player->mo->subsector)
             continue;
 
@@ -2296,12 +2296,12 @@ void Rend_RetrieveLightSample(void)
     unsigned int currentTime = Sys_GetRealTime();
 
     midpoint = MOD_RANGE / 2;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(!players[i].inGame)
+        if(!ddPlayers[i].inGame)
             continue;
 
-        player = &players[i];
+        player = &ddPlayers[i];
         if(!player->mo || !player->mo->subsector)
             continue;
 
@@ -2450,7 +2450,7 @@ void Rend_ApplyLightAdaptation(float *lightvar)
 
     // Apply light adaptation?
     if(r_lightAdapt)
-        range = playerLightRange[viewPlayer - players];
+        range = playerLightRange[viewPlayer - ddPlayers];
 
     lightval = ROUND(255.0f * *lightvar);
     if(lightval > 254)
@@ -2475,7 +2475,7 @@ float Rend_GetLightAdaptVal(float lightvalue)
 
     // Apply light adaptation?
     if(r_lightAdapt)
-        range = playerLightRange[viewPlayer - players];
+        range = playerLightRange[viewPlayer - ddPlayers];
 
     lightval = ROUND(255.0f * lightvalue);
     if(lightval > 254)
@@ -2540,9 +2540,9 @@ void R_DrawLightRange(void)
             off = lightRangeModMatrix[r-1][i];
 
             // Draw the range bar to match that of the current viewPlayer.
-            if(r == (int) playerLightRange[viewPlayer - players])
+            if(r == (int) playerLightRange[viewPlayer - ddPlayers])
             {
-                if(i == (int) (playerLastLightSample[viewPlayer - players].currentlight * 255))
+                if(i == (int) (playerLastLightSample[viewPlayer - ddPlayers].currentlight * 255))
                     DGL_Color4f(1, 0, 0, 1);
                 else
                     DGL_Color4f(c + off, c + off, c + off, 1);
@@ -2729,7 +2729,7 @@ static void Rend_RenderBoundingBoxes(void)
         // For every mobj in the sector's mobjList
         for(mo = sec->mobjList; mo; mo = mo->sNext)
         {
-            if(mo == players[consolePlayer].mo)
+            if(mo == ddPlayers[consolePlayer].mo)
                 continue; // We don't want the console player.
 
             alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->width/2))/4);

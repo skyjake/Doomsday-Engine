@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -64,7 +64,7 @@ netbuffer_t netBuffer;
 
 // The Sent Message Store: list of sent or queued messages waiting to be
 // confirmed.
-//static store_t stores[MAXPLAYERS];
+//static store_t stores[DDMAXPLAYERS];
 
 // The message queue: list of incoming messages waiting for processing.
 static netmessage_t *msgHead, *msgTail;
@@ -259,9 +259,9 @@ void N_SendPacket(int flags)
     // Figure out the destination DPNID.
     if(netServerMode)
     {
-        if(netBuffer.player >= 0 && netBuffer.player < MAXPLAYERS)
+        if(netBuffer.player >= 0 && netBuffer.player < DDMAXPLAYERS)
         {
-            if(players[netBuffer.player].flags & DDPF_LOCAL ||
+            if(ddPlayers[netBuffer.player].flags & DDPF_LOCAL ||
                !clients[netBuffer.player].connected)
             {
                 // Do not send anything to local or disconnected players.
@@ -273,7 +273,7 @@ void N_SendPacket(int flags)
         else
         {
             // Broadcast to all non-local players, using recursive calls.
-            for(i = 0; i < MAXPLAYERS; ++i)
+            for(i = 0; i < DDMAXPLAYERS; ++i)
             {
                 netBuffer.player = i;
                 N_SendPacket(flags);
@@ -329,7 +329,7 @@ uint N_IdentifyPlayer(nodeid_t id)
         // a list of all the IDs.
         i = 0;
         found = false;
-        while(i < MAXPLAYERS && !found)
+        while(i < DDMAXPLAYERS && !found)
             if(clients[i].nodeID == id)
                 found = true;
             else

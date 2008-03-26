@@ -187,7 +187,7 @@ Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n",
             /*#ifdef _DEBUG
                Con_Printf("Cl_ReadSoundDelta2(%i): ViewMobj sound...\n", type);
                #endif */
-            emitter = players[consolePlayer].mo;
+            emitter = ddPlayers[consolePlayer].mo;
         }
 
         // First stop any sounds originating from the same emitter.
@@ -304,7 +304,7 @@ Con_Printf("Cl_Sound: %i\n", sound);
     }
     else if(flags & SNDF_PLAYER)
     {
-        S_LocalSoundAtVolume(sound, players[(flags & 0xf0) >> 4].mo,
+        S_LocalSoundAtVolume(sound, ddPlayers[(flags & 0xf0) >> 4].mo,
                              volume / 127.0f);
     }
     else

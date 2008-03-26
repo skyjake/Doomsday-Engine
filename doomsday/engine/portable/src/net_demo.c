@@ -106,7 +106,7 @@ boolean demoOnGround;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static demotimer_t writeInfo[MAXPLAYERS];
+static demotimer_t writeInfo[DDMAXPLAYERS];
 static demotimer_t readInfo;
 static float startFOV;
 static int demoStartTic;
@@ -140,7 +140,7 @@ boolean Demo_BeginRecording(char *fileName, int playerNum)
 
     // Is a demo already being recorded for this client?
     if(cl->recording || playback || (isDedicated && !playerNum) ||
-       !players[playerNum].inGame)
+       !ddPlayers[playerNum].inGame)
         return false;
 
     // Compose the real file name.
@@ -307,7 +307,7 @@ void Demo_BroadcastPacket(void)
     int             i;
 
     // Write packet to all recording demo files.
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
         Demo_WritePacket(i);
 }
 
@@ -322,7 +322,7 @@ boolean Demo_BeginPlayback(char *fileName)
         return false; // Can't do it.
 
     // Check that we aren't recording anything.
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
         if(clients[i].recording)
             return false;
 
@@ -442,7 +442,7 @@ Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
  */
 void Demo_WriteLocalCamera(int plnum)
 {
-    mobj_t         *mo = players[plnum].mo;
+    mobj_t         *mo = ddPlayers[plnum].mo;
     fixed_t         x, y, z;
     byte            flags;
     boolean         incfov = (writeInfo[plnum].fov != fieldOfView);
@@ -454,7 +454,7 @@ void Demo_WriteLocalCamera(int plnum)
     // Flags.
     flags = (mo->pos[VZ] <= mo->floorZ ? LCAMF_ONGROUND : 0)  // On ground?
         | (incfov ? LCAMF_FOV : 0);
-    if(players[plnum].flags & DDPF_CAMERA)
+    if(ddPlayers[plnum].flags & DDPF_CAMERA)
     {
         flags &= ~LCAMF_ONGROUND;
         flags |= LCAMF_CAMERA;
@@ -469,13 +469,13 @@ void Demo_WriteLocalCamera(int plnum)
     Msg_WriteShort(y >> 16);
     Msg_WriteByte(y >> 8);
 
-    //z = mo->pos[VZ] + players[plnum].viewheight;
-    z = FLT2FIX(players[plnum].viewZ);
+    //z = mo->pos[VZ] + ddPlayers[plnum].viewheight;
+    z = FLT2FIX(ddPlayers[plnum].viewZ);
     Msg_WriteShort(z >> 16);
     Msg_WriteByte(z >> 8);
 
-    Msg_WriteShort(mo->angle /*players[plnum].clAngle*/ >> 16); /* $unifiedangles */
-    Msg_WriteShort(players[plnum].lookDir / 110 * DDMAXSHORT /* $unifiedangles */);
+    Msg_WriteShort(mo->angle /*ddPlayers[plnum].clAngle*/ >> 16); /* $unifiedangles */
+    Msg_WriteShort(ddPlayers[plnum].lookDir / 110 * DDMAXSHORT /* $unifiedangles */);
     // Field of view is optional.
     if(incfov)
     {
@@ -491,13 +491,13 @@ void Demo_WriteLocalCamera(int plnum)
  */
 void Demo_ReadLocalCamera(void)
 {
-    ddplayer_t *pl = players + consolePlayer;
-    mobj_t     *mo = players[consolePlayer].mo;
-    int         flags;
-    float       z;
-    int         intertics = LOCALCAM_WRITE_TICS;
-    int         dang;
-    float       dlook;
+    ddplayer_t         *pl = &ddPlayers[consolePlayer];
+    mobj_t             *mo = pl->mo;
+    int                 flags;
+    float               z;
+    int                 intertics = LOCALCAM_WRITE_TICS;
+    int                 dang;
+    float               dlook;
 
     if(!mo)
         return;
@@ -582,9 +582,10 @@ void Demo_ReadLocalCamera(void)
  */
 void Demo_Ticker(timespan_t time)
 {
-    static trigger_t fixed = { 1 / 35.0, 0 };
-    ddplayer_t *pl = players + consolePlayer;
-    int         i;
+    static trigger_t        fixed = { 1 / 35.0, 0 };
+
+    ddplayer_t             *pl = &ddPlayers[consolePlayer];
+    int                     i;
 
     if(!M_RunTrigger(&fixed, time))
         return;
@@ -603,8 +604,8 @@ void Demo_Ticker(timespan_t time)
     }
     else
     {
-        for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].inGame && clients[i].recording &&
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+            if(ddPlayers[i].inGame && clients[i].recording &&
                !clients[i].recordPaused &&
                ++writeInfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
             {

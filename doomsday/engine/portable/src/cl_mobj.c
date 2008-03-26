@@ -72,7 +72,7 @@ typedef struct cmhash_s {
 extern int /*latest_frame_size, */ gotFrame;
 extern int predicted_tics;
 
-extern playerstate_t playerState[MAXPLAYERS];
+extern playerstate_t playerState[DDMAXPLAYERS];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -421,7 +421,7 @@ if(justCreated)         //Con_Error("justCreated!\n");
         // A Null Delta. We should delete this mobj.
         if(cmo->mo.dPlayer)
         {
-            playerState[cmo->mo.dPlayer - players].cmo = NULL;
+            playerState[cmo->mo.dPlayer - ddPlayers].cmo = NULL;
         }
         Cl_DestroyMobj(cmo);
         return true;            // Continue.
@@ -1116,7 +1116,7 @@ Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
     else
     {
         // The clmobjs of players aren't linked.
-        playerState[cmo->mo.dPlayer - players].cmo = NULL;
+        playerState[cmo->mo.dPlayer - ddPlayers].cmo = NULL;
     }
 
     // This'll allow playing sounds from the mobj for a little while.

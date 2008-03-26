@@ -1171,11 +1171,11 @@ void R_InitTranslationTables(void)
     byte               *transLump;
 
     // Allocate translation tables
-    translationTables = Z_Malloc(256 * 3 * ( /*MAXPLAYERS*/ 8 - 1) + 255, PU_REFRESHTRANS, 0);
+    translationTables = Z_Malloc(256 * 3 * ( /*DDMAXPLAYERS*/ 8 - 1) + 255, PU_REFRESHTRANS, 0);
 
     translationTables = (byte *) (((long) translationTables + 255) & ~255);
 
-    for(i = 0; i < 3 * ( /*MAXPLAYERS*/ 8 - 1); ++i)
+    for(i = 0; i < 3 * ( /*DDMAXPLAYERS*/ 8 - 1); ++i)
     {
         // If this can't be found, it's reasonable to expect that the game dll
         // will initialize the translation tables as it wishes.

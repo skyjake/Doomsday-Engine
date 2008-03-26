@@ -104,11 +104,11 @@ void Sv_TransmitFrame(void)
     {
         // When not running a netGame, only generate deltas when somebody
         // is recording a demo.
-        for(i = 0; i < MAXPLAYERS; ++i)
+        for(i = 0; i < DDMAXPLAYERS; ++i)
             if(Sv_IsFrameTarget(i))
                 break;
 
-        if(i == MAXPLAYERS)
+        if(i == DDMAXPLAYERS)
         {
             // Nobody is a frame target.
             return;
@@ -128,7 +128,7 @@ void Sv_TransmitFrame(void)
     // How many players currently in the game?
     numInGame = Sv_GetNumPlayers();
 
-    for(i = 0, pCount = 0; i < MAXPLAYERS; ++i)
+    for(i = 0, pCount = 0; i < DDMAXPLAYERS; ++i)
     {
         if(!Sv_IsFrameTarget(i))
         {
@@ -972,7 +972,7 @@ if(delta->state == DELTA_UNACKED)
 
     // If the target is local, ack immediately. This effectively removes
     // all the sent deltas from the pool.
-    if(players[playerNumber].flags & DDPF_LOCAL)
+    if(ddPlayers[playerNumber].flags & DDPF_LOCAL)
     {
         Sv_AckDeltaSet(playerNumber, pool->setDealer, 0);
     }

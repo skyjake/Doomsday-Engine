@@ -43,7 +43,7 @@ typedef struct playerstate_s {
 
 extern float pspMoveSpeed;
 extern float cplrThrustMul;
-extern playerstate_t playerState[MAXPLAYERS];
+extern playerstate_t playerState[DDMAXPLAYERS];
 
 void            Cl_InitPlayers(void);
 void            Cl_LocalCommand(void);

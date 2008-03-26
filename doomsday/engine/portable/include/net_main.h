@@ -257,8 +257,8 @@ extern int      realTics, availableTics;
 extern int      isServer, isClient;
 extern boolean  allowNetTraffic; // Should net traffic be allowed?
 extern byte     netDontSleep, netTicSync;
-extern ddplayer_t ddPlayers[MAXPLAYERS];
-extern client_t clients[MAXPLAYERS];
+extern ddplayer_t ddPlayers[DDMAXPLAYERS];
+extern client_t clients[DDMAXPLAYERS];
 
 //---------------------------------------------------------------------------
 // Functions

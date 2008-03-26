@@ -1596,9 +1596,9 @@ void R_SetupLevel(int mode, int flags)
         DD_ResetTimer();
 
         // Kill all local commands and determine the invoid status of players.
-        for(i = 0; i < MAXPLAYERS; ++i)
+        for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            ddplayer_t         *plr = &players[i];
+            ddplayer_t         *plr = &ddPlayers[i];
 
             clients[i].numTics = 0;
 
@@ -1775,9 +1775,9 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
             // Check if there are any camera players in this sector. If their
             // height is now above the ceiling/below the floor they are now in
             // the void.
-            for(j = 0; j < MAXPLAYERS; ++j)
+            for(j = 0; j < DDMAXPLAYERS; ++j)
             {
-                player = &players[j];
+                player = &ddPlayers[j];
                 if(!player->inGame || !player->mo || !player->mo->subsector)
                     continue;
 

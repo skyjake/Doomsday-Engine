@@ -98,11 +98,8 @@ char   *serverInfo = "Multiplayer Host";
 char   *playerName = "Player";
 int     serverData[3];          // Some parameters passed to master server.
 
-//byte   *localticcmds;
-//int     numlocal;             // Number of cmds in the buffer.
-
-ddplayer_t ddPlayers[MAXPLAYERS];
-client_t clients[MAXPLAYERS];   // All network data for the players.
+ddplayer_t ddPlayers[DDMAXPLAYERS];
+client_t clients[DDMAXPLAYERS];   // All network data for the players.
 
 int     netGame;                // true if a netGame is in progress
 int     isServer;               // true if this computer is an open server.
@@ -157,7 +154,7 @@ void Net_Register(void)
     C_VAR_CHARPTR("server-password", &netPassword, 0, 0, 0);
     C_VAR_BYTE("server-latencies", &netShowLatencies, 0, 0, 1);
     C_VAR_INT("server-frame-interval", &frameInterval, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("server-player-limit", &svMaxPlayers, 0, 0, MAXPLAYERS);
+    C_VAR_INT("server-player-limit", &svMaxPlayers, 0, 0, DDMAXPLAYERS);
 
     // Ccmds
     C_CMD("chat", NULL, Chat);
@@ -334,7 +331,7 @@ void Net_ResetTimer(void)
  */
 boolean Net_IsLocalPlayer(int pNum)
 {
-	return players[pNum].inGame && (players[pNum].flags & DDPF_LOCAL);
+	return ddPlayers[pNum].inGame && (ddPlayers[pNum].flags & DDPF_LOCAL);
 }
 
 /**
@@ -465,9 +462,9 @@ static void Net_DoUpdate(void)
      * entirely local.
      */
     coordTimer -= newTics;
-    if(isClient && allowFrames && coordTimer < 0 && players[consolePlayer].mo)
+    if(isClient && allowFrames && coordTimer < 0 && ddPlayers[consolePlayer].mo)
     {
-        mobj_t *mo = players[consolePlayer].mo;
+        mobj_t *mo = ddPlayers[consolePlayer].mo;
 
         coordTimer = netCoordTime; // 35/2
         Msg_Begin(PKT_COORDS);
@@ -551,7 +548,7 @@ void Net_AllocArrays(void)
     numlocal = 0;               // Nothing in the buffer.
 #endif
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         memset(clients + i, 0, sizeof(clients[i]));
         // The server stores ticcmds sent by the clients to these
@@ -573,7 +570,7 @@ void Net_DestroyArrays(void)
     localticcmds = NULL;
 #endif
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         M_Free(clients[i].ticCmds);
         M_Free(clients[i].lastCmd);
@@ -600,8 +597,8 @@ void Net_InitGame(void)
     // Netgame is true when we're aware of the network (i.e. other players).
     netGame = false;
 
-    players[0].inGame = true;
-    players[0].flags |= DDPF_LOCAL;
+    ddPlayers[0].inGame = true;
+    ddPlayers[0].flags |= DDPF_LOCAL;
     clients[0].id = clientID;
     clients[0].ready = true;
     clients[0].connected = true;
@@ -643,28 +640,28 @@ void Net_StopGame(void)
     netLoggedIn = false;
 
     // All remote players are forgotten.
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        players[i].inGame = false;
+        ddPlayers[i].inGame = false;
         clients[i].ready = clients[i].connected = false;
         clients[i].nodeID = 0;
-        players[i].flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
+        ddPlayers[i].flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
     }
 
     // We're about to become player zero, so update it's view angles to
     // match our current ones.
-    if(players[0].mo)
+    if(ddPlayers[0].mo)
     {
         /* $unifiedangles */
-        players[0].mo->angle = players[consolePlayer].mo->angle;
-        players[0].lookDir = players[consolePlayer].lookDir;
+        ddPlayers[0].mo->angle = ddPlayers[consolePlayer].mo->angle;
+        ddPlayers[0].lookDir = ddPlayers[consolePlayer].lookDir;
     }
     consolePlayer = displayPlayer = 0;
-    players[0].inGame = true;
+    ddPlayers[0].inGame = true;
     clients[0].ready = true;
     clients[0].connected = true;
     clients[0].viewConsole = 0;
-    players[0].flags |= DDPF_LOCAL;
+    ddPlayers[0].flags |= DDPF_LOCAL;
 }
 
 /**
@@ -837,8 +834,8 @@ void Net_Drawer(void)
     int     i, c;
     boolean show_blink_r = false;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
-        if(players[i].inGame && clients[i].recording)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+        if(ddPlayers[i].inGame && clients[i].recording)
             show_blink_r = true;
 
     // Draw the Shadow Bias Editor HUD (if it is active).
@@ -865,9 +862,9 @@ void Net_Drawer(void)
     if(show_blink_r && SECONDS_TO_TICKS(gameTime) & 8)
     {
         strcpy(buf, "[");
-        for(i = c = 0; i < MAXPLAYERS; ++i)
+        for(i = c = 0; i < DDMAXPLAYERS; ++i)
         {
-            if(!(!players[i].inGame || !clients[i].recording))
+            if(!(!ddPlayers[i].inGame || !clients[i].recording))
             {
                 // This is a "real" player (or camera).
                 if(c++)
@@ -891,12 +888,12 @@ void Net_Drawer(void)
         /*      DGL_Color3f(1, 1, 1);
            sprintf(buf, "G%i", gametic);
            FR_TextOut(buf, 10, 10);
-           for(i = 0, cl = clients; i<MAXPLAYERS; ++i, cl++)
-           if(players[i].inGame)
+           for(i = 0, cl = clients; i<DDMAXPLAYERS; ++i, cl++)
+           if(ddPlayers[i].inGame)
            {
            sprintf(buf, "%02i:%+04i[%+03i](%02d/%03i) pf:%x", i, cl->lag,
            cl->lagStress, cl->numtics, cl->runTime,
-           players[i].flags);
+           ddPlayers[i].flags);
            FR_TextOut(buf, 10, 10+10*(i+1));
            } */
     }
@@ -1010,7 +1007,7 @@ void Net_Ticker(void /*timespan_t time*/)
         if(printTimer++ > TICSPERSEC)
         {
             printTimer = 0;
-            for(i = 0; i < MAXPLAYERS; ++i)
+            for(i = 0; i < DDMAXPLAYERS; ++i)
             {
                 if(Sv_IsFrameTarget(i))
                 {
@@ -1023,7 +1020,7 @@ void Net_Ticker(void /*timespan_t time*/)
                                 Sv_GetMaxFrameSize(i),
                                 Sv_CountUnackedDeltas(i));
                 }
-                /*if(players[i].inGame)
+                /*if(ddPlayers[i].inGame)
                     Con_Message("%i: cmds=%i\n", i, clients[i].numTics);*/
             }
         }
@@ -1034,7 +1031,7 @@ void Net_Ticker(void /*timespan_t time*/)
         return;
 
     // Check the pingers.
-    for(i = 0, cl = clients; i < MAXPLAYERS; ++i, cl++)
+    for(i = 0, cl = clients; i < DDMAXPLAYERS; ++i, cl++)
     {
         // Clients can only ping the server.
         if(!(isClient && i) && i != consolePlayer)
@@ -1143,7 +1140,7 @@ D_CMD(Chat)
         {
         boolean     found = false;
 
-        for(i = 0; i < MAXPLAYERS && !found; ++i)
+        for(i = 0; i < DDMAXPLAYERS && !found; ++i)
             if(!stricmp(clients[i].name, argv[1]))
             {
                 mask = 1 << i;
@@ -1168,8 +1165,8 @@ D_CMD(Chat)
         }
         else
         {
-            for(i = 1; i < MAXPLAYERS; ++i)
-                if(players[i].inGame && mask & (1 << i))
+            for(i = 1; i < DDMAXPLAYERS; ++i)
+                if(ddPlayers[i].inGame && mask & (1 << i))
                     Net_SendBuffer(i, SPF_ORDERED);
         }
     }
@@ -1203,7 +1200,7 @@ D_CMD(Kick)
     }
 
     num = atoi(argv[1]);
-    if(num < 1 || num >= MAXPLAYERS)
+    if(num < 1 || num >= DDMAXPLAYERS)
     {
         Con_Printf("Invalid client number.\n");
         return false;
@@ -1262,8 +1259,8 @@ D_CMD(MakeCamera)
        clients[cp].connected = true;
        clients[cp].ready = true;
        clients[cp].updateCount = UPDATECOUNT;
-       players[cp].flags |= DDPF_CAMERA;
-       players[cp].inGame = true; // !!!
+       ddPlayers[cp].flags |= DDPF_CAMERA;
+       ddPlayers[cp].inGame = true; // !!!
        Sv_InitPoolForClient(cp);
        mo = Z_Malloc(sizeof(mobj_t), PU_LEVEL, 0);
        memset(mo, 0, sizeof(*mo));
@@ -1271,14 +1268,14 @@ D_CMD(MakeCamera)
        mo->pos[VY] = conp->mo->pos[VY];
        mo->pos[VZ] = conp->mo->pos[VZ];
        mo->subsector = conp->mo->subsector;
-       players[cp].mo = mo;
+       ddPlayers[cp].mo = mo;
        displayPlayer = cp; */
 
     // Create a new local player.
     int         cp;
 
     cp = atoi(argv[1]);
-    if(cp < 0 || cp >= MAXPLAYERS)
+    if(cp < 0 || cp >= DDMAXPLAYERS)
         return false;
 
     if(clients[cp].connected)
@@ -1290,7 +1287,7 @@ D_CMD(MakeCamera)
     clients[cp].connected = true;
     clients[cp].ready = true;
     clients[cp].updateCount = UPDATECOUNT;
-    players[cp].flags |= DDPF_LOCAL;
+    ddPlayers[cp].flags |= DDPF_LOCAL;
     Sv_InitPoolForClient(cp);
 
     return true;
@@ -1301,7 +1298,7 @@ D_CMD(SetConsole)
     int         cp;
 
     cp = atoi(argv[1]);
-    if(players[cp].inGame)
+    if(ddPlayers[cp].inGame)
         consolePlayer = displayPlayer = cp;
     return true;
 }
@@ -1472,13 +1469,13 @@ D_CMD(Net)
             if(isServer)
             {
                 Con_Printf("Clients:\n");
-                for(i = 0; i < MAXPLAYERS; ++i)
+                for(i = 0; i < DDMAXPLAYERS; ++i)
                 {
                     if(clients[i].connected)
                         Con_Printf("%2i: %10s node %2x, entered at %07i (ingame:%i, handshake:%i)\n",
                                    i, clients[i].name,
                                    clients[i].nodeID, clients[i].enterTime,
-                                   players[i].inGame, clients[i].handshake);
+                                   ddPlayers[i].inGame, clients[i].handshake);
                 }
             }
 

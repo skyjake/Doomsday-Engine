@@ -173,9 +173,9 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 
     // Update time and player ingame status.
     gameTime = shake.gameTime / 100.0;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        players[i].inGame = (shake.playerMask & (1 << i)) != 0;
+        ddPlayers[i].inGame = (shake.playerMask & (1 << i)) != 0;
     }
     consolePlayer = displayPlayer = shake.yourConsole;
     clients[consolePlayer].numTics = 0;
@@ -220,11 +220,11 @@ void Cl_HandlePlayerInfo(playerinfo_packet_t *info)
                info->name);
 
     // Is the console number valid?
-    if(info->console >= MAXPLAYERS)
+    if(info->console >= DDMAXPLAYERS)
         return;
 
-    present = players[info->console].inGame;
-    players[info->console].inGame = true;
+    present = ddPlayers[info->console].inGame;
+    ddPlayers[info->console].inGame = true;
     strcpy(clients[info->console].name, info->name);
 
     if(!present)
@@ -237,7 +237,7 @@ void Cl_HandlePlayerInfo(playerinfo_packet_t *info)
 void Cl_PlayerLeaves(int number)
 {
     Con_Printf("Cl_PlayerLeaves: player %i has left.\n", number);
-    players[number].inGame = false;
+    ddPlayers[number].inGame = false;
     gx.NetPlayerEvent(number, DDPE_EXIT, 0);
 }
 
@@ -278,7 +278,7 @@ void Cl_GetPackets(void)
                 break;
 
             case PSV_FILTER:
-                players[consolePlayer].filter = Msg_ReadLong();
+                ddPlayers[consolePlayer].filter = Msg_ReadLong();
                 break;
 
             default:

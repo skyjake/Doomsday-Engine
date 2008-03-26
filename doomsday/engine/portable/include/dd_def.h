@@ -43,10 +43,6 @@
 #pragma warning (disable:4761 4244)
 #endif
 
-// Important definitions.
-#define MAXPLAYERS          DDMAXPLAYERS
-#define players             ddPlayers
-
 // if rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
 #ifndef NORANGECHECKING

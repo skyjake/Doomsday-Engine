@@ -350,7 +350,7 @@ void P_ControlShutdown(void)
 	// Free the control tables of the local players.
 	for(i = 0; i < DDMAXPLAYERS; ++i)
 	{
-		if(players[i].flags & DDPF_LOCAL)
+		if(ddPlayers[i].flags & DDPF_LOCAL)
             controlTableFree(i);
 	}
 
@@ -811,7 +811,7 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 
     // FIXME: These should be in PlayerThink.
     /*
-    plr = &players[player];
+    plr = &ddPlayers[player];
 
 	// Get a descriptor of the axis control.
 	desc = &ctlClass[CC_AXIS].desc[axisControlIndex];
@@ -860,7 +860,7 @@ void P_ControlTicker(timespan_t time)
     mul = time * TICSPERSEC * (640 << 16) * 45.0f/ANGLE_45;
 	for(i = 0; i < DDMAXPLAYERS; ++i)
 	{
-		if(!players[i].inGame || !(players[i].flags & DDPF_LOCAL))
+		if(!ddPlayers[i].inGame || !(ddPlayers[i].flags & DDPF_LOCAL))
             continue;
 
 		pos = P_ControlGetAxis(i, "turn");

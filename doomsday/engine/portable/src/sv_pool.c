@@ -84,7 +84,7 @@ typedef struct cregister_s {
     // The mobjs are stored in a hash for efficiency (ID is the key).
     mobjhash_t          mobjs[REG_MOBJ_HASH_SIZE];
 
-    dt_player_t         players[MAXPLAYERS];
+    dt_player_t         ddPlayers[DDMAXPLAYERS];
     dt_sector_t        *sectors;
     dt_side_t          *sideDefs;
     dt_poly_t          *polyObjs;
@@ -121,7 +121,7 @@ cregister_t worldRegister;
 cregister_t initialRegister;
 
 // Each client has its own pool for deltas.
-pool_t pools[MAXPLAYERS];
+pool_t pools[DDMAXPLAYERS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -176,7 +176,7 @@ void Sv_InitPools(void)
 
     // Since the level has changed, PU_LEVEL memory has been freed.
     // Reset all pools (set numbers are kept, though).
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         pools[i].owner = i;
         pools[i].resendDealer = 1;
@@ -438,20 +438,20 @@ void Sv_RegisterResetMobj(dt_mobj_t *reg)
  */
 void Sv_RegisterPlayer(dt_player_t *reg, uint number)
 {
-    ddplayer_t *p = players + number;
-    client_t *c = clients + number;
+    ddplayer_t         *p = &ddPlayers[number];
+    client_t           *c = &clients[number];
 
-    reg->mobj = p->mo ? p->mo->thinker.id : 0;
+    reg->mobj = (p->mo ? p->mo->thinker.id : 0);
     reg->forwardMove = c->lastCmd->forwardMove;
     reg->sideMove = c->lastCmd->sideMove;
-    reg->angle = p->mo ? p->mo->angle : 0;
-    reg->turnDelta = p->mo ? p->mo->angle - p->lastAngle : 0;
+    reg->angle = (p->mo ? p->mo->angle : 0);
+    reg->turnDelta = (p->mo ? p->mo->angle - p->lastAngle : 0);
     reg->friction = p->mo &&
-        gx.MobjFriction ? gx.MobjFriction(p->mo) : DEFAULT_FRICTION;
+        (gx.MobjFriction ? gx.MobjFriction(p->mo) : DEFAULT_FRICTION);
     reg->extraLight = p->extraLight;
     reg->fixedColorMap = p->fixedColorMap;
     reg->filter = p->filter;
-    reg->clYaw = p->mo ? p->mo->angle : 0;
+    reg->clYaw = (p->mo ? p->mo->angle : 0);
     reg->clPitch = p->lookDir;
     memcpy(reg->psp, p->pSprites, sizeof(ddpsprite_t) * 2);
 }
@@ -465,9 +465,9 @@ void Sv_RegisterPlayer(dt_player_t *reg, uint number)
  */
 void Sv_RegisterSector(dt_sector_t *reg, uint number)
 {
-    uint        i;
-    sector_t   *sec = SECTOR_PTR(number);
-    material_t *mat;
+    uint                i;
+    sector_t           *sec = SECTOR_PTR(number);
+    material_t         *mat;
 
     reg->lightLevel = sec->lightLevel;
     memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
@@ -629,7 +629,7 @@ VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinke
 boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
                                  playerdelta_t *d)
 {
-    const dt_player_t *r = &reg->players[number];
+    const dt_player_t *r = &reg->ddPlayers[number];
     dt_player_t *s = &d->player;
     int         df = 0;
 
@@ -1059,7 +1059,7 @@ boolean Sv_IsMobjIgnored(mobj_t *mo)
  */
 boolean Sv_IsPlayerIgnored(uint number)
 {
-    return !players[number].inGame;
+    return !ddPlayers[number].inGame;
 }
 
 /**
@@ -1110,7 +1110,7 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
  */
 void Sv_UpdateOwnerInfo(pool_t *pool)
 {
-    ddplayer_t             *player = &players[pool->owner];
+    ddplayer_t             *player = &ddPlayers[pool->owner];
     ownerinfo_t            *info = &pool->ownerInfo;
 
     memset(info, 0, sizeof(*info));
@@ -1695,7 +1695,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
     if(delta->type == DT_PLAYER)
     {
         // Use the player's actual position.
-        const mobj_t *mo = players[delta->id].mo;
+        const mobj_t           *mo = ddPlayers[delta->id].mo;
 
         if(mo)
         {
@@ -1859,15 +1859,15 @@ float Sv_GetMaxSoundDistance(const sounddelta_t *delta)
  */
 int Sv_ExcludeDelta(pool_t *pool, const void *deltaPtr)
 {
-    const delta_t *delta = deltaPtr;
-    ddplayer_t *player = &players[pool->owner];
-    mobj_t     *poolViewer = player->mo;
-    int         flags = delta->flags;
+    const delta_t      *delta = deltaPtr;
+    ddplayer_t         *player = &ddPlayers[pool->owner];
+    mobj_t             *poolViewer = player->mo;
+    int                 flags = delta->flags;
 
     // Can we exclude information from the delta? (for this player only)
     if(delta->type == DT_MOBJ)
     {
-        const mobjdelta_t *mobjDelta = deltaPtr;
+        const mobjdelta_t  *mobjDelta = deltaPtr;
 
         if(poolViewer && poolViewer->thinker.id == delta->id)
         {
@@ -2101,7 +2101,7 @@ void Sv_MobjRemoved(thid_t id)
         // the register, no Null Mobj delta is generated, and thus the
         // client will eventually receive those mobj deltas unnecessarily.
 
-        for(i = 0; i < MAXPLAYERS; ++i)
+        for(i = 0; i < DDMAXPLAYERS; ++i)
         {
             if(clients[i].connected)
             {
@@ -2118,7 +2118,7 @@ void Sv_MobjRemoved(thid_t id)
  */
 void Sv_PlayerRemoved(uint playerNumber)
 {
-    dt_player_t *p = &worldRegister.players[playerNumber];
+    dt_player_t *p = &worldRegister.ddPlayers[playerNumber];
 
     memset(p, 0, sizeof(*p));
 }
@@ -2146,7 +2146,7 @@ int Sv_GetTargetPools(pool_t **targets, int clientsMask)
 {
     int         i, numTargets = 0;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         if(clientsMask & (1 << i) && clients[i].connected)
         {
@@ -2161,7 +2161,7 @@ int Sv_GetTargetPools(pool_t **targets, int clientsMask)
         return 1;
     }
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         // Deltas must be generated for all connected players, even
         // if they aren't yet ready to receive them.
@@ -2270,7 +2270,7 @@ void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     playerdelta_t player;
     uint        i;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         if(Sv_IsPlayerIgnored(i))
             continue;
@@ -2285,7 +2285,7 @@ void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
             if(doUpdate && player.delta.flags & PDF_MOBJ)
             {
                 reg_mobj_t *registered =
-                    Sv_RegisterFindMobj(reg, reg->players[i].mobj);
+                    Sv_RegisterFindMobj(reg, reg->ddPlayers[i].mobj);
 
                 if(registered)
                 {
@@ -2298,14 +2298,14 @@ void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 
         if(doUpdate)
         {
-            Sv_RegisterPlayer(&reg->players[i], i);
+            Sv_RegisterPlayer(&reg->ddPlayers[i], i);
         }
 
         // What about forced deltas?
         if(Sv_IsPoolTargeted(&pools[i], targets))
         {
 #if 0
-            if(players[i].flags & DDPF_FIXANGLES)
+            if(ddPlayers[i].flags & DDPF_FIXANGLES)
             {
                 Sv_NewDelta(&player, DT_PLAYER, i);
                 Sv_RegisterPlayer(&player.player, i);
@@ -2315,22 +2315,22 @@ void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
                 Sv_AddDelta(&pools[i], &player);
 
                 // Doing this once is enough.
-                players[i].flags &= ~DDPF_FIXANGLES;
+                ddPlayers[i].flags &= ~DDPF_FIXANGLES;
             }
 
             // Generate a FIXPOS/FIXMOM mobj delta, too?
-            if(players[i].mo && players[i].flags & (DDPF_FIXPOS | DDPF_FIXMOM))
+            if(ddPlayers[i].mo && ddPlayers[i].flags & (DDPF_FIXPOS | DDPF_FIXMOM))
             {
-                const mobj_t *mo = players[i].mo;
+                const mobj_t *mo = ddPlayers[i].mo;
                 mobjdelta_t mobj;
 
                 Sv_NewDelta(&mobj, DT_MOBJ, mo->thinker.id);
                 Sv_RegisterMobj(&mobj.mo, mo);
-                if(players[i].flags & DDPF_FIXPOS)
+                if(ddPlayers[i].flags & DDPF_FIXPOS)
                 {
                     mobj.delta.flags |= MDF_POS;
                 }
-                if(players[i].flags & DDPF_FIXMOM)
+                if(ddPlayers[i].flags & DDPF_FIXMOM)
                 {
                     mobj.delta.flags |= MDF_MOM;
                 }
@@ -2338,7 +2338,7 @@ void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
                 Sv_AddDelta(&pools[i], &mobj);
 
                 // Doing this once is enough.
-                players[i].flags &= ~(DDPF_FIXPOS | DDPF_FIXMOM);
+                ddPlayers[i].flags &= ~(DDPF_FIXPOS | DDPF_FIXMOM);
             }
 #endif
         }
@@ -2442,7 +2442,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, sector_t *sourceSector,
                       polyobj_t *sourcePoly, float volume,
                       boolean isRepeating, int clientsMask)
 {
-    pool_t     *targets[MAXPLAYERS + 1];
+    pool_t     *targets[DDMAXPLAYERS + 1];
     sounddelta_t soundDelta;
     int         type = DT_SOUND;
     uint        id = soundId;
@@ -2502,8 +2502,8 @@ boolean Sv_IsFrameTarget(uint number)
 {
     // Local players receive frames only when they're recording a demo.
     // Clients must tell us they are ready before we can begin sending.
-    return (players[number].inGame && !(players[number].flags & DDPF_LOCAL) &&
-            clients[number].ready) || (players[number].flags & DDPF_LOCAL &&
+    return (ddPlayers[number].inGame && !(ddPlayers[number].flags & DDPF_LOCAL) &&
+            clients[number].ready) || (ddPlayers[number].flags & DDPF_LOCAL &&
                                        clients[number].recording);
 }
 
@@ -2521,7 +2521,7 @@ boolean Sv_IsFrameTarget(uint number)
 void Sv_GenerateNewDeltas(cregister_t *reg, int clientNumber,
                           boolean doUpdate)
 {
-    pool_t *targets[MAXPLAYERS + 1], **pool;
+    pool_t             *targets[DDMAXPLAYERS + 1], **pool;
 
     // Determine the target pools.
     Sv_GetTargetPools(targets, (clientNumber < 0 ? 0xff : (1 << clientNumber)));
@@ -2866,8 +2866,8 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
 void Sv_RatePool(pool_t *pool)
 {
 #ifdef _DEBUG
-    ddplayer_t *player = &players[pool->owner];
-    //client_t *client = &clients[pool->owner];
+    ddplayer_t         *player = &ddPlayers[pool->owner];
+    //client_t           *client = &clients[pool->owner];
 #endif
     delta_t *delta;
     int     i;

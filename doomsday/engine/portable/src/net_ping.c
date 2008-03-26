@@ -171,8 +171,8 @@ D_CMD(Ping)
             count = atoi(argv[1]);
     }
     // Check that the given parameters are valid.
-    if(count <= 0 || count > MAX_PINGS || dest < 0 || dest >= MAXPLAYERS ||
-       dest == consolePlayer || (dest && !players[dest].inGame))
+    if(count <= 0 || count > MAX_PINGS || dest < 0 || dest >= DDMAXPLAYERS ||
+       dest == consolePlayer || (dest && !ddPlayers[dest].inGame))
         return false;
 
     Net_SendPing(dest, count);

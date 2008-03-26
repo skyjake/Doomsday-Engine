@@ -447,9 +447,9 @@ boolean P_LoadMap(const char *mapID)
     {
         // Whenever the map changes, remote players must tell us when
         // they're ready to begin receiving frames.
-        for(i = 0; i < MAXPLAYERS; ++i)
+        for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            if(!(players[i].flags & DDPF_LOCAL) && clients[i].connected)
+            if(!(ddPlayers[i].flags & DDPF_LOCAL) && clients[i].connected)
             {
 #ifdef _DEBUG
                 Con_Printf("Cl%i NOT READY ANY MORE!\n", i);
@@ -469,9 +469,9 @@ boolean P_LoadMap(const char *mapID)
         Rend_CalcLightRangeModMatrix(NULL);
 
         // Invalidate old cmds and init player values.
-        for(i = 0; i < MAXPLAYERS; ++i)
+        for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            ddplayer_t      *plr = &players[i];
+            ddplayer_t      *plr = &ddPlayers[i];
 
             if(isServer && plr->inGame)
                 clients[i].runTime = SECONDS_TO_TICKS(gameTime);

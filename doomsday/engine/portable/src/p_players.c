@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_players.c: Players
  */
 
@@ -55,11 +55,11 @@
  */
 int P_LocalToConsole(int localPlayer)
 {
-    int         i, count;
+    int         		i, count;
 
     for(i = 0, count = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(players[i].flags & DDPF_LOCAL)
+        if(ddPlayers[i].flags & DDPF_LOCAL)
         {
             if(count++ == localPlayer)
                 return i;
@@ -76,14 +76,14 @@ int P_LocalToConsole(int localPlayer)
  */
 int P_ConsoleToLocal(int playerNum)
 {
-    int         i, count;
-    
-    if(!(players[playerNum].flags & DDPF_LOCAL))
+    int         		i, count;
+
+    if(!(ddPlayers[playerNum].flags & DDPF_LOCAL))
         return -1; // Not local at all.
-    
+
     for(i = 0, count = 0; i < playerNum; ++i)
     {
-        if(players[i].flags & DDPF_LOCAL)
+        if(ddPlayers[i].flags & DDPF_LOCAL)
             count++;
     }
     return count;

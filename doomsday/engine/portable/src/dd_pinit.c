@@ -260,7 +260,7 @@ void DD_ShutdownAll(void)
 #endif
 
     // Stop all demo recording.
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
         Demo_StopRecording(i);
 
     P_ControlShutdown();

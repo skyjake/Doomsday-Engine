@@ -212,7 +212,7 @@ void R_Update(void)
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         // States have changed, the states are unknown.
-        players[i].pSprites[0].statePtr = players[i].pSprites[1].statePtr =
+        ddPlayers[i].pSprites[0].statePtr = ddPlayers[i].pSprites[1].statePtr =
             NULL;
     }
     // The rendering lists have persistent data that has changed during

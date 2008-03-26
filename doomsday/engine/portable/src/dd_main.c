@@ -1214,7 +1214,7 @@ void DD_SetVariable(int ddvalue, void *parm)
  */
 ddplayer_t *DD_GetPlayer(int number)
 {
-    return (ddplayer_t *) &players[number];
+    return (ddplayer_t *) &ddPlayers[number];
 }
 
 #ifdef UNIX

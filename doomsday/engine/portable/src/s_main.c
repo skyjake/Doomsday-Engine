@@ -171,7 +171,7 @@ void S_EndFrame(void)
  */
 mobj_t *S_GetListenerMobj(void)
 {
-    return players[displayPlayer].mo;
+    return ddPlayers[displayPlayer].mo;
 }
 
 /**
