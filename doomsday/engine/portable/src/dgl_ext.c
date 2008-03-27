@@ -233,7 +233,7 @@ void printExtensions(const GLubyte* extensions)
 {
     char           *token, *extbuf;
 
-    extbuf = malloc(strlen((const char*) extensions) + 1);
+    extbuf = M_Malloc(strlen((const char*) extensions) + 1);
     strcpy(extbuf, (const char *) extensions);
 
     token = strtok(extbuf, " ");
@@ -256,7 +256,7 @@ void printExtensions(const GLubyte* extensions)
         }
         token = strtok(NULL, " ");
     }
-    free(extbuf);
+    M_Free(extbuf);
 }
 
 void DGL_PrintExtensions(void)
