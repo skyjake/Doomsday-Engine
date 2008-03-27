@@ -247,7 +247,7 @@ void Sv_ShutdownPools(void)
 /**
  * Called when a client joins the game.
  */
-void Sv_InitPoolForClient(int clientNumber)
+void Sv_InitPoolForClient(uint clientNumber)
 {
     // Free everything that might exist in the pool.
     Sv_DrainPool(clientNumber);
@@ -265,7 +265,7 @@ void Sv_InitPoolForClient(int clientNumber)
 /**
  * @return              Pointer to the console's delta pool.
  */
-pool_t *Sv_GetPool(int consoleNumber)
+pool_t *Sv_GetPool(uint consoleNumber)
 {
     return &pools[consoleNumber];
 }
@@ -438,22 +438,23 @@ void Sv_RegisterResetMobj(dt_mobj_t *reg)
  */
 void Sv_RegisterPlayer(dt_player_t *reg, uint number)
 {
-    ddplayer_t         *p = &ddPlayers[number];
+    player_t           *plr = &ddPlayers[number];
+    ddplayer_t         *ddpl = &plr->shared;
     client_t           *c = &clients[number];
 
-    reg->mobj = (p->mo ? p->mo->thinker.id : 0);
+    reg->mobj = (ddpl->mo ? ddpl->mo->thinker.id : 0);
     reg->forwardMove = c->lastCmd->forwardMove;
     reg->sideMove = c->lastCmd->sideMove;
-    reg->angle = (p->mo ? p->mo->angle : 0);
-    reg->turnDelta = (p->mo ? p->mo->angle - p->lastAngle : 0);
-    reg->friction = p->mo &&
-        (gx.MobjFriction ? gx.MobjFriction(p->mo) : DEFAULT_FRICTION);
-    reg->extraLight = p->extraLight;
-    reg->fixedColorMap = p->fixedColorMap;
-    reg->filter = p->filter;
-    reg->clYaw = (p->mo ? p->mo->angle : 0);
-    reg->clPitch = p->lookDir;
-    memcpy(reg->psp, p->pSprites, sizeof(ddpsprite_t) * 2);
+    reg->angle = (ddpl->mo ? ddpl->mo->angle : 0);
+    reg->turnDelta = (ddpl->mo ? ddpl->mo->angle - ddpl->lastAngle : 0);
+    reg->friction = ddpl->mo &&
+        (gx.MobjFriction ? gx.MobjFriction(ddpl->mo) : DEFAULT_FRICTION);
+    reg->extraLight = ddpl->extraLight;
+    reg->fixedColorMap = ddpl->fixedColorMap;
+    reg->filter = ddpl->filter;
+    reg->clYaw = (ddpl->mo ? ddpl->mo->angle : 0);
+    reg->clPitch = ddpl->lookDir;
+    memcpy(reg->psp, ddpl->pSprites, sizeof(ddpsprite_t) * 2);
 }
 
 /**
@@ -1057,9 +1058,9 @@ boolean Sv_IsMobjIgnored(mobj_t *mo)
  * @return              @c true, if the player can be excluded from delta
  *                      processing.
  */
-boolean Sv_IsPlayerIgnored(uint number)
+boolean Sv_IsPlayerIgnored(int plrNum)
 {
-    return !ddPlayers[number].inGame;
+    return !ddPlayers[plrNum].shared.inGame;
 }
 
 /**
@@ -1073,7 +1074,7 @@ boolean Sv_IsPlayerIgnored(uint number)
  */
 void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
 {
-    uint        i;
+    uint                i;
 
     memset(reg, 0, sizeof(*reg));
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -1110,23 +1111,23 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
  */
 void Sv_UpdateOwnerInfo(pool_t *pool)
 {
-    ddplayer_t             *player = &ddPlayers[pool->owner];
-    ownerinfo_t            *info = &pool->ownerInfo;
+    player_t           *plr = &ddPlayers[pool->owner];
+    ownerinfo_t        *info = &pool->ownerInfo;
 
     memset(info, 0, sizeof(*info));
 
     // Pointer to the owner's pool.
     info->pool = pool;
 
-    if(player->mo)
+    if(plr->shared.mo)
     {
-        info->pos[VX] = player->mo->pos[VX];
-        info->pos[VY] = player->mo->pos[VY];
-        info->pos[VZ] = player->mo->pos[VZ];
-        info->angle = player->mo->angle;
-        info->speed =
-            P_ApproxDistance(player->mo->mom[MX],
-                             player->mo->mom[MY]);
+        mobj_t                 *mo = plr->shared.mo;
+
+        info->pos[VX] = mo->pos[VX];
+        info->pos[VY] = mo->pos[VY];
+        info->pos[VZ] = mo->pos[VZ];
+        info->angle = mo->angle;
+        info->speed = P_ApproxDistance(mo->mom[MX], mo->mom[MY]);
     }
 
     // The acknowledgement threshold is a multiple of the average
@@ -1148,7 +1149,7 @@ uint Sv_GetTimeStamp(void)
  */
 void Sv_NewDelta(void *deltaPtr, deltatype_t type, uint id)
 {
-    delta_t *delta = deltaPtr;
+    delta_t            *delta = deltaPtr;
 
     // NOTE: This only clears the common delta_t part, not the extra data.
     memset(delta, 0, sizeof(*delta));
@@ -1172,7 +1173,7 @@ boolean Sv_IsVoidDelta(const void *delta)
  */
 boolean Sv_IsSoundDelta(const void *delta)
 {
-    const delta_t *d = delta;
+    const delta_t      *d = delta;
 
     return (d->type == DT_SOUND || d->type == DT_MOBJ_SOUND ||
             d->type == DT_SECTOR_SOUND || d->type == DT_POLY_SOUND);
@@ -1695,7 +1696,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
     if(delta->type == DT_PLAYER)
     {
         // Use the player's actual position.
-        const mobj_t           *mo = ddPlayers[delta->id].mo;
+        const mobj_t           *mo = ddPlayers[delta->id].shared.mo;
 
         if(mo)
         {
@@ -1789,13 +1790,13 @@ void Sv_RemoveDelta(pool_t *pool, void *deltaPtr)
 /**
  * Draining the pool means emptying it of all contents. (Doh?)
  */
-void Sv_DrainPool(int clientNumber)
+void Sv_DrainPool(uint clientNumber)
 {
-    pool_t     *pool = &pools[clientNumber];
-    delta_t    *delta;
-    misrecord_t *mis;
-    void       *next = NULL;
-    int         i;
+    pool_t             *pool = &pools[clientNumber];
+    delta_t            *delta;
+    misrecord_t        *mis;
+    void               *next = NULL;
+    int                 i;
 
     // Update the number of the owner.
     pool->owner = clientNumber;
@@ -1851,7 +1852,7 @@ float Sv_GetMaxSoundDistance(const sounddelta_t *delta)
         // Silence is heard all over the world.
         return DDMAXFLOAT;
     }
-    return volume * sound_max_distance;
+    return volume * soundMaxDist;
 }
 
 /**
@@ -1860,8 +1861,8 @@ float Sv_GetMaxSoundDistance(const sounddelta_t *delta)
 int Sv_ExcludeDelta(pool_t *pool, const void *deltaPtr)
 {
     const delta_t      *delta = deltaPtr;
-    ddplayer_t         *player = &ddPlayers[pool->owner];
-    mobj_t             *poolViewer = player->mo;
+    player_t           *plr = &ddPlayers[pool->owner];
+    mobj_t             *poolViewer = plr->shared.mo;
     int                 flags = delta->flags;
 
     // Can we exclude information from the delta? (for this player only)
@@ -2498,13 +2499,16 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, sector_t *sourceSector,
 /**
  * @return              @c true, if the client should receive frames.
  */
-boolean Sv_IsFrameTarget(uint number)
+boolean Sv_IsFrameTarget(uint plrNum)
 {
+    player_t           *plr = &ddPlayers[plrNum];
+    ddplayer_t         *ddpl = &plr->shared;
+
     // Local players receive frames only when they're recording a demo.
     // Clients must tell us they are ready before we can begin sending.
-    return (ddPlayers[number].inGame && !(ddPlayers[number].flags & DDPF_LOCAL) &&
-            clients[number].ready) || (ddPlayers[number].flags & DDPF_LOCAL &&
-                                       clients[number].recording);
+    return (ddpl->inGame && !(ddpl->flags & DDPF_LOCAL) &&
+            clients[plrNum].ready) ||
+           ((ddpl->flags & DDPF_LOCAL) && clients[plrNum].recording);
 }
 
 /**
@@ -2866,14 +2870,14 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
 void Sv_RatePool(pool_t *pool)
 {
 #ifdef _DEBUG
-    ddplayer_t         *player = &ddPlayers[pool->owner];
+    player_t           *plr = &ddPlayers[pool->owner];
     //client_t           *client = &clients[pool->owner];
 #endif
-    delta_t *delta;
-    int     i;
+    delta_t            *delta;
+    int                 i;
 
 #ifdef _DEBUG
-    if(!player->mo)
+    if(!plr->shared.mo)
     {
         Con_Error("Sv_RatePool: Player %i has no mobj.\n", pool->owner);
     }
@@ -2903,7 +2907,7 @@ void Sv_AckDelta(pool_t *pool, delta_t *delta)
 {
     if(Sv_IsCreateMobjDelta(delta))
     {
-        mobjdelta_t *mobjDelta = (mobjdelta_t *) delta;
+        mobjdelta_t        *mobjDelta = (mobjdelta_t *) delta;
 
         // Created missiles are put on record.
         if(mobjDelta->mo.ddFlags & DDMF_MISSILE)
@@ -2923,10 +2927,10 @@ void Sv_AckDelta(pool_t *pool, delta_t *delta)
  */
 void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
 {
-    pool_t      *pool = &pools[clientNumber];
-    delta_t    *delta, *next = NULL;
-    boolean     ackTimeRegistered = false;
-    int         i;
+    pool_t             *pool = &pools[clientNumber];
+    delta_t            *delta, *next = NULL;
+    boolean             ackTimeRegistered = false;
+    int                 i;
 
     // Iterate through the entire hash table.
     for(i = 0; i < POOL_HASH_SIZE; ++i)
@@ -2961,9 +2965,9 @@ void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
  */
 uint Sv_CountUnackedDeltas(uint clientNumber)
 {
-    uint        i, count;
-    pool_t     *pool = Sv_GetPool(clientNumber);
-    delta_t    *delta;
+    uint                i, count;
+    pool_t             *pool = Sv_GetPool(clientNumber);
+    delta_t            *delta;
 
     // Iterate through the entire hash table.
     count = 0;

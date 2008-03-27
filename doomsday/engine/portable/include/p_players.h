@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,14 +22,26 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_players.h: Players
  */
 
 #ifndef __DOOMSDAY_PLAYERS_H__
 #define __DOOMSDAY_PLAYERS_H__
 
-int         P_LocalToConsole(int localPlayer);
-int         P_ConsoleToLocal(int playerNum);
+typedef struct player_s {
+    ddplayer_t          shared; // The public player data.
+} player_t;
+
+extern player_t *viewPlayer;
+extern player_t ddPlayers[DDMAXPLAYERS];
+extern int consolePlayer;
+extern int displayPlayer;
+
+int             P_LocalToConsole(int localPlayer);
+int             P_ConsoleToLocal(int playerNum);
+int             P_GetDDPlayerIdx(ddplayer_t *ddpl);
+
+boolean         P_IsInVoid(player_t *p);
 
 #endif

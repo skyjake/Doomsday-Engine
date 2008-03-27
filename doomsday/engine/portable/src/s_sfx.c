@@ -67,14 +67,14 @@ sfxdriver_t *driver = NULL;
 int     sfx_max_channels = 16;
 int     sfx_dedicated_2d = 4;
 int     sfx_3d = false;
-float   sfx_reverb_strength = 1;
+float   sfxReverbStrength = 1;
 int     sfx_bits = 8;
 int     sfx_rate = 11025;
 
 // Console variables:
-int     sound_3dmode = false;
-int     sound_16bit = false;
-int     sound_rate = 11025;
+int     sfx3D = false;
+int     sfx16bit = false;
+int     sfxSampleRate = 11025;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -378,7 +378,7 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
     if(buf->flags & SFXBF_3D)
     {
         // Volume is affected only by maxvol.
-        driver->Set(buf, SFXBP_VOLUME, ch->volume * sfx_volume / 255.0f);
+        driver->Set(buf, SFXBP_VOLUME, ch->volume * sfxVolume / 255.0f);
         if(ch->emitter && ch->emitter == listener)
         {
             // Emitted by the listener object. Go to relative position mode
@@ -421,12 +421,12 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
         {
             // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
             dist = P_MobjPointDistancef(listener, 0, ch->pos);
-            if(dist < sound_min_distance || ch->flags & SFXCF_NO_ATTENUATION)
+            if(dist < soundMinDist || ch->flags & SFXCF_NO_ATTENUATION)
             {
                 // No distance attenuation.
                 dist = 1;
             }
-            else if(dist > sound_max_distance)
+            else if(dist > soundMaxDist)
             {
                 // Can't be heard.
                 dist = 0;
@@ -434,8 +434,8 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
             else
             {
                 normdist =
-                    (dist - sound_min_distance) / (sound_max_distance -
-                                                   sound_min_distance);
+                    (dist - soundMinDist) / (soundMaxDist -
+                                                   soundMinDist);
                 // Apply the linear factor so that at max distance there
                 // really is silence.
                 dist = .125f / (.125f + normdist) * (1 - normdist);
@@ -470,7 +470,7 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
             }
         }
         driver->Set(buf, SFXBP_VOLUME,
-                    ch->volume * dist * sfx_volume / 255.0f);
+                    ch->volume * dist * sfxVolume / 255.0f);
         driver->Set(buf, SFXBP_PAN, pan);
     }
 }
@@ -481,7 +481,7 @@ void Sfx_ListenerUpdate(void)
     int     i;
 
     // No volume means no sound.
-    if(!sfx_avail || !sfx_3d || !sfx_volume)
+    if(!sfx_avail || !sfx_3d || !sfxVolume)
         return;
 
     // Update the listener mobj.
@@ -514,7 +514,7 @@ void Sfx_ListenerUpdate(void)
             {
                 vec[i] = listener_sector->reverb[i];
                 if(i == SRD_VOLUME)
-                    vec[i] *= sfx_reverb_strength;
+                    vec[i] *= sfxReverbStrength;
             }
             driver->Listenerv(SFXLP_REVERB, vec);
         }
@@ -779,11 +779,11 @@ int Sfx_StartSound(sfxsample_t * sample, float volume, float freq,
         // This is only done once, when the sound is started (i.e. here).
         driver->Set(selch->buffer, SFXBP_MIN_DISTANCE,
                     selch->
-                    flags & SFXCF_NO_ATTENUATION ? 10000 : sound_min_distance);
+                    flags & SFXCF_NO_ATTENUATION ? 10000 : soundMinDist);
 
         driver->Set(selch->buffer, SFXBP_MAX_DISTANCE,
                     selch->
-                    flags & SFXCF_NO_ATTENUATION ? 20000 : sound_max_distance);
+                    flags & SFXCF_NO_ATTENUATION ? 20000 : soundMaxDist);
     }
 
     // This'll commit all the deferred properties.
@@ -843,25 +843,25 @@ void Sfx_StartFrame(void)
     driver->Event(SFXEV_BEGIN);
 
     // Have there been changes to the cvar settings?
-    if(old_3dmode != sound_3dmode)
+    if(old_3dmode != sfx3D)
     {
-        Sfx_3DMode(sound_3dmode != 0);
-        old_3dmode = sound_3dmode;
+        Sfx_3DMode(sfx3D != 0);
+        old_3dmode = sfx3D;
     }
 
     // Check that the rate is valid.
-    if(sound_rate != 11025 && sound_rate != 22050 && sound_rate != 44100)
+    if(sfxSampleRate != 11025 && sfxSampleRate != 22050 && sfxSampleRate != 44100)
     {
         Con_Message("sound-rate corrected to 11025.\n");
-        sound_rate = 11025;
+        sfxSampleRate = 11025;
     }
 
     // Do we need to change the sample format?
-    if(old_16bit != sound_16bit || old_rate != sound_rate)
+    if(old_16bit != sfx16bit || old_rate != sfxSampleRate)
     {
-        Sfx_SampleFormat(sound_16bit ? 16 : 8, sound_rate);
-        old_16bit = sound_16bit;
-        old_rate = sound_rate;
+        Sfx_SampleFormat(sfx16bit ? 16 : 8, sfxSampleRate);
+        old_16bit = sfx16bit;
+        old_rate = sfxSampleRate;
     }
 
     // Should we purge the cache (to conserve memory)?

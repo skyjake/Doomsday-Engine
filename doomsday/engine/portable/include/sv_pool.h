@@ -399,14 +399,14 @@ typedef struct pool_s {
 
 void            Sv_InitPools(void);
 void            Sv_ShutdownPools(void);
-void            Sv_DrainPool(int clientNumber);
-void            Sv_InitPoolForClient(int clientNumber);
+void            Sv_DrainPool(uint clientNumber);
+void            Sv_InitPoolForClient(uint clientNumber);
 void            Sv_MobjRemoved(thid_t id);
 void            Sv_PlayerRemoved(uint clientNumber);
 void            Sv_GenerateFrameDeltas(void);
 boolean         Sv_IsFrameTarget(uint clientNumber);
 uint            Sv_GetTimeStamp(void);
-pool_t         *Sv_GetPool(int clientNumber);
+pool_t         *Sv_GetPool(uint clientNumber);
 void            Sv_RatePool(pool_t *pool);
 delta_t        *Sv_PoolQueueExtract(pool_t *pool);
 void            Sv_AckDeltaSet(uint clientNumber, int set, byte resent);

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,6 @@ extern float    viewFrontVec[3], viewUpVec[3], viewSideVec[3];
 extern float    viewXOffset, viewYOffset, viewZOffset;
 extern angle_t  viewAngle;
 extern float    viewPitch;
-extern ddplayer_t *viewPlayer;
 extern angle_t  clipAngle;
 extern fixed_t  fineTangent[FINEANGLES / 2];
 
@@ -55,7 +54,7 @@ void            R_Init(void);
 void            R_Update(void);
 void            R_Shutdown(void);
 void            R_SetupWorldFrame(void);
-void            R_RenderPlayerView(ddplayer_t *player);
+void            R_RenderPlayerView(int num);
 void            R_RenderPlayerViewBorder(void);
 void            R_ResetViewer(void);
 void            R_ViewWindow(int x, int y, int w, int h);

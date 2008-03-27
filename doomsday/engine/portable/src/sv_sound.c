@@ -93,15 +93,15 @@ static void Sv_IdentifySoundOrigin(mobj_t **origin, sector_t **sector,
 /**
  * Tell clients to play a sound.
  */
-void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin, float volume,
+void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume,
                       int toPlr)
 {
-    int         sound_id = (sound_id_and_flags & ~DDSF_FLAG_MASK);
-    sector_t   *sector;
-    polyobj_t  *poly;
-    int         targetPlayers = 0;
+    int                 soundID = (soundIDAndFlags & ~DDSF_FLAG_MASK);
+    sector_t           *sector;
+    polyobj_t          *poly;
+    int                 targetPlayers = 0;
 
-    if(isClient || !sound_id)
+    if(isClient || !soundID)
         return;
 
     Sv_IdentifySoundOrigin(&origin, &sector, &poly);
@@ -120,17 +120,17 @@ void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin, float volume,
         // Remove the bit of the player who owns the origin mobj (if any).
         if(origin && origin->dPlayer)
         {
-            targetPlayers &= ~(1 << (origin->dPlayer - ddPlayers));
+            targetPlayers &= ~(1 << P_GetDDPlayerIdx(origin->dPlayer));
         }
     }
 
 #ifdef _DEBUG
     VERBOSE( Con_Message("Sv_SoundAtVolume: Id=%i, vol=%g, targets=%x\n",
-                         sound_id, volume, targetPlayers) );
+                         soundID, volume, targetPlayers) );
 #endif
 
-    Sv_NewSoundDelta(sound_id, origin, sector, poly, volume,
-                     (sound_id_and_flags & DDSF_REPEAT) != 0,
+    Sv_NewSoundDelta(soundID, origin, sector, poly, volume,
+                     (soundIDAndFlags & DDSF_REPEAT) != 0,
                      targetPlayers);
 }
 

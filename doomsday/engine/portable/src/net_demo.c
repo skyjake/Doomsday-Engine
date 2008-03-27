@@ -39,9 +39,10 @@
 #include "de_network.h"
 #include "de_render.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 #include "r_main.h"
-#include "gl_main.h"            // For r_framecounter.
+#include "gl_main.h" // For r_framecounter.
 
 // MACROS ------------------------------------------------------------------
 
@@ -133,14 +134,15 @@ void Demo_Init(void)
  * Open a demo file and begin recording.
  * Returns false if the recording can't be begun.
  */
-boolean Demo_BeginRecording(char *fileName, int playerNum)
+boolean Demo_BeginRecording(char *fileName, int plrNum)
 {
-    char            buf[200];
-    client_t       *cl = clients + playerNum;
+    char                buf[200];
+    client_t           *cl = &clients[plrNum];
+    player_t           *plr = &ddPlayers[plrNum];
 
     // Is a demo already being recorded for this client?
-    if(cl->recording || playback || (isDedicated && !playerNum) ||
-       !ddPlayers[playerNum].inGame)
+    if(cl->recording || playback || (isDedicated && !plrNum) ||
+       !plr->shared.inGame)
         return false;
 
     // Compose the real file name.
@@ -155,10 +157,10 @@ boolean Demo_BeginRecording(char *fileName, int playerNum)
 
     cl->recording = true;
     cl->recordPaused = false;
-    writeInfo[playerNum].first = true;
-    writeInfo[playerNum].canwrite = false;
-    writeInfo[playerNum].cameratimer = 0;
-    writeInfo[playerNum].fov = -1; // Must be written in the first packet.
+    writeInfo[plrNum].first = true;
+    writeInfo[plrNum].canwrite = false;
+    writeInfo[plrNum].cameratimer = 0;
+    writeInfo[plrNum].fov = -1; // Must be written in the first packet.
 
     if(isServer)
     {
@@ -168,7 +170,7 @@ boolean Demo_BeginRecording(char *fileName, int playerNum)
         // Servers need to send a handshake packet.
         // It only needs to recorded in the demo file, though.
         allowSending = false;
-        Sv_Handshake(playerNum, false);
+        Sv_Handshake(plrNum, false);
         // Enable sending to network.
         allowSending = true;
     }
@@ -440,21 +442,23 @@ Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
 /**
  * Writes a view angle and coords packet. Doesn't send the packet outside.
  */
-void Demo_WriteLocalCamera(int plnum)
+void Demo_WriteLocalCamera(int plrNum)
 {
-    mobj_t         *mo = ddPlayers[plnum].mo;
-    fixed_t         x, y, z;
-    byte            flags;
-    boolean         incfov = (writeInfo[plnum].fov != fieldOfView);
+    player_t           *plr = &ddPlayers[plrNum];
+    ddplayer_t         *ddpl = &plr->shared;
+    mobj_t             *mo = ddpl->mo;
+    fixed_t             x, y, z;
+    byte                flags;
+    boolean             incfov = (writeInfo[plrNum].fov != fieldOfView);
 
     if(!mo)
         return;
 
-    Msg_Begin(clients[plnum].recordPaused ? PKT_DEMOCAM_RESUME : PKT_DEMOCAM);
+    Msg_Begin(clients[plrNum].recordPaused ? PKT_DEMOCAM_RESUME : PKT_DEMOCAM);
     // Flags.
     flags = (mo->pos[VZ] <= mo->floorZ ? LCAMF_ONGROUND : 0)  // On ground?
         | (incfov ? LCAMF_FOV : 0);
-    if(ddPlayers[plnum].flags & DDPF_CAMERA)
+    if(ddpl->flags & DDPF_CAMERA)
     {
         flags &= ~LCAMF_ONGROUND;
         flags |= LCAMF_CAMERA;
@@ -469,20 +473,20 @@ void Demo_WriteLocalCamera(int plnum)
     Msg_WriteShort(y >> 16);
     Msg_WriteByte(y >> 8);
 
-    //z = mo->pos[VZ] + ddPlayers[plnum].viewheight;
-    z = FLT2FIX(ddPlayers[plnum].viewZ);
+    //z = mo->pos[VZ] + ddpl->viewheight;
+    z = FLT2FIX(ddpl->viewZ);
     Msg_WriteShort(z >> 16);
     Msg_WriteByte(z >> 8);
 
-    Msg_WriteShort(mo->angle /*ddPlayers[plnum].clAngle*/ >> 16); /* $unifiedangles */
-    Msg_WriteShort(ddPlayers[plnum].lookDir / 110 * DDMAXSHORT /* $unifiedangles */);
+    Msg_WriteShort(mo->angle /*ddpl->clAngle*/ >> 16); /* $unifiedangles */
+    Msg_WriteShort(ddpl->lookDir / 110 * DDMAXSHORT /* $unifiedangles */);
     // Field of view is optional.
     if(incfov)
     {
         Msg_WriteShort(fieldOfView / 180 * DDMAXSHORT);
-        writeInfo[plnum].fov = fieldOfView;
+        writeInfo[plrNum].fov = fieldOfView;
     }
-    Net_SendBuffer(plnum, SPF_DONT_SEND);
+    Net_SendBuffer(plrNum, SPF_DONT_SEND);
 }
 
 /**
@@ -491,7 +495,7 @@ void Demo_WriteLocalCamera(int plnum)
  */
 void Demo_ReadLocalCamera(void)
 {
-    ddplayer_t         *pl = &ddPlayers[consolePlayer];
+    ddplayer_t         *pl = &ddPlayers[consolePlayer].shared;
     mobj_t             *mo = pl->mo;
     int                 flags;
     float               z;
@@ -584,17 +588,17 @@ void Demo_Ticker(timespan_t time)
 {
     static trigger_t        fixed = { 1 / 35.0, 0 };
 
-    ddplayer_t             *pl = &ddPlayers[consolePlayer];
-    int                     i;
-
     if(!M_RunTrigger(&fixed, time))
         return;
 
     // Only playback is handled.
     if(playback)
     {
-        pl->mo->angle += viewangleDelta;
-        pl->lookDir += lookdirDelta;
+        player_t               *plr = &ddPlayers[consolePlayer];
+        ddplayer_t             *ddpl = &plr->shared;
+
+        ddpl->mo->angle += viewangleDelta;
+        ddpl->lookDir += lookdirDelta;
         /* $unifiedangles */
         // Move player (i.e. camera).
         Cl_MoveLocalPlayer(posDelta[VX], posDelta[VY], demoFrameZ + demoZ,
@@ -604,15 +608,22 @@ void Demo_Ticker(timespan_t time)
     }
     else
     {
+        int                     i;
+
         for(i = 0; i < DDMAXPLAYERS; ++i)
-            if(ddPlayers[i].inGame && clients[i].recording &&
-               !clients[i].recordPaused &&
+        {
+            player_t               *plr = &ddPlayers[i];
+            ddplayer_t             *ddpl = &plr->shared;
+            client_t               *cl = &clients[i];
+
+            if(ddpl->inGame && cl->recording && !cl->recordPaused &&
                ++writeInfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
             {
                 // It's time to write local view angles and coords.
                 writeInfo[i].cameratimer = 0;
                 Demo_WriteLocalCamera(i);
             }
+        }
     }
 }
 
@@ -624,27 +635,32 @@ D_CMD(PlayDemo)
 
 D_CMD(RecordDemo)
 {
-    int         plnum = consolePlayer;
+    int                 plnum = consolePlayer;
 
     if(argc == 3 && isClient)
     {
         Con_Printf("Clients can only record the consolePlayer.\n");
         return true;
     }
+
     if(isClient && argc != 2)
     {
         Con_Printf("Usage: %s (fileName)\n", argv[0]);
         return true;
     }
+
     if(isServer && (argc < 2 || argc > 3))
     {
         Con_Printf("Usage: %s (fileName) (plnum)\n", argv[0]);
         Con_Printf("(plnum) is the player which will be recorded.\n");
         return true;
     }
+
     if(argc == 3)
         plnum = atoi(argv[2]);
+
     Con_Printf("Recording demo of player %i to \"%s\".\n", plnum, argv[1]);
+
     return Demo_BeginRecording(argv[1], plnum);
 }
 

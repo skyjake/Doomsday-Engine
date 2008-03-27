@@ -72,8 +72,6 @@ typedef struct cmhash_s {
 extern int /*latest_frame_size, */ gotFrame;
 extern int predicted_tics;
 
-extern playerstate_t playerState[DDMAXPLAYERS];
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 cmhash_t cmHash[HASH_SIZE];
@@ -421,10 +419,11 @@ if(justCreated)         //Con_Error("justCreated!\n");
         // A Null Delta. We should delete this mobj.
         if(cmo->mo.dPlayer)
         {
-            playerState[cmo->mo.dPlayer - ddPlayers].cmo = NULL;
+            clPlayerStates[P_GetDDPlayerIdx(cmo->mo.dPlayer)].cmo = NULL;
         }
+
         Cl_DestroyMobj(cmo);
-        return true;            // Continue.
+        return true; // Continue.
     }
 
 #ifdef _DEBUG
@@ -705,10 +704,10 @@ void Cl_MobjAnimate(mobj_t *mo)
  */
 void Cl_PredictMovement(void)
 {
-    clmobj_t   *cmo, *next = NULL;
-    int         i;
-    int         moCount = 0;
-    uint        nowTime = Sys_GetRealTime();
+    clmobj_t           *cmo, *next = NULL;
+    int                 i;
+    int                 moCount = 0;
+    uint                nowTime = Sys_GetRealTime();
 
     predicted_tics++;
 
@@ -720,9 +719,9 @@ void Cl_PredictMovement(void)
             next = cmo->next;
             moCount++;
 
-            if(cmo->mo.dPlayer != &ddPlayers[consolePlayer] &&
-               cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN) /*||
-               cmo->mo.ddFlags & DDMF_MISSILE*/)
+            if(cmo->mo.dPlayer != &ddPlayers[consolePlayer].shared &&
+               (cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN)) /*||
+               (cmo->mo.ddFlags & DDMF_MISSILE)*/)
             {
                 // Has this mobj timed out?
                 if(nowTime - cmo->time > CLMOBJ_TIMEOUT)
@@ -741,7 +740,7 @@ void Cl_PredictMovement(void)
             // The local player gets a bit more complex prediction.
             if(cmo->mo.dPlayer)
             {
-                Cl_MovePlayer(cmo->mo.dPlayer);
+                Cl_MovePlayer(P_GetDDPlayerIdx(cmo->mo.dPlayer));
             }
             else
             {
@@ -821,7 +820,7 @@ void Cl_DestroyMobj(clmobj_t *cmo)
 boolean Cl_RevealMobj(clmobj_t *cmo)
 {
     // Check that we know enough about the clmobj.
-    if(cmo->mo.dPlayer != &ddPlayers[consolePlayer] &&
+    if(cmo->mo.dPlayer != &ddPlayers[consolePlayer].shared &&
        (!(cmo->flags & CLMF_KNOWN_X) ||
         !(cmo->flags & CLMF_KNOWN_Y) ||
         !(cmo->flags & CLMF_KNOWN_Z) ||
@@ -1116,7 +1115,7 @@ Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
     else
     {
         // The clmobjs of players aren't linked.
-        playerState[cmo->mo.dPlayer - ddPlayers].cmo = NULL;
+        clPlayerStates[P_GetDDPlayerIdx(cmo->mo.dPlayer)].cmo = NULL;
     }
 
     // This'll allow playing sounds from the mobj for a little while.

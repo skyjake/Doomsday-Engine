@@ -251,13 +251,10 @@ extern int      oldEnterTics;
 extern int      numClMobjs;
 extern boolean  masterAware;
 extern int      netGame;
-extern int      consolePlayer;
-extern int      displayPlayer;
 extern int      realTics, availableTics;
 extern int      isServer, isClient;
 extern boolean  allowNetTraffic; // Should net traffic be allowed?
 extern byte     netDontSleep, netTicSync;
-extern ddplayer_t ddPlayers[DDMAXPLAYERS];
 extern client_t clients[DDMAXPLAYERS];
 
 //---------------------------------------------------------------------------

@@ -34,6 +34,7 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
+#include "de_play.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -55,21 +56,23 @@
 
 void Net_ShowPingSummary(int player)
 {
-    client_t *cl = clients + player;
-    pinger_t *ping = &cl->ping;
-    float   avgTime = 0, loss;
-    int     i, goodCount = 0;
+    client_t           *cl = clients + player;
+    pinger_t           *ping = &cl->ping;
+    float               avgTime = 0, loss;
+    int                 i, goodCount = 0;
 
-    if(player < 0)
+    if(player < 0 && ping->total > 0)
         return;
 
-    for(i = 0; i < ping->total; i++)
+    for(i = 0; i < ping->total; ++i)
     {
         if(ping->times[i] < 0)
             continue;
+
         goodCount++;
         avgTime += ping->times[i];
     }
+
     avgTime /= goodCount;
     loss = 1 - goodCount / (float) ping->total;
     Con_Printf("Plr %i (%s): average ping %.0f ms, loss %.0f%%.\n", player,
@@ -78,7 +81,7 @@ void Net_ShowPingSummary(int player)
 
 void Net_SendPing(int player, int count)
 {
-    client_t *cl = clients + player;
+    client_t           *cl = clients + player;
 
     // Valid destination?
     if((player == consolePlayer) || (isClient && player))
@@ -89,6 +92,7 @@ void Net_SendPing(int player, int count)
         // We can't start a new ping run until the old one is done.
         if(cl->ping.sent)
             return;
+
         // Start a new ping session.
         if(count > MAX_PINGS)
             count = MAX_PINGS;
@@ -107,6 +111,7 @@ void Net_SendPing(int player, int count)
             return;
         }
     }
+
     // Send a new ping.
     Msg_Begin(PKT_PING);
     cl->ping.sent = Sys_GetRealTime();
@@ -121,8 +126,8 @@ void Net_SendPing(int player, int count)
 // Called when a ping packet comes in.
 void Net_PingResponse(void)
 {
-    client_t *cl = &clients[netBuffer.player];
-    int     time = Msg_ReadLong();
+    client_t           *cl = &clients[netBuffer.player];
+    int                 time = Msg_ReadLong();
 
     // Is this a response to our ping?
     if(time == cl->ping.sent)
@@ -145,19 +150,21 @@ void Net_PingResponse(void)
 
 D_CMD(Ping)
 {
-    int     dest, count = 4;
+    int                 dest, count = 4;
 
     if(!netGame)
     {
         Con_Printf("Ping is only for netgames.\n");
         return true;
     }
+
     if(isServer && argc == 1)
     {
         Con_Printf("Usage: %s (plrnum) (count)\n", argv[0]);
         Con_Printf("(count) is optional. 4 pings are sent by default.\n");
         return true;
     }
+
     if(isServer)
     {
         dest = atoi(argv[1]);
@@ -170,9 +177,10 @@ D_CMD(Ping)
         if(argc >= 2)
             count = atoi(argv[1]);
     }
+
     // Check that the given parameters are valid.
     if(count <= 0 || count > MAX_PINGS || dest < 0 || dest >= DDMAXPLAYERS ||
-       dest == consolePlayer || (dest && !ddPlayers[dest].inGame))
+       dest == consolePlayer || (dest && !ddPlayers[dest].shared.inGame))
         return false;
 
     Net_SendPing(dest, count);

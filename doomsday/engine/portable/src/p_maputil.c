@@ -686,7 +686,7 @@ void P_MobjLink(mobj_t *mo, byte flags)
     // entered or exited the void.
     if(mo->dPlayer)
     {
-        ddplayer_t* player = mo->dPlayer;
+        ddplayer_t         *player = mo->dPlayer;
 
         player->inVoid = true;
         if(R_IsPointInSector2(player->mo->pos[VX],

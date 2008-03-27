@@ -36,6 +36,7 @@
 #include "de_system.h"
 #include "de_refresh.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 #include "def_main.h"
 
@@ -846,20 +847,20 @@ byte Sv_GetNewResendID(pool_t *pool)
  * Send a sv_frame packet to the specified player. The amount of data sent
  * depends on the player's bandwidth rating.
  */
-void Sv_SendFrame(int playerNumber)
+void Sv_SendFrame(int plrNum)
 {
-    pool_t     *pool = Sv_GetPool(playerNumber);
-    byte        oldResend;
-    delta_t    *delta;
-    int         deltaCount = 0;
+    pool_t             *pool = Sv_GetPool(plrNum);
+    byte                oldResend;
+    delta_t            *delta;
+    int                 deltaCount = 0;
+    size_t              lastStart, maxFrameSize, deltaCountOffset = 0;
 #if _NETDEBUG
-    int         endOffset = 0;
+    int                 endOffset = 0;
 #endif
-    size_t      lastStart, maxFrameSize, deltaCountOffset = 0;
 
     // Does the send queue allow us to send this packet?
     // Bandwidth rating is updated during the check.
-    if(!Sv_CheckBandwidth(playerNumber))
+    if(!Sv_CheckBandwidth(plrNum))
     {
         // We cannot send anything at this time. This will only happen if
         // the send queue has too many packets waiting to be sent.
@@ -874,7 +875,7 @@ void Sv_SendFrame(int playerNumber)
     pool->setDealer++;
 
     // Determine the maximum size of the frame packet.
-    maxFrameSize = Sv_GetMaxFrameSize(playerNumber);
+    maxFrameSize = Sv_GetMaxFrameSize(plrNum);
 
     // Allow more info for the first frame.
     if(pool->isFirst)
@@ -920,9 +921,9 @@ Con_Printf("set%i\n", pool->setDealer);
         if(Msg_Offset() > maxFrameSize)
         {
             // Time to see if BWR needs to be adjusted.
-            if(clients[playerNumber].bwrAdjustTime <= 0)
+            if(clients[plrNum].bwrAdjustTime <= 0)
             {
-                clients[playerNumber].bwrAdjustTime = BWR_ADJUST_TICS;
+                clients[plrNum].bwrAdjustTime = BWR_ADJUST_TICS;
             }
 
             // Cancel the last delta.
@@ -968,13 +969,13 @@ if(delta->state == DELTA_UNACKED)
     // The PSV_FIRST_FRAME2 packet is sent Ordered, which means it'll
     // always arrive in the correct order when compared to the other
     // game setup packets.
-    Net_SendBuffer(playerNumber, pool->isFirst ? SPF_ORDERED : 0);
+    Net_SendBuffer(plrNum, pool->isFirst ? SPF_ORDERED : 0);
 
     // If the target is local, ack immediately. This effectively removes
     // all the sent deltas from the pool.
-    if(ddPlayers[playerNumber].flags & DDPF_LOCAL)
+    if(ddPlayers[plrNum].shared.flags & DDPF_LOCAL)
     {
-        Sv_AckDeltaSet(playerNumber, pool->setDealer, 0);
+        Sv_AckDeltaSet(plrNum, pool->setDealer, 0);
     }
 
     // Now a frame has been sent.

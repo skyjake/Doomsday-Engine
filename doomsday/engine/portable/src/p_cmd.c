@@ -81,7 +81,7 @@ void P_BuildCommand(ticcmd_t *cmd, int playerNumber)
     memset(cmd, 0, sizeof(*cmd));
 
 #if 0
-	ddplayer_t *player = &ddPlayers[playerNumber];
+	ddplayer_t *player = &ddPlayers[playerNumber].shared;
 	//client_t *client = clients + playerNumber;
 
 	// Examine the state of controllers to see which controls are

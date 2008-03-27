@@ -558,7 +558,7 @@ static boolean heightClip(mobj_t *mo)
     boolean             onfloor;
 
     // During demo playback the player gets preferential treatment.
-    if(mo->dPlayer == &ddPlayers[consolePlayer] && playback)
+    if(mo->dPlayer == &ddPlayers[consolePlayer].shared && playback)
         return true;
 
     onfloor = (mo->pos[VZ] <= mo->floorZ);
@@ -584,50 +584,12 @@ static boolean heightClip(mobj_t *mo)
     // all the changes from the server) to match the changes.
     if(isClient && mo->dPlayer)
     {
-        Cl_UpdatePlayerPos(mo->dPlayer);
+        Cl_UpdatePlayerPos(P_GetDDPlayerIdx(mo->dPlayer));
     }
 
     if(mo->ceilingZ - mo->floorZ < mo->height)
         return false;
     return true;
-}
-
-/**
- * Do we THINK the given (camera) player is currently in the void.
- * The method used to test this is to compare the position of the mobj
- * each time it is linked into a subsector.
- *
- * \note Cannot be 100% accurate so best not to use it for anything critical...
- *
- * @param player        The player to test.
- *
- * @return              @c true, If the player is thought to be in the void.
- */
-boolean P_IsInVoid(ddplayer_t *player)
-{
-    if(!player)
-        return false;
-
-    // Cameras are allowed to move completely freely (so check z height
-    // above/below ceiling/floor).
-    if(player->flags & DDPF_CAMERA)
-    {
-        if(player->inVoid)
-            return true;
-
-        if(player->mo->subsector)
-        {
-            sector_t           *sec = player->mo->subsector->sector;
-
-            if(player->mo->pos[VZ] >
-                sec->SP_ceilheight + sec->skyFix[PLN_CEILING].offset - 4 ||
-               player->mo->pos[VZ] <
-                sec->SP_floorheight + sec->skyFix[PLN_FLOOR].offset + 4)
-                return true;
-        }
-    }
-
-    return false;
 }
 
 /**
@@ -862,7 +824,7 @@ void P_MobjMovement(mobj_t *mo)
  */
 void P_MobjMovement2(mobj_t *mo, void *pstate)
 {
-    playerstate_t      *playstate = pstate;
+    clplayerstate_t    *playstate = pstate;
     float               tryPos[3];
     float               delta[3];
     ddplayer_t         *player;

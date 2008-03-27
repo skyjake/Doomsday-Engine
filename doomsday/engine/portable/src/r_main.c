@@ -81,7 +81,6 @@ float   viewXOffset = 0, viewYOffset = 0, viewZOffset = 0;
 angle_t viewAngle;
 float   viewPitch;              // player->lookDir, global version
 float   viewCos, viewSin;
-ddplayer_t *viewPlayer;
 boolean setSizeNeeded;
 
 // Precalculated math tables.
@@ -185,7 +184,7 @@ void R_Init(void)
  */
 void R_Update(void)
 {
-    int         i;
+    int                 i;
 
     // Stop playing sounds and music.
     Demo_StopPlayback();
@@ -197,9 +196,9 @@ void R_Update(void)
     DGL_LoadIdentity();
     DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
     GL_TotalReset(true, false, false);
-    GL_TotalReset(false, false, false);    // Bring GL back online (no lightmaps, flares yet).
+    GL_TotalReset(false, false, false); // Bring GL back online (no lightmaps, flares yet).
     R_UpdateData();
-    R_InitSprites();            // Fully reinitialize sprites.
+    R_InitSprites(); // Fully reinitialize sprites.
     R_InitSkyMap();
     R_UpdateTranslationTables();
     // Re-read definitions.
@@ -207,14 +206,17 @@ void R_Update(void)
     // Now that we've read the defs, we can load lightmaps and flares.
     GL_LoadSystemTextures(true, true);
     Def_PostInit();
-    R_InitModels();             // Defs might've changed.
-    P_UpdateParticleGens();     // Defs might've changed.
+    R_InitModels(); // Defs might've changed.
+    P_UpdateParticleGens(); // Defs might've changed.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+        player_t           *plr = &ddPlayers[i];
+        ddplayer_t         *ddpl = &plr->shared;
+
         // States have changed, the states are unknown.
-        ddPlayers[i].pSprites[0].statePtr = ddPlayers[i].pSprites[1].statePtr =
-            NULL;
+        ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
     }
+
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();
@@ -293,27 +295,33 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 /**
  * Retrieve the current sharp camera position.
  */
-void R_GetSharpView(viewer_t *view, ddplayer_t *player)
+void R_GetSharpView(viewer_t *view, player_t *player)
 {
-    if(player->mo == NULL)
+    ddplayer_t         *ddpl;
+
+    if(!player)
+        return; // Huh?
+    ddpl = &player->shared;
+
+    if(ddpl->mo == NULL)
         return;
 
     /* $unifiedangles */
-    view->angle = player->mo->angle + viewAngleOffset;
-    view->pitch = player->lookDir;
-    view->pos[VX] = player->mo->pos[VX] + viewXOffset;
-    view->pos[VY] = player->mo->pos[VY] + viewYOffset;
-    view->pos[VZ] = player->viewZ + viewZOffset;
-    if((player->flags & DDPF_CHASECAM) && !(player->flags & DDPF_CAMERA))
+    view->angle = ddpl->mo->angle + viewAngleOffset;
+    view->pitch = ddpl->lookDir;
+    view->pos[VX] = ddpl->mo->pos[VX] + viewXOffset;
+    view->pos[VY] = ddpl->mo->pos[VY] + viewYOffset;
+    view->pos[VZ] = ddpl->viewZ + viewZOffset;
+    if((ddpl->flags & DDPF_CHASECAM) && !(ddpl->flags & DDPF_CAMERA))
     {
         /* STUB
          * This needs to be fleshed out with a proper third person
          * camera control setup. Currently we simply project the viewer's
-         * position a set distance behind the player.
+         * position a set distance behind the ddpl.
          */
-        angle_t     pitch = LOOKDIR2DEG(view->pitch) / 360 * ANGLE_MAX;
-        angle_t     angle = view->angle;
-        float       distance = 90 >> FRACBITS;
+        angle_t             pitch = LOOKDIR2DEG(view->pitch) / 360 * ANGLE_MAX;
+        angle_t             angle = view->angle;
+        float               distance = 90 >> FRACBITS;
 
         angle = view->angle >> ANGLETOFINESHIFT;
         pitch >>= ANGLETOFINESHIFT;
@@ -325,16 +333,16 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
 
     // Check that the viewZ doesn't go too high or low.
     // Cameras are not restricted.
-    if(!(player->flags & DDPF_CAMERA))
+    if(!(ddpl->flags & DDPF_CAMERA))
     {
-        if(view->pos[VZ] > player->mo->ceilingZ - 4)
+        if(view->pos[VZ] > ddpl->mo->ceilingZ - 4)
         {
-            view->pos[VZ] = player->mo->ceilingZ - 4;
+            view->pos[VZ] = ddpl->mo->ceilingZ - 4;
         }
 
-        if(view->pos[VZ] < player->mo->floorZ + 4)
+        if(view->pos[VZ] < ddpl->mo->floorZ + 4)
         {
-            view->pos[VZ] = player->mo->floorZ + 4;
+            view->pos[VZ] = ddpl->mo->floorZ + 4;
         }
     }
 }
@@ -345,7 +353,7 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
  */
 void R_NewSharpWorld(void)
 {
-    viewer_t    sharpView;
+    viewer_t            sharpView;
 
     if(!viewPlayer)
         return;
@@ -391,11 +399,11 @@ void R_SetupWorldFrame(void)
 /**
  * Prepare rendering the view of the given player.
  */
-void R_SetupFrame(ddplayer_t *player)
+void R_SetupFrame(player_t *player)
 {
-    int         tableAngle;
-    float       yawRad, pitchRad;
-    viewer_t    sharpView, smoothView;
+    int                 tableAngle;
+    float               yawRad, pitchRad;
+    viewer_t            sharpView, smoothView;
 
     // Reset the DGL triangle counter.
     DGL_GetInteger(DGL_POLY_COUNT);
@@ -431,18 +439,20 @@ void R_SetupFrame(ddplayer_t *player)
         // are not set. The interpolation flags are used when the view angles
         // are updated during the sharp tics and need to be smoothed out here.
         // For example, view locking (dead or camera setlock).
-        if(!(player->flags & DDPF_INTERYAW))
+        if(!(player->shared.flags & DDPF_INTERYAW))
             smoothView.angle = sharpView.angle;
-        if(!(player->flags & DDPF_INTERPITCH))
+        if(!(player->shared.flags & DDPF_INTERPITCH))
             smoothView.pitch = sharpView.pitch;
         R_SetViewPos(&smoothView);
 
         // Monitor smoothness of yaw/pitch changes.
         if(showViewAngleDeltas)
         {
-            static double oldtime = 0;
-            static float oldyaw, oldpitch;
-            float yaw = (double)smoothView.angle / ANGLE_MAX * 360;
+            static double           oldtime = 0;
+            static float            oldyaw, oldpitch;
+            float                   yaw =
+                (double)smoothView.angle / ANGLE_MAX * 360;
+
             Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
                         "Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
@@ -460,8 +470,9 @@ void R_SetupFrame(ddplayer_t *player)
         // The Rdx and Rdy should stay constant when moving.
         if(showViewPosDeltas)
         {
-            static double oldtime = 0;
-            static float oldx, oldy;
+            static double           oldtime = 0;
+            static float            oldx, oldy;
+
             Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
                         "Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
@@ -482,7 +493,7 @@ void R_SetupFrame(ddplayer_t *player)
         Con_Printf("frametime = %f\n", frameTimePos);
     }
 
-    extraLight = player->extraLight;
+    extraLight = player->shared.extraLight;
     tableAngle = viewAngle >> ANGLETOFINESHIFT;
     viewSin = FIX2FLT(finesine[tableAngle]);
     viewCos = FIX2FLT(fineCosine[tableAngle]);
@@ -522,11 +533,17 @@ void R_RenderPlayerViewBorder(void)
 /**
  * Draw the view of the player inside the view window.
  */
-void R_RenderPlayerView(ddplayer_t *player)
+void R_RenderPlayerView(int num)
 {
     extern boolean  firstFrameAfterLoad, freezeRLs;
     extern int      psp3d, modelTriCount;
-    int             i, oldFlags = 0;
+
+    int                 i, oldFlags = 0;
+    player_t           *player;
+
+    if(num < 0 || num >= DDMAXPLAYERS)
+        return; // Huh?
+    player = &ddPlayers[num];
 
     if(firstFrameAfterLoad)
     {
@@ -547,10 +564,10 @@ void R_RenderPlayerView(ddplayer_t *player)
     PG_InitForNewFrame();
 
     // Hide the viewPlayer's mobj?
-    if(!(player->flags & DDPF_CHASECAM))
+    if(!(player->shared.flags & DDPF_CHASECAM))
     {
-        oldFlags = player->mo->ddFlags;
-        player->mo->ddFlags |= DDMF_DONTDRAW;
+        oldFlags = player->shared.mo->ddFlags;
+        player->shared.mo->ddFlags |= DDMF_DONTDRAW;
     }
     // Go to wireframe mode?
     if(renderWireframe)
@@ -586,8 +603,8 @@ void R_RenderPlayerView(ddplayer_t *player)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Now we can show the viewPlayer's mobj again.
-    if(!(player->flags & DDPF_CHASECAM))
-        player->mo->ddFlags = oldFlags;
+    if(!(player->shared.flags & DDPF_CHASECAM))
+        player->shared.mo->ddFlags = oldFlags;
 
     // Should we be counting triangles?
     if(rendInfoTris)

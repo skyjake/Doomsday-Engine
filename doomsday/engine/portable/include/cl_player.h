@@ -31,7 +31,7 @@
 
 #include "cl_mobj.h"
 
-typedef struct playerstate_s {
+typedef struct clplayerstate_s {
 	clmobj_t       *cmo;
 	thid_t          mobjId;
 	int             forwardMove;
@@ -39,22 +39,22 @@ typedef struct playerstate_s {
 	int             angle;
 	angle_t         turnDelta;
 	int             friction;
-} playerstate_t;
+} clplayerstate_t;
 
 extern float pspMoveSpeed;
 extern float cplrThrustMul;
-extern playerstate_t playerState[DDMAXPLAYERS];
+extern clplayerstate_t clPlayerStates[DDMAXPLAYERS];
 
 void            Cl_InitPlayers(void);
 void            Cl_LocalCommand(void);
-void            Cl_MovePlayer(ddplayer_t *pl);
+void            Cl_MovePlayer(int plrnum);
 void            Cl_MoveLocalPlayer(float dx, float dy, float dz, boolean onground);
-void            Cl_UpdatePlayerPos(ddplayer_t *pl);
+void            Cl_UpdatePlayerPos(int plrnum);
 //void            Cl_MovePsprites(void);
 void            Cl_CoordsReceived(void);
 void            Cl_HandlePlayerFix(void);
 int             Cl_ReadPlayerDelta(void);
 void            Cl_ReadPlayerDelta2(boolean skip);
-boolean         Cl_IsFreeToMove(int player);
+boolean         Cl_IsFreeToMove(int plrnum);
 
 #endif

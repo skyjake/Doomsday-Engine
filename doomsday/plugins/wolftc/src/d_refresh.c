@@ -279,7 +279,7 @@ void D_Display(void)
                 player->powers[PT_INVULNERABILITY] > 30);
 
             // Render the view with possible custom filters.
-            R_RenderPlayerView(players[DISPLAYPLAYER].plr);
+            R_RenderPlayerView(DISPLAYPLAYER);
 
             R_DrawSpecialFilter();
             // Crosshair.

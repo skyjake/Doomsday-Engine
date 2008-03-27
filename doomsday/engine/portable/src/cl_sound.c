@@ -58,14 +58,14 @@
  */
 void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 {
-    int         sound = 0, soundFlags = 0;
-    byte        flags = 0;
-    clmobj_t   *cmo = NULL;
-    thid_t      mobjId = 0;
-    sector_t   *sector = NULL;
-    polyobj_t  *poly = NULL;
-    mobj_t     *emitter = NULL;
-    float       volume = 1;
+    int                 sound = 0, soundFlags = 0;
+    byte                flags = 0;
+    clmobj_t           *cmo = NULL;
+    thid_t              mobjId = 0;
+    sector_t           *sector = NULL;
+    polyobj_t          *poly = NULL;
+    mobj_t             *emitter = NULL;
+    float               volume = 1;
 
     if(type == DT_SOUND)
     {
@@ -127,7 +127,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
     if(flags & SNDDF_VOLUME)
     {
-        byte    b = Msg_ReadByte();
+        byte            b = Msg_ReadByte();
 
         if(b == 255)
         {
@@ -182,12 +182,12 @@ Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n",
 
         // Sounds originating from the viewmobj should really originate
         // from the real player mobj.
-        if(cmo && cmo == playerState[consolePlayer].cmo)
+        if(cmo && cmo == clPlayerStates[consolePlayer].cmo)
         {
             /*#ifdef _DEBUG
                Con_Printf("Cl_ReadSoundDelta2(%i): ViewMobj sound...\n", type);
                #endif */
-            emitter = ddPlayers[consolePlayer].mo;
+            emitter = ddPlayers[consolePlayer].shared.mo;
         }
 
         // First stop any sounds originating from the same emitter.
@@ -304,7 +304,7 @@ Con_Printf("Cl_Sound: %i\n", sound);
     }
     else if(flags & SNDF_PLAYER)
     {
-        S_LocalSoundAtVolume(sound, ddPlayers[(flags & 0xf0) >> 4].mo,
+        S_LocalSoundAtVolume(sound, ddPlayers[(flags & 0xf0) >> 4].shared.mo,
                              volume / 127.0f);
     }
     else

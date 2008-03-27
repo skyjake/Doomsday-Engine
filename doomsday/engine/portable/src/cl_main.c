@@ -38,6 +38,7 @@
 #include "de_network.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 #include "r_main.h"
 
@@ -175,7 +176,7 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
     gameTime = shake.gameTime / 100.0;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        ddPlayers[i].inGame = (shake.playerMask & (1 << i)) != 0;
+        ddPlayers[i].shared.inGame = (shake.playerMask & (1 << i)) != 0;
     }
     consolePlayer = displayPlayer = shake.yourConsole;
     clients[consolePlayer].numTics = 0;
@@ -214,7 +215,8 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 
 void Cl_HandlePlayerInfo(playerinfo_packet_t *info)
 {
-    boolean     present;
+    player_t           *plr;
+    boolean             present;
 
     Con_Printf("Cl_HandlePlayerInfo: console:%i name:%s\n", info->console,
                info->name);
@@ -223,8 +225,10 @@ void Cl_HandlePlayerInfo(playerinfo_packet_t *info)
     if(info->console >= DDMAXPLAYERS)
         return;
 
-    present = ddPlayers[info->console].inGame;
-    ddPlayers[info->console].inGame = true;
+    plr = &ddPlayers[info->console];
+    present = plr->shared.inGame;
+    plr->shared.inGame = true;
+
     strcpy(clients[info->console].name, info->name);
 
     if(!present)
@@ -234,11 +238,11 @@ void Cl_HandlePlayerInfo(playerinfo_packet_t *info)
     }
 }
 
-void Cl_PlayerLeaves(int number)
+void Cl_PlayerLeaves(int plrNum)
 {
-    Con_Printf("Cl_PlayerLeaves: player %i has left.\n", number);
-    ddPlayers[number].inGame = false;
-    gx.NetPlayerEvent(number, DDPE_EXIT, 0);
+    Con_Printf("Cl_PlayerLeaves: player %i has left.\n", plrNum);
+    ddPlayers[plrNum].shared.inGame = false;
+    gx.NetPlayerEvent(plrNum, DDPE_EXIT, 0);
 }
 
 /**
@@ -247,7 +251,7 @@ void Cl_PlayerLeaves(int number)
  */
 void Cl_GetPackets(void)
 {
-    int         i;
+    int                 i;
 
     // All messages come from the server.
     while(Net_GetPacket())
@@ -278,7 +282,7 @@ void Cl_GetPackets(void)
                 break;
 
             case PSV_FILTER:
-                ddPlayers[consolePlayer].filter = Msg_ReadLong();
+                ddPlayers[consolePlayer].shared.filter = Msg_ReadLong();
                 break;
 
             default:

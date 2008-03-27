@@ -258,7 +258,7 @@ void H_Display(void)
             Set(DD_FULLBRIGHT, isFullbright);
 
             // Render the view with possible custom filters.
-            R_RenderPlayerView(vplayer->plr);
+            R_RenderPlayerView(DISPLAYPLAYER);
 
             R_DrawSpecialFilter();
 

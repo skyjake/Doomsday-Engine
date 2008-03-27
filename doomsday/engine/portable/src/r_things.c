@@ -407,25 +407,26 @@ vissprite_t *R_NewVisSprite(void)
  */
 void R_ProjectPlayerSprites(void)
 {
-    int         i;
-    float       inter;
-    float       lightLevel, alpha, rgb[3];
-    modeldef_t *mf, *nextmf;
-    ddpsprite_t *psp;
-    vissprite_t *vis;
-    boolean     isFullBright = (levelFullBright != 0);
-    boolean     isModel;
+    int                 i;
+    float               inter;
+    float               lightLevel, alpha, rgb[3];
+    modeldef_t         *mf, *nextmf;
+    ddpsprite_t        *psp;
+    vissprite_t        *vis;
+    boolean             isFullBright = (levelFullBright != 0);
+    boolean             isModel;
+    ddplayer_t         *ddpl = &viewPlayer->shared;
 
     psp3d = false;
 
     // Cameramen have no psprites.
-    if((viewPlayer->flags & DDPF_CAMERA) || (viewPlayer->flags & DDPF_CHASECAM))
+    if((ddpl->flags & DDPF_CAMERA) || (ddpl->flags & DDPF_CHASECAM))
         return;
 
     // Determine if we should be drawing all the psprites full bright?
     if(!isFullBright)
     {
-        for(i = 0, psp = viewPlayer->pSprites; i < DDMAXPSPRITES; ++i, psp++)
+        for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
         {
             if(!psp->statePtr)
                 continue;
@@ -436,7 +437,7 @@ void R_ProjectPlayerSprites(void)
         }
     }
 
-    for(i = 0, psp = viewPlayer->pSprites; i < DDMAXPSPRITES; ++i, psp++)
+    for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
     {
         vis = visPSprites + i;
 
@@ -472,19 +473,18 @@ void R_ProjectPlayerSprites(void)
                  * Evaluate the position of this player in the light grid.
                  * \todo Should be affected by BIAS sources.
                  */
-                float       point[3];
+                float               point[3];
 
-                point[0] = viewPlayer->mo->pos[VX];
-                point[1] = viewPlayer->mo->pos[VY];
-                point[2] = viewPlayer->mo->pos[VZ] +
-                            viewPlayer->viewHeight / 2;
+                point[VX] = ddpl->mo->pos[VX];
+                point[VY] = ddpl->mo->pos[VY];
+                point[VZ] = ddpl->mo->pos[VZ] + ddpl->viewHeight / 2;
                 LG_Evaluate(point, rgb);
                 lightLevel = 1;
             }
             else
             {
                 memcpy(rgb,
-                       R_GetSectorLightColor(viewPlayer->mo->subsector->sector),
+                       R_GetSectorLightColor(ddpl->mo->subsector->sector),
                        sizeof(rgb));
 
                 if(psp->light < 1)
@@ -496,6 +496,7 @@ void R_ProjectPlayerSprites(void)
                     lightLevel = 1;
             }
         }
+
         alpha = psp->alpha;
 
         if(isModel)
@@ -508,12 +509,12 @@ void R_ProjectPlayerSprites(void)
             vis->light = NULL;
 
             vis->distance = -10;//4;
-            vis->data.mo.subsector = viewPlayer->mo->subsector;
+            vis->data.mo.subsector = ddpl->mo->subsector;
             vis->data.mo.flags = 0;
             // 32 is the raised weapon height.
             vis->data.mo.gzt = viewZ;
-            vis->data.mo.secFloor = viewPlayer->mo->subsector->sector->SP_floorvisheight;
-            vis->data.mo.secCeil = viewPlayer->mo->subsector->sector->SP_ceilvisheight;
+            vis->data.mo.secFloor = ddpl->mo->subsector->sector->SP_floorvisheight;
+            vis->data.mo.secCeil = ddpl->mo->subsector->sector->SP_ceilvisheight;
             vis->data.mo.pClass = 0;
             vis->data.mo.floorClip = 0;
 
@@ -554,7 +555,7 @@ void R_ProjectPlayerSprites(void)
             vis->center[VY] = viewY;
             vis->center[VZ] = viewZ;
 
-            vis->data.psprite.subsector = viewPlayer->mo->subsector;
+            vis->data.psprite.subsector = ddpl->mo->subsector;
             vis->data.psprite.psp = psp;
 
             memcpy(vis->data.psprite.rgb, rgb, sizeof(float) * 3);

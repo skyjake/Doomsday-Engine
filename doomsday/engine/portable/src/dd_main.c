@@ -852,8 +852,8 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&defResX, &defResX},
     {&defResY, &defResY},
     {&skyDetail, 0},
-    {&sfx_volume, &sfx_volume},
-    {&mus_volume, &mus_volume},
+    {&sfxVolume, &sfxVolume},
+    {&musVolume, &musVolume},
     {0, 0}, //{&mouseInverseY, &mouseInverseY},
     {&queryResult, 0},
     {&levelFullBright, &levelFullBright},
@@ -1214,7 +1214,7 @@ void DD_SetVariable(int ddvalue, void *parm)
  */
 ddplayer_t *DD_GetPlayer(int number)
 {
-    return (ddplayer_t *) &ddPlayers[number];
+    return (ddplayer_t *) &ddPlayers[number].shared;
 }
 
 #ifdef UNIX

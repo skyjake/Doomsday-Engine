@@ -105,7 +105,7 @@ static interface_info_t interfaces[] = {
 void Mus_Register(void)
 {
     // Cvars
-    C_VAR_INT("music-volume", &mus_volume, 0, 0, 255);
+    C_VAR_INT("music-volume", &musVolume, 0, 0, 255);
     C_VAR_INT("music-source", &mus_preference, 0, 0, 2);
 
     // Ccmds

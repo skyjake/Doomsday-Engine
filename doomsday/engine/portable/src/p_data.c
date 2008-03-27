@@ -403,7 +403,7 @@ int P_GetMapAmbientLightLevel(gamemap_t *map)
 
 static void spawnParticleGeneratorsForMap(const char *mapID)
 {
-    uint        startTime = Sys_GetRealTime();
+    uint                startTime = Sys_GetRealTime();
 
     // Spawn all type-triggered particle generators.
     // Let's hope there aren't too many...
@@ -420,13 +420,13 @@ static void spawnParticleGeneratorsForMap(const char *mapID)
  * Begin the process of loading a new map.
  * Can be accessed by the games via the public API.
  *
- * @param levelId   Identifier of the map to be loaded (eg "E1M1").
+ * @param levelId       Identifier of the map to be loaded (eg "E1M1").
  *
- * @return          @c true, if the map was loaded successfully.
+ * @return              @c true, if the map was loaded successfully.
  */
 boolean P_LoadMap(const char *mapID)
 {
-    uint            i;
+    uint                i;
 
     if(!mapID || !mapID[0])
         return false; // Yeah, ok... :P
@@ -449,7 +449,9 @@ boolean P_LoadMap(const char *mapID)
         // they're ready to begin receiving frames.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            if(!(ddPlayers[i].flags & DDPF_LOCAL) && clients[i].connected)
+            player_t           *plr = &ddPlayers[i];
+
+            if(!(plr->shared.flags & DDPF_LOCAL) && clients[i].connected)
             {
 #ifdef _DEBUG
                 Con_Printf("Cl%i NOT READY ANY MORE!\n", i);
@@ -461,8 +463,8 @@ boolean P_LoadMap(const char *mapID)
 
     if(DAM_AttemptMapLoad(mapID))
     {
-        uint            i;
-        gamemap_t      *map = P_GetCurrentMap();
+        uint                i;
+        gamemap_t          *map = P_GetCurrentMap();
 
         Cl_Reset();
         RL_DeleteLists();
@@ -471,9 +473,9 @@ boolean P_LoadMap(const char *mapID)
         // Invalidate old cmds and init player values.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            ddplayer_t      *plr = &ddPlayers[i];
+            player_t           *plr = &ddPlayers[i];
 
-            if(isServer && plr->inGame)
+            if(isServer && plr->shared.inGame)
                 clients[i].runTime = SECONDS_TO_TICKS(gameTime);
         }
 

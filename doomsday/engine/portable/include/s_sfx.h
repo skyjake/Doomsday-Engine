@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,11 +19,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * s_sfx.h: Sound Effects
  */
 
@@ -32,8 +33,8 @@
 #include "sys_sfxd.h"
 #include "de_play.h"
 
-// Begin and end macros for Critical OPerations. They are operations 
-// that can't be done while a refresh is being made. No refreshing 
+// Begin and end macros for Critical OPerations. They are operations
+// that can't be done while a refresh is being made. No refreshing
 // will be done between BEGIN_COP and END_COP.
 #define BEGIN_COP		Sfx_AllowRefresh(false)
 #define END_COP			Sfx_AllowRefresh(true)
@@ -64,10 +65,10 @@ typedef struct sfxchannel_s {
 } sfxchannel_t;
 
 extern boolean  sfx_avail;
-extern float    sfx_reverb_strength;
+extern float    sfxReverbStrength;
 extern int      sfx_max_cache_kb, sfx_max_cache_tics;
 extern int      sfx_bits, sfx_rate;
-extern int      sound_3dmode, sound_16bit, sound_rate;
+extern int      sfx3D, sfx16bit, sfxSampleRate;
 
 boolean         Sfx_Init(void);
 void            Sfx_Shutdown(void);

@@ -288,7 +288,7 @@ void D_Display(void)
             Set(DD_FULLBRIGHT, isFullBright);
 
             // Render the view with possible custom filters.
-            R_RenderPlayerView(players[DISPLAYPLAYER].plr);
+            R_RenderPlayerView(DISPLAYPLAYER);
 
             R_DrawSpecialFilter();
 

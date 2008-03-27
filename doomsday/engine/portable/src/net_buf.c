@@ -34,6 +34,7 @@
 #include "de_network.h"
 #include "de_console.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -248,9 +249,9 @@ void N_ClearMessages(void)
  */
 void N_SendPacket(int flags)
 {
-    uint            i, dest = 0;
-    void           *data;
-    size_t          size;
+    uint                i, dest = 0;
+    void               *data;
+    size_t              size;
 
     // Is the network available?
     if(!allowSending || !N_IsAvailable())
@@ -259,9 +260,12 @@ void N_SendPacket(int flags)
     // Figure out the destination DPNID.
     if(netServerMode)
     {
+        player_t           *plr = &ddPlayers[netBuffer.player];
+        ddplayer_t         *ddpl = &plr->shared;
+
         if(netBuffer.player >= 0 && netBuffer.player < DDMAXPLAYERS)
         {
-            if(ddPlayers[netBuffer.player].flags & DDPF_LOCAL ||
+            if((ddpl->flags & DDPF_LOCAL) ||
                !clients[netBuffer.player].connected)
             {
                 // Do not send anything to local or disconnected players.
@@ -316,12 +320,12 @@ Con_Message("N_SendPacket: Sending %ul bytes reliably to %i.\n", size, dest));
 }
 
 /**
- * @return          The player number that corresponds the DPNID.
+ * @return              The player number that corresponds the DPNID.
  */
 uint N_IdentifyPlayer(nodeid_t id)
 {
-    uint        i;
-    boolean     found;
+    uint                i;
+    boolean             found;
 
     if(netServerMode)
     {
@@ -350,11 +354,12 @@ uint N_IdentifyPlayer(nodeid_t id)
  *
  * \note Skips all messages from unknown nodeids!
  *
- * @return          The next message waiting in the incoming message queue.
+ * @return              The next message waiting in the incoming message
+ *                      queue.
  */
 netmessage_t *N_GetNextMessage(void)
 {
-    netmessage_t *msg;
+    netmessage_t       *msg;
 
     while((msg = N_GetMessage()) != NULL)
     {

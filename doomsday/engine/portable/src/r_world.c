@@ -1598,22 +1598,24 @@ void R_SetupLevel(int mode, int flags)
         // Kill all local commands and determine the invoid status of players.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            ddplayer_t         *plr = &ddPlayers[i];
+            player_t           *plr = &ddPlayers[i];
+            ddplayer_t         *ddpl = &plr->shared;
 
             clients[i].numTics = 0;
 
             // Determine if the player is in the void.
-            plr->inVoid = true;
-            if(plr->mo)
+            ddpl->inVoid = true;
+            if(ddpl->mo)
             {
                 subsector_t        *ssec =
-                    R_PointInSubsector(plr->mo->pos[VX], plr->mo->pos[VY]);
+                    R_PointInSubsector(ddpl->mo->pos[VX],
+                                       ddpl->mo->pos[VY]);
 
                 //// \fixme $nplanes
                 if(ssec &&
-                   plr->mo->pos[VZ] > ssec->sector->SP_floorheight + 4 &&
-                   plr->mo->pos[VZ] < ssec->sector->SP_ceilheight - 4)
-                   plr->inVoid = false;
+                   ddpl->mo->pos[VZ] > ssec->sector->SP_floorheight + 4 &&
+                   ddpl->mo->pos[VZ] < ssec->sector->SP_ceilheight - 4)
+                   ddpl->inVoid = false;
             }
         }
 
@@ -1770,24 +1772,24 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         if(forceUpdate ||
            plane->height != plane->oldHeight[1])
         {
-            ddplayer_t *player;
-
             // Check if there are any camera players in this sector. If their
             // height is now above the ceiling/below the floor they are now in
             // the void.
             for(j = 0; j < DDMAXPLAYERS; ++j)
             {
-                player = &ddPlayers[j];
-                if(!player->inGame || !player->mo || !player->mo->subsector)
+                player_t               *plr = &ddPlayers[j];
+                ddplayer_t             *ddpl = &plr->shared;
+
+                if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->subsector)
                     continue;
 
                 //// \fixme $nplanes
-                if((player->flags & DDPF_CAMERA) &&
-                   player->mo->subsector->sector == sec &&
-                   (player->mo->pos[VZ] > sec->SP_ceilheight ||
-                    player->mo->pos[VZ] < sec->SP_floorheight))
+                if((ddpl->flags & DDPF_CAMERA) &&
+                   ddpl->mo->subsector->sector == sec &&
+                   (ddpl->mo->pos[VZ] > sec->SP_ceilheight ||
+                    ddpl->mo->pos[VZ] < sec->SP_floorheight))
                 {
-                    player->inVoid = true;
+                    ddpl->inVoid = true;
                 }
             }
 

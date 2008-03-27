@@ -1336,16 +1336,16 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
         }
 
         /**
-         * Draw the viewPlayer.
+         * Draw the followMobj.
          */
 
-        radius = viewPlayer->mo->radius;
+        radius = followMobj->radius;
         V2_Set(start,
-               viewPlayer->mo->pos[VX] - bmap->bBox[0][VX] - radius,
-               viewPlayer->mo->pos[VY] - bmap->bBox[0][VY] - radius);
+               followMobj->pos[VX] - bmap->bBox[0][VX] - radius,
+               followMobj->pos[VY] - bmap->bBox[0][VY] - radius);
         V2_Set(end,
-               viewPlayer->mo->pos[VX] - bmap->bBox[0][VX] + radius,
-               viewPlayer->mo->pos[VY] - bmap->bBox[0][VY] + radius);
+               followMobj->pos[VX] - bmap->bBox[0][VX] + radius,
+               followMobj->pos[VY] - bmap->bBox[0][VY] + radius);
 
         DGL_Color4f(0, 1, 0, 1);
         DGL_Begin(DGL_QUADS);
@@ -1424,8 +1424,8 @@ void P_BlockmapDebug(void)
     }
 
     // If possible, we'll tailor what we draw relative to the viewPlayer.
-    if(viewPlayer && viewPlayer->mo)
-        followMobj = viewPlayer->mo;
+    if(viewPlayer && viewPlayer->shared.mo)
+        followMobj = viewPlayer->shared.mo;
 
     blockmapDebug(blockmap, followMobj, func);
 

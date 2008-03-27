@@ -254,7 +254,7 @@ void G_Display(void)
 
             // The view angle offset.
             DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
-            R_RenderPlayerView(vplayer->plr);
+            R_RenderPlayerView(DISPLAYPLAYER);
 
             if(special200)
             {

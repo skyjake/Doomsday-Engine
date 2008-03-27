@@ -394,7 +394,7 @@ extern          "C" {
     void            R_PrecacheLevel(void);
     void            R_PrecachePatch(lumpnum_t lump);
     void            R_PrecacheSkinsForState(int stateIndex);
-    void            R_RenderPlayerView(ddplayer_t *player);
+    void            R_RenderPlayerView(int num);
     void            R_ViewWindow(int x, int y, int w, int h);
     void            R_SetBorderGfx(char *lumps[9]);
     void            R_GetSpriteInfo(int sprite, int frame,

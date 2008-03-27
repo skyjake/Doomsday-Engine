@@ -29,6 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_play.h"
 #include "de_network.h"
 
 // MACROS ------------------------------------------------------------------
@@ -45,6 +46,11 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+player_t *viewPlayer;
+player_t ddPlayers[DDMAXPLAYERS];
+int consolePlayer;
+int displayPlayer;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -59,7 +65,10 @@ int P_LocalToConsole(int localPlayer)
 
     for(i = 0, count = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(ddPlayers[i].flags & DDPF_LOCAL)
+        player_t           *plr = &ddPlayers[i];
+        ddplayer_t         *ddpl = &plr->shared;
+
+        if(ddpl->flags & DDPF_LOCAL)
         {
             if(count++ == localPlayer)
                 return i;
@@ -77,14 +86,77 @@ int P_LocalToConsole(int localPlayer)
 int P_ConsoleToLocal(int playerNum)
 {
     int         		i, count;
+    player_t           *plr = &ddPlayers[playerNum];
 
-    if(!(ddPlayers[playerNum].flags & DDPF_LOCAL))
+    if(!(plr->shared.flags & DDPF_LOCAL))
         return -1; // Not local at all.
 
     for(i = 0, count = 0; i < playerNum; ++i)
     {
-        if(ddPlayers[i].flags & DDPF_LOCAL)
+        player_t           *plr = &ddPlayers[i];
+
+        if(plr->shared.flags & DDPF_LOCAL)
             count++;
     }
+
     return count;
+}
+
+/**
+ * Given a ptr to ddplayer_t, return it's logical index.
+ */
+int P_GetDDPlayerIdx(ddplayer_t *ddpl)
+{
+    if(ddpl)
+    {
+        uint                i;
+
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+            if(&ddPlayers[i].shared == ddpl)
+                return i;
+    }
+
+    return -1;
+}
+
+/**
+ * Do we THINK the given (camera) player is currently in the void.
+ * The method used to test this is to compare the position of the mobj
+ * each time it is linked into a subsector.
+ *
+ * \note Cannot be 100% accurate so best not to use it for anything critical...
+ *
+ * @param player        The player to test.
+ *
+ * @return              @c true, If the player is thought to be in the void.
+ */
+boolean P_IsInVoid(player_t *player)
+{
+    ddplayer_t         *ddpl;
+
+    if(!player)
+        return false;
+
+    ddpl = &player->shared;
+
+    // Cameras are allowed to move completely freely (so check z height
+    // above/below ceiling/floor).
+    if(ddpl->flags & DDPF_CAMERA)
+    {
+        if(ddpl->inVoid)
+            return true;
+
+        if(ddpl->mo->subsector)
+        {
+            sector_t           *sec = ddpl->mo->subsector->sector;
+
+            if(ddpl->mo->pos[VZ] >
+                sec->SP_ceilheight + sec->skyFix[PLN_CEILING].offset - 4 ||
+               ddpl->mo->pos[VZ] <
+                sec->SP_floorheight + sec->skyFix[PLN_FLOOR].offset + 4)
+                return true;
+        }
+    }
+
+    return false;
 }

@@ -98,14 +98,11 @@ char   *serverInfo = "Multiplayer Host";
 char   *playerName = "Player";
 int     serverData[3];          // Some parameters passed to master server.
 
-ddplayer_t ddPlayers[DDMAXPLAYERS];
 client_t clients[DDMAXPLAYERS];   // All network data for the players.
 
-int     netGame;                // true if a netGame is in progress
-int     isServer;               // true if this computer is an open server.
-int     isClient;               // true if this computer is a client
-int     consolePlayer;
-int     displayPlayer;
+int     netGame; // true if a netGame is in progress
+int     isServer; // true if this computer is an open server.
+int     isClient; // true if this computer is a client
 
 // Gotframe is true if a frame packet has been received.
 int     gotFrame = false;
@@ -327,11 +324,14 @@ void Net_ResetTimer(void)
 }
 
 /**
- * @return          @c true, if the specified player is a real, local player.
+ * @return              @c true, if the specified player is a real, local
+ *                      player.
  */
-boolean Net_IsLocalPlayer(int pNum)
+boolean Net_IsLocalPlayer(int plrNum)
 {
-	return ddPlayers[pNum].inGame && (ddPlayers[pNum].flags & DDPF_LOCAL);
+    player_t           *plr = &ddPlayers[plrNum];
+
+    return plr->shared.inGame && (plr->shared.flags & DDPF_LOCAL);
 }
 
 /**
@@ -339,9 +339,9 @@ boolean Net_IsLocalPlayer(int pNum)
  */
 void Net_SendCommands(void)
 {
-    uint        i;
-    byte       *msg;
-    ticcmd_t   *cmd;
+    uint                i;
+    byte               *msg;
+    ticcmd_t           *cmd;
 
     if(isDedicated)
         return;
@@ -388,9 +388,9 @@ void Net_SendCommands(void)
 
 static void Net_DoUpdate(void)
 {
-    static int  lastTime = 0;
+    static int          lastTime = 0;
 
-    int         nowTime, newTics;
+    int                 nowTime, newTics;
 
     /**
      * This timing is only used by the client when it determines if it is
@@ -462,9 +462,10 @@ static void Net_DoUpdate(void)
      * entirely local.
      */
     coordTimer -= newTics;
-    if(isClient && allowFrames && coordTimer < 0 && ddPlayers[consolePlayer].mo)
+    if(isClient && allowFrames && coordTimer < 0 &&
+       ddPlayers[consolePlayer].shared.mo)
     {
-        mobj_t *mo = ddPlayers[consolePlayer].mo;
+        mobj_t             *mo = ddPlayers[consolePlayer].shared.mo;
 
         coordTimer = netCoordTime; // 35/2
         Msg_Begin(PKT_COORDS);
@@ -597,8 +598,8 @@ void Net_InitGame(void)
     // Netgame is true when we're aware of the network (i.e. other players).
     netGame = false;
 
-    ddPlayers[0].inGame = true;
-    ddPlayers[0].flags |= DDPF_LOCAL;
+    ddPlayers[0].shared.inGame = true;
+    ddPlayers[0].shared.flags |= DDPF_LOCAL;
     clients[0].id = clientID;
     clients[0].ready = true;
     clients[0].connected = true;
@@ -642,34 +643,40 @@ void Net_StopGame(void)
     // All remote players are forgotten.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        ddPlayers[i].inGame = false;
-        clients[i].ready = clients[i].connected = false;
-        clients[i].nodeID = 0;
-        ddPlayers[i].flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
+        player_t           *plr = &ddPlayers[i];
+        client_t           *cl = &clients[i];
+
+        plr->shared.inGame = false;
+        cl->ready = cl->connected = false;
+        cl->nodeID = 0;
+        plr->shared.flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
     }
 
     // We're about to become player zero, so update it's view angles to
     // match our current ones.
-    if(ddPlayers[0].mo)
+    if(ddPlayers[0].shared.mo)
     {
         /* $unifiedangles */
-        ddPlayers[0].mo->angle = ddPlayers[consolePlayer].mo->angle;
-        ddPlayers[0].lookDir = ddPlayers[consolePlayer].lookDir;
+        ddPlayers[0].shared.mo->angle =
+            ddPlayers[consolePlayer].shared.mo->angle;
+        ddPlayers[0].shared.lookDir =
+            ddPlayers[consolePlayer].shared.lookDir;
     }
+
     consolePlayer = displayPlayer = 0;
-    ddPlayers[0].inGame = true;
+    ddPlayers[0].shared.inGame = true;
     clients[0].ready = true;
     clients[0].connected = true;
     clients[0].viewConsole = 0;
-    ddPlayers[0].flags |= DDPF_LOCAL;
+    ddPlayers[0].shared.flags |= DDPF_LOCAL;
 }
 
 /**
- * @return          Delta based on 'now' (- future, + past).
+ * @return              Delta based on 'now' (- future, + past).
  */
 int Net_TimeDelta(byte now, byte then)
 {
-    int         delta;
+    int                 delta;
 
     if(now >= then)
     {   // Simple case.
@@ -830,13 +837,15 @@ Con_Printf("  CmdLag=%i\n", cl->lag);
  */
 void Net_Drawer(void)
 {
-    char    buf[160], tmp[40];
-    int     i, c;
-    boolean show_blink_r = false;
+    char                buf[160], tmp[40];
+    int                 i, c;
+    boolean             showBlinkR = false;
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
-        if(ddPlayers[i].inGame && clients[i].recording)
-            show_blink_r = true;
+    {
+        if(ddPlayers[i].shared.inGame && clients[i].recording)
+            showBlinkR = true;
+    }
 
     // Draw the Shadow Bias Editor HUD (if it is active).
     SBE_DrawHUD();
@@ -850,7 +859,7 @@ void Net_Drawer(void)
     // Draw the light range debug display.
     R_DrawLightRange();
 
-    if(!netDev && !show_blink_r && !consoleShowFPS)
+    if(!netDev && !showBlinkR && !consoleShowFPS)
         return;
 
     // Go into screen projection mode.
@@ -859,12 +868,12 @@ void Net_Drawer(void)
     DGL_LoadIdentity();
     DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
-    if(show_blink_r && SECONDS_TO_TICKS(gameTime) & 8)
+    if(showBlinkR && SECONDS_TO_TICKS(gameTime) & 8)
     {
         strcpy(buf, "[");
         for(i = c = 0; i < DDMAXPLAYERS; ++i)
         {
-            if(!(!ddPlayers[i].inGame || !clients[i].recording))
+            if(!(!ddPlayers[i].shared.inGame || !clients[i].recording))
             {
                 // This is a "real" player (or camera).
                 if(c++)
@@ -1166,7 +1175,7 @@ D_CMD(Chat)
         else
         {
             for(i = 1; i < DDMAXPLAYERS; ++i)
-                if(ddPlayers[i].inGame && mask & (1 << i))
+                if(ddPlayers[i].shared.inGame && (mask & (1 << i)))
                     Net_SendBuffer(i, SPF_ORDERED);
         }
     }
@@ -1272,7 +1281,7 @@ D_CMD(MakeCamera)
        displayPlayer = cp; */
 
     // Create a new local player.
-    int         cp;
+    int                 cp;
 
     cp = atoi(argv[1]);
     if(cp < 0 || cp >= DDMAXPLAYERS)
@@ -1287,7 +1296,7 @@ D_CMD(MakeCamera)
     clients[cp].connected = true;
     clients[cp].ready = true;
     clients[cp].updateCount = UPDATECOUNT;
-    ddPlayers[cp].flags |= DDPF_LOCAL;
+    ddPlayers[cp].shared.flags |= DDPF_LOCAL;
     Sv_InitPoolForClient(cp);
 
     return true;
@@ -1295,20 +1304,20 @@ D_CMD(MakeCamera)
 
 D_CMD(SetConsole)
 {
-    int         cp;
+    int                 cp;
 
     cp = atoi(argv[1]);
-    if(ddPlayers[cp].inGame)
+    if(ddPlayers[cp].shared.inGame)
         consolePlayer = displayPlayer = cp;
     return true;
 }
 
 int Net_ConnectWorker(void *ptr)
 {
-    connectparam_t *param = ptr;
-    double      startTime = 0;
-    boolean     isDone = false;
-    int         returnValue = false;
+    connectparam_t     *param = ptr;
+    double              startTime = 0;
+    boolean             isDone = false;
+    int                 returnValue = false;
 
     // Make sure TCP/IP is active.
     if(N_InitService(false))
@@ -1358,8 +1367,8 @@ int Net_ConnectWorker(void *ptr)
  */
 D_CMD(Connect)
 {
-    connectparam_t param;
-    char       *ptr;
+    connectparam_t      param;
+    char               *ptr;
 
     if(argc < 2 || argc > 3)
     {
@@ -1397,10 +1406,10 @@ D_CMD(Connect)
  */
 D_CMD(Net)
 {
-    int         i;
-    boolean     success = true;
+    int                 i;
+    boolean             success = true;
 
-    if(argc == 1)               // No args?
+    if(argc == 1) // No args?
     {
         Con_Printf("Usage: %s (cmd/args)\n", argv[0]);
         Con_Printf("Commands:\n");
@@ -1436,7 +1445,7 @@ D_CMD(Net)
         }
     }
 
-    if(argc == 2)               // One argument?
+    if(argc == 2) // One argument?
     {
         if(!stricmp(argv[1], "shutdown"))
         {
@@ -1471,11 +1480,13 @@ D_CMD(Net)
                 Con_Printf("Clients:\n");
                 for(i = 0; i < DDMAXPLAYERS; ++i)
                 {
-                    if(clients[i].connected)
+                    client_t           *cl = &clients[i];
+                    player_t           *plr = &ddPlayers[i];
+
+                    if(cl->connected)
                         Con_Printf("%2i: %10s node %2x, entered at %07i (ingame:%i, handshake:%i)\n",
-                                   i, clients[i].name,
-                                   clients[i].nodeID, clients[i].enterTime,
-                                   ddPlayers[i].inGame, clients[i].handshake);
+                                   i, cl->name, cl->nodeID, cl->enterTime,
+                                   plr->shared.inGame, cl->handshake);
                 }
             }
 
@@ -1493,6 +1504,7 @@ D_CMD(Net)
                 Con_Printf("This client is not connected to a server.\n");
                 return false;
             }
+
             if(!isClient)
             {
                 Con_Printf("This is not a client.\n");
@@ -1507,11 +1519,11 @@ D_CMD(Net)
         else
         {
             Con_Printf("Bad arguments.\n");
-            return false;       // Bad args.
+            return false; // Bad args.
         }
     }
 
-    if(argc == 3)               // Two arguments?
+    if(argc == 3) // Two arguments?
     {
         if(!stricmp(argv[1], "server"))
         {
@@ -1556,7 +1568,7 @@ D_CMD(Net)
         }
         else if(!stricmp(argv[1], "connect"))
         {
-            int     idx;
+            int             idx;
 
             if(netGame)
             {
@@ -1574,7 +1586,7 @@ D_CMD(Net)
         }
         else if(!stricmp(argv[1], "mconnect"))
         {
-            serverinfo_t info;
+            serverinfo_t    info;
 
             if(N_MasterGet(strtol(argv[2], 0, 0), &info))
             {

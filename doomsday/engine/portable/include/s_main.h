@@ -3,7 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
+ *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * s_main.h: Sound Subsystem
  */
 
@@ -39,9 +41,9 @@
 #define SF_REPEAT           0x10   // Repeats until stopped.
 #define SF_DONT_STOP        0x20   // Sound can't be stopped while playing.
 
-extern int      sound_info;
-extern int      sound_min_distance, sound_max_distance;
-extern int      sfx_volume, mus_volume;
+extern int      showSoundInfo;
+extern int      soundMinDist, soundMaxDist;
+extern int      sfxVolume, musVolume;
 
 void            S_Register(void);
 boolean         S_Init(void);

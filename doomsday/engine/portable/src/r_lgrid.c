@@ -38,6 +38,7 @@
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 #include <math.h>
 #include <assert.h>
@@ -947,17 +948,19 @@ void LG_Evaluate(const float *point, float *color)
  */
 void LG_Debug(void)
 {
-    gridblock_t *block;
-    int         x, y;
-    int         vx, vy;
-    static int  blink = 0;
+    static int          blink = 0;
+
+    gridblock_t        *block;
+    int                 x, y;
+    int                 vx, vy;
+    ddplayer_t         *ddpl = &viewPlayer->shared;
 
     if(!lgInited || !lgShowDebug)
         return;
 
     blink++;
-    vx = ROUND((viewPlayer->mo->pos[VX] - lgOrigin[VX]) / lgBlockSize);
-    vy = ROUND((viewPlayer->mo->pos[VY] - lgOrigin[VY]) / lgBlockSize);
+    vx = ROUND((ddpl->mo->pos[VX] - lgOrigin[VX]) / lgBlockSize);
+    vy = ROUND((ddpl->mo->pos[VY] - lgOrigin[VY]) / lgBlockSize);
     vx = MINMAX_OF(1, vx, lgBlockWidth - 2);
     vy = MINMAX_OF(1, vy, lgBlockHeight - 2);
 

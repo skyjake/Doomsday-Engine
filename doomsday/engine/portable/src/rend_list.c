@@ -425,6 +425,8 @@ void RL_VertexColors(rendpoly_t *poly, float lightLevel,
         }
         else
         {
+            ddplayer_t             *ddpl = &viewPlayer->shared;
+
             if(!(distanceOverride > 0))
                 dist = Rend_PointDist2D(vtx->pos);
 
@@ -440,11 +442,11 @@ void RL_VertexColors(rendpoly_t *poly, float lightLevel,
             rgb[CB] = lightVal * sufColor[CB];
 
             // Check for torch.
-            if(viewPlayer->fixedColorMap && dist < 1024)
+            if(ddpl->fixedColorMap && dist < 1024)
             {
                 // Colormap 1 is the brightest. I'm guessing 16 would be
                 // the darkest.
-                int                 ll = 16 - viewPlayer->fixedColorMap;
+                int                 ll = 16 - ddpl->fixedColorMap;
                 float               d = (1024 - dist) / 1024.0f * ll / 15.0f;
 
                 if(torchAdditive)

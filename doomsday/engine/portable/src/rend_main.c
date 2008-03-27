@@ -1170,7 +1170,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
 
         if(section == SEG_MIDDLE && softSurface)
         {
-            mobj_t             *mo = viewPlayer->mo;
+            mobj_t             *mo = viewPlayer->shared.mo;
 
             /**
              * Can the player walk through this surface?
@@ -1484,12 +1484,13 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     // Middle section.
     if(side->sections[SEG_MIDDLE].frameFlags & SUFINF_PVIS)
     {
-        surface_t  *surface = &side->SW_middlesurface;
-        texinfo_t  *texinfo = NULL;
-        float       texOffsetY = 0;
-        float       top, bottom, vL_ZBottom, vR_ZBottom, vL_ZTop, vR_ZTop;
-        boolean     softSurface =
-            (!(ldef->flags & DDLF_BLOCKING) || !(viewPlayer->flags & DDPF_NOCLIP));
+        surface_t          *surface = &side->SW_middlesurface;
+        texinfo_t          *texinfo = NULL;
+        float               texOffsetY = 0;
+        float               top, bottom, vL_ZBottom, vR_ZBottom, vL_ZTop, vR_ZTop;
+        boolean             softSurface =
+            (!(ldef->flags & DDLF_BLOCKING) ||
+             !(viewPlayer->shared.flags & DDPF_NOCLIP));
 
         // We need the properties of the real flat/texture.
         if(surface->material)
@@ -2256,20 +2257,21 @@ void Rend_CalcLightRangeModMatrix(cvar_t *unused)
  */
 void Rend_InitPlayerLightRanges(void)
 {
-    uint        i;
-    sector_t   *sec;
-    ddplayer_t *player;
+    uint                i;
+    sector_t           *sec;
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(!ddPlayers[i].inGame)
+        player_t           *plr = &ddPlayers[i];
+        ddplayer_t         *ddpl = &plr->shared;
+
+        if(!ddpl->inGame)
             continue;
 
-        player = &ddPlayers[i];
-        if(!player->mo || !player->mo->subsector)
+        if(!ddpl->mo || !ddpl->mo->subsector)
             continue;
 
-        sec = player->mo->subsector->sector;
+        sec = ddpl->mo->subsector->sector;
 
         playerLightRange[i] = (MOD_RANGE/2) - 1;
         playerLastLightSample[i].value =
@@ -2287,28 +2289,29 @@ void Rend_InitPlayerLightRanges(void)
  */
 void Rend_RetrieveLightSample(void)
 {
-    uint        i;
-    int         midpoint;
-    float       light, diff, range, mod, inter;
-    ddplayer_t *player;
-    subsector_t *sub;
+    uint                i;
+    int                 midpoint;
+    float               light, diff, range, mod, inter;
+    subsector_t        *sub;
 
     unsigned int currentTime = Sys_GetRealTime();
 
     midpoint = MOD_RANGE / 2;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(!ddPlayers[i].inGame)
+        player_t           *plr = &ddPlayers[i];
+        ddplayer_t         *ddpl = &plr->shared;
+
+        if(!ddpl->inGame)
             continue;
 
-        player = &ddPlayers[i];
-        if(!player->mo || !player->mo->subsector)
+        if(!ddpl->mo || !ddpl->mo->subsector)
             continue;
 
-        sub = player->mo->subsector;
+        sub = ddpl->mo->subsector;
 
         // In some circumstances we should disable light adaptation.
-        if(levelFullBright || P_IsInVoid(player))
+        if(levelFullBright || P_IsInVoid(plr))
         {
             playerLightRange[i] = midpoint;
             continue;
@@ -2329,7 +2332,7 @@ void Rend_RetrieveLightSample(void)
             byte color[3];
 
             // \todo Should be affected by BIAS sources...
-            LG_Evaluate(player->mo->pos, color);
+            LG_Evaluate(ddpl->mo->pos, color);
             light = ((float)(color[0] + color[1] + color[2]) / 3) / 255.0f;
         }
         else
@@ -2437,13 +2440,13 @@ void Rend_RetrieveLightSample(void)
  *       lightvalue is NEVER outside the range 0-254 when the original lightvalue
  *       is used as the index.
  *
- * @param lightvar    Ptr to the value to apply the adaptation to.
+ * @param lightvar      Ptr to the value to apply the adaptation to.
  */
 void Rend_ApplyLightAdaptation(float *lightvar)
 {
     // The default range.
-    uint        range = (MOD_RANGE/2) - 1;
-    int         lightval;
+    uint                range = (MOD_RANGE/2) - 1;
+    int                 lightval;
 
     if(lightvar == NULL)
         return; // Can't apply adaptation to a NULL val ptr...
@@ -2470,8 +2473,8 @@ void Rend_ApplyLightAdaptation(float *lightvar)
  */
 float Rend_GetLightAdaptVal(float lightvalue)
 {
-    uint        range = (MOD_RANGE/2) - 1;
-    int         lightval;
+    uint                range = (MOD_RANGE/2) - 1;
+    int                 lightval;
 
     // Apply light adaptation?
     if(r_lightAdapt)
@@ -2729,7 +2732,7 @@ static void Rend_RenderBoundingBoxes(void)
         // For every mobj in the sector's mobjList
         for(mo = sec->mobjList; mo; mo = mo->sNext)
         {
-            if(mo == ddPlayers[consolePlayer].mo)
+            if(mo == ddPlayers[consolePlayer].shared.mo)
                 continue; // We don't want the console player.
 
             alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->width/2))/4);

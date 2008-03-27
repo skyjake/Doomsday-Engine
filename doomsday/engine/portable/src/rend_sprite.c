@@ -380,16 +380,17 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
  */
 void Rend_DrawPlayerSprites(void)
 {
-    int         i;
-    ddpsprite_t *psp;
-    vissprite_t *vis;
+    int                 i;
+    ddplayer_t         *ddpl = &viewPlayer->shared;
+    ddpsprite_t        *psp;
+    vissprite_t        *vis;
 
     // Cameramen have no psprites.
-    if((viewPlayer->flags & DDPF_CAMERA) || (viewPlayer->flags & DDPF_CHASECAM))
+    if((ddpl->flags & DDPF_CAMERA) || (ddpl->flags & DDPF_CHASECAM))
         return;
 
     // Check for fullbright.
-    for(i = 0, psp = viewPlayer->pSprites; i < DDMAXPSPRITES; ++i, psp++)
+    for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
     {
         vis = visPSprites + i;
 
