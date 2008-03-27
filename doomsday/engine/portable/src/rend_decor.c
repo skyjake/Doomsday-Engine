@@ -114,7 +114,6 @@ static void clearDecorations(void)
     sourceCursor = sourceFirst;
 }
 
-
 /**
  * @return              @c > 0, if the sector lightlevel passes the
  *                      limit condition.
@@ -208,6 +207,10 @@ static void projectDecoration(decorsource_t *src)
     vis->center[VY] = src->pos[VY];
     vis->center[VZ] = src->pos[VZ];
 
+    /**
+     * \todo From here on is pretty much the same as LO_AddLuminous, reconcile
+     * the two.
+     */
     light = LO_NewLuminous(LT_OMNI);
     l = LO_GetLuminous(light);
 
@@ -215,10 +218,10 @@ static void projectDecoration(decorsource_t *src)
     l->pos[VY] = src->pos[VY];
     l->pos[VZ] = src->pos[VZ];
     l->subsector = src->subsector;
+    l->flags = LUMF_CLIPPED;
 
     LUM_OMNI(l)->haloFactor = 0xff; // Assumed visible.
     LUM_OMNI(l)->zOff = 0;
-    l->flags = LUMF_CLIPPED;
     LUM_OMNI(l)->tex = src->def->sides.tex;
     LUM_OMNI(l)->ceilTex = src->def->up.tex;
     LUM_OMNI(l)->floorTex = src->def->down.tex;
@@ -257,11 +260,7 @@ static void projectDecoration(decorsource_t *src)
     for(i = 0; i < 3; ++i)
         l->color[i] = src->def->color[i] * fadeMul;
 
-    // Approximate the distance.
-    l->distanceToViewer =
-            P_ApproxDistance3(l->pos[VX] - viewX,
-                              l->pos[VY] - viewY,
-                              l->pos[VZ] - viewZ);
+    l->distanceToViewer = distance;
 
     vis->light = l;
 }
@@ -337,23 +336,6 @@ static void createSurfaceDecoration(const surface_t *suf, const float pos[3],
     source->def = def;
     source->subsector = R_PointInSubsector(pos[VX], pos[VY]);
     source->surface = suf;
-}
-
-/**
- * @return              @c true, if the view point is close enough to
- *                      the bounding box so that there could be visible
- *                      decorations inside.
- */
-static __inline
-boolean pointInBounds(const float bounds[6], const float viewer[3],
-                      const float maxDist)
-{
-    return viewer[VX] > bounds[BOXLEFT]    - maxDist &&
-           viewer[VX] < bounds[BOXRIGHT]   + maxDist &&
-           viewer[VY] > bounds[BOXBOTTOM]  - maxDist &&
-           viewer[VY] < bounds[BOXTOP]     + maxDist &&
-           viewer[VZ] > bounds[BOXFLOOR]   - maxDist &&
-           viewer[VZ] < bounds[BOXCEILING] + maxDist;
 }
 
 static void projectSurfaceDecorations(const surface_t *suf, float maxDist)
@@ -500,65 +482,6 @@ static sidedef_t *getSectorSide(const linedef_t *line, sector_t *sector)
         return line->L_backside;
 
     return side;
-}
-
-/**
- * @return              @c true, if the line is within the visible
- *                      decoration 'box'.
- */
-static boolean checkLineDecorationBounds(const linedef_t *line,
-                                         const float *viewer,
-                                         const float maxDist)
-{
-    float               bounds[6];
-    sector_t           *sector;
-
-    bounds[BOXLEFT]   = line->bBox[BOXLEFT];
-    bounds[BOXRIGHT]  = line->bBox[BOXRIGHT];
-    bounds[BOXTOP]    = line->bBox[BOXTOP];
-    bounds[BOXBOTTOM] = line->bBox[BOXBOTTOM];
-
-    // Figure out the highest and lowest Z height.
-    sector = line->L_frontsector;
-    bounds[BOXFLOOR]   = sector->SP_floorheight;
-    bounds[BOXCEILING] = sector->SP_ceilheight;
-
-    // Is the other sector higher/lower?
-    sector = (line->L_backside? line->L_backsector : NULL);
-    if(sector)
-    {
-        float               bfloor = sector->SP_floorheight;
-        float               bceil  = sector->SP_ceilheight;
-
-        if(bfloor < bounds[BOXFLOOR])
-            bounds[BOXFLOOR] = bfloor;
-
-        if(bceil > bounds[BOXCEILING])
-            bounds[BOXCEILING] = bceil;
-    }
-
-    return pointInBounds(bounds, viewer, maxDist);
-}
-
-/**
- * @return              @c true, if the sector is within the visible
- *                      decoration 'box'.
- */
-static boolean checkSectorDecorationBounds(const sector_t *sector,
-                                           const float *viewer,
-                                           const float maxDist)
-{
-    float               bounds[6];
-
-    bounds[BOXLEFT]    = sector->bBox[BOXLEFT];
-    bounds[BOXRIGHT]   = sector->bBox[BOXRIGHT];
-    bounds[BOXBOTTOM]  = sector->bBox[BOXBOTTOM];
-    bounds[BOXTOP]     = sector->bBox[BOXTOP];
-
-    bounds[BOXFLOOR]   = sector->SP_floorvisheight;
-    bounds[BOXCEILING] = sector->SP_ceilvisheight;
-
-    return pointInBounds(bounds, viewer, maxDist);
 }
 
 static void decorateLine(const linedef_t *line, const float maxDist)
@@ -726,19 +649,6 @@ static void decorateLine(const linedef_t *line, const float maxDist)
 }
 
 /**
- * Generate decorations for upper, middle and bottom parts of the line,
- * on both sides.
- */
-static void Rend_DecorateLine(const linedef_t *line, const float viewer[3],
-                              const float maxDist)
-{
-    // Only the lines within the decoration visibility bounding box
-    // are processed.
-    if(checkLineDecorationBounds(line, viewer, maxDist))
-        decorateLine(line, maxDist);
-}
-
-/**
  * Generate decorations for a plane.
  */
 static void decoratePlane(const sector_t *sec, plane_t *pln,
@@ -832,22 +742,6 @@ static void decorateSector(const sector_t *sec, const float maxDist)
 }
 
 /**
- * Generate decorations for the planes of the sector.
- */
-static void Rend_DecorateSector(const sector_t *sec,
-                                const float viewer[3],
-                                const float maxDist)
-{
-    // The sector must have height if it wants decorations.
-    if(sec->SP_ceilheight <= sec->SP_floorheight)
-        return;
-
-    // Is this sector close enough for the decorations to be visible?
-    if(checkSectorDecorationBounds(sec, viewer, maxDist))
-        decorateSector(sec, maxDist);
-}
-
-/**
  * Decorations are generated for each frame.
  */
 void Rend_InitDecorationsForFrame(void)
@@ -858,20 +752,15 @@ void Rend_InitDecorationsForFrame(void)
     if(useDecorations)
     {
         uint                i;
-        float               viewer[3];
-
-        viewer[VX] = viewX;
-        viewer[VY] = viewY;
-        viewer[VZ] = viewZ;
 
         // Process all lines. This could also be done during sectors,
         // but validCount would need to be used to prevent duplicate
         // processing.
         for(i = 0; i < numLineDefs; ++i)
-            Rend_DecorateLine(&lineDefs[i], viewer, decorMaxDist);
+            decorateLine(&lineDefs[i], decorMaxDist);
 
         // Process all planes.
         for(i = 0; i < numSectors; ++i)
-            Rend_DecorateSector(&sectors[i], viewer, decorMaxDist);
+            decorateSector(&sectors[i], decorMaxDist);
     }
 }
