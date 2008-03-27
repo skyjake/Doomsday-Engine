@@ -61,7 +61,7 @@ float       stageFactor = .5f;
 
 static dbinding_t* B_AllocDeviceBinding(void)
 {
-    dbinding_t* cb = calloc(sizeof(dbinding_t), 1);
+    dbinding_t* cb = M_Calloc(sizeof(dbinding_t));
     cb->bid = B_NewIdentifier();
     return cb;
 }
@@ -73,7 +73,7 @@ static dbinding_t* B_AllocDeviceBinding(void)
  */
 static statecondition_t* B_AllocDeviceBindingCondition(dbinding_t* b)
 {
-    b->conds = realloc(b->conds, ++b->numConds * sizeof(statecondition_t));
+    b->conds = M_Realloc(b->conds, ++b->numConds * sizeof(statecondition_t));
     memset(&b->conds[b->numConds - 1], 0, sizeof(statecondition_t));
     return &b->conds[b->numConds - 1];
 }
@@ -234,17 +234,21 @@ dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc)
 
 void B_DestroyDeviceBinding(dbinding_t* cb)
 {
-    assert(cb->bid != 0);
-
-    // Unlink first, if linked.
-    if(cb->prev)
+    if(cb)
     {
-        cb->prev->next = cb->next;
-        cb->next->prev = cb->prev;
-    }
+        assert(cb->bid != 0);
 
-    free(cb->conds);
-    free(cb);
+        // Unlink first, if linked.
+        if(cb->prev)
+        {
+            cb->prev->next = cb->next;
+            cb->next->prev = cb->prev;
+        }
+
+        if(cb->conds)
+            M_Free(cb->conds);
+        M_Free(cb);
+    }
 }
 
 void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relativeOffset,
