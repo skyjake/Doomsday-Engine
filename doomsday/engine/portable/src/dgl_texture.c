@@ -256,8 +256,8 @@ boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
 	float       invFactor = 1 - DGL_state_texture.grayMipmapFactor;
 
 	// Buffer used for the faded texture.
-	faded = malloc(size / 4);
-	image = malloc(size);
+	faded = M_Malloc(size / 4);
+	image = M_Malloc(size);
 
 	// Initial fading.
 	if(format == DGL_LUMINANCE || format == DGL_RGB)
@@ -304,8 +304,8 @@ boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
 	}
 
 	// Do we need to free the temp buffer?
-	free(faded);
-	free(image);
+	M_Free(faded);
+	M_Free(image);
 
     DGL_TexFilter(DGL_ANISO_FILTER, DGL_GetTexAnisoMul(-1 /*best*/));
 	return true;
@@ -407,7 +407,7 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
 		{   // Needs converting.
             // \fixme This adds some overhead.
 			needFree = true;
-			buffer = malloc(numPixels * 4);
+			buffer = M_Malloc(numPixels * 4);
 			if(!buffer)
 				return false;
 
@@ -459,7 +459,7 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
 				break;
 
 			default:
-				free(buffer);
+				M_Free(buffer);
 				Con_Error("LoadTexture: Unknown format %x.\n", format);
 				break;
 			}
@@ -478,7 +478,7 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
 		}
 
 		if(needFree)
-			free(buffer);
+			M_Free(buffer);
 	}
 
 #ifdef _DEBUG
