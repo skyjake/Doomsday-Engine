@@ -98,6 +98,9 @@ void            LO_Clear(void);        // 'Physically' destroy the tables.
 // Action.
 void            LO_ClearForFrame(void);
 void            LO_InitForNewFrame(void);
+void            LO_AddLuminousMobjs(void);
+void            LO_LinkLumobjs(void);
+
 uint            LO_NewLuminous(lumtype_t type);
 lumobj_t       *LO_GetLuminous(uint idx);
 uint            LO_GetNumLuminous(void);

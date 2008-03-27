@@ -1877,6 +1877,10 @@ uint MPE_PlaneCreate(uint sector, float height, const char *material,
     pln->PS_normal[VX] = normalX;
     pln->PS_normal[VY] = normalY;
     pln->PS_normal[VZ] = normalZ;
+    if(pln->PS_normal[VZ] < 0)
+        pln->type = PLN_CEILING;
+    else
+        pln->type = PLN_FLOOR;
     M_Normalize(pln->PS_normal);
     pln->sector = s;
 

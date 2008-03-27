@@ -60,6 +60,7 @@ boolean Plane_SetProperty(plane_t *pln, const setargs_t *args)
     case DMU_HEIGHT:
         DMU_SetValue(DMT_PLANE_HEIGHT, &pln->height, args, 0);
         R_AddWatchedPlane(watchedPlaneList, pln);
+        R_MarkBackSurfacesForDecorationUpdate(pln);
         break;
     case DMU_TARGET_HEIGHT:
         DMU_SetValue(DMT_PLANE_TARGET, &pln->target, args, 0);

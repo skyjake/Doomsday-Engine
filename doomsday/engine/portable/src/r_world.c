@@ -160,6 +160,37 @@ void R_UpdateWatchedPlanes(watchedplanelist_t *wpl)
 }
 
 /**
+ * Called when a floor or ceiling height changes to update the plotted
+ * decoration origins for surfaces on the back side of the given plane.
+ */
+void R_MarkBackSurfacesForDecorationUpdate(plane_t *pln)
+{
+    linedef_t         **linep;
+
+    // Mark the decor lights on back side of this plane as requiring
+    // an update.
+    linep = pln->sector->lineDefs;
+    while(*linep)
+    {
+        linedef_t          *li = *linep;
+
+        if(li->L_frontside && li->L_backside &&
+           li->L_frontsector != li->L_backsector)
+        {
+            sidedef_t          *si =
+                (li->L_frontsector == pln->sector? li->L_backside : li->L_frontside);
+
+            if(pln->type == PLN_FLOOR)
+                si->sections[SEG_BOTTOM].flags |= SUF_UPDATE_DECORATIONS;
+            else
+                si->sections[SEG_TOP].flags |= SUF_UPDATE_DECORATIONS;
+        }
+
+        *linep++;
+    }
+}
+
+/**
  * $smoothplane: interpolate the visual offset.
  */
 void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
@@ -181,6 +212,11 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
             pln->visOffset = 0;
             pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
 
+            if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
+            {
+                R_MarkBackSurfacesForDecorationUpdate(pln);
+            }
+
             // Has this plane reached its destination?
             if(R_RemoveWatchedPlane(wpl, pln))
                 i = (i > 0? i-1 : 0);
@@ -201,6 +237,11 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
 
             // Visible plane height.
             pln->visHeight = pln->height + pln->visOffset;
+
+            if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
+            {
+                R_MarkBackSurfacesForDecorationUpdate(pln);
+            }
 
             // Has this plane reached its destination?
             if(pln->visHeight == pln->height)
@@ -333,14 +374,13 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     sec->planes = newList;
 }
 
-void R_CreateSurfaceDecoration(surface_t *suf, float pos[3],
-                               ded_decorlight_t *def)
+surfacedecor_t* R_CreateSurfaceDecoration(surface_t *suf, float pos[3])
 {
     uint                i;
     surfacedecor_t     *d, *s, *decorations;
 
-    if(!suf || !def)
-        return;
+    if(!suf)
+        return NULL;
 
     decorations =
         Z_Malloc(sizeof(*decorations) * (++suf->numDecorations),
@@ -367,9 +407,10 @@ void R_CreateSurfaceDecoration(surface_t *suf, float pos[3],
     d->pos[VX] = pos[VX];
     d->pos[VY] = pos[VY];
     d->pos[VZ] = pos[VZ];
-    d->def = def;
 
     suf->decorations = decorations;
+
+    return d;
 }
 
 void R_ClearSurfaceDecorations(surface_t *suf)

@@ -916,16 +916,12 @@ static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
 }
 
 /**
- * Creates the lumobj links by removing everything and then linking this
- * frame's luminous objects. Called by Rend_RenderMap() at the beginning
- * of a new frame (if the render lists are not frozen).
+ * Initialize the lumobj > subsector contact lists ready for adding new
+ * luminous objects. Called by Rend_RenderMap() at the beginning of a new
+ * frame (if the render lists are not frozen).
  */
 void LO_InitForNewFrame(void)
 {
-    uint                i;
-    sector_t           *seciter;
-    mobj_t             *iter;
-
 BEGIN_PROF( PROF_DYN_INIT_DEL );
 
     // Start reusing nodes from the first one in the list.
@@ -937,6 +933,16 @@ END_PROF( PROF_DYN_INIT_DEL );
     // The luminousList already contains lumobjs if there are any light
     // decorations in use.
     loInited = true;
+}
+
+/**
+ * Create lumobjs for all sector-linked mobjs who want them.
+ */
+void LO_AddLuminousMobjs(void)
+{
+    uint                i;
+    sector_t           *seciter;
+    mobj_t             *iter;
 
 BEGIN_PROF( PROF_DYN_INIT_ADD );
 
@@ -961,9 +967,15 @@ BEGIN_PROF( PROF_DYN_INIT_ADD );
     }
 
 END_PROF( PROF_DYN_INIT_ADD );
+}
+
+/**
+ * Link all luminous objects into the blockmap.
+ */
+void LO_LinkLumobjs(void)
+{
 BEGIN_PROF( PROF_DYN_INIT_LINK );
 
-    // Link the luminous objects into the blockmap.
     linkLuminous();
 
 END_PROF( PROF_DYN_INIT_LINK );

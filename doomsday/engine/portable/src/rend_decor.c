@@ -46,8 +46,11 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct decorsource_s {
-    uint            light;
     float           pos[3];
+    float           maxDist;
+    const surface_t *surface;
+    subsector_t    *subsector;
+    const ded_decorlight_t *def;
     struct decorsource_s *next;
 } decorsource_t;
 
@@ -70,9 +73,6 @@ float decorFadeAngle = .1f;
 
 static uint numDecorLightSources;
 static decorsource_t *sourceFirst, *sourceLast, *sourceCursor;
-
-// Lights near surfaces get dimmer if the angle is too small.
-static float surfaceNormal[3];
 
 // CODE --------------------------------------------------------------------
 
@@ -114,23 +114,156 @@ static void clearDecorations(void)
     sourceCursor = sourceFirst;
 }
 
-static void projectDecoration(lumobj_t *lum, float x, float y, float z)
+
+/**
+ * @return              @c > 0, if the sector lightlevel passes the
+ *                      limit condition.
+ */
+static float checkSectorLight(float lightlevel,
+                              const ded_decorlight_t *lightDef)
+{
+    float               factor;
+
+    // Has a limit been set?
+    if(lightDef->lightLevels[0] == lightDef->lightLevels[1])
+        return 1;
+
+    // Apply adaptation
+    Rend_ApplyLightAdaptation(&lightlevel);
+
+    factor = (lightlevel - lightDef->lightLevels[0]) /
+        (float) (lightDef->lightLevels[1] - lightDef->lightLevels[0]);
+
+    if(factor < 0)
+        return 0;
+    if(factor > 1)
+        return 1;
+
+    return factor;
+}
+
+static void projectDecoration(decorsource_t *src)
 {
     float               v1[2];
+    uint                light;
+    lumobj_t           *l;
     vissprite_t        *vis;
+    float               distance = Rend_PointDist3D(src->pos);
+    float               fadeMul = 1, flareMul = 1, brightness;
+    uint                i;
+
+    // Is the point in range?
+    if(distance > src->maxDist)
+        return;
+
+    // Does it pass the sectorlight limitation?
+    if(!((brightness = checkSectorLight(src->subsector->sector->lightLevel,
+                                        src->def)) > 0))
+        return;
+
+    // Close enough to the maximum distance, the lights fade out.
+    if(distance > .67f * src->maxDist)
+    {
+        fadeMul = (src->maxDist - distance) / (.33f * src->maxDist);
+    }
+
+    // Apply the brightness factor (was calculated using sector lightlevel).
+    fadeMul *= brightness * decorFactor;
+
+    // Brightness drops as the angle gets too big.
+    if(src->def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
+    {
+        float               vector[3];
+        float               dot;
+
+        vector[VX] = src->pos[VX] - vx;
+        vector[VY] = src->pos[VZ] - vy;
+        vector[VZ] = src->pos[VY] - vz;
+        M_Normalize(vector);
+        dot = -(src->surface->normal[VX] * vector[VX] +
+                src->surface->normal[VZ] * vector[VY] +
+                src->surface->normal[VY] * vector[VZ]);
+        if(dot < decorFadeAngle / 2)
+        {
+            flareMul = 0;
+        }
+        else if(dot < 3 * decorFadeAngle)
+        {
+            flareMul *= (dot - decorFadeAngle / 2) / (2.5f * decorFadeAngle);
+        }
+    }
+
+    if(fadeMul <= 0)
+        return;
 
     // Calculate edges of the shape.
-    v1[VX] = x;
-    v1[VY] = y;
+    v1[VX] = src->pos[VX];
+    v1[VY] = src->pos[VY];
 
     vis = R_NewVisSprite();
     memset(vis, 0, sizeof(*vis));
     vis->type = VSPR_DECORATION;
-    vis->distance = Rend_PointDist2D(v1);
-    vis->light = lum;
-    vis->center[VX] = x;
-    vis->center[VY] = y;
-    vis->center[VZ] = z;
+    vis->distance = distance;
+    vis->center[VX] = src->pos[VX];
+    vis->center[VY] = src->pos[VY];
+    vis->center[VZ] = src->pos[VZ];
+
+    light = LO_NewLuminous(LT_OMNI);
+    l = LO_GetLuminous(light);
+
+    l->pos[VX] = src->pos[VX];
+    l->pos[VY] = src->pos[VY];
+    l->pos[VZ] = src->pos[VZ];
+    l->subsector = src->subsector;
+
+    LUM_OMNI(l)->haloFactor = 0xff; // Assumed visible.
+    LUM_OMNI(l)->zOff = 0;
+    l->flags = LUMF_CLIPPED;
+    LUM_OMNI(l)->tex = src->def->sides.tex;
+    LUM_OMNI(l)->ceilTex = src->def->up.tex;
+    LUM_OMNI(l)->floorTex = src->def->down.tex;
+
+    // These are the same rules as in DL_MobjRadius().
+    LUM_OMNI(l)->radius = src->def->radius * 40 * loRadiusFactor;
+
+    // Don't make a too small or too large light.
+    if(LUM_OMNI(l)->radius > loMaxRadius)
+        LUM_OMNI(l)->radius = loMaxRadius;
+
+    if(src->def->haloRadius > 0)
+    {
+        LUM_OMNI(l)->flareSize =
+            src->def->haloRadius * 60 * (50 + haloSize) / 100.0f;
+        if(LUM_OMNI(l)->flareSize < 1)
+            LUM_OMNI(l)->flareSize = 1;
+    }
+    else
+    {
+        LUM_OMNI(l)->flareSize = 0;
+    }
+
+    if(src->def->flare.disabled)
+    {
+        l->flags |= LUMF_NOHALO;
+    }
+    else
+    {
+        LUM_OMNI(l)->flareCustom = src->def->flare.custom;
+        LUM_OMNI(l)->flareTex = src->def->flare.tex;
+    }
+
+    LUM_OMNI(l)->flareMul = flareMul;
+
+    for(i = 0; i < 3; ++i)
+        l->color[i] = src->def->color[i] * fadeMul;
+
+    // Approximate the distance.
+    l->distanceToViewer =
+            P_ApproxDistance3(l->pos[VX] - viewX,
+                              l->pos[VY] - viewY,
+                              l->pos[VZ] - viewZ);
+
+    vis->light = l;
 }
 
 /**
@@ -141,23 +274,9 @@ void Rend_ProjectDecorations(void)
 {
     decorsource_t      *src;
 
-    // No need for this if no halos are rendered.
-    if(!haloMode)
-        return;
-
     for(src = sourceFirst; src != sourceCursor; src = src->next)
     {
-        lumobj_t           *l = LO_GetLuminous(src->light);
-
-        // Only omni lights get halos.
-        if(l->type != LT_OMNI)
-            continue;
-
-        // Clipped sources don't get halos.
-        if((l->flags & LUMF_CLIPPED) || LUM_OMNI(l)->flareSize <= 0)
-            continue;
-
-        projectDecoration(l, src->pos[VX], src->pos[VY], src->pos[VZ]);
+        projectDecoration(src);
     }
 }
 
@@ -199,118 +318,25 @@ static decorsource_t *addDecoration(void)
 }
 
 /**
- * A light decoration is created in the specified coordinates.
- * Does largely the same thing as LO_AddLuminous().
+ * A decoration is created at the specified coordinates.
  */
-static void projectDecorLight(const float pos[3],
-                              const ded_decorlight_t *def,
-                              const float brightness,
-                              const float maxDist)
+static void createSurfaceDecoration(const surface_t *suf, const float pos[3],
+                                    const ded_decorlight_t *def,
+                                    const float maxDist)
 {
-    decorsource_t      *source;
-    lumobj_t           *l;
-    float               distance = Rend_PointDist3D(pos);
-    float               fadeMul = 1, flareMul = 1;
-    uint                i;
+    decorsource_t      *source = addDecoration();
 
-    // Is the point in range?
-    if(distance > maxDist)
-        return;
-
-    // Close enough to the maximum distance, the lights fade out.
-    if(distance > .67f * maxDist)
-    {
-        fadeMul = (maxDist - distance) / (.33f * maxDist);
-    }
-
-    // Apply the brightness factor (was calculated using sector lightlevel).
-    fadeMul *= brightness * decorFactor;
-
-    // Brightness drops as the angle gets too big.
-    if(def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
-    {
-        float               vector[3];
-        float               dot;
-
-        vector[VX] = pos[VX] - vx;
-        vector[VY] = pos[VZ] - vy;
-        vector[VZ] = pos[VY] - vz;
-        M_Normalize(vector);
-        dot =
-            -(surfaceNormal[VX] * vector[VX] + surfaceNormal[VY] * vector[VY] +
-              surfaceNormal[VZ] * vector[VZ]);
-        if(dot < decorFadeAngle / 2)
-        {
-            flareMul = 0;
-        }
-        else if(dot < 3 * decorFadeAngle)
-        {
-            flareMul *= (dot - decorFadeAngle / 2) / (2.5f * decorFadeAngle);
-        }
-    }
-
-    if(fadeMul <= 0)
-        return;
-
-    if(!(source = addDecoration()))
+    if(!source)
         return; // Out of sources!
 
-    // Fill in the data for a new luminous object.
-    source->light = LO_NewLuminous(LT_OMNI);
+    // Fill in the data for a new surface decoration.
     source->pos[VX] = pos[VX];
     source->pos[VY] = pos[VY];
     source->pos[VZ] = pos[VZ];
-    l = LO_GetLuminous(source->light);
-    l->pos[VX] = source->pos[VX];
-    l->pos[VY] = source->pos[VY];
-    l->pos[VZ] = source->pos[VZ];
-    l->subsector = R_PointInSubsector(l->pos[VX], l->pos[VY]);
-
-    LUM_OMNI(l)->haloFactor = 0xff; // Assumed visible.
-    LUM_OMNI(l)->zOff = 0;
-    l->flags = LUMF_CLIPPED;
-    LUM_OMNI(l)->tex = def->sides.tex;
-    LUM_OMNI(l)->ceilTex = def->up.tex;
-    LUM_OMNI(l)->floorTex = def->down.tex;
-
-    // These are the same rules as in DL_MobjRadius().
-    LUM_OMNI(l)->radius = def->radius * 40 * loRadiusFactor;
-
-    // Don't make a too small or too large light.
-    if(LUM_OMNI(l)->radius > loMaxRadius)
-        LUM_OMNI(l)->radius = loMaxRadius;
-
-    if(def->haloRadius > 0)
-    {
-        LUM_OMNI(l)->flareSize = def->haloRadius * 60 * (50 + haloSize) / 100.0f;
-        if(LUM_OMNI(l)->flareSize < 1)
-            LUM_OMNI(l)->flareSize = 1;
-    }
-    else
-    {
-        LUM_OMNI(l)->flareSize = 0;
-    }
-
-    if(def->flare.disabled)
-    {
-        l->flags |= LUMF_NOHALO;
-    }
-    else
-    {
-        LUM_OMNI(l)->flareCustom = def->flare.custom;
-        LUM_OMNI(l)->flareTex = def->flare.tex;
-    }
-
-    LUM_OMNI(l)->flareMul = flareMul;
-
-    for(i = 0; i < 3; ++i)
-        l->color[i] = def->color[i] * fadeMul;
-
-    // Approximate the distance.
-    l->distanceToViewer =
-            P_ApproxDistance3(l->pos[VX] - viewX,
-                              l->pos[VY] - viewY,
-                              l->pos[VZ] - viewZ);
+    source->maxDist = maxDist;
+    source->def = def;
+    source->subsector = R_PointInSubsector(pos[VX], pos[VY]);
+    source->surface = suf;
 }
 
 /**
@@ -330,49 +356,18 @@ boolean pointInBounds(const float bounds[6], const float viewer[3],
            viewer[VZ] < bounds[BOXCEILING] + maxDist;
 }
 
-/**
- * @return              @c > 0, if the sector lightlevel passes the
- *                      limit condition.
- */
-static float checkSectorLight(float lightlevel,
-                              const ded_decorlight_t *lightDef)
-{
-    float               factor;
-
-    // Has a limit been set?
-    if(lightDef->lightLevels[0] == lightDef->lightLevels[1])
-        return 1;
-
-    // Apply adaptation
-    Rend_ApplyLightAdaptation(&lightlevel);
-
-    factor = (lightlevel - lightDef->lightLevels[0]) /
-        (float) (lightDef->lightLevels[1] - lightDef->lightLevels[0]);
-
-    if(factor < 0)
-        return 0;
-    if(factor > 1)
-        return 1;
-
-    return factor;
-}
-
-static void projectSurfaceDecorations(const surface_t *suf,
-                                      float lightLevel, float maxDist)
+static void projectSurfaceDecorations(const surface_t *suf, float maxDist)
 {
     uint                i;
 
     for(i = 0; i < suf->numDecorations; ++i)
     {
-        float               brightMul;
         const surfacedecor_t *d = &suf->decorations[i];
 
         if(!R_IsValidLightDecoration(d->def))
             break;
 
-        // Does it pass the sectorlight limitation?
-        if((brightMul = checkSectorLight(lightLevel, d->def)) > 0)
-            projectDecorLight(d->pos, d->def, brightMul, maxDist);
+        createSurfaceDecoration(suf, d->pos, d->def, maxDist);
     }
 }
 
@@ -402,28 +397,6 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                                 float bottom, float texOffY,
                                 ded_decor_t *def, const float maxDist)
 {
-    vertex_t           *v[2];
-    float               delta[2];
-
-    // Let's see which sidedef is present.
-    if(line->L_backside && line->L_backside == side)
-    {
-        // Flip vertices, this is the backside.
-        v[0] = line->L_v2;
-        v[1] = line->L_v1;
-    }
-    else
-    {
-        v[0] = line->L_v1;
-        v[1] = line->L_v2;
-    }
-
-    delta[VX] = v[1]->V_pos[VX] - v[0]->V_pos[VX];
-    delta[VY] = v[1]->V_pos[VY] - v[0]->V_pos[VY];
-    surfaceNormal[VX] = delta[VY] / line->length;
-    surfaceNormal[VZ] = -delta[VX] / line->length;
-    surfaceNormal[VY] = 0;
-
     if(suf->flags & SUF_UPDATE_DECORATIONS)
     {
         ded_decorlight_t   *lightDef;
@@ -433,6 +406,24 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
         int                 skip[2];
         uint                i;
         texinfo_t          *texinfo;
+        vertex_t           *v[2];
+        float               delta[2];
+
+        // Let's see which sidedef is present.
+        if(line->L_backside && line->L_backside == side)
+        {
+            // Flip vertices, this is the backside.
+            v[0] = line->L_v2;
+            v[1] = line->L_v1;
+        }
+        else
+        {
+            v[0] = line->L_v1;
+            v[1] = line->L_v2;
+        }
+
+        delta[VX] = v[1]->V_pos[VX] - v[0]->V_pos[VX];
+        delta[VY] = v[1]->V_pos[VY] - v[0]->V_pos[VY];
 
         R_ClearSurfaceDecorations(suf);
 
@@ -458,8 +449,8 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
             // Skip must be at least one.
             getDecorationSkipPattern(lightDef, skip);
 
-            posBase[VX] = v[0]->V_pos[VX] + lightDef->elevation * surfaceNormal[VX];
-            posBase[VY] = v[0]->V_pos[VY] + lightDef->elevation * surfaceNormal[VY];
+            posBase[VX] = v[0]->V_pos[VX] + lightDef->elevation * suf->normal[VX];
+            posBase[VY] = v[0]->V_pos[VY] + lightDef->elevation * suf->normal[VZ];
 
             patternW = surfTexW * skip[VX];
             patternH = surfTexH * skip[VY];
@@ -477,11 +468,16 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
 
                 for(; t < lh; t += patternH)
                 {
+                    surfacedecor_t         *d;
+
                     pos[VX] = posBase[VX] + delta[VX] * s / line->length;
                     pos[VY] = posBase[VY] + delta[VY] * s / line->length;
                     pos[VZ] = top - t;
 
-                    R_CreateSurfaceDecoration(suf, pos, lightDef);
+                    if(NULL != (d = R_CreateSurfaceDecoration(suf, pos)))
+                    {
+                        d->def = lightDef;
+                    }
                 }
             }
         }
@@ -489,7 +485,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
         suf->flags &= ~SUF_UPDATE_DECORATIONS;
     }
 
-    projectSurfaceDecorations(suf, side->sector->lightLevel, maxDist);
+    projectSurfaceDecorations(suf, maxDist);
 }
 
 /**
@@ -751,10 +747,6 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
     uint                i;
     surface_t          *suf = &pln->surface;
 
-    surfaceNormal[VX] = suf->normal[VX];
-    surfaceNormal[VZ] = suf->normal[VY];
-    surfaceNormal[VY] = suf->normal[VZ];
-
     if(suf->flags & SUF_UPDATE_DECORATIONS)
     {
         float               pos[3], tileSize = 64;
@@ -797,6 +789,8 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
                 for(; pos[VX] < sec->bBox[BOXRIGHT];
                     pos[VX] += tileSize * skip[VX])
                 {
+                    surfacedecor_t         *d;
+
                     if(pos[VX] < sec->bBox[BOXLEFT])
                         continue;
 
@@ -805,9 +799,12 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
                         continue;
 
                     pos[VZ] =
-                        pln->visHeight + lightDef->elevation * surfaceNormal[VZ];
+                        pln->visHeight + lightDef->elevation * suf->normal[VY];
 
-                    R_CreateSurfaceDecoration(suf, pos, lightDef);
+                    if(NULL != (d = R_CreateSurfaceDecoration(suf, pos)))
+                    {
+                        d->def = lightDef;
+                    }
                 }
             }
         }
@@ -815,7 +812,7 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
         suf->flags &= ~SUF_UPDATE_DECORATIONS;
     }
 
-    projectSurfaceDecorations(suf, sec->lightLevel, maxDist);
+    projectSurfaceDecorations(suf, maxDist);
 }
 
 static void decorateSector(const sector_t *sec, const float maxDist)

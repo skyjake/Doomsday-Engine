@@ -2082,6 +2082,8 @@ static void Rend_RenderNode(uint bspnum)
 void Rend_RenderMap(void)
 {
     binangle_t          viewside;
+    boolean             doLums =
+        (useDynLights || haloMode || spriteLight || useDecorations);
 
     // Set to true if dynlights are inited for this frame.
     loInited = false;
@@ -2108,14 +2110,23 @@ void Rend_RenderMap(void)
         // Generate surface decorations for the frame.
         Rend_InitDecorationsForFrame();
 
-        // Maintain luminous objects.
-        if(useDynLights || haloMode || spriteLight || useDecorations)
+        if(doLums)
         {
             // Clear the projected dynlight lists.
             DL_InitForNewFrame();
 
             // Clear the luminous objects.
             LO_InitForNewFrame();
+        }
+
+        // Make vissprites of all the visible decorations.
+        Rend_ProjectDecorations();
+
+        // Maintain luminous objects.
+        if(doLums)
+        {
+            LO_AddLuminousMobjs();
+            LO_LinkLumobjs();
         }
 
         // Add the backside clipping range (if vpitch allows).
@@ -2138,9 +2149,6 @@ void Rend_RenderMap(void)
         // We don't want subsector clipchecking for the first subsector.
         firstsubsector = true;
         Rend_RenderNode(numNodes - 1);
-
-        // Make vissprites of all the visible decorations.
-        Rend_ProjectDecorations();
 
         Rend_RenderShadows();
 
