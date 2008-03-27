@@ -468,7 +468,7 @@ boolean P_LoadMap(const char *mapID)
 
         Cl_Reset();
         RL_DeleteLists();
-        Rend_CalcLightRangeModMatrix(NULL);
+        Rend_CalcLightModRange(NULL);
 
         // Invalidate old cmds and init player values.
         for(i = 0; i < DDMAXPLAYERS; ++i)

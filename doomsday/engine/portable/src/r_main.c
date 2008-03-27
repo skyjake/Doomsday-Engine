@@ -58,8 +58,6 @@ typedef struct viewer_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    Rend_RetrieveLightSample(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -388,9 +386,6 @@ void R_NewSharpWorld(void)
  */
 void R_SetupWorldFrame(void)
 {
-    // Calculate the light range to be used for each player
-    Rend_RetrieveLightSample();
-
     R_ClearSectorFlags();
 
     R_InterpolateWatchedPlanes(watchedPlaneList, resetNextViewer);
@@ -551,7 +546,6 @@ void R_RenderPlayerView(int num)
         // loading still left to do that we have been unable to
         // predetermine.
         firstFrameAfterLoad = false;
-        Rend_InitPlayerLightRanges();
         DD_ResetTimer();
     }
 

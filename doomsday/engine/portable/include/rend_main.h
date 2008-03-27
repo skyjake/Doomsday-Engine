@@ -33,19 +33,16 @@
 #include "rend_list.h"
 #include "r_things.h"
 
-// Light mod matrix range
-#define MOD_RANGE 100
-
 extern float    vx, vy, vz, vang, vpitch, fieldOfView, yfov;
 extern byte     smoothTexAnim;
 extern float    viewsidex, viewsidey;
 extern int      missileBlend;
 extern boolean  usingFog;
 extern float    fogColor[4];
-extern int      r_ambient;
+extern int      rAmbient;
 extern byte     devNoLinkedSurfaces;
 
-extern float    lightRangeModMatrix[MOD_RANGE][255];
+extern float    lightModRange[255];
 
 void            Rend_Register(void);
 void            Rend_Init(void);
@@ -68,6 +65,5 @@ boolean         Rend_DoesMidTextureFillGap(linedef_t *line, int backside);
 void            Rend_ApplyLightAdaptation(float *lightvalue);
 float           Rend_GetLightAdaptVal(float lightvalue);
 
-void            Rend_CalcLightRangeModMatrix(struct cvar_s* unused);
-void            Rend_InitPlayerLightRanges(void);
+void            Rend_CalcLightModRange(struct cvar_s* unused);
 #endif

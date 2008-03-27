@@ -1065,20 +1065,8 @@ desc = 1=Enable shiny textures on surfaces of the map.
 [rend-light-compression]
 desc = Sector light range compression (brighten dark areas / darken light areas).
 
-[rend-light-adaptation]
-desc = Controls the overall strength of light adaptation
-
-[rend-light-adaptation-ramp]
-desc = Light adaptation range ramp multiplier.
-
-[rend-light-adaptation-darktime]
-desc = Time it takes to adapt to dark lighting conditions in seconds.
-
-[rend-light-adaptation-brighttime]
-desc = Time it takes to adapt to bright lighting conditions in seconds.
-
-[rend-dev-light-modmatrix]
-desc = Show light modification matrix.
+[rend-dev-light-mod]
+desc = Show the light-level mod range.
 
 [rend-model-shiny-strength]
 desc = General strength of model shininess effects.

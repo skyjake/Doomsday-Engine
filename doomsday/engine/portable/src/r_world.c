@@ -1545,7 +1545,7 @@ void R_SetupLevel(int mode, int flags)
         Sv_InitPools();
 
         // Recalculate the light range mod matrix.
-        Rend_CalcLightRangeModMatrix(NULL);
+        Rend_CalcLightModRange(NULL);
 
         // Update all sectors. Set intial values of various tracked
         // and interpolated properties (lighting, smoothed planes etc).
