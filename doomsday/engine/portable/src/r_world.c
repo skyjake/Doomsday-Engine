@@ -161,29 +161,42 @@ void R_UpdateWatchedPlanes(watchedplanelist_t *wpl)
 
 /**
  * Called when a floor or ceiling height changes to update the plotted
- * decoration origins for surfaces on the back side of the given plane.
+ * decoration origins for surfaces whose material offset is dependant upon
+ * the given plane.
  */
-void R_MarkBackSurfacesForDecorationUpdate(plane_t *pln)
+void R_MarkDependantSurfacesForDecorationUpdate(plane_t *pln)
 {
     linedef_t         **linep;
 
-    // Mark the decor lights on back side of this plane as requiring
+    // Mark the decor lights on the sides of this plane as requiring
     // an update.
     linep = pln->sector->lineDefs;
     while(*linep)
     {
         linedef_t          *li = *linep;
 
-        if(li->L_frontside && li->L_backside &&
-           li->L_frontsector != li->L_backsector)
+        if(!li->L_backside)
         {
-            sidedef_t          *si =
-                (li->L_frontsector == pln->sector? li->L_backside : li->L_frontside);
+            if(pln->type != PLN_MID)
+                li->L_frontside->SW_surface(SEG_MIDDLE).flags |=
+                    SUF_UPDATE_DECORATIONS;
+        }
+        else if(li->L_backsector != li->L_frontsector)
+        {
+            byte                side =
+                (li->L_frontsector == pln->sector? FRONT : BACK);
+
+            li->L_side(side)->SW_surface(SEG_BOTTOM).flags |=
+                SUF_UPDATE_DECORATIONS;
+            li->L_side(side)->SW_surface(SEG_TOP).flags |=
+                SUF_UPDATE_DECORATIONS;
 
             if(pln->type == PLN_FLOOR)
-                si->sections[SEG_BOTTOM].flags |= SUF_UPDATE_DECORATIONS;
+                li->L_side(side^1)->SW_surface(SEG_BOTTOM).flags |=
+                    SUF_UPDATE_DECORATIONS;
             else
-                si->sections[SEG_TOP].flags |= SUF_UPDATE_DECORATIONS;
+                li->L_side(side^1)->SW_surface(SEG_TOP).flags |=
+                    SUF_UPDATE_DECORATIONS;
         }
 
         *linep++;
@@ -214,7 +227,7 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
 
             if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
             {
-                R_MarkBackSurfacesForDecorationUpdate(pln);
+                R_MarkDependantSurfacesForDecorationUpdate(pln);
             }
 
             // Has this plane reached its destination?
@@ -240,7 +253,7 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
 
             if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
             {
-                R_MarkBackSurfacesForDecorationUpdate(pln);
+                R_MarkDependantSurfacesForDecorationUpdate(pln);
             }
 
             // Has this plane reached its destination?

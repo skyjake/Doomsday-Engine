@@ -376,8 +376,7 @@ static void getDecorationSkipPattern(const ded_decorlight_t *lightDef,
  */
 static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                                 surface_t *suf, float top,
-                                float bottom, float texOffY,
-                                ded_decor_t *def, const float maxDist)
+                                float bottom, const float maxDist)
 {
     if(suf->flags & SUF_UPDATE_DECORATIONS)
     {
@@ -390,75 +389,122 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
         texinfo_t          *texinfo;
         vertex_t           *v[2];
         float               delta[2];
-
-        // Let's see which sidedef is present.
-        if(line->L_backside && line->L_backside == side)
-        {
-            // Flip vertices, this is the backside.
-            v[0] = line->L_v2;
-            v[1] = line->L_v1;
-        }
-        else
-        {
-            v[0] = line->L_v1;
-            v[1] = line->L_v2;
-        }
-
-        delta[VX] = v[1]->V_pos[VX] - v[0]->V_pos[VX];
-        delta[VY] = v[1]->V_pos[VY] - v[0]->V_pos[VY];
+        ded_decor_t        *def;
+        float               offsetY;
 
         R_ClearSurfaceDecorations(suf);
 
-        // Height of the section.
-        lh = top - bottom;
-
-        // Setup the global texture info variables.
-        GL_GetMaterialInfo(suf->material->ofTypeID,
-                           suf->material->type, &texinfo);
-
-        surfTexW = texinfo->width;
-        surfTexH = texinfo->height;
-
-        // Generate a number of lights.
-        for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+        def = getMaterialDecoration(suf->material);
+        if(def)
         {
-            lightDef = def->lights + i;
-
-            // No more?
-            if(!R_IsValidLightDecoration(lightDef))
-                break;
-
-            // Skip must be at least one.
-            getDecorationSkipPattern(lightDef, skip);
-
-            posBase[VX] = v[0]->V_pos[VX] + lightDef->elevation * suf->normal[VX];
-            posBase[VY] = v[0]->V_pos[VY] + lightDef->elevation * suf->normal[VZ];
-
-            patternW = surfTexW * skip[VX];
-            patternH = surfTexH * skip[VY];
-
-            // Let's see where the top left light is.
-            s = M_CycleIntoRange(lightDef->pos[VX] - suf->offset[VX] -
-                                 surfTexW * lightDef->patternOffset[VX],
-                                 patternW);
-
-            for(; s < line->length; s += patternW)
+            if(line->L_backside)
             {
-                t = M_CycleIntoRange(lightDef->pos[VY] - suf->offset[VY] -
-                                     surfTexH * lightDef->patternOffset[VY] +
-                                     texOffY, patternH);
-
-                for(; t < lh; t += patternH)
+                if(suf == &side->SW_topsurface)
                 {
-                    surfacedecor_t         *d;
-
-                    pos[VX] = posBase[VX] + delta[VX] * s / line->length;
-                    pos[VY] = posBase[VY] + delta[VY] * s / line->length;
-                    pos[VZ] = top - t;
-
-                    if(NULL != (d = R_CreateSurfaceDecoration(suf, pos)))
+                    if(line->flags & DDLF_DONTPEGTOP)
                     {
-                        d->def = lightDef;
+                        offsetY = 0;
+                    }
+                    else
+                    {
+                        texinfo_t          *texinfo;
+
+                        GL_GetMaterialInfo(suf->material->ofTypeID,
+                                           suf->material->type, &texinfo);
+                        offsetY = -texinfo->height + (top - bottom);
+                    }
+                }
+                else // Its a bottom section.
+                {
+                    if(line->flags & DDLF_DONTPEGBOTTOM)
+                        offsetY = (top - bottom);
+                    else
+                        offsetY = 0;
+                }
+            }
+            else
+            {
+                if(line->flags & DDLF_DONTPEGBOTTOM)
+                {
+                    texinfo_t          *texinfo;
+
+                    GL_GetMaterialInfo(suf->material->ofTypeID,
+                                       suf->material->type, &texinfo);
+                    offsetY = -texinfo->height + (top - bottom);
+                }
+                else
+                {
+                    offsetY = 0;
+                }
+            }
+
+            // Let's see which sidedef is present.
+            if(line->L_backside && line->L_backside == side)
+            {
+                // Flip vertices, this is the backside.
+                v[0] = line->L_v2;
+                v[1] = line->L_v1;
+            }
+            else
+            {
+                v[0] = line->L_v1;
+                v[1] = line->L_v2;
+            }
+
+            delta[VX] = v[1]->V_pos[VX] - v[0]->V_pos[VX];
+            delta[VY] = v[1]->V_pos[VY] - v[0]->V_pos[VY];
+
+            // Height of the section.
+            lh = top - bottom;
+
+            // Setup the global texture info variables.
+            GL_GetMaterialInfo(suf->material->ofTypeID,
+                               suf->material->type, &texinfo);
+
+            surfTexW = texinfo->width;
+            surfTexH = texinfo->height;
+
+            // Generate a number of lights.
+            for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+            {
+                lightDef = def->lights + i;
+
+                // No more?
+                if(!R_IsValidLightDecoration(lightDef))
+                    break;
+
+                // Skip must be at least one.
+                getDecorationSkipPattern(lightDef, skip);
+
+                posBase[VX] = v[0]->V_pos[VX] + lightDef->elevation * suf->normal[VX];
+                posBase[VY] = v[0]->V_pos[VY] + lightDef->elevation * suf->normal[VZ];
+
+                patternW = surfTexW * skip[VX];
+                patternH = surfTexH * skip[VY];
+
+                // Let's see where the top left light is.
+                s = M_CycleIntoRange(lightDef->pos[VX] - suf->offset[VX] -
+                                     surfTexW * lightDef->patternOffset[VX],
+                                     patternW);
+
+                for(; s < line->length; s += patternW)
+                {
+                    t = M_CycleIntoRange(lightDef->pos[VY] - suf->offset[VY] -
+                                         surfTexH * lightDef->patternOffset[VY] +
+                                         offsetY, patternH);
+
+                    for(; t < lh; t += patternH)
+                    {
+                        surfacedecor_t         *d;
+
+                        pos[VX] = posBase[VX] + delta[VX] * s / line->length;
+                        pos[VY] = posBase[VY] + delta[VY] * s / line->length;
+                        pos[VZ] = top - t;
+
+                        if(NULL != (d = R_CreateSurfaceDecoration(suf, pos)))
+                        {
+                            d->def = lightDef;
+                        }
                     }
                 }
             }
@@ -528,30 +574,8 @@ static void decorateLine(const linedef_t *line, const float maxDist)
                 // Is this a valid section?
                 if(bottom < top && line->length > 0)
                 {
-                    ded_decor_t        *def;
-
-                    // Should this be decorated at all?
-                    def = getMaterialDecoration(suf->material);
-                    if(def)
-                    {
-                        float               offsetY;
-
-                        if(line->flags & DDLF_DONTPEGTOP)
-                        {
-                            offsetY = 0;
-                        }
-                        else
-                        {
-                            texinfo_t          *texinfo;
-
-                            GL_GetMaterialInfo(suf->material->ofTypeID,
-                                               suf->material->type, &texinfo);
-                            offsetY = -texinfo->height + (top - bottom);
-                        }
-
-                        decorateLineSection(line, side, suf, top, bottom,
-                                            offsetY, def, maxDist);
-                    }
+                    decorateLineSection(line, side, suf, top, bottom,
+                                        maxDist);
                 }
             }
         }
@@ -584,22 +608,9 @@ static void decorateLine(const linedef_t *line, const float maxDist)
                 // Is this a valid section?
                 if(bottom < top && line->length > 0)
                 {
-                    ded_decor_t        *def;
 
-                    // Should this be decorated at all?
-                    def = getMaterialDecoration(suf->material);
-                    if(def)
-                    {
-                        float               offsetY;
-
-                        if(line->flags & DDLF_DONTPEGBOTTOM)
-                            offsetY = (top - bottom);
-                        else
-                            offsetY = 0;
-
-                        decorateLineSection(line, side, suf, top, bottom,
-                                            offsetY, def, maxDist);
-                    }
+                    decorateLineSection(line, side, suf, top, bottom,
+                                        maxDist);
                 }
             }
         }
@@ -619,30 +630,7 @@ static void decorateLine(const linedef_t *line, const float maxDist)
             // Is this a valid section?
             if(bottom < top && line->length > 0)
             {
-                ded_decor_t        *def;
-
-                // Should this be decorated at all?
-                def = getMaterialDecoration(suf->material);
-                if(def)
-                {
-                    float               offsetY;
-
-                    if(line->flags & DDLF_DONTPEGBOTTOM)
-                    {
-                        texinfo_t          *texinfo;
-
-                        GL_GetMaterialInfo(suf->material->ofTypeID,
-                                           suf->material->type, &texinfo);
-                        offsetY = -texinfo->height + (top - bottom);
-                    }
-                    else
-                    {
-                        offsetY = 0;
-                    }
-
-                    decorateLineSection(line, side, suf, top, bottom,
-                                        offsetY, def, maxDist);
-                }
+                decorateLineSection(line, side, suf, top, bottom, maxDist);
             }
         }
     }
@@ -652,7 +640,7 @@ static void decorateLine(const linedef_t *line, const float maxDist)
  * Generate decorations for a plane.
  */
 static void decoratePlane(const sector_t *sec, plane_t *pln,
-                          ded_decor_t *def, const float maxDist)
+                          const float maxDist)
 {
     uint                i;
     surface_t          *suf = &pln->surface;
@@ -661,59 +649,64 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
     {
         float               pos[3], tileSize = 64;
         int                 skip[2];
+        ded_decor_t        *def;
         ded_decorlight_t   *lightDef;
 
         R_ClearSurfaceDecorations(suf);
 
-        // Generate a number of lights.
-        for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+        def = getMaterialDecoration(pln->PS_material);
+        if(def)
         {
-            lightDef = &def->lights[i];
-
-            // No more?
-            if(!R_IsValidLightDecoration(lightDef))
-                break;
-
-            // Skip must be at least one.
-            getDecorationSkipPattern(lightDef, skip);
-
-            pos[VY] =
-                (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_offset[VY] -
-                lightDef->pos[VY] - lightDef->patternOffset[VY] * tileSize;
-
-            while(pos[VY] > sec->bBox[BOXBOTTOM])
-                pos[VY] -= tileSize * skip[VY];
-
-            for(; pos[VY] < sec->bBox[BOXTOP]; pos[VY] += tileSize * skip[VY])
+            // Generate a number of lights.
+            for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
             {
-                if(pos[VY] < sec->bBox[BOXBOTTOM])
-                    continue;
+                lightDef = &def->lights[i];
 
-                pos[VX] =
-                    (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_offset[VX] +
-                    lightDef->pos[VX] - lightDef->patternOffset[VX] * tileSize;
+                // No more?
+                if(!R_IsValidLightDecoration(lightDef))
+                    break;
 
-                while(pos[VX] > sec->bBox[BOXLEFT])
-                    pos[VX] -= tileSize * skip[VX];
+                // Skip must be at least one.
+                getDecorationSkipPattern(lightDef, skip);
 
-                for(; pos[VX] < sec->bBox[BOXRIGHT];
-                    pos[VX] += tileSize * skip[VX])
+                pos[VY] =
+                    (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_offset[VY] -
+                    lightDef->pos[VY] - lightDef->patternOffset[VY] * tileSize;
+
+                while(pos[VY] > sec->bBox[BOXBOTTOM])
+                    pos[VY] -= tileSize * skip[VY];
+
+                for(; pos[VY] < sec->bBox[BOXTOP]; pos[VY] += tileSize * skip[VY])
                 {
-                    surfacedecor_t         *d;
-
-                    if(pos[VX] < sec->bBox[BOXLEFT])
+                    if(pos[VY] < sec->bBox[BOXBOTTOM])
                         continue;
 
-                    // The point must be inside the correct sector.
-                    if(!R_IsPointInSector(pos[VX], pos[VY], sec))
-                        continue;
+                    pos[VX] =
+                        (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_offset[VX] +
+                        lightDef->pos[VX] - lightDef->patternOffset[VX] * tileSize;
 
-                    pos[VZ] =
-                        pln->visHeight + lightDef->elevation * suf->normal[VY];
+                    while(pos[VX] > sec->bBox[BOXLEFT])
+                        pos[VX] -= tileSize * skip[VX];
 
-                    if(NULL != (d = R_CreateSurfaceDecoration(suf, pos)))
+                    for(; pos[VX] < sec->bBox[BOXRIGHT];
+                        pos[VX] += tileSize * skip[VX])
                     {
-                        d->def = lightDef;
+                        surfacedecor_t         *d;
+
+                        if(pos[VX] < sec->bBox[BOXLEFT])
+                            continue;
+
+                        // The point must be inside the correct sector.
+                        if(!R_IsPointInSector(pos[VX], pos[VY], sec))
+                            continue;
+
+                        pos[VZ] =
+                            pln->visHeight + lightDef->elevation * suf->normal[VY];
+
+                        if(NULL != (d = R_CreateSurfaceDecoration(suf, pos)))
+                        {
+                            d->def = lightDef;
+                        }
                     }
                 }
             }
@@ -728,16 +721,10 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
 static void decorateSector(const sector_t *sec, const float maxDist)
 {
     uint                i;
-    plane_t            *pln;
-    ded_decor_t        *def;
 
     for(i = 0; i < sec->planeCount; ++i)
     {
-        pln = sec->SP_plane(i);
-        def = getMaterialDecoration(pln->PS_material);
-
-        if(def != NULL) // The surface is decorated.
-            decoratePlane(sec, pln, def, maxDist);
+        decoratePlane(sec, sec->SP_plane(i), maxDist);
     }
 }
 

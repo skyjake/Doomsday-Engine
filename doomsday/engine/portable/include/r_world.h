@@ -82,7 +82,7 @@ void            R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
 void            R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln);
 boolean         R_RemoveWatchedPlane(watchedplanelist_t *wpl,
                                      const plane_t *pln);
-void            R_MarkBackSurfacesForDecorationUpdate(plane_t *pln);
+void            R_MarkDependantSurfacesForDecorationUpdate(plane_t *pln);
 
 boolean         R_IsGlowingPlane(const plane_t *pln);
 
