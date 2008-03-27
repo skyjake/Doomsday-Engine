@@ -119,14 +119,14 @@ void M_ResetFileIDs(void)
 /**
  * Maintains a list of identifiers already seen.
  *
- * @return          @c true, if the given file can be read, or
- *                  @c false, if it has already been read.
+ * @return              @c true, if the given file can be read, or
+ *                      @c false, if it has already been read.
  */
 boolean M_CheckFileID(const char *path)
 {
-    byte        id[16];
-    uint        i;
-    boolean     alreadySeen;
+    byte                id[16];
+    uint                i;
+    boolean             alreadySeen;
 
     if(!F_Access(path))
     {
@@ -162,7 +162,7 @@ boolean M_CheckFileID(const char *path)
         else
             maxReadFiles *= 2;
 
-        readFiles = realloc(readFiles, sizeof(readFiles[0]) * maxReadFiles);
+        readFiles = M_Realloc(readFiles, sizeof(readFiles[0]) * maxReadFiles);
     }
 
     memcpy(readFiles[numReadFiles - 1].hash, id, 16);
@@ -830,7 +830,7 @@ size_t M_ReadFile(const char *name, byte **buffer)
 }
 
 /**
- * Read a file into a buffer allocated using malloc().
+ * Read a file into a buffer allocated using M_Malloc().
  */
 size_t M_ReadFileCLib(const char *name, byte **buffer)
 {
@@ -931,7 +931,7 @@ static size_t FileReader(const char *name, byte **buffer, int mallocType)
  */
 void M_ForceUppercase(char *text)
 {
-    char    c;
+    char                c;
 
     while((c = *text) != 0)
     {
@@ -948,7 +948,7 @@ void M_ForceUppercase(char *text)
 
 void M_WriteCommented(FILE *file, const char *text)
 {
-    char   *buff = M_Malloc(strlen(text) + 1), *line;
+    char               *buff = M_Malloc(strlen(text) + 1), *line;
 
     strcpy(buff, text);
     line = strtok(buff, "\n");
@@ -965,9 +965,9 @@ void M_WriteCommented(FILE *file, const char *text)
  */
 void M_WriteTextEsc(FILE *file, char *text)
 {
-    int     i;
+    int                 i;
 
-    for(i = 0; text[i]; i++)
+    for(i = 0; text[i]; ++i)
     {
         if(text[i] == '"' || text[i] == '\\')
             fprintf(file, "\\");
@@ -1027,13 +1027,13 @@ int M_ScreenShot(const char *filename, int bits)
     else
         TGA_Save24_rgb888(filename, theWindow->width, theWindow->height, screen);
 
-    free(screen);
+    M_Free(screen);
     return true;
 }
 
 void M_PrependBasePath(const char *path, char *newpath)
 {
-    char    buf[300];
+    char                buf[300];
 
     if(Dir_IsAbsolute(path))
     {

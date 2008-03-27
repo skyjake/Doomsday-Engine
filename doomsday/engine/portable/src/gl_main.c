@@ -868,13 +868,13 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
 /**
  * Copies the current contents of the frame buffer and returns a pointer
  * to data containing 24-bit RGB triplets. The caller must free the
- * returned buffer using free()!
+ * returned buffer using M_Free()!
  */
 unsigned char *GL_GrabScreen(void)
 {
     unsigned char *buffer = 0;
 
-    buffer = malloc(theWindow->width * theWindow->height * 3);
+    buffer = M_Malloc(theWindow->width * theWindow->height * 3);
     DGL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
     return buffer;
 }
