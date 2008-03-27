@@ -659,9 +659,9 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
  */
 void Rend_DrawMasked(void)
 {
-    float       center[3];
-    boolean     haloDrawn = false;
-    vissprite_t *spr;
+    float               center[3];
+    boolean             haloDrawn = false;
+    vissprite_t        *spr;
 
     if(!willRenderSprites)
         return;
@@ -711,6 +711,22 @@ void Rend_DrawMasked(void)
                     center[VX] += spr->data.mo.visOff[VX];
                     center[VY] += spr->data.mo.visOff[VY];
                     center[VZ] += spr->data.mo.visOff[VZ];
+                }
+
+                /**
+                 * \kludge surface decorations do not yet persist over frames,
+                 * thus we do not smoothly occlude their halos. Instead, we will
+                 * have to put up with them instantly appearing/disappearing.
+                 */
+                if(spr->type == VSPR_DECORATION)
+                {
+                    if(spr->light->type == LT_OMNI)
+                    {
+                        if(spr->light->flags & LUMF_CLIPPED)
+                            LUM_OMNI(spr->light)->haloFactor = 0;
+                        else
+                            LUM_OMNI(spr->light)->haloFactor = 1;
+                    }
                 }
 
                 if(H_RenderHalo(center[VX], center[VY], center[VZ],
