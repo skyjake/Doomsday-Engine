@@ -39,6 +39,7 @@
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -68,16 +69,16 @@ extern byte topLineRGB[3];
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 skylayer_t skyLayers[MAXSKYLAYERS];
-int     firstLayer, activeLayers;
+int firstLayer, activeLayers;
 
-skyvertex_t *skyVerts = NULL;   // Vertices for the upper hemisphere.
-int     numSkyVerts = 0;
+skyvertex_t *skyVerts = NULL; // Vertices for the upper hemisphere.
+int numSkyVerts = 0;
 
-int     skyDetail = 6, simpleSky;
-int     skyColumns, skyRows = 3;
-int     skyhemispheres;
-float   skyDist = 1600;
-int     r_fullsky = false;
+int skyDetail = 6, simpleSky;
+int skyColumns, skyRows = 3;
+int skyhemispheres;
+float skyDist = 1600;
+int r_fullsky = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -107,11 +108,11 @@ void Rend_SkyRegister(void)
 
 void Rend_RenderSkyModels(void)
 {
-    int     i, k;
-    float   inter;
-    skymodel_t *sky;
-    modelparams_t params;
-    float   pos[3];
+    int                 i, k;
+    float               inter;
+    skymodel_t         *sky;
+    modelparams_t       params;
+    float               pos[3];
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -152,7 +153,7 @@ void Rend_RenderSkyModels(void)
         params.alwaysInterpolate = true;
         R_SetModelFrame(sky->model, sky->frame);
         params.yaw = sky->yaw;
-        params.lightLevel = -1;    // Fullbright.
+        params.lightLevel = -1; // Fullbright.
         for(k = 0; k < 3; ++k)
         {
             params.rgb[k] = sky->def->color[k];
@@ -171,7 +172,7 @@ void Rend_RenderSkyModels(void)
     DGL_PopMatrix();
 }
 
-/*
+/**
  * Calculate the vertex and texture coordinates.
  */
 static void SkyVertex(int r, int c)
@@ -190,6 +191,7 @@ static void SkyVertex(int r, int c)
         DGL_TexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
                       skyTexOff / skyTexWidth, (skyRows - r) / (float) skyRows);
     }
+
     // Also the color.
     if(currentFO->use)
     {
@@ -223,7 +225,7 @@ static void CapSideVertex(int r, int c)
  */
 void Rend_SkyRenderer(int hemi)
 {
-    int     r, c;
+    int                 r, c;
 
     if(hemi & SKYHEMI_LOWER)
         yflip = true;
@@ -258,12 +260,13 @@ void Rend_SkyRenderer(int hemi)
             CapSideVertex(0, 0);
             for(c = 0; c < skyColumns; ++c)
             {
-                CapSideVertex(1, c);    // One step down.
-                CapSideVertex(0, c + 1);    // And one step right.
+                CapSideVertex(1, c); // One step down.
+                CapSideVertex(0, c + 1); // And one step right.
             }
             CapSideVertex(1, c);
             DGL_End();
         }
+
         DGL_Enable(DGL_TEXTURING);
         return;
     }
@@ -299,9 +302,9 @@ void Rend_SkyRenderer(int hemi)
     }
 }
 
-static void SetupFadeout(skylayer_t *slayer)
+static void setupFadeout(skylayer_t *slayer)
 {
-    int     i;
+    int                 i;
 
     GL_GetSkyTopColor(slayer->texture, slayer->fadeout.rgb);
 
@@ -317,8 +320,8 @@ static void SetupFadeout(skylayer_t *slayer)
 
 void Rend_RenderSkyHemisphere(int whichHemi)
 {
-    int     i, resetup;
-    skylayer_t *slayer;
+    int                 i, resetup;
+    skylayer_t         *slayer;
 
     // The current fadeout is the first layer's fadeout.
     currentFO = &skyLayers[firstLayer].fadeout;
@@ -352,7 +355,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                                   slayer->flags & SLF_MASKED ? true : false, &texinfo) : 0);
 
             if(resetup)
-                SetupFadeout(slayer);
+                setupFadeout(slayer);
 
             if(renderTextures)
             {
@@ -419,9 +422,9 @@ void Rend_RenderSky(int hemis)
 /**
  * Calculate sky vertices.
  */
-void Rend_InitSky()
+void Rend_InitSky(void)
 {
-    int     i;
+    int                 i;
 
     firstLayer = 0;
     //maxSideAngle = (float) PI/3;
@@ -436,18 +439,18 @@ void Rend_InitSky()
     }
 }
 
-void Rend_ShutdownSky()
+void Rend_ShutdownSky(void)
 {
-    free(skyVerts);
+    M_Free(skyVerts);
     skyVerts = NULL;
     numSkyVerts = 0;
 }
 
 void Rend_SkyDetail(int quarterDivs, int rows)
 {
-    float       topAngle, sideAngle, realRadius, scale = 1 /*32 */ ;
-    int         c, r;
-    skyvertex_t *svtx;
+    float               topAngle, sideAngle, realRadius, scale = 1 /*32 */ ;
+    int                 c, r;
+    skyvertex_t        *svtx;
 
     if(quarterDivs < 1)
         quarterDivs = 1;
@@ -462,7 +465,7 @@ void Rend_SkyDetail(int quarterDivs, int rows)
     numSkyVerts = skyColumns * (skyRows + 1);
 
     // Allocate memory for it.
-    skyVerts = realloc(skyVerts, sizeof(*skyVerts) * numSkyVerts);
+    skyVerts = M_Realloc(skyVerts, sizeof(*skyVerts) * numSkyVerts);
 
     // Calculate the vertices.
     for(r = 0; r <= skyRows; ++r)
@@ -479,9 +482,9 @@ void Rend_SkyDetail(int quarterDivs, int rows)
         }
 }
 
-static void updateLayerStats()
+static void updateLayerStats(void)
 {
-    int         i = 0;
+    int                 i = 0;
 
     // -1 denotes 'no active layers'.
     firstLayer = -1;
@@ -532,7 +535,7 @@ static void internalSkyParams(skylayer_t *slayer, int parm, float value)
         slayer->texture = (int) value;
         GL_PrepareSky(slayer->texture,
                       slayer->flags & SLF_MASKED ? true : false, NULL);
-        SetupFadeout(slayer);
+        setupFadeout(slayer);
         break;
 
     case DD_OFFSET:
@@ -541,7 +544,7 @@ static void internalSkyParams(skylayer_t *slayer, int parm, float value)
 
     case DD_COLOR_LIMIT:
         slayer->fadeout.limit = value;
-        SetupFadeout(slayer);
+        setupFadeout(slayer);
         break;
 
     default:
@@ -551,12 +554,12 @@ static void internalSkyParams(skylayer_t *slayer, int parm, float value)
 
 void Rend_SkyParams(int layer, int parm, float value)
 {
-    int         i;
+    int                 i;
 
     if(isDedicated)
         return;
 
-    if(layer == DD_SKY)         // The whole sky?
+    if(layer == DD_SKY) // The whole sky?
     {
         switch (parm)
         {
