@@ -186,7 +186,7 @@ void B_UpdateDeviceStateAssociations(void)
 
 static void B_SetClassCount(int count)
 {
-    bindClasses = realloc(bindClasses, sizeof(bclass_t*) * count);
+    bindClasses = M_Realloc(bindClasses, sizeof(bclass_t*) * count);
     bindClassCount = count;
 }
 
@@ -215,7 +215,7 @@ static void B_RemoveClass(bclass_t* bc)
  */
 bclass_t* B_NewClass(const char* name)
 {
-    bclass_t* bc = M_Calloc(sizeof(bclass_t));
+    bclass_t           *bc = M_Calloc(sizeof(bclass_t));
 
     bc->name = strdup(name);
     B_InitCommandBindingList(&bc->commandBinds);
@@ -226,8 +226,11 @@ bclass_t* B_NewClass(const char* name)
 
 void B_DestroyClass(bclass_t* bc)
 {
+    if(!bc)
+        return;
+
     B_RemoveClass(bc);
-    free(bc->name);
+    M_Free(bc->name);
     B_ClearClass(bc);
     M_Free(bc);
 }
@@ -332,7 +335,10 @@ controlbinding_t* B_GetControlBinding(bclass_t* bc, int control)
 
 void B_DestroyControlBinding(controlbinding_t* conBin)
 {
-    int     i;
+    int                 i;
+
+    if(!conBin)
+        return;
 
     assert(conBin->bid != 0);
 
