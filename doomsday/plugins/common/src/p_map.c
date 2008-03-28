@@ -412,7 +412,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
     if(thing == tmThing)
         return true;
 
-    if(!(thing->flags & (MF_SOLID | MF_SHOOTABLE)) ||
+    if(!(thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) ||
        P_IsCamera(thing) || P_IsCamera(tmThing))
         return true;
 
@@ -470,7 +470,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
     }
 
     // Check for skulls slamming into things.
-    if(tmThing->flags & MF_SKULLFLY)
+    if((tmThing->flags & MF_SKULLFLY) && (thing->flags & MF_SOLID))
     {
 #if __JHEXEN__
         if(tmThing->type == MT_MINOTAUR)
