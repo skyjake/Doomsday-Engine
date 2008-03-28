@@ -396,6 +396,8 @@ void R_SetupWorldFrame(void)
  */
 void R_SetupFrame(player_t *player)
 {
+#define MINEXTRALIGHTFRAMES         2
+
     int                 tableAngle;
     float               yawRad, pitchRad;
     viewer_t            sharpView, smoothView;
@@ -488,7 +490,23 @@ void R_SetupFrame(player_t *player)
         Con_Printf("frametime = %f\n", frameTimePos);
     }
 
-    extraLight = player->shared.extraLight;
+    // Handle extralight (used to light up the world momentarily (used for
+    // e.g. gun flashes). We want to avoid flickering, so when ever it is
+    // enabled; make it last for a few frames.
+    if(player->targetExtraLight != player->shared.extraLight)
+    {
+        player->targetExtraLight = player->shared.extraLight;
+        player->extraLightCounter = MINEXTRALIGHTFRAMES;
+    }
+
+    if(player->extraLightCounter > 0)
+    {
+        player->extraLightCounter--;
+        if(player->extraLightCounter == 0)
+            player->extraLight = player->targetExtraLight;
+    }
+    extraLight = player->extraLight;
+
     tableAngle = viewAngle >> ANGLETOFINESHIFT;
     viewSin = FIX2FLT(finesine[tableAngle]);
     viewCos = FIX2FLT(fineCosine[tableAngle]);

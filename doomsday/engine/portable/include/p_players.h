@@ -30,6 +30,8 @@
 #define __DOOMSDAY_PLAYERS_H__
 
 typedef struct player_s {
+    byte                extraLightCounter; // Num tics to go till extraLight is disabled.
+    int                 extraLight, targetExtraLight;
     ddplayer_t          shared; // The public player data.
 } player_t;
 

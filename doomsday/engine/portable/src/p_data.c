@@ -477,6 +477,9 @@ boolean P_LoadMap(const char *mapID)
 
             if(isServer && plr->shared.inGame)
                 clients[i].runTime = SECONDS_TO_TICKS(gameTime);
+
+            plr->extraLight = plr->targetExtraLight = 0;
+            plr->extraLightCounter = 0;
         }
 
         // Make sure that the next frame doesn't use a filtered viewer.
