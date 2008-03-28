@@ -1038,10 +1038,11 @@ void ST_doFullscreenStuff(void)
     {
         ST_drawHUDSprite(SPR_STIM, 2, height - 2, HOT_BLEFT, iconAlpha);
         ST_HUDSpriteSize(SPR_STIM, &w, &h);
+        pos = w + 2;
         sprintf(buf, "%i%%", plr->health);
-        M_WriteText2(w + 4, height - 14, buf, huFontB, cfg.hudColor[0],
+        M_WriteText2(pos, height - 14, buf, huFontB, cfg.hudColor[0],
                      cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-        pos = 60;
+        pos += M_StringWidth(buf, huFontB) + 2;
     }
 
     if(cfg.hudShown[HUD_AMMO])
@@ -1056,10 +1057,11 @@ void ST_doFullscreenStuff(void)
                 continue;
 
             spr = ammoSprite[ammoType];
-            ST_drawHUDSprite(spr, pos + 2, height - 2, HOT_BLEFT, iconAlpha);
+            ST_drawHUDSprite(spr, pos, height - 2, HOT_BLEFT, iconAlpha);
             ST_HUDSpriteSize(spr, &w, &h);
+            pos += w + 2;
             sprintf(buf, "%i", plr->ammo[ammoType]);
-            M_WriteText2(pos + w + 4, height - 14, buf, huFontB,
+            M_WriteText2(pos, height - 14, buf, huFontB,
                          cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
                          textAlpha);
             break;
