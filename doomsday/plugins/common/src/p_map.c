@@ -412,7 +412,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
     if(thing == tmThing)
         return true;
 
-    if(!(thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) ||
+    if(!(thing->flags & (MF_SOLID | MF_SHOOTABLE)) ||
        P_IsCamera(thing) || P_IsCamera(tmThing))
         return true;
 
@@ -1706,7 +1706,7 @@ if(lineWasHit)
 }
 
 /**
- * Sets linetaget and aimSlope when a target is aimed at.
+ * Sets linetarget and aimSlope when a target is aimed at.
  */
 boolean PTR_AimTraverse(intercept_t *in)
 {

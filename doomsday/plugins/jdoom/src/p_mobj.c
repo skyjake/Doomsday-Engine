@@ -208,8 +208,8 @@ void P_MobjMoveXY(mobj_t *mo)
 
         if(largeNegative || mom[MX] > MAXMOVE / 2 || mom[MY] > MAXMOVE / 2)
         {
-            pos[VX] = mo->pos[VX] + mom[VX] / 2;
-            pos[VY] = mo->pos[VY] + mom[VY] / 2;
+            pos[VX] = mo->pos[VX] + mom[MX] / 2;
+            pos[VY] = mo->pos[VY] + mom[MY] / 2;
             mom[VX] /= 2;
             mom[VY] /= 2;
         }
@@ -503,11 +503,11 @@ void P_MobjMoveZ(mobj_t *mo)
         //
         // So we need to check that this is either retail or commercial
         // (but not doom2)
-        int correct_lost_soul_bounce
+        int correctLostSoulBounce
                 = (gameMode == retail || gameMode == commercial) &&
                     gameMission != GM_DOOM2;
 
-        if(correct_lost_soul_bounce && mo->flags & MF_SKULLFLY)
+        if(correctLostSoulBounce && (mo->flags & MF_SKULLFLY))
         {
             // The skull slammed into something.
             mo->mom[MZ] = -mo->mom[MZ];
@@ -544,7 +544,7 @@ void P_MobjMoveZ(mobj_t *mo)
          * and hit by a raising floor this would incorrectly reverse it's
          * Y momentum.
          */
-        if(!correct_lost_soul_bounce && (mo->flags & MF_SKULLFLY))
+        if(!correctLostSoulBounce && (mo->flags & MF_SKULLFLY))
             mo->mom[MZ] = -mo->mom[MZ];
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
@@ -1155,8 +1155,8 @@ void P_SpawnMapThing(spawnspot_t *th)
     if(IS_NETGAME && (th->flags & MTF_NOTSINGLE))
     {
         // Cooperative weapons?
-        if(cfg.noCoopWeapons && !deathmatch && i >= MT_CLIP
-           && i <= MT_SUPERSHOTGUN)
+        if(cfg.noCoopWeapons && !deathmatch && i >= MT_CLIP &&
+           i <= MT_SUPERSHOTGUN)
             return;
 
         // Don't spawn any special objects in coop?

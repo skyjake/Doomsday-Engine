@@ -524,7 +524,7 @@ boolean P_IsCamera(mobj_t *mo)
 {
     // Client mobjs do not have thinkers and thus cannot be cameras.
     return (mo->thinker.function && mo->player &&
-            mo->player->plr->flags & DDPF_CAMERA);
+            (mo->player->plr->flags & DDPF_CAMERA));
 }
 
 int P_CameraXYMovement(mobj_t *mo)
