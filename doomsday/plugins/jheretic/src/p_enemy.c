@@ -139,8 +139,8 @@ void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 
 boolean P_CheckMeleeRange(mobj_t *actor)
 {
-    mobj_t     *pl;
-    float       dist, range;
+    mobj_t             *pl;
+    float               dist, range;
 
     if(!actor->target)
         return false;
@@ -148,12 +148,14 @@ boolean P_CheckMeleeRange(mobj_t *actor)
     pl = actor->target;
     dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
                             pl->pos[VY] - actor->pos[VY]);
+    if(!cfg.netNoMaxZMonsterMeleeAttack)
+    {   // Account for Z height difference.
+        if(pl->pos[VZ] > actor->pos[VZ] + actor->height ||
+           pl->pos[VZ] + pl->height < actor->pos[VZ])
+            return false;
+    }
 
-    if(!(cfg.netNoMaxZMonsterMeleeAttack))
-        dist = P_ApproxDistance(dist, (pl->pos[VZ] + pl->height /2) -
-                                   (actor->pos[VZ] + actor->height /2));
-
-    range = (MELEERANGE - 20) + pl->info->radius;
+    range = MELEERANGE - 20 + pl->info->radius;
     if(dist >= range)
         return false;
 

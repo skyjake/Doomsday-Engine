@@ -184,11 +184,12 @@ boolean P_CheckMeleeRange(mobj_t *actor, boolean midrange)
     pl = actor->target;
     dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
                             pl->pos[VY] - actor->pos[VY]);
-
-    if(!(cfg.netNoMaxZMonsterMeleeAttack))
-        dist = P_ApproxDistance(dist,
-                                (pl->pos[VZ] + pl->height /2) -
-                                (actor->pos[VZ] + actor->height /2));
+    if(!cfg.netNoMaxZMonsterMeleeAttack)
+    {   // Account for Z height difference.
+        if(pl->pos[VZ] > actor->pos[VZ] + actor->height ||
+           pl->pos[VZ] + pl->height < actor->pos[VZ])
+            return false;
+    }
 
     range = MELEERANGE - 20 + pl->info->radius;
     if(midrange)
