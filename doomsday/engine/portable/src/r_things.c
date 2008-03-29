@@ -1170,8 +1170,10 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
                 light->approxDist = dist;
                 glowLightSetup(light);
 
-                memcpy(light->worldVector, &LUM_PLANE(lum)->normal,
-                       sizeof(light->worldVector));
+                light->worldVector[VX] = LUM_PLANE(lum)->normal[VX];
+                light->worldVector[VY] = LUM_PLANE(lum)->normal[VY];
+                light->worldVector[VZ] = -LUM_PLANE(lum)->normal[VZ];
+
                 dist = 1 - dist / glowHeight;
                 scaleFloatRGB(light->color, lum->color, dist);
                 R_ScaleAmbientRGB(ambientColor, lum->color, dist / 3);
