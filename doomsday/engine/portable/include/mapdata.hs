@@ -175,6 +175,9 @@ struct surface
     -       float[3]    normal      // Surface normal
     -       float[3]    oldNormal
     FLOAT   float[2]    offset      // [X, Y] Planar offset to surface material origin.
+	-		float[2][2] oldOffset
+    -       float[2]    visOffset
+    -       float[2]    visOffsetDelta
     FLOAT   float[4]    rgba        // Surface color tint
     -       short       frameFlags
     -       uint        numDecorations
@@ -198,6 +201,7 @@ internal
 #define PS_normal               surface.normal
 #define PS_material             surface.material
 #define PS_offset               surface.offset
+#define PS_visoffset            surface.visOffset
 #define PS_rgba                 surface.rgba
 end
 
@@ -335,6 +339,7 @@ typedef enum segsection_e {
 #define SW_surfacematerial(n)   SW_surface(n).material
 #define SW_surfacenormal(n)     SW_surface(n).normal
 #define SW_surfaceoffset(n)     SW_surface(n).offset
+#define SW_surfacevisoffset(n)  SW_surface(n).visOffset
 #define SW_surfacergba(n)       SW_surface(n).rgba
 #define SW_surfaceblendmode(n)  SW_surface(n).blendMode
 
@@ -344,6 +349,7 @@ typedef enum segsection_e {
 #define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
 #define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
 #define SW_middleoffset         SW_surfaceoffset(SEG_MIDDLE)
+#define SW_middlevisoffset      SW_surfacevisoffset(SEG_MIDDLE)
 #define SW_middlergba           SW_surfacergba(SEG_MIDDLE)
 #define SW_middleblendmode      SW_surfaceblendmode(SEG_MIDDLE)
 
@@ -353,6 +359,7 @@ typedef enum segsection_e {
 #define SW_topnormal            SW_surfacenormal(SEG_TOP)
 #define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
 #define SW_topoffset            SW_surfaceoffset(SEG_TOP)
+#define SW_topvisoffset         SW_surfacevisoffset(SEG_TOP)
 #define SW_toprgba              SW_surfacergba(SEG_TOP)
 
 #define SW_bottomsurface        SW_surface(SEG_BOTTOM)
@@ -361,6 +368,7 @@ typedef enum segsection_e {
 #define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
 #define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
 #define SW_bottomoffset         SW_surfaceoffset(SEG_BOTTOM)
+#define SW_bottomvisoffset      SW_surfacevisoffset(SEG_BOTTOM)
 #define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
 end
 

@@ -522,6 +522,10 @@ boolean DAM_AttemptMapLoad(const char *mapID)
             // Init blockmap for searching subsectors.
             P_BuildSubsectorBlockMap(map);
 
+            // Init the watched object lists.
+            memset(&map->watchedPlaneList, 0, sizeof(map->watchedPlaneList));
+            memset(&map->watchedSurfaceList, 0, sizeof(map->watchedSurfaceList));
+
             strncpy(map->levelID, dam->identifier, 8);
             strncpy(map->uniqueID, P_GenerateUniqueMapID(dam->identifier),
                     sizeof(map->uniqueID));

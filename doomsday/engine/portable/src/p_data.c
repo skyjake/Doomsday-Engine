@@ -92,6 +92,7 @@ uint        numSideDefs;
 sidedef_t  *sideDefs;
 
 watchedplanelist_t *watchedPlaneList;
+watchedsurfacelist_t *watchedSurfaceList;
 
 blockmap_t *BlockMap;
 blockmap_t *SSecBlockMap;
@@ -340,6 +341,7 @@ void P_SetCurrentMap(gamemap_t *map)
     sideDefs = map->sideDefs;
 
     watchedPlaneList = &map->watchedPlaneList;
+    watchedSurfaceList = &map->watchedSurfaceList;
 
     numPolyObjs = map->numPolyObjs;
     polyObjs = map->polyObjs;

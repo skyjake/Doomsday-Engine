@@ -549,13 +549,13 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                 patternH = surfTexH * skip[VY];
 
                 // Let's see where the top left light is.
-                s = M_CycleIntoRange(modelDef->pos[VX] - suf->offset[VX] -
+                s = M_CycleIntoRange(modelDef->pos[VX] - suf->visOffset[VX] -
                                      surfTexW * modelDef->patternOffset[VX],
                                      patternW);
 
                 for(; s < line->length; s += patternW)
                 {
-                    t = M_CycleIntoRange(modelDef->pos[VY] - suf->offset[VY] -
+                    t = M_CycleIntoRange(modelDef->pos[VY] - suf->visOffset[VY] -
                                          surfTexH * modelDef->patternOffset[VY] +
                                          offsetY, patternH);
 
@@ -596,13 +596,13 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                 patternH = surfTexH * skip[VY];
 
                 // Let's see where the top left light is.
-                s = M_CycleIntoRange(lightDef->pos[VX] - suf->offset[VX] -
+                s = M_CycleIntoRange(lightDef->pos[VX] - suf->visOffset[VX] -
                                      surfTexW * lightDef->patternOffset[VX],
                                      patternW);
 
                 for(; s < line->length; s += patternW)
                 {
-                    t = M_CycleIntoRange(lightDef->pos[VY] - suf->offset[VY] -
+                    t = M_CycleIntoRange(lightDef->pos[VY] - suf->visOffset[VY] -
                                          surfTexH * lightDef->patternOffset[VY] +
                                          offsetY, patternH);
 
@@ -786,7 +786,7 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
                 getDecorationSkipPattern(modelDef->patternSkip, skip);
 
                 pos[VY] =
-                    (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_offset[VY] -
+                    (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_visoffset[VY] -
                     modelDef->pos[VY] - modelDef->patternOffset[VY] * tileSize;
 
                 while(pos[VY] > sec->bBox[BOXBOTTOM])
@@ -798,7 +798,7 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
                         continue;
 
                     pos[VX] =
-                        (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_offset[VX] +
+                        (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_visoffset[VX] +
                         modelDef->pos[VX] - modelDef->patternOffset[VX] * tileSize;
 
                     while(pos[VX] > sec->bBox[BOXLEFT])
@@ -842,7 +842,7 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
                 getDecorationSkipPattern(lightDef->patternSkip, skip);
 
                 pos[VY] =
-                    (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_offset[VY] -
+                    (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_visoffset[VY] -
                     lightDef->pos[VY] - lightDef->patternOffset[VY] * tileSize;
 
                 while(pos[VY] > sec->bBox[BOXBOTTOM])
@@ -854,7 +854,7 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
                         continue;
 
                     pos[VX] =
-                        (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_offset[VX] +
+                        (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_visoffset[VX] +
                         lightDef->pos[VX] - lightDef->patternOffset[VX] * tileSize;
 
                     while(pos[VX] > sec->bBox[BOXLEFT])

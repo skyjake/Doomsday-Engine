@@ -96,8 +96,13 @@ typedef struct linkpolyobj_s {
 
 typedef struct watchedplanelist_s {
     uint            num, maxNum;
-    struct plane_s ** list;
+    struct plane_s** list;
 } watchedplanelist_t;
+
+typedef struct watchedsurfacelist_s {
+    uint            num, maxNum;
+    struct surface_s** list;
+} watchedsurfacelist_t;
 
 typedef void* blockmap_t;
 
@@ -175,6 +180,7 @@ extern uint     numSideDefs;
 extern sidedef_t  *sideDefs;
 
 extern watchedplanelist_t *watchedPlaneList;
+extern watchedsurfacelist_t *watchedSurfaceList;
 
 extern float    mapGravity;
 
@@ -213,6 +219,7 @@ typedef struct gamemap_s {
     linkpolyobj_t **polyBlockMap;
 
     watchedplanelist_t watchedPlaneList;
+    watchedsurfacelist_t watchedSurfaceList;
 
     blockmap_t *blockMap;
     blockmap_t *ssecBlockMap;

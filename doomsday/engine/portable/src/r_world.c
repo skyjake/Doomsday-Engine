@@ -48,6 +48,9 @@
 // $smoothplane: Maximum speed for a smoothed plane.
 #define MAX_SMOOTH_PLANE_MOVE   (64)
 
+// $smoothmatoffset: Maximum speed for a smoothed material offset.
+#define MAX_SMOOTH_MATERIAL_MOVE (64)
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -74,6 +77,169 @@ static float skyColorRGB[4], balancedRGB[4];
 static float skyColorBalance;
 
 // CODE --------------------------------------------------------------------
+
+void R_AddWatchedSurface(watchedsurfacelist_t *wsl, surface_t *suf)
+{
+    uint                i;
+
+    if(!wsl || !suf)
+        return;
+
+    // Check whether we are already tracking this surface.
+    for(i = 0; i < wsl->num; ++i)
+        if(wsl->list[i] == suf)
+            return; // Yes we are.
+
+    wsl->num++;
+
+    // Only allocate memory when it's needed.
+    if(wsl->num > wsl->maxNum)
+    {
+        wsl->maxNum *= 2;
+
+        // The first time, allocate 8 watched surface nodes.
+        if(!wsl->maxNum)
+            wsl->maxNum = 8;
+
+        wsl->list =
+            Z_Realloc(wsl->list, sizeof(surface_t*) * (wsl->maxNum + 1),
+                      PU_LEVEL);
+    }
+
+    // Add the surface to the list.
+    wsl->list[wsl->num-1] = suf;
+    wsl->list[wsl->num] = NULL; // Terminate.
+}
+
+boolean R_RemoveWatchedSurface(watchedsurfacelist_t *wsl,
+                               const surface_t *suf)
+{
+    uint            i;
+
+    if(!wsl || !suf)
+        return false;
+
+    for(i = 0; i < wsl->num; ++i)
+    {
+        if(wsl->list[i] == suf)
+        {
+            if(i == wsl->num - 1)
+                wsl->list[i] = NULL;
+            else
+                memmove(&wsl->list[i], &wsl->list[i+1],
+                        sizeof(surface_t*) * (wsl->num - 1 - i));
+            wsl->num--;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * $smoothmatoffset: Roll the surface material offset tracker buffers.
+ */
+void R_UpdateWatchedSurfaces(watchedsurfacelist_t *wsl)
+{
+    uint                i;
+
+    if(!wsl)
+        return;
+
+    for(i = 0; i < wsl->num; ++i)
+    {
+        surface_t          *suf = wsl->list[i];
+
+        // X Offset
+        suf->oldOffset[0][0] = suf->oldOffset[1][0];
+        suf->oldOffset[1][0] = suf->offset[0];
+        if(suf->oldOffset[0][0] != suf->oldOffset[1][0])
+            if(fabs(suf->oldOffset[0][0] - suf->oldOffset[1][0]) >=
+               MAX_SMOOTH_MATERIAL_MOVE)
+            {
+                // Too fast: make an instantaneous jump.
+                suf->oldOffset[0][0] = suf->oldOffset[1][0];
+            }
+
+        // Y Offset
+        suf->oldOffset[0][1] = suf->oldOffset[1][1];
+        suf->oldOffset[1][1] = suf->offset[1];
+        if(suf->oldOffset[0][1] != suf->oldOffset[1][1])
+            if(fabs(suf->oldOffset[0][1] - suf->oldOffset[1][1]) >=
+               MAX_SMOOTH_MATERIAL_MOVE)
+            {
+                // Too fast: make an instantaneous jump.
+                suf->oldOffset[0][1] = suf->oldOffset[1][1];
+            }
+    }
+}
+
+/**
+ * $smoothmatoffset: interpolate the visual offset.
+ */
+void R_InterpolateWatchedSurfaces(watchedsurfacelist_t *wsl,
+                                  boolean resetNextViewer)
+{
+    uint                i;
+    surface_t          *suf;
+
+    if(!wsl)
+        return;
+
+    if(resetNextViewer)
+    {
+        // Reset the material offset trackers.
+        for(i = 0; i < wsl->num; ++i)
+        {
+            suf = wsl->list[i];
+
+            // X Offset.
+            suf->visOffsetDelta[0] = 0;
+            suf->oldOffset[0][0] = suf->oldOffset[1][0] = suf->offset[0];
+
+            // X Offset.
+            suf->visOffsetDelta[1] = 0;
+            suf->oldOffset[0][1] = suf->oldOffset[1][1] = suf->offset[1];
+
+            Surface_Update(suf);
+
+            if(R_RemoveWatchedSurface(wsl, suf))
+                i = (i > 0? i-1 : 0);
+        }
+    }
+    // While the game is paused there is no need to calculate any
+    // visual material offsets.
+    else //if(!clientPaused)
+    {
+        // Set the visible material offsets.
+        for(i = 0; i < wsl->num; ++i)
+        {
+            suf = wsl->list[i];
+
+            // X Offset.
+            suf->visOffsetDelta[0] =
+                suf->oldOffset[0][0] * (1 - frameTimePos) +
+                        suf->offset[0] * frameTimePos - suf->offset[0];
+
+            // Y Offset.
+            suf->visOffsetDelta[1] =
+                suf->oldOffset[0][1] * (1 - frameTimePos) +
+                        suf->offset[1] * frameTimePos - suf->offset[1];
+
+            // Visible material offset.
+            suf->visOffset[0] = suf->offset[0] + suf->visOffsetDelta[0];
+            suf->visOffset[1] = suf->offset[1] + suf->visOffsetDelta[1];
+
+            Surface_Update(suf);
+
+            // Has this material reached its destination?
+            if(suf->visOffset[0] == suf->offset[0] &&
+               suf->visOffset[1] == suf->offset[1])
+                if(R_RemoveWatchedSurface(wsl, suf))
+                    i = (i > 0? i-1 : 0);
+        }
+    }
+}
 
 void R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln)
 {
@@ -160,6 +326,66 @@ void R_UpdateWatchedPlanes(watchedplanelist_t *wpl)
 }
 
 /**
+ * $smoothplane: interpolate the visual offset.
+ */
+void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
+                                boolean resetNextViewer)
+{
+    uint                i;
+    plane_t            *pln;
+
+    if(!wpl)
+        return;
+
+    if(resetNextViewer)
+    {
+        // $smoothplane: Reset the plane height trackers.
+        for(i = 0; i < wpl->num; ++i)
+        {
+            pln = wpl->list[i];
+
+            pln->visHeightDelta = 0;
+            pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
+
+            if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
+            {
+                R_MarkDependantSurfacesForDecorationUpdate(pln);
+            }
+
+            if(R_RemoveWatchedPlane(wpl, pln))
+                i = (i > 0? i-1 : 0);
+        }
+    }
+    // While the game is paused there is no need to calculate any
+    // visual plane offsets $smoothplane.
+    else //if(!clientPaused)
+    {
+        // $smoothplane: Set the visible offsets.
+        for(i = 0; i < wpl->num; ++i)
+        {
+            pln = wpl->list[i];
+
+            pln->visHeightDelta = pln->oldHeight[0] * (1 - frameTimePos) +
+                        pln->height * frameTimePos -
+                        pln->height;
+
+            // Visible plane height.
+            pln->visHeight = pln->height + pln->visHeightDelta;
+
+            if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
+            {
+                R_MarkDependantSurfacesForDecorationUpdate(pln);
+            }
+
+            // Has this plane reached its destination?
+            if(pln->visHeight == pln->height)
+                if(R_RemoveWatchedPlane(wpl, pln))
+                    i = (i > 0? i-1 : 0);
+        }
+    }
+}
+
+/**
  * Called when a floor or ceiling height changes to update the plotted
  * decoration origins for surfaces whose material offset is dependant upon
  * the given plane.
@@ -195,67 +421,6 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t *pln)
         }
 
         *linep++;
-    }
-}
-
-/**
- * $smoothplane: interpolate the visual offset.
- */
-void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
-                                boolean resetNextViewer)
-{
-    uint                i;
-    plane_t            *pln;
-
-    if(!wpl)
-        return;
-
-    if(resetNextViewer)
-    {
-        // $smoothplane: Reset the plane height trackers.
-        for(i = 0; i < wpl->num; ++i)
-        {
-            pln = wpl->list[i];
-
-            pln->visHeightDelta = 0;
-            pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
-
-            if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
-            {
-                R_MarkDependantSurfacesForDecorationUpdate(pln);
-            }
-
-            // Has this plane reached its destination?
-            if(R_RemoveWatchedPlane(wpl, pln))
-                i = (i > 0? i-1 : 0);
-        }
-    }
-    // While the game is paused there is no need to calculate any
-    // visual plane offsets $smoothplane.
-    else //if(!clientPaused)
-    {
-        // $smoothplane: Set the visible offsets.
-        for(i = 0; i < wpl->num; ++i)
-        {
-            pln = wpl->list[i];
-
-            pln->visHeightDelta = pln->oldHeight[0] * (1 - frameTimePos) +
-                        pln->height * frameTimePos -
-                        pln->height;
-
-            // Visible plane height.
-            pln->visHeight = pln->height + pln->visHeightDelta;
-
-            if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
-            {
-                R_MarkDependantSurfacesForDecorationUpdate(pln);
-            }
-
-            // Has this plane reached its destination?
-            if(pln->visHeight == pln->height)
-                if(R_RemoveWatchedPlane(wpl, pln))
-                    i = (i > 0? i-1 : 0);
-        }
     }
 }
 
@@ -341,7 +506,7 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
  */
 void R_DestroyPlaneOfSector(uint id, sector_t *sec)
 {
-    plane_t        *plane, **newList = NULL;
+    plane_t            *plane, **newList = NULL;
 
     if(!sec)
         return; // Do wha?
@@ -355,7 +520,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     // Create a new plane list?
     if(sec->planeCount > 1)
     {
-        uint        i, n;
+        uint                i, n;
 
         newList = Z_Malloc(sizeof(plane_t**) * sec->planeCount, PU_LEVEL, 0);
 
@@ -372,6 +537,8 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
 
     // If this plane is currently being watched, remove it.
     R_RemoveWatchedPlane(watchedPlaneList, plane);
+    // If this plane's surafce is currently being watched, remove it.
+    R_RemoveWatchedSurface(watchedSurfaceList, &plane->surface);
 
     // Destroy the specified plane.
     Z_Free(plane);

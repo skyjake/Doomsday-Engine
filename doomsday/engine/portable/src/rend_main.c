@@ -519,7 +519,7 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
                     // Possibly. Check the placement of the mid texture.
                     if(Rend_MidTexturePos
                        (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
-                        NULL, side->SW_middleoffset[VX], texinfo->height,
+                        NULL, side->SW_middlevisoffset[VX], texinfo->height,
                         0 != (line->flags & DDLF_DONTPEGBOTTOM)))
                     {
                         if(openTop[0] >= gapTop[0] &&
@@ -1139,8 +1139,8 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
         vL_ZTop = vR_ZTop = top;
         vL_ZBottom = vR_ZBottom = bottom;
 
-        texOffset[VX] = surface->offset[VX] + seg->offset;
-        texOffset[VY] = surface->offset[VY] + extraTexYOffset;
+        texOffset[VX] = surface->visOffset[VX] + seg->offset;
+        texOffset[VY] = surface->visOffset[VY] + extraTexYOffset;
 
         if(section == SEG_MIDDLE && softSurface)
         {
@@ -1480,7 +1480,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         vL_ZTop    = vR_ZTop    = top    = MIN_OF(bceil, fceil);
         if(Rend_MidTexturePos
            (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
-            &texOffsetY, surface->offset[VY], texinfo->height,
+            &texOffsetY, surface->visOffset[VY], texinfo->height,
             (ldef->flags & DDLF_DONTPEGBOTTOM)? true : false))
         {
             // Can we make this a soft surface?
@@ -1899,9 +1899,9 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
         else
         {
             poly->texOffset[VX] =
-                sector->planes[plane->planeID]->surface.offset[VX];
+                sector->SP_plane(plane->planeID)->PS_visoffset[VX];
             poly->texOffset[VY] =
-                sector->planes[plane->planeID]->surface.offset[VY];
+                sector->SP_plane(plane->planeID)->PS_visoffset[VY];
 
             if(surface->material && !texInfo->masked)
                 tempflags |= RPF2_SHINY;

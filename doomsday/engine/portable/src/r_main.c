@@ -396,6 +396,7 @@ void R_NewSharpWorld(void)
 
     R_CheckViewerLimits(lastSharpView, &sharpView);
     R_UpdateWatchedPlanes(watchedPlaneList);
+    R_UpdateWatchedSurfaces(watchedSurfaceList);
 }
 
 /**
@@ -407,6 +408,7 @@ void R_SetupWorldFrame(void)
     R_ClearSectorFlags();
 
     R_InterpolateWatchedPlanes(watchedPlaneList, resetNextViewer);
+    R_InterpolateWatchedSurfaces(watchedSurfaceList, resetNextViewer);
 }
 
 /**
