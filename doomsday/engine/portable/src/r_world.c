@@ -49,7 +49,7 @@
 #define MAX_SMOOTH_PLANE_MOVE   (64)
 
 // $smoothmatoffset: Maximum speed for a smoothed material offset.
-#define MAX_SMOOTH_MATERIAL_MOVE (64)
+#define MAX_SMOOTH_MATERIAL_MOVE (8)
 
 // TYPES -------------------------------------------------------------------
 
