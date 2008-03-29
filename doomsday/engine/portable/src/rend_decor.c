@@ -541,14 +541,19 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
             // Generate a number of models.
             for(i = 0; i < DED_DECOR_NUM_MODELS; ++i)
             {
-                ded_decormodel_t       *modelDef = &def->models[i];
-                modeldef_t             *mf;
+                ded_decormodel_t   *modelDef = &def->models[i];
+                modeldef_t         *mf;
+                float               pitch, yaw;
 
                 if(!R_IsValidModelDecoration(modelDef))
                     break;
 
                 if((mf = R_CheckIDModelFor(modelDef->id)) == NULL)
                     break;
+
+                yaw = R_MovementYaw(suf->normal[VX], suf->normal[VY]);
+                pitch = R_MovementPitch(suf->normal[VX], suf->normal[VY],
+                                        suf->normal[VZ]);
 
                 // Skip must be at least one.
                 getDecorationSkipPattern(modelDef->patternSkip, skip);
@@ -587,13 +592,8 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
 
                             DEC_MODEL(d)->mf = mf;
                             DEC_MODEL(d)->def = modelDef;
-                            DEC_MODEL(d)->pitch =
-                                R_MovementPitch(suf->normal[VX],
-                                                suf->normal[VY],
-                                                suf->normal[VZ]);
-                            DEC_MODEL(d)->yaw =
-                                R_MovementYaw(suf->normal[VX],
-                                              suf->normal[VY]);
+                            DEC_MODEL(d)->pitch = pitch;
+                            DEC_MODEL(d)->yaw = yaw;
                         }
                     }
                 }
@@ -800,14 +800,20 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
             // Generate a number of models.
             for(i = 0; i < DED_DECOR_NUM_MODELS; ++i)
             {
-                ded_decormodel_t       *modelDef = &def->models[i];
-                modeldef_t             *mf;
+                ded_decormodel_t   *modelDef = &def->models[i];
+                modeldef_t         *mf;
+                float               pitch, yaw;
 
                 if(!R_IsValidModelDecoration(modelDef))
                     break;
 
                 if((mf = R_CheckIDModelFor(modelDef->id)) == NULL)
                     break;
+
+                yaw = 90 + R_MovementYaw(suf->normal[VX],
+                                         suf->normal[VY]);
+                pitch = R_MovementPitch(suf->normal[VX], suf->normal[VY],
+                                        suf->normal[VZ]);
 
                 // Skip must be at least one.
                 getDecorationSkipPattern(modelDef->patternSkip, skip);
@@ -855,13 +861,8 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
 
                             DEC_MODEL(d)->def = modelDef;
                             DEC_MODEL(d)->mf = mf;
-                            DEC_MODEL(d)->pitch =
-                                R_MovementPitch(suf->normal[VX],
-                                                suf->normal[VY],
-                                                suf->normal[VZ]);
-                            DEC_MODEL(d)->yaw = 90 +
-                                R_MovementYaw(suf->normal[VX],
-                                              suf->normal[VY]);
+                            DEC_MODEL(d)->pitch = pitch;
+                            DEC_MODEL(d)->yaw = yaw;
                         }
                     }
                 }
