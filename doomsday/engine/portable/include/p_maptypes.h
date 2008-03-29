@@ -141,8 +141,8 @@ typedef enum {
 
 typedef struct surfacedecor_s {
     float               pos[3]; // World coordinates of the decoration.
-    subsector_t        *subsector;
     decortype_t         type;
+    subsector_t        *subsector;
     union surfacedecor_data_u {
         struct surfacedecor_light_s {
             struct ded_decorlight_s *def;
@@ -150,7 +150,7 @@ typedef struct surfacedecor_s {
         struct surfacedecor_model_s {
             struct ded_decormodel_s *def;
             struct modeldef_t *mf;
-            float               rotation;
+            float               pitch, yaw;
         } model;
     } data;
 } surfacedecor_t;

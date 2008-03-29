@@ -57,7 +57,7 @@ typedef struct decorsource_s {
         } light;
         struct decorsource_data_model_s {
             modeldef_t     *mf;
-            float           rotation;
+            float          pitch, yaw;
         } model;
     } data;
     struct decorsource_s *next;
@@ -175,14 +175,14 @@ static void projectDecoration(decorsource_t *src)
         // Does it pass the sectorlight limitation?
         if(!((brightness =
               checkSectorLight(src->subsector->sector->lightLevel,
-                               DEC_LIGHT(src)->def)) > 0))
+                               src->data.light.def)) > 0))
             return;
 
         // Apply the brightness factor (was calculated using sector lightlevel).
         fadeMul *= brightness * decorFactor;
 
         // Brightness drops as the angle gets too big.
-        if(DEC_LIGHT(src)->def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
+        if(src->data.light.def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
         {
             float               vector[3];
             float               dot;
@@ -222,24 +222,34 @@ static void projectDecoration(decorsource_t *src)
 
     if(src->type == DT_MODEL)
     {
-        const float*            rgb =
-            R_GetSectorLightColor(src->subsector->sector);
-
-        vis->data.decormodel.mf = DEC_MODEL(src)->mf;
+        vis->data.decormodel.mf = src->data.model.mf;
         vis->data.decormodel.subsector = src->subsector;
-        vis->data.decormodel.lightLevel = src->subsector->sector->lightLevel;
-        Rend_ApplyLightAdaptation(&vis->data.decormodel.lightLevel);
-        vis->data.decormodel.rgb[CR] = rgb[CR];
-        vis->data.decormodel.rgb[CG] = rgb[CG];
-        vis->data.decormodel.rgb[CB] = rgb[CB];
+
+        if(useBias)
+        {
+            /**
+             * Evaluate the position of this decoration in the light grid.
+             * \todo Should be affected by BIAS sources.
+             */
+            LG_Evaluate(vis->center, vis->data.decormodel.rgb);
+            vis->data.decormodel.lightLevel = 1;
+        }
+        else
+        {
+            const float*            rgb =
+                R_GetSectorLightColor(src->subsector->sector);
+
+            vis->data.decormodel.lightLevel = src->subsector->sector->lightLevel;
+            Rend_ApplyLightAdaptation(&vis->data.decormodel.lightLevel);
+
+            vis->data.decormodel.rgb[CR] = rgb[CR];
+            vis->data.decormodel.rgb[CG] = rgb[CG];
+            vis->data.decormodel.rgb[CB] = rgb[CB];
+        }
         vis->data.decormodel.alpha = fadeMul;
-        vis->data.decormodel.pitch =
-            R_MovementPitch(src->surface->normal[VX],
-                            src->surface->normal[VY],
-                            src->surface->normal[VZ]);
+        vis->data.decormodel.pitch = src->data.model.pitch;
         vis->data.decormodel.pitchAngleOffset = 0;
-        vis->data.decormodel.yaw = src->data.model.rotation +
-            R_MovementYaw(src->surface->normal[VX], src->surface->normal[VY]);
+        vis->data.decormodel.yaw = src->data.model.yaw;
         vis->data.decormodel.yawAngleOffset = 0;
     }
     else if(src->type == DT_LIGHT)
@@ -259,21 +269,21 @@ static void projectDecoration(decorsource_t *src)
 
         LUM_OMNI(l)->haloFactor = 0xff; // Assumed visible.
         LUM_OMNI(l)->zOff = 0;
-        LUM_OMNI(l)->tex = DEC_LIGHT(src)->def->sides.tex;
-        LUM_OMNI(l)->ceilTex = DEC_LIGHT(src)->def->up.tex;
-        LUM_OMNI(l)->floorTex = DEC_LIGHT(src)->def->down.tex;
+        LUM_OMNI(l)->tex = src->data.light.def->sides.tex;
+        LUM_OMNI(l)->ceilTex = src->data.light.def->up.tex;
+        LUM_OMNI(l)->floorTex = src->data.light.def->down.tex;
 
         // These are the same rules as in DL_MobjRadius().
-        LUM_OMNI(l)->radius = DEC_LIGHT(src)->def->radius * 40 * loRadiusFactor;
+        LUM_OMNI(l)->radius = src->data.light.def->radius * 40 * loRadiusFactor;
 
         // Don't make a too small or too large light.
         if(LUM_OMNI(l)->radius > loMaxRadius)
             LUM_OMNI(l)->radius = loMaxRadius;
 
-        if(DEC_LIGHT(src)->def->haloRadius > 0)
+        if(src->data.light.def->haloRadius > 0)
         {
             LUM_OMNI(l)->flareSize =
-                DEC_LIGHT(src)->def->haloRadius * 60 * (50 + haloSize) / 100.0f;
+                src->data.light.def->haloRadius * 60 * (50 + haloSize) / 100.0f;
             if(LUM_OMNI(l)->flareSize < 1)
                 LUM_OMNI(l)->flareSize = 1;
         }
@@ -282,20 +292,20 @@ static void projectDecoration(decorsource_t *src)
             LUM_OMNI(l)->flareSize = 0;
         }
 
-        if(DEC_LIGHT(src)->def->flare.disabled)
+        if(src->data.light.def->flare.disabled)
         {
             l->flags |= LUMF_NOHALO;
         }
         else
         {
-            LUM_OMNI(l)->flareCustom = DEC_LIGHT(src)->def->flare.custom;
-            LUM_OMNI(l)->flareTex = DEC_LIGHT(src)->def->flare.tex;
+            LUM_OMNI(l)->flareCustom = src->data.light.def->flare.custom;
+            LUM_OMNI(l)->flareTex = src->data.light.def->flare.tex;
         }
 
         LUM_OMNI(l)->flareMul = flareMul;
 
         for(i = 0; i < 3; ++i)
-            l->color[i] = DEC_LIGHT(src)->def->color[i] * fadeMul;
+            l->color[i] = src->data.light.def->color[i] * fadeMul;
 
         l->distanceToViewer = distance;
 
@@ -382,7 +392,8 @@ static void createSurfaceDecoration(const surface_t *suf,
 
     case DT_MODEL:
         source->data.model.mf = DEC_MODEL(dec)->mf;
-        source->data.model.rotation = DEC_MODEL(dec)->rotation;
+        source->data.model.pitch = DEC_MODEL(dec)->pitch;
+        source->data.model.yaw = DEC_MODEL(dec)->yaw;
         break;
     }
 }
@@ -576,7 +587,13 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
 
                             DEC_MODEL(d)->mf = mf;
                             DEC_MODEL(d)->def = modelDef;
-                            DEC_MODEL(d)->rotation = 0;
+                            DEC_MODEL(d)->pitch =
+                                R_MovementPitch(suf->normal[VX],
+                                                suf->normal[VY],
+                                                suf->normal[VZ]);
+                            DEC_MODEL(d)->yaw =
+                                R_MovementYaw(suf->normal[VX],
+                                              suf->normal[VY]);
                         }
                     }
                 }
@@ -838,7 +855,13 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
 
                             DEC_MODEL(d)->def = modelDef;
                             DEC_MODEL(d)->mf = mf;
-                            DEC_MODEL(d)->rotation = 90; // Degrees.
+                            DEC_MODEL(d)->pitch =
+                                R_MovementPitch(suf->normal[VX],
+                                                suf->normal[VY],
+                                                suf->normal[VZ]);
+                            DEC_MODEL(d)->yaw = 90 +
+                                R_MovementYaw(suf->normal[VX],
+                                              suf->normal[VY]);
                         }
                     }
                 }
