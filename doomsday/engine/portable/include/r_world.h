@@ -42,7 +42,8 @@ typedef struct {
     uint        count;
 } ownerlist_t;
 
-extern int      rendSkyLight;      // cvar
+extern int rendSkyLight;      // cvar
+extern boolean levelSetup;
 
 // Map Info flags.
 #define MIF_FOG             0x1    // Fog is used in the level.
