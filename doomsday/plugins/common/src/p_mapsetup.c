@@ -579,7 +579,7 @@ static void P_FinalizeLevel(void)
     int                 bottomTex;
     int                 midTex;
     float               yoff;
-    sidedef_t          *side;
+    sidedef_t          *sidedef;
     linedef_t          *line;
 
     for(i = 0; i < numlines; ++i)
@@ -588,15 +588,18 @@ static void P_FinalizeLevel(void)
 
         for(k = 0; k < 2; ++k)
         {
-            if(P_GetPtrp(line, k == 0? DMU_FRONT_SECTOR : DMU_BACK_SECTOR))
+            sidedef = P_GetPtrp(line, k == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
+
+            if(sidedef)
             {
-                side = P_GetPtrp(line, k == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
-                yoff = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                bottomTex = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
-                midTex = P_GetIntp(side, DMU_MIDDLE_MATERIAL);
+                bottomTex = P_GetIntp(sidedef, DMU_BOTTOM_MATERIAL);
+                midTex = P_GetIntp(sidedef, DMU_MIDDLE_MATERIAL);
 
                 if(bottomTex == materialID && midTex == 0)
-                    P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
+                {
+                    yoff = P_GetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                    P_SetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
+                }
             }
         }
     }
