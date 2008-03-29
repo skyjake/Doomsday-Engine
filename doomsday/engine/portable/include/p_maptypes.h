@@ -197,7 +197,7 @@ typedef struct plane_s {
     float               target;        // Target height
     float               speed;         // Move speed
     float               visHeight;     // Visible plane height (smoothed)
-    float               visOffset;
+    float               visHeightDelta;
     planetype_t         type;          // PLN_* type.
 } plane_t;
 

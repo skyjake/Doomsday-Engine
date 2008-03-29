@@ -579,7 +579,7 @@ static void writeSector(const gamemap_t *map, uint idx)
         writeFloat(p->target);
         writeFloat(p->speed);
         writeFloat(p->visHeight);
-        writeFloat(p->visOffset);
+        writeFloat(p->visHeightDelta);
 
         writeLong((long) p->surface.flags);
         writeLong(getMaterialDictID(materialDict, p->surface.material));
@@ -670,7 +670,7 @@ static void readSector(const gamemap_t *map, uint idx)
         p->target = readFloat();
         p->speed = readFloat();
         p->visHeight = readFloat();
-        p->visOffset = readFloat();
+        p->visHeightDelta = readFloat();
 
         p->surface.flags = (int) readLong();
         Surface_SetMaterial(&p->surface, lookupMaterialFromDict(materialDict, readLong()));

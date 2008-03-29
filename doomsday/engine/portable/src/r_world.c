@@ -217,7 +217,7 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
         {
             pln = wpl->list[i];
 
-            pln->visOffset = 0;
+            pln->visHeightDelta = 0;
             pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
 
             if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
@@ -239,12 +239,12 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
         {
             pln = wpl->list[i];
 
-            pln->visOffset = pln->oldHeight[0] * (1 - frameTimePos) +
+            pln->visHeightDelta = pln->oldHeight[0] * (1 - frameTimePos) +
                         pln->height * frameTimePos -
                         pln->height;
 
             // Visible plane height.
-            pln->visHeight = pln->height + pln->visOffset;
+            pln->visHeight = pln->height + pln->visHeightDelta;
 
             if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
             {
@@ -301,7 +301,7 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
     plane->glow = 0;
     plane->sector = sec;
     plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
-    plane->visHeight = plane->visOffset = 0;
+    plane->visHeight = plane->visHeightDelta = 0;
     plane->soundOrg.pos[VX] = sec->soundOrg.pos[VX];
     plane->soundOrg.pos[VY] = sec->soundOrg.pos[VY];
     plane->soundOrg.pos[VZ] = sec->soundOrg.pos[VZ];

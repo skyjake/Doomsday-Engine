@@ -212,7 +212,7 @@ struct plane
     FLOAT   float       target      // Target height
     FLOAT   float       speed       // Move speed
     -       float       visHeight   // Visible plane height (smoothed)
-    -       float       visOffset
+    -       float       visHeightDelta
     -       planetype_t type        // PLN_* type.
 end
 
