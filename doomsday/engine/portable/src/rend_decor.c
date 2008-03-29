@@ -224,28 +224,6 @@ static void projectDecoration(decorsource_t *src)
     {
         vis->data.decormodel.mf = src->data.model.mf;
         vis->data.decormodel.subsector = src->subsector;
-
-        if(useBias)
-        {
-            /**
-             * Evaluate the position of this decoration in the light grid.
-             * \todo Should be affected by BIAS sources.
-             */
-            LG_Evaluate(vis->center, vis->data.decormodel.rgb);
-            vis->data.decormodel.lightLevel = 1;
-        }
-        else
-        {
-            const float*            rgb =
-                R_GetSectorLightColor(src->subsector->sector);
-
-            vis->data.decormodel.lightLevel = src->subsector->sector->lightLevel;
-            Rend_ApplyLightAdaptation(&vis->data.decormodel.lightLevel);
-
-            vis->data.decormodel.rgb[CR] = rgb[CR];
-            vis->data.decormodel.rgb[CG] = rgb[CG];
-            vis->data.decormodel.rgb[CB] = rgb[CB];
-        }
         vis->data.decormodel.alpha = fadeMul;
         vis->data.decormodel.pitch = src->data.model.pitch;
         vis->data.decormodel.pitchAngleOffset = 0;

@@ -560,22 +560,22 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         // routine.
         if(rtype == PTC_MODEL && dst->model >= 0)
         {
-            int         frame;
-            const float *slc;
-            sector_t   *sec;
-            modelparams_t params;
+            int                 frame;
+            const float        *slc;
+            subsector_t        *ssec;
+            modelparams_t       params;
             visspritelightparams_t lparams;
 
             memset(&params, 0, sizeof(params));
 
             // Render the particle as a model.
-            params.distance = dist;
-            params.subsector =
-                R_PointInSubsector(FIX2FLT(pt->pos[VX]), FIX2FLT(pt->pos[VY]));
-            sec = params.subsector->sector;
             params.center[VX] = center[VX];
             params.center[VY] = center[VZ];
             params.center[VZ] = params.gzt = center[VY];
+            params.distance = dist;
+            ssec = R_PointInSubsector(FIX2FLT(pt->pos[VX]),
+                                      FIX2FLT(pt->pos[VY]));
+
             params.extraScale = size;   // Extra scaling factor.
             params.mf = &modefs[dst->model];
             params.alwaysInterpolate = true;
@@ -625,7 +625,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             params.alpha = color[3];
 
             lparams.starkLight = false;
-            lparams.subsector = params.subsector;
+            lparams.subsector = ssec;
             memcpy(lparams.center, params.center, sizeof(lparams.center));
             lparams.maxLights = modelLight;
 

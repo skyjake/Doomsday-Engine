@@ -68,9 +68,6 @@ typedef struct modelparams_s {
     float           shinePitchOffset;
     boolean         shineTranslateWithViewerPos;
     boolean         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
-
-// Misc
-    struct subsector_s *subsector;
 } modelparams_t;
 
 extern int      modelLight;

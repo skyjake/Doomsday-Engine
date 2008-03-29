@@ -628,7 +628,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->extraPitchAngle = 0;
         params->pitchAngleOffset = spr->data.mo.pitchAngleOffset;
         params->extraScale = 0;
-        params->subsector = spr->data.mo.subsector;
 
         params->lightLevel = spr->data.mo.lightLevel;
 
@@ -647,6 +646,7 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
     }
     else if(spr->type == VSPR_DECORATION)
     {
+        float               rgba[4], lightLevel;
         visspritelightparams_t lparams;
 
         lparams.starkLight = false;
@@ -654,12 +654,41 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         lparams.subsector = spr->data.decormodel.subsector;
         lparams.maxLights = modelLight;
 
+        if(useBias)
         {
-        float   rgba[4];
-        memcpy(rgba, spr->data.decormodel.rgb, sizeof(float) * 3);
-        rgba[CA] = 1;
-        R_SetAmbientColor(rgba, spr->data.decormodel.lightLevel, spr->distance);
+            /**
+             * Evaluate the position of this decoration in the light grid.
+             * \todo Should be affected by BIAS sources.
+             */
+            LG_Evaluate(spr->center, rgba);
+            lightLevel = 1;
         }
+        else
+        {
+            const float*        sectorColor =
+                R_GetSectorLightColor(spr->data.decormodel.subsector->sector);
+
+            if(levelFullBright)
+            {
+                lightLevel = 1;
+            }
+            else
+            {
+                lightLevel = spr->data.decormodel.subsector->sector->lightLevel;
+                Rend_ApplyLightAdaptation(&lightLevel);
+            }
+
+            rgba[CR] = sectorColor[CR];
+            rgba[CG] = sectorColor[CG];
+            rgba[CB] = sectorColor[CB];
+        }
+
+        params->lightLevel = lightLevel;
+        params->uniformColor = false;
+        memcpy(params->rgb, rgba, sizeof(float) * 3);
+        params->alpha = spr->data.decormodel.alpha;
+
+        R_SetAmbientColor(rgba, lightLevel, spr->distance);
         R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
 
         params->mf = spr->data.decormodel.mf;
@@ -682,17 +711,8 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->extraPitchAngle = 0;
         params->pitchAngleOffset = spr->data.decormodel.pitchAngleOffset;
         params->extraScale = 0;
-        params->subsector = spr->data.decormodel.subsector;
-
-        params->lightLevel = spr->data.decormodel.lightLevel;
-
-        memcpy(params->rgb, spr->data.decormodel.rgb, sizeof(float) * 3);
-        params->uniformColor = false;
-        params->alpha = spr->data.decormodel.alpha;
-
         params->viewAligned = 0;
         params->mirror = 0;
-
         params->shineYawOffset = 0;
         params->shinePitchOffset = 0;
         params->shineTranslateWithViewerPos = false;
