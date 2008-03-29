@@ -178,25 +178,20 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t *pln)
         if(!li->L_backside)
         {
             if(pln->type != PLN_MID)
-                li->L_frontside->SW_surface(SEG_MIDDLE).flags |=
-                    SUF_UPDATE_DECORATIONS;
+                Surface_Update(&li->L_frontside->SW_surface(SEG_MIDDLE));
         }
         else if(li->L_backsector != li->L_frontsector)
         {
             byte                side =
                 (li->L_frontsector == pln->sector? FRONT : BACK);
 
-            li->L_side(side)->SW_surface(SEG_BOTTOM).flags |=
-                SUF_UPDATE_DECORATIONS;
-            li->L_side(side)->SW_surface(SEG_TOP).flags |=
-                SUF_UPDATE_DECORATIONS;
+            Surface_Update(&li->L_side(side)->SW_surface(SEG_BOTTOM));
+            Surface_Update(&li->L_side(side)->SW_surface(SEG_TOP));
 
             if(pln->type == PLN_FLOOR)
-                li->L_side(side^1)->SW_surface(SEG_BOTTOM).flags |=
-                    SUF_UPDATE_DECORATIONS;
+                Surface_Update(&li->L_side(side^1)->SW_surface(SEG_BOTTOM));
             else
-                li->L_side(side^1)->SW_surface(SEG_TOP).flags |=
-                    SUF_UPDATE_DECORATIONS;
+                Surface_Update(&li->L_side(side^1)->SW_surface(SEG_TOP));
         }
 
         *linep++;
@@ -387,7 +382,8 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     sec->planes = newList;
 }
 
-surfacedecor_t* R_CreateSurfaceDecoration(surface_t *suf, float pos[3])
+surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t *suf,
+                                          const float *pos)
 {
     uint                i;
     surfacedecor_t     *d, *s, *decorations;
@@ -406,10 +402,7 @@ surfacedecor_t* R_CreateSurfaceDecoration(surface_t *suf, float pos[3])
             d = &decorations[i];
             s = &suf->decorations[i];
 
-            d->pos[VX] = s->pos[VX];
-            d->pos[VY] = s->pos[VY];
-            d->pos[VZ] = s->pos[VZ];
-            d->def = s->def;
+            memcpy(d, s, sizeof(*d));
         }
 
         Z_Free(suf->decorations);
@@ -417,6 +410,7 @@ surfacedecor_t* R_CreateSurfaceDecoration(surface_t *suf, float pos[3])
 
     // Add the new decoration.
     d = &decorations[suf->numDecorations - 1];
+    d->type = type;
     d->pos[VX] = pos[VX];
     d->pos[VY] = pos[VY];
     d->pos[VZ] = pos[VZ];
@@ -1788,7 +1782,6 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         memcpy(sec->oldRGB, sec->rgb, sizeof(sec->oldRGB));
 
         LG_SectorChanged(sec);
-        updateDecorations = true;
     }
     else
     {
@@ -1849,11 +1842,11 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
             P_PlaneChanged(sec, i);
             updateReverb = true;
-            plane->surface.flags |= SUF_UPDATE_DECORATIONS;
+            updateDecorations = true;
         }
 
         if(updateDecorations)
-            plane->surface.flags |= SUF_UPDATE_DECORATIONS;
+            Surface_Update(&plane->surface);
     }
 
     if(updateReverb)

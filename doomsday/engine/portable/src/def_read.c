@@ -1620,6 +1620,31 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     }
                     sub++;
                 }
+                else if(ISLABEL("Model"))
+                {
+                    ded_decormodel_t *dm = &decor->models[sub];
+
+                    if(sub == DED_DECOR_NUM_MODELS)
+                    {
+                        SetError("Too many models in decoration.");
+                        retval = false;
+                        goto ded_end_read;
+                    }
+                    FINDBEGIN;
+                    for(;;)
+                    {
+                        READLABEL;
+                        RV_VEC("Offset", dm->pos, 2)
+                        RV_FLT("Distance", dm->elevation)
+                        RV_IVEC("Pattern offset", dm->patternOffset, 2)
+                        RV_IVEC("Pattern skip", dm->patternSkip, 2)
+                        RV_STR("ID", dm->id)
+                        RV_FLT("Frame interval", dm->frameInterval)
+                        RV_END
+                        CHECKSC;
+                    }
+                    sub++;
+                }
                 else if(ISLABEL("Light"))
                 {
                     ded_decorlight_t *dl = &decor->lights[sub];

@@ -104,6 +104,17 @@ typedef struct vissprite_s {
             float           rgb[3];
             ddpsprite_t    *psp;
         } psprite;
+        struct vissprite_decormodel_s {
+            subsector_t    *subsector;
+            float           rgb[3]; // Sector light color.
+            float           alpha;
+            float           lightLevel;
+            struct modeldef_s *mf;
+            float           yaw, pitch;
+            float           pitchAngleOffset;
+            float           yawAngleOffset;
+            float           inter; // Frame interpolation, 0..1
+        } decormodel;
     } data;
 } vissprite_t;
 

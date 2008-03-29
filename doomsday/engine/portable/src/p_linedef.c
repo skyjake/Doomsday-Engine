@@ -79,15 +79,15 @@ boolean Linedef_SetProperty(linedef_t *lin, const setargs_t *args)
         DMU_SetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
 
         s = lin->L_frontside;
-        s->SW_topsurface.flags |= SUF_UPDATE_DECORATIONS;
-        s->SW_bottomsurface.flags |= SUF_UPDATE_DECORATIONS;
-        s->SW_middlesurface.flags |= SUF_UPDATE_DECORATIONS;
+        Surface_Update(&s->SW_topsurface);
+        Surface_Update(&s->SW_bottomsurface);
+        Surface_Update(&s->SW_middlesurface);
         if(lin->L_backside)
         {
             s = lin->L_backside;
-            s->SW_topsurface.flags |= SUF_UPDATE_DECORATIONS;
-            s->SW_bottomsurface.flags |= SUF_UPDATE_DECORATIONS;
-            s->SW_middlesurface.flags |= SUF_UPDATE_DECORATIONS;
+            Surface_Update(&s->SW_topsurface);
+            Surface_Update(&s->SW_bottomsurface);
+            Surface_Update(&s->SW_middlesurface);
         }
         break;
         }

@@ -289,6 +289,17 @@ boolean Surface_SetBlendMode(surface_t *suf, blendmode_t blendMode)
 }
 
 /**
+ * Mark the surface as requiring a full update. Called during engine-reset.
+ */
+void Surface_Update(surface_t *suf)
+{
+    if(!suf)
+        return;
+
+    suf->flags |= SUF_UPDATE_DECORATIONS;
+}
+
+/**
  * Update the surface, property is selected by DMU_* name.
  */
 boolean Surface_SetProperty(surface_t *suf, const setargs_t *args)

@@ -182,7 +182,7 @@ void R_Init(void)
  */
 void R_Update(void)
 {
-    int                 i;
+    uint                i;
 
     // Stop playing sounds and music.
     Demo_StopPlayback();
@@ -195,12 +195,12 @@ void R_Update(void)
     DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
     GL_TotalReset(true, false, false);
     GL_TotalReset(false, false, false); // Bring GL back online (no lightmaps, flares yet).
+    // Re-read definitions.
+    Def_Read();
     R_UpdateData();
     R_InitSprites(); // Fully reinitialize sprites.
     R_InitSkyMap();
     R_UpdateTranslationTables();
-    // Re-read definitions.
-    Def_Read();
     // Now that we've read the defs, we can load lightmaps and flares.
     GL_LoadSystemTextures(true, true);
     Def_PostInit();
@@ -213,6 +213,24 @@ void R_Update(void)
 
         // States have changed, the states are unknown.
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
+    }
+
+    // Update all world surfaces.
+    for(i = 0; i < numSectors; ++i)
+    {
+        uint                j;
+        sector_t           *sec = &sectors[i];
+
+        for(j = 0; j < sec->planeCount; ++j)
+            Surface_Update(&sec->SP_planesurface(j));
+    }
+    for(i = 0; i < numSideDefs; ++i)
+    {
+        sidedef_t          *side = &sideDefs[i];
+
+        Surface_Update(&side->SW_topsurface);
+        Surface_Update(&side->SW_middlesurface);
+        Surface_Update(&side->SW_bottomsurface);
     }
 
     // The rendering lists have persistent data that has changed during

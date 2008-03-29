@@ -471,6 +471,18 @@ extern          "C" {
     // There is a fixed number of light decorations in each decoration.
 #define DED_DECOR_NUM_LIGHTS    16
 
+    typedef struct ded_decormodel_s {
+        float           pos[2]; // Coordinates on the surface.
+        float           elevation; // Distance from the surface.
+        int             patternOffset[2];
+        int             patternSkip[2];
+        ded_stringid_t  id;
+        float           frameInterval; // Seconds per frame.
+    } ded_decormodel_t;
+
+    // There is a fixed number of model decorations in each decoration.
+#define DED_DECOR_NUM_MODELS    8
+
     typedef struct ded_decor_s {
         ded_string_t    surface; // Texture or flat name.
         int             isTexture; // True, if decoration for a wall.
@@ -478,6 +490,7 @@ extern          "C" {
         ded_flags_t     flags;
         int             surfaceIndex; // Flat or texture index.
         ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
+        ded_decormodel_t models[DED_DECOR_NUM_MODELS];
     } ded_decor_t;
 
     typedef struct ded_reflection_s {
@@ -508,13 +521,11 @@ extern          "C" {
         float           randomTics;
     } ded_group_member_t;
 
-//#define DED_GROUP_NUM_MEMBERS 64
-
     typedef struct ded_group_s {
         int             isTexture; // Group of textures?
         ded_flags_t     flags;
         ded_count_t     count;
-        ded_group_member_t *members; //[DED_GROUP_NUM_MEMBERS]
+        ded_group_member_t *members;
     } ded_group_t;
 
     // The ded_t structure encapsulates all the data one definition file

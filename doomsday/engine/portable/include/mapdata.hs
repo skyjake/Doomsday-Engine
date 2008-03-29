@@ -140,9 +140,30 @@ internal
 // Surface frame flags
 #define SUFINF_PVIS     0x0001
 
+// Decoration types.
+typedef enum {
+    DT_LIGHT,
+    DT_MODEL,
+    NUM_DECORTYPES
+} decortype_t;
+
+// Helper macros for accessing decor data.
+#define DEC_LIGHT(x)         (&((x)->data.light))
+#define DEC_MODEL(x)         (&((x)->data.model))
+
 typedef struct surfacedecor_s {
-    float           pos[3];         // World coordinates of the decoration.
-    struct ded_decorlight_s *def;
+    float               pos[3]; // World coordinates of the decoration.
+    decortype_t         type;
+    union surfacedecor_data_u {
+        struct surfacedecor_light_s {
+            struct ded_decorlight_s *def;
+        } light;
+        struct surfacedecor_model_s {
+            struct ded_decormodel_s *def;
+            struct modeldef_t *mf;
+            float               rotation;
+        } model;
+    } data;
 } surfacedecor_t;
 end
 

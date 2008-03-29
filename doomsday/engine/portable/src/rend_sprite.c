@@ -645,6 +645,59 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->shineTranslateWithViewerPos = false;
         params->shinepspriteCoordSpace = (spr->type == VSPR_HUD_MODEL);
     }
+    else if(spr->type == VSPR_DECORATION)
+    {
+        visspritelightparams_t lparams;
+
+        lparams.starkLight = false;
+        memcpy(lparams.center, spr->center, sizeof(lparams.center));
+        lparams.subsector = spr->data.decormodel.subsector;
+        lparams.maxLights = modelLight;
+
+        {
+        float   rgba[4];
+        memcpy(rgba, spr->data.decormodel.rgb, sizeof(float) * 3);
+        rgba[CA] = 1;
+        R_SetAmbientColor(rgba, spr->data.decormodel.lightLevel, spr->distance);
+        }
+        R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
+
+        params->mf = spr->data.decormodel.mf;
+        params->inter = spr->data.decormodel.inter;
+        params->alwaysInterpolate = true;
+        R_SetModelFrame(params->mf, 0);
+        params->id = 0;
+        params->selector = 0;
+        params->flags = 0;
+        params->center[VX] = spr->center[VX];
+        params->center[VY] = spr->center[VY];
+        params->center[VZ] = spr->center[VZ];
+        params->srvo[VX] = params->srvo[VY] = params->srvo[VZ] = 0;
+        params->gzt = spr->center[VZ];
+        params->distance = spr->distance;
+        params->yaw = spr->data.decormodel.yaw;
+        params->extraYawAngle = 0;
+        params->yawAngleOffset = spr->data.decormodel.yawAngleOffset;
+        params->pitch = spr->data.decormodel.pitch;
+        params->extraPitchAngle = 0;
+        params->pitchAngleOffset = spr->data.decormodel.pitchAngleOffset;
+        params->extraScale = 0;
+        params->subsector = spr->data.decormodel.subsector;
+
+        params->lightLevel = spr->data.decormodel.lightLevel;
+
+        memcpy(params->rgb, spr->data.decormodel.rgb, sizeof(float) * 3);
+        params->uniformColor = false;
+        params->alpha = spr->data.decormodel.alpha;
+
+        params->viewAligned = 0;
+        params->mirror = 0;
+
+        params->shineYawOffset = 0;
+        params->shinePitchOffset = 0;
+        params->shineTranslateWithViewerPos = false;
+        params->shinepspriteCoordSpace = 0;
+    }
 }
 
 /**
@@ -692,6 +745,17 @@ void Rend_DrawMasked(void)
                 }
                 else
                 {   // It's a sprite and it has a modelframe (it's a 3D model).
+                    modelparams_t       params;
+
+                    setupModelParamsForVisSprite(&params, spr);
+                    Rend_RenderModel(&params);
+                }
+            }
+            else if(spr->type == VSPR_DECORATION)
+            {
+                // It could be a model decoration.
+                if(spr->data.decormodel.mf)
+                {
                     modelparams_t       params;
 
                     setupModelParamsForVisSprite(&params, spr);
