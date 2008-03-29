@@ -571,16 +571,20 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
 
                 for(; s < line->length; s += patternW)
                 {
+                    subsector_t        *subsector;
+
                     t = M_CycleIntoRange(modelDef->pos[VY] - suf->visOffset[VY] -
                                          surfTexH * modelDef->patternOffset[VY] +
                                          offsetY, patternH);
 
+                    pos[VX] = posBase[VX] + delta[VX] * s / line->length;
+                    pos[VY] = posBase[VY] + delta[VY] * s / line->length;
+                    subsector = R_PointInSubsector(pos[VX], pos[VY]);
+
                     for(; t < lh; t += patternH)
                     {
-                        surfacedecor_t         *d;
+                        surfacedecor_t     *d;
 
-                        pos[VX] = posBase[VX] + delta[VX] * s / line->length;
-                        pos[VY] = posBase[VY] + delta[VY] * s / line->length;
                         pos[VZ] = top - t;
 
                         if(NULL != (d = R_CreateSurfaceDecoration(DT_MODEL, suf)))
@@ -588,7 +592,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                             d->pos[VX] = pos[VX];
                             d->pos[VY] = pos[VY];
                             d->pos[VZ] = pos[VZ];
-                            d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
+                            d->subsector = subsector;
 
                             DEC_MODEL(d)->mf = mf;
                             DEC_MODEL(d)->def = modelDef;
@@ -624,16 +628,20 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
 
                 for(; s < line->length; s += patternW)
                 {
+                    subsector_t        *subsector;
+
                     t = M_CycleIntoRange(lightDef->pos[VY] - suf->visOffset[VY] -
                                          surfTexH * lightDef->patternOffset[VY] +
                                          offsetY, patternH);
 
+                    pos[VX] = posBase[VX] + delta[VX] * s / line->length;
+                    pos[VY] = posBase[VY] + delta[VY] * s / line->length;
+                    subsector = R_PointInSubsector(pos[VX], pos[VY]);
+
                     for(; t < lh; t += patternH)
                     {
-                        surfacedecor_t         *d;
+                        surfacedecor_t     *d;
 
-                        pos[VX] = posBase[VX] + delta[VX] * s / line->length;
-                        pos[VY] = posBase[VY] + delta[VY] * s / line->length;
                         pos[VZ] = top - t;
 
                         if(NULL != (d = R_CreateSurfaceDecoration(DT_LIGHT, suf)))
@@ -641,7 +649,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                             d->pos[VX] = pos[VX];
                             d->pos[VY] = pos[VY];
                             d->pos[VZ] = pos[VZ];
-                            d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
+                            d->subsector = subsector;
 
                             DEC_LIGHT(d)->def = lightDef;
                         }
