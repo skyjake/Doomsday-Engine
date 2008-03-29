@@ -565,7 +565,7 @@ uint DL_ProcessSegSection(seg_t *seg, float bottom, float top,
 {
     seglumobjiterparams_t params;
 
-    if(!useDynLights)
+    if(!useDynLights && !useWallGlow)
         return 0; // Disabled.
 
     if(!seg || !seg->subsector)
@@ -642,7 +642,7 @@ uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
     float               height;
     boolean             isLit;
 
-    if(!useDynLights)
+    if(!useDynLights && !useWallGlow)
         return 0; // Disabled.
 
     if(!ssec)

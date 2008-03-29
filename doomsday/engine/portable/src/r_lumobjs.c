@@ -852,7 +852,7 @@ static void linkLuminous(void)
  */
 void LO_InitForSubsector(subsector_t *ssec)
 {
-    if(!useDynLights)
+    if(!useDynLights && !useWallGlow)
         return; // Disabled.
 
     // First make sure we know which lumobjs are contacting us.
@@ -942,15 +942,22 @@ void LO_AddLuminousMobjs(void)
 {
     uint                i;
     sector_t           *seciter;
-    mobj_t             *iter;
+
+    if(!useDynLights && !useWallGlow)
+        return;
 
 BEGIN_PROF( PROF_DYN_INIT_ADD );
 
     for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
     {
-        for(iter = seciter->mobjList; iter; iter = iter->sNext)
+        if(useDynLights)
         {
-            LO_AddLuminous(iter);
+            mobj_t             *iter;
+
+            for(iter = seciter->mobjList; iter; iter = iter->sNext)
+            {
+                LO_AddLuminous(iter);
+            }
         }
 
         // If the segs of this subsector are affected by glowing planes we need
