@@ -591,20 +591,8 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
     if(spr->type == VSPR_MAP_OBJECT ||
        spr->type == VSPR_HUD_MODEL)
     {
+        float               rgba[4], lightLevel;
         visspritelightparams_t lparams;
-
-        lparams.starkLight = (spr->type == VSPR_HUD_MODEL);
-        memcpy(lparams.center, spr->center, sizeof(lparams.center));
-        lparams.subsector = spr->data.mo.subsector;
-        lparams.maxLights = modelLight;
-
-        {
-        float   rgba[4];
-        memcpy(rgba, spr->data.mo.rgb, sizeof(float) * 3);
-        rgba[CA] = 1;
-        R_SetAmbientColor(rgba, spr->data.mo.lightLevel, spr->distance);
-        }
-        R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
 
         params->mf = spr->data.mo.mf;
         params->nextMF = spr->data.mo.nextMF;
@@ -628,26 +616,93 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->extraPitchAngle = 0;
         params->pitchAngleOffset = spr->data.mo.pitchAngleOffset;
         params->extraScale = 0;
-
-        params->lightLevel = spr->data.mo.lightLevel;
-
-        memcpy(params->rgb, spr->data.mo.rgb, sizeof(float) * 3);
-        params->uniformColor = false;
-        params->alpha = spr->data.mo.alpha;
-
         params->viewAligned = spr->data.mo.viewAligned;
         params->mirror =
             (spr->type == VSPR_HUD_MODEL && mirrorHudModels != 0);
-
         params->shineYawOffset = (spr->type == VSPR_HUD_MODEL? -vang : 0);
         params->shinePitchOffset = (spr->type == VSPR_HUD_MODEL? vpitch + 90 : 0);
         params->shineTranslateWithViewerPos = false;
         params->shinepspriteCoordSpace = (spr->type == VSPR_HUD_MODEL);
+
+        lparams.starkLight = (spr->type == VSPR_HUD_MODEL);
+        memcpy(lparams.center, spr->center, sizeof(lparams.center));
+        lparams.subsector = spr->data.mo.subsector;
+        lparams.maxLights = modelLight;
+
+        if(useBias)
+        {
+            if(spr->data.mo.stateFullBright)
+            {
+                rgba[CR] = rgba[CG] = rgba[CB] = 1;
+            }
+            else
+            {
+                LG_Evaluate(params->center, rgba);
+            }
+
+            lightLevel = 1;
+        }
+        else
+        {
+            const float*        secColor =
+                R_GetSectorLightColor(spr->data.mo.subsector->sector);
+
+            if((levelFullBright || spr->data.mo.stateFullBright) &&
+                !(spr->data.mo.mf->sub[0].flags & MFF_DIM))
+            {
+                lightLevel = 1;
+            }
+            else
+            {
+                // Diminished light (with compression).
+                lightLevel = spr->data.mo.subsector->sector->lightLevel;
+                Rend_ApplyLightAdaptation(&lightLevel);
+            }
+
+            rgba[CR] = secColor[CR];
+            rgba[CG] = secColor[CG];
+            rgba[CB] = secColor[CB];
+        }
+
+        params->lightLevel = lightLevel;
+        params->uniformColor = false;
+        memcpy(params->rgb, rgba, sizeof(float) * 3);
+        params->alpha = spr->data.mo.alpha;
+
+        R_SetAmbientColor(rgba, lightLevel, spr->distance);
+        R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
     }
     else if(spr->type == VSPR_DECORATION)
     {
         float               rgba[4], lightLevel;
         visspritelightparams_t lparams;
+
+        params->mf = spr->data.decormodel.mf;
+        params->inter = spr->data.decormodel.inter;
+        params->alwaysInterpolate = true;
+        R_SetModelFrame(params->mf, 0);
+        params->id = 0;
+        params->selector = 0;
+        params->flags = 0;
+        params->center[VX] = spr->center[VX];
+        params->center[VY] = spr->center[VY];
+        params->center[VZ] = spr->center[VZ];
+        params->srvo[VX] = params->srvo[VY] = params->srvo[VZ] = 0;
+        params->gzt = spr->center[VZ];
+        params->distance = spr->distance;
+        params->yaw = spr->data.decormodel.yaw;
+        params->extraYawAngle = 0;
+        params->yawAngleOffset = spr->data.decormodel.yawAngleOffset;
+        params->pitch = spr->data.decormodel.pitch;
+        params->extraPitchAngle = 0;
+        params->pitchAngleOffset = spr->data.decormodel.pitchAngleOffset;
+        params->extraScale = 0;
+        params->viewAligned = 0;
+        params->mirror = 0;
+        params->shineYawOffset = 0;
+        params->shinePitchOffset = 0;
+        params->shineTranslateWithViewerPos = false;
+        params->shinepspriteCoordSpace = 0;
 
         lparams.starkLight = false;
         memcpy(lparams.center, spr->center, sizeof(lparams.center));
@@ -690,33 +745,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
 
         R_SetAmbientColor(rgba, lightLevel, spr->distance);
         R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
-
-        params->mf = spr->data.decormodel.mf;
-        params->inter = spr->data.decormodel.inter;
-        params->alwaysInterpolate = true;
-        R_SetModelFrame(params->mf, 0);
-        params->id = 0;
-        params->selector = 0;
-        params->flags = 0;
-        params->center[VX] = spr->center[VX];
-        params->center[VY] = spr->center[VY];
-        params->center[VZ] = spr->center[VZ];
-        params->srvo[VX] = params->srvo[VY] = params->srvo[VZ] = 0;
-        params->gzt = spr->center[VZ];
-        params->distance = spr->distance;
-        params->yaw = spr->data.decormodel.yaw;
-        params->extraYawAngle = 0;
-        params->yawAngleOffset = spr->data.decormodel.yawAngleOffset;
-        params->pitch = spr->data.decormodel.pitch;
-        params->extraPitchAngle = 0;
-        params->pitchAngleOffset = spr->data.decormodel.pitchAngleOffset;
-        params->extraScale = 0;
-        params->viewAligned = 0;
-        params->mirror = 0;
-        params->shineYawOffset = 0;
-        params->shinePitchOffset = 0;
-        params->shineTranslateWithViewerPos = false;
-        params->shinepspriteCoordSpace = 0;
     }
 }
 
@@ -1091,7 +1119,49 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->matFlip[1] = spr->data.mo.matFlip[1];
 
     // Set the lighting and alpha.
-    memcpy(params->rgba, spr->data.mo.rgb, sizeof(params->rgba));
+    if(useBias)
+    {
+        if(spr->data.mo.stateFullBright)
+        {
+            params->rgba[CR] = params->rgba[CG] = params->rgba[CB] = 1;
+        }
+        else
+        {
+            LG_Evaluate(params->center, params->rgba);
+        }
+        params->lightLevel = 1;
+    }
+    else
+    {
+        const float*        secColor =
+            R_GetSectorLightColor(spr->data.mo.subsector->sector);
+
+        if(levelFullBright || spr->data.mo.stateFullBright)
+        {
+            params->lightLevel = 1;
+        }
+        else
+        {
+            // Diminished light (with compression).
+            params->lightLevel = spr->data.mo.subsector->sector->lightLevel;
+            Rend_ApplyLightAdaptation(&params->lightLevel);
+        }
+
+        params->rgba[CR] = secColor[CR];
+        params->rgba[CG] = secColor[CG];
+        params->rgba[CB] = secColor[CB];
+    }
+
+    params->rgba[CA] = 1;
+
+    lparams.starkLight = false;
+    memcpy(lparams.center, params->center, sizeof(lparams.center));
+    lparams.maxLights = spriteLight;
+    lparams.subsector = params->subsector;
+
+    R_SetAmbientColor(params->rgba, params->lightLevel, params->distance);
+    R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
+
     if(useSpriteAlpha)
     {
         if(missileBlend && (spr->data.mo.flags & DDMF_BRIGHTSHADOW))
@@ -1122,14 +1192,4 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     {
         params->blendMode = BM_NORMAL;
     }
-
-    params->lightLevel = spr->data.mo.lightLevel;
-
-    lparams.starkLight = false;
-    memcpy(lparams.center, params->center, sizeof(lparams.center));
-    lparams.maxLights = spriteLight;
-    lparams.subsector = params->subsector;
-
-    R_SetAmbientColor(params->rgba, params->lightLevel, params->distance);
-    R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
 }

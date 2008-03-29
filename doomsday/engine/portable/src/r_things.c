@@ -540,9 +540,8 @@ void R_ProjectPlayerSprites(void)
             vis->data.mo.matFlip[0] = vis->data.mo.matFlip[1] = false;
             memset(vis->data.mo.visOff, 0, sizeof(vis->data.mo.visOff));
 
-            memcpy(vis->data.mo.rgb, rgb, sizeof(float) * 3);
             vis->data.mo.alpha = alpha;
-            vis->data.mo.lightLevel = lightLevel;
+            vis->data.mo.stateFullBright = false;
         }
         else
         {   // No, draw a 2D sprite (in Rend_DrawPlayerSprites).
@@ -783,21 +782,9 @@ void R_ProjectSprite(mobj_t *mo)
     vis->data.mo.gzt =
         vis->center[VZ] + ((float) sprTex->info.offsetY);
 
-    if(useBias)
-    {
-        float               point[3];
-
-        point[0] = mo->pos[VX];
-        point[1] = mo->pos[VY];
-        point[2] = mo->pos[VZ] + mo->height / 2;
-        LG_Evaluate(point, vis->data.mo.rgb);
-    }
-    else
-    {
-        memcpy(vis->data.mo.rgb, R_GetSectorLightColor(sect), sizeof(float) * 3);
-    }
-
     vis->data.mo.viewAligned = align;
+    vis->data.mo.stateFullBright =
+        (mo->state->flags & STF_FULLBRIGHT)? true : false;
 
     vis->data.mo.secFloor = mo->subsector->sector->SP_floorvisheight;
     vis->data.mo.secCeil  = mo->subsector->sector->SP_ceilvisheight;
@@ -866,24 +853,6 @@ void R_ProjectSprite(mobj_t *mo)
     vis->data.mo.matFlip[0] = flip;
     vis->data.mo.matFlip[1] = false;
     vis->data.mo.mat = mat;
-
-    // Set light level.
-    if((levelFullBright || mo->state->flags & STF_FULLBRIGHT) &&
-       (!mf || !(mf->sub[0].flags & MFF_DIM)))
-    {
-        vis->data.mo.lightLevel = -1; // fullbright
-    }
-    else if(useBias)
-    {
-        // The light color has been evaluated with the light grid.
-        vis->data.mo.lightLevel = 1;
-    }
-    else
-    {
-        // Diminished light (with compression).
-        vis->data.mo.lightLevel = sect->lightLevel;
-        Rend_ApplyLightAdaptation(&vis->data.mo.lightLevel);
-    }
 
     // The three highest bits of the selector are used for an alpha level.
     // 0 = opaque (alpha -1)
@@ -1209,7 +1178,7 @@ void R_DetermineLightsAffectingVisSprite(const visspritelightparams_t *params,
     {
         memset(lights, 0, sizeof(lights));
 
-        // The model should always be lit with world light.
+        // Should always be lit with world light.
         numLights++;
         lights[0].used = true;
 

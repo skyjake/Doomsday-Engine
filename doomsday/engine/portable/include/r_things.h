@@ -81,10 +81,9 @@ typedef struct vissprite_s {
             int             selector;
             int             pClass; // player class (used in translation)
             float           floorClip;
+            boolean         stateFullBright;
             boolean         viewAligned;    // Align to view plane.
             float           secFloor, secCeil;
-            float           rgb[3]; // Sector light color.
-            float           lightLevel;
             float           alpha;
             float           visOff[3]; // Last-minute offset to coords.
             boolean         floorAdjust; // Allow moving sprite to match visible floor.
