@@ -549,8 +549,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     sec->planes = newList;
 }
 
-surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t *suf,
-                                          const float *pos)
+surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t *suf)
 {
     uint                i;
     surfacedecor_t     *d, *s, *decorations;
@@ -578,9 +577,6 @@ surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t *suf,
     // Add the new decoration.
     d = &decorations[suf->numDecorations - 1];
     d->type = type;
-    d->pos[VX] = pos[VX];
-    d->pos[VY] = pos[VY];
-    d->pos[VZ] = pos[VZ];
 
     suf->decorations = decorations;
 
@@ -1700,6 +1696,17 @@ void R_BuildSectorLinks(gamemap_t *map)
 #undef DOMINANT_SIZE
 }
 
+static __inline void initSurfaceMaterialOffset(surface_t *suf)
+{
+    if(!suf)
+        return;
+
+    suf->visOffset[VX] = suf->oldOffset[0][VX] =
+        suf->oldOffset[1][VX] = suf->offset[VX];
+    suf->visOffset[VY] = suf->oldOffset[0][VY] =
+        suf->oldOffset[1][VY] = suf->offset[VY];
+}
+
 /**
  * Called by the game at various points in the level setup process.
  */
@@ -1730,19 +1737,32 @@ void R_SetupLevel(int mode, int flags)
 
         R_SkyFix(true, true); // fix floors and ceilings.
 
-        // Update all sectors. Set intial values of various tracked
-        // and interpolated properties (lighting, smoothed planes etc).
+        // Set intial values of various tracked and interpolated properties
+        // (lighting, smoothed planes etc).
         for(i = 0; i < numSectors; ++i)
         {
-            uint            j;
-            sector_t       *sec = SECTOR_PTR(i);
+            uint                j;
+            sector_t           *sec = SECTOR_PTR(i);
 
             R_UpdateSector(sec, false);
             for(j = 0; j < sec->planeCount; ++j)
             {
-                sec->planes[j]->visHeight = sec->planes[j]->oldHeight[0] =
-                    sec->planes[j]->oldHeight[1] = sec->planes[j]->height;
+                plane_t            *pln = sec->SP_plane(j);
+
+                pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] =
+                    pln->height;
+
+                initSurfaceMaterialOffset(&pln->surface);
             }
+        }
+
+        for(i = 0; i < numSideDefs; ++i)
+        {
+            sidedef_t          *si = SIDE_PTR(i);
+
+            initSurfaceMaterialOffset(&si->SW_topsurface);
+            initSurfaceMaterialOffset(&si->SW_middlesurface);
+            initSurfaceMaterialOffset(&si->SW_bottomsurface);
         }
 
         // We don't render fakeradio on polyobjects...
@@ -1766,15 +1786,28 @@ void R_SetupLevel(int mode, int flags)
         // and interpolated properties (lighting, smoothed planes etc).
         for(i = 0; i < numSectors; ++i)
         {
-            uint            l;
-            sector_t       *sec = SECTOR_PTR(i);
+            uint                l;
+            sector_t           *sec = SECTOR_PTR(i);
 
             R_UpdateSector(sec, true);
             for(l = 0; l < sec->planeCount; ++l)
             {
-                sec->planes[l]->visHeight = sec->planes[l]->oldHeight[0] =
-                    sec->planes[l]->oldHeight[1] = sec->planes[l]->height;
+                plane_t            *pln = sec->SP_plane(l);
+
+                pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] =
+                    pln->height;
+
+                initSurfaceMaterialOffset(&pln->surface);
             }
+        }
+
+        for(i = 0; i < numSideDefs; ++i)
+        {
+            sidedef_t          *si = SIDE_PTR(i);
+
+            initSurfaceMaterialOffset(&si->SW_topsurface);
+            initSurfaceMaterialOffset(&si->SW_middlesurface);
+            initSurfaceMaterialOffset(&si->SW_bottomsurface);
         }
 
         // We don't render fakeradio on polyobjects...

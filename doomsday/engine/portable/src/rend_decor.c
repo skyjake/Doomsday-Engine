@@ -371,7 +371,7 @@ static void createSurfaceDecoration(const surface_t *suf,
     source->pos[VY] = dec->pos[VY];
     source->pos[VZ] = dec->pos[VZ];
     source->maxDist = maxDist;
-    source->subsector = R_PointInSubsector(dec->pos[VX], dec->pos[VY]);
+    source->subsector = dec->subsector;
     source->surface = suf;
     source->type = dec->type;
     switch(source->type)
@@ -543,7 +543,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                 getDecorationSkipPattern(modelDef->patternSkip, skip);
 
                 posBase[VX] = v[0]->V_pos[VX] + modelDef->elevation * suf->normal[VX];
-                posBase[VY] = v[0]->V_pos[VY] + modelDef->elevation * suf->normal[VZ];
+                posBase[VY] = v[0]->V_pos[VY] + modelDef->elevation * suf->normal[VY];
 
                 patternW = surfTexW * skip[VX];
                 patternH = surfTexH * skip[VY];
@@ -567,8 +567,13 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                         pos[VY] = posBase[VY] + delta[VY] * s / line->length;
                         pos[VZ] = top - t;
 
-                        if(NULL != (d = R_CreateSurfaceDecoration(DT_MODEL, suf, pos)))
+                        if(NULL != (d = R_CreateSurfaceDecoration(DT_MODEL, suf)))
                         {
+                            d->pos[VX] = pos[VX];
+                            d->pos[VY] = pos[VY];
+                            d->pos[VZ] = pos[VZ];
+                            d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
+
                             DEC_MODEL(d)->mf = mf;
                             DEC_MODEL(d)->def = modelDef;
                             DEC_MODEL(d)->rotation = 0;
@@ -614,8 +619,13 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                         pos[VY] = posBase[VY] + delta[VY] * s / line->length;
                         pos[VZ] = top - t;
 
-                        if(NULL != (d = R_CreateSurfaceDecoration(DT_LIGHT, suf, pos)))
+                        if(NULL != (d = R_CreateSurfaceDecoration(DT_LIGHT, suf)))
                         {
+                            d->pos[VX] = pos[VX];
+                            d->pos[VY] = pos[VY];
+                            d->pos[VZ] = pos[VZ];
+                            d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
+
                             DEC_LIGHT(d)->def = lightDef;
                         }
                     }
@@ -819,8 +829,13 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
                         pos[VZ] =
                             pln->visHeight + modelDef->elevation * suf->normal[VZ];
 
-                        if(NULL != (d = R_CreateSurfaceDecoration(DT_MODEL, suf, pos)))
+                        if(NULL != (d = R_CreateSurfaceDecoration(DT_MODEL, suf)))
                         {
+                            d->pos[VX] = pos[VX];
+                            d->pos[VY] = pos[VY];
+                            d->pos[VZ] = pos[VZ];
+                            d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
+
                             DEC_MODEL(d)->def = modelDef;
                             DEC_MODEL(d)->mf = mf;
                             DEC_MODEL(d)->rotation = 90; // Degrees.
@@ -875,8 +890,13 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
                         pos[VZ] =
                             pln->visHeight + lightDef->elevation * suf->normal[VZ];
 
-                        if(NULL != (d = R_CreateSurfaceDecoration(DT_LIGHT, suf, pos)))
+                        if(NULL != (d = R_CreateSurfaceDecoration(DT_LIGHT, suf)))
                         {
+                            d->pos[VX] = pos[VX];
+                            d->pos[VY] = pos[VY];
+                            d->pos[VZ] = pos[VZ];
+                            d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
+
                             DEC_LIGHT(d)->def = lightDef;
                         }
                     }
