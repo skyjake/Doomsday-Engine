@@ -501,10 +501,10 @@ void Rend_ApplyTorchLight(float* color, float distance)
  *                      the rendpoly to be lit, for each vertex seperately.
  */
 void Rend_VertexColors(rendpoly_t* poly, float lightLevel,
-                       float distanceOverride, const float* sufColor)
+                       const float* sufColor)
 {
     int                 i, num;
-    float               lightVal, dist = distanceOverride;
+    float               lightVal, dist;
     rendpoly_vertex_t  *vtx;
 
     // Check for special case exceptions.
@@ -513,13 +513,10 @@ void Rend_VertexColors(rendpoly_t* poly, float lightLevel,
         return; // Don't need per-vertex lighting.
     }
 
-    lightLevel = MINMAX_OF(0, lightLevel, 1);
-
     num = poly->numVertices;
     for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
     {
-        if(!(distanceOverride >= 0))
-            dist = Rend_PointDist2D(vtx->pos);
+        dist = Rend_PointDist2D(vtx->pos);
 
         // Apply distance attenuation.
         lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
@@ -611,12 +608,12 @@ void Rend_PreparePlane(rendpoly_t *poly, subplaneinfo_t *info, float height,
                     for(i = 0; i < 3; ++i)
                         vColor[i] = surfaceColor[i] * sectorLightColor[i];
 
-                    Rend_VertexColors(poly, sectorLight, -1, vColor);
+                    Rend_VertexColors(poly, sectorLight, vColor);
                 }
                 else
                 {
                     // Use sector light+color only
-                    Rend_VertexColors(poly, sectorLight, -1, sectorLightColor);
+                    Rend_VertexColors(poly, sectorLight, sectorLightColor);
                 }
             }
         }
@@ -1437,7 +1434,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                             R_WallAngleLightLevelDelta(seg->lineDef,
                                                        seg->side);
 
-                        Rend_VertexColors(quad, ll, -1, topColor);
+                        Rend_VertexColors(quad, ll, topColor);
 
                         // Bottom color (if different from top)?
                         if(bottomColor != NULL)
