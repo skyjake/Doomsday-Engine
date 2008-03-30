@@ -145,41 +145,49 @@ static void setupModelParamsForVisPSprite(modelparams_t *params,
     params->shinePitchOffset = vpitch + 90;
     params->shineTranslateWithViewerPos = false;
     params->shinepspriteCoordSpace = true;
+    params->ambientColor[CA] = spr->data.model.alpha;
 
     if((levelFullBright || spr->data.model.stateFullBright) &&
        !(spr->data.model.mf->sub[0].flags & MFF_DIM))
     {
         params->ambientColor[CR] = params->ambientColor[CG] =
             params->ambientColor[CB] = 1;
-        params->ambientColor[CA] = spr->data.model.alpha;
         params->lights = NULL;
         params->numLights = 0;
     }
     else
     {
-        float               lightLevel;
         collectaffectinglights_params_t lparams;
 
         if(useBias)
         {
             LG_Evaluate(params->center, params->ambientColor);
-            lightLevel = 1;
         }
         else
         {
+            float               lightLevel;
             const float*        secColor =
                 R_GetSectorLightColor(spr->data.model.subsector->sector);
 
             // Diminished light (with compression).
             lightLevel = spr->data.model.subsector->sector->lightLevel;
+
+            // No need for distance attentuation.
+
+            // Add extra light.
+            lightLevel += R_ExtraLightDelta();
+
+            // The last step is to compress the resultant light value by
+            // the global lighting function.
             Rend_ApplyLightAdaptation(&lightLevel);
 
-            params->ambientColor[CR] = secColor[CR];
-            params->ambientColor[CG] = secColor[CG];
-            params->ambientColor[CB] = secColor[CB];
+            // Determine the final ambientColor in effect.
+            params->ambientColor[CR] = lightLevel * secColor[CR];
+            params->ambientColor[CG] = lightLevel * secColor[CG];
+            params->ambientColor[CB] = lightLevel * secColor[CB];
         }
 
-        params->ambientColor[CA] = spr->data.model.alpha;
+        Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
         lparams.starkLight = true;
         memcpy(lparams.center, spr->center, sizeof(lparams.center));
@@ -187,8 +195,6 @@ static void setupModelParamsForVisPSprite(modelparams_t *params,
         lparams.maxLights = modelLight;
         lparams.ambientColor = params->ambientColor;
 
-        R_SetAmbientColor(params->ambientColor, params->ambientColor, lightLevel,
-                          params->distance);
         R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
 }
@@ -355,60 +361,56 @@ static void setupPSpriteParams(rendpspriteparams_t *params,
     params->texFlip[1] = false;
 
     params->lump = info.idx;
+    params->ambientColor[CA] = spr->data.sprite.alpha;
 
     if(spr->data.sprite.isFullBright)
     {
         params->ambientColor[CR] = params->ambientColor[CG] =
             params->ambientColor[CB] = 1;
-        params->ambientColor[CA] = spr->data.sprite.alpha;
-        params->uniformColor = true;
         params->numLights = 0;
         params->lights = NULL;
     }
     else
     {
-        float               lightLevel;
         collectaffectinglights_params_t lparams;
-
-        params->uniformColor = false;
 
         if(useBias)
         {
-            /**
-             * Evaluate the position of the player in the light grid.
-             * \todo Should be affected by BIAS sources.
-             */
+            // Evaluate the position in the light grid.
             LG_Evaluate(spr->center, params->ambientColor);
-            lightLevel = 1;
         }
         else
         {
-            const float*            secColor =
+            float               lightLevel;
+            const float*        secColor =
                 R_GetSectorLightColor(spr->data.sprite.subsector->sector);
 
             if(spr->psp->light < 1)
-            {
                 lightLevel = (spr->psp->light - .1f);
-                Rend_ApplyLightAdaptation(&lightLevel);
-            }
             else
                 lightLevel = 1;
 
-            params->ambientColor[CR] = secColor[CR];
-            params->ambientColor[CG] = secColor[CG];
-            params->ambientColor[CB] = secColor[CB];
+            // No need for distance attentuation.
+
+            // Add extra light.
+            lightLevel += R_ExtraLightDelta();
+
+            Rend_ApplyLightAdaptation(&lightLevel);
+
+            // Determine the final ambientColor in affect.
+            params->ambientColor[CR] = lightLevel * secColor[CR];
+            params->ambientColor[CG] = lightLevel * secColor[CG];
+            params->ambientColor[CB] = lightLevel * secColor[CB];
         }
 
-        params->ambientColor[CA] = spr->data.sprite.alpha;
+        Rend_ApplyTorchLight(params->ambientColor, 0);
 
-        lparams.starkLight = true;
+        lparams.starkLight = false;
         memcpy(lparams.center, spr->center, sizeof(lparams.center));
         lparams.maxLights = spriteLight;
         lparams.subsector = spr->data.sprite.subsector;
         lparams.ambientColor = params->ambientColor;
 
-        R_SetAmbientColor(params->ambientColor, params->ambientColor,
-                          lightLevel, -10);
         R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
 }
@@ -453,7 +455,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         quadNormals[i].xyz[VZ] = viewFrontVec[VY];
     }
 
-    if(params->uniformColor)
+    if(!params->lights)
     {   // Lit uniformly.
         Spr_UniformVertexColors(4, quadColors, params->ambientColor);
     }
@@ -742,40 +744,46 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->shineTranslateWithViewerPos = false;
         params->shinepspriteCoordSpace = false;
 
+        params->ambientColor[CA] = spr->data.mo.alpha;
+
         if((levelFullBright || spr->data.mo.stateFullBright) &&
             !(spr->data.mo.mf->sub[0].flags & MFF_DIM))
         {
             params->ambientColor[CR] = params->ambientColor[CG] =
                 params->ambientColor[CB] = 1;
-            params->ambientColor[CA] = spr->data.mo.alpha;
             params->lights = NULL;
             params->numLights = 0;
         }
         else
         {
-            float               lightLevel;
             collectaffectinglights_params_t lparams;
 
             if(useBias)
             {
                 LG_Evaluate(params->center, params->ambientColor);
-                lightLevel = 1;
             }
             else
             {
+                subsector_t*        ssec = spr->data.mo.subsector;
+                float               lightLevel = ssec->sector->lightLevel;
                 const float*        secColor =
-                    R_GetSectorLightColor(spr->data.mo.subsector->sector);
+                    R_GetSectorLightColor(ssec->sector);
 
-                // Diminished light (with compression).
-                lightLevel = spr->data.mo.subsector->sector->lightLevel;
+                // Apply distance attenuation.
+                lightLevel = R_DistAttenuateLightLevel(spr->distance, lightLevel);
+
+                // Add extra light.
+                lightLevel += R_ExtraLightDelta();
+
                 Rend_ApplyLightAdaptation(&lightLevel);
 
-                params->ambientColor[CR] = secColor[CR];
-                params->ambientColor[CG] = secColor[CG];
-                params->ambientColor[CB] = secColor[CB];
+                // Determine the final ambientColor in affect.
+                params->ambientColor[CR] = lightLevel * secColor[CR];
+                params->ambientColor[CG] = lightLevel * secColor[CG];
+                params->ambientColor[CB] = lightLevel * secColor[CB];
             }
 
-            params->ambientColor[CA] = spr->data.mo.alpha;
+            Rend_ApplyTorchLight(params->ambientColor, spr->distance);
 
             lparams.starkLight = false;
             memcpy(lparams.center, spr->center, sizeof(lparams.center));
@@ -783,8 +791,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
             lparams.maxLights = modelLight;
             lparams.ambientColor = params->ambientColor;
 
-            R_SetAmbientColor(params->ambientColor, params->ambientColor,
-                              lightLevel, spr->distance);
             R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
         }
     }
@@ -817,42 +823,49 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->shineTranslateWithViewerPos = false;
         params->shinepspriteCoordSpace = 0;
 
+        params->ambientColor[CA] = spr->data.decormodel.alpha;
+
         if(levelFullBright)
         {
             params->ambientColor[CR] = params->ambientColor[CG] =
                 params->ambientColor[CB] = 1;
-            params->ambientColor[CA] = spr->data.decormodel.alpha;
             params->lights = NULL;
             params->numLights = 0;
         }
         else
         {
-            float               lightLevel;
             collectaffectinglights_params_t lparams;
 
             if(useBias)
             {
-                /**
-                 * Evaluate the position of this decoration in the light grid.
-                 * \todo Should be affected by BIAS sources.
-                 */
+                // Evaluate the position in the light grid.
                 LG_Evaluate(spr->center, params->ambientColor);
-                lightLevel = 1;
             }
             else
             {
-                const float*        sectorColor =
-                    R_GetSectorLightColor(spr->data.decormodel.subsector->sector);
+                subsector_t        *ssec = spr->data.decormodel.subsector;
+                float               lightLevel = ssec->sector->lightLevel;
+                const float*        secColor =
+                    R_GetSectorLightColor(ssec->sector);
 
-                lightLevel = spr->data.decormodel.subsector->sector->lightLevel;
+                // Wall decorations receive an additional light delta.
+                /*lightLevel += R_WallAngleLightLevelDelta(linedef, side);*/
+
+                // Apply distance attenuation.
+                lightLevel = R_DistAttenuateLightLevel(spr->distance, lightLevel);
+
+                // Add extra light.
+                lightLevel += R_ExtraLightDelta();
+
                 Rend_ApplyLightAdaptation(&lightLevel);
 
-                params->ambientColor[CR] = sectorColor[CR];
-                params->ambientColor[CG] = sectorColor[CG];
-                params->ambientColor[CB] = sectorColor[CB];
+                // Determine the final ambientColor in affect.
+                params->ambientColor[CR] = lightLevel * secColor[CR];
+                params->ambientColor[CG] = lightLevel * secColor[CG];
+                params->ambientColor[CB] = lightLevel * secColor[CB];
             }
 
-            params->ambientColor[CA] = spr->data.decormodel.alpha;
+            Rend_ApplyTorchLight(params->ambientColor, spr->distance);
 
             lparams.starkLight = false;
             memcpy(lparams.center, spr->center, sizeof(lparams.center));
@@ -860,8 +873,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
             lparams.maxLights = modelLight;
             lparams.ambientColor = params->ambientColor;
 
-            R_SetAmbientColor(params->ambientColor, params->ambientColor,
-                              lightLevel, spr->distance);
             R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
         }
     }
@@ -1055,13 +1066,9 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
     for(i = 0; i < 4; ++i)
         memcpy(quadNormals[i].xyz, surfaceNormal, sizeof(surfaceNormal));
 
-    // Light the sprite.
-    if(params->lightLevel < 0)
-    {   // Fullbright white.
-        float               rgba[4];
-        rgba[CR] = rgba[CG] = rgba[CB] = 1;
-        rgba[CA] = params->ambientColor[CA];
-        Spr_UniformVertexColors(4, quadColors, rgba);
+    if(!params->lights)
+    {   // Lit uniformly.
+        Spr_UniformVertexColors(4, quadColors, params->ambientColor);
     }
     else
     {   // Lit normally.
@@ -1186,7 +1193,6 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           vissprite_t *spr)
 {
     float               top;
-    collectaffectinglights_params_t lparams;
     spritetex_t        *sprTex = spriteTextures[spr->data.mo.mat->ofTypeID];
 
     // Setup params:
@@ -1232,53 +1238,6 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->matFlip[0] = spr->data.mo.matFlip[0];
     params->matFlip[1] = spr->data.mo.matFlip[1];
 
-    // Set the lighting and alpha.
-    if(useBias)
-    {
-        if(spr->data.mo.stateFullBright)
-        {
-            params->ambientColor[CR] = params->ambientColor[CG] =
-                params->ambientColor[CB] = 1;
-        }
-        else
-        {
-            LG_Evaluate(params->center, params->ambientColor);
-        }
-        params->lightLevel = 1;
-    }
-    else
-    {
-        const float*        secColor =
-            R_GetSectorLightColor(spr->data.mo.subsector->sector);
-
-        if(levelFullBright || spr->data.mo.stateFullBright)
-        {
-            params->lightLevel = 1;
-        }
-        else
-        {
-            // Diminished light (with compression).
-            params->lightLevel = spr->data.mo.subsector->sector->lightLevel;
-            Rend_ApplyLightAdaptation(&params->lightLevel);
-        }
-
-        params->ambientColor[CR] = secColor[CR];
-        params->ambientColor[CG] = secColor[CG];
-        params->ambientColor[CB] = secColor[CB];
-    }
-
-    params->ambientColor[CA] = 1;
-
-    lparams.starkLight = false;
-    memcpy(lparams.center, params->center, sizeof(lparams.center));
-    lparams.maxLights = spriteLight;
-    lparams.subsector = params->subsector;
-    lparams.ambientColor = params->ambientColor;
-
-    R_SetAmbientColor(params->ambientColor, params->ambientColor,
-                      params->lightLevel, params->distance);
-    R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
-
     if(useSpriteAlpha)
     {
         if(missileBlend && (spr->data.mo.flags & DDMF_BRIGHTSHADOW))
@@ -1308,5 +1267,52 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     else
     {
         params->blendMode = BM_NORMAL;
+    }
+
+    if(levelFullBright || spr->data.mo.stateFullBright)
+    {
+        params->ambientColor[CR] = params->ambientColor[CG] =
+            params->ambientColor[CB] = 1;
+        params->lights = NULL;
+        params->numLights = 0;
+    }
+    else
+    {
+        collectaffectinglights_params_t lparams;
+
+        if(useBias)
+        {
+            LG_Evaluate(params->center, params->ambientColor);
+        }
+        else
+        {
+            subsector_t*        ssec = spr->data.mo.subsector;
+            float               lightLevel = ssec->sector->lightLevel;
+            const float*        secColor =
+                R_GetSectorLightColor(ssec->sector);
+
+            // Apply distance attenuation.
+            lightLevel = R_DistAttenuateLightLevel(params->distance, lightLevel);
+
+            // Add extra light.
+            lightLevel += R_ExtraLightDelta();
+
+            Rend_ApplyLightAdaptation(&lightLevel);
+
+            // Determine the final ambientColor in affect.
+            params->ambientColor[CR] = lightLevel * secColor[CR];
+            params->ambientColor[CG] = lightLevel * secColor[CG];
+            params->ambientColor[CB] = lightLevel * secColor[CB];
+        }
+
+        Rend_ApplyTorchLight(params->ambientColor, params->distance);
+
+        lparams.starkLight = false;
+        memcpy(lparams.center, params->center, sizeof(lparams.center));
+        lparams.maxLights = spriteLight;
+        lparams.subsector = params->subsector;
+        lparams.ambientColor = params->ambientColor;
+
+        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
 }

@@ -203,11 +203,8 @@ void            R_AddPSprites(void);
 void            R_DrawSprites(void);
 void            R_InitSprites(void);
 void            R_ClearSprites(void);
-
 void            R_ClipVisSprite(vissprite_t *vis, int xl, int xh);
 
-void            R_SetAmbientColor(float *dest, const float *rgba,
-                                  float lightLevel, float distance);
 void            R_CollectAffectingLights(const collectaffectinglights_params_t *params,
                                          vlight_t **ptr, uint *num);
 

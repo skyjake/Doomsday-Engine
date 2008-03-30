@@ -959,25 +959,6 @@ void R_SortVisSprites(void)
         visSprSortedHead.prev->next = best;
         visSprSortedHead.prev = best;
     }
-
-}
-
-void R_SetAmbientColor(float *dest, const float *rgba, float lightLevel, float distance)
-{
-    uint                i;
-    rendpoly_t         *poly;
-
-    // This way the distance darkening has an effect.
-    poly = R_AllocRendPoly(RP_NONE, false, 1);
-
-    // Note: Light adaptation has already been applied.
-    RL_VertexColors(poly, lightLevel, distance, rgba, rgba[CA]);
-
-    // Determine the ambient light affecting the vissprite.
-    for(i = 0; i < 3; ++i)
-        dest[i] = poly->vertices[0].color[i];
-
-    R_FreeRendPoly(poly);
 }
 
 static void scaleFloatRGB(float *out, const float *in, float mul)

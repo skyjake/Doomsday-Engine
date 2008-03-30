@@ -50,7 +50,6 @@ typedef struct rendspriteparams_s {
 
     // Lighting/color:
     float           ambientColor[4];
-    float           lightLevel;
     uint            numLights;
     vlight_t       *lights;
 
@@ -71,7 +70,6 @@ typedef struct rendpspriteparams_s {
 
     // Lighting/color:
     float           ambientColor[4];
-    boolean         uniformColor;
     uint            numLights;
     vlight_t       *lights;
 } rendpspriteparams_t;

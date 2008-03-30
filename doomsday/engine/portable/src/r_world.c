@@ -51,6 +51,8 @@
 // $smoothmatoffset: Maximum speed for a smoothed material offset.
 #define MAX_SMOOTH_MATERIAL_MOVE (8)
 
+#define MAX_LIGHTATTENTUATION_DISTANCE 1024
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -69,6 +71,9 @@ boolean firstFrameAfterLoad;
 boolean levelSetup;
 
 nodeindex_t     *linelinks;         // indices to roots
+
+// Intensity of angle-based wall lighting.
+float   rendLightWallAngle = 1;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -2078,6 +2083,64 @@ void R_UpdatePlanes(void)
 }
 
 /**
+ * The DOOM lighting model applies distance attenuation to sector light
+ * levels.
+ *
+ * @param distToViewer  Distance from the viewer to this object.
+ * @param lightLevel    Sector lightLevel at this object's origin.
+ * @return              The specified lightLevel plus any attentuation.
+ */
+float R_DistAttenuateLightLevel(float distToViewer, float lightLevel)
+{
+    if(distToViewer > 0)
+    {
+        float               real, minimum;
+
+        real = lightLevel -
+            (distToViewer - 32) / MAX_LIGHTATTENTUATION_DISTANCE *
+                (1 - lightLevel);
+
+        minimum = lightLevel * lightLevel + (lightLevel - .63f) / 2;
+        if(real < minimum)
+            real = minimum; // Clamp it.
+
+        return real;
+    }
+
+    return lightLevel;
+}
+
+/**
+ * The DOOM lighting model applies a sector light level delta when drawing
+ * segs based on their 2D world angle.
+ *
+ * @param l             Linedef to calculate the delta for.
+ * @param side          Side of the linedef we are interested in.
+ * @return              Calculated delta.
+ */
+float R_WallAngleLightLevelDelta(const linedef_t* l, byte side)
+{
+    if(!(rendLightWallAngle > 0))
+        return 0;
+
+    // Do a lighting adjustment based on orientation.
+    return (1.0f / 255.0f) *
+        ((l->L_vpos(side^1)[VY] - l->L_vpos(side)[VY]) / l->length * 18 *
+        rendLightWallAngle);
+}
+
+/**
+ * The DOOM lighting model applies a light level delta to everything when
+ * e.g. the player shoots.
+ *
+ * @return              Calculated delta.
+ */
+float R_ExtraLightDelta(void)
+{
+    return extraLight / 16.0f;
+}
+
+/**
  * Sector light color may be affected by the sky light color.
  */
 const float *R_GetSectorLightColor(const sector_t *sector)
@@ -2087,7 +2150,6 @@ const float *R_GetSectorLightColor(const sector_t *sector)
 
     if(!R_SectorContainsSkySurfaces(sector))
     {
-        uint                c;
         sector_t           *src;
 
         // A dominant light source affects this sector?
@@ -2098,6 +2160,8 @@ const float *R_GetSectorLightColor(const sector_t *sector)
             return R_GetSectorLightColor(src);
         }
 
+        return sector->rgb;
+/*
         // Return the sector's real color (balanced against sky's).
         if(skyColorBalance >= 1)
         {
@@ -2105,10 +2169,13 @@ const float *R_GetSectorLightColor(const sector_t *sector)
         }
         else
         {
+            int                 c;
+
             for(c = 0; c < 3; ++c)
                 balancedRGB[c] = sector->rgb[c] * skyColorBalance;
             return balancedRGB;
         }
+*/
     }
 
     // Return the sky color.

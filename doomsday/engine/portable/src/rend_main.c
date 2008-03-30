@@ -78,7 +78,6 @@ extern boolean firstFrameAfterLoad;
 boolean usingFog = false; // Is the fog in use?
 float fogColor[4];
 float fieldOfView = 95.0f;
-float maxLightDist = 1024;
 byte smoothTexAnim = true;
 int useShinySurfaces = true;
 
@@ -220,56 +219,6 @@ void Rend_ModelViewMatrix(boolean useAngles)
     DGL_Scalef(1, 1.2f, 1);      // This is the aspect correction.
     DGL_Translatef(-vx, -vy, -vz);
 }
-
-#if 0 // unused atm
-/**
- * Models the effect of distance to the light level. Extralight (torch)
- * is also noted. This is meant to be used for white light only
- * (a light level).
- */
-int R_AttenuateLevel(float lightlevel, float distance)
-{
-    float   light = lightlevel, real, minimum;
-    float   d, newmin;
-    int     i;
-
-    //boolean usewhite = false;
-
-    real = light - (distance - 32) / maxLightDist * (1 - light);
-    minimum = light * light + (light - .63f) / 2;
-    if(real < minimum)
-        real = minimum;         // Clamp it.
-
-    // Add extra light.
-    real += extraLight / 16.0f;
-
-    // Check for torch.
-    if(viewPlayer->fixedColorMap)
-    {
-        // Colormap 1 is the brightest. I'm guessing 16 would be the darkest.
-        newmin =
-            ((1024 - distance) / 512) * (16 -
-                                         viewPlayer->fixedColorMap) / 15.0f;
-        if(real < newmin)
-        {
-            real = newmin;
-            //usewhite = true; // FIXME : Do some linear blending.
-        }
-    }
-
-    real *= 256;
-
-    // Clamp the final light.
-    if(real < 0)
-        real = 0;
-    if(real > 255)
-        real = 255;
-
-    /*for(i = 0; i < 3; i++)
-       vtx->color.rgb[i] = (DGLubyte) ((usewhite? 0xff : rgb[c]) * real); */
-    return real;
-}
-#endif
 
 static __inline float segFacingViewerDot(float v1[2], float v2[2])
 {
@@ -476,6 +425,205 @@ static void polyTexBlend(rendpoly_t *poly, material_t *material)
     poly->interTex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
     poly->interTex.masked = texinfo->masked;
     poly->interPos = xlat->inter;
+}
+
+void Rend_VertexColorsGlow(rendpoly_t* poly)
+{
+    int                 i;
+
+    // Check for special case exceptions.
+    if(!(poly->flags & RPF_GLOW))
+        return;
+
+    for(i = 0; i < poly->numVertices; ++i)
+    {
+        rendpoly_vertex_t  *vtx = &poly->vertices[i];
+
+        vtx->color[CR] = vtx->color[CG] = vtx->color[CB] = 1;
+    }
+}
+
+void Rend_VertexColorsAlpha(rendpoly_t* poly, float alpha)
+{
+    int                 i;
+
+    // Check for special case exceptions.
+    if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW))
+    {
+        return;
+    }
+
+    for(i = 0; i < poly->numVertices; ++i)
+    {
+        rendpoly_vertex_t      *vtx = &poly->vertices[i];
+
+        // Set final alpha.
+        vtx->color[CA] = alpha;
+    }
+}
+
+void Rend_ApplyTorchLight(float* color, float distance)
+{
+    ddplayer_t         *ddpl = &viewPlayer->shared;
+
+    if(!ddpl->fixedColorMap)
+        return;
+
+    // Check for torch.
+    if(distance < 1024)
+    {
+        // Colormap 1 is the brightest. I'm guessing 16 would be
+        // the darkest.
+        int                 ll = 16 - ddpl->fixedColorMap;
+        float               d = (1024 - distance) / 1024.0f * ll / 15.0f;
+
+        if(torchAdditive)
+        {
+            color[CR] += d * torchColor[CR];
+            color[CG] += d * torchColor[CG];
+            color[CB] += d * torchColor[CB];
+        }
+        else
+        {
+            color[CR] += d * ((color[CR] * torchColor[CR]) - color[CR]);
+            color[CG] += d * ((color[CG] * torchColor[CG]) - color[CG]);
+            color[CB] += d * ((color[CB] * torchColor[CB]) - color[CB]);
+        }
+    }
+}
+
+/**
+ * Color distance attenuation, extraLight.
+ *
+ * @param distanceOverride If positive, this distance will be used for ALL
+ *                      of the rendpoly's vertices. Else, the dist will be
+ *                      calculated if needed, depending on the properties of
+ *                      the rendpoly to be lit, for each vertex seperately.
+ */
+void Rend_VertexColors(rendpoly_t* poly, float lightLevel,
+                       float distanceOverride, const float* sufColor)
+{
+    int                 i, num;
+    float               lightVal, dist = distanceOverride;
+    rendpoly_vertex_t  *vtx;
+
+    // Check for special case exceptions.
+    if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW|RPF_GLOW))
+    {
+        return; // Don't need per-vertex lighting.
+    }
+
+    lightLevel = MINMAX_OF(0, lightLevel, 1);
+
+    num = poly->numVertices;
+    for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
+    {
+        if(!(distanceOverride >= 0))
+            dist = Rend_PointDist2D(vtx->pos);
+
+        // Apply distance attenuation.
+        lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
+
+        // Add extra light.
+        lightVal += R_ExtraLightDelta();
+
+        Rend_ApplyLightAdaptation(&lightVal);
+
+        // Mix with the surface color.
+        vtx->color[CR] = lightVal * sufColor[CR];
+        vtx->color[CG] = lightVal * sufColor[CG];
+        vtx->color[CB] = lightVal * sufColor[CB];
+    }
+}
+
+void Rend_VertexColorsApplyTorchLight(rendpoly_t *poly, float distanceOverride)
+{
+    int                 i;
+    float               dist = distanceOverride;
+
+    // Check for special case exceptions.
+    if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW|RPF_GLOW))
+    {
+        return; // Don't receive light from torches.
+    }
+
+    for(i = 0; i < poly->numVertices; ++i)
+    {
+        rendpoly_vertex_t  *vtx = &poly->vertices[i];
+
+        if(!(distanceOverride >= 0))
+            dist = Rend_PointDist2D(vtx->pos);
+
+        Rend_ApplyTorchLight(vtx->color, dist);
+    }
+}
+
+void Rend_PreparePlane(rendpoly_t *poly, subplaneinfo_t *info, float height,
+                       subsector_t *subsector, float sectorLight,
+                       boolean antiClockwise,
+                       const float *sectorLightColor, float *surfaceColor)
+{
+    uint                i, vid;
+
+    // First vertex is always #0.
+    poly->vertices[0].pos[VX] = subsector->vertices[0]->pos[VX];
+    poly->vertices[0].pos[VY] = subsector->vertices[0]->pos[VY];
+    poly->vertices[0].pos[VZ] = height;
+
+    // Copy the vertices in reverse order for ceilings (flip faces).
+    if(antiClockwise)
+        vid = poly->numVertices - 1;
+    else
+        vid = 1;
+
+    for(i = 1; i < poly->numVertices; ++i)
+    {
+        poly->vertices[i].pos[VX] = subsector->vertices[vid]->pos[VX];
+        poly->vertices[i].pos[VY] = subsector->vertices[vid]->pos[VY];
+        poly->vertices[i].pos[VZ] = height;
+
+        (antiClockwise? vid-- : vid++);
+    }
+
+    if(!(poly->flags & RPF_SKY_MASK))
+    {
+        float               vColor[] = { 0, 0, 0, 0};
+
+        if(poly->flags & RPF_GLOW)
+        {
+            Rend_VertexColorsGlow(poly);
+        }
+        else
+        {
+            if(useBias)
+            {
+                // Do BIAS lighting for this poly.
+                SB_RendPoly(poly, subsector->sector->lightLevel,
+                            info->illumination, &info->tracker,
+                            info->affected, subsector - ssectors);
+            }
+            else
+            {
+                // Calculate the color for each vertex, blended with plane color?
+                if(surfaceColor[0] < 1 || surfaceColor[1] < 1 || surfaceColor[2] < 1)
+                {
+                    // Blend sector light+color+surfacecolor
+                    for(i = 0; i < 3; ++i)
+                        vColor[i] = surfaceColor[i] * sectorLightColor[i];
+
+                    Rend_VertexColors(poly, sectorLight, -1, vColor);
+                }
+                else
+                {
+                    // Use sector light+color only
+                    Rend_VertexColors(poly, sectorLight, -1, sectorLightColor);
+                }
+            }
+        }
+
+        Rend_VertexColorsApplyTorchLight(poly, -1);
+        Rend_VertexColorsAlpha(poly, surfaceColor[CA]);
+    }
 }
 
 /**
@@ -986,7 +1134,7 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
         poly->flags |= RPF_GLOW;
 
     // Surface color/light.
-    RL_PreparePlane(poly, height, subsector, Rend_SectorLight(polySector),
+    Rend_PreparePlane(poly, plane, height, subsector, Rend_SectorLight(polySector),
                     !(surface->normal[VZ] > 0),
                     R_GetSectorLightColor(polySector), surface->rgba);
 
@@ -998,13 +1146,6 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
     }
     else
         poly->lightListIdx = DL_ProcessSubSectorPlane(subsector, plane->planeID);
-
-    if(useBias)
-    {
-        // Do BIAS lighting for this poly.
-        SB_RendPoly(poly, subsector->sector->lightLevel, plane->illumination,
-                    &plane->tracker, plane->affected, subIndex);
-    }
 
     // Smooth Texture Animation?
     if(flags & RPF2_BLEND)
@@ -1258,7 +1399,8 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
             {
                 const float    *topColor = NULL;
                 const float    *bottomColor = NULL;
-                float           sectorLightLevel = Rend_SectorLight(frontsec);
+                float           sectorLightLevel =
+                    Rend_SectorLight(frontsec);
 
                 // Check for neighborhood division?
                 if(!(quad->flags & RPF_MASKED))
@@ -1276,30 +1418,44 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                     quad->flags |= RPF_GLOW;
 
                 // Surface color/light.
-                if(useBias)
+                if(quad->flags & RPF_GLOW)
                 {
-                    // Do BIAS lighting for this poly.
-                    SB_RendPoly(quad, sectorLightLevel, seg->illum[section],
-                                &seg->tracker[section], seg->affected,
-                                GET_SEG_IDX(seg));
+                    Rend_VertexColorsGlow(quad);
                 }
                 else
                 {
-                    RL_VertexColors(quad, sectorLightLevel, -1, topColor, alpha);
-
-                    // Bottom color (if different from top)?
-                    if(bottomColor != NULL)
+                    if(useBias)
                     {
-                        uint                i;
+                        // Do BIAS lighting for this poly.
+                        SB_RendPoly(quad, sectorLightLevel, seg->illum[section],
+                                    &seg->tracker[section], seg->affected,
+                                    GET_SEG_IDX(seg));
+                    }
+                    else
+                    {
+                        float               ll = sectorLightLevel +
+                            R_WallAngleLightLevelDelta(seg->lineDef,
+                                                       seg->side);
 
-                        for(i = 0; i < 4; i += 2)
+                        Rend_VertexColors(quad, ll, -1, topColor);
+
+                        // Bottom color (if different from top)?
+                        if(bottomColor != NULL)
                         {
-                            quad->vertices[i].color[CR] = bottomColor[0];
-                            quad->vertices[i].color[CG] = bottomColor[1];
-                            quad->vertices[i].color[CB] = bottomColor[2];
+                            uint                i;
+
+                            for(i = 0; i < 4; i += 2)
+                            {
+                                quad->vertices[i].color[CR] = bottomColor[0];
+                                quad->vertices[i].color[CG] = bottomColor[1];
+                                quad->vertices[i].color[CB] = bottomColor[2];
+                            }
                         }
                     }
                 }
+
+                Rend_VertexColorsApplyTorchLight(quad, -1);
+                Rend_VertexColorsAlpha(quad, alpha);
 
                 // Smooth Texture Animation?
                 if(tempflags & RPF2_BLEND)
@@ -1576,14 +1732,13 @@ float Rend_SectorLight(sector_t *sec)
     if(levelFullBright)
         return 1.0f;
 
-    // Apply light adaptation
-    return sec->lightLevel + Rend_GetLightAdaptVal(sec->lightLevel);
+    return sec->lightLevel;
 }
 
 static void Rend_MarkSegsFacingFront(subsector_t *sub)
 {
-    uint        i;
-    seg_t      *seg, **ptr;
+    uint                i;
+    seg_t              *seg, **ptr;
 
     ptr = sub->segs;
     while(*ptr)

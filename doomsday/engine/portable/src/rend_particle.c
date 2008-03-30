@@ -448,27 +448,47 @@ void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
         params->pitch = pt->pitch / 32768.0f * 180;
     }
 
+    params->ambientColor[CA] = alpha;
+
     if((st->flags & PTCF_BRIGHT) || levelFullBright)
     {
         params->ambientColor[CR] = params->ambientColor[CG] =
             params->ambientColor[CB] = 1;
-        params->ambientColor[CA] = alpha;
         params->lights = NULL;
         params->numLights = 0;
     }
     else
     {
-        float                   lightLevel;
-        const float*            secColor = R_GetSectorLightColor(pt->sector);
         collectaffectinglights_params_t lparams;
 
-        lightLevel = pt->sector->lightLevel;
-        Rend_ApplyLightAdaptation(&lightLevel);
+        if(useBias)
+        {
+            LG_Evaluate(params->center, params->ambientColor);
+        }
+        else
+        {
+            float               lightLevel = pt->sector->lightLevel;
+            const float*        secColor = R_GetSectorLightColor(pt->sector);
 
-        params->ambientColor[CR] = secColor[CR];
-        params->ambientColor[CG] = secColor[CG];
-        params->ambientColor[CB] = secColor[CB];
-        params->ambientColor[CA] = alpha;
+            params->ambientColor[CR] = secColor[CR];
+            params->ambientColor[CG] = secColor[CG];
+            params->ambientColor[CB] = secColor[CB];
+
+            // Apply distance attenuation.
+            lightLevel = R_DistAttenuateLightLevel(params->distance, lightLevel);
+
+            // Add extra light.
+            lightLevel += R_ExtraLightDelta();
+
+            Rend_ApplyLightAdaptation(&lightLevel);
+
+            // Determine the final ambientColor in affect.
+            params->ambientColor[CR] = lightLevel * secColor[CR];
+            params->ambientColor[CG] = lightLevel * secColor[CG];
+            params->ambientColor[CB] = lightLevel * secColor[CB];
+        }
+
+        Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
         lparams.starkLight = false;
         lparams.subsector = ssec;
@@ -476,8 +496,6 @@ void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
         lparams.maxLights = modelLight;
         lparams.ambientColor = params->ambientColor;
 
-        R_SetAmbientColor(params->ambientColor, params->ambientColor,
-                          lightLevel, params->distance);
         R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
 }

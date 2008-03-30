@@ -217,7 +217,6 @@ vissprite_t *R_NewVisSprite(void);
 extern int skyhemispheres;
 extern int useDynLights, dlBlend, simpleSky;
 extern boolean usingFog;
-extern float maxLightDist;
 
 extern byte freezeRLs;
 extern material_t *skyMaskMaterial;
@@ -228,9 +227,6 @@ int     renderTextures = true;
 int     renderWireframe = false;
 int     useMultiTexLights = true;
 int     useMultiTexDetails = true;
-
-// Intensity of angle-based wall lighting.
-float   rendLightWallAngle = 1;
 
 // Rendering parameters for detail textures.
 float   detailFactor = .5f;
@@ -361,165 +357,6 @@ static void addMaskedPoly(rendpoly_t *poly)
     else
     {
         vis->data.wall.modTex = 0;
-    }
-}
-
-static float wallAngleLightlevelOffset(const rendpoly_t *poly)
-{
-    if(!poly->isWall || !(rendLightWallAngle > 0))
-        return 0;
-
-    // Do a lighting adjustment based on orientation.
-    return (1.0f / 255.0f) *
-        ((poly->vertices[2].pos[VY] -
-         poly->vertices[0].pos[VY]) / poly->wall->length * 18 *
-        rendLightWallAngle);
-}
-
-static float distAttenuateLightLevel(float distToViewer, float lightLevel)
-{
-    float               real, minimum;
-
-    real = lightLevel - (distToViewer - 32) / maxLightDist * (1 - lightLevel);
-    minimum = lightLevel * lightLevel + (lightLevel - .63f) / 2;
-    if(real < minimum)
-        real = minimum; // Clamp it.
-
-    return real;
-}
-
-/**
- * Color distance attenuation, extraLight, fixedcolormap.
- * "Torchlight" is white, regardless of the original RGB.
- *
- * @param distanceOverride If positive, this distance will be used for ALL
- *                      of the rendpoly's vertices. Else, the dist will be
- *                      calculated if needed, depending on the properties of
- *                      the rendpoly to be lit, for each vertex seperately.
- */
-void RL_VertexColors(rendpoly_t *poly, float lightLevel,
-                     float distanceOverride, const float sufColor[3],
-                     float alpha)
-{
-    int                 i, num;
-    float               lightVal, dist = distanceOverride;
-    float               rgb[3];
-    rendpoly_vertex_t  *vtx;
-
-    // Check for special case exceptions.
-    if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW))
-    {
-        return; // Don't need per-vertex lighting.
-    }
-
-    lightLevel += wallAngleLightlevelOffset(poly);
-    lightLevel = MINMAX_OF(0, lightLevel, 1);
-
-    num = poly->numVertices;
-    for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
-    {
-        // If this is a glowing surface, boost the light level up.
-        if(poly->flags & RPF_GLOW)
-        {
-            vtx->color[CR] = vtx->color[CG] = vtx->color[CB] = 1;
-        }
-        else
-        {
-            ddplayer_t             *ddpl = &viewPlayer->shared;
-
-            if(!(distanceOverride > 0))
-                dist = Rend_PointDist2D(vtx->pos);
-
-            // Apply distance attenuation.
-            lightVal = distAttenuateLightLevel(dist, lightLevel);
-
-            // Add extra light.
-            lightVal += extraLight / 16.0f;
-
-            // Mix with the surface color.
-            rgb[CR] = lightVal * sufColor[CR];
-            rgb[CG] = lightVal * sufColor[CG];
-            rgb[CB] = lightVal * sufColor[CB];
-
-            // Check for torch.
-            if(ddpl->fixedColorMap && dist < 1024)
-            {
-                // Colormap 1 is the brightest. I'm guessing 16 would be
-                // the darkest.
-                int                 ll = 16 - ddpl->fixedColorMap;
-                float               d = (1024 - dist) / 1024.0f * ll / 15.0f;
-
-                if(torchAdditive)
-                {
-                    rgb[CR] += d * torchColor[CR];
-                    rgb[CG] += d * torchColor[CG];
-                    rgb[CB] += d * torchColor[CB];
-                }
-                else
-                {
-                    rgb[CR] += d * ((rgb[CR] * torchColor[CR]) - rgb[CR]);
-                    rgb[CG] += d * ((rgb[CG] * torchColor[CG]) - rgb[CG]);
-                    rgb[CB] += d * ((rgb[CB] * torchColor[CB]) - rgb[CB]);
-                }
-            }
-
-            // Set final color.
-            vtx->color[CR] = rgb[CR];
-            vtx->color[CG] = rgb[CG];
-            vtx->color[CB] = rgb[CB];
-        }
-
-        // Set final alpha.
-        vtx->color[CA] = alpha;
-    }
-}
-
-void RL_PreparePlane(rendpoly_t *poly, float height,
-                     subsector_t *subsector, float sectorLight,
-                     boolean antiClockwise,
-                     const float *sectorLightColor, float *surfaceColor)
-{
-    uint                i, vid;
-
-    // First vertex is always #0.
-    poly->vertices[0].pos[VX] = subsector->vertices[0]->pos[VX];
-    poly->vertices[0].pos[VY] = subsector->vertices[0]->pos[VY];
-    poly->vertices[0].pos[VZ] = height;
-
-    // Copy the vertices in reverse order for ceilings (flip faces).
-    if(antiClockwise)
-        vid = poly->numVertices - 1;
-    else
-        vid = 1;
-
-    for(i = 1; i < poly->numVertices; ++i)
-    {
-        poly->vertices[i].pos[VX] = subsector->vertices[vid]->pos[VX];
-        poly->vertices[i].pos[VY] = subsector->vertices[vid]->pos[VY];
-        poly->vertices[i].pos[VZ] = height;
-
-        (antiClockwise? vid-- : vid++);
-    }
-
-    if(!(poly->flags & RPF_SKY_MASK))
-    {
-        float               vColor[] = { 0, 0, 0, 0};
-
-        // Calculate the color for each vertex, blended with plane color?
-        if(surfaceColor[0] < 1 || surfaceColor[1] < 1 || surfaceColor[2] < 1)
-        {
-            // Blend sector light+color+surfacecolor
-            for(i = 0; i < 3; ++i)
-                vColor[i] = surfaceColor[i] * sectorLightColor[i];
-
-            RL_VertexColors(poly, sectorLight, -1, vColor, surfaceColor[3]);
-        }
-        else
-        {
-            // Use sector light+color only
-            RL_VertexColors(poly, sectorLight, -1, sectorLightColor,
-                            surfaceColor[3]);
-        }
     }
 }
 

@@ -59,7 +59,9 @@ void            R_SetupFogDefaults(void);
 void            R_SetupSky(ded_mapinfo_t *mapInfo);
 
 const float    *R_GetSectorLightColor(const sector_t *sector);
-
+float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
+float           R_WallAngleLightLevelDelta(const linedef_t* l, byte side);
+float           R_ExtraLightDelta(void);
 boolean         R_IsSkySurface(const surface_t *suf);
 
 boolean         R_SectorContainsSkySurfaces(const sector_t *sec);
