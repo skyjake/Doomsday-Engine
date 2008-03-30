@@ -643,18 +643,18 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
                         mf->offset[VY];
 
     // Calculate lighting.
-    if(params->uniformColor)
-    {   // Specified uniform color.
+    if((subFlags & MFF_FULLBRIGHT) && !(subFlags & MFF_DIM))
+    {   // Submodel-specific lighting override.
+        ambient[CR] = ambient[CG] = ambient[CB] = ambient[CA] = 1;
+        Mod_FullBrightVertexColors(numVerts, modelColors, alpha);
+    }
+    else if(!params->lights)
+    {   // Lit uniformly.
         ambient[CR] = params->ambientColor[CR];
         ambient[CG] = params->ambientColor[CG];
         ambient[CB] = params->ambientColor[CB];
         ambient[CA] = alpha;
         Mod_FixedVertexColors(numVerts, modelColors, ambient);
-    }
-    else if((subFlags & MFF_FULLBRIGHT) && !(subFlags & MFF_DIM))
-    {   // Fullbright white.
-        ambient[CR] = ambient[CG] = ambient[CB] = ambient[CA] = 1;
-        Mod_FullBrightVertexColors(numVerts, modelColors, alpha);
     }
     else
     {   // Lit normally.

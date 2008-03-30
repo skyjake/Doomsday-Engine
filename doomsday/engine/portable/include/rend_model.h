@@ -56,7 +56,6 @@ typedef struct modelparams_s {
 
     // Lighting/color:
     float           ambientColor[4];
-    boolean         uniformColor;
     uint            numLights;
     vlight_t       *lights;
 

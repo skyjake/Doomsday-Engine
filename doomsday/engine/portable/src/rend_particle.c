@@ -450,10 +450,11 @@ void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
 
     if((st->flags & PTCF_BRIGHT) || levelFullBright)
     {
-        params->uniformColor = true;
         params->ambientColor[CR] = params->ambientColor[CG] =
             params->ambientColor[CB] = 1;
         params->ambientColor[CA] = alpha;
+        params->lights = NULL;
+        params->numLights = 0;
     }
     else
     {
@@ -461,7 +462,6 @@ void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
         const float*            secColor = R_GetSectorLightColor(pt->sector);
         visspritelightparams_t lparams;
 
-        params->uniformColor = false;
         lightLevel = pt->sector->lightLevel;
         Rend_ApplyLightAdaptation(&lightLevel);
 

@@ -152,7 +152,6 @@ static void setupModelParamsForVisPSprite(modelparams_t *params,
         params->ambientColor[CR] = params->ambientColor[CG] =
             params->ambientColor[CB] = 1;
         params->ambientColor[CA] = spr->data.model.alpha;
-        params->uniformColor = true;
         params->lights = NULL;
         params->numLights = 0;
     }
@@ -180,14 +179,13 @@ static void setupModelParamsForVisPSprite(modelparams_t *params,
             params->ambientColor[CB] = secColor[CB];
         }
 
+        params->ambientColor[CA] = spr->data.model.alpha;
+
         lparams.starkLight = true;
         memcpy(lparams.center, spr->center, sizeof(lparams.center));
         lparams.subsector = spr->data.model.subsector;
         lparams.maxLights = modelLight;
         lparams.ambientColor = params->ambientColor;
-
-        params->uniformColor = false;
-        params->ambientColor[CA] = spr->data.model.alpha;
 
         R_SetAmbientColor(params->ambientColor, params->ambientColor, lightLevel,
                           params->distance);
@@ -750,7 +748,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
             params->ambientColor[CR] = params->ambientColor[CG] =
                 params->ambientColor[CB] = 1;
             params->ambientColor[CA] = spr->data.mo.alpha;
-            params->uniformColor = true;
             params->lights = NULL;
             params->numLights = 0;
         }
@@ -779,7 +776,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
             }
 
             params->ambientColor[CA] = spr->data.mo.alpha;
-            params->uniformColor = false;
 
             lparams.starkLight = false;
             memcpy(lparams.center, spr->center, sizeof(lparams.center));
@@ -826,7 +822,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
             params->ambientColor[CR] = params->ambientColor[CG] =
                 params->ambientColor[CB] = 1;
             params->ambientColor[CA] = spr->data.decormodel.alpha;
-            params->uniformColor = true;
             params->lights = NULL;
             params->numLights = 0;
         }
@@ -858,8 +853,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
             }
 
             params->ambientColor[CA] = spr->data.decormodel.alpha;
-
-            params->uniformColor = false;
 
             lparams.starkLight = false;
             memcpy(lparams.center, spr->center, sizeof(lparams.center));
