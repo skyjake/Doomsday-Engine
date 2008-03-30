@@ -69,9 +69,14 @@ void B_DestroyAllClasses(void)
 
     if(bindClasses)
     {
-        for(i = 0; i < bindClassCount; ++i)
+        // Do not use the global bindClassCount to control the loop; it is
+        // changed as a sideeffect of B_DestroyClass() and also, the
+        // bindClasses array itself is shifted back to idx 0 afterwards.
+        int                 numBindClasses = bindClassCount;
+
+        for(i = 0; i < numBindClasses; ++i)
         {
-            B_DestroyClass(bindClasses[i]);
+            B_DestroyClass(bindClasses[0]);
         }
         M_Free(bindClasses);
     }
@@ -213,6 +218,7 @@ static void B_RemoveClass(bclass_t* bc)
     {
         memmove(&bindClasses[classIdx], &bindClasses[classIdx + 1],
                 sizeof(bclass_t*) * (bindClassCount - 1 - classIdx));
+
         B_SetClassCount(bindClassCount - 1);
     }
 }
