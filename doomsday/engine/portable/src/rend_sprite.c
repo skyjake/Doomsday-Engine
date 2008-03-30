@@ -158,7 +158,7 @@ static void setupModelParamsForVisPSprite(modelparams_t *params,
     else
     {
         float               lightLevel;
-        visspritelightparams_t lparams;
+        collectaffectinglights_params_t lparams;
 
         if(useBias)
         {
@@ -368,7 +368,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params,
     else
     {
         float               lightLevel;
-        visspritelightparams_t lparams;
+        collectaffectinglights_params_t lparams;
 
         params->uniformColor = false;
 
@@ -754,7 +754,7 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         else
         {
             float               lightLevel;
-            visspritelightparams_t lparams;
+            collectaffectinglights_params_t lparams;
 
             if(useBias)
             {
@@ -828,7 +828,7 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         else
         {
             float               lightLevel;
-            visspritelightparams_t lparams;
+            collectaffectinglights_params_t lparams;
 
             if(useBias)
             {
@@ -1186,7 +1186,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           vissprite_t *spr)
 {
     float               top;
-    visspritelightparams_t lparams;
+    collectaffectinglights_params_t lparams;
     spritetex_t        *sprTex = spriteTextures[spr->data.mo.mat->ofTypeID];
 
     // Setup params:

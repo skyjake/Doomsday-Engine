@@ -106,14 +106,6 @@ typedef struct vissprite_s {
     } data;
 } vissprite_t;
 
-typedef struct visspritelightparams_s {
-    float           center[3];
-    float*          ambientColor;
-    subsector_t*    subsector;
-
-    uint            maxLights;
-    boolean         starkLight; // World light has a more pronounced effect.
-} visspritelightparams_t;
 
 // Sprites are patches with a special naming convention so they can be
 // recognized by R_InitSprites.  The sprite and frame specified by a
@@ -175,6 +167,15 @@ typedef struct vispsprite_s {
     } data;
 } vispsprite_t;
 
+typedef struct collectaffectinglights_params_s {
+    float           center[3];
+    float*          ambientColor;
+    subsector_t*    subsector;
+
+    uint            maxLights;
+    boolean         starkLight; // World light has a more pronounced effect.
+} collectaffectinglights_params_t;
+
 extern spritedef_t *sprites;
 extern int      numSprites;
 extern float    pspOffset[2];
@@ -208,7 +209,7 @@ void            R_ClipVisSprite(vissprite_t *vis, int xl, int xh);
 
 void            R_SetAmbientColor(float *dest, const float *rgba,
                                   float lightLevel, float distance);
-void            R_CollectAffectingLights(const visspritelightparams_t *params,
+void            R_CollectAffectingLights(const collectaffectinglights_params_t *params,
                                          vlight_t **ptr, uint *num);
 
 #endif

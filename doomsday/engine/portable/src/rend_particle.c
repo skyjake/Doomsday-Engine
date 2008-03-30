@@ -460,7 +460,7 @@ void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
     {
         float                   lightLevel;
         const float*            secColor = R_GetSectorLightColor(pt->sector);
-        visspritelightparams_t lparams;
+        collectaffectinglights_params_t lparams;
 
         lightLevel = pt->sector->lightLevel;
         Rend_ApplyLightAdaptation(&lightLevel);

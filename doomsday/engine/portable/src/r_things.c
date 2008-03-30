@@ -1114,7 +1114,7 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
     return true;
 }
 
-void R_CollectAffectingLights(const visspritelightparams_t *params,
+void R_CollectAffectingLights(const collectaffectinglights_params_t *params,
                               vlight_t **ptr, uint *num)
 {
     uint                i, numLights;
