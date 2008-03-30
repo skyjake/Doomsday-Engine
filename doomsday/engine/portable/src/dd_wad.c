@@ -410,32 +410,30 @@ void W_ResizeLumpStorage(int numItems)
     // the user pointers in the memory zone remain valid.
     if(numCache != numItems)
     {
+        int                 i, numToMod;
         void              **newCache; // This is the new cache.
-        int                 i, newCacheBytes = numItems * sizeof(*newCache);    // The new size of the cache (bytes).
-        int                 numToMod;
+        size_t              newCacheBytes = numItems * sizeof(*newCache); // The new size of the cache (bytes).
 
-        newCache = M_Malloc(newCacheBytes);
-        memset(newCache, 0, newCacheBytes); // Clear the new cache.
-        // Copy the old cache.
-        if(numCache < numItems)
-            numToMod = numCache;
-        else
-            numToMod = numItems;
-        memcpy(newCache, lumpCache, numToMod * sizeof(*lumpCache));
+        newCache = M_Calloc(newCacheBytes);
+        if(lumpCache)
+        {
+            // Copy the old cache.
+            if(numCache < numItems)
+                numToMod = numCache;
+            else
+                numToMod = numItems;
 
-        // Update the user information in the memory zone.
-        for(i = 0; i < numToMod; i++)
-            if(newCache[i])
-                Z_ChangeUser(newCache[i], newCache + i);
-        /*
-           // Check that the rest of the cache has been freed (the part that gets
-           // removed, if the storage is getting smaller).
-           for(i = numToMod; i < numCache; ++i)
-           if(lumpCache[i])
-           Con_Error("W_ResizeLumpStorage: Cached lump getting lost.\n");
-         */
-        // Get rid of the old cache.
-        M_Free(lumpCache);
+            memcpy(newCache, lumpCache, numToMod * sizeof(*lumpCache));
+
+            // Update the user information in the memory zone.
+            for(i = 0; i < numToMod; ++i)
+                if(newCache[i])
+                    Z_ChangeUser(newCache[i], newCache + i);
+
+            // Get rid of the old cache.
+            M_Free(lumpCache);
+        }
+
         lumpCache = newCache;
         numCache = numItems;
     }
