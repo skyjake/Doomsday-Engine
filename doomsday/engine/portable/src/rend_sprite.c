@@ -195,7 +195,7 @@ static void setupModelParamsForVisPSprite(modelparams_t *params,
     params->alpha = spr->data.model.alpha;
 
     R_SetAmbientColor(rgba, lightLevel, params->distance);
-    R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
+    R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
 }
 
 /**
@@ -411,7 +411,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params,
         lparams.subsector = spr->data.sprite.subsector;
 
         R_SetAmbientColor(params->rgba, lightLevel, -10);
-        R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
+        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
 }
 
@@ -800,7 +800,7 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->alpha = spr->data.mo.alpha;
 
         R_SetAmbientColor(rgba, lightLevel, spr->distance);
-        R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
+        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
     else if(spr->type == VSPR_DECORATION)
     {
@@ -874,7 +874,7 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->alpha = spr->data.decormodel.alpha;
 
         R_SetAmbientColor(rgba, lightLevel, spr->distance);
-        R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
+        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
 }
 
@@ -1292,7 +1292,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     lparams.subsector = params->subsector;
 
     R_SetAmbientColor(params->rgba, params->lightLevel, params->distance);
-    R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
+    R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
 
     if(useSpriteAlpha)
     {

@@ -94,13 +94,6 @@ typedef struct vissprite_s {
             float           inter; // Frame interpolation, 0..1
         } mo;
         rendmaskedwallparams_t wall;
-        struct vissprite_hudsprite_s {
-            subsector_t    *subsector;
-            float           lightLevel;
-            float           alpha;
-            float           rgb[3];
-            ddpsprite_t    *psp;
-        } psprite;
         struct vissprite_decormodel_s {
             subsector_t    *subsector;
             float           alpha;
@@ -213,7 +206,7 @@ void            R_ClearSprites(void);
 void            R_ClipVisSprite(vissprite_t *vis, int xl, int xh);
 
 void            R_SetAmbientColor(float *rgba, float lightLevel, float distance);
-void            R_DetermineLightsAffectingVisSprite(const visspritelightparams_t *params,
+void            R_CollectAffectingLights(const visspritelightparams_t *params,
                                                     vlight_t **ptr, uint *num);
 
 #endif

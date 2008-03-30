@@ -635,7 +635,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             rgba[CA] = params.alpha;
             R_SetAmbientColor(rgba, params.lightLevel, params.distance);
             }
-            R_DetermineLightsAffectingVisSprite(&lparams, &params.lights, &params.numLights);
+            R_CollectAffectingLights(&lparams, &params.lights, &params.numLights);
 
             Rend_RenderModel(&params);
             continue;
