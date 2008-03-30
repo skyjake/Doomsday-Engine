@@ -33,14 +33,34 @@
 #include "r_data.h"
 #include "r_materials.h"
 
+// Sprites are patches with a special naming convention so they can be
+// recognized by R_InitSprites.  The sprite and frame specified by a
+// mobj is range checked at run time.
+
+// A sprite is a patch_t that is assumed to represent a three dimensional
+// object and may have multiple rotations pre drawn.  Horizontal flipping
+// is used to save space. Some sprites will only have one picture used
+// for all views.
+
+typedef struct {
+    boolean         rotate; // If false use 0 for any position
+    material_t     *mats[8]; // Material to use for view angles 0-7
+    byte            flip[8]; // Flip (1 = flip) to use for view angles 0-7
+} spriteframe_t;
+
+typedef struct {
+    int             numFrames;
+    spriteframe_t  *spriteFrames;
+} spritedef_t;
+
 #define MAXVISSPRITES   8192
 
 // These constants are used as the type of vissprite_s.
-enum {
+typedef enum {
     VSPR_MASKED_WALL,
     VSPR_MAP_OBJECT,
     VSPR_DECORATION
-};
+} visspritetype_t;
 
 typedef struct rendmaskedwallparams_s {
     int             texture;
@@ -62,7 +82,7 @@ typedef struct rendmaskedwallparams_s {
 // a refresh.
 typedef struct vissprite_s {
     struct vissprite_s *prev, *next;
-    byte            type;          // VSPR_* type of vissprite.
+    visspritetype_t type;          // VSPR_* type of vissprite.
     float           distance;      // Vissprites are sorted by distance.
     float           center[3];
     struct lumobj_s *light;        // For the halo (NULL if no halo).
@@ -105,27 +125,6 @@ typedef struct vissprite_s {
         } decormodel;
     } data;
 } vissprite_t;
-
-
-// Sprites are patches with a special naming convention so they can be
-// recognized by R_InitSprites.  The sprite and frame specified by a
-// mobj is range checked at run time.
-
-// A sprite is a patch_t that is assumed to represent a three dimensional
-// object and may have multiple rotations pre drawn.  Horizontal flipping
-// is used to save space. Some sprites will only have one picture used
-// for all views.
-
-typedef struct {
-    boolean         rotate; // If false use 0 for any position
-    material_t     *mats[8]; // Material to use for view angles 0-7
-    byte            flip[8]; // Flip (1 = flip) to use for view angles 0-7
-} spriteframe_t;
-
-typedef struct {
-    int             numFrames;
-    spriteframe_t  *spriteFrames;
-} spritedef_t;
 
 typedef enum {
     VPSPR_SPRITE,
