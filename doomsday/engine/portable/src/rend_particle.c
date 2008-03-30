@@ -395,6 +395,88 @@ static int PG_ListVisibleParticles(void)
     return true;
 }
 
+void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
+                                 ptcstage_t *st, ded_ptcstage_t *dst,
+                                 float* center, float dist, float size,
+                                 float mark, float* color)
+{
+    int                 frame;
+    const float        *slc;
+    subsector_t        *ssec;
+    visspritelightparams_t lparams;
+
+    // Render the particle as a model.
+    params->center[VX] = center[VX];
+    params->center[VY] = center[VZ];
+    params->center[VZ] = params->gzt = center[VY];
+    params->distance = dist;
+    ssec = R_PointInSubsector(center[VX], center[VY]);
+
+    params->extraScale = size; // Extra scaling factor.
+    params->mf = &modefs[dst->model];
+    params->alwaysInterpolate = true;
+
+    if(dst->endFrame < 0)
+    {
+        frame = dst->frame;
+        params->inter = 0;
+    }
+    else
+    {
+        frame = dst->frame + (dst->endFrame - dst->frame) * mark;
+        params->inter =
+            M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
+    }
+
+    R_SetModelFrame(params->mf, frame);
+    // Set the correct orientation for the particle.
+    if(params->mf->sub[0].flags & MFF_MOVEMENT_YAW)
+    {
+        params->yaw =
+            R_MovementYaw(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]));
+    }
+    else
+    {
+        params->yaw = pt->yaw / 32768.0f * 180;
+    }
+
+    if(params->mf->sub[0].flags & MFF_MOVEMENT_PITCH)
+    {
+        params->pitch =
+            R_MovementPitch(pt->mov[0], pt->mov[1], pt->mov[2]);
+    }
+    else
+    {
+        params->pitch = pt->pitch / 32768.0f * 180;
+    }
+
+    if((st->flags & PTCF_BRIGHT) || levelFullBright)
+    {
+        params->lightLevel = -1; // Fullbright.
+    }
+    else
+    {
+        params->lightLevel = pt->sector->lightLevel;
+        Rend_ApplyLightAdaptation(&params->lightLevel);
+    }
+
+    slc = R_GetSectorLightColor(pt->sector);
+    params->ambientColor[CR] = slc[CR];
+    params->ambientColor[CG] = slc[CG];
+    params->ambientColor[CB] = slc[CB];
+    params->ambientColor[CA] = color[CA];
+
+    lparams.starkLight = false;
+    lparams.subsector = ssec;
+    memcpy(lparams.center, params->center, sizeof(lparams.center));
+    lparams.maxLights = modelLight;
+    lparams.ambientColor = params->ambientColor;
+
+    R_SetAmbientColor(params->ambientColor, params->ambientColor,
+                      params->lightLevel, params->distance);
+    R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
+}
+
 static void PG_RenderParticles(int rtype, boolean withBlend)
 {
     uint            i;
@@ -502,7 +584,8 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                                 order[i].index) * invMark +
             P_GetParticleRadius(nextDst, order[i].index) * mark;
         if(!size)
-            continue;           // Infinitely small.
+            continue; // Infinitely small.
+
         for(c = 0; c < 4; ++c)
         {
             color[c] = dst->color[c] * invMark + nextDst->color[c] * mark;
@@ -524,6 +607,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             if(dist > maxdist * .75f)
                 color[3] *= 1 - (dist - maxdist * .75f) / (maxdist * .25f);
         }
+
         // Near diffuse?
         if(particleDiffuse > 0)
         {
@@ -560,83 +644,10 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         // routine.
         if(rtype == PTC_MODEL && dst->model >= 0)
         {
-            int                 frame;
-            const float        *slc;
-            subsector_t        *ssec;
-            modelparams_t       params;
-            visspritelightparams_t lparams;
+            modelparams_t           params;
 
-            memset(&params, 0, sizeof(params));
-
-            // Render the particle as a model.
-            params.center[VX] = center[VX];
-            params.center[VY] = center[VZ];
-            params.center[VZ] = params.gzt = center[VY];
-            params.distance = dist;
-            ssec = R_PointInSubsector(FIX2FLT(pt->pos[VX]),
-                                      FIX2FLT(pt->pos[VY]));
-
-            params.extraScale = size;   // Extra scaling factor.
-            params.mf = &modefs[dst->model];
-            params.alwaysInterpolate = true;
-
-            if(dst->endFrame < 0)
-            {
-                frame = dst->frame;
-                params.inter = 0;
-            }
-            else
-            {
-                frame = dst->frame + (dst->endFrame - dst->frame) * mark;
-                params.inter =
-                    M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
-            }
-            R_SetModelFrame(params.mf, frame);
-            // Set the correct orientation for the particle.
-            if(params.mf->sub[0].flags & MFF_MOVEMENT_YAW)
-            {
-                params.yaw =
-                    R_MovementYaw(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]));
-            }
-            else
-            {
-                params.yaw = pt->yaw / 32768.0f * 180;
-            }
-            if(params.mf->sub[0].flags & MFF_MOVEMENT_PITCH)
-            {
-                params.pitch =
-                    R_MovementPitch(pt->mov[0], pt->mov[1], pt->mov[2]);
-            }
-            else
-            {
-                params.pitch = pt->pitch / 32768.0f * 180;
-            }
-            if(st->flags & PTCF_BRIGHT || levelFullBright)
-                params.lightLevel = -1;    // Fullbright.
-            else
-            {
-                params.lightLevel = pt->sector->lightLevel;
-                Rend_ApplyLightAdaptation(&params.lightLevel);
-            }
-            slc = R_GetSectorLightColor(pt->sector);
-            params.rgb[0] = slc[0];
-            params.rgb[1] = slc[1];
-            params.rgb[2] = slc[2];
-            params.alpha = color[3];
-
-            lparams.starkLight = false;
-            lparams.subsector = ssec;
-            memcpy(lparams.center, params.center, sizeof(lparams.center));
-            lparams.maxLights = modelLight;
-
-            {
-            float       rgba[4];
-            memcpy(rgba, params.rgb, sizeof(float) * 3);
-            rgba[CA] = params.alpha;
-            R_SetAmbientColor(rgba, params.lightLevel, params.distance);
-            }
-            R_CollectAffectingLights(&lparams, &params.lights, &params.numLights);
-
+            setupModelParamsForParticle(&params, pt, st, dst, center, dist,
+                                        size, mark, color);
             Rend_RenderModel(&params);
             continue;
         }

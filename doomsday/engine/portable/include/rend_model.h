@@ -56,9 +56,8 @@ typedef struct modelparams_s {
 
     // Lighting/color:
     float           lightLevel; // Light level of the sector the model is in. All modifiers applied (i.e. light adaptation).
-    float           rgb[3];
+    float           ambientColor[4];
     boolean         uniformColor;
-    float           alpha;
 
     uint            numLights;
     vlight_t       *lights;

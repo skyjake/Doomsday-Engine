@@ -108,7 +108,7 @@ void Rend_SkyRegister(void)
 
 void Rend_RenderSkyModels(void)
 {
-    int                 i, k;
+    int                 i, c;
     float               inter;
     skymodel_t         *sky;
     modelparams_t       params;
@@ -154,12 +154,11 @@ void Rend_RenderSkyModels(void)
         R_SetModelFrame(sky->model, sky->frame);
         params.yaw = sky->yaw;
         params.lightLevel = -1; // Fullbright.
-        for(k = 0; k < 3; ++k)
+        for(c = 0; c < 4; ++c)
         {
-            params.rgb[k] = sky->def->color[k];
+            params.ambientColor[c] = sky->def->color[c];
         }
         params.uniformColor = true;
-        params.alpha = sky->def->color[3];
         params.shineTranslateWithViewerPos = true;
 
         Rend_RenderModel(&params);

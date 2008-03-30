@@ -62,14 +62,14 @@ extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
 /**
  * Which side of the partition does the point lie?
  *
- * @param x         X coordinate to test.
- * @param y         Y coordinate to test.
- * @return int      @c 0 = front, else @c 1 = back.
+ * @param x             X coordinate to test.
+ * @param y             Y coordinate to test.
+ * @return int          @c 0 = front, else @c 1 = back.
  */
 int R_PointOnSide(const float x, const float y, const partition_t *par)
 {
-    float       dx, dy;
-    float       left, right;
+    float               dx, dy;
+    float               left, right;
 
     if(!par->dX)
     {
@@ -141,14 +141,14 @@ int R_PointOnSide(const float x, const float y, const partition_t *par)
     right = dy * par->dX;
 
     if(right < left)
-        return 0;               // front side
+        return 0; // front side
     else
-        return 1;               // back side
+        return 1; // back side
 }
 
 int R_SlopeDiv(unsigned num, unsigned den)
 {
-    unsigned    ans;
+    unsigned int        ans;
 
     if(den < 512)
         return SLOPERANGE;
@@ -170,7 +170,7 @@ int R_SlopeDiv(unsigned num, unsigned den)
  */
 angle_t R_PointToAngle(float x, float y)
 {
-    fixed_t         pos[2];
+    fixed_t             pos[2];
 
     x -= viewX;
     y -= viewY;
@@ -182,16 +182,16 @@ angle_t R_PointToAngle(float x, float y)
     pos[VY] = FLT2FIX(y);
 
     if(pos[VX] >= 0)
-    {                           // x >=0
+    {   // x >=0
         if(pos[VY] >= 0)
-        {                       // y>= 0
+        {   // y>= 0
             if(pos[VX] > pos[VY])
                 return tantoangle[R_SlopeDiv(pos[VY], pos[VX])];                // octant 0
             else
                 return ANG90 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])];    // octant 1
         }
         else
-        {                       // y<0
+        {   // y<0
             pos[VY] = -pos[VY];
             if(pos[VX] > pos[VY])
                 return -tantoangle[R_SlopeDiv(pos[VY], pos[VX])];               // octant 8
@@ -200,17 +200,17 @@ angle_t R_PointToAngle(float x, float y)
         }
     }
     else
-    {                           // x<0
+    {   // x<0
         pos[VX] = -pos[VX];
         if(pos[VY] >= 0)
-        {                       // y>= 0
+        {   // y>= 0
             if(pos[VX] > pos[VY])
                 return ANG180 - 1 - tantoangle[R_SlopeDiv(pos[VY], pos[VX])];   // octant 3
             else
                 return ANG90 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])];        // octant 2
         }
         else
-        {                       // y<0
+        {   // y<0
             pos[VY] = -pos[VY];
             if(pos[VX] > pos[VY])
                 return ANG180 + tantoangle[R_SlopeDiv(pos[VY], pos[VX])];       // octant 4
@@ -230,9 +230,9 @@ angle_t R_PointToAngle2(const float x1, const float y1,
 
 float R_PointToDist(const float x, const float y)
 {
-    uint        angle;
-    float       dx, dy, temp;
-    float       dist;
+    uint                angle;
+    float               dx, dy, temp;
+    float               dist;
 
     dx = fabs(x - viewX);
     dy = fabs(y - viewY);
@@ -254,8 +254,8 @@ float R_PointToDist(const float x, const float y)
 
 subsector_t *R_PointInSubsector(const float x, const float y)
 {
-    node_t     *node = 0;
-    uint        nodenum = 0;
+    node_t             *node = 0;
+    uint                nodenum = 0;
 
     if(!numNodes)               // single subsector is a special case
         return (subsector_t *) ssectors;
@@ -275,7 +275,7 @@ subsector_t *R_PointInSubsector(const float x, const float y)
 linedef_t *R_GetLineForSide(const uint sideNumber)
 {
     uint                i;
-    sidedef_t             *side = SIDE_PTR(sideNumber);
+    sidedef_t          *side = SIDE_PTR(sideNumber);
     sector_t           *sector = side->sector;
 
     // All sides may not have a sector.
@@ -356,9 +356,9 @@ boolean R_IsPointInSector(const float x, const float y,
 boolean R_IsPointInSector2(const float x, const float y,
                            const sector_t *sector)
 {
-    uint        i;
-    subsector_t *subsector;
-    fvertex_t  *vi, *vj;
+    uint                i;
+    subsector_t        *subsector;
+    fvertex_t          *vi, *vj;
 
     subsector = R_PointInSubsector(x, y);
     if(subsector->sector != sector)
@@ -398,8 +398,8 @@ boolean R_IsPointInSector2(const float x, const float y,
 
 void R_ScaleAmbientRGB(float *out, const float *in, float mul)
 {
-    int         i;
-    float       val;
+    int                 i;
+    float               val;
 
     if(mul < 0)
         mul = 0;
@@ -425,8 +425,8 @@ void R_ScaleAmbientRGB(float *out, const float *in, float mul)
  */
 sector_t *R_GetSectorForDegen(const void *degenmobj)
 {
-    uint        i, k;
-    sector_t   *sec;
+    uint                i, k;
+    sector_t           *sec;
 
     // Check all sectors; find where the sound is coming from.
     for(i = 0; i < numSectors; ++i)

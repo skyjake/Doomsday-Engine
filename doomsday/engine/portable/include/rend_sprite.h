@@ -40,6 +40,7 @@ typedef struct rendspriteparams_s {
 
 // Appearance
     boolean         noZWrite;
+    blendmode_t     blendMode;
 
     // Material:
     material_t     *mat;
@@ -48,10 +49,8 @@ typedef struct rendspriteparams_s {
     boolean         matFlip[2]; // {X, Y} Flip along the specified axis.
 
     // Lighting/color:
-    float           rgba[4];
-    blendmode_t     blendMode;
+    float           ambientColor[4];
     float           lightLevel;
-
     uint            numLights;
     vlight_t       *lights;
 
@@ -71,7 +70,7 @@ typedef struct rendpspriteparams_s {
     boolean         texFlip[2]; // {X, Y} Flip along the specified axis.
 
     // Lighting/color:
-    float           rgba[4];
+    float           ambientColor[4];
     boolean         uniformColor;
     uint            numLights;
     vlight_t       *lights;

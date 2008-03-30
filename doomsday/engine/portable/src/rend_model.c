@@ -472,8 +472,8 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
         alpha = customAlpha;
 
     // More custom alpha?
-    if(params->alpha >= 0)
-        alpha *= params->alpha;
+    if(params->ambientColor[CA] >= 0)
+        alpha *= params->ambientColor[CA];
     if(alpha <= 0)
         return; // Fully transparent.
     if(alpha > 1)
@@ -645,11 +645,11 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     // Calculate lighting.
     if(params->uniformColor)
     {   // Specified uniform color.
-        color[0] = params->rgb[0];
-        color[1] = params->rgb[1];
-        color[2] = params->rgb[2];
-        color[3] = alpha;
-        Mod_FixedVertexColors(numVerts, modelColors, color);
+        ambient[CR] = params->ambientColor[CR];
+        ambient[CG] = params->ambientColor[CG];
+        ambient[CB] = params->ambientColor[CB];
+        ambient[CA] = alpha;
+        Mod_FixedVertexColors(numVerts, modelColors, ambient);
     }
     else if((params->lightLevel < 0 || (subFlags & MFF_FULLBRIGHT)) &&
             !(subFlags & MFF_DIM))
@@ -659,12 +659,12 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     }
     else
     {   // Lit normally.
-        extern float ambientColor[3];
+        uint            i;
+        vlight_t       *light;
 
-        uint        i;
-        vlight_t   *light;
-
-        memcpy(ambient, ambientColor, sizeof(float) * 3);
+        ambient[CR] = params->ambientColor[CR];
+        ambient[CG] = params->ambientColor[CG];
+        ambient[CB] = params->ambientColor[CB];
         ambient[CA] = alpha;
 
         // We need to make some adjustments to the light vectors.

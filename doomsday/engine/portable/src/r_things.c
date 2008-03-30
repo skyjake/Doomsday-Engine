@@ -63,9 +63,10 @@
 
 typedef struct {
     float           pos[3];
-    uint           *numLights;
+    float*          ambientColor;
+    uint*           numLights;
     uint            maxLights;
-} vlightitervars_t;
+} vlightiterparams_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -115,8 +116,6 @@ static vlight_t lights[MAX_VISSPRITE_LIGHTS] = {
     // The first light is the world light.
     {false, 0, NULL}
 };
-
-float ambientColor[3];
 
 // CODE --------------------------------------------------------------------
 
@@ -963,7 +962,7 @@ void R_SortVisSprites(void)
 
 }
 
-void R_SetAmbientColor(float *rgba, float lightLevel, float distance)
+void R_SetAmbientColor(float *dest, const float *rgba, float lightLevel, float distance)
 {
     uint                i;
     rendpoly_t         *poly;
@@ -976,7 +975,7 @@ void R_SetAmbientColor(float *rgba, float lightLevel, float distance)
 
     // Determine the ambient light affecting the vissprite.
     for(i = 0; i < 3; ++i)
-        ambientColor[i] = poly->vertices[0].color[i];
+        dest[i] = poly->vertices[0].color[i];
 
     R_FreeRendPoly(poly);
 }
@@ -1002,10 +1001,10 @@ static void glowLightSetup(vlight_t *light)
  */
 boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
 {
-    vlightitervars_t *vars = (vlightitervars_t*) data;
-    float       dist;
-    float       glowHeight;
-    boolean     addLight = false;
+    float               dist;
+    float               glowHeight;
+    boolean             addLight = false;
+    vlightiterparams_t *params = (vlightiterparams_t*) data;
 
     // Is the light close enough to make the list?
     switch(lum->type)
@@ -1014,7 +1013,7 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
         {
         float       zDist;
 
-        zDist = vars->pos[VZ] - lum->pos[VZ] + LUM_OMNI(lum)->zOff;
+        zDist = params->pos[VZ] - lum->pos[VZ] + LUM_OMNI(lum)->zOff;
         dist = P_ApproxDistance(xyDist, zDist);
 
         if(dist < (float) loMaxRadius)
@@ -1038,9 +1037,9 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
                 if(glowHeight > glowHeightMax)
                     glowHeight = glowHeightMax;
 
-                delta[VX] = vars->pos[VX] - lum->pos[VX];
-                delta[VY] = vars->pos[VY] - lum->pos[VY];
-                delta[VZ] = vars->pos[VZ] - lum->pos[VZ];
+                delta[VX] = params->pos[VX] - lum->pos[VX];
+                delta[VY] = params->pos[VY] - lum->pos[VY];
+                delta[VZ] = params->pos[VZ] - lum->pos[VZ];
 
                 if(!((dist = M_DotProduct(delta, LUM_PLANE(lum)->normal)) < 0))
                     // Is on the front of the glow plane.
@@ -1058,13 +1057,13 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
     // If the light is not close enough, skip it.
     if(addLight)
     {
-        vlight_t   *light;
-        uint        i, maxIndex = 0;
-        float       maxDist = -1;
+        vlight_t           *light;
+        uint                i, maxIndex = 0;
+        float               maxDist = -1;
 
         // See if this light can be inserted into the list.
         // (In most cases it should be.)
-        for(i = 1, light = lights + 1; i < vars->maxLights; ++i, light++)
+        for(i = 1, light = lights + 1; i < params->maxLights; ++i, light++)
         {
             if(light->approxDist > maxDist)
             {
@@ -1098,7 +1097,7 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
 
                 dist = 1 - dist / glowHeight;
                 scaleFloatRGB(light->color, lum->color, dist);
-                R_ScaleAmbientRGB(ambientColor, lum->color, dist / 3);
+                R_ScaleAmbientRGB(params->ambientColor, lum->color, dist / 3);
                 break;
 
             default:
@@ -1107,8 +1106,8 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
                 break;
             }
 
-            if(*vars->numLights < maxIndex + 1)
-                *vars->numLights = maxIndex + 1;
+            if(*params->numLights < maxIndex + 1)
+                *params->numLights = maxIndex + 1;
         }
     }
 
@@ -1116,7 +1115,7 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
 }
 
 void R_CollectAffectingLights(const visspritelightparams_t *params,
-                                         vlight_t **ptr, uint *num)
+                              vlight_t **ptr, uint *num)
 {
     uint                i, numLights;
     vlight_t           *light;
@@ -1139,7 +1138,7 @@ void R_CollectAffectingLights(const visspritelightparams_t *params,
         for(i = 0; i < 3; ++i)
         {
             lights->worldVector[i] = worldLight[i];
-            lights->color[i] = ambientColor[i];
+            lights->color[i] = params->ambientColor[i];
         }
 
         if(params->starkLight)
@@ -1162,11 +1161,12 @@ void R_CollectAffectingLights(const visspritelightparams_t *params,
     // Add extra light using dynamic lights.
     if(params->maxLights > numLights && loInited && params->subsector)
     {
-        vlightitervars_t vars;
+        vlightiterparams_t vars;
 
         memcpy(vars.pos, params->center, sizeof(vars.pos));
         vars.numLights = &numLights;
         vars.maxLights = params->maxLights;
+        vars.ambientColor = params->ambientColor;
 
         // Find the nearest sources of light. They will be used to
         // light the vertices. First initialize the array.
@@ -1174,8 +1174,8 @@ void R_CollectAffectingLights(const visspritelightparams_t *params,
             lights[i].approxDist = DDMAXFLOAT;
 
         LO_LumobjsRadiusIterator(params->subsector, params->center[VX],
-                             params->center[VY], (float) loMaxRadius,
-                             &vars, visSpriteLightIterator);
+                                 params->center[VY], (float) loMaxRadius,
+                                 &vars, visSpriteLightIterator);
     }
 
     // Don't use too many lights.

@@ -108,7 +108,8 @@ typedef struct vissprite_s {
 
 typedef struct visspritelightparams_s {
     float           center[3];
-    subsector_t    *subsector;
+    float*          ambientColor;
+    subsector_t*    subsector;
 
     uint            maxLights;
     boolean         starkLight; // World light has a more pronounced effect.
@@ -118,7 +119,7 @@ typedef struct visspritelightparams_s {
 // recognized by R_InitSprites.  The sprite and frame specified by a
 // mobj is range checked at run time.
 
-// a sprite is a patch_t that is assumed to represent a three dimensional
+// A sprite is a patch_t that is assumed to represent a three dimensional
 // object and may have multiple rotations pre drawn.  Horizontal flipping
 // is used to save space. Some sprites will only have one picture used
 // for all views.
@@ -205,8 +206,9 @@ void            R_ClearSprites(void);
 
 void            R_ClipVisSprite(vissprite_t *vis, int xl, int xh);
 
-void            R_SetAmbientColor(float *rgba, float lightLevel, float distance);
+void            R_SetAmbientColor(float *dest, const float *rgba,
+                                  float lightLevel, float distance);
 void            R_CollectAffectingLights(const visspritelightparams_t *params,
-                                                    vlight_t **ptr, uint *num);
+                                         vlight_t **ptr, uint *num);
 
 #endif

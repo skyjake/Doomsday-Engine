@@ -149,11 +149,6 @@ static void setupModelParamsForVisPSprite(modelparams_t *params,
     params->shineTranslateWithViewerPos = false;
     params->shinepspriteCoordSpace = true;
 
-    lparams.starkLight = true;
-    memcpy(lparams.center, spr->center, sizeof(lparams.center));
-    lparams.subsector = spr->data.model.subsector;
-    lparams.maxLights = modelLight;
-
     if(useBias)
     {
         if(spr->data.model.stateFullBright)
@@ -189,12 +184,19 @@ static void setupModelParamsForVisPSprite(modelparams_t *params,
         rgba[CB] = secColor[CB];
     }
 
+    lparams.starkLight = true;
+    memcpy(lparams.center, spr->center, sizeof(lparams.center));
+    lparams.subsector = spr->data.model.subsector;
+    lparams.maxLights = modelLight;
+    lparams.ambientColor = params->ambientColor;
+
     params->lightLevel = lightLevel;
     params->uniformColor = false;
-    memcpy(params->rgb, rgba, sizeof(float) * 3);
-    params->alpha = spr->data.model.alpha;
+    memcpy(params->ambientColor, rgba, sizeof(float) * 3);
+    params->ambientColor[CA] = spr->data.model.alpha;
 
-    R_SetAmbientColor(rgba, lightLevel, params->distance);
+    R_SetAmbientColor(params->ambientColor, params->ambientColor, lightLevel,
+                      params->distance);
     R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
 }
 
@@ -255,12 +257,12 @@ void Spr_UniformVertexColors(int count, gl_color_t *colors,
  * Calculate vertex lighting.
  */
 void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
-                      int numLights, vlight_t *lights,
-                      float ambient[4])
+                      int numLights, const vlight_t *lights,
+                      const float* ambient)
 {
-    int         i, k;
-    float       color[3], extra[3], *dest, dot;
-    vlight_t   *light;
+    int                 i, k;
+    float               color[3], extra[3], *dest, dot;
+    const vlight_t*     light;
 
     for(i = 0; i < count; ++i, out++, normal++)
     {
@@ -363,8 +365,9 @@ static void setupPSpriteParams(rendpspriteparams_t *params,
 
     if(spr->data.sprite.isFullBright)
     {
-        params->rgba[CR] = params->rgba[CG] = params->rgba[CB] = 1;
-        params->rgba[CA] = spr->data.sprite.alpha;
+        params->ambientColor[CR] = params->ambientColor[CG] =
+            params->ambientColor[CB] = 1;
+        params->ambientColor[CA] = spr->data.sprite.alpha;
         params->uniformColor = true;
         params->numLights = 0;
         params->lights = NULL;
@@ -382,7 +385,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params,
              * Evaluate the position of the player in the light grid.
              * \todo Should be affected by BIAS sources.
              */
-            LG_Evaluate(spr->center, params->rgba);
+            LG_Evaluate(spr->center, params->ambientColor);
             lightLevel = 1;
         }
         else
@@ -398,19 +401,21 @@ static void setupPSpriteParams(rendpspriteparams_t *params,
             else
                 lightLevel = 1;
 
-            params->rgba[CR] = secColor[CR];
-            params->rgba[CG] = secColor[CG];
-            params->rgba[CB] = secColor[CB];
+            params->ambientColor[CR] = secColor[CR];
+            params->ambientColor[CG] = secColor[CG];
+            params->ambientColor[CB] = secColor[CB];
         }
 
-        params->rgba[CA] = spr->data.sprite.alpha;
+        params->ambientColor[CA] = spr->data.sprite.alpha;
 
         lparams.starkLight = true;
         memcpy(lparams.center, spr->center, sizeof(lparams.center));
         lparams.maxLights = spriteLight;
         lparams.subsector = spr->data.sprite.subsector;
+        lparams.ambientColor = params->ambientColor;
 
-        R_SetAmbientColor(params->rgba, lightLevel, -10);
+        R_SetAmbientColor(params->ambientColor, params->ambientColor,
+                          lightLevel, -10);
         R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
 }
@@ -457,19 +462,12 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
 
     if(params->uniformColor)
     {   // Lit uniformly.
-        Spr_UniformVertexColors(4, quadColors, params->rgba);
+        Spr_UniformVertexColors(4, quadColors, params->ambientColor);
     }
     else
     {   // Lit normally.
-        extern float ambientColor[3];
-
-        float       ambient[4];
-
-        memcpy(ambient, ambientColor, sizeof(float) * 3);
-        ambient[CA] = params->rgba[CA];
-
-        Spr_VertexColors(4, quadColors, quadNormals,
-                         params->numLights, params->lights, ambient);
+        Spr_VertexColors(4, quadColors, quadNormals, params->numLights,
+                         params->lights, params->ambientColor);
     }
 
     {
@@ -754,11 +752,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->shineTranslateWithViewerPos = false;
         params->shinepspriteCoordSpace = false;
 
-        lparams.starkLight = false;
-        memcpy(lparams.center, spr->center, sizeof(lparams.center));
-        lparams.subsector = spr->data.mo.subsector;
-        lparams.maxLights = modelLight;
-
         if(useBias)
         {
             if(spr->data.mo.stateFullBright)
@@ -796,10 +789,17 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
 
         params->lightLevel = lightLevel;
         params->uniformColor = false;
-        memcpy(params->rgb, rgba, sizeof(float) * 3);
-        params->alpha = spr->data.mo.alpha;
+        memcpy(params->ambientColor, rgba, sizeof(float) * 3);
+        params->ambientColor[CA] = spr->data.mo.alpha;
 
-        R_SetAmbientColor(rgba, lightLevel, spr->distance);
+        lparams.starkLight = false;
+        memcpy(lparams.center, spr->center, sizeof(lparams.center));
+        lparams.subsector = spr->data.mo.subsector;
+        lparams.maxLights = modelLight;
+        lparams.ambientColor = params->ambientColor;
+
+        R_SetAmbientColor(params->ambientColor, params->ambientColor,
+                          lightLevel, spr->distance);
         R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
     else if(spr->type == VSPR_DECORATION)
@@ -834,11 +834,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->shineTranslateWithViewerPos = false;
         params->shinepspriteCoordSpace = 0;
 
-        lparams.starkLight = false;
-        memcpy(lparams.center, spr->center, sizeof(lparams.center));
-        lparams.subsector = spr->data.decormodel.subsector;
-        lparams.maxLights = modelLight;
-
         if(useBias)
         {
             /**
@@ -870,10 +865,17 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
 
         params->lightLevel = lightLevel;
         params->uniformColor = false;
-        memcpy(params->rgb, rgba, sizeof(float) * 3);
-        params->alpha = spr->data.decormodel.alpha;
+        memcpy(params->ambientColor, rgba, sizeof(float) * 3);
+        params->ambientColor[CA] = spr->data.decormodel.alpha;
 
-        R_SetAmbientColor(rgba, lightLevel, spr->distance);
+        lparams.starkLight = false;
+        memcpy(lparams.center, spr->center, sizeof(lparams.center));
+        lparams.subsector = spr->data.decormodel.subsector;
+        lparams.maxLights = modelLight;
+        lparams.ambientColor = params->ambientColor;
+
+        R_SetAmbientColor(params->ambientColor, params->ambientColor,
+                          lightLevel, spr->distance);
         R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
 }
@@ -1071,20 +1073,13 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
     {   // Fullbright white.
         float               rgba[4];
         rgba[CR] = rgba[CG] = rgba[CB] = 1;
-        rgba[CA] = params->rgba[CA];
+        rgba[CA] = params->ambientColor[CA];
         Spr_UniformVertexColors(4, quadColors, rgba);
     }
     else
     {   // Lit normally.
-        extern float ambientColor[3];
-
-        float       ambient[4];
-
-        memcpy(ambient, ambientColor, sizeof(float) * 3);
-        ambient[CA] = params->rgba[CA];
-
-        Spr_VertexColors(4, quadColors, quadNormals,
-                         params->numLights, params->lights, ambient);
+        Spr_VertexColors(4, quadColors, quadNormals, params->numLights,
+                         params->lights, params->ambientColor);
     }
 
     // Do we need to do some aligning?
@@ -1144,7 +1139,7 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
         GL_BlendMode(params->blendMode);
 
     // Transparent sprites shouldn't be written to the Z buffer.
-    if(params->noZWrite || params->rgba[CA] < .98f ||
+    if(params->noZWrite || params->ambientColor[CA] < .98f ||
        !(params->blendMode == BM_NORMAL || params->blendMode == BM_ZEROALPHA))
     {
         restoreZ = true;
@@ -1255,11 +1250,12 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     {
         if(spr->data.mo.stateFullBright)
         {
-            params->rgba[CR] = params->rgba[CG] = params->rgba[CB] = 1;
+            params->ambientColor[CR] = params->ambientColor[CG] =
+                params->ambientColor[CB] = 1;
         }
         else
         {
-            LG_Evaluate(params->center, params->rgba);
+            LG_Evaluate(params->center, params->ambientColor);
         }
         params->lightLevel = 1;
     }
@@ -1279,44 +1275,46 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
             Rend_ApplyLightAdaptation(&params->lightLevel);
         }
 
-        params->rgba[CR] = secColor[CR];
-        params->rgba[CG] = secColor[CG];
-        params->rgba[CB] = secColor[CB];
+        params->ambientColor[CR] = secColor[CR];
+        params->ambientColor[CG] = secColor[CG];
+        params->ambientColor[CB] = secColor[CB];
     }
 
-    params->rgba[CA] = 1;
+    params->ambientColor[CA] = 1;
 
     lparams.starkLight = false;
     memcpy(lparams.center, params->center, sizeof(lparams.center));
     lparams.maxLights = spriteLight;
     lparams.subsector = params->subsector;
+    lparams.ambientColor = params->ambientColor;
 
-    R_SetAmbientColor(params->rgba, params->lightLevel, params->distance);
+    R_SetAmbientColor(params->ambientColor, params->ambientColor,
+                      params->lightLevel, params->distance);
     R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
 
     if(useSpriteAlpha)
     {
         if(missileBlend && (spr->data.mo.flags & DDMF_BRIGHTSHADOW))
-            params->rgba[CA] = .8f;      // 80 %.
+            params->ambientColor[CA] = .8f; // 80 %.
         else if(spr->data.mo.flags & DDMF_SHADOW)
-            params->rgba[CA] = .333f;    // One third.
+            params->ambientColor[CA] = .333f; // One third.
         else if(spr->data.mo.flags & DDMF_ALTSHADOW)
-            params->rgba[CA] = .666f;    // Two thirds.
+            params->ambientColor[CA] = .666f; // Two thirds.
         else
-            params->rgba[CA] = 1;
+            params->ambientColor[CA] = 1;
 
         // Sprite has a custom alpha multiplier?
         if(spr->data.mo.alpha >= 0)
-            params->rgba[CA] *= spr->data.mo.alpha;
+            params->ambientColor[CA] *= spr->data.mo.alpha;
     }
     else
-        params->rgba[CA] = 1;
+        params->ambientColor[CA] = 1;
 
     if(missileBlend && (spr->data.mo.flags & DDMF_BRIGHTSHADOW))
     {   // Additive blending.
         params->blendMode = BM_ADD;
     }
-    else if(noSpriteTrans && params->rgba[CA] >= .98f)
+    else if(noSpriteTrans && params->ambientColor[CA] >= .98f)
     {   // Use the "no translucency" blending mode.
         params->blendMode = BM_ZEROALPHA;
     }
