@@ -153,7 +153,6 @@ void Rend_RenderSkyModels(void)
         params.alwaysInterpolate = true;
         R_SetModelFrame(sky->model, sky->frame);
         params.yaw = sky->yaw;
-        params.lightLevel = -1; // Fullbright.
         for(c = 0; c < 4; ++c)
         {
             params.ambientColor[c] = sky->def->color[c];

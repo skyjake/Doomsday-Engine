@@ -398,12 +398,10 @@ static int PG_ListVisibleParticles(void)
 void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
                                  ptcstage_t *st, ded_ptcstage_t *dst,
                                  float* center, float dist, float size,
-                                 float mark, float* color)
+                                 float mark, float alpha)
 {
     int                 frame;
-    const float        *slc;
     subsector_t        *ssec;
-    visspritelightparams_t lparams;
 
     // Render the particle as a model.
     params->center[VX] = center[VX];
@@ -452,29 +450,36 @@ void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
 
     if((st->flags & PTCF_BRIGHT) || levelFullBright)
     {
-        params->lightLevel = -1; // Fullbright.
+        params->uniformColor = true;
+        params->ambientColor[CR] = params->ambientColor[CG] =
+            params->ambientColor[CB] = 1;
+        params->ambientColor[CA] = alpha;
     }
     else
     {
-        params->lightLevel = pt->sector->lightLevel;
-        Rend_ApplyLightAdaptation(&params->lightLevel);
+        float                   lightLevel;
+        const float*            secColor = R_GetSectorLightColor(pt->sector);
+        visspritelightparams_t lparams;
+
+        params->uniformColor = false;
+        lightLevel = pt->sector->lightLevel;
+        Rend_ApplyLightAdaptation(&lightLevel);
+
+        params->ambientColor[CR] = secColor[CR];
+        params->ambientColor[CG] = secColor[CG];
+        params->ambientColor[CB] = secColor[CB];
+        params->ambientColor[CA] = alpha;
+
+        lparams.starkLight = false;
+        lparams.subsector = ssec;
+        memcpy(lparams.center, params->center, sizeof(lparams.center));
+        lparams.maxLights = modelLight;
+        lparams.ambientColor = params->ambientColor;
+
+        R_SetAmbientColor(params->ambientColor, params->ambientColor,
+                          lightLevel, params->distance);
+        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
-
-    slc = R_GetSectorLightColor(pt->sector);
-    params->ambientColor[CR] = slc[CR];
-    params->ambientColor[CG] = slc[CG];
-    params->ambientColor[CB] = slc[CB];
-    params->ambientColor[CA] = color[CA];
-
-    lparams.starkLight = false;
-    lparams.subsector = ssec;
-    memcpy(lparams.center, params->center, sizeof(lparams.center));
-    lparams.maxLights = modelLight;
-    lparams.ambientColor = params->ambientColor;
-
-    R_SetAmbientColor(params->ambientColor, params->ambientColor,
-                      params->lightLevel, params->distance);
-    R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
 }
 
 static void PG_RenderParticles(int rtype, boolean withBlend)
@@ -647,7 +652,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             modelparams_t           params;
 
             setupModelParamsForParticle(&params, pt, st, dst, center, dist,
-                                        size, mark, color);
+                                        size, mark, color[CA]);
             Rend_RenderModel(&params);
             continue;
         }

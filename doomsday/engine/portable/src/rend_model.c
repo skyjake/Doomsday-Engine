@@ -651,8 +651,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
         ambient[CA] = alpha;
         Mod_FixedVertexColors(numVerts, modelColors, ambient);
     }
-    else if((params->lightLevel < 0 || (subFlags & MFF_FULLBRIGHT)) &&
-            !(subFlags & MFF_DIM))
+    else if((subFlags & MFF_FULLBRIGHT) && !(subFlags & MFF_DIM))
     {   // Fullbright white.
         ambient[CR] = ambient[CG] = ambient[CB] = ambient[CA] = 1;
         Mod_FullBrightVertexColors(numVerts, modelColors, alpha);

@@ -55,10 +55,8 @@ typedef struct modelparams_s {
     int             flags; // Mobj flags.
 
     // Lighting/color:
-    float           lightLevel; // Light level of the sector the model is in. All modifiers applied (i.e. light adaptation).
     float           ambientColor[4];
     boolean         uniformColor;
-
     uint            numLights;
     vlight_t       *lights;
 

@@ -117,9 +117,6 @@ static __inline void renderQuad(gl_vertex_t *v, gl_color_t *c,
 static void setupModelParamsForVisPSprite(modelparams_t *params,
                                           vispsprite_t *spr)
 {
-    float               rgba[4], lightLevel;
-    visspritelightparams_t lparams;
-
     params->mf = spr->data.model.mf;
     params->nextMF = spr->data.model.nextMF;
     params->inter = spr->data.model.inter;
@@ -149,55 +146,53 @@ static void setupModelParamsForVisPSprite(modelparams_t *params,
     params->shineTranslateWithViewerPos = false;
     params->shinepspriteCoordSpace = true;
 
-    if(useBias)
+    if((levelFullBright || spr->data.model.stateFullBright) &&
+       !(spr->data.model.mf->sub[0].flags & MFF_DIM))
     {
-        if(spr->data.model.stateFullBright)
-        {
-            rgba[CR] = rgba[CG] = rgba[CB] = 1;
-        }
-        else
-        {
-            LG_Evaluate(params->center, rgba);
-        }
-
-        lightLevel = 1;
+        params->ambientColor[CR] = params->ambientColor[CG] =
+            params->ambientColor[CB] = 1;
+        params->ambientColor[CA] = spr->data.model.alpha;
+        params->uniformColor = true;
+        params->lights = NULL;
+        params->numLights = 0;
     }
     else
     {
-        const float*        secColor =
-            R_GetSectorLightColor(spr->data.model.subsector->sector);
+        float               lightLevel;
+        visspritelightparams_t lparams;
 
-        if((levelFullBright || spr->data.model.stateFullBright) &&
-            !(spr->data.model.mf->sub[0].flags & MFF_DIM))
+        if(useBias)
         {
+            LG_Evaluate(params->center, params->ambientColor);
             lightLevel = 1;
         }
         else
         {
+            const float*        secColor =
+                R_GetSectorLightColor(spr->data.model.subsector->sector);
+
             // Diminished light (with compression).
             lightLevel = spr->data.model.subsector->sector->lightLevel;
             Rend_ApplyLightAdaptation(&lightLevel);
+
+            params->ambientColor[CR] = secColor[CR];
+            params->ambientColor[CG] = secColor[CG];
+            params->ambientColor[CB] = secColor[CB];
         }
 
-        rgba[CR] = secColor[CR];
-        rgba[CG] = secColor[CG];
-        rgba[CB] = secColor[CB];
+        lparams.starkLight = true;
+        memcpy(lparams.center, spr->center, sizeof(lparams.center));
+        lparams.subsector = spr->data.model.subsector;
+        lparams.maxLights = modelLight;
+        lparams.ambientColor = params->ambientColor;
+
+        params->uniformColor = false;
+        params->ambientColor[CA] = spr->data.model.alpha;
+
+        R_SetAmbientColor(params->ambientColor, params->ambientColor, lightLevel,
+                          params->distance);
+        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
-
-    lparams.starkLight = true;
-    memcpy(lparams.center, spr->center, sizeof(lparams.center));
-    lparams.subsector = spr->data.model.subsector;
-    lparams.maxLights = modelLight;
-    lparams.ambientColor = params->ambientColor;
-
-    params->lightLevel = lightLevel;
-    params->uniformColor = false;
-    memcpy(params->ambientColor, rgba, sizeof(float) * 3);
-    params->ambientColor[CA] = spr->data.model.alpha;
-
-    R_SetAmbientColor(params->ambientColor, params->ambientColor, lightLevel,
-                      params->distance);
-    R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
 }
 
 /**
@@ -720,9 +715,6 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
 
     if(spr->type == VSPR_MAP_OBJECT)
     {
-        float               rgba[4], lightLevel;
-        visspritelightparams_t lparams;
-
         params->mf = spr->data.mo.mf;
         params->nextMF = spr->data.mo.nextMF;
         params->inter = spr->data.mo.inter;
@@ -752,61 +744,56 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->shineTranslateWithViewerPos = false;
         params->shinepspriteCoordSpace = false;
 
-        if(useBias)
+        if((levelFullBright || spr->data.mo.stateFullBright) &&
+            !(spr->data.mo.mf->sub[0].flags & MFF_DIM))
         {
-            if(spr->data.mo.stateFullBright)
-            {
-                rgba[CR] = rgba[CG] = rgba[CB] = 1;
-            }
-            else
-            {
-                LG_Evaluate(params->center, rgba);
-            }
-
-            lightLevel = 1;
+            params->ambientColor[CR] = params->ambientColor[CG] =
+                params->ambientColor[CB] = 1;
+            params->ambientColor[CA] = spr->data.mo.alpha;
+            params->uniformColor = true;
+            params->lights = NULL;
+            params->numLights = 0;
         }
         else
         {
-            const float*        secColor =
-                R_GetSectorLightColor(spr->data.mo.subsector->sector);
+            float               lightLevel;
+            visspritelightparams_t lparams;
 
-            if((levelFullBright || spr->data.mo.stateFullBright) &&
-                !(spr->data.mo.mf->sub[0].flags & MFF_DIM))
+            if(useBias)
             {
+                LG_Evaluate(params->center, params->ambientColor);
                 lightLevel = 1;
             }
             else
             {
+                const float*        secColor =
+                    R_GetSectorLightColor(spr->data.mo.subsector->sector);
+
                 // Diminished light (with compression).
                 lightLevel = spr->data.mo.subsector->sector->lightLevel;
                 Rend_ApplyLightAdaptation(&lightLevel);
+
+                params->ambientColor[CR] = secColor[CR];
+                params->ambientColor[CG] = secColor[CG];
+                params->ambientColor[CB] = secColor[CB];
             }
 
-            rgba[CR] = secColor[CR];
-            rgba[CG] = secColor[CG];
-            rgba[CB] = secColor[CB];
+            params->ambientColor[CA] = spr->data.mo.alpha;
+            params->uniformColor = false;
+
+            lparams.starkLight = false;
+            memcpy(lparams.center, spr->center, sizeof(lparams.center));
+            lparams.subsector = spr->data.mo.subsector;
+            lparams.maxLights = modelLight;
+            lparams.ambientColor = params->ambientColor;
+
+            R_SetAmbientColor(params->ambientColor, params->ambientColor,
+                              lightLevel, spr->distance);
+            R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
         }
-
-        params->lightLevel = lightLevel;
-        params->uniformColor = false;
-        memcpy(params->ambientColor, rgba, sizeof(float) * 3);
-        params->ambientColor[CA] = spr->data.mo.alpha;
-
-        lparams.starkLight = false;
-        memcpy(lparams.center, spr->center, sizeof(lparams.center));
-        lparams.subsector = spr->data.mo.subsector;
-        lparams.maxLights = modelLight;
-        lparams.ambientColor = params->ambientColor;
-
-        R_SetAmbientColor(params->ambientColor, params->ambientColor,
-                          lightLevel, spr->distance);
-        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
     else if(spr->type == VSPR_DECORATION)
     {
-        float               rgba[4], lightLevel;
-        visspritelightparams_t lparams;
-
         params->mf = spr->data.decormodel.mf;
         params->inter = spr->data.decormodel.inter;
         params->alwaysInterpolate = true;
@@ -834,49 +821,56 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->shineTranslateWithViewerPos = false;
         params->shinepspriteCoordSpace = 0;
 
-        if(useBias)
+        if(levelFullBright)
         {
-            /**
-             * Evaluate the position of this decoration in the light grid.
-             * \todo Should be affected by BIAS sources.
-             */
-            LG_Evaluate(spr->center, rgba);
-            lightLevel = 1;
+            params->ambientColor[CR] = params->ambientColor[CG] =
+                params->ambientColor[CB] = 1;
+            params->ambientColor[CA] = spr->data.decormodel.alpha;
+            params->uniformColor = true;
+            params->lights = NULL;
+            params->numLights = 0;
         }
         else
         {
-            const float*        sectorColor =
-                R_GetSectorLightColor(spr->data.decormodel.subsector->sector);
+            float               lightLevel;
+            visspritelightparams_t lparams;
 
-            if(levelFullBright)
+            if(useBias)
             {
+                /**
+                 * Evaluate the position of this decoration in the light grid.
+                 * \todo Should be affected by BIAS sources.
+                 */
+                LG_Evaluate(spr->center, params->ambientColor);
                 lightLevel = 1;
             }
             else
             {
+                const float*        sectorColor =
+                    R_GetSectorLightColor(spr->data.decormodel.subsector->sector);
+
                 lightLevel = spr->data.decormodel.subsector->sector->lightLevel;
                 Rend_ApplyLightAdaptation(&lightLevel);
+
+                params->ambientColor[CR] = sectorColor[CR];
+                params->ambientColor[CG] = sectorColor[CG];
+                params->ambientColor[CB] = sectorColor[CB];
             }
 
-            rgba[CR] = sectorColor[CR];
-            rgba[CG] = sectorColor[CG];
-            rgba[CB] = sectorColor[CB];
+            params->ambientColor[CA] = spr->data.decormodel.alpha;
+
+            params->uniformColor = false;
+
+            lparams.starkLight = false;
+            memcpy(lparams.center, spr->center, sizeof(lparams.center));
+            lparams.subsector = spr->data.decormodel.subsector;
+            lparams.maxLights = modelLight;
+            lparams.ambientColor = params->ambientColor;
+
+            R_SetAmbientColor(params->ambientColor, params->ambientColor,
+                              lightLevel, spr->distance);
+            R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
         }
-
-        params->lightLevel = lightLevel;
-        params->uniformColor = false;
-        memcpy(params->ambientColor, rgba, sizeof(float) * 3);
-        params->ambientColor[CA] = spr->data.decormodel.alpha;
-
-        lparams.starkLight = false;
-        memcpy(lparams.center, spr->center, sizeof(lparams.center));
-        lparams.subsector = spr->data.decormodel.subsector;
-        lparams.maxLights = modelLight;
-        lparams.ambientColor = params->ambientColor;
-
-        R_SetAmbientColor(params->ambientColor, params->ambientColor,
-                          lightLevel, spr->distance);
-        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
 }
 
