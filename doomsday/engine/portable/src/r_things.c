@@ -93,7 +93,7 @@ spritedef_t *sprites = 0;
 int     numSprites;
 
 vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
-vissprite_t visPSprites[DDMAXPSPRITES];
+vispsprite_t visPSprites[DDMAXPSPRITES];
 
 int     maxModelDistance = 1500;
 int     levelFullBright = false;
@@ -409,10 +409,8 @@ void R_ProjectPlayerSprites(void)
 {
     int                 i;
     float               inter;
-    float               lightLevel, alpha, rgb[3];
     modeldef_t         *mf, *nextmf;
     ddpsprite_t        *psp;
-    vissprite_t        *vis;
     boolean             isFullBright = (levelFullBright != 0);
     boolean             isModel;
     ddplayer_t         *ddpl = &viewPlayer->shared;
@@ -439,9 +437,11 @@ void R_ProjectPlayerSprites(void)
 
     for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
     {
-        vis = visPSprites + i;
+        vispsprite_t        *spr = &visPSprites[i];
 
-        vis->type = false;
+        spr->type = VPSPR_SPRITE;
+        spr->psp = psp;
+
         if(!psp->statePtr)
             continue;
 
@@ -460,106 +460,59 @@ void R_ProjectPlayerSprites(void)
                 isModel = true;
         }
 
-        if(isFullBright)
-        {
-            rgb[CR] = rgb[CG] = rgb[CB] = 1;
-            lightLevel = -1;
-        }
-        else
-        {
-            if(useBias)
-            {
-                /**
-                 * Evaluate the position of this player in the light grid.
-                 * \todo Should be affected by BIAS sources.
-                 */
-                float               point[3];
-
-                point[VX] = ddpl->mo->pos[VX];
-                point[VY] = ddpl->mo->pos[VY];
-                point[VZ] = ddpl->mo->pos[VZ] + ddpl->viewHeight / 2;
-                LG_Evaluate(point, rgb);
-                lightLevel = 1;
-            }
-            else
-            {
-                memcpy(rgb,
-                       R_GetSectorLightColor(ddpl->mo->subsector->sector),
-                       sizeof(rgb));
-
-                if(psp->light < 1)
-                {
-                    lightLevel = (psp->light - .1f);
-                    Rend_ApplyLightAdaptation(&lightLevel);
-                }
-                else
-                    lightLevel = 1;
-            }
-        }
-
-        alpha = psp->alpha;
-
         if(isModel)
         {   // Yes, draw a 3D model (in Rend_Draw3DPlayerSprites).
 
             // There are 3D psprites.
             psp3d = true;
 
-            vis->type = VSPR_HUD_MODEL;
-            vis->light = NULL;
+            spr->type = VPSPR_MODEL;
 
-            vis->distance = -10;//4;
-            vis->data.mo.subsector = ddpl->mo->subsector;
-            vis->data.mo.flags = 0;
+            spr->data.model.subsector = ddpl->mo->subsector;
+            spr->data.model.flags = 0;
             // 32 is the raised weapon height.
-            vis->data.mo.gzt = viewZ;
-            vis->data.mo.secFloor = ddpl->mo->subsector->sector->SP_floorvisheight;
-            vis->data.mo.secCeil = ddpl->mo->subsector->sector->SP_ceilvisheight;
-            vis->data.mo.pClass = 0;
-            vis->data.mo.floorClip = 0;
+            spr->data.model.gzt = viewZ;
+            spr->data.model.secFloor = ddpl->mo->subsector->sector->SP_floorvisheight;
+            spr->data.model.secCeil = ddpl->mo->subsector->sector->SP_ceilvisheight;
+            spr->data.model.pClass = 0;
+            spr->data.model.floorClip = 0;
 
-            vis->data.mo.mf = mf;
-            vis->data.mo.nextMF = nextmf;
-            vis->data.mo.inter = inter;
-            vis->data.mo.viewAligned = true;
-            vis->center[VX] = viewX;
-            vis->center[VY] = viewY;
-            vis->center[VZ] = viewZ;
+            spr->data.model.mf = mf;
+            spr->data.model.nextMF = nextmf;
+            spr->data.model.inter = inter;
+            spr->data.model.viewAligned = true;
+            spr->center[VX] = viewX;
+            spr->center[VY] = viewY;
+            spr->center[VZ] = viewZ;
 
             // Offsets to rotation angles.
-            vis->data.mo.yawAngleOffset = psp->pos[VX] * weaponOffsetScale - 90;
-            vis->data.mo.pitchAngleOffset =
+            spr->data.model.yawAngleOffset = psp->pos[VX] * weaponOffsetScale - 90;
+            spr->data.model.pitchAngleOffset =
                 (32 - psp->pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
             // Is the FOV shift in effect?
             if(weaponFOVShift > 0 && fieldOfView > 90)
-                vis->data.mo.yawAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
+                spr->data.model.yawAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
             // Real rotation angles.
-            vis->data.mo.yaw =
-                viewAngle / (float) ANGLE_MAX *-360 + vis->data.mo.yawAngleOffset + 90;
-            vis->data.mo.pitch = viewPitch * 85 / 110 + vis->data.mo.yawAngleOffset;
-            vis->data.mo.matFlip[0] = vis->data.mo.matFlip[1] = false;
-            memset(vis->data.mo.visOff, 0, sizeof(vis->data.mo.visOff));
+            spr->data.model.yaw =
+                viewAngle / (float) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;
+            spr->data.model.pitch = viewPitch * 85 / 110 + spr->data.model.yawAngleOffset;
+            memset(spr->data.model.visOff, 0, sizeof(spr->data.model.visOff));
 
-            vis->data.mo.alpha = alpha;
-            vis->data.mo.stateFullBright = false;
+            spr->data.model.alpha = psp->alpha;
+            spr->data.model.stateFullBright = false;
         }
         else
         {   // No, draw a 2D sprite (in Rend_DrawPlayerSprites).
-            vis->type = VSPR_HUD_SPRITE;
-            vis->light = NULL;
+            spr->type = VPSPR_SPRITE;
 
             // Adjust the center slightly so an angle can be calculated.
-            vis->distance = 4;
-            vis->center[VX] = viewX;
-            vis->center[VY] = viewY;
-            vis->center[VZ] = viewZ;
+            spr->center[VX] = viewX;
+            spr->center[VY] = viewY;
+            spr->center[VZ] = viewZ;
 
-            vis->data.psprite.subsector = ddpl->mo->subsector;
-            vis->data.psprite.psp = psp;
-
-            memcpy(vis->data.psprite.rgb, rgb, sizeof(float) * 3);
-            vis->data.psprite.alpha = alpha;
-            vis->data.psprite.lightLevel = lightLevel;
+            spr->data.sprite.subsector = ddpl->mo->subsector;
+            spr->data.sprite.alpha = psp->alpha;
+            spr->data.sprite.isFullBright = isFullBright;
         }
     }
 }

@@ -614,7 +614,7 @@ void R_RenderPlayerView(int num)
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    Rend_DrawPlayerSprites();   // If the 2D versions are needed.
+    Rend_Draw2DPlayerSprites(); // If the 2D versions are needed.
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 

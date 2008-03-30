@@ -39,8 +39,6 @@
 enum {
     VSPR_MASKED_WALL,
     VSPR_MAP_OBJECT,
-    VSPR_HUD_MODEL,
-    VSPR_HUD_SPRITE,
     VSPR_DECORATION
 };
 
@@ -143,6 +141,46 @@ typedef struct {
     spriteframe_t  *spriteFrames;
 } spritedef_t;
 
+typedef enum {
+    VPSPR_SPRITE,
+    VPSPR_MODEL
+} vispspritetype_t;
+
+typedef struct vispsprite_s {
+    vispspritetype_t type;
+    ddpsprite_t    *psp;
+    float           center[3];
+
+    union vispsprite_data_u {
+        struct vispsprite_sprite_s {
+            subsector_t    *subsector;
+            float           alpha;
+            boolean         isFullBright;
+        } sprite;
+        struct vispsprite_model_s {
+            subsector_t    *subsector;
+            float           gzt; // global top for silhouette clipping
+            int             flags; // for color translation and shadow draw
+            uint            id;
+            int             selector;
+            int             pClass; // player class (used in translation)
+            float           floorClip;
+            boolean         stateFullBright;
+            boolean         viewAligned;    // Align to view plane.
+            float           secFloor, secCeil;
+            float           alpha;
+            float           visOff[3]; // Last-minute offset to coords.
+            boolean         floorAdjust; // Allow moving sprite to match visible floor.
+
+            struct modeldef_s *mf, *nextMF;
+            float           yaw, pitch;
+            float           pitchAngleOffset;
+            float           yawAngleOffset;
+            float           inter; // Frame interpolation, 0..1
+        } model;
+    } data;
+} vispsprite_t;
+
 extern spritedef_t *sprites;
 extern int      numSprites;
 extern float    pspOffset[2];
@@ -153,8 +191,8 @@ extern float    modelSpinSpeed;
 extern int      maxModelDistance, noSpriteZWrite;
 extern int      useSRVO, useSRVOAngle;
 extern vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
-extern vissprite_t visPSprites[DDMAXPSPRITES];
 extern vissprite_t visSprSortedHead;
+extern vispsprite_t visPSprites[DDMAXPSPRITES];
 
 void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
 void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info);

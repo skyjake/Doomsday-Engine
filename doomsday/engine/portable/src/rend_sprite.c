@@ -53,12 +53,13 @@
 
 static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           vissprite_t *spr);
-static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
-                                           vissprite_t *spr);
 static void setupMaskedWallParamsForVisSprite(rendmaskedwallparams_t *params,
                                               vissprite_t *spr);
 static void setupModelParamsForVisSprite(modelparams_t *params,
                                               vissprite_t *spr);
+
+static void setupPSpriteParams(rendpspriteparams_t *params,
+                               vispsprite_t *spr);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -113,14 +114,97 @@ static __inline void renderQuad(gl_vertex_t *v, gl_color_t *c,
     DGL_End();
 }
 
+static void setupModelParamsForVisPSprite(modelparams_t *params,
+                                          vispsprite_t *spr)
+{
+    float               rgba[4], lightLevel;
+    visspritelightparams_t lparams;
+
+    params->mf = spr->data.model.mf;
+    params->nextMF = spr->data.model.nextMF;
+    params->inter = spr->data.model.inter;
+    params->alwaysInterpolate = false;
+    params->id = spr->data.model.id;
+    params->selector = spr->data.model.selector;
+    params->flags = spr->data.model.flags;
+    params->center[VX] = spr->center[VX];
+    params->center[VY] = spr->center[VY];
+    params->center[VZ] = spr->center[VZ];
+    params->srvo[VX] = spr->data.model.visOff[VX];
+    params->srvo[VY] = spr->data.model.visOff[VY];
+    params->srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
+    params->gzt = spr->data.model.gzt;
+    params->distance = -10;
+    params->yaw = spr->data.model.yaw;
+    params->extraYawAngle = 0;
+    params->yawAngleOffset = spr->data.model.yawAngleOffset;
+    params->pitch = spr->data.model.pitch;
+    params->extraPitchAngle = 0;
+    params->pitchAngleOffset = spr->data.model.pitchAngleOffset;
+    params->extraScale = 0;
+    params->viewAligned = spr->data.model.viewAligned;
+    params->mirror = (mirrorHudModels? true : false);
+    params->shineYawOffset = -vang;
+    params->shinePitchOffset = vpitch + 90;
+    params->shineTranslateWithViewerPos = false;
+    params->shinepspriteCoordSpace = true;
+
+    lparams.starkLight = true;
+    memcpy(lparams.center, spr->center, sizeof(lparams.center));
+    lparams.subsector = spr->data.model.subsector;
+    lparams.maxLights = modelLight;
+
+    if(useBias)
+    {
+        if(spr->data.model.stateFullBright)
+        {
+            rgba[CR] = rgba[CG] = rgba[CB] = 1;
+        }
+        else
+        {
+            LG_Evaluate(params->center, rgba);
+        }
+
+        lightLevel = 1;
+    }
+    else
+    {
+        const float*        secColor =
+            R_GetSectorLightColor(spr->data.model.subsector->sector);
+
+        if((levelFullBright || spr->data.model.stateFullBright) &&
+            !(spr->data.model.mf->sub[0].flags & MFF_DIM))
+        {
+            lightLevel = 1;
+        }
+        else
+        {
+            // Diminished light (with compression).
+            lightLevel = spr->data.model.subsector->sector->lightLevel;
+            Rend_ApplyLightAdaptation(&lightLevel);
+        }
+
+        rgba[CR] = secColor[CR];
+        rgba[CG] = secColor[CG];
+        rgba[CB] = secColor[CB];
+    }
+
+    params->lightLevel = lightLevel;
+    params->uniformColor = false;
+    memcpy(params->rgb, rgba, sizeof(float) * 3);
+    params->alpha = spr->data.model.alpha;
+
+    R_SetAmbientColor(rgba, lightLevel, params->distance);
+    R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
+}
+
 /**
  * Fog is turned off while rendering. It's not feasible to think that the
  * fog would obstruct the player's view of his own weapon.
  */
 void Rend_Draw3DPlayerSprites(void)
 {
-    int         i;
-    modelparams_t params;
+    int                 i;
 
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false);
@@ -135,11 +219,16 @@ void Rend_Draw3DPlayerSprites(void)
 
     for(i = 0; i < DDMAXPSPRITES; ++i)
     {
-        if(!visPSprites[i].type)
-            continue;           // Not used.
+        vispsprite_t       *spr = &visPSprites[i];
 
-        setupModelParamsForVisSprite(&params, visPSprites + i);
+        if(spr->type != VPSPR_MODEL)
+            continue; // Not used.
+
+        {
+        modelparams_t       params;
+        setupModelParamsForVisPSprite(&params, spr);
         Rend_RenderModel(&params);
+        }
     }
 
     // Should we turn the fog back on?
@@ -148,14 +237,17 @@ void Rend_Draw3DPlayerSprites(void)
 }
 
 /**
- * Set all the colors in the array to bright white.
+ * Set all the colors in the array to that specified.
  */
-void Spr_FullBrightVertexColors(int count, gl_color_t *colors, float alpha)
+void Spr_UniformVertexColors(int count, gl_color_t *colors,
+                             const float *rgba)
 {
     for(; count-- > 0; colors++)
     {
-        memset(colors->rgba, 255, 3);
-        colors->rgba[3] = (byte) (255 * alpha);
+        colors->rgba[CR] = (byte) (255 * rgba[CR]);
+        colors->rgba[CG] = (byte) (255 * rgba[CG]);
+        colors->rgba[CB] = (byte) (255 * rgba[CB]);
+        colors->rgba[CA] = (byte) (255 * rgba[CA]);
     }
 }
 
@@ -237,14 +329,13 @@ void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
     }
 }
 
-static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
-                                           vissprite_t *spr)
+static void setupPSpriteParams(rendpspriteparams_t *params,
+                               vispsprite_t *spr)
 {
     float               offScaleY = weaponOffsetScaleY / 1000.0f;
     spritetex_t        *sprTex;
     spriteinfo_t        info;
-    ddpsprite_t        *psp = spr->data.psprite.psp;
-    visspritelightparams_t lparams;
+    ddpsprite_t        *psp = spr->psp;
 
     // Clear sprite info.
     memset(&info, 0, sizeof(info));
@@ -257,7 +348,6 @@ static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
         offScaleY * psp->pos[VY] + (1 - offScaleY) * 32 - info.topOffset + pspOffset[VY];
     params->width = sprTex->info.width;
     params->height = sprTex->info.height;
-    params->subsector = spr->data.psprite.subsector;
 
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
@@ -271,25 +361,66 @@ static void setupPSpriteParamsForVisSprite(rendpspriteparams_t *params,
 
     params->lump = info.idx;
 
-    memcpy(params->rgba, spr->data.psprite.rgb, sizeof(float) * 3);
-    params->rgba[CA] = spr->data.psprite.alpha;
-    params->lightLevel = spr->data.psprite.lightLevel;
+    if(spr->data.sprite.isFullBright)
+    {
+        params->rgba[CR] = params->rgba[CG] = params->rgba[CB] = 1;
+        params->rgba[CA] = spr->data.sprite.alpha;
+        params->uniformColor = true;
+        params->numLights = 0;
+        params->lights = NULL;
+    }
+    else
+    {
+        float               lightLevel;
+        visspritelightparams_t lparams;
 
-    lparams.starkLight = true;
-    memcpy(lparams.center, spr->center, sizeof(lparams.center));
-    lparams.maxLights = spriteLight;
-    lparams.subsector = params->subsector;
+        params->uniformColor = false;
 
-    R_SetAmbientColor(params->rgba, params->lightLevel, spr->distance);
-    R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
+        if(useBias)
+        {
+            /**
+             * Evaluate the position of the player in the light grid.
+             * \todo Should be affected by BIAS sources.
+             */
+            LG_Evaluate(spr->center, params->rgba);
+            lightLevel = 1;
+        }
+        else
+        {
+            const float*            secColor =
+                R_GetSectorLightColor(spr->data.sprite.subsector->sector);
+
+            if(spr->psp->light < 1)
+            {
+                lightLevel = (spr->psp->light - .1f);
+                Rend_ApplyLightAdaptation(&lightLevel);
+            }
+            else
+                lightLevel = 1;
+
+            params->rgba[CR] = secColor[CR];
+            params->rgba[CG] = secColor[CG];
+            params->rgba[CB] = secColor[CB];
+        }
+
+        params->rgba[CA] = spr->data.sprite.alpha;
+
+        lparams.starkLight = true;
+        memcpy(lparams.center, spr->center, sizeof(lparams.center));
+        lparams.maxLights = spriteLight;
+        lparams.subsector = spr->data.sprite.subsector;
+
+        R_SetAmbientColor(params->rgba, lightLevel, -10);
+        R_DetermineLightsAffectingVisSprite(&lparams, &params->lights, &params->numLights);
+    }
 }
 
 void Rend_DrawPSprite(const rendpspriteparams_t *params)
 {
-    int         i;
-    float       v1[2], v2[2], v3[2], v4[2];
-    gl_color_t  quadColors[4];
-    gl_vertex_t quadNormals[4];
+    int                 i;
+    float               v1[2], v2[2], v3[2], v4[2];
+    gl_color_t          quadColors[4];
+    gl_vertex_t         quadNormals[4];
 
     if(renderTextures == 1)
         GL_SetPSprite(params->lump);
@@ -324,9 +455,9 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         quadNormals[i].xyz[VZ] = viewFrontVec[VY];
     }
 
-    if(params->lightLevel < 0)
-    {   // Fullbright white.
-        Spr_FullBrightVertexColors(4, quadColors, params->rgba[CA]);
+    if(params->uniformColor)
+    {   // Lit uniformly.
+        Spr_UniformVertexColors(4, quadColors, params->rgba);
     }
     else
     {   // Lit normally.
@@ -375,35 +506,36 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
 }
 
 /**
- * Draws 2D player sprites. If they were already drawn 3D, this
- * won't do anything.
+ * Draws 2D HUD sprites.
+ *
+ * \note If they were already drawn 3D, this won't do anything.
  */
-void Rend_DrawPlayerSprites(void)
+void Rend_Draw2DPlayerSprites(void)
 {
     int                 i;
     ddplayer_t         *ddpl = &viewPlayer->shared;
     ddpsprite_t        *psp;
-    vissprite_t        *vis;
 
-    // Cameramen have no psprites.
+    // Cameramen have no HUD sprites.
     if((ddpl->flags & DDPF_CAMERA) || (ddpl->flags & DDPF_CHASECAM))
         return;
 
     // Check for fullbright.
     for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
     {
-        vis = visPSprites + i;
+        vispsprite_t        *spr = &visPSprites[i];
 
         // Should this psprite be drawn?
-        if(vis->type != VSPR_HUD_SPRITE)
+        if(spr->type != VPSPR_SPRITE)
             continue; // No...
 
         // Draw as separate sprites.
+        if(spr->psp && spr->psp->statePtr)
         {
-        rendpspriteparams_t params;
+            rendpspriteparams_t params;
 
-        setupPSpriteParamsForVisSprite(&params, vis);
-        Rend_DrawPSprite(&params);
+            setupPSpriteParams(&params, spr);
+            Rend_DrawPSprite(&params);
         }
     }
 }
@@ -588,8 +720,7 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
     if(!params || !spr)
         return; // Hmm...
 
-    if(spr->type == VSPR_MAP_OBJECT ||
-       spr->type == VSPR_HUD_MODEL)
+    if(spr->type == VSPR_MAP_OBJECT)
     {
         float               rgba[4], lightLevel;
         visspritelightparams_t lparams;
@@ -617,14 +748,13 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
         params->pitchAngleOffset = spr->data.mo.pitchAngleOffset;
         params->extraScale = 0;
         params->viewAligned = spr->data.mo.viewAligned;
-        params->mirror =
-            (spr->type == VSPR_HUD_MODEL && mirrorHudModels != 0);
-        params->shineYawOffset = (spr->type == VSPR_HUD_MODEL? -vang : 0);
-        params->shinePitchOffset = (spr->type == VSPR_HUD_MODEL? vpitch + 90 : 0);
+        params->mirror = 0;
+        params->shineYawOffset = 0;
+        params->shinePitchOffset = 0;
         params->shineTranslateWithViewerPos = false;
-        params->shinepspriteCoordSpace = (spr->type == VSPR_HUD_MODEL);
+        params->shinepspriteCoordSpace = false;
 
-        lparams.starkLight = (spr->type == VSPR_HUD_MODEL);
+        lparams.starkLight = false;
         memcpy(lparams.center, spr->center, sizeof(lparams.center));
         lparams.subsector = spr->data.mo.subsector;
         lparams.maxLights = modelLight;
@@ -863,8 +993,7 @@ void Rend_DrawMasked(void)
                     center[VY] = spr->center[VY];
                     center[VZ] = spr->center[VZ];
 
-                    if(spr->type == VSPR_MAP_OBJECT ||
-                       spr->type == VSPR_HUD_MODEL)
+                    if(spr->type == VSPR_MAP_OBJECT)
                     {
                         center[VX] += spr->data.mo.visOff[VX];
                         center[VY] += spr->data.mo.visOff[VY];
@@ -940,7 +1069,10 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
     // Light the sprite.
     if(params->lightLevel < 0)
     {   // Fullbright white.
-        Spr_FullBrightVertexColors(4, quadColors, params->rgba[CA]);
+        float               rgba[4];
+        rgba[CR] = rgba[CG] = rgba[CB] = 1;
+        rgba[CA] = params->rgba[CA];
+        Spr_UniformVertexColors(4, quadColors, rgba);
     }
     else
     {   // Lit normally.

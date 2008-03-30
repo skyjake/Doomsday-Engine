@@ -72,13 +72,9 @@ typedef struct rendpspriteparams_s {
 
     // Lighting/color:
     float           rgba[4];
-    float           lightLevel;
-
+    boolean         uniformColor;
     uint            numLights;
     vlight_t       *lights;
-
-// Misc
-    struct subsector_s *subsector;
 } rendpspriteparams_t;
 
 extern int      spriteLight;
@@ -86,7 +82,7 @@ extern byte     noSpriteTrans;
 
 void            Rend_SpriteRegister(void);
 void            Rend_DrawMasked(void);
-void            Rend_DrawPlayerSprites(void);
+void            Rend_Draw2DPlayerSprites(void);
 void            Rend_Draw3DPlayerSprites(void);
 void            Rend_SpriteTexCoord(int pnum, int x, int y);
 void            Rend_RenderSprite(const rendspriteparams_t *params);
