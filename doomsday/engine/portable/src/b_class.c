@@ -89,12 +89,12 @@ void B_DestroyAllClasses(void)
  */
 void B_UpdateDeviceStateAssociations(void)
 {
-    int             i;
-    uint            k;
-    bclass_t       *bc;
-    evbinding_t    *eb;
-    controlbinding_t* conBin;
-    dbinding_t     *db;
+    int                 i;
+    uint                k;
+    bclass_t*           bc;
+    evbinding_t*        eb;
+    controlbinding_t*   conBin;
+    dbinding_t*         db;
 
     I_ClearDeviceClassAssociations();
 
@@ -109,7 +109,8 @@ void B_UpdateDeviceStateAssociations(void)
         // Mark all event bindings in the class.
         for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
         {
-            inputdev_t* dev = I_GetDevice(eb->device, false);
+            inputdev_t*         dev = I_GetDevice(eb->device, false);
+
             switch(eb->type)
             {
             case E_TOGGLE:
@@ -144,7 +145,8 @@ void B_UpdateDeviceStateAssociations(void)
                 for(db = conBin->deviceBinds[k].next; db != &conBin->deviceBinds[k];
                     db = db->next)
                 {
-                    inputdev_t     *dev = I_GetDevice(db->device, false);
+                    inputdev_t*         dev = I_GetDevice(db->device, false);
+
                     switch(db->type)
                     {
                     case CBD_TOGGLE:
@@ -174,7 +176,8 @@ void B_UpdateDeviceStateAssociations(void)
         // If the class have made a broad device acquisition, mark all relevant states.
         if(bc->acquireKeyboard)
         {
-            inputdev_t     *dev = I_GetDevice(IDEV_KEYBOARD, false);
+            inputdev_t*         dev = I_GetDevice(IDEV_KEYBOARD, false);
+
             for(k = 0; k < dev->numKeys; ++k)
             {
                 if(!dev->keys[k].bClass)
@@ -190,21 +193,26 @@ static void B_SetClassCount(int count)
     bindClassCount = count;
 }
 
-static void B_InsertClass(bclass_t* bc, int where)
+static void B_InsertClass(bclass_t* bc, int classIdx)
 {
     B_SetClassCount(bindClassCount + 1);
-    memmove(&bindClasses[where + 1], &bindClasses[where], sizeof(bclass_t*) *
-            (bindClassCount - 1 - where));
-    bindClasses[where] = bc;
+    if(classIdx < bindClassCount - 1)
+    {
+        // We need to make room for this new binding class.
+        memmove(&bindClasses[classIdx + 1], &bindClasses[classIdx], sizeof(bclass_t*) *
+                (bindClassCount - 1 - classIdx));
+    }
+    bindClasses[classIdx] = bc;
 }
 
 static void B_RemoveClass(bclass_t* bc)
 {
-    int where = B_GetClassPos(bc);
-    if(where >= 0)
+    int                 classIdx = B_GetClassPos(bc);
+
+    if(classIdx >= 0)
     {
-        memmove(&bindClasses[where], &bindClasses[where + 1],
-                sizeof(bclass_t*) * (bindClassCount - 1 - where));
+        memmove(&bindClasses[classIdx], &bindClasses[classIdx + 1],
+                sizeof(bclass_t*) * (bindClassCount - 1 - classIdx));
         B_SetClassCount(bindClassCount - 1);
     }
 }
@@ -215,7 +223,7 @@ static void B_RemoveClass(bclass_t* bc)
  */
 bclass_t* B_NewClass(const char* name)
 {
-    bclass_t           *bc = M_Calloc(sizeof(bclass_t));
+    bclass_t*           bc = M_Calloc(sizeof(bclass_t));
 
     bc->name = strdup(name);
     B_InitCommandBindingList(&bc->commandBinds);
@@ -258,13 +266,14 @@ void B_AcquireKeyboard(bclass_t* bc, boolean doAcquire)
 
 bclass_t* B_ClassByName(const char* name)
 {
-    int     i;
+    int                 i;
 
     for(i = 0; i < bindClassCount; ++i)
     {
         if(!strcasecmp(name, bindClasses[i]->name))
             return bindClasses[i];
     }
+
     return NULL;
 }
 
@@ -272,6 +281,7 @@ bclass_t* B_ClassByPos(int pos)
 {
     if(pos < 0 || pos >= bindClassCount)
         return NULL;
+
     return bindClasses[pos];
 }
 
@@ -282,13 +292,14 @@ int B_ClassCount(void)
 
 int B_GetClassPos(bclass_t* bc)
 {
-    int     i;
+    int                 i;
 
     for(i = 0; i < bindClassCount; ++i)
     {
         if(bindClasses[i] == bc)
             return i;
     }
+
     return -1;
 }
 
@@ -300,7 +311,7 @@ void B_ReorderClass(bclass_t* bc, int pos)
 
 controlbinding_t* B_NewControlBinding(bclass_t* bc)
 {
-    int     i;
+    int                 i;
 
     controlbinding_t* conBin = M_Calloc(sizeof(controlbinding_t));
     conBin->bid = B_NewIdentifier();
@@ -320,13 +331,14 @@ controlbinding_t* B_NewControlBinding(bclass_t* bc)
 
 controlbinding_t* B_GetControlBinding(bclass_t* bc, int control)
 {
-    controlbinding_t* i;
+    controlbinding_t*   i;
 
     for(i = bc->controlBinds.next; i != &bc->controlBinds; i = i->next)
     {
         if(i->control == control)
             return i;
     }
+
     // Create a new one.
     i = B_NewControlBinding(bc);
     i->control = control;
@@ -375,10 +387,10 @@ void B_DestroyControlBindingList(controlbinding_t* listRoot)
  */
 boolean B_DeleteBinding(bclass_t* bc, int bid)
 {
-    evbinding_t* eb = 0;
-    controlbinding_t* conBin = 0;
-    dbinding_t* db = 0;
-    int         i;
+    int                 i;
+    evbinding_t*        eb = 0;
+    controlbinding_t*   conBin = 0;
+    dbinding_t*         db = 0;
 
     // Check if it one of the command bindings.
     for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
@@ -418,12 +430,12 @@ boolean B_DeleteBinding(bclass_t* bc, int bid)
 
 boolean B_TryEvent(ddevent_t* event)
 {
-    int     i;
-    evbinding_t* eb;
+    int                 i;
+    evbinding_t*        eb;
 
     for(i = 0; i < bindClassCount; ++i)
     {
-        bclass_t* bc = bindClasses[i];
+        bclass_t*           bc = bindClasses[i];
 
         if(!bc->active)
             continue;
@@ -441,8 +453,8 @@ boolean B_TryEvent(ddevent_t* event)
 
 void B_PrintClasses(void)
 {
-    int         i;
-    bclass_t*   bc;
+    int                 i;
+    bclass_t*           bc;
 
     Con_Printf("%i binding classes defined:\n", bindClassCount);
 
@@ -455,14 +467,12 @@ void B_PrintClasses(void)
 
 void B_PrintAllBindings(void)
 {
-    int         i;
-    int         k;
-    bclass_t*   bc;
-    int         count;
-    evbinding_t* e;
-    controlbinding_t* c;
-    dbinding_t* d;
-    ddstring_t* str = Str_New();
+    int                 i, k, count;
+    bclass_t*           bc;
+    evbinding_t*        e;
+    controlbinding_t*   c;
+    dbinding_t*         d;
+    ddstring_t*         str = Str_New();
 
     Con_Printf("%i binding classes defined.\n", bindClassCount);
 
@@ -475,8 +485,10 @@ void B_PrintAllBindings(void)
 
         // Commands.
         for(count = 0, e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next, count++);
+
         if(count)
             Con_Printf("  %i event bindings:\n", count);
+
         for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
         {
             B_EventBindingToString(e, str);
@@ -485,17 +497,24 @@ void B_PrintAllBindings(void)
 
         // Controls.
         for(count = 0, c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next, count++);
+
         if(count)
             Con_Printf("  %i control bindings.\n", count);
+
         for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
         {
             const char* controlName = P_PlayerControlById(c->control)->name;
+
             Con_Printf("  Control \"%s\" "BIDFORMAT":\n", controlName, c->bid);
+
             for(k = 0; k < DDMAXPLAYERS; ++k)
             {
                 for(count = 0, d = c->deviceBinds[k].next; d != &c->deviceBinds[k];
                     d = d->next, count++);
-                if(!count) continue;
+
+                if(!count)
+                    continue;
+
                 Con_Printf("    Local player %i has %i device bindings for \"%s\":\n",
                            k + 1, count, controlName);
                 for(d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
@@ -506,16 +525,17 @@ void B_PrintAllBindings(void)
             }
         }
     }
+
     Str_Free(str);
 }
 
 void B_WriteClassToFile(const bclass_t* bc, FILE* file)
 {
-    evbinding_t* e;
-    controlbinding_t* c;
-    dbinding_t* d;
-    int         k;
-    ddstring_t* str = Str_New();
+    evbinding_t*        e;
+    controlbinding_t*   c;
+    dbinding_t*         d;
+    int                 k;
+    ddstring_t*         str = Str_New();
 
     // Commands.
     for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
@@ -530,6 +550,7 @@ void B_WriteClassToFile(const bclass_t* bc, FILE* file)
     for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
     {
         const char* controlName = P_PlayerControlById(c->control)->name;
+
         for(k = 0; k < DDMAXPLAYERS; ++k)
         {
             for(d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
@@ -539,5 +560,6 @@ void B_WriteClassToFile(const bclass_t* bc, FILE* file)
             }
         }
     }
+
     Str_Free(str);
 }
