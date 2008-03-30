@@ -53,17 +53,6 @@ void            RL_Init(void);
 void            RL_ClearLists(void);
 void            RL_DeleteLists(void);
 void            RL_AddPoly(rendpoly_t *poly);
-void            Rend_PreparePlane(rendpoly_t *poly, subplaneinfo_t *info,
-                                float height,
-                                subsector_t *subsector, float sectorLight,
-                                boolean antiClockwise,
-                                const float *sectorLightColor,
-                                float *surfaceColor);
-void            Rend_VertexColorsGlow(rendpoly_t* poly);
-void            Rend_VertexColors(rendpoly_t* poly, float lightLevel,
-                                float distanceOverride, const float* sufColor);
-void            Rend_VertexColorsAlpha(rendpoly_t* poly, float alpha);
-void            Rend_VertexColorsApplyTorchLight(rendpoly_t *poly, float distanceOverride);
 void            RL_RenderAllLists(void);
 
 void            RL_SelectTexUnits(int count);
