@@ -95,10 +95,8 @@ void GL_DeleteDetailTexture(detailtex_t *dtex);
 
 static void LoadPalette(void);
 static void GL_SetTexCoords(float *tc, int wid, int hgt);
-static DGLuint getFlatInfo2(int index, boolean translate,
-                            texinfo_t **texinfo);
-static DGLuint getTextureInfo2(int index, boolean translate,
-                               texinfo_t **texinfo);
+static DGLuint getFlatInfo2(int index, texinfo_t **texinfo);
+static DGLuint getTextureInfo2(int index, texinfo_t **texinfo);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1273,26 +1271,16 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
 /**
  * @return              The OpenGL name of the texture.
  */
-static unsigned int prepareFlat2(int idx, boolean translate,
-                                 texinfo_t **info)
+static unsigned int prepareFlat2(int idx, texinfo_t **info)
 {
-    byte   *flatptr;
-    int     originalIndex = idx;
-    int     width, height, pixSize = 3;
-    boolean RGBData = false, freeptr = false;
+    byte               *flatptr;
+    int                 width, height, pixSize = 3;
+    boolean             RGBData = false, freeptr = false;
     ded_detailtexture_t *def;
-    ded_decor_t *dec;
-    image_t image;
-    boolean hasExternal = false;
-    flat_t *flat;
-
-    if(idx < 0 || idx >= numFlats) // No texture?
-        return 0;
-
-    if(translate)
-    {
-        idx = flattranslation[idx].current;
-    }
+    ded_decor_t        *dec;
+    image_t             image;
+    boolean             hasExternal = false;
+    flat_t             *flat;
 
     if(idx < 0 || idx >= numFlats) // No texture?
         return 0;
@@ -1374,7 +1362,8 @@ static unsigned int prepareFlat2(int idx, boolean translate,
         // Get the surface reflection for this flat.
         flat->reflection = Def_GetReflection(idx, false);
     }
-    return getFlatInfo2(originalIndex, translate, info);
+
+    return getFlatInfo2(idx, info);
 }
 
 /**
@@ -1767,24 +1756,15 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 /**
  * @return              The DGL texture name.
  */
-static unsigned int prepareTexture2(int idx, boolean translate, texinfo_t **info)
+static unsigned int prepareTexture2(int idx, texinfo_t **info)
 {
     ded_detailtexture_t *def;
-    ded_decor_t *dec;
-    int     originalIndex = idx;
-    texture_t *tex;
-    boolean alphaChannel = false, RGBData = false;
-    int     i;
-    image_t image;
-    boolean hasExternal = false;
-
-    if(idx < 0 || idx >= numTextures) // No texture?
-        return 0;
-
-    if(translate)
-    {
-        idx = texturetranslation[idx].current;
-    }
+    ded_decor_t        *dec;
+    texture_t          *tex;
+    boolean             alphaChannel = false, RGBData = false;
+    int                 i;
+    image_t             image;
+    boolean             hasExternal = false;
 
     if(idx < 0 || idx >= numTextures) // No texture?
         return 0;
@@ -1879,7 +1859,8 @@ static unsigned int prepareTexture2(int idx, boolean translate, texinfo_t **info
         // Get the reflection for this surface.
         tex->reflection = Def_GetReflection(idx, true);
     }
-    return getTextureInfo2(originalIndex, translate, info);
+
+    return getTextureInfo2(idx, info);
 }
 
 /**
@@ -1952,35 +1933,13 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
     *outbuffer = imgdata;
 }
 
-/**
- * Sky textures are usually 256 pixels wide.
- */
-unsigned int GL_PrepareSky(int idx, boolean zeroMask, texinfo_t **info)
+static DGLuint prepareSky(int idx, boolean zeroMask, texinfo_t **texinfo)
 {
-    return GL_PrepareSky2(idx, zeroMask, true, info);
-}
-
-/**
- * Sky textures are usually 256 pixels wide.
- */
-unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
-                            texinfo_t **texinfo)
-{
-    boolean RGBData, alphaChannel;
-    image_t image;
+    boolean             RGBData, alphaChannel;
+    image_t             image;
 
     if(idx >= numTextures)
         return 0;
-    /*
-       #if _DEBUG
-       if(idx != texturetranslation[idx])
-       Con_Error("Skytex: %d, translated: %d\n", idx, texturetranslation[idx]);
-       #endif
-     */
-    if(translate)
-    {
-        idx = texturetranslation[idx].current;
-    }
 
     if(!textures[idx]->tex)
     {
@@ -2026,10 +1985,29 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
     return textures[idx]->tex;
 }
 
+/**
+ * Sky textures are usually 256 pixels wide.
+ */
+DGLuint GL_PrepareSky(const struct material_s *mat, boolean zeroMask,
+                      texinfo_t **texinfo)
+{
+    if(!mat)
+        return 0;
+
+    if(mat->type != MAT_TEXTURE)
+    {
+#if _DEBUG
+Con_Error("GL_PrepareSky: Material \"%s\" not suitable for sky.", mat->name);
+#endif
+    }
+
+    return prepareSky(mat->ofTypeID, zeroMask, texinfo);
+}
+
 transspr_t *GL_NewTranslatedSprite(int pnum, unsigned char *table)
 {
-    transspr_t **newlist, *ptr;
-    int i;
+    int             i;
+    transspr_t    **newlist, *ptr;
 
     newlist = Z_Malloc(sizeof(transspr_t*) * ++numTransSprites, PU_SPRITE, 0);
     if(numTransSprites > 1)
@@ -3152,19 +3130,9 @@ unsigned int GL_PrepareShinySkin(skintex_t *stp)
 /**
  * @return              The texture name, if it has been prepared.
  */
-static DGLuint getTextureInfo2(int index, boolean translate,
-                               texinfo_t **texinfo)
+static DGLuint getTextureInfo2(int index, texinfo_t **texinfo)
 {
     texture_t          *tex;
-
-    if(index < 0 || index >= numTextures)
-        return 0;
-
-    // Translate the texture.
-    if(translate)
-    {
-        index = texturetranslation[index].current;
-    }
 
     if(index < 0 || index >= numTextures)
         return 0;
@@ -3180,19 +3148,9 @@ static DGLuint getTextureInfo2(int index, boolean translate,
 /**
  * @return              The flat name, if it has been prepared.
  */
-static DGLuint getFlatInfo2(int index, boolean translate,
-                            texinfo_t **texinfo)
+static DGLuint getFlatInfo2(int index, texinfo_t **texinfo)
 {
     flat_t             *flat;
-
-    if(index < 0 || index >= numFlats)
-        return 0;
-
-    // Translate the flat.
-    if(translate)
-    {
-        index = flattranslation[index].current;
-    }
 
     if(index < 0 || index >= numFlats)
         return 0;
@@ -3306,53 +3264,52 @@ boolean GL_IsColorKeyed(const char *path)
     return strstr(buf, "-ck.") != NULL;
 }
 
-DGLuint GL_GetMaterialInfo2(int idx, materialtype_t type,
+DGLuint GL_GetMaterialInfo2(const struct material_s *mat,
                             boolean translate, texinfo_t **info)
 {
-    switch(type)
+    if(translate)
+        mat = mat->current;
+
+    switch(mat->type)
     {
     case MAT_FLAT:
-        return getFlatInfo2(idx, translate, info);
+        return getFlatInfo2(mat->ofTypeID, info);
 
     case MAT_TEXTURE:
-        return getTextureInfo2(idx, translate, info);
+        return getTextureInfo2(mat->ofTypeID, info);
 
     case MAT_DDTEX:
-        return getDDTextureInfo(idx, info);
+        return getDDTextureInfo(mat->ofTypeID, info);
 
     case MAT_SPRITE:
-        return getSpriteInfo(idx, info);
+        return getSpriteInfo(mat->ofTypeID, info);
 
     default:
-        Con_Error("GL_GetMaterialInfo2: Unknown material type %i.",
-                  type);
+        Con_Error("GL_GetMaterialInfo2: Invalid material type %i.",
+                  mat->type);
     }
 
     return 0;
 }
 
-DGLuint GL_GetMaterialInfo(int idx, materialtype_t type,
-                           texinfo_t **info)
+DGLuint GL_PrepareMaterial2(const struct material_s *mat, texinfo_t **info)
 {
-    return GL_GetMaterialInfo2(idx, type, true, info);
-}
-
-DGLuint GL_PrepareMaterial2(const struct material_s *mat,
-                            boolean translate, texinfo_t **info)
-{
-    switch(mat->type)
+    if(mat)
     {
-    case MAT_FLAT:
-        return prepareFlat2(mat->ofTypeID, translate, info);
+        switch(mat->type)
+        {
+        case MAT_FLAT:
+            return prepareFlat2(mat->ofTypeID, info);
 
-    case MAT_TEXTURE:
-        return prepareTexture2(mat->ofTypeID, translate, info);
+        case MAT_TEXTURE:
+            return prepareTexture2(mat->ofTypeID, info);
 
-    case MAT_SPRITE:
-        return prepareSprite(mat->ofTypeID, 0, info);
+        case MAT_SPRITE:
+            return prepareSprite(mat->ofTypeID, 0, info);
 
-    case MAT_DDTEX:
-        return prepareDDTexture(mat->ofTypeID, info);
+        case MAT_DDTEX:
+            return prepareDDTexture(mat->ofTypeID, info);
+        }
     }
 
     return 0;
@@ -3360,36 +3317,12 @@ DGLuint GL_PrepareMaterial2(const struct material_s *mat,
 
 DGLuint GL_PrepareMaterial(const struct material_s *mat, texinfo_t **info)
 {
-    return GL_PrepareMaterial2(mat, true, info);
+    return GL_PrepareMaterial2(mat->current, info);
 }
 
 void GL_SetMaterial(int idx, materialtype_t type)
 {
-    DGLuint             texID;
-
-    switch(type)
-    {
-    case MAT_FLAT:
-        texID = prepareFlat2(idx, true, NULL);
-        break;
-
-    case MAT_TEXTURE:
-        texID = prepareTexture2(idx, true, NULL);
-        break;
-
-    case MAT_DDTEX:
-        texID = prepareDDTexture(idx, NULL);
-        break;
-
-    case MAT_SPRITE:
-        texID = prepareSprite(idx, 0, NULL);
-        break;
-
-    default:
-        Con_Error("GL_SetMaterial: Invalid material type %i.", type);
-    }
-
-    DGL_Bind(texID);
+    DGL_Bind(GL_PrepareMaterial(R_GetMaterial(idx, type), NULL));
 }
 
 /**

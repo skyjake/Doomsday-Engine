@@ -161,7 +161,7 @@ typedef struct surfacedecor_s {
         } light;
         struct surfacedecor_model_s {
             struct ded_decormodel_s *def;
-            struct modeldef_t *mf;
+            struct modeldef_s *mf;
             float               pitch, yaw;
         } model;
     } data;

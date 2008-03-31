@@ -126,13 +126,11 @@ DGLuint         GL_UploadTexture(byte *data, int width, int height,
                                  int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
 
-DGLuint         GL_GetMaterialInfo(int index, materialtype_t type, texinfo_t **info);
+DGLuint         GL_GetMaterialInfo2(const struct material_s *mat, boolean translate, texinfo_t **info);
 DGLuint         GL_PrepareMaterial(const struct material_s *mat, texinfo_t **info);
-DGLuint         GL_PrepareMaterial2(const struct material_s *mat, boolean translate, texinfo_t **info);
+DGLuint         GL_PrepareMaterial2(const struct material_s *mat, texinfo_t **info);
 
-DGLuint         GL_PrepareSky(int idx, boolean zeroMask, texinfo_t **info);
-DGLuint         GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
-                               texinfo_t **info);
+DGLuint         GL_PrepareSky(const struct material_s *mat, boolean zeroMask, texinfo_t **info);
 
 DGLuint         GL_GetPatchInfo(int idx, boolean part2, texinfo_t **info);
 DGLuint         GL_GetRawTexInfo(lumpnum_t lump, boolean part2, texinfo_t **texinfo);

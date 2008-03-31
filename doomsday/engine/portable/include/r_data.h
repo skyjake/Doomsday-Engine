@@ -237,12 +237,6 @@ typedef struct {
     texinfo_t       info;
 } ddtexture_t;
 
-typedef struct translation_s {
-    int             current;
-    int             next;
-    float           inter;
-} translation_t;
-
 typedef struct flat_s {
     DGLuint         tex;            // Name of the associated DGL texture.
     char            name[9];        // for switch changing, etc; ends in \0
@@ -375,7 +369,6 @@ extern nodepile_t *mobjNodes, *lineNodes;
 extern int      viewwidth, viewheight;
 extern int      numTextures;
 extern texture_t **textures;
-extern translation_t *texturetranslation;   // for global animation
 extern int      numFlats;
 extern flat_t **flats;
 
@@ -383,7 +376,6 @@ extern spritetex_t **spriteTextures;
 extern int      numSpriteTextures;
 extern int      numDDTextures;
 extern ddtexture_t ddTextures[NUM_DD_TEXTURES];
-extern translation_t *flattranslation;   // for global animation
 extern rawtex_t *rawtextures;
 extern uint numrawtextures;
 extern int      numgroups;

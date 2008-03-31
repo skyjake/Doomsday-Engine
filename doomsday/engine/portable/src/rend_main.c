@@ -288,22 +288,21 @@ static void Rend_ShinySurfaceColor(float color[4], ded_reflection_t *ref)
            color[CA]);*/
 }
 
-static ded_reflection_t *getReflectionDef(material_t *material, short *width,
+static ded_reflection_t *getReflectionDef(material_t *mat, short *width,
                                           short *height)
 {
     ded_reflection_t *ref = NULL;
 
-    if(!material)
+    if(!mat)
         return NULL;
 
     // Figure out what kind of surface properties have been defined
     // for the texture or flat in question.
-    switch(material->type)
+    switch(mat->current->type)
     {
     case MAT_FLAT:
         {
-        flat_t         *flatptr =
-            flats[flattranslation[material->ofTypeID].current];
+        flat_t         *flatptr = flats[mat->current->ofTypeID];
 
         ref = flatptr->reflection;
         if(ref)
@@ -317,8 +316,7 @@ static ded_reflection_t *getReflectionDef(material_t *material, short *width,
         }
     case MAT_TEXTURE:
         {
-        texture_t      *texptr =
-            textures[texturetranslation[material->ofTypeID].current];
+        texture_t      *texptr = textures[mat->current->ofTypeID];
 
         ref = texptr->reflection;
         if(ref)
@@ -384,47 +382,31 @@ static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
     RL_AddPoly(poly);
 }
 
-static void polyTexBlend(rendpoly_t *poly, material_t *material)
+static void polyTexBlend(rendpoly_t* poly, material_t* mat)
 {
     texinfo_t          *texinfo;
-    translation_t      *xlat = NULL;
 
-    if(!material)
+    if(!mat)
         return;
-
-    switch(material->type)
-    {
-    case MAT_FLAT:
-        xlat = &flattranslation[material->ofTypeID];
-        break;
-
-    case MAT_TEXTURE:
-        xlat = &texturetranslation[material->ofTypeID];
-        break;
-
-    default:
-        break;
-    }
 
     // If fog is active, inter=0 is accepted as well. Otherwise flickering
     // may occur if the rendering passes don't match for blended and
     // unblended surfaces.
-    if(!xlat || !smoothTexAnim || numTexUnits < 2 || xlat->current == xlat->next ||
-       (!usingFog && xlat->inter < 0) || renderTextures == 2)
+    if(!smoothTexAnim || numTexUnits < 2 || mat->current == mat->next ||
+       (!usingFog && mat->inter < 0) || renderTextures == 2)
     {
         // No blending for you, my friend.
         return;
     }
 
     // Get info of the blend target.
-    poly->interTex.id =
-        GL_PrepareMaterial2(R_GetMaterial(xlat->next, material->type), false, &texinfo);
+    poly->interTex.id = GL_PrepareMaterial2(mat->next, &texinfo);
 
     poly->interTex.width = texinfo->width;
     poly->interTex.height = texinfo->height;
     poly->interTex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
     poly->interTex.masked = texinfo->masked;
-    poly->interPos = xlat->inter;
+    poly->interPos = mat->inter;
 }
 
 void Rend_VertexColorsGlow(rendpoly_t* poly)
@@ -647,8 +629,7 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
         {
             texinfo_t          *texinfo = NULL;
 
-            GL_GetMaterialInfo(side->SW_middlematerial->ofTypeID,
-                               side->SW_middlematerial->type, &texinfo);
+            GL_GetMaterialInfo2(side->SW_middlematerial, true, &texinfo);
 
             if(!side->SW_middleblendmode && side->SW_middlergba[3] >= 1 && !texinfo->masked)
             {
@@ -791,8 +772,7 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
         // We need the properties of the real flat/texture.
         if(surface->material)
         {
-            GL_GetMaterialInfo(surface->material->ofTypeID,
-                               surface->material->type, &info);
+            GL_GetMaterialInfo2(surface->material, true, &info);
 
             poly->tex.width = info->width;
             poly->tex.height = info->height;
@@ -813,7 +793,7 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
     else if(surface->material)
     {
         poly->tex.id = curTex =
-            GL_PrepareMaterial2(surface->material, true, &info);
+            GL_PrepareMaterial(surface->material, &info);
         flags = surface->flags;
 
         //// \kludge >
@@ -1626,11 +1606,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         // We need the properties of the real flat/texture.
         if(surface->material)
         {
-            if(surface->material->type == MAT_DDTEX)
-                GL_GetMaterialInfo(DDT_UNKNOWN, MAT_DDTEX, &texinfo);
-            else
-                GL_GetMaterialInfo(surface->material->ofTypeID,
-                                   surface->material->type, &texinfo);
+            GL_GetMaterialInfo2(surface->material, true, &texinfo);
         }
 
         vL_ZBottom = vR_ZBottom = bottom = MAX_OF(bfloor, ffloor);

@@ -120,6 +120,8 @@ material_t *R_MaterialCreate(const char *name, int ofTypeID,
             // Update the (possibly new) meta data.
             mat->ofTypeID = ofTypeID;
             mat->flags &= ~MATF_CHANGED;
+            mat->current = mat->next = mat;
+            mat->inter = 0;
             return mat; // Yep, return it.
         }
     }
@@ -131,6 +133,8 @@ material_t *R_MaterialCreate(const char *name, int ofTypeID,
     mat->ofTypeID = ofTypeID;
     mat->type = type;
     mat->flags = 0;
+    mat->current = mat->next = mat;
+    mat->inter = 0;
 
     /**
      * Link the new material into the list of materials.
@@ -261,35 +265,20 @@ boolean R_IsCustomMaterial(int ofTypeID, materialtype_t type)
     return false;
 }
 
-int R_SetMaterialTranslation(int ofTypeID, materialtype_t type,
-                             int translateTo)
+void R_SetMaterialTranslation(material_t *mat, material_t *current,
+                              material_t *next, float inter)
 {
-    int                 old = ofTypeID;
-
-    switch(type)
+    if(!mat || !current || !next)
     {
-    case MAT_FLAT:
-        old = flattranslation[ofTypeID].current;
-
-        flattranslation[ofTypeID].current =
-            flattranslation[ofTypeID].next = translateTo;
-        flattranslation[ofTypeID].inter = 0;
-        break;
-
-    case MAT_TEXTURE:
-        old = texturetranslation[ofTypeID].current;
-
-        texturetranslation[ofTypeID].current =
-            texturetranslation[ofTypeID].next = translateTo;
-        texturetranslation[ofTypeID].inter = 0;
-        break;
-
-    default:
-        Con_Error("R_SetMaterialTranslation: Unknown material type %i.",
-                  type);
+#if _DEBUG
+Con_Error("R_SetMaterialTranslation: Invalid paramaters.");
+#endif
+        return;
     }
 
-    return old;
+    mat->current = current;
+    mat->next = next;
+    mat->inter = 0;
 }
 
 /**
@@ -336,24 +325,28 @@ int R_GetMaterialFlags(material_t *mat)
     if(!mat)
         return 0;
 
-    switch(mat->type)
+    switch(mat->current->type)
     {
     case MAT_TEXTURE:
-        ofTypeID = texturetranslation[mat->ofTypeID].current;
+        ofTypeID = mat->current->ofTypeID;
         if(ofTypeID < 0)
             return 0;
 
         return textures[ofTypeID]->flags;
 
     case MAT_FLAT:
-        ofTypeID = flattranslation[mat->ofTypeID].current;
+        ofTypeID = mat->current->ofTypeID;
         if(ofTypeID < 0)
             return 0;
 
         return flats[ofTypeID]->flags;
 
     case MAT_SPRITE:
-        return spriteTextures[mat->ofTypeID]->flags;
+        ofTypeID = mat->current->ofTypeID;
+        if(ofTypeID < 0)
+            return 0;
+
+        return spriteTextures[ofTypeID]->flags;
 
     default:
         return 0;

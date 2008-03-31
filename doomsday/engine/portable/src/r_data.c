@@ -76,11 +76,9 @@ patchhash_t patchhash[PATCH_HASH_SIZE];
 
 int     numTextures;
 texture_t **textures;
-translation_t *texturetranslation;  // for global animation
 
 int     numFlats;
 flat_t **flats;
-translation_t *flattranslation;  // for global animation
 
 int     numSpriteTextures;
 spritetex_t **spriteTextures;
@@ -821,14 +819,8 @@ void R_InitTextures(void)
     for(i = 0; i < numTextures; ++i)
         R_MaterialCreate(textures[i]->name, i, MAT_TEXTURE);
 
-    // Translation table for global animation.
-    texturetranslation =
-        Z_Malloc(sizeof(translation_t) * (numTextures + 1), PU_REFRESHTEX, 0);
     for(i = 0; i < numTextures; ++i)
     {
-        texturetranslation[i].current = texturetranslation[i].next = i;
-        texturetranslation[i].inter = 0;
-
         // Determine the texture's material type.
         textures[i]->materialClass =
             S_MaterialClassForName(R_MaterialNameForNum(i, MAT_TEXTURE), MAT_TEXTURE);
@@ -916,14 +908,8 @@ void R_InitFlats(void)
     for(i = 0; i < numFlats; ++i)
         R_MaterialCreate(flats[i]->name, i, MAT_FLAT);
 
-    // Translation table for global animation.
-    flattranslation =
-        Z_Malloc(sizeof(translation_t) * (numFlats + 1), PU_REFRESHTEX, 0);
     for(i = 0; i < numFlats; ++i)
     {
-        flattranslation[i].current = flattranslation[i].next = i;
-        flattranslation[i].inter = 0;
-
         // Determine the flat's material type.
         flats[i]->materialClass =
             S_MaterialClassForName(R_MaterialNameForNum(i, MAT_FLAT), MAT_FLAT);
@@ -1424,24 +1410,11 @@ void R_PrecacheLevel(void)
     //Con_Progress(100, PBARF_SET);
 }
 
-translation_t *R_GetTranslation(boolean isTexture, int number)
-{
-    if(isTexture)
-    {
-        return &texturetranslation[number];
-    }
-    else
-    {
-        return &flattranslation[number];
-    }
-}
-
 void R_AnimateAnimGroups(void)
 {
-    animgroup_t *group;
-    translation_t *xlat;
-    int     i, timer, k;
-    boolean isTexture;
+    int                 i, timer, k;
+    animgroup_t        *group;
+    boolean             isTexture;
 
     // The animation will only progress when the game is not paused.
     if(clientPaused)
@@ -1470,24 +1443,19 @@ void R_AnimateAnimGroups(void)
             // Update texture/flat translations.
             for(k = 0; k < group->count; ++k)
             {
-                int     real, current, next;
+                material_t         *real, *current, *next;
+                materialtype_t      type;
 
-                real = group->frames[k].number;
-                current =
-                    group->frames[(group->index + k) % group->count].number;
-                next =
+                type = (isTexture? MAT_TEXTURE : MAT_FLAT);
+                real = R_GetMaterial(group->frames[k].number, type);
+                current = R_GetMaterial(
+                    group->frames[(group->index + k) % group->count].number,
+                    type);
+                next = R_GetMaterial(
                     group->frames[(group->index + k + 1) %
-                                  group->count].number;
-/*
-#ifdef _DEBUG
-if(isTexture)
-    Con_Printf("real=%i cur=%i next=%i\n", real, current, next);
-#endif
-*/
-                xlat = R_GetTranslation(isTexture, real);
-                xlat->current = current;
-                xlat->next = next;
-                xlat->inter = 0;
+                                  group->count].number, type);
+
+                R_SetMaterialTranslation(real, current, next, 0);
 
                 // Just animate the first in the sequence?
                 if(group->flags & AGF_FIRST_ONLY)
@@ -1499,15 +1467,17 @@ if(isTexture)
             // Update the interpolation point of animated group members.
             for(k = 0; k < group->count; ++k)
             {
-                xlat = R_GetTranslation(isTexture, group->frames[k].number);
+                material_t         *mat =
+                    R_GetMaterial(group->frames[k].number,
+                                  (isTexture? MAT_TEXTURE : MAT_FLAT));
 
                 if(group->flags & AGF_SMOOTH)
                 {
-                    xlat->inter = 1 - group->timer / (float) group->maxTimer;
+                    mat->inter = 1 - group->timer / (float) group->maxTimer;
                 }
                 else
                 {
-                    xlat->inter = 0;
+                    mat->inter = 0;
                 }
 
                 // Just animate the first in the sequence?

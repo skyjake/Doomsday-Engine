@@ -56,7 +56,7 @@ typedef struct decorsource_s {
             const ded_decorlight_t *def;
         } light;
         struct decorsource_data_model_s {
-            modeldef_t     *mf;
+            struct modeldef_s *mf;
             float          pitch, yaw;
         } model;
     } data;
@@ -101,13 +101,13 @@ static ded_decor_t *getMaterialDecoration(material_t *mat)
     if(!mat)
         return NULL;
 
-    switch(mat->type)
+    switch(mat->current->type)
     {
     case MAT_FLAT:
-        return flats[flattranslation[mat->ofTypeID].current]->decoration;
+        return flats[mat->current->ofTypeID]->decoration;
 
     case MAT_TEXTURE:
-        return textures[texturetranslation[mat->ofTypeID].current]->decoration;
+        return textures[mat->current->ofTypeID]->decoration;
 
     default:
         return NULL;
@@ -461,8 +461,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                     {
                         texinfo_t          *texinfo;
 
-                        GL_GetMaterialInfo(suf->material->ofTypeID,
-                                           suf->material->type, &texinfo);
+                        GL_GetMaterialInfo2(suf->material, true, &texinfo);
                         offsetY = -texinfo->height + (top - bottom);
                     }
                 }
@@ -480,8 +479,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                 {
                     texinfo_t          *texinfo;
 
-                    GL_GetMaterialInfo(suf->material->ofTypeID,
-                                       suf->material->type, &texinfo);
+                    GL_GetMaterialInfo2(suf->material, true, &texinfo);
                     offsetY = -texinfo->height + (top - bottom);
                 }
                 else
@@ -510,8 +508,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
             lh = top - bottom;
 
             // Setup the global texture info variables.
-            GL_GetMaterialInfo(suf->material->ofTypeID,
-                               suf->material->type, &texinfo);
+            GL_GetMaterialInfo2(suf->material, true, &texinfo);
 
             surfTexW = texinfo->width;
             surfTexH = texinfo->height;

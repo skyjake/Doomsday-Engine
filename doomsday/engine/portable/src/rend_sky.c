@@ -335,7 +335,9 @@ void Rend_RenderSkyHemisphere(int whichHemi)
     {
         if(slayer->flags & SLF_ENABLED)
         {
-            texinfo_t  *texinfo;
+            texinfo_t          *texinfo;
+            material_t         *mat;
+
             resetup = false;
 
             if(slayer->texture == -1)
@@ -345,13 +347,13 @@ void Rend_RenderSkyHemisphere(int whichHemi)
             // See if we have to re-setup the fadeout.
             // This happens if the texture is for some reason deleted
             // (forced texture reload, for example).
-            if(!R_GetMaterialName(slayer->texture, MAT_TEXTURE))
+            if(NULL == (mat = R_GetMaterial(slayer->texture, MAT_TEXTURE)))
                 resetup = true;
 
             // The texture is actually loaded when an update is done.
             DGL_Bind(renderTextures ?
-                    GL_PrepareSky(slayer->texture,
-                                  slayer->flags & SLF_MASKED ? true : false, &texinfo) : 0);
+                     GL_PrepareSky(mat->current,
+                                  (slayer->flags & SLF_MASKED ? true : false), &texinfo) : 0);
 
             if(resetup)
                 setupFadeout(slayer);
@@ -532,7 +534,7 @@ static void internalSkyParams(skylayer_t *slayer, int parm, float value)
 
     case DD_MATERIAL:
         slayer->texture = (int) value;
-        GL_PrepareSky(slayer->texture,
+        GL_PrepareSky(R_GetMaterial(slayer->texture, MAT_TEXTURE)->current,
                       slayer->flags & SLF_MASKED ? true : false, NULL);
         setupFadeout(slayer);
         break;

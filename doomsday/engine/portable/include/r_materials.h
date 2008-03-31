@@ -37,6 +37,11 @@ typedef struct material_s {
     int             ofTypeID;
     materialtype_t  type;
     short           flags;
+
+    // For global animation:
+    struct material_s *current;
+    struct material_s *next;
+    float           inter;
 } material_t;
 
 extern uint numMaterials;
@@ -63,6 +68,8 @@ void            R_DeleteMaterialTex(int ofTypeID, materialtype_t type);
 int             R_CheckMaterialNumForName(const char *name, materialtype_t type);
 int             R_MaterialNumForName(const char *name, materialtype_t type);
 const char     *R_MaterialNameForNum(int ofTypeID, materialtype_t type);
-int             R_SetMaterialTranslation(int ofTypeID, materialtype_t type, int translateTo);
+void            R_SetMaterialTranslation(material_t *mat,
+                                         material_t *current,
+                                         material_t *next, float inter);
 
 #endif
