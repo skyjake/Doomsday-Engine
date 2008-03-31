@@ -84,7 +84,8 @@ boolean setSizeNeeded;
 // Precalculated math tables.
 fixed_t *fineCosine = &finesine[FINEANGLES / 4];
 
-int     extraLight;             // bumped light from gun blasts
+int extraLight; // bumped light from gun blasts
+float extraLightDelta;
 
 material_t *skyMaskMaterial = NULL;
 
@@ -526,6 +527,7 @@ void R_SetupFrame(player_t *player)
             player->extraLight = player->targetExtraLight;
     }
     extraLight = player->extraLight;
+    extraLightDelta = extraLight / 16.0f;
 
     tableAngle = viewAngle >> ANGLETOFINESHIFT;
     viewSin = FIX2FLT(finesine[tableAngle]);

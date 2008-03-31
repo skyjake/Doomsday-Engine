@@ -50,6 +50,12 @@
 
 // CODE --------------------------------------------------------------------
 
+float Linedef_GetLightLevelDelta(const linedef_t* l)
+{
+    return (1.0f / 255) *
+        ((l->L_vpos(1)[VY] - l->L_vpos(0)[VY]) / l->length * 18);
+}
+
 /**
  * Update the linedef, property is selected by DMU_* name.
  */

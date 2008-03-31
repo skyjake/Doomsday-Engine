@@ -130,6 +130,7 @@ typedef enum {
 typedef struct {
     float           pos[3];        // X, Y and Z coordinates.
     float           color[4];      // Color of the vertex.
+    float           distanceToViewer;
 } rendpoly_vertex_t;
 
 typedef struct walldiv_s {

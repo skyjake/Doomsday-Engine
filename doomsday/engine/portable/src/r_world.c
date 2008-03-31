@@ -2100,7 +2100,7 @@ float R_DistAttenuateLightLevel(float distToViewer, float lightLevel)
             (distToViewer - 32) / MAX_LIGHTATTENTUATION_DISTANCE *
                 (1 - lightLevel);
 
-        minimum = lightLevel * lightLevel + (lightLevel - .63f) / 2;
+        minimum = lightLevel * lightLevel + (lightLevel - .63f) * .5f;
         if(real < minimum)
             real = minimum; // Clamp it.
 
@@ -2124,9 +2124,8 @@ float R_WallAngleLightLevelDelta(const linedef_t* l, byte side)
         return 0;
 
     // Do a lighting adjustment based on orientation.
-    return (1.0f / 255.0f) *
-        ((l->L_vpos(side^1)[VY] - l->L_vpos(side)[VY]) / l->length * 18 *
-        rendLightWallAngle);
+    return Linedef_GetLightLevelDelta(l) * (side? -1 : 1) *
+        rendLightWallAngle;
 }
 
 /**
@@ -2137,7 +2136,7 @@ float R_WallAngleLightLevelDelta(const linedef_t* l, byte side)
  */
 float R_ExtraLightDelta(void)
 {
-    return extraLight / 16.0f;
+    return extraLightDelta;
 }
 
 /**

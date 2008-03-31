@@ -34,10 +34,6 @@
 // Multiplicative blending for dynamic lights?
 #define IS_MUL  (dlBlend != 1 && !usingFog)
 
-// PrepareFlat directions.
-#define RLPF_NORMAL     0
-#define RLPF_REVERSE    1
-
 extern int      renderTextures;
 extern int      renderWireframe;
 extern int      useMultiTexLights;

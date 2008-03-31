@@ -270,6 +270,7 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->tex.masked = 0;;
 
     memset(&poly->interTex, 0, sizeof(poly->interTex));
+    memset(poly->vertices, 0, numverts * sizeof(*poly->vertices));
 
     return poly;
 }

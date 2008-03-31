@@ -342,14 +342,14 @@ static ded_reflection_t *getReflectionDef(material_t *material, short *width,
  *      the caller to ensure this is OK (ie if not it should pass us a
  *      copy instead (eg wall segs)).
  *
- * @param   texture     The texture/flat id of the texture on the poly.
- * @param   isFlat      @c true = param texture is a flat.
- * @param   poly        The poly to add the shiny poly for.
+ * @param texture       The texture/flat id of the texture on the poly.
+ * @param isFlat        @c true = param texture is a flat.
+ * @param poly          The poly to add the shiny poly for.
  */
 static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
                               short width, short height)
 {
-    uint        i;
+    uint                i;
 
     // Make it a shiny polygon.
     poly->lightListIdx = 0;
@@ -386,8 +386,8 @@ static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
 
 static void polyTexBlend(rendpoly_t *poly, material_t *material)
 {
-    texinfo_t      *texinfo;
-    translation_t  *xlat = NULL;
+    texinfo_t          *texinfo;
+    translation_t      *xlat = NULL;
 
     if(!material)
         return;
@@ -492,6 +492,14 @@ void Rend_ApplyTorchLight(float* color, float distance)
     }
 }
 
+static float distanceToRendpolyVertex(rendpoly_vertex_t* vtx)
+{
+    if(!(vtx->distanceToViewer > 0))
+        vtx->distanceToViewer = Rend_PointDist2D(vtx->pos);
+
+    return vtx->distanceToViewer;
+}
+
 /**
  * Color distance attenuation, extraLight.
  *
@@ -516,7 +524,7 @@ void Rend_VertexColors(rendpoly_t* poly, float lightLevel,
     num = poly->numVertices;
     for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
     {
-        dist = Rend_PointDist2D(vtx->pos);
+        dist = distanceToRendpolyVertex(vtx);
 
         // Apply distance attenuation.
         lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
@@ -533,10 +541,9 @@ void Rend_VertexColors(rendpoly_t* poly, float lightLevel,
     }
 }
 
-void Rend_VertexColorsApplyTorchLight(rendpoly_t *poly, float distanceOverride)
+void Rend_VertexColorsApplyTorchLight(rendpoly_t *poly)
 {
     int                 i;
-    float               dist = distanceOverride;
 
     // Check for special case exceptions.
     if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW|RPF_GLOW))
@@ -548,10 +555,7 @@ void Rend_VertexColorsApplyTorchLight(rendpoly_t *poly, float distanceOverride)
     {
         rendpoly_vertex_t  *vtx = &poly->vertices[i];
 
-        if(!(distanceOverride >= 0))
-            dist = Rend_PointDist2D(vtx->pos);
-
-        Rend_ApplyTorchLight(vtx->color, dist);
+        Rend_ApplyTorchLight(vtx->color, distanceToRendpolyVertex(vtx));
     }
 }
 
@@ -618,7 +622,7 @@ void Rend_PreparePlane(rendpoly_t *poly, subplaneinfo_t *info, float height,
             }
         }
 
-        Rend_VertexColorsApplyTorchLight(poly, -1);
+        Rend_VertexColorsApplyTorchLight(poly);
         Rend_VertexColorsAlpha(poly, surfaceColor[CA]);
     }
 }
@@ -1132,8 +1136,8 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
 
     // Surface color/light.
     Rend_PreparePlane(poly, plane, height, subsector, Rend_SectorLight(polySector),
-                    !(surface->normal[VZ] > 0),
-                    R_GetSectorLightColor(polySector), surface->rgba);
+                      !(surface->normal[VZ] > 0),
+                      R_GetSectorLightColor(polySector), surface->rgba);
 
     // Dynamic lights. Check for sky.
     if(R_IsSkySurface(surface))
@@ -1174,7 +1178,7 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
 
 static void setSurfaceColorsForSide(sidedef_t *side)
 {
-    uint        i;
+    uint                i;
 
     // Top wall section color offset?
     if(side->SW_toprgba[0] < 1 || side->SW_toprgba[1] < 1 ||
@@ -1218,7 +1222,7 @@ static void lineDistanceAlpha(const float *point, float radius,
                               float *alpha)
 {
     // Calculate 2D distance to line.
-    float       distance =  M_PointLineDistance(from, to, point);
+    float               distance =  M_PointLineDistance(from, to, point);
 
     if(radius <= 0)
         radius = 1;
@@ -1236,8 +1240,8 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                                 sector_t *frontsec, boolean softSurface,
                                 boolean canMask, short sideFlags)
 {
-    boolean     visible = false, skyMask = false;
-    boolean     solidSeg = true;
+    boolean             visible = false, skyMask = false;
+    boolean             solidSeg = true;
 
     if(bottom >= top)
         return true;
@@ -1451,7 +1455,7 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                     }
                 }
 
-                Rend_VertexColorsApplyTorchLight(quad, -1);
+                Rend_VertexColorsApplyTorchLight(quad);
                 Rend_VertexColorsAlpha(quad, alpha);
 
                 // Smooth Texture Animation?
@@ -1927,12 +1931,12 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
  * the remaining faces, i.e. the forward facing segs. This is done before
  * rendering segs, so solid segments cut out all unnecessary oranges.
  */
-static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
+static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
 {
-    float       fronth[2], backh[2];
-    float      *startv, *endv;
-    sector_t   *front = sub->sector, *back;
-    seg_t      *seg, **ptr;
+    float               fronth[2], backh[2];
+    float              *startv, *endv;
+    sector_t           *front = sub->sector, *back;
+    seg_t              *seg, **ptr;
 
     if(devNoCulling || P_IsInVoid(viewPlayer))
         return;
@@ -1948,13 +1952,13 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
         // Occlusions can only happen where two sectors contact.
         if(seg->lineDef && seg->SG_backsector &&
            !(seg->flags & SEGF_POLYOBJ) && // Polyobjects don't occlude.
-           (forward_facing = ((seg->frameFlags & SEGINF_FACINGFRONT)? true : false)))
+           (forwardFacing == ((seg->frameFlags & SEGINF_FACINGFRONT)? true : false)))
         {
             back = seg->SG_backsector;
             backh[0] = back->SP_floorheight;
             backh[1] = back->SP_ceilheight;
             // Choose start and end vertices so that it's facing forward.
-            if(forward_facing)
+            if(forwardFacing)
             {
                 startv = seg->SG_v1pos;
                 endv   = seg->SG_v2pos;
@@ -2111,9 +2115,9 @@ static void Rend_RenderSubsector(uint ssecidx)
     Rend_RadioInitForSubsector(ssec);
     Rend_RadioSubsectorEdges(ssec);
 
-    Rend_OccludeSubsector(ssec, false);
+    occludeSubsector(ssec, false);
     LO_ClipInSubsector(ssecidx);
-    Rend_OccludeSubsector(ssec, true);
+    occludeSubsector(ssec, true);
 
     if(ssec->polyObj)
     {

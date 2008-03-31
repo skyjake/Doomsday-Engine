@@ -46,6 +46,7 @@ extern boolean  setSizeNeeded;
 extern int      frameCount;
 extern int      viewAngleOffset;
 extern int      extraLight;
+extern float    extraLightDelta;
 extern float    viewCos, viewSin;
 extern int      rendInfoTris;
 

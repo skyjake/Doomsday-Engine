@@ -32,6 +32,8 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+float           Linedef_GetLightLevelDelta(const linedef_t* l);
+
 boolean         Linedef_GetProperty(const linedef_t *lin, setargs_t *args);
 boolean         Linedef_SetProperty(linedef_t *lin, const setargs_t *args);
 
