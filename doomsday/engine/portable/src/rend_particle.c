@@ -300,11 +300,11 @@ static void PG_CheckOrderBuffer(uint max)
  */
 static int PG_ListVisibleParticles(void)
 {
-    unsigned int i, m;
-    int         p, stagetype;
-    ptcgen_t   *gen;
-    ded_ptcgen_t *def;
-    particle_t *pt;
+    uint                i, m;
+    int                 p, stagetype;
+    ptcgen_t*           gen;
+    const ded_ptcgen_t* def;
+    particle_t*         pt;
 
     hasModels = hasLines = hasBlend = hasNoBlend = false;
     memset(hasPoints, 0, sizeof(hasPoints));

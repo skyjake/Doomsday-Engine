@@ -304,7 +304,7 @@ static ded_reflection_t *getReflectionDef(material_t *mat, short *width,
         {
         flat_t         *flatptr = flats[mat->current->ofTypeID];
 
-        ref = flatptr->reflection;
+        ref = mat->current->reflection;
         if(ref)
         {
             if(width)
@@ -318,7 +318,7 @@ static ded_reflection_t *getReflectionDef(material_t *mat, short *width,
         {
         texture_t      *texptr = textures[mat->current->ofTypeID];
 
-        ref = texptr->reflection;
+        ref = mat->current->reflection;
         if(ref)
         {
             if(width)

@@ -127,8 +127,8 @@ DGLuint         GL_UploadTexture(byte *data, int width, int height,
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
 
 DGLuint         GL_GetMaterialInfo2(const struct material_s *mat, boolean translate, texinfo_t **info);
-DGLuint         GL_PrepareMaterial(const struct material_s *mat, texinfo_t **info);
-DGLuint         GL_PrepareMaterial2(const struct material_s *mat, texinfo_t **info);
+DGLuint         GL_PrepareMaterial(struct material_s *mat, texinfo_t **info);
+DGLuint         GL_PrepareMaterial2(struct material_s *mat, texinfo_t **info);
 
 DGLuint         GL_PrepareSky(const struct material_s *mat, boolean zeroMask, texinfo_t **info);
 

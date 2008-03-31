@@ -122,19 +122,20 @@ material_t *R_MaterialCreate(const char *name, int ofTypeID,
             mat->flags &= ~MATF_CHANGED;
             mat->current = mat->next = mat;
             mat->inter = 0;
+            mat->decoration = NULL;
+            mat->ptcGen = NULL;
+            mat->reflection = NULL;
             return mat; // Yep, return it.
         }
     }
 
     // A new material.
-    mat = Z_Malloc(sizeof(*mat), PU_STATIC, 0);
+    mat = Z_Calloc(sizeof(*mat), PU_STATIC, 0);
     strncpy(mat->name, name, sizeof(mat->name));
     mat->name[8] = '\0';
     mat->ofTypeID = ofTypeID;
     mat->type = type;
-    mat->flags = 0;
     mat->current = mat->next = mat;
-    mat->inter = 0;
 
     /**
      * Link the new material into the list of materials.
@@ -208,6 +209,17 @@ void R_DeleteMaterialTex(int ofTypeID, materialtype_t type)
         {
             DGL_DeleteTextures(1, &spriteTextures[ofTypeID]->tex);
             spriteTextures[ofTypeID]->tex = 0;
+        }
+        break;
+
+    case MAT_DDTEX:
+        if(ofTypeID < 0 || ofTypeID >= NUM_DD_TEXTURES)
+            return;
+
+        if(ddTextures[ofTypeID].tex)
+        {
+            DGL_DeleteTextures(1, &ddTextures[ofTypeID].tex);
+            ddTextures[ofTypeID].tex = 0;
         }
         break;
 
@@ -353,7 +365,33 @@ int R_GetMaterialFlags(material_t *mat)
     };
 }
 
-int R_CheckMaterialNumForName(const char *name, materialtype_t type)
+/**
+ * Retrieve the decoration definition associated with the material.
+ *
+ * @return              The associated decoration definition, else @c NULL
+ */
+const ded_decor_t* R_GetMaterialDecoration(const material_t* mat)
+{
+    if(!mat)
+        return NULL;
+
+    return mat->current->decoration;
+}
+
+/**
+ * Retrieve the ptcgen definition associated with the material.
+ *
+ * @return              The associated ptcgen definition, else @c NULL.
+ */
+const ded_ptcgen_t* P_GetMaterialPtcGen(const material_t* mat)
+{
+    if(!mat)
+        return NULL;
+
+    return mat->ptcGen;
+}
+
+int R_CheckMaterialNumForName(const char* name, materialtype_t type)
 {
     int                 i;
 

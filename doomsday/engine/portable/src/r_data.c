@@ -1222,7 +1222,7 @@ void R_PrecachePatch(lumpnum_t num)
  * Prepares all graphic resources associated with the specified material
  * including any in the same animation group.
  */
-void R_PrecacheMaterial(const material_t *mat)
+void R_PrecacheMaterial(material_t *mat)
 {
     int                 i, k;
 

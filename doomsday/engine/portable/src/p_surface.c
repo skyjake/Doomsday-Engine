@@ -59,8 +59,6 @@
  */
 boolean Surface_SetMaterial(surface_t *suf, struct material_s *mat)
 {
-    int                 texFlags, oldTexFlags;
-
     if(!suf || !mat)
         return false;
 
@@ -68,21 +66,18 @@ boolean Surface_SetMaterial(surface_t *suf, struct material_s *mat)
         return true;
 
     // Any change to the texture or glow properties?
-    texFlags = R_GetMaterialFlags(mat);
-    oldTexFlags = R_GetMaterialFlags(suf->material);
-
-    if(texFlags & TXF_GLOW)
+    if(mat->flags & MATF_GLOW)
     {   // The new texture is glowing.
         suf->flags |= SUF_GLOW;
     }
-    else if(suf->material && (oldTexFlags & TXF_GLOW))
+    else if(suf->material && (suf->material->flags & MATF_GLOW))
     {
         // The old texture was glowing but the new one is not.
         suf->flags &= ~SUF_GLOW;
     }
 
     // No longer a missing texture fix?
-    if(mat && (oldTexFlags & SUF_TEXFIX))
+    if(mat && (suf->oldFlags & SUF_TEXFIX))
         suf->flags &= ~SUF_TEXFIX;
 
     suf->flags |= SUF_UPDATE_DECORATIONS;

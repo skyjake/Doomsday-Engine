@@ -46,8 +46,6 @@
 // Texture flags.
 #define TXF_NO_DRAW     0x1         // Texture should never be drawn.
 #define TXF_MASKED      0x2
-#define TXF_GLOW        0x8         // For lava etc, textures that glow.
-#define TXF_PTCGEN      0x10        // Ptcgen def has been determined.
 
 // Texture definition
 typedef struct {
@@ -224,10 +222,6 @@ typedef struct {
     rgbcol_t        color;
     byte            inGroup;       // True if texture belongs to some animgroup.
     materialclass_t materialClass;  // Used for environmental sound properties.
-    struct ded_decor_s *decoration; /* Pointer to the surface
-                                     * decoration, if any. */
-    struct ded_reflection_s *reflection; // Surface reflection definition.
-
     short           patchCount;
     texpatch_t      patches[1];    // [patchcount] drawn back to front
 } texture_t;                       //   into the cached texture
@@ -245,12 +239,7 @@ typedef struct flat_s {
     rgbcol_t        color;
     byte            inGroup;        // True if belongs to some animgroup.
     materialclass_t materialClass;  // Used for environmental sound properties.
-    struct ded_decor_s *decoration; // Pointer to the surface decoration,
-                                    // if any.
-    struct ded_reflection_s *reflection; // Surface reflection definition.
-
     lumpnum_t       lump;
-    struct ded_ptcgen_s *ptcGen;    // Particle generator for the flat.
 } flat_t;
 
 typedef struct {

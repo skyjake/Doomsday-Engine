@@ -106,11 +106,11 @@ typedef struct {
 // Particle Generator
 typedef struct ptcgen_s {
     thinker_t       thinker;       // Func = P_PtcGenThinker
-    sector_t       *sector;        // Flat-triggered.
+    sector_t*       sector;        // Flat-triggered.
     int             ceiling;       // Flat-triggered.
     float           area;          // Rough estimate of sector area.
-    ded_ptcgen_t   *def;           // The definition of this generator.
-    mobj_t         *source;        // If mobj-triggered.
+    const ded_ptcgen_t* def;       // The definition of this generator.
+    mobj_t*         source;        // If mobj-triggered.
     int             srcid;         // Source mobj ID.
     int             type;          // Type-triggered; mobj type number (-1=none).
     int             type2;         // Type-triggered; alternate type.
@@ -121,8 +121,8 @@ typedef struct ptcgen_s {
     int             spawnCP;       // Spawn cursor.
     int             age;
     int             count;         // Number of particles.
-    particle_t     *ptcs;          // List of particles.
-    ptcstage_t     *stages;
+    particle_t*     ptcs;          // List of particles.
+    ptcstage_t*     stages;
 } ptcgen_t;
 
 extern ptcgen_t *activePtcGens[MAX_ACTIVE_PTCGENS];

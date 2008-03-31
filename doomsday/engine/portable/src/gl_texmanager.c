@@ -49,6 +49,7 @@
 
 #include "def_main.h"
 #include "ui_main.h"
+#include "p_particle.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1269,24 +1270,33 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
 }
 
 /**
+ * @param result        If not @c NULL, the outcome will be written back
+ *                      to here:
+ *                      0 = already prepared
+ *                      1 = found and prepared a lump resource.
+ *                      2 = found and prepared an external resource.
+ *
  * @return              The OpenGL name of the texture.
  */
-static unsigned int prepareFlat2(int idx, texinfo_t **info)
+static unsigned int prepareFlat2(int idx, texinfo_t **info, byte *result)
 {
     byte               *flatptr;
     int                 width, height, pixSize = 3;
     boolean             RGBData = false, freeptr = false;
     ded_detailtexture_t *def;
-    ded_decor_t        *dec;
     image_t             image;
-    boolean             hasExternal = false;
     flat_t             *flat;
 
     if(idx < 0 || idx >= numFlats) // No texture?
         return 0;
 
     flat = flats[idx];
-    if(!flat->tex)
+    if(flat->tex)
+    {   // Already prepared.
+        if(result)
+            *result = 0;
+    }
+    else
     {
         // Try to load a high resolution version of this flat.
         if((loadExtAlways || highResWithPWAD ||
@@ -1299,7 +1309,8 @@ static unsigned int prepareFlat2(int idx, texinfo_t **info)
             height = image.height;
             pixSize = image.pixelSize;
 
-            hasExternal = true;
+            if(result)
+                *result = 2;
         }
         else
         {
@@ -1309,6 +1320,9 @@ static unsigned int prepareFlat2(int idx, texinfo_t **info)
             // Get a pointer to the texture data.
             flatptr = W_CacheLumpNum(flat->lump, PU_CACHE);
             width = height = 64;
+
+            if(result)
+                *result = 1;
         }
 
         flat->info.width = flat->info.height = 64;
@@ -1345,22 +1359,6 @@ static unsigned int prepareFlat2(int idx, texinfo_t **info)
 
         if(freeptr)
             M_Free(flatptr);
-
-        // Is there a surface decoration for this flat?
-        dec = Def_GetDecoration(idx, false, hasExternal);
-        if(dec)
-        {
-            // A glowing flat?
-            if(dec->glow)
-                flat->flags |= TXF_GLOW;
-            else
-                flat->flags &= ~TXF_GLOW;
-
-            flat->decoration = dec;
-        }
-
-        // Get the surface reflection for this flat.
-        flat->reflection = Def_GetReflection(idx, false);
     }
 
     return getFlatInfo2(idx, info);
@@ -1756,21 +1754,24 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 /**
  * @return              The DGL texture name.
  */
-static unsigned int prepareTexture2(int idx, texinfo_t **info)
+static DGLuint prepareTexture2(int idx, texinfo_t **info, byte *result)
 {
     ded_detailtexture_t *def;
-    ded_decor_t        *dec;
     texture_t          *tex;
     boolean             alphaChannel = false, RGBData = false;
     int                 i;
     image_t             image;
-    boolean             hasExternal = false;
 
     if(idx < 0 || idx >= numTextures) // No texture?
         return 0;
 
     tex = textures[idx];
-    if(!tex->tex)
+    if(tex->tex)
+    {   // Already prepared.
+        if(result)
+            *result = 0;
+    }
+    else
     {
         // Try to load a high resolution version of this texture.
         if((loadExtAlways || highResWithPWAD ||
@@ -1780,7 +1781,8 @@ static unsigned int prepareTexture2(int idx, texinfo_t **info)
             // High resolution texture loaded.
             RGBData = true;
             alphaChannel = (image.pixelSize == 4);
-            hasExternal = true;
+            if(result)
+                *result = 2;
         }
         else
         {
@@ -1790,6 +1792,9 @@ static unsigned int prepareTexture2(int idx, texinfo_t **info)
             image.isMasked =
                 GL_BufferTexture(tex, image.pixels, image.width, image.height,
                                  &i);
+
+            if(result)
+                *result = 1;
 
             // The -bigmtex option allows the engine to resize masked
             // textures whose patches are too big to fit the texture.
@@ -1842,22 +1847,6 @@ static unsigned int prepareTexture2(int idx, texinfo_t **info)
         tex->info.masked = (image.isMasked != 0);
 
         GL_DestroyImage(&image);
-
-        // Is there a decoration for this surface?
-        dec = Def_GetDecoration(idx, true, hasExternal);
-        if(dec)
-        {
-            // A glowing texture?
-            if(dec->glow)
-                tex->flags |= TXF_GLOW;
-            else
-                tex->flags &= ~TXF_GLOW;
-
-            tex->decoration = dec;
-        }
-
-        // Get the reflection for this surface.
-        tex->reflection = Def_GetReflection(idx, true);
     }
 
     return getTextureInfo2(idx, info);
@@ -3292,17 +3281,110 @@ DGLuint GL_GetMaterialInfo2(const struct material_s *mat,
     return 0;
 }
 
-DGLuint GL_PrepareMaterial2(const struct material_s *mat, texinfo_t **info)
+DGLuint GL_PrepareMaterial2(struct material_s* mat, texinfo_t** info)
 {
     if(mat)
     {
+        DGLuint             glTexName;
+        byte                result;
+
         switch(mat->type)
         {
         case MAT_FLAT:
-            return prepareFlat2(mat->ofTypeID, info);
+            glTexName = prepareFlat2(mat->ofTypeID, info, &result);
+
+            if(result)
+            {   // We need to update the assocated enhancements.
+                ded_decor_t        *def =
+                    Def_GetDecoration(mat->ofTypeID, false, result == 2);
+
+                mat->flags &= ~MATF_GLOW;
+                if(def)
+                {
+                    mat->decoration = def;
+
+                    // A glowing flat?
+                    if(def->glow)
+                        mat->flags |= MATF_GLOW;
+                }
+
+                // Get the surface reflection for this.
+                mat->reflection = Def_GetReflection(mat->ofTypeID, false);
+
+                // Get the particle generator definition for this.
+                {
+                ded_ptcgen_t       *def;
+                int                 i, g;
+                boolean             found = false;
+
+                // The generator will be determined now.
+                for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+                {
+                    if(def->flags & PGF_GROUP)
+                    {
+                        // This generator is triggered by all the flats in
+                        // the animation group.
+                        flat_t             *defFlat = flats[def->surfaceIndex];
+                        flat_t             *usedFlat = flats[mat->ofTypeID];
+
+                        // We only need to search if we know both the real used flat
+                        // and the flat of this definition belong in an animgroup.
+                        if(defFlat->inGroup && usedFlat->inGroup)
+                        {
+                            for(g = 0; g < numgroups; ++g)
+                            {
+                                // Precache groups don't apply.
+                                if(groups[g].flags & AGF_PRECACHE)
+                                    continue;
+
+                                if(R_IsInAnimGroup(groups[g].id, MAT_FLAT, def->surfaceIndex) &&
+                                   R_IsInAnimGroup(groups[g].id, MAT_FLAT, mat->ofTypeID))
+                                {
+                                    // Both are in this group! This def will do.
+                                    mat->ptcGen = def;
+                                    found = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if(!def->isTexture && def->surfaceIndex == mat->ofTypeID)
+                    {
+                        mat->ptcGen = def;
+                        found = true;
+                    }
+                }
+
+                if(!found)
+                    mat->ptcGen = NULL;
+                }
+            }
+
+            return glTexName;
 
         case MAT_TEXTURE:
-            return prepareTexture2(mat->ofTypeID, info);
+            glTexName = prepareTexture2(mat->ofTypeID, info, &result);
+
+            if(result)
+            {   // We need to update the associated enhancements.
+                ded_decor_t        *def =
+                    Def_GetDecoration(mat->ofTypeID, true, result == 2);
+
+                mat->flags &= ~MATF_GLOW;
+                if(def)
+                {
+                    mat->decoration = def;
+
+                    // A glowing texture?
+                    if(def->glow)
+                        def->flags |= MATF_GLOW;
+                }
+
+                // Get the reflection for this surface.
+                mat->reflection = Def_GetReflection(mat->ofTypeID, true);
+            }
+
+            return glTexName;
 
         case MAT_SPRITE:
             return prepareSprite(mat->ofTypeID, 0, info);
@@ -3315,7 +3397,7 @@ DGLuint GL_PrepareMaterial2(const struct material_s *mat, texinfo_t **info)
     return 0;
 }
 
-DGLuint GL_PrepareMaterial(const struct material_s *mat, texinfo_t **info)
+DGLuint GL_PrepareMaterial(struct material_s* mat, texinfo_t** info)
 {
     return GL_PrepareMaterial2(mat->current, info);
 }

@@ -29,14 +29,22 @@
 #ifndef __DOOMSDAY_REFRESH_MATERIALS_H__
 #define __DOOMSDAY_REFRESH_MATERIALS_H__
 
+#include "def_data.h"
+
 // Material flags:
-#define MATF_CHANGED            0x1 // Needs update.
+#define MATF_GLOW               0x1 // Glowing material.
+#define MATF_CHANGED            0x8 // Needs update.
 
 typedef struct material_s {
     char            name[9];
     int             ofTypeID;
     materialtype_t  type;
-    short           flags;
+    byte            flags;
+
+    // Associated enhancements/attachments to be used with surfaces:
+    ded_decor_t *decoration;
+    ded_reflection_t *reflection;
+    ded_ptcgen_t *ptcGen;
 
     // For global animation:
     struct material_s *current;
@@ -60,6 +68,8 @@ boolean         R_GetMaterialColor(const material_t *material, float *rgb);
 
 // Returns the real DGL texture, if such exists
 unsigned int    R_GetMaterialName(int ofTypeID, materialtype_t type);
+const ded_decor_t* R_GetMaterialDecoration(const material_t* mat);
+const ded_ptcgen_t* P_GetMaterialPtcGen(const material_t* mat);
 
 // Not for sprites, etc.
 void            R_DeleteMaterialTex(int ofTypeID, materialtype_t type);

@@ -94,27 +94,6 @@ void Rend_DecorRegister(void)
 }
 
 /**
- * @return              Ptr to the surface decoration, if any.
- */
-static ded_decor_t *getMaterialDecoration(material_t *mat)
-{
-    if(!mat)
-        return NULL;
-
-    switch(mat->current->type)
-    {
-    case MAT_FLAT:
-        return flats[mat->current->ofTypeID]->decoration;
-
-    case MAT_TEXTURE:
-        return textures[mat->current->ofTypeID]->decoration;
-
-    default:
-        return NULL;
-    }
-}
-
-/**
  * Clears the list of decoration dummies.
  */
 static void clearDecorations(void)
@@ -432,21 +411,20 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
 {
     if(suf->flags & SUF_UPDATE_DECORATIONS)
     {
-        ded_decorlight_t   *lightDef;
         float               lh, s, t; // Horizontal and vertical offset.
         float               posBase[2], pos[3];
         float               surfTexW, surfTexH, patternW, patternH;
         int                 skip[2];
         uint                i;
-        texinfo_t          *texinfo;
-        vertex_t           *v[2];
+        texinfo_t*          texinfo;
+        vertex_t*           v[2];
         float               delta[2];
-        ded_decor_t        *def;
+        const ded_decor_t*  def;
         float               offsetY;
 
         R_ClearSurfaceDecorations(suf);
 
-        def = getMaterialDecoration(suf->material);
+        def = R_GetMaterialDecoration(suf->material);
         if(def)
         {
             if(line->L_backside)
@@ -516,8 +494,8 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
             // Generate a number of models.
             for(i = 0; i < DED_DECOR_NUM_MODELS; ++i)
             {
-                ded_decormodel_t   *modelDef = &def->models[i];
-                modeldef_t         *mf;
+                const ded_decormodel_t* modelDef = &def->models[i];
+                modeldef_t*         mf;
                 float               pitch, yaw;
 
                 if(!R_IsValidModelDecoration(modelDef))
@@ -581,7 +559,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
             // Generate a number of lights.
             for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
             {
-                lightDef = def->lights + i;
+                const ded_decorlight_t* lightDef = def->lights + i;
 
                 // No more?
                 if(!R_IsValidLightDecoration(lightDef))
@@ -772,19 +750,18 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
     {
         float               pos[3], tileSize = 64;
         int                 skip[2];
-        ded_decor_t        *def;
-        ded_decorlight_t   *lightDef;
+        const ded_decor_t*  def;
 
         R_ClearSurfaceDecorations(suf);
 
-        def = getMaterialDecoration(pln->PS_material);
+        def = R_GetMaterialDecoration(pln->PS_material);
         if(def)
         {
             // Generate a number of models.
             for(i = 0; i < DED_DECOR_NUM_MODELS; ++i)
             {
-                ded_decormodel_t   *modelDef = &def->models[i];
-                modeldef_t         *mf;
+                const ded_decormodel_t* modelDef = &def->models[i];
+                modeldef_t*         mf;
                 float               pitch, yaw;
 
                 if(!R_IsValidModelDecoration(modelDef))
@@ -854,7 +831,7 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
             // Generate a number of lights.
             for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
             {
-                lightDef = &def->lights[i];
+                const ded_decorlight_t* lightDef = &def->lights[i];
 
                 // No more?
                 if(!R_IsValidLightDecoration(lightDef))

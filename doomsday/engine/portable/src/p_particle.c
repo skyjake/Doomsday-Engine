@@ -151,9 +151,9 @@ static ptcgen_t *P_NewPtcGen(void)
 /**
  * Set gen->count prior to calling this function.
  */
-static void P_InitParticleGen(ptcgen_t *gen, ded_ptcgen_t *def)
+static void P_InitParticleGen(ptcgen_t *gen, const ded_ptcgen_t* def)
 {
-    int         i;
+    int                 i;
 
     if(gen->count <= 0)
         gen->count = 1;
@@ -169,12 +169,15 @@ static void P_InitParticleGen(ptcgen_t *gen, ded_ptcgen_t *def)
 
     for(i = 0; i < def->stageCount.num; ++i)
     {
-        gen->stages[i].bounce = FRACUNIT * def->stages[i].bounce;
-        gen->stages[i].resistance = FRACUNIT * (1 - def->stages[i].resistance);
-        gen->stages[i].radius = FRACUNIT * def->stages[i].radius;
-        gen->stages[i].gravity = FRACUNIT * def->stages[i].gravity;
-        gen->stages[i].type = def->stages[i].type;
-        gen->stages[i].flags = def->stages[i].flags;
+        ded_ptcstage_t     *sdef = &def->stages[i];
+        ptcstage_t         *s = &gen->stages[i];
+
+        s->bounce = FRACUNIT * sdef->bounce;
+        s->resistance = FRACUNIT * (1 - sdef->resistance);
+        s->radius = FRACUNIT * sdef->radius;
+        s->gravity = FRACUNIT * sdef->gravity;
+        s->type = sdef->type;
+        s->flags = sdef->flags;
     }
 
     // Init some data.
@@ -241,11 +244,12 @@ Con_Message("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)\n",
  * Creates a new flat-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
  */
-static void P_SpawnPlaneParticleGen(ded_ptcgen_t *def, sector_t *sec,
+static void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, sector_t* sec,
                                     boolean isCeiling)
 {
-    ptcgen_t   *gen;
-    float      *box, width, height;
+    ptcgen_t*           gen;
+    float*              box;
+    float               width, height;
 
     if(isDedicated || !useParticles || !(gen = P_NewPtcGen()))
         return;
@@ -321,10 +325,10 @@ static void P_SetParticleAngles(particle_t *pt, int flags)
         pt->pitch = RNG_RandFloat() * 65536;
 }
 
-static void P_ParticleSound(fixed_t pos[3], ded_embsound_t *sound)
+static void P_ParticleSound(fixed_t pos[3], ded_embsound_t* sound)
 {
-    int         i;
-    float       orig[3];
+    int                 i;
+    float               orig[3];
 
     // Is there any sound to play?
     if(!sound->id || sound->volume <= 0)
@@ -341,13 +345,13 @@ static void P_ParticleSound(fixed_t pos[3], ded_embsound_t *sound)
  */
 static void P_NewParticle(ptcgen_t *gen)
 {
-    ded_ptcgen_t *def = gen->def;
-    particle_t *pt;
-    int         uncertain, len, i;
-    angle_t     ang, ang2;
-    subsector_t *subsec;
-    float      *box, inter = -1;
-    modeldef_t *mf = 0, *nextmf = 0;
+    const ded_ptcgen_t* def = gen->def;
+    particle_t*         pt;
+    int                 uncertain, len, i;
+    angle_t             ang, ang2;
+    subsector_t*        subsec;
+    float*              box, inter = -1;
+    modeldef_t*         mf = 0, *nextmf = 0;
 
     // Check for a model-only generators.
     if(gen->source)
@@ -1076,12 +1080,12 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 /**
  * Spawn and move particles.
  */
-void P_PtcGenThinker(ptcgen_t *gen)
+void P_PtcGenThinker(ptcgen_t* gen)
 {
-    ded_ptcgen_t *def = gen->def;
-    particle_t *pt;
-    float       newparts;
-    int         i;
+    int                 i;
+    particle_t*         pt;
+    float               newparts;
+    const ded_ptcgen_t* def = gen->def;
 
     // Source has been destroyed?
     if(!(gen->flags & PGF_UNTRIGGERED) && !P_IsUsedMobjID(gen->srcid))
@@ -1159,68 +1163,6 @@ void P_PtcGenThinker(ptcgen_t *gen)
 }
 
 /**
- * Returns the ptcgen definition for the given flat.
- */
-ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
-{
-    ded_ptcgen_t *def;
-    int         i;
-    int         g;
-    flat_t     *flat = flats[flatpic];
-
-    if(!flat)
-        return NULL;
-
-    if(flatpic <= 0)
-        return flat->ptcGen = NULL;
-
-    if(flat->flags & TXF_PTCGEN)
-    {
-        return flat->ptcGen;
-    }
-
-    // The generator will be determined now.
-    flat->flags |= TXF_PTCGEN;
-
-    for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
-    {
-        if(def->flags & PGF_GROUP)
-        {
-            // This generator is triggered by all the flats in
-            // the animation group.
-            flat_t *defFlat = flats[def->surfaceIndex];
-            flat_t *usedFlat = flats[flatpic];
-
-            // We only need to search if we know both the real used flat
-            // and the flat of this definition belong in an animgroup.
-            if(defFlat->inGroup && usedFlat->inGroup)
-            {
-                for(g = 0; g < numgroups; ++g)
-                {
-                    // Precache groups don't apply.
-                    if(groups[g].flags & AGF_PRECACHE)
-                        continue;
-
-                    if(R_IsInAnimGroup(groups[g].id, MAT_FLAT, def->surfaceIndex) &&
-                       R_IsInAnimGroup(groups[g].id, MAT_FLAT, flatpic))
-                    {
-                        // Both are in this group! This def will do.
-                        return flat->ptcGen = def;
-                    }
-                }
-            }
-        }
-
-        if(def->isTexture && def->surfaceIndex == flatpic)
-        {
-            return flat->ptcGen = def;
-        }
-    }
-
-    return flat->ptcGen = NULL;
-}
-
-/**
  * Returns true iff there is an active ptcgen for the given plane.
  */
 static boolean P_HasActivePtcGen(sector_t *sector, int isCeiling)
@@ -1241,7 +1183,6 @@ void P_CheckPtcPlanes(void)
 {
     uint            i, p;
     sector_t       *sector;
-    ded_ptcgen_t   *def;
 
     // There is no need to do this on every tic.
     if(isDedicated || SECONDS_TO_TICKS(gameTime) % 4)
@@ -1257,7 +1198,8 @@ void P_CheckPtcPlanes(void)
 
             if(mat && mat->type == MAT_FLAT)
             {
-                def = P_GetPtcGenForFlat(mat->ofTypeID);
+                const ded_ptcgen_t*     def = P_GetMaterialPtcGen(mat);
+
                 if(!def)
                     continue;
 
@@ -1283,9 +1225,9 @@ void P_CheckPtcPlanes(void)
  */
 void P_SpawnTypeParticleGens(void)
 {
-    int         i;
-    ded_ptcgen_t *def;
-    ptcgen_t   *gen;
+    int                 i;
+    ded_ptcgen_t       *def;
+    ptcgen_t           *gen;
 
     if(isDedicated || !useParticles)
         return;
@@ -1310,9 +1252,9 @@ void P_SpawnTypeParticleGens(void)
 
 void P_SpawnMapParticleGens(const char *mapId)
 {
-    int         i;
-    ded_ptcgen_t *def;
-    ptcgen_t   *gen;
+    int                 i;
+    ded_ptcgen_t       *def;
+    ptcgen_t           *gen;
 
     if(isDedicated || !useParticles)
         return;
@@ -1343,10 +1285,10 @@ void P_SpawnMapParticleGens(const char *mapId)
  */
 void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
 {
-    ptcgen_t   *gen;
-    ded_ptcgen_t *def;
-    int         i;
-    float       len;
+    ptcgen_t           *gen;
+    ded_ptcgen_t       *def;
+    int                 i;
+    float               len;
 
     // Are particles allowed?
     if(isDedicated || !useParticles || !mo || !inflictor || amount <= 0)
@@ -1361,7 +1303,8 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
 
         // Create it.
         if(!(gen = P_NewPtcGen()))
-            return;             // No more generators.
+            return; // No more generators.
+
         gen->count = def->particles;
         P_InitParticleGen(gen, def);
         gen->flags |= PGF_UNTRIGGERED;
@@ -1385,7 +1328,7 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
                              FIX2FLT(gen->vector[VZ]));
         if(len != 0)
         {
-            uint        k;
+            uint                k;
 
             for(k = 0; k < 3; ++k)
                 gen->vector[k] = FixedDiv(gen->vector[k], FLT2FIX(len));
@@ -1401,14 +1344,14 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
  */
 void P_UpdateParticleGens(void)
 {
-    uint            i;
-    ptcgen_t       *gen;
+    uint                i;
+    ptcgen_t           *gen;
 
     for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
     {
-        int             j;
-        ded_ptcgen_t   *def;
-        boolean         found;
+        int                 j;
+        ded_ptcgen_t       *def;
+        boolean             found;
 
         if(!activePtcGens[i])
             continue;
@@ -1419,8 +1362,7 @@ void P_UpdateParticleGens(void)
         // identify them), so destroy them.
         // Flat generators will be spawned automatically within a few tics so we'll
         // just destroy those too.
-        if((gen->flags & PGF_UNTRIGGERED) ||
-           (gen->sector))
+        if((gen->flags & PGF_UNTRIGGERED) || gen->sector)
         {
             P_FreePtcGen(gen);
             continue;
