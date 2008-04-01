@@ -406,8 +406,8 @@ extern          "C" {
     int             R_MaterialNumForName(const char *name, materialtype_t type);
     int             R_SetMaterialTranslation(int originalID, materialtype_t type, int translate_to);
     boolean         R_IsCustomMaterial(int texture, materialtype_t type);
-    int             R_CreateAnimGroup(materialtype_t type, int flags);
-    void            R_AddToAnimGroup(int groupNum, const char *name,
+    int             R_CreateAnimGroup(int flags);
+    void            R_AddToAnimGroup(int groupNum, const char *name, materialtype_t type,
                                      int tics, int randomTics);
 
     angle_t         R_PointToAngle2(float x1, float y1, float x2,

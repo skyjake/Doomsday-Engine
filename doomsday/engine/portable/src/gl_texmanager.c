@@ -3286,7 +3286,7 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat, texinfo_t** info)
     if(mat)
     {
         DGLuint             glTexName;
-        byte                result;
+        byte                result = 0;
 
         switch(mat->type)
         {
@@ -3322,14 +3322,13 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat, texinfo_t** info)
                 {
                     if(def->flags & PGF_GROUP)
                     {
-                        // This generator is triggered by all the flats in
+                        // This generator is triggered by all the materials in
                         // the animation group.
-                        flat_t             *defFlat = flats[def->surfaceIndex];
-                        flat_t             *usedFlat = flats[mat->ofTypeID];
+                        material_t         *defMat = R_GetMaterial(def->surfaceIndex, (def->isTexture? MAT_TEXTURE : MAT_FLAT));
 
                         // We only need to search if we know both the real used flat
                         // and the flat of this definition belong in an animgroup.
-                        if(defFlat->inGroup && usedFlat->inGroup)
+                        if(defMat->inGroup && mat->inGroup)
                         {
                             for(g = 0; g < numgroups; ++g)
                             {
@@ -3337,8 +3336,8 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat, texinfo_t** info)
                                 if(groups[g].flags & AGF_PRECACHE)
                                     continue;
 
-                                if(R_IsInAnimGroup(groups[g].id, MAT_FLAT, def->surfaceIndex) &&
-                                   R_IsInAnimGroup(groups[g].id, MAT_FLAT, mat->ofTypeID))
+                                if(R_IsInAnimGroup(groups[g].id, (def->isTexture? MAT_TEXTURE : MAT_FLAT), def->surfaceIndex) &&
+                                    R_IsInAnimGroup(groups[g].id, mat->type, mat->ofTypeID))
                                 {
                                     // Both are in this group! This def will do.
                                     mat->ptcGen = def;
@@ -3348,7 +3347,8 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat, texinfo_t** info)
                         }
                     }
 
-                    if(!def->isTexture && def->surfaceIndex == mat->ofTypeID)
+                    if(mat->type == (def->isTexture? MAT_TEXTURE : MAT_FLAT) &&
+                       def->surfaceIndex == mat->ofTypeID)
                     {
                         mat->ptcGen = def;
                         found = true;

@@ -120,6 +120,7 @@ material_t *R_MaterialCreate(const char *name, int ofTypeID,
             // Update the (possibly new) meta data.
             mat->ofTypeID = ofTypeID;
             mat->flags &= ~MATF_CHANGED;
+            mat->inGroup = false;
             mat->current = mat->next = mat;
             mat->inter = 0;
             mat->decoration = NULL;

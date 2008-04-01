@@ -1710,11 +1710,10 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             for(;;)
             {
                 READLABEL;
-                if(ISLABEL("Texture") || ISLABEL("Flat"))
+                if(ISLABEL("Texture") || ISLABEL("Flat") ||
+                   ISLABEL("Sprite") || ISLABEL("DDTex"))
                 {
                     ded_group_member_t *memb;
-
-                    grp->isTexture = ISLABEL("Texture");
 
                     if(sub >= grp->count.num)
                     {
@@ -1723,6 +1722,10 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     }
 
                     memb = &grp->members[sub];
+                    memb->type = (
+                        ISLABEL("Texture")? MAT_TEXTURE :
+                        ISLABEL("Flat")? MAT_FLAT :
+                        ISLABEL("Sprite")? MAT_SPRITE : MAT_DDTEX);
 
                     FINDBEGIN;
                     for(;;)

@@ -466,7 +466,7 @@ patch_t *R_GetPatch(lumpnum_t lump)
  * Create a new animation group. Returns the group number.
  * This function is exported and accessible from DLLs.
  */
-int R_CreateAnimGroup(materialtype_t type, int flags)
+int R_CreateAnimGroup(int flags)
 {
     animgroup_t        *group;
 
@@ -481,21 +481,6 @@ int R_CreateAnimGroup(materialtype_t type, int flags)
     // The group number is (index + 1).
     group->id = ++numgroups;
     group->flags = flags;
-
-    switch(type)
-    {
-    case MAT_TEXTURE:
-        group->flags |= AGF_TEXTURE;
-        break;
-
-    case MAT_FLAT:
-        group->flags |= AGF_FLAT;
-        break;
-
-    default:
-        Con_Error("R_CreateAnimGroup: Material type %i does not support animations.",
-                  type);
-    }
 
     return group->id;
 }
@@ -531,11 +516,13 @@ animgroup_t *R_GetAnimGroup(int number)
 /**
  * This function is exported and accessible from DLLs.
  */
-void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
+void R_AddToAnimGroup(int groupNum, const char *name, materialtype_t type,
+                      int tics, int randomTics)
 {
     animgroup_t        *group;
     animframe_t        *frame;
     int                 number;
+    material_t         *mat;
 
     if(!name || !name[0])
         return;
@@ -544,14 +531,18 @@ void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
     if(!group)
         Con_Error("R_AddToAnimGroup: Unknown anim group %i.", groupNum);
 
-    number = R_CheckMaterialNumForName(name, ((group->flags & AGF_TEXTURE)? MAT_TEXTURE : MAT_FLAT));
+    number = R_CheckMaterialNumForName(name, type);
 
     if(number < 0)
     {
-        Con_Message("R_AddToAnimGroup: Unknown %s '%s'.",
-                    ((group->flags & AGF_TEXTURE)? "Texture" : "Flat"), name);
+        Con_Message("R_AddToAnimGroup: No type %i material named '%s'.",
+                    (int) type, name);
         return;
     }
+
+    mat = R_GetMaterial(number, type);
+    // Mark the material as being in an animgroup.
+    mat->inGroup = true;
 
     // Allocate a new animframe.
     group->frames =
@@ -561,41 +552,28 @@ void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
     frame = group->frames + group->count - 1;
 
     frame->number = number;
+    frame->type = type;
     frame->tics = tics;
     frame->random = randomTics;
-
-    // Mark the texture/flat as belonging to some animgroup.
-    if(group->flags & AGF_TEXTURE)
-    {
-        textures[number]->inGroup = true;
-    }
-    else
-    {
-        flats[number]->inGroup = true;
-    }
 }
 
 boolean R_IsInAnimGroup(int groupNum, materialtype_t type, int number)
 {
-    animgroup_t        *group = R_GetAnimGroup(groupNum);
     int                 i;
+    animgroup_t        *group = R_GetAnimGroup(groupNum);
 
     if(!group)
         return false;
 
-    if((type == MAT_TEXTURE && !(group->flags & AGF_TEXTURE)) ||
-       (type == MAT_FLAT && !(group->flags & AGF_FLAT)))
-    {
-        // Not the right type.
-        return false;
-    }
-
     // Is it in there?
     for(i = 0; i < group->count; ++i)
     {
-        if(group->frames[i].number == number)
+        animframe_t        *frame = &group->frames[i];
+
+        if(frame->number == number && frame->type == type)
             return true;
     }
+
     return false;
 }
 
@@ -604,28 +582,28 @@ boolean R_IsInAnimGroup(int groupNum, materialtype_t type, int number)
  */
 void R_InitAnimGroup(ded_group_t *def)
 {
-    int                 i;
+    int                 i, ofTypeIDX;
     int                 groupNumber = -1;
-    int                 type, number;
-
-    type = (def->isTexture ? MAT_TEXTURE : MAT_FLAT);
 
     for(i = 0; i < def->count.num; ++i)
     {
-        number = R_CheckMaterialNumForName(def->members[i].name, type);
+        ded_group_member_t *gm = &def->members[i];
 
-        if(number < 0)
+        ofTypeIDX =
+            R_CheckMaterialNumForName(gm->name, (materialtype_t) gm->type);
+
+        if(ofTypeIDX < 0)
             continue;
 
         // Only create a group when the first texture is found.
         if(groupNumber == -1)
         {
             // Create a new animation group.
-            groupNumber = R_CreateAnimGroup(type, def->flags);
+            groupNumber = R_CreateAnimGroup(def->flags);
         }
 
-        R_AddToAnimGroup(groupNumber, def->members[i].name,
-                         def->members[i].tics, def->members[i].randomTics);
+        R_AddToAnimGroup(groupNumber, gm->name, gm->type,
+                         gm->tics, gm->randomTics);
     }
 }
 
@@ -1219,53 +1197,33 @@ void R_PrecachePatch(lumpnum_t num)
 }
 
 /**
- * Prepares all graphic resources associated with the specified material
- * including any in the same animation group.
+ * Prepares all resources associated with the specified material including
+ * all in the same animation group.
  */
 void R_PrecacheMaterial(material_t *mat)
 {
-    int                 i, k;
+    if(mat->inGroup)
+    {   // The material belongs in one or more animgroups.
+        int                 i;
 
-    switch(mat->type)
-    {
-    case MAT_FLAT:
-        if(flats[mat->ofTypeID]->inGroup)
+        for(i = 0; i < numgroups; ++i)
         {
-            // The flat belongs in one or more animgroups.
-            for(i = 0; i < numgroups; ++i)
+            if(R_IsInAnimGroup(groups[i].id, mat->type, mat->ofTypeID))
             {
-                if(R_IsInAnimGroup(groups[i].id, MAT_FLAT, mat->ofTypeID))
+                int                 k;
+
+                // Precache this group.
+                for(k = 0; k < groups[i].count; ++k)
                 {
-                    // Precache this group.
-                    for(k = 0; k < groups[i].count; ++k)
-                        GL_PrepareMaterial(R_GetMaterial(groups[i].frames[k].number, MAT_FLAT), NULL);
+                    animframe_t        *frame = &groups[i].frames[k];
+
+                    GL_PrepareMaterial(R_GetMaterial(frame->number,
+                                                     frame->type), NULL);
                 }
             }
-
-            return;
         }
-        break;
 
-    case MAT_TEXTURE:
-        if(textures[mat->ofTypeID]->inGroup)
-        {
-            // The texture belongs in one or more animgroups.
-            for(i = 0; i < numgroups; ++i)
-            {
-                if(R_IsInAnimGroup(groups[i].id, MAT_TEXTURE, mat->ofTypeID))
-                {
-                    // Precache this group.
-                    for(k = 0; k < groups[i].count; ++k)
-                        GL_PrepareMaterial(R_GetMaterial(groups[i].frames[k].number, MAT_TEXTURE), NULL);
-                }
-            }
-
-            return;
-        }
-        break;
-
-    default:
-        break;
+        return;
     }
 
     // Just this one material.
@@ -1414,7 +1372,6 @@ void R_AnimateAnimGroups(void)
 {
     int                 i, timer, k;
     animgroup_t        *group;
-    boolean             isTexture;
 
     // The animation will only progress when the game is not paused.
     if(clientPaused)
@@ -1425,8 +1382,6 @@ void R_AnimateAnimGroups(void)
         // The Precache groups are not intended for animation.
         if((group->flags & AGF_PRECACHE) || !group->count)
             continue;
-
-        isTexture = (group->flags & AGF_TEXTURE) != 0;
 
         if(--group->timer <= 0)
         {
@@ -1443,17 +1398,19 @@ void R_AnimateAnimGroups(void)
             // Update texture/flat translations.
             for(k = 0; k < group->count; ++k)
             {
+                int                 rIDX, cIDX, nIDX;
                 material_t         *real, *current, *next;
-                materialtype_t      type;
 
-                type = (isTexture? MAT_TEXTURE : MAT_FLAT);
-                real = R_GetMaterial(group->frames[k].number, type);
-                current = R_GetMaterial(
-                    group->frames[(group->index + k) % group->count].number,
-                    type);
-                next = R_GetMaterial(
-                    group->frames[(group->index + k + 1) %
-                                  group->count].number, type);
+                rIDX = k;
+                cIDX = (group->index + k) % group->count;
+                nIDX = (group->index + k + 1) % group->count;
+
+                real = R_GetMaterial(group->frames[rIDX].number,
+                                     group->frames[rIDX].type);
+                current = R_GetMaterial(group->frames[cIDX].number,
+                                        group->frames[cIDX].type);
+                next = R_GetMaterial(group->frames[nIDX].number,
+                                     group->frames[nIDX].type);
 
                 R_SetMaterialTranslation(real, current, next, 0);
 
@@ -1469,7 +1426,7 @@ void R_AnimateAnimGroups(void)
             {
                 material_t         *mat =
                     R_GetMaterial(group->frames[k].number,
-                                  (isTexture? MAT_TEXTURE : MAT_FLAT));
+                                  group->frames[k].type);
 
                 if(group->flags & AGF_SMOOTH)
                 {
@@ -1494,7 +1451,7 @@ void R_AnimateAnimGroups(void)
  */
 void R_GenerateDecorMap(ded_decor_t *def)
 {
-    int     i, count;
+    int                 i, count;
 
     for(i = 0, count = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
     {

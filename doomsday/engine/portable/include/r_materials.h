@@ -47,6 +47,7 @@ typedef struct material_s {
     ded_ptcgen_t *ptcGen;
 
     // For global animation:
+    boolean         inGroup; // True if belongs to some animgroup.
     struct material_s *current;
     struct material_s *next;
     float           inter;

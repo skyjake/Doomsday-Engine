@@ -220,7 +220,6 @@ typedef struct {
     texinfo_t       info;
     int             flags;         // TXF_* flags.
     rgbcol_t        color;
-    byte            inGroup;       // True if texture belongs to some animgroup.
     materialclass_t materialClass;  // Used for environmental sound properties.
     short           patchCount;
     texpatch_t      patches[1];    // [patchcount] drawn back to front
@@ -237,7 +236,6 @@ typedef struct flat_s {
     texinfo_t       info;
     int             flags;
     rgbcol_t        color;
-    byte            inGroup;        // True if belongs to some animgroup.
     materialclass_t materialClass;  // Used for environmental sound properties.
     lumpnum_t       lump;
 } flat_t;
@@ -291,6 +289,7 @@ typedef struct rawtex_s {
 
 typedef struct animframe_s {
     int             number;
+    materialtype_t  type;
     ushort          tics;
     ushort          random;
 } animframe_t;

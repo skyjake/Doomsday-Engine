@@ -517,12 +517,12 @@ extern          "C" {
 
     typedef struct ded_group_member_s {
         char            name[9];
+        int             type;
         float           tics;
         float           randomTics;
     } ded_group_member_t;
 
     typedef struct ded_group_s {
-        int             isTexture; // Group of textures?
         ded_flags_t     flags;
         ded_count_t     count;
         ded_group_member_t *members;

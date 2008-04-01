@@ -1093,8 +1093,6 @@ typedef enum materialtype_e {
 // Animation group flags.
 #define AGF_SMOOTH      0x1
 #define AGF_FIRST_ONLY  0x2
-#define AGF_TEXTURE     0x1000
-#define AGF_FLAT        0x2000
 #define AGF_PRECACHE    0x4000      // Group is just for precaching.
 
     //------------------------------------------------------------------------
