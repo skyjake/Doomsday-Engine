@@ -221,7 +221,7 @@ void P_InitPicAnims(void)
             if(startFrame != -1 && endFrame != -1)
             {   // We have a valid animation.
                 // Create a new animation group for it.
-                groupNum = R_CreateAnimGroup(type, AGF_SMOOTH);
+                groupNum = R_CreateAnimGroup(AGF_SMOOTH);
 
                 /**
                  * Doomsday's group animation needs to know the texture/flat
@@ -242,7 +242,7 @@ void P_InitPicAnims(void)
                     {
                         name = (type == MAT_TEXTURE? R_MaterialNameForNum(j, MAT_TEXTURE) :
                                  W_LumpName(j));
-                        R_AddToAnimGroup(groupNum, name, ticsPerFrame, 0);
+                        R_AddToAnimGroup(groupNum, name, type, ticsPerFrame, 0);
                     }
                 }
                 else
@@ -251,7 +251,7 @@ void P_InitPicAnims(void)
                     {
                         name = (type == MAT_TEXTURE? R_MaterialNameForNum(j, MAT_TEXTURE) :
                                  W_LumpName(j));
-                        R_AddToAnimGroup(groupNum, name, ticsPerFrame, 0);
+                        R_AddToAnimGroup(groupNum, name, type, ticsPerFrame, 0);
                     }
                 }
             }
