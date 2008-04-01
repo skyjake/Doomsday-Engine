@@ -67,8 +67,11 @@ boolean         R_IsCustomMaterial(int ofTypeID, materialtype_t type);
 int             R_GetMaterialFlags(material_t *material);
 boolean         R_GetMaterialColor(const material_t *material, float *rgb);
 
+void            R_PrecacheMaterial(material_t *mat);
+
 // Returns the real DGL texture, if such exists
 unsigned int    R_GetMaterialName(int ofTypeID, materialtype_t type);
+ded_reflection_t* R_GetMaterialReflection(material_t* mat);
 const ded_decor_t* R_GetMaterialDecoration(const material_t* mat);
 const ded_ptcgen_t* P_GetMaterialPtcGen(const material_t* mat);
 

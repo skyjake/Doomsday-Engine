@@ -544,20 +544,17 @@ void GL_DeleteFlareMap(ded_flaremap_t *map)
  * Loads both the shiny texture and the mask.  Returns true if there is
  * a reflection map to can be used.
  */
-boolean GL_LoadReflectionMap(ded_reflection_t *loading_ref)
+boolean GL_LoadReflectionMap(ded_reflection_t* loadingRef)
 {
-    ded_reflection_t *ref;
+    ded_reflection_t* ref;
 
-    if(loading_ref == NULL)
-    {
+    if(!loadingRef)
         return false;
-    }
 
     // First try the shiny texture map.
-    ref = loading_ref->useShiny;
+    ref = loadingRef->useShiny;
     if(!ref)
-    {
-        // Not shiny at all.
+    {   // Not shiny at all.
         return false;
     }
 
@@ -574,9 +571,9 @@ boolean GL_LoadReflectionMap(ded_reflection_t *loading_ref)
     }
 
     // Also load the mask, if one has been specified.
-    if(loading_ref->useMask)
+    if(loadingRef->useMask)
     {
-        ref = loading_ref->useMask;
+        ref = loadingRef->useMask;
 
         if(ref->maskTex == 0)
         {
@@ -1280,11 +1277,6 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
  */
 static unsigned int prepareFlat2(int idx, texinfo_t **info, byte *result)
 {
-    byte               *flatptr;
-    int                 width, height, pixSize = 3;
-    boolean             RGBData = false, freeptr = false;
-    ded_detailtexture_t *def;
-    image_t             image;
     flat_t             *flat;
 
     if(idx < 0 || idx >= numFlats) // No texture?
@@ -1298,6 +1290,12 @@ static unsigned int prepareFlat2(int idx, texinfo_t **info, byte *result)
     }
     else
     {
+        byte               *flatptr;
+        int                 width, height, pixSize = 3;
+        boolean             RGBData = false, freeptr = false;
+        ded_detailtexture_t *def;
+        image_t             image;
+
         // Try to load a high resolution version of this flat.
         if((loadExtAlways || highResWithPWAD ||
             !R_IsCustomMaterial(idx, MAT_FLAT)) &&
@@ -1756,11 +1754,7 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
  */
 static DGLuint prepareTexture2(int idx, texinfo_t **info, byte *result)
 {
-    ded_detailtexture_t *def;
     texture_t          *tex;
-    boolean             alphaChannel = false, RGBData = false;
-    int                 i;
-    image_t             image;
 
     if(idx < 0 || idx >= numTextures) // No texture?
         return 0;
@@ -1773,6 +1767,11 @@ static DGLuint prepareTexture2(int idx, texinfo_t **info, byte *result)
     }
     else
     {
+        int                 i;
+        image_t             image;
+        ded_detailtexture_t *def;
+        boolean             alphaChannel = false, RGBData = false;
+
         // Try to load a high resolution version of this texture.
         if((loadExtAlways || highResWithPWAD ||
             !R_IsCustomMaterial(idx, MAT_TEXTURE)) &&

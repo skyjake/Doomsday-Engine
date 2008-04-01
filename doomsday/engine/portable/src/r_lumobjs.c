@@ -345,25 +345,25 @@ lumobj_t *LO_GetLuminous(uint idx)
  */
 void LO_AddLuminous(mobj_t *mo)
 {
-    uint                i;
-    float               mul, xOff, center;
-    int                 flags = 0;
-    int                 radius, flareSize;
-    float               rgb[3];
-    lumobj_t           *l;
-    lightconfig_t       cf;
-    ded_light_t        *def = 0;
-    spritedef_t        *sprDef;
-    spriteframe_t      *sprFrame;
-    spritetex_t        *sprTex;
-    material_t         *mat;
-
     mo->light = 0;
 
     if(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
        (mo->ddFlags & DDMF_ALWAYSLIT))
     {
+        uint                i;
+        float               mul, xOff, center;
+        int                 flags = 0;
+        int                 radius, flareSize;
+        float               rgb[3];
+        lumobj_t           *l;
+        lightconfig_t       cf;
+        ded_light_t        *def = 0;
+        spritedef_t        *sprDef;
+        spriteframe_t      *sprFrame;
+        spritetex_t        *sprTex;
+        material_t         *mat;
+
         // Are the automatically calculated light values for fullbright
         // sprite frames in use?
         if(mo->state &&

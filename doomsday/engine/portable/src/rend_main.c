@@ -270,7 +270,8 @@ static int C_DECL DivSortDescend(const void *e1, const void *e2)
     return 0;
 }
 
-static void Rend_ShinySurfaceColor(float color[4], ded_reflection_t *ref)
+static void Rend_ShinySurfaceColor(float color[4],
+                                   const ded_reflection_t* ref)
 {
     uint                i;
 
@@ -288,53 +289,6 @@ static void Rend_ShinySurfaceColor(float color[4], ded_reflection_t *ref)
            color[CA]);*/
 }
 
-static ded_reflection_t *getReflectionDef(material_t *mat, short *width,
-                                          short *height)
-{
-    ded_reflection_t *ref = NULL;
-
-    if(!mat)
-        return NULL;
-
-    // Figure out what kind of surface properties have been defined
-    // for the texture or flat in question.
-    switch(mat->current->type)
-    {
-    case MAT_FLAT:
-        {
-        flat_t         *flatptr = flats[mat->current->ofTypeID];
-
-        ref = mat->current->reflection;
-        if(ref)
-        {
-            if(width)
-                *width = flatptr->info.width;
-            if(height)
-                *height = flatptr->info.height;
-        }
-        break;
-        }
-    case MAT_TEXTURE:
-        {
-        texture_t      *texptr = textures[mat->current->ofTypeID];
-
-        ref = mat->current->reflection;
-        if(ref)
-        {
-            if(width)
-                *width = texptr->info.width;
-            if(height)
-                *height = texptr->info.height;
-        }
-        break;
-        }
-    default:
-        break;
-    }
-
-    return ref;
-}
-
 /**
  * \pre As we modify param poly quite a bit it is the responsibility of
  *      the caller to ensure this is OK (ie if not it should pass us a
@@ -344,7 +298,7 @@ static ded_reflection_t *getReflectionDef(material_t *mat, short *width,
  * @param isFlat        @c true = param texture is a flat.
  * @param poly          The poly to add the shiny poly for.
  */
-static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
+static void Rend_AddShinyPoly(rendpoly_t *poly, const ded_reflection_t* ref,
                               short width, short height)
 {
     uint                i;
@@ -526,12 +480,16 @@ void Rend_VertexColors(rendpoly_t* poly, float lightLevel,
 void Rend_VertexColorsApplyTorchLight(rendpoly_t *poly)
 {
     int                 i;
+    ddplayer_t         *ddpl = &viewPlayer->shared;
 
     // Check for special case exceptions.
     if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW|RPF_GLOW))
     {
         return; // Don't receive light from torches.
     }
+
+    if(!ddpl->fixedColorMap)
+        return; // No need, its disabled.
 
     for(i = 0; i < poly->numVertices; ++i)
     {
@@ -792,8 +750,7 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
     }
     else if(surface->material)
     {
-        poly->tex.id = curTex =
-            GL_PrepareMaterial(surface->material, &info);
+        poly->tex.id = curTex = GL_PrepareMaterial(surface->material, &info);
         flags = surface->flags;
 
         //// \kludge >
@@ -1126,7 +1083,10 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
         skyhemispheres |= (plane->type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
     }
     else
-        poly->lightListIdx = DL_ProcessSubSectorPlane(subsector, plane->planeID);
+    {
+        poly->lightListIdx =
+            DL_ProcessSubSectorPlane(subsector, plane->planeID);
+    }
 
     // Smooth Texture Animation?
     if(flags & RPF2_BLEND)
@@ -1141,17 +1101,15 @@ static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
     // Render Shiny polys for this seg?
     if((flags & RPF2_SHINY) && useShinySurfaces)
     {
-        ded_reflection_t *ref;
-        short       width = 0;
-        short       height = 0;
+        ded_reflection_t* ref = R_GetMaterialReflection(surface->material);
 
-        if((ref = getReflectionDef(surface->material, &width, &height)) != NULL)
+        // Make sure the texture has been loaded.
+        if(GL_LoadReflectionMap(ref))
         {
-            // Make sure the texture has been loaded.
-            if(GL_LoadReflectionMap(ref))
-            {
-                Rend_AddShinyPoly(poly, ref, width, height);
-            }
+            texinfo_t*      texInfo;
+
+            GL_GetMaterialInfo2(surface->material, false, &texInfo);
+            Rend_AddShinyPoly(poly, ref, texInfo->width, texInfo->height);
         }
     }
 }
@@ -1456,22 +1414,22 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                 // Render Shiny polys for this seg?
                 if((tempflags & RPF2_SHINY) && useShinySurfaces)
                 {
-                    ded_reflection_t *ref;
-                    short width = 0;
-                    short height = 0;
+                    ded_reflection_t* ref =
+                        R_GetMaterialReflection(surface->material);
 
-                    if((ref = getReflectionDef(surface->material, &width, &height)) != NULL)
+                    // Make sure the texture has been loaded.
+                    if(GL_LoadReflectionMap(ref))
                     {
-                        // Make sure the texture has been loaded.
-                        if(GL_LoadReflectionMap(ref))
-                        {
-                            // We're going to modify the polygon quite a bit...
-                            rendpoly_t *q = R_AllocRendPoly(RP_QUAD, true, 4);
-                            R_MemcpyRendPoly(q, quad);
-                            Rend_AddShinyPoly(q, ref, width, height);
+                        // We're going to modify the polygon quite a bit...
+                        rendpoly_t*         q;
+                        texinfo_t*          texInfo;
 
-                            R_FreeRendPoly(q);
-                        }
+                        GL_GetMaterialInfo2(surface->material, false, &texInfo);
+
+                        q = R_AllocRendPoly(RP_QUAD, true, 4);
+                        R_MemcpyRendPoly(q, quad);
+                        Rend_AddShinyPoly(q, ref, texInfo->width, texInfo->height);
+                        R_FreeRendPoly(q);
                     }
                 }
             }

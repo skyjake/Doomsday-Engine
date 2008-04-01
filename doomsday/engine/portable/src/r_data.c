@@ -551,8 +551,7 @@ void R_AddToAnimGroup(int groupNum, const char *name, materialtype_t type,
 
     frame = group->frames + group->count - 1;
 
-    frame->number = number;
-    frame->type = type;
+    frame->mat = mat;
     frame->tics = tics;
     frame->random = randomTics;
 }
@@ -561,6 +560,7 @@ boolean R_IsInAnimGroup(int groupNum, materialtype_t type, int number)
 {
     int                 i;
     animgroup_t        *group = R_GetAnimGroup(groupNum);
+    material_t         *mat = R_GetMaterial(number, type);
 
     if(!group)
         return false;
@@ -570,7 +570,7 @@ boolean R_IsInAnimGroup(int groupNum, materialtype_t type, int number)
     {
         animframe_t        *frame = &group->frames[i];
 
-        if(frame->number == number && frame->type == type)
+        if(frame->mat == mat)
             return true;
     }
 
@@ -1196,40 +1196,6 @@ void R_PrecachePatch(lumpnum_t num)
     GL_PreparePatch(num, NULL);
 }
 
-/**
- * Prepares all resources associated with the specified material including
- * all in the same animation group.
- */
-void R_PrecacheMaterial(material_t *mat)
-{
-    if(mat->inGroup)
-    {   // The material belongs in one or more animgroups.
-        int                 i;
-
-        for(i = 0; i < numgroups; ++i)
-        {
-            if(R_IsInAnimGroup(groups[i].id, mat->type, mat->ofTypeID))
-            {
-                int                 k;
-
-                // Precache this group.
-                for(k = 0; k < groups[i].count; ++k)
-                {
-                    animframe_t        *frame = &groups[i].frames[k];
-
-                    GL_PrepareMaterial(R_GetMaterial(frame->number,
-                                                     frame->type), NULL);
-                }
-            }
-        }
-
-        return;
-    }
-
-    // Just this one material.
-    GL_PrepareMaterial(mat, NULL);
-}
-
 static boolean isInList(void **list, size_t len, void *elm)
 {
     size_t              n;
@@ -1398,19 +1364,13 @@ void R_AnimateAnimGroups(void)
             // Update texture/flat translations.
             for(k = 0; k < group->count; ++k)
             {
-                int                 rIDX, cIDX, nIDX;
                 material_t         *real, *current, *next;
 
-                rIDX = k;
-                cIDX = (group->index + k) % group->count;
-                nIDX = (group->index + k + 1) % group->count;
-
-                real = R_GetMaterial(group->frames[rIDX].number,
-                                     group->frames[rIDX].type);
-                current = R_GetMaterial(group->frames[cIDX].number,
-                                        group->frames[cIDX].type);
-                next = R_GetMaterial(group->frames[nIDX].number,
-                                     group->frames[nIDX].type);
+                real = group->frames[k].mat;
+                current =
+                    group->frames[(group->index + k) % group->count].mat;
+                next =
+                    group->frames[(group->index + k + 1) % group->count].mat;
 
                 R_SetMaterialTranslation(real, current, next, 0);
 
@@ -1424,9 +1384,7 @@ void R_AnimateAnimGroups(void)
             // Update the interpolation point of animated group members.
             for(k = 0; k < group->count; ++k)
             {
-                material_t         *mat =
-                    R_GetMaterial(group->frames[k].number,
-                                  group->frames[k].type);
+                material_t         *mat = group->frames[k].mat;
 
                 if(group->flags & AGF_SMOOTH)
                 {

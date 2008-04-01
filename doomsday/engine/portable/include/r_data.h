@@ -288,8 +288,7 @@ typedef struct rawtex_s {
 } rawtex_t;
 
 typedef struct animframe_s {
-    int             number;
-    materialtype_t  type;
+    material_t     *mat;
     ushort          tics;
     ushort          random;
 } animframe_t;

@@ -1215,11 +1215,6 @@ static void radioAddShadowEdge(const linedef_t *line, byte side,
     q = R_AllocRendPoly(RP_FLAT, false, 4);
     if(!renderWireframe)
         q->flags = RPF_SHADOW;
-    memset(&q->tex, 0, sizeof(q->tex));
-    memset(&q->interTex, 0, sizeof(q->interTex));
-    q->interPos = 0;
-    q->lightListIdx = 0;
-    memset(q->vertices, 0, q->numVertices * sizeof(rendpoly_vertex_t));
 
     q->normal[0] = normal[VX];
     q->normal[1] = normal[VY];

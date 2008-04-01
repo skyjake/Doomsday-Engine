@@ -367,9 +367,55 @@ int R_GetMaterialFlags(material_t *mat)
 }
 
 /**
+ * Prepares all resources associated with the specified material including
+ * all in the same animation group.
+ */
+void R_PrecacheMaterial(material_t *mat)
+{
+    if(mat->inGroup)
+    {   // The material belongs in one or more animgroups.
+        int                 i;
+
+        for(i = 0; i < numgroups; ++i)
+        {
+            if(R_IsInAnimGroup(groups[i].id, mat->type, mat->ofTypeID))
+            {
+                int                 k;
+
+                // Precache this group.
+                for(k = 0; k < groups[i].count; ++k)
+                {
+                    animframe_t        *frame = &groups[i].frames[k];
+
+                    GL_PrepareMaterial(frame->mat, NULL);
+                }
+            }
+        }
+
+        return;
+    }
+
+    // Just this one material.
+    GL_PrepareMaterial(mat, NULL);
+}
+
+/**
+ * Retrieve the reflection definition associated with the material.
+ *
+ * @return              The associated reflection definition, else @c NULL.
+ */
+ded_reflection_t* R_GetMaterialReflection(material_t* mat)
+{
+    if(!mat)
+        return NULL;
+
+    return mat->reflection;
+}
+
+/**
  * Retrieve the decoration definition associated with the material.
  *
- * @return              The associated decoration definition, else @c NULL
+ * @return              The associated decoration definition, else @c NULL.
  */
 const ded_decor_t* R_GetMaterialDecoration(const material_t* mat)
 {
