@@ -394,35 +394,14 @@ const ded_ptcgen_t* P_GetMaterialPtcGen(const material_t* mat)
 
 int R_CheckMaterialNumForName(const char* name, materialtype_t type)
 {
-    int                 i;
+    uint                i;
 
-    switch(type)
+    for(i = 0; i < numMaterials; ++i)
     {
-    case MAT_FLAT:
-        if(name[0] == '-') // No flat marker.
-            return 0;
+        material_t         *mat = materials[i];
 
-        for(i = 0; i < numFlats; ++i)
-            if(!strncasecmp(flats[i]->name, name, 8))
-            {
-                return i;
-            }
-        break;
-
-    case MAT_TEXTURE:
-        if(name[0] == '-') // No texture marker.
-            return 0;
-
-        for(i = 0; i < numTextures; ++i)
-            if(!strncasecmp(textures[i]->name, name, 8))
-            {
-                return i;
-            }
-            break;
-
-    default:
-        Con_Error("R_CheckMaterialNumForName: Unknown material type %i.",
-                  type);
+        if(mat->type == type && !strncasecmp(mat->name, name, 8))
+            return mat->ofTypeID;
     }
 
     return -1;
@@ -430,20 +409,14 @@ int R_CheckMaterialNumForName(const char* name, materialtype_t type)
 
 const char *R_MaterialNameForNum(int ofTypeID, materialtype_t type)
 {
-    switch(type)
+    uint                i;
+
+    for(i = 0; i < numMaterials; ++i)
     {
-    case MAT_FLAT:
-        if(ofTypeID < 0 || ofTypeID > numFlats - 1)
-            return NULL;
-        return flats[ofTypeID]->name;
+        material_t         *mat = materials[i];
 
-    case MAT_TEXTURE:
-        if(ofTypeID < 0 || ofTypeID > numTextures - 1)
-            return NULL;
-        return textures[ofTypeID]->name;
-
-    default:
-        Con_Error("R_MaterialNameForNum: Unknown material type %i.", type);
+        if(mat->type == type && mat->ofTypeID == ofTypeID)
+            return mat->name;
     }
 
     return NULL;
