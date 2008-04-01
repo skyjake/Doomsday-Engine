@@ -131,7 +131,7 @@ void P_InitPicAnims(void)
         {
             picBase = R_MaterialNumForName(sc_String, type);
             groupNumber =
-                R_CreateAnimGroup(type, AGF_SMOOTH | AGF_FIRST_ONLY);
+                R_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
         }
 
         done = false;
@@ -153,7 +153,7 @@ void P_InitPicAnims(void)
                         SC_MustGetNumber();
                         if(ignore == false)
                         {
-                            R_AddToAnimGroup(groupNumber, name, sc_Number, 0);
+                            R_AddToAnimGroup(groupNumber, name, type, sc_Number, 0);
                         }
                     }
                     else if(SC_Compare(SCI_RAND))
@@ -163,7 +163,7 @@ void P_InitPicAnims(void)
                         SC_MustGetNumber();
                         if(ignore == false)
                         {
-                            R_AddToAnimGroup(groupNumber, name, base,
+                            R_AddToAnimGroup(groupNumber, name, type, base,
                                              sc_Number - base);
                         }
                     }
