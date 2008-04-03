@@ -510,7 +510,9 @@ void LG_Init(void)
             }
         }
 
-        VERBOSE2(Con_Message("  Sector %i: %i / %i\n", s, changedCount, count));
+/*if _DEBUG
+Con_Message("  Sector %i: %i / %i\n", s, changedCount, count);
+#endif*/
 
         sector->changedBlockCount = changedCount;
         sector->blockCount = changedCount + count;
