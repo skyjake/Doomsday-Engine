@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -626,8 +626,8 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
  */
 boolean Con_IsValidCommand(const char *name)
 {
-    uint        i = 0;
-    boolean     found = false;;
+    uint                i = 0;
+    boolean             found = false;
 
     // Try the console commands first.
     while(!found && i < numCCmds)
@@ -658,9 +658,9 @@ boolean Con_IsValidCommand(const char *name)
  */
 void Con_PrintCCmdUsage(ddccmd_t *ccmd, boolean showExtra)
 {
-    int         i;
-    char       *str;
-    void       *ccmd_help;
+    int                 i;
+    char*               str;
+    void*               ccmd_help;
 
     if(!ccmd || (ccmd->minArgs == -1 && ccmd->maxArgs == -1))
         return;
