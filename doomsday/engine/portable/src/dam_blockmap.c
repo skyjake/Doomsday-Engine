@@ -100,31 +100,32 @@ static void addBlockLine(linelist_t **lists, uint *count, uint *done,
 /**
  * Construct a blockmap from the level data.
  *
- * This finds the intersection of each linedef with the column and
- * row lines at the left and bottom of each blockmap cell. It then
+ * This finds the intersection of each linedef with the column and row
+ * lines at the left and bottom of each blockmap cell. It then
  * adds the line to all block lists touching the intersection.
  */
-boolean DAM_BuildBlockMap(gamemap_t* map)
+boolean DAM_BuildBlockMap(gamemap_t* map, vertex_t*** vertexes,
+                          uint* numVertexes)
 {
-    uint        startTime = Sys_GetRealTime();
+    uint                startTime = Sys_GetRealTime();
 
-    uint        i;
-    int         j;
-    uint        bMapWidth, bMapHeight;  // blockmap dimensions
-    vec2_t      blockSize;            // size of the blocks
-    uint       *blockcount = NULL;      // array of counters of line lists
-    uint       *blockdone = NULL;       // array keeping track of blocks/line
-    uint        numBlocks;              // number of cells = nrows*ncols
+    uint                i;
+    int                 j;
+    uint                bMapWidth, bMapHeight; // blockmap dimensions
+    vec2_t              blockSize; // size of the blocks
+    uint*               blockcount = NULL; // array of counters of line lists
+    uint*               blockdone = NULL; // array keeping track of blocks/line
+    uint                numBlocks; // number of cells = nrows*ncols
 
-    linelist_t **blocklists = NULL;     // array of pointers to lists of lines
-    vec2_t      bounds[2], point, dims;
-    vertex_t   *vtx;
-    blockmap_t *blockmap;
+    linelist_t**        blocklists = NULL; // array of pointers to lists of lines
+    vec2_t              bounds[2], point, dims;
+    vertex_t*           vtx;
+    blockmap_t*         blockmap;
 
-    // scan for map limits, which the blockmap must enclose
-    for(i = 0; i < map->numVertexes; ++i)
+    // Scan for map limits, which the blockmap must enclose.
+    for(i = 0; i < *numVertexes; ++i)
     {
-        vtx = &map->vertexes[i];
+        vtx = (*vertexes)[i];
         V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
         if(!i)
             V2_InitBox(bounds, point);
@@ -161,25 +162,25 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
     // Create the array of pointers on NBlocks to blocklists, create an array
     // of linelist counts on NBlocks, then finally, make an array in which we
     // can mark blocks done per line.
-    blocklists = M_Calloc(numBlocks * sizeof(linelist_t *));
+    blocklists = M_Calloc(numBlocks * sizeof(linelist_t*));
     blockcount = M_Calloc(numBlocks * sizeof(uint));
     blockdone  = M_Malloc(numBlocks * sizeof(uint));
 
     // For each linedef in the wad, determine all blockmap blocks it touches
     // and add the linedef number to the blocklists for those blocks.
     {
-    int         xorg = (int) bounds[0][VX];
-    int         yorg = (int) bounds[0][VY];
-    int         v1[2], v2[2];
-    int         dx, dy;
-    int         vert, horiz;
-    boolean     slopePos, slopeNeg;
-    int         bx, by;
-    int         minx, maxx, miny, maxy;
+    int                 xorg = (int) bounds[0][VX];
+    int                 yorg = (int) bounds[0][VY];
+    int                 v1[2], v2[2];
+    int                 dx, dy;
+    int                 vert, horiz;
+    boolean             slopePos, slopeNeg;
+    int                 bx, by;
+    int                 minx, maxx, miny, maxy;
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t *line = &map->lineDefs[i];
+        linedef_t*      line = &map->lineDefs[i];
 
         if(line->inFlags & LF_POLYOBJ)
             continue; // Polyobj lines don't get into the blockmap.
@@ -226,10 +227,10 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
                 // intersection of Linedef with x=xorg+(j<<BLKSHIFT)
                 // (y-v1[VY])*dx = dy*(x-v1[VX])
                 // y = dy*(x-v1[VX])+v1[VY]*dx;
-                int     x = xorg + (j << BLKSHIFT);       // (x,y) is intersection
-                int     y = (dy * (x - v1[VX])) / dx + v1[VY];
-                int     yb = (y - yorg) >> BLKSHIFT;      // block row number
-                int     yp = (y - yorg) & BLKMASK;        // y position within block
+                int             x = xorg + (j << BLKSHIFT); // (x,y) is intersection
+                int             y = (dy * (x - v1[VX])) / dx + v1[VY];
+                int             yb = (y - yorg) >> BLKSHIFT; // block row number
+                int             yp = (y - yorg) & BLKMASK; // y position within block
 
                 // Already outside the blockmap?
                 if(yb < 0 || yb > (signed) (bMapHeight) + 1)
@@ -298,10 +299,10 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
                 // intersection of Linedef with y=yorg+(j<<BLKSHIFT)
                 // (x,y) on Linedef i satisfies: (y-v1[VY])*dx = dy*(x-v1[VX])
                 // x = dx*(y-v1[VY])/dy+v1[VX];
-                int     y = yorg + (j << BLKSHIFT);       // (x,y) is intersection
-                int     x = (dx * (y - v1[VY])) / dy + v1[VX];
-                int     xb = (x - xorg) >> BLKSHIFT;      // block column number
-                int     xp = (x - xorg) & BLKMASK;        // x position within block
+                int             y = yorg + (j << BLKSHIFT); // (x,y) is intersection
+                int             x = (dx * (y - v1[VY])) / dy + v1[VX];
+                int             xb = (x - xorg) >> BLKSHIFT; // block column number
+                int             xp = (x - xorg) & BLKMASK; // x position within block
 
                 // Outside the blockmap?
                 if(xb < 0 || xb > (signed) (bMapWidth) + 1)
@@ -362,20 +363,20 @@ boolean DAM_BuildBlockMap(gamemap_t* map)
 
     // Create the actual links by 'hardening' the lists into arrays.
     {
-    uint        x, y;
+    uint            x, y;
     for(y = 0; y < bMapHeight; ++y)
         for(x = 0; x < bMapWidth; ++x)
         {
-            uint        count = blockcount[y * bMapWidth + x];
-            linelist_t *bl = blocklists[y * bMapWidth + x];
+            uint            count = blockcount[y * bMapWidth + x];
+            linelist_t*     bl = blocklists[y * bMapWidth + x];
 
             if(count > 0)
             {
-                linedef_t    **lines, **ptr;
+                linedef_t**     lines, **ptr;
 
                 // A NULL-terminated array of pointers to lines.
                 lines = Z_Malloc((count + 1) * sizeof(linedef_t *),
-                                PU_LEVELSTATIC, NULL);
+                                 PU_LEVELSTATIC, NULL);
 
                 // Copy pointers to the array, delete the nodes.
                 ptr = lines;

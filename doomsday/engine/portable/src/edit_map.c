@@ -1524,6 +1524,11 @@ boolean MPE_End(void)
     buildVertexOwnerRings(gamemap, &map->vertexes, &map->numVertexes);
 
     /**
+     * Build a blockmap for this map.
+     */
+    DAM_BuildBlockMap(gamemap, &map->vertexes, &map->numVertexes);
+
+    /**
      * Build a BSP for this map.
      */
     builtOK = BSP_Build(gamemap, &map->vertexes, &map->numVertexes);
@@ -1552,9 +1557,6 @@ boolean MPE_End(void)
     buildSectorSSecLists(gamemap);
     buildSectorLineLists(gamemap);
     finishLineDefs(gamemap);
-
-    DAM_BuildBlockMap(gamemap);
-
     finishSectors(gamemap);
     updateMapBounds(gamemap);
     S_DetermineSubSecsAffectingSectorReverb(gamemap);

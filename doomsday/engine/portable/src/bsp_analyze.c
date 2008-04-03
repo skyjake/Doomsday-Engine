@@ -38,6 +38,7 @@
 #include "de_base.h"
 #include "de_bsp.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -136,12 +137,9 @@ static __inline int lineVertexLowest(const linedef_t *l)
 
 static int C_DECL lineStartCompare(const void *p1, const void *p2)
 {
-    const linedef_t    *a = *((const void **) p1);
-    const linedef_t    *b = *((const void **) p2);
+    const linedef_t    *a = (const linedef_t*) p1;
+    const linedef_t    *b = (const linedef_t*) p2;
     vertex_t           *c, *d;
-
-    if(a == b)
-        return 0;
 
     // Determine left-most vertex of each line.
     c = (lineVertexLowest(a)? a->v[1] : a->v[0]);
@@ -155,12 +153,9 @@ static int C_DECL lineStartCompare(const void *p1, const void *p2)
 
 static int C_DECL lineEndCompare(const void *p1, const void *p2)
 {
-    const linedef_t    *a = *((const void **) p1);
-    const linedef_t    *b = *((const void **) p2);
+    const linedef_t    *a = (const linedef_t*) p1;
+    const linedef_t    *b = (const linedef_t*) p2;
     vertex_t           *c, *d;
-
-    if(a == b)
-        return 0;
 
     // Determine right-most vertex of each line.
     c = (lineVertexLowest(a)? a->v[0] : a->v[1]);
@@ -172,48 +167,65 @@ static int C_DECL lineEndCompare(const void *p1, const void *p2)
     return (int) c->buildData.pos[VY] - (int) d->buildData.pos[VY];
 }
 
-/**
- * \note Algorithm:
- * Sort all lines by left-most vertex.
- * Overlapping lines will then be near each other in this set but note this
- * does not detect partially overlapping lines!
- */
-void BSP_DetectOverlappingLines(gamemap_t *map)
+size_t numOverlaps;
+
+boolean testOverlaps(linedef_t* b, void* data)
 {
-    size_t              i, j, count = 0;
-    linedef_t         **hits;
+    linedef_t*          a = (linedef_t*) data;
 
-    hits = M_Malloc(map->numLineDefs * sizeof(*hits));
-
-    // Sort array of ptrs.
-    for(i = 0; i < map->numLineDefs; ++i)
-        hits[i] = &map->lineDefs[i];
-    qsort(hits, map->numLineDefs, sizeof(*hits), lineStartCompare);
-
-    for(i = 0; i < map->numLineDefs - 1; ++i)
+    if(a != b)
     {
-        for(j = i + 1; j < map->numLineDefs; ++j)
-        {
-            if(lineStartCompare(hits + i, hits + j) != 0)
-                break;
-
-            if(lineEndCompare(hits + i, hits + j) == 0)
+        if(lineStartCompare(a, b) == 0)
+            if(lineEndCompare(a, b) == 0)
             {   // Found an overlap!
-                linedef_t             *a = hits[i];
-                linedef_t             *b = hits[j];
-
                 b->buildData.overlap =
                     (a->buildData.overlap ? a->buildData.overlap : a);
-                count++;
+                numOverlaps++;
             }
-        }
     }
 
-    M_Free(hits);
+    return true; // Continue iteration.
+}
 
-    if(count > 0)
+typedef struct {
+    blockmap_t*         blockMap;
+    uint                block[2];
+} findoverlaps_params_t;
+
+boolean findOverlapsForLinedef(linedef_t* l, void* data)
+{
+    findoverlaps_params_t* params = (findoverlaps_params_t*) data;
+
+    P_BlockmapLinesIterator(params->blockMap, params->block, testOverlaps, l);
+    return true; // Continue iteration.
+}
+
+/**
+ * \note Does not detect partially overlapping lines!
+ */
+void BSP_DetectOverlappingLines(gamemap_t* map)
+{
+    uint                x, y, bmapDimensions[2];
+    findoverlaps_params_t params;
+
+    params.blockMap = map->blockMap;
+    numOverlaps = 0;
+
+    P_GetBlockmapDimensions(map->blockMap, bmapDimensions);
+
+    for(y = 0; y < bmapDimensions[VY]; ++y)
+        for(x = 0; x < bmapDimensions[VX]; ++x)
+        {
+            params.block[VX] = x;
+            params.block[VY] = y;
+
+            P_BlockmapLinesIterator(map->blockMap, params.block,
+                                    findOverlapsForLinedef, &params);
+        }
+
+    if(numOverlaps > 0)
         VERBOSE(Con_Message("Detected %lu overlapped linedefs\n",
-                            (unsigned long) count));
+                            (unsigned long) numOverlaps));
 }
 
 /**

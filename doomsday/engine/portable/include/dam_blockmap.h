@@ -37,6 +37,6 @@
 
 #include "p_mapdata.h"
 
-boolean     DAM_BuildBlockMap(gamemap_t *map);
-
+boolean     DAM_BuildBlockMap(gamemap_t* map, vertex_t*** vertexes,
+                              uint* numVertexes);
 #endif
