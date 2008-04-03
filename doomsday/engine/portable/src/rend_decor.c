@@ -81,7 +81,8 @@ float decorFadeAngle = .1f;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static uint numDecorLightSources;
-static decorsource_t *sourceFirst, *sourceLast, *sourceCursor;
+static decorsource_t *sourceFirst = NULL, *sourceLast = NULL;
+static decorsource_t *sourceCursor = NULL;
 
 // CODE --------------------------------------------------------------------
 
