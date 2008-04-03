@@ -558,23 +558,13 @@ void P_MobjUnlink(mobj_t *mo)
  */
 boolean PIT_LinkToLines(linedef_t *ld, void *parm)
 {
-    int         pX, pY;
-    linelinker_data_t *data = parm;
-    vec2_t      box[2], point;
-    nodeindex_t nix;
+    linelinker_data_t*  data = parm;
+    nodeindex_t         nix;
 
-    // Setup the bounding box for the line.
-    pX = (ld->L_v1pos[VX] < ld->L_v2pos[VX]);
-    pY = (ld->L_v1pos[VY] < ld->L_v2pos[VY]);
-    V2_Set(point, ld->L_vpos(pX^1)[VX], ld->L_vpos(pY^1)[VY]);
-    V2_InitBox(box, point);
-    V2_Set(point, ld->L_vpos(pX)[VX], ld->L_vpos(pY)[VY]);
-    V2_AddToBox(box, point);
-
-    if(data->box[1][VX] <= box[0][VX] ||
-       data->box[0][VX] >= box[1][VX] ||
-       data->box[1][VY] <= box[0][VY] ||
-       data->box[0][VY] >= box[1][VY])
+    if(data->box[1][VX] <= ld->bBox[BOXLEFT] ||
+       data->box[0][VX] >= ld->bBox[BOXRIGHT] ||
+       data->box[1][VY] <= ld->bBox[BOXBOTTOM] ||
+       data->box[0][VY] >= ld->bBox[BOXTOP])
         // Bounding boxes do not overlap.
         return true;
 

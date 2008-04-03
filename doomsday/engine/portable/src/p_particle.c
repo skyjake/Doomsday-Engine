@@ -629,21 +629,11 @@ static void P_ManyNewParticles(ptcgen_t *gen)
 
 boolean PIT_CheckLinePtc(linedef_t *ld, void *data)
 {
-    int         pX, pY;
-    vec2_t      box[2], point;
-    fixed_t     ceil, floor;
-    sector_t   *front, *back;
+    fixed_t             ceil, floor;
+    sector_t           *front, *back;
 
-    // Setup the bounding box for the line.
-    pX = (ld->L_v1pos[VX] < ld->L_v2pos[VX]);
-    pY = (ld->L_v1pos[VY] < ld->L_v2pos[VY]);
-    V2_Set(point, ld->L_vpos(pX^1)[VX], ld->L_vpos(pY^1)[VY]);
-    V2_InitBox(box, point);
-    V2_Set(point, ld->L_vpos(pX)[VX], ld->L_vpos(pY)[VY]);
-    V2_AddToBox(box, point);
-
-    if(mbox[1][VX] <= box[0][VX] || mbox[0][VX] >= box[1][VX] ||
-       mbox[1][VY] <= box[0][VY] || mbox[0][VY] >= box[1][VY])
+    if(mbox[1][VX] <= ld->bBox[BOXLEFT] || mbox[0][VX] >= ld->bBox[BOXRIGHT] ||
+       mbox[1][VY] <= ld->bBox[BOXBOTTOM] || mbox[0][VY] >= ld->bBox[BOXTOP])
     {
         return true; // Bounding box misses the line completely.
     }

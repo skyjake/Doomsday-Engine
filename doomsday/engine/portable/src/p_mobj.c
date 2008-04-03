@@ -212,22 +212,15 @@ void P_MobjSetState(mobj_t *mobj, int statenum)
 /**
  * Adjusts tmpFloorZ and tmpCeilingZ as lines are contacted.
  */
-boolean PIT_LineCollide(linedef_t *ld, void *parm)
+boolean PIT_LineCollide(linedef_t* ld, void* parm)
 {
-    int                 pX, pY;
-    checkpos_data_t    *tm = parm;
-    vec2_t              box[2], point;
+    checkpos_data_t*    tm = parm;
 
-    // Setup the bounding box for the line.
-    pX = (ld->L_v1pos[VX] < ld->L_v2pos[VX]);
-    pY = (ld->L_v1pos[VY] < ld->L_v2pos[VY]);
-    V2_Set(point, ld->L_vpos(pX^1)[VX], ld->L_vpos(pY^1)[VY]);
-    V2_InitBox(box, point);
-    V2_Set(point, ld->L_vpos(pX)[VX], ld->L_vpos(pY)[VY]);
-    V2_AddToBox(box, point);
-
-    if(tm->box[1][VX] <= box[0][VX] || tm->box[0][VX] >= box[1][VX] ||
-       tm->box[1][VY] <= box[0][VY] || tm->box[0][VY] >= box[1][VY])
+    if(tm->box[1][VX] <= ld->bBox[BOXLEFT] ||
+       tm->box[0][VX] >= ld->bBox[BOXRIGHT] ||
+       tm->box[1][VY] <= ld->bBox[BOXBOTTOM] ||
+       tm->box[0][VY] >= ld->bBox[BOXTOP])
+       // Bounding boxes do not overlap.
         return true;
 
     if(P_BoxOnLineSide2(tm->box[0][VX], tm->box[1][VX],
