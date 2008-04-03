@@ -42,17 +42,17 @@
 // MACROS ------------------------------------------------------------------
 
 // Point + custom textures.
-#define NUM_TEX_NAMES (1 + MAX_PTC_TEXTURES)
+#define NUM_TEX_NAMES           (1 + MAX_PTC_TEXTURES)
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct pglink_s {
-    struct pglink_s *next;
-    ptcgen_t       *gen;
+    struct pglink_s* next;
+    ptcgen_t*       gen;
 } pglink_t;
 
 typedef struct {
-    unsigned char   gen;            // Index of the generator (activePtcGens)
+    unsigned char   gen; // Index of the generator (activePtcGens)
     short           index;
     float           distance;
 } porder_t;
@@ -66,18 +66,17 @@ typedef struct {
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern float vang, vpitch;
-
-extern ptcgen_t *activePtcGens[MAX_ACTIVE_PTCGENS];
+extern ptcgen_t* activePtcGens[MAX_ACTIVE_PTCGENS];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 DGLuint ptctexname[NUM_TEX_NAMES];
-int     particleNearLimit = 0;
-float   particleDiffuse = 4;
+int particleNearLimit = 0;
+float particleDiffuse = 4;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static pglink_t **pgLinks;      // Array of pointers to pgLinks in pgStore.
+static pglink_t **pgLinks; // Array of pointers to pgLinks in pgStore.
 static pglink_t *pgStore;
 static unsigned int pgCursor, pgMax;
 static uint orderSize;
@@ -102,12 +101,13 @@ void Rend_ParticleRegister(void)
 
 static float PG_PointDist(fixed_t c[3])
 {
-    float       dist =
+    float               dist =
         ((viewY - FIX2FLT(c[VY])) * -viewSin) -
                     ((viewX - FIX2FLT(c[VX])) * viewCos);
 
     if(dist < 0)
-        return -dist;           // Always return positive.
+        return -dist; // Always return positive.
+
     return dist;
 }
 
@@ -116,11 +116,11 @@ static float PG_PointDist(fixed_t c[3])
  */
 void PG_InitTextures(void)
 {
-    int     i;
-    boolean reported = false;
+    int                 i;
+    boolean             reported = false;
 
     if(ptctexname[0])
-        return;                 // Already been here.
+        return; // Already been here.
 
     // Clear the texture names array.
     memset(ptctexname, 0, sizeof(ptctexname));
@@ -139,8 +139,8 @@ void PG_InitTextures(void)
     // The first is "Particle00". (based on Leesz' textured particles mod)
     for(i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
-        char    filename[80];
-        image_t image;
+        char                filename[80];
+        image_t             image;
 
         // Try to load the texture.
         sprintf(filename, "Particle%02i", i);
@@ -203,36 +203,32 @@ void PG_InitForLevel(void)
 /**
  * Returns an unused link from the pgStore.
  */
-static pglink_t *PG_GetLink(void)
+static pglink_t* PG_GetLink(void)
 {
-    if(pgCursor == pgMax)
-    {
-        if(verbose)
-            Con_Message("PG_GetLink: Out of PGen store.\n");
-        return NULL;
-    }
-    return &pgStore[pgCursor++];
+    if(pgCursor != pgMax)
+        return &pgStore[pgCursor++];
+
+    VERBOSE(Con_Message("PG_GetLink: Out of PGen store.\n"));
+    return NULL;
 }
 
-static void PG_LinkPtcGen(ptcgen_t *gen, sector_t *sector)
+static void PG_LinkPtcGen(ptcgen_t* gen, uint secIDX)
 {
-    int     si = GET_SECTOR_IDX(sector);
-    pglink_t *link;
-    pglink_t *it;
+    pglink_t*           link, *it;
 
     // Must check that it isn't already there...
-    for(it = pgLinks[si]; it; it = it->next)
+    for(it = pgLinks[secIDX]; it; it = it->next)
         if(it->gen == gen)
-            return;             // No, no...
+            return; // No, no...
 
     // We need a new PG link.
     link = PG_GetLink();
     if(!link)
-        return;                 // Out of links!
+        return; // Out of links!
 
     link->gen = gen;
-    link->next = pgLinks[si];
-    pgLinks[si] = link;
+    link->next = pgLinks[secIDX];
+    pgLinks[secIDX] = link;
 }
 
 /**
@@ -240,9 +236,9 @@ static void PG_LinkPtcGen(ptcgen_t *gen, sector_t *sector)
  */
 void PG_InitForNewFrame(void)
 {
-    unsigned int i;
-    int         k;
-    ptcgen_t   *gen;
+    uint                i;
+    int                 k;
+    ptcgen_t*           gen;
 
     // Clear the PG links.
     memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
@@ -256,7 +252,7 @@ void PG_InitForNewFrame(void)
             // \fixme Overkill?
             for(k = 0; k < gen->count; ++k)
                 if(gen->ptcs[k].stage >= 0)
-                    PG_LinkPtcGen(gen, gen->ptcs[k].sector);
+                    PG_LinkPtcGen(gen, GET_SECTOR_IDX(gen->ptcs[k].sector));
         }
 }
 
@@ -266,7 +262,7 @@ void PG_InitForNewFrame(void)
  */
 void PG_SectorIsVisible(sector_t *sector)
 {
-    pglink_t *it = pgLinks[GET_SECTOR_IDX(sector)];
+    pglink_t*           it = pgLinks[GET_SECTOR_IDX(sector)];
 
     for(; it; it = it->next)
         it->gen->flags |= PGF_VISIBLE;
@@ -281,6 +277,7 @@ static int C_DECL PG_Sorter(const void *pt1, const void *pt2)
         return -1;
     else if(((porder_t *) pt1)->distance < ((porder_t *) pt2)->distance)
         return 1;
+
     // Highly unlikely (but possible)...
     return 0;
 }
@@ -320,6 +317,7 @@ static int PG_ListVisibleParticles(void)
             if(gen->ptcs[p].stage >= 0)
                 numParts++;
     }
+
     if(!numParts)
         return false;
 
@@ -339,9 +337,10 @@ static int PG_ListVisibleParticles(void)
         {
             if(pt->stage < 0)
                 continue;
+
             // Is the particle's sector visible?
             if(!(pt->sector->frameFlags & SIF_VISIBLE))
-                continue;       // No; this particle can't be seen.
+                continue; // No; this particle can't be seen.
 
             order[m].gen = i;
             order[m].index = p;
@@ -349,10 +348,11 @@ static int PG_ListVisibleParticles(void)
             // Don't allow zero distance.
             if(order[m].distance == 0)
                 order[m].distance = 1;
+
             if(def->maxDist != 0 && order[m].distance > def->maxDist)
-                continue;       // Too far.
+                continue; // Too far.
             if(order[m].distance < (float) particleNearLimit)
-                continue;       // Too near.
+                continue; // Too near.
 
             stagetype = gen->stages[pt->stage].type;
             if(stagetype == PTC_POINT)
@@ -381,9 +381,9 @@ static int PG_ListVisibleParticles(void)
             m++;
         }
     }
+
     if(!m)
-    {
-        // No particles left (all too far?).
+    {   // No particles left (all too far?).
         return false;
     }
 
@@ -395,13 +395,13 @@ static int PG_ListVisibleParticles(void)
     return true;
 }
 
-void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
-                                 ptcstage_t *st, ded_ptcstage_t *dst,
+void setupModelParamsForParticle(modelparams_t* params, particle_t* pt,
+                                 ptcstage_t* st, ded_ptcstage_t* dst,
                                  float* center, float dist, float size,
                                  float mark, float alpha)
 {
     int                 frame;
-    subsector_t        *ssec;
+    subsector_t*        ssec;
 
     // Render the particle as a model.
     params->center[VX] = center[VX];
@@ -470,10 +470,6 @@ void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
             float               lightLevel = pt->sector->lightLevel;
             const float*        secColor = R_GetSectorLightColor(pt->sector);
 
-            params->ambientColor[CR] = secColor[CR];
-            params->ambientColor[CG] = secColor[CG];
-            params->ambientColor[CB] = secColor[CB];
-
             // Apply distance attenuation.
             lightLevel = R_DistAttenuateLightLevel(params->distance, lightLevel);
 
@@ -502,20 +498,18 @@ void setupModelParamsForParticle(modelparams_t *params, particle_t *pt,
 
 static void PG_RenderParticles(int rtype, boolean withBlend)
 {
-    uint            i;
-    int             c;
-    int             usingTexture = -1;
-    float           leftoff[3], rightoff[3], mark, invMark;
-    float           size, color[4], center[3];
-    float           dist, maxdist;
-    float           projected[2];
-    ptcgen_t       *gen;
-    ptcstage_t     *st;
-    particle_t     *pt;
-    ded_ptcstage_t *dst, *nextDst;
-    glprimtype_t    primType = DGL_QUADS;
-    blendmode_t     mode = BM_NORMAL, newMode;
-    boolean         flatOnPlane, flatOnWall, nearPlane, nearWall;
+    uint                i;
+    int                 c, usingTexture = -1;
+    float               leftoff[3], rightoff[3], mark, invMark;
+    float               size, color[4], center[3];
+    float               dist, maxdist, projected[2];
+    ptcgen_t*           gen;
+    ptcstage_t*         st;
+    particle_t*         pt;
+    ded_ptcstage_t*     dst, *nextDst;
+    glprimtype_t        primType = DGL_QUADS;
+    blendmode_t         mode = BM_NORMAL, newMode;
+    boolean             flatOnPlane, flatOnWall, nearPlane, nearWall;
 
     // viewSideVec points to the left.
     for(c = 0; c < 3; ++c)
@@ -545,7 +539,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
     }
     else
     {
-        DGL_Disable(DGL_TEXTURING);  // Lines don't use textures.
+        DGL_Disable(DGL_TEXTURING); // Lines don't use textures.
         DGL_Begin(primType = DGL_LINES);
     }
 
@@ -568,6 +562,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         {
             continue;
         }
+
         if(!(gen->flags & PGF_ADD_BLEND) == withBlend)
             continue;
 
@@ -660,7 +655,8 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         {
             center[VX] += frameTimePos * FIX2FLT(pt->mov[VX]);
             center[VZ] += frameTimePos * FIX2FLT(pt->mov[VY]);
-            if(!nearPlane) center[VY] += frameTimePos * FIX2FLT(pt->mov[VZ]);
+            if(!nearPlane)
+                center[VY] += frameTimePos * FIX2FLT(pt->mov[VZ]);
         }
 
         // Model particles are rendered using the normal model rendering
@@ -696,9 +692,8 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             // Flat against a wall, then?
             else if(flatOnWall)
             {
-                float       line[2];
-                float       pos[3];
-                vertex_t   *vtx;
+                float               line[2], pos[3];
+                vertex_t*           vtx;
 
                 line[0] = pt->contact->dX;
                 line[1] = pt->contact->dY;
@@ -714,50 +709,51 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 pos[VX] = FIX2FLT(pt->pos[VX]);
                 pos[VY] = FIX2FLT(pt->pos[VY]);
                 pos[VZ] = FIX2FLT(pt->pos[VZ]);
-                M_ProjectPointOnLine(pos, &vtx->V_pos[VX], line, 1, projected);
+                M_ProjectPointOnLine(pos, &vtx->V_pos[VX], line, 1,
+                                     projected);
 
                 P_LineUnitVector(pt->contact, line);
 
                 DGL_TexCoord2f(0, 0);
                 DGL_Vertex3f(projected[VX] - size * line[VX], center[VY] - size,
-                            projected[VY] - size * line[VY]);
+                             projected[VY] - size * line[VY]);
 
                 DGL_TexCoord2f(1, 0);
                 DGL_Vertex3f(projected[VX] - size * line[VX], center[VY] + size,
-                            projected[VY] - size * line[VY]);
+                             projected[VY] - size * line[VY]);
 
                 DGL_TexCoord2f(1, 1);
                 DGL_Vertex3f(projected[VX] + size * line[VX], center[VY] + size,
-                            projected[VY] + size * line[VY]);
+                             projected[VY] + size * line[VY]);
 
                 DGL_TexCoord2f(0, 1);
                 DGL_Vertex3f(projected[VX] + size * line[VX], center[VY] - size,
-                            projected[VY] + size * line[VY]);
+                             projected[VY] + size * line[VY]);
             }
             else
             {
                 DGL_TexCoord2f(0, 0);
                 DGL_Vertex3f(center[VX] + size * leftoff[VX],
-                            center[VY] + size * leftoff[VY] / 1.2f,
-                            center[VZ] + size * leftoff[VZ]);
+                             center[VY] + size * leftoff[VY] / 1.2f,
+                             center[VZ] + size * leftoff[VZ]);
 
                 DGL_TexCoord2f(1, 0);
                 DGL_Vertex3f(center[VX] + size * rightoff[VX],
-                            center[VY] + size * rightoff[VY] / 1.2f,
-                            center[VZ] + size * rightoff[VZ]);
+                             center[VY] + size * rightoff[VY] / 1.2f,
+                             center[VZ] + size * rightoff[VZ]);
 
                 DGL_TexCoord2f(1, 1);
                 DGL_Vertex3f(center[VX] - size * leftoff[VX],
-                            center[VY] - size * leftoff[VY] / 1.2f,
-                            center[VZ] - size * leftoff[VZ]);
+                             center[VY] - size * leftoff[VY] / 1.2f,
+                             center[VZ] - size * leftoff[VZ]);
 
                 DGL_TexCoord2f(0, 1);
                 DGL_Vertex3f(center[VX] - size * rightoff[VX],
-                            center[VY] - size * rightoff[VY] / 1.2f,
-                            center[VZ] - size * rightoff[VZ]);
+                             center[VY] - size * rightoff[VY] / 1.2f,
+                             center[VZ] - size * rightoff[VZ]);
             }
         }
-        else                    // It's a line.
+        else // It's a line.
         {
             DGL_Vertex3f(center[VX], center[VY], center[VZ]);
             DGL_Vertex3f(center[VX] - FIX2FLT(pt->mov[VX]),
@@ -791,7 +787,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
 
 static void PG_RenderPass(boolean useBlending)
 {
-    int     i;
+    int                 i;
 
     // Set blending mode.
     if(useBlending)
@@ -826,7 +822,7 @@ void PG_Render(void)
     if(!useParticles)
         return;
     if(!PG_ListVisibleParticles())
-        return;                 // No visible particles at all?
+        return; // No visible particles at all?
 
     // Render all the visible particles.
     if(hasNoBlend)
