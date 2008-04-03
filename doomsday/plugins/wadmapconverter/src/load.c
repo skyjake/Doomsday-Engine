@@ -118,6 +118,8 @@ static uint registerMaterial(const char *name, boolean isFlat)
     memcpy(m->name, name, 8);
     m->name[8] = '\0';
     m->isFlat = isFlat;
+    m->ddNum =
+        R_CheckMaterialNumForName(m->name, (isFlat? MAT_FLAT : MAT_TEXTURE));
 
     // Add it to the list of known materials.
     map->materials = realloc(map->materials, sizeof(m) * ++map->numMaterials);
@@ -1052,11 +1054,11 @@ boolean TransferMap(void)
             MPE_SectorCreate((float) sec->lightLevel / 255.0f, 1, 1, 1);
 
         MPE_PlaneCreate(sectorIDX, sec->floorHeight,
-                        map->materials[sec->floorMaterial]->name,
+                        map->materials[sec->floorMaterial]->ddNum,
                         (map->materials[sec->floorMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
                         0, 0, 1, 1, 1, 1, 0, 0, 1);
         MPE_PlaneCreate(sectorIDX, sec->ceilHeight,
-                        map->materials[sec->ceilMaterial]->name,
+                        map->materials[sec->ceilMaterial]->ddNum,
                         (map->materials[sec->ceilMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
                         0, 0, 1, 1, 1, 1, 0, 0, -1);
 
@@ -1075,13 +1077,13 @@ boolean TransferMap(void)
         {
             frontIdx =
                 MPE_SidedefCreate(front->sector, 0,
-                                  map->materials[front->topMaterial]->name,
+                                  map->materials[front->topMaterial]->ddNum,
                                   (map->materials[front->topMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
                                   front->offset[VX], front->offset[VY], 1, 1, 1,
-                                  map->materials[front->middleMaterial]->name,
+                                  map->materials[front->middleMaterial]->ddNum,
                                   (map->materials[front->middleMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
                                   front->offset[VX], front->offset[VY], 1, 1, 1, 1,
-                                  map->materials[front->bottomMaterial]->name,
+                                  map->materials[front->bottomMaterial]->ddNum,
                                   (map->materials[front->bottomMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
                                   front->offset[VX], front->offset[VY], 1, 1, 1);
         }
@@ -1091,13 +1093,13 @@ boolean TransferMap(void)
         {
             backIdx =
                 MPE_SidedefCreate(back->sector, 0,
-                                  map->materials[back->topMaterial]->name,
+                                  map->materials[back->topMaterial]->ddNum,
                                   (map->materials[back->topMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
                                   back->offset[VX], back->offset[VY], 1, 1, 1,
-                                  map->materials[back->middleMaterial]->name,
+                                  map->materials[back->middleMaterial]->ddNum,
                                   (map->materials[back->middleMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
                                   back->offset[VX], back->offset[VY], 1, 1, 1, 1,
-                                  map->materials[back->bottomMaterial]->name,
+                                  map->materials[back->bottomMaterial]->ddNum,
                                   (map->materials[back->bottomMaterial]->isFlat? MAT_FLAT : MAT_TEXTURE),
                                   back->offset[VX], back->offset[VY], 1, 1, 1);
         }

@@ -56,16 +56,16 @@ boolean         MPE_End(void);
 uint            MPE_VertexCreate(float x, float y);
 boolean         MPE_VertexCreatev(size_t num, float *values, uint *indices);
 uint            MPE_SidedefCreate(uint sector, short flags,
-                                  const char *topMaterial,
+                                  int topMaterial,
                                   materialtype_t topMaterialType,
                                   float topOffsetX, float topOffsetY, float topRed,
                                   float topGreen, float topBlue,
-                                  const char *middleMaterial,
+                                  int middleMaterial,
                                   materialtype_t middleMaterialType,
                                   float middleOffsetX, float middleOffsetY,
                                   float middleRed, float middleGreen,
                                   float middleBlue, float middleAlpha,
-                                  const char *bottomMaterial,
+                                  int bottomMaterial,
                                   materialtype_t bottomMaterialType,
                                   float bottomOffsetX, float bottomOffsetY,
                                   float bottomRed, float bottomGreen,
@@ -74,7 +74,7 @@ uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSid
                                   int flags);
 uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
 uint            MPE_PlaneCreate(uint sector, float height,
-                                const char *material, materialtype_t materialType,
+                                int material, materialtype_t materialType,
                                 float matOffsetX, float matOffsetY,
                                 float r, float g, float b, float a,
                                 float normalX, float normalY, float normalZ);
