@@ -133,10 +133,10 @@ boolean P_ToBlockmapBlockIdx(blockmap_t *blockmap, uint dest[2],
     return false; // hmm...
 }
 
-void P_PointToBlock(float x, float y, uint *bx, uint *by)
+void P_PointToBlock(float x, float y, uint* bx, uint* by)
 {
-    gamemap_t  *map = P_GetCurrentMap();
-    vec2_t      min;
+    gamemap_t*      map = P_GetCurrentMap();
+    vec2_t          min;
 
     P_GetBlockmapBounds(map->blockMap, min, NULL);
 
@@ -144,7 +144,7 @@ void P_PointToBlock(float x, float y, uint *bx, uint *by)
     *by = FLT2FIX(y - min[VY]) >> MAPBLOCKSHIFT;
 }
 
-static __inline int xToSSecBlockX(bmap_t *bmap, float x)
+static __inline int xToSSecBlockX(bmap_t* bmap, float x)
 {
     if(x >= bmap->bBox[0][VX] && x < bmap->bBox[1][VX])
         return (x - bmap->bBox[0][VX]) / bmap->blockSize[VX];
@@ -152,7 +152,7 @@ static __inline int xToSSecBlockX(bmap_t *bmap, float x)
     return -1;
 }
 
-static __inline int yToSSecBlockY(bmap_t *bmap, float y)
+static __inline int yToSSecBlockY(bmap_t* bmap, float y)
 {
     if(y >= bmap->bBox[0][VY] && y < bmap->bBox[1][VY])
         return (y - bmap->bBox[0][VY]) / bmap->blockSize[VY];
@@ -160,15 +160,15 @@ static __inline int yToSSecBlockY(bmap_t *bmap, float y)
     return -1;
 }
 
-static bmap_t *allocBmap(void)
+static bmap_t* allocBmap(void)
 {
     return Z_Calloc(sizeof(bmap_t), PU_LEVELSTATIC, 0);
 }
 
-blockmap_t *P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
+blockmap_t* P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
                              uint width, uint height)
 {
-    bmap_t     *bmap = allocBmap();
+    bmap_t*         bmap = allocBmap();
 
     V2_Copy(bmap->bBox[0], min);
     V2_Copy(bmap->bBox[1], max);
@@ -190,13 +190,14 @@ blockmap_t *P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
     return (blockmap_t *) bmap;
 }
 
-void P_SSecBlockmapSetBlock(blockmap_t *blockmap, uint x, uint y,
-                            subsector_t **ssecs)
+void P_SSecBlockmapSetBlock(blockmap_t* blockmap, uint x, uint y,
+                            subsector_t** ssecs)
 {
     if(blockmap)
     {
-        bmap_t     *bmap = (bmap_t*) blockmap;
-        ssecmapblock_t *block = M_GridmapGetBlock(bmap->gridmap, x, y, true);
+        bmap_t*             bmap = (bmap_t*) blockmap;
+        ssecmapblock_t*     block =
+            M_GridmapGetBlock(bmap->gridmap, x, y, true);
 
         if(block)
         {
@@ -205,39 +206,31 @@ void P_SSecBlockmapSetBlock(blockmap_t *blockmap, uint x, uint y,
     }
 }
 
-void P_BuildSubsectorBlockMap(gamemap_t *map)
+void P_BuildSubsectorBlockMap(gamemap_t* map)
 {
-#define BLKMARGIN           8
-#define BLOCK_WIDTH         128
-#define BLOCK_HEIGHT        128
+#define BLKMARGIN       8
+#define BLOCK_WIDTH     128
+#define BLOCK_HEIGHT    128
 
-    uint        startTime = Sys_GetRealTime();
+    uint                startTime = Sys_GetRealTime();
 
-    int         xl, xh, yl, yh, x, y;
-    int         subMapWidth, subMapHeight;
-    uint        i;
-    ssecnode_t *iter, *next;
-    ssecmap_t  *bmap, *block;
-    vec2_t      bounds[2], blockSize, point, dims;
-    blockmap_t *ssecBlockMap;
-
-    // Figure out the dimensions of the blockmap.
-    for(i = 0; i < map->numVertexes; ++i)
-    {
-        vertex_t   *vtx = &map->vertexes[i];
-
-        V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
-        if(!i)
-            V2_InitBox(bounds, point);
-        else
-            V2_AddToBox(bounds, point);
-    }
+    int                 xl, xh, yl, yh, x, y;
+    int                 subMapWidth, subMapHeight;
+    uint                i;
+    ssecnode_t*         iter, *next;
+    ssecmap_t*          bmap, *block;
+    vec2_t              bounds[2], blockSize, dims;
+    blockmap_t*         ssecBlockMap;
+    subsector_t**       ssecLinks;
+    size_t              totalLinks;
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap
     // cell).
-    V2_Set(bounds[0], bounds[0][VX] - BLKMARGIN, bounds[0][VY] - BLKMARGIN);
-    V2_Set(bounds[1], bounds[1][VX] + BLKMARGIN, bounds[1][VY] + BLKMARGIN);
+    V2_Set(bounds[0], map->bBox[BOXLEFT] - BLKMARGIN,
+                      map->bBox[BOXBOTTOM] - BLKMARGIN);
+    V2_Set(bounds[1], map->bBox[BOXRIGHT] + BLKMARGIN,
+                      map->bBox[BOXTOP] + BLKMARGIN);
 
     // Select a good size for the blocks.
     V2_Set(blockSize, MAPBLOCKUNITS, MAPBLOCKUNITS);
@@ -259,16 +252,16 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
                       bounds[0][VY] + subMapHeight * blockSize[VY]);
 
     ssecBlockMap = (blockmap_t*)
-        P_BlockmapCreate(bounds[0], bounds[1],
-                         subMapWidth, subMapHeight);
+        P_BlockmapCreate(bounds[0], bounds[1], subMapWidth, subMapHeight);
 
-    // We'll construct the links using nodes.
+    // We'll construct the temporary links using nodes.
     bmap = M_Calloc(sizeof(ssecmap_t) * subMapWidth * subMapHeight);
 
     // Process all the subsectors in the map.
+    totalLinks = 0;
     for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t    *ssec = &map->ssectors[i];
+        subsector_t*        ssec = &map->ssectors[i];
 
         if(!ssec->sector)
             continue;
@@ -296,9 +289,14 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
                 block = &bmap[x + y * subMapWidth];
                 iter->next = block->nodes;
                 block->nodes = iter;
+                totalLinks++;
+                if(!block->count)
+                    totalLinks++; // +1 for terminating NULL.
                 block->count++;
             }
     }
+
+    ssecLinks = Z_Malloc(totalLinks * sizeof(subsector_t*), PU_LEVEL, NULL);
 
     // Create the actual links by 'hardening' the lists into arrays.
     for(y = 0; y < subMapHeight; ++y)
@@ -308,11 +306,10 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
 
             if(block->count > 0)
             {
-                subsector_t **ssecs, **ptr;
+                subsector_t**       ssecs, **ptr;
 
                 // A NULL-terminated array of pointers to subsectors.
-                ssecs = Z_Malloc((block->count + 1) * sizeof(subsector_t *),
-                                PU_LEVELSTATIC, NULL);
+                ssecs = ssecLinks;
 
                 // Copy pointers to the array, delete the nodes.
                 ptr = ssecs;
@@ -328,6 +325,8 @@ void P_BuildSubsectorBlockMap(gamemap_t *map)
 
                 // Link it into the ssecblockmap.
                 P_SSecBlockmapSetBlock(ssecBlockMap, x, y, ssecs);
+
+                ssecLinks += block->count + 1;
             }
         }
 
