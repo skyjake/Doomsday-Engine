@@ -34,12 +34,12 @@
 #ifndef __BSP_ANALYZE_H__
 #define __BSP_ANALYZE_H__
 
-void        BSP_InitAnalyzer(gamemap_t *map);
+void        BSP_InitAnalyzer(gamemap_t* map);
 
-void        BSP_GetBMapBounds(int *x, int *y, int *w, int *h);
+void        BSP_GetBMapBounds(int* x, int* y, int* w, int* h);
 
 // Detection routines (for finding map errors and editing tricks).
-void        BSP_DetectOverlappingLines(gamemap_t *map);
-void        BSP_DetectWindowEffects(gamemap_t *map);
+void        BSP_DetectOverlappingLines(gamemap_t* map);
+void        BSP_DetectWindowEffects(gamemap_t* map);
 
 #endif

@@ -64,7 +64,7 @@ static int blockMapBounds[4];
 
 // CODE --------------------------------------------------------------------
 
-void BSP_GetBMapBounds(int *x, int *y, int *w, int *h)
+void BSP_GetBMapBounds(int* x, int* y, int* w, int* h)
 {
     if(x)
         *x = blockMapBounds[BOXLEFT];
@@ -76,7 +76,7 @@ void BSP_GetBMapBounds(int *x, int *y, int *w, int *h)
         *h = blockMapBounds[BOXTOP];
 }
 
-static void findMapLimits(gamemap_t *src, int *bbox)
+static void findMapLimits(gamemap_t* src, int* bbox)
 {
     uint                i;
 
@@ -84,18 +84,18 @@ static void findMapLimits(gamemap_t *src, int *bbox)
 
     for(i = 0; i < src->numLineDefs; ++i)
     {
-        linedef_t          *l = &src->lineDefs[i];
+        linedef_t*          l = &src->lineDefs[i];
 
         if(!(l->buildData.mlFlags & MLF_ZEROLENGTH))
         {
-            double      x1 = l->v[0]->buildData.pos[VX];
-            double      y1 = l->v[0]->buildData.pos[VY];
-            double      x2 = l->v[1]->buildData.pos[VX];
-            double      y2 = l->v[1]->buildData.pos[VY];
-            int         lX = (int) floor(MIN_OF(x1, x2));
-            int         lY = (int) floor(MIN_OF(y1, y2));
-            int         hX = (int) ceil(MAX_OF(x1, x2));
-            int         hY = (int) ceil(MAX_OF(y1, y2));
+            double              x1 = l->v[0]->buildData.pos[VX];
+            double              y1 = l->v[0]->buildData.pos[VY];
+            double              x2 = l->v[1]->buildData.pos[VX];
+            double              y2 = l->v[1]->buildData.pos[VY];
+            int                 lX = (int) floor(MIN_OF(x1, x2));
+            int                 lY = (int) floor(MIN_OF(y1, y2));
+            int                 hX = (int) ceil(MAX_OF(x1, x2));
+            int                 hY = (int) ceil(MAX_OF(y1, y2));
 
             M_AddToBox(bbox, lX, lY);
             M_AddToBox(bbox, hX, hY);
@@ -103,7 +103,7 @@ static void findMapLimits(gamemap_t *src, int *bbox)
     }
 }
 
-void BSP_InitAnalyzer(gamemap_t *map)
+void BSP_InitAnalyzer(gamemap_t* map)
 {
     // Find maximal vertexes, and store as map limits.
     findMapLimits(map, mapBounds);
@@ -124,22 +124,22 @@ void BSP_InitAnalyzer(gamemap_t *map)
 }
 
 /**
- * @return          The "lowest" vertex (normally the left-most, but if the
- *                  line is vertical, then the bottom-most).
- *                  @c => 0 for start, 1 for end.
+ * @return              The "lowest" vertex (normally the left-most, but if
+ *                      the line is vertical, then the bottom-most).
+ *                      @c => 0 for start, 1 for end.
  */
-static __inline int lineVertexLowest(const linedef_t *l)
+static __inline int lineVertexLowest(const linedef_t* l)
 {
     return (((int) l->v[0]->buildData.pos[VX] < (int) l->v[1]->buildData.pos[VX] ||
              ((int) l->v[0]->buildData.pos[VX] == (int) l->v[1]->buildData.pos[VX] &&
-              (int) l->v[0]->buildData.pos[VY] <  (int) l->v[1]->buildData.pos[VY]))? 0 : 1);
+              (int) l->v[0]->buildData.pos[VY] < (int) l->v[1]->buildData.pos[VY]))? 0 : 1);
 }
 
-static int C_DECL lineStartCompare(const void *p1, const void *p2)
+static int C_DECL lineStartCompare(const void* p1, const void* p2)
 {
-    const linedef_t    *a = (const linedef_t*) p1;
-    const linedef_t    *b = (const linedef_t*) p2;
-    vertex_t           *c, *d;
+    const linedef_t*    a = (const linedef_t*) p1;
+    const linedef_t*    b = (const linedef_t*) p2;
+    vertex_t*           c, *d;
 
     // Determine left-most vertex of each line.
     c = (lineVertexLowest(a)? a->v[1] : a->v[0]);
@@ -151,11 +151,11 @@ static int C_DECL lineStartCompare(const void *p1, const void *p2)
     return (int) c->buildData.pos[VY] - (int) d->buildData.pos[VY];
 }
 
-static int C_DECL lineEndCompare(const void *p1, const void *p2)
+static int C_DECL lineEndCompare(const void* p1, const void* p2)
 {
-    const linedef_t    *a = (const linedef_t*) p1;
-    const linedef_t    *b = (const linedef_t*) p2;
-    vertex_t           *c, *d;
+    const linedef_t*    a = (const linedef_t*) p1;
+    const linedef_t*    b = (const linedef_t*) p2;
+    vertex_t*           c, *d;
 
     // Determine right-most vertex of each line.
     c = (lineVertexLowest(a)? a->v[0] : a->v[1]);
@@ -233,29 +233,33 @@ void BSP_DetectOverlappingLines(gamemap_t* map)
  * Cast a line horizontally or vertically and see what we hit (OUCH, we
  * have to iterate over all linedefs!).
  */
-static void testForWindowEffect(gamemap_t *map, linedef_t *l)
+static void testForWindowEffect(gamemap_t* map, linedef_t* l)
 {
-    uint        i;
-    double      mX = (l->v[0]->buildData.pos[VX] + l->v[1]->buildData.pos[VX]) / 2.0;
-    double      mY = (l->v[0]->buildData.pos[VY] + l->v[1]->buildData.pos[VY]) / 2.0;
-    double      dX =  l->v[1]->buildData.pos[VX] - l->v[0]->buildData.pos[VX];
-    double      dY =  l->v[1]->buildData.pos[VY] - l->v[0]->buildData.pos[VY];
-    int         castHoriz = fabs(dX) < fabs(dY) ? 1 : 0;
+    uint                i;
+    double              mX =
+        (l->v[0]->buildData.pos[VX] + l->v[1]->buildData.pos[VX]) / 2.0;
+    double              mY =
+        (l->v[0]->buildData.pos[VY] + l->v[1]->buildData.pos[VY]) / 2.0;
+    double              dX =
+        l->v[1]->buildData.pos[VX] - l->v[0]->buildData.pos[VX];
+    double              dY =
+        l->v[1]->buildData.pos[VY] - l->v[0]->buildData.pos[VY];
+    int                 castHoriz = fabs(dX) < fabs(dY) ? 1 : 0;
 
-    double      backDist = 999999.0;
-    sector_t  *backOpen = NULL;
-    int         backLine = -1;
+    double              backDist = 999999.0;
+    sector_t*           backOpen = NULL;
+    int                 backLine = -1;
 
-    double      frontDist = 999999.0;
-    sector_t  *frontOpen = NULL;
-    int         frontLine = -1;
+    double              frontDist = 999999.0;
+    sector_t*           frontOpen = NULL;
+    int                 frontLine = -1;
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t          *n = &map->lineDefs[i];
+        linedef_t*          n = &map->lineDefs[i];
         double              dist;
         boolean             isFront;
-        sidedef_t          *hitSide;
+        sidedef_t*          hitSide;
         double              dX2, dY2;
 
         if(n == l || (n->buildData.mlFlags & MLF_ZEROLENGTH) || n->buildData.overlap)
@@ -303,7 +307,7 @@ static void testForWindowEffect(gamemap_t *map, linedef_t *l)
             hitSide = n->sideDefs[(dX > 0) ^ (dX2 > 0) ^ !isFront];
         }
 
-        if(dist < DIST_EPSILON)  // too close (overlapping lines ?)
+        if(dist < DIST_EPSILON) // Too close (overlapping lines ?)
             continue;
 
         if(isFront)
@@ -354,13 +358,13 @@ Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
  * odd number of one-sided linedefs connected to a single vertex.
  * This idea courtesy of Graham Jackson.
  */
-void BSP_DetectWindowEffects(gamemap_t *map)
+void BSP_DetectWindowEffects(gamemap_t* map)
 {
     uint                i, oneSiders, twoSiders;
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t         *l = &map->lineDefs[i];
+        linedef_t*          l = &map->lineDefs[i];
 
         if((l->buildData.mlFlags & MLF_TWOSIDED) || (l->buildData.mlFlags & MLF_ZEROLENGTH) ||
             l->buildData.overlap || !l->sideDefs[FRONT])
