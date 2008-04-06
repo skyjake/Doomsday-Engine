@@ -103,13 +103,13 @@ typedef struct subsector_s {
     struct seg_s**      segs;          // [segcount] size.
     struct polyobj_s*   polyObj;       // NULL, if there is no polyobj.
     struct sector_s*    sector;
+    unsigned int        inSectorID;
     int                 flags;
     int                 validCount;
     unsigned int        group;
     unsigned int        reverb[NUM_REVERB_DATA];
     fvertex_t           bBox[2];       // Min and max points.
     fvertex_t           midPoint;      // Center of vertices.
-    struct subplaneinfo_s** planes;
     unsigned short      numVertices;
     struct fvertex_s**  vertices;      // [numvertices] size
     struct shadowlink_s* shadows;
@@ -204,6 +204,8 @@ typedef struct plane_s {
     float               visHeight;     // Visible plane height (smoothed)
     float               visHeightDelta;
     planetype_t         type;          // PLN_* type.
+    int                 planeID;
+    struct subplaneinfo_s* subPlanes;
 } plane_t;
 
 // Helper macros for accessing sector floor/ceiling plane data elements.

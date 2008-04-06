@@ -80,7 +80,7 @@ typedef struct linelist_s {
 static void addBlockLine(linelist_t **lists, uint *count, uint *done,
                          uint blockno, linedef_t *line)
 {
-    linelist_t *l;
+    linelist_t*         l;
 
     if(done[blockno])
         return;
@@ -104,8 +104,8 @@ static void addBlockLine(linelist_t **lists, uint *count, uint *done,
  * lines at the left and bottom of each blockmap cell. It then
  * adds the line to all block lists touching the intersection.
  */
-boolean DAM_BuildBlockMap(gamemap_t* map, vertex_t*** vertexes,
-                          uint* numVertexes)
+blockmap_t* DAM_BuildBlockMap(vertex_t*** vertexes, uint* numVertexes,
+                              linedef_t** lineDefs, uint* numLineDefs)
 {
     uint                startTime = Sys_GetRealTime();
 
@@ -178,9 +178,9 @@ boolean DAM_BuildBlockMap(gamemap_t* map, vertex_t*** vertexes,
     int                 bx, by;
     int                 minx, maxx, miny, maxy;
 
-    for(i = 0; i < map->numLineDefs; ++i)
+    for(i = 0; i < *numLineDefs; ++i)
     {
-        linedef_t*      line = &map->lineDefs[i];
+        linedef_t*      line = &(*lineDefs)[i];
 
         if(line->inFlags & LF_POLYOBJ)
             continue; // Polyobj lines don't get into the blockmap.
@@ -408,6 +408,5 @@ boolean DAM_BuildBlockMap(gamemap_t* map, vertex_t*** vertexes,
             ("DAM_BuildBlockMap: Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
 
-    map->blockMap = blockmap;
-    return true;
+    return blockmap;
 }

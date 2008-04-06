@@ -505,7 +505,7 @@ boolean P_LoadMap(const char *mapID)
         LG_Init();
 
         if(!isDedicated)
-            R_InitRendPolyPool();
+            R_InitRendVerticesPool();
         return true;
     }
 

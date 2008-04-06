@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
@@ -37,6 +37,6 @@
 
 #include "p_mapdata.h"
 
-boolean     DAM_BuildBlockMap(gamemap_t* map, vertex_t*** vertexes,
-                              uint* numVertexes);
+blockmap_t*     DAM_BuildBlockMap(vertex_t*** vertexes, uint* numVertexes,
+                                  linedef_t** lineDefs, uint* numLineDefs);
 #endif

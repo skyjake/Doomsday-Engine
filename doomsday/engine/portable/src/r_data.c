@@ -46,13 +46,14 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct patchhash_s {
-    patch_t *first;
+    patch_t*        first;
 } patchhash_t;
 
 typedef struct {
-    boolean     inUse;
-    unsigned int numVerts;
-    rendpoly_t  poly;
+    boolean         inUse;
+    boolean         type; // If true, data is rcolor else rvertex.
+    uint            num;
+    void*           data;
 } rendpolydata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -69,28 +70,28 @@ extern boolean levelSetup; // we are currently setting up a level
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte    precacheSkins = true;
-byte    precacheSprites = false;
+byte precacheSkins = true;
+byte precacheSprites = false;
 
 patchhash_t patchhash[PATCH_HASH_SIZE];
 
-int     numTextures;
-texture_t **textures;
+int numTextures;
+texture_t** textures;
 
-int     numFlats;
-flat_t **flats;
+int numFlats;
+flat_t** flats;
 
-int     numSpriteTextures;
-spritetex_t **spriteTextures;
+int numSpriteTextures;
+spritetex_t** spriteTextures;
 
 // Raw screens.
-rawtex_t *rawtextures;
+rawtex_t* rawtextures;
 uint numrawtextures;
-int     numgroups;
-animgroup_t *groups;
+int numgroups;
+animgroup_t* groups;
 
 // Glowing textures are always rendered fullbright.
-int     glowingTextures = true;
+int glowingTextures = true;
 
 byte rendInfoRPolys = 0;
 
@@ -100,19 +101,19 @@ byte rendInfoRPolys = 0;
 // and the ID numbers are the same as indices to the skinNames array.
 // Created in r_model.c, when registering the skins.
 int numSkinNames;
-skintex_t *skinNames;
+skintex_t* skinNames;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static unsigned int numrendpolys = 0;
 static unsigned int maxrendpolys = 0;
-static rendpolydata_t **rendPolys;
+static rendpolydata_t** rendPolys;
 
 // CODE --------------------------------------------------------------------
 
-void R_InfoRendPolys(void)
+void R_InfoRendVerticesPool(void)
 {
-    unsigned int            i;
+    uint                i;
 
     if(!rendInfoRPolys)
         return;
@@ -121,68 +122,56 @@ void R_InfoRendPolys(void)
 
     for(i = 0; i < numrendpolys; ++i)
     {
-        Con_Printf("RP: %-4i %c %c (vtxs=%i)\n", i,
-                   rendPolys[i]->inUse? 'Y':'N',
-                   rendPolys[i]->poly.isWall? 'w':'p',
-                   rendPolys[i]->numVerts);
+        Con_Printf("RP: %-4u %c (vtxs=%u t=%c)\n", i,
+                   (rendPolys[i]->inUse? 'Y':'N'), rendPolys[i]->num,
+                   (rendPolys[i]->type? 'c' : 'v'));
     }
 }
 
 /**
  * Called at the start of each level.
  */
-void R_InitRendPolyPool(void)
+void R_InitRendVerticesPool(void)
 {
-    int                     i;
-    rendpoly_t             *p;
+    rvertex_t*          rvertices;
+    rcolor_t*           rcolors;
 
     numrendpolys = maxrendpolys = 0;
     rendPolys = NULL;
 
-    // Allocate the common ones to get us started.
-    p = R_AllocRendPoly(RP_QUAD, true, 4); // wall
-    R_FreeRendPoly(p); // mark unused.
+    rvertices = R_AllocRendVertices(24);
+    rcolors = R_AllocRendColors(24);
 
-    // sprites/models use rendpolys with 1/2 vtxs to unify lighting.
-    for(i = 1; i < 16; ++i)
-    {
-        p = R_AllocRendPoly(i < 3? RP_NONE:RP_FLAT, false, i);
-        R_FreeRendPoly(p); // mark unused.
-    }
+    // Mark unused.
+    R_FreeRendVertices(rvertices);
+    R_FreeRendColors(rcolors);
 }
 
 /**
- * Re-uses existing rendpolys whenever possible, there are a few conditions
- * which prevent this:
+ * Retrieves a batch of rvertex_t.
+ * Possibly allocates new if necessary.
  *
- * There is no unused rendpoly which:
- * a) has enough vertices.
- * b) matches the "isWall" specification.
+ * @param num           The number of verts required.
  *
- * @param numverts      The number of verts required.
- * @param isWall        @c true = wall data is required.
- *
- * @return              Ptr to a suitable rendpoly.
+ * @return              Ptr to array of rvertex_t
  */
-static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
+rvertex_t* R_AllocRendVertices(uint num)
 {
     unsigned int        idx;
-    rendpoly_t         *p;
     boolean             found = false;
 
     for(idx = 0; idx < maxrendpolys; ++idx)
     {
-        if(rendPolys[idx]->inUse)
+        if(rendPolys[idx]->inUse || rendPolys[idx]->type)
             continue;
 
-        if(rendPolys[idx]->numVerts == numverts &&
-           rendPolys[idx]->poly.isWall == isWall)
+        if(rendPolys[idx]->num >= num)
         {
             // Use this one.
             rendPolys[idx]->inUse = true;
-            return &rendPolys[idx]->poly;
+            return (rvertex_t*) rendPolys[idx]->data;
         }
-        else if(rendPolys[idx]->numVerts == 0)
+        else if(rendPolys[idx]->num == 0)
         {
             // There is an unused one but we haven't allocated verts yet.
             numrendpolys++;
@@ -196,8 +185,8 @@ static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
         // We may need to allocate more.
         if(++numrendpolys > maxrendpolys)
         {
-            unsigned int        i, newCount;
-            rendpolydata_t     *newPolyData, *ptr;
+            uint                i, newCount;
+            rendpolydata_t*     newPolyData, *ptr;
 
             maxrendpolys = (maxrendpolys > 0? maxrendpolys * 2 : 8);
 
@@ -214,83 +203,111 @@ static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
             for(i = numrendpolys-1; i < maxrendpolys; ++i, ptr++)
             {
                 ptr->inUse = false;
-                ptr->numVerts = 0;
+                ptr->num = 0;
                 rendPolys[i] = ptr;
             }
         }
         idx = numrendpolys - 1;
     }
 
-    p = &rendPolys[idx]->poly;
     rendPolys[idx]->inUse = true;
-    rendPolys[idx]->numVerts = numverts;
+    rendPolys[idx]->type = false;
+    rendPolys[idx]->num = num;
+    rendPolys[idx]->data =
+        Z_Malloc(sizeof(rvertex_t) * num, PU_LEVEL, 0);
 
-    p->numVertices = numverts;
-    p->vertices = Z_Malloc(sizeof(rendpoly_vertex_t) * p->numVertices,
-                           PU_LEVEL, 0);
-    p->isWall = isWall;
-
-    if(p->isWall) // Its a wall so allocate the wall data.
-        p->wall = Z_Malloc(sizeof(rendpoly_wall_t), PU_LEVEL, 0);
-    else
-        p->wall = NULL;
-
-    return p;
+    return (rvertex_t*) rendPolys[idx]->data;
 }
 
 /**
- * Retrieves a suitable rendpoly. Possibly allocates a new one if necessary.
+ * Retrieves a batch of rcolor_t.
+ * Possibly allocates new if necessary.
  *
- * @param type          The type of the poly to create.
- * @param isWall        @c true = wall data is required for this poly.
- * @param numverts      The number of verts required.
+ * @param num           The number of verts required.
  *
- * @return              Ptr to a suitable rendpoly.
+ * @return              Ptr to array of rcolor_t
  */
-rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
-                            unsigned int numverts)
+rcolor_t* R_AllocRendColors(uint num)
 {
-    rendpoly_t         *poly = R_NewRendPoly(numverts, isWall);
+    unsigned int        idx;
+    boolean             found = false;
 
-    poly->type = type;
+    for(idx = 0; idx < maxrendpolys; ++idx)
+    {
+        if(rendPolys[idx]->inUse || !rendPolys[idx]->type)
+            continue;
 
-    poly->flags = 0;
-    poly->texOffset[VX] = poly->texOffset[VY] = 0;
-    poly->interPos = 0;
-    poly->lightListIdx = 0;
-    poly->blendMode = BM_NORMAL;
-    poly->normal[0] = poly->normal[1] = poly->normal[2] = 0;
+        if(rendPolys[idx]->num >= num)
+        {
+            // Use this one.
+            rendPolys[idx]->inUse = true;
+            return (rcolor_t*) rendPolys[idx]->data;
+        }
+        else if(rendPolys[idx]->num == 0)
+        {
+            // There is an unused one but we haven't allocated verts yet.
+            numrendpolys++;
+            found = true;
+            break;
+        }
+    }
 
-    poly->tex.id = curTex = 0;
+    if(!found)
+    {
+        // We may need to allocate more.
+        if(++numrendpolys > maxrendpolys)
+        {
+            uint                i, newCount;
+            rendpolydata_t*     newPolyData, *ptr;
 
-    poly->tex.detail = 0;
-    poly->tex.height = poly->tex.width = 0;
-    poly->tex.masked = 0;;
+            maxrendpolys = (maxrendpolys > 0? maxrendpolys * 2 : 8);
 
-    memset(&poly->interTex, 0, sizeof(poly->interTex));
-    memset(poly->vertices, 0, numverts * sizeof(*poly->vertices));
+            rendPolys =
+                Z_Realloc(rendPolys, sizeof(rendpolydata_t*) * maxrendpolys,
+                          PU_LEVEL);
 
-    return poly;
+            newCount = maxrendpolys - numrendpolys + 1;
+
+            newPolyData =
+                Z_Malloc(sizeof(rendpolydata_t) * newCount, PU_LEVEL, 0);
+
+            ptr = newPolyData;
+            for(i = numrendpolys-1; i < maxrendpolys; ++i, ptr++)
+            {
+                ptr->inUse = false;
+                ptr->num = 0;
+                rendPolys[i] = ptr;
+            }
+        }
+        idx = numrendpolys - 1;
+    }
+
+    rendPolys[idx]->inUse = true;
+    rendPolys[idx]->type = true;
+    rendPolys[idx]->num = num;
+    rendPolys[idx]->data =
+        Z_Malloc(sizeof(rcolor_t) * num, PU_LEVEL, 0);
+
+    return (rcolor_t*) rendPolys[idx]->data;
 }
 
 /**
- * Doesn't actually free anything. Instead, mark it as unused ready for the
- * next time a rendpoly with this number of verts is needed.
+ * Doesn't actually free anything. Instead, mark them as unused ready for
+ * the next time a batch of rendvertex_t is needed.
  *
- * @param poly          Ptr to the poly to mark unused.
+ * @param vertices      Ptr to array of rvertex_t to mark unused.
  */
-void R_FreeRendPoly(rendpoly_t *poly)
+void R_FreeRendVertices(rvertex_t* rvertices)
 {
-    unsigned int        i;
+    uint                i;
 
-    if(!poly)
+    if(!rvertices)
         return;
 
     for(i = 0; i < numrendpolys; ++i)
     {
-        if(&rendPolys[i]->poly == poly)
+        if(rendPolys[i]->data == rvertices)
         {
-            // \todo: release any light list created for this rendpoly.
             rendPolys[i]->inUse = false;
             return;
         }
@@ -300,27 +317,30 @@ void R_FreeRendPoly(rendpoly_t *poly)
 #endif
 }
 
-void R_MemcpyRendPoly(rendpoly_t *dest, const rendpoly_t *src)
+/**
+ * Doesn't actually free anything. Instead, mark them as unused ready for
+ * the next time a batch of rendvertex_t is needed.
+ *
+ * @param vertices      Ptr to array of rcolor_t to mark unused.
+ */
+void R_FreeRendColors(rcolor_t* rcolors)
 {
-    unsigned int        i;
+    uint                i;
 
-    if(!dest || !src)
+    if(!rcolors)
         return;
 
-    memcpy(&dest->tex, &src->tex, sizeof(gltexture_t));
-    memcpy(&dest->interTex, &src->interTex, sizeof(gltexture_t));
-    if(dest->wall && src->wall)
-        memcpy(&dest->wall, &src->wall, sizeof(rendpoly_wall_t));
-    dest->texOffset[VX] = src->texOffset[VX];
-    dest->texOffset[VY] = src->texOffset[VY];
-    dest->flags = src->flags;
-    dest->interPos = src->interPos;
-    dest->blendMode = src->interPos;
-    dest->lightListIdx = src->lightListIdx;
-    dest->type = src->type;
-    memcpy(&dest->normal, &src->normal, sizeof(dest->normal));
-    for(i = 0; i < dest->numVertices; ++i)
-        memcpy(&dest->vertices[i], &src->vertices[i], sizeof(rendpoly_vertex_t));
+    for(i = 0; i < numrendpolys; ++i)
+    {
+        if(rendPolys[i]->data == rcolors)
+        {
+            rendPolys[i]->inUse = false;
+            return;
+        }
+    }
+#if _DEBUG
+    Con_Message("R_FreeRendPoly: Dangling poly ptr!\n");
+#endif
 }
 
 void R_ShutdownData(void)

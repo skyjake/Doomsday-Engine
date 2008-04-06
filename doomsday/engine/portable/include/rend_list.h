@@ -48,12 +48,13 @@ void            RL_Register(void);
 void            RL_Init(void);
 void            RL_ClearLists(void);
 void            RL_DeleteLists(void);
-void            RL_AddPoly(rendpoly_t *poly);
+void            RL_AddPoly(const rvertex_t* vertices, const rcolor_t* colors,
+                           uint numVertices, const rendpoly_params_t* params);
 void            RL_RenderAllLists(void);
 
 void            RL_SelectTexUnits(int count);
 void            RL_Bind(DGLuint texture);
 void            RL_BindTo(int unit, DGLuint texture);
-void            RL_FloatRGB(byte *rgb, float *dest);
+void            RL_FloatRGB(byte* rgb, float* dest);
 
 #endif

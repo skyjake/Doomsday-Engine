@@ -78,29 +78,31 @@ extern int      useBias; // Bias lighting enabled.
 extern unsigned int currentTimeSB;
 
 void            SB_Register(void);
-void            SB_InitForMap(const char *uniqueId);
-void            SB_SegHasMoved(struct seg_s *seg);
-void            SB_PlaneHasMoved(const struct subsector_s *subsector, uint plane);
+void            SB_InitForMap(const char* uniqueId);
+void            SB_InitVertexIllum(vertexillum_t* villum);
+void            SB_SegHasMoved(struct seg_s* seg);
+void            SB_PlaneHasMoved(const struct subsector_s* subsector, uint plane);
 void            SB_BeginFrame(void);
-void            SB_RendPoly(struct rendpoly_s *poly,
+void            SB_RendPoly(const struct rvertex_s* rvertices,
+                            struct rcolor_s* rcolors,
+                            uint numVertices, const float* normal,
                             float sectorLightLevel,
-                            vertexillum_t *illumination,
-                            biastracker_t *tracker,
-                            biasaffection_t *affected,
-                            uint mapElementIndex);
+                            biastracker_t* tracker,
+                            biasaffection_t* affected,
+                            void* surface, uint elmIdx, boolean isSeg);
 void            SB_EndFrame(void);
 
 int             SB_NewSourceAt(float x, float y, float z, float size, float minLight,
-                               float maxLight, float *rgb);
+                               float maxLight, float* rgb);
 void            SB_UpdateSource(int which, float x, float y, float z, float size,
-                                float minLight, float maxLight, float *rgb);
+                                float minLight, float maxLight, float* rgb);
 void            SB_Delete(int which);
 void            SB_Clear(void);
 
 source_t*       SB_GetSource(int which);
 int             SB_ToIndex(source_t* source);
 
-void            SB_SetColor(float *dest, float *src);
-void            HSVtoRGB(float *rgb, float h, float s, float v);
+void            SB_SetColor(float* dest, float* src);
+void            HSVtoRGB(float* rgb, float h, float s, float v);
 
 #endif

@@ -436,14 +436,17 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t *pln)
  * Post: The sector's plane list will be replaced, the new plane will be
  *       linked to the end of the list.
  *
- * @param sec       Sector for which a new plane will be created.
+ * @param sec           Sector for which a new plane will be created.
  *
- * @return          Ptr to the newly created plane.
+ * @return              Ptr to the newly created plane.
  */
-plane_t *R_NewPlaneForSector(sector_t *sec)
+plane_t* R_NewPlaneForSector(sector_t* sec)
 {
-    surface_t      *suf;
-    plane_t        *plane;
+    uint                villumCount;
+    surface_t*          suf;
+    plane_t*            plane;
+    subsector_t**       ssecPtr;
+    vertexillum_t*      illums;
 
     if(!sec)
         return NULL; // Do wha?
@@ -478,7 +481,8 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
     memset(&plane->soundOrg.thinker, 0, sizeof(plane->soundOrg.thinker));
     plane->speed = 0;
     plane->target = 0;
-    plane->type = PLN_FLOOR;
+    plane->type = PLN_MID;
+    plane->planeID = sec->planeCount-1;
 
     suf = &plane->surface;
 
@@ -499,6 +503,33 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
     Surface_SetColorRGBA(suf, 1, 1, 1, 1);
     Surface_SetBlendMode(suf, BM_NORMAL);
 
+    // Allocate the subplanes of this plane.
+    plane->subPlanes =
+        Z_Calloc(sec->ssectorCount * sizeof(subplaneinfo_t),
+                 PU_LEVEL, NULL);
+
+    // Count the number of vertexillum's we'll need.
+    villumCount = 0;
+    ssecPtr = sec->ssectors;
+    while(*ssecPtr)
+    {
+        villumCount += (*ssecPtr)->numVertices;
+        *ssecPtr++;
+    }
+
+    // Allocate the vertexillums.
+    illums = Z_Calloc(villumCount * sizeof(*illums), PU_LEVEL, NULL);
+    ssecPtr = sec->ssectors;
+    while(*ssecPtr)
+    {
+        subsector_t*        ssec = *ssecPtr;
+        subplaneinfo_t*     subPln = &plane->subPlanes[ssec->inSectorID];
+
+        subPln->illum = illums;
+        illums += ssec->numVertices;
+        *ssecPtr++;
+    }
+
     return plane;
 }
 
@@ -511,6 +542,7 @@ plane_t *R_NewPlaneForSector(sector_t *sec)
  */
 void R_DestroyPlaneOfSector(uint id, sector_t *sec)
 {
+    uint                i;
     plane_t            *plane, **newList = NULL;
 
     if(!sec)
@@ -525,7 +557,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     // Create a new plane list?
     if(sec->planeCount > 1)
     {
-        uint                i, n;
+        uint                n;
 
         newList = Z_Malloc(sizeof(plane_t**) * sec->planeCount, PU_LEVEL, 0);
 
@@ -544,6 +576,13 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     R_RemoveWatchedPlane(watchedPlaneList, plane);
     // If this plane's surafce is currently being watched, remove it.
     R_RemoveWatchedSurface(watchedSurfaceList, &plane->surface);
+
+    // Destroy the subplanes.
+    for(i = 0; i < plane->sector->ssectorCount; ++i)
+    {
+        Z_Free(plane->subPlanes[i].illum);
+    }
+    Z_Free(plane->subPlanes);
 
     // Destroy the specified plane.
     Z_Free(plane);
@@ -1486,110 +1525,55 @@ void R_PolygonizeMap(gamemap_t *map)
 #endif
 }
 
-static void initPlaneIllumination(subsector_t *ssec, uint planeID)
+static void prepareSubsectorForBias(subsector_t* ssec)
 {
-    uint        i, j, num;
-    subplaneinfo_t *plane = ssec->planes[planeID];
+    uint                i, j;
+    seg_t**             segPtr;
 
-    num = ssec->numVertices;
-
-    plane->illumination =
-        Z_Calloc(num * sizeof(vertexillum_t), PU_LEVELSTATIC, NULL);
-
-    for(i = 0; i < num; ++i)
-    {
-        plane->illumination[i].flags |= VIF_STILL_UNSEEN;
-
-        for(j = 0; j < MAX_BIAS_AFFECTED; ++j)
-            plane->illumination[i].casted[j].source = -1;
-    }
-}
-
-static void initSSecPlanes(subsector_t *ssec)
-{
-    uint                i;
-
-    // Allocate the subsector plane info array.
-    ssec->planes =
-        Z_Malloc(ssec->sector->planeCount * sizeof(subplaneinfo_t*),
-                 PU_LEVEL, NULL);
     for(i = 0; i < ssec->sector->planeCount; ++i)
     {
-        ssec->planes[i] =
-            Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
-        ssec->planes[i]->planeID = i;
-        ssec->planes[i]->type = PLN_MID;
+        subplaneinfo_t*     plane =
+            &ssec->sector->planes[i]->subPlanes[ssec->inSectorID];
 
-        // Initialize the illumination for the subsector.
-        initPlaneIllumination(ssec, i);
+        for(j = 0; j < ssec->numVertices; ++j)
+            SB_InitVertexIllum(&plane->illum[j]);
     }
-
-    // \fixme $nplanes
-    // Initialize the plane types.
-    ssec->planes[PLN_FLOOR]->type = PLN_FLOOR;
-    ssec->planes[PLN_CEILING]->type = PLN_CEILING;
-}
-
-static void prepareSubsectorForBias(subsector_t *ssec)
-{
-    seg_t             **segPtr;
-
-    initSSecPlanes(ssec);
 
     segPtr = ssec->segs;
     while(*segPtr)
     {
         uint                i;
-        seg_t              *seg = *segPtr;
+        seg_t*              seg = *segPtr;
 
         for(i = 0; i < 4; ++i)
         {
-            uint            j;
+            uint                j;
 
             for(j = 0; j < 3; ++j)
-            {
-                uint            n;
-
-                seg->illum[j][i].flags = VIF_STILL_UNSEEN;
-                for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
-                {
-                    seg->illum[j][i].casted[n].source = -1;
-                }
-            }
+                SB_InitVertexIllum(&seg->illum[j][i]);
         }
 
         *segPtr++;
     }
 }
 
-void R_PrepareForBias(gamemap_t *map)
+void R_PrepareForBias(gamemap_t* map)
 {
     uint                i;
-    uint                starttime = Sys_GetRealTime();
-
-    Con_Message("prepareForBias: Processing...\n");
 
     for(i = 0; i < map->numSSectors; ++i)
-    {
-        subsector_t    *ssec = &map->ssectors[i];
-        prepareSubsectorForBias(ssec);
-    }
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("prepareForBias: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - starttime) / 1000.0f));
+        prepareSubsectorForBias(&map->ssectors[i]);
 }
 
 /**
  * The test is done on subsectors.
  */
-static sector_t *getContainingSectorOf(gamemap_t *map, sector_t *sec)
+static sector_t *getContainingSectorOf(gamemap_t* map, sector_t* sec)
 {
     uint                i;
     float               cdiff = -1, diff;
     float               inner[4], outer[4];
-    sector_t           *other, *closest = NULL;
+    sector_t*           other, *closest = NULL;
 
     memcpy(inner, sec->bBox, sizeof(inner));
 

@@ -269,8 +269,8 @@ static void hardenSSecSegList(gamemap_t *dest, subsector_t *ssec,
     ssec->segs = segs;
 }
 
-static void hardenLeaf(gamemap_t *map, subsector_t *dest,
-                       const bspleafdata_t *src)
+static void hardenLeaf(gamemap_t *map, subsector_t* dest,
+                       const bspleafdata_t* src)
 {
     seg_t             **segp;
     boolean             found;
@@ -278,7 +278,6 @@ static void hardenLeaf(gamemap_t *map, subsector_t *dest,
     dest->header.type = DMU_SUBSECTOR;
     dest->segCount = (uint) src->hEdgeCount;
     dest->shadows = NULL;
-    dest->planes = NULL;
     dest->vertices = NULL;
     dest->group = 0;
 

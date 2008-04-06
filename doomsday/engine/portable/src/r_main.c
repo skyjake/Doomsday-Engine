@@ -139,12 +139,12 @@ void R_InitSkyMap(void)
  * @param suf           Ptr to the surface to test.
  * @return boolean      @c true, iff the surface will be masked.
  */
-boolean R_IsSkySurface(const surface_t *suf)
+boolean R_IsSkySurface(const surface_t* suf)
 {
-    if(!suf)
-        return false;
+    if(suf && suf->material == skyMaskMaterial)
+        return true;
 
-    return (suf->material == skyMaskMaterial? true : false);
+    return false;
 }
 
 /**
@@ -654,7 +654,7 @@ void R_RenderPlayerView(int num)
         Con_Printf("LumObjs: %-4i\n", LO_GetNumLuminous());
     }
 
-    R_InfoRendPolys();
+    R_InfoRendVerticesPool();
 
     // The colored filter.
     GL_DrawFilter();

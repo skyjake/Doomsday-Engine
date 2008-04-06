@@ -69,6 +69,7 @@ static void Rend_RenderBoundingBoxes(void);
 
 extern int useDynLights, translucentIceCorpse;
 extern int skyhemispheres;
+extern material_t* skyMaskMaterial;
 extern int loMaxRadius;
 extern int devNoCulling;
 extern boolean firstFrameAfterLoad;
@@ -86,6 +87,7 @@ float viewsidex, viewsidey;
 
 boolean willRenderSprites = true;
 byte freezeRLs = false;
+int devSkyMode = false;
 
 int missileBlend = 1;
 // Ambient lighting, rAmbient is used within the renderer, ambientLight is
@@ -111,15 +113,6 @@ int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
 
 static boolean firstsubsector; // No range checking for the first one.
 
-// Wall section colors.
-// With accompanying ptrs to allow for "hot-swapping" (for speed).
-const float *topColorPtr;
-static float topColor[3];
-const float *midColorPtr;
-static float midColor[3];
-const float *bottomColorPtr;
-static float bottomColor[3];
-
 // Current sector light color.
 const float *sLightColor;
 
@@ -130,6 +123,7 @@ byte devNoLinkedSurfaces = 0;
 
 void Rend_Register(void)
 {
+    C_VAR_INT("rend-dev-sky", &devSkyMode, 0, 0, 1);
     C_VAR_BYTE("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling,CVF_NO_ARCHIVE,0,1);
     C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, 0, 0, 1);
@@ -294,54 +288,57 @@ static void Rend_ShinySurfaceColor(float color[4],
  *      the caller to ensure this is OK (ie if not it should pass us a
  *      copy instead (eg wall segs)).
  *
+ * @param vertices      The vertices to be used for creating the shiny poly.
+ * @param numVertices   Number of vertices in the poly.
  * @param texture       The texture/flat id of the texture on the poly.
  * @param isFlat        @c true = param texture is a flat.
- * @param poly          The poly to add the shiny poly for.
  */
-static void Rend_AddShinyPoly(rendpoly_t *poly, const ded_reflection_t* ref,
+static void Rend_AddShinyPoly(const rvertex_t* rvertices, rcolor_t* rcolors,
+                              uint numVertices, rendpoly_params_t* params,
+                              const ded_reflection_t* ref,
                               short width, short height)
 {
     uint                i;
 
     // Make it a shiny polygon.
-    poly->lightListIdx = 0;
-    poly->flags |= RPF_SHINY;
-    poly->blendMode = ref->blendMode;
-    poly->tex.id = ref->useShiny->shinyTex;
-    poly->tex.detail = NULL;
-    poly->tex.masked = false;
-    poly->interTex.detail = NULL;
-    poly->interTex.masked = false;
-    poly->interPos = 0;
+    params->lightListIdx = 0;
+    params->flags |= RPF_SHINY;
+    params->blendMode = ref->blendMode;
+    params->tex.id = ref->useShiny->shinyTex;
+    params->tex.detail = NULL;
+    params->tex.masked = false;
+    params->interTex.detail = NULL;
+    params->interTex.masked = false;
+    params->interPos = 0;
 
     // Strength of the shine.
-    for(i = 0; i < poly->numVertices; ++i)
+    for(i = 0; i < numVertices; ++i)
     {
-        Rend_ShinySurfaceColor(poly->vertices[i].color, ref);
+        Rend_ShinySurfaceColor(rcolors[i].rgba, ref);
     }
 
     // The mask texture is stored in the intertex.
     if(ref->useMask && ref->useMask->maskTex)
     {
-        poly->interTex.id = ref->useMask->maskTex;
-        poly->tex.width = poly->interTex.width = width * ref->maskWidth;
-        poly->tex.height = poly->interTex.height = height * ref->maskHeight;
+        params->interTex.id = ref->useMask->maskTex;
+        params->tex.width = params->interTex.width = width * ref->maskWidth;
+        params->tex.height = params->interTex.height = height * ref->maskHeight;
     }
     else
     {
         // No mask.
-        poly->interTex.id = 0;
+        params->interTex.id = 0;
     }
 
-    RL_AddPoly(poly);
+    RL_AddPoly(rvertices, rcolors, numVertices, params);
 }
 
-static void polyTexBlend(rendpoly_t* poly, material_t* mat)
+static float polyTexBlend(gltexture_t* interTex, material_t* mat)
 {
-    texinfo_t          *texinfo;
+    texinfo_t*          texinfo;
 
     if(!mat)
-        return;
+        return 0;
 
     // If fog is active, inter=0 is accepted as well. Otherwise flickering
     // may occur if the rendering passes don't match for blended and
@@ -350,51 +347,45 @@ static void polyTexBlend(rendpoly_t* poly, material_t* mat)
        (!usingFog && mat->inter < 0) || renderTextures == 2)
     {
         // No blending for you, my friend.
-        return;
+        return 0;
     }
 
     // Get info of the blend target.
-    poly->interTex.id = GL_PrepareMaterial2(mat->next, &texinfo);
+    interTex->id = GL_PrepareMaterial2(mat->next, &texinfo);
 
-    poly->interTex.width = texinfo->width;
-    poly->interTex.height = texinfo->height;
-    poly->interTex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
-    poly->interTex.masked = texinfo->masked;
-    poly->interPos = mat->inter;
+    interTex->width = texinfo->width;
+    interTex->height = texinfo->height;
+    interTex->detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
+    interTex->masked = texinfo->masked;
+
+    return mat->inter;
 }
 
-void Rend_VertexColorsGlow(rendpoly_t* poly)
+void Rend_VertexColorsGlow(rcolor_t* colors, size_t num)
 {
-    int                 i;
+    size_t              i;
 
-    // Check for special case exceptions.
-    if(!(poly->flags & RPF_GLOW))
-        return;
-
-    for(i = 0; i < poly->numVertices; ++i)
+    for(i = 0; i < num; ++i)
     {
-        rendpoly_vertex_t  *vtx = &poly->vertices[i];
-
-        vtx->color[CR] = vtx->color[CG] = vtx->color[CB] = 1;
+        rcolor_t*           c = &colors[i];
+        c->rgba[CR] = c->rgba[CG] = c->rgba[CB] = 1;
     }
 }
 
-void Rend_VertexColorsAlpha(rendpoly_t* poly, float alpha)
+void Rend_VertexColorsAlpha(rcolor_t* colors, size_t num, short flags,
+                            float alpha)
 {
-    int                 i;
+    size_t               i;
 
     // Check for special case exceptions.
-    if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW))
+    if(flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW))
     {
         return;
     }
 
-    for(i = 0; i < poly->numVertices; ++i)
+    for(i = 0; i < num; ++i)
     {
-        rendpoly_vertex_t      *vtx = &poly->vertices[i];
-
-        // Set final alpha.
-        vtx->color[CA] = alpha;
+        colors[i].rgba[CA] = alpha;
     }
 }
 
@@ -428,62 +419,36 @@ void Rend_ApplyTorchLight(float* color, float distance)
     }
 }
 
-static float distanceToRendpolyVertex(rendpoly_vertex_t* vtx)
+static void lightVertex(rcolor_t* color, const rvertex_t* vtx,
+                        float lightLevel, const float* ambientColor)
 {
-    if(!(vtx->distanceToViewer > 0))
-        vtx->distanceToViewer = Rend_PointDist2D(vtx->pos);
-
-    return vtx->distanceToViewer;
-}
-
-/**
- * Color distance attenuation, extraLight.
- *
- * @param distanceOverride If positive, this distance will be used for ALL
- *                      of the rendpoly's vertices. Else, the dist will be
- *                      calculated if needed, depending on the properties of
- *                      the rendpoly to be lit, for each vertex seperately.
- */
-void Rend_VertexColors(rendpoly_t* poly, float lightLevel,
-                       const float* sufColor)
-{
-    int                 i, num;
     float               lightVal, dist;
-    rendpoly_vertex_t  *vtx;
 
-    // Check for special case exceptions.
-    if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW|RPF_GLOW))
-    {
-        return; // Don't need per-vertex lighting.
-    }
+    dist = Rend_PointDist2D(vtx->pos);
 
-    num = poly->numVertices;
-    for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
-    {
-        dist = distanceToRendpolyVertex(vtx);
+    // Apply distance attenuation.
+    lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
 
-        // Apply distance attenuation.
-        lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
+    // Add extra light.
+    lightVal += R_ExtraLightDelta();
 
-        // Add extra light.
-        lightVal += R_ExtraLightDelta();
+    Rend_ApplyLightAdaptation(&lightVal);
 
-        Rend_ApplyLightAdaptation(&lightVal);
-
-        // Mix with the surface color.
-        vtx->color[CR] = lightVal * sufColor[CR];
-        vtx->color[CG] = lightVal * sufColor[CG];
-        vtx->color[CB] = lightVal * sufColor[CB];
-    }
+    // Mix with the surface color.
+    color->rgba[CR] = lightVal * ambientColor[CR];
+    color->rgba[CG] = lightVal * ambientColor[CG];
+    color->rgba[CB] = lightVal * ambientColor[CB];
 }
 
-void Rend_VertexColorsApplyTorchLight(rendpoly_t *poly)
+void Rend_VertexColorsApplyTorchLight(rcolor_t* colors,
+                                      const rvertex_t* vertices,
+                                      size_t numVertices, short flags)
 {
-    int                 i;
+    size_t              i;
     ddplayer_t         *ddpl = &viewPlayer->shared;
 
     // Check for special case exceptions.
-    if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW|RPF_GLOW))
+    if(flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW|RPF_GLOW))
     {
         return; // Don't receive light from torches.
     }
@@ -491,79 +456,39 @@ void Rend_VertexColorsApplyTorchLight(rendpoly_t *poly)
     if(!ddpl->fixedColorMap)
         return; // No need, its disabled.
 
-    for(i = 0; i < poly->numVertices; ++i)
+    for(i = 0; i < numVertices; ++i)
     {
-        rendpoly_vertex_t  *vtx = &poly->vertices[i];
+        const rvertex_t*    vtx = &vertices[i];
+        rcolor_t*           c = &colors[i];
 
-        Rend_ApplyTorchLight(vtx->color, distanceToRendpolyVertex(vtx));
+        Rend_ApplyTorchLight(c->rgba, Rend_PointDist2D(vtx->pos));
     }
 }
 
-void Rend_PreparePlane(rendpoly_t *poly, subplaneinfo_t *info, float height,
-                       subsector_t *subsector, float sectorLight,
-                       boolean antiClockwise,
-                       const float *sectorLightColor, float *surfaceColor)
+void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
+                       float height, const subsector_t* subsector,
+                       boolean antiClockwise)
 {
-    uint                i, vid;
+    size_t              i, vid;
 
     // First vertex is always #0.
-    poly->vertices[0].pos[VX] = subsector->vertices[0]->pos[VX];
-    poly->vertices[0].pos[VY] = subsector->vertices[0]->pos[VY];
-    poly->vertices[0].pos[VZ] = height;
+    rvertices[0].pos[VX] = subsector->vertices[0]->pos[VX];
+    rvertices[0].pos[VY] = subsector->vertices[0]->pos[VY];
+    rvertices[0].pos[VZ] = height;
 
     // Copy the vertices in reverse order for ceilings (flip faces).
     if(antiClockwise)
-        vid = poly->numVertices - 1;
+        vid = numVertices - 1;
     else
         vid = 1;
 
-    for(i = 1; i < poly->numVertices; ++i)
+    for(i = 1; i < numVertices; ++i)
     {
-        poly->vertices[i].pos[VX] = subsector->vertices[vid]->pos[VX];
-        poly->vertices[i].pos[VY] = subsector->vertices[vid]->pos[VY];
-        poly->vertices[i].pos[VZ] = height;
+        rvertices[i].pos[VX] = subsector->vertices[vid]->pos[VX];
+        rvertices[i].pos[VY] = subsector->vertices[vid]->pos[VY];
+        rvertices[i].pos[VZ] = height;
 
         (antiClockwise? vid-- : vid++);
-    }
-
-    if(!(poly->flags & RPF_SKY_MASK))
-    {
-        float               vColor[] = { 0, 0, 0, 0};
-
-        if(poly->flags & RPF_GLOW)
-        {
-            Rend_VertexColorsGlow(poly);
-        }
-        else
-        {
-            if(useBias)
-            {
-                // Do BIAS lighting for this poly.
-                SB_RendPoly(poly, subsector->sector->lightLevel,
-                            info->illumination, &info->tracker,
-                            info->affected, subsector - ssectors);
-            }
-            else
-            {
-                // Calculate the color for each vertex, blended with plane color?
-                if(surfaceColor[0] < 1 || surfaceColor[1] < 1 || surfaceColor[2] < 1)
-                {
-                    // Blend sector light+color+surfacecolor
-                    for(i = 0; i < 3; ++i)
-                        vColor[i] = surfaceColor[i] * sectorLightColor[i];
-
-                    Rend_VertexColors(poly, sectorLight, vColor);
-                }
-                else
-                {
-                    // Use sector light+color only
-                    Rend_VertexColors(poly, sectorLight, sectorLightColor);
-                }
-            }
-        }
-
-        Rend_VertexColorsApplyTorchLight(poly);
-        Rend_VertexColorsAlpha(poly, surfaceColor[CA]);
     }
 }
 
@@ -703,17 +628,18 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
 }
 
 /**
- * Prepares the correct flat/texture for the passed poly.
+ * Prepares the correct flat/texture for the given surface.
  *
  * @param poly          Ptr to the poly to apply the texture to.
  * @param surface       Ptr to the surface properties this rendpoly is using.
  * @return int          @c -1, if the texture reference is invalid,
  *                      else return the surface flags for this poly.
  */
-static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
-                                  texinfo_t **texinfo)
+static int prepareMaterialForSurface(gltexture_t* texParams,
+                                     const surface_t* surface,
+                                     texinfo_t** texinfo)
 {
-    texinfo_t          *info;
+    texinfo_t*          info;
     int                 flags = 0;
 
     if(R_IsSkySurface(surface))
@@ -722,7 +648,7 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
     // Prepare the flat/texture
     if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
-        poly->tex.id = curTex =
+        texParams->id =
             GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), &info);
 
         flags = surface->flags & ~(SUF_TEXFIX);
@@ -732,10 +658,10 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
         {
             GL_GetMaterialInfo2(surface->material, true, &info);
 
-            poly->tex.width = info->width;
-            poly->tex.height = info->height;
-            poly->tex.detail = (r_detail && info->detail.tex? &info->detail : 0);
-            poly->tex.masked = info->masked;
+            texParams->width = info->width;
+            texParams->height = info->height;
+            texParams->detail = (r_detail && info->detail.tex? &info->detail : 0);
+            texParams->masked = info->masked;
 
             if(info->masked)
                 flags &= ~SUF_NO_RADIO;
@@ -744,13 +670,13 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
     else if((surface->flags & SUF_TEXFIX) && devNoTexFix)
     {   // For debug, render the "missing" texture instead of the texture
         // chosen for surfaces to fix the HOMs.
-        poly->tex.id = curTex =
+        texParams->id =
             GL_PrepareMaterial(R_GetMaterial(DDT_MISSING, MAT_DDTEX), &info);
         flags = SUF_GLOW; // Make it stand out
     }
     else if(surface->material)
     {
-        poly->tex.id = curTex = GL_PrepareMaterial(surface->material, &info);
+        texParams->id = GL_PrepareMaterial(surface->material, &info);
         flags = surface->flags;
 
         //// \kludge >
@@ -758,10 +684,10 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
             flags = SUF_GLOW; // Make it stand out.
          ///// <kludge
 
-        poly->tex.width = info->width;
-        poly->tex.height = info->height;
-        poly->tex.detail = (r_detail && info->detail.tex? &info->detail : 0);
-        poly->tex.masked = info->masked;
+        texParams->width = info->width;
+        texParams->height = info->height;
+        texParams->detail = (r_detail && info->detail.tex? &info->detail : 0);
+        texParams->masked = info->masked;
 
         if(info->masked)
             flags &= ~SUF_NO_RADIO;
@@ -769,7 +695,7 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
     else
     {   // Shouldn't ever get here!
 #if _DEBUG
-        Con_Error("prepareMaterialForPoly: Surface with no material?");
+        Con_Error("prepareMaterialForSurface: Surface with no material?");
 #endif
     }
 
@@ -781,11 +707,11 @@ static int prepareMaterialForPoly(rendpoly_t *poly, surface_t *surface,
 }
 
 /**
- * @return          @true,  if there is a division at the specified height.
+ * @return              @true, if there is a division at the specified height.
  */
 static int checkDiv(walldiv_t *div, float height)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; i < div->num; ++i)
         if(div->pos[i] == height)
@@ -794,16 +720,16 @@ static int checkDiv(walldiv_t *div, float height)
     return false;
 }
 
-static void doCalcSegDivisions(linedef_t *line, boolean backSide,sector_t *frontSec,
-                               walldiv_t *div, float bottomZ, float topZ,
-                               boolean doRight)
+static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
+                               boolean backSide, const sector_t* frontSec,
+                               float bottomZ, float topZ, boolean doRight)
 {
-    uint        i, j;
-    linedef_t     *iter;
-    sector_t   *scanSec;
-    lineowner_t *base, *own;
-    boolean     clockwise = !doRight;
-    boolean     stopScan = false;
+    uint                i, j;
+    linedef_t          *iter;
+    sector_t           *scanSec;
+    lineowner_t        *base, *own;
+    boolean             clockwise = !doRight;
+    boolean             stopScan = false;
 
     if(bottomZ >= topZ)
         return; // Obviously no division.
@@ -870,16 +796,13 @@ static void doCalcSegDivisions(linedef_t *line, boolean backSide,sector_t *front
     } while(!stopScan);
 }
 
-static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
-                             walldiv_t *div, float bottomZ, float topZ,
-                             boolean doRight)
+static void calcSegDivisions(walldiv_t* div, const seg_t* seg,
+                             const sector_t* frontSec, float bottomZ,
+                             float topZ, boolean doRight)
 {
-    sidedef_t          *side;
+    sidedef_t*          side;
 
     div->num = 0;
-
-    if(!seg->lineDef)
-        return; // Mini-segs arn't drawn.
 
     side = SEG_SIDEDEF(seg);
 
@@ -891,27 +814,27 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
          (seg == side->segs[side->segCount -1] && doRight)))
         return;
 
-    doCalcSegDivisions(seg->lineDef, seg->side, frontSec, div, bottomZ,
+    doCalcSegDivisions(div, seg->lineDef, seg->side, frontSec, bottomZ,
                        topZ, doRight);
 }
 
 /**
  * Division will only happen if it must be done.
- * Converts quads to divquads.
  */
-static void applyWallHeightDivision(rendpoly_t *quad, const seg_t *seg,
-                                    sector_t *frontsec, float low, float hi)
+static void applyWallHeightDivision(walldiv_t* divs, const seg_t* seg,
+                                    const sector_t* frontsec, float low,
+                                    float hi)
 {
     uint                i;
-    walldiv_t          *div;
+    walldiv_t*          div;
+
+    if(!seg->lineDef)
+        return; // Mini-segs arn't drawn.
 
     for(i = 0; i < 2; ++i)
     {
-        div = &quad->wall->divs[i];
-        calcSegDivisions(seg, frontsec, div, low, hi, i);
-
-        if(div->num > 0)
-            quad->type = RP_DIVQUAD;
+        div = &divs[i];
+        calcSegDivisions(div, seg, frontsec, low, hi, i);
 
         // We need to sort the divisions for the renderer.
         if(div->num > 1)
@@ -941,13 +864,13 @@ for(k = 0; k < div->num; ++k)
  * texoffy may be NULL.
  * Returns false if the middle texture isn't visible (in the opening).
  */
-int Rend_MidTexturePos(float *bottomleft, float *bottomright,
-                       float *topleft, float *topright, float *texoffy,
+int Rend_MidTexturePos(float* bottomleft, float* bottomright,
+                       float* topleft, float* topright, float* texoffy,
                        float tcyoff, float texHeight, boolean lower_unpeg)
 {
-    int         side;
-    float       openingTop, openingBottom;
-    boolean     visible[2] = {false, false};
+    int                 side;
+    float               openingTop, openingBottom;
+    boolean             visible[2] = {false, false};
 
     for(side = 0; side < 2; ++side)
     {
@@ -994,8 +917,9 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
     return (visible[0] || visible[1]);
 }
 
-static void getColorsForSegSection(short sideFlags, segsection_t section,
-                                   const float **bottomColor, const float **topColor)
+static void getColorsForSegSection(const seg_t* seg, segsection_t section,
+                                   short sideFlags,
+                                   const float** color, const float** color2)
 {
     // Select the correct colors for this surface.
     switch(section)
@@ -1003,31 +927,31 @@ static void getColorsForSegSection(short sideFlags, segsection_t section,
     case SEG_MIDDLE:
         if(sideFlags & SDF_BLENDMIDTOTOP)
         {
-            *topColor = topColorPtr;
-            *bottomColor = midColorPtr;
+            *color = SEG_SIDEDEF(seg)->SW_toprgba;
+            *color2 = SEG_SIDEDEF(seg)->SW_middlergba;
         }
         else if(sideFlags & SDF_BLENDMIDTOBOTTOM)
         {
-            *topColor = midColorPtr;
-            *bottomColor = bottomColorPtr;
+            *color = SEG_SIDEDEF(seg)->SW_middlergba;
+            *color2 = SEG_SIDEDEF(seg)->SW_bottomrgba;
         }
         else
         {
-            *topColor = midColorPtr;
-            *bottomColor = NULL;
+            *color = SEG_SIDEDEF(seg)->SW_middlergba;
+            *color2 = NULL;
         }
         break;
 
     case SEG_TOP:
         if(sideFlags & SDF_BLENDTOPTOMID)
         {
-            *topColor = topColorPtr;
-            *bottomColor = midColorPtr;
+            *color = SEG_SIDEDEF(seg)->SW_toprgba;
+            *color2 = SEG_SIDEDEF(seg)->SW_middlergba;
         }
         else
         {
-            *topColor = topColorPtr;
-            *bottomColor = NULL;
+            *color = SEG_SIDEDEF(seg)->SW_toprgba;
+            *color2 = NULL;
         }
         break;
 
@@ -1035,13 +959,13 @@ static void getColorsForSegSection(short sideFlags, segsection_t section,
         // Select the correct colors for this surface.
         if(sideFlags & SDF_BLENDBOTTOMTOMID)
         {
-            *topColor = midColorPtr;
-            *bottomColor = bottomColorPtr;
+            *color = SEG_SIDEDEF(seg)->SW_middlergba;
+            *color2 = SEG_SIDEDEF(seg)->SW_bottomrgba;
         }
         else
         {
-            *topColor = bottomColorPtr;
-            *bottomColor = NULL;
+            *color = SEG_SIDEDEF(seg)->SW_bottomrgba;
+            *color2 = NULL;
         }
         break;
 
@@ -1052,115 +976,17 @@ static void getColorsForSegSection(short sideFlags, segsection_t section,
     }
 }
 
-#define RPF2_SHADOW 0x0001
-#define RPF2_SHINY  0x0002
-#define RPF2_GLOW   0x0004
-#define RPF2_BLEND  0x0008
-
 /**
- * Same as above but for planes. Ultimately we should consider merging the
- * two into a Rend_RenderSurface.
+ * Calculate 2D distance to line.
+ * \fixme Too accurate?
  */
-static void doRenderPlane(rendpoly_t *poly, sector_t *polySector,
-                          subsector_t *subsector,
-                          subplaneinfo_t* plane, surface_t *surface,
-                          float height, short flags)
-{
-    uint                subIndex = GET_SUBSECTOR_IDX(subsector);
-
-    if((flags & RPF2_GLOW) && glowingTextures) // Make it fullbright?
-        poly->flags |= RPF_GLOW;
-
-    // Surface color/light.
-    Rend_PreparePlane(poly, plane, height, subsector, Rend_SectorLight(polySector),
-                      !(surface->normal[VZ] > 0),
-                      R_GetSectorLightColor(polySector), surface->rgba);
-
-    // Dynamic lights. Check for sky.
-    if(R_IsSkySurface(surface))
-    {
-        poly->lightListIdx = 0;
-        skyhemispheres |= (plane->type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
-    }
-    else
-    {
-        poly->lightListIdx =
-            DL_ProcessSubSectorPlane(subsector, plane->planeID);
-    }
-
-    // Smooth Texture Animation?
-    if(flags & RPF2_BLEND)
-        polyTexBlend(poly, surface->material);
-
-    // Add the poly to the appropriate list
-    RL_AddPoly(poly);
-
-    // Fakeradio uses a seperate algorithm for planes.
-    //if(flags & RPF2_SHADOW)
-
-    // Render Shiny polys for this seg?
-    if((flags & RPF2_SHINY) && useShinySurfaces)
-    {
-        ded_reflection_t* ref = R_GetMaterialReflection(surface->material);
-
-        // Make sure the texture has been loaded.
-        if(GL_LoadReflectionMap(ref))
-        {
-            texinfo_t*      texInfo;
-
-            GL_GetMaterialInfo2(surface->material, false, &texInfo);
-            Rend_AddShinyPoly(poly, ref, texInfo->width, texInfo->height);
-        }
-    }
-}
-
-static void setSurfaceColorsForSide(sidedef_t *side)
-{
-    uint                i;
-
-    // Top wall section color offset?
-    if(side->SW_toprgba[0] < 1 || side->SW_toprgba[1] < 1 ||
-       side->SW_toprgba[2] < 1)
-    {
-        for(i = 0; i < 3; ++i)
-            topColor[i] = side->SW_toprgba[i] * sLightColor[i];
-
-        topColorPtr = topColor;
-    }
-    else
-        topColorPtr = sLightColor;
-
-    // Mid wall section color offset?
-    if(side->SW_middlergba[0] < 1 || side->SW_middlergba[1] < 1 ||
-       side->SW_middlergba[2] < 1)
-    {
-        for(i = 0; i < 3; ++i)
-            midColor[i] = side->SW_middlergba[i] * sLightColor[i];
-
-        midColorPtr = midColor;
-    }
-    else
-        midColorPtr = sLightColor;
-
-    // Bottom wall section color offset?
-    if(side->SW_bottomrgba[0] < 1 || side->SW_bottomrgba[1] < 1 ||
-       side->SW_bottomrgba[2] < 1)
-    {
-        for(i = 0; i < 3; ++i)
-            bottomColor[i] = side->SW_bottomrgba[i] * sLightColor[i];
-
-        bottomColorPtr = bottomColor;
-    }
-    else
-        bottomColorPtr = sLightColor;
-}
-
 static void lineDistanceAlpha(const float *point, float radius,
                               const float *from, const float *to,
                               float *alpha)
 {
-    // Calculate 2D distance to line.
-    float               distance =  M_PointLineDistance(from, to, point);
+    float               distance;
+
+    distance = M_PointLineDistance(from, to, point);
 
     if(radius <= 0)
         radius = 1;
@@ -1172,6 +998,290 @@ static void lineDistanceAlpha(const float *point, float radius,
         *alpha = MINMAX_OF(0, *alpha, 1);
     }
 }
+
+typedef struct {
+    boolean         isWall;
+    float           length;
+    const walldiv_t* divs;
+
+    rendpolytype_t  type;
+    short           flags; // RPF_*.
+    float           texOffset[2]; // Texture coordinates for left/top
+                                  // (in real texcoords).
+    const float*    normal; // Surface normal.
+    float           alpha;
+    float           sectorLightLevel, wallAngleLightLevelDelta;
+    const float*    sectorLightColor;
+    const float*    surfaceColor;
+    const float*    surfaceColor2; // Secondary color.
+    gltexture_t     tex;
+    gltexture_t     interTex;
+    float           interPos; // Blending strength (0..1).
+    uint            lightListIdx; // List of lights that affect this poly.
+    blendmode_t     blendMode; // Primitive-specific blending mode.
+
+    // For bias:
+    void*           mapObject;
+    uint            elmIdx;
+    biasaffection_t* affection;
+    biastracker_t*  tracker;
+} rendsegsection_params_t;
+
+typedef struct {
+    rendpolytype_t  type;
+    short           flags; // RPF_*.
+    float           texOffset[2]; // Texture coordinates for left/top
+                                  // (in real texcoords).
+    const float*    normal;
+    float           alpha;
+    float           sectorLightLevel;
+    const float*    sectorLightColor;
+    const float*    surfaceColor;
+    gltexture_t     tex;
+    gltexture_t     interTex;
+    float           interPos; // Blending strength (0..1).
+    uint            lightListIdx; // List of lights that affect this poly.
+    blendmode_t     blendMode; // Primitive-specific blending mode.
+
+    // For bias:
+    void*           mapObject;
+    uint            elmIdx;
+    biasaffection_t* affection;
+    biastracker_t*  tracker;
+} renderplane_params_t;
+
+static void renderSegSection2(const rvertex_t* rvertices, uint numVertices,
+                              const rendsegsection_params_t* p)
+{
+    rendpoly_wall_t     wall;
+    rendpoly_params_t   params;
+    rcolor_t            rcolors[4];
+
+    // Light this polygon.
+    if(!(p->flags & RPF_SKY_MASK))
+    {
+        if(p->flags & RPF_GLOW)
+        {
+            Rend_VertexColorsGlow(rcolors, 4);
+        }
+        else
+        {
+            if(useBias)
+            {
+                // Do BIAS lighting for this poly.
+                SB_RendPoly(rvertices, rcolors, 4,
+                            p->normal, p->sectorLightLevel,
+                            p->tracker, p->affection,
+                            p->mapObject, p->elmIdx, true);
+            }
+            else
+            {
+                float               ll = p->sectorLightLevel +
+                    p->wallAngleLightLevelDelta;
+
+                // Calculate the color for each vertex, blended with plane color?
+                if(p->surfaceColor[0] < 1 || p->surfaceColor[1] < 1 ||
+                   p->surfaceColor[2] < 1)
+                {
+                    float               vColor[4];
+
+                    // Blend sector light+color+surfacecolor
+                    vColor[CR] = p->surfaceColor[CR] * p->sectorLightColor[CR];
+                    vColor[CG] = p->surfaceColor[CG] * p->sectorLightColor[CG];
+                    vColor[CB] = p->surfaceColor[CB] * p->sectorLightColor[CB];
+                    vColor[CA] = 1;
+
+                    if(p->surfaceColor2)
+                    {
+                        lightVertex(&rcolors[1], &rvertices[1], ll, vColor);
+                        lightVertex(&rcolors[3], &rvertices[3], ll, vColor);
+                    }
+                    else
+                    {
+                        lightVertex(&rcolors[0], &rvertices[0], ll, vColor);
+                        lightVertex(&rcolors[1], &rvertices[1], ll, vColor);
+                        lightVertex(&rcolors[2], &rvertices[2], ll, vColor);
+                        lightVertex(&rcolors[3], &rvertices[3], ll, vColor);
+                    }
+                }
+                else
+                {
+                    // Use sector light+color only
+                    if(p->surfaceColor2)
+                    {
+                        lightVertex(&rcolors[1], &rvertices[1], ll, p->sectorLightColor);
+                        lightVertex(&rcolors[3], &rvertices[3], ll, p->sectorLightColor);
+                    }
+                    else
+                    {
+                        lightVertex(&rcolors[0], &rvertices[0], ll, p->sectorLightColor);
+                        lightVertex(&rcolors[1], &rvertices[1], ll, p->sectorLightColor);
+                        lightVertex(&rcolors[2], &rvertices[2], ll, p->sectorLightColor);
+                        lightVertex(&rcolors[3], &rvertices[3], ll, p->sectorLightColor);
+                    }
+                }
+
+                // Bottom color (if different from top)?
+                if(p->surfaceColor2)
+                {
+                    float               vColor[4];
+
+                    // Blend sector light+color+surfacecolor
+                    vColor[CR] = p->surfaceColor2[CR] * p->sectorLightColor[CR];
+                    vColor[CG] = p->surfaceColor2[CG] * p->sectorLightColor[CG];
+                    vColor[CB] = p->surfaceColor2[CB] * p->sectorLightColor[CB];
+                    vColor[CA] = 1;
+
+                    lightVertex(&rcolors[0], &rvertices[0], ll, vColor);
+                    lightVertex(&rcolors[2], &rvertices[2], ll, vColor);
+                }
+            }
+        }
+
+        Rend_VertexColorsApplyTorchLight(rcolors, rvertices, 4, p->flags);
+        Rend_VertexColorsAlpha(rcolors, 4, p->flags, p->alpha);
+    }
+    else
+    {
+        memset(&rcolors, 0, sizeof(rcolors));
+    }
+
+    // Init the params.
+    memset(&params, 0, sizeof(params));
+
+    params.type = p->type;
+    params.flags = p->flags;
+
+    params.isWall = p->isWall;
+    params.wall = &wall;
+    params.wall->length = p->length;
+    memcpy(params.wall->divs, p->divs, sizeof(params.wall->divs));
+
+    params.texOffset[VX] = p->texOffset[VX];
+    params.texOffset[VY] = p->texOffset[VY];
+
+    params.tex.id = curTex = p->tex.id;
+    params.tex.detail = p->tex.detail;
+    params.tex.masked = p->tex.masked;
+    params.tex.height = p->tex.height;
+    params.tex.width = p->tex.width;
+
+    params.interTex.id = p->interTex.id;
+    params.interTex.detail = p->interTex.detail;
+    params.interTex.masked = p->interTex.masked;
+    params.interTex.height = p->interTex.height;
+    params.interTex.width = p->interTex.width;
+
+    params.interPos = p->interPos;
+    params.lightListIdx = p->lightListIdx;
+    params.blendMode = p->blendMode;
+
+    // Add the poly to the appropriate list
+    RL_AddPoly(rvertices, rcolors, 4, &params);
+}
+
+static void renderPlane2(const rvertex_t* rvertices, uint numVertices,
+                         const renderplane_params_t* p)
+{
+    rendpoly_params_t   params;
+    rcolor_t*           rcolors;
+
+    rcolors = R_AllocRendColors(numVertices);
+
+    // Light this polygon.
+    if(!(p->flags & RPF_SKY_MASK))
+    {
+        if(p->flags & RPF_GLOW)
+        {
+            Rend_VertexColorsGlow(rcolors, numVertices);
+        }
+        else
+        {
+            if(useBias)
+            {
+                // Do BIAS lighting for this poly.
+                SB_RendPoly(rvertices, rcolors, numVertices,
+                            p->normal, p->sectorLightLevel,
+                            p->tracker, p->affection,
+                            p->mapObject, p->elmIdx, false);
+            }
+            else
+            {
+                uint                i;
+
+                // Calculate the color for each vertex, blended with plane color?
+                if(p->surfaceColor[0] < 1 || p->surfaceColor[1] < 1 ||
+                   p->surfaceColor[2] < 1)
+                {
+                    float               vColor[4];
+
+                    // Blend sector light+color+surfacecolor
+                    vColor[CR] = p->surfaceColor[CR] * p->sectorLightColor[CR];
+                    vColor[CG] = p->surfaceColor[CG] * p->sectorLightColor[CG];
+                    vColor[CB] = p->surfaceColor[CB] * p->sectorLightColor[CB];
+                    vColor[CA] = 1;
+
+                    for(i = 0; i < numVertices; ++i)
+                        lightVertex(&rcolors[i], &rvertices[i],
+                                    p->sectorLightLevel, vColor);
+                }
+                else
+                {
+                    // Use sector light+color only
+                    for(i = 0; i < numVertices; ++i)
+                        lightVertex(&rcolors[i], &rvertices[i],
+                                    p->sectorLightLevel, p->sectorLightColor);
+                }
+            }
+        }
+
+        Rend_VertexColorsApplyTorchLight(rcolors, rvertices, numVertices,
+                                         p->flags);
+        Rend_VertexColorsAlpha(rcolors, numVertices, p->flags, p->alpha);
+    }
+    else
+    {
+        memset(rcolors, 0, sizeof(*rcolors) * numVertices);
+    }
+
+    // Init the params.
+    memset(&params, 0, sizeof(params));
+
+    params.type = p->type;
+    params.flags = p->flags;
+
+    params.isWall = false;
+    params.wall = NULL;
+
+    params.texOffset[VX] = p->texOffset[VX];
+    params.texOffset[VY] = p->texOffset[VY];
+
+    params.tex.id = curTex = p->tex.id;
+    params.tex.detail = p->tex.detail;
+    params.tex.masked = p->tex.masked;
+    params.tex.height = p->tex.height;
+    params.tex.width = p->tex.width;
+
+    params.interTex.id = p->interTex.id;
+    params.interTex.detail = p->interTex.detail;
+    params.interTex.masked = p->interTex.masked;
+    params.interTex.height = p->interTex.height;
+    params.interTex.width = p->interTex.width;
+
+    params.interPos = p->interPos;
+    params.lightListIdx = p->lightListIdx;
+    params.blendMode = p->blendMode;
+
+    // Add the poly to the appropriate list
+    RL_AddPoly(rvertices, rcolors, numVertices, &params);
+
+    R_FreeRendColors(rcolors);
+}
+
+#define RPF2_SHADOW 0x0001
+#define RPF2_SHINY  0x0002
+#define RPF2_GLOW   0x0004
+#define RPF2_BLEND  0x0008
 
 static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *surface,
                                 float bottom, float top, float extraTexYOffset,
@@ -1204,23 +1314,11 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
     // Is there a visible surface?
     if(visible)
     {
-        float       vL_ZTop, vL_ZBottom, vR_ZTop, vR_ZBottom, *vL_XY, *vR_XY;
-        short       tempflags = 0;
-        float       alpha = (section == SEG_MIDDLE? surface->rgba[3] : 1.0f);
-        float       texOffset[2] = {0, 0};
-        boolean     inView = true;
-        texinfo_t  *texinfo = NULL;
+        float               alpha;
+        short               tempflags = 0;
+        texinfo_t*          texinfo = NULL;
 
-        // Get the start and end vertices, left then right.
-        vL_XY = seg->SG_v1pos;
-        vR_XY = seg->SG_v2pos;
-
-        // Calculate texture coordinates.
-        vL_ZTop = vR_ZTop = top;
-        vL_ZBottom = vR_ZBottom = bottom;
-
-        texOffset[VX] = surface->visOffset[VX] + seg->offset;
-        texOffset[VY] = surface->visOffset[VY] + extraTexYOffset;
+        alpha = (section == SEG_MIDDLE? surface->rgba[3] : 1.0f);
 
         if(section == SEG_MIDDLE && softSurface)
         {
@@ -1242,58 +1340,97 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                 c[VY] = mo->pos[VY];
 
                 lineDistanceAlpha(c, mo->radius * .8f,
-                                  vL_XY, vR_XY, &alpha);
+                                  seg->SG_v1pos, seg->SG_v2pos, &alpha);
                 if(alpha < 1)
                     solidSeg = false;
             }
         }
 
-        if(inView && alpha > 0)
+        if(alpha > 0)
         {
-            rendpoly_t         *quad;
-            int                 surfaceFlags;
+            rendsegsection_params_t params;
+            rvertex_t           rvertices[4];
+            walldiv_t           divs[2];
 
-            // Init the quad.
-            quad = R_AllocRendPoly(RP_QUAD, true, 4);
-            quad->tex.detail = NULL;
-            quad->interTex.detail = NULL;
-            quad->wall->length = seg->length;
-            quad->flags = 0;
-            memcpy(&quad->normal, &surface->normal, sizeof(quad->normal));
+            // Init the params.
+            memset(&params, 0, sizeof(params));
 
-            quad->texOffset[VX] = texOffset[VX];
-            quad->texOffset[VY] = texOffset[VY];
+            // Bottom Left.
+            rvertices[0].pos[VX] = seg->SG_v1pos[VX];
+            rvertices[0].pos[VY] = seg->SG_v1pos[VY];
+            rvertices[0].pos[VZ] = bottom;
 
-            // Fill in the remaining quad data.
+            // Top Left.
+            rvertices[1].pos[VX] = seg->SG_v1pos[VX];
+            rvertices[1].pos[VY] = seg->SG_v1pos[VY];
+            rvertices[1].pos[VZ] = top;
+
+            // Bottom Right.
+            rvertices[2].pos[VX] = seg->SG_v2pos[VX];
+            rvertices[2].pos[VY] = seg->SG_v2pos[VY];
+            rvertices[2].pos[VZ] = bottom;
+
+            // Top Right.
+            rvertices[3].pos[VX] = seg->SG_v2pos[VX];
+            rvertices[3].pos[VY] = seg->SG_v2pos[VY];
+            rvertices[3].pos[VZ] = top;
+
+            params.type = RP_QUAD;
+            params.length = seg->length;
+            params.divs = divs;
+            params.alpha = alpha;
+            params.mapObject = seg;
+            params.elmIdx = (uint) section;
+
+            // Fill in the remaining params data.
             if(skyMask || !surface->material)
-            {   // We'll mask this.
-                quad->flags = RPF_SKY_MASK;
-                quad->tex.id = 0;
-                quad->lightListIdx = 0;
-                quad->interTex.id = 0;
+            {
+                // In devSkyMode mode we render all polys destined for the skymask as
+                // regular world polys (with a few obvious properties).
+                if(devSkyMode)
+                {
+                    texinfo_t          *texinfo;
+
+                    params.tex.id =
+                        GL_PrepareMaterial(skyMaskMaterial, &texinfo);
+
+                    params.tex.width = texinfo->width;
+                    params.tex.height = texinfo->height;
+                    params.flags |= RPF_GLOW;
+                }
+                else
+                {
+                    // We'll mask this.
+                    params.flags |= RPF_SKY_MASK;
+                }
             }
             else
             {
-                surfaceFlags = prepareMaterialForPoly(quad, surface, &texinfo);
+                int                 surfaceFlags =
+                    prepareMaterialForSurface(&params.tex, surface, &texinfo);
+
+                // Calculate texture coordinates.
+                params.texOffset[VX] = surface->visOffset[VX] + seg->offset;
+                params.texOffset[VY] = surface->visOffset[VY] + extraTexYOffset;
 
                 if(section == SEG_MIDDLE && softSurface)
                 {
                     // Blendmode.
                     if(surface->blendMode == BM_NORMAL && noSpriteTrans)
-                        quad->blendMode = BM_ZEROALPHA; // "no translucency" mode
+                        params.blendMode = BM_ZEROALPHA; // "no translucency" mode
                     else
-                        quad->blendMode = surface->blendMode;
+                        params.blendMode = surface->blendMode;
 
                     // If alpha, masked or blended we'll render as a vissprite.
                     if(alpha < 1 || texinfo->masked || surface->blendMode > 0)
                     {
-                        quad->flags = RPF_MASKED;
+                        params.flags = RPF_MASKED;
                         solidSeg = false;
                     }
                 }
                 else
                 {
-                    quad->blendMode = BM_NORMAL;
+                    params.blendMode = BM_NORMAL;
                 }
 
                 if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
@@ -1306,109 +1443,66 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                     tempflags |= RPF2_BLEND;
             }
 
-            // Bottom Left.
-            quad->vertices[0].pos[0] = vL_XY[VX];
-            quad->vertices[0].pos[1] = vL_XY[VY];
-            quad->vertices[0].pos[2] = vL_ZBottom;
-
-            // Bottom Right.
-            quad->vertices[2].pos[0] = vR_XY[VX];
-            quad->vertices[2].pos[1] = vR_XY[VY];
-            quad->vertices[2].pos[2] = vR_ZBottom;
-
-            // Top Left.
-            quad->vertices[1].pos[0] = vL_XY[VX];
-            quad->vertices[1].pos[1] = vL_XY[VY];
-            quad->vertices[1].pos[2] = vL_ZTop;
-
-            // Top Right.
-            quad->vertices[3].pos[0] = vR_XY[VX];
-            quad->vertices[3].pos[1] = vR_XY[VY];
-            quad->vertices[3].pos[2] = vR_ZTop;
-
-            if(skyMask)
+            /**
+             * If this poly is destined for the skymask, we don't need to
+             * do any further processing.
+             */
+            if(!(params.flags & RPF_SKY_MASK))
             {
-                /**
-                 * This poly is destined for the skymask, so we don't need
-                 * to do further processing.
-                 */
-                RL_AddPoly(quad);
-            }
-            else
-            {
-                const float    *topColor = NULL;
-                const float    *bottomColor = NULL;
-                float           sectorLightLevel =
-                    Rend_SectorLight(frontsec);
+                const float*    topColor = NULL;
+                const float*    bottomColor = NULL;
+
+                params.normal = surface->normal;
+                params.sectorLightLevel = Rend_SectorLight(frontsec);
+                params.sectorLightColor = R_GetSectorLightColor(frontsec);
+                params.wallAngleLightLevelDelta =
+                    R_WallAngleLightLevelDelta(seg->lineDef, seg->side);
 
                 // Check for neighborhood division?
-                if(!(quad->flags & RPF_MASKED))
-                    applyWallHeightDivision(quad, seg, frontsec, vL_ZBottom, vL_ZTop);
-
-                getColorsForSegSection(sideFlags, section, &bottomColor, &topColor);
-
-                // Dynamic lights.
-                quad->lightListIdx =
-                    DL_ProcessSegSection(seg, vL_ZBottom, vL_ZTop,
-                                         (quad->flags & RPF_MASKED)? true:false);
-
-                // Make it fullbright?
-                if((tempflags & RPF2_GLOW) && glowingTextures)
-                    quad->flags |= RPF_GLOW;
-
-                // Surface color/light.
-                if(quad->flags & RPF_GLOW)
+                if(!(params.flags & RPF_MASKED))
                 {
-                    Rend_VertexColorsGlow(quad);
+                    applyWallHeightDivision(divs, seg, frontsec, bottom, top);
+
+                    if(divs[0].num > 0 || divs[1].num > 0)
+                        params.type = RP_DIVQUAD;
                 }
-                else
-                {
-                    if(useBias)
-                    {
-                        // Do BIAS lighting for this poly.
-                        SB_RendPoly(quad, sectorLightLevel, seg->illum[section],
-                                    &seg->tracker[section], seg->affected,
-                                    GET_SEG_IDX(seg));
-                    }
-                    else
-                    {
-                        float               ll = sectorLightLevel +
-                            R_WallAngleLightLevelDelta(seg->lineDef,
-                                                       seg->side);
-
-                        Rend_VertexColors(quad, ll, topColor);
-
-                        // Bottom color (if different from top)?
-                        if(bottomColor != NULL)
-                        {
-                            uint                i;
-
-                            for(i = 0; i < 4; i += 2)
-                            {
-                                quad->vertices[i].color[CR] = bottomColor[0];
-                                quad->vertices[i].color[CG] = bottomColor[1];
-                                quad->vertices[i].color[CB] = bottomColor[2];
-                            }
-                        }
-                    }
-                }
-
-                Rend_VertexColorsApplyTorchLight(quad);
-                Rend_VertexColorsAlpha(quad, alpha);
 
                 // Smooth Texture Animation?
                 if(tempflags & RPF2_BLEND)
-                    polyTexBlend(quad, surface->material);
+                {
+                    params.interPos =
+                        polyTexBlend(&params.interTex, surface->material);
+                }
 
-                // Add the poly to the appropriate list
-                RL_AddPoly(quad);
+                if(tempflags & RPF2_SHADOW)
+                    Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
+
+                getColorsForSegSection(seg, section, sideFlags,
+                                       &params.surfaceColor,
+                                       &params.surfaceColor2);
+
+                // Make it fullbright?
+                if((tempflags & RPF2_GLOW) && glowingTextures)
+                    params.flags |= RPF_GLOW;
+
+                // Dynamic lights.
+                if(!(params.flags & RPF_GLOW))
+                    params.lightListIdx =
+                        DL_ProcessSegSection(seg, bottom, top,
+                                             (params.flags & RPF_MASKED)? true:false);
+
+                if(useBias)
+                {
+                    params.tracker = &seg->tracker[section];
+                    params.affection = seg->affected;
+                }
 
                 // Render Fakeradio polys for this seg?
-                if(tempflags & RPF2_SHADOW)
+                if((tempflags & RPF2_SHADOW) && !(params.flags & RPF_GLOW))
                 {
-                    Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
-                    Rend_RadioSegSection(quad, seg->lineDef, seg->side, seg->offset,
-                                         seg->length);
+                    Rend_RadioSegSection(rvertices, params.divs,
+                                         params.type, seg->lineDef,
+                                         seg->side, seg->offset, seg->length);
                 }
 
                 // Render Shiny polys for this seg?
@@ -1420,21 +1514,37 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                     // Make sure the texture has been loaded.
                     if(GL_LoadReflectionMap(ref))
                     {
-                        // We're going to modify the polygon quite a bit...
-                        rendpoly_t*         q;
+                        rcolor_t            shinyColors[4];
+                        rendpoly_wall_t     wall2;
+                        rendpoly_params_t   params2;
                         texinfo_t*          texInfo;
 
+                        // We'll re-use the same vertices but we'll need
+                        // some rcolors.
                         GL_GetMaterialInfo2(surface->material, false, &texInfo);
 
-                        q = R_AllocRendPoly(RP_QUAD, true, 4);
-                        R_MemcpyRendPoly(q, quad);
-                        Rend_AddShinyPoly(q, ref, texInfo->width, texInfo->height);
-                        R_FreeRendPoly(q);
+                        params2.type = RP_QUAD;
+                        memcpy(&params2.tex, &params.tex, sizeof(gltexture_t));
+                        memcpy(&params2.interTex, &params.interTex, sizeof(gltexture_t));
+                        memcpy(&wall2.divs, &params.divs, sizeof(wall2.divs));
+                        wall2.length = params.length;
+                        params2.wall = &wall2;
+                        params2.texOffset[VX] = params.texOffset[VX];
+                        params2.texOffset[VY] = params.texOffset[VY];
+                        params2.flags = params.flags;
+                        params2.interPos = params.interPos;
+                        params2.blendMode = BM_NORMAL;
+                        params2.lightListIdx = 0;
+                        params2.type = params.type;
+
+                        Rend_AddShinyPoly(rvertices, shinyColors, 4,
+                                          &params2, ref, texInfo->width,
+                                          texInfo->height);
                     }
                 }
             }
 
-            R_FreeRendPoly(quad);
+            renderSegSection2(rvertices, 4, &params);
         }
     }
 
@@ -1474,8 +1584,6 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     ffloor = fflinkSec->SP_floorvisheight;
     fclinkSec = R_GetLinkedSector(ssec, PLN_CEILING);
     fceil = fclinkSec->SP_ceilvisheight;
-
-    setSurfaceColorsForSide(side);
 
     // Create the wall sections.
 
@@ -1542,8 +1650,6 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     bceil = backsec->SP_ceilvisheight;
     bfloor = backsec->SP_floorvisheight;
     bsh = bceil - bfloor;
-
-    setSurfaceColorsForSide(side);
 
     // Create the wall sections.
 
@@ -1717,27 +1823,49 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
 
 static void Rend_SSectSkyFixes(subsector_t *ssec)
 {
-    float       ffloor, fceil, bfloor, bceil, bsh;
-    rendpoly_t *quad;
-    float      *vBL, *vBR, *vTL, *vTR;
-    sector_t   *frontsec, *backsec;
-    uint        j, num;
-    seg_t      *seg, **list;
-    sidedef_t     *side;
+    float               ffloor, fceil, bfloor, bceil, bsh;
+    rvertex_t           rvertices[4];
+    rcolor_t            rcolors[4];
+    rendpoly_params_t   params;
+    rendpoly_wall_t     wall;
+    float*              vBL, *vBR, *vTL, *vTR;
+    sector_t*           frontsec, *backsec;
+    uint                j, num;
+    seg_t*              seg, **list;
+    sidedef_t*          side;
 
-    // Init the quad.
-    quad = R_AllocRendPoly(RP_QUAD, true, 4);
-    quad->flags = RPF_SKY_MASK;
-    quad->lightListIdx = 0;
-    quad->tex.id = 0;
-    quad->tex.detail = NULL;
-    quad->interTex.id = 0;
-    quad->interTex.detail = NULL;
+    // Init the poly.
+    memset(&params, 0, sizeof(params));
+    params.type = RP_QUAD;
+    params.flags = RPF_SKY_MASK;
+    params.wall = &wall;
 
-    vBL = quad->vertices[0].pos;
-    vBR = quad->vertices[2].pos;
-    vTL = quad->vertices[1].pos;
-    vTR = quad->vertices[3].pos;
+    // In devSkyMode mode we render all polys destined for the skymask as
+    // regular world polys (with a few obvious properties).
+    if(devSkyMode)
+    {
+        size_t              i;
+        texinfo_t          *texinfo;
+
+        params.tex.id = curTex =
+            GL_PrepareMaterial(skyMaskMaterial, &texinfo);
+
+        params.tex.width = texinfo->width;
+        params.tex.height = texinfo->height;
+        params.flags &= ~RPF_SKY_MASK;
+        params.flags |= RPF_GLOW;
+
+        for(i = 0; i < 4; ++i)
+            rcolors[i].rgba[CR] =
+                rcolors[i].rgba[CG] =
+                    rcolors[i].rgba[CB] =
+                        rcolors[i].rgba[CA] = 1;
+    }
+
+    vBL = rvertices[0].pos;
+    vBR = rvertices[2].pos;
+    vTL = rvertices[1].pos;
+    vTR = rvertices[3].pos;
 
     num  = ssec->segCount;
     list = ssec->segs;
@@ -1783,8 +1911,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
         vBR[VX] = vTR[VX] = seg->SG_v2pos[VX];
         vBR[VY] = vTR[VY] = seg->SG_v2pos[VY];
 
-        quad->wall->length = seg->length;
-        memcpy(&quad->normal, &side->SW_middlenormal, sizeof(quad->normal));
+        params.wall->length = seg->length;
 
         // Upper/lower normal skyfixes.
         if(!((frontsec->flags & SECF_SELFREFHACK) && backsec))
@@ -1800,7 +1927,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     vTL[VZ] = vTR[VZ] = ffloor;
                     vBL[VZ] = vBR[VZ] =
                         ffloor + frontsec->skyFix[PLN_FLOOR].offset;
-                    RL_AddPoly(quad);
+                    RL_AddPoly(rvertices, rcolors, 4, &params);
                 }
             }
 
@@ -1816,7 +1943,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                         fceil + frontsec->skyFix[PLN_CEILING].offset;
                     vBL[VZ] = vBR[VZ] = fceil;
 
-                    RL_AddPoly(quad);
+                    RL_AddPoly(rvertices, rcolors, 4, &params);
                 }
             }
         }
@@ -1833,7 +1960,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     vTL[VZ] = vTR[VZ] = bfloor;
                     vBL[VZ] = vBR[VZ] =
                         bfloor + backsec->skyFix[PLN_FLOOR].offset;
-                    RL_AddPoly(quad);
+                    RL_AddPoly(rvertices, rcolors, 4, &params);
                 }
                 // Ensure we add a solid view seg.
                 seg->frameFlags |= SEGINF_BACKSECSKYFIX;
@@ -1848,15 +1975,13 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     vTL[VZ] = vTR[VZ] =
                         bceil + backsec->skyFix[PLN_CEILING].offset;
                     vBL[VZ] = vBR[VZ] = bceil;
-                    RL_AddPoly(quad);
+                    RL_AddPoly(rvertices, rcolors, 4, &params);
                 }
                 // Ensure we add a solid view seg.
                 seg->frameFlags |= SEGINF_BACKSECSKYFIX;
             }
         }
     }
-
-    R_FreeRendPoly(quad);
 }
 
 /**
@@ -1868,9 +1993,9 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
 static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
 {
     float               fronth[2], backh[2];
-    float              *startv, *endv;
-    sector_t           *front = sub->sector, *back;
-    seg_t              *seg, **ptr;
+    float*              startv, *endv;
+    sector_t*           front = sub->sector, *back;
+    seg_t*              seg, **ptr;
 
     if(devNoCulling || P_IsInVoid(viewPlayer))
         return;
@@ -1936,21 +2061,23 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
     }
 }
 
-static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
+static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
 {
-    sector_t   *sector = subsector->sector;
-    int         surfaceFlags;
-    float       height;
-    surface_t  *surface;
-    sector_t   *polySector;
-    float       vec[3];
+    sector_t*       sector = subsector->sector;
+    float           height;
+    surface_t*      surface;
+    sector_t*       polySector;
+    float           vec[3];
+    plane_t*        plane;
 
-    polySector = R_GetLinkedSector(subsector, plane->planeID);
-    surface = &polySector->planes[plane->planeID]->surface;
+    polySector = R_GetLinkedSector(subsector, planeID);
+    surface = &polySector->planes[planeID]->surface;
 
     // Must have a visible surface.
     if(!surface->material)
         return;
+
+    plane = polySector->planes[planeID];
 
     // We don't render planes for unclosed sectors when the polys would
     // be added to the skymask (a DOOM.EXE renderer hack).
@@ -1958,7 +2085,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
         return;
 
     // Determine plane height.
-    height = polySector->SP_planevisheight(plane->planeID);
+    height = polySector->SP_planevisheight(planeID);
     // Add the skyfix.
     if(plane->type != PLN_MID)
         height += polySector->S_skyfix(plane->type).offset;
@@ -1971,26 +2098,65 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     if(!(M_DotProduct(vec, surface->normal) < 0))
     {
         short               tempflags = 0;
-        texinfo_t          *texInfo;
-        rendpoly_t         *poly =
-            R_AllocRendPoly(RP_FLAT, false, subsector->numVertices);
+        texinfo_t*          texInfo;
+        renderplane_params_t params;
+        uint                numVertices = subsector->numVertices;
+        rvertex_t*          rvertices;
+        uint                subIndex = GET_SUBSECTOR_IDX(subsector);
 
-        surfaceFlags = prepareMaterialForPoly(poly, surface, &texInfo);
+        rvertices = R_AllocRendVertices(numVertices);
 
-        // Fill in the remaining quad data.
-        poly->flags = 0;
-        memcpy(&poly->normal, &surface->normal, sizeof(poly->normal));
+        memset(&params, 0, sizeof(params));
+        params.type = RP_FLAT;
+        params.flags = 0;
+        params.texOffset[VX] = params.texOffset[VY] = 0;
+        params.interPos = 0;
+        params.lightListIdx = 0;
+        params.blendMode = BM_NORMAL;
+        params.mapObject = subsector;
+        params.elmIdx = plane->planeID;
+
+        params.tex.id = curTex = 0;
+
+        params.tex.detail = 0;
+        params.tex.height = params.tex.width = 0;
+        params.tex.masked = 0;
+
+        memset(&params.interTex, 0, sizeof(params.interTex));
 
         // Check for sky.
         if(R_IsSkySurface(surface))
         {
-            poly->flags |= RPF_SKY_MASK;
+            params.flags |= RPF_SKY_MASK;
+
+            // In devSkyMode mode we render all polys destined for the skymask as
+            // regular world polys (with a few obvious properties).
+            if(devSkyMode)
+            {
+                texinfo_t          *texinfo;
+
+                params.tex.id = curTex =
+                    GL_PrepareMaterial(skyMaskMaterial, &texinfo);
+
+                params.tex.width = texinfo->width;
+                params.tex.height = texinfo->height;
+                params.tex.detail = 0;
+                params.texOffset[VX] = params.texOffset[VY] = 0;
+                params.lightListIdx = 0;
+                params.flags &= ~RPF_SKY_MASK;
+                params.flags |= RPF_GLOW;
+            }
         }
         else
         {
-            poly->texOffset[VX] =
+            int             surfaceFlags =
+                prepareMaterialForSurface(&params.tex, surface, &texInfo);
+
+            curTex = params.tex.id; //// \kludge.
+
+            params.texOffset[VX] =
                 sector->SP_plane(plane->planeID)->PS_visoffset[VX];
-            poly->texOffset[VY] =
+            params.texOffset[VY] =
                 sector->SP_plane(plane->planeID)->PS_visoffset[VY];
 
             if(surface->material && !texInfo->masked)
@@ -2001,10 +2167,88 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
                 tempflags |= RPF2_BLEND;
         }
 
-        doRenderPlane(poly, polySector, subsector, plane, surface,
-                      height, tempflags);
+        if((tempflags & RPF2_GLOW) && glowingTextures) // Make it fullbright?
+            params.flags |= RPF_GLOW;
 
-        R_FreeRendPoly(poly);
+        Rend_PreparePlane(rvertices, numVertices, height, subsector,
+                          !(surface->normal[VZ] > 0));
+
+        // Dynamic lights. Check for sky.
+        if(R_IsSkySurface(surface))
+        {
+            skyhemispheres |=
+                (plane->type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
+            params.alpha = 1;
+        }
+        else
+        {
+            if(!(params.flags & RPF_GLOW))
+                params.lightListIdx =
+                    DL_ProcessSubSectorPlane(subsector, plane->planeID);
+
+            // Smooth Texture Animation?
+            if(tempflags & RPF2_BLEND)
+            {
+                params.interPos =
+                    polyTexBlend(&params.interTex, surface->material);
+            }
+
+            params.alpha = surface->rgba[CA];
+        }
+
+        params.normal = surface->normal;
+        params.sectorLightLevel = Rend_SectorLight(polySector);
+
+        if(useBias)
+        {
+            subplaneinfo_t*     subPln =
+                &plane->subPlanes[subsector->inSectorID];
+
+            params.tracker = &subPln->tracker;
+            params.affection = subPln->affected;
+        }
+
+        params.sectorLightColor = R_GetSectorLightColor(polySector);
+        params.surfaceColor = surface->rgba;
+        renderPlane2(rvertices, numVertices, &params);
+
+        // Fakeradio uses a seperate algorithm for planes.
+        //if(tempflags & RPF2_SHADOW)
+
+        // Render Shiny polys for this seg?
+        if((tempflags & RPF2_SHINY) && useShinySurfaces &&
+           !R_IsSkySurface(surface))
+        {
+            ded_reflection_t*   ref =
+                R_GetMaterialReflection(surface->material);
+
+            // Make sure the texture has been loaded.
+            if(GL_LoadReflectionMap(ref))
+            {
+                texinfo_t*          texInfo;
+                rendpoly_params_t   shinyParams;
+                rcolor_t*           shinyColors;
+
+                // We'll re-use the same vertices but we'll need to change
+                // the colors.
+                shinyColors = R_AllocRendColors(numVertices);
+                memset(&shinyParams, 0, sizeof(shinyParams));
+                shinyParams.type = params.type;
+                shinyParams.flags = params.flags;
+                shinyParams.blendMode = BM_NORMAL;
+                shinyParams.texOffset[VX] = params.texOffset[VX];
+                shinyParams.texOffset[VY] = params.texOffset[VY];
+                shinyParams.type = params.type;
+
+                GL_GetMaterialInfo2(surface->material, false, &texInfo);
+                Rend_AddShinyPoly(rvertices, shinyColors, numVertices,
+                                  &shinyParams, ref, texInfo->width,
+                                  texInfo->height);
+                R_FreeRendColors(shinyColors);
+            }
+        }
+
+        R_FreeRendVertices(rvertices);
     }
 }
 
@@ -2137,7 +2381,7 @@ static void Rend_RenderSubsector(uint ssecidx)
 
     // Render all planes of this sector.
     for(i = 0; i < sect->planeCount; ++i)
-        Rend_RenderPlane(ssec->planes[i], ssec);
+        Rend_RenderPlane(ssec, i);
 }
 
 static void Rend_RenderNode(uint bspnum)

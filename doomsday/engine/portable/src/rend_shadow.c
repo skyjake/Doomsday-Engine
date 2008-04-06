@@ -87,17 +87,19 @@ static boolean Rend_ShadowIterator(sector_t *sector, void *data)
     return true; // Continue iteration.
 }
 
-static void processMobjShadow(mobj_t *mo)
+static void processMobjShadow(mobj_t* mo)
 {
 #define SHADOWZOFFSET       (0.2f)
 
     float               moz;
-    float               height, moh, halfmoh, color, pos[2];
+    float               height, moh, halfmoh, alpha, pos[2];
     sector_t           *sec = mo->subsector->sector;
     float               radius;
     uint                i;
-    rendpoly_t         *poly;
-    plane_t            *plane;
+    rvertex_t           rvertices[4];
+    rcolor_t            rcolors[4];
+    rendpoly_params_t   params;
+    plane_t*            plane;
     float               distance;
 
     // Is this too far?
@@ -131,24 +133,24 @@ static void processMobjShadow(mobj_t *mo)
 
     // Calculate the strength of the shadow.
     // Simplified version, no light diminishing or range compression.
-    color =
+    alpha =
         shadowFactor * sec->lightLevel *
         (1 - mo->translucency * reciprocal255);
 
     halfmoh = moh / 2;
     if(height > halfmoh)
-        color *= 1 - (height - halfmoh) / (moh - halfmoh);
+        alpha *= 1 - (height - halfmoh) / (moh - halfmoh);
     if(usingFog)
-        color /= 2;
+        alpha /= 2;
     if(distance > 3 * shadowMaxDist / 4)
     {
         // Fade when nearing the maximum distance.
-        color *= (shadowMaxDist - distance) / (shadowMaxDist / 4);
+        alpha *= (shadowMaxDist - distance) / (shadowMaxDist / 4);
     }
-    if(color <= 0)
+    if(alpha <= 0)
         return; // Can't be seen.
-    if(color > 1)
-        color = 1;
+    if(alpha > 1)
+        alpha = 1;
 
     // Calculate the radius of the shadow.
     radius = R_VisualRadius(mo);
@@ -173,40 +175,49 @@ static void processMobjShadow(mobj_t *mo)
         return;
 
     // Prepare the poly.
-    poly = R_AllocRendPoly(RP_FLAT, false, 4);
-    poly->flags = RPF_SHADOW;
-    poly->tex.id = GL_PrepareLSTexture(LST_DYNAMIC, NULL);
-    poly->tex.width = poly->tex.height = radius * 2;
-    poly->texOffset[VX] = -pos[VX] + radius;
-    poly->texOffset[VY] = -pos[VY] - radius;
+    params.type = RP_FLAT;
+    params.flags = 0;
+    params.texOffset[VX] = params.texOffset[VY] = 0;
+    params.interPos = 0;
+    params.lightListIdx = 0;
+    params.blendMode = BM_NORMAL;
+    params.tex.id = curTex = 0;
 
-    poly->vertices[0].pos[VX] = pos[VX] - radius;
-    poly->vertices[0].pos[VY] = pos[VY] + radius;
-    poly->vertices[0].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
-    poly->vertices[1].pos[VX] = pos[VX] + radius;
-    poly->vertices[1].pos[VY] = pos[VY] + radius;
-    poly->vertices[1].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
-    poly->vertices[2].pos[VX] = pos[VX] + radius;
-    poly->vertices[2].pos[VY] = pos[VY] - radius;
-    poly->vertices[2].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
-    poly->vertices[3].pos[VX] = pos[VX] - radius;
-    poly->vertices[3].pos[VY] = pos[VY] - radius;
-    poly->vertices[3].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
+    params.tex.detail = 0;
+    params.tex.height = params.tex.width = 0;
+    params.tex.masked = 0;
 
-    poly->normal[0] = poly->normal[1] = 0;
-    poly->normal[2] = 1;
+    memset(&params.interTex, 0, sizeof(params.interTex));
 
+    params.flags = RPF_SHADOW;
+    params.tex.id = curTex = GL_PrepareLSTexture(LST_DYNAMIC, NULL);
+    params.tex.width = params.tex.height = radius * 2;
+    params.texOffset[VX] = -pos[VX] + radius;
+    params.texOffset[VY] = -pos[VY] - radius;
+
+    rvertices[0].pos[VX] = pos[VX] - radius;
+    rvertices[0].pos[VY] = pos[VY] + radius;
+    rvertices[0].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
+    rvertices[1].pos[VX] = pos[VX] + radius;
+    rvertices[1].pos[VY] = pos[VY] + radius;
+    rvertices[1].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
+    rvertices[2].pos[VX] = pos[VX] + radius;
+    rvertices[2].pos[VY] = pos[VY] - radius;
+    rvertices[2].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
+    rvertices[3].pos[VX] = pos[VX] - radius;
+    rvertices[3].pos[VY] = pos[VY] - radius;
+    rvertices[3].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
+
+    // Shadows are black.
     for(i = 0; i < 4; ++i)
     {
-        // Shadows are black.
-        poly->vertices[i].color[CR] =
-            poly->vertices[i].color[CG] =
-                poly->vertices[i].color[CB] = 0;
-        poly->vertices[i].color[CA] = color;
+        rcolors[i].rgba[CR] =
+            rcolors[i].rgba[CG] =
+                rcolors[i].rgba[CB] = 0;
+        rcolors[i].rgba[CA] = alpha;
     }
 
-    RL_AddPoly(poly);
-    R_FreeRendPoly(poly);
+    RL_AddPoly(rvertices, rcolors, 4, &params);
 
 #undef SHADOWZOFFSET
 }

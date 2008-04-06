@@ -663,7 +663,10 @@ static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
         subsector_t        *ssec = &map->ssectors[i];
 
         if(ssec->sector == sec)
+        {
+            ssec->inSectorID = n;
             sec->ssectors[n++] = ssec;
+        }
     }
     sec->ssectors[n] = NULL; // Terminate.
     sec->ssectorCount = count;
@@ -1337,7 +1340,7 @@ static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
     }
 }
 
-static void hardenSidedefs(gamemap_t *dest, editmap_t *src)
+static void hardenSidedefs(gamemap_t* dest, editmap_t* src)
 {
     uint                i;
 
@@ -1354,9 +1357,9 @@ static void hardenSidedefs(gamemap_t *dest, editmap_t *src)
     }
 }
 
-static void hardenSectors(gamemap_t *dest, editmap_t *src)
+static void hardenSectors(gamemap_t* dest, editmap_t* src)
 {
-    uint                i, j;
+    uint                i;
 
     dest->numSectors = src->numSectors;
     dest->sectors = Z_Malloc(dest->numSectors * sizeof(sector_t), PU_LEVELSTATIC, 0);
@@ -1365,22 +1368,42 @@ static void hardenSectors(gamemap_t *dest, editmap_t *src)
     {
         sector_t           *destS = &dest->sectors[i];
         sector_t           *srcS = src->sectors[i];
-        plane_t            *pln;
 
         memcpy(destS, srcS, sizeof(*destS));
         destS->planeCount = 0;
         destS->planes = NULL;
+    }
+}
+
+static void hardenPlanes(gamemap_t* dest, editmap_t* src)
+{
+    uint                i, j;
+
+    for(i = 0; i < dest->numSectors; ++i)
+    {
+        sector_t           *destS = &dest->sectors[i];
+        sector_t           *srcS = src->sectors[i];
 
         for(j = 0; j < srcS->planeCount; ++j)
         {
-            pln = R_NewPlaneForSector(destS);
-            memcpy(pln, srcS->planes[j], sizeof(*pln));
-            pln->sector = destS;
+            plane_t*            destP = R_NewPlaneForSector(destS);
+            plane_t*            srcP = srcS->planes[j];
+
+            destP->glow = srcP->glow;
+            destP->glowRGB[CR] = srcP->glowRGB[CR];
+            destP->glowRGB[CG] = srcP->glowRGB[CG];
+            destP->glowRGB[CB] = srcP->glowRGB[CB];
+            destP->height = destP->oldHeight[0] = destP->oldHeight[1] =
+                destP->visHeight = srcP->height;
+            destP->visHeightDelta = 0;
+            memcpy(&destP->surface, &srcP->surface, sizeof(destP->surface));
+            destP->type = srcP->type;
+            destP->sector = destS;
         }
     }
 }
 
-static void hardenPolyobjs(gamemap_t *dest, editmap_t *src)
+static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
 {
     uint                i;
 
@@ -1515,7 +1538,7 @@ boolean MPE_End(void)
     hardenLinedefs(gamemap, map);
     hardenPolyobjs(gamemap, map);
 
-    destroyEditableSectors(map);
+    // Don't destroy the sectors (planes are linked to them).
     destroyEditableSideDefs(map);
     destroyEditableLineDefs(map);
     destroyEditablePolyObjs(map);
@@ -1526,12 +1549,22 @@ boolean MPE_End(void)
     /**
      * Build a blockmap for this map.
      */
-    DAM_BuildBlockMap(gamemap, &map->vertexes, &map->numVertexes);
-
+    gamemap->blockMap =
+        DAM_BuildBlockMap(&map->vertexes, &map->numVertexes,
+                          &gamemap->lineDefs, &gamemap->numLineDefs);
     /**
      * Build a BSP for this map.
      */
     builtOK = BSP_Build(gamemap, &map->vertexes, &map->numVertexes);
+
+    // Polygonize.
+    R_PolygonizeMap(gamemap);
+
+    buildSectorSSecLists(gamemap);
+
+    // Map must be polygonized and sector->ssectors must be built before
+    // this is called!
+    hardenPlanes(gamemap, map);
 
     // Destroy the rest of editable map, we are finished with it.
     // \note Only the vertexes should be left anyway.
@@ -1545,16 +1578,6 @@ boolean MPE_End(void)
         return false;
     }
 
-    // Call the game's setup routines.
-    if(gx.SetupForMapData)
-    {
-        gx.SetupForMapData(DMU_VERTEX, gamemap->numVertexes);
-        gx.SetupForMapData(DMU_LINEDEF, gamemap->numLineDefs);
-        gx.SetupForMapData(DMU_SIDEDEF, gamemap->numSideDefs);
-        gx.SetupForMapData(DMU_SECTOR, gamemap->numSectors);
-    }
-
-    buildSectorSSecLists(gamemap);
     buildSectorLineLists(gamemap);
     finishLineDefs(gamemap);
     finishSectors(gamemap);
@@ -1569,6 +1592,15 @@ boolean MPE_End(void)
     MPE_FreeUnclosedSectorList();
 
     editMapInited = false;
+
+    // Call the game's setup routines.
+    if(gx.SetupForMapData)
+    {
+        gx.SetupForMapData(DMU_VERTEX, gamemap->numVertexes);
+        gx.SetupForMapData(DMU_LINEDEF, gamemap->numLineDefs);
+        gx.SetupForMapData(DMU_SIDEDEF, gamemap->numSideDefs);
+        gx.SetupForMapData(DMU_SECTOR, gamemap->numSectors);
+    }
 
     /**
      * Are we caching this map?
@@ -1599,7 +1631,7 @@ boolean MPE_End(void)
     return true;
 }
 
-gamemap_t *MPE_GetLastBuiltMap(void)
+gamemap_t* MPE_GetLastBuiltMap(void)
 {
     return lastBuiltMap;
 }
@@ -1627,7 +1659,7 @@ void MPE_PrintMapErrors(void)
  */
 uint MPE_VertexCreate(float x, float y)
 {
-    vertex_t           *v;
+    vertex_t*           v;
 
     if(!editMapInited)
         return 0;
@@ -1650,7 +1682,7 @@ uint MPE_VertexCreate(float x, float y)
  * @param indices       If not @c NULL, the indices of the newly created
  *                      vertexes will be written back here.
  */
-boolean MPE_VertexCreatev(size_t num, float *values, uint *indices)
+boolean MPE_VertexCreatev(size_t num, float* values, uint* indices)
 {
     uint                n;
 
@@ -1660,7 +1692,7 @@ boolean MPE_VertexCreatev(size_t num, float *values, uint *indices)
     // Create many vertexes.
     for(n = 0; n < num; ++n)
     {
-        vertex_t           *v;
+        vertex_t*           v;
 
         v = createVertex();
         v->V_pos[VX] = values[n * 2];
@@ -1688,7 +1720,7 @@ uint MPE_SidedefCreate(uint sector, short flags,
                        float bottomRed, float bottomGreen,
                        float bottomBlue)
 {
-    sidedef_t          *s;
+    sidedef_t*          s;
 
     if(!editMapInited)
         return 0;
@@ -1733,8 +1765,8 @@ uint MPE_SidedefCreate(uint sector, short flags,
 uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
                        int flags)
 {
-    linedef_t             *l;
-    sidedef_t             *front = NULL, *back = NULL;
+    linedef_t*          l;
+    sidedef_t*          front = NULL, *back = NULL;
 
     if(!editMapInited)
         return 0;
@@ -1761,7 +1793,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
         uint                i;
         for(i = 0; i < map->numLineDefs; ++i)
         {
-            linedef_t             *other = map->lineDefs[i];
+            linedef_t*          other = map->lineDefs[i];
 
             if(other->L_frontside)
             {
@@ -1850,8 +1882,8 @@ uint MPE_PlaneCreate(uint sector, float height, int material,
                      float normalX, float normalY, float normalZ)
 {
     uint                i;
-    sector_t           *s;
-    plane_t           **newList, *pln;
+    sector_t*           s;
+    plane_t**           newList, *pln;
 
     if(!editMapInited)
         return 0;

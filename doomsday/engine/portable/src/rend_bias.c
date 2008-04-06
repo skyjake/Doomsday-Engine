@@ -59,9 +59,9 @@ typedef struct affection_s {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 void         SB_EvalPoint(float light[4],
-                          vertexillum_t *illum,
-                          biasaffection_t *affectedSources,
-                          const float *point, float *normal);
+                          vertexillum_t* illum,
+                          biasaffection_t* affectedSources,
+                          const float* point, const float* normal);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -117,9 +117,9 @@ void SB_Register(void)
 }
 
 /**
- * Creates a new bias light source and sets the appropriate properties
- * to the values of the passed parameters. The id of the new light source
- * is returned unless there are no free sources available.
+ * Creates a new bias light source and sets the appropriate properties to
+ * the values of the passed parameters. The id of the new light source is
+ * returned unless there are no free sources available.
  *
  * @param   x           X coordinate of the new light.
  * @param   y           Y coordinate of the new light.
@@ -360,7 +360,7 @@ void HSVtoRGB(float *rgb, float h, float s, float v)
     }
 }
 
-static void SB_AddAffected(affection_t *aff, uint k, float intensity)
+static void SB_AddAffected(affection_t* aff, uint k, float intensity)
 {
     uint                i, worst;
 
@@ -385,11 +385,21 @@ static void SB_AddAffected(affection_t *aff, uint k, float intensity)
     }
 }
 
+void SB_InitVertexIllum(vertexillum_t* villum)
+{
+    int                 i;
+
+    villum->flags |= VIF_STILL_UNSEEN;
+
+    for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
+        villum->casted[i].source = -1;
+}
+
 /**
- * This must be called when a plane that the seg touches is moved, or
- * when a seg in a polyobj changes position.
+ * This must be called when a plane that the seg touches is moved, or when
+ * a seg in a polyobj changes position.
  */
-void SB_SegHasMoved(struct seg_s *seg)
+void SB_SegHasMoved(seg_t* seg)
 {
     int                 i;
 
@@ -401,13 +411,15 @@ void SB_SegHasMoved(struct seg_s *seg)
 }
 
 /**
- * This must be called when a plane has moved.  Set 'theCeiling' to
- * true if the plane is a ceiling plane.
+ * This must be called when a plane has moved.
+ *
+ * @param plane         Index of the subsector plane that has moved.
  */
-void SB_PlaneHasMoved(const struct subsector_s *subsector, uint plane)
+void SB_PlaneHasMoved(const subsector_t* subsector, uint plane)
 {
     int                 i;
-    subplaneinfo_t     *info = subsector->planes[plane];
+    subplaneinfo_t*     info =
+        &subsector->sector->planes[plane]->subPlanes[subsector->inSectorID];
 
     // Mark the affected lights changed.
     for(i = 0; i < MAX_BIAS_AFFECTED && info->affected[i].source >= 0; ++i)
@@ -417,14 +429,14 @@ void SB_PlaneHasMoved(const struct subsector_s *subsector, uint plane)
 }
 
 /**
- * This could be enhanced so that only the lights on the right side of
- * the seg are taken into consideration.
+ * This could be enhanced so that only the lights on the right side of the
+ * seg are taken into consideration.
  */
-void SB_UpdateSegAffected(struct seg_s *seg, rendpoly_t *poly)
+void SB_UpdateSegAffected(seg_t *seg, const struct rvertex_s* rvertices)
 {
     int                 i, k;
     vec2_t              delta;
-    source_t           *src;
+    source_t*           src;
     float               distance = 0, len;
     float               intensity;
     affection_t         aff;
@@ -450,8 +462,8 @@ void SB_UpdateSegAffected(struct seg_s *seg, rendpoly_t *poly)
         for(i = 0; i < 2; ++i)
         {
             V2_Set(delta,
-                   poly->vertices[i*2].pos[VX] - src->pos[VX],
-                   poly->vertices[i*2].pos[VY] - src->pos[VY]);
+                   rvertices[i*2].pos[VX] - src->pos[VX],
+                   rvertices[i*2].pos[VY] - src->pos[VY]);
             len = V2_Normalize(delta);
 
             if(i == 0 || len < distance)
@@ -474,7 +486,7 @@ void SB_UpdateSegAffected(struct seg_s *seg, rendpoly_t *poly)
     }
 }
 
-static float SB_Dot(source_t *src, float point[3], float normal[3])
+static float SB_Dot(source_t* src, float point[3], float normal[3])
 {
     float               delta[3];
     int                 i;
@@ -490,50 +502,45 @@ static float SB_Dot(source_t *src, float point[3], float normal[3])
 }
 
 /**
- * This could be enhanced so that only the lights on the right side of
- * the plane are taken into consideration.
+ * This could be enhanced so that only the lights on the right side of the
+ * plane are taken into consideration.
  */
-void SB_UpdateSubsectorAffected(struct subsector_s *subsector,
-                                rendpoly_t *poly)
+void SB_UpdatePlaneAffected(struct subsector_s* ssec, uint planeID,
+                            const struct rvertex_s* rvertices,
+                            size_t numVertices)
 {
     int                 i;
     uint                k;
     vec2_t              delta;
     float               point[3];
-    source_t           *src;
+    source_t*           src;
     float               distance = 0, len, dot;
     float               intensity;
-    affection_t        *aff;
+    affection_t         aff;
+    subplaneinfo_t*     plane =
+        &ssec->sector->planes[planeID]->subPlanes[ssec->inSectorID];
 
     // If the data is already up to date, nothing needs to be done.
-    if(subsector->planes[PLN_FLOOR]->updated == lastChangeOnFrame ||
-       !updateAffected)
+    if(plane->updated == lastChangeOnFrame || !updateAffected)
         return;
 
-    // \fixme NOT optimal.
-    aff = M_Calloc(subsector->sector->planeCount * sizeof(affection_t));
-
-    // For each plane.
-    for(k = 0; k < subsector->sector->planeCount; ++k)
-    {
-        subsector->planes[k]->updated = lastChangeOnFrame;
-        aff[k].affected = subsector->planes[k]->affected;
-        aff[k].numFound = 0;
-        memset(aff[k].affected, -1, sizeof(subsector->planes[k]->affected));
-    }
+    plane->updated = lastChangeOnFrame;
+    aff.affected = plane->affected;
+    aff.numFound = 0;
+    memset(aff.affected, -1, sizeof(plane->affected));
 
     for(i = 0, src = sources; i < numSources; ++i, ++src)
     {
         if(src->intensity <= 0)
             continue;
 
-        // Calculate minimum 2D distance to the subsector.
+        // Calculate minimum 2D distance to the ssec.
         // \fixme This is probably too accurate an estimate.
-        for(k = 0; k < poly->numVertices; ++k)
+        for(k = 0; k < numVertices; ++k)
         {
             V2_Set(delta,
-                   poly->vertices[k].pos[VX] - src->pos[VX],
-                   poly->vertices[k].pos[VY] - src->pos[VY]);
+                   rvertices[k].pos[VX] - src->pos[VX],
+                   rvertices[k].pos[VY] - src->pos[VY]);
             len = V2_Length(delta);
 
             if(k == 0 || len < distance)
@@ -542,29 +549,23 @@ void SB_UpdateSubsectorAffected(struct subsector_s *subsector,
         if(distance < 1)
             distance = 1;
 
-        // For each plane
-        for(k = 0; k < subsector->sector->planeCount; ++k)
-        {
-            // Estimate the effect on this plane.
-            point[VX] = subsector->midPoint.pos[VX];
-            point[VY] = subsector->midPoint.pos[VY];
-            point[VZ] = subsector->sector->planes[k]->height;
+        // Estimate the effect on this plane.
+        point[VX] = ssec->midPoint.pos[VX];
+        point[VY] = ssec->midPoint.pos[VY];
+        point[VZ] = ssec->sector->planes[planeID]->height;
 
-            dot = SB_Dot(src, point, subsector->sector->planes[k]->surface.normal);
-            if(dot <= 0)
-                continue;
+        dot = SB_Dot(src, point, ssec->sector->planes[planeID]->surface.normal);
+        if(dot <= 0)
+            continue;
 
-            intensity = /*dot * */ src->intensity / distance;
+        intensity = /*dot * */ src->intensity / distance;
 
-            // Is the source is too weak, ignore it entirely.
-            if(intensity < biasIgnoreLimit)
-                continue;
+        // Is the source is too weak, ignore it entirely.
+        if(intensity < biasIgnoreLimit)
+            continue;
 
-            SB_AddAffected(&aff[k], i, intensity);
-        }
+        SB_AddAffected(&aff, i, intensity);
     }
-
-    M_Free(aff);
 }
 
 /**
@@ -640,11 +641,12 @@ static boolean SB_ChangeInAffected(biasaffection_t *affected,
  * changed.  The planes that the change affects will need to be
  * re-evaluated.
  */
-void SB_MarkPlaneChanges(const struct subsector_s *ssec, uint plane,
-                         biastracker_t *allChanges)
+void SB_MarkPlaneChanges(const struct subsector_s* ssec, uint plane,
+                         biastracker_t* allChanges)
 {
     uint                i;
-    subplaneinfo_t     *pinfo = ssec->planes[plane];
+    subplaneinfo_t*     pinfo =
+        &ssec->sector->planes[plane]->subPlanes[ssec->inSectorID];
 
     SB_TrackerApply(&pinfo->tracker, allChanges);
 
@@ -652,7 +654,7 @@ void SB_MarkPlaneChanges(const struct subsector_s *ssec, uint plane,
     {
         // Mark the illumination unseen to force an update.
         for(i = 0; i < ssec->numVertices; ++i)
-            pinfo->illumination[i].flags |= VIF_STILL_UNSEEN;
+            pinfo->illum[i].flags |= VIF_STILL_UNSEEN;
     }
 }
 
@@ -665,7 +667,7 @@ void SB_BeginFrame(void)
 {
     int                 l;
     uint                i, j, k;
-    source_t           *s;
+    source_t*           s;
     biastracker_t       allChanges;
 
     if(!useBias)
@@ -827,14 +829,20 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
 /**
  * Poly can be a either a wall or a plane (ceiling or a floor).
  *
- * @param poly          Rendering polygon (wall or plane).
+ * @param vertices      Array of vertices to be lit.
+ * @param colors        Array of colors to be written to.
+ * @param numVertices   Number of vertices (in the array) to be lit.
  * @param illumination  Illumination for each corner of the polygon.
  * @param tracker       Tracker of all the changed lights for this polygon.
- * @param mapElementIndex  Index of the seg or subsector in the global arrays.
+ * @param mapObject     Ptr to either a seg or subsector.
+ * @param elmIdx        Used with subsectors to select a specific plane.
+ * @param isSeg         @c true, if surface is to a seg ELSE a subsector.
  */
-void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
-                 vertexillum_t *illumination, biastracker_t *tracker,
-                 biasaffection_t *affected, uint mapElementIndex)
+void SB_RendPoly(const struct rvertex_s* rvertices, struct rcolor_s* rcolors,
+                 size_t numVertices, const float* normal,
+                 float sectorLightLevel,
+                 biastracker_t* tracker, biasaffection_t* affected,
+                 void* mapObject, uint elmIdx, boolean isSeg)
 {
     uint                i;
     boolean             forced;
@@ -859,16 +867,29 @@ void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
     // Has any of the old affected lights changed?
     forced = false;
 
-    if(poly->isWall)
-        SB_UpdateSegAffected(SEG_PTR(mapElementIndex), poly);
+    if(isSeg)
+        SB_UpdateSegAffected((seg_t*) mapObject, rvertices);
     else
-        SB_UpdateSubsectorAffected(SUBSECTOR_PTR(mapElementIndex), poly);
+        SB_UpdatePlaneAffected((subsector_t*) mapObject, elmIdx,
+                               rvertices, numVertices);
 
-    for(i = 0; i < poly->numVertices; ++i)
+    if(isSeg)
     {
-        SB_EvalPoint(poly->vertices[i].color,
-                     &illumination[i], affected,
-                     poly->vertices[i].pos, poly->normal);
+        seg_t*              seg = (seg_t*) mapObject;
+
+        for(i = 0; i < numVertices; ++i)
+            SB_EvalPoint(rcolors[i].rgba, &seg->illum[elmIdx][i], affected,
+                         rvertices[i].pos, normal);
+    }
+    else
+    {
+        subsector_t*        ssec = (subsector_t*) mapObject;
+        subplaneinfo_t*     plane =
+            &ssec->sector->planes[elmIdx]->subPlanes[ssec->inSectorID];
+
+        for(i = 0; i < numVertices; ++i)
+            SB_EvalPoint(rcolors[i].rgba, &plane->illum[i],
+                         affected, rvertices[i].pos, normal);
     }
 
 //    colorOverride = SB_CheckColorOverride(affected);
@@ -879,7 +900,7 @@ void SB_RendPoly(struct rendpoly_s *poly, float sectorLightLevel,
 /**
  * Interpolate between current and destination.
  */
-void SB_LerpIllumination(vertexillum_t *illum, float *result)
+void SB_LerpIllumination(vertexillum_t* illum, float* result)
 {
     uint                i;
 
@@ -977,16 +998,16 @@ void SB_AmbientLight(const float *point, float *light)
 
 /**
  * Applies shadow bias to the given point.  If 'forced' is true, new
- * lighting is calculated regardless of whether the lights affecting
- * the point have changed.  This is needed when there has been world
- * geometry changes.  'illum' is allowed to be NULL.
+ * lighting is calculated regardless of whether the lights affecting the
+ * point have changed.  This is needed when there has been world geometry
+ * changes. 'illum' is allowed to be NULL.
  *
  * \fixme Only recalculate the changed lights.  The colors contributed
  * by the others can be saved with the 'affected' array.
  */
-void SB_EvalPoint(float light[4],
-                  vertexillum_t *illum, biasaffection_t *affectedSources,
-                  const float *point, float *normal)
+void SB_EvalPoint(float light[4], vertexillum_t* illum,
+                  biasaffection_t* affectedSources, const float* point,
+                  const float* normal)
 {
 #define COLOR_CHANGE_THRESHOLD  0.1f
 

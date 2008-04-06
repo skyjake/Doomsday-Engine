@@ -110,13 +110,13 @@ struct subsector
     PTR     seg_s**     segs        // [segcount] size.
     PTR     polyobj_s*  polyObj     // NULL, if there is no polyobj.
     PTR     sector_s*   sector
+    -       uint        inSectorID
     -       int         flags
     -       int         validCount
     -       uint        group
     -       uint[NUM_REVERB_DATA] reverb
     -       fvertex_t   bBox[2]     // Min and max points.
     -       fvertex_t   midPoint    // Center of vertices.
-    -       subplaneinfo_s** planes
     -       ushort      numVertices
     -       fvertex_s** vertices    // [numvertices] size
     -       shadowlink_s* shadows
@@ -219,6 +219,8 @@ struct plane
     -       float       visHeight   // Visible plane height (smoothed)
     -       float       visHeightDelta
     -       planetype_t type        // PLN_* type.
+    -       int         planeID
+    -       subplaneinfo_s* subPlanes
 end
 
 internal

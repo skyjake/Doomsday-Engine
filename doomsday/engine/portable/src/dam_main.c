@@ -439,9 +439,9 @@ static boolean convertMap(gamemap_t **map, archivedmap_t *dam)
 /**
  * Attempt to load the map associated with the specified identifier.
  */
-boolean DAM_AttemptMapLoad(const char *mapID)
+boolean DAM_AttemptMapLoad(const char* mapID)
 {
-    archivedmap_t      *dam;
+    archivedmap_t*      dam;
     boolean             loadedOK = false;
 
     VERBOSE2(
@@ -508,10 +508,6 @@ boolean DAM_AttemptMapLoad(const char *mapID)
             P_InitUnusedMobjList();
             P_InitMapBlockRings(map);
 
-            // Polygonize.
-            R_PolygonizeMap(map);
-
-            // Must follow polygonize!
             R_PrepareForBias(map);
 
             // Must be called before any mobjs are spawned.

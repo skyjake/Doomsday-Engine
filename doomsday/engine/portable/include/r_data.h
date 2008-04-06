@@ -96,7 +96,7 @@ typedef struct gltexture_s {
     DGLuint         id;
     float           width, height;
     boolean         masked;
-    detailinfo_t   *detail;
+    detailinfo_t*   detail;
 } gltexture_t;
 
 typedef struct glcommand_vertex_s {
@@ -125,11 +125,13 @@ typedef enum {
     RP_FLAT                        // Floor or ceiling.
 } rendpolytype_t;
 
-typedef struct {
-    float           pos[3];        // X, Y and Z coordinates.
-    float           color[4];      // Color of the vertex.
-    float           distanceToViewer;
-} rendpoly_vertex_t;
+typedef struct rvertex_s {
+    float           pos[3];
+} rvertex_t;
+
+typedef struct rcolor_s {
+    float           rgba[4];
+} rcolor_t;
 
 typedef struct walldiv_s {
     unsigned int    num;
@@ -141,9 +143,9 @@ typedef struct rendpoly_wall_s {
     walldiv_t       divs[2];       // For wall segments (two vertices).
 } rendpoly_wall_t;
 
-// rendpoly_t is only for convenience; the data written in the rendering
+// rendpoly_params_t is only for convenience; the data written in the rendering
 // list data buffer is taken from this struct.
-typedef struct rendpoly_s {
+typedef struct rendpoly_params_s {
     boolean         isWall;
     rendpolytype_t  type;
     short           flags;          // RPF_*.
@@ -154,14 +156,8 @@ typedef struct rendpoly_s {
     float           interPos;       // Blending strength (0..1).
     uint            lightListIdx;   // List of lights that affect this poly.
     blendmode_t     blendMode;      // Primitive-specific blending mode.
-
-    // The geometry:
-    float           normal[3];
-    byte            numVertices;    // Number of vertices for the poly.
-    rendpoly_vertex_t *vertices;
-
-    rendpoly_wall_t *wall;          // Wall specific data if any.
-} rendpoly_t;
+    rendpoly_wall_t* wall;          // Wall specific data if any.
+} rendpoly_params_t;
 
 // This is the dummy mobj_t used for blockring roots.
 // It has some excess information since it has to be compatible with
@@ -170,19 +166,17 @@ typedef struct rendpoly_s {
 typedef struct linkmobj_s {
     thinker_t       thinker;
     float           pos[3];
-    struct mobj_s  *next, *prev;
+    struct mobj_s*  next, *prev;
 } linkmobj_t;
 
 typedef struct shadowlink_s {
-    struct shadowlink_s *next;
-    linedef_t      *lineDef;
+    struct shadowlink_s* next;
+    linedef_t*      lineDef;
     byte            side;
 } shadowlink_t;
 
 typedef struct subplaneinfo_s {
-    int             type;           // Plane type (ie PLN_FLOOR or PLN_CEILING)
-    int             planeID;
-    vertexillum_t  *illumination;
+    vertexillum_t*  illum;
     biastracker_t   tracker;
     uint            updated;
     biasaffection_t affected[MAX_BIAS_AFFECTED];
@@ -272,7 +266,7 @@ typedef struct patch_s {
     DGLuint         tex2;
     texinfo_t       info2;
 
-    struct patch_s *next;
+    struct patch_s* next;
 } patch_t;
 
 // A rawtex is a lump raw graphic that has been prepared for render.
@@ -288,7 +282,7 @@ typedef struct rawtex_s {
 } rawtex_t;
 
 typedef struct animframe_s {
-    material_t     *mat;
+    material_t*     mat;
     ushort          tics;
     ushort          random;
 } animframe_t;
@@ -300,13 +294,13 @@ typedef struct animgroup_s {
     int             maxTimer;
     int             timer;
     int             count;
-    animframe_t    *frames;
+    animframe_t*    frames;
 } animgroup_t;
 
 typedef struct {
     boolean         used;
     float           approxDist;         // Only an approximation.
-    struct lumobj_s *lum;
+    struct lumobj_s* lum;
     float           worldVector[3];     // Light direction vector (world space).
     float           vector[3];          // Light direction vector (object space).
     float           color[3];           // How intense the light is (0..1, RGB).
@@ -346,71 +340,71 @@ typedef enum ddtextureid_e {
     NUM_DD_TEXTURES
 } ddtextureid_t;
 
-extern nodeindex_t *linelinks;
-extern blockmap_t *BlockMap;
-extern blockmap_t *SSecBlockMap;
-extern linkmobj_t *blockrings;
-extern byte    *rejectMatrix;      // for fast sight rejection
-extern nodepile_t *mobjNodes, *lineNodes;
+extern nodeindex_t* linelinks;
+extern blockmap_t* BlockMap;
+extern blockmap_t* SSecBlockMap;
+extern linkmobj_t* blockrings;
+extern byte* rejectMatrix;      // for fast sight rejection
+extern nodepile_t* mobjNodes, *lineNodes;
 
-extern int      viewwidth, viewheight;
-extern int      numTextures;
-extern texture_t **textures;
-extern int      numFlats;
-extern flat_t **flats;
+extern int viewwidth, viewheight;
+extern int numTextures;
+extern texture_t** textures;
+extern int numFlats;
+extern flat_t** flats;
 
-extern spritetex_t **spriteTextures;
-extern int      numSpriteTextures;
-extern int      numDDTextures;
+extern spritetex_t** spriteTextures;
+extern int numSpriteTextures;
+extern int numDDTextures;
 extern ddtexture_t ddTextures[NUM_DD_TEXTURES];
-extern rawtex_t *rawtextures;
+extern rawtex_t* rawtextures;
 extern uint numrawtextures;
-extern int      numgroups;
-extern animgroup_t *groups;
-extern int      levelFullBright;
-extern int      glowingTextures;
-extern byte     precacheSprites, precacheSkins;
+extern int numgroups;
+extern animgroup_t* groups;
+extern int levelFullBright;
+extern int glowingTextures;
+extern byte precacheSprites, precacheSkins;
 
-void            R_InitRendPolyPool(void);
-rendpoly_t     *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
-                                unsigned int numverts);
-void            R_FreeRendPoly(rendpoly_t *poly);
-void            R_MemcpyRendPoly(rendpoly_t *dest, const rendpoly_t *src);
-void            R_InfoRendPolys(void);
+void            R_InitRendVerticesPool(void);
+rvertex_t*      R_AllocRendVertices(uint num);
+rcolor_t*       R_AllocRendColors(uint num);
+void            R_FreeRendVertices(rvertex_t* rvertices);
+void            R_FreeRendColors(rcolor_t* rcolors);
+void            R_InfoRendVerticesPool(void);
 
 void            R_InitData(void);
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
 
-void            R_UpdateSector(struct sector_s *sec, boolean forceUpdate);
+void            R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
 
 void            R_PrecacheLevel(void);
 void            R_PrecachePatch(lumpnum_t lump);
 
 void            R_DestroyAnimGroups(void);
-void            R_InitAnimGroup(ded_group_t *def);
+void            R_InitAnimGroup(ded_group_t* def);
 void            R_ResetAnimGroups(void);
 boolean         R_IsInAnimGroup(int groupNum, materialtype_t type, int number);
 void            R_AnimateAnimGroups(void);
 
 void            R_InitSpriteTextures(void);
-int             R_NewSpriteTexture(lumpnum_t lump, material_t **mat);
+int             R_NewSpriteTexture(lumpnum_t lump, material_t** mat);
 
-int             R_GetSkinTexIndex(const char *skin);
-skintex_t      *R_GetSkinTexByIndex(int id);
-int             R_RegisterSkin(char *skin, const char *modelfn, char *fullpath);
+int             R_GetSkinTexIndex(const char* skin);
+skintex_t*      R_GetSkinTexByIndex(int id);
+int             R_RegisterSkin(char* skin, const char* modelfn, char* fullpath);
 void            R_DeleteSkinTextures(void);
 void            R_DestroySkins(void); // Called at shutdown.
 
-patch_t        *R_FindPatch(lumpnum_t lump); // May return NULL.
-patch_t        *R_GetPatch(lumpnum_t lump); // Creates new entries.
-patch_t       **R_CollectPatches(int *count);
-rawtex_t       *R_FindRawTex(lumpnum_t lump); // May return NULL.
-rawtex_t       *R_GetRawTex(lumpnum_t lump); // Creates new entries.
+patch_t*        R_FindPatch(lumpnum_t lump); // May return NULL.
+patch_t*        R_GetPatch(lumpnum_t lump); // Creates new entries.
+patch_t**       R_CollectPatches(int* count);
+rawtex_t*       R_FindRawTex(lumpnum_t lump); // May return NULL.
+rawtex_t*       R_GetRawTex(lumpnum_t lump); // Creates new entries.
 
-boolean         R_IsAllowedDecoration(ded_decor_t *def, int index,
+boolean         R_IsAllowedDecoration(ded_decor_t* def, int index,
                                       boolean hasExternal);
-boolean         R_IsValidLightDecoration(const ded_decorlight_t *lightDef);
-void            R_GenerateDecorMap(ded_decor_t *def);
+boolean         R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
+void            R_GenerateDecorMap(ded_decor_t* def);
 
 #endif
