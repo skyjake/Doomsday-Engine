@@ -866,7 +866,7 @@ for(k = 0; k < div->num; ++k)
  */
 int Rend_MidTexturePos(float* bottomleft, float* bottomright,
                        float* topleft, float* topright, float* texoffy,
-                       float tcyoff, float texHeight, boolean lower_unpeg)
+                       float tcyoff, float texHeight, boolean lowerUnpeg)
 {
     int                 side;
     float               openingTop, openingBottom;
@@ -887,7 +887,7 @@ int Rend_MidTexturePos(float* bottomleft, float* bottomright,
             *texoffy = 0;
 
         // We don't allow vertical tiling.
-        if(lower_unpeg)
+        if(lowerUnpeg)
         {
             *(side? bottomright : bottomleft) += tcyoff;
             *(side? topright : topleft) =
@@ -1283,9 +1283,10 @@ static void renderPlane2(const rvertex_t* rvertices, uint numVertices,
 #define RPF2_GLOW   0x0004
 #define RPF2_BLEND  0x0008
 
-static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *surface,
-                                float bottom, float top, float extraTexYOffset,
-                                sector_t *frontsec, boolean softSurface,
+static boolean renderSegSection(seg_t* seg, segsection_t section,
+                                surface_t* surface, float bottom, float top,
+                                float texXOffset, float texYOffset,
+                                sector_t* frontsec, boolean softSurface,
                                 boolean canMask, short sideFlags)
 {
     boolean             visible = false, skyMask = false;
@@ -1410,8 +1411,8 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
                     prepareMaterialForSurface(&params.tex, surface, &texinfo);
 
                 // Calculate texture coordinates.
-                params.texOffset[VX] = surface->visOffset[VX] + seg->offset;
-                params.texOffset[VY] = surface->visOffset[VY] + extraTexYOffset;
+                params.texOffset[VX] = texXOffset;
+                params.texOffset[VY] = texYOffset;
 
                 if(section == SEG_MIDDLE && softSurface)
                 {
@@ -1554,14 +1555,14 @@ static boolean renderSegSection(seg_t *seg, segsection_t section, surface_t *sur
 /**
  * Renders the given single-sided seg into the world.
  */
-static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
+static boolean Rend_RenderSSWallSeg(seg_t* seg, subsector_t* ssec)
 {
     boolean             solidSeg = true;
-    sidedef_t          *side;
-    linedef_t          *ldef;
+    sidedef_t*          side;
+    linedef_t*          ldef;
     float               ffloor, fceil;
     boolean             backSide;
-    sector_t           *frontsec, *fflinkSec, *fclinkSec;
+    sector_t*           frontsec, *fflinkSec, *fclinkSec;
     int                 pid = viewPlayer - ddPlayers;
 
     side = SEG_SIDEDEF(seg);
@@ -1588,13 +1589,17 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     // Create the wall sections.
 
     // Middle section.
-    if(side->sections[SEG_MIDDLE].frameFlags & SUFINF_PVIS)
+    if(side->SW_middlesurface.frameFlags & SUFINF_PVIS)
     {
-        float       offsetY =
+        float               offset[2];
+        surface_t*          surface = &side->SW_middlesurface;
+
+        offset[VX] = surface->visOffset[VX] + seg->offset;
+        offset[VY] = surface->visOffset[VY] +
             (ldef->flags & DDLF_DONTPEGBOTTOM)? -(fceil - ffloor) : 0;
 
         renderSegSection(seg, SEG_MIDDLE, &side->SW_middlesurface, ffloor, fceil,
-                         offsetY,
+                         offset[VX], offset[VY],
                          /*temp >*/ frontsec, /*< temp*/
                          false, true, side->flags);
     }
@@ -1608,15 +1613,15 @@ static boolean Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 /**
  * Renders wall sections for given two-sided seg.
  */
-static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
+static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
 {
     int                 solidSeg = false;
-    sector_t           *backsec;
-    sidedef_t          *backsid, *side;
-    linedef_t          *ldef;
+    sector_t*           backsec;
+    sidedef_t*          backsid, *side;
+    linedef_t*          ldef;
     float               ffloor, fceil, bfloor, bceil, bsh;
     boolean             backSide;
-    sector_t           *frontsec, *fflinkSec, *fclinkSec;
+    sector_t*           frontsec, *fflinkSec, *fclinkSec;
     int                 pid = viewPlayer - ddPlayers;
 
     backsid = SEG_SIDEDEF(seg->backSeg);
@@ -1657,11 +1662,11 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     // Determine which parts of the segment are visible.
 
     // Middle section.
-    if(side->sections[SEG_MIDDLE].frameFlags & SUFINF_PVIS)
+    if(side->SW_middlesurface.frameFlags & SUFINF_PVIS)
     {
-        surface_t          *surface = &side->SW_middlesurface;
-        texinfo_t          *texinfo = NULL;
-        float               texOffsetY = 0;
+        surface_t*          surface = &side->SW_middlesurface;
+        texinfo_t*          texinfo = NULL;
+        float               texOffset[2];
         float               top, bottom, vL_ZBottom, vR_ZBottom, vL_ZTop, vR_ZTop;
         boolean             softSurface =
             (!(ldef->flags & DDLF_BLOCKING) ||
@@ -1677,7 +1682,7 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         vL_ZTop    = vR_ZTop    = top    = MIN_OF(bceil, fceil);
         if(Rend_MidTexturePos
            (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
-            &texOffsetY, surface->visOffset[VY], texinfo->height,
+            &texOffset[VY], surface->visOffset[VY], texinfo->height,
             (ldef->flags & DDLF_DONTPEGBOTTOM)? true : false))
         {
             // Can we make this a soft surface?
@@ -1687,49 +1692,60 @@ static boolean Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                 softSurface = true;
             }
 
+            texOffset[VX] = surface->visOffset[VX] + seg->offset;
+
             solidSeg = renderSegSection(seg, SEG_MIDDLE, surface,
-                                        vL_ZBottom, vL_ZTop, texOffsetY,
+                                        vL_ZBottom, vL_ZTop, texOffset[VX],
+                                        texOffset[VY],
                                         /*temp >*/ frontsec, /*< temp*/
                                         softSurface, false, side->flags);
         }
     }
 
     // Upper section.
-    if(side->sections[SEG_TOP].frameFlags & SUFINF_PVIS)
+    if(side->SW_topsurface.frameFlags & SUFINF_PVIS)
     {
-        float       bottom = bceil;
-        float       texOffY = 0;
+        float               bottom = bceil;
+        float               texOffset[2];
+        surface_t*          surface = &side->SW_topsurface;
 
         if(bceil < ffloor)
         {   // Can't go over front ceiling, would induce polygon flaws.
             bottom = ffloor;
         }
 
+        texOffset[VX] = surface->visOffset[VX] + seg->offset;
+        texOffset[VY] = surface->visOffset[VY];
+
         if(!(ldef->flags & DDLF_DONTPEGTOP))
-            texOffY += -(fceil - bceil);  // Align with normal middle texture.
+            texOffset[VY] += -(fceil - bceil);  // Align with normal middle texture.
 
         renderSegSection(seg, SEG_TOP, &side->SW_topsurface, bottom, fceil,
-                         texOffY, frontsec, false,
+                         texOffset[VX], texOffset[VY], frontsec, false,
                          false, side->flags);
     }
 
     // Lower section.
-    if(side->sections[SEG_BOTTOM].frameFlags & SUFINF_PVIS)
+    if(side->SW_bottomsurface.frameFlags & SUFINF_PVIS)
     {
-        float       top = bfloor;
-        float       texOffY = 0;
+        float               top = bfloor;
+        float               texOffset[2];
+        surface_t*          surface = &side->SW_bottomsurface;
+
+        texOffset[VX] = surface->visOffset[VX] + seg->offset;
+        texOffset[VY] = surface->visOffset[VY];
 
         if(bfloor > fceil)
         {   // Can't go over front ceiling, would induce polygon flaws.
-            texOffY += bfloor - fceil;
+            texOffset[VY] += bfloor - fceil;
             top = fceil;
         }
 
         if(ldef->flags & DDLF_DONTPEGBOTTOM)
-            texOffY += (fceil - bfloor); // Align with normal middle texture.
+            texOffset[VY] += (fceil - bfloor); // Align with normal middle texture.
 
         renderSegSection(seg, SEG_BOTTOM, &side->SW_bottomsurface, ffloor, top,
-                         texOffY, frontsec,
+                         texOffset[VX], texOffset[VY], frontsec,
                          false, false, side->flags);
     }
 
