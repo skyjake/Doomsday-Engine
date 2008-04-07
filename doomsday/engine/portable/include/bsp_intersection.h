@@ -44,7 +44,7 @@ typedef void* cutlist_t;
  */
 typedef struct intersection_s {
     // Vertex in question.
-    vertex_t   *vertex;
+    vertex_t*   vertex;
 
     // How far along the partition line the vertex is. Zero is at the
     // partition half-edge's start point, positive values move in the same
@@ -57,28 +57,29 @@ typedef struct intersection_s {
 
     // Sector on each side of the vertex (along the partition),
     // or NULL when that direction isn't OPEN.
-    sector_t   *before;
-    sector_t   *after;
+    sector_t*   before;
+    sector_t*   after;
 } intersection_t;
 
 void        BSP_InitIntersectionAllocator(void);
 void        BSP_ShutdownIntersectionAllocator(void);
 
-intersection_t *BSP_IntersectionCreate(vertex_t *vert, hedge_t *part,
+intersection_t* BSP_IntersectionCreate(vertex_t* vert,
+                                       const struct bspartition_s* part,
                                        boolean selfRef);
-void        BSP_IntersectionDestroy(intersection_t *cut);
+void        BSP_IntersectionDestroy(intersection_t* cut);
 #if _DEBUG
-void        BSP_IntersectionPrint(intersection_t *cut);
+void        BSP_IntersectionPrint(intersection_t* cut);
 #endif
 
 // Cutlist functions:
-cutlist_t  *BSP_CutListCreate(void);
-void        BSP_CutListDestroy(cutlist_t *cutList);
+cutlist_t*  BSP_CutListCreate(void);
+void        BSP_CutListDestroy(cutlist_t* cutList);
 
-void        BSP_CutListEmpty(cutlist_t *cutList);
-void        BSP_CutListPrint(cutlist_t *cutList);
+void        BSP_CutListEmpty(cutlist_t* cutList);
+void        BSP_CutListPrint(cutlist_t* cutList);
 
-boolean     BSP_CutListInsertIntersection(cutlist_t *cutList,
-                                          intersection_t *cut);
-intersection_t *BSP_CutListFindIntersection(cutlist_t *cutList, vertex_t *v);
+boolean     BSP_CutListInsertIntersection(cutlist_t* cutList,
+                                          intersection_t* cut);
+intersection_t* BSP_CutListFindIntersection(cutlist_t* cutList, vertex_t* v);
 #endif

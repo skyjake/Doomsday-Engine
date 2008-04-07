@@ -39,19 +39,24 @@
 #include "m_binarytree.h"
 #include "p_mapdata.h"
 
+typedef struct bspartition_s {
+    double              x, y;
+    double              dX, dY;
+    double              length;
+    linedef_t*          lineDef; // Not NULL if partition originated from a linedef.
+    linedef_t*          sourceLine;
+
+    double              pSX, pSY;
+    double              pDX, pDY;
+    double              pPara, pPerp;
+} bspartition_t;
+
 typedef struct bspnodedata_s {
-    float               x;             // Partition line.
-    float               y;             // Partition line.
-    float               dX;            // Partition line.
-    float               dY;            // Partition line.
+    partition_t         partition;
     float               bBox[2][4];    // Bounding box for each child.
     // Node index. Only valid once the NODES or GL_NODES lump has been
     // created.
     int					index;
-
-    // The node is too long, and the (dx,dy) values should be halved
-    // when writing into the NODES lump.
-    boolean				tooLong;
 } bspnodedata_t;
 
 boolean     BuildNodes(struct superblock_s *hEdgeList, binarytree_t **parent,

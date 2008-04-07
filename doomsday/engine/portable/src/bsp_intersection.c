@@ -44,14 +44,14 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct cnode_s {
-    void       *data;
-    struct cnode_s *next;
-    struct cnode_s *prev;
+    void*       data;
+    struct cnode_s* next;
+    struct cnode_s* prev;
 } cnode_t;
 
 // The intersection list is kept sorted by along_dist, in ascending order.
 typedef struct clist_s {
-    cnode_t    *headPtr;
+    cnode_t*    headPtr;
 } clist_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -73,19 +73,19 @@ static boolean initedOK = false;
 
 // CODE --------------------------------------------------------------------
 
-static cnode_t *allocCNode(void)
+static cnode_t* allocCNode(void)
 {
     return M_Malloc(sizeof(cnode_t));
 }
 
-static void freeCNode(cnode_t *node)
+static void freeCNode(cnode_t* node)
 {
     M_Free(node);
 }
 
-static cnode_t *quickAllocCNode(void)
+static cnode_t* quickAllocCNode(void)
 {
-    cnode_t    *node;
+    cnode_t*            node;
 
     if(initedOK && unusedCNodes)
     {
@@ -103,33 +103,33 @@ static cnode_t *quickAllocCNode(void)
     return node;
 }
 
-static clist_t *allocCList(void)
+static clist_t* allocCList(void)
 {
     return M_Malloc(sizeof(clist_t));
 }
 
-static void freeCList(clist_t *list)
+static void freeCList(clist_t* list)
 {
     M_Free(list);
 }
 
-static intersection_t *allocIntersection(void)
+static intersection_t* allocIntersection(void)
 {
     return M_Calloc(sizeof(intersection_t));
 }
 
-static void freeIntersection(intersection_t *cut)
+static void freeIntersection(intersection_t* cut)
 {
     M_Free(cut);
 }
 
-static intersection_t *quickAllocIntersection(void)
+static intersection_t* quickAllocIntersection(void)
 {
-    intersection_t *cut;
+    intersection_t*     cut;
 
     if(initedOK && UnusedIntersectionList->headPtr)
     {
-        cnode_t    *node = UnusedIntersectionList->headPtr;
+        cnode_t*            node = UnusedIntersectionList->headPtr;
 
         // Unlink from the unused list.
         UnusedIntersectionList->headPtr = node->next;
@@ -151,14 +151,14 @@ static intersection_t *quickAllocIntersection(void)
     return cut;
 }
 
-static void emptyCList(clist_t *list)
+static void emptyCList(clist_t* list)
 {
-    cnode_t    *node;
+    cnode_t*            node;
 
     node = list->headPtr;
     while(node)
     {
-        cnode_t    *p = node->next;
+        cnode_t*            p = node->next;
 
         BSP_IntersectionDestroy(node->data);
 
@@ -186,12 +186,12 @@ void BSP_ShutdownIntersectionAllocator(void)
 {
     if(UnusedIntersectionList)
     {
-        cnode_t    *node;
+        cnode_t*            node;
 
         node = UnusedIntersectionList->headPtr;
         while(node)
         {
-            cnode_t    *p = node->next;
+            cnode_t*            p = node->next;
 
             freeIntersection(node->data);
             freeCNode(node);
@@ -205,12 +205,13 @@ void BSP_ShutdownIntersectionAllocator(void)
 
     if(unusedCNodes)
     {
-        cnode_t    *node;
+        cnode_t*            node;
 
         node = unusedCNodes;
         while(node)
         {
-            cnode_t    *np = node->next;
+            cnode_t*            np = node->next;
+
             freeCNode(node);
             node = np;
         }
@@ -224,14 +225,15 @@ void BSP_ShutdownIntersectionAllocator(void)
 /**
  * Create a new intersection.
  */
-intersection_t *BSP_IntersectionCreate(vertex_t *vert, hedge_t *part,
+intersection_t* BSP_IntersectionCreate(vertex_t* vert,
+                                       const struct bspartition_s* part,
                                        boolean selfRef)
 {
-    intersection_t *cut = quickAllocIntersection();
+    intersection_t*     cut = quickAllocIntersection();
 
     cut->vertex = vert;
     cut->alongDist =
-        M_ParallelDist(part->pDX, part->pDY, part->pPara, part->pLength,
+        M_ParallelDist(part->pDX, part->pDY, part->pPara, part->length,
                        vert->buildData.pos[VX], vert->buildData.pos[VY]);
     cut->selfRef = selfRef;
 
@@ -246,12 +248,12 @@ intersection_t *BSP_IntersectionCreate(vertex_t *vert, hedge_t *part,
  *
  * @param cut           Ptr to the intersection to be destroyed.
  */
-void BSP_IntersectionDestroy(intersection_t *cut)
+void BSP_IntersectionDestroy(intersection_t* cut)
 {
     if(initedOK)
     {   // If the allocator is initialized, move the intersection to the
         // unused list for reuse.
-        cnode_t    *node = quickAllocCNode();
+        cnode_t*            node = quickAllocCNode();
 
         node->data = cut;
         node->next = UnusedIntersectionList->headPtr;
@@ -265,7 +267,7 @@ void BSP_IntersectionDestroy(intersection_t *cut)
 }
 
 #if _DEBUG
-void BSP_IntersectionPrint(intersection_t *cut)
+void BSP_IntersectionPrint(intersection_t* cut)
 {
     Con_Message("  Vertex %8X (%1.1f,%1.1f)  Along %1.2f  [%d/%d]  %s\n",
                 cut->vertex->buildData.index, cut->vertex->buildData.pos[VX],
@@ -279,9 +281,9 @@ void BSP_IntersectionPrint(intersection_t *cut)
 /**
  * Create a new cutlist.
  */
-cutlist_t *BSP_CutListCreate(void)
+cutlist_t* BSP_CutListCreate(void)
 {
-    clist_t    *list = allocCList();
+    clist_t*            list = allocCList();
 
     list->headPtr = NULL;
 
@@ -291,11 +293,11 @@ cutlist_t *BSP_CutListCreate(void)
 /**
  * Destroy a cutlist.
  */
-void BSP_CutListDestroy(cutlist_t *cutList)
+void BSP_CutListDestroy(cutlist_t* cutList)
 {
     if(cutList)
     {
-        clist_t    *list = (clist_t*) cutList;
+        clist_t*            list = (clist_t*) cutList;
 
         emptyCList(list);
         freeCList(list);
@@ -305,11 +307,11 @@ void BSP_CutListDestroy(cutlist_t *cutList)
 /**
  * Empty all intersections from the specified cutlist.
  */
-void BSP_CutListEmpty(cutlist_t *cutList)
+void BSP_CutListEmpty(cutlist_t* cutList)
 {
     if(cutList)
     {
-        clist_t    *list = (clist_t*) cutList;
+        clist_t*            list = (clist_t*) cutList;
         emptyCList(list);
     }
 }
@@ -322,10 +324,10 @@ void BSP_CutListEmpty(cutlist_t *cutList)
  *
  * @return              Ptr to the found intersection, else @c NULL;
  */
-intersection_t *BSP_CutListFindIntersection(cutlist_t *cutList, vertex_t *v)
+intersection_t* BSP_CutListFindIntersection(cutlist_t* cutList, vertex_t* v)
 {
-    clist_t    *list = (clist_t*) cutList;
-    cnode_t    *node;
+    clist_t*            list = (clist_t*) cutList;
+    cnode_t*            node;
 
     node = list->headPtr;
     while(node)
@@ -344,15 +346,16 @@ intersection_t *BSP_CutListFindIntersection(cutlist_t *cutList, vertex_t *v)
 /**
  * Insert the given intersection into the specified cutlist.
  *
- * @return          @c true, if successful.
+ * @return              @c true, if successful.
  */
-boolean BSP_CutListInsertIntersection(cutlist_t *cutList, intersection_t *cut)
+boolean BSP_CutListInsertIntersection(cutlist_t* cutList,
+                                      intersection_t* cut)
 {
     if(cutList && cut)
     {
-        clist_t    *list = (clist_t*) cutList;
-        cnode_t    *newNode = quickAllocCNode();
-        cnode_t    *after;
+        clist_t*            list = (clist_t*) cutList;
+        cnode_t*            newNode = quickAllocCNode();
+        cnode_t*            after;
 
         /**
          * Enqueue the new intersection into the list.
@@ -392,10 +395,10 @@ boolean BSP_CutListInsertIntersection(cutlist_t *cutList, intersection_t *cut)
     return false;
 }
 
-static void buildEdgeBetweenIntersections(hedge_t *part,
-                                          intersection_t *start,
-                                          intersection_t *end,
-                                          hedge_t **right, hedge_t **left)
+static void buildEdgeBetweenIntersections(const bspartition_t* part,
+                                          intersection_t* start,
+                                          intersection_t* end,
+                                          hedge_t** right, hedge_t** left)
 {
     // Create the half-edge pair.
     // Leave 'linedef' field as NULL as these are not linedef-linked.
@@ -432,11 +435,11 @@ Con_Message("  %p LEFT  sector %d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
  *
  * \todo Does this belong in here?
  */
-void BSP_AddMiniHEdges(hedge_t *part, superblock_t *rightList,
-                       superblock_t *leftList, cutlist_t *cutList)
+void BSP_AddMiniHEdges(const bspartition_t* part, superblock_t* rightList,
+                       superblock_t* leftList, cutlist_t* cutList)
 {
-    clist_t    *list;
-    cnode_t    *node, *np;
+    clist_t*            list;
+    cnode_t*            node, *np;
 
     if(!cutList)
         return;
@@ -445,7 +448,7 @@ void BSP_AddMiniHEdges(hedge_t *part, superblock_t *rightList,
 /*
 #if _DEBUG
 BSP_CutListPrint(cutList);
-Con_Message("PARTITION: (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
+Con_Message("BSP_AddMiniHEdges: Partition (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
             part->pSX, part->pSY, part->pDX, part->pDY);
 */
 
@@ -456,9 +459,9 @@ Con_Message("PARTITION: (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
     np = node->next;
     while(node && np)
     {
-        intersection_t *cur = node->data;
-        intersection_t *next = np->data;
-        double      len = next->alongDist - cur->alongDist;
+        intersection_t*     cur = node->data;
+        intersection_t*     next = np->data;
+        double              len = next->alongDist - cur->alongDist;
 
         if(len < -0.1)
         {
@@ -476,7 +479,7 @@ Con_Message("PARTITION: (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
         {
 /*
 #if _DEBUG
-Con_Message("Skipping very short half-edge (len=%1.3f) near "
+Con_Message(" Skipping very short half-edge (len=%1.3f) near "
             "(%1.1f,%1.1f)\n", len, cur->vertex->V_pos[VX],
             cur->vertex->V_pos[VY]);
 #endif
@@ -486,7 +489,7 @@ Con_Message("Skipping very short half-edge (len=%1.3f) near "
         // Merge the two intersections into one.
 /*
 #if _DEBUG
-Con_Message("Merging intersections:\n");
+Con_Message(" Merging intersections:\n");
 BSP_IntersectionPrint(cur);
 BSP_IntersectionPrint(next);
 #endif
@@ -509,7 +512,7 @@ BSP_IntersectionPrint(next);
             cur->after = next->after;
 /*
 #if _DEBUG
-Con_Message("Result:\n");
+Con_Message(" Result:\n");
 BSP_IntersectionPrint(cur);
 #endif
 */
@@ -525,8 +528,8 @@ BSP_IntersectionPrint(cur);
     node = list->headPtr;
     while(node && node->next)
     {
-        intersection_t *cur = node->data;
-        intersection_t *next = (node->next? node->next->data : NULL);
+        intersection_t*     cur = node->data;
+        intersection_t*     next = (node->next? node->next->data : NULL);
 
         if(!(!cur->after && !next->before))
         {
@@ -590,7 +593,7 @@ BSP_IntersectionPrint(cur);
                 }
 
                 {
-                hedge_t    *right, *left;
+                hedge_t*            right, *left;
 
                 buildEdgeBetweenIntersections(part, cur, next, &right, &left);
 
@@ -606,12 +609,12 @@ BSP_IntersectionPrint(cur);
 }
 
 #if _DEBUG
-void BSP_CutListPrint(cutlist_t *cutList)
+void BSP_CutListPrint(cutlist_t* cutList)
 {
     if(cutList)
     {
-        clist_t    *list = (clist_t*) cutList;
-        cnode_t    *node;
+        clist_t*            list = (clist_t*) cutList;
+        cnode_t*            node;
 
         Con_Message("CutList %p:\n", list);
         node = list->headPtr;

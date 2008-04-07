@@ -581,15 +581,15 @@ static bspleafdata_t *createBSPLeaf(superblock_t *hEdgeList)
  *                      intersections (cuts).
  * @return              @c true, if successfull.
  */
-boolean BuildNodes(superblock_t *hEdgeList, binarytree_t **parent,
-                   size_t depth, cutlist_t *cutList)
+boolean BuildNodes(superblock_t* hEdgeList, binarytree_t** parent,
+                   size_t depth, cutlist_t* cutList)
 {
-    binarytree_t       *subTree;
-    bspnodedata_t      *node;
-    hedge_t            *best;
-    superblock_t       *hEdgeSet[2];
-    bspleafdata_t      *leaf;
+    binarytree_t*       subTree;
+    bspnodedata_t*      node;
+    superblock_t*       hEdgeSet[2];
+    bspleafdata_t*      leaf;
     boolean             builtOK = false;
+    bspartition_t      partition;
 
     *parent = NULL;
 
@@ -598,11 +598,9 @@ Con_Message("Build: Begun @ %lu\n", (unsigned long) depth);
 BSP_PrintSuperblockHEdges(hEdgeList);
 #endif*/
 
-    // Pick best hEdge to use. NULL indicates convexicity.
-    best = BSP_PickHEdge(hEdgeList, depth);
-
-    if(best == NULL)
-    {
+    // Pick the next partition to use.
+    if(!BSP_PickPartition(hEdgeList, depth, &partition))
+    {   // No partition required, already convex.
 /*#if _DEBUG
 Con_Message("BuildNodes: Convex.\n");
 #endif*/
@@ -610,8 +608,6 @@ Con_Message("BuildNodes: Convex.\n");
         *parent = BinaryTree_Create(leaf);
         return true;
     }
-
-    assert(best->lineDef);
 
 /*#if _DEBUG
 Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
@@ -628,8 +624,8 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
     M_CopyBox(hEdgeSet[RIGHT]->bbox, hEdgeList->bbox);
 
     // Divide the half-edges into two lists: left & right.
-    BSP_PartitionHEdges(hEdgeList, best, hEdgeSet[RIGHT], hEdgeSet[LEFT],
-                        cutList);
+    BSP_PartitionHEdges(hEdgeList, &partition, hEdgeSet[RIGHT],
+                        hEdgeSet[LEFT], cutList);
     BSP_CutListEmpty(cutList);
 
     node = M_Calloc(sizeof(bspnodedata_t));
@@ -637,25 +633,10 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
 
     BSP_FindNodeBounds(node, hEdgeSet[RIGHT], hEdgeSet[LEFT]);
 
-    // Should we not be doing some rounding here? - DJS.
-    node->x  = best->lineDef->v[best->side]->buildData.pos[VX];
-    node->y  = best->lineDef->v[best->side]->buildData.pos[VY];
-    node->dX = best->lineDef->v[best->side^1]->buildData.pos[VX] - node->x;
-    node->dY = best->lineDef->v[best->side^1]->buildData.pos[VY] - node->y;
-
-    // Check for really long partition (overflows dx,dy in NODES).
-    if(best->pLength >= 30000)
-    {
-        if(node->dX && node->dY &&
-           (((int)node->dX & 1) || ((int)node->dY & 1)))
-        {
-            VERBOSE2(Con_Message("Loss of accuracy on VERY long node: "
-                                 "(%g,%g) -> (%g,%g).\n", node->x, node->y,
-                                 node->x + node->dX, node->y + node->dY));
-        }
-
-        node->tooLong = true;
-    }
+    node->partition.x = partition.x;
+    node->partition.y = partition.y;
+    node->partition.dX = partition.dX;
+    node->partition.dY = partition.dY;
 
     builtOK = BuildNodes(hEdgeSet[RIGHT], &subTree, depth + 1, cutList);
     BinaryTree_SetChild(*parent, RIGHT, subTree);

@@ -55,11 +55,11 @@
 
 // CODE --------------------------------------------------------------------
 
-static void hardenSideSegList(gamemap_t *map, sidedef_t *side, seg_t *seg,
-                              hedge_t *hEdge)
+static void hardenSideSegList(gamemap_t* map, sidedef_t* side, seg_t* seg,
+                              hedge_t* hEdge)
 {
     uint                count;
-    hedge_t            *first, *other;
+    hedge_t*            first, *other;
 
     // Have we already processed this side?
     if(side->segs)
@@ -94,10 +94,10 @@ static void hardenSideSegList(gamemap_t *map, sidedef_t *side, seg_t *seg,
     side->segs[count] = NULL; // Terminate.
 }
 
-static int C_DECL hEdgeCompare(const void *p1, const void *p2)
+static int C_DECL hEdgeCompare(const void* p1, const void* p2)
 {
-    const hedge_t *a = ((const hedge_t **) p1)[0];
-    const hedge_t *b = ((const hedge_t **) p2)[0];
+    const hedge_t* a = ((const hedge_t**) p1)[0];
+    const hedge_t* b = ((const hedge_t**) p2)[0];
 
     if(a->index == b->index)
         return 0;
@@ -108,17 +108,17 @@ static int C_DECL hEdgeCompare(const void *p1, const void *p2)
 
 typedef struct {
     size_t              curIdx;
-    hedge_t          ***indexPtr;
+    hedge_t***          indexPtr;
     boolean             write;
 } hedgecollectorparams_t;
 
-static boolean hEdgeCollector(binarytree_t *tree, void *data)
+static boolean hEdgeCollector(binarytree_t* tree, void* data)
 {
     if(BinaryTree_IsLeaf(tree))
     {
-        hedgecollectorparams_t *params = (hedgecollectorparams_t*) data;
-        bspleafdata_t      *leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
-        hedge_t            *hEdge;
+        hedgecollectorparams_t* params = (hedgecollectorparams_t*) data;
+        bspleafdata_t*      leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
+        hedge_t*            hEdge;
 
         for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->next)
         {
@@ -139,10 +139,10 @@ static boolean hEdgeCollector(binarytree_t *tree, void *data)
     return true; // Continue traversal.
 }
 
-static void buildSegsFromHEdges(gamemap_t *dest, binarytree_t *rootNode)
+static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
 {
     uint                i;
-    hedge_t           **index;
+    hedge_t**           index;
     hedgecollectorparams_t params;
 
     //
@@ -172,8 +172,8 @@ static void buildSegsFromHEdges(gamemap_t *dest, binarytree_t *rootNode)
     dest->segs = Z_Calloc(dest->numSegs * sizeof(seg_t), PU_LEVELSTATIC, 0);
     for(i = 0; i < dest->numSegs; ++i)
     {
-        seg_t      *seg = &dest->segs[i];
-        hedge_t    *hEdge = index[i];
+        seg_t*              seg = &dest->segs[i];
+        hedge_t*            hEdge = index[i];
 
         seg->header.type = DMU_SEG;
 
@@ -189,8 +189,8 @@ static void buildSegsFromHEdges(gamemap_t *dest, binarytree_t *rootNode)
         seg->flags = 0;
         if(seg->lineDef)
         {
-            linedef_t     *ldef = seg->lineDef;
-            vertex_t   *vtx = seg->lineDef->L_v(seg->side);
+            linedef_t*          ldef = seg->lineDef;
+            vertex_t*           vtx = seg->lineDef->L_v(seg->side);
 
             seg->SG_frontsector = ldef->L_side(seg->side)->sector;
 
@@ -233,8 +233,8 @@ static void buildSegsFromHEdges(gamemap_t *dest, binarytree_t *rootNode)
         // Front first
         if(seg->lineDef)
         {
-            sidedef_t          *side = SEG_SIDEDEF(seg);
-            surface_t          *surface = &side->SW_topsurface;
+            sidedef_t*          side = SEG_SIDEDEF(seg);
+            surface_t*          surface = &side->SW_topsurface;
 
             surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
             surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
@@ -250,12 +250,12 @@ static void buildSegsFromHEdges(gamemap_t *dest, binarytree_t *rootNode)
     M_Free(index);
 }
 
-static void hardenSSecSegList(gamemap_t *dest, subsector_t *ssec,
-                              hedge_t *list, size_t segCount)
+static void hardenSSecSegList(gamemap_t* dest, subsector_t* ssec,
+                              hedge_t* list, size_t segCount)
 {
     size_t              i;
-    hedge_t            *cur;
-    seg_t             **segs;
+    hedge_t*            cur;
+    seg_t**             segs;
 
     segs = Z_Malloc(sizeof(seg_t*) * (segCount + 1), PU_LEVELSTATIC, 0);
 
@@ -269,10 +269,10 @@ static void hardenSSecSegList(gamemap_t *dest, subsector_t *ssec,
     ssec->segs = segs;
 }
 
-static void hardenLeaf(gamemap_t *map, subsector_t* dest,
+static void hardenLeaf(gamemap_t* map, subsector_t* dest,
                        const bspleafdata_t* src)
 {
-    seg_t             **segp;
+    seg_t**             segp;
     boolean             found;
 
     dest->header.type = DMU_SUBSECTOR;
@@ -288,11 +288,11 @@ static void hardenLeaf(gamemap_t *map, subsector_t* dest,
     found = false;
     while(*segp)
     {
-        seg_t              *seg = *segp;
+        seg_t*              seg = *segp;
 
         if(!found && seg->lineDef)
         {
-            sidedef_t          *side = SEG_SIDEDEF(seg);
+            sidedef_t*          side = SEG_SIDEDEF(seg);
 
             dest->sector = side->sector;
             found = true;
@@ -306,17 +306,17 @@ static void hardenLeaf(gamemap_t *map, subsector_t* dest,
 }
 
 typedef struct {
-    gamemap_t      *dest;
+    gamemap_t*      dest;
     uint            ssecCurIndex;
     uint            nodeCurIndex;
 } hardenbspparams_t;
 
-static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
+static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
 {
-    binarytree_t       *right, *left;
-    bspnodedata_t      *nodeData;
-    hardenbspparams_t  *params;
-    node_t             *node;
+    binarytree_t*       right, *left;
+    bspnodedata_t*      nodeData;
+    hardenbspparams_t*  params;
+    node_t*             node;
 
     if(BinaryTree_IsLeaf(tree))
         return true; // Continue iteration.
@@ -327,10 +327,10 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
     node = &params->dest->nodes[nodeData->index = params->nodeCurIndex++];
     node->header.type = DMU_NODE;
 
-    node->partition.x = nodeData->x;
-    node->partition.y = nodeData->y;
-    node->partition.dX = nodeData->dX / (nodeData->tooLong? 2 : 1);
-    node->partition.dY = nodeData->dY / (nodeData->tooLong? 2 : 1);
+    node->partition.x = nodeData->partition.x;
+    node->partition.y = nodeData->partition.y;
+    node->partition.dX = nodeData->partition.dX;
+    node->partition.dY = nodeData->partition.dY;
 
     node->bBox[RIGHT][BOXTOP]    = nodeData->bBox[RIGHT][BOXTOP];
     node->bBox[RIGHT][BOXBOTTOM] = nodeData->bBox[RIGHT][BOXBOTTOM];
@@ -347,7 +347,7 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
     {
         if(BinaryTree_IsLeaf(right))
         {
-            bspleafdata_t  *leaf = (bspleafdata_t*) BinaryTree_GetData(right);
+            bspleafdata_t*  leaf = (bspleafdata_t*) BinaryTree_GetData(right);
             uint            idx = params->ssecCurIndex++;
 
             node->children[RIGHT] = idx | NF_SUBSECTOR;
@@ -355,7 +355,8 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
         }
         else
         {
-            bspnodedata_t *data = (bspnodedata_t*) BinaryTree_GetData(right);
+            bspnodedata_t* data = (bspnodedata_t*) BinaryTree_GetData(right);
+
             node->children[RIGHT] = data->index;
         }
     }
@@ -365,7 +366,7 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
     {
         if(BinaryTree_IsLeaf(left))
         {
-            bspleafdata_t  *leaf = (bspleafdata_t*) BinaryTree_GetData(left);
+            bspleafdata_t*  leaf = (bspleafdata_t*) BinaryTree_GetData(left);
             uint            idx = params->ssecCurIndex++;
 
             node->children[LEFT] = idx | NF_SUBSECTOR;
@@ -373,7 +374,8 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
         }
         else
         {
-            bspnodedata_t *data = (bspnodedata_t*) BinaryTree_GetData(left);
+            bspnodedata_t*  data = (bspnodedata_t*) BinaryTree_GetData(left);
+
             node->children[LEFT]  = data->index;
         }
     }
@@ -381,7 +383,7 @@ static boolean C_DECL hardenNode(binarytree_t *tree, void *data)
     return true; // Continue iteration.
 }
 
-static boolean C_DECL countNode(binarytree_t *tree, void *data)
+static boolean C_DECL countNode(binarytree_t* tree, void* data)
 {
     if(!BinaryTree_IsLeaf(tree))
         (*((uint*) data))++;
@@ -389,7 +391,7 @@ static boolean C_DECL countNode(binarytree_t *tree, void *data)
     return true; // Continue iteration.
 }
 
-static boolean C_DECL countSSec(binarytree_t *tree, void *data)
+static boolean C_DECL countSSec(binarytree_t* tree, void* data)
 {
     if(BinaryTree_IsLeaf(tree))
         (*((uint*) data))++;
@@ -397,7 +399,7 @@ static boolean C_DECL countSSec(binarytree_t *tree, void *data)
     return true; // Continue iteration.
 }
 
-static void hardenBSP(gamemap_t *dest, binarytree_t *rootNode)
+static void hardenBSP(gamemap_t* dest, binarytree_t* rootNode)
 {
     dest->numNodes = 0;
     BinaryTree_PostOrder(rootNode, countNode, &dest->numNodes);
@@ -421,15 +423,15 @@ static void hardenBSP(gamemap_t *dest, binarytree_t *rootNode)
     }
 }
 
-void BSP_InitForNodeBuild(gamemap_t *map)
+void BSP_InitForNodeBuild(gamemap_t* map)
 {
     uint                i;
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t          *l = &map->lineDefs[i];
-        vertex_t           *start = l->v[0];
-        vertex_t           *end   = l->v[1];
+        linedef_t*          l = &map->lineDefs[i];
+        vertex_t*           start = l->v[0];
+        vertex_t*           end   = l->v[1];
 
         start->buildData.refCount++;
         end->buildData.refCount++;
@@ -454,8 +456,8 @@ void BSP_InitForNodeBuild(gamemap_t *map)
     }
 }
 
-static void hardenVertexes(gamemap_t *dest, vertex_t ***vertexes,
-                           uint *numVertexes)
+static void hardenVertexes(gamemap_t* dest, vertex_t*** vertexes,
+                           uint* numVertexes)
 {
     uint                i;
 
@@ -465,8 +467,8 @@ static void hardenVertexes(gamemap_t *dest, vertex_t ***vertexes,
 
     for(i = 0; i < dest->numVertexes; ++i)
     {
-        vertex_t           *destV = &dest->vertexes[i];
-        vertex_t           *srcV = (*vertexes)[i];
+        vertex_t*           destV = &dest->vertexes[i];
+        vertex_t*           srcV = (*vertexes)[i];
 
         destV->header.type = DMU_VERTEX;
         destV->numLineOwners = srcV->numLineOwners;
@@ -479,24 +481,24 @@ static void hardenVertexes(gamemap_t *dest, vertex_t ***vertexes,
     }
 }
 
-static void updateVertexLinks(gamemap_t *dest)
+static void updateVertexLinks(gamemap_t* dest)
 {
     uint                i;
 
     for(i = 0; i < dest->numLineDefs; ++i)
     {
-        linedef_t          *line = &dest->lineDefs[i];
+        linedef_t*          line = &dest->lineDefs[i];
 
         line->L_v1 = &dest->vertexes[line->L_v1->buildData.index - 1];
         line->L_v2 = &dest->vertexes[line->L_v2->buildData.index - 1];
     }
 }
 
-void SaveMap(gamemap_t *dest, void *rootNode, vertex_t ***vertexes,
-             uint *numVertexes)
+void SaveMap(gamemap_t* dest, void* rootNode, vertex_t*** vertexes,
+             uint* numVertexes)
 {
     uint                startTime = Sys_GetRealTime();
-    binarytree_t       *rn = (binarytree_t*) rootNode;
+    binarytree_t*       rn = (binarytree_t*) rootNode;
 
     hardenVertexes(dest, vertexes, numVertexes);
     updateVertexLinks(dest);
