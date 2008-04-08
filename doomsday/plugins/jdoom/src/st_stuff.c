@@ -352,10 +352,10 @@ cvar_t sthudCVars[] =
     {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1},
     {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1},
     {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1},
+    {"hud-keys-combine", 0, CVT_BYTE, &cfg.hudKeysCombine, 0, 1},
 
     // HUD displays
     {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
-
     {"hud-frags-all", 0, CVT_BYTE, &huShowAllFrags, 0, 1},
 
     {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
@@ -1087,36 +1087,70 @@ Draw_EndZoom();
         }
     }
 
-    pos = width - 1;
+    pos = width - 2;
     if(cfg.hudShown[HUD_ARMOR])
     {
-        sprintf(buf, "%i%%", plr->armorPoints);
-        spr = plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1;
-        ST_drawHUDSprite(spr, width - 49, height - 2, HOT_BRIGHT, iconAlpha);
-        ST_HUDSpriteSize(spr, &w, &h);
+        int                 maxArmor, armorOffset;
 
-        M_WriteText2(width - M_StringWidth(buf, huFontB) - 2, height - 14, buf, huFontB,
+        maxArmor = MAX_OF(armorPoints[0], armorPoints[1]);
+        maxArmor = MAX_OF(maxArmor, armorPoints[2]);
+        maxArmor = MAX_OF(maxArmor, armorPoints[2]);
+        sprintf(buf, "%i%%", maxArmor);
+        armorOffset = M_StringWidth(buf, huFontB);
+
+        sprintf(buf, "%i%%", plr->armorPoints);
+        pos -= armorOffset;
+        M_WriteText2(pos + armorOffset - M_StringWidth(buf, huFontB), height - 14, buf, huFontB,
                      cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-        pos = width - w - 52;
+        pos -= 2;
+
+        spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
+        ST_drawHUDSprite(spr, pos, height - 2, HOT_BRIGHT, iconAlpha);
+        ST_HUDSpriteSize(spr, &w, &h);
+        pos -= w + 2;
     }
 
-    // Keys  | use a bit of extra scale.
+    // Keys | use a bit of extra scale.
     if(cfg.hudShown[HUD_KEYS])
     {
+        static int          keyPairs[3][2] = {
+            {KT_REDCARD, KT_REDSKULL},
+            {KT_YELLOWCARD, KT_YELLOWSKULL},
+            {KT_BLUECARD, KT_BLUESKULL}
+        };
+        static int          keyIcons[NUM_KEY_TYPES] = {
+            SPR_BKEY,
+            SPR_YKEY,
+            SPR_RKEY,
+            SPR_BSKU,
+            SPR_YSKU,
+            SPR_RSKU
+        };
+
 Draw_BeginZoom(0.75f, pos , height - 2);
-        for(i = 0; i < 3; ++i)
+        for(i = 0; i < NUM_KEY_TYPES; ++i)
         {
-            spr = 0;
-            if(plr->
-               keys[i == 0 ? KT_REDCARD : i ==
-                     1 ? KT_YELLOWCARD : KT_BLUECARD])
-                spr = i == 0 ? SPR_RKEY : i == 1 ? SPR_YKEY : SPR_BKEY;
-            if(plr->
-               keys[i == 0 ? KT_REDSKULL : i ==
-                     1 ? KT_YELLOWSKULL : KT_BLUESKULL])
-                spr = i == 0 ? SPR_RSKU : i == 1 ? SPR_YSKU : SPR_BSKU;
-            if(spr)
+            boolean             shown = true;
+
+            if(!plr->keys[i])
+                continue;
+
+            if(cfg.hudKeysCombine)
             {
+                int                 j;
+
+                for(j = 0; j < 3; ++j)
+                    if(keyPairs[j][0] == i &&
+                       plr->keys[keyPairs[j][0]] && plr->keys[keyPairs[j][1]])
+                    {
+                        shown = false;
+                        break;
+                    }
+            }
+
+            if(shown)
+            {
+                spr = keyIcons[i];
                 ST_drawHUDSprite(spr, pos, height - 2, HOT_BRIGHT, iconAlpha);
                 ST_HUDSpriteSize(spr, &w, &h);
                 pos -= w + 2;

@@ -377,6 +377,7 @@ void G_PreInit(void)
     cfg.flashColor[2] = 1;
     cfg.flashSpeed = 4;
     cfg.turningSkull = true;
+    cfg.hudKeysCombine = false;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;
     cfg.hudShown[HUD_AMMO] = true;

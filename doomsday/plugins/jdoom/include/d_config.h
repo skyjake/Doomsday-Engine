@@ -95,8 +95,9 @@ typedef struct jdoom_config_s {
     float           flashColor[3];
     int             flashSpeed;
     byte            turningSkull;
-    byte            hudShown[NUMHUDDISPLAYS];   // HUD data visibility.
-    float           hudScale;      // How to scale HUD data?
+    byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
+    byte            hudKeysCombine; // One icon per color (e.g. if red key and red skull is owned only show red key).
+    float           hudScale; // How to scale HUD data?
     float           hudColor[4];
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.

@@ -863,16 +863,15 @@ static menuitem_t HUDItems[] = {
     {ITT_EFUNC, 0, "show power keys :", M_ToggleVar, 0, NULL, "hud-power" },
     {ITT_EFUNC, 0, "show health :", M_ToggleVar, 0, NULL,"hud-health" },
     {ITT_EFUNC, 0, "show keys :", M_ToggleVar, 0, NULL, "hud-keys" },
-
     {ITT_LRFUNC, 0, "scale", M_HUDScale, 0},
     {ITT_EFUNC, 0, "   HUD color", SCColorWidget, 5},
 #elif __JDOOM__
-    {ITT_EFUNC, 0, "show ammo :", M_ToggleVar, 0, NULL, "hud-ammo" },
-    {ITT_EFUNC, 0, "show armor :", M_ToggleVar, 0, NULL, "hud-armor" },
-    {ITT_EFUNC, 0, "show face :", M_ToggleVar, 0, NULL, "hud-face" },
-    {ITT_EFUNC, 0, "show health :", M_ToggleVar, 0, NULL,"hud-health" },
-    {ITT_EFUNC, 0, "show keys :", M_ToggleVar, 0, NULL, "hud-keys" },
-
+    {ITT_EFUNC, 0, "show ammo :", M_ToggleVar, 0, NULL, "hud-ammo"},
+    {ITT_EFUNC, 0, "show armor :", M_ToggleVar, 0, NULL, "hud-armor"},
+    {ITT_EFUNC, 0, "show face :", M_ToggleVar, 0, NULL, "hud-face"},
+    {ITT_EFUNC, 0, "show health :", M_ToggleVar, 0, NULL, "hud-health"},
+    {ITT_EFUNC, 0, "show keys :", M_ToggleVar, 0, NULL, "hud-keys"},
+    {ITT_EFUNC, 0, "single key display :", M_ToggleVar, 0, NULL, "hud-keys-combine"},
     {ITT_LRFUNC, 0, "scale", M_HUDScale, 0},
     {ITT_EFUNC, 0, "   HUD color", SCColorWidget, 5},
 #endif
@@ -940,7 +939,7 @@ static menu_t HUDDef = {
 #elif __JDOOM64__
     11, HUDItems,
 #elif __JDOOM__
-    13, HUDItems,
+    14, HUDItems,
 #endif
     0, MENU_OPTIONS,
     huFontA,
@@ -954,7 +953,7 @@ static menu_t HUDDef = {
 #elif __JDOOM64__
     0, 11
 #elif __JDOOM__
-    0, 13
+    0, 14
 #endif
 };
 
@@ -3142,8 +3141,9 @@ void M_AmmoAutoSwitch(int option, void *data)
 
 void M_DrawHUDMenu(void)
 {
-    menu_t     *menu = &HUDDef;
-    char       *xhairnames[7] = {
+    int                 idx;
+    menu_t*             menu = &HUDDef;
+    char*               xhairnames[7] = {
         "NONE", "CROSS", "ANGLES", "SQUARE", "OPEN SQUARE", "DIAMOND", "V"
     };
 
@@ -3204,25 +3204,29 @@ void M_DrawHUDMenu(void)
         MN_DrawSlider(menu, 23, 10, cfg.hudScale * 10 - 3 + .5f);
     }
 #elif __JDOOM__ || __JDOOM64__
-    M_WriteMenuText(menu, 0, yesno[cfg.hudShown[HUD_AMMO]]);
-    M_WriteMenuText(menu, 1, yesno[cfg.hudShown[HUD_ARMOR]]);
+    idx = 0;
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_AMMO]]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_ARMOR]]);
 # if __JDOOM64__
-    M_WriteMenuText(menu, 2, yesno[cfg.hudShown[HUD_POWER]]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_POWER]]);
 # else
-    M_WriteMenuText(menu, 2, yesno[cfg.hudShown[HUD_FACE]]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_FACE]]);
 # endif
-    M_WriteMenuText(menu, 3, yesno[cfg.hudShown[HUD_HEALTH]]);
-    M_WriteMenuText(menu, 4, yesno[cfg.hudShown[HUD_KEYS]]);
-    MN_DrawSlider(menu, 5, 10, cfg.hudScale * 10 - 3 + .5f);
-    MN_DrawColorBox(menu,6, cfg.hudColor[0], cfg.hudColor[1],
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_HEALTH]]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_KEYS]]);
+# if __JDOOM__
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudKeysCombine]);
+# endif
+    MN_DrawSlider(menu, idx++, 10, cfg.hudScale * 10 - 3 + .5f);
+    MN_DrawColorBox(menu, idx++, cfg.hudColor[0], cfg.hudColor[1],
                     cfg.hudColor[2], menuAlpha);
-    M_WriteMenuText(menu, 7, yesno[cfg.msgShow != 0]);
-    M_WriteMenuText(menu, 8, xhairnames[cfg.xhair]);
-    MN_DrawSlider(menu, 9, 9, cfg.xhairSize);
-    MN_DrawSlider(menu, 10, 11, cfg.screenBlocks - 3 );
+    M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
+    M_WriteMenuText(menu, idx++, xhairnames[cfg.xhair]);
+    MN_DrawSlider(menu, idx++, 9, cfg.xhairSize);
+    MN_DrawSlider(menu, idx++, 11, cfg.screenBlocks - 3 );
 # if !__JDOOM64__
-    MN_DrawSlider(menu, 11, 20, cfg.statusbarScale - 1);
-    MN_DrawSlider(menu, 12, 11, cfg.statusbarAlpha * 10 + .25f);
+    MN_DrawSlider(menu, idx++, 20, cfg.statusbarScale - 1);
+    MN_DrawSlider(menu, idx++, 11, cfg.statusbarAlpha * 10 + .25f);
 # endif
 #endif
 }

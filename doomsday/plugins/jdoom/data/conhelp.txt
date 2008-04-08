@@ -667,6 +667,9 @@ desc = 1=Show ammo in HUD.
 [hud-keys]
 desc = 1=Show keys in HUD.
 
+[hud-keys-combine]
+desc = 1=Combine the display of keys of the same color in HUD.
+
 [hud-frags]
 desc = 1=Show deathmatch frags in HUD.
 
