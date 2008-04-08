@@ -40,6 +40,8 @@ enum { VX, VY, VZ };
 #define RIGHT                   0
 #define LEFT                    1
 
+#define VERBOSE(code)   { if(verbose) { code; } }
+
 typedef struct materialref_s {
     char            name[9];
     boolean         isFlat;
@@ -101,7 +103,7 @@ typedef struct mthing_s {
 typedef struct mpolyobj_s {
     uint            idx; // Idx of polyobject
     uint            lineCount;
-    uint           *lineIndices;
+    uint*           lineIndices;
     int             tag; // Reference tag assigned in HereticEd
     int             seqType;
     int16_t         anchor[2];
@@ -117,26 +119,27 @@ typedef struct map_s {
     uint            numThings;
     uint            numMaterials;
 
-    float          *vertexes; // Array of vertex coords [v0 X, vo Y, v1 X, v1 Y...]
-    msector_t      *sectors;
-    mline_t        *lines;
-    mside_t        *sides;
-    mthing_t       *things;
-    mpolyobj_t    **polyobjs;
+    float*          vertexes; // Array of vertex coords [v0 X, vo Y, v1 X, v1 Y...]
+    msector_t*      sectors;
+    mline_t*        lines;
+    mside_t*        sides;
+    mthing_t*       things;
+    mpolyobj_t**    polyobjs;
 
-    materialref_t **materials;
+    materialref_t** materials;
 
     boolean         hexenFormat;
 
-    byte           *rejectMatrix;
-    void           *blockMap;
+    byte*           rejectMatrix;
+    void*           blockMap;
 } map_t;
 
-extern map_t *map;
+extern map_t* map;
+extern boolean verbose;
 
-boolean         IsSupportedFormat(const int *lumpList, int numLumps);
+boolean         IsSupportedFormat(const int* lumpList, int numLumps);
 
-boolean         LoadMap(const int *lumpList, int numLumps);
+boolean         LoadMap(const int* lumpList, int numLumps);
 void            AnalyzeMap(void);
 boolean         TransferMap();
 

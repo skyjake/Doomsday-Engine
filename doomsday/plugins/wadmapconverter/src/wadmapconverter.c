@@ -62,6 +62,7 @@ static int ConvertMapHook(int hookType, int parm, void *data);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 map_t theMap, *map = &theMap;
+boolean verbose;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -108,6 +109,8 @@ int ConvertMapHook(int hookType, int param, void *data)
 {
     int                *lumpList = (int*) data;
     boolean             result = false;
+
+    verbose = ArgExists("-verbose");
 
     Con_Message("WadMapConverter::Convert: Attempting map conversion...\n");
     memset(map, 0, sizeof(*map));

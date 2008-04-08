@@ -1038,13 +1038,20 @@ boolean LoadMap(const int *lumpList, int numLumps)
 
 boolean TransferMap(void)
 {
+    uint                startTime = Sys_GetRealTime();
+
     uint                i;
+    boolean             result;
+
+    VERBOSE(Con_Message("WadMapConverter::TransferMap...\n"));
 
     MPE_Begin(map->name);
 
     // Create all the data structures.
+    VERBOSE(Con_Message("WadMapConverter::Transfering vertexes...\n"));
     MPE_VertexCreatev(map->numVertexes, map->vertexes, NULL);
 
+    VERBOSE(Con_Message("WadMapConverter::Transfering sectors...\n"));
     for(i = 0; i < map->numSectors; ++i)
     {
         msector_t          *sec = &map->sectors[i];
@@ -1066,6 +1073,7 @@ boolean TransferMap(void)
         MPE_GameObjProperty("XSector", i, "Type", DDVT_SHORT, &sec->type);
     }
 
+    VERBOSE(Con_Message("WadMapConverter::Transfering linedefs...\n"));
     for(i = 0; i < map->numLines; ++i)
     {
         mline_t            *l = &map->lines[i];
@@ -1124,6 +1132,7 @@ boolean TransferMap(void)
         }
     }
 
+    VERBOSE(Con_Message("WadMapConverter::Transfering polyobjs...\n"));
     for(i = 0; i < map->numPolyobjs; ++i)
     {
         mpolyobj_t         *po = map->polyobjs[i];
@@ -1138,6 +1147,7 @@ boolean TransferMap(void)
         free(lineList);
     }
 
+    VERBOSE(Con_Message("WadMapConverter::Transfering things...\n"));
     for(i = 0; i < map->numThings; ++i)
     {
         mthing_t           *th = &map->things[i];
@@ -1165,5 +1175,11 @@ boolean TransferMap(void)
     freeMapData();
 
     // Let Doomsday know that we've finished with this map.
-    return MPE_End();
+    result = MPE_End();
+
+    VERBOSE(
+    Con_Message("WadMapConverter::TransferMap: Done in %.2f seconds.\n",
+                (Sys_GetRealTime() - startTime) / 1000.0f));
+
+    return result;
 }
