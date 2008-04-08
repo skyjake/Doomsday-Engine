@@ -93,6 +93,5 @@ unsigned int    W_CRCNumberForRecord(int idx);
 unsigned int    W_CRCNumber(void);
 void            W_GetIWADFileName(char *buf, int bufSize);
 void            W_GetPWADFileNames(char *buf, int bufSize, char separator);
-void            W_PrintMapList(void);
 
 #endif

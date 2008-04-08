@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -459,13 +459,13 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
         file = prevOpened;
     }
 
-    VERBOSE(Con_Message("Zip_Open: %s\n", M_Pretty(fileName)));
+    VERBOSE(Con_Message("Zip_Open: %s\n", M_PrettyPath(fileName)));
 
     // Scan the end of the file for the central directory end record.
     if(!locateCentralDirectory(file))
     {
         Con_Error("Zip_Open: %s: Central directory not found.\n",
-                  M_Pretty(fileName));
+                  M_PrettyPath(fileName));
     }
 
     // Read the central directory end record.
@@ -475,7 +475,7 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
     if(USHORT(summary.diskEntryCount) != USHORT(summary.totalEntryCount))
     {
         Con_Error("Zip_Open: %s: Multipart Zip files are not supported.\n",
-                  M_Pretty(fileName));
+                  M_PrettyPath(fileName));
     }
 
     // Read the entire central directory into memory.
@@ -514,12 +514,12 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
            USHORT(header->compression) != ZFC_DEFLATED)
         {
             Con_Error("Zip_Open: %s: '%s' uses an unsupported compression "
-                      "algorithm.\n", M_Pretty(fileName), buf);
+                      "algorithm.\n", M_PrettyPath(fileName), buf);
         }
         if(USHORT(header->flags) & ZFH_ENCRYPTED)
         {
             Con_Error("Zip_Open: %s: '%s' is encrypted.\n  Encryption is "
-                      "not supported.\n", M_Pretty(fileName), buf);
+                      "not supported.\n", M_PrettyPath(fileName), buf);
         }
 
         // Convert all slashes to the host OS's directory separator,
@@ -756,8 +756,8 @@ size_t Zip_Read(zipindex_t index, void *buffer)
     pack = entry->package;
 
     VERBOSE2(Con_Message
-             ("Zip_Read: %s: '%s' (%lu bytes%s)\n", M_Pretty(pack->name),
-              M_Pretty(entry->name), (unsigned long) entry->size,
+             ("Zip_Read: %s: '%s' (%lu bytes%s)\n", M_PrettyPath(pack->name),
+              M_PrettyPath(entry->name), (unsigned long) entry->size,
               (entry->deflatedSize? ", deflated" : "")));
 
     F_Seek(pack->file, entry->offset, SEEK_SET);

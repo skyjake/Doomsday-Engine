@@ -1180,12 +1180,13 @@ void M_ReplaceFileExt(char *path, char *newext)
 /**
  * Return a prettier copy of the original path.
  */
-const char *M_Pretty(const char *path)
+const char* M_PrettyPath(const char* path)
 {
-#define MAX_BUFS 8
-    static char buffers[MAX_BUFS][256];
-    static uint index = 0;
-    char   *str;
+#define MAX_BUFS            8
+
+    static char         buffers[MAX_BUFS][256];
+    static uint         index = 0;
+    char*               str;
 
     if(!strnicmp(path, ddBasePath, strlen(ddBasePath)))
     {
@@ -1203,9 +1204,9 @@ const char *M_Pretty(const char *path)
  * Concatenates src to dest as a quoted string. " is escaped to \".
  * Returns dest.
  */
-char* M_StrCatQuoted(char *dest, char *src)
+char* M_StrCatQuoted(char* dest, char* src)
 {
-    size_t          k = strlen(dest) + 1, i;
+    size_t              k = strlen(dest) + 1, i;
 
     strcat(dest, "\"");
     for(i = 0; src[i]; i++)

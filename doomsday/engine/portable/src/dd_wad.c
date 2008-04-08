@@ -82,7 +82,6 @@ typedef struct {
 D_CMD(Dir);
 D_CMD(Dump);
 D_CMD(ListFiles);
-D_CMD(ListMaps);
 D_CMD(LoadFile);
 D_CMD(ResetLumps);
 D_CMD(UnloadFile);
@@ -138,7 +137,6 @@ void DD_RegisterVFS(void)
     C_CMD("dir", "s*", Dir);
     C_CMD("dump", "s", Dump);
     C_CMD("listfiles", "", ListFiles);
-    C_CMD("listmaps", "", ListMaps);
     C_CMD("load", "ss", LoadFile);
     C_CMD("ls", "s*", Dir);
     C_CMD("reset", "", ResetLumps);
@@ -568,7 +566,7 @@ boolean W_AddFile(const char *fileName, boolean allowDuplicate)
         return false;
     }
 
-    Con_Message("W_AddFile: %s\n", M_Pretty(fileName));
+    Con_Message("W_AddFile: %s\n", M_PrettyPath(fileName));
 
     // Determine the file name extension.
     extension = strrchr(fileName, '.');
@@ -1375,14 +1373,6 @@ boolean W_IsFromIWAD(lumpnum_t lump)
     return false;
 }
 
-static void W_MapLumpName(int episode, int map, char *mapLump)
-{
-    if(episode > 0)
-        sprintf(mapLump, "E%iM%i", episode, map);
-    else
-        sprintf(mapLump, "MAP%02i", map);
-}
-
 #if 0
 /**
  * \fixme What about GL data?
@@ -1434,91 +1424,6 @@ boolean W_RemapPWADMaps(const char *pwadName, int episode, int map)
     return true;
 }
 #endif
-
-/**
- * Print a list of maps and the WAD files where they are from.
- */
-void W_PrintFormattedMapList(int episode, const char **files, int count)
-{
-    const char         *current = NULL;
-    char                lump[20];
-    int                 i, k;
-    int                 rangeStart = 0, len;
-
-    for(i = 0; i < count; ++i)
-    {
-        if(!current && files[i])
-        {
-            current = files[i];
-            rangeStart = i;
-        }
-        else if(current && (!files[i] || stricmp(current, files[i])))
-        {
-            // Print a range.
-            len = i - rangeStart;
-            Con_Printf("  ");   // Indentation.
-            if(len <= 2)
-            {
-                for(k = rangeStart + 1; k <= i; ++k)
-                {
-                    W_MapLumpName(episode, k, lump);
-                    Con_Printf("%s%s", lump, k != i ? "," : "");
-                }
-            }
-            else
-            {
-                W_MapLumpName(episode, rangeStart + 1, lump);
-                Con_Printf("%s-", lump);
-                W_MapLumpName(episode, i, lump);
-                Con_Printf("%s", lump);
-            }
-            Con_Printf(": %s\n", M_Pretty(current));
-
-            // Moving on to a different file.
-            current = files[i];
-            rangeStart = i;
-        }
-    }
-}
-
-/**
- * Print a list of loaded maps and which WAD files are they located in.
- * The maps are identified using the "ExMy" and "MAPnn" markers.
- */
-void W_PrintMapList(void)
-{
-    const char         *sourceList[100];
-    lumpnum_t           lump;
-    int                 episode, map;
-    char                mapLump[20];
-
-    for(episode = 0; episode <= 9; ++episode)
-    {
-        memset((void *) sourceList, 0, sizeof(sourceList));
-
-        // Find the name of each map (not all may exist).
-        for(map = 1; map <= (episode ? 9 : 99); ++map)
-        {
-            W_MapLumpName(episode, map, mapLump);
-
-            // Does the lump exist?
-            if((lump = W_CheckNumForName(mapLump)) >= 0)
-            {
-                // Get the name of the WAD.
-                sourceList[map - 1] = W_LumpSourceFile(lump);
-            }
-        }
-
-        W_PrintFormattedMapList(episode, sourceList, 99);
-    }
-}
-
-D_CMD(ListMaps)
-{
-    Con_Printf("Loaded maps:\n");
-    W_PrintMapList();
-    return true;
-}
 
 D_CMD(LoadFile)
 {

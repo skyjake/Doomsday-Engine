@@ -2,28 +2,90 @@
 # CONSOLE COMMANDS - JDOOM SPECFIC
 #
 
-[setcolor]
-desc = Set player color.
-inf = Params: setcolor (playernum)\nFor example, 'setcolor 4'.
+[addmark]
+desc = Add a mark in the automap.
 
-[setmap]
-desc = Set map.
-inf = Params: setmap (episode) (map)\nFor example, 'setmap 1 7'.
+[automap]
+desc = Show automap.
 
-[setclass]
-desc = Set player class.
+[beginchat]
+desc = Begin chat mode.
 
-[startcycle]
-desc = Begin map rotation.
+[chatcancel]
+desc = Exit chat mode without sending the message.
+
+[chatcomplete]
+desc = Send the chat message and exit chat mode.
+
+[chatdelete]
+desc = Delete a character from the chat buffer.
+
+[chatsendmacro]
+desc = Send a chat macro.
+
+[cheat]
+desc = Issue a cheat code using the original DOOM cheats.
+inf = Params: cheat (cheat)\nFor example, 'cheat idclev25'.
+
+[clearmarks]
+desc = Clear all marks in the automap.
+
+[coord]
+desc = Print the coordinates of the consoleplayer.
+
+[crosshair]
+desc = Crosshair setup.
+
+[doomfont]
+desc = Use the Doom font in the console.
 
 [endcycle]
 desc = End map rotation.
 
+[endgame]
+desc = End the game.
+
+[exitlevel]
+desc = Exit the current level.
+
+[follow]
+desc = Toggle Follow mode in the automap.
+
+[god]
+desc = God mode (cheat).
+
+[give]
+desc = Gives you weapons, ammo, power-ups, etc.
+
+[helpscreen]
+desc = Show the Help screens.
+
+[kill]
+desc = Kill all the monsters on the level.
+
+[loadgame]
+desc = Open the load game menu.
+
+[lockmode]
+desc = Set camera viewlock mode.
+inf = Params: lockmode (0-1).
+
+[listmaps]
+desc = List all loaded maps.
+
+[makecam]
+desc = Toggle camera mode.
+inf = Params: makecam (playernum)\nFor example, 'makecam 1'.
+
+[makelocp]
+desc = Make local player.
+inf = Params: makelocp (playernum)\nFor example, 'makelocp 1'.
+
 [menu]
 desc = Open/Close the menu.
 
-[menuup]
-desc = Move the menu cursor up.
+[menucancel]
+desc = Return to the previous menu page.
 
 [menudown]
 desc = Move the menu cursor down.
@@ -37,185 +99,124 @@ desc = Move the menu cursor right.
 [menuselect]
 desc = Select/Accept the current menu item.
 
-[menucancel]
-desc = Return to the previous menu page.
+[menuup]
+desc = Move the menu cursor up.
 
-[helpscreen]
-desc = Show the Help screens.
+[message]
+desc = Show a local game message.
+inf = Params: message (msg)\nFor example, 'message "this is a message"'.
 
-[savegame]
-desc = Open the save game menu.
-
-[loadgame]
-desc = Open the load game menu.
-
-[soundmenu]
-desc = Open the sound settings menu.
-
-[quicksave]
-desc = Quicksave the game.
-
-[endgame]
-desc = End the game.
-
-[togglemsgs]
-desc = Messages on/off.
-
-[quickload]
-desc = Load the quicksaved game.
-
-[quit]
-desc = Quit the game and return to the OS.
-
-[togglegamma]
-desc = Cycle gamma correction levels.
-
-[messageyes]
-desc = Respond - YES to the message promt.
+[messagecancel]
+desc = Respond - CANCEL to the message promt.
 
 [messageno]
 desc = Respond - NO to the message promt.
 
-[messagecancel]
-desc = Respond - CANCEL to the message promt.
-    
-[spy]
-desc = Spy mode: cycle player views in co-op.
-    
-[screenshot]
-desc = Takes a screenshot. Saved to DOOMnn.TGA.
-    
-[viewsize]
-desc = View size adjustment.
-inf = Params: viewsize (size)\nFor example, 'viewsize 10'.\nSize can be: +, -, (num).
+[messageyes]
+desc = Respond - YES to the message promt.
 
-[pause]
-desc = Pause the game.
-    
-[cheat]
-desc = Issue a cheat code using the original DOOM cheats.
-inf = Params: cheat (cheat)\nFor example, 'cheat idclev25'.
+[moveceil]
+desc = Move a sector's ceiling plane.
 
-[god]
-desc = God mode (cheat).
+[movefloor]
+desc = Move a sector's floor plane.
+
+[movesec]
+desc = Move a sector's both planes.
+
+[msgrefresh]
+desc = Show last HUD message.
+
+[noclip]
+desc = No movement clipping aka, walk through walls (cheat).
 
 [notarget]
 desc = Enemies will not target the player (cheat).
 
-[noclip]
-desc = No movement clipping aka, walk through walls (cheat).
-    
-[warp]
-desc = Warp to another map.
-    
+[pause]
+desc = Pause the game.
+
+[quickload]
+desc = Load the quicksaved game.
+
+[quicksave]
+desc = Quicksave the game.
+
+[quit]
+desc = Quit the game and return to the OS.
+
+[rotate]
+desc = Toggle Rotate mode in the automap.
+
 [reveal]
 desc = Map cheat.
 inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=map+things\n 4=show subsectors
 
-[give]
-desc = Gives you weapons, ammo, power-ups, etc.
-    
-[kill]
-desc = Kill all the monsters on the level.
-    
-[exitlevel]
-desc = Exit the current level.
-    
-[suicide]
-desc = Kill yourself. What did you think?
-    
-[doomfont]
-desc = Use the Doom font in the console.
-    
+[savegame]
+desc = Open the save game menu.
+
+[sbsize]
+desc = Status bar size adjustment.
+inf = Params: sbsize (size)\nFor example, 'sbsize +'.\nSize can be: +, -, (num).
+
+[screenshot]
+desc = Takes a screenshot. Saved to DOOMnn.TGA.
+
+[setcolor]
+desc = Set player color.
+inf = Params: setcolor (playernum)\nFor example, 'setcolor 4'.
+
+[setclass]
+desc = Set player class.
+
+[setlock]
+desc = Set camera viewlock.
+
+[setmap]
+desc = Set map.
+inf = Params: setmap (episode) (map)\nFor example, 'setmap 1 7'.
+
+[showhud]
+desc = Show the HUD if hidden.
+
+[soundmenu]
+desc = Open the sound settings menu.
+
+[spawnmobj]
+desc = Spawn a new mobj.
+
+[spy]
+desc = Spy mode: cycle player views in co-op.
+
+[startcycle]
+desc = Begin map rotation.
+
 [startinf]
 desc = Start an InFine script.
 inf = Params: startinf (script-id)\nFor example, 'startinf coolscript'.
 
 [stopinf]
 desc = Stop the currently playing interlude/finale.
-    
-[stopfinale]
-desc = Stop the currently playing interlude/finale.
-    
-[spawnmobj]
-desc = Spawn a new mobj.
-    
-[coord]
-desc = Print the coordinates of the consoleplayer.
 
-[makelocp]
-desc = Make local player.
-inf = Params: makelocp (playernum)\nFor example, 'makelocp 1'.
+[suicide]
+desc = Kill yourself. What did you think?
 
-[makecam]
-desc = Toggle camera mode.
-inf = Params: makecam (playernum)\nFor example, 'makecam 1'.
+[togglegamma]
+desc = Cycle gamma correction levels.
 
-[setlock]
-desc = Set camera viewlock.
+[togglemsgs]
+desc = Messages on/off.
 
-[lockmode]
-desc = Set camera viewlock mode.
-inf = Params: lockmode (0-1).
+[viewsize]
+desc = View size adjustment.
+inf = Params: viewsize (size)\nFor example, 'viewsize 10'.\nSize can be: +, -, (num).
 
-[sbsize]
-desc = Status bar size adjustment.
-inf = Params: sbsize (size)\nFor example, 'sbsize +'.\nSize can be: +, -, (num).
-
-[showhud]
-desc = Show the HUD if hidden.
-    
-[movefloor]
-desc = Move a sector's floor plane.
-    
-[moveceil]
-desc = Move a sector's ceiling plane.
-
-[movesec]
-desc = Move a sector's both planes.
-    
-[crosshair]
-desc = Crosshair setup.
-        
-[chatcomplete]
-desc = Send the chat message and exit chat mode.
-	
-[chatdelete]
-desc = Delete a character from the chat buffer.
-	
-[chatcancel]
-desc = Exit chat mode without sending the message.
-	
-[chatsendmacro]
-desc = Send a chat macro.
-	
-[beginchat]
-desc = Begin chat mode.
-	
-[msgrefresh]
-desc = Show last HUD message.
-
-[message]
-desc = Show a local game message.
-inf = Params: message (msg)\nFor example, 'message "this is a message"'.
-
-[automap]
-desc = Show automap.
-    
-[follow]
-desc = Toggle Follow mode in the automap.
-    
-[rotate]
-desc = Toggle Rotate mode in the automap.
-    
-[addmark]
-desc = Add a mark in the automap.
-    
-[clearmarks]
-desc = Clear all marks in the automap.
+[warp]
+desc = Warp to another map.
 
 [zoommax]
 desc = Zoom out to the max in the automap.
+
 
 #
 # CONSOLE VARIABLES - JDOOM SPECIFIC

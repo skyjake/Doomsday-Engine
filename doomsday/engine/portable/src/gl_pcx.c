@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1997-2006 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -200,7 +200,7 @@ byte *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h, byte *outBuffer)
 
     // Parse the PCX file.
     if(!(outBuffer = PCX_MemoryAllocLoad(raw, len, buf_w, buf_h, outBuffer)))
-        Con_Message("PCX_Load: Error loading \"%s\".\n", M_Pretty(fn));
+        Con_Message("PCX_Load: Error loading \"%s\".\n", M_PrettyPath(fn));
 
     M_Free(raw);
     return outBuffer;

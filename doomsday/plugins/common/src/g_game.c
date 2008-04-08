@@ -121,6 +121,8 @@ MonsterMissileInfo[] =
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+DEFCC(CCmdListMaps);
+
 void    G_PlayerReborn(int player);
 void    G_InitNew(skillmode_t skill, int episode, int map);
 void    G_DoInitNew(void);
@@ -384,6 +386,11 @@ cvar_t gamestatusCVars[] =
    {NULL}
 };
 
+ccmd_t  gameCmds[] = {
+    { "listmaps",    "",     CCmdListMaps },
+    { NULL }
+};
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static skillmode_t dSkill;
@@ -404,6 +411,9 @@ void G_Register(void)
 
     for(i = 0; gamestatusCVars[i].name; ++i)
         Con_AddVariable(gamestatusCVars + i);
+
+    for(i = 0; gameCmds[i].name; ++i)
+        Con_AddCommand(gameCmds + i);
 }
 
 void G_SetGameAction(gameaction_t action)
@@ -476,6 +486,8 @@ void G_CommonPreInit(void)
  */
 void G_CommonPostInit(void)
 {
+    VERBOSE(G_PrintMapList());
+
     Con_Message("R_InitRefresh: Loading data for referesh.\n");
     R_InitRefresh();
 
@@ -2248,6 +2260,113 @@ char *P_GetLevelName(int episode, int map)
 #endif
 
 /**
+ * Print a list of maps and the WAD files where they are from.
+ */
+void G_PrintFormattedMapList(int episode, const char** files, int count)
+{
+    const char*         current = NULL;
+    char                lump[20];
+    int                 i, k;
+    int                 rangeStart = 0, len;
+
+    for(i = 0; i < count; ++i)
+    {
+        if(!current && files[i])
+        {
+            current = files[i];
+            rangeStart = i;
+        }
+        else if(current && (!files[i] || stricmp(current, files[i])))
+        {
+            // Print a range.
+            len = i - rangeStart;
+            Con_Printf("  "); // Indentation.
+            if(len <= 2)
+            {
+                for(k = rangeStart + 1; k <= i; ++k)
+                {
+                    P_GetMapLumpName(episode, k, lump);
+                    Con_Printf("%s%s", lump, k != i ? "," : "");
+                }
+            }
+            else
+            {
+                P_GetMapLumpName(episode, rangeStart + 1, lump);
+                Con_Printf("%s-", lump);
+                P_GetMapLumpName(episode, i, lump);
+                Con_Printf("%s", lump);
+            }
+            Con_Printf(": %s\n", M_PrettyPath(current));
+
+            // Moving on to a different file.
+            current = files[i];
+            rangeStart = i;
+        }
+    }
+}
+
+/**
+ * Print a list of loaded maps and which WAD files are they located in.
+ * The maps are identified using the "ExMy" and "MAPnn" markers.
+ */
+void G_PrintMapList(void)
+{
+    const char*         sourceList[100];
+    lumpnum_t           lump;
+    int                 episode, map, numEpisodes, maxMapsPerEpisode;
+    char                mapLump[20];
+
+#if __JDOOM__
+    if(gameMode == registered)
+    {
+        numEpisodes = 3;
+        maxMapsPerEpisode = 9;
+    }
+    else if(gameMode == retail)
+    {
+        numEpisodes = 4;
+        maxMapsPerEpisode = 9;
+    }
+    else
+    {
+        numEpisodes = 1;
+        maxMapsPerEpisode = 99;
+    }
+#elif __JHERETIC__
+    if(gameMode == extended)
+        numEpisodes = 5;
+    else if(gameMode == registered)
+        numEpisodes = 3;
+    else
+        numEpisodes = 1;
+    maxMapsPerEpisode = 9;
+#else
+    numEpisodes = 1;
+    maxMapsPerEpisode = 99;
+#endif
+
+    for(episode = 1; episode <= numEpisodes; ++episode)
+    {
+        memset((void *) sourceList, 0, sizeof(sourceList));
+
+        // Find the name of each map (not all may exist).
+        for(map = 1; map <= maxMapsPerEpisode; ++map)
+        {
+            P_GetMapLumpName(episode, map, mapLump);
+
+            // Does the lump exist?
+            if((lump = W_CheckNumForName(mapLump)) >= 0)
+            {
+                // Get the name of the WAD.
+                sourceList[map - 1] = W_LumpSourceFile(lump);
+            }
+        }
+
+        G_PrintFormattedMapList(episode, sourceList, 99);
+    }
+}
+
+/**
  * Stops both playback and a recording. Called at critical points like
  * starting a new game, or ending the game in the menu.
  */
@@ -2297,4 +2416,11 @@ void G_DoScreenShot(void)
 
     M_ScreenShot(name, 24);
     Con_Message("Wrote %s.\n", name);
+}
+
+DEFCC(CCmdListMaps)
+{
+    Con_Message("Loaded maps:\n");
+    G_PrintMapList();
+    return true;
 }

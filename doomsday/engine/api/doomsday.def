@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 413 <--
+; --> 421 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -426,9 +426,10 @@ EXPORTS
     M_WriteFile                 @135 NONAME
     M_ExtractFileBase           @136 NONAME
     M_GetFileExt                @137 NONAME
-    M_CheckPath                 @138 NONAME
     M_FileExists                @139 NONAME
+    M_CheckPath                 @138 NONAME
     M_TranslatePath             @140 NONAME
+    M_PrettyPath				@421 NONAME
     M_SkipWhite                 @141 NONAME
     M_FindWhite                 @142 NONAME
     M_StrCatQuoted              @248 NONAME

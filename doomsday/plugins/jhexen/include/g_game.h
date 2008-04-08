@@ -47,4 +47,6 @@ extern boolean secretExit;
 
 extern int gsvMapMusic;
 
+void            G_PrintMapList(void);
+
 #endif

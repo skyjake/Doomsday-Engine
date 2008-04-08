@@ -567,8 +567,6 @@ static int DD_StartupWorker(void *parm)
     // No more WADs will be loaded in startup mode after this point.
     W_EndStartup();
 
-    VERBOSE(W_PrintMapList());
-
     // Execute the startup script (Startup.cfg).
     Con_ParseCommands("startup.cfg", false);
 

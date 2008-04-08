@@ -581,7 +581,7 @@ int Def_ReadDEDFile(const char *fn, filetype_t type, void *parm)
         }
         else if(verbose)
         {
-            Con_Message("DED done: %s\n", M_Pretty(fn));
+            Con_Message("DED done: %s\n", M_PrettyPath(fn));
         }
     }
 
@@ -723,7 +723,7 @@ void Def_Read(void)
 
     for(i = 0; dedFiles[i]; ++i)
     {
-        Con_Message("Reading definition file: %s\n", M_Pretty(dedFiles[i]));
+        Con_Message("Reading definition file: %s\n", M_PrettyPath(dedFiles[i]));
         Def_ReadProcessDED(dedFiles[i]);
     }
 

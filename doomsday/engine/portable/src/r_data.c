@@ -1062,7 +1062,7 @@ skintex_t *R_GetSkinTex(const char *skin)
 
     if(verbose)
     {
-        Con_Message("SkinTex: %s => %li\n", M_Pretty(skin),
+        Con_Message("SkinTex: %s => %li\n", M_PrettyPath(skin),
                     (long) (st - skinNames));
     }
     return st;

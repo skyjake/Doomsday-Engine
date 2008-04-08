@@ -561,6 +561,7 @@ extern          "C" {
     boolean         M_CheckPath(const char *path);
     int             M_FileExists(const char *file);
     void            M_TranslatePath(const char *path, char *translated);
+    const char*     M_PrettyPath(const char* path);
     char           *M_SkipWhite(char *str);
     char           *M_FindWhite(char *str);
     char           *M_StrCatQuoted(char *dest, char *src);

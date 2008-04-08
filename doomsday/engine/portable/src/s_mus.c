@@ -361,7 +361,7 @@ int Mus_GetExt(ded_music_t *def, char *path)
 
 	            VERBOSE(Con_Message("Mus_GetExt: Opened Song %s "
                                     "(File \"%s\" %ul bytes)\n",
-                                    def->id, M_Pretty(def->path.path),
+                                    def->id, M_PrettyPath(def->path.path),
                                     F_Length(file)));
 
                 ptr = iext->SongBuffer(len = F_Length(file));

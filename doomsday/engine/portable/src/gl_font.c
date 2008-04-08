@@ -349,7 +349,7 @@ int FR_PrepareFont(const char *name)
         return retVal;
     }
 
-    VERBOSE2(Con_Printf("FR_PrepareFont: %s\n", M_Pretty(buf)));
+    VERBOSE2(Con_Printf("FR_PrepareFont: %s\n", M_PrettyPath(buf)));
 
     version = InByte(file);
 

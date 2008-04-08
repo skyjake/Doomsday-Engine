@@ -49,6 +49,9 @@ desc = Open the save game menu.
 [loadgame]
 desc = Open the load game menu.
 
+[listmaps]
+desc = List all loaded maps.
+
 [soundmenu]
 desc = Open the sound settings menu.
 

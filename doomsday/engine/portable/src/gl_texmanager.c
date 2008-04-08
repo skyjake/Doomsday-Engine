@@ -1471,7 +1471,7 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
     }
 
     VERBOSE(Con_Message
-            ("LoadImage: %s (%ix%i)\n", M_Pretty(img->fileName), img->width,
+            ("LoadImage: %s (%ix%i)\n", M_PrettyPath(img->fileName), img->width,
              img->height));
 
     // How about some color-keying?

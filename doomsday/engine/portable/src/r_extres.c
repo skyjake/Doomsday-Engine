@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -142,7 +142,7 @@ void R_InitDataPaths(const char *path, boolean justGamePaths)
 
     M_TranslatePath(path, dataPath);
     Dir_ValidDir(dataPath);
-    VERBOSE(Con_Message("R_SetDataPath: %s\n", M_Pretty(dataPath)));
+    VERBOSE(Con_Message("R_SetDataPath: %s\n", M_PrettyPath(dataPath)));
 
     // Update the paths of each class.
     for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
@@ -176,8 +176,8 @@ void R_InitDataPaths(const char *path, boolean justGamePaths)
         Dir_ValidDir(classInfo[i].overridePath);
 
         VERBOSE2(Con_Message
-                 ("  %i: %s (%s)\n", i, M_Pretty(classInfo[i].path),
-                  M_Pretty(classInfo[i].overridePath)));
+                 ("  %i: %s (%s)\n", i, M_PrettyPath(classInfo[i].path),
+                  M_PrettyPath(classInfo[i].overridePath)));
     }
 }
 
