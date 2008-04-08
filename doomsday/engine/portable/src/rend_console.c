@@ -476,15 +476,15 @@ static void drawConsole(void)
     buffer = Con_GetConsoleBuffer();
 
     // Do we have a font?
-    if(Cfont.TextOut == NULL)
+    if(Cfont.drawText == NULL)
     {
         Cfont.flags = DDFONT_WHITE;
         Cfont.height = FR_SingleLineHeight("Con");
         Cfont.sizeX = 1;
         Cfont.sizeY = 1;
-        Cfont.TextOut = FR_ShadowTextOut;
-        Cfont.Width = FR_TextWidth;
-        Cfont.Filter = NULL;
+        Cfont.drawText = FR_ShadowTextOut;
+        Cfont.getWidth = FR_TextWidth;
+        Cfont.filterText = NULL;
     }
 
     FR_SetFont(glFontFixed);
@@ -507,7 +507,7 @@ static void drawConsole(void)
     // The console is composed of two parts: the main area background and the
     // border.
     DGL_Color4f(consoleLight / 100.0f, consoleLight / 100.0f,
-               consoleLight / 100.0f, closeFade * consoleAlpha / 100);
+                consoleLight / 100.0f, closeFade * consoleAlpha / 100);
 
     // The background.
     if(gx.ConsoleBackground)
@@ -588,22 +588,25 @@ static void drawConsole(void)
                     memset(buff, 0, sizeof(buff));
                     strncpy(buff, line->text, 255);
 
-                    x = line->flags & CBLF_CENTER ? (theWindow->width / Cfont.sizeX -
-                                                     Cfont.Width(buff)) / 2 : 2;
+                    if(line->flags & CBLF_CENTER)
+                        x = (theWindow->width /
+                            Cfont.sizeX - Cfont.getWidth(buff)) / 2;
+                    else
+                        x = 2;
 
-                    if(Cfont.Filter)
-                        Cfont.Filter(buff);
+                    if(Cfont.filterText)
+                        Cfont.filterText(buff);
                     /*else if(consoleShadowText)
                     {
                         // Draw a shadow.
                         DGL_Color3f(0, 0, 0);
-                        Cfont.TextOut(buff, x + 2, y / Cfont.sizeY + 2);
+                        Cfont.drawText(buff, x + 2, y / Cfont.sizeY + 2);
                     }*/
 
                     // Set the color.
                     if(Cfont.flags & DDFONT_WHITE)  // Can it be colored?
                         consoleSetColor(line->flags, closeFade);
-                    Cfont.TextOut(buff, x, y / Cfont.sizeY);
+                    Cfont.drawText(buff, x, y / Cfont.sizeY);
                 }
 
                 // Move up.
@@ -616,8 +619,8 @@ static void drawConsole(void)
     strcpy(buff, ">");
     strncat(buff, cmdLine, 255);
 
-    if(Cfont.Filter)
-        Cfont.Filter(buff);
+    if(Cfont.filterText)
+        Cfont.filterText(buff);
     /*if(consoleShadowText)
     {
         // Draw a shadow.
@@ -629,27 +632,29 @@ static void drawConsole(void)
         DGL_Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], closeFade);
     else
         DGL_Color4f(1, 1, 1, closeFade);
-    Cfont.TextOut(buff, 2, (ConsoleY * gtosMulY - fontScaledY - textOffsetY) /
-                  Cfont.sizeY);
+    Cfont.drawText(buff, 2, (ConsoleY * gtosMulY - fontScaledY - textOffsetY) /
+                   Cfont.sizeY);
 
     // Width of the current char.
     temp[0] = cmdLine[cmdCursor];
     temp[1] = 0;
-    k = Cfont.Width(temp);
+    k = Cfont.getWidth(temp);
     if(!k)
-        k = Cfont.Width(" ");
+        k = Cfont.getWidth(" ");
 
     // What is the width?
     memset(temp, 0, sizeof(temp));
     strncpy(temp, buff, MIN_OF(250, cmdCursor) + 1);
-    i = Cfont.Width(temp);
+    i = Cfont.getWidth(temp);
 
     // Draw the cursor in the appropriate place.
     if(!Con_IsLocked())
     {
+        float           curHeight = fontScaledY / 4;
+
         DGL_Disable(DGL_TEXTURING);
-        GL_DrawRect(2 + i, (ConsoleY * gtosMulY) / Cfont.sizeY,
-                    k, -(Con_InputMode()? fontScaledY : textOffsetY),
+        GL_DrawRect(2 + i, (ConsoleY * gtosMulY - textOffsetY + curHeight) / Cfont.sizeY,
+                    k, -(Con_InputMode()? fontScaledY + curHeight: curHeight) / Cfont.sizeY,
                     CcolYellow[0], CcolYellow[1], CcolYellow[2],
                     closeFade * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
         DGL_Enable(DGL_TEXTURING);

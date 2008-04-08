@@ -1126,25 +1126,14 @@ typedef enum materialtype_e {
     // Font flags.
 #define DDFONT_WHITE            0x1 // The font data is white, can be colored.
 
-    // Windows sure is fun... <sound of teeth being ground>
-#ifdef TextOut
-#undef TextOut
-#define _RedefineTextOut_
-#endif
-
     typedef struct {
         int             flags;
         float           sizeX, sizeY;   // The scale.
         int             height;
-        int             (*TextOut) (const char *text, int x, int y);
-        int             (*Width) (const char *text);
-        void            (*Filter) (char *text); // maybe alters text
+        int           (*drawText) (const char* text, int x, int y);
+        int           (*getWidth) (const char* text);
+        void          (*filterText) (char* text); // Maybe alters text.
     } ddfont_t;
-
-#ifdef _RedefineTextOut_
-#undef _RedefineTextOut_
-#define TextOut TextOutA
-#endif
 
     // DDay's Built-in bindClasses
     enum {

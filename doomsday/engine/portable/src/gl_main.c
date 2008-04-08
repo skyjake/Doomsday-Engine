@@ -458,9 +458,9 @@ void GL_InitFont(void)
     Cfont.height = FR_SingleLineHeight("Con");
     Cfont.sizeX = 1;
     Cfont.sizeY = 1;
-    Cfont.TextOut = FR_ShadowTextOut;
-    Cfont.Width = FR_TextWidth;
-    Cfont.Filter = NULL;
+    Cfont.drawText = FR_ShadowTextOut;
+    Cfont.getWidth = FR_TextWidth;
+    Cfont.filterText = NULL;
 }
 
 void GL_ShutdownFont(void)

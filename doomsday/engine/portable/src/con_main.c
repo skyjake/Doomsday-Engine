@@ -440,9 +440,12 @@ void Con_Shutdown(void)
  * Changes the console font.
  * Part of the Doomsday public API.
  */
-void Con_SetFont(ddfont_t *cfont)
+void Con_SetFont(ddfont_t* cfont)
 {
-    Cfont = *cfont;
+    if(!cfont)
+        return;
+
+    memcpy(&Cfont, cfont, sizeof(Cfont));
 }
 
 /**
@@ -2245,9 +2248,9 @@ D_CMD(Font)
         Cfont.height = FR_SingleLineHeight("Con");
         Cfont.sizeX = 1;
         Cfont.sizeY = 1;
-        Cfont.TextOut = FR_ShadowTextOut;
-        Cfont.Width = FR_TextWidth;
-        Cfont.Filter = NULL;
+        Cfont.drawText = FR_ShadowTextOut;
+        Cfont.getWidth = FR_TextWidth;
+        Cfont.filterText = NULL;
     }
     else if(!stricmp(argv[1], "name") && argc == 3)
     {
