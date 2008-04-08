@@ -657,10 +657,9 @@ DEFCC(CCmdCheatReveal)
 
 DEFCC(CCmdCheatGive)
 {
-    char    buf[100];
-    int     i;
-    int     weapNum;
-    player_t *plyr = &players[CONSOLEPLAYER];
+    char                buf[100];
+    player_t*           plyr = &players[CONSOLEPLAYER];
+    size_t              i, stuffLen;
 
     if(IS_CLIENT)
     {
@@ -670,13 +669,16 @@ DEFCC(CCmdCheatGive)
         NetCl_CheatRequest(buf);
         return true;
     }
+
     if(IS_NETGAME && !netSvAllowCheats)
         return false;
+
     if(argc != 2 && argc != 3)
     {
         Con_Printf("Usage:\n  give (stuff)\n");
         Con_Printf("  give (stuff) (player)\n");
-        Con_Printf("Stuff consists of one or more of:\n");
+        Con_Printf("Stuff consists of one or more of (type:id). "
+                   "If no id; give all of type:\n");
         Con_Printf(" a - ammo\n");
         Con_Printf(" b - berserk\n");
         Con_Printf(" f - the power of flight\n");
@@ -689,8 +691,8 @@ DEFCC(CCmdCheatGive)
         Con_Printf(" s - radiation shielding suit\n");
         Con_Printf(" v - invisibility\n");
         Con_Printf(" w - weapons\n");
-        Con_Printf(" 0-8 - weapon\n");
         Con_Printf("Example: 'give arw' corresponds the cheat IDFA.\n");
+        Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
         return true;
     }
 
@@ -713,15 +715,36 @@ DEFCC(CCmdCheatGive)
 
     strcpy(buf, argv[1]);       // Stuff is the 2nd arg.
     strlwr(buf);
-    for(i = 0; buf[i]; i++)
+    stuffLen = strlen(buf);
+    for(i = 0; buf[i]; ++i)
     {
-        switch (buf[i])
+        switch(buf[i])
         {
         case 'a':
-            Con_Printf("Ammo given.\n");
-            Cht_GiveFunc(plyr, 0, true, 0, 0, NULL);
-            break;
+            {
+            boolean             giveAll = true;
 
+            if(i < stuffLen)
+            {
+                int                 idx;
+
+                idx = ((int) buf[i+1]) - 48;
+                if(idx >= 0 && idx < NUM_AMMO_TYPES)
+                {   // Give one specific ammo type.
+                    plyr->update |= PSF_AMMO;
+                    plyr->ammo[idx] = plyr->maxAmmo[idx];
+                    giveAll = false;
+                    i++;
+                }
+            }
+
+            if(giveAll)
+            {
+                Con_Printf("All ammo given.\n");
+                Cht_GiveFunc(plyr, 0, true, 0, 0, NULL);
+            }
+            break;
+            }
         case 'b':
             if(Cht_PowerUpFunc(plyr, PT_STRENGTH))
                 Con_Printf("Your vision blurs! Yaarrrgh!!\n");
@@ -743,10 +766,30 @@ DEFCC(CCmdCheatGive)
             break;
 
         case 'k':
-            Con_Printf("Key cards and skulls given.\n");
-            Cht_GiveFunc(plyr, 0, 0, 0, true, NULL);
-            break;
+            {
+            boolean             giveAll = true;
 
+            if(i < stuffLen)
+            {
+                int                 idx;
+
+                idx = ((int) buf[i+1]) - 48;
+                if(idx >= 0 && idx < NUM_KEY_TYPES)
+                {   // Give one specific key.
+                    plyr->update |= PSF_KEYS;
+                    plyr->keys[idx] = true;
+                    giveAll = false;
+                    i++;
+                }
+            }
+
+            if(giveAll)
+            {
+                Con_Printf("Key cards and skulls given.\n");
+                Cht_GiveFunc(plyr, 0, 0, 0, true, NULL);
+            }
+            break;
+            }
         case 'm':
             Con_Printf("Computer area map given.\n");
             Cht_PowerUpFunc(plyr, PT_ALLMAP);
@@ -773,21 +816,33 @@ DEFCC(CCmdCheatGive)
             break;
 
         case 'w':
-            Con_Printf("Weapons given.\n");
-            Cht_GiveFunc(plyr, true, 0, 0, 0, NULL);
-            break;
-
-        default:
-            // Individual Weapon
-            weapNum = ((int) buf[i]) - 48;
-            if(weapNum >= 0 && weapNum < NUM_WEAPON_TYPES)
             {
-               P_GiveWeapon(plyr, weapNum, false);
-               return true;
+            boolean             giveAll = true;
 
+            if(i < stuffLen)
+            {
+                int                 idx;
+
+                idx = ((int) buf[i+1]) - 48;
+                if(idx >= 0 && idx < NUM_WEAPON_TYPES)
+                {   // Give one specific weapon.
+                    P_GiveWeapon(plyr, idx, false);
+                    giveAll = false;
+                    i++;
+                }
             }
+
+            if(giveAll)
+            {
+                Con_Printf("All weapons given.\n");
+                Cht_GiveFunc(plyr, true, 0, 0, 0, NULL);
+            }
+            break;
+            }
+        default:
             // Unrecognized
             Con_Printf("What do you mean, '%c'?\n", buf[i]);
+            break;
         }
     }
     return true;

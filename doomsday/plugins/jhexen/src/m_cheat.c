@@ -1034,9 +1034,8 @@ DEFCC(CCmdCheatSuicide)
 DEFCC(CCmdCheatGive)
 {
     char                buf[100];
-    int                 i;
-    int                 weapNum;
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    player_t*           plyr = &players[CONSOLEPLAYER];
+    size_t              i, stuffLen;
 
     if(IS_CLIENT)
     {
@@ -1057,13 +1056,15 @@ DEFCC(CCmdCheatGive)
     {
         Con_Printf("Usage:\n  give (stuff)\n");
         Con_Printf("  give (stuff) (player)\n");
-        Con_Printf("Stuff consists of one or more of:\n");
+        Con_Printf("Stuff consists of one or more of (type:id). "
+                   "If no id; give all of type:\n");
         Con_Printf(" a - artifacts\n");
         Con_Printf(" h - health\n");
         Con_Printf(" k - keys\n");
         Con_Printf(" p - puzzle\n");
         Con_Printf(" w - weapons\n");
-        Con_Printf(" 0-4 - weapon\n");
+        Con_Printf("Example: 'give akw' gives artifacts, keys and weapons.\n");
+        Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
         return true;
     }
 
@@ -1086,6 +1087,7 @@ DEFCC(CCmdCheatGive)
 
     strcpy(buf, argv[1]); // Stuff is the 2nd arg.
     strlwr(buf);
+    stuffLen = strlen(buf);
     for(i = 0; buf[i]; ++i)
     {
         switch(buf[i])
@@ -1101,29 +1103,64 @@ DEFCC(CCmdCheatGive)
             break;
 
         case 'k':
-            Con_Printf("Keys given.\n");
-            CheatKeysFunc(plyr, NULL);
-            break;
+            {
+            boolean             giveAll = true;
 
+            if(i < stuffLen)
+            {
+                int                 idx;
+
+                idx = ((int) buf[i+1]) - 48;
+                if(idx >= 0 && idx < NUM_KEY_TYPES)
+                {   // Give one specific key.
+                    plyr->update |= PSF_KEYS;
+                    plyr->keys |= (1 << idx);
+                    giveAll = false;
+                    i++;
+                }
+            }
+
+            if(giveAll)
+            {
+                Con_Printf("All Keys given.\n");
+                CheatKeysFunc(plyr, NULL);
+            }
+            break;
+            }
         case 'p':
             Con_Printf("Puzzle parts given.\n");
             CheatPuzzleFunc(plyr, NULL);
             break;
 
         case 'w':
-            Con_Printf("Weapons given.\n");
-            CheatWeaponsFunc(plyr, NULL);
-            break;
-
-        default:
-            // Individual Weapon.
-            weapNum = ((int) buf[i]) - 48;
-            if(weapNum >= 0 && weapNum < NUM_WEAPON_TYPES)
             {
-               plyr->weaponOwned[weapNum] = true;
+            boolean             giveAll = true;
+
+            if(i < stuffLen)
+            {
+                int                 idx;
+
+                idx = ((int) buf[i+1]) - 48;
+                if(idx >= 0 && idx < NUM_WEAPON_TYPES)
+                {   // Give one specific weapon.
+                    plyr->update |= PSF_OWNED_WEAPONS;
+                    plyr->weaponOwned[idx] = true;
+                    giveAll = false;
+                    i++;
+                }
             }
-            else// Unrecognized.
-                Con_Printf("What do you mean, '%c'?\n", buf[i]);
+
+            if(giveAll)
+            {
+                Con_Printf("All weapons given.\n");
+                CheatWeaponsFunc(plyr, NULL);
+            }
+            break;
+            }
+        default:
+            // Unrecognized
+            Con_Printf("What do you mean, '%c'?\n", buf[i]);
+            break;
         }
     }
 
