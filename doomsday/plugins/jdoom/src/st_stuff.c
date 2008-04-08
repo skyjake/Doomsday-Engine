@@ -429,12 +429,12 @@ void ST_refreshBackground(void)
 
         DGL_Begin(DGL_QUADS);
 
-        // (up to faceback if deathmatch, else ST_ARMS)
+        // Up to faceback if deathmatch, else ST_ARMS.
         x = ST_X;
         y = ST_Y;
-        w = statusbarArmsOn ? 104 : 143;
+        w = (statusbarArmsOn ? 104 : 143);
         h = 32;
-        cw = statusbarArmsOn ? 0.325f : 0.446875f;
+        cw = (float) w / ST_WIDTH;
 
         DGL_TexCoord2f(0, 0);
         DGL_Vertex2f(x, y);
@@ -447,14 +447,14 @@ void ST_refreshBackground(void)
 
         if(IS_NETGAME)
         {
-            // (fiddly little bit above faceback)
+            // Awkward, 1 pixel tall strip above faceback.
             x = ST_X + 144;
             y = ST_Y;
             w = 35;
             h = 1;
-            cw = 0.446875f;
-            cw2 = 0.55625f;
-            ch = 0.03125f;
+            cw = (float) (x - 1) / ST_WIDTH;
+            cw2 = (float) (x - 1 + w) / ST_WIDTH;
+            ch = (float) 1 / ST_HEIGHT;
 
             DGL_TexCoord2f(cw, 0);
             DGL_Vertex2f(x, y);
@@ -465,12 +465,12 @@ void ST_refreshBackground(void)
             DGL_TexCoord2f(cw, ch);
             DGL_Vertex2f(x, y + h);
 
-            // (after faceback)
+            // After faceback.
             x = ST_X + 178;
             y = ST_Y;
             w = 142;
             h = 32;
-            cw = 0.55625f;
+            cw = (float) x / ST_WIDTH;
 
         }
         else
@@ -480,7 +480,7 @@ void ST_refreshBackground(void)
             y = ST_Y;
             w = 176;
             h = 32;
-            cw = 0.45f;
+            cw = (float) x / ST_WIDTH;
         }
 
         DGL_TexCoord2f(cw, 0);
