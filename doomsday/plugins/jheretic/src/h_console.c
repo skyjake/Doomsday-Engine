@@ -347,9 +347,9 @@ DEFCC(CCmdHereticFont)
     cfont.height = 9;
     cfont.sizeX = 1.2f;
     cfont.sizeY = 2;
-    cfont.TextOut = ConTextOut;
-    cfont.Width = ConTextWidth;
-    cfont.Filter = ConTextFilter;
+    cfont.drawText = ConTextOut;
+    cfont.getWidth = ConTextWidth;
+    cfont.filterText = ConTextFilter;
     Con_SetFont(&cfont);
     return true;
 }

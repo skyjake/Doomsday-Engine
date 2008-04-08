@@ -364,9 +364,9 @@ DEFCC(CCmdWolftcFont)
     cfont.height = 8;
     cfont.sizeX = 1.5f;
     cfont.sizeY = 2;
-    cfont.TextOut = ConTextOut;
-    cfont.Width = ConTextWidth;
-    cfont.Filter = ConTextFilter;
+    cfont.drawText = ConTextOut;
+    cfont.getWidth = ConTextWidth;
+    cfont.filterText = ConTextFilter;
 
     Con_SetFont(&cfont);
     return true;
