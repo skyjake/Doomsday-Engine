@@ -1283,6 +1283,213 @@ static void renderPlane2(const rvertex_t* rvertices, uint numVertices,
 #define RPF2_GLOW   0x0004
 #define RPF2_BLEND  0x0008
 
+static boolean doRenderSeg(seg_t* seg, segsection_t section,
+                           surface_t* surface, float bottom, float top,
+                           float alpha, float texXOffset, float texYOffset,
+                           sector_t* frontsec, boolean skyMask,
+                           boolean softSurface, short sideFlags)
+{
+    rendsegsection_params_t params;
+    rvertex_t           rvertices[4];
+    walldiv_t           divs[2];
+    short               tempflags = 0;
+    texinfo_t*          texinfo = NULL;
+    boolean             solidSeg = true;
+
+    // Init the params.
+    memset(&params, 0, sizeof(params));
+
+    // Bottom Left.
+    rvertices[0].pos[VX] = seg->SG_v1pos[VX];
+    rvertices[0].pos[VY] = seg->SG_v1pos[VY];
+    rvertices[0].pos[VZ] = bottom;
+
+    // Top Left.
+    rvertices[1].pos[VX] = seg->SG_v1pos[VX];
+    rvertices[1].pos[VY] = seg->SG_v1pos[VY];
+    rvertices[1].pos[VZ] = top;
+
+    // Bottom Right.
+    rvertices[2].pos[VX] = seg->SG_v2pos[VX];
+    rvertices[2].pos[VY] = seg->SG_v2pos[VY];
+    rvertices[2].pos[VZ] = bottom;
+
+    // Top Right.
+    rvertices[3].pos[VX] = seg->SG_v2pos[VX];
+    rvertices[3].pos[VY] = seg->SG_v2pos[VY];
+    rvertices[3].pos[VZ] = top;
+
+    params.type = RP_QUAD;
+    params.length = seg->length;
+    params.divs = divs;
+    params.alpha = alpha;
+    params.mapObject = seg;
+    params.elmIdx = (uint) section;
+
+    // Fill in the remaining params data.
+    if(skyMask || !surface->material)
+    {
+        // In devSkyMode mode we render all polys destined for the skymask as
+        // regular world polys (with a few obvious properties).
+        if(devSkyMode)
+        {
+            texinfo_t          *texinfo;
+
+            params.tex.id =
+                GL_PrepareMaterial(skyMaskMaterial, &texinfo);
+
+            params.tex.width = texinfo->width;
+            params.tex.height = texinfo->height;
+            params.flags |= RPF_GLOW;
+        }
+        else
+        {
+            // We'll mask this.
+            params.flags |= RPF_SKY_MASK;
+        }
+    }
+    else
+    {
+        int                 surfaceFlags =
+            prepareMaterialForSurface(&params.tex, surface, &texinfo);
+
+        // Calculate texture coordinates.
+        params.texOffset[VX] = texXOffset;
+        params.texOffset[VY] = texYOffset;
+
+        if(section == SEG_MIDDLE && softSurface)
+        {
+            // Blendmode.
+            if(surface->blendMode == BM_NORMAL && noSpriteTrans)
+                params.blendMode = BM_ZEROALPHA; // "no translucency" mode
+            else
+                params.blendMode = surface->blendMode;
+
+            // If alpha, masked or blended we'll render as a vissprite.
+            if(alpha < 1 || texinfo->masked || surface->blendMode > 0)
+            {
+                params.flags = RPF_MASKED;
+                solidSeg = false;
+            }
+        }
+        else
+        {
+            params.blendMode = BM_NORMAL;
+        }
+
+        if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
+            tempflags |= RPF2_SHADOW;
+        if(solidSeg && surface->material && !texinfo->masked)
+            tempflags |= RPF2_SHINY;
+        if(surfaceFlags & SUF_GLOW)
+            tempflags |= RPF2_GLOW;
+    }
+
+    /**
+     * If this poly is destined for the skymask, we don't need to
+     * do any further processing.
+     */
+    if(!(params.flags & RPF_SKY_MASK))
+    {
+        const float*    topColor = NULL;
+        const float*    bottomColor = NULL;
+
+        params.normal = surface->normal;
+        params.sectorLightLevel = Rend_SectorLight(frontsec);
+        params.sectorLightColor = R_GetSectorLightColor(frontsec);
+        params.wallAngleLightLevelDelta =
+            R_WallAngleLightLevelDelta(seg->lineDef, seg->side);
+
+        // Check for neighborhood division?
+        if(!(params.flags & RPF_MASKED))
+        {
+            applyWallHeightDivision(divs, seg, frontsec, bottom, top);
+
+            if(divs[0].num > 0 || divs[1].num > 0)
+                params.type = RP_DIVQUAD;
+        }
+
+        // Smooth Texture Animation?
+        if(tempflags & RPF2_BLEND)
+        {
+            params.interPos =
+                polyTexBlend(&params.interTex, surface->material);
+        }
+
+        if(tempflags & RPF2_SHADOW)
+            Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
+
+        getColorsForSegSection(seg, section, sideFlags,
+                               &params.surfaceColor,
+                               &params.surfaceColor2);
+
+        // Make it fullbright?
+        if((tempflags & RPF2_GLOW) && glowingTextures)
+            params.flags |= RPF_GLOW;
+
+        // Dynamic lights.
+        if(!(params.flags & RPF_GLOW))
+            params.lightListIdx =
+                DL_ProcessSegSection(seg, bottom, top,
+                                     (params.flags & RPF_MASKED)? true:false);
+
+        if(useBias)
+        {
+            params.tracker = &seg->tracker[section];
+            params.affection = seg->affected;
+        }
+
+        // Render Fakeradio polys for this seg?
+        if((tempflags & RPF2_SHADOW) && !(params.flags & RPF_GLOW))
+        {
+            Rend_RadioSegSection(rvertices,
+                                 (params.type == RP_DIVQUAD? params.divs:NULL),
+                                 seg);
+        }
+
+        // Render Shiny polys for this seg?
+        if((tempflags & RPF2_SHINY) && useShinySurfaces)
+        {
+            ded_reflection_t* ref =
+                R_GetMaterialReflection(surface->material);
+
+            // Make sure the texture has been loaded.
+            if(GL_LoadReflectionMap(ref))
+            {
+                rcolor_t            shinyColors[4];
+                rendpoly_wall_t     wall2;
+                rendpoly_params_t   params2;
+                texinfo_t*          texInfo;
+
+                // We'll re-use the same vertices but we'll need
+                // some rcolors.
+                GL_GetMaterialInfo2(surface->material, false, &texInfo);
+
+                params2.type = RP_QUAD;
+                memcpy(&params2.tex, &params.tex, sizeof(gltexture_t));
+                memcpy(&params2.interTex, &params.interTex, sizeof(gltexture_t));
+                memcpy(&wall2.divs, &params.divs, sizeof(wall2.divs));
+                wall2.length = params.length;
+                params2.wall = &wall2;
+                params2.texOffset[VX] = params.texOffset[VX];
+                params2.texOffset[VY] = params.texOffset[VY];
+                params2.flags = params.flags;
+                params2.interPos = params.interPos;
+                params2.blendMode = BM_NORMAL;
+                params2.lightListIdx = 0;
+                params2.type = params.type;
+
+                Rend_AddShinyPoly(rvertices, shinyColors, 4,
+                                  &params2, ref, texInfo->width,
+                                  texInfo->height);
+            }
+        }
+    }
+
+    renderSegSection2(rvertices, 4, &params);
+    return solidSeg;
+}
+
 static boolean renderSegSection(seg_t* seg, segsection_t section,
                                 surface_t* surface, float bottom, float top,
                                 float texXOffset, float texYOffset,
@@ -1316,8 +1523,6 @@ static boolean renderSegSection(seg_t* seg, segsection_t section,
     if(visible)
     {
         float               alpha;
-        short               tempflags = 0;
-        texinfo_t*          texinfo = NULL;
 
         alpha = (section == SEG_MIDDLE? surface->rgba[3] : 1.0f);
 
@@ -1333,7 +1538,8 @@ static boolean renderSegSection(seg_t* seg, segsection_t section,
              * opaque waterfall).
              */
 
-            if(mo->subsector->sector == frontsec)
+            if(mo->subsector->sector == frontsec &&
+               viewZ > bottom && viewZ < top)
             {
                 float               c[2];
 
@@ -1349,203 +1555,9 @@ static boolean renderSegSection(seg_t* seg, segsection_t section,
 
         if(alpha > 0)
         {
-            rendsegsection_params_t params;
-            rvertex_t           rvertices[4];
-            walldiv_t           divs[2];
-
-            // Init the params.
-            memset(&params, 0, sizeof(params));
-
-            // Bottom Left.
-            rvertices[0].pos[VX] = seg->SG_v1pos[VX];
-            rvertices[0].pos[VY] = seg->SG_v1pos[VY];
-            rvertices[0].pos[VZ] = bottom;
-
-            // Top Left.
-            rvertices[1].pos[VX] = seg->SG_v1pos[VX];
-            rvertices[1].pos[VY] = seg->SG_v1pos[VY];
-            rvertices[1].pos[VZ] = top;
-
-            // Bottom Right.
-            rvertices[2].pos[VX] = seg->SG_v2pos[VX];
-            rvertices[2].pos[VY] = seg->SG_v2pos[VY];
-            rvertices[2].pos[VZ] = bottom;
-
-            // Top Right.
-            rvertices[3].pos[VX] = seg->SG_v2pos[VX];
-            rvertices[3].pos[VY] = seg->SG_v2pos[VY];
-            rvertices[3].pos[VZ] = top;
-
-            params.type = RP_QUAD;
-            params.length = seg->length;
-            params.divs = divs;
-            params.alpha = alpha;
-            params.mapObject = seg;
-            params.elmIdx = (uint) section;
-
-            // Fill in the remaining params data.
-            if(skyMask || !surface->material)
-            {
-                // In devSkyMode mode we render all polys destined for the skymask as
-                // regular world polys (with a few obvious properties).
-                if(devSkyMode)
-                {
-                    texinfo_t          *texinfo;
-
-                    params.tex.id =
-                        GL_PrepareMaterial(skyMaskMaterial, &texinfo);
-
-                    params.tex.width = texinfo->width;
-                    params.tex.height = texinfo->height;
-                    params.flags |= RPF_GLOW;
-                }
-                else
-                {
-                    // We'll mask this.
-                    params.flags |= RPF_SKY_MASK;
-                }
-            }
-            else
-            {
-                int                 surfaceFlags =
-                    prepareMaterialForSurface(&params.tex, surface, &texinfo);
-
-                // Calculate texture coordinates.
-                params.texOffset[VX] = texXOffset;
-                params.texOffset[VY] = texYOffset;
-
-                if(section == SEG_MIDDLE && softSurface)
-                {
-                    // Blendmode.
-                    if(surface->blendMode == BM_NORMAL && noSpriteTrans)
-                        params.blendMode = BM_ZEROALPHA; // "no translucency" mode
-                    else
-                        params.blendMode = surface->blendMode;
-
-                    // If alpha, masked or blended we'll render as a vissprite.
-                    if(alpha < 1 || texinfo->masked || surface->blendMode > 0)
-                    {
-                        params.flags = RPF_MASKED;
-                        solidSeg = false;
-                    }
-                }
-                else
-                {
-                    params.blendMode = BM_NORMAL;
-                }
-
-                if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
-                    tempflags |= RPF2_SHADOW;
-                if(solidSeg && surface->material && !texinfo->masked)
-                    tempflags |= RPF2_SHINY;
-                if(surfaceFlags & SUF_GLOW)
-                    tempflags |= RPF2_GLOW;
-                if(!(surface->flags & SUF_TEXFIX))
-                    tempflags |= RPF2_BLEND;
-            }
-
-            /**
-             * If this poly is destined for the skymask, we don't need to
-             * do any further processing.
-             */
-            if(!(params.flags & RPF_SKY_MASK))
-            {
-                const float*    topColor = NULL;
-                const float*    bottomColor = NULL;
-
-                params.normal = surface->normal;
-                params.sectorLightLevel = Rend_SectorLight(frontsec);
-                params.sectorLightColor = R_GetSectorLightColor(frontsec);
-                params.wallAngleLightLevelDelta =
-                    R_WallAngleLightLevelDelta(seg->lineDef, seg->side);
-
-                // Check for neighborhood division?
-                if(!(params.flags & RPF_MASKED))
-                {
-                    applyWallHeightDivision(divs, seg, frontsec, bottom, top);
-
-                    if(divs[0].num > 0 || divs[1].num > 0)
-                        params.type = RP_DIVQUAD;
-                }
-
-                // Smooth Texture Animation?
-                if(tempflags & RPF2_BLEND)
-                {
-                    params.interPos =
-                        polyTexBlend(&params.interTex, surface->material);
-                }
-
-                if(tempflags & RPF2_SHADOW)
-                    Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
-
-                getColorsForSegSection(seg, section, sideFlags,
-                                       &params.surfaceColor,
-                                       &params.surfaceColor2);
-
-                // Make it fullbright?
-                if((tempflags & RPF2_GLOW) && glowingTextures)
-                    params.flags |= RPF_GLOW;
-
-                // Dynamic lights.
-                if(!(params.flags & RPF_GLOW))
-                    params.lightListIdx =
-                        DL_ProcessSegSection(seg, bottom, top,
-                                             (params.flags & RPF_MASKED)? true:false);
-
-                if(useBias)
-                {
-                    params.tracker = &seg->tracker[section];
-                    params.affection = seg->affected;
-                }
-
-                // Render Fakeradio polys for this seg?
-                if((tempflags & RPF2_SHADOW) && !(params.flags & RPF_GLOW))
-                {
-                    Rend_RadioSegSection(rvertices, params.divs,
-                                         params.type, seg->lineDef,
-                                         seg->side, seg->offset, seg->length);
-                }
-
-                // Render Shiny polys for this seg?
-                if((tempflags & RPF2_SHINY) && useShinySurfaces)
-                {
-                    ded_reflection_t* ref =
-                        R_GetMaterialReflection(surface->material);
-
-                    // Make sure the texture has been loaded.
-                    if(GL_LoadReflectionMap(ref))
-                    {
-                        rcolor_t            shinyColors[4];
-                        rendpoly_wall_t     wall2;
-                        rendpoly_params_t   params2;
-                        texinfo_t*          texInfo;
-
-                        // We'll re-use the same vertices but we'll need
-                        // some rcolors.
-                        GL_GetMaterialInfo2(surface->material, false, &texInfo);
-
-                        params2.type = RP_QUAD;
-                        memcpy(&params2.tex, &params.tex, sizeof(gltexture_t));
-                        memcpy(&params2.interTex, &params.interTex, sizeof(gltexture_t));
-                        memcpy(&wall2.divs, &params.divs, sizeof(wall2.divs));
-                        wall2.length = params.length;
-                        params2.wall = &wall2;
-                        params2.texOffset[VX] = params.texOffset[VX];
-                        params2.texOffset[VY] = params.texOffset[VY];
-                        params2.flags = params.flags;
-                        params2.interPos = params.interPos;
-                        params2.blendMode = BM_NORMAL;
-                        params2.lightListIdx = 0;
-                        params2.type = params.type;
-
-                        Rend_AddShinyPoly(rvertices, shinyColors, 4,
-                                          &params2, ref, texInfo->width,
-                                          texInfo->height);
-                    }
-                }
-            }
-
-            renderSegSection2(rvertices, 4, &params);
+            solidSeg = doRenderSeg(seg, section, surface, bottom, top,
+                                   alpha, texXOffset, texYOffset, frontsec,
+                                   skyMask, softSurface, sideFlags);
         }
     }
 
@@ -1668,9 +1680,7 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
         texinfo_t*          texinfo = NULL;
         float               texOffset[2];
         float               top, bottom, vL_ZBottom, vR_ZBottom, vL_ZTop, vR_ZTop;
-        boolean             softSurface =
-            (!(ldef->flags & DDLF_BLOCKING) ||
-             !(viewPlayer->shared.flags & DDPF_NOCLIP));
+        boolean             softSurface = false;
 
         // We need the properties of the real flat/texture.
         if(surface->material)
@@ -1678,15 +1688,26 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
             GL_GetMaterialInfo2(surface->material, true, &texinfo);
         }
 
-        vL_ZBottom = vR_ZBottom = bottom = MAX_OF(bfloor, ffloor);
-        vL_ZTop    = vR_ZTop    = top    = MIN_OF(bceil, fceil);
+        if(ldef->L_backsector == ldef->L_frontsector)
+        {
+            vL_ZBottom = vR_ZBottom = bottom = MIN_OF(bfloor, ffloor);
+            vL_ZTop    = vR_ZTop    = top    = MAX_OF(bceil, fceil);
+        }
+        else
+        {
+            vL_ZBottom = vR_ZBottom = bottom = MAX_OF(bfloor, ffloor);
+            vL_ZTop    = vR_ZTop    = top    = MIN_OF(bceil, fceil);
+        }
+
         if(Rend_MidTexturePos
            (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
             &texOffset[VY], surface->visOffset[VY], texinfo->height,
             (ldef->flags & DDLF_DONTPEGBOTTOM)? true : false))
         {
             // Can we make this a soft surface?
-            if(vL_ZTop >= top && vL_ZBottom <= bottom &&
+            if((!(ldef->flags & DDLF_BLOCKING) ||
+               !(viewPlayer->shared.flags & DDPF_NOCLIP)) &&
+               vL_ZTop >= top && vL_ZBottom <= bottom &&
                vR_ZTop >= top && vR_ZBottom <= bottom)
             {
                 softSurface = true;
@@ -1699,6 +1720,11 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
                                         texOffset[VY],
                                         /*temp >*/ frontsec, /*< temp*/
                                         softSurface, false, side->flags);
+
+            // Can we make this a solid segment?
+            if(!(vL_ZTop >= top && vL_ZBottom <= bottom &&
+                 vR_ZTop >= top && vR_ZBottom <= bottom))
+                 solidSeg = false;
         }
     }
 
@@ -1752,6 +1778,10 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
     // Can we make this a solid segment in the clipper?
     if(solidSeg == -1)
         return false; // NEVER (we have a hole we couldn't fix).
+
+    if(ldef->L_frontside && ldef->L_backside &&
+       ldef->L_frontsector == ldef->L_backsector)
+       return false;
 
     if(!solidSeg) // We'll have to determine whether we can...
     {
@@ -2305,8 +2335,6 @@ static void Rend_RenderSubsector(uint ssecidx)
     // Prepare for dynamic lighting.
     LO_InitForSubsector(ssec);
 
-    // Prepare for FakeRadio.
-    Rend_RadioInitForSubsector(ssec);
     Rend_RadioSubsectorEdges(ssec);
 
     occludeSubsector(ssec, false);

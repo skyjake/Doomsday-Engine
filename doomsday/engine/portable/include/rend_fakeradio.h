@@ -31,13 +31,9 @@
 
 void            Rend_RadioRegister(void);
 void            Rend_RadioInitForFrame(void);
-void            Rend_RadioUpdateLinedef(linedef_t *line, boolean backSide);
-void            Rend_RadioInitForSubsector(subsector_t *sector);
-void            Rend_RadioSegSection(const rvertex_t *origVertices,
-                                     const walldiv_t* origDivs,
-                                     rendpolytype_t origType,
-                                     linedef_t* line, byte side,
-                                     float xOffset, float segLength);
-void            Rend_RadioSubsectorEdges(subsector_t *subsector);
+void            Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide);
+void            Rend_RadioSegSection(const rvertex_t* rvertices,
+                                     const walldiv_t* divs, const seg_t* seg);
+void            Rend_RadioSubsectorEdges(subsector_t* subsector);
 
 #endif
