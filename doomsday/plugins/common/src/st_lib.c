@@ -76,8 +76,8 @@ void STlib_init(void)
     sttminus_i = W_GetNumForName(MINUSPATCH);
 }
 
-void STlib_initNum(st_number_t * n, int x, int y, dpatch_t * pl, int *num,
-                   boolean *on, int width, float *alpha)
+void STlib_initNum(st_number_t* n, int x, int y, dpatch_t* pl, int* num,
+                   boolean* on, int width, float* alpha)
 {
     n->x = x;
     n->y = y;
@@ -89,13 +89,13 @@ void STlib_initNum(st_number_t * n, int x, int y, dpatch_t * pl, int *num,
     n->p = pl;
 }
 
-void STlib_drawNum(st_number_t * n, boolean refresh)
+void STlib_drawNum(st_number_t* n, boolean refresh)
 {
-    int     numdigits = n->width;
-    int     num = *n->num;
-    int     w = n->p[0].width;
-    int     x = n->x;
-    int     neg;
+    int                 numdigits = n->width;
+    int                 num = *n->num;
+    int                 w = n->p[0].width;
+    int                 x = n->x;
+    int                 neg;
 
     n->oldnum = *n->num;
 
@@ -112,13 +112,13 @@ void STlib_drawNum(st_number_t * n, boolean refresh)
 
     x = n->x - numdigits * w;
 
-    // if non-number, do not draw it
+    // If non-number, do not draw it.
     if(num == 1994)
         return;
 
     x = n->x;
 
-    // In the special case of 0, you draw 0
+    // In the special case of 0, you draw 0.
     if(!num)
         WI_DrawPatch(x - w, n->y, 1, 1, 1, *n->alpha, n->p[0].lump,
                      NULL, false, ALIGN_LEFT);
@@ -138,20 +138,20 @@ void STlib_drawNum(st_number_t * n, boolean refresh)
                      NULL, false, ALIGN_LEFT);
 }
 
-void STlib_updateNum(st_number_t *n, boolean refresh)
+void STlib_updateNum(st_number_t* n, boolean refresh)
 {
     if(*n->on)
         STlib_drawNum(n, refresh);
 }
 
-void STlib_initPercent(st_percent_t *p, int x, int y, dpatch_t *pl, int *num,
-                       boolean *on, dpatch_t *percent, float *alpha)
+void STlib_initPercent(st_percent_t* p, int x, int y, dpatch_t* pl, int* num,
+                       boolean* on, dpatch_t* percent, float* alpha)
 {
     STlib_initNum(&p->n, x, y, pl, num, on, 3, alpha);
     p->p = percent;
 }
 
-void STlib_updatePercent(st_percent_t *per, int refresh)
+void STlib_updatePercent(st_percent_t* per, int refresh)
 {
     if(refresh && *per->n.on)
         WI_DrawPatch(per->n.x, per->n.y, 1, 1, 1, *per->n.alpha, per->p->lump,
@@ -160,30 +160,31 @@ void STlib_updatePercent(st_percent_t *per, int refresh)
     STlib_updateNum(&per->n, refresh);
 }
 
-void STlib_initMultIcon(st_multicon_t *i, int x, int y, dpatch_t *il,
-                        int *inum, boolean *on, float *alpha)
+void STlib_initMultIcon(st_multicon_t* i, int x, int y, dpatch_t* il,
+                        int* iconNum, boolean* on, float* alpha)
 {
     i->x = x;
     i->y = y;
-    i->oldinum = -1;
+    i->oldIconNum = -1;
     i->alpha = alpha;
-    i->inum = inum;
+    i->iconNum = iconNum;
     i->on = on;
     i->p = il;
 }
 
-void STlib_updateMultIcon(st_multicon_t *mi, boolean refresh)
+void STlib_updateMultIcon(st_multicon_t* mi, boolean refresh)
 {
-    if(*mi->on && (mi->oldinum != *mi->inum || refresh) && (*mi->inum != -1))
+    if(*mi->on && (mi->oldIconNum != *mi->iconNum || refresh) &&
+       *mi->iconNum != -1)
     {
-        WI_DrawPatch(mi->x, mi->y, 1, 1, 1, *mi->alpha, mi->p[*mi->inum].lump,
-                     NULL, false, ALIGN_LEFT);
-        mi->oldinum = *mi->inum;
+        WI_DrawPatch(mi->x, mi->y, 1, 1, 1, *mi->alpha,
+                     mi->p[*mi->iconNum].lump, NULL, false, ALIGN_LEFT);
+        mi->oldIconNum = *mi->iconNum;
     }
 }
 
-void STlib_initBinIcon(st_binicon_t *b, int x, int y, dpatch_t *i,
-                       boolean *val, boolean *on, int d, float *alpha)
+void STlib_initBinIcon(st_binicon_t* b, int x, int y, dpatch_t* i,
+                       boolean* val, boolean* on, int d, float* alpha)
 {
     b->x = x;
     b->y = y;
@@ -195,7 +196,7 @@ void STlib_initBinIcon(st_binicon_t *b, int x, int y, dpatch_t *i,
     b->data =d;
 }
 
-void STlib_updateBinIcon(st_binicon_t *bi, boolean refresh)
+void STlib_updateBinIcon(st_binicon_t* bi, boolean refresh)
 {
     if(*bi->on && (bi->oldval != *bi->val || refresh))
     {

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +23,7 @@
  */
 
 /**
- * st_lib.h: The status bar widget code.
- *
- * Compiles for jDoom/jHeretic/jHexen/jDoom64
+ * st_lib.h: HUD, Status Widgets.
  */
 
 #ifndef __COMMON_STLIB__
@@ -33,154 +31,81 @@
 
 #include "hu_stuff.h"
 
-//
-// Background and foreground screen numbers
-//
-#define BG 4
-#define FG 0
-
 // Patch used for '-' in the status bar
 #if __JDOOM__
-# define MINUSPATCH "STTMINUS"
+# define MINUSPATCH             "STTMINUS"
 #elif __JDOOM64__
-# define MINUSPATCH "FONTB046"
+# define MINUSPATCH             "FONTB046"
 #else
-# define MINUSPATCH "FONTB13"
+# define MINUSPATCH             "FONTB13"
 #endif
 
-//
-// Typedefs of widgets
-//
-
-// Number widget
-
+/**
+ * Number widget.
+ */
 typedef struct {
-    // upper right-hand corner
-    //  of the number (right-justified)
-    int             x;
-    int             y;
-
-    // max # of digits in number
-    int             width;
-
-    // last number value
-    int             oldnum;
-
-    // pointer to alpha
-    float          *alpha;
-
-    // pointer to current value
-    int            *num;
-
-    // pointer to boolean stating
-    //  whether to update number
-    boolean        *on;
-
-    // list of patches for 0-9
-    dpatch_t       *p;
-
-    // user data
-    int             data;
-
+    int             x, y; // Upper right-hand corner of the number (right-justified).
+    int             width; // Max # of digits in number.
+    int             oldnum; // Last number value.
+    float*          alpha; // Pointer to alpha.
+    int*            num; // Pointer to current value.
+    boolean*        on; // Pointer to boolean stating whether to update number.
+    dpatch_t*       p; // List of patches for 0-9.
+    int             data; // User data.
 } st_number_t;
 
-// Percent widget ("child" of number widget,
-//  or, more precisely, contains a number widget.)
+/**
+ * Percent widget
+ * "child" of number widget, or, more precisely, contains a number widget.
+ */
 typedef struct {
     // number information
     st_number_t     n;
 
     // percent sign graphic
-    dpatch_t       *p;
-
+    dpatch_t*       p;
 } st_percent_t;
 
-// Multiple Icon widget
+/**
+ * Multiple Icon widget.
+ */
 typedef struct {
-    // center-justified location of icons
-    int             x;
-    int             y;
-
-    // last icon number
-    int             oldinum;
-
-    // pointer to current icon
-    int            *inum;
-
-    // pointer to alpha
-    float          *alpha;
-
-    // pointer to boolean stating
-    //  whether to update icon
-    boolean        *on;
-
-    // list of icons
-    dpatch_t       *p;
-
-    // user data
-    int             data;
-
+    int             x, y; // Center-justified location of icons.
+    int             oldIconNum; // Last icon number.
+    int*            iconNum; // Pointer to current icon.
+    float*          alpha; // Pointer to alpha.
+    boolean*        on; // Pointer to boolean stating whether to update icon.
+    dpatch_t*       p; // List of icons.
+    int             data; // User data.
 } st_multicon_t;
 
-// Binary Icon widget
-
+/**
+ * Binary Icon widget.
+ */
 typedef struct {
-    // center-justified location of icon
-    int             x;
-    int             y;
-
-    // last icon value
-    int             oldval;
-
-    // pointer to current icon status
-    boolean        *val;
-
-    // pointer to alpha
-    float          *alpha;
-
-    // pointer to boolean
-    //  stating whether to update icon
-    boolean        *on;
-
-    dpatch_t       *p;             // icon
-    int             data;          // user data
-
+    int             x, y; // Center-justified location of icon.
+    int             oldval; // Last icon value.
+    boolean*        val; // Pointer to current icon status.
+    float*          alpha; // Pointer to alpha.
+    boolean*        on; // Pointer to boolean stating whether to update icon.
+    dpatch_t*       p; // Icon.
+    int             data; // User data.
 } st_binicon_t;
 
-//
-// Widget creation, access, and update routines
-//
-
-// Initializes widget library.
-// More precisely, initialize STMINUS,
-//  everything else is done somewhere else.
-//
 void            STlib_init(void);
-
-// Number widget routines
-void            STlib_initNum(st_number_t * n, int x, int y, dpatch_t * pl,
-                              int *num, boolean *on, int width, float *alpha);
-
-void            STlib_updateNum(st_number_t * n, boolean refresh);
-
-// Percent widget routines
-void            STlib_initPercent(st_percent_t * p, int x, int y,
-                                  dpatch_t * pl, int *num, boolean *on,
-                                  dpatch_t * percent, float *alpha);
-
-void            STlib_updatePercent(st_percent_t * per, int refresh);
-
-// Multiple Icon widget routines
-void            STlib_initMultIcon(st_multicon_t * mi, int x, int y,
-                                   dpatch_t * il, int *inum, boolean *on, float *alpha);
-
-void            STlib_updateMultIcon(st_multicon_t * mi, boolean refresh);
-
-// Binary Icon widget routines
-
-void            STlib_initBinIcon(st_binicon_t * b, int x, int y, dpatch_t * i,
-                                  boolean *val, boolean *on, int d, float *alpha);
-
-void            STlib_updateBinIcon(st_binicon_t * bi, boolean refresh);
+void            STlib_initNum(st_number_t* n, int x, int y, dpatch_t* pl,
+                              int* num, boolean* on, int width, float* alpha);
+void            STlib_updateNum(st_number_t* n, boolean refresh);
+void            STlib_initPercent(st_percent_t* p, int x, int y,
+                                  dpatch_t* pl, int* num, boolean* on,
+                                  dpatch_t* percent, float* alpha);
+void            STlib_updatePercent(st_percent_t* per, int refresh);
+void            STlib_initMultIcon(st_multicon_t* mi, int x, int y,
+                                   dpatch_t* il, int* inum, boolean* on,
+                                   float* alpha);
+void            STlib_updateMultIcon(st_multicon_t* mi, boolean refresh);
+void            STlib_initBinIcon(st_binicon_t* b, int x, int y, dpatch_t* i,
+                                  boolean* val, boolean* on, int d, float* alpha);
+void            STlib_updateBinIcon(st_binicon_t* bi, boolean refresh);
 
 #endif
