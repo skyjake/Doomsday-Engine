@@ -104,7 +104,7 @@ void            M_PointCrossProduct(const float* v1, const float* v2,
 float           M_TriangleArea(const float* v1, const float* v2,
                                const float* v3);
 void            M_RotateVector(float vec[3], float degYaw, float degPitch);
-void            M_ProjectPointOnLine(const float* point, const float* linepoint,
+float           M_ProjectPointOnLine(const float* point, const float* linepoint,
                                      const float* delta, float gap,
                                      float* result);
 void            M_ProjectViewRelativeLine2D(const float center[2],

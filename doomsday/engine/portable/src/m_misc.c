@@ -664,9 +664,8 @@ float M_PointLineDistance(const float *a, const float *b, const float *c)
 /**
  * Gap is the distance left between the line and the projected point.
  */
-void M_ProjectPointOnLine(const float *point, const float *linepoint,
-                          const float *delta,
-                          float gap, float *result)
+float M_ProjectPointOnLine(const float* point, const float* linepoint,
+                           const float* delta, float gap, float* result)
 {
 #define DOTPROD(a,b)    (a[VX]*b[VX] + a[VY]*b[VY])
     float   pointvec[2];
@@ -674,12 +673,15 @@ void M_ProjectPointOnLine(const float *point, const float *linepoint,
     float   diff[2], dist;
 
     if(!div)
-        return;
+        return 0;
 
     pointvec[0] = point[VX] - linepoint[VX];
     pointvec[1] = point[VY] - linepoint[VY];
 
     div = DOTPROD(pointvec, delta) / div;
+    if(!result)
+        return div;
+
     result[VX] = linepoint[VX] + delta[VX] * div;
     result[VY] = linepoint[VY] + delta[VY] * div;
 
@@ -696,6 +698,8 @@ void M_ProjectPointOnLine(const float *point, const float *linepoint,
                 result[i] -= diff[i] / dist * gap;
         }
     }
+
+    return div;
 }
 
 void M_ProjectViewRelativeLine2D(const float center[2],

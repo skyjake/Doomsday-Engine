@@ -976,29 +976,6 @@ static void getColorsForSegSection(const seg_t* seg, segsection_t section,
     }
 }
 
-/**
- * Calculate 2D distance to line.
- * \fixme Too accurate?
- */
-static void lineDistanceAlpha(const float *point, float radius,
-                              const float *from, const float *to,
-                              float *alpha)
-{
-    float               distance;
-
-    distance = M_PointLineDistance(from, to, point);
-
-    if(radius <= 0)
-        radius = 1;
-
-    if(distance < radius)
-    {
-        // Fade it out the closer the viewPlayer gets and clamp.
-        *alpha = (*alpha / radius) * distance;
-        *alpha = MINMAX_OF(0, *alpha, 1);
-    }
-}
-
 typedef struct {
     boolean         isWall;
     float           length;
@@ -1287,7 +1264,7 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
                            surface_t* surface, float bottom, float top,
                            float alpha, float texXOffset, float texYOffset,
                            sector_t* frontsec, boolean skyMask,
-                           boolean softSurface, short sideFlags)
+                           short sideFlags)
 {
     rendsegsection_params_t params;
     rvertex_t           rvertices[4];
@@ -1357,7 +1334,7 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
         params.texOffset[VX] = texXOffset;
         params.texOffset[VY] = texYOffset;
 
-        if(section == SEG_MIDDLE && softSurface)
+        if(section == SEG_MIDDLE)
         {
             // Blendmode.
             if(surface->blendMode == BM_NORMAL && noSpriteTrans)
@@ -1538,18 +1515,36 @@ static boolean renderSegSection(seg_t* seg, segsection_t section,
              * opaque waterfall).
              */
 
-            if(mo->subsector->sector == frontsec &&
-               viewZ > bottom && viewZ < top)
+            if(viewZ > bottom && viewZ < top)
             {
-                float               c[2];
+                float               delta[2], pos, result[2];
+                linedef_t*          lineDef = seg->lineDef;
 
-                c[VX] = mo->pos[VX];
-                c[VY] = mo->pos[VY];
+                delta[0] = lineDef->dX;
+                delta[1] = lineDef->dY;
 
-                lineDistanceAlpha(c, mo->radius * .8f,
-                                  seg->SG_v1pos, seg->SG_v2pos, &alpha);
-                if(alpha < 1)
-                    solidSeg = false;
+                pos = M_ProjectPointOnLine(mo->pos, lineDef->L_v1pos, delta, 0,
+                                           result);
+                if(pos > 0 && pos < 1)
+                {
+                    float               distance;
+                    float               minDistance = mo->radius * .8f;
+
+                    delta[VX] = mo->pos[VX] - result[VX];
+                    delta[VY] = mo->pos[VY] - result[VY];
+
+                    distance = M_ApproxDistancef(delta[VX], delta[VY]);
+
+                    if(distance < minDistance)
+                    {
+                        // Fade it out the closer the viewPlayer gets and clamp.
+                        alpha = (alpha / minDistance) * distance;
+                        alpha = MINMAX_OF(0, alpha, 1);
+                    }
+
+                    if(alpha < 1)
+                        solidSeg = false;
+                }
             }
         }
 
@@ -1557,7 +1552,7 @@ static boolean renderSegSection(seg_t* seg, segsection_t section,
         {
             solidSeg = doRenderSeg(seg, section, surface, bottom, top,
                                    alpha, texXOffset, texYOffset, frontsec,
-                                   skyMask, softSurface, sideFlags);
+                                   skyMask, sideFlags);
         }
     }
 
@@ -1705,10 +1700,8 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
             (ldef->flags & DDLF_DONTPEGBOTTOM)? true : false))
         {
             // Can we make this a soft surface?
-            if((!(ldef->flags & DDLF_BLOCKING) ||
-               !(viewPlayer->shared.flags & DDPF_NOCLIP)) &&
-               vL_ZTop >= top && vL_ZBottom <= bottom &&
-               vR_ZTop >= top && vR_ZBottom <= bottom)
+            if((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
+               !(ldef->flags & DDLF_BLOCKING))
             {
                 softSurface = true;
             }
