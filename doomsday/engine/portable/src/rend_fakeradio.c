@@ -965,9 +965,9 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size,
 }
 
 static void setSideShadowParams(rendershadowseg_params_t* p,
-                                boolean rightSide, float size,
-                                float bottom, float top,
-                                boolean bottomGlow, boolean topGlow,
+                                float size, float bottom, float top,
+                                boolean rightSide, boolean bottomGlow,
+                                boolean topGlow,
                                 const float* xOffset, const float* segLength,
                                 const float* fFloor, const float* fCeil,
                                 const float* bFloor, const float* bCeil,
@@ -1080,29 +1080,22 @@ static void setSideShadowParams(rendershadowseg_params_t* p,
  */
 static void rendRadioSegSection(const rvertex_t* rvertices,
                                 const walldiv_t* divs,
-                                const shadowcorner_t* botCn,
-                                const shadowcorner_t* topCn,
-                                const shadowcorner_t* sideCn,
-                                const edgespan_t* spans,
-                                const float* xOffset, const float* segLength,
                                 float shadowSize, float shadowDark,
-                                const float* lineLength,
-                                const sector_t* frontSec,
-                                const sector_t* backSec)
+                                const rendsegradio_params_t* p)
 {
     const float*        fFloor, *fCeil, *bFloor, *bCeil;
     float               size;
     boolean             bottomGlow, topGlow;
 
-    bottomGlow = R_IsGlowingPlane(frontSec->SP_plane(PLN_FLOOR));
-    topGlow = R_IsGlowingPlane(frontSec->SP_plane(PLN_CEILING));
+    bottomGlow = R_IsGlowingPlane(p->frontSec->SP_plane(PLN_FLOOR));
+    topGlow = R_IsGlowingPlane(p->frontSec->SP_plane(PLN_CEILING));
 
-    fFloor = &frontSec->SP_floorvisheight;
-    fCeil = &frontSec->SP_ceilvisheight;
-    if(backSec)
+    fFloor = &p->frontSec->SP_floorvisheight;
+    fCeil = &p->frontSec->SP_ceilvisheight;
+    if(p->backSec)
     {
-        bFloor = &backSec->SP_floorvisheight;
-        bCeil  = &backSec->SP_ceilvisheight;
+        bFloor = &p->backSec->SP_floorvisheight;
+        bCeil  = &p->backSec->SP_ceilvisheight;
     }
     else
         bFloor = bCeil = NULL;
@@ -1113,15 +1106,15 @@ static void rendRadioSegSection(const rvertex_t* rvertices,
     if(!topGlow)
     {
         // The top shadow will reach this far down.
-        size = shadowSize + calcLongWallBonus(spans[TOP].length);
+        size = shadowSize + calcLongWallBonus(p->spans[TOP].length);
         if(rvertices[3].pos[VZ] > *fCeil - size &&
            rvertices[0].pos[VZ] < *fCeil)
         {
             rendershadowseg_params_t params;
 
-            setTopShadowParams(&params, size, rvertices[1].pos[VZ], xOffset,
-                               segLength, fFloor, fCeil, botCn, topCn, sideCn,
-                               spans);
+            setTopShadowParams(&params, size, rvertices[1].pos[VZ],
+                               p->segOffset, p->segLength, fFloor, fCeil,
+                               p->botCn, p->topCn, p->sideCn, p->spans);
             renderShadowSeg(rvertices, divs, &params, shadowDark);
         }
     }
@@ -1131,15 +1124,15 @@ static void rendRadioSegSection(const rvertex_t* rvertices,
      */
     if(!bottomGlow)
     {
-        size = shadowSize + calcLongWallBonus(spans[BOTTOM].length);
+        size = shadowSize + calcLongWallBonus(p->spans[BOTTOM].length);
         if(rvertices[0].pos[VZ] < *fFloor + size &&
            rvertices[3].pos[VZ] > *fFloor)
         {
             rendershadowseg_params_t params;
 
-            setBottomShadowParams(&params, size, rvertices[1].pos[VZ], xOffset,
-                                  segLength, fFloor, fCeil, botCn, topCn, sideCn,
-                                  spans);
+            setBottomShadowParams(&params, size, rvertices[1].pos[VZ],
+                                  p->segOffset, p->segLength, fFloor, fCeil,
+                                  p->botCn, p->topCn, p->sideCn, p->spans);
             renderShadowSeg(rvertices, divs, &params, shadowDark);
         }
     }
@@ -1149,33 +1142,36 @@ static void rendRadioSegSection(const rvertex_t* rvertices,
     if(bottomGlow && topGlow)
         return;
 
-    size = shadowSize + calcLongWallBonus(*lineLength);
+    size = shadowSize + calcLongWallBonus(*p->linedefLength);
 
     /*
      * Left Shadow.
      */
-    if(sideCn[0].corner > 0 && *xOffset < size)
+    if(p->sideCn[0].corner > 0 && *p->segOffset < size)
     {
         rendershadowseg_params_t params;
 
-        setSideShadowParams(&params, false, size,
-                            rvertices[0].pos[VZ], rvertices[1].pos[VZ],
-                            bottomGlow, topGlow, xOffset, segLength, fFloor,
-                            fCeil, bFloor, bCeil, lineLength, sideCn);
+        setSideShadowParams(&params, size, rvertices[0].pos[VZ],
+                            rvertices[1].pos[VZ], false,
+                            bottomGlow, topGlow, p->segOffset, p->segLength,
+                            fFloor, fCeil, bFloor, bCeil, p->linedefLength,
+                            p->sideCn);
         renderShadowSeg(rvertices, divs, &params, shadowDark);
     }
 
     /*
      * Right Shadow.
      */
-    if(sideCn[1].corner > 0 && *xOffset + *segLength > *lineLength - size)
+    if(p->sideCn[1].corner > 0 &&
+       *p->segOffset + *p->segLength > *p->linedefLength - size)
     {
         rendershadowseg_params_t params;
 
-        setSideShadowParams(&params, true, size,
-                            rvertices[0].pos[VZ], rvertices[1].pos[VZ],
-                            bottomGlow, topGlow, xOffset, segLength, fFloor,
-                            fCeil, bFloor, bCeil, lineLength, sideCn);
+        setSideShadowParams(&params, size, rvertices[0].pos[VZ],
+                            rvertices[1].pos[VZ], true,
+                            bottomGlow, topGlow, p->segOffset, p->segLength,
+                            fFloor, fCeil, bFloor, bCeil, p->linedefLength,
+                            p->sideCn);
         renderShadowSeg(rvertices, divs, &params, shadowDark);
     }
 }
@@ -1184,20 +1180,17 @@ static void rendRadioSegSection(const rvertex_t* rvertices,
  * Render FakeRadio for the given seg section.
  */
 void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* divs,
-                          const seg_t* seg)
+                          const rendsegradio_params_t* params)
 {
     float               lightLevel, shadowSize, shadowDark;
-    sidedef_t*          sideDef;
 
     if(!rendFakeRadio || levelFullBright) // Disabled?
         return;
 
-    if(!rvertices || !seg)
+    if(!rvertices || !params)
         return; // Wha?
 
-    sideDef = seg->lineDef->L_side(seg->side);
-
-    lightLevel = seg->SG_frontsector->lightLevel;
+    lightLevel = *params->sectorLightLevel;
     Rend_ApplyLightAdaptation(&lightLevel);
     if(!(lightLevel > 0))
         return; // No point drawing shadows in a PITCH black sector.
@@ -1211,12 +1204,7 @@ void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* divs,
 
     shadowDark = calcShadowDarkness(lightLevel) *.8f;
 
-    rendRadioSegSection(rvertices, divs,
-                        sideDef->bottomCorners, sideDef->topCorners,
-                        sideDef->sideCorners, sideDef->spans,
-                        &seg->offset, &seg->length,
-                        shadowSize, shadowDark, &seg->lineDef->length,
-                        seg->SG_frontsector, seg->SG_backsector);
+    rendRadioSegSection(rvertices, divs, shadowSize, shadowDark, params);
 }
 
 /**

@@ -29,11 +29,22 @@
 #ifndef __DOOMSDAY_RENDER_FAKERADIO_H__
 #define __DOOMSDAY_RENDER_FAKERADIO_H__
 
+typedef struct {
+    const float*        sectorLightLevel;
+    const shadowcorner_t* botCn, *topCn, *sideCn;
+    const edgespan_t*   spans;
+    const float*        segOffset;
+    const float*        segLength;
+    const float*        linedefLength;
+    const sector_t*     frontSec, *backSec;
+} rendsegradio_params_t;
+
 void            Rend_RadioRegister(void);
 void            Rend_RadioInitForFrame(void);
 void            Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide);
 void            Rend_RadioSegSection(const rvertex_t* rvertices,
-                                     const walldiv_t* divs, const seg_t* seg);
+                                     const walldiv_t* divs,
+                                     const rendsegradio_params_t* params);
 void            Rend_RadioSubsectorEdges(subsector_t* subsector);
 
 #endif

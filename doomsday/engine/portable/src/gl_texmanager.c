@@ -412,7 +412,7 @@ void GL_LoadLightMap(ded_lightmap_t *map)
     }
 }
 
-void GL_DeleteLightMap(ded_lightmap_t *map)
+void GL_DeleteLightMap(ded_lightmap_t* map)
 {
     if(map->tex != lightingTextures[LST_DYNAMIC].tex)
     {
@@ -424,7 +424,7 @@ void GL_DeleteLightMap(ded_lightmap_t *map)
 /**
  * Flaremaps are normally monochrome images but we'll allow full color.
  */
-void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
+void GL_LoadFlareMap(ded_flaremap_t* map, int oldidx)
 {
     image_t             image;
     filename_t          resource;
@@ -531,7 +531,7 @@ void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
     }
 }
 
-void GL_DeleteFlareMap(ded_flaremap_t *map)
+void GL_DeleteFlareMap(ded_flaremap_t* map)
 {
     if(map->tex != flareTextures[FXT_FLARE].tex)
     {
@@ -542,7 +542,7 @@ void GL_DeleteFlareMap(ded_flaremap_t *map)
 
 /**
  * Loads both the shiny texture and the mask.  Returns true if there is
- * a reflection map to can be used.
+ * a reflection map available for use.
  */
 boolean GL_LoadReflectionMap(ded_reflection_t* loadingRef)
 {
