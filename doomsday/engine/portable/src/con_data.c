@@ -54,26 +54,26 @@ D_CMD(ListVars);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int C_DECL wordListSorter(const void *e1, const void *e2);
-static int C_DECL knownWordListSorter(const void *e1, const void *e2);
+static int C_DECL wordListSorter(const void* e1, const void* e2);
+static int C_DECL knownWordListSorter(const void* e1, const void* e2);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-static cvar_t *cvars = NULL;
-static ddccmd_t *ccmds = NULL;
-static calias_t *caliases = NULL;
+static cvar_t* cvars = NULL;
+static ddccmd_t* ccmds = NULL;
+static calias_t* caliases = NULL;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static unsigned int numCVars = 0, maxCVars = 0;
-static unsigned int numCCmds = 0, maxCCmds = 0;
-static unsigned int numCAliases = 0;
+static uint numCVars = 0, maxCVars = 0;
+static uint numCCmds = 0, maxCCmds = 0;
+static uint numCAliases = 0;
 
 // The list of known words (for completion).
-static knownword_t *knownWords = NULL;
-static unsigned int numKnownWords = 0;
+static knownword_t* knownWords = NULL;
+static uint numKnownWords = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -85,15 +85,15 @@ void Con_DataRegister(void)
     C_CMD("listvars",       NULL,   ListVars);
 }
 
-void Con_SetString(const char *name, char *text, byte override)
+void Con_SetString(const char* name, char* text, byte overRide)
 {
-    cvar_t *cvar = Con_GetVariable(name);
-    boolean changed = false;
+    cvar_t*             cvar = Con_GetVariable(name);
+    boolean             changed = false;
 
     if(!cvar)
         return;
 
-    if(cvar->flags & CVF_READ_ONLY && !override)
+    if(cvar->flags & CVF_READ_ONLY && !overRide)
     {
         Con_Printf("%s (cvar) is read-only. It can't be changed "
                    "(not even with force)\n", name);
@@ -122,17 +122,17 @@ void Con_SetString(const char *name, char *text, byte override)
 }
 
 /**
- * NOTE: Also works with bytes.
+ * \note: Also works with bytes.
  */
-void Con_SetInteger(const char *name, int value, byte override)
+void Con_SetInteger(const char* name, int value, byte overRide)
 {
-    cvar_t *var = Con_GetVariable(name);
-    boolean changed = false;
+    cvar_t*             var = Con_GetVariable(name);
+    boolean             changed = false;
 
     if(!var)
         return;
 
-    if(var->flags & CVF_READ_ONLY && !override)
+    if(var->flags & CVF_READ_ONLY && !overRide)
     {
         Con_Printf("%s (cvar) is read-only. It can't be changed "
                    "(not even with force)\n", name);
@@ -148,17 +148,17 @@ void Con_SetInteger(const char *name, int value, byte override)
     }
     if(var->type == CVT_BYTE)
     {
-        if(CV_BYTE(var) != value)
+        if(CV_BYTE(var) != (byte) value)
             changed = true;
 
-        CV_BYTE(var) = value;
+        CV_BYTE(var) = (byte) value;
     }
     if(var->type == CVT_FLOAT)
     {
-        if(CV_FLOAT(var) != value)
+        if(CV_FLOAT(var) != (float) value)
             changed = true;
 
-        CV_FLOAT(var) = value;
+        CV_FLOAT(var) = (float) value;
     }
 
     // Make the change notification callback
@@ -166,15 +166,15 @@ void Con_SetInteger(const char *name, int value, byte override)
         var->notifyChanged(var);
 }
 
-void Con_SetFloat(const char *name, float value, byte override)
+void Con_SetFloat(const char* name, float value, byte overRide)
 {
-    cvar_t *var = Con_GetVariable(name);
-    boolean changed = false;
+    cvar_t*             var = Con_GetVariable(name);
+    boolean             changed = false;
 
     if(!var)
         return;
 
-    if(var->flags & CVF_READ_ONLY && !override)
+    if(var->flags & CVF_READ_ONLY && !overRide)
     {
         Con_Printf("%s (cvar) is read-only. It can't be changed "
                    "(not even with force)\n", name);
@@ -208,9 +208,9 @@ void Con_SetFloat(const char *name, float value, byte override)
         var->notifyChanged(var);
 }
 
-int Con_GetInteger(const char *name)
+int Con_GetInteger(const char* name)
 {
-    cvar_t *var = Con_GetVariable(name);
+    cvar_t*             var = Con_GetVariable(name);
 
     if(!var)
         return 0;
@@ -223,9 +223,9 @@ int Con_GetInteger(const char *name)
     return CV_INT(var);
 }
 
-float Con_GetFloat(const char *name)
+float Con_GetFloat(const char* name)
 {
-    cvar_t *var = Con_GetVariable(name);
+    cvar_t*             var = Con_GetVariable(name);
 
     if(!var)
         return 0;
@@ -238,9 +238,9 @@ float Con_GetFloat(const char *name)
     return CV_FLOAT(var);
 }
 
-byte Con_GetByte(const char *name)
+byte Con_GetByte(const char* name)
 {
-    cvar_t *var = Con_GetVariable(name);
+    cvar_t*             var = Con_GetVariable(name);
 
     if(!var)
         return 0;
@@ -253,22 +253,22 @@ byte Con_GetByte(const char *name)
     return CV_BYTE(var);
 }
 
-char *Con_GetString(const char *name)
+char* Con_GetString(const char* name)
 {
-    cvar_t *var = Con_GetVariable(name);
+    cvar_t*             var = Con_GetVariable(name);
 
     if(!var || var->type != CVT_CHARPTR)
         return "";
     return CV_CHARPTR(var);
 }
 
-void Con_AddVariableList(cvar_t *varlist)
+void Con_AddVariableList(cvar_t* varlist)
 {
     for(; varlist->name; varlist++)
         Con_AddVariable(varlist);
 }
 
-void Con_AddVariable(cvar_t *var)
+void Con_AddVariable(cvar_t* var)
 {
     if(Con_GetVariable(var->name))
         Con_Error("Con_AddVariable: A CVAR by the name \"%s\" "
@@ -288,12 +288,12 @@ void Con_AddVariable(cvar_t *var)
     qsort(cvars, numCVars, sizeof(cvar_t), wordListSorter);
 }
 
-cvar_t *Con_GetVariable(const char *name)
+cvar_t* Con_GetVariable(const char* name)
 {
-    int     result;
-    unsigned int bottomIdx, topIdx, pivot;
-    cvar_t *var;
-    boolean isDone;
+    int                 result;
+    uint                bottomIdx, topIdx, pivot;
+    cvar_t*             var;
+    boolean             isDone;
 
     if(numCVars == 0)
         return NULL;
@@ -308,8 +308,7 @@ cvar_t *Con_GetVariable(const char *name)
 
         result = stricmp(cvars[pivot].name, name);
         if(result == 0)
-        {
-            // Found.
+        {   // Found.
             var = &cvars[pivot];
             isDone = true;
         }
@@ -318,8 +317,7 @@ cvar_t *Con_GetVariable(const char *name)
             if(result > 0)
             {
                 if(pivot == 0)
-                {
-                    // Not present.
+                {   // Not present.
                     isDone = true;
                 }
                 else
@@ -333,19 +331,19 @@ cvar_t *Con_GetVariable(const char *name)
     return var;
 }
 
-cvar_t *Con_GetVariableIDX(unsigned int idx)
+cvar_t* Con_GetVariableIDX(uint idx)
 {
     return &cvars[idx];
 }
 
-unsigned int Con_CVarCount(void)
+uint Con_CVarCount(void)
 {
     return numCVars;
 }
 
-void Con_PrintCVar(cvar_t *var, char *prefix)
+void Con_PrintCVar(cvar_t* var, char* prefix)
 {
-    char    equals = '=';
+    char                equals = '=';
 
     if(var->flags & CVF_PROTECTED || var->flags & CVF_READ_ONLY)
         equals = ':';
@@ -375,34 +373,34 @@ void Con_PrintCVar(cvar_t *var, char *prefix)
     Con_Printf("\n");
 }
 
-void Con_AddCommandList(ccmd_t *cmdlist)
+void Con_AddCommandList(ccmd_t* cmdlist)
 {
     for(; cmdlist->name; cmdlist++)
         Con_AddCommand(cmdlist);
 }
 
-void Con_AddCommand(ccmd_t *cmd)
+void Con_AddCommand(ccmd_t* cmd)
 {
-    uint        i;
-    cvartype_t  params[MAX_ARGS];
-    int         minArgs, maxArgs;
-    ddccmd_t   *newCmd;
+    uint                i;
+    cvartype_t          params[MAX_ARGS];
+    int                 minArgs, maxArgs;
+    ddccmd_t*           newCmd;
 
     if(!cmd->name)
         Con_Error("Con_AddCommand: CCmd missing a name.");
-/*
-#if _DEBUG
+
+/*#if _DEBUG
 Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
             cmd->params, cmd->flags);
-#endif
-*/
+#endif*/
+
     // Decode the usage string if present.
     if(cmd->params != NULL)
     {
-        char        c;
-        size_t      l, len;
-        cvartype_t  type = CVT_NULL;
-        boolean     unlimitedArgs;
+        char                c;
+        size_t              l, len;
+        cvartype_t          type = CVT_NULL;
+        boolean             unlimitedArgs;
 
         len = strlen(cmd->params);
         minArgs = 0;
@@ -458,8 +456,7 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
         else
             maxArgs = minArgs;
 
-/*
-#if _DEBUG
+/*#if _DEBUG
 {
 int i;
 Con_Message("Con_AddCommand: CCmd \"%s\": minArgs %i, maxArgs %i: \"",
@@ -477,19 +474,17 @@ for(i = 0; i < minArgs; ++i)
 }
 Con_Printf("\".\n");
 }
-#endif
-*/
+#endif*/
     }
     else // it's usage is NOT validated by Doomsday.
     {
         minArgs = maxArgs = -1;
-/*
-#if _DEBUG
+
+/*#if _DEBUG
 if(cmd->params == NULL)
   Con_Message("Con_AddCommand: CCmd \"%s\" will not have it's usage "
               "validated.\n", cmd->name);
-#endif
-*/
+#endif*/
     }
 
     // Now check that the ccmd to be registered is unique.
@@ -497,7 +492,7 @@ if(cmd->params == NULL)
     // their paramater lists that they are unique (overloading).
     for(i = 0; i < numCCmds; ++i)
     {
-        ddccmd_t *other = &ccmds[i];
+        ddccmd_t*           other = &ccmds[i];
 
         if(!stricmp(other->name, cmd->name))
         {
@@ -559,11 +554,11 @@ if(cmd->params == NULL)
     qsort(ccmds, numCCmds, sizeof(ddccmd_t), wordListSorter);
 }
 
-ddccmd_t *Con_GetCommand(cmdargs_t *args)
+ddccmd_t* Con_GetCommand(cmdargs_t* args)
 {
-    uint        i;
-    ddccmd_t   *ccmd = NULL;
-    ddccmd_t   *matchingNameCmd = NULL;
+    uint                i;
+    ddccmd_t*           ccmd = NULL;
+    ddccmd_t*           matchingNameCmd = NULL;
 
     // \todo Use a faster than O(n) linear search. Note, ccmd->name is not
     //       a unique key (ccmds can share names if params differ).
@@ -573,7 +568,7 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
 
         if(!stricmp(args->argv[0], ccmd->name))
         {
-            boolean     invalidArgs = false;
+            boolean             invalidArgs = false;
 
             // Remember the first one with a matching name.
             if(!matchingNameCmd)
@@ -582,7 +577,7 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
             // Are we validating the arguments?
             if(!(ccmd->minArgs == -1 && ccmd->maxArgs == -1))
             {
-                int         j;
+                int                 j;
 
                 // Do we have the right number of arguments?
                 if(args->argc-1 < ccmd->minArgs)
@@ -605,6 +600,7 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
                     }
                 }
             }
+
             if(!invalidArgs)
                 return ccmd; // This is the one!
         }
@@ -624,7 +620,7 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
  * @return              @c true, if the given string is a
  *                      valid command or alias name.
  */
-boolean Con_IsValidCommand(const char *name)
+boolean Con_IsValidCommand(const char* name)
 {
     uint                i = 0;
     boolean             found = false;
@@ -656,7 +652,7 @@ boolean Con_IsValidCommand(const char *name)
  * @param showExtra     If @c true, print any additional info we
  *                      have about the ccmd.
  */
-void Con_PrintCCmdUsage(ddccmd_t *ccmd, boolean showExtra)
+void Con_PrintCCmdUsage(ddccmd_t* ccmd, boolean showExtra)
 {
     int                 i;
     char*               str;
@@ -696,12 +692,12 @@ void Con_PrintCCmdUsage(ddccmd_t *ccmd, boolean showExtra)
 /**
  * Returns NULL if the specified alias can't be found.
  */
-calias_t *Con_GetAlias(const char *name)
+calias_t* Con_GetAlias(const char* name)
 {
-    int         result;
-    uint        bottomIdx, topIdx, pivot;
-    calias_t   *cal;
-    boolean     isDone;
+    int                 result;
+    uint                bottomIdx, topIdx, pivot;
+    calias_t*           cal;
+    boolean             isDone;
 
     if(numCAliases == 0)
         return NULL;
@@ -741,9 +737,9 @@ calias_t *Con_GetAlias(const char *name)
     return cal;
 }
 
-calias_t *Con_AddAlias(const char *aName, const char *command)
+calias_t* Con_AddAlias(const char* aName, const char* command)
 {
-    calias_t   *cal;
+    calias_t*           cal;
 
     caliases = M_Realloc(caliases, sizeof(calias_t) * (++numCAliases));
     cal = caliases + numCAliases - 1;
@@ -759,9 +755,9 @@ calias_t *Con_AddAlias(const char *aName, const char *command)
     return cal;
 }
 
-void Con_DeleteAlias(calias_t *cal)
+void Con_DeleteAlias(calias_t* cal)
 {
-    uint        idx = cal - caliases;
+    uint                idx = cal - caliases;
 
     M_Free(cal->name);
     M_Free(cal->command);
@@ -776,10 +772,10 @@ void Con_DeleteAlias(calias_t *cal)
 /**
  * Called by the config file writer.
  */
-void Con_WriteAliasesToFile(FILE *file)
+void Con_WriteAliasesToFile(FILE* file)
 {
-    uint        i;
-    calias_t   *cal;
+    uint                i;
+    calias_t*           cal;
 
     for(i = 0, cal = caliases; i < numCAliases; ++i, cal++)
     {
@@ -791,23 +787,23 @@ void Con_WriteAliasesToFile(FILE *file)
     }
 }
 
-static int C_DECL wordListSorter(const void *e1, const void *e2)
+static int C_DECL wordListSorter(const void* e1, const void* e2)
 {
-    return stricmp(*(char **) e1, *(char **) e2);
+    return stricmp(*(char**)e1, *(char**)e2);
 }
 
-static int C_DECL knownWordListSorter(const void *e1, const void *e2)
+static int C_DECL knownWordListSorter(const void* e1, const void* e2)
 {
-    return stricmp(((knownword_t *) e1)->word, ((knownword_t *) e2)->word);
+    return stricmp(((knownword_t*) e1)->word, ((knownword_t*) e2)->word);
 }
 
 /**
- * NOTE: Variables with CVF_HIDE are not considered known words.
+ * \note: Variables with CVF_HIDE are not considered known words.
  */
 void Con_UpdateKnownWords(void)
 {
-    uint        i, c, knownVars;
-    size_t      len;
+    uint                i, c, knownVars;
+    size_t              len;
 
     // Count the number of visible console variables.
     for(i = knownVars = 0; i < numCVars; ++i)
@@ -866,12 +862,11 @@ void Con_UpdateKnownWords(void)
  * @return          A NULL-terminated array of pointers to all the known
  *                  words which match (at least partially) @param word
  */
-knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
-                                                unsigned int *count)
+knownword_t** Con_CollectKnownWordsMatchingWord(const char* word, uint *count)
 {
-    uint        i, num = 0, num2 = 0;
-    size_t      wordLength;
-    knownword_t **array;
+    uint                i, num = 0, num2 = 0;
+    size_t              wordLength;
+    knownword_t**       matches;
 
     wordLength = strlen(word);
 
@@ -890,7 +885,7 @@ knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
         return NULL;
 
     // Allocate the array, plus one for the terminator.
-    array = M_Malloc(sizeof(knownword_t *) * (num + 1));
+    matches = M_Malloc(sizeof(knownword_t *) * (num + 1));
 
     // Collect the pointers.
     i = 0;
@@ -898,22 +893,22 @@ knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
     do
     {
         if(!strnicmp(knownWords[i].word, word, wordLength))
-            array[num2++] = &knownWords[i];
+            matches[num2++] = &knownWords[i];
 
         i++;
     }
     while(num2 < num);
 
     // Terminate.
-    array[num] = NULL;
+    matches[num] = NULL;
 
-    return array;
+    return matches;
 }
 
 void Con_DestroyDatabases(void)
 {
-    uint        i, k;
-    char       *ptr;
+    uint                i, k;
+    char*               ptr;
 
     // Free the data of the data cvars.
     for(i = 0; i < numCVars; ++i)
@@ -931,36 +926,43 @@ void Con_DestroyDatabases(void)
                 }
             M_Free(ptr);
         }
-    M_Free(cvars);
+
+    if(cvars)
+        M_Free(cvars);
     cvars = NULL;
     numCVars = 0;
 
-    M_Free(ccmds);
+    if(ccmds)
+        M_Free(ccmds);
     ccmds = NULL;
     numCCmds = 0;
 
-    M_Free(knownWords);
+    if(knownWords)
+        M_Free(knownWords);
     knownWords = NULL;
     numKnownWords = 0;
 
-    // Free the alias data.
-    for(i = 0; i < numCAliases; ++i)
+    if(caliases)
     {
-        M_Free(caliases[i].command);
-        M_Free(caliases[i].name);
+        // Free the alias data.
+        for(i = 0; i < numCAliases; ++i)
+        {
+            M_Free(caliases[i].command);
+            M_Free(caliases[i].name);
+        }
+        M_Free(caliases);
     }
-    M_Free(caliases);
     caliases = NULL;
     numCAliases = 0;
 }
 
 D_CMD(HelpWhat)
 {
-    char       *str;
-    void       *help;
-    ddccmd_t   *ccmd;
-    cvar_t     *cvar;
-    uint        i, found = 0;
+    char*               str;
+    void*               help;
+    ddccmd_t*           ccmd;
+    cvar_t*             cvar;
+    uint                i, found = 0;
 
     if(!stricmp(argv[1], "(what)"))
     {
@@ -1007,10 +1009,10 @@ D_CMD(HelpWhat)
 
 D_CMD(ListCmds)
 {
-    uint        i;
-    char       *str;
-    void       *ccmd_help;
-    size_t      length = 0;
+    uint                i;
+    char*               str;
+    void*               ccmd_help;
+    size_t              length = 0;
 
     if(argc > 1)
         length = strlen(argv[1]);
@@ -1033,8 +1035,8 @@ D_CMD(ListCmds)
 
 D_CMD(ListVars)
 {
-    uint        i;
-    size_t      length = 0;
+    uint                i;
+    size_t              length = 0;
 
     if(argc > 1)
         length = strlen(argv[1]);
@@ -1054,8 +1056,8 @@ D_CMD(ListVars)
 
 D_CMD(ListAliases)
 {
-    uint        i;
-    size_t      length = 0;
+    uint                i;
+    size_t              length = 0;
 
     if(argc > 1)
         length = strlen(argv[1]);
