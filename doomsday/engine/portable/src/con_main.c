@@ -146,7 +146,7 @@ ddfont_t Cfont;                 // The console font.
 byte    ConsoleSilent = false;
 
 int     conCompMode = 0;        // Completion mode.
-int     conSilentCVars = 1;
+byte    conSilentCVars = 1;
 byte    consoleDump = true;
 int     consoleActiveKey = '`'; // Tilde.
 byte    consoleSnapBackOnPrint = false;
