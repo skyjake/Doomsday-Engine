@@ -955,6 +955,7 @@ void LG_Debug(void)
     gridblock_t        *block;
     int                 x, y;
     int                 vx, vy;
+    size_t              vIdx, blockIdx;
     ddplayer_t         *ddpl = &viewPlayer->shared;
 
     if(!lgInited || !lgShowDebug)
@@ -965,6 +966,7 @@ void LG_Debug(void)
     vy = ROUND((ddpl->mo->pos[VY] - lgOrigin[VY]) / lgBlockSize);
     vx = MINMAX_OF(1, vx, lgBlockWidth - 2);
     vy = MINMAX_OF(1, vy, lgBlockHeight - 2);
+    vIdx = vy * lgBlockWidth + vx;
 
     // Go into screen projection mode.
     DGL_MatrixMode(DGL_PROJECTION);
@@ -974,15 +976,18 @@ void LG_Debug(void)
 
     DGL_Disable(DGL_TEXTURING);
 
-    for(block = grid, y = 0; y < lgBlockHeight; ++y)
+    for(y = 0; y < lgBlockHeight; ++y)
     {
         DGL_Begin(DGL_QUADS);
         for(x = 0; x < lgBlockWidth; ++x, ++block)
         {
+            blockIdx = (lgBlockHeight - 1 - y) * lgBlockWidth + x;
+            block = &grid[blockIdx];
+
             if(!block->sector)
                 continue;
 
-            if(x == vx && y == vy && (blink & 16))
+            if(vIdx == blockIdx && (blink & 16))
                 DGL_Color3f(1, 0, 0);
             else
                 DGL_Color3fv(block->rgb);
@@ -990,7 +995,7 @@ void LG_Debug(void)
             DGL_Vertex2f(x * lgDebugSize, y * lgDebugSize);
             DGL_Vertex2f(x * lgDebugSize + lgDebugSize, y * lgDebugSize);
             DGL_Vertex2f(x * lgDebugSize + lgDebugSize,
-                        y * lgDebugSize + lgDebugSize);
+                         y * lgDebugSize + lgDebugSize);
             DGL_Vertex2f(x * lgDebugSize, y * lgDebugSize + lgDebugSize);
         }
         DGL_End();
