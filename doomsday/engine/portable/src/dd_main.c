@@ -163,11 +163,6 @@ const char* value_Str(int val)
         { DDVT_PTR, "DDVT_PTR" },
         { DDVT_FLAT_INDEX, "DDVT_FLAT_INDEX" },
         { DDVT_BLENDMODE, "DDVT_BLENDMODE" },
-        { DDVT_VERT_IDX, "DDVT_VERT_IDX" },
-        { DDVT_LINE_IDX, "DDVT_LINE_IDX" },
-        { DDVT_SIDE_IDX, "DDVT_SIDE_IDX" },
-        { DDVT_SECT_IDX, "DDVT_SECT_IDX" },
-        { DDVT_SEG_IDX, "DDVT_SEG_IDX" },
         { 0, NULL }
     };
     uint            i;

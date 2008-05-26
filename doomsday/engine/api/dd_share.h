@@ -135,12 +135,7 @@ extern          "C" {
         DDVT_ULONG,
         DDVT_PTR,
         DDVT_FLAT_INDEX,
-        DDVT_BLENDMODE,
-        DDVT_VERT_IDX,
-        DDVT_LINE_IDX,
-        DDVT_SIDE_IDX,
-        DDVT_SECT_IDX,
-        DDVT_SEG_IDX
+        DDVT_BLENDMODE
     } valuetype_t;
 
     enum {
