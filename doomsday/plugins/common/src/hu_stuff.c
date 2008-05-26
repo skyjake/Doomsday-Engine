@@ -503,7 +503,11 @@ static const int their_colors[] = {
         }
         else
         {
-            GL_SetColor(their_colors[cfg.playerColor[order[i]]]);
+            float               rgb[3];
+
+            GL_PalIdxToRGB(their_colors[cfg.playerColor[order[i]]], rgb);
+            DGL_Color3fv(rgb);
+
             memset(textBuffer, 0, 80);
             strncpy(textBuffer, Net_GetPlayerName(order[i]), 78);
             strcat(textBuffer, ":");
@@ -1366,7 +1370,7 @@ void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
         break;
     }
 
-    GL_SetColorAndAlpha(red, green, blue, alpha);
+    DGL_Color4f(red, green, blue, alpha);
 
     if(background)
     {

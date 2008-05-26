@@ -74,7 +74,7 @@ void    ST_HUDUnHide(hueevent_t event);
 int     R_GetFilterColor(int filter);
 
 void    ST_HUDSpriteSize(int sprite, int *w, int *h);
-void    ST_drawHUDSprite(int sprite, int x, int y, hotloc_t hotspot,
-                         float alpha);
+void    ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
+                         float scale, float alpha, boolean flip);
 
 #endif

@@ -375,38 +375,6 @@ void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
     DGL_End();
 }
 
-void GL_SetColor(int palidx)
-{
-    GL_SetColor2(palidx, 1);
-}
-
-void GL_SetColor2(int palidx, float alpha)
-{
-    byte                rgb[4];
-
-    if(palidx == -1) // Invisible?
-    {
-        DGL_Color4f(0, 0, 0, 0);
-    }
-    else
-    {
-        PalIdxToRGB(GL_GetPalette(), palidx, rgb);
-
-        if(alpha < 0)
-            alpha = 0;
-        if(alpha > 1)
-            alpha = 1;
-
-        rgb[3] = alpha * 255;
-        DGL_Color4ubv(rgb);
-    }
-}
-
-void GL_SetColorAndAlpha(float r, float g, float b, float a)
-{
-    DGL_Color4f(r, g, b, a);
-}
-
 void GL_SetFilter(int filterRGBA)
 {
     curfilter = filterRGBA;
@@ -435,41 +403,4 @@ int GL_DrawFilter(void)
 
     DGL_Enable(DGL_TEXTURING);
     return 1;
-}
-
-void GL_DrawPSprite(float x, float y, float scale, int flip, lumpnum_t lump)
-{
-    int                 w, h, w2, h2;
-    float               s, t;
-    spritetex_t        *sprTex = spriteTextures[lump];
-
-    if(flip)
-        flip = 1; // Make sure it's zero or one.
-
-    GL_SetPSprite(lump);
-    w = sprTex->info.width;
-    h = sprTex->info.height;
-    w2 = M_CeilPow2(w);
-    h2 = M_CeilPow2(h);
-
-    // Let's calculate texture coordinates.
-    // To remove a possible edge artifact, move the corner a bit up/left.
-    s = sprTex->texCoord[1][VX] - 0.4f / w2;
-    t = sprTex->texCoord[1][VY] - 0.4f / h2;
-
-    DGL_Begin(DGL_QUADS);
-
-    DGL_TexCoord2f(flip * s, 0);
-    DGL_Vertex2f(x, y);
-
-    DGL_TexCoord2f(!flip * s, 0);
-    DGL_Vertex2f(x + w * scale, y);
-
-    DGL_TexCoord2f(!flip * s, t);
-    DGL_Vertex2f(x + w * scale, y + h * scale);
-
-    DGL_TexCoord2f(flip * s, t);
-    DGL_Vertex2f(x, y + h * scale);
-
-    DGL_End();
 }

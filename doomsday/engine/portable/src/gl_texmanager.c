@@ -611,10 +611,10 @@ void GL_DeleteReflectionMap(ded_reflection_t *ref)
  */
 void GL_LoadDDTextures(void)
 {
-    GL_PrepareMaterial(R_MaterialCreate("DDT_UNKNOWN", DDT_UNKNOWN, MAT_DDTEX), NULL);
-    GL_PrepareMaterial(R_MaterialCreate("DDT_MISSING", DDT_MISSING, MAT_DDTEX), NULL);
-    GL_PrepareMaterial(R_MaterialCreate("DDT_BBOX", DDT_BBOX, MAT_DDTEX), NULL);
-    GL_PrepareMaterial(R_MaterialCreate("DDT_GRAY", DDT_GRAY, MAT_DDTEX), NULL);
+    GL_PrepareMaterial(R_GetMaterial(DDT_UNKNOWN, MAT_DDTEX), NULL);
+    GL_PrepareMaterial(R_GetMaterial(DDT_MISSING, MAT_DDTEX), NULL);
+    GL_PrepareMaterial(R_GetMaterial(DDT_BBOX, MAT_DDTEX), NULL);
+    GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), NULL);
 }
 
 void GL_ClearDDTextures(void)
@@ -622,8 +622,7 @@ void GL_ClearDDTextures(void)
     uint                i;
 
     for(i = 0; i < NUM_DD_TEXTURES; ++i)
-        DGL_DeleteTextures(1, &ddTextures[i].tex);
-    memset(ddTextures, 0, sizeof(ddTextures));
+        R_DeleteMaterialTex(i, MAT_DDTEX);
 }
 
 /**
@@ -636,6 +635,12 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
 
     if(!texInited)
         return;
+
+    memset(&ddTextures, 0, sizeof(ddTextures));
+    R_MaterialCreate("DDT_UNKN", DDT_UNKNOWN, MAT_DDTEX);
+    R_MaterialCreate("DDT_MISS", DDT_MISSING, MAT_DDTEX);
+    R_MaterialCreate("DDT_BBOX", DDT_BBOX, MAT_DDTEX);
+    R_MaterialCreate("DDT_GRAY", DDT_GRAY, MAT_DDTEX);
 
     GL_LoadDDTextures(); // missing etc
     UI_LoadTextures();
@@ -1379,16 +1384,16 @@ static DGLuint prepareDDTexture(ddtextureid_t which, texinfo_t **texinfo)
     {
         if(!ddTextures[which].tex)
         {
-            ddTextures[which].tex =
+            ddtexture_t*        ddTex = &ddTextures[which];
+
+            ddTex->tex =
                 GL_LoadGraphics2(RC_GRAPHICS, ddTexNames[which], LGM_NORMAL,
                                  true, false, 0);
-
-            if(!ddTextures[which].tex)
+            if(!ddTex->tex)
                 Con_Error("prepareDDTexture: \"%s\" not found!\n",
                           ddTexNames[which]);
 
-            ddTextures[which].info.width =
-                ddTextures[which].info.height = 64;
+            ddTex->info.width = ddTex->info.height = 64;
         }
     }
     else
@@ -2213,11 +2218,6 @@ void GL_GetSpriteColorf(int pnum, float *rgb)
         return;
 
     memcpy(rgb, spriteTextures[pnum]->color, sizeof(float) * 3);
-}
-
-void GL_SetSprite(int pnum)
-{
-    GL_BindTexture(GL_PrepareSprite(pnum, NULL));
 }
 
 void GL_SetPSprite(int pnum)

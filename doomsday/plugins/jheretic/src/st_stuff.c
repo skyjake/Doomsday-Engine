@@ -848,10 +848,10 @@ static void drawBNumber(signed int val, int x, int y, float red,
 
         GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, alpha * .4f,
                              fontBNumBase + val / 100);
-        GL_SetColorAndAlpha(red, green, blue, alpha);
+        DGL_Color4f(red, green, blue, alpha);
         GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
                              fontBNumBase + val / 100);
-        GL_SetColorAndAlpha(1, 1, 1, 1);
+        DGL_Color4f(1, 1, 1, 1);
     }
 
     val = val % 100;
@@ -862,10 +862,10 @@ static void drawBNumber(signed int val, int x, int y, float red,
 
         GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, alpha * .4f,
                              fontBNumBase + val / 10);
-        GL_SetColorAndAlpha(red, green, blue, alpha);
+        DGL_Color4f(red, green, blue, alpha);
         GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
                              fontBNumBase + val / 10);
-        GL_SetColorAndAlpha(1, 1, 1, 1);
+        DGL_Color4f(1, 1, 1, 1);
     }
 
     val = val % 10;
@@ -874,10 +874,10 @@ static void drawBNumber(signed int val, int x, int y, float red,
 
     GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, alpha * .4f,
                              fontBNumBase + val);
-    GL_SetColorAndAlpha(red, green, blue, alpha);
+    DGL_Color4f(red, green, blue, alpha);
     GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
                              fontBNumBase + val);
-    GL_SetColorAndAlpha(1, 1, 1, 1);
+    DGL_Color4f(1, 1, 1, 1);
 }
 
 static void _DrSmallNumber(int val, int x, int y, boolean skipone, float r,

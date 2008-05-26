@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 421 <--
+; --> 422 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -19,11 +19,15 @@ NAME            "DOOMSDAY"
 ; 106 formerly DD_GetDGLProcAddress
 ; 107 formerly GL_DoUpdate
 ; 108 formerly GL_ChangeResolution
+; 113 formerly DGL_Color
+; 116 formerly GL_SetSprite
 ; 118 formerly GL_SetTexture
+; 131 formerly GL_DrawPSprite
 ; 143 formerly M_Random
 ; 144 formerly M_FRandom
 ; 206 formerly GL_Update
 ; 232 formerly R_SetAnimGroup
+; 238 formerly DGL_Color2
 ; 255 formerly P_PointToBlock
 ; 326 formerly PO_Alloc
 ; 332 formerly P_ControlReset
@@ -360,18 +364,16 @@ EXPORTS
     GL_UseFog                   @104 NONAME
     GL_GrabScreen               @109 NONAME
     GL_TextureFilterMode        @112 NONAME
-    GL_SetColor                 @113 NONAME
-    GL_SetColor2                @238 NONAME
-    GL_SetColorAndAlpha         @114 NONAME
+    GL_SetPSprite				@114 NONAME
     GL_SetNoTexture             @115 NONAME
     GL_SetPatch                 @196 NONAME
-    GL_SetSprite                @116 NONAME
     GL_SetTranslatedSprite      @334 NONAME
     GL_SetMaterial              @117 NONAME
     GL_SetRawImage              @119 NONAME
     GL_LoadGraphics             @244 NONAME
     GL_NewTextureWithParams2    @329 NONAME
     GL_BlendMode                @338 NONAME
+    GL_PalIdxToRGB              @423 NONAME
 
 ; Graphics: 2D drawing.
     GL_DrawPatch                @120 NONAME
@@ -386,7 +388,6 @@ EXPORTS
     GL_DrawRect                 @128 NONAME
     GL_DrawRectTiled            @129 NONAME
     GL_DrawCutRectTiled         @130 NONAME
-    GL_DrawPSprite              @131 NONAME
     GL_SetFilter                @132 NONAME
 
 ; Graphics: Picture formats.
@@ -438,6 +439,7 @@ EXPORTS
     M_ScreenShot                @210 NONAME
     M_CheckTrigger              @340 NONAME
     M_RunTrigger                @341 NONAME
+    M_CeilPow2					@422 NONAME
 
 ; Math.
     ; Binary angles.

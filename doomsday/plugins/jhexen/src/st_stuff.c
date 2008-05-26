@@ -998,10 +998,10 @@ static void DrBNumber(signed int val, int x, int y, float red, float green,
         GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0,
                              alpha * .4f,
                              FontBNumBase + val / 100);
-        GL_SetColorAndAlpha(red, green, blue, alpha);
+        DGL_Color4f(red, green, blue, alpha);
         GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
                              FontBNumBase + val / 100);
-        GL_SetColorAndAlpha(1, 1, 1, 1);
+        DGL_Color4f(1, 1, 1, 1);
     }
     val = val % 100;
     xpos += 12;
@@ -1011,20 +1011,20 @@ static void DrBNumber(signed int val, int x, int y, float red, float green,
         GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0,
                              alpha * .4f,
                              FontBNumBase + val / 10);
-        GL_SetColorAndAlpha(red, green, blue, alpha);
+        DGL_Color4f(red, green, blue, alpha);
         GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
                              FontBNumBase + val / 10);
-        GL_SetColorAndAlpha(1, 1, 1, 1);
+        DGL_Color4f(1, 1, 1, 1);
     }
     val = val % 10;
     xpos += 12;
     patch = W_CacheLumpNum(FontBNumBase + val, PU_CACHE);
     GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0,
                          alpha *.4f, FontBNumBase + val);
-    GL_SetColorAndAlpha(red, green, blue, alpha);
+    DGL_Color4f(red, green, blue, alpha);
     GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
                              FontBNumBase + val);
-    GL_SetColorAndAlpha(1, 1, 1, 1);
+    DGL_Color4f(1, 1, 1, 1);
 }
 
 /**

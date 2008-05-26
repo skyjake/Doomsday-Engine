@@ -958,9 +958,11 @@ void ST_HUDSpriteSize(int sprite, int *w, int *h)
     }
 }
 
-void ST_drawHUDSprite(int sprite, int x, int y, int hotSpot, float alpha)
+void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
+                      float scale, float alpha, boolean flip)
 {
-    int                 w, h;
+    int                 w, h, w2, h2;
+    float               s, t;
     spriteinfo_t        sprInfo;
 
     CLAMP(alpha, 0.0f, 1.0f);
@@ -970,29 +972,46 @@ void ST_drawHUDSprite(int sprite, int x, int y, int hotSpot, float alpha)
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     w = sprInfo.width;
     h = sprInfo.height;
-    if(sprite == SPR_ROCK)
-    {
-        w /= 1.5;
-        h /= 1.5;
-    }
+    w2 = M_CeilPow2(w);
+    h2 = M_CeilPow2(h);
 
-    switch(hotSpot)
+    switch(hotspot)
     {
     case HOT_BRIGHT:
-        y -= h;
+        y -= h * scale;
 
     case HOT_TRIGHT:
-        x -= w;
+        x -= w * scale;
         break;
 
     case HOT_BLEFT:
-        y -= h;
+        y -= h * scale;
         break;
     }
 
-    DGL_Color4f(1, 1, 1, alpha );
-    GL_DrawPSprite(x, y, sprite == SPR_ROCK ? 1 / 1.5 : 1, false,
-                   sprInfo.idx);
+    GL_SetPSprite(sprInfo.idx);
+
+    // Let's calculate texture coordinates.
+    // To remove a possible edge artifact, move the corner a bit up/left.
+    s = (w - 0.4f) / w2;
+    t = (h - 0.4f) / h2;
+
+    DGL_Color4f(1, 1, 1, alpha);
+    DGL_Begin(DGL_QUADS);
+
+    DGL_TexCoord2f(flip * s, 0);
+    DGL_Vertex2f(x, y);
+
+    DGL_TexCoord2f(!flip * s, 0);
+    DGL_Vertex2f(x + w * scale, y);
+
+    DGL_TexCoord2f(!flip * s, t);
+    DGL_Vertex2f(x + w * scale, y + h * scale);
+
+    DGL_TexCoord2f(flip * s, t);
+    DGL_Vertex2f(x, y + h * scale);
+
+    DGL_End();
 }
 
 void ST_doFullscreenStuff(void)
@@ -1036,7 +1055,8 @@ void ST_doFullscreenStuff(void)
     // Draw the visible HUD data, first health.
     if(cfg.hudShown[HUD_HEALTH])
     {
-        ST_drawHUDSprite(SPR_STIM, 2, height - 2, HOT_BLEFT, iconAlpha);
+        ST_drawHUDSprite(SPR_STIM, 2, height - 2, HOT_BLEFT, 1, iconAlpha,
+                         false);
         ST_HUDSpriteSize(SPR_STIM, &w, &h);
         pos = w + 2;
         sprintf(buf, "%i%%", plr->health);
@@ -1048,6 +1068,7 @@ void ST_doFullscreenStuff(void)
     if(cfg.hudShown[HUD_AMMO])
     {
         ammotype_t          ammoType;
+        float               scale;
 
         //// \todo Only supports one type of ammo per weapon.
         //// for each type of ammo this weapon takes.
@@ -1057,7 +1078,10 @@ void ST_doFullscreenStuff(void)
                 continue;
 
             spr = ammoSprite[ammoType];
-            ST_drawHUDSprite(spr, pos, height - 2, HOT_BLEFT, iconAlpha);
+            scale = (spr == SPR_ROCK? .72f : 1);
+
+            ST_drawHUDSprite(spr, pos, height - 2, HOT_BLEFT, scale,
+                             iconAlpha, false);
             ST_HUDSpriteSize(spr, &w, &h);
             pos += w + 2;
             sprintf(buf, "%i", plr->ammo[ammoType]);
@@ -1105,7 +1129,8 @@ Draw_EndZoom();
         pos -= 2;
 
         spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
-        ST_drawHUDSprite(spr, pos, height - 2, HOT_BRIGHT, iconAlpha);
+        ST_drawHUDSprite(spr, pos, height - 2, HOT_BRIGHT, 1, iconAlpha,
+                         false);
         ST_HUDSpriteSize(spr, &w, &h);
         pos -= w + 2;
     }
@@ -1151,7 +1176,8 @@ Draw_BeginZoom(0.75f, pos , height - 2);
             if(shown)
             {
                 spr = keyIcons[i];
-                ST_drawHUDSprite(spr, pos, height - 2, HOT_BRIGHT, iconAlpha);
+                ST_drawHUDSprite(spr, pos, height - 2, HOT_BRIGHT, 1,
+                                 iconAlpha, false);
                 ST_HUDSpriteSize(spr, &w, &h);
                 pos -= w + 2;
             }

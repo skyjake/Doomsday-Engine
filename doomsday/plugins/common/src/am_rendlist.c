@@ -693,8 +693,12 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
             {
                 if(p->data.line.type == AMLT_PALCOL)
                 {
-                    GL_SetColor2(p->data.line.coldata.palcolor.color,
-                                 p->data.line.coldata.palcolor.alpha * alpha);
+                    float               rgba[4];
+
+                    GL_PalIdxToRGB(p->data.line.coldata.palcolor.color, rgba);
+                    rgba[3] = MINMAX_OF(0, p->data.line.coldata.palcolor.alpha * alpha, 1);
+
+                    DGL_Color4fv(rgba);
                 }
                 else
                 {
@@ -739,52 +743,52 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
                            p->data.quad.rgba[3] * alpha);
                 // V1
                 if(tex && maskID == 0)
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[0].pos[0],
-                                   p->data.quad.verts[0].pos[1]);
+                    DGL_MultiTexCoord2f(normal,
+                                        p->data.quad.verts[0].pos[0],
+                                        p->data.quad.verts[0].pos[1]);
                 else
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[0].tex[0],
-                                   p->data.quad.verts[0].tex[1]);
+                    DGL_MultiTexCoord2f(normal,
+                                        p->data.quad.verts[0].tex[0],
+                                        p->data.quad.verts[0].tex[1]);
 
                 DGL_Vertex2f(p->data.quad.verts[0].pos[0],
-                            p->data.quad.verts[0].pos[1]);
+                             p->data.quad.verts[0].pos[1]);
                 // V2
                 if(tex && maskID == 0)
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[1].pos[0],
-                                   p->data.quad.verts[1].pos[1]);
+                    DGL_MultiTexCoord2f(normal,
+                                        p->data.quad.verts[1].pos[0],
+                                        p->data.quad.verts[1].pos[1]);
                 else
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[1].tex[0],
-                                   p->data.quad.verts[1].tex[1]);
+                    DGL_MultiTexCoord2f(normal,
+                                        p->data.quad.verts[1].tex[0],
+                                        p->data.quad.verts[1].tex[1]);
 
                 DGL_Vertex2f(p->data.quad.verts[1].pos[0],
-                            p->data.quad.verts[1].pos[1]);
+                             p->data.quad.verts[1].pos[1]);
                 // V3
                 if(tex && maskID == 0)
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[2].pos[0],
-                                   p->data.quad.verts[2].pos[1]);
+                    DGL_MultiTexCoord2f(normal,
+                                        p->data.quad.verts[2].pos[0],
+                                        p->data.quad.verts[2].pos[1]);
                 else
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[2].tex[0],
-                                   p->data.quad.verts[2].tex[1]);
+                    DGL_MultiTexCoord2f(normal,
+                                        p->data.quad.verts[2].tex[0],
+                                        p->data.quad.verts[2].tex[1]);
 
                 DGL_Vertex2f(p->data.quad.verts[2].pos[0],
-                            p->data.quad.verts[2].pos[1]);
+                             p->data.quad.verts[2].pos[1]);
                 // V4
                 if(tex && maskID == 0)
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[3].pos[0],
-                                   p->data.quad.verts[3].pos[1]);
+                    DGL_MultiTexCoord2f(normal,
+                                        p->data.quad.verts[3].pos[0],
+                                        p->data.quad.verts[3].pos[1]);
                 else
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[3].tex[0],
-                                   p->data.quad.verts[3].tex[1]);
+                    DGL_MultiTexCoord2f(normal,
+                                        p->data.quad.verts[3].tex[0],
+                                        p->data.quad.verts[3].tex[1]);
 
                 DGL_Vertex2f(p->data.quad.verts[3].pos[0],
-                            p->data.quad.verts[3].pos[1]);
+                             p->data.quad.verts[3].pos[1]);
 
                 p = p->next;
             }
@@ -795,15 +799,19 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
             {
                 if(p->data.line.type == AMLT_PALCOL)
                 {
-                    GL_SetColor2(p->data.line.coldata.palcolor.color,
-                                 p->data.line.coldata.palcolor.alpha * alpha);
+                    float               rgba[4];
+
+                    GL_PalIdxToRGB(p->data.line.coldata.palcolor.color, rgba);
+                    rgba[3] = MINMAX_OF(0, p->data.line.coldata.palcolor.alpha * alpha, 1);
+
+                    DGL_Color4fv(rgba);
                 }
                 else
                 {
                     DGL_Color4f(p->data.line.coldata.f4color.rgba[0],
-                               p->data.line.coldata.f4color.rgba[1],
-                               p->data.line.coldata.f4color.rgba[2],
-                               p->data.line.coldata.f4color.rgba[3] * alpha);
+                                p->data.line.coldata.f4color.rgba[1],
+                                p->data.line.coldata.f4color.rgba[2],
+                                p->data.line.coldata.f4color.rgba[3] * alpha);
                 }
 
                 if(tex && maskID == 0)

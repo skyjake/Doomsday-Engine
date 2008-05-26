@@ -472,13 +472,11 @@ extern          "C" {
                                              int flags, int minFilter, int magFilter, int anisoFilter,
                                              int wrapS, int wrapT);
     void            GL_TextureFilterMode(int target, int parm);
-    void            GL_SetColor(int palidx);
-    void            GL_SetColor2(int palidx, float alpha);
-    void            GL_SetColorAndAlpha(float r, float g, float b, float a);
     void            GL_BlendMode(blendmode_t mode);
+    void            GL_SetFilter(int filter_rgba);
+    void            GL_PalIdxToRGB(int idx, float* rgb);
     void            GL_SetNoTexture(void);
     void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT);
-    void            GL_SetSprite(int pnum);
     void            GL_SetPSprite(int pnum);
     void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
     void            GL_SetMaterial(int idx, materialtype_t type);
@@ -505,9 +503,6 @@ extern          "C" {
     void            GL_DrawCutRectTiled(int x, int y, int w, int h, int tw,
                                         int th, int txoff, int tyoff, int cx,
                                         int cy, int cw, int ch);
-    void            GL_DrawPSprite(float x, float y, float scale, int flip,
-                                   lumpnum_t lump);
-    void            GL_SetFilter(int filter_rgba);
 
     // Graphics: PCX.
     int             PCX_GetSize(const char *fn, int *w, int *h);
@@ -570,6 +565,7 @@ extern          "C" {
     void            M_ClearBox(fixed_t *box);
     void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
     int             M_ScreenShot(const char *filename, int bits);
+    int             M_CeilPow2(int num);
 
     // MiscellaneousL: Time utilities.
     boolean         M_RunTrigger(trigger_t *trigger, timespan_t advanceTime);

@@ -992,35 +992,60 @@ void ST_HUDSpriteSize(int sprite, int *w, int *h)
     }
 }
 
-void ST_drawHUDSprite(int sprite, int x, int y, int hotspot, float alpha)
+void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
+                      float scale, float alpha, boolean flip)
 {
-    spriteinfo_t sprInfo;
-    int     w, h;
+    int                 w, h, w2, h2;
+    float               s, t;
+    spriteinfo_t        sprInfo;
+
+    CLAMP(alpha, 0.0f, 1.0f);
+    if(alpha == 0.0f)
+        return;
 
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     w = sprInfo.width;
     h = sprInfo.height;
-    if(sprite == SPR_HRCK)
-    {
-        w /= 1.5;
-        h /= 1.5;
-    }
-    switch (hotspot)
+    w2 = M_CeilPow2(w);
+    h2 = M_CeilPow2(h);
+
+    switch(hotspot)
     {
     case HOT_BRIGHT:
-        y -= h;
+        y -= h * scale;
 
     case HOT_TRIGHT:
-        x -= w;
+        x -= w * scale;
         break;
 
     case HOT_BLEFT:
-        y -= h;
+        y -= h * scale;
         break;
     }
-    DGL_Color4f(1, 1, 1, alpha );
-    GL_DrawPSprite(x, y, sprite == SPR_HRCK ? 1 / 1.5 : 1, false,
-                   sprInfo.lump);
+
+    GL_SetPSprite(sprInfo.idx);
+
+    // Let's calculate texture coordinates.
+    // To remove a possible edge artifact, move the corner a bit up/left.
+    s = (w - 0.4f) / w2;
+    t = (h - 0.4f) / h2;
+
+    DGL_Color4f(1, 1, 1, alpha);
+    DGL_Begin(DGL_QUADS);
+
+    DGL_TexCoord2f(flip * s, 0);
+    DGL_Vertex2f(x, y);
+
+    DGL_TexCoord2f(!flip * s, 0);
+    DGL_Vertex2f(x + w * scale, y);
+
+    DGL_TexCoord2f(!flip * s, t);
+    DGL_Vertex2f(x + w * scale, y + h * scale);
+
+    DGL_TexCoord2f(flip * s, t);
+    DGL_Vertex2f(x, y + h * scale);
+
+    DGL_End();
 }
 
 void ST_doFullscreenStuff(void)
@@ -1060,7 +1085,8 @@ void ST_doFullscreenStuff(void)
     // draw the visible HUD data, first health
     if(cfg.hudShown[HUD_HEALTH])
     {
-        ST_drawHUDSprite(SPR_HHTH, 2, h_height - 2, HOT_BLEFT, iconalpha);
+        ST_drawHUDSprite(SPR_HHTH, 2, h_height - 2, HOT_BLEFT, 1,
+                         iconalpha, false);
         ST_HUDSpriteSize(SPR_HHTH, &w, &h);
         sprintf(buf, "%i%%", plr->health);
         M_WriteText2(w + 4, h_height - 14, buf, huFontB, cfg.hudColor[0],
@@ -1070,7 +1096,8 @@ void ST_doFullscreenStuff(void)
 
     if(cfg.hudShown[HUD_AMMO])
     {
-        ammotype_t ammotype;
+        ammotype_t          ammotype;
+        float               scale;
 
         //// \todo Only supports one type of ammo per weapon.
         //// for each type of ammo this weapon takes.
@@ -1080,7 +1107,10 @@ void ST_doFullscreenStuff(void)
                 continue;
 
             spr = ammo_sprite[ammotype];
-            ST_drawHUDSprite(spr, pos + 2, h_height - 2, HOT_BLEFT, iconalpha);
+            scale = (spr == SPR_HRCK? .72f : 1);
+
+            ST_drawHUDSprite(spr, pos + 2, h_height - 2, HOT_BLEFT, 1,
+                             iconalpha, false);
             ST_HUDSpriteSize(spr, &w, &h);
             sprintf(buf, "%i", plr->ammo[ammotype]);
             M_WriteText2(pos + w + 4, h_height - 14, buf, huFontB,
@@ -1108,7 +1138,8 @@ Draw_EndZoom();
     {
         sprintf(buf, "%i%%", plr->armorPoints);
         spr = plr->armorType == 2 ? SPR_HAR2 : SPR_HAR1;
-        ST_drawHUDSprite(spr, h_width - 49, h_height - 2, HOT_BRIGHT, iconalpha);
+        ST_drawHUDSprite(spr, h_width - 49, h_height - 2, HOT_BRIGHT, 1,
+                         iconalpha, false);
         ST_HUDSpriteSize(spr, &w, &h);
 
         M_WriteText2(h_width - M_StringWidth(buf, huFontB) - 2, h_height - 14, buf, huFontB,
@@ -1133,7 +1164,8 @@ Draw_BeginZoom(0.75f, pos , h_height - 2);
                 spr = i == 0 ? SPR_BLNK : i == 1 ? SPR_HSGK : SPR_HSSK;
             if(spr)
             {
-                ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BRIGHT,iconalpha);
+                ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BRIGHT, 1,
+                                 iconalpha, false);
                 ST_HUDSpriteSize(spr, &w, &h);
                 pos -= w + 2;
             }

@@ -3039,10 +3039,10 @@ static void setupGLStateForMap(void)
          // We only want the left portion.
         GL_SetRawImage(maplumpnum, false, DGL_REPEAT, DGL_REPEAT);
 
-        GL_SetColorAndAlpha(map->cfg.backgroundRGBA[0],
-                            map->cfg.backgroundRGBA[1],
-                            map->cfg.backgroundRGBA[2],
-                            map->alpha * map->cfg.backgroundRGBA[3]);
+        DGL_Color4f(map->cfg.backgroundRGBA[0],
+                    map->cfg.backgroundRGBA[1],
+                    map->cfg.backgroundRGBA[2],
+                    map->alpha * map->cfg.backgroundRGBA[3]);
 
         // Scale from texture to window space
         DGL_Translatef(win->x, win->y, 0);
@@ -3121,7 +3121,7 @@ static void setupGLStateForMap(void)
 
         if(num > 0)
         {
-            float               x, y, spacing, scale, iconAlpha;
+            float               x, y, w, h, spacing, scale, iconAlpha;
             spriteinfo_t        sprInfo;
             int                 artifactSprites[NUMARTIFACTS] = {
                 SPR_POW1, SPR_POW2, SPR_POW3
@@ -3132,19 +3132,45 @@ static void setupGLStateForMap(void)
 
             spacing = win->height / num;
 
-            x = win->width;
-            y = 0;
-
             for(i = 0; i < NUMARTIFACTS; ++i)
             {
                 if(plr->artifacts[i])
                 {
                     R_GetSpriteInfo(artifactSprites[i], 0, &sprInfo);
+                    GL_SetPSprite(sprInfo.idx);
 
                     scale = win->height / (sprInfo.height * num);
+                    x = win->width - sprInfo.width * scale;
+                    y = 0;
+                    w = sprInfo.width;
+                    h = sprInfo.height;
+
+                    {
+                    float               s, t;
+
+                    // Let's calculate texture coordinates.
+                    // To remove a possible edge artifact, move the corner a bit up/left.
+                    s = sprInfo.offset - 0.4f / M_CeilPow2(w);
+                    t = sprInfo.topOffset - 0.4f / M_CeilPow2(h);
+
                     DGL_Color4f(1, 1, 1, iconAlpha);
-                    GL_DrawPSprite(x - sprInfo.width * scale, y, scale, false,
-                                   sprInfo.idx);
+                    DGL_Begin(DGL_QUADS);
+
+                    DGL_TexCoord2f(0, 0);
+                    DGL_Vertex2f(x, y);
+
+                    DGL_TexCoord2f(s, 0);
+                    DGL_Vertex2f(x + w * scale, y);
+
+                    DGL_TexCoord2f(s, t);
+                    DGL_Vertex2f(x + w * scale, y + h * scale);
+
+                    DGL_TexCoord2f(0, t);
+                    DGL_Vertex2f(x, y + h * scale);
+
+                    DGL_End();
+                    }
+
                     y += spacing;
                 }
             }

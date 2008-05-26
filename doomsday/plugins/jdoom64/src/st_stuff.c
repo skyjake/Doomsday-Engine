@@ -310,10 +310,11 @@ void ST_HUDSpriteSize(int sprite, int *w, int *h)
     *h = sprInfo.height;
 }
 
-void ST_drawHUDSprite(int sprite, int x, int y, hotloc_t hotspot,
-                      float alpha)
+void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
+                      float scale, float alpha, boolean flip)
 {
-    int                 w, h;
+    int                 w, h, w2, h2;
+    float               s, t;
     spriteinfo_t        sprInfo;
 
     CLAMP(alpha, 0.0f, 1.0f);
@@ -323,23 +324,46 @@ void ST_drawHUDSprite(int sprite, int x, int y, hotloc_t hotspot,
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     w = sprInfo.width;
     h = sprInfo.height;
+    w2 = M_CeilPow2(w);
+    h2 = M_CeilPow2(h);
 
     switch(hotspot)
     {
     case HOT_BRIGHT:
-        y -= h;
+        y -= h * scale;
 
     case HOT_TRIGHT:
-        x -= w;
+        x -= w * scale;
         break;
 
     case HOT_BLEFT:
-        y -= h;
+        y -= h * scale;
         break;
     }
 
-    DGL_Color4f(1, 1, 1, alpha );
-    GL_DrawPSprite(x, y, 1, false, sprInfo.idx);
+    GL_SetPSprite(sprInfo.idx);
+
+    // Let's calculate texture coordinates.
+    // To remove a possible edge artifact, move the corner a bit up/left.
+    s = (w - 0.4f) / w2;
+    t = (h - 0.4f) / h2;
+
+    DGL_Color4f(1, 1, 1, alpha);
+    DGL_Begin(DGL_QUADS);
+
+    DGL_TexCoord2f(flip * s, 0);
+    DGL_Vertex2f(x, y);
+
+    DGL_TexCoord2f(!flip * s, 0);
+    DGL_Vertex2f(x + w * scale, y);
+
+    DGL_TexCoord2f(!flip * s, t);
+    DGL_Vertex2f(x + w * scale, y + h * scale);
+
+    DGL_TexCoord2f(flip * s, t);
+    DGL_Vertex2f(x, y + h * scale);
+
+    DGL_End();
 }
 
 void ST_doFullscreenStuff(void)
@@ -405,7 +429,7 @@ void ST_doFullscreenStuff(void)
             ST_HUDSpriteSize(spr, &w, &h);
             pos -= w/2;
             ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 44,
-                             HOT_BLEFT, iconalpha);
+                             HOT_BLEFT, 1, iconalpha, false);
         }
 
         if(plr->artifacts[it_laserpw2])
@@ -413,7 +437,7 @@ void ST_doFullscreenStuff(void)
             spr = SPR_POW2;
             ST_HUDSpriteSize(spr, &w, &h);
             ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 84,
-                             HOT_BLEFT, iconalpha);
+                             HOT_BLEFT, 1, iconalpha, false);
         }
 
         if(plr->artifacts[it_laserpw3])
@@ -421,7 +445,7 @@ void ST_doFullscreenStuff(void)
             spr = SPR_POW3;
             ST_HUDSpriteSize(spr, &w, &h);
             ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 124,
-                             HOT_BLEFT, iconalpha);
+                             HOT_BLEFT, 1, iconalpha, false);
         }
     }
     // < d64tc
@@ -479,7 +503,8 @@ Draw_BeginZoom(0.75f, pos , h_height - HUDBORDERY);
                 spr = i == 0 ? SPR_RSKU : i == 1 ? SPR_YSKU : SPR_BSKU;
             if(spr)
             {
-                ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BLEFT, iconalpha);
+                ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BLEFT, 1,
+                                 iconalpha, false);
                 ST_HUDSpriteSize(spr, &w, &h);
                 pos -= w + 2;
             }
