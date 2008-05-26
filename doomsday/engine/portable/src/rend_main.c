@@ -116,8 +116,7 @@ static boolean firstsubsector; // No range checking for the first one.
 // Current sector light color.
 const float *sLightColor;
 
-byte devNoTexFix = 0;
-int padding[30];
+int devNoTexFix = 0;
 byte devNoLinkedSurfaces = 0;
 
 // CODE --------------------------------------------------------------------
@@ -140,7 +139,7 @@ void Rend_Register(void)
     C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX,
                 0, 0);
     C_VAR_INT("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, 0, 0, 1);
+    C_VAR_INT("rend-dev-tex-showfix", &devNoTexFix, 0, 0, 1);
     C_VAR_BYTE("rend-dev-surface-linked", &devNoLinkedSurfaces, 0, 0, 1);
 
     C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, 0, 0, 2);
@@ -1316,7 +1315,16 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
             // chosen for surfaces to fix the HOMs.
             params.tex.id =
                 GL_PrepareMaterial(R_GetMaterial(DDT_MISSING, MAT_DDTEX), &texinfo);
-            surfaceFlags = SUF_GLOW; // Make it stand out
+            params.tex.width = texinfo->width;
+            params.tex.height = texinfo->height;
+            params.tex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
+            params.tex.masked = texinfo->masked;
+            surfaceFlags = surface->flags;
+
+            if(texinfo->masked)
+                surfaceFlags &= ~SUF_NO_RADIO;
+
+            surfaceFlags |= SUF_GLOW; // Make it stand out
         }
         else if(surface->material)
         {
@@ -1366,6 +1374,8 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
         if(solidSeg && surface->material && !texinfo->masked)
             tempflags |= RPF2_SHINY;
         if(surfaceFlags & SUF_GLOW)
+            tempflags |= RPF2_GLOW;
+        if(surface->material && (surface->material->flags & MATF_GLOW))
             tempflags |= RPF2_GLOW;
     }
 
@@ -2242,7 +2252,16 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
                 // chosen for surfaces to fix the HOMs.
                 params.tex.id =
                     GL_PrepareMaterial(R_GetMaterial(DDT_MISSING, MAT_DDTEX), &texInfo);
-                surfaceFlags = SUF_GLOW; // Make it stand out
+                surfaceFlags = surface->flags;
+
+                params.tex.width = texInfo->width;
+                params.tex.height = texInfo->height;
+                params.tex.detail = (r_detail && texInfo->detail.tex? &texInfo->detail : 0);
+                params.tex.masked = texInfo->masked;
+
+                if(texInfo->masked)
+                    surfaceFlags &= ~SUF_NO_RADIO;
+                surfaceFlags |= SUF_GLOW; // Make it stand out
             }
             else if(surface->material)
             {
@@ -2272,8 +2291,11 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
                 tempflags |= RPF2_SHINY;
             if(surfaceFlags & SUF_GLOW)
                 tempflags |= RPF2_GLOW;
+            if(surface->material && (surface->material->flags & MATF_GLOW))
+                tempflags |= RPF2_GLOW;
             if(!(surface->flags & SUF_TEXFIX))
                 tempflags |= RPF2_BLEND;
+
             if((tempflags & RPF2_GLOW) && glowingTextures) // Make it fullbright?
                 params.flags |= RPF_GLOW;
 
