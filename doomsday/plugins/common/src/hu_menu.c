@@ -3141,7 +3141,9 @@ void M_AmmoAutoSwitch(int option, void *data)
 
 void M_DrawHUDMenu(void)
 {
+#if __JDOOM__ || __JDOOM64__
     int                 idx;
+#endif
     menu_t*             menu = &HUDDef;
     char*               xhairnames[7] = {
         "NONE", "CROSS", "ANGLES", "SQUARE", "OPEN SQUARE", "DIAMOND", "V"
