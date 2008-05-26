@@ -1982,9 +1982,10 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     {
         plane = sec->planes[i];
 
-        // \fixme Now update the glow properties.
+        // Update the glow properties.
         hasGlow = false;
-        if(plane->surface.flags & SUF_GLOW)
+        if((plane->surface.flags & SUF_GLOW) ||
+           (plane->PS_material && (plane->PS_material->flags & MATF_GLOW)))
         {
             if(R_GetMaterialColor(plane->PS_material, plane->glowRGB))
             {
@@ -2002,7 +2003,6 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
                 plane->glowRGB[CB] = 0;
             plane->glow = 0;
         }
-        // < FIXME
 
         // Geometry change?
         if(forceUpdate ||

@@ -65,17 +65,6 @@ boolean Surface_SetMaterial(surface_t *suf, struct material_s *mat)
     if(suf->material == mat)
         return true;
 
-    // Any change to the texture or glow properties?
-    if(mat->flags & MATF_GLOW)
-    {   // The new texture is glowing.
-        suf->flags |= SUF_GLOW;
-    }
-    else if(suf->material && (suf->material->flags & MATF_GLOW))
-    {
-        // The old texture was glowing but the new one is not.
-        suf->flags &= ~SUF_GLOW;
-    }
-
     // No longer a missing texture fix?
     if(mat && (suf->oldFlags & SUF_TEXFIX))
         suf->flags &= ~SUF_TEXFIX;
