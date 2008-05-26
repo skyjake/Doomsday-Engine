@@ -1660,7 +1660,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
             // This'll make the mobj unarchiver destroy this mobj.
             Z_Free(mo);
 
-            return false;  // Don't add this thinker.
+            return;  // Don't add this thinker.
         }
 #endif
 
