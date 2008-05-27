@@ -502,12 +502,12 @@ void P_PolyobjUnlinkFromRing(polyobj_t *po, linkpolyobj_t **list)
     }
 }
 
-void P_PolyobjUnLink(polyobj_t *po)
+void P_PolyobjUnLink(struct polyobj_s* po)
 {
     P_BlockmapUnlinkPolyobj(BlockMap, po);
 }
 
-void P_PolyobjLink(polyobj_t *po)
+void P_PolyobjLink(struct polyobj_s* po)
 {
     P_BlockmapLinkPolyobj(BlockMap, po);
 }

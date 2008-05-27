@@ -802,7 +802,7 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     angle_t         angle;              \
     spritenum_t     sprite;             /* used to find patch_t and \
                                          * flip value */ \
-    int             frame;              /* might be ord with FF_FULLBRIGHT */ \
+    int             frame; \
     float           radius; \
     float           height; \
     int             ddFlags;            /* Doomsday mobj flags (DDMF_*) */ \

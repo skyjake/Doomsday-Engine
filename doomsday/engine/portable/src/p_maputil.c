@@ -54,8 +54,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    mobj_t     *mo;
-    vec2_t      box[2];
+    mobj_t*         mo;
+    vec2_t          box[2];
 } linelinker_data_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -73,7 +73,7 @@ float lowfloor;
 
 divline_t traceLOS;
 boolean earlyout;
-int     ptflags;
+int ptflags;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -81,7 +81,7 @@ int     ptflags;
 
 float P_AccurateDistanceFixed(fixed_t dx, fixed_t dy)
 {
-    float   fx = FIX2FLT(dx), fy = FIX2FLT(dy);
+    float               fx = FIX2FLT(dx), fy = FIX2FLT(dy);
 
     return (float) sqrt(fx * fx + fy * fy);
 }
@@ -114,9 +114,9 @@ float P_ApproxDistance3(float dx, float dy, float dz)
 /**
  * Returns a two-component float unit vector parallel to the line.
  */
-void P_LineUnitVector(linedef_t *line, float *unitvec)
+void P_LineUnitVector(linedef_t* line, float* unitvec)
 {
-    float       len = M_ApproxDistancef(line->dX, line->dY);
+    float               len = M_ApproxDistancef(line->dX, line->dY);
 
     if(len)
     {
@@ -133,7 +133,7 @@ void P_LineUnitVector(linedef_t *line, float *unitvec)
  * Either end or fixpoint must be specified. The distance is measured
  * (approximately) in 3D. Start must always be specified.
  */
-float P_MobjPointDistancef(mobj_t *start, mobj_t *end, float *fixpoint)
+float P_MobjPointDistancef(mobj_t* start, mobj_t* end, float* fixpoint)
 {
     if(!start)
         return 0;
@@ -148,7 +148,7 @@ float P_MobjPointDistancef(mobj_t *start, mobj_t *end, float *fixpoint)
 
     if(fixpoint)
     {
-        float       sp[3];
+        float               sp[3];
 
         sp[VX] = start->pos[VX];
         sp[VY] = start->pos[VY],
@@ -169,7 +169,7 @@ float P_MobjPointDistancef(mobj_t *start, mobj_t *end, float *fixpoint)
 #ifdef _MSC_VER
 #  pragma optimize("g", off)
 #endif
-int P_FloatPointOnLineSide(fvertex_t *pnt, fdivline_t *dline)
+int P_FloatPointOnLineSide(fvertex_t* pnt, fdivline_t* dline)
 {
     /*
        (AY-CY)(BX-AX)-(AX-CX)(BY-AY)
@@ -188,27 +188,26 @@ int P_FloatPointOnLineSide(fvertex_t *pnt, fdivline_t *dline)
 /**
  * Lines start, end and fdiv must intersect.
  */
-float P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
-                             fdivline_t *fdiv, fvertex_t *inter)
+float P_FloatInterceptVertex(fvertex_t* start, fvertex_t* end,
+                             fdivline_t* fdiv, fvertex_t* inter)
 {
-    float   ax = start->pos[VX], ay = start->pos[VY];
-    float   bx = end->pos[VX], by = end->pos[VY];
-    float   cx = fdiv->pos[VX], cy = fdiv->pos[VY];
-    float   dx = cx + fdiv->dX, dy = cy + fdiv->dY;
+    float               ax = start->pos[VX], ay = start->pos[VY];
+    float               bx = end->pos[VX], by = end->pos[VY];
+    float               cx = fdiv->pos[VX], cy = fdiv->pos[VY];
+    float               dx = cx + fdiv->dX, dy = cy + fdiv->dY;
 
     /*
-       (YA-YC)(XD-XC)-(XA-XC)(YD-YC)
+           (YA-YC)(XD-XC)-(XA-XC)(YD-YC)
        r = -----------------------------  (eqn 1)
-       (XB-XA)(YD-YC)-(YB-YA)(XD-XC)
+           (XB-XA)(YD-YC)-(YB-YA)(XD-XC)
      */
 
-    float   r =
-        ((ay - cy) * (dx - cx) -
-         (ax - cx) * (dy - cy)) / ((bx - ax) * (dy - cy) - (by - ay) * (dx -
-                                                                        cx));
+    float               r =
+        ((ay - cy) * (dx - cx) - (ax - cx) * (dy - cy)) /
+        ((bx - ax) * (dy - cy) - (by - ay) * (dx - cx));
     /*
-       XI=XA+r(XB-XA)
-       YI=YA+r(YB-YA)
+       XI = XA+r(XB-XA)
+       YI = YA+r(YB-YA)
      */
     inter->pos[VX] = ax + r * (bx - ax);
     inter->pos[VY] = ay + r * (by - ay);
@@ -221,9 +220,9 @@ float P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
 /**
  * Returns 0 or 1
  */
-int P_PointOnLineSide(float x, float y, linedef_t *line)
+int P_PointOnLineSide(float x, float y, linedef_t* line)
 {
-    vertex_t   *vtx1 = line->L_v1;
+    vertex_t*           vtx1 = line->L_v1;
 
     return  !line->dX? x <= vtx1->V_pos[VX]? line->dY > 0 : line->dY <
         0 : !line->dY? y <= vtx1->V_pos[VY]? line->dX < 0 : line->dX >
@@ -248,7 +247,7 @@ int P_PointOnLineSide2(double pointX, double pointY, double lineDX,
                        double lineDY, double linePerp, double lineLength,
                        double epsilon)
 {
-    double          perp =
+    double              perp =
         M_PerpDist(lineDX, lineDY, linePerp, lineLength, pointX, pointY);
 
     if(fabs(perp) <= epsilon)
@@ -280,11 +279,11 @@ int P_BoxOnLineSide3(const int bbox[4], double lineSX, double lineSY,
 {
 #define IFFY_LEN        4.0
 
-    int         p1, p2;
-    double      x1 = (double)bbox[BOXLEFT]   - IFFY_LEN * 1.5;
-    double      y1 = (double)bbox[BOXBOTTOM] - IFFY_LEN * 1.5;
-    double      x2 = (double)bbox[BOXRIGHT]  + IFFY_LEN * 1.5;
-    double      y2 = (double)bbox[BOXTOP]    + IFFY_LEN * 1.5;
+    int                 p1, p2;
+    double              x1 = (double)bbox[BOXLEFT]   - IFFY_LEN * 1.5;
+    double              y1 = (double)bbox[BOXBOTTOM] - IFFY_LEN * 1.5;
+    double              x2 = (double)bbox[BOXRIGHT]  + IFFY_LEN * 1.5;
+    double              y2 = (double)bbox[BOXTOP]    + IFFY_LEN * 1.5;
 
     if(lineDX == 0)
     {   // Horizontal.
@@ -332,9 +331,10 @@ int P_BoxOnLineSide3(const int bbox[4], double lineSX, double lineSY,
  *
  * Returns side 0 or 1, -1 if box crosses the line
  */
-int P_BoxOnLineSide2(float xl, float xh, float yl, float yh, linedef_t *ld)
+int P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
+                     linedef_t* ld)
 {
-    int         p;
+    int                 p;
 
     switch(ld->slopeType)
     {
@@ -361,7 +361,7 @@ int P_BoxOnLineSide2(float xl, float xh, float yl, float yh, linedef_t *ld)
     }
 }
 
-int P_BoxOnLineSide(float *box, linedef_t *ld)
+int P_BoxOnLineSide(float* box, linedef_t* ld)
 {
     return P_BoxOnLineSide2(box[BOXLEFT], box[BOXRIGHT],
                             box[BOXBOTTOM], box[BOXTOP], ld);
@@ -370,10 +370,10 @@ int P_BoxOnLineSide(float *box, linedef_t *ld)
 /**
  * Returns 0 or 1
  */
-int P_PointOnDivlineSide(float fx, float fy, divline_t *line)
+int P_PointOnDivlineSide(float fx, float fy, divline_t* line)
 {
-    fixed_t     x = FLT2FIX(fx);
-    fixed_t     y = FLT2FIX(fy);
+    fixed_t             x = FLT2FIX(fx);
+    fixed_t             y = FLT2FIX(fy);
 
     return  !line->dX? x <= line->pos[VX]? line->dY > 0 : line->dY <
         0 : !line->dY? y <= line->pos[VY]? line->dX < 0 : line->dX >
@@ -382,9 +382,9 @@ int P_PointOnDivlineSide(float fx, float fy, divline_t *line)
         FixedMul(line->dY >> 8, x >> 8);
 }
 
-void P_MakeDivline(linedef_t *li, divline_t *dl)
+void P_MakeDivline(linedef_t* li, divline_t* dl)
 {
-    vertex_t    *vtx = li->L_v1;
+    vertex_t*           vtx = li->L_v1;
 
     dl->pos[VX] = FLT2FIX(vtx->V_pos[VX]);
     dl->pos[VY] = FLT2FIX(vtx->V_pos[VY]);
@@ -397,10 +397,10 @@ void P_MakeDivline(linedef_t *li, divline_t *dl)
  *
  * This is only called by the addmobjs and addlines traversers
  */
-float P_InterceptVector(divline_t *v2, divline_t *v1)
+float P_InterceptVector(divline_t* v2, divline_t* v1)
 {
-    float       frac = 0;
-    fixed_t     den =
+    float               frac = 0;
+    fixed_t             den =
         FixedMul(v1->dY >> 8, v2->dX) - FixedMul(v1->dX >> 8, v2->dY);
 
     if(den)
@@ -417,9 +417,9 @@ float P_InterceptVector(divline_t *v2, divline_t *v1)
  * Sets opentop and openbottom to the window through a two sided line.
  * \fixme $nplanes.
  */
-void P_LineOpening(linedef_t *linedef)
+void P_LineOpening(linedef_t* linedef)
 {
-    sector_t           *front, *back;
+    sector_t*           front, *back;
 
     if(!linedef->L_backside)
     {   // Single sided line.
@@ -454,10 +454,10 @@ void P_LineOpening(linedef_t *linedef)
  * a block does not exist, NULL is returned. This routine is exported
  * for use in Games.
  */
-mobj_t *P_GetBlockRoot(uint blockx, uint blocky)
+mobj_t* P_GetBlockRoot(uint blockx, uint blocky)
 {
-    gamemap_t  *map = P_GetCurrentMap();
-    uint        bmapSize[2];
+    gamemap_t*          map = P_GetCurrentMap();
+    uint                bmapSize[2];
 
     P_GetBlockmapDimensions(map->blockMap, bmapSize);
 
@@ -473,9 +473,9 @@ mobj_t *P_GetBlockRoot(uint blockx, uint blocky)
 /**
  * Same as P_GetBlockRoot, but takes world coordinates as parameters.
  */
-mobj_t *P_GetBlockRootXY(float x, float y)
+mobj_t* P_GetBlockRootXY(float x, float y)
 {
-    uint        blockX, blockY;
+    uint                blockX, blockY;
 
     P_PointToBlock(x, y, &blockX, &blockY);
 
@@ -490,7 +490,7 @@ mobj_t *P_GetBlockRootXY(float x, float y)
  * 2) If there is a node following us, set its sprev pointer to point
  *    to the pointer that points back to it (our sprev, just modified).
  */
-void P_UnlinkFromSector(mobj_t *mo)
+void P_UnlinkFromSector(mobj_t* mo)
 {
     if((*mo->sPrev = mo->sNext))
         mo->sNext->sPrev = mo->sPrev;
@@ -503,7 +503,7 @@ void P_UnlinkFromSector(mobj_t *mo)
 /**
  * Only call if it is certain that the mobj is linked to a block!
  */
-void P_UnlinkFromBlock(mobj_t *mo)
+void P_UnlinkFromBlock(mobj_t* mo)
 {
     (mo->bNext->bPrev = mo->bPrev)->bNext = mo->bNext;
     // Not linked any more.
@@ -514,10 +514,10 @@ void P_UnlinkFromBlock(mobj_t *mo)
  * Unlinks the mobj from all the lines it's been linked to. Can be called
  * without checking that the list does indeed contain lines.
  */
-void P_UnlinkFromLines(mobj_t *mo)
+void P_UnlinkFromLines(mobj_t* mo)
 {
-    linknode_t *tn = mobjNodes->nodes;
-    nodeindex_t nix;
+    linknode_t*         tn = mobjNodes->nodes;
+    nodeindex_t         nix;
 
     // Try unlinking from lines.
     if(!mo->lineRoot)
@@ -543,7 +543,7 @@ void P_UnlinkFromLines(mobj_t *mo)
 /**
  * Unlinks a mobj from everything it has been linked to.
  */
-void P_MobjUnlink(mobj_t *mo)
+void P_MobjUnlink(mobj_t* mo)
 {
     if(IS_SECTOR_LINKED(mo))
         P_UnlinkFromSector(mo);
@@ -556,7 +556,7 @@ void P_MobjUnlink(mobj_t *mo)
  * The given line might cross the mobj. If necessary, link the mobj into
  * the line's mobj link ring.
  */
-boolean PIT_LinkToLines(linedef_t *ld, void *parm)
+boolean PIT_LinkToLines(linedef_t* ld, void* parm)
 {
     linelinker_data_t*  data = parm;
     nodeindex_t         nix;
@@ -595,10 +595,10 @@ boolean PIT_LinkToLines(linedef_t *ld, void *parm)
 /**
  * \pre The mobj must be currently unlinked.
  */
-void P_LinkToLines(mobj_t *mo)
+void P_LinkToLines(mobj_t* mo)
 {
-    linelinker_data_t data;
-    vec2_t      point;
+    linelinker_data_t   data;
+    vec2_t              point;
 
     // Get a new root node.
     mo->lineRoot = NP_New(mobjNodes, NP_ROOT_NODE);
@@ -619,10 +619,10 @@ void P_LinkToLines(mobj_t *mo)
  * Sets mobj->subsector properly. Calling with flags==0 only updates
  * the subsector pointer. Can be called without unlinking first.
  */
-void P_MobjLink(mobj_t *mo, byte flags)
+void P_MobjLink(mobj_t* mo, byte flags)
 {
-    sector_t *sec;
-    mobj_t *root;
+    sector_t*           sec;
+    mobj_t*             root;
 
     // Link into the sector.
     mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
@@ -676,7 +676,7 @@ void P_MobjLink(mobj_t *mo, byte flags)
     // entered or exited the void.
     if(mo->dPlayer)
     {
-        ddplayer_t         *player = mo->dPlayer;
+        ddplayer_t*         player = mo->dPlayer;
 
         player->inVoid = true;
         if(R_IsPointInSector2(player->mo->pos[VX],
@@ -686,14 +686,16 @@ void P_MobjLink(mobj_t *mo, byte flags)
     }
 }
 
-boolean P_BlockRingMobjsIterator(uint x, uint y, boolean (*func) (mobj_t *, void *),
-                                  void *data)
+boolean P_BlockRingMobjsIterator(uint x, uint y,
+                                 boolean (*func) (mobj_t*, void*),
+                                 void*data)
 {
-    mobj_t *mobj, *root = P_GetBlockRoot(x, y);
-    void   *linkstore[MAXLINKED], **end = linkstore, **it;
+    mobj_t*             mobj, *root = P_GetBlockRoot(x, y);
+    void*               linkstore[MAXLINKED];
+    void**              end = linkstore, **it;
 
     if(!root)
-        return true;            // Not inside the blockmap.
+        return true; // Not inside the blockmap.
 
     // Gather all the mobjs in the block into the list.
     for(mobj = root->bNext; mobj != root; mobj = mobj->bNext)
@@ -707,12 +709,14 @@ boolean P_BlockRingMobjsIterator(uint x, uint y, boolean (*func) (mobj_t *, void
  * The callback function will be called once for each line that crosses
  * trough the object. This means all the lines will be two-sided.
  */
-boolean P_MobjLinesIterator(mobj_t *mo, boolean (*func) (linedef_t *, void *),
-                             void *data)
+boolean P_MobjLinesIterator(mobj_t* mo,
+                            boolean (*func) (linedef_t*, void*),
+                            void* data)
 {
-    nodeindex_t nix;
-    linknode_t *tn = mobjNodes->nodes;
-    void       *linkstore[MAXLINKED], **end = linkstore, **it;
+    void*               linkstore[MAXLINKED];
+    void**              end = linkstore, **it;
+    nodeindex_t         nix;
+    linknode_t*         tn = mobjNodes->nodes;
 
     if(!mo->lineRoot)
         return true; // No lines to process.
@@ -731,15 +735,16 @@ boolean P_MobjLinesIterator(mobj_t *mo, boolean (*func) (linedef_t *, void *),
  * partly inside). This is not a 3D check; the mobj may actually reside
  * above or under the sector.
  */
-boolean P_MobjSectorsIterator(mobj_t *mo,
-                              boolean (*func) (sector_t *, void *),
-                              void *data)
+boolean P_MobjSectorsIterator(mobj_t* mo,
+                              boolean (*func) (sector_t*, void*),
+                              void* data)
 {
-    void       *linkstore[MAXLINKED], **end = linkstore, **it;
-    nodeindex_t nix;
-    linknode_t *tn = mobjNodes->nodes;
-    linedef_t     *ld;
-    sector_t   *sec;
+    void*               linkstore[MAXLINKED];
+    void**              end = linkstore, **it;
+    nodeindex_t         nix;
+    linknode_t*         tn = mobjNodes->nodes;
+    linedef_t*          ld;
+    sector_t*           sec;
 
     // Always process the mobj's own sector first.
     *end++ = sec = mo->subsector->sector;
@@ -773,16 +778,19 @@ boolean P_MobjSectorsIterator(mobj_t *mo,
             }
         }
     }
+
     DO_LINKS(it, end);
     return true;
 }
 
-boolean P_LineMobjsIterator(linedef_t *line, boolean (*func) (mobj_t *, void *),
-                             void *data)
+boolean P_LineMobjsIterator(linedef_t* line,
+                            boolean (*func) (mobj_t*, void*),
+                            void* data)
 {
-    void       *linkstore[MAXLINKED], **end = linkstore, **it;
-    nodeindex_t root = linelinks[GET_LINE_IDX(line)], nix;
-    linknode_t *ln = lineNodes->nodes;
+    void*               linkstore[MAXLINKED];
+    void**              end = linkstore, **it;
+    nodeindex_t         root = linelinks[GET_LINE_IDX(line)], nix;
+    linknode_t*         ln = lineNodes->nodes;
 
     for(nix = ln[root].next; nix != root; nix = ln[nix].next)
         *end++ = ln[nix].ptr;
@@ -799,16 +807,17 @@ boolean P_LineMobjsIterator(linedef_t *line, boolean (*func) (mobj_t *, void *),
  * (Lovely name; actually this is a combination of SectorMobjs and
  * a bunch of LineMobjs iterations.)
  */
-boolean P_SectorTouchingMobjsIterator(sector_t *sector,
-                                      boolean (*func) (mobj_t *, void *),
-                                      void *data)
+boolean P_SectorTouchingMobjsIterator(sector_t* sector,
+                                      boolean (*func) (mobj_t*, void*),
+                                      void* data)
 {
-    void       *linkstore[MAXLINKED], **end = linkstore, **it;
-    mobj_t     *mo;
-    linedef_t     *li;
-    nodeindex_t root, nix;
-    linknode_t *ln = lineNodes->nodes;
-    uint        i;
+    uint                i;
+    void*               linkstore[MAXLINKED];
+    void**              end = linkstore, **it;
+    mobj_t*             mo;
+    linedef_t*          li;
+    nodeindex_t         root, nix;
+    linknode_t*         ln = lineNodes->nodes;
 
     // First process the mobjs that obviously are in the sector.
     for(mo = sector->mobjList; mo; mo = mo->sNext)
@@ -843,10 +852,10 @@ boolean P_SectorTouchingMobjsIterator(sector_t *sector,
 }
 
 boolean P_MobjsBoxIterator(const float box[4],
-                            boolean (*func) (mobj_t *, void *),
-                            void *data)
+                           boolean (*func) (mobj_t*, void*),
+                           void* data)
 {
-    vec2_t      bounds[2];
+    vec2_t              bounds[2];
 
     bounds[0][VX] = box[BOXLEFT];
     bounds[0][VY] = box[BOXBOTTOM];
@@ -857,10 +866,10 @@ boolean P_MobjsBoxIterator(const float box[4],
 }
 
 boolean P_MobjsBoxIteratorv(const arvec2_t box,
-                             boolean (*func) (mobj_t *, void *),
-                             void *data)
+                            boolean (*func) (mobj_t*, void*),
+                            void* data)
 {
-    uint        blockBox[4];
+    uint                blockBox[4];
 
     P_BoxToBlockmapBlocks(BlockMap, blockBox, box);
 
@@ -868,10 +877,10 @@ boolean P_MobjsBoxIteratorv(const arvec2_t box,
 }
 
 boolean P_LinesBoxIterator(const float box[4],
-                           boolean (*func) (linedef_t *, void *),
-                           void *data)
+                           boolean (*func) (linedef_t*, void*),
+                           void* data)
 {
-    vec2_t      bounds[2];
+    vec2_t              bounds[2];
 
     bounds[0][VX] = box[BOXLEFT];
     bounds[0][VY] = box[BOXBOTTOM];
@@ -882,10 +891,10 @@ boolean P_LinesBoxIterator(const float box[4],
 }
 
 boolean P_LinesBoxIteratorv(const arvec2_t box,
-                            boolean (*func) (linedef_t *, void *),
-                            void *data)
+                            boolean (*func) (linedef_t*, void*),
+                            void* data)
 {
-    uint        blockBox[4];
+    uint                blockBox[4];
 
     P_BoxToBlockmapBlocks(BlockMap, blockBox, box);
 
@@ -893,13 +902,13 @@ boolean P_LinesBoxIteratorv(const arvec2_t box,
 }
 
 /**
- * @return          @c false, if the iterator func returns @c false.
+ * @return              @c false, if the iterator func returns @c false.
  */
-boolean P_SubsectorsBoxIterator(const float box[4], sector_t *sector,
-                               boolean (*func) (subsector_t *, void *),
-                               void *parm)
+boolean P_SubsectorsBoxIterator(const float box[4], sector_t* sector,
+                                boolean (*func) (subsector_t*, void*),
+                                void* parm)
 {
-    vec2_t      bounds[2];
+    vec2_t              bounds[2];
 
     bounds[0][VX] = box[BOXLEFT];
     bounds[0][VY] = box[BOXBOTTOM];
@@ -913,12 +922,12 @@ boolean P_SubsectorsBoxIterator(const float box[4], sector_t *sector,
  * Same as the fixed-point version of this routine, but the bounding box
  * is specified using an vec2_t array (see m_vector.c).
  */
-boolean P_SubsectorsBoxIteratorv(const arvec2_t box, sector_t *sector,
-                                 boolean (*func) (subsector_t *, void *),
-                                 void *data)
+boolean P_SubsectorsBoxIteratorv(const arvec2_t box, sector_t* sector,
+                                 boolean (*func) (subsector_t*, void*),
+                                 void* data)
 {
-    static int  localValidCount = 0;
-    uint        blockBox[4];
+    static int          localValidCount = 0;
+    uint                blockBox[4];
 
     // This is only used here.
     localValidCount++;
@@ -931,10 +940,10 @@ boolean P_SubsectorsBoxIteratorv(const arvec2_t box, sector_t *sector,
 }
 
 boolean P_PolyobjsBoxIterator(const float box[4],
-                              boolean (*func) (struct polyobj_s *, void *),
-                              void *data)
+                              boolean (*func) (struct polyobj_s*, void*),
+                              void* data)
 {
-    vec2_t      bounds[2];
+    vec2_t              bounds[2];
 
     bounds[0][VX] = box[BOXLEFT];
     bounds[0][VY] = box[BOXBOTTOM];
@@ -950,10 +959,10 @@ boolean P_PolyobjsBoxIterator(const float box[4],
  * make one or more calls to it.
  */
 boolean P_PolyobjsBoxIteratorv(const arvec2_t box,
-                               boolean (*func) (polyobj_t *, void *),
-                               void *data)
+                               boolean (*func) (struct polyobj_s*, void*),
+                               void* data)
 {
-    uint        blockBox[4];
+    uint                blockBox[4];
 
     // Blockcoords to check.
     P_BoxToBlockmapBlocks(BlockMap, blockBox, box);
@@ -962,10 +971,10 @@ boolean P_PolyobjsBoxIteratorv(const arvec2_t box,
 }
 
 boolean P_PolyobjLinesBoxIterator(const float box[4],
-                                  boolean (*func) (linedef_t *, void *),
-                                  void *data)
+                                  boolean (*func) (linedef_t*, void*),
+                                  void* data)
 {
-    vec2_t      bounds[2];
+    vec2_t              bounds[2];
 
     bounds[0][VX] = box[BOXLEFT];
     bounds[0][VY] = box[BOXBOTTOM];
@@ -976,10 +985,10 @@ boolean P_PolyobjLinesBoxIterator(const float box[4],
 }
 
 boolean P_PolyobjLinesBoxIteratorv(const arvec2_t box,
-                                   boolean (*func) (linedef_t *, void *),
-                                   void *data)
+                                   boolean (*func) (linedef_t*, void*),
+                                   void* data)
 {
-    uint        blockBox[4];
+    uint                blockBox[4];
 
     P_BoxToBlockmapBlocks(BlockMap, blockBox, box);
 
@@ -993,10 +1002,10 @@ boolean P_PolyobjLinesBoxIteratorv(const arvec2_t box,
  * to P_BlockmapLinesIterator, then make one or more calls to it.
  */
 boolean P_AllLinesBoxIterator(const float box[4],
-                              boolean (*func) (linedef_t *, void *),
-                              void *data)
+                              boolean (*func) (linedef_t*, void*),
+                              void* data)
 {
-    vec2_t  bounds[2];
+    vec2_t              bounds[2];
 
     bounds[0][VX] = box[BOXLEFT];
     bounds[0][VY] = box[BOXBOTTOM];
@@ -1012,8 +1021,8 @@ boolean P_AllLinesBoxIterator(const float box[4],
  * to P_BlockmapLinesIterator, then make one or more calls to it.
  */
 boolean P_AllLinesBoxIteratorv(const arvec2_t box,
-                               boolean (*func) (linedef_t *, void *),
-                               void *data)
+                               boolean (*func) (linedef_t*, void*),
+                               void* data)
 {
     if(numPolyObjs > 0)
     {
@@ -1031,11 +1040,11 @@ boolean P_AllLinesBoxIteratorv(const arvec2_t box,
  *
  * @return              @c true if earlyout and a solid line hit.
  */
-boolean PIT_AddLineIntercepts(linedef_t *ld, void *data)
+boolean PIT_AddLineIntercepts(linedef_t* ld, void* data)
 {
-    int         s[2];
-    float       frac;
-    divline_t   dl;
+    int                 s[2];
+    float               frac;
+    divline_t           dl;
 
     // Avoid precision problems with two routines.
     if(traceLOS.dX > FRACUNIT * 16 || traceLOS.dY > FRACUNIT * 16 ||
@@ -1057,9 +1066,7 @@ boolean PIT_AddLineIntercepts(linedef_t *ld, void *data)
     if(s[0] == s[1])
         return true; // Line isn't crossed.
 
-    //
     // Hit the line.
-    //
     P_MakeDivline(ld, &dl);
     frac = P_InterceptVector(&traceLOS, &dl);
     if(frac < 0)
@@ -1074,21 +1081,18 @@ boolean PIT_AddLineIntercepts(linedef_t *ld, void *data)
     return true; // Continue iteration.
 }
 
-boolean PIT_AddMobjIntercepts(mobj_t *mo, void *data)
+boolean PIT_AddMobjIntercepts(mobj_t* mo, void* data)
 {
-    float       x1, y1, x2, y2;
-    int         s[2];
-    boolean     tracepositive;
-    divline_t   dl;
-    float       frac;
+    float               x1, y1, x2, y2;
+    int                 s[2];
+    divline_t           dl;
+    float               frac;
 
     if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
         return true; // $democam: ssshh, keep going, we're not here...
 
-    tracepositive = (traceLOS.dX ^ traceLOS.dY) > 0;
-
     // Check a corner to corner crossection for hit.
-    if(tracepositive)
+    if((traceLOS.dX ^ traceLOS.dY) > 0)
     {
         x1 = mo->pos[VX] - mo->radius;
         y1 = mo->pos[VY] + mo->radius;
@@ -1129,11 +1133,11 @@ boolean PIT_AddMobjIntercepts(mobj_t *mo, void *data)
  * Returns true if the traverser function returns true for all lines
  */
 boolean P_PathTraverse(float x1, float y1, float x2, float y2,
-                       int flags, boolean (*trav) (intercept_t *))
+                       int flags, boolean (*trav) (intercept_t*))
 {
     float               origin[2], dest[2];
     uint                originBlock[2], destBlock[2];
-    gamemap_t          *map = P_GetCurrentMap();
+    gamemap_t*          map = P_GetCurrentMap();
     vec2_t              min, max;
 
     V2_Set(origin, x1, y1);
@@ -1157,9 +1161,9 @@ boolean P_PathTraverse(float x1, float y1, float x2, float y2,
     }
 
     if((FLT2FIX(origin[VX] - min[VX]) & (MAPBLOCKSIZE - 1)) == 0)
-        origin[VX] += 1; // Don't side exactly on a line
+        origin[VX] += 1; // Don't side exactly on a line.
     if((FLT2FIX(origin[VY] - min[VY]) & (MAPBLOCKSIZE - 1)) == 0)
-        origin[VY] += 1; // Don't side exactly on a line
+        origin[VY] += 1; // Don't side exactly on a line.
 
     traceLOS.pos[VX] = FLT2FIX(origin[VX]);
     traceLOS.pos[VY] = FLT2FIX(origin[VY]);

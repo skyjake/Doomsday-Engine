@@ -375,8 +375,8 @@ extern          "C" {
     // Play: Polyobjs.
     boolean         P_PolyobjMove(uint num, float x, float y);
     boolean         P_PolyobjRotate(uint num, angle_t angle);
-    void            P_PolyobjUnLink(void *po);
-    void            P_PolyobjLink(void *po);
+    void            P_PolyobjLink(struct polyobj_s *po);
+    void            P_PolyobjUnLink(struct polyobj_s *po);
 
     struct polyobj_s* PO_GetPolyobj(uint polyNum);
     struct polyobj_s* PO_GetPolyobjIdx(uint idx);

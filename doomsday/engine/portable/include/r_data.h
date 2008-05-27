@@ -166,7 +166,7 @@ typedef struct rendpoly_params_s {
 typedef struct linkmobj_s {
     thinker_t       thinker;
     float           pos[3];
-    struct mobj_s*  next, *prev;
+    struct mobj_s*  bNext, *bPrev;
 } linkmobj_t;
 
 typedef struct shadowlink_s {

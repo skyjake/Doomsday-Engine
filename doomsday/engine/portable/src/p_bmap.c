@@ -453,8 +453,8 @@ void P_InitMapBlockRings(gamemap_t *map)
     map->blockRings = Z_Calloc(size, PU_LEVEL, 0);
 
     for(i = 0; i < bmapSize[VX] * bmapSize[VY]; ++i)
-        map->blockRings[i].next =
-            map->blockRings[i].prev = (mobj_t *) &map->blockRings[i];
+        map->blockRings[i].bNext =
+            map->blockRings[i].bPrev = (mobj_t *) &map->blockRings[i];
 }
 
 typedef struct bmapiterparams_s {
