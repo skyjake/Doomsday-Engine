@@ -2576,12 +2576,14 @@ static int SV_ReadPolyObj(polyobj_t* po)
         Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
 
     angle = (angle_t) SV_ReadLong();
-    P_PolyobjRotate(po->tag, angle);
+    P_PolyobjRotate(po, angle);
     po->destAngle = angle;
     deltaX = FIX2FLT(SV_ReadLong()) - po->startSpot.pos[VX];
     deltaY = FIX2FLT(SV_ReadLong()) - po->startSpot.pos[VY];
-    P_PolyobjMove(po->tag, deltaX, deltaY);
+    P_PolyobjMove(po, deltaX, deltaY);
+
     //// \fixme What about speed? It isn't saved at all?
+
     return true;
 }
 #endif
@@ -2607,7 +2609,7 @@ static void P_ArchiveWorld(void)
     SV_BeginSegment(ASEG_POLYOBJS);
     SV_WriteLong(numpolyobjs);
     for(i = 0; i < numpolyobjs; ++i)
-        SV_WritePolyObj(PO_GetPolyobjIdx(i));
+        SV_WritePolyObj(PO_GetPolyobj(i | 0x80000000));
 #endif
 }
 
@@ -2638,7 +2640,7 @@ static void P_UnArchiveWorld(void)
         Con_Error("UnarchivePolyobjs: Bad polyobj count");
 
     for(i = 0; i < numpolyobjs; ++i)
-        SV_ReadPolyObj(PO_GetPolyobjIdx(i));
+        SV_ReadPolyObj(PO_GetPolyobj(i | 0x80000000));
 #endif
 }
 
@@ -4293,7 +4295,7 @@ static void P_ArchiveSounds(void)
         SV_WriteLong(node->currentSoundID);
         for(i = 0; i < numpolyobjs; ++i)
         {
-            polyobj_t*          po = PO_GetPolyobjIdx(i);
+            polyobj_t*          po = PO_GetPolyobj(i | 0x80000000);
 
             if(po && node->mobj == (mobj_t*) &po->startSpot)
             {
@@ -4349,7 +4351,7 @@ static void P_UnArchiveSounds(void)
         }
         else
         {
-            polyobj_t*          po = PO_GetPolyobjIdx(secNum);
+            polyobj_t*          po = PO_GetPolyobj(secNum | 0x80000000);
 
             if(po)
                 sndMobj = (mobj_t*) &po->startSpot;

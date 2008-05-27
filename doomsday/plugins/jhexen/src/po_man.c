@@ -91,12 +91,12 @@ void PO_SetDestination(polyobj_t *po, float dist, uint an, float speed)
 
 // ===== Polyobj Event Code =====
 
-void T_RotatePoly(polyevent_t *pe)
+void T_RotatePoly(polyevent_t* pe)
 {
-    unsigned int absSpeed;
-    polyobj_t  *poly;
+    unsigned int        absSpeed;
+    polyobj_t*          po = PO_GetPolyobj(pe->polyobj);
 
-    if(P_PolyobjRotate(pe->polyobj, pe->intSpeed))
+    if(P_PolyobjRotate(po, pe->intSpeed))
     {
         absSpeed = abs(pe->intSpeed);
 
@@ -108,15 +108,13 @@ void T_RotatePoly(polyevent_t *pe)
         pe->dist -= absSpeed;
         if(pe->dist <= 0)
         {
-            poly = PO_GetPolyobj(pe->polyobj);
+            if(po->specialData == pe)
+                po->specialData = NULL;
 
-            if(poly->specialData == pe)
-                poly->specialData = NULL;
-
-            PO_StopSequence(poly);
-            P_PolyobjFinished(poly->tag);
+            PO_StopSequence(po);
+            P_PolyobjFinished(po->tag);
             P_RemoveThinker(&pe->thinker);
-            poly->angleSpeed = 0;
+            po->angleSpeed = 0;
         }
 
         if(pe->dist < absSpeed)
@@ -231,16 +229,14 @@ boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
 void T_MovePoly(polyevent_t* pe)
 {
     unsigned int        absSpeed;
-    polyobj_t*          po;
+    polyobj_t*          po = PO_GetPolyobj(pe->polyobj);
 
-    if(P_PolyobjMove(pe->polyobj, pe->speed[MX], pe->speed[MY]))
+    if(P_PolyobjMove(po, pe->speed[MX], pe->speed[MY]))
     {
         absSpeed = abs(pe->intSpeed);
         pe->dist -= absSpeed;
         if(pe->dist <= 0)
         {
-            po = PO_GetPolyobj(pe->polyobj);
-
             if(po->specialData == pe)
                 po->specialData = NULL;
 
@@ -341,14 +337,13 @@ boolean EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
 
 void T_PolyDoor(polydoor_t* pd)
 {
-    int             absSpeed;
-    polyobj_t*      po;
+    int                 absSpeed;
+    polyobj_t*          po = PO_GetPolyobj(pd->polyobj);
 
     if(pd->tics)
     {
         if(!--pd->tics)
         {
-            po = PO_GetPolyobj(pd->polyobj);
             PO_StartSequence(po, SEQ_DOOR_STONE);
 
             // Movement is about to begin. Update the destination.
@@ -361,13 +356,12 @@ void T_PolyDoor(polydoor_t* pd)
     switch(pd->type)
     {
     case PODOOR_SLIDE:
-        if(P_PolyobjMove(pd->polyobj, pd->speed[MX], pd->speed[MY]))
+        if(P_PolyobjMove(po, pd->speed[MX], pd->speed[MY]))
         {
             absSpeed = abs(pd->intSpeed);
             pd->dist -= absSpeed;
             if(pd->dist <= 0)
             {
-                po = PO_GetPolyobj(pd->polyobj);
                 PO_StopSequence(po);
                 if(!pd->close)
                 {
@@ -391,7 +385,6 @@ void T_PolyDoor(polydoor_t* pd)
         }
         else
         {
-            po = PO_GetPolyobj(pd->polyobj);
             if(po->crush || !pd->close)
             {   // Continue moving if the po is a crusher, or is opening.
                 return;
@@ -413,7 +406,7 @@ void T_PolyDoor(polydoor_t* pd)
         break;
 
     case PODOOR_SWING:
-        if(P_PolyobjRotate(pd->polyobj, pd->intSpeed))
+        if(P_PolyobjRotate(po, pd->intSpeed))
         {
             absSpeed = abs(pd->intSpeed);
             if(pd->dist == -1)
@@ -424,7 +417,6 @@ void T_PolyDoor(polydoor_t* pd)
             pd->dist -= absSpeed;
             if(pd->dist <= 0)
             {
-                po = PO_GetPolyobj(pd->polyobj);
                 PO_StopSequence(po);
                 if(!pd->close)
                 {
@@ -445,7 +437,6 @@ void T_PolyDoor(polydoor_t* pd)
         }
         else
         {
-            po = PO_GetPolyobj(pd->polyobj);
             if(po->crush || !pd->close)
             {   // Continue moving if the po is a crusher, or is opening.
                 return;
@@ -568,7 +559,7 @@ static int getPolyobjMirror(uint poly)
 
     for(i = 0; i < numpolyobjs; ++i)
     {
-        polyobj_t*          po = PO_GetPolyobjIdx(i);
+        polyobj_t*          po = PO_GetPolyobj(i | 0x80000000);
 
         if(po->tag == poly)
         {
@@ -659,7 +650,7 @@ void PO_InitForMap(void)
         spawnspot_t*        mt;
         polyobj_t*          po;
 
-        po = PO_GetPolyobjIdx(i);
+        po = PO_GetPolyobj(i | 0x80000000);
 
         // Init game-specific properties.
         po->specialData = NULL;
@@ -684,9 +675,8 @@ void PO_InitForMap(void)
         if(mt)
         {
             po->crush = ((mt->type == PO_SPAWNCRUSH_TYPE)? 1 : 0);
-            P_PolyobjMove(i | 0x80000000,
-                          -po->startSpot.pos[VX] + mt->pos[VX],
-                          -po->startSpot.pos[VY] + mt->pos[VY]);
+            P_PolyobjMove(po, -po->startSpot.pos[VX] + mt->pos[VX],
+                              -po->startSpot.pos[VY] + mt->pos[VY]);
         }
         else
         {

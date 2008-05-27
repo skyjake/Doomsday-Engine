@@ -35,26 +35,26 @@ DD_BASE_POLYOBJ_ELEMENTS()} polyobj_t;
 
 #define POLYOBJ_SIZE		gx.polyobjSize
 
-extern polyobj_t **polyObjs; // List of all poly-objects on the level.
+extern polyobj_t** polyObjs; // List of all poly-objects on the level.
 extern uint numPolyObjs;
 
 // Polyobj system.
 void            PO_InitForMap(void);
-void            PO_SetCallback(void (*func) (struct mobj_s *, void *, void *));
+void            PO_SetCallback(void (*func) (struct mobj_s*, void*, void*));
 
-polyobj_t*      PO_GetPolyobj(uint polyNum);
-polyobj_t*      PO_GetPolyobjIdx(uint idx);
+polyobj_t*      PO_GetPolyobj(uint num);
 polyobj_t*      PO_GetPolyobjForDegen(void *degenMobj);
 
 // Polyobject interface.
-boolean         P_PolyobjMove(uint num, float x, float y);
-boolean         P_PolyobjRotate(uint num, angle_t angle);
-void            P_PolyobjUnLink(polyobj_t *po);
-void            P_PolyobjLink(polyobj_t *po);
-void            P_PolyobjUpdateBBox(polyobj_t *po);
+boolean         P_PolyobjMove(struct polyobj_s* po, float x, float y);
+boolean         P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
+void            P_PolyobjLink(struct polyobj_s* po);
+void            P_PolyobjUnLink(struct polyobj_s* po);
 
-void            P_PolyobjLinkToRing(polyobj_t *po, linkpolyobj_t **link);
-void            P_PolyobjUnlinkFromRing(polyobj_t *po, linkpolyobj_t **link);
-boolean         P_PolyobjLinesIterator(polyobj_t *po, boolean (*func) (struct linedef_s *, void *),
-                                       void *data);
+void            P_PolyobjUpdateBBox(polyobj_t* po);
+
+void            P_PolyobjLinkToRing(polyobj_t* po, linkpolyobj_t** link);
+void            P_PolyobjUnlinkFromRing(polyobj_t* po, linkpolyobj_t** link);
+boolean         P_PolyobjLinesIterator(polyobj_t* po, boolean (*func) (struct linedef_s*, void*),
+                                       void* data);
 #endif

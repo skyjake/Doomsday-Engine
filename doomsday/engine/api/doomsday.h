@@ -364,6 +364,7 @@ extern          "C" {
     void            P_MobjSetState(struct mobj_s *mo, int statenum);
     void            P_MobjLink(struct mobj_s *mo, byte flags);
     void            P_MobjUnlink(struct mobj_s *mo);
+
     // Mobj linked object iterators.
     boolean         P_MobjLinesIterator(struct mobj_s *mo,
                                         boolean (*func) (struct linedef_s *,
@@ -373,13 +374,12 @@ extern          "C" {
                                           void *data);
 
     // Play: Polyobjs.
-    boolean         P_PolyobjMove(uint num, float x, float y);
-    boolean         P_PolyobjRotate(uint num, angle_t angle);
-    void            P_PolyobjLink(struct polyobj_s *po);
-    void            P_PolyobjUnLink(struct polyobj_s *po);
+    boolean         P_PolyobjMove(struct polyobj_s* po, float x, float y);
+    boolean         P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
+    void            P_PolyobjLink(struct polyobj_s* po);
+    void            P_PolyobjUnLink(struct polyobj_s* po);
 
-    struct polyobj_s* PO_GetPolyobj(uint polyNum);
-    struct polyobj_s* PO_GetPolyobjIdx(uint idx);
+    struct polyobj_s* PO_GetPolyobj(uint num);
     void            PO_SetCallback(void (*func)(struct mobj_s*, void*, void*));
 
     // Play: Thinkers.

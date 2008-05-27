@@ -305,6 +305,7 @@ void P_SpawnPhasedLight(sector_t *sector, float base, int index)
 
 void P_SpawnLightSequence(sector_t *sector, int indexStep)
 {
+#if 0
     int         i, seqSpecial, count;
     float       base;
     fixed_t     index, indexDelta;
@@ -369,4 +370,5 @@ void P_SpawnLightSequence(sector_t *sector, int indexStep)
         }
         sec = nextSec;
     } while(sec);
+#endif
 }

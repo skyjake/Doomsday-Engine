@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 425 <--
+; --> 424 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -283,7 +283,6 @@ EXPORTS
     P_PolyobjUnLink             @81 NONAME
 
     PO_GetPolyobj               @424 NONAME
-    PO_GetPolyobjIdx            @425 NONAME
     PO_SetCallback				@83 NONAME
 
 ; Play: Thinkers.

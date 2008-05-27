@@ -38,7 +38,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXRADIUS   32
+#define MAXRADIUS           32
 
 // TYPES -------------------------------------------------------------------
 
@@ -48,20 +48,20 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void updateSegBBox(seg_t *seg);
-static void rotatePoint(int an, float *x, float *y, float startSpotX,
-                     float startSpotY);
-static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po);
+static void updateSegBBox(seg_t* seg);
+static void rotatePoint(int an, float* x, float* y, float startSpotX,
+                        float startSpotY);
+static boolean CheckMobjBlocking(seg_t* seg, polyobj_t* po);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Called when the polyobj hits a mobj.
-void    (*po_callback) (mobj_t *mobj, void *seg, void *po);
+void (*po_callback) (mobj_t* mobj, void* seg, void* po);
 
-polyobj_t **polyObjs; // List of all poly-objects in the map.
-uint    numPolyObjs;
+polyobj_t** polyObjs; // List of all poly-objects in the map.
+uint numPolyObjs;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -70,20 +70,58 @@ uint    numPolyObjs;
 /**
  * The po_callback is called when a polyobj hits a mobj.
  */
-void PO_SetCallback(void (*func) (struct mobj_s *, void *, void *))
+void PO_SetCallback(void (*func) (struct mobj_s*, void*, void*))
 {
     po_callback = func;
 }
 
-polyobj_t *PO_GetPolyobj(uint polyNum)
+/**
+ * Retrieve a ptr to polyobj_t by index or by tag.
+ *
+ * @param num               If MSB is set, treat num as an index, ELSE
+ *                          num is a tag that *should* match one polyobj.
+ */
+polyobj_t* PO_GetPolyobj(uint num)
+{
+    if(num & 0x80000000)
+    {
+        uint                idx = num & 0x7ffffffff;
+
+        if(idx < numPolyObjs)
+            return polyObjs[idx];
+    }
+    else
+    {
+        uint                i;
+
+        for(i = 0; i < numPolyObjs; ++i)
+        {
+            polyobj_t*          po = polyObjs[i];
+
+            if((uint) po->tag == num)
+            {
+                return po;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * @returns             Ptr to the polyobj that owns the degenmobj,
+ *                      else @c NULL.
+ */
+polyobj_t* PO_GetPolyobjForDegen(void* degenMobj)
 {
     uint                i;
+    polyobj_t*          po;
 
     for(i = 0; i < numPolyObjs; ++i)
     {
-        polyobj_t          *po = polyObjs[i];
+        po = polyObjs[i];
 
-        if((uint) po->tag == polyNum)
+        if(&po->startSpot == degenMobj)
         {
             return po;
         }
@@ -92,17 +130,9 @@ polyobj_t *PO_GetPolyobj(uint polyNum)
     return NULL;
 }
 
-polyobj_t *PO_GetPolyobjIdx(uint idx)
+static void updateSegBBox(seg_t* seg)
 {
-    if(idx < numPolyObjs)
-        return polyObjs[idx];
-
-    return NULL;
-}
-
-static void updateSegBBox(seg_t *seg)
-{
-    linedef_t          *line = seg->lineDef;
+    linedef_t*          line = seg->lineDef;
     byte                edge;
 
     edge = (seg->SG_v1pos[VX] < seg->SG_v2pos[VX]);
@@ -113,7 +143,7 @@ static void updateSegBBox(seg_t *seg)
     line->bBox[BOXBOTTOM] = seg->SG_vpos(edge^1)[VY];
     line->bBox[BOXTOP]    = seg->SG_vpos(edge)[VY];
 
-    // Update the line's slopetype
+    // Update the line's slopetype.
     line->dX = line->L_v2pos[VX] - line->L_v1pos[VX];
     line->dY = line->L_v2pos[VY] - line->L_v1pos[VY];
     if(!line->dX)
@@ -214,23 +244,16 @@ void PO_InitForMap(void)
     }
 }
 
-boolean P_PolyobjMove(uint num, float x, float y)
+boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
 {
-    uint            count;
-    polyobj_t*      po;
-    fvertex_t*      prevPts;
-    seg_t**         segList;
-    seg_t**         veryTempSeg;
-    boolean         blocked;
+    uint                count;
+    fvertex_t*          prevPts;
+    seg_t**             segList;
+    seg_t**             veryTempSeg;
+    boolean             blocked;
 
-    if(num & 0x80000000)
-    {
-        po = polyObjs[num & 0x7fffffff];
-    }
-    else if(!(po = PO_GetPolyobj(num)))
-    {
-        Con_Error("P_PolyobjMove:  Invalid polyobj number: %d\n", num);
-    }
+    if(!po)
+        return false;
 
     P_PolyobjUnLink(po);
 
@@ -241,7 +264,7 @@ boolean P_PolyobjMove(uint num, float x, float y)
     validCount++;
     for(count = 0; count < po->numSegs; ++count, segList++, prevPts++)
     {
-        seg_t*          seg = *segList;
+        seg_t*              seg = *segList;
 
         if(seg->lineDef->validCount != validCount)
         {
@@ -287,7 +310,7 @@ boolean P_PolyobjMove(uint num, float x, float y)
         validCount++;
         while(count++ < po->numSegs)
         {
-            seg_t*          seg = *segList;
+            seg_t*              seg = *segList;
 
             if(seg->lineDef->validCount != validCount)
             {
@@ -333,10 +356,10 @@ boolean P_PolyobjMove(uint num, float x, float y)
     return true;
 }
 
-static void rotatePoint(int an, float *x, float *y, float startSpotX,
+static void rotatePoint(int an, float* x, float* y, float startSpotX,
                         float startSpotY)
 {
-    float           trx, try, gxt, gyt;
+    float               trx, try, gxt, gyt;
 
     trx = *x;
     try = *y;
@@ -350,25 +373,19 @@ static void rotatePoint(int an, float *x, float *y, float startSpotX,
     *y = gyt + gxt + startSpotY;
 }
 
-boolean P_PolyobjRotate(uint num, angle_t angle)
+boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
 {
-    int             an;
-    uint            count;
-    fvertex_t*      originalPts;
-    fvertex_t*      prevPts;
-    polyobj_t*      po;
-    vertex_t*       vtx;
-    seg_t**         segList;
-    boolean         blocked;
+    int                 an;
+    uint                count;
+    fvertex_t*          originalPts;
+    fvertex_t*          prevPts;
+    vertex_t*           vtx;
+    seg_t**             segList;
+    boolean             blocked;
 
-    if(num & 0x80000000)
-    {
-        po = polyObjs[num & 0x7fffffff];
-    }
-    else if(!(po = PO_GetPolyobj(num)))
-    {
-        Con_Error("P_PolyobjRotate: Invalid polyobj number: %d\n", num);
-    }
+    if(!po)
+        return false;
+
     an = (po->angle + angle) >> ANGLETOFINESHIFT;
 
     P_PolyobjUnLink(po);
@@ -380,7 +397,7 @@ boolean P_PolyobjRotate(uint num, angle_t angle)
     for(count = 0; count < po->numSegs;
         ++count, segList++, originalPts++, prevPts++)
     {
-        seg_t          *seg = *segList;
+        seg_t*              seg = *segList;
 
         vtx = seg->SG_v1;
 
@@ -398,7 +415,7 @@ boolean P_PolyobjRotate(uint num, angle_t angle)
     validCount++;
     for(count = 0; count < po->numSegs; ++count, segList++)
     {
-        seg_t          *seg = *segList;
+        seg_t*              seg = *segList;
 
         if(CheckMobjBlocking(seg, po))
         {
@@ -420,7 +437,7 @@ boolean P_PolyobjRotate(uint num, angle_t angle)
         prevPts = po->prevPts;
         for(count = 0; count < po->numSegs; ++count, segList++, prevPts++)
         {
-            seg_t          *seg = *segList;
+            seg_t*              seg = *segList;
 
             vtx = seg->SG_v1;
             vtx->V_pos[VX] = prevPts->pos[VX];
@@ -431,7 +448,7 @@ boolean P_PolyobjRotate(uint num, angle_t angle)
         validCount++;
         for(count = 0; count < po->numSegs; ++count, segList++, prevPts++)
         {
-            seg_t          *seg = *segList;
+            seg_t*              seg = *segList;
 
             if(seg->lineDef->validCount != validCount)
             {
@@ -451,9 +468,9 @@ boolean P_PolyobjRotate(uint num, angle_t angle)
     return true;
 }
 
-void P_PolyobjLinkToRing(polyobj_t *po, linkpolyobj_t **link)
+void P_PolyobjLinkToRing(polyobj_t* po, linkpolyobj_t** link)
 {
-    linkpolyobj_t *tempLink;
+    linkpolyobj_t*      tempLink;
 
     if(!(*link))
     {   // Create a new link at the current block cell.
@@ -487,9 +504,9 @@ void P_PolyobjLinkToRing(polyobj_t *po, linkpolyobj_t **link)
     }
 }
 
-void P_PolyobjUnlinkFromRing(polyobj_t *po, linkpolyobj_t **list)
+void P_PolyobjUnlinkFromRing(polyobj_t* po, linkpolyobj_t** list)
 {
-    linkpolyobj_t *iter = *list;
+    linkpolyobj_t*      iter = *list;
 
     while(iter != NULL && iter->polyobj != po)
     {
@@ -514,18 +531,18 @@ void P_PolyobjLink(struct polyobj_s* po)
 
 typedef struct ptrmobjblockingparams_s {
     boolean         blocked;
-    linedef_t         *line;
-    seg_t          *seg;
-    polyobj_t      *po;
+    linedef_t*      line;
+    seg_t*          seg;
+    polyobj_t*      po;
 } ptrmobjblockingparams_t;
 
-boolean PTR_CheckMobjBlocking(mobj_t *mo, void *data)
+boolean PTR_CheckMobjBlocking(mobj_t* mo, void* data)
 {
     if((mo->ddFlags & DDMF_SOLID) ||
        (mo->dPlayer && !(mo->dPlayer->flags & DDPF_CAMERA)))
     {
-        float       tmbbox[4];
-        ptrmobjblockingparams_t *params = data;
+        float               tmbbox[4];
+        ptrmobjblockingparams_t* params = data;
 
         tmbbox[BOXTOP]    = mo->pos[VY] + mo->radius;
         tmbbox[BOXBOTTOM] = mo->pos[VY] - mo->radius;
@@ -550,11 +567,11 @@ boolean PTR_CheckMobjBlocking(mobj_t *mo, void *data)
     return true; // Continue iteration.
 }
 
-static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po)
+static boolean CheckMobjBlocking(seg_t* seg, polyobj_t* po)
 {
-    uint        blockBox[4];
-    vec2_t      bbox[2];
-    linedef_t     *ld;
+    uint                blockBox[4];
+    vec2_t              bbox[2];
+    linedef_t*          ld;
     ptrmobjblockingparams_t params;
 
     params.blocked = false;
@@ -575,28 +592,6 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po)
 }
 
 /**
- * @returns             Ptr to the polyobj that owns the degenmobj,
- *                      else @c NULL.
- */
-polyobj_t* PO_GetPolyobjForDegen(void *degenMobj)
-{
-    uint                i;
-    polyobj_t          *po;
-
-    for(i = 0; i < numPolyObjs; ++i)
-    {
-        po = polyObjs[i];
-
-        if(&po->startSpot == degenMobj)
-        {
-            return po;
-        }
-    }
-
-    return NULL;
-}
-
-/**
  * Iterate the linedefs of the polyobj calling func for each.
  * Iteration will stop if func returns false.
  *
@@ -604,7 +599,8 @@ polyobj_t* PO_GetPolyobjForDegen(void *degenMobj)
  * @param func          Call back function to call for each line of this po.
  * @return              @c true, if all callbacks are successfull.
  */
-boolean P_PolyobjLinesIterator(polyobj_t* po, boolean (*func) (struct linedef_s*, void*),
+boolean P_PolyobjLinesIterator(polyobj_t* po,
+                               boolean (*func) (struct linedef_s*, void*),
                                void* data)
 {
     uint                i;

@@ -296,7 +296,7 @@ void Cl_PolyMoverThinker(polymover_t *mover)
         }
 
         // Do the move.
-        P_PolyobjMove(mover->number | 0x80000000, dx, dy);
+        P_PolyobjMove(PO_GetPolyobj(mover->number | 0x80000000), dx, dy);
     }
 
     if(mover->rotate)
@@ -314,7 +314,8 @@ void Cl_PolyMoverThinker(polymover_t *mover)
             // Adjust to speed.
             dist = FIX2FLT(poly->angleSpeed);
         }
-        P_PolyobjRotate(mover->number | 0x80000000, FLT2FIX(dist));
+
+        P_PolyobjRotate(PO_GetPolyobj(mover->number | 0x80000000), FLT2FIX(dist));
     }
 
     // Can we get rid of this mover?
