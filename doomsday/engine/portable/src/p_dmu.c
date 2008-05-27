@@ -96,7 +96,6 @@ const char* DMU_Str(uint prop)
         { DMU_SUBSECTOR, "DMU_SUBSECTOR" },
         { DMU_SECTOR, "DMU_SECTOR" },
         { DMU_PLANE, "DMU_PLANE" },
-        { DMU_POLYOBJ, "DMU_POLYOBJ" },
         { DMU_LINEDEF_BY_TAG, "DMU_LINEDEF_BY_TAG" },
         { DMU_SECTOR_BY_TAG, "DMU_SECTOR_BY_TAG" },
         { DMU_LINEDEF_BY_ACT_TAG, "DMU_LINEDEF_BY_ACT_TAG" },
@@ -136,20 +135,7 @@ const char* DMU_Str(uint prop)
         { DMU_HEIGHT, "DMU_HEIGHT" },
         { DMU_TARGET_HEIGHT, "DMU_TARGET_HEIGHT" },
         { DMU_SEG_COUNT, "DMU_SEG_COUNT" },
-        { DMU_TAG, "DMU_TAG" },
-        { DMU_START_SPOT, "DMU_START_SPOT" },
-        { DMU_START_SPOT_X, "DMU_START_SPOT_X" },
-        { DMU_START_SPOT_Y, "DMU_START_SPOT_Y" },
-        { DMU_START_SPOT_XY, "DMU_START_SPOT_XY" },
-        { DMU_DESTINATION_X, "DMU_DESTINATION_X" },
-        { DMU_DESTINATION_Y, "DMU_DESTINATION_Y" },
-        { DMU_DESTINATION_XY, "DMU_DESTINATION_XY" },
-        { DMU_DESTINATION_ANGLE, "DMU_DESTINATION_ANGLE" },
         { DMU_SPEED, "DMU_SPEED" },
-        { DMU_ANGLE_SPEED, "DMU_ANGLE_SPEED" },
-        { DMU_SEQUENCE_TYPE, "DMU_SEQUENCE_TYPE" },
-        { DMU_CRUSH, "DMU_CRUSH" },
-        { DMU_SPECIAL_DATA, "DMU_SPECIAL_DATA" },
         { 0, NULL }
     };
     uint                i;
@@ -187,7 +173,6 @@ static int DMU_GetType(const void* ptr)
         case DMU_SUBSECTOR:
         case DMU_SECTOR:
         case DMU_PLANE:
-        case DMU_POLYOBJ:
         case DMU_NODE:
             return type;
 
@@ -396,9 +381,6 @@ uint P_ToIndex(const void* ptr)
     case DMU_SECTOR:
         return GET_SECTOR_IDX((sector_t*) ptr);
 
-    case DMU_POLYOBJ:
-        return ((polyobj_t*) ptr)->idx;
-
     case DMU_NODE:
         return GET_NODE_IDX((node_t*) ptr);
 
@@ -435,9 +417,6 @@ void* P_ToPtr(int type, uint index)
 
     case DMU_SECTOR:
         return SECTOR_PTR(index);
-
-    case DMU_POLYOBJ:
-        return (index < numPolyObjs? polyObjs[index] : NULL);
 
     case DMU_NODE:
         return NODE_PTR(index);
@@ -498,28 +477,6 @@ int P_Iteratep(void *ptr, uint prop, void* context,
             ssecPtr = sec->ssectors;
             while(*ssecPtr && (result = callback(*ssecPtr, context)) != 0)
                 *ssecPtr++;
-
-            return result;
-            }
-
-        default:
-            Con_Error("P_Iteratep: Property %s unknown/not vector.\n",
-                      DMU_Str(prop));
-        }
-        break;
-
-    case DMU_POLYOBJ:
-        switch(prop)
-        {
-        case DMU_SEG:
-            {
-            polyobj_t          *po = (polyobj_t*) ptr;
-            seg_t             **segPtr;
-            int                 result;
-
-            segPtr = po->segs;
-            while(*segPtr && (result = callback(*segPtr, context)) != 0)
-                *segPtr++;
 
             return result;
             }
@@ -613,11 +570,6 @@ int P_Callback(int type, uint index, void* context,
             return callback(SECTOR_PTR(index), context);
         break;
 
-    case DMU_POLYOBJ:
-        if(index < numPolyObjs)
-            return callback(polyObjs[index], context);
-        break;
-
     case DMU_PLANE:
         Con_Error("P_Callback: %s cannot be referenced by id alone (sector is unknown).\n",
                   DMU_Str(type));
@@ -660,7 +612,6 @@ int P_Callbackp(int type, void* ptr, void* context,
     case DMU_NODE:
     case DMU_SUBSECTOR:
     case DMU_SECTOR:
-    case DMU_POLYOBJ:
     case DMU_PLANE:
         // Only do the callback if the type is the same as the object's.
         if(type == DMU_GetType(ptr))
@@ -1034,10 +985,6 @@ static int setProperty(void* obj, void* context)
         break;
         }
 
-    case DMU_POLYOBJ:
-        Polyobj_SetProperty(ptr, args);
-        break;
-
     case DMU_NODE:
         Con_Error("SetProperty: Property %s is not writable in DMU_NODE.\n",
                   DMU_Str(args->prop));
@@ -1284,10 +1231,6 @@ static int getProperty(void* obj, void* context)
 
     case DMU_SUBSECTOR:
         Subsector_GetProperty(ptr, args);
-        break;
-
-    case DMU_POLYOBJ:
-        Polyobj_GetProperty(ptr, args);
         break;
 
     default:

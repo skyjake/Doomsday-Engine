@@ -29,15 +29,22 @@
 #ifndef __DOOMSDAY_POLYOB_H__
 #define __DOOMSDAY_POLYOB_H__
 
-#include "p_mapdata.h"
+// We'll use the base polyobj template directly as our mobj.
+typedef struct polyobj_s {
+DD_BASE_POLYOBJ_ELEMENTS()} polyobj_t;
 
-extern struct   polyobj_s **polyObjs; // list of all poly-objects on the level
-extern uint     numPolyObjs;
+#define POLYOBJ_SIZE		gx.polyobjSize
+
+extern polyobj_t **polyObjs; // List of all poly-objects on the level.
+extern uint numPolyObjs;
 
 // Polyobj system.
 void            PO_InitForMap(void);
-void            PO_SetCallback(void (*func) (mobj_t *, void *, void *));
-polyobj_t      *PO_GetPolyobjForDegen(void *degenMobj);
+void            PO_SetCallback(void (*func) (struct mobj_s *, void *, void *));
+
+polyobj_t*      PO_GetPolyobj(uint polyNum);
+polyobj_t*      PO_GetPolyobjIdx(uint idx);
+polyobj_t*      PO_GetPolyobjForDegen(void *degenMobj);
 
 // Polyobject interface.
 boolean         P_PolyobjMove(uint num, float x, float y);
@@ -48,6 +55,6 @@ void            P_PolyobjUpdateBBox(polyobj_t *po);
 
 void            P_PolyobjLinkToRing(polyobj_t *po, linkpolyobj_t **link);
 void            P_PolyobjUnlinkFromRing(polyobj_t *po, linkpolyobj_t **link);
-boolean         P_PolyobjLinesIterator(polyobj_t *po, boolean (*func) (linedef_t *, void *),
+boolean         P_PolyobjLinesIterator(polyobj_t *po, boolean (*func) (struct linedef_s *, void *),
                                        void *data);
 #endif

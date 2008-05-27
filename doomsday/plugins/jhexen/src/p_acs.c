@@ -332,7 +332,7 @@ static void StartOpenACS(int number, int infoIndex, int *address)
  */
 void P_CheckACSStore(void)
 {
-    acsstore_t *store;
+    acsstore_t* store;
 
     for(store = ACSStore; store->map != 0; store++)
     {
@@ -348,13 +348,12 @@ void P_CheckACSStore(void)
     }
 }
 
-boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
-                   linedef_t *line, int side)
+boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
+                   linedef_t* line, int side)
 {
-    int         i;
-    acs_t      *script;
-    int         infoIndex;
-    aste_t     *statePtr;
+    int                 i, infoIndex;
+    acs_t*              script;
+    aste_t*             statePtr;
 
     NewScript = NULL;
     if(map && map != gameMap)
@@ -364,7 +363,7 @@ boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
 
     infoIndex = GetACSIndex(number);
     if(infoIndex == -1)
-    {                           // Script not found
+    {   // Script not found.
         //Con_Error("P_StartACS: Unknown script number %d", number);
         sprintf(ErrorMsg, "P_STARTACS ERROR: UNKNOWN SCRIPT %d", number);
         P_SetMessage(&players[CONSOLEPLAYER], ErrorMsg, false);
@@ -372,17 +371,19 @@ boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
 
     statePtr = &ACSInfo[infoIndex].state;
     if(*statePtr == ASTE_SUSPENDED)
-    {                           // Resume a suspended script
+    {   // Resume a suspended script.
         *statePtr = ASTE_RUNNING;
         return true;
     }
+
     if(*statePtr != ASTE_INACTIVE)
-    {                           // Script is already executing
+    {   // Script is already executing.
         return false;
     }
 
     script = Z_Malloc(sizeof(acs_t), PU_LEVSPEC, 0);
     memset(script, 0, sizeof(acs_t));
+
     script->number = number;
     script->infoIndex = infoIndex;
     script->activator = activator;
@@ -394,6 +395,7 @@ boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
     {
         script->vars[i] = args[i];
     }
+
     *statePtr = ASTE_RUNNING;
     P_AddThinker(&script->thinker);
     NewScript = script;
@@ -516,10 +518,9 @@ void P_ACSInitNewGame(void)
     memset(ACSStore, 0, sizeof(ACSStore));
 }
 
-void T_InterpretACS(acs_t * script)
+void T_InterpretACS(acs_t* script)
 {
-    int         cmd;
-    int         action;
+    int             cmd, action;
 
     if(ACSInfo[script->infoIndex].state == ASTE_TERMINATING)
     {
@@ -559,7 +560,7 @@ void T_InterpretACS(acs_t * script)
 
 void P_TagFinished(int tag)
 {
-    int         i;
+    int             i;
 
     if(TagBusy(tag) == true)
     {
@@ -578,7 +579,7 @@ void P_TagFinished(int tag)
 
 void P_PolyobjFinished(int po)
 {
-    int         i;
+    int             i;
 
     if(PO_Busy(po) == true)
     {
@@ -597,7 +598,7 @@ void P_PolyobjFinished(int po)
 
 static void ScriptFinished(int number)
 {
-    int         i;
+    int             i;
 
     for(i = 0; i < ACScriptCount; ++i)
     {
@@ -611,9 +612,9 @@ static void ScriptFinished(int number)
 
 static boolean TagBusy(int tag)
 {
-    uint        k;
-    sector_t   *sec;
-    xsector_t  *xsec;
+    uint                k;
+    sector_t*           sec;
+    xsector_t*          xsec;
 
     // NOTE: We can't use the sector tag lists here as we might already be
     // in an iteration at a higher level.
@@ -628,6 +629,7 @@ static boolean TagBusy(int tag)
         if(xsec->specialData)
             return true;
     }
+
     return false;
 }
 
@@ -636,7 +638,7 @@ static boolean TagBusy(int tag)
  */
 static int GetACSIndex(int number)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < ACScriptCount; ++i)
     {
@@ -692,30 +694,32 @@ static int CmdPushNumber(void)
 
 static int CmdLSpec1(void)
 {
-    int         special;
+    int                 special;
 
     special = LONG(*PCodePtr++);
     SpecArgs[0] = Pop();
     P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
                          ACScript->activator);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec2(void)
 {
-    int         special;
+    int                 special;
 
     special = LONG(*PCodePtr++);
     SpecArgs[1] = Pop();
     SpecArgs[0] = Pop();
     P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
                          ACScript->activator);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec3(void)
 {
-    int         special;
+    int                 special;
 
     special = LONG(*PCodePtr++);
     SpecArgs[2] = Pop();
@@ -723,12 +727,13 @@ static int CmdLSpec3(void)
     SpecArgs[0] = Pop();
     P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
                          ACScript->activator);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec4(void)
 {
-    int         special;
+    int                 special;
 
     special = LONG(*PCodePtr++);
     SpecArgs[3] = Pop();
@@ -737,12 +742,13 @@ static int CmdLSpec4(void)
     SpecArgs[0] = Pop();
     P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
                          ACScript->activator);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec5(void)
 {
-    int         special;
+    int                 special;
 
     special = LONG(*PCodePtr++);
     SpecArgs[4] = Pop();
@@ -752,35 +758,38 @@ static int CmdLSpec5(void)
     SpecArgs[0] = Pop();
     P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
                          ACScript->activator);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec1Direct(void)
 {
-    int         special;
+    int                 special;
 
     special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
     P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
                          ACScript->activator);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec2Direct(void)
 {
-    int         special;
+    int                 special;
 
     special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
     SpecArgs[1] = LONG(*PCodePtr++);
     P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
                          ACScript->activator);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec3Direct(void)
 {
-    int         special;
+    int                 special;
 
     special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
@@ -788,12 +797,13 @@ static int CmdLSpec3Direct(void)
     SpecArgs[2] = LONG(*PCodePtr++);
     P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
                          ACScript->activator);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec4Direct(void)
 {
-    int         special;
+    int                 special;
 
     special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
@@ -802,12 +812,13 @@ static int CmdLSpec4Direct(void)
     SpecArgs[3] = LONG(*PCodePtr++);
     P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
                          ACScript->activator);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec5Direct(void)
 {
-    int         special;
+    int                 special;
 
     special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
@@ -817,6 +828,7 @@ static int CmdLSpec5Direct(void)
     SpecArgs[4] = LONG(*PCodePtr++);
     P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
                          ACScript->activator);
+
     return SCRIPT_CONTINUE;
 }
 
@@ -828,10 +840,11 @@ static int CmdAdd(void)
 
 static int CmdSubtract(void)
 {
-    int         operand2;
+    int                 operand2;
 
     operand2 = Pop();
     Push(Pop() - operand2);
+
     return SCRIPT_CONTINUE;
 }
 
@@ -843,7 +856,7 @@ static int CmdMultiply(void)
 
 static int CmdDivide(void)
 {
-    int         operand2;
+    int                 operand2;
 
     operand2 = Pop();
     Push(Pop() / operand2);
@@ -852,7 +865,7 @@ static int CmdDivide(void)
 
 static int CmdModulus(void)
 {
-    int         operand2;
+    int                 operand2;
 
     operand2 = Pop();
     Push(Pop() % operand2);
@@ -873,7 +886,7 @@ static int CmdNE(void)
 
 static int CmdLT(void)
 {
-    int         operand2;
+    int                 operand2;
 
     operand2 = Pop();
     Push(Pop() < operand2);
@@ -882,7 +895,7 @@ static int CmdLT(void)
 
 static int CmdGT(void)
 {
-    int         operand2;
+    int                 operand2;
 
     operand2 = Pop();
     Push(Pop() > operand2);
@@ -891,7 +904,7 @@ static int CmdGT(void)
 
 static int CmdLE(void)
 {
-    int         operand2;
+    int                 operand2;
 
     operand2 = Pop();
     Push(Pop() <= operand2);
@@ -900,7 +913,7 @@ static int CmdLE(void)
 
 static int CmdGE(void)
 {
-    int         operand2;
+    int                 operand2;
 
     operand2 = Pop();
     Push(Pop() >= operand2);
@@ -1108,8 +1121,7 @@ static int CmdDelayDirect(void)
 
 static int CmdRandom(void)
 {
-    int         low;
-    int         high;
+    int                 low, high;
 
     high = Pop();
     low = Pop();
@@ -1119,8 +1131,7 @@ static int CmdRandom(void)
 
 static int CmdRandomDirect(void)
 {
-    int         low;
-    int         high;
+    int                 low, high;
 
     low = LONG(*PCodePtr++);
     high = LONG(*PCodePtr++);
@@ -1130,7 +1141,7 @@ static int CmdRandomDirect(void)
 
 static int CmdThingCount(void)
 {
-    int         tid;
+    int                 tid;
 
     tid = Pop();
     ThingCount(Pop(), tid);
@@ -1139,7 +1150,7 @@ static int CmdThingCount(void)
 
 static int CmdThingCountDirect(void)
 {
-    int         type;
+    int                 type;
 
     type = LONG(*PCodePtr++);
     ThingCount(type, LONG(*PCodePtr++));
@@ -1148,59 +1159,64 @@ static int CmdThingCountDirect(void)
 
 static void ThingCount(int type, int tid)
 {
-    int         count;
-    int         searcher;
-    mobj_t     *mobj;
-    mobjtype_t  moType;
-    thinker_t  *think;
+    int                 count, searcher;
+    mobj_t*             mobj;
+    mobjtype_t          moType;
+    thinker_t*          think;
 
     if(!(type + tid))
-    {   // Nothing to count
+    {   // Nothing to count.
         return;
     }
+
     moType = TranslateThingType[type];
     count = 0;
     searcher = -1;
+
     if(tid)
-    {   // Count TID things
+    {   // Count TID things.
         while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
         {
             if(type == 0)
-            {   // Just count TIDs
+            {   // Just count TIDs.
                 count++;
             }
             else if(moType == mobj->type)
             {
                 if(mobj->flags & MF_COUNTKILL && mobj->health <= 0)
-                {   // Don't count dead monsters
+                {   // Don't count dead monsters.
                     continue;
                 }
+
                 count++;
             }
         }
     }
     else
-    {   // Count only types
+    {   // Count only types.
         for(think = thinkerCap.next; think != &thinkerCap && think;
             think = think->next)
         {
             if(think->function != P_MobjThinker)
-            {   // Not a mobj thinker
+            {   // Not a mobj thinker.
                 continue;
             }
 
             mobj = (mobj_t *) think;
             if(mobj->type != moType)
-            {   // Doesn't match
+            {   // Doesn't match.
                 continue;
             }
+
             if(mobj->flags & MF_COUNTKILL && mobj->health <= 0)
-            {   // Don't count dead monsters
+            {   // Don't count dead monsters.
                 continue;
             }
+
             count++;
         }
     }
+
     Push(count);
 }
 
@@ -1234,89 +1250,89 @@ static int CmdPolyWaitDirect(void)
 
 static int CmdChangeFloor(void)
 {
-    int         tag;
-    int         flat;
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+    int                 tag, flat;
+    sector_t*           sec = NULL;
+    iterlist_t*         list;
 
     flat = R_MaterialNumForName(GetACString(Pop()), MAT_FLAT);
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
-    if(!list)
-        return SCRIPT_CONTINUE;
-
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    if(list)
     {
-        P_SetIntp(sec, DMU_FLOOR_MATERIAL, flat);
+        P_IterListResetIterator(list, true);
+        while((sec = P_IterListIterator(list)) != NULL)
+        {
+            P_SetIntp(sec, DMU_FLOOR_MATERIAL, flat);
+        }
     }
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdChangeFloorDirect(void)
 {
-    int         tag;
-    int         flat;
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+    int                 tag, flat;
+    sector_t*           sec = NULL;
+    iterlist_t*         list;
 
     tag = LONG(*PCodePtr++);
     flat = R_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MAT_FLAT);
 
     list = P_GetSectorIterListForTag(tag, false);
-    if(!list)
-        return SCRIPT_CONTINUE;
-
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    if(list)
     {
-        P_SetIntp(sec, DMU_FLOOR_MATERIAL, flat);
+        P_IterListResetIterator(list, true);
+        while((sec = P_IterListIterator(list)) != NULL)
+        {
+            P_SetIntp(sec, DMU_FLOOR_MATERIAL, flat);
+        }
     }
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdChangeCeiling(void)
 {
-    int         tag;
-    int         flat;
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+    int                 tag, flat;
+    sector_t*           sec = NULL;
+    iterlist_t*         list;
 
     flat = R_MaterialNumForName(GetACString(Pop()), MAT_FLAT);
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
-    if(!list)
-        return SCRIPT_CONTINUE;
-
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    if(list)
     {
-        P_SetIntp(sec, DMU_CEILING_MATERIAL, flat);
+        P_IterListResetIterator(list, true);
+        while((sec = P_IterListIterator(list)) != NULL)
+        {
+            P_SetIntp(sec, DMU_CEILING_MATERIAL, flat);
+        }
     }
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdChangeCeilingDirect(void)
 {
-    int         tag;
-    int         flat;
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+    int                 tag, flat;
+    sector_t*           sec = NULL;
+    iterlist_t*         list;
 
     tag = LONG(*PCodePtr++);
     flat = R_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MAT_FLAT);
 
     list = P_GetSectorIterListForTag(tag, false);
-    if(!list)
-        return SCRIPT_CONTINUE;
-
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    if(list)
     {
-        P_SetIntp(sec, DMU_CEILING_MATERIAL, flat);
+        P_IterListResetIterator(list, true);
+        while((sec = P_IterListIterator(list)) != NULL)
+        {
+            P_SetIntp(sec, DMU_CEILING_MATERIAL, flat);
+        }
     }
+
     return SCRIPT_CONTINUE;
 }
 
@@ -1364,7 +1380,7 @@ static int CmdNegateLogical(void)
 
 static int CmdLShift(void)
 {
-    int         operand2;
+    int                 operand2;
 
     operand2 = Pop();
     Push(Pop() << operand2);
@@ -1373,7 +1389,7 @@ static int CmdLShift(void)
 
 static int CmdRShift(void)
 {
-    int         operand2;
+    int                 operand2;
 
     operand2 = Pop();
     Push(Pop() >> operand2);
@@ -1456,7 +1472,7 @@ static int CmdEndPrint(void)
     }
     else
     {
-        int         i;
+        int                 i;
 
         // Send to everybody.
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -1469,7 +1485,7 @@ static int CmdEndPrint(void)
 
 static int CmdEndPrintBold(void)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -1478,6 +1494,7 @@ static int CmdEndPrintBold(void)
             P_SetYellowMessage(&players[i], PrintBuffer, false);
         }
     }
+
     return SCRIPT_CONTINUE;
 }
 
@@ -1489,27 +1506,28 @@ static int CmdPrintString(void)
 
 static int CmdPrintNumber(void)
 {
-    char        tempStr[16];
+    char                tempStr[16];
 
     sprintf(tempStr, "%d", Pop());
     strcat(PrintBuffer, tempStr);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdPrintCharacter(void)
 {
-    char       *bufferEnd;
+    char*               bufferEnd;
 
     bufferEnd = PrintBuffer + strlen(PrintBuffer);
     *bufferEnd++ = Pop();
     *bufferEnd = 0;
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdPlayerCount(void)
 {
-    int         i;
-    int         count;
+    int                 i, count;
 
     count = 0;
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -1517,12 +1535,13 @@ static int CmdPlayerCount(void)
         count += players[i].plr->inGame;
     }
     Push(count);
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdGameType(void)
 {
-    int         gametype;
+    int                 gametype;
 
     if(IS_NETGAME == false)
     {
@@ -1537,6 +1556,7 @@ static int CmdGameType(void)
         gametype = GAME_NET_COOPERATIVE;
     }
     Push(gametype);
+
     return SCRIPT_CONTINUE;
 }
 
@@ -1554,13 +1574,15 @@ static int CmdTimer(void)
 
 static int CmdSectorSound(void)
 {
-    int         volume;
-    mobj_t     *mobj;
+    int                 volume;
+    mobj_t*             mobj;
 
     mobj = NULL;
     if(ACScript->line)
     {
-        sector_t* front = P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
+        sector_t*           front =
+            P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
+
         mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);
     }
     volume = Pop();
@@ -1576,11 +1598,8 @@ Con_Printf("CmdSectorSound: volume=%i\n", volume);
 
 static int CmdThingSound(void)
 {
-    int         tid;
-    int         sound;
-    int         volume;
-    mobj_t     *mobj;
-    int         searcher;
+    int                 tid, sound, volume, searcher;
+    mobj_t*             mobj;
 
     volume = Pop();
     sound = S_GetSoundID(GetACString(Pop()));
@@ -1590,14 +1609,15 @@ static int CmdThingSound(void)
     {
         S_StartSoundAtVolume(sound, mobj, volume / 127.0f);
     }
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdAmbientSound(void)
 {
-    int         volume, sound;
-    mobj_t     *mobj = NULL;        // For 3D positioning.
-    mobj_t     *plrmo = players[DISPLAYPLAYER].plr->mo;
+    int                 volume, sound;
+    mobj_t*             mobj = NULL; // For 3D positioning.
+    mobj_t*             plrmo = players[DISPLAYPLAYER].plr->mo;
 
     volume = Pop();
     // If we are playing 3D sounds, create a temporary source mobj
@@ -1607,9 +1627,9 @@ static int CmdAmbientSound(void)
         // SpawnMobj calls P_Random. We don't want that
         // the random generator gets out of sync.
         mobj = P_SpawnMobj3f(plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
-                           plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
-                           plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
-                           MT_CAMERA); // A camera's a good temporary source.
+                             plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
+                             plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
+                             MT_CAMERA); // A camera's a good temporary source.
         mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.
     }
 
@@ -1621,26 +1641,26 @@ static int CmdAmbientSound(void)
 
 static int CmdSoundSequence(void)
 {
-    mobj_t     *mobj;
+    mobj_t*             mobj;
 
     mobj = NULL;
     if(ACScript->line)
     {
-        sector_t* front = P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
+        sector_t*           front =
+            P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
+
         mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);
     }
     SN_StartSequenceName(mobj, GetACString(Pop()));
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdSetLineTexture(void)
 {
-    linedef_t     *line;
-    int         lineTag;
-    int         side;
-    int         position;
-    int         texture;
-    iterlist_t *list;
+    int                 lineTag, side, position, texture;
+    linedef_t*          line;
+    iterlist_t*         list;
 
     texture = R_MaterialNumForName(GetACString(Pop()), MAT_TEXTURE);
     position = Pop();
@@ -1648,59 +1668,62 @@ static int CmdSetLineTexture(void)
     lineTag = Pop();
 
     list = P_GetLineIterListForTag(lineTag, false);
-    if(!list)
-        return SCRIPT_CONTINUE;
-
-    P_IterListResetIterator(list, true);
-    while((line = P_IterListIterator(list)) != NULL)
+    if(list)
     {
-        sidedef_t* sdef = P_GetPtrp(line,
-                                 (side == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1));
-        if(position == TEXTURE_MIDDLE)
+        P_IterListResetIterator(list, true);
+        while((line = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, texture);
-        }
-        else if(position == TEXTURE_BOTTOM)
-        {
-            P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, texture);
-        }
-        else
-        {                       // TEXTURE_TOP
-            P_SetIntp(sdef, DMU_TOP_MATERIAL, texture);
+            sidedef_t*          sdef =
+                P_GetPtrp(line, (side == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1));
+
+            if(position == TEXTURE_MIDDLE)
+            {
+                P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, texture);
+            }
+            else if(position == TEXTURE_BOTTOM)
+            {
+                P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, texture);
+            }
+            else
+            {                       // TEXTURE_TOP
+                P_SetIntp(sdef, DMU_TOP_MATERIAL, texture);
+            }
         }
     }
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdSetLineBlocking(void)
 {
-    linedef_t     *line;
-    int         lineTag;
-    boolean     blocking;
-    iterlist_t *list;
+    linedef_t*          line;
+    int                 lineTag;
+    boolean             blocking;
+    iterlist_t*         list;
 
     blocking = Pop()? DDLF_BLOCKING : 0;
     lineTag = Pop();
 
     list = P_GetLineIterListForTag(lineTag, false);
-    if(!list)
-        return SCRIPT_CONTINUE;
-
-    P_IterListResetIterator(list, true);
-    while((line = P_IterListIterator(list)) != NULL)
+    if(list)
     {
-        P_SetIntp(line, DMU_FLAGS,
-            (P_GetIntp(line, DMU_FLAGS) & ~DDLF_BLOCKING) | blocking);
+        P_IterListResetIterator(list, true);
+        while((line = P_IterListIterator(list)) != NULL)
+        {
+            P_SetIntp(line, DMU_FLAGS,
+                (P_GetIntp(line, DMU_FLAGS) & ~DDLF_BLOCKING) | blocking);
+        }
     }
+
     return SCRIPT_CONTINUE;
 }
 
 static int CmdSetLineSpecial(void)
 {
-    linedef_t     *line;
-    int         lineTag;
-    int         special, arg1, arg2, arg3, arg4, arg5;
-    iterlist_t *list;
+    linedef_t*          line;
+    int                 lineTag;
+    int                 special, arg1, arg2, arg3, arg4, arg5;
+    iterlist_t*         list;
 
     arg5 = Pop();
     arg4 = Pop();
@@ -1711,28 +1734,29 @@ static int CmdSetLineSpecial(void)
     lineTag = Pop();
 
     list = P_GetLineIterListForTag(lineTag, false);
-    if(!list)
-        return SCRIPT_CONTINUE;
-
-    P_IterListResetIterator(list, true);
-    while((line = P_IterListIterator(list)) != NULL)
+    if(list)
     {
-        xline_t* xline = P_ToXLine(line);
-        xline->special = special;
-        xline->arg1 = arg1;
-        xline->arg2 = arg2;
-        xline->arg3 = arg3;
-        xline->arg4 = arg4;
-        xline->arg5 = arg5;
+        P_IterListResetIterator(list, true);
+        while((line = P_IterListIterator(list)) != NULL)
+        {
+            xline_t* xline = P_ToXLine(line);
+            xline->special = special;
+            xline->arg1 = arg1;
+            xline->arg2 = arg2;
+            xline->arg3 = arg3;
+            xline->arg4 = arg4;
+            xline->arg5 = arg5;
+        }
     }
+
     return SCRIPT_CONTINUE;
 }
 
 // Console commands.
 DEFCC(CCmdScriptInfo)
 {
-    int     i, whichOne = -1;
-    char   *scriptStates[] = {
+    int                 i, whichOne = -1;
+    char*               scriptStates[] = {
         "Inactive", "Running", "Suspended", "Waiting for tag",
         "Waiting for poly", "Waiting for script", "Terminating"
     };
@@ -1742,12 +1766,14 @@ DEFCC(CCmdScriptInfo)
 
     for(i = 0; i < ACScriptCount; ++i)
     {
-        acsinfo_t *aptr = ACSInfo + i;
+        acsinfo_t*          aptr = ACSInfo + i;
 
         if(whichOne != -1 && whichOne != aptr->number)
             continue;
+
         Con_Printf("%d %s (a: %d, w: %d)\n", aptr->number,
                    scriptStates[aptr->state], aptr->argCount, aptr->waitValue);
     }
+
     return true;
 }

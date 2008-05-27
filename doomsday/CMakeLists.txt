@@ -689,7 +689,6 @@ SET (DENG_PORTABLE_SOURCES
      ${CMAKE_SOURCE_DIR}/engine/portable/src/p_particle.c
      ${CMAKE_SOURCE_DIR}/engine/portable/src/p_plane.c
      ${CMAKE_SOURCE_DIR}/engine/portable/src/p_players.c
-     ${CMAKE_SOURCE_DIR}/engine/portable/src/p_polyob.c
      ${CMAKE_SOURCE_DIR}/engine/portable/src/p_polyobj.c
      ${CMAKE_SOURCE_DIR}/engine/portable/src/p_sector.c
      ${CMAKE_SOURCE_DIR}/engine/portable/src/p_seg.c

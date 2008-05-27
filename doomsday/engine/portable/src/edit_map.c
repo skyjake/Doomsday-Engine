@@ -138,7 +138,6 @@ static polyobj_t *createPolyobj(void)
     polyobj_t          *po;
 
     po = M_Calloc(sizeof(*po));
-    po->header.type = DMU_POLYOBJ;
 
     map->polyObjs = M_Realloc(map->polyObjs, sizeof(po) * (++map->numPolyObjs + 1));
     map->polyObjs[map->numPolyObjs-1] = po;
@@ -1420,12 +1419,11 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
 
     for(i = 0; i < dest->numPolyObjs; ++i)
     {
-        uint            j;
-        polyobj_t      *destP, *srcP = src->polyObjs[i];
-        seg_t          *segs;
+        uint                j;
+        polyobj_t*          destP, *srcP = src->polyObjs[i];
+        seg_t*              segs;
 
-        destP = Z_Calloc(sizeof(*destP), PU_LEVEL, 0);
-        destP->header.type = DMU_POLYOBJ;
+        destP = Z_Calloc(POLYOBJ_SIZE, PU_LEVEL, 0);
         destP->idx = i;
         destP->crush = srcP->crush;
         destP->tag = srcP->tag;
@@ -1441,22 +1439,21 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
             Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_LEVEL, 0);
 
         // Create a seg for each line of this polyobj.
-        segs = Z_Calloc(sizeof(seg_t) * srcP->buildData.lineCount, PU_LEVEL, 0);
-        destP->segs = Z_Malloc(sizeof(seg_t*) * (srcP->buildData.lineCount+1), PU_LEVEL, 0);
-        for(j = 0; j < srcP->buildData.lineCount; ++j)
+        segs = Z_Calloc(sizeof(seg_t) * destP->numSegs, PU_LEVEL, 0);
+        destP->segs = Z_Malloc(sizeof(seg_t*) * (destP->numSegs+1), PU_LEVEL, 0);
+        for(j = 0; j < destP->numSegs; ++j)
         {
-            linedef_t      *line = &dest->lineDefs[srcP->buildData.lineDefs[j]->buildData.index - 1];
-            seg_t          *seg = &segs[j];
-            float           dx, dy;
-            uint            k;
+            linedef_t*          line =
+                &dest->lineDefs[srcP->buildData.lineDefs[j]->buildData.index - 1];
+            seg_t*              seg = &segs[j];
+            float               dx, dy;
+            uint                k;
 
             // This line is part of a polyobj.
             line->inFlags |= LF_POLYOBJ;
 
             seg->header.type = DMU_SEG;
             seg->lineDef = line;
-            seg->SG_v1 = line->L_v1;
-            seg->SG_v2 = line->L_v2;
             dx = line->L_v2pos[VX] - line->L_v1pos[VX];
             dy = line->L_v2pos[VY] - line->L_v1pos[VY];
             seg->length = P_AccurateDistance(dx, dy);
@@ -1469,11 +1466,12 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
             // Initialize the bias illumination data.
             for(k = 0; k < 4; ++k)
             {
-                uint        l;
+                uint                l;
 
                 for(l = 0; l < 3; ++l)
                 {
-                    uint        m;
+                    uint                m;
+
                     seg->illum[l][k].flags = VIF_STILL_UNSEEN;
 
                     for(m = 0; m < MAX_BIAS_AFFECTED; ++m)
@@ -1482,13 +1480,6 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
                     }
                 }
             }
-
-            // The original Pts are based off the anchor Pt, and are unique
-            // to each seg, not each linedef.
-            destP->originalPts[j].pos[VX] =
-                seg->SG_v1pos[VX] - destP->startSpot.pos[VX];
-            destP->originalPts[j].pos[VY] =
-                seg->SG_v1pos[VY] - destP->startSpot.pos[VY];
 
             destP->segs[j] = seg;
         }
@@ -1505,7 +1496,8 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
  */
 boolean MPE_End(void)
 {
-    gamemap_t          *gamemap;
+    uint                i;
+    gamemap_t*          gamemap;
     boolean             builtOK;
 
     if(!editMapInited)
@@ -1556,6 +1548,34 @@ boolean MPE_End(void)
      * Build a BSP for this map.
      */
     builtOK = BSP_Build(gamemap, &map->vertexes, &map->numVertexes);
+
+    // Finish the polyobjs (after the vertexes are hardened).
+    for(i = 0; i < gamemap->numPolyObjs; ++i)
+    {
+        polyobj_t*          po = gamemap->polyObjs[i];
+        seg_t**             segPtr;
+        size_t              n;
+
+        segPtr = po->segs;
+        n = 0;
+        while(*segPtr)
+        {
+            seg_t*              seg = *segPtr;
+
+            seg->SG_v1 = seg->lineDef->L_v1;
+            seg->SG_v2 = seg->lineDef->L_v2;
+
+            // The original Pts are based off the anchor Pt, and are unique
+            // to each seg, not each linedef.
+            po->originalPts[n].pos[VX] =
+                seg->SG_v1pos[VX] - po->startSpot.pos[VX];
+            po->originalPts[n].pos[VY] =
+                seg->SG_v1pos[VY] - po->startSpot.pos[VY];
+
+            *segPtr++;
+            n++;
+        }
+    }
 
     // Polygonize.
     R_PolygonizeMap(gamemap);

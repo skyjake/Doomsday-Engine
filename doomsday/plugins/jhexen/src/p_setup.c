@@ -72,7 +72,7 @@ void P_RegisterMapObjs(void)
     P_RegisterMapObjProperty(MO_THING, MO_ID, "ID", DDVT_SHORT);
     P_RegisterMapObjProperty(MO_THING, MO_X, "X", DDVT_SHORT);
     P_RegisterMapObjProperty(MO_THING, MO_Y, "Y", DDVT_SHORT);
-    P_RegisterMapObjProperty(MO_THING, MO_Y, "Z", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_THING, MO_Z, "Z", DDVT_SHORT);
     P_RegisterMapObjProperty(MO_THING, MO_ANGLE, "Angle", DDVT_SHORT);
     P_RegisterMapObjProperty(MO_THING, MO_TYPE, "Type", DDVT_SHORT);
     P_RegisterMapObjProperty(MO_THING, MO_FLAGS, "Flags", DDVT_SHORT);

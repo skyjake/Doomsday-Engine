@@ -576,7 +576,6 @@ extern          "C" {
         DMU_SECTOR,
         DMU_PLANE,
         DMU_SURFACE,
-        DMU_POLYOBJ,
 
         DMU_LINEDEF_BY_TAG,
         DMU_SECTOR_BY_TAG,
@@ -620,25 +619,10 @@ extern          "C" {
         DMT_MOBJS,                  // pointer to start of sector mobjList
         DMU_BOUNDING_BOX,           // float[4]
         DMU_SOUND_ORIGIN,
-
         DMU_HEIGHT,
         DMU_TARGET_HEIGHT,
-
-        DMU_SEG_COUNT,
-        DMU_TAG,
-        DMU_START_SPOT,             // degenmobj_t
-        DMU_START_SPOT_X,
-        DMU_START_SPOT_Y,
-        DMU_START_SPOT_XY,
-        DMU_DESTINATION_X,
-        DMU_DESTINATION_Y,
-        DMU_DESTINATION_XY,
-        DMU_DESTINATION_ANGLE,
         DMU_SPEED,
-        DMU_ANGLE_SPEED,
-        DMU_SEQUENCE_TYPE,
-        DMU_CRUSH,                  // boolean
-        DMU_SPECIAL_DATA
+        DMU_SEG_COUNT
     };
 
     // Linedef flags:
@@ -845,6 +829,33 @@ enum { MX, MY, MZ };               // Momentum axis indices.
 
     typedef struct ddmobj_base_s {
     DD_BASE_MOBJ_ELEMENTS()} ddmobj_base_t;
+
+    // Base polyobj_t elements. Games MUST use this as the basis for polyobj_t.
+#define DD_BASE_POLYOBJ_ELEMENTS() \
+    unsigned int        idx;            /* Idx of polyobject. */ \
+    int                 tag;            /* Reference tag. */ \
+    int                 validCount; \
+    float               box[2][2]; \
+    degenmobj_t         startSpot; \
+    float               dest[2];        /* Destination XY. */ \
+    angle_t             angle; \
+    angle_t             destAngle;      /* Destination angle. */ \
+    angle_t             angleSpeed;     /* Rotation speed. */ \
+    unsigned int        numSegs; \
+    struct seg_s**      segs; \
+    struct fvertex_s*   originalPts;    /* Used as the base for the rotations. */ \
+    struct fvertex_s*   prevPts;        /* Use to restore the old point values. */ \
+    float               speed;          /* Movement speed. */ \
+    boolean             crush;          /* Should the polyobj attempt to crush mobjs? */ \
+    int                 seqType; \
+    struct { \
+        int             index; \
+        uint            lineCount; \
+        struct linedef_s **lineDefs; \
+    } buildData;
+
+    typedef struct ddpolyobj_base_s {
+    DD_BASE_POLYOBJ_ELEMENTS()} ddpolyobj_base_t;
 
     //------------------------------------------------------------------------
     //
@@ -1406,6 +1417,7 @@ typedef struct ticcmd_s {
 #define LOOKDIR2RAD(x)  (LOOKDIR2DEG(x)/180*PI)
 
     struct mobj_s;
+    struct polyobj_s;
 
     typedef struct fixcounters_s {
         int             angles;

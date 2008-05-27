@@ -186,7 +186,8 @@ typedef struct {
 typedef struct mobj_s {
     // Defined in dd_share.h; required mobj elements.
     DD_BASE_MOBJ_ELEMENTS()
-        // Hexen-specific data:
+
+    // Hexen-specific data:
     struct player_s *player;       // only valid if type == MT_PLAYER
 
     int             floorPic;      // contacted sec floorpic
@@ -219,6 +220,14 @@ typedef struct mobj_s {
     // Used by lightning zap
     struct mobj_s  *lastEnemy;
 } mobj_t;
+
+typedef struct polyobj_s {
+    // Defined in dd_share.h; required polyobj elements.
+    DD_BASE_POLYOBJ_ELEMENTS()
+
+    // Hexen-specific data:
+    void*               specialData;    /* Pointer a thinker, if the poly is moving. */
+} polyobj_t;
 
 extern spawnspot_t* things;
 

@@ -170,30 +170,33 @@ typedef struct spawnspot_s {
 // Map Object definition.
 typedef struct mobj_s {
     // Defined in dd_share.h; required mobj elements.
-    DD_BASE_MOBJ_ELEMENTS() mobjinfo_t *info;   // &mobjinfo[mobj->type]
-    int             damage;        // For missiles
+    DD_BASE_MOBJ_ELEMENTS()
+
+    // Heretic-specific data:
+    mobjinfo_t     *info;           // &mobjinfo[mobj->type]
+    int             damage;         // For missiles
     int             flags;
-    int             flags2;        // Heretic flags
+    int             flags2;         // Heretic flags
     int             flags3;
-    int             special1;      // Special info
-    int             special2;      // Special info
+    int             special1;       // Special info
+    int             special2;       // Special info
     int             health;
-    int             moveDir;       // 0-7
-    int             moveCount;     // when 0, select a new dir
-    struct mobj_s  *target;        // thing being chased/attacked (or NULL)
+    int             moveDir;        // 0-7
+    int             moveCount;      // when 0, select a new dir
+    struct mobj_s  *target;         // thing being chased/attacked (or NULL)
     // also the originator for missiles
     // used by player to freeze a bit after
     // teleporting
-    int             threshold;     // if >0, the target will be chased
+    int             threshold;      // if >0, the target will be chased
 
-    int             intFlags;      // killough $dropoff_fix: internal flags
-    float           dropOffZ;      // killough $dropoff_fix
-    short           gear;          // killough 11/98: used in torque simulation
-    boolean         wallRun;       // true = last move was the result of a wallrun
+    int             intFlags;       // $dropoff_fix: internal flags
+    float           dropOffZ;       // $dropoff_fix
+    short           gear;           // used in torque simulation
+    boolean         wallRun;        // true = last move was the result of a wallrun
 
     // no matter what (even if shot)
-    struct player_s *player;       // only valid if type == MT_PLAYER
-    int             lastLook;      // player number last looked for
+    struct player_s *player;        // only valid if type == MT_PLAYER
+    int             lastLook;       // player number last looked for
 
     // For nightmare/multiplayer respawn.
     spawnspot_t     spawnSpot;
@@ -204,9 +207,16 @@ typedef struct mobj_s {
     // Used for pod generating.
     struct mobj_s  *generator;
 
-    int             turnTime;      // $visangle-facetarget
-    int             corpseTics;    // $vanish: how long has this been dead?
+    int             turnTime;       // $visangle-facetarget
+    int             corpseTics;     // $vanish: how long has this been dead?
 } mobj_t;
+
+typedef struct polyobj_s {
+    // Defined in dd_share.h; required polyobj elements.
+    DD_BASE_POLYOBJ_ELEMENTS()
+
+    // Heretic-specific data:
+} polyobj_t;
 
 extern spawnspot_t* things;
 

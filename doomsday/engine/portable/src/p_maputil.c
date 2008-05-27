@@ -931,7 +931,7 @@ boolean P_SubsectorsBoxIteratorv(const arvec2_t box, sector_t *sector,
 }
 
 boolean P_PolyobjsBoxIterator(const float box[4],
-                              boolean (*func) (polyobj_t *, void *),
+                              boolean (*func) (struct polyobj_s *, void *),
                               void *data)
 {
     vec2_t      bounds[2];

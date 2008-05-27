@@ -2047,10 +2047,15 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
     P_MobjsBoxIterator(box, PIT_RadiusAttack, 0);
 }
 
-boolean PTR_UseTraverse(intercept_t *in)
+boolean PTR_UseTraverse(intercept_t* in)
 {
     int                 side;
-    xline_t            *xline = P_ToXLine(in->d.lineDef);
+    xline_t*            xline;
+
+    if(in->type != ICPT_LINE)
+        return true; // Continue iteration.
+
+    xline = P_ToXLine(in->d.lineDef);
 
     if(!xline->special)
     {

@@ -1056,8 +1056,8 @@ static void writePolyobj(const gamemap_t *map, uint idx)
     writeFloat(p->box[0][VY]);
     writeFloat(p->box[1][VX]);
     writeFloat(p->box[1][VY]);
-    writeFloat(p->dest.pos[VX]);
-    writeFloat(p->dest.pos[VY]);
+    writeFloat(p->dest[VX]);
+    writeFloat(p->dest[VY]);
     writeFloat(p->speed);
     writeLong((long) p->destAngle);
     writeLong((long) p->angleSpeed);
@@ -1097,8 +1097,8 @@ static void readPolyobj(const gamemap_t *map, uint idx)
     p->box[0][VY] = readFloat();
     p->box[1][VX] = readFloat();
     p->box[1][VY] = readFloat();
-    p->dest.pos[VX] = readFloat();
-    p->dest.pos[VY] = readFloat();
+    p->dest[VX] = readFloat();
+    p->dest[VY] = readFloat();
     p->speed = readFloat();
     p->destAngle = (angle_t) readLong();
     p->angleSpeed = (angle_t) readLong();

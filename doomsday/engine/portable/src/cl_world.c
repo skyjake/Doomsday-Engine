@@ -280,8 +280,8 @@ void Cl_PolyMoverThinker(polymover_t *mover)
     if(mover->move)
     {
         // How much to go?
-        dx = poly->dest.pos[VX] - poly->startSpot.pos[VX];
-        dy = poly->dest.pos[VY] - poly->startSpot.pos[VY];
+        dx = poly->dest[VX] - poly->startSpot.pos[VX];
+        dy = poly->dest[VY] - poly->startSpot.pos[VY];
         dist = P_ApproxDistance(dx, dy);
         if(dist <= poly->speed || poly->speed == 0)
         {
@@ -804,9 +804,9 @@ if(num >= numPolyObjs)
     po = polyObjs[num];
 
     if(df & PODF_DEST_X)
-        po->dest.pos[VX] = destX;
+        po->dest[VX] = destX;
     if(df & PODF_DEST_Y)
-        po->dest.pos[VY] = destY;
+        po->dest[VY] = destY;
     if(df & PODF_SPEED)
         po->speed = speed;
     if(df & PODF_DEST_ANGLE)

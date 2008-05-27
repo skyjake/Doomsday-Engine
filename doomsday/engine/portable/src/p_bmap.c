@@ -100,10 +100,18 @@ void P_BoxToBlockmapBlocks(blockmap_t *blockmap, uint blockBox[4],
         m[0][VY] = MAX_OF(bmap->bBox[0][VY], box[0][VY]);
         m[1][VY] = MIN_OF(bmap->bBox[1][VY], box[1][VY]);
 
-        blockBox[BOXLEFT]   = (m[0][VX] - bmap->bBox[0][VX]) / bmap->blockSize[VX];
-        blockBox[BOXRIGHT]  = (m[1][VX] - bmap->bBox[0][VX]) / bmap->blockSize[VX];
-        blockBox[BOXBOTTOM] = (m[0][VY] - bmap->bBox[0][VY]) / bmap->blockSize[VY];
-        blockBox[BOXTOP]    = (m[1][VY] - bmap->bBox[0][VY]) / bmap->blockSize[VY];
+        blockBox[BOXLEFT] =
+            MINMAX_OF(0, (m[0][VX] - bmap->bBox[0][VX]) /
+                            bmap->blockSize[VX], bmap->dimensions[0]);
+        blockBox[BOXRIGHT] =
+            MINMAX_OF(0, (m[1][VX] - bmap->bBox[0][VX]) /
+                            bmap->blockSize[VX], bmap->dimensions[0]);
+        blockBox[BOXBOTTOM] =
+            MINMAX_OF(0, (m[0][VY] - bmap->bBox[0][VY]) /
+                            bmap->blockSize[VY], bmap->dimensions[1]);
+        blockBox[BOXTOP] =
+            MINMAX_OF(0, (m[1][VY] - bmap->bBox[0][VY]) /
+                            bmap->blockSize[VY], bmap->dimensions[1]);
     }
 }
 

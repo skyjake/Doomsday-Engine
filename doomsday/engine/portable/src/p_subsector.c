@@ -55,15 +55,8 @@
  */
 boolean Subsector_SetProperty(subsector_t *sub, const setargs_t *args)
 {
-    switch(args->prop)
-    {
-    case DMU_POLYOBJ:
-        DMU_SetValue(DMT_SUBSECTOR_POLYOBJ, &sub->polyObj, args, 0);
-        break;
-    default:
-        Con_Error("Subsector_SetProperty: Property %s is not writable.\n",
-                  DMU_Str(args->prop));
-    }
+    Con_Error("Subsector_SetProperty: Property %s is not writable.\n",
+              DMU_Str(args->prop));
 
     return true; // Continue iteration.
 }
@@ -83,9 +76,6 @@ boolean Subsector_GetProperty(const subsector_t *sub, setargs_t *args)
         break;
     case DMT_MOBJS:
         DMU_GetValue(DMT_SECTOR_MOBJLIST, &sub->sector->mobjList, args, 0);
-        break;
-    case DMU_POLYOBJ:
-        DMU_GetValue(DMT_SUBSECTOR_POLYOBJ, &sub->polyObj, args, 0);
         break;
     case DMU_SEG_COUNT:
     {

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -188,16 +188,19 @@ typedef struct spawnspot_s {
 // Map Object definition.
 typedef struct mobj_s {
     // Defined in dd_share.h; required mobj elements.
-    DD_BASE_MOBJ_ELEMENTS() mobjinfo_t *info;   // &mobjinfo[mobj->type]
-    int             damage;        // For missiles
+    DD_BASE_MOBJ_ELEMENTS()
+
+    // WolfTC-specific data:
+    mobjinfo_t     *info;           // &mobjinfo[mobj->type]
+    int             damage;         // For missiles
     int             flags;
     int             flags2;
     int             flags3;
     int             health;
 
     // Movement direction, movement generation (zig-zagging).
-    int             movedir;       // 0-7
-    int             movecount;     // when 0, select a new dir
+    int             movedir;        // 0-7
+    int             movecount;      // when 0, select a new dir
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
@@ -207,10 +210,10 @@ typedef struct mobj_s {
     // no matter what (even if shot)
     int             threshold;
 
-    int             intflags;      // internal flags
-    float           dropoffz;      // killough $dropoff_fix
-    short           gear;          // killough 11/98: used in torque simulation
-    boolean         wallrun;       // true = last move was the result of a wallrun
+    int             intflags;       // internal flags
+    float           dropoffz;       // killough $dropoff_fix
+    short           gear;           // killough 11/98: used in torque simulation
+    boolean         wallrun;        // true = last move was the result of a wallrun
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
@@ -225,10 +228,16 @@ typedef struct mobj_s {
     // Thing being chased/attacked for tracers.
     struct mobj_s  *tracer;
 
-    int             turntime;      // $visangle-facetarget
-    int             corpsetics;    // $vanish: how long has this been dead?
-
+    int             turntime;       // $visangle-facetarget
+    int             corpsetics;     // $vanish: how long has this been dead?
 } mobj_t;
+
+typedef struct polyobj_s {
+    // Defined in dd_share.h; required polyobj elements.
+    DD_BASE_POLYOBJ_ELEMENTS()
+
+    // WolfTC-specific data:
+} polyobj_t;
 
 extern spawnspot_t* things;
 

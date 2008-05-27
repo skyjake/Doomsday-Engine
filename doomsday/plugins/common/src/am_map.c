@@ -2636,7 +2636,14 @@ boolean drawSegsOfSubsector(subsector_t *s, void *data)
  */
 boolean drawSegsOfPolyobject(polyobj_t *po, void *data)
 {
-    return P_Iteratep(po, DMU_SEG, data, renderWallSeg);
+    seg_t**             segPtr;
+    int                 result;
+
+    segPtr = po->segs;
+    while(*segPtr && (result = renderWallSeg(*segPtr, data)) != 0)
+        *segPtr++;
+
+    return result;
 }
 
 /**

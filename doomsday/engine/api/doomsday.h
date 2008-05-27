@@ -61,7 +61,6 @@ extern          "C" {
     typedef struct seg_s { int type; } seg_t;
     typedef struct subsector_s { int type; } subsector_t;
     typedef struct sector_s { int type; } sector_t;
-    typedef struct polyobj_s { int type; } polyobj_t;
     typedef struct plane_s { int type; } plane_t;
 #endif
 
@@ -235,7 +234,7 @@ extern          "C" {
                                            boolean (*func) (subsector_t *, void *),
                                            void *data);
     boolean         P_PolyobjsBoxIterator(const float box[4],
-                                          boolean (*func) (polyobj_t *, void *),
+                                          boolean (*func) (struct polyobj_s *, void *),
                                           void *data);
 
     // Object type touching mobjs iterators.
@@ -379,6 +378,8 @@ extern          "C" {
     void            P_PolyobjUnLink(void *po);
     void            P_PolyobjLink(void *po);
 
+    struct polyobj_s* PO_GetPolyobj(uint polyNum);
+    struct polyobj_s* PO_GetPolyobjIdx(uint idx);
     void            PO_SetCallback(void (*func)(struct mobj_s*, void*, void*));
 
     // Play: Thinkers.

@@ -2552,35 +2552,35 @@ static void SV_ReadLine(linedef_t *li)
 }
 
 #if __JHEXEN__
-static void SV_WritePolyObj(polyobj_t *po)
+static void SV_WritePolyObj(polyobj_t* po)
 {
     SV_WriteByte(1); // write a version byte.
 
-    SV_WriteLong(P_GetIntp(po, DMU_TAG));
-    SV_WriteLong(P_GetAnglep(po, DMU_ANGLE));
-    SV_WriteLong(FLT2FIX(P_GetFloatp(po, DMU_START_SPOT_X)));
-    SV_WriteLong(FLT2FIX(P_GetFloatp(po, DMU_START_SPOT_Y)));
+    SV_WriteLong(po->tag);
+    SV_WriteLong(po->angle);
+    SV_WriteLong(FLT2FIX(po->startSpot.pos[VX]));
+    SV_WriteLong(FLT2FIX(po->startSpot.pos[VY]));
 }
 
-static int SV_ReadPolyObj(polyobj_t *po)
+static int SV_ReadPolyObj(polyobj_t* po)
 {
-    int         ver;
-    float       deltaX;
-    float       deltaY;
-    angle_t     angle;
+    int             ver;
+    float           deltaX;
+    float           deltaY;
+    angle_t         angle;
 
     if(saveVersion >= 3)
         ver = SV_ReadByte();
 
-    if(SV_ReadLong() != P_GetIntp(po, DMU_TAG))
+    if(SV_ReadLong() != po->tag)
         Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
 
     angle = (angle_t) SV_ReadLong();
-    P_PolyobjRotate(P_GetIntp(po, DMU_TAG), angle);
-    P_SetAnglep(po, DMU_DESTINATION_ANGLE, angle);
-    deltaX = FIX2FLT(SV_ReadLong()) - P_GetFloatp(po, DMU_START_SPOT_X);
-    deltaY = FIX2FLT(SV_ReadLong()) - P_GetFloatp(po, DMU_START_SPOT_Y);
-    P_PolyobjMove(P_GetIntp(po, DMU_TAG), deltaX, deltaY);
+    P_PolyobjRotate(po->tag, angle);
+    po->destAngle = angle;
+    deltaX = FIX2FLT(SV_ReadLong()) - po->startSpot.pos[VX];
+    deltaY = FIX2FLT(SV_ReadLong()) - po->startSpot.pos[VY];
+    P_PolyobjMove(po->tag, deltaX, deltaY);
     //// \fixme What about speed? It isn't saved at all?
     return true;
 }
@@ -2607,7 +2607,7 @@ static void P_ArchiveWorld(void)
     SV_BeginSegment(ASEG_POLYOBJS);
     SV_WriteLong(numpolyobjs);
     for(i = 0; i < numpolyobjs; ++i)
-        SV_WritePolyObj(P_ToPtr(DMU_POLYOBJ, i));
+        SV_WritePolyObj(PO_GetPolyobjIdx(i));
 #endif
 }
 
@@ -2638,7 +2638,7 @@ static void P_UnArchiveWorld(void)
         Con_Error("UnarchivePolyobjs: Bad polyobj count");
 
     for(i = 0; i < numpolyobjs; ++i)
-        SV_ReadPolyObj(P_ToPtr(DMU_POLYOBJ, i));
+        SV_ReadPolyObj(PO_GetPolyobjIdx(i));
 #endif
 }
 
@@ -4274,17 +4274,17 @@ static void P_UnArchiveSoundTargets(void)
 #if __JHEXEN__
 static void P_ArchiveSounds(void)
 {
-    seqnode_t  *node;
-    sector_t   *sec;
-    int         difference;
-    uint        i;
+    uint            i;
+    int             difference;
+    seqnode_t*      node;
+    sector_t*       sec;
 
-    // Save the sound sequences
+    // Save the sound sequences.
     SV_BeginSegment(ASEG_SOUNDS);
     SV_WriteLong(ActiveSequences);
     for(node = SequenceListHead; node; node = node->next)
     {
-        SV_WriteByte(1); // write a version byte.
+        SV_WriteByte(1); // Write a version byte.
 
         SV_WriteLong(node->sequence);
         SV_WriteLong(node->delayTics);
@@ -4293,22 +4293,24 @@ static void P_ArchiveSounds(void)
         SV_WriteLong(node->currentSoundID);
         for(i = 0; i < numpolyobjs; ++i)
         {
-            if(node->mobj == P_GetPtr(DMU_POLYOBJ, i, DMU_START_SPOT))
+            polyobj_t*          po = PO_GetPolyobjIdx(i);
+
+            if(po && node->mobj == (mobj_t*) &po->startSpot)
             {
                 break;
             }
         }
 
         if(i == numpolyobjs)
-        {   // Sound is attached to a sector, not a polyobj
+        {   // Sound is attached to a sector, not a polyobj.
             sec = P_GetPtrp(R_PointInSubsector(node->mobj->pos[VX], node->mobj->pos[VY]),
                             DMU_SECTOR);
             difference = P_ToIndex(sec);
-            SV_WriteLong(0);   // 0 -- sector sound origin
+            SV_WriteLong(0); // 0 -- sector sound origin.
         }
         else
         {
-            SV_WriteLong(1);   // 1 -- polyobj sound origin
+            SV_WriteLong(1); // 1 -- polyobj sound origin
             difference = i;
         }
         SV_WriteLong(difference);
@@ -4317,16 +4319,11 @@ static void P_ArchiveSounds(void)
 
 static void P_UnArchiveSounds(void)
 {
-    int         i, ver;
-    int         numSequences;
-    int         sequence;
-    int         delayTics;
-    int         volume;
-    int         seqOffset;
-    int         soundID;
-    int         polySnd;
-    int         secNum;
-    mobj_t     *sndMobj;
+    int             i;
+    int             numSequences, sequence, seqOffset;
+    int             delayTics, soundID, volume;
+    int             polySnd, secNum, ver;
+    mobj_t*         sndMobj;
 
     AssertSegment(ASEG_SOUNDS);
 
@@ -4352,7 +4349,10 @@ static void P_UnArchiveSounds(void)
         }
         else
         {
-            sndMobj = P_GetPtr(DMU_POLYOBJ, secNum, DMU_START_SPOT);
+            polyobj_t*          po = PO_GetPolyobjIdx(secNum);
+
+            if(po)
+                sndMobj = (mobj_t*) &po->startSpot;
         }
         SN_StartSequence(sndMobj, sequence);
         SN_ChangeNodeData(i, seqOffset, delayTics, volume, soundID);

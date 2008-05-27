@@ -531,8 +531,8 @@ void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 {
     polyobj_t          *poly = polyObjs[number];
 
-    reg->dest.pos[VX] = poly->dest.pos[VX];
-    reg->dest.pos[VY] = poly->dest.pos[VY];
+    reg->dest.pos[VX] = poly->dest[VX];
+    reg->dest.pos[VY] = poly->dest[VY];
     reg->speed = poly->speed;
     reg->destAngle = poly->destAngle;
     reg->angleSpeed = poly->angleSpeed;

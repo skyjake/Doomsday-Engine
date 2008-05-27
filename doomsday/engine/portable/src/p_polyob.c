@@ -49,7 +49,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void updateSegBBox(seg_t *seg);
-static void RotatePt(int an, float *x, float *y, float startSpotX,
+static void rotatePoint(int an, float *x, float *y, float startSpotX,
                      float startSpotY);
 static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po);
 
@@ -70,12 +70,12 @@ uint    numPolyObjs;
 /**
  * The po_callback is called when a polyobj hits a mobj.
  */
-void PO_SetCallback(void (*func) (mobj_t *, void *, void *))
+void PO_SetCallback(void (*func) (struct mobj_s *, void *, void *))
 {
     po_callback = func;
 }
 
-polyobj_t *P_GetPolyobj(uint polyNum)
+polyobj_t *PO_GetPolyobj(uint polyNum)
 {
     uint                i;
 
@@ -88,6 +88,14 @@ polyobj_t *P_GetPolyobj(uint polyNum)
             return po;
         }
     }
+
+    return NULL;
+}
+
+polyobj_t *PO_GetPolyobjIdx(uint idx)
+{
+    if(idx < numPolyObjs)
+        return polyObjs[idx];
 
     return NULL;
 }
@@ -132,12 +140,12 @@ static void updateSegBBox(seg_t *seg)
 /**
  * Update the polyobj bounding box.
  */
-void P_PolyobjUpdateBBox(polyobj_t *po)
+void P_PolyobjUpdateBBox(polyobj_t* po)
 {
-    uint            i;
-    vec2_t          point;
-    vertex_t       *vtx;
-    seg_t         **segPtr;
+    uint                i;
+    vec2_t              point;
+    vertex_t*           vtx;
+    seg_t**             segPtr;
 
     segPtr = po->segs;
     V2_Set(point, (*segPtr)->SG_v1pos[VX], (*segPtr)->SG_v1pos[VY]);
@@ -162,9 +170,9 @@ void PO_InitForMap(void)
 
     for(i = 0; i < numPolyObjs; ++i)
     {
-        polyobj_t          *po = polyObjs[i];
-        seg_t            **segPtr;
-        subsector_t        *ssec;
+        polyobj_t*          po = polyObjs[i];
+        seg_t**             segPtr;
+        subsector_t*        ssec;
         fvertex_t           avg; // Used to find a polyobj's center, and hence subsector.
 
         avg.pos[VX] = 0;
@@ -173,8 +181,8 @@ void PO_InitForMap(void)
         segPtr = po->segs;
         while(*segPtr)
         {
-            seg_t              *seg = *segPtr;
-            sidedef_t             *side = seg->lineDef->L_frontside;
+            seg_t*              seg = *segPtr;
+            sidedef_t*          side = seg->lineDef->L_frontside;
 
             side->SW_topflags |= SUF_NO_RADIO;
             side->SW_middleflags |= SUF_NO_RADIO;
@@ -209,17 +217,17 @@ void PO_InitForMap(void)
 boolean P_PolyobjMove(uint num, float x, float y)
 {
     uint            count;
-    polyobj_t      *po;
-    fvertex_t      *prevPts;
-    seg_t         **segList;
-    seg_t         **veryTempSeg;
+    polyobj_t*      po;
+    fvertex_t*      prevPts;
+    seg_t**         segList;
+    seg_t**         veryTempSeg;
     boolean         blocked;
 
     if(num & 0x80000000)
     {
         po = polyObjs[num & 0x7fffffff];
     }
-    else if(!(po = P_GetPolyobj(num)))
+    else if(!(po = PO_GetPolyobj(num)))
     {
         Con_Error("P_PolyobjMove:  Invalid polyobj number: %d\n", num);
     }
@@ -233,7 +241,7 @@ boolean P_PolyobjMove(uint num, float x, float y)
     validCount++;
     for(count = 0; count < po->numSegs; ++count, segList++, prevPts++)
     {
-        seg_t          *seg = *segList;
+        seg_t*          seg = *segList;
 
         if(seg->lineDef->validCount != validCount)
         {
@@ -258,7 +266,7 @@ boolean P_PolyobjMove(uint num, float x, float y)
             seg->SG_v1pos[VY] += y;
         }
 
-        (*prevPts).pos[VX] += x;      // previous points are unique for each seg
+        (*prevPts).pos[VX] += x; // Previous points are unique for each seg.
         (*prevPts).pos[VY] += y;
     }
 
@@ -279,7 +287,7 @@ boolean P_PolyobjMove(uint num, float x, float y)
         validCount++;
         while(count++ < po->numSegs)
         {
-            seg_t              *seg = *segList;
+            seg_t*          seg = *segList;
 
             if(seg->lineDef->validCount != validCount)
             {
@@ -325,10 +333,10 @@ boolean P_PolyobjMove(uint num, float x, float y)
     return true;
 }
 
-static void RotatePt(int an, float *x, float *y, float startSpotX, float startSpotY)
+static void rotatePoint(int an, float *x, float *y, float startSpotX,
+                        float startSpotY)
 {
-    float trx, try;
-    float gxt, gyt;
+    float           trx, try, gxt, gyt;
 
     trx = *x;
     try = *y;
@@ -346,18 +354,18 @@ boolean P_PolyobjRotate(uint num, angle_t angle)
 {
     int             an;
     uint            count;
-    fvertex_t      *originalPts;
-    fvertex_t      *prevPts;
-    polyobj_t      *po;
-    vertex_t       *vtx;
-    seg_t         **segList;
+    fvertex_t*      originalPts;
+    fvertex_t*      prevPts;
+    polyobj_t*      po;
+    vertex_t*       vtx;
+    seg_t**         segList;
     boolean         blocked;
 
     if(num & 0x80000000)
     {
         po = polyObjs[num & 0x7fffffff];
     }
-    else if(!(po = P_GetPolyobj(num)))
+    else if(!(po = PO_GetPolyobj(num)))
     {
         Con_Error("P_PolyobjRotate: Invalid polyobj number: %d\n", num);
     }
@@ -381,7 +389,7 @@ boolean P_PolyobjRotate(uint num, angle_t angle)
         vtx->V_pos[VX] = originalPts->pos[VX];
         vtx->V_pos[VY] = originalPts->pos[VY];
 
-        RotatePt(an, &vtx->V_pos[VX], &vtx->V_pos[VY],
+        rotatePoint(an, &vtx->V_pos[VX], &vtx->V_pos[VY],
                  po->startSpot.pos[VX], po->startSpot.pos[VY]);
     }
 
@@ -596,17 +604,17 @@ polyobj_t* PO_GetPolyobjForDegen(void *degenMobj)
  * @param func          Call back function to call for each line of this po.
  * @return              @c true, if all callbacks are successfull.
  */
-boolean P_PolyobjLinesIterator(polyobj_t *po, boolean (*func) (linedef_t *, void *),
-                               void *data)
+boolean P_PolyobjLinesIterator(polyobj_t* po, boolean (*func) (struct linedef_s*, void*),
+                               void* data)
 {
     uint                i;
-    seg_t             **segList;
+    seg_t**             segList;
 
     segList = po->segs;
     for(i = 0; i < po->numSegs; ++i, segList++)
     {
-        seg_t          *seg = *segList;
-        linedef_t         *line = seg->lineDef;
+        seg_t*              seg = *segList;
+        linedef_t*          line = seg->lineDef;
 
         if(line->validCount == validCount)
             continue;

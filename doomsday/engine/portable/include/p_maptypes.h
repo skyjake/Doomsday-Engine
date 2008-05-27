@@ -453,34 +453,6 @@ typedef struct linedef_s {
     unsigned short      shadowVisFrame[2]; // Framecount of last time shadows were drawn for this line, for each side [right, left].
 } linedef_t;
 
-typedef struct mpolyobj_s {
-    int         index;
-    uint        lineCount;
-    struct linedef_s **lineDefs;
-} mpolyobj_t;
-
-typedef struct polyobj_s {
-    runtime_mapdata_header_t header;
-    unsigned int        idx;           // Idx of polyobject
-    int                 tag;           // Reference tag assigned in HereticEd
-    int                 validCount;
-    vec2_t              box[2];
-    degenmobj_t         startSpot;
-    fvertex_t           dest;          // Destination XY
-    angle_t             angle;
-    angle_t             destAngle;     // Destination angle.
-    angle_t             angleSpeed;    // Rotation speed.
-    unsigned int        numSegs;
-    struct seg_s**      segs;
-    fvertex_t*          originalPts;   // Used as the base for the rotations
-    fvertex_t*          prevPts;       // Use to restore the old point values
-    float               speed;         // Movement speed.
-    boolean             crush;         // Should the polyobj attempt to crush mobjs?
-    int                 seqType;
-    void*               specialData;   // pointer a thinker, if the poly is moving
-    mpolyobj_t          buildData;
-} polyobj_t;
-
 #define RIGHT                   0
 #define LEFT                    1
 

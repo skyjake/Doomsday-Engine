@@ -239,7 +239,7 @@ boolean R_IsShadowingLinedef(linedef_t *line)
 {
     if(line)
     {
-        if(!LINE_SELFREF(line) &&
+        if(!LINE_SELFREF(line) && !(line->inFlags & LF_POLYOBJ) &&
            !(line->vo[0]->LO_next->lineDef == line ||
              line->vo[1]->LO_next->lineDef == line))
         {

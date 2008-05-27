@@ -278,9 +278,9 @@ int Cl_ReadPolyDelta(void)
     df = Msg_ReadPackedShort();
 
     if(df & PODF_DEST_X)
-        po->dest.pos[VX] = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
+        po->dest[VX] = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
     if(df & PODF_DEST_Y)
-        po->dest.pos[VY] = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
+        po->dest[VY] = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
     if(df & PODF_SPEED)
         po->speed = FIX2FLT(Msg_ReadShort() << 8);
     if(df & PODF_DEST_ANGLE)

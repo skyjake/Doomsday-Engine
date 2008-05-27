@@ -702,7 +702,6 @@ boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType
     }
 
     repeat = ((xline->flags & ML_REPEAT_SPECIAL)? true : false);
-    buttonSuccess = false;
 
     buttonSuccess =
         P_ExecuteLineSpecial(xline->special, &xline->arg1, line, side, mo);

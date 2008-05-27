@@ -106,6 +106,7 @@ typedef struct watchedsurfacelist_s {
 
 typedef void* blockmap_t;
 
+#include "p_polyob.h"
 #include "p_maptypes.h"
 
 // Game-specific, map object type definitions.

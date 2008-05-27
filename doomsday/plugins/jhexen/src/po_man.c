@@ -55,19 +55,14 @@
 
 // MACROS ------------------------------------------------------------------
 
-/* Returns the special data pointer of the polyobj. */
-#define PO_SpecialData(polyPtr)     P_GetPtrp((polyPtr), DMU_SPECIAL_DATA)
-#define PO_Tag(polyPtr)             P_GetIntp((polyPtr), DMU_TAG)
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static polyobj_t *GetPolyobj(uint polyNum);
-static int GetPolyobjMirror(uint polyNum);
-static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t *po);
+static int getPolyobjMirror(uint polyNum);
+static void thrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t *po);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -77,28 +72,21 @@ static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t *po);
 
 // CODE --------------------------------------------------------------------
 
-void PO_StartSequence(polyobj_t *poly, int seqBase)
+void PO_StartSequence(polyobj_t *po, int seqBase)
 {
-    SN_StartSequence(P_GetPtrp(poly, DMU_START_SPOT),
-                     seqBase + P_GetIntp(poly, DMU_SEQUENCE_TYPE));
+    SN_StartSequence((mobj_t*) &po->startSpot, seqBase + po->seqType);
 }
 
-void PO_StopSequence(polyobj_t *poly)
+void PO_StopSequence(polyobj_t *po)
 {
-    SN_StopSequence(P_GetPtrp(poly, DMU_START_SPOT));
+    SN_StopSequence((mobj_t*) &po->startSpot);
 }
 
-void PO_SetDestination(polyobj_t *poly, float dist, uint an, float speed)
+void PO_SetDestination(polyobj_t *po, float dist, uint an, float speed)
 {
-    ddvertexf_t startSpot;
-
-    P_GetFloatpv(poly, DMU_START_SPOT_XY, startSpot.pos);
-
-    P_SetFloatp(poly, DMU_DESTINATION_X,
-                startSpot.pos[VX] + dist * FIX2FLT(finecosine[an]));
-    P_SetFloatp(poly, DMU_DESTINATION_Y,
-                startSpot.pos[VY] + dist * FIX2FLT(finesine[an]));
-    P_SetFloatp(poly, DMU_SPEED, speed);
+    po->dest[VX] = po->startSpot.pos[VX] + dist * FIX2FLT(finecosine[an]);
+    po->dest[VY] = po->startSpot.pos[VY] + dist * FIX2FLT(finesine[an]);
+    po->speed = speed;
 }
 
 // ===== Polyobj Event Code =====
@@ -120,16 +108,15 @@ void T_RotatePoly(polyevent_t *pe)
         pe->dist -= absSpeed;
         if(pe->dist <= 0)
         {
-            poly = GetPolyobj(pe->polyobj);
-            if(PO_SpecialData(poly) == pe)
-            {
-                P_SetPtrp(poly, DMU_SPECIAL_DATA, NULL);
-            }
+            poly = PO_GetPolyobj(pe->polyobj);
+
+            if(poly->specialData == pe)
+                poly->specialData = NULL;
 
             PO_StopSequence(poly);
-            P_PolyobjFinished(PO_Tag(poly));
+            P_PolyobjFinished(poly->tag);
             P_RemoveThinker(&pe->thinker);
-            P_SetAnglep(poly, DMU_ANGLE_SPEED, 0);
+            poly->angleSpeed = 0;
         }
 
         if(pe->dist < absSpeed)
@@ -142,15 +129,15 @@ void T_RotatePoly(polyevent_t *pe)
 boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
                       boolean overRide)
 {
-    int         mirror, polyNum;
-    polyevent_t *pe;
-    polyobj_t  *poly;
+    int                 mirror, polyNum;
+    polyevent_t*        pe;
+    polyobj_t*          po;
 
     polyNum = args[0];
-    poly = GetPolyobj(polyNum);
-    if(poly)
+    po = PO_GetPolyobj(polyNum);
+    if(po)
     {
-        if(PO_SpecialData(poly) && !overRide)
+        if(po->specialData && !overRide)
         {   // Poly is already moving, so keep going...
             return false;
         }
@@ -171,71 +158,64 @@ boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
         {
             // Perpetual rotation.
             pe->dist = -1;
-            P_SetAnglep(poly, DMU_DESTINATION_ANGLE, -1);
+            po->destAngle = -1;
         }
         else
         {
             pe->dist = args[2] * (ANGLE_90 / 64);   // Angle
-            P_SetAnglep(poly, DMU_DESTINATION_ANGLE,
-                        P_GetAnglep(poly, DMU_ANGLE) +
-                        pe->dist * direction);
+            po->destAngle = po->angle + pe->dist * direction;
         }
     }
     else
     {
         pe->dist = ANGLE_MAX - 1;
-        P_SetAnglep(poly, DMU_DESTINATION_ANGLE,
-                        P_GetAnglep(poly, DMU_ANGLE) + pe->dist);
+        po->destAngle = po->angle + pe->dist;
     }
 
     pe->intSpeed = (args[1] * direction * (ANGLE_90 / 64)) >> 3;
-    P_SetPtrp(poly, DMU_SPECIAL_DATA, pe);
-    P_SetAnglep(poly, DMU_ANGLE_SPEED, pe->intSpeed);
-    PO_StartSequence(poly, SEQ_DOOR_STONE);
+    po->specialData = pe;
+    po->angleSpeed = pe->intSpeed;
+    PO_StartSequence(po, SEQ_DOOR_STONE);
 
-    while((mirror = GetPolyobjMirror(polyNum)) != 0)
+    while((mirror = getPolyobjMirror(polyNum)) != 0)
     {
-        poly = GetPolyobj(mirror);
-        if(poly && PO_SpecialData(poly) && !overRide)
-        {   // Mirroring poly is already in motion.
+        po = PO_GetPolyobj(mirror);
+        if(po && po->specialData && !overRide)
+        {   // Mirroring po is already in motion.
             break;
         }
 
         pe = Z_Malloc(sizeof(polyevent_t), PU_LEVSPEC, 0);
         P_AddThinker(&pe->thinker);
         pe->thinker.function = T_RotatePoly;
-        P_SetPtrp(poly, DMU_SPECIAL_DATA, pe);
+        po->specialData = pe;
         pe->polyobj = mirror;
         if(args[2])
         {
             if(args[2] == 255)
             {
                 pe->dist = -1;
-                P_SetAnglep(poly, DMU_DESTINATION_ANGLE, -1);
+                po->destAngle = -1;
             }
             else
             {
-                pe->dist = args[2] * (ANGLE_90 / 64);   // Angle
-                P_SetAnglep(poly, DMU_DESTINATION_ANGLE,
-                            P_GetAnglep(poly, DMU_ANGLE) +
-                            pe->dist * -direction);
+                pe->dist = args[2] * (ANGLE_90 / 64); // Angle
+                po->destAngle = po->angle + pe->dist * -direction;
             }
         }
         else
         {
             pe->dist = ANGLE_MAX - 1;
-            P_SetAnglep(poly, DMU_DESTINATION_ANGLE,
-                            P_GetAnglep(poly, DMU_ANGLE) +
-                            pe->dist);
+            po->destAngle =  po->angle + pe->dist;
         }
         direction = -direction;
         pe->intSpeed = (args[1] * direction * (ANGLE_90 / 64)) >> 3;
-        P_SetAnglep(poly, DMU_ANGLE_SPEED, pe->intSpeed);
+        po->angleSpeed = pe->intSpeed;
 
-        poly = GetPolyobj(polyNum);
-        if(poly)
+        po = PO_GetPolyobj(polyNum);
+        if(po)
         {
-            P_SetPtrp(poly, DMU_SPECIAL_DATA, pe);
+            po->specialData = pe;
         }
         else
         {
@@ -243,15 +223,15 @@ boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
         }
 
         polyNum = mirror;
-        PO_StartSequence(poly, SEQ_DOOR_STONE);
+        PO_StartSequence(po, SEQ_DOOR_STONE);
     }
     return true;
 }
 
-void T_MovePoly(polyevent_t *pe)
+void T_MovePoly(polyevent_t* pe)
 {
-    unsigned int absSpeed;
-    polyobj_t  *poly;
+    unsigned int        absSpeed;
+    polyobj_t*          po;
 
     if(P_PolyobjMove(pe->polyobj, pe->speed[MX], pe->speed[MY]))
     {
@@ -259,16 +239,15 @@ void T_MovePoly(polyevent_t *pe)
         pe->dist -= absSpeed;
         if(pe->dist <= 0)
         {
-            poly = GetPolyobj(pe->polyobj);
-            if(PO_SpecialData(poly) == pe)
-            {
-                P_SetPtrp(poly, DMU_SPECIAL_DATA, NULL);
-            }
+            po = PO_GetPolyobj(pe->polyobj);
 
-            PO_StopSequence(poly);
-            P_PolyobjFinished(PO_Tag(poly));
+            if(po->specialData == pe)
+                po->specialData = NULL;
+
+            PO_StopSequence(po);
+            P_PolyobjFinished(po->tag);
             P_RemoveThinker(&pe->thinker);
-            P_SetFloatp(poly, DMU_SPEED, 0);
+            po->speed = 0;
         }
 
         if(pe->dist < absSpeed)
@@ -280,20 +259,20 @@ void T_MovePoly(polyevent_t *pe)
     }
 }
 
-boolean EV_MovePoly(linedef_t *line, byte *args, boolean timesEight,
+boolean EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
                     boolean overRide)
 {
-    int         mirror, polyNum;
-    polyevent_t *pe;
-    polyobj_t  *poly;
-    angle_t     angle;
+    int                 mirror, polyNum;
+    polyevent_t*        pe;
+    polyobj_t*          po;
+    angle_t             angle;
 
     polyNum = args[0];
-    poly = GetPolyobj(polyNum);
-    if(poly)
+    po = PO_GetPolyobj(polyNum);
+    if(po)
     {
-        if(PO_SpecialData(poly) && !overRide)
-        {                       // poly is already moving
+        if(po->specialData && !overRide)
+        {   // Is already moving.
             return false;
         }
     }
@@ -315,22 +294,22 @@ boolean EV_MovePoly(linedef_t *line, byte *args, boolean timesEight,
         pe->dist = args[3] * FRACUNIT;  // Distance
     }
     pe->intSpeed = args[1] * (FRACUNIT / 8);
-    P_SetPtrp(poly, DMU_SPECIAL_DATA, pe);
+    po->specialData = pe;
 
     angle = args[2] * (ANGLE_90 / 64);
 
     pe->fangle = angle >> ANGLETOFINESHIFT;
     pe->speed[MX] = FIX2FLT(FixedMul(pe->intSpeed, finecosine[pe->fangle]));
     pe->speed[MY] = FIX2FLT(FixedMul(pe->intSpeed, finesine[pe->fangle]));
-    PO_StartSequence(poly, SEQ_DOOR_STONE);
+    PO_StartSequence(po, SEQ_DOOR_STONE);
 
-    PO_SetDestination(poly, FIX2FLT(pe->dist), pe->fangle, FIX2FLT(pe->intSpeed));
+    PO_SetDestination(po, FIX2FLT(pe->dist), pe->fangle, FIX2FLT(pe->intSpeed));
 
-    while((mirror = GetPolyobjMirror(polyNum)) != 0)
+    while((mirror = getPolyobjMirror(polyNum)) != 0)
     {
-        poly = GetPolyobj(mirror);
-        if(poly && PO_SpecialData(poly) && !overRide)
-        {                       // mirroring poly is already in motion
+        po = PO_GetPolyobj(mirror);
+        if(po && po->specialData && !overRide)
+        {                       // mirroring po is already in motion
             break;
         }
 
@@ -338,7 +317,7 @@ boolean EV_MovePoly(linedef_t *line, byte *args, boolean timesEight,
         P_AddThinker(&pe->thinker);
         pe->thinker.function = T_MovePoly;
         pe->polyobj = mirror;
-        P_SetPtrp(poly, DMU_SPECIAL_DATA, pe);
+        po->specialData = pe;
         if(timesEight)
         {
             pe->dist = args[3] * 8 * FRACUNIT;
@@ -353,27 +332,27 @@ boolean EV_MovePoly(linedef_t *line, byte *args, boolean timesEight,
         pe->speed[MX] = FIX2FLT(FixedMul(pe->intSpeed, finecosine[pe->fangle]));
         pe->speed[MY] = FIX2FLT(FixedMul(pe->intSpeed, finesine[pe->fangle]));
         polyNum = mirror;
-        PO_StartSequence(poly, SEQ_DOOR_STONE);
+        PO_StartSequence(po, SEQ_DOOR_STONE);
 
-        PO_SetDestination(poly, FIX2FLT(pe->dist), pe->fangle, FIX2FLT(pe->intSpeed));
+        PO_SetDestination(po, FIX2FLT(pe->dist), pe->fangle, FIX2FLT(pe->intSpeed));
     }
     return true;
 }
 
-void T_PolyDoor(polydoor_t *pd)
+void T_PolyDoor(polydoor_t* pd)
 {
-    int         absSpeed;
-    polyobj_t  *poly;
+    int             absSpeed;
+    polyobj_t*      po;
 
     if(pd->tics)
     {
         if(!--pd->tics)
         {
-            poly = GetPolyobj(pd->polyobj);
-            PO_StartSequence(poly, SEQ_DOOR_STONE);
+            po = PO_GetPolyobj(pd->polyobj);
+            PO_StartSequence(po, SEQ_DOOR_STONE);
 
             // Movement is about to begin. Update the destination.
-            PO_SetDestination(GetPolyobj(pd->polyobj), FIX2FLT(pd->dist),
+            PO_SetDestination(PO_GetPolyobj(pd->polyobj), FIX2FLT(pd->dist),
                               pd->direction, FIX2FLT(pd->intSpeed));
         }
         return;
@@ -388,8 +367,8 @@ void T_PolyDoor(polydoor_t *pd)
             pd->dist -= absSpeed;
             if(pd->dist <= 0)
             {
-                poly = GetPolyobj(pd->polyobj);
-                PO_StopSequence(poly);
+                po = PO_GetPolyobj(pd->polyobj);
+                PO_StopSequence(po);
                 if(!pd->close)
                 {
                     pd->dist = pd->totalDist;
@@ -402,34 +381,33 @@ void T_PolyDoor(polydoor_t *pd)
                 }
                 else
                 {
-                    if(PO_SpecialData(poly) == pd)
-                    {
-                        P_SetPtrp(poly, DMU_SPECIAL_DATA, NULL);
-                    }
-                    P_PolyobjFinished(PO_Tag(poly));
+                    if(po->specialData == pd)
+                        po->specialData = NULL;
+
+                    P_PolyobjFinished(po->tag);
                     P_RemoveThinker(&pd->thinker);
                 }
             }
         }
         else
         {
-            poly = GetPolyobj(pd->polyobj);
-            if(P_GetBoolp(poly, DMU_CRUSH) || !pd->close)
-            {   // continue moving if the poly is a crusher, or is opening
+            po = PO_GetPolyobj(pd->polyobj);
+            if(po->crush || !pd->close)
+            {   // Continue moving if the po is a crusher, or is opening.
                 return;
             }
             else
-            {   // open back up
+            {   // Open back up.
                 pd->dist = pd->totalDist - pd->dist;
                 pd->direction =
                     (ANGLE_MAX >> ANGLETOFINESHIFT) - pd->direction;
                 pd->speed[MX] = -pd->speed[MX];
                 pd->speed[MY] = -pd->speed[MY];
                 // Update destination.
-                PO_SetDestination(GetPolyobj(pd->polyobj), FIX2FLT(pd->dist),
+                PO_SetDestination(PO_GetPolyobj(pd->polyobj), FIX2FLT(pd->dist),
                                   pd->direction, FIX2FLT(pd->intSpeed));
                 pd->close = false;
-                PO_StartSequence(poly, SEQ_DOOR_STONE);
+                PO_StartSequence(po, SEQ_DOOR_STONE);
             }
         }
         break;
@@ -439,14 +417,15 @@ void T_PolyDoor(polydoor_t *pd)
         {
             absSpeed = abs(pd->intSpeed);
             if(pd->dist == -1)
-            {   // perpetual polyobj
+            {   // Perpetual polyobj.
                 return;
             }
+
             pd->dist -= absSpeed;
             if(pd->dist <= 0)
             {
-                poly = GetPolyobj(pd->polyobj);
-                PO_StopSequence(poly);
+                po = PO_GetPolyobj(pd->polyobj);
+                PO_StopSequence(po);
                 if(!pd->close)
                 {
                     pd->dist = pd->totalDist;
@@ -456,28 +435,27 @@ void T_PolyDoor(polydoor_t *pd)
                 }
                 else
                 {
-                    if(PO_SpecialData(poly) == pd)
-                    {
-                        P_SetPtrp(poly, DMU_SPECIAL_DATA, NULL);
-                    }
-                    P_PolyobjFinished(PO_Tag(poly));
+                    if(po->specialData == pd)
+                        po->specialData = NULL;
+
+                    P_PolyobjFinished(po->tag);
                     P_RemoveThinker(&pd->thinker);
                 }
             }
         }
         else
         {
-            poly = GetPolyobj(pd->polyobj);
-            if(P_GetBoolp(poly, DMU_CRUSH) || !pd->close)
-            {   // continue moving if the poly is a crusher, or is opening
+            po = PO_GetPolyobj(pd->polyobj);
+            if(po->crush || !pd->close)
+            {   // Continue moving if the po is a crusher, or is opening.
                 return;
             }
             else
-            {   // open back up and rewait
+            {   // Open back up and rewait.
                 pd->dist = pd->totalDist - pd->dist;
                 pd->intSpeed = -pd->intSpeed;
                 pd->close = false;
-                PO_StartSequence(poly, SEQ_DOOR_STONE);
+                PO_StartSequence(po, SEQ_DOOR_STONE);
             }
         }
         break;
@@ -487,19 +465,19 @@ void T_PolyDoor(polydoor_t *pd)
     }
 }
 
-boolean EV_OpenPolyDoor(linedef_t *line, byte *args, podoortype_t type)
+boolean EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type)
 {
-    int         mirror, polyNum;
-    polydoor_t *pd;
-    polyobj_t  *poly;
-    angle_t     angle = 0;
+    int                 mirror, polyNum;
+    polydoor_t*         pd;
+    polyobj_t*          po;
+    angle_t             angle = 0;
 
     polyNum = args[0];
-    poly = GetPolyobj(polyNum);
-    if(poly)
+    po = PO_GetPolyobj(polyNum);
+    if(po)
     {
-        if(PO_SpecialData(poly))
-        {                       // poly is already moving
+        if(po->specialData)
+        {   // Is already moving.
             return false;
         }
     }
@@ -518,32 +496,32 @@ boolean EV_OpenPolyDoor(linedef_t *line, byte *args, podoortype_t type)
     {
         pd->waitTics = args[4];
         pd->intSpeed = args[1] * (FRACUNIT / 8);
-        pd->totalDist = args[3] * FRACUNIT; // Distance
+        pd->totalDist = args[3] * FRACUNIT; // Distance.
         pd->dist = pd->totalDist;
         angle = args[2] * (ANGLE_90 / 64);
         pd->direction = angle >> ANGLETOFINESHIFT;
         pd->speed[MX] = FIX2FLT(FixedMul(pd->intSpeed, finecosine[pd->direction]));
         pd->speed[MY] = FIX2FLT(FixedMul(pd->intSpeed, finesine[pd->direction]));
-        PO_StartSequence(poly, SEQ_DOOR_STONE);
+        PO_StartSequence(po, SEQ_DOOR_STONE);
     }
     else if(type == PODOOR_SWING)
     {
         pd->waitTics = args[3];
-        pd->direction = 1;      // ADD:  PODOOR_SWINGL, PODOOR_SWINGR
+        pd->direction = 1;
         pd->intSpeed = (args[1] * pd->direction * (ANGLE_90 / 64)) >> 3;
         pd->totalDist = args[2] * (ANGLE_90 / 64);
         pd->dist = pd->totalDist;
-        PO_StartSequence(poly, SEQ_DOOR_STONE);
+        PO_StartSequence(po, SEQ_DOOR_STONE);
     }
 
-    P_SetPtrp(poly, DMU_SPECIAL_DATA, pd);
-    PO_SetDestination(poly, FIX2FLT(pd->dist), pd->direction, FIX2FLT(pd->intSpeed));
+    po->specialData = pd;
+    PO_SetDestination(po, FIX2FLT(pd->dist), pd->direction, FIX2FLT(pd->intSpeed));
 
-    while((mirror = GetPolyobjMirror(polyNum)) != 0)
+    while((mirror = getPolyobjMirror(polyNum)) != 0)
     {
-        poly = GetPolyobj(mirror);
-        if(poly && PO_SpecialData(poly))
-        {                       // mirroring poly is already in motion
+        po = PO_GetPolyobj(mirror);
+        if(po && po->specialData)
+        {   // Mirroring po is already in motion.
             break;
         }
 
@@ -553,30 +531,30 @@ boolean EV_OpenPolyDoor(linedef_t *line, byte *args, podoortype_t type)
         pd->thinker.function = T_PolyDoor;
         pd->polyobj = mirror;
         pd->type = type;
-        P_SetPtrp(poly, DMU_SPECIAL_DATA, pd);
+        po->specialData = pd;
         if(type == PODOOR_SLIDE)
         {
             pd->waitTics = args[4];
             pd->intSpeed = args[1] * (FRACUNIT / 8);
-            pd->totalDist = args[3] * FRACUNIT; // Distance
+            pd->totalDist = args[3] * FRACUNIT; // Distance.
             pd->dist = pd->totalDist;
-            angle = angle + ANGLE_180;    // reverse the angle
+            angle = angle + ANGLE_180; // Reverse the angle.
             pd->direction = angle >> ANGLETOFINESHIFT;
             pd->speed[MX] = FIX2FLT(FixedMul(pd->intSpeed, finecosine[pd->direction]));
             pd->speed[MY] = FIX2FLT(FixedMul(pd->intSpeed, finesine[pd->direction]));
-            PO_StartSequence(poly, SEQ_DOOR_STONE);
+            PO_StartSequence(po, SEQ_DOOR_STONE);
         }
         else if(type == PODOOR_SWING)
         {
             pd->waitTics = args[3];
-            pd->direction = -1; // ADD:  same as above
+            pd->direction = -1;
             pd->intSpeed = (args[1] * pd->direction * (ANGLE_90 / 64)) >> 3;
             pd->totalDist = args[2] * (ANGLE_90 / 64);
             pd->dist = pd->totalDist;
-            PO_StartSequence(poly, SEQ_DOOR_STONE);
+            PO_StartSequence(po, SEQ_DOOR_STONE);
         }
         polyNum = mirror;
-        PO_SetDestination(poly, FIX2FLT(pd->dist), pd->direction, FIX2FLT(pd->intSpeed));
+        PO_SetDestination(po, FIX2FLT(pd->dist), pd->direction, FIX2FLT(pd->intSpeed));
     }
 
     return true;
@@ -584,49 +562,31 @@ boolean EV_OpenPolyDoor(linedef_t *line, byte *args, podoortype_t type)
 
 // ===== Higher Level Poly Interface code =====
 
-static polyobj_t *GetPolyobj(uint polyNum)
+static int getPolyobjMirror(uint poly)
 {
     uint                i;
 
     for(i = 0; i < numpolyobjs; ++i)
     {
-        if(P_GetInt(DMU_POLYOBJ, i, DMU_TAG) == polyNum)
-        {
-            return P_ToPtr(DMU_POLYOBJ, i);
-        }
-    }
-    return NULL;
-}
+        polyobj_t*          po = PO_GetPolyobjIdx(i);
 
-static int GetPolyobjMirror(uint poly)
-{
-    /**
-     * \fixme Polyobjs are now handled completely differently and so we can
-     * no longer use this method to determine the mirror.
-    uint                i;
-    for(i = 0; i < numpolyobjs; ++i)
-    {
-        if(P_GetInt(DMU_POLYOBJ, i, DMU_TAG) == poly)
+        if(po->tag == poly)
         {
-            seg_t* seg = P_GetPtrp(P_ToPtr(DMU_POLYOBJ, i), DMU_SEG_OF_POLYOBJ | 0);
-            linedef_t* linedef = P_GetPtrp(seg, DMU_LINEDEF);
+            seg_t*              seg = po->segs[0];
+            linedef_t*          linedef = P_GetPtrp(seg, DMU_LINEDEF);
+
             return P_ToXLine(linedef)->arg2;
         }
     }
-    */
-
-#if _DEBUG
-Con_Message("GetPolyobjMirror: Not currently implemented.\n");
-#endif
 
     return 0;
 }
 
-static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
+static void thrustMobj(mobj_t* mobj, seg_t* seg, polyobj_t* po)
 {
     uint                thrustAn;
     float               thrustX, thrustY, force;
-    polyevent_t        *pe;
+    polyevent_t*        pe;
 
     // Clients do no polyobj <-> mobj interaction.
     if(IS_CLIENT)
@@ -641,7 +601,7 @@ static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
     thrustAn =
         (P_GetAnglep(seg, DMU_ANGLE) - ANGLE_90) >> ANGLETOFINESHIFT;
 
-    pe = PO_SpecialData(po);
+    pe = (polyevent_t*) po->specialData;
     if(pe)
     {
         if(pe->thinker.function == T_RotatePoly)
@@ -672,7 +632,7 @@ static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
     mobj->mom[MX] += thrustX;
     mobj->mom[MY] += thrustY;
 
-    if(P_GetBoolp(po, DMU_CRUSH))
+    if(po->crush)
     {
         if(!P_CheckPosition2f(mobj, mobj->pos[VX] + thrustX,
                               mobj->pos[VY] + thrustY))
@@ -687,20 +647,22 @@ static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
  */
 void PO_InitForMap(void)
 {
-    uint            i;
+    uint                i;
 
     Con_Message("PO_Init: Initializing polyobjects.\n");
 
-    // ThrustMobj will handle polyobj <-> mobj interaction.
-    PO_SetCallback(ThrustMobj);
-
+    // thrustMobj will handle polyobj <-> mobj interaction.
+    PO_SetCallback(thrustMobj);
     for(i = 0; i < numpolyobjs; ++i)
     {
         uint                j;
-        int                 tag;
-        spawnspot_t        *mt;
+        spawnspot_t*        mt;
+        polyobj_t*          po;
 
-        tag = P_GetInt(DMU_POLYOBJ, i, DMU_TAG);
+        po = PO_GetPolyobjIdx(i);
+
+        // Init game-specific properties.
+        po->specialData = NULL;
 
         // Find the spawnspot associated with this polyobj.
         j = 0;
@@ -708,7 +670,8 @@ void PO_InitForMap(void)
         while(j < numthings && !mt)
         {
             if((things[j].type == PO_SPAWN_TYPE ||
-                things[j].type == PO_SPAWNCRUSH_TYPE) && things[j].angle == tag)
+                things[j].type == PO_SPAWNCRUSH_TYPE) &&
+               things[j].angle == po->tag)
             {   // Polyobj spawnspot.
                 mt = &things[j];
             }
@@ -720,9 +683,10 @@ void PO_InitForMap(void)
 
         if(mt)
         {
-            P_SetInt(DMU_POLYOBJ, i, DMU_CRUSH,
-                     mt->type == PO_SPAWNCRUSH_TYPE? 1 : 0);
-            P_PolyobjMove(i, mt->pos[VX], mt->pos[VY]);
+            po->crush = ((mt->type == PO_SPAWNCRUSH_TYPE)? 1 : 0);
+            P_PolyobjMove(i | 0x80000000,
+                          -po->startSpot.pos[VX] + mt->pos[VX],
+                          -po->startSpot.pos[VY] + mt->pos[VY]);
         }
         else
         {
@@ -733,5 +697,10 @@ void PO_InitForMap(void)
 
 boolean PO_Busy(int polyobj)
 {
-    return P_GetPtrp(GetPolyobj(polyobj), DMU_SPECIAL_DATA) != NULL;
+    polyobj_t*          po = PO_GetPolyobj(polyobj);
+
+    if(po && po->specialData != NULL)
+        return true;
+
+    return false;
 }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,42 +96,6 @@ extern int flyheight;
 
 extern int sscount, linecount, loopcount;
 extern int extralight;
-/*
-//
-// R_data.c
-//
-typedef struct {
-    int             originx;       // block origin (allways UL), which has allready
-    int             originy;       // accounted  for the patch's internal origin
-    int             patch;
-} texpatch_t;
-
-// a maptexturedef_t describes a rectangular texture, which is composed of one
-// or more mappatch_t structures that arrange graphic patches
-typedef struct {
-    char            name[8];       // for switch changing, etc
-    short           width;
-    short           height;
-    short           patchcount;
-    texpatch_t      patches[1];    // [patchcount] drawn back to front
-    //  into the cached texture
-    // Extra stuff. -jk
-    boolean         masked;        // from maptexture_t
-} texture_t;
-
-extern fixed_t *textureheight;     // needed for texture pegging
-extern fixed_t *spritewidth;       // needed for pre rendering (fracs)
-extern fixed_t *spriteoffset;
-extern fixed_t *spritetopoffset;
-extern int      viewwidth, scaledviewwidth, viewheight;
-
-#define firstflat       gi.Get(DD_FIRSTFLAT)
-#define numflats        gi.Get(DD_NUMFLATS)
-
-extern int      firstspritelump, lastspritelump, numspritelumps;
-
-//extern boolean LevelUseFullBright;
-*/
 
 void            R_InitData(void);
 void            R_UpdateData(void);

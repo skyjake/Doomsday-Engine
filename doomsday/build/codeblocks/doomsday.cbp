@@ -273,7 +273,6 @@
 		<Unit filename="..\..\engine\portable\include\p_particle.h" />
 		<Unit filename="..\..\engine\portable\include\p_plane.h" />
 		<Unit filename="..\..\engine\portable\include\p_players.h" />
-		<Unit filename="..\..\engine\portable\include\p_polyob.h" />
 		<Unit filename="..\..\engine\portable\include\p_polyobj.h" />
 		<Unit filename="..\..\engine\portable\include\p_sector.h" />
 		<Unit filename="..\..\engine\portable\include\p_seg.h" />
@@ -610,9 +609,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\p_players.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\p_polyob.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\p_polyobj.c">

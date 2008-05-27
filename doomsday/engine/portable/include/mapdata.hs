@@ -484,35 +484,6 @@ struct linedef
 end
 
 internal
-typedef struct mpolyobj_s {
-    int         index;
-    uint        lineCount;
-    struct linedef_s **lineDefs;
-} mpolyobj_t;
-end
-
-struct polyobj
-    UINT    uint        idx         // Idx of polyobject
-    INT     int         tag         // Reference tag assigned in HereticEd
-    INT     int         validCount
-    FLOAT   vec2_t[2]   box
-    PTR     degenmobj_t startSpot
-    -       fvertex_t   dest        // Destination XY
-    ANGLE   angle_t     angle
-    ANGLE   angle_t     destAngle   // Destination angle.
-    ANGLE   angle_t     angleSpeed  // Rotation speed.
-    UINT    uint        numSegs
-    PTR     seg_s**     segs
-    -       fvertex_t*  originalPts // Used as the base for the rotations
-    -       fvertex_t*  prevPts     // Use to restore the old point values
-    FLOAT   float       speed       // Movement speed.
-    BOOL    boolean     crush       // Should the polyobj attempt to crush mobjs?
-    INT     int         seqType
-    PTR     void*       specialData // pointer a thinker, if the poly is moving
-    -       mpolyobj_t  buildData
-end
-
-internal
 #define RIGHT                   0
 #define LEFT                    1
 

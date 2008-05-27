@@ -593,10 +593,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\p_polyobj.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\p_sector.c"
 				>
 			</File>
@@ -1685,10 +1681,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\p_polyob.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\p_polyobj.h"
 				>
 			</File>
 			<File
