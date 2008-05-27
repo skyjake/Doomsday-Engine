@@ -85,7 +85,7 @@ polyobj_t* PO_GetPolyobj(uint num)
 {
     if(num & 0x80000000)
     {
-        uint                idx = num & 0x7ffffffff;
+        uint                idx = num & 0x7fffffff;
 
         if(idx < numPolyObjs)
             return polyObjs[idx];
