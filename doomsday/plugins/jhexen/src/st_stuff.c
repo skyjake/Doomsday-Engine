@@ -1183,7 +1183,7 @@ void ST_refreshBackground(void)
         // top
         x = 0;
         y = 135;
-        w = 320;
+        w = ST_WIDTH;
         h = 27;
         ch = 0.41538461538461538461538461538462;
 
@@ -1201,7 +1201,7 @@ void ST_refreshBackground(void)
         y = 162;
         w = 38;
         h = 38;
-        cw = 0.11875f;
+        cw = (float) 38 / ST_WIDTH;
         ch = 0.41538461538461538461538461538462;
 
         DGL_TexCoord2f(0, ch);
@@ -1218,7 +1218,7 @@ void ST_refreshBackground(void)
         y = 162;
         w = 38;
         h = 38;
-        cw = 0.88125f;
+        cw = (float) (ST_WIDTH - 38) / ST_WIDTH;
         ch = 0.41538461538461538461538461538462f;
 
         DGL_TexCoord2f(cw, ch);
@@ -1235,8 +1235,8 @@ void ST_refreshBackground(void)
         y = 192;
         w = 244;
         h = 8;
-        cw = 0.11875f;
-        cw2 = 0.88125f;
+        cw = (float) 38 / ST_WIDTH;
+        cw2 = (float) (ST_WIDTH - 38) / ST_WIDTH;
         ch = 0.87692307692307692307692307692308f;
 
         DGL_TexCoord2f(cw, ch);
@@ -1268,7 +1268,7 @@ void ST_refreshBackground(void)
                 y = 162;
                 w = deathmatch ? 122 : 152;
                 h = 30;
-                cw = deathmatch ? 0.12295081967213114754098360655738f : 0;
+                cw = deathmatch ? (float) 15 / 122 : 0;
                 cw2 = 0.62295081967213114754098360655738f;
                 ch = 0.96774193548387096774193548387097f;
 
