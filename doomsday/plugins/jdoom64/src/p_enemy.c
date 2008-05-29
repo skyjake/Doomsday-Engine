@@ -536,31 +536,65 @@ static boolean lookForPlayers(mobj_t *actor, boolean allAround)
     }
 }
 
+static boolean massacreMobj(thinker_t* th, void* context)
+{
+    int*                count = (int*) context;
+    mobj_t*             mo = (mobj_t *) th;
+
+    if(mo->type == MT_SKULL ||
+       ((mo->flags & MF_COUNTKILL) && mo->health > 0))
+    {
+        P_DamageMobj(mo, NULL, NULL, 10000);
+        (*count)++;
+    }
+
+    return true; // Continue iteration.
+}
+
 int P_Massacre(void)
 {
     int                 count = 0;
-    mobj_t             *mo;
-    thinker_t          *think;
 
-    // Only massacre when in a level.
-    if(G_GetGameState() != GS_LEVEL)
-        return 0;
-
-    for(think = thinkerCap.next; think != &thinkerCap; think = think->next)
+    // Only massacre when actually in a level.
+    if(G_GetGameState() == GS_LEVEL)
     {
-        if(think->function != P_MobjThinker)
-            continue; // Not a mobj thinker.
-
-        mo = (mobj_t *) think;
-        if(mo->type == MT_SKULL ||
-           ((mo->flags & MF_COUNTKILL) && mo->health > 0))
-        {
-            P_DamageMobj(mo, NULL, NULL, 10000);
-            count++;
-        }
+        P_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
 
     return count;
+}
+
+
+static boolean findBrainTarget(thinker_t* th, void* context)
+{
+    mobj_t*             mo = (mobj_t *) th;
+
+    if(mo->type == MT_BOSSTARGET)
+    {
+        if(numBrainTargets >= numBrainTargetsAlloc)
+        {
+            // Do we need to alloc more targets?
+            if(numBrainTargets == numBrainTargetsAlloc)
+            {
+                numBrainTargetsAlloc *= 2;
+                brainTargets =
+                    Z_Realloc(brainTargets,
+                              numBrainTargetsAlloc * sizeof(*brainTargets),
+                              PU_LEVEL);
+            }
+            else
+            {
+                numBrainTargetsAlloc = 32;
+                brainTargets =
+                    Z_Malloc(numBrainTargetsAlloc * sizeof(*brainTargets),
+                             PU_LEVEL, NULL);
+            }
+        }
+
+        brainTargets[numBrainTargets++] = mo;
+    }
+
+    return true; // Continue iteration.
 }
 
 /**
@@ -571,65 +605,24 @@ int P_Massacre(void)
  */
 void P_SpawnBrainTargets(void)
 {
-    thinker_t          *thinker;
-    mobj_t             *m;
-
     // Find all the target spots.
-    for(thinker = thinkerCap.next; thinker != &thinkerCap;
-        thinker = thinker->next)
-    {
-        if(thinker->function != P_MobjThinker)
-            continue; // Not a mobj.
-
-        m = (mobj_t *) thinker;
-
-        if(m->type == MT_BOSSTARGET)
-        {
-            if(numBrainTargets >= numBrainTargetsAlloc)
-            {
-                // Do we need to alloc more targets?
-                if(numBrainTargets == numBrainTargetsAlloc)
-                {
-                    numBrainTargetsAlloc *= 2;
-                    brainTargets =
-                        Z_Realloc(brainTargets,
-                                  numBrainTargetsAlloc * sizeof(*brainTargets),
-                                  PU_LEVEL);
-                }
-                else
-                {
-                    numBrainTargetsAlloc = 32;
-                    brainTargets =
-                        Z_Malloc(numBrainTargetsAlloc * sizeof(*brainTargets),
-                                 PU_LEVEL, NULL);
-                }
-            }
-
-            brainTargets[numBrainTargets++] = m;
-        }
-    }
+    P_IterateThinkers(P_MobjThinker, findBrainTarget, NULL);
 }
 
-static boolean countMobjsOfType(int type)
+typedef struct {
+    mobjtype_t          type;
+    size_t              count;
+} countmobjoftypeparams_t;
+
+static boolean countMobjOfType(thinker_t* th, void* context)
 {
-    thinker_t          *th;
-    mobj_t             *mo;
-    size_t              num = 0;
+    countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
 
-    // Scan the thinkers to count the number of mobjs of the given type.
-    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
-    {
-        if(th->function != P_MobjThinker)
-            continue;
+    if(params->type == mo->type && mo->health > 0)
+        params->count++;
 
-        mo = (mobj_t *) th;
-        if(mo->type == type && mo->health > 0)
-        {
-            num++;
-        }
-    }
-
-    return num;
+    return true; // Continue iteration.
 }
 
 /**
@@ -643,21 +636,25 @@ static boolean countMobjsOfType(int type)
 /**
  * kaiser - Used for special stuff. works only per monster!!!
  */
-void C_DECL A_BitchSpecial(mobj_t *mo)
+void C_DECL A_BitchSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    // Check if there are no more Bitches left in the map.
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4459; // jd64 was 666.
-    EV_DoDoor(dummyLine, lowerFloorToLowest); // jd64 was open.
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {   // No Bitches left alive.
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4459; // jd64 was 666.
+        EV_DoDoor(dummyLine, lowerFloorToLowest); // jd64 was open.
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -665,19 +662,22 @@ void C_DECL A_BitchSpecial(mobj_t *mo)
  */
 void C_DECL A_PossSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4444;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4444;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -685,19 +685,22 @@ void C_DECL A_PossSpecial(mobj_t* mo)
  */
 void C_DECL A_SposSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4445;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4445;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -705,19 +708,22 @@ void C_DECL A_SposSpecial(mobj_t* mo)
  */
 void C_DECL A_TrooSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4446;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4446;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -725,19 +731,22 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
  */
 void C_DECL A_NtroSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4447;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4447;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -745,19 +754,22 @@ void C_DECL A_NtroSpecial(mobj_t* mo)
  */
 void C_DECL A_SargSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4448;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4448;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -765,19 +777,22 @@ void C_DECL A_SargSpecial(mobj_t* mo)
  */
 void C_DECL A_HeadSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4450;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4450;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -785,19 +800,22 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
  */
 void C_DECL A_SkulSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4452;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4452;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -805,19 +823,22 @@ void C_DECL A_SkulSpecial(mobj_t* mo)
  */
 void C_DECL A_Bos2Special(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4453;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4453;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -825,19 +846,22 @@ void C_DECL A_Bos2Special(mobj_t* mo)
  */
 void C_DECL A_BossSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4454;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4454;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -845,19 +869,22 @@ void C_DECL A_BossSpecial(mobj_t* mo)
  */
 void C_DECL A_PainSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4455;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4455;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -865,19 +892,22 @@ void C_DECL A_PainSpecial(mobj_t* mo)
  */
 void C_DECL A_FattSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4456;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4456;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -885,19 +915,22 @@ void C_DECL A_FattSpecial(mobj_t* mo)
  */
 void C_DECL A_BabySpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4457;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4457;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -905,19 +938,22 @@ void C_DECL A_BabySpecial(mobj_t* mo)
  */
 void C_DECL A_CybrSpecial(mobj_t* mo)
 {
-    linedef_t          *dummyLine;
+    countmobjoftypeparams_t params;
 
     A_Fall(mo);
 
-    if(countMobjsOfType(mo->type))
-    {   // There are others like us still alive.
-        return;
-    }
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 4458;
-    EV_DoDoor(dummyLine, lowerFloorToLowest);
-    P_FreeDummyLine(dummyLine);
+    if(!params.count)
+    {
+        linedef_t*          dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4458;
+        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -1858,32 +1894,22 @@ void C_DECL A_SkullAttack(mobj_t *actor)
 void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
 {
     float               pos[3];
-    mobj_t             *newmobj;
+    mobj_t*             newmobj;
     uint                an;
     float               prestep;
-    int                 count;
-    sector_t           *sec;
-    thinker_t          *currentthinker;
+    sector_t*           sec;
 
-    // DJS - Compat option for unlimited lost soul spawns
     if(cfg.maxSkulls)
-    {
-        // Count total number of skull currently on the level.
-        count = 0;
+    {   // Limit the number of MT_SKULL's we should spawn.
+        countmobjoftypeparams_t params;
 
-        currentthinker = thinkerCap.next;
-        while(currentthinker != &thinkerCap)
-        {
-            if((currentthinker->function == P_MobjThinker) &&
-               ((mobj_t *) currentthinker)->type == MT_SKULL)
-                count++;
+        // Count total number currently on the level.
+        params.type = MT_SKULL;
+        params.count = 0;
+        P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-            currentthinker = currentthinker->next;
-        }
-
-        // If there are already 20 skulls on the level, don't spit another.
-        if(count > 20)
-            return;
+        if(params.count > 20)
+            return; // Too many, don't spit another.
     }
 
     an = angle >> ANGLETOFINESHIFT;
@@ -2137,10 +2163,11 @@ void C_DECL A_Explode(mobj_t *mo)
  * kaiser - Removed exit special at end to allow MT_FATSO to properly
  *          work in Map33 for d64tc.
  */
-void C_DECL A_BossDeath(mobj_t *mo)
+void C_DECL A_BossDeath(mobj_t* mo)
 {
     int                 i;
-    linedef_t          *dummyLine;
+    linedef_t*          dummyLine;
+    countmobjoftypeparams_t params;
 
     // Has the boss already been killed?
     if(bossKilled)
@@ -2241,7 +2268,11 @@ void C_DECL A_BossDeath(mobj_t *mo)
         return; // No one left alive, so do not end game.
 
     // Scan the remaining thinkers to see if all bosses are dead.
-    if(countMobjsOfType(mo->type))
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+
+    if(params.count)
     {   // Other boss not dead.
         return;
     }
@@ -2535,7 +2566,7 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     P_TeleportMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false);
 
     // Remove self (i.e., cube).
-    P_MobjRemove(mo);
+    P_MobjRemove(mo, true);
 }
 
 void C_DECL A_PlayerScream(mobj_t *mo)

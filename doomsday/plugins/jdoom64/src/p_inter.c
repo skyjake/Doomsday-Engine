@@ -43,6 +43,7 @@
 #include "p_map.h"
 #include "p_user.h"
 #include "p_tick.h"
+#include "p_actor.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -786,7 +787,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     if(special->flags & MF_COUNTITEM)
         player->itemCount++;
 
-    P_MobjRemove(special);
+    P_MobjRemove(special, false);
     player->bonusCount += BONUSADD;
     /*if (player == &players[CONSOLEPLAYER])
        S_StartSound (NULL, sound); */
