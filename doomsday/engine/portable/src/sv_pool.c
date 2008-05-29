@@ -2225,42 +2225,58 @@ void Sv_NewNullDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     }
 }
 
-/**
- * Mobj deltas are generated for all mobjs that have changed.
- */
-void Sv_NewMobjDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
+typedef struct {
+    cregister_t*        reg;
+    boolean             doUpdate;
+    pool_t**            targets;
+} newmobjdeltaparams_t;
+
+static boolean newMobjDelta(thinker_t* th, void* context)
 {
-    thinker_t  *th;
-    mobj_t     *mo;
-    mobjdelta_t delta;
+    newmobjdeltaparams_t* params = (newmobjdeltaparams_t*) context;
 
-    // All existing mobjs are processed.
-    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
+    if(P_IsMobjThinker(th->function))
     {
-        if(!P_IsMobjThinker(th->function))
-            continue;
-
-        mo = (mobj_t *) th;
+        mobj_t*             mo = (mobj_t *) th;
 
         // Some objects should not be processed.
-        if(Sv_IsMobjIgnored(mo))
-            continue;
-
-        // Compare to produce a delta.
-        if(Sv_RegisterCompareMobj(reg, mo, &delta))
+        if(!Sv_IsMobjIgnored(mo))
         {
-            Sv_AddDeltaToPools(&delta, targets);
+            mobjdelta_t         delta;
 
-            if(doUpdate)
+            // Compare to produce a delta.
+            if(Sv_RegisterCompareMobj(params->reg, mo, &delta))
             {
-                reg_mobj_t *obj;
+                Sv_AddDeltaToPools(&delta, params->targets);
 
-                // This'll add a new register-mobj if it doesn't already exist.
-                obj = Sv_RegisterAddMobj(reg, mo->thinker.id);
-                Sv_RegisterMobj(&obj->mo, mo);
+                if(params->doUpdate)
+                {
+                    reg_mobj_t*         obj;
+
+                    // This'll add a new register-mobj if it doesn't
+                    // already exist.
+                    obj = Sv_RegisterAddMobj(params->reg, mo->thinker.id);
+                    Sv_RegisterMobj(&obj->mo, mo);
+                }
             }
         }
     }
+
+    return true; // Continue iteration.
+}
+
+/**
+ * Mobj deltas are generated for all mobjs that have changed.
+ */
+void Sv_NewMobjDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
+{
+    newmobjdeltaparams_t params;
+
+    params.reg = reg;
+    params.doUpdate = doUpdate;
+    params.targets = targets;
+
+    P_IterateThinkers(NULL, newMobjDelta, &params);
 }
 
 /**

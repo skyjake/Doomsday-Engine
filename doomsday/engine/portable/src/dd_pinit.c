@@ -135,7 +135,6 @@ void SetGameImports(game_import_t *imp)
     imp->validCount = &validCount;
     imp->topSlope = &topSlope;
     imp->bottomSlope = &bottomSlope;
-    imp->thinkerCap = &thinkerCap;
 }
 
 void DD_InitAPI(void)

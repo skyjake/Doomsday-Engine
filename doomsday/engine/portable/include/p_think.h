@@ -38,12 +38,18 @@ typedef struct thinker_s {
     thid_t          id; // Only used for mobjs (zero is not an ID).
 } thinker_t;
 
-extern thinker_t thinkerCap; // both the head and tail of the thinker list
-
 void            P_RunThinkers(void);
 void            P_InitThinkers(void);
+boolean         P_ThinkerListInited(void);
+
+void*           P_ThinkerCreate(think_t func, size_t extraData);
+
 void            P_AddThinker(thinker_t *thinker);
 void            P_RemoveThinker(thinker_t *thinker);
+boolean         P_IterateThinkers(think_t type,
+                                  boolean (*callback) (thinker_t* thinker, void*),
+                                  void* context);
+
 void            P_SetMobjID(thid_t id, boolean state);
 boolean         P_IsUsedMobjID(thid_t id);
 boolean         P_IsMobjThinker(think_t thinker);

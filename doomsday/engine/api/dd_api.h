@@ -55,10 +55,6 @@ typedef struct game_import_s {
     int            *validCount;
     float          *topSlope;
     float          *bottomSlope;
-
-    // Thinker data (DO NOT CHANGE).
-    thinker_t      *thinkerCap; /* The head and tail of the thinker list
-                                   game import == engine export */
 } game_import_t;
 
 /**

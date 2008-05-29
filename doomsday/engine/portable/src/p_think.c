@@ -33,8 +33,6 @@
 #include "de_console.h"
 #include "de_network.h"
 
-#include <assert.h>
-
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -49,18 +47,18 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     idtable[2048];          // 65536 bits telling which IDs are in use
+int idtable[2048]; // 65536 bits telling which IDs are in use.
 unsigned short iddealer = 0;
 
-thinker_t thinkerCap;           // The head and tail of the thinker list
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static thinker_t thinkerCap; // The head and tail of the thinker list.
 
 // CODE --------------------------------------------------------------------
 
 boolean P_IsMobjThinker(think_t thinker)
 {
-    think_t altfunc;
+    think_t             altfunc;
 
     if(thinker == gx.MobjThinker)
         return true;
@@ -72,7 +70,7 @@ boolean P_IsMobjThinker(think_t thinker)
 void P_ClearMobjIDs(void)
 {
     memset(idtable, 0, sizeof(idtable));
-    idtable[0] |= 1;      // ID zero is always "used" (it's not a valid ID).
+    idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
 }
 
 boolean P_IsUsedMobjID(thid_t id)
@@ -82,7 +80,7 @@ boolean P_IsUsedMobjID(thid_t id)
 
 void P_SetMobjID(thid_t id, boolean state)
 {
-    int         c = id >> 5, bit = 1 << (id & 31);  //(id % 32);
+    int                 c = id >> 5, bit = 1 << (id & 31); //(id % 32);
 
     if(state)
         idtable[c] |= bit;
@@ -100,43 +98,69 @@ thid_t P_NewMobjID(void)
     return iddealer;
 }
 
-void P_RunThinkers(void)
+/**
+ * Iterate the list of thinkers making a callback for each.
+ *
+ * @param type          If not @c NULL, only make a callback for thinkers
+ *                      whose function matches this.
+ * @param callback      The callback to make. Iteration will continue
+ *                      until a callback returns a zero value.
+ * @param context       Is passed to the callback function.
+ */
+boolean P_IterateThinkers(think_t type,
+                          boolean (*callback) (thinker_t* thinker, void*),
+                          void* context)
 {
-    thinker_t  *current, *next;
+    boolean             result;
+    thinker_t*          th, *next;
 
-    current = thinkerCap.next;
-    while(current != &thinkerCap)
+    th = thinkerCap.next;
+    while(th != &thinkerCap)
     {
 #ifdef FAKE_MEMORY_ZONE
-        assert(current->next != NULL);
-        assert(current->prev != NULL);
+        assert(th->next != NULL);
+        assert(th->prev != NULL);
 #endif
-        next = current->next;
-
-        if(current->function == (think_t) -2)
-        {   // In stasis, ignore.
-        }
-        else if(current->function == (think_t) -1)
-        {
-            // Time to remove it.
-            current->next->prev = current->prev;
-            current->prev->next = current->next;
-            if(current->id)
-            {   // Its a mobj.
-                P_MobjRecycle((mobj_t*) current);
-            }
-            else
-            {
-                Z_Free(current);
-            }
-        }
-        else if(current->function)
-        {
-            current->function(current);
-        }
-
-        current = next;
+        next = th->next;
+        if(!(type && th->function && th->function != type))
+            if((result = callback(th, context)) == 0)
+                break;
+        th = next;
     }
+
+    return result;
+}
+
+static boolean runThinker(thinker_t* th, void* context)
+{
+    if(th->function == (think_t) -2)
+    {   // In stasis, ignore.
+    }
+    else if(th->function == (think_t) -1)
+    {
+        // Time to remove it.
+        th->next->prev = th->prev;
+        th->prev->next = th->next;
+        if(th->id)
+        {   // Its a mobj.
+            P_MobjRecycle((mobj_t*) th);
+        }
+        else
+        {
+            Z_Free(th);
+        }
+    }
+    else if(th->function)
+    {
+        th->function(th);
+    }
+
+    return true; // Continue iteration.
+}
+
+void P_RunThinkers(void)
+{
+    P_IterateThinkers(NULL, runThinker, NULL);
 }
 
 void P_InitThinkers(void)
@@ -145,10 +169,15 @@ void P_InitThinkers(void)
     P_ClearMobjIDs();
 }
 
+boolean P_ThinkerListInited(void)
+{
+    return (thinkerCap.next)? true : false;
+}
+
 /**
  * Adds a new thinker at the end of the list.
  */
-void P_AddThinker(thinker_t *thinker)
+void P_AddThinker(thinker_t* thinker)
 {
     // Link the thinker to the thinker list.
     thinkerCap.prev->next = thinker;
@@ -173,13 +202,12 @@ void P_AddThinker(thinker_t *thinker)
  * Deallocation is lazy -- it will not actually be freed until its
  * thinking turn comes up.
  */
-void P_RemoveThinker(thinker_t *thinker)
+void P_RemoveThinker(thinker_t* thinker)
 {
     // Has got an ID?
     if(thinker->id)
-    {
-        // Then it must be a mobj.
-        mobj_t *mo = (mobj_t *) thinker;
+    {   // Then it must be a mobj.
+        mobj_t*             mo = (mobj_t *) thinker;
 
         // Flag the ID as free.
         P_SetMobjID(thinker->id, false);
@@ -195,5 +223,6 @@ void P_RemoveThinker(thinker_t *thinker)
             }
         }
     }
+
     thinker->function = (think_t) - 1;
 }

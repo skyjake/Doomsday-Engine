@@ -574,11 +574,11 @@ static void P_NewParticle(ptcgen_t *gen)
 }
 
 /**
- * Callback for the client mobj iterator, called from P_ManyNewParticles.
+ * Callback for the client mobj iterator, called from P_PtcGenThinker.
  */
 boolean PIT_ClientMobjParticles(clmobj_t *cmo, void *parm)
 {
-    ptcgen_t   *gen = parm;
+    ptcgen_t*           gen = parm;
 
     // If the clmobj is not valid at the moment, don't do anything.
     if(cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN))
@@ -591,6 +591,7 @@ boolean PIT_ClientMobjParticles(clmobj_t *cmo, void *parm)
         // Type mismatch.
         return true;
     }
+
     gen->source = &cmo->mo;
     P_NewParticle(gen);
     return true;
@@ -599,32 +600,23 @@ boolean PIT_ClientMobjParticles(clmobj_t *cmo, void *parm)
 /**
  * Spawn multiple new particles using all applicable sources.
  */
-static void P_ManyNewParticles(ptcgen_t *gen)
+static boolean manyNewParticles(thinker_t* th, void* context)
 {
-    thinker_t  *it;
-    mobj_t     *mo;
-
-    // Client's should also check the client mobjs.
-    if(isClient)
+    if(P_IsMobjThinker(th->function))
     {
-        Cl_MobjIterator(PIT_ClientMobjParticles, gen);
-    }
+        ptcgen_t*           gen = (ptcgen_t*) context;
+        mobj_t*             mo = (mobj_t *) th;
 
-    // Scan all thinkers.
-    for(it = thinkerCap.next; it != &thinkerCap; it = it->next)
-    {
-        if(!P_IsMobjThinker(it->function))
-            continue;
-        mo = (mobj_t *) it;
         // Type match?
-        if(mo->type != gen->type && mo->type != gen->type2)
-            continue;
-        // Someone might think this is a slight hack...
-        gen->source = mo;
-        P_NewParticle(gen);
+        if(mo->type == gen->type || mo->type == gen->type2)
+        {
+            // Someone might think this is a slight hack...
+            gen->source = mo;
+            P_NewParticle(gen);
+        }
     }
-    // The generator has no real source.
-    gen->source = NULL;
+
+    return true; // Continue iteration.
 }
 
 boolean PIT_CheckLinePtc(linedef_t *ld, void *data)
@@ -1112,10 +1104,24 @@ void P_PtcGenThinker(ptcgen_t* gen)
         while(gen->spawnCount >= 1)
         {
             // Spawn a new particle.
-            if(gen->type >= 0)  // Type-triggered?
-                P_ManyNewParticles(gen);
+            if(gen->type >= 0) // Type-triggered?
+            {
+                // Client's should also check the client mobjs.
+                if(isClient)
+                {
+                    Cl_MobjIterator(PIT_ClientMobjParticles, gen);
+                }
+
+                P_IterateThinkers(NULL, manyNewParticles, gen);
+
+                // The generator has no real source.
+                gen->source = NULL;
+            }
             else
+            {
                 P_NewParticle(gen);
+            }
+
             gen->spawnCount--;
         }
     }

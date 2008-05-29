@@ -1230,6 +1230,17 @@ static boolean isInList(void **list, size_t len, void *elm)
     return false;
 }
 
+static boolean precacheResourcesForMobjs(thinker_t* th, void* context)
+{
+    if(P_IsMobjThinker(th->function))
+    {
+        // Precache all the skins for the mobj.
+        R_PrecacheSkinsForMobj((mobj_t *) th);
+    }
+
+    return true; // Continue iteration.
+}
+
 /**
  * Prepare all relevant skins, textures, flats and sprites.
  * Doesn't unload anything, though (so that if there's enough
@@ -1241,7 +1252,6 @@ void R_PrecacheLevel(void)
 {
     uint            i, j;
     size_t          n;
-    thinker_t      *th;
     sector_t       *sec;
     sidedef_t      *side;
     material_t     *mat;
@@ -1327,16 +1337,7 @@ void R_PrecacheLevel(void)
     // Precache skins?
     if(useModels && precacheSkins)
     {
-        for(i = 0, th = thinkerCap.next; th != &thinkerCap; th = th->next)
-        {
-            if(th->function != gx.MobjThinker)
-                continue;
-            // Advance progress bar.
-            /*if(++i % SAFEDIV(mocount, 10) == 0)
-                Con_Progress(2, PBARF_DONTSHOW);*/
-            // Precache all the skins for the mobj.
-            R_PrecacheSkinsForMobj((mobj_t *) th);
-        }
+        P_IterateThinkers(NULL, precacheResourcesForMobjs, NULL);
     }
 
     // Update progress.

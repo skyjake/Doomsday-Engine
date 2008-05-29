@@ -55,10 +55,17 @@
 
 // CODE --------------------------------------------------------------------
 
-void P_MobjTicker(mobj_t *mo)
+boolean P_MobjTicker(thinker_t* th, void* context)
 {
     int                 i;
-    lumobj_t           *lum = LO_GetLuminous(mo->light);
+    mobj_t*             mo;
+    lumobj_t*           lum;
+
+    if(!P_IsMobjThinker(th->function))
+        return true; // Continue iteration.
+
+    mo = (mobj_t*) th;
+    lum = LO_GetLuminous(mo->light);
 
     // Set the high bit of halofactor if the light is clipped. This will
     // make P_Ticker diminish the factor to zero. Take the first step here
@@ -67,7 +74,7 @@ void P_MobjTicker(mobj_t *mo)
     {
         if(mo->haloFactor & 0x80)
         {
-            i = (mo->haloFactor & 0x7f);    // - haloOccludeSpeed;
+            i = (mo->haloFactor & 0x7f); // - haloOccludeSpeed;
             if(i < 0)
                 i = 0;
             mo->haloFactor = i;
@@ -77,7 +84,7 @@ void P_MobjTicker(mobj_t *mo)
     {
         if(!(mo->haloFactor & 0x80))
         {
-            i = (mo->haloFactor & 0x7f);    // + haloOccludeSpeed;
+            i = (mo->haloFactor & 0x7f); // + haloOccludeSpeed;
             if(i > 127)
                 i = 127;
             mo->haloFactor = 0x80 | i;
@@ -103,11 +110,14 @@ void P_MobjTicker(mobj_t *mo)
 
     mo->haloFactor &= ~0x7f;
     mo->haloFactor |= i;
+
+    return true; // Continue iteration.
 }
 
 boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
 {
-    P_MobjTicker(&cmo->mo);
+    P_MobjTicker((thinker_t*) &cmo->mo, NULL);
+
     // Continue iteration.
     return true;
 }
@@ -119,9 +129,7 @@ void P_Ticker(timespan_t time)
 {
     static trigger_t    fixed = { 1.0 / 35, 0 };
 
-    thinker_t          *th;
-
-    if(!thinkerCap.next)
+    if(!P_ThinkerListInited())
         return; // Not initialized yet.
 
     if(!M_RunTrigger(&fixed, time))
@@ -133,12 +141,8 @@ void P_Ticker(timespan_t time)
     R_SkyTicker();
 
     // Check all mobjs.
-    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
-    {
-        if(!P_IsMobjThinker(th->function))
-            continue;
-        P_MobjTicker((mobj_t *) th);
-    }
+    P_IterateThinkers(NULL, P_MobjTicker, NULL);
 
+    // Check all client mobjs.
     Cl_MobjIterator(PIT_ClientMobjTicker, NULL);
 }

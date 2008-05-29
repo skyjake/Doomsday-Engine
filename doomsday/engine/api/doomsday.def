@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 424 <--
+; --> 425 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -288,6 +288,7 @@ EXPORTS
 ; Play: Thinkers.
     P_RunThinkers               @84 NONAME
     P_InitThinkers              @85 NONAME
+    P_IterateThinkers			@425 NONAME
     P_AddThinker                @86 NONAME
     P_RemoveThinker             @87 NONAME
 
