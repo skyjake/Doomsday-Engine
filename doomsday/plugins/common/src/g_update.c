@@ -83,29 +83,40 @@
 
 // CODE --------------------------------------------------------------------
 
+static boolean mangleMobj(thinker_t* th, void* context)
+{
+    mobj_t*             mo = (mobj_t *) th;
+
+    mo->state = MANGLE_STATE(mo->state);
+    mo->info = (mobjinfo_t *) (mo->info - mobjInfo);
+
+    return true; // Continue iteration.
+}
+
+static boolean restoreMobj(thinker_t* th, void* context)
+{
+    mobj_t*             mo = (mobj_t *) th;
+
+    mo->state = RESTORE_STATE(mo->state);
+    mo->info = &mobjInfo[(int) mo->info];
+
+    return true; // Continue iteration.
+}
+
 /**
  * Called before the engine re-inits the definitions. After that all the
  * state, info, etc. pointers will be obsolete.
  */
 void G_MangleState(void)
 {
-    int             i, k;
-    thinker_t      *it;
-    mobj_t         *mo;
+    int                 i;
 
-    for(it = thinkerCap.next; it != &thinkerCap && it; it = it->next)
-    {
-        if(it->function != P_MobjThinker)
-            continue;
-
-        mo = (mobj_t *) it;
-        mo->state = MANGLE_STATE(mo->state);
-        mo->info = (mobjinfo_t *) (mo->info - mobjInfo);
-    }
+    P_IterateThinkers(P_MobjThinker, mangleMobj, NULL);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t       *plr = &players[i];
+        player_t*           plr = &players[i];
+        int                 k;
 
         for(k = 0; k < NUMPSPRITES; ++k)
             plr->pSprites[k].state =
@@ -115,23 +126,14 @@ void G_MangleState(void)
 
 void G_RestoreState(void)
 {
-    int             i, k;
-    thinker_t      *it;
-    mobj_t         *mo;
+    int                 i;
 
-    for(it = thinkerCap.next; it != &thinkerCap && it; it = it->next)
-    {
-        if(it->function != P_MobjThinker)
-            continue;
-
-        mo = (mobj_t *) it;
-        mo->state = RESTORE_STATE(mo->state);
-        mo->info = &mobjInfo[(int) mo->info];
-    }
+    P_IterateThinkers(P_MobjThinker, restoreMobj, NULL);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t       *plr = &players[i];
+        player_t*           plr = &players[i];
+        int                 k;
 
         for(k = 0; k < NUMPSPRITES; ++k)
             plr->pSprites[k].state =

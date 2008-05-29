@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,15 +29,15 @@
 #ifndef __DD_COMMON_ACTOR_H__
 #define __DD_COMMON_ACTOR_H__
 
-void            P_MobjRemove(mobj_t *mo);
+void            P_MobjRemove(mobj_t* mo, boolean noRespawn);
 
-void            P_MobjUnsetPosition(mobj_t *mo);
-void            P_MobjSetPosition(mobj_t *mo);
-void            P_MobjSetSRVO(mobj_t *mo, float stepx, float stepy);
-void            P_MobjSetSRVOZ(mobj_t *mo, float stepz);
-void            P_MobjClearSRVO(mobj_t *mo);
-void            P_MobjAngleSRVOTicker(mobj_t *mo);
+void            P_MobjUnsetPosition(mobj_t* mo);
+void            P_MobjSetPosition(mobj_t* mo);
+void            P_MobjSetSRVO(mobj_t* mo, float stepx, float stepy);
+void            P_MobjSetSRVOZ(mobj_t* mo, float stepz);
+void            P_MobjClearSRVO(mobj_t* mo);
+void            P_MobjAngleSRVOTicker(mobj_t* mo);
 
-void            P_UpdateHealthBits(mobj_t *mobj);
+void            P_UpdateHealthBits(mobj_t* mo);
 
 #endif

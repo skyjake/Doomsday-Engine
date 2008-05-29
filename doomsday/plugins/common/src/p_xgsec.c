@@ -583,32 +583,46 @@ void XS_PlaneMover(xgplanemover_t *mover)
     }
 }
 
+typedef struct {
+    sector_t*           sec;
+    boolean             ceiling;
+} stopplanemoverparams_t;
+
+static boolean stopPlaneMover(thinker_t* th, void* context)
+{
+    stopplanemoverparams_t* params = (stopplanemoverparams_t*) context;
+    xgplanemover_t*     mover = (xgplanemover_t *) th;
+
+    if(mover->sector == params->sec &&
+       mover->ceiling == params->ceiling)
+    {
+        XS_MoverStopped(mover, false);
+        P_RemoveThinker(th); // Remove it.
+    }
+
+    return true; // Continue iteration.
+}
+
 /**
  * Returns a new thinker for handling the specified plane. Removes any
  * existing thinkers associated with the plane.
  */
-xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
+xgplanemover_t *XS_GetPlaneMover(sector_t *sec, boolean ceiling)
 {
-    thinker_t  *th;
-    xgplanemover_t *mover;
+    xgplanemover_t*     mover;
+    stopplanemoverparams_t params;
 
-    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
-        if(th->function == XS_PlaneMover)
-        {
-            mover = (xgplanemover_t *) th;
-            if(mover->sector == sector && mover->ceiling == ceiling)
-            {
-                XS_MoverStopped(mover, false);
-                P_RemoveThinker(th); // Remove it.
-            }
-        }
+    params.sec = sec;
+    params.ceiling = ceiling;
+    P_IterateThinkers(XS_PlaneMover, stopPlaneMover, NULL);
 
     // Allocate a new thinker.
     mover = Z_Malloc(sizeof(*mover), PU_LEVEL, 0);
     memset(mover, 0, sizeof(*mover));
     mover->thinker.function = XS_PlaneMover;
-    mover->sector = sector;
+    mover->sector = sec;
     mover->ceiling = ceiling;
+
     return mover;
 }
 
@@ -2664,48 +2678,41 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
     P_FreeDummyLine(dummyLine);
 }
 
-int XSTrav_SectorChain(sector_t *sec, mobj_t *mo, int ch)
+static boolean checkChainRequirements(sector_t* sec, mobj_t* mo, int ch,
+                                      boolean* activating)
 {
-    xgsector_t *xg;
-    sectortype_t *info;
-    player_t   *player = mo->player;
-    int         flags;
-    boolean     activating;
+    xgsector_t*         xg;
+    sectortype_t*       info;
+    player_t*           player = mo->player;
+    int                 flags;
+    boolean             typePasses = false;
 
     xg = P_ToXSector(sec)->xg;
     info = &xg->info;
     flags = info->chainFlags[ch];
 
     // Check mobj type.
-    if(flags & (SCEF_ANY_A | SCEF_ANY_D | SCEF_TICKER_A | SCEF_TICKER_D))
-        goto type_passes;
-    if((flags & (SCEF_PLAYER_A | SCEF_PLAYER_D)) && player)
-        goto type_passes;
-    if((flags & (SCEF_OTHER_A | SCEF_OTHER_D)) && !player)
-        goto type_passes;
-    if((flags & (SCEF_MONSTER_A | SCEF_MONSTER_D)) && (mo->flags & MF_COUNTKILL))
-        goto type_passes;
-    if((flags & (SCEF_MISSILE_A | SCEF_MISSILE_D)) && (mo->flags & MF_MISSILE))
-    {
-        goto type_passes;
-    }
+    if((flags & (SCEF_ANY_A | SCEF_ANY_D | SCEF_TICKER_A | SCEF_TICKER_D)) ||
+       ((flags & (SCEF_PLAYER_A | SCEF_PLAYER_D)) && player) ||
+       ((flags & (SCEF_OTHER_A | SCEF_OTHER_D)) && !player) ||
+       ((flags & (SCEF_MONSTER_A | SCEF_MONSTER_D)) && (mo->flags & MF_COUNTKILL)) ||
+       ((flags & (SCEF_MISSILE_A | SCEF_MISSILE_D)) && (mo->flags & MF_MISSILE)))
+        typePasses = true;
 
-    // Wrong type, continue looking.
-    return true;
-
-  type_passes:
+    if(!typePasses)
+        return false; // Wrong type.
 
     // Are we looking for an activation effect?
     if(player)
-        activating = !(flags & SCEF_PLAYER_D);
+        *activating = !(flags & SCEF_PLAYER_D);
     else if(mo->flags & MF_COUNTKILL)
-        activating = !(flags & SCEF_MONSTER_D);
+        *activating = !(flags & SCEF_MONSTER_D);
     else if(mo->flags & MF_MISSILE)
-        activating = !(flags & SCEF_MISSILE_D);
+        *activating = !(flags & SCEF_MISSILE_D);
     else if(flags & (SCEF_ANY_A | SCEF_ANY_D))
-        activating = !(flags & SCEF_ANY_D);
+        *activating = !(flags & SCEF_ANY_D);
     else
-        activating = !(flags & SCEF_OTHER_D);
+        *activating = !(flags & SCEF_OTHER_D);
 
     // Check for extra requirements (touching).
     switch(ch)
@@ -2713,31 +2720,49 @@ int XSTrav_SectorChain(sector_t *sec, mobj_t *mo, int ch)
     case XSCE_FLOOR:
         // Is it touching the floor?
         if(mo->pos[VZ] > P_GetFloatp(sec, DMU_FLOOR_HEIGHT))
-            return true;
-        break;
+            return false;
 
     case XSCE_CEILING:
         // Is it touching the ceiling?
         if(mo->pos[VZ] + mo->height < P_GetFloatp(sec, DMU_CEILING_HEIGHT))
-            return true;
-        break;
+            return false;
 
     default:
         break;
     }
 
-    XS_DoChain(sec, ch, activating, mo);
-
-    return true; // Continue looking...
+    return true;
 }
 
-int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
+typedef struct {
+    sector_t*           sec;
+    int                 data;
+} xstrav_sectorchainparams_t;
+
+boolean XSTrav_SectorChain(thinker_t* th, void* context)
 {
-    sectortype_t *info;
-    float       ang;
+    xstrav_sectorchainparams_t* params =
+        (xstrav_sectorchainparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+
+    if(params->sec == P_GetPtrp(mo->subsector, DMU_SECTOR))
+    {
+        boolean             activating;
+
+        if(checkChainRequirements(params->sec, mo, params->data, &activating))
+            XS_DoChain(params->sec, params->data, activating, mo);
+    }
+
+    return true; // Continue iteration.
+}
+
+void P_ApplyWind(mobj_t* mo, sector_t* sec)
+{
+    sectortype_t*       info;
+    float               ang;
 
     if(mo->player && (mo->player->plr->flags & DDPF_CAMERA))
-        return true; // Wind does not affect cameras.
+        return; // Wind does not affect cameras.
 
     info = &(P_ToXSector(sec)->xg->info);
     ang = PI * info->windAngle / 180;
@@ -2746,7 +2771,7 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
     {
         // Clientside wind only affects the local player.
         if(!mo->player || mo->player != &players[CONSOLEPLAYER])
-            return true;
+            return;
     }
 
     // Does wind affect this sort of things?
@@ -2755,8 +2780,10 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
        ((info->flags & STF_MONSTER_WIND) && (mo->flags & MF_COUNTKILL)) ||
        ((info->flags & STF_MISSILE_WIND) && (mo->flags & MF_MISSILE)))
     {
-        float       thfloorz = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
-        float       thceilz  = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+        float               thfloorz =
+            P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+        float               thceilz  =
+            P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 
         if(!(info->flags & (STF_FLOOR_WIND | STF_CEILING_WIND)) ||
            ((info->flags & STF_FLOOR_WIND) && mo->pos[VZ] <= thfloorz) ||
@@ -2771,41 +2798,23 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
             mo->mom[MY] += sin(ang) * info->windSpeed;
         }
     }
-
-    return true; // Continue applying wind.
 }
 
-/**
- * @return              @c true, if all callbacks returned @c true.
- */
-int XS_TraverseMobjs(sector_t *sec, int data,
-                     int (*func) (sector_t *sec, mobj_t *mo, int data))
+typedef struct {
+    sector_t*           sec;
+} xstrav_windparams_t;
+
+boolean XSTrav_Wind(thinker_t* th, void* context)
 {
-    mobj_t     *mo;
-    thinker_t  *th;
+    xstrav_windparams_t* params = (xstrav_windparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
 
-    // Only traverse sectorlinked things.
-    //for(mo = sec->thinglist; mo; mo = mo->sNext)
-    //{
-
-    th = thinkerCap.next;
-    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
+    if(params->sec == P_GetPtrp(mo->subsector, DMU_SECTOR))
     {
-        // Not a mobj.
-        if(th->function != P_MobjThinker)
-            continue;
-
-        mo = (mobj_t *) th;
-
-        // Wrong sector.
-        if(sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
-            continue;
-
-        if(!func(sec, mo, data))
-            return false;
+        P_ApplyWind(mo, params->sec);
     }
 
-    return true;
+    return true; // Continue iteration.
 }
 
 /**
@@ -2886,19 +2895,31 @@ Con_Message("XS_Think: Index (%i) not xsector!\n", idx);
         // sector.
         if(info->chain[XSCE_FLOOR] && xg->chainTimer[XSCE_FLOOR] <= 0)
         {
-            XS_TraverseMobjs(sector, XSCE_FLOOR, XSTrav_SectorChain);
+            xstrav_sectorchainparams_t params;
+
+            params.sec = sector;
+            params.data = XSCE_FLOOR;
+            P_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Ceiling chain. Check any mobjs that are touching the ceiling.
         if(info->chain[XSCE_CEILING] && xg->chainTimer[XSCE_CEILING] <= 0)
         {
-            XS_TraverseMobjs(sector, XSCE_CEILING, XSTrav_SectorChain);
+            xstrav_sectorchainparams_t params;
+
+            params.sec = sector;
+            params.data = XSCE_CEILING;
+            P_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Inside chain. Check any sectorlinked mobjs.
         if(info->chain[XSCE_INSIDE] && xg->chainTimer[XSCE_INSIDE] <= 0)
         {
-            XS_TraverseMobjs(sector, XSCE_INSIDE, XSTrav_SectorChain);
+            xstrav_sectorchainparams_t params;
+
+            params.sec = sector;
+            params.data = XSCE_INSIDE;
+            P_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Ticker chain. Send an activate event if TICKER_D flag is not set.
@@ -2951,7 +2972,10 @@ Con_Message("XS_Think: Index (%i) not xsector!\n", idx);
     // Wind for all sectorlinked mobjs.
     if(xg->info.windSpeed || xg->info.verticalWind)
     {
-        XS_TraverseMobjs(sector, 0, XSTrav_Wind);
+        xstrav_windparams_t params;
+
+        params.sec = sector;
+        P_IterateThinkers(P_MobjThinker, XSTrav_Wind, &params);
     }
 }
 

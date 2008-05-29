@@ -2493,7 +2493,7 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
 #if __JHEXEN__
         if(thing->flags & MF_NOBLOOD)
         {
-            P_MobjRemove(thing);
+            P_MobjRemove(thing, false);
         }
         else
         {
@@ -2528,7 +2528,7 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
     if(thing->flags & MF_DROPPED)
 #endif
     {
-        P_MobjRemove(thing);
+        P_MobjRemove(thing, false);
         return true; // Keep checking...
     }
 

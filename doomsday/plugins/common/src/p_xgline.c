@@ -1788,29 +1788,20 @@ boolean XL_CheckLineStatus(linedef_t *line, int reftype, int ref, int active,
                             XLTrav_CheckLine);
 }
 
-boolean XL_CheckMobjGone(int thingtype)
+boolean XL_CheckMobjGone(thinker_t* th, void* context)
 {
-    thinker_t  *th;
-    mobj_t     *mo;
+    int                 thingtype = *(int*) context;
+    mobj_t*             mo = (mobj_t *) th;
 
-    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
-    {
-        // Only find mobjs.
-        if(th->function != P_MobjThinker)
-            continue;
-
-        mo = (mobj_t *) th;
-        if(mo->type == thingtype && mo->health > 0)
-        {   // Not dead.
-            XG_Dev("XL_CheckMobjGone: Thing type %i: Found mo id=%i, "
-                   "health=%i, pos=(%g,%g)", thingtype, mo->thinker.id,
-                   mo->health, mo->pos[VX], mo->pos[VY]);
-            return false;
-        }
+    if(mo->type == thingtype && mo->health > 0)
+    {   // Not dead.
+        XG_Dev("XL_CheckMobjGone: Thing type %i: Found mo id=%i, "
+               "health=%i, pos=(%g,%g)", thingtype, mo->thinker.id,
+               mo->health, mo->pos[VX], mo->pos[VY]);
+        return false; // Stop iteration.
     }
 
-    XG_Dev("XL_CheckMobjGone: Thing type %i is gone", thingtype);
-    return true;
+    return true; // Continue iteration.
 }
 
 boolean XL_SwitchSwap(sidedef_t *side, int section)
@@ -2335,11 +2326,13 @@ int XL_LineEvent(int evtype, int linetype, linedef_t *line, int sidenum,
             return false;
         }
     }
+
     if(info->flags & LTF_MOBJ_GONE)
     {
-        if(!XL_CheckMobjGone(info->aparm[9]))
-        return false;
+        if(!P_IterateThinkers(P_MobjThinker, XL_CheckMobjGone, &info->aparm[9]))
+            return false;
     }
+
     if(info->flags & LTF_ACTIVATOR_TYPE)
     {
         // Check the activator's type.
@@ -2349,6 +2342,7 @@ int XL_LineEvent(int evtype, int linetype, linedef_t *line, int sidenum,
             return false;
         }
     }
+
     if((evtype == XLE_USE || evtype == XLE_SHOOT || evtype == XLE_CROSS) &&
        !(info->flags2 & LTF2_TWOSIDED))
     {

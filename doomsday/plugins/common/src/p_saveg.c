@@ -537,9 +537,9 @@ static void SV_BeginSegment(int segType)
 /**
  * @return              Ptr to the thinkerinfo for the given thinker.
  */
-static thinkerinfo_t* infoForThinker(thinker_t *th)
+static thinkerinfo_t* infoForThinker(thinker_t* th)
 {
-    thinkerinfo_t *thInfo = thinkerInfo;
+    thinkerinfo_t*      thInfo = thinkerInfo;
 
     if(!th)
         return NULL;
@@ -557,7 +557,7 @@ static thinkerinfo_t* infoForThinker(thinker_t *th)
 
 static thinkerinfo_t* thinkerinfo(thinkerclass_t tClass)
 {
-    thinkerinfo_t *thInfo = thinkerInfo;
+    thinkerinfo_t*      thInfo = thinkerInfo;
 
     while(thInfo->thinkclass != TC_NULL)
     {
@@ -570,23 +570,30 @@ static thinkerinfo_t* thinkerinfo(thinkerclass_t tClass)
     return NULL;
 }
 
-static void removeAllThinkers(void)
+static boolean removeThinker(thinker_t* th, void* context)
 {
-    thinker_t *th, *next;
+    if(th->function == P_MobjThinker)
+        P_MobjRemove((mobj_t *) th, true);
+    else
+        Z_Free(th);
 
-    th = thinkerCap.next;
-    while(th != &thinkerCap && th)
-    {
-        next = th->next;
+    return true; // Continue iteration.
+}
 
-        if(th->function == P_MobjThinker)
-            P_MobjRemove((mobj_t *) th);
-        else
-            Z_Free(th);
+typedef struct {
+    uint                count;
+    boolean             savePlayers;
+} countmobjsparams_t;
 
-        th= next;
-    }
-    P_InitThinkers();
+static boolean countMobjs(thinker_t* th, void* context)
+{
+    countmobjsparams_t* params = (countmobjsparams_t*) context;
+    mobj_t*             mo = (mobj_t*) th;
+
+    if(!(mo->player && !params->savePlayers))
+        params->count++;
+
+    return true; // Continue iteration.
 }
 
 /**
@@ -594,35 +601,28 @@ static void removeAllThinkers(void)
  */
 static uint SV_InitThingArchive(boolean load, boolean savePlayers)
 {
-    uint    count = 0;
+    countmobjsparams_t  params;
+
+    params.count = 0;
+    params.savePlayers = savePlayers;
 
     if(load)
     {
 #if !__JHEXEN__
         if(hdr.version < 5)
-            count = 1024; // Limit in previous versions.
+            params.count = 1024; // Limit in previous versions.
         else
 #endif
-            count = SV_ReadLong();
+            params.count = SV_ReadLong();
     }
     else
     {
-        thinker_t *th;
-
         // Count the number of mobjs we'll be writing.
-        th = thinkerCap.next;
-        while(th != &thinkerCap)
-        {
-            if(th->function == P_MobjThinker &&
-               !(((mobj_t *) th)->player && !savePlayers))
-                count++;
-
-            th = th->next;
-        }
+        P_IterateThinkers(P_MobjThinker, countMobjs, &params);
     }
 
-    thing_archive = calloc(count, sizeof(mobj_t*));
-    return thing_archiveSize = (uint) count;
+    thing_archive = calloc(params.count, sizeof(mobj_t*));
+    return thing_archiveSize = params.count;
 }
 
 /**
@@ -3879,7 +3879,7 @@ static void SV_AddThinker(thinkerclass_t tclass, thinker_t* th)
  * @param thInfo    The thinker info to be used when archiving.
  * @param th        The thinker to be archived.
  */
-static void DoArchiveThinker(thinkerinfo_t *thInfo, thinker_t *th)
+static void doArchiveThinker(thinkerinfo_t *thInfo, thinker_t *th)
 {
     if(!thInfo || !th)
         return;
@@ -3892,71 +3892,133 @@ static void DoArchiveThinker(thinkerinfo_t *thInfo, thinker_t *th)
         thInfo->Write(th);
 }
 
+static boolean archiveThinker(thinker_t* th, void* context)
+{
+    boolean             savePlayers = *(boolean*) context;
+
+#if !__JHEXEN__
+    if(th->function == INSTASIS)
+    {   // Special case for thinkers in stasis.
+        extern ceilinglist_t *activeceilings;
+        extern platlist_t *activeplats;
+
+        platlist_t*         pl;
+        ceilinglist_t*      cl;
+        boolean             found;
+
+        found = false;
+        for(pl = activeplats; pl && !found; pl = pl->next)
+            if(pl->plat == (plat_t *) th)
+            {
+                doArchiveThinker(thinkerinfo(TC_PLAT), th);
+                found = true;
+            }
+
+        for(cl = activeceilings; cl && !found; cl = cl->next)
+            if(cl->ceiling == (ceiling_t *) th)
+            {
+                doArchiveThinker(thinkerinfo(TC_CEILING), th);
+                found = true;
+            }
+    }
+    else
+#endif
+    {
+        // Are we archiving players?
+        if(!(th->function == P_MobjThinker && ((mobj_t *) th)->player &&
+           !savePlayers))
+            doArchiveThinker(infoForThinker(th), th);
+    }
+
+    return true; // Continue iteration.
+}
+
 /**
  * Archives thinkers for both client and server.
  * Clients do not save all data for all thinkers (the server will send
  * it to us anyway so saving it would just bloat client save games).
  *
- * NOTE: Some thinker classes are NEVER saved by clients.
+ * \note Some thinker classes are NEVER saved by clients.
  */
 static void P_ArchiveThinkers(boolean savePlayers)
 {
-#if !__JHEXEN__
-    extern ceilinglist_t *activeceilings;
-    extern platlist_t *activeplats;
-#endif
-
-    thinker_t  *th = 0;
-#if !__JHEXEN__
-    boolean     found;
-#endif
+    boolean             localSavePlayers = savePlayers;
 
     SV_BeginSegment(ASEG_THINKERS);
 #if __JHEXEN__
     SV_WriteLong(thing_archiveSize); // number of mobjs.
 #endif
 
-    // Save off the current thinkers
-    for(th = thinkerCap.next; th != &thinkerCap && th; th = th->next)
-    {
-#if !__JHEXEN__
-        if(th->function == INSTASIS) // Special case for thinkers in stasis.
-        {
-            platlist_t *pl;
-            ceilinglist_t *cl;     //jff 2/22/98 need this for ceilings too now
-
-            // killough 2/8/98: fix plat original height bug.
-            // Since acv==NULL, this could be a plat in stasis.
-            // so check the active plats list, and save this
-            // plat (jff: or ceiling) even if it is in stasis.
-            found = false;
-            for(pl = activeplats; pl && !found; pl = pl->next)
-                if(pl->plat == (plat_t *) th)      // killough 2/14/98
-                {
-                    DoArchiveThinker(thinkerinfo(TC_PLAT), th);
-                    found = true;
-                }
-
-            for(cl = activeceilings; cl && !found; cl = cl->next)
-                if(cl->ceiling == (ceiling_t *) th)      //jff 2/22/98
-                {
-                    DoArchiveThinker(thinkerinfo(TC_CEILING), th);
-                    found = true;
-                }
-        }
-        else
-#endif
-        {
-            if(th->function == P_MobjThinker &&
-               ((mobj_t *) th)->player && !savePlayers)
-                continue; // Skipping player mobjs
-
-            DoArchiveThinker(infoForThinker(th), th);
-        }
-    }
+    // Save off the current thinkers.
+    P_IterateThinkers(NULL, archiveThinker, &localSavePlayers);
 
     // Add a terminating marker.
     SV_WriteByte(TC_END);
+}
+
+static boolean restoreMobjLinks(thinker_t* th, void* context)
+{
+    mobj_t*             mo = (mobj_t *) th;
+
+    mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
+
+#if __JHEXEN__
+    switch(mo->type)
+    {
+    // Just tracer
+    case MT_BISH_FX:
+    case MT_HOLY_FX:
+    case MT_DRAGON:
+    case MT_THRUSTFLOOR_UP:
+    case MT_THRUSTFLOOR_DOWN:
+    case MT_MINOTAUR:
+    case MT_SORCFX1:
+        if(saveVersion >= 3)
+        {
+            mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
+        }
+        else
+        {
+            mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+            mo->special1 = 0;
+        }
+        break;
+
+    // Just special2
+    case MT_LIGHTNING_FLOOR:
+    case MT_LIGHTNING_ZAP:
+        mo->special2 = (int) SV_GetArchiveThing(mo->special2, &mo->special2);
+        break;
+
+    // Both tracer and special2
+    case MT_HOLY_TAIL:
+    case MT_LIGHTNING_CEILING:
+        if(saveVersion >= 3)
+        {
+            mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
+        }
+        else
+        {
+            mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+            mo->special1 = 0;
+        }
+        mo->special2 = (int) SV_GetArchiveThing(mo->special2, &mo->special2);
+        break;
+
+    default:
+        break;
+    }
+#else
+    mo->onMobj = SV_GetArchiveThing((int) mo->onMobj, &mo->onMobj);
+# if __JDOOM__ || __JDOOM64__
+    mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
+# endif
+# if __JHERETIC__
+    mo->generator = SV_GetArchiveThing((int) mo->generator, &mo->generator);
+# endif
+#endif
+
+    return true; // Continue iteration.
 }
 
 /**
@@ -3978,7 +4040,10 @@ static void P_UnArchiveThinkers(void)
 #if !__JHEXEN__
     if(IS_SERVER)
 #endif
-        removeAllThinkers();
+    {
+        P_IterateThinkers(NULL, removeThinker, NULL);
+        P_InitThinkers();
+    }
 
 #if __JHEXEN__
     if(saveVersion < 4)
@@ -4093,85 +4158,11 @@ static void P_UnArchiveThinkers(void)
 
     // Update references to things.
 #if __JHEXEN__
-    {
-        mobj_t* mo;
-
-        for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
-        {
-            if(th->function != P_MobjThinker)
-                continue;
-
-            mo = (mobj_t *) th;
-            mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
-
-            switch(mo->type)
-            {
-            // Just tracer
-            case MT_BISH_FX:
-            case MT_HOLY_FX:
-            case MT_DRAGON:
-            case MT_THRUSTFLOOR_UP:
-            case MT_THRUSTFLOOR_DOWN:
-            case MT_MINOTAUR:
-            case MT_SORCFX1:
-                if(saveVersion >= 3)
-                {
-                    mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
-                }
-                else
-                {
-                    mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
-                    mo->special1 = 0;
-                }
-                break;
-
-            // Just special2
-            case MT_LIGHTNING_FLOOR:
-            case MT_LIGHTNING_ZAP:
-                mo->special2 = (int) SV_GetArchiveThing(mo->special2, &mo->special2);
-                break;
-
-            // Both tracer and special2
-            case MT_HOLY_TAIL:
-            case MT_LIGHTNING_CEILING:
-                if(saveVersion >= 3)
-                {
-                    mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
-                }
-                else
-                {
-                    mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
-                    mo->special1 = 0;
-                }
-                mo->special2 = (int) SV_GetArchiveThing(mo->special2, &mo->special2);
-                break;
-
-            default:
-                break;
-            }
-        }
-    }
+    P_IterateThinkers(P_MobjThinker, restoreMobjLinks, NULL);
 #else
     if(IS_SERVER)
     {
-        mobj_t* mo;
-
-        for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
-        {
-            if(th->function != P_MobjThinker)
-                continue;
-
-            mo = (mobj_t *) th;
-
-            mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
-            mo->onMobj = SV_GetArchiveThing((int) mo->onMobj, &mo->onMobj);
-# if __JDOOM__ || __JDOOM64__
-            mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
-# endif
-# if __JHERETIC__
-            mo->generator = SV_GetArchiveThing((int) mo->generator, &mo->generator);
-# endif
-        }
+        P_IterateThinkers(P_MobjThinker, restoreMobjLinks, NULL);
 
         for(i = 0; i < numlines; ++i)
         {
@@ -4193,7 +4184,7 @@ static void P_UnArchiveThinkers(void)
 #if __JDOOM__
 static void P_ArchiveBrain(void)
 {
-    int     i;
+    int                 i;
 
     SV_WriteByte(numBrainTargets);
     SV_WriteByte(brain.targetOn);
@@ -4204,10 +4195,10 @@ static void P_ArchiveBrain(void)
 
 static void P_UnArchiveBrain(void)
 {
-    int     i;
+    int                 i;
 
     if(hdr.version < 3)
-        return;    // No brain data before version 3.
+        return; // No brain data before version 3.
 
     numBrainTargets = SV_ReadByte();
     brain.targetOn = SV_ReadByte();
@@ -4225,10 +4216,10 @@ static void P_UnArchiveBrain(void)
 #if !__JHEXEN__
 static void P_ArchiveSoundTargets(void)
 {
-    uint        i;
-    xsector_t  *xsec;
+    uint                i;
+    xsector_t*          xsec;
 
-    // Write the total number
+    // Write the total number.
     SV_WriteLong(numSoundTargets);
 
     // Write the mobj references using the mobj archive.
@@ -4246,10 +4237,10 @@ static void P_ArchiveSoundTargets(void)
 
 static void P_UnArchiveSoundTargets(void)
 {
-    uint        i;
-    uint        secid;
-    uint        numsoundtargets;
-    xsector_t  *xsec;
+    uint                i;
+    uint                secid;
+    uint                numsoundtargets;
+    xsector_t*          xsec;
 
     // Sound Target data was introduced in ver 5
     if(hdr.version < 5)
@@ -4268,6 +4259,7 @@ static void P_UnArchiveSoundTargets(void)
 
         xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, secid));
         xsec->soundTarget = (mobj_t*) (int) SV_ReadShort();
+        xsec->soundTarget =
             SV_GetArchiveThing((int) xsec->soundTarget, &xsec->soundTarget);
     }
 }
@@ -4276,10 +4268,10 @@ static void P_UnArchiveSoundTargets(void)
 #if __JHEXEN__
 static void P_ArchiveSounds(void)
 {
-    uint            i;
-    int             difference;
-    seqnode_t*      node;
-    sector_t*       sec;
+    uint                i;
+    int                 difference;
+    seqnode_t*          node;
+    sector_t*           sec;
 
     // Save the sound sequences.
     SV_BeginSegment(ASEG_SOUNDS);
@@ -5305,12 +5297,12 @@ void SV_MapTeleport(int map, int position)
     sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
     M_TranslatePath(fileName, fileName);
     if(!deathmatch && ExistingFile(fileName))
-    {                           // Unarchive map
+    {   // Unarchive map.
         SV_HxLoadMap();
         briefDisabled = true;
     }
     else
-    {                           // New map
+    {   // New map.
         G_InitNew(gameSkill, gameEpisode, gameMap);
 
         // Destroy all freshly spawned players
@@ -5318,12 +5310,12 @@ void SV_MapTeleport(int map, int position)
         {
             if(players[i].plr->inGame)
             {
-                P_MobjRemove(players[i].plr->mo);
+                P_MobjRemove(players[i].plr->mo, true);
             }
         }
     }
 
-    // Restore player structs
+    // Restore player structs.
     targetPlayerMobj = NULL;
     for(i = 0; i < MAXPLAYERS; ++i)
     {

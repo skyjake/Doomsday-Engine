@@ -79,20 +79,34 @@
 
 // CODE --------------------------------------------------------------------
 
-void P_MobjRemove(mobj_t *mo)
+/**
+ * Removes the given mobj from the world.
+ *
+ * @param mo                The mobj to be removed.
+ * @param noRespawn         Disable the automatical respawn which occurs
+ *                          with mobjs of certain type(s) (also dependant on
+ *                          the current gamemode).
+ *                          Generally this should be @c false.
+ */
+void P_MobjRemove(mobj_t* mo, boolean noRespawn)
 {
+    if(!noRespawn)
+    {
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-    if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED) &&
-       (mo->type != MT_INV) && (mo->type != MT_INS))
-    {
-        P_RespawnEnqueue(&mo->spawnSpot);
-    }
+        if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED) &&
+           (mo->type != MT_INV) && (mo->type != MT_INS))
+        {
+            P_RespawnEnqueue(&mo->spawnSpot);
+        }
 #elif __JHERETIC__
-    if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED))
-    {
-        P_RespawnEnqueue(&mo->spawnSpot);
+        if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED))
+        {
+            P_RespawnEnqueue(&mo->spawnSpot);
+        }
+#endif
     }
-#elif __JHEXEN__
+
+#if __JHEXEN__
     if((mo->flags & MF_COUNTKILL) && (mo->flags & MF_CORPSE))
     {
         A_DeQueueCorpse(mo);

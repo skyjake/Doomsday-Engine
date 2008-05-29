@@ -871,31 +871,31 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
 }
 
 #if __JHEXEN__
-int EV_FloorCrushStop(linedef_t *line, byte *args)
+static boolean stopFloorCrush(thinker_t* th, void* context)
 {
-    thinker_t  *think;
-    floormove_t *floor;
-    boolean     rtn;
+    boolean*            found = (boolean*) context;
+    floormove_t*        floor = (floormove_t *) th;
 
-    rtn = 0;
-    for(think = thinkerCap.next; think != &thinkerCap && think;
-        think = think->next)
+    if(floor->type == FLEV_RAISEFLOORCRUSH)
     {
-        if(think->function != T_MoveFloor)
-            continue;
-
-        floor = (floormove_t *) think;
-        if(floor->type != FLEV_RAISEFLOORCRUSH)
-            continue;
-
         // Completely remove the crushing floor
         SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
         P_ToXSector(floor->sector)->specialData = NULL;
         P_TagFinished(P_ToXSector(floor->sector)->tag);
         P_RemoveThinker(&floor->thinker);
-        rtn = 1;
+        (*found) = true;
     }
-    return rtn;
+
+    return true; // Continue iteration.
+}
+
+int EV_FloorCrushStop(linedef_t* line, byte* args)
+{
+    boolean             found = false;
+
+    P_IterateThinkers(T_MoveFloor, stopFloorCrush, &found);
+
+    return (found? 1 : 0);
 }
 #endif
 

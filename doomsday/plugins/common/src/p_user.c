@@ -738,7 +738,7 @@ boolean P_UndoPlayerMorph(player_t *player)
 
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit
-        P_MobjRemove(mo);
+        P_MobjRemove(mo, false);
         mo = P_SpawnMobj3fv(oldBeast, pos);
 
         mo->angle = angle;

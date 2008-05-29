@@ -58,6 +58,7 @@
 #include "p_map.h"
 #include "g_common.h"
 #include "p_start.h"
+#include "p_actor.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -280,7 +281,7 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
 
         if(using_dummy)
         {
-            P_MobjRemove(ddplyr->mo);
+            P_MobjRemove(ddplyr->mo, true);
             ddplyr->mo = NULL;
         }
         return false;
@@ -289,7 +290,7 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
 
     if(using_dummy)
     {
-        P_MobjRemove(ddplyr->mo);
+        P_MobjRemove(ddplyr->mo, true);
         ddplyr->mo = NULL;
     }
 
@@ -587,7 +588,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
     if(usingDummy)
     {
         // Destroy the dummy.
-        P_MobjRemove(pl->mo);
+        P_MobjRemove(pl->mo, true);
         pl->mo = NULL;
     }
 

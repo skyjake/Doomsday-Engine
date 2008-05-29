@@ -56,6 +56,7 @@
 #include "g_controls.h"
 #include "p_mapsetup.h"
 #include "p_user.h"
+#include "p_actor.h"
 #include "p_tick.h"
 #include "am_map.h"
 #include "hu_stuff.h"
@@ -822,7 +823,7 @@ void G_Ticker(timespan_t ticLength)
 #ifdef _DEBUG
 Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 #endif
-                P_MobjRemove(plr->plr->mo);
+                P_MobjRemove(plr->plr->mo, true);
                 plr->plr->mo = NULL;
             }
         }
@@ -1254,7 +1255,7 @@ void G_QueueBody(mobj_t *body)
 {
     // Flush an old corpse if needed.
     if(bodyQueueSlot >= BODYQUEUESIZE)
-        P_MobjRemove(bodyQueue[bodyQueueSlot % BODYQUEUESIZE]);
+        P_MobjRemove(bodyQueue[bodyQueueSlot % BODYQUEUESIZE], false);
 
     bodyQueue[bodyQueueSlot % BODYQUEUESIZE] = body;
     bodyQueueSlot++;

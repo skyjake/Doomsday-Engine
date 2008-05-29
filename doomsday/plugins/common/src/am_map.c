@@ -2835,55 +2835,58 @@ static void renderThings(int color, int colorrange)
     }
 }
 
-/**
- * Draws all the keys on the map using the keysquare line character.
- */
-static void renderKeys(void)
+static int getKeyColorForMobjType(int type)
 {
-    int         keyColor;
-    thinker_t  *th;
-    mobj_t     *mo;
-    float       size = PLAYERRADIUS;
-    automap_t  *map = &automaps[mapviewplayer];
-
-    for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
+    struct keycolor_s {
+        int             moType;
+        int             color;
+    } keyColors[] =
     {
-        if(th->function != P_MobjThinker)
-            continue;
-
-        mo = (mobj_t *) th;
 #if __JDOOM__ || __JDOOM64__
-        if(mo->type == MT_MISC4)
-            keyColor = KEY1;
-        else if(mo->type == MT_MISC5)
-            keyColor = KEY2;
-        else if(mo->type == MT_MISC6)
-            keyColor = KEY3;
-        else if(mo->type == MT_MISC7)
-            keyColor = KEY4;
-        else if(mo->type == MT_MISC8)
-            keyColor = KEY5;
-        else if(mo->type == MT_MISC9)
-            keyColor = KEY6;
-        else
+        {MT_MISC4, KEY1},
+        {MT_MISC5, KEY2},
+        {MT_MISC6, KEY3},
+        {MT_MISC7, KEY4},
+        {MT_MISC8, KEY5},
+        {MT_MISC9, KEY6},
 #elif __JHERETIC__
-        if(mo->type == MT_CKEY)
-            keyColor = KEY1;
-        else if(mo->type == MT_BKYY)
-            keyColor = KEY2;
-        else if(mo->type == MT_AKYY)
-            keyColor = KEY3;
-        else
+        {MT_CKEY, KEY1},
+        {MT_BKYY, KEY2},
+        {MT_AKYY, KEY3},
 #endif
-            continue; // not a key.
+        {-1, -1} // Terminate.
+    };
+    uint                i;
 
-        if(!isPointVisible(map, mo->pos[VX], mo->pos[VY]))
-            continue;
+    for(i = 0; keyColors[i].moType; ++i)
+        if(keyColors[i].moType == type)
+            return keyColors[i].color;
 
-        addLineCharacter(getVectorGraphic(VG_KEYSQUARE),
-                         mo->pos[VX], mo->pos[VY], 0, size,
-                         keyColor, cfg.automapLineAlpha, BM_NORMAL);
+    return -1; // Not a key.
+}
+
+/**
+ * If the given thinker is a mobj whose type matches that of a key, it
+ * will be drawn on the automap.
+ */
+static boolean drawKeys(thinker_t* th, void* context)
+{
+    mobj_t*             mo = (mobj_t *) th;
+    automap_t*          map = &automaps[mapviewplayer];
+    int                 keyColor;
+
+    if((keyColor = getKeyColorForMobjType(mo->type)) != -1)
+    {   // This mobj is indeed a key.
+        if(isPointVisible(map, mo->pos[VX], mo->pos[VY]))
+        {
+            addLineCharacter(getVectorGraphic(VG_KEYSQUARE),
+                             mo->pos[VX], mo->pos[VY], 0,
+                             PLAYERRADIUS, keyColor,
+                             cfg.automapLineAlpha, BM_NORMAL);
+        }
     }
+
+    return true; // Continue iteration.
 }
 
 /**
@@ -3346,7 +3349,7 @@ void AM_Drawer(int viewplayer)
             renderThings(THINGCOLORS, THINGRANGE);
 
         if(map->flags & AMF_REND_KEYS)
-            renderKeys();
+            P_IterateThinkers(P_MobjThinker, drawKeys, NULL);
 
         // Draw any marked points.
         drawMarks();
