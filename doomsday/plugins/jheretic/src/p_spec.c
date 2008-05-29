@@ -393,7 +393,7 @@ static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 39:
         // TELEPORT!
-        EV_Teleport(line, side, thing);
+        EV_Teleport(line, side, thing, true);
         P_ToXLine(line)->special = 0;
         break;
 
@@ -652,7 +652,7 @@ static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 97:
         // TELEPORT!
-        EV_Teleport(line, side, thing);
+        EV_Teleport(line, side, thing, true);
         break;
 
     case 100:

@@ -72,22 +72,23 @@
 
 // CODE --------------------------------------------------------------------
 
-mobj_t *P_SpawnTeleFog(float x, float y)
+mobj_t* P_SpawnTeleFog(float x, float y)
 {
-    subsector_t *ss = R_PointInSubsector(x, y);
+    subsector_t*        ss = R_PointInSubsector(x, y);
 
     return P_SpawnMobj3f(MT_TFOG, x, y,
                          P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT);
 }
 
-boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
+boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
+                   boolean spawnFog)
 {
-    float       oldpos[3];
-    float       aboveFloor;
-    float       fogDelta;
-    player_t   *player;
-    uint        an;
-    mobj_t     *fog;
+    float               oldpos[3];
+    float               aboveFloor;
+    float               fogDelta;
+    player_t*           player;
+    uint                an;
+    mobj_t*             fog;
 
     memcpy(oldpos, thing->pos, sizeof(oldpos));
     aboveFloor = thing->pos[VZ] - thing->floorZ;
@@ -131,17 +132,22 @@ boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
         thing->pos[VZ] = thing->floorZ;
     }
 
-    // Spawn teleport fog at source and destination
-    fogDelta = thing->flags & MF_MISSILE? 0 : TELEFOGHEIGHT;
-    fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta);
-    S_StartSound(sfx_telept, fog);
-    an = angle >> ANGLETOFINESHIFT;
-    fog =
-        P_SpawnMobj3f(MT_TFOG,
-                      x + 20 * FIX2FLT(finecosine[an]),
-                      y + 20 * FIX2FLT(finesine[an]),
-                      thing->pos[VZ] + fogDelta);
-    S_StartSound(sfx_telept, fog);
+    if(spawnFog)
+    {
+        // Spawn teleport fog at source and destination
+        fogDelta = thing->flags & MF_MISSILE? 0 : TELEFOGHEIGHT;
+        fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta);
+        S_StartSound(sfx_telept, fog);
+
+        an = angle >> ANGLETOFINESHIFT;
+        fog =
+            P_SpawnMobj3f(MT_TFOG,
+                          x + 20 * FIX2FLT(finecosine[an]),
+                          y + 20 * FIX2FLT(finesine[an]),
+                          thing->pos[VZ] + fogDelta);
+        S_StartSound(sfx_telept, fog);
+    }
+
     if(thing->player && !thing->player->powers[PT_WEAPONLEVEL2])
     {   // Freeze player for about .5 sec.
         thing->reactionTime = 18;
@@ -177,55 +183,86 @@ boolean P_Teleport(mobj_t *thing, float x, float y, angle_t angle)
     return true;
 }
 
-boolean EV_Teleport(linedef_t *line, int side, mobj_t *thing)
-{
-    mobj_t     *m;
-    thinker_t  *th;
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+typedef struct {
+    sector_t*           sec;
+    mobjtype_t          type;
+    mobj_t*             foundMobj;
+} findmobjparams_t;
 
-    if(thing->flags2 & MF2_NOTELEPORT)
+static boolean findMobj(thinker_t* th, void* context)
+{
+    findmobjparams_t*   params = (findmobjparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+
+    // Must be of the correct type?
+    if(params->type >= 0 && params->type != mo->type)
+        return true; // Continue iteration.
+
+    // Must be in the specified sector?
+    if(params->sec &&
+       params->sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
+        return true; // Continue iteration.
+
+    // Found it!
+    params->foundMobj = mo;
+    return false; // Stop iteration.
+}
+
+static mobj_t* getTeleportDestination(short tag)
+{
+    iterlist_t*         list;
+
+    list = P_GetSectorIterListForTag(tag, false);
+    if(list)
+    {
+        sector_t*           sec = NULL;
+        findmobjparams_t    params;
+
+        params.type = MT_TELEPORTMAN;
+        params.foundMobj = NULL;
+
+        P_IterListResetIterator(list, true);
+        while((sec = P_IterListIterator(list)) != NULL)
+        {
+            params.sec = sec;
+
+            if(!P_IterateThinkers(P_MobjThinker, findMobj, &params))
+            {   // Found one!
+                return params.foundMobj;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+boolean EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
+{
+    mobj_t*             dest;
+
+    if(mo->flags2 & MF2_NOTELEPORT)
         return false;
 
     // Don't teleport if hit back of line, so you can get out of teleporter.
     if(side == 1)
         return false;
 
-    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
-    if(!list)
-        return false;
-
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    if((dest = getTeleportDestination(P_ToXLine(line)->tag)) != NULL)
     {
-        th = thinkerCap.next;
-        for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
-        {
-            if(th->function != P_MobjThinker)
-                continue; // Not a mobj.
-
-            m = (mobj_t *) th;
-
-            if(m->type != MT_TELEPORTMAN)
-                continue; // Not a teleportman.
-
-            if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
-                continue; // Wrong sector.
-
-            return P_Teleport(thing, m->pos[VX], m->pos[VY], m->angle);
-        }
+        return P_Teleport(mo, dest->pos[VX], dest->pos[VY], dest->angle,
+                          spawnFog);
     }
 
     return false;
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void P_ArtiTele(player_t *player)
+void P_ArtiTele(player_t* player)
 {
-    int         i;
-    int         selections;
-    float       destPos[2];
-    angle_t     destAngle;
+    int                 i;
+    int                 selections;
+    float               destPos[2];
+    angle_t             destAngle;
 
     //// \todo Spawn spot selection does not belong in this file.
     if(deathmatch)
@@ -251,7 +288,7 @@ void P_ArtiTele(player_t *player)
     }
     //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
 # else
-    P_Teleport(player->plr->mo, destPos[VX], destPos[VY], destAngle);
+    P_Teleport(player->plr->mo, destPos[VX], destPos[VY], destAngle, true);
     /*S_StartSound(sfx_wpnup, NULL); // Full volume laugh
        NetSv_Sound(NULL, sfx_wpnup, player-players); */
     S_StartSound(sfx_wpnup, NULL);

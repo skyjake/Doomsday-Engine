@@ -469,44 +469,83 @@ void P_NewChaseDir(mobj_t *actor)
     newChaseDir(actor, delta[VX], delta[VY]);
 }
 
-boolean P_LookForMonsters(mobj_t *actor)
-{
-    int         count;
-    mobj_t     *mo;
-    thinker_t  *think;
+typedef struct {
+    size_t              count;
+    size_t              maxTries;
+    mobj_t*             notThis;
+    mobj_t*             foundMobj;
+    float               origin[2];
+    float               maxDistance;
+    int                 minHealth;
+    int                 compFlags;
+    boolean             checkLOS;
+    byte                randomSkip;
+} findmobjparams_t;
 
-    if(!P_CheckSight(players[0].plr->mo, actor))
+static boolean findMobj(thinker_t* th, void* context)
+{
+    findmobjparams_t*   params = (findmobjparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+
+    // Flags requirement?
+    if(params->compFlags > 0 && !(mo->flags & params->compFlags))
+        return true; // Continue iteration.
+
+    // Minimum health requirement?
+    if(params->minHealth > 0 && mo->health < params->minHealth)
+        return true; // Continue iteration.
+
+    // Exclude this mobj?
+    if(params->notThis && mo == params->notThis)
+        return true; // Continue iteration.
+
+    // Out of range?
+    if(params->maxDistance > 0 &&
+       P_ApproxDistance(params->origin[VX] - mo->pos[VX],
+                        params->origin[VY] - mo->pos[VY]) >
+       params->maxDistance)
+        return true; // Continue iteration.
+
+    // Randomly skip this?
+    if(params->randomSkip && P_Random() < params->randomSkip)
+        return true; // Continue iteration.
+
+    if(params->maxTries > 0 && params->count++ > params->maxTries)
+        return false; // Stop iteration.
+
+    // Out of sight?
+    if(params->checkLOS && params->notThis &&
+       !P_CheckSight(params->notThis, mo))
+        return true; // Continue iteration.
+
+    // Found one!
+    params->foundMobj = mo;
+    return false; // Stop iteration.
+}
+
+boolean P_LookForMonsters(mobj_t* mo)
+{
+    findmobjparams_t    params;
+
+    if(!P_CheckSight(players[0].plr->mo, mo))
         return false; // Player can't see the monster.
 
-    count = 0;
-    for(think = thinkerCap.next; think != &thinkerCap; think = think->next)
+    params.count = 0;
+    params.notThis = mo;
+    params.origin[VX] = mo->pos[VX];
+    params.origin[VY] = mo->pos[VY];
+    params.foundMobj = NULL;
+    params.maxDistance = MONS_LOOK_RANGE;
+    params.maxTries = MONS_LOOK_LIMIT;
+    params.minHealth = 1;
+    params.compFlags = MF_COUNTKILL;
+    params.checkLOS = true;
+    params.randomSkip = 16;
+    P_IterateThinkers(P_MobjThinker, findMobj, &params);
+
+    if(params.foundMobj)
     {
-        if(think->function != P_MobjThinker)
-            continue; // Not a mobj thinker.
-
-        mo = (mobj_t *) think;
-
-        if(!(mo->flags & MF_COUNTKILL) || (mo == actor) || (mo->health <= 0))
-            continue; // Not a valid monster.
-
-        // Out of range?
-        if(P_ApproxDistance(actor->pos[VX] - mo->pos[VX],
-                            actor->pos[VY] - mo->pos[VY]) >
-           MONS_LOOK_RANGE)
-            continue;
-
-        if(P_Random() < 16)
-            continue; // Skip.
-
-        if(count++ > MONS_LOOK_LIMIT)
-            return false; // Stop searching.
-
-        // Out of sight?
-        if(!P_CheckSight(actor, mo))
-            continue;
-
-        // Found a target monster.
-        actor->target = mo;
+        mo->target = params.foundMobj;
         return true;
     }
 
@@ -966,7 +1005,7 @@ boolean P_UpdateChicken(mobj_t *actor, int tics)
     mo = P_SpawnMobj3fv(moType, pos);
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit.
-        P_MobjRemove(mo);
+        P_MobjRemove(mo, true);
 
         mo = P_SpawnMobj3fv(MT_CHICKEN, pos);
 
@@ -1291,7 +1330,7 @@ void C_DECL A_GenWizard(mobj_t *actor)
 
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit.
-        P_MobjRemove(mo);
+        P_MobjRemove(mo, true);
         return;
     }
 
@@ -1973,7 +2012,7 @@ void C_DECL A_MakePod(mobj_t *actor)
     if(P_CheckPosition2f(mo, pos[VX], pos[VY]) == false)
     {
         // Didn't fit.
-        P_MobjRemove(mo);
+        P_MobjRemove(mo, true);
         return;
     }
 
@@ -1990,34 +2029,56 @@ void C_DECL A_MakePod(mobj_t *actor)
     return;
 }
 
+static boolean massacreMobj(thinker_t* th, void* context)
+{
+    int*                count = (int*) context;
+    mobj_t*             mo = (mobj_t *) th;
+
+    if((mo->flags & MF_COUNTKILL) && mo->health > 0)
+    {
+        P_DamageMobj(mo, NULL, NULL, 10000);
+        (*count)++;
+    }
+
+    return true; // Continue iteration.
+}
+
 /**
  * Kills all monsters.
  */
-void P_Massacre(void)
+int P_Massacre(void)
 {
-    mobj_t     *mo;
-    thinker_t  *think;
+    int                 count = 0;
 
-    // Only massacre when in a level.
-    if(G_GetGameState() != GS_LEVEL)
-        return;
-
-    for(think = thinkerCap.next; think != &thinkerCap; think = think->next)
+    // Only massacre when actually in a level.
+    if(G_GetGameState() == GS_LEVEL)
     {
-        if(think->function != P_MobjThinker)
-            continue; // Not a mobj thinker.
-
-        mo = (mobj_t *) think;
-
-        if((mo->flags & MF_COUNTKILL) && (mo->health > 0))
-            P_DamageMobj(mo, NULL, NULL, 10000);
+        P_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
+
+    return count;
+}
+
+typedef struct {
+    mobjtype_t          type;
+    size_t              count;
+} countmobjoftypeparams_t;
+
+static boolean countMobjOfType(thinker_t* th, void* context)
+{
+    countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+
+    if(params->type == mo->type && mo->health > 0)
+        params->count++;
+
+    return true; // Continue iteration.
 }
 
 /**
  * Trigger special effects if all bosses are dead.
  */
-void C_DECL A_BossDeath(mobj_t *actor)
+void C_DECL A_BossDeath(mobj_t* actor)
 {
     static mobjtype_t   bossType[6] = {
         MT_HEAD,
@@ -2028,9 +2089,8 @@ void C_DECL A_BossDeath(mobj_t *actor)
         -1
     };
 
-    mobj_t             *mo;
-    thinker_t          *think;
-    linedef_t          *dummyLine;
+    linedef_t*          dummyLine;
+    countmobjoftypeparams_t params;
 
     // Not a boss level?
     if(gameMap != 8)
@@ -2040,17 +2100,14 @@ void C_DECL A_BossDeath(mobj_t *actor)
     if(actor->type != bossType[gameEpisode - 1])
         return;
 
-    // Make sure all bosses are dead
-    for(think = thinkerCap.next; think != &thinkerCap; think = think->next)
-    {
-        if(think->function != P_MobjThinker)
-            continue; // Not a mobj thinker.
+    // Scan the remaining thinkers to see if all bosses are dead.
+    params.type = actor->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-        mo = (mobj_t *) think;
-
-        // Found a living boss?
-        if((mo != actor) && (mo->type == actor->type) && (mo->health > 0))
-            return;
+    if(params.count)
+    {   // Other boss not dead.
+        return;
     }
 
     // Kill any remaining monsters.
@@ -2272,7 +2329,7 @@ void C_DECL A_AddPlayerCorpse(mobj_t *actor)
     if(bodyqueslot >= BODYQUESIZE)
     {
         // Remove an old one.
-        P_MobjRemove(bodyque[bodyqueslot % BODYQUESIZE]);
+        P_MobjRemove(bodyque[bodyqueslot % BODYQUESIZE], true);
     }
 
     bodyque[bodyqueslot % BODYQUESIZE] = actor;

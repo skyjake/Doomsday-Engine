@@ -102,7 +102,7 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
     if(state == S_NULL)
     {   // Remove mobj.
         mobj->state = (state_t *) S_NULL;
-        P_MobjRemove(mobj);
+        P_MobjRemove(mobj, false);
         return false;
     }
 
@@ -131,7 +131,7 @@ boolean P_SetMobjStateNF(mobj_t *mobj, statenum_t state)
     if(state == S_NULL)
     {   // Remove mobj.
         mobj->state = (state_t *) S_NULL;
-        P_MobjRemove(mobj);
+        P_MobjRemove(mobj, false);
         return false;
     }
 
@@ -439,7 +439,7 @@ void P_MobjMoveXY(mobj_t *mo)
                         }
                         else
                         {
-                            P_MobjRemove(mo);
+                            P_MobjRemove(mo, false);
                         }
 
                         return;
@@ -765,7 +765,7 @@ void P_MobjMoveZ(mobj_t *mo)
 #endif
                 // Don't explode against sky.
                 {
-                    P_MobjRemove(mo);
+                    P_MobjRemove(mo, false);
                 }
                 return;
             }
@@ -817,7 +817,7 @@ void P_NightmareRespawn(mobj_t *mobj)
     mo->reactionTime = 18;
 
     // Remove the old monster.
-    P_MobjRemove(mobj);
+    P_MobjRemove(mobj, true);
 }
 
 /**

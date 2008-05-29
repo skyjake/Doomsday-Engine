@@ -43,4 +43,9 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+int         P_Massacre(void);
+void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);
+void        P_AddBossSpot(float x, float y, angle_t angle);
+void        P_DSparilTeleport(mobj_t* actor);
+
 #endif

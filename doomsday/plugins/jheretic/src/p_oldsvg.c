@@ -387,6 +387,16 @@ void P_v13_UnArchiveWorld(void)
     save_p = (byte *) get;
 }
 
+static boolean removeThinker(thinker_t* th, void* context)
+{
+    if(th->function == P_MobjThinker)
+        P_MobjRemove((mobj_t *) th, true);
+    else
+        Z_Free(th);
+
+    return true; // Continue iteration.
+}
+
 void P_v13_UnArchiveThinkers(void)
 {
 typedef enum
@@ -395,20 +405,10 @@ typedef enum
 	TC_MOBJ
 } thinkerclass_t;
 
-    byte    tclass;
-    thinker_t *currentthinker, *next;
+    byte                tclass;
 
-    // remove all the current thinkers
-    currentthinker = thinkerCap.next;
-    while(currentthinker != &thinkerCap)
-    {
-        next = currentthinker->next;
-        if(currentthinker->function == P_MobjThinker)
-            P_MobjRemove((mobj_t *) currentthinker);
-        else
-            Z_Free(currentthinker);
-        currentthinker = next;
-    }
+    // Remove all the current thinkers.
+    P_IterateThinkers(NULL, removeThinker, NULL);
     P_InitThinkers();
 
     // read in saved thinkers
@@ -418,7 +418,7 @@ typedef enum
         switch (tclass)
         {
         case TC_END:
-            return;             // end of list
+            return; // End of list.
 
         case TC_MOBJ:
             SV_v13_ReadMobj();

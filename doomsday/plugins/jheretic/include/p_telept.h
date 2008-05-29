@@ -43,4 +43,9 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#define TELEFOGHEIGHTF      (32)
+
+boolean         EV_Teleport(linedef_t* line, int side, mobj_t* thing, boolean spawnFog);
+void            P_ArtiTele(player_t* player);
+
 #endif

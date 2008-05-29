@@ -373,12 +373,4 @@ int             EV_BuildStairs(linedef_t *line, stair_e type);
 int             EV_DoFloor(linedef_t *line, floor_e floortype);
 void            T_MoveFloor(floormove_t *floor);
 
-//
-// P_TELEPT
-//
-#define         TELEFOGHEIGHTF      (32)
-boolean         P_TeleportF(mobj_t *thing, float x, float y, angle_t angle);
-boolean         EV_Teleport(linedef_t *line, int side, mobj_t *thing);
-void            P_ArtiTele(player_t *player);
-
 #endif

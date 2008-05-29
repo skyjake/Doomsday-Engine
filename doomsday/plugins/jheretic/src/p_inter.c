@@ -760,7 +760,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     }
     else
     {
-        P_MobjRemove(special);
+        P_MobjRemove(special, false);
     }
 
     player->bonusCount += BONUSADD;

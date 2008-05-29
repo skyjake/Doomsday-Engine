@@ -169,7 +169,6 @@ mobj_t     *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source,
                                 angle_t angle, float momz);
 mobj_t     *P_SpawnTeleFog(float x, float y);
 
-void        P_MobjRemove(mobj_t *th);
 boolean     P_MobjChangeState(mobj_t *mobj, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t *mobj, statenum_t state);
 void        P_ThrustMobj(mobj_t *mo, angle_t angle, float move);
@@ -188,13 +187,6 @@ void        P_ExplodeMissile(mobj_t *mo);
 
 void        P_SpawnMapThing(spawnspot_t *th);
 void        P_SpawnPlayer(spawnspot_t *mthing, int plrnum);
-
-// ***** P_ENEMY *****
-
-void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
-void        P_AddBossSpot(float x, float y, angle_t angle);
-void        P_Massacre(void);
-void        P_DSparilTeleport(mobj_t *actor);
 
 // ***** P_MAPUTL *****
 
