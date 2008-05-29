@@ -412,61 +412,92 @@ void P_NewChaseDir(mobj_t *actor)
     newChaseDir(actor, delta[VX], delta[VY]);
 }
 
-boolean P_LookForMonsters(mobj_t *actor)
+typedef struct {
+    size_t              count;
+    size_t              maxTries;
+    mobj_t*             notThis;
+    mobj_t*             foundMobj;
+    float               origin[2];
+    float               maxDistance;
+    int                 minHealth;
+    int                 compFlags;
+    boolean             checkLOS;
+    mobj_t*             checkMinotaurTracer;
+    byte                randomSkip;
+} findmobjparams_t;
+
+static boolean findMobj(thinker_t* th, void* context)
 {
-    int         count;
-    mobj_t     *mo;
-    thinker_t  *think;
+    findmobjparams_t*   params = (findmobjparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
 
-    if(!P_CheckSight(players[0].plr->mo, actor))
-    {   // Player can't see monster
-        return false;
-    }
+    // Flags requirement?
+    if(params->compFlags > 0 && !(mo->flags & params->compFlags))
+        return true; // Continue iteration.
 
-    count = 0;
-    for(think = thinkerCap.next; think != &thinkerCap && think;
-        think = think->next)
+    // Minimum health requirement?
+    if(params->minHealth > 0 && mo->health < params->minHealth)
+        return true; // Continue iteration.
+
+    // Exclude this mobj?
+    if(params->notThis && mo == params->notThis)
+        return true; // Continue iteration.
+
+    // Out of range?
+    if(params->maxDistance > 0 &&
+       P_ApproxDistance(params->origin[VX] - mo->pos[VX],
+                        params->origin[VY] - mo->pos[VY]) >
+       params->maxDistance)
+        return true; // Continue iteration.
+
+    // Randomly skip this?
+    if(params->randomSkip && P_Random() < params->randomSkip)
+        return true; // Continue iteration.
+
+    if(params->maxTries > 0 && params->count++ > params->maxTries)
+        return false; // Stop iteration.
+
+    // Out of sight?
+    if(params->checkLOS && params->notThis &&
+       !P_CheckSight(params->notThis, mo))
+        return true; // Continue iteration.
+
+    // Check the special case of a minotaur looking at it's master.
+    if(params->checkMinotaurTracer)
+        if(mo->type == MT_MINOTAUR &&
+           mo->target != params->checkMinotaurTracer)
+            return true; // Continue iteration.
+
+    // Found one!
+    params->foundMobj = mo;
+    return false; // Stop iteration.
+}
+
+boolean P_LookForMonsters(mobj_t* mo)
+{
+    findmobjparams_t    params;
+
+    if(!P_CheckSight(players[0].plr->mo, mo))
+        return false; // Player can't see the monster.
+
+    params.count = 0;
+    params.notThis = mo;
+    params.origin[VX] = mo->pos[VX];
+    params.origin[VY] = mo->pos[VY];
+    params.foundMobj = NULL;
+    params.maxDistance = MONS_LOOK_RANGE;
+    params.maxTries = MONS_LOOK_LIMIT;
+    params.minHealth = 1;
+    params.compFlags = MF_COUNTKILL;
+    params.checkLOS = true;
+    params.randomSkip = 16;
+    params.checkMinotaurTracer = (mo->type == MT_MINOTAUR)?
+        ((player_t *) mo->tracer)->plr->mo : NULL;
+    P_IterateThinkers(P_MobjThinker, findMobj, &params);
+
+    if(params.foundMobj)
     {
-        if(think->function != P_MobjThinker)
-            continue;
-
-        mo = (mobj_t *) think;
-        if(!(mo->flags & MF_COUNTKILL) || mo == actor || mo->health <= 0)
-        {   // Not a valid monster
-            continue;
-        }
-
-        if(P_ApproxDistance(actor->pos[VX] - mo->pos[VX],
-                            actor->pos[VY] - mo->pos[VY]) >
-           MONS_LOOK_RANGE)
-        {    // Out of range
-            continue;
-        }
-
-        if(P_Random() < 16) // Random chance of skiping it.
-            continue;
-
-        if(count++ > MONS_LOOK_LIMIT)
-        {   // Stop searching
-            return false;
-        }
-
-        if(!P_CheckSight(actor, mo))
-        {   // Out of sight
-            continue;
-        }
-
-        if(actor->type == MT_MINOTAUR)
-        {
-            if((mo->type == MT_MINOTAUR) &&
-               (mo->target != ((player_t *) actor->tracer)->plr->mo))
-            {
-                continue;
-            }
-        }
-
-        // Found a target monster
-        actor->target = mo;
+        mo->target = params.foundMobj;
         return true;
     }
 
@@ -815,7 +846,7 @@ boolean P_UpdateMorphedMonster(mobj_t *actor, int tics)
 
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit.
-        P_MobjRemove(mo);
+        P_MobjRemove(mo, true);
         mo = P_SpawnMobj3fv(oldMonster.type, pos);
 
         mo->angle = oldMonster.angle;
@@ -993,21 +1024,71 @@ void C_DECL A_MinotaurRoam(mobj_t *actor)
     }
 }
 
+typedef struct {
+    mobj_t*             notThis, *notThis2;
+    mobj_t*             checkMinotaurTracer;
+    float               origin[2];
+    float               maxDistance;
+    int                 minHealth;
+    mobj_t*             foundMobj;
+} findmonsterparams_t;
+
+static boolean findMonster(thinker_t* th, void* context)
+{
+    findmonsterparams_t* params = (findmonsterparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+
+    if(!(mo->flags & MF_COUNTKILL))
+        return true; // Continue iteration.
+
+    // Health requirement?
+    if(!(params->minHealth < 0) && mo->health < params->minHealth)
+        return true; // Continue iteration.
+
+    if(!(mo->flags & MF_SHOOTABLE))
+        return true; // Continue iteration.
+
+    // Within range?
+    if(params->maxDistance > 0)
+    {
+        float               dist =
+            P_ApproxDistance(params->origin[VX] - mo->pos[VX],
+                             params->origin[VY] - mo->pos[VY]);
+        if(dist > params->maxDistance)
+            return true; // Continue iteration.
+    }
+
+    if(params->notThis && params->notThis == mo)
+        return true; // Continue iteration.
+    if(params->notThis2 && params->notThis2 == mo)
+        return true; // Continue iteration.
+
+    // Check the special case for minotaurs.
+    if(params->checkMinotaurTracer)
+        if(mo->type == MT_MINOTAUR && params->checkMinotaurTracer == mo->tracer)
+            return true; // Continue iteration.
+
+    // Found one!
+    params->foundMobj = mo;
+    return false; // Stop iteration.
+}
+
 /**
  * Look for enemy of player.
  */
 void C_DECL A_MinotaurLook(mobj_t *actor)
 {
-    mobj_t     *mo = NULL;
-    player_t   *player;
-    thinker_t  *think;
-    float       dist;
-    int         i;
-    mobj_t     *master = actor->tracer;
+    mobj_t*             master = actor->tracer;
 
     actor->target = NULL;
+
     if(deathmatch) // Quick search for players.
     {
+        int                 i;
+        float               dist;
+        player_t*           player;
+        mobj_t*             mo;
+
         for(i = 0; i < MAXPLAYERS; ++i)
         {
             if(!players[i].plr->inGame)
@@ -1034,45 +1115,25 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
     if(!actor->target) // Near player monster search.
     {
         if(master && (master->health > 0) && (master->player))
-            mo = P_RoughMonsterSearch(master, 20*128);
+            actor->target = P_RoughMonsterSearch(master, 20*128);
         else
-            mo = P_RoughMonsterSearch(actor, 20*128);
-        actor->target = mo;
+            actor->target = P_RoughMonsterSearch(actor, 20*128);
     }
 
     if(!actor->target) // Normal monster search.
     {
-        for(think = thinkerCap.next; think != &thinkerCap && think;
-            think = think->next)
-        {
-            if(think->function != P_MobjThinker)
-                continue;
+        findmonsterparams_t     params;
 
-            mo = (mobj_t *) think;
-            if(!(mo->flags & MF_COUNTKILL))
-                continue;
-
-            if(mo->health <= 0)
-                continue;
-
-            if(!(mo->flags & MF_SHOOTABLE))
-                continue;
-
-            dist = P_ApproxDistance(actor->pos[VX] - mo->pos[VX],
-                                    actor->pos[VY] - mo->pos[VY]);
-
-            if(dist > MINOTAUR_LOOK_DIST)
-                continue;
-
-            if((mo == master) || (mo == actor))
-                continue;
-
-            if((mo->type == MT_MINOTAUR) && (mo->tracer == actor->tracer))
-                continue;
-
-            actor->target = mo;
-            break; // Found mobj to attack.
-        }
+        params.notThis = actor;
+        params.notThis2 = master;
+        params.origin[VX] = actor->pos[VX];
+        params.origin[VY] = actor->pos[VY];
+        params.maxDistance = MINOTAUR_LOOK_DIST;
+        params.foundMobj = NULL;
+        params.minHealth = 1;
+        params.checkMinotaurTracer = actor->tracer;
+        if(!P_IterateThinkers(P_MobjThinker, findMonster, &params))
+            actor->target = params.foundMobj;
     }
 
     if(actor->target)
@@ -1517,34 +1578,33 @@ void C_DECL A_Explode(mobj_t *actor)
     }
 }
 
+static boolean massacreMobj(thinker_t* th, void* context)
+{
+    int*                count = (int*) context;
+    mobj_t*             mo = (mobj_t *) th;
+
+    if((mo->flags & MF_COUNTKILL) && mo->health > 0)
+    {
+        mo->flags2 &= ~(MF2_NONSHOOTABLE + MF2_INVULNERABLE);
+        mo->flags |= MF_SHOOTABLE;
+        P_DamageMobj(mo, NULL, NULL, 10000);
+        (*count)++;
+    }
+
+    return true; // Continue iteration.
+}
+
 /**
- * Kill all monsters.
+ * Kills all monsters.
  */
 int P_Massacre(void)
 {
-    int             count;
-    mobj_t         *mo;
-    thinker_t      *think;
+    int                 count = 0;
 
-    // Only massacre when in a level.
-    if(G_GetGameState() != GS_LEVEL)
-        return 0;
-
-    count = 0;
-    for(think = thinkerCap.next; think != &thinkerCap && think;
-        think = think->next)
+    // Only massacre when actually in a level.
+    if(G_GetGameState() == GS_LEVEL)
     {
-        if(think->function != P_MobjThinker)
-            continue;
-
-        mo = (mobj_t *) think;
-        if((mo->flags & MF_COUNTKILL) && (mo->health > 0))
-        {
-            mo->flags2 &= ~(MF2_NONSHOOTABLE + MF2_INVULNERABLE);
-            mo->flags |= MF_SHOOTABLE;
-            P_DamageMobj(mo, NULL, NULL, 10000);
-            count++;
-        }
+        P_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
 
     return count;
@@ -1628,10 +1688,10 @@ void C_DECL A_QueueCorpse(mobj_t *actor)
     mobj_t         *corpse;
 
     if(corpseQueueSlot >= CORPSEQUEUESIZE)
-    {                           // Too many corpses - remove an old one
+    {   // Too many corpses - remove an old one
         corpse = corpseQueue[corpseQueueSlot % CORPSEQUEUESIZE];
         if(corpse)
-            P_MobjRemove(corpse);
+            P_MobjRemove(corpse, false);
     }
     corpseQueue[corpseQueueSlot % CORPSEQUEUESIZE] = actor;
     corpseQueueSlot++;
@@ -1654,11 +1714,56 @@ void C_DECL A_DeQueueCorpse(mobj_t *actor)
     }
 }
 
+static boolean addMobjToCorpseQueue(thinker_t* th, void* context)
+{
+    mobj_t*             mo = (mobj_t *) th;
+
+    // Must be a corpse.
+    if(!(mo->flags & MF_CORPSE))
+        return true; // Continue iteration.
+
+    // Not ice corpses.
+    if(mo->flags & MF_ICECORPSE)
+        return true; // Continue iteration.
+
+    // Only corpses that call A_QueueCorpse from death routine.
+    switch(mo->type)
+    {
+    case MT_CENTAUR:
+    case MT_CENTAURLEADER:
+    case MT_DEMON:
+    case MT_DEMON2:
+    case MT_WRAITH:
+    case MT_WRAITHB:
+    case MT_BISHOP:
+    case MT_ETTIN:
+    case MT_PIG:
+    case MT_CENTAUR_SHIELD:
+    case MT_CENTAUR_SWORD:
+    case MT_DEMONCHUNK1:
+    case MT_DEMONCHUNK2:
+    case MT_DEMONCHUNK3:
+    case MT_DEMONCHUNK4:
+    case MT_DEMONCHUNK5:
+    case MT_DEMON2CHUNK1:
+    case MT_DEMON2CHUNK2:
+    case MT_DEMON2CHUNK3:
+    case MT_DEMON2CHUNK4:
+    case MT_DEMON2CHUNK5:
+    case MT_FIREDEMON_SPLOTCH1:
+    case MT_FIREDEMON_SPLOTCH2:
+        A_QueueCorpse(mo); // Add corpse to queue.
+        break;
+
+    default:
+        break;
+    }
+
+    return true; // Continue iteration.
+}
+
 void P_InitCreatureCorpseQueue(boolean corpseScan)
 {
-    thinker_t      *think;
-    mobj_t         *mo;
-
     // Initialize queue
     corpseQueueSlot = 0;
     memset(corpseQueue, 0, sizeof(mobj_t *) * CORPSEQUEUESIZE);
@@ -1666,59 +1771,15 @@ void P_InitCreatureCorpseQueue(boolean corpseScan)
     if(!corpseScan)
         return;
 
-    // Search mobj list for corpses and place them in this queue.
-    for(think = thinkerCap.next; think != &thinkerCap && think;
-        think = think->next)
-    {
-        if(think->function != P_MobjThinker)
-            continue;
-
-        mo = (mobj_t *) think;
-        if(!(mo->flags & MF_CORPSE))
-            continue; // Must be a corpse.
-        if(mo->flags & MF_ICECORPSE)
-            continue; // Not ice corpses.
-
-        // Only corpses that call A_QueueCorpse from death routine.
-        switch(mo->type)
-        {
-        case MT_CENTAUR:
-        case MT_CENTAURLEADER:
-        case MT_DEMON:
-        case MT_DEMON2:
-        case MT_WRAITH:
-        case MT_WRAITHB:
-        case MT_BISHOP:
-        case MT_ETTIN:
-        case MT_PIG:
-        case MT_CENTAUR_SHIELD:
-        case MT_CENTAUR_SWORD:
-        case MT_DEMONCHUNK1:
-        case MT_DEMONCHUNK2:
-        case MT_DEMONCHUNK3:
-        case MT_DEMONCHUNK4:
-        case MT_DEMONCHUNK5:
-        case MT_DEMON2CHUNK1:
-        case MT_DEMON2CHUNK2:
-        case MT_DEMON2CHUNK3:
-        case MT_DEMON2CHUNK4:
-        case MT_DEMON2CHUNK5:
-        case MT_FIREDEMON_SPLOTCH1:
-        case MT_FIREDEMON_SPLOTCH2:
-            A_QueueCorpse(mo); // Add corpse to queue.
-            break;
-
-        default:
-            break;
-        }
-    }
+    // Search the thinker list for corpses and place them in this queue.
+    P_IterateThinkers(P_MobjThinker, addMobjToCorpseQueue, NULL);
 }
 
 void C_DECL A_AddPlayerCorpse(mobj_t *actor)
 {
     if(bodyqueslot >= BODYQUESIZE)
     {   // Too many player corpses - remove an old one.
-        P_MobjRemove(bodyque[bodyqueslot % BODYQUESIZE]);
+        P_MobjRemove(bodyque[bodyqueslot % BODYQUESIZE], true);
     }
     bodyque[bodyqueslot % BODYQUESIZE] = actor;
     bodyqueslot++;

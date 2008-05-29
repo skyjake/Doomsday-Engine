@@ -261,7 +261,7 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
         }
         else
         {
-            P_MobjRemove(weapon);
+            P_MobjRemove(weapon, false);
         }
     }
 
@@ -357,7 +357,7 @@ static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
         }
         else
         {
-            P_MobjRemove(pieceMobj);
+            P_MobjRemove(pieceMobj, false);
         }
     }
 
@@ -633,7 +633,7 @@ static void TryPickupArtifact(player_t *plr, artitype_e artifactType,
             P_SetMessage(plr, GET_TXT(artifactMessages[artifactType]), false);
             if(!IS_NETGAME || deathmatch)
             {   // Remove puzzle items if not cooperative netplay.
-                P_MobjRemove(artifact);
+                P_MobjRemove(artifact, false);
             }
         }
     }
@@ -1038,7 +1038,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     }
     else
     {
-        P_MobjRemove(special);
+        P_MobjRemove(special, false);
     }
 
     player->bonusCount += BONUSADD;
@@ -1049,37 +1049,47 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     }
 }
 
-mobj_t *ActiveMinotaur(player_t *master)
+typedef struct {
+    player_t*           master;
+    mobj_t*             foundMobj;
+} findactiveminotaurparams_t;
+
+static boolean findActiveMinotaur(thinker_t* th, void* context)
 {
-    mobj_t         *mo;
-    player_t       *plr;
-    thinker_t      *think;
-    unsigned int  *starttime;
+    findactiveminotaurparams_t* params =
+        (findactiveminotaurparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
 
-    for(think = thinkerCap.next; think != &thinkerCap && think;
-        think = think->next)
-    {
-        if(think->function != P_MobjThinker)
-            continue;
+    if(mo->type != MT_MINOTAUR)
+        return true; // Continue iteration.
+    if(mo->health <= 0)
+        return true; // Continue iteration.
+    if(!(mo->flags & MF_COUNTKILL)) // For morphed minotaurs.
+        return true; // Continue iteration.
+    if(mo->flags & MF_CORPSE)
+        return true; // Continue iteration.
 
-        mo = (mobj_t *) think;
-        if(mo->type != MT_MINOTAUR)
-            continue;
-        if(mo->health <= 0)
-            continue;
-        if(!(mo->flags & MF_COUNTKILL))
-            continue; // For morphed minotaurs.
-        if(mo->flags & MF_CORPSE)
-            continue;
+    if((levelTime - *((unsigned int *) mo->args)) >= MAULATORTICS)
+        return true; // Continue iteration.
 
-        starttime = (unsigned int *) mo->args;
-        if((levelTime - *starttime) >= MAULATORTICS)
-            continue;
-
-        plr = mo->tracer->player;
-        if(plr == master)
-            return mo;
+    if(mo->tracer->player == params->master)
+    {   // Found it!
+        params->foundMobj = mo;
+        return false; // Stop iteration.
     }
+
+    return true; // Continue iteration.
+}
+
+mobj_t* ActiveMinotaur(player_t* master)
+{
+    findactiveminotaurparams_t params;
+
+    params.master = master;
+    params.foundMobj = NULL;
+
+    if(!P_IterateThinkers(P_MobjThinker, findActiveMinotaur, &params))
+        return params.foundMobj;
 
     return NULL;
 }

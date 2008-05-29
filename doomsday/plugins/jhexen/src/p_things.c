@@ -263,7 +263,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
         newMobj = P_SpawnMobj3f(moType, mobj->pos[VX], mobj->pos[VY], z);
         if(P_TestMobjLocation(newMobj) == false)
         {   // Didn't fit
-            P_MobjRemove(newMobj);
+            P_MobjRemove(newMobj, true);
         }
         else
         {
@@ -341,7 +341,7 @@ boolean EV_ThingRemove(int tid)
             A_BridgeRemove(mobj);
             return true;
         }
-        P_MobjRemove(mobj);
+        P_MobjRemove(mobj, false);
         success = true;
     }
     return success;

@@ -179,8 +179,6 @@ void        P_SpawnBloodSplatter2(float x, float y, float z, mobj_t *origin);
 
 void        P_CreateTIDList(void);
 
-void        P_MobjRemove(mobj_t *th);
-
 boolean     P_MobjChangeState(mobj_t *mo, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t *mo, statenum_t state);
 

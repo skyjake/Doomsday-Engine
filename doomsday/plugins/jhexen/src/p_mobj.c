@@ -118,7 +118,7 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
     if(state == S_NULL)
     {   // Remove mobj.
         mobj->state = (state_t *) S_NULL;
-        P_MobjRemove(mobj);
+        P_MobjRemove(mobj, false);
         return false;
     }
     st = &states[state];
@@ -142,7 +142,7 @@ boolean P_SetMobjStateNF(mobj_t *mobj, statenum_t state)
     if(state == S_NULL)
     {   // Remove mobj
         mobj->state = (state_t *) S_NULL;
-        P_MobjRemove(mobj);
+        P_MobjRemove(mobj, false);
         return false;
     }
 
@@ -196,7 +196,7 @@ void P_FloorBounceMissile(mobj_t *mo)
             break;
 
         default:
-            P_MobjRemove(mo);
+            P_MobjRemove(mo, false);
             return;
         }
     }
@@ -607,7 +607,7 @@ explode:
                     }
                     else
                     {
-                        P_MobjRemove(mo);
+                        P_MobjRemove(mo, false);
                     }
                     return;
                 }
@@ -926,7 +926,7 @@ void P_MobjMoveZ(mobj_t *mo)
                 }
                 else
                 {
-                    P_MobjRemove(mo);
+                    P_MobjRemove(mo, false);
                 }
 
                 return;
@@ -1635,38 +1635,40 @@ void P_SpawnMapThing(spawnspot_t *spot)
     }
 }
 
-void P_CreateTIDList(void)
+static boolean addToTIDList(thinker_t* th, void* context)
 {
-    int         i;
-    mobj_t     *mobj;
-    thinker_t  *t;
+    size_t*             count = (size_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
 
-    i = 0;
-    for(t = thinkerCap.next; t != &thinkerCap && t; t = t->next)
+    if(mo->tid != 0)
     {
-        if(t->function != P_MobjThinker)
-            continue;
-
-        mobj = (mobj_t *) t;
-        if(mobj->tid != 0)
-        {   // Add to list
-            if(i == MAX_TID_COUNT)
-            {
-                Con_Error("P_CreateTIDList: MAX_TID_COUNT (%d) exceeded.",
-                          MAX_TID_COUNT);
-            }
-            TIDList[i] = mobj->tid;
-            TIDMobj[i++] = mobj;
+        // Add to list.
+        if(*count == MAX_TID_COUNT)
+        {
+            Con_Error("P_CreateTIDList: MAX_TID_COUNT (%d) exceeded.",
+                      MAX_TID_COUNT);
         }
+
+        TIDList[*count] = mo->tid;
+        TIDMobj[(*count)++] = mo;
     }
 
+    return true; // Continue iteration.
+}
+
+void P_CreateTIDList(void)
+{
+    size_t              count = 0;
+
+    P_IterateThinkers(P_MobjThinker, addToTIDList, &count);
+
     // Add termination marker
-    TIDList[i] = 0;
+    TIDList[count] = 0;
 }
 
 void P_MobjInsertIntoTIDList(mobj_t *mobj, int tid)
 {
-    int         i, index;
+    int                 i, index;
 
     index = -1;
     for(i = 0; TIDList[i] != 0; ++i)
@@ -2033,132 +2035,195 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, float strength)
     }
 }
 
-/**
- * Blast all mobj things away
- */
-void P_BlastRadius(player_t *player)
+typedef struct {
+    float               maxDistance;
+    mobj_t*             source;
+} radiusblastparams_t;
+
+static boolean radiusBlast(thinker_t* th, void* context)
 {
-    mobj_t     *mo;
-    mobj_t     *pmo = player->plr->mo;
-    thinker_t  *think;
-    float       dist;
+    radiusblastparams_t* params = (radiusblastparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+    float               dist;
+
+    if(mo == params->source || (mo->flags2 & MF2_BOSS))
+        return true; // Continue iteration.
+
+    if(mo->type == MT_POISONCLOUD || // poison cloud.
+       mo->type == MT_HOLY_FX || // holy fx.
+       (mo->flags & MF_ICECORPSE)) // frozen corpse.
+    {
+        // Let these special cases go.
+    }
+    else if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
+    {
+        return true; // Continue iteration.
+    }
+    else if(!(mo->flags & MF_COUNTKILL) && !mo->player &&
+            !(mo->flags & MF_MISSILE))
+    {   // Must be monster, player, or missile.
+        return true; // Continue iteration.
+    }
+
+    // Is this mobj dormant?
+    if(mo->flags2 & MF2_DORMANT)
+        return true; // Continue iteration.
+
+    // Is this an underground Wraith?
+    if(mo->type == MT_WRAITHB && (mo->flags2 & MF2_DONTDRAW))
+        return true; // Continue iteration.
+
+    if(mo->type == MT_SPLASHBASE || mo->type == MT_SPLASH)
+        return true; // Continue iteration.
+
+    if(mo->type == MT_SERPENT || mo->type == MT_SERPENTLEADER)
+        return true; // Continue iteration.
+
+    // Within range?
+    dist = P_ApproxDistance(params->source->pos[VX] - mo->pos[VX],
+                            params->source->pos[VY] - mo->pos[VY]);
+    if(dist <= params->maxDistance)
+    {
+        P_BlastMobj(params->source, mo, BLAST_FULLSTRENGTH);
+    }
+
+    return true; // Continue iteration.
+}
+
+/**
+ * Blast all mobjs away.
+ */
+void P_BlastRadius(player_t* pl)
+{
+    mobj_t*             pmo = pl->plr->mo;
+    radiusblastparams_t params;
 
     S_StartSound(SFX_ARTIFACT_BLAST, pmo);
-    P_NoiseAlert(player->plr->mo, player->plr->mo);
+    P_NoiseAlert(pmo, pmo);
 
-    for(think = thinkerCap.next; think != &thinkerCap && think;
-        think = think->next)
+    params.source = pmo;
+    params.maxDistance = BLAST_RADIUS_DIST;
+    P_IterateThinkers(P_MobjThinker, radiusBlast, &params);
+}
+
+typedef struct {
+    float               origin[2];
+    float               maxDistance;
+    boolean             effective;
+} radiusgiveparams_t;
+
+static boolean radiusGiveArmor(thinker_t* th, void* context)
+{
+    radiusgiveparams_t* params = (radiusgiveparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+    float               dist;
+
+    if(!mo->player || mo->health <= 0)
+        return true; // Continue iteration.
+
+    // Within range?
+    dist = P_ApproxDistance(params->origin[VX] - mo->pos[VX],
+                            params->origin[VY] - mo->pos[VY]);
+    if(dist <= params->maxDistance)
     {
-        if(think->function != P_MobjThinker)
-            continue; // Not a mobj thinker
-
-        mo = (mobj_t *) think;
-        if((mo == pmo) || (mo->flags2 & MF2_BOSS))
-            continue; // Not a valid monster
-
-        if((mo->type == MT_POISONCLOUD) ||  // poison cloud
-           (mo->type == MT_HOLY_FX) ||  // holy fx
-           (mo->flags & MF_ICECORPSE))  // frozen corpse
+        if((P_GiveArmor(mo->player, ARMOR_ARMOR, 1)) ||
+           (P_GiveArmor(mo->player, ARMOR_SHIELD, 1)) ||
+           (P_GiveArmor(mo->player, ARMOR_HELMET, 1)) ||
+           (P_GiveArmor(mo->player, ARMOR_AMULET, 1)))
         {
-            // Let these special cases go
+            params->effective = true;
+            S_StartSound(SFX_MYSTICINCANT, mo);
         }
-        else if((mo->flags & MF_COUNTKILL) && (mo->health <= 0))
-        {
-            continue;
-        }
-        else if(!(mo->flags & MF_COUNTKILL) && !(mo->player) &&
-                !(mo->flags & MF_MISSILE))
-        {   // Must be monster, player, or missile
-            continue;
-        }
-
-        if(mo->flags2 & MF2_DORMANT)
-            continue;  // no dormant creatures
-
-        if((mo->type == MT_WRAITHB) && (mo->flags2 & MF2_DONTDRAW))
-            continue;  // no underground wraiths
-
-        if((mo->type == MT_SPLASHBASE) || (mo->type == MT_SPLASH))
-            continue;
-
-        if(mo->type == MT_SERPENT || mo->type == MT_SERPENTLEADER)
-            continue;
-
-        dist = P_ApproxDistance(pmo->pos[VX] - mo->pos[VX],
-                                pmo->pos[VY] - mo->pos[VY]);
-        if(dist > BLAST_RADIUS_DIST)
-            continue; // Out of range
-
-        P_BlastMobj(pmo, mo, BLAST_FULLSTRENGTH);
     }
+
+    return true; // Continue iteration.
+}
+
+static boolean radiusGiveBody(thinker_t* th, void* context)
+{
+    radiusgiveparams_t* params = (radiusgiveparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+    float               dist;
+
+    if(!mo->player || mo->health <= 0)
+        return true; // Continue iteration.
+
+    // Within range?
+    dist = P_ApproxDistance(params->origin[VX] - mo->pos[VX],
+                            params->origin[VY] - mo->pos[VY]);
+    if(dist <= params->maxDistance)
+    {
+        int                 amount = 50 + (P_Random() % 50);
+
+        if(P_GiveBody(mo->player, amount))
+        {
+            params->effective = true;
+            S_StartSound(SFX_MYSTICINCANT, mo);
+        }
+    }
+
+    return true; // Continue iteration.
+}
+
+static boolean radiusGiveMana(thinker_t* th, void* context)
+{
+    radiusgiveparams_t* params = (radiusgiveparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+    float               dist;
+
+    if(!mo->player || mo->health <= 0)
+        return true; // Continue iteration.
+
+    // Within range?
+    dist = P_ApproxDistance(params->origin[VX] - mo->pos[VX],
+                            params->origin[VY] - mo->pos[VY]);
+    if(dist <= params->maxDistance)
+    {
+        int                 amount = 50 + (P_Random() % 50);
+
+        if((P_GiveMana(mo->player, AT_BLUEMANA, amount)) ||
+           (P_GiveMana(mo->player, AT_GREENMANA, amount)))
+        {
+            params->effective = true;
+            S_StartSound(SFX_MYSTICINCANT, mo);
+        }
+    }
+
+    return true; // Continue iteration.
 }
 
 /**
  * Do class specific effect for everyone in radius
  */
-boolean P_HealRadius(player_t *player)
+boolean P_HealRadius(player_t* player)
 {
-    mobj_t     *mo;
-    mobj_t     *pmo = player->plr->mo;
-    thinker_t  *think;
-    float       dist;
-    int         effective = false;
-    int         amount;
+    mobj_t*             pmo = player->plr->mo;
+    radiusgiveparams_t  params;
 
-    for(think = thinkerCap.next; think != &thinkerCap && think;
-        think = think->next)
+    params.effective = false;
+    params.origin[VX] = pmo->pos[VX];
+    params.origin[VY] = pmo->pos[VY];
+    params.maxDistance = HEAL_RADIUS_DIST;
+
+    switch(player->class)
     {
-        if(think->function != P_MobjThinker)
-            continue; // Not a mobj thinker
+    case PCLASS_FIGHTER:
+        P_IterateThinkers(P_MobjThinker, radiusGiveArmor, &params);
+        break;
 
-        mo = (mobj_t *) think;
-        if(!mo->player || mo->health <= 0)
-            continue;
+    case PCLASS_CLERIC:
+        P_IterateThinkers(P_MobjThinker, radiusGiveBody, &params);
+        break;
 
-        dist = P_ApproxDistance(pmo->pos[VX] - mo->pos[VX],
-                                pmo->pos[VY] - mo->pos[VY]);
-        if(dist > HEAL_RADIUS_DIST)
-            continue; // Out of range
+    case PCLASS_MAGE:
+        P_IterateThinkers(P_MobjThinker, radiusGiveMana, &params);
+        break;
 
-        switch(player->class)
-        {
-        case PCLASS_FIGHTER: // Radius armor boost
-            if((P_GiveArmor(mo->player, ARMOR_ARMOR, 1)) ||
-               (P_GiveArmor(mo->player, ARMOR_SHIELD, 1)) ||
-               (P_GiveArmor(mo->player, ARMOR_HELMET, 1)) ||
-               (P_GiveArmor(mo->player, ARMOR_AMULET, 1)))
-            {
-                effective = true;
-                S_StartSound(SFX_MYSTICINCANT, mo);
-            }
-            break;
-
-        case PCLASS_CLERIC: // Radius heal
-            amount = 50 + (P_Random() % 50);
-            if(P_GiveBody(mo->player, amount))
-            {
-                effective = true;
-                S_StartSound(SFX_MYSTICINCANT, mo);
-            }
-            break;
-
-        case PCLASS_MAGE: // Radius mana boost
-            amount = 50 + (P_Random() % 50);
-            if((P_GiveMana(mo->player, AT_BLUEMANA, amount)) ||
-               (P_GiveMana(mo->player, AT_GREENMANA, amount)))
-            {
-                effective = true;
-                S_StartSound(SFX_MYSTICINCANT, mo);
-            }
-            break;
-
-        case PCLASS_PIG:
-        default:
-            break;
-        }
+    default:
+        break;
     }
 
-    return effective;
+    return params.effective;
 }
 
 /**

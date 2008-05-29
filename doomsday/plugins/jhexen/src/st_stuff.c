@@ -2122,6 +2122,6 @@ void SB_ChangePlayerClass(player_t *player, int newclass)
         dummy.angle = oldMobj->angle;
 
         P_SpawnPlayer(&dummy, player - players);
-        P_MobjRemove(oldMobj);
+        P_MobjRemove(oldMobj, true);
     }
 }

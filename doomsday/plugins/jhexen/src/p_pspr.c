@@ -1918,7 +1918,7 @@ static void CHolyTailRemove(mobj_t *mo)
         CHolyTailRemove(child);
     }
 
-    P_MobjRemove(mo);
+    P_MobjRemove(mo, false);
 }
 
 void C_DECL A_CHolyTail(mobj_t *mo)

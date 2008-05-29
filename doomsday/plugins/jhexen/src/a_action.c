@@ -135,7 +135,7 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
             P_SpawnMobj3fv(TranslateThingType[actor->args[0]], actor->pos);
         }
     }
-    P_MobjRemove(actor);
+    P_MobjRemove(actor, false);
 }
 
 void C_DECL A_PotteryChooseBit(mobj_t *actor)
@@ -225,7 +225,7 @@ void C_DECL A_CorpseExplode(mobj_t *actor)
         mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
         S_StartSound(SFX_FIRED_DEATH, mo);
     }
-    P_MobjRemove(actor);
+    P_MobjRemove(actor, false);
 }
 
 #ifdef MSVC
@@ -830,7 +830,7 @@ void C_DECL A_ThrustRaise(mobj_t *actor)
     // Lose the dirt clump.
     if(actor->floorClip < actor->height && actor->tracer)
     {
-        P_MobjRemove(actor->tracer);
+        P_MobjRemove(actor->tracer, false);
         actor->tracer = NULL;
     }
 
@@ -903,7 +903,7 @@ void C_DECL A_SoAExplode(mobj_t *actor)
     }
 
     S_StartSound(SFX_SUITOFARMOR_BREAK, mo);
-    P_MobjRemove(actor);
+    P_MobjRemove(actor, false);
 }
 #if MSVC
 #  pragma optimize("",on)

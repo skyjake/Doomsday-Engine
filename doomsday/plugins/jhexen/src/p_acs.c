@@ -1157,12 +1157,33 @@ static int CmdThingCountDirect(void)
     return SCRIPT_CONTINUE;
 }
 
+typedef struct {
+    mobjtype_t          type;
+    int                 count;
+} countmobjoftypeparams_t;
+
+static boolean countMobjOfType(thinker_t* th, void* context)
+{
+    countmobjoftypeparams_t* params = (countmobjoftypeparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+
+    // Does the type match?
+    if(mo->type != params->type)
+        return true; // Continue iteration.
+
+    // Minimum health requirement?
+    if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
+        return true; // Continue iteration.
+
+    params->count++;
+
+    return true; // Continue iteration.
+}
+
 static void ThingCount(int type, int tid)
 {
-    int                 count, searcher;
-    mobj_t*             mobj;
+    int                 count;
     mobjtype_t          moType;
-    thinker_t*          think;
 
     if(!(type + tid))
     {   // Nothing to count.
@@ -1171,19 +1192,21 @@ static void ThingCount(int type, int tid)
 
     moType = TranslateThingType[type];
     count = 0;
-    searcher = -1;
 
     if(tid)
     {   // Count TID things.
-        while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
+        mobj_t*             mo;
+        int                 searcher = -1;
+
+        while((mo = P_FindMobjFromTID(tid, &searcher)) != NULL)
         {
             if(type == 0)
             {   // Just count TIDs.
                 count++;
             }
-            else if(moType == mobj->type)
+            else if(moType == mo->type)
             {
-                if(mobj->flags & MF_COUNTKILL && mobj->health <= 0)
+                if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
                 {   // Don't count dead monsters.
                     continue;
                 }
@@ -1194,27 +1217,13 @@ static void ThingCount(int type, int tid)
     }
     else
     {   // Count only types.
-        for(think = thinkerCap.next; think != &thinkerCap && think;
-            think = think->next)
-        {
-            if(think->function != P_MobjThinker)
-            {   // Not a mobj thinker.
-                continue;
-            }
+        countmobjoftypeparams_t params;
 
-            mobj = (mobj_t *) think;
-            if(mobj->type != moType)
-            {   // Doesn't match.
-                continue;
-            }
+        params.type = moType;
+        params.count = 0;
+        P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
-            if(mobj->flags & MF_COUNTKILL && mobj->health <= 0)
-            {   // Don't count dead monsters.
-                continue;
-            }
-
-            count++;
-        }
+        count = params.count;
     }
 
     Push(count);
