@@ -89,7 +89,7 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
         if(state == S_NULL)
         {
             mobj->state = (state_t *) S_NULL;
-            P_MobjRemove(mobj);
+            P_MobjRemove(mobj, false);
             return false;
         }
 
@@ -247,7 +247,7 @@ void P_MobjMoveXY(mobj_t *mo)
                         {
                             // Hack to prevent missiles exploding against
                             // the sky. Does not handle sky floors.
-                            P_MobjRemove(mo);
+                            P_MobjRemove(mo, false);
                             return;
                         }
                     }
@@ -594,7 +594,7 @@ void P_MobjMoveZ(mobj_t *mo)
             if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) ==
                SKYMASKMATERIAL)
             {
-                P_MobjRemove(mo);
+                P_MobjRemove(mo, false);
             }
             else
             {
@@ -645,7 +645,7 @@ void P_NightmareRespawn(mobj_t *mobj)
     mo->reactionTime = 18;
 
     // Remove the old monster.
-    P_MobjRemove(mobj);
+    P_MobjRemove(mobj, true);
 }
 
 void P_MobjThinker(mobj_t *mobj)

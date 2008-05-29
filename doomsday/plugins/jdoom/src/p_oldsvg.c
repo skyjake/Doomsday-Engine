@@ -371,6 +371,16 @@ void P_v19_UnArchiveWorld(void)
     savePtr = (byte *) get;
 }
 
+static boolean removeThinker(thinker_t* th, void* context)
+{
+    if(th->function == P_MobjThinker)
+        P_MobjRemove((mobj_t *) th, true);
+    else
+        Z_Free(th);
+
+    return true; // Continue iteration.
+}
+
 void P_v19_UnArchiveThinkers(void)
 {
 enum thinkerclass_e {
@@ -379,22 +389,9 @@ enum thinkerclass_e {
 };
 
     byte                tClass;
-    thinker_t          *currentThinker;
-    thinker_t          *next;
 
     // Remove all the current thinkers.
-    currentThinker = thinkerCap.next;
-    while(currentThinker != &thinkerCap)
-    {
-        next = currentThinker->next;
-
-        if(currentThinker->function == P_MobjThinker)
-            P_MobjRemove((mobj_t *) currentThinker);
-        else
-            Z_Free(currentThinker);
-
-        currentThinker = next;
-    }
+    P_IterateThinkers(NULL, removeThinker, NULL);
     P_InitThinkers();
 
     // Read in saved thinkers.

@@ -357,15 +357,11 @@ typedef enum {
     pastdest
 } result_e;
 
-result_e    T_MovePlane(sector_t *sector, float speed, float dest,
+result_e    T_MovePlane(sector_t* sector, float speed, float dest,
                         int crush, int floorOrCeiling, int direction);
 
-int         EV_BuildStairs(linedef_t *line, stair_e type);
-int         EV_DoFloor(linedef_t *line, floor_e floortype);
-void        T_MoveFloor(floormove_t *floor);
-
-#define         TELEFOGHEIGHT 0
-
-int         EV_Teleport(linedef_t *line, int side, mobj_t *thing);
+int         EV_BuildStairs(linedef_t* line, stair_e type);
+int         EV_DoFloor(linedef_t* line, floor_e floortype);
+void        T_MoveFloor(floormove_t* floor);
 
 #endif

@@ -72,8 +72,6 @@
 
 #define sentient(mobj)      ((mobj)->health > 0 && (mobj)->info->seeState)
 
-#define thinkerCap          (*gi.thinkerCap)
-
 #define FRICTION_NORMAL     (0.90625f)
 #define FRICTION_FLY        (0.91796875f)
 #define FRICTION_HIGH       (0.5f)
@@ -121,25 +119,25 @@ void        P_SpawnPuff(float x, float y, float z);
 void        P_SpawnBlood(float x, float y, float z, int damage);
 mobj_t     *P_SpawnTeleFog(float x, float y);
 
-void        P_MobjRemove(mobj_t *mo);
-boolean     P_MobjChangeState(mobj_t *mo, statenum_t state);
-void        P_MobjThinker(mobj_t *mo);
-int         P_MobjGetFloorType(mobj_t *mo);
-void        P_RipperBlood(mobj_t *mo);
+void        P_MobjRemove(mobj_t* mo, boolean noRespawn);
+boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
+void        P_MobjThinker(mobj_t* mo);
+int         P_MobjGetFloorType(mobj_t* mo);
+void        P_RipperBlood(mobj_t* mo);
 
-void        P_SetDoomsdayFlags(mobj_t *mo);
-void        P_HitFloor(mobj_t *mo);
+void        P_SetDoomsdayFlags(mobj_t* mo);
+void        P_HitFloor(mobj_t* mo);
 
-void        P_SpawnMapThing(spawnspot_t *th);
-void        P_SpawnPlayer(spawnspot_t *mthing, int pnum);
+void        P_SpawnMapThing(spawnspot_t* th);
+void        P_SpawnPlayer(spawnspot_t* mthing, int pnum);
 
-void        P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
+void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 
-void        P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+void        P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
                          int damage);
-void        P_DamageMobj2(mobj_t *target, mobj_t *inflictor,
-                          mobj_t *source, int damage, boolean stomping);
+void        P_DamageMobj2(mobj_t* target, mobj_t* inflictor,
+                          mobj_t* source, int damage, boolean stomping);
 
-void        P_ExplodeMissile(mobj_t *mo);
+void        P_ExplodeMissile(mobj_t* mo);
 
 #endif

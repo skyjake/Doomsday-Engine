@@ -54,118 +54,155 @@
 
 // CODE --------------------------------------------------------------------
 
-mobj_t *P_SpawnTeleFog(float x, float y)
+mobj_t* P_SpawnTeleFog(float x, float y)
 {
-    subsector_t        *ss = R_PointInSubsector(x, y);
+    subsector_t*        ss = R_PointInSubsector(x, y);
 
     return P_SpawnMobj3f(MT_TFOG, x, y,
                          P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT);
 }
 
-int EV_Teleport(linedef_t *line, int side, mobj_t *thing)
-{
-    uint                an;
-    float               oldPos[3];
-    float               aboveFloor;
-    mobj_t             *m, *fog;
-    thinker_t          *th;
-    sector_t           *sec = NULL;
-    iterlist_t         *list;
+typedef struct {
+    sector_t*           sec;
+    mobjtype_t          type;
+    mobj_t*             foundMobj;
+} findmobjparams_t;
 
-    if(thing->flags2 & MF2_NOTELEPORT)
-        return false;
+static boolean findMobj(thinker_t* th, void* context)
+{
+    findmobjparams_t*   params = (findmobjparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
+
+    // Must be of the correct type?
+    if(params->type >= 0 && params->type != mo->type)
+        return true; // Continue iteration.
+
+    // Must be in the specified sector?
+    if(params->sec &&
+       params->sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
+        return true; // Continue iteration.
+
+    // Found it!
+    params->foundMobj = mo;
+    return false; // Stop iteration.
+}
+
+static mobj_t* getTeleportDestination(short tag)
+{
+    iterlist_t*         list;
+
+    list = P_GetSectorIterListForTag(tag, false);
+    if(list)
+    {
+        sector_t*           sec = NULL;
+        findmobjparams_t    params;
+
+        params.type = MT_TELEPORTMAN;
+        params.foundMobj = NULL;
+
+        P_IterListResetIterator(list, true);
+        while((sec = P_IterListIterator(list)) != NULL)
+        {
+            params.sec = sec;
+
+            if(!P_IterateThinkers(P_MobjThinker, findMobj, &params))
+            {   // Found one.
+                return params.foundMobj;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
+{
+    mobj_t*             dest;
+
+    if(mo->flags2 & MF2_NOTELEPORT)
+        return 0;
 
     // Don't teleport if hit back of line, so you can get out of teleporter.
     if(side == 1)
         return 0;
 
-    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
-    if(!list)
-        return 0;
+    if((dest = getTeleportDestination(P_ToXLine(line)->tag)) != NULL)
+    {   // A suitable destination has been found.
+        mobj_t*             fog;
+        uint                an;
+        float               oldPos[3];
+        float               aboveFloor;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
-    {
-        for(th = thinkerCap.next; th != &thinkerCap; th = th->next)
+        memcpy(oldPos, mo->pos, sizeof(mo->pos));
+        aboveFloor = mo->pos[VZ] - mo->floorZ;
+
+        if(!P_TeleportMove(mo, dest->pos[VX], dest->pos[VY], false))
+            return 0;
+
+        // In Final Doom things teleported to their destination but the
+        // height wasn't set to the floor.
+        if(gameMission != GM_TNT && gameMission != GM_PLUT)
+            mo->pos[VZ] = mo->floorZ;
+
+        if(spawnFog)
         {
-            if(th->function != P_MobjThinker)
-                continue; // Not a mobj.
-
-            m = (mobj_t *) th;
-
-            if(m->type != MT_TELEPORTMAN)
-                continue; // Not a teleportman.
-
-            if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
-                continue; // Wrong sector.
-
-            memcpy(oldPos, thing->pos, sizeof(thing->pos));
-            aboveFloor = thing->pos[VZ] - thing->floorZ;
-
-            if(!P_TeleportMove(thing, m->pos[VX], m->pos[VY], false))
-                return 0;
-
-            // In Final Doom things teleported to their destination but the
-            // height wasn't set to the floor.
-            if(gameMission != GM_TNT && gameMission != GM_PLUT)
-                thing->pos[VZ] = thing->floorZ;
-
             // Spawn teleport fog at source and destination.
             fog = P_SpawnMobj3fv(MT_TFOG, oldPos);
             S_StartSound(sfx_telept, fog);
-            an = m->angle >> ANGLETOFINESHIFT;
+
+            an = dest->angle >> ANGLETOFINESHIFT;
             fog = P_SpawnMobj3f(MT_TFOG,
-                                m->pos[VX] + 20 * FIX2FLT(finecosine[an]),
-                                m->pos[VY] + 20 * FIX2FLT(finesine[an]),
-                                thing->pos[VZ]);
+                                dest->pos[VX] + 20 * FIX2FLT(finecosine[an]),
+                                dest->pos[VY] + 20 * FIX2FLT(finesine[an]),
+                                mo->pos[VZ]);
 
             // Emit sound, where?
             S_StartSound(sfx_telept, fog);
-
-            thing->angle = m->angle;
-            if(thing->flags2 & MF2_FLOORCLIP)
-            {
-                if(thing->pos[VZ] ==
-                   P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT) &&
-                   P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
-                {
-                    thing->floorClip = 10;
-                }
-                else
-                {
-                    thing->floorClip = 0;
-                }
-            }
-
-            thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;
-
-            // Don't move for a bit.
-            if(thing->player)
-            {
-                thing->reactionTime = 18;
-                if(thing->player->powers[PT_FLIGHT] && aboveFloor)
-                {
-                    thing->pos[VZ] = thing->floorZ + aboveFloor;
-                    if(thing->pos[VZ] + thing->height > thing->ceilingZ)
-                    {
-                        thing->pos[VZ] = thing->ceilingZ - thing->height;
-                    }
-                }
-                else
-                {
-                    //thing->dPlayer->clLookDir = 0; /* $unifiedangles */
-                    thing->dPlayer->lookDir = 0;
-                }
-                thing->dPlayer->viewZ =
-                    thing->pos[VZ] + thing->dPlayer->viewHeight;
-
-                //thing->dPlayer->clAngle = thing->angle; /* $unifiedangles */
-                thing->dPlayer->flags |=
-                    DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
-            }
-
-            return 1;
         }
+
+        mo->angle = dest->angle;
+        if(mo->flags2 & MF2_FLOORCLIP)
+        {
+            if(mo->pos[VZ] ==
+               P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT) &&
+               P_MobjGetFloorType(mo) >= FLOOR_LIQUID)
+            {
+                mo->floorClip = 10;
+            }
+            else
+            {
+                mo->floorClip = 0;
+            }
+        }
+
+        mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
+
+        // Don't move for a bit.
+        if(mo->player)
+        {
+            mo->reactionTime = 18;
+            if(mo->player->powers[PT_FLIGHT] && aboveFloor)
+            {
+                mo->pos[VZ] = mo->floorZ + aboveFloor;
+                if(mo->pos[VZ] + mo->height > mo->ceilingZ)
+                {
+                    mo->pos[VZ] = mo->ceilingZ - mo->height;
+                }
+            }
+            else
+            {
+                //mo->dPlayer->clLookDir = 0; /* $unifiedangles */
+                mo->dPlayer->lookDir = 0;
+            }
+            mo->dPlayer->viewZ =
+                mo->pos[VZ] + mo->dPlayer->viewHeight;
+
+            //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
+            mo->dPlayer->flags |=
+                DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+        }
+
+        return 1;
     }
 
     return 0;

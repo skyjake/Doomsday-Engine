@@ -461,7 +461,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 39:
         // TELEPORT!
-        EV_Teleport(line, side, thing);
+        EV_Teleport(line, side, thing, true);
         xline->special = 0;
         break;
 
@@ -570,7 +570,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
         // TELEPORT MonsterONLY.
         if(!thing->player)
         {
-            EV_Teleport(line, side, thing);
+            EV_Teleport(line, side, thing, true);
             xline->special = 0;
         }
         break;
@@ -705,7 +705,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 97:
         // TELEPORT!
-        EV_Teleport(line, side, thing);
+        EV_Teleport(line, side, thing, true);
         break;
 
     case 98:
@@ -736,7 +736,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
     case 126:
         // TELEPORT MonsterONLY.
         if(!thing->player)
-            EV_Teleport(line, side, thing);
+            EV_Teleport(line, side, thing, true);
         break;
 
     case 128:
