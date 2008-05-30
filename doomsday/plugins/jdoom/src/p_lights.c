@@ -84,9 +84,9 @@ void P_SpawnFireFlicker(sector_t *sector)
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
 
-    flick = Z_Malloc(sizeof(*flick), PU_LEVSPEC, 0);
+    flick = Z_Calloc(sizeof(*flick), PU_LEVSPEC, 0);
 
-    P_AddThinker(&flick->thinker);
+    P_ThinkerAdd(&flick->thinker);
 
     flick->thinker.function = T_FireFlicker;
     flick->sector = sector;
@@ -138,11 +138,11 @@ void P_SpawnLightFlash(sector_t *sector)
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
 
-    flash = Z_Malloc(sizeof(*flash), PU_LEVSPEC, 0);
-
-    P_AddThinker(&flash->thinker);
-
+    flash = Z_Calloc(sizeof(*flash), PU_LEVSPEC, 0);
     flash->thinker.function = T_LightFlash;
+
+    P_ThinkerAdd(&flash->thinker);
+
     flash->sector = sector;
     flash->maxLight = lightLevel;
 
@@ -189,14 +189,14 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
     float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     float               otherLevel = DDMAXFLOAT;
 
-    flash = Z_Malloc(sizeof(*flash), PU_LEVSPEC, 0);
+    flash = Z_Calloc(sizeof(*flash), PU_LEVSPEC, 0);
+    flash->thinker.function = T_StrobeFlash;
 
-    P_AddThinker(&flash->thinker);
+    P_ThinkerAdd(&flash->thinker);
 
     flash->sector = sector;
     flash->darkTime = fastOrSlow;
     flash->brightTime = STROBEBRIGHT;
-    flash->thinker.function = T_StrobeFlash;
     flash->maxLight = lightLevel;
     P_FindSectorSurroundingLowestLight(sector, &otherLevel);
     if(otherLevel < lightLevel)
@@ -333,9 +333,10 @@ void P_SpawnGlowingLight(sector_t *sector)
     float               otherLevel = DDMAXFLOAT;
     glow_t             *g;
 
-    g = Z_Malloc(sizeof(*g), PU_LEVSPEC, 0);
+    g = Z_Calloc(sizeof(*g), PU_LEVSPEC, 0);
+    g->thinker.function = T_Glow;
 
-    P_AddThinker(&g->thinker);
+    P_ThinkerAdd(&g->thinker);
 
     g->sector = sector;
     P_FindSectorSurroundingLowestLight(sector, &otherLevel);
@@ -344,7 +345,6 @@ void P_SpawnGlowingLight(sector_t *sector)
     else
         g->minLight = lightLevel;
     g->maxLight = lightLevel;
-    g->thinker.function = T_Glow;
     g->direction = -1;
 
     // Note that we are resetting sector attributes.

@@ -123,6 +123,9 @@ mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
 {
     mobj_t             *mo;
 
+    if(!function)
+        Con_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
+
     // Do we have any unused mobjs we can reuse?
     if(unusedMobjs)
     {
@@ -144,7 +147,7 @@ mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
     mo->ddFlags = ddflags;
     mo->thinker.function = function;
     if(mo->thinker.function)
-        P_AddThinker(&mo->thinker);
+        P_ThinkerAdd(&mo->thinker);
 
     return mo;
 }
@@ -162,7 +165,7 @@ void P_MobjDestroy(mobj_t *mo)
 
     S_StopSound(0, mo);
 
-    P_RemoveThinker((thinker_t *) mo);
+    P_ThinkerRemove((thinker_t *) mo);
 }
 
 /**

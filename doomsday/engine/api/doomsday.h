@@ -383,11 +383,13 @@ extern          "C" {
     void            PO_SetCallback(void (*func)(struct mobj_s*, void*, void*));
 
     // Play: Thinkers.
-    boolean         P_IterateThinkers(think_t type, boolean (*func) (thinker_t *thinker, void*), void* data);
+    void            P_ThinkerAdd(thinker_t* th);
+    void            P_ThinkerRemove(thinker_t* th);
+    void            P_ThinkerSetStasis(thinker_t* th, boolean on);
+
+    boolean         P_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
     void            P_RunThinkers(void);
     void            P_InitThinkers(void);
-    void            P_AddThinker(thinker_t *thinker);
-    void            P_RemoveThinker(thinker_t *thinker);
 
     // Refresh.
     int             DD_GetFrameRate(void);

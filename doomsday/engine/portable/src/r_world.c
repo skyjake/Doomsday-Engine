@@ -1666,17 +1666,14 @@ void R_BuildSectorLinks(gamemap_t *map)
                 {
                     lin = sec->lineDefs[k];
                     other = lin->L_frontsector;
-                    if(!other || other == sec)
+                    if(other == sec)
                     {
                         if(lin->L_backside)
-                        {
                             other = lin->L_backsector;
-                            if(!other || other == sec)
-                                continue;
-                        }
                     }
 
-                    other->lightSource = sec;
+                    if(other && other != sec)
+                        other->lightSource = sec;
                 }
             }
         }

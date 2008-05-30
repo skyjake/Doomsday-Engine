@@ -428,7 +428,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
         break;
 
     case 44: // Ceiling Crush Stop
-        buttonSuccess = EV_CeilingCrushStop(line, args);
+        buttonSuccess = P_CeilingDeactivate(line, args);
         break;
 
     case 45: // Ceiling Crush Raise and Stay
@@ -444,7 +444,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
         break;
 
     case 61: // Plat Stop
-        EV_StopPlat(line, args);
+        P_PlatDeactivate(line, args);
         break;
 
     case 62: // Plat Down-Wait-Up-Stay
@@ -982,10 +982,6 @@ void P_SpawnSpecials(void)
             break;
         }
     }
-
-    //// \fixme Remove fixed limits.
-    P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
-    P_RemoveAllActivePlats();
 
     P_FreeButtons();
 }

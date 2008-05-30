@@ -491,7 +491,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 54:
         // Platform Stop.
-        EV_StopPlat(line);
+        P_PlatDeactivate(xline->tag);
         xline->special = 0;
         break;
 
@@ -503,7 +503,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 57:
         // Ceiling Crush Stop.
-        EV_CeilingCrushStop(line);
+        P_CeilingDeactivate(xline->tag);
         xline->special = 0;
         break;
 
@@ -600,7 +600,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 74:
         // Ceiling Crush Stop.
-        EV_CeilingCrushStop(line);
+        P_CeilingDeactivate(xline->tag);
         break;
 
     case 75:
@@ -665,7 +665,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 89:
         // Platform Stop.
-        EV_StopPlat(line);
+        P_PlatDeactivate(xline->tag);
         break;
 
     case 90:
@@ -974,11 +974,11 @@ void P_FreeButtons(void)
 void P_SpawnSpecials(void)
 {
     uint                i;
-    linedef_t          *line;
-    xline_t            *xline;
-    iterlist_t         *list;
-    sector_t           *sec;
-    xsector_t          *xsec;
+    linedef_t*          line;
+    xline_t*            xline;
+    iterlist_t*         list;
+    sector_t*           sec;
+    xsector_t*          xsec;
 
     // Init special sectors.
     P_DestroySectorTagLists();
@@ -1097,9 +1097,6 @@ void P_SpawnSpecials(void)
            P_AddObjectToIterList(list, line);
         }
     }
-
-    P_RemoveAllActiveCeilings();
-    P_RemoveAllActivePlats();
 
     P_FreeButtons();
 

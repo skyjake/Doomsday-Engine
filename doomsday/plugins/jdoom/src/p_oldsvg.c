@@ -419,7 +419,7 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
-    ceiling_e type; // was 32bit int
+    ceilingtype_e type; // was 32bit int
     sector_t *sector;
     fixed_t bottomheight;
     fixed_t topheight;
@@ -447,23 +447,24 @@ typedef struct {
     ceiling->topHeight = FIX2FLT(SV_ReadLong());
     ceiling->speed = FIX2FLT(SV_ReadLong());
     ceiling->crush = SV_ReadLong();
-    ceiling->direction = SV_ReadLong();
+    ceiling->state = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
     ceiling->tag = SV_ReadLong();
-    ceiling->oldDirection = SV_ReadLong();
+    ceiling->oldState = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
 
-    if(temp + V19_THINKER_T_FUNC_OFFSET)
-        ceiling->thinker.function = T_MoveCeiling;
+    ceiling->thinker.function = T_MoveCeiling;
+    if(!(temp + V19_THINKER_T_FUNC_OFFSET))
+        P_ThinkerSetStasis(&ceiling->thinker, true);
 
     P_ToXSector(ceiling->sector)->specialData = ceiling;
     return true; // Add this thinker.
 }
 
-static int SV_ReadDoor(vldoor_t *door)
+static int SV_ReadDoor(door_t *door)
 {
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
-    vldoor_e type; // was 32bit int
+    doortype_e type; // was 32bit int
     sector_t *sector;
     fixed_t topheight;
     fixed_t speed;
@@ -485,11 +486,11 @@ typedef struct {
 
     door->topHeight = FIX2FLT(SV_ReadLong());
     door->speed = FIX2FLT(SV_ReadLong());
-    door->direction = SV_ReadLong();
+    door->state = SV_ReadLong();
     door->topWait = SV_ReadLong();
     door->topCountDown = SV_ReadLong();
 
-    door->thinker.function = T_VerticalDoor;
+    door->thinker.function = T_Door;
 
     P_ToXSector(door->sector)->specialData = door;
     return true; // Add this thinker.
@@ -545,8 +546,8 @@ typedef struct {
     fixed_t high;
     int     wait;
     int     count;
-    plat_e  status; // was 32bit int
-    plat_e  oldstatus; // was 32bit int
+    platstate_e  status; // was 32bit int
+    platstate_e  oldstatus; // was 32bit int
     boolean crush;
     int     tag;
     plattype_e type; // was 32bit int
@@ -568,14 +569,15 @@ typedef struct {
     plat->high = FIX2FLT(SV_ReadLong());
     plat->wait = SV_ReadLong();
     plat->count = SV_ReadLong();
-    plat->status = SV_ReadLong();
-    plat->oldStatus = SV_ReadLong();
+    plat->state = SV_ReadLong();
+    plat->oldState = SV_ReadLong();
     plat->crush = SV_ReadLong();
     plat->tag = SV_ReadLong();
     plat->type = SV_ReadLong();
 
-    if(temp + V19_THINKER_T_FUNC_OFFSET)
-        plat->thinker.function = T_PlatRaise;
+    plat->thinker.function = T_PlatRaise;
+    if(!(temp + V19_THINKER_T_FUNC_OFFSET))
+        P_ThinkerSetStasis(&plat->thinker, true);
 
     P_ToXSector(plat->sector)->specialData = plat;
     return true; // Add this thinker.
@@ -677,7 +679,7 @@ typedef struct {
  * Things to handle:
  *
  * T_MoveCeiling, (ceiling_t: sector_t * swizzle), - active list
- * T_VerticalDoor, (vldoor_t: sector_t * swizzle),
+ * T_Door, (door_t: sector_t * swizzle),
  * T_MoveFloor, (floormove_t: sector_t * swizzle),
  * T_LightFlash, (lightflash_t: sector_t * swizzle),
  * T_StrobeFlash, (strobe_t: sector_t *),
@@ -699,7 +701,7 @@ void P_v19_UnArchiveSpecials(void)
 
     byte                tClass;
     ceiling_t          *ceiling;
-    vldoor_t           *door;
+    door_t           *door;
     floormove_t        *floor;
     plat_t             *plat;
     lightflash_t       *flash;
@@ -721,8 +723,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadCeiling(ceiling);
 
-            P_AddThinker(&ceiling->thinker);
-            P_AddActiveCeiling(ceiling);
+            P_ThinkerAdd(&ceiling->thinker);
             break;
 
         case tc_door:
@@ -731,7 +732,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadDoor(door);
 
-            P_AddThinker(&door->thinker);
+            P_ThinkerAdd(&door->thinker);
             break;
 
         case tc_floor:
@@ -740,7 +741,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadFloor(floor);
 
-            P_AddThinker(&floor->thinker);
+            P_ThinkerAdd(&floor->thinker);
             break;
 
         case tc_plat:
@@ -749,8 +750,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadPlat(plat);
 
-            P_AddThinker(&plat->thinker);
-            P_AddActivePlat(plat);
+            P_ThinkerAdd(&plat->thinker);
             break;
 
         case tc_flash:
@@ -759,7 +759,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadFlash(flash);
 
-            P_AddThinker(&flash->thinker);
+            P_ThinkerAdd(&flash->thinker);
             break;
 
         case tc_strobe:
@@ -768,7 +768,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadStrobe(strobe);
 
-            P_AddThinker(&strobe->thinker);
+            P_ThinkerAdd(&strobe->thinker);
             break;
 
         case tc_glow:
@@ -777,7 +777,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadGlow(glow);
 
-            P_AddThinker(&glow->thinker);
+            P_ThinkerAdd(&glow->thinker);
             break;
 
         default:

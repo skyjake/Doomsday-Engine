@@ -245,8 +245,8 @@ static void SV_WriteMobj(mobj_t *mobj);
 static int  SV_ReadMobj(thinker_t *th);
 static void SV_WriteCeiling(ceiling_t* ceiling);
 static int  SV_ReadCeiling(ceiling_t* ceiling);
-static void SV_WriteDoor(vldoor_t* door);
-static int  SV_ReadDoor(vldoor_t* door);
+static void SV_WriteDoor(door_t* door);
+static int  SV_ReadDoor(door_t* door);
 static void SV_WriteFloor(floormove_t* floor);
 static int  SV_ReadFloor(floormove_t* floor);
 static void SV_WritePlat(plat_t* plat);
@@ -371,11 +371,11 @@ static thinkerinfo_t thinkerInfo[] = {
     },
     {
       TC_DOOR,
-      T_VerticalDoor,
+      T_Door,
       TSF_SPECIAL,
       SV_WriteDoor,
       SV_ReadDoor,
-      sizeof(vldoor_t)
+      sizeof(door_t)
     },
     {
       TC_FLOOR,
@@ -547,21 +547,6 @@ static thinkerinfo_t* infoForThinker(thinker_t* th)
     while(thInfo->thinkclass != TC_NULL)
     {
         if(thInfo->function == th->function)
-            return thInfo;
-
-        thInfo++;
-    }
-
-    return NULL;
-}
-
-static thinkerinfo_t* thinkerinfo(thinkerclass_t tClass)
-{
-    thinkerinfo_t*      thInfo = thinkerInfo;
-
-    while(thInfo->thinkclass != TC_NULL)
-    {
-        if(thInfo->thinkclass == tClass)
             return thInfo;
 
         thInfo++;
@@ -2644,16 +2629,13 @@ static void P_UnArchiveWorld(void)
 #endif
 }
 
-static void SV_WriteCeiling(ceiling_t *ceiling)
+static void SV_WriteCeiling(ceiling_t* ceiling)
 {
     SV_WriteByte(TC_CEILING);
 
-    SV_WriteByte(1); // Write a version byte.
+    SV_WriteByte(2); // Write a version byte.
 
-    if(ceiling->thinker.function)
-        SV_WriteByte(1);
-    else
-        SV_WriteByte(0);
+    SV_WriteByte(ceiling->thinker.inStasis? 0 : 1);
 
     SV_WriteByte((byte) ceiling->type);
     SV_WriteLong(P_ToIndex(ceiling->sector));
@@ -2664,14 +2646,14 @@ static void SV_WriteCeiling(ceiling_t *ceiling)
 
     SV_WriteByte(ceiling->crush);
 
-    SV_WriteLong(ceiling->direction);
+    SV_WriteByte((byte) ceiling->state);
     SV_WriteLong(ceiling->tag);
-    SV_WriteLong(ceiling->oldDirection);
+    SV_WriteByte((byte) ceiling->oldState);
 }
 
-static int SV_ReadCeiling(ceiling_t *ceiling)
+static int SV_ReadCeiling(ceiling_t* ceiling)
 {
-    sector_t *sector;
+    sector_t*           sector;
 
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -2679,13 +2661,16 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
     if(hdr.version >= 5)
 #endif
     {   // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
+        int                 ver = SV_ReadByte(); // version byte.
 
-        // Should we set the function?
-        if(SV_ReadByte())
-            ceiling->thinker.function = T_MoveCeiling;
+        ceiling->thinker.function = T_MoveCeiling;
+        // Should we put this into stasis?
+#if !__JHEXEN__
+        if(!SV_ReadByte())
+            P_ThinkerSetStasis(&ceiling->thinker, true);
+#endif
 
-        ceiling->type = (ceiling_e) SV_ReadByte();
+        ceiling->type = (ceilingtype_e) SV_ReadByte();
 
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
@@ -2700,9 +2685,15 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 
         ceiling->crush = SV_ReadByte();
 
-        ceiling->direction = SV_ReadLong();
+        if(ver == 2)
+            ceiling->state = SV_ReadByte();
+        else
+            ceiling->state = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
         ceiling->tag = SV_ReadLong();
-        ceiling->oldDirection = SV_ReadLong();
+        if(ver == 2)
+            ceiling->oldState = SV_ReadByte();
+        else
+            ceiling->state = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
     }
     else
     {
@@ -2735,21 +2726,22 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
         ceiling->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
         ceiling->crush = SV_ReadLong();
-        ceiling->direction = SV_ReadLong();
+        ceiling->state = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
         ceiling->tag = SV_ReadLong();
-        ceiling->oldDirection = SV_ReadLong();
+        ceiling->oldState = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
 
+        ceiling->thinker.function = T_MoveCeiling;
 #if !__JHEXEN__
-        if(junk.function)
+        if(!junk.function)
+            P_ThinkerSetStasis(&ceiling->thinker, true);
 #endif
-            ceiling->thinker.function = T_MoveCeiling;
     }
 
     P_ToXSector(ceiling->sector)->specialData = ceiling;
     return true; // Add this thinker.
 }
 
-static void SV_WriteDoor(vldoor_t *door)
+static void SV_WriteDoor(door_t *door)
 {
     SV_WriteByte(TC_DOOR);
 
@@ -2765,12 +2757,12 @@ static void SV_WriteDoor(vldoor_t *door)
     SV_WriteShort((int)door->topHeight);
     SV_WriteLong(FLT2FIX(door->speed));
 
-    SV_WriteLong(door->direction);
+    SV_WriteLong(door->state);
     SV_WriteLong(door->topWait);
     SV_WriteLong(door->topCountDown);
 }
 
-static int SV_ReadDoor(vldoor_t *door)
+static int SV_ReadDoor(door_t *door)
 {
     sector_t *sector;
 
@@ -2782,7 +2774,7 @@ static int SV_ReadDoor(vldoor_t *door)
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
-        door->type = (vldoor_e) SV_ReadByte();
+        door->type = (doortype_e) SV_ReadByte();
 
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
@@ -2794,13 +2786,13 @@ static int SV_ReadDoor(vldoor_t *door)
         door->topHeight = (float) SV_ReadShort();
         door->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
-        door->direction = SV_ReadLong();
+        door->state = SV_ReadLong();
         door->topWait = SV_ReadLong();
         door->topCountDown = SV_ReadLong();
     }
     else
     {
-        // Its in the old format which serialized vldoor_t
+        // Its in the old format which serialized door_t
         // Padding at the start (an old thinker_t struct)
         SV_Read(junkbuffer, (size_t) 16);
 
@@ -2825,13 +2817,13 @@ static int SV_ReadDoor(vldoor_t *door)
         door->topHeight = FIX2FLT((fixed_t) SV_ReadLong());
         door->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
-        door->direction = SV_ReadLong();
+        door->state = SV_ReadLong();
         door->topWait = SV_ReadLong();
         door->topCountDown = SV_ReadLong();
     }
 
     P_ToXSector(door->sector)->specialData = door;
-    door->thinker.function = T_VerticalDoor;
+    door->thinker.function = T_Door;
 
     return true; // Add this thinker.
 }
@@ -2970,12 +2962,7 @@ static void SV_WritePlat(plat_t *plat)
     SV_WriteByte(TC_PLAT);
 
     SV_WriteByte(1); // Write a version byte.
-
-    if(plat->thinker.function)
-        SV_WriteByte(1);
-    else
-        SV_WriteByte(0);
-
+    SV_WriteByte(plat->thinker.inStasis? 0 : 1);
     SV_WriteByte((byte) plat->type);
 
     SV_WriteLong(P_ToIndex(plat->sector));
@@ -2987,8 +2974,8 @@ static void SV_WritePlat(plat_t *plat)
     SV_WriteLong(plat->wait);
     SV_WriteLong(plat->count);
 
-    SV_WriteByte((byte) plat->status);
-    SV_WriteByte((byte) plat->oldStatus);
+    SV_WriteByte((byte) plat->state);
+    SV_WriteByte((byte) plat->oldState);
     SV_WriteByte((byte) plat->crush);
 
     SV_WriteLong(plat->tag);
@@ -3006,9 +2993,12 @@ static int SV_ReadPlat(plat_t *plat)
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
-        // Should we set the function?
-        if(SV_ReadByte())
-            plat->thinker.function = T_PlatRaise;
+        plat->thinker.function = T_PlatRaise;
+#if !__JHEXEN__
+        // Should we put this into stasis?
+        if(!SV_ReadByte())
+            P_ThinkerSetStasis(&plat->thinker, true);
+#endif
 
         plat->type = (plattype_e) SV_ReadByte();
 
@@ -3026,8 +3016,8 @@ static int SV_ReadPlat(plat_t *plat)
         plat->wait = SV_ReadLong();
         plat->count = SV_ReadLong();
 
-        plat->status = (plat_e) SV_ReadByte();
-        plat->oldStatus = (plat_e) SV_ReadByte();
+        plat->state = (platstate_e) SV_ReadByte();
+        plat->oldState = (platstate_e) SV_ReadByte();
         plat->crush = (boolean) SV_ReadByte();
 
         plat->tag = SV_ReadLong();
@@ -3052,16 +3042,17 @@ static int SV_ReadPlat(plat_t *plat)
 
         plat->wait = SV_ReadLong();
         plat->count = SV_ReadLong();
-        plat->status = SV_ReadLong();
-        plat->oldStatus = SV_ReadLong();
+        plat->state = SV_ReadLong();
+        plat->oldState = SV_ReadLong();
         plat->crush = SV_ReadLong();
         plat->tag = SV_ReadLong();
         plat->type = SV_ReadLong();
 
+        plat->thinker.function = T_PlatRaise;
 #if !__JHEXEN__
-        if(junk.function)
+        if(!junk.function)
+            P_ThinkerSetStasis(&plat->thinker, true);
 #endif
-            plat->thinker.function = T_PlatRaise;
     }
 
     P_ToXSector(plat->sector)->specialData = plat;
@@ -3855,24 +3846,6 @@ static int SV_ReadBlink(lightblink_t *blink)
 # endif
 #endif // !__JHEXEN__
 
-static void SV_AddThinker(thinkerclass_t tclass, thinker_t* th)
-{
-    P_AddThinker(&((plat_t *)th)->thinker);
-
-    switch(tclass)
-    {
-    case TC_CEILING:
-        P_AddActiveCeiling((ceiling_t *) th);
-        break;
-    case TC_PLAT:
-        P_AddActivePlat((plat_t *) th);
-        break;
-
-    default:
-        break;
-    }
-}
-
 /**
  * Archives the specified thinker.
  *
@@ -3896,39 +3869,10 @@ static boolean archiveThinker(thinker_t* th, void* context)
 {
     boolean             savePlayers = *(boolean*) context;
 
-#if !__JHEXEN__
-    if(th->function == INSTASIS)
-    {   // Special case for thinkers in stasis.
-        extern ceilinglist_t *activeceilings;
-        extern platlist_t *activeplats;
-
-        platlist_t*         pl;
-        ceilinglist_t*      cl;
-        boolean             found;
-
-        found = false;
-        for(pl = activeplats; pl && !found; pl = pl->next)
-            if(pl->plat == (plat_t *) th)
-            {
-                doArchiveThinker(thinkerinfo(TC_PLAT), th);
-                found = true;
-            }
-
-        for(cl = activeceilings; cl && !found; cl = cl->next)
-            if(cl->ceiling == (ceiling_t *) th)
-            {
-                doArchiveThinker(thinkerinfo(TC_CEILING), th);
-                found = true;
-            }
-    }
-    else
-#endif
-    {
-        // Are we archiving players?
-        if(!(th->function == P_MobjThinker && ((mobj_t *) th)->player &&
-           !savePlayers))
-            doArchiveThinker(infoForThinker(th), th);
-    }
+    // Are we archiving players?
+    if(!(th->function == P_MobjThinker && ((mobj_t *) th)->player &&
+       !savePlayers))
+        doArchiveThinker(infoForThinker(th), th);
 
     return true; // Continue iteration.
 }
@@ -4127,7 +4071,7 @@ static void P_UnArchiveThinkers(void)
                 if(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT))
                 {
                     // Mobjs use a special engine-side allocator.
-                    if(tClass = TC_MOBJ)
+                    if(thInfo->thinkclass == TC_MOBJ)
                     {
                         th = (thinker_t*)
                             P_MobjCreate(P_MobjThinker, 0, 0, 0, 0, 64, 64, 0);
@@ -4153,7 +4097,7 @@ static void P_UnArchiveThinkers(void)
                       tClass);
 
         if(knownThinker)
-            SV_AddThinker(tClass, th);
+            P_ThinkerAdd(th);
     }
 
     // Update references to things.

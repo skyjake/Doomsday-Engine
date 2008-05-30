@@ -1238,9 +1238,9 @@ void C_DECL A_FireBlasterPL1(player_t *player, pspdef_t *psp)
     S_StartSoundEx(sfx_blssht, mo);
 }
 
-void C_DECL A_FireBlasterPL2(player_t *player, pspdef_t *psp)
+void C_DECL A_FireBlasterPL2(player_t* player, pspdef_t* psp)
 {
-    mobj_t             *mo;
+    mobj_t*             mo;
 
     P_ShotAmmo(player);
     S_StartSoundEx(sfx_blssht, player->plr->mo);
@@ -1249,9 +1249,7 @@ void C_DECL A_FireBlasterPL2(player_t *player, pspdef_t *psp)
 
     mo = P_SpawnMissile(MT_BLASTERFX1, player->plr->mo, NULL);
     if(mo)
-    {
         mo->thinker.function = P_BlasterMobjThinker;
-    }
 }
 
 void C_DECL A_FireGoldWandPL1(player_t *player, pspdef_t *psp)

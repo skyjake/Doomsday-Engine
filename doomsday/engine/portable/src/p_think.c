@@ -111,7 +111,7 @@ boolean P_IterateThinkers(think_t type,
                           boolean (*callback) (thinker_t* thinker, void*),
                           void* context)
 {
-    boolean             result;
+    boolean             result = true;
     thinker_t*          th, *next;
 
     th = thinkerCap.next;
@@ -121,6 +121,7 @@ boolean P_IterateThinkers(think_t type,
         assert(th->next != NULL);
         assert(th->prev != NULL);
 #endif
+
         next = th->next;
         if(!(type && th->function && th->function != type))
             if((result = callback(th, context)) == 0)
@@ -133,26 +134,27 @@ boolean P_IterateThinkers(think_t type,
 
 static boolean runThinker(thinker_t* th, void* context)
 {
-    if(th->function == (think_t) -2)
-    {   // In stasis, ignore.
-    }
-    else if(th->function == (think_t) -1)
+    // Thinker cannot think when in stasis.
+    if(!th->inStasis)
     {
-        // Time to remove it.
-        th->next->prev = th->prev;
-        th->prev->next = th->next;
-        if(th->id)
-        {   // Its a mobj.
-            P_MobjRecycle((mobj_t*) th);
-        }
-        else
+        if(th->function == (think_t) -1)
         {
-            Z_Free(th);
+            // Time to remove it.
+            th->next->prev = th->prev;
+            th->prev->next = th->next;
+            if(th->id)
+            {   // Its a mobj.
+                P_MobjRecycle((mobj_t*) th);
+            }
+            else
+            {
+                Z_Free(th);
+            }
         }
-    }
-    else if(th->function)
-    {
-        th->function(th);
+        else if(th->function)
+        {
+            th->function(th);
+        }
     }
 
     return true; // Continue iteration.
@@ -177,24 +179,24 @@ boolean P_ThinkerListInited(void)
 /**
  * Adds a new thinker at the end of the list.
  */
-void P_AddThinker(thinker_t* thinker)
+void P_ThinkerAdd(thinker_t* th)
 {
     // Link the thinker to the thinker list.
-    thinkerCap.prev->next = thinker;
-    thinker->next = &thinkerCap;
-    thinker->prev = thinkerCap.prev;
-    thinkerCap.prev = thinker;
+    thinkerCap.prev->next = th;
+    th->next = &thinkerCap;
+    th->prev = thinkerCap.prev;
+    thinkerCap.prev = th;
 
     // Will it need an ID?
-    if(P_IsMobjThinker(thinker->function))
+    if(P_IsMobjThinker(th->function))
     {
         // It is a mobj, give it an ID.
-        thinker->id = P_NewMobjID();
+        th->id = P_NewMobjID();
     }
     else
     {
         // Zero is not a valid ID.
-        thinker->id = 0;
+        th->id = 0;
     }
 }
 
@@ -202,15 +204,15 @@ void P_AddThinker(thinker_t* thinker)
  * Deallocation is lazy -- it will not actually be freed until its
  * thinking turn comes up.
  */
-void P_RemoveThinker(thinker_t* thinker)
+void P_ThinkerRemove(thinker_t* th)
 {
     // Has got an ID?
-    if(thinker->id)
+    if(th->id)
     {   // Then it must be a mobj.
-        mobj_t*             mo = (mobj_t *) thinker;
+        mobj_t*             mo = (mobj_t *) th;
 
         // Flag the ID as free.
-        P_SetMobjID(thinker->id, false);
+        P_SetMobjID(th->id, false);
 
         // If the state of the mobj is the NULL state, this is a
         // predictable mobj removal (result of animation reaching its
@@ -219,10 +221,24 @@ void P_RemoveThinker(thinker_t* thinker)
         {
             if(!mo->state || mo->state == states)
             {
-                Sv_MobjRemoved(thinker->id);
+                Sv_MobjRemoved(th->id);
             }
         }
     }
 
-    thinker->function = (think_t) - 1;
+    th->function = (think_t) - 1;
+}
+
+/**
+ * Change the 'in stasis' state of a thinker (stop it from thinking).
+ *
+ * @param th            The thinker to change.
+ * @param on            @c true, put into stasis.
+ */
+void P_ThinkerSetStasis(thinker_t* th, boolean on)
+{
+    if(th)
+    {
+        th->inStasis = on;
+    }
 }

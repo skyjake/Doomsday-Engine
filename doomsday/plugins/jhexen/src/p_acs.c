@@ -311,10 +311,9 @@ void P_LoadACScripts(int lump)
 
 static void StartOpenACS(int number, int infoIndex, int *address)
 {
-    acs_t  *script;
+    acs_t*              script;
 
-    script = Z_Malloc(sizeof(acs_t), PU_LEVSPEC, 0);
-    memset(script, 0, sizeof(acs_t));
+    script = Z_Calloc(sizeof(*script), PU_LEVSPEC, 0);
     script->number = number;
 
     // World objects are allotted 1 second for initialization
@@ -323,7 +322,7 @@ static void StartOpenACS(int number, int infoIndex, int *address)
     script->infoIndex = infoIndex;
     script->ip = address;
     script->thinker.function = T_InterpretACS;
-    P_AddThinker(&script->thinker);
+    P_ThinkerAdd(&script->thinker);
 }
 
 /**
@@ -332,7 +331,7 @@ static void StartOpenACS(int number, int infoIndex, int *address)
  */
 void P_CheckACSStore(void)
 {
-    acsstore_t* store;
+    acsstore_t*         store;
 
     for(store = ACSStore; store->map != 0; store++)
     {
@@ -381,8 +380,7 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
         return false;
     }
 
-    script = Z_Malloc(sizeof(acs_t), PU_LEVSPEC, 0);
-    memset(script, 0, sizeof(acs_t));
+    script = Z_Calloc(sizeof(*script), PU_LEVSPEC, 0);
 
     script->number = number;
     script->infoIndex = infoIndex;
@@ -397,7 +395,7 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
     }
 
     *statePtr = ASTE_RUNNING;
-    P_AddThinker(&script->thinker);
+    P_ThinkerAdd(&script->thinker);
     NewScript = script;
     return true;
 }
@@ -526,7 +524,7 @@ void T_InterpretACS(acs_t* script)
     {
         ACSInfo[script->infoIndex].state = ASTE_INACTIVE;
         ScriptFinished(ACScript->number);
-        P_RemoveThinker(&ACScript->thinker);
+        P_ThinkerRemove(&ACScript->thinker);
         return;
     }
 
@@ -554,7 +552,7 @@ void T_InterpretACS(acs_t* script)
     {
         ACSInfo[script->infoIndex].state = ASTE_INACTIVE;
         ScriptFinished(ACScript->number);
-        P_RemoveThinker(&ACScript->thinker);
+        P_ThinkerRemove(&ACScript->thinker);
     }
 }
 

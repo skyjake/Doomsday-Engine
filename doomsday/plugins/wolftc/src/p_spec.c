@@ -489,7 +489,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 54:
         // Platform Stop
-        EV_StopPlat(line);
+        P_PlatDeactivate(line);
         xline->special = 0;
         break;
 
@@ -501,7 +501,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 57:
         // Ceiling Crush Stop
-        EV_CeilingCrushStop(line);
+        P_CeilingDeactivate(line);
         xline->special = 0;
         break;
 
@@ -598,7 +598,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 74:
         // Ceiling Crush Stop
-        EV_CeilingCrushStop(line);
+        P_CeilingDeactivate(line);
         break;
 
     case 75:
@@ -663,7 +663,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 89:
         // Platform Stop
-        EV_StopPlat(line);
+        P_PlatDeactivate(line);
         break;
 
     case 90:
@@ -1077,9 +1077,6 @@ void P_SpawnSpecials(void)
            P_AddObjectToIterList(list, line);
         }
     }
-
-    P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
-    P_RemoveAllActivePlats();     // killough
 
     P_FreeButtons();
 

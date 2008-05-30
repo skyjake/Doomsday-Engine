@@ -142,7 +142,7 @@ void Cl_RemoveActiveMover(mover_t *mover)
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] == mover)
         {
-            P_RemoveThinker(&mover->thinker);
+            P_ThinkerRemove(&mover->thinker);
             activemovers[i] = NULL;
             break;
         }
@@ -158,7 +158,7 @@ void Cl_RemoveActivePoly(polymover_t *mover)
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activepolys[i] == mover)
         {
-            P_RemoveThinker(&mover->thinker);
+            P_ThinkerRemove(&mover->thinker);
             activepolys[i] = NULL;
             break;
         }
@@ -266,7 +266,7 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
             if(mov->destination < *mov->current)
                 mov->speed = -mov->speed;
 
-            P_AddThinker(&mov->thinker);
+            P_ThinkerAdd(&mov->thinker);
             break;
         }
 }
@@ -343,7 +343,7 @@ polymover_t *Cl_NewPolyMover(uint number)
     mover->thinker.function = Cl_PolyMoverThinker;
     mover->poly = poly;
     mover->number = number;
-    P_AddThinker(&mover->thinker);
+    P_ThinkerAdd(&mover->thinker);
     return mover;
 }
 
@@ -373,12 +373,12 @@ void Cl_RemoveMovers(void)
     {
         if(activemovers[i])
         {
-            P_RemoveThinker(&activemovers[i]->thinker);
+            P_ThinkerRemove(&activemovers[i]->thinker);
             activemovers[i] = NULL;
         }
         if(activepolys[i])
         {
-            P_RemoveThinker(&activepolys[i]->thinker);
+            P_ThinkerRemove(&activepolys[i]->thinker);
             activepolys[i] = NULL;
         }
     }

@@ -179,9 +179,8 @@ static void processStairSector(sector_t *sec, int type, float height,
 
     height += stairData.stepDelta;
 
-    floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
-    memset(floor, 0, sizeof(*floor));
-    P_AddThinker(&floor->thinker);
+    floor = Z_Calloc(sizeof(*floor), PU_LEVSPEC, 0);
+    P_ThinkerAdd(&floor->thinker);
     P_ToXSector(sec)->specialData = floor;
     floor->thinker.function = T_MoveFloor;
     floor->type = FLEV_RAISEBUILDSTEP;
@@ -299,7 +298,7 @@ void T_BuildPillar(pillar_t *pillar)
         P_ToXSector(pillar->sector)->specialData = NULL;
         SN_StopSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN));
         P_TagFinished(P_ToXSector(pillar->sector)->tag);
-        P_RemoveThinker(&pillar->thinker);
+        P_ThinkerRemove(&pillar->thinker);
     }
 }
 
@@ -339,9 +338,9 @@ int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + (float) args[2];
         }
 
-        pillar = Z_Malloc(sizeof(*pillar), PU_LEVSPEC, 0);
+        pillar = Z_Calloc(sizeof(*pillar), PU_LEVSPEC, 0);
         P_ToXSector(sec)->specialData = pillar;
-        P_AddThinker(&pillar->thinker);
+        P_ThinkerAdd(&pillar->thinker);
         pillar->thinker.function = T_BuildPillar;
         pillar->sector = sec;
 
@@ -399,9 +398,9 @@ int EV_OpenPillar(linedef_t *line, byte *args)
             continue; // Pillar isn't closed.
 
         rtn = 1;
-        pillar = Z_Malloc(sizeof(*pillar), PU_LEVSPEC, 0);
+        pillar = Z_Calloc(sizeof(*pillar), PU_LEVSPEC, 0);
         P_ToXSector(sec)->specialData = pillar;
-        P_AddThinker(&pillar->thinker);
+        P_ThinkerAdd(&pillar->thinker);
         pillar->thinker.function = T_BuildPillar;
         pillar->sector = sec;
         if(!args[2])
@@ -483,7 +482,7 @@ void T_FloorWaggle(floorWaggle_t *waggle)
             P_ChangeSector(waggle->sector, true);
             P_ToXSector(waggle->sector)->specialData = NULL;
             P_TagFinished(P_ToXSector(waggle->sector)->tag);
-            P_RemoveThinker(&waggle->thinker);
+            P_ThinkerRemove(&waggle->thinker);
             return;
         }
         break;
@@ -517,7 +516,7 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
             continue; // Already moving, so keep going...
 
         retCode = true;
-        waggle = Z_Malloc(sizeof(*waggle), PU_LEVSPEC, 0);
+        waggle = Z_Calloc(sizeof(*waggle), PU_LEVSPEC, 0);
         P_ToXSector(sec)->specialData = waggle;
         waggle->thinker.function = T_FloorWaggle;
         waggle->sector = sec;
@@ -530,7 +529,7 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
             FIX2FLT(FLT2FIX(waggle->targetScale) / (TICSPERSEC + ((3 * TICSPERSEC) * height) / 255));
         waggle->ticker = timer ? timer * 35 : -1;
         waggle->state = WGLSTATE_EXPAND;
-        P_AddThinker(&waggle->thinker);
+        P_ThinkerAdd(&waggle->thinker);
     }
 
     return retCode;

@@ -415,7 +415,7 @@ typedef enum
     for(;;)
     {
         tclass = *save_p++;
-        switch (tclass)
+        switch(tclass)
         {
         case TC_END:
             return; // End of list.
@@ -435,7 +435,7 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 /* Original Heretic format:
 typedef struct {
 	thinker_t	thinker;        // was 12 bytes
-	ceiling_e	type;           // was 32bit int
+	ceilingtype_e	type;           // was 32bit int
 	sector_t	*sector;
 	fixed_t		bottomheight, topheight;
 	fixed_t		speed;
@@ -462,23 +462,24 @@ typedef struct {
     ceiling->topHeight = FIX2FLT(SV_v13_ReadLong());
     ceiling->speed = FIX2FLT(SV_v13_ReadLong());
     ceiling->crush = SV_v13_ReadLong();
-    ceiling->direction = SV_v13_ReadLong();
+    ceiling->state = (SV_v13_ReadLong() == -1? CS_DOWN : CS_UP);
     ceiling->tag = SV_v13_ReadLong();
-    ceiling->oldDirection = SV_v13_ReadLong();
+    ceiling->oldState = (SV_v13_ReadLong() == -1? CS_DOWN : CS_UP);
 
-    if(temp + V13_THINKER_T_FUNC_OFFSET)
-        ceiling->thinker.function = T_MoveCeiling;
+    ceiling->thinker.function = T_MoveCeiling;
+    if(!(temp + V13_THINKER_T_FUNC_OFFSET))
+        P_ThinkerSetStasis(&ceiling->thinker, true);
 
     P_ToXSector(ceiling->sector)->specialData = T_MoveCeiling;
     return true; // Add this thinker.
 }
 
-static int SV_ReadDoor(vldoor_t *door)
+static int SV_ReadDoor(door_t *door)
 {
 /* Original Heretic format:
 typedef struct {
 	thinker_t	thinker;        // was 12 bytes
-	vldoor_e	type;           // was 32bit int
+	doortype_e	type;           // was 32bit int
 	sector_t	*sector;
 	fixed_t		topheight;
 	fixed_t		speed;
@@ -501,13 +502,13 @@ typedef struct {
 
     door->topHeight = FIX2FLT(SV_v13_ReadLong());
     door->speed = FIX2FLT(SV_v13_ReadLong());
-    door->direction = SV_v13_ReadLong();
+    door->state = SV_v13_ReadLong();
     door->topWait = SV_v13_ReadLong();
     door->topCountDown = SV_v13_ReadLong();
 
-    door->thinker.function = T_VerticalDoor;
+    door->thinker.function = T_Door;
 
-    P_ToXSector(door->sector)->specialData = T_VerticalDoor;
+    P_ToXSector(door->sector)->specialData = T_Door;
     return true; // Add this thinker.
 }
 
@@ -561,8 +562,8 @@ typedef struct {
 	fixed_t		high;
 	int			wait;
 	int			count;
-	plat_e		status;         // was 32bit int
-	plat_e		oldStatus;      // was 32bit int
+	platstate_e		status;         // was 32bit int
+	platstate_e		oldStatus;      // was 32bit int
 	boolean		crush;
 	int			tag;
 	plattype_e	type;           // was 32bit int
@@ -583,14 +584,15 @@ typedef struct {
     plat->high = FIX2FLT(SV_v13_ReadLong());
     plat->wait = SV_v13_ReadLong();
     plat->count = SV_v13_ReadLong();
-    plat->status = SV_v13_ReadLong();
-    plat->oldStatus = SV_v13_ReadLong();
+    plat->state = SV_v13_ReadLong();
+    plat->oldState = SV_v13_ReadLong();
     plat->crush = SV_v13_ReadLong();
     plat->tag = SV_v13_ReadLong();
     plat->type = SV_v13_ReadLong();
 
-    if(temp + V13_THINKER_T_FUNC_OFFSET)
-        plat->thinker.function = T_PlatRaise;
+    plat->thinker.function = T_PlatRaise;
+    if(!(temp + V13_THINKER_T_FUNC_OFFSET))
+        P_ThinkerSetStasis(&plat->thinker, true);
 
     P_ToXSector(plat->sector)->specialData = T_PlatRaise;
     return true; // Add this thinker.
@@ -692,7 +694,7 @@ typedef struct {
  * Things to handle:
  *
  * T_MoveCeiling, (ceiling_t: sector_t * swizzle), - active list
- * T_VerticalDoor, (vldoor_t: sector_t * swizzle),
+ * T_Door, (door_t: sector_t * swizzle),
  * T_MoveFloor, (floormove_t: sector_t * swizzle),
  * T_LightFlash, (lightflash_t: sector_t * swizzle),
  * T_StrobeFlash, (strobe_t: sector_t *),
@@ -714,7 +716,7 @@ enum {
 
     byte        tclass;
     ceiling_t  *ceiling;
-    vldoor_t   *door;
+    door_t   *door;
     floormove_t *floor;
     plat_t     *plat;
     lightflash_t *flash;
@@ -731,61 +733,59 @@ enum {
             return;             // end of list
 
         case tc_ceiling:
-            ceiling = Z_Malloc(sizeof(*ceiling), PU_LEVEL, NULL);
+            ceiling = Z_Calloc(sizeof(*ceiling), PU_LEVEL, NULL);
 
             SV_ReadCeiling(ceiling);
 
-            P_AddThinker(&ceiling->thinker);
-            P_AddActiveCeiling(ceiling);
+            P_ThinkerAdd(&ceiling->thinker);
             break;
 
         case tc_door:
-            door = Z_Malloc(sizeof(*door), PU_LEVEL, NULL);
+            door = Z_Calloc(sizeof(*door), PU_LEVEL, NULL);
 
             SV_ReadDoor(door);
 
-            P_AddThinker(&door->thinker);
+            P_ThinkerAdd(&door->thinker);
             break;
 
         case tc_floor:
-            floor = Z_Malloc(sizeof(*floor), PU_LEVEL, NULL);
+            floor = Z_Calloc(sizeof(*floor), PU_LEVEL, NULL);
 
             SV_ReadFloor(floor);
 
-            P_AddThinker(&floor->thinker);
+            P_ThinkerAdd(&floor->thinker);
             break;
 
         case tc_plat:
-            plat = Z_Malloc(sizeof(*plat), PU_LEVEL, NULL);
+            plat = Z_Calloc(sizeof(*plat), PU_LEVEL, NULL);
 
             SV_ReadPlat(plat);
 
-            P_AddThinker(&plat->thinker);
-            P_AddActivePlat(plat);
+            P_ThinkerAdd(&plat->thinker);
             break;
 
         case tc_flash:
-            flash = Z_Malloc(sizeof(*flash), PU_LEVEL, NULL);
+            flash = Z_Calloc(sizeof(*flash), PU_LEVEL, NULL);
 
             SV_ReadFlash(flash);
 
-            P_AddThinker(&flash->thinker);
+            P_ThinkerAdd(&flash->thinker);
             break;
 
         case tc_strobe:
-            strobe = Z_Malloc(sizeof(*strobe), PU_LEVEL, NULL);
+            strobe = Z_Calloc(sizeof(*strobe), PU_LEVEL, NULL);
 
             SV_ReadStrobe(strobe);
 
-            P_AddThinker(&strobe->thinker);
+            P_ThinkerAdd(&strobe->thinker);
             break;
 
         case tc_glow:
-            glow = Z_Malloc(sizeof(*glow), PU_LEVEL, NULL);
+            glow = Z_Calloc(sizeof(*glow), PU_LEVEL, NULL);
 
             SV_ReadGlow(glow);
 
-            P_AddThinker(&glow->thinker);
+            P_ThinkerAdd(&glow->thinker);
             break;
 
         default:

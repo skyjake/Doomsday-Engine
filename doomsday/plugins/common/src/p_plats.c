@@ -98,24 +98,36 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-platlist_t *activeplats;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+/**
+ * Called when a moving plat needs to be removed.
+ *
+ * @parm plat           Ptr to the plat to remove.
+ */
+static void stopPlat(plat_t *plat)
+{
+    P_ToXSector(plat->sector)->specialData = NULL;
+#if __JHEXEN__
+    P_TagFinished(P_ToXSector(plat->sector)->tag);
+#endif
+    P_ThinkerRemove(&plat->thinker);
+}
 
 /**
  * Move a plat up and down.
  *
  * @param plat          Ptr to the plat to be moved.
  */
-void T_PlatRaise(plat_t *plat)
+void T_PlatRaise(plat_t* plat)
 {
-    result_e res;
+    result_e            res;
 
-    switch(plat->status)
+    switch(plat->state)
     {
-    case up:
+    case PS_UP:
         res = T_MovePlane(plat->sector, plat->speed, plat->high,
                           plat->crush, 0, 1);
 
@@ -135,7 +147,7 @@ void T_PlatRaise(plat_t *plat)
         if(res == crushed && (!plat->crush))
         {
             plat->count = plat->wait;
-            plat->status = down;
+            plat->state = PS_DOWN;
 #if __JHEXEN__
             SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
 #else
@@ -150,7 +162,7 @@ void T_PlatRaise(plat_t *plat)
             if(res == pastdest)
             {
                 plat->count = plat->wait;
-                plat->status = waiting;
+                plat->state = PS_WAIT;
 #if __JHEXEN__
                 SN_StopSequenceInSec(plat->sector);
 #else
@@ -172,7 +184,7 @@ void T_PlatRaise(plat_t *plat)
 # endif
                 case raiseAndChange:
 #endif
-                    P_RemoveActivePlat(plat);
+                    stopPlat(plat);
                     break;
 
                 default:
@@ -182,14 +194,14 @@ void T_PlatRaise(plat_t *plat)
         }
         break;
 
-    case down:
+    case PS_DOWN:
         res =
             T_MovePlane(plat->sector, plat->speed, plat->low, false, 0, -1);
 
         if(res == pastdest)
         {
             plat->count = plat->wait;
-            plat->status = waiting;
+            plat->state = PS_WAIT;
 
 #if __JHEXEN__ || __JDOOM64__
             switch(plat->type)
@@ -198,7 +210,7 @@ void T_PlatRaise(plat_t *plat)
             case upByValueWaitDownStay:
 # endif
             case upWaitDownStay:
-                P_RemoveActivePlat(plat);
+                stopPlat(plat);
                 break;
 
             default:
@@ -222,13 +234,13 @@ void T_PlatRaise(plat_t *plat)
         }
         break;
 
-    case waiting:
+    case PS_WAIT:
         if(!--plat->count)
         {
             if(P_GetFloatp(plat->sector, DMU_FLOOR_HEIGHT) == plat->low)
-                plat->status = up;
+                plat->state = PS_UP;
             else
-                plat->status = down;
+                plat->state = PS_DOWN;
 #if __JHEXEN__
             SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
 #else
@@ -236,11 +248,6 @@ void T_PlatRaise(plat_t *plat)
 #endif
         }
         break;
-
-#if !__JHEXEN__
-    case in_stasis:
-        break;
-#endif
 
     default:
         break;
@@ -278,14 +285,14 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 
         // Find lowest & highest floors around sector
         rtn = 1;
-        plat = Z_Malloc(sizeof(*plat), PU_LEVSPEC, 0);
-        P_AddThinker(&plat->thinker);
+        plat = Z_Calloc(sizeof(*plat), PU_LEVSPEC, 0);
+        plat->thinker.function = T_PlatRaise;
+        P_ThinkerAdd(&plat->thinker);
 
         plat->type = type;
         plat->sector = sec;
 
         xsec->specialData = plat;
-        plat->thinker.function = T_PlatRaise;
 
         plat->crush = false;
         plat->tag = tag;
@@ -311,8 +318,8 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             }
 
             plat->wait = 0;
-            plat->status = up;
-            // NO MORE DAMAGE, IF APPLICABLE
+            plat->state = PS_UP;
+            // No more damage if applicable.
             xsec->special = 0;
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMMOVE);
             break;
@@ -325,7 +332,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 
             plat->high = floorHeight + amount;
             plat->wait = 0;
-            plat->status = up;
+            plat->state = PS_UP;
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMMOVE);
             break;
 #endif
@@ -340,7 +347,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
                 plat->low = floorHeight;
 
             plat->high = floorHeight;
-            plat->status = down;
+            plat->state = PS_DOWN;
 #if __JHEXEN__
             plat->wait = (int) args[2];
 #else
@@ -359,7 +366,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
                 plat->high = floorHeight;
 
             plat->low = floorHeight;
-            plat->status = up;
+            plat->state = PS_UP;
 # if __JHEXEN__
             plat->wait = (int) args[2];
 # else
@@ -383,7 +390,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 
             plat->high = floorHeight;
             plat->wait = 50 * PLATWAIT;
-            plat->status = down;
+            plat->state = PS_DOWN;
             break;
 #endif
 #if __JHEXEN__
@@ -393,7 +400,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
                 plat->low = floorHeight;
             plat->high = floorHeight;
             plat->wait = (int) args[2];
-            plat->status = down;
+            plat->state = PS_DOWN;
             break;
 
         case upByValueWaitDownStay:
@@ -402,7 +409,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
                 plat->high = floorHeight;
             plat->low = floorHeight;
             plat->wait = (int) args[2];
-            plat->status = up;
+            plat->state = PS_UP;
             break;
 #endif
 #if __JDOOM__ || __JDOOM64__
@@ -415,7 +422,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
 
             plat->high = floorHeight;
             plat->wait = PLATWAIT * TICSPERSEC;
-            plat->status = down;
+            plat->state = PS_DOWN;
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
             break;
 #endif
@@ -434,7 +441,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             if(plat->high < floorHeight)
                 plat->high = floorHeight;
 
-            plat->status = P_Random() & 1;
+            plat->state = P_Random() & 1;
 #if __JHEXEN__
             plat->wait = (int) args[2];
 #else
@@ -449,7 +456,6 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             break;
         }
 
-        P_AddActivePlat(plat);
 #if __JHEXEN__
         SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
 #endif
@@ -479,7 +485,7 @@ int EV_DoPlat(linedef_t *line, plattype_e type, int amount)
     switch(type)
     {
     case perpetualRaise:
-        rtn = P_ActivateInStasisPlat(xline->tag);
+        rtn = P_PlatActivate(xline->tag);
         break;
 
     default:
@@ -490,142 +496,99 @@ int EV_DoPlat(linedef_t *line, plattype_e type, int amount)
 #endif
 }
 
+#if !__JHEXEN__
+typedef struct {
+    short               tag;
+    int                 count;
+} activateplatparams_t;
+
+static boolean activatePlat(thinker_t* th, void* context)
+{
+    plat_t*             plat = (plat_t*) th;
+    activateplatparams_t* params = (activateplatparams_t*) context;
+
+    if(plat->tag == (int) params->tag && plat->thinker.inStasis)
+    {
+        plat->state = plat->oldState;
+        P_ThinkerSetStasis(&plat->thinker, false);
+        params->count++;
+    }
+
+    return true; // Contiue iteration.
+}
+
 /**
  * Activate a plat that has been put in stasis
  * (stopped perpetual floor, instant floor/ceil toggle)
  *
- * @param tag           Tag of the plat that should be reactivated.
+ * @param tag           Tag of plats that should be reactivated.
  */
-#if !__JHEXEN__
-int P_ActivateInStasisPlat(int tag)
+int P_PlatActivate(short tag)
 {
-    int         rtn = 0;
-    platlist_t *pl;
+    activateplatparams_t params;
 
-    // Search the active plats.
-    for(pl = activeplats; pl; pl = pl->next)
-    {
-        plat_t *plat = pl->plat;
+    params.tag = tag;
+    params.count = 0;
+    P_IterateThinkers(T_PlatRaise, activatePlat, &params);
 
-        // For one in stasis with right tag.
-        if(plat->tag == tag && plat->status == in_stasis)
-        {
-            plat->status = plat->oldStatus;
-            plat->thinker.function = T_PlatRaise;
-            rtn = 1;
-        }
-    }
-
-    return rtn;
+    return params.count;
 }
 #endif
 
-static boolean EV_StopPlat2(int tag)
-{
-    platlist_t *pl;
+typedef struct {
+    short               tag;
+} deactivateplatparams_t;
 
-    // Search the active plats...
-    for(pl = activeplats; pl; pl = pl->next)
-    {
-        plat_t *plat = pl->plat;
+static boolean deactivatePlat(thinker_t* th, void* context)
+{
+    plat_t*             plat = (plat_t*) th;
+    deactivateplatparams_t* params = (deactivateplatparams_t*) context;
 
 #if __JHEXEN__
-        // For THE one with the tag.
-        if(plat->tag == tag)
-        {
-            // Destroy it.
-            P_RemoveActivePlat(plat);
-            return false;
-        }
-#else
-        // For one with the tag and not in stasis.
-        if(plat->status != in_stasis && plat->tag == tag)
-        {
-            // Put it in stasis.
-            plat->oldStatus = plat->status;
-            plat->status = in_stasis;
-            plat->thinker.function = INSTASIS;
-        }
-#endif
+    // For THE one with the tag.
+    if(plat->tag == params->tag)
+    {
+        // Destroy it.
+        stopPlat(plat);
+        return false; // Stop iteration.
     }
+#else
+    // For one with the tag and not in stasis.
+    if(plat->tag == (int) params->tag && !plat->thinker.inStasis)
+    {
+        // Put it in stasis.
+        plat->oldState = plat->state;
+        P_ThinkerSetStasis(&plat->thinker, true);
+    }
+#endif
+
+    return true; // Continue iteration.
+}
+
+/**
+ * Handler for "stop perpetual floor" linedef type.
+ *
+ * @param tag           Tag of plats to put into stasis.
+ *
+ * @return              @c true, if a plat was put in stasis.
+ */
+#if __JHEXEN__
+int P_PlatDeactivate(linedef_t *line, byte *args)
+#else
+int P_PlatDeactivate(short tag)
+#endif
+{
+#if __JHEXEN__
+    int                 tag = (int) args[0];
+#endif
+    deactivateplatparams_t params;
+
+    params.tag = tag;
+    P_IterateThinkers(T_PlatRaise, deactivatePlat, &params);
 
 #if __JHEXEN__
     return false;
 #else
     return true;
 #endif
-}
-
-/**
- * Handler for "stop perpetual floor" linedef type.
- *
- * @parm line           Ptr to the line that stopped the plat.
- *
- * @return              @c true, if the plat was put in stasis.
- */
-#if __JHEXEN__
-boolean EV_StopPlat(linedef_t *line, byte *args)
-#else
-boolean EV_StopPlat(linedef_t *line)
-#endif
-{
-#if __JHEXEN__
-    return EV_StopPlat2((int) args[0]);
-#else
-    return EV_StopPlat2(P_ToXLine(line)->tag);
-#endif
-}
-
-/**
- * Add a plat to the head of the active plat list.
- *
- * @param plat           Ptr to the plat to add.
- */
-void P_AddActivePlat(plat_t *plat)
-{
-    platlist_t *list = malloc(sizeof *list);
-
-    list->plat = plat;
-    plat->list = list;
-
-    if((list->next = activeplats) != NULL)
-        list->next->prev = &list->next;
-
-    list->prev = &activeplats;
-    activeplats = list;
-}
-
-/**
- * Remove a plat from the active plat list.
- *
- * @parm plat           Ptr to the plat to remove.
- */
-void P_RemoveActivePlat(plat_t *plat)
-{
-    platlist_t *list = plat->list;
-
-    P_ToXSector(plat->sector)->specialData = NULL;
-#if __JHEXEN__
-    P_TagFinished(P_ToXSector(plat->sector)->tag);
-#endif
-    P_RemoveThinker(&plat->thinker);
-
-    if((*list->prev = list->next) != NULL)
-        list->next->prev = list->prev;
-
-    free(list);
-}
-
-/**
- * Remove all plats from the active plat list.
- */
-void P_RemoveAllActivePlats(void)
-{
-    while(activeplats)
-    {
-        platlist_t *next = activeplats->next;
-
-        free(activeplats);
-        activeplats = next;
-    }
 }

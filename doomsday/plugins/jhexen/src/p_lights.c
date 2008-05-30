@@ -99,13 +99,13 @@ void T_Light(light_t *light)
             if(P_SectorLight(light->sector) >= light->value1)
             {
                 P_SectorSetLight(light->sector, light->value1);
-                P_RemoveThinker(&light->thinker);
+                P_ThinkerRemove(&light->thinker);
             }
         }
         else if(P_SectorLight(light->sector) <= light->value1)
         {
             P_SectorSetLight(light->sector, light->value1);
-            P_RemoveThinker(&light->thinker);
+            P_ThinkerRemove(&light->thinker);
         }
         break;
 
@@ -183,7 +183,7 @@ boolean EV_SpawnLight(linedef_t *line, byte *arg, lighttype_t type)
         think = false;
         rtn = true;
 
-        light = Z_Malloc(sizeof(light_t), PU_LEVSPEC, 0);
+        light = Z_Calloc(sizeof(*light), PU_LEVSPEC, 0);
         light->type = type;
         light->sector = sec;
         light->count = 0;
@@ -260,7 +260,7 @@ boolean EV_SpawnLight(linedef_t *line, byte *arg, lighttype_t type)
 
         if(think)
         {
-            P_AddThinker(&light->thinker);
+            P_ThinkerAdd(&light->thinker);
             light->thinker.function = T_Light;
         }
         else
@@ -283,8 +283,8 @@ void P_SpawnPhasedLight(sector_t *sector, float base, int index)
 {
     phase_t    *phase;
 
-    phase = Z_Malloc(sizeof(*phase), PU_LEVSPEC, 0);
-    P_AddThinker(&phase->thinker);
+    phase = Z_Calloc(sizeof(*phase), PU_LEVSPEC, 0);
+    P_ThinkerAdd(&phase->thinker);
     phase->sector = sector;
     if(index == -1)
     {   // Sector->lightLevel as the index.
@@ -305,6 +305,7 @@ void P_SpawnPhasedLight(sector_t *sector, float base, int index)
 
 void P_SpawnLightSequence(sector_t *sector, int indexStep)
 {
+#if 0
     int         i, seqSpecial, count;
     float       base;
     fixed_t     index, indexDelta;
@@ -369,4 +370,5 @@ void P_SpawnLightSequence(sector_t *sector, int indexStep)
         }
         sec = nextSec;
     } while(sec);
+#endif
 }

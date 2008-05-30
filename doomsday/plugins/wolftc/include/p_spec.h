@@ -178,15 +178,11 @@ void            P_ChangeSwitchTexture(linedef_t *line, int useAgain);
 
 void            P_InitSwitchList(void);
 
-//
-// P_PLATS
-//
 typedef enum {
-    up,
-    down,
-    waiting,
-    in_stasis
-} plat_e;
+    PS_UP,
+    PS_DOWN,
+    PS_WAIT
+} platstate_e;
 
 typedef enum {
     perpetualRaise,
@@ -204,20 +200,12 @@ typedef struct {
     float           high;
     int             wait;
     int             count;
-    plat_e          status;
-    plat_e          oldstatus;
+    platstate_e     state;
+    platstate_e     oldstate;
     boolean         crush;
     int             tag;
     plattype_e      type;
-
-    struct platlist *list;   // killough
 } plat_t;
-
-// New limit-free plat structure -- killough
-typedef struct platlist {
-  plat_t *plat;
-  struct platlist *next,**prev;
-} platlist_t;
 
 #define PLATWAIT        3
 #define PLATSPEED       1
@@ -225,16 +213,16 @@ typedef struct platlist {
 void            T_PlatRaise(plat_t *plat);
 
 int             EV_DoPlat(linedef_t *line, plattype_e type, int amount);
-boolean         EV_StopPlat(linedef_t *line);
+int             P_PlatActivate(short tag);
+int             P_PlatDeactivate(short tag);
 
-void            P_AddActivePlat(plat_t *plat);
-void            P_RemoveActivePlat(plat_t *plat);
-void            P_RemoveAllActivePlats(void);    // killough
-int             P_ActivateInStasisPlat(int tag);
+typedef enum {
+    DS_DOWN = -1,
+    DS_WAIT,
+    DS_UP,
+    DS_INITIALWAIT
+} doorstate_e;
 
-//
-// P_DOORS
-//
 typedef enum {
     normal,
     close30ThenOpen,
@@ -244,39 +232,37 @@ typedef enum {
     blazeRaise,
     blazeOpen,
     blazeClose
-} vldoor_e;
+} doortype_e;
 
 typedef struct {
     thinker_t       thinker;
-    vldoor_e        type;
-    sector_t       *sector;
+    doortype_e      type;
+    sector_t*       sector;
     float           topheight;
     float           speed;
-
-    // 1 = up, 0 = waiting at top, -1 = down
-    int             direction;
-
-    // tics to wait at the top
-    int             topwait;
+    int             state;
+    int             topwait; // tics to wait at the top
     // (keep in case a door going down is reset)
     // when it reaches 0, start going down
     int             topcountdown;
-} vldoor_t;
+} door_t;
 
-#define VDOORSPEED      2
-#define VDOORWAIT       150
+#define DOORSPEED       2
+#define DOORWAIT        150
 
-boolean         EV_VerticalDoor(linedef_t *line, mobj_t *thing);
-int             EV_DoDoor(linedef_t *line, vldoor_e type);
-int             EV_DoLockedDoor(linedef_t *line, vldoor_e type, mobj_t *thing);
+boolean         EV_VerticalDoor(linedef_t* line, mobj_t* thing);
+int             EV_DoDoor(linedef_t* line, doortype_e type);
+int             EV_DoLockedDoor(linedef_t* line, doortype_e type, mobj_t* thing);
 
-void            T_VerticalDoor(vldoor_t *door);
-void            P_SpawnDoorCloseIn30(sector_t *sec);
-void            P_SpawnDoorRaiseIn5Mins(sector_t *sec);
+void            T_Door(door_t* door);
+void            P_SpawnDoorCloseIn30(sector_t* sec);
+void            P_SpawnDoorRaiseIn5Mins(sector_t* sec);
 
-//
-// P_CEILNG
-//
+typedef enum {
+    CS_DOWN,
+    CS_UP
+} ceilingstate_e;
+
 typedef enum {
     lowerToFloor,
     raiseToHighest,
@@ -284,47 +270,30 @@ typedef enum {
     crushAndRaise,
     fastCrushAndRaise,
     silentCrushAndRaise
-} ceiling_e;
+} ceilingtype_e;
 
 typedef struct {
     thinker_t       thinker;
-    ceiling_e       type;
+    ceilingtype_e   type;
     sector_t       *sector;
     float           bottomheight;
     float           topheight;
     float           speed;
     boolean         crush;
-
-    // 1 = up, 0 = waiting, -1 = down
-    int             direction;
-
-    // ID
+    ceilingstate_e  state;
+    ceilingstate_e  oldState;
     int             tag;
-    int             olddirection;
-
-    struct ceilinglist *list;   // jff 2/22/98 copied from killough's plats
 } ceiling_t;
-
-typedef struct ceilinglist {
-    ceiling_t *ceiling;
-    struct ceilinglist *next,**prev;
-} ceilinglist_t;
 
 #define CEILSPEED       1
 #define CEILWAIT        150
 
-int             EV_DoCeiling(linedef_t *line, ceiling_e type);
+int             EV_DoCeiling(linedef_t *line, ceilingtype_e type);
 
 void            T_MoveCeiling(ceiling_t *ceiling);
-void            P_AddActiveCeiling(ceiling_t * c);
-void            P_RemoveActiveCeiling(ceiling_t *c);
-void            P_RemoveAllActiveCeilings(void);
-int             EV_CeilingCrushStop(linedef_t *line);
-int             P_ActivateInStasisCeiling(linedef_t *line);
+int             P_CeilingActivate(short tag);
+int             P_CeilingDeactivate(short tag);
 
-//
-// P_FLOOR
-//
 typedef enum {
     // lower floor to highest surrounding floor
     lowerFloor,
@@ -389,11 +358,5 @@ result_e        T_MovePlane(sector_t *sector, float speed, float dest,
 int             EV_BuildStairs(linedef_t *line, stair_e type);
 int             EV_DoFloor(linedef_t *line, floor_e floortype);
 void            T_MoveFloor(floormove_t *floor);
-
-//
-// P_TELEPT
-//
-#define         TELEFOGHEIGHT (32*FRACUNIT)
-int             EV_Teleport(linedef_t *line, int side, mobj_t *thing);
 
 #endif

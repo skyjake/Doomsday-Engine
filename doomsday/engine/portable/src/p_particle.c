@@ -92,7 +92,7 @@ static void P_FreePtcGen(ptcgen_t *gen)
             // Destroy it.
             Z_Free(gen->ptcs);
             gen->ptcs = NULL;
-            P_RemoveThinker(&gen->thinker);
+            P_ThinkerRemove(&gen->thinker);
             break;
         }
 }
@@ -144,7 +144,7 @@ static ptcgen_t *P_NewPtcGen(void)
 
     // Link the thinker to the list of thinkers.
     gen->thinker.function = P_PtcGenThinker;
-    P_AddThinker(&gen->thinker);
+    P_ThinkerAdd(&gen->thinker);
     return gen;
 }
 

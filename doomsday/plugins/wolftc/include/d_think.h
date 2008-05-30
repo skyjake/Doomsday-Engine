@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,6 @@ typedef void    (*actionf_v) ();
 typedef void    (*actionf_p1) (void *);
 typedef void    (*actionf_p2) (void *, void *);
 
-#define INSTASIS ((actionf_v) (-2))
 #define NOPFUNC ((actionf_v) (-1))
 
 typedef union {

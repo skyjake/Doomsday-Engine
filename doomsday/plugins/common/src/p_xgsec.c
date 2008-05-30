@@ -436,7 +436,7 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
         }
 
         // Remove this thinker.
-        P_RemoveThinker((thinker_t *) mover);
+        P_ThinkerRemove((thinker_t *) mover);
     }
     else
     {
@@ -456,7 +456,7 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
         if(mover->flags & (PMF_ACTIVATE_ON_ABORT | PMF_DEACTIVATE_ON_ABORT))
         {
             // Destroy this mover.
-            P_RemoveThinker((thinker_t *) mover);
+            P_ThinkerRemove((thinker_t *) mover);
         }
     }
 }
@@ -597,7 +597,7 @@ static boolean stopPlaneMover(thinker_t* th, void* context)
        mover->ceiling == params->ceiling)
     {
         XS_MoverStopped(mover, false);
-        P_RemoveThinker(th); // Remove it.
+        P_ThinkerRemove(th); // Remove it.
     }
 
     return true; // Continue iteration.
@@ -617,8 +617,7 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sec, boolean ceiling)
     P_IterateThinkers(XS_PlaneMover, stopPlaneMover, NULL);
 
     // Allocate a new thinker.
-    mover = Z_Malloc(sizeof(*mover), PU_LEVEL, 0);
-    memset(mover, 0, sizeof(*mover));
+    mover = Z_Calloc(sizeof(*mover), PU_LEVEL, 0);
     mover->thinker.function = XS_PlaneMover;
     mover->sector = sec;
     mover->ceiling = ceiling;
@@ -1435,7 +1434,7 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
     xline->xg->fdata += info->fparm[6];
 
     // Add the thinker if necessary.
-    P_AddThinker(&mover->thinker);
+    P_ThinkerAdd(&mover->thinker);
 
     // Do start stuff. Play sound?
     if(playsound)
@@ -1570,7 +1569,7 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, linedef_t *origin,
         XS_SectorSound(sector, SORG_FLOOR + ceiling, info->iparm[4]);
     }
 
-    P_AddThinker(&mover->thinker);
+    P_ThinkerAdd(&mover->thinker);
 
     return true; // Building has begun!
 }
@@ -2124,12 +2123,12 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling,
     return true;
 }
 
-int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
-                           void *context2, mobj_t *thing)
+int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
+                           void* context2, mobj_t* thing)
 {
-    mobj_t     *mo = NULL;
-    boolean     ok = false;
-    linetype_t *info = context2;
+    mobj_t*         mo = NULL;
+    boolean         ok = false;
+    linetype_t*     info = context2;
 
     // Don't teleport things marked noteleport!
     if(thing->flags2 & MF2_NOTELEPORT)
@@ -2157,11 +2156,11 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
 
     if(ok)
     {   // We can teleport.
-        mobj_t     *flash;
-        unsigned    an;
-        float       oldpos[3];
-        float       thfloorz, thceilz;
-        float       aboveFloor, fogDelta = 0;
+        mobj_t*         flash;
+        unsigned        an;
+        float           oldpos[3];
+        float           thfloorz, thceilz;
+        float           aboveFloor, fogDelta = 0;
 
         XG_Dev("XSTrav_Teleport: Sector %i, %s, %s%s", P_ToIndex(sector),
                 info->iparm[2]? "No Flash":"", info->iparm[3]? "Play Sound":"Silent",
@@ -3230,7 +3229,7 @@ DEFCC(CCmdMovePlane)
     if(isBoth)
         mover->flags |= PMF_OTHER_FOLLOWS;
 
-    P_AddThinker(&mover->thinker);
+    P_ThinkerAdd(&mover->thinker);
     return true;
 }
 

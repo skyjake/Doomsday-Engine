@@ -113,7 +113,7 @@ void T_RotatePoly(polyevent_t* pe)
 
             PO_StopSequence(po);
             P_PolyobjFinished(po->tag);
-            P_RemoveThinker(&pe->thinker);
+            P_ThinkerRemove(&pe->thinker);
             po->angleSpeed = 0;
         }
 
@@ -145,8 +145,8 @@ boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
         Con_Error("EV_RotatePoly:  Invalid polyobj num: %d\n", polyNum);
     }
 
-    pe = Z_Malloc(sizeof(polyevent_t), PU_LEVSPEC, 0);
-    P_AddThinker(&pe->thinker);
+    pe = Z_Calloc(sizeof(*pe), PU_LEVSPEC, 0);
+    P_ThinkerAdd(&pe->thinker);
     pe->thinker.function = T_RotatePoly;
     pe->polyobj = polyNum;
 
@@ -183,8 +183,8 @@ boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
             break;
         }
 
-        pe = Z_Malloc(sizeof(polyevent_t), PU_LEVSPEC, 0);
-        P_AddThinker(&pe->thinker);
+        pe = Z_Calloc(sizeof(*pe), PU_LEVSPEC, 0);
+        P_ThinkerAdd(&pe->thinker);
         pe->thinker.function = T_RotatePoly;
         po->specialData = pe;
         pe->polyobj = mirror;
@@ -242,7 +242,7 @@ void T_MovePoly(polyevent_t* pe)
 
             PO_StopSequence(po);
             P_PolyobjFinished(po->tag);
-            P_RemoveThinker(&pe->thinker);
+            P_ThinkerRemove(&pe->thinker);
             po->speed = 0;
         }
 
@@ -277,8 +277,8 @@ boolean EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
         Con_Error("EV_MovePoly:  Invalid polyobj num: %d\n", polyNum);
     }
 
-    pe = Z_Malloc(sizeof(polyevent_t), PU_LEVSPEC, 0);
-    P_AddThinker(&pe->thinker);
+    pe = Z_Calloc(sizeof(*pe), PU_LEVSPEC, 0);
+    P_ThinkerAdd(&pe->thinker);
     pe->thinker.function = T_MovePoly;
     pe->polyobj = polyNum;
     if(timesEight)
@@ -309,8 +309,8 @@ boolean EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
             break;
         }
 
-        pe = Z_Malloc(sizeof(polyevent_t), PU_LEVSPEC, 0);
-        P_AddThinker(&pe->thinker);
+        pe = Z_Calloc(sizeof(*pe), PU_LEVSPEC, 0);
+        P_ThinkerAdd(&pe->thinker);
         pe->thinker.function = T_MovePoly;
         pe->polyobj = mirror;
         po->specialData = pe;
@@ -379,7 +379,7 @@ void T_PolyDoor(polydoor_t* pd)
                         po->specialData = NULL;
 
                     P_PolyobjFinished(po->tag);
-                    P_RemoveThinker(&pd->thinker);
+                    P_ThinkerRemove(&pd->thinker);
                 }
             }
         }
@@ -431,7 +431,7 @@ void T_PolyDoor(polydoor_t* pd)
                         po->specialData = NULL;
 
                     P_PolyobjFinished(po->tag);
-                    P_RemoveThinker(&pd->thinker);
+                    P_ThinkerRemove(&pd->thinker);
                 }
             }
         }
@@ -477,9 +477,8 @@ boolean EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type)
         Con_Error("EV_OpenPolyDoor:  Invalid polyobj num: %d\n", polyNum);
     }
 
-    pd = Z_Malloc(sizeof(polydoor_t), PU_LEVSPEC, 0);
-    memset(pd, 0, sizeof(polydoor_t));
-    P_AddThinker(&pd->thinker);
+    pd = Z_Calloc(sizeof(*pd), PU_LEVSPEC, 0);
+    P_ThinkerAdd(&pd->thinker);
     pd->thinker.function = T_PolyDoor;
     pd->type = type;
     pd->polyobj = polyNum;
@@ -516,9 +515,8 @@ boolean EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type)
             break;
         }
 
-        pd = Z_Malloc(sizeof(polydoor_t), PU_LEVSPEC, 0);
-        memset(pd, 0, sizeof(polydoor_t));
-        P_AddThinker(&pd->thinker);
+        pd = Z_Calloc(sizeof(*pd), PU_LEVSPEC, 0);
+        P_ThinkerAdd(&pd->thinker);
         pd->thinker.function = T_PolyDoor;
         pd->polyobj = mirror;
         pd->type = type;

@@ -410,7 +410,7 @@ void T_MoveFloor(floormove_t *floor)
 #if __JHEXEN__
         P_TagFinished(P_ToXSector(floor->sector)->tag);
 #endif
-        P_RemoveThinker(&floor->thinker);
+        P_ThinkerRemove(&floor->thinker);
     }
 }
 
@@ -528,11 +528,9 @@ int EV_DoFloor(linedef_t *line, floor_e floortype)
 
         // New floor thinker.
         rtn = 1;
-        floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
-#if __JHEXEN__
-        memset(floor, 0, sizeof(*floor));
-#endif
-        P_AddThinker(&floor->thinker);
+        floor = Z_Calloc(sizeof(*floor), PU_LEVSPEC, 0);
+
+        P_ThinkerAdd(&floor->thinker);
         xsec->specialData = floor;
         floor->thinker.function = T_MoveFloor;
         floor->type = floortype;
@@ -882,7 +880,7 @@ static boolean stopFloorCrush(thinker_t* th, void* context)
         SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
         P_ToXSector(floor->sector)->specialData = NULL;
         P_TagFinished(P_ToXSector(floor->sector)->tag);
-        P_RemoveThinker(&floor->thinker);
+        P_ThinkerRemove(&floor->thinker);
         (*found) = true;
     }
 

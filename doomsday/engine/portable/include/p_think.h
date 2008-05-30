@@ -35,20 +35,21 @@ typedef void    (*think_t) ();
 typedef struct thinker_s {
     struct thinker_s *prev, *next;
     think_t         function;
+    boolean         inStasis;
     thid_t          id; // Only used for mobjs (zero is not an ID).
 } thinker_t;
 
-void            P_RunThinkers(void);
-void            P_InitThinkers(void);
 boolean         P_ThinkerListInited(void);
 
-void*           P_ThinkerCreate(think_t func, size_t extraData);
-
-void            P_AddThinker(thinker_t *thinker);
-void            P_RemoveThinker(thinker_t *thinker);
+void            P_InitThinkers(void);
+void            P_RunThinkers(void);
 boolean         P_IterateThinkers(think_t type,
-                                  boolean (*callback) (thinker_t* thinker, void*),
+                                  boolean (*callback) (thinker_t* th, void*),
                                   void* context);
+
+void            P_ThinkerAdd(thinker_t* th);
+void            P_ThinkerRemove(thinker_t* th);
+void            P_ThinkerSetStasis(thinker_t* th, boolean on);
 
 void            P_SetMobjID(thid_t id, boolean state);
 boolean         P_IsUsedMobjID(thid_t id);

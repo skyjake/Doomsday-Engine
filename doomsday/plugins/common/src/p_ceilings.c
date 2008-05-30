@@ -94,26 +94,34 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-ceilinglist_t *activeceilings;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-void T_MoveCeiling(ceiling_t *ceiling)
+/**
+ * Called when a moving ceiling needs to be removed.
+ *
+ * @param ceiling       Ptr to the ceiling to be stopped.
+ */
+static void stopCeiling(ceiling_t* ceiling)
 {
-    result_e res;
-
-    switch(ceiling->direction)
-    {
-#if !__JHEXEN__
-    case 0: // In stasis.
-        break;
+    P_ToXSector(ceiling->sector)->specialData = NULL;
+#if __JHEXEN__
+    P_TagFinished(P_ToXSector(ceiling->sector)->tag);
 #endif
-    case 1: // Going up.
+    P_ThinkerRemove(&ceiling->thinker);
+}
+
+void T_MoveCeiling(ceiling_t* ceiling)
+{
+    result_e            res;
+
+    switch(ceiling->state)
+    {
+    case CS_UP: // Going up.
         res =
             T_MovePlane(ceiling->sector, ceiling->speed, ceiling->topHeight,
-                        false, 1, ceiling->direction);
+                        false, 1, 1);
 
         // Play a "while-moving" sound?
 #if !__JHEXEN__
@@ -146,7 +154,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
 # if __JDOOM64__
             case customCeiling: //jd64
 # endif
-                P_RemoveActiveCeiling(ceiling);
+                stopCeiling(ceiling);
                 break;
 # if !__JHERETIC__
             case silentCrushAndRaise:
@@ -155,7 +163,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
             case fastCrushAndRaise:
 #endif
             case crushAndRaise:
-                ceiling->direction = -1;
+                ceiling->state = CS_DOWN;
 #if __JHEXEN__
                 ceiling->speed *= 2;
 #endif
@@ -163,7 +171,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
 
             default:
 #if __JHEXEN__
-                P_RemoveActiveCeiling(ceiling);
+                stopCeiling(ceiling);
 #endif
                 break;
             }
@@ -171,10 +179,10 @@ void T_MoveCeiling(ceiling_t *ceiling)
         }
         break;
 
-    case -1: // Going down.
+    case CS_DOWN: // Going down.
         res =
             T_MovePlane(ceiling->sector, ceiling->speed, ceiling->bottomHeight,
-                        ceiling->crush, 1, ceiling->direction);
+                        ceiling->crush, 1, -1);
 
         // Play a "while-moving" sound?
 #if !__JHEXEN__
@@ -205,7 +213,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
             case silentCrushAndRaise:
                 S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGSTOP);
                 ceiling->speed = CEILSPEED;
-                ceiling->direction = 1;
+                ceiling->state = CS_UP;
                 break;
 #endif
 
@@ -218,11 +226,11 @@ void T_MoveCeiling(ceiling_t *ceiling)
 #else
                 ceiling->speed = CEILSPEED;
 #endif
-                ceiling->direction = 1;
+                ceiling->state = CS_UP;
                 break;
 #if !__JHEXEN__
             case fastCrushAndRaise:
-                ceiling->direction = 1;
+                ceiling->state = CS_UP;
                 break;
 
             case lowerAndCrush:
@@ -230,13 +238,13 @@ void T_MoveCeiling(ceiling_t *ceiling)
 # if __JDOOM64__
             case customCeiling: //jd64
 # endif
-                P_RemoveActiveCeiling(ceiling);
+                stopCeiling(ceiling);
                 break;
 #endif
 
             default:
 #if __JHEXEN__
-                P_RemoveActiveCeiling(ceiling);
+                stopCeiling(ceiling);
 #endif
                 break;
             }
@@ -270,19 +278,19 @@ void T_MoveCeiling(ceiling_t *ceiling)
 }
 
 #if __JDOOM64__
-static int EV_DoCeiling2(linedef_t *line, int tag, float basespeed,
-                         ceiling_e type)
+static int EV_DoCeiling2(linedef_t* line, int tag, float basespeed,
+                         ceilingtype_e type)
 #elif __JHEXEN__
-static int EV_DoCeiling2(byte *arg, int tag, float basespeed, ceiling_e type)
+static int EV_DoCeiling2(byte* arg, int tag, float basespeed, ceilingtype_e type)
 #else
-static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
+static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #endif
 {
-    int         rtn = 0;
-    xsector_t  *xsec;
-    sector_t   *sec = NULL;
-    ceiling_t  *ceiling;
-    iterlist_t *list;
+    int             rtn = 0;
+    xsector_t*      xsec;
+    sector_t*       sec = NULL;
+    ceiling_t*      ceiling;
+    iterlist_t*     list;
 
     list = P_GetSectorIterListForTag(tag, false);
     if(!list)
@@ -298,10 +306,12 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 
         // new door thinker
         rtn = 1;
-        ceiling = Z_Malloc(sizeof(*ceiling), PU_LEVSPEC, 0);
-        P_AddThinker(&ceiling->thinker);
-        xsec->specialData = ceiling;
+        ceiling = Z_Calloc(sizeof(*ceiling), PU_LEVSPEC, 0);
+
         ceiling->thinker.function = T_MoveCeiling;
+        P_ThinkerAdd(&ceiling->thinker);
+
+        xsec->specialData = ceiling;
         ceiling->sector = sec;
         ceiling->crush = false;
         ceiling->speed = basespeed;
@@ -315,7 +325,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             ceiling->bottomHeight =
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
 
-            ceiling->direction = -1;
+            ceiling->state = CS_DOWN;
             ceiling->speed *= 2;
             break;
 #endif
@@ -324,7 +334,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             ceiling->crush = (int) arg[2];    // arg[2] = crushing value
             ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
             ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
-            ceiling->direction = -1;
+            ceiling->state = CS_DOWN;
             break;
 #endif
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
@@ -345,7 +355,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 
             if(type != lowerToFloor)
                 ceiling->bottomHeight += 8;
-            ceiling->direction = -1;
+            ceiling->state = CS_DOWN;
 #if __JDOOM64__
             ceiling->speed *= 8; // jd64
 #endif
@@ -356,7 +366,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 #if __JDOOM64__
             ceiling->topHeight -= 8;   // jd64
 #endif
-            ceiling->direction = 1;
+            ceiling->state = CS_UP;
             break;
 #if __JDOOM64__
         case customCeiling: // jd64
@@ -373,7 +383,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             if(bitmipR > 0)
             {
                 P_FindSectorSurroundingHighestCeiling(sec, &ceiling->topHeight);
-                ceiling->direction = 1;
+                ceiling->state = CS_UP;
                 ceiling->speed *= bitmipL;
                 ceiling->topHeight -= bitmipR;
             }
@@ -381,7 +391,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             {
                 ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
                 ceiling->bottomHeight -= bitmipR;
-                ceiling->direction = -1;
+                ceiling->state = CS_DOWN;
                 ceiling->speed *= bitmipL;
             }
             }
@@ -390,13 +400,13 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
         case lowerByValue:
             ceiling->bottomHeight =
                 P_GetFloatp(sec, DMU_CEILING_HEIGHT) - (float) arg[2];
-            ceiling->direction = -1;
+            ceiling->state = CS_DOWN;
             break;
 
         case raiseByValue:
             ceiling->topHeight =
                 P_GetFloatp(sec, DMU_CEILING_HEIGHT) + (float) arg[2];
-            ceiling->direction = 1;
+            ceiling->state = CS_UP;
             break;
 
         case moveToValueTimes8:
@@ -408,14 +418,14 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 
             if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) <= destHeight)
             {
-                ceiling->direction = 1;
+                ceiling->state = CS_UP;
                 ceiling->topHeight = destHeight;
                 if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) == destHeight)
                     rtn = 0;
             }
             else if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) > destHeight)
             {
-                ceiling->direction = -1;
+                ceiling->state = CS_DOWN;
                 ceiling->bottomHeight = destHeight;
             }
             break;
@@ -430,7 +440,6 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 
         ceiling->tag = xsec->tag;
         ceiling->type = type;
-        P_AddActiveCeiling(ceiling);
 
 #if __JHEXEN__
         if(rtn)
@@ -447,9 +456,9 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
  * Move a ceiling up/down.
  */
 #if __JHEXEN__
-int EV_DoCeiling(linedef_t *line, byte *args, ceiling_e type)
+int EV_DoCeiling(linedef_t *line, byte *args, ceilingtype_e type)
 #else
-int EV_DoCeiling(linedef_t *line, ceiling_e type)
+int EV_DoCeiling(linedef_t *line, ceilingtype_e type)
 #endif
 {
 #if __JHEXEN__
@@ -465,7 +474,7 @@ int EV_DoCeiling(linedef_t *line, ceiling_e type)
     case silentCrushAndRaise:
 # endif
     case crushAndRaise:
-        rtn = P_ActivateInStasisCeiling(line);
+        rtn = P_CeilingActivate(P_ToXLine(line)->tag);
         break;
 
     default:
@@ -479,136 +488,98 @@ int EV_DoCeiling(linedef_t *line, ceiling_e type)
 #endif
 }
 
-/**
- * Adds a ceiling to the head of the list of active ceilings.
- *
- * @param ceiling       Ptr to the ceiling structure to be added.
- */
-void P_AddActiveCeiling(ceiling_t *ceiling)
+#if !__JHEXEN__
+typedef struct {
+    short               tag;
+    int                 count;
+} activateceilingparams_t;
+
+static boolean activateCeiling(thinker_t* th, void* context)
 {
-    ceilinglist_t *list = malloc(sizeof *list);
+    ceiling_t*          ceiling = (ceiling_t*) th;
+    activateceilingparams_t* params = (activateceilingparams_t*) context;
 
-    list->ceiling = ceiling;
-    ceiling->list = list;
-
-    if((list->next = activeceilings) != NULL)
-        list->next->prev = &list->next;
-
-    list->prev = &activeceilings;
-    activeceilings = list;
-}
-
-/**
- * Removes a ceiling from the list of active ceilings.
- *
- * @param ceiling       Ptr to the ceiling structure to be removed.
- */
-void P_RemoveActiveCeiling(ceiling_t *ceiling)
-{
-    ceilinglist_t *list = ceiling->list;
-
-    P_ToXSector(ceiling->sector)->specialData = NULL;
-#if __JHEXEN__
-    P_TagFinished(P_ToXSector(ceiling->sector)->tag);
-#endif
-    P_RemoveThinker(&ceiling->thinker);
-
-    if((*list->prev = list->next) != NULL)
-        list->next->prev = list->prev;
-
-    free(list);
-}
-
-/**
- * Removes all ceilings from the active ceiling list.
- */
-void P_RemoveAllActiveCeilings(void)
-{
-    while(activeceilings)
+    if(ceiling->tag == (int) params->tag && ceiling->thinker.inStasis)
     {
-        ceilinglist_t *next = activeceilings->next;
-
-        free(activeceilings);
-        activeceilings = next;
+        ceiling->state = ceiling->oldState;
+        P_ThinkerSetStasis(&ceiling->thinker, false);
+        params->count++;
     }
+
+    return true; // Continue iteration.
 }
 
 /**
  * Reactivates all stopped crushers with the right tag.
  *
- * @param line          Ptr to the line reactivating the crusher.
+ * @param tag           Tag of ceilings to activate.
  *
- * @return              @c true, if a ceiling is reactivated.
+ * @return              @c true, if a ceiling is activated.
  */
-#if !__JHEXEN__
-int P_ActivateInStasisCeiling(linedef_t *line)
+int P_CeilingActivate(short tag)
 {
-    int         rtn = 0;
-    xline_t    *xline = P_ToXLine(line);
-    ceilinglist_t *cl;
+    activateceilingparams_t params;
 
-    for(cl = activeceilings; cl; cl = cl->next)
-    {
-        ceiling_t *ceiling = cl->ceiling;
+    params.tag = tag;
+    params.count = 0;
+    P_IterateThinkers(T_MoveCeiling, activateCeiling, &params);
 
-        if(ceiling->direction == 0 && ceiling->tag == xline->tag)
-        {
-            ceiling->direction = ceiling->oldDirection;
-            ceiling->thinker.function = T_MoveCeiling;
-            rtn = 1;
-        }
-    }
-    return rtn;
+    return params.count;
 }
 #endif
 
-static int EV_CeilingCrushStop2(int tag)
-{
-    int         rtn = 0;
-    ceilinglist_t *cl;
+typedef struct {
+    short               tag;
+    int                 count;
+} deactivateceilingparams_t;
 
-    for(cl = activeceilings; cl; cl = cl->next)
-    {
-        ceiling_t *ceiling = cl->ceiling;
+static boolean deactivateCeiling(thinker_t* th, void* context)
+{
+    ceiling_t*          ceiling = (ceiling_t*) th;
+    deactivateceilingparams_t* params =
+        (deactivateceilingparams_t*) context;
 
 #if __JHEXEN__
-        if(ceiling->tag == tag)
-        {   // Destroy it.
-            SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
-            P_RemoveActiveCeiling(ceiling);
-            rtn = 1;
-            break;
-        }
-#else
-        if(ceiling->direction != 0 && ceiling->tag == tag)
-        {   // Put it into stasis.
-            ceiling->oldDirection = ceiling->direction;
-            ceiling->direction = 0;
-            ceiling->thinker.function = INSTASIS;
-            rtn = 1;
-        }
-#endif
+    if(ceiling->tag == (int) params->tag)
+    {   // Destroy it.
+        SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
+        stopCeiling(ceiling);
+        params->count++;
+        return false; // Stop iteration.
     }
-
-    return rtn;
+#else
+    if(!ceiling->thinker.inStasis && ceiling->tag == (int) params->tag)
+    {   // Put it into stasis.
+        ceiling->oldState = ceiling->state;
+        P_ThinkerSetStasis(&ceiling->thinker, true);
+        params->count++;
+    }
+#endif
+    return true; // Continue iteration.
 }
 
 /**
  * Stops all active ceilings with the right tag.
  *
- * @param line          Ptr to the line stopping the ceilings.
+ * @param tag           Tag of ceilings to stop.
  *
  * @return              @c true, if a ceiling put in stasis.
  */
 #if __JHEXEN__
-int EV_CeilingCrushStop(linedef_t *line, byte *args)
+int P_CeilingDeactivate(linedef_t *line, byte *args)
 #else
-int EV_CeilingCrushStop(linedef_t *line)
+int P_CeilingDeactivate(short tag)
 #endif
 {
 #if __JHEXEN__
-    return EV_CeilingCrushStop2((int) args[0]);
-#else
-    return EV_CeilingCrushStop2(P_ToXLine(line)->tag);
+    short               tag = (int) args[0];
 #endif
+
+    deactivateceilingparams_t params;
+
+    params.tag = tag;
+    params.count = 0;
+    P_IterateThinkers(T_MoveCeiling, deactivateCeiling, &params);
+
+    return params.count;
 }

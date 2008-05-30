@@ -116,8 +116,8 @@ int EV_BuildStairs(linedef_t *line, stair_e type)
 
         // New floor thinker.
         rtn = 1;
-        floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
-        P_AddThinker(&floor->thinker);
+        floor = Z_Calloc(sizeof(*floor), PU_LEVSPEC, 0);
+        P_ThinkerAdd(&floor->thinker);
         xsec->specialData = floor;
         floor->thinker.function = T_MoveFloor;
         floor->direction = 1;
@@ -149,9 +149,9 @@ int EV_BuildStairs(linedef_t *line, stair_e type)
         {   // We found another sector to spread to.
             height += stairsize;
 
-            floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
+            floor = Z_Calloc(sizeof(*floor), PU_LEVSPEC, 0);
 
-            P_AddThinker(&floor->thinker);
+            P_ThinkerAdd(&floor->thinker);
 
             P_ToXSector(params.foundSec)->specialData = floor;
             floor->thinker.function = T_MoveFloor;
@@ -241,8 +241,8 @@ int EV_DoDonut(linedef_t *line)
                 P_GetFloatp(inner, DMU_FLOOR_HEIGHT);
 
             // Spawn rising slime.
-            floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
-            P_AddThinker(&floor->thinker);
+            floor = Z_Calloc(sizeof(*floor), PU_LEVSPEC, 0);
+            P_ThinkerAdd(&floor->thinker);
 
             P_ToXSector(outer)->specialData = floor;
 
@@ -257,8 +257,8 @@ int EV_DoDonut(linedef_t *line)
             floor->floorDestHeight = destHeight;
 
             // Spawn lowering donut-hole.
-            floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
-            P_AddThinker(&floor->thinker);
+            floor = Z_Calloc(sizeof(*floor), PU_LEVSPEC, 0);
+            P_ThinkerAdd(&floor->thinker);
 
             P_ToXSector(sec)->specialData = floor;
 
