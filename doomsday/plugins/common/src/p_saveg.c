@@ -77,6 +77,7 @@
 #include "am_map.h"
 #include "p_tick.h"
 #include "p_actor.h"
+#include "p_plat.h"
 
 // MACROS ------------------------------------------------------------------
 

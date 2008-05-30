@@ -304,6 +304,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_plat.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_player.h"
 				>
 			</File>

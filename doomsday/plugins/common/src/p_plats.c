@@ -59,6 +59,7 @@
 #include "dmu_lib.h"
 #include "p_mapspec.h"
 #include "p_tick.h"
+#include "p_plat.h"
 
 // MACROS ------------------------------------------------------------------
 

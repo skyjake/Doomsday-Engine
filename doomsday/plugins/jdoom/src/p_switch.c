@@ -35,6 +35,7 @@
 
 #include "d_net.h"
 #include "dmu_lib.h"
+#include "p_plat.h"
 
 // MACROS ------------------------------------------------------------------
 

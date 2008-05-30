@@ -153,43 +153,6 @@ void        P_ChangeSwitchTexture(linedef_t *line, int useAgain);
 void        P_InitSwitchList(void);
 
 typedef enum {
-    PS_UP,
-    PS_DOWN,
-    PS_WAIT
-} platstate_e;
-
-typedef enum {
-    perpetualRaise,
-    downWaitUpStay,
-    downByValueWaitUpStay,
-    upWaitDownStay,
-    upByValueWaitDownStay
-} plattype_e;
-
-typedef struct {
-    thinker_t       thinker;
-    sector_t*       sector;
-    float           speed;
-    float           low;
-    float           high;
-    int             wait;
-    int             count;
-    platstate_e     state;
-    platstate_e     oldState;
-    int             crush;
-    int             tag;
-    plattype_e      type;
-} plat_t;
-
-#define PLATWAIT                3
-#define PLATSPEED               1
-
-void        T_PlatRaise(plat_t* plat);
-int         EV_DoPlat(linedef_t* line, byte* args, plattype_e type,
-                      int amount);
-int         P_PlatDeactivate(linedef_t* line, byte* args);
-
-typedef enum {
     DS_DOWN = -1,
     DS_WAIT,
     DS_UP,

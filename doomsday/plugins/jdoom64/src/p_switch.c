@@ -38,6 +38,7 @@
 #include "dmu_lib.h"
 #include "p_mapsetup.h" // jd64
 #include "p_mapspec.h"
+#include "p_plat.h"
 
 // MACROS ------------------------------------------------------------------
 
