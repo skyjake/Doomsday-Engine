@@ -440,33 +440,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\p_ceilings.c"
+				RelativePath="..\..\..\plugins\common\src\p_ceiling.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\p_doors.c"
+				RelativePath="..\..\..\plugins\common\src\p_door.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\p_floors.c"
+				RelativePath="..\..\..\plugins\common\src\p_floor.c"
 				>
 			</File>
 			<File
@@ -490,7 +472,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\p_plats.c"
+				RelativePath="..\..\..\plugins\common\src\p_plat.c"
 				>
 			</File>
 			<File
@@ -510,7 +492,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\p_switches.c"
+				RelativePath="..\..\..\plugins\common\src\p_switch.c"
 				>
 			</File>
 			<File

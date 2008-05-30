@@ -21,12 +21,12 @@
  ./../../plugins/common/src/p_inventory.c
  ./../../plugins/jhexen/src/p_things.c
  ./../../plugins/jhexen/src/p_telept.c
- ./../../plugins/common/src/p_switches.c
+ ./../../plugins/common/src/p_switch.c
  ./../../plugins/common/src/p_mapspec.c
  ./../../plugins/jhexen/src/p_spec.c
  ./../../plugins/jhexen/src/p_setup.c
  ./../../plugins/jhexen/src/p_pspr.c
- ./../../plugins/common/src/p_plats.c
+ ./../../plugins/common/src/p_plat.c
  ./../../plugins/jhexen/src/p_mobj.c
  ./../../plugins/jhexen/src/p_mapinfo.c
  ./../../plugins/jhexen/src/p_maputl.c
@@ -34,11 +34,11 @@
  ./../../plugins/common/src/p_map.c
  ./../../plugins/jhexen/src/p_lights.c
  ./../../plugins/jhexen/src/p_inter.c
- ./../../plugins/common/src/p_floors.c
+ ./../../plugins/common/src/p_floor.c
  ./../../plugins/jhexen/src/p_floor.c
  ./../../plugins/jhexen/src/p_enemy.c
- ./../../plugins/common/src/p_doors.c
- ./../../plugins/common/src/p_ceilings.c
+ ./../../plugins/common/src/p_door.c
+ ./../../plugins/common/src/p_ceiling.c
  ./../../plugins/jhexen/src/p_anim.c
  ./../../plugins/jhexen/src/p_acs.c
  ./../../plugins/common/src/x_hair.c

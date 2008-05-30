@@ -17,7 +17,7 @@
  ./../../plugins/common/src/p_user.c
  ./../../plugins/common/src/p_tick.c
  ./../../plugins/wolftc/src/p_telept.c
- ./../../plugins/common/src/p_switches.c
+ ./../../plugins/common/src/p_switch.c
  ./../../plugins/wolftc/src/p_switch.c
  ./../../plugins/common/src/p_svtexarc.c
  ./../../plugins/common/src/p_start.c
@@ -28,18 +28,18 @@
  ./../../plugins/wolftc/src/p_setup.c
  ./../../plugins/common/src/p_saveg.c
  ./../../plugins/wolftc/src/p_pspr.c
- ./../../plugins/common/src/p_plats.c
+ ./../../plugins/common/src/p_plat.c
  ./../../plugins/wolftc/src/p_mobj.c
  ./../../plugins/wolftc/src/p_maputl.c
  ./../../plugins/common/src/p_iterlist.c
  ./../../plugins/common/src/p_map.c
  ./../../plugins/wolftc/src/p_lights.c
  ./../../plugins/wolftc/src/p_inter.c
- ./../../plugins/common/src/p_floors.c
+ ./../../plugins/common/src/p_floor.c
  ./../../plugins/wolftc/src/p_floor.c
  ./../../plugins/wolftc/src/p_enemy.c
- ./../../plugins/common/src/p_doors.c
- ./../../plugins/common/src/p_ceilings.c
+ ./../../plugins/common/src/p_door.c
+ ./../../plugins/common/src/p_ceiling.c
  ./../../plugins/common/src/p_actor.c
  ./../../plugins/common/src/p_player.c
  ./../../plugins/common/src/x_hair.c

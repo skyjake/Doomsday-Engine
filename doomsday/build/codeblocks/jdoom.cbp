@@ -183,13 +183,13 @@
 		<Unit filename="..\..\plugins\common\src\p_actor.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_ceilings.c">
+		<Unit filename="..\..\plugins\common\src\p_ceiling.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_doors.c">
+		<Unit filename="..\..\plugins\common\src\p_door.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_floors.c">
+		<Unit filename="..\..\plugins\common\src\p_floor.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\p_inventory.c">
@@ -207,7 +207,7 @@
 		<Unit filename="..\..\plugins\common\src\p_mapspec.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_plats.c">
+		<Unit filename="..\..\plugins\common\src\p_plat.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\p_player.c">
@@ -222,7 +222,7 @@
 		<Unit filename="..\..\plugins\common\src\p_svtexarc.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_switches.c">
+		<Unit filename="..\..\plugins\common\src\p_switch.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\p_tick.c">
