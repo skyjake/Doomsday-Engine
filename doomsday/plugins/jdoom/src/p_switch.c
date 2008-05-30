@@ -160,13 +160,13 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
 
     case 14:
         // Raise Floor 32 and change texture.
-        if(EV_DoPlat(line, raiseAndChange, 32))
+        if(EV_DoPlat(line, PT_RAISEANDCHANGE, 32))
             P_ChangeSwitchTexture(line, 0);
         break;
 
     case 15:
         // Raise Floor 24 and change texture.
-        if(EV_DoPlat(line, raiseAndChange, 24))
+        if(EV_DoPlat(line, PT_RAISEANDCHANGE, 24))
             P_ChangeSwitchTexture(line, 0);
         break;
 
@@ -178,13 +178,13 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
 
     case 20:
         // Raise Plat next highest floor and change texture.
-        if(EV_DoPlat(line, raiseToNearestAndChange, 0))
+        if(EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0))
             P_ChangeSwitchTexture(line, 0);
         break;
 
     case 21:
         // PlatDownWaitUpStay.
-        if(EV_DoPlat(line, downWaitUpStay, 0))
+        if(EV_DoPlat(line, PT_DOWNWAITUPSTAY, 0))
             P_ChangeSwitchTexture(line, 0);
         break;
 
@@ -284,7 +284,7 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
 
     case 122:
         // Blazing PlatDownWaitUpStay.
-        if(EV_DoPlat(line, blazeDWUS, 0))
+        if(EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0))
             P_ChangeSwitchTexture(line, 0);
         break;
 
@@ -349,7 +349,7 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
 
     case 62:
         // PlatDownWaitUpStay.
-        if(EV_DoPlat(line, downWaitUpStay, 1))
+        if(EV_DoPlat(line, PT_DOWNWAITUPSTAY, 1))
             P_ChangeSwitchTexture(line, 1);
         break;
 
@@ -367,13 +367,13 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
 
     case 66:
         // Raise Floor 24 and change texture.
-        if(EV_DoPlat(line, raiseAndChange, 24))
+        if(EV_DoPlat(line, PT_RAISEANDCHANGE, 24))
             P_ChangeSwitchTexture(line, 1);
         break;
 
     case 67:
         // Raise Floor 32 and change texture.
-        if(EV_DoPlat(line, raiseAndChange, 32))
+        if(EV_DoPlat(line, PT_RAISEANDCHANGE, 32))
             P_ChangeSwitchTexture(line, 1);
         break;
 
@@ -385,7 +385,7 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
 
     case 68:
         // Raise Plat to next highest floor and change texture.
-        if(EV_DoPlat(line, raiseToNearestAndChange, 0))
+        if(EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0))
             P_ChangeSwitchTexture(line, 1);
         break;
 
@@ -421,7 +421,7 @@ boolean P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side)
 
     case 123:
         // Blazing PlatDownWaitUpStay.
-        if(EV_DoPlat(line, blazeDWUS, 0))
+        if(EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0))
             P_ChangeSwitchTexture(line, 1);
         break;
 

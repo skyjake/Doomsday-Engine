@@ -108,7 +108,7 @@
  *
  * @parm plat           Ptr to the plat to remove.
  */
-static void stopPlat(plat_t *plat)
+static void stopPlat(plat_t* plat)
 {
     P_ToXSector(plat->sector)->specialData = NULL;
 #if __JHEXEN__
@@ -138,8 +138,8 @@ void T_PlatRaise(plat_t* plat)
             S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
 #endif
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-        if(plat->type == raiseAndChange ||
-           plat->type == raiseToNearestAndChange)
+        if(plat->type == PT_RAISEANDCHANGE ||
+           plat->type == PT_RAISETONEARESTANDCHANGE)
         {
             if(!(levelTime & 7))
                 S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
@@ -153,7 +153,7 @@ void T_PlatRaise(plat_t* plat)
             SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
 #else
 # if __JDOOM64__
-            if(plat->type != downWaitUpDoor) // jd64 added test
+            if(plat->type != PT_DOWNWAITUPDOOR) // jd64 added test
 # endif
                 S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMSTART);
 #endif
@@ -171,19 +171,19 @@ void T_PlatRaise(plat_t* plat)
 #endif
                 switch(plat->type)
                 {
-                case downWaitUpStay:
+                case PT_DOWNWAITUPSTAY:
 #if __JHEXEN__
-                case downByValueWaitUpStay:
+                case PT_DOWNBYVALUEWAITUPSTAY:
 #else
 # if !__JHERETIC__
-                case blazeDWUS:
-                case raiseToNearestAndChange:
+                case PT_DOWNWAITUPSTAYBLAZE:
+                case PT_RAISETONEARESTANDCHANGE:
 # endif
 # if __JDOOM64__
-                case blazeDWUSplus16: // jd64
-                case downWaitUpDoor: // jd64
+                case PT_DOWNWAITUPPLUS16STAYBLAZE: // jd64
+                case PT_DOWNWAITUPDOOR: // jd64
 # endif
-                case raiseAndChange:
+                case PT_RAISEANDCHANGE:
 #endif
                     stopPlat(plat);
                     break;
@@ -208,9 +208,9 @@ void T_PlatRaise(plat_t* plat)
             switch(plat->type)
             {
 # if __JHEXEN__
-            case upByValueWaitDownStay:
+            case PT_UPBYVALUEWAITDOWNSTAY:
 # endif
-            case upWaitDownStay:
+            case PT_UPWAITDOWNSTAY:
                 stopPlat(plat);
                 break;
 
@@ -256,10 +256,10 @@ void T_PlatRaise(plat_t* plat)
 }
 
 #if __JHEXEN__
-static int EV_DoPlat2(linedef_t *line, int tag, byte *args, plattype_e type,
+static int doPlat(linedef_t *line, int tag, byte *args, plattype_e type,
                       int amount)
 #else
-static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
+static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
 #endif
 {
     int                 rtn = 0;
@@ -304,7 +304,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
         switch(type)
         {
 #if !__JHEXEN__
-        case raiseToNearestAndChange:
+        case PT_RAISETONEARESTANDCHANGE:
             plat->speed = PLATSPEED * .5;
 
             P_SetIntp(sec, DMU_FLOOR_MATERIAL,
@@ -325,7 +325,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMMOVE);
             break;
 
-        case raiseAndChange:
+        case PT_RAISEANDCHANGE:
             plat->speed = PLATSPEED * .5;
 
             P_SetIntp(sec, DMU_FLOOR_MATERIAL,
@@ -337,7 +337,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMMOVE);
             break;
 #endif
-        case downWaitUpStay:
+        case PT_DOWNWAITUPSTAY:
             P_FindSectorSurroundingLowestFloor(sec, &plat->low);
 #if __JHEXEN__
             plat->low += 8;
@@ -360,7 +360,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             break;
 
 #if __JDOOM64__ || __JHEXEN__
-        case upWaitDownStay:
+        case PT_UPWAITDOWNSTAY:
             P_FindSectorSurroundingHighestFloor(sec, &plat->high);
 
             if(plat->high < floorHeight)
@@ -380,7 +380,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             break;
 #endif
 #if __JDOOM64__
-        case downWaitUpDoor: // jd64
+        case PT_DOWNWAITUPDOOR: // jd64
             plat->speed = PLATSPEED * 8;
             P_FindSectorSurroundingLowestFloor(sec, &plat->low);
 
@@ -395,7 +395,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             break;
 #endif
 #if __JHEXEN__
-       case downByValueWaitUpStay:
+       case PT_DOWNBYVALUEWAITUPSTAY:
             plat->low = floorHeight - (float) args[3] * 8;
             if(plat->low > floorHeight)
                 plat->low = floorHeight;
@@ -404,7 +404,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             plat->state = PS_DOWN;
             break;
 
-        case upByValueWaitDownStay:
+        case PT_UPBYVALUEWAITDOWNSTAY:
             plat->high = floorHeight + (float) args[3] * 8;
             if(plat->high < floorHeight)
                 plat->high = floorHeight;
@@ -414,7 +414,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             break;
 #endif
 #if __JDOOM__ || __JDOOM64__
-        case blazeDWUS:
+        case PT_DOWNWAITUPSTAYBLAZE:
             plat->speed = PLATSPEED * 8;
             P_FindSectorSurroundingLowestFloor(sec, &plat->low);
 
@@ -427,7 +427,7 @@ static int EV_DoPlat2(linedef_t *line, int tag, plattype_e type, int amount)
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
             break;
 #endif
-        case perpetualRaise:
+        case PT_PERPETUALRAISE:
             P_FindSectorSurroundingLowestFloor(sec, &plat->low);
 #if __JHEXEN__
             plat->low += 8;
@@ -477,15 +477,15 @@ int EV_DoPlat(linedef_t *line, plattype_e type, int amount)
 #endif
 {
 #if __JHEXEN__
-    return EV_DoPlat2(line, (int) args[0], args, type, amount);
+    return doPlat(line, (int) args[0], args, type, amount);
 #else
-    int         rtn = 0;
-    xline_t    *xline = P_ToXLine(line);
+    int                 rtn = 0;
+    xline_t*            xline = P_ToXLine(line);
 
-    // Activate all <type> plats that are in_stasis
+    // Activate all <type> plats that are in stasis.
     switch(type)
     {
-    case perpetualRaise:
+    case PT_PERPETUALRAISE:
         rtn = P_PlatActivate(xline->tag);
         break;
 
@@ -493,7 +493,7 @@ int EV_DoPlat(linedef_t *line, plattype_e type, int amount)
         break;
     }
 
-    return EV_DoPlat2(line, xline->tag, type, amount) || rtn;
+    return doPlat(line, xline->tag, type, amount) || rtn;
 #endif
 }
 
@@ -538,6 +538,7 @@ int P_PlatActivate(short tag)
 
 typedef struct {
     short               tag;
+    int                 count;
 } deactivateplatparams_t;
 
 static boolean deactivatePlat(thinker_t* th, void* context)
@@ -551,6 +552,7 @@ static boolean deactivatePlat(thinker_t* th, void* context)
     {
         // Destroy it.
         stopPlat(plat);
+        params->count++;
         return false; // Stop iteration.
     }
 #else
@@ -560,6 +562,7 @@ static boolean deactivatePlat(thinker_t* th, void* context)
         // Put it in stasis.
         plat->oldState = plat->state;
         P_ThinkerSetStasis(&plat->thinker, true);
+        params->count++;
     }
 #endif
 
@@ -571,25 +574,15 @@ static boolean deactivatePlat(thinker_t* th, void* context)
  *
  * @param tag           Tag of plats to put into stasis.
  *
- * @return              @c true, if a plat was put in stasis.
+ * @return              Number of plats put into stasis.
  */
-#if __JHEXEN__
-int P_PlatDeactivate(linedef_t *line, byte *args)
-#else
 int P_PlatDeactivate(short tag)
-#endif
 {
-#if __JHEXEN__
-    int                 tag = (int) args[0];
-#endif
     deactivateplatparams_t params;
 
     params.tag = tag;
+    params.count = 0;
     P_IterateThinkers(T_PlatRaise, deactivatePlat, &params);
 
-#if __JHEXEN__
-    return false;
-#else
-    return true;
-#endif
+    return params.count;
 }

@@ -441,27 +441,27 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
         break;
 
     case 60: // Plat Perpetual Raise
-        buttonSuccess = EV_DoPlat(line, args, perpetualRaise, 0);
+        buttonSuccess = EV_DoPlat(line, args, PT_PERPETUALRAISE, 0);
         break;
 
     case 61: // Plat Stop
-        P_PlatDeactivate(line, args);
+        P_PlatDeactivate((short) args[0]);
         break;
 
     case 62: // Plat Down-Wait-Up-Stay
-        buttonSuccess = EV_DoPlat(line, args, downWaitUpStay, 0);
+        buttonSuccess = EV_DoPlat(line, args, PT_DOWNWAITUPSTAY, 0);
         break;
 
     case 63: // Plat Down-by-Value*8-Wait-Up-Stay
-        buttonSuccess = EV_DoPlat(line, args, downByValueWaitUpStay, 0);
+        buttonSuccess = EV_DoPlat(line, args, PT_DOWNBYVALUEWAITUPSTAY, 0);
         break;
 
     case 64: // Plat Up-Wait-Down-Stay
-        buttonSuccess = EV_DoPlat(line, args, upWaitDownStay, 0);
+        buttonSuccess = EV_DoPlat(line, args, PT_UPWAITDOWNSTAY, 0);
         break;
 
     case 65: // Plat Up-by-Value*8-Wait-Down-Stay
-        buttonSuccess = EV_DoPlat(line, args, upByValueWaitDownStay, 0);
+        buttonSuccess = EV_DoPlat(line, args, PT_UPBYVALUEWAITDOWNSTAY, 0);
         break;
 
     case 66: // Floor Lower Instant * 8

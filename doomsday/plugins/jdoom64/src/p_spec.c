@@ -388,7 +388,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 10:
         // PlatDownWaitUp
-        EV_DoPlat(line, downWaitUpStay, 0);
+        EV_DoPlat(line, PT_DOWNWAITUPSTAY, 0);
         xline->special = 0;
         break;
 
@@ -424,7 +424,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 22:
         // Raise floor to nearest height and change texture
-        EV_DoPlat(line, raiseToNearestAndChange, 0);
+        EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0);
         xline->special = 0;
         break;
 
@@ -552,7 +552,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 53:
         // Perpetual Platform Raise
-        EV_DoPlat(line, perpetualRaise, 0);
+        EV_DoPlat(line, PT_PERPETUALRAISE, 0);
         xline->special = 0;
         break;
 
@@ -624,7 +624,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 121:
         // Blazing PlatDownWaitUpStay
-        EV_DoPlat(line, blazeDWUS, 0);
+        EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0);
         xline->special = 0;
         break;
 
@@ -722,17 +722,17 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 87:
         // Perpetual Platform Raise
-        EV_DoPlat(line, perpetualRaise, 0);
+        EV_DoPlat(line, PT_PERPETUALRAISE, 0);
         break;
 
     case 88:
         // PlatDownWaitUp
-        EV_DoPlat(line, downWaitUpStay, 0);
+        EV_DoPlat(line, PT_DOWNWAITUPSTAY, 0);
         break;
 
     case 415: // jd64
         if(thing->player)
-            EV_DoPlat(line, upWaitDownStay, 0);
+            EV_DoPlat(line, PT_UPWAITDOWNSTAY, 0);
         break;
 
     case 89:
@@ -768,7 +768,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
     case 95:
         // Raise floor to nearest height
         // and change texture.
-        EV_DoPlat(line, raiseToNearestAndChange, 0);
+        EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0);
         break;
 
     case 96:
@@ -810,7 +810,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 120:
         // Blazing PlatDownWaitUpStay.
-        EV_DoPlat(line, blazeDWUS, 0);
+        EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0);
         break;
 
     case 126:
@@ -876,13 +876,13 @@ void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
 
     case 47:
         // RAISE FLOOR NEAR AND CHANGE
-        EV_DoPlat(line, raiseToNearestAndChange, 0);
+        EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0);
         P_ChangeSwitchTexture(line, 0);
         break;
 
     case 191: // jd64
         // LOWER FLOOR WAIT RAISE
-        EV_DoPlat(line, blazeDWUS, 0);
+        EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0);
         P_ChangeSwitchTexture(line, 1);
         break;
     }

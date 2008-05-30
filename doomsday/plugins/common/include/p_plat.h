@@ -37,23 +37,23 @@ typedef enum {
 } platstate_e;
 
 typedef enum {
-    perpetualRaise,
-    downWaitUpStay,
+    PT_PERPETUALRAISE,
+    PT_DOWNWAITUPSTAY,
 #if __JHEXEN__
-    downByValueWaitUpStay,
-    upWaitDownStay,
-    upByValueWaitDownStay,
+    PT_DOWNBYVALUEWAITUPSTAY,
+    PT_UPWAITDOWNSTAY,
+    PT_UPBYVALUEWAITDOWNSTAY,
 #else
 # if __JDOOM64__
-    upWaitDownStay, //jd64 kaiser - outcast
-    downWaitUpDoor, //jd64 kaiser - outcast
+    PT_UPWAITDOWNSTAY, //jd64 kaiser - outcast
+    PT_DOWNWAITUPDOOR, //jd64 kaiser - outcast
 # endif
-    raiseAndChange,
-    raiseToNearestAndChange,
+    PT_RAISEANDCHANGE,
+    PT_RAISETONEARESTANDCHANGE,
 # if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-    blazeDWUS,
+    PT_DOWNWAITUPSTAYBLAZE,
 #  if __JDOOM64__
-    blazeDWUSplus16, //jd64
+    PT_DOWNWAITUPPLUS16STAYBLAZE, //jd64
 #  endif
 # endif
 #endif
@@ -70,11 +70,7 @@ typedef struct plat_s {
     int             count;
     platstate_e     state;
     platstate_e     oldState;
-#if __JHEXEN__
-    int             crush;
-#else
     boolean         crush;
-#endif
     int             tag;
     plattype_e      type;
 } plat_t;
@@ -87,7 +83,7 @@ void        T_PlatRaise(plat_t* pl);
 #if __JHEXEN__
 int         EV_DoPlat(linedef_t* li, byte* args, plattype_e type,
                       int amount);
-int         P_PlatDeactivate(linedef_t* li, byte* args);
+int         P_PlatDeactivate(short tag);
 #else
 int         EV_DoPlat(linedef_t* li, plattype_e type, int amount);
 int         P_PlatActivate(short tag);
