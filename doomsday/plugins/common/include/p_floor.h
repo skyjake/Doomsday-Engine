@@ -118,4 +118,10 @@ int         EV_DoFloor(linedef_t* li, byte* args, floortype_e type);
 int         EV_DoFloor(linedef_t* li, floortype_e type);
 #endif
 
+#if __JHEXEN__
+int         EV_DoFloorAndCeiling(linedef_t* li, byte* args, int ftype, int ctype);
+#elif __JDOOM64__
+int         EV_DoFloorAndCeiling(linedef_t* li, int ftype, int ctype);
+#endif
+
 #endif

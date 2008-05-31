@@ -100,7 +100,6 @@ result_e    T_MovePlane(sector_t *sector, float speed, float dest,
 
 int         EV_BuildStairs(linedef_t *line, byte *args, int direction,
                            stairs_e type);
-int         EV_DoFloorAndCeiling(linedef_t *line, byte *args, boolean raise);
 int         EV_FloorCrushStop(linedef_t *line, byte *args);
 
 #define TELEFOGHEIGHTF          (32)

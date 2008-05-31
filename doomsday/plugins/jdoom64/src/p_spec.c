@@ -471,7 +471,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
         break;
 
     case 420: // jd64
-        EV_DoSplitDoor(line, FT_TOHIGHESTPLUS8, CT_RAISETOHIGHEST);
+        EV_DoFloorAndCeiling(line, FT_TOHIGHESTPLUS8, CT_RAISETOHIGHEST);
         xline->special = 0;
         break;
 
@@ -1732,7 +1732,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         break;
 
     case 416: // jd64
-        if(EV_DoSplitDoor(line, FT_TOHIGHESTPLUS8, CT_RAISETOHIGHEST))
+        if(EV_DoFloorAndCeiling(line, FT_TOHIGHESTPLUS8, CT_RAISETOHIGHEST))
             P_ChangeSwitchTexture(line, 0);
         break;
 

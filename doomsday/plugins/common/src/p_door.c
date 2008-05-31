@@ -854,27 +854,3 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
     door->topCountDown = 5 * 60 * TICSPERSEC;
 }
 #endif
-
-#if __JDOOM64__
-int EV_DoSplitDoor(linedef_t *line, int ftype, int ctype)
-{
-    boolean     floor, ceiling;
-    sector_t   *sec = NULL;
-    iterlist_t *list;
-
-    floor = EV_DoFloor(line, ftype);
-
-    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
-    if(!list)
-        return 0;
-
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
-    {
-        P_ToXSector(sec)->specialData = 0;
-    }
-
-    ceiling = EV_DoCeiling(line, ctype);
-    return (floor || ceiling);
-}
-#endif

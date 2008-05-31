@@ -90,7 +90,6 @@ void        P_SpawnDoorCloseIn30(sector_t* sec);
 void        P_SpawnDoorRaiseIn5Mins(sector_t* sec);
 #endif
 #if __JDOOM64__
-int         EV_DoSplitDoor(linedef_t* li, int ftype, int ctype);
 int         EV_AnimateDoor(linedef_t* li, mobj_t* mo);
 #endif
 

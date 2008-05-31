@@ -61,7 +61,7 @@
 #include "p_mapspec.h"
 #include "p_tick.h"
 #include "p_floor.h"
-#if __JHEXEN__
+#if __JHEXEN__ || __JDOOM64__
 #include "p_ceiling.h"
 #endif
 
@@ -1363,51 +1363,58 @@ int EV_FloorCrushStop(linedef_t* line, byte* args)
 
     return (found? 1 : 0);
 }
+#endif
 
-int EV_DoFloorAndCeiling(linedef_t *line, byte *args, boolean raise)
+#if __JHEXEN__ || __JDOOM64__
+# if __JHEXEN__
+int EV_DoFloorAndCeiling(linedef_t *line, byte *args, int ftype, int ctype)
+# else
+int EV_DoFloorAndCeiling(linedef_t* line, int ftype, int ctype)
+# endif
 {
-    boolean     floor, ceiling;
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+# if __JHEXEN__
+    int                 tag = (int) args[0];
+# else
+    int                 tag = P_ToXLine(line)->tag;
+# endif
+    boolean             floor, ceiling;
+    sector_t*           sec = NULL;
+    iterlist_t*         list;
 
-    list = P_GetSectorIterListForTag((int) args[0], false);
+    list = P_GetSectorIterListForTag(tag, false);
     if(!list)
         return 0;
 
+    /** \kludge
+     * Due to the fact that sectors can only have one special thinker
+     * linked at a time, this routine manually removes the link before
+     * then creating a second thinker for the sector.
+     * In order to commonize this we should maintain seperate links in
+     * xsector_t for each type of special (not thinker type) i.e:
+     *
+     *   floor, ceiling, lightlevel
+     *
+     * Note: floor and ceiling are capable of moving at different speeds
+     * and with different target heights, we must remain compatible.
+     */
+
+# if __JHEXEN__
+    floor = EV_DoFloor(line, args, ftype);
+# else
+    floor = EV_DoFloor(line, ftype);
+# endif
     P_IterListResetIterator(list, true);
-
-    /** \kludge Original Hexen KLUDGE:
-    * Due to the fact that sectors can only have one special thinker
-    * linked at a time, this routine manually removes the link before
-    * then creating a second thinker for the sector.
-    * In order to commonize this we should maintain seperate links in
-    * xsector_t for each type of special (not thinker type) i.e:
-    *
-    *   floor, ceiling, lightlevel
-    *
-    * Note: floor and ceiling are capable of moving at different speeds
-    * and with different target heights, we must remain compatible.
-    */
-
-    if(raise)
+    while((sec = P_IterListIterator(list)) != NULL)
     {
-        floor = EV_DoFloor(line, args, FT_RAISEFLOORBYVALUE);
-        while((sec = P_IterListIterator(list)) != NULL)
-        {
-            P_ToXSector(sec)->specialData = NULL;
-        }
-        ceiling = EV_DoCeiling(line, args, CT_RAISEBYVALUE);
+        P_ToXSector(sec)->specialData = NULL;
     }
-    else
-    {
-        floor = EV_DoFloor(line, args, FT_LOWERBYVALUE);
-        while((sec = P_IterListIterator(list)) != NULL)
-        {
-            P_ToXSector(sec)->specialData = NULL;
-        }
-        ceiling = EV_DoCeiling(line, args, CT_LOWERBYVALUE);
-    }
+# if __JHEXEN__
+    ceiling = EV_DoCeiling(line, args, ctype);
+# else
+    ceiling = EV_DoCeiling(line, ctype);
+# endif
     // < KLUDGE
+
     return (floor | ceiling);
 }
 #endif
