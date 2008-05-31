@@ -55,7 +55,11 @@
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
+#include "p_ceiling.h"
+#include "p_door.h"
 #include "p_plat.h"
+#include "p_floor.h"
+#include "p_switch.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -313,7 +317,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
         break;
 
     case 10: // Door Close
-        buttonSuccess = EV_DoDoor(line, args, close);
+        buttonSuccess = EV_DoDoor(line, args, DT_CLOSE);
         break;
 
     case 11: // Door Open
@@ -323,7 +327,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
         }
         else
         {
-            buttonSuccess = EV_DoDoor(line, args, open);
+            buttonSuccess = EV_DoDoor(line, args, DT_OPEN);
         }
         break;
 
@@ -334,7 +338,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
         }
         else
         {
-            buttonSuccess = EV_DoDoor(line, args, normal);
+            buttonSuccess = EV_DoDoor(line, args, DT_NORMAL);
         }
         break;
 
@@ -347,33 +351,33 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
             }
             else
             {
-                buttonSuccess = EV_DoDoor(line, args, normal);
+                buttonSuccess = EV_DoDoor(line, args, DT_NORMAL);
             }
         }
         break;
 
     case 20: // Floor Lower by Value
-        buttonSuccess = EV_DoFloor(line, args, FLEV_LOWERFLOORBYVALUE);
+        buttonSuccess = EV_DoFloor(line, args, FT_LOWERBYVALUE);
         break;
 
     case 21: // Floor Lower to Lowest
-        buttonSuccess = EV_DoFloor(line, args, FLEV_LOWERFLOORTOLOWEST);
+        buttonSuccess = EV_DoFloor(line, args, FT_LOWERTOLOWEST);
         break;
 
     case 22: // Floor Lower to Nearest
-        buttonSuccess = EV_DoFloor(line, args, FLEV_LOWERFLOOR);
+        buttonSuccess = EV_DoFloor(line, args, FT_LOWER);
         break;
 
     case 23: // Floor Raise by Value
-        buttonSuccess = EV_DoFloor(line, args, FLEV_RAISEFLOORBYVALUE);
+        buttonSuccess = EV_DoFloor(line, args, FT_RAISEFLOORBYVALUE);
         break;
 
     case 24: // Floor Raise to Highest
-        buttonSuccess = EV_DoFloor(line, args, FLEV_RAISEFLOOR);
+        buttonSuccess = EV_DoFloor(line, args, FT_RAISEFLOOR);
         break;
 
     case 25: // Floor Raise to Nearest
-        buttonSuccess = EV_DoFloor(line, args, FLEV_RAISEFLOORTONEAREST);
+        buttonSuccess = EV_DoFloor(line, args, FT_RAISEFLOORTONEAREST);
         break;
 
     case 26: // Stairs Build Down Normal
@@ -385,7 +389,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
         break;
 
     case 28: // Floor Raise and Crush
-        buttonSuccess = EV_DoFloor(line, args, FLEV_RAISEFLOORCRUSH);
+        buttonSuccess = EV_DoFloor(line, args, FT_RAISEFLOORCRUSH);
         break;
 
     case 29: // Build Pillar (no crushing)
@@ -405,27 +409,27 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
         break;
 
     case 35: // Raise Floor by Value Times 8
-        buttonSuccess = EV_DoFloor(line, args, FLEV_RAISEBYVALUETIMES8);
+        buttonSuccess = EV_DoFloor(line, args, FT_RAISEBYVALUEMUL8);
         break;
 
     case 36: // Lower Floor by Value Times 8
-        buttonSuccess = EV_DoFloor(line, args, FLEV_LOWERBYVALUETIMES8);
+        buttonSuccess = EV_DoFloor(line, args, FT_LOWERBYVALUEMUL8);
         break;
 
     case 40: // Ceiling Lower by Value
-        buttonSuccess = EV_DoCeiling(line, args, lowerByValue);
+        buttonSuccess = EV_DoCeiling(line, args, CT_LOWERBYVALUE);
         break;
 
     case 41: // Ceiling Raise by Value
-        buttonSuccess = EV_DoCeiling(line, args, raiseByValue);
+        buttonSuccess = EV_DoCeiling(line, args, CT_RAISEBYVALUE);
         break;
 
     case 42: // Ceiling Crush and Raise
-        buttonSuccess = EV_DoCeiling(line, args, crushAndRaise);
+        buttonSuccess = EV_DoCeiling(line, args, CT_CRUSHANDRAISE);
         break;
 
     case 43: // Ceiling Lower and Crush
-        buttonSuccess = EV_DoCeiling(line, args, lowerAndCrush);
+        buttonSuccess = EV_DoCeiling(line, args, CT_LOWERANDCRUSH);
         break;
 
     case 44: // Ceiling Crush Stop
@@ -433,7 +437,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
         break;
 
     case 45: // Ceiling Crush Raise and Stay
-        buttonSuccess = EV_DoCeiling(line, args, crushRaiseAndStay);
+        buttonSuccess = EV_DoCeiling(line, args, CT_CRUSHRAISEANDSTAY);
         break;
 
     case 46: // Floor Crush Stop
@@ -465,19 +469,19 @@ boolean P_ExecuteLineSpecial(int special, byte *args, linedef_t *line, int side,
         break;
 
     case 66: // Floor Lower Instant * 8
-        buttonSuccess = EV_DoFloor(line, args, FLEV_LOWERTIMES8INSTANT);
+        buttonSuccess = EV_DoFloor(line, args, FT_LOWERMUL8INSTANT);
         break;
 
     case 67: // Floor Raise Instant * 8
-        buttonSuccess = EV_DoFloor(line, args, FLEV_RAISETIMES8INSTANT);
+        buttonSuccess = EV_DoFloor(line, args, FT_RAISEMUL8INSTANT);
         break;
 
     case 68: // Floor Move to Value * 8
-        buttonSuccess = EV_DoFloor(line, args, FLEV_MOVETOVALUETIMES8);
+        buttonSuccess = EV_DoFloor(line, args, FT_TOVALUEMUL8);
         break;
 
     case 69: // Ceiling Move to Value * 8
-        buttonSuccess = EV_DoCeiling(line, args, moveToValueTimes8);
+        buttonSuccess = EV_DoCeiling(line, args, CT_MOVETOVALUEMUL8);
         break;
 
     case 70: // Teleport
@@ -699,7 +703,7 @@ boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType
         }
 
         if(xline->flags & ML_SECRET)
-            return false; // never open secret doors
+            return false; // never DT_OPEN secret doors
     }
 
     repeat = ((xline->flags & ML_REPEAT_SPECIAL)? true : false);

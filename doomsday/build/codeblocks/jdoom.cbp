@@ -109,6 +109,9 @@
 		<Unit filename="..\..\plugins\common\include\hu_stuff.h" />
 		<Unit filename="..\..\plugins\common\include\m_argv.h" />
 		<Unit filename="..\..\plugins\common\include\p_actor.h" />
+		<Unit filename="..\..\plugins\common\include\p_ceiling.h" />
+		<Unit filename="..\..\plugins\common\include\p_door.h" />
+		<Unit filename="..\..\plugins\common\include\p_floor.h" />
 		<Unit filename="..\..\plugins\common\include\p_inventory.h" />
 		<Unit filename="..\..\plugins\common\include\p_iterlist.h" />
 		<Unit filename="..\..\plugins\common\include\p_map.h" />
@@ -119,6 +122,7 @@
 		<Unit filename="..\..\plugins\common\include\p_saveg.h" />
 		<Unit filename="..\..\plugins\common\include\p_start.h" />
 		<Unit filename="..\..\plugins\common\include\p_svtexarc.h" />
+		<Unit filename="..\..\plugins\common\include\p_switch.h" />
 		<Unit filename="..\..\plugins\common\include\p_tick.h" />
 		<Unit filename="..\..\plugins\common\include\p_user.h" />
 		<Unit filename="..\..\plugins\common\include\p_view.h" />
@@ -282,7 +286,6 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="..\..\plugins\jdoom\include\p_enemy.h" />
-		<Unit filename="..\..\plugins\jdoom\include\p_floor.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_inter.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_lights.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_local.h" />
@@ -293,7 +296,6 @@
 		<Unit filename="..\..\plugins\jdoom\include\p_setup.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_sound.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_spec.h" />
-		<Unit filename="..\..\plugins\jdoom\include\p_switch.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_telept.h" />
 		<Unit filename="..\..\plugins\jdoom\include\r_defs.h" />
 		<Unit filename="..\..\plugins\jdoom\include\s_sound.h" />
@@ -332,9 +334,6 @@
 		<Unit filename="..\..\plugins\jdoom\src\p_enemy.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\jdoom\src\p_floor.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="..\..\plugins\jdoom\src\p_inter.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -360,9 +359,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\jdoom\src\p_spec.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jdoom\src\p_switch.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\jdoom\src\p_telept.c">

@@ -4,11 +4,6 @@
  ./../../plugins/common/src/dmu_lib.c
  ./../../plugins/common/src/m_multi.c
  ./../../plugins/common/src/hu_menu.c
- ./../../plugins/wolftc/src/g_ctrl.c
- ./../../plugins/wolftc/src/d_api.c
- ./../../plugins/wolftc/src/d_refresh.c
- ./../../plugins/wolftc/src/d_main.c
- ./../../plugins/wolftc/src/d_console.c
  ./../../plugins/common/src/p_xgsec.c
  ./../../plugins/common/src/p_xgsave.c
  ./../../plugins/common/src/p_xgline.c
@@ -16,35 +11,21 @@
  ./../../plugins/common/src/p_view.c
  ./../../plugins/common/src/p_user.c
  ./../../plugins/common/src/p_tick.c
- ./../../plugins/wolftc/src/p_telept.c
  ./../../plugins/common/src/p_switch.c
- ./../../plugins/wolftc/src/p_switch.c
  ./../../plugins/common/src/p_svtexarc.c
  ./../../plugins/common/src/p_start.c
  ./../../plugins/common/src/p_mapsetup.c
  ./../../plugins/common/src/p_mapspec.c
- ./../../plugins/wolftc/src/p_spec.c
- ./../../plugins/wolftc/src/p_sound.c
- ./../../plugins/wolftc/src/p_setup.c
  ./../../plugins/common/src/p_saveg.c
- ./../../plugins/wolftc/src/p_pspr.c
  ./../../plugins/common/src/p_plat.c
- ./../../plugins/wolftc/src/p_mobj.c
- ./../../plugins/wolftc/src/p_maputl.c
  ./../../plugins/common/src/p_iterlist.c
  ./../../plugins/common/src/p_map.c
- ./../../plugins/wolftc/src/p_lights.c
- ./../../plugins/wolftc/src/p_inter.c
  ./../../plugins/common/src/p_floor.c
- ./../../plugins/wolftc/src/p_floor.c
- ./../../plugins/wolftc/src/p_enemy.c
  ./../../plugins/common/src/p_door.c
  ./../../plugins/common/src/p_ceiling.c
  ./../../plugins/common/src/p_actor.c
  ./../../plugins/common/src/p_player.c
  ./../../plugins/common/src/x_hair.c
- ./../../plugins/wolftc/src/wi_stuff.c
- ./../../plugins/wolftc/src/st_stuff.c
  ./../../plugins/common/src/st_lib.c
  ./../../plugins/common/src/hu_stuff.c
  ./../../plugins/common/src/hu_pspr.c
@@ -53,13 +34,30 @@
  ./../../plugins/common/src/f_infine.c
  ./../../plugins/common/src/am_map.c
  ./../../plugins/common/src/am_rendlist.c
- ./../../plugins/wolftc/src/tables.c
  ./../../plugins/common/src/r_common.c
- ./../../plugins/wolftc/src/m_random.c
  ./../../plugins/common/src/m_fixed.c
- ./../../plugins/wolftc/src/m_cheat.c
  ./../../plugins/common/src/g_update.c
  ./../../plugins/common/src/g_game.c
  ./../../plugins/common/src/g_controls.c
+ ./../../plugins/wolftc/src/p_telept.c
+ ./../../plugins/wolftc/src/g_ctrl.c
+ ./../../plugins/wolftc/src/d_api.c
+ ./../../plugins/wolftc/src/d_refresh.c
+ ./../../plugins/wolftc/src/d_main.c
+ ./../../plugins/wolftc/src/d_console.c
+ ./../../plugins/wolftc/src/p_spec.c
+ ./../../plugins/wolftc/src/p_sound.c
+ ./../../plugins/wolftc/src/p_setup.c
+ ./../../plugins/wolftc/src/p_pspr.c
+ ./../../plugins/wolftc/src/p_mobj.c
+ ./../../plugins/wolftc/src/p_maputl.c
+ ./../../plugins/wolftc/src/p_lights.c
+ ./../../plugins/wolftc/src/p_inter.c
+ ./../../plugins/wolftc/src/p_enemy.c
+ ./../../plugins/wolftc/src/wi_stuff.c
+ ./../../plugins/wolftc/src/st_stuff.c
+ ./../../plugins/wolftc/src/tables.c
+ ./../../plugins/wolftc/src/m_random.c
+ ./../../plugins/wolftc/src/m_cheat.c
  ./../../plugins/wolftc/src/d_items.c
  ./../../plugins/wolftc/src/acfnlink.c

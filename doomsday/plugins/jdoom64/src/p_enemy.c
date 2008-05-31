@@ -52,6 +52,8 @@
 #include "p_mapspec.h"
 #include "p_map.h"
 #include "p_actor.h"
+#include "p_door.h"
+#include "p_floor.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -652,7 +654,7 @@ void C_DECL A_BitchSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4459; // jd64 was 666.
-        EV_DoDoor(dummyLine, lowerFloorToLowest); // jd64 was open.
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST); // jd64 was open.
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -675,7 +677,7 @@ void C_DECL A_PossSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4444;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -698,7 +700,7 @@ void C_DECL A_SposSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4445;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -721,7 +723,7 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4446;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -744,7 +746,7 @@ void C_DECL A_NtroSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4447;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -767,7 +769,7 @@ void C_DECL A_SargSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4448;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -790,7 +792,7 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4450;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -813,7 +815,7 @@ void C_DECL A_SkulSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4452;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -836,7 +838,7 @@ void C_DECL A_Bos2Special(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4453;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -859,7 +861,7 @@ void C_DECL A_BossSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4454;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -882,7 +884,7 @@ void C_DECL A_PainSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4455;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -905,7 +907,7 @@ void C_DECL A_FattSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4456;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -928,7 +930,7 @@ void C_DECL A_BabySpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4457;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -951,7 +953,7 @@ void C_DECL A_CybrSpecial(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4458;
-        EV_DoDoor(dummyLine, lowerFloorToLowest);
+        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -2284,7 +2286,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         {
             dummyLine = P_AllocDummyLine();
             P_ToXLine(dummyLine)->tag = 666;
-            EV_DoDoor(dummyLine, blazeRaise);
+            EV_DoDoor(dummyLine, DT_BLAZERAISE);
 
             P_FreeDummyLine(dummyLine);
             return;
@@ -2303,7 +2305,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         {
             dummyLine = P_AllocDummyLine();
             P_ToXLine(dummyLine)->tag = 666;
-            EV_DoDoor(dummyLine, blazeRaise);
+            EV_DoDoor(dummyLine, DT_BLAZERAISE);
 
             P_FreeDummyLine(dummyLine);
             return;
@@ -2333,7 +2335,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             {
                 dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
-                EV_DoFloor(dummyLine, lowerFloorToLowest);
+                EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
                 P_FreeDummyLine(dummyLine);
                 return;
             }
@@ -2342,7 +2344,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             {
                 dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 667;
-                EV_DoFloor(dummyLine, raiseToTexture);
+                EV_DoFloor(dummyLine, FT_RAISETOTEXTURE);
                 P_FreeDummyLine(dummyLine);
 
                 // Only activate once (rare Dead simple bug)
@@ -2358,7 +2360,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         case 1:
             dummyLine = P_AllocDummyLine();
             P_ToXLine(dummyLine)->tag = 666;
-            EV_DoFloor(dummyLine, lowerFloorToLowest);
+            EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
             P_FreeDummyLine(dummyLine);
             bossKilled = true;
             return;
@@ -2370,7 +2372,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             case 6:
                 dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
-                EV_DoDoor(dummyLine, blazeOpen);
+                EV_DoDoor(dummyLine, DT_BLAZEOPEN);
                 P_FreeDummyLine(dummyLine);
                 bossKilled = true;
                 return;
@@ -2379,7 +2381,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             case 8:
                 dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
-                EV_DoFloor(dummyLine, lowerFloorToLowest);
+                EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
                 P_FreeDummyLine(dummyLine);
                 bossKilled = true;
                 return;

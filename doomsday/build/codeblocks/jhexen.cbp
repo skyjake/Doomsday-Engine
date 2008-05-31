@@ -105,6 +105,9 @@
 		<Unit filename="..\..\plugins\common\include\hu_stuff.h" />
 		<Unit filename="..\..\plugins\common\include\m_argv.h" />
 		<Unit filename="..\..\plugins\common\include\p_actor.h" />
+		<Unit filename="..\..\plugins\common\include\p_ceiling.h" />
+		<Unit filename="..\..\plugins\common\include\p_door.h" />
+		<Unit filename="..\..\plugins\common\include\p_floor.h" />
 		<Unit filename="..\..\plugins\common\include\p_inventory.h" />
 		<Unit filename="..\..\plugins\common\include\p_iterlist.h" />
 		<Unit filename="..\..\plugins\common\include\p_map.h" />
@@ -115,6 +118,7 @@
 		<Unit filename="..\..\plugins\common\include\p_saveg.h" />
 		<Unit filename="..\..\plugins\common\include\p_start.h" />
 		<Unit filename="..\..\plugins\common\include\p_svtexarc.h" />
+		<Unit filename="..\..\plugins\common\include\p_switch.h" />
 		<Unit filename="..\..\plugins\common\include\p_tick.h" />
 		<Unit filename="..\..\plugins\common\include\p_user.h" />
 		<Unit filename="..\..\plugins\common\include\p_view.h" />
@@ -267,18 +271,19 @@
 		<Unit filename="..\..\plugins\jhexen\include\p_acs.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_anim.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_enemy.h" />
-		<Unit filename="..\..\plugins\jhexen\include\p_floor.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_inter.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_lights.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_local.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_mapinfo.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_maputl.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_mobj.h" />
+		<Unit filename="..\..\plugins\jhexen\include\p_pillar.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_pspr.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_setup.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_spec.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_telept.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_things.h" />
+		<Unit filename="..\..\plugins\jhexen\include\p_waggle.h" />
 		<Unit filename="..\..\plugins\jhexen\include\po_man.h" />
 		<Unit filename="..\..\plugins\jhexen\include\r_defs.h" />
 		<Unit filename="..\..\plugins\jhexen\include\r_local.h" />
@@ -338,9 +343,6 @@
 		<Unit filename="..\..\plugins\jhexen\src\p_enemy.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\jhexen\src\p_floor.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="..\..\plugins\jhexen\src\p_inter.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -356,6 +358,9 @@
 		<Unit filename="..\..\plugins\jhexen\src\p_mobj.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\plugins\jhexen\src\p_pillar.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\plugins\jhexen\src\p_pspr.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -369,6 +374,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\jhexen\src\p_things.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\plugins\jhexen\src\p_waggle.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\jhexen\src\po_man.c">

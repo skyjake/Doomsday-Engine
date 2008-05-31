@@ -18,7 +18,6 @@
  ./../../plugins/common/src/p_tick.c
  ./../../plugins/jdoom/src/p_telept.c
  ./../../plugins/common/src/p_switch.c
- ./../../plugins/jdoom/src/p_switch.c
  ./../../plugins/common/src/p_svtexarc.c
  ./../../plugins/common/src/p_start.c
  ./../../plugins/common/src/p_mapsetup.c
@@ -37,7 +36,6 @@
  ./../../plugins/jdoom/src/p_lights.c
  ./../../plugins/jdoom/src/p_inter.c
  ./../../plugins/common/src/p_floor.c
- ./../../plugins/jdoom/src/p_floor.c
  ./../../plugins/jdoom/src/p_enemy.c
  ./../../plugins/common/src/p_door.c
  ./../../plugins/common/src/p_ceiling.c

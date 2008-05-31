@@ -63,6 +63,7 @@
 #include "g_common.h"
 #include "p_mapspec.h"
 #include "am_map.h"
+#include "p_switch.h"
 
 // MACROS ------------------------------------------------------------------
 

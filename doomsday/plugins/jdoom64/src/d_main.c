@@ -42,6 +42,7 @@
 #include "hu_msg.h"
 #include "p_saveg.h"
 #include "p_mapspec.h"
+#include "p_switch.h"
 #include "am_map.h"
 
 // MACROS ------------------------------------------------------------------

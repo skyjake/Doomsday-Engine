@@ -77,6 +77,9 @@
 #include "am_map.h"
 #include "p_tick.h"
 #include "p_actor.h"
+#include "p_ceiling.h"
+#include "p_door.h"
+#include "p_floor.h"
 #include "p_plat.h"
 
 // MACROS ------------------------------------------------------------------
@@ -248,8 +251,8 @@ static void SV_WriteCeiling(ceiling_t* ceiling);
 static int  SV_ReadCeiling(ceiling_t* ceiling);
 static void SV_WriteDoor(door_t* door);
 static int  SV_ReadDoor(door_t* door);
-static void SV_WriteFloor(floormove_t* floor);
-static int  SV_ReadFloor(floormove_t* floor);
+static void SV_WriteFloor(floor_t* floor);
+static int  SV_ReadFloor(floor_t* floor);
 static void SV_WritePlat(plat_t* plat);
 static int  SV_ReadPlat(plat_t* plat);
 
@@ -268,8 +271,8 @@ static void SV_WriteRotatePoly(polyevent_t *rotatepoly);
 static int  SV_ReadRotatePoly(polyevent_t *rotatepoly);
 static void SV_WritePillar(pillar_t *pillar);
 static int  SV_ReadPillar(pillar_t *pillar);
-static void SV_WriteFloorWaggle(floorWaggle_t *floorwaggle);
-static int  SV_ReadFloorWaggle(floorWaggle_t *floorwaggle);
+static void SV_WriteFloorWaggle(waggle_t *floorwaggle);
+static int  SV_ReadFloorWaggle(waggle_t *floorwaggle);
 #else
 static void SV_WriteFlash(lightflash_t* flash);
 static int  SV_ReadFlash(lightflash_t* flash);
@@ -384,7 +387,7 @@ static thinkerinfo_t thinkerInfo[] = {
       TSF_SPECIAL,
       SV_WriteFloor,
       SV_ReadFloor,
-      sizeof(floormove_t)
+      sizeof(floor_t)
     },
     {
       TC_PLAT,
@@ -409,7 +412,7 @@ static thinkerinfo_t thinkerInfo[] = {
      0,
      SV_WriteFloorWaggle,
      SV_ReadFloorWaggle,
-     sizeof(floorWaggle_t)
+     sizeof(waggle_t)
     },
     {
      TC_LIGHT,
@@ -2829,7 +2832,7 @@ static int SV_ReadDoor(door_t *door)
     return true; // Add this thinker.
 }
 
-static void SV_WriteFloor(floormove_t *floor)
+static void SV_WriteFloor(floor_t *floor)
 {
     SV_WriteByte(TC_FLOOR);
 
@@ -2844,12 +2847,12 @@ static void SV_WriteFloor(floormove_t *floor)
 
     SV_WriteByte((byte) floor->crush);
 
-    SV_WriteLong(floor->direction);
+    SV_WriteLong((int) floor->state);
     SV_WriteLong(floor->newSpecial);
 
     SV_WriteShort(floor->texture);
 
-    SV_WriteShort((int)floor->floorDestHeight);
+    SV_WriteShort((int) floor->floorDestHeight);
     SV_WriteLong(FLT2FIX(floor->speed));
 
 #if __JHEXEN__
@@ -2864,7 +2867,7 @@ static void SV_WriteFloor(floormove_t *floor)
 #endif
 }
 
-static int SV_ReadFloor(floormove_t *floor)
+static int SV_ReadFloor(floor_t *floor)
 {
     sector_t *sector;
 
@@ -2876,7 +2879,7 @@ static int SV_ReadFloor(floormove_t *floor)
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
-        floor->type = (floor_e) SV_ReadByte();
+        floor->type = (floortype_e) SV_ReadByte();
 
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
@@ -2887,7 +2890,7 @@ static int SV_ReadFloor(floormove_t *floor)
 
         floor->crush = (boolean) SV_ReadByte();
 
-        floor->direction = SV_ReadLong();
+        floor->state = (int) SV_ReadLong();
         floor->newSpecial = SV_ReadLong();
 
         floor->texture = SV_ReadShort();
@@ -2908,7 +2911,7 @@ static int SV_ReadFloor(floormove_t *floor)
     }
     else
     {
-        // Its in the old format which serialized floormove_t
+        // Its in the old format which serialized floor_t
         // Padding at the start (an old thinker_t struct)
         SV_Read(junkbuffer, (size_t) 16);
 
@@ -2933,7 +2936,7 @@ static int SV_ReadFloor(floormove_t *floor)
             Con_Error("TC_FLOOR: bad sector number\n");
         floor->sector = sector;
 #endif
-        floor->direction = SV_ReadLong();
+        floor->state = (int) SV_ReadLong();
         floor->newSpecial = SV_ReadLong();
         floor->texture = SV_ReadShort();
 
@@ -3508,7 +3511,7 @@ static int SV_ReadPillar(pillar_t *th)
     return true; // Add this thinker.
 }
 
-static void SV_WriteFloorWaggle(floorWaggle_t *th)
+static void SV_WriteFloorWaggle(waggle_t *th)
 {
     SV_WriteByte(TC_FLOOR_WAGGLE);
 
@@ -3529,7 +3532,7 @@ static void SV_WriteFloorWaggle(floorWaggle_t *th)
     SV_WriteLong(th->state);
 }
 
-static int SV_ReadFloorWaggle(floorWaggle_t *th)
+static int SV_ReadFloorWaggle(waggle_t *th)
 {
     sector_t *sector;
 
@@ -3554,7 +3557,7 @@ static int SV_ReadFloorWaggle(floorWaggle_t *th)
     }
     else
     {
-        // Its in the old pre V4 format which serialized floorWaggle_t
+        // Its in the old pre V4 format which serialized waggle_t
         // Padding at the start (an old thinker_t struct)
         thinker_t junk;
         SV_Read(&junk, (size_t) 16);

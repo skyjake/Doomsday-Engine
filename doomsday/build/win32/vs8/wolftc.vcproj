@@ -283,6 +283,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_ceiling.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\p_door.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\p_floor.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_inventory.h"
 				>
 			</File>
@@ -320,6 +332,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\include\p_svtexarc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\p_switch.h"
 				>
 			</File>
 			<File
@@ -627,6 +643,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\wolftc\include\p_lights.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\wolftc\include\p_local.h"
 				>
 			</File>
@@ -735,10 +755,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\wolftc\src\p_floor.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\wolftc\src\p_inter.c"
 				>
 			</File>
@@ -768,10 +784,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\wolftc\src\p_spec.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\wolftc\src\p_switch.c"
 				>
 			</File>
 			<File

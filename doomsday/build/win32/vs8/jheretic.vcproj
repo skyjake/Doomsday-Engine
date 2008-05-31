@@ -284,6 +284,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_ceiling.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\p_door.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\p_floor.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_inventory.h"
 				>
 			</File>
@@ -321,6 +333,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\include\p_svtexarc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\p_switch.h"
 				>
 			</File>
 			<File
@@ -640,10 +656,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jheretic\include\p_floor.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jheretic\include\p_inter.h"
 				>
 			</File>
@@ -681,10 +693,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jheretic\include\p_spec.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jheretic\include\p_switch.h"
 				>
 			</File>
 			<File
@@ -772,10 +780,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jheretic\src\p_floor.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jheretic\src\p_inter.c"
 				>
 			</File>
@@ -809,10 +813,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jheretic\src\p_spec.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jheretic\src\p_switch.c"
 				>
 			</File>
 			<File

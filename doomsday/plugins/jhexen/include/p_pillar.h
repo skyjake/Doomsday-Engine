@@ -42,54 +42,29 @@
  */
 
 /**
- * p_lights.h:
+ * p_pillar.h:
  */
 
-#ifndef __P_LIGHTS_H__
-#define __P_LIGHTS_H__
+#ifndef __P_PILLAR_H__
+#define __P_PILLAR_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#define LIGHT_SEQUENCE_START        (2)
-#define LIGHT_SEQUENCE              (3)
-#define LIGHT_SEQUENCE_ALT          (4)
-
-typedef enum {
-    LITE_RAISEBYVALUE,
-    LITE_LOWERBYVALUE,
-    LITE_CHANGETOVALUE,
-    LITE_FADE,
-    LITE_GLOW,
-    LITE_FLICKER,
-    LITE_STROBE
-} lighttype_t;
-
 typedef struct {
     thinker_t       thinker;
-    sector_t*       sector;
-    lighttype_t     type;
-    float           value1;
-    float           value2;
-    int             tics1;  //// \todo Type LITEGLOW uses this as a third light value. As such, it has been left as 0 - 255 for now.
-    int             tics2;
-    int             count;
-} light_t;
+    sector_t       *sector;
+    float           ceilingSpeed;
+    float           floorSpeed;
+    float           floorDest;
+    float           ceilingDest;
+    int             direction;
+    int             crush;
+} pillar_t;
 
-typedef struct {
-    thinker_t       thinker;
-    sector_t*       sector;
-    int             index;
-    float           baseValue;
-} phase_t;
-
-void            T_Phase(phase_t* phase);
-void            P_SpawnPhasedLight(sector_t* sec, float base, int index);
-
-void            T_Light(light_t* light);
-void            P_SpawnLightSequence(sector_t* sec, int indexStep);
-
-boolean         EV_SpawnLight(linedef_t* line, byte* arg, lighttype_t type);
+void        T_BuildPillar(pillar_t* pillar);
+int         EV_BuildPillar(linedef_t* line, byte* args, boolean crush);
+int         EV_OpenPillar(linedef_t* line, byte* args);
 
 #endif

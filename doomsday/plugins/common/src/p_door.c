@@ -59,6 +59,11 @@
 #include "dmu_lib.h"
 #include "p_player.h"
 #include "p_mapspec.h"
+#include "p_door.h"
+#if __JDOOM64__
+#include "p_ceiling.h"
+#include "p_floor.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -127,17 +132,17 @@ void T_Door(door_t* door)
             switch(door->type)
             {
 #if __JDOOM64__
-            case instantRaise:  //jd64
+            case DT_INSTANTRAISE:  //jd64
                 door->state = DS_DOWN;
                 break;
 #endif
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-            case blazeRaise:
+            case DT_BLAZERAISE:
                 door->state = DS_DOWN; // Time to go back down.
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOORBLAZECLOSE);
                 break;
 #endif
-            case normal:
+            case DT_NORMAL:
                 door->state = DS_DOWN; // Time to go back down.
 #if __JHEXEN__
                 SN_StartSequence(P_SectorSoundOrigin(door->sector),
@@ -147,7 +152,7 @@ void T_Door(door_t* door)
 #endif
                 break;
 
-            case close30ThenOpen:
+            case DT_CLOSE30THENOPEN:
                 door->state = DS_UP;
 #if !__JHEXEN__
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOOROPEN);
@@ -165,9 +170,9 @@ void T_Door(door_t* door)
         {
             switch(door->type)
             {
-            case raiseIn5Mins:
+            case DT_RAISEIN5MINS:
                 door->state = DS_UP;
-                door->type = normal;
+                door->type = DT_NORMAL;
 #if !__JHEXEN__
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOOROPEN);
 #endif
@@ -193,15 +198,15 @@ void T_Door(door_t* door)
             switch(door->type)
             {
 #if __JDOOM64__
-            case instantRaise:  //jd64
-            case instantClose:  //jd64
+            case DT_INSTANTRAISE:  //jd64
+            case DT_INSTANTCLOSE:  //jd64
                 P_ToXSector(door->sector)->specialData = NULL;
                 P_ThinkerRemove(&door->thinker); // Unlink and free.
                 break;
 #endif
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-            case blazeRaise:
-            case blazeClose:
+            case DT_BLAZERAISE:
+            case DT_BLAZECLOSE:
                 xsec->specialData = NULL;
                 P_ThinkerRemove(&door->thinker); // Unlink and free.
 
@@ -212,8 +217,8 @@ void T_Door(door_t* door)
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOORBLAZECLOSE);
                 break;
 #endif
-            case normal:
-            case close:
+            case DT_NORMAL:
+            case DT_CLOSE:
                 xsec->specialData = NULL;
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
@@ -224,7 +229,7 @@ void T_Door(door_t* door)
 #endif
                 break;
 
-            case close30ThenOpen:
+            case DT_CLOSE30THENOPEN:
                 door->state = DS_WAIT;
                 door->topCountDown = 30 * TICSPERSEC;
                 break;
@@ -241,9 +246,9 @@ void T_Door(door_t* door)
             switch(door->type)
             {
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-            case blazeClose:
+            case DT_BLAZECLOSE:
 #endif
-            case close:     // Do not go back up!
+            case DT_CLOSE: // Do not go back up!
                 break;
 
             default:
@@ -269,7 +274,7 @@ void T_Door(door_t* door)
             switch(door->type)
             {
 #if __JDOOM64__
-            case instantRaise:  //jd64
+            case DT_INSTANTRAISE:  //jd64
                 door->state = DS_WAIT;
                 /*
                  * skip topwait and began the countdown
@@ -280,19 +285,19 @@ void T_Door(door_t* door)
                 break;
 #endif
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-            case blazeRaise:
+            case DT_BLAZERAISE:
 #endif
 
-            case normal:
+            case DT_NORMAL:
                 door->state = DS_WAIT; // Wait at top.
                 door->topCountDown = door->topWait;
                 break;
 
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-            case blazeOpen:
+            case DT_BLAZEOPEN:
 #endif
-            case close30ThenOpen:
-            case open:
+            case DT_CLOSE30THENOPEN:
+            case DT_OPEN:
                 xsec->specialData = NULL;
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
@@ -357,7 +362,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
         switch(type)
         {
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-        case blazeClose:
+        case DT_BLAZECLOSE:
             P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
             door->topHeight -= 4;
             door->state = DS_DOWN;
@@ -365,7 +370,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
             sound = SFX_DOORBLAZECLOSE;
             break;
 #endif
-        case close:
+        case DT_CLOSE:
             P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
             door->topHeight -= 4;
             door->state = DS_DOWN;
@@ -374,7 +379,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 #endif
             break;
 
-        case close30ThenOpen:
+        case DT_CLOSE30THENOPEN:
             door->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
             door->state = DS_DOWN;
 #if !__JHEXEN__
@@ -383,10 +388,10 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
             break;
 
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-        case blazeRaise:
+        case DT_BLAZERAISE:
 #endif
 #if !__JHEXEN__
-        case blazeOpen:
+        case DT_BLAZEOPEN:
             door->state = DS_UP;
             P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
             door->topHeight -= 4;
@@ -400,8 +405,8 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
             break;
 #endif
 
-        case normal:
-        case open:
+        case DT_NORMAL:
+        case DT_OPEN:
             door->state = DS_UP;
             P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
             door->topHeight -= 4;
@@ -734,7 +739,7 @@ boolean EV_VerticalDoor(linedef_t *line, mobj_t *thing)
     {
 #if __JHEXEN__
     case 11:
-        door->type = open;
+        door->type = DT_OPEN;
         door->speed = (float) xline->arg2 * (1.0 / 8);
         door->topWait = (int) xline->arg3;
         xline->special = 0;
@@ -744,7 +749,7 @@ boolean EV_VerticalDoor(linedef_t *line, mobj_t *thing)
     case 32:
     case 33:
     case 34:
-        door->type = open;
+        door->type = DT_OPEN;
         door->speed = DOORSPEED;
         door->topWait = DOORWAIT;
         xline->special = 0;
@@ -754,7 +759,7 @@ boolean EV_VerticalDoor(linedef_t *line, mobj_t *thing)
 #if __JHEXEN__
     case 12:
     case 13:
-        door->type = normal;
+        door->type = DT_NORMAL;
         door->speed = (float) xline->arg2 * (1.0 / 8);
         door->topWait = (int) xline->arg3;
         break;
@@ -763,7 +768,7 @@ boolean EV_VerticalDoor(linedef_t *line, mobj_t *thing)
     case 26:
     case 27:
     case 28:
-        door->type = normal;
+        door->type = DT_NORMAL;
         door->speed = DOORSPEED;
         door->topWait = DOORWAIT;
         break;
@@ -776,13 +781,13 @@ boolean EV_VerticalDoor(linedef_t *line, mobj_t *thing)
     case 526: // jd64
     case 527: // jd64
 # endif
-        door->type = blazeRaise;
+        door->type = DT_BLAZERAISE;
         door->speed = DOORSPEED * 4;
         door->topWait = DOORWAIT;
         break;
 
     case 118:                   // blazing door open
-        door->type = blazeOpen;
+        door->type = DT_BLAZEOPEN;
         door->speed = DOORSPEED * 4;
         door->topWait = DOORWAIT;
         xline->special = 0;
@@ -791,7 +796,7 @@ boolean EV_VerticalDoor(linedef_t *line, mobj_t *thing)
 
     default:
 #if __JHEXEN__
-        door->type = normal;
+        door->type = DT_NORMAL;
         door->speed = (float) xline->arg2 * (1.0 / 8);
         door->topWait = (int) xline->arg3;
 #else
@@ -822,7 +827,7 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
     door->thinker.function = T_Door;
     door->sector = sec;
     door->state = DS_WAIT;
-    door->type = normal;
+    door->type = DT_NORMAL;
     door->speed = DOORSPEED;
     door->topCountDown = 30 * TICSPERSEC;
 }
@@ -841,7 +846,7 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
     door->thinker.function = T_Door;
     door->sector = sec;
     door->state = DS_INITIALWAIT;
-    door->type = raiseIn5Mins;
+    door->type = DT_RAISEIN5MINS;
     door->speed = DOORSPEED;
     P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
     door->topHeight -= 4;

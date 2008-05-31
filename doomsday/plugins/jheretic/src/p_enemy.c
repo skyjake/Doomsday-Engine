@@ -60,6 +60,7 @@
 #include "dmu_lib.h"
 #include "p_mapspec.h"
 #include "p_map.h"
+#include "p_floor.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2116,7 +2117,7 @@ void C_DECL A_BossDeath(mobj_t* actor)
 
     dummyLine = P_AllocDummyLine();
     P_ToXLine(dummyLine)->tag = 666;
-    EV_DoFloor(dummyLine, lowerFloor);
+    EV_DoFloor(dummyLine, FT_LOWER);
     P_FreeDummyLine(dummyLine);
 }
 

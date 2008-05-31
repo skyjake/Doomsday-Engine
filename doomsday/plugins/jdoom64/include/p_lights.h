@@ -35,8 +35,6 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-#include "doomsday.h"
-
 #define GLOWSPEED               (8)
 #define STROBEBRIGHT            (5)
 #define FASTDARK                (15)
@@ -44,7 +42,7 @@
 
 typedef struct {
     thinker_t       thinker;
-    sector_t       *sector;
+    sector_t*       sector;
     int             count;
     float           maxLight;
     float           minLight;
@@ -52,7 +50,7 @@ typedef struct {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t       *sector;
+    sector_t*       sector;
     int             count;
     float           maxLight;
     float           minLight;
@@ -62,7 +60,7 @@ typedef struct {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t       *sector;
+    sector_t*       sector;
     int             count;
     float           maxLight;
     float           minLight;
@@ -72,7 +70,7 @@ typedef struct {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t       *sector;
+    sector_t*       sector;
     int             count;
     float           minLight;
     float           maxLight;
@@ -82,26 +80,29 @@ typedef struct {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t       *sector;
+    sector_t*       sector;
     float           minLight;
     float           maxLight;
     int             direction;
 } glow_t;
 
-void            T_FireFlicker(fireflicker_t *flick);
-void            P_SpawnFireFlicker(sector_t *sector);
-void            T_LightFlash(lightflash_t *flash);
-void            P_SpawnLightFlash(sector_t *sector);
-void            T_LightBlink(lightblink_t *flash);
-void            P_SpawnLightBlink(sector_t *sector);
-void            T_StrobeFlash(strobe_t *flash);
-void            P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow,
-                                   int inSync);
-void            T_Glow(glow_t *g);
-void            P_SpawnGlowingLight(sector_t *sector);
+void            T_FireFlicker(fireflicker_t* flick);
+void            P_SpawnFireFlicker(sector_t* sector);
 
-void            EV_StartLightStrobing(linedef_t *line);
-void            EV_TurnTagLightsOff(linedef_t *line);
-void            EV_LightTurnOn(linedef_t *line, float max);
+void            T_LightFlash(lightflash_t* flash);
+void            P_SpawnLightFlash(sector_t* sector);
+
+void            T_LightBlink(lightblink_t* flash);
+void            P_SpawnLightBlink(sector_t* sector);
+
+void            T_StrobeFlash(strobe_t* flash);
+void            P_SpawnStrobeFlash(sector_t* sector, int fastOrSlow,
+                                   int inSync);
+void            T_Glow(glow_t* g);
+void            P_SpawnGlowingLight(sector_t* sector);
+
+void            EV_StartLightStrobing(linedef_t* line);
+void            EV_TurnTagLightsOff(linedef_t* line);
+void            EV_LightTurnOn(linedef_t* line, float max);
 
 #endif

@@ -74,102 +74,22 @@ boolean         P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
 void            P_PlayerInSpecialSector(player_t *player);
 
 typedef enum {
-    DS_DOWN = -1,
-    DS_WAIT,
-    DS_UP,
-    DS_INITIALWAIT
-} doorstate_e;
-
-typedef enum {
-    normal,
-    close30ThenOpen,
-    close,
-    open,
-    raiseIn5Mins,
-    blazeRaise,
-    blazeOpen,
-    instantOpen, //jd64 kaiser
-    instantClose, //jd64 kaiser
-    instantRaise, //jd64 kaiser
-    blazeClose
-} doortype_e;
-
-typedef struct {
-    thinker_t       thinker;
-    doortype_e      type;
-    sector_t*       sector;
-    float           topHeight;
-    float           speed;
-    doorstate_e     state;
-    int             topWait; // Tics to wait at the top.
-    // (keep in case a door going down is reset)
-    // when it reaches 0, start going down
-    int             topCountDown;
-} door_t;
-
-#define DOORSPEED          2
-#define DOORWAIT           150
-
-boolean     EV_VerticalDoor(linedef_t* line, mobj_t* mo);
-int         EV_DoDoor(linedef_t* line, doortype_e type);
-int         EV_DoLockedDoor(linedef_t* line, doortype_e type, mobj_t* mo);
-
-void        T_Door(door_t* door);
-void        P_SpawnDoorCloseIn30(sector_t* sec);
-void        P_SpawnDoorRaiseIn5Mins(sector_t* sec);
-
-// jd64 >
-int         EV_DoSplitDoor(linedef_t* line, int ftype, int ctype);
-int         EV_AnimateDoor(linedef_t* line, mobj_t* thing);
-// < d64tc
-
-typedef enum {
-    CS_DOWN,
-    CS_UP
-} ceilingstate_e;
-
-typedef enum {
-    lowerToFloor,
-    raiseToHighest,
-    lowerAndCrush,
-    crushAndRaise,
-    fastCrushAndRaise,
-    silentCrushAndRaise,
-    customCeiling // jd64
-} ceilingtype_e;
-
-typedef struct {
-    thinker_t       thinker;
-    ceilingtype_e   type;
-    sector_t*       sector;
-    float           bottomHeight;
-    float           topHeight;
-    float           speed;
-    boolean         crush;
-    ceilingstate_e  state;
-    ceilingstate_e  oldState;
-    int             tag;
-} ceiling_t;
-
-#define CEILSPEED           1
-#define CEILWAIT            150
-
-int         EV_DoCeiling(linedef_t* line, ceilingtype_e type);
-
-void        T_MoveCeiling(ceiling_t* c);
-int         P_CeilingActivate(short tag);
-int         P_CeilingDeactivate(short tag);
-
-typedef enum {
     ok,
     crushed,
     pastdest
 } result_e;
 
+typedef enum {
+    build8, // slowly build by 8
+    turbo16 // quickly build by 16
+} stair_e;
+
+int             EV_BuildStairs(linedef_t *line, stair_e type);
+
 result_e    T_MovePlane(sector_t* sector, float speed, float dest,
                         int crush, int floorOrCeiling, int direction);
+int             EV_DoDonut(linedef_t *line);
 
-int         EV_DoFloor(linedef_t* line, floor_e floortype);
-void        T_MoveFloor(floormove_t* floor);
+boolean     P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side);
 
 #endif

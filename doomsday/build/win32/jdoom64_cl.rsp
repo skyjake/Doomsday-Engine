@@ -49,7 +49,6 @@
  ./../../plugins/jdoom64/src/m_cheat.c
  ./../../plugins/jdoom64/src/m_random.c
  ./../../plugins/jdoom64/src/p_enemy.c
- ./../../plugins/jdoom64/src/p_floor.c
  ./../../plugins/jdoom64/src/p_inter.c
  ./../../plugins/jdoom64/src/p_lights.c
  ./../../plugins/jdoom64/src/p_maputl.c
@@ -59,7 +58,6 @@
  ./../../plugins/jdoom64/src/p_setup.c
  ./../../plugins/jdoom64/src/p_sound.c
  ./../../plugins/jdoom64/src/p_spec.c
- ./../../plugins/jdoom64/src/p_switch.c
  ./../../plugins/jdoom64/src/st_stuff.c
  ./../../plugins/jdoom64/src/tables.c
  ./../../plugins/jdoom64/src/wi_stuff.c

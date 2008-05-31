@@ -56,6 +56,8 @@
 
 #include "d_net.h"
 #include "dmu_lib.h"
+#include "p_plat.h"
+#include "p_switch.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -428,3 +430,17 @@ void P_ChangeSwitchTexture(linedef_t *line, int useAgain)
         }
     }
 }
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+/**
+ * Called when a mobj "uses" a linedef.
+ */
+boolean P_UseSpecialLine(mobj_t* mo, linedef_t* line, int side)
+{
+    // Extended functionality overrides old.
+    if(XL_UseLine(line, side, mo))
+        return true;
+
+    return P_UseSpecialLine2(mo, line, side);
+}
+#endif

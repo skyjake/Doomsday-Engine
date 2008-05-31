@@ -45,6 +45,7 @@
 #include "../../wolftc/include/m_menu.h"
 #include "../../wolftc/include/mn_def.h"
 #include "../../wolftc/include/p_inter.h"
+#include "../../wolftc/include/p_lights.h"
 #include "../../wolftc/include/p_local.h"
 #include "../../wolftc/include/p_maputl.h"
 #include "../../wolftc/include/p_pspr.h"

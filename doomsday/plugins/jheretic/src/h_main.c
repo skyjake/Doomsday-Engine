@@ -43,6 +43,7 @@
 #include "p_saveg.h"
 #include "d_net.h"
 #include "p_mapspec.h"
+#include "p_switch.h"
 #include "am_map.h"
 
 // MACROS ------------------------------------------------------------------

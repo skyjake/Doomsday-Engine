@@ -60,6 +60,7 @@
 #include "p_mapspec.h"
 #include "p_start.h"
 #include "p_tick.h"
+#include "p_ceiling.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -132,7 +133,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
 # else
             switch(ceiling->type)
             {
-            case silentCrushAndRaise:
+            case CT_SILENTCRUSHANDRAISE:
                 break;
             default:
                 S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGMOVE);
@@ -150,19 +151,19 @@ void T_MoveCeiling(ceiling_t* ceiling)
             switch(ceiling->type)
             {
 #if !__JHEXEN__
-            case raiseToHighest:
+            case CT_RAISETOHIGHEST:
 # if __JDOOM64__
-            case customCeiling: //jd64
+            case CT_CUSTOM: //jd64
 # endif
                 stopCeiling(ceiling);
                 break;
 # if !__JHERETIC__
-            case silentCrushAndRaise:
+            case CT_SILENTCRUSHANDRAISE:
                 S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGSTOP);
 # endif
-            case fastCrushAndRaise:
+            case CT_CRUSHANDRAISEFAST:
 #endif
-            case crushAndRaise:
+            case CT_CRUSHANDRAISE:
                 ceiling->state = CS_DOWN;
 #if __JHEXEN__
                 ceiling->speed *= 2;
@@ -193,7 +194,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
 # else
             switch(ceiling->type)
             {
-            case silentCrushAndRaise:
+            case CT_SILENTCRUSHANDRAISE:
                 break;
             default:
                 S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGMOVE);
@@ -210,16 +211,16 @@ void T_MoveCeiling(ceiling_t* ceiling)
             switch(ceiling->type)
             {
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-            case silentCrushAndRaise:
+            case CT_SILENTCRUSHANDRAISE:
                 S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGSTOP);
                 ceiling->speed = CEILSPEED;
                 ceiling->state = CS_UP;
                 break;
 #endif
 
-            case crushAndRaise:
+            case CT_CRUSHANDRAISE:
 #if __JHEXEN__
-            case crushRaiseAndStay:
+            case CT_CRUSHRAISEANDSTAY:
 #endif
 #if __JHEXEN__
                 ceiling->speed = ceiling->speed * .5;
@@ -229,14 +230,14 @@ void T_MoveCeiling(ceiling_t* ceiling)
                 ceiling->state = CS_UP;
                 break;
 #if !__JHEXEN__
-            case fastCrushAndRaise:
+            case CT_CRUSHANDRAISEFAST:
                 ceiling->state = CS_UP;
                 break;
 
-            case lowerAndCrush:
-            case lowerToFloor:
+            case CT_LOWERANDCRUSH:
+            case CT_LOWERTOFLOOR:
 # if __JDOOM64__
-            case customCeiling: //jd64
+            case CT_CUSTOM: //jd64
 # endif
                 stopCeiling(ceiling);
                 break;
@@ -256,12 +257,12 @@ void T_MoveCeiling(ceiling_t* ceiling)
                 switch(ceiling->type)
                 {
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-                case silentCrushAndRaise:
+                case CT_SILENTCRUSHANDRAISE:
 #endif
-                case crushAndRaise:
-                case lowerAndCrush:
+                case CT_CRUSHANDRAISE:
+                case CT_LOWERANDCRUSH:
 #if __JHEXEN__
-                case crushRaiseAndStay:
+                case CT_CRUSHRAISEANDSTAY:
 #endif
 #if !__JHEXEN__
                     ceiling->speed = CEILSPEED * .125;
@@ -319,7 +320,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
         switch(type)
         {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
-        case fastCrushAndRaise:
+        case CT_CRUSHANDRAISEFAST:
             ceiling->crush = true;
             ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
             ceiling->bottomHeight =
@@ -330,7 +331,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
             break;
 #endif
 #if __JHEXEN__
-        case crushRaiseAndStay:
+        case CT_CRUSHRAISEANDSTAY:
             ceiling->crush = (int) arg[2];    // arg[2] = crushing value
             ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
             ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
@@ -338,22 +339,22 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
             break;
 #endif
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-        case silentCrushAndRaise:
+        case CT_SILENTCRUSHANDRAISE:
 #endif
-        case crushAndRaise:
+        case CT_CRUSHANDRAISE:
 #if !__JHEXEN__
             ceiling->crush = true;
 #endif
             ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
 
-        case lowerAndCrush:
+        case CT_LOWERANDCRUSH:
 #if __JHEXEN__
             ceiling->crush = (int) arg[2];    // arg[2] = crushing value
 #endif
-        case lowerToFloor:
+        case CT_LOWERTOFLOOR:
             ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
 
-            if(type != lowerToFloor)
+            if(type != CT_LOWERTOFLOOR)
                 ceiling->bottomHeight += 8;
             ceiling->state = CS_DOWN;
 #if __JDOOM64__
@@ -361,7 +362,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #endif
             break;
 
-        case raiseToHighest:
+        case CT_RAISETOHIGHEST:
             P_FindSectorSurroundingHighestCeiling(sec, &ceiling->topHeight);
 #if __JDOOM64__
             ceiling->topHeight -= 8;   // jd64
@@ -369,7 +370,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
             ceiling->state = CS_UP;
             break;
 #if __JDOOM64__
-        case customCeiling: // jd64
+        case CT_CUSTOM: // jd64
             {
             //bitmip? wha?
             sidedef_t *front = P_GetPtrp(line, DMU_SIDEDEF0);
@@ -397,19 +398,19 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
             }
 #endif
 #if __JHEXEN__
-        case lowerByValue:
+        case CT_LOWERBYVALUE:
             ceiling->bottomHeight =
                 P_GetFloatp(sec, DMU_CEILING_HEIGHT) - (float) arg[2];
             ceiling->state = CS_DOWN;
             break;
 
-        case raiseByValue:
+        case CT_RAISEBYVALUE:
             ceiling->topHeight =
                 P_GetFloatp(sec, DMU_CEILING_HEIGHT) + (float) arg[2];
             ceiling->state = CS_UP;
             break;
 
-        case moveToValueTimes8:
+        case CT_MOVETOVALUEMUL8:
             {
             float   destHeight = (float) arg[2] * 8;
 
@@ -469,11 +470,11 @@ int EV_DoCeiling(linedef_t *line, ceilingtype_e type)
     // Reactivate in-stasis ceilings...for certain types.
     switch(type)
     {
-    case fastCrushAndRaise:
+    case CT_CRUSHANDRAISEFAST:
 # if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-    case silentCrushAndRaise:
+    case CT_SILENTCRUSHANDRAISE:
 # endif
-    case crushAndRaise:
+    case CT_CRUSHANDRAISE:
         rtn = P_CeilingActivate(P_ToXLine(line)->tag);
         break;
 

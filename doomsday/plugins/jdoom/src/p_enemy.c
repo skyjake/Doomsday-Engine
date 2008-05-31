@@ -44,6 +44,8 @@
 #include "dmu_lib.h"
 #include "p_map.h"
 #include "p_mapspec.h"
+#include "p_door.h"
+#include "p_floor.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -642,7 +644,7 @@ void C_DECL A_KeenDie(mobj_t* mo)
         linedef_t*          dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 666;
-        EV_DoDoor(dummyLine, open);
+        EV_DoDoor(dummyLine, DT_OPEN);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -1721,7 +1723,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             {
                 dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
-                EV_DoFloor(dummyLine, lowerFloorToLowest);
+                EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
                 P_FreeDummyLine(dummyLine);
                 return;
             }
@@ -1730,7 +1732,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             {
                 dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 667;
-                EV_DoFloor(dummyLine, raiseToTexture);
+                EV_DoFloor(dummyLine, FT_RAISETOTEXTURE);
                 P_FreeDummyLine(dummyLine);
 
                 // Only activate once (rare, "DOOM2::MAP07-Dead Simple" bug).
@@ -1746,7 +1748,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         case 1:
             dummyLine = P_AllocDummyLine();
             P_ToXLine(dummyLine)->tag = 666;
-            EV_DoFloor(dummyLine, lowerFloorToLowest);
+            EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
             P_FreeDummyLine(dummyLine);
             bossKilled = true;
             return;
@@ -1758,7 +1760,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             case 6:
                 dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
-                EV_DoDoor(dummyLine, blazeOpen);
+                EV_DoDoor(dummyLine, DT_BLAZEOPEN);
                 P_FreeDummyLine(dummyLine);
                 bossKilled = true;
                 return;
@@ -1767,7 +1769,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             case 8:
                 dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
-                EV_DoFloor(dummyLine, lowerFloorToLowest);
+                EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
                 P_FreeDummyLine(dummyLine);
                 bossKilled = true;
                 return;

@@ -4,10 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,21 +24,29 @@
  */
 
 /**
- * p_switch.h: Switches, buttons. Two-state animation. Exits.
+ * p_switch.h: Common playsim routines relating to switches.
  */
 
-#ifndef __P_SWITCH_H__
-#define __P_SWITCH_H__
+#ifndef __COMMON_SWITCH_H__
+#define __COMMON_SWITCH_H__
 
-#ifndef __JDOOM64__
-#  error "Using jDoom64 headers without __JDOOM64__"
-#endif
+typedef enum linesection_e{
+    LS_MIDDLE,
+    LS_BOTTOM,
+    LS_TOP
+} linesection_t;
 
-#include "doomsday.h"
+#define BUTTONTIME              (TICSPERSEC) // 1 second, in ticks.
 
-#include "p_mobj.h"
+typedef struct button_s {
+    linedef_t*      line;
+    linesection_t   section;
+    int             texture;
+    int             timer;
+    mobj_t*         soundOrg;
 
-#define BUTTONTIME          (TICSPERSEC) // 1 second, in ticks.
+    struct button_s *next;
+} button_t;
 
 /**
  * This struct is used to provide byte offsets when reading a custom
@@ -52,32 +57,20 @@ typedef struct {
     /* Do NOT change these members in any way! */
     char            name1[9];
     char            name2[9];
+#if __JHEXEN__
+    int             soundID;
+#else
     short           episode;
+#endif
 } switchlist_t;
 #pragma pack()
-
-typedef enum linesection_e{
-    LS_MIDDLE,
-    LS_BOTTOM,
-    LS_TOP
-} linesection_t;
-
-typedef struct button_s {
-    linedef_t      *line;
-    linesection_t   section;
-    int             texture;
-    int             timer;
-    mobj_t         *soundOrg;
-
-    struct button_s *next;
-} button_t;
 
 extern button_t *buttonlist;
 
 void            P_InitSwitchList(void);
 
 void            P_FreeButtons(void);
-void            P_ChangeSwitchTexture(linedef_t *line, int useAgain);
-boolean         P_UseSpecialLine(mobj_t *thing, linedef_t *line, int side);
+void            P_ChangeSwitchTexture(linedef_t* line, int useAgain);
+boolean         P_UseSpecialLine(mobj_t* mo, linedef_t* line, int side);
 
 #endif

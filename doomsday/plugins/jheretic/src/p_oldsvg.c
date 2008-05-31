@@ -57,7 +57,10 @@
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
+#include "p_ceiling.h"
+#include "p_door.h"
 #include "p_plat.h"
+#include "p_floor.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -513,12 +516,12 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int SV_ReadFloor(floormove_t *floor)
+static int SV_ReadFloor(floor_t *floor)
 {
 /* Original Heretic format:
 typedef struct {
 	thinker_t	thinker;        // was 12 bytes
-	floor_e		type;           // was 32bit int
+	floortype_e		type;           // was 32bit int
 	boolean		crush;
 	sector_t	*sector;
 	int			direction;
@@ -540,7 +543,7 @@ typedef struct {
     if(!floor->sector)
         Con_Error("tc_floor: bad sector number\n");
 
-    floor->direction = SV_v13_ReadLong();
+    floor->state = (int) SV_v13_ReadLong();
     floor->newSpecial = SV_v13_ReadLong();
     floor->texture = SV_v13_ReadShort();
     floor->floorDestHeight = FIX2FLT(SV_v13_ReadLong());
@@ -696,7 +699,7 @@ typedef struct {
  *
  * T_MoveCeiling, (ceiling_t: sector_t * swizzle), - active list
  * T_Door, (door_t: sector_t * swizzle),
- * T_MoveFloor, (floormove_t: sector_t * swizzle),
+ * T_MoveFloor, (floor_t: sector_t * swizzle),
  * T_LightFlash, (lightflash_t: sector_t * swizzle),
  * T_StrobeFlash, (strobe_t: sector_t *),
  * T_Glow, (glow_t: sector_t *),
@@ -718,7 +721,7 @@ enum {
     byte        tclass;
     ceiling_t  *ceiling;
     door_t   *door;
-    floormove_t *floor;
+    floor_t *floor;
     plat_t     *plat;
     lightflash_t *flash;
     strobe_t   *strobe;

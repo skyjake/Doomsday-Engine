@@ -284,6 +284,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_ceiling.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\p_door.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\p_floor.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_inventory.h"
 				>
 			</File>
@@ -321,6 +333,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\include\p_svtexarc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\p_switch.h"
 				>
 			</File>
 			<File
@@ -604,10 +620,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jhexen\include\p_floor.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jhexen\include\p_inter.h"
 				>
 			</File>
@@ -632,6 +644,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_pillar.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\p_pspr.h"
 				>
 			</File>
@@ -649,6 +665,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\include\p_things.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_waggle.h"
 				>
 			</File>
 			<File
@@ -796,10 +816,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jhexen\src\p_floor.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jhexen\src\p_inter.c"
 				>
 			</File>
@@ -820,6 +836,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\src\p_pillar.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\src\p_pspr.c"
 				>
 			</File>
@@ -837,6 +857,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\src\p_things.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\src\p_waggle.c"
 				>
 			</File>
 			<File

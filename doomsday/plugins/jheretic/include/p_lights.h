@@ -3,7 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,5 +42,51 @@
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
+
+#define GLOWSPEED               (8)
+#define STROBEBRIGHT            (5)
+#define FASTDARK                (15)
+#define SLOWDARK                (35)
+
+typedef struct {
+    thinker_t       thinker;
+    sector_t*       sector;
+    int             count;
+    float           maxLight;
+    float           minLight;
+    int             maxTime;
+    int             minTime;
+} lightflash_t;
+
+typedef struct {
+    thinker_t       thinker;
+    sector_t*       sector;
+    int             count;
+    float           minLight;
+    float           maxLight;
+    int             darkTime;
+    int             brightTime;
+} strobe_t;
+
+typedef struct {
+    thinker_t       thinker;
+    sector_t*       sector;
+    float           minLight;
+    float           maxLight;
+    int             direction;
+} glow_t;
+
+void            T_LightFlash(lightflash_t* flash);
+void            P_SpawnLightFlash(sector_t* sector);
+
+void            T_StrobeFlash(strobe_t* flash);
+void            P_SpawnStrobeFlash(sector_t* sector, int fastOrSlow,
+                                   int inSync);
+void            T_Glow(glow_t* g);
+void            P_SpawnGlowingLight(sector_t* sector);
+
+void            EV_StartLightStrobing(linedef_t* line);
+void            EV_TurnTagLightsOff(linedef_t* line);
+void            EV_LightTurnOn(linedef_t* line, float bright);
 
 #endif

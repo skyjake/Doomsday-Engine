@@ -3,7 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,15 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_lights.h: Handle Sector base lighting effects.
- */
-
 #ifndef __P_LIGHTS_H__
 #define __P_LIGHTS_H__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __WOLFTC__
+#  error "Using WolfTC headers without __WOLFTC__"
 #endif
 
 #define GLOWSPEED               (8)
@@ -41,35 +39,35 @@ typedef struct {
     thinker_t       thinker;
     sector_t*       sector;
     int             count;
-    float           maxLight;
-    float           minLight;
+    float           maxlight;
+    float           minlight;
 } fireflicker_t;
 
 typedef struct {
     thinker_t       thinker;
     sector_t*       sector;
     int             count;
-    float           maxLight;
-    float           minLight;
-    int             maxTime;
-    int             minTime;
+    float           maxlight;
+    float           minlight;
+    int             maxtime;
+    int             mintime;
 } lightflash_t;
 
 typedef struct {
     thinker_t       thinker;
     sector_t*       sector;
     int             count;
-    float           minLight;
-    float           maxLight;
-    int             darkTime;
-    int             brightTime;
+    float           minlight;
+    float           maxlight;
+    int             darktime;
+    int             brighttime;
 } strobe_t;
 
 typedef struct {
     thinker_t       thinker;
     sector_t*       sector;
-    float           minLight;
-    float           maxLight;
+    float           minlight;
+    float           maxlight;
     int             direction;
 } glow_t;
 
@@ -80,8 +78,8 @@ void            T_LightFlash(lightflash_t* flash);
 void            P_SpawnLightFlash(sector_t* sector);
 
 void            T_StrobeFlash(strobe_t* flash);
-void            P_SpawnStrobeFlash(sector_t* sector, int fastOrSlow,
-                                   int inSync);
+void            P_SpawnStrobeFlash(sector_t* sector, int fastOrSlow, int inSync);
+
 void            T_Glow(glow_t* g);
 void            P_SpawnGlowingLight(sector_t* sector);
 
