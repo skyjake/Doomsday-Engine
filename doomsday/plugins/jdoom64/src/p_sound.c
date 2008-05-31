@@ -51,7 +51,7 @@ int S_GetMusicNum(int episode, int map)
 {
     int                 mnum;
 
-    mnum = mus_runnin + map - 1;
+    mnum = MUS_RUNNIN + map - 1;
 
     return mnum;
 }

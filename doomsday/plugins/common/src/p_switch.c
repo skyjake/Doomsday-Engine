@@ -363,9 +363,9 @@ void P_ChangeSwitchTexture(linedef_t *line, int useAgain)
 
 #if !__JHEXEN__
 # if __JHERETIC__ || __WOLFTC__
-    sound = sfx_switch;
+    sound = SFX_SWITCH;
 # else
-    sound = sfx_swtchn;
+    sound = SFX_SWTCHN;
 #endif
 
     // EXIT SWITCH?
@@ -373,9 +373,9 @@ void P_ChangeSwitchTexture(linedef_t *line, int useAgain)
     if(P_ToXLine(line)->special == 11)
     {
 #  if __WOLFTC__
-        sound = sfx_wfeswi;
+        sound = SFX_WFESWI;
 #  else
-        sound = sfx_swtchx;
+        sound = SFX_SWTCHX;
 #  endif
     }
 # endif

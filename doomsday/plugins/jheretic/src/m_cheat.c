@@ -360,7 +360,7 @@ boolean Cht_Responder(event_t *ev)
         if(cheatAddKey(&cheats[i], key, &eat))
         {
             cheats[i].func(&players[CONSOLEPLAYER], &cheats[i]);
-            S_LocalSound(sfx_dorcls, NULL);
+            S_LocalSound(SFX_DORCLS, NULL);
         }
     }
 
@@ -784,7 +784,7 @@ DEFCC(CCmdCheatSuicide)
 {
     if(G_GetGameState() != GS_LEVEL)
     {
-        S_LocalSound(sfx_chat, NULL);
+        S_LocalSound(SFX_CHAT, NULL);
         Con_Printf("Can only suicide when in a game!\n");
         return true;
     }
@@ -906,7 +906,7 @@ DEFCC(CCmdCheatExitLevel)
 
     if(G_GetGameState() != GS_LEVEL)
     {
-        S_LocalSound(sfx_chat, NULL);
+        S_LocalSound(SFX_CHAT, NULL);
         Con_Printf("Can only exit a level when in a game!\n");
         return true;
     }

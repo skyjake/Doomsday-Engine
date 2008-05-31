@@ -867,13 +867,13 @@ DEFCC(CCmdSpawnMobj)
     // jd64 > kaiser - another cheesy hack!!!
     if(mo->type == MT_DART || mo->type == MT_RDART)
     {
-        S_StartSound(sfx_skeswg, mo); // We got darts! spawn skeswg sound!
+        S_StartSound(SFX_SKESWG, mo); // We got darts! spawn skeswg sound!
     }
     else
     {
         mo->translucency = 255;
 
-        S_StartSound(sfx_itmbk, mo); // If not dart, then spawn itmbk sound
+        S_StartSound(SFX_ITMBK, mo); // If not dart, then spawn itmbk sound
         mo->intFlags = MIF_FADE;
         mo->translucency = 255;
     }

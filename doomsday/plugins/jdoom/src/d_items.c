@@ -161,10 +161,10 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
      S_SAWUP,
-     sfx_sawup,    // raise sound id
+     SFX_SAWUP,    // raise sound id
      S_SAWDOWN,
      S_SAW,
-     sfx_sawidl,   // ready sound
+     SFX_SAWIDL,   // ready sound
      S_SAW1,
      S_NULL
     }

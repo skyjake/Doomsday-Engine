@@ -815,7 +815,7 @@ void P_PlayerInSpecialSector(player_t *player)
         if(cfg.secretMsg)
         {
             P_SetMessage(player, "You've found a secret area!", false);
-            S_ConsoleSound(sfx_wpnup, 0, player - players);
+            S_ConsoleSound(SFX_WPNUP, 0, player - players);
         }
         break;
 
@@ -937,7 +937,7 @@ void P_UpdateSpecials(void)
                               (int) button->section);
                 }
 
-                S_StartSound(sfx_switch,
+                S_StartSound(SFX_SWITCH,
                              P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
 
                 button->line = NULL;
@@ -1151,110 +1151,110 @@ int     AmbSndSeqInit[] = {     // Startup
     afxcmd_end
 };
 int     AmbSndSeq1[] = {        // Scream
-    afxcmd_play, sfx_amb1,
+    afxcmd_play, SFX_AMB1,
     afxcmd_end
 };
 int     AmbSndSeq2[] = {        // Squish
-    afxcmd_play, sfx_amb2,
+    afxcmd_play, SFX_AMB2,
     afxcmd_end
 };
 int     AmbSndSeq3[] = {        // Drops
-    afxcmd_play, sfx_amb3,
+    afxcmd_play, SFX_AMB3,
     afxcmd_delay, 16,
     afxcmd_delayrand, 31,
-    afxcmd_play, sfx_amb7,
+    afxcmd_play, SFX_AMB7,
     afxcmd_delay, 16,
     afxcmd_delayrand, 31,
-    afxcmd_play, sfx_amb3,
+    afxcmd_play, SFX_AMB3,
     afxcmd_delay, 16,
     afxcmd_delayrand, 31,
-    afxcmd_play, sfx_amb7,
+    afxcmd_play, SFX_AMB7,
     afxcmd_delay, 16,
     afxcmd_delayrand, 31,
-    afxcmd_play, sfx_amb3,
+    afxcmd_play, SFX_AMB3,
     afxcmd_delay, 16,
     afxcmd_delayrand, 31,
-    afxcmd_play, sfx_amb7,
+    afxcmd_play, SFX_AMB7,
     afxcmd_delay, 16,
     afxcmd_delayrand, 31,
     afxcmd_end
 };
 int     AmbSndSeq4[] = {        // SlowFootSteps
-    afxcmd_play, sfx_amb4,
+    afxcmd_play, SFX_AMB4,
     afxcmd_delay, 15,
-    afxcmd_playrelvol, sfx_amb11, -3,
+    afxcmd_playrelvol, SFX_AMB11, -3,
     afxcmd_delay, 15,
-    afxcmd_playrelvol, sfx_amb4, -3,
+    afxcmd_playrelvol, SFX_AMB4, -3,
     afxcmd_delay, 15,
-    afxcmd_playrelvol, sfx_amb11, -3,
+    afxcmd_playrelvol, SFX_AMB11, -3,
     afxcmd_delay, 15,
-    afxcmd_playrelvol, sfx_amb4, -3,
+    afxcmd_playrelvol, SFX_AMB4, -3,
     afxcmd_delay, 15,
-    afxcmd_playrelvol, sfx_amb11, -3,
+    afxcmd_playrelvol, SFX_AMB11, -3,
     afxcmd_delay, 15,
-    afxcmd_playrelvol, sfx_amb4, -3,
+    afxcmd_playrelvol, SFX_AMB4, -3,
     afxcmd_delay, 15,
-    afxcmd_playrelvol, sfx_amb11, -3,
+    afxcmd_playrelvol, SFX_AMB11, -3,
     afxcmd_end
 };
 int     AmbSndSeq5[] = {        // Heartbeat
-    afxcmd_play, sfx_amb5,
+    afxcmd_play, SFX_AMB5,
     afxcmd_delay, 35,
-    afxcmd_play, sfx_amb5,
+    afxcmd_play, SFX_AMB5,
     afxcmd_delay, 35,
-    afxcmd_play, sfx_amb5,
+    afxcmd_play, SFX_AMB5,
     afxcmd_delay, 35,
-    afxcmd_play, sfx_amb5,
+    afxcmd_play, SFX_AMB5,
     afxcmd_end
 };
 int     AmbSndSeq6[] = {        // Bells
-    afxcmd_play, sfx_amb6,
+    afxcmd_play, SFX_AMB6,
     afxcmd_delay, 17,
-    afxcmd_playrelvol, sfx_amb6, -8,
+    afxcmd_playrelvol, SFX_AMB6, -8,
     afxcmd_delay, 17,
-    afxcmd_playrelvol, sfx_amb6, -8,
+    afxcmd_playrelvol, SFX_AMB6, -8,
     afxcmd_delay, 17,
-    afxcmd_playrelvol, sfx_amb6, -8,
+    afxcmd_playrelvol, SFX_AMB6, -8,
     afxcmd_end
 };
 int     AmbSndSeq7[] = {        // Growl
-    afxcmd_play, sfx_bstsit,
+    afxcmd_play, SFX_BSTSIT,
     afxcmd_end
 };
 int     AmbSndSeq8[] = {        // Magic
-    afxcmd_play, sfx_amb8,
+    afxcmd_play, SFX_AMB8,
     afxcmd_end
 };
 int     AmbSndSeq9[] = {        // Laughter
-    afxcmd_play, sfx_amb9,
+    afxcmd_play, SFX_AMB9,
     afxcmd_delay, 16,
-    afxcmd_playrelvol, sfx_amb9, -4,
+    afxcmd_playrelvol, SFX_AMB9, -4,
     afxcmd_delay, 16,
-    afxcmd_playrelvol, sfx_amb9, -4,
+    afxcmd_playrelvol, SFX_AMB9, -4,
     afxcmd_delay, 16,
-    afxcmd_playrelvol, sfx_amb10, -4,
+    afxcmd_playrelvol, SFX_AMB10, -4,
     afxcmd_delay, 16,
-    afxcmd_playrelvol, sfx_amb10, -4,
+    afxcmd_playrelvol, SFX_AMB10, -4,
     afxcmd_delay, 16,
-    afxcmd_playrelvol, sfx_amb10, -4,
+    afxcmd_playrelvol, SFX_AMB10, -4,
     afxcmd_end
 };
 int     AmbSndSeq10[] = {       // FastFootsteps
-    afxcmd_play, sfx_amb4,
+    afxcmd_play, SFX_AMB4,
     afxcmd_delay, 8,
-    afxcmd_playrelvol, sfx_amb11, -3,
+    afxcmd_playrelvol, SFX_AMB11, -3,
     afxcmd_delay, 8,
-    afxcmd_playrelvol, sfx_amb4, -3,
+    afxcmd_playrelvol, SFX_AMB4, -3,
     afxcmd_delay, 8,
-    afxcmd_playrelvol, sfx_amb11, -3,
+    afxcmd_playrelvol, SFX_AMB11, -3,
     afxcmd_delay, 8,
-    afxcmd_playrelvol, sfx_amb4, -3,
+    afxcmd_playrelvol, SFX_AMB4, -3,
     afxcmd_delay, 8,
-    afxcmd_playrelvol, sfx_amb11, -3,
+    afxcmd_playrelvol, SFX_AMB11, -3,
     afxcmd_delay, 8,
-    afxcmd_playrelvol, sfx_amb4, -3,
+    afxcmd_playrelvol, SFX_AMB4, -3,
     afxcmd_delay, 8,
-    afxcmd_playrelvol, sfx_amb11, -3,
+    afxcmd_playrelvol, SFX_AMB11, -3,
     afxcmd_end
 };
 

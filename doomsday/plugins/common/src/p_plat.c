@@ -64,23 +64,23 @@
 // MACROS ------------------------------------------------------------------
 
 // Sounds played by the platforms when changing state or moving.
-// jHexen uses sound sequences, so it's are defined as 'sfx_None'.
+// jHexen uses sound sequences, so it's are defined as 'SFX_NONE'.
 #if __WOLFTC__
-# define SFX_PLATFORMSTART      (sfx_pltstr)
-# define SFX_PLATFORMMOVE       (sfx_pltmov)
-# define SFX_PLATFORMSTOP       (sfx_pltstp)
+# define SFX_PLATFORMSTART      (SFX_PLTSTR)
+# define SFX_PLATFORMMOVE       (SFX_PLTMOV)
+# define SFX_PLATFORMSTOP       (SFX_PLTSTP)
 #elif __JDOOM__
-# define SFX_PLATFORMSTART      (sfx_pstart)
-# define SFX_PLATFORMMOVE       (sfx_stnmov)
-# define SFX_PLATFORMSTOP       (sfx_pstop)
+# define SFX_PLATFORMSTART      (SFX_PSTART)
+# define SFX_PLATFORMMOVE       (SFX_STNMOV)
+# define SFX_PLATFORMSTOP       (SFX_PSTOP)
 #elif __JDOOM64__
-# define SFX_PLATFORMSTART      (sfx_pstart)
-# define SFX_PLATFORMMOVE       (sfx_stnmov)
-# define SFX_PLATFORMSTOP       (sfx_pstop)
+# define SFX_PLATFORMSTART      (SFX_PSTART)
+# define SFX_PLATFORMMOVE       (SFX_STNMOV)
+# define SFX_PLATFORMSTOP       (SFX_PSTOP)
 #elif __JHERETIC__
-# define SFX_PLATFORMSTART      (sfx_pstart)
-# define SFX_PLATFORMMOVE       (sfx_stnmov)
-# define SFX_PLATFORMSTOP       (sfx_pstop)
+# define SFX_PLATFORMSTART      (SFX_PSTART)
+# define SFX_PLATFORMMOVE       (SFX_STNMOV)
+# define SFX_PLATFORMSTOP       (SFX_PSTOP)
 #elif __JHEXEN__
 # define SFX_PLATFORMSTART      (SFX_NONE)
 # define SFX_PLATFORMMOVE       (SFX_NONE)

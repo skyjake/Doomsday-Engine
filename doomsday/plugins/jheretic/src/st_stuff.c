@@ -774,7 +774,7 @@ void ST_Ticker(void)
         if(tomePlay != timeleft)
         {
             tomePlay = timeleft;
-            S_LocalSound(sfx_keyup, NULL);
+            S_LocalSound(SFX_KEYUP, NULL);
         }
     }
 

@@ -306,29 +306,29 @@ short   whichSkull;    // which skull to draw
 // Sounds played in the menu
 int menusnds[] = {
 #if __WOLFTC__
-    sfx_menubc,            // close menu
-    sfx_menubc,            // open menu
-    sfx_menubc,            // cancel
-    sfx_menumv,            // up/down
-    sfx_menumv,            // left/right
-    sfx_menusl,            // accept
-    sfx_menumv             // bad sound (eg can't autosave)
+    SFX_MENUBC,            // close menu
+    SFX_MENUBC,            // open menu
+    SFX_MENUBC,            // cancel
+    SFX_MENUMV,            // up/down
+    SFX_MENUMV,            // left/right
+    SFX_MENUSL,            // accept
+    SFX_MENUMV             // bad sound (eg can't autosave)
 #elif __JDOOM__ || __JDOOM64__
-    sfx_dorcls,            // close menu
-    sfx_swtchx,            // open menu
-    sfx_swtchn,            // cancel
-    sfx_pstop,             // up/down
-    sfx_stnmov,            // left/right
-    sfx_pistol,            // accept
-    sfx_oof                // bad sound (eg can't autosave)
+    SFX_DORCLS,            // close menu
+    SFX_SWTCHX,            // open menu
+    SFX_SWTCHN,            // cancel
+    SFX_PSTOP,             // up/down
+    SFX_STNMOV,            // left/right
+    SFX_PISTOL,            // accept
+    SFX_OOF                // bad sound (eg can't autosave)
 #elif __JHERETIC__
-    sfx_switch,
-    sfx_chat,
-    sfx_switch,
-    sfx_switch,
-    sfx_stnmov,
-    sfx_chat,
-    sfx_chat
+    SFX_SWITCH,
+    SFX_CHAT,
+    SFX_SWITCH,
+    SFX_SWITCH,
+    SFX_STNMOV,
+    SFX_CHAT,
+    SFX_CHAT
 #elif __JHEXEN__
     SFX_PLATFORM_STOP,
     SFX_DOOR_LIGHT_CLOSE,
@@ -932,7 +932,9 @@ static menu_t HUDDef = {
     64, 30,
 #endif
     M_DrawHUDMenu,
-#if __JHEXEN__ || __JSTRIFE__
+#if __WOLFTC__
+    13, HUDItems,
+#elif __JHEXEN__ || __JSTRIFE__
     23, HUDItems,
 #elif __JHERETIC__
     25, HUDItems,
@@ -946,7 +948,9 @@ static menu_t HUDDef = {
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
-#if __JHEXEN__ || __JSTRIFE__
+#if __WOLFTC__
+    0, 13
+#elif __JHEXEN__ || __JSTRIFE__
     0, 15        // 21
 #elif __JHERETIC__
     0, 15        // 23
@@ -3217,7 +3221,9 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_HEALTH]]);
     M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_KEYS]]);
 # if __JDOOM__
+# if !__WOLFTC__
     M_WriteMenuText(menu, idx++, yesno[cfg.hudKeysCombine]);
+# endif
 # endif
     MN_DrawSlider(menu, idx++, 10, cfg.hudScale * 10 - 3 + .5f);
     MN_DrawColorBox(menu, idx++, cfg.hudColor[0], cfg.hudColor[1],
@@ -3394,24 +3400,24 @@ boolean M_QuitResponse(int option, void *data)
 {
 #if __JDOOM__ || __JDOOM64__
     static int  quitsounds[8] = {
-        sfx_pldeth,
-        sfx_dmpain,
-        sfx_popain,
-        sfx_slop,
-        sfx_telept,
-        sfx_posit1,
-        sfx_posit3,
-        sfx_sgtatk
+        SFX_PLDETH,
+        SFX_DMPAIN,
+        SFX_POPAIN,
+        SFX_SLOP,
+        SFX_TELEPT,
+        SFX_POSIT1,
+        SFX_POSIT3,
+        SFX_SGTATK
     };
     static int  quitsounds2[8] = {
-        sfx_vilact,
-        sfx_getpow,
-        sfx_boscub,
-        sfx_slop,
-        sfx_skeswg,
-        sfx_kntdth,
-        sfx_bspact,
-        sfx_sgtatk
+        SFX_VILACT,
+        SFX_GETPOW,
+        SFX_BOSCUB,
+        SFX_SLOP,
+        SFX_SKESWG,
+        SFX_KNTDTH,
+        SFX_BSPACT,
+        SFX_SGTATK
     };
 #endif
 

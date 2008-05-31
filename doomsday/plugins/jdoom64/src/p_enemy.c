@@ -998,15 +998,15 @@ void C_DECL A_Look(mobj_t *actor)
 
         switch(actor->info->seeSound)
         {
-        case sfx_posit1:
-        case sfx_posit2:
-        case sfx_posit3:
-            sound = sfx_posit1 + P_Random() % 3;
+        case SFX_POSIT1:
+        case SFX_POSIT2:
+        case SFX_POSIT3:
+            sound = SFX_POSIT1 + P_Random() % 3;
             break;
 
-        case sfx_bgsit1:
-        case sfx_bgsit2:
-            sound = sfx_bgsit1 + P_Random() % 2;
+        case SFX_BGSIT1:
+        case SFX_BGSIT2:
+            sound = SFX_BGSIT1 + P_Random() % 2;
             break;
 
         default:
@@ -1169,7 +1169,7 @@ void C_DECL A_PosAttack(mobj_t *actor)
     angle = actor->angle;
     slope = P_AimLineAttack(actor, angle, MISSILERANGE);
 
-    S_StartSound(sfx_pistol, actor);
+    S_StartSound(SFX_PISTOL, actor);
     angle += (P_Random() - P_Random()) << 20;
     damage = ((P_Random() % 5) + 1) * 3;
     P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
@@ -1184,7 +1184,7 @@ void C_DECL A_SPosAttack(mobj_t *actor)
     if(!actor->target)
         return;
 
-    S_StartSound(sfx_shotgn, actor);
+    S_StartSound(SFX_SHOTGN, actor);
     A_FaceTarget(actor);
     bangle = actor->angle;
     slope = P_AimLineAttack(actor, bangle, MISSILERANGE);
@@ -1222,7 +1222,7 @@ void C_DECL A_CPosAttack(mobj_t *actor)
     if(!actor->target)
         return;
 
-    S_StartSound(sfx_pistol, actor);
+    S_StartSound(SFX_PISTOL, actor);
     A_FaceTarget(actor);
     bangle = actor->angle;
     slope = P_AimLineAttack(actor, bangle, MISSILERANGE);
@@ -1373,7 +1373,7 @@ void C_DECL A_TroopClaw(mobj_t *actor)
     A_FaceTarget(actor);
     if(checkMeleeRange(actor))
     {
-        S_StartSound(sfx_claw, actor);
+        S_StartSound(SFX_CLAW, actor);
         damage = (P_Random() % 8 + 1) * 3;
         P_DamageMobj(actor->target, actor, actor, damage);
         return;
@@ -1406,7 +1406,7 @@ void C_DECL A_MotherFloorFire(mobj_t *actor)
         return;
 
     A_FaceTarget(actor);
-    S_StartSound(sfx_mthatk, actor);
+    S_StartSound(SFX_MTHATK, actor);
 /*
     mo = P_SpawnMissile(MT_FIREEND, actor, actor->target);
 
@@ -1604,7 +1604,7 @@ void C_DECL A_BruisAttack(mobj_t *actor)
 
     if(checkMeleeRange(actor))
     {
-        S_StartSound(sfx_claw, actor);
+        S_StartSound(SFX_CLAW, actor);
         damage = (P_Random() % 8 + 1) * 10;
         P_DamageMobj(actor->target, actor, actor, damage);
         return;
@@ -1626,7 +1626,7 @@ void C_DECL A_BruisredAttack(mobj_t *actor)
 
     if(checkMeleeRange(actor))
     {
-        S_StartSound(sfx_claw, actor);
+        S_StartSound(SFX_CLAW, actor);
         damage = (P_Random() % 8 + 1) * 10;
         P_DamageMobj(actor->target, actor, actor, damage);
         return;
@@ -1654,7 +1654,7 @@ void C_DECL A_SkelMissile(mobj_t *actor)
             actor->flags |= MF_SHOOTABLE;
 
             P_SpawnMobj3fv(MT_HFOG, actor->pos);
-            S_StartSound(sfx_stlktp, actor);
+            S_StartSound(SFX_STLKTP, actor);
             return;
         }
 
@@ -1665,7 +1665,7 @@ void C_DECL A_SkelMissile(mobj_t *actor)
         {
             P_SpawnMobj3fv(MT_HFOG, actor->pos);
 
-            S_StartSound(sfx_stlktp, actor);
+            S_StartSound(SFX_STLKTP, actor);
             P_MobjChangeState(actor, S_STALK_HIDE);
             actor->flags &= ~MF_SOLID;
             actor->flags &= ~MF_SHOOTABLE;
@@ -1775,7 +1775,7 @@ void C_DECL A_SkelWhoosh(mobj_t *actor)
         return;
 
     A_FaceTarget(actor);
-    S_StartSound(sfx_skeswg, actor);
+    S_StartSound(SFX_SKESWG, actor);
 }
 
 void C_DECL A_SkelFist(mobj_t *actor)
@@ -1789,7 +1789,7 @@ void C_DECL A_SkelFist(mobj_t *actor)
     if(checkMeleeRange(actor))
     {
         damage = ((P_Random() % 10) + 1) * 6;
-        S_StartSound(sfx_skepch, actor);
+        S_StartSound(SFX_SKEPCH, actor);
         P_DamageMobj(actor->target, actor, actor, damage);
     }
 }
@@ -1797,7 +1797,7 @@ void C_DECL A_SkelFist(mobj_t *actor)
 void C_DECL A_FatRaise(mobj_t *actor)
 {
     A_FaceTarget(actor);
-    S_StartSound(sfx_manatk, actor);
+    S_StartSound(SFX_MANATK, actor);
 }
 
 /**
@@ -2036,15 +2036,15 @@ void C_DECL A_Scream(mobj_t *actor)
     case 0:
         return;
 
-    case sfx_podth1:
-    case sfx_podth2:
-    case sfx_podth3:
-        sound = sfx_podth1 + P_Random() % 3;
+    case SFX_PODTH1:
+    case SFX_PODTH2:
+    case SFX_PODTH3:
+        sound = SFX_PODTH1 + P_Random() % 3;
         break;
 
-    case sfx_bgdth1:
-    case sfx_bgdth2:
-        sound = sfx_bgdth1 + P_Random() % 2;
+    case SFX_BGDTH1:
+    case SFX_BGDTH2:
+        sound = SFX_BGDTH1 + P_Random() % 2;
         break;
 
     default:
@@ -2080,7 +2080,7 @@ void C_DECL A_BossExplode(mobj_t *actor)
     mo = P_SpawnMobj3fv(MT_KABOOM, pos);
     if(mo)
     {
-        S_StartSound(sfx_barexp, mo);
+        S_StartSound(SFX_BAREXP, mo);
         mo->mom[MX] = FIX2FLT((P_Random() - 128) << 11);
         mo->mom[MY] = FIX2FLT((P_Random() - 128) << 11);
         mo->target = actor;
@@ -2129,7 +2129,7 @@ void C_DECL A_Lasersmoke(mobj_t *mo)
 
 void C_DECL A_XScream(mobj_t *actor)
 {
-    S_StartSound(sfx_slop, actor);
+    S_StartSound(SFX_SLOP, actor);
 }
 
 void C_DECL A_Pain(mobj_t *actor)
@@ -2400,7 +2400,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \kludge Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(sfx_hoof |
+    S_StartSound(SFX_HOOF |
                  (gameMode != commercial &&
                   gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
@@ -2412,7 +2412,7 @@ void C_DECL A_Metal(mobj_t *mo)
      * \kludge Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(sfx_metal |
+    S_StartSound(SFX_MEAL |
                  (gameMode != commercial &&
                   gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
@@ -2420,18 +2420,18 @@ void C_DECL A_Metal(mobj_t *mo)
 
 void C_DECL A_BabyMetal(mobj_t *mo)
 {
-    S_StartSound(sfx_bspwlk, mo);
+    S_StartSound(SFX_BSPWLK, mo);
     A_Chase(mo);
 }
 
 void C_DECL A_BrainAwake(mobj_t *mo)
 {
-    S_StartSound(sfx_bossit, NULL);
+    S_StartSound(SFX_BOSSIT, NULL);
 }
 
 void C_DECL A_BrainPain(mobj_t *mo)
 {
-    S_StartSound(sfx_bospn, NULL);
+    S_StartSound(SFX_BOSPN, NULL);
 }
 
 void C_DECL A_BrainScream(mobj_t *mo)
@@ -2455,7 +2455,7 @@ void C_DECL A_BrainScream(mobj_t *mo)
             th->tics = 1;
     }
 
-    S_StartSound(sfx_bosdth, NULL);
+    S_StartSound(SFX_BOSDTH, NULL);
 }
 
 void C_DECL A_BrainExplode(mobj_t *mo)
@@ -2520,7 +2520,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
  */
 void C_DECL A_SpawnSound(mobj_t *mo)
 {
-    S_StartSound(sfx_boscub, mo);
+    S_StartSound(SFX_BOSCUB, mo);
     A_SpawnFly(mo);
 }
 
@@ -2573,12 +2573,12 @@ void C_DECL A_SpawnFly(mobj_t *mo)
 
 void C_DECL A_PlayerScream(mobj_t *mo)
 {
-    int                 sound = sfx_pldeth; // Default death sound.
+    int                 sound = SFX_PLDETH; // Default death sound.
 
     if((gameMode == commercial) && (mo->health < -50))
     {
         // If the player dies less with less than -50% without gibbing.
-        sound = sfx_pdiehi;
+        sound = SFX_PDIEHI;
     }
 
     S_StartSound(sound, mo);

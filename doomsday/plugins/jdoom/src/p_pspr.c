@@ -418,7 +418,7 @@ void C_DECL A_Punch(player_t *player, pspdef_t *psp)
     // Turn to face target.
     if(lineTarget)
     {
-        S_StartSoundEx(sfx_punch, player->plr->mo);
+        S_StartSoundEx(SFX_PUNCH, player->plr->mo);
 
         player->plr->mo->angle =
             R_PointToAngle2(player->plr->mo->pos[VX],
@@ -448,11 +448,11 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
 
     if(!lineTarget)
     {
-        S_StartSoundEx(sfx_sawful, player->plr->mo);
+        S_StartSoundEx(SFX_SAWFUL, player->plr->mo);
         return;
     }
 
-    S_StartSoundEx(sfx_sawhit, player->plr->mo);
+    S_StartSoundEx(SFX_SAWHIT, player->plr->mo);
 
     // Turn to face target.
     angle =
@@ -560,7 +560,7 @@ void P_GunShot(mobj_t *mo, boolean accurate)
 
 void C_DECL A_FirePistol(player_t *player, pspdef_t *psp)
 {
-    S_StartSoundEx(sfx_pistol, player->plr->mo);
+    S_StartSoundEx(SFX_PISTOL, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo,
                       PCLASS_INFO(player->class)->attackEndState);
@@ -582,7 +582,7 @@ void C_DECL A_FireShotgun(player_t *player, pspdef_t *psp)
 {
     int                 i;
 
-    S_StartSoundEx(sfx_shotgn, player->plr->mo);
+    S_StartSoundEx(SFX_SHOTGN, player->plr->mo);
     P_MobjChangeState(player->plr->mo,
                       PCLASS_INFO(player->class)->attackEndState);
 
@@ -607,7 +607,7 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t *psp)
     angle_t             angle;
     int                 damage;
 
-    S_StartSoundEx(sfx_dshtgn, player->plr->mo);
+    S_StartSoundEx(SFX_DSHTGN, player->plr->mo);
     P_MobjChangeState(player->plr->mo,
                       PCLASS_INFO(player->class)->attackEndState);
 
@@ -635,23 +635,23 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t *psp)
 
 void C_DECL A_OpenShotgun2(player_t *player, pspdef_t *psp)
 {
-    S_StartSound(sfx_dbopn, player->plr->mo);
+    S_StartSound(SFX_DBOPN, player->plr->mo);
 }
 
 void C_DECL A_LoadShotgun2(player_t *player, pspdef_t *psp)
 {
-    S_StartSound(sfx_dbload, player->plr->mo);
+    S_StartSound(SFX_DBLOAD, player->plr->mo);
 }
 
 void C_DECL A_CloseShotgun2(player_t *player, pspdef_t *psp)
 {
-    S_StartSound(sfx_dbcls, player->plr->mo);
+    S_StartSound(SFX_DBCLS, player->plr->mo);
     A_ReFire(player, psp);
 }
 
 void C_DECL A_FireCGun(player_t *player, pspdef_t *psp)
 {
-    S_StartSoundEx(sfx_pistol, player->plr->mo);
+    S_StartSoundEx(SFX_PISTOL, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo,
                       PCLASS_INFO(player->class)->attackEndState);
@@ -719,7 +719,7 @@ void C_DECL A_BFGSpray(mobj_t *mo)
 
 void C_DECL A_BFGsound(player_t *player, pspdef_t *psp)
 {
-    S_StartSound(sfx_bfg, player->plr->mo);
+    S_StartSound(SFX_BFG, player->plr->mo);
 }
 
 /**

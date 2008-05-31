@@ -757,14 +757,14 @@ void WI_updateDeathmatchStats(void)
             dmTotals[i] = WI_fragSum(i);
         }
 
-        S_LocalSound(sfx_barexp, 0);
+        S_LocalSound(SFX_BAREXP, 0);
         dmState = 4;
     }
 
     if(dmState == 2)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_pistol, 0);
+            S_LocalSound(SFX_PISTOL, 0);
 
         stillTicking = false;
         for(i = 0; i < NUM_TEAMS; ++i)
@@ -799,7 +799,7 @@ void WI_updateDeathmatchStats(void)
 
         if(!stillTicking)
         {
-            S_LocalSound(sfx_barexp, 0);
+            S_LocalSound(SFX_BAREXP, 0);
             dmState++;
         }
     }
@@ -807,7 +807,7 @@ void WI_updateDeathmatchStats(void)
     {
         if(accelerateStage)
         {
-            S_LocalSound(sfx_slop, 0);
+            S_LocalSound(SFX_SLOP, 0);
             if(gameMode == commercial)
                 WI_initNoState();
             else
@@ -965,14 +965,14 @@ void WI_updateNetgameStats(void)
                 cntFrags[i] = teamInfo[i].totalFrags;
         }
 
-        S_LocalSound(sfx_barexp, 0);
+        S_LocalSound(SFX_BAREXP, 0);
         ngState = 10;
     }
 
     if(ngState == 2)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_pistol, 0);
+            S_LocalSound(SFX_PISTOL, 0);
         stillTicking = false;
 
         for(i = 0; i < NUM_TEAMS; ++i)
@@ -987,14 +987,14 @@ void WI_updateNetgameStats(void)
 
         if(!stillTicking)
         {
-            S_LocalSound(sfx_barexp, 0);
+            S_LocalSound(SFX_BAREXP, 0);
             ngState++;
         }
     }
     else if(ngState == 4)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_pistol, 0);
+            S_LocalSound(SFX_PISTOL, 0);
         stillTicking = false;
 
         for(i = 0; i < NUM_TEAMS; ++i)
@@ -1008,14 +1008,14 @@ void WI_updateNetgameStats(void)
 
         if(!stillTicking)
         {
-            S_LocalSound(sfx_barexp, 0);
+            S_LocalSound(SFX_BAREXP, 0);
             ngState++;
         }
     }
     else if(ngState == 6)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_pistol, 0);
+            S_LocalSound(SFX_PISTOL, 0);
 
         stillTicking = false;
 
@@ -1031,14 +1031,14 @@ void WI_updateNetgameStats(void)
 
         if(!stillTicking)
         {
-            S_LocalSound(sfx_barexp, 0);
+            S_LocalSound(SFX_BAREXP, 0);
             ngState += 1 + 2 * !doFrags;
         }
     }
     else if(ngState == 8)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_pistol, 0);
+            S_LocalSound(SFX_PISTOL, 0);
 
         stillTicking = false;
 
@@ -1054,7 +1054,7 @@ void WI_updateNetgameStats(void)
 
         if(!stillTicking)
         {
-            S_LocalSound(sfx_pldeth, 0);
+            S_LocalSound(SFX_PLDETH, 0);
             ngState++;
         }
     }
@@ -1062,7 +1062,7 @@ void WI_updateNetgameStats(void)
     {
         if(accelerateStage)
         {
-            S_LocalSound(sfx_sgcock, 0);
+            S_LocalSound(SFX_SGCOCK, 0);
             if(gameMode == commercial)
                 WI_initNoState();
             else
@@ -1172,7 +1172,7 @@ void WI_updateStats(void)
         if(wbs->parTime != -1)
             cntPar = wbs->parTime / TICRATE;
 
-        S_LocalSound(sfx_barexp, 0);
+        S_LocalSound(SFX_BAREXP, 0);
         spState = 10;
     }
 
@@ -1181,12 +1181,12 @@ void WI_updateStats(void)
         cntKills[0] += 2;
 
         if(!(bcnt & 3))
-            S_LocalSound(sfx_pistol, 0);
+            S_LocalSound(SFX_PISTOL, 0);
 
         if(cntKills[0] >= (plrs[me].kills * 100) / wbs->maxKills)
         {
             cntKills[0] = (plrs[me].kills * 100) / wbs->maxKills;
-            S_LocalSound(sfx_barexp, 0);
+            S_LocalSound(SFX_BAREXP, 0);
             spState++;
         }
     }
@@ -1195,12 +1195,12 @@ void WI_updateStats(void)
         cntItems[0] += 2;
 
         if(!(bcnt & 3))
-            S_LocalSound(sfx_pistol, 0);
+            S_LocalSound(SFX_PISTOL, 0);
 
         if(cntItems[0] >= (plrs[me].items * 100) / wbs->maxItems)
         {
             cntItems[0] = (plrs[me].items * 100) / wbs->maxItems;
-            S_LocalSound(sfx_barexp, 0);
+            S_LocalSound(SFX_BAREXP, 0);
             spState++;
         }
     }
@@ -1209,19 +1209,19 @@ void WI_updateStats(void)
         cntSecret[0] += 2;
 
         if(!(bcnt & 3))
-            S_LocalSound(sfx_pistol, 0);
+            S_LocalSound(SFX_PISTOL, 0);
 
         if(cntSecret[0] >= (plrs[me].secret * 100) / wbs->maxSecret)
         {
             cntSecret[0] = (plrs[me].secret * 100) / wbs->maxSecret;
-            S_LocalSound(sfx_barexp, 0);
+            S_LocalSound(SFX_BAREXP, 0);
             spState++;
         }
     }
     else if(spState == 8)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_pistol, 0);
+            S_LocalSound(SFX_PISTOL, 0);
 
         cntTime += 3;
 
@@ -1238,7 +1238,7 @@ void WI_updateStats(void)
 
                 if(cntTime >= plrs[me].time / TICRATE)
                 {
-                    S_LocalSound(sfx_barexp, 0);
+                    S_LocalSound(SFX_BAREXP, 0);
                     spState++;
                 }
             }
@@ -1250,7 +1250,7 @@ void WI_updateStats(void)
     {
         if(accelerateStage)
         {
-            S_LocalSound(sfx_sgcock, 0);
+            S_LocalSound(SFX_SGCOCK, 0);
 
             if(gameMode == commercial)
                 WI_initNoState();
@@ -1352,9 +1352,9 @@ void WI_Ticker(void)
     {
         // Intermission music.
         if(gameMode == commercial)
-            S_StartMusicNum(mus_dm2int, true);
+            S_StartMusicNum(MUS_DM2INT, true);
         else
-            S_StartMusicNum(mus_inter, true);
+            S_StartMusicNum(MUS_INTER, true);
     }
 
     WI_checkForAccelerate();

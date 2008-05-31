@@ -64,7 +64,7 @@
 // MACROS ------------------------------------------------------------------
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-#  define TELEPORTSOUND     sfx_telept
+#  define TELEPORTSOUND     SFX_TELEPT
 #  define MAX_START_SPOTS   4 // Maximum number of different player starts.
 #else
 #  define TELEPORTSOUND     SFX_TELEPORT

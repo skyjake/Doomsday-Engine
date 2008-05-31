@@ -616,7 +616,7 @@ void P_MobjMoveZ(mobj_t *mo)
                 mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
 
                 if(mo->player->health > 0)
-                    S_StartSound(sfx_plroof, mo);
+                    S_StartSound(SFX_PLROOF, mo);
             }
             mo->mom[MZ] = 0;
         }
@@ -679,7 +679,7 @@ void P_MobjMoveZ(mobj_t *mo)
                 // Fix DOOM bug - dead players grunting when hitting the ground
                 // (e.g., after an archvile attack)
                 if(mo->player->health > 0)
-                    S_StartSound(sfx_plroof, mo);
+                    S_StartSound(SFX_PLROOF, mo);
             }
 
             P_HitFloor(mo);
@@ -794,14 +794,14 @@ void P_NightmareRespawn(mobj_t *mobj)
     mo = P_SpawnMobj3f(MT_TFOG, mobj->pos[VX], mobj->pos[VY],
                        P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT);
     // Initiate teleport sound.
-    S_StartSound(sfx_telept, mo);
+    S_StartSound(SFX_TELEPT, mo);
 
     // Spawn a teleport fog at the new spot.
     ss = R_PointInSubsector(pos[VX], pos[VY]);
     mo = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY],
                        P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT);
 
-    S_StartSound(sfx_telept, mo);
+    S_StartSound(SFX_TELEPT, mo);
 
     if(mobj->info->flags & MF_SPAWNCEILING)
         pos[VZ] = ONCEILINGZ;
@@ -1542,7 +1542,7 @@ int P_HitFloor(mobj_t *thing)
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 8);
             mo->mom[MZ] = 2 + FIX2FLT(P_Random() << 8);
         }
-        S_StartSound(sfx_gloop, mo);
+        S_StartSound(SFX_GLOOP, mo);
         return FLOOR_WATER;
 
     case FLOOR_LAVA:
@@ -1555,7 +1555,7 @@ int P_HitFloor(mobj_t *thing)
         {
             mo->mom[MZ] = 1 + FIX2FLT((P_Random() << 7));
         }
-        S_StartSound(sfx_burn, mo);
+        S_StartSound(SFX_BURN, mo);
         return FLOOR_LAVA;
 
     case FLOOR_SLUDGE:
@@ -1878,11 +1878,11 @@ void C_DECL A_ContMobjSound(mobj_t *actor)
     switch(actor->type)
     {
     case MT_KNIGHTAXE:
-        S_StartSound(sfx_kgtatk, actor);
+        S_StartSound(SFX_KGTATK, actor);
         break;
 
     case MT_MUMMYFX1:
-        S_StartSound(sfx_mumhed, actor);
+        S_StartSound(SFX_MUMHED, actor);
         break;
 
     default:

@@ -68,31 +68,31 @@
 // MACROS ------------------------------------------------------------------
 
 // Sounds played by the doors when changing state.
-// jHexen uses sound sequences, so it's are defined as 'sfx_None'.
+// jHexen uses sound sequences, so it's are defined as 'SFX_NONE'.
 #if __JDOOM64__
-# define SFX_DOORCLOSE         (sfx_dorcls)
-# define SFX_DOORBLAZECLOSE    (sfx_bdcls)
-# define SFX_DOOROPEN          (sfx_doropn)
-# define SFX_DOORBLAZEOPEN     (sfx_bdopn)
-# define SFX_DOORLOCKED        (sfx_oof)
+# define SFX_DOORCLOSE         (SFX_DORCLS)
+# define SFX_DOORBLAZECLOSE    (SFX_BDCLS)
+# define SFX_DOOROPEN          (SFX_DOROPN)
+# define SFX_DOORBLAZEOPEN     (SFX_BDOPN)
+# define SFX_DOORLOCKED        (SFX_OOF)
 #elif __WOLFTC__
-# define SFX_DOORCLOSE         (sfx_wlfdrc)
-# define SFX_DOORBLAZECLOSE    (sfx_wlfpwl)
-# define SFX_DOOROPEN          (sfx_wlfdro)
-# define SFX_DOORBLAZEOPEN     (sfx_wlfpwl)
-# define SFX_DOORLOCKED        (sfx_dorlck)
+# define SFX_DOORCLOSE         (SFX_WLFDRC)
+# define SFX_DOORBLAZECLOSE    (SFX_WLFPWL)
+# define SFX_DOOROPEN          (SFX_WLFDRO)
+# define SFX_DOORBLAZEOPEN     (SFX_WLFPWL)
+# define SFX_DOORLOCKED        (SFX_DORLCK)
 #elif __JDOOM__
-# define SFX_DOORCLOSE         (sfx_dorcls)
-# define SFX_DOORBLAZECLOSE    (sfx_bdcls)
-# define SFX_DOOROPEN          (sfx_doropn)
-# define SFX_DOORBLAZEOPEN     (sfx_bdopn)
-# define SFX_DOORLOCKED        (sfx_oof)
+# define SFX_DOORCLOSE         (SFX_DORCLS)
+# define SFX_DOORBLAZECLOSE    (SFX_BDCLS)
+# define SFX_DOOROPEN          (SFX_DOROPN)
+# define SFX_DOORBLAZEOPEN     (SFX_BDOPN)
+# define SFX_DOORLOCKED        (SFX_OOF)
 #elif __JHERETIC__
-# define SFX_DOORCLOSE         (sfx_doropn)
-# define SFX_DOORBLAZECLOSE    (sfx_None)
-# define SFX_DOOROPEN          (sfx_doropn)
-# define SFX_DOORBLAZEOPEN     (sfx_doropn)
-# define SFX_DOORLOCKED        (sfx_plroof)
+# define SFX_DOORCLOSE         (SFX_DOROPN)
+# define SFX_DOORBLAZECLOSE    (SFX_NONE)
+# define SFX_DOOROPEN          (SFX_DOROPN)
+# define SFX_DOORBLAZEOPEN     (SFX_DOROPN)
+# define SFX_DOORLOCKED        (SFX_PLROOF)
 #elif __JHEXEN__
 # define SFX_DOORCLOSE         (SFX_NONE)
 # define SFX_DOORBLAZECLOSE    (SFX_NONE)
@@ -242,7 +242,7 @@ void T_Door(door_t* door)
         {
             // DOOMII BUG:
             // The switch bellow SHOULD(?) play the blazing open sound if
-            // the door type is blazing and not sfx_doropn.
+            // the door type is blazing and not SFX_DOROPN.
             switch(door->type)
             {
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__

@@ -567,14 +567,14 @@ void D_ChatSound(void)
 #elif __JSTRIFE__
     S_LocalSound(SFX_CHAT, NULL);
 #elif __JHERETIC__
-    S_LocalSound(sfx_chat, NULL);
+    S_LocalSound(SFX_CHAT, NULL);
 #else
 # if __JDOOM__
     if(gameMode == commercial)
-        S_LocalSound(sfx_radio, NULL);
+        S_LocalSound(SFX_RADIO, NULL);
     else
 # endif
-        S_LocalSound(sfx_tink, NULL);
+        S_LocalSound(SFX_TINK, NULL);
 #endif
 }
 

@@ -149,7 +149,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
-        S_ConsoleSound(sfx_wpnup, NULL, player - players);
+        S_ConsoleSound(SFX_WPNUP, NULL, player - players);
         return false;
     }
     else
@@ -372,7 +372,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         return;
     }
 
-    sound = sfx_itemup;
+    sound = SFX_ITEMUP;
     player = toucher->player;
 
     // Dead thing touching (an happen with a sliding player corpse).
@@ -430,7 +430,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         player->plr->mo->health = player->health;
         player->update |= PSF_HEALTH;
         P_SetMessage(player, GOTSUPER, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
 
         // Maybe unhide the HUD?
         if(player == &players[CONSOLEPLAYER])
@@ -445,7 +445,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         player->update |= PSF_HEALTH;
         P_GiveArmor(player, armorClass[1]);
         P_SetMessage(player, GOTMSPHERE, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
 
         // Maybe unhide the HUD?
         if(player == &players[CONSOLEPLAYER])
@@ -536,7 +536,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTINVUL, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     case SPR_PSTR:
@@ -549,7 +549,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             player->pendingWeapon = WT_FIRST;
             player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
         }
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     case SPR_PINS:
@@ -557,7 +557,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTINVIS, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     case SPR_SUIT:
@@ -565,7 +565,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTSUIT, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     case SPR_PMAP:
@@ -573,7 +573,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTMAP, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     case SPR_PVIS:
@@ -581,7 +581,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTVISOR, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     // Ammo.
@@ -658,7 +658,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTBFG9000, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_MGUN:
@@ -666,7 +666,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTCHAINGUN, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_CSAW:
@@ -674,7 +674,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTCHAINSAW, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_LAUN:
@@ -682,7 +682,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTLAUNCHER, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_PLAS:
@@ -690,7 +690,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTPLASMA, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_SHOT:
@@ -698,7 +698,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTSHOTGUN, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_SGN2:
@@ -706,7 +706,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, GOTSHOTGUN2, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     default:

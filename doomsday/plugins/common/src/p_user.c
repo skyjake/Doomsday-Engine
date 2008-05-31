@@ -1,4 +1,4 @@
-/**
+/**\file
  *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
@@ -115,9 +115,9 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         {640, 1280, 320},
         24,
 # if __WOLFTC__
-        sfx_blockd
+        SFX_BLOCKD
 # else
-        sfx_noway
+        SFX_NOWAY
 # endif
     }
 };
@@ -135,7 +135,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         2048,
         {640, 1280, 320},
         24,
-        sfx_None
+        SFX_NONE
     },
     {   // Chicken
         S_CHICPLAY,
@@ -149,7 +149,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         2500,
         {640, 1280, 320},
         24,
-        sfx_None
+        SFX_NONE
     },
 };
 #elif __JHEXEN__
@@ -694,7 +694,7 @@ void P_MorphThink(player_t *player)
 
     if(P_Random() < 48)
     {   // Just noise.
-        S_StartSound(sfx_chicact, pmo);
+        S_StartSound(SFX_CHICACT, pmo);
     }
 # endif
 }
@@ -801,7 +801,7 @@ boolean P_UndoPlayerMorph(player_t *player)
                       pos[VY] + 20 * FIX2FLT(finesine[angle]),
                       pos[VZ] + TELEFOGHEIGHT);
 # if __JHERETIC__
-    S_StartSound(sfx_telept, fog);
+    S_StartSound(SFX_TELEPT, fog);
 # else
     S_StartSound(SFX_TELEPORT, fog);
 # endif

@@ -765,7 +765,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
                 P_RipperBlood(tmThing);
             }
 #if __JHERETIC__
-            S_StartSound(sfx_ripslop, tmThing);
+            S_StartSound(SFX_RIPSLOP, tmThing);
 #endif
 #if __JDOOM__
             if(tmThing->damage == DDMAXINT) //// \kludge to support old save games.
@@ -1655,7 +1655,7 @@ if(lineWasHit)
     {
         // Make blaster big puff.
         mobj_t *mo = P_SpawnMobj3fv(MT_BLASTERPUFF2, pos);
-        S_StartSound(sfx_blshit, mo);
+        S_StartSound(SFX_BLSHIT, mo);
     }
     else
         P_SpawnPuff(pos[VX], pos[VY], pos[VZ]);
@@ -2510,7 +2510,7 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
         //// \fixme kaiser - the def file is too fucked up..
         //// DJS - FIXME!
         P_MobjChangeState(thing, S_HEADCANDLES + 3);
-        S_StartSound(sfx_slop, thing);
+        S_StartSound(SFX_SLOP, thing);
 # elif __JDOOM__
         P_MobjChangeState(thing, S_GIBS);
 # endif

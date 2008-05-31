@@ -170,7 +170,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
-        S_ConsoleSound(sfx_wpnup, NULL, player - players);
+        S_ConsoleSound(SFX_WPNUP, NULL, player - players);
         return false;
     }
     else
@@ -376,14 +376,14 @@ void P_SetDormantArtifact(mobj_t *arti)
         P_MobjChangeState(arti, S_DEADARTI1);
     }
 
-    S_StartSound(sfx_artiup, arti);
+    S_StartSound(SFX_ARTIUP, arti);
 }
 
 void C_DECL A_RestoreArtifact(mobj_t *arti)
 {
     arti->flags |= MF_SPECIAL;
     P_MobjChangeState(arti, arti->info->spawnState);
-    S_StartSound(sfx_respawn, arti);
+    S_StartSound(SFX_RESPAWN, arti);
 }
 
 void P_HideSpecialThing(mobj_t *thing)
@@ -404,7 +404,7 @@ void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
     }
 
     thing->flags2 &= ~MF2_DONTDRAW;
-    S_StartSound(sfx_respawn, thing);
+    S_StartSound(SFX_RESPAWN, thing);
 }
 
 void C_DECL A_RestoreSpecialThing2(mobj_t *thing)
@@ -432,7 +432,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         return; // Toucher is dead.
     }
 
-    sound = sfx_itemup;
+    sound = SFX_ITEMUP;
     player = toucher->player;
     if(player == NULL)
         return;
@@ -495,7 +495,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         }
 
         P_GiveKey(player, KT_BLUE);
-        sound = sfx_keyup;
+        sound = SFX_KEYUP;
         if(!IS_NETGAME)
         {
             break;
@@ -508,7 +508,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             P_SetMessage(player, TXT_GOTYELLOWKEY, false);
         }
 
-        sound = sfx_keyup;
+        sound = SFX_KEYUP;
         P_GiveKey(player, KT_YELLOW);
         if(!IS_NETGAME)
         {
@@ -522,7 +522,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             P_SetMessage(player, TXT_GOTGREENKEY, false);
         }
 
-        sound = sfx_keyup;
+        sound = SFX_KEYUP;
         P_GiveKey(player, KT_GREEN);
         if(!IS_NETGAME)
         {
@@ -702,7 +702,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, TXT_WPNMACE, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_WBOW: // Weapon_Crossbow.
@@ -710,7 +710,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, TXT_WPNCROSSBOW, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_WBLS: // Weapon_Blaster.
@@ -718,7 +718,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, TXT_WPNBLASTER, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_WSKL: // Weapon_SkullRod.
@@ -726,7 +726,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, TXT_WPNSKULLROD, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_WPHX: // Weapon_PhoenixRod.
@@ -734,7 +734,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, TXT_WPNPHOENIXROD, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_WGNT: // Weapon_Gauntlets.
@@ -742,7 +742,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             return;
 
         P_SetMessage(player, TXT_WPNGAUNTLETS, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     default:
@@ -934,7 +934,7 @@ boolean P_MorphPlayer(player_t *player)
     P_MobjChangeState(pmo, S_FREETARGMOBJ);
 
     fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT);
-    S_StartSound(sfx_telept, fog);
+    S_StartSound(SFX_TELEPT, fog);
 
     chicken = P_SpawnMobj3fv(MT_CHICPLAYER, pos);
     chicken->special1 = player->readyWeapon;
@@ -993,7 +993,7 @@ boolean P_MorphMonster(mobj_t *actor)
     P_MobjChangeState(actor, S_FREETARGMOBJ);
 
     fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT);
-    S_StartSound(sfx_telept, fog);
+    S_StartSound(SFX_TELEPT, fog);
 
     chicken = P_SpawnMobj3fv(MT_CHICKEN, pos);
     chicken->special2 = moType;

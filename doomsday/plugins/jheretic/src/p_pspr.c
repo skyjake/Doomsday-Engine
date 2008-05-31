@@ -117,7 +117,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      0,                         // raise sound id
      S_STAFFDOWN2,              // downstate
      S_STAFFREADY2_1,           // readystate
-     sfx_stfcrk,                // readysound
+     SFX_STFCRK,                // readysound
      S_STAFFATK2_1,             // atkstate
      S_STAFFATK2_1,             // holdatkstate
      S_NULL                     // flashstate
@@ -575,7 +575,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_GAUNTLETUP,              // upstate
-     sfx_gntact,                // raise sound id
+     SFX_GNTACT,                // raise sound id
      S_GAUNTLETDOWN,            // downstate
      S_GAUNTLETREADY,           // readystate
      0,                         // readysound
@@ -590,7 +590,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_GAUNTLETUP2,             // upstate
-     sfx_gntact,                // raise sound id
+     SFX_GNTACT,                // raise sound id
      S_GAUNTLETDOWN2,           // downstate
      S_GAUNTLETREADY2_1,        // readystate
      0,                         // readysound
@@ -843,7 +843,7 @@ void P_FireWeapon(player_t *player)
     if(player->readyWeapon == WT_EIGHTH && !player->refire)
     {
         // Play the sound for the initial gauntlet attack
-        S_StartSoundEx(sfx_gntuse, player->plr->mo);
+        S_StartSoundEx(SFX_GNTUSE, player->plr->mo);
     }
 
     player->update |= PSF_AMMO;
@@ -1137,7 +1137,7 @@ void C_DECL A_BeakAttackPL1(player_t *player, pspdef_t *psp)
                             lineTarget->pos[VX], lineTarget->pos[VY]);
     }
 
-    S_StartSoundEx(sfx_chicpk1 + (P_Random() % 3), player->plr->mo);
+    S_StartSoundEx(SFX_CHICPK1 + (P_Random() % 3), player->plr->mo);
     player->chickenPeck = 12;
     psp->tics -= P_Random() & 7;
 }
@@ -1162,7 +1162,7 @@ void C_DECL A_BeakAttackPL2(player_t *player, pspdef_t *psp)
                             lineTarget->pos[VX], lineTarget->pos[VY]);
     }
 
-    S_StartSoundEx(sfx_chicpk1 + (P_Random() % 3), player->plr->mo);
+    S_StartSoundEx(SFX_CHICPK1 + (P_Random() % 3), player->plr->mo);
     player->chickenPeck = 12;
     psp->tics -= P_Random() & 3;
 }
@@ -1221,7 +1221,7 @@ void C_DECL A_FireBlasterPL1(player_t *player, pspdef_t *psp)
     int                 damage;
 
     mo = player->plr->mo;
-    S_StartSoundEx(sfx_gldhit, mo);
+    S_StartSoundEx(SFX_GLDHIT, mo);
     P_ShotAmmo(player);
     P_BulletSlope(mo);
 
@@ -1235,7 +1235,7 @@ void C_DECL A_FireBlasterPL1(player_t *player, pspdef_t *psp)
     puffType = MT_BLASTERPUFF1;
 
     P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
-    S_StartSoundEx(sfx_blssht, mo);
+    S_StartSoundEx(SFX_BLSSHT, mo);
 }
 
 void C_DECL A_FireBlasterPL2(player_t* player, pspdef_t* psp)
@@ -1243,7 +1243,7 @@ void C_DECL A_FireBlasterPL2(player_t* player, pspdef_t* psp)
     mobj_t*             mo;
 
     P_ShotAmmo(player);
-    S_StartSoundEx(sfx_blssht, player->plr->mo);
+    S_StartSoundEx(SFX_BLSSHT, player->plr->mo);
     if(IS_CLIENT)
         return;
 
@@ -1260,7 +1260,7 @@ void C_DECL A_FireGoldWandPL1(player_t *player, pspdef_t *psp)
 
     mo = player->plr->mo;
     P_ShotAmmo(player);
-    S_StartSoundEx(sfx_gldhit, player->plr->mo);
+    S_StartSoundEx(SFX_GLDHIT, player->plr->mo);
     if(IS_CLIENT)
         return;
 
@@ -1285,7 +1285,7 @@ void C_DECL A_FireGoldWandPL2(player_t *player, pspdef_t *psp)
 
     mo = player->plr->mo;
     P_ShotAmmo(player);
-    S_StartSoundEx(sfx_gldhit, player->plr->mo);
+    S_StartSoundEx(SFX_GLDHIT, player->plr->mo);
     if(IS_CLIENT)
         return;
 
@@ -1335,7 +1335,7 @@ void C_DECL A_FireMacePL1B(player_t *player, pspdef_t *psp)
         ball->info->speed * FIX2FLT(finesine[an]);
 
     P_CheckMissileSpawn(ball);
-    S_StartSound(sfx_lobsht, ball);
+    S_StartSound(SFX_LOBSHT, ball);
 }
 
 void C_DECL A_FireMacePL1(player_t *player, pspdef_t *psp)
@@ -1404,13 +1404,13 @@ void C_DECL A_MaceBallImpact(mobj_t *ball)
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
         ball->flags2 &= ~MF2_FLOORBOUNCE;
         P_MobjChangeState(ball, ball->info->spawnState);
-        S_StartSound(sfx_bounce, ball);
+        S_StartSound(SFX_BOUNCE, ball);
     }
     else
     {   // Explode.
         ball->flags |= MF_NOGRAVITY;
         ball->flags2 &= ~MF2_LOGRAV;
-        S_StartSound(sfx_lobhit, ball);
+        S_StartSound(SFX_LOBHIT, ball);
     }
 }
 
@@ -1469,7 +1469,7 @@ void C_DECL A_FireMacePL2(player_t *player, pspdef_t *psp)
     mobj_t             *mo;
 
     P_ShotAmmo(player);
-    S_StartSoundEx(sfx_lobsht, player->plr->mo);
+    S_StartSoundEx(SFX_LOBSHT, player->plr->mo);
     if(IS_CLIENT)
         return;
 
@@ -1546,13 +1546,13 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
         }
 
         P_MobjChangeState(ball, ball->info->spawnState);
-        S_StartSound(sfx_pstop, ball);
+        S_StartSound(SFX_PSTOP, ball);
     }
     else
     {   // Explode.
         ball->flags |= MF_NOGRAVITY;
         ball->flags2 &= ~MF2_LOGRAV;
-        S_StartSound(sfx_phohit, ball);
+        S_StartSound(SFX_PHOHIT, ball);
     }
 }
 
@@ -1667,7 +1667,7 @@ void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t *psp)
     if(lineTarget)
         missileMobj->tracer = lineTarget;
 
-    S_StartSound(sfx_hrnpow, missileMobj);
+    S_StartSound(SFX_HRNPOW, missileMobj);
 }
 
 void C_DECL A_SkullRodPL2Seek(mobj_t *actor)
@@ -1777,7 +1777,7 @@ void C_DECL A_SkullRodStorm(mobj_t *actor)
 
     P_CheckMissileSpawn(mo);
     if(!(actor->special1 & 31))
-        S_StartSound(sfx_ramrain, actor);
+        S_StartSound(SFX_RAMRAIN, actor);
 
     actor->special1++;
 }
@@ -1886,7 +1886,7 @@ void C_DECL A_FirePhoenixPL2(player_t *player, pspdef_t *psp)
 
     if(!player->refire || !(levelTime % 38))
     {
-        S_StartSoundEx(sfx_phopow, player->plr->mo);
+        S_StartSoundEx(SFX_PHOPOW, player->plr->mo);
     }
 
     P_CheckMissileSpawn(mo);
@@ -1940,7 +1940,7 @@ void C_DECL A_GauntletAttack(player_t *player, pspdef_t *psp)
             player->plr->extraLight = !player->plr->extraLight;
         }
 
-        S_StartSoundEx(sfx_gntful, player->plr->mo);
+        S_StartSoundEx(SFX_GNTFUL, player->plr->mo);
         return;
     }
 
@@ -1961,11 +1961,11 @@ void C_DECL A_GauntletAttack(player_t *player, pspdef_t *psp)
     if(player->powers[PT_WEAPONLEVEL2])
     {
         P_GiveBody(player, damage / 2);
-        S_StartSoundEx(sfx_gntpow, player->plr->mo);
+        S_StartSoundEx(SFX_GNTPOW, player->plr->mo);
     }
     else
     {
-        S_StartSoundEx(sfx_gnthit, player->plr->mo);
+        S_StartSoundEx(SFX_GNTHIT, player->plr->mo);
     }
 
     // Turn to face target.

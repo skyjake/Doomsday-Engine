@@ -68,11 +68,11 @@
 // MACROS ------------------------------------------------------------------
 
 #if __WOLFTC__
-# define SFX_FLOORMOVE          (sfx_pltstr)
+# define SFX_FLOORMOVE          (SFX_PLTSTR)
 #elif __JHERETIC__
-# define SFX_FLOORMOVE          (sfx_dormov)
+# define SFX_FLOORMOVE          (SFX_DORMOV)
 #else
-# define SFX_FLOORMOVE          (sfx_stnmov)
+# define SFX_FLOORMOVE          (SFX_STNMOV)
 #endif
 
 #if __JHEXEN__
@@ -390,12 +390,12 @@ void T_MoveFloor(floor_t* floor)
         SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
 #else
 # if __WOLFTC__
-        S_SectorSound(floor->sector, SORG_FLOOR, sfx_pltstp);
+        S_SectorSound(floor->sector, SORG_FLOOR, SFX_PLTSTP);
 # else
 #   if __JHERETIC__
         if(floor->type == FT_RAISEBUILDSTEP)
 #   endif
-            S_SectorSound(floor->sector, SORG_FLOOR, sfx_pstop);
+            S_SectorSound(floor->sector, SORG_FLOOR, SFX_PSTOP);
 # endif
 #endif
 #if __JHEXEN__

@@ -329,7 +329,7 @@ void P_ArtiTele(player_t *player)
 
 # else
     P_Teleport(player->plr->mo, destPos[VX], destPos[VY], destAngle);
-    S_StartSound(sfx_wpnup, NULL);
+    S_StartSound(SFX_WPNUP, NULL);
 # endif
 }
 #endif

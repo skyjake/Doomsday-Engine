@@ -851,7 +851,7 @@ void P_PlayerInSpecialSector(player_t *player)
         if(cfg.secretMsg)
         {
             P_SetMessage(player, "You've found a secret area!", false);
-            S_ConsoleSound(sfx_getpow, 0, player - players);
+            S_ConsoleSound(SFX_GETPOW, 0, player - players);
         }
         break;
 
@@ -948,7 +948,7 @@ void P_UpdateSpecials(void)
                               (int) button->section);
                 }
 
-                S_StartSound(sfx_swtchn,
+                S_StartSound(SFX_SWTCHN,
                              P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
 
                 button->line = NULL;
@@ -1196,7 +1196,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         // Prevent 'zombie players' from exiting levels.
         if(mo->player && mo->player->health <= 0 && !cfg.zombiesCanExit)
         {
-            S_StartSound(sfx_noway, mo);
+            S_StartSound(SFX_NOWAY, mo);
             return false;
         }
 
@@ -1278,7 +1278,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         // Prevent 'zombie players' from exiting levels.
         if(mo->player && mo->player->health <= 0 && !cfg.zombiesCanExit)
         {
-            S_StartSound(sfx_noway, mo);
+            S_StartSound(SFX_NOWAY, mo);
             return false;
         }
 

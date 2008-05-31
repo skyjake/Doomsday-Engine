@@ -148,7 +148,7 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
         {
             // Spawn teleport fog at source and destination.
             fog = P_SpawnMobj3fv(MT_TFOG, oldPos);
-            S_StartSound(sfx_telept, fog);
+            S_StartSound(SFX_TELEPT, fog);
 
             an = dest->angle >> ANGLETOFINESHIFT;
             fog = P_SpawnMobj3f(MT_TFOG,
@@ -157,7 +157,7 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
                                 mo->pos[VZ]);
 
             // Emit sound, where?
-            S_StartSound(sfx_telept, fog);
+            S_StartSound(SFX_TELEPT, fog);
         }
 
         mo->angle = dest->angle;

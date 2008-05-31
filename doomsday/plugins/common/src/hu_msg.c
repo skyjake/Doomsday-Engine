@@ -723,16 +723,16 @@ static void sendMessage(char *msg)
 
 #if __WOLFTC__
     if(gameMode == commercial)
-        S_LocalSound(sfx_hudms1, 0);
+        S_LocalSound(SFX_HUDMS1, 0);
     else
-        S_LocalSound(sfx_hudms2, 0);
+        S_LocalSound(SFX_HUDMS2, 0);
 #elif __JDOOM__
     if(gameMode == commercial)
-        S_LocalSound(sfx_radio, 0);
+        S_LocalSound(SFX_RADIO, 0);
     else
-        S_LocalSound(sfx_tink, 0);
+        S_LocalSound(SFX_TINK, 0);
 #elif __JDOOM64__
-    S_LocalSound(sfx_radio, 0);
+    S_LocalSound(SFX_RADIO, 0);
 #endif
 }
 

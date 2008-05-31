@@ -330,7 +330,7 @@ boolean P_InventoryUseArtifact(player_t *player, artitype_e arti)
 
 # if __JHERETIC__
     if(play_sound)
-        S_ConsoleSound(sfx_artiuse, NULL, player - players);
+        S_ConsoleSound(SFX_ARTIUSE, NULL, player - players);
 # endif
 
     return success;
@@ -407,7 +407,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
             else
             {   // Succeeded.
                 player->morphTics = 0;
-                S_StartSound(sfx_wpnup, player->plr->mo);
+                S_StartSound(SFX_WPNUP, player->plr->mo);
             }
         }
         else

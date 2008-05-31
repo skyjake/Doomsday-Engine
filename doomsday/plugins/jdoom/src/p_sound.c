@@ -57,25 +57,25 @@ int S_GetMusicNum(int episode, int map)
 
     if(gameMode == commercial)
     {
-        mnum = mus_runnin + map - 1;
+        mnum = MUS_RUNNIN + map - 1;
     }
     else
     {
         int                 spmus[] = {
             // Song - Who? - Where?
-            mus_e3m4,           // American     e4m1
-            mus_e3m2,           // Romero       e4m2
-            mus_e3m3,           // Shawn        e4m3
-            mus_e1m5,           // American     e4m4
-            mus_e2m7,           // Tim          e4m5
-            mus_e2m4,           // Romero       e4m6
-            mus_e2m6,           // J.Anderson   e4m7 CHIRON.WAD
-            mus_e2m5,           // Shawn        e4m8
-            mus_e1m9            // Tim          e4m9
+            MUS_E3M4,           // American     e4m1
+            MUS_E3M2,           // Romero       e4m2
+            MUS_E3M3,           // Shawn        e4m3
+            MUS_E1M5,           // American     e4m4
+            MUS_E2M7,           // Tim          e4m5
+            MUS_E2M4,           // Romero       e4m6
+            MUS_E2M6,           // J.Anderson   e4m7 CHIRON.WAD
+            MUS_E2M5,           // Shawn        e4m8
+            MUS_E1M9            // Tim          e4m9
         };
 
         if(episode < 4)
-            mnum = mus_e1m1 + (episode - 1) * 9 + map - 1;
+            mnum = MUS_E1M1 + (episode - 1) * 9 + map - 1;
         else
             mnum = spmus[map - 1];
     }

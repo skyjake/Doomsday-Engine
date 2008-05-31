@@ -435,7 +435,7 @@ void Cht_MusicFunc(player_t *plyr, char *buf)
     int                 off, musnum;
 
     off = (buf[0] - '0') * 10 + buf[1] - '0';
-    musnum = mus_runnin + off - 1;
+    musnum = MUS_RUNNIN + off - 1;
     if(off < 1 || off > 35)
         P_SetMessage(plyr, STSTR_NOMUS, false);
     else
@@ -618,7 +618,7 @@ DEFCC(CCmdCheatSuicide)
 {
     if(G_GetGameState() != GS_LEVEL)
     {
-        S_LocalSound(sfx_oof, NULL);
+        S_LocalSound(SFX_OOF, NULL);
         Con_Printf("Can only suicide when in a game!\n");
         return true;
     }
@@ -896,7 +896,7 @@ DEFCC(CCmdCheatExitLevel)
 
     if(G_GetGameState() != GS_LEVEL)
     {
-        S_LocalSound(sfx_oof, NULL);
+        S_LocalSound(SFX_OOF, NULL);
         Con_Printf("Can only exit a level when in a game!\n");
         return true;
     }

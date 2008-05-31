@@ -71,9 +71,9 @@
 #if __JHEXEN__ || __JSTRIFE__
 #  define SOUND_COUNTDOWN       SFX_PICKUP_KEY
 #elif __JDOOM__ || __JDOOM64__
-#  define SOUND_COUNTDOWN       sfx_getpow
+#  define SOUND_COUNTDOWN       SFX_GETPOW
 #elif __JHERETIC__
-#  define SOUND_COUNTDOWN       sfx_keyup
+#  define SOUND_COUNTDOWN       SFX_KEYUP
 #endif
 
 #define SOUND_VICTORY           SOUND_COUNTDOWN

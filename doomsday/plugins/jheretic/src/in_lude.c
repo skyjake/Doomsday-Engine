@@ -451,7 +451,7 @@ void IN_Ticker(void)
         {
             interState = 2;
             skipIntermission = false;
-            S_StartSound(sfx_dorcls, NULL);
+            S_StartSound(SFX_DORCLS, NULL);
             NetSv_Intermission(IMF_STATE, interState, 0);
             return;
         }
@@ -459,7 +459,7 @@ void IN_Ticker(void)
         interState = 3;
         cnt = 10;
         skipIntermission = false;
-        S_StartSound(sfx_dorcls, NULL);
+        S_StartSound(SFX_DORCLS, NULL);
         NetSv_Intermission(IMF_STATE, interState, 0);
     }
 }
@@ -524,7 +524,7 @@ void IN_Drawer(void)
 
     if(oldInterState != 2 && interState == 2)
     {
-        S_LocalSound(sfx_pstop, NULL);
+        S_LocalSound(SFX_PSTOP, NULL);
     }
 
     oldInterState = interState;
@@ -695,7 +695,7 @@ void IN_DrawSingleStats(void)
 
     if(sounds < 1 && interTime >= 30)
     {
-        S_LocalSound(sfx_dorcls, NULL);
+        S_LocalSound(SFX_DORCLS, NULL);
         sounds++;
     }
 
@@ -712,7 +712,7 @@ void IN_DrawSingleStats(void)
 
     if(sounds < 2 && interTime >= 60)
     {
-        S_LocalSound(sfx_dorcls, NULL);
+        S_LocalSound(SFX_DORCLS, NULL);
         sounds++;
     }
 
@@ -729,7 +729,7 @@ void IN_DrawSingleStats(void)
 
     if(sounds < 3 && interTime >= 90)
     {
-        S_LocalSound(sfx_dorcls, NULL);
+        S_LocalSound(SFX_DORCLS, NULL);
         sounds++;
     }
 
@@ -746,7 +746,7 @@ void IN_DrawSingleStats(void)
 
     if(sounds < 4 && interTime >= 150)
     {
-        S_LocalSound(sfx_dorcls, NULL);
+        S_LocalSound(SFX_DORCLS, NULL);
         sounds++;
     }
 
@@ -807,7 +807,7 @@ void IN_DrawCoopStats(void)
             }
             else if(interTime >= 40 && sounds < 1)
             {
-                S_LocalSound(sfx_dorcls, NULL);
+                S_LocalSound(SFX_DORCLS, NULL);
                 sounds++;
             }
 
@@ -871,13 +871,13 @@ void IN_DrawDMStats(void)
 
     if(interTime >= 20 && sounds < 1)
     {
-        S_LocalSound(sfx_dorcls, NULL);
+        S_LocalSound(SFX_DORCLS, NULL);
         sounds++;
     }
 
     if(interTime >= 100 && slaughterBoy && sounds < 2)
     {
-        S_LocalSound(sfx_wpnup, NULL);
+        S_LocalSound(SFX_WPNUP, NULL);
         sounds++;
     }
 

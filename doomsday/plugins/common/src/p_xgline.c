@@ -2156,12 +2156,12 @@ boolean XL_CheckKeys(mobj_t *mo, int flags2)
         "BLUE SKULL KEY", "YELLOW SKULL KEY", "RED SKULL KEY"
     };
     int    *keys = (int *) act->keys;
-    int     badsound = sfx_oof;
+    int     badsound = SFX_OOF;
 #elif __JHERETIC__
     int     num = 3;
     char   *keystr[] = { "YELLOW KEY", "GREEN KEY", "BLUE KEY" };
     boolean *keys = act->keys;
-    int     badsound = sfx_plroof;
+    int     badsound = SFX_PLROOF;
 #elif __JSTRIFE__
 //// \fixme FIXME!!!
     int     num = 3;

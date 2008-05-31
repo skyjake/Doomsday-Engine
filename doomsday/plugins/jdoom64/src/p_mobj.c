@@ -162,7 +162,7 @@ void P_ExplodeMissile(mobj_t *mo)
 void P_BounceMissile(mobj_t *mo)   //kaiser
 {
     mo->mom[MZ] *= -(mo->reactionTime * (1.0f / 192));
-    S_StartSound(sfx_ssdth, mo);
+    S_StartSound(SFX_SSDTH, mo);
 }
 
 void P_FloorBounceMissile(mobj_t *mo)
@@ -506,7 +506,7 @@ void P_MobjMoveZ(mobj_t *mo)
                 mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
 
                 if(mo->player->health > 0)
-                    S_StartSound(sfx_oof, mo);
+                    S_StartSound(SFX_OOF, mo);
             }
 
             mo->mom[MZ] = 0;
@@ -601,7 +601,7 @@ void P_MobjMoveZ(mobj_t *mo)
                 // Fix DOOM bug - dead players grunting when hitting the ground
                 // (e.g., after an archvile attack)
                 if(mo->player->health > 0)
-                    S_StartSound(sfx_oof, mo);
+                    S_StartSound(SFX_OOF, mo);
             }
 
             P_HitFloor(mo);
@@ -694,13 +694,13 @@ void P_NightmareRespawn(mobj_t* mobj)
     // Spawn a teleport fog at old spot.
     mo = P_SpawnMobj3f(MT_TFOG, mobj->pos[VX], mobj->pos[VY],
                        P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT));
-    S_StartSound(sfx_telept, mo);
+    S_StartSound(SFX_TELEPT, mo);
 
     // Spawn a teleport fog at the new spot.
     ss = R_PointInSubsector(pos[VX], pos[VY]);
     mo = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY],
                        P_GetFloatp(ss, DMU_FLOOR_HEIGHT));
-    S_StartSound(sfx_telept, mo);
+    S_StartSound(SFX_TELEPT, mo);
 
     if(mobj->info->flags & MF_SPAWNCEILING)
         pos[VZ] = ONCEILINGZ;
@@ -1059,7 +1059,7 @@ void P_CheckRespawnQueue(void) // jd64
     // jd64 >
     // Spawn a teleport fog at the new spot
     //mo = P_SpawnMobj3fv(MT_IFOG, pos);
-    //S_StartSound(sfx_itmbk, mo);
+    //S_StartSound(SFX_ITMBK, mo);
     // < d64tc
 
     // Find which type to spawn.
@@ -1095,7 +1095,7 @@ void P_CheckRespawnQueue(void) // jd64
 
         // jd64 >
         mo->intFlags |= MIF_FADE;
-        S_StartSound(sfx_itmbk, mo);
+        S_StartSound(SFX_ITMBK, mo);
         mo->translucency = 255;
         // < d64tc
     }

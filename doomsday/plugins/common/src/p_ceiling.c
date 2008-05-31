@@ -65,19 +65,19 @@
 // MACROS ------------------------------------------------------------------
 
 // Sounds played by the ceilings when changing state or moving.
-// jHexen uses sound sequences, so it's are defined as 'sfx_None'.
+// jHexen uses sound sequences, so it's are defined as 'SFX_NONE'.
 #if __WOLFTC__
-# define SFX_CEILINGMOVE        (sfx_pltmov)
-# define SFX_CEILINGSTOP        (sfx_pltstp)
+# define SFX_CEILINGMOVE        (SFX_PLTMOV)
+# define SFX_CEILINGSTOP        (SFX_PLTSTP)
 #elif __JDOOM__
-# define SFX_CEILINGMOVE        (sfx_stnmov)
-# define SFX_CEILINGSTOP        (sfx_pstop)
+# define SFX_CEILINGMOVE        (SFX_STNMOV)
+# define SFX_CEILINGSTOP        (SFX_PSTOP)
 #elif __JDOOM64__
-# define SFX_CEILINGMOVE        (sfx_stnmov)
-# define SFX_CEILINGSTOP        (sfx_pstop)
+# define SFX_CEILINGMOVE        (SFX_STNMOV)
+# define SFX_CEILINGSTOP        (SFX_PSTOP)
 #elif __JHERETIC__
-# define SFX_CEILINGMOVE        (sfx_dormov)
-# define SFX_CEILINGSTOP        (sfx_none)
+# define SFX_CEILINGMOVE        (SFX_DORMOV)
+# define SFX_CEILINGSTOP        (SFX_NONE)
 #elif __JHEXEN__
 # define SFX_CEILINGMOVE        (SFX_NONE)
 # define SFX_CEILINGSTOP        (SFX_NONE)

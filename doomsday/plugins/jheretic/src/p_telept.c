@@ -137,7 +137,7 @@ boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
         // Spawn teleport fog at source and destination
         fogDelta = thing->flags & MF_MISSILE? 0 : TELEFOGHEIGHT;
         fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta);
-        S_StartSound(sfx_telept, fog);
+        S_StartSound(SFX_TELEPT, fog);
 
         an = angle >> ANGLETOFINESHIFT;
         fog =
@@ -145,7 +145,7 @@ boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
                           x + 20 * FIX2FLT(finecosine[an]),
                           y + 20 * FIX2FLT(finesine[an]),
                           thing->pos[VZ] + fogDelta);
-        S_StartSound(sfx_telept, fog);
+        S_StartSound(SFX_TELEPT, fog);
     }
 
     if(thing->player && !thing->player->powers[PT_WEAPONLEVEL2])
@@ -286,12 +286,12 @@ void P_ArtiTele(player_t* player)
     {   // Teleporting away will undo any morph effects (pig)
         P_UndoPlayerMorph(player);
     }
-    //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
+    //S_StartSound(NULL, SFX_WPNUP); // Full volume laugh
 # else
     P_Teleport(player->plr->mo, destPos[VX], destPos[VY], destAngle, true);
-    /*S_StartSound(sfx_wpnup, NULL); // Full volume laugh
-       NetSv_Sound(NULL, sfx_wpnup, player-players); */
-    S_StartSound(sfx_wpnup, NULL);
+    /*S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
+       NetSv_Sound(NULL, SFX_WPNUP, player-players); */
+    S_StartSound(SFX_WPNUP, NULL);
 # endif
 }
 #endif
