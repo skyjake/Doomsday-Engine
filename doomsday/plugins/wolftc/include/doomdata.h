@@ -40,16 +40,6 @@ enum {
     PLN_CEILING
 };
 
-typedef struct spawnspot_s {
-    float           pos[2];
-    float           height;
-    short           angle;
-    short           type;
-    short           options;
-} spawnspot_t;
-
-extern spawnspot_t* things;
-
 //
 // LineDef attributes.
 //

@@ -199,8 +199,8 @@ typedef struct mobj_s {
     int             health;
 
     // Movement direction, movement generation (zig-zagging).
-    int             movedir;        // 0-7
-    int             movecount;      // when 0, select a new dir
+    int             moveDir;        // 0-7
+    int             moveCount;      // when 0, select a new dir
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
@@ -210,26 +210,26 @@ typedef struct mobj_s {
     // no matter what (even if shot)
     int             threshold;
 
-    int             intflags;       // internal flags
-    float           dropoffz;       // killough $dropoff_fix
-    short           gear;           // killough 11/98: used in torque simulation
-    boolean         wallrun;        // true = last move was the result of a wallrun
+    int             intFlags;       // internal flags
+    float           dropOffZ;       // $dropoff_fix
+    short           gear;           // used in torque simulation
+    boolean         wallRun;        // true = last move was the result of a wallrun
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
     struct player_s *player;
 
     // Player number last looked for.
-    int             lastlook;
+    int             lastLook;
 
     // For nightmare/multiplayer respawn.
-    spawnspot_t     spawnspot;
+    spawnspot_t     spawnSpot;
 
     // Thing being chased/attacked for tracers.
     struct mobj_s  *tracer;
 
-    int             turntime;       // $visangle-facetarget
-    int             corpsetics;     // $vanish: how long has this been dead?
+    int             turnTime;       // $visangle-facetarget
+    int             corpseTics;     // $vanish: how long has this been dead?
 } mobj_t;
 
 typedef struct polyobj_s {

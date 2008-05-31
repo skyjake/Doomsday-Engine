@@ -438,7 +438,7 @@ void ST_refreshBackground(void)
     else
         alpha = 1.0f;
 
-    GL_SetPatch(sbar.lump);
+    GL_SetPatch(sbar.lump, DGL_CLAMP, DGL_CLAMP);
     if(!(alpha < 1))
     {
         // we can just render the full thing as normal
@@ -767,9 +767,9 @@ void ST_updateWidgets(void)
 
     // must redirect the pointer if the ready weapon has changed.
     found = false;
-    for(ammotype=0; ammotype < NUM_AMMO_TYPES && !found; ++ammotype)
+    for(ammotype = 0; ammotype < NUM_AMMO_TYPES && !found; ++ammotype)
     {
-        if(!weaponinfo[plr->readyWeapon][plr->class].mode[0].ammotype[ammotype])
+        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammotype])
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon
@@ -1103,7 +1103,7 @@ void ST_doFullscreenStuff(void)
         //// for each type of ammo this weapon takes.
         for(ammotype=0; ammotype < NUM_AMMO_TYPES; ++ammotype)
         {
-            if(!weaponinfo[plr->readyWeapon][plr->class].mode[0].ammotype[ammotype])
+            if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammotype])
                 continue;
 
             spr = ammo_sprite[ammotype];
@@ -1330,8 +1330,6 @@ void ST_initData(void)
     st_firsttime = true;
 
     st_clock = 0;
-    st_chatstate = StartChatState;
-    st_gamestate = FirstPersonState;
 
     st_statusbaron = true;
     st_oldchat = st_chat = false;
@@ -1369,7 +1367,7 @@ void ST_createWidgets(void)
     found = false;
     for(ammotype=0; ammotype < NUM_AMMO_TYPES && !found; ++ammotype)
     {
-        if(!weaponinfo[plyr->readyWeapon][plyr->class].mode[0].ammotype[ammotype])
+        if(!weaponInfo[plyr->readyWeapon][plyr->class].mode[0].ammoType[ammotype])
             continue; // Weapon does not take this ammo.
 
         STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, tallnum, &plyr->ammo[ammotype],

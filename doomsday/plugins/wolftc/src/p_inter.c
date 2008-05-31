@@ -43,7 +43,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BONUSADD    6
+#define BONUSADD            (6)
 
 // TYPES -------------------------------------------------------------------
 
@@ -57,21 +57,20 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-// a weapon is found with two clip loads,
-// a big item has five clip loads
-int     maxammo[NUM_AMMO_TYPES] = { 200, 50, 300, 50 };
-int     clipammo[NUM_AMMO_TYPES] = { 10, 4, 20, 1 };
+// A weapon is found with two clip loads, a big item has five clip loads.
+int maxAmmo[NUM_AMMO_TYPES] = { 200, 50, 300, 50 };
+int clipAmmo[NUM_AMMO_TYPES] = { 10, 4, 20, 1 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
 /**
- * @param num       Number of clip loads, not the individual count.
+ * @param num           Number of clip loads, not the individual count.
  *
- * @return          @c false, if the ammo can't be picked up at all.
+ * @return              @c false, if the ammo can't be picked up at all.
  */
-boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
+boolean P_GiveAmmo(player_t* player, ammotype_t ammo, int num)
 {
     if(ammo == AT_NOAMMO)
         return false;
@@ -83,9 +82,9 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
         return false;
 
     if(num)
-        num *= clipammo[ammo];
+        num *= clipAmmo[ammo];
     else
-        num = clipammo[ammo] / 2;
+        num = clipAmmo[ammo] / 2;
 
     if(gameskill == SM_BABY || gameskill == SM_NIGHTMARE)
     {
@@ -116,10 +115,10 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
  */
 boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 {
-    ammotype_t i;
-    boolean gaveammo = false;
-    boolean gaveweapon;
-    int     numClips;
+    ammotype_t          i;
+    boolean             gaveammo = false;
+    boolean             gaveweapon;
+    int                 numClips;
 
     if(IS_NETGAME && (deathmatch != 2) && !dropped)
     {
@@ -134,7 +133,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Give some of each of the ammo types used by this weapon.
         for(i=0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponinfo[weapon][player->class].mode[0].ammotype[i])
+            if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             if(deathmatch)
@@ -153,7 +152,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         if(player == &players[CONSOLEPLAYER])
             ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
-        S_ConsoleSound(sfx_wpnup, NULL, player - players);
+        S_ConsoleSound(SFX_WPNUP, NULL, player - players);
         return false;
     }
     else
@@ -161,7 +160,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Give some of each of the ammo types used by this weapon.
         for(i=0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponinfo[weapon][player->class].mode[0].ammotype[i])
+            if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             // give one clip with a dropped weapon,
@@ -368,7 +367,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         return;
     }
 
-    sound = sfx_itemup;
+    sound = SFX_ITEMUP;
     player = toucher->player;
 
     // Dead thing touching.
@@ -427,7 +426,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         player->plr->mo->health = player->health;
         player->update |= PSF_HEALTH;
         P_SetMessage(player, GOTSUPER, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
 
         // Maybe unhide the HUD?
         if(player == &players[CONSOLEPLAYER])
@@ -442,7 +441,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         player->update |= PSF_HEALTH;
         P_GiveArmor(player, armorclass[1]);
         P_SetMessage(player, GOTMSPHERE, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
 
         // Maybe unhide the HUD?
         if(player == &players[CONSOLEPLAYER])
@@ -531,7 +530,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         if(!P_GivePower(player, PT_INVULNERABILITY))
             return;
         P_SetMessage(player, GOTINVUL, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     case SPR_PSTR:
@@ -543,35 +542,35 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             player->pendingWeapon = WT_FIRST;
             player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
         }
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     case SPR_PINS:
         if(!P_GivePower(player, PT_INVISIBILITY))
             return;
         P_SetMessage(player, GOTINVIS, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     case SPR_SUIT:
         if(!P_GivePower(player, PT_IRONFEET))
             return;
         P_SetMessage(player, GOTSUIT, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     case SPR_PMAP:
         if(!P_GivePower(player, PT_ALLMAP))
             return;
         P_SetMessage(player, GOTMAP, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
     case SPR_PVIS:
         if(!P_GivePower(player, PT_INFRARED))
             return;
         P_SetMessage(player, GOTVISOR, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
         break;
 
         // ammo
@@ -640,49 +639,49 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         if(!P_GiveWeapon(player, WT_SEVENTH, false))
             return;
         P_SetMessage(player, GOTBFG9000, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_MGUN:
         if(!P_GiveWeapon(player, WT_FOURTH, special->flags & MF_DROPPED))
             return;
         P_SetMessage(player, GOTCHAINGUN, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_CSAW:
         if(!P_GiveWeapon(player, WT_EIGHTH, false))
             return;
         P_SetMessage(player, GOTCHAINSAW, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_LAUN:
         if(!P_GiveWeapon(player, WT_FIFTH, false))
             return;
         P_SetMessage(player, GOTLAUNCHER, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_PLAS:
         if(!P_GiveWeapon(player, WT_SIXTH, false))
             return;
         P_SetMessage(player, GOTPLASMA, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_SHOT:
         if(!P_GiveWeapon(player, WT_THIRD, special->flags & MF_DROPPED))
             return;
         P_SetMessage(player, GOTSHOTGUN, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
     case SPR_SGN2:
         if(!P_GiveWeapon(player, WT_NINETH, special->flags & MF_DROPPED))
             return;
         P_SetMessage(player, GOTSHOTGUN2, false);
-        sound = sfx_wpnup;
+        sound = SFX_WPNUP;
         break;
 
 // START WolfTC objects
@@ -691,21 +690,21 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         if(!P_GiveBody(player, 2))
             return;
         P_SetMessage(player, GOTSHOTGUN2, false);
-        sound = sfx_helth1;
+        sound = SFX_HELTH1;
         break;
 
     case SPR_DINR:
         if(!P_GiveBody(player, 10))
             return;
         P_SetMessage(player, GOTSHOTGUN2, false);
-        sound = sfx_helth2;
+        sound = SFX_HELTH2;
         break;
 
     case SPR_FAID:
         if(!P_GiveBody(player, 25))
             return;
         P_SetMessage(player, GOTSHOTGUN2, false);
-        sound = sfx_helth3;
+        sound = SFX_HELTH3;
         break;
 
     case SPR_MEGH:
@@ -715,7 +714,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         player->plr->mo->health = player->health;
         player->update |= PSF_HEALTH;
         P_SetMessage(player, GOTSHOTGUN2, false);
-        sound = sfx_getmeg;
+        sound = SFX_GETMEG;
 
         // Maybe unhide the HUD?
         if(player == &players[CONSOLEPLAYER]);
@@ -746,56 +745,56 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
                 return;
         }
         P_SetMessage(player, GOTCLIP, false);
-        sound = sfx_ammocl;
+        sound = SFX_AMMOCL;
         break;
 
     case SPR_WABX:
         if(!P_GiveAmmo(player, AT_CLIP, 5))
             return;
         P_SetMessage(player, GOTCLIPBOX, false);
-        sound = sfx_ammobx;
+        sound = SFX_AMMOBX;
         break;
 
     case SPR_WRKT:
         if(!P_GiveAmmo(player, AT_MISSILE, 1))
             return;
         P_SetMessage(player, GOTROCKET, false);
-        sound = sfx_ammocl;
+        sound = SFX_AMMOCL;
         break;
 
     case SPR_WRBX:
         if(!P_GiveAmmo(player, AT_MISSILE, 5))
             return;
         P_SetMessage(player, GOTROCKBOX, false);
-        sound = sfx_ammobx;
+        sound = SFX_AMMOBX;
         break;
 
     case SPR_ORBS:
         if(!P_GiveAmmo(player, AT_CELL, 1))
             return;
         P_SetMessage(player, GOTCELL, false);
-        sound = sfx_ammocl;
+        sound = SFX_AMMOCL;
         break;
 
     case SPR_ORBL:
         if(!P_GiveAmmo(player, AT_CELL, 5))
             return;
         P_SetMessage(player, GOTCELLBOX, false);
-        sound = sfx_ammocl;
+        sound = SFX_AMMOCL;
         break;
 
     case SPR_WFUL:
         if(!P_GiveAmmo(player, AT_SHELL, 1))
             return;
         P_SetMessage(player, GOTSHELLS, false);
-        sound = sfx_ammocl;
+        sound = SFX_AMMOCL;
         break;
 
     case SPR_WFUB:
         if(!P_GiveAmmo(player, AT_SHELL, 5))
             return;
         P_SetMessage(player, GOTSHELLBOX, false);
-        sound = sfx_ammobx;
+        sound = SFX_AMMOBX;
         break;
 
     case SPR_WSKY:
@@ -803,7 +802,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             P_SetMessage(player, GOTBLUESKUL, false);
         P_GiveKey(player, KT_BLUESKULL);
         if(!IS_NETGAME)
-        sound = sfx_keyup;
+        sound = SFX_KEYUP;
             break;
         return;
 
@@ -812,7 +811,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             P_SetMessage(player, GOTYELWSKUL, false);
         P_GiveKey(player, KT_YELLOWSKULL);
         if(!IS_NETGAME)
-        sound = sfx_keyup;
+        sound = SFX_KEYUP;
             break;
         return;
 
@@ -821,7 +820,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             P_SetMessage(player, GOTBLUECARD, false);
         P_GiveKey(player, KT_BLUECARD);
         if(!IS_NETGAME)
-        sound = sfx_keyup;
+        sound = SFX_KEYUP;
             break;
         return;
 
@@ -830,7 +829,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             P_SetMessage(player, GOTYELWCARD, false);
         P_GiveKey(player, KT_YELLOWCARD);
         if(!IS_NETGAME)
-        sound = sfx_keyup;
+        sound = SFX_KEYUP;
             break;
         return;
 
@@ -839,7 +838,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             P_SetMessage(player, GOTBLUESKUL, false);
         P_GiveKey(player, KT_BLUESKULL);
         if(!IS_NETGAME)
-        sound = sfx_ckeyup;
+        sound = SFX_CKEYUP;
             break;
         return;
 
@@ -848,7 +847,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             P_SetMessage(player, GOTREDSKULL, false);
         P_GiveKey(player, KT_REDCARD);
         if(!IS_NETGAME)
-        sound = sfx_ckeyup;
+        sound = SFX_CKEYUP;
             break;
         return;
 
@@ -857,7 +856,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             P_SetMessage(player, GOTREDSKULL, false);
         P_GiveKey(player, KT_REDSKULL);
         if(!IS_NETGAME)
-        sound = sfx_ckeyup;
+        sound = SFX_CKEYUP;
             break;
         return;
 
@@ -866,7 +865,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             P_SetMessage(player, GOTYELWSKUL, false);
         P_GiveKey(player, KT_YELLOWSKULL);
         if(!IS_NETGAME)
-        sound = sfx_ckeyup;
+        sound = SFX_CKEYUP;
             break;
         return;
 
@@ -878,7 +877,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             player->armorType = 1;
         player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
         P_SetMessage(player, GOTARMBONUS, false);
-        sound = sfx_treas1;
+        sound = SFX_TREAS1;
 
         // Maybe unhide the HUD?
         if(player == &players[CONSOLEPLAYER]);
@@ -893,7 +892,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             player->armorType = 1;
         player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
         P_SetMessage(player, GOTARMBONUS, false);
-        sound = sfx_treas2;
+        sound = SFX_TREAS2;
 
         // Maybe unhide the HUD?
         if(player == &players[CONSOLEPLAYER]);
@@ -908,7 +907,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             player->armorType = 1;
         player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
         P_SetMessage(player, GOTARMBONUS, false);
-        sound = sfx_treas3;
+        sound = SFX_TREAS3;
 
         // Maybe unhide the HUD?
         if(player == &players[CONSOLEPLAYER]);
@@ -923,7 +922,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             player->armorType = 1;
         player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
         P_SetMessage(player, GOTARMBONUS, false);
-        sound = sfx_atreas;
+        sound = SFX_ATREAS;
 
         // Maybe unhide the HUD?
         if(player == &players[CONSOLEPLAYER]);
@@ -937,7 +936,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         player->plr->mo->health = player->health;
         player->update |= PSF_HEALTH;
         P_SetMessage(player, GOTSHOTGUN2, false);
-        sound = sfx_getpow;
+        sound = SFX_GETPOW;
 
         // Maybe unhide the HUD?
         if(player == &players[CONSOLEPLAYER]);
@@ -976,63 +975,63 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         if(!P_GiveWeapon(player, WT_THIRD, special->flags & MF_DROPPED))
             return;
         P_SetMessage(player, GOTSHOTGUN, false);
-        sound = sfx_getmac;
+        sound = SFX_GETMAC;
         break;
 
     case SPR_FLTP:
         if(!P_GiveWeapon(player, WT_NINETH, false))
             return;
         P_SetMessage(player, GOTSHOTGUN2, false);
-        sound = sfx_getgat;
+        sound = SFX_GETGAT;
         break;
 
     case SPR_CGNP:
         if(!P_GiveWeapon(player, WT_FOURTH, false))
             return;
         P_SetMessage(player, GOTCHAINGUN, false);
-        sound = sfx_getgat;
+        sound = SFX_GETGAT;
         break;
 
     case SPR_RLAP:
         if(!P_GiveWeapon(player, WT_FIFTH, false))
             return;
         P_SetMessage(player, GOTLAUNCHER, false);
-        sound = sfx_getgat;
+        sound = SFX_GETGAT;
         break;
 
     case SPR_CWP1:
         if(!P_GiveWeapon(player, WT_SIXTH, false))
             return;
         P_SetMessage(player, GOTPLASMA, false);
-        sound = sfx_spelup;
+        sound = SFX_SPELUP;
         break;
 
     case SPR_CWP2:
         if(!P_GiveWeapon(player, WT_SEVENTH, false))
             return;
         P_SetMessage(player, GOTBFG9000, false);
-        sound = sfx_spelup;
+        sound = SFX_SPELUP;
         break;
 
     case SPR_LFLP:
         if(!P_GiveWeapon(player, WT_NINETH, false))
             return;
         P_SetMessage(player, GOTSHOTGUN2, false);
-        sound = sfx_lgetgt;
+        sound = SFX_LGETGT;
         break;
 
     case SPR_LCGP:
         if(!P_GiveWeapon(player, WT_FOURTH, false))
             return;
         P_SetMessage(player, GOTCHAINGUN, false);
-        sound = sfx_lgetgt;
+        sound = SFX_LGETGT;
         break;
 
     case SPR_LRLP:
         if(!P_GiveWeapon(player, WT_FIFTH, false))
             return;
         P_SetMessage(player, GOTLAUNCHER, false);
-        sound = sfx_lgetgt;
+        sound = SFX_LGETGT;
         break;
 
 // END WolfTC objects
@@ -1043,7 +1042,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
     if(special->flags & MF_COUNTITEM)
         player->itemCount++;
-    P_MobjRemove(special);
+    P_MobjRemove(special, false);
     player->bonusCount += BONUSADD;
     /*if (player == &players[CONSOLEPLAYER])
        S_StartSound (NULL, sound); */
@@ -1071,7 +1070,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 
     if(source && source->player)
     {
-        // count for intermission
+        // Count for intermission.
         if(target->flags & MF_COUNTKILL)
             source->player->killCount++;
 
@@ -1084,14 +1083,13 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     }
     else if(!IS_NETGAME && (target->flags & MF_COUNTKILL))
     {
-        // count all monster deaths,
-        // even those caused by other monsters
-        players[0].killcount++;
+        // Count all monster deaths, even those caused by other monsters.
+        players[0].killCount++;
     }
 
     if(target->player)
     {
-        // count environment kills against you
+        // Count environment kills against you.
         if(!source)
         {
             target->player->frags[target->player - players]++;

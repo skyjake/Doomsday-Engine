@@ -38,8 +38,8 @@
 
 #include "p_xg.h"
 
-#define SP_floororigheight      planes[PLN_FLOOR].origheight
-#define SP_ceilorigheight       planes[PLN_CEILING].origheight
+#define SP_floororigheight      planes[PLN_FLOOR].origHeight
+#define SP_ceilorigheight       planes[PLN_CEILING].origHeight
 
 // Stair build flags.
 #define BL_BUILT        0x1
@@ -51,13 +51,13 @@ typedef struct xsector_s {
     short           tag;
 
     // 0 = untraversed, 1,2 = sndlines -1
-    int             soundtraversed;
+    int             soundTraversed;
 
     // thing that made a sound (or null)
-    struct mobj_s  *soundtarget;
+    struct mobj_s  *soundTarget;
 
     // thinker_t for reversable actions
-    void           *specialdata;
+    void           *specialData;
 
     byte            blFlags; // Used during stair building.
 
@@ -65,13 +65,12 @@ typedef struct xsector_s {
     byte            seqType;       // NOT USED ATM
 
     struct {
-        float       origheight;
+        float       origHeight;
     } planes[2];    // {floor, ceiling}
 
-    float           origlight;
-    float           origrgb[3];
+    float           origLight;
+    float           origRGB[3];
     xgsector_t     *xg;
-
 } xsector_t;
 
 typedef struct xline_s {
@@ -81,18 +80,19 @@ typedef struct xline_s {
     // Has been rendered at least once and needs to appear in the map,
     // for each player.
     boolean         mapped[MAXPLAYERS];
-    int             validcount;
+    int             validCount;
 
     // Extended generalized lines.
     xgline_t       *xg;
 } xline_t;
 
-extern xline_t *xlines;
 extern xsector_t *xsectors;
+extern xline_t *xlines;
 
-xline_t*    P_ToXLine(linedef_t* line);
-xline_t*    P_GetXLine(uint index);
-xsector_t*  P_ToXSector(sector_t* sector);
-xsector_t*  P_GetXSector(uint index);
-xsector_t*  P_ToXSectorOfSubsector(subsector_t* sub);
+xline_t*        P_ToXLine(linedef_t* line);
+xsector_t*      P_ToXSector(sector_t* sector);
+xsector_t*      P_ToXSectorOfSubsector(subsector_t* sub);
+
+xline_t*        P_GetXLine(uint index);
+xsector_t*      P_GetXSector(uint index);
 #endif

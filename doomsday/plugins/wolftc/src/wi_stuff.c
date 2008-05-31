@@ -466,8 +466,8 @@ void WI_drawOnLnode(int n, dpatch_t * c)
     i = 0;
     do
     {
-        left = lnodes[wbs->epsd][n].x - c[i].leftoffset;
-        top = lnodes[wbs->epsd][n].y - c[i].topoffset;
+        left = lnodes[wbs->epsd][n].x - c[i].leftOffset;
+        top = lnodes[wbs->epsd][n].y - c[i].topOffset;
         right = left + c[i].width;
         bottom = top + c[i].height;
         if(left >= 0 && right < SCREENWIDTH && top >= 0 &&
@@ -846,14 +846,14 @@ void WI_updateDeathmatchStats(void)
             dm_totals[i] = WI_fragSum(i);
             //          }
         }
-        S_LocalSound(sfx_intcmp, 0);
+        S_LocalSound(SFX_INTCMP, 0);
         dm_state = 4;
     }
 
     if(dm_state == 2)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_intcnt, 0);
+            S_LocalSound(SFX_INTCNT, 0);
         stillTicking = false;
         for(i = 0; i < NUM_TEAMS; i++)
         {
@@ -889,7 +889,7 @@ void WI_updateDeathmatchStats(void)
         }
         if(!stillTicking)
         {
-            S_LocalSound(sfx_intcmp, 0);
+            S_LocalSound(SFX_INTCMP, 0);
             dm_state++;
         }
     }
@@ -897,7 +897,7 @@ void WI_updateDeathmatchStats(void)
     {
         if(acceleratestage)
         {
-            S_LocalSound(sfx_hitslp, 0);
+            S_LocalSound(SFX_HITSLP, 0);
             if(gamemode == commercial)
                 WI_initNoState();
             else
@@ -1061,14 +1061,14 @@ void WI_updateNetgameStats(void)
             if(dofrags)
                 cnt_frags[i] = teaminfo[i].totalfrags;  //WI_fragSum(i);
         }
-        S_LocalSound(sfx_intcmp, 0);
+        S_LocalSound(SFX_INTCMP, 0);
         ng_state = 10;
     }
 
     if(ng_state == 2)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_intcnt, 0);
+            S_LocalSound(SFX_INTCNT, 0);
         stillTicking = false;
 
         for(i = 0; i < NUM_TEAMS; i++)
@@ -1084,14 +1084,14 @@ void WI_updateNetgameStats(void)
         }
         if(!stillTicking)
         {
-            S_LocalSound(sfx_intcmp, 0);
+            S_LocalSound(SFX_INTCMP, 0);
             ng_state++;
         }
     }
     else if(ng_state == 4)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_intcnt, 0);
+            S_LocalSound(SFX_INTCNT, 0);
         stillTicking = false;
 
         for(i = 0; i < NUM_TEAMS; i++)
@@ -1106,14 +1106,14 @@ void WI_updateNetgameStats(void)
         }
         if(!stillTicking)
         {
-            S_LocalSound(sfx_intcmp, 0);
+            S_LocalSound(SFX_INTCMP, 0);
             ng_state++;
         }
     }
     else if(ng_state == 6)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_intcnt, 0);
+            S_LocalSound(SFX_INTCNT, 0);
 
         stillTicking = false;
 
@@ -1130,14 +1130,14 @@ void WI_updateNetgameStats(void)
         }
         if(!stillTicking)
         {
-            S_LocalSound(sfx_intcmp, 0);
+            S_LocalSound(SFX_INTCMP, 0);
             ng_state += 1 + 2 * !dofrags;
         }
     }
     else if(ng_state == 8)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_intcnt, 0);
+            S_LocalSound(SFX_INTCNT, 0);
 
         stillTicking = false;
 
@@ -1154,7 +1154,7 @@ void WI_updateNetgameStats(void)
         }
         if(!stillTicking)
         {
-            S_LocalSound(sfx_plydth, 0);
+            S_LocalSound(SFX_PLYDTH, 0);
             ng_state++;
         }
     }
@@ -1162,7 +1162,7 @@ void WI_updateNetgameStats(void)
     {
         if(acceleratestage)
         {
-            S_LocalSound(sfx_intyea, 0);
+            S_LocalSound(SFX_INTYEA, 0);
             if(gamemode == commercial)
                 WI_initNoState();
             else
@@ -1267,13 +1267,13 @@ void WI_updateStats(void)
     if(acceleratestage && sp_state != 10)
     {
         acceleratestage = 0;
-        cnt_kills[0] = (plrs[me].skills * 100) / wbs->maxKills;
-        cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxItems;
-        cnt_secret[0] = (plrs[me].ssecret * 100) / wbs->maxSecret;
-        cnt_time = plrs[me].stime / TICRATE;
-        if(wbs->partime != -1)
-            cnt_par = wbs->partime / TICRATE;
-        S_LocalSound(sfx_intcmp, 0);
+        cnt_kills[0] = (plrs[me].kills * 100) / wbs->maxKills;
+        cnt_items[0] = (plrs[me].items * 100) / wbs->maxItems;
+        cnt_secret[0] = (plrs[me].secret * 100) / wbs->maxSecret;
+        cnt_time = plrs[me].time / TICRATE;
+        if(wbs->parTime != -1)
+            cnt_par = wbs->parTime / TICRATE;
+        S_LocalSound(SFX_INTCMP, 0);
         sp_state = 10;
     }
 
@@ -1282,12 +1282,12 @@ void WI_updateStats(void)
         cnt_kills[0] += 2;
 
         if(!(bcnt & 3))
-            S_LocalSound(sfx_intcnt, 0);
+            S_LocalSound(SFX_INTCNT, 0);
 
-        if(cnt_kills[0] >= (plrs[me].skills * 100) / wbs->maxKills)
+        if(cnt_kills[0] >= (plrs[me].kills * 100) / wbs->maxKills)
         {
-            cnt_kills[0] = (plrs[me].skills * 100) / wbs->maxKills;
-            S_LocalSound(sfx_intcmp, 0);
+            cnt_kills[0] = (plrs[me].kills * 100) / wbs->maxKills;
+            S_LocalSound(SFX_INTCMP, 0);
             sp_state++;
         }
     }
@@ -1296,12 +1296,12 @@ void WI_updateStats(void)
         cnt_items[0] += 2;
 
         if(!(bcnt & 3))
-            S_LocalSound(sfx_intcnt, 0);
+            S_LocalSound(SFX_INTCNT, 0);
 
-        if(cnt_items[0] >= (plrs[me].sitems * 100) / wbs->maxItems)
+        if(cnt_items[0] >= (plrs[me].items * 100) / wbs->maxItems)
         {
-            cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxItems;
-            S_LocalSound(sfx_intcmp, 0);
+            cnt_items[0] = (plrs[me].items * 100) / wbs->maxItems;
+            S_LocalSound(SFX_INTCMP, 0);
             sp_state++;
         }
     }
@@ -1310,12 +1310,12 @@ void WI_updateStats(void)
         cnt_secret[0] += 2;
 
         if(!(bcnt & 3))
-            S_LocalSound(sfx_intcnt, 0);
+            S_LocalSound(SFX_INTCNT, 0);
 
-        if(cnt_secret[0] >= (plrs[me].ssecret * 100) / wbs->maxSecret)
+        if(cnt_secret[0] >= (plrs[me].secret * 100) / wbs->maxSecret)
         {
-            cnt_secret[0] = (plrs[me].ssecret * 100) / wbs->maxSecret;
-            S_LocalSound(sfx_intcmp, 0);
+            cnt_secret[0] = (plrs[me].secret * 100) / wbs->maxSecret;
+            S_LocalSound(SFX_INTCMP, 0);
             sp_state++;
         }
     }
@@ -1323,24 +1323,24 @@ void WI_updateStats(void)
     else if(sp_state == 8)
     {
         if(!(bcnt & 3))
-            S_LocalSound(sfx_intcnt, 0);
+            S_LocalSound(SFX_INTCNT, 0);
 
         cnt_time += 3;
 
-        if(cnt_time >= plrs[me].stime / TICRATE)
-            cnt_time = plrs[me].stime / TICRATE;
+        if(cnt_time >= plrs[me].time / TICRATE)
+            cnt_time = plrs[me].time / TICRATE;
 
         if(cnt_par != -1)
         {
             cnt_par += 3;
 
-            if(cnt_par >= wbs->partime / TICRATE)
+            if(cnt_par >= wbs->parTime / TICRATE)
             {
-                cnt_par = wbs->partime / TICRATE;
+                cnt_par = wbs->parTime / TICRATE;
 
-                if(cnt_time >= plrs[me].stime / TICRATE)
+                if(cnt_time >= plrs[me].time / TICRATE)
                 {
-                    S_LocalSound(sfx_intcmp, 0);
+                    S_LocalSound(SFX_INTCMP, 0);
                     sp_state++;
                 }
             }
@@ -1352,7 +1352,7 @@ void WI_updateStats(void)
     {
         if(acceleratestage)
         {
-            S_LocalSound(sfx_intyea, 0);
+            S_LocalSound(SFX_INTYEA, 0);
 
             if(gamemode == commercial)
                 WI_initNoState();
@@ -1400,7 +1400,7 @@ void WI_drawStats(void)
                  ALIGN_LEFT);
     WI_drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cnt_time);
 
-    if(wbs->epsd < 3 && wbs->partime != -1)
+    if(wbs->epsd < 3 && wbs->parTime != -1)
     {
         WI_DrawPatch(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, par.lump,
                      NULL, false, ALIGN_LEFT);
@@ -1449,9 +1449,9 @@ void WI_Ticker(void)
     {
         // intermission music
         if(gamemode == commercial)
-            S_StartMusicNum(mus_wlfint, true);
+            S_StartMusicNum(MUS_WLFINT, true);
         else
-            S_StartMusicNum(mus_inter, true);
+            S_StartMusicNum(MUS_INTER, true);
     }
 
     WI_checkForAccelerate();
@@ -1728,8 +1728,8 @@ void WI_initVariables(wbstartstruct_t * wbstartstruct)
     acceleratestage = 0;
     cnt = bcnt = 0;
     firstrefresh = 1;
-    me = wbs->pnum;
-    myteam = cfg.playerColor[wbs->pnum];
+    me = wbs->pNum;
+    myteam = cfg.playerColor[wbs->pNum];
     plrs = wbs->plyr;
 
     if(!wbs->maxKills)
@@ -1760,19 +1760,19 @@ void WI_Start(wbstartstruct_t * wbstartstruct)
         for(j = 0; j < MAXPLAYERS; j++)
         {
             // Is the player in this team?
-            if(!plrs[j].in || cfg.playerColor[j] != i)
+            if(!plrs[j].inGame || cfg.playerColor[j] != i)
                 continue;
             tin->members++;
             // Check the frags.
             for(k = 0; k < MAXPLAYERS; k++)
                 tin->frags[cfg.playerColor[k]] += plrs[j].frags[k];
             // Counters.
-            if(plrs[j].sitems > tin->items)
-                tin->items = plrs[j].sitems;
-            if(plrs[j].skills > tin->kills)
-                tin->kills = plrs[j].skills;
-            if(plrs[j].ssecret > tin->secret)
-                tin->secret = plrs[j].ssecret;
+            if(plrs[j].items > tin->items)
+                tin->items = plrs[j].items;
+            if(plrs[j].kills > tin->kills)
+                tin->kills = plrs[j].kills;
+            if(plrs[j].secret > tin->secret)
+                tin->secret = plrs[j].secret;
         }
         // Calculate team's total frags.
         for(j = 0; j < NUM_TEAMS; j++)

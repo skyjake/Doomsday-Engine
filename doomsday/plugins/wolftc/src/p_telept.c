@@ -119,7 +119,7 @@ int EV_Teleport(linedef_t *line, int side, mobj_t *thing)
 #if 0
             // Spawn teleport fog at source and destination.
             fog = P_SpawnMobj3fv(MT_TFOG, oldpos);
-            S_StartSound(sfx_telept, fog);
+            S_StartSound(SFX_TELEPT, fog);
             an = m->angle >> ANGLETOFINESHIFT;
             fog =
                 P_SpawnMobj3f(MT_TFOG,
@@ -128,7 +128,7 @@ int EV_Teleport(linedef_t *line, int side, mobj_t *thing)
                               thing->pos[VZ]);
 
             // Emit sound, where?
-            S_StartSound(sfx_telept, fog);
+            S_StartSound(SFX_TELEPT, fog);
 #endif
             thing->angle = m->angle;
             if(thing->flags2 & MF2_FLOORCLIP)

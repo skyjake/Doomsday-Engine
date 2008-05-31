@@ -155,11 +155,6 @@ extern boolean  singleDemo;
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
 
-// Player spawn spots for deathmatch.
-#define MAX_DM_STARTS   16
-extern spawnspot_t deathmatchStarts[MAX_DM_STARTS];
-extern spawnspot_t *deathmatchP;
-
 // Intermission stats.
 // Parameters for world map / intermission.
 extern wbstartstruct_t wmInfo;

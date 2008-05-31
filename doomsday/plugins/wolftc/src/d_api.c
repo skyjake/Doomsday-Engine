@@ -114,13 +114,13 @@ void *G_GetVariable(int id)
 
     case DD_PSPRITE_BOB_X:
         bob[VX] = 1 + (cfg.bobWeapon * players[CONSOLEPLAYER].bob) *
-            FIX2FLT(finecosine[(128 * leveltime) & FINEMASK]);
+            FIX2FLT(finecosine[(128 * levelTime) & FINEMASK]);
 
         return &bob[VX];
 
     case DD_PSPRITE_BOB_Y:
         bob[VY] = 32 + (cfg.bobWeapon * players[CONSOLEPLAYER].bob) *
-            FIX2FLT(finesine[(128 * leveltime) & FINEMASK & (FINEANGLES / 2 - 1)]);
+            FIX2FLT(finesine[(128 * levelTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
 
         return &bob[VY];
 

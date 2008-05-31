@@ -52,13 +52,8 @@
 
 #define FLOATSPEED      4
 
-#define DELTAMUL        6.324555320 // Used when calculating ticcmd_t.lookdirdelta
-
-
 #define MAXHEALTH       maxhealth  //100
 #define VIEWHEIGHT      41
-
-#define TOCENTER        -8
 
 // player radius for movement checking
 #define PLAYERRADIUS    16
@@ -142,7 +137,6 @@ void        P_SpawnBlood(float x, float y, float z, int damage);
 mobj_t     *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
 mobj_t     *P_SpawnTeleFog(float x, float y);
 
-void        P_MobjRemove(mobj_t *th);
 boolean     P_MobjChangeState(mobj_t *mobj, statenum_t state);
 void        P_MobjThinker(mobj_t *mobj);
 int         P_MobjGetFloorType(mobj_t *thing);
@@ -156,21 +150,26 @@ void        P_SpawnPlayer(spawnspot_t *mthing, int pnum);
 //
 // P_ENEMY
 //
-void            P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
 
-/* killough 3/26/98: spawn icon landings */
-void P_SpawnBrainTargets(void);
+/**
+ * Global state of boss brain.
+ */
+typedef struct braindata_s {
+    int             easy;
+    int             targetOn;
+} braindata_t;
 
-/* killough 3/26/98: global state of boss brain */
-extern struct brain_s {
-    int easy;
-    int targeton;
-} brain;
+extern braindata_t brain;
+extern mobj_t **brainTargets;
+extern int numBrainTargets;
+extern int numBrainTargetsAlloc;
 
-/* Removed fixed limit on number of brain targets */
-extern mobj_t  **brainTargets;
-extern int      numBrainTargets;
-extern int      numBrainTargetsAlloc;
+extern boolean bossKilled;
+
+void        P_SpawnBrainTargets(void);
+
+void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
+int         P_Massacre(void);
 
 //
 // P_MAPUTL
@@ -181,13 +180,11 @@ extern int      numBrainTargetsAlloc;
 #define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-int             P_Massacre(void);
-
 //
 // P_INTER
 //
-extern int      maxammo[NUM_AMMO_TYPES];
-extern int      clipammo[NUM_AMMO_TYPES];
+extern int      maxAmmo[NUM_AMMO_TYPES];
+extern int      clipAmmo[NUM_AMMO_TYPES];
 
 void            P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
 

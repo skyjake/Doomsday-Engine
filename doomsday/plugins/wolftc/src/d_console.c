@@ -332,12 +332,12 @@ DEFCC(CCmdViewSize)
     if(!stricmp(argv[1], "+"))
     {
         (*val)++;
-        S_LocalSound(sfx_scrnrs, NULL);
+        S_LocalSound(SFX_SCRNRS, NULL);
     }
     else if(!stricmp(argv[1], "-"))
     {
         (*val)--;
-        S_LocalSound(sfx_scrnrs, NULL);
+        S_LocalSound(SFX_SCRNRS, NULL);
     }
     else
         *val = strtol(argv[1], NULL, 0);

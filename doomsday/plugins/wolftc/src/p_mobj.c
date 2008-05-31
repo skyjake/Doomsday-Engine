@@ -40,6 +40,7 @@
 
 #include "wolftc.h"
 
+#include "dmu_lib.h"
 #include "hu_stuff.h"
 #include "g_common.h"
 #include "p_map.h"
@@ -101,7 +102,7 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
         if(state == S_NULL)
         {
             mobj->state = (state_t *) S_NULL;
-            P_MobjRemove(mobj);
+            P_MobjRemove(mobj, false);
             return false;
         }
 
@@ -132,7 +133,7 @@ void P_ExplodeMissile(mobj_t *mo)
 
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
-    P_MobjChangeState(mo, mobjinfo[mo->type].deathstate);
+    P_MobjChangeState(mo, mobjInfo[mo->type].deathState);
 
     mo->tics -= P_Random() & 3;
 
@@ -157,7 +158,7 @@ void P_ExplodeMissile(mobj_t *mo)
 void P_FloorBounceMissile(mobj_t *mo)
 {
     mo->mom[MZ] = -mo->mom[MZ];
-    P_MobjChangeState(mo, mobjinfo[mo->type].deathstate);
+    P_MobjChangeState(mo, mobjInfo[mo->type].deathState);
 }
 
 /**
@@ -258,7 +259,7 @@ void P_MobjMoveXY(mobj_t *mo)
                             // Hack to prevent missiles exploding
                             // against the sky.
                             // Does not handle sky floors.
-                            P_MobjRemove(mo);
+                            P_MobjRemove(mo, false);
                             return;
                         }
                     }
@@ -309,8 +310,8 @@ void P_MobjMoveXY(mobj_t *mo)
        mo->mom[MY] > -STANDSPEED && mo->mom[MY] < STANDSPEED)
     {
         // if in a walking frame, stop moving
-        if((unsigned) ((player->plr->mo->state - states) - PCLASS_INFO(player->class)->runstate) < 4)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
+        if((unsigned) ((player->plr->mo->state - states) - PCLASS_INFO(player->class)->runState) < 4)
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
     }
 
     if((!player || (player->plr->cmd.forwardMove == 0 && player->plr->cmd.sideMove == 0)) &&
@@ -458,9 +459,9 @@ void P_MobjMoveZ(mobj_t *mo)
 
     // Do some fly-bobbing.
     if(mo->player && (mo->flags2 & MF2_FLY) && mo->pos[VZ] > mo->floorZ &&
-       !mo->onMobj && (leveltime & 2))
+       !mo->onMobj && (levelTime & 2))
     {
-        mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * leveltime >> 2) & FINEMASK]);
+        mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * levelTime >> 2) & FINEMASK]);
     }
 
     // Clip movement. Another thing?
@@ -477,7 +478,7 @@ void P_MobjMoveZ(mobj_t *mo)
                 mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
 
                 if(mo->player->health > 0)
-                    S_StartSound(sfx_blockd, mo);
+                    S_StartSound(SFX_BLOCKD, mo);
             }
             mo->mom[MZ] = 0;
         }
@@ -542,7 +543,7 @@ void P_MobjMoveZ(mobj_t *mo)
                 // Fix DOOM bug - dead players grunting when hitting the ground
                 // (e.g., after an archvile attack)
                 if(mo->player->health > 0)
-                    S_StartSound(sfx_blockd, mo);
+                    S_StartSound(SFX_BLOCKD, mo);
             }
             P_HitFloor(mo);
             mo->mom[MZ] = 0;
@@ -606,7 +607,7 @@ void P_MobjMoveZ(mobj_t *mo)
             {
                 // Don't explode against sky.
                 {
-                    P_MobjRemove(mo);
+                    P_MobjRemove(mo, false);
                 }
                 return;
             }
@@ -636,7 +637,7 @@ void P_NightmareRespawn(mobj_t *mobj)
                      P_GetFixedp(mobj->subsector, DMU_FLOOR_HEIGHT),
                      MT_TFOG);
     // initiate teleport sound
-    S_StartSound(sfx_nmrrsp, mo);
+    S_StartSound(SFX_NMRRSP, mo);
 
     // spawn a teleport fog at the new spot
     ss = R_PointInSubsector(pos[VX], pos[VY]);
@@ -644,7 +645,7 @@ void P_NightmareRespawn(mobj_t *mobj)
                      P_GetFixedp(ss, DMU_FLOOR_HEIGHT),
                      MT_TFOG);
 
-    S_StartSound(sfx_nmrrsp, mo);
+    S_StartSound(SFX_NMRRSP, mo);
 
     // spawn it
     if(mobj->info->flags & MF_SPAWNCEILING)
@@ -653,20 +654,20 @@ void P_NightmareRespawn(mobj_t *mobj)
         pos[VZ] = ONFLOORZ;
 
     // inherit attributes from deceased one
-    mo = P_SpawnMobj3fv(pos, mobj->type);
+    mo = P_SpawnMobj3fv(mobj->type, pos);
     memcpy(mo->spawnSpot.pos, mobj->spawnSpot.pos, sizeof(mo->spawnSpot.pos));
     mo->spawnSpot.angle = mobj->spawnSpot.angle;
     mo->spawnSpot.type = mobj->spawnSpot.type;
-    mo->spawnSpot.options = mobj->spawnSpot.options;
+    mo->spawnSpot.flags = mobj->spawnSpot.flags;
     mo->angle = mobj->spawnSpot.angle;
 
-    if(mobj->spawnSpot.options & MTF_AMBUSH)
+    if(mobj->spawnSpot.flags & MTF_AMBUSH)
         mo->flags |= MF_AMBUSH;
 
     mo->reactionTime = 18;
 
     // remove the old monster.
-    P_MobjRemove(mobj);
+    P_MobjRemove(mobj, true);
 }
 
 void P_MobjThinker(mobj_t *mobj)
@@ -817,7 +818,7 @@ void P_MobjThinker(mobj_t *mobj)
         if(mobj->moveCount < 12 * 35)
             return;
 
-        if(leveltime & 31)
+        if(levelTime & 31)
             return;
 
         if(P_Random() > 4)
@@ -833,7 +834,7 @@ void P_MobjThinker(mobj_t *mobj)
 mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
 {
     mobj_t         *mo;
-    mobjinfo_t     *info = &mobjinfo[type];
+    mobjinfo_t     *info = &mobjInfo[type];
     float           space;
 
     mo = P_MobjCreate(P_MobjThinker, x, y, z, 0, info->radius, info->height,
@@ -876,7 +877,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
         {
             space -= 40;
             mo->pos[VZ] =
-                (space * P_Random()) / 256) + mo->floorZ + 40;
+                ((space * P_Random()) / 256) + mo->floorZ + 40;
         }
         else
         {
@@ -912,7 +913,7 @@ void P_RespawnEnqueue(spawnspot_t *spot)
 
     memcpy(spawnobj, spot, sizeof(*spawnobj));
 
-    itemrespawntime[iquehead] = leveltime;
+    itemrespawntime[iquehead] = levelTime;
     iquehead = (iquehead + 1) & (ITEMQUESIZE - 1);
 
     // lose one off the end?
@@ -937,7 +938,7 @@ void P_CheckRespawnQueue(void)
         return;
 
     // Wait at least 30 seconds
-    if(leveltime - itemrespawntime[iquetail] < 30 * 35)
+    if(levelTime - itemrespawntime[iquetail] < 30 * 35)
         return;
 
     // Get the attributes of the mobj from spawn parameters.
@@ -949,21 +950,21 @@ void P_CheckRespawnQueue(void)
 
     // Spawn a teleport fog at the new spot.
     mo = P_SpawnMobj3fv(MT_IFOG, pos);
-    S_StartSound(sfx_nmrrsp, mo);
+    S_StartSound(SFX_NMRRSP, mo);
 
     // Find which type to spawn.
     for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
     {
-        if(sobj->type == mobjinfo[i].doomednum)
+        if(sobj->type == mobjInfo[i].doomedNum)
             break;
     }
 
-    if(mobjinfo[i].flags & MF_SPAWNCEILING)
+    if(mobjInfo[i].flags & MF_SPAWNCEILING)
         pos[VZ] = ONCEILINGZ;
     else
         pos[VZ] = ONFLOORZ;
 
-    mo = P_SpawnMobj3fv(pos, i);
+    mo = P_SpawnMobj3fv(i, pos);
     mo->angle = sobj->angle;
 
     if((mo->flags2 & MF2_FLOORCLIP) &&
@@ -981,7 +982,7 @@ void P_CheckRespawnQueue(void)
     memcpy(mo->spawnSpot.pos, sobj->pos, sizeof(mo->spawnSpot.pos));
     mo->spawnSpot.angle = sobj->angle;
     mo->spawnSpot.type = sobj->type;
-    mo->spawnSpot.options = sobj->thingflags;
+    mo->spawnSpot.flags = sobj->thingflags;
 
     // Pull it from the que.
     iquetail = (iquetail + 1) & (ITEMQUESIZE - 1);
@@ -1023,7 +1024,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
         pos[VX] = pos[VY] = pos[VZ] = 0;
     }
 
-    mobj = P_SpawnMobj3fv(pos, MT_PLAYER);
+    mobj = P_SpawnMobj3fv(MT_PLAYER, pos);
 
     // With clients all player mobjs are remote, even the CONSOLEPLAYER.
     if(IS_CLIENT)
@@ -1099,10 +1100,10 @@ void P_SpawnMapThing(spawnspot_t *th)
     // Count deathmatch start positions.
     if(th->type == 11)
     {
-        if(deathmatch_p < &deathmatchstarts[MAX_DM_STARTS])
+        if(deathmatchP < &deathmatchStarts[MAX_DM_STARTS])
         {
-            memcpy(deathmatch_p, th, sizeof(*th));
-            deathmatch_p++;
+            memcpy(deathmatchP, th, sizeof(*th));
+            deathmatchP++;
         }
         return;
     }
@@ -1116,15 +1117,15 @@ void P_SpawnMapThing(spawnspot_t *th)
     }
 
     // Don't spawn things flagged for Multiplayer if we're not in a netgame.
-    if(!IS_NETGAME && (th->options & MTF_NOTSINGLE))
+    if(!IS_NETGAME && (th->flags & MTF_NOTSINGLE))
         return;
 
     // Don't spawn things flagged for Not Deathmatch if we're deathmatching.
-    if(deathmatch && (th->options & MTF_NOTDM))
+    if(deathmatch && (th->flags & MTF_NOTDM))
         return;
 
     // Don't spawn things flagged for Not Coop if we're coop'in.
-    if(IS_NETGAME && !deathmatch && (th->options & MTF_NOTCOOP))
+    if(IS_NETGAME && !deathmatch && (th->flags & MTF_NOTCOOP))
         return;
 
     // Check for apropriate skill level.
@@ -1135,20 +1136,20 @@ void P_SpawnMapThing(spawnspot_t *th)
     else
         bit = 1 << (gameskill - 1);
 
-    if(!(th->options & bit))
+    if(!(th->flags & bit))
         return;
 
     // Find which type to spawn.
     for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
     {
-        if(th->type == mobjinfo[i].doomednum)
+        if(th->type == mobjInfo[i].doomedNum)
             break;
     }
 
     // Clients only spawn local objects.
     if(IS_CLIENT)
     {
-        if(!(mobjinfo[i].flags & MF_LOCAL))
+        if(!(mobjInfo[i].flags & MF_LOCAL))
             return;
     }
 
@@ -1156,11 +1157,11 @@ void P_SpawnMapThing(spawnspot_t *th)
         return;
 
     // Don't spawn keycards in deathmatch.
-    if(deathmatch && mobjinfo[i].flags & MF_NOTDMATCH)
+    if(deathmatch && mobjInfo[i].flags & MF_NOTDMATCH)
         return;
 
     // Check for specific disabled objects.
-    if(IS_NETGAME && (th->options & MTF_NOTSINGLE)) // Multiplayer flag.
+    if(IS_NETGAME && (th->flags & MTF_NOTSINGLE)) // Multiplayer flag.
     {
         if(cfg.noCoopWeapons && !deathmatch && i >= MT_CLIP
            && i <= MT_SUPERSHOTGUN)
@@ -1176,22 +1177,22 @@ void P_SpawnMapThing(spawnspot_t *th)
     }
 
     // Don't spawn any monsters if -nomonsters.
-    if(nomonsters && (i == MT_SKULL || (mobjinfo[i].flags & MF_COUNTKILL)))
+    if(nomonsters && (i == MT_SKULL || (mobjInfo[i].flags & MF_COUNTKILL)))
     {
         return;
     }
 
-    pos[VX] = (float) th->x;
-    pos[VY] = (float) th->y;
+    pos[VX] = (float) th->pos[VX];
+    pos[VY] = (float) th->[VY];
 
-    if(mobjinfo[i].flags & MF_SPAWNCEILING)
+    if(mobjInfo[i].flags & MF_SPAWNCEILING)
         pos[VZ] = ONCEILINGZ;
-    else if(mobjinfo[i].flags2 & MF2_SPAWNFLOAT)
+    else if(mobjInfo[i].flags2 & MF2_SPAWNFLOAT)
         pos[VZ] = FLOATRANDZ;
     else
         pos[VZ] = ONFLOORZ;
 
-    mobj = P_SpawnMobj3fv(pos, i);
+    mobj = P_SpawnMobj3fv(i, pos);
     if(mobj->flags2 & MF2_FLOATBOB)
     {   // Seed random starting index for bobbing motion.
         mobj->health = P_Random();
@@ -1201,19 +1202,19 @@ void P_SpawnMapThing(spawnspot_t *th)
     if(mobj->tics > 0)
         mobj->tics = 1 + (P_Random() % mobj->tics);
     if(mobj->flags & MF_COUNTKILL)
-        totalkills++;
+        totalKills++;
     if(mobj->flags & MF_COUNTITEM)
-        totalitems++;
+        totalItems++;
 
     mobj->visAngle = mobj->angle >> 16; // "angle-servo"; smooth actor turning
-    if(th->options & MTF_AMBUSH)
+    if(th->flags & MTF_AMBUSH)
         mobj->flags |= MF_AMBUSH;
 
     // Set the spawn info for this mobj
     memcpy(mobj->spawnSpot.pos, pos, sizeof(mobj->spawnSpot.pos));
     mobj->spawnSpot.angle = mobj->angle;
-    mobj->spawnSpot.type = mobjinfo[i].doomednum;
-    mobj->spawnSpot.options = th->options;
+    mobj->spawnSpot.type = mobjInfo[i].doomedNum;
+    mobj->spawnSpot.flags = th->flags;
 }
 
 mobj_t *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z)
@@ -1333,7 +1334,7 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
                 {
                     an = source->angle;
                     slope =
-                        tan(LOOKDIR2RAD(source->dPlayer->lookDir) / 1.2f;
+                        tan(LOOKDIR2RAD(source->dPlayer->lookDir)) / 1.2f;
                 }
             }
 

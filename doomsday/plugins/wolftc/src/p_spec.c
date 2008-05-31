@@ -48,6 +48,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_plat.h"
+#include "p_switch.h"
 #include "d_netsv.h"
 
 // MACROS ------------------------------------------------------------------
@@ -494,7 +495,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 54:
         // Platform Stop
-        P_PlatDeactivate(line);
+        P_PlatDeactivate(xline->tag);
         xline->special = 0;
         break;
 
@@ -506,7 +507,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 57:
         // Ceiling Crush Stop
-        P_CeilingDeactivate(line);
+        P_CeilingDeactivate(xline->tag);
         xline->special = 0;
         break;
 
@@ -603,7 +604,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 74:
         // Ceiling Crush Stop
-        P_CeilingDeactivate(line);
+        P_CeilingDeactivate(xline->tag);
         break;
 
     case 75:
@@ -668,7 +669,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 89:
         // Platform Stop
-        P_PlatDeactivate(line);
+        P_PlatDeactivate(xline->tag);
         break;
 
     case 90:
@@ -818,14 +819,14 @@ void P_PlayerInSpecialSector(player_t *player)
     case 5:
         // HELLSLIME DAMAGE
         if(!player->powers[PT_IRONFEET])
-            if(!(leveltime & 0x1f))
+            if(!(levelTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 10);
         break;
 
     case 7:
         // NUKAGE DAMAGE
         if(!player->powers[PT_IRONFEET])
-            if(!(leveltime & 0x1f))
+            if(!(levelTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 5);
         break;
 
@@ -835,7 +836,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // STROBE HURT
         if(!player->powers[PT_IRONFEET] || (P_Random() < 5))
         {
-            if(!(leveltime & 0x1f))
+            if(!(levelTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 20);
         }
         break;
@@ -847,7 +848,7 @@ void P_PlayerInSpecialSector(player_t *player)
         if(cfg.secretMsg)
         {
             P_SetMessage(player, "You've found a secret area!", false);
-            S_ConsoleSound(sfx_secret, 0, player - players);
+            S_ConsoleSound(SFX_SECRET, 0, player - players);
         }
         break;
 
@@ -855,7 +856,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // EXIT SUPER DAMAGE! (for E1M8 finale)
         player->cheats &= ~CF_GODMODE;
 
-        if(!(leveltime & 0x1f))
+        if(!(levelTime & 0x1f))
             P_DamageMobj(player->plr->mo, NULL, NULL, 20);
 
         if(player->health <= 10)
@@ -917,30 +918,30 @@ void P_UpdateSpecials(void)
                 sidedef_t     *sdef = P_GetPtrp(button->line, DMU_SIDEDEF0);
                 sector_t   *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
 
-                switch(button->where)
+                switch(button->section)
                 {
-                case top:
+                case LS_TOP:
                     P_SetIntp(sdef, DMU_TOP_MATERIAL, button->texture);
                     break;
 
-                case middle:
+                case LS_MIDDLE:
                     P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->texture);
                     break;
 
-                case bottom:
+                case LS_BOTTOM:
                     P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->texture);
                     break;
 
                 default:
                     Con_Error("P_UpdateSpecials: Unknown sidedef section \"%d\".",
-                              button->where);
+                              button->section);
                 }
 
-                S_StartSound(sfx_swtchn,
+                S_StartSound(SFX_SWTCHN,
                              P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
 
                 button->line = NULL;
-                button->where = 0;
+                button->section = LS_MIDDLE;
                 button->texture = 0;
                 button->soundOrg = NULL;
             }
@@ -996,7 +997,7 @@ void P_SpawnSpecials(void)
             {
             case 9:
                 // SECRET SECTOR
-                totalsecret++;
+                totalSecret++;
                 break;
             }
             continue;
@@ -1032,7 +1033,7 @@ void P_SpawnSpecials(void)
 
         case 9:
             // SECRET SECTOR
-            totalsecret++;
+            totalSecret++;
             break;
 
         case 10:
@@ -1175,7 +1176,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         // killough 10/98: prevent zombies from exiting levels
         if(mo->player && mo->player->health <= 0 && !cfg.zombiesCanExit)
         {
-            S_StartSound(sfx_noway, mo);
+            S_StartSound(SFX_NOWAY, mo);
             return false;
         }
 
@@ -1257,7 +1258,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         // killough 10/98: prevent zombies from exiting levels
         if(mo->player && mo->player->health <= 0 && !cfg.zombiesCanExit)
         {
-            S_StartSound(sfx_noway, mo);
+            S_StartSound(SFX_NOWAY, mo);
             return false;
         }
 

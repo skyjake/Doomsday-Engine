@@ -49,7 +49,6 @@
 
 #define LOWERSPEED          (6)
 #define RAISESPEED          (6)
-
 #define WEAPONBOTTOM        (128)
 #define WEAPONTOP           (32)
 
@@ -65,8 +64,8 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-float swingPos[2];
-float bulletslope;
+static float swing[2];
+static float bulletSlope;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -95,8 +94,8 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
         if(state->misc[0])
         {
             // coordinate set
-            psp->offset[VX] = (float) state->misc[0];
-            psp->offset[VY] = (float) state->misc[1];
+            psp->pos[VX] = (float) state->misc[0];
+            psp->pos[VY] = (float) state->misc[1];
         }
 
         // Call action routine.
@@ -116,24 +115,22 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 
 void P_CalcSwing(player_t *player)
 {
-    fixed_t swing;
-    int     angle;
+    int                 angle;
+    float               mul;
 
-    // OPTIMIZE: tablify this.
-    // A LUT would allow for different modes,
-    //  and add flexibility.
+    /**
+     * Fun Fact:
+     * Due to the way the swing and the sector damage are calculated you
+     * are ALWAYS damaged at precisely the same time your weapon is at the
+     * furthest point of its swing (left or right).
+     */
+    mul = player->bob;
 
-    // FUNFACT: due to the way the swing and the sector damage are
-    // calculated you are ALWAYS damaged at precisely the same time your
-    // weapon is at the furthest point of its swing (left or right).
+    angle = (FINEANGLES / 70 * levelTime) & FINEMASK;
+    swing[VX] = mul * FIX2FLT(finesine[angle]);
 
-    swing = player->bob;
-
-    angle = (FINEANGLES / 70 * leveltime) & FINEMASK;
-    swingx = FixedMul(swing, finesine[angle]);
-
-    angle = (FINEANGLES / 70 * leveltime + FINEANGLES / 2) & FINEMASK;
-    swingy = -FixedMul(swingx, finesine[angle]);
+    angle = (FINEANGLES / 70 * levelTime + FINEANGLES / 2) & FINEMASK;
+    swing[VY] = -(mul * FIX2FLT(finesine[angle]));
 }
 
 /*
@@ -153,7 +150,7 @@ void P_BringUpWeapon(player_t *player)
         S_StartSound(wminfo->raiseSound, player->plr->mo);
 
     player->pendingWeapon = WT_NOCHANGE;
-    player->pSprites[ps_weapon].offset[VY] = WEAPONBOTTOM;
+    player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
 
     P_SetPsprite(player, ps_weapon, wminfo->upState);
 }
@@ -172,11 +169,11 @@ boolean P_CheckAmmo(player_t *player)
     good = true;
     for(i=0; i < NUM_AMMO_TYPES && good; ++i)
     {
-        if(!weaponinfo[player->readyWeapon][player->class].mode[0].ammotype[i])
+        if(!weaponInfo[player->readyWeapon][player->class].mode[0].ammoType[i])
             continue; // Weapon does not take this type of ammo.
 
         // Minimal amount for one shot varies.
-        count = weaponinfo[player->readyWeapon][player->class].mode[0].pershot[i];
+        count = weaponInfo[player->readyWeapon][player->class].mode[0].perShot[i];
 
         // Return if current ammunition sufficient.
         if(player->ammo[i] < count)
@@ -191,7 +188,7 @@ boolean P_CheckAmmo(player_t *player)
     P_MaybeChangeWeapon(player, WT_NOCHANGE, AT_NOAMMO, false);
 
     // Now set appropriate weapon overlay.
-    P_SetPsprite(player, ps_weapon, weaponinfo[player->readyWeapon][player->class].mode[0].downstate);
+    P_SetPsprite(player, ps_weapon, weaponInfo[player->readyWeapon][player->class].mode[0].downState);
 
     return false;
 }
@@ -207,7 +204,7 @@ void P_FireWeapon(player_t *player)
     player->plr->pSprites[0].state = DDPSP_FIRE;
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackState);
-    newstate = weaponinfo[player->readyWeapon][player->class].mode[0].atkstate;
+    newstate = weaponInfo[player->readyWeapon][player->class].mode[0].attackState;
     P_SetPsprite(player, ps_weapon, newstate);
     NetSv_PSpriteChange(player - players, newstate);
     P_NoiseAlert(player->plr->mo, player->plr->mo);
@@ -218,7 +215,7 @@ void P_FireWeapon(player_t *player)
  */
 void P_DropWeapon(player_t *player)
 {
-    P_SetPsprite(player, ps_weapon, weaponinfo[player->readyWeapon][player->class].mode[0].downstate);
+    P_SetPsprite(player, ps_weapon, weaponInfo[player->readyWeapon][player->class].mode[0].downState);
 }
 
 /*
@@ -236,7 +233,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
     if(player->plr->mo->state == &states[PCLASS_INFO(player->class)->attackState] ||
        player->plr->mo->state == &states[PCLASS_INFO(player->class)->attackEndState])
     {
-        P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
+        P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
     }
 
     if(player->readyWeapon != WT_NOCHANGE)
@@ -272,8 +269,8 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
         player->attackDown = false;
 
     // Bob the weapon based on movement speed.
-    psp->offset[VX] = *((float *)G_GetVariable(DD_PSPRITE_BOB_X));
-    psp->offset[VY] = *((float *)G_GetVariable(DD_PSPRITE_BOB_Y));
+    psp->pos[VX] = *((float *)G_GetVariable(DD_PSPRITE_BOB_X));
+    psp->pos[VY] = *((float *)G_GetVariable(DD_PSPRITE_BOB_Y));
 
     // Psprite state.
     player->plr->pSprites[0].state = DDPSP_BOBBING;
@@ -313,25 +310,25 @@ void C_DECL A_CheckReload(player_t *player, pspdef_t *psp)
  */
 void C_DECL A_Lower(player_t *player, pspdef_t * psp)
 {
-    psp->offset[VY] += LOWERSPEED;
+    psp->pos[VY] += LOWERSPEED;
 
     // Psprite state.
     player->plr->pSprites[0].state = DDPSP_DOWN;
 
     // Should we disable the lowering?
-    if(!cfg.bobWeaponLower || weaponinfo[player->readyWeapon][player->class].mode[0].static_switch)
+    if(!cfg.bobWeaponLower || weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch)
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
 
     // Is already down.
-    if(psp->offset[VY] < WEAPONBOTTOM)
+    if(psp->pos[VY] < WEAPONBOTTOM)
         return;
 
     // Player is dead.
     if(player->playerState == PST_DEAD)
     {
-        psp->offset[VY] = WEAPONBOTTOM;
+        psp->pos[VY] = WEAPONBOTTOM;
 
         // don't bring weapon back up
         return;
@@ -350,7 +347,7 @@ void C_DECL A_Lower(player_t *player, pspdef_t * psp)
     player->update |= PSF_READY_WEAPON;
 
     // Should we suddenly lower the weapon?
-    if(cfg.bobWeaponLower && !weaponinfo[player->readyWeapon][player->class].mode[0].static_switch)
+    if(cfg.bobWeaponLower && !weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch)
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
     }
@@ -366,24 +363,24 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
     player->plr->pSprites[0].state = DDPSP_UP;
 
     // Should we disable the lowering?
-    if(!cfg.bobWeaponLower || weaponinfo[player->readyWeapon][player->class].mode[0].static_switch)
+    if(!cfg.bobWeaponLower || weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch)
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
 
-    psp->offset[VY] -= RAISESPEED;
+    psp->pos[VY] -= RAISESPEED;
 
-    if(psp->offset[VY] > WEAPONTOP)
+    if(psp->pos[VY] > WEAPONTOP)
         return;
 
     // Enable the pspr Y offset once again.
     DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
 
-    psp->offset[VY] = WEAPONTOP;
+    psp->pos[VY] = WEAPONTOP;
 
     // The weapon has been raised all the way,
     //  so change to the ready state.
-    newstate = weaponinfo[player->readyWeapon][player->class].mode[0].readystate;
+    newstate = weaponInfo[player->readyWeapon][player->class].mode[0].readyState;
 
     P_SetPsprite(player, ps_weapon, newstate);
 }
@@ -391,7 +388,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
 void C_DECL A_GunFlash(player_t *player, pspdef_t * psp)
 {
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackEndState);
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 }
 
 void C_DECL A_Punch(player_t *player, pspdef_t * psp)
@@ -416,7 +413,7 @@ void C_DECL A_Punch(player_t *player, pspdef_t * psp)
     // Turn to face target.
     if(lineTarget)
     {
-        S_StartSound(sfx_punch, player->plr->mo);
+        S_StartSound(SFX_PUNCH, player->plr->mo);
 
         player->plr->mo->angle =
             R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
@@ -444,11 +441,11 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
 
     if(!lineTarget)
     {
-        S_StartSound(sfx_sawful, player->plr->mo);
+        S_StartSound(SFX_SAWFUL, player->plr->mo);
         return;
     }
 
-    S_StartSound(sfx_sawhit, player->plr->mo);
+    S_StartSound(SFX_SAWHIT, player->plr->mo);
 
     // Turn to face target.
     angle =
@@ -496,7 +493,7 @@ void C_DECL A_FirePlasma(player_t *player, pspdef_t *psp)
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     player->update |= PSF_AMMO;
@@ -516,24 +513,24 @@ void P_BulletSlope(mobj_t *mo)
 
     // See which target is to be aimed at.
     an = mo->angle;
-    bulletslope = P_AimLineAttack(mo, an, 16 * 64);
+    bulletSlope = P_AimLineAttack(mo, an, 16 * 64);
     if(!cfg.noAutoAim)
     {
         if(!lineTarget)
         {
             an += 1 << 26;
-            bulletslope = P_AimLineAttack(mo, an, 16 * 64);
+            bulletSlope = P_AimLineAttack(mo, an, 16 * 64);
 
             if(!lineTarget)
             {
                 an -= 2 << 26;
-                bulletslope = P_AimLineAttack(mo, an, 16 * 64);
+                bulletSlope = P_AimLineAttack(mo, an, 16 * 64);
             }
 
             if(!lineTarget)
             {
                 an += 2 << 26;
-                bulletslope =
+                bulletSlope =
                     tan(LOOKDIR2RAD(mo->dPlayer->lookDir)) / 1.2;
             }
         }
@@ -551,18 +548,18 @@ void P_GunShot(mobj_t *mo, boolean accurate)
     if(!accurate)
         angle += (P_Random() - P_Random()) << 18;
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
 void C_DECL A_FirePistol(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_pistol, player->plr->mo);
+    S_StartSound(SFX_PISTOL, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackEndState);
 
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -576,12 +573,12 @@ void C_DECL A_FireShotgun(player_t *player, pspdef_t * psp)
 {
     int     i;
 
-    S_StartSound(sfx_shotgn, player->plr->mo);
+    S_StartSound(SFX_SHOTGN, player->plr->mo);
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackEndState);
 
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -599,12 +596,12 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t * psp)
     angle_t     angle;
     int         damage;
 
-    S_StartSound(sfx_dshtgn, player->plr->mo);
+    S_StartSound(SFX_DSHTGN, player->plr->mo);
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackEndState);
 
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -619,20 +616,20 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t * psp)
         angle += (P_Random() - P_Random()) << 19;
 
         P_LineAttack(player->plr->mo, angle, MISSILERANGE,
-                     bulletslope + FIX2FLT((P_Random() - P_Random()) << 5), damage);
+                     bulletSlope + FIX2FLT((P_Random() - P_Random()) << 5), damage);
     }
 }
 
 void C_DECL A_FireCGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_pistol, player->plr->mo);
+    S_StartSound(SFX_PISTOL, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackEndState);
 
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate + psp->state -
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState + psp->state -
                  &states[S_CHAIN1]);
 
     player->update |= PSF_AMMO;
@@ -692,7 +689,7 @@ void C_DECL A_BFGSpray(mobj_t *mo)
 
 void C_DECL A_BFGsound(player_t *player, pspdef_t *psp)
 {
-    S_StartSound(sfx_bfg, player->plr->mo);
+    S_StartSound(SFX_BFG, player->plr->mo);
 }
 
 /**
@@ -761,7 +758,7 @@ void P_WPistolShot(mobj_t *mo, boolean accurate)
     if(!accurate)
         angle += (P_Random() - P_Random()) << 16;
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
 //
@@ -778,7 +775,7 @@ void P_WMachineGunShot(mobj_t *mo, boolean accurate)
     if(!accurate)
         angle += (P_Random() - P_Random()) << 17;
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
 //
@@ -795,7 +792,7 @@ void P_WChainGunShot(mobj_t *mo, boolean accurate)
     if(!accurate)
         angle += (P_Random() - P_Random()) << 18;
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
 //
@@ -813,7 +810,7 @@ void P_RifleShot(mobj_t *mo, boolean accurate)
     if(!accurate)
         angle += (P_Random() - P_Random()) << 17;
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
 //
@@ -831,7 +828,7 @@ void P_RevolverShot(mobj_t *mo, boolean accurate)
     if(!accurate)
         angle += (P_Random() - P_Random()) << 17;
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
 //
@@ -849,7 +846,7 @@ void P_MPistolShot(mobj_t *mo, boolean accurate)
     if(!accurate)
         angle += (P_Random() - P_Random()) << 16;
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
 //
@@ -867,7 +864,7 @@ void P_MChaingunShot(mobj_t *mo, boolean accurate)
     if(!accurate)
         angle += (P_Random() - P_Random()) << 20;
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
 //
@@ -885,7 +882,7 @@ void P_MRifleShot(mobj_t *mo, boolean accurate)
     if(!accurate)
         angle += (P_Random() - P_Random()) << 18;
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
 //
@@ -903,7 +900,7 @@ void P_RShotgunShot(mobj_t *mo, boolean accurate)
     if(!accurate)
         angle += (P_Random() - P_Random()) << 18;
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
 //
@@ -932,7 +929,7 @@ void C_DECL A_Knife(player_t *player, pspdef_t *psp)
     // Turn to face target.
     if(lineTarget)
     {
-        S_StartSound(sfx_punch, player->plr->mo);
+        S_StartSound(SFX_PUNCH, player->plr->mo);
         player->plr->mo->angle =
             R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
                             lineTarget->pos[VX], lineTarget->pos[VY]);
@@ -946,13 +943,13 @@ void C_DECL A_Knife(player_t *player, pspdef_t *psp)
 
 void C_DECL A_FireWPistol(player_t *player, pspdef_t *psp)
 {
-    S_StartSound(sfx_wpisto, player->plr->mo);
+    S_StartSound(SFX_WPISTO, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -968,13 +965,13 @@ void C_DECL A_FireWPistol(player_t *player, pspdef_t *psp)
 
 void C_DECL A_FireSPistol(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_lpisto, player->plr->mo);
+    S_StartSound(SFX_LPISTO, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -990,13 +987,13 @@ void C_DECL A_FireSPistol(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireCPistol(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_cpisto, player->plr->mo);
+    S_StartSound(SFX_CPISTO, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1012,13 +1009,13 @@ void C_DECL A_FireCPistol(player_t *player, pspdef_t * psp)
 
 void C_DECL A_Fire3Pistol(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_3pisto, player->plr->mo);
+    S_StartSound(SFX_3PISTO, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1034,11 +1031,11 @@ void C_DECL A_Fire3Pistol(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireUPistol(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     player->update |= PSF_AMMO;
@@ -1067,13 +1064,13 @@ void C_DECL A_UranusPlayerPistolBlur(mobj_t *actor)
 
 void C_DECL A_FireMPistol(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_wpisto, player->plr->mo);
+    S_StartSound(SFX_WPISTO, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1089,13 +1086,13 @@ void C_DECL A_FireMPistol(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireWMachineGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_wmachi, player->plr->mo);
+    S_StartSound(SFX_WMACHI, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1111,13 +1108,13 @@ void C_DECL A_FireWMachineGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireSMachineGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_lmachi, player->plr->mo);
+    S_StartSound(SFX_LMACHI, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1133,13 +1130,13 @@ void C_DECL A_FireSMachineGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireOMachineGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_omachi, player->plr->mo);
+    S_StartSound(SFX_OMACHI, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1155,13 +1152,13 @@ void C_DECL A_FireOMachineGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireCMachineGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_cpisto, player->plr->mo);
+    S_StartSound(SFX_CPISTO, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1177,13 +1174,13 @@ void C_DECL A_FireCMachineGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_Fire3MachineGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_3machi, player->plr->mo);
+    S_StartSound(SFX_3MACHI, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1199,11 +1196,11 @@ void C_DECL A_Fire3MachineGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireUMachineGun(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     player->update |= PSF_AMMO;
@@ -1232,16 +1229,16 @@ void C_DECL A_UranusPlayerMachinegunBlur(mobj_t *actor)
 
 void C_DECL A_FireWGattlingGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_wchgun, player->plr->mo);
+    S_StartSound(SFX_WCHGUN, player->plr->mo);
 
-    /*if(!player->ammo[weaponinfo[player->readyWeapon].ammo])
+    /*if(!player->ammo[weaponInfo[player->readyWeapon].ammo])
        return; */
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1258,16 +1255,16 @@ void C_DECL A_FireWGattlingGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireSGattlingGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_lchgun, player->plr->mo);
+    S_StartSound(SFX_LCHGUN, player->plr->mo);
 
-    /*if(!player->ammo[weaponinfo[player->readyWeapon].ammo])
+    /*if(!player->ammo[weaponInfo[player->readyWeapon].ammo])
        return; */
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1284,16 +1281,16 @@ void C_DECL A_FireSGattlingGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireAGattlingGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_wmachi, player->plr->mo);
+    S_StartSound(SFX_WMACHI, player->plr->mo);
 
-    /*if(!player->ammo[weaponinfo[player->readyWeapon].ammo])
+    /*if(!player->ammo[weaponInfo[player->readyWeapon].ammo])
        return; */
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1310,16 +1307,16 @@ void C_DECL A_FireAGattlingGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireOGattlingGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_orifle, player->plr->mo);
+    S_StartSound(SFX_ORIFLE, player->plr->mo);
 
-    /*if(!player->ammo[weaponinfo[player->readyWeapon].ammo])
+    /*if(!player->ammo[weaponInfo[player->readyWeapon].ammo])
        return; */
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1336,17 +1333,17 @@ void C_DECL A_FireOGattlingGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireEGattlingGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_wchgun, player->plr->mo);
+    S_StartSound(SFX_WCHGUN, player->plr->mo);
 
-    /*if(!player->ammo[weaponinfo[player->readyWeapon].ammo])
+    /*if(!player->ammo[weaponInfo[player->readyWeapon].ammo])
        return; */
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate + psp->state -
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState + psp->state -
                  &states[S_SAELCHAIN1]);
 
     player->update |= PSF_AMMO;
@@ -1364,16 +1361,16 @@ void C_DECL A_FireEGattlingGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireCGattlingGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_cpisto, player->plr->mo);
+    S_StartSound(SFX_CPISTO, player->plr->mo);
 
-    /*if(!player->ammo[weaponinfo[player->readyWeapon].ammo])
+    /*if(!player->ammo[weaponInfo[player->readyWeapon].ammo])
        return; */
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1390,16 +1387,16 @@ void C_DECL A_FireCGattlingGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_Fire3GattlingGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_3chgun, player->plr->mo);
+    S_StartSound(SFX_3CHGUN, player->plr->mo);
 
-    /*if(!player->ammo[weaponinfo[player->readyWeapon].ammo])
+    /*if(!player->ammo[weaponInfo[player->readyWeapon].ammo])
        return; */
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1416,11 +1413,11 @@ void C_DECL A_Fire3GattlingGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireUGattlingGun(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     player->update |= PSF_AMMO;
@@ -1449,16 +1446,16 @@ void C_DECL A_UranusPlayerChaingunBlur(mobj_t *actor)
 
 void C_DECL A_FireMGattlingGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_wchgun, player->plr->mo);
+    S_StartSound(SFX_WCHGUN, player->plr->mo);
 
-    /*if(!player->ammo[weaponinfo[player->readyWeapon].ammo])
+    /*if(!player->ammo[weaponInfo[player->readyWeapon].ammo])
        return; */
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1475,13 +1472,13 @@ void C_DECL A_FireMGattlingGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireORifle(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_orifle, player->plr->mo);
+    S_StartSound(SFX_ORIFLE, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1498,13 +1495,13 @@ void C_DECL A_FireMRifle(player_t *player, pspdef_t * psp)
 {
     int     i;
 
-    S_StartSound(sfx_orifle, player->plr->mo);
+    S_StartSound(SFX_ORIFLE, player->plr->mo);
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
 
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1522,13 +1519,13 @@ void C_DECL A_FireMRifle(player_t *player, pspdef_t * psp)
 
 void C_DECL A_FireORevolver(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_orevol, player->plr->mo);
+    S_StartSound(SFX_OREVOL, player->plr->mo);
 
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1546,13 +1543,13 @@ void C_DECL A_FireRShotgun(player_t *player, pspdef_t * psp)
 {
     int     i;
 
-    S_StartSound(sfx_orifle, player->plr->mo);
+    S_StartSound(SFX_ORIFLE, player->plr->mo);
     P_MobjChangeState(player->plr->mo, S_PLAY_ATK2);
 
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponinfo[player->readyWeapon][player->class].mode[0].flashstate);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1569,11 +1566,11 @@ void C_DECL A_FireRShotgun(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_FireMSyringe(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     player->update |= PSF_AMMO;
@@ -1588,7 +1585,7 @@ void C_DECL A_FireMSyringe(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_FireWMissile(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1601,7 +1598,7 @@ void C_DECL A_FireWMissile(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_FireLMissile(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1614,7 +1611,7 @@ void C_DECL A_FireLMissile(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_FireCMissile(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -1627,11 +1624,11 @@ void C_DECL A_FireCMissile(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_FireFlame(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     player->update |= PSF_AMMO;
@@ -1646,11 +1643,11 @@ void C_DECL A_FireFlame(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_FireCFlame(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     player->update |= PSF_AMMO;
@@ -1665,11 +1662,11 @@ void C_DECL A_FireCFlame(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_Fire3Flame(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     player->update |= PSF_AMMO;
@@ -1684,11 +1681,11 @@ void C_DECL A_Fire3Flame(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_FireCMissile1(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     player->update |= PSF_AMMO;
@@ -1703,11 +1700,11 @@ void C_DECL A_FireCMissile1(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_FireCMissile2(player_t *player, pspdef_t * psp)
 {
-    //player->ammo[weaponinfo[player->readyWeapon].ammo]--;
+    //player->ammo[weaponInfo[player->readyWeapon].ammo]--;
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     player->update |= PSF_AMMO;
@@ -1724,7 +1721,7 @@ void C_DECL A_FireCMissile2NA(player_t *player, pspdef_t * psp)
 {
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     P_SpawnMissile(MT_CATAPMISSILE2, player->plr->mo, NULL);
@@ -1738,7 +1735,7 @@ void C_DECL A_FireCMissile3(player_t *player, pspdef_t * psp)
 {
 
     P_SetPsprite(player, ps_flash,
-                 weaponinfo[player->readyWeapon][player->class].mode[0].flashstate +
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
     P_SpawnMissile(MT_CATAPMISSILE2, player->plr->mo, NULL);
@@ -1749,7 +1746,7 @@ void C_DECL A_FireCMissile3(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_KnifeThrust(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_knfatk, player->plr->mo);
+    S_StartSound(SFX_KNFATK, player->plr->mo);
 }
 
 //
@@ -1757,7 +1754,7 @@ void C_DECL A_KnifeThrust(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_CKnifeThrust(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_cknfat, player->plr->mo);
+    S_StartSound(SFX_CKNFAT, player->plr->mo);
 }
 
 //
@@ -1765,5 +1762,5 @@ void C_DECL A_CKnifeThrust(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_LoadMachineGun(player_t *player, pspdef_t * psp)
 {
-    S_StartSound(sfx_wmload, player->plr->mo);
+    S_StartSound(SFX_WMLOAD, player->plr->mo);
 }

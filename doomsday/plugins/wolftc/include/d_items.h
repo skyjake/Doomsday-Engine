@@ -35,7 +35,7 @@
 #pragma interface
 #endif
 
-#define WEAPON_INFO(weaponnum, pclass, fmode) (&weaponinfo[weaponnum][pclass].mode[fmode])
+#define WEAPON_INFO(weaponnum, pclass, fmode) (&weaponInfo[weaponnum][pclass].mode[fmode])
 
 typedef struct {
     int             gameModeBits; // Game modes, weapon is available in.

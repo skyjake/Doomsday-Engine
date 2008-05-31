@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,12 +62,12 @@ typedef enum hueevent_e {
 
 typedef struct wolftc_config_s {
     float           playerMoveSpeed;
-    int             dclickuse;
-    int             usemlook;      // Mouse look (mouse Y => viewpitch)
-    int             usejlook;      // Joy look (joy Y => viewpitch)
+    int             dclickUse;
+    int             useMLook;      // Mouse look (mouse Y => viewpitch)
+    int             useJLook;      // Joy look (joy Y => viewpitch)
     int             alwaysRun;     // Always run.
     int             noAutoAim;     // No auto-aiming?
-    int             jlookDeltaMode;
+    int             jLookDeltaMode;
     int             lookSpring;
     float           lookSpeed;
     float           turnSpeed;
@@ -75,12 +75,11 @@ typedef struct wolftc_config_s {
     int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;
-    byte            setsizeneeded;
-    int             setblocks;
-    int             screenblocks;
+    byte            setSizeNeeded;
+    int             setBlocks;
+    int             screenBlocks;
     byte            deathLookUp; // look up when killed
     int             slidingCorpses;
-    int             sbarscale;
     byte            echoMsg;
     float           menuScale;
     int             menuEffects;
@@ -90,8 +89,8 @@ typedef struct wolftc_config_s {
     int             menuQuitSound;
     byte            menuSlam;
     byte            askQuickSaveLoad;
-    float           flashcolor[3];
-    int             flashspeed;
+    float           flashColor[3];
+    int             flashSpeed;
     byte            turningSkull;
     byte            hudShown[6];   // HUD data visibility.
     float           hudScale;      // How to scale HUD data?
@@ -120,17 +119,18 @@ typedef struct wolftc_config_s {
     byte            coopRespawnItems;
     byte            respawnMonstersNightmare;
 
+    int             statusbarScale;
     float           statusbarAlpha;
     float           statusbarCounterAlpha;
 
     /** Compatibility options.
-    * \todo Put these into an array so we can use a bit array to change
-    * multiple options based on a compatibility mode (ala PrBoom).
-    */
-    byte            raiseghosts;
-    byte            maxskulls;
-    byte            allowskullsinwalls;
-    byte            anybossdeath;
+     * \todo Put these into an array so we can use a bit array to change
+     * multiple options based on a compatibility mode (ala PrBoom).
+     */
+    byte            raiseGhosts;
+    byte            maxSkulls;
+    byte            allowSkullsInWalls;
+    byte            anyBossDeath;
     byte            monstersStuckInDoors;
     byte            avoidDropoffs;
     byte            moveBlock; // Dont handle large negative movement in P_TryMove.
@@ -168,7 +168,7 @@ typedef struct wolftc_config_s {
     byte            msgShow;
     float           msgColor[3];
 
-    char           *chat_macros[10];
+    char           *chatMacros[10];
     byte            chatBeep;
 
     int             corpseTime;
@@ -189,7 +189,7 @@ typedef struct wolftc_config_s {
     int             netGravity;              // multiplayer custom gravity
     byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
     byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
-    byte            netNomonsters;
+    byte            netNoMonsters;
     byte            netRespawn;
     byte            netJumping;
     byte            netEpisode;
