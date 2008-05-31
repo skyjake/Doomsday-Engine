@@ -893,20 +893,15 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 
     // Don't drop at the exact same place, causes Z flickering with
     // 3D sprites.
-    /* d64tc
-    angle = M_Random() << (24 - ANGLETOFINESHIFT);
-    mo = P_SpawnMobj3f(target->pos[VX] + 3 * finecosine[angle],
-                     target->pos[VY] + 3 * finesine[angle], ONFLOORZ, item);
-    */
-
-    mo = P_SpawnMobj3f(target->pos[VX] + FIX2FLT((M_Random() - M_Random()) << 12),
+    mo = P_SpawnMobj3f(item,
+                       target->pos[VX] + FIX2FLT((M_Random() - M_Random()) << 12),
                        target->pos[VY] + FIX2FLT((M_Random() - M_Random()) << 12),
-                       ONFLOORZ, item);
+                       ONFLOORZ);
 
     mo->flags |= MF_DROPPED; // Special versions of items.
 }
 
-void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+void P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
                   int damage)
 {
     P_DamageMobj2(target, inflictor, source, damage, false);
@@ -922,7 +917,7 @@ void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
  *                      can be NULL (slime, etc).
  * @param source        Mobj to target after taking damage, creature or NULL.
  */
-void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+void P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
                    int damageP, boolean stomping)
 {
 // Follow a player exlusively for 3 seconds.
