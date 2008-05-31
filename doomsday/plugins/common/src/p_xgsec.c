@@ -148,8 +148,8 @@ static sectortype_t sectypebuffer;
 
 sectortype_t *XS_GetType(int id)
 {
-    sectortype_t       *ptr;
-    char                buff[5];
+    sectortype_t*       ptr;
+    char                buff[6];
 
     // Try finding it from the DDXGDATA lump.
     ptr = XG_GetLumpSector(id);
@@ -159,7 +159,8 @@ sectortype_t *XS_GetType(int id)
         return &sectypebuffer;
     }
 
-    sprintf(buff, "%i", id);
+    snprintf(buff, 5, "%i", id);
+    buff[5] = '\0';
     if(Def_Get(DD_DEF_SECTOR_TYPE, buff, &sectypebuffer))
         return &sectypebuffer;  // A definition was found.
 
