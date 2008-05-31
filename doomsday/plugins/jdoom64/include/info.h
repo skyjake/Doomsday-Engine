@@ -1372,7 +1372,6 @@ typedef enum {
     MT_POSSESSED,
     MT_SHOTGUY,
     MT_EMARINEL,
-    MT_NIGHTMARECACO,
     MT_TRACER,
     MT_SMOKE,
     MT_FATSO,
