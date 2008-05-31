@@ -269,27 +269,27 @@ void XF_Init(sector_t *sec, function_t *fn, char *func, int min, int max,
     fn->oldValue = -scale + offset;
 }
 
-int C_DECL XLTrav_LineAngle(linedef_t *line, boolean dummy, void *context,
-                            void *context2, mobj_t *activator)
+int C_DECL XLTrav_LineAngle(linedef_t* line, boolean dummy, void* context,
+                            void* context2, mobj_t* activator)
 {
-    sector_t* sec = (sector_t *) context;
+    sector_t*           sec = (sector_t *) context;
 
     if(P_GetPtrp(line, DMU_FRONT_SECTOR) != sec &&
        P_GetPtrp(line, DMU_BACK_SECTOR) != sec)
         return true; // Wrong sector, keep looking.
 
-    *(angle_t *) context2 = R_PointToAngle2(0, 0, P_GetFixedp(line, DMU_DX),
-                                            P_GetFixedp(line, DMU_DY));
+    *(angle_t *) context2 = R_PointToAngle2(0, 0, P_GetFloatp(line, DMU_DX),
+                                            P_GetFloatp(line, DMU_DY));
 
     return false; // Stop looking after first hit.
 }
 
-void XS_SetSectorType(struct sector_s *sec, int special)
+void XS_SetSectorType(struct sector_s* sec, int special)
 {
-    int         i;
-    xsector_t *xsec = P_ToXSector(sec);
-    xgsector_t *xg;
-    sectortype_t *info;
+    int                 i;
+    xsector_t*          xsec = P_ToXSector(sec);
+    xgsector_t*         xg;
+    sectortype_t*       info;
 
     if(XS_GetType(special))
     {
@@ -2944,7 +2944,7 @@ Con_Message("XS_Think: Index (%i) not xsector!\n", idx);
     }
 
     // Floor Texture movement
-    if(xg->info.texMoveAngle[0] != 0)
+    if(xg->info.texMoveSpeed[0] != 0)
     {
         ang = PI * xg->info.texMoveAngle[0] / 180;
         // Get current values
@@ -2957,7 +2957,7 @@ Con_Message("XS_Think: Index (%i) not xsector!\n", idx);
     }
 
     // Ceiling Texture movement
-    if(xg->info.texMoveAngle[1] != 0)
+    if(xg->info.texMoveSpeed[1] != 0)
     {
         ang = PI * xg->info.texMoveAngle[1] / 180;
         // Get current values
