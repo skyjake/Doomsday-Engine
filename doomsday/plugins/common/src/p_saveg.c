@@ -52,6 +52,7 @@
 #include <lzss.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #if __WOLFTC__
 #  include "wolftc.h"
@@ -87,7 +88,7 @@
 #if __WOLFTC__
 # define MY_SAVE_MAGIC         0x1A8AFF08
 # define MY_CLIENT_SAVE_MAGIC  0x2A8AFF08
-# define MY_SAVE_VERSION       5
+# define MY_SAVE_VERSION       6
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "WolfSav"
@@ -96,7 +97,7 @@
 #elif __JDOOM__
 # define MY_SAVE_MAGIC         0x1DEAD666
 # define MY_CLIENT_SAVE_MAGIC  0x2DEAD666
-# define MY_SAVE_VERSION       5
+# define MY_SAVE_VERSION       6
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "DoomSav"
@@ -105,7 +106,7 @@
 #elif __JDOOM64__
 # define MY_SAVE_MAGIC         0x1D6420F4
 # define MY_CLIENT_SAVE_MAGIC  0x2D6420F4
-# define MY_SAVE_VERSION       5
+# define MY_SAVE_VERSION       6
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "D64Sav"
@@ -114,7 +115,7 @@
 #elif __JHERETIC__
 # define MY_SAVE_MAGIC         0x7D9A12C5
 # define MY_CLIENT_SAVE_MAGIC  0x1062AF43
-# define MY_SAVE_VERSION       5
+# define MY_SAVE_VERSION       6
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x9d
 # define SAVEGAMENAME          "HticSav"
@@ -124,7 +125,7 @@
 # define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
 # define HXS_VERSION_TEXT_LENGTH 16
 
-# define MY_SAVE_VERSION       4
+# define MY_SAVE_VERSION       6
 # define SAVESTRINGSIZE        24
 # define SAVEGAMENAME          "Hex"
 # define CLIENTSAVEGAMENAME    "HexenCl"
@@ -1356,8 +1357,6 @@ static void SV_ReadPlayer(player_t *p)
 static void SV_WriteMobj(mobj_t *original)
 {
     mobj_t              temp, *mo = &temp;
-
-    SV_WriteByte(TC_MOBJ); // Write thinker type byte.
 
     memcpy(mo, original, sizeof(*mo));
     // Mangle it!
@@ -2635,11 +2634,7 @@ static void P_UnArchiveWorld(void)
 
 static void SV_WriteCeiling(ceiling_t* ceiling)
 {
-    SV_WriteByte(TC_CEILING);
-
     SV_WriteByte(2); // Write a version byte.
-
-    SV_WriteByte(ceiling->thinker.inStasis? 0 : 1);
 
     SV_WriteByte((byte) ceiling->type);
     SV_WriteLong(P_ToIndex(ceiling->sector));
@@ -2668,10 +2663,14 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
         int                 ver = SV_ReadByte(); // version byte.
 
         ceiling->thinker.function = T_MoveCeiling;
-        // Should we put this into stasis?
+
 #if !__JHEXEN__
-        if(!SV_ReadByte())
-            P_ThinkerSetStasis(&ceiling->thinker, true);
+        // Should we put this into stasis?
+        if(hdr.version == 5)
+        {
+            if(!SV_ReadByte())
+                P_ThinkerSetStasis(&ceiling->thinker, true);
+        }
 #endif
 
         ceiling->type = (ceilingtype_e) SV_ReadByte();
@@ -2747,8 +2746,6 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
 
 static void SV_WriteDoor(door_t *door)
 {
-    SV_WriteByte(TC_DOOR);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -2834,8 +2831,6 @@ static int SV_ReadDoor(door_t *door)
 
 static void SV_WriteFloor(floor_t *floor)
 {
-    SV_WriteByte(TC_FLOOR);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -2963,10 +2958,8 @@ static int SV_ReadFloor(floor_t *floor)
 
 static void SV_WritePlat(plat_t *plat)
 {
-    SV_WriteByte(TC_PLAT);
-
     SV_WriteByte(1); // Write a version byte.
-    SV_WriteByte(plat->thinker.inStasis? 0 : 1);
+
     SV_WriteByte((byte) plat->type);
 
     SV_WriteLong(P_ToIndex(plat->sector));
@@ -2998,10 +2991,14 @@ static int SV_ReadPlat(plat_t *plat)
         /*int ver =*/ SV_ReadByte(); // version byte.
 
         plat->thinker.function = T_PlatRaise;
+
 #if !__JHEXEN__
         // Should we put this into stasis?
+        if(hdr.version == 5)
+        {
         if(!SV_ReadByte())
             P_ThinkerSetStasis(&plat->thinker, true);
+        }
 #endif
 
         plat->type = (plattype_e) SV_ReadByte();
@@ -3066,8 +3063,6 @@ static int SV_ReadPlat(plat_t *plat)
 #if __JHEXEN__
 static void SV_WriteLight(light_t *th)
 {
-    SV_WriteByte(TC_LIGHT);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3134,8 +3129,6 @@ static int SV_ReadLight(light_t *th)
 
 static void SV_WritePhase(phase_t *th)
 {
-    SV_WriteByte(TC_PHASE);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3190,8 +3183,6 @@ static int SV_ReadPhase(phase_t *th)
 static void SV_WriteScript(acs_t *th)
 {
     uint        i;
-
-    SV_WriteByte(TC_INTERPRET_ACS);
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -3269,8 +3260,6 @@ static int SV_ReadScript(acs_t *th)
 
 static void SV_WriteDoorPoly(polydoor_t *th)
 {
-    SV_WriteByte(TC_POLY_DOOR);
-
     SV_WriteByte(1); // Write a version byte.
 
     SV_WriteByte(th->type);
@@ -3339,8 +3328,6 @@ static int SV_ReadDoorPoly(polydoor_t *th)
 
 static void SV_WriteMovePoly(polyevent_t *th)
 {
-    SV_WriteByte(TC_MOVE_POLY);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3392,8 +3379,6 @@ static int SV_ReadMovePoly(polyevent_t *th)
 
 static void SV_WriteRotatePoly(polyevent_t *th)
 {
-    SV_WriteByte(TC_ROTATE_POLY);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3444,8 +3429,6 @@ static int SV_ReadRotatePoly(polyevent_t *th)
 
 static void SV_WritePillar(pillar_t *th)
 {
-    SV_WriteByte(TC_BUILD_PILLAR);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3513,8 +3496,6 @@ static int SV_ReadPillar(pillar_t *th)
 
 static void SV_WriteFloorWaggle(waggle_t *th)
 {
-    SV_WriteByte(TC_FLOOR_WAGGLE);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3589,8 +3570,6 @@ static int SV_ReadFloorWaggle(waggle_t *th)
 #if !__JHEXEN__
 static void SV_WriteFlash(lightflash_t* flash)
 {
-    SV_WriteByte(TC_FLASH);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3651,8 +3630,6 @@ static int SV_ReadFlash(lightflash_t* flash)
 
 static void SV_WriteStrobe(strobe_t* strobe)
 {
-    SV_WriteByte(TC_STROBE);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3712,8 +3689,6 @@ static int SV_ReadStrobe(strobe_t *strobe)
 
 static void SV_WriteGlow(glow_t *glow)
 {
-    SV_WriteByte(TC_GLOW);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3768,8 +3743,6 @@ static int SV_ReadGlow(glow_t *glow)
 # if __JDOOM__ || __JDOOM64__
 static void SV_WriteFlicker(fireflicker_t *flicker)
 {
-    SV_WriteByte(TC_FLICKER);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3807,8 +3780,6 @@ static int SV_ReadFlicker(fireflicker_t *flicker)
 # if __JDOOM64__
 static void SV_WriteBlink(lightblink_t *blink)
 {
-    SV_WriteByte(TC_BLINK);
-
     SV_WriteByte(1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -3853,22 +3824,8 @@ static int SV_ReadBlink(lightblink_t *blink)
 /**
  * Archives the specified thinker.
  *
- * @param thInfo    The thinker info to be used when archiving.
  * @param th        The thinker to be archived.
  */
-static void doArchiveThinker(thinkerinfo_t *thInfo, thinker_t *th)
-{
-    if(!thInfo || !th)
-        return;
-
-    // Only the server saves this class of thinker?
-    if((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
-        return;
-
-    if(thInfo->Write)
-        thInfo->Write(th);
-}
-
 static boolean archiveThinker(thinker_t* th, void* context)
 {
     boolean             savePlayers = *(boolean*) context;
@@ -3876,7 +3833,26 @@ static boolean archiveThinker(thinker_t* th, void* context)
     // Are we archiving players?
     if(!(th->function == P_MobjThinker && ((mobj_t *) th)->player &&
        !savePlayers))
-        doArchiveThinker(infoForThinker(th), th);
+    {
+        thinkerinfo_t*      thInfo = infoForThinker(th);
+
+        if(!thInfo)
+            return true; // This is not a thinker we need to save.
+
+        // Only the server saves this class of thinker?
+        if(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT))
+        {
+#if _DEBUG
+assert(thInfo->Write);
+#endif
+            // Write the header block for this thinker.
+            SV_WriteByte(thInfo->thinkclass); // Thinker type byte.
+            SV_WriteByte(th->inStasis? 1 : 0); // In stasis?
+
+            // Write the thinker data.
+            thInfo->Write(th);
+        }
+    }
 
     return true; // Continue iteration.
 }
@@ -3979,6 +3955,7 @@ static void P_UnArchiveThinkers(void)
     thinker_t  *th = 0;
     thinkerinfo_t *thInfo = 0;
     boolean     found, knownThinker;
+    boolean     inStasis;
 #if __JHEXEN__
     boolean     doSpecials = (saveVersion >= 4);
 #else
@@ -4063,7 +4040,7 @@ static void P_UnArchiveThinkers(void)
         if(tClass == TC_END)
             break; // End of the list.
 
-        found = knownThinker = false;
+        found = knownThinker = inStasis = false;
         thInfo = thinkerInfo;
         while(thInfo->thinkclass != TC_NULL && !found)
         {
@@ -4086,6 +4063,13 @@ static void P_UnArchiveThinkers(void)
                                       ((thInfo->flags & TSF_SPECIAL)? PU_LEVSPEC : PU_LEVEL),
                                       0);
                     }
+
+                    // Is there a thinker header block?
+                    if(hdr.version >= 6)
+                    {
+                        inStasis = (boolean) SV_ReadByte();
+                    }
+
                     knownThinker = thInfo->Read(th);
                 }
             }
@@ -4102,6 +4086,8 @@ static void P_UnArchiveThinkers(void)
 
         if(knownThinker)
             P_ThinkerAdd(th);
+        if(inStasis)
+            P_ThinkerSetStasis(th, true);
     }
 
     // Update references to things.

@@ -226,7 +226,6 @@ void SV_WriteXGPlaneMover(thinker_t *th)
     uint        i;
     xgplanemover_t *mov = (xgplanemover_t *) th;
 
-    SV_WriteByte(TC_XGMOVER);
     SV_WriteByte(1); // Version.
 
     SV_WriteLong(P_ToIndex(mov->sector));
