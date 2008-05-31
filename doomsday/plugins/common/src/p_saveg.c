@@ -4065,7 +4065,11 @@ static void P_UnArchiveThinkers(void)
                     }
 
                     // Is there a thinker header block?
+#if __JHEXEN__
+                    if(saveVersion >= 6)
+#else
                     if(hdr.version >= 6)
+#endif
                     {
                         inStasis = (boolean) SV_ReadByte();
                     }
