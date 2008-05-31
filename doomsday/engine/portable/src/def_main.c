@@ -1504,23 +1504,31 @@ int Def_Get(int type, char *id, void *out)
         return false;
 
     case DD_DEF_LINE_TYPE:
+        {
+        int                 typeId = strtol(id, (char **)NULL, 10);
+
         for(i = defs.count.lineTypes.num - 1; i >= 0; i--)
-            if(defs.lineTypes[i].id == strtol(id, (char **)NULL, 10))
+            if(defs.lineTypes[i].id == typeId)
             {
                 if(out)
                     Def_CopyLineType(out, &defs.lineTypes[i]);
                 return true;
             }
+        }
         return false;
 
     case DD_DEF_SECTOR_TYPE:
+        {
+        int                 typeId = strtol(id, (char **)NULL, 10);
+
         for(i = defs.count.sectorTypes.num - 1; i >= 0; i--)
-            if(defs.sectorTypes[i].id == strtol(id, (char **)NULL, 10))
+            if(defs.sectorTypes[i].id == typeId)
             {
                 if(out)
                     Def_CopySectorType(out, &defs.sectorTypes[i]);
                 return true;
             }
+        }
         return false;
 
     default:
