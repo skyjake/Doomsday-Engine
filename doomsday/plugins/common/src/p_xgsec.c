@@ -615,7 +615,7 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sec, boolean ceiling)
 
     params.sec = sec;
     params.ceiling = ceiling;
-    P_IterateThinkers(XS_PlaneMover, stopPlaneMover, NULL);
+    P_IterateThinkers(XS_PlaneMover, stopPlaneMover, &params);
 
     // Allocate a new thinker.
     mover = Z_Calloc(sizeof(*mover), PU_LEVEL, 0);
