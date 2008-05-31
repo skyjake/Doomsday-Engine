@@ -433,7 +433,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
         break;
 
     case 44: // Ceiling Crush Stop
-        success = P_CeilingDeactivate(line, args);
+        success = P_CeilingDeactivate((short) args[0]);
         break;
 
     case 45: // Ceiling Crush Raise and Stay

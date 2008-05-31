@@ -566,16 +566,8 @@ static boolean deactivateCeiling(thinker_t* th, void* context)
  *
  * @return              @c true, if a ceiling put in stasis.
  */
-#if __JHEXEN__
-int P_CeilingDeactivate(linedef_t *line, byte *args)
-#else
 int P_CeilingDeactivate(short tag)
-#endif
 {
-#if __JHEXEN__
-    short               tag = (int) args[0];
-#endif
-
     deactivateceilingparams_t params;
 
     params.tag = tag;

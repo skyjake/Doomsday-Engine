@@ -83,10 +83,6 @@ int         EV_DoCeiling(linedef_t* li, ceilingtype_e type);
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
 int         P_CeilingActivate(short tag);
 #endif
-#if __JHEXEN__
-int         P_CeilingDeactivate(linedef_t* line, byte* args);
-#else
 int         P_CeilingDeactivate(short tag);
-#endif
 
 #endif
