@@ -23,11 +23,23 @@
 FILE(GLOB DEHREAD_SOURCES src/*.c)
 ADD_LIBRARY (dpdehread SHARED ${DEHREAD_SOURCES})
 
-IF (APPLE)
-	SET_TARGET_PROPERTIES (dpdehread PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
-ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dpdehread
 RUNTIME DESTINATION ${bindir}
 LIBRARY DESTINATION ${libdir} )
+
+IF (APPLE)
+    # Bundling.
+    SET (BUNDLE_BASE dpDehRead)
+    SET (BUNDLE ${CMAKE_BINARY_DIR}/${BUNDLE_BASE}.bundle)
+    ADD_CUSTOM_COMMAND( TARGET dpdehread POST_BUILD
+        COMMAND rm -rf ${BUNDLE}
+        COMMAND mkdir -p ${BUNDLE}/Contents/MacOS
+        COMMAND cp libdpdehread.dylib ${BUNDLE}/Contents/MacOS/${BUNDLE_BASE}
+        COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/${BUNDLE_BASE}-Info.plist ${BUNDLE}/Contents/Info.plist
+        #COMMAND mkdir -p ${BUNDLE}/Contents/Resources/English.lproj
+        #COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/InfoPlist.strings ${BUNDLE}/Contents/Resources/English.lproj/
+        COMMAND echo 'APPL????' > ${BUNDLE}/Contents/PkgInfo
+        )
+ENDIF (APPLE)

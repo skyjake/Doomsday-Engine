@@ -95,11 +95,27 @@ IF (WIN32)
 TARGET_LINK_LIBRARIES (jhexen ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss)
 ENDIF (WIN32)
 
-IF (APPLE)
-	SET_TARGET_PROPERTIES (jhexen PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
-ENDIF (APPLE)
+#IF (APPLE)
+#	SET_TARGET_PROPERTIES (jhexen PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+#ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS jhexen
 RUNTIME DESTINATION ${bindir}
 LIBRARY DESTINATION ${libdir} )
+
+IF (APPLE)
+    # Bundling.
+    SET (BUNDLE_BASE jHexen)
+    SET (BUNDLE ${CMAKE_BINARY_DIR}/${BUNDLE_BASE}.bundle)
+    ADD_CUSTOM_COMMAND( TARGET jhexen POST_BUILD
+        COMMAND rm -rf ${BUNDLE}
+        COMMAND mkdir -p ${BUNDLE}/Contents/MacOS
+        COMMAND cp libjhexen.dylib ${BUNDLE}/Contents/MacOS/${BUNDLE_BASE}
+        COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/${BUNDLE_BASE}-Info.plist ${BUNDLE}/Contents/Info.plist
+        COMMAND mkdir -p ${BUNDLE}/Contents/Resources
+        #COMMAND mkdir -p ${BUNDLE}/Contents/Resources/English.lproj
+        #COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/InfoPlist.strings ${BUNDLE}/Contents/Resources/English.lproj/
+        COMMAND echo 'APPL????' > ${BUNDLE}/Contents/PkgInfo
+        )
+ENDIF (APPLE)

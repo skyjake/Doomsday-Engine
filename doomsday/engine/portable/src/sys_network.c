@@ -33,11 +33,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef MACOSX
-#  ifndef FINK
-#    include <SDL_net/SDL_net.h>
-#  else
-#    include <SDL/SDL_net.h>
-#  endif
+#  include <SDL_net.h>
 #else
 #  include <SDL_net.h>
 #endif

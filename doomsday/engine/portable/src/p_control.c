@@ -83,10 +83,17 @@ typedef struct controlclass_s {
 } controlstate_t;
 */
 
-typedef struct impulsecounter_s {
+typedef struct doubleclick_s {
+    boolean triggered;                      // True if double-click has been detected.
+    uint    lastClickTime;
+    boolean previousState;                  // State on the previous check.
+} doubleclick_t;
+
+typedef struct controlcounter_s {
     int     control;
-    short   counts[DDMAXPLAYERS];
-} impulsecounter_t;
+    short   impulseCounts[DDMAXPLAYERS];
+    doubleclick_t doubleClicks[DDMAXPLAYERS];    
+} controlcounter_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -98,11 +105,7 @@ D_CMD(Impulse);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-//static uint controlFind(controlclass_t *cl, const char *name);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-//extern unsigned int numBindClasses;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 /*
@@ -115,13 +118,8 @@ const char *ctlClassNames[NUM_CONTROL_CLASSES][NUM_CONTROL_CLASSES] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-/*static int ctlInfo = false;
-static controlclass_t ctlClass[NUM_CONTROL_CLASSES];
-static controlstate_t ctlState[DDMAXPLAYERS];
-*/
-
 static playercontrol_t* playerControls;
-static impulsecounter_t** impulseCounts;
+static controlcounter_t** controlCounts;
 static int playerControlCount;
 
 // CODE --------------------------------------------------------------------
@@ -130,10 +128,10 @@ static playercontrol_t* P_AllocPlayerControl(void)
 {
     playerControls = M_Realloc(playerControls, sizeof(playercontrol_t) *
                                ++playerControlCount);
-    impulseCounts = M_Realloc(impulseCounts, sizeof(impulsecounter_t*) *
+    controlCounts = M_Realloc(controlCounts, sizeof(controlcounter_t*) *
                               playerControlCount);
     memset(&playerControls[playerControlCount - 1], 0, sizeof(playercontrol_t));
-    impulseCounts[playerControlCount - 1] = NULL;
+    controlCounts[playerControlCount - 1] = NULL;
     return &playerControls[playerControlCount - 1];
 }
 
@@ -161,7 +159,7 @@ void P_NewPlayerControl(int id, controltype_t type, const char *name, const char
     if(type == CTLT_IMPULSE)
     {
         // Also allocate the impulse counter.
-        impulseCounts[pc - playerControls] = M_Calloc(sizeof(impulsecounter_t));
+        controlCounts[pc - playerControls] = M_Calloc(sizeof(controlcounter_t));
     }
 }
 
@@ -197,13 +195,13 @@ void P_ControlShutdown(void)
     {
         free(playerControls[i].name);
         free(playerControls[i].bindClassName);
-        M_Free(impulseCounts[i]);
+        M_Free(controlCounts[i]);
     }
     playerControlCount = 0;
     M_Free(playerControls);
     playerControls = 0;
-    M_Free(impulseCounts);
-    impulseCounts = 0;
+    M_Free(controlCounts);
+    controlCounts = 0;
 }
 
 void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
@@ -244,13 +242,34 @@ int P_GetImpulseControlState(int playerNum, int control)
     // Check that this is really an impulse control.
     assert(pc->type == CTLT_IMPULSE);
 #endif
-    if(!impulseCounts[pc - playerControls])
+    if(!controlCounts[pc - playerControls])
         return 0;
 
-    counter = &impulseCounts[pc - playerControls]->counts[playerNum];
+    counter = &controlCounts[pc - playerControls]->impulseCounts[playerNum];
     count = *counter;
     *counter = 0;
     return count;
+}
+
+int P_GetControlDoubleClick(int playerNum, int control)
+{
+    playercontrol_t* pc = P_PlayerControlById(control);
+    doubleclick_t *doubleClick = 0;
+    int triggered = false;
+    
+    if(!pc || playerNum < 0 || playerNum >= DDMAXPLAYERS)
+        return 0;
+    
+    if(controlCounts[pc - playerControls])
+    {
+        doubleClick = &controlCounts[pc - playerControls]->doubleClicks[playerNum];
+        if(doubleClick->triggered)
+        {
+            triggered = true;
+            doubleClick->triggered = false;    
+        }
+    }
+    return triggered;
 }
 
 void P_Impulse(int playerNum, int control)
@@ -269,7 +288,7 @@ void P_Impulse(int playerNum, int control)
     if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return;
 
-    impulseCounts[pc - playerControls]->counts[playerNum]++;
+    controlCounts[pc - playerControls]->impulseCounts[playerNum]++;
 }
 
 void P_ImpulseByName(int playerNum, const char* control)
@@ -279,6 +298,12 @@ void P_ImpulseByName(int playerNum, const char* control)
     {
         P_Impulse(playerNum, pc->id);
     }
+}
+
+void P_ControlTicker(timespan_t time)
+{
+    // Check for double-clicks.
+    
 }
 
 D_CMD(ClearControlAccumulation)
@@ -295,607 +320,12 @@ D_CMD(ClearControlAccumulation)
                 P_GetControlState(p, pc->id, NULL, NULL);
             else if(pc->type == CTLT_IMPULSE)
                 P_GetImpulseControlState(p, pc->id);
+            // Also clear the double click state.
+            P_GetControlDoubleClick(p, pc->id);
         }
     }
     return true;
 }
-
-#if 0
-/**
- * Initialize the control state table of the specified player. The control
- * descriptors must be fully initialized before this is called.
- */
-void P_ControlTableInit(int player)
-{
-	uint        i;
-    controlstate_t *s = &ctlState[player];
-
-	// Allocate toggle states.
-	s->toggles =
-        M_Calloc(ctlClass[CC_TOGGLE].count * sizeof(controltoggle_t));
-
-	// Allocate an axis state for each axis control.
-	s->axes = M_Calloc(ctlClass[CC_AXIS].count * sizeof(controlaxis_t));
-	for(i = 0; i < ctlClass[CC_AXIS].count; ++i)
-	{
-		// The corresponding toggle control.  (Always exists.)
-		s->axes[i].toggle = &s->toggles[
-			controlFind(&ctlClass[CC_TOGGLE],
-						  ctlClass[CC_AXIS].desc[i].name) - 1];
-	}
-
-	// Clear the impulse buffer.
-	s->head = s->tail = 0;
-}
-
-/**
- * Free the memory allocated for the player's control state table.
- */
-static void controlTableFree(int player)
-{
-	controlstate_t *s = &ctlState[player];
-
-	M_Free(s->axes);
-	M_Free(s->toggles);
-	memset(s, 0, sizeof(*s));
-}
-
-/**
- * Free the control descriptors and state tables.
- */
-void P_ControlShutdown(void)
-{
-	uint        i;
-
-	// Free the control tables of the local players.
-	for(i = 0; i < DDMAXPLAYERS; ++i)
-	{
-		if(ddPlayers[i].flags & DDPF_LOCAL)
-            controlTableFree(i);
-	}
-
-	for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
-	{
-        if(ctlClass[i].desc)
-		    M_Free(ctlClass[i].desc);
-	}
-	memset(ctlClass, 0, sizeof(ctlClass));
-}
-
-/**
- * Look up the index of the specified control.
- */
-static uint controlFind(controlclass_t *cl, const char *name)
-{
-	uint        i;
-
-    // \fixme Use a faster than O(n) linear search.
-	for(i = 0; i < cl->count; ++i)
-	{
-		if(!stricmp(cl->desc[i].name, name))
-			return i + 1; // index + 1
-	}
-
-    return 0;
-}
-
-/**
- * Look up the index of the specified axis control.
- */
-uint P_ControlFindAxis(const char *name)
-{
-	return controlFind(&ctlClass[CC_AXIS], name);
-}
-
-/**
- * Update the state of the axis and return a pointer to it.
- */
-float P_ControlGetAxis(int player, const char *name)
-{
-	uint        idx = controlFind(&ctlClass[CC_AXIS], name);
-	controlaxis_t *axis;
-	float       pos;
-
-#ifdef _DEBUG
-	if(idx == 0)
-	{
-		Con_Error("P_ControlGetAxis: '%s' is undefined.\n", name);
-	}
-#endif
-
-	axis = &ctlState[player].axes[idx - 1];
-	pos = axis->pos;
-
-	// Update the axis position, if the axis toggle control is active.
-	if(axis->toggle && axis->toggle->state != TG_MIDDLE)
-	{
-		pos = (axis->toggle->state == TG_POSITIVE? 1 : -1);
-
-		// During the slow turn time, the speed is halved.
-/*      // DJS - The time and strength of the slow speed modifier should be
-        //       specified when the axis is registered by the game.
-        //       A time of zero, would mean no slow turn timer.
-        if(Sys_GetSeconds() - axis->toggle->time < SLOW_TURN_TIME)
-		{
-			pos /= 2;
-		}
-*/
-    }
-    //Con_Message("P_ControlGetAxis(%s): returning pos = %f\n", name, pos);
-
-	return pos;
-}
-
-/**
- * Retrieve the name of an axis control.
- *
- * @param index     The index of the axis control to retrieve the name of.
- *
- * @return          The name of an axis control at index.
- */
-const char *P_ControlGetAxisName(uint index)
-{
-    return ctlClass[CC_AXIS].desc[index].name;
-}
-
-/**
- * Create a new control descriptor.
- */
-static controldesc_t *controlAdd(uint class, const char *name)
-{
-	controlclass_t *c = &ctlClass[class];
-	controldesc_t *d;
-
-	c->desc = M_Realloc(c->desc, sizeof(*c->desc) * ++c->count);
-	d = c->desc + c->count - 1;
-	memset(d, 0, sizeof(*d));
-	strncpy(d->name, name, sizeof(d->name) - 1);
-	return d;
-}
-
-/**
- * Register a new player control descriptor.
- * Part of the Doomsday public API.
- *
- * Axis controls will automatically get toggleable controls too.
- *
- * The controls whose names are in CAPITAL LETTERS will be included 'as is'
- * in a ticcmd.  The state of other controls won't be sent over the network.
- *
- * All the symbolic names must be unique and at most MAX_DESCRIPTOR_LENGTH
- * chars long!
- *
- * @param cClass        Control class of the descriptor being registered.
- * @param name          A unique name for the new control descriptor.
- */
-void P_RegisterPlayerControl(uint cClass, const char *name)
-{
-    uint        i;
-
-    if(!name || !name[0])
-        Con_Error("P_RegisterPlayerControl: Control missing name.");
-
-    if(cClass >= NUM_CONTROL_CLASSES)
-        Con_Error("P_RegisterPlayerControl: Unknown class %i. "
-                  "Could not register control \"%s\".", cClass, name);
-
-    // Names must be at most 16 chars long.
-    if(strlen(name) > MAX_DESCRIPTOR_LENGTH)
-        Con_Error("P_RegisterPlayerControl: Cannot register control \"%s\""
-                  " - too many characters (%i max).",
-                  name, MAX_DESCRIPTOR_LENGTH);
-
-    // Names must be unique.
-    // (Actually, there can be both upper and lower-case versions when
-    // dealing with axis controls but as far as the games are concerned;
-    // they must be completely unique).
-    for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
-    {
-        if(controlFind(&ctlClass[i], name) > 0)
-            Con_Error("P_RegisterPlayerControl: There already exists a "
-                      "control with the name \"%s\". Names must be unique.",
-                      name);
-    }
-
-    controlAdd(cClass, name);
-
-    if(cClass == CC_AXIS)
-    {
-	    char        buf[MAX_DESCRIPTOR_LENGTH + 1];
-        // Also create a toggle for each axis, but use a lower case name so
-        // it won't be included in ticcmds.
-		strncpy(buf, name, sizeof(buf) - 1);
-		strlwr(buf);
-		controlAdd(CC_TOGGLE, buf);
-    }
-}
-
-/**
- * Retrieve a bitmap that specifies which toggle controls are currently
- * active. Only the UPPER CASE toggles are included. The other toggle
- * controls are intended for local use only.
- *
- * @param player        Player num whose toggle control states to collect.
- *
- * @return              The created bitmap.
- */
-int P_ControlGetToggles(int player)
-{
-	int         bits = 0;
-    uint        pos = 0, i;
-	controlclass_t *cc = &ctlClass[CC_TOGGLE];
-	controlstate_t *state = &ctlState[player];
-
-	for(i = 0; i < cc->count; ++i)
-	{
-		// Only the upper case toggles are included.
-		if(isupper(cc->desc[i].name[0]))
-		{
-			if(state->toggles[i].state != TG_OFF)
-			{
-				bits |= 1 << pos;
-			}
-			pos++;
-		}
-	}
-
-#ifdef _DEBUG
-	// We assume that we can only use up to seven bits for the controls.
-	if(pos >= 7)
-		Con_Error("P_ControlGetToggles: Out of bits (%i).\n", pos);
-#endif
-
-	return bits;
-}
-
-/**
- * Clear all toggle controls.
- *
- * @param player        Player number whose toggle controls to clear.
- *                      If negative, clear ALL player's toggle controls.
- */
-void P_ControlReset(int player)
-{
-    int         console;
-	uint        i, k;
-	controlstate_t *s;
-
-    if(player < 0)
-    {   // Clear toggles for ALL players.
-	    for(i = 0, s = ctlState; i < DDMAXPLAYERS; ++i, s++)
-	    {
-		    if(!s->toggles)
-                continue;
-
-            for(k = 0; k < ctlClass[CC_TOGGLE].count; ++k)
-		    {
-			    s->toggles[k].state = TG_OFF;
-		    }
-	    }
-    }
-    else
-    {   // Clear toggles for local player #n.
-        console = P_LocalToConsole(player);
-	    if(console >= 0 && console < DDMAXPLAYERS)
-        {
-            s = &ctlState[console];
-            for(k = 0; k < ctlClass[CC_TOGGLE].count; ++k)
-		    {
-			    s->toggles[k].state = TG_OFF;
-		    }
-        }
-    }
-}
-
-/**
- * Store the specified impulse to the player's impulse buffer.
- *
- * @param player        Player number the impulse is for.
- * @param impulse       The impluse to be executed.
- */
-static void controlImpulse(int player, impulse_t impulse)
-{
-    controlstate_t *s = &ctlState[player];
-	uint        old = s->tail;
-
-	s->impulses[s->tail] = impulse;
-	s->tail = (s->tail + 1) % MAX_IMPULSES;
-
-    if(s->tail == s->head)
-	{
-		// Oops, must cancel.  The buffer is full.
-		s->tail = old;
-	}
-}
-
-/**
- * Is the given string a valid control command?
- *
- * @param cmd           Ptr to the string to be tested.
- *
- * @return              @c true, if valid.
- */
-boolean P_IsValidControl(const char *cmd)
-{
-	char        name[20], *ptr;
-    uint        i, idx;
-    int         console, localPlayer = 0;
-
-    // Check the prefix to see what will be the new state of the
-	// toggle.
-	if(cmd[0] == '+' || cmd[0] == '-')
-	{
-		if(cmd[0] == cmd[1]) // ++ / --
-			cmd += 2;
-		else
-			cmd++;
-	}
-
-    // Copy the name of the control and find the end.
-    for(ptr = name, i = 0; *cmd && *cmd != '/'; cmd++, ++i)
-    {
-        if(i >= 20)
-            return false;
-
-        *ptr++ = *cmd;
-    }
-    *ptr++ = 0;
-
-	// Is the local player number specified?
-	if(*cmd == '/')
-	{
-		// The specified number could be bogus.
-		localPlayer = strtol(cmd + 1, NULL, 10);
-	}
-
-	// Which player will be affected?
-	console = P_LocalToConsole(localPlayer);
-	if(console >= 0 && console < DDMAXPLAYERS)
-	{
-	    // Is the given name a valid control name?  First check the toggle
-	    // controls.
-        if((idx = controlFind(&ctlClass[CC_TOGGLE], name)) > 0)
-		    return true;
-
-	    // How about impulses?
-	    if((idx = controlFind(&ctlClass[CC_IMPULSE], name)) > 0)
-		    return true;
-    }
-
-	return false;
-}
-
-/**
- * Execute a control command, which will modify the state of a toggle
- * control or send a new impulse.  Returns true if a control was
- * successfully modified.  The command is case-insensitive.  This
- * function is called by the console.
- *
- * The command syntax is as follows: [+|-]name[/N]
- *
- *   name			Toggle state of 'name', local player zero
- * 	 name/3			Toggle state of 'name', local player 3
- *   name/12 		Toggle state of 'name', local player 12 (!)
- *   +name			Set 'name' to on/positive state (local zero)
- *	 ++name/4		Set 'name' to on/positive state (local 4)
- *   -name			Set 'name' to off/middle state (local zero)
- *	 --name/5		Set 'name' to negative state (local 5)
- *
- * @param cmd           The action command to search for.
- *
- * @return              @c true, if the action was changed
- *                      successfully.
- */
-boolean P_ControlExecute(const char *cmd)
-{
-	char        name[MAX_DESCRIPTOR_LENGTH + 1], *ptr;
-    uint        idx;
-    int         console, localPlayer = 0;
-    togglestate_t newState = TG_TOGGLE;
-	controlstate_t *state = NULL;
-
-    if(!cmd || !cmd[0] || strlen(cmd) > MAX_DESCRIPTOR_LENGTH)
-        return false;
-
-    // Check the prefix to see what will be the new state of the
-	// toggle.
-	if(cmd[0] == '+' || cmd[0] == '-')
-	{
-		if(cmd[0] == cmd[1]) // ++ / --
-		{
-			newState = (cmd[0] == '+'? TG_POSITIVE : TG_NEGATIVE);
-			cmd += 2;
-		}
-		else
-		{
-			newState = (cmd[0] == '+'? TG_ON : TG_OFF);
-			cmd++;
-		}
-	}
-
-    // Copy the name of the control and find the end.
-    for(ptr = name; *cmd && *cmd != '/'; cmd++)
-        *ptr++ = *cmd;
-    *ptr++ = 0;
-
-	// Is the local player number specified?
-	if(*cmd == '/')
-	{
-		// The specified number could be bogus.
-		localPlayer = strtol(cmd + 1, NULL, 10);
-	}
-
-	// Which player will be affected?
-	console = P_LocalToConsole(localPlayer);
-	if(console >= 0 && console < DDMAXPLAYERS && ddPlayers[console].inGame)
-	{
-        state = &ctlState[console];
-    }
-
-    if(state)
-    {
-	    // Is the given name a valid control name?  First check the toggle
-	    // controls.
-        if((idx = controlFind(&ctlClass[CC_TOGGLE], name)) > 0)
-	    {
-		    // This is the control that must be changed.
-		    controltoggle_t *toggle = state->toggles + idx - 1;
-
-		    if(newState == TG_TOGGLE)
-		    {
-			    toggle->state = (toggle->state == TG_ON? TG_OFF : TG_ON);
-		    }
-		    else
-		    {
-			    toggle->state = newState;
-		    }
-
-		    // Update the toggle time.
-		    toggle->time = Sys_GetSeconds();
-		    return true;
-	    }
-
-	    // How about impulses?
-	    if((idx = controlFind(&ctlClass[CC_IMPULSE], name)) > 0)
-	    {
-	        controlImpulse(console, idx - 1);
-		    return true;
-	    }
-    }
-
-	return false;
-}
-
-/**
- * Update the position of an axis control. This is called periodically
- * from the axis binding code (for STICK axes).
- */
-
-void P_ControlSetAxis(int player, uint axisControlIndex, float pos)
-{
-	if(player < 0 || player >= DDMAXPLAYERS)
-        return;
-
-    if(ctlState[player].axes == NULL)
-        return;
-#if _DEBUG
-    if(axisControlIndex > ctlClass[CC_AXIS].count)
-        Con_Error("P_ControlSetAxis: Invalid axis index %i.",
-                  axisControlIndex);
-#endif
-
-    ctlState[player].axes[axisControlIndex].pos = pos;
-}
-
-/**
- * Move a control bound to a POINTER type axis.
- */
-void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
-{
-//    controldesc_t *desc;
-//    ddplayer_t *plr;
-
-	if(player < 0 || player >= DDMAXPLAYERS)
-        return;
-
-    if(ctlState[player].axes == NULL)
-        return;
-
-#if _DEBUG
-    if(axisControlIndex > ctlClass[CC_AXIS].count)
-        Con_Error("P_ControlAxisDelta: Invalid axis index %i.",
-                  axisControlIndex);
-#endif
-
-    ctlState[player].axes[axisControlIndex].pos += delta;
-
-    // FIXME: These should be in PlayerThink.
-    /*
-    plr = &ddPlayers[player];
-
-	// Get a descriptor of the axis control.
-	desc = &ctlClass[CC_AXIS].desc[axisControlIndex];
-
-	switch(axisControlIndex)
-	{
-	case CTL_TURN:
-        // $unifiedangles
-        if(plr->mo)
-		    plr->mo->angle -= (angle_t) (delta/180 * ANGLE_180);
-		break;
-
-	case CTL_LOOK:
-		// 110 corresponds 85 degrees.
-        // $unifiedangles
-        plr->lookDir += delta * 110.0f/85.0f;
-        // Clamp it.
-        if(plr->lookDir > 110)
-            plr->lookDir = 110;
-        if(plr->lookDir < -110)
-            plr->lookDir = -110;
-		break;
-
-	default:
-		// Undefined for other axis controls?
-		break;
-	}*/
-}
-
-/**
- * Update view angles according to the "turn" or "look" axes.
- * Done for all local players.
- *
- * FIXME: The code here is game logic, it does not belong here.
- * Functionality to be done in PlayerThink.
- */
-void P_ControlTicker(timespan_t time)
-{
-#if 0
-	/** \fixme  Player class turn speed.
-	* angleturn[3] = {640, 1280, 320};	// + slow turn
-	*/
-	uint        i;
-	float       pos, mul;
-
-    mul = time * TICSPERSEC * (640 << 16) * 45.0f/ANGLE_45;
-	for(i = 0; i < DDMAXPLAYERS; ++i)
-	{
-		if(!ddPlayers[i].inGame || !(ddPlayers[i].flags & DDPF_LOCAL))
-            continue;
-
-		pos = P_ControlGetAxis(i, "turn");
-		P_ControlAxisDelta(i, CTL_TURN, mul * pos);
-
-		pos = P_ControlGetAxis(i, "look");
-		P_ControlAxisDelta(i, CTL_LOOK, mul * pos);
-	}
-#endif
-}
-
-/**
- * Draws a HUD overlay with information about the state of the game controls as seen
- * by the engine. The cvar @c ctl-info is used for toggling the drawing of this info.
- */
-void P_ControlDrawer(void)
-{
-    int         winWidth, winHeight;
-
-    if(!ctlInfo)
-        return;
-
-    // Go into screen projection mode.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
-
-    // TODO: Draw control state here.
-
-    // Back to the original.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
-}
-#endif
 
 /**
  * Prints a list of the registered control descriptors.

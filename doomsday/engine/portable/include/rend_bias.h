@@ -73,6 +73,8 @@ typedef struct biastracker_s {
 } biastracker_t;
 
 struct rendpoly_s;
+struct rvertex_s;
+struct rcolor_s;
 
 extern int      useBias; // Bias lighting enabled.
 extern unsigned int currentTimeSB;
@@ -85,7 +87,7 @@ void            SB_PlaneHasMoved(const struct subsector_s* subsector, uint plane
 void            SB_BeginFrame(void);
 void            SB_RendPoly(const struct rvertex_s* rvertices,
                             struct rcolor_s* rcolors,
-                            uint numVertices, const float* normal,
+                            size_t numVertices, const float* normal,
                             float sectorLightLevel,
                             biastracker_t* tracker,
                             biasaffection_t* affected,

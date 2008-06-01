@@ -44,6 +44,7 @@ typedef struct playercontrol_s {
 
 void        P_ControlRegister(void);
 void        P_ControlShutdown(void);
+void        P_ControlTicker(timespan_t time);
 
 playercontrol_t* P_PlayerControlById(int id);
 playercontrol_t* P_PlayerControlByName(const char* name);

@@ -38,6 +38,8 @@
 
 typedef void* cutlist_t;
 
+struct bspartition_s;
+
 /**
  * An "intersection" remembers the vertex that touches a BSP divider
  * line (especially a new vertex that is created at a twin-edge split).

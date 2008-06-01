@@ -558,13 +558,15 @@ boolean Cht_Responder(event_t *ev)
 
 static boolean canCheat(void)
 {
+    extern boolean netCheatParm;
+    
     if(IS_NETGAME && !IS_CLIENT && netSvAllowCheats)
         return true;
 
 #ifdef _DEBUG
     return true;
 #else
-    return !(gameskill == SM_NIGHTMARE || (IS_NETGAME && !netCheatParm) ||
+    return !(gameSkill == SM_NIGHTMARE || (IS_NETGAME && !netCheatParm) ||
              players[CONSOLEPLAYER].health <= 0);
 #endif
 }

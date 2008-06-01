@@ -850,7 +850,7 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     int                 seqType; \
     struct { \
         int             index; \
-        uint            lineCount; \
+        unsigned int    lineCount; \
         struct linedef_s **lineDefs; \
     } buildData;
 
@@ -1246,7 +1246,7 @@ typedef struct ticcmd_s {
 	char		forwardMove;		// *2048 for real move
 	char		sideMove;			// *2048 for real move
 	char		upMove;				// *2048 for real move
-	ushort		angle;				// <<16 for angle (view angle)
+	unsigned short angle;			// <<16 for angle (view angle)
 	short		pitch;				// View pitch
 	short		actions;			// On/off action flags
 } ticcmd_t;

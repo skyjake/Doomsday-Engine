@@ -21,6 +21,9 @@
  * Boston, MA  02110-1301  USA
  */
 
+#include <stdint.h>
+typedef uint64_t      io_user_reference_t; 
+
 #import "SDL.h"
 #import "../include/DoomsdayRunner.h"
 

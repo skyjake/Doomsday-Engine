@@ -29,6 +29,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdint.h>
+typedef uint64_t io_user_reference_t;
+
 #include "driver.h"
 #include <Carbon/Carbon.h>
 #include <QuickTime/Movies.h>

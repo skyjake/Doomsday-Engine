@@ -44,12 +44,29 @@ ELSE (ENABLEMAO)
 	ADD_LIBRARY (jdoom SHARED ${JDOOM_SOURCES} ${COMMON_PLUGIN_SOURCES} )
 ENDIF (ENABLEMAO)
 
-IF (APPLE)
-	SET_TARGET_PROPERTIES (jdoom PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
-ENDIF (APPLE)
+#IF (APPLE)
+#	SET_TARGET_PROPERTIES (jdoom PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+#ENDIF (APPLE)
 
 ################################################################################
 ######################## Install Targets  ######################################
-INSTALL(TARGETS jdoom
-RUNTIME DESTINATION ${bindir}
-LIBRARY DESTINATION ${libdir} )
+IF (NOT APPLE)
+    INSTALL(TARGETS jdoom
+    RUNTIME DESTINATION ${bindir}
+    LIBRARY DESTINATION ${libdir} )
+ENDIF (NOT APPLE)
+
+IF (APPLE)
+    # Bundling.
+    SET (BUNDLE_BASE jDoom)
+    SET (BUNDLE ${CMAKE_BINARY_DIR}/${BUNDLE_BASE}.bundle)
+    ADD_CUSTOM_COMMAND( TARGET jdoom POST_BUILD
+        COMMAND rm -rf ${BUNDLE}
+        COMMAND mkdir -p ${BUNDLE}/Contents/MacOS
+        COMMAND cp libjdoom.dylib ${BUNDLE}/Contents/MacOS/${BUNDLE_BASE}
+        COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/${BUNDLE_BASE}-Info.plist ${BUNDLE}/Contents/Info.plist
+        COMMAND mkdir -p ${BUNDLE}/Contents/Resources
+        #COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/InfoPlist.strings ${BUNDLE}/Contents/Resources/English.lproj/
+        COMMAND echo 'APPL????' > ${BUNDLE}/Contents/PkgInfo
+        )
+ENDIF (APPLE)

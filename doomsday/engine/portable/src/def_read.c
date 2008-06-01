@@ -459,7 +459,7 @@ static int ReadFloat(float *dest)
     return true;
 }
 
-static int ReadFlags(uint *dest, const char *prefix)
+static int ReadFlags(int *dest, const char *prefix)
 {
     char    flag[1024];
 

@@ -107,6 +107,11 @@ Splint 3.1.1 --- 03 Nov 2006
 typedef unsigned int	size_t;
 */
 
+#else
+
+typedef uint32_t	    uint;
+typedef uint16_t	    ushort;
+
 #endif
 
 typedef int				fixed_t;

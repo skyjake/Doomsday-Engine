@@ -21,26 +21,41 @@
 ######################## SDLMixer Output Plugin  ###############################
 INCLUDE_DIRECTORIES ( portable/include )
 IF (NOT APPLE)
-FILE(GLOB SDLMIXER_PORTABLE_SOURCES portable/src/*.c)
+    FILE(GLOB SDLMIXER_PORTABLE_SOURCES portable/src/*.c)
 ELSE (NOT APPLE)
-SET (SDLMIXER_SOURCES portable/src/driver_sdlmixer.c
-portable/src/mus2midi.c )
+    SET (SDLMIXER_PORTABLE_SOURCES portable/src/driver_sdlmixer.c
+        portable/src/mus2midi.c )
 ENDIF (NOT APPLE)
 SET (SDLMIXER_SOURCES ${SDLMIXER_PORTABLE_SOURCES} )
 
 IF (APPLE)
-FILE(GLOB SDLMIXER_APPLE_SOURCES mac/src/*.c)
-SET (SDLMIXER_SOURCES ${SDLMIXER_SOURCES} ${SDLMIXER_APPLE_SOURCES} )
+    FILE(GLOB SDLMIXER_APPLE_SOURCES mac/src/*.c)
+    SET (SDLMIXER_SOURCES ${SDLMIXER_SOURCES} ${SDLMIXER_APPLE_SOURCES} )
 ENDIF (APPLE)
 
 ADD_LIBRARY (dssdlmixer SHARED ${SDLMIXER_SOURCES})
 TARGET_LINK_LIBRARIES (dssdlmixer ${SDL_LIBRARY} ${SDLMIXER_LIBRARY})
 
-IF (APPLE)
-	SET_TARGET_PROPERTIES (dssdlmixer PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
-ENDIF (APPLE)
+#IF (APPLE)
+#	SET_TARGET_PROPERTIES (dssdlmixer PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+#ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dssdlmixer
 RUNTIME DESTINATION ${bindir}
 LIBRARY DESTINATION ${libdir} )
+
+IF (APPLE)
+    # Bundling.
+    SET (BUNDLE_BASE dsSDLMixer)
+    SET (BUNDLE ${CMAKE_BINARY_DIR}/${BUNDLE_BASE}.bundle)
+    ADD_CUSTOM_COMMAND( TARGET dssdlmixer POST_BUILD
+        COMMAND rm -rf ${BUNDLE}
+        COMMAND mkdir -p ${BUNDLE}/Contents/MacOS
+        COMMAND cp libdssdlmixer.dylib ${BUNDLE}/Contents/MacOS/${BUNDLE_BASE}
+        COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/${BUNDLE_BASE}-Info.plist ${BUNDLE}/Contents/Info.plist
+        #COMMAND mkdir -p ${BUNDLE}/Contents/Resources/English.lproj
+        #COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/InfoPlist.strings ${BUNDLE}/Contents/Resources/English.lproj/
+        COMMAND echo 'APPL????' > ${BUNDLE}/Contents/PkgInfo
+        )
+ENDIF (APPLE)

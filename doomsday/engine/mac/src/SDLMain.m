@@ -14,6 +14,9 @@
     Feel free to customize this file to suit your needs
 */
 
+#include <stdint.h>
+typedef uint64_t      io_user_reference_t; 
+
 #import "SDL.h"
 #import "../include/SDLMain.h"
 #import <sys/param.h> /* for MAXPATHLEN */
@@ -314,9 +317,8 @@ void CustomApplicationMain (argc, argv)
 #  undef main
 #endif
 
-
 /* Main entry point to executable - should *not* be SDL_main! */
-int main (int argc, char **argv)
+int main (int argc, char *argv[])
 {
 
     /* Copy the arguments into a global variable */
