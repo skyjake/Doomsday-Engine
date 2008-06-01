@@ -2,7 +2,7 @@
  *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
- *\author Copyright © 2000-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2000-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © Raven Software, Corp.
  *\author Copyright © 1993-1996 by id Software, Inc.
