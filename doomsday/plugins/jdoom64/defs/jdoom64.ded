@@ -23,10 +23,8 @@ Include "maps.ded";
 Include "finales.ded";
 Include "text.ded";
 Include "values.ded";
-Include "models.ded";
-Include "user.ded";
 
-Include "jd64xg.ded";
+Include "d64xg.ded";
 Include "colorrooms.ded";
 Include "hecticxg.ded";
 Include "map01xg.ded";
