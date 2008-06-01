@@ -385,6 +385,5 @@ int             XG_RandomInt(int min, int max);
 
 void            SV_WriteXGLine(struct linedef_s *li);
 void            SV_ReadXGLine(struct linedef_s *li);
-void            XL_UpdateActivators(void);
 
 #endif

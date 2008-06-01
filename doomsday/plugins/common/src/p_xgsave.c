@@ -288,22 +288,4 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     return true; // Add this thinker.
 }
 
-/**
- * This is called after all thinkers have been loaded.
- * We need to set the correct pointers to the line activators.
- */
-void XL_UpdateActivators(void)
-{
-    uint        i;
-    xline_t    *xline;
-    mobj_t     *activator;
-
-    for(i = 0; i < numlines; ++i)
-    {
-        xline = P_ToXLine(P_ToPtr(DMU_LINEDEF, i));
-        if(xline->xg)
-            xline->xg->activator = (activator? activator : &dummything);
-    }
-}
-
 #endif

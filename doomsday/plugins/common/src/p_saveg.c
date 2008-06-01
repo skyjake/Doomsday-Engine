@@ -4892,11 +4892,6 @@ static boolean SV_LoadGame2(void)
     }
 #endif
 
-#if !__JHEXEN__
-    // The activator mobjs must be set.
-    XL_UpdateActivators();
-#endif
-
     // Notify the players that weren't in the savegame.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -5125,9 +5120,6 @@ void SV_LoadClient(unsigned int gameid)
 
     lzClose(savefile);
     free(junkbuffer);
-
-    // The activator mobjs must be set.
-    XL_UpdateActivators();
 #endif
 }
 
