@@ -5541,6 +5541,529 @@ Thing {
   Flags = "mf_local mf_noblockmap mf_nogravity";
 }
 
+Thing {
+  ID = "TEMPSOUNDORIGIN";
+  DoomEd number = -1;
+  Spawn state = "TEMPSOUNDORIGIN1";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Radius = 1;
+  Height = 1;
+  Mass = 100;
+  Flags = "mf_local mf_nosector mf_noblockmap mf_nogravity";
+}
+
+Thing {
+  ID = "FAKEKNIGHT";
+  Name = "Fake Hell Knight";
+  DoomEd number = 222;
+  Spawn state = "BOS2_STND";
+  See state = "BOS2_RUN1";
+  Pain state = "BOS2_PAIN";
+  Melee state = "BOS2_ATK1";
+  Missile state = "BOS2_ATK1";
+  Death state = "BOS2_DIE1";
+  Xdeath state = "NULL";
+  Raise state = "BOS2_RAISE1";
+  See sound = "kntsit";
+  Attack sound = "None";
+  Pain sound = "dmpain";
+  Death sound = "kntdth";
+  Active sound = "dmact";
+  Reaction time = 8;
+  Pain chance = 50;
+  Spawn health = 500;
+  Speed = 8;
+  Radius = 32;
+  Height = 64;
+  Mass = 1000;
+  Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
+}
+
+Thing {
+  ID = "FAKETROOP";
+  Name = "Fake Imp";
+  DoomEd number = 223;
+  Spawn state = "TROO_STND";
+  See state = "TROO_RUN1";
+  Pain state = "TROO_PAIN";
+  Melee state = "TROO_MEL1";
+  Missile state = "TROO_ATK1";
+  Death state = "TROO_DIE1";
+  Xdeath state = "TROO_XDIE1";
+  Raise state = "TROO_RAISE1";
+  See sound = "bgsit1";
+  Attack sound = "None";
+  Pain sound = "popain";
+  Death sound = "bgdth1";
+  Active sound = "bgact";
+  Reaction time = 8;
+  Pain chance = 200;
+  Spawn health = 60;
+  Speed = 8;
+  Radius = 32;
+  Height = 72;
+  Mass = 100;
+  Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
+}
+
+Thing {
+  ID = "FAKESHADOWS";
+  Name = "Fake Spectre";
+  DoomEd number = 224;
+  Spawn state = "SARG_STND";
+  See state = "SARG_RUN1";
+  Pain state = "SARG_PAIN";
+  Melee state = "SARG_ATK1";
+  Missile state = "NULL";
+  Death state = "SARG_DIE1";
+  Xdeath state = "NULL";
+  Raise state = "SARG_RAISE1";
+  See sound = "sgtsit";
+  Attack sound = "sgtatk";
+  Pain sound = "dmpain";
+  Death sound = "sgtdth";
+  Active sound = "dmact";
+  Reaction time = 8;
+  Pain chance = 180;
+  Spawn health = 150;
+  Speed = 10;
+  Radius = 32;
+  Height = 56;
+  Mass = 400;
+  Flags = "mf_solid mf_shootable mf_shadow mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
+}
+
+Thing {
+  ID = "FAKESKULL";
+  Name = "Fake Lost Soul";
+  DoomEd number = 225;
+  Spawn state = "SKULL_STND";
+  See state = "SKULL_RUN1";
+  Pain state = "SKULL_PAIN";
+  Melee state = "NULL";
+  Missile state = "SKULL_ATK1";
+  Death state = "SKULL_DIE1";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "sklatk";
+  Pain sound = "dmpain";
+  Death sound = "firxpl";
+  Active sound = "dmact";
+  Reaction time = 8;
+  Pain chance = 256;
+  Spawn health = 100;
+  Speed = 8;
+  Radius = 16;
+  Height = 56;
+  Mass = 50;
+  Damage = 3;
+  Flags = "mf_solid mf_shootable mf_float mf_nogravity";
+  Flags2 = "mf2_passmobj mf2_telestomp";
+}
+
+Thing {
+  ID = "F_BRUISER";
+  Name = "Fake Baron";
+  DoomEd number = 226;
+  Spawn state = "BOSS_STND";
+  See state = "BOSS_RUN1";
+  Pain state = "BOSS_PAIN";
+  Melee state = "BOSS_ATK1";
+  Missile state = "BOSS_ATK1";
+  Death state = "BOSS_DIE1";
+  Xdeath state = "NULL";
+  Raise state = "BOSS_RAISE1";
+  See sound = "brssit";
+  Attack sound = "None";
+  Pain sound = "dmpain";
+  Death sound = "brsdth";
+  Active sound = "dmact";
+  Reaction time = 8;
+  Pain chance = 50;
+  Spawn health = 1000;
+  Speed = 8;
+  Radius = 24;
+  Height = 80;
+  Mass = 1000;
+  Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
+}
+
+Thing {
+  ID = "TRACER6";
+  Name = "Tracer 6 Shot";
+  DoomEd number = 227;
+  Spawn state = "TSHOT6_STND";
+  See state = "TSHOT6_RUN1";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Reaction time = 0;
+  Pain chance = 180;
+  Spawn health = 500;
+  Speed = 0;
+  Radius = 8;
+  Height = 32;
+  Mass = 400;
+  Flags = "mf_dropoff mf_nogravity mf_float";
+}
+
+Thing {
+  ID = "YELLOWFIREBALL";
+  DoomEd number = 747;
+  Spawn state = "YFIREBALL1";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Radius = 16;
+  Height = 60;
+  Mass = 100;
+  Flags = "mf_local";
+}
+
+Thing {
+  ID = "BLUEFIREBALL";
+  DoomEd number = 748;
+  Spawn state = "BFIREBALL1";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Radius = 16;
+  Height = 60;
+  Mass = 100;
+  Flags = "mf_local";
+}
+
+Thing {
+  ID = "REDFIREBALL";
+  DoomEd number = 749;
+  Spawn state = "RFIREBALL1";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Radius = 16;
+  Height = 60;
+  Mass = 100;
+  Flags = "mf_local";
+}
+
+Thing {
+  ID = "YELLOWFIREBALL2";
+  DoomEd number = 750;
+  Spawn state = "Y2FIREBALL1";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Radius = 16;
+  Height = 60;
+  Mass = 100;
+  Flags = "mf_local";
+}
+
+Thing {
+  ID = "BLUEFIREBALL2";
+  DoomEd number = 751;
+  Spawn state = "B2FIREBALL1";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Radius = 16;
+  Height = 60;
+  Mass = 100;
+  Flags = "mf_local";
+}
+
+Thing {
+  ID = "REDFIREBALL2";
+  DoomEd number = 752;
+  Spawn state = "R2FIREBALL1";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Radius = 16;
+  Height = 60;
+  Mass = 100;
+  Flags = "mf_local";
+}
+
+Thing {
+  ID = "FSHOTGUY";
+  Name = "Fake Shotgun Guy";
+  DoomEd number = 228;
+  Spawn state = "SPOS_STND";
+  See state = "SPOS_RUN1";
+  Pain state = "SPOS_PAIN";
+  Melee state = "NULL";
+  Missile state = "SPOS_ATK1";
+  Death state = "SPOS_DIE1";
+  Xdeath state = "SPOS_XDIE1";
+  Raise state = "SPOS_RAISE1";
+  See sound = "posit2";
+  Attack sound = "None";
+  Pain sound = "popain";
+  Death sound = "podth2";
+  Active sound = "posact";
+  Reaction time = 8;
+  Pain chance = 170;
+  Spawn health = 30;
+  Speed = 8;
+  Radius = 31;
+  Height = 72;
+  Mass = 100;
+  Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
+}
+
+Thing {
+  ID = "FDEMON";
+  Name = "Fake Demon";
+  DoomEd number = 229;
+  Spawn state = "SARG_STND";
+  See state = "SARG_RUN1";
+  Pain state = "SARG_PAIN";
+  Melee state = "SARG_ATK1";
+  Missile state = "NULL";
+  Death state = "SARG_DIE1";
+  Xdeath state = "NULL";
+  Raise state = "SARG_RAISE1";
+  See sound = "sgtsit";
+  Attack sound = "sgtatk";
+  Pain sound = "dmpain";
+  Death sound = "sgtdth";
+  Active sound = "dmact";
+  Reaction time = 8;
+  Pain chance = 180;
+  Spawn health = 150;
+  Speed = 10;
+  Radius = 32;
+  Height = 56;
+  Mass = 400;
+  Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
+}
+
+Thing {
+  ID = "FPAIN";
+  Name = "Fake Pain Elemental";
+  DoomEd number = 230;
+  Spawn state = "PAIN_STND";
+  See state = "PAIN_RUN1";
+  Pain state = "PAIN_PAIN";
+  Melee state = "NULL";
+  Missile state = "PAIN_ATK1";
+  Death state = "PAIN_DIE1";
+  Xdeath state = "NULL";
+  Raise state = "PAIN_RAISE1";
+  See sound = "pesit";
+  Attack sound = "None";
+  Pain sound = "pepain";
+  Death sound = "pedth";
+  Active sound = "dmact";
+  Reaction time = 8;
+  Pain chance = 128;
+  Spawn health = 400;
+  Speed = 8;
+  Radius = 31;
+  Height = 56;
+  Mass = 400;
+  Flags = "mf_solid mf_shootable mf_float mf_nogravity mf_countkill mf_spawnceiling";
+  Flags2 = "mf2_passmobj mf2_telestomp";
+}
+
+Thing {
+  ID = "DISSOUL";
+  Name = "Dissapearing Soulsphere";
+  DoomEd number = 231;
+  Spawn state = "DISSOUL1";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Radius = 20;
+  Height = 16;
+  Mass = 100;
+  Flags = "mf_special";
+}
+
+Thing {
+  ID = "DISBKEY1";
+  DoomEd number = 233;
+  Spawn state = "DBKEY1";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Radius = 20;
+  Height = 16;
+  Mass = 100;
+  Flags = "mf_special mf_notdmatch";
+}
+
+Thing {
+  ID = "FBABY";
+  Name = "Fake Arachnotron";
+  DoomEd number = 234;
+  Spawn state = "BSPI_STND";
+  See state = "BSPI_SIGHT";
+  Pain state = "BSPI_PAIN";
+  Melee state = "NULL";
+  Missile state = "BSPI_ATK1";
+  Death state = "BSPI_DIE1";
+  Xdeath state = "NULL";
+  Raise state = "BSPI_RAISE1";
+  See sound = "bspsit";
+  Attack sound = "None";
+  Pain sound = "dmpain";
+  Death sound = "bspdth";
+  Active sound = "bspact";
+  Reaction time = 8;
+  Pain chance = 128;
+  Spawn health = 500;
+  Speed = 12;
+  Radius = 64;
+  Height = 64;
+  Mass = 600;
+  Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
+}
+
+Thing {
+  ID = "FFATSO";
+  Name = "Fake Mancubus";
+  DoomEd number = 235;
+  Spawn state = "FATT_STND";
+  See state = "FATT_RUN1";
+  Pain state = "FATT_PAIN";
+  Melee state = "NULL";
+  Missile state = "FATT_ATK1";
+  Death state = "FATT_DIE1";
+  Xdeath state = "NULL";
+  Raise state = "FATT_RAISE1";
+  See sound = "mansit";
+  Attack sound = "None";
+  Pain sound = "mnpain";
+  Death sound = "mandth";
+  Active sound = "posact";
+  Reaction time = 8;
+  Pain chance = 80;
+  Spawn health = 600;
+  Speed = 8;
+  Radius = 64;
+  Height = 64;
+  Mass = 1000;
+  Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
+}
+
 State {
   ID = "NULL";
   Sprite = "TROO";
@@ -5691,7 +6214,8 @@ State {
 State {
   ID = "PISTOLFLASH";
   Sprite = "PISF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_Light1";
   Next state = "LIGHTDONE";
@@ -5801,7 +6325,8 @@ State {
 State {
   ID = "SGUNFLASH1";
   Sprite = "SHTF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_Light1";
   Next state = "SGUNFLASH2";
@@ -5810,7 +6335,8 @@ State {
 State {
   ID = "SGUNFLASH2";
   Sprite = "SHTF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Action = "A_Light2";
   Next state = "LIGHTDONE";
@@ -5948,7 +6474,8 @@ State {
 State {
   ID = "DSGUNFLASH1";
   Sprite = "SHT2";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_Light1";
   Next state = "DSGUNFLASH2";
@@ -5957,7 +6484,8 @@ State {
 State {
   ID = "DSGUNFLASH2";
   Sprite = "SHT2";
-  Frame = 32777;
+  Frame = 9;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_Light2";
   Next state = "LIGHTDONE";
@@ -6020,7 +6548,8 @@ State {
 State {
   ID = "CHAINFLASH1";
   Sprite = "CHGF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LIGHTDONE";
 }
@@ -6028,7 +6557,8 @@ State {
 State {
   ID = "CHAINFLASH2";
   Sprite = "CHGF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LIGHTDONE";
 }
@@ -6090,7 +6620,8 @@ State {
 State {
   ID = "MISSILEFLASH1";
   Sprite = "MISF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Action = "A_Light1";
   Next state = "MISSILEFLASH2";
@@ -6099,7 +6630,8 @@ State {
 State {
   ID = "MISSILEFLASH2";
   Sprite = "MISF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "MISSILEFLASH3";
 }
@@ -6107,7 +6639,8 @@ State {
 State {
   ID = "MISSILEFLASH3";
   Sprite = "MISF";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_Light2";
   Next state = "MISSILEFLASH4";
@@ -6116,7 +6649,8 @@ State {
 State {
   ID = "MISSILEFLASH4";
   Sprite = "MISF";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_Light2";
   Next state = "LIGHTDONE";
@@ -6215,7 +6749,8 @@ State {
 State {
   ID = "PLASMA1";
   Sprite = "PLSG";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_FirePlasma";
   Next state = "PLASMA2";
@@ -6233,7 +6768,8 @@ State {
 State {
   ID = "PLASMASHOCK1";
   Sprite = "PLSD";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Action = "A_PlasmaBuzz";
   Next state = "PLASMASHOCK2";
@@ -6242,7 +6778,8 @@ State {
 State {
   ID = "PLASMASHOCK2";
   Sprite = "PLSD";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "PLASMASHOCK3";
 }
@@ -6250,7 +6787,8 @@ State {
 State {
   ID = "PLASMASHOCK3";
   Sprite = "PLSD";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PLASMASHOCK1";
 }
@@ -6258,7 +6796,8 @@ State {
 State {
   ID = "PLASMASHOCK4";
   Sprite = "PLSD";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PLASMASHOCK1";
 }
@@ -6266,7 +6805,8 @@ State {
 State {
   ID = "PLASMAFLASH1";
   Sprite = "PLSF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_Light1";
   Next state = "LIGHTDONE";
@@ -6275,7 +6815,8 @@ State {
 State {
   ID = "PLASMAFLASH2";
   Sprite = "PLSF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_Light1";
   Next state = "LIGHTDONE";
@@ -6347,7 +6888,8 @@ State {
 State {
   ID = "BFGFLASH1";
   Sprite = "BFGF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Action = "A_Light1";
   Next state = "BFGFLASH2";
@@ -6356,7 +6898,8 @@ State {
 State {
   ID = "BFGFLASH2";
   Sprite = "BFGF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_Light2";
   Next state = "BFGFLASH3";
@@ -6389,7 +6932,8 @@ State {
 State {
   ID = "PUFF1";
   Sprite = "PUFF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PUFF2";
 }
@@ -6397,7 +6941,8 @@ State {
 State {
   ID = "PUFF2";
   Sprite = "PUFF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PUFF3";
 }
@@ -6421,7 +6966,8 @@ State {
 State {
   ID = "TBALL1";
   Sprite = "BAL1";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TBALL2";
 }
@@ -6429,7 +6975,8 @@ State {
 State {
   ID = "TBALL2";
   Sprite = "BAL1";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TBALL3";
 }
@@ -6437,7 +6984,8 @@ State {
 State {
   ID = "TBALLX1";
   Sprite = "BAL1";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "TBALLX2";
 }
@@ -6445,7 +6993,8 @@ State {
 State {
   ID = "TBALLX2";
   Sprite = "BAL1";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "TBALLX3";
 }
@@ -6453,7 +7002,8 @@ State {
 State {
   ID = "TBALLX3";
   Sprite = "BAL1";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 6;
   Next state = "TBALLX4";
 }
@@ -6461,7 +7011,8 @@ State {
 State {
   ID = "RBALL1";
   Sprite = "BAL2";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RBALL2";
 }
@@ -6469,7 +7020,8 @@ State {
 State {
   ID = "RBALL2";
   Sprite = "BAL2";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RBALL3";
 }
@@ -6477,7 +7029,8 @@ State {
 State {
   ID = "RBALLX1";
   Sprite = "BAL2";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RBALLX2";
 }
@@ -6485,7 +7038,8 @@ State {
 State {
   ID = "RBALLX2";
   Sprite = "BAL2";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RBALLX3";
 }
@@ -6493,7 +7047,8 @@ State {
 State {
   ID = "RBALLX3";
   Sprite = "BAL2";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RBALLX4";
 }
@@ -6501,7 +7056,8 @@ State {
 State {
   ID = "PLASBALL";
   Sprite = "PLSS";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PLASBALL2";
 }
@@ -6509,7 +7065,8 @@ State {
 State {
   ID = "PLASBALL2";
   Sprite = "PLSS";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PLASBALL";
 }
@@ -6517,7 +7074,8 @@ State {
 State {
   ID = "PLASEXP";
   Sprite = "PLSE";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PLASEXP2";
 }
@@ -6525,7 +7083,8 @@ State {
 State {
   ID = "PLASEXP2";
   Sprite = "PLSE";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PLASEXP3";
 }
@@ -6533,7 +7092,8 @@ State {
 State {
   ID = "PLASEXP3";
   Sprite = "PLSE";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PLASEXP4";
 }
@@ -6541,7 +7101,8 @@ State {
 State {
   ID = "PLASEXP4";
   Sprite = "PLSE";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PLASEXP5";
 }
@@ -6549,7 +7110,8 @@ State {
 State {
   ID = "PLASEXP5";
   Sprite = "PLSE";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PLASEXP6";
 }
@@ -6557,7 +7119,8 @@ State {
 State {
   ID = "ROCKET";
   Sprite = "MISL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 2;
   Next state = "ROCKET2";
 }
@@ -6565,7 +7128,8 @@ State {
 State {
   ID = "BFGSHOT";
   Sprite = "BFS1";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFGSHOT2";
 }
@@ -6573,7 +7137,8 @@ State {
 State {
   ID = "BFGSHOT2";
   Sprite = "BFS1";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFGSHOT";
 }
@@ -6581,7 +7146,8 @@ State {
 State {
   ID = "BFGLAND";
   Sprite = "BFE1";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 8;
   Next state = "BFGLAND2";
 }
@@ -6589,7 +7155,8 @@ State {
 State {
   ID = "BFGLAND2";
   Sprite = "BFE1";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 8;
   Next state = "BFGLAND3";
 }
@@ -6597,7 +7164,8 @@ State {
 State {
   ID = "BFGLAND3";
   Sprite = "BFE1";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 8;
   Action = "A_BFGSpray";
   Next state = "BFGLAND4";
@@ -6606,7 +7174,8 @@ State {
 State {
   ID = "BFGLAND4";
   Sprite = "BFE1";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 8;
   Next state = "BFGLAND5";
 }
@@ -6614,7 +7183,8 @@ State {
 State {
   ID = "BFGLAND5";
   Sprite = "BFE1";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 8;
   Next state = "BFGLAND6";
 }
@@ -6622,7 +7192,8 @@ State {
 State {
   ID = "BFGLAND6";
   Sprite = "BFE1";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 8;
   Next state = "NULL";
 }
@@ -6630,7 +7201,8 @@ State {
 State {
   ID = "BFGEXP";
   Sprite = "BFE2";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFGEXP2";
 }
@@ -6638,7 +7210,8 @@ State {
 State {
   ID = "BFGEXP2";
   Sprite = "BFE2";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFGEXP3";
 }
@@ -6646,7 +7219,8 @@ State {
 State {
   ID = "BFGEXP3";
   Sprite = "BFE2";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFGEXP4";
 }
@@ -6654,7 +7228,8 @@ State {
 State {
   ID = "BFGEXP4";
   Sprite = "BFE2";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFGEXP5";
 }
@@ -6662,7 +7237,8 @@ State {
 State {
   ID = "EXPLODE1";
   Sprite = "MISL";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 8;
   Action = "A_Explode";
   Next state = "EXPLODE2";
@@ -6671,7 +7247,8 @@ State {
 State {
   ID = "EXPLODE2";
   Sprite = "MISL";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "EXPLODE3";
 }
@@ -6679,7 +7256,8 @@ State {
 State {
   ID = "EXPLODE3";
   Sprite = "MISL";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "EXPLODE4";
 }
@@ -6687,7 +7265,8 @@ State {
 State {
   ID = "TFOG";
   Sprite = "TFOG";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG01";
 }
@@ -6695,7 +7274,8 @@ State {
 State {
   ID = "TFOG01";
   Sprite = "TFOG";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG3";
 }
@@ -6703,7 +7283,8 @@ State {
 State {
   ID = "TFOG02";
   Sprite = "TFOG";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG2";
 }
@@ -6711,7 +7292,8 @@ State {
 State {
   ID = "TFOG2";
   Sprite = "TFOG";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG3";
 }
@@ -6719,7 +7301,8 @@ State {
 State {
   ID = "TFOG3";
   Sprite = "TFOG";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG4";
 }
@@ -6727,7 +7310,8 @@ State {
 State {
   ID = "TFOG4";
   Sprite = "TFOG";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG5";
 }
@@ -6735,7 +7319,8 @@ State {
 State {
   ID = "TFOG5";
   Sprite = "TFOG";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG6";
 }
@@ -6743,7 +7328,8 @@ State {
 State {
   ID = "TFOG6";
   Sprite = "TFOG";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG7";
 }
@@ -6751,7 +7337,8 @@ State {
 State {
   ID = "TFOG7";
   Sprite = "TFOG";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG8";
 }
@@ -6759,7 +7346,8 @@ State {
 State {
   ID = "TFOG8";
   Sprite = "TFOG";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG9";
 }
@@ -6767,7 +7355,8 @@ State {
 State {
   ID = "TFOG9";
   Sprite = "TFOG";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG10";
 }
@@ -6775,7 +7364,8 @@ State {
 State {
   ID = "TFOG10";
   Sprite = "TFOG";
-  Frame = 32777;
+  Frame = 9;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG11";
 }
@@ -6783,7 +7373,8 @@ State {
 State {
   ID = "IFOG";
   Sprite = "IFOG";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "IFOG01";
 }
@@ -6791,7 +7382,8 @@ State {
 State {
   ID = "IFOG01";
   Sprite = "IFOG";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "IFOG02";
 }
@@ -6799,7 +7391,8 @@ State {
 State {
   ID = "IFOG02";
   Sprite = "IFOG";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "IFOG2";
 }
@@ -6807,7 +7400,8 @@ State {
 State {
   ID = "IFOG2";
   Sprite = "IFOG";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "IFOG3";
 }
@@ -6815,7 +7409,8 @@ State {
 State {
   ID = "IFOG3";
   Sprite = "IFOG";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "IFOG4";
 }
@@ -6823,7 +7418,8 @@ State {
 State {
   ID = "IFOG4";
   Sprite = "IFOG";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "IFOG5";
 }
@@ -6831,7 +7427,8 @@ State {
 State {
   ID = "IFOG5";
   Sprite = "IFOG";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NULL";
 }
@@ -6839,7 +7436,8 @@ State {
 State {
   ID = "LDBLINK1";
   Sprite = "LDUF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LDBLINK2";
 }
@@ -6847,7 +7445,8 @@ State {
 State {
   ID = "LDBLINK2";
   Sprite = "LDUF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LDBLINK3";
 }
@@ -6855,7 +7454,8 @@ State {
 State {
   ID = "LDBLINK3";
   Sprite = "LDUF";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LDBLINK4";
 }
@@ -6863,7 +7463,8 @@ State {
 State {
   ID = "LDBLINK4";
   Sprite = "LDUF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LDBLINK1";
 }
@@ -6919,7 +7520,8 @@ State {
 State {
   ID = "PLAY_ATK2";
   Sprite = "PLAY";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PLAY_ATK1";
 }
@@ -7175,7 +7777,8 @@ State {
 State {
   ID = "POSS_ATK2";
   Sprite = "POSS";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 8;
   Action = "A_PosAttack";
   Next state = "POSS_ATK3";
@@ -7458,7 +8061,8 @@ State {
 State {
   ID = "SPOS_ATK2";
   Sprite = "SPOS";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 10;
   Action = "A_SPosAttack";
   Next state = "SPOS_ATK3";
@@ -7749,7 +8353,8 @@ State {
 State {
   ID = "POSC_ATK2";
   Sprite = "POSC";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_CPosAttack";
   Next state = "POSC_ATK3";
@@ -7900,7 +8505,8 @@ State {
 State {
   ID = "STALK_STND";
   Sprite = "STLK";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_Look";
   Next state = "STALK_STND";
@@ -7909,7 +8515,8 @@ State {
 State {
   ID = "STALK_RUN1";
   Sprite = "STLK";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_Chase";
   Next state = "STALK_RUN1";
@@ -7918,7 +8525,8 @@ State {
 State {
   ID = "STALK_ATK1";
   Sprite = "STLK";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 15;
   Action = "A_FaceTarget";
   Next state = "STALK_ATK2";
@@ -7927,7 +8535,8 @@ State {
 State {
   ID = "STALK_ATK2";
   Sprite = "STLK";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_SkelMissile";
   Next state = "STALK_ATK3";
@@ -7936,7 +8545,8 @@ State {
 State {
   ID = "STALK_ATK3";
   Sprite = "STLK";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 15;
   Action = "A_FaceTarget";
   Next state = "STALK_RUN1";
@@ -7946,7 +8556,8 @@ State {
 State {
   ID = "STALK_PAIN";
   Sprite = "STLK";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 3;
    Action = "A_Pain";
   Next state = "STALK_RUN1";
@@ -7955,7 +8566,8 @@ State {
 State {
   ID = "STALK_DIE1";
   Sprite = "STLK";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "STALK_DIE2";
 }
@@ -7963,7 +8575,8 @@ State {
 State {
   ID = "STALK_DIE2";
   Sprite = "STLK";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Action = "A_Scream";
   Next state = "STALK_DIE3";
@@ -7972,7 +8585,8 @@ State {
 State {
   ID = "STALK_DIE3";
   Sprite = "STLK";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 6;
   Next state = "STALK_DIE4";
 }
@@ -7980,7 +8594,8 @@ State {
 State {
   ID = "STALK_DIE4";
   Sprite = "STLK";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 6;
   Action = "A_Fall";
   Next state = "STALK_DIE5";
@@ -7989,7 +8604,8 @@ State {
 State {
   ID = "STALK_DIE5";
   Sprite = "STLK";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 6;
   Next state = "STALK_DIE6";
 }
@@ -7997,7 +8613,8 @@ State {
 State {
   ID = "STALK_DIE6";
   Sprite = "STLK";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 6;
   Next state = "STALK_DIE7";
 }
@@ -8005,7 +8622,8 @@ State {
 State {
   ID = "STALK_DIE7";
   Sprite = "STLK";
-  Frame = 32777;
+  Frame = 9;
+  Flags = fullbright;
   Tics = 6;
   Next state = "STALK_DIE8";
 }
@@ -8013,7 +8631,8 @@ State {
 State {
   ID = "STALK_DIE8";
   Sprite = "STLK";
-  Frame = 32778;
+  Frame = 10;
+  Flags = fullbright;
   Tics = 6;
   Next state = "STALK_DIE9";
 }
@@ -8021,7 +8640,8 @@ State {
 State {
   ID = "STALK_DIE9";
   Sprite = "STLK";
-  Frame = 32779;
+  Frame = 11;
+  Flags = fullbright;
   Tics = 6;
   Next state = "STALK_DIE10";
 }
@@ -8029,7 +8649,8 @@ State {
 State {
   ID = "STALK_DIE10";
   Sprite = "STLK";
-  Frame = 32780;
+  Frame = 12;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NULL";
 }
@@ -8045,7 +8666,8 @@ State {
 State {
   ID = "STALK_SHOW";
   Sprite = "STLK";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_SkelMissile";
   Next state = "STALK_RUN1";
@@ -8256,7 +8878,8 @@ State {
 State {
   ID = "SKEL_MISS1";
   Sprite = "SKEL";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 3;
   Action = "A_FaceTarget";
   Next state = "SKEL_MISS2";
@@ -8265,7 +8888,8 @@ State {
 State {
   ID = "SKEL_MISS2";
   Sprite = "SKEL";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 3;
   Action = "A_FaceTarget";
   Next state = "SKEL_MISS3";
@@ -8274,7 +8898,8 @@ State {
 State {
   ID = "SKEL_MISS3";
   Sprite = "SKEL";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_HeadAttack";
   Next state = "SKEL_MISS4";
@@ -8407,7 +9032,8 @@ State {
 State {
   ID = "FATSHOT1";
   Sprite = "MANF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "FATSHOT2";
 }
@@ -8415,7 +9041,8 @@ State {
 State {
   ID = "FATSHOT2";
   Sprite = "MANF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "FATSHOT3";
 }
@@ -8423,7 +9050,8 @@ State {
 State {
   ID = "FATSHOTX1";
   Sprite = "MANF";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 8;
   Next state = "FATSHOTX2";
 }
@@ -8431,7 +9059,8 @@ State {
 State {
   ID = "FATSHOTX2";
   Sprite = "MANF";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "FATSHOTX3";
 }
@@ -8439,7 +9068,8 @@ State {
 State {
   ID = "FATSHOTX3";
   Sprite = "MANF";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 4;
   Next state = "FATSHOTX4";
 }
@@ -8582,7 +9212,8 @@ State {
 State {
   ID = "FATT_ATK2";
   Sprite = "FATT";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 10;
   Action = "A_FatAttack1";
   Next state = "FATT_ATK3";
@@ -8609,7 +9240,8 @@ State {
 State {
   ID = "FATT_ATK5";
   Sprite = "FATT";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 10;
   Action = "A_FatAttack2";
   Next state = "FATT_ATK6";
@@ -8636,7 +9268,8 @@ State {
 State {
   ID = "FATT_ATK8";
   Sprite = "FATT";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 10;
   Action = "A_FatAttack3";
   Next state = "FATT_ATK9";
@@ -8928,7 +9561,8 @@ State {
 State {
   ID = "CPOS_ATK2";
   Sprite = "CPOS";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_CPosAttack";
   Next state = "CPOS_ATK3";
@@ -8937,7 +9571,8 @@ State {
 State {
   ID = "CPOS_ATK3";
   Sprite = "CPOS";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_CPosAttack";
   Next state = "CPOS_ATK4";
@@ -10067,7 +10702,8 @@ State {
 State {
   ID = "HEAD_ATK1";
   Sprite = "HEAD";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_FaceTarget";
   Next state = "HEAD_ATK2";
@@ -10076,7 +10712,8 @@ State {
 State {
   ID = "HEAD_ATK2";
   Sprite = "HEAD";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_FaceTarget";
   Next state = "HEAD_ATK3";
@@ -10085,7 +10722,8 @@ State {
 State {
   ID = "HEAD_ATK3";
   Sprite = "HEAD";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 6;
   Action = "A_HeadAttack";
   Next state = "HEAD_RUN1";
@@ -10218,7 +10856,8 @@ State {
 State {
   ID = "BRBALL1";
   Sprite = "BAL7";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BRBALL2";
 }
@@ -10226,7 +10865,8 @@ State {
 State {
   ID = "BRBALL2";
   Sprite = "BAL7";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BRBALL1";
 }
@@ -10234,7 +10874,8 @@ State {
 State {
   ID = "BRBALLX1";
   Sprite = "BAL7";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BRBALLX2";
 }
@@ -10242,7 +10883,8 @@ State {
 State {
   ID = "BRBALLX2";
   Sprite = "BAL7";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BRBALLX3";
 }
@@ -10250,7 +10892,8 @@ State {
 State {
   ID = "BRBALLX3";
   Sprite = "BAL7";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BRBALLX4";
 }
@@ -10758,7 +11401,8 @@ State {
 State {
   ID = "SKULL_STND";
   Sprite = "SKUL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_Look";
   Next state = "SKULL_STND2";
@@ -10767,7 +11411,8 @@ State {
 State {
   ID = "SKULL_STND2";
   Sprite = "SKUL";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_Look";
   Next state = "SKULL_STND3";
@@ -10776,7 +11421,8 @@ State {
 State {
   ID = "SKULL_RUN1";
   Sprite = "SKUL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_Chase";
   Next state = "SKULL_RUN2";
@@ -10785,7 +11431,8 @@ State {
 State {
   ID = "SKULL_RUN2";
   Sprite = "SKUL";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_Chase";
   Next state = "SKULL_RUN3";
@@ -10794,7 +11441,8 @@ State {
 State {
   ID = "SKULL_ATK1";
   Sprite = "SKUL";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_FaceTarget";
   Next state = "SKULL_ATK2";
@@ -10803,7 +11451,8 @@ State {
 State {
   ID = "SKULL_ATK2";
   Sprite = "SKUL";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_SkullAttack";
   Next state = "SKULL_ATK3";
@@ -10812,7 +11461,8 @@ State {
 State {
   ID = "SKULL_ATK3";
   Sprite = "SKUL";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "SKULL_ATK4";
 }
@@ -10820,7 +11470,8 @@ State {
 State {
   ID = "SKULL_ATK4";
   Sprite = "SKUL";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "SKULL_ATK3";
 }
@@ -10828,7 +11479,8 @@ State {
 State {
   ID = "SKULL_PAIN";
   Sprite = "SKUL";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 3;
   Next state = "SKULL_PAIN2";
 }
@@ -10836,7 +11488,8 @@ State {
 State {
   ID = "SKULL_PAIN2";
   Sprite = "SKUL";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 3;
   Action = "A_Pain";
   Next state = "SKULL_RUN1";
@@ -10845,7 +11498,8 @@ State {
 State {
   ID = "SKULL_DIE1";
   Sprite = "SKUL";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SKULL_DIE2";
 }
@@ -10853,7 +11507,8 @@ State {
 State {
   ID = "SKULL_DIE2";
   Sprite = "SKUL";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 6;
   Action = "A_Scream";
   Next state = "SKULL_DIE3";
@@ -10862,7 +11517,8 @@ State {
 State {
   ID = "SKULL_DIE3";
   Sprite = "SKUL";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SKULL_DIE4";
 }
@@ -10870,7 +11526,8 @@ State {
 State {
   ID = "SKULL_DIE4";
   Sprite = "SKUL";
-  Frame = 32777;
+  Frame = 9;
+  Flags = fullbright;
   Tics = 6;
   Action = "A_Fall";
   Next state = "SKULL_DIE5";
@@ -10879,7 +11536,8 @@ State {
 State {
   ID = "SKULL_DIE5";
   Sprite = "SKUL";
-  Frame = 32778;
+  Frame = 10;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SKULL_DIE6";
 }
@@ -10887,7 +11545,8 @@ State {
 State {
   ID = "SKULL_DIE6";
   Sprite = "SKUL";
-  Frame = 32779;
+  Frame = 11;
+  Flags = fullbright;
   Tics = 6;
   Action = "A_SkulSpecial";
   Next state = "SKULL_DIE7";
@@ -11022,7 +11681,8 @@ State {
 State {
   ID = "SPID_ATK1";
   Sprite = "SPID";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 20;
   Action = "A_FaceTarget";
   Next state = "SPID_ATK2";
@@ -11031,7 +11691,8 @@ State {
 State {
   ID = "SPID_ATK2";
   Sprite = "SPID";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_SPosAttack";
   Next state = "SPID_ATK3";
@@ -11040,7 +11701,8 @@ State {
 State {
   ID = "SPID_ATK3";
   Sprite = "SPID";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_SPosAttack";
   Next state = "SPID_ATK4";
@@ -11049,7 +11711,8 @@ State {
 State {
   ID = "SPID_ATK4";
   Sprite = "SPID";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_SpidRefire";
   Next state = "SPID_ATK2";
@@ -11101,7 +11764,8 @@ State {
 State {
   ID = "SPID_DIE4";
   Sprite = "SPID";
-  Frame = 32780;
+  Frame = 12;
+  Flags = fullbright;
   Tics = 10;
   Next state = "SPID_DIE5";
 }
@@ -11109,7 +11773,8 @@ State {
 State {
   ID = "SPID_DIE5";
   Sprite = "SPID";
-  Frame = 32781;
+  Frame = 13;
+  Flags = fullbright;
   Tics = 10;
   Next state = "SPID_DIE6";
 }
@@ -11117,7 +11782,8 @@ State {
 State {
   ID = "SPID_DIE6";
   Sprite = "SPID";
-  Frame = 32782;
+  Frame = 14;
+  Flags = fullbright;
   Tics = 10;
   Next state = "SPID_DIE7";
 }
@@ -11125,7 +11791,8 @@ State {
 State {
   ID = "SPID_DIE7";
   Sprite = "SPID";
-  Frame = 32783;
+  Frame = 15;
+  Flags = fullbright;
   Tics = 10;
   Next state = "SPID_DIE8";
 }
@@ -11133,7 +11800,8 @@ State {
 State {
   ID = "SPID_DIE8";
   Sprite = "SPID";
-  Frame = 32784;
+  Frame = 16;
+  Flags = fullbright;
   Tics = 10;
   Next state = "SPID_DIE9";
 }
@@ -11141,7 +11809,8 @@ State {
 State {
   ID = "SPID_DIE9";
   Sprite = "SPID";
-  Frame = 32785;
+  Frame = 17;
+  Flags = fullbright;
   Tics = 10;
   Next state = "SPID_DIE10";
 }
@@ -11300,7 +11969,8 @@ State {
 State {
   ID = "BSPI_ATK1";
   Sprite = "BSPI";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 20;
   Action = "A_FaceTarget";
   Next state = "BSPI_ATK2";
@@ -11309,7 +11979,8 @@ State {
 State {
   ID = "BSPI_ATK2";
   Sprite = "BSPI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_BspiAttack";
   Next state = "BSPI_ATK3";
@@ -11318,7 +11989,8 @@ State {
 State {
   ID = "BSPI_ATK3";
   Sprite = "BSPI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_FaceTarget";
   Next state = "BSPI_ATK4";
@@ -11327,7 +11999,8 @@ State {
 State {
   ID = "BSPI_ATK4";
   Sprite = "BSPI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_BspiAttack";
   Next state = "BSPI_ATK5";
@@ -11336,7 +12009,8 @@ State {
 State {
   ID = "BSPI_ATK5";
   Sprite = "BSPI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_FaceTarget";
   Next state = "BSPI_ATK6";
@@ -11345,7 +12019,8 @@ State {
 State {
   ID = "BSPI_ATK6";
   Sprite = "BSPI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_BspiAttack";
   Next state = "BSPI_ATK7";
@@ -11354,7 +12029,8 @@ State {
 State {
   ID = "BSPI_ATK7";
   Sprite = "BSPI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_FaceTarget";
   Next state = "BSPI_ATK8";
@@ -11363,7 +12039,8 @@ State {
 State {
   ID = "BSPI_ATK8";
   Sprite = "BSPI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_BspiAttack";
   Next state = "BSPI_ATK9";
@@ -11372,7 +12049,8 @@ State {
 State {
   ID = "BSPI_ATK9";
   Sprite = "BSPI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_FaceTarget";
   Next state = "BSPI_ATK10";
@@ -11381,7 +12059,8 @@ State {
 State {
   ID = "BSPI_ATK10";
   Sprite = "BSPI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_BspiAttack";
   Next state = "BSPI_ATK11";
@@ -11390,7 +12069,8 @@ State {
 State {
   ID = "BSPI_ATK11";
   Sprite = "BSPI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_SpidRefire";
   Next state = "BSPI_ATK1";
@@ -11660,7 +12340,8 @@ State {
 State {
   ID = "BSGI_ATK1";
   Sprite = "BSGI";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 20;
   Action = "A_FaceTarget";
   Next state = "BSGI_ATK2";
@@ -11669,7 +12350,8 @@ State {
 State {
   ID = "BSGI_ATK2";
   Sprite = "BSGI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_BspiAttack";
   Next state = "BSGI_ATK3";
@@ -11678,7 +12360,8 @@ State {
 State {
   ID = "BSGI_ATK3";
   Sprite = "BSGI";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_FaceTarget";
   Next state = "BSGI_SIGHT";
@@ -11763,7 +12446,8 @@ State {
 State {
   ID = "ARACH_PLAZ";
   Sprite = "APLS";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 5;
   Next state = "ARACH_PLAZ2";
 }
@@ -11771,7 +12455,8 @@ State {
 State {
   ID = "ARACH_PLAZ2";
   Sprite = "APLS";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 5;
   Next state = "ARACH_PLAZ";
 }
@@ -11779,7 +12464,8 @@ State {
 State {
   ID = "ARACH_PLEX";
   Sprite = "APBX";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 5;
   Next state = "ARACH_PLEX2";
 }
@@ -11787,7 +12473,8 @@ State {
 State {
   ID = "ARACH_PLEX2";
   Sprite = "APBX";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 5;
   Next state = "ARACH_PLEX3";
 }
@@ -11795,7 +12482,8 @@ State {
 State {
   ID = "ARACH_PLEX3";
   Sprite = "APBX";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 5;
   Next state = "ARACH_PLEX4";
 }
@@ -11803,7 +12491,8 @@ State {
 State {
   ID = "ARACH_PLEX4";
   Sprite = "APBX";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 5;
   Next state = "ARACH_PLEX5";
 }
@@ -11811,7 +12500,8 @@ State {
 State {
   ID = "ARACH_PLEX5";
   Sprite = "APBX";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 5;
   Next state = "ARACH_PLEX6";
 }
@@ -11918,7 +12608,8 @@ State {
 State {
   ID = "CYBER_ATK2";
   Sprite = "CYBR";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 12;
   Action = "A_CyberAttack";
   Next state = "CYBER_ATK3";
@@ -11936,7 +12627,8 @@ State {
 State {
   ID = "CYBER_ATK4";
   Sprite = "CYBR";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 12;
   Action = "A_CyberAttack";
   Next state = "CYBER_ATK5";
@@ -11954,7 +12646,8 @@ State {
 State {
   ID = "CYBER_ATK6";
   Sprite = "CYBR";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 12;
   Action = "A_CyberAttack";
   Next state = "CYBER_RUN1";
@@ -12120,7 +12813,8 @@ State {
 State {
   ID = "PAIN_ATK1";
   Sprite = "PAIN";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_FaceTarget";
   Next state = "PAIN_ATK2";
@@ -12129,7 +12823,8 @@ State {
 State {
   ID = "PAIN_ATK2";
   Sprite = "PAIN";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_PainAttack";
   Next state = "PAIN_RUN1";
@@ -12138,7 +12833,8 @@ State {
 State {
   ID = "PAIN_ATK3";
   Sprite = "PAIN";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_FaceTarget";
   Next state = "PAIN_ATK4";
@@ -12147,7 +12843,8 @@ State {
 State {
   ID = "PAIN_ATK4";
   Sprite = "PAIN";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_PainAttack";
   Next state = "PAIN_RUN1";
@@ -12173,7 +12870,8 @@ State {
 State {
   ID = "PAIN_DIE1";
   Sprite = "PAIN";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PAIN_DIE2";
 }
@@ -12181,7 +12879,8 @@ State {
 State {
   ID = "PAIN_DIE2";
   Sprite = "PAIN";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_Scream";
   Next state = "PAIN_DIE3";
@@ -12190,7 +12889,8 @@ State {
 State {
   ID = "PAIN_DIE3";
   Sprite = "PAIN";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PAIN_DIE4";
 }
@@ -12198,7 +12898,8 @@ State {
 State {
   ID = "PAIN_DIE4";
   Sprite = "PAIN";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 4;
   Next state = "PAIN_DIE5";
 }
@@ -12206,7 +12907,8 @@ State {
 State {
   ID = "PAIN_DIE5";
   Sprite = "PAIN";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_PainDie";
   Next state = "PAIN_DIE6";
@@ -12215,7 +12917,8 @@ State {
 State {
   ID = "PAIN_DIE6";
   Sprite = "PAIN";
-  Frame = 32777;
+  Frame = 9;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_PainSpecial";
   Next state = "PAIN_DIE7";
@@ -12380,7 +13083,8 @@ State {
 State {
   ID = "SSWV_ATK3";
   Sprite = "SSWV";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_CPosAttack";
   Next state = "SSWV_ATK4";
@@ -12398,7 +13102,8 @@ State {
 State {
   ID = "SSWV_ATK5";
   Sprite = "SSWV";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_CPosAttack";
   Next state = "SSWV_ATK6";
@@ -12790,7 +13495,8 @@ State {
 State {
   ID = "SPAWN1";
   Sprite = "BOSF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "SPAWN2";
 }
@@ -12798,7 +13504,8 @@ State {
 State {
   ID = "SPAWN2";
   Sprite = "BOSF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "SPAWN3";
 }
@@ -12806,7 +13513,8 @@ State {
 State {
   ID = "SPAWN3";
   Sprite = "BOSF";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 3;
   Next state = "SPAWN4";
 }
@@ -12814,7 +13522,8 @@ State {
 State {
   ID = "SPAWN4";
   Sprite = "BOSF";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 3;
   Next state = "SPAWN1";
 }
@@ -12822,7 +13531,8 @@ State {
 State {
   ID = "BRAINEXPLODE1";
   Sprite = "MISL";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 10;
   Next state = "BRAINEXPLODE2";
 }
@@ -12830,7 +13540,8 @@ State {
 State {
   ID = "BRAINEXPLODE2";
   Sprite = "MISL";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 10;
   Next state = "BRAINEXPLODE3";
 }
@@ -12838,7 +13549,8 @@ State {
 State {
   ID = "BRAINEXPLODE3";
   Sprite = "MISL";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 10;
   Action = "A_BrainExplode";
   Next state = "NULL";
@@ -12855,7 +13567,8 @@ State {
 State {
   ID = "ARM1A";
   Sprite = "ARM1";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 7;
   Next state = "ARM1";
 }
@@ -12871,7 +13584,8 @@ State {
 State {
   ID = "ARM2A";
   Sprite = "ARM2";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "ARM2";
 }
@@ -12895,7 +13609,8 @@ State {
 State {
   ID = "BEXP";
   Sprite = "BEXP";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 5;
   Next state = "BEXP2";
 }
@@ -12903,7 +13618,8 @@ State {
 State {
   ID = "BEXP2";
   Sprite = "BEXP";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_Scream";
   Next state = "BEXP3";
@@ -12912,7 +13628,8 @@ State {
 State {
   ID = "BEXP3";
   Sprite = "BEXP";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 5;
   Next state = "BEXP4";
 }
@@ -12920,7 +13637,8 @@ State {
 State {
   ID = "BEXP4";
   Sprite = "BEXP";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 5;
   Next state = "BEXP5";
 }
@@ -12928,7 +13646,8 @@ State {
 State {
   ID = "BEXP5";
   Sprite = "BEXP";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_Explode";
   Next state = "BEXP6";
@@ -12937,7 +13656,8 @@ State {
 State {
   ID = "BBAR1";
   Sprite = "FCAN";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BBAR2";
 }
@@ -12945,7 +13665,8 @@ State {
 State {
   ID = "BBAR2";
   Sprite = "FCAN";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BBAR3";
 }
@@ -12953,7 +13674,8 @@ State {
 State {
   ID = "BBAR3";
   Sprite = "FCAN";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BBAR1";
 }
@@ -12961,7 +13683,8 @@ State {
 State {
   ID = "BON1";
   Sprite = "BON1";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON1A";
 }
@@ -12969,7 +13692,8 @@ State {
 State {
   ID = "BON1A";
   Sprite = "BON1";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON1B";
 }
@@ -12977,7 +13701,8 @@ State {
 State {
   ID = "BON1B";
   Sprite = "BON1";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON1C";
 }
@@ -12985,7 +13710,8 @@ State {
 State {
   ID = "BON1C";
   Sprite = "BON1";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON1D";
 }
@@ -12993,7 +13719,8 @@ State {
 State {
   ID = "BON1D";
   Sprite = "BON1";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON1E";
 }
@@ -13001,7 +13728,8 @@ State {
 State {
   ID = "BON1E";
   Sprite = "BON1";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON1";
 }
@@ -13065,7 +13793,8 @@ State {
 State {
   ID = "BKEY2";
   Sprite = "BKEY";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 10;
   Next state = "BKEY";
 }
@@ -13081,7 +13810,8 @@ State {
 State {
   ID = "RKEY2";
   Sprite = "RKEY";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 10;
   Next state = "RKEY";
 }
@@ -13097,7 +13827,8 @@ State {
 State {
   ID = "YKEY2";
   Sprite = "YKEY";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 10;
   Next state = "YKEY";
 }
@@ -13113,7 +13844,8 @@ State {
 State {
   ID = "BSKULL2";
   Sprite = "BSKU";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 10;
   Next state = "BSKULL";
 }
@@ -13129,7 +13861,8 @@ State {
 State {
   ID = "RSKULL2";
   Sprite = "RSKU";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 10;
   Next state = "RSKULL";
 }
@@ -13145,7 +13878,8 @@ State {
 State {
   ID = "YSKULL2";
   Sprite = "YSKU";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 10;
   Next state = "YSKULL";
 }
@@ -13153,7 +13887,8 @@ State {
 State {
   ID = "STIM";
   Sprite = "STIM";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13161,7 +13896,8 @@ State {
 State {
   ID = "MEDI";
   Sprite = "MEDI";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13169,7 +13905,8 @@ State {
 State {
   ID = "SOUL";
   Sprite = "SOUL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SOUL2";
 }
@@ -13177,7 +13914,8 @@ State {
 State {
   ID = "SOUL2";
   Sprite = "SOUL";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SOUL3";
 }
@@ -13185,7 +13923,8 @@ State {
 State {
   ID = "SOUL3";
   Sprite = "SOUL";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SOUL4";
 }
@@ -13193,7 +13932,8 @@ State {
 State {
   ID = "SOUL4";
   Sprite = "SOUL";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SOUL5";
 }
@@ -13201,7 +13941,8 @@ State {
 State {
   ID = "SOUL5";
   Sprite = "SOUL";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SOUL6";
 }
@@ -13209,7 +13950,8 @@ State {
 State {
   ID = "SOUL6";
   Sprite = "SOUL";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SOUL";
 }
@@ -13217,7 +13959,8 @@ State {
 State {
   ID = "PINV";
   Sprite = "PINV";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PINV2";
 }
@@ -13225,7 +13968,8 @@ State {
 State {
   ID = "PINV2";
   Sprite = "PINV";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PINV3";
 }
@@ -13233,7 +13977,8 @@ State {
 State {
   ID = "PINV3";
   Sprite = "PINV";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PINV4";
 }
@@ -13241,7 +13986,8 @@ State {
 State {
   ID = "PINV4";
   Sprite = "PINV";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PINV";
 }
@@ -13249,7 +13995,8 @@ State {
 State {
   ID = "PSTR";
   Sprite = "PSTR";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13257,7 +14004,8 @@ State {
 State {
   ID = "PINS";
   Sprite = "PINS";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PINS2";
 }
@@ -13265,7 +14013,8 @@ State {
 State {
   ID = "PINS2";
   Sprite = "PINS";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PINS3";
 }
@@ -13273,7 +14022,8 @@ State {
 State {
   ID = "PINS3";
   Sprite = "PINS";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PINS4";
 }
@@ -13281,7 +14031,8 @@ State {
 State {
   ID = "PINS4";
   Sprite = "PINS";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PINS";
 }
@@ -13289,7 +14040,8 @@ State {
 State {
   ID = "MEGA";
   Sprite = "MEGA";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "MEGA2";
 }
@@ -13297,7 +14049,8 @@ State {
 State {
   ID = "MEGA2";
   Sprite = "MEGA";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "MEGA3";
 }
@@ -13305,7 +14058,8 @@ State {
 State {
   ID = "MEGA3";
   Sprite = "MEGA";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "MEGA4";
 }
@@ -13313,7 +14067,8 @@ State {
 State {
   ID = "MEGA4";
   Sprite = "MEGA";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "MEGA";
 }
@@ -13321,7 +14076,8 @@ State {
 State {
   ID = "SUIT";
   Sprite = "SUIT";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 2;
   Next state = "SUIT2";
 }
@@ -13329,7 +14085,8 @@ State {
 State {
   ID = "PMAP";
   Sprite = "PMAP";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PMAP2";
 }
@@ -13337,7 +14094,8 @@ State {
 State {
   ID = "PMAP2";
   Sprite = "PMAP";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PMAP3";
 }
@@ -13345,7 +14103,8 @@ State {
 State {
   ID = "PMAP3";
   Sprite = "PMAP";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PMAP4";
 }
@@ -13353,7 +14112,8 @@ State {
 State {
   ID = "PMAP4";
   Sprite = "PMAP";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PMAP5";
 }
@@ -13361,7 +14121,8 @@ State {
 State {
   ID = "PMAP5";
   Sprite = "PMAP";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PMAP6";
 }
@@ -13369,7 +14130,8 @@ State {
 State {
   ID = "PMAP6";
   Sprite = "PMAP";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PMAP";
 }
@@ -13377,7 +14139,8 @@ State {
 State {
   ID = "PVIS";
   Sprite = "PVIS";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "PVIS2";
 }
@@ -13393,7 +14156,8 @@ State {
 State {
   ID = "CLIP";
   Sprite = "CLIP";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13401,7 +14165,8 @@ State {
 State {
   ID = "AMMO";
   Sprite = "AMMO";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13409,7 +14174,8 @@ State {
 State {
   ID = "ROCK";
   Sprite = "ROCK";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13417,7 +14183,8 @@ State {
 State {
   ID = "BROK";
   Sprite = "BROK";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13425,7 +14192,8 @@ State {
 State {
   ID = "CELL";
   Sprite = "CELL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13433,7 +14201,8 @@ State {
 State {
   ID = "CELP";
   Sprite = "CELP";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13441,7 +14210,8 @@ State {
 State {
   ID = "SHEL";
   Sprite = "SHEL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13449,7 +14219,8 @@ State {
 State {
   ID = "SBOX";
   Sprite = "SBOX";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13457,7 +14228,8 @@ State {
 State {
   ID = "BPAK";
   Sprite = "BPAK";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13465,7 +14237,8 @@ State {
 State {
   ID = "BFUG";
   Sprite = "BFUG";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13473,7 +14246,8 @@ State {
 State {
   ID = "MGUN";
   Sprite = "MGUN";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13481,7 +14255,8 @@ State {
 State {
   ID = "CSAW";
   Sprite = "CSAW";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13489,7 +14264,8 @@ State {
 State {
   ID = "LAUN";
   Sprite = "LAUN";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13497,7 +14273,8 @@ State {
 State {
   ID = "PLAS";
   Sprite = "PLAS";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13505,7 +14282,8 @@ State {
 State {
   ID = "SHOT";
   Sprite = "SHOT";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13513,7 +14291,8 @@ State {
 State {
   ID = "SHOT2";
   Sprite = "SGN2";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13521,7 +14300,8 @@ State {
 State {
   ID = "COLU";
   Sprite = "COLU";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13529,7 +14309,8 @@ State {
 State {
   ID = "DART1";
   Sprite = "DART";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13617,7 +14398,8 @@ State {
 State {
   ID = "HEADCANDLES2";
   Sprite = "POL3";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "HEADCANDLES";
 }
@@ -13721,7 +14503,8 @@ State {
 State {
   ID = "CANDLESTIK";
   Sprite = "CAND";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 2;
   Next state = "CANDLESTIK2";
 }
@@ -13729,7 +14512,8 @@ State {
 State {
   ID = "CANDELABRA";
   Sprite = "CBRA";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13761,7 +14545,8 @@ State {
 State {
   ID = "TECHPILLAR";
   Sprite = "ELEC";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -13769,7 +14554,8 @@ State {
 State {
   ID = "EVILEYE";
   Sprite = "CEYE";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "EVILEYE2";
 }
@@ -13777,7 +14563,8 @@ State {
 State {
   ID = "EVILEYE2";
   Sprite = "CEYE";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "EVILEYE3";
 }
@@ -13785,7 +14572,8 @@ State {
 State {
   ID = "EVILEYE3";
   Sprite = "CEYE";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 3;
   Next state = "EVILEYE4";
 }
@@ -13793,7 +14581,8 @@ State {
 State {
   ID = "EVILEYE4";
   Sprite = "CEYE";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "EVILEYE";
 }
@@ -13801,7 +14590,8 @@ State {
 State {
   ID = "FLOATSKULL";
   Sprite = "FSKU";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "FLOATSKULL2";
 }
@@ -13809,7 +14599,8 @@ State {
 State {
   ID = "FLOATSKULL2";
   Sprite = "FSKU";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "FLOATSKULL3";
 }
@@ -13817,7 +14608,8 @@ State {
 State {
   ID = "FLOATSKULL3";
   Sprite = "FSKU";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "FLOATSKULL";
 }
@@ -13841,7 +14633,8 @@ State {
 State {
   ID = "BLUETORCH";
   Sprite = "TBLU";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BLUETORCH2";
 }
@@ -13849,7 +14642,8 @@ State {
 State {
   ID = "BLUETORCH2";
   Sprite = "TBLU";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BLUETORCH3";
 }
@@ -13857,7 +14651,8 @@ State {
 State {
   ID = "BLUETORCH3";
   Sprite = "TBLU";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BLUETORCH4";
 }
@@ -13865,7 +14660,8 @@ State {
 State {
   ID = "BLUETORCH4";
   Sprite = "TBLU";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BLUETORCH";
 }
@@ -13873,7 +14669,8 @@ State {
 State {
   ID = "GREENTORCH";
   Sprite = "TGRN";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "GREENTORCH2";
 }
@@ -13881,7 +14678,8 @@ State {
 State {
   ID = "GREENTORCH2";
   Sprite = "TGRN";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "GREENTORCH3";
 }
@@ -13889,7 +14687,8 @@ State {
 State {
   ID = "GREENTORCH3";
   Sprite = "TGRN";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "GREENTORCH4";
 }
@@ -13897,7 +14696,8 @@ State {
 State {
   ID = "GREENTORCH4";
   Sprite = "TGRN";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "GREENTORCH";
 }
@@ -13905,7 +14705,8 @@ State {
 State {
   ID = "REDTORCH";
   Sprite = "TRED";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "REDTORCH2";
 }
@@ -13913,7 +14714,8 @@ State {
 State {
   ID = "REDTORCH2";
   Sprite = "TRED";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "REDTORCH3";
 }
@@ -13921,7 +14723,8 @@ State {
 State {
   ID = "REDTORCH3";
   Sprite = "TRED";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "REDTORCH4";
 }
@@ -13929,7 +14732,8 @@ State {
 State {
   ID = "REDTORCH4";
   Sprite = "TRED";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "REDTORCH";
 }
@@ -13937,7 +14741,8 @@ State {
 State {
   ID = "BTORCHSHRT";
   Sprite = "SMBT";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BTORCHSHRT2";
 }
@@ -13945,7 +14750,8 @@ State {
 State {
   ID = "BTORCHSHRT2";
   Sprite = "SMBT";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BTORCHSHRT3";
 }
@@ -13953,7 +14759,8 @@ State {
 State {
   ID = "BTORCHSHRT3";
   Sprite = "SMBT";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BTORCHSHRT4";
 }
@@ -13961,7 +14768,8 @@ State {
 State {
   ID = "BTORCHSHRT4";
   Sprite = "SMBT";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BTORCHSHRT5";
 }
@@ -13969,7 +14777,8 @@ State {
 State {
   ID = "GTORCHSHRT";
   Sprite = "SMGT";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "GTORCHSHRT2";
 }
@@ -13977,7 +14786,8 @@ State {
 State {
   ID = "GTORCHSHRT2";
   Sprite = "SMGT";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "GTORCHSHRT3";
 }
@@ -13985,7 +14795,8 @@ State {
 State {
   ID = "GTORCHSHRT3";
   Sprite = "SMGT";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "GTORCHSHRT4";
 }
@@ -13993,7 +14804,8 @@ State {
 State {
   ID = "GTORCHSHRT4";
   Sprite = "SMGT";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "GTORCHSHRT5";
 }
@@ -14001,7 +14813,8 @@ State {
 State {
   ID = "RTORCHSHRT";
   Sprite = "SMRT";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RTORCHSHRT2";
 }
@@ -14009,7 +14822,8 @@ State {
 State {
   ID = "RTORCHSHRT2";
   Sprite = "SMRT";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RTORCHSHRT3";
 }
@@ -14017,7 +14831,8 @@ State {
 State {
   ID = "RTORCHSHRT3";
   Sprite = "SMRT";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RTORCHSHRT4";
 }
@@ -14025,7 +14840,8 @@ State {
 State {
   ID = "RTORCHSHRT4";
   Sprite = "SMRT";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RTORCHSHRT5";
 }
@@ -14105,7 +14921,8 @@ State {
 State {
   ID = "BRNRBALL1";
   Sprite = "BRNR";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BRNRBALL2";
 }
@@ -14113,7 +14930,8 @@ State {
 State {
   ID = "BRNRBALL2";
   Sprite = "BRNR";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BRNRBALL1";
 }
@@ -14121,7 +14939,8 @@ State {
 State {
   ID = "BRNRBALLX1";
   Sprite = "BRNR";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BRNRBALLX2";
 }
@@ -14129,7 +14948,8 @@ State {
 State {
   ID = "BRNRBALLX2";
   Sprite = "BRNR";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BRNRBALLX3";
 }
@@ -14137,7 +14957,8 @@ State {
 State {
   ID = "BRNRBALLX3";
   Sprite = "BRNR";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BRNRBALLX4";
 }
@@ -14145,7 +14966,8 @@ State {
 State {
   ID = "BRNRBALLX4";
   Sprite = "BRNR";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BRNRBALLX5";
 }
@@ -14153,7 +14975,8 @@ State {
 State {
   ID = "BRNRBALLX5";
   Sprite = "BRNR";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BRNRBALLX6";
 }
@@ -14161,7 +14984,8 @@ State {
 State {
   ID = "BRNRBALLX6";
   Sprite = "BRNR";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NULL";
 }
@@ -14169,7 +14993,8 @@ State {
 State {
   ID = "NMBL1";
   Sprite = "NMBL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "NMBL2";
 }
@@ -14177,7 +15002,8 @@ State {
 State {
   ID = "NMBL2";
   Sprite = "NMBL";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "NMBL3";
 }
@@ -14185,7 +15011,8 @@ State {
 State {
   ID = "NMBL3";
   Sprite = "NMBL";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "NMBL1";
 }
@@ -14193,7 +15020,8 @@ State {
 State {
   ID = "NMBLX1";
   Sprite = "NMBL";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NMBLX2";
 }
@@ -14201,7 +15029,8 @@ State {
 State {
   ID = "NMBLX2";
   Sprite = "NMBL";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NMBLX3";
 }
@@ -14209,7 +15038,8 @@ State {
 State {
   ID = "NMBLX3";
   Sprite = "NMBL";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NMBLX4";
 }
@@ -14217,7 +15047,8 @@ State {
 State {
   ID = "NMBLX4";
   Sprite = "NMBL";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NMBLX5";
 }
@@ -14225,7 +15056,8 @@ State {
 State {
   ID = "NMBLX5";
   Sprite = "NMBL";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NMBLX6";
 }
@@ -14233,7 +15065,8 @@ State {
 State {
   ID = "NMBLX6";
   Sprite = "NMBL";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NULL";
 }
@@ -14241,7 +15074,8 @@ State {
 State {
   ID = "RPUFF1";
   Sprite = "SMOK";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 2;
   Next state = "RPUFF2";
 }
@@ -14249,7 +15083,8 @@ State {
 State {
   ID = "RPUFF2";
   Sprite = "SMOK";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 2;
   Next state = "RPUFF3";
 }
@@ -14257,7 +15092,8 @@ State {
 State {
   ID = "RPUFF3";
   Sprite = "SMOK";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 2;
   Next state = "RPUFF4";
 }
@@ -14265,7 +15101,8 @@ State {
 State {
   ID = "RPUFF4";
   Sprite = "SMOK";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 2;
   Next state = "RPUFF5";
 }
@@ -14273,7 +15110,8 @@ State {
 State {
   ID = "RPUFF5";
   Sprite = "SMOK";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 2;
   Next state = "NULL";
 }
@@ -14281,7 +15119,8 @@ State {
 State {
   ID = "LGUN1";
   Sprite = "LGUN";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -14289,7 +15128,8 @@ State {
 State {
   ID = "UNKFLASH1";
   Sprite = "HTUF";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LIGHTDONE";
 }
@@ -14341,7 +15181,8 @@ State {
 State {
   ID = "LAZR1";
   Sprite = "LAZR";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_Lasersmoke";
   Next state = "LAZR2";
@@ -14350,7 +15191,8 @@ State {
 State {
   ID = "LAZR2";
   Sprite = "LAZR";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_Lasersmoke";
   Next state = "LAZR1";
@@ -14359,7 +15201,8 @@ State {
 State {
   ID = "LAZRDTH";
   Sprite = "LPUF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LAZRDTH2";
 }
@@ -14367,7 +15210,8 @@ State {
 State {
   ID = "LAZRDTH2";
   Sprite = "LPUF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LAZRDTH3";
 }
@@ -14375,7 +15219,8 @@ State {
 State {
   ID = "LAZRDTH3";
   Sprite = "LPUF";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LAZRDTH4";
 }
@@ -14383,7 +15228,8 @@ State {
 State {
   ID = "LAZRDTH4";
   Sprite = "LPUF";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LAZRDTH5";
 }
@@ -14391,7 +15237,8 @@ State {
 State {
   ID = "LAZRDUST";
   Sprite = "LPUF";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 8;
   Next state = "NULL";
 }
@@ -14399,7 +15246,8 @@ State {
 State {
   ID = "POW10";
   Sprite = "POW1";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW11";
 }
@@ -14407,7 +15255,8 @@ State {
 State {
   ID = "POW11";
   Sprite = "POW1";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW12";
 }
@@ -14415,7 +15264,8 @@ State {
 State {
   ID = "POW12";
   Sprite = "POW1";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW13";
 }
@@ -14423,7 +15273,8 @@ State {
 State {
   ID = "POW13";
   Sprite = "POW1";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW14";
 }
@@ -14431,7 +15282,8 @@ State {
 State {
   ID = "POW14";
   Sprite = "POW1";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW15";
 }
@@ -14439,7 +15291,8 @@ State {
 State {
   ID = "POW15";
   Sprite = "POW1";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW16";
 }
@@ -14447,7 +15300,8 @@ State {
 State {
   ID = "POW16";
   Sprite = "POW1";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW17";
 }
@@ -14455,7 +15309,8 @@ State {
 State {
   ID = "POW17";
   Sprite = "POW1";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW10";
 }
@@ -14463,7 +15318,8 @@ State {
 State {
   ID = "POW20";
   Sprite = "POW2";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW21";
 }
@@ -14471,7 +15327,8 @@ State {
 State {
   ID = "POW21";
   Sprite = "POW2";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW22";
 }
@@ -14479,7 +15336,8 @@ State {
 State {
   ID = "POW22";
   Sprite = "POW2";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW23";
 }
@@ -14487,7 +15345,8 @@ State {
 State {
   ID = "POW23";
   Sprite = "POW2";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW24";
 }
@@ -14495,7 +15354,8 @@ State {
 State {
   ID = "POW24";
   Sprite = "POW2";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW25";
 }
@@ -14503,7 +15363,8 @@ State {
 State {
   ID = "POW25";
   Sprite = "POW2";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW26";
 }
@@ -14511,7 +15372,8 @@ State {
 State {
   ID = "POW26";
   Sprite = "POW2";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW27";
 }
@@ -14519,7 +15381,8 @@ State {
 State {
   ID = "POW27";
   Sprite = "POW2";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW20";
 }
@@ -14527,7 +15390,8 @@ State {
 State {
   ID = "POW30";
   Sprite = "POW3";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW31";
 }
@@ -14535,7 +15399,8 @@ State {
 State {
   ID = "POW31";
   Sprite = "POW3";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW32";
 }
@@ -14543,7 +15408,8 @@ State {
 State {
   ID = "POW32";
   Sprite = "POW3";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW33";
 }
@@ -14551,7 +15417,8 @@ State {
 State {
   ID = "POW33";
   Sprite = "POW3";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW34";
 }
@@ -14559,7 +15426,8 @@ State {
 State {
   ID = "POW34";
   Sprite = "POW3";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW35";
 }
@@ -14567,7 +15435,8 @@ State {
 State {
   ID = "POW35";
   Sprite = "POW3";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW36";
 }
@@ -14575,7 +15444,8 @@ State {
 State {
   ID = "POW36";
   Sprite = "POW3";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW37";
 }
@@ -14583,7 +15453,8 @@ State {
 State {
   ID = "POW37";
   Sprite = "POW3";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW30";
 }
@@ -14591,7 +15462,8 @@ State {
 State {
   ID = "POW40";
   Sprite = "POW4";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW41";
 }
@@ -14599,7 +15471,8 @@ State {
 State {
   ID = "POW41";
   Sprite = "POW4";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW42";
 }
@@ -14607,7 +15480,8 @@ State {
 State {
   ID = "POW42";
   Sprite = "POW4";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW43";
 }
@@ -14615,7 +15489,8 @@ State {
 State {
   ID = "POW43";
   Sprite = "POW4";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW44";
 }
@@ -14623,7 +15498,8 @@ State {
 State {
   ID = "POW44";
   Sprite = "POW4";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW45";
 }
@@ -14631,7 +15507,8 @@ State {
 State {
   ID = "POW45";
   Sprite = "POW4";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW46";
 }
@@ -14639,7 +15516,8 @@ State {
 State {
   ID = "POW46";
   Sprite = "POW4";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW47";
 }
@@ -14647,7 +15525,8 @@ State {
 State {
   ID = "POW47";
   Sprite = "POW4";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW40";
 }
@@ -14655,7 +15534,8 @@ State {
 State {
   ID = "POW50";
   Sprite = "POW5";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW51";
 }
@@ -14663,7 +15543,8 @@ State {
 State {
   ID = "POW51";
   Sprite = "POW5";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW52";
 }
@@ -14671,7 +15552,8 @@ State {
 State {
   ID = "POW52";
   Sprite = "POW5";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW53";
 }
@@ -14679,7 +15561,8 @@ State {
 State {
   ID = "POW53";
   Sprite = "POW5";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW54";
 }
@@ -14687,7 +15570,8 @@ State {
 State {
   ID = "POW54";
   Sprite = "POW5";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW55";
 }
@@ -14695,7 +15579,8 @@ State {
 State {
   ID = "POW55";
   Sprite = "POW5";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW56";
 }
@@ -14703,7 +15588,8 @@ State {
 State {
   ID = "POW56";
   Sprite = "POW5";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW57";
 }
@@ -14711,7 +15597,8 @@ State {
 State {
   ID = "POW57";
   Sprite = "POW5";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "POW50";
 }
@@ -14719,7 +15606,8 @@ State {
 State {
   ID = "LAZRW1";
   Sprite = "LAZR";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 1;
   Next state = "LAZRW2";
 }
@@ -14727,7 +15615,8 @@ State {
 State {
   ID = "LAZRW2";
   Sprite = "LAZR";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 1;
   Next state = "LAZRW1";
 }
@@ -14966,7 +15855,8 @@ State {
 State {
   ID = "RTRACER1";
   Sprite = "MBAL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_BitchTracerPuff";
   Next state = "RTRACER2";
@@ -14975,7 +15865,8 @@ State {
 State {
   ID = "RTRACER2";
   Sprite = "MBAL";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_BitchTracerPuff";
   Next state = "RTRACER1";
@@ -14984,7 +15875,8 @@ State {
 State {
   ID = "RTRACER3";
   Sprite = "BRNR";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Action = "A_MotherBallExplode";
   Next state = "BRNRBALLX2";
@@ -14993,7 +15885,8 @@ State {
 State {
   ID = "MPUFF1";
   Sprite = "MPUF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 2;
   Next state = "MPUFF2";
 }
@@ -15001,7 +15894,8 @@ State {
 State {
   ID = "MPUFF2";
   Sprite = "MPUF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 2;
   Next state = "MPUFF3";
 }
@@ -15009,7 +15903,8 @@ State {
 State {
   ID = "MPUFF3";
   Sprite = "MPUF";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 2;
   Next state = "MPUFF4";
 }
@@ -15017,7 +15912,8 @@ State {
 State {
   ID = "MPUFF4";
   Sprite = "MPUF";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 2;
   Next state = "MPUFF5";
 }
@@ -15025,7 +15921,8 @@ State {
 State {
   ID = "MPUFF5";
   Sprite = "MPUF";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 2;
   Next state = "NULL";
 }
@@ -15132,7 +16029,8 @@ State {
 State {
   ID = "EMARP_ATK2";
   Sprite = "PLAY";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 8;
   Action = "A_PosAttack";
   Next state = "EMARP_ATK3";
@@ -15149,7 +16047,8 @@ State {
 State {
   ID = "EMARP_ATK4";
   Sprite = "PLAY";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 8;
   Action = "A_PosAttack";
   Next state = "EMARP_ATK5";
@@ -15191,7 +16090,8 @@ State {
 State {
   ID = "TECHLAMP";
   Sprite = "TLMP";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -15199,7 +16099,8 @@ State {
 State {
   ID = "TECHLAMP2";
   Sprite = "TLMP";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TECHLAMP3";
 }
@@ -15207,7 +16108,8 @@ State {
 State {
   ID = "TECHLAMP3";
   Sprite = "TLMP";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TECHLAMP4";
 }
@@ -15215,7 +16117,8 @@ State {
 State {
   ID = "TECHLAMP4";
   Sprite = "TLMP";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TECHLAMP";
 }
@@ -15223,7 +16126,8 @@ State {
 State {
   ID = "TECH2LAMP";
   Sprite = "TLP2";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -15231,7 +16135,8 @@ State {
 State {
   ID = "TECH2LAMP2";
   Sprite = "TLP2";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TECH2LAMP3";
 }
@@ -15239,7 +16144,8 @@ State {
 State {
   ID = "TECH2LAMP3";
   Sprite = "TLP2";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TECH2LAMP4";
 }
@@ -15247,7 +16153,8 @@ State {
 State {
   ID = "TECH2LAMP4";
   Sprite = "TLP2";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TECH2LAMP";
 }
@@ -15255,7 +16162,8 @@ State {
 State {
   ID = "TRACER";
   Sprite = "MANF";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_Tracer";
   Next state = "TRACER2";
@@ -15264,7 +16172,8 @@ State {
 State {
   ID = "TRACER2";
   Sprite = "MANF";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_Tracer";
   Next state = "TRACER3";
@@ -15273,7 +16182,8 @@ State {
 State {
   ID = "TRACER3";
   Sprite = "MANF";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_Tracer";
   Next state = "TRACER";
@@ -15282,7 +16192,8 @@ State {
 State {
   ID = "TRACEEXP1";
   Sprite = "MANF";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 8;
   Next state = "TRACEEXP2";
 }
@@ -15290,7 +16201,8 @@ State {
 State {
   ID = "TRACEEXP2";
   Sprite = "MANF";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Next state = "TRACEEXP3";
 }
@@ -15298,7 +16210,8 @@ State {
 State {
   ID = "TRACEEXP3";
   Sprite = "MANF";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TRACEEXP4";
 }
@@ -15306,7 +16219,8 @@ State {
 State {
   ID = "TRACEEXP4";
   Sprite = "MANF";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TRACEEXP5";
 }
@@ -15314,7 +16228,8 @@ State {
 State {
   ID = "TRACEEXP5";
   Sprite = "MANF";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 2;
   Next state = "TRACEEXP6";
 }
@@ -15322,7 +16237,8 @@ State {
 State {
   ID = "TRACEEXP6";
   Sprite = "MANF";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 2;
   Next state = "NULL";
 }
@@ -15333,28 +16249,6 @@ State {
   Frame = 4;
   Tics = -1;
   Next state = "NULL";
-}
-
-Thing {
-  ID = "TEMPSOUNDORIGIN";
-  DoomEd number = -1;
-  Spawn state = "TEMPSOUNDORIGIN1";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Radius = 1;
-  Height = 1;
-  Mass = 100;
-  Flags = "mf_local mf_nosector mf_noblockmap mf_nogravity";
 }
 
 State {
@@ -15368,14 +16262,16 @@ State {
 State {
   ID = "EXPLODE0";
   Sprite = "MISL";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Next state = "EXPLODE1";
 }
 
 State {
   ID = "BFGFLASH3";
   Sprite = "BFGF";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_Light2";
   Next state = "LIGHTDONE";
@@ -15400,7 +16296,8 @@ State {
 State {
   ID = "PLASEXP6";
   Sprite = "PLSE";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 4;
   Next state = "NULL";
 }
@@ -15408,7 +16305,8 @@ State {
 State {
   ID = "EXPLODE4";
   Sprite = "MISL";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "EXPLODE5";
 }
@@ -15416,7 +16314,8 @@ State {
 State {
   ID = "EXPLODE5";
   Sprite = "MISL";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 4;
   Next state = "NULL";
 }
@@ -15424,7 +16323,8 @@ State {
 State {
   ID = "CANDLESTIK2";
   Sprite = "CAND";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 2;
   Next state = "CANDLESTIK";
 }
@@ -15432,7 +16332,8 @@ State {
 State {
   ID = "SUIT2";
   Sprite = "SUIT";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 2;
   Next state = "SUIT";
 }
@@ -15440,7 +16341,8 @@ State {
 State {
   ID = "TFOG11";
   Sprite = "TFOG";
-  Frame = 32778;
+  Frame = 10;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG12";
 }
@@ -15448,7 +16350,8 @@ State {
 State {
   ID = "TFOG12";
   Sprite = "TFOG";
-  Frame = 32779;
+  Frame = 11;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG13";
 }
@@ -15456,7 +16359,8 @@ State {
 State {
   ID = "TFOG13";
   Sprite = "TFOG";
-  Frame = 32780;
+  Frame = 12;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG14";
 }
@@ -15464,7 +16368,8 @@ State {
 State {
   ID = "TFOG14";
   Sprite = "TFOG";
-  Frame = 32781;
+  Frame = 13;
+  Flags = fullbright;
   Tics = 3;
   Next state = "TFOG15";
 }
@@ -15472,7 +16377,8 @@ State {
 State {
   ID = "TFOG15";
   Sprite = "TFOG";
-  Frame = 32782;
+  Frame = 14;
+  Flags = fullbright;
   Tics = 3;
   Next state = "NULL";
 }
@@ -15480,7 +16386,8 @@ State {
 State {
   ID = "TBALL3";
   Sprite = "BAL1";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "TBALL1";
 }
@@ -15488,7 +16395,8 @@ State {
 State {
   ID = "TBALLX4";
   Sprite = "BAL1";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 6;
   Next state = "TBALLX5";
 }
@@ -15496,7 +16404,8 @@ State {
 State {
   ID = "TBALLX5";
   Sprite = "BAL1";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 6;
   Next state = "TBALLX6";
 }
@@ -15504,7 +16413,8 @@ State {
 State {
   ID = "TBALLX6";
   Sprite = "BAL1";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NULL";
 }
@@ -15568,7 +16478,8 @@ State {
 State {
   ID = "FATSHOT3";
   Sprite = "MANF";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "FATSHOT1";
 }
@@ -15584,7 +16495,8 @@ State {
 State {
   ID = "FATSHOTX4";
   Sprite = "MANF";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Next state = "FATSHOTX5";
 }
@@ -15592,7 +16504,8 @@ State {
 State {
   ID = "FATSHOTX5";
   Sprite = "MANF";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 4;
   Next state = "FATSHOTX6";
 }
@@ -15600,7 +16513,8 @@ State {
 State {
   ID = "FATSHOTX6";
   Sprite = "MANF";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 4;
   Next state = "NULL";
 }
@@ -15608,7 +16522,8 @@ State {
 State {
   ID = "BRBALLX4";
   Sprite = "BAL7";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BRBALLX5";
 }
@@ -15616,7 +16531,8 @@ State {
 State {
   ID = "BRBALLX5";
   Sprite = "BAL7";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BRBALLX6";
 }
@@ -15624,7 +16540,8 @@ State {
 State {
   ID = "BRBALLX6";
   Sprite = "BAL7";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NULL";
 }
@@ -15632,7 +16549,8 @@ State {
 State {
   ID = "SKULL_STND3";
   Sprite = "SKUL";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_Look";
   Next state = "SKULL_STND";
@@ -15641,7 +16559,8 @@ State {
 State {
   ID = "SKULL_RUN3";
   Sprite = "SKUL";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_Chase";
   Next state = "SKULL_RUN1";
@@ -15650,7 +16569,8 @@ State {
 State {
   ID = "SKULL_DIE7";
   Sprite = "SKUL";
-  Frame = 32780;
+  Frame = 12;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SKULL_DIE8";
 }
@@ -15658,7 +16578,8 @@ State {
 State {
   ID = "SKULL_DIE8";
   Sprite = "SKUL";
-  Frame = 32781;
+  Frame = 13;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SKULL_DIE9";
 }
@@ -15666,7 +16587,8 @@ State {
 State {
   ID = "SKULL_DIE9";
   Sprite = "SKUL";
-  Frame = 32782;
+  Frame = 14;
+  Flags = fullbright;
   Tics = 6;
   Next state = "SKULL_DIE10";
 }
@@ -15674,7 +16596,8 @@ State {
 State {
   ID = "SKULL_DIE10";
   Sprite = "SKUL";
-  Frame = 32783;
+  Frame = 15;
+  Flags = fullbright;
   Tics = 6;
   Next state = "NULL";
 }
@@ -15682,7 +16605,8 @@ State {
 State {
   ID = "BEXP6";
   Sprite = "BEXP";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 5;
   Next state = "BEXP7";
 }
@@ -15690,7 +16614,8 @@ State {
 State {
   ID = "BEXP7";
   Sprite = "BEXP";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 5;
   Next state = "BEXP8";
 }
@@ -15698,7 +16623,8 @@ State {
 State {
   ID = "BEXP8";
   Sprite = "BEXP";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 5;
   Next state = "BEXP9";
 }
@@ -15706,7 +16632,8 @@ State {
 State {
   ID = "BEXP9";
   Sprite = "BEXP";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 5;
   Action = "A_BossDeath";
   Next state = "NULL";
@@ -15715,7 +16642,8 @@ State {
 State {
   ID = "PAIN_DIE7";
   Sprite = "PAIN";
-  Frame = 32778;
+  Frame = 10;
+  Flags = fullbright;
   Tics = 5;
   Next state = "PAIN_DIE8";
 }
@@ -15723,7 +16651,8 @@ State {
 State {
   ID = "PAIN_DIE8";
   Sprite = "PAIN";
-  Frame = 32779;
+  Frame = 11;
+  Flags = fullbright;
   Tics = 5;
   Next state = "NULL";
 }
@@ -15731,7 +16660,8 @@ State {
 State {
   ID = "RBALL3";
   Sprite = "BAL2";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RBALL1";
 }
@@ -15739,7 +16669,8 @@ State {
 State {
   ID = "RBALLX4";
   Sprite = "BAL2";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RBALLX5";
 }
@@ -15747,7 +16678,8 @@ State {
 State {
   ID = "RBALLX5";
   Sprite = "BAL2";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 4;
   Next state = "NULL";
 }
@@ -15764,7 +16696,8 @@ State {
 State {
   ID = "SKEL_MISS4";
   Sprite = "SKEL";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 3;
   Action = "A_FaceTarget";
   Next state = "SKEL_MISS5";
@@ -15773,7 +16706,8 @@ State {
 State {
   ID = "SKEL_MISS5";
   Sprite = "SKEL";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 3;
   Action = "A_FaceTarget";
   Next state = "SKEL_MISS6";
@@ -15782,7 +16716,8 @@ State {
 State {
   ID = "SKEL_MISS6";
   Sprite = "SKEL";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_HeadAttack";
   Next state = "SKEL_MISS7";
@@ -15791,7 +16726,8 @@ State {
 State {
   ID = "SKEL_MISS7";
   Sprite = "SKEL";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 3;
   Action = "A_FaceTarget";
   Next state = "SKEL_MISS7";
@@ -15800,7 +16736,8 @@ State {
 State {
   ID = "SKEL_MISS7";
   Sprite = "SKEL";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 3;
   Action = "A_FaceTarget";
   Next state = "SKEL_MISS8";
@@ -15809,129 +16746,18 @@ State {
 State {
   ID = "SKEL_MISS8";
   Sprite = "SKEL";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Action = "A_HeadAttack";
   Next state = "SKEL_RUN1";
 }
 
-Thing {
-  ID = "FAKEKNIGHT";
-  Name = "Fake Hell Knight";
-  DoomEd number = 222;
-  Spawn state = "BOS2_STND";
-  See state = "BOS2_RUN1";
-  Pain state = "BOS2_PAIN";
-  Melee state = "BOS2_ATK1";
-  Missile state = "BOS2_ATK1";
-  Death state = "BOS2_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "BOS2_RAISE1";
-  See sound = "kntsit";
-  Attack sound = "None";
-  Pain sound = "dmpain";
-  Death sound = "kntdth";
-  Active sound = "dmact";
-  Reaction time = 8;
-  Pain chance = 50;
-  Spawn health = 500;
-  Speed = 8;
-  Radius = 32;
-  Height = 64;
-  Mass = 1000;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
-}
-
-Thing {
-  ID = "FAKETROOP";
-  Name = "Fake Imp";
-  DoomEd number = 223;
-  Spawn state = "TROO_STND";
-  See state = "TROO_RUN1";
-  Pain state = "TROO_PAIN";
-  Melee state = "TROO_MEL1";
-  Missile state = "TROO_ATK1";
-  Death state = "TROO_DIE1";
-  Xdeath state = "TROO_XDIE1";
-  Raise state = "TROO_RAISE1";
-  See sound = "bgsit1";
-  Attack sound = "None";
-  Pain sound = "popain";
-  Death sound = "bgdth1";
-  Active sound = "bgact";
-  Reaction time = 8;
-  Pain chance = 200;
-  Spawn health = 60;
-  Speed = 8;
-  Radius = 32;
-  Height = 72;
-  Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
-}
-
-Thing {
-  ID = "FAKESHADOWS";
-  Name = "Fake Spectre";
-  DoomEd number = 224;
-  Spawn state = "SARG_STND";
-  See state = "SARG_RUN1";
-  Pain state = "SARG_PAIN";
-  Melee state = "SARG_ATK1";
-  Missile state = "NULL";
-  Death state = "SARG_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "SARG_RAISE1";
-  See sound = "sgtsit";
-  Attack sound = "sgtatk";
-  Pain sound = "dmpain";
-  Death sound = "sgtdth";
-  Active sound = "dmact";
-  Reaction time = 8;
-  Pain chance = 180;
-  Spawn health = 150;
-  Speed = 10;
-  Radius = 32;
-  Height = 56;
-  Mass = 400;
-  Flags = "mf_solid mf_shootable mf_shadow mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
-}
-
-Thing {
-  ID = "FAKESKULL";
-  Name = "Fake Lost Soul";
-  DoomEd number = 225;
-  Spawn state = "SKULL_STND";
-  See state = "SKULL_RUN1";
-  Pain state = "SKULL_PAIN";
-  Melee state = "NULL";
-  Missile state = "SKULL_ATK1";
-  Death state = "SKULL_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "sklatk";
-  Pain sound = "dmpain";
-  Death sound = "firxpl";
-  Active sound = "dmact";
-  Reaction time = 8;
-  Pain chance = 256;
-  Spawn health = 100;
-  Speed = 8;
-  Radius = 16;
-  Height = 56;
-  Mass = 50;
-  Damage = 3;
-  Flags = "mf_solid mf_shootable mf_float mf_nogravity";
-  Flags2 = "mf2_passmobj mf2_telestomp";
-}
-
 State {
   ID = "BTORCHSHRT5";
   Sprite = "SMBT";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BTORCHSHRT";
 }
@@ -15939,7 +16765,8 @@ State {
 State {
   ID = "GTORCHSHRT5";
   Sprite = "SMGT";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "GTORCHSHRT";
 }
@@ -15947,7 +16774,8 @@ State {
 State {
   ID = "RTORCHSHRT5";
   Sprite = "SMRT";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RTORCHSHRT";
 }
@@ -15955,7 +16783,8 @@ State {
 State {
   ID = "BFGEXP5";
   Sprite = "BFE2";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFGEXP6";
 }
@@ -15963,7 +16792,8 @@ State {
 State {
   ID = "BFGEXP6";
   Sprite = "BFE2";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 4;
   Next state = "NULL";
 }
@@ -15993,61 +16823,6 @@ State {
   Tics = 1;
   Action = "A_WeaponReady";
   Next state = "PLASMA";
-}
-
-Thing {
-  ID = "F_BRUISER";
-  Name = "Fake Baron";
-  DoomEd number = 226;
-  Spawn state = "BOSS_STND";
-  See state = "BOSS_RUN1";
-  Pain state = "BOSS_PAIN";
-  Melee state = "BOSS_ATK1";
-  Missile state = "BOSS_ATK1";
-  Death state = "BOSS_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "BOSS_RAISE1";
-  See sound = "brssit";
-  Attack sound = "None";
-  Pain sound = "dmpain";
-  Death sound = "brsdth";
-  Active sound = "dmact";
-  Reaction time = 8;
-  Pain chance = 50;
-  Spawn health = 1000;
-  Speed = 8;
-  Radius = 24;
-  Height = 80;
-  Mass = 1000;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
-}
-
-Thing {
-  ID = "TRACER6";
-  Name = "Tracer 6 Shot";
-  DoomEd number = 227;
-  Spawn state = "TSHOT6_STND";
-  See state = "TSHOT6_RUN1";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Reaction time = 0;
-  Pain chance = 180;
-  Spawn health = 500;
-  Speed = 0;
-  Radius = 8;
-  Height = 32;
-  Mass = 400;
-  Flags = "mf_dropoff mf_nogravity mf_float";
 }
 
 State {
@@ -16122,34 +16897,11 @@ State {
   Next state = "NULL";
 }
 
-Thing {
-  ID = "YELLOWFIREBALL";
-  DoomEd number = 747;
-  Spawn state = "YFIREBALL1";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Reaction time = 8;
-  Spawn health = 1000;
-  Radius = 16;
-  Height = 60;
-  Mass = 100;
-  Flags = "mf_local";
-}
-
 State {
   ID = "YFIREBALL1";
   Sprite = "FIRE";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
   Next state = "YFIREBALL2";
 }
@@ -16157,7 +16909,8 @@ State {
 State {
   ID = "YFIREBALL2";
   Sprite = "FIRE";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 4;
   Next state = "YFIREBALL3";
 }
@@ -16165,7 +16918,8 @@ State {
 State {
   ID = "YFIREBALL3";
   Sprite = "FIRE";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
   Next state = "YFIREBALL4";
 }
@@ -16173,7 +16927,8 @@ State {
 State {
   ID = "YFIREBALL4";
   Sprite = "FIRE";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 4;
   Next state = "YFIREBALL5";
 }
@@ -16181,39 +16936,17 @@ State {
 State {
   ID = "YFIREBALL5";
   Sprite = "FIRE";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "YFIREBALL1";
-}
-
-Thing {
-  ID = "BLUEFIREBALL";
-  DoomEd number = 748;
-  Spawn state = "BFIREBALL1";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Reaction time = 8;
-  Spawn health = 1000;
-  Radius = 16;
-  Height = 60;
-  Mass = 100;
-  Flags = "mf_local";
 }
 
 State {
   ID = "BFIREBALL1";
   Sprite = "TBLU";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFIREBALL2";
 }
@@ -16221,7 +16954,8 @@ State {
 State {
   ID = "BFIREBALL2";
   Sprite = "TBLU";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFIREBALL3";
 }
@@ -16229,7 +16963,8 @@ State {
 State {
   ID = "BFIREBALL3";
   Sprite = "TBLU";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFIREBALL4";
 }
@@ -16237,39 +16972,17 @@ State {
 State {
   ID = "BFIREBALL4";
   Sprite = "TBLU";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 4;
   Next state = "BFIREBALL1";
-}
-
-Thing {
-  ID = "REDFIREBALL";
-  DoomEd number = 749;
-  Spawn state = "RFIREBALL1";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Reaction time = 8;
-  Spawn health = 1000;
-  Radius = 16;
-  Height = 60;
-  Mass = 100;
-  Flags = "mf_local";
 }
 
 State {
   ID = "RFIREBALL1";
   Sprite = "TRED";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RFIREBALL2";
 }
@@ -16277,7 +16990,8 @@ State {
 State {
   ID = "RFIREBALL2";
   Sprite = "TRED";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RFIREBALL3";
 }
@@ -16285,7 +16999,8 @@ State {
 State {
   ID = "RFIREBALL3";
   Sprite = "TRED";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RFIREBALL4";
 }
@@ -16293,39 +17008,17 @@ State {
 State {
   ID = "RFIREBALL4";
   Sprite = "TRED";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 4;
   Next state = "RFIREBALL1";
-}
-
-Thing {
-  ID = "YELLOWFIREBALL2";
-  DoomEd number = 750;
-  Spawn state = "Y2FIREBALL1";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Reaction time = 8;
-  Spawn health = 1000;
-  Radius = 16;
-  Height = 60;
-  Mass = 100;
-  Flags = "mf_local";
 }
 
 State {
   ID = "Y2FIREBALL1";
   Sprite = "TGRN";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 4;
   Next state = "Y2FIREBALL2";
 }
@@ -16333,7 +17026,8 @@ State {
 State {
   ID = "Y2FIREBALL2";
   Sprite = "TGRN";
-  Frame = 32777;
+  Frame = 9;
+  Flags = fullbright;
   Tics = 4;
   Next state = "Y2FIREBALL3";
 }
@@ -16341,7 +17035,8 @@ State {
 State {
   ID = "Y2FIREBALL3";
   Sprite = "TGRN";
-  Frame = 32778;
+  Frame = 10;
+  Flags = fullbright;
   Tics = 4;
   Next state = "Y2FIREBALL4";
 }
@@ -16349,39 +17044,17 @@ State {
 State {
   ID = "Y2FIREBALL4";
   Sprite = "TGRN";
-  Frame = 32779;
+  Frame = 11;
+  Flags = fullbright;
   Tics = 4;
   Next state = "Y2FIREBALL1";
-}
-
-Thing {
-  ID = "BLUEFIREBALL2";
-  DoomEd number = 751;
-  Spawn state = "B2FIREBALL1";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Reaction time = 8;
-  Spawn health = 1000;
-  Radius = 16;
-  Height = 60;
-  Mass = 100;
-  Flags = "mf_local";
 }
 
 State {
   ID = "B2FIREBALL1";
   Sprite = "TBLU";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 4;
   Next state = "B2FIREBALL2";
 }
@@ -16389,7 +17062,8 @@ State {
 State {
   ID = "B2FIREBALL2";
   Sprite = "TBLU";
-  Frame = 32777;
+  Frame = 9;
+  Flags = fullbright;
   Tics = 4;
   Next state = "B2FIREBALL3";
 }
@@ -16397,7 +17071,8 @@ State {
 State {
   ID = "B2FIREBALL3";
   Sprite = "TBLU";
-  Frame = 32778;
+  Frame = 10;
+  Flags = fullbright;
   Tics = 4;
   Next state = "B2FIREBALL4";
 }
@@ -16405,39 +17080,17 @@ State {
 State {
   ID = "B2FIREBALL4";
   Sprite = "TBLU";
-  Frame = 32779;
+  Frame = 11;
+  Flags = fullbright;
   Tics = 4;
   Next state = "B2FIREBALL1";
-}
-
-Thing {
-  ID = "REDFIREBALL2";
-  DoomEd number = 752;
-  Spawn state = "R2FIREBALL1";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Reaction time = 8;
-  Spawn health = 1000;
-  Radius = 16;
-  Height = 60;
-  Mass = 100;
-  Flags = "mf_local";
 }
 
 State {
   ID = "R2FIREBALL1";
   Sprite = "TRED";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 4;
   Next state = "R2FIREBALL2";
 }
@@ -16445,7 +17098,8 @@ State {
 State {
   ID = "R2FIREBALL2";
   Sprite = "TRED";
-  Frame = 32777;
+  Frame = 9;
+  Flags = fullbright;
   Tics = 4;
   Next state = "R2FIREBALL3";
 }
@@ -16453,7 +17107,8 @@ State {
 State {
   ID = "R2FIREBALL3";
   Sprite = "TRED";
-  Frame = 32778;
+  Frame = 10;
+  Flags = fullbright;
   Tics = 4;
   Next state = "R2FIREBALL4";
 }
@@ -16461,37 +17116,10 @@ State {
 State {
   ID = "R2FIREBALL4";
   Sprite = "TRED";
-  Frame = 32779;
+  Frame = 11;
+  Flags = fullbright;
   Tics = 4;
   Next state = "R2FIREBALL1";
-}
-
-Thing {
-  ID = "FSHOTGUY";
-  Name = "Fake Shotgun Guy";
-  DoomEd number = 228;
-  Spawn state = "SPOS_STND";
-  See state = "SPOS_RUN1";
-  Pain state = "SPOS_PAIN";
-  Melee state = "NULL";
-  Missile state = "SPOS_ATK1";
-  Death state = "SPOS_DIE1";
-  Xdeath state = "SPOS_XDIE1";
-  Raise state = "SPOS_RAISE1";
-  See sound = "posit2";
-  Attack sound = "None";
-  Pain sound = "popain";
-  Death sound = "podth2";
-  Active sound = "posact";
-  Reaction time = 8;
-  Pain chance = 170;
-  Spawn health = 30;
-  Speed = 8;
-  Radius = 31;
-  Height = 72;
-  Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 State {
@@ -16526,91 +17154,11 @@ State {
   Next state = "SPOS_STND";
 }
 
-Thing {
-  ID = "FDEMON";
-  Name = "Fake Demon";
-  DoomEd number = 229;
-  Spawn state = "SARG_STND";
-  See state = "SARG_RUN1";
-  Pain state = "SARG_PAIN";
-  Melee state = "SARG_ATK1";
-  Missile state = "NULL";
-  Death state = "SARG_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "SARG_RAISE1";
-  See sound = "sgtsit";
-  Attack sound = "sgtatk";
-  Pain sound = "dmpain";
-  Death sound = "sgtdth";
-  Active sound = "dmact";
-  Reaction time = 8;
-  Pain chance = 180;
-  Spawn health = 150;
-  Speed = 10;
-  Radius = 32;
-  Height = 56;
-  Mass = 400;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
-}
-
-Thing {
-  ID = "FPAIN";
-  Name = "Fake Pain Elemental";
-  DoomEd number = 230;
-  Spawn state = "PAIN_STND";
-  See state = "PAIN_RUN1";
-  Pain state = "PAIN_PAIN";
-  Melee state = "NULL";
-  Missile state = "PAIN_ATK1";
-  Death state = "PAIN_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "PAIN_RAISE1";
-  See sound = "pesit";
-  Attack sound = "None";
-  Pain sound = "pepain";
-  Death sound = "pedth";
-  Active sound = "dmact";
-  Reaction time = 8;
-  Pain chance = 128;
-  Spawn health = 400;
-  Speed = 8;
-  Radius = 31;
-  Height = 56;
-  Mass = 400;
-  Flags = "mf_solid mf_shootable mf_float mf_nogravity mf_countkill mf_spawnceiling";
-  Flags2 = "mf2_passmobj mf2_telestomp";
-}
-
-Thing {
-  ID = "DISSOUL";
-  Name = "Dissapearing Soulsphere";
-  DoomEd number = 231;
-  Spawn state = "DISSOUL1";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Reaction time = 8;
-  Spawn health = 1000;
-  Radius = 20;
-  Height = 16;
-  Mass = 100;
-  Flags = "mf_special";
-}
-
 State {
   ID = "DISSOUL1";
   Sprite = "SOUL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 5;
   Next state = "DISSOUL2";
 }
@@ -16618,7 +17166,8 @@ State {
 State {
   ID = "DISSOUL2";
   Sprite = "SOUL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 5;
   Next state = "DISSOUL3";
 }
@@ -16626,7 +17175,8 @@ State {
 State {
   ID = "DISSOUL3";
   Sprite = "SOUL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 5;
   Next state = "DISSOUL4";
 }
@@ -16634,7 +17184,8 @@ State {
 State {
   ID = "DISSOUL4";
   Sprite = "SOUL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 5;
   Next state = "DISSOUL5";
 }
@@ -16642,7 +17193,8 @@ State {
 State {
   ID = "DISSOUL5";
   Sprite = "SOUL";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 10;
   Next state = "DISSOUL6";
 }
@@ -16650,7 +17202,8 @@ State {
 State {
   ID = "DISSOUL6";
   Sprite = "SOUL";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 5;
   Next state = "DISSOUL7";
 }
@@ -16658,7 +17211,8 @@ State {
 State {
   ID = "DISSOUL7";
   Sprite = "SOUL";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 5;
   Next state = "DISSOUL8";
 }
@@ -16666,7 +17220,8 @@ State {
 State {
   ID = "DISSOUL8";
   Sprite = "SOUL";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 5;
   Next state = "DISSOUL9";
 }
@@ -16674,39 +17229,17 @@ State {
 State {
   ID = "DISSOUL9";
   Sprite = "SOUL";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 5;
   Next state = "NULL";
-}
-
-Thing {
-  ID = "DISBKEY1";
-  DoomEd number = 233;
-  Spawn state = "DBKEY1";
-  See state = "NULL";
-  Pain state = "NULL";
-  Melee state = "NULL";
-  Missile state = "NULL";
-  Death state = "NULL";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "None";
-  Death sound = "None";
-  Active sound = "None";
-  Reaction time = 8;
-  Spawn health = 1000;
-  Radius = 20;
-  Height = 16;
-  Mass = 100;
-  Flags = "mf_special mf_notdmatch";
 }
 
 State {
   ID = "DBKEY1";
   Sprite = "BKEY";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY2";
 }
@@ -16714,7 +17247,8 @@ State {
 State {
   ID = "DBKEY2";
   Sprite = "BKEY";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY3";
 }
@@ -16722,7 +17256,8 @@ State {
 State {
   ID = "DBKEY3";
   Sprite = "BKEY";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY4";
 }
@@ -16730,7 +17265,8 @@ State {
 State {
   ID = "DBKEY4";
   Sprite = "BKEY";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY5";
 }
@@ -16738,7 +17274,8 @@ State {
 State {
   ID = "DBKEY5";
   Sprite = "BKEY";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY6";
 }
@@ -16746,7 +17283,8 @@ State {
 State {
   ID = "DBKEY6";
   Sprite = "BKEY";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY7";
 }
@@ -16754,7 +17292,8 @@ State {
 State {
   ID = "DBKEY7";
   Sprite = "BKEY";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY8";
 }
@@ -16762,7 +17301,8 @@ State {
 State {
   ID = "DBKEY8";
   Sprite = "BKEY";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY9";
 }
@@ -16770,7 +17310,8 @@ State {
 State {
   ID = "DBKEY9";
   Sprite = "BKEY";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY10";
 }
@@ -16778,7 +17319,8 @@ State {
 State {
   ID = "DBKEY10";
   Sprite = "BKEY";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 10;
   Next state = "DBKEY11";
 }
@@ -16786,7 +17328,8 @@ State {
 State {
   ID = "DBKEY11";
   Sprite = "BKEY";
-  Frame = 32778;
+  Frame = 10;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY12";
 }
@@ -16794,7 +17337,8 @@ State {
 State {
   ID = "DBKEY12";
   Sprite = "BKEY";
-  Frame = 32777;
+  Frame = 9;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY13";
 }
@@ -16802,7 +17346,8 @@ State {
 State {
   ID = "DBKEY13";
   Sprite = "BKEY";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY14";
 }
@@ -16810,7 +17355,8 @@ State {
 State {
   ID = "DBKEY14";
   Sprite = "BKEY";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY15";
 }
@@ -16818,7 +17364,8 @@ State {
 State {
   ID = "DBKEY15";
   Sprite = "BKEY";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY16";
 }
@@ -16826,7 +17373,8 @@ State {
 State {
   ID = "DBKEY16";
   Sprite = "BKEY";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY17";
 }
@@ -16834,7 +17382,8 @@ State {
 State {
   ID = "DBKEY17";
   Sprite = "BKEY";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 3;
   Next state = "DBKEY18";
 }
@@ -16842,15 +17391,17 @@ State {
 State {
   ID = "DBKEY18";
   Sprite = "BKEY";
-  Frame = 32771;
-  Tics = 3;
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 3;  
   Next state = "DBKEY19";
 }
 
 State {
   ID = "DBKEY19";
   Sprite = "BKEY";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 3;
   Next state = "NULL";
 }
@@ -16895,38 +17446,11 @@ State {
   Next state = "NTRO_RUN1";
 }
 
-Thing {
-  ID = "FBABY";
-  Name = "Fake Arachnotron";
-  DoomEd number = 234;
-  Spawn state = "BSPI_STND";
-  See state = "BSPI_SIGHT";
-  Pain state = "BSPI_PAIN";
-  Melee state = "NULL";
-  Missile state = "BSPI_ATK1";
-  Death state = "BSPI_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "BSPI_RAISE1";
-  See sound = "bspsit";
-  Attack sound = "None";
-  Pain sound = "dmpain";
-  Death sound = "bspdth";
-  Active sound = "bspact";
-  Reaction time = 8;
-  Pain chance = 128;
-  Spawn health = 500;
-  Speed = 12;
-  Radius = 64;
-  Height = 64;
-  Mass = 600;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
-}
-
 State {
   ID = "ARACH_PLEX6";
   Sprite = "APBX";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 5;
   Next state = "NULL";
 }
@@ -16934,7 +17458,8 @@ State {
 State {
   ID = "ROCKET2";
   Sprite = "MISL";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 1;
   Action = "A_Rocketpuff";
   Next state = "ROCKET";
@@ -16943,7 +17468,8 @@ State {
 State {
   ID = "LAZRDTH5";
   Sprite = "LPUF";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LAZRDTH6";
 }
@@ -16951,7 +17477,8 @@ State {
 State {
   ID = "LAZRDTH6";
   Sprite = "LPUF";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LAZRDTH7";
 }
@@ -16959,7 +17486,8 @@ State {
 State {
   ID = "LAZRDTH7";
   Sprite = "LPUF";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LAZRDTH8";
 }
@@ -16967,7 +17495,8 @@ State {
 State {
   ID = "LAZRDTH8";
   Sprite = "LPUF";
-  Frame = 32776;
+  Frame = 8;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LAZRDTH9";
 }
@@ -16975,7 +17504,8 @@ State {
 State {
   ID = "LAZRDTH9";
   Sprite = "LPUF";
-  Frame = 32777;
+  Frame = 9;
+  Flags = fullbright;
   Tics = 3;
   Next state = "LAZRDTH10";
 }
@@ -16983,43 +17513,17 @@ State {
 State {
   ID = "LAZRDTH10";
   Sprite = "LPUF";
-  Frame = 32778;
+  Frame = 10;
+  Flags = fullbright;
   Tics = 3;
   Next state = "NULL";
-}
-
-Thing {
-  ID = "FFATSO";
-  Name = "Fake Mancubus";
-  DoomEd number = 235;
-  Spawn state = "FATT_STND";
-  See state = "FATT_RUN1";
-  Pain state = "FATT_PAIN";
-  Melee state = "NULL";
-  Missile state = "FATT_ATK1";
-  Death state = "FATT_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "FATT_RAISE1";
-  See sound = "mansit";
-  Attack sound = "None";
-  Pain sound = "mnpain";
-  Death sound = "mandth";
-  Active sound = "posact";
-  Reaction time = 8;
-  Pain chance = 80;
-  Spawn health = 600;
-  Speed = 8;
-  Radius = 64;
-  Height = 64;
-  Mass = 1000;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 State {
   ID = "GRENADE";
   Sprite = "GREN";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_Rocketpuff";
   Next state = "GRENADE2";
@@ -17028,7 +17532,8 @@ State {
 State {
   ID = "GRENADE2";
   Sprite = "GREN";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_Rocketpuff";
   Next state = "GRENADE3";
@@ -17037,7 +17542,8 @@ State {
 State {
   ID = "GRENADE3";
   Sprite = "GREN";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_Rocketpuff";
   Next state = "GRENADE4";
@@ -17046,7 +17552,8 @@ State {
 State {
   ID = "GRENADE4";
   Sprite = "GREN";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_Rocketpuff";
   Next state = "GRENADE2";
@@ -17055,7 +17562,8 @@ State {
 State {
   ID = "BON3";
   Sprite = "BON3";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON3A";
 }
@@ -17063,7 +17571,8 @@ State {
 State {
   ID = "BON3A";
   Sprite = "BON3";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON3B";
 }
@@ -17071,7 +17580,8 @@ State {
 State {
   ID = "BON3B";
   Sprite = "BON3";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON3C";
 }
@@ -17079,7 +17589,8 @@ State {
 State {
   ID = "BON3C";
   Sprite = "BON3";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON3D";
 }
@@ -17087,7 +17598,8 @@ State {
 State {
   ID = "BON3D";
   Sprite = "BON3";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON3E";
 }
@@ -17095,7 +17607,8 @@ State {
 State {
   ID = "BON3E";
   Sprite = "BON3";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 6;
   Next state = "BON3";
 }
@@ -17103,7 +17616,8 @@ State {
 State {
   ID = "HFOG";
   Sprite = "HFOG";
-  Frame = 32775;
+  Frame = 7;
+  Flags = fullbright;
   Tics = 2;
   Action = "A_Pain";
   Next state = "HFOG01";
@@ -17112,7 +17626,8 @@ State {
 State {
   ID = "HFOG01";
   Sprite = "HFOG";
-  Frame = 32774;
+  Frame = 6;
+  Flags = fullbright;
   Tics = 2;
   Next state = "HFOG02";
 }
@@ -17120,7 +17635,8 @@ State {
 State {
   ID = "HFOG02";
   Sprite = "HFOG";
-  Frame = 32773;
+  Frame = 5;
+  Flags = fullbright;
   Tics = 2;
   Next state = "HFOG03";
 }
@@ -17128,7 +17644,8 @@ State {
 State {
   ID = "HFOG03";
   Sprite = "HFOG";
-  Frame = 32772;
+  Frame = 4;
+  Flags = fullbright;
   Tics = 2;
   Next state = "HFOG04";
 }
@@ -17136,7 +17653,8 @@ State {
 State {
   ID = "HFOG04";
   Sprite = "HFOG";
-  Frame = 32771;
+  Frame = 3;
+  Flags = fullbright;
   Tics = 2;
   Next state = "HFOG05";
 }
@@ -17144,7 +17662,8 @@ State {
 State {
   ID = "HFOG05";
   Sprite = "HFOG";
-  Frame = 32770;
+  Frame = 2;
+  Flags = fullbright;
   Tics = 2;
   Next state = "HFOG07";
 }
@@ -17152,7 +17671,8 @@ State {
 State {
   ID = "HFOG07";
   Sprite = "HFOG";
-  Frame = 32769;
+  Frame = 1;
+  Flags = fullbright;
   Tics = 2;
   Next state = "HFOG08";
 }
@@ -17160,7 +17680,8 @@ State {
 State {
   ID = "HFOG08";
   Sprite = "HFOG";
-  Frame = 32768;
+  Frame = 0;
+  Flags = fullbright;
   Tics = 2;
   Next state = "NULL";
 }
