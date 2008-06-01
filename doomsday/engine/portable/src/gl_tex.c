@@ -160,14 +160,14 @@ void GL_PalIdxToRGB(int idx, float* rgb)
 {
     if(rgb)
     {
-        int                 c;
-
         if(!(idx < 0))
         {
+            int                 c;
+            byte*               pal = GL_GetPalette();
+
             idx = MIN_OF(idx, 255);
             for(c = 0; c < 3; ++c)
-                rgb[c] = gammaTable[GL_GetPalette()[idx * 3 + c]] *
-                    reciprocal255;
+                rgb[c] = gammaTable[pal[idx * 3 + c]] * reciprocal255;
             return;
         }
 
