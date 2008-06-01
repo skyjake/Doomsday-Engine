@@ -3141,6 +3141,7 @@ static void setupGLStateForMap(void)
             CLAMP(iconAlpha, 0.0f, 0.5f);
 
             spacing = win->height / num;
+            y = 0;
 
             for(i = 0; i < NUMARTIFACTS; ++i)
             {
@@ -3151,7 +3152,6 @@ static void setupGLStateForMap(void)
 
                     scale = win->height / (sprInfo.height * num);
                     x = win->width - sprInfo.width * scale;
-                    y = 0;
                     w = sprInfo.width;
                     h = sprInfo.height;
 
@@ -3160,8 +3160,8 @@ static void setupGLStateForMap(void)
 
                     // Let's calculate texture coordinates.
                     // To remove a possible edge artifact, move the corner a bit up/left.
-                    s = sprInfo.offset - 0.4f / M_CeilPow2(w);
-                    t = sprInfo.topOffset - 0.4f / M_CeilPow2(h);
+                    s = (w - 0.4f) / M_CeilPow2(w);
+                    t = (h - 0.4f) / M_CeilPow2(h);
 
                     DGL_Color4f(1, 1, 1, iconAlpha);
                     DGL_Begin(DGL_QUADS);
