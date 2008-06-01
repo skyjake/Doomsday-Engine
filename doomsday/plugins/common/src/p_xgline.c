@@ -564,8 +564,8 @@ int XL_AutoGenType(int id, linetype_t *outptr)
  */
 linetype_t *XL_GetType(int id)
 {
-    linetype_t *ptr;
-    char        buff[6];
+    linetype_t*         ptr;
+    char                buff[6];
 
     // Try finding it from the DDXGDATA lump.
     ptr = XG_GetLumpLine(id);
@@ -576,7 +576,8 @@ linetype_t *XL_GetType(int id)
     }
 
     // Does Doomsday have a definition for this?
-    sprintf(buff, "%i", id);
+    snprintf(buff, 5, "%i", id);
+    buff[5] = '\0';
     if(Def_Get(DD_DEF_LINE_TYPE, buff, &typebuffer))
         return &typebuffer;
 
@@ -610,7 +611,7 @@ float XG_RandomPercentFloat(float value, int percent)
  */
 void XL_SetLineType(linedef_t *line, int id)
 {
-    xline_t *xline = P_ToXLine(line);
+    xline_t*            xline = P_ToXLine(line);
 
     if(XL_GetType(id))
     {
