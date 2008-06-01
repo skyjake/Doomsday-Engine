@@ -535,12 +535,14 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
  * message and play a sound before returning @c false.
  * Else, NOT a locked door and can be opened, return @c true.
  */
-static boolean tryLockedManualDoor(linedef_t *line, player_t *p)
+static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
 {
-    xline_t *xline = P_ToXLine(line);
+    xline_t*            xline = P_ToXLine(line);
+    player_t*           p;
 
-    if(!p || !xline)
+    if(!mo || !xline)
         return false;
+    p = mo->player;
 
 #if !__JHEXEN__
     switch(xline->special)
@@ -550,6 +552,9 @@ static boolean tryLockedManualDoor(linedef_t *line, player_t *p)
 # if __JDOOM64__
     case 525: // jd64
 # endif
+        if(!p)
+            return false;
+
         // Blue Lock
 # if __JHERETIC__
         if(!p->keys[KT_BLUE])
@@ -573,6 +578,9 @@ static boolean tryLockedManualDoor(linedef_t *line, player_t *p)
 # if __JDOOM64__
     case 526: // jd64
 # endif
+        if(!p)
+            return false;
+
         // Yellow Lock
 # if __JHERETIC__
         if(!p->keys[KT_YELLOW])
@@ -596,6 +604,9 @@ static boolean tryLockedManualDoor(linedef_t *line, player_t *p)
 # if __JDOOM64__
     case 527: // jd64
 # endif
+        if(!p)
+            return false;
+
 # if __JHERETIC__
         // Green lock
         if(!p->keys[KT_GREEN])
@@ -639,21 +650,22 @@ int EV_DoLockedDoor(linedef_t *line, doortype_e type, mobj_t *thing)
 /**
  * Open a door manually, no tag value.
  */
-boolean EV_VerticalDoor(linedef_t *line, mobj_t *thing)
+boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
 {
-    xline_t *xline = P_ToXLine(line);
-    xsector_t *xsec;
-    sector_t *sec;
-    door_t *door;
+    xline_t*            xline;
+    xsector_t*          xsec;
+    sector_t*           sec;
+    door_t*             door;
 
     sec = P_GetPtrp(line, DMU_BACK_SECTOR);
     if(!sec)
         return false;
 
-    xsec = P_ToXSector(sec);
+    if(!tryLockedManualDoor(line, mo))
+        return false; // Mobj cannot open this door.
 
-    if(!tryLockedManualDoor(line, thing->player))
-        return false;
+    xsec = P_ToXSector(sec);
+    xline = P_ToXLine(line);
 
     // If the sector has an active thinker, use it.
     if(xsec->specialData)
@@ -681,7 +693,7 @@ boolean EV_VerticalDoor(linedef_t *line, mobj_t *thing)
                 door->state = DS_UP; // Go back up.
             else
             {
-                if(!thing->player)
+                if(!mo->player)
                     return false; // Bad guys never close doors.
 
                 door->state = DS_DOWN; // Start going down immediately.
