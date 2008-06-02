@@ -251,8 +251,7 @@ void B_DestroyDeviceBinding(dbinding_t* cb)
     }
 }
 
-void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relativeOffset,
-                                 bclass_t* controlClass)
+void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relativeOffset, bclass_t* controlClass)
 {
     dbinding_t* cb;
     int         i;
