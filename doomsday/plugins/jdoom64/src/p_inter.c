@@ -872,7 +872,6 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     // during the death frame of a thing.
     switch(target->type)
     {
-    case MT_WOLFSS:
     case MT_POSSESSED:
     //case MT_TROOP: // jd64
         item = MT_CLIP;

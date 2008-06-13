@@ -96,7 +96,6 @@ Sprite { ID = "SKEL"; }
 Sprite { ID = "CPOS"; }
 Sprite { ID = "BAL7"; }
 Sprite { ID = "BOS2"; }
-Sprite { ID = "SPID"; }
 Sprite { ID = "APBX"; }
 Sprite { ID = "SSWV"; }
 Sprite { ID = "KEEN"; }

@@ -189,8 +189,7 @@ static boolean checkMissileRange(mobj_t *actor)
     if(!actor->info->meleeState)
         dist -= 128; // No melee attack, so fire more.
 
-    if(actor->type == MT_CYBORG || actor->type == MT_SPIDER ||
-       actor->type == MT_SKULL)
+    if(actor->type == MT_CYBORG || actor->type == MT_SKULL)
     {
         dist /= 2;
     }
@@ -2053,8 +2052,7 @@ void C_DECL A_Scream(mobj_t *actor)
     }
 
     // Check for bosses.
-    if(actor->type == MT_SPIDER || actor->type == MT_CYBORG ||
-       actor->type == MT_BITCH) // jd64 added "|| actor->type == MT_BITCH"
+    if(actor->type == MT_CYBORG || actor->type == MT_BITCH)
     {
         // Full volume.
         S_StartSound(sound | DDSF_NO_ATTENUATION, NULL);
