@@ -79,7 +79,6 @@ void C_DECL A_FireShotgun2();
 void C_DECL A_GunFlash();
 void C_DECL A_HeadAttack();
 void C_DECL A_Hoof();
-//void C_DECL A_KeenDie();
 void C_DECL A_Light0();
 void C_DECL A_Light1();
 void C_DECL A_Light2();

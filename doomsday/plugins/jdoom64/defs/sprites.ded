@@ -98,7 +98,6 @@ Sprite { ID = "BAL7"; }
 Sprite { ID = "BOS2"; }
 Sprite { ID = "APBX"; }
 Sprite { ID = "SSWV"; }
-Sprite { ID = "KEEN"; }
 Sprite { ID = "BBRN"; }
 Sprite { ID = "BOSF"; }
 Sprite { ID = "BEXP"; }

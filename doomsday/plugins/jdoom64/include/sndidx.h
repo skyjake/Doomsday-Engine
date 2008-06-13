@@ -135,12 +135,10 @@ typedef enum {
     SFX_MANDTH,                    // 100
     SFX_SSSIT,                     // 101
     SFX_SSDTH,                     // 102
-    SFX_KEENPN,                    // 103
-    SFX_KEENDT,                    // 104
-    SFX_SKEACT,                    // 105
-    SFX_SKESIT,                    // 106
-    SFX_SKEATK,                    // 107
-    SFX_RADIO,                     // 108
+    SFX_SKEACT,
+    SFX_SKESIT,
+    SFX_SKEATK,
+    SFX_RADIO,
     //SFX_WSPLASH, // jd64
     //SFX_NSPLASH, // jd64
     //SFX_BLURB, // jd64

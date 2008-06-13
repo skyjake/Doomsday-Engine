@@ -1079,26 +1079,6 @@ Sound {
 }
 
 Sound {
-  ID = "keenpn";
-  Flags = "sf_shift2";
-  Lump = "DSKEENPN";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 70;
-  Max channels = -1;
-}
-
-Sound {
-  ID = "keendt";
-  Flags = "sf_shift2";
-  Lump = "DSKEENDT";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 70;
-  Max channels = -1;
-}
-
-Sound {
   ID = "skeact";
   Flags = "sf_shift2";
   Lump = "DSSKEACT";

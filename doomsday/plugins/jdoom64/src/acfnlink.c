@@ -88,7 +88,6 @@ actionlink_t actionlinks[] = {
     {"A_GunFlash",          A_GunFlash},
     {"A_HeadAttack",        A_HeadAttack},
     {"A_Hoof",              A_Hoof},
-    //{"A_KeenDie", A_KeenDie},
     {"A_PossSpecial",       A_PossSpecial}, //jd64
     {"A_SposSpecial",       A_SposSpecial}, //jd64
     {"A_TrooSpecial",       A_TrooSpecial}, //jd64
