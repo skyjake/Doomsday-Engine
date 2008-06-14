@@ -2511,11 +2511,10 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
         }
 #else
 # if __JDOOM64__
-        //// \fixme kaiser - the def file is too fucked up..
-        //// DJS - FIXME!
-        P_MobjChangeState(thing, S_HEADCANDLES + 3);
         S_StartSound(SFX_SLOP, thing);
-# elif __JDOOM__
+# endif
+
+# if __JDOOM__ || __JDOOM64__
         P_MobjChangeState(thing, S_GIBS);
 # endif
         thing->flags &= ~MF_SOLID;
