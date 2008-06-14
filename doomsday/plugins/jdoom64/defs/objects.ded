@@ -84,8 +84,8 @@ Thing {
   Radius = 18;
   Height = 56;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_dropoff mf_pickup mf_notdmatch";
-  Flags2 = "mf2_slide mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | dropoff | pickup | notdmatch;
+  Flags2 = slide | passmobj | telestomp;
 }
 
 Thing {
@@ -112,8 +112,8 @@ Thing {
   Radius = 31;
   Height = 72;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -140,8 +140,8 @@ Thing {
   Radius = 31;
   Height = 72;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -166,8 +166,8 @@ Thing {
   Radius = 25;
   Height = 56;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -193,8 +193,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 10;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -218,8 +218,8 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | nogravity;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -246,8 +246,8 @@ Thing {
   Radius = 64;
   Height = 64;
   Mass = 1000;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -273,8 +273,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 8;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -299,8 +299,8 @@ Thing {
   Radius = 25;
   Height = 56;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -327,8 +327,8 @@ Thing {
   Radius = 32;
   Height = 72;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -355,8 +355,8 @@ Thing {
   Radius = 32;
   Height = 56;
   Mass = 400;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -383,8 +383,8 @@ Thing {
   Radius = 32;
   Height = 56;
   Mass = 400;
-  Flags = "mf_solid mf_shootable mf_shadow mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | shadow | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -411,8 +411,8 @@ Thing {
   Radius = 39;
   Height = 88;
   Mass = 400;
-  Flags = "mf_solid mf_shootable mf_float mf_nogravity mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | float | nogravity | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -439,8 +439,8 @@ Thing {
   Radius = 24;
   Height = 80;
   Mass = 1000;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -466,8 +466,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 8;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -494,8 +494,8 @@ Thing {
   Radius = 32;
   Height = 80;
   Mass = 1000;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -523,8 +523,8 @@ Thing {
   Height = 56;
   Mass = 50;
   Damage = 3;
-  Flags = "mf_solid mf_shootable mf_float mf_nogravity";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | float | nogravity;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -551,8 +551,8 @@ Thing {
   Radius = 64;
   Height = 64;
   Mass = 600;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -579,8 +579,8 @@ Thing {
   Radius = 40;
   Height = 160;
   Mass = 1000;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp mf2_boss";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp | boss;
 }
 
 Thing {
@@ -607,8 +607,8 @@ Thing {
   Radius = 31;
   Height = 56;
   Mass = 400;
-  Flags = "mf_solid mf_shootable mf_float mf_nogravity mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | float | nogravity | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -633,7 +633,7 @@ Thing {
   Radius = 25;
   Height = 56;
   Mass = 100;
-  Flags = "mf_solid";
+  Flags = solid;
 }
 
 Thing {
@@ -657,8 +657,8 @@ Thing {
   Radius = 10;
   Height = 42;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_noblood";
-  Flags2 = "mf2_alwayslit mf2_telestomp";
+  Flags = solid | shootable | noblood;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -684,8 +684,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 3;
-  Flags = "mf_brightexplode mf_dropoff mf_missile mf_noblockmap mf_nogravity mf_brightshadow";
-  Flags2 = "mf2_noteleport";
+  Flags = brightexplode | dropoff | missile | noblockmap | nogravity | brightshadow;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -711,8 +711,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 5;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -738,8 +738,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 20;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -765,8 +765,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 20;
-  Flags = "mf_missile mf_noblockmap mf_dropoff mf_nogravity";
-  Flags2 = "mf2_noteleport";
+  Flags = missile | noblockmap | dropoff | nogravity;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -792,8 +792,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 7;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -819,8 +819,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity mf_brightexplode mf_brightshadow";
-  Flags2 = "mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity | brightexplode | brightshadow;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -846,8 +846,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 5;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -871,8 +871,8 @@ Thing {
   Radius = 8;
   Height = 8;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_viewalign";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | nogravity | viewalign;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -896,8 +896,8 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_viewalign";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | viewalign;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -921,8 +921,8 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | nogravity | brightshadow;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -946,8 +946,8 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | nogravity;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -971,8 +971,8 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
-  Flags2 = "mf2_cannotpush";
+  Flags = noblockmap | nosector | local;
+  Flags2 = cannotpush;
 }
 
 Thing {
@@ -996,8 +996,8 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_brightshadow";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | nogravity | brightshadow;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -1021,7 +1021,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1045,7 +1045,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1069,7 +1069,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_countitem";
+  Flags = special | countitem;
 }
 
 Thing {
@@ -1093,7 +1093,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_countitem";
+  Flags = special | countitem;
 }
 
 Thing {
@@ -1117,7 +1117,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_notdmatch";
+  Flags = special | notdmatch;
 }
 
 Thing {
@@ -1141,7 +1141,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_notdmatch";
+  Flags = special | notdmatch;
 }
 
 Thing {
@@ -1165,7 +1165,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_notdmatch";
+  Flags = special | notdmatch;
 }
 
 Thing {
@@ -1189,7 +1189,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_notdmatch";
+  Flags = special | notdmatch;
 }
 
 Thing {
@@ -1213,7 +1213,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_notdmatch";
+  Flags = special | notdmatch;
 }
 
 Thing {
@@ -1237,7 +1237,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_notdmatch";
+  Flags = special | notdmatch;
 }
 
 Thing {
@@ -1261,7 +1261,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1285,7 +1285,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1309,7 +1309,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_countitem";
+  Flags = special | countitem;
 }
 
 Thing {
@@ -1333,7 +1333,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_countitem";
+  Flags = special | countitem;
 }
 
 Thing {
@@ -1357,7 +1357,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_countitem";
+  Flags = special | countitem;
 }
 
 Thing {
@@ -1381,7 +1381,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_countitem";
+  Flags = special | countitem;
 }
 
 Thing {
@@ -1405,7 +1405,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1429,7 +1429,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_countitem";
+  Flags = special | countitem;
 }
 
 Thing {
@@ -1453,7 +1453,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_countitem";
+  Flags = special | countitem;
 }
 
 Thing {
@@ -1477,7 +1477,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_countitem";
+  Flags = special | countitem;
 }
 
 Thing {
@@ -1501,7 +1501,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1525,7 +1525,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1549,7 +1549,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1573,7 +1573,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1597,7 +1597,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1621,7 +1621,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1645,7 +1645,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1669,7 +1669,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1693,7 +1693,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1718,7 +1718,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1742,7 +1742,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1766,7 +1766,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1790,7 +1790,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1814,7 +1814,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1838,7 +1838,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1862,7 +1862,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -1886,8 +1886,8 @@ Thing {
   Radius = 16;
   Height = 80;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -1911,8 +1911,8 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -1936,7 +1936,7 @@ Thing {
   Radius = 16;
   Height = 48;
   Mass = 100;
-  Flags = "mf_nogravity mf_spawnceiling mf_local";
+  Flags = nogravity | spawnceiling | local;
 }
 
 Thing {
@@ -1960,8 +1960,8 @@ Thing {
   Radius = 16;
   Height = 53;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -1985,8 +1985,8 @@ Thing {
   Radius = 16;
   Height = 40;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2010,8 +2010,8 @@ Thing {
   Radius = 16;
   Height = 53;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2035,8 +2035,8 @@ Thing {
   Radius = 16;
   Height = 40;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2060,8 +2060,8 @@ Thing {
   Radius = 16;
   Height = 40;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2085,8 +2085,8 @@ Thing {
   Radius = 16;
   Height = 70;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2110,7 +2110,7 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -2134,7 +2134,7 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -2158,7 +2158,7 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -2182,7 +2182,7 @@ Thing {
   Radius = 16;
   Height = 40;
   Mass = 100;
-  Flags = "mf_nogravity mf_spawnceiling";
+  Flags = nogravity | spawnceiling;
 }
 
 Thing {
@@ -2206,7 +2206,7 @@ Thing {
   Radius = 16;
   Height = 40;
   Mass = 100;
-  Flags = "mf_nogravity mf_spawnceiling";
+  Flags = nogravity | spawnceiling;
 }
 
 Thing {
@@ -2230,7 +2230,7 @@ Thing {
   Radius = 16;
   Height = 40;
   Mass = 100;
-  Flags = "mf_nogravity mf_spawnceiling";
+  Flags = nogravity | spawnceiling;
 }
 
 Thing {
@@ -2254,8 +2254,8 @@ Thing {
   Radius = 16;
   Height = 40;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2279,7 +2279,7 @@ Thing {
   Radius = 16;
   Height = 128;
   Mass = 100;
-  Flags = "mf_nogravity mf_local mf_spawnceiling";
+  Flags = nogravity | local | spawnceiling;
 }
 
 Thing {
@@ -2303,7 +2303,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -2327,8 +2327,8 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2352,8 +2352,8 @@ Thing {
   Radius = 16;
   Height = 68;
   Mass = 100;
-  Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | spawnceiling | nogravity | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2377,7 +2377,7 @@ Thing {
   Radius = 16;
   Height = 84;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2401,7 +2401,7 @@ Thing {
   Radius = 16;
   Height = 84;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2425,8 +2425,8 @@ Thing {
   Radius = 16;
   Height = 68;
   Mass = 100;
-  Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | spawnceiling | nogravity | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2450,8 +2450,8 @@ Thing {
   Radius = 16;
   Height = 52;
   Mass = 100;
-  Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | spawnceiling | nogravity | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2475,7 +2475,7 @@ Thing {
   Radius = 20;
   Height = 84;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2499,7 +2499,7 @@ Thing {
   Radius = 20;
   Height = 68;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2523,7 +2523,7 @@ Thing {
   Radius = 20;
   Height = 52;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2547,7 +2547,7 @@ Thing {
   Radius = 20;
   Height = 52;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2571,7 +2571,7 @@ Thing {
   Radius = 20;
   Height = 68;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2641,7 +2641,7 @@ Thing {
   Radius = 16;
   Height = 67;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -2665,7 +2665,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags2 = "mf2_cannotpush";
+  Flags2 = cannotpush;
 }
 
 Thing {
@@ -2689,8 +2689,8 @@ Thing {
   Radius = 16;
   Height = 56;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2714,7 +2714,7 @@ Thing {
   Radius = 16;
   Height = 43;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -2738,8 +2738,8 @@ Thing {
   Radius = 16;
   Height = 66;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2763,7 +2763,7 @@ Thing {
   Radius = 16;
   Height = 66;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -2787,8 +2787,8 @@ Thing {
   Radius = 32;
   Height = 124;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2812,8 +2812,8 @@ Thing {
   Radius = 16;
   Height = 88;
   Mass = 100;
-  Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | spawnceiling | nogravity | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2837,7 +2837,7 @@ Thing {
   Radius = 16;
   Height = 88;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2861,8 +2861,8 @@ Thing {
   Radius = 16;
   Height = 64;
   Mass = 100;
-  Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
-  Flags2 = "mf2_telestomp";
+  Flags = solid | spawnceiling | nogravity | local;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -2886,7 +2886,7 @@ Thing {
   Radius = 16;
   Height = 64;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2910,7 +2910,7 @@ Thing {
   Radius = 16;
   Height = 64;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2934,7 +2934,7 @@ Thing {
   Radius = 16;
   Height = 64;
   Mass = 100;
-  Flags = "mf_spawnceiling mf_nogravity mf_local";
+  Flags = spawnceiling | nogravity | local;
 }
 
 Thing {
@@ -2958,7 +2958,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
+  Flags = noblockmap;
 }
 
 Thing {
@@ -2982,7 +2982,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
+  Flags = noblockmap;
 }
 
 Thing {
@@ -3006,8 +3006,8 @@ Thing {
   Radius = 20;
   Height = 64;
   Mass = 100;
-  Flags = "mf_solid mf_local";
-  Flags2 = "mf2_noteleport";
+  Flags = solid | local;
+  Flags2 = noteleport;
 }
 
 Thing {
@@ -3033,8 +3033,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 8;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -3060,8 +3060,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 3;
-  Flags = "mf_brightexplode mf_dropoff mf_missile mf_noblockmap mf_nogravity mf_brightshadow";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = brightexplode | dropoff | missile | noblockmap | nogravity | brightshadow;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -3085,8 +3085,8 @@ Thing {
   Radius = 8;
   Height = 8;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | nogravity;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -3110,7 +3110,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -3136,8 +3136,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 10;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -3163,8 +3163,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 0;
-  Flags = "mf_noblockmap mf_nogravity";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | nogravity;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -3188,9 +3188,8 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
-
 
 Thing {
   ID = "LPOWERUP2";
@@ -3213,7 +3212,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -3237,7 +3236,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -3263,8 +3262,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 5;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -3290,8 +3289,8 @@ Thing {
   Height = 110;
   Mass = 1000;
   Pain chance = 20;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -3317,8 +3316,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 10;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_passmobj mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = passmobj | cannotpush | noteleport;
 }
 
 Thing {
@@ -3342,8 +3341,8 @@ Thing {
   Radius = 8;
   Height = 8;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
-  Flags2 = "mf2_cannotpush mf2_noteleport";
+  Flags = noblockmap | nogravity;
+  Flags2 = cannotpush | noteleport;
 }
 
 Thing {
@@ -3369,8 +3368,8 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 1;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
-  Flags2 = "mf2_passmobj mf2_cannotpush";
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = passmobj | cannotpush;
 }
 
 Thing {
@@ -3395,8 +3394,8 @@ Thing {
   Radius = 25;
   Height = 56;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_slide mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = slide | passmobj | telestomp;
 }
 
 Thing {
@@ -3420,7 +3419,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3444,7 +3443,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3468,7 +3467,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3492,7 +3491,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3516,7 +3515,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3540,7 +3539,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3564,7 +3563,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3588,7 +3587,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3612,7 +3611,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3636,7 +3635,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3660,7 +3659,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3684,7 +3683,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3708,7 +3707,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3732,7 +3731,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3756,7 +3755,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3780,7 +3779,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3804,7 +3803,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3828,7 +3827,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3852,7 +3851,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3876,7 +3875,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3900,7 +3899,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3924,7 +3923,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3948,7 +3947,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3972,7 +3971,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -3996,7 +3995,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4020,7 +4019,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4044,7 +4043,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4068,7 +4067,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4092,7 +4091,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4116,7 +4115,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4140,7 +4139,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4164,7 +4163,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4188,7 +4187,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4212,7 +4211,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4236,7 +4235,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4260,7 +4259,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4284,7 +4283,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4308,7 +4307,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4332,7 +4331,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4356,7 +4355,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4380,7 +4379,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4404,7 +4403,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4428,7 +4427,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4452,7 +4451,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4476,7 +4475,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4500,7 +4499,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4524,7 +4523,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4548,7 +4547,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4572,7 +4571,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4596,7 +4595,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4620,7 +4619,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4644,7 +4643,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4668,7 +4667,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4692,7 +4691,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4716,7 +4715,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4740,7 +4739,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = noblockmap | nosector | local;
 }
 
 Thing {
@@ -4767,7 +4766,7 @@ Thing {
   Radius = 32;
   Height = 72;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill mf_brightshadow";
+  Flags = solid | shootable | countkill | brightshadow;
 }
 
 Thing {
@@ -4793,7 +4792,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 20;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_brightexplode mf_float mf_noclip";
+  Flags = noblockmap | dropoff | nogravity | brightexplode | float | noclip;
 }
 
 Thing {
@@ -4815,7 +4814,7 @@ Thing {
   Radius = 16;
   Height = 16;
   Mass = 100;
-  Flags = "mf_local mf_noblockmap mf_nogravity";
+  Flags = local | noblockmap | nogravity;
 }
 
 Thing {
@@ -4837,7 +4836,7 @@ Thing {
   Radius = 1;
   Height = 1;
   Mass = 100;
-  Flags = "mf_local mf_nosector mf_noblockmap mf_nogravity";
+  Flags = local | nosector | noblockmap | nogravity;
 }
 
 Thing {
@@ -4864,8 +4863,8 @@ Thing {
   Radius = 32;
   Height = 64;
   Mass = 1000;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -4892,8 +4891,8 @@ Thing {
   Radius = 32;
   Height = 72;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -4920,8 +4919,8 @@ Thing {
   Radius = 32;
   Height = 56;
   Mass = 400;
-  Flags = "mf_solid mf_shootable mf_shadow mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | shadow | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -4949,8 +4948,8 @@ Thing {
   Height = 56;
   Mass = 50;
   Damage = 3;
-  Flags = "mf_solid mf_shootable mf_float mf_nogravity";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | float | nogravity;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -4977,8 +4976,8 @@ Thing {
   Radius = 24;
   Height = 80;
   Mass = 1000;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -5005,7 +5004,7 @@ Thing {
   Radius = 8;
   Height = 32;
   Mass = 400;
-  Flags = "mf_dropoff mf_nogravity mf_float";
+  Flags = dropoff | nogravity | float;
 }
 
 Thing {
@@ -5029,7 +5028,7 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -5053,7 +5052,7 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -5077,7 +5076,7 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -5101,7 +5100,7 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -5125,7 +5124,7 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -5149,7 +5148,7 @@ Thing {
   Radius = 16;
   Height = 60;
   Mass = 100;
-  Flags = "mf_local";
+  Flags = local;
 }
 
 Thing {
@@ -5176,8 +5175,8 @@ Thing {
   Radius = 31;
   Height = 72;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -5204,8 +5203,8 @@ Thing {
   Radius = 32;
   Height = 56;
   Mass = 400;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -5232,8 +5231,8 @@ Thing {
   Radius = 31;
   Height = 56;
   Mass = 400;
-  Flags = "mf_solid mf_shootable mf_float mf_nogravity mf_countkill mf_spawnceiling";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | float | nogravity | countkill | spawnceiling;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -5258,7 +5257,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special";
+  Flags = special;
 }
 
 Thing {
@@ -5282,7 +5281,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_special mf_notdmatch";
+  Flags = special | notdmatch;
 }
 
 Thing {
@@ -5309,8 +5308,8 @@ Thing {
   Radius = 64;
   Height = 64;
   Mass = 600;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 Thing {
@@ -5337,8 +5336,8 @@ Thing {
   Radius = 64;
   Height = 64;
   Mass = 1000;
-  Flags = "mf_solid mf_shootable mf_countkill";
-  Flags2 = "mf2_passmobj mf2_telestomp";
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
 }
 
 State {
@@ -11060,7 +11059,6 @@ State {
   ID = "BEXP";
   Sprite = "BEXP";
   Frame = 0;
-  Flags = fullbright;
   Tics = 5;
   Next state = "BEXP2";
 }
@@ -11069,7 +11067,6 @@ State {
   ID = "BEXP2";
   Sprite = "BEXP";
   Frame = 1;
-  Flags = fullbright;
   Tics = 5;
   Action = "A_Scream";
   Next state = "BEXP3";
@@ -11079,7 +11076,6 @@ State {
   ID = "BEXP3";
   Sprite = "BEXP";
   Frame = 2;
-  Flags = fullbright;
   Tics = 5;
   Next state = "BEXP4";
 }
@@ -11101,33 +11097,6 @@ State {
   Tics = 5;
   Action = "A_Explode";
   Next state = "BEXP6";
-}
-
-State {
-  ID = "BBAR1";
-  Sprite = "FCAN";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BBAR2";
-}
-
-State {
-  ID = "BBAR2";
-  Sprite = "FCAN";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BBAR3";
-}
-
-State {
-  ID = "BBAR3";
-  Sprite = "FCAN";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BBAR1";
 }
 
 State {
@@ -11338,7 +11307,6 @@ State {
   ID = "STIM";
   Sprite = "STIM";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11347,7 +11315,6 @@ State {
   ID = "MEDI";
   Sprite = "MEDI";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11446,7 +11413,6 @@ State {
   ID = "PSTR";
   Sprite = "PSTR";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11455,7 +11421,6 @@ State {
   ID = "PINS";
   Sprite = "PINS";
   Frame = 0;
-  Flags = fullbright;
   Tics = 6;
   Next state = "PINS2";
 }
@@ -11464,7 +11429,6 @@ State {
   ID = "PINS2";
   Sprite = "PINS";
   Frame = 1;
-  Flags = fullbright;
   Tics = 6;
   Next state = "PINS3";
 }
@@ -11473,7 +11437,6 @@ State {
   ID = "PINS3";
   Sprite = "PINS";
   Frame = 2;
-  Flags = fullbright;
   Tics = 6;
   Next state = "PINS4";
 }
@@ -11482,7 +11445,6 @@ State {
   ID = "PINS4";
   Sprite = "PINS";
   Frame = 3;
-  Flags = fullbright;
   Tics = 6;
   Next state = "PINS";
 }
@@ -11590,7 +11552,6 @@ State {
   ID = "PVIS";
   Sprite = "PVIS";
   Frame = 0;
-  Flags = fullbright;
   Tics = 6;
   Next state = "PVIS2";
 }
@@ -11607,7 +11568,6 @@ State {
   ID = "CLIP";
   Sprite = "CLIP";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11616,7 +11576,6 @@ State {
   ID = "AMMO";
   Sprite = "AMMO";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11625,7 +11584,6 @@ State {
   ID = "ROCK";
   Sprite = "ROCK";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11634,7 +11592,6 @@ State {
   ID = "BROK";
   Sprite = "BROK";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11643,7 +11600,6 @@ State {
   ID = "CELL";
   Sprite = "CELL";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11652,7 +11608,6 @@ State {
   ID = "CELP";
   Sprite = "CELP";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11661,7 +11616,6 @@ State {
   ID = "SHEL";
   Sprite = "SHEL";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11670,7 +11624,6 @@ State {
   ID = "SBOX";
   Sprite = "SBOX";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11679,7 +11632,6 @@ State {
   ID = "BPAK";
   Sprite = "BPAK";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11688,7 +11640,6 @@ State {
   ID = "BFUG";
   Sprite = "BFUG";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11697,7 +11648,6 @@ State {
   ID = "MGUN";
   Sprite = "MGUN";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11706,7 +11656,6 @@ State {
   ID = "CSAW";
   Sprite = "CSAW";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11715,7 +11664,6 @@ State {
   ID = "LAUN";
   Sprite = "LAUN";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11724,7 +11672,6 @@ State {
   ID = "PLAS";
   Sprite = "PLAS";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11733,7 +11680,6 @@ State {
   ID = "SHOT";
   Sprite = "SHOT";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11742,7 +11688,6 @@ State {
   ID = "SHOT2";
   Sprite = "SGN2";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11760,7 +11705,6 @@ State {
   ID = "DART1";
   Sprite = "DART";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -14339,38 +14283,6 @@ State {
   Flags = fullbright;
   Tics = 4;
   Next state = "R2FIREBALL1";
-}
-
-State {
-  ID = "SPOS_SDIE1";
-  Sprite = "SPOS";
-  Frame = 21;
-  Tics = 4;
-  Next state = "SPOS_SDIE2";
-}
-
-State {
-  ID = "SPOS_SDIE2";
-  Sprite = "SPOS";
-  Frame = 22;
-  Tics = 4;
-  Next state = "SPOS_SDIE3";
-}
-
-State {
-  ID = "SPOS_SDIE3";
-  Sprite = "SPOS";
-  Frame = 23;
-  Tics = 4;
-  Next state = "SPOS_SDIE4";
-}
-
-State {
-  ID = "SPOS_SDIE4";
-  Sprite = "SPOS";
-  Frame = 24;
-  Tics = 4;
-  Next state = "SPOS_STND";
 }
 
 State {
