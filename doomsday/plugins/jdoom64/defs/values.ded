@@ -165,8 +165,8 @@ Values {
       Per shot = "1";
       Up = "UNKFUP";
       Down = "UNKFDOWN";
-      Ready = "UNKF1";
-      Atk = "UNKF2";
+      Ready = "UNKF";
+      Atk = "UNKF1";
       Flash = "UNKFLASH1";
     };
   };

@@ -558,7 +558,8 @@ void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
     short               laserPower;
 
     P_SetPsprite(player, ps_flash,
-                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState + psp->state -
+                 &states[S_UNKF1]);
 
     if(IS_CLIENT)
         return;

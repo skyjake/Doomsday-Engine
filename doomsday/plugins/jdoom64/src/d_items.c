@@ -196,10 +196,10 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      S_UNKFUP,
      0,            // raise sound id
      S_UNKFDOWN,
-     S_UNKF1,
+     S_UNKF,
      0,            // ready sound
-     S_UNKF2,
-     S_NULL
+     S_UNKF1,
+     S_UNKFLASH1
     }
    }
 };
