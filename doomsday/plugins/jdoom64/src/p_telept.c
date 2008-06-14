@@ -143,6 +143,8 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
         if(!P_TeleportMove(mo, dest->pos[VX], dest->pos[VY], false))
             return 0;
 
+        mo->pos[VZ] = mo->floorZ;
+
         if(spawnFog)
         {
             // Spawn teleport fog at source and destination.
