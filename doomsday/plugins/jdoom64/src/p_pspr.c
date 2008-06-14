@@ -246,21 +246,6 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
         if(psp->state == &states[wminfo->readyState] && wminfo->readySound)
             S_StartSound(wminfo->readySound, player->plr->mo);
 
-        // jd64 >
-        // DJS - FIXME!
-/*
-        if(player->readyWeapon == WT_TENTH)
-        {
-            if(actions[A_WEAPON10].on &&
-               (player->artifacts[it_helltime] || player->artifacts[it_float]))
-            {
-                player->outcastCycle++;
-                player->pendingWeapon = WT_TENTH;
-            }
-        }
-*/
-        // < d64tc
-
         // Check for change. If player is dead, put the weapon away.
         if(player->pendingWeapon != WT_NOCHANGE || !player->health)
         {   //  (pending weapon should allready be validated)
