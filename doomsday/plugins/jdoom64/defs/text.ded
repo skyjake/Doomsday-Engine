@@ -139,11 +139,6 @@ Text {
 }
 
 Text {
-  ID = "GOTHELLBONUS";
-  Text = "Picked up a hell potion.";
-}
-
-Text {
   ID = "GOTSTIM";
   Text = "Picked up a stimpack.";
 }

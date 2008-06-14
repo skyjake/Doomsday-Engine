@@ -120,10 +120,6 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
 
 void P_ExplodeMissile(mobj_t *mo)
 {
-    // DJS - FIXME??
-    if(mo->type == MT_GRENADE) // jd64
-        return;
-
     if(IS_CLIENT)
     {
         // Clients won't explode missiles.
@@ -479,16 +475,8 @@ void P_MobjMoveZ(mobj_t *mo)
     {
         // Hit the floor
         mo->pos[VZ] = mo->floorZ;
-        if(mo->type == MT_GRENADE)
-        {
-            P_BounceMissile(mo);
-            return;
-        }
-        else
-        {
-            P_ExplodeMissile(mo);
-            return;
-        }
+        P_ExplodeMissile(mo);
+        return;
     }
     // < d64tc
 
@@ -517,13 +505,7 @@ void P_MobjMoveZ(mobj_t *mo)
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
         {
-            // jd64 >
-            // DJS - FIXME!
-            if(mo->type == MT_GRENADE)
-                P_BounceMissile(mo);
-            else
-                P_ExplodeMissile(mo);
-            // < d64tc
+            P_ExplodeMissile(mo);
             return;
         }
     }
@@ -542,10 +524,7 @@ void P_MobjMoveZ(mobj_t *mo)
         }
         else
         {
-            if(mo->type == MT_GRENADE)
-                P_BounceMissile(mo);
-            else
-                P_ExplodeMissile(mo);
+            P_ExplodeMissile(mo);
             return;
         }
     }

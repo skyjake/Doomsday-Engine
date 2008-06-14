@@ -53,8 +53,6 @@ void C_DECL A_BspiAttack();
 void C_DECL A_Chase();
 void C_DECL A_CheckReload();
 void C_DECL A_CloseShotgun2();
-void C_DECL A_CPosAttack();
-void C_DECL A_CPosRefire();
 void C_DECL A_CyberAttack();
 void C_DECL A_Explode();
 void C_DECL A_FaceTarget();
@@ -105,8 +103,6 @@ void C_DECL A_XScream();
 
 //jd64
 void C_DECL A_BruisredAttack();
-void C_DECL A_CposPanLeft();
-void C_DECL A_CposPanRight();
 void C_DECL A_DrawPlasmaTube();
 void C_DECL A_PlasmaBuzz();
 void C_DECL A_Lasersmoke();

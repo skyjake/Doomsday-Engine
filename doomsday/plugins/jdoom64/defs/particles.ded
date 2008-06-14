@@ -566,7 +566,6 @@ Generator {
 Copy Generator { State = "PLAY_XDIE2"; }
 Copy Generator { State = "SPOS_XDIE2"; }
 Copy Generator { State = "TROO_XDIE2"; }
-Copy Generator { State = "CPOS_XDIE2"; }
 Copy Generator { State = "SSWV_XDIE2"; }
 
 # Pink demon death blood.

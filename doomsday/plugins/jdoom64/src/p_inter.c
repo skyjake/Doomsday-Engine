@@ -441,28 +441,6 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
             ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
         break;
 
-    case SPR_BON3: // jd64
-        player->health += 2;
-        if(player->health > healthLimit)
-            player->health = healthLimit;
-        player->plr->mo->health = player->health;
-
-        player->armorPoints += 2;
-        if(player->armorPoints > armorPoints[1]) // 200
-            player->armorPoints = armorPoints[1];
-        if(!player->armorType)
-            player->armorType = armorClass[0];
-
-        player->update |= PSF_HEALTH | PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
-        P_SetMessage(player, GOTHELLBONUS, false);
-
-        // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
-        if(player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
-        break;
-
     case SPR_SOUL:
         player->health += soulSphereHealth;
         if(player->health > soulSphereLimit)
@@ -879,11 +857,6 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 
     case MT_SHOTGUY:
         item = MT_SHOTGUN;
-        break;
-
-    //case MT_CHAINGUY:
-    case MT_CHAINGUNGUY: // jd64
-        item = MT_CHAINGUN;
         break;
 
     default:

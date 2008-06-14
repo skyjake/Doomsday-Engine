@@ -500,16 +500,6 @@ Sound {
 }
 
 Sound {
-  ID = "spisit";
-  Flags = "sf_shift2";
-  Lump = "DSSPISIT";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 90;
-  Max channels = 1;
-}
-
-Sound {
   ID = "bspsit";
   Flags = "sf_shift2";
   Lump = "DSBSPSIT";
@@ -733,16 +723,6 @@ Sound {
   ID = "cybdth";
   Flags = "sf_shift2";
   Lump = "DSCYBDTH";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 32;
-  Max channels = -1;
-}
-
-Sound {
-  ID = "spidth";
-  Flags = "sf_shift2";
-  Lump = "DSSPIDTH";
   Link pitch = -1;
   Link volume = -1;
   Priority = 32;
@@ -1129,36 +1109,6 @@ Sound {
   Link volume = -1;
   Priority = 80;
   Max channels = 1;
-}
-
-Sound {
-  ID = "stlkst";
-  Flags = "sf_shift2";
-  Lump = "DSSTLKST";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 70;
-  Max channels = -1;
-}
-
-Sound {
-  ID = "stlkpn";
-  Flags = "sf_shift2";
-  Lump = "DSSTLKPN";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 70;
-  Max channels = -1;
-}
-
-Sound {
-  ID = "stlktp";
-  Flags = "sf_shift2";
-  Lump = "DSSTLKTP";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 32;
-  Max channels = -1;
 }
 
 Sound {

@@ -77,7 +77,6 @@ typedef enum {
     SFX_CACSIT,                    // 042
     SFX_BRSSIT,                    // 043
     SFX_CYBSIT,                    // 044
-    SFX_SPISIT,                    // 045
     SFX_BSPSIT,                    // 046
     SFX_KNTSIT,                    // 047
     SFX_VILSIT,                    // 048
@@ -101,7 +100,6 @@ typedef enum {
     SFX_SKLDTH,                    // 066
     SFX_BRSDTH,                    // 067
     SFX_CYBDTH,                    // 068
-    SFX_SPIDTH,                    // 069
     SFX_BSPDTH,                    // 070
     SFX_VILDTH,                    // 071
     SFX_KNTDTH,                    // 072
@@ -145,9 +143,6 @@ typedef enum {
     SFX_MTHPAI,
     SFX_MTHACT,
     SFX_MTHDTH,
-    SFX_STLKST,
-    SFX_STLKPN,
-    SFX_STLKTP,
     SFX_HTIME,
     // < D64TC
     NUMSFX

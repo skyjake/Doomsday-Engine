@@ -1147,66 +1147,6 @@ void C_DECL A_SPosAttack(mobj_t *actor)
     }
 }
 
-/**
- * d64tc
- */
-void C_DECL A_CposPanLeft(mobj_t* actor)
-{
-    actor->angle = actor->angle + ANG90/4;
-}
-
-/**
- * d64tc
- */
-void C_DECL A_CposPanRight(mobj_t* actor)
-{
-    actor->angle = actor->angle - ANG90/4;
-}
-
-void C_DECL A_CPosAttack(mobj_t *actor)
-{
-    int                 angle, bangle, damage, r;
-    float               slope;
-
-    if(!actor->target)
-        return;
-
-    S_StartSound(SFX_PISTOL, actor);
-    A_FaceTarget(actor);
-    bangle = actor->angle;
-    slope = P_AimLineAttack(actor, bangle, MISSILERANGE);
-
-    angle = bangle + ((P_Random() - P_Random()) << 20);
-    damage = ((P_Random() % 5) + 1) * 3;
-
-    r = P_Random();
-    if(r < 64)
-        A_CposPanLeft(actor);
-    else if(r < 128)
-        A_CposPanRight(actor);
-
-    P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
-}
-
-void C_DECL A_CPosRefire(mobj_t *actor)
-{
-    if(!actor->target) // jd64
-        return;
-
-    // Keep firing unless target got out of sight.
-    A_FaceTarget(actor);
-
-    if(P_Random() < 30) // jd64: was "if(P_Random() < 40)"
-        return;
-
-    // jd64: Added "|| P_Random() < 40"
-    if(!actor->target || actor->target->health <= 0 ||
-       !P_CheckSight(actor, actor->target) || P_Random() < 40)
-    {
-        P_MobjChangeState(actor, actor->info->seeState);
-    }
-}
-
 void C_DECL A_SpidRefire(mobj_t *actor)
 {
     // Keep firing unless target got out of sight.
@@ -1272,27 +1212,8 @@ void BabyFire(mobj_t *actor, int type, boolean right)
  */
 void C_DECL A_BspiAttack(mobj_t *actor)
 {
-    int                 type = P_Random() % 2;
-
-    switch(type)
-    {
-    case 0:
-        if(actor->type == MT_BABY || actor->info->doomedNum == 234)
-            type = MT_ARACHPLAZ;
-        else if(actor->type == MT_NIGHTCRAWLER)
-            type = MT_GRENADE;
-        break;
-
-    case 1:
-        if(actor->type == MT_BABY || actor->info->doomedNum == 234)
-            type = MT_ARACHPLAZ;
-        else if(actor->type == MT_NIGHTCRAWLER)
-            type = MT_GRENADE;
-        break;
-    }
-
-    BabyFire(actor, type, false);
-    BabyFire(actor, type, true);
+    BabyFire(actor, MT_ARACHPLAZ, false);
+    BabyFire(actor, MT_ARACHPLAZ, true);
 }
 
 /**
@@ -1585,65 +1506,19 @@ void C_DECL A_BruisredAttack(mobj_t *actor)
     P_SpawnMissile(MT_BRUISERSHOTRED, actor, actor->target);
 }
 
-/**
- * kaiser - Too lazy to add a new action, instead I'll just borrow this one.
- * DJS - yup you are lazy :P
- *
- * \todo Implement this properly as two seperate actions.
- */
 void C_DECL A_SkelMissile(mobj_t *actor)
 {
     mobj_t             *mo;
 
-    if(actor->type == MT_STALKER)
-    {
-        if(!((actor->flags & MF_SOLID) && (actor->flags & MF_SHOOTABLE)))
-        {
-            actor->flags |= MF_SOLID;
-            actor->flags |= MF_SHOOTABLE;
+    if(!actor->target)
+        return;
 
-            P_SpawnMobj3fv(MT_HFOG, actor->pos);
-            S_StartSound(SFX_STLKTP, actor);
-            return;
-        }
+    A_FaceTarget(actor);
+    mo = P_SpawnMissile(MT_TRACER, actor, actor->target);
 
-        if(!actor->target)
-            return;
-
-        if(P_Random() < 64)
-        {
-            P_SpawnMobj3fv(MT_HFOG, actor->pos);
-
-            S_StartSound(SFX_STLKTP, actor);
-            P_MobjChangeState(actor, S_STALK_HIDE);
-            actor->flags &= ~MF_SOLID;
-            actor->flags &= ~MF_SHOOTABLE;
-
-            memcpy(actor->pos, actor->target->pos, sizeof(actor->pos));
-            actor->pos[VZ] += 32;
-        }
-        else
-        {
-            A_FaceTarget(actor);
-            mo = P_SpawnMissile(MT_TRACER, actor, actor->target);
-
-            mo->pos[VX] += mo->mom[MX];
-            mo->pos[VY] += mo->mom[MY];
-            mo->tracer = actor->target;
-        }
-    }
-    else
-    {
-        if(!actor->target)
-            return;
-
-        A_FaceTarget(actor);
-        mo = P_SpawnMissile(MT_TRACER, actor, actor->target);
-
-        mo->pos[VX] += mo->mom[MX];
-        mo->pos[VY] += mo->mom[MY];
-        mo->tracer = actor->target;
-    }
+    mo->pos[VX] += mo->mom[MX];
+    mo->pos[VY] += mo->mom[MY];
+    mo->tracer = actor->target;
 }
 
 void C_DECL A_Tracer(mobj_t *actor)
@@ -2050,18 +1925,6 @@ void C_DECL A_Rocketpuff(mobj_t *actor)
         return;
 
     P_SpawnMobj3fv(MT_ROCKETPUFF, actor->pos);
-
-    if(actor->type == MT_GRENADE)
-    {
-        actor->reactionTime -= 8;
-        if(actor->reactionTime <= 0)
-        {
-            actor->mom[MX] = actor->mom[MY] = actor->mom[MZ] = 0;
-
-            P_MobjChangeState(actor, actor->info->deathState);
-            S_StartSound(actor->info->deathSound, actor);
-        }
-    }
 }
 
 /**
@@ -2094,17 +1957,7 @@ void C_DECL A_Fall(mobj_t *actor)
 
 void C_DECL A_Explode(mobj_t *mo)
 {
-    // jd64 >
-    int                 radius;
-
-    if(mo->type == MT_GRENADE)
-        radius = 48;
-    else
-        radius = 128;
-    // < d64tc
-
-    //P_RadiusAttack(mo, mo->target, 128, 127); // jd64
-    P_RadiusAttack(mo, mo->target, radius, radius - 1);
+    P_RadiusAttack(mo, mo->target, 128, 127);
 }
 
 /**

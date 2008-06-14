@@ -865,7 +865,7 @@ DEFCC(CCmdSpawnMobj)
 
 #if __JDOOM64__
     // jd64 > kaiser - another cheesy hack!!!
-    if(mo->type == MT_DART || mo->type == MT_RDART)
+    if(mo->type == MT_DART)
     {
         S_StartSound(SFX_SKESWG, mo); // We got darts! spawn skeswg sound!
     }

@@ -53,10 +53,6 @@ actionlink_t actionlinks[] = {
     {"A_Chase",             A_Chase},
     {"A_CheckReload",       A_CheckReload},
     {"A_CloseShotgun2",     A_CloseShotgun2},
-    {"A_CPosAttack",        A_CPosAttack},
-    {"A_CposPanLeft",       A_CposPanLeft}, //jd64
-    {"A_CposPanRight",      A_CposPanRight}, //jd64
-    {"A_CPosRefire",        A_CPosRefire},
     {"A_CyberAttack",       A_CyberAttack},
     {"A_Explode",           A_Explode},
     {"A_FaceTarget",        A_FaceTarget},

@@ -278,8 +278,6 @@ static mobjtype_t isFadeSpawner(int doomednum)
         {7628, MT_MISC9},
         {7629, MT_MISC6},
         {7630, MT_MISC7},
-        {7631, MT_CHAINGUNGUY},
-        {7632, MT_NIGHTCRAWLER},
         {-1, -1} // Terminator.
     };
     int                 i;
