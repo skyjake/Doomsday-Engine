@@ -151,16 +151,6 @@ void P_ExplodeMissile(mobj_t *mo)
         S_StartSound(mo->info->deathSound, mo);
 }
 
-/**
- * d64tc
- * DJS: FIXME
- */
-void P_BounceMissile(mobj_t *mo)   //kaiser
-{
-    mo->mom[MZ] *= -(mo->reactionTime * (1.0f / 192));
-    S_StartSound(SFX_SSDTH, mo);
-}
-
 void P_FloorBounceMissile(mobj_t *mo)
 {
     mo->mom[MZ] = -mo->mom[MZ];
@@ -1324,7 +1314,6 @@ void P_SpawnMapThing(spawnspot_t *th)
 
     if(th->flags & MTF_FLOAT)
     {
-        mobj->flags |= MF_FLOATER;
         mobj->pos[VZ] += 96;
         mobj->flags |= (MF_FLOAT | MF_NOGRAVITY);
     }

@@ -223,19 +223,10 @@ typedef struct spawnspot_s {
 #define MF_CORPSE           0x00100000  // (i) Don't stop moving halfway off a step.
 #define MF_INFLOAT          0x00200000  // Floating to a height for a move,
                                         //  don't auto float to target's height.
-
 #define MF_COUNTKILL        0x00400000  // count towards intermission kill total
 #define MF_COUNTITEM        0x00800000  // count towards intermission item total
-
 #define MF_SKULLFLY         0x01000000  // (i) skull in flight.
-
 #define MF_NOTDMATCH        0x02000000  // (p) not spawned in deathmatch mode (e.g. key cards).
-
-// FIXME: DJS - d64tc used this without knowing it was already in use by the
-// the color translation stuff. We'll resolve this by first seeing what it actually
-// does and if usefull we can move it to a free value and implement in the other games.
-#define MF_FLOATER          0x04000000
-
 #define MF_TRANSLATION      0x0c000000  // (i) if 0x4 0x8 or 0xc, use a translation
 #define MF_TRANSSHIFT       26          // (N/A) table for player colormaps
 
