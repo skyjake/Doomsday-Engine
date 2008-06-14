@@ -989,56 +989,6 @@ Sound {
 }
 
 Sound {
-  ID = "bospit";
-  Flags = "sf_shift2";
-  Lump = "DSBOSPIT";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 70;
-  Max channels = -1;
-}
-
-Sound {
-  ID = "boscub";
-  Flags = "sf_shift2";
-  Lump = "DSBOSCUB";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 70;
-  Max channels = -1;
-}
-
-Sound {
-  ID = "bossit";
-  Flags = "sf_shift2";
-  Lump = "DSBOSSIT";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 70;
-  Max channels = -1;
-}
-
-Sound {
-  ID = "bospn";
-  Flags = "sf_shift2";
-  Lump = "DSBOSPN";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 70;
-  Max channels = -1;
-}
-
-Sound {
-  ID = "bosdth";
-  Flags = "sf_shift2";
-  Lump = "DSBOSDTH";
-  Link pitch = -1;
-  Link volume = -1;
-  Priority = 70;
-  Max channels = -1;
-}
-
-Sound {
   ID = "manatk";
   Flags = "sf_shift2";
   Lump = "DSMANATK";

@@ -3412,7 +3412,11 @@ boolean M_QuitResponse(int option, void *data)
     static int  quitsounds2[8] = {
         SFX_VILACT,
         SFX_GETPOW,
+# if __JDOOM64__
+        SFX_PEPAIN,
+# else
         SFX_BOSCUB,
+# endif
         SFX_SLOP,
         SFX_SKESWG,
         SFX_KNTDTH,

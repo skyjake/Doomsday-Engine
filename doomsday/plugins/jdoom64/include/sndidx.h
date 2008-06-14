@@ -126,11 +126,6 @@ typedef enum {
     SFX_FLAME,                     // 091
     SFX_FLAMST,                    // 092
     SFX_GETPOW,                    // 093
-    SFX_BOSPIT,                    // 094
-    SFX_BOSCUB,                    // 095
-    SFX_BOSSIT,                    // 096
-    SFX_BOSPN,                     // 097
-    SFX_BOSDTH,                    // 098
     SFX_MANATK,                    // 099
     SFX_MANDTH,                    // 100
     SFX_SSSIT,                     // 101

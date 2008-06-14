@@ -516,7 +516,9 @@ static void P_ResetWorldState(void)
 
     // Only used with 666/7 specials
     bossKilled = false;
+#endif
 
+#if __JDOOM__
     // Brain info
     numBrainTargets = 0;
     numBrainTargetsAlloc = -1;

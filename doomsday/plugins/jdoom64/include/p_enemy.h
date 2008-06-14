@@ -32,19 +32,6 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-/**
- * Global state of boss brain.
- */
-typedef struct braindata_s {
-    int             easy;
-    int             targetOn;
-} braindata_t;
-
-extern braindata_t brain;
-extern mobj_t **brainTargets;
-extern int numBrainTargets;
-extern int numBrainTargetsAlloc;
-
 extern boolean bossKilled;
 
 void        P_SpawnBrainTargets(void);

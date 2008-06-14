@@ -1964,8 +1964,12 @@ boolean PIT_RadiusAttack(mobj_t *thing, void *data)
        thing->type == MT_SORCERER2)
         return true;
 #elif __JDOOM__ || __JDOOM64__
-    if(thing->type == MT_CYBORG || thing->type == MT_SPIDER)
+    if(thing->type == MT_CYBORG)
         return true;
+# if __JDOOM__
+    if(thing->type == MT_SPIDER)
+        return true;
+# endif
 #else
     if(!damageSource && thing == bombSource) // Don't damage the source of the explosion.
         return true;
