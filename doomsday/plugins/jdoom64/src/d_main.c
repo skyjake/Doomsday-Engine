@@ -362,7 +362,6 @@ void G_PreInit(void)
     cfg.bobView = 1;
     cfg.bobWeaponLower = true;
     cfg.cameraNoClip = true;
-    cfg.respawnMonstersNightmare = true;
 
     cfg.weaponOrder[0] = WT_TENTH;
     cfg.weaponOrder[1] = WT_SIXTH;

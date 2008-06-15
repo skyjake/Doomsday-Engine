@@ -122,7 +122,6 @@ typedef struct jdoom64_config_s {
     byte            noCoopAnything;
     byte            noNetBFG;
     byte            coopRespawnItems;
-    byte            respawnMonstersNightmare;
 
     /**
      * Compatibility options.

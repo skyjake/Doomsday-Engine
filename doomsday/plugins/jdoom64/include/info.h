@@ -1447,7 +1447,6 @@ typedef enum {
     TXT_QSPROMPT,
     TXT_QLPROMPT,
     TXT_NEWGAME,
-    TXT_NIGHTMARE,
     TXT_MSGOFF,
     TXT_MSGON,
     TXT_NETEND,
@@ -1668,7 +1667,6 @@ typedef enum {
     TXT_SKILL2,
     TXT_SKILL3,
     TXT_SKILL4,
-    TXT_SKILL5,
     NUMTEXT
 } textenum_t;
 

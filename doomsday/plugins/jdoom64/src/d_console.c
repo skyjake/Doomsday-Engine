@@ -123,8 +123,6 @@ cvar_t  gameCVars[] = {
     {"server-game-bfg-freeaim", 0, CVT_BYTE, &cfg.netBFGFreeLook, 0, 1},
     {"server-game-nomonsters", 0, CVT_BYTE, &cfg.netNoMonsters, 0, 1 },
     {"server-game-respawn", 0, CVT_BYTE, &cfg.netRespawn, 0, 1},
-    {"server-game-respawn-monsters-nightmare", 0, CVT_BYTE,
-        &cfg.respawnMonstersNightmare, 0, 1},
     {"server-game-radiusattack-nomaxz", 0, CVT_BYTE,
         &cfg.netNoMaxZRadiusAttack, 0, 1},
     {"server-game-monster-meleeattack-nomaxz", 0, CVT_BYTE,

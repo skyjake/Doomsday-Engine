@@ -92,10 +92,9 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     else
         num = clipAmmo[ammo] / 2;
 
-    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
+    if(gameSkill == SM_BABY)
     {
-        // give double ammo in trainer mode,
-        // you'll need in nightmare
+        // Give double ammo in trainer mode.
         num <<= 1;
     }
 

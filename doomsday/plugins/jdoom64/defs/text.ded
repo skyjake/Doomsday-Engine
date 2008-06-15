@@ -58,12 +58,6 @@ Text {
 }
 
 Text {
-  ID = "NIGHTMARE";
-  Text = "are you sure? this skill level\nisn't even remotely fair.\n\n
-    press y or n.";
-}
-
-Text {
   ID = "MSGOFF";
   Text = "Messages OFF";
 }
@@ -1168,7 +1162,7 @@ Text {
 
 Text {
   ID = "SKILL1";
-  Text = "Be gentle!";
+  Text = "Be Gentle!";
 }
 
 Text {
@@ -1184,9 +1178,4 @@ Text {
 Text {
   ID = "SKILL4";
   Text = "Watch me die!";
-}
-
-Text {
-  ID = "SKILL5";
-  Text = "Hell fears me!";
 }

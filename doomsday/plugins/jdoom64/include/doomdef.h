@@ -155,7 +155,6 @@ typedef enum {
     SM_EASY,
     SM_MEDIUM,
     SM_HARD,
-    SM_NIGHTMARE,
     NUM_SKILL_MODES
 } skillmode_t;
 

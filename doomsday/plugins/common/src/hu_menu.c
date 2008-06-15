@@ -702,7 +702,26 @@ static menu_t SkillDef = {
     LINEHEIGHT,
     0, 5
 };
-#elif __JDOOM__ || __JDOOM64__
+#elif __JDOOM64__
+static menuitem_t SkillItems[] = {
+    {ITT_EFUNC, 0, "I", M_ChooseSkill, 0, "M_JKILL"},
+    {ITT_EFUNC, 0, "H", M_ChooseSkill, 1, "M_ROUGH"},
+    {ITT_EFUNC, 0, "H", M_ChooseSkill, 2, "M_HURT"},
+    {ITT_EFUNC, 0, "U", M_ChooseSkill, 3, "M_ULTRA"},
+};
+static menu_t SkillDef = {
+    0,
+    48, 63,
+    M_DrawSkillMenu,
+    4, SkillItems,
+    2, MENU_MAIN,
+    huFontB,                    //1, 0, 0,
+    cfg.menuColor,
+    NULL,
+    LINEHEIGHT,
+    0, 4
+};
+#else __JDOOM__
 static menuitem_t SkillItems[] = {
     // Text defs TXT_SKILL1..5.
     {ITT_EFUNC, 0, "I", M_ChooseSkill, 0, "M_JKILL"},
@@ -717,11 +736,7 @@ static menu_t SkillDef = {
     48, 63,
     M_DrawSkillMenu,
     5, SkillItems,
-# if __JDOOM64__
-    2, MENU_MAIN,
-# else
     2, MENU_EPISODE,
-# endif
     huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
@@ -1345,7 +1360,7 @@ void Hu_MenuInit(void)
 
 #if __JDOOM__ || __JDOOM64__
     // Skill names.
-    for(i = 0, maxw = 0; i < 5; ++i)
+    for(i = 0, maxw = 0; i < NUM_SKILL_MODES; ++i)
     {
         SkillItems[i].text = GET_TXT(TXT_SKILL1 + i);
         w = M_StringWidth(SkillItems[i].text, SkillDef.font);
@@ -3678,17 +3693,16 @@ void M_Episode(int option, void *data)
 }
 #endif
 
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__ || __WOLFTC__
 boolean M_VerifyNightmare(int option, void *data)
 {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
     if(messageResponse == 1) // Yes
     {
 #ifdef __JHERETIC__
         G_DeferedInitNew(SM_NIGHTMARE, MenuEpisode, 1);
 #elif __JDOOM__
         G_DeferedInitNew(SM_NIGHTMARE, epi + 1, 1);
-#elif __JDOOM64__
-        G_DeferedInitNew(SM_NIGHTMARE, 1, 1);
 #elif __JSTRIFE__
         G_DeferredNewGame(SM_NIGHTMARE);
 #endif
@@ -3706,7 +3720,7 @@ boolean M_VerifyNightmare(int option, void *data)
 #endif
     return false;
 }
-
+#endif
 
 void M_ChooseSkill(int option, void *data)
 {
@@ -3719,7 +3733,7 @@ void M_ChooseSkill(int option, void *data)
     SB_state = -1;
 
 #else
-# if __JDOOM__ || __JDOOM64__ || __JSTRIFE__
+# if __JDOOM__ || __JSTRIFE__
     if(option == SM_NIGHTMARE)
     {
 #  if __JSTRIFE__

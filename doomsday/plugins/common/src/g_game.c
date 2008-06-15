@@ -1945,8 +1945,8 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 
     if(skill < SM_BABY)
         skill = SM_BABY;
-    if(skill > SM_NIGHTMARE)
-        skill = SM_NIGHTMARE;
+    if(skill > NUM_SKILL_MODES - 1)
+        skill = NUM_SKILL_MODES - 1;
 
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
@@ -1957,7 +1957,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
     respawnMonsters = respawnParm;
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+#if __JDOOM__ || __JHERETIC__
     // Is respawning enabled at all in nightmare skill?
     if(skill == SM_NIGHTMARE)
         respawnMonsters = cfg.respawnMonstersNightmare;
@@ -1966,7 +1966,11 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 //// \kludge Doom/Heretic Fast Monters/Missiles
 #if __JDOOM__ || __JDOOM64__
     // Fast monsters?
-    if(fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE))
+    if(fastParm
+# if __JDOOM__
+        || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
+# endif
+        )
     {
         for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
             states[i].tics = 1;
@@ -1988,11 +1992,13 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 
     // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-#   if __JDOOM__ || __JDOOM64__
+# if __JDOOM64__
+    speed = fastParm;
+# elif __JDOOM__
     speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
-#   else
+# else
     speed = skill == SM_NIGHTMARE;
-#   endif
+# endif
 
     for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
     {

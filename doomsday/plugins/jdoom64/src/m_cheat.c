@@ -170,13 +170,10 @@ boolean Cht_Responder(event_t *ev)
 
     plyr = &players[CONSOLEPLAYER];
 
-    if(gameSkill != SM_NIGHTMARE &&
-       ev->type == EV_KEY && ev->state == EVS_DOWN)
+    if(ev->type == EV_KEY && ev->state == EVS_DOWN)
     {
         if(!IS_NETGAME)
         {
-            // if (gameSkill != SM_NIGHTMARE) {
-
             // 'dqd' cheat for toggleable god mode.
             if(Cht_CheckCheat(&cheat_god, ev->data1))
             {

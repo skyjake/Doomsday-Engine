@@ -49,7 +49,6 @@
 #define QLPROMPT            GET_TXT(TXT_QLPROMPT)
 
 #define NEWGAME             GET_TXT(TXT_NEWGAME)
-#define NIGHTMARE           GET_TXT(TXT_NIGHTMARE)
 #define SWSTRING            GET_TXT(TXT_SWSTRING)
 #define MSGOFF              GET_TXT(TXT_MSGOFF)
 #define MSGON               GET_TXT(TXT_MSGON)
@@ -210,7 +209,6 @@
 #define CC_BARON            GET_TXT(TXT_CC_BARON)
 #define CC_ARACH            GET_TXT(TXT_CC_ARACH)
 #define CC_PAIN             GET_TXT(TXT_CC_PAIN)
-#define CC_REVEN            GET_TXT(TXT_CC_REVEN)
 #define CC_MANCU            GET_TXT(TXT_CC_MANCU)
 #define CC_CYBER            GET_TXT(TXT_CC_CYBER)
 #define CC_NTROOP           GET_TXT(TXT_CC_NTROOP) // jd64

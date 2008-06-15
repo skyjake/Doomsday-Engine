@@ -917,9 +917,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     // Let the engine know about solid objects.
     P_SetDoomsdayFlags(mo);
 
-    if(gameSkill != SM_NIGHTMARE)
-        mo->reactionTime = info->reactionTime;
-
+    mo->reactionTime = info->reactionTime;
     mo->lastLook = P_Random() % MAXPLAYERS;
 
     // Do not set the state with P_MobjChangeState, because action routines
@@ -1231,8 +1229,6 @@ void P_SpawnMapThing(spawnspot_t *th)
     // Check for apropriate skill level.
     if(gameSkill == SM_BABY)
         bit = 1;
-    else if(gameSkill == SM_NIGHTMARE)
-        bit = 4;
     else
         bit = 1 << (gameSkill - 1);
 

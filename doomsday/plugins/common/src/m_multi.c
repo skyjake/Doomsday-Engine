@@ -364,13 +364,17 @@ void DrawMultiplayerMenu(void)
 
 void DrawGameSetupMenu(void)
 {
-    char   *boolText[2] = { "NO", "YES" }, buf[50];
-    char   *skillText[5] = { "BABY", "EASY", "MEDIUM", "HARD", "NIGHTMARE" };
+    char   *boolText[] = { "NO", "YES" }, buf[50];
+#if __JDOOM__
+    char   *skillText[] = {"BABY", "EASY", "MEDIUM", "HARD", "NIGHTMARE" };
+#else
+    char   *skillText[] = {"BABY", "EASY", "MEDIUM", "HARD" };
+#endif
 #if __JDOOM__ || __JDOOM64__
     //char   *freeLookText[3] = { "NO", "NOT BFG", "ALL" };
-    char   *dmText[3] = { "COOPERATIVE", "DEATHMATCH 1", "DEATHMATCH 2" };
+    char   *dmText[] = { "COOPERATIVE", "DEATHMATCH 1", "DEATHMATCH 2" };
 #else
-    char   *dmText[3] = { "NO", "YES", "YES" };
+    char   *dmText[] = { "NO", "YES", "YES" };
 #endif
     menu_t *menu = &GameSetupMenu;
     int     idx;
@@ -714,7 +718,7 @@ void SCGameSetupSkill(int option, void *data)
 {
     if(option == RIGHT_DIR)
     {
-        if(cfg.netSkill < 4)
+        if(cfg.netSkill < NUM_SKILL_MODES - 1)
             cfg.netSkill++;
     }
     else if(cfg.netSkill > 0)

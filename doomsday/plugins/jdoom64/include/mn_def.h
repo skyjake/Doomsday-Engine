@@ -100,7 +100,7 @@ typedef enum {
 } menutype_t;
 
 // Menu item flags
-#define MIF_NOTALTTXT           0x01 // Don't use alt text instead of lump (M_NMARE)
+#define MIF_NOTALTTXT           0x01 // Don't use alt text instead of lump.
 
 typedef struct {
     menuitemtype_t  type;

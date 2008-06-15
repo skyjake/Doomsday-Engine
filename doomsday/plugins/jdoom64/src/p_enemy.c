@@ -1039,7 +1039,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE && !fastParm)
+        if(!fastParm)
             newChaseDir(actor);
 
         return;
@@ -1058,7 +1058,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if(actor->info->missileState)
     {
-        if(!(gameSkill < SM_NIGHTMARE && !fastParm && actor->moveCount))
+        if(!(!fastParm && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {
@@ -1976,91 +1976,13 @@ void C_DECL A_BossDeath(mobj_t* mo)
     if(bossKilled)
         return;
 
-    //if(gameMode == commercial) // jd64
-    {
-        /* d64tc
-        if(gameMap != 7)
-            return;
-        if((mo->type != MT_FATSO) && (mo->type != MT_BABY))
-            return;
-        */
+    if((gameMap != 1) && (gameMap != 30) && (gameMap != 32) &&
+       (gameMap != 33) && (gameMap != 35))
+        return;
 
-        // jd64 >
-        if((gameMap != 1) && (gameMap != 30) && (gameMap != 32) &&
-           (gameMap != 33) && (gameMap != 35))
-            return;
-
-        if((mo->type != MT_BITCH) && (mo->type != MT_CYBORG) &&
-           (mo->type != MT_BARREL) && (mo->type != MT_FATSO))
-            return;
-        // < d64tc
-    }
-/* d64tc >
-    else
-    {
-        switch (gameEpisode)
-        {
-        case 1:
-            if(gameMap != 8)
-                return;
-
-            // Ultimate DOOM behavioral change
-            // This test was added so that the (variable) effects of the
-            // 666 special would only take effect when the last Baron
-            // died and not ANY monster.
-            // Many classic PWADS such as "Doomsday of UAC" (UAC_DEAD.wad)
-            // relied on the old behaviour and cannot be completed.
-
-            // Added compatibility option.
-            if(!cfg.anyBossDeath)
-                if(mo->type != MT_BRUISER)
-                    return;
-            break;
-
-        case 2:
-            if(gameMap != 8)
-                return;
-
-            if(mo->type != MT_CYBORG)
-                return;
-            break;
-
-        case 3:
-            if(gameMap != 8)
-                return;
-
-            if(mo->type != MT_SPIDER)
-                return;
-
-            break;
-
-        case 4:
-            switch (gameMap)
-            {
-            case 6:
-                if(mo->type != MT_CYBORG)
-                    return;
-                break;
-
-            case 8:
-                if(mo->type != MT_SPIDER)
-                    return;
-                break;
-
-            default:
-                return;
-                break;
-            }
-            break;
-
-        default:
-            if(gameMap != 8)
-                return;
-            break;
-        }
-
-    }
-< d64tc */
+    if((mo->type != MT_BITCH) && (mo->type != MT_CYBORG) &&
+       (mo->type != MT_BARREL) && (mo->type != MT_FATSO))
+        return;
 
     // Make sure there is a player alive for victory.
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -2080,7 +2002,6 @@ void C_DECL A_BossDeath(mobj_t* mo)
         return;
     }
 
-    // jd64 >
     if(gameMap == 1)
     {
         if(mo->type == MT_BARREL)
@@ -2124,75 +2045,6 @@ void C_DECL A_BossDeath(mobj_t* mo)
             G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
         }
     }
-    // < d64tc
-
-/* d64tc >
-    // victory!
-    if(gameMode == commercial)
-    {
-        if(gameMap == 7)
-        {
-            if(mo->type == MT_FATSO)
-            {
-                dummyLine = P_AllocDummyLine();
-                P_ToXLine(dummyLine)->tag = 666;
-                EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
-                P_FreeDummyLine(dummyLine);
-                return;
-            }
-
-            if(mo->type == MT_BABY)
-            {
-                dummyLine = P_AllocDummyLine();
-                P_ToXLine(dummyLine)->tag = 667;
-                EV_DoFloor(dummyLine, FT_RAISETOTEXTURE);
-                P_FreeDummyLine(dummyLine);
-
-                // Only activate once (rare Dead simple bug)
-                bossKilled = true;
-                return;
-            }
-        }
-    }
-    else
-    {
-        switch (gameEpisode)
-        {
-        case 1:
-            dummyLine = P_AllocDummyLine();
-            P_ToXLine(dummyLine)->tag = 666;
-            EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
-            P_FreeDummyLine(dummyLine);
-            bossKilled = true;
-            return;
-            break;
-
-        case 4:
-            switch (gameMap)
-            {
-            case 6:
-                dummyLine = P_AllocDummyLine();
-                P_ToXLine(dummyLine)->tag = 666;
-                EV_DoDoor(dummyLine, DT_BLAZEOPEN);
-                P_FreeDummyLine(dummyLine);
-                bossKilled = true;
-                return;
-                break;
-
-            case 8:
-                dummyLine = P_AllocDummyLine();
-                P_ToXLine(dummyLine)->tag = 666;
-                EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
-                P_FreeDummyLine(dummyLine);
-                bossKilled = true;
-                return;
-                break;
-            }
-        }
-    }
-
-    G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
-*/
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
