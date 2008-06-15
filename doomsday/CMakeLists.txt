@@ -440,6 +440,12 @@ IF (APPLE)
 	SET (CMAKE_OSX_SYSROOT /Developer/SDKs/MacOSX10.4u.sdk)
 	SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
 	SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
+	
+	IF (ENABLEDEBUG)
+        SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g" )
+	ENDIF (ENABLEDEBUG)
+	
 	#SET (CMAKE_LD_FLAGS "${LDFLAGS} /opt/local/lib/libpng12.a")
 	SET (BUILDSYSTEM MACOSX)
 
