@@ -764,7 +764,7 @@ void R_ProjectSprite(mobj_t *mo)
         else if(mf->sub[0].flags & MFF_SPIN)
         {
             vis->data.mo.yaw =
-                modelSpinSpeed * 70 * levelTime + MOBJ_TO_ID(mo) % 360;
+                modelSpinSpeed * 70 * ddLevelTime + MOBJ_TO_ID(mo) % 360;
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
         {
@@ -1223,7 +1223,7 @@ float R_GetBobOffset(mobj_t *mo)
 {
     if(mo->ddFlags & DDMF_BOB)
     {
-        return (sin(MOBJ_TO_ID(mo) + levelTime / 1.8286 * 2 * PI) * 8);
+        return (sin(MOBJ_TO_ID(mo) + ddLevelTime / 1.8286 * 2 * PI) * 8);
     }
     return 0;
 }

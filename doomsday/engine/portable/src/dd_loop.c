@@ -85,7 +85,7 @@ boolean suspendMsgPump = false; // Set to true to disable checking windows msgs.
 
 int     maxFrameRate = 200;     // Zero means 'unlimited'.
 
-timespan_t sysTime, gameTime, demoTime, levelTime;
+timespan_t sysTime, gameTime, demoTime, ddLevelTime;
 timespan_t frameStartTime;
 
 boolean stopTime = false;  // If true the time counters won't be incremented
@@ -388,7 +388,7 @@ void DD_AdvanceTime(timespan_t time)
         // The level time only advances when the game is not paused.
         if(!clientPaused)
         {
-            levelTime += time;
+            ddLevelTime += time;
         }
     }
 }

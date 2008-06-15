@@ -1854,7 +1854,7 @@ void R_SetupLevel(int mode, int flags)
         }
 
         // Reset the level tick timer.
-        levelTime = 0;
+        ddLevelTime = 0;
 
         // We've finished setting up the level
         levelSetup = false;

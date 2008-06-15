@@ -1260,7 +1260,7 @@ void P_SpawnMapParticleGens(const char *mapId)
         if(!def->map[0] || stricmp(def->map, mapId))
             continue;
 
-        if(def->spawnAge > 0 && levelTime > def->spawnAge)
+        if(def->spawnAge > 0 && ddLevelTime > def->spawnAge)
             continue; // No longer spawning this generator.
 
         if(!(gen = P_NewPtcGen()))
