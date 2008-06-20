@@ -88,13 +88,13 @@ Values {
 
   MegaSphere {
     Give {
-      Health = "100";
+      Health = "200";
     };
   };
 
   SoulSphere {
     Give {
-      Health = "200";
+      Health = "100";
       Health Limit = "200";
     };
   };
