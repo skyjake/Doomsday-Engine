@@ -1694,16 +1694,15 @@ int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context,
 #undef FUDGEFACTOR
 }
 
-
 int XL_ValidateMap(int val, int type)
 {
     int         episode, level = val;
 
 #if __JDOOM__
-    if(gameMode == commercial)
-        episode = gameEpisode;
-    else
+    if(gameMode == commercial || gameMode == shareware)
         episode = 0;
+    else
+        episode = gameEpisode;
 #elif __JDOOM64__
     episode = 0;
 #elif __JHERETIC__
