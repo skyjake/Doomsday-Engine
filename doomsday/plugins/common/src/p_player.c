@@ -813,7 +813,7 @@ DEFCC(CCmdCycleSpy)
 
 DEFCC(CCmdSpawnMobj)
 {
-    int                 type;
+    mobjtype_t          type;
     float               pos[3];
     mobj_t             *mo;
 
@@ -858,26 +858,29 @@ DEFCC(CCmdSpawnMobj)
     }
 
     mo = P_SpawnMobj3fv(type, pos);
-    if(mo && argc == 6)
+    if(mo)
     {
-        mo->angle = ((int) (strtod(argv[5], 0) / 360 * FRACUNIT)) << 16;
-    }
+        if(argc == 6)
+        {
+            mo->angle = ((int) (strtod(argv[5], 0) / 360 * FRACUNIT)) << 16;
+        }
 
 #if __JDOOM64__
-    // jd64 > kaiser - another cheesy hack!!!
-    if(mo->type == MT_DART)
-    {
-        S_StartSound(SFX_SKESWG, mo); // We got darts! spawn skeswg sound!
-    }
-    else
-    {
-        mo->translucency = 255;
-
-        S_StartSound(SFX_ITMBK, mo); // If not dart, then spawn itmbk sound
-        mo->intFlags = MIF_FADE;
-        mo->translucency = 255;
-    }
+        // jd64 > kaiser - another cheesy hack!!!
+        if(mo->type == MT_DART)
+        {
+            S_StartSound(SFX_SKESWG, mo); // We got darts! spawn skeswg sound!
+        }
+        else
+        {
+            S_StartSound(SFX_ITMBK, mo); // If not dart, then spawn itmbk sound
+            mo->translucency = 255;
+            mo->spawnFadeTics = 0;
+            mo->intFlags |= MIF_FADE;
+        }
     // << d64tc
 #endif
+    }
+
     return true;
 }
