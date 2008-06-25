@@ -614,7 +614,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         P_SetMessage(player, GOTCLIPBOX, false);
         break;
 
-    case SPR_ROCK:
+    case SPR_RCKT:
         if(!P_GiveAmmo(player, AT_MISSILE, 1))
             return;
         P_SetMessage(player, GOTROCKET, false);
@@ -683,7 +683,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = SFX_WPNUP;
         break;
 
-    case SPR_PLAS:
+    case SPR_PLSM:
         if(!P_GiveWeapon(player, WT_SIXTH, false))
             return;
         P_SetMessage(player, GOTPLASMA, false);
@@ -704,7 +704,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = SFX_WPNUP;
         break;
 
-    case SPR_LGUN: // jd64
+    case SPR_LSRG: // jd64
         if(!P_GiveWeapon(player, WT_TENTH, special->flags & MF_DROPPED))
             return;
 
@@ -712,7 +712,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = SFX_WPNUP;
         break;
 
-    case SPR_POW1: // jd64
+    case SPR_ART1: // jd64
         if(player->artifacts[it_laserpw1])
         {
             if(!(levelTime & 0x1f))
@@ -727,7 +727,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         }
         break;
 
-    case SPR_POW2: // jd64
+    case SPR_ART2: // jd64
         if(player->artifacts[it_laserpw2])
         {
             if(!(levelTime & 0x1f))
@@ -742,7 +742,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         }
         break;
 
-    case SPR_POW3: // jd64
+    case SPR_ART3: // jd64
         if(player->artifacts[it_laserpw3])
         {
             if(!(levelTime & 0x1f))
@@ -959,7 +959,7 @@ void P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     if(inflictor && !inflictor->player &&
        (!source || (source && !source->player)))
     {
-        //damage = (int) ((float) damage * netMobDamageModifier);
+        // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
             damage *= cfg.netMobDamageModifier;
     }
@@ -975,7 +975,7 @@ void P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
             R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
                             target->pos[VX], target->pos[VY]);
 
-        thrust = FIX2FLT(damage * (1.0f/8) * 100 / target->info->mass);
+        thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
 
         // Make fall forwards sometimes.
         if(damage < 40 && damage > target->health &&
