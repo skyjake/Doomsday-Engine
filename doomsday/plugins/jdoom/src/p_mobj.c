@@ -48,14 +48,15 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define VANISHTICS          (2*TICSPERSEC)
+#define VANISHTICS              (2*TICSPERSEC)
 
-#define MAX_BOB_OFFSET      (8)
+#define MAX_BOB_OFFSET          (8)
 
-#define STOPSPEED           (1.0f/1.6/10)
-#define STANDSPEED          (1.0f/2)
+#define NOMOMENTUM_THRESHOLD    (0.000001f)
+#define STOPSPEED               (1.0f/1.6/10)
+#define DROPOFFMOMENTUM_THRESHOLD (1.0f / 4)
 
-#define ITEMQUESIZE         (128)
+#define ITEMQUESIZE             (128)
 
 // TYPES -------------------------------------------------------------------
 
@@ -161,6 +162,30 @@ float P_MobjGetFriction(mobj_t *mo)
     return XS_Friction(P_GetPtrp(mo->subsector, DMU_SECTOR));
 }
 
+static boolean isInWalkState(player_t* pl)
+{
+    return pl->plr->mo->state - states -
+                PCLASS_INFO(pl->class)->runState < 4;
+}
+
+static float getFriction(mobj_t* mo)
+{
+    if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) &&
+       !mo->onMobj)
+    {   // Airborne friction.
+        return FRICTION_FLY;
+    }
+
+#if __JHERETIC__
+    if(P_ToXSector(P_GetPtrp(mo->subsector, DMU_SECTOR))->special == 15)
+    {   // Friction_Low
+        return FRICTION_LOW;
+    }
+#endif
+
+    return P_MobjGetFriction(mo);
+}
+
 void P_MobjMoveXY(mobj_t *mo)
 {
     float               pos[3], mom[3];
@@ -171,10 +196,8 @@ void P_MobjMoveXY(mobj_t *mo)
     if(P_CameraXYMovement(mo))
         return;
 
-    mom[MX] = mo->mom[MX] = CLAMP(mo->mom[MX], -MAXMOVE, MAXMOVE);
-    mom[MY] = mo->mom[MY] = CLAMP(mo->mom[MY], -MAXMOVE, MAXMOVE);
-
-    if(mom[MX] == 0 && mom[MY] == 0)
+    if(INRANGEOF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
+       INRANGEOF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD))
     {
         if(mo->flags & MF_SKULLFLY)
         {   // The skull slammed into something.
@@ -186,6 +209,9 @@ void P_MobjMoveXY(mobj_t *mo)
 
         return;
     }
+
+    mom[MX] = mo->mom[MX] = CLAMP(mo->mom[MX], -MAXMOVE, MAXMOVE);
+    mom[MY] = mo->mom[MY] = CLAMP(mo->mom[MY], -MAXMOVE, MAXMOVE);
 
     player = mo->player;
 
@@ -240,10 +266,9 @@ void P_MobjMoveXY(mobj_t *mo)
 
                     if(backsector)
                     {
-                        // Explode a missile?
-                        if(ceilingLine &&
-                           P_GetIntp(backsector,
-                                     DMU_CEILING_MATERIAL) == SKYMASKMATERIAL)
+                        if(P_GetIntp(backsector,
+                                     DMU_CEILING_MATERIAL) == SKYMASKMATERIAL &&
+                           mo->pos[VZ] > P_GetFloatp(backsector, DMU_CEILING_HEIGHT))
                         {
                             // Hack to prevent missiles exploding against
                             // the sky. Does not handle sky floors.
@@ -252,12 +277,16 @@ void P_MobjMoveXY(mobj_t *mo)
                         }
                     }
                 }
+
                 P_ExplodeMissile(mo);
             }
             else
+            {
                 mo->mom[MX] = mo->mom[MY] = 0;
+            }
         }
-    } while(mom[MX] != 0 || mom[MY] != 0);
+    } while(!INRANGEOF(mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
+            !INRANGEOF(mom[MY], 0, NOMOMENTUM_THRESHOLD));
 
     // Slow down.
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
@@ -270,7 +299,7 @@ void P_MobjMoveXY(mobj_t *mo)
     if(mo->flags & (MF_MISSILE | MF_SKULLFLY))
         return; // No friction for missiles ever.
 
-    if(mo->pos[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
+    if(mo->pos[VZ] > mo->floorZ && !mo->onMobj /*&& !(mo->flags2 & MF2_FLY)*/)
         return; // No friction when falling.
 
     if(cfg.slidingCorpses)
@@ -281,8 +310,8 @@ void P_MobjMoveXY(mobj_t *mo)
            !mo->player)
         {
             // Do not stop sliding if halfway off a step with some momentum.
-            if(mo->mom[MX] > (1.0f / 4) || mo->mom[MX] < -(1.0f / 4) ||
-               mo->mom[MY] > (1.0f / 4) || mo->mom[MY] < -(1.0f / 4))
+            if(!INRANGEOF(mo->mom[MX], 0, DROPOFFMOMENTUM_THRESHOLD) ||
+               !INRANGEOF(mo->mom[MY], 0, DROPOFFMOMENTUM_THRESHOLD))
             {
                 if(mo->floorZ !=
                    P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
@@ -292,45 +321,27 @@ void P_MobjMoveXY(mobj_t *mo)
     }
 
     // Stop player walking animation.
-    if(player && !player->plr->cmd.forwardMove && !player->plr->cmd.sideMove &&
-       mo->mom[MX] > -STANDSPEED && mo->mom[MX] < STANDSPEED &&
-       mo->mom[MY] > -STANDSPEED && mo->mom[MY] < STANDSPEED)
+    if((!player || !(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) ||
+         player->plr->mo != mo /* $voodoodolls: Stop also. */) &&
+       INRANGEOF(mo->mom[MX], 0, STOPSPEED) &&
+       INRANGEOF(mo->mom[MY], 0, STOPSPEED))
     {
         // If in a walking frame, stop moving.
-        if((unsigned) ((player->plr->mo->state - states) - PCLASS_INFO(player->class)->runState) < 4)
+        if(player && isInWalkState(player) && player->plr->mo == mo)
             P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
-    }
 
-    if((!player || (player->plr->cmd.forwardMove == 0 && player->plr->cmd.sideMove == 0)) &&
-       mo->mom[MX] > -STOPSPEED && mo->mom[MX] < STOPSPEED &&
-       mo->mom[MY] > -STOPSPEED && mo->mom[MY] < STOPSPEED)
-    {
         mo->mom[MX] = mo->mom[MY] = 0;
+
+        // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
+        if(player && player->plr->mo == mo)
+            player->bob = 0;
     }
     else
     {
-        if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) &&
-           !mo->onMobj)
-        {
-            mo->mom[MX] *= FRICTION_FLY;
-            mo->mom[MY] *= FRICTION_FLY;
-        }
-#if __JHERETIC__
-        else if(P_ToXSector(P_GetPtrp(mo->subsector,
-                                    DMU_SECTOR))->special == 15)
-        {
-            // Friction_Low
-            mo->mom[MX] *= FRICTION_LOW;
-            mo->mom[MY] *= FRICTION_LOW;
-        }
-#endif
-        else
-        {
-            float       friction = P_MobjGetFriction(mo);
+        float       friction = getFriction(mo);
 
-            mo->mom[MX] *= friction;
-            mo->mom[MY] *= friction;
-        }
+        mo->mom[MX] *= friction;
+        mo->mom[MY] *= friction;
     }
 }
 
@@ -384,9 +395,8 @@ void P_HitFloor(mobj_t *mo)
 
 void P_MobjMoveZ(mobj_t *mo)
 {
-    float               gravity;
-    float               dist;
-    float               delta;
+    float               gravity, dist, delta;
+    boolean             movingDown;
 
     gravity = XS_Gravity(P_GetPtrp(mo->subsector, DMU_SECTOR));
 
@@ -394,40 +404,37 @@ void P_MobjMoveZ(mobj_t *mo)
     if(P_CameraZMovement(mo))
         return;
 
-    // Check for smooth step up.
-    if(mo->player && mo->pos[VZ] < mo->floorZ)
+    // $voodoodolls: Check for smooth step up unless a voodoo doll.
+    if(mo->player && mo->player->plr->mo == mo &&
+       mo->pos[VZ] < mo->floorZ)
     {
         mo->dPlayer->viewHeight -= mo->floorZ - mo->pos[VZ];
-
         mo->dPlayer->viewHeightDelta =
             (cfg.plrViewHeight - mo->dPlayer->viewHeight) / 8;
     }
 
     // Adjust height.
     mo->pos[VZ] += mo->mom[MZ];
+
     if((mo->flags2 & MF2_FLY) &&
        mo->onMobj && mo->pos[VZ] > mo->onMobj->pos[VZ] + mo->onMobj->height)
         mo->onMobj = NULL; // We were on a mobj, we are NOT now.
 
-    if((mo->flags & MF_FLOAT) && mo->target && !P_IsCamera(mo->target))
+    if(!((mo->flags ^ MF_FLOAT) & (MF_FLOAT | MF_SKULLFLY | MF_INFLOAT)) &&
+       mo->target && !P_IsCamera(mo->target))
     {
         // Float down towards target if too close.
-        if(!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
+        dist = P_ApproxDistance(mo->pos[VX] - mo->target->pos[VX],
+                                mo->pos[VY] - mo->target->pos[VY]);
+
+        //delta = (mo->target->pos[VZ] + (mo->height / 2)) - mo->pos[VZ];
+        delta = (mo->target->pos[VZ] + mo->target->height / 2) -
+                (mo->pos[VZ] + mo->height / 2);
+
+        // Don't go INTO the target.
+        if(!(dist < mo->radius + mo->target->radius &&
+             fabs(delta) < mo->height + mo->target->height))
         {
-            dist = P_ApproxDistance(mo->pos[VX] - mo->target->pos[VX],
-                                    mo->pos[VY] - mo->target->pos[VY]);
-
-            //delta = (mo->target->pos[VZ] + (mo->height / 2)) - mo->pos[VZ];
-            delta = (mo->target->pos[VZ] + mo->target->height / 2) -
-                    (mo->pos[VZ] + mo->height / 2);
-
-            if(dist < mo->radius + mo->target->radius &&
-               fabs(delta) < mo->height + mo->target->height)
-            {
-                // Don't go INTO the target.
-                delta = 0;
-            }
-
             if(delta < 0 && dist < -(delta * 3))
             {
                 mo->pos[VZ] -= FLOATSPEED;
@@ -513,15 +520,16 @@ void P_MobjMoveZ(mobj_t *mo)
             mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if(mo->mom[MZ] < 0)
+        if(movingDown = (mo->mom[MZ] < 0))
         {
-            if(mo->player && mo->mom[MZ] < -gravity * 8 &&
-               !(mo->flags2 & MF2_FLY))
+            if(mo->player && mo->player->plr->mo == mo &&
+               mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))
             {
                 // Squat down.
                 // Decrease viewheight for a moment after hitting the ground
                 // (hard), and utter appropriate sound.
                 mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
+                mo->player->jumpTics = 10;
 
                 /**
                  * DOOM bug:
@@ -532,11 +540,13 @@ void P_MobjMoveZ(mobj_t *mo)
                     S_StartSound(SFX_OOF, mo);
             }
 
-            P_HitFloor(mo);
             mo->mom[MZ] = 0;
         }
 
         mo->pos[VZ] = mo->floorZ;
+
+        if(movingDown)
+            P_HitFloor(mo);
 
         /**
          * See lost soul bouncing comment above. We need this here for bug
@@ -547,7 +557,7 @@ void P_MobjMoveZ(mobj_t *mo)
         if(!correctLostSoulBounce && (mo->flags & MF_SKULLFLY))
             mo->mom[MZ] = -mo->mom[MZ];
 
-        if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
+        if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
         {
             if(mo->flags2 & MF2_FLOORBOUNCE)
             {
@@ -588,7 +598,7 @@ void P_MobjMoveZ(mobj_t *mo)
             mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
+        if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
         {
             // Don't explode against sky.
             if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) ==
@@ -678,7 +688,9 @@ void P_MobjThinker(mobj_t *mobj)
 #endif
 
     // Handle X and Y momentums.
-    if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || (mobj->flags & MF_SKULLFLY))
+    if(!INRANGEOF(mobj->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
+       !INRANGEOF(mobj->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
+       (mobj->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mobj);
 
@@ -714,15 +726,16 @@ void P_MobjThinker(mobj_t *mobj)
             return; // Mobj was removed.
     }
     // Non-sentient objects at rest.
-    else if(!(mobj->mom[MX] == 0 && mobj->mom[MY] == 0) && !sentient(mobj) && !(mobj->player) &&
-            !(mobj->player) && !((mobj->flags & MF_CORPSE) &&
-            cfg.slidingCorpses))
+    else if(!sentient(mobj) && !mobj->player &&
+            !(INRANGEOF(mobj->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
+              INRANGEOF(mobj->mom[MY], 0, NOMOMENTUM_THRESHOLD)))
     {
-        // Objects fall off ledges if they are hanging off slightly push
+        // Objects fall off ledges if they are hanging off. Slightly push
         // off of ledge if hanging more than halfway off.
 
         if(mobj->pos[VZ] > mobj->dropOffZ && // Only objects contacting dropoff.
-           !(mobj->flags & MF_NOGRAVITY) && cfg.fallOff)
+           !(mobj->flags & MF_NOGRAVITY) &&
+           !(mobj->flags2 & MF2_FLOATBOB) && cfg.fallOff)
         {
             P_ApplyTorque(mobj);
         }
@@ -781,8 +794,7 @@ void P_MobjThinker(mobj_t *mobj)
         if(!mobj->tics)
         {
             P_MobjClearSRVO(mobj);
-            if(!P_MobjChangeState(mobj, mobj->state->nextState))
-                return; // Freed itself.
+            P_MobjChangeState(mobj, mobj->state->nextState);
         }
     }
     else if(!IS_CLIENT)
@@ -796,16 +808,11 @@ void P_MobjThinker(mobj_t *mobj)
 
         mobj->moveCount++;
 
-        if(mobj->moveCount < 12 * 35)
-            return;
-
-        if(levelTime & 31)
-            return;
-
-        if(P_Random() > 4)
-            return;
-
-        P_NightmareRespawn(mobj);
+        if(mobj->moveCount >= 12 * 35 && !(levelTime & 31) &&
+           P_Random() <= 4)
+        {
+            P_NightmareRespawn(mobj);
+        }
     }
 }
 
@@ -828,6 +835,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     mo->damage = info->damage;
     mo->health =
         info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->moveDir = DI_NODIR;
 
     // Let the engine know about solid objects.
     P_SetDoomsdayFlags(mo);
