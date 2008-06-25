@@ -255,17 +255,23 @@ void I_InitVirtualInputDevices(void)
  */
 void I_ShutdownInputDevices(void)
 {
-	uint        i;
-	inputdev_t *dev;
+	uint                i;
+	inputdev_t*         dev;
 
 	for(i = 0; i < NUM_INPUT_DEVICES; ++i)
 	{
 		dev = &inputDevices[i];
-        M_Free(dev->keys);
+
+        if(dev->keys)
+            M_Free(dev->keys);
         dev->keys = 0;
-        M_Free(dev->axes);
+
+        if(dev->axes)
+            M_Free(dev->axes);
         dev->axes = 0;
-        M_Free(dev->hats);
+
+        if(dev->hats)
+            M_Free(dev->hats);
         dev->hats = 0;
 	}
 }
@@ -280,7 +286,7 @@ void I_ShutdownInputDevices(void)
  */
 inputdev_t *I_GetDevice(uint ident, boolean ifactive)
 {
-    inputdev_t *dev = &inputDevices[ident];
+    inputdev_t*         dev = &inputDevices[ident];
 
     if(ifactive)
     {
