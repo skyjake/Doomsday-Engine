@@ -135,7 +135,7 @@ desc = The higher the number, the smaller lens flares become when the source is 
 [Texture quality]
 cvar = rend-tex-quality
 def = 8
-desc = All textures must be resized so that their dimensions are powers of two. Depending on this setting either the higher or smaller matching power of two is chosen. At quality zero, all textures are reduced in size, to match the largest power of two smaller than the original size. At quality 8, the resizing is always done upwards.
+desc = Depending on your system configuration, some textures must be resized so that their dimensions are powers of two. In these instances, this setting controls whether the higher or smaller matching power of two is chosen. At quality zero, all textures are reduced in size, to match the largest power of two smaller than the original size. At quality 8, the resizing is always done upwards.
 
 [Smart texture filtering]
 cvar = rend-tex-filter-smart
