@@ -158,6 +158,7 @@
 				DebugInformationFormat="4"
 				CallingConvention="0"
 				CompileAs="0"
+				DisableSpecificWarnings="4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -776,10 +777,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jdoom64\src\p_spec.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jdoom64\src\p_switch.c"
 				>
 			</File>
 			<File
